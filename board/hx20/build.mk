@@ -24,7 +24,7 @@ endif
 
 CHIP_SPI_SIZE_KB:=512
 
-board-y=board.o led.o
+board-y=board.o led.o power_sequence.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o
 board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
 board-$(CONFIG_KEYBOARD_CUSTOMIZATION)+=keyboard_customization.o

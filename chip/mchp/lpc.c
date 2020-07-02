@@ -326,6 +326,27 @@ void chip_acpi_ec_config(int instance, uint32_t io_base, uint8_t mask)
 			mask;
 	MCHP_ESPI_IO_BAR(acpi_ec_espi_bar_id[instance]) =
 			(io_base << 16) + 0x01ul;
+	
+	switch (instance)
+	{
+	case 0: /* for 0x62 / 0x66 port ACPI 0 */
+		MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_ACPI_EC0_SIRQ) = BIT(0);
+		break;
+	case 1: /* for 0x200 ~ 207 ACPI 1  */
+		MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_ACPI_EC1_SIRQ) = BIT(0);
+		break;
+	case 2:
+		MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_ACPI_EC2_SIRQ) = BIT(0);
+		break;
+	case 3:
+		MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_ACPI_EC3_SIRQ) = BIT(0);
+		break;
+	case 4:
+		MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_ACPI_EC4_SIRQ) = BIT(0);
+		break;
+	default:
+		break;
+	}
 #else
 	MCHP_LPC_ACPI_EC_BAR(instance) = (io_base << 16) +
 		(1ul << 15) + mask;

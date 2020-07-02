@@ -80,7 +80,7 @@
  * Requires for handling Kabylake/Skylake RVP3 board's
  * ALL_SYS_PWRGD signal.
  */
-#define CONFIG_BOARD_EC_HANDLES_ALL_SYS_PWRGD
+/* #define CONFIG_BOARD_EC_HANDLES_ALL_SYS_PWRGD */
 
 /*
  * EVB eSPI test mode (no eSPI master connected)
@@ -142,7 +142,7 @@
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_BAT_PRESENT_L
 #define CONFIG_BATTERY_SMART
-#define CONFIG_BOARD_VERSION_GPIO
+#define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_BUTTON_COUNT 2
 /* #define CONFIG_CHARGE_MANAGER */
 /* #define CONFIG_CHARGE_RAMP_SW */
@@ -166,7 +166,8 @@
 /* #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20 */
 /* #define CONFIG_CMD_CHARGER_ADC_AMON_BMON */
 
-#define CONFIG_CHIPSET_SKYLAKE
+/* #define CONFIG_CHIPSET_SKYLAKE */
+/* #define CONFIG_CHIPSET_TIGERLAKE */
 #define CONFIG_CHIPSET_RESET_HOOK
 
 #define CONFIG_HOSTCMD_ESPI
@@ -179,6 +180,7 @@
 /* #define CONFIG_HOSTCMD_PD_PANIC */
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
+#define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LED_COMMON
 
@@ -189,6 +191,8 @@
 #endif /* CONFIG_ACCEL_KX022 */
 
 #define CONFIG_LID_SWITCH
+#define CONFIG_POWER_BUTTON_IGNORE_LID
+#define CONFIG_CPU_PROCHOT_ACTIVE_LOW
 /*
  * Enable MCHP Low Power Idle support
  * and API to power down pins
@@ -259,9 +263,9 @@
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 #endif
-
+/* TODO FRAMEWORK 
 #define CONFIG_VBOOT_HASH
-
+*/
 /*
  * MEC1701H loads firmware using QMSPI controller
  * CONFIG_SPI_FLASH_PORT is the index into
@@ -361,8 +365,27 @@
 #endif
 
 /* LED signals */
-#define GPIO_BAT_LED_RED GPIO_CHARGE_LED_1
-#define GPIO_BAT_LED_GREEN GPIO_CHARGE_LED_2
+#define GPIO_BAT_LED_RED GPIO_BATT_LOW_LED_L
+#define GPIO_BAT_LED_GREEN GPIO_BATT_CHG_LED_L
+
+/*
+ * Macros for GPIO signals used in common code that don't match the
+ * schematic names. Signal names in gpio.inc match the schematic and are
+ * then redefined here to so it's more clear which signal is being used for
+ * which purpose.
+ */
+#define GPIO_AC_PRESENT		GPIO_VCIN1_AC_IN
+#define GPIO_POWER_BUTTON_L	GPIO_ON_OFF
+#define GPIO_PCH_SLP_SUS_L	GPIO_SLP_SUS_L
+#define GPIO_PCH_SLP_S3_L	GPIO_PM_SLP_S3_L
+#define GPIO_PCH_SLP_S4_L	GPIO_PM_SLP_S4_L
+#define GPIO_PCH_PWRBTN_L	GPIO_PBTN_OUT_L
+#define GPIO_PCH_ACOK		GPIO_AC_PRESENT_OUT
+#define GPIO_PCH_RSMRST_L	GPIO_EC_RSMRST_L
+#define GPIO_CPU_PROCHOT	GPIO_VCOUT1_PROCHOT_L
+#define GPIO_LID_OPEN		GPIO_LID_SW_L
+#define GPIO_ENABLE_TOUCHPAD	GPIO_EC_KBL_PWR_EN
+#define GPIO_ENABLE_BACKLIGHT	GPIO_EC_BKOFF_L
 
 /* I2C ports */
 #define I2C_CONTROLLER_COUNT	2
@@ -392,6 +415,30 @@
 #define I2C_PORT_ACCEL          MCHP_I2C_PORT4
 #define I2C_PORT_BATTERY        MCHP_I2C_PORT5
 #define I2C_PORT_CHARGER        MCHP_I2C_PORT5
+
+/* GPIO for power signal */
+#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
+#define SLP_S3_SIGNAL_L VW_SLP_S3_L
+#else
+#define SLP_S3_SIGNAL_L GPIO_PCH_SLP_S3_L
+#endif
+#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_S4
+#define SLP_S4_SIGNAL_L VW_SLP_S4_L
+#else
+#define SLP_S4_SIGNAL_L GPIO_PCH_SLP_S4_L
+#endif
+
+#define IN_PGOOD_PWR_VR           POWER_SIGNAL_MASK(X86_VR_PWRGD)
+#define IN_PGOOD_PWR_3V5V         POWER_SIGNAL_MASK(X86_PWR_3V5V_PG)
+#define IN_PGOOD_VCCIN_AUX_VR     POWER_SIGNAL_MASK(X86_VCCIN_AUX_VR_PG)
+
+#define IN_PCH_SLP_S3_DEASSERTED  POWER_SIGNAL_MASK(X86_SLP_S3_DEASSERTED)
+#define IN_PCH_SLP_S4_DEASSERTED  POWER_SIGNAL_MASK(X86_SLP_S4_DEASSERTED)
+#define IN_PCH_SLP_SUS_DEASSERTED POWER_SIGNAL_MASK(X86_SLP_SUS_DEASSERTED)
+
+#define IN_ALL_PM_SLP_DEASSERTED (IN_PCH_SLP_S3_DEASSERTED | \
+				  IN_PCH_SLP_S4_DEASSERTED | \
+				  IN_PCH_SLP_SUS_DEASSERTED)
 
 /* Thermal sensors read through PMIC ADC interface */
 #if 0
@@ -435,6 +482,21 @@ enum temp_sensor_id {
 /*	TEMP_SENSOR_WIFI, */
 
 	TEMP_SENSOR_COUNT
+};
+
+/* Power signals list */
+enum power_signal {
+#ifdef CONFIG_POWER_S0IX
+	X86_SLP_S0_DEASSERTED,
+#endif
+	X86_SLP_S3_DEASSERTED,
+	X86_SLP_S4_DEASSERTED,
+	X86_SLP_SUS_DEASSERTED,
+	X86_PWR_3V5V_PG,
+	X86_VCCIN_AUX_VR_PG,
+	X86_VR_PWRGD,
+	/* Number of X86 signals */
+	POWER_SIGNAL_COUNT
 };
 
 enum sensor_id {
@@ -491,6 +553,26 @@ uint16_t board_i2c_slave_addrs(int controller);
 
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
+
+/* P sensor */
+void psensor_interrupt(enum gpio_signal signal);
+
+/* HID */
+void soc_hid_interrupt(enum gpio_signal signal);
+
+/* PD CHIP */
+void pd_chip_interrupt(enum gpio_signal signal);
+
+/* thermal sensor */
+void thermal_sensor_interrupt(enum gpio_signal signal);
+
+/* SOC */
+void soc_signal_interrupt(enum gpio_signal signal);
+
+/* power sequence */
+int board_chipset_power_on(void);
+
+int board_get_version(void);
 
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);

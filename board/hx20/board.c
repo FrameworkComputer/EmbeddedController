@@ -88,6 +88,8 @@ static int smart_batt_temp;
 static int ds1624_temp;
 static int sb_temp(int idx, int *temp_ptr);
 static int ds1624_get_val(int idx, int *temp_ptr);
+static int forcing_shutdown;  /* Forced shutdown in progress? */
+
 #ifdef HAS_TASK_MOTIONSENSE
 static void board_spi_enable(void);
 static void board_spi_disable(void);
@@ -119,7 +121,62 @@ void board_config_pre_init(void)
 }
 #endif /* #ifdef CONFIG_BOARD_PRE_INIT */
 
+/* Power signals list. Must match order of enum power_signal. */
+const struct power_signal_info power_signal_list[] = {
+#ifdef CONFIG_POWER_S0IX
+	[X86_SLP_S0_DEASSERTED] = {
+		GPIO_PCH_SLP_S0_L,
+		POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_DISABLE_AT_BOOT,
+		"SLP_S0_DEASSERTED",
+	},
+#endif
+	[X86_SLP_S3_DEASSERTED] = {
+		SLP_S3_SIGNAL_L,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"SLP_S3_DEASSERTED",
+	},
+	[X86_SLP_S4_DEASSERTED] = {
+		SLP_S4_SIGNAL_L,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"SLP_S4_DEASSERTED",
+	},
+	[X86_SLP_SUS_DEASSERTED] = {
+		GPIO_PCH_SLP_SUS_L,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"SLP_SUS_DEASSERTED",
+	},
+	[X86_PWR_3V5V_PG] = {
+		GPIO_PWR_3V5V_PG,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"PWR_3V5V_PG",
+	},
+	[X86_VCCIN_AUX_VR_PG] = {
+		GPIO_VCCIN_AUX_VR_PG,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"VCCIN_AUX_VR_PG",
+	},
+	[X86_VR_PWRGD] = {
+		GPIO_VR_PWRGD,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"VR_PWRGD",
+	}
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
+void chipset_handle_espi_reset_assert(void)
+{
+	/*
+	 * If eSPI_Reset# pin is asserted without SLP_SUS# being asserted, then
+	 * it means that there is an unexpected power loss (global reset
+	 * event). In this case, check if shutdown was being forced by pressing
+	 * power button. If yes, release power button.
+	 */
+	if ((power_get_signals() & IN_PCH_SLP_SUS_DEASSERTED) &&
+		forcing_shutdown) {
+		power_button_pch_release();
+		forcing_shutdown = 0;
+	}
+}
 /*
  * Use EC to handle ALL_SYS_PWRGD signal.
  * MEC17xx connected to SKL/KBL RVP3 reference board
@@ -398,7 +455,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.usb_port = 1,
 		.i2c_port = I2C_PORT_USB_MUX,
 		.i2c_addr_flags = 0x10,
-		.driver = &ps8740_usb_mux_driver,
+		.driver = &ps874x_usb_mux_driver,
 	}
 };
 #endif
@@ -408,9 +465,10 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
  */
 void board_reset_pd_mcu(void)
 {
-	gpio_set_level(GPIO_PD_RST_L, 0);
+	// TODO FRAMEWORK
+	//gpio_set_level(GPIO_PD_RST_L, 0);
 	usleep(100);
-	gpio_set_level(GPIO_PD_RST_L, 1);
+	//gpio_set_level(GPIO_PD_RST_L, 1);
 }
 
 /*
@@ -470,12 +528,15 @@ struct als_t als[] = {
 BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 #endif
 
+/*
+TODO FRAMEWORK 
 const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 	{"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN, GPIO_VOLUME_DOWN_L,
 	 30 * MSEC, 0},
 	{"Volume Up", KEYBOARD_BUTTON_VOLUME_UP, GPIO_VOLUME_UP_L,
 	 30 * MSEC, 0},
 };
+*/
 
 /* MCHP mec1701_evb connected to Intel SKL RVP3 with Kabylake
  * processor we do not control the PMIC on SKL.
@@ -556,7 +617,7 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
 #endif
 	/* Enable tablet mode interrupt for input device enable */
-	gpio_enable_interrupt(GPIO_TABLET_MODE_L);
+	/* gpio_enable_interrupt(GPIO_TABLET_MODE_L); TODO FRAMEWORK */
 
 	/* Provide AC status to the PCH */
 	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
@@ -670,13 +731,14 @@ static void enable_input_devices(void)
 	int tp_enable = 1;
 
 	/* Disable both TP and KB in tablet mode */
-	if (!gpio_get_level(GPIO_TABLET_MODE_L))
-		kb_enable = tp_enable = 0;
+	/* if (!gpio_get_level(GPIO_TABLET_MODE_L))
+		kb_enable = tp_enable = 0; 
+	*/
 	/* Disable TP if chipset is off */
-	else if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+	// TODO FRAMEWORK else if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		tp_enable = 0;
 
-	keyboard_scan_enable(kb_enable, KB_SCAN_DISABLE_LID_ANGLE);
+	keyboard_scan_enable(kb_enable, KB_SCAN_DISABLE_LID_CLOSED);
 	gpio_set_level(GPIO_ENABLE_TOUCHPAD, tp_enable);
 }
 
@@ -685,8 +747,10 @@ static void board_chipset_startup(void)
 {
 	CPRINTS("MEC1701 HOOK_CHIPSET_STARTUP - called board_chipset_startup");
 	trace0(0, HOOK, 0, "HOOK_CHIPSET_STARTUP - board_chipset_startup");
+	/* TODO FRAMEWORK 
 	gpio_set_level(GPIO_USB1_ENABLE, 1);
 	gpio_set_level(GPIO_USB2_ENABLE, 1);
+	*/ 
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
@@ -699,8 +763,10 @@ static void board_chipset_shutdown(void)
 	CPRINTS("MEC1701 HOOK_CHIPSET_SHUTDOWN board_chipset_shutdown");
 	trace0(0, HOOK, 0,
 	       "HOOK_CHIPSET_SHUTDOWN board_chipset_shutdown");
+	/* TODO FRAMEWORK 
 	gpio_set_level(GPIO_USB1_ENABLE, 0);
 	gpio_set_level(GPIO_USB2_ENABLE, 0);
+	*/ 
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
@@ -713,6 +779,8 @@ static void board_chipset_resume(void)
 	CPRINTS("MEC1701_EVG HOOK_CHIPSET_RESUME");
 	trace0(0, HOOK, 0, "HOOK_CHIPSET_RESUME - board_chipset_resume");
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
+	gpio_set_level(GPIO_EC_WLAN_EN,1);
+	gpio_set_level(GPIO_EC_WL_OFF_L,1);
 #if 0 /* TODO not implemented in gpio.inc */
 	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 1);
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 1);
@@ -728,6 +796,8 @@ static void board_chipset_suspend(void)
 	CPRINTS("MEC1701 HOOK_CHIPSET_SUSPEND - called board_chipset_resume");
 	trace0(0, HOOK, 0, "HOOK_CHIPSET_SUSPEND - board_chipset_suspend");
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
+	gpio_set_level(GPIO_EC_WLAN_EN,1);
+	gpio_set_level(GPIO_EC_WL_OFF_L,1);
 #if 0 /* TODO not implemented in gpio.inc */
 	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 0);
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 0);
@@ -743,14 +813,18 @@ void board_hibernate_late(void)
 	gpio_set_level(GPIO_SYS_RESET_L, 0);
 
 	/* Turn off LEDs in hibernate */
+	/*
 	gpio_set_level(GPIO_CHARGE_LED_1, 0);
 	gpio_set_level(GPIO_CHARGE_LED_2, 0);
+	*/
 
 	/*
 	 * Set PD wake low so that it toggles high to generate a wake
 	 * event once we leave hibernate.
 	 */
+	/*
 	gpio_set_level(GPIO_USB_PD_WAKE, 0);
+	*/
 
 #ifdef CONFIG_USB_PD_PORT_MAX_COUNT
 	/*
@@ -896,10 +970,10 @@ static void board_one_sec(void)
 {
 	trace0(0, BRD, 0, "HOOK_SECOND");
 
-	if (gpio_get_level(GPIO_CHARGE_LED_2))
-		gpio_set_level(GPIO_CHARGE_LED_2, 0);
+	if (gpio_get_level(GPIO_LED1_PWM))
+		gpio_set_level(GPIO_LED1_PWM, 0);
 	else
-		gpio_set_level(GPIO_CHARGE_LED_2, 1);
+		gpio_set_level(GPIO_LED1_PWM, 1);
 
 	sb_update();
 	ds1624_update();
@@ -1028,3 +1102,57 @@ void tach0_isr(void)
 }
 DECLARE_IRQ(MCHP_IRQ_TACH_0, tach0_isr, 1);
 #endif
+
+void psensor_interrupt(enum gpio_signal signal)
+{
+	/* TODO: implement p-sensor interrupt function
+	* when object close to p-sensor, trun on system to S0
+	*/
+}
+
+void soc_hid_interrupt(enum gpio_signal signal)
+{
+	/* TODO: implement hid function */
+}
+
+void pd_chip_interrupt(enum gpio_signal signal)
+{
+	/* TODO: implement cypress CCG5 function */
+}
+
+void thermal_sensor_interrupt(enum gpio_signal signal)
+{
+	/* TODO: implement thermal sensor alert interrupt function */
+}
+
+void soc_signal_interrupt(enum gpio_signal signal)
+{
+	/* TODO: EC BKOFF signal is related soc enable panel siganl */
+}
+
+int board_get_version(void)
+{
+	static int ver = -1;
+	/* TODO FRAMEWORK */
+	return ver; 
+}
+
+/* Keyboard scan setting */
+struct keyboard_scan_config keyscan_config = {
+	/*
+	 * F3 key scan cycle completed but scan input is not
+	 * charging to logic high when EC start scan next
+	 * column for "T" key, so we set .output_settle_us
+	 * to 80us from 50us.
+	 */
+	.output_settle_us = 80,
+	.debounce_down_us = 9 * MSEC,
+	.debounce_up_us = 30 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+	.actual_key_mask = {
+		0x14, 0xff, 0xff, 0xf2, 0xff, 0xff, 0xff,
+		0x0a, 0xff, 0xa0, 0xff, 0xff, 0x00, 0x41, 0xff, 0xff  /* full set */
+	},
+};
