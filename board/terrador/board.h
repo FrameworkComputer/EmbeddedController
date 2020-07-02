@@ -81,6 +81,7 @@
 /* Volume Button feature */
 
 /* Fan features */
+#undef CONFIG_FANS
 
 /*
  * Macros for GPIO signals used in common code that don't match the
@@ -144,7 +145,6 @@ enum pwm_channel {
 	PWM_CH_LED2_GREEN,
 	PWM_CH_LED3_RED,
 	PWM_CH_LED4_SIDESEL,
-	PWM_CH_FAN,
 	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT
 };

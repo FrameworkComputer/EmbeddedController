@@ -157,11 +157,6 @@ ALTERNATE(PIN_MASK(B, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                       
 ALTERNATE(PIN_MASK(6, BIT(0)), 0, MODULE_PWM, 0)                                     /* LED_SIDESEL_4_L */
 ALTERNATE(PIN_MASK(C, BIT(2) | BIT(3) | BIT(4)), 0, MODULE_PWM, 0)                   /* LED_{3,2,1}_L */
 
-/* Fan signals */
-GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
-ALTERNATE(PIN_MASK(B, BIT(7)), 0, MODULE_PWM, 0)	/* FAN_PWM */
-ALTERNATE(PIN_MASK(4, BIT(0)), 0, MODULE_PWM, 0)	/* FAN_SPEED_TACH */
-
 /* Keyboard pins */
 #define GPIO_KB_INPUT (GPIO_INPUT | GPIO_PULL_UP)
 ALTERNATE(PIN_MASK(3, 0x03), 0, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT) /* KSI_00-01 */
