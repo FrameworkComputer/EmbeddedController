@@ -78,6 +78,7 @@ GPIO(EC_INT_L,               PIN(E, 6), GPIO_ODR_HIGH) /* EC_AP_INT_ODL */
 /* Misc Signals */
 GPIO(EC_BATT_PRES_ODL,       PIN(C, 0), GPIO_INPUT)
 GPIO(BC12_DET_EN,            PIN(J, 5), GPIO_OUT_LOW) /* EN_USB_C0_BC12_DET */
+GPIO(EN_EC_ID_ODL,           PIN(H, 5), GPIO_ODR_LOW)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C_A_SCL,              PIN(B, 3), GPIO_INPUT) /* I2C_CHG_BATT_SCL */
@@ -156,7 +157,6 @@ UNIMPLEMENTED_GPIO(EC_USB_C0_CC2,          PIN(F, 5))
 UNIMPLEMENTED_GPIO(EC_USB_C1_CC1,          PIN(H, 1))
 UNIMPLEMENTED_GPIO(EC_USB_C1_CC2,          PIN(H, 2))
 UNIMPLEMENTED_GPIO(USB_C0_FRS_EN,          PIN(H, 3))
-UNIMPLEMENTED_GPIO(EN_EC_ID_DOL,           PIN(H, 5))
 UNIMPLEMENTED_GPIO(PG_MT6315_GPU_ODL,      PIN(H, 6))
 UNIMPLEMENTED_GPIO(EC_GPG2,                PIN(G, 2))
 UNIMPLEMENTED_GPIO(EC_SPI_FLASH_MOSI,      PIN(G, 4))
