@@ -101,14 +101,16 @@ GPIO(EC_PCH_INT_ODL,           PIN(B, 0), GPIO_ODR_HIGH)
  * so it's safe to define GPIOs compatible with both designs.
  * TODO (b/149858568): remove board ID=0 support.
  */
-GPIO(USB_C1_RT_RST_ODL_BOARDID_0,	PIN(3, 2), GPIO_ODR_LOW) /* USB_C1 Reset on boards without board ID */
+GPIO(USB_C0_RT_RST_ODL,			PIN(4, 1), GPIO_ODR_LOW)
 GPIO(USB_C1_RT_RST_ODL,			PIN(8, 3), GPIO_ODR_LOW) /* USB_C1 Reset on boards board ID >=1 */
 GPIO(USB_C0_OC_ODL,			PIN(B, 1), GPIO_ODR_HIGH)
 GPIO(USB_C1_OC_ODL,			PIN(5, 0), GPIO_ODR_HIGH)
 
 /* Don't have a load switch for retimer */
+UNIMPLEMENTED(USB_C0_LS_EN)
 UNIMPLEMENTED(USB_C1_LS_EN)
 /* Retimer Force Power enable is connected to AP */
+UNIMPLEMENTED(USB_C0_RT_FORCE_PWR)
 UNIMPLEMENTED(USB_C1_RT_FORCE_PWR)
 
 /* Misc Signals */
@@ -131,6 +133,8 @@ GPIO(EC_I2C2_USB_C1_SCL,       PIN(9, 2), GPIO_INPUT)
 GPIO(EC_I2C2_USB_C1_SDA,       PIN(9, 1), GPIO_INPUT)
 GPIO(EC_I2C3_USB_1_MIX_SCL,    PIN(D, 1), GPIO_INPUT)
 GPIO(EC_I2C3_USB_1_MIX_SDA,    PIN(D, 0), GPIO_INPUT)
+GPIO(EC_I2C4_USB_1_MIX_SCL,    PIN(F, 3), GPIO_INPUT)
+GPIO(EC_I2C4_USB_1_MIX_SDA,    PIN(F, 2), GPIO_INPUT)
 GPIO(EC_I2C5_POWER_SCL,        PIN(3, 3), GPIO_INPUT)
 GPIO(EC_I2C5_POWER_SDA,        PIN(3, 6), GPIO_INPUT)
 GPIO(EC_I2C7_EEPROM_SCL,       PIN(B, 3), GPIO_INPUT)
