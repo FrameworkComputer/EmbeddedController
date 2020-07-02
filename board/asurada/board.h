@@ -191,6 +191,10 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
+/* USB-A */
+#define CONFIG_USB_PORT_POWER_DUMB
+#define USB_PORT_COUNT 1
+
 /* GPIO name remapping */
 #define GPIO_EN_HDMI_PWR        GPIO_EC_X_GPIO1
 #define GPIO_USB_C1_FRS_EN      GPIO_EC_X_GPIO1

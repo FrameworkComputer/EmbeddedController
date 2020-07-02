@@ -370,6 +370,12 @@ static int board_ps8743_mux_set(const struct usb_mux *me,
 	return ps8743_write(me, PS8743_REG_MODE, reg);
 }
 
+/* USB-A */
+const int usb_port_enable[] = {
+	GPIO_EN_PP5000_USB_A0_VBUS,
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
+
 /* USB Mux */
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
