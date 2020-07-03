@@ -2840,6 +2840,7 @@ static void tc_low_power_mode_run(const int port)
 	if (TC_CHK_FLAG(port, TC_FLAGS_CHECK_CONNECTION)) {
 		uint64_t now = get_time().val;
 
+		tc_start_event_loop(port);
 		if (tc[port].low_power_exit_time == 0) {
 			tc[port].low_power_exit_time = now
 				+ PD_LPM_EXIT_DEBOUNCE_US;
