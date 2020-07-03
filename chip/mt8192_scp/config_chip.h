@@ -41,6 +41,8 @@
 #define TASK_STACK_SIZE 488
 #define LARGER_TASK_STACK_SIZE 640
 #define VENTI_TASK_STACK_SIZE 768
+#define ULTRA_TASK_STACK_SIZE 1056
+#define TRENTA_TASK_STACK_SIZE 1184
 
 /* TODO: need to confirm, placeholder */
 #define GPIO_PIN(num) ((num) / 32), ((num) % 32)

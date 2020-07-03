@@ -104,6 +104,8 @@
 
 /* Even bigger */
 #define VENTI_TASK_STACK_SIZE 768
+#define ULTRA_TASK_STACK_SIZE 1056
+#define TRENTA_TASK_STACK_SIZE 1184
 
 /*
  * Console stack size. For test builds, the console is used to interact with
