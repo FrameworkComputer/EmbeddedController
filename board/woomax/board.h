@@ -72,7 +72,7 @@ enum adc_channel {
 };
 
 enum battery_type {
-	BATTERY_AP18F4M,
+	BATTERY_C536,
 	BATTERY_TYPE_COUNT,
 };
 
