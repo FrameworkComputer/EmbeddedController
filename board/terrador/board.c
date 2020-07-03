@@ -214,6 +214,18 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
+static void kb_backlight_enable(void)
+{
+	gpio_set_level(GPIO_EC_KB_BL_EN, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, kb_backlight_enable, HOOK_PRIO_DEFAULT);
+
+static void kb_backlight_disable(void)
+{
+	gpio_set_level(GPIO_EC_KB_BL_EN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kb_backlight_disable, HOOK_PRIO_DEFAULT);
+
 void board_reset_pd_mcu(void)
 {
 	/* TODO(b/159025015): Terrador: check USB PD reset operation */
