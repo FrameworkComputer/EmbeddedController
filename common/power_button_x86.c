@@ -359,7 +359,7 @@ static void state_machine(uint64_t tnow)
 		 * Power the system on if possible.  Gating due to insufficient
 		 * battery is handled inside set_pwrbtn_to_pch().
 		 */
-		chipset_exit_hard_off();
+		/* chipset_exit_hard_off(); TODO FRAMEWORK REVIEW*/
 #ifdef CONFIG_DELAY_DSW_PWROK_TO_PWRBTN
 		/* Check if power button is ready. If not, we'll come back. */
 		if (get_time().val - get_time_dsw_pwrok() <
@@ -370,7 +370,7 @@ static void state_machine(uint64_t tnow)
 		}
 #endif
 
-		set_pwrbtn_to_pch(0, 1);
+		/* set_pwrbtn_to_pch(0, 1); TODO FRAMEWORK REVIEW */ 
 		tnext_state = get_time().val + PWRBTN_INITIAL_US;
 		pwrbtn_state = PWRBTN_STATE_BOOT_KB_RESET;
 		break;

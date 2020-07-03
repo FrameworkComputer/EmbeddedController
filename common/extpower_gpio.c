@@ -33,10 +33,12 @@ static void extpower_deferred(void)
 	hook_notify(HOOK_AC_CHANGE);
 
 	/* Forward notification to host */
+	/* TODO FRAMEWORK REVIEW
 	if (extpower_presence)
 		host_set_single_event(EC_HOST_EVENT_AC_CONNECTED);
 	else
 		host_set_single_event(EC_HOST_EVENT_AC_DISCONNECTED);
+	*/
 }
 DECLARE_DEFERRED(extpower_deferred);
 
