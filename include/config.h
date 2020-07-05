@@ -2259,6 +2259,14 @@
 #undef CONFIG_I2C_BITBANG
 
 /*
+ * If defined, reduce I2C traffic from update functions (i2c_update8/16
+ * and i2c_field_update8/16) by skipping the write if the new value is
+ * unchanged from the old value. This assumes no side effects from writing an
+ * unchanged value back out.
+ */
+#undef CONFIG_I2C_UPDATE_IF_CHANGED
+
+/*
  * Packet error checking support for SMBus.
  *
  * If defined, adds error checking support for i2c_readN, i2c_writeN,
