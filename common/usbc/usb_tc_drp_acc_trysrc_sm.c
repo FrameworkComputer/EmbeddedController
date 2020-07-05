@@ -50,6 +50,25 @@
 #define CPRINTS_L2(format, args...) CPRINTS_LX(2, format, ## args)
 #define CPRINTS_L3(format, args...) CPRINTS_LX(3, format, ## args)
 
+/*
+ * Define DEBUG_PRINT_FLAG_AND_EVENT_NAMES to print flag names when set and
+ * cleared, and event names when handled by tc_event_check().
+ */
+#undef DEBUG_PRINT_FLAG_AND_EVENT_NAMES
+
+#ifdef DEBUG_PRINT_FLAG_AND_EVENT_NAMES
+	void print_flag(int set_or_clear, int flag);
+	#define TC_SET_FLAG(port, flag) do { \
+		print_flag(1, flag); atomic_or(&tc[port].flags, (flag)); \
+	} while (0)
+	#define TC_CLR_FLAG(port, flag) do { \
+		print_flag(0, flag); atomic_clear(&tc[port].flags, (flag)); \
+	} while (0)
+#else
+	#define TC_SET_FLAG(port, flag) atomic_or(&tc[port].flags, (flag))
+	#define TC_CLR_FLAG(port, flag) atomic_clear(&tc[port].flags, (flag))
+#endif
+#define TC_CHK_FLAG(port, flag) (tc[port].flags & (flag))
 
 /* Type-C Layer Flags */
 /* Flag to note we are sourcing VCONN */
@@ -106,8 +125,8 @@
 /*
  * Clear all flags except TC_FLAGS_LPM_ENGAGED and TC_FLAGS_SUSPEND.
  */
-#define CLR_ALL_BUT_LPM_FLAGS(port) (TC_CLR_FLAG(port, \
-	~(TC_FLAGS_LPM_ENGAGED | TC_FLAGS_SUSPEND)))
+#define CLR_ALL_BUT_LPM_FLAGS(port) TC_CLR_FLAG(port, \
+	~(TC_FLAGS_LPM_ENGAGED | TC_FLAGS_SUSPEND))
 
 /* 100 ms is enough time for any TCPC transaction to complete. */
 #define PD_LPM_DEBOUNCE_US (100 * MSEC)
@@ -240,6 +259,85 @@ static const enum debug_level tc_debug_level = CONFIG_USB_PD_DEBUG_LEVEL;
 #else
 static enum debug_level tc_debug_level = DEBUG_LEVEL_1;
 #endif
+
+#ifdef DEBUG_PRINT_FLAG_AND_EVENT_NAMES
+struct bit_name {
+	int		value;
+	const char	*name;
+};
+
+static struct bit_name flag_bit_names[] = {
+	{ TC_FLAGS_VCONN_ON, "VCONN_ON" },
+	{ TC_FLAGS_TS_DTS_PARTNER, "TS_DTS_PARTNER" },
+	{ TC_FLAGS_VBUS_NEVER_LOW, "VBUS_NEVER_LOW" },
+	{ TC_FLAGS_LPM_TRANSITION, "LPM_TRANSITION" },
+	{ TC_FLAGS_LPM_ENGAGED, "LPM_ENGAGED" },
+	{ TC_FLAGS_CTVPD_DETECTED, "CTVPD_DETECTED" },
+	{ TC_FLAGS_REQUEST_VC_SWAP_ON, "REQUEST_VC_SWAP_ON" },
+	{ TC_FLAGS_REQUEST_VC_SWAP_OFF, "REQUEST_VC_SWAP_OFF" },
+	{ TC_FLAGS_REJECT_VCONN_SWAP, "REJECT_VCONN_SWAP" },
+	{ TC_FLAGS_REQUEST_PR_SWAP, "REQUEST_PR_SWAP" },
+	{ TC_FLAGS_REQUEST_DR_SWAP, "REQUEST_DR_SWAP" },
+	{ TC_FLAGS_POWER_OFF_SNK, "POWER_OFF_SNK" },
+	{ TC_FLAGS_PARTNER_UNCONSTRAINED, "PARTNER_UNCONSTRAINED" },
+	{ TC_FLAGS_PARTNER_DR_DATA, "PARTNER_DR_DATA" },
+	{ TC_FLAGS_PARTNER_DR_POWER, "PARTNER_DR_POWER" },
+	{ TC_FLAGS_PARTNER_PD_CAPABLE, "PARTNER_PD_CAPABLE" },
+	{ TC_FLAGS_HARD_RESET_REQUESTED, "HARD_RESET_REQUESTED" },
+	{ TC_FLAGS_PARTNER_USB_COMM, "PARTNER_USB_COMM" },
+	{ TC_FLAGS_PR_SWAP_IN_PROGRESS, "PR_SWAP_IN_PROGRESS" },
+	{ TC_FLAGS_DISC_IDENT_IN_PROGRESS, "DISC_IDENT_IN_PROGRESS" },
+	{ TC_FLAGS_CHECK_CONNECTION, "CHECK_CONNECTION" },
+	{ TC_FLAGS_SUSPEND, "SUSPEND" },
+	{ TC_FLAGS_TC_WARM_ATTACHED_SNK, "TC_WARM_ATTACHED_SNK" },
+};
+
+static struct bit_name event_bit_names[] = {
+	{ TASK_EVENT_SYSJUMP_READY, "SYSJUMP_READY" },
+	{ TASK_EVENT_IPC_READY, "IPC_READY" },
+	{ TASK_EVENT_PD_AWAKE, "PD_AWAKE" },
+	{ TASK_EVENT_PECI_DONE, "PECI_DONE" },
+	{ TASK_EVENT_I2C_IDLE, "I2C_IDLE" },
+	{ TASK_EVENT_PS2_DONE, "PS2_DONE" },
+	{ TASK_EVENT_DMA_TC, "DMA_TC" },
+	{ TASK_EVENT_ADC_DONE, "ADC_DONE" },
+	{ TASK_EVENT_RESET_DONE, "RESET_DONE" },
+	{ TASK_EVENT_WAKE, "WAKE" },
+	{ TASK_EVENT_MUTEX, "MUTEX" },
+	{ TASK_EVENT_TIMER, "TIMER" },
+	{ PD_EVENT_TX, "TX" },
+	{ PD_EVENT_CC, "CC" },
+	{ PD_EVENT_TCPC_RESET, "TCPC_RESET" },
+	{ PD_EVENT_UPDATE_DUAL_ROLE, "UPDATE_DUAL_ROLE" },
+	{ PD_EVENT_DEVICE_ACCESSED, "DEVICE_ACCESSED" },
+	{ PD_EVENT_POWER_STATE_CHANGE, "POWER_STATE_CHANGE" },
+	{ PD_EVENT_SEND_HARD_RESET, "SEND_HARD_RESET" },
+	{ PD_EVENT_SM, "SM" },
+	{ PD_EVENT_SYSJUMP, "SYSJUMP" },
+};
+
+static void print_bits(const char *desc, int value,
+		       struct bit_name *names, int names_size)
+{
+	int i;
+
+	CPRINTF("%s 0x%x : ", desc, value);
+	for (i = 0; i < names_size; i++) {
+		if (value & names[i].value)
+			CPRINTF("%s | ", names[i].name);
+		value &= ~names[i].value;
+	}
+	if (value != 0)
+		CPRINTF("0x%x", value);
+	CPRINTF("\n");
+}
+
+void print_flag(int set_or_clear, int flag)
+{
+	print_bits(set_or_clear ? "Set" : "Clr", flag, flag_bit_names,
+		   ARRAY_SIZE(flag_bit_names));
+}
+#endif /* DEBUG_PRINT_FLAG_AND_EVENT_NAMES */
 
 /* Generate a compiler error if invalid states are referenced */
 #ifndef CONFIG_USB_PD_TRY_SRC
@@ -1340,6 +1438,11 @@ static void handle_device_access(int port)
 
 void tc_event_check(int port, int evt)
 {
+#ifdef DEBUG_PRINT_FLAG_AND_EVENT_NAMES
+	if (evt != TASK_EVENT_TIMER)
+		print_bits("Event", evt, event_bit_names,
+			   ARRAY_SIZE(event_bit_names));
+#endif
 
 	if (evt & PD_EXIT_LOW_POWER_EVENT_MASK)
 		TC_SET_FLAG(port, TC_FLAGS_CHECK_CONNECTION);
