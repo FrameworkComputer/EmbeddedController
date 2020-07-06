@@ -17,6 +17,22 @@
 
 struct mock_tc_port_t mock_tc_port[CONFIG_USB_PD_PORT_MAX_COUNT];
 
+void mock_tc_port_reset(void)
+{
+	int port;
+
+	for (port = 0 ; port < CONFIG_USB_PD_PORT_MAX_COUNT ; ++port) {
+		mock_tc_port[port].rev = PD_REV30;
+		mock_tc_port[port].pd_enable = 0;
+		mock_tc_port[port].power_role = PD_ROLE_SINK;
+		mock_tc_port[port].data_role = PD_ROLE_DISCONNECTED;
+		mock_tc_port[port].msg_tx_id = 0;
+		mock_tc_port[port].msg_rx_id = 0;
+		mock_tc_port[port].sop = TCPC_TX_INVALID;
+		mock_tc_port[port].lcl_rp = TYPEC_RP_RESERVED;
+	}
+}
+
 enum pd_cable_plug tc_get_cable_plug(int port)
 {
 	return PD_PLUG_FROM_DFP_UFP;

@@ -24,5 +24,6 @@ struct mock_pe_port_t {
 
 extern struct mock_pe_port_t mock_pe_port[CONFIG_USB_PD_PORT_MAX_COUNT];
 
+void mock_pe_port_reset(void);
 
 #endif /* __MOCK_USB_PE_SM_MOCK_H */

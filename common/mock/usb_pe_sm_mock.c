@@ -19,6 +19,28 @@
 struct mock_pe_port_t mock_pe_port[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 
+/**
+ * Resets all mock PE ports to initial values
+ */
+void mock_pe_port_reset(void)
+{
+	int port;
+
+	for (port = 0 ; port < CONFIG_USB_PD_PORT_MAX_COUNT ; ++port) {
+		mock_pe_port[port].mock_pe_error = -1;
+		/* These mock variable only get set to 1 by various functions,
+		 * so initialize them to 0. Tests can verify they are still 0
+		 * if that's part of the pass criteria.
+		 */
+		mock_pe_port[port].mock_pe_message_received = 0;
+		mock_pe_port[port].mock_pe_message_sent = 0;
+		mock_pe_port[port].mock_pe_message_discarded = 0;
+		mock_pe_port[port].mock_got_soft_reset = 0;
+		mock_pe_port[port].mock_pe_got_hard_reset = 0;
+		mock_pe_port[port].mock_pe_hard_reset_sent = 0;
+	}
+}
+
 void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 {
 	mock_pe_port[port].mock_pe_error = e;
