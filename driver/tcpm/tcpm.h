@@ -284,6 +284,13 @@ static inline int tcpm_auto_toggle_supported(int port)
 }
 #endif
 
+static inline int tcpm_debug_accessory(int port, bool enable)
+{
+	if (tcpc_config[port].drv->debug_accessory)
+		return tcpc_config[port].drv->debug_accessory(port, enable);
+	return EC_SUCCESS;
+}
+
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 static inline int tcpm_enter_low_power_mode(int port)
 {

@@ -396,6 +396,13 @@ void tcpci_tcpc_enable_auto_discharge_disconnect(int port, int enable)
 		     (enable) ? MASK_SET : MASK_CLR);
 }
 
+int tcpci_tcpc_debug_accessory(int port, bool enable)
+{
+	return tcpc_update8(port, TCPC_REG_CONFIG_STD_OUTPUT,
+			    TCPC_REG_CONFIG_STD_OUTPUT_DBG_ACC_CONN_N,
+			    enable ? MASK_CLR : MASK_SET);
+}
+
 int tcpci_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 	enum tcpc_cc_voltage_status *cc2)
 {

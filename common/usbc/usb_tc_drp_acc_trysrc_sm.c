@@ -493,6 +493,7 @@ static void tc_detached(int port)
 	TC_CLR_FLAG(port, TC_FLAGS_TS_DTS_PARTNER);
 	hook_notify(HOOK_USB_PD_DISCONNECT);
 	tc_pd_connection(port, 0);
+	tcpm_debug_accessory(port, 0);
 	pd_update_saved_port_flags(port, PD_BBRMFLG_DBGACC_ROLE, 0);
 }
 
@@ -2080,6 +2081,7 @@ static void tc_attached_snk_entry(const int port)
 		tc_enable_pd(port, 1);
 
 	if (TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER)) {
+		tcpm_debug_accessory(port, 1);
 		/* Save our current connection is a DEBUG ACCESSORY */
 		pd_update_saved_port_flags(port, PD_BBRMFLG_DBGACC_ROLE, 1);
 	}
@@ -2572,6 +2574,7 @@ static void tc_attached_src_entry(const int port)
 	}
 
 	if (TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER)) {
+		tcpm_debug_accessory(port, 1);
 		/* Save our current connection is a DEBUG ACCESSORY */
 		pd_update_saved_port_flags(port, PD_BBRMFLG_DBGACC_ROLE, 1);
 	}

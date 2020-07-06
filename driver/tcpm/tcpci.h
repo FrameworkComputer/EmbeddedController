@@ -50,6 +50,7 @@
 #define TCPC_REG_ALERT_EXTENDED_MASK 0x17
 
 #define TCPC_REG_CONFIG_STD_OUTPUT 0x18
+#define TCPC_REG_CONFIG_STD_OUTPUT_DBG_ACC_CONN_N    BIT(6)
 #define TCPC_REG_CONFIG_STD_OUTPUT_MUX_MASK          (3 << 2)
 #define TCPC_REG_CONFIG_STD_OUTPUT_MUX_NONE          (0 << 2)
 #define TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB           BIT(2)
@@ -237,6 +238,7 @@ int tcpci_enter_low_power_mode(int port);
 void tcpci_tcpc_discharge_vbus(int port, int enable);
 #endif
 void tcpci_tcpc_enable_auto_discharge_disconnect(int port, int enable);
+int tcpci_tcpc_debug_accessory(int port, bool enable);
 
 int tcpci_tcpm_mux_init(const struct usb_mux *me);
 int tcpci_tcpm_mux_set(const struct usb_mux *me, mux_state_t mux_state);

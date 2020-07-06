@@ -328,6 +328,14 @@ struct tcpm_drv {
 	void (*tcpc_enable_auto_discharge_disconnect)(int port,
 						      int enable);
 
+	/**
+	 * Manual control of TCPC DebugAccessory enable
+	 *
+	 * @param port Type-C port number
+	 * @param enable Debug Accessory enable or disable
+	 */
+	int (*debug_accessory)(int port, bool enable);
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	/**
 	 * Enable TCPC auto DRP toggling.
