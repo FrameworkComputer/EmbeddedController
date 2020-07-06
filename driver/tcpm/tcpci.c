@@ -1301,6 +1301,7 @@ int tcpci_tcpm_init(int port)
 	int error;
 	int power_status;
 	int tries = TCPM_INIT_TRIES;
+	int tcpc_ctrl;
 
 	if (port >= board_get_usb_pd_port_count())
 		return EC_ERROR_INVAL;
@@ -1320,17 +1321,23 @@ int tcpci_tcpm_init(int port)
 	}
 
 	/*
+	 * Set TCPC_CONTROL.DebugAccessoryControl = 1 to control by TCPM,
+	 * not TCPC.
+	 */
+	tcpc_ctrl = TCPC_REG_TCPC_CTRL_DEBUG_ACC_CONTROL;
+
+	/*
 	 * For TCPCI Rev 2.0, unless the TCPM sets
 	 * TCPC_CONTROL.EnableLooking4ConnectionAlert bit, TCPC by default masks
 	 * Alert assertion when CC_STATUS.Looking4Connection changes state.
 	 */
 	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) {
-		error = tcpc_update8(port, TCPC_REG_TCPC_CTRL,
-				TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT,
-				MASK_SET);
-		if (error)
-			CPRINTS("C%d: Failed to init TCPC_CTRL!", port);
+		tcpc_ctrl |= TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT;
 	}
+
+	error = tcpc_update8(port, TCPC_REG_TCPC_CTRL, tcpc_ctrl, MASK_SET);
+	if (error)
+		CPRINTS("C%d: Failed to init TCPC_CTRL!", port);
 
 	/*
 	 * Handle and clear any alerts, since we might be coming out of low

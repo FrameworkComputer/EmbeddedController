@@ -63,7 +63,8 @@
  * In TCPCI Rev 2.0, this bit must be set this to generate CC status alerts when
  * a connection is found.
  */
-#define TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT  (BIT(6))
+#define TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT  BIT(6)
+#define TCPC_REG_TCPC_CTRL_DEBUG_ACC_CONTROL         BIT(4)
 
 #define TCPC_REG_ROLE_CTRL         0x1a
 #define TCPC_REG_ROLE_CTRL_DRP_MASK                    BIT(6)
