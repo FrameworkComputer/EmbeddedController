@@ -248,6 +248,14 @@ struct tcpc_gpio_config_t {
 };
 extern const struct tcpc_gpio_config_t tcpc_gpios[];
 
+struct tcpc_aic_gpio_config_t {
+	/* TCPC interrupt */
+	enum gpio_signal tcpc_alert;
+	/* PPC interrupt */
+	enum gpio_signal ppc_alert;
+};
+extern const struct tcpc_aic_gpio_config_t tcpc_aic_gpios[];
+
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
 void board_charging_enable(int port, int enable);

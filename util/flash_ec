@@ -49,14 +49,15 @@ die() {
 # not aware of its 'ec_chip'. If servod becomes able to answer 'ec_chip'
 # for the board, remove it from BOARDS_XXXX array below.
 BOARDS_IT83XX=(
+	adlrvpp_ite
 	glkrvp_ite
 	it83xx_evb
+	jslrvp_ite
 	reef_it8320
 	tglrvpu_ite
 	tglrvpu_ite_tcpmv1
 	tglrvpy_ite
 	tglrvpy_ite_tcpmv1
-	jslrvp_ite
 )
 
 BOARDS_IT83XX_SPI_PROGRAMMING=(

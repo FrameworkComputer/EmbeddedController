@@ -15,6 +15,8 @@ ifneq ($(CONFIG_USB_POWER_DELIVERY),)
 baseboard-$(CONFIG_USB_POWER_DELIVERY)+=chg_usb_pd.o
 baseboard-$(CONFIG_INTEL_RVP_MECC_VERSION_0_9)+=chg_usb_pd_mecc_0_9.o
 baseboard-$(CONFIG_INTEL_RVP_MECC_VERSION_0_9)+=usb_pd_policy_mecc_0_9.o
+baseboard-$(CONFIG_INTEL_RVP_MECC_VERSION_1_0)+=chg_usb_pd_mecc_1_0.o
+baseboard-$(CONFIG_INTEL_RVP_MECC_VERSION_1_0)+=usb_pd_policy_mecc_1_0.o
 endif
 
 #EC specific files
