@@ -2065,11 +2065,12 @@ static void tc_attached_snk_entry(const int port)
 				pd_is_port_partner_dualrole(port) ?
 				CAP_DUALROLE : CAP_DEDICATED);
 		}
-		/* Apply Rd */
-		typec_update_cc(port);
 
 		/* Attached.SNK - enable AutoDischargeDisconnect */
 		tcpm_enable_auto_discharge_disconnect(port, 1);
+
+		/* Apply Rd */
+		typec_update_cc(port);
 	}
 
 	tc[port].cc_debounce = 0;
@@ -2507,11 +2508,11 @@ static void tc_attached_src_entry(const int port)
 				USB_SWITCH_DISCONNECT, tc[port].polarity);
 		}
 
-		/* Apply Rp */
-		typec_update_cc(port);
-
 		/* Attached.SRC - enable AutoDischargeDisconnect */
 		tcpm_enable_auto_discharge_disconnect(port, 1);
+
+		/* Apply Rp */
+		typec_update_cc(port);
 
 		tc_enable_pd(port, 0);
 		tc[port].timeout = get_time().val +
@@ -2550,11 +2551,11 @@ static void tc_attached_src_entry(const int port)
 			USB_SWITCH_DISCONNECT, tc[port].polarity);
 	}
 
-	/* Apply Rp */
-	typec_update_cc(port);
-
 	/* Attached.SRC - enable AutoDischargeDisconnect */
 	tcpm_enable_auto_discharge_disconnect(port, 1);
+
+	/* Apply Rp */
+	typec_update_cc(port);
 
 #endif /* CONFIG_USB_PE_SM */
 
