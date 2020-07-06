@@ -252,8 +252,7 @@ const struct tcpc_config_t tcpc_config[] = {
 			.addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
 		},
 		.drv = &nct38xx_tcpm_drv,
-		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
-			 TCPC_FLAGS_TCPCI_BAD_VBUS_SOURCING,
+		.flags = TCPC_FLAGS_TCPCI_REV2_0,
 	},
 	[USBC_PORT_C1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -262,8 +261,7 @@ const struct tcpc_config_t tcpc_config[] = {
 			.addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
 		},
 		.drv = &nct38xx_tcpm_drv,
-		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
-			 TCPC_FLAGS_TCPCI_BAD_VBUS_SOURCING,
+		.flags = TCPC_FLAGS_TCPCI_REV2_0,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);

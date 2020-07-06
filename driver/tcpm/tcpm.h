@@ -245,16 +245,6 @@ static inline int tcpm_set_src_ctrl(int port, int enable)
 	else
 		return EC_ERROR_UNIMPLEMENTED;
 }
-
-static inline int tcpm_disable_bad_vbus_sourcing(int port)
-{
-	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_BAD_VBUS_SOURCING)
-		return tcpm_set_src_ctrl(port, 0);
-	else
-		return EC_ERROR_UNIMPLEMENTED;
-}
-#else
-int tcpm_disable_bad_vbus_sourcing(int port);
 #endif
 
 static inline void tcpc_alert(int port)
