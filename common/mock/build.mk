@@ -11,6 +11,7 @@ mock-$(HAS_MOCK_MKBP_EVENTS) += mkbp_events_mock.o
 mock-$(HAS_MOCK_ROLLBACK) += rollback_mock.o
 mock-$(HAS_MOCK_TCPC) += tcpc_mock.o
 mock-$(HAS_MOCK_TCPM) += tcpm_mock.o
+mock-$(HAS_MOCK_TCPCI_I2C) += tcpci_i2c_mock.o
 mock-$(HAS_MOCK_TIMER) += timer_mock.o
 mock-$(HAS_MOCK_USB_MUX) += usb_mux_mock.o
 mock-$(HAS_MOCK_USB_PD) += usb_pd_mock.o

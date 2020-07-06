@@ -89,7 +89,7 @@ void schedule_deferred_pd_interrupt(const int port)
  */
 void pd_interrupt_handler_task(void *p)
 {
-	const int port = (int) p;
+	const int port = (int) ((intptr_t) p);
 	const int port_mask = (PD_STATUS_TCPC_ALERT_0 << port);
 	struct {
 		int count;

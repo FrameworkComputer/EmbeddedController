@@ -87,6 +87,7 @@ test-list-host += usb_typec_vpd
 test-list-host += usb_typec_ctvpd
 test-list-host += usb_typec_drp_acc_trysrc
 test-list-host += usb_prl_old
+test-list-host += usb_tcpmv2_tcpci
 test-list-host += usb_prl
 test-list-host += usb_pe_drp
 test-list-host += utils
@@ -198,6 +199,7 @@ usb_prl_old-y=usb_prl_old.o usb_sm_checks.o fake_usbc.o
 usb_prl-y=usb_prl.o usb_sm_checks.o
 usb_pe_drp-y=usb_pe_drp.o usb_sm_checks.o \
 	fake_battery.o fake_prl.o fake_usbc.o
+usb_tcpmv2_tcpci-y=usb_tcpmv2_tcpci.o vpd_api.o usb_sm_checks.o
 utils-y=utils.o
 utils_str-y=utils_str.o
 vboot-y=vboot.o
