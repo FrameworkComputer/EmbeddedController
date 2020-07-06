@@ -240,6 +240,7 @@ __override void board_power_5v_enable(int enable)
 	 * sets it through the charger GPIO.
 	 */
 	gpio_set_level(GPIO_EN_PP5000, !!enable);
+	gpio_set_level(GPIO_EN_USB_A0_VBUS, !!enable);
 	if (sm5803_set_gpio0_level(1, !!enable))
 		CPRINTUSB("Failed to %sable sub rails!", enable ? "en" : "dis");
 }
