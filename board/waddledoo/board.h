@@ -17,6 +17,9 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
+/* Battery */
+#define CONFIG_BATTERY_FUEL_GAUGE
+
 /* Charger */
 #define CONFIG_CHARGER_RAA489000
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
@@ -163,6 +166,12 @@ enum temp_sensor_id {
 	TEMP_SENSOR_1,
 	TEMP_SENSOR_2,
 	TEMP_SENSOR_COUNT
+};
+
+/* List of possible batteries */
+enum battery_type {
+	BATTERY_POWER_TECH,
+	BATTERY_TYPE_COUNT,
 };
 
 int board_is_sourcing_vbus(int port);
