@@ -9,7 +9,7 @@
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
-#include "driver/accel_lis2dh.h"
+#include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
@@ -233,7 +233,7 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Sensor Data */
-static struct stprivate_data g_lis2dh_data;
+static struct stprivate_data g_lis2dwl_data;
 static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
 /* Drivers */
@@ -241,22 +241,21 @@ struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 		.name = "Lid Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_LIS2DE,
+		.chip = MOTIONSENSE_CHIP_LIS2DWL,
 		.type = MOTIONSENSE_TYPE_ACCEL,
 		.location = MOTIONSENSE_LOC_LID,
-		.drv = &lis2dh_drv,
+		.drv = &lis2dw12_drv,
 		.mutex = &g_lid_mutex,
-		.drv_data = &g_lis2dh_data,
+		.drv_data = &g_lis2dwl_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = LIS2DH_ADDR1_FLAGS,
+		.i2c_spi_addr_flags = LIS2DWL_ADDR1_FLAGS,
 		.rot_standard_ref = NULL,
 		.default_range = 2, /* g */
-		/* We only use 2g because its resolution is only 8-bits */
-		.min_frequency = LIS2DH_ODR_MIN_VAL,
-		.max_frequency = LIS2DH_ODR_MAX_VAL,
+		.min_frequency = LIS2DW12_ODR_MIN_VAL,
+		.max_frequency = LIS2DW12_ODR_MAX_VAL,
 		.config = {
 			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 10000 | ROUND_UP_FLAG,
+				.odr = 12500 | ROUND_UP_FLAG,
 			},
 			[SENSOR_CONFIG_EC_S3] = {
 				.odr = 10000 | ROUND_UP_FLAG,
