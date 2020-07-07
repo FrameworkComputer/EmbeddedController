@@ -66,8 +66,10 @@ enum pd_rx_errors {
 #define PD_EVENT_SM			TASK_EVENT_CUSTOM_BIT(10)
 /* Prepare for sysjump */
 #define PD_EVENT_SYSJUMP		TASK_EVENT_CUSTOM_BIT(11)
+/* Receive a Hard Reset. */
+#define PD_EVENT_RX_HARD_RESET		TASK_EVENT_CUSTOM_BIT(12)
 /* First free event on PD task */
-#define PD_EVENT_FIRST_FREE_BIT		12
+#define PD_EVENT_FIRST_FREE_BIT		13
 
 /* Ensure TCPC is out of low power mode before handling these events. */
 #define PD_EXIT_LOW_POWER_EVENT_MASK \

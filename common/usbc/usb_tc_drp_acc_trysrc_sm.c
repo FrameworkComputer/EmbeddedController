@@ -1411,6 +1411,9 @@ void tc_event_check(int port, int evt)
 	if (evt & PD_EVENT_TCPC_RESET)
 		reset_device_and_notify(port);
 
+	if (evt & PD_EVENT_RX_HARD_RESET)
+		pd_execute_hard_reset(port);
+
 #ifdef CONFIG_POWER_COMMON
 	if (IS_ENABLED(CONFIG_POWER_COMMON)) {
 		if (evt & PD_EVENT_POWER_STATE_CHANGE)
