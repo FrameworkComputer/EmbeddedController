@@ -486,6 +486,8 @@ static struct policy_engine {
 	uint32_t vdm_data[VDO_HDR_SIZE + VDO_MAX_SIZE];
 	uint8_t vdm_ack_min_data_objects;
 	enum vdm_response_result vdm_result;
+	uint32_t vdm_rsp_hdr;
+	uint32_t vdm_rsp_body[VDO_MAX_SIZE];
 
 	/* Timers */
 
@@ -4173,7 +4175,14 @@ static enum vdm_response_result parse_vdm_response_common(int port)
 			&& ext == 0) {
 		if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_ACK &&
 				cnt >= pe[port].vdm_ack_min_data_objects) {
-			/* Handle ACKs in state-specific code. */
+			/*
+			 * Handle ACKs in state-specific code. The PRL may
+			 * overwrite rx_emsg before the child handles the ACK,
+			 * so save the response in the PE.
+			 */
+			pe[port].vdm_rsp_hdr = rx_emsg[port].header;
+			memcpy(pe[port].vdm_rsp_body, rx_emsg[port].buf,
+					cnt * sizeof(pe[port].vdm_rsp_body[0]));
 			return VDM_RESULT_ACK;
 		} else if (PD_VDO_CMDT(payload[0]) == CMDT_RSP_NAK) {
 			/* Handle NAKs in state-specific code. */
@@ -4187,6 +4196,10 @@ static enum vdm_response_result parse_vdm_response_common(int port)
 					port);
 			pe[port].discover_identity_timer =
 					get_time().val + PD_T_VDM_BUSY;
+
+			pe[port].vdm_rsp_hdr = rx_emsg[port].header;
+			memcpy(pe[port].vdm_rsp_body, rx_emsg[port].buf,
+					cnt * sizeof(pe[port].vdm_rsp_body[0]));
 			return VDM_RESULT_NO_ACTION;
 		}
 
@@ -4207,6 +4220,9 @@ static enum vdm_response_result parse_vdm_response_common(int port)
 	}
 
 	/* Unexpected Message Received. Src.Ready or Snk.Ready can handle it. */
+	pe[port].vdm_rsp_hdr = rx_emsg[port].header;
+	memcpy(pe[port].vdm_rsp_body, rx_emsg[port].buf,
+			cnt * sizeof(pe[port].vdm_rsp_body[0]));
 	PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 	return VDM_RESULT_NO_ACTION;
 }
@@ -4329,18 +4345,12 @@ static void pe_vdm_identity_request_cbl_entry(int port)
 
 static void pe_vdm_identity_request_cbl_run(int port)
 {
-	uint32_t *payload;
-	int sop;
-	uint8_t type;
-	uint8_t cnt;
-	uint8_t ext;
-
 	/* Retrieve the message information */
-	payload = (uint32_t *)rx_emsg[port].buf;
-	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-	type = PD_HEADER_TYPE(rx_emsg[port].header);
-	cnt = PD_HEADER_CNT(rx_emsg[port].header);
-	ext = PD_HEADER_EXT(rx_emsg[port].header);
+	uint32_t *payload = pe[port].vdm_rsp_body;
+	int sop = PD_HEADER_GET_SOP(pe[port].vdm_rsp_hdr);
+	uint8_t type = PD_HEADER_TYPE(pe[port].vdm_rsp_hdr);
+	uint8_t cnt = PD_HEADER_CNT(pe[port].vdm_rsp_hdr);
+	uint8_t ext = PD_HEADER_EXT(pe[port].vdm_rsp_hdr);
 
 	switch (pe[port].vdm_result) {
 	case VDM_RESULT_WAITING:
@@ -4394,7 +4404,7 @@ static void pe_vdm_identity_request_cbl_run(int port)
 		 */
 		if (prl_get_rev(port, TCPC_TX_SOP) != PD_REV20)
 			prl_set_rev(port, sop,
-				    PD_HEADER_REV(rx_emsg[port].header));
+					PD_HEADER_REV(pe[port].vdm_rsp_hdr));
 		break;
 	case VDM_RESULT_NAK:
 		/* PE_INIT_PORT_VDM_IDENTITY_NAKed embedded here */
@@ -4472,9 +4482,9 @@ static void pe_init_port_vdm_identity_request_run(int port)
 		break;
 	case VDM_RESULT_ACK: {
 		/* Retrieve the message information. */
-		uint32_t *payload = (uint32_t *)rx_emsg[port].buf;
-		int sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-		uint8_t cnt = PD_HEADER_CNT(rx_emsg[port].header);
+		uint32_t *payload = pe[port].vdm_rsp_body;
+		int sop = PD_HEADER_GET_SOP(pe[port].vdm_rsp_hdr);
+		uint8_t cnt = PD_HEADER_CNT(pe[port].vdm_rsp_hdr);
 
 		/* PE_INIT_PORT_VDM_Identity_ACKed embedded here */
 		dfp_consume_identity(port, sop, cnt, payload);
@@ -4551,9 +4561,9 @@ static void pe_init_vdm_svids_request_run(int port)
 		break;
 	case VDM_RESULT_ACK: {
 		/* Retrieve the message information. */
-		uint32_t *payload = (uint32_t *)rx_emsg[port].buf;
-		int sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-		uint8_t cnt = PD_HEADER_CNT(rx_emsg[port].header);
+		uint32_t *payload = pe[port].vdm_rsp_body;
+		int sop = PD_HEADER_GET_SOP(pe[port].vdm_rsp_hdr);
+		uint8_t cnt = PD_HEADER_CNT(pe[port].vdm_rsp_hdr);
 
 		/* PE_INIT_VDM_SVIDs_ACKed embedded here */
 		dfp_consume_svids(port, sop, cnt, payload);
@@ -4628,9 +4638,9 @@ static void pe_init_vdm_modes_request_run(int port)
 		break;
 	case VDM_RESULT_ACK: {
 		/* Retrieve the message information. */
-		uint32_t *payload = (uint32_t *)rx_emsg[port].buf;
-		int sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-		uint8_t cnt = PD_HEADER_CNT(rx_emsg[port].header);
+		uint32_t *payload = pe[port].vdm_rsp_body;
+		int sop = PD_HEADER_GET_SOP(pe[port].vdm_rsp_hdr);
+		uint8_t cnt = PD_HEADER_CNT(pe[port].vdm_rsp_hdr);
 
 		/* PE_INIT_VDM_Modes_ACKed embedded here */
 		dfp_consume_modes(port, sop, cnt, payload);
@@ -4698,9 +4708,9 @@ static void pe_vdm_request_dpm_run(int port)
 		break;
 	case VDM_RESULT_ACK: {
 		/* Retrieve the message information. */
-		uint32_t *payload = (uint32_t *)rx_emsg[port].buf;
-		int sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
-		uint8_t cnt = PD_HEADER_CNT(rx_emsg[port].header);
+		uint32_t *payload = pe[port].vdm_rsp_body;
+		int sop = PD_HEADER_GET_SOP(pe[port].vdm_rsp_hdr);
+		uint8_t cnt = PD_HEADER_CNT(pe[port].vdm_rsp_hdr);
 		uint16_t svid = PD_VDO_VID(payload[0]);
 		uint8_t vdm_cmd = PD_VDO_CMD(payload[0]);
 
