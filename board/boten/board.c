@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Waddledee board-specific configuration */
+/* Boten board-specific configuration */
 
 #include "adc_chip.h"
 #include "button.h"
@@ -148,6 +148,11 @@ void board_init(void)
 	gpio_enable_interrupt(GPIO_HDMI_HPD_SUB_ODL);
 
 	gpio_set_level(GPIO_HDMI_EN_SUB_ODL, 0);
+
+	/* Set LEDs luminance */
+	pwm_set_duty(PWM_CH_LED_RED, 70);
+	pwm_set_duty(PWM_CH_LED_GREEN, 70);
+	pwm_set_duty(PWM_CH_LED_WHITE, 70);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -260,7 +265,7 @@ const struct pwm_t pwm_channels[] = {
 		.freq_hz = 2400,
 	},
 
-	[PWM_CH_LED_BLUE] = {
+	[PWM_CH_LED_WHITE] = {
 		.channel = 3,
 		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
 		.freq_hz = 2400,
