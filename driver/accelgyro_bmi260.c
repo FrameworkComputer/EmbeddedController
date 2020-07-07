@@ -12,6 +12,7 @@
 #include "console.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accelgyro_bmi260.h"
+#include "endian.h"
 #include "hwtimer.h"
 #include "i2c.h"
 #include "math_util.h"
@@ -21,6 +22,7 @@
 #include "third_party/bmi260/accelgyro_bmi260_config_tbin.h"
 #include "timer.h"
 #include "util.h"
+#include "watchdog.h"
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
@@ -377,10 +379,170 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 }
 #endif  /* CONFIG_ACCEL_INTERRUPTS */
 
-static int init_config(const struct motion_sensor_t *s)
+/*
+ * TODO(b/160330682): Eliminate or reduce size of BMI260 initialization file.
+ * Remove this option once the BMI260 initialization file is moved to the
+ * kernel rootfs.
+ */
+#ifdef CONFIG_ACCELGYRO_BMI160_COMPRESSED_CONFIG
+
+#define INCBIN_STYLE INCBIN_STYLE_SNAKE
+#define INCBIN_PREFIX
+#include "third_party/incbin/incbin.h"
+INCBIN(bmi260_config,
+	"third_party/bmi260/accelgyro_bmi260_config_compressed.bin");
+
+#define COMPRESS_KEY		0xE9EA
+#define BMI_BUFFER_SIZE		256
+static uint8_t bmi_buffer[BMI_BUFFER_SIZE];
+static int bmi_buffer_bytes;
+static int bmi_config_offset;
+
+static int write_bmi_data(const struct motion_sensor_t *s)
 {
-	int init_status, ret;
+	uint8_t addr[2];
+	int ret;
+
+	if (bmi_buffer_bytes == 0)
+		return EC_SUCCESS;
+
+	addr[0] = (bmi_config_offset / 2) & 0xF;
+	addr[1] = (bmi_config_offset / 2) >> 4;
+	ret = bmi_write_n(s->port, s->i2c_spi_addr_flags,
+			  BMI260_INIT_ADDR_0, addr, 2);
+	if (ret)
+		return ret;
+
+	ret = bmi_write_n(s->port, s->i2c_spi_addr_flags,
+			  BMI260_INIT_DATA, bmi_buffer,
+			  bmi_buffer_bytes);
+	if (ret)
+		return ret;
+
+	bmi_config_offset += bmi_buffer_bytes;
+	bmi_buffer_bytes = 0;
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Stores 4 bytes of BMI configuration data into a static buffer. If the buffer
+ * is filled, write the buffer contents over I2C.
+ */
+static int enqueue_bmi_data(const struct motion_sensor_t *s, uint32_t *data)
+{
+	int ret;
+
+	memcpy(&bmi_buffer[bmi_buffer_bytes], data, 4);
+	bmi_buffer_bytes += 4;
+
+	if (bmi_buffer_bytes >= BMI_BUFFER_SIZE) {
+		ret = write_bmi_data(s);
+		if (ret)
+			return ret;
+	}
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Load the BMI configuration data from a compressed buffer.
+ *
+ * Compression scheme:
+ *	Repeated 32-bit words are replaced by a 16-bit key, 16-bit count, and
+ *	the 32-bit data word. All values stored big-endian.
+ *
+ *	For example, if the uncompressed file had the following data words:
+ *		0x89ABCDEF 0x89ABCDEF 0x89ABCDEF
+ *
+ *	This is represented compressed as (key 0xE9EA):
+ *		0xE9EA0003 0x89ABCDEF
+ *
+ *	Key value (0xE9EA) chosen as it wasn't found in the BMI configuration
+ *	data.
+ */
+int bmi_compressed_config_load(const struct motion_sensor_t *s)
+{
+	uint32_t *bmi_compressed_config = (uint32_t *)bmi260_config_data;
+	int length = bmi260_config_size;
+	int i;
+	int output_offset;
+	uint16_t *buf16;
+	uint16_t key;
+	uint16_t repeat_count;
+	uint32_t *data32;
+	int ret;
+
+	length /= sizeof(uint32_t);
+
+	bmi_buffer_bytes = 0;
+	bmi_config_offset = 0;
+
+	output_offset = 0;
+
+	for (i = 0; i < length; i++) {
+		buf16 = (uint16_t *)&bmi_compressed_config[i];
+		key = be16toh(*buf16);
+
+		if (key == COMPRESS_KEY) {
+			repeat_count = be16toh(*++buf16);
+
+			if (repeat_count == 0) {
+				CPRINTF("BMI260 config: invalid repeat count "
+					"found at word offset %d\n",
+					i);
+				return EC_ERROR_UNKNOWN;
+			}
+
+			/*
+			 * Advance to the next word in the buffer, which
+			 * contains the actual data to write.
+			 */
+			if (++i >= length) {
+				CPRINTF("BMI260 config: "
+					"Unexpected end of file\n");
+				return EC_ERROR_UNKNOWN;
+			}
+
+			data32 = &bmi_compressed_config[i];
+
+			while (repeat_count-- > 0) {
+				ret = enqueue_bmi_data(s, data32);
+				if (ret)
+					return ret;
+
+				output_offset += 4;
+			}
+		} else {
+			data32 = &bmi_compressed_config[i];
+			ret = enqueue_bmi_data(s, data32);
+			if (ret)
+				return ret;
+
+			output_offset += 4;
+		}
+	}
+
+	ret = write_bmi_data(s);
+
+	return ret;
+}
+
+static int bmi_config_load(const struct motion_sensor_t *s)
+{
+	return EC_ERROR_UNKNOWN;
+}
+#else /* !CONFIG_ACCELGYRO_BMI160_COMPRESSED_CONFIG */
+static int bmi_compressed_config_load(const struct motion_sensor_t *s)
+{
+	return EC_ERROR_UNKNOWN;
+}
+
+static int bmi_config_load(const struct motion_sensor_t *s)
+{
+	int ret;
 	uint16_t i;
+
 	/*
 	 * Due to i2c transaction timeout limit,
 	 * burst_write_len should not be above 2048 to prevent timeout.
@@ -389,13 +551,6 @@ static int init_config(const struct motion_sensor_t *s)
 	/* We have to write the config even bytes of data every time */
 	BUILD_ASSERT((burst_write_len & 1) == 0);
 
-	/* disable advance power save but remain fifo self wakeup*/
-	bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_PWR_CONF, 2);
-	msleep(1);
-	/* prepare for config load */
-	bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_INIT_CTRL, 0);
-
-	/* load config file to INIT_DATA */
 	for (i = 0; i < g_bmi260_config_tbin_len; i += burst_write_len) {
 		uint8_t addr[2];
 		const int len = MIN(burst_write_len,
@@ -406,13 +561,37 @@ static int init_config(const struct motion_sensor_t *s)
 		ret = bmi_write_n(s->port, s->i2c_spi_addr_flags,
 				  BMI260_INIT_ADDR_0, addr, 2);
 		if (ret)
-			break;
+			return ret;
 		ret = bmi_write_n(s->port, s->i2c_spi_addr_flags,
 				  BMI260_INIT_DATA, &g_bmi260_config_tbin[i],
 				  len);
 		if (ret)
-			break;
+			return ret;
+;
 	}
+
+	return EC_SUCCESS;
+}
+
+#endif /* CONFIG_ACCELGYRO_BMI160_COMPRESSED_CONFIG */
+
+static int init_config(const struct motion_sensor_t *s)
+{
+	int init_status, ret;
+	uint16_t i;
+
+	/* disable advance power save but remain fifo self wakeup*/
+	bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_PWR_CONF, 2);
+	msleep(1);
+	/* prepare for config load */
+	bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_INIT_CTRL, 0);
+
+	/* load config file to INIT_DATA */
+	if (IS_ENABLED(CONFIG_ACCELGYRO_BMI160_COMPRESSED_CONFIG))
+		ret = bmi_compressed_config_load(s);
+	else
+		ret = bmi_config_load(s);
+
 	/* finish config load */
 	bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_INIT_CTRL, 1);
 	/* return error if load config failed */
