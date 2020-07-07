@@ -31,10 +31,6 @@
 #define CONFIG_CHARGER_OTG
 #undef  CONFIG_CHARGER_SINGLE_CHIP
 
-/* LED */
-#define CONFIG_LED_PWM
-#define CONFIG_LED_PWM_COUNT 1
-
 /* Sensors */
 #define CONFIG_ACCEL_LIS2DE		/* Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
@@ -94,9 +90,6 @@ enum chg_id {
 
 enum pwm_channel {
 	PWM_CH_KBLIGHT,
-	PWM_CH_LED_RED,
-	PWM_CH_LED_GREEN,
-	PWM_CH_LED_BLUE,
 	PWM_CH_COUNT,
 };
 
