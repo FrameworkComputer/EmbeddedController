@@ -454,3 +454,16 @@ int board_get_charger_i2c(void)
 	/* TODO(b:138415463): confirm the bus allocation for future builds */
 	return board_get_version() == 1 ? 2 : 1;
 }
+
+/* Enable or disable input devices, based on chipset state and tablet mode */
+#ifndef TEST_BUILD
+void lid_angle_peripheral_enable(int enable)
+{
+	/* If the lid is in 360 position, ignore the lid angle,
+	 * which might be faulty. Disable keyboard.
+	 */
+	if (tablet_get_mode() || chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		enable = 0;
+	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+}
+#endif
