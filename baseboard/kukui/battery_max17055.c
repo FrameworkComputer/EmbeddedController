@@ -211,9 +211,9 @@ int charger_profile_override(struct charge_state_data *curr)
 	rv = battery_cycle_count(&val);
 	if (!rv)
 		cycle_count = val;
-	if (cycle_count > 300)
+	if (cycle_count > 300 && cycle_count <= 600)
 		curr->requested_voltage = 4320;
-	else if (cycle_count > 600)
+	else if (cycle_count > 600 && cycle_count <= 1000)
 		curr->requested_voltage = 4300;
 	else if (cycle_count > 1000)
 		curr->requested_voltage = 4250;
