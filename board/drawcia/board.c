@@ -6,6 +6,7 @@
 /* Drawcia board-specific configuration */
 
 #include "button.h"
+#include "cbi_fw_config.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
@@ -117,6 +118,16 @@ static void usb_c1_interrupt(enum gpio_signal s)
 	hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
 }
 
+static void button_sub_hdmi_hpd_interrupt(enum gpio_signal s)
+{
+	int hdmi_hpd = gpio_get_level(GPIO_VOLUP_BTN_ODL_HDMI_HPD);
+
+	if (get_cbi_fw_config_db() == DB_1A_HDMI)
+		gpio_set_level(GPIO_EC_AP_USB_C1_HDMI_HPD, hdmi_hpd);
+	else
+		button_interrupt(s);
+}
+
 static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 {
 	cprints(CC_USBPD, "C0: CC OVP, SBU OVP, or thermal event");
@@ -194,6 +205,15 @@ void board_init(void)
 	int on;
 
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
+
+	if (get_cbi_fw_config_db() == DB_1A_HDMI) {
+		/* Select HDMI option */
+		gpio_set_level(GPIO_HDMI_SEL_L, 0);
+	} else {
+		/* Select AUX option */
+		gpio_set_level(GPIO_HDMI_SEL_L, 1);
+	}
+
 	gpio_enable_interrupt(GPIO_USB_C1_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
 	/* Enable Base Accel interrupt */
@@ -229,6 +249,14 @@ __override void board_power_5v_enable(int enable)
 	gpio_set_level(GPIO_EN_PP5000, !!enable);
 	if (sm5803_set_gpio0_level(1, !!enable))
 		CPRINTUSB("Failed to %sable sub rails!", enable ? "en" : "dis");
+}
+
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	if (get_cbi_fw_config_db() == DB_1A_HDMI)
+		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
+	else
+		return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
 
 uint16_t tcpc_get_alert_status(void)
@@ -277,7 +305,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 
 int board_set_active_charge_port(int port)
 {
-	int is_valid_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_valid_port = (port >= 0 && port < board_get_usb_pd_port_count());
 	int p0_otg, p1_otg;
 
 	if (!is_valid_port && port != CHARGE_PORT_NONE)
@@ -347,7 +375,7 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	int current;
 
-	if (port < 0 || port > CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (port < 0 || port > board_get_usb_pd_port_count())
 		return;
 
 	current = (rp == TYPEC_RP_3A0) ? 3000 : 1500;

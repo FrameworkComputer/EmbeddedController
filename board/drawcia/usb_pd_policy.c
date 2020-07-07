@@ -26,7 +26,7 @@ void pd_power_supply_reset(int port)
 {
 	int prev_en;
 
-	if (port < 0 || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (port < 0 || port >= board_get_usb_pd_port_count())
 		return;
 
 	/* TODO(b/147440290): charger functions should take chgnum */
