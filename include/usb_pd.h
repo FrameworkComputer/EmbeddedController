@@ -2663,6 +2663,15 @@ int pd_is_vbus_present(int port);
 int pd_set_frs_enable(int port, int enable);
 
 /**
+ * Optional, board-specific configuration to enable the FRS trigger on port
+ *
+ * @param port   USB-C port number
+ * @param enable 1 to enable the FRS trigger, 0 to disable
+ * @return EC_SUCCESS on success, or an error
+ */
+__override_proto int board_pd_set_frs_enable(int port, int enable);
+
+/**
  * Get current DisplayPort pin mode on the specified port.
  *
  * @param port USB-C port number

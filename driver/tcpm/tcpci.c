@@ -665,15 +665,10 @@ int tcpci_tcpm_set_rx_enable(int port, int enable)
 #ifdef CONFIG_USB_PD_FRS_TCPC
 int tcpci_tcpc_fast_role_swap_enable(int port, int enable)
 {
-	int rv;
-	rv = tcpc_update8(port,
+	return tcpc_update8(port,
 		     TCPC_REG_POWER_CTRL,
 		     TCPC_REG_POWER_CTRL_FRS_ENABLE,
 		     (enable) ? MASK_SET : MASK_CLR);
-	if (rv)
-		return rv;
-	//TODO move this board FRS configuration call to usb_common
-	return board_tcpc_fast_role_swap_enable(port, enable);
 }
 #endif
 

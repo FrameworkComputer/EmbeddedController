@@ -333,10 +333,6 @@ void bc12_interrupt(enum gpio_signal signal);
 void ppc_interrupt(enum gpio_signal signal);
 #endif
 
-#ifdef CONFIG_USB_PD_FRS_TCPC
-int board_tcpc_fast_role_swap_enable(int port, int enable);
-#endif
-
 void pi3hdx1204_retimer_power(void);
 __override_proto int check_hdmi_hpd_status(void);
 int board_get_temp(int idx, int *temp_k);

@@ -738,6 +738,11 @@ int pd_is_vbus_present(int port)
 }
 
 #ifdef CONFIG_USB_PD_FRS
+__overridable int board_pd_set_frs_enable(int port, int enable)
+{
+	return EC_SUCCESS;
+}
+
 int pd_set_frs_enable(int port, int enable)
 {
 	int rv = EC_SUCCESS;
@@ -746,6 +751,8 @@ int pd_set_frs_enable(int port, int enable)
 		rv = ppc_set_frs_enable(port, enable);
 	if (rv == EC_SUCCESS && IS_ENABLED(CONFIG_USB_PD_FRS_TCPC))
 		rv = tcpm_set_frs_enable(port, enable);
+	if (rv == EC_SUCCESS)
+		rv = board_pd_set_frs_enable(port, enable);
 	return rv;
 }
 #endif /* defined(CONFIG_USB_PD_FRS) */
