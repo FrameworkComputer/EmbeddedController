@@ -11,9 +11,10 @@
 #include "cbi_ec_fw_config.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi260.h"
-#include "driver/ppc/sn5s330.h"
 #include "driver/ppc/syv682x.h"
 #include "driver/retimer/bb_retimer.h"
+#include "driver/tcpm/ps8xxx.h"
+#include "driver/tcpm/tcpci.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -42,8 +43,7 @@
  * FW_CONFIG defaults for Delbin if the CBI data is not initialized.
  */
 union volteer_cbi_fw_config fw_config_defaults = {
-	/* Set all FW_CONFIG fields default to 0 */
-	.raw_value = 0,
+	.usb_db = DB_USB3_ACTIVE,
 };
 
 static void board_init(void)
@@ -229,6 +229,63 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
+static const struct tcpc_config_t tcpc_config_p0_usb3 = {
+	.bus_type = EC_BUS_TYPE_I2C,
+	.i2c_info = {
+		.port = I2C_PORT_USB_C0,
+		.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+	},
+	.flags = TCPC_FLAGS_TCPCI_REV2_0 | TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
+	.drv = &ps8xxx_tcpm_drv,
+	.usb23 = USBC_PORT_0_USB2_NUM | (USBC_PORT_0_USB3_NUM << 4),
+};
+
+static const struct tcpc_config_t tcpc_config_p1_usb3 = {
+	.bus_type = EC_BUS_TYPE_I2C,
+	.i2c_info = {
+		.port = I2C_PORT_USB_C1,
+		.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+	},
+	.flags = TCPC_FLAGS_TCPCI_REV2_0 | TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
+	.drv = &ps8xxx_tcpm_drv,
+	.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
+};
+
+static const struct usb_mux usbc0_usb3_mb_retimer = {
+	.usb_port = USBC_PORT_C0,
+	.driver = &tcpci_tcpm_usb_mux_driver,
+	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	.next_mux = NULL,
+};
+
+static const struct usb_mux mux_config_p0_usb3 = {
+	.usb_port = USBC_PORT_C0,
+	.driver = &virtual_usb_mux_driver,
+	.hpd_update = &virtual_hpd_update,
+	.next_mux = &usbc0_usb3_mb_retimer,
+};
+
+static const struct usb_mux usbc1_usb3_db_retimer = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &tcpci_tcpm_usb_mux_driver,
+	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	.next_mux = NULL,
+};
+
+static const struct usb_mux mux_config_p1_usb3 = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &virtual_usb_mux_driver,
+	.hpd_update = &virtual_hpd_update,
+	.next_mux = &usbc1_usb3_db_retimer,
+};
+
+static const struct bb_usb_control bb_p0_control = {
+	.shared_nvm = false,
+	.usb_ls_en_gpio = GPIO_USB_C0_LS_EN,
+	.retimer_rst_gpio = GPIO_USB_C0_RT_RST_ODL,
+	.force_power_gpio = GPIO_USB_C0_RT_FORCE_PWR,
+};
+
 /******************************************************************************/
 /* USB-A charging control */
 
@@ -236,14 +293,61 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_PP5000_USBA,
 };
 
+static void ps8815_reset(int port)
+{
+	int val;
+	int i2c_port;
+	enum gpio_signal ps8xxx_rst_odl;
+
+	if (port == USBC_PORT_C0) {
+		ps8xxx_rst_odl = GPIO_USB_C0_RT_RST_ODL;
+		i2c_port = I2C_PORT_USB_C0;
+	} else if (port == USBC_PORT_C1) {
+		ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL;
+		i2c_port = I2C_PORT_USB_C1;
+	} else {
+		return;
+	}
+
+	gpio_set_level(ps8xxx_rst_odl, 0);
+	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
+			   PS8815_PWR_H_RST_H_DELAY_MS));
+	gpio_set_level(ps8xxx_rst_odl, 1);
+	msleep(PS8815_FW_INIT_DELAY_MS);
+
+	CPRINTS("[C%d] %s: patching ps8815 registers", port, __func__);
+
+	if (i2c_read8(i2c_port,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f was %02x", val);
+
+	if (i2c_write8(i2c_port,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f set to 0x31");
+
+	if (i2c_read8(i2c_port,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f now %02x", val);
+}
+
 void board_reset_pd_mcu(void)
 {
-	/* TODO(b/159336576): Delbin: check USB PD reset operation */
+	ps8815_reset(USBC_PORT_C0);
+	usb_mux_hpd_update(USBC_PORT_C0, 0, 0);
+	ps8815_reset(USBC_PORT_C1);
+	usb_mux_hpd_update(USBC_PORT_C1, 0, 0);
 }
 
 __override void board_cbi_init(void)
 {
-	/* TODO(b/159336576): Delbin: check FW_CONFIG fields for USB DB type */
+	/* Config MB USB3 */
+	tcpc_config[USBC_PORT_C0] = tcpc_config_p0_usb3;
+	usb_muxes[USBC_PORT_C0] = mux_config_p0_usb3;
+	bb_controls[USBC_PORT_C0] = bb_p0_control;
+
+	/* Config DB USB3 */
+	tcpc_config[USBC_PORT_C1] = tcpc_config_p1_usb3;
+	usb_muxes[USBC_PORT_C1] = mux_config_p1_usb3;
 }
 
 /******************************************************************************/
@@ -251,8 +355,8 @@ __override void board_cbi_init(void)
 struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
 		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv,
+		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.drv = &syv682x_drv,
 	},
 	[USBC_PORT_C1] = {
 		.i2c_port = I2C_PORT_USB_C1,
@@ -269,7 +373,7 @@ void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_C0_PPC_INT_ODL:
-		sn5s330_interrupt(USBC_PORT_C0);
+		syv682x_interrupt(USBC_PORT_C0);
 		break;
 	case GPIO_USB_C1_PPC_INT_ODL:
 		syv682x_interrupt(USBC_PORT_C1);
@@ -277,4 +381,3 @@ void ppc_interrupt(enum gpio_signal signal)
 		break;
 	}
 }
-
