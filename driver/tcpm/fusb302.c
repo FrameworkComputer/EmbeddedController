@@ -988,10 +988,8 @@ void fusb302_tcpc_alert(int port)
 
 		/* bring FUSB302 out of reset */
 		fusb302_pd_reset(port);
-
-		pd_execute_hard_reset(port);
-
-		task_wake(PD_PORT_TO_TASK_ID(port));
+		task_set_event(PD_PORT_TO_TASK_ID(port),
+			PD_EVENT_RX_HARD_RESET, 0);
 	}
 
 	if (interruptb & TCPC_REG_INTERRUPTB_GCRCSENT) {

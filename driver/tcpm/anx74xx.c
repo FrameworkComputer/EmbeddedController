@@ -1037,8 +1037,8 @@ void anx74xx_tcpc_alert(int port)
 
 	if (reg & ANX74XX_REG_EXT_HARD_RST) {
 		/* hard reset received */
-		pd_execute_hard_reset(port);
-		task_wake(PD_PORT_TO_TASK_ID(port));
+		task_set_event(PD_PORT_TO_TASK_ID(port),
+			PD_EVENT_RX_HARD_RESET, 0);
 	}
 }
 

@@ -1180,8 +1180,7 @@ void tcpci_tcpc_alert(int port)
 	if (alert & TCPC_REG_ALERT_RX_HARD_RST) {
 		/* hard reset received */
 		CPRINTS("C%d Hard Reset received", port);
-		pd_execute_hard_reset(port);
-		pd_event |= TASK_EVENT_WAKE;
+		pd_event |= PD_EVENT_RX_HARD_RESET;
 	}
 
 	/* USB TCPCI Spec R2 V1.1 Section 4.7.3 Step 2

@@ -21,8 +21,9 @@ static void chip_pd_irq(enum usbpd_port port)
 	if (USBPD_IS_HARD_RESET_DETECT(port)) {
 		/* clear interrupt */
 		IT83XX_USBPD_ISR(port) = USBPD_REG_MASK_HARD_RESET_DETECT;
+		USBPD_SW_RESET(port);
 		task_set_event(PD_PORT_TO_TASK_ID(port),
-			PD_EVENT_TCPC_RESET, 0);
+			PD_EVENT_RX_HARD_RESET, 0);
 	}
 
 	if (USBPD_IS_RX_DONE(port)) {
