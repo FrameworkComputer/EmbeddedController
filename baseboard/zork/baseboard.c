@@ -200,33 +200,25 @@ void lid_angle_peripheral_enable(int enable)
 }
 #endif
 
-/* Unprovisioned magic value. */
-static uint32_t sku_id = 0x7fffffff;
-
-uint32_t system_get_sku_id(void)
-{
-	return sku_id;
-}
-
 static void cbi_init(void)
 {
-	uint32_t board_version = 0;
 	uint32_t val;
 
 	if (cbi_get_board_version(&val) == EC_SUCCESS)
-		board_version = val;
-	ccprints("Board Version: %d (0x%x)", board_version, board_version);
+		ccprints("Board Version: %d (0x%x)", val, val);
+	else
+		ccprints("Board Version: not set in cbi");
 
 	if (cbi_get_sku_id(&val) == EC_SUCCESS)
-		sku_id = val;
-	ccprints("SKU: %d (0x%x)", sku_id, sku_id);
-
-	/* FW config */
-	val = get_cbi_fw_config();
-	if (val == UNINITIALIZED_FW_CONFIG)
-		ccprints("FW Config: not set in cbi");
+		ccprints("SKU ID: %d (0x%x)", val, val);
 	else
+		ccprints("SKU ID: not set in cbi");
+
+	val = get_cbi_fw_config();
+	if (val != UNINITIALIZED_FW_CONFIG)
 		ccprints("FW Config: %d (0x%x)", val, val);
+	else
+		ccprints("FW Config: not set in cbi");
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
