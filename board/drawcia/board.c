@@ -185,6 +185,7 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_port = I2C_PORT_SUB_USB_C1,
 		.i2c_addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		.driver = &tcpci_tcpm_usb_mux_driver,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
 };
 
