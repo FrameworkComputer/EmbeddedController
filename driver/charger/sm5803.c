@@ -310,6 +310,40 @@ static void sm5803_init(int chgnum)
 			rv |= chg_write8(chgnum, 0x7E, 0x04);
 
 			rv |= chg_write8(chgnum, 0x33, 0x3C);
+		} else if (platform_id >= 0x06 && platform_id <= 0x0D) {
+			/* 2S Battery inits */
+			rv |= main_write8(chgnum, 0x30, 0xC0);
+			rv |= main_write8(chgnum, 0x80, 0x01);
+			rv |= main_write8(chgnum, 0x1A, 0x08);
+
+			rv |= meas_write8(chgnum, 0x08, 0xC2);
+
+			rv |= chg_write8(chgnum, 0x1D, 0x40);
+
+			rv |= chg_write8(chgnum, 0x22, 0xB3);
+
+			rv |= chg_write8(chgnum, 0x4F, 0xBF);
+
+			rv |= chg_write8(chgnum, 0x52, 0x77);
+			rv |= chg_write8(chgnum, 0x53, 0xD2);
+			rv |= chg_write8(chgnum, 0x54, 0x02);
+			rv |= chg_write8(chgnum, 0x55, 0xD1);
+			rv |= chg_write8(chgnum, 0x56, 0x7F);
+			rv |= chg_write8(chgnum, 0x57, 0x02);
+			rv |= chg_write8(chgnum, 0x58, 0xD1);
+			rv |= chg_write8(chgnum, 0x59, 0x7F);
+			rv |= chg_write8(chgnum, 0x5A, 0x13);
+			rv |= chg_write8(chgnum, 0x5B, 0x50);
+			rv |= chg_write8(chgnum, 0x5D, 0xD0);
+
+			rv |= chg_write8(chgnum, 0x60, 0x44);
+			rv |= chg_write8(chgnum, 0x65, 0x35);
+			rv |= chg_write8(chgnum, 0x66, 0x29);
+
+			rv |= chg_write8(chgnum, 0x7D, 0x97);
+			rv |= chg_write8(chgnum, 0x7E, 0x07);
+
+			rv |= chg_write8(chgnum, 0x33, 0x3C);
 		}
 	}
 
