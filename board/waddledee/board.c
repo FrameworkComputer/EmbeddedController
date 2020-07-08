@@ -210,6 +210,16 @@ void board_init(void)
 
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
 	gpio_enable_interrupt(c1_int_line);
+
+	/*
+	 * If interrupt lines are already low, schedule them to be processed
+	 * after inits are completed.
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_INT_ODL))
+		hook_call_deferred(&check_c0_line_data, 0);
+	if (!gpio_get_level(c1_int_line))
+		hook_call_deferred(&check_c1_line_data, 0);
+
 	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
 	/* Enable Base Accel interrupt */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
