@@ -310,6 +310,23 @@ static inline int tcpm_get_chip_info(int port, int live,
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
+#ifdef CONFIG_USB_PD_FRS_TCPC
+static inline int tcpm_set_frs_enable(int port, int enable)
+{
+	const struct tcpm_drv *tcpc;
+	int rv = EC_SUCCESS;
+
+	/*
+	 * set_frs_enable will be set to tcpci_tcp_fast_role_swap_enable
+	 * if it is handled by the tcpci for the tcpc chipset
+	 */
+	tcpc = tcpc_config[port].drv;
+	if (tcpc->set_frs_enable)
+		rv = tcpc->set_frs_enable(port, enable);
+	return rv;
+}
+#endif /* defined(CONFIG_USB_PD_FRS_TCPC) */
+
 #else
 
 /**
@@ -458,7 +475,6 @@ int tcpm_has_pending_message(int port);
  */
 void tcpm_clear_pending_messages(int port);
 
-#ifdef CONFIG_USB_PD_FRS_TCPC
 /**
  * Enable/Disable TCPC Fast Role Swap detection
  *
@@ -466,21 +482,7 @@ void tcpm_clear_pending_messages(int port);
  * @param enable FRS enable (true) disable (false)
  * @return EC_SUCCESS on success, or an error
  */
-static inline int tcpm_set_frs_enable(int port, int enable)
-{
-	const struct tcpm_drv *tcpc;
-	int rv = EC_SUCCESS;
-
-	/*
-	 * set_frs_enable will be set to tcpci_tcp_fast_role_swap_enable
-	 * if it is handled by the tcpci for the tcpc chipset
-	 */
-	tcpc = tcpc_config[port].drv;
-	if (tcpc->set_frs_enable)
-		rv = tcpc->set_frs_enable(port, enable);
-	return rv;
-}
-#endif /* defined(CONFIG_USB_PD_FRS_TCPC) */
+int tcpm_set_frs_enable(int port, int enable);
 
 #ifdef CONFIG_CMD_TCPC_DUMP
 static inline void tcpm_dump_registers(int port)
