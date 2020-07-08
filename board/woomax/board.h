@@ -13,13 +13,6 @@
 #include <stdbool.h>
 #include "baseboard.h"
 
-/*
- * Allow dangerous commands.
- * TODO: Remove this config before production.
- */
-#define CONFIG_SYSTEM_UNLOCKED
-#define CONFIG_I2C_DEBUG
-
 #undef CONFIG_USB_PORT_POWER_SMART_PORT_COUNT
 #define CONFIG_USB_PORT_POWER_SMART_PORT_COUNT 1
 #define CONFIG_USBC_RETIMER_PI3DPX1207
