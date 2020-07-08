@@ -276,7 +276,7 @@ static void sm5803_init(int chgnum)
 		}
 		platform_id &= SM5803_PLATFORM_ID;
 
-		if (platform_id >= 0x0E && platform_id <= 0x17) {
+		if (platform_id >= 0x0E && platform_id <= 0x16) {
 			/* 3S Battery inits */
 			rv |= main_write8(chgnum, 0x30, 0xC0);
 			rv |= main_write8(chgnum, 0x80, 0x01);
@@ -306,6 +306,7 @@ static void sm5803_init(int chgnum)
 			rv |= chg_write8(chgnum, 0x65, 0x35);
 			rv |= chg_write8(chgnum, 0x66, 0x29);
 
+			rv |= chg_write8(chgnum, 0x7D, 0x67);
 			rv |= chg_write8(chgnum, 0x7E, 0x04);
 
 			rv |= chg_write8(chgnum, 0x33, 0x3C);
