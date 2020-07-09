@@ -33,8 +33,6 @@
 /* USB */
 #define CONFIG_USB_PD_TCPM_PS8751
 #define CONFIG_USBC_PPC_SN5S330
-/* PS8751 can only run with PD 2.0 */
-#define CONFIG_USB_PD_REV20
 
 /* USB-A */
 #define USB_PORT_COUNT 1
