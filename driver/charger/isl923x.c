@@ -284,7 +284,14 @@ static enum ec_error_list isl923x_get_current(int chgnum, int *current)
 	int rv;
 	int reg;
 
-	rv = raw_read16(chgnum, ISL923X_REG_CHG_CURRENT, &reg);
+	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
+		rv = raw_read16(chgnum, RAA489000_REG_ADC_CHARGE_CURRENT, &reg);
+		/* The value is in 22.2mA increments. */
+		reg *= 222;
+		reg /= 10;
+	} else {
+		rv = raw_read16(chgnum, ISL923X_REG_CHG_CURRENT, &reg);
+	}
 	if (rv)
 		return rv;
 
@@ -299,6 +306,22 @@ static enum ec_error_list isl923x_set_current(int chgnum, int current)
 
 static enum ec_error_list isl923x_get_voltage(int chgnum, int *voltage)
 {
+	int rv;
+	int reg;
+
+	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
+		rv = raw_read16(chgnum, RAA489000_REG_ADC_VSYS, &reg);
+		if (rv)
+			return rv;
+
+		/* The voltage is returned in bits 13:6. LSB is 96mV. */
+		reg &= GENMASK(13, 6);
+		reg >>= 6;
+		reg *= 96;
+
+		*voltage = reg;
+		return EC_SUCCESS;
+	}
 	return raw_read16(chgnum, ISL923X_REG_SYS_VOLTAGE_MAX, voltage);
 }
 
