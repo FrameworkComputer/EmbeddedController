@@ -28,6 +28,7 @@
 #include "pwm_chip.h"
 #include "switch.h"
 #include "system.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
 #include "usb_charge.h"
