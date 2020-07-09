@@ -5388,7 +5388,7 @@ void pd_set_dfp_enter_mode_flag(int port, bool set)
 
 const char *pe_get_current_state(int port)
 {
-	if (IS_ENABLED(USB_PD_DEBUG_LABELS))
+	if (pe_is_running(port) && IS_ENABLED(USB_PD_DEBUG_LABELS))
 		return pe_state_names[get_state_pe(port)];
 	else
 		return "";
