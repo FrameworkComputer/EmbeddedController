@@ -232,6 +232,13 @@ __override void board_cbi_init(void)
 }
 
 /******************************************************************************/
+/* USB-A charging control */
+
+const int usb_port_enable[USB_PORT_COUNT] = {
+	GPIO_EN_PP5000_USBA,
+};
+
+/******************************************************************************/
 /* USBC PPC configuration */
 struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {

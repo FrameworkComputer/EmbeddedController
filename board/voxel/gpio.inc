@@ -59,7 +59,7 @@ UNIMPLEMENTED(PCH_DSW_PWROK)
 
 #ifdef VOLTEER_POWER_SEQUENCE
 /* Optional power sequencing signals that are not stuffed by default */
-GPIO(EN_DRAM_VDDQ,		PIN(F, 2), GPIO_OUT_LOW)
+GPIO(EN_DRAM_VDDQ,		PIN(C, 6), GPIO_OUT_LOW)
 GPIO(EN_PP1050_STG,		PIN(C, 0), GPIO_OUT_LOW)
 GPIO(EN_PP5000_USB_AG,		PIN(A, 7), GPIO_OUT_LOW)
 GPIO(EN_PPVAR_VCCIN_AUX,	PIN(8, 1), GPIO_OUT_LOW)
@@ -94,6 +94,8 @@ GPIO(SYS_RST_ODL,              PIN(C, 5), GPIO_ODR_HIGH)
 GPIO(EC_PCH_INT_ODL,           PIN(B, 0), GPIO_ODR_HIGH)
 
 /* USB and USBC Signals */
+GPIO(EN_PP5000_USBA,		PIN(3, 5), GPIO_OUT_LOW)	/* Enable USB-A charging - all ports */
+GPIO(USB_A_LOW_PWR_OD,		PIN(6, 6), GPIO_ODR_LOW)	/* Don't limit USB-A charging by default - all ports */
 
 /*
  * USB_C1 moved from GPIO32 to GPIO83 on boards with board ID >=1.
