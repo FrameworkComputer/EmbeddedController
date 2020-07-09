@@ -315,6 +315,9 @@ static int init_alert_mask(int port)
 	if (TCPC_FLAGS_VSAFE0V(tcpc_config[port].flags))
 		mask |= TCPC_REG_ALERT_EXT_STATUS;
 
+	if (IS_ENABLED(CONFIG_USB_PD_FRS_TCPC))
+		mask |= TCPC_REG_ALERT_ALERT_EXT;
+
 	/* Set the alert mask in TCPC */
 	rv = tcpc_write16(port, TCPC_REG_ALERT_MASK, mask);
 
