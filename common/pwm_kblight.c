@@ -28,7 +28,7 @@ static int kblight_pwm_init(void)
 {
 	/* dnojiri: Why do we need save/restore setting over sysjump? */
 	kblight_pwm_set(0);
-	pwm_enable(kblight_pwm_ch, 1);
+	pwm_enable(kblight_pwm_ch, 0);
 	return EC_SUCCESS;
 }
 
