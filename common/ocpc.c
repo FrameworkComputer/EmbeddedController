@@ -53,6 +53,32 @@ enum phase {
 	PHASE_CV_COMPLETE,
 };
 
+enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
+					 struct batt_params *battery)
+{
+	if ((battery->current <= 0) || (ocpc->isys_ma <= 0) ||
+	    (ocpc->vsys_aux_mv < ocpc->vsys_mv)) {
+		CPRINTS_DBG("Not charging... won't determine resistance");
+		CPRINTS_DBG("vsys_aux_mv: %dmV vsys_mv: %dmV",
+			    ocpc->vsys_aux_mv, ocpc->vsys_mv);
+		return EC_ERROR_INVALID_CONFIG; /* We must be charging */
+	}
+
+	/*
+	 * The combined system and battery resistance is the delta between Vsys
+	 * and Vbatt divided by Ibatt.
+	 */
+	ocpc->rsys_mo = ((ocpc->vsys_aux_mv - ocpc->vsys_mv) * 1000) /
+			 ocpc->isys_ma;
+	ocpc->rbatt_mo = ((ocpc->vsys_mv - battery->voltage) * 1000) /
+			 battery->current;
+	ocpc->combined_rsys_rbatt_mo = ocpc->rsys_mo + ocpc->rbatt_mo;
+	CPRINTS_DBG("Rsys: %dmOhm Rbatt: %dmOhm", ocpc->rsys_mo,
+		    ocpc->rbatt_mo);
+
+	return EC_SUCCESS;
+}
+
 int ocpc_config_secondary_charger(int *desired_input_current,
 				  struct ocpc_data *ocpc,
 				  int voltage_mv, int current_ma)
@@ -71,6 +97,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	static int prev_limited;
 	int chgnum;
 	enum ec_error_list result;
+	static int iterations;
 
 	/*
 	 * There's nothing to do if we're not using this charger.  Should
@@ -100,8 +127,10 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 		return result;
 	}
 
-	if (ocpc->last_vsys == OCPC_UNINIT)
+	if (ocpc->last_vsys == OCPC_UNINIT) {
 		ph = PHASE_UNKNOWN;
+		iterations = 0;
+	}
 
 	if (current_ma == 0) {
 		vsys_target = voltage_mv;
@@ -117,6 +146,27 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	battery_get_params(&batt);
 	ocpc_get_adcs(ocpc);
 	charger_get_params(&charger);
+
+
+	/*
+	 * If the system is in S5/G3, we can calculate the board and battery
+	 * resistances.
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		/*
+		 * In the first few iterations of the loop, charging isn't
+		 * stable/correct so making the calculation then leads to some
+		 * strange values throwing off the loop even more. However,
+		 * after those initial iterations it then begins to behave as
+		 * expected. From there onwards, the resistance values aren't
+		 * changing _too_ rapidly.  This is why we calculate with every
+		 * modulo 4 interval.
+		 */
+		iterations++;
+		if (!(iterations % 4))
+			ocpc_calc_resistances(ocpc, &batt);
+		iterations %= 5;
+	}
 
 	/* Set our current target accordingly. */
 	if (batt.voltage < batt.desired_voltage) {
@@ -167,13 +217,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	CPRINTS_DBG("batt.current = %dmA", batt.current);
 	CPRINTS_DBG("i_ma = %dmA", i_ma);
 
-	/*
-	 * Assuming that our combined Rsys + Rbatt resistance is correct, this
-	 * should be enough to reach our desired i_ma.  If it's not, our PID
-	 * loop will help us get there.
-	 */
-	min_vsys_target = (i_ma * ocpc->combined_rsys_rbatt_mo) / 1000;
-	min_vsys_target += MIN(batt.voltage, batt.desired_voltage);
+	min_vsys_target = MIN(batt.voltage, batt.desired_voltage);
 	CPRINTS_DBG("min_vsys_target = %d", min_vsys_target);
 
 	/* Obtain the drive from our PID controller. */
@@ -248,9 +292,15 @@ void ocpc_get_adcs(struct ocpc_data *ocpc)
 	if (!charger_get_input_current(CHARGER_PRIMARY, &val))
 		ocpc->primary_ibus_ma = val;
 
+	val = 0;
+	if (!charger_get_voltage(CHARGER_PRIMARY, &val))
+		ocpc->vsys_mv = val;
+
 	if (board_get_charger_chip_count() <= CHARGER_SECONDARY) {
 		ocpc->secondary_vbus_mv = 0;
 		ocpc->secondary_ibus_ma = 0;
+		ocpc->vsys_aux_mv = 0;
+		ocpc->isys_ma = 0;
 		return;
 	}
 
@@ -261,6 +311,14 @@ void ocpc_get_adcs(struct ocpc_data *ocpc)
 	val = 0;
 	if (!charger_get_input_current(CHARGER_SECONDARY, &val))
 		ocpc->secondary_ibus_ma = val;
+
+	val = 0;
+	if (!charger_get_voltage(CHARGER_SECONDARY, &val))
+		ocpc->vsys_aux_mv = val;
+
+	val = 0;
+	if (!charger_get_current(CHARGER_SECONDARY, &val))
+		ocpc->isys_ma = val;
 }
 
 __overridable void ocpc_get_pid_constants(int *kp, int *kp_div,

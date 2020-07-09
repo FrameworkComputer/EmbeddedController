@@ -1042,16 +1042,17 @@ static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 
 	/*
 	 * Rp1 is set between 36-156mOhms in 4mOhm increments.  This must be
-	 * non-zero in order for compensation to work.  The system keeps track
-	 * of combined resistance; we'll assume that Rp2 is what was statically
-	 * defined leaving Rp1 as the difference.  If Rp1 is less than 36mOhms,
-	 * then the compensation is disabled.
+	 * non-zero in order for compensation to work.
 	 *
-	 * TODO(b/148980020): When we can calculate Rsys vs Rbatt, update this
-	 * accordingly.
+	 * To get Rp1, we need to look at the delta between VSYS measured by the
+	 * auxiliary charger IC and the primary charger IC where the actual VSYS
+	 * node is as well as the current provided by the auxiliary charger IC.
+	 * The system keeps track of combined resistance; therefore, Rp2 is the
+	 * difference between the combined resistance and Rp1 that we calculate.
+	 * If Rp1 is less than 36mOhms, then the compensation is disabled.
 	 */
-	rp1 = o->combined_rsys_rbatt_mo - CONFIG_OCPC_DEF_RBATT_MOHMS;
-	rp1 = MIN(rp1, RAA489000_RP1_MAX);
+
+	rp1 = MIN(o->rsys_mo, RAA489000_RP1_MAX);
 	rp1 -= RAA489000_RP1_MIN;
 	if (rp1 < 0) {
 		if (o->last_vsys == OCPC_UNINIT)
@@ -1064,7 +1065,7 @@ static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 	}
 
 	/* Rp2 is set between 0-124mOhms in 4mOhm increments. */
-	rp2 = CONFIG_OCPC_DEF_RBATT_MOHMS;
+	rp2 = o->rbatt_mo;
 	rp2 = CLAMP(rp2, RAA489000_RP2_MIN, RAA489000_RP2_MAX);
 	rp2 /= 4;
 
