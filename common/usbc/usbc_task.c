@@ -152,6 +152,8 @@ void pd_task(void *u)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
 
+test_only_restart:
+
 	if (IS_ENABLED(CONFIG_USB_TYPEC_SM))
 		tc_state_init(port);
 
@@ -184,6 +186,12 @@ void pd_task(void *u)
 			task_wait_event(paused[port]
 						? -1
 						: USBC_EVENT_TIMEOUT);
+
+		/*
+		 * Re-use TASK_EVENT_RESET_DONE in tests to restart the USB task
+		 */
+		if (IS_ENABLED(TEST_BUILD) && (evt & TASK_EVENT_RESET_DONE))
+			goto test_only_restart;
 
 		/* handle events that affect the state machine as a whole */
 		if (IS_ENABLED(CONFIG_USB_TYPEC_SM))

@@ -47,7 +47,11 @@
 #define TASK_EVENT_DMA_TC       BIT(26)
 /* ADC interrupt handler event */
 #define TASK_EVENT_ADC_DONE	BIT(27)
-/* task_reset() that was requested has been completed */
+/*
+ * task_reset() that was requested has been completed
+ *
+ * For test-only builds, may be used by some tasks to restart themselves.
+ */
 #define TASK_EVENT_RESET_DONE   BIT(28)
 /* task_wake() called on task */
 #define TASK_EVENT_WAKE		BIT(29)

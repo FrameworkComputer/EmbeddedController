@@ -135,6 +135,12 @@ __maybe_unused static int test_power_role_set(void)
 {
 	mock_tcpc.num_calls_to_set_header = 0;
 
+	/*
+	 * We need to allow auto toggling to see the port partner attach
+	 * as a sink
+	 */
+	pd_set_dual_role(PORT0, PD_DRP_TOGGLE_ON);
+
 	/* Update CC lines send state machine event to process */
 	mock_tcpc.cc1 = TYPEC_CC_VOLT_OPEN;
 	mock_tcpc.cc2 = TYPEC_CC_VOLT_RD;
@@ -603,10 +609,8 @@ void before_test(void)
 	mock_usb_mux_reset();
 	mock_tcpc_reset();
 
-	tc_try_src_override(TRY_SRC_NO_OVERRIDE);
-
-	/* Ensure that PD task initializes its state machine and settles */
-	task_wake(TASK_ID_PD_C0);
+	/* Restart the PD task and let it settle */
+	task_set_event(TASK_ID_PD_C0, TASK_EVENT_RESET_DONE, 0);
 	task_wait_event(SECOND);
 
 	/* Print out TCPC calls for easier debugging */

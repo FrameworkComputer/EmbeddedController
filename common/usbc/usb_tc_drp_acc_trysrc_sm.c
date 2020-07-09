@@ -1273,6 +1273,16 @@ static void restart_tc_sm(int port, enum usb_tc_state start_state)
 
 void tc_state_init(int port)
 {
+	/* For test builds, replicate static initialization */
+	if (IS_ENABLED(TEST_BUILD)) {
+		int i;
+
+		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
+			memset(&tc[i], 0, sizeof(tc[i]));
+			drp_state[i] = CONFIG_USB_PD_INITIAL_DRP_STATE;
+		}
+	}
+
 	/* If port is not available, there is nothing to initialize */
 	if (port >= board_get_usb_pd_port_count()) {
 		tc_enable_pd(port, 0);
