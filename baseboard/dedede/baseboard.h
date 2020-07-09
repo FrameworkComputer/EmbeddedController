@@ -203,14 +203,6 @@
 /* Common enums */
 #if defined(VARIANT_DEDEDE_EC_NPCX796FC)
 #elif defined(VARIANT_DEDEDE_EC_IT8320)
-	enum adc_channel {
-		ADC_VSNS_PP3300_A,     /* ADC0 */
-		ADC_TEMP_SENSOR_1,     /* ADC2 */
-		ADC_TEMP_SENSOR_2,     /* ADC3 */
-		ADC_SUB_ANALOG,        /* ADC13 */
-		ADC_CH_COUNT
-	};
-
 	enum board_vcmp {
 		VCMP_SNS_PP3300_LOW,
 		VCMP_SNS_PP3300_HIGH,
