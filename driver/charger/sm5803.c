@@ -498,7 +498,7 @@ static enum ec_error_list sm5803_set_mode(int chgnum, int mode)
 		flow2_reg &= ~SM5803_FLOW2_AUTO_ENABLED;
 	} else {
 		flow1_reg |= SM5803_FLOW1_CHG_EN;
-		if (battery_is_present() == BP_YES)
+		if (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED)
 			flow2_reg |= SM5803_FLOW2_AUTO_ENABLED;
 	}
 
