@@ -321,6 +321,7 @@ extern const struct thermistor_info thermistor_info;
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
 
 void mst_hpd_interrupt(enum ioex_signal signal);
+void sbu_fault_interrupt(enum ioex_signal signal);
 
 #ifdef VARIANT_ZORK_TREMBYLE
 void board_reset_pd_mcu(void);

@@ -286,3 +286,10 @@ void pi3hdx1204_retimer_power(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pi3hdx1204_retimer_power, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pi3hdx1204_retimer_power, HOOK_PRIO_DEFAULT);
+
+void sbu_fault_interrupt(enum ioex_signal signal)
+{
+	int port = (signal == IOEX_USB_C0_SBU_FAULT_ODL) ? 0 : 1;
+
+	pd_handle_overcurrent(port);
+}
