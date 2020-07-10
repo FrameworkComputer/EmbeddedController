@@ -845,15 +845,6 @@ void tc_hard_reset_request(int port)
 {
 	TC_SET_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
-
-	/*
-	 * TCPCI Rev2 V1.1 4.4.5.4.4
-	 * Disconnect Detection by the Sink TCPC during a Connection
-	 *
-	 * Attached.SNK Hard Reset disable AutoDischargeDisconnect
-	 */
-	if (IS_ATTACHED_SNK(port))
-		tcpm_enable_auto_discharge_disconnect(port, 0);
 }
 
 void tc_disc_ident_in_progress(int port)
@@ -1188,15 +1179,6 @@ static bool tc_perform_snk_hard_reset(int port)
 			 */
 			tc[port].ps_reset_state = PS_STATE0;
 			pe_ps_reset_complete(port);
-
-			/*
-			 * TCPCI Rev2 V1.1 4.4.5.4.4
-			 * Disconnect Detection by the Sink TCPC during a
-			 * Connection
-			 *
-			 * HardReset done - enable AutoDischargeDisconnect
-			 */
-			tcpm_enable_auto_discharge_disconnect(port, 1);
 
 			/*
 			 * Now that VBUS is back, let's notify charge manager
