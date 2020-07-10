@@ -18,6 +18,7 @@
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/charger/isl923x.h"
 #include "driver/ppc/nx20p348x.h"
+#include "driver/ppc/syv682x.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -49,16 +50,57 @@
 #define USB_PD_PORT_PS8751	1
 
 static uint8_t sku_id;
+static int is_support_syv_ppc;
+
+const struct ppc_config_t ppc_syv682x_port0 = {
+	.i2c_port = I2C_PORT_TCPC0,
+	.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+	.drv = &syv682x_drv,
+};
+
+const struct ppc_config_t ppc_syv682x_port1 = {
+	.i2c_port = I2C_PORT_TCPC1,
+	.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+	.drv = &syv682x_drv,
+};
+
+/* Check PPC_ID pin status to decide which one ppc is used. */
+static int board_is_syv_ppc(void)
+{
+	return gpio_get_level(GPIO_PPC_ID);
+}
+
+static void board_update_ppc_config_from_board(void)
+{
+	if (!is_support_syv_ppc)
+		return;
+
+	memcpy(&ppc_chips[USB_PD_PORT_TCPC_0],
+	       &ppc_syv682x_port0,
+	       sizeof(struct ppc_config_t));
+	memcpy(&ppc_chips[USB_PD_PORT_TCPC_1],
+	       &ppc_syv682x_port1,
+	       sizeof(struct ppc_config_t));
+
+	gpio_set_flags(GPIO_USB_PD_C0_INT_ODL, GPIO_INT_BOTH);
+	gpio_set_flags(GPIO_USB_PD_C1_INT_ODL, GPIO_INT_BOTH);
+}
 
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_PD_C0_INT_ODL:
-		nx20p348x_interrupt(0);
+		if (is_support_syv_ppc)
+			syv682x_interrupt(0);
+		else
+			nx20p348x_interrupt(0);
 		break;
 
 	case GPIO_USB_PD_C1_INT_ODL:
-		nx20p348x_interrupt(1);
+		if (is_support_syv_ppc)
+			syv682x_interrupt(1);
+		else
+			nx20p348x_interrupt(1);
 		break;
 
 	default:
@@ -278,5 +320,17 @@ static void charger_set_buck_boost_mode(void)
 static void board_init(void)
 {
 	charger_set_buck_boost_mode();
+
+	is_support_syv_ppc = board_is_syv_ppc();
+
+	board_update_ppc_config_from_board();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+int ppc_get_alert_status(int port)
+{
+	if (port == 0)
+		return gpio_get_level(GPIO_USB_PD_C0_INT_ODL) == 0;
+
+	return gpio_get_level(GPIO_USB_PD_C1_INT_ODL) == 0;
+}
