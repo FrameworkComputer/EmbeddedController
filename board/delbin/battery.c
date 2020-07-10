@@ -32,26 +32,22 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* LGC\011 L17L3PB0 Battery Information */
-	/*
-	 * Battery info provided by ODM on b/143477210, comment #11
-	 */
-	[BATTERY_LGC011] = {
+	[BATTERY_C536] = {
 		.fuel_gauge = {
-			.manuf_name = "LGC",
+			.manuf_name = "AS3GXAE3jB",
 			.ship_mode = {
 				.reg_addr = 0x00,
 				.reg_data = { 0x10, 0x10 },
 			},
 			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x6000,
-				.disconnect_val = 0x6000,
+				.reg_addr = 0x99,
+				.reg_mask = 0x000c,
+				.disconnect_val = 0x000c,
 			}
 		},
 		.batt_info = {
-			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
-			.voltage_normal		= 11550, /* mV */
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11880, /* mV */
 			.voltage_min		= 9000, /* mV */
 			.precharge_current	= 256,	/* mA */
 			.start_charging_min_c	= 0,
@@ -59,10 +55,10 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_min_c		= 0,
 			.charging_max_c		= 60,
 			.discharging_min_c	= 0,
-			.discharging_max_c	= 75,
+			.discharging_max_c	= 60,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_LGC011;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_C536;
