@@ -125,12 +125,12 @@ int ppc_clear_oc_event_counter(int port)
 
 int ppc_is_sourcing_vbus(int port)
 {
-	int rv = EC_ERROR_UNIMPLEMENTED;
+	int rv = 0;
 	const struct ppc_config_t *ppc;
 
 	if ((port < 0) || (port >= ppc_cnt)) {
 		CPRINTS("%s(%d) Invalid port!", __func__, port);
-		return EC_ERROR_INVAL;
+		return 0;
 	}
 
 	ppc = &ppc_chips[port];
@@ -197,7 +197,7 @@ int ppc_is_port_latched_off(int port)
 {
 	if ((port < 0) || (port >= ppc_cnt)) {
 		CPRINTS("%s(%d) Invalid port!", __func__, port);
-		return EC_ERROR_INVAL;
+		return 0;
 	}
 
 	return oc_event_cnt_tbl[port] >= PPC_OC_CNT_THRESH;
@@ -346,12 +346,12 @@ int ppc_set_frs_enable(int port, int enable)
 #ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
 int ppc_is_vbus_present(int port)
 {
-	int rv = EC_ERROR_UNIMPLEMENTED;
+	int rv = 0;
 	const struct ppc_config_t *ppc;
 
 	if ((port < 0) || (port >= ppc_cnt)) {
 		CPRINTS("%s(%d) Invalid port!", __func__, port);
-		return EC_ERROR_INVAL;
+		return 0;
 	}
 
 	ppc = &ppc_chips[port];
