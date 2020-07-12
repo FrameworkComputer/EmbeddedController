@@ -889,7 +889,7 @@ static int test_send_ctrl_msg_with_retry_and_fail(void)
 
 	for (i = 0; i < N_RETRY_COUNT + 1; i++) {
 		/* Ensure that we have timed out */
-		cycle_through_state_machine(port, 10, 100 * MSEC);
+		cycle_through_state_machine(port, 12, MSEC);
 
 		TEST_EQ(pd_port[port].mock_got_soft_reset, 0, "%d");
 		TEST_EQ(pd_port[port].mock_pe_message_sent, 0, "%d");
@@ -959,10 +959,7 @@ static int test_send_ctrl_msg_with_retry_and_success(void)
 		simulate_goodcrc(port, pd_port[port].power_role,
 						pd_port[port].msg_tx_id);
 
-		cycle_through_state_machine(port, 8, 10 * MSEC);
-
-		task_wake(PD_PORT_TO_TASK_ID(port));
-		task_wait_event(PD_T_TCPC_TX_TIMEOUT);
+		cycle_through_state_machine(port, 3, MSEC);
 
 		TEST_EQ(pd_port[port].mock_got_soft_reset, 0, "%d");
 		if (i == N_RETRY_COUNT)
