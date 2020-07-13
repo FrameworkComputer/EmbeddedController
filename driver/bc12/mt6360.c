@@ -112,16 +112,10 @@ static int mt6360_enable_bc12_detection(int en)
 	return rv;
 }
 
-static void mt6360_update_charge_manager(int port)
+static void mt6360_update_charge_manager(int port,
+					 enum charge_supplier new_bc12_type)
 {
-	static int current_bc12_type = CHARGE_SUPPLIER_NONE;
-	int reg;
-	int new_bc12_type = CHARGE_SUPPLIER_NONE;
-
-	mt6360_read8(MT6360_REG_DPDMIRQ, &reg);
-
-	if (pd_snk_is_vbus_provided(port) && (reg & MT6360_MASK_DPDMIRQ_ATTACH))
-		new_bc12_type = mt6360_get_bc12_device_type();
+	static enum charge_supplier current_bc12_type = CHARGE_SUPPLIER_NONE;
 
 	if (new_bc12_type != current_bc12_type) {
 		charge_manager_update_charge(current_bc12_type, port, NULL);
@@ -136,6 +130,23 @@ static void mt6360_update_charge_manager(int port)
 		}
 
 		current_bc12_type = new_bc12_type;
+	}
+}
+
+static void mt6360_handle_bc12_irq(int port)
+{
+	int reg;
+
+	mt6360_read8(MT6360_REG_DPDMIRQ, &reg);
+
+	if (reg & MT6360_MASK_DPDMIRQ_ATTACH) {
+		/* Check vbus again to avoid timing issue */
+		if (pd_snk_is_vbus_provided(port))
+			mt6360_update_charge_manager(
+					port, mt6360_get_bc12_device_type());
+		else
+			mt6360_update_charge_manager(
+					0, CHARGE_SUPPLIER_NONE);
 	}
 
 	/* write clear */
@@ -152,12 +163,17 @@ static void mt6360_usb_charger_task(const int port)
 		uint32_t evt = task_wait_event(-1);
 
 		/* vbus change, start bc12 detection */
-		if (evt & USB_CHG_EVENT_VBUS)
-			mt6360_enable_bc12_detection(1);
+		if (evt & USB_CHG_EVENT_VBUS) {
+			if (pd_snk_is_vbus_provided(port))
+				mt6360_enable_bc12_detection(1);
+			else
+				mt6360_update_charge_manager(
+						0, CHARGE_SUPPLIER_NONE);
+		}
 
 		/* detection done, update charge_manager and stop detection */
 		if (evt & USB_CHG_EVENT_BC12) {
-			mt6360_update_charge_manager(port);
+			mt6360_handle_bc12_irq(port);
 			mt6360_enable_bc12_detection(0);
 		}
 	}
