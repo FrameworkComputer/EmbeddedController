@@ -220,28 +220,6 @@ static void setup_mux(void)
 	}
 }
 
-/* TODO(b:151232257) Remove probe code when hardware supports CBI */
-#include "driver/retimer/ps8802.h"
-#include "driver/retimer/ps8818.h"
-static void probe_setup_mux_backup(void)
-{
-	if (usb_muxes[USBC_PORT_C1].driver != NULL)
-		return;
-
-	/*
-	 * Identifying a PS8818 is faster than the PS8802,
-	 * so do it first.
-	 */
-	if (ps8818_detect(&usbc1_ps8818) == EC_SUCCESS) {
-		set_cbi_fw_config(0x00004000);
-		setup_mux();
-	} else if (ps8802_detect(&usbc1_ps8802) == EC_SUCCESS) {
-		set_cbi_fw_config(0x00004001);
-		setup_mux();
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, probe_setup_mux_backup, HOOK_PRIO_DEFAULT);
-
 const struct pi3dpx1207_usb_control pi3dpx1207_controls[] = {
 	[USBC_PORT_C0] = {
 		.enable_gpio = IOEX_USB_C0_DATA_EN,
