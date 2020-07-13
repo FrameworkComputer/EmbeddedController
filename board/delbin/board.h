@@ -11,6 +11,9 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+#undef NPCX_PWM1_SEL
+#define NPCX_PWM1_SEL 0	/* GPIO C2 is not used as PWM1. */
+
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
@@ -25,9 +28,8 @@
 #define CONFIG_POWER_PP5000_CONTROL
 
 /* LED defines */
-#define CONFIG_LED_PWM
-/* Although there are 2 LEDs, they are both controlled by the same lines. */
-#define CONFIG_LED_PWM_COUNT 1
+#define CONFIG_LED_POWER_LED
+#define CONFIG_LED_ONOFF_STATES
 
 /* Keyboard features */
 
@@ -138,11 +140,7 @@ enum battery_type {
 };
 
 enum pwm_channel {
-	PWM_CH_LED1_BLUE = 0,
-	PWM_CH_LED2_GREEN,
-	PWM_CH_LED3_RED,
-	PWM_CH_LED4_SIDESEL,
-	PWM_CH_FAN,
+	PWM_CH_FAN = 0,
 	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT
 };

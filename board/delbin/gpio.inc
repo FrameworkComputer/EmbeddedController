@@ -110,7 +110,9 @@ UNIMPLEMENTED(USB_C1_RT_FORCE_PWR)
 
 /* Misc Signals */
 GPIO(UART2_EC_RX,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
-
+GPIO(LED_1_L,			PIN(C, 4), GPIO_OUT_HIGH)	/* Battery Full LED: White */
+GPIO(LED_2_L,			PIN(C, 3), GPIO_OUT_HIGH)	/* Battery Charging LED: Amber */
+GPIO(LED_3_L,			PIN(C, 2), GPIO_OUT_HIGH)	/* Battery Power LED: White */
 
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
@@ -147,12 +149,6 @@ ALTERNATE(PIN_MASK(8, BIT(7)), 0, MODULE_I2C, 0)                                
 ALTERNATE(PIN_MASK(D, BIT(1) | BIT(0)), 0, MODULE_I2C, 0)                            /* I2C3 */
 ALTERNATE(PIN_MASK(3, BIT(3) | BIT(6)), 0, MODULE_I2C, 0)                            /* I2C5 */
 ALTERNATE(PIN_MASK(B, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                            /* I2C7 */
-
-/* This selects between an LED module on the motherboard and one on the daughter
- * board, to be controlled by LED_{1,2,3}_L. PWM allows driving both modules at
- * the same time. */
-ALTERNATE(PIN_MASK(6, BIT(0)), 0, MODULE_PWM, 0)                                     /* LED_SIDESEL_4_L */
-ALTERNATE(PIN_MASK(C, BIT(2) | BIT(3) | BIT(4)), 0, MODULE_PWM, 0)                   /* LED_{3,2,1}_L */
 
 /* Fan signals */
 GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
