@@ -12,6 +12,7 @@
 #define SM5803_ADDR_MAIN_FLAGS		0x30
 #define SM5803_ADDR_MEAS_FLAGS		0x31
 #define SM5803_ADDR_CHARGER_FLAGS	0x32
+#define SM5803_ADDR_TEST_FLAGS		0x37
 
 /* Main registers (address 0x30) */
 

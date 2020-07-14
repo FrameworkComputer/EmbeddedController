@@ -25,6 +25,9 @@
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
+#define UNKNOWN_DEV_ID -1
+static int dev_id = UNKNOWN_DEV_ID;
+
 static const struct charger_info sm5803_charger_info = {
 	.name         = CHARGER_NAME,
 	.voltage_max  = CHARGE_V_MAX,
@@ -86,6 +89,22 @@ static inline enum ec_error_list main_write8(int chgnum, int offset, int value)
 	return i2c_write8(chg_chips[chgnum].i2c_port,
 			 SM5803_ADDR_MAIN_FLAGS,
 			 offset, value);
+}
+
+static inline enum ec_error_list test_write8(int chgnum, int offset, int value)
+{
+	return i2c_write8(chg_chips[chgnum].i2c_port,
+			 SM5803_ADDR_TEST_FLAGS,
+			 offset, value);
+}
+
+static inline enum ec_error_list test_update8(int chgnum,
+					      const int offset,
+					      const uint8_t mask,
+					      const enum mask_update_action action)
+{
+	return i2c_update8(chg_chips[chgnum].i2c_port,
+			   SM5803_ADDR_TEST_FLAGS, offset, mask, action);
 }
 
 int sm5803_is_vbus_present(int chgnum)
@@ -210,7 +229,7 @@ static void sm5803_init(int chgnum)
 		return;
 	}
 
-	rv |= main_read8(chgnum, SM5803_REG_CHIP_ID, &reg);
+	rv |= charger_device_id(&reg);
 	if (reg == 0x02) {
 		/* --- Special register init ---
 		 * For early silicon (ID 2) with 3S batteries
@@ -262,8 +281,7 @@ static void sm5803_init(int chgnum)
 
 		/* Inits to access page 0x37 and enable trickle charging */
 		rv |= main_write8(chgnum, 0x1F, 0x01);
-		rv |= i2c_update8(chg_chips[chgnum].i2c_port, 0x37,
-				  0x8E, BIT(5), MASK_SET);
+		rv |= test_update8(chgnum, 0x8E, BIT(5), MASK_SET);
 		rv |= main_write8(chgnum, 0x1F, 0x00);
 	} else if (reg == 0x03) {
 		uint32_t platform_id;
@@ -460,6 +478,20 @@ void sm5803_interrupt(int chgnum)
 	hook_call_deferred(&sm5803_irq_deferred_data, 0);
 }
 
+static enum ec_error_list sm5803_get_dev_id(int chgnum, int *id)
+{
+	int rv = EC_SUCCESS;
+
+	if (dev_id == UNKNOWN_DEV_ID)
+		rv = main_read8(chgnum, SM5803_REG_CHIP_ID, &dev_id);
+
+	if (!rv)
+		*id = dev_id;
+
+	return rv;
+
+}
+
 static const struct charger_info *sm5803_get_info(int chgnum)
 {
 	return &sm5803_charger_info;
@@ -487,10 +519,23 @@ static enum ec_error_list sm5803_set_mode(int chgnum, int mode)
 {
 	enum ec_error_list rv;
 	int flow1_reg, flow2_reg;
+	int dev_id;
 
+	rv = sm5803_get_dev_id(chgnum, &dev_id);
 	mutex_lock(&flow1_access_lock[chgnum]);
 
-	rv = chg_read8(chgnum, SM5803_REG_FLOW2, &flow2_reg);
+	/* New silicon version requires a new procedure to start charging. */
+	if ((dev_id >= 3) && (!(mode & CHARGE_FLAG_INHIBIT_CHARGE))) {
+		/* Enable Test Page */
+		rv |= main_write8(chgnum, 0x1F, 0x1);
+		/* magic */
+		rv |= test_write8(chgnum, 0x44, 0x2);
+		rv |= test_write8(chgnum, 0x48, 0x4);
+		/* Disable Test Page */
+		rv |= main_write8(chgnum, 0x1F, 0);
+	}
+
+	rv |= chg_read8(chgnum, SM5803_REG_FLOW2, &flow2_reg);
 	rv |= chg_read8(chgnum, SM5803_REG_FLOW1, &flow1_reg);
 	if (rv) {
 		mutex_unlock(&flow1_access_lock[chgnum]);
@@ -764,6 +809,7 @@ const struct charger_drv sm5803_drv = {
 	.get_vbus_voltage = &sm5803_get_vbus_voltage,
 	.set_input_current = &sm5803_set_input_current,
 	.get_input_current = &sm5803_get_input_current,
+	.device_id = &sm5803_get_dev_id,
 	.get_option = &sm5803_get_option,
 	.set_option = &sm5803_set_option,
 	.set_otg_current_voltage = &sm5803_set_otg_current_voltage,
