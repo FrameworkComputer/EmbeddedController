@@ -62,6 +62,12 @@ static const mat33_fp_t base_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
+static const mat33_fp_t lid_standard_ref = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
 /* TODO(gcc >= 5.0) Remove the casts to const pointer at rot_standard_ref */
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -75,7 +81,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_lis2dwl_data,
 	 .port = I2C_PORT_SENSOR,
 	 .i2c_spi_addr_flags = LIS2DWL_ADDR1_FLAGS,
-	 .rot_standard_ref = NULL,
+	 .rot_standard_ref = &lid_standard_ref,
 	 .default_range = 2, /* g, enough for laptop. */
 	 .min_frequency = LIS2DW12_ODR_MIN_VAL,
 	 .max_frequency = LIS2DW12_ODR_MAX_VAL,
