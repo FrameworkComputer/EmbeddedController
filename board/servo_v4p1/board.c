@@ -24,6 +24,7 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
+#include "tusb1064.h"
 #include "update_fw.h"
 #include "usart-stm32f0.h"
 #include "usart_tx_dma.h"
@@ -324,6 +325,7 @@ static void board_init(void)
 
 	init_ioexpanders();
 	init_dacs();
+	init_tusb1064(1);
 
 	/* Clear BBRAM, we don't want any PD state carried over on reset. */
 	system_set_bbram(SYSTEM_BBRAM_IDX_PD0, 0);
