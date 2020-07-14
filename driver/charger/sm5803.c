@@ -206,26 +206,27 @@ static void sm5803_init(int chgnum)
 {
 	enum ec_error_list rv;
 	int reg;
+	int vbus_mv;
 
 	/*
 	 * If a charger is not currently present, disable switching per OCPC
 	 * requirements
 	 */
-	rv = main_read8(chgnum, SM5803_REG_STATUS1, &reg);
+	rv = charger_get_vbus_voltage(chgnum, &vbus_mv);
 	if (rv == EC_SUCCESS) {
-		if (!(reg & SM5803_STATUS1_CHG_DET)) {
+		if (vbus_mv < 4000) {
 			/*
 			 * No charger connected, disable CHG_EN
 			 * (note other bits default to 0)
 			 */
 			rv = chg_write8(chgnum, SM5803_FLOW1_CHG_EN,
 					0);
-		} else {
+		} else if (!sm5803_is_sourcing_otg_power(chgnum, chgnum)) {
 			charger_vbus[chgnum] = 1;
 		}
 	} else {
-		CPRINTS("%s %d: Failed to read status during init",
-							CHARGER_NAME, chgnum);
+		CPRINTS("%s %d: Failed to read VBUS voltage during init",
+			CHARGER_NAME, chgnum);
 		return;
 	}
 
