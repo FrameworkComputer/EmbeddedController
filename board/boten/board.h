@@ -30,6 +30,7 @@
 #define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr */
 
 /* LED */
+#define CONFIG_LED_PWM
 #define CONFIG_LED_PWM_COUNT 1
 
 /* Sensors */

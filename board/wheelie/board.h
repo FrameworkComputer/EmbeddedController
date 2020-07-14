@@ -30,6 +30,7 @@
 #undef  CONFIG_CHARGER_SINGLE_CHIP
 
 /* LED */
+#define CONFIG_LED_PWM
 #define CONFIG_LED_PWM_COUNT 1
 
 /* Sensors */

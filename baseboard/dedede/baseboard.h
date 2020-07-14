@@ -131,9 +131,10 @@
 #define CONFIG_BACKLIGHT_LID
 #define GPIO_ENABLE_BACKLIGHT   GPIO_EN_BL_OD
 
-/* PWM */
+/* LED */
 #define CONFIG_LED_COMMON
-#define CONFIG_LED_PWM
+
+/* PWM */
 #define CONFIG_PWM
 
 /* SoC */
