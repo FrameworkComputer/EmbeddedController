@@ -41,6 +41,7 @@
 	(ICACHE_BASE -                                                         \
 	 (CONFIG_IPC_SHARED_OBJ_BUF_SIZE + 2 * 4 /* int32_t */) * 2)
 #define CONFIG_IPI
+#define CONFIG_RPMSG_NAME_SERVICE
 
 #define SCP_IPI_INIT 0
 #define SCP_IPI_VDEC_H264 1
@@ -59,6 +60,8 @@
 #define SCP_IPI_COUNT 14
 
 #define IPI_COUNT SCP_IPI_COUNT
+
+#define SCP_IPI_NS_SERVICE 0xFF
 
 #ifndef __ASSEMBLER__
 #include "gpio_signal.h"
