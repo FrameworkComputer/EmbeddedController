@@ -23,3 +23,4 @@ endif
 chip-$(CONFIG_COMMON_TIMER)+=hrtimer.o
 chip-$(CONFIG_IPI)+=ipi.o ipi_table.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
+chip-$(HAS_TASK_HOSTCMD)+=hostcmd.o

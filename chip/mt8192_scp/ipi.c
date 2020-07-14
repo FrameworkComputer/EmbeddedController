@@ -7,6 +7,7 @@
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
+#include "hostcmd.h"
 #include "ipi_chip.h"
 #include "registers.h"
 #include "system.h"
@@ -52,6 +53,9 @@ static int ipi_is_busy(void)
 
 static void ipi_wake_ap(int32_t id)
 {
+	if (id >= IPI_COUNT)
+		return;
+
 	if (*ipi_wakeup_table[id])
 		SCP_SCP2SPM_IPC_SET = IPC_SCP2HOST;
 }
@@ -134,6 +138,8 @@ static void ipi_enable_deferred(void)
 		init_done = 0;
 		return;
 	}
+
+	hostcmd_init();
 
 	task_enable_irq(SCP_IRQ_GIPC_IN0);
 }
