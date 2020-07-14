@@ -93,13 +93,15 @@ void dpm_vdm_naked(int port, enum tcpm_transmit_type type, uint16_t svid,
 	}
 }
 
-void dpm_attempt_mode_entry(int port)
+/*
+ * The call to this function requests that the PE send one VDM, whichever is
+ * next in the mode entry sequence. This only happens if preconditions for mode
+ * entry are met.
+ */
+static void dpm_attempt_mode_entry(int port)
 {
 	int vdo_count = 0;
 	uint32_t vdm[VDO_MAX_SIZE];
-
-	if (dpm[port].mode_entry_done)
-		return;
 
 	if (pd_get_data_role(port) != PD_ROLE_DFP)
 		return;
@@ -172,14 +174,11 @@ void dpm_attempt_mode_entry(int port)
 	pe_dpm_request(port, DPM_REQUEST_VDM);
 }
 
-void dpm_attempt_mode_exit(int port)
+static void dpm_attempt_mode_exit(int port)
 {
 	int opos;
 	uint16_t svid;
 	uint32_t vdm;
-
-	if (!dpm[port].mode_exit_request)
-		return;
 
 	/* TODO: Add exit mode support for SOP' and SOP'' */
 
@@ -213,4 +212,12 @@ void dpm_attempt_mode_exit(int port)
 
 		pe_dpm_request(port, DPM_REQUEST_VDM);
 	}
+}
+
+void dpm_run(int port)
+{
+	if (dpm[port].mode_exit_request)
+		dpm_attempt_mode_exit(port);
+	else if (!dpm[port].mode_entry_done)
+		dpm_attempt_mode_entry(port);
 }

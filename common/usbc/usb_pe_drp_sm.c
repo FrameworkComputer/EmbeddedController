@@ -2084,16 +2084,8 @@ static void pe_src_ready_run(int port)
 			return;
 		}
 
-		/*
-		 * TODO b/155890173: Combine the entry and exit mode requests
-		 * so that there is only a single entry point into DPM.
-		 */
-
-		/* No DPM requests; attempt mode exit if needed */
-		dpm_attempt_mode_exit(port);
-
-		/* No DPM requests; attempt mode entry if needed */
-		dpm_attempt_mode_entry(port);
+		/* No DPM requests; attempt mode entry/exit if needed */
+		dpm_run(port);
 	}
 }
 
@@ -2834,15 +2826,9 @@ static void pe_snk_ready_run(int port)
 			return;
 		}
 
-		/*
-		 * TODO b/155890173: Combine the entry and exit mode requests
-		 * so that there is only a single entry point into DPM.
-		 */
-		/* No DPM requests; attempt mode exit if needed */
-		dpm_attempt_mode_exit(port);
+		/* No DPM requests; attempt mode entry/exit if needed */
+		dpm_run(port);
 
-		/* No DPM requests; attempt mode entry if needed */
-		dpm_attempt_mode_entry(port);
 	}
 }
 

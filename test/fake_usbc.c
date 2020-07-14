@@ -270,11 +270,7 @@ void dpm_set_mode_exit_request(int port)
 {
 }
 
-void dpm_attempt_mode_entry(int port)
-{
-}
-
-void dpm_attempt_mode_exit(int port)
+void dpm_run(int port)
 {
 }
 
