@@ -53,7 +53,9 @@ BOARDS_IT83XX=(
 	it83xx_evb
 	reef_it8320
 	tglrvpu_ite
+	tglrvpu_ite_tcpmv1
 	tglrvpy_ite
+	tglrvpy_ite_tcpmv1
 	jslrvp_ite
 )
 
