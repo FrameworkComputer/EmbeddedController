@@ -83,7 +83,7 @@ const char help_str[] =
 	"  button [vup|vdown|rec] <Delay-ms>\n"
 	"      Simulates button press.\n"
 	"  cbi\n"
-	"      Get/Set Cros Board Info\n"
+	"      Get/Set/Remove Cros Board Info\n"
 	"  chargecurrentlimit\n"
 	"      Set the maximum battery charging current\n"
 	"  chargecontrol\n"
@@ -7839,6 +7839,7 @@ static void cmd_cbi_help(char *cmd)
 	fprintf(stderr,
 	"  Usage: %s get <tag> [get_flag]\n"
 	"  Usage: %s set <tag> <value/string> <size> [set_flag]\n"
+	"  Usage: %s remove <tag> [set_flag]\n"
 	"    <tag> is one of:\n"
 	"      0: BOARD_VERSION\n"
 	"      1: OEM_ID\n"
@@ -7855,7 +7856,7 @@ static void cmd_cbi_help(char *cmd)
 	"      01b: Invalidate cache and reload data from EEPROM\n"
 	"    [set_flag] is combination of:\n"
 	"      01b: Skip write to EEPROM. Use for back-to-back writes\n"
-	"      10b: Set all fields to defaults first\n", cmd, cmd);
+	"      10b: Set all fields to defaults first\n", cmd, cmd, cmd);
 }
 
 static int cmd_cbi_is_string_field(enum cbi_data_tag tag)
@@ -7981,6 +7982,30 @@ static int cmd_cbi(int argc, char *argv[])
 		}
 		rv = ec_command(EC_CMD_SET_CROS_BOARD_INFO, 0,
 				p, sizeof(*p) + size, NULL, 0);
+		if (rv < 0) {
+			if (rv == -EC_RES_ACCESS_DENIED - EECRESULT)
+				fprintf(stderr, "Write-protect is enabled or "
+					"EC explicitly refused to change the "
+					"requested field.\n");
+			else
+				fprintf(stderr, "Error code: %d\n", rv);
+			return rv;
+		}
+		return 0;
+	} else if (!strcasecmp(argv[1], "remove")) {
+		struct ec_params_set_cbi p = { 0 };
+
+		p.tag = tag;
+		p.size = 0;
+		if (argc > 3) {
+			p.flag = strtol(argv[3], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad flag\n");
+				return -1;
+			}
+		}
+		rv = ec_command(EC_CMD_SET_CROS_BOARD_INFO, 0,
+				&p, sizeof(p), NULL, 0);
 		if (rv < 0) {
 			if (rv == -EC_RES_ACCESS_DENIED - EECRESULT)
 				fprintf(stderr, "Write-protect is enabled or "
