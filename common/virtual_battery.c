@@ -177,6 +177,7 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 			      int write_len)
 {
 	int val;
+	int year, month, day;
 	/*
 	 * We cache battery operational mode locally for both read and write
 	 * commands. If MODE_CAPACITY bit is set, battery capacity will be
@@ -298,6 +299,20 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 		/* This may cause an i2c transaction */
 		if (battery_time_to_empty(&val))
 			return EC_ERROR_INVAL;
+		memcpy(dest, &val, bounded_read_len);
+		break;
+	case SB_MANUFACTURE_DATE:
+		/* This may cause an i2c transaction */
+		if (!battery_manufacture_date(&year, &month, &day)) {
+			/* Encode in Smart Battery Spec format */
+			val = ((year - 1980) << 9) + (month << 5) + day;
+		} else {
+			/*
+			 * Return 0 on error. The kernel is unhappy with
+			 * returning an error code.
+			 */
+			val = 0;
+		}
 		memcpy(dest, &val, bounded_read_len);
 		break;
 	case SB_MANUFACTURER_ACCESS:
