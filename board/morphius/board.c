@@ -260,7 +260,6 @@ enum gpio_signal gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V1;
 static void board_remap_gpio(void)
 {
 	uint32_t board_ver = 0;
-	int ppc_id = 0;
 
 	cbi_get_board_version(&board_ver);
 
@@ -272,9 +271,7 @@ static void board_remap_gpio(void)
 		ccprintf("GPIO_EC_PS2_RESET_V0\n");
 	}
 
-	ioex_get_level(IOEX_PPC_ID, &ppc_id);
-
-	support_aoz_ppc = ((board_ver >= 3) && !ppc_id);
+	support_aoz_ppc = (board_ver == 3);
 	if (support_aoz_ppc) {
 		ccprintf("DB USBC PPC aoz1380\n");
 		ppc_chips[USBC_PORT_C1].drv = &aoz1380_drv;
