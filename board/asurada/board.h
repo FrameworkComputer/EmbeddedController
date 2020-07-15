@@ -14,6 +14,7 @@
 #define CONFIG_POWER_COMMON
 
 /* Optional features */
+#define CONFIG_SYSTEM_UNLOCKED
 #define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_EXTPOWER_GPIO
 /*
