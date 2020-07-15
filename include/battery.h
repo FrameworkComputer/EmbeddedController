@@ -303,6 +303,16 @@ int battery_status(int *status);
 int battery_cycle_count(int *count);
 
 /**
+ * Read battery manufacture date.
+ *
+ * @param year		Destination for year
+ * @param month		Destination for month
+ * @param day		Destination for day
+ * @return non-zero if error.
+ */
+int battery_manufacture_date(int *year, int *month, int *day);
+
+/**
  * Read battery serial number.
  *
  * @param serial	Destination for serial number.
