@@ -26,7 +26,7 @@ static void cbi_fw_config_init(void)
 
 	CPRINTS("FW_CONFIG: 0x%04X", cached_fw_config);
 }
-DECLARE_HOOK(HOOK_INIT, cbi_fw_config_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, cbi_fw_config_init, HOOK_PRIO_FIRST);
 
 enum fw_config_db get_cbi_fw_config_db(void)
 {
