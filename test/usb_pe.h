@@ -131,15 +131,21 @@ enum usb_pe_state {
 	PE_BIST_RX,
 	PE_DR_SNK_GET_SINK_CAP,
 
+#ifdef CONFIG_USB_PD_REV30
 	/* PD3.0 only states below here*/
 	PE_FRS_SNK_SRC_START_AMS,
+#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
 	PE_GIVE_BATTERY_CAP,
 	PE_GIVE_BATTERY_STATUS,
+	PE_SEND_ALERT,
+#else
+	PE_SRC_CHUNK_RECEIVED,
+	PE_SNK_CHUNK_RECEIVED,
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 
-#ifdef CONFIG_USB_PD_REV30
 	/* Super States */
 	PE_PRS_FRS_SHARED,
-#endif
+#endif /* CONFIG_USB_PD_REV30 */
 };
 
 void set_state_pe(const int port, const enum usb_pe_state new_state);

@@ -314,9 +314,14 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_TEST_SM
 #endif
 
-#if defined(TEST_USB_PRL_OLD)
+#if defined(TEST_USB_PRL_OLD) || defined(TEST_USB_PRL_NOEXTENDED)
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_REV30
+
+#if defined(TEST_USB_PRL_OLD)
+#define CONFIG_USB_PD_EXTENDED_MESSAGES
+#endif
+
 #define CONFIG_USB_PD_TCPMV2
 #undef CONFIG_USB_PE_SM
 #undef CONFIG_USB_TYPEC_SM
@@ -332,6 +337,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #if defined(TEST_USB_PRL)
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_REV30
+#define CONFIG_USB_PD_EXTENDED_MESSAGES
 #define CONFIG_USB_PD_TCPMV2
 #undef CONFIG_USB_PE_SM
 #undef CONFIG_USB_TYPEC_SM
@@ -340,7 +346,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_POWER_DELIVERY
 #endif
 
-#if defined(TEST_USB_PE_DRP)
+#if defined(TEST_USB_PE_DRP) || defined(TEST_USB_PE_DRP_NOEXTENDED)
 #define CONFIG_TEST_USB_PE_SM
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PE_SM
@@ -348,6 +354,11 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_POWER_DELIVERY
 #undef CONFIG_USB_PRL_SM
 #define CONFIG_USB_PD_REV30
+
+#if defined(TEST_USB_PE_DRP)
+#define CONFIG_USB_PD_EXTENDED_MESSAGES
+#endif
+
 #define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_PD_DECODE_SOP
 #undef CONFIG_USB_TYPEC_SM
@@ -375,6 +386,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_REV30
+#define CONFIG_USB_PD_EXTENDED_MESSAGES
 #define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_PE_SM
 #define CONFIG_USB_PRL_SM
@@ -455,6 +467,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_SW_CRC
 #ifdef TEST_USB_PD_REV30
 #define CONFIG_USB_PD_REV30
+#define CONFIG_USB_PD_EXTENDED_MESSAGES
 #define CONFIG_USB_PID 0x5000
 #endif
 #ifdef TEST_USB_PD_GIVEBACK

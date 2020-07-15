@@ -3885,6 +3885,14 @@
  */
 #undef CONFIG_USB_PD_REV30
 
+/*
+ * Support USB PD 3.0 Extended Messages. This will only take effect if
+ * CONFIG_USB_PD_REV30 is also enabled. Note that Chromebooks disabling this
+ * config item are non-compliant with PD 3.0, because they have batteries but do
+ * not support Get_Battery_Cap or Get_Battery_Status.
+ */
+#define CONFIG_USB_PD_EXTENDED_MESSAGES
+
 /* Major and Minor ChromeOS specific PD device Hardware IDs. */
 #undef CONFIG_USB_PD_HW_DEV_ID_BOARD_MAJOR
 #undef CONFIG_USB_PD_HW_DEV_ID_BOARD_MINOR
@@ -4726,7 +4734,11 @@
 #define CONFIG_USB_PD_FRS
 #endif
 
-
+/******************************************************************************/
+/* Disable extended message support if PD 3.0 support is disabled. */
+#ifndef CONFIG_USB_PD_REV30
+#undef CONFIG_USB_PD_EXTENDED_MESSAGES
+#endif
 
 /******************************************************************************/
 /*

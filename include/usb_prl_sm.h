@@ -124,6 +124,11 @@ void prl_execute_hard_reset(int port);
  * Fake to track the last sent control message
  */
 enum pd_ctrl_msg_type fake_prl_get_last_sent_ctrl_msg(int port);
+
+/**
+ * Fake to set the last sent control message to an invalid value.
+ */
+void fake_prl_clear_last_sent_ctrl_msg(int port);
 #endif
 
 #endif /* __CROS_EC_USB_PRL_H */

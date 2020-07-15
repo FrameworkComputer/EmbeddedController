@@ -60,3 +60,8 @@ enum pd_ctrl_msg_type fake_prl_get_last_sent_ctrl_msg(int port)
 {
 	return last_ctrl_msg[port];
 }
+
+void fake_prl_clear_last_sent_ctrl_msg(int port)
+{
+	last_ctrl_msg[port] = 0;
+}

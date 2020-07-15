@@ -43,9 +43,16 @@ void pd_set_vbus_discharge(int port, int enable)
 	gpio_set_level(GPIO_USB_C0_DISCHARGE, enable);
 }
 
+test_static uint8_t tc_enabled = 1;
+
 uint8_t tc_get_pd_enabled(int port)
 {
-	return 1;
+	return tc_enabled;
+}
+
+void pd_comm_enable(int port, int enable)
+{
+	tc_enabled = !!enable;
 }
 
 bool pd_alt_mode_capable(int port)
@@ -56,6 +63,31 @@ bool pd_alt_mode_capable(int port)
 void pd_set_suspend(int port, int suspend)
 {
 
+}
+
+test_static void setup_source(void)
+{
+	/* Start PE. */
+	task_wait_event(10 * MSEC);
+	pe_set_flag(PORT0, PE_FLAGS_VDM_SETUP_DONE);
+	pe_set_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT);
+	set_state_pe(PORT0, PE_SRC_READY);
+	task_wait_event(10 * MSEC);
+	/* At this point, the PE should be running in PE_SRC_Ready. */
+}
+
+test_static void setup_sink(void)
+{
+	tc_set_power_role(PORT0, PD_ROLE_SINK);
+	pd_comm_enable(PORT0, 0);
+	task_wait_event(10 * MSEC);
+	pd_comm_enable(PORT0, 1);
+	task_wait_event(10 * MSEC);
+	pe_set_flag(PORT0, PE_FLAGS_VDM_SETUP_DONE);
+	pe_set_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT);
+	set_state_pe(PORT0, PE_SNK_READY);
+	task_wait_event(10 * MSEC);
+	/* At this point, the PE should be running in PE_SNK_Ready. */
 }
 /**
  * Test section
@@ -157,12 +189,105 @@ static int test_vbus_gpio_discharge(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_extended_message_not_supported(void)
+{
+	memset(rx_emsg[PORT0].buf, 0, ARRAY_SIZE(rx_emsg[PORT0].buf));
+
+	/*
+	 * Receive an extended, non-chunked message; expect a Not Supported
+	 * response.
+	 */
+	rx_emsg[PORT0].header = PD_HEADER(
+			PD_DATA_BATTERY_STATUS, PD_ROLE_SINK, PD_ROLE_UFP, 0,
+			PDO_MAX_OBJECTS, PD_REV30, 1);
+	*(uint16_t *)rx_emsg[PORT0].buf =
+		PD_EXT_HEADER(0, 0, ARRAY_SIZE(rx_emsg[PORT0].buf)) & ~BIT(15);
+	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
+	fake_prl_clear_last_sent_ctrl_msg(PORT0);
+	task_wait_event(10 * MSEC);
+
+	pe_set_flag(PORT0, PE_FLAGS_TX_COMPLETE);
+	task_wait_event(10 * MSEC);
+	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0), PD_CTRL_NOT_SUPPORTED,
+			"%d");
+	/* At this point, the PE should again be running in PE_SRC_Ready. */
+
+	/*
+	 * Receive an extended, chunked, single-chunk message; expect a Not
+	 * Supported response.
+	 */
+	rx_emsg[PORT0].header = PD_HEADER(
+			PD_DATA_BATTERY_STATUS, PD_ROLE_SINK, PD_ROLE_UFP, 0,
+			PDO_MAX_OBJECTS, PD_REV30, 1);
+	*(uint16_t *)rx_emsg[PORT0].buf =
+		PD_EXT_HEADER(0, 0, PD_MAX_EXTENDED_MESSAGE_CHUNK_LEN);
+	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
+	fake_prl_clear_last_sent_ctrl_msg(PORT0);
+	task_wait_event(10 * MSEC);
+
+	pe_set_flag(PORT0, PE_FLAGS_TX_COMPLETE);
+	task_wait_event(10 * MSEC);
+	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0), PD_CTRL_NOT_SUPPORTED,
+			"%d");
+	/* At this point, the PE should again be running in PE_SRC_Ready. */
+
+	/*
+	 * Receive an extended, chunked, multi-chunk message; expect a Not
+	 * Supported response after tChunkingNotSupported (not earlier).
+	 */
+	rx_emsg[PORT0].header = PD_HEADER(
+			PD_DATA_BATTERY_STATUS, PD_ROLE_SINK, PD_ROLE_UFP, 0,
+			PDO_MAX_OBJECTS, PD_REV30, 1);
+	*(uint16_t *)rx_emsg[PORT0].buf =
+		PD_EXT_HEADER(0, 0, ARRAY_SIZE(rx_emsg[PORT0].buf));
+	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
+	fake_prl_clear_last_sent_ctrl_msg(PORT0);
+	task_wait_event(10 * MSEC);
+	/*
+	 * The PE should stay in PE_SRC_Chunk_Received for
+	 * tChunkingNotSupported.
+	 */
+	task_wait_event(10 * MSEC);
+	TEST_NE(fake_prl_get_last_sent_ctrl_msg(PORT0), PD_CTRL_NOT_SUPPORTED,
+			"%d");
+
+	task_wait_event(PD_T_CHUNKING_NOT_SUPPORTED);
+	pe_set_flag(PORT0, PE_FLAGS_TX_COMPLETE);
+	task_wait_event(10 * MSEC);
+	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0), PD_CTRL_NOT_SUPPORTED,
+			"%d");
+	/* At this point, the PE should again be running in PE_SRC_Ready. */
+
+	/*
+	 * TODO(b/160374787): Test responding with Not Supported to control
+	 * messages requesting extended messages as responses.
+	 */
+
+	return EC_SUCCESS;
+}
+
+test_static int test_extended_message_not_supported_src(void)
+{
+	setup_source();
+	return test_extended_message_not_supported();
+}
+
+test_static int test_extended_message_not_supported_snk(void)
+{
+	setup_sink();
+	return test_extended_message_not_supported();
+}
+
 void run_test(int argc, char **argv)
 {
 	test_reset();
 
 	RUN_TEST(test_pe_frs);
 	RUN_TEST(test_vbus_gpio_discharge);
+#ifndef CONFIG_USB_PD_EXTENDED_MESSAGES
+	RUN_TEST(test_extended_message_not_supported_src);
+	RUN_TEST(test_extended_message_not_supported_snk);
+#endif
 
 	/* Do basic state machine validity checks last. */
 	RUN_TEST(test_pe_no_parent_cycles);
