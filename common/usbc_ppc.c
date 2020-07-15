@@ -16,22 +16,28 @@
 #ifndef TEST_BUILD
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#else
+#define CPRINTF(args...)
+#define CPRINTS(args...)
+#endif
 
 int ppc_prints(const char *string, int port)
 {
+#ifndef TEST_BUILD
 	return CPRINTS("ppc p%d %s", port, string);
+#else
+	return 0;
+#endif
 }
 
 int ppc_err_prints(const char *string, int port, int error)
 {
+#ifndef TEST_BUILD
 	return CPRINTS("ppc p%d %s (%d)", port, string, error);
-}
 #else
-#define CPRINTF(args...)
-#define CPRINTS(args...)
-#define ppc_prints(string, port)
-#define ppc_err_prints(string, port, error)
+	return 0;
 #endif
+}
 
 /*
  * A per-port table that indicates how many VBUS overcurrent events have
