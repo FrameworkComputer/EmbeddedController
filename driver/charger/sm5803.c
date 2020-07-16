@@ -310,6 +310,8 @@ static void sm5803_init(int chgnum)
 			rv |= chg_write8(chgnum, 0x7E, 0x04);
 
 			rv |= chg_write8(chgnum, 0x33, 0x3C);
+
+			rv |= chg_write8(chgnum, 0x5C, 0x7A);
 		} else if (platform_id >= 0x06 && platform_id <= 0x0D) {
 			/* 2S Battery inits */
 			rv |= main_write8(chgnum, 0x30, 0xC0);
@@ -344,7 +346,14 @@ static void sm5803_init(int chgnum)
 			rv |= chg_write8(chgnum, 0x7E, 0x07);
 
 			rv |= chg_write8(chgnum, 0x33, 0x3C);
+
+			rv |= chg_write8(chgnum, 0x5C, 0x7A);
 		}
+
+		/* Disable Vbus PROCHOT comparator */
+		rv |= chg_write8(chgnum, 0x72, 0x27);
+		rv |= chg_write8(chgnum, 0x73, 0x20);
+
 	}
 
 	/* Set default input current */
