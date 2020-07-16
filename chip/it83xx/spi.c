@@ -92,6 +92,8 @@ static void spi_bad_received_data(int count)
 
 	/* State machine mismatch, timeout, or protocol we can't handle. */
 	spi_set_state(SPI_STATE_RX_BAD);
+	/* End CPU access Rx FIFO, so it can clock in bytes from AP again. */
+	IT83XX_SPI_TXRXFAR = 0;
 
 	CPRINTS("SPI rx bad data");
 	CPRINTF("in_msg=[");
@@ -294,8 +296,6 @@ static void spi_init(void)
 	/* Set FIFO data target count */
 	IT83XX_SPI_FTCB1R = (SPI_RX_MAX_FIFO_SIZE >> 8) & 0xff;
 	IT83XX_SPI_FTCB0R = SPI_RX_MAX_FIFO_SIZE & 0xff;
-	/* SPI slave controller enable */
-	IT83XX_SPI_SPISGCR = IT83XX_SPI_SPISCEN;
 #ifdef IT83XX_SPI_AUTO_RESET_RX_FIFO
 	/*
 	 * General control register2
@@ -320,6 +320,8 @@ static void spi_init(void)
 	spi_set_state(SPI_STATE_READY_TO_RECV);
 	/* Interrupt status register(write one to clear) */
 	IT83XX_SPI_ISR = 0xff;
+	/* SPI slave controller enable (after settings are ready) */
+	IT83XX_SPI_SPISGCR = IT83XX_SPI_SPISCEN;
 	/* Enable SPI slave interrupt */
 	task_clear_pending_irq(IT83XX_IRQ_SPI_SLAVE);
 	task_enable_irq(IT83XX_IRQ_SPI_SLAVE);
@@ -328,6 +330,17 @@ static void spi_init(void)
 	gpio_enable_interrupt(GPIO_SPI0_CS);
 }
 DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_INIT_SPI);
+
+/* reset slave SPI module */
+static void spi_reset(void)
+{
+	/*
+	 * Reset SPI module before sysjump. New FW images (RO/RW) will
+	 * re-configure it.
+	 */
+	IT83XX_GCTRL_RSTC5 |= BIT(1);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, spi_reset, HOOK_PRIO_DEFAULT);
 
 /* Get protocol information */
 enum ec_status spi_get_protocol_info(struct host_cmd_handler_args *args)
