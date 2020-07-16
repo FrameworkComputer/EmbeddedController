@@ -32,3 +32,9 @@ enum fw_config_db get_cbi_fw_config_db(void)
 {
 	return ((cached_fw_config & FW_CONFIG_DB_MASK) >> FW_CONFIG_DB_OFFSET);
 }
+
+enum fw_config_tablet_mode_type get_cbi_fw_config_tablet_mode(void)
+{
+	return ((cached_fw_config & FW_CONFIG_TABLET_MODE_MASK)
+			>> FW_CONFIG_DB_OFFSET_TABLET_MODE_OFFSET);
+}
