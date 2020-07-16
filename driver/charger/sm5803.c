@@ -16,6 +16,7 @@
 #include "timer.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
+#include "util.h"
 
 #ifndef CONFIG_CHARGER_NARROW_VDC
 #error "SM5803 is a NVDC charger, please enable CONFIG_CHARGER_NARROW_VDC."
@@ -207,6 +208,9 @@ static void sm5803_init(int chgnum)
 	enum ec_error_list rv;
 	int reg;
 	int vbus_mv;
+	const struct battery_info *batt_info;
+	int pre_term;
+	int cells;
 
 	/*
 	 * If a charger is not currently present, disable switching per OCPC
@@ -403,6 +407,20 @@ static void sm5803_init(int chgnum)
 	 * HOST_MODE_EN bit (all other register bits are 0 by default)
 	 */
 	rv |= chg_write8(chgnum, SM5803_REG_FLOW2, SM5803_FLOW2_HOST_MODE_EN);
+
+	/* Setup the proper precharge thresholds. */
+	batt_info = battery_get_info();
+	cells = batt_info->voltage_max / 4;
+	pre_term = batt_info->voltage_min / cells;
+	pre_term /= 100; /* Convert to decivolts. */
+	pre_term = CLAMP(pre_term, SM5803_VBAT_PRE_TERM_MIN_DV,
+			 SM5803_VBAT_PRE_TERM_MAX_DV);
+	pre_term -= SM5803_VBAT_PRE_TERM_MIN_DV; /* Convert to regval */
+
+	rv |= chg_read8(chgnum, SM5803_REG_PRE_FAST_CONF_REG1, &reg);
+	reg &= ~SM5803_VBAT_PRE_TERM;
+	reg |= pre_term << SM5803_VBAT_PRE_TERM_SHIFT;
+	rv |= chg_write8(chgnum, SM5803_REG_PRE_FAST_CONF_REG1, reg);
 
 	if (rv)
 		CPRINTS("%s %d: Failed initialization", CHARGER_NAME, chgnum);

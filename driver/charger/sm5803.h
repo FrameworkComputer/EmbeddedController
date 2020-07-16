@@ -215,6 +215,16 @@ enum sm5803_gpio0_modes {
 					 / SM5803_VOLTAGE_STEP)
 
 /*
+ * Precharge Termination threshold.
+ */
+#define SM5803_REG_PRE_FAST_CONF_REG1	0x39
+#define SM5803_VBAT_PRE_TERM_MIN_DV	23
+/* 3.8V+ gets rounded to 4V */
+#define SM5803_VBAT_PRE_TERM_MAX_DV	38
+#define SM5803_VBAT_PRE_TERM		GENMASK(7, 4)
+#define SM5803_VBAT_PRE_TERM_SHIFT	4
+
+/*
  * Vbat for fast charge uses the same equation as Vsys
  * Lower saturation value is 3V, upper is dependent on number of cells
  */
