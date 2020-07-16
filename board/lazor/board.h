@@ -24,6 +24,7 @@
 
 /* Battery */
 #define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
+#define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_FUEL_GAUGE
 
 /* BC 1.2 Charger */
@@ -94,6 +95,7 @@ enum pwm_channel {
 enum battery_type {
 	BATTERY_AP16L5J,
 	BATTERY_AP16L5J_009,
+	BATTERY_AP16L8J,
 	BATTERY_TYPE_COUNT,
 };
 
