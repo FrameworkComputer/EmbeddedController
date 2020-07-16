@@ -7,6 +7,7 @@
 #include "adc_chip.h"
 #include "button.h"
 #include "charge_state_v2.h"
+#include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
@@ -34,6 +35,8 @@
 #include "gpio_list.h"
 
 #ifdef HAS_TASK_MOTIONSENSE
+
+static int board_ver;
 
 /* Motion sensors */
 static struct mutex g_lid_mutex;
@@ -339,20 +342,45 @@ const struct usb_mux usbc1_ps8743 = {
 
 void setup_fw_config(void)
 {
+	int rv;
+
+	rv = cbi_get_board_version(&board_ver);
+	if (rv) {
+		ccprints("Fail to get board_ver");
+		/* Default for v3 */
+		board_ver = 3;
+	}
+
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 
 	setup_mux();
 
-	if (ec_config_has_hdmi_conn_hpd())
-		gpio_enable_interrupt(GPIO_DP1_HPD_EC_IN);
+	if (ec_config_has_hdmi_conn_hpd()) {
+		if (board_ver < 3)
+			ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
+		else
+			gpio_enable_interrupt(GPIO_DP1_HPD_EC_IN);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
+
+__override int check_hdmi_hpd_status(void)
+{
+	int hpd = 0;
+
+	if (board_ver < 3)
+		ioex_get_level(IOEX_HDMI_CONN_HPD_3V3_DB, &hpd);
+	else
+		hpd = gpio_get_level(GPIO_DP1_HPD_EC_IN);
+
+	return hpd;
+}
 
 static void hdmi_hpd_handler(void)
 {
 	/* Pass HPD through from DB OPT1 HDMI connector to AP's DP1. */
-	int hpd = gpio_get_level(GPIO_DP1_HPD_EC_IN);
+	int hpd = check_hdmi_hpd_status();
 
 	gpio_set_level(GPIO_DP1_HPD, hpd);
 	ccprints("HDMI HPD %d", hpd);
@@ -366,9 +394,10 @@ void hdmi_hpd_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
 }
 
-__override int check_hdmi_hpd_status(void)
+void hdmi_hpd_interrupt_v2(enum ioex_signal signal)
 {
-	return gpio_get_level(GPIO_DP1_HPD_EC_IN);
+	/* Debounce for 2 msec. */
+	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
 }
 
 /*****************************************************************************
