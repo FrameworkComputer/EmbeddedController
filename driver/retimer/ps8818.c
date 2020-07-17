@@ -98,22 +98,6 @@ int ps8818_i2c_field_update8(const struct usb_mux *me, int page, int offset,
 	return rv;
 }
 
-/* TODO(b:151232257) Remove probe code when hardware supports CBI */
-int ps8818_detect(const struct usb_mux *me)
-{
-	int rv = EC_ERROR_NOT_POWERED;
-	int val;
-
-	/* Detected if we are powered and can read the device */
-	if (!chipset_in_state(CHIPSET_STATE_HARD_OFF))
-		rv = ps8818_i2c_read(me,
-				     PS8818_REG_PAGE0,
-				     PS8818_REG0_FLIP,
-				     &val);
-
-	return rv;
-}
-
 static int ps8818_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int rv;

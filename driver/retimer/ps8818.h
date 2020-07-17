@@ -80,9 +80,6 @@
 
 extern const struct usb_mux_driver ps8818_usb_retimer_driver;
 
-/* TODO(b:151232257) Remove probe code when hardware supports CBI */
-int ps8818_detect(const struct usb_mux *me);
-
 int ps8818_i2c_read(const struct usb_mux *me,
 		    int page, int offset, int *data);
 int ps8818_i2c_write(const struct usb_mux *me,

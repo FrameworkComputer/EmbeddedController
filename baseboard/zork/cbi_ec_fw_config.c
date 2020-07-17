@@ -10,17 +10,9 @@
 /****************************************************************************
  * CBI Zork EC FW Configuration
  */
-/* TODO(b:151232257) Remove probe code when hardware supports CBI */
-static uint32_t cached_fw_config = UNINITIALIZED_FW_CONFIG;
-void set_cbi_fw_config(uint32_t val)
-{
-	cached_fw_config = val;
-}
-
 uint32_t get_cbi_fw_config(void)
 {
-	/* TODO(b:151232257) Remove probe code when hardware supports CBI */
-	/* static uint32_t cached_fw_config = UNINITIALIZED_FW_CONFIG; */
+	static uint32_t cached_fw_config = UNINITIALIZED_FW_CONFIG;
 
 	if (cached_fw_config == UNINITIALIZED_FW_CONFIG) {
 		uint32_t val;

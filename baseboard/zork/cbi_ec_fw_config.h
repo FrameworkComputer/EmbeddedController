@@ -98,9 +98,6 @@ enum ec_cfg_lid_angle_tablet_mode_type {
 					EC_CFG_LID_ANGLE_TABLET_MODE_L)
 
 
-/* TODO(b:151232257) Remove probe code when hardware supports CBI */
-void set_cbi_fw_config(uint32_t val);
-
 uint32_t get_cbi_fw_config(void);
 enum ec_cfg_usb_db_type ec_config_get_usb_db(void);
 enum ec_cfg_usb_mb_type ec_config_get_usb_mb(void);
