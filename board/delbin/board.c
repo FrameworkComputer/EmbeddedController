@@ -20,6 +20,7 @@
 #include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -355,3 +356,46 @@ void ppc_interrupt(enum gpio_signal signal)
 		break;
 	}
 }
+
+static const struct ec_response_keybd_config delbin_kb = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+__override const struct ec_response_keybd_config
+*board_vivaldi_keybd_config(void)
+{
+	return &delbin_kb;
+}
+
+static void keyboard_init(void)
+{
+	keyscan_config.actual_key_mask[0] = 0x1c;
+	keyscan_config.actual_key_mask[1] = 0xfe;
+	keyscan_config.actual_key_mask[2] = 0xff;
+	keyscan_config.actual_key_mask[3] = 0xff;
+	keyscan_config.actual_key_mask[4] = 0xff;
+	keyscan_config.actual_key_mask[5] = 0xf5;
+	keyscan_config.actual_key_mask[6] = 0xff;
+	keyscan_config.actual_key_mask[7] = 0xa4;
+	keyscan_config.actual_key_mask[8] = 0xff;
+	keyscan_config.actual_key_mask[9] = 0xfe;
+	keyscan_config.actual_key_mask[10] = 0x55;
+	keyscan_config.actual_key_mask[11] = 0xfe;
+	keyscan_config.actual_key_mask[12] = 0xff;
+	keyscan_config.actual_key_mask[13] = 0xff;
+	keyscan_config.actual_key_mask[14] = 0xff;
+}
+DECLARE_HOOK(HOOK_INIT, keyboard_init, HOOK_PRIO_INIT_I2C + 1);
