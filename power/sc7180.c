@@ -69,7 +69,7 @@
 /* Wait for polling the AP on signal */
 #define PMIC_POWER_AP_WAIT		(1 * MSEC)
 
-/* The length of an issued low pulse to the PM845_RESIN_L signal */
+/* The length of an issued low pulse to the PMIC_RESIN_L signal */
 #define PMIC_RESIN_PULSE_LENGTH		(20 * MSEC)
 
 /* The timeout of the check if the system can boot AP */
@@ -412,14 +412,14 @@ static int set_pmic_pwron(int enable)
 	 * 3. Release PMIC_KPD_PWR_ODL
 	 *
 	 * Power-off sequence:
-	 * 1. Hold down PMIC_KPD_PWR_ODL and PM845_RESIN_L, which is a power-off
+	 * 1. Hold down PMIC_KPD_PWR_ODL and PMIC_RESIN_L, which is a power-off
 	 *    trigger (requiring reprogramming PMIC registers to make
-	 *    PMIC_KPD_PWR_ODL + PM845_RESIN_L as a shutdown trigger)
+	 *    PMIC_KPD_PWR_ODL + PMIC_RESIN_L as a shutdown trigger)
 	 * 2. PMIC stops supplying power to POWER_GOOD (requiring
 	 *    reprogramming PMIC to set the stage-1 and stage-2 reset timers to
 	 *    0 such that the pull down happens just after the deboucing time
 	 *    of the trigger, like 2ms)
-	 * 3. Release PMIC_KPD_PWR_ODL and PM845_RESIN_L
+	 * 3. Release PMIC_KPD_PWR_ODL and PMIC_RESIN_L
 	 *
 	 * If the above PMIC registers not programmed or programmed wrong, it
 	 * falls back to the next functions, which cuts off the system power.
@@ -427,11 +427,11 @@ static int set_pmic_pwron(int enable)
 
 	gpio_set_level(GPIO_PMIC_KPD_PWR_ODL, 0);
 	if (!enable)
-		gpio_set_level(GPIO_PM845_RESIN_L, 0);
+		gpio_set_level(GPIO_PMIC_RESIN_L, 0);
 	ret = wait_pmic_pwron(enable, PMIC_POWER_AP_RESPONSE_TIMEOUT);
 	gpio_set_level(GPIO_PMIC_KPD_PWR_ODL, 1);
 	if (!enable)
-		gpio_set_level(GPIO_PM845_RESIN_L, 1);
+		gpio_set_level(GPIO_PMIC_RESIN_L, 1);
 
 	return ret;
 }
@@ -710,9 +710,9 @@ void chipset_reset(enum chipset_reset_reason reason)
 
 	/*
 	 * Warm reset sequence:
-	 * 1. Issue a low pulse to PM845_RESIN_L, which triggers PMIC
+	 * 1. Issue a low pulse to PMIC_RESIN_L, which triggers PMIC
 	 *    to do a warm reset (requiring reprogramming PMIC registers
-	 *    to make PM845_RESIN_L as a warm reset trigger).
+	 *    to make PMIC_RESIN_L as a warm reset trigger).
 	 * 2. PMIC then issues a low pulse to AP_RST_L to reset AP.
 	 *    EC monitors the signal to see any low pulse.
 	 *    2.1. If a low pulse found, done.
@@ -721,9 +721,9 @@ void chipset_reset(enum chipset_reset_reason reason)
 	 *         to initiate a cold reset power sequence.
 	 */
 
-	gpio_set_level(GPIO_PM845_RESIN_L, 0);
+	gpio_set_level(GPIO_PMIC_RESIN_L, 0);
 	usleep(PMIC_RESIN_PULSE_LENGTH);
-	gpio_set_level(GPIO_PM845_RESIN_L, 1);
+	gpio_set_level(GPIO_PMIC_RESIN_L, 1);
 
 	rv = power_wait_signals_timeout(IN_AP_RST_ASSERTED,
 					PMIC_POWER_AP_RESPONSE_TIMEOUT);

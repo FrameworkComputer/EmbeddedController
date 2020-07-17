@@ -173,6 +173,9 @@
 #define I2C_PORT_EEPROM  NPCX_I2C_PORT5_0
 #define I2C_PORT_SENSOR  NPCX_I2C_PORT7_0
 
+/* GPIO alias */
+#define GPIO_PMIC_RESIN_L GPIO_PM845_RESIN_L
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"

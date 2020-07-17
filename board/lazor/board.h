@@ -61,6 +61,9 @@
 #define CONFIG_GMR_TABLET_MODE
 #define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
 
+/* GPIO alias */
+#define GPIO_PMIC_RESIN_L GPIO_PM845_RESIN_L
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
