@@ -33,6 +33,8 @@ static int tusb544_enter_low_power_mode(const struct usb_mux *me)
 
 	/* Setting CTL_SEL[0,1] to 0 powers down, per Table 5 */
 	reg &= ~TUSB544_GEN4_CTL_SEL;
+	/* Clear HPD */
+	reg &= ~TUSB544_GEN4_HPDIN;
 
 	return tusb544_write(me, TUSB544_REG_GENERAL4, reg);
 }
@@ -62,11 +64,13 @@ static int tusb544_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 	reg &= ~TUSB544_GEN4_CTL_SEL;
 
 	if ((mux_state & USB_PD_MUX_USB_ENABLED) &&
-	    (mux_state & USB_PD_MUX_DP_ENABLED))
+	    (mux_state & USB_PD_MUX_DP_ENABLED)) {
 		reg |= TUSB544_CTL_SEL_DP_USB;
-	else if (mux_state & USB_PD_MUX_DP_ENABLED)
+		reg |= TUSB544_GEN4_HPDIN;
+	} else if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		reg |= TUSB544_CTL_SEL_DP_ONLY;
-	else if (mux_state & USB_PD_MUX_USB_ENABLED)
+		reg |= TUSB544_GEN4_HPDIN;
+	} else if (mux_state & USB_PD_MUX_USB_ENABLED)
 		reg |= TUSB544_CTL_SEL_USB_ONLY;
 
 	rv = tusb544_write(me, TUSB544_REG_GENERAL4, reg);
