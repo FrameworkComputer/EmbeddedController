@@ -4089,14 +4089,25 @@
 #undef CONFIG_USB_PD_TCPM_ANX7447
 #undef CONFIG_USB_PD_TCPM_ANX7688
 #undef CONFIG_USB_PD_TCPM_NCT38XX
+#undef CONFIG_USB_PD_TCPM_MT6370
+#undef CONFIG_USB_PD_TCPM_TUSB422
+#undef CONFIG_USB_PD_TCPM_RAA489000
+
+/* PS8XXX series are all supported by a single driver with a build time config
+ * listed below (CONFIG_USB_PD_TCPM_PS*) defined to enable the specific product.
+ *
+ * If a board with the same EC FW is expected to support multiple products here
+ * then CONFIG_USB_PD_TCPM_MULTI_PS8XXX MUST be defined then we can enable more
+ * than one product config to support them in the runtime. In this case, board
+ * is responsible to override function of board_get_ps8xxx_product_id in order
+ * to provide the product id per port.
+ */
+#undef CONFIG_USB_PD_TCPM_MULTI_PS8XXX
 #undef CONFIG_USB_PD_TCPM_PS8751
 #undef CONFIG_USB_PD_TCPM_PS8755
 #undef CONFIG_USB_PD_TCPM_PS8705
 #undef CONFIG_USB_PD_TCPM_PS8805
 #undef CONFIG_USB_PD_TCPM_PS8815
-#undef CONFIG_USB_PD_TCPM_MT6370
-#undef CONFIG_USB_PD_TCPM_TUSB422
-#undef CONFIG_USB_PD_TCPM_RAA489000
 
 /*
  * Defined automatically by chip and depends on chip. This guards the onboard
@@ -5617,5 +5628,27 @@
 #ifndef CONFIG_KEYBOARD_PROTOCOL_8042
 #undef CONFIG_KEYBOARD_VIVALDI
 #endif
+
+#if defined(CONFIG_USB_PD_TCPM_MULTI_PS8XXX)
+#if defined(CONFIG_USB_PD_TCPM_PS8705) + \
+	defined(CONFIG_USB_PD_TCPM_PS8751) + \
+	defined(CONFIG_USB_PD_TCPM_PS8755) + \
+	defined(CONFIG_USB_PD_TCPM_PS8805) + \
+	defined(CONFIG_USB_PD_TCPM_PS8815) < 2
+#error "Must select 2 CONFIG_USB_PD_TCPM_PS8* or above if " \
+	"CONFIG_USB_PD_TCPM_MULTI_PS8XXX is defined."
+#endif
+#endif /* CONFIG_USB_PD_TCPM_MULTI_PS8XXX  */
+
+#if defined(CONFIG_USB_PD_TCPM_PS8705) + \
+	defined(CONFIG_USB_PD_TCPM_PS8751) + \
+	defined(CONFIG_USB_PD_TCPM_PS8755) + \
+	defined(CONFIG_USB_PD_TCPM_PS8805) + \
+	defined(CONFIG_USB_PD_TCPM_PS8815) > 1
+#if !defined(CONFIG_USB_PD_TCPM_MULTI_PS8XXX)
+#error "CONFIG_USB_PD_TCPM_MULTI_PS8XXX MUST be defined if more than one " \
+	"CONFIG_USB_PD_TCPM_PS8* are intended to support in a board."
+#endif
+#endif /* defined(CONFIG_USB_PD_TCPM_PS8705) + ... */
 
 #endif  /* __CROS_EC_CONFIG_H */
