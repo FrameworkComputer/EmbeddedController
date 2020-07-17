@@ -11,10 +11,6 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
-/* Bringup/debug config items. Remove before shipping. */
-#define CONFIG_SYSTEM_UNLOCKED
-
-
 /* NPCX7 config */
 #define NPCX7_PWM1_SEL    0  /* GPIO C2 is not used as PWM1. */
 #define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
