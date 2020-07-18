@@ -198,19 +198,15 @@ static inline bool ec_config_has_mst_hub_rtd2141b(void)
 		  HAS_MST_HUB_RTD2141B);
 }
 
-#define HAS_HDMI_CONN_HPD \
-			(BIT(MORPHIUS_DB_T_OPT1_USBC_HDMI))
-
-static inline bool ec_config_has_hdmi_conn_hpd(void)
-{
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_HDMI_CONN_HPD);
-}
-
+/*
+ * USB-C0 always uses USB_C0_HPD (= DP3_HPD).
+ * USB-C1 OPT1 DB uses DP2_HPD.
+ * USB-C1 OPT3 DB uses DP1_HPD via RTD2141B MST hub, EC does not drive HPD.
+ */
 #define PORT_TO_HPD(port) ((port == 0) \
 	? GPIO_USB_C0_HPD \
-	: (ec_config_has_usbc1_retimer_ps8802()) \
-		? GPIO_DP1_HPD \
+	: (ec_config_has_mst_hub_rtd2141b()) \
+		? GPIO_NO_HPD \
 		: GPIO_DP2_HPD)
 
 extern const struct usb_mux usbc0_pi3dpx1207_usb_retimer;
