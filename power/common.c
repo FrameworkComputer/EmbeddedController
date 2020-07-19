@@ -1049,10 +1049,15 @@ DECLARE_HOOK(HOOK_INIT, restore_enable_5v_state, HOOK_PRIO_FIRST);
 
 static void preserve_enable_5v_state(void)
 {
-	mutex_lock(&pwr_5v_ctl_mtx);
+	/* Must not call mutex_lock() before task_start(). */
+	int use_mutex = task_start_called();
+
+	if (use_mutex)
+		mutex_lock(&pwr_5v_ctl_mtx);
 	system_add_jump_tag(P5_SYSJUMP_TAG, 0, sizeof(pwr_5v_en_req),
 	    &pwr_5v_en_req);
-	mutex_unlock(&pwr_5v_ctl_mtx);
+	if (use_mutex)
+		mutex_unlock(&pwr_5v_ctl_mtx);
 }
 DECLARE_HOOK(HOOK_SYSJUMP, preserve_enable_5v_state, HOOK_PRIO_DEFAULT);
 #endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
