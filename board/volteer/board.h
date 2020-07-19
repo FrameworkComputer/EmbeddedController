@@ -17,6 +17,13 @@
 
 /* Enable the required TCPMv1 options */
 #define CONFIG_USB_PD_TCPMV1
+
+/*
+ * Because the TPCMv1 stack has considerably smaller flash footprint, disable
+ * the CONFIG_CHIP_INIT_ROM_REGION for testing of the init_rom API and the
+ * BMI260 driver.
+ */
+#undef CONFIG_CHIP_INIT_ROM_REGION
 #endif
 
 /* Optional features */
@@ -45,7 +52,6 @@
 
 /* BMI260 accel/gyro in base */
 #define CONFIG_ACCELGYRO_BMI260
-#define CONFIG_ACCELGYRO_BMI160_COMPRESSED_CONFIG
 #define CONFIG_ACCELGYRO_BMI260_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
