@@ -227,6 +227,19 @@ SECTIONS
 		. = ALIGN(4);
 		*(.rodata*)
 
+#ifdef CONFIG_CHIP_INIT_ROM_REGION
+	ASSERT(0, "CONFIG_CHIP_INIT_ROM_REGION not supported by linker script")
+#endif /* CONFIG_CHIP_INIT_ROM_REGION */
+		/*
+		 * This linker file does not yet support a separate ROM resident
+		 * section. Ensure the corresponding data objects are linked
+		 * into the .rodata section.
+		 */
+		. = ALIGN(4);
+		__init_rom_start = .;
+		*(.init.rom)
+		__init_rom_end = .;
+
 		. = ALIGN(4);
 		*(.srodata*)
 #if defined(SECTION_IS_RO) && defined(CONFIG_FLASH)

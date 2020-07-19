@@ -59,11 +59,23 @@
 #define CONFIG_RO_SIZE		NPCX_PROGRAM_MEMORY_SIZE
 
 /*
+ * ROM resident area in flash used to store data objects that are not copied
+ * into code RAM. Enable using the CONFIG_CHIP_INIT_ROM_REGION option.
+ */
+#define CONFIG_RO_ROM_RESIDENT_MEM_OFF	CONFIG_RO_SIZE
+#define CONFIG_RO_ROM_RESIDENT_SIZE \
+	(CONFIG_EC_PROTECTED_STORAGE_SIZE - CONFIG_RO_SIZE)
+
+/*
  * RW firmware in program memory - Identical to RO, only one image loaded at
  * a time.
  */
 #define CONFIG_RW_MEM_OFF	CONFIG_RO_MEM_OFF
 #define CONFIG_RW_SIZE		CONFIG_RO_SIZE
+
+#define CONFIG_RW_ROM_RESIDENT_MEM_OFF	CONFIG_RW_SIZE
+#define CONFIG_RW_ROM_RESIDENT_SIZE \
+	(CONFIG_EC_WRITABLE_STORAGE_SIZE - CONFIG_RW_SIZE)
 
 #if (CONFIG_RO_SIZE != CONFIG_RW_SIZE)
 #error "Unsupported.. FLASH_ERASE_SIZE assumes RO and RW size is same!"

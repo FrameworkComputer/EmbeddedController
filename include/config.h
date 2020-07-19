@@ -1091,6 +1091,18 @@
  */
 #undef CONFIG_CHIP_UNCACHED_REGION
 
+/*
+ * When defined, adds a new linker section to store objects that remain resident
+ * in ROM/flash. This is useful on ECs that execute all code from RAM and
+ * in which the RAM size is smaller than the flash size.
+ *
+ * Code can force objects into the .init_rom resident section using the
+ * __init_rom macro. Objects should accessed using the include/init_rom.h
+ * module.
+ */
+#undef CONFIG_CHIP_INIT_ROM_REGION
+
+
 /*****************************************************************************/
 /* Chipset config */
 
@@ -1815,6 +1827,24 @@
 /* Offset relative to CONFIG_EC_WRITABLE_STORAGE_OFF */
 #undef CONFIG_RW_STORAGE_OFF
 #undef CONFIG_RW_SIZE
+
+/*
+ * Offset relative to CONFIG_EC_PROTECTED_STORAGE_OFF
+ * These define a region of flash used to store ROM resident data objects
+ * for RO images.  This is only possible when the program memory is smaller
+ * than CONFIG_EC_PROTECTED_STORAGE_SIZE.
+ */
+#undef CONFIG_RO_ROM_RESIDENT_MEM_OFF
+#undef CONFIG_RO_ROM_RESIDENT_SIZE
+
+/*
+ * Offset relative to CONFIG_EC_WRITABLE_STORAGE_OFF
+ * These define a region of flash used to store ROM resident data objects
+ * for RW images.  This is only possible when the program memory is smaller
+ * than CONFIG_EC_WRITABLE_STORAGE_SIZE.
+ */
+#undef CONFIG_RW_ROM_RESIDENT_MEM_OFF
+#undef CONFIG_RW_ROM_RESIDENT_SIZE
 
 /*
  * NPCX-specific bootheader geometry.
@@ -5346,6 +5376,34 @@
 #define CONFIG_USB_PD_PCIE_TUNNELING
 #define CONFIG_USB_PD_TBT_GEN3_CAPABLE
 #endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
+
+/*
+ * CONFIG_CHIP_INIT_ROM_REGION requires that the chip has defined a
+ * ROM resident region to store the .init_rom section.
+ *
+ * These sections must also not be zero bytes, which will happen if
+ * the program size is the same as the flash size.
+ */
+#ifdef CONFIG_CHIP_INIT_ROM_REGION
+
+#ifndef CONFIG_RO_ROM_RESIDENT_SIZE
+#error CONFIG_CHIP_INIT_ROM_REGION requires CONFIG_RO_ROM_RESIDENT_SIZE
+#endif
+
+#ifndef CONFIG_RW_ROM_RESIDENT_SIZE
+#error CONFIG_CHIP_INIT_ROM_REGION requires CONFIG_RW_ROM_RESIDENT_SIZE
+#endif
+
+
+#if (CONFIG_RO_ROM_RESIDENT_SIZE == 0)
+#error CONFIG_RO_ROM_RESIDENT_SIZE is 0 with CONFIG_CHIP_INIT_ROM_REGION defined
+#endif
+
+#if (CONFIG_RW_ROM_RESIDENT_SIZE == 0)
+#error CONFIG_RW_ROM_RESIDENT_SIZE is 0 with CONFIG_CHIP_INIT_ROM_REGION defined
+#endif
+
+#endif /* CONFIG_CHIP_INIT_ROM_REGION */
 
 /*****************************************************************************/
 
