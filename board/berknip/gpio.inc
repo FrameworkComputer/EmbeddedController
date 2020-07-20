@@ -48,9 +48,12 @@ GPIO(USB_C0_TCPC_RST_L,		PIN(E, 1), GPIO_OUT_HIGH)			/* C0 TCPC Reset */
 GPIO(USB_C1_TCPC_RST_L,		PIN(F, 0), GPIO_OUT_HIGH)			/* C1 TCPC Reset */
 GPIO(USB_C0_HPD,		PIN(F, 5), GPIO_OUT_LOW)			/* C0 DP Hotplug Detect */
 GPIO(USB_C0_IN_HPD,		PIN(7, 3), GPIO_OUT_LOW)			/* C0 IN Hotplug Detect */
-GPIO(DP1_HPD,			PIN(F, 4), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
+GPIO(EC_DP1_HPD,		PIN(F, 4), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
 GPIO(DP2_HPD,			PIN(C, 1), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
+GPIO(DP1_HPD_EC_IN,		PIN(7, 5), GPIO_INPUT)			/* C1  IN Hotplug Detect */
 GPIO(EC_H1_PACKET_MODE,		PIN(8, 6), GPIO_OUT_LOW)			/* H1 Packet Mode */
+
+UNIMPLEMENTED(NO_HPD)
 
 UNIMPLEMENTED(PCH_SMI_L)
 

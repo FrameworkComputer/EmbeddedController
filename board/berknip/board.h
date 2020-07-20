@@ -205,8 +205,8 @@ static inline bool ec_config_has_hdmi_conn_hpd(void)
 
 #define PORT_TO_HPD(port) ((port == 0) \
 	? GPIO_USB_C0_HPD \
-	: (ec_config_has_usbc1_retimer_ps8743()) \
-		? GPIO_DP1_HPD \
+	: (ec_config_has_mst_hub_rtd2141b()) \
+		? GPIO_NO_HPD \
 		: GPIO_DP2_HPD)
 
 extern const struct usb_mux usbc1_tusb544;
