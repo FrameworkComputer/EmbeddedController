@@ -285,7 +285,6 @@ static struct bit_name flag_bit_names[] = {
 	{ TC_FLAGS_DISC_IDENT_IN_PROGRESS, "DISC_IDENT_IN_PROGRESS" },
 	{ TC_FLAGS_CHECK_CONNECTION, "CHECK_CONNECTION" },
 	{ TC_FLAGS_SUSPEND, "SUSPEND" },
-	{ TC_FLAGS_TC_WARM_ATTACHED_SNK, "TC_WARM_ATTACHED_SNK" },
 };
 
 static struct bit_name event_bit_names[] = {
