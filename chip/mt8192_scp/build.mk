@@ -12,6 +12,7 @@ CORE:=riscv-rv32i
 chip-y+=clock.o
 chip-y+=gpio.o
 chip-y+=intc.o
+chip-y+=memmap.o
 chip-y+=system.o
 chip-y+=uart.o
 
