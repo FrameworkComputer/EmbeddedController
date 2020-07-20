@@ -85,6 +85,9 @@
 /* Work around double CR50 reset by waiting in initial power on. */
 #define CONFIG_BOARD_RESET_AFTER_POWER_ON
 
+/* Enable i2ctrace command */
+#define CONFIG_I2C_DEBUG
+
 /* EC Modules */
 #define CONFIG_ADC
 #define CONFIG_CRC8
