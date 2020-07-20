@@ -14,18 +14,6 @@
  */
 #define PORT0 0
 
-/*
- * Parameters for pe_run
- *
- * pe_run(port, evt, enable)
- *    evt - currently ignored in the implementation
- *    enable - 0 Disable/1 Enable
- */
-#define EVT_IGNORED 0
-
-#define ENABLED 1
-#define DISABLED 0
-
 /**
  * usb_pe_drp_sm.c locally defined.  If it changes there, it must
  * be changed here as well.

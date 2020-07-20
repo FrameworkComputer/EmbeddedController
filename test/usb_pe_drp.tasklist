@@ -6,4 +6,5 @@
 /**
  * See CONFIG_TEST_TASK_LIST in config.h for details.
  */
-#define CONFIG_TEST_TASK_LIST
+#define CONFIG_TEST_TASK_LIST \
+	TASK_TEST(PD_C0, pd_task, NULL, LARGER_TASK_STACK_SIZE)

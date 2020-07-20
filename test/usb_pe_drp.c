@@ -53,13 +53,22 @@ bool pd_alt_mode_capable(int port)
 	return 1;
 }
 
+void pd_set_suspend(int port, int suspend)
+{
+
+}
 /**
  * Test section
  */
 /* PE Fast Role Swap */
 static int test_pe_frs(void)
 {
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	/*
+	 * TODO: This test should validate PE boundary API differences -- not
+	 * internal state changes.
+	 */
+
+	task_wait_event(10 * MSEC);
 	TEST_ASSERT(pe_is_running(PORT0));
 
 	/*
@@ -71,7 +80,7 @@ static int test_pe_frs(void)
 	pe_set_flag(PORT0, PE_FLAGS_VDM_SETUP_DONE);
 	pe_set_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT);
 	set_state_pe(PORT0, PE_SNK_READY);
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	task_wait_event(10 * MSEC);
 	TEST_ASSERT(get_state_pe(PORT0) == PE_SNK_READY);
 
 	/*
@@ -83,7 +92,7 @@ static int test_pe_frs(void)
 	/*
 	 * Verify we detected FRS and ready to start swap
 	 */
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	task_wait_event(10 * MSEC);
 	TEST_ASSERT(get_state_pe(PORT0) == PE_PRS_SNK_SRC_SEND_SWAP);
 	TEST_ASSERT(pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
 	TEST_ASSERT(!pe_chk_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT));
@@ -91,7 +100,7 @@ static int test_pe_frs(void)
 	/*
 	 * Make sure that we sent FR_Swap
 	 */
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	task_wait_event(10 * MSEC);
 	TEST_ASSERT(fake_prl_get_last_sent_ctrl_msg(PORT0) == PD_CTRL_FR_SWAP);
 	TEST_ASSERT(get_state_pe(PORT0) == PE_PRS_SNK_SRC_SEND_SWAP);
 	TEST_ASSERT(pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
@@ -101,7 +110,7 @@ static int test_pe_frs(void)
 	 */
 	rx_emsg[PORT0].header = PD_HEADER(PD_CTRL_ACCEPT, 0, 0, 0, 0, 0, 0);
 	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	task_wait_event(10 * MSEC);
 	TEST_ASSERT(!pe_chk_flag(PORT0, PE_FLAGS_MSG_RECEIVED));
 	TEST_ASSERT(get_state_pe(PORT0) == PE_PRS_SNK_SRC_TRANSITION_TO_OFF);
 	TEST_ASSERT(pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
@@ -112,29 +121,16 @@ static int test_pe_frs(void)
 	rx_emsg[PORT0].header = PD_HEADER(PD_CTRL_PS_RDY, 0, 0, 0, 0, 0, 0);
 	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
 	TEST_ASSERT(!tc_is_attached_src(PORT0));
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	task_wait_event(10 * MSEC);
 	TEST_ASSERT(!pe_chk_flag(PORT0, PE_FLAGS_MSG_RECEIVED));
 	TEST_ASSERT(tc_is_attached_src(PORT0));
-	TEST_ASSERT(get_state_pe(PORT0) == PE_PRS_SNK_SRC_ASSERT_RP);
-	TEST_ASSERT(pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
-
-	/*
-	 * We are now attached source, so move to next state
-	 */
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
 	TEST_ASSERT(get_state_pe(PORT0) == PE_PRS_SNK_SRC_SOURCE_ON);
 	TEST_ASSERT(pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
 
 	/*
-	 * Move the time to be after our wait time.
-	 */
-	force_time((timestamp_t)(get_time().val +
-				 PD_POWER_SUPPLY_TURN_ON_DELAY));
-
-	/*
 	 * After delay we are ready to send our PS_RDY
 	 */
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	task_wait_event(PD_POWER_SUPPLY_TURN_ON_DELAY);
 	TEST_ASSERT(get_state_pe(PORT0) == PE_PRS_SNK_SRC_SOURCE_ON);
 	TEST_ASSERT(pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
 	TEST_ASSERT(fake_prl_get_last_sent_ctrl_msg(PORT0) == PD_CTRL_PS_RDY);
@@ -143,7 +139,7 @@ static int test_pe_frs(void)
 	 * Fake the Transmit complete and this will bring us to Source Startup
 	 */
 	pe_set_flag(PORT0, PE_FLAGS_TX_COMPLETE);
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	task_wait_event(10 * MSEC);
 	TEST_ASSERT(get_state_pe(PORT0) == PE_SRC_STARTUP);
 	TEST_ASSERT(!pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
 
