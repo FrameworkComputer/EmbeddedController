@@ -125,4 +125,7 @@ typedef struct {
 int fp_sensor_maintenance(uint8_t *image_data,
 			  fp_sensor_info_t *fp_sensor_info);
 
+/* Read the HWID from the sensor. */
+int fpc_check_hwid(void);
+
 #endif /* __CROS_EC_FPC_PRIVATE_H */

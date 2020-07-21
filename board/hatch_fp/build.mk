@@ -30,6 +30,7 @@ test-list-y=\
        flash_physical \
        flash_write_protect \
        fpsensor \
+       fpsensor_hw \
        mpu \
        mutex \
        pingpong \

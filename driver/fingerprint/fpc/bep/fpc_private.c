@@ -114,7 +114,7 @@ void fp_sensor_low_power(void)
 	fpc_send_cmd(FPC_CMD_DEEPSLEEP);
 }
 
-static int fpc_check_hwid(void)
+int fpc_check_hwid(void)
 {
 	uint16_t id;
 	int rc;

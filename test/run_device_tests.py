@@ -123,6 +123,8 @@ class AllTests:
                 TestConfig(name='flash_write_protect',
                            image_to_use=ImageType.RO,
                            toggle_power=True, enable_hw_write_protect=True),
+            'fpsensor_hw':
+                TestConfig(name='fpsensor_hw'),
             'fpsensor_spi_ro':
                 TestConfig(name='fpsensor', image_to_use=ImageType.RO,
                            test_args=['spi']),
