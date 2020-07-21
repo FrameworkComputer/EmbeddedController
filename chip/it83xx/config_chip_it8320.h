@@ -83,6 +83,8 @@
 #define IT83XX_GPIO_1P8V_PIN_EXTENDED
 /* All GPIOs support interrupt on rising, falling, and either edge. */
 #define IT83XX_GPIO_INT_FLEXIBLE
+/* Enable FRS detection interrupt. */
+#define IT83XX_INTC_FAST_SWAP_SUPPORT
 /* Enable interrupts of group 21 and 22. */
 #define IT83XX_INTC_GROUP_21_22_SUPPORT
 /* Enable detect type-c plug in interrupt. */

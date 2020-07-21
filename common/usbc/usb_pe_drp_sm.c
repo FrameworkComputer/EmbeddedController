@@ -814,6 +814,7 @@ void pe_got_hard_reset(int port)
 void pd_got_frs_signal(int port)
 {
 	PE_SET_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_SIGNALED);
+	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE, 0);
 }
 
 /*

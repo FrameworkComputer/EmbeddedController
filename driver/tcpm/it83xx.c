@@ -336,6 +336,38 @@ static void it83xx_set_data_role(enum usbpd_port port, int pd_role)
 		(IT83XX_USBPD_PDMSR(port) & ~0xc) | ((pd_role & 0x1) << 2);
 }
 
+#ifdef CONFIG_USB_PD_FRS_TCPC
+static int it83xx_tcpm_set_frs_enable(int port, int enable)
+{
+	uint8_t mask = (USBPD_REG_FAST_SWAP_REQUEST_ENABLE |
+			USBPD_REG_FAST_SWAP_DETECT_ENABLE);
+
+	if (enable) {
+		/*
+		 * Disable HW auto turn off FRS requestion and detection
+		 * when we receive soft or hard reset.
+		 */
+		IT83XX_USBPD_PDPSR(port) &= ~USBPD_REG_MASK_AUTO_FRS_DISABLE;
+		/* W/C status */
+		IT83XX_USBPD_PD30IR(port) = 0x3f;
+		/* Enable FRS detection (cc to GND) interrupt */
+		IT83XX_USBPD_MPD30IR(port) &= ~(USBPD_REG_MASK_PD30_ISR |
+					USBPD_REG_MASK_FAST_SWAP_DETECT_ISR);
+		/* Enable FRS detection (cc to GND) */
+		IT83XX_USBPD_PDQSCR(port) = (IT83XX_USBPD_PDQSCR(port) & ~mask)
+					| USBPD_REG_FAST_SWAP_DETECT_ENABLE;
+	} else {
+		/* Disable FRS detection (cc to GND) interrupt */
+		IT83XX_USBPD_MPD30IR(port) |= (USBPD_REG_MASK_PD30_ISR |
+					USBPD_REG_MASK_FAST_SWAP_DETECT_ISR);
+		/* Disable FRS detection and requestion */
+		IT83XX_USBPD_PDQSCR(port) &= ~mask;
+	}
+
+	return EC_SUCCESS;
+}
+#endif
+
 static void it83xx_init(enum usbpd_port port, int role)
 {
 #ifdef IT83XX_USBPD_CC_PARAMETER_RELOAD
@@ -655,4 +687,7 @@ const struct tcpm_drv it83xx_tcpm_drv = {
 	.get_message_raw	= &it83xx_tcpm_get_message_raw,
 	.transmit		= &it83xx_tcpm_transmit,
 	.get_chip_info		= &it83xx_tcpm_get_chip_info,
+#ifdef CONFIG_USB_PD_FRS_TCPC
+	.set_frs_enable		= &it83xx_tcpm_set_frs_enable,
+#endif
 };

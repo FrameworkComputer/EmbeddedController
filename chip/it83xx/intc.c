@@ -18,6 +18,23 @@ static void chip_pd_irq(enum usbpd_port port)
 	task_clear_pending_irq(usbpd_ctrl_regs[port].irq);
 
 	/* check status */
+	if (IS_ENABLED(IT83XX_INTC_FAST_SWAP_SUPPORT) &&
+		IS_ENABLED(CONFIG_USB_PD_FRS_TCPC) &&
+		IS_ENABLED(CONFIG_USB_PD_REV30)) {
+		/*
+		 * FRS detection must handle first, because we need to short
+		 * the interrupt -> board_frs_handler latency-critical time.
+		 */
+		if (USBPD_IS_FAST_SWAP_DETECT(port)) {
+			/* clear detect FRS signal (cc to GND) status */
+			USBPD_CLEAR_FRS_DETECT_STATUS(port);
+			if (board_frs_handler)
+				board_frs_handler(port);
+			/* inform TCPMv2 to change state */
+			pd_got_frs_signal(port);
+		}
+	}
+
 	if (USBPD_IS_HARD_RESET_DETECT(port)) {
 		/* clear interrupt */
 		IT83XX_USBPD_ISR(port) = USBPD_REG_MASK_HARD_RESET_DETECT;

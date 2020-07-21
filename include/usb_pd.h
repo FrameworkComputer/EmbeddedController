@@ -2672,6 +2672,13 @@ int pd_set_frs_enable(int port, int enable);
 __override_proto int board_pd_set_frs_enable(int port, int enable);
 
 /**
+ * Optional board-level function called after TCPC detect FRS signal.
+ *
+ * @param port   USB-C port number
+ */
+__overridable void board_frs_handler(int port);
+
+/**
  * Get current DisplayPort pin mode on the specified port.
  *
  * @param port USB-C port number
