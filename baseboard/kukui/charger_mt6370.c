@@ -205,7 +205,7 @@ static void battery_desired_curr_dynamic(struct charge_state_data *curr)
 	supply_voltage = charge_manager_get_charger_voltage();
 	stable_current = charge_get_stable_current();
 
-	if (stable_current == CHARGE_CURRENT_UNINITIALIZED)
+	if (!charge_is_current_stable())
 		return;
 
 	if (!prev_supply_voltage)
