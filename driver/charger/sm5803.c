@@ -774,8 +774,22 @@ static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 		rv = chg_write8(chgnum, SM5803_REG_ANA_EN1, reg);
 	}
 
+	/*
+	 * Vbus monitor comparator must be enabled for sourcing out voltage, and
+	 * should be disabled when sinking to prevent false Vbus PROCHOT
+	 * triggers
+	 */
+	rv = chg_read8(chgnum, SM5803_REG_PHOT1, &reg);
+	if (rv)
+		return rv;
+	if (enabled)
+		reg |= SM5803_PHOT1_VBUS_MON_EN;
+	else
+		reg &= ~SM5803_PHOT1_VBUS_MON_EN;
+	rv |= chg_write8(chgnum, SM5803_REG_PHOT1, reg);
+
 	mutex_lock(&flow1_access_lock[chgnum]);
-	rv = chg_read8(chgnum, SM5803_REG_FLOW1, &reg);
+	rv |= chg_read8(chgnum, SM5803_REG_FLOW1, &reg);
 	if (rv) {
 		mutex_unlock(&flow1_access_lock[chgnum]);
 		return rv;
