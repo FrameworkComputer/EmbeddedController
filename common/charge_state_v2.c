@@ -2501,6 +2501,11 @@ int charge_get_active_chg_chip(void)
 }
 
 #ifdef CONFIG_USB_PD_PREFER_MV
+bool charge_is_current_stable(void)
+{
+	return get_time().val >= stable_ts.val;
+}
+
 int charge_get_plt_plus_bat_desired_mw(void)
 {
 	/*
