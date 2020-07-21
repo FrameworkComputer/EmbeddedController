@@ -31,6 +31,7 @@ This FPMCU board is the Dragonclaw Rev 0.2. |
 ------------------------------------------- |
 ![Dragonclaw board]                         |
 
+Download the [Dragonclaw schematics, layout, and BOM][dragonclaw schematics].
 
 *** note
 **Googlers**: You can pick up the Dragonclaw development board at Chromestop.
@@ -603,6 +604,7 @@ Make sure that this interface is disabled:
 [Installing Chromium]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#installing-chromium-os-on-your-device
 [FPMCU documentation]: ./fingerprint.md
 [Fingerprint Debugging]: ./fingerprint-debugging.md
+[dragonclaw schematics]: ../schematics/dragonclaw
 
 <!-- Images -->
 

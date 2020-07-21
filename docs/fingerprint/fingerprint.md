@@ -24,12 +24,10 @@ The main source code for fingerprint sensor functionality lives in the
 The following "boards" (specified by the `BOARD` environment variable when
 building the EC code) are for fingerprint:
 
-*   [`nocturne_fp`] aka [`nami_fp`] aka [`dartmonkey`]
-    *   Based on [STM32H743](Cortex-M7).
-*   [`hatch_fp`] aka [`bloonchipper`]
-    *   Based on [STM32F412](Cortex-M4).
-    *   Support for the STM32F412 for the FPMCU is not yet fully complete, but
-        it is functional enough for testing.
+MCU                   | Firmware (EC "board")                          | Dev Board
+--------------------- | ---------------------------------------------- | ---------
+STM32H743 (Cortex-M7) | `dartmonkey`<br>(aka `nocturne_fp`, `nami_fp`) | Icetower v0.2 <br>(Previously Dragontalon)
+STM32F412 (Cortex-M4) | `bloonchipper`<br>(aka `hatch_fp`)             | Dragonclaw v0.2
 
 ### Determining Hardware {#chromeos-config-fingerprint}
 
@@ -481,3 +479,4 @@ detail.
 [Unit Tests]: ../unit_tests.md
 [run the unit tests]: ../unit_tests.md#running
 [Measuring Power]: ./fingerprint-dev-for-partners.md#measure-power
+[dragonclaw]: ./fingerprint-dev-for-partners.md#fpmcu-dev-board

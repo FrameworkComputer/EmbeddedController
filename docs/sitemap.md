@@ -20,6 +20,7 @@
 ## Verified Boot Troubleshooting
 
 *   [Cr50 Verified Boot Troubleshooting][4]
+
 ## Fingerprint MCU (FPMCU)
 
 *   [Fingerprint MCU (FPMCU)](./fingerprint/fingerprint.md)
@@ -28,6 +29,7 @@
 *   [Fingerprint Authentication Design Doc](./fingerprint/fingerprint-authentication-design-doc.md)
 *   [Fingerprint Factory Requirements](./fingerprint/fingerprint-factory-requirements.md)
 *   [Fingerprint Quick Factory Guide](./fingerprint/fingerprint-factory-quick-guide.md)
+*   [Dragonclaw Schematics and Layout](./schematics/dragonclaw)
 
 ## Testing
 
