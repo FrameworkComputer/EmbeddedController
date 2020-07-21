@@ -255,7 +255,7 @@ static void peci_init(void)
 	CLEAR_BIT(NPCX_DEVALT(0x0A), 6);
 	/* Set initial clock frequency */
 	peci_freq_changed();
-	/* Initialize temperature reading buffer to a sane value. */
+	/* Initialize temperature reading buffer to a valid value. */
 	for (i = 0; i < TEMP_AVG_LENGTH; ++i)
 		temp_vals[i] = 300; /* 27 C */
 

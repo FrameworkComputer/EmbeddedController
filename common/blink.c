@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* This is a sanity check program for boards that have LEDs. */
+/* This is a confidence check program for boards that have LEDs. */
 
 #include "common.h"
 #include "gpio.h"

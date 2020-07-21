@@ -333,7 +333,7 @@ static void elan_tp_init(void)
 
 #ifdef CONFIG_USB_HID_TOUCHPAD
 	/*
-	 * Sanity check dimensions provided at build time.
+	 * Validity check dimensions provided at build time.
 	 * - dpi == logical dimension / physical dimension (inches)
 	 *   (254 tenths of mm per inch)
 	 */

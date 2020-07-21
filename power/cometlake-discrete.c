@@ -372,7 +372,7 @@ enum power_state power_handle_state(enum power_state state)
 
 #ifdef CONFIG_VBOOT_EFS
 /*
- * Called in main() to ensure chipset power is sane.
+ * Called in main() to ensure chipset power is in a good state.
  *
  * This may be useful because EC reset could happen under unexpected
  * conditions and we want to ensure that if the AP is wedged for some

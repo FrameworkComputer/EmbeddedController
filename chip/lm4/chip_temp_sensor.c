@@ -10,7 +10,7 @@
 #include "common.h"
 #include "hooks.h"
 
-/* Initialize temperature reading to a sane value (27 C) */
+/* Initialize temperature reading to a valid value (27 C) */
 static int last_val = C_TO_K(27);
 
 static void chip_temp_sensor_poll(void)

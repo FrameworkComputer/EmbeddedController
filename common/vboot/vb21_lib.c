@@ -35,7 +35,7 @@ int vb21_is_signature_valid(const struct vb21_signature *sig,
 		return EC_ERROR_VBOOT_SIG_ALGORITHM;
 	if (key->hash_alg != sig->hash_alg)
 		return EC_ERROR_VBOOT_HASH_ALGORITHM;
-	/* Sanity check signature offset and data size. */
+	/* Validity check signature offset and data size. */
 	if (sig->sig_offset < sizeof(*sig))
 		return EC_ERROR_VBOOT_SIG_OFFSET;
 	if (sig->sig_offset + RSANUMBYTES > CONFIG_RW_SIG_SIZE)

@@ -227,7 +227,7 @@ excep_handler:
 	la      $r0, saved_regs + 4
 	smw.bim $r1, [$r0], $r10, 0
 	smw.bim $r15,[$r0], $r15, 0xF
-	/* put a sane stack pointer */
+	/* put a valid stack pointer */
 	la $sp, stack_end
 	/* add IPC, IPSW to the context */
 	mfsr    $r1, $IPC

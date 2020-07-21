@@ -198,7 +198,7 @@ void chipset_warm_reset_interrupt(enum gpio_signal signal)
 			 * high-Z both AP_RST_L and PS_HOLD.
 			 */
 			CPRINTS("Long warm reset ended, "
-				"cold resetting to restore sanity.");
+				"cold resetting to restore confidence.");
 			request_cold_reset();
 		}
 		/* If not overdriven, just a normal power-up, do nothing. */

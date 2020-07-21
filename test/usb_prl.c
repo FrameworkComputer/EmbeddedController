@@ -162,7 +162,7 @@ void run_test(int argc, char **argv)
 	/* TODO add tests here */
 
 
-	/* Do basic state machine sanity checks last. */
+	/* Do basic state machine validity checks last. */
 	RUN_TEST(test_prl_no_parent_cycles);
 	RUN_TEST(test_prl_no_empty_state);
 	RUN_TEST(test_prl_all_states_named);

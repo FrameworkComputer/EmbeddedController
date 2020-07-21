@@ -20,9 +20,9 @@
 struct calendar_date {
 	/* The number of years since A.D. 2000, i.e. year = 17 for y2017 */
 	uint8_t year;
-	/* 1-based indexing, i.e. sane values range from 1 to 12 */
+	/* 1-based indexing, i.e. valid values range from 1 to 12 */
 	uint8_t month;
-	/* 1-based indexing, i.e. sane values range from 1 to 31 */
+	/* 1-based indexing, i.e. valid values range from 1 to 31 */
 	uint8_t day;
 };
 

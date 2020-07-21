@@ -3652,7 +3652,7 @@
  * console logs on SRAM so that the logs will be preserved after EC shutting
  * down or sysjumped. It will keep the contents across EC resets, so we have
  * more information about system states. The contents on SRAM will be cleared
- * when checksum or sanity check fails.
+ * when checksum or validity check fails.
  */
 #undef CONFIG_PRESERVE_LOGS
 
@@ -5256,7 +5256,7 @@
 #include "test_config.h"
 
 /*
- * Sanity checks to make sure some of the configs above make sense.
+ * Validity checks to make sure some of the configs above make sense.
  */
 
 #if (CONFIG_AUX_TIMER_PERIOD_MS) < ((HOOK_TICK_INTERVAL_MS) * 2)

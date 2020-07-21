@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Sanity tests for a state machine definition */
+/* Validity tests for a state machine definition */
 
 #ifndef __CROS_EC_USB_SM_CHECKS_H
 #define __CROS_EC_USB_SM_CHECKS_H

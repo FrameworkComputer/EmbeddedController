@@ -67,8 +67,8 @@ static void temp_sensor_init(void)
 
 	/*
 	 * Initialize memory-mapped data so that if a temperature value is read
-	 * before we actually poll the sensors, we don't end up with an insane
-	 * value.
+	 * before we actually poll the sensors, we don't return an impossible
+	 * or out-of-range value.
 	 */
 	base = host_get_memmap(EC_MEMMAP_TEMP_SENSOR);
 	base_b = host_get_memmap(EC_MEMMAP_TEMP_SENSOR_B);
