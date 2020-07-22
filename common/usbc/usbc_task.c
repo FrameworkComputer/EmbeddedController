@@ -154,18 +154,9 @@ void pd_interrupt_handler_task(void *p)
 }
 #endif /* HAS_TASK_PD_INT_C0 || HAS_TASK_PD_INT_C1 || HAS_TASK_PD_INT_C2 */
 
-void pd_task(void *u)
+
+static void pd_task_init(int port)
 {
-	int port = TASK_ID_TO_PD_PORT(task_get_current());
-
-	/*
-	 * If port does not exist, return
-	 */
-	if (port >= board_get_usb_pd_port_count())
-		return;
-
-test_only_restart:
-
 	if (IS_ENABLED(CONFIG_USB_TYPEC_SM))
 		tc_state_init(port);
 
@@ -178,42 +169,69 @@ test_only_restart:
 	 */
 	if (IS_ENABLED(HAS_DEFFERED_INTERRUPT_HANDLER))
 		schedule_deferred_pd_interrupt(port);
+}
 
+static bool pd_task_loop(int port)
+{
+	/* wait for next event/packet or timeout expiration */
+	const uint32_t evt =
+		task_wait_event(paused[port]
+					? -1
+					: USBC_EVENT_TIMEOUT);
+
+	/*
+	 * Re-use TASK_EVENT_RESET_DONE in tests to restart the USB task
+	 * if this code is running in a unit test.
+	 */
+	if (IS_ENABLED(TEST_BUILD) && (evt & TASK_EVENT_RESET_DONE))
+		return false;
+
+	/* handle events that affect the state machine as a whole */
+	if (IS_ENABLED(CONFIG_USB_TYPEC_SM))
+		tc_event_check(port, evt);
+
+	/*
+	 * run port controller task to check CC and/or read incoming
+	 * messages
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_TCPC))
+		tcpc_run(port, evt);
+
+	/* Run policy engine state machine */
+	if (IS_ENABLED(CONFIG_USB_PE_SM))
+		pe_run(port, evt, tc_get_pd_enabled(port));
+
+	/* Run protocol state machine */
+	if (IS_ENABLED(CONFIG_USB_PRL_SM))
+		prl_run(port, evt, tc_get_pd_enabled(port));
+
+	/* Run TypeC state machine */
+	if (IS_ENABLED(CONFIG_USB_TYPEC_SM))
+		tc_run(port);
+
+	return true;
+}
+
+void pd_task(void *u)
+{
+	int port = TASK_ID_TO_PD_PORT(task_get_current());
+
+	/*
+	 * If port does not exist, return
+	 */
+	if (port >= board_get_usb_pd_port_count())
+		return;
 
 	while (1) {
-		/* wait for next event/packet or timeout expiration */
-		const uint32_t evt =
-			task_wait_event(paused[port]
-						? -1
-						: USBC_EVENT_TIMEOUT);
+		pd_task_init(port);
 
-		/*
-		 * Re-use TASK_EVENT_RESET_DONE in tests to restart the USB task
+		/* As long as pd_task_loop returns true, keep running the loop.
+		 * pd_task_loop returns false when the code needs to re-init
+		 * the task, so once the code breaks out of the inner while
+		 * loop, the re-init code at the top of the outer while loop
+		 * will run.
 		 */
-		if (IS_ENABLED(TEST_BUILD) && (evt & TASK_EVENT_RESET_DONE))
-			goto test_only_restart;
-
-		/* handle events that affect the state machine as a whole */
-		if (IS_ENABLED(CONFIG_USB_TYPEC_SM))
-			tc_event_check(port, evt);
-
-		/*
-		 * run port controller task to check CC and/or read incoming
-		 * messages
-		 */
-		if (IS_ENABLED(CONFIG_USB_PD_TCPC))
-			tcpc_run(port, evt);
-
-		/* Run policy engine state machine */
-		if (IS_ENABLED(CONFIG_USB_PE_SM))
-			pe_run(port, evt, tc_get_pd_enabled(port));
-
-		/* Run protocol state machine */
-		if (IS_ENABLED(CONFIG_USB_PRL_SM))
-			prl_run(port, evt, tc_get_pd_enabled(port));
-
-		/* Run TypeC state machine */
-		if (IS_ENABLED(CONFIG_USB_TYPEC_SM))
-			tc_run(port);
+		while (pd_task_loop(port))
+			continue;
 	}
 }
