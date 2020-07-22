@@ -190,4 +190,3 @@ __override void intel_x86_sys_reset_delay(void)
 	 */
 	udelay(60 * MSEC);
 }
-

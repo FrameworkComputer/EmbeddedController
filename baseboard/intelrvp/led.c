@@ -14,9 +14,6 @@
 #define LED_ON_LVL 0
 #define LED_OFF_LVL 1
 
-#define GPIO_BAT_LED_RED_L GPIO_BAT_LED_GREEN_L
-#define GPIO_PWR_LED_WHITE_L GPIO_AC_LED_GREEN_L
-
 const int led_charge_lvl_1 = 5;
 
 const int led_charge_lvl_2 = 97;

@@ -5,6 +5,7 @@
 
 /* Intel Jasperlake RVP with ITE EC board specific configuration */
 
+#include "anx7440.h"
 #include "button.h"
 #include "charger.h"
 #include "driver/charger/isl923x.h"
@@ -12,6 +13,7 @@
 #include "i2c.h"
 #include "icelake.h"
 #include "intc.h"
+#include "it83xx_pd.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -19,6 +21,8 @@
 #include "system.h"
 #include "tablet_mode.h"
 #include "uart.h"
+#include "usb_mux.h"
+#include "usb_pd_tcpm.h"
 
 #include "gpio_list.h"
 
@@ -57,6 +61,37 @@ const struct tcpc_gpio_config_t tcpc_gpios[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_gpios) == CONFIG_USB_PD_PORT_MAX_COUNT);
+
+/* USB-C TPCP Configuration */
+const struct tcpc_config_t tcpc_config[] = {
+	[TYPE_C_PORT_0] = {
+		.bus_type = EC_BUS_TYPE_EMBEDDED,
+		/* TCPC is embedded within EC so no i2c config needed */
+		.drv = &it83xx_tcpm_drv,
+	},
+	[TYPE_C_PORT_1] = {
+		.bus_type = EC_BUS_TYPE_EMBEDDED,
+		/* TCPC is embedded within EC so no i2c config needed */
+		.drv = &it83xx_tcpm_drv,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == CONFIG_USB_PD_PORT_MAX_COUNT);
+
+const struct usb_mux usb_muxes[] = {
+	[TYPE_C_PORT_0] = {
+		.usb_port = TYPE_C_PORT_0,
+		.i2c_port = I2C_PORT_USB_MUX,
+		.i2c_addr_flags = I2C_ADDR_USB_MUX0_FLAGS,
+		.driver = &anx7440_usb_mux_driver,
+	},
+	[TYPE_C_PORT_1] = {
+		.usb_port = TYPE_C_PORT_1,
+		.i2c_port = I2C_PORT_USB_MUX,
+		.i2c_addr_flags = I2C_ADDR_USB_MUX1_FLAGS,
+		.driver = &anx7440_usb_mux_driver,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {

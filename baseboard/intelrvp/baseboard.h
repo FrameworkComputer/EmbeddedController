@@ -8,9 +8,9 @@
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
 
-#ifdef CHIP_FAMILY_IT83XX
+#ifdef VARIANT_INTELRVP_EC_IT8320
 	#include "ite_ec.h"
-#endif /* CHIP_FAMILY_IT83XX */
+#endif /* VARIANT_INTELRVP_EC_IT8320 */
 
 /*
  * Allow dangerous commands.
@@ -44,7 +44,6 @@
 /* Battery */
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_FUEL_GAUGE
-#define CONFIG_BATTERY_PRESENT_GPIO GPIO_EC_BATT_PRES_L
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_SMART
 
@@ -128,7 +127,6 @@
 /* Tablet mode */
 #define CONFIG_TABLET_MODE
 #define CONFIG_GMR_TABLET_MODE
-#define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
 
 /* Verified boot */
 #define CONFIG_CRC8
