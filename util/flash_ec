@@ -417,16 +417,6 @@ servo_has_dut_i2c_mux() {
 	dut_control -i dut_i2c_mux >/dev/null 2>&1
 }
 
-# reset the EC
-toad_ec_hard_reset() {
-	if dut_control cold_reset 2>/dev/null ; then
-		dut_control cold_reset:on
-		dut_control cold_reset:off
-	else
-		info "you probably need to hard-reset your EC manually"
-	fi
-}
-
 servo_ec_hard_reset_or_die() {
 	dut_control_or_die cold_reset:on
 	dut_control_or_die cold_reset:off
@@ -471,11 +461,6 @@ ec_reset() {
 	if [[ -n "${stype}" ]]; then
 		eval ${stype}_${MCU}_hard_reset
 	fi
-}
-
-# force the EC to boot in serial monitor mode
-toad_ec_boot0() {
-	dut_control boot_mode:$1
 }
 
 ccd_ec_boot0() {
@@ -542,13 +527,6 @@ ec_switch_boot0() {
 		stype=servo
 	else
 		stype=${SERVO_TYPE}
-		if [[ "${SERVO_TYPE}" =~ "toad" ]] ; then
-			if [[ "${on_value}" == "on" ]] ; then
-				on_value="yes"
-			else
-				on_value="no"
-			fi
-		fi
 	fi
 	eval ${stype}_${MCU}_boot0 "${on_value}" $2
 }
@@ -729,7 +707,6 @@ c2d2_VARS=( "cold_reset" )
 # Some servo boards use the same controls.
 servo_v3_VARS=( "${servo_v2_VARS[@]}" )
 servo_v4_with_servo_micro_VARS=( "${servo_micro_VARS[@]}" )
-toad_VARS=( "boot_mode" )
 
 declare -a save
 
@@ -1533,13 +1510,6 @@ function flash_mec1322() {
 	flash_flashrom
 }
 
-if dut_control_get boot_mode 2>/dev/null ; then
-	if [[ "${MCU}" != "ec" ]] ; then
-		die "Toad cable can't support non-ec UARTs"
-	fi
-	SERVO_TYPE=toad
-	info "Using a dedicated debug cable"
-fi
 info "Using ${SERVO_TYPE}."
 
 # Only if it is a flash program request, call ec_image.
