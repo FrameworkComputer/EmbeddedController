@@ -273,12 +273,14 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.i2c_port = I2C_PORT_PPC0,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv
+		.drv = &syv682x_drv,
+		.frs_en = GPIO_USB_C0_FRS_EN,
 	},
 	{
 		.i2c_port = I2C_PORT_PPC1,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv
+		.drv = &syv682x_drv,
+		.frs_en = GPIO_USB_C1_FRS_EN,
 	},
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);

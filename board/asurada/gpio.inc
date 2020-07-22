@@ -81,6 +81,7 @@ GPIO(EC_INT_L,               PIN(E, 6), GPIO_ODR_HIGH) /* EC_AP_INT_ODL */
 GPIO(DP_AUX_PATH_SEL,        PIN(G, 0), GPIO_OUT_HIGH)
 GPIO(EC_DPBRDG_HPD_ODL,      PIN(J, 0), GPIO_ODR_HIGH)
 GPIO(EN_PP5000_USB_A0_VBUS,  PIN(B, 7), GPIO_OUT_LOW)
+GPIO(USB_C0_FRS_EN,          PIN(H, 3), GPIO_OUT_LOW)
 
 /* Misc Signals */
 GPIO(EC_BATT_PRES_ODL,       PIN(C, 0), GPIO_INPUT)
@@ -106,7 +107,7 @@ GPIO(I2C_E_SDA,              PIN(E, 7), GPIO_INPUT) /* I2C_USB_C1_SDA */
 /* Keyboard pins */
 
 /* Subboards HDMI/TYPEC */
-GPIO(EC_X_GPIO1,             PIN(H, 4), GPIO_OUT_HIGH)
+GPIO(EC_X_GPIO1,             PIN(H, 4), GPIO_OUT_LOW)
 GPIO(EC_X_GPIO3,             PIN(J, 1), GPIO_INPUT)
 
 /* Alternate functions GPIO definitions */
@@ -147,7 +148,6 @@ UNIMPLEMENTED_GPIO(PACKET_MODE_EN,         PIN(A, 3))
 /* b/160218054: behavior not defined */
 UNIMPLEMENTED_GPIO(USB_A0_FAULT_ODL,       PIN(A, 7))
 UNIMPLEMENTED_GPIO(CHARGER_PROCHOT_ODL,    PIN(C, 3))
-UNIMPLEMENTED_GPIO(USB_C0_FRS_EN,          PIN(H, 3))
 UNIMPLEMENTED_GPIO(PG_MT6315_GPU_ODL,      PIN(H, 6))
 UNIMPLEMENTED_GPIO(EN_PP3000_SD_U,         PIN(G, 1))
 /* reserved for future use */
