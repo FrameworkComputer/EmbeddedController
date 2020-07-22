@@ -628,7 +628,7 @@ void task_print_list(void)
 int command_task_info(int argc, char **argv)
 {
 #ifdef CONFIG_TASK_PROFILING
-	int total = 0;
+	unsigned int total = 0;
 	int i;
 #endif
 
@@ -644,13 +644,13 @@ int command_task_info(int argc, char **argv)
 		}
 	}
 
-	ccprintf("Service calls:          %11d\n", svc_calls);
-	ccprintf("Total exceptions:       %11d\n", total + svc_calls);
-	ccprintf("Task switches:          %11d\n", task_switches);
-	ccprintf("Task switching started: %11.6lld s\n", task_start_time);
-	ccprintf("Time in tasks:          %11.6lld s\n",
+	ccprintf("Service calls:          %11u\n", svc_calls);
+	ccprintf("Total exceptions:       %11u\n", total + svc_calls);
+	ccprintf("Task switches:          %11u\n", task_switches);
+	ccprintf("Task switching started: %11.6llu s\n", task_start_time);
+	ccprintf("Time in tasks:          %11.6llu s\n",
 		 get_time().val - task_start_time);
-	ccprintf("Time in exceptions:     %11.6lld s\n", exc_total_time);
+	ccprintf("Time in exceptions:     %11.6llu s\n", exc_total_time);
 #endif
 
 	return EC_SUCCESS;
