@@ -286,7 +286,7 @@ void setup_fw_config(void)
 	/* Enable PS2 power interrupts */
 	gpio_enable_interrupt(GPIO_EN_PWR_TOUCHPAD_PS2);
 
-	ps2_enable_channel(NPCX_PS2_CH0, 1, send_aux_data_to_host);
+	ps2_enable_channel(NPCX_PS2_CH0, 1, send_aux_data_to_host_interrupt);
 
 	setup_mux();
 

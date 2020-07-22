@@ -69,7 +69,7 @@ enum scancode_set_list {
  */
 static struct mutex to_host_mutex;
 
-/* Queue command/data from the host */
+/* Queue command/data to the host */
 enum {
 	CHAN_KBD = 0,
 	CHAN_AUX,
@@ -103,6 +103,9 @@ struct host_byte {
  * Hence, 5 (actually 4 plus one spare) is large enough, but use 8 for safety.
  */
 static struct queue const from_host = QUEUE_NULL(8, struct host_byte);
+
+/* Queue aux data to the host from interrupt context. */
+static struct queue const aux_to_host_queue = QUEUE_NULL(16, uint8_t);
 
 static int i8042_keyboard_irq_enabled;
 static int i8042_aux_irq_enabled;
@@ -950,17 +953,29 @@ void keyboard_protocol_task(void *u)
 	}
 }
 
+static void send_aux_data_to_host_deferred(void)
+{
+	uint8_t data;
+
+	while (!queue_is_empty(&aux_to_host_queue)) {
+		queue_remove_unit(&aux_to_host_queue, &data);
+		if (aux_chan_enabled && IS_ENABLED(CONFIG_8042_AUX))
+			i8042_send_to_host(1, &data, CHAN_AUX);
+		else
+			CPRINTS("AUX Callback ignored");
+	}
+}
+DECLARE_DEFERRED(send_aux_data_to_host_deferred);
+
 /**
- * Send aux response data to host.
+ * Send aux data to host from interrupt context.
  *
  * @param data	Aux response to send to host.
  */
-void send_aux_data_to_host(uint8_t data)
+void send_aux_data_to_host_interrupt(uint8_t data)
 {
-	if (aux_chan_enabled && IS_ENABLED(CONFIG_8042_AUX))
-		i8042_send_to_host(1, &data, CHAN_AUX);
-	else
-		CPRINTS("AUX Callback ignored");
+	queue_add_unit(&aux_to_host_queue, &data);
+	hook_call_deferred(&send_aux_data_to_host_deferred_data, 0);
 }
 
 /**
