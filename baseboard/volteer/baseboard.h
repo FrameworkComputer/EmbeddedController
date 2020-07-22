@@ -212,25 +212,10 @@
  */
 #define CONFIG_USB_PID 0x503E
 
-/* TODO: b/144165680 - measure and check these values on Volteer */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
-#define PD_VCONN_SWAP_DELAY		5000 /* us */
-
 /* Retimer */
 #define CONFIG_USBC_RETIMER_INTEL_BB
 #define CONFIG_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
 #define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x40
-
-/*
- * SN5S30 PPC supports up to 24V VBUS source and sink, however passive USB-C
- * cables only support up to 60W.
- */
-#define PD_OPERATING_POWER_MW	15000
-#define PD_MAX_POWER_MW		60000
-#define PD_MAX_CURRENT_MA	3000
-#define PD_MAX_VOLTAGE_MV	20000
-
 
 #ifndef __ASSEMBLER__
 
