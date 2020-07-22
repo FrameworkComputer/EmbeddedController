@@ -14,6 +14,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "intel_x86.h"
+#include "system.h"
 
 /******************************************************************************/
 /*
@@ -123,6 +124,31 @@ __override int intel_x86_get_pg_ec_dsw_pwrok(void)
 	 */
 	return pp3300_a_pgood;
 }
+
+/* Store away PP300_A good status before sysjumps */
+#define BASEBOARD_SYSJUMP_TAG	0x4242 /* BB */
+#define BASEBOARD_HOOK_VERSION	1
+
+static void pp3300_a_pgood_preserve(void)
+{
+	system_add_jump_tag(BASEBOARD_SYSJUMP_TAG, BASEBOARD_HOOK_VERSION,
+			    sizeof(pp3300_a_pgood), &pp3300_a_pgood);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, pp3300_a_pgood_preserve, HOOK_PRIO_DEFAULT);
+
+static void pp3300_a_pgood_restore(void)
+{
+	const int *stored;
+	int version, size;
+
+	stored = (const int *)system_get_jump_tag(BASEBOARD_SYSJUMP_TAG,
+						  &version, &size);
+	if (stored && (version == BASEBOARD_HOOK_VERSION) &&
+					(size == sizeof(pp3300_a_pgood)))
+		/* Valid PP3300 status found, restore before CHIPSET init */
+		pp3300_a_pgood = *stored;
+}
+DECLARE_HOOK(HOOK_INIT, pp3300_a_pgood_restore, HOOK_PRIO_FIRST);
 
 __override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 {
