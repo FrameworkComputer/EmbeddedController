@@ -46,10 +46,10 @@ static const char * const task_names[] = {
 
 #ifdef CONFIG_TASK_PROFILING
 static int task_will_switch;
-static uint64_t exc_sub_time;
+static uint32_t exc_sub_time;
 static uint64_t task_start_time; /* Time task scheduling started */
-static uint64_t exc_start_time;  /* Time of task->exception transition */
-static uint64_t exc_end_time;    /* Time of exception->task transition */
+static uint32_t exc_start_time;  /* Time of task->exception transition */
+static uint32_t exc_end_time;    /* Time of exception->task transition */
 static uint64_t exc_total_time;  /* Total time in exceptions */
 static uint32_t svc_calls;       /* Number of service calls */
 static uint32_t task_switches;   /* Number of times active task changed */
@@ -307,7 +307,7 @@ static inline void __schedule(int desched, int resched, int swirq)
 void __ram_code update_exc_start_time(void)
 {
 #ifdef CONFIG_TASK_PROFILING
-	exc_start_time = get_time().val;
+	exc_start_time = get_time().le.lo;
 #endif
 }
 
@@ -364,9 +364,9 @@ error:
 void __ram_code end_irq_handler(void)
 {
 #ifdef CONFIG_TASK_PROFILING
-	uint64_t t, p;
+	uint32_t t, p;
 
-	t = get_time().val;
+	t = get_time().le.lo;
 	p = t - exc_start_time;
 
 	exc_total_time += p;
@@ -722,7 +722,8 @@ void task_pre_init(void)
 int task_start(void)
 {
 #ifdef CONFIG_TASK_PROFILING
-	task_start_time = exc_end_time = get_time().val;
+	task_start_time = get_time().val;
+	exc_end_time = get_time().le.lo;
 #endif
 
 	return __task_start();
