@@ -1117,6 +1117,21 @@
  */
 #undef CONFIG_CHIP_INIT_ROM_REGION
 
+/*
+ * This is a convenience macro that causes the .data section to link into
+ * the ROM/flash resident section defined above.
+ *
+ * When enabled, the EC initialization code copies the .data section directly
+ * from flash into data RAM.
+ *
+ * When this is not defined, the bootloader copies the .data section from flash
+ * to code RAM. The EC initialization code copies .data from code RAM to data
+ * RAM.
+ *
+ * This is automatically enabled when both CONFIG_CHIP_INIT_ROM_REGION and
+ * CONFIG_MAPPED_STORAGE are enabled.
+ */
+#undef CONFIG_CHIP_DATA_IN_INIT_ROM
 
 /*****************************************************************************/
 /* Chipset config */
@@ -5461,6 +5476,13 @@
 #error CONFIG_RW_ROM_RESIDENT_SIZE is 0 with CONFIG_CHIP_INIT_ROM_REGION defined
 #endif
 
+/*
+ * By default, enable storing the .data section on the ROM resident area to
+ * save flash space.
+ */
+#ifdef CONFIG_MAPPED_STORAGE
+#define CONFIG_CHIP_DATA_IN_INIT_ROM
+#endif
 #endif /* CONFIG_CHIP_INIT_ROM_REGION */
 
 /*****************************************************************************/

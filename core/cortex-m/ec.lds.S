@@ -124,7 +124,12 @@ MEMORY
 	#else
 		#define EC_IMAGE_VMA_MEM_REGION	FLASH
 	#endif
-	#define DATA_LMA_MEM_REGION		FLASH
+
+	#ifdef CONFIG_CHIP_DATA_IN_INIT_ROM
+		#define DATA_LMA_MEM_REGION	ROM_RESIDENT
+	#else
+		#define DATA_LMA_MEM_REGION	FLASH
+	#endif
 #endif
 
 SECTIONS
@@ -344,7 +349,13 @@ SECTIONS
 		. = ALIGN(4);
 	} > EC_IMAGE_VMA_MEM_REGION AT > EC_IMAGE_LMA_MEM_REGION
 
+#ifdef CONFIG_CHIP_DATA_IN_INIT_ROM
+	__data_lma_start = ORIGIN(ROM_RESIDENT_VMA);
+	#define INIT_ROM_LMA	(ORIGIN(ROM_RESIDENT_VMA) + SIZEOF(.data))
+#else
 	__data_lma_start = .;
+	#define INIT_ROM_LMA	ORIGIN(ROM_RESIDENT_VMA)
+#endif
 
 #ifdef CONFIG_PRESERVE_LOGS
 	.preserve_logs(NOLOAD) : {
@@ -465,13 +476,25 @@ SECTIONS
 	__ram_free = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE) -
 		     (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
 
+#ifdef CONFIG_CHIP_DATA_IN_INIT_ROM
+	/*
+	 * .data is ROM resident, last section in the EC image is the .rodata
+	 * section.
+	 */
+	#define FLASH_USED_END	(LOADADDR(.rodata) + SIZEOF(.rodata))
+#else
+	/*
+	 * .data is included in the EC image and copied to RAM by the loader.
+	 */
+	#define FLASH_USED_END	(LOADADDR(.data) + SIZEOF(.data))
+#endif
+
 	/*
 	 * __flash_used is used in flash free calculations by the makefile.
 	 * __image_size is stored in the struct image_data header and used
 	 * in hash calcuations.
 	 */
-	__flash_used = LOADADDR(.data) + SIZEOF(.data) -
-		       ORIGIN(EC_IMAGE_LMA_MEM_REGION);
+	__flash_used = FLASH_USED_END - ORIGIN(EC_IMAGE_LMA_MEM_REGION);
 	__image_size = __flash_used;
 
 #ifdef CONFIG_FLASH
@@ -516,6 +539,24 @@ SECTIONS
 	 * The loader code copies the .text, .rodata, and .data sections into
 	 * the code RAM of the EC.  The .header and .init_rom sections are not
 	 * copied by the loader.
+	 *
+	 * Image layout when ROM_RESIDENT region is used, and
+	 * CONFIG_CHIP_DATA_IN_INIT_ROM is enabled.
+	 *
+	 *	EC image layout (LMA)		VMA
+	 *	.header (if RO image)		none
+	 *	.text				code RAM
+	 *	.rodata				code RAM + .text size
+	 *	.fill				none
+	 *	.data				data RAM
+	 *	.init_rom			flash offset
+	 *
+	 * The loader code copies the .text and .rodata sections into the code
+	 * RAM of the EC.  The .header, .data, and .init_rom sections are not
+	 * copied by the loader.
+	 *
+	 * EC initialization code copies the .data directly from flash to
+	 * data RAM at runtime.
 	 */
 
 	/*
@@ -525,7 +566,7 @@ SECTIONS
 	ASSERT((ORIGIN(FLASH) + LENGTH(FLASH)) == ORIGIN(ROM_RESIDENT),
 		".init_rom section must follow the flash section")
 
-	.init_rom : {
+	.init_rom INIT_ROM_LMA : {
 		. = ALIGN(4);
 		__init_rom_start = .;
 		*(.init.rom)
@@ -537,7 +578,7 @@ SECTIONS
 	 * flash as the FLASH section. Fill the space between.
 	 */
 	.fill : {
-		. = LOADADDR(.data) + SIZEOF(.data);
+		. = FLASH_USED_END;
 		. = ALIGN(4);
 		__fill_start = .;
 		FILL(0xFF);
@@ -548,11 +589,11 @@ SECTIONS
 	} > FLASH
 
 	/*
-	 * The end of the .fill region should also be the start of the
-	 * .init_rom region
+	 * The end of the .fill region should also be the start of the ROM
+	 * resident region.
 	 */
-	ASSERT(__fill_end == LOADADDR(.init_rom),
-		".fill region end not aligned to start of .init_rom")
+	ASSERT(__fill_end == ORIGIN(ROM_RESIDENT),
+		".fill region end not aligned to start of ROM_RESIDENT region")
 
 	/*
 	 * __image_size is used for hash calculation.  When
