@@ -83,6 +83,9 @@
 /* Enabling USB4 mode */
 #define CONFIG_USB_PD_USB4
 
+/* Disabled PD extended message support to save flash space. */
+#undef CONFIG_USB_PD_EXTENDED_MESSAGES
+
 /* USB Type A Features */
 #define USB_PORT_COUNT			1
 #define CONFIG_USB_PORT_POWER_DUMB
