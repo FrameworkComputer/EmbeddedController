@@ -91,7 +91,7 @@
 /* Fan features */
 
 /* charger defines */
-#define CONFIG_CHARGER_SENSE_RESISTOR		10
+#define CONFIG_CHARGER_SENSE_RESISTOR		5
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC	10
 
 /*
