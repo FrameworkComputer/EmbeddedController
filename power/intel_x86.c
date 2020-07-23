@@ -194,13 +194,17 @@ static void sleep_notify_transition(int check_state, int hook_id)
 	if (sleep_notify != check_state)
 		return;
 
-	/* Clear masks before any hooks are run for suspend. */
-	if (sleep_notify == SLEEP_NOTIFY_SUSPEND)
-		lpc_s0ix_suspend_clear_masks();
-
 	hook_notify(hook_id);
 	sleep_notify = SLEEP_NOTIFY_NONE;
 }
+
+static void handle_chipset_suspend(void)
+{
+	/* Clear masks before any hooks are run for suspend. */
+	lpc_s0ix_suspend_clear_masks();
+
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, handle_chipset_suspend, HOOK_PRIO_FIRST);
 
 static void handle_chipset_reset(void)
 {
@@ -297,14 +301,6 @@ static void sleep_complete_resume(struct host_sleep_event_context *ctx)
 {
 	hook_call_deferred(&sleep_transition_timeout_data, -1);
 	ctx->sleep_transitions = sleep_signal_transitions;
-
-	/*
-	 * If the sleep signal timed out and never transitioned, then the
-	 * wake mask was modified to its suspend state (S0ix), so that the
-	 * event wakes the system. Explicitly restore the wake mask to its
-	 * S0 state now.
-	 */
-	power_update_wake_mask();
 }
 
 static void sleep_reset_tracking(void)
@@ -692,7 +688,13 @@ __override void power_chipset_handle_host_sleep_event(
 		lpc_s0ix_resume_restore_masks();
 		power_signal_disable_interrupt(sleep_sig[SYS_SLEEP_S0IX]);
 		sleep_complete_resume(ctx);
-
+		/*
+		 * If the sleep signal timed out and never transitioned, then
+		 * the wake mask was modified to its suspend state (S0ix), so
+		 * that the event wakes the system. Explicitly restore the wake
+		 * mask to its S0 state now.
+		 */
+		power_update_wake_mask();
 	} else if (state == HOST_SLEEP_EVENT_DEFAULT_RESET) {
 		power_signal_disable_interrupt(sleep_sig[SYS_SLEEP_S0IX]);
 	}
