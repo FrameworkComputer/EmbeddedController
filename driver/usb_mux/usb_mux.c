@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"
@@ -35,6 +36,7 @@ enum mux_config_type {
 	USB_MUX_LOW_POWER,
 	USB_MUX_SET_MODE,
 	USB_MUX_GET_MODE,
+	USB_MUX_CHIPSET_RESET,
 };
 
 /* Configure the MUX */
@@ -82,6 +84,12 @@ static int configure_mux(int port,
 		case USB_MUX_LOW_POWER:
 			if (drv && drv->enter_low_power_mode)
 				rv = drv->enter_low_power_mode(mux_ptr);
+
+			break;
+
+		case USB_MUX_CHIPSET_RESET:
+			if (drv && drv->chipset_reset)
+				rv = drv->chipset_reset(mux_ptr);
 
 			break;
 
@@ -276,6 +284,15 @@ void usb_mux_hpd_update(int port, int hpd_lvl, int hpd_irq)
 		configure_mux(port, USB_MUX_SET_MODE, &mux_state);
 	}
 }
+
+static void mux_chipset_reset(void)
+{
+	int port;
+
+	for (port = 0; port < board_get_usb_pd_port_count(); ++port)
+		configure_mux(port, USB_MUX_CHIPSET_RESET, NULL);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, mux_chipset_reset, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CMD_TYPEC
 static int command_typec(int argc, char **argv)

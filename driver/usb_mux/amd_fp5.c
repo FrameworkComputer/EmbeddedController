@@ -8,8 +8,13 @@
 #include "amd_fp5.h"
 #include "chipset.h"
 #include "common.h"
+#include "hooks.h"
 #include "i2c.h"
+#include "queue.h"
+#include "timer.h"
 #include "usb_mux.h"
+
+static mux_state_t saved_mux_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static inline int amd_fp5_mux_read(const struct usb_mux *me, uint8_t *val)
 {
@@ -40,6 +45,8 @@ static int amd_fp5_init(const struct usb_mux *me)
 static int amd_fp5_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 {
 	uint8_t val = 0;
+
+	saved_mux_state[me->usb_port] = mux_state;
 
 	/*
 	 * This MUX is on the FP5 SoC.  If that device is not powered then
@@ -114,8 +121,36 @@ static int amd_fp5_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 	return EC_SUCCESS;
 }
 
+static struct queue const chipset_reset_queue
+	= QUEUE_NULL(CONFIG_USB_PD_PORT_MAX_COUNT, struct usb_mux *);
+
+static void amd_fp5_chipset_reset_delay(void)
+{
+	struct usb_mux *me;
+	int rv;
+
+	while (queue_remove_unit(&chipset_reset_queue, &me)) {
+		rv = amd_fp5_set_mux(me, saved_mux_state[me->usb_port]);
+		if (rv)
+			ccprints("C%d restore mux rv:%d", me->usb_port, rv);
+	}
+}
+DECLARE_DEFERRED(amd_fp5_chipset_reset_delay);
+
+/*
+ * The AP's internal USB-C mux is reset when AP resets, so wait for
+ * it to be ready and then restore the previous setting.
+ */
+static int amd_fp5_chipset_reset(const struct usb_mux *me)
+{
+	queue_add_unit(&chipset_reset_queue, &me);
+	hook_call_deferred(&amd_fp5_chipset_reset_delay_data, 200 * MSEC);
+	return EC_SUCCESS;
+}
+
 const struct usb_mux_driver amd_fp5_usb_mux_driver = {
 	.init = &amd_fp5_init,
 	.set = &amd_fp5_set_mux,
 	.get = &amd_fp5_get_mux,
+	.chipset_reset = &amd_fp5_chipset_reset,
 };
