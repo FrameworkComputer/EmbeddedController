@@ -619,7 +619,7 @@ static int syv682x_init(int port)
 		 * select HV channel.
 		 */
 		regval = SYV682X_CONTROL_1_PWR_ENB |
-			(SYV682X_HV_ILIM_3_30 << SYV682X_HV_ILIM_BIT_SHIFT) |
+			(CONFIG_SYV682X_HV_ILIM << SYV682X_HV_ILIM_BIT_SHIFT) |
 			/* !SYV682X_CONTROL_1_HV_DR */
 			SYV682X_CONTROL_1_CH_SEL;
 		rv = write_reg(port, SYV682X_CONTROL_1_REG, regval);
