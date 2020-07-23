@@ -5295,6 +5295,17 @@
 #error "Must enable CONFIG_POWER_TRACK_HOST_SLEEP_STATE for S0ix"
 #endif
 
+#if defined(CONFIG_CHIPSET_SC7180)
+#if defined(CONFIG_POWER_SLEEP_FAILURE_DETECTION) && \
+	!defined(CONFIG_CHIPSET_RESUME_INIT_HOOK)
+#error "Require resume init hook to enable sleep failure detection"
+#endif
+#if !defined(CONFIG_POWER_SLEEP_FAILURE_DETECTION) && \
+	defined(CONFIG_CHIPSET_RESUME_INIT_HOOK)
+#error "Don't enable resume init hook unless for sleep failure detection"
+#endif
+#endif
+
 /*****************************************************************************/
 
 /*
