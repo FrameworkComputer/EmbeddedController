@@ -11,6 +11,9 @@
 /* ITE EC variant */
 #define VARIANT_INTELRVP_EC_IT8320
 
+/* MECC config */
+#define CONFIG_INTEL_RVP_MECC_VERSION_0_9
+
 /* USB MUX */
 #define CONFIG_USB_MUX_VIRTUAL
 

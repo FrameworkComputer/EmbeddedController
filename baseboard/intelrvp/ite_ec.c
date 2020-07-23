@@ -19,18 +19,6 @@ void board_reset_pd_mcu(void)
 	/* Not applicable for ITE TCPC */
 }
 
-uint16_t tcpc_get_alert_status(void)
-{
-	/*
-	 * Since C0/C1 TCPC are embedded within EC, we don't need the
-	 * PDCMD tasks. The (embedded) TCPC status since chip driver
-	 * code handles its own interrupts and forward the correct
-	 * events to the PD_C0 task. See it83xx/intc.c
-	 */
-
-	return 0;
-}
-
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
 	.output_settle_us = 35,

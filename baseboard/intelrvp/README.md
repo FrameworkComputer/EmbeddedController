@@ -14,12 +14,14 @@ this baseboard code is applicable to Icelake and its successors only.
 
 Following hardware features are supported on MECC header by RVP and can be
 validated by software by MECC.
+
+MECC version 0.9 features
 1. Power to MECC is provide by RVP (battery + DC Jack + Type C)
 2. Power control pins for Intel SOC are added
 3. Servo V2 header need to be added by MECC
 4. Google H1 chip need to be added by MECC (optional for EC vendors)
-4. 2 Type-C port support (SRC/SNK/BC1.2/MUX/Rerimer)
-5. 6 Temperature sensors
-6. 4 ADC
-7. 4 I2C Channels
-8. 1 Fan control
+5. 2 Type-C port support (SRC/SNK/BC1.2/MUX/Rerimer)
+6. 6 Temperature sensors
+7. 4 ADC
+8. 4 I2C Channels
+9. 1 Fan control

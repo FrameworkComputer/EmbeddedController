@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
 
+#include "stdbool.h"
+
 #ifdef VARIANT_INTELRVP_EC_IT8320
 	#include "ite_ec.h"
 #endif /* VARIANT_INTELRVP_EC_IT8320 */
@@ -254,6 +256,7 @@ void board_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp);
 int ioexpander_read_intelrvp_version(int *port0, int *port1);
 void board_dc_jack_interrupt(enum gpio_signal signal);
 void tcpc_alert_event(enum gpio_signal signal);
+bool is_typec_port(int port);
 
 #endif /* !__ASSEMBLER__ */
 

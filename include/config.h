@@ -4393,6 +4393,12 @@
 /* USB Device version of product */
 #undef CONFIG_USB_BCD_DEV
 
+/*
+ * Intel Reference Validation Platform's (RVP) Modular Embedded Control
+ * Card (MECC) version 0.9
+ */
+#undef CONFIG_INTEL_RVP_MECC_VERSION_0_9
+
 /*****************************************************************************/
 
 /* Compile chip support for the USB device controller */
