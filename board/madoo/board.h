@@ -116,6 +116,9 @@
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
 
+#define CONFIG_BATTERY_DEVICE_CHEMISTRY "LION"
+#define CONFIG_BATTERY_FUEL_GAUGE
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -148,6 +151,16 @@ enum pwm_channel {
 	PWM_CH_LED1_AMBER,
 	PWM_CH_LED2_WHITE,
 	PWM_CH_COUNT,
+};
+
+enum battery_type {
+	BATTERY_SIMPLO_HIGHPOWER,
+	BATTERY_SIMPLO_COS,
+	BATTERY_CosMX,
+	BATTERY_SAMSUNG_SDI,
+	BATTERY_DynaPack_COS,
+	BATTERY_DANAPACK_ATL,
+	BATTERY_TYPE_COUNT,
 };
 
 int board_is_sourcing_vbus(int port);
