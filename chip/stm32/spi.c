@@ -633,7 +633,11 @@ static void spi_chipset_startup(void)
 
 	enabled = 1;
 }
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+DECLARE_HOOK(HOOK_CHIPSET_RESUME_INIT, spi_chipset_startup, HOOK_PRIO_DEFAULT);
+#else
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, spi_chipset_startup, HOOK_PRIO_DEFAULT);
+#endif
 
 static void spi_chipset_shutdown(void)
 {
@@ -649,7 +653,12 @@ static void spi_chipset_shutdown(void)
 	/* Allow deep sleep when AP off */
 	enable_sleep(SLEEP_MASK_SPI);
 }
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND_COMPLETE, spi_chipset_shutdown,
+	     HOOK_PRIO_DEFAULT);
+#else
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, spi_chipset_shutdown, HOOK_PRIO_DEFAULT);
+#endif
 
 static void spi_init(void)
 {

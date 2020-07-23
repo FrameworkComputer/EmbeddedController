@@ -940,7 +940,11 @@ static void shi_enable(void)
 	 */
 	task_enable_irq(NPCX_IRQ_SHI);
 }
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+DECLARE_HOOK(HOOK_CHIPSET_RESUME_INIT, shi_enable, HOOK_PRIO_DEFAULT);
+#else
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, shi_enable, HOOK_PRIO_DEFAULT);
+#endif
 
 static void shi_reenable_on_sysjump(void)
 {
@@ -979,7 +983,11 @@ static void shi_disable(void)
 	 */
 	enable_sleep(SLEEP_MASK_SPI);
 }
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND_COMPLETE, shi_disable, HOOK_PRIO_DEFAULT);
+#else
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, shi_disable, HOOK_PRIO_DEFAULT);
+#endif
 DECLARE_HOOK(HOOK_SYSJUMP, shi_disable, HOOK_PRIO_DEFAULT);
 
 static void shi_init(void)
