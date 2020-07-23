@@ -3014,8 +3014,8 @@
 /* Support S0ix */
 #undef CONFIG_POWER_S0IX
 
-/* Support detecting failure to enter S0ix */
-#undef CONFIG_POWER_S0IX_FAILURE_DETECTION
+/* Support detecting failure to enter a sleep state (S0ix/S3) */
+#undef CONFIG_POWER_SLEEP_FAILURE_DETECTION
 
 /*
  * Allow the host to self-report its sleep state, in case there is some delay
