@@ -297,6 +297,8 @@ static int syv682x_vbus_sink_enable(int port, int enable)
 		/* Select Sink mode and turn on the channel */
 		regval &= ~(SYV682X_CONTROL_1_HV_DR |
 			    SYV682X_CONTROL_1_PWR_ENB);
+		/* Set sink current limit to the configured value */
+		regval |= CONFIG_SYV682X_HV_ILIM << SYV682X_HV_ILIM_BIT_SHIFT;
 		flags[port] &= ~SYV682X_FLAGS_SOURCE_ENABLED;
 	} else {
 		/*
