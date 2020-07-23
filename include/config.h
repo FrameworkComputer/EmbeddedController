@@ -1130,6 +1130,14 @@
 #undef CONFIG_CHIPSET_RESET_HOOK
 
 /*
+ * Enable chipset resume init and suspend complete hooks. These hooks are
+ * usually used to initialize/disable the SPI driver, which goes to sleep
+ * on suspend. Require to initialize it first such that it can receive a
+ * host resume event, that notifies the normal resume hook.
+ */
+#undef CONFIG_CHIPSET_RESUME_INIT_HOOK
+
+/*
  * Enable turning on PP3300_A rail before PP5000_A rail on the Ice Lake
  * and Tiger Lake chipsets. Enable this option if there is leakage from PP5000_A
  * resources into PP3300_A resources.

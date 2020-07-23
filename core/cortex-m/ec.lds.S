@@ -188,6 +188,16 @@ SECTIONS
 		KEEP(*(.rodata.HOOK_CHIPSET_SUSPEND))
 		__hooks_chipset_suspend_end = .;
 
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+		__hooks_chipset_resume_init = .;
+		KEEP(*(.rodata.HOOK_CHIPSET_RESUME_INIT))
+		__hooks_chipset_resume_init_end = .;
+
+		__hooks_chipset_suspend_complete = .;
+		KEEP(*(.rodata.HOOK_CHIPSET_SUSPEND_COMPLETE))
+		__hooks_chipset_suspend_complete_end = .;
+#endif
+
 		__hooks_chipset_shutdown = .;
 		KEEP(*(.rodata.HOOK_CHIPSET_SHUTDOWN))
 		__hooks_chipset_shutdown_end = .;

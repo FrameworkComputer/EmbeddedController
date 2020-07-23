@@ -40,6 +40,12 @@ extern const struct hook_data __hooks_chipset_resume[];
 extern const struct hook_data __hooks_chipset_resume_end[];
 extern const struct hook_data __hooks_chipset_suspend[];
 extern const struct hook_data __hooks_chipset_suspend_end[];
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+extern const struct hook_data __hooks_chipset_resume_init[];
+extern const struct hook_data __hooks_chipset_resume_init_end[];
+extern const struct hook_data __hooks_chipset_suspend_complete[];
+extern const struct hook_data __hooks_chipset_suspend_complete_end[];
+#endif
 extern const struct hook_data __hooks_chipset_shutdown[];
 extern const struct hook_data __hooks_chipset_shutdown_end[];
 extern const struct hook_data __hooks_chipset_shutdown_complete[];
