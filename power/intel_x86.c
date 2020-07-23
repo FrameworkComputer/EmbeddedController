@@ -196,38 +196,10 @@ static void lpc_s0ix_hang_detected(void)
 	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
 }
 
-enum sleep_notify_type {
-	SLEEP_NOTIFY_NONE,
-	SLEEP_NOTIFY_SUSPEND,
-	SLEEP_NOTIFY_RESUME,
-};
-
-/* Flag to notify listeners about suspend/resume events. */
-enum sleep_notify_type sleep_notify = SLEEP_NOTIFY_NONE;
-
-/*
- * Note: the following sleep_ functions do not get called in the S3 path on
- * Intel devices. On Intel devices, they are called in the S0ix path.
- */
-static void sleep_set_notify(enum sleep_notify_type notify)
-{
-	sleep_notify = notify;
-}
-
-static void sleep_notify_transition(int check_state, int hook_id)
-{
-	if (sleep_notify != check_state)
-		return;
-
-	hook_notify(hook_id);
-	sleep_set_notify(SLEEP_NOTIFY_NONE);
-}
-
 static void handle_chipset_suspend(void)
 {
 	/* Clear masks before any hooks are run for suspend. */
 	lpc_s0ix_suspend_clear_masks();
-
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, handle_chipset_suspend, HOOK_PRIO_FIRST);
 
@@ -240,100 +212,6 @@ static void handle_chipset_reset(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, handle_chipset_reset, HOOK_PRIO_FIRST);
-
-#ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
-
-static uint16_t sleep_signal_timeout;
-static uint32_t sleep_signal_transitions;
-static void (*sleep_timeout_callback)(void);
-
-static void sleep_transition_timeout(void);
-DECLARE_DEFERRED(sleep_transition_timeout);
-
-static void sleep_increment_transition(void)
-{
-	if ((sleep_signal_transitions & EC_HOST_RESUME_SLEEP_TRANSITIONS_MASK) <
-	    EC_HOST_RESUME_SLEEP_TRANSITIONS_MASK)
-		sleep_signal_transitions += 1;
-}
-
-static void sleep_suspend_transition(void)
-{
-	sleep_increment_transition();
-	hook_call_deferred(&sleep_transition_timeout_data, -1);
-}
-
-static void sleep_resume_transition(void)
-{
-	sleep_increment_transition();
-
-	/*
-	 * Start the timer again to ensure the AP doesn't get itself stuck in
-	 * a state where it's no longer in a sleep state (S0ix/S3), but from
-	 * the Linux perspective is still suspended. Perhaps a bug in the SoC-
-	 * internal periodic housekeeping code might result in a situation
-	 * like this.
-	 */
-	if (sleep_signal_timeout)
-		hook_call_deferred(&sleep_transition_timeout_data,
-				   (uint32_t)sleep_signal_timeout * 1000);
-}
-
-static void sleep_transition_timeout(void)
-{
-	/* Mark the timeout. */
-	sleep_signal_transitions |= EC_HOST_RESUME_SLEEP_TIMEOUT;
-	hook_call_deferred(&sleep_transition_timeout_data, -1);
-
-	/* Call the custom callback */
-	if (sleep_timeout_callback)
-		sleep_timeout_callback();
-}
-
-static void sleep_start_suspend(struct host_sleep_event_context *ctx,
-				void (*callback)(void))
-{
-	uint16_t timeout = ctx->sleep_timeout_ms;
-
-	sleep_timeout_callback = callback;
-	sleep_signal_transitions = 0;
-
-	/* Use zero internally to indicate no timeout. */
-	if (timeout == EC_HOST_SLEEP_TIMEOUT_DEFAULT) {
-		timeout = CONFIG_SLEEP_TIMEOUT_MS;
-
-	} else if (timeout == EC_HOST_SLEEP_TIMEOUT_INFINITE) {
-		sleep_signal_timeout = 0;
-		return;
-	}
-
-	sleep_signal_timeout = timeout;
-	hook_call_deferred(&sleep_transition_timeout_data,
-			   (uint32_t)timeout * 1000);
-}
-
-static void sleep_complete_resume(struct host_sleep_event_context *ctx)
-{
-	hook_call_deferred(&sleep_transition_timeout_data, -1);
-	ctx->sleep_transitions = sleep_signal_transitions;
-}
-
-static void sleep_reset_tracking(void)
-{
-	sleep_signal_transitions = 0;
-	sleep_signal_timeout = 0;
-	sleep_timeout_callback = NULL;
-}
-
-#else /* !CONFIG_POWER_SLEEP_FAILURE_DETECTION */
-
-#define sleep_suspend_transition()
-#define sleep_resume_transition()
-#define sleep_start_suspend(_ctx)
-#define sleep_complete_resume(_ctx)
-#define sleep_reset_tracking()
-
-#endif /* CONFIG_POWER_SLEEP_FAILURE_DETECTION */
 
 void power_reset_host_sleep_state(void)
 {
