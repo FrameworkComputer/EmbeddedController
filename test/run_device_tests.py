@@ -61,7 +61,7 @@ class TestConfig:
 
     def __init__(self, name, image_to_use=ImageType.RW, finish_regexes=None,
                  toggle_power=False, test_args=None, num_flash_attempts=2,
-                 timeout_secs=10):
+                 timeout_secs=10, enable_hw_write_protect=False):
         if test_args is None:
             test_args = []
         if finish_regexes is None:
@@ -74,6 +74,7 @@ class TestConfig:
         self.toggle_power = toggle_power
         self.num_flash_attempts = num_flash_attempts
         self.timeout_secs = timeout_secs
+        self.enable_hw_write_protect = enable_hw_write_protect
         self.logs = []
         self.passed = False
         self.num_fails = 0
@@ -91,7 +92,7 @@ ALL_TESTS = {
                    toggle_power=True),
     'flash_write_protect':
         TestConfig(name='flash_write_protect', image_to_use=ImageType.RO,
-                   toggle_power=True),
+                   toggle_power=True, enable_hw_write_protect=True),
     'mpu_ro':
         TestConfig(name='mpu',
                    image_to_use=ImageType.RO,
@@ -169,6 +170,22 @@ def power(board_name, board_config, on):
         '-n', board_name,
         board_config.servo_power_enable + ':' + state,
     ]
+    logging.debug('Running command: "%s"', ' '.join(cmd))
+    subprocess.run(cmd).check_returncode()
+
+
+def hw_write_protect(board_name, enable):
+    """Enable/disable hardware write protect."""
+    if enable:
+        state = 'on'
+    else:
+        state = 'off'
+
+    cmd = [
+        'dut-control',
+        '-n', board_name,
+        'fw_wp_en' + ':' + state,
+        ]
     logging.debug('Running command: "%s"', ' '.join(cmd))
     subprocess.run(cmd).check_returncode()
 
@@ -355,6 +372,8 @@ def main():
             power(args.board, board_config, on=False)
             time.sleep(1)
             power(args.board, board_config, on=True)
+
+        hw_write_protect(args.board, test.enable_hw_write_protect)
 
         # run the test
         logging.info('Running test: "%s"', test.name)
