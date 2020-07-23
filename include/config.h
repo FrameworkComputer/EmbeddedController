@@ -5224,6 +5224,10 @@
 #error "Cannot use CONFIG_CHIPSET_SLP_S3_L_OVERRIDE if SLP_S3 is a virtual wire"
 #endif
 
+#if defined(CONFIG_POWER_S0IX) && !defined(CONFIG_POWER_TRACK_HOST_SLEEP_STATE)
+#error "Must enable CONFIG_POWER_TRACK_HOST_SLEEP_STATE for S0ix"
+#endif
+
 /*****************************************************************************/
 
 /*

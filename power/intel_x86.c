@@ -208,7 +208,6 @@ static void handle_chipset_reset(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, handle_chipset_reset, HOOK_PRIO_FIRST);
 
-#ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 #ifdef CONFIG_POWER_S0IX_FAILURE_DETECTION
 
 static uint16_t slp_s0ix_timeout;
@@ -326,7 +325,6 @@ void power_reset_host_sleep_state(void)
 					      NULL);
 }
 
-#endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
 #endif /* CONFIG_POWER_S0IX */
 
 void chipset_throttle_cpu(int throttle)
