@@ -123,44 +123,37 @@ static void dpm_attempt_mode_entry(int port)
 	    pd_get_modes_discovery(port, TCPC_TX_SOP) != PD_DISC_COMPLETE)
 		return;
 
-	/* Check if we discovered USB4 mode */
+	/* Check if the device and cable support USB4. */
 	if (IS_ENABLED(CONFIG_USB_PD_USB4) && enter_usb_is_capable(port)) {
 		pe_dpm_request(port, DPM_REQUEST_ENTER_USB);
 		return;
 	}
 
-	/*
-	 * IF USB4 mode is not discovered or if the device/cable is not
-	 * USB4 capable, Check if we discovered a Thunderbolt mode.
-	 */
+	/* If not, check if they support Thunderbolt alt mode. */
 	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
-	    pd_is_mode_discovered_for_svid(port, TCPC_TX_SOP,
-					USB_VID_INTEL))
+	    pd_is_mode_discovered_for_svid(port, TCPC_TX_SOP, USB_VID_INTEL))
 		vdo_count = tbt_setup_next_vdm(port,
 			ARRAY_SIZE(vdm), vdm, &tx_type);
 
-	/*
-	 * IF thunderbolt mode is not discovered or if the device/cable is not
-	 * thunderbolt compatible, Check if we discovered a DisplayPort mode
-	 */
+	/* If not, check if they support DisplayPort alt mode. */
 	if (vdo_count == 0 && !dpm[port].mode_entry_done &&
 	    pd_is_mode_discovered_for_svid(port, TCPC_TX_SOP,
 				USB_SID_DISPLAYPORT))
 		vdo_count = dp_setup_next_vdm(port, ARRAY_SIZE(vdm), vdm);
 
 	/*
-	 * If we did not enter any alternate mode, just mark discovery done
-	 * and get out of here.
+	 * If the PE didn't discover any supported alternate mode, just mark
+	 * setup done and get out of here.
 	 */
 	if (vdo_count == 0 && !dpm[port].mode_entry_done) {
-		CPRINTF("C%d: No supported ALT mode discovered\n", port);
+		CPRINTS("C%d: No supported alt mode discovered", port);
 		dpm_set_mode_entry_done(port);
 		return;
 	}
 
 	if (vdo_count < 0) {
 		dpm_set_mode_entry_done(port);
-		CPRINTF("C%d: Couldn't set up ALT VDM\n", port);
+		CPRINTS("C%d: Couldn't construct alt mode VDM", port);
 		return;
 	}
 
@@ -181,8 +174,6 @@ static void dpm_attempt_mode_exit(int port)
 	int opos;
 	uint16_t svid;
 	uint32_t vdm;
-
-	/* TODO: Add exit mode support for SOP' and SOP'' */
 
 	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
 	    tbt_is_active(port))
