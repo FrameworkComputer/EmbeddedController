@@ -136,7 +136,7 @@ static void pp3300_a_pgood_preserve(void)
 }
 DECLARE_HOOK(HOOK_SYSJUMP, pp3300_a_pgood_preserve, HOOK_PRIO_DEFAULT);
 
-static void pp3300_a_pgood_restore(void)
+static void baseboard_prepare_power_signals(void)
 {
 	const int *stored;
 	int version, size;
@@ -147,8 +147,13 @@ static void pp3300_a_pgood_restore(void)
 					(size == sizeof(pp3300_a_pgood)))
 		/* Valid PP3300 status found, restore before CHIPSET init */
 		pp3300_a_pgood = *stored;
+
+	/* Restore pull-up on PG_PP1050_ST_OD */
+	if (system_jumped_to_this_image() &&
+					gpio_get_level(GPIO_RSMRST_L_PGOOD))
+		board_after_rsmrst(1);
 }
-DECLARE_HOOK(HOOK_INIT, pp3300_a_pgood_restore, HOOK_PRIO_FIRST);
+DECLARE_HOOK(HOOK_INIT, baseboard_prepare_power_signals, HOOK_PRIO_FIRST);
 
 __override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 {
