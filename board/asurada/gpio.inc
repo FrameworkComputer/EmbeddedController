@@ -11,9 +11,9 @@
 /* Wake Source interrupts */
 GPIO_INT(POWER_BUTTON_L,     PIN(E, 4), GPIO_INT_BOTH | GPIO_PULL_UP |
 	 GPIO_HIB_WAKE_HIGH, power_button_interrupt) /* H1_EC_PWR_BTN_ODL */
-GPIO_INT(LID_OPEN,           PIN(E, 2), GPIO_INT_BOTH | GPIO_PULL_DOWN |
-         GPIO_HIB_WAKE_HIGH, lid_interrupt)
-GPIO_INT(TABLET_MODE_L,      PIN(J, 7), GPIO_INT_BOTH | GPIO_PULL_UP,
+GPIO_INT(LID_OPEN,           PIN(E, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,
+         lid_interrupt)
+GPIO_INT(TABLET_MODE_L,      PIN(J, 7), GPIO_INT_BOTH,
          gmr_tablet_switch_isr)
 
 /* Chipset interrupts */
