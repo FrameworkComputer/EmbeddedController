@@ -29,6 +29,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "keyboard_scan.h"
+#include "keyboard_8042_sharedlib.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
 #include "power.h"
@@ -129,6 +130,17 @@ void board_init(void)
 	/* Turn on 5V if the system is on, otherwise turn it off. */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND);
 	board_power_5v_enable(on);
+	if (get_cbi_fw_config_keyboard() == CUST_UK2_KB) {
+		/*
+		 * Observed on Shyvana with UK keyboard,
+		 *   \|:     0x0061->0x61->0x56
+		 *   r-ctrl: 0xe014->0x14->0x1d
+		 */
+		uint16_t tmp = get_scancode_set2(4, 0);
+
+		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
+		set_scancode_set2(2, 7, tmp);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
