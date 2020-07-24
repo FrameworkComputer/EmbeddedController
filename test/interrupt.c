@@ -29,11 +29,20 @@ void my_isr(void)
 	interrupt_count++;
 }
 
+static volatile uint32_t enable_ready_reg;
+
+static void set_ready_bit(void)
+{
+	if (enable_ready_reg & BIT(0))
+		enable_ready_reg |= BIT(1);
+}
+
 void interrupt_generator(void)
 {
 	while (1) {
 		udelay(3 * PERIOD_US(prng_no_seed()));
 		task_trigger_test_interrupt(my_isr);
+		task_trigger_test_interrupt(set_ready_bit);
 	}
 }
 
@@ -71,12 +80,21 @@ static int interrupt_disable_test(void)
 	return EC_SUCCESS;
 }
 
+static int test_wait_for_ready(void)
+{
+	wait_for_ready(&enable_ready_reg, BIT(0), BIT(1));
+	TEST_EQ(enable_ready_reg, BIT(0) | BIT(1), "%x");
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, char **argv)
 {
 	test_reset();
 
 	RUN_TEST(interrupt_test);
 	RUN_TEST(interrupt_disable_test);
+	RUN_TEST(test_wait_for_ready);
 
 	test_print_result();
 }

@@ -44,19 +44,6 @@ uint32_t us_to_rtcss(int32_t us)
 	return (RTC_PREDIV_S - (us / US_PER_RTC_TICK));
 }
 
-static void wait_for_ready(volatile uint32_t *cr_reg,
-			uint32_t enable, uint32_t ready)
-{
-	/* Ensure that clock source is ON */
-	if (!(*cr_reg & ready)) {
-		/* Enable clock */
-		*cr_reg |= enable;
-		/* Wait for ready */
-		while (!(*cr_reg & ready))
-			;
-	}
-}
-
 void config_hispeed_clock(void)
 {
 #ifdef CONFIG_STM32_CLOCK_HSE_HZ
