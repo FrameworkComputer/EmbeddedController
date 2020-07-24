@@ -15,6 +15,7 @@
 #include "host_command.h"
 #include "intel_x86.h"
 #include "system.h"
+#include "usb_pd.h"
 
 /******************************************************************************/
 /*
@@ -241,4 +242,20 @@ int board_is_i2c_port_powered(int port)
 
 	/* Sensor rails are off in S5/G3 */
 	return chipset_in_state(CHIPSET_STATE_ANY_OFF) ? 0 : 1;
+}
+
+int extpower_is_present(void)
+{
+	int vbus_present = 0;
+	int port;
+
+	/*
+	 * Boards define pd_snk_is_vbus_provided() with something appropriate
+	 * for their hardware
+	 */
+	for (port = 0; port < board_get_usb_pd_port_count(); port++)
+		if (pd_get_power_role(port) == PD_ROLE_SINK)
+			vbus_present |= pd_snk_is_vbus_provided(port);
+
+	return vbus_present;
 }

@@ -446,12 +446,6 @@ struct motion_sensor_t motion_sensors[] = {
 
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-int extpower_is_present(void)
-{
-	return pd_check_vbus_level(0, VBUS_PRESENT) ||
-	       pd_check_vbus_level(1, VBUS_PRESENT);
-}
-
 __override void ocpc_get_pid_constants(int *kp, int *kp_div,
 				       int *ki, int *ki_div,
 				       int *kd, int *kd_div)
@@ -479,10 +473,7 @@ __override void ocpc_get_pid_constants(int *kp, int *kp_div,
 
 int pd_snk_is_vbus_provided(int port)
 {
-	int regval = 0;
-
-	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
-	return regval & TCPC_REG_POWER_STATUS_VBUS_PRES;
+	return pd_check_vbus_level(port, VBUS_PRESENT);
 }
 
 const struct charger_config_t chg_chips[] = {

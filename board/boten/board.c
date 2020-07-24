@@ -188,11 +188,6 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-int extpower_is_present(void)
-{
-	return pd_check_vbus_level(0, VBUS_PRESENT);
-}
-
 void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 			    int charge_mv)
 {

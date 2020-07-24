@@ -311,11 +311,6 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-int extpower_is_present(void)
-{
-	return sm5803_is_vbus_present(0) || sm5803_is_vbus_present(1);
-}
-
 void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 			    int charge_mv)
 {
