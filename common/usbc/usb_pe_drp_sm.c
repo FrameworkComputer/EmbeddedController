@@ -1942,7 +1942,7 @@ static void extended_message_not_supported(int port, uint32_t *payload)
 			!IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES) &&
 			PD_EXT_HEADER_CHUNKED(ext_header) &&
 			PD_EXT_HEADER_DATA_SIZE(ext_header) >
-			PD_MAX_EXTENDED_MESSAGE_CHUNK_LEN) {
+			PD_MAX_EXTENDED_MSG_CHUNK_LEN) {
 		set_state_pe(port,
 				pe[port].power_role == PD_ROLE_SOURCE ?
 				PE_SRC_CHUNK_RECEIVED : PE_SNK_CHUNK_RECEIVED);

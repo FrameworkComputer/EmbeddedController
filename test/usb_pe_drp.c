@@ -220,7 +220,7 @@ test_static int test_extended_message_not_supported(void)
 			PD_DATA_BATTERY_STATUS, PD_ROLE_SINK, PD_ROLE_UFP, 0,
 			PDO_MAX_OBJECTS, PD_REV30, 1);
 	*(uint16_t *)rx_emsg[PORT0].buf =
-		PD_EXT_HEADER(0, 0, PD_MAX_EXTENDED_MESSAGE_CHUNK_LEN);
+		PD_EXT_HEADER(0, 0, PD_MAX_EXTENDED_MSG_CHUNK_LEN);
 	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
 	fake_prl_clear_last_sent_ctrl_msg(PORT0);
 	task_wait_event(10 * MSEC);

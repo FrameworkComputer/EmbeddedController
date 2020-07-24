@@ -1013,8 +1013,9 @@ static void prl_tx_wait_for_phy_response_run(const int port)
 
 #ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
 		pd3_retry_check = (pdmsg[port].ext &&
-		PD_EXT_HEADER_DATA_SIZE(GET_EXT_HEADER(
-		pdmsg[port].tx_chk_buf[0]) > 26));
+				PD_EXT_HEADER_DATA_SIZE(GET_EXT_HEADER(
+						pdmsg[port].tx_chk_buf[0]) >
+					PD_MAX_EXTENDED_MSG_CHUNK_LEN));
 #else
 		pd3_retry_check = 0;
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
@@ -1441,8 +1442,8 @@ static void rch_processing_extended_message_run(const int port)
 	else if (chunk_num == pdmsg[port].chunk_number_expected) {
 		byte_num = data_size - pdmsg[port].num_bytes_received;
 
-		if (byte_num > 25)
-			byte_num = 26;
+		if (byte_num >= PD_MAX_EXTENDED_MSG_CHUNK_LEN)
+			byte_num = PD_MAX_EXTENDED_MSG_CHUNK_LEN;
 
 		/* Make sure extended message buffer does not overflow */
 		if (pdmsg[port].num_bytes_received +
@@ -1750,8 +1751,8 @@ static void tch_construct_chunked_message_entry(const int port)
 	data = ((uint8_t *)pdmsg[port].tx_chk_buf + 2);
 	num = tx_emsg[port].len - pdmsg[port].send_offset;
 
-	if (num > 26)
-		num = 26;
+	if (num > PD_MAX_EXTENDED_MSG_CHUNK_LEN)
+		num = PD_MAX_EXTENDED_MSG_CHUNK_LEN;
 
 	/* Set the chunks extended header */
 	*ext_hdr = PD_EXT_HEADER(pdmsg[port].chunk_number_to_send,

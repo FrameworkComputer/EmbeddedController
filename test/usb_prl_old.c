@@ -317,7 +317,7 @@ static int simulate_receive_data(int port, enum pd_data_msg_type msg_type,
 	pd_port[port].mock_pe_message_received = 0;
 	rx_emsg[port].header = 0;
 	rx_emsg[port].len = 0;
-	memset(rx_emsg[port].buf, 0, 260);
+	memset(rx_emsg[port].buf, 0, ARRAY_SIZE(rx_emsg[port].buf));
 
 	for (i = 0; i < 28; i++) {
 		if (i < len)
@@ -356,7 +356,7 @@ static int simulate_receive_extended_data(int port,
 	pd_port[port].mock_pe_message_received = 0;
 	rx_emsg[port].header = 0;
 	rx_emsg[port].len = 0;
-	memset(rx_emsg[port].buf, 0, 260);
+	memset(rx_emsg[port].buf, 0, ARRAY_SIZE(rx_emsg[port].buf));
 
 	dsize = len;
 	for (j = 0; j < 10; j++) {
@@ -364,10 +364,10 @@ static int simulate_receive_extended_data(int port,
 		cycle_through_state_machine(port, 10, MSEC);
 
 		byte_len = len;
-		if (byte_len > 26)
-			byte_len = 26;
+		if (byte_len > PD_MAX_EXTENDED_MSG_CHUNK_LEN)
+			byte_len = PD_MAX_EXTENDED_MSG_CHUNK_LEN;
 
-		len -= 26;
+		len -= PD_MAX_EXTENDED_MSG_CHUNK_LEN;
 
 		memset(td, 0, 28);
 		*(uint16_t *)td = PD_EXT_HEADER(chunk_num, 0, dsize);
@@ -602,8 +602,8 @@ static int verify_extended_data_msg_transmission(int port,
 
 	for (j = 0; j < 10; j++) {
 		byte_len = len;
-		if (byte_len > 26)
-			byte_len = 26;
+		if (byte_len > PD_MAX_EXTENDED_MSG_CHUNK_LEN)
+			byte_len = PD_MAX_EXTENDED_MSG_CHUNK_LEN;
 
 		nw = (byte_len + 2 + 3) >> 2;
 
@@ -678,7 +678,7 @@ static int verify_extended_data_msg_transmission(int port,
 		cycle_through_state_machine(port, 1, MSEC);
 		inc_tx_id(port);
 
-		len -= 26;
+		len -= PD_MAX_EXTENDED_MSG_CHUNK_LEN;
 		if (len <= 0)
 			break;
 
@@ -706,12 +706,12 @@ static int simulate_send_extended_data_msg(int port,
 	uint8_t *buf = tx_emsg[port].buf;
 	uint8_t *td = (uint8_t *)test_data;
 
-	memset(buf, 0, 260);
+	memset(buf, 0, ARRAY_SIZE(tx_emsg[port].buf));
 	tx_emsg[port].len = len;
 
 	/* don't overflow buffer */
-	if (len > 260)
-		len = 260;
+	if (len > ARRAY_SIZE(tx_emsg[port].buf))
+		len = ARRAY_SIZE(tx_emsg[port].buf);
 
 	for (i = 0; i < len; i++)
 		buf[i] = td[i];
@@ -1078,7 +1078,7 @@ static int test_send_extended_data_msg(void)
 	pd_port[port].mock_pe_error = -1;
 
 	ccprintf("Iteration ");
-	for (i = 29; i <= 260; i++) {
+	for (i = 29; i <= PD_MAX_EXTENDED_MSG_LEN; i++) {
 		ccprintf(".%d", i);
 		pd_port[port].mock_pe_message_sent = 0;
 
@@ -1229,7 +1229,7 @@ static int test_receive_extended_data_msg(void)
 		TEST_EQ(rch_get_state(port),
 				RCH_WAIT_FOR_MESSAGE_FROM_PROTOCOL_LAYER, "%u");
 
-		for (len = 29; len <= 260; len++) {
+		for (len = 29; len <= PD_MAX_EXTENDED_MSG_LEN; len++) {
 			TEST_NE(simulate_receive_extended_data(port,
 					PD_DATA_BATTERY_STATUS, len), 0, "%d");
 		}

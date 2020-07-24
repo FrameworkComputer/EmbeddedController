@@ -1232,7 +1232,9 @@ enum pd_msg_type {
 /* Used to get extended header from the first 32-bit word of the message */
 #define GET_EXT_HEADER(msg) (msg & 0xffff)
 
-#define PD_MAX_EXTENDED_MESSAGE_CHUNK_LEN 26
+/* Extended message constants (PD 3.0, Rev. 2.0, section 6.13) */
+#define PD_MAX_EXTENDED_MSG_LEN       260
+#define PD_MAX_EXTENDED_MSG_CHUNK_LEN  26
 
 /* K-codes for special symbols */
 #define PD_SYNC1 0x18
