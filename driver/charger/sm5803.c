@@ -99,10 +99,9 @@ static inline enum ec_error_list test_write8(int chgnum, int offset, int value)
 			 offset, value);
 }
 
-static inline enum ec_error_list test_update8(int chgnum,
-					      const int offset,
+static inline enum ec_error_list test_update8(int chgnum, const int offset,
 					      const uint8_t mask,
-					      const enum mask_update_action action)
+					const enum mask_update_action action)
 {
 	return i2c_update8(chg_chips[chgnum].i2c_port,
 			   SM5803_ADDR_TEST_FLAGS, offset, mask, action);
@@ -385,10 +384,15 @@ static void sm5803_init(int chgnum)
 		rv |= main_write8(chgnum, 0x1F, 0x0);
 	}
 
+	/* Disable Ibus PROCHOT comparator */
+	rv = chg_read8(chgnum, SM5803_REG_PHOT1, &reg);
+	reg &= ~SM5803_PHOT1_IBUS_PHOT_COMP_EN;
+	rv |= chg_write8(chgnum, SM5803_REG_PHOT1, reg);
+
 	/* Set default input current */
 	reg = SM5803_CURRENT_TO_REG(CONFIG_CHARGER_INPUT_CURRENT)
 		& SM5803_CHG_ILIM_RAW;
-	rv = chg_write8(chgnum, SM5803_REG_CHG_ILIM, reg);
+	rv |= chg_write8(chgnum, SM5803_REG_CHG_ILIM, reg);
 
 	/* Set Vbus interrupt levels for 3.5V and 4.0V */
 	rv |= meas_write8(chgnum, SM5803_REG_VBUS_LOW_TH,
