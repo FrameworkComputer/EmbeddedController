@@ -389,6 +389,26 @@ void pd_set_dfp_enter_mode_flag(int port, bool set)
 {
 }
 
+/**
+ * Return the discover alternate mode payload data
+ *
+ * @param port    USB-C port number
+ * @param payload Pointer to payload data to fill
+ * @return 1 if valid SVID present else 0
+ */
+static int dfp_discover_modes(int port, uint32_t *payload)
+{
+	struct pd_discovery *disc = pd_get_am_discovery(port, TCPC_TX_SOP);
+	uint16_t svid = disc->svids[disc->svid_idx].svid;
+
+	if (disc->svid_idx >= disc->svid_cnt)
+		return 0;
+
+	payload[0] = VDO(svid, 1, CMD_DISCOVER_MODES);
+
+	return 1;
+}
+
 static bool is_usb4_vdo(int port, int cnt, uint32_t *payload)
 {
 	enum idh_ptype ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);

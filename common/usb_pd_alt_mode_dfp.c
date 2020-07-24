@@ -445,23 +445,6 @@ void dfp_consume_modes(int port, enum tcpm_transmit_type type, int cnt,
 			PD_DISC_COMPLETE);
 }
 
-/*
- * TODO(b/152417597): Move this function to usb_pd_policy.c after TCPMv2 stops
- * using it.
- */
-int dfp_discover_modes(int port, uint32_t *payload)
-{
-	struct pd_discovery *disc = pd_get_am_discovery(port, TCPC_TX_SOP);
-	uint16_t svid = disc->svids[disc->svid_idx].svid;
-
-	if (disc->svid_idx >= disc->svid_cnt)
-		return 0;
-
-	payload[0] = VDO(svid, 1, CMD_DISCOVER_MODES);
-
-	return 1;
-}
-
 int pd_alt_mode(int port, enum tcpm_transmit_type type, uint16_t svid)
 {
 	struct svdm_amode_data *modep = pd_get_amode_data(port, type, svid);
