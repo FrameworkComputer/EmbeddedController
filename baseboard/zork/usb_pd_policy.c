@@ -29,16 +29,15 @@ int pd_check_vconn_swap(int port)
 
 void pd_power_supply_reset(int port)
 {
-	int prev_en;
+	/* Don't need to shutoff VBus if we are not sourcing it */
+	if (ppc_is_sourcing_vbus(port)) {
+		/* Disable VBUS. */
+		ppc_vbus_source_enable(port, 0);
 
-	prev_en = ppc_is_sourcing_vbus(port);
-
-	/* Disable VBUS. */
-	ppc_vbus_source_enable(port, 0);
-
-	/* Enable discharge if we were previously sourcing 5V */
-	if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE) && prev_en)
-		pd_set_vbus_discharge(port, 1);
+		/* Enable discharge if we were previously sourcing 5V */
+		if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE))
+			pd_set_vbus_discharge(port, 1);
+	}
 
 #ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
 	/* Give back the current quota we are no longer using */
