@@ -4126,6 +4126,13 @@ static enum vdm_response_result parse_vdm_response_common(int port)
 					get_time().val + PD_T_VDM_BUSY;
 
 			return VDM_RESULT_NO_ACTION;
+		} else if (PD_VDO_CMDT(payload[0]) == CMDT_INIT) {
+			/*
+			 * Unexpected VDM REQ received. Let Src.Ready or
+			 * Snk.Ready handle it.
+			 */
+			PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+			return VDM_RESULT_NO_ACTION;
 		}
 
 		/*
