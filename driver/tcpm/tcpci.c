@@ -565,12 +565,38 @@ int tcpci_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 }
 
 #ifdef CONFIG_USBC_PPC
+int tcpci_tcpm_get_snk_ctrl(int port, bool *sinking)
+{
+	int rv;
+	int pwr_sts;
+
+	rv = tcpci_tcpm_get_power_status(port, &pwr_sts);
+	*sinking = (rv != EC_SUCCESS)
+			? 0
+			: pwr_sts & TCPC_REG_POWER_STATUS_SINKING_VBUS;
+
+	return rv;
+}
+
 int tcpci_tcpm_set_snk_ctrl(int port, int enable)
 {
 	int cmd = enable ? TCPC_REG_COMMAND_SNK_CTRL_HIGH :
 		TCPC_REG_COMMAND_SNK_CTRL_LOW;
 
 	return tcpc_write(port, TCPC_REG_COMMAND, cmd);
+}
+
+int tcpci_tcpm_get_src_ctrl(int port, bool *sourcing)
+{
+	int rv;
+	int pwr_sts;
+
+	rv = tcpci_tcpm_get_power_status(port, &pwr_sts);
+	*sourcing = (rv != EC_SUCCESS)
+			? 0
+			: pwr_sts & TCPC_REG_POWER_STATUS_SOURCING_VBUS;
+
+	return rv;
 }
 
 int tcpci_tcpm_set_src_ctrl(int port, int enable)

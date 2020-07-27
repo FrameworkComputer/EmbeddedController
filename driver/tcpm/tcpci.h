@@ -116,6 +116,7 @@
 #define TCPC_REG_POWER_STATUS_SOURCING_VBUS BIT(4)
 #define TCPC_REG_POWER_STATUS_VBUS_DET  BIT(3)
 #define TCPC_REG_POWER_STATUS_VBUS_PRES BIT(2)
+#define TCPC_REG_POWER_STATUS_SINKING_VBUS BIT(0)
 
 #define TCPC_REG_FAULT_STATUS      0x1f
 #define TCPC_REG_FAULT_STATUS_ALL_REGS_RESET            BIT(7)
@@ -246,7 +247,9 @@ int tcpci_tcpm_mux_get(const struct usb_mux *me, mux_state_t *mux_state);
 int tcpci_get_chip_info(int port, int live,
 			struct ec_response_pd_chip_info_v1 *chip_info);
 #ifdef CONFIG_USBC_PPC
+int tcpci_tcpm_get_snk_ctrl(int port, bool *sinking);
 int tcpci_tcpm_set_snk_ctrl(int port, int enable);
+int tcpci_tcpm_get_src_ctrl(int port, bool *sourcing);
 int tcpci_tcpm_set_src_ctrl(int port, int enable);
 #endif
 

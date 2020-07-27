@@ -230,6 +230,17 @@ static inline int tcpm_transmit(int port, enum tcpm_transmit_type type,
 }
 
 #ifdef CONFIG_USBC_PPC
+static inline int tcpm_get_snk_ctrl(int port, bool *sinking)
+{
+	int rv = EC_ERROR_UNIMPLEMENTED;
+
+	if (tcpc_config[port].drv->get_snk_ctrl != NULL)
+		rv = tcpc_config[port].drv->get_snk_ctrl(port, sinking);
+	else
+		*sinking = false;
+
+	return rv;
+}
 static inline int tcpm_set_snk_ctrl(int port, int enable)
 {
 	if (tcpc_config[port].drv->set_snk_ctrl != NULL)
@@ -238,6 +249,17 @@ static inline int tcpm_set_snk_ctrl(int port, int enable)
 		return EC_ERROR_UNIMPLEMENTED;
 }
 
+static inline int tcpm_get_src_ctrl(int port, bool *sourcing)
+{
+	int rv = EC_ERROR_UNIMPLEMENTED;
+
+	if (tcpc_config[port].drv->get_src_ctrl != NULL)
+		rv = tcpc_config[port].drv->get_src_ctrl(port, sourcing);
+	else
+		*sourcing = false;
+
+	return rv;
+}
 static inline int tcpm_set_src_ctrl(int port, int enable)
 {
 	if (tcpc_config[port].drv->set_src_ctrl != NULL)
