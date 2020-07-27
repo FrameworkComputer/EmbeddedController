@@ -393,23 +393,26 @@ static const char * const pe_state_names[] = {
 };
 #else
 /*
- * Reference so IS_ENABLED section below that references the names
- * will compile and the optimizer will remove it.
+ * Here and below, ensure that invalid states don't link properly. This lets us
+ * use guard code with IS_ENABLED instead of ifdefs and still save flash space.
+ * Use STATIC_IF instead of bare extern to avoid a checkpatch.pl error.
  */
-extern const char **pe_state_names;
+STATIC_IF(USB_PD_DEBUG_LABELS) const char **pe_state_names;
 #endif
 
-/*
- * Ensure that invalid states don't link properly. This lets us use guard code
- * with IS_ENABLED instead of ifdefs and still save flash space.
- */
 #ifndef CONFIG_USBC_VCONN
-enum usb_pe_state PE_VCS_EVALUATE_SWAP_NOT_SUPPORTED;
-enum usb_pe_state PE_VCS_SEND_SWAP_NOT_SUPPORTED;
-enum usb_pe_state PE_VCS_WAIT_FOR_VCONN_SWAP_NOT_SUPPORTED;
-enum usb_pe_state PE_VCS_TURN_ON_VCONN_SWAP_NOT_SUPPORTED;
-enum usb_pe_state PE_VCS_TURN_OFF_VCONN_SWAP_NOT_SUPPORTED;
-enum usb_pe_state PE_VCS_SEND_PS_RDY_SWAP_NOT_SUPPORTED;
+STATIC_IF(CONFIG_USBC_VCONN)
+	enum usb_pe_state PE_VCS_EVALUATE_SWAP_NOT_SUPPORTED;
+STATIC_IF(CONFIG_USBC_VCONN)
+	enum usb_pe_state PE_VCS_SEND_SWAP_NOT_SUPPORTED;
+STATIC_IF(CONFIG_USBC_VCONN)
+	enum usb_pe_state PE_VCS_WAIT_FOR_VCONN_SWAP_NOT_SUPPORTED;
+STATIC_IF(CONFIG_USBC_VCONN)
+	enum usb_pe_state PE_VCS_TURN_ON_VCONN_SWAP_NOT_SUPPORTED;
+STATIC_IF(CONFIG_USBC_VCONN)
+	enum usb_pe_state PE_VCS_TURN_OFF_VCONN_SWAP_NOT_SUPPORTED;
+STATIC_IF(CONFIG_USBC_VCONN)
+	enum usb_pe_state PE_VCS_SEND_PS_RDY_SWAP_NOT_SUPPORTED;
 #define PE_VCS_EVALUATE_SWAP PE_VCS_EVALUATE_SWAP_NOT_SUPPORTED
 #define PE_VCS_SEND_SWAP PE_VCS_SEND_SWAP_NOT_SUPPORTED
 #define PE_VCS_WAIT_FOR_VCONN_SWAP PE_VCS_WAIT_FOR_VCONN_SWAP_NOT_SUPPORTED
@@ -419,8 +422,10 @@ enum usb_pe_state PE_VCS_SEND_PS_RDY_SWAP_NOT_SUPPORTED;
 #endif /* CONFIG_USBC_VCONN */
 
 #ifndef CONFIG_USB_PD_REV30
-extern enum usb_pe_state PE_FRS_SNK_SRC_START_AMS_NOT_SUPPORTED;
-extern enum usb_pe_state PE_PRS_FRS_SHARE_NOT_SUPPORTED;
+STATIC_IF(CONFIG_USB_PD_REV30)
+	enum usb_pe_state PE_FRS_SNK_SRC_START_AMS_NOT_SUPPORTED;
+STATIC_IF(CONFIG_USB_PD_REV30)
+	enum usb_pe_state PE_PRS_FRS_SHARE_NOT_SUPPORTED;
 STATIC_IF(CONFIG_USB_PD_REV30)
 	enum usb_pe_state PE_SRC_CHUNK_RECEIVED_NOT_SUPPORTED;
 STATIC_IF(CONFIG_USB_PD_REV30)
@@ -433,7 +438,6 @@ void pe_set_frs_enable(int port, int enable);
 #endif /* CONFIG_USB_PD_REV30 */
 
 #ifndef CONFIG_USB_PD_EXTENDED_MESSAGES
-/* Use STATIC_IF instead of bare extern to avoid checkpatch.pl error. */
 STATIC_IF(CONFIG_USB_PD_EXTENDED_MESSAGES)
 	enum usb_pe_state PE_GIVE_BATTERY_CAP_NOT_SUPPORTED;
 STATIC_IF(CONFIG_USB_PD_EXTENDED_MESSAGES)
@@ -2066,7 +2070,12 @@ static void pe_src_ready_run(int port)
 				set_state_pe(port, PE_DRS_EVALUATE_SWAP);
 				return;
 			case PD_CTRL_VCONN_SWAP:
-				set_state_pe(port, PE_VCS_EVALUATE_SWAP);
+				if (IS_ENABLED(CONFIG_USBC_VCONN))
+					set_state_pe(port,
+							PE_VCS_EVALUATE_SWAP);
+				else
+					set_state_pe(port,
+							PE_SEND_NOT_SUPPORTED);
 				return;
 			/*
 			 * USB PD 3.0 6.8.1:
@@ -2810,7 +2819,12 @@ static void pe_snk_ready_run(int port)
 							PE_DRS_EVALUATE_SWAP);
 				return;
 			case PD_CTRL_VCONN_SWAP:
-				set_state_pe(port, PE_VCS_EVALUATE_SWAP);
+				if (IS_ENABLED(CONFIG_USBC_VCONN))
+					set_state_pe(port,
+							PE_VCS_EVALUATE_SWAP);
+				else
+					set_state_pe(port,
+							PE_SEND_NOT_SUPPORTED);
 				return;
 			case PD_CTRL_NOT_SUPPORTED:
 				/* Do nothing */
