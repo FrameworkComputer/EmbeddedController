@@ -1249,12 +1249,12 @@ static void pe_update_pdo_flags(int port, uint32_t pdo)
 {
 #ifdef CONFIG_CHARGE_MANAGER
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-	int charge_whitelisted =
+	int charge_allowlisted =
 		(pd_get_power_role(port) == PD_ROLE_SINK &&
 			pd_charge_from_device(pd_get_identity_vid(port),
 			pd_get_identity_pid(port)));
 #else
-	const int charge_whitelisted = 0;
+	const int charge_allowlisted = 0;
 #endif
 #endif
 
@@ -1287,10 +1287,10 @@ static void pe_update_pdo_flags(int port, uint32_t pdo)
 	 * Treat device as a dedicated charger (meaning we should charge
 	 * from it) if it does not support power swap, or if it is unconstrained
 	 * power, or if we are a sink and the device identity matches a
-	 * charging white-list.
+	 * charging allow-list.
 	 */
 	if (!(pdo & PDO_FIXED_DUAL_ROLE) || (pdo & PDO_FIXED_UNCONSTRAINED) ||
-		charge_whitelisted) {
+		charge_allowlisted) {
 		PE_CLR_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
 		charge_manager_update_dualrole(port, CAP_DEDICATED);
 	} else {

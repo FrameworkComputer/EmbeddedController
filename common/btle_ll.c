@@ -152,7 +152,7 @@ uint8_t ll_reset(void)
 	ll_state = UNINITIALIZED;
 	radio_disable();
 
-	ble_radio_clear_white_list();
+	ble_radio_clear_allow_list();
 
 	return HCI_SUCCESS;
 }
@@ -312,35 +312,35 @@ uint8_t initialize_connection(void)
 	return HCI_SUCCESS;
 }
 
-/* White List */
-uint8_t ll_clear_white_list(void)
+/* Allow List */
+uint8_t ll_clear_allow_list(void)
 {
-	if (ble_radio_clear_white_list() == EC_SUCCESS)
+	if (ble_radio_clear_allow_list() == EC_SUCCESS)
 		return HCI_SUCCESS;
 	else
 		return HCI_ERR_Hardware_Failure;
 }
 
-uint8_t ll_read_white_list_size(uint8_t *return_params)
+uint8_t ll_read_allow_list_size(uint8_t *return_params)
 {
-	if (ble_radio_read_white_list_size(return_params) == EC_SUCCESS)
+	if (ble_radio_read_allow_list_size(return_params) == EC_SUCCESS)
 		return HCI_SUCCESS;
 	else
 		return HCI_ERR_Hardware_Failure;
 }
 
-uint8_t ll_add_device_to_white_list(uint8_t *params)
+uint8_t ll_add_device_to_allow_list(uint8_t *params)
 {
-	if (ble_radio_add_device_to_white_list(&params[1], params[0]) ==
+	if (ble_radio_add_device_to_allow_list(&params[1], params[0]) ==
 			EC_SUCCESS)
 		return HCI_SUCCESS;
 	else
 		return HCI_ERR_Host_Rejected_Due_To_Limited_Resources;
 }
 
-uint8_t ll_remove_device_from_white_list(uint8_t *params)
+uint8_t ll_remove_device_from_allow_list(uint8_t *params)
 {
-	if (ble_radio_remove_device_from_white_list(&params[1], params[0]) ==
+	if (ble_radio_remove_device_from_allow_list(&params[1], params[0]) ==
 			EC_SUCCESS)
 		return HCI_SUCCESS;
 	else

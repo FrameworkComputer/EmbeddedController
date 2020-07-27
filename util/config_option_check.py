@@ -50,7 +50,7 @@ class Hunk(object):
 CONFIG_FILE = 'include/config.h'
 
 # Specific files which the checker should ignore.
-WHITELIST = [CONFIG_FILE, 'util/config_option_check.py']
+ALLOWLIST = [CONFIG_FILE, 'util/config_option_check.py']
 
 def obtain_current_config_options():
   """Obtains current config options from include/config.h.
@@ -304,8 +304,8 @@ def get_hunks():
       match = filename_re.search(line)
       if match:
         filename = match.groups(1)[0]
-        if filename in WHITELIST:
-          # Skip the file if it's whitelisted.
+        if filename in ALLOWLIST:
+          # Skip the file if it's allowlisted.
           current_state = state.NEW_FILE
         else:
           current_state = state.HUNK

@@ -215,36 +215,36 @@ void hci_cmd(uint8_t *hciCmdbuf)
 			STATUS = ll_set_scan_params(params);
 	break;
 
-	/* White List */
+	/* Allow List */
 	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Clear_White_List):
+				HCI_CMD_LE_Clear_Allow_List):
 		if (hdr->paramLen != 0)
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
-			STATUS = ll_clear_white_list();
+			STATUS = ll_clear_allow_list();
 	break;
 	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Read_White_List_Size):
+				HCI_CMD_LE_Read_Allow_List_Size):
 		if (hdr->paramLen != 0)
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
-			STATUS = ll_read_white_list_size(RPARAMS);
-		rparam_count = sizeof(struct hciCmplLeReadWhiteListSize);
+			STATUS = ll_read_allow_list_size(RPARAMS);
+		rparam_count = sizeof(struct hciCmplLeReadAllowListSize);
 	break;
 	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Add_Device_To_White_List):
-		if (hdr->paramLen != sizeof(struct hciLeAddDeviceToWhiteList))
+				HCI_CMD_LE_Add_Device_To_Allow_List):
+		if (hdr->paramLen != sizeof(struct hciLeAddDeviceToAllowList))
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
-			STATUS = ll_add_device_to_white_list(params);
+			STATUS = ll_add_device_to_allow_list(params);
 	break;
 	case CMD_MAKE_OPCODE(HCI_OGF_LE,
-				HCI_CMD_LE_Remove_Device_From_White_List):
+				HCI_CMD_LE_Remove_Device_From_Allow_List):
 		if (hdr->paramLen !=
-				sizeof(struct hciLeRemoveDeviceFromWhiteList))
+				sizeof(struct hciLeRemoveDeviceFromAllowList))
 			STATUS = HCI_ERR_Invalid_HCI_Command_Parameters;
 		else
-			STATUS = ll_remove_device_from_white_list(params);
+			STATUS = ll_remove_device_from_allow_list(params);
 	break;
 
 	/* RFPHY Testing Support */
@@ -416,31 +416,31 @@ uint8_t *adv_params[] = {adv_param0, adv_param1};
  *
  */
 
-/* White list commands:
+/* Allow list commands:
  *
- * Read White list size
+ * Read allow list size
  * hcitool cmd 8 F
  *
- * Clear white list
+ * Clear allow list
  * hcitool cmd 8 10
  *
- * Add device to white list (Public C5A4A3A2A1A0)
+ * Add device to allow list (Public C5A4A3A2A1A0)
  * hcitool cmd 8 11 0 a0 a1 a2 a3 a4 c5
  * hcitool lcmd 0x2011 7 0xA2A1A000 0xC5A4A3
  *
- * Add device to white list (Random C5B4B3B2B1B0)
+ * Add device to allow list (Random C5B4B3B2B1B0)
  * hcitool cmd 8 11 1 b0 b1 b2 b4 b5 c5
  * hcitool lcmd 0x2011 7 0xB2B1B001 0xC5B4B3
  *
- * Remove device from white list (Public C5A4A3A2A1A0)
+ * Remove device from allow list (Public C5A4A3A2A1A0)
  * hcitool cmd 8 12 0 a0 a1 a2 a3 a4 c5
  * hcitool lcmd 0x2012 7 0xA2A1A000 0xC5A4A3
  *
- * Remove device from white list (Random C5B4B3B2B1B0)
+ * Remove device from allow list (Random C5B4B3B2B1B0)
  * hcitool cmd 8 12 1 b0 b1 b2 b4 b5 c5
  * hcitool lcmd 0x2012 7 0xB2B1B001 0xC5B4B3
  *
- * Tested by checking dumping the white list and checking its size when:
+ * Tested by checking dumping the allow list and checking its size when:
  * - adding devices
  * - removing devices
  * - removing non-existent devices

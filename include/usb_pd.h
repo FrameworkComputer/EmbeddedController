@@ -1540,7 +1540,7 @@ __override_proto void pd_try_execute_vconn_swap(int port, int flags);
 
 /**
  * Check if we should charge from this device. This is
- * basically a white-list for chargers that are dual-role,
+ * basically a allow-list for chargers that are dual-role,
  * don't set the unconstrained bit, but we should charge
  * from by default.
  *

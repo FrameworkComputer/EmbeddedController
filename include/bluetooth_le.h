@@ -382,11 +382,11 @@ void dump_ble_addr(uint8_t *mem, char *name);
 
 void dump_ble_packet(struct ble_pdu *ble_p);
 
-/* Radio-specific white list handling */
-int ble_radio_clear_white_list(void);
-int ble_radio_read_white_list_size(uint8_t *ret_size);
-int ble_radio_add_device_to_white_list(const uint8_t *addr_ptr, uint8_t rand);
-int ble_radio_remove_device_from_white_list(const uint8_t *addr_ptr,
+/* Radio-specific allow list handling */
+int ble_radio_clear_allow_list(void);
+int ble_radio_read_allow_list_size(uint8_t *ret_size);
+int ble_radio_add_device_to_allow_list(const uint8_t *addr_ptr, uint8_t rand);
+int ble_radio_remove_device_from_allow_list(const uint8_t *addr_ptr,
 					    uint8_t rand);
 
 #endif /* __CROS_EC_BLE_H */
