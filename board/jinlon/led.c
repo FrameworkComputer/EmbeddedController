@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Power and battery LED control for Dratini/Dragonair
+ * Power and battery LED control for Jinlon
  */
 
 #include "battery.h"
@@ -23,6 +23,7 @@
 
 #define LED_TICKS_PER_CYCLE 10
 #define LED_ON_TICKS 5
+#define POWER_LED_ON_TICKS 2
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_LEFT_LED,
@@ -200,7 +201,7 @@ static void led_set_power(void)
 	else if (chipset_in_state(CHIPSET_STATE_SUSPEND |
 				  CHIPSET_STATE_STANDBY))
 		led_set_color_power((power_tick %
-			LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
+			LED_TICKS_PER_CYCLE < POWER_LED_ON_TICKS) ?
 			LED_WHITE : LED_OFF);
 	else
 		led_set_color_power(LED_OFF);
