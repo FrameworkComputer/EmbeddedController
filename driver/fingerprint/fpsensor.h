@@ -6,7 +6,7 @@
 #ifndef __CROS_EC_DRIVER_FINGERPRINT_FPSENSOR_H_
 #define __CROS_EC_DRIVER_FINGERPRINT_FPSENSOR_H_
 
-#if defined(HAVE_PRIVATE) && !defined(TEST_BUILD)
+#if defined(HAVE_PRIVATE) && !defined(EMU_BUILD)
 #define HAVE_FP_PRIVATE_DRIVER
 #include "fpc/fpc_sensor.h"
 #else
