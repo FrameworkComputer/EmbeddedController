@@ -23,7 +23,7 @@
 #define BAT_LED_OFF 0
 
 const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_LEFT_LED,
+	EC_LED_ID_BATTERY_LED,
 };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
@@ -141,14 +141,14 @@ void led_control(enum ec_led_id led_id, enum ec_led_state state)
 		return;
 
 	if (state == LED_STATE_RESET) {
-		led_auto_control(EC_LED_ID_LEFT_LED, 1);
+		led_auto_control(EC_LED_ID_BATTERY_LED, 1);
 		board_led_set_battery();
 		return;
 	}
 
 	color = state ? LED_BLUE : LED_OFF;
 
-	led_auto_control(EC_LED_ID_LEFT_LED, 0);
+	led_auto_control(EC_LED_ID_BATTERY_LED, 0);
 
 	led_set_color(color);
 }
