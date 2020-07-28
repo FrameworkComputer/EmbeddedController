@@ -128,12 +128,15 @@ static int set_offset(const struct motion_sensor_t *s, const int16_t *offset,
 		      int16_t temp)
 {
 	int i, ret;
+	intv3_t v = { offset[X], offset[Y], offset[Z] };
+
+	rotate_inv(v, *s->rot_standard_ref, v);
 
 	/* temperature is ignored */
 	/* Offset from host is in 1/1024g, 1/128g internally. */
 	for (i = X; i <= Z; i++) {
 		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-				 BMA2x2_OFFSET_X_AXIS_ADDR + i, offset[i] / 8);
+				 BMA2x2_OFFSET_X_AXIS_ADDR + i, v[i] / 8);
 		if (ret)
 			return ret;
 	}
@@ -144,14 +147,20 @@ static int get_offset(const struct motion_sensor_t *s, int16_t *offset,
 		      int16_t *temp)
 {
 	int i, val, ret;
+	intv3_t v;
 
 	for (i = X; i <= Z; i++) {
 		ret = raw_read8(s->port, s->i2c_spi_addr_flags,
 				BMA2x2_OFFSET_X_AXIS_ADDR + i, &val);
 		if (ret)
 			return ret;
-		offset[i] = (int8_t)val * 8;
+		v[i] = (int8_t)val * 8;
 	}
+	rotate(v, *s->rot_standard_ref, v);
+	offset[X] = v[X];
+	offset[Y] = v[Y];
+	offset[Z] = v[Z];
+
 	*temp = EC_MOTION_SENSE_INVALID_CALIB_TEMP;
 	return EC_SUCCESS;
 }
