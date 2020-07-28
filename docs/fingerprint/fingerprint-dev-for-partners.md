@@ -509,6 +509,9 @@ From the DUT, flash the firmware you copied:
 ```bash
 (device) $ flash_fp_mcu /tmp/ec.bin
 ```
+## Commit-queue Prototype Environment
+
+![Dragonclaw in CQ Prototype Environment]
 
 ## Troubleshooting
 
@@ -628,3 +631,6 @@ Make sure that this interface is disabled:
 
 <!-- https://docs.google.com/drawings/d/1YhOUD-Qf69NUdugT6n0cX7o7CWvb5begcdmJwv7ch6I -->
 [Dragonclaw Rev 0.2 1.8V Rework]: https://github.com/coreboot/chrome-ec/blob/master/docs/images/dragonclaw_rev_0.2_1.8v_load_switch_rework.pdf
+
+<!-- https://docs.google.com/drawings/d/1w2qbb4AsSxY-KTK2vXZ6TKeWHveWvS3Dkgh61ocu0wc -->
+[Dragonclaw in CQ Prototype Environment]: ../images/Dragonclaw_in_CQ_Prototype_Environment.jpg
