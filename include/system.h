@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_SYSTEM_H
 #define __CROS_EC_SYSTEM_H
 
+#include <stdnoreturn.h>
+
 #include "atomic.h"
 #include "common.h"
 #include "compile_time_macros.h"
@@ -293,7 +295,7 @@ const char *system_get_build_info(void);
  * @param flags		Reset flags; see SYSTEM_RESET_* above.
  */
 #ifndef TEST_FUZZ
-__attribute__((noreturn))
+noreturn
 #endif
 void system_reset(int flags);
 

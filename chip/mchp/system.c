@@ -5,6 +5,8 @@
 
 /* System module for Chrome EC : MCHP hardware specific implementation */
 
+#include <stdnoreturn.h>
+
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -210,8 +212,7 @@ void chip_save_reset_flags(uint32_t flags)
 	MCHP_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = flags;
 }
 
-void __attribute__((noreturn)) _system_reset(int flags,
-					int wake_from_hibernate)
+noreturn void _system_reset(int flags, int wake_from_hibernate)
 {
 	uint32_t save_flags = 0;
 

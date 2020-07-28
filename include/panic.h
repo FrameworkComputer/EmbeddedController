@@ -11,6 +11,7 @@
 
 #include <stdarg.h>
 #include <stdint.h>
+#include <stdnoreturn.h>
 
 #include "software_panic.h"
 
@@ -152,11 +153,10 @@ void panic_data_print(const struct panic_data *pdata);
  * @param linenum	Line number where assertion happened
  */
 #ifdef CONFIG_DEBUG_ASSERT_BRIEF
-void panic_assert_fail(const char *fname, int linenum)
-	__attribute__((noreturn));
+noreturn void panic_assert_fail(const char *fname, int linenum);
 #else
-void panic_assert_fail(const char *msg, const char *func, const char *fname,
-		       int linenum) __attribute__((noreturn));
+noreturn void panic_assert_fail(const char *msg, const char *func,
+				const char *fname, int linenum);
 #endif
 
 /**
@@ -164,19 +164,19 @@ void panic_assert_fail(const char *msg, const char *func, const char *fname,
  *
  * @param msg	Panic message
  */
-void panic(const char *msg) __attribute__((noreturn));
+noreturn void panic(const char *msg);
 
 /**
  * Display a default message and reset
  */
-void panic_reboot(void) __attribute__((noreturn));
+noreturn void panic_reboot(void);
 
 #ifdef CONFIG_SOFTWARE_PANIC
 /**
  * Store a panic log and halt the system for a software-related reason, such as
  * stack overflow or assertion failure.
  */
-void software_panic(uint32_t reason, uint32_t info) __attribute__((noreturn));
+noreturn void software_panic(uint32_t reason, uint32_t info);
 
 /**
  * Log a panic in the panic log, but don't halt the system. Normally

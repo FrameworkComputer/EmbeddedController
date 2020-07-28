@@ -6,7 +6,9 @@
  *
  */
 
-void lfw_main(void) __attribute__ ((noreturn, naked));
+#include <stdnoreturn.h>
+
+noreturn void lfw_main(void) __attribute__ ((naked));
 void fault_handler(void) __attribute__((naked));
 
 struct int_vector_t {

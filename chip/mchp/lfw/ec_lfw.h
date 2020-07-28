@@ -6,6 +6,9 @@
  *
  */
 
+#include <stdint.h>
+#include <stdnoreturn.h>
+
 /* Why naked?  This is dangerous except for
  * function/ISR wrappers using inline assembly.
  * lfw_main() makes many calls and has one local variable.
@@ -16,9 +19,9 @@
  * We also do not know how much stack space is available when
  * EC_RO calls lfw_main().
  *
-void lfw_main(void) __attribute__ ((noreturn, naked));
+noreturn void lfw_main(void) __attribute__ ((naked));
 */
-void lfw_main(void) __attribute__ ((noreturn));
+noreturn void lfw_main(void);
 void fault_handler(void) __attribute__((naked));
 
 /*

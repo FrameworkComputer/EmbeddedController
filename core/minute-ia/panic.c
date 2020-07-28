@@ -171,7 +171,7 @@ void exception_panic(
 	__builtin_unreachable();
 }
 
-__attribute__((noreturn))
+noreturn
 void software_panic(uint32_t reason, uint32_t info)
 {
 	uint16_t code_segment;

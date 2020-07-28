@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <stdnoreturn.h>
+
 /* System module driver depends on chip series for Chrome EC */
 #include "common.h"
 #include "console.h"
@@ -57,7 +59,7 @@ void system_enter_psl_mode(void)
 }
 
 /* Hibernate function implemented by PSL (Power Switch Logic) mode. */
-void __keep __attribute__ ((noreturn)) __enter_hibernate_in_psl(void)
+noreturn void __keep __enter_hibernate_in_psl(void)
 {
 	system_enter_psl_mode();
 	/* Spin and wait for PSL cuts power; should never return */
@@ -104,7 +106,7 @@ int system_config_psl_mode(enum gpio_signal signal)
  * Hibernate function in last 32K ram block for npcx7 series.
  * Do not use global variable since we also turn off data ram.
  */
-void __keep __attribute__ ((noreturn, section(".after_init")))
+noreturn void __keep __attribute__ ((section(".after_init")))
 __enter_hibernate_in_last_block(void)
 {
 	/*

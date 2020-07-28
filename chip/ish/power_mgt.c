@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <stdnoreturn.h>
+
 #include "aontaskfw/ish_aon_share.h"
 #include "console.h"
 #include "hwtimer.h"
@@ -256,7 +258,7 @@ static void switch_to_aontask(void)
 	interrupt_enable();
 }
 
-__attribute__ ((noreturn))
+noreturn
 static void handle_reset_in_aontask(enum ish_pm_state pm_state)
 {
 	pm_ctx.aon_share->pm_state = pm_state;
@@ -649,7 +651,7 @@ void ish_pm_init(void)
 	}
 }
 
-__attribute__ ((noreturn))
+noreturn
 void ish_pm_reset(enum ish_pm_state pm_state)
 {
 	if (IS_ENABLED(CONFIG_ISH_PM_AONTASK) &&
@@ -756,7 +758,7 @@ DECLARE_IRQ(ISH_PMU_WAKEUP_IRQ, pmu_wakeup_isr);
  *
  */
 
-__maybe_unused __attribute__ ((noreturn))
+__maybe_unused noreturn
 static void reset_prep_isr(void)
 {
 	/* mask reset prep avail interrupt */
