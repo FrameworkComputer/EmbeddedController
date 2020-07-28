@@ -316,9 +316,6 @@ void setup_fw_config(void)
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 
 	setup_mux();
-
-	if (ec_config_has_hdmi_conn_hpd())
-		ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
 }
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
@@ -419,23 +416,6 @@ static void setup_fans(void)
 	thermal_params[TEMP_SENSOR_CPU] = thermal_cpu;
 }
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
-
-static void hdmi_hpd_handler(void)
-{
-	int hpd = 0;
-
-	/* Pass HPD through from DB OPT1 HDMI connector to AP's DP1. */
-	ioex_get_level(IOEX_HDMI_CONN_HPD_3V3_DB, &hpd);
-	gpio_set_level(GPIO_DP1_HPD, hpd);
-	ccprints("HDMI HPD %d", hpd);
-}
-DECLARE_DEFERRED(hdmi_hpd_handler);
-
-void hdmi_hpd_interrupt(enum ioex_signal signal)
-{
-	/* Debounce for 2 msec. */
-	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
-}
 
 static void board_chipset_resume(void)
 {
