@@ -62,24 +62,28 @@ static void chip_pd_irq(enum usbpd_port port)
 			TASK_EVENT_PHY_TX_DONE, 0);
 	}
 
-	if (IS_ENABLED(IT83XX_INTC_PLUG_IN_SUPPORT)) {
+	if (IS_ENABLED(IT83XX_INTC_PLUG_IN_OUT_SUPPORT)) {
 		if (USBPD_IS_PLUG_IN_OUT_DETECT(port)) {
-			/*
-			 * When tcpc detect type-c plug in, then disable
-			 * this interrupt. Because any cc volt changes
-			 * (include pd negotiation) would trigger plug in
-			 * interrupt, frequently plug in interrupt and wakeup
-			 * pd task may cause task starvation or device dead
-			 * (ex.transmit lots SRC_Cap).
-			 *
-			 * When polling disconnect will enable detect type-c
-			 * plug in again.
-			 *
-			 * Clear detect type-c plug in interrupt status.
-			 */
+			if (USBPD_IS_PLUG_IN(port))
+				/*
+				 * When tcpc detect type-c plug in:
+				 * 1)If we are sink, disable detect interrupt,
+				 * messages on cc line won't trigger interrupt.
+				 * 2)If we are source, then set plug out
+				 * detection.
+				 */
+				switch_plug_out_type(port);
+			else
+				/*
+				 * When tcpc detect type-c plug out:
+				 * switch to detect plug in.
+				 */
+				IT83XX_USBPD_TCDCR(port) &=
+					~USBPD_REG_PLUG_OUT_SELECT;
+
+			/* clear type-c device plug in/out detect interrupt */
 			IT83XX_USBPD_TCDCR(port) |=
-				(USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE |
-				 USBPD_REG_PLUG_IN_OUT_DETECT_STAT);
+				USBPD_REG_PLUG_IN_OUT_DETECT_STAT;
 			task_set_event(PD_PORT_TO_TASK_ID(port),
 				PD_EVENT_CC, 0);
 		}

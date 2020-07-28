@@ -71,8 +71,8 @@
 #define IT83XX_H2RAM_REMAPPING
 /* Enable FRS detection interrupt. */
 #define IT83XX_INTC_FAST_SWAP_SUPPORT
-/* Enable detect type-c plug in interrupt. */
-#define IT83XX_INTC_PLUG_IN_SUPPORT
+/* Enable detect type-c plug in and out interrupt. */
+#define IT83XX_INTC_PLUG_IN_OUT_SUPPORT
 /* Chip IT83202BX actually has TCPC physical port count. */
 #define IT83XX_USBPD_PHY_PORT_COUNT    3
 #elif defined(CHIP_VARIANT_IT81302AX_1024) \
@@ -118,8 +118,8 @@
 #define IT83XX_H2RAM_REMAPPING
 /* Enable FRS detection interrupt. */
 #define IT83XX_INTC_FAST_SWAP_SUPPORT
-/* Enable detect type-c plug in interrupt. */
-#define IT83XX_INTC_PLUG_IN_SUPPORT
+/* Enable detect type-c plug in and out interrupt. */
+#define IT83XX_INTC_PLUG_IN_OUT_SUPPORT
 /* Wake up CPU from low power mode even if interrupts are disabled */
 #define IT83XX_RISCV_WAKEUP_CPU_WITHOUT_INT_ENABLED
 /* Auto reset rx fifo while CS# deasserted. */

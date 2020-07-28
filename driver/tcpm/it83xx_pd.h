@@ -90,7 +90,7 @@
 #define IT83XX_USBPD_TCDCR(p)     REG8(IT83XX_USBPD_BASE(p)+0x67)
 #define USBPD_REG_PLUG_OUT_DETECT_TYPE_SELECT     BIT(7)
 #define USBPD_REG_MASK_TYPEC_PLUG_IN_OUT_ISR      BIT(4)
-#define USBPD_REG_PLUG_IN_OUT_SELECT              BIT(3)
+#define USBPD_REG_PLUG_OUT_SELECT                 BIT(3)
 #define USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE      BIT(1)
 #define USBPD_REG_PLUG_IN_OUT_DETECT_STAT         BIT(0)
 #define IT83XX_USBPD_PDQSCR(p)    REG8(IT83XX_USBPD_BASE(p)+0x70)
@@ -195,7 +195,7 @@
 #define USBPD_REG_MASK_BMC_RX_THRESHOLD_SNK       BIT(1)
 #define IT83XX_USBPD_TCDCR(p)       REG8(IT83XX_USBPD_BASE(p)+0x67)
 #define USBPD_REG_PLUG_OUT_DETECT_TYPE_SELECT     BIT(7)
-#define USBPD_REG_PLUG_IN_OUT_SELECT              BIT(6)
+#define USBPD_REG_PLUG_OUT_SELECT                 BIT(6)
 #define USBPD_REG_PD3_0_SNK_TX_OK_DISABLE         BIT(5)
 #define USBPD_REG_PD3_0_SNK_TX_NG_DISABLE         BIT(3)
 #define USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE      BIT(1)
@@ -353,6 +353,8 @@
 	IS_MASK_SET(IT83XX_USBPD_ISR(port), USBPD_REG_MASK_MSG_RX_DONE)
 #define USBPD_IS_PLUG_IN_OUT_DETECT(port)\
 	IS_MASK_SET(IT83XX_USBPD_TCDCR(port), USBPD_REG_PLUG_IN_OUT_DETECT_STAT)
+#define USBPD_IS_PLUG_IN(port)           \
+	IS_MASK_CLEAR(IT83XX_USBPD_TCDCR(port), USBPD_REG_PLUG_OUT_SELECT)
 #if defined(CONFIG_USB_PD_TCPM_DRIVER_IT83XX)
 #define USBPD_IS_FAST_SWAP_DETECT(port)  \
 	IS_MASK_SET(IT83XX_USBPD_PD30IR(port), USBPD_REG_FAST_SWAP_DETECT_STAT)
@@ -403,5 +405,6 @@ void it83xx_disable_pd_module(int port);
 void it83xx_clear_tx_error_status(enum usbpd_port port);
 void it83xx_get_tx_error_status(enum usbpd_port port);
 #endif
+void switch_plug_out_type(enum usbpd_port port);
 
 #endif /* __CROS_EC_DRIVER_TCPM_IT83XX_H */

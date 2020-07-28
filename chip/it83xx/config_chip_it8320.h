@@ -87,8 +87,8 @@
 #define IT83XX_INTC_FAST_SWAP_SUPPORT
 /* Enable interrupts of group 21 and 22. */
 #define IT83XX_INTC_GROUP_21_22_SUPPORT
-/* Enable detect type-c plug in interrupt. */
-#define IT83XX_INTC_PLUG_IN_SUPPORT
+/* Enable detect type-c plug in and out interrupt. */
+#define IT83XX_INTC_PLUG_IN_OUT_SUPPORT
 /* Chip Dx transmit status bit of PD register is different from Bx. */
 #define IT83XX_PD_TX_ERROR_STATUS_BIT5
 /* Chip IT8320DX actually has TCPC physical port count */
