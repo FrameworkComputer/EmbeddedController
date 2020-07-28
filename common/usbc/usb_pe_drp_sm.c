@@ -4099,6 +4099,7 @@ static enum vdm_response_result parse_vdm_response_common(int port)
 
 	if (!PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
 		return VDM_RESULT_WAITING;
+	PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
 	payload = (uint32_t *)rx_emsg[port].buf;
 	sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
