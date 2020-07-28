@@ -320,7 +320,21 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state)
 	uint32_t set_retimer_con = 0;
 	uint8_t dp_pin_mode;
 	int port = me->usb_port;
-
+	/*
+	 * TODO(b/161327513): Remove this once we have final fix for
+	 * the Type-C MFD degradation issue.
+	 * In alternate mode, mux changes states as USB->Safe->DP Alt Mode.
+	 * As EC programs retimer into safe mode independent of virtual mux,
+	 * the super speed lanes are terminated while IOM is in the process
+	 * of establishing the super speed link, which causes a fallback to
+	 * USB 2.0 enumeration through PCH. By removing the Safe mode in retimer
+	 * Super Speed lanes are available to virtual mux and would not
+	 * interrupt the enumeration process and then entering safe.
+	 * From the protocol analyser traces the safe mode is still achieved
+	 * with virtual mux Safe mode settings.
+	 */
+	if (mux_state & USB_PD_MUX_SAFE_MODE)
+		return 0;
 	/*
 	 * Bit 0: DATA_CONNECTION_PRESENT
 	 * 0 - No connection present
