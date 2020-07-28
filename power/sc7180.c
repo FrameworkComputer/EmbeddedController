@@ -733,6 +733,49 @@ void chipset_reset(enum chipset_reset_reason reason)
 	}
 }
 
+/*
+ * Flag to fake the suspend signal to 1 or 0, or -1 means not fake it.
+ *
+ * TODO(waihong): Remove this flag and debug command when the AP_SUSPEND
+ * signal is working.
+ */
+static int fake_suspend = -1;
+
+static int command_fake_suspend(int argc, char **argv)
+{
+	int v;
+
+	if (argc < 2) {
+		ccprintf("fake_suspend: %s\n",
+			 fake_suspend == -1 ? "reset"
+					    : (fake_suspend ? "on" : "off"));
+		return EC_SUCCESS;
+	}
+
+	if (!strcasecmp(argv[1], "reset"))
+		fake_suspend = -1;
+	else if (parse_bool(argv[1], &v))
+		fake_suspend = v;
+	else
+		return EC_ERROR_PARAM1;
+
+	task_wake(TASK_ID_CHIPSET);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(fakesuspend, command_fake_suspend,
+			"on/off/reset",
+			"Fake the AP_SUSPEND signal");
+
+/* Get system sleep state through GPIOs */
+static inline int chipset_get_sleep_signal(void)
+{
+	if (fake_suspend == -1)
+		return (power_get_signals() & IN_SUSPEND) == IN_SUSPEND;
+	else
+		return fake_suspend;
+}
+
 /**
  * Power handler for steady states
  *
@@ -815,7 +858,7 @@ enum power_state power_handle_state(enum power_state state)
 		 * host event before transits the state. It prevents changing
 		 * the state for modem paging.
 		 */
-		if (!(power_get_signals() & IN_SUSPEND))
+		if (!chipset_get_sleep_signal())
 			return POWER_S3S0;
 		break;
 
@@ -827,8 +870,7 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S0:
 		shutdown_from_s0 = check_for_power_off_event();
-		if (shutdown_from_s0 ||
-		    power_get_signals() & IN_SUSPEND)
+		if (shutdown_from_s0 || chipset_get_sleep_signal())
 			return POWER_S0S3;
 		break;
 
