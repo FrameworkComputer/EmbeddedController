@@ -27,7 +27,7 @@ void prl_hard_reset_complete(int port)
 
 int prl_is_running(int port)
 {
-	return 0;
+	return 1;
 }
 
 void prl_reset(int port)

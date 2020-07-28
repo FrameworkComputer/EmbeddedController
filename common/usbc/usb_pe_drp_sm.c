@@ -1781,14 +1781,22 @@ static void pe_src_send_capabilities_run(int port)
 	 *  1) The Protocol Layer indicates that the Message has not been sent
 	 *     and we are presently not Connected
 	 *
+	 * Send soft reset when:
+	 *  1) The Protocol Layer indicates that the Message has not been sent
+	 *     and we are already Connected
+	 *
+	 * See section 8.3.3.4.1.1 PE_SRC_Send_Soft_Reset State and section
+	 * 8.3.3.2.3 PE_SRC_Send_Capabilities State.
+	 *
 	 * NOTE: The PE_FLAGS_PROTOCOL_ERROR is set if a GoodCRC Message
 	 *       is not received.
 	 */
-	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR) &&
-			!PE_CHK_FLAG(port, PE_FLAGS_PD_CONNECTION)) {
+	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
-
-		set_state_pe(port, PE_SRC_DISCOVERY);
+		if (!PE_CHK_FLAG(port, PE_FLAGS_PD_CONNECTION))
+			set_state_pe(port, PE_SRC_DISCOVERY);
+		else
+			pe_send_soft_reset(port, TCPC_TX_SOP);
 		return;
 	}
 

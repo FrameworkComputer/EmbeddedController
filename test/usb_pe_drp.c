@@ -278,6 +278,41 @@ test_static int test_extended_message_not_supported_snk(void)
 	return test_extended_message_not_supported();
 }
 
+static int test_send_caps_error(void)
+{
+	/*
+	 * See section 8.3.3.4.1.1 PE_SRC_Send_Soft_Reset State and section
+	 * 8.3.3.2.3 PE_SRC_Send_Capabilities State.
+	 *
+	 * Transition to the PE_SRC_Discovery state when:
+	 *  1) The Protocol Layer indicates that the Message has not been sent
+	 *     and we are presently not Connected
+	 */
+	fake_prl_clear_last_sent_ctrl_msg(PORT0);
+	pe_set_flag(PORT0, PE_FLAGS_PROTOCOL_ERROR);
+	pe_clr_flag(PORT0, PE_FLAGS_PD_CONNECTION);
+	set_state_pe(PORT0, PE_SRC_SEND_CAPABILITIES);
+	task_wait_event(10 * MSEC);
+	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0), 0, "%d");
+	TEST_EQ(get_state_pe(PORT0), PE_SRC_DISCOVERY, "%d");
+
+	/*
+	 * Send soft reset when:
+	 *  1) The Protocol Layer indicates that the Message has not been sent
+	 *     and we are already Connected
+	 */
+	fake_prl_clear_last_sent_ctrl_msg(PORT0);
+	pe_set_flag(PORT0, PE_FLAGS_PROTOCOL_ERROR);
+	pe_set_flag(PORT0, PE_FLAGS_PD_CONNECTION);
+	set_state_pe(PORT0, PE_SRC_SEND_CAPABILITIES);
+	task_wait_event(10 * MSEC);
+	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0),
+		PD_CTRL_SOFT_RESET, "%d");
+	TEST_EQ(get_state_pe(PORT0), PE_SEND_SOFT_RESET, "%d");
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, char **argv)
 {
 	test_reset();
@@ -288,6 +323,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_extended_message_not_supported_src);
 	RUN_TEST(test_extended_message_not_supported_snk);
 #endif
+	RUN_TEST(test_send_caps_error);
 
 	/* Do basic state machine validity checks last. */
 	RUN_TEST(test_pe_no_parent_cycles);
