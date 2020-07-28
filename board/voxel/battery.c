@@ -32,6 +32,33 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
+	/* AP19B8M */
+	[BATTERY_AP19B8M] = {
+		.fuel_gauge = {
+			.manuf_name = "LGC KT0030G024",
+			.ship_mode = {
+				.reg_addr = 0x3A,
+				.reg_data = { 0xC574, 0xC574 },
+			},
+			.fet = {
+				.reg_addr = 0x43,
+				.reg_mask = 0x0001,
+				.disconnect_val = 0x0,
+			}
+		},
+		.batt_info = {
+			.voltage_max          = 13350,
+			.voltage_normal       = 11610,
+			.voltage_min          = 9000,
+			.precharge_current    = 256,
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 50,
+			.charging_min_c       = 0,
+			.charging_max_c       = 60,
+			.discharging_min_c    = -20,
+			.discharging_max_c    = 75,
+		},
+	},
 	/* LGC\011 L17L3PB0 Battery Information */
 	/*
 	 * Battery info provided by ODM on b/143477210, comment #11

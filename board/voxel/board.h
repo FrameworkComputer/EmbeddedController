@@ -144,6 +144,7 @@
 #include "registers.h"
 
 enum battery_type {
+	BATTERY_AP19B8M,
 	BATTERY_LGC011,
 	BATTERY_TYPE_COUNT,
 };
