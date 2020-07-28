@@ -1052,6 +1052,8 @@ static void prl_tx_wait_for_phy_response_run(const int port)
 			 */
 			/* Try to resend the message. */
 			prl_tx_construct_message(port);
+			prl_tx[port].tcpc_tx_timeout = get_time().val
+						       + PD_T_TCPC_TX_TIMEOUT;
 		}
 	} else if (prl_tx[port].xmit_status == TCPC_TX_COMPLETE_SUCCESS) {
 		/* NOTE: PRL_TX_Message_Sent State embedded here. */
