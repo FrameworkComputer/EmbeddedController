@@ -16,6 +16,7 @@
 #include "math_util.h"
 #include "queue.h"
 #include "timer.h"
+#include "util.h"
 
 enum sensor_state {
 	SENSOR_NOT_INITIALIZED = 0,
@@ -318,5 +319,40 @@ enum motionsensor_orientation motion_sense_remap_orientation(
 #define MOTION_SENSE_LUX motion_sensors[CONFIG_ALS_LIGHTBAR_DIMMING].raw_xyz[0]
 #endif
 #endif
+
+/*
+ * helper functions for clamping raw i32 values,
+ * each sensor driver should take care of overflow condition.
+ */
+static inline uint16_t ec_motion_sensor_clamp_u16(const int32_t value)
+{
+	return (uint16_t)MIN(MAX(value, 0), UINT16_MAX);
+}
+static inline void ec_motion_sensor_clamp_u16s(uint16_t *arr, const int32_t *v)
+{
+	arr[0] = ec_motion_sensor_clamp_u16(v[0]);
+	arr[1] = ec_motion_sensor_clamp_u16(v[1]);
+	arr[2] = ec_motion_sensor_clamp_u16(v[2]);
+}
+
+static inline int16_t ec_motion_sensor_clamp_i16(const int32_t value)
+{
+	return MIN(MAX(value, INT16_MIN), INT16_MAX);
+}
+static inline void ec_motion_sensor_clamp_i16s(int16_t *arr, const int32_t *v)
+{
+	arr[0] = ec_motion_sensor_clamp_i16(v[0]);
+	arr[1] = ec_motion_sensor_clamp_i16(v[1]);
+	arr[2] = ec_motion_sensor_clamp_i16(v[2]);
+}
+
+/* direct assignment */
+static inline void ec_motion_sensor_fill_values(
+		struct ec_response_motion_sensor_data *dst, const int32_t *v)
+{
+	dst->data[0] = v[0];
+	dst->data[1] = v[1];
+	dst->data[2] = v[2];
+}
 
 #endif /* __CROS_EC_MOTION_SENSE_H */
