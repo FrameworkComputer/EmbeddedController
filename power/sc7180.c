@@ -514,6 +514,9 @@ static void power_off(void)
 		set_system_power(0);
 	}
 
+	/* Turn off the load switch */
+	gpio_set_level(GPIO_QSIP_ON, 0);
+
 	/* Turn off the 3.3V and 5V rails. */
 	gpio_set_level(GPIO_EN_PP3300_A, 0);
 #ifdef CONFIG_POWER_PP5000_CONTROL
@@ -564,6 +567,12 @@ static int power_on(void)
 #else /* !defined(CONFIG_POWER_PP5000_CONTROL) */
 	gpio_set_level(GPIO_EN_PP5000, 1);
 #endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
+
+	/*
+	 * Enable the load switch. The load switch is redundant.
+	 * But leaving it off consumes power.
+	 */
+	gpio_set_level(GPIO_QSIP_ON, 1);
 
 	ret = set_system_power(1);
 	if (ret != EC_SUCCESS)
