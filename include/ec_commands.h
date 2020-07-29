@@ -2610,6 +2610,8 @@ struct ec_response_motion_sensor_data {
 	/* Each sensor is up to 3-axis. */
 	union {
 		int16_t             data[3];
+		/* for sensors using unsigned data */
+		uint16_t            udata[3];
 		struct __ec_todo_packed {
 			uint16_t    reserved;
 			uint32_t    timestamp;
