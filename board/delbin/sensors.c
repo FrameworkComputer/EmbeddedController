@@ -29,14 +29,14 @@ static struct bmi_drv_data_t g_bmi260_data;
 
 /* Rotation matrix for the lid accelerometer */
 static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
 	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
+	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
 const mat33_fp_t base_standard_ref = {
+	{ FLOAT_TO_FP(1), 0, 0},
 	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
