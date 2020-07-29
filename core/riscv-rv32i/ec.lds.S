@@ -310,6 +310,17 @@ SECTIONS
 	__image_size = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
 #endif
 
+#ifdef CONFIG_FLASH
+        /*
+         * These linker labels are just for analysis and not used in the code.
+         */
+	__config_flash_size = CONFIG_FLASH_SIZE;
+	__config_ro_size = CONFIG_RO_SIZE;
+	__config_ec_protected_storage_size = CONFIG_EC_PROTECTED_STORAGE_SIZE;
+	__config_rw_size = CONFIG_RW_SIZE;
+	__config_ec_writable_storage_size = CONFIG_EC_WRITABLE_STORAGE_SIZE;
+#endif
+
 #if defined(CHIP_FAMILY_IT8XXX2)
 #if defined(CONFIG_HOSTCMD_X86) || defined(CONFIG_I2C_SLAVE)
 	.h2ram (NOLOAD) : {
