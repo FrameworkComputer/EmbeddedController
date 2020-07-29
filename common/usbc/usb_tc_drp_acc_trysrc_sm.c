@@ -131,10 +131,13 @@
  * This delay is not part of the USB Type-C specification or the USB port
  * controller specification. Some TCPCs require extra time before the CC_STATUS
  * register is updated when exiting low power mode.
- * The PS8815 TCPC in particular was measured to take 8-10 ms from low power
- * exit before the first update to CC_STATUS.
+ *
+ * This delay can be possibly shortened or removed by checking VBUS state
+ * before trying to re-enter LPM.
+ *
+ * TODO(b/162347811): TCPMv2: Wait for debounce on Vbus and CC lines
  */
-#define PD_LPM_EXIT_DEBOUNCE_US (25*MSEC)
+#define PD_LPM_EXIT_DEBOUNCE_US CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
 
 /*
  * The TypeC state machine uses this bit to disable/enable PD
@@ -2899,6 +2902,7 @@ static void tc_low_power_mode_entry(const int port)
 {
 	print_current_state(port);
 	tc[port].low_power_time = get_time().val + PD_LPM_DEBOUNCE_US;
+	tc[port].low_power_exit_time = 0;
 }
 
 static void tc_low_power_mode_run(const int port)

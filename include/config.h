@@ -3954,6 +3954,13 @@
 /* Enable TCPC to enter low power mode */
 #undef CONFIG_USB_PD_TCPC_LOW_POWER
 
+/*
+ * Default debounce when exiting low-power mode before checking CC status.
+ * Some TCPCs need additional time following a VBUS change to internally
+ * debounce the CC line status and updating the CC_STATUS register.
+ */
+#define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE	(25*MSEC)
+
 /* Define EC and TCPC modules are in one integrated chip */
 #undef CONFIG_USB_PD_TCPC_ON_CHIP
 

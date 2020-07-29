@@ -168,6 +168,13 @@
 #define CONFIG_HOSTCMD_PD_CONTROL		/* Needed for TCPC FW update */
 #define CONFIG_CMD_USB_PD_PE
 
+/*
+ * The PS8815 TCPC was found to require a 50ms delay to consistently work
+ * with non-PD chargers.  Override the default low-power mode exit delay.
+ */
+#undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
+#define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE	(50*MSEC)
+
 /* Enable USB3.2 DRD */
 #define CONFIG_USB_PD_USB32_DRD
 
