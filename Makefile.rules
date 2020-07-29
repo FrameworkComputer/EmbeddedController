@@ -17,7 +17,7 @@ build-srcs := $(foreach u,$(build-util-bin),$(sort $($(u)-objs:%.o=util/%.c) $(w
 host-srcs := $(foreach u,$(host-util-bin),$(sort $($(u)-objs:%.o=util/%.c) $(wildcard util/$(u).c)))
 
 # Don't do a build test on the following boards:
-skip_boards = OWNERS chell chell_pd cr50 glados glados_pd gru host kevin
+skip_boards = OWNERS cr50 host
 boards := $(filter-out $(skip_boards),$(notdir $(wildcard board/* private*/board/*)))
 
 # Create output directories if necessary
