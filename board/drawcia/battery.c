@@ -90,6 +90,64 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 
+	/* DynaPack HIGHPOWER Battery Information */
+	[BATTERY_DANAPACK_HIGHPOWER] = {
+		.fuel_gauge = {
+			.manuf_name = "333-2D-0D-A",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0006,
+				.disconnect_val = 0x0,
+			},
+		},
+		.batt_info = {
+			.voltage_max = 8800,	/* mV */
+			.voltage_normal = 7700,
+			.voltage_min = 6000,
+			.precharge_current = 256,	/* mA */
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 45,
+			.discharging_min_c = -10,
+			.discharging_max_c = 60,
+		},
+	},
+
+	/* DynaPack BYD Battery Information */
+	[BATTERY_DANAPACK_BYD] = {
+		.fuel_gauge = {
+			.manuf_name = "333-2E-0D-A",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0006,
+				.disconnect_val = 0x0,
+			},
+		},
+		.batt_info = {
+			.voltage_max = 8800,	/* mV */
+			.voltage_normal = 7700,
+			.voltage_min = 6000,
+			.precharge_current = 256,	/* mA */
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 45,
+			.discharging_min_c = -10,
+			.discharging_max_c = 60,
+		},
+	},
+
 	/* Samsung SDI Battery Information */
 	[BATTERY_SAMSUNG_SDI] = {
 		.fuel_gauge = {
@@ -152,6 +210,35 @@ const struct board_batt_params board_battery_info[] = {
 	[BATTERY_SIMPLO_HIGHPOWER] = {
 		.fuel_gauge = {
 			.manuf_name = "333-1D-DA-A",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0006,
+				.disconnect_val = 0x0,
+			},
+		},
+		.batt_info = {
+			.voltage_max = 8800,	/* mV */
+			.voltage_normal = 7700,
+			.voltage_min = 6000,
+			.precharge_current = 256,	/* mA */
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 45,
+			.discharging_min_c = -10,
+			.discharging_max_c = 60,
+		},
+	},
+
+	/* CosMX Battery Information */
+	[BATTERY_COS] = {
+		.fuel_gauge = {
+			.manuf_name = "333-AC-0D-A",
 			.ship_mode = {
 				.reg_addr = 0x00,
 				.reg_data = { 0x0010, 0x0010 },
