@@ -376,6 +376,12 @@ static int32_t get_lux_from_xyz(struct motion_sensor_t *s, int32_t *xyz_data)
 	return lux;
 }
 
+static bool is_spoof(struct motion_sensor_t *s)
+{
+	return IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) &&
+	       (s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE);
+}
+
 static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 {
 	/*
@@ -383,32 +389,30 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 	 * This routine will only get called from ALS sensor driver.
 	 */
 	struct motion_sensor_t *rgb_s = s + 1;
-	const uint8_t calibration_mode =
+	const uint8_t is_calibration =
 			TCS3400_RGB_DRV_DATA(rgb_s)->calibration_mode;
-	struct ec_response_motion_sensor_data vector;
+	struct ec_response_motion_sensor_data vector = { .flags = 0, };
 	uint8_t buf[TCS_RGBC_DATA_SIZE]; /* holds raw data read from chip */
 	int32_t xyz_data[3] = { 0, 0, 0 };
 	uint16_t raw_data[CRGB_COUNT]; /* holds raw CRGB assembled from buf[] */
-	int retries = 20;     /* 400 ms max */
-	int *last_v = s->raw_xyz;
-	int32_t data = 0;
-	int32_t lux;
-	int i, ret = EC_SUCCESS;
+	int *last_v;
+	int32_t lux, data = 0;
+	int i, ret;
 
-	/* Make sure data is valid */
-	do {
+	i = 20;	/* 400ms max */
+	while (i--) {
+		/* Make sure data is valid */
 		ret = tcs3400_i2c_read8(s, TCS_I2C_STATUS, &data);
 		if (ret)
 			return ret;
-		if (!(data & TCS_I2C_STATUS_RGBC_VALID)) {
-			retries--;
-			if (retries == 0) {
-				CPRINTS("RGBC not valid (0x%x)", data);
-				return EC_ERROR_UNCHANGED;
-			}
-			msleep(20);
-		}
-	} while (!(data & TCS_I2C_STATUS_RGBC_VALID));
+		if (data & TCS_I2C_STATUS_RGBC_VALID)
+			break;
+		msleep(20);
+	}
+	if (i < 0) {
+		CPRINTS("RGBC invalid (0x%x)", data);
+		return EC_ERROR_UNCHANGED;
+	}
 
 	/* Read the light registers */
 	ret = i2c_read_block(s->port, s->i2c_spi_addr_flags,
@@ -421,30 +425,20 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 	tcs3400_process_raw_data(s, buf, raw_data, xyz_data);
 
 	/* get lux value */
-	if (calibration_mode)
-		lux = xyz_data[Y];
-	else
-		lux = get_lux_from_xyz(s, xyz_data);
+	lux = is_calibration ? xyz_data[Y] : get_lux_from_xyz(s, xyz_data);
 
 	/* if clear channel data changed, send illuminance upstream */
+	last_v = s->raw_xyz;
 	if ((raw_data[CLEAR_CRGB_IDX] != TCS_SATURATION_LEVEL) &&
 	    (last_v[X] != lux)) {
-		if (calibration_mode)
-			last_v[X] = raw_data[CLEAR_CRGB_IDX];
+		if (is_spoof(s))
+			last_v[X] = s->spoof_xyz[X];
 		else
-			last_v[X] = lux;
-		vector.flags = 0;
-		vector.data[X] = last_v[X];
-		vector.data[Y] = 0;
-		vector.data[Z] = 0;
+			last_v[X] = is_calibration ? raw_data[CLEAR_CRGB_IDX] : lux;
 
-#ifdef CONFIG_ACCEL_SPOOF_MODE
-		/* If in spoof mode, replace actual data with our fake data */
-		if (s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE) {
-			for (i = 0; i < 3; i++)
-				vector.data[i] = last_v[i] = s->spoof_xyz[i];
-		}
-#endif /* CONFIG_ACCEL_SPOOF_MODE */
+		vector.udata[X] = ec_motion_sensor_clamp_u16(last_v[X]);
+		vector.udata[Y] = 0;
+		vector.udata[Z] = 0;
 
 		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 			vector.sensor_num = s - motion_sensors;
@@ -462,35 +456,28 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 		((raw_data[RED_CRGB_IDX] != TCS_SATURATION_LEVEL) &&
 		(raw_data[BLUE_CRGB_IDX] != TCS_SATURATION_LEVEL) &&
 		(raw_data[GREEN_CRGB_IDX] != TCS_SATURATION_LEVEL))) {
-		vector.flags = 0;
-		if (calibration_mode) {
-			memcpy(vector.data, &raw_data[RED_CRGB_IDX],
-			       sizeof(vector.data));
-			memcpy(rgb_s->raw_xyz, &raw_data[RED_CRGB_IDX],
-			       sizeof(vector.data));
+
+		if (is_spoof(rgb_s)) {
+			memcpy(last_v, rgb_s->spoof_xyz, sizeof(rgb_s->spoof_xyz));
+		} else if (is_calibration) {
+			last_v[0] = raw_data[RED_CRGB_IDX];
+			last_v[1] = raw_data[GREEN_CRGB_IDX];
+			last_v[2] = raw_data[BLUE_CRGB_IDX];
 		} else {
-			for (i = 0; i < 3; i++)
-				vector.data[i] = last_v[i] = xyz_data[i];
+			memcpy(last_v, xyz_data, sizeof(xyz_data));
 		}
-#ifdef CONFIG_ACCEL_SPOOF_MODE
-		if (rgb_s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE) {
-			for (i = 0; i < 3; i++) {
-				vector.data[i] = last_v[i] =
-						rgb_s->spoof_xyz[i];
-			}
-		}
-#endif /* CONFIG_ACCEL_SPOOF_MODE */
 
-#ifdef CONFIG_ACCEL_FIFO
-		vector.sensor_num = rgb_s - motion_sensors;
-		motion_sense_fifo_stage_data(&vector, rgb_s, 3, last_ts);
-#endif
+		ec_motion_sensor_clamp_u16s(vector.udata, last_v);
+
+		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+			vector.sensor_num = rgb_s - motion_sensors;
+			motion_sense_fifo_stage_data(&vector, rgb_s, 3, last_ts);
+		}
 	}
-#ifdef CONFIG_ACCEL_FIFO
-	motion_sense_fifo_commit_data();
-#endif
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+		motion_sense_fifo_commit_data();
 
-	if (!calibration_mode)
+	if (!is_calibration)
 		ret = tcs3400_adjust_sensor_for_saturation(s, xyz_data[Y],
 							   raw_data);
 
