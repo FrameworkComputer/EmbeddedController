@@ -514,7 +514,7 @@ static inline void set_present(uint8_t *lpc_status)
 static inline void update_sense_data(uint8_t *lpc_status, int *psample_id)
 {
 	int s, d, i;
-	uint16_t *lpc_data = (uint16_t *)host_get_memmap(EC_MEMMAP_ACC_DATA);
+	int16_t *lpc_data = (int16_t *)host_get_memmap(EC_MEMMAP_ACC_DATA);
 #if (!defined HAS_TASK_ALS) && (defined CONFIG_ALS)
 	uint16_t *lpc_als = (uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
 #endif
@@ -552,13 +552,16 @@ static inline void update_sense_data(uint8_t *lpc_status, int *psample_id)
 			break;
 		else if (sensor->type == MOTIONSENSE_TYPE_GYRO)
 			d = 2;
+
 		for (i = X; i <= Z; i++)
-			lpc_data[1 + i + 3 * d] = sensor->xyz[i];
+			lpc_data[1 + i + 3 * d] =
+				ec_motion_sensor_clamp_i16(sensor->xyz[i]);
 	}
 
 #if (!defined HAS_TASK_ALS) && (defined CONFIG_ALS)
 	for (i = 0; i < EC_ALS_ENTRIES && i < ALS_COUNT; i++)
-		lpc_als[i] = motion_als_sensors[i]->xyz[X];
+		lpc_als[i] = ec_motion_sensor_clamp_u16(
+				motion_als_sensors[i]->xyz[X]);
 #endif
 
 	/*
@@ -633,11 +636,13 @@ static void motion_sense_push_raw_xyz(struct motion_sensor_t *s)
 		if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) &&
 		    s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE)
 			v = s->spoof_xyz;
+
 		mutex_lock(&g_sensor_mutex);
-		vector.data[X] = v[X];
-		vector.data[Y] = v[Y];
-		vector.data[Z] = v[Z];
+
+		ec_motion_sensor_fill_values(&vector, v);
+
 		mutex_unlock(&g_sensor_mutex);
+
 		motion_sense_fifo_stage_data(&vector, s, 3,
 					     __hw_clock_source_read());
 		motion_sense_fifo_commit_data();
@@ -1035,10 +1040,8 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 				MOTIONSENSE_SENSOR_FLAG_PRESENT;
 			if (i < motion_sensor_count) {
 				sensor = &motion_sensors[i];
-				/* casting from int to s16 */
-				out->dump.sensor[i].data[X] = sensor->xyz[X];
-				out->dump.sensor[i].data[Y] = sensor->xyz[Y];
-				out->dump.sensor[i].data[Z] = sensor->xyz[Z];
+				ec_motion_sensor_fill_values(
+					&out->dump.sensor[i], sensor->xyz);
 			} else {
 				memset(out->dump.sensor[i].data, 0,
 				       3 * sizeof(int16_t));
@@ -1058,10 +1061,9 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		out->data.flags = 0;
 
 		mutex_lock(&g_sensor_mutex);
-		out->data.data[X] = sensor->xyz[X];
-		out->data.data[Y] = sensor->xyz[Y];
-		out->data.data[Z] = sensor->xyz[Z];
+		ec_motion_sensor_fill_values(&out->data, sensor->xyz);
 		mutex_unlock(&g_sensor_mutex);
+
 		args->response_size = sizeof(out->data);
 		break;
 
