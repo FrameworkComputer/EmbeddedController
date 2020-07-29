@@ -13,6 +13,8 @@
 #include "driver/ppc/sn5s330.h"
 #include "driver/ppc/syv682x.h"
 #include "driver/sync.h"
+#include "driver/tcpm/ps8xxx.h"
+#include "driver/tcpm/tcpci.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -309,6 +311,32 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
+/* USBC TCPC configuration for port 1 on USB3 board */
+static const struct tcpc_config_t tcpc_config_p1_usb3 = {
+	.bus_type = EC_BUS_TYPE_I2C,
+	.i2c_info = {
+		.port = I2C_PORT_USB_C1,
+		.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+	},
+	.flags = TCPC_FLAGS_TCPCI_REV2_0 | TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
+	.drv = &ps8xxx_tcpm_drv,
+	.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
+};
+
+static const struct usb_mux usbc1_usb3_db_retimer = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &tcpci_tcpm_usb_mux_driver,
+	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	.next_mux = NULL,
+};
+
+static const struct usb_mux mux_config_p1_usb3 = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &virtual_usb_mux_driver,
+	.hpd_update = &virtual_hpd_update,
+	.next_mux = &usbc1_usb3_db_retimer,
+};
+
 void board_reset_pd_mcu(void)
 {
 	/* TODO(b/159024035): Malefor: check USB PD reset operation */
@@ -316,7 +344,9 @@ void board_reset_pd_mcu(void)
 
 __override void board_cbi_init(void)
 {
-	/* TODO(b/159024035): Malefor: check FW_CONFIG fields for USB DB type */
+	/* Config DB USB3 */
+	tcpc_config[USBC_PORT_C1] = tcpc_config_p1_usb3;
+	usb_muxes[USBC_PORT_C1] = mux_config_p1_usb3;
 }
 
 /******************************************************************************/
