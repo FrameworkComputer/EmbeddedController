@@ -35,6 +35,7 @@
 #include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
+#include "thermistor.h"
 #include "usb_mux.h"
 #include "usb_charge.h"
 #include "usbc_ppc.h"
@@ -318,6 +319,38 @@ const struct fan_t fans[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
 
+int board_get_temp(int idx, int *temp_k)
+{
+	int mv;
+	int temp_c;
+	enum adc_channel channel;
+
+	/* idx is the sensor index set in board temp_sensors[] */
+	switch (idx) {
+	case TEMP_SENSOR_CHARGER:
+		channel = ADC_TEMP_SENSOR_CHARGER;
+		break;
+
+	case TEMP_SENSOR_5V_REGULATOR:
+		/* thermistor is not powered in G3 */
+		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			return EC_ERROR_NOT_POWERED;
+
+		channel = ADC_TEMP_SENSOR_5V_REGULATOR;
+		break;
+	default:
+		return EC_ERROR_INVAL;
+	}
+
+	mv = adc_read_channel(channel);
+	if (mv < 0)
+		return EC_ERROR_INVAL;
+
+	temp_c = thermistor_linear_interpolate(mv, &thermistor_info);
+	*temp_k = C_TO_K(temp_c);
+	return EC_SUCCESS;
+}
+
 const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_CHARGER] = {
 		.name = "CHARGER",
@@ -326,8 +359,8 @@ const struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_SOC] = {
-		.name = "SOC",
+	[ADC_TEMP_SENSOR_5V_REGULATOR] = {
+		.name = "5V_REGULATOR",
 		.input_ch = NPCX_ADC_CH3,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
@@ -343,11 +376,11 @@ const struct temp_sensor_t temp_sensors[] = {
 		.read = board_get_temp,
 		.idx = TEMP_SENSOR_CHARGER,
 	},
-	[TEMP_SENSOR_SOC] = {
-		.name = "SOC",
+	[TEMP_SENSOR_5V_REGULATOR] = {
+		.name = "5V_REGULATOR",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = board_get_temp,
-		.idx = TEMP_SENSOR_SOC,
+		.idx = TEMP_SENSOR_5V_REGULATOR,
 	},
 	[TEMP_SENSOR_CPU] = {
 		.name = "CPU",
@@ -355,8 +388,8 @@ const struct temp_sensor_t temp_sensors[] = {
 		.read = sb_tsi_get_val,
 		.idx = 0,
 	},
-	[TEMP_SENSOR_5V_REGULATOR] = {
-		.name = "5V_REGULATOR",
+	[TEMP_SENSOR_SSD] = {
+		.name = "SSD",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = tmp432_get_val,
 		.idx = TMP432_IDX_LOCAL,
@@ -393,7 +426,6 @@ struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 static void setup_fans(void)
 {
 	thermal_params[TEMP_SENSOR_CHARGER] = thermal_thermistor;
-	thermal_params[TEMP_SENSOR_SOC] = thermal_thermistor;
 	thermal_params[TEMP_SENSOR_CPU] = thermal_cpu;
 }
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);

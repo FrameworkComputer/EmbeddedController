@@ -76,7 +76,7 @@ void ps2_pwr_en_interrupt(enum gpio_signal signal);
 
 enum adc_channel {
 	ADC_TEMP_SENSOR_CHARGER,
-	ADC_TEMP_SENSOR_SOC,
+	ADC_TEMP_SENSOR_5V_REGULATOR,
 	ADC_CH_COUNT
 };
 
@@ -102,9 +102,9 @@ enum pwm_channel {
 
 enum temp_sensor_id {
 	TEMP_SENSOR_CHARGER = 0,
-	TEMP_SENSOR_SOC,
-	TEMP_SENSOR_CPU,
 	TEMP_SENSOR_5V_REGULATOR,
+	TEMP_SENSOR_CPU,
+	TEMP_SENSOR_SSD,
 	TEMP_SENSOR_COUNT
 };
 

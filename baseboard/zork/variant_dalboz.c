@@ -6,6 +6,7 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "charger.h"
+#include "chipset.h"
 #include "common.h"
 #include "driver/charger/isl9241.h"
 #include "driver/temp_sensor/sb_tsi.h"
@@ -14,6 +15,7 @@
 #include "i2c.h"
 #include "power.h"
 #include "temp_sensor.h"
+#include "thermistor.h"
 
 const struct power_signal_info power_signal_list[] = {
 	[X86_SLP_S3_N] = {
@@ -38,6 +40,37 @@ const struct power_signal_info power_signal_list[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+int board_get_temp(int idx, int *temp_k)
+{
+	int mv;
+	int temp_c;
+	enum adc_channel channel;
+
+	/* idx is the sensor index set in board temp_sensors[] */
+	switch (idx) {
+	case TEMP_SENSOR_CHARGER:
+		channel = ADC_TEMP_SENSOR_CHARGER;
+		break;
+	case TEMP_SENSOR_SOC:
+		/* thermistor is not powered in G3 */
+		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			return EC_ERROR_NOT_POWERED;
+
+		channel = ADC_TEMP_SENSOR_SOC;
+		break;
+	default:
+		return EC_ERROR_INVAL;
+	}
+
+	mv = adc_read_channel(channel);
+	if (mv < 0)
+		return EC_ERROR_INVAL;
+
+	temp_c = thermistor_linear_interpolate(mv, &thermistor_info);
+	*temp_k = C_TO_K(temp_c);
+	return EC_SUCCESS;
+}
 
 const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_CHARGER] = {

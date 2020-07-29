@@ -146,37 +146,6 @@ const struct thermistor_info thermistor_info = {
 	.data = thermistor_data,
 };
 
-__overridable int board_get_temp(int idx, int *temp_k)
-{
-	int mv;
-	int temp_c;
-	enum adc_channel channel;
-
-	/* idx is the sensor index set in board temp_sensors[] */
-	switch (idx) {
-	case TEMP_SENSOR_CHARGER:
-		channel = ADC_TEMP_SENSOR_CHARGER;
-		break;
-	case TEMP_SENSOR_SOC:
-		/* thermistor is not powered in G3 */
-		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-			return EC_ERROR_NOT_POWERED;
-
-		channel = ADC_TEMP_SENSOR_SOC;
-		break;
-	default:
-		return EC_ERROR_INVAL;
-	}
-
-	mv = adc_read_channel(channel);
-	if (mv < 0)
-		return EC_ERROR_INVAL;
-
-	temp_c = thermistor_linear_interpolate(mv, &thermistor_info);
-	*temp_k = C_TO_K(temp_c);
-	return EC_SUCCESS;
-}
-
 #ifndef TEST_BUILD
 void lid_angle_peripheral_enable(int enable)
 {

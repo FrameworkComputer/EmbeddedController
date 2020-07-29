@@ -336,7 +336,7 @@ const struct fan_t fans[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
 
-__override int board_get_temp(int idx, int *temp_k)
+int board_get_temp(int idx, int *temp_k)
 {
 	int mv;
 	int temp_c;

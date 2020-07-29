@@ -334,7 +334,6 @@ void ppc_interrupt(enum gpio_signal signal);
 
 void pi3hdx1204_retimer_power(void);
 __override_proto int check_hdmi_hpd_status(void);
-int board_get_temp(int idx, int *temp_k);
 
 #endif /* !__ASSEMBLER__ */
 
