@@ -475,12 +475,10 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 {
 	/*
-	 * We ignore the cc_pin because the polarity should already be set
-	 * correctly in the PPC driver via the pd state machine.
+	 * We ignore the cc_pin and PPC vconn because polarity and PPC vconn
+	 * should already be set correctly in the PPC driver via the pd
+	 * state machine.
 	 */
-	if (ppc_set_vconn(port, enabled) != EC_SUCCESS)
-		cprints(CC_USBPD, "C%d: Failed %sabling vconn",
-			port, enabled ? "en" : "dis");
 }
 
 /* Called on AP S3 -> S0 transition */
