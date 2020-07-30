@@ -14,11 +14,6 @@ GPIO_INT(EC_WP_L,              PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
 GPIO_INT(H1_EC_PWR_BTN_ODL,    PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)
 GPIO_INT(ACOK_OD,              PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
 
-/* Optional power sequencing interrupts */
-#ifdef VOLTEER_POWER_SEQUENCE
-GPIO_INT(CPU_C10_GATE_L,       PIN(6, 7), GPIO_INT_BOTH, c10_gate_change)
-#endif
-
 /* Power sequencing interrupts */
 GPIO_INT(SLP_S0_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
 #ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
@@ -57,15 +52,6 @@ GPIO(EN_PPVAR_VCCIN,	       PIN(4, 3), GPIO_OUT_LOW)
 /* The EC does not buffer this signal on Halvor. */
 UNIMPLEMENTED(PCH_DSW_PWROK)
 UNIMPLEMENTED(EN_PP5000_A)
-
-#ifdef VOLTEER_POWER_SEQUENCE
-/* Optional power sequencing signals that are not stuffed by default */
-GPIO(EN_PP1050_STG,		PIN(C, 0), GPIO_OUT_LOW)
-GPIO(EN_PP5000_USB_AG,		PIN(A, 7), GPIO_OUT_LOW)
-GPIO(EN_PP1050_ST_S0,		PIN(3, 4), GPIO_OUT_LOW)
-GPIO(EN_VNN_BYPASS,		PIN(B, 0), GPIO_OUT_LOW)
-GPIO(EN_DRAM_VDD1,		PIN(9, 6), GPIO_OUT_LOW)
-#endif
 
 /* Other wake sources */
 /*
