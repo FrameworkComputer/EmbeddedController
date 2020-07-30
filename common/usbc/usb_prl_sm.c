@@ -606,12 +606,18 @@ void prl_reset_soft(int port)
 {
 	/* Do not change negotiated PD Revision Specification level */
 	local_state[port] = SM_INIT;
+
+	/* Ensure we process the reset quickly */
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 void prl_reset(int port)
 {
 	prl_set_default_pd_revision(port);
 	local_state[port] = SM_INIT;
+
+	/* Ensure we process the reset quickly */
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 void prl_run(int port, int evt, int en)
