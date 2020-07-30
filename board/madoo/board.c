@@ -78,6 +78,12 @@ static void sub_hdmi_hpd_interrupt(enum gpio_signal s)
 	gpio_set_level(GPIO_EC_AP_USB_C1_HDMI_HPD, !hdmi_hpd_odl);
 }
 
+static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
+{
+	cprints(CC_USBPD, "C0: CC OVP, SBU OVP, or thermal event");
+	pd_handle_cc_overvoltage(0);
+}
+
 #include "gpio_list.h"
 
 /* ADC channels */
@@ -118,6 +124,7 @@ void board_init(void)
 	int on;
 
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
 
 	if (get_cbi_fw_config_db() == DB_1A_HDMI) {
 		/* Disable i2c on HDMI pins */

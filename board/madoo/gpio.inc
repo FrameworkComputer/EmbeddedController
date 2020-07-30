@@ -28,6 +28,7 @@ GPIO_INT(PG_PP1050_ST_OD,	 PIN(4, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(USB_C0_INT_ODL,	 		PIN(6, 2), GPIO_INT_FALLING | GPIO_PULL_UP, usb_c0_interrupt)
 GPIO_INT(SUB_C1_INT_EN_RAILS_ODL,		PIN(F, 5), GPIO_INT_FALLING | GPIO_PULL_UP, sub_usb_c1_interrupt) /* C1 interrupt OR 5V power en */
 GPIO_INT(EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL,	PIN(9, 1), GPIO_INT_BOTH, sub_hdmi_hpd_interrupt) /* C1 I2C SDA OR HDMI_HPD */
+GPIO_INT(USB_C0_CCSBU_OVP_ODL,	PIN(A, 2), GPIO_INT_FALLING | GPIO_PULL_UP, c0_ccsbu_ovp_interrupt) /* Fault protection */
 
 /* Button interrupts */
 GPIO_INT(H1_EC_PWR_BTN_ODL,	 PIN(0, 1), GPIO_INT_BOTH | GPIO_PULL_UP, power_button_interrupt)
