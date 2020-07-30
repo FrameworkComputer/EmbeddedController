@@ -2077,7 +2077,8 @@ static void pe_src_ready_run(int port)
 			case PD_CTRL_REJECT:
 			case PD_CTRL_WAIT:
 			case PD_CTRL_PS_RDY:
-				set_state_pe(port, PE_SEND_SOFT_RESET);
+				pe_send_soft_reset(port,
+				  PD_HEADER_GET_SOP(rx_emsg[port].header));
 				return;
 			/*
 			 * Receiving an unknown or unsupported message
@@ -2823,7 +2824,8 @@ static void pe_snk_ready_run(int port)
 			case PD_CTRL_REJECT:
 			case PD_CTRL_WAIT:
 			case PD_CTRL_PS_RDY:
-				set_state_pe(port, PE_SEND_SOFT_RESET);
+				pe_send_soft_reset(port,
+				  PD_HEADER_GET_SOP(rx_emsg[port].header));
 				return;
 			/*
 			 * Receiving an unknown or unsupported message
