@@ -313,6 +313,14 @@ void reset_rtc_alarm(struct rtc_time_reg *rtc)
 	rtc_lock_regs();
 }
 
+#ifdef CONFIG_HOSTCMD_RTC
+static void set_rtc_host_event(void)
+{
+	host_set_single_event(EC_HOST_EVENT_RTC);
+}
+DECLARE_DEFERRED(set_rtc_host_event);
+#endif
+
 test_mockable_static
 void __rtc_alarm_irq(void)
 {
@@ -323,7 +331,7 @@ void __rtc_alarm_irq(void)
 	/* Wake up the host if there is a saved rtc wake alarm. */
 	if (host_wake_time.ts.val) {
 		host_wake_time.ts.val = 0;
-		host_set_single_event(EC_HOST_EVENT_RTC);
+		hook_call_deferred(&set_rtc_host_event_data, 0);
 	}
 #endif
 }
