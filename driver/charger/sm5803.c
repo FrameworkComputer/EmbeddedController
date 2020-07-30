@@ -835,6 +835,40 @@ static int sm5803_is_sourcing_otg_power(int chgnum, int port)
 	return reg == (SM5803_FLOW1_CHG_EN | SM5803_FLOW1_VBUSIN_DISCHG_EN);
 }
 
+#ifdef CONFIG_CMD_CHARGER_DUMP
+static int command_sm5803_dump(int argc, char **argv)
+{
+	int reg;
+	int regval;
+	int chgnum = 0;
+
+	if (argc > 1)
+		chgnum = atoi(argv[1]);
+
+	/* Dump measure regs */
+	ccprintf("MEAS regs\n");
+	for (reg = 0x01; reg <= 0xED; reg++) {
+		if (!meas_read8(chgnum, reg, &regval))
+			ccprintf("[0x%02X] = 0x%02x\n", reg, regval);
+		if (reg & 0xf)
+			cflush(); /* Flush periodically */
+	}
+
+	/* Dump Charger regs from 0x1C to 0x7F */
+	ccprintf("CHG regs\n");
+	for (reg = 0x1C; reg <= 0x7F; reg++) {
+		if (!chg_read8(chgnum, reg, &regval))
+			ccprintf("[0x%02X] = 0x%02x\n", reg, regval);
+		if (reg & 0xf)
+			cflush(); /* Flush periodically */
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(charger_dump, command_sm5803_dump,
+			"charger_dump [chgnum]", "Dumps SM5803 registers");
+#endif /* CONFIG_CMD_CHARGER_DUMP */
+
 const struct charger_drv sm5803_drv = {
 	.init = &sm5803_init,
 	.post_init = &sm5803_post_init,
