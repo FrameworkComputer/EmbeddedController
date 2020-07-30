@@ -42,6 +42,11 @@ GPIO_INT(USB_C0_BC12_INT_ODL,PIN(J, 6), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C1_BC12_INT_L,  PIN(J, 4), GPIO_INT_FALLING, bc12_interrupt)
 
 /* Volume button interrupts */
+/* Note that netnames are reversed in asurada rev 0/1 */
+GPIO_INT(VOLUME_DOWN_L,      PIN(D, 5), GPIO_INT_BOTH | GPIO_PULL_UP,
+         button_interrupt) /* EC_VOLDN_BTN_ODL */
+GPIO_INT(VOLUME_UP_L,        PIN(D, 6), GPIO_INT_BOTH | GPIO_PULL_UP,
+         button_interrupt) /* EC_VOLUP_BTN_ODL */
 
 /* Other interrupts */
 GPIO_INT(AC_PRESENT,         PIN(M, 2),  GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,
@@ -50,10 +55,6 @@ GPIO_INT(UART1_RX,           PIN(B, 0), GPIO_INT_FALLING,
          uart_deepsleep_interrupt) /* UART_DEBUG_TX_EC_RX */
 GPIO_INT(WP,                 PIN(I, 4), GPIO_INT_BOTH,
          switch_interrupt) /* EC_FLASH_WP_OD */
-GPIO_INT(VOLUME_DOWN_L,      PIN(D, 6), GPIO_INT_BOTH | GPIO_PULL_UP,
-         button_interrupt) /* EC_VOLDN_BTN_ODL */
-GPIO_INT(VOLUME_UP_L,        PIN(D, 5), GPIO_INT_BOTH | GPIO_PULL_UP,
-         button_interrupt) /* EC_VOLUP_BTN_ODL */
 GPIO_INT(SPI0_CS,            PIN(M, 5), GPIO_INT_FALLING | GPIO_PULL_UP,
          spi_event)        /* SPI slave Chip Select -- AP_SPI_EC_CS_L */
 GPIO_INT(X_EC_GPIO2,         PIN(B, 2), GPIO_ODR_HIGH, x_ec_interrupt)
