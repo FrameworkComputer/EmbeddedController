@@ -15,6 +15,8 @@
 /* System unlocked in early development */
 #define CONFIG_SYSTEM_UNLOCKED
 
+#define CONFIG_CMD_CHARGER_DUMP
+
 /* Battery */
 #define CONFIG_BATTERY_FUEL_GAUGE
 
@@ -27,6 +29,8 @@
 #define CONFIG_USB_PD_5V_CHARGER_CTRL
 #define CONFIG_CHARGER_OTG
 #undef  CONFIG_CHARGER_SINGLE_CHIP
+#define CONFIG_OCPC
+#define CONFIG_OCPC_DEF_RBATT_MOHMS 5 /* R_DS(on) 5.3mOhm */
 
 /* LED */
 #define CONFIG_LED_PWM
