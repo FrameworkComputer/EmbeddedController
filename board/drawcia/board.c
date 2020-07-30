@@ -408,6 +408,12 @@ void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+__override void board_ocpc_init(struct ocpc_data *ocpc)
+{
+	/* There's no provision to measure Isys */
+	ocpc->chg_flags[CHARGER_SECONDARY] |= OCPC_NO_ISYS_MEAS_CAP;
+}
+
 void board_reset_pd_mcu(void)
 {
 	/*
@@ -606,3 +612,17 @@ void lid_angle_peripheral_enable(int enable)
 	}
 }
 #endif
+
+__override void ocpc_get_pid_constants(int *kp, int *kp_div,
+				       int *ki, int *ki_div,
+				       int *kd, int *kd_div)
+{
+	*kp = 1;
+	*kp_div = 6;
+
+	*ki = 0;
+	*ki_div = 1;
+
+	*kd = 0;
+	*kd_div = 1;
+}

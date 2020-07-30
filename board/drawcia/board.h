@@ -30,6 +30,8 @@
 #define CONFIG_USB_PD_5V_CHARGER_CTRL
 #define CONFIG_CHARGER_OTG
 #undef  CONFIG_CHARGER_SINGLE_CHIP
+#define CONFIG_OCPC
+#define CONFIG_OCPC_DEF_RBATT_MOHMS 5 /* R_DS(on) 5.3mOhm */
 
 /* Sensors */
 #define CONFIG_ACCEL_BMA255		/* Lid accel */
