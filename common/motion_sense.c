@@ -7,6 +7,7 @@
 
 #include "accelgyro.h"
 #include "atomic.h"
+#include "body_detection.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -187,6 +188,10 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 	sensor->next_collection = ts.le.lo + sensor->collection_rate;
 	sensor->oversampling = 0;
 	mutex_unlock(&g_sensor_mutex);
+#ifdef CONFIG_BODY_DETECTION
+	if (sensor - motion_sensors == CONFIG_BODY_DETECTION_SENSOR)
+		body_detect_reset();
+#endif
 	return 0;
 }
 
@@ -444,6 +449,10 @@ static void motion_sense_shutdown(void)
 				MOTIONSENSE_ACTIVITY_DOUBLE_TAP, 1, NULL);
 	}
 #endif
+#ifdef CONFIG_BODY_DETECTION
+	/* disable the body detection since motion sensor is down */
+	body_detect_set_enable(false);
+#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, motion_sense_shutdown,
 	     MOTION_SENSE_HOOK_PRIO);
@@ -459,6 +468,10 @@ static void motion_sense_suspend(void)
 
 	sensor_active = SENSOR_ACTIVE_S3;
 
+#ifdef CONFIG_BODY_DETECTION
+	/* disable the body detection since motion sensor is suspended */
+	body_detect_set_enable(false);
+#endif
 	/*
 	 * During shutdown sequence sensor rails can be powered down
 	 * asynchronously to the EC hence EC cannot interlock the sensor
@@ -659,9 +672,11 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 {
 	int ret = EC_SUCCESS;
 	int is_odr_pending = 0;
+	int has_data_read = 0;
+	int sensor_num = sensor - motion_sensors;
 
 	if (*event & TASK_EVENT_MOTION_ODR_CHANGE) {
-		const int sensor_bit = 1 << (sensor - motion_sensors);
+		const int sensor_bit = 1 << sensor_num;
 		int odr_pending = atomic_read_clear(&odr_event_required);
 
 		is_odr_pending = odr_pending & sensor_bit;
@@ -673,8 +688,10 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 	if ((*event & TASK_EVENT_MOTION_INTERRUPT_MASK || is_odr_pending) &&
 	    (sensor->drv->irq_handler != NULL)) {
 		ret = sensor->drv->irq_handler(sensor, event);
+		if (ret == EC_SUCCESS)
+			has_data_read = 1;
 	}
-#endif
+#endif /* CONFIG_ACCEL_INTERRUPTS */
 	if (motion_sensor_in_forced_mode(sensor)) {
 		if (motion_sensor_time_to_read(ts, sensor)) {
 			ret = motion_sense_read(sensor);
@@ -683,8 +700,10 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 			ret = EC_ERROR_BUSY;
 		}
 
-		if (ret == EC_SUCCESS)
+		if (ret == EC_SUCCESS) {
 			motion_sense_push_raw_xyz(sensor);
+			has_data_read = 1;
+		}
 	}
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO) &&
 	    *event & TASK_EVENT_MOTION_FLUSH_PENDING) {
@@ -703,6 +722,17 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 		if (IS_ENABLED(CONFIG_ACCEL_FIFO))
 			motion_sense_fifo_insert_async_event(
 				sensor, ASYNC_EVENT_ODR);
+	}
+	if (has_data_read) {
+#ifdef CONFIG_GESTURE_SW_DETECTION
+		/* Run gesture recognition engine */
+		if (sensor_num == CONFIG_GESTURE_SENSOR_DOUBLE_TAP)
+			gesture_calc(event);
+#endif
+#ifdef CONFIG_BODY_DETECTION
+		if (sensor_num == CONFIG_BODY_DETECTION_SENSOR)
+			body_detect();
+#endif
 	}
 	return ret;
 }
@@ -734,10 +764,6 @@ static void check_and_queue_gestures(uint32_t *event)
 	const struct motion_sensor_t *sensor;
 #endif
 
-#ifdef CONFIG_GESTURE_SW_DETECTION
-	/* Run gesture recognition engine */
-	gesture_calc(event);
-#endif
 #ifdef CONFIG_GESTURE_SENSOR_DOUBLE_TAP
 	if (*event & TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(
 				MOTIONSENSE_ACTIVITY_DOUBLE_TAP)) {
@@ -1168,8 +1194,8 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 				return EC_RES_INVALID_COMMAND;
 
 			if (sensor->drv->set_range(sensor,
-						in->sensor_range.data,
-						in->sensor_range.roundup)
+						   in->sensor_range.data,
+						   in->sensor_range.roundup)
 					!= EC_SUCCESS) {
 				return EC_RES_INVALID_PARAM;
 			}
@@ -1350,6 +1376,15 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 				out->list_activities.disabled |= disabled;
 			}
 		}
+#ifdef CONFIG_BODY_DETECTION
+		if (body_detect_get_enable()) {
+			out->list_activities.enabled |=
+				BIT(MOTIONSENSE_ACTIVITY_BODY_DETECTION);
+		} else {
+			out->list_activities.disabled |=
+				BIT(MOTIONSENSE_ACTIVITY_BODY_DETECTION);
+		}
+#endif
 		if (ret != EC_RES_SUCCESS)
 			return ret;
 		args->response_size = sizeof(out->list_activities);
@@ -1372,9 +1407,31 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 						in->set_activity.enable,
 						&in->set_activity);
 		}
+#ifdef CONFIG_BODY_DETECTION
+		if (in->set_activity.activity ==
+		    MOTIONSENSE_ACTIVITY_BODY_DETECTION)
+			body_detect_set_enable(in->set_activity.enable);
+#endif
 		if (ret != EC_RES_SUCCESS)
 			return ret;
 		args->response_size = 0;
+		break;
+	}
+	case MOTIONSENSE_CMD_GET_ACTIVITY: {
+		switch (in->get_activity.activity) {
+#ifdef CONFIG_BODY_DETECTION
+		case MOTIONSENSE_ACTIVITY_BODY_DETECTION:
+			out->get_activity.state = (uint8_t)
+					body_detect_get_state();
+			ret = EC_RES_SUCCESS;
+			break;
+#endif
+		default:
+			ret = EC_RES_INVALID_PARAM;
+		}
+		if (ret != EC_RES_SUCCESS)
+			return ret;
+		args->response_size = sizeof(out->get_activity);
 		break;
 	}
 #endif /* defined(CONFIG_GESTURE_HOST_DETECTION) */

@@ -5541,6 +5541,19 @@ static int cmd_motionsense(int argc, char **argv)
 			return rv;
 		return 0;
 	}
+	if (argc == 4 && !strcasecmp(argv[1], "get_activity")) {
+		param.cmd = MOTIONSENSE_CMD_GET_ACTIVITY;
+		param.get_activity.sensor_num = strtol(argv[2], &e, 0);
+		param.get_activity.activity = strtol(argv[3], &e, 0);
+
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
+		if (rv < 0)
+			return rv;
+		printf("State: %d\n", resp->get_activity.state);
+		return 0;
+	}
 
 	if (argc == 2 && !strcasecmp(argv[1], "lid_angle")) {
 		param.cmd = MOTIONSENSE_CMD_LID_ANGLE;

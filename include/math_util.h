@@ -48,6 +48,9 @@ typedef int64_t fp_inter_t;
 
 #endif
 
+/* Some useful math functions.  Use with integers only! */
+#define POW2(x) ((x) * (x))
+
 /*
  * Fixed-point addition and subtraction can be done directly, because they
  * work identically.
