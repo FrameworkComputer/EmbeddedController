@@ -1113,7 +1113,10 @@ void tcpci_tcpc_alert(int port)
 	uint32_t pd_event = 0;
 
 	/* Read the Alert register from the TCPC */
-	tcpm_alert_status(port, &alert);
+	if (tcpm_alert_status(port, &alert)) {
+		CPRINTS("C%d: Failed to read alert register", port);
+		return;
+	}
 
 	/* Get Extended Alert register if needed */
 	if (alert & TCPC_REG_ALERT_ALERT_EXT)
