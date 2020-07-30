@@ -327,8 +327,10 @@
 #define BMI260_FF_FRAME_LEN_TS          4
 #define BMI260_FF_DATA_LEN_ACC          6
 #define BMI260_FF_DATA_LEN_GYR          6
-
 #define BMI260_FF_DATA_LEN_MAG          8
+
+/* Root mean square noise of 100Hz accelerometer, units: ug */
+#define BMI260_ACCEL_RMS_NOISE_100HZ    1060
 
 extern const struct accelgyro_drv bmi260_drv;
 

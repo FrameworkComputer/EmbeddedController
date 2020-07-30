@@ -750,6 +750,9 @@ const struct accelgyro_drv bmi160_drv = {
 	.manage_activity = manage_activity,
 	.list_activities = list_activities,
 #endif
+#ifdef CONFIG_BODY_DETECTION
+	.get_rms_noise = bmi_get_rms_noise,
+#endif
 };
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL

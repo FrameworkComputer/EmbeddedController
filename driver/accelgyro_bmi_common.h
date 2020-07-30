@@ -150,7 +150,9 @@ struct bmi_drv_data_t {
 	(v) * (BMI260_CMD_REG - BMI160_CMD_REG))
 #define BMI_CMD_FIFO_FLUSH 0xb0
 
-
+#define BMI_ACCEL_RMS_NOISE_100HZ(v) (BMI160_ACCEL_RMS_NOISE_100HZ + \
+	(v) * (BMI260_ACCEL_RMS_NOISE_100HZ - BMI160_ACCEL_RMS_NOISE_100HZ))
+#define BMI_ACCEL_100HZ 100
 
 /*
  * Struct for pairing an engineering value with the register value for a
@@ -297,6 +299,10 @@ int bmi_get_offset(const struct motion_sensor_t *s,
 		   int16_t *offset, int16_t *temp);
 
 int bmi_get_resolution(const struct motion_sensor_t *s);
+
+#ifdef CONFIG_BODY_DETECTION
+int bmi_get_rms_noise(const struct motion_sensor_t *s);
+#endif
 
 int bmi_set_scale(const struct motion_sensor_t *s,
 		  const uint16_t *scale, int16_t temp);

@@ -159,6 +159,12 @@ struct accelgyro_drv {
 			       uint32_t *disabled);
 
 #endif
+#ifdef CONFIG_BODY_DETECTION
+	/**
+	 * Get the root mean square of current noise (ug/mdps) in the sensor.
+	 */
+	int (*get_rms_noise)(const struct motion_sensor_t *s);
+#endif
 };
 
 /* Index values for rgb_calibration_t.coeff array */

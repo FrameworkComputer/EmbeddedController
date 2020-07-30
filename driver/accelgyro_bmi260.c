@@ -565,6 +565,9 @@ const struct accelgyro_drv bmi260_drv = {
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	.irq_handler = irq_handler,
 #endif
+#ifdef CONFIG_BODY_DETECTION
+	.get_rms_noise = bmi_get_rms_noise,
+#endif
 };
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL
