@@ -54,6 +54,7 @@ GPIO(DP1_HPD_EC_IN,		PIN(7, 5), GPIO_INPUT)				/* C1 IN Hotplug Detect */
 GPIO(EC_PS2_RESET_V0,		PIN(3, 2), GPIO_OUT_LOW)			/* Trackpoint reset pin V0*/
 GPIO(EC_PS2_RESET_V1,		PIN(4, 5), GPIO_OUT_LOW)			/* Trackpoint reset pin V1 */
 GPIO(EC_H1_PACKET_MODE,		PIN(8, 6), GPIO_OUT_LOW)			/* H1 Packet Mode */
+GPIO(FAN_ID,			PIN(8, 2), GPIO_INPUT)				/* Fan ID*/
 
 UNIMPLEMENTED(NO_HPD)
 
