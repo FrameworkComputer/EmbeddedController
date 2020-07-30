@@ -31,7 +31,7 @@
 struct fifo_staged {
 	uint32_t read_ts;
 	uint16_t count;
-	uint8_t sample_count[SENSOR_COUNT];
+	uint8_t sample_count[MAX_MOTION_SENSORS];
 	uint8_t requires_spreading;
 };
 
@@ -57,7 +57,7 @@ static struct fifo_staged fifo_staged;
  * Cached expected timestamp per sensor. If a sensor's timestamp pre-dates this
  * timestamp it will be fast forwarded.
  */
-static struct timestamp_state next_timestamp[SENSOR_COUNT];
+static struct timestamp_state next_timestamp[MAX_MOTION_SENSORS];
 
 /**
  * Bitmap telling which sensors have valid entries in the next_timestamp array.
@@ -169,7 +169,7 @@ static void fifo_pop(void)
 		int i;
 
 		fifo_staged.requires_spreading = 0;
-		for (i = 0; i < SENSOR_COUNT; i++) {
+		for (i = 0; i < MAX_MOTION_SENSORS; i++) {
 			if (fifo_staged.sample_count[i] > 1) {
 				fifo_staged.requires_spreading = 1;
 				break;
@@ -214,7 +214,7 @@ static void fifo_ensure_space(void)
  */
 static inline bool is_new_timestamp(uint8_t sensor_num)
 {
-	return sensor_num < SENSOR_COUNT &&
+	return sensor_num < MAX_MOTION_SENSORS &&
 	       !(next_timestamp_initialized & BIT(sensor_num));
 }
 
@@ -413,7 +413,7 @@ void motion_sense_fifo_stage_data(
 void motion_sense_fifo_commit_data(void)
 {
 	/* Cached data periods, static to store off stack. */
-	static uint32_t data_periods[SENSOR_COUNT];
+	static uint32_t data_periods[MAX_MOTION_SENSORS];
 	struct ec_response_motion_sensor_data *data;
 	int i, window, sensor_num;
 
@@ -447,7 +447,7 @@ void motion_sense_fifo_commit_data(void)
 	window = time_until(data->timestamp, fifo_staged.read_ts);
 
 	/* Update the data_periods as needed for this flush. */
-	for (i = 0; i < SENSOR_COUNT; i++) {
+	for (i = 0; i < MAX_MOTION_SENSORS; i++) {
 		int period;
 
 		/* Skip empty sensors. */

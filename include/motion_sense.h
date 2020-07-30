@@ -304,12 +304,23 @@ enum motionsensor_orientation motion_sense_remap_orientation(
 		enum motionsensor_orientation orientation);
 #endif
 
+/*
+ * There are 4 variables that represent the number of sensors:
+ * SENSOR_COUNT: The number of available motion sensors in board.
+ * MAX_MOTION_SENSORS: Max number of sensors. This equals to SENSOR_COUNT
+ *                     (+ 1 when activity sensor is available).
+ * motion_sensor_count: The number of motion sensors using currently.
+ * ALL_MOTION_SENSORS: motion_sensor_count (+ 1 when activity sensor is
+ *                     available).
+ */
 #if defined(CONFIG_GESTURE_HOST_DETECTION) || defined(CONFIG_ORIENTATION_SENSOR)
 /* Add an extra sensor. We may need to add more */
 #define MOTION_SENSE_ACTIVITY_SENSOR_ID (motion_sensor_count)
 #define ALL_MOTION_SENSORS (MOTION_SENSE_ACTIVITY_SENSOR_ID + 1)
+#define MAX_MOTION_SENSORS (SENSOR_COUNT + 1)
 #else
-#define ALL_MOTION_SENSORS motion_sensor_count
+#define ALL_MOTION_SENSORS (motion_sensor_count)
+#define MAX_MOTION_SENSORS (SENSOR_COUNT)
 #endif
 
 #ifdef CONFIG_ALS_LIGHTBAR_DIMMING
