@@ -150,11 +150,12 @@
 #define CONFIG_TEMP_CACHE_STALE_THRES (1 * SECOND)
 #endif /* CONFIG_ONLINE_CALIB && !CONFIG_TEMP_CACHE_STALE_THRES */
 
-#if defined(TEST_MOTION_LID) || \
+#if defined(CONFIG_ONLINE_CALIB) || \
+	defined(TEST_BODY_DETECTION) || \
 	defined(TEST_MOTION_ANGLE) || \
 	defined(TEST_MOTION_ANGLE_TABLET) || \
-	defined(TEST_MOTION_SENSE_FIFO) || \
-	defined(CONFIG_ONLINE_CALIB)
+	defined(TEST_MOTION_LID) || \
+	defined(TEST_MOTION_SENSE_FIFO)
 enum sensor_id {
 	BASE,
 	LID,
@@ -180,6 +181,11 @@ enum sensor_id {
 #define CONFIG_ACCEL_FORCE_MODE_MASK \
 	((1 << CONFIG_LID_ANGLE_SENSOR_BASE) | \
 	 (1 << CONFIG_LID_ANGLE_SENSOR_LID))
+#endif
+
+#if defined(TEST_BODY_DETECTION)
+#define CONFIG_BODY_DETECTION
+#define CONFIG_BODY_DETECTION_SENSOR BASE
 #endif
 
 #ifdef TEST_RMA_AUTH
