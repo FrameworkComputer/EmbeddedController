@@ -1508,6 +1508,13 @@ static void set_vconn(int port, int enable)
 		TC_CLR_FLAG(port, TC_FLAGS_VCONN_ON);
 
 	/*
+	 * Disable PPC Vconn first then TCPC in case the voltage feeds back
+	 * to TCPC and damages.
+	 */
+	if (IS_ENABLED(CONFIG_USBC_PPC_VCONN) && !enable)
+		ppc_set_vconn(port, 0);
+
+	/*
 	 * We always need to tell the TCPC to enable Vconn first, otherwise some
 	 * TCPCs get confused and think the CC line is in over voltage mode and
 	 * immediately disconnects. If there is a PPC, both devices will
@@ -1516,8 +1523,8 @@ static void set_vconn(int port, int enable)
 	 */
 	tcpm_set_vconn(port, enable);
 
-	if (IS_ENABLED(CONFIG_USBC_PPC_VCONN))
-		ppc_set_vconn(port, enable);
+	if (IS_ENABLED(CONFIG_USBC_PPC_VCONN) && enable)
+		ppc_set_vconn(port, 1);
 }
 
 /* This must only be called from the PD task */

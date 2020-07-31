@@ -424,6 +424,13 @@ void pd_vbus_low(int port)
 static void set_vconn(int port, int enable)
 {
 	/*
+	 * Disable PPC Vconn first then TCPC in case the voltage feeds back
+	 * to TCPC and damages.
+	 */
+	if (IS_ENABLED(CONFIG_USBC_PPC_VCONN) && !enable)
+		ppc_set_vconn(port, 0);
+
+	/*
 	 * We always need to tell the TCPC to enable Vconn first, otherwise some
 	 * TCPCs get confused when a PPC sets secondary CC line to 5V and TCPC
 	 * immediately disconnect. If there is a PPC, both devices will
@@ -431,9 +438,9 @@ static void set_vconn(int port, int enable)
 	 * "make before break" electrical requirements when swapping anyway.
 	 */
 	tcpm_set_vconn(port, enable);
-#ifdef CONFIG_USBC_PPC_VCONN
-	ppc_set_vconn(port, enable);
-#endif
+
+	if (IS_ENABLED(CONFIG_USBC_PPC_VCONN) && enable)
+		ppc_set_vconn(port, 1);
 }
 #endif /* defined(CONFIG_USBC_VCONN) */
 
