@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "board_config.h"
+#include "cbi_fw_config.h"
 #include "chipset.h"
 #include "common.h"
 #include "extpower.h"
@@ -258,4 +259,15 @@ int extpower_is_present(void)
 			vbus_present |= pd_snk_is_vbus_provided(port);
 
 	return vbus_present;
+}
+
+__override uint32_t board_override_feature_flags0(uint32_t flags0)
+{
+	/*
+	 * Remove keyboard backlight feature for devices that don't support it.
+	 */
+	if (get_cbi_fw_config_kblight() == KB_BL_ABSENT)
+		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
+	else
+		return flags0;
 }
