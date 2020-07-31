@@ -9,6 +9,7 @@
  * data used by NPCX ROM code (booter).
  */
 
+#include "compile_time_macros.h"
 #include "ecst.h"
 
 /* Global Variables */
@@ -37,15 +38,19 @@ int api_file_size_bytes;
 int is_mrider15 = FALSE;
 
 /* Chips information, RAM start address and RAM size. */
-struct chip_info chip_info[] = {{NPCX5M5G_RAM_ADDR, NPCX5M5G_RAM_SIZE},
-				{NPCX5M6G_RAM_ADDR, NPCX5M6G_RAM_SIZE},
-				{NPCX7M5X_RAM_ADDR, NPCX7M5X_RAM_SIZE},
-				{NPCX7M6X_RAM_ADDR, NPCX7M6X_RAM_SIZE},
-				{NPCX7M7X_RAM_ADDR, NPCX7M7X_RAM_SIZE},};
+struct chip_info chip_info[] = {
+	[NPCX5M5G] = {NPCX5M5G_RAM_ADDR, NPCX5M5G_RAM_SIZE},
+	[NPCX5M6G] = {NPCX5M6G_RAM_ADDR, NPCX5M6G_RAM_SIZE},
+	[NPCX7M5] = {NPCX7M5X_RAM_ADDR, NPCX7M5X_RAM_SIZE},
+	[NPCX7M6] = {NPCX7M6X_RAM_ADDR, NPCX7M6X_RAM_SIZE},
+	[NPCX7M7] = {NPCX7M7X_RAM_ADDR, NPCX7M7X_RAM_SIZE},
+};
+BUILD_ASSERT(ARRAY_SIZE(chip_info) == NPCX_CHIP_RAM_VAR_NONE);
 
 /* Support chips name strings */
 const char *supported_chips = "npcx5m5g, npcx5m6g, npcx7m5g, npcx7m6g, "
-		"npcx7m6f, npcx7m6fb, npcx7m6fc, npcx7m7wb, or npcx7m7wc";
+		"npcx7m6f, npcx7m6fb, npcx7m6fc, npcx7m7fc, npcx7m7wb, "
+		"or npcx7m7wc";
 
 static unsigned int calc_api_csum_bin(void);
 static unsigned int initialize_crc_32(void);
@@ -89,6 +94,39 @@ static int splice_into_path(char *result, const char *path, int resultsz,
 	result_last_delim = result + (last_delim - path);
 	sprintf(result_last_delim + 1, "%s%s", prefix, last_delim + 1);
 	return TRUE;
+}
+
+/**
+ * Convert the chip name (string) to the chip's RAM variant.
+ * @param    chip_name - the string of the npcx chip variant.
+ *
+ * @return   one of enum value of npcx_chip_ram_variant,
+ *           NPCX_CHIP_RAM_VAR_NONE otherwise.
+ */
+static enum npcx_chip_ram_variant chip_to_ram_var(const char *chip_name)
+{
+	if (str_cmp_no_case(chip_name, "npcx7m7wb") == 0)
+		return NPCX7M7;
+	else if (str_cmp_no_case(chip_name, "npcx7m7wc") == 0)
+		return NPCX7M7;
+	else if (str_cmp_no_case(chip_name, "npcx7m7fc") == 0)
+		return NPCX7M7;
+	else if (str_cmp_no_case(chip_name, "npcx7m6f") == 0)
+		return NPCX7M6;
+	else if (str_cmp_no_case(chip_name, "npcx7m6fb") == 0)
+		return NPCX7M6;
+	else if (str_cmp_no_case(chip_name, "npcx7m6fc") == 0)
+		return NPCX7M6;
+	else if (str_cmp_no_case(chip_name, "npcx7m6g") == 0)
+		return  NPCX7M6;
+	else if (str_cmp_no_case(chip_name, "npcx7m5g") == 0)
+		return NPCX7M5;
+	else if (str_cmp_no_case(chip_name, "npcx5m6g") == 0)
+		return NPCX5M6G;
+	else if (str_cmp_no_case(chip_name, "npcx5m5g") == 0)
+		return NPCX5M5G;
+	else
+		return NPCX_CHIP_RAM_VAR_NONE;
 }
 
 /*
@@ -239,118 +277,40 @@ int main(int argc, char *argv[])
 						supported_chips);
 				main_status = FALSE;
 			} else {
-				if ((str_cmp_no_case(main_str_temp,
-					"npcx7m7wb") == 0) ||
-					       (str_cmp_no_case(main_str_temp,
-					"npcx7m7wc") == 0)) {
-					if ((bin_params.bin_params
-						& BIN_FW_LOAD_START_ADDR) ==
-						0x00000000)
-						bin_params.fw_load_addr =
-						chip_info[NPCX7M7].ram_addr;
+				enum npcx_chip_ram_variant ram_variant;
 
-					if ((bin_params.bin_params
-						& BIN_FW_ENTRY_POINT) ==
-						0x00000000)
-						bin_params.fw_ep =
-						chip_info[NPCX7M7].ram_addr;
-
-					g_ram_start_address =
-						chip_info[NPCX7M7].ram_addr;
-					g_ram_size =
-						chip_info[NPCX7M7].ram_size;
-				} else if ((str_cmp_no_case(main_str_temp,
-					"npcx7m6f") == 0) ||
-					       (str_cmp_no_case(main_str_temp,
-					"npcx7m6fb") == 0) ||
-					       (str_cmp_no_case(main_str_temp,
-					"npcx7m6fc") == 0) ||
-					       (str_cmp_no_case(main_str_temp,
-					"npcx7m6g") == 0)) {
-					if ((bin_params.bin_params
-						& BIN_FW_LOAD_START_ADDR) ==
-						0x00000000)
-						bin_params.fw_load_addr =
-						chip_info[NPCX7M6].ram_addr;
-
-					if ((bin_params.bin_params &
-						BIN_FW_ENTRY_POINT) ==
-						0x00000000)
-						bin_params.fw_ep =
-						chip_info[NPCX7M6].ram_addr;
-
-					g_ram_start_address =
-						chip_info[NPCX7M6].ram_addr;
-					g_ram_size =
-						chip_info[NPCX7M6].ram_size;
-				} else if (str_cmp_no_case(main_str_temp,
-					"npcx7m5g") == 0) {
-					if ((bin_params.bin_params
-						& BIN_FW_LOAD_START_ADDR) ==
-						0x00000000)
-						bin_params.fw_load_addr =
-						chip_info[NPCX7M5].ram_addr;
-
-					if ((bin_params.bin_params &
-						BIN_FW_ENTRY_POINT) ==
-						0x00000000)
-						bin_params.fw_ep =
-						chip_info[NPCX7M5].ram_addr;
-
-					g_ram_start_address =
-						chip_info[NPCX7M5].ram_addr;
-					g_ram_size =
-						chip_info[NPCX7M5].ram_size;
-				} else if (str_cmp_no_case(main_str_temp,
-						    "npcx5m5g") == 0) {
-					if ((bin_params.bin_params
-						& BIN_FW_LOAD_START_ADDR) ==
-								0x00000000)
-						bin_params.fw_load_addr =
-						   chip_info[NPCX5M5G].ram_addr;
-
-					if ((bin_params.bin_params &
-					     BIN_FW_ENTRY_POINT) == 0x00000000)
-						bin_params.fw_ep =
-						   chip_info[NPCX5M5G].ram_addr;
-
-					g_ram_start_address =
-						chip_info[NPCX5M5G].ram_addr;
-					g_ram_size =
-						chip_info[NPCX5M5G].ram_size;
-
-					is_mrider15 = TRUE;
-
-				} else if (str_cmp_no_case(main_str_temp,
-							   "npcx5m6g") == 0) {
-					if ((bin_params.bin_params &
-						BIN_FW_LOAD_START_ADDR) ==
-								0x00000000)
-						bin_params.fw_load_addr =
-						   chip_info[NPCX5M6G].ram_addr;
-
-					if ((bin_params.bin_params &
-						BIN_FW_ENTRY_POINT) ==
-								0x00000000)
-						bin_params.fw_ep =
-						   chip_info[NPCX5M6G].ram_addr;
-
-					g_ram_start_address =
-						chip_info[NPCX5M6G].ram_addr;
-					g_ram_size =
-						chip_info[NPCX5M6G].ram_size;
-
-					is_mrider15 = TRUE;
-
-				} else {
+				ram_variant = chip_to_ram_var(main_str_temp);
+				if (ram_variant == NPCX_CHIP_RAM_VAR_NONE) {
 					my_printf(TERR,
 						  "\nInvalid chip name (%s) ",
 						  main_str_temp);
 					my_printf(TERR, ", it should be %s.\n",
 						supported_chips);
 					main_status = FALSE;
+					break;
 				}
 
+				if ((bin_params.bin_params
+					& BIN_FW_LOAD_START_ADDR) ==
+					0x00000000)
+					bin_params.fw_load_addr =
+					chip_info[ram_variant].ram_addr;
+
+				if ((bin_params.bin_params
+					& BIN_FW_ENTRY_POINT) ==
+					0x00000000)
+					bin_params.fw_ep =
+					chip_info[ram_variant].ram_addr;
+
+				g_ram_start_address =
+					chip_info[ram_variant].ram_addr;
+				g_ram_size =
+					chip_info[ram_variant].ram_size;
+
+				if ((ram_variant == NPCX5M5G) ||
+					(ram_variant == NPCX5M6G)) {
+					is_mrider15 = TRUE;
+				}
 			}
 		  /* -argfile Read argument file. File name must be after it.*/
 		} else if (str_cmp_no_case(hdr_args[arg_ind],

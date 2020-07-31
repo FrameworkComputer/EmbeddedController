@@ -161,11 +161,14 @@
 #define MAX_FLASH_SIZE                  0x03ffffff
 
 /* Chips: convert from name to index. */
-#define NPCX5M5G                        0
-#define NPCX5M6G                        1
-#define NPCX7M5                         2
-#define NPCX7M6                         3
-#define NPCX7M7                         4
+enum npcx_chip_ram_variant {
+	NPCX5M5G = 0,
+	NPCX5M6G = 1,
+	NPCX7M5 = 2,
+	NPCX7M6 = 3,
+	NPCX7M7 = 4,
+	NPCX_CHIP_RAM_VAR_NONE
+};
 
 #define DEFAULT_CHIP                    NPCX5M5G
 
