@@ -63,6 +63,7 @@ GPIO(ALL_SYS_PWRGD,		PIN(B, 7), GPIO_OUT_LOW)
 GPIO(EN_SLP_Z,			PIN(K, 3), GPIO_OUT_LOW)
 
 /* Required for icelake chipset code, but implemented through other means for dedede */
+UNIMPLEMENTED(AC_PRESENT)
 UNIMPLEMENTED(PG_EC_DSW_PWROK)
 UNIMPLEMENTED(PG_EC_ALL_SYS_PWRGD)
 

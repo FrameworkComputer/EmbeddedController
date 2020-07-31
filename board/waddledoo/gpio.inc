@@ -96,6 +96,7 @@ GPIO(EC_BATTERY_PRES_ODL,    PIN(E, 1), GPIO_INPUT)
  * Waddledoo doesn't have these physical pins coming to the EC but uses other
  * logic.
  */
+UNIMPLEMENTED(AC_PRESENT)
 UNIMPLEMENTED(PG_EC_DSW_PWROK)
 UNIMPLEMENTED(PG_EC_ALL_SYS_PWRGD)
 
