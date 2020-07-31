@@ -291,14 +291,12 @@ SECTIONS
 		     (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
 
 	/*
-	 * The linker won't notice if the .data section is too big to fit,
-	 * apparently because we're sending it into IRAM, not FLASH.
-	 * The following symbol isn't used by the code, but running
-	 * "objdump -t *.elf | grep hey" will let us check how much
-	 * flash space we're actually using. The explicit ASSERT afterwards
-	 * will cause the linker to abort if we use too much.
+	 * __flash_used is used in flash free calculations by the makefile.
+	 * __image_size is stored in the struct image_data header and used
+	 * in hash calcuations.
 	 */
-	__hey_flash_used = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
+	__flash_used = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(FLASH);
+	__image_size = __flash_used;
 
 #ifdef CONFIG_FLASH
         /*
@@ -311,17 +309,22 @@ SECTIONS
 	__config_ec_writable_storage_size = CONFIG_EC_WRITABLE_STORAGE_SIZE;
 #endif
 
-	ASSERT((FW_SIZE(SECTION)
+	/*
+	 * The linker won't notice if the .data section is too big to fit,
+	 * apparently because we're sending it into IRAM, not FLASH.
+	 * Verify that all sections linked into the FLASH region will fit.
+	 */
+	ASSERT((LENGTH(FLASH)
 #if defined(CONFIG_RWSIG) && defined(SECTION_IS_RO)
 	       - CONFIG_RO_PUBKEY_SIZE
 #endif
 #if defined(CONFIG_RWSIG) && defined(SECTION_IS_RW)
 	       - CONFIG_RW_SIG_SIZE
 #endif
-	       ) >= (LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION)),
+	       ) >= __flash_used,
 	       "No room left in the flash")
 
-	__image_size = __hey_flash_used;
+	__image_size = __flash_used;
 
 #ifdef CONFIG_CHIP_MEMORY_REGIONS
 #define REGION(name, attr, start, size) \

@@ -259,7 +259,13 @@ SECTIONS
 	__ram_free = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE) -
 		     (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
 
-	__image_size = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
+	/*
+	 * __flash_used is used in flash free calculations by the makefile.
+	 * __image_size is stored in the struct image_data header and used
+	 * in hash calcuations.
+	 */
+	__flash_used = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
+	__image_size = __flash_used;
 
 #ifdef CONFIG_FLASH
         /*

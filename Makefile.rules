@@ -408,10 +408,10 @@ ifeq ($(V),0)
 cmd_size=
 else
 cmd_size=$(Q)awk '\
-  /__image_size =/ {image_size = strtonum($$1)} \
+  /__flash_used =/ {flash_used = strtonum($$1)} \
   /^FLASH/ {flash_size = strtonum($$3)} \
   /__ram_free =/ {ram_free = strtonum($$1)} \
-  END {room_free = flash_size - image_size; \
+  END {room_free = flash_size - flash_used; \
        print ram_free > "$(out)/$(1)/space_free_ram.txt"; \
        printf "  *** "; \
        if (flash_size > 0) { \
