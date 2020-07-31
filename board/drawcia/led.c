@@ -14,7 +14,13 @@
 #define BAT_LED_ON 0
 #define BAT_LED_OFF 1
 
-const enum ec_led_id supported_led_ids[] = {EC_LED_ID_BATTERY_LED};
+#define POWER_LED_ON 0
+#define POWER_LED_OFF 1
+
+const enum ec_led_id supported_led_ids[] = {
+	EC_LED_ID_BATTERY_LED,
+	EC_LED_ID_POWER_LED
+};
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -46,10 +52,34 @@ static int led_set_color_battery(enum led_color color)
 	return EC_SUCCESS;
 }
 
+static int led_set_color_power(enum ec_led_colors color)
+{
+	switch (color) {
+	case LED_OFF:
+		gpio_set_level(GPIO_PWR_LED_WHITE_L, POWER_LED_OFF);
+		break;
+	case LED_WHITE:
+		gpio_set_level(GPIO_PWR_LED_WHITE_L, POWER_LED_ON);
+		break;
+	default:
+		return EC_ERROR_UNKNOWN;
+	}
+	return EC_SUCCESS;
+}
+
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	brightness_range[EC_LED_COLOR_WHITE] = 1;
-	brightness_range[EC_LED_COLOR_AMBER] = 1;
+	switch (led_id) {
+	case EC_LED_ID_BATTERY_LED:
+		brightness_range[EC_LED_COLOR_WHITE] = 1;
+		brightness_range[EC_LED_COLOR_AMBER] = 1;
+		break;
+	case EC_LED_ID_POWER_LED:
+		brightness_range[EC_LED_COLOR_WHITE] = 1;
+		break;
+	default:
+		break;
+	}
 }
 
 static int led_set_color(enum ec_led_id led_id, enum led_color color)
@@ -59,6 +89,9 @@ static int led_set_color(enum ec_led_id led_id, enum led_color color)
 	switch (led_id) {
 	case EC_LED_ID_BATTERY_LED:
 		rv = led_set_color_battery(color);
+		break;
+	case EC_LED_ID_POWER_LED:
+		rv = led_set_color_power(color);
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
@@ -143,9 +176,27 @@ static void led_set_battery(void)
 	}
 }
 
+static void led_set_power(void)
+{
+	static int power_tick;
+
+	power_tick++;
+
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		led_set_color_power(LED_WHITE);
+	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		led_set_color_power(
+			(power_tick & 0x2) ? LED_WHITE : LED_OFF);
+	else
+		led_set_color_power(LED_OFF);
+}
+
 /* Called by hook task every TICK */
 static void led_tick(void)
 {
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		led_set_power();
+
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		led_set_battery();
 }
