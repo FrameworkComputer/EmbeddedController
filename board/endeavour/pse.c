@@ -43,7 +43,7 @@
 #define LTC4291_HPMD_MIN	0x00
 #define LTC4291_HPMD_MAX	0xA8
 
-#define LTC4291_RESET_DELAY_MS	10
+#define LTC4291_RESET_DELAY_US	20000
 
 #define I2C_PSE_READ(reg, data) \
 	i2c_read8(I2C_PORT_PSE, LTC4291_I2C_ADDR, LTC4291_REG_##reg, (data))
@@ -82,17 +82,17 @@ static int pse_port_hpmd[4] = {
 
 static int pse_init_worker(void)
 {
+	timestamp_t deadline;
 	int err, id, devid, statpin, port;
 
-	err = I2C_PSE_WRITE(RSTPB, LTC4291_FLD_RSTPB_RSTALL);
-	if (err != 0)
-		return err;
+	/* Ignore errors -- may already be resetting */
+	I2C_PSE_WRITE(RSTPB, LTC4291_FLD_RSTPB_RSTALL);
 
-	msleep(LTC4291_RESET_DELAY_MS);
-
-	err = I2C_PSE_READ(ID, &id);
-	if (err != 0)
-		return err;
+	deadline.val = get_time().val + LTC4291_RESET_DELAY_US;
+	while ((err = I2C_PSE_READ(ID, &id)) != 0) {
+		if (timestamp_expired(deadline, NULL))
+			return err;
+	}
 
 	err = I2C_PSE_READ(DEVID, &devid);
 	if (err != 0)
@@ -144,7 +144,7 @@ static void pse_init(void)
 	else
 		CPRINTS("PSE init done");
 }
-DECLARE_HOOK(HOOK_INIT, pse_init, HOOK_PRIO_INIT_I2C);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, pse_init, HOOK_PRIO_DEFAULT);
 
 static int command_pse(int argc, char **argv)
 {
