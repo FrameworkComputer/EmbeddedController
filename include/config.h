@@ -606,8 +606,7 @@
 #define CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE	4
 
 /*
- * Powerd's full_factor. It has to be 100(%) to get display battery percentage.
- * Otherwise, display percentages will be always zero.
+ * Powerd's full_factor.
  */
 #define CONFIG_BATT_HOST_FULL_FACTOR		94
 
