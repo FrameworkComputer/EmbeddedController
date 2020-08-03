@@ -68,6 +68,11 @@ const struct svdm_response svdm_rsp = {
 	.modes = NULL,
 };
 
+bool vboot_allow_usb_pd(void)
+{
+	return 1;
+}
+
 int pd_check_vconn_swap(int port)
 {
 	return 1;
@@ -93,7 +98,7 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	}
 };
 
-__maybe_unused static int test_connect_as_sink(void)
+__maybe_unused static int test_connect_as_nonpd_sink(void)
 {
 	task_wait_event(10 * SECOND);
 
@@ -136,6 +141,97 @@ __maybe_unused static int test_startup_and_resume(void)
 	return EC_SUCCESS;
 }
 
+
+__maybe_unused static int test_connect_as_pd3_source(void)
+{
+	int rx_id = 0;
+	uint32_t rdo = RDO_FIXED(1, 500, 500, 0);
+
+	/* DRP auto-toggling with AP in S0, source enabled. */
+	TEST_EQ(test_startup_and_resume(), EC_SUCCESS, "%d");
+
+	/*
+	 * PROC.PD.E1. Bring-up procedure for DFP(Source) UUT:
+	 * a) The test starts in a disconnected state.
+	 */
+	mock_tcpci_set_reg(TCPC_REG_EXT_STATUS, TCPC_REG_EXT_STATUS_SAFE0V);
+	mock_set_alert(TCPC_REG_ALERT_EXT_STATUS);
+	task_wait_event(10 * SECOND);
+
+	/*
+	 * b) The Tester applies Rd and waits for Vbus for tNoResponse max.
+	 */
+	mock_set_cc(MOCK_CC_WE_ARE_SRC, MOCK_CC_SRC_OPEN, MOCK_CC_SRC_RD);
+	mock_set_alert(TCPC_REG_ALERT_CC_STATUS);
+
+	/*
+	 * c) The Tester waits for Source_Capabilities for tNoResponse max.
+	 */
+	TEST_EQ(mock_tcpci_wait_for_transmit(
+		TCPC_TX_SOP, 0, PD_DATA_SOURCE_CAP), EC_SUCCESS, "%d");
+	/*
+	 * d) The Tester replies GoodCrc on reception of the
+	 * Source_Capabilities.
+	 */
+	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+	task_wait_event(10 * MSEC);
+	/*
+	 * e) The Tester requests 5V 0.5A.
+	 */
+	mock_tcpci_receive(PD_MSG_SOP,
+		PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK,
+			PD_ROLE_UFP, rx_id,
+			1, PD_REV30, 0),
+		&rdo);
+	mock_set_alert(TCPC_REG_ALERT_RX_STATUS);
+	TEST_EQ(mock_tcpci_wait_for_transmit(
+		TCPC_TX_SOP, PD_CTRL_ACCEPT, 0), EC_SUCCESS, "%d");
+	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+	/*
+	 * f) The Tester waits for PS_RDY for tPSSourceOn max.
+	 */
+	TEST_EQ(mock_tcpci_wait_for_transmit(
+		TCPC_TX_SOP, PD_CTRL_PS_RDY, 0), EC_SUCCESS, "%d");
+	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+
+	/*
+	 * PROC.PD.E3. Wait to Start AMS for DFP(Source) UUT:
+	 * a) The Tester keeps monitoring the Rp value and if the UUT doesn't
+	 * set the value to SinkTXOK if it doesn't have anything to send in 1s,
+	 * the test fails. During this period, the Tester replies any message
+	 * sent from the UUT with a proper response.
+	 */
+	TEST_EQ(mock_tcpci_wait_for_transmit(
+		TCPC_TX_SOP_PRIME, 0, PD_DATA_VENDOR_DEF), EC_SUCCESS, "%d");
+	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+	task_wait_event(10 * MSEC);
+	mock_tcpci_receive(PD_MSG_SOP_PRIME,
+		PD_HEADER(PD_CTRL_NOT_SUPPORTED, PD_PLUG_FROM_CABLE,
+			PD_ROLE_UFP, 1,
+			0, PD_REV30, 0),
+		NULL);
+	mock_set_alert(TCPC_REG_ALERT_RX_STATUS);
+
+	TEST_EQ(mock_tcpci_wait_for_transmit(
+		TCPC_TX_SOP, 0, PD_DATA_VENDOR_DEF), EC_SUCCESS, "%d");
+	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+	task_wait_event(10 * MSEC);
+	mock_tcpci_receive(PD_MSG_SOP,
+		PD_HEADER(PD_CTRL_NOT_SUPPORTED, PD_ROLE_SINK,
+			PD_ROLE_UFP, 2,
+			0, PD_REV30, 0),
+		NULL);
+	mock_set_alert(TCPC_REG_ALERT_RX_STATUS);
+
+	task_wait_event(1 * SECOND);
+	TEST_EQ(tc_is_attached_src(PORT0), true, "%d");
+	TEST_EQ(TCPC_REG_ROLE_CTRL_RP(mock_tcpci_get_reg(TCPC_REG_ROLE_CTRL)),
+		SINK_TX_OK, "%d");
+
+	task_wait_event(10 * SECOND);
+	return EC_SUCCESS;
+}
+
 void before_test(void)
 {
 	mock_usb_mux_reset();
@@ -150,8 +246,9 @@ void run_test(int argc, char **argv)
 {
 	test_reset();
 
-	RUN_TEST(test_connect_as_sink);
+	RUN_TEST(test_connect_as_nonpd_sink);
 	RUN_TEST(test_startup_and_resume);
+	RUN_TEST(test_connect_as_pd3_source);
 
 	test_print_result();
 }

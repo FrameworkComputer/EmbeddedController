@@ -159,6 +159,7 @@ static void pd_task_init(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_TYPEC_SM))
 		tc_state_init(port);
+	paused[port] = 0;
 
 	/*
 	 * Since most boards configure the TCPC interrupt as edge

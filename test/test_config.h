@@ -425,6 +425,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_DRP_ACC_TRYSRC
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+#define CONFIG_USB_PD_REV30
 #define CONFIG_USB_PD_TCPC_LOW_POWER
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_PD_TCPMV2
@@ -442,6 +443,8 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 #define I2C_PORT_HOST_TCPC 0
+#define CONFIG_USB_PD_DEBUG_LEVEL 3
+#define CONFIG_USB_PD_EXTENDED_MESSAGES
 #endif
 
 #ifdef TEST_USB_PD_INT
