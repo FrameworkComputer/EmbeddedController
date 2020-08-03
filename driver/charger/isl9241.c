@@ -320,6 +320,18 @@ static enum ec_error_list isl9241_discharge_on_ac(int chgnum, int enable)
 	return rv;
 }
 
+int isl9241_set_ac_prochot(int chgnum, int ma)
+{
+	int rv;
+	uint16_t reg = AC_CURRENT_TO_REG(ma);
+
+	rv = isl9241_write(chgnum, ISL9241_REG_AC_PROCHOT, reg);
+	if (rv)
+		CPRINTF("set_ac_prochot failed (%d)", rv);
+
+	return rv;
+}
+
 /*****************************************************************************/
 /* ISL-9241 initialization */
 static void isl9241_init(int chgnum)

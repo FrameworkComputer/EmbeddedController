@@ -122,4 +122,13 @@
 
 extern const struct charger_drv isl9241_drv;
 
+/**
+ * Set AC prochot threshold
+ *
+ * @param chgnum: Index into charger chips
+ * @param ma: AC prochot threshold current in mA, multiple of 128mA
+ * @return EC_SUCCESS or error
+ */
+int isl9241_set_ac_prochot(int chgnum, int ma);
+
 #endif /* __CROS_EC_ISL9241_H */

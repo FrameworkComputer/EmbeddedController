@@ -194,6 +194,9 @@
 #define PD_MAX_CURRENT_MA	3250
 #define PD_MAX_VOLTAGE_MV	20000
 
+/* Round up 3250 max current to multiple of 128mA for ISL9241 AC prochot. */
+#define ZORK_AC_PROCHOT_CURRENT_MA 3328
+
 /*
  * Minimum conditions to start AP and perform swsync.  Note that when the
  * charger is connected via USB-PD analog signaling, the boot will proceed

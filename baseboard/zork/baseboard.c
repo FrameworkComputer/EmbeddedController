@@ -17,6 +17,7 @@
 #include "console.h"
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/charger/isl9241.h"
 #include "driver/retimer/pi3hdx1204.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "ec_commands.h"
@@ -262,3 +263,9 @@ void sbu_fault_interrupt(enum ioex_signal signal)
 
 	pd_handle_overcurrent(port);
 }
+
+static void set_ac_prochot(void)
+{
+	isl9241_set_ac_prochot(CHARGER_SOLO, ZORK_AC_PROCHOT_CURRENT_MA);
+}
+DECLARE_HOOK(HOOK_INIT, set_ac_prochot, HOOK_PRIO_DEFAULT);
