@@ -51,7 +51,6 @@ die() {
 BOARDS_IT83XX=(
 	glkrvp_ite
 	it83xx_evb
-	it8xxx2_pdevb
 	reef_it8320
 	tglrvpu_ite
 	tglrvpy_ite
@@ -60,6 +59,7 @@ BOARDS_IT83XX=(
 
 BOARDS_IT83XX_SPI_PROGRAMMING=(
 	it8xxx2_evb
+	it8xxx2_pdevb
 )
 
 BOARDS_STM32=(
