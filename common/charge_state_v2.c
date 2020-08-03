@@ -1666,13 +1666,7 @@ void charger_task(void *u)
 	charge_base = -1;
 #endif
 #ifdef CONFIG_OCPC
-	/*
-	 * We can start off assuming that the board resistance is 0 ohms
-	 * and later on, we can update this value if we charge the
-	 * system in suspend or off.
-	 */
-	curr.ocpc.combined_rsys_rbatt_mo = CONFIG_OCPC_DEF_RBATT_MOHMS;
-	curr.ocpc.rbatt_mo = CONFIG_OCPC_DEF_RBATT_MOHMS;
+	ocpc_init(&curr.ocpc);
 	charge_set_active_chg_chip(CHARGE_PORT_NONE);
 #endif /* CONFIG_OCPC */
 
