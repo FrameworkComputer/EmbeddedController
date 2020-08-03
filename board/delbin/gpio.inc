@@ -97,6 +97,7 @@ GPIO(UART2_EC_RX,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
 GPIO(LED_1_L,			PIN(C, 4), GPIO_OUT_HIGH)	/* Battery Full LED: White */
 GPIO(LED_2_L,			PIN(C, 3), GPIO_OUT_HIGH)	/* Battery Charging LED: Amber */
 GPIO(LED_3_L,			PIN(C, 2), GPIO_OUT_HIGH)	/* Battery Power LED: White */
+GPIO(CCD_MODE_ODL,		PIN(E, 5), GPIO_INPUT)		/* Case Closed Debug Mode */
 
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
