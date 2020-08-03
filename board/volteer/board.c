@@ -18,6 +18,7 @@
 #include "driver/retimer/bb_retimer.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
+#include "driver/tcpm/rt1715.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tusb422.h"
 #include "extpower.h"
@@ -374,6 +375,31 @@ static void config_db_usb3_passive(void)
 	usb_muxes[USBC_PORT_C1] = mux_config_p1_usb3_passive;
 }
 
+static void config_port_discrete_tcpc(int port)
+{
+	/*
+	 * Support 2 Pin-to-Pin compatible parts: TUSB422 and RT1715, for
+	 * simplicity allow either and decide at runtime which we are using.
+	 * Default to TUSB422, and switch to RT1715 if it is on the I2C bus and
+	 * the VID matches.
+	 */
+
+	int regval;
+
+	if (i2c_read16(port ? I2C_PORT_USB_C1 : I2C_PORT_USB_C0,
+		       RT1715_I2C_ADDR_FLAGS, TCPC_REG_VENDOR_ID,
+		       &regval) == EC_SUCCESS) {
+		if (regval == RT1715_VENDOR_ID) {
+			CPRINTS("C%d: RT1715 detected", port);
+			tcpc_config[port].i2c_info.addr_flags =
+				RT1715_I2C_ADDR_FLAGS;
+			tcpc_config[port].drv = &rt1715_tcpm_drv;
+			return;
+		}
+	}
+	CPRINTS("C%d: Default to TUSB422", port);
+}
+
 static const char *db_type_prefix = "USB DB type: ";
 __override void board_cbi_init(void)
 {
@@ -389,15 +415,17 @@ __override void board_cbi_init(void)
 			GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
 		ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
 	}
-
+	config_port_discrete_tcpc(0);
 	switch (usb_db) {
 	case DB_USB_ABSENT:
 		CPRINTS("%sNone", db_type_prefix);
 		break;
 	case DB_USB4_GEN2:
+		config_port_discrete_tcpc(1);
 		CPRINTS("%sUSB4 Gen1/2", db_type_prefix);
 		break;
 	case DB_USB4_GEN3:
+		config_port_discrete_tcpc(1);
 		CPRINTS("%sUSB4 Gen3", db_type_prefix);
 		break;
 	case DB_USB3_ACTIVE:
@@ -406,6 +434,7 @@ __override void board_cbi_init(void)
 		break;
 	case DB_USB3_PASSIVE:
 		config_db_usb3_passive();
+		config_port_discrete_tcpc(1);
 		CPRINTS("%sUSB3 Passive", db_type_prefix);
 		break;
 	default:
