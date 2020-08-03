@@ -21,7 +21,7 @@ uint32_t rand(void)
 	/* Wait for a valid random number */
 	while (!(STM32_RNG_SR & STM32_RNG_SR_DRDY) && --tries)
 		;
-	/* we cannot afford to feed the caller with a dummy number */
+	/* we cannot afford to feed the caller with an arbitrary number */
 	if (!tries)
 		software_panic(PANIC_SW_BAD_RNG, task_get_current());
 	/* Finally the 32-bit of entropy */

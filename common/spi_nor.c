@@ -228,7 +228,7 @@ static int spi_nor_read_sfdp_dword(
 	sfdp_cmd[1] = (sfdp_offset & 0xFF0000) >> 16;
 	sfdp_cmd[2] = (sfdp_offset & 0xFF00) >> 8;
 	sfdp_cmd[3] = (sfdp_offset & 0xFF);
-	sfdp_cmd[4] = 0;  /* Required dummy cycle. */
+	sfdp_cmd[4] = 0;  /* Required extra cycle. */
 	return spi_transaction(&spi_devices[spi_nor_device->spi_master],
 			       sfdp_cmd, 5, (uint8_t *)out_dw, 4);
 }

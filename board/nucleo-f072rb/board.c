@@ -18,7 +18,7 @@ void button_event(enum gpio_signal signal)
 
 #ifdef CTS_MODULE
 /*
- * Dummy interrupt handler. It's supposed to be overwritten by each suite
+ * Mock interrupt handler. It's supposed to be overwritten by each suite
  * if needed.
  */
 __attribute__((weak)) void cts_irq1(enum gpio_signal signal) {}

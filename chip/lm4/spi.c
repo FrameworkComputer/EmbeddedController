@@ -65,12 +65,12 @@ int spi_transaction(const struct spi_device_t *spi_device,
 	int totallen = txlen + rxlen;
 	int txcount = 0, rxcount = 0;
 	static struct mutex spi_mutex;
-	volatile uint32_t dummy  __attribute__((unused));
+	volatile uint32_t unused  __attribute__((unused));
 
 	mutex_lock(&spi_mutex);
 	/* Empty the receive FIFO */
 	while (LM4_SSI_SR(0) & LM4_SSI_SR_RNE)
-		dummy = LM4_SSI_DR(0);
+		unused = LM4_SSI_DR(0);
 
 	/* Start transaction.  Need to do this explicitly because the LM4
 	 * SSI controller pulses its frame select every byte, and the EEPROM
@@ -85,7 +85,7 @@ int spi_transaction(const struct spi_device_t *spi_device,
 			if (rxcount < txlen) {
 				/* Throw away bytes received while we were
 				   transmitting */
-				dummy = LM4_SSI_DR(0);
+				unused = LM4_SSI_DR(0);
 			} else
 				*(rxdata++) = LM4_SSI_DR(0);
 			rxcount++;
@@ -96,7 +96,7 @@ int spi_transaction(const struct spi_device_t *spi_device,
 			if (txcount < txlen)
 				LM4_SSI_DR(0) = *(txdata++);
 			else {
-				/* Clock out dummy byte so we can clock in the
+				/* Clock out unused byte so we can clock in the
 				 * response byte */
 				LM4_SSI_DR(0) = 0;
 			}

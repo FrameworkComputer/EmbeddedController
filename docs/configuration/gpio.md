@@ -10,7 +10,7 @@ the pins on the EC chipset through the following macros.
   longer required.
 - `ALTERNATE(...)` - Configures a pin for an alternate function (e.g I2C, ADC,
   SPI, etc)
-- `UNIMPLEMENTED(<name>, ...)` - Creates a dummy GPIO entry
+- `UNIMPLEMENTED(<name>, ...)` - Creates a fake GPIO entry
 
 The `GPIO()`, `GPIO_INT()`, and `UNIMPLEMENTED()` macros create a C enumeration
 of the form `GPIO_<name>` that can be used in the code. As noted in [GPIO

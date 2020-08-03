@@ -95,7 +95,7 @@ static int pd_host_command_internal(int command, int version,
 	resp_len = resp_buf[1];
 
 	if (resp_len > (insize + sizeof(rs))) {
-		/* Do a dummy read to generate stop condition */
+		/* Do a read to generate stop condition */
 		i2c_xfer_unlocked(I2C_PORT_PD_MCU,
 				  CONFIG_USB_PD_I2C_SLAVE_ADDR_FLAGS,
 				  0, 0, &resp_buf[2], 1, I2C_XFER_STOP);

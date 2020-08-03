@@ -236,12 +236,12 @@ class TestConsoleEditingMethods(unittest.TestCase):
     # create a loopback.
     self.tempfile = tempfile.TemporaryFile()
 
-    # Create some dummy pipes.  These won't be used since we'll mock out sends
+    # Create some mock pipes. These won't be used since we'll mock out sends
     # to the interpreter.
-    dummy_pipe_end_0, dummy_pipe_end_1 = threadproc_shim.Pipe()
+    mock_pipe_end_0, mock_pipe_end_1 = threadproc_shim.Pipe()
     self.console = console.Console(self.tempfile.fileno(), self.tempfile,
                                    tempfile.TemporaryFile(),
-                                   dummy_pipe_end_0, dummy_pipe_end_1, "EC")
+                                   mock_pipe_end_0, mock_pipe_end_1, "EC")
 
     # Console editing methods are only valid for enhanced EC images, therefore
     # we have to assume that the "EC" we're talking to is enhanced.  By default,
@@ -1142,10 +1142,10 @@ class TestConsoleCompatibility(unittest.TestCase):
     self.tempfile = tempfile.TemporaryFile()
 
     # Mock out the pipes.
-    dummy_pipe_end_0, dummy_pipe_end_1 = mock.MagicMock(), mock.MagicMock()
+    mock_pipe_end_0, mock_pipe_end_1 = mock.MagicMock(), mock.MagicMock()
     self.console = console.Console(self.tempfile.fileno(), self.tempfile,
                                    tempfile.TemporaryFile(),
-                                   dummy_pipe_end_0, dummy_pipe_end_1, "EC")
+                                   mock_pipe_end_0, mock_pipe_end_1, "EC")
 
   @mock.patch('console.Console.CheckForEnhancedECImage')
   def test_ActAsPassThruInNonEnhancedMode(self, mock_check):
@@ -1412,10 +1412,10 @@ class TestOOBMConsoleCommands(unittest.TestCase):
     self.tempfile = tempfile.TemporaryFile()
 
     # Mock out the pipes.
-    dummy_pipe_end_0, dummy_pipe_end_1 = mock.MagicMock(), mock.MagicMock()
+    mock_pipe_end_0, mock_pipe_end_1 = mock.MagicMock(), mock.MagicMock()
     self.console = console.Console(self.tempfile.fileno(), self.tempfile,
                                    tempfile.TemporaryFile(),
-                                   dummy_pipe_end_0, dummy_pipe_end_1, "EC")
+                                   mock_pipe_end_0, mock_pipe_end_1, "EC")
     self.console.oobm_queue = mock.MagicMock()
 
   @mock.patch('console.Console.CheckForEnhancedECImage')

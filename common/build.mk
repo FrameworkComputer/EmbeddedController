@@ -208,11 +208,11 @@ endif
 
 else
 
-# generate a dummy bootblock file
-BOOTBLOCK := $(out)/.dummy-bootblock
+# generate a fake bootblock file
+BOOTBLOCK := $(out)/.fake-bootblock
 
-.PHONY: $(out)/.dummy-bootblock
-$(out)/.dummy-bootblock:
+.PHONY: $(out)/.fake-bootblock
+$(out)/.fake-bootblock:
 	@dd if=/dev/zero of=$@ bs=1 count=$(DEFAULT_BOOTBLOCK_SIZE) status=none
 
 endif # BOOTBLOCK

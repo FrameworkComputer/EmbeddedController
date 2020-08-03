@@ -392,7 +392,7 @@ static int ps8xxx_tcpm_init(int port)
  * as though a port partner is detected), which ends up confusing
  * our TCPM.  The workaround for this seems to be a short sleep and
  * then re-reading the CC state.  In other words, the issue shows up
- * as a short glitch or transient, which a dummy read and then a short
+ * as a short glitch or transient, which an extra read and then a short
  * delay will allow the transient to disappear.
  */
 static int ps8751_get_gcc(int port, enum tcpc_cc_voltage_status *cc1,

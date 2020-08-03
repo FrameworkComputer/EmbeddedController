@@ -11,7 +11,7 @@
 #include "common.h"
 #include "compile_time_macros.h"
 
-#define DUMMY_GPIO_BANK 0
+#define UNIMPLEMENTED_GPIO_BANK 0
 
 #define SCP_REG_BASE			0x70000000
 

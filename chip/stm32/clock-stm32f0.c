@@ -388,14 +388,14 @@ int clock_get_freq(void)
 
 void clock_wait_bus_cycles(enum bus_type bus, uint32_t cycles)
 {
-	volatile uint32_t dummy __attribute__((unused));
+	volatile uint32_t unused __attribute__((unused));
 
 	if (bus == BUS_AHB) {
 		while (cycles--)
-			dummy = STM32_DMA1_REGS->isr;
+			unused = STM32_DMA1_REGS->isr;
 	} else { /* APB */
 		while (cycles--)
-			dummy = STM32_USART_BRR(STM32_USART1_BASE);
+			unused = STM32_USART_BRR(STM32_USART1_BASE);
 	}
 }
 

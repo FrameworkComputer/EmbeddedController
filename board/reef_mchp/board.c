@@ -394,7 +394,7 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
  * Upon receiving DRP low power idle command, PS8751 holds SCL and
  * SDA low for ~480us. It simultaneously releases both pins which is
  * defined as a bus error condition by I2C spec. No ACK received.
- * TCPCI spec. states waking any TCPM requires sending any dummy
+ * TCPCI spec. states waking any TCPM requires sending any fake
  * I2C command which the TCPM will NACK. The I2C master MUST wait
  * a minimum of 5 ms after the NACK before sending another I2C
  * command. We observe the PD task and TCPCI state machines do not

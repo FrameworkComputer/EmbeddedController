@@ -36,7 +36,7 @@ void pp3300_a_pgood_high(void)
 	npcx_adc_thresh_int_enable(NPCX_ADC_THRESH2, 1);
 
 	/*
-	 * Call power_signal_interrupt() with a dummy GPIO in order for the
+	 * Call power_signal_interrupt() with a fake GPIO in order for the
 	 * chipset task to pick up the change in power sequencing signals.
 	 */
 	power_signal_interrupt(GPIO_PG_EC_DSW_PWROK);
@@ -52,7 +52,7 @@ void pp3300_a_pgood_low(void)
 	npcx_adc_thresh_int_enable(NPCX_ADC_THRESH1, 1);
 
 	/*
-	 * Call power_signal_interrupt() with a dummy GPIO in order for the
+	 * Call power_signal_interrupt() with a fake GPIO in order for the
 	 * chipset task to pick up the change in power sequencing signals.
 	 */
 	power_signal_interrupt(GPIO_PG_EC_DSW_PWROK);

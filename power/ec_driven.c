@@ -4,7 +4,7 @@
  */
 
 /*
- * Dummy power module for Sensor HUB.
+ * Mock power module for Sensor HUB.
  *
  * This implements the following features:
  * when AP_IN_SUSPEND is low, in S0, otherwise S3.

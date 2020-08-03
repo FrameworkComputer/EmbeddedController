@@ -768,7 +768,7 @@ static void lpc_init(void)
 	while (!(LM4_LPC_ST(LPC_CH_MEMMAP) & 0x10)) {
 		/* Clear HW1ST */
 		LM4_LPC_ST(LPC_CH_MEMMAP) &= ~0x40;
-		/* Do a dummy slave write; this should cause SW1ST to be set */
+		/* Do a slave write; this should cause SW1ST to be set */
 		*LPC_POOL_MEMMAP = *LPC_POOL_MEMMAP;
 	}
 

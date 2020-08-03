@@ -694,7 +694,7 @@ int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
 
 	/* Read the answer payload */
 	if (resp) {
-		if (mode == MODE_SPI) /* ignore dummy byte */
+		if (mode == MODE_SPI) /* ignore extra byte */
 			if (read_wrapper(fd, resp, 1) < 0)
 				return STM32_EIO;
 		while ((resp_size > 0) &&

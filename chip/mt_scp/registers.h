@@ -573,7 +573,7 @@
  */
 #define AP_GPIO_MODE(n)			REG32(AP_GPIO_BASE + 0x300 + ((n) << 4))
 #define AP_GPIO_TRAP			REG32(AP_GPIO_BASE + 0x6B0)
-#define AP_GPIO_DUMMY			REG32(AP_GPIO_BASE + 0x6C0)
+#define AP_GPIO_UNIMPLEMENTED		REG32(AP_GPIO_BASE + 0x6C0)
 #define AP_GPIO_DBG			REG32(AP_GPIO_BASE + 0x6D0)
 #define AP_GPIO_BANK			REG32(AP_GPIO_BASE + 0x6E0)
 /* AP_GPIO_SEC, n in [0..5] */
@@ -610,7 +610,7 @@
 #define OSC_MOD_MASK			(0x03 << 0)
 #define OSC_DIV2_EN			BIT(2)
 
-#define DUMMY_GPIO_BANK 0
+#define UNIMPLEMENTED_GPIO_BANK 0
 
 #ifndef __ASSEMBLER__
 

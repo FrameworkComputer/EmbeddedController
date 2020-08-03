@@ -21,7 +21,7 @@ test_mockable int gpio_get_level(enum gpio_signal signal)
 	const struct gpio_info *g = gpio_list + signal;
 
 	/* Unimplemented GPIOs shouldn't do anything */
-	if (g->port == DUMMY_GPIO_BANK)
+	if (g->port == UNIMPLEMENTED_GPIO_BANK)
 		return 0;
 
 	return  !!(ISH_GPIO_GPLR & g->mask);
@@ -32,7 +32,7 @@ void gpio_set_level(enum gpio_signal signal, int value)
 	const struct gpio_info *g = gpio_list + signal;
 
 	/* Unimplemented GPIOs shouldn't do anything */
-	if (g->port == DUMMY_GPIO_BANK)
+	if (g->port == UNIMPLEMENTED_GPIO_BANK)
 		return;
 
 	if (value)
@@ -44,7 +44,7 @@ void gpio_set_level(enum gpio_signal signal, int value)
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
 	/* Unimplemented GPIOs shouldn't do anything */
-	if (port == DUMMY_GPIO_BANK)
+	if (port == UNIMPLEMENTED_GPIO_BANK)
 		return;
 
 	/* ISH does not support level-trigger interrupts; only edge. */
@@ -92,7 +92,7 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 	const struct gpio_info *g = gpio_list + signal;
 
 	/* Unimplemented GPIOs shouldn't do anything */
-	if (g->port == DUMMY_GPIO_BANK)
+	if (g->port == UNIMPLEMENTED_GPIO_BANK)
 		return EC_SUCCESS;
 
 	ISH_GPIO_GIMR |= g->mask;

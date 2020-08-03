@@ -72,7 +72,7 @@ int spi_enable(int port, int enable);
  * Issue a SPI transaction.  Assumes SPI port has already been enabled.
  *
  * Transmits <txlen> bytes from <txdata>, throwing away the corresponding
- * received data, then transmits <rxlen> dummy bytes, saving the received data
+ * received data, then transmits <rxlen> bytes, saving the received data
  * in <rxdata>.
  * If SPI_READBACK_ALL is set in <rxlen>, the received data during transmission
  * is recorded in rxdata buffer and it assumes that the real <rxlen> is equal

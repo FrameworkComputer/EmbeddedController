@@ -854,7 +854,7 @@ static const struct gpio_reg_t gpio_group_to_reg[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(gpio_group_to_reg) == (COUNT));
 
-#define DUMMY_GPIO_BANK GPIO_A
+#define UNIMPLEMENTED_GPIO_BANK GPIO_A
 
 #define IT83XX_GPIO_DATA(port)                 \
 	REG8(gpio_group_to_reg[port].reg_gpdr)

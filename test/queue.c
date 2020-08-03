@@ -18,11 +18,11 @@ static struct queue const test_queue2 = QUEUE_NULL(2, int16_t);
 
 static int test_queue8_empty(void)
 {
-	char dummy = 1;
+	char tmp = 1;
 
 	TEST_ASSERT(queue_is_empty(&test_queue8));
-	TEST_ASSERT(!queue_remove_units(&test_queue8, &dummy, 1));
-	TEST_ASSERT(queue_add_units(&test_queue8, &dummy, 1) == 1);
+	TEST_ASSERT(!queue_remove_units(&test_queue8, &tmp, 1));
+	TEST_ASSERT(queue_add_units(&test_queue8, &tmp, 1) == 1);
 	TEST_ASSERT(!queue_is_empty(&test_queue8));
 
 	return EC_SUCCESS;
@@ -30,9 +30,9 @@ static int test_queue8_empty(void)
 
 static int test_queue8_init(void)
 {
-	char dummy = 1;
+	char tmp = 1;
 
-	TEST_ASSERT(queue_add_units(&test_queue8, &dummy, 1) == 1);
+	TEST_ASSERT(queue_add_units(&test_queue8, &tmp, 1) == 1);
 	queue_init(&test_queue8);
 	TEST_ASSERT(queue_is_empty(&test_queue8));
 

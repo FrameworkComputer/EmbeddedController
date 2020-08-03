@@ -509,7 +509,7 @@ enum {
 #define GPIO_D GPIO_PORT_D
 #define GPIO_E GPIO_PORT_E
 #define GPIO_F GPIO_PORT_F
-#define DUMMY_GPIO_BANK GPIO_PORT_0
+#define UNIMPLEMENTED_GPIO_BANK GPIO_PORT_0
 
 /******************************************************************************/
 /* MSWC Registers */

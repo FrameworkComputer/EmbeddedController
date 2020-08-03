@@ -594,7 +594,7 @@
 /* MCHP implements 6 GPIO ports */
 #define MCHP_GPIO_MAX_PORT	(7)
 
-#define DUMMY_GPIO_BANK 0
+#define UNIMPLEMENTED_GPIO_BANK 0
 
 /*
  * MEC1701 documentation GPIO numbers are octal, each control

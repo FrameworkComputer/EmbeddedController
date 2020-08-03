@@ -454,9 +454,9 @@ void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 
 void lpc_keyboard_clear_buffer(void)
 {
-	volatile char dummy __attribute__((unused));
+	volatile char unused __attribute__((unused));
 
-	dummy = MEC1322_8042_OBF_CLR;
+	unused = MEC1322_8042_OBF_CLR;
 }
 
 void lpc_keyboard_resume_irq(void)

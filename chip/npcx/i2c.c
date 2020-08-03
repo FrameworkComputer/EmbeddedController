@@ -99,7 +99,7 @@ enum smb_oper_state_t {
 	SMB_MASTER_START,
 	SMB_WRITE_OPER,
 	SMB_READ_OPER,
-	SMB_DUMMY_READ_OPER,
+	SMB_FAKE_READ_OPER,
 	SMB_REPEAT_START,
 	SMB_WRITE_SUSPEND,
 	SMB_READ_SUSPEND,
@@ -348,7 +348,7 @@ enum smb_error i2c_master_transaction(int controller)
 	} else if (p_status->oper_state == SMB_READ_SUSPEND) {
 		if (!IS_ENABLED(NPCX_I2C_FIFO_SUPPORT)) {
 			/*
-			 * Do dummy read if read length is 1 and I2C_XFER_STOP
+			 * Do extra read if read length is 1 and I2C_XFER_STOP
 			 * is set simultaneously.
 			 */
 			if (p_status->sz_rxbuf == 1 &&
@@ -356,13 +356,13 @@ enum smb_error i2c_master_transaction(int controller)
 				/*
 				 * Since SCL is released after reading last
 				 * byte from previous transaction, adding a
-				 * dummy byte for next transaction which let
+				 * extra byte for next transaction which let
 				 * ec sets NACK bit in time is necessary.
 				 * Or i2c master cannot generate STOP
 				 * when the last byte is ACK during receiving.
 				 */
 				p_status->sz_rxbuf++;
-				p_status->oper_state = SMB_DUMMY_READ_OPER;
+				p_status->oper_state = SMB_FAKE_READ_OPER;
 			} else
 				/*
 				 * Need to read the other bytes from
@@ -475,7 +475,7 @@ void i2c_done(int controller)
 			NPCX_SMBFIF_CTS(controller) =
 						BIT(NPCX_SMBFIF_CTS_RXF_TXE);
 
-		/* Clear SDAST by writing dummy byte */
+		/* Clear SDAST by writing mock byte */
 		I2C_WRITE_BYTE(controller, 0xFF);
 	}
 
@@ -536,8 +536,8 @@ static void i2c_handle_receive(int controller)
 	I2C_READ_BYTE(controller, data);
 	CPRINTS("-R(%02x)", data);
 
-	/* Read to buf. Skip last byte if meet SMB_DUMMY_READ_OPER */
-	if (p_status->oper_state == SMB_DUMMY_READ_OPER &&
+	/* Read to buf. Skip last byte if meet SMB_FAKE_READ_OPER */
+	if (p_status->oper_state == SMB_FAKE_READ_OPER &&
 			p_status->idx_buf == (p_status->sz_rxbuf - 1))
 		p_status->idx_buf++;
 	else
@@ -735,7 +735,7 @@ static void i2c_handle_sda_irq(int controller)
 	}
 	/* 3 Handle master read operation (read or after a write operation) */
 	else if (p_status->oper_state == SMB_READ_OPER ||
-			p_status->oper_state == SMB_DUMMY_READ_OPER) {
+			p_status->oper_state == SMB_FAKE_READ_OPER) {
 		if (IS_ENABLED(NPCX_I2C_FIFO_SUPPORT))
 			i2c_fifo_handle_receive(controller);
 		else
@@ -755,7 +755,7 @@ void i2c_master_int_handler (int controller)
 		CPUTS("-SP");
 		/* Clear BER Bit */
 		SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_BER);
-		/* Mask sure slave doesn't hold bus by dummy reading */
+		/* Make sure slave doesn't hold bus by reading */
 		I2C_READ_BYTE(controller, data);
 
 		/* Set error code */

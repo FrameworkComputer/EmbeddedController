@@ -94,9 +94,9 @@
  * function/name then it should specify that that GPIO is not implemented using
  * the UNIMPLEMENTED macro below in the board gpio.inc file.  This macro creates
  * an entry in the gpio_signal enum and the gpio_list array that is initialized
- * to use the DUMMY_GPIO_BANK and a bitmask of zero.  The chip GPIO layer is
- * implemented such that writes to and reads from DUMMY_GPIO_BANK with a bitmask
- * of zero are harmless.
+ * to use the UNIMPLEMENTED_GPIO_BANK and a bitmask of zero.  The chip GPIO
+ * layer is implemented such that writes to and reads from
+ * UNIMPLEMENTED_GPIO_BANK with a bitmask of zero are harmless.
  *
  * This allows common code that expects these GPIOs to exist to compile and have
  * some reduced functionality.

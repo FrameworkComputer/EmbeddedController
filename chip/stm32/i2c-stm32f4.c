@@ -860,7 +860,7 @@ static void i2c_event_handler(int port)
 	static int rx_pending, buf_idx;
 	static uint16_t addr_8bit;
 
-	volatile uint32_t dummy __attribute__((unused));
+	volatile uint32_t unused __attribute__((unused));
 
 	i2c_cr1 = STM32_I2C_CR1(port);
 	i2c_sr2 = STM32_I2C_SR2(port);
@@ -903,8 +903,8 @@ static void i2c_event_handler(int port)
 		/* Enable buffer interrupt to start receive/response */
 		STM32_I2C_CR2(port) |= STM32_I2C_CR2_ITBUFEN;
 		/* Clear ADDR bit */
-		dummy = STM32_I2C_SR1(port);
-		dummy = STM32_I2C_SR2(port);
+		unused = STM32_I2C_SR1(port);
+		unused = STM32_I2C_SR2(port);
 		/* Inhibit stop mode when addressed until STOPF flag is set */
 		disable_sleep(SLEEP_MASK_I2C_SLAVE);
 	}
@@ -964,7 +964,7 @@ static void i2c_event_handler(int port)
 		/* Clear AF */
 		STM32_I2C_SR1(port) &= ~STM32_I2C_SR1_AF;
 		/* Clear STOPF: read SR1 and write CR1 */
-		dummy = STM32_I2C_SR1(port);
+		unused = STM32_I2C_SR1(port);
 		STM32_I2C_CR1(port) = i2c_cr1 | STM32_I2C_CR1_PE;
 
 		/* No longer inhibit deep sleep after stop condition */

@@ -65,7 +65,7 @@ void watchdog_reload(void)
 	if (status) {
 		LM4_WATCHDOG_ICR(0) = status;
 		/* That doesn't seem to unpend the watchdog interrupt (even if
-		 * we do dummy writes to force the write to be committed), so
+		 * we do writes to force the write to be committed), so
 		 * explicitly unpend the interrupt before re-enabling it. */
 		task_clear_pending_irq(LM4_IRQ_WATCHDOG);
 		task_enable_irq(LM4_IRQ_WATCHDOG);

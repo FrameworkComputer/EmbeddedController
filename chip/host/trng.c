@@ -3,7 +3,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * Dummy TRNG driver for unit test.
+ * Mock TRNG driver for unit test.
  *
  * Although a TRNG is designed to be anything but predictable,
  * this implementation strives to be as predictable and defined

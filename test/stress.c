@@ -79,25 +79,25 @@ static int stress(const char *name,
 static int test_i2c(void)
 {
 	int res = EC_ERROR_UNKNOWN;
-	int dummy_data;
+	int mock_data;
 	struct i2c_test_param_t *param;
 	param = i2c_test_params + (prng_no_seed() % (sizeof(i2c_test_params) /
 				   sizeof(struct i2c_test_param_t)));
 	if (param->width == 8 && param->data == -1)
 		res = i2c_read8(param->port, param->addr,
-				param->offset, &dummy_data);
+				param->offset, &mock_data);
 	else if (param->width == 8 && param->data >= 0)
 		res = i2c_write8(param->port, param->addr,
 				 param->offset, param->data);
 	else if (param->width == 16 && param->data == -1)
 		res = i2c_read16(param->port, param->addr,
-				 param->offset, &dummy_data);
+				 param->offset, &mock_data);
 	else if (param->width == 16 && param->data >= 0)
 		res = i2c_write16(param->port, param->addr,
 				  param->offset, param->data);
 	else if (param->width == 32 && param->data == -1)
 		res = i2c_read32(param->port, param->addr,
-				 param->offset, &dummy_data);
+				 param->offset, &mock_data);
 	else if (param->width == 32 && param->data >= 0)
 		res = i2c_write32(param->port, param->addr,
 				  param->offset, param->data);

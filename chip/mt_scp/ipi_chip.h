@@ -104,8 +104,8 @@ extern int *ipi_wakeup_table[];
  */
 #define DECLARE_IPI(_id, handler, is_wakeup_src) \
 	struct ipi_num_check##_id { \
-		int dummy1[_id < IPI_COUNT ? 1 : -1]; \
-		int dummy2[is_wakeup_src == 0 || is_wakeup_src == 1 ? 1 : -1]; \
+		int tmp1[_id < IPI_COUNT ? 1 : -1]; \
+		int tmp2[is_wakeup_src == 0 || is_wakeup_src == 1 ? 1 : -1]; \
 	};  \
 	void __keep IPI_HANDLER(_id)(int32_t id, void *buf, uint32_t len) \
 	{ \

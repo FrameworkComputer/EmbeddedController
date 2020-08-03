@@ -29,7 +29,7 @@ static void pp3300_a_pgood_low(void)
 	vcmp_enable(VCMP_SNS_PP3300_HIGH, 1);
 
 	/*
-	 * Call power_signal_interrupt() with a dummy GPIO in order for the
+	 * Call power_signal_interrupt() with a fake GPIO in order for the
 	 * chipset task to pick up the change in power sequencing signals.
 	 */
 	power_signal_interrupt(GPIO_PG_EC_DSW_PWROK);
@@ -46,7 +46,7 @@ static void pp3300_a_pgood_high(void)
 	vcmp_enable(VCMP_SNS_PP3300_LOW, 1);
 
 	/*
-	 * Call power_signal_interrupt() with a dummy GPIO in order for the
+	 * Call power_signal_interrupt() with a fake GPIO in order for the
 	 * chipset task to pick up the change in power sequencing signals.
 	 */
 	power_signal_interrupt(GPIO_PG_EC_DSW_PWROK);

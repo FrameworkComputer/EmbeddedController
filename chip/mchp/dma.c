@@ -43,7 +43,7 @@ void dma_disable(enum dma_channel channel)
 void dma_disable_all(void)
 {
 	uint16_t ch;
-	uint32_t dummy = 0;
+	uint32_t unused = 0;
 
 	for (ch = 0; ch < MCHP_DMAC_COUNT; ch++) {
 		/* Abort any current transfer. */
@@ -55,7 +55,7 @@ void dma_disable_all(void)
 
 	/* Soft-reset the block. */
 	MCHP_DMA_MAIN_CTRL = MCHP_DMA_MAIN_CTRL_SRST;
-	dummy += MCHP_DMA_MAIN_CTRL;
+	unused += MCHP_DMA_MAIN_CTRL;
 	MCHP_DMA_MAIN_CTRL = MCHP_DMA_MAIN_CTRL_ACT;
 }
 

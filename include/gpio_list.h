@@ -16,7 +16,7 @@
 #define GPIO_INT(name, pin, flags, signal) {#name, GPIO_##pin, flags},
 #endif
 
-#define UNIMPLEMENTED(name) {#name, DUMMY_GPIO_BANK, 0, GPIO_DEFAULT},
+#define UNIMPLEMENTED(name) {#name, UNIMPLEMENTED_GPIO_BANK, 0, GPIO_DEFAULT},
 
 /* GPIO signal list. */
 const struct gpio_info gpio_list[] = {

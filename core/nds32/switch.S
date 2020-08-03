@@ -80,7 +80,7 @@ __switch_task:
  */
 .global __task_start
 __task_start:
-	/* area used as dummy thread stack for the first switch */
+	/* area used as thread stack for the first switch */
 	la $r3, scratchpad
 
 	movi55 $r4, 1
@@ -88,7 +88,7 @@ __task_start:
 	movi55 $r1, 0    /* syscall 2nd parameter : re-schedule nothing */
 	movi55 $r0, 0    /* syscall 1st parameter : de-schedule nothing */
 
-	/* put the dummy stack pointer at the top of the stack in scratchpad */
+	/* put the stack pointer at the top of the stack in scratchpad */
 	addi $sp, $r3, 4 * 18
 	/* we are ready to re-schedule */
 	swi.gp  $r4, [ + need_resched]
