@@ -116,6 +116,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	int chgnum;
 	enum ec_error_list result;
 	static int iterations;
+	int i_step;
 
 	/*
 	 * There's nothing to do if we're not using this charger.  Should
@@ -205,6 +206,10 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	/* Ensure our target is not negative. */
 	i_ma = MAX(i_ma, 0);
 
+	/* Convert desired mA to what the charger could actually regulate to. */
+	i_step = (int)charger_get_info()->current_step;
+	i_ma = (i_ma / i_step) * i_step;
+
 	/*
 	 * We'll use our current target and our combined Rsys+Rbatt to seed our
 	 * VSYS target.  However, we'll use a PID loop to correct the error and
@@ -215,7 +220,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	if (ocpc->last_vsys != OCPC_UNINIT) {
 		error = i_ma - batt.current;
 		/* Add some hysteresis. */
-		if (ABS(error) < 4)
+		if (ABS(error) < i_step)
 			error = 0;
 
 		derivative = error - ocpc->last_error;
