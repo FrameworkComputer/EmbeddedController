@@ -56,7 +56,11 @@ enum phase {
 enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
 					 struct batt_params *battery)
 {
-	if ((battery->current <= 0) || (ocpc->isys_ma <= 0) ||
+	int act_chg = ocpc->active_chg_chip;
+
+	if ((battery->current <= 0) ||
+	    (!(ocpc->chg_flags[act_chg] & OCPC_NO_ISYS_MEAS_CAP) &&
+	     (ocpc->isys_ma <= 0)) ||
 	    (ocpc->vsys_aux_mv < ocpc->vsys_mv)) {
 		CPRINTS_DBG("Not charging... won't determine resistance");
 		CPRINTS_DBG("vsys_aux_mv: %dmV vsys_mv: %dmV",
@@ -68,14 +72,24 @@ enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
 	 * The combined system and battery resistance is the delta between Vsys
 	 * and Vbatt divided by Ibatt.
 	 */
-	ocpc->rsys_mo = ((ocpc->vsys_aux_mv - ocpc->vsys_mv) * 1000) /
-			 ocpc->isys_ma;
-	ocpc->rbatt_mo = ((ocpc->vsys_mv - battery->voltage) * 1000) /
-			 battery->current;
-	ocpc->combined_rsys_rbatt_mo = ocpc->rsys_mo + ocpc->rbatt_mo;
-	CPRINTS_DBG("Rsys: %dmOhm Rbatt: %dmOhm", ocpc->rsys_mo,
-		    ocpc->rbatt_mo);
-
+	if ((ocpc->chg_flags[act_chg] & OCPC_NO_ISYS_MEAS_CAP)) {
+		/*
+		 * There's no provision to measure Isys, so we cannot separate
+		 * out Rsys from Rbatt.
+		 */
+		ocpc->combined_rsys_rbatt_mo = ((ocpc->vsys_aux_mv -
+						 battery->voltage) * 1000) /
+						 battery->current;
+		CPRINTS_DBG("Rsys+Rbatt: %dmOhm", ocpc->combined_rsys_rbatt_mo);
+	} else {
+		ocpc->rsys_mo = ((ocpc->vsys_aux_mv - ocpc->vsys_mv) * 1000) /
+				 ocpc->isys_ma;
+		ocpc->rbatt_mo = ((ocpc->vsys_mv - battery->voltage) * 1000) /
+				 battery->current;
+		ocpc->combined_rsys_rbatt_mo = ocpc->rsys_mo + ocpc->rbatt_mo;
+		CPRINTS_DBG("Rsys: %dmOhm Rbatt: %dmOhm", ocpc->rsys_mo,
+			    ocpc->rbatt_mo);
+	}
 	return EC_SUCCESS;
 }
 

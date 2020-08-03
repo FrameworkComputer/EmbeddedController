@@ -33,7 +33,12 @@ struct ocpc_data {
 	int last_error;
 	int integral;
 	int last_vsys;
+#ifdef HAS_TASK_PD_C1
+	uint32_t chg_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+#endif /* HAS_TASK_PD_C1 */
 };
+
+#define OCPC_NO_ISYS_MEAS_CAP	BIT(0)
 
 /** Set the VSYS target for the secondary charger IC.
  *
