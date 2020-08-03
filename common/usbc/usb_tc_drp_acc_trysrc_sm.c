@@ -2292,8 +2292,14 @@ static void tc_attached_snk_exit(const int port)
 		if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
 			set_vconn(port, 0);
 
-		/* Attached.SNK exit - disable AutoDischargeDisconnect */
-		tcpm_enable_auto_discharge_disconnect(port, 0);
+		/*
+		 * Attached.SNK exit - disable AutoDischargeDisconnect
+		 * NOTE: This should not happen if we are suspending. It will
+		 * happen in tc_cc_open_entry if that is the path we are
+		 * taking.
+		 */
+		if (!TC_CHK_FLAG(port, TC_FLAGS_SUSPEND))
+			tcpm_enable_auto_discharge_disconnect(port, 0);
 	}
 
 	/* Clear flags after checking Vconn status */
@@ -3261,9 +3267,15 @@ static void tc_cc_open_entry(const int port)
 	/*
 	 * Ensure we disable discharging before setting CC lines to open.
 	 * If we were sourcing above, then we already drained Vbus. If partner
-	 * is sourcing Vbus they will drain Vbus if they are PD-capable.
+	 * is sourcing Vbus they will drain Vbus if they are PD-capable. This
+	 * should only be done if a battery is present as a batteryless
+	 * device will brown out when AutoDischargeDisconnect is disabled and
+	 * we do not want this to happen until the set_cc open/open to make
+	 * sure the TCPC has managed its internal states for disconnecting
+	 * the only source of power it has.
 	 */
-	tcpm_enable_auto_discharge_disconnect(port, 0);
+	if (battery_is_present())
+		tcpm_enable_auto_discharge_disconnect(port, 0);
 
 	/* We may brown out after applying CC open, so flush console first. */
 	CPRINTS("C%d: Applying CC Open!", port);

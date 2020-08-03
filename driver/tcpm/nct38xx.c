@@ -109,6 +109,38 @@ static int nct38xx_tcpm_init(int port)
 	return nct38xx_init(port);
 }
 
+int nct38xx_tcpm_set_cc(int port, int pull)
+{
+	/*
+	 * Setting the CC lines to open/open requires that the NCT CTRL_OUT
+	 * register has sink disabled. Otherwise the following happens, as
+	 * described by Nuvoton:
+	 *
+	 * 1. You set CC lines to Open/Open. This is physically happening on
+	 *    the CC line.
+	 * 2. Since CC is now Open/Open, the internal TCPC HW state machine
+	 *    is no longer in Attached.Snk and therefore our TCPC HW
+	 *    automatically opens the sink switch (de-assert the VBSNK_EN pin)
+	 * 3. Since sink switch is open, the TCPC VCC voltage starts to drop.
+	 * 4. When TCPC VCC gets below ~2.7V the TCPC will reset and therefore
+	 *    it will present Rd/Rd on the CC lines. Also the VBSNK_EN pin
+	 *    after reset is Hi-Z, so the sink switch will get closed again.
+	 */
+	if (pull == TYPEC_CC_OPEN) {
+		int rv;
+
+		/* Disable SNKEN, it will be re-enabled in tcpm_init path */
+		rv = tcpc_update8(port,
+				  NCT38XX_REG_CTRL_OUT_EN,
+				  NCT38XX_REG_CTRL_OUT_EN_SNKEN,
+				  MASK_CLR);
+		if (rv)
+			return rv;
+	}
+
+	return tcpci_tcpm_set_cc(port, pull);
+}
+
 static void nct38xx_tcpc_alert(int port)
 {
 	int alert, rv;
@@ -167,7 +199,7 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 	.check_vbus_level	= &tcpci_tcpm_check_vbus_level,
 #endif
 	.select_rp_value	= &tcpci_tcpm_select_rp_value,
-	.set_cc			= &tcpci_tcpm_set_cc,
+	.set_cc			= &nct38xx_tcpm_set_cc,
 	.set_polarity		= &tcpci_tcpm_set_polarity,
 	.set_vconn		= &tcpci_tcpm_set_vconn,
 	.set_msg_header		= &tcpci_tcpm_set_msg_header,
