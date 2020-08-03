@@ -581,7 +581,6 @@ void battery_compensate_params(struct batt_params *batt)
 	int numer, denom;
 	int *remain = &(batt->remaining_capacity);
 	int *full = &(batt->full_capacity);
-	int lfcc = *(int *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
 
 	if ((batt->flags & BATT_FLAG_BAD_FULL_CAPACITY) ||
 			(batt->flags & BATT_FLAG_BAD_REMAINING_CAPACITY))
@@ -597,19 +596,16 @@ void battery_compensate_params(struct batt_params *batt)
 
 	/* full_factor is effectively disabled in powerd. */
 	*full = *full * batt_full_factor / 100;
-	if (lfcc == 0)
-		/* EC just reset. Assume host full is equal. */
-		lfcc = *full;
-	if (*remain > lfcc)
-		*remain = lfcc;
+	if (*remain > *full)
+		*remain = *full;
 
 	/*
 	 * Powerd uses the following equation to calculate display percentage:
 	 *   charge = 100 * remain/full;
 	 *   100 * (charge - shutdown_pct) / (full_factor - shutdown_pct);
 	 */
-	numer = (100 * *remain - lfcc * batt_host_shutdown_pct) * 1000;
-	denom = lfcc * (100 - batt_host_shutdown_pct);
+	numer = (100 * *remain - *full * batt_host_shutdown_pct) * 1000;
+	denom = *full * (100 - batt_host_shutdown_pct);
 	/* Rounding (instead of truncating) */
 	batt->display_charge = (numer + denom / 2) / denom;
 	if (batt->display_charge < 0)
