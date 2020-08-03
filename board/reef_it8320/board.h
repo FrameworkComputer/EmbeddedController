@@ -130,6 +130,7 @@
 #define CONFIG_WLAN_POWER_ACTIVE_LOW
 #define WIRELESS_GPIO_WLAN_POWER GPIO_WIRELESS_GPIO_WLAN_POWER
 #define CONFIG_PWR_STATE_DISCHARGE_FULL
+#undef CONFIG_KEYBOARD_VIVALDI
 
 /*
  * Enable 1 slot of secure temporary storage to support
