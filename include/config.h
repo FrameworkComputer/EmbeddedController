@@ -606,9 +606,10 @@
 #define CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE	4
 
 /*
- * Powerd's full_factor.
+ * Powerd's full_factor. The value comes from:
+ *   src/platform2/power_manager/default_prefs/power_supply_full_factor
  */
-#define CONFIG_BATT_HOST_FULL_FACTOR		94
+#define CONFIG_BATT_HOST_FULL_FACTOR		97
 
 /*
  * Smart battery pass-through host commands.
