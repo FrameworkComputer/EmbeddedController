@@ -87,6 +87,12 @@
 
 /* Optional console commands */
 #define CONFIG_CMD_CHARGER_DUMP
+
+/* Enable AP Reset command for TPM with old firmware version to detect it. */
+#define CONFIG_CMD_AP_RESET_LOG
+#define CONFIG_HOSTCMD_AP_RESET
+
+/* Enable i2ctrace command */
 #define CONFIG_I2C_DEBUG
 
 /* EC Modules */
