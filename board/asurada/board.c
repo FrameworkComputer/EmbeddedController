@@ -82,12 +82,12 @@ const struct pwm_t pwm_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Wake-up pins for hibernate */
-const enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_AC_PRESENT,
+enum gpio_signal hibernate_wake_pins[] = {
+	GPIO_AC_PRESENT_PLACEHOLDER,
 	GPIO_LID_OPEN,
 	GPIO_POWER_BUTTON_L,
 };
-const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
+int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -602,6 +602,27 @@ int board_regulator_get_voltage(uint32_t index, uint32_t *voltage_mv)
 
 	return mt6360_ldo_get_voltage(ldo_id, voltage_mv);
 }
+
+/* gpio */
+
+/* TODO(b/163098341): Remove these after rev0 deprecated. */
+enum gpio_signal GPIO_AC_PRESENT = GPIO_AC_PRESENT_PLACEHOLDER;
+
+static void ac_present_init(void)
+{
+	if (board_get_version() == 0)
+		GPIO_AC_PRESENT = GPIO_EC_GPM2;
+	else
+		GPIO_AC_PRESENT = GPIO_EC_GPE5;
+
+	/* Set wake pins to the correct one */
+	hibernate_wake_pins[0] = GPIO_AC_PRESENT;
+
+	/* Manually run extpower_init() again */
+	gpio_enable_interrupt(GPIO_AC_PRESENT);
+	extpower_interrupt(GPIO_AC_PRESENT);
+}
+DECLARE_HOOK(HOOK_INIT, ac_present_init, HOOK_PRIO_INIT_ADC + 1);
 
 /* Sensor */
 static struct mutex g_base_mutex;

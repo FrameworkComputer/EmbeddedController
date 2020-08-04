@@ -11,6 +11,7 @@
 #define CONFIG_BRINGUP
 #define CONFIG_CHIPSET_MT8192
 #define CONFIG_CMD_POWERINDEBUG
+#define CONFIG_HIBERNATE_WAKE_PINS_DYNAMIC
 #define CONFIG_POWER_COMMON
 
 /* Optional features */
@@ -276,6 +277,8 @@ enum temp_sensor_id {
 
 void board_reset_pd_mcu(void);
 int board_get_version(void);
+
+extern enum gpio_signal GPIO_AC_PRESENT;
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

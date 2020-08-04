@@ -49,8 +49,10 @@ GPIO_INT(VOLUME_UP_L,        PIN(D, 6), GPIO_INT_BOTH | GPIO_PULL_UP,
          button_interrupt) /* EC_VOLUP_BTN_ODL */
 
 /* Other interrupts */
-GPIO_INT(AC_PRESENT,         PIN(M, 2),  GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,
-         extpower_interrupt) /* ACOK_OD */
+GPIO_INT(EC_GPM2,            PIN(M, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,
+         extpower_interrupt) /* AC_OK / AC_PRESENT in rev0 */
+GPIO_INT(EC_GPE5,            PIN(E, 5), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,
+         extpower_interrupt) /* AC_OK / AC_PRESENT in rev1+ */
 GPIO_INT(UART1_RX,           PIN(B, 0), GPIO_INT_FALLING,
          uart_deepsleep_interrupt) /* UART_DEBUG_TX_EC_RX */
 GPIO_INT(WP,                 PIN(I, 4), GPIO_INT_BOTH,
@@ -132,6 +134,9 @@ UNIMPLEMENTED(PCH_SCI_L)
 UNIMPLEMENTED(PCH_WAKE_L)
 UNIMPLEMENTED(PCH_PLTRST_L)
 
+/* Fake AC_PRESENT pin before board rev is determined */
+UNIMPLEMENTED(AC_PRESENT_PLACEHOLDER)
+
 #define UNIMPLEMENTED_GPIO(name, pin) UNIMPLEMENTED(name)
 
 UNIMPLEMENTED_GPIO(SET_VMC_VOLT_AT_1V8,    PIN(D, 4))
@@ -143,8 +148,6 @@ UNIMPLEMENTED_GPIO(LED3_SUB_ODL,           PIN(A, 2))
 UNIMPLEMENTED_GPIO(PACKET_MODE_EN,         PIN(A, 3))
 /* b/160218054: behavior not defined */
 UNIMPLEMENTED_GPIO(USB_A0_FAULT_ODL,       PIN(A, 7))
-/* TODO: ACOK_OD in P1 */
-UNIMPLEMENTED_GPIO(EC_GPE5,                PIN(E, 5))
 UNIMPLEMENTED_GPIO(CHARGER_PROCHOT_ODL,    PIN(C, 3))
 UNIMPLEMENTED_GPIO(USB_C0_FRS_EN,          PIN(H, 3))
 UNIMPLEMENTED_GPIO(PG_MT6315_GPU_ODL,      PIN(H, 6))
