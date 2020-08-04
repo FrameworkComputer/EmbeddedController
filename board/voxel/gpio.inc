@@ -103,6 +103,7 @@ UNIMPLEMENTED(USB_C1_RT_FORCE_PWR)
 GPIO(UART2_EC_RX,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
 GPIO(LED_1_L,                  PIN(C, 4), GPIO_OUT_HIGH)        /* Blue */
 GPIO(LED_2_L,                  PIN(C, 3), GPIO_OUT_HIGH)        /* Yellow */
+GPIO(EC_KB_BL_EN,		PIN(8, 6), GPIO_OUT_LOW)	/* Keyboard backlight enable*/
 
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
