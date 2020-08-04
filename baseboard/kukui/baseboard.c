@@ -35,8 +35,6 @@ const struct charger_config_t chg_chips[] = {
 };
 #endif /* VARIANT_KUKUI_CHARGER_* */
 
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
-
 #endif /* CONFIG_CHARGER_RUNTIME_CONFIG */
 
 void board_reset_pd_mcu(void)

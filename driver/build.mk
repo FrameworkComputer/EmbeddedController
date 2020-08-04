@@ -28,6 +28,7 @@ driver-$(CONFIG_ACCEL_LIS2DS)+=accel_lis2ds.o stm_mems_common.o
 
 # BC1.2 Charger Detection Devices
 driver-$(CONFIG_BC12_DETECT_MAX14637)+=bc12/max14637.o
+driver-$(CONFIG_BC12_DETECT_MT6360)+=bc12/mt6360.o
 driver-$(CONFIG_BC12_DETECT_PI3USB9201)+=bc12/pi3usb9201.o
 driver-$(CONFIG_BC12_DETECT_PI3USB9281)+=bc12/pi3usb9281.o
 
@@ -137,6 +138,8 @@ driver-$(CONFIG_USB_PD_TCPM_ANX74XX)+=tcpm/anx74xx.o
 driver-$(CONFIG_USB_PD_TCPM_ANX7688)+=tcpm/anx7688.o
 driver-$(CONFIG_USB_PD_TCPM_ANX7447)+=tcpm/anx7447.o
 driver-$(CONFIG_USB_PD_TCPM_PS8751)+=tcpm/ps8xxx.o
+driver-$(CONFIG_USB_PD_TCPM_PS8755)+=tcpm/ps8xxx.o
+driver-$(CONFIG_USB_PD_TCPM_PS8705)+=tcpm/ps8xxx.o
 driver-$(CONFIG_USB_PD_TCPM_PS8805)+=tcpm/ps8xxx.o
 driver-$(CONFIG_USB_PD_TCPM_PS8815)+=tcpm/ps8xxx.o
 driver-$(CONFIG_USB_PD_TCPM_TUSB422)+=tcpm/tusb422.o

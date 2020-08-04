@@ -76,4 +76,7 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+int board_allow_i2c_passthru(int port)
+{
+	return (port == I2C_PORT_VIRTUAL_BATTERY);
+}

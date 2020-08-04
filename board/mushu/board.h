@@ -24,7 +24,6 @@
 /* Keyboard features */
 #define CONFIG_PWM_KBLIGHT
 
-#define CONFIG_TEMP_SENSOR_AMD_R19ME4070
 
 /* Sensors */
 /* BMI160 Base accel/gyro */
@@ -47,6 +46,14 @@
 #define CONFIG_ALS_TCS3400_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
 #define I2C_PORT_ALS      I2C_PORT_SENSOR
+#define CONFIG_TEMP_SENSOR
+/* AMD SMBUS Temp sensors */
+#define CONFIG_TEMP_SENSOR_AMD_R19ME4070
+/* F75303 on I2C bus */
+#define CONFIG_TEMP_SENSOR_F75303
+/* Temp sensor is on port 4 on baseboard but on port 0 on Mushu */
+#undef I2C_PORT_THERMAL
+#define I2C_PORT_THERMAL I2C_PORT_SENSOR
 
 /* GPU features */
 #define I2C_PORT_GPU                    NPCX_I2C_PORT4_1
@@ -182,6 +189,9 @@ enum temp_sensor_id {
 	TEMP_CHARGER,
 	TEMP_5V,
 	TEMP_GPU,
+	TEMP_F75303_LOCAL,
+	TEMP_F75303_GPU,
+	TEMP_F75303_GPU_POWER,
 	TEMP_SENSOR_COUNT
 };
 

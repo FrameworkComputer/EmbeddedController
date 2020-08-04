@@ -59,6 +59,8 @@
 #include "config-stm32f03x.h"
 #elif defined(CHIP_VARIANT_STM32H7X3)
 #include "config-stm32h7x3.h"
+#elif defined(CHIP_VARIANT_STM32G431XB)
+#include "config-stm32g41xb.h"
 #else
 #error "Unsupported chip variant"
 #endif
@@ -104,6 +106,8 @@
 
 /* Even bigger */
 #define VENTI_TASK_STACK_SIZE 768
+#define ULTRA_TASK_STACK_SIZE 1056
+#define TRENTA_TASK_STACK_SIZE 1184
 
 /*
  * Console stack size. For test builds, the console is used to interact with

@@ -299,6 +299,15 @@ static inline uint64_t mulaa32(uint32_t a, uint32_t b, uint32_t c, uint32_t d)
 }
 #endif
 
+/**
+ * Set enable bit(s) in register and wait for ready bit(s)
+ *
+ * @param reg    Register to be get and set for enable and ready
+ * @param enable Bit(s) to be enabled
+ * @param ready  Bit(s) to be read for readiness
+ */
+void wait_for_ready(volatile uint32_t *reg, uint32_t enable, uint32_t ready);
+
 #ifdef __cplusplus
 }
 #endif

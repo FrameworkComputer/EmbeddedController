@@ -37,7 +37,18 @@ static uint32_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int aoz1380_init(int port)
 {
+	int rv;
+	bool is_sinking, is_sourcing;
+
 	flags[port] = 0;
+
+	rv = tcpm_get_snk_ctrl(port, &is_sinking);
+	if (rv == EC_SUCCESS && is_sinking)
+		AOZ1380_SET_FLAG(port, AOZ1380_FLAGS_SINK_ENABLED);
+
+	rv = tcpm_get_src_ctrl(port, &is_sourcing);
+	if (rv == EC_SUCCESS && is_sourcing)
+		AOZ1380_SET_FLAG(port, AOZ1380_FLAGS_SOURCE_ENABLED);
 
 	return EC_SUCCESS;
 }
@@ -115,7 +126,7 @@ static void aoz1380_handle_interrupt(int port)
 		/*
 		 * This is a over current/temperature condition
 		 */
-		CPRINTS("C%d PPC Vbus overcurrent/temperature", port);
+		ppc_prints("Vbus overcurrent/temperature", port);
 		pd_handle_overcurrent(port);
 	} else {
 		/*

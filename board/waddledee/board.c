@@ -5,6 +5,7 @@
 
 /* Waddledee board-specific configuration */
 
+#include "adc_chip.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
@@ -125,6 +126,39 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 /* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
+/* ADC channels */
+const struct adc_t adc_channels[] = {
+	[ADC_VSNS_PP3300_A] = {
+		.name = "PP3300_A_PGOOD",
+		.factor_mul = ADC_MAX_MVOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+		.channel = CHIP_ADC_CH0
+	},
+	[ADC_TEMP_SENSOR_1] = {
+		.name = "TEMP_SENSOR1",
+		.factor_mul = ADC_MAX_MVOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+		.channel = CHIP_ADC_CH2
+	},
+	[ADC_TEMP_SENSOR_2] = {
+		.name = "TEMP_SENSOR2",
+		.factor_mul = ADC_MAX_MVOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+		.channel = CHIP_ADC_CH3
+	},
+	[ADC_SUB_ANALOG] = {
+		.name = "SUB_ANALOG",
+		.factor_mul = ADC_MAX_MVOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+		.channel = CHIP_ADC_CH13
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
 /* BC 1.2 chips */
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	{
@@ -152,7 +186,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &sm5803_drv,
 	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /* TCPCs */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
@@ -210,7 +243,19 @@ void board_init(void)
 
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
 	gpio_enable_interrupt(c1_int_line);
+
+	/*
+	 * If interrupt lines are already low, schedule them to be processed
+	 * after inits are completed.
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_INT_ODL))
+		hook_call_deferred(&check_c0_line_data, 0);
+	if (!gpio_get_level(c1_int_line))
+		hook_call_deferred(&check_c1_line_data, 0);
+
 	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
+	/* Enable Base Accel interrupt */
+	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 
 	/* Charger on the MB will be outputting PROCHOT_ODL and OD CHG_DET */
 	sm5803_configure_gpio0(CHARGER_PRIMARY, GPIO0_MODE_PROCHOT, 1);
@@ -240,6 +285,7 @@ __override void board_power_5v_enable(int enable)
 	 * sets it through the charger GPIO.
 	 */
 	gpio_set_level(GPIO_EN_PP5000, !!enable);
+	gpio_set_level(GPIO_EN_USB_A0_VBUS, !!enable);
 	if (sm5803_set_gpio0_level(1, !!enable))
 		CPRINTUSB("Failed to %sable sub rails!", enable ? "en" : "dis");
 }
@@ -263,17 +309,6 @@ uint16_t tcpc_get_alert_status(void)
 	}
 
 	return status;
-}
-
-int extpower_is_present(void)
-{
-	int chg0 = 0;
-	int chg1 = 0;
-
-	sm5803_get_chg_det(0, &chg0);
-	sm5803_get_chg_det(1, &chg1);
-
-	return chg0 || chg1;
 }
 
 void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,

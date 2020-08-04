@@ -236,7 +236,7 @@ static void board_init(void)
 	STM32_GPIO_OSPEEDR(GPIO_D) |= 0x000003cf;
 
 	/* Sensor Init */
-	if (system_jumped_to_this_image() && chipset_in_state(CHIPSET_STATE_ON))
+	if (system_jumped_late() && chipset_in_state(CHIPSET_STATE_ON))
 		board_spi_enable();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

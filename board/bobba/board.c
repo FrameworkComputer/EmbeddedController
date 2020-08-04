@@ -34,6 +34,7 @@
 #include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
+#include "stdbool.h"
 #include "switch.h"
 #include "system.h"
 #include "tablet_mode.h"
@@ -71,22 +72,32 @@ const int keyboard_factory_scan_pins[][2] = {
 const int keyboard_factory_scan_pins_used =
 			ARRAY_SIZE(keyboard_factory_scan_pins);
 
-static void ppc_interrupt(enum gpio_signal signal)
+/* Check PPC ID Pin and Board ver to decide which one ppc is used. */
+static bool support_syv_ppc(void)
 {
 	uint32_t board_version = 0;
 
 	if (cbi_get_board_version(&board_version) != EC_SUCCESS)
 		CPRINTSUSB("Get board version failed.");
+
+	if ((board_version == 5) && (gpio_get_level(GPIO_PPC_ID)))
+		return true;
+
+	return false;
+}
+
+static void ppc_interrupt(enum gpio_signal signal)
+{
 	switch (signal) {
 	case GPIO_USB_PD_C0_INT_ODL:
-		if ((board_version == 5) && (gpio_get_level(GPIO_PPC_ID)))
+		if (support_syv_ppc())
 			syv682x_interrupt(0);
 		else
 			nx20p348x_interrupt(0);
 		break;
 
 	case GPIO_USB_PD_C1_INT_ODL:
-		if ((board_version == 5) && (gpio_get_level(GPIO_PPC_ID)))
+		if (support_syv_ppc())
 			syv682x_interrupt(1);
 		else
 			nx20p348x_interrupt(1);
@@ -324,7 +335,7 @@ static void board_usb_charge_mode_init(void)
 	 * Only overriding the USB_DISALLOW_SUSPEND_CHARGE in RO is enough because
 	 * USB_SYSJUMP_TAG preserves the settings to RW. And we should honor to it.
 	 */
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 	/* Currently only blorb and droid support this feature. */
@@ -375,6 +386,35 @@ __override uint32_t board_override_feature_flags0(uint32_t flags0)
 		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
 }
 
+static const struct ppc_config_t ppc_syv682x_port0 = {
+		.i2c_port = I2C_PORT_TCPC0,
+		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.drv = &syv682x_drv,
+};
+
+static const struct ppc_config_t ppc_syv682x_port1 = {
+		.i2c_port = I2C_PORT_TCPC1,
+		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.drv = &syv682x_drv,
+};
+
+static void board_setup_ppc(void)
+{
+	if (!support_syv_ppc())
+		return;
+
+	memcpy(&ppc_chips[USB_PD_PORT_TCPC_0],
+	       &ppc_syv682x_port0,
+	       sizeof(struct ppc_config_t));
+	memcpy(&ppc_chips[USB_PD_PORT_TCPC_1],
+	       &ppc_syv682x_port1,
+	       sizeof(struct ppc_config_t));
+
+	gpio_set_flags(GPIO_USB_PD_C0_INT_ODL, GPIO_INT_BOTH);
+	gpio_set_flags(GPIO_USB_PD_C1_INT_ODL, GPIO_INT_BOTH);
+}
+DECLARE_HOOK(HOOK_INIT, board_setup_ppc, HOOK_PRIO_INIT_I2C + 2);
+
 void board_hibernate_late(void) {
 
 	int i;
@@ -407,7 +447,7 @@ void lid_angle_peripheral_enable(int enable)
 
 void board_overcurrent_event(int port, int is_overcurrented)
 {
-	/* Sanity check the port. */
+	/* Check that port number is valid. */
 	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_MAX_COUNT))
 		return;
 
@@ -415,27 +455,11 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	gpio_set_level(GPIO_USB_C_OC, !is_overcurrented);
 }
 
-const struct ppc_config_t ppc_syv682x_port0 = {
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
-};
 
-const struct ppc_config_t ppc_syv682x_port1 = {
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
-};
-
-static void board_setup_ppc(void)
+int ppc_get_alert_status(int port)
 {
-	if (gpio_get_level(GPIO_PPC_ID)) {
-		memcpy(&ppc_chips[USB_PD_PORT_TCPC_0],
-		       &ppc_syv682x_port0,
-		       sizeof(struct ppc_config_t));
-		memcpy(&ppc_chips[USB_PD_PORT_TCPC_1],
-		       &ppc_syv682x_port1,
-		       sizeof(struct ppc_config_t));
-	}
+	if (port == 0)
+		return gpio_get_level(GPIO_USB_PD_C0_INT_ODL) == 0;
+
+	return gpio_get_level(GPIO_USB_PD_C1_INT_ODL) == 0;
 }
-DECLARE_HOOK(HOOK_INIT, board_setup_ppc, HOOK_PRIO_INIT_I2C + 2);

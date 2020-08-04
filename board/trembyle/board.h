@@ -13,13 +13,6 @@
 #include <stdbool.h>
 #include "baseboard.h"
 
-/*
- * Allow dangerous commands.
- * TODO: Remove this config before production.
- */
-#define CONFIG_SYSTEM_UNLOCKED
-#define CONFIG_I2C_DEBUG
-
 #define CONFIG_USBC_RETIMER_PI3DPX1207
 #define CONFIG_MKBP_USE_GPIO
 
@@ -63,6 +56,12 @@
 
 #ifndef __ASSEMBLER__
 
+enum adc_channel {
+	ADC_TEMP_SENSOR_CHARGER,
+	ADC_TEMP_SENSOR_SOC,
+	ADC_CH_COUNT
+};
+
 enum battery_type {
 	BATTERY_AP18F4M,
 	BATTERY_TYPE_COUNT,
@@ -80,6 +79,18 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
+enum temp_sensor_id {
+	TEMP_SENSOR_CHARGER = 0,
+	TEMP_SENSOR_SOC,
+	TEMP_SENSOR_CPU,
+	TEMP_SENSOR_COUNT
+};
+
+enum usba_port {
+	USBA_PORT_A0 = 0,
+	USBA_PORT_A1,
+	USBA_PORT_COUNT
+};
 
 /*****************************************************************************
  * CBI EC FW Configuration

@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"
@@ -35,6 +36,7 @@ enum mux_config_type {
 	USB_MUX_LOW_POWER,
 	USB_MUX_SET_MODE,
 	USB_MUX_GET_MODE,
+	USB_MUX_CHIPSET_RESET,
 };
 
 /* Configure the MUX */
@@ -82,6 +84,12 @@ static int configure_mux(int port,
 		case USB_MUX_LOW_POWER:
 			if (drv && drv->enter_low_power_mode)
 				rv = drv->enter_low_power_mode(mux_ptr);
+
+			break;
+
+		case USB_MUX_CHIPSET_RESET:
+			if (drv && drv->chipset_reset)
+				rv = drv->chipset_reset(mux_ptr);
 
 			break;
 
@@ -149,12 +157,24 @@ static inline void exit_low_power_mode(int port)
 
 void usb_mux_init(int port)
 {
+	int rv;
+
 	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 
-	configure_mux(port, USB_MUX_INIT, NULL);
+	if (port >= board_get_usb_pd_port_count()) {
+		return;
+	}
 
-	/* Device is always out of LPM after initialization. */
-	flags[port] &= ~USB_MUX_FLAG_IN_LPM;
+	rv = configure_mux(port, USB_MUX_INIT, NULL);
+
+	/*
+	 * Mux may fail initialization if it's not powered. Mark this port
+	 * as in LPM mode to try initialization again.
+	 */
+	if (rv == EC_ERROR_NOT_POWERED)
+		flags[port] |= USB_MUX_FLAG_IN_LPM;
+	else
+		flags[port] &= ~USB_MUX_FLAG_IN_LPM;
 }
 
 /*
@@ -168,6 +188,10 @@ void usb_mux_set(int port, mux_state_t mux_mode,
 	const int should_enter_low_power_mode =
 		(mux_mode == USB_PD_MUX_NONE &&
 		usb_mode == USB_SWITCH_DISCONNECT);
+
+	if (port >= board_get_usb_pd_port_count()) {
+		return;
+	}
 
 	/* Configure USB2.0 */
 	if (IS_ENABLED(CONFIG_USB_CHARGER))
@@ -207,18 +231,37 @@ void usb_mux_set(int port, mux_state_t mux_mode,
 mux_state_t usb_mux_get(int port)
 {
 	mux_state_t mux_state;
+	bool is_low_power_mode;
+	int rv;
+
+	if (port >= board_get_usb_pd_port_count()) {
+		return USB_PD_MUX_NONE;
+	}
+
+	/* Store the status of LPM flag (low power mode) */
+	is_low_power_mode = flags[port] & USB_MUX_FLAG_IN_LPM;
 
 	exit_low_power_mode(port);
 
-	if (configure_mux(port, USB_MUX_GET_MODE, &mux_state))
-		return USB_PD_MUX_NONE;
+	rv = configure_mux(port, USB_MUX_GET_MODE, &mux_state);
 
-	return mux_state;
+	/*
+	 * If the LPM flag was set prior to reading the mux state, re-enter the
+	 * low power mode.
+	 */
+	if (is_low_power_mode)
+		enter_low_power_mode(port);
+
+	return rv ? USB_PD_MUX_NONE : mux_state;
 }
 
 void usb_mux_flip(int port)
 {
 	mux_state_t mux_state;
+
+	if (port >= board_get_usb_pd_port_count()) {
+		return;
+	}
 
 	exit_low_power_mode(port);
 
@@ -238,6 +281,10 @@ void usb_mux_hpd_update(int port, int hpd_lvl, int hpd_irq)
 	mux_state_t mux_state;
 	const struct usb_mux *mux_ptr = &usb_muxes[port];
 
+	if (port >= board_get_usb_pd_port_count()) {
+		return;
+	}
+
 	for (; mux_ptr; mux_ptr = mux_ptr->next_mux)
 		if (mux_ptr->hpd_update)
 			mux_ptr->hpd_update(mux_ptr, hpd_lvl, hpd_irq);
@@ -248,6 +295,15 @@ void usb_mux_hpd_update(int port, int hpd_lvl, int hpd_irq)
 		configure_mux(port, USB_MUX_SET_MODE, &mux_state);
 	}
 }
+
+static void mux_chipset_reset(void)
+{
+	int port;
+
+	for (port = 0; port < board_get_usb_pd_port_count(); ++port)
+		configure_mux(port, USB_MUX_CHIPSET_RESET, NULL);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, mux_chipset_reset, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CMD_TYPEC
 static int command_typec(int argc, char **argv)

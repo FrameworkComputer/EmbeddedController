@@ -13,12 +13,12 @@ from unit tests and fuzzers' `.mocklist` file.
   [mock control](#mock-controls) functions/variables.
   See the [Design Patterns](#design-patterns) section
   for more detail on design patterns.
-* Add an new entry in [common/mock/build.mk](build.mk)
+* Add a new entry in [common/mock/build.mk](build.mk)
   that is conditioned on your mock's name.
 
 If a unit test or fuzzer requests this mock, the build system will
 set the variable `HAS_MOCK_<BUILD_NAME>` to `y` at build time.
-This variable is used to conditionally include the the mock source
+This variable is used to conditionally include the mock source
 in [common/mock/build.mk](build.mk).
 
 Example line from [common/mock/build.mk](build.mk):

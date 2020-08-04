@@ -27,6 +27,13 @@ void dpm_init(int port);
 void dpm_set_mode_entry_done(int port);
 
 /*
+ * Informs the DPM that Exit Mode request is received
+ *
+ * @param port USB-C port number
+ */
+void dpm_set_mode_exit_request(int port);
+
+/*
  * Informs the DPM that a VDM ACK was received.
  *
  * @param port      USB-C port number
@@ -50,13 +57,10 @@ void dpm_vdm_naked(int port, enum tcpm_transmit_type type, uint16_t svid,
 		uint8_t vdm_cmd);
 
 /*
- * Drives the Policy Engine through the mode entry/configuration process. Each
- * call to this function requests that the PE send one VDM, whichever is next in
- * the mode entry sequence. This only happens if preconditions for mode entry
- * are met.
+ * Drives the Policy Engine through entry/exit mode process
  *
  * @param port USB-C port number
  */
-void dpm_attempt_mode_entry(int port);
+void dpm_run(int port);
 
 #endif  /* __CROS_EC_USB_DPM_H */

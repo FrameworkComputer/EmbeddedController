@@ -19,6 +19,15 @@
 #include "timer.h"
 #include "util.h"
 
+#define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
+
+/*
+ * Due to the CSME-Lite processing, upon startup the CPU transitions through
+ * S0->S3->S5->S3->S0, causing the LED to turn on/off/on, so
+ * delay turning off the LED during suspend/shutdown.
+ */
+#define LED_CPU_DELAY_MS	(2000 * MSEC)
+
 const enum ec_led_id supported_led_ids[] = {EC_LED_ID_POWER_LED};
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -135,21 +144,40 @@ static void led_suspend(void)
 	CONFIG_TICK(LED_PULSE_TICK_US, LED_GREEN);
 	led_tick();
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, led_suspend, HOOK_PRIO_DEFAULT);
+DECLARE_DEFERRED(led_suspend);
 
 static void led_shutdown(void)
 {
-	hook_call_deferred(&led_tick_data, -1);
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 		set_color(EC_LED_ID_POWER_LED, LED_OFF, 0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, led_shutdown, HOOK_PRIO_DEFAULT);
+DECLARE_DEFERRED(led_shutdown);
+
+static void led_shutdown_hook(void)
+{
+	hook_call_deferred(&led_tick_data, -1);
+	hook_call_deferred(&led_suspend_data, -1);
+	hook_call_deferred(&led_shutdown_data, LED_CPU_DELAY_MS);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, led_shutdown_hook, HOOK_PRIO_DEFAULT);
+
+static void led_suspend_hook(void)
+{
+	hook_call_deferred(&led_shutdown_data, -1);
+	hook_call_deferred(&led_suspend_data, LED_CPU_DELAY_MS);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, led_suspend_hook, HOOK_PRIO_DEFAULT);
 
 static void led_resume(void)
 {
 	/* Assume there is no race condition with led_tick, which also
 	 * runs in hook_task. */
 	hook_call_deferred(&led_tick_data, -1);
+	/*
+	 * Avoid invoking the suspend/shutdown delayed hooks.
+	 */
+	hook_call_deferred(&led_suspend_data, -1);
+	hook_call_deferred(&led_shutdown_data, -1);
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 		set_color(EC_LED_ID_POWER_LED, LED_GREEN, 100);
 }

@@ -98,6 +98,7 @@ static void led_set_charge_port_tick(void)
 		side_select_duty = 50;
 	}
 
-	pwm_set_duty(PWM_CH_LED4_SIDESEL, side_select_duty);
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		pwm_set_duty(PWM_CH_LED4_SIDESEL, side_select_duty);
 }
 DECLARE_HOOK(HOOK_TICK, led_set_charge_port_tick, HOOK_PRIO_DEFAULT);

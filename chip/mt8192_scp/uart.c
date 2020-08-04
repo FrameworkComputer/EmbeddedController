@@ -5,6 +5,7 @@
 
 /* SCP UART module */
 
+#include "csr.h"
 #include "system.h"
 #include "uart.h"
 #include "uart_regs.h"
@@ -17,6 +18,7 @@
  */
 #define UARTN CONFIG_UART_CONSOLE
 #define UART_IDLE_WAIT_US 500
+#define UART_INTC_GROUP 12
 
 static uint8_t init_done, tx_started;
 
@@ -111,19 +113,30 @@ void uart_tx_start(void)
 
 void uart_tx_stop(void)
 {
+	/*
+	 * Workaround for b/157541273.
+	 * Don't unset the THRI flag unless we are in the UART ISR.
+	 *
+	 * Note:
+	 * MICAUSE denotes current INTC group number.
+	 */
+	if (in_interrupt_context() &&
+	    read_csr(CSR_VIC_MICAUSE) != UART_INTC_GROUP)
+		return;
+
 	tx_started = 0;
 	UART_IER(UARTN) &= ~UART_IER_THRI;
 	enable_sleep(SLEEP_MASK_UART);
 }
 
-void uart_process(void)
+static void uart_process(void)
 {
 	uart_process_input();
 	uart_process_output();
 }
 
 #if (UARTN < SCP_UART_COUNT)
-void irq_group12_handler(void)
+static void uart_irq_handler(void)
 {
 	extern volatile int ec_int;
 
@@ -139,7 +152,7 @@ void irq_group12_handler(void)
 		break;
 	}
 }
-DECLARE_IRQ(12, irq_group12_handler, 2);
+DECLARE_IRQ(UART_INTC_GROUP, uart_irq_handler, 0);
 #else
 
 #ifndef HAS_TASK_APUART

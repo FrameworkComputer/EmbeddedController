@@ -284,7 +284,14 @@ static enum ec_error_list isl923x_get_current(int chgnum, int *current)
 	int rv;
 	int reg;
 
-	rv = raw_read16(chgnum, ISL923X_REG_CHG_CURRENT, &reg);
+	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
+		rv = raw_read16(chgnum, RAA489000_REG_ADC_CHARGE_CURRENT, &reg);
+		/* The value is in 22.2mA increments. */
+		reg *= 222;
+		reg /= 10;
+	} else {
+		rv = raw_read16(chgnum, ISL923X_REG_CHG_CURRENT, &reg);
+	}
 	if (rv)
 		return rv;
 
@@ -299,6 +306,22 @@ static enum ec_error_list isl923x_set_current(int chgnum, int current)
 
 static enum ec_error_list isl923x_get_voltage(int chgnum, int *voltage)
 {
+	int rv;
+	int reg;
+
+	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
+		rv = raw_read16(chgnum, RAA489000_REG_ADC_VSYS, &reg);
+		if (rv)
+			return rv;
+
+		/* The voltage is returned in bits 13:6. LSB is 96mV. */
+		reg &= GENMASK(13, 6);
+		reg >>= 6;
+		reg *= 96;
+
+		*voltage = reg;
+		return EC_SUCCESS;
+	}
 	return raw_read16(chgnum, ISL923X_REG_SYS_VOLTAGE_MAX, voltage);
 }
 
@@ -485,6 +508,18 @@ static void isl923x_init(int chgnum)
 			goto init_fail;
 	}
 
+	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
+		/*
+		 * Return the BFET to normal operation as it may have been
+		 * turned off when entering hibernate.
+		 */
+		if (raw_read16(chgnum, ISL923X_REG_CONTROL1, &reg))
+			goto init_fail;
+		reg &= ~RAA489000_C1_BGATE_FORCE_OFF;
+		if (raw_write16(chgnum, ISL923X_REG_CONTROL1, reg))
+			goto init_fail;
+	}
+
 	if (IS_ENABLED(CHARGER_ISL9238X) ||
 	    IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
 		/*
@@ -516,7 +551,7 @@ static void isl923x_init(int chgnum)
 		 * No need to proceed with the rest of init if we sysjump'd to
 		 * this image as the input current limit has already been set.
 		 */
-		if (system_jumped_to_this_image())
+		if (system_jumped_late())
 			return;
 
 		/*
@@ -563,7 +598,7 @@ void raa489000_hibernate(int chgnum)
 {
 	int rv, regval;
 
-	if ((chgnum < 0) || (chgnum > chg_cnt)) {
+	if ((chgnum < 0) || (chgnum > board_get_charger_chip_count())) {
 		CPRINTS("%s: Invalid chgnum! (%d)", __func__, chgnum);
 		return;
 	}
@@ -586,13 +621,11 @@ void raa489000_hibernate(int chgnum)
 		/* Disable Supplemental support */
 		regval &= ~RAA489000_C1_ENABLE_SUPP_SUPPORT_MODE;
 
-		/* Force BGATE off */
-		if (IS_ENABLED(CONFIG_OCPC) && (chgnum == PRIMARY_CHARGER)) {
-			/* This is needed in the Z-state */
-			CPRINTS("%s(%d): Skip disable BFET", __func__, chgnum);
-		} else {
-			regval |= RAA489000_C1_BGATE_FORCE_OFF;
-		}
+		/*
+		 * Force BGATE off.  For devices that utilize the Z-state, the
+		 * LDO will be powered through the BFET's body diode.
+		 */
+		regval |= RAA489000_C1_BGATE_FORCE_OFF;
 
 		/* Disable AMON/BMON */
 		regval |= ISL923X_C1_DISABLE_MON;
@@ -625,10 +658,9 @@ void raa489000_hibernate(int chgnum)
 	if (rv)
 		CPRINTS("%s(%d):Failed to set Control4!", __func__, chgnum);
 
-	if (IS_ENABLED(CONFIG_OCPC) && (chgnum == PRIMARY_CHARGER)) {
-		/* The LDO is needed in the Z-state */
-		CPRINTS("%s(%d): Skip disable MCU LDO", __func__, chgnum);
-	} else {
+#ifdef CONFIG_OCPC
+	/* The LDO is needed in the Z-state on the primary charger */
+	if (chgnum != CHARGER_PRIMARY) {
 		rv = raw_read16(chgnum, RAA489000_REG_CONTROL8, &regval);
 		if (!rv) {
 			/* Disable MCU LDO in battery state */
@@ -641,6 +673,7 @@ void raa489000_hibernate(int chgnum)
 			CPRINTS("%s(%d):Failed to set Control8!", __func__,
 				chgnum);
 	}
+#endif
 
 	cflush();
 }
@@ -961,7 +994,7 @@ static enum ec_error_list isl923x_get_vbus_voltage(int chgnum, int port,
 	return EC_SUCCESS;
 }
 
-#ifdef CONFIG_CHARGER_RAA489000
+#if defined(CONFIG_CHARGER_RAA489000) && defined(CONFIG_OCPC)
 static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 							  struct ocpc_data *o,
 							  int current_ma,
@@ -974,7 +1007,7 @@ static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 	int regval;
 
 	/* This should never be called against the primary charger. */
-	ASSERT(chgnum != PRIMARY_CHARGER);
+	ASSERT(chgnum != CHARGER_PRIMARY);
 
 	/* Only B0+ silicon supports VSYS compensation. */
 	rv = isl923x_device_id(chgnum, &device_id);
@@ -1009,16 +1042,17 @@ static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 
 	/*
 	 * Rp1 is set between 36-156mOhms in 4mOhm increments.  This must be
-	 * non-zero in order for compensation to work.  The system keeps track
-	 * of combined resistance; we'll assume that Rp2 is what was statically
-	 * defined leaving Rp1 as the difference.  If Rp1 is less than 36mOhms,
-	 * then the compensation is disabled.
+	 * non-zero in order for compensation to work.
 	 *
-	 * TODO(b/148980020): When we can calculate Rsys vs Rbatt, update this
-	 * accordingly.
+	 * To get Rp1, we need to look at the delta between VSYS measured by the
+	 * auxiliary charger IC and the primary charger IC where the actual VSYS
+	 * node is as well as the current provided by the auxiliary charger IC.
+	 * The system keeps track of combined resistance; therefore, Rp2 is the
+	 * difference between the combined resistance and Rp1 that we calculate.
+	 * If Rp1 is less than 36mOhms, then the compensation is disabled.
 	 */
-	rp1 = o->combined_rsys_rbatt_mo - CONFIG_OCPC_DEF_RBATT_MOHMS;
-	rp1 = MIN(rp1, RAA489000_RP1_MAX);
+
+	rp1 = MIN(o->rsys_mo, RAA489000_RP1_MAX);
 	rp1 -= RAA489000_RP1_MIN;
 	if (rp1 < 0) {
 		if (o->last_vsys == OCPC_UNINIT)
@@ -1031,7 +1065,7 @@ static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 	}
 
 	/* Rp2 is set between 0-124mOhms in 4mOhm increments. */
-	rp2 = CONFIG_OCPC_DEF_RBATT_MOHMS;
+	rp2 = o->rbatt_mo;
 	rp2 = CLAMP(rp2, RAA489000_RP2_MIN, RAA489000_RP2_MAX);
 	rp2 /= 4;
 
@@ -1058,9 +1092,9 @@ static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 	}
 
 	/* Lastly, enable DVC fast charge mode for the primary charger IC. */
-	rv = raw_read16(PRIMARY_CHARGER, RAA489000_REG_CONTROL10, &regval);
+	rv = raw_read16(CHARGER_PRIMARY, RAA489000_REG_CONTROL10, &regval);
 	regval |= RAA489000_C10_ENABLE_DVC_CHARGE_MODE;
-	rv |= raw_write16(PRIMARY_CHARGER, RAA489000_REG_CONTROL10, regval);
+	rv |= raw_write16(CHARGER_PRIMARY, RAA489000_REG_CONTROL10, regval);
 	if (rv) {
 		CPRINTS("%s Failed to enable DVC on primary charger!",
 			__func__);
@@ -1073,7 +1107,7 @@ static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 	 */
 	return EC_ERROR_UNIMPLEMENTED;
 }
-#endif /* CONFIG_CHARGER_RAA489000 */
+#endif /* CONFIG_CHARGER_RAA489000 && CONFIG_OCPC */
 
 const struct charger_drv isl923x_drv = {
 	.init = &isl923x_init,
@@ -1103,7 +1137,7 @@ const struct charger_drv isl923x_drv = {
 	.ramp_is_detected = &isl923x_ramp_is_detected,
 	.ramp_get_current_limit = &isl923x_ramp_get_current_limit,
 #endif
-#ifdef CONFIG_CHARGER_RAA489000
+#if defined(CONFIG_CHARGER_RAA489000) && defined(CONFIG_OCPC)
 	.set_vsys_compensation = &raa489000_set_vsys_compensation,
 #endif
 };

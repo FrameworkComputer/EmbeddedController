@@ -194,9 +194,9 @@ void tc_state_init(int port)
 {
 	int res = 0;
 
-	res = tc_restart_tcpc(port);
+	res = tcpm_init(port);
 
-	CPRINTS("TCPC p%d init %s", port, res ? "failed" : "ready");
+	CPRINTS("C%d: init %s", port, res ? "failed" : "ready");
 
 	/* Disable if restart failed, otherwise start in default state. */
 	set_state_tc(port, res ? TC_DISABLED : TC_UNATTACHED_SNK);
@@ -277,13 +277,23 @@ static void tc_disabled_run(const int port)
 static void tc_disabled_exit(const int port)
 {
 	if (!IS_ENABLED(CONFIG_USB_PD_TCPC)) {
-		if (tc_restart_tcpc(port) != 0) {
-			CPRINTS("TCPC p%d restart failed!", port);
+		if (tcpm_init(port) != 0) {
+			CPRINTS("C%d: restart failed!", port);
 			return;
 		}
 	}
 
-	CPRINTS("TCPC p%d resumed!", port);
+	CPRINTS("C%d: resumed!", port);
+}
+
+void pd_set_suspend(int port, int suspend)
+{
+	/*
+	 * This shouldn't happen. If it does, we need to send an event to the
+	 * PD task to put the SM into the disabled state. It is not safe to
+	 * directly set_state here since this may be in another task.
+	 */
+	assert(false);
 }
 
 /**

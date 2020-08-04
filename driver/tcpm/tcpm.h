@@ -31,11 +31,10 @@ static inline int tcpc_addr_write(int port, int i2c_addr, int reg, int val)
 			  i2c_addr, reg, val);
 }
 
-static inline int tcpc_write16(int port, int reg, int val)
+static inline int tcpc_addr_write16(int port, int i2c_addr, int reg, int val)
 {
 	return i2c_write16(tcpc_config[port].i2c_info.port,
-			   tcpc_config[port].i2c_info.addr_flags,
-			   reg, val);
+			   i2c_addr, reg, val);
 }
 
 static inline int tcpc_addr_read(int port, int i2c_addr, int reg, int *val)
@@ -44,11 +43,10 @@ static inline int tcpc_addr_read(int port, int i2c_addr, int reg, int *val)
 			 i2c_addr, reg, val);
 }
 
-static inline int tcpc_read16(int port, int reg, int *val)
+static inline int tcpc_addr_read16(int port, int i2c_addr, int reg, int *val)
 {
 	return i2c_read16(tcpc_config[port].i2c_info.port,
-			  tcpc_config[port].i2c_info.addr_flags,
-			  reg, val);
+			  i2c_addr, reg, val);
 }
 
 static inline int tcpc_xfer(int port, const uint8_t *out, int out_size,
@@ -102,9 +100,9 @@ static inline int tcpc_update16(int port, int reg,
 
 #else /* !CONFIG_USB_PD_TCPC_LOW_POWER */
 int tcpc_addr_write(int port, int i2c_addr, int reg, int val);
-int tcpc_write16(int port, int reg, int val);
+int tcpc_addr_write16(int port, int i2c_addr, int reg, int val);
 int tcpc_addr_read(int port, int i2c_addr, int reg, int *val);
-int tcpc_read16(int port, int reg, int *val);
+int tcpc_addr_read16(int port, int i2c_addr, int reg, int *val);
 int tcpc_read_block(int port, int reg, uint8_t *in, int size);
 int tcpc_write_block(int port, int reg, const uint8_t *out, int size);
 int tcpc_xfer(int port, const uint8_t *out, int out_size,
@@ -125,10 +123,22 @@ static inline int tcpc_write(int port, int reg, int val)
 			       tcpc_config[port].i2c_info.addr_flags, reg, val);
 }
 
+static inline int tcpc_write16(int port, int reg, int val)
+{
+	return tcpc_addr_write16(port,
+			tcpc_config[port].i2c_info.addr_flags, reg, val);
+}
+
 static inline int tcpc_read(int port, int reg, int *val)
 {
 	return tcpc_addr_read(port,
 			      tcpc_config[port].i2c_info.addr_flags, reg, val);
+}
+
+static inline int tcpc_read16(int port, int reg, int *val)
+{
+	return tcpc_addr_read16(port,
+			tcpc_config[port].i2c_info.addr_flags, reg, val);
 }
 
 static inline void tcpc_lock(int port, int lock)
@@ -178,19 +188,6 @@ static inline int tcpm_set_cc(int port, int pull)
 	return tcpc_config[port].drv->set_cc(port, pull);
 }
 
-static inline int tcpm_set_connection(int port,
-				      enum tcpc_cc_pull pull,
-				      int connect)
-{
-	const struct tcpm_drv *tcpc = tcpc_config[port].drv;
-
-	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) &&
-	    tcpc->set_connection)
-		return tcpc->set_connection(port, pull, connect);
-
-	return EC_SUCCESS;
-}
-
 static inline int tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
 	return tcpc_config[port].drv->set_polarity(port, polarity);
@@ -233,6 +230,17 @@ static inline int tcpm_transmit(int port, enum tcpm_transmit_type type,
 }
 
 #ifdef CONFIG_USBC_PPC
+static inline int tcpm_get_snk_ctrl(int port, bool *sinking)
+{
+	int rv = EC_ERROR_UNIMPLEMENTED;
+
+	if (tcpc_config[port].drv->get_snk_ctrl != NULL)
+		rv = tcpc_config[port].drv->get_snk_ctrl(port, sinking);
+	else
+		*sinking = false;
+
+	return rv;
+}
 static inline int tcpm_set_snk_ctrl(int port, int enable)
 {
 	if (tcpc_config[port].drv->set_snk_ctrl != NULL)
@@ -241,6 +249,17 @@ static inline int tcpm_set_snk_ctrl(int port, int enable)
 		return EC_ERROR_UNIMPLEMENTED;
 }
 
+static inline int tcpm_get_src_ctrl(int port, bool *sourcing)
+{
+	int rv = EC_ERROR_UNIMPLEMENTED;
+
+	if (tcpc_config[port].drv->get_src_ctrl != NULL)
+		rv = tcpc_config[port].drv->get_src_ctrl(port, sourcing);
+	else
+		*sourcing = false;
+
+	return rv;
+}
 static inline int tcpm_set_src_ctrl(int port, int enable)
 {
 	if (tcpc_config[port].drv->set_src_ctrl != NULL)
@@ -270,7 +289,19 @@ static inline int tcpm_enable_drp_toggle(int port)
 {
 	return tcpc_config[port].drv->drp_toggle(port);
 }
+#else
+static inline int tcpm_auto_toggle_supported(int port)
+{
+	return false;
+}
 #endif
+
+static inline int tcpm_debug_accessory(int port, bool enable)
+{
+	if (tcpc_config[port].drv->debug_accessory)
+		return tcpc_config[port].drv->debug_accessory(port, enable);
+	return EC_SUCCESS;
+}
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 static inline int tcpm_enter_low_power_mode(int port)
@@ -294,12 +325,29 @@ static inline int tcpc_i2c_write(const int port, const uint16_t addr_flags,
 #endif
 
 static inline int tcpm_get_chip_info(int port, int live,
-				     struct ec_response_pd_chip_info_v1 **info)
+				     struct ec_response_pd_chip_info_v1 *info)
 {
 	if (tcpc_config[port].drv->get_chip_info)
 		return tcpc_config[port].drv->get_chip_info(port, live, info);
 	return EC_ERROR_UNIMPLEMENTED;
 }
+
+#ifdef CONFIG_USB_PD_FRS_TCPC
+static inline int tcpm_set_frs_enable(int port, int enable)
+{
+	const struct tcpm_drv *tcpc;
+	int rv = EC_SUCCESS;
+
+	/*
+	 * set_frs_enable will be set to tcpci_tcp_fast_role_swap_enable
+	 * if it is handled by the tcpci for the tcpc chipset
+	 */
+	tcpc = tcpc_config[port].drv;
+	if (tcpc->set_frs_enable)
+		rv = tcpc->set_frs_enable(port, enable);
+	return rv;
+}
+#endif /* defined(CONFIG_USB_PD_FRS_TCPC) */
 
 #else
 
@@ -454,19 +502,9 @@ void tcpm_clear_pending_messages(int port);
  *
  * @param port Type-C port number
  * @param enable FRS enable (true) disable (false)
+ * @return EC_SUCCESS on success, or an error
  */
-static inline void tcpm_set_frs_enable(int port, int enable)
-{
-	const struct tcpm_drv *tcpc;
-
-	/*
-	 * set_frs_enable will be set to tcpci_tcp_fast_role_swap_enable
-	 * if it is handled by the tcpci for the tcpc chipset
-	 */
-	tcpc = tcpc_config[port].drv;
-	if (tcpc->set_frs_enable)
-		tcpc->set_frs_enable(port, enable);
-}
+int tcpm_set_frs_enable(int port, int enable);
 
 #ifdef CONFIG_CMD_TCPC_DUMP
 static inline void tcpm_dump_registers(int port)

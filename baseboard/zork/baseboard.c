@@ -18,8 +18,6 @@
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/retimer/pi3hdx1204.h"
-#include "driver/temp_sensor/sb_tsi.h"
-#include "driver/temp_sensor/tmp432.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "ec_commands.h"
 #include "extpower.h"
@@ -39,7 +37,6 @@
 #include "system.h"
 #include "task.h"
 #include "tcpci.h"
-#include "temp_sensor.h"
 #include "thermistor.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
@@ -55,54 +52,12 @@ const enum gpio_signal hibernate_wake_pins[] = {
 };
 const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
 
-const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		.name = "CHARGER",
-		.input_ch = NPCX_ADC_CH2,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-	},
-	[ADC_TEMP_SENSOR_SOC] = {
-		.name = "SOC",
-		.input_ch = NPCX_ADC_CH3,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
-
-const struct power_signal_info power_signal_list[] = {
-	[X86_SLP_S3_N] = {
-		.gpio = GPIO_PCH_SLP_S3_L,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "SLP_S3_DEASSERTED",
-	},
-	[X86_SLP_S5_N] = {
-		.gpio = GPIO_PCH_SLP_S5_L,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "SLP_S5_DEASSERTED",
-	},
-	[X86_S0_PGOOD] = {
-		.gpio = GPIO_S0_PGOOD,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "S0_PGOOD",
-	},
-	[X86_S5_PGOOD] = {
-		.gpio = GPIO_S5_PGOOD,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "S5_PGOOD",
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
 /*
  * In the AOZ1380 PPC, there are no programmable features.  We use
  * the attached NCT3807 to control a GPIO to indicate 1A5 or 3A0
  * current limits.
  */
-int board_aoz1380_set_vbus_source_current_limit(int port,
+__overridable int board_aoz1380_set_vbus_source_current_limit(int port,
 						enum tcpc_rp_value rp)
 {
 	int rv;
@@ -169,7 +124,7 @@ struct keyboard_scan_config keyscan_config = {
  * Values are calculated from the "Resistance VS. Temperature" table on the
  * Murata page for part NCP15WB473F03RC. Vdd=3.3V, R=30.9Kohm.
  */
-static const struct thermistor_data_pair thermistor_data[] = {
+const struct thermistor_data_pair thermistor_data[] = {
 	{ 2761 / THERMISTOR_SCALING_FACTOR, 0},
 	{ 2492 / THERMISTOR_SCALING_FACTOR, 10},
 	{ 2167 / THERMISTOR_SCALING_FACTOR, 20},
@@ -185,108 +140,54 @@ static const struct thermistor_data_pair thermistor_data[] = {
 	{ 283 / THERMISTOR_SCALING_FACTOR, 100}
 };
 
-static const struct thermistor_info thermistor_info = {
+const struct thermistor_info thermistor_info = {
 	.scaling_factor = THERMISTOR_SCALING_FACTOR,
 	.num_pairs = ARRAY_SIZE(thermistor_data),
 	.data = thermistor_data,
 };
 
-static int board_get_temp(int idx, int *temp_k)
-{
-	int mv;
-	int temp_c;
-	enum adc_channel channel;
-
-	/* idx is the sensor index set below in temp_sensors[] */
-	switch (idx) {
-	case TEMP_SENSOR_CHARGER:
-		channel = ADC_TEMP_SENSOR_CHARGER;
-		break;
-	case TEMP_SENSOR_SOC:
-		/* thermistor is not powered in G3 */
-		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-			return EC_ERROR_NOT_POWERED;
-
-		channel = ADC_TEMP_SENSOR_SOC;
-		break;
-	default:
-		return EC_ERROR_INVAL;
-	}
-
-	mv = adc_read_channel(channel);
-	if (mv < 0)
-		return EC_ERROR_INVAL;
-
-	temp_c = thermistor_linear_interpolate(mv, &thermistor_info);
-	*temp_k = C_TO_K(temp_c);
-	return EC_SUCCESS;
-}
-
-const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_CHARGER] = {
-		.name = "Charger",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = board_get_temp,
-		.idx = TEMP_SENSOR_CHARGER,
-	},
-	[TEMP_SENSOR_SOC] = {
-		.name = "SOC",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = board_get_temp,
-		.idx = TEMP_SENSOR_SOC,
-	},
-	[TEMP_SENSOR_CPU] = {
-		.name = "CPU",
-		.type = TEMP_SENSOR_TYPE_CPU,
-		.read = sb_tsi_get_val,
-		.idx = 0,
-	},
-#ifdef BOARD_MORPHIUS
-	[TEMP_SENSOR_5V_REGULATOR] = {
-		.name = "5V_REGULATOR",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = tmp432_get_val,
-		.idx = TMP432_IDX_LOCAL,
-	},
-#endif
-};
-BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
 #ifndef TEST_BUILD
 void lid_angle_peripheral_enable(int enable)
 {
-	if (ec_config_has_lid_angle_tablet_mode())
-		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+	if (ec_config_has_lid_angle_tablet_mode()) {
+		int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
+
+		if (enable) {
+			keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
+		} else {
+			/*
+			 * Ensure that the chipset is off before disabling the
+			 * keyboard. When the chipset is on, the EC keeps the
+			 * keyboard enabled and the AP decides whether to
+			 * ignore input devices or not.
+			 */
+			if (!chipset_in_s0)
+				keyboard_scan_enable(0,
+						     KB_SCAN_DISABLE_LID_ANGLE);
+		}
+	}
 }
 #endif
 
-/* Unprovisioned magic value. */
-static uint32_t sku_id = 0x7fffffff;
-
-uint32_t system_get_sku_id(void)
-{
-	return sku_id;
-}
-
 static void cbi_init(void)
 {
-	uint32_t board_version = 0;
 	uint32_t val;
 
 	if (cbi_get_board_version(&val) == EC_SUCCESS)
-		board_version = val;
-	ccprints("Board Version: %d (0x%x)", board_version, board_version);
+		ccprints("Board Version: %d (0x%x)", val, val);
+	else
+		ccprints("Board Version: not set in cbi");
 
 	if (cbi_get_sku_id(&val) == EC_SUCCESS)
-		sku_id = val;
-	ccprints("SKU: %d (0x%x)", sku_id, sku_id);
-
-	/* FW config */
-	val = get_cbi_fw_config();
-	if (val == UNINITIALIZED_FW_CONFIG)
-		ccprints("FW Config: not set in cbi");
+		ccprints("SKU ID: %d (0x%x)", val, val);
 	else
+		ccprints("SKU ID: not set in cbi");
+
+	val = get_cbi_fw_config();
+	if (val != UNINITIALIZED_FW_CONFIG)
 		ccprints("FW Config: %d (0x%x)", val, val);
+	else
+		ccprints("FW Config: not set in cbi");
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -329,6 +230,12 @@ void board_hibernate(void)
 	}
 }
 
+__overridable int check_hdmi_hpd_status(void)
+{
+	/* Default hdmi insert. */
+	return 1;
+}
+
 const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
 	.eq_ch0_ch1_offset = PI3HDX1204_EQ_DB710,
 	.eq_ch2_ch3_offset = PI3HDX1204_EQ_DB710,
@@ -336,11 +243,11 @@ const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
 	.de_offset = PI3HDX1204_DE_DB_MINUS5,
 };
 
-static void pi3hdx1204_retimer_power(void)
+void pi3hdx1204_retimer_power(void)
 {
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
 		int enable = chipset_in_or_transitioning_to_state(
-			CHIPSET_STATE_ON);
+			CHIPSET_STATE_ON) && check_hdmi_hpd_status();
 		pi3hdx1204_enable(I2C_PORT_TCPC1,
 				  PI3HDX1204_I2C_ADDR_FLAGS,
 				  enable);
@@ -348,3 +255,10 @@ static void pi3hdx1204_retimer_power(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pi3hdx1204_retimer_power, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pi3hdx1204_retimer_power, HOOK_PRIO_DEFAULT);
+
+void sbu_fault_interrupt(enum ioex_signal signal)
+{
+	int port = (signal == IOEX_USB_C0_SBU_FAULT_ODL) ? 0 : 1;
+
+	pd_handle_overcurrent(port);
+}

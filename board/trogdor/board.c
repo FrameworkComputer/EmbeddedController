@@ -250,13 +250,16 @@ static void board_init(void)
 	 * the CCD_MODE_ODL interrupt to make sure the SBU FETs are connected.
 	 */
 	gpio_enable_interrupt(GPIO_CCD_MODE_ODL);
+
+	/* Set the backlight duty cycle to 0. AP will override it later. */
+	pwm_set_duty(PWM_CH_DISPLIGHT, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 void board_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image()) {
+	if (!system_jumped_late()) {
 		/* TODO(crosbug.com/p/61098): How long do we need to wait? */
 		board_reset_pd_mcu();
 	}
@@ -286,9 +289,6 @@ static void board_chipset_suspend(void)
 	 */
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
 	pwm_enable(PWM_CH_DISPLIGHT, 0);
-
-	/* Disable the keyboard backlight */
-	pwm_enable(PWM_CH_KBLIGHT, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
@@ -297,8 +297,8 @@ static void board_chipset_resume(void)
 {
 	/* Turn on display and keyboard backlight in S0. */
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
-	pwm_enable(PWM_CH_DISPLIGHT, 1);
-	pwm_enable(PWM_CH_KBLIGHT, 1);
+	if (pwm_get_duty(PWM_CH_DISPLIGHT))
+		pwm_enable(PWM_CH_DISPLIGHT, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
@@ -453,7 +453,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_LID,
+	 .location = MOTIONSENSE_LOC_BASE,
 	 .drv = &bmi160_drv,
 	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
@@ -474,7 +474,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_GYRO,
-	 .location = MOTIONSENSE_LOC_LID,
+	 .location = MOTIONSENSE_LOC_BASE,
 	 .drv = &bmi160_drv,
 	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,

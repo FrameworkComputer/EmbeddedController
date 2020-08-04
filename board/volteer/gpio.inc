@@ -14,11 +14,6 @@ GPIO_INT(EC_WP_L,              PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
 GPIO_INT(H1_EC_PWR_BTN_ODL,    PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)
 GPIO_INT(ACOK_OD,              PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
 
-/* Optional power sequencing interrupts */
-#ifdef VOLTEER_POWER_SEQUENCE
-GPIO_INT(CPU_C10_GATE_L,       PIN(6, 7), GPIO_INT_BOTH, c10_gate_change)
-#endif
-
 /* Power sequencing interrupts */
 GPIO_INT(SLP_S0_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
 #ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
@@ -26,13 +21,18 @@ GPIO_INT(SLP_S3_L,             PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
 #endif
 GPIO_INT(SLP_SUS_L,            PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_EC_RSMRST_ODL,     PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(DSW_PWROK,            PIN(C, 7), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4),  GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PG_EC_DSW_PWROK,      PIN(C, 7), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
 
 /* Sensor Interrupts */
 GPIO_INT(EC_IMU_INT_L,         PIN(5, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi260_interrupt)
 GPIO_INT(EC_ALS_RGB_INT_L,     PIN(D, 4), GPIO_INT_FALLING, tcs3400_interrupt)
 GPIO_INT(TABLET_MODE_L,        PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
+/*
+ * Lid g-sensor interrupt unused on Volteer, configure as regular input for
+ * power saving.
+ */
+GPIO(EC_ACCEL_INT,		PIN(8, 1), GPIO_INPUT | GPIO_PULL_UP)
 
 /* USB-C interrupts */
 GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(E, 0), GPIO_INT_BOTH, tcpc_alert_event)
@@ -54,19 +54,7 @@ GPIO_INT(EC_VOLUP_BTN_ODL,		PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_inte
 GPIO(EN_PP3300_A,              PIN(A, 3), GPIO_OUT_LOW)
 GPIO(EN_PP5000_A,              PIN(A, 4), GPIO_OUT_LOW)
 GPIO(EN_PPVAR_VCCIN,           PIN(4, 3), GPIO_OUT_LOW) /* Enables VCCIN IMPV9 */
-/* The EC does not buffer this signal on Volteer. */
-UNIMPLEMENTED(PCH_DSW_PWROK)
-
-#ifdef VOLTEER_POWER_SEQUENCE
-/* Optional power sequencing signals that are not stuffed by default */
-GPIO(EN_DRAM_VDDQ,		PIN(F, 2), GPIO_OUT_LOW)
-GPIO(EN_PP1050_STG,		PIN(C, 0), GPIO_OUT_LOW)
-GPIO(EN_PP5000_USB_AG,		PIN(A, 7), GPIO_OUT_LOW)
-GPIO(EN_PPVAR_VCCIN_AUX,	PIN(8, 1), GPIO_OUT_LOW)
-GPIO(EN_PP1050_ST_S0,		PIN(3, 4), GPIO_OUT_LOW)
-GPIO(EN_VNN_BYPASS,		PIN(B, 0), GPIO_OUT_LOW)
-GPIO(EN_DRAM_VDD1,		PIN(9, 6), GPIO_OUT_LOW)
-#endif
+GPIO(EC_PCH_DSW_PWROK,         PIN(C, 0), GPIO_OUT_LOW)
 
 /* Other wake sources */
 /*
@@ -94,6 +82,8 @@ GPIO(SYS_RST_ODL,              PIN(C, 5), GPIO_ODR_HIGH)
 GPIO(EC_PCH_INT_ODL,           PIN(B, 0), GPIO_ODR_HIGH)
 
 /* USB and USBC Signals */
+GPIO(EN_PP5000_USBA,		PIN(C, 6), GPIO_OUT_LOW)	/* Enable USB-A charging - all ports */
+GPIO(USB_A_LOW_PWR_OD,		PIN(6, 6), GPIO_ODR_LOW)	/* Don't limit USB-A charging by default - all ports */
 
 /*
  * USB_C1 moved from GPIO32 to GPIO83 on boards with board ID >=1.
@@ -105,6 +95,8 @@ GPIO(USB_C1_RT_RST_ODL_BOARDID_0,	PIN(3, 2), GPIO_ODR_LOW) /* USB_C1 Reset on bo
 GPIO(USB_C1_RT_RST_ODL,			PIN(8, 3), GPIO_ODR_LOW) /* USB_C1 Reset on boards board ID >=1 */
 GPIO(USB_C0_OC_ODL,			PIN(B, 1), GPIO_ODR_HIGH)
 GPIO(USB_C1_OC_ODL,			PIN(5, 0), GPIO_ODR_HIGH)
+/* There is currently no need to service this interrupt. */
+GPIO(USB_C1_RT_INT_ODL,			PIN(F, 3), GPIO_INPUT)
 
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C1_LS_EN)
@@ -112,8 +104,21 @@ UNIMPLEMENTED(USB_C1_LS_EN)
 UNIMPLEMENTED(USB_C1_RT_FORCE_PWR)
 
 /* Misc Signals */
-GPIO(UART2_EC_RX,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
+GPIO(EC_H1_PACKET_MODE,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
+/*
+ * TODO(b/138954381): Determine the polarity of these SSD signals and whether
+ * they are open-drain.
+ */
+GPIO(M2_SSD_PLN,		PIN(A, 0), GPIO_OUT_HIGH)	/* SSD power-loss notification */
+GPIO(M2_SSD_PLA,		PIN(7, 0), GPIO_INPUT)		/* SSD power-loss acknoledgement */
+GPIO(CCD_MODE_ODL,		PIN(E, 5), GPIO_INPUT)		/* Case Closed Debug Mode */
+GPIO(EC_SLP_S0IX,		PIN(7, 2), GPIO_INPUT | GPIO_PULL_UP)
 
+/* Unused signals */
+GPIO(UNUSED_GPIO41,		PIN(4, 1), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIOF2,		PIN(F, 2), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIO96,		PIN(9, 6), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIO34,		PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
 
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
@@ -131,17 +136,13 @@ GPIO(EC_I2C2_USB_C1_SCL,       PIN(9, 2), GPIO_INPUT)
 GPIO(EC_I2C2_USB_C1_SDA,       PIN(9, 1), GPIO_INPUT)
 GPIO(EC_I2C3_USB_1_MIX_SCL,    PIN(D, 1), GPIO_INPUT)
 GPIO(EC_I2C3_USB_1_MIX_SDA,    PIN(D, 0), GPIO_INPUT)
-GPIO(EC_I2C5_POWER_SCL,        PIN(3, 3), GPIO_INPUT)
-GPIO(EC_I2C5_POWER_SDA,        PIN(3, 6), GPIO_INPUT)
-GPIO(EC_I2C7_EEPROM_SCL,       PIN(B, 3), GPIO_INPUT)
-GPIO(EC_I2C7_EEPROM_SDA,       PIN(B, 2), GPIO_INPUT)
+GPIO(EC_I2C5_BATTERY_SCL,      PIN(3, 3), GPIO_INPUT)
+GPIO(EC_I2C5_BATTERY_SDA,      PIN(3, 6), GPIO_INPUT)
+GPIO(EC_I2C7_EEPROM_PWR_SCL_R, PIN(B, 3), GPIO_INPUT)
+GPIO(EC_I2C7_EEPROM_PWR_SDA_R, PIN(B, 2), GPIO_INPUT)
 
 /* Battery signals */
 GPIO(EC_BATT_PRES_ODL, 		PIN(E, 1), GPIO_INPUT)
-
-/* Physical HPD pins are not needed on EC as these are configured by PMC */
-GPIO(USB_C0_DP_HPD,		PIN(F, 3), GPIO_INPUT)
-GPIO(USB_C1_DP_HPD,		PIN(7, 0), GPIO_INPUT)
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(B, BIT(5) | BIT(4)), 0, MODULE_I2C, (GPIO_INPUT | GPIO_SEL_1P8V)) /* I2C0 */

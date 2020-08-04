@@ -214,15 +214,19 @@ void board_hibernate_late(void) {
 /* This callback disables keyboard when convertibles are fully open */
 void lid_angle_peripheral_enable(int enable)
 {
-	/*
-	 * If the lid is in tablet position via other sensors,
-	 * ignore the lid angle, which might be faulty then
-	 * disable keyboard.
-	 */
-	if (tablet_get_mode())
-		enable = 0;
+	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
 
-	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+	if (enable) {
+		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
+	} else {
+		/*
+		 * Ensure that the chipset is off before disabling the keyboard.
+		 * When the chipset is on, the EC keeps the keyboard enabled and
+		 * the AP decides whether to ignore input devices or not.
+		 */
+		if (!chipset_in_s0)
+			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
+	}
 }
 
 
@@ -247,7 +251,7 @@ DECLARE_HOOK(HOOK_INIT, post_old_board_warning, HOOK_PRIO_INIT_I2C + 1);
 
 void board_overcurrent_event(int port, int is_overcurrented)
 {
-	/* Sanity check the port. */
+	/* Check that port number is valid. */
 	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_MAX_COUNT))
 		return;
 

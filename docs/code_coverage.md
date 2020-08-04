@@ -21,26 +21,7 @@ This target will compile and link the unit tests with `--coverage` flag (which
 pulls in the `gcov` libraries), run the tests, and then process the profiling
 data into a code coverage report using the `lcov` and `genhtml` tools.
 
-The coverage report top-level page is `build/host/coverage_rpt/index.html`.
-
-### `make clobber` is required
-
-**Always** `make clobber` when switching from building with code coverage
-to building without code coverage, or from building without code coverage
-to building with code coverage. `make clean` is not sufficient.
-
-`make buildall -j ; make clobber ; make coverage -j`
-
-`make coverage -j ; make clobber ; make buildall -j`
-
-If you do not `make clobber`, you will get link-time errors such as:
-
-```
-core/host/task.c:558: undefined reference to `__gcov_init'
-build/host/online_calibration/RO/core/host/timer.o:(.data+0x5b0): undefined reference to `__gcov_merge_add'
-```
-
-Note that `make clobber` will delete the coverage report.
+The coverage report top-level page is `build/coverage/coverage_rpt/index.html`.
 
 ### Noise in the build output
 

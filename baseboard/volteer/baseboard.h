@@ -35,6 +35,7 @@
 #define CONFIG_VSTORE_SLOT_COUNT 1
 #define CONFIG_VOLUME_BUTTONS
 #define CONFIG_LOW_POWER_IDLE
+#define CONFIG_BOARD_RESET_AFTER_POWER_ON
 
 /* Host communication */
 #define CONFIG_HOSTCMD_ESPI
@@ -52,7 +53,7 @@
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_S0IX
-#define CONFIG_POWER_S0IX_FAILURE_DETECTION
+#define CONFIG_POWER_SLEEP_FAILURE_DETECTION
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 #define CONFIG_BOARD_HAS_RTC_RESET
 
@@ -133,22 +134,23 @@
 
 /* USB Type C and USB PD defines */
 /* Enable the new USB-C PD stack */
-/* TODO: b/145756626 - re-enable once all blocking issues resolved */
-#if 0
+#define CONFIG_USB_PD_DEBUG_LEVEL 1
 #define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_DRP_ACC_TRYSRC
-#else
-/*
- * PD 3.0 is always enabled by the TCPMv2 stack, so it's only explicitly
- * enabled when using the TCPMv1 stack
- */
 #define CONFIG_USB_PD_REV30
-#endif
 
-#define CONFIG_CMD_TCPC_DUMP
+/*
+ * TODO(b/158572770): TCPMv2: Conserve flash space
+ * Add these console commands as flash space permits.
+ */
+#undef CONFIG_CMD_HCDEBUG
+#undef CONFIG_CMD_ACCELS
+#undef CONFIG_CMD_ACCEL_INFO
+#undef CONFIG_CMD_ACCELSPOOF
+#undef CONFIG_CMD_BATTFAKE
+#undef CONFIG_CMD_PPC_DUMP
 
 #define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_USB_PD_TCPMV1
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_DISCHARGE_PPC
@@ -161,6 +163,7 @@
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_PD_TCPM_TUSB422	/* USBC port C0 */
 #define CONFIG_USB_PD_TCPM_PS8815	/* USBC port USB3 DB */
+#define CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_HOSTCMD_PD_CONTROL		/* Needed for TCPC FW update */
 #define CONFIG_CMD_USB_PD_PE
@@ -175,15 +178,12 @@
 #define CONFIG_USB_MUX_RUNTIME_CONFIG
 
 #define CONFIG_USBC_PPC
-#define CONFIG_CMD_PPC_DUMP
 /* Note - SN5S330 support automatically adds
  * CONFIG_USBC_PPC_POLARITY
  * CONFIG_USBC_PPC_SBU
  * CONFIG_USBC_PPC_VCONN
  */
 #define CONFIG_USBC_PPC_DEDICATED_INT
-#define CONFIG_USBC_PPC_SN5S330		/* USBC port C0 */
-#define CONFIG_USBC_PPC_SYV682X		/* USBC port C1 */
 
 #define CONFIG_INTEL_VIRTUAL_MUX
 #define CONFIG_USBC_SS_MUX
@@ -265,59 +265,20 @@ enum usbc_port {
 	USBC_PORT_COUNT
 };
 
-/*
- * Daughterboard type is encoded in the lower 4 bits
- * of the FW_CONFIG CBI tag.
- */
-
-enum usb_db_id {
-	USB_DB_NONE = 0,
-	USB_DB_USB4_GEN2 = 1,
-	USB_DB_USB3 = 2,
-	USB_DB_USB4_GEN3 = 3,
-	USB_DB_COUNT
-};
-
-#define CBI_FW_CONFIG_USB_DB_MASK	0x0f
-#define CBI_FW_CONFIG_USB_DB_SHIFT	0
-#define CBI_FW_CONFIG_USB_DB_TYPE(bits) \
-	(((bits) & CBI_FW_CONFIG_USB_DB_MASK) >> CBI_FW_CONFIG_USB_DB_SHIFT)
-
-/*
- * Tablet Mode (1 bit)
- *
- * ec_config_has_tablet_mode() will return 1 is present or 0
- */
-enum ec_cfg_tablet_mode_type {
-	TABLET_MODE_NO = 0,
-	TABLET_MODE_YES = 1,
-};
-#define EC_CFG_TABLET_MODE_L		11
-#define EC_CFG_TABLET_MODE_H		11
-#define EC_CFG_TABLET_MODE_MASK \
-				GENMASK(EC_CFG_TABLET_MODE_H,\
-					EC_CFG_TABLET_MODE_L)
-
-extern enum gpio_signal ps8xxx_rst_odl;
-
-void board_reset_pd_mcu(void);
-
 /* Common definition for the USB PD interrupt handlers. */
 void ppc_interrupt(enum gpio_signal signal);
 void tcpc_alert_event(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
 
 unsigned char get_board_id(void);
-enum usb_db_id get_usb_db_type(void);
 
 /**
- * Configure GPIOs based on the CBI board version.  Boards in the Volteer
- * family can optionally implement this function to change GPIO definitions for
- * different board build phases.
+ * Configure run-time data structures and operation based on CBI data. This
+ * typically includes customization for changes in the BOARD_VERSION and
+ * FW_CONFIG fields in CBI. This routine is called from the baseboard after
+ * the CBI data has been initialized.
  */
-__override_proto void config_volteer_gpios(void);
-
-enum ec_cfg_tablet_mode_type ec_config_has_tablet_mode(void);
+__override_proto void board_cbi_init(void);
 
 #endif /* !__ASSEMBLER__ */
 

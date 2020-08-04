@@ -18,22 +18,6 @@
 
 #define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
-/* ADC channels */
-const struct adc_t adc_channels[] = {
-	[ADC_VSNS_PP3300_A] = {
-		"PP3300_A_PGOOD", CHIP_ADC_CH0, ADC_MAX_MVOLT, ADC_READ_MAX+1,
-		0},
-	[ADC_TEMP_SENSOR_1] = {
-		"TEMP_SENSOR1", CHIP_ADC_CH2, ADC_MAX_MVOLT, ADC_READ_MAX+1, 0},
-
-	[ADC_TEMP_SENSOR_2] = {
-		"TEMP_SENSOR2", CHIP_ADC_CH3, ADC_MAX_MVOLT, ADC_READ_MAX+1, 0},
-
-	[ADC_SUB_ANALOG] = {
-		"SUB_ANALOG", CHIP_ADC_CH13, ADC_MAX_MVOLT, ADC_READ_MAX+1, 0},
-};
-BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
-
 static void pp3300_a_pgood_low(void)
 {
 	atomic_clear(&pp3300_a_pgood, 1);
@@ -106,10 +90,12 @@ const struct i2c_port_t i2c_ports[] = {
 		GPIO_EC_I2C_SENSOR_SDA
 	},
 
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	{
 		"sub_usbc1", I2C_PORT_SUB_USB_C1, 1000,
 		GPIO_EC_I2C_SUB_USB_C1_SCL, GPIO_EC_I2C_SUB_USB_C1_SDA
 	},
+#endif
 
 	{
 		"usbc0", I2C_PORT_USB_C0, 1000, GPIO_EC_I2C_USB_C0_SCL,

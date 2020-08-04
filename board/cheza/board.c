@@ -285,8 +285,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
-
 /*
  * Port-0 USB mux driver.
  *
@@ -409,7 +407,7 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 void board_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image()) {
+	if (!system_jumped_late()) {
 		/* TODO(crosbug.com/p/61098): How long do we need to wait? */
 		board_reset_pd_mcu();
 	}

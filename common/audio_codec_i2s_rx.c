@@ -84,12 +84,23 @@ static enum ec_status i2s_rx_set_bclk(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
+static enum ec_status i2s_rx_reset(struct host_cmd_handler_args *args)
+{
+	if (audio_codec_i2s_rx_disable() != EC_SUCCESS)
+		return EC_RES_ERROR;
+
+	i2s_rx_enabled = 0;
+
+	return EC_RES_SUCCESS;
+}
+
 static enum ec_status (*sub_cmds[])(struct host_cmd_handler_args *) = {
 	[EC_CODEC_I2S_RX_ENABLE] = i2s_rx_enable,
 	[EC_CODEC_I2S_RX_DISABLE] = i2s_rx_disable,
 	[EC_CODEC_I2S_RX_SET_SAMPLE_DEPTH] = i2s_rx_set_sample_depth,
 	[EC_CODEC_I2S_RX_SET_DAIFMT] = i2s_rx_set_daifmt,
 	[EC_CODEC_I2S_RX_SET_BCLK] = i2s_rx_set_bclk,
+	[EC_CODEC_I2S_RX_RESET] = i2s_rx_reset,
 };
 
 #ifdef DEBUG_AUDIO_CODEC
@@ -99,6 +110,7 @@ static char *strcmd[] = {
 	[EC_CODEC_I2S_RX_SET_SAMPLE_DEPTH] = "EC_CODEC_I2S_RX_SET_SAMPLE_DEPTH",
 	[EC_CODEC_I2S_RX_SET_DAIFMT] = "EC_CODEC_I2S_RX_SET_DAIFMT",
 	[EC_CODEC_I2S_RX_SET_BCLK] = "EC_CODEC_I2S_RX_SET_BCLK",
+	[EC_CODEC_I2S_RX_RESET] = "EC_CODEC_I2S_RESET",
 };
 BUILD_ASSERT(ARRAY_SIZE(sub_cmds) == ARRAY_SIZE(strcmd));
 #endif

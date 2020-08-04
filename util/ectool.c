@@ -83,7 +83,7 @@ const char help_str[] =
 	"  button [vup|vdown|rec] <Delay-ms>\n"
 	"      Simulates button press.\n"
 	"  cbi\n"
-	"      Get/Set Cros Board Info\n"
+	"      Get/Set/Remove Cros Board Info\n"
 	"  chargecurrentlimit\n"
 	"      Set the maximum battery charging current\n"
 	"  chargecontrol\n"
@@ -281,6 +281,8 @@ const char help_str[] =
 	"      Run RW signature verification and get status.\n"
 	"  sertest\n"
 	"      Serial output test for COM2\n"
+	"  smartdischarge\n"
+	"      Set/Get smart discharge parameters\n"
 	"  stress [reboot] [help]\n"
 	"      Stress test the ec host command interface.\n"
 	"  sysinfo [flags|reset_flags|firmware_copy]\n"
@@ -2588,6 +2590,77 @@ int cmd_port_80_flood(int argc, char *argv[])
 }
 #endif
 
+static void cmd_smart_discharge_usage(const char *command)
+{
+	printf("Usage: %s [hours_to_zero [hibern] [cutoff]]\n", command);
+	printf("\n");
+	printf("Set/Get smart discharge parameters\n");
+	printf("hours_to_zero: Desired hours for state of charge to zero\n");
+	printf("hibern: Discharge rate in hibernation (uA)\n");
+	printf("cutoff: Discharge rate in battery cutoff (uA)\n");
+}
+
+int cmd_smart_discharge(int argc, char *argv[])
+{
+	struct ec_params_smart_discharge *p = ec_outbuf;
+	struct ec_response_smart_discharge *r = ec_inbuf;
+	uint32_t cap;
+	char *e;
+	int rv;
+
+	if (argc > 1) {
+		if (strcmp(argv[1], "help") == 0) {
+			cmd_smart_discharge_usage(argv[0]);
+			return 0;
+		}
+		p->flags = EC_SMART_DISCHARGE_FLAGS_SET;
+		p->hours_to_zero = strtol(argv[1], &e, 0);
+		if (p->hours_to_zero < 0 || (e && *e)) {
+			perror("Bad value for [hours_to_zero]");
+			return -1;
+		}
+		if (argc == 4) {
+			p->drate.hibern = strtol(argv[2], &e, 0);
+			if (p->drate.hibern < 0 || (e && *e)) {
+				perror("Bad value for [hibern]");
+				return -1;
+			}
+			p->drate.cutoff = strtol(argv[3], &e, 0);
+			if (p->drate.cutoff < 0 || (e && *e)) {
+				perror("Bad value for [cutoff]");
+				return -1;
+			}
+		} else if (argc != 2) {
+			/* If argc != 4, it has to be 2. */
+			perror("Invalid number of parameters");
+			return -1;
+		}
+	}
+
+	rv = ec_command(EC_CMD_SMART_DISCHARGE, 0, p, sizeof(*p),
+			r, ec_max_insize);
+	if (rv < 0) {
+		perror("ERROR: EC_CMD_SMART_DISCHARGE failed");
+		return rv;
+	}
+
+	cap = read_mapped_mem32(EC_MEMMAP_BATT_LFCC);
+	if (!is_battery_range(cap)) {
+		perror("WARN: Failed to read battery capacity");
+		cap = 0;
+	}
+
+	printf("%-27s %5d h\n", "Hours to zero capacity:", r->hours_to_zero);
+	printf("%-27s %5d mAh (%d %%)\n", "Stay-up threshold:",
+	       r->dzone.stayup, cap > 0 ? r->dzone.stayup * 100 / cap : -1);
+	printf("%-27s %5d mAh (%d %%)\n", "Cutoff threshold:",
+	       r->dzone.cutoff, cap > 0 ? r->dzone.cutoff * 100 / cap : -1);
+	printf("%-27s %5d uA\n", "Hibernate discharge rate:", r->drate.hibern);
+	printf("%-27s %5d uA\n", "Cutoff discharge rate:", r->drate.cutoff);
+
+	return 0;
+}
+
 /*
  * This boolean variable and handler are used for
  * catching signals that translate into a quit/shutdown
@@ -4798,31 +4871,25 @@ BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 static int ms_help(const char *cmd)
 {
 	printf("Usage:\n");
-	printf("  %s                            - dump all motion data\n", cmd);
-	printf("  %s active                     - print active flag\n", cmd);
-	printf("  %s info NUM                   - print sensor info\n", cmd);
-	printf("  %s ec_rate [RATE_MS]          - set/get sample rate\n", cmd);
-	printf("  %s odr NUM [ODR [ROUNDUP]]    - set/get sensor ODR\n", cmd);
-	printf("  %s range NUM [RANGE [ROUNDUP]]- set/get sensor range\n", cmd);
-	printf("  %s offset NUM                 - get sensor offset\n", cmd);
-	printf("  %s kb_wake NUM                - set/get KB wake ang\n", cmd);
-	printf("  %s data NUM                   - read sensor latest data\n",
-			cmd);
-	printf("  %s fifo_info                  - print fifo info\n", cmd);
-	printf("  %s fifo_int_enable [0/1]      - enable/disable/get fifo "
-	       "interrupt status\n", cmd);
-	printf("  %s fifo_read MAX_DATA         - read fifo data\n", cmd);
-	printf("  %s fifo_flush NUM             - trigger fifo interrupt\n",
-			cmd);
-	printf("  %s list_activities NUM        - list supported activities\n",
-			cmd);
-	printf("  %s set_activity NUM ACT EN    - enable/disable activity\n",
-			cmd);
-	printf("  %s lid_angle                  - print lid angle\n", cmd);
-	printf("  %s spoof -- NUM [0/1] [X Y Z] - enable/disable spoofing\n",
-	       cmd);
-	printf("  %s tablet_mode_angle ANG HYS  - set/get tablet mode angle\n",
-	       cmd);
+	printf("  %s                              - dump all motion data\n", cmd);
+	printf("  %s active                       - print active flag\n", cmd);
+	printf("  %s info NUM                     - print sensor info\n", cmd);
+	printf("  %s ec_rate [RATE_MS]            - set/get sample rate\n", cmd);
+	printf("  %s odr NUM [ODR [ROUNDUP]]      - set/get sensor ODR\n", cmd);
+	printf("  %s range NUM [RANGE [ROUNDUP]]  - set/get sensor range\n", cmd);
+	printf("  %s offset NUM [-- X Y Z [TEMP]] - set/get sensor offset\n", cmd);
+	printf("  %s kb_wake NUM                  - set/get KB wake ang\n", cmd);
+	printf("  %s fifo_info                    - print fifo info\n", cmd);
+	printf("  %s fifo_int_enable [0/1]        - enable/disable/get fifo interrupt "
+		"status\n", cmd);
+	printf("  %s fifo_read MAX_DATA           - read fifo data\n", cmd);
+	printf("  %s fifo_flush NUM               - trigger fifo interrupt\n", cmd);
+	printf("  %s list_activities NUM          - list supported activities\n", cmd);
+	printf("  %s set_activity NUM ACT EN      - enable/disable activity\n", cmd);
+	printf("  %s lid_angle                    - print lid angle\n", cmd);
+	printf("  %s spoof -- NUM [0/1] [X Y Z]   - enable/disable spoofing\n", cmd);
+	printf("  %s tablet_mode_angle ANG HYS    - set/get tablet mode angle\n", cmd);
+	printf("  %s calibrate NUM                - run sensor calibration\n", cmd);
 
 	return 0;
 }
@@ -5350,14 +5417,71 @@ static int cmd_motionsense(int argc, char **argv)
 		return rv < 0 ? rv : 0;
 	}
 
-	if (argc == 3 && !strcasecmp(argv[1], "offset")) {
+	if (argc == 3 && !strcasecmp(argv[1], "calibrate")) {
+		param.cmd = MOTIONSENSE_CMD_PERFORM_CALIB;
+		param.perform_calib.enable = 1;
+		param.perform_calib.sensor_num = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad %s arg.\n", argv[2]);
+			return -1;
+		}
+
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
+
+		if (rv < 0)
+			return rv;
+
+		printf("--- Calibrated well ---\n");
+		printf("New offset vector: X:%d, Y:%d, Z:%d\n",
+			resp->perform_calib.offset[0],
+			resp->perform_calib.offset[1],
+			resp->perform_calib.offset[2]);
+		if ((uint16_t)resp->perform_calib.temp ==
+		    EC_MOTION_SENSE_INVALID_CALIB_TEMP)
+			printf("Temperature at calibration unknown\n");
+		else
+			printf("Temperature at calibration: %d.%02d C\n",
+			       resp->perform_calib.temp / 100,
+			       resp->perform_calib.temp % 100);
+		return 0;
+	}
+
+	if (argc >= 3 && !strcasecmp(argv[1], "offset")) {
 		param.cmd = MOTIONSENSE_CMD_SENSOR_OFFSET;
 		param.sensor_offset.flags = 0;
+		param.sensor_offset.temp = EC_MOTION_SENSE_INVALID_CALIB_TEMP;
 
 		param.sensor_offset.sensor_num = strtol(argv[2], &e, 0);
 		if (e && *e) {
 			fprintf(stderr, "Bad %s arg.\n", argv[2]);
 			return -1;
+		}
+
+		if (argc >= 4) {
+			/* Regarded as a command to set offset */
+			if (argc >= 6 && argc < 8) {
+				/* Set offset : X, Y, Z */
+				param.sensor_offset.flags = MOTION_SENSE_SET_OFFSET;
+				for (i = 0; i < 3; i++) {
+					param.sensor_offset.offset[i] = strtol(argv[3+i], &e, 0);
+					if (e && *e) {
+						fprintf(stderr, "Bad %s arg.\n", argv[3+i]);
+						return -1;
+					}
+				}
+				if (argc == 7) {
+					/* Set offset : Temperature */
+					param.sensor_offset.temp = strtol(argv[6], &e, 0);
+					if (e && *e) {
+						fprintf(stderr, "Bad %s arg.\n", argv[6]);
+						return -1;
+					}
+				}
+			} else {
+				return ms_help(argv[0]);
+			}
 		}
 
 		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 1,
@@ -7715,6 +7839,7 @@ static void cmd_cbi_help(char *cmd)
 	fprintf(stderr,
 	"  Usage: %s get <tag> [get_flag]\n"
 	"  Usage: %s set <tag> <value/string> <size> [set_flag]\n"
+	"  Usage: %s remove <tag> [set_flag]\n"
 	"    <tag> is one of:\n"
 	"      0: BOARD_VERSION\n"
 	"      1: OEM_ID\n"
@@ -7731,7 +7856,7 @@ static void cmd_cbi_help(char *cmd)
 	"      01b: Invalidate cache and reload data from EEPROM\n"
 	"    [set_flag] is combination of:\n"
 	"      01b: Skip write to EEPROM. Use for back-to-back writes\n"
-	"      10b: Set all fields to defaults first\n", cmd, cmd);
+	"      10b: Set all fields to defaults first\n", cmd, cmd, cmd);
 }
 
 static int cmd_cbi_is_string_field(enum cbi_data_tag tag)
@@ -7857,6 +7982,30 @@ static int cmd_cbi(int argc, char *argv[])
 		}
 		rv = ec_command(EC_CMD_SET_CROS_BOARD_INFO, 0,
 				p, sizeof(*p) + size, NULL, 0);
+		if (rv < 0) {
+			if (rv == -EC_RES_ACCESS_DENIED - EECRESULT)
+				fprintf(stderr, "Write-protect is enabled or "
+					"EC explicitly refused to change the "
+					"requested field.\n");
+			else
+				fprintf(stderr, "Error code: %d\n", rv);
+			return rv;
+		}
+		return 0;
+	} else if (!strcasecmp(argv[1], "remove")) {
+		struct ec_params_set_cbi p = { 0 };
+
+		p.tag = tag;
+		p.size = 0;
+		if (argc > 3) {
+			p.flag = strtol(argv[3], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Bad flag\n");
+				return -1;
+			}
+		}
+		rv = ec_command(EC_CMD_SET_CROS_BOARD_INFO, 0,
+				&p, sizeof(p), NULL, 0);
 		if (rv < 0) {
 			if (rv == -EC_RES_ACCESS_DENIED - EECRESULT)
 				fprintf(stderr, "Write-protect is enabled or "
@@ -9589,6 +9738,7 @@ const struct command commands[] = {
 	{"rwsigaction", cmd_rwsig_action_legacy},
 	{"rwsigstatus", cmd_rwsig_status},
 	{"sertest", cmd_serial_test},
+	{"smartdischarge", cmd_smart_discharge},
 	{"stress", cmd_stress_test},
 	{"sysinfo", cmd_sysinfo},
 	{"port80flood", cmd_port_80_flood},

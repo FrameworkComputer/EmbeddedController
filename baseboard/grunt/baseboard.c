@@ -136,7 +136,7 @@ void tcpc_alert_event(enum gpio_signal signal)
 void board_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image())
+	if (!system_jumped_late())
 		board_reset_pd_mcu();
 
 	/* Enable PPC interrupts. */
@@ -369,8 +369,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &isl923x_drv,
 	},
 };
-
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 
 const int usb_port_enable[USB_PORT_COUNT] = {

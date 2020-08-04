@@ -265,12 +265,7 @@ static void clock_enable_osc(enum clock_osc osc, bool enabled)
 	}
 
 	/* Turn on the oscillator if not already on */
-	if (!(STM32_RCC_CR & ready)) {
-		STM32_RCC_CR |= on;
-		/* Wait until ready */
-		while (!(STM32_RCC_CR & ready))
-			;
-	}
+	wait_for_ready(&STM32_RCC_CR, on, ready);
 }
 
 static void clock_switch_osc(enum clock_osc osc)

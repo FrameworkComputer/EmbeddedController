@@ -7,13 +7,12 @@
 #include "adc_chip.h"
 #include "bb_retimer.h"
 #include "button.h"
+#include "cbi_ec_fw_config.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "cros_board_info.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl9241.h"
-#include "driver/ppc/sn5s330.h"
-#include "driver/ppc/syv682x.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tusb422.h"
@@ -123,8 +122,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
-
 /******************************************************************************/
 /*
  * PWROK signal configuration, see the PWROK Generation Flow Diagram (Figure
@@ -193,9 +190,6 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /* EC thermal management configuration */
 
 /*
- * TODO: b/144941023 - revisit thermal limits with each board spin.
- */
-/*
  * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
  * 130 C.  However, sensor is located next to DDR, so we need to use the lower
  * DDR temperature limit (85 C)
@@ -220,7 +214,8 @@ const static struct ec_thermal_config thermal_cpu = {
  * Charger max recommended temperature 100C, max absolute temperature 125C
  * PP3300 regulator: operating range -40 C to 145 C
  *
- * Inductors: waiting on info from hardware team, assuming 80 C for now
+ * Inductors: limit of 125c
+ * PCB: limit is 80c
  */
 const static struct ec_thermal_config thermal_inductor = {
 	.temp_host = {
@@ -268,56 +263,6 @@ struct tcpc_config_t tcpc_config[] = {
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 
-/* USBC TCPC configuration for port 1 on USB3 board */
-static const struct tcpc_config_t tcpc_config_p1_usb3 = {
-	.bus_type = EC_BUS_TYPE_I2C,
-	.i2c_info = {
-		.port = I2C_PORT_USB_C1,
-		.addr_flags = PS8751_I2C_ADDR1_FLAGS,
-	},
-	.flags = TCPC_FLAGS_TCPCI_REV2_0,
-	.drv = &ps8xxx_tcpm_drv,
-	.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
-};
-
-/*
- * USB3 DB mux configuration - the top level mux still needs to be set to the
- * virutal_usb_mux_driver so the AP gets notified of mux changes and updates
- * the TCSS configuration on state changes.
- */
-static const struct usb_mux usbc1_usb3_db_retimer = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &tcpci_tcpm_usb_mux_driver,
-	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-	.next_mux = NULL,
-};
-
-static const struct usb_mux mux_config_p1_usb3 = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-	.next_mux = &usbc1_usb3_db_retimer,
-};
-
-static enum usb_db_id usb_db_type = USB_DB_NONE;
-
-/******************************************************************************/
-/* USBC PPC configuration */
-struct ppc_config_t ppc_chips[] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv,
-	},
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_USB_C1,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
-
 /******************************************************************************/
 /* USBC mux configuration - Tiger Lake includes internal mux */
 struct usb_mux usbc1_usb4_db_retimer = {
@@ -356,8 +301,8 @@ BUILD_ASSERT(ARRAY_SIZE(bb_controls) == USBC_PORT_COUNT);
 
 static void baseboard_tcpc_init(void)
 {
-	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image())
+	/* Don't reset TCPCs after initial reset */
+	if (!system_jumped_late())
 		board_reset_pd_mcu();
 
 	/* Enable PPC interrupts. */
@@ -375,64 +320,7 @@ static void baseboard_tcpc_init(void)
 DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
 
 /******************************************************************************/
-/* PPC support routines */
-void ppc_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_PPC_INT_ODL:
-		sn5s330_interrupt(USBC_PORT_C0);
-		break;
-	case GPIO_USB_C1_PPC_INT_ODL:
-		syv682x_interrupt(USBC_PORT_C1);
-	default:
-		break;
-	}
-}
-
-/******************************************************************************/
 /* TCPC support routines */
-enum gpio_signal ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL;
-
-static void ps8815_reset(void)
-{
-	int val;
-
-	gpio_set_level(ps8xxx_rst_odl, 0);
-	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
-			   PS8815_PWR_H_RST_H_DELAY_MS));
-	gpio_set_level(ps8xxx_rst_odl, 1);
-	msleep(PS8815_FW_INIT_DELAY_MS);
-
-	/*
-	 * b/144397088
-	 * ps8815 firmware 0x01 needs special configuration
-	 */
-
-	CPRINTS("%s: patching ps8815 registers", __func__);
-
-	if (i2c_read8(I2C_PORT_USB_C1,
-		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
-		CPRINTS("ps8815: reg 0x0f was %02x", val);
-
-	if (i2c_write8(I2C_PORT_USB_C1,
-		       PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
-		CPRINTS("ps8815: reg 0x0f set to 0x31");
-
-	if (i2c_read8(I2C_PORT_USB_C1,
-		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
-		CPRINTS("ps8815: reg 0x0f now %02x", val);
-}
-
-void board_reset_pd_mcu(void)
-{
-	/* No reset available for TCPC on port 0 */
-	/* Daughterboard specific reset for port 1 */
-	if (usb_db_type == USB_DB_USB3) {
-		ps8815_reset();
-		usb_mux_hpd_update(USBC_PORT_C1, 0, 0);
-	}
-}
-
 uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;
@@ -494,8 +382,6 @@ void bc12_interrupt(enum gpio_signal signal)
 
 int board_set_active_charge_port(int port)
 {
-	/* TODO: b/140561826 - check correct operation for Volteer */
-
 	int is_valid_port = (port >= 0 &&
 			     port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
@@ -576,50 +462,17 @@ static void baseboard_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT);
 
-/*
- * Set up support for the USB3 daughterboard:
- *   Parade PS8815 TCPC (integrated retimer)
- *   Diodes PI3USB9201 BC 1.2 chip (same as USB4 board)
- *   Silergy SYV682A PPC (same as USB4 board)
- */
-static void config_db_usb3(void)
-{
-	tcpc_config[USBC_PORT_C1] = tcpc_config_p1_usb3;
-	usb_muxes[USBC_PORT_C1] = mux_config_p1_usb3;
-}
-
 static uint8_t board_id;
-static uint32_t fw_config;
 
 uint8_t get_board_id(void)
 {
 	return board_id;
 }
 
-enum usb_db_id get_usb_db_type(void)
-{
-	return usb_db_type;
-}
-
-uint32_t get_fw_config(void)
-{
-	return fw_config;
-}
-
-/*
- * ec_config_has_tablet_mode() will return 1 is present or 0
- */
-enum ec_cfg_tablet_mode_type ec_config_has_tablet_mode(void)
-{
-	return ((get_fw_config() & EC_CFG_TABLET_MODE_MASK)
-			>> EC_CFG_TABLET_MODE_L);
-}
-
-__overridable void config_volteer_gpios(void)
+__overridable void board_cbi_init(void)
 {
 }
 
-static const char *db_type_prefix = "USB DB type: ";
 /*
  * Read CBI from i2c eeprom and initialize variables for board variants
  *
@@ -629,7 +482,6 @@ static const char *db_type_prefix = "USB DB type: ";
 static void cbi_init(void)
 {
 	uint32_t cbi_val;
-	uint32_t usb_db_val;
 
 	/* Board ID */
 	if (cbi_get_board_version(&cbi_val) != EC_SUCCESS ||
@@ -640,35 +492,10 @@ static void cbi_init(void)
 
 	CPRINTS("Board ID: %d", board_id);
 
-	config_volteer_gpios();
-
 	/* FW config */
-	if (cbi_get_fw_config(&cbi_val) != EC_SUCCESS) {
-		CPRINTS("CBI: Read FW config failed, assuming USB4");
-		usb_db_val = USB_DB_USB4_GEN2;
-	} else {
-		fw_config = cbi_val;
-		usb_db_val = CBI_FW_CONFIG_USB_DB_TYPE(cbi_val);
-	}
+	init_fw_config();
 
-	switch (usb_db_val) {
-	case USB_DB_NONE:
-		CPRINTS("%sNone", db_type_prefix);
-		break;
-	case USB_DB_USB4_GEN2:
-		CPRINTS("%sUSB4 Gen1/2", db_type_prefix);
-		break;
-	case USB_DB_USB4_GEN3:
-		CPRINTS("%sUSB4 Gen3", db_type_prefix);
-		break;
-	case USB_DB_USB3:
-		config_db_usb3();
-		CPRINTS("%sUSB3", db_type_prefix);
-		break;
-	default:
-		CPRINTS("%sID %d not supported", db_type_prefix, usb_db_val);
-		usb_db_val = USB_DB_NONE;
-	}
-	usb_db_type = usb_db_val;
+	/* Allow the board project to make runtime changes based on CBI data */
+	board_cbi_init();
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_FIRST);

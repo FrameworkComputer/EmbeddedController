@@ -24,20 +24,11 @@ int pd_check_vconn_swap(int port)
 
 void pd_power_supply_reset(int port)
 {
-	int prev_en;
-
-	if (port < 0 || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (port != 0)
 		return;
 
-	/* TODO(b/147440290): charger functions should take chgnum */
-	prev_en = chg_chips[port].drv->is_sourcing_otg_power(port, port);
-
-	/* Disable Vbus */
-	chg_chips[port].drv->enable_otg_power(port, 0);
-
-	/* Discharge Vbus if previously enabled */
-	if (prev_en)
-		sm5803_set_vbus_disch(port, 1);
+	/* Disable VBUS */
+	tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SRC_CTRL_LOW);
 
 #ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
 	/* Give back the current quota we are no longer using */
@@ -50,18 +41,24 @@ void pd_power_supply_reset(int port)
 
 int pd_set_power_supply_ready(int port)
 {
-	enum ec_error_list rv;
+	int rv;
 
-	/* Disable charging */
-	rv = chg_chips[port].drv->set_mode(port, CHARGE_FLAG_INHIBIT_CHARGE);
+	if (port != 0)
+		return EC_ERROR_INVAL;
+
+	/* Disable charging. */
+	rv = tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SNK_CTRL_LOW);
 	if (rv)
 		return rv;
 
-	/* Disable Vbus discharge */
-	sm5803_set_vbus_disch(port, 0);
+	/* Our policy is not to source VBUS when the AP is off. */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return EC_ERROR_NOT_POWERED;
 
-	/* Provide Vbus */
-	chg_chips[port].drv->enable_otg_power(port, 1);
+	/* Provide Vbus. */
+	rv = tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SRC_CTRL_HIGH);
+	if (rv)
+		return rv;
 
 #ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
 	/* Ensure we advertise the proper available current quota */
@@ -76,5 +73,8 @@ int pd_set_power_supply_ready(int port)
 
 int pd_snk_is_vbus_provided(int port)
 {
-	return sm5803_is_vbus_present(port);
+	int regval = 0;
+
+	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
+	return regval & TCPC_REG_POWER_STATUS_VBUS_PRES;
 }

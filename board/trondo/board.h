@@ -66,6 +66,10 @@
 
 /* USB Type A Features */
 
+/* USBC PPC*/
+#define CONFIG_USBC_PPC_SN5S330		/* USBC port C0 */
+#define CONFIG_USBC_PPC_SYV682X		/* USBC port C1 */
+
 /* BC 1.2 */
 
 /* Volume Button feature */
@@ -152,8 +156,7 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-/* TODO: b/143375057 - Remove this code after power on. */
-void c10_gate_change(enum gpio_signal signal);
+void board_reset_pd_mcu(void);
 
 #endif /* !__ASSEMBLER__ */
 

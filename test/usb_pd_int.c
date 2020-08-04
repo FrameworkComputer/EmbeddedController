@@ -25,6 +25,10 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	}
 };
 
+void board_reset_pd_mcu(void)
+{
+}
+
 static int deferred_resume_called;
 void pd_deferred_resume(int port)
 {

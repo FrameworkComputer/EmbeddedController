@@ -442,7 +442,7 @@ static void reset_gpio_flags(enum gpio_signal signal, int flags)
 	 * may change the value from the previous image which could cause a
 	 * brownout.
 	 */
-	if (system_is_reboot_warm() || system_jumped_to_this_image())
+	if (system_is_reboot_warm() || system_jumped_late())
 		flags &= ~(GPIO_LOW | GPIO_HIGH);
 
 	gpio_set_flags(signal, flags);
@@ -485,7 +485,7 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 void board_overcurrent_event(int port, int is_overcurrented)
 {
-	/* Sanity check the port. */
+	/* Check that port number is valid. */
 	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_MAX_COUNT))
 		return;
 

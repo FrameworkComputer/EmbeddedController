@@ -177,6 +177,11 @@ void chipset_handle_espi_reset_assert(void);
  */
 void chipset_pre_init_callback(void);
 
+/**
+ * Initialize reset logs and next reset log.
+ */
+void init_reset_log(void);
+
 #else /* !HAS_TASK_CHIPSET */
 
 /* When no chipset is present, assume it is always off. */
@@ -204,6 +209,8 @@ static inline void chipset_reset_request_interrupt(enum gpio_signal signal) { }
 static inline void chipset_warm_reset_interrupt(enum gpio_signal signal) { }
 static inline void chipset_power_good_interrupt(enum gpio_signal signal) { }
 static inline void chipset_watchdog_interrupt(enum gpio_signal signal) { }
+
+static inline void init_reset_log(void) { }
 
 #endif /* !HAS_TASK_CHIPSET */
 
@@ -292,8 +299,3 @@ get_ap_reset_stats(struct ap_reset_log_entry *reset_log_entries,
 #endif /* !CONFIG_CMD_AP_RESET_LOG */
 
 #endif  /* __CROS_EC_CHIPSET_H */
-
-/**
- * Initialize reset logs and next reset log.
- */
-void init_reset_log(void);

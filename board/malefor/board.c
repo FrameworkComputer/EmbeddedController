@@ -6,10 +6,15 @@
 /* Malefor board-specific configuration */
 
 #include "button.h"
+#include "cbi_ec_fw_config.h"
 #include "common.h"
 #include "driver/accel_lis2dh.h"
 #include "driver/accelgyro_lsm6dsm.h"
+#include "driver/ppc/sn5s330.h"
+#include "driver/ppc/syv682x.h"
 #include "driver/sync.h"
+#include "driver/tcpm/ps8xxx.h"
+#include "driver/tcpm/tcpci.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -26,6 +31,7 @@
 #include "task.h"
 #include "tablet_mode.h"
 #include "uart.h"
+#include "usbc_ppc.h"
 #include "util.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
@@ -33,9 +39,16 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
+/*
+ * FW_CONFIG defaults for Malefor if the CBI data is not initialized.
+ */
+union volteer_cbi_fw_config fw_config_defaults = {
+	.usb_db = DB_USB3_NO_A,
+};
+
 static void board_init(void)
 {
-	if (ec_config_has_tablet_mode()) {
+	if (ec_cfg_has_tabletmode()) {
 		/* Enable gpio interrupt for base accelgyro sensor */
 		gpio_enable_interrupt(GPIO_EC_IMU_INT_L);
 	} else {
@@ -58,14 +71,14 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 int board_is_lid_angle_tablet_mode(void)
 {
-	return ec_config_has_tablet_mode();
+	return ec_cfg_has_tabletmode();
 }
 
 /* Enable or disable input devices, based on tablet mode or chipset state */
 #ifndef TEST_BUILD
 void lid_angle_peripheral_enable(int enable)
 {
-	if (ec_config_has_tablet_mode()) {
+	if (ec_cfg_has_tabletmode()) {
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF) ||
 			tablet_get_mode())
 			enable = 0;
@@ -297,3 +310,99 @@ const struct pwm_t pwm_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+/* USBC TCPC configuration for port 1 on USB3 board */
+static const struct tcpc_config_t tcpc_config_p1_usb3 = {
+	.bus_type = EC_BUS_TYPE_I2C,
+	.i2c_info = {
+		.port = I2C_PORT_USB_C1,
+		.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+	},
+	.flags = TCPC_FLAGS_TCPCI_REV2_0 | TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
+	.drv = &ps8xxx_tcpm_drv,
+	.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
+};
+
+static const struct usb_mux usbc1_usb3_db_retimer = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &tcpci_tcpm_usb_mux_driver,
+	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	.next_mux = NULL,
+};
+
+static const struct usb_mux mux_config_p1_usb3 = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &virtual_usb_mux_driver,
+	.hpd_update = &virtual_hpd_update,
+	.next_mux = &usbc1_usb3_db_retimer,
+};
+
+void board_reset_pd_mcu(void)
+{
+	int val;
+
+	gpio_set_level(GPIO_USB_C1_RT_RST_ODL, 0);
+	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
+			   PS8815_PWR_H_RST_H_DELAY_MS));
+	gpio_set_level(GPIO_USB_C1_RT_RST_ODL, 1);
+	msleep(PS8815_FW_INIT_DELAY_MS);
+
+	/*
+	 * b/144397088
+	 * ps8815 firmware 0x01 needs special configuration
+	 */
+
+	CPRINTS("%s: patching ps8815 registers", __func__);
+
+	if (i2c_read8(I2C_PORT_USB_C1,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f was %02x", val);
+
+	if (i2c_write8(I2C_PORT_USB_C1,
+		       PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f set to 0x31");
+
+	if (i2c_read8(I2C_PORT_USB_C1,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f now %02x", val);
+}
+
+__override void board_cbi_init(void)
+{
+	/* Config DB USB3 */
+	tcpc_config[USBC_PORT_C1] = tcpc_config_p1_usb3;
+	usb_muxes[USBC_PORT_C1] = mux_config_p1_usb3;
+}
+
+/******************************************************************************/
+/* USBC PPC configuration */
+struct ppc_config_t ppc_chips[] = {
+	[USBC_PORT_C0] = {
+		.i2c_port = I2C_PORT_USB_C0,
+		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+		.drv = &sn5s330_drv,
+	},
+	[USBC_PORT_C1] = {
+		.i2c_port = I2C_PORT_USB_C1,
+		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.drv = &syv682x_drv,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
+unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
+
+/******************************************************************************/
+/* PPC support routines */
+void ppc_interrupt(enum gpio_signal signal)
+{
+	switch (signal) {
+	case GPIO_USB_C0_PPC_INT_ODL:
+		sn5s330_interrupt(USBC_PORT_C0);
+		break;
+	case GPIO_USB_C1_PPC_INT_ODL:
+		syv682x_interrupt(USBC_PORT_C1);
+	default:
+		break;
+	}
+}
+

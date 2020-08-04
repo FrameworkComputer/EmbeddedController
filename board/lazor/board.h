@@ -22,14 +22,17 @@
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_FLASH_SIZE (512 * 1024)  /* 512KB internal spi flash */
 
+/* Battery */
+#define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
+#define CONFIG_BATTERY_REVIVE_DISCONNECT
+#define CONFIG_BATTERY_FUEL_GAUGE
+
 /* BC 1.2 Charger */
 #define CONFIG_BC12_DETECT_PI3USB9201
 
 /* USB */
 #define CONFIG_USB_PD_TCPM_PS8751
 #define CONFIG_USBC_PPC_SN5S330
-/* PS8751 can only run with PD 2.0 */
-#define CONFIG_USB_PD_REV20
 
 /* USB-A */
 #define USB_PORT_COUNT 1
@@ -57,6 +60,9 @@
 #define CONFIG_GMR_TABLET_MODE
 #define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
 
+/* GPIO alias */
+#define GPIO_PMIC_RESIN_L GPIO_PM845_RESIN_L
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -81,6 +87,14 @@ enum pwm_channel {
 	PWM_CH_KBLIGHT = 0,
 	PWM_CH_DISPLIGHT,
 	PWM_CH_COUNT
+};
+
+/* List of possible batteries */
+enum battery_type {
+	BATTERY_AP16L5J,
+	BATTERY_AP16L5J_009,
+	BATTERY_AP16L8J,
+	BATTERY_TYPE_COUNT,
 };
 
 /* Custom function to indicate if sourcing VBUS */

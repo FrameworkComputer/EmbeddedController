@@ -137,11 +137,11 @@ uint8_t ll_set_random_address(uint8_t *params);
 uint8_t ll_set_scan_enable(uint8_t *params);
 uint8_t ll_set_scan_params(uint8_t *params);
 
-/* White List */
-uint8_t ll_clear_white_list(void);
-uint8_t ll_read_white_list_size(uint8_t *return_params);
-uint8_t ll_add_device_to_white_list(uint8_t *params);
-uint8_t ll_remove_device_from_white_list(uint8_t *params);
+/* Allow List */
+uint8_t ll_clear_allow_list(void);
+uint8_t ll_read_allow_list_size(uint8_t *return_params);
+uint8_t ll_add_device_to_allow_list(uint8_t *params);
+uint8_t ll_remove_device_from_allow_list(uint8_t *params);
 
 /* Connections */
 uint8_t ll_read_remote_used_features(uint8_t *params);

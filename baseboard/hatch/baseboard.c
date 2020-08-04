@@ -66,7 +66,8 @@ const struct i2c_port_t i2c_ports[] = {
 	{"thermal", I2C_PORT_THERMAL, 100, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
 #endif
 #ifdef BOARD_MUSHU
-	{"gpu_temp", I2C_PORT_THERMAL, 100, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
+	{"f75303_temp", I2C_PORT_THERMAL, 100, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
+	{"gpu_temp", I2C_PORT_GPU, 100, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
 #endif
 	{"power",   I2C_PORT_POWER,   100, GPIO_I2C5_SCL, GPIO_I2C5_SDA},
 	{"eeprom",  I2C_PORT_EEPROM,  100, GPIO_I2C7_SCL, GPIO_I2C7_SDA},
@@ -82,7 +83,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &bq25710_drv,
 	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /******************************************************************************/
 /* Chipset callbacks/hooks */
@@ -177,7 +177,7 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 void baseboard_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image())
+	if (!system_jumped_late())
 		board_reset_pd_mcu();
 
 	/* Enable PPC interrupts. */

@@ -46,11 +46,11 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 					      int8_t pressed);
 
 /**
- * Send aux response data to host.
+ * Send aux data to host from interrupt context.
  *
  * @param data	Aux response to send to host.
  */
-void send_aux_data_to_host(uint8_t data);
+void send_aux_data_to_host_interrupt(uint8_t data);
 
 /**
  * Send aux data to device.

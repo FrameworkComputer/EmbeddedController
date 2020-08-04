@@ -155,8 +155,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
-
 /* TCPC mux configuration */
 struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_PS8751] = {
@@ -247,7 +245,7 @@ void board_tcpc_init(void)
 	ps8751_i2c_remap();
 
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image()) {
+	if (!system_jumped_late()) {
 		board_reset_pd_mcu();
 	}
 
@@ -413,7 +411,7 @@ static void board_pmic_init(void)
 {
 	board_report_pmic_fault("SYSJUMP");
 
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 	/*

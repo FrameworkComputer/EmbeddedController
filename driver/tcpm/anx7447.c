@@ -707,6 +707,21 @@ static int anx7447_set_polarity(int port,
 #ifdef CONFIG_CMD_TCPC_DUMP
 static const struct tcpc_reg_dump_map anx7447_regs[] = {
 	{
+		.addr = ANX7447_REG_TCPC_SWITCH_0,
+		.name = "SWITCH_0",
+		.size = 1,
+	},
+	{
+		.addr = ANX7447_REG_TCPC_SWITCH_1,
+		.name = "SWITCH_1",
+		.size = 1,
+	},
+	{
+		.addr = ANX7447_REG_TCPC_AUX_SWITCH,
+		.name = "AUX_SWITCH",
+		.size = 1,
+	},
+	{
 		.addr = ANX7447_REG_ADC_CTRL_1,
 		.name = "ADC_CTRL_1",
 		.size = 1,

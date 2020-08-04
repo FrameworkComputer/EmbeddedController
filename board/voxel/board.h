@@ -12,6 +12,9 @@
 #include "baseboard.h"
 
 /* Optional features */
+#undef NPCX7_PWM1_SEL
+#define NPCX7_PWM1_SEL    0    /* GPIO C2 is not used as PWM1. */
+
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
 #define CONFIG_VBOOT_EFS2
@@ -21,10 +24,11 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
+/* Chipset features */
+#define CONFIG_POWER_PP5000_CONTROL
+
 /* LED defines */
-#define CONFIG_LED_PWM
-/* Although there are 2 LEDs, they are both controlled by the same lines. */
-#define CONFIG_LED_PWM_COUNT 1
+#define CONFIG_LED_ONOFF_STATES
 
 /* Keyboard features */
 
@@ -70,8 +74,16 @@
 
 /* Enabling USB4 mode */
 #define CONFIG_USB_PD_USB4
+#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x40
+#undef	USBC_PORT_C1_BB_RETIMER_I2C_ADDR
+#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x41
 
 /* USB Type A Features */
+#define USB_PORT_COUNT			1
+#define CONFIG_USB_PORT_POWER_DUMB
+
+/* USBC PPC*/
+#define CONFIG_USBC_PPC_SYV682X		/* USBC port C0/C1 */
 
 /* BC 1.2 */
 
@@ -115,7 +127,8 @@
 #define I2C_PORT_SENSOR		NPCX_I2C_PORT0_0
 #define I2C_PORT_USB_C0		NPCX_I2C_PORT1_0
 #define I2C_PORT_USB_C1		NPCX_I2C_PORT2_0
-#define I2C_PORT_USB_1_MIX	NPCX_I2C_PORT3_0
+#define I2C_PORT_USB_0_MIX	NPCX_I2C_PORT3_0
+#define I2C_PORT_USB_1_MIX	NPCX_I2C_PORT4_1
 #define I2C_PORT_POWER		NPCX_I2C_PORT5_0
 #define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
 
@@ -124,7 +137,6 @@
 
 #define I2C_ADDR_EEPROM_FLAGS	0x50
 #define CONFIG_I2C_MASTER
-
 
 #ifndef __ASSEMBLER__
 
@@ -137,10 +149,6 @@ enum battery_type {
 };
 
 enum pwm_channel {
-	PWM_CH_LED1_BLUE = 0,
-	PWM_CH_LED2_GREEN,
-	PWM_CH_LED3_RED,
-	PWM_CH_LED4_SIDESEL,
 	PWM_CH_FAN,
 	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT
@@ -155,8 +163,7 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-/* TODO: b/143375057 - Remove this code after power on. */
-void c10_gate_change(enum gpio_signal signal);
+void board_reset_pd_mcu(void);
 
 #endif /* !__ASSEMBLER__ */
 

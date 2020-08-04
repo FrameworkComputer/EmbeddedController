@@ -14,6 +14,7 @@
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power_button.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -81,14 +82,19 @@ int power_button_wait_for_release(int timeout_us)
 
 	while (!power_button_is_stable || power_button_is_pressed()) {
 		now = get_time();
-		if (timeout_us < 0) {
-			task_wait_event(-1);
-		} else if (timestamp_expired(deadline, &now) ||
-			(task_wait_event(deadline.val - now.val) ==
-			TASK_EVENT_TIMER)) {
+		if (timeout_us >= 0 && timestamp_expired(deadline, &now)) {
 			CPRINTS("%s not released in time", power_button.name);
 			return EC_ERROR_TIMEOUT;
 		}
+		/*
+		 * We use task_wait_event() instead of usleep() here. It will
+		 * be woken up immediately if the power button is debouned and
+		 * changed. However, it is not guaranteed, like the cases that
+		 * the power button is debounced but not changed, or the power
+		 * button has not been debounced.
+		 */
+		task_wait_event(MIN(power_button.debounce_us,
+				    deadline.val - now.val));
 	}
 
 	CPRINTS("%s released in time", power_button.name);
@@ -107,6 +113,36 @@ static void power_button_init(void)
 	gpio_enable_interrupt(power_button.gpio);
 }
 DECLARE_HOOK(HOOK_INIT, power_button_init, HOOK_PRIO_INIT_POWER_BUTTON);
+
+#ifdef CONFIG_POWER_BUTTON_INIT_IDLE
+/*
+ * Set/clear AP_IDLE flag. It's set when the system gracefully shuts down and
+ * it's cleared when the system boots up. The result is the system tries to
+ * go back to the previous state upon AC plug-in. If the system uncleanly
+ * shuts down, it boots immediately. If the system shuts down gracefully,
+ * it'll stay at S5 and wait for power button press.
+ */
+static void pb_chipset_startup(void)
+{
+	chip_save_reset_flags(chip_read_reset_flags() & ~EC_RESET_FLAG_AP_IDLE);
+	system_clear_reset_flags(EC_RESET_FLAG_AP_IDLE);
+	CPRINTS("Cleared AP_IDLE flag");
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pb_chipset_startup, HOOK_PRIO_DEFAULT);
+
+static void pb_chipset_shutdown(void)
+{
+	chip_save_reset_flags(chip_read_reset_flags() | EC_RESET_FLAG_AP_IDLE);
+	system_set_reset_flags(EC_RESET_FLAG_AP_IDLE);
+	CPRINTS("Saved AP_IDLE flag");
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pb_chipset_shutdown,
+	     /*
+	      * Slightly higher than handle_pending_reboot because
+	      * it may clear AP_IDLE flag.
+	      */
+	     HOOK_PRIO_DEFAULT - 1);
+#endif
 
 /**
  * Handle debounced power button changing state.

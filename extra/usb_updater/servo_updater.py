@@ -66,12 +66,12 @@ def flash2(vidpid, serialno, binfile):
   print(cmd)
   help_cmd = '%s --help' % tool
   with open('/dev/null') as devnull:
-    sanity_check = subprocess.call(help_cmd.split(), stdout=devnull,
-                                   stderr=devnull)
-  if sanity_check:
+    valid_check = subprocess.call(help_cmd.split(), stdout=devnull,
+                                  stderr=devnull)
+  if valid_check:
     raise ServoUpdaterException('%s exit with res = %d. Make sure the tool '
                                 'is available on the device.' % (help_cmd,
-                                                                 sanity_check))
+                                                                 valid_check))
   res = subprocess.call(cmd.split())
 
   if res in (0, 1, 2):

@@ -83,13 +83,8 @@ static void clock_enable_osc(enum clock_osc osc)
 		return;
 	}
 
-	if (!(STM32_RCC_CR & ready)) {
-		/* Enable HSI */
-		STM32_RCC_CR |= on;
-		/* Wait for HSI to be ready */
-		while (!(STM32_RCC_CR & ready))
-			;
-	}
+	/* Enable HSI and wait for HSI to be ready */
+	wait_for_ready(&STM32_RCC_CR, on, ready);
 }
 
 /* Switch system clock oscillator */

@@ -71,6 +71,7 @@ common-$(CONFIG_EC_EC_COMM_MASTER)+=ec_ec_comm_master.o
 common-$(CONFIG_EC_EC_COMM_SLAVE)+=ec_ec_comm_slave.o
 common-$(CONFIG_HOSTCMD_ESPI)+=espi.o
 common-$(CONFIG_EXTPOWER_GPIO)+=extpower_gpio.o
+common-$(CONFIG_EXTPOWER)+=extpower_common.o
 common-$(CONFIG_FANS)+=fan.o pwm.o
 common-$(CONFIG_FLASH)+=flash.o
 common-$(CONFIG_FMAP)+=fmap.o
@@ -78,6 +79,7 @@ common-$(CONFIG_GESTURE_SW_DETECTION)+=gesture.o
 common-$(CONFIG_HOSTCMD_EVENTS)+=host_event_commands.o
 common-$(CONFIG_HOSTCMD_GET_UPTIME_INFO)+=uptime.o
 common-$(CONFIG_HOSTCMD_PD)+=host_command_master.o
+common-$(CONFIG_HOSTCMD_REGULATOR)+=regulator.o
 common-$(CONFIG_HOSTCMD_RTC)+=rtc.o
 common-$(CONFIG_I2C_DEBUG)+=i2c_trace.o
 common-$(CONFIG_I2C_HID_TOUCHPAD)+=i2c_hid_touchpad.o
@@ -118,7 +120,8 @@ common-$(CONFIG_RWSIG_TYPE_RWSIG)+=vboot/vb21_lib.o
 common-$(CONFIG_MATH_UTIL)+=math_util.o
 common-$(CONFIG_ONLINE_CALIB)+=stillness_detector.o kasa.o math_util.o \
 	mat44.o vec3.o newton_fit.o accel_cal.o online_calibration.o \
-	mkbp_event.o
+	mkbp_event.o mag_cal.o math_util.o mat33.o
+common-$(CONFIG_SHA1)+= sha1.o
 common-$(CONFIG_SHA256)+=sha256.o
 common-$(CONFIG_SOFTWARE_CLZ)+=clz.o
 common-$(CONFIG_SOFTWARE_CTZ)+=ctz.o

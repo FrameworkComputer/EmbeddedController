@@ -91,12 +91,12 @@ There are two main objectives for potential attackers:
 
 ### Scalability
 
-For Eve, we [considered][Old Design Doc] using SGX as the SBP.
-However the complexity of the solution makes that option unattractive, both
-because of the amount of dev work required and because of the large resulting
-attack surface. It’s also exclusive to Intel, we would have to develop a
-completely different architecture for other platforms, which would add more dev
-work and increase the attack surface again.
+For Eve, we [considered][Old Design Doc] using SGX as the SBP. However the
+complexity of the solution makes that option unattractive, both because of the
+amount of dev work required and because of the large resulting attack surface.
+It’s also exclusive to Intel, we would have to develop a completely different
+architecture for other platforms, which would add more dev work and increase the
+attack surface again.
 
 ## Overview {#overview}
 
@@ -337,14 +337,14 @@ JSON files with the following fields:
 The content of the "data" field is the encrypted template that can be deciphered
 by the SBP.
 
-| Field Name | Field description  | Field size (bytes) | Field offset (bytes) |
-| ---------- | ------------------ | ------------------ | -------------------- |
-| Version    | Number describing the version of the file format. Set to 3 at launch. | 2 | 0 |
-| Reserved   | Reserved bytes, set to 0 | 2 | 2 |
-| Nonce      | Randomly-generated IV | 12 | 4 |
-| Salt       | Randomly-generated salt | 16 | 16 |
-| Tag        | AES-GCM Authentication Tag | 16 | 32 |
-| Template   | Encrypted template | 47552 | 48 |
+Field Name | Field description                                                     | Field size (bytes) | Field offset (bytes)
+---------- | --------------------------------------------------------------------- | ------------------ | --------------------
+Version    | Number describing the version of the file format. Set to 3 at launch. | 2                  | 0
+Reserved   | Reserved bytes, set to 0                                              | 2                  | 2
+Nonce      | Randomly-generated IV                                                 | 12                 | 4
+Salt       | Randomly-generated salt                                               | 16                 | 16
+Tag        | AES-GCM Authentication Tag                                            | 16                 | 32
+Template   | Encrypted template                                                    | 47552              | 48
 
 When the user logs in, the cryptohome daemon store folder of that user is
 mounted and the JSON files become available to biod. For every enrolled finger,
@@ -716,7 +716,7 @@ The log file is `/var/log/cros_fp.log`.
 [AuthSession]: https://chromium.googlesource.com/chromiumos/platform2/+/eae39a9ad1239f8fbfa8164255578b306ff6ba5c/biod/biometrics_manager.h#96
 [biod D-Bus API]: https://chromium.googlesource.com/chromiumos/platform2/+/refs/heads/master/system_api/dbus/biod/
 [biod upstart script]: https://chromium.googlesource.com/chromiumos/platform2/+/master/biod/init/biod.conf
-[ccd open]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/docs/case_closed_debugging_cr50.md#Open-CCD
+[ccd open]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md#Open-CCD
 [CDD]: https://source.android.com/compatibility/android-cdd#7_3_10_fingerprint_sensor
 [Chromium OS EC]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/README.md
 [clobber-state]: https://chromium.googlesource.com/chromiumos/platform2/+/962ab1bc481db0cf504b5449eb3a3d5008ea7601/init/clobber_state.cc#475
@@ -761,8 +761,9 @@ The log file is `/var/log/cros_fp.log`.
 
 <!-- https://docs.google.com/drawings/d/1-JUWTF7sUTND29BfhDvIudzX_S6g-iwoxG1InPedmVw -->
 [Decryption Flowchart]: ../images/cros_fingerprint_decryption_flowchart.png
+
 <!-- https://drive.google.com/open?id=1uUprgLsTUZZ2G2QWRYcRn6zBAh6ejvJagVRD7eZQv-k -->
 [Encryption Flowchart]: ../images/cros_fingerprint_encryption_flowchart.png
+
 <!-- https://docs.google.com/drawings/d/1DFEdxfDXEtYY3LNOOJFAxVw2A7rKouH98tnb1yiXLAA -->
 [Fingerprint Architecture]: ../images/cros_fingerprint_architecture_diagram.png
-

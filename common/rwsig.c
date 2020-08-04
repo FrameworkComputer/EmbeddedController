@@ -163,7 +163,7 @@ int rwsig_check_signature(void)
 	    vb21_sig->sig_size != RSANUMBYTES ||
 	    vb21_key->sig_alg != vb21_sig->sig_alg ||
 	    vb21_key->hash_alg != vb21_sig->hash_alg ||
-	    /* Sanity check signature offset and data size. */
+	    /* Validity check signature offset and data size. */
 	    vb21_sig->sig_offset < sizeof(vb21_sig) ||
 	    (vb21_sig->sig_offset + RSANUMBYTES) > CONFIG_RW_SIG_SIZE ||
 	    vb21_sig->data_size > (CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)) {

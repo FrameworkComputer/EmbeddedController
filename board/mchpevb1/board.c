@@ -485,7 +485,7 @@ static void board_pmic_init(void)
 	int rv, cfg;
 
 	/* No need to re-init PMIC since settings are sticky across sysjump */
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 #if 0 /* BD99992GW PMIC on a real Chromebook */
@@ -562,7 +562,7 @@ static void board_init(void)
 	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
 
 #ifdef HAS_TASK_MOTIONSENSE
-	if (system_jumped_to_this_image() &&
+	if (system_jumped_late() &&
 	    chipset_in_state(CHIPSET_STATE_ON)) {
 		trace0(0, BRD, 0, "board_init: S0 call board_spi_enable");
 		board_spi_enable();
@@ -781,7 +781,7 @@ static void board_handle_reboot(void)
 	CPRINTS("MEC HOOK_INIT - called board_handle_reboot");
 	trace0(0, HOOK, 0, "HOOK_INIT - board_handle_reboot");
 
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 	if (system_get_board_version() < BOARD_MIN_ID_LOD_EN)

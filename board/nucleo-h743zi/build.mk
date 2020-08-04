@@ -20,7 +20,10 @@ test-list-y=\
        pingpong \
        rollback \
        rollback_entropy \
+       rsa \
+       rsa3 \
        rtc \
        scratchpad \
        sha256 \
        sha256_unrolled \
+       utils \

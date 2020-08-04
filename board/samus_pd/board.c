@@ -496,6 +496,11 @@ void pd_send_host_event(int mask)
 	pd_send_ec_int();
 }
 
+int battery_is_cut_off(void)
+{
+	return 0;  /* Always return NOT cut off */
+}
+
 /****************************************************************************/
 /* Console commands */
 static int command_ec_int(int argc, char **argv)

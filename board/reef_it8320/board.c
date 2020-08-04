@@ -172,7 +172,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &bd9995x_drv,
 	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /* Called by APL power state machine when transitioning from G3 to S5 */
 void chipset_pre_init_callback(void)

@@ -13,18 +13,12 @@
 #include <stdbool.h>
 #include "baseboard.h"
 
-/*
- * Allow dangerous commands.
- * TODO: Remove this config before production.
- */
-#define CONFIG_SYSTEM_UNLOCKED
-#define CONFIG_I2C_DEBUG
-
 #define CONFIG_USBC_RETIMER_PI3DPX1207
 #define CONFIG_MKBP_USE_GPIO
 #define CONFIG_8042_AUX
 #define CONFIG_PS2
 #define CONFIG_CMD_PS2
+#define CONFIG_KEYBOARD_FACTORY_TEST
 
 #undef CONFIG_LED_ONOFF_STATES
 #define CONFIG_BATTERY_LEVEL_NEAR_FULL 91
@@ -37,7 +31,7 @@
 #define CONFIG_ACCEL_KX022
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
-#define CONFIG_FAN_RPM_CUSTOM
+#define CONFIG_CUSTOM_FAN_CONTROL
 #define CONFIG_TABLET_MODE
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_TMP432
@@ -46,6 +40,7 @@
 #define CONFIG_LID_ANGLE_UPDATE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
+#define RPM_DEVIATION 1
 
 /* GPIO mapping from board specific name to EC common name. */
 #define CONFIG_BATTERY_PRESENT_GPIO	GPIO_EC_BATT_PRES_ODL
@@ -76,7 +71,14 @@
 
 #ifndef __ASSEMBLER__
 
+
 void ps2_pwr_en_interrupt(enum gpio_signal signal);
+
+enum adc_channel {
+	ADC_TEMP_SENSOR_CHARGER,
+	ADC_TEMP_SENSOR_5V_REGULATOR,
+	ADC_CH_COUNT
+};
 
 enum battery_type {
 	BATTERY_SMP,
@@ -98,6 +100,19 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
+enum temp_sensor_id {
+	TEMP_SENSOR_CHARGER = 0,
+	TEMP_SENSOR_5V_REGULATOR,
+	TEMP_SENSOR_CPU,
+	TEMP_SENSOR_SSD,
+	TEMP_SENSOR_COUNT
+};
+
+enum usba_port {
+	USBA_PORT_A0 = 0,
+	USBA_PORT_A1,
+	USBA_PORT_COUNT
+};
 
 /*****************************************************************************
  * CBI EC FW Configuration
@@ -183,19 +198,15 @@ static inline bool ec_config_has_mst_hub_rtd2141b(void)
 		  HAS_MST_HUB_RTD2141B);
 }
 
-#define HAS_HDMI_CONN_HPD \
-			(BIT(MORPHIUS_DB_T_OPT1_USBC_HDMI))
-
-static inline bool ec_config_has_hdmi_conn_hpd(void)
-{
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_HDMI_CONN_HPD);
-}
-
+/*
+ * USB-C0 always uses USB_C0_HPD (= DP3_HPD).
+ * USB-C1 OPT1 DB uses DP2_HPD.
+ * USB-C1 OPT3 DB uses DP1_HPD via RTD2141B MST hub, EC does not drive HPD.
+ */
 #define PORT_TO_HPD(port) ((port == 0) \
 	? GPIO_USB_C0_HPD \
-	: (ec_config_has_usbc1_retimer_ps8802()) \
-		? GPIO_DP1_HPD \
+	: (ec_config_has_mst_hub_rtd2141b()) \
+		? GPIO_NO_HPD \
 		: GPIO_DP2_HPD)
 
 extern const struct usb_mux usbc0_pi3dpx1207_usb_retimer;
@@ -204,6 +215,11 @@ extern const struct usb_mux usbc1_ps8818;
 extern struct usb_mux usbc1_amd_fp5_usb_mux;
 
 void hdmi_hpd_interrupt(enum ioex_signal signal);
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+#endif
 
 #endif /* !__ASSEMBLER__ */
 

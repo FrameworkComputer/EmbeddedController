@@ -27,10 +27,13 @@ void prl_hard_reset_complete(int port)
 
 int prl_is_running(int port)
 {
-	return 0;
+	return 1;
 }
 
 void prl_reset(int port)
+{}
+
+void prl_reset_soft(int port)
 {}
 
 static enum pd_ctrl_msg_type last_ctrl_msg[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -56,4 +59,9 @@ void prl_set_rev(int port, enum tcpm_transmit_type partner,
 enum pd_ctrl_msg_type fake_prl_get_last_sent_ctrl_msg(int port)
 {
 	return last_ctrl_msg[port];
+}
+
+void fake_prl_clear_last_sent_ctrl_msg(int port)
+{
+	last_ctrl_msg[port] = 0;
 }

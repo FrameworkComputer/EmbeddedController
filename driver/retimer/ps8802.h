@@ -68,10 +68,6 @@
 extern const struct usb_mux_driver ps8802_usb_mux_driver;
 
 int ps8802_i2c_wake(const struct usb_mux *me);
-
-/* TODO(b:151232257) Remove probe code when hardware supports CBI */
-int ps8802_detect(const struct usb_mux *me);
-
 int ps8802_i2c_read(const struct usb_mux *me, int page, int offset, int *data);
 int ps8802_i2c_write(const struct usb_mux *me, int page, int offset, int data);
 int ps8802_i2c_write16(const struct usb_mux *me, int page, int offset,

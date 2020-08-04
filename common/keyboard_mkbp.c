@@ -696,7 +696,7 @@ static void keyscan_copy_config(const struct ec_mkbp_config *src,
 	uint8_t new_flags;
 
 	if (valid_mask & EC_MKBP_VALID_FIFO_MAX_DEPTH) {
-		/* Sanity check for fifo depth */
+		/* Validity check for fifo depth */
 		dst->fifo_max_depth = MIN(src->fifo_max_depth,
 					  FIFO_DEPTH);
 	}

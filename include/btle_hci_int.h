@@ -2236,7 +2236,7 @@ struct hciLeSetScanParams {
 	uint16_t scanInterval; /* in units of 0.625ms, 4..0x4000 */
 	uint16_t scanWindow; /* in units of 0.625ms, 4..0x4000 */
 	uint8_t useOwnRandomAddr;
-	uint8_t onlyWhitelist;
+	uint8_t onlyAllowlist;
 } __packed;
 struct hciCmplLeSetScanParams {
 	uint8_t status;
@@ -2255,7 +2255,7 @@ struct hciCmplLeSetScanEnable {
 struct hciLeCreateConnection {
 	uint16_t scanInterval; /* in units of 0.625ms, 4..0x4000 */
 	uint16_t scanWindow; /* in units of 0.625ms, 4..0x4000 */
-	uint8_t connectToAnyWhitelistedDevice; /* if so, ignore next 2 params */
+	uint8_t connectToAnyAllowlistedDevice; /* if so, ignore next 2 params */
 	uint8_t peerRandomAddr;
 	uint8_t peerMac[6];
 	uint8_t useOwnRandomAddr;
@@ -2272,32 +2272,32 @@ struct hciCmplLeCreateConnectionCancel {
 	uint8_t status;
 } __packed;
 
-#define HCI_CMD_LE_Read_White_List_Size                          0x000F /* complete */
-struct hciCmplLeReadWhiteListSize {
+#define HCI_CMD_LE_Read_Allow_List_Size                          0x000F /* complete */
+struct hciCmplLeReadAllowListSize {
 	uint8_t status;
-	uint8_t whitelistSize;
+	uint8_t allowlistSize;
 } __packed;
 
-#define HCI_CMD_LE_Clear_White_List                              0x0010 /* complete */
-struct hciCmplLeClearWhiteList {
+#define HCI_CMD_LE_Clear_Allow_List                              0x0010 /* complete */
+struct hciCmplLeClearAllowList {
 	uint8_t status;
 } __packed;
 
-#define HCI_CMD_LE_Add_Device_To_White_List                      0x0011 /* complete */
-struct hciLeAddDeviceToWhiteList {
+#define HCI_CMD_LE_Add_Device_To_Allow_List                      0x0011 /* complete */
+struct hciLeAddDeviceToAllowList {
 	uint8_t randomAddr;
 	uint8_t mac[6];
 } __packed;
-struct hciCmplLeAddDeviceToWhiteList {
+struct hciCmplLeAddDeviceToAllowList {
 	uint8_t status;
 } __packed;
 
-#define HCI_CMD_LE_Remove_Device_From_White_List                 0x0012 /* complete */
-struct hciLeRemoveDeviceFromWhiteList {
+#define HCI_CMD_LE_Remove_Device_From_Allow_List                 0x0012 /* complete */
+struct hciLeRemoveDeviceFromAllowList {
 	uint8_t randomAddr;
 	uint8_t mac[6];
 } __packed;
-struct hciCmplLeRemoveDeviceFromWhiteList {
+struct hciCmplLeRemoveDeviceFromAllowList {
 	uint8_t status;
 } __packed;
 

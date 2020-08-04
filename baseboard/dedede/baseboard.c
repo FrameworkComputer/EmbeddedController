@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "board_config.h"
+#include "cbi_fw_config.h"
 #include "chipset.h"
 #include "common.h"
 #include "extpower.h"
@@ -14,6 +15,8 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "intel_x86.h"
+#include "system.h"
+#include "usb_pd.h"
 
 /******************************************************************************/
 /*
@@ -106,14 +109,8 @@ __override void board_vbus_present_change(void)
 	static int last_extpower_present;
 	int extpower_present = extpower_is_present();
 
-	if (last_extpower_present ^ extpower_present) {
-		hook_notify(HOOK_AC_CHANGE);
-
-		if (extpower_present)
-			host_set_single_event(EC_HOST_EVENT_AC_CONNECTED);
-		else
-			host_set_single_event(EC_HOST_EVENT_AC_DISCONNECTED);
-	}
+	if (last_extpower_present ^ extpower_present)
+		extpower_handle_update(extpower_present);
 
 	last_extpower_present = extpower_present;
 }
@@ -129,6 +126,36 @@ __override int intel_x86_get_pg_ec_dsw_pwrok(void)
 	 */
 	return pp3300_a_pgood;
 }
+
+/* Store away PP300_A good status before sysjumps */
+#define BASEBOARD_SYSJUMP_TAG	0x4242 /* BB */
+#define BASEBOARD_HOOK_VERSION	1
+
+static void pp3300_a_pgood_preserve(void)
+{
+	system_add_jump_tag(BASEBOARD_SYSJUMP_TAG, BASEBOARD_HOOK_VERSION,
+			    sizeof(pp3300_a_pgood), &pp3300_a_pgood);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, pp3300_a_pgood_preserve, HOOK_PRIO_DEFAULT);
+
+static void baseboard_prepare_power_signals(void)
+{
+	const int *stored;
+	int version, size;
+
+	stored = (const int *)system_get_jump_tag(BASEBOARD_SYSJUMP_TAG,
+						  &version, &size);
+	if (stored && (version == BASEBOARD_HOOK_VERSION) &&
+					(size == sizeof(pp3300_a_pgood)))
+		/* Valid PP3300 status found, restore before CHIPSET init */
+		pp3300_a_pgood = *stored;
+
+	/* Restore pull-up on PG_PP1050_ST_OD */
+	if (system_jumped_to_this_image() &&
+					gpio_get_level(GPIO_RSMRST_L_PGOOD))
+		board_after_rsmrst(1);
+}
+DECLARE_HOOK(HOOK_INIT, baseboard_prepare_power_signals, HOOK_PRIO_FIRST);
 
 __override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 {
@@ -216,4 +243,31 @@ int board_is_i2c_port_powered(int port)
 
 	/* Sensor rails are off in S5/G3 */
 	return chipset_in_state(CHIPSET_STATE_ANY_OFF) ? 0 : 1;
+}
+
+int extpower_is_present(void)
+{
+	int vbus_present = 0;
+	int port;
+
+	/*
+	 * Boards define pd_snk_is_vbus_provided() with something appropriate
+	 * for their hardware
+	 */
+	for (port = 0; port < board_get_usb_pd_port_count(); port++)
+		if (pd_get_power_role(port) == PD_ROLE_SINK)
+			vbus_present |= pd_snk_is_vbus_provided(port);
+
+	return vbus_present;
+}
+
+__override uint32_t board_override_feature_flags0(uint32_t flags0)
+{
+	/*
+	 * Remove keyboard backlight feature for devices that don't support it.
+	 */
+	if (get_cbi_fw_config_kblight() == KB_BL_ABSENT)
+		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
+	else
+		return flags0;
 }

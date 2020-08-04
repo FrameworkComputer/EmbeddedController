@@ -63,6 +63,8 @@ const struct i2c_port_t i2c_ports[] = {
 	{"battery", I2C_PORT_BATTERY, 100,  0, 0},
 #elif defined I2C_PORT_LIGHTBAR
 	{"lightbar", I2C_PORT_LIGHTBAR, 100,  0, 0},
+#elif defined I2C_PORT_HOST_TCPC
+	{"tcpc", I2C_PORT_HOST_TCPC, 100,  0, 0},
 #endif
 };
 

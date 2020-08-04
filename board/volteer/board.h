@@ -11,6 +11,14 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+#ifdef BOARD_VOLTEER_TCPMV1
+/* Disable TCPMv2 configuration options */
+#undef CONFIG_USB_PD_TCPMV2
+
+/* Enable the required TCPMv1 options */
+#define CONFIG_USB_PD_TCPMV1
+#endif
+
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
@@ -20,6 +28,9 @@
 
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
+
+/* Chipset features */
+#define CONFIG_POWER_PP5000_CONTROL
 
 /* LED defines */
 #define CONFIG_LED_PWM
@@ -34,6 +45,7 @@
 
 /* BMI260 accel/gyro in base */
 #define CONFIG_ACCELGYRO_BMI260
+#define CONFIG_ACCELGYRO_BMI160_COMPRESSED_CONFIG
 #define CONFIG_ACCELGYRO_BMI260_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
@@ -71,7 +83,16 @@
 /* Enabling USB4 mode */
 #define CONFIG_USB_PD_USB4
 
+/* Disabled PD extended message support to save flash space. */
+#undef CONFIG_USB_PD_EXTENDED_MESSAGES
+
 /* USB Type A Features */
+#define USB_PORT_COUNT			1
+#define CONFIG_USB_PORT_POWER_DUMB
+
+/* USBC PPC*/
+#define CONFIG_USBC_PPC_SN5S330		/* USBC port C0 */
+#define CONFIG_USBC_PPC_SYV682X		/* USBC port C1 */
 
 /* BC 1.2 */
 
@@ -91,14 +112,14 @@
 #define GPIO_ENTERING_RW		GPIO_EC_ENTERING_RW
 #define GPIO_LID_OPEN			GPIO_EC_LID_OPEN
 #define GPIO_KBD_KSO2			GPIO_EC_KSO_02_INV
-#define GPIO_PACKET_MODE_EN		GPIO_UART2_EC_RX
+#define GPIO_PACKET_MODE_EN		GPIO_EC_H1_PACKET_MODE
 #define GPIO_PCH_WAKE_L			GPIO_EC_PCH_WAKE_ODL
 #define GPIO_PCH_PWRBTN_L		GPIO_EC_PCH_PWR_BTN_ODL
 #define GPIO_PCH_RSMRST_L		GPIO_EC_PCH_RSMRST_ODL
 #define GPIO_PCH_RTCRST			GPIO_EC_PCH_RTCRST
 #define GPIO_PCH_SLP_S0_L		GPIO_SLP_S0_L
 #define GPIO_PCH_SLP_S3_L		GPIO_SLP_S3_L
-#define GPIO_PG_EC_DSW_PWROK		GPIO_DSW_PWROK
+#define GPIO_PCH_DSW_PWROK		GPIO_EC_PCH_DSW_PWROK
 #define GPIO_POWER_BUTTON_L		GPIO_H1_EC_PWR_BTN_ODL
 #define GPIO_RSMRST_L_PGOOD		GPIO_PG_EC_RSMRST_ODL
 #define GPIO_CPU_PROCHOT		GPIO_EC_PROCHOT_ODL
@@ -155,8 +176,7 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-/* TODO: b/143375057 - Remove this code after power on. */
-void c10_gate_change(enum gpio_signal signal);
+void board_reset_pd_mcu(void);
 
 #endif /* !__ASSEMBLER__ */
 

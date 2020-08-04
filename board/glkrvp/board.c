@@ -64,8 +64,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
-
 /* Wake-up pins for hibernate */
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_AC_PRESENT,
@@ -166,7 +164,7 @@ int board_get_version(void)
 static void pmic_init(void)
 {
 	/* No need to re-init PMIC since settings are sticky across sysjump. */
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 	/*

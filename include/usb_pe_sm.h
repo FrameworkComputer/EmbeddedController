@@ -33,15 +33,16 @@ enum pe_dpm_request {
 	DPM_REQUEST_SEND_PING           = BIT(6),
 	DPM_REQUEST_SOURCE_CAP          = BIT(7),
 	DPM_REQUEST_NEW_POWER_LEVEL     = BIT(8),
-	DPM_REQUEST_EXIT_DP_MODE        = BIT(9),
-	DPM_REQUEST_VDM                 = BIT(10),
-	DPM_REQUEST_BIST_RX             = BIT(11),
-	DPM_REQUEST_BIST_TX             = BIT(12),
-	DPM_REQUEST_SNK_STARTUP         = BIT(13),
-	DPM_REQUEST_SRC_STARTUP         = BIT(14),
-	DPM_REQUEST_HARD_RESET_SEND     = BIT(15),
-	DPM_REQUEST_SOFT_RESET_SEND     = BIT(16),
-	DPM_REQUEST_PORT_DISCOVERY      = BIT(17),
+	DPM_REQUEST_VDM                 = BIT(9),
+	DPM_REQUEST_BIST_RX             = BIT(10),
+	DPM_REQUEST_BIST_TX             = BIT(11),
+	DPM_REQUEST_SNK_STARTUP         = BIT(12),
+	DPM_REQUEST_SRC_STARTUP         = BIT(13),
+	DPM_REQUEST_HARD_RESET_SEND     = BIT(14),
+	DPM_REQUEST_SOFT_RESET_SEND     = BIT(15),
+	DPM_REQUEST_PORT_DISCOVERY      = BIT(16),
+	DPM_REQUEST_SEND_ALERT          = BIT(17),
+	DPM_REQUEST_ENTER_USB           = BIT(18),
 };
 
 /**
@@ -77,6 +78,13 @@ void pe_message_sent(int port);
 void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type);
 
 /**
+ * Informs the Policy Engine of a discard.
+ *
+ * @param port USB-C port number
+ */
+void pe_report_discard(int port);
+
+/**
  * Called by the Protocol Layer to informs the Policy Engine
  * that a message has been received.
  *
@@ -104,13 +112,6 @@ void pe_got_soft_reset(int port);
  * @param port USB-C port number
  */
 void pe_hard_reset_sent(int port);
-
-/**
- * Exit DP mode
- *
- * @param port USB-C port number
- */
-void pe_exit_dp_mode(int port);
 
 /**
  * Get the id of the current Policy Engine state
@@ -167,11 +168,6 @@ void pe_dpm_request(int port, enum pe_dpm_request req);
 int pd_is_port_partner_dualrole(int port);
 
 /*
- * Informs the Policy Engine that a sysjump has occurred
- */
-void pe_set_sysjump(void);
-
-/*
  * Informs the Policy Engine that it should invalidate the
  * explicit contract.
  *
@@ -189,5 +185,22 @@ void pe_invalidate_explicit_contract(int port);
  * @param port USB-C port number
  */
 bool pe_in_local_ams(int port);
+
+/**
+ * Returns the name of the current PE state
+ *
+ * @param port USB-C port number
+ * @return name of current pe state
+ */
+const char *pe_get_current_state(int port);
+
+/**
+ * Returns the flag mask of the PE state machine
+ *
+ * @param port USB-C port number
+ * @return flag mask of the pe state machine
+ */
+uint32_t pe_get_flags(int port);
+
 #endif /* __CROS_EC_USB_PE_H */
 

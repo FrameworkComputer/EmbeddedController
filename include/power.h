@@ -69,7 +69,11 @@ struct power_signal_info {
  * Each board must provide its signal list and a corresponding enum
  * power_signal.
  */
+#ifdef CONFIG_POWER_SIGNAL_RUNTIME_CONFIG
+extern struct power_signal_info power_signal_list[];
+#else
 extern const struct power_signal_info power_signal_list[];
+#endif
 
 /* Convert enum power_signal to a mask for signal functions */
 #define POWER_SIGNAL_MASK(signal) (1 << (signal))
@@ -163,7 +167,13 @@ void power_set_state(enum power_state new_state);
  *
  * @return Current chipset power state
  */
+#ifdef HAS_TASK_CHIPSET
 enum power_state power_get_state(void);
+#else
+static inline enum power_state power_get_state(void) {
+	return POWER_G3;
+}
+#endif
 
 /*
  * Set the wake mask according to the current power state.

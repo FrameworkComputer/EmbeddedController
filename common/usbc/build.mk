@@ -30,6 +30,8 @@ all-obj-$(CONFIG_USB_CTVPD)+=$(_usbc_dir)usb_pe_ctvpd_sm.o
 all-obj-$(CONFIG_USB_DRP_ACC_TRYSRC)+=$(_usbc_dir)usb_pe_drp_sm.o
 all-obj-$(CONFIG_USB_DRP_ACC_TRYSRC)+=$(_usbc_dir)usb_pd_dpm.o
 all-obj-$(CONFIG_USB_DRP_ACC_TRYSRC)+=$(_usbc_dir)dp_alt_mode.o
+all-obj-$(CONFIG_USB_PD_TBT_COMPAT_MODE)+=$(_usbc_dir)tbt_alt_mode.o
+all-obj-$(CONFIG_USB_PD_USB4)+=$(_usbc_dir)usb_mode.o
 all-obj-$(CONFIG_CMD_PD)+=$(_usbc_dir)usb_pd_console.o
 endif # CONFIG_USB_PE_SM
 

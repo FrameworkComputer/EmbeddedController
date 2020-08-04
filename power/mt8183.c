@@ -391,8 +391,8 @@ enum power_state power_handle_state(enum power_state state)
 			gpio_set_level(GPIO_PMIC_EN_ODL, 1);
 		}
 
-		/* If EC is in RW, or has already booted once, reboot to RO. */
-		if (system_get_image_copy() != EC_IMAGE_RO || booted) {
+		/* If EC jumped, or has already booted once, reboot to RO. */
+		if (system_jumped_to_this_image() || booted) {
 			/*
 			 * TODO(b:109850749): How quickly does the EC come back
 			 * up? Would IN_PGOOD_PMIC be ready by the time we are

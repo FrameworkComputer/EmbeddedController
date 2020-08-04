@@ -6,6 +6,7 @@
  */
 
 #include "bb_retimer.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "i2c.h"
@@ -95,6 +96,12 @@ static void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 
 	if (on_off) {
 		gpio_set_level(control->usb_ls_en_gpio, 1);
+		/*
+		 * Tpw, minimum time from VCC to RESET_N de-assertion is 100us.
+		 * For boards that don't provide a load switch control, the
+		 * retimer_init() function ensures power is up before calling
+		 * this function.
+		 */
 		msleep(1);
 		gpio_set_level(control->retimer_rst_gpio, 1);
 		msleep(10);
@@ -165,8 +172,9 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 		*set_retimer_con |= BB_RETIMER_ACTIVE_PASSIVE;
 
 	if (mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED) {
-		cable_resp = get_cable_tbt_vdo(port);
-		dev_resp = get_dev_tbt_vdo(port);
+		cable_resp.raw_value =
+			pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME);
+		dev_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPC_TX_SOP);
 
 		/*
 		 * Bit 2: RE_TIMER_DRIVER
@@ -332,16 +340,17 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state)
 	 * 0 - No USB3.1 Connection
 	 * 1 - USB3.1 connection
 	 */
-	if (mux_state & USB_PD_MUX_USB_ENABLED)
+	if (mux_state & USB_PD_MUX_USB_ENABLED) {
 		set_retimer_con |= BB_RETIMER_USB_3_CONNECTION;
 
-	/*
-	 * Bit 6: USB3_Speed
-	 * 0 – USB3 is limited to Gen1
-	 * 1 – USB3 Gen1/Gen2 supported
-	 */
-	if (is_cable_speed_gen2_capable(port))
-		set_retimer_con |= BB_RETIMER_USB_3_SPEED;
+		/*
+		 * Bit 6: USB3_Speed
+		 * 0 – USB3 is limited to Gen1
+		 * 1 – USB3 Gen1/Gen2 supported
+		 */
+		if (is_cable_speed_gen2_capable(port))
+			set_retimer_con |= BB_RETIMER_USB_3_SPEED;
+	}
 
 	/*
 	 * Bit 8: DP_CONNECTION
@@ -415,6 +424,13 @@ static int retimer_init(const struct usb_mux *me)
 {
 	int rv;
 	uint32_t data;
+
+	/* Burnside Bridge is powered by main AP rail */
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
+		/* Ensure reset is asserted while chip is not powered */
+		bb_retimer_power_handle(me, 0);
+		return EC_ERROR_NOT_POWERED;
+	}
 
 	bb_retimer_power_handle(me, 1);
 

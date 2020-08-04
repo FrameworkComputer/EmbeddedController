@@ -393,7 +393,8 @@ int main(int argc, char *argv[])
 
 					/* Copy back the restored arguments. */
 					for (tmp_ind = 0;
-						 tmp_ind < tmp_arg_num;
+						 (tmp_ind < tmp_arg_num) &&
+						 (arg_ind < MAX_ARGS);
 						 tmp_ind++) {
 						strncpy(hdr_args[arg_ind++],
 							tmp_hdr_args[tmp_ind],

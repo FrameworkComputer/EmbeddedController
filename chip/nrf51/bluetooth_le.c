@@ -213,14 +213,14 @@ int ble_rx(struct ble_pdu *pdu, int timeout, int adv)
 	return EC_SUCCESS;
 }
 
-/* White list handling */
-int ble_radio_clear_white_list(void)
+/* Allow list handling */
+int ble_radio_clear_allow_list(void)
 {
 	NRF51_RADIO_DACNF = 0;
 	return EC_SUCCESS;
 }
 
-int ble_radio_read_white_list_size(uint8_t *ret_size)
+int ble_radio_read_allow_list_size(uint8_t *ret_size)
 {
 	int i, size = 0;
 	uint32_t dacnf = NRF51_RADIO_DACNF;
@@ -235,7 +235,7 @@ int ble_radio_read_white_list_size(uint8_t *ret_size)
 	return EC_SUCCESS;
 }
 
-int ble_radio_add_device_to_white_list(const uint8_t *addr_ptr, uint8_t rand)
+int ble_radio_add_device_to_allow_list(const uint8_t *addr_ptr, uint8_t rand)
 {
 	uint32_t dacnf = NRF51_RADIO_DACNF;
 	int i;
@@ -262,7 +262,7 @@ int ble_radio_add_device_to_white_list(const uint8_t *addr_ptr, uint8_t rand)
 	return EC_SUCCESS;
 }
 
-int ble_radio_remove_device_from_white_list(const uint8_t *addr_ptr,
+int ble_radio_remove_device_from_allow_list(const uint8_t *addr_ptr,
 					    uint8_t rand)
 {
 	int i, dacnf = NRF51_RADIO_DACNF;

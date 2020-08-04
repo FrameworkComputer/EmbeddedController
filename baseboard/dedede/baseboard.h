@@ -32,16 +32,6 @@
 	#define CONFIG_FLASH_SIZE (512 * 1024)
 	#define CONFIG_SPI_FLASH_REGS
 	#define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
-
-	/* USB defines specific to external TCPCs */
-	#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	#define CONFIG_USB_PD_VBUS_DETECT_TCPC
-	#define CONFIG_USB_PD_DISCHARGE_TCPC
-	#define CONFIG_USB_PD_TCPC_LOW_POWER
-
-	/* Variant references the TCPCs to determine Vbus sourcing */
-	#define CONFIG_USB_PD_5V_EN_CUSTOM
-
 #elif defined(VARIANT_DEDEDE_EC_IT8320)
 	/* Flash clock must be > (50Mhz / 2) */
 	#define CONFIG_IT83XX_FLASH_CLOCK_48MHZ
@@ -92,6 +82,12 @@
 
 /* Common EC defines */
 
+/* Work around double CR50 reset by waiting in initial power on. */
+#define CONFIG_BOARD_RESET_AFTER_POWER_ON
+
+/* Enable i2ctrace command */
+#define CONFIG_I2C_DEBUG
+
 /* EC Modules */
 #define CONFIG_ADC
 #define CONFIG_CRC8
@@ -105,6 +101,7 @@
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
+#define CONFIG_VBOOT_EFS2
 
 /* Battery */
 #define CONFIG_BATTERY_CUT_OFF
@@ -138,9 +135,10 @@
 #define CONFIG_BACKLIGHT_LID
 #define GPIO_ENABLE_BACKLIGHT   GPIO_EN_BL_OD
 
-/* PWM */
+/* LED */
 #define CONFIG_LED_COMMON
-#define CONFIG_LED_PWM
+
+/* PWM */
 #define CONFIG_PWM
 
 /* SoC */
@@ -151,7 +149,7 @@
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 #define CONFIG_POWER_S0IX
-#define CONFIG_POWER_S0IX_FAILURE_DETECTION
+#define CONFIG_POWER_SLEEP_FAILURE_DETECTION
 #define CONFIG_CPU_PROCHOT_ACTIVE_LOW
 
 /* USB Type-C */
@@ -168,7 +166,6 @@
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_LOGGING
 #define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT TYPEC_RP_3A0
-#define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_USB_PD_REV30
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_USB_PD_TCPM_TCPCI
@@ -211,14 +208,6 @@
 /* Common enums */
 #if defined(VARIANT_DEDEDE_EC_NPCX796FC)
 #elif defined(VARIANT_DEDEDE_EC_IT8320)
-	enum adc_channel {
-		ADC_VSNS_PP3300_A,     /* ADC0 */
-		ADC_TEMP_SENSOR_1,     /* ADC2 */
-		ADC_TEMP_SENSOR_2,     /* ADC3 */
-		ADC_SUB_ANALOG,        /* ADC13 */
-		ADC_CH_COUNT
-	};
-
 	enum board_vcmp {
 		VCMP_SNS_PP3300_LOW,
 		VCMP_SNS_PP3300_HIGH,

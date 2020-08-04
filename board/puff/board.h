@@ -11,10 +11,6 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
-/* Bringup/debug config items. Remove before shipping. */
-#define CONFIG_SYSTEM_UNLOCKED
-
-
 /* NPCX7 config */
 #define NPCX7_PWM1_SEL    0  /* GPIO C2 is not used as PWM1. */
 #define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
@@ -31,6 +27,7 @@
 #define CONFIG_DEDICATED_RECOVERY_BUTTON
 #define CONFIG_DEDICATED_RECOVERY_BUTTON_2
 #define CONFIG_BUTTONS_RUNTIME_CONFIG
+#define CONFIG_BOARD_RESET_AFTER_POWER_ON
 /* TODO: (b/143496253) re-enable CEC */
 /* #define CONFIG_CEC */
 #define CONFIG_CRC8
@@ -101,7 +98,7 @@
 #define CONFIG_DELAY_DSW_PWROK_TO_PWRBTN
 #define CONFIG_POWER_PP5000_CONTROL
 #define CONFIG_POWER_S0IX
-#define CONFIG_POWER_S0IX_FAILURE_DETECTION
+#define CONFIG_POWER_SLEEP_FAILURE_DETECTION
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 #define CONFIG_INA3221
 
@@ -143,6 +140,7 @@
 #define CONFIG_USB_PD_DISCHARGE_PPC
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_LOGGING
+#define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT TYPEC_RP_3A0
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_VBUS_DETECT_PPC
 #define CONFIG_USBC_PPC_SN5S330
@@ -233,13 +231,23 @@ void led_alert(int enable);
 void show_critical_error(void);
 
 /*
+ * firmware config fields
+ */
+/*
  * Barrel-jack power (4 bits).
  */
 #define EC_CFG_BJ_POWER_L		0
 #define EC_CFG_BJ_POWER_H		3
 #define EC_CFG_BJ_POWER_MASK GENMASK(EC_CFG_BJ_POWER_H, EC_CFG_BJ_POWER_L)
+/*
+ * USB Connector 4 not present (1 bit).
+ */
+#define EC_CFG_NO_USB4_L		4
+#define EC_CFG_NO_USB4_H		4
+#define EC_CFG_NO_USB4_MASK GENMASK(EC_CFG_NO_USB4_H, EC_CFG_NO_USB4_L)
 
 unsigned int ec_config_get_bj_power(void);
+int ec_config_get_usb4_present(void);
 
 #endif /* !__ASSEMBLER__ */
 

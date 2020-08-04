@@ -262,7 +262,7 @@ class RMAOpen(object):
         url = URL % (challenge, hwid)
         logging.info('GOTO:\n %s', url)
         logging.info('If the server fails to debug the challenge make sure the '
-                     'RLZ is whitelisted')
+                     'RLZ is allowlisted')
 
     def try_authcode(self, authcode):
         """Try opening cr50 with the authcode

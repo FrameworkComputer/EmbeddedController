@@ -16,8 +16,8 @@
 #include "timer.h"
 #include "util.h"
 
-#define LED_BAT_OFF_LVL	1
-#define LED_BAT_ON_LVL	0
+#define LED_BAT_OFF_LVL	0
+#define LED_BAT_ON_LVL	1
 #define LED_BAT_S3_OFF_TIME_MS 3000
 #define LED_BAT_S3_PWM_RESCALE 5
 #define LED_BAT_S3_TICK_MS 50

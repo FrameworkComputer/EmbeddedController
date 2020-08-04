@@ -182,7 +182,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			}
 		}
 		if (pad_width < 0 || pad_width > MAX_FORMAT) {
-			/* Sanity check for precision failed */
+			/* Validity check for precision failed */
 			format = error_str;
 			continue;
 		}
@@ -202,7 +202,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				}
 			}
 			if (precision < 0 || precision > MAX_FORMAT) {
-				/* Sanity check for precision failed */
+				/* Validity check for precision failed */
 				format = error_str;
 				continue;
 			}

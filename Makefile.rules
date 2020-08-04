@@ -17,7 +17,7 @@ build-srcs := $(foreach u,$(build-util-bin),$(sort $($(u)-objs:%.o=util/%.c) $(w
 host-srcs := $(foreach u,$(host-util-bin),$(sort $($(u)-objs:%.o=util/%.c) $(wildcard util/$(u).c)))
 
 # Don't do a build test on the following boards:
-skip_boards = OWNERS chell chell_pd cr50 glados glados_pd gru host kevin
+skip_boards = OWNERS cr50 host
 boards := $(filter-out $(skip_boards),$(notdir $(wildcard board/* private*/board/*)))
 
 # Create output directories if necessary
@@ -112,7 +112,9 @@ cmd_host_test = $(MAKE) BOARD=host PROJECT=$* \
 	V=$(V) out=build/host/$* TEST_BUILD=y EMU_BUILD=y CROSS_COMPILE= \
 	$(if $(TEST_SCRIPT),TEST_SCRIPT=$(TEST_SCRIPT)) $(TEST_FLAG) \
 	build/host/$*/$*.exe
+cmd_coverage_test = $(subst build/host,build/coverage,$(cmd_host_test))
 cmd_run_host_test = ./util/run_host_test $* $(silent)
+cmd_run_coverage_test = ./util/run_host_test --coverage $* $(silent)
 # generate new version.h, compare if it changed and replace if so
 cmd_version = ./util/getversion.sh > $@.tmp && \
 	cmp -s $@.tmp $@ && rm -f $@.tmp || mv $@.tmp $@
@@ -303,6 +305,18 @@ $(run-test-targets): run-%: host-%
 	$(call quiet,run_host_test,TEST   )
 	@rm -f $(FAILED_BOARDS_DIR)/test-$*
 
+host-coverage-targets=$(foreach t,$(test-list-host),host-coverage-$(t))
+run-coverage-targets=$(foreach t,$(test-list-host),run-coverage-$(t))
+.PHONY: $(host-coverage-targets) $(run-coverage-targets)
+
+$(host-coverage-targets): host-coverage-%: | $(FAILED_BOARDS_DIR)
+	@touch $(FAILED_BOARDS_DIR)/test-$*
+	+$(call quiet,coverage_test,BUILD  )
+
+$(run-coverage-targets): run-coverage-%: host-coverage-%
+	$(call quiet,run_coverage_test,TEST   )
+	@rm -f $(FAILED_BOARDS_DIR)/test-$*
+
 .PHONY: print-host-tests
 print-host-tests:
 	$(call cmd_pretty_print_list, \
@@ -377,13 +391,13 @@ $(foreach b, $(cts_boards), \
 	) \
 )
 
-cov-test-targets=$(foreach t,$(cov-test-list-host),build/host/$(t).info)
+cov-test-targets=$(foreach t,$(cov-test-list-host),build/coverage/$(t).info)
 bldversion=$(shell (./util/getversion.sh ; echo VERSION) | $(CPP) -P -)
 
 # lcov fails when multiple instances run at the same time.
 # We need to run them sequentially by using flock
-cmd_lcov=flock /tmp/ec-lcov-lock -c "lcov -q -o $@ -c -d build/host/$*"
-cmd_report_cov=genhtml -q -o build/host/coverage_rpt -t \
+cmd_lcov=flock /tmp/ec-lcov-lock -c "lcov -q -o $@ -c -d build/coverage/$*"
+cmd_report_cov=genhtml -q -o build/coverage/coverage_rpt -t \
 	       "EC Unittest "$(bldversion) $^
 
 # Unless V is set to 0 we always want the 'size:' target to report its output,
@@ -420,7 +434,7 @@ cmd_stats= \
 	printf "%-10s: %6d\n" $$board $$size; \
   done
 
-build/host/%.info: run-%
+build/coverage/%.info: run-coverage-%
 	$(call quiet,lcov,COV    )
 
 .PHONY: coverage

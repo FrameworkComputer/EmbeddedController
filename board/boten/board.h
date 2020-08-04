@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Waddledee board configuration */
+/* Boten board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -22,18 +22,20 @@
 #define CONFIG_BC12_DETECT_PI3USB9201
 
 /* Charger */
-#define CONFIG_CHARGER_SM5803		/* C0 Charger */
-#define CONFIG_USB_PD_VBUS_DETECT_CHARGER
-#define CONFIG_USB_PD_5V_CHARGER_CTRL
-#define CONFIG_CHARGER_OTG
+#define CONFIG_CHARGE_RAMP_HW
+#define CONFIG_CHARGER_DISCHARGE_ON_AC
+#define CONFIG_CHARGER_RAA489000
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
+#define CONFIG_CHARGER_SENSE_RESISTOR 10
+#define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr */
 
 /* LED */
-#define CONFIG_LED_PWM_COUNT 1
+#define CONFIG_LED_POWER_LED
+#define CONFIG_LED_ONOFF_STATES
 
 /* Sensors */
-#define CONFIG_ACCEL_LIS2DE		/* Lid accel */
+#define CONFIG_ACCEL_LIS2DWL		/* Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
-#define CONFIG_SYNC			/* Camera VSYNC */
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
 
@@ -49,18 +51,22 @@
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 
-#define CONFIG_SYNC_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
-
 #define CONFIG_TABLET_MODE
 #define CONFIG_TABLET_MODE_SWITCH
 #define CONFIG_GMR_TABLET_MODE
 
 /* TCPC */
-#undef  CONFIG_USB_PD_PORT_MAX_COUNT
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
-#define CONFIG_USB_PD_TCPM_ITE_ON_CHIP	/* C0: ITE EC TCPC */
-#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 1
+#define CONFIG_USB_PD_TCPM_RAA489000
+
+/* USB defines specific to external TCPCs */
+#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+#define CONFIG_USB_PD_VBUS_DETECT_TCPC
+#define CONFIG_USB_PD_DISCHARGE_TCPC
+#define CONFIG_USB_PD_TCPC_LOW_POWER
+
+/* Variant references the TCPCs to determine Vbus sourcing */
+#define CONFIG_USB_PD_5V_EN_CUSTOM
 
 /* Thermistors */
 #define CONFIG_TEMP_SENSOR
@@ -68,9 +74,8 @@
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 #define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_EN_PP3300_A
 
-/* USB Mux and Retimer */
-#define CONFIG_USB_MUX_IT5205			/* C1: ITE Mux */
-#define I2C_PORT_USB_MUX I2C_PORT_USB_C0	/* Required for ITE Mux */
+/* USB Mux */
+#define CONFIG_USB_MUX_IT5205
 
 #ifndef __ASSEMBLER__
 
@@ -81,7 +86,7 @@ enum pwm_channel {
 	PWM_CH_KBLIGHT,
 	PWM_CH_LED_RED,
 	PWM_CH_LED_GREEN,
-	PWM_CH_LED_BLUE,
+	PWM_CH_LED_WHITE,
 	PWM_CH_COUNT,
 };
 
@@ -90,8 +95,16 @@ enum sensor_id {
 	LID_ACCEL,
 	BASE_ACCEL,
 	BASE_GYRO,
-	VSYNC,
 	SENSOR_COUNT
+};
+
+/* ADC channels */
+enum adc_channel {
+	ADC_VSNS_PP3300_A,     /* ADC0 */
+	ADC_TEMP_SENSOR_1,     /* ADC2 */
+	ADC_TEMP_SENSOR_2,     /* ADC3 */
+	ADC_SUB_ANALOG,        /* ADC13 */
+	ADC_CH_COUNT
 };
 
 enum temp_sensor_id {
@@ -102,16 +115,9 @@ enum temp_sensor_id {
 
 /* List of possible batteries */
 enum battery_type {
-	BATTERY_LGC15,
-	BATTERY_PANASONIC_AP15O5L,
-	BATTERY_SANYO,
-	BATTERY_SONY,
-	BATTERY_SMP_AP13J7K,
-	BATTERY_PANASONIC_AC15A3J,
-	BATTERY_LGC_AP18C8K,
-	BATTERY_MURATA_AP18C4K,
-	BATTERY_LGC_AP19A8K,
-	BATTERY_LGC_G023,
+	BATTERY_SMP,
+	BATTERY_LGC,
+	BATTERY_SUNWODA,
 	BATTERY_TYPE_COUNT,
 };
 

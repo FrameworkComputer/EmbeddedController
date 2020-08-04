@@ -173,7 +173,7 @@ class Spower(object):
           dev = d
           break
       if dev is None:
-        raise SusbError("USB device(%s) not found" % serialname)
+        raise Exception("Power", "USB device(%s) not found" % serialname)
     else:
       try:
         dev = dev_list[0]

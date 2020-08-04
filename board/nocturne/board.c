@@ -340,8 +340,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
-
 void board_chipset_startup(void)
 {
 	gpio_set_level(GPIO_EN_5V, 1);
@@ -562,7 +560,7 @@ void board_overcurrent_event(int port, int is_overcurrented)
 {
 	int lvl;
 
-	/* Sanity check the port. */
+	/* Check that port number is valid. */
 	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_MAX_COUNT))
 		return;
 

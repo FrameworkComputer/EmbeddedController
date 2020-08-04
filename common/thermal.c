@@ -42,7 +42,7 @@ int thermal_fan_percent(int low, int high, int cur)
 }
 
 /* The logic below is hard-coded for only three thresholds: WARN, HIGH, HALT.
- * This is just a sanity check to be sure we catch any changes in thermal.h
+ * This is just a validity check to be sure we catch any changes in thermal.h
  */
 BUILD_ASSERT(EC_TEMP_THRESH_COUNT == 3);
 

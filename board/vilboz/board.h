@@ -13,13 +13,6 @@
 #include <stdbool.h>
 #include "baseboard.h"
 
-/*
- * Allow dangerous commands.
- * TODO: Remove this config before production.
- */
-#define CONFIG_SYSTEM_UNLOCKED
-#define CONFIG_I2C_DEBUG
-
 #define CONFIG_MKBP_USE_GPIO
 
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
@@ -76,6 +69,12 @@
 /* This I2C moved. Temporarily detect and support the V0 HW. */
 extern int I2C_PORT_BATTERY;
 
+enum adc_channel {
+	ADC_TEMP_SENSOR_CHARGER,
+	ADC_TEMP_SENSOR_SOC,
+	ADC_CH_COUNT
+};
+
 enum battery_type {
 	BATTERY_SMP,
 	BATTERY_LGC,
@@ -97,6 +96,23 @@ enum ioex_port {
 	? GPIO_USB3_C0_DP2_HPD \
 	: GPIO_DP1_HPD)
 
+enum temp_sensor_id {
+	TEMP_SENSOR_CHARGER = 0,
+	TEMP_SENSOR_SOC,
+	TEMP_SENSOR_CPU,
+	TEMP_SENSOR_COUNT
+};
+
+enum usba_port {
+	USBA_PORT_A0 = 0,
+	USBA_PORT_A1,
+	USBA_PORT_COUNT
+};
+
+enum usbc_port {
+	USBC_PORT_C0 = 0,
+	USBC_PORT_COUNT
+};
 
 /*****************************************************************************
  * CBI EC FW Configuration
@@ -144,11 +160,6 @@ enum ec_cfg_usb_db_type {
 	DALBOZ_DB_D_OPT2_USBA_HDMI = 1,
 };
 
-enum usbc_port {
-	USBC_PORT_C0 = 0,
-	USBC_PORT_COUNT
-};
-
 #define HAS_USBC1 \
 			(BIT(DALBOZ_DB_D_OPT1_USBAC))
 
@@ -157,7 +168,6 @@ static inline bool ec_config_has_usbc1(void)
 	return !!(BIT(ec_config_get_usb_db()) &
 		  HAS_USBC1);
 }
-
 
 #define HAS_USBC1_RETIMER_PS8740 \
 			(BIT(DALBOZ_DB_D_OPT1_USBAC))

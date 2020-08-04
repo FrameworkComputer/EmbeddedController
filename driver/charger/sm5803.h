@@ -12,6 +12,7 @@
 #define SM5803_ADDR_MAIN_FLAGS		0x30
 #define SM5803_ADDR_MEAS_FLAGS		0x31
 #define SM5803_ADDR_CHARGER_FLAGS	0x32
+#define SM5803_ADDR_TEST_FLAGS		0x37
 
 /* Main registers (address 0x30) */
 
@@ -75,6 +76,9 @@
 #define SM5803_MISC_INV_INT		BIT(0)
 #define SM5803_INT_CLEAR_MODE		BIT(1)
 #define SM5803_INT_MASK_MODE		BIT(2)
+
+#define SM5803_REG_PLATFORM		0x18
+#define SM5803_PLATFORM_ID		GENMASK(4, 0)
 
 #define SM5803_REG_REFERENCE		0x20
 #define SM5803_REFERENCE_LDO3P3_PGOOD	BIT(4)
@@ -211,6 +215,16 @@ enum sm5803_gpio0_modes {
 					 / SM5803_VOLTAGE_STEP)
 
 /*
+ * Precharge Termination threshold.
+ */
+#define SM5803_REG_PRE_FAST_CONF_REG1	0x39
+#define SM5803_VBAT_PRE_TERM_MIN_DV	23
+/* 3.8V+ gets rounded to 4V */
+#define SM5803_VBAT_PRE_TERM_MAX_DV	38
+#define SM5803_VBAT_PRE_TERM		GENMASK(7, 4)
+#define SM5803_VBAT_PRE_TERM_SHIFT	4
+
+/*
  * Vbat for fast charge uses the same equation as Vsys
  * Lower saturation value is 3V, upper is dependent on number of cells
  */
@@ -223,6 +237,14 @@ enum sm5803_gpio0_modes {
  */
 #define SM5803_REG_FAST_CONF4		0x3C
 #define SM5803_CONF4_ICHG_FAST		GENMASK(5, 0)
+
+#define SM5803_REG_PHOT1		0x72
+#define SM5803_PHOT1_IBAT_PHOT_COMP_EN	BIT(0)
+#define SM5803_PHOT1_IBUS_PHOT_COMP_EN	BIT(1)
+#define SM5803_PHOT1_VSYS_MON_EN	BIT(2)
+#define SM5803_PHOT1_VBUS_MON_EN	BIT(3)
+#define SM5803_PHOT1_DURATION		GENMASK(6, 4)
+#define SM5803_PHOT1_IRQ_MODE		BIT(7)
 
 #define CHARGER_NAME "sm5803"
 

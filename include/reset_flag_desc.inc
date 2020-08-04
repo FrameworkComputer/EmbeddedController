@@ -29,3 +29,4 @@
 "stay-in-ro",
 "efs",
 "ap-idle",
+"initial-pwr",

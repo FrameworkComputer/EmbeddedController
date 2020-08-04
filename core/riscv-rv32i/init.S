@@ -386,7 +386,7 @@ excep_handler:
         la a0, saved_regs
         csrr sp, mscratch
         sw sp, 30*4(a0)
-        /* put a sane stack pointer */
+        /* put a valid stack pointer */
         la sp, stack_end
         /* jump to panic dump C routine */
         jal report_panic

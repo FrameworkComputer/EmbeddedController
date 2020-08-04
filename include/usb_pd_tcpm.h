@@ -329,24 +329,12 @@ struct tcpm_drv {
 						      int enable);
 
 	/**
-	 * Set connection
-	 * If this is a disconnect, set the ROLE_CONTROL, otherwise
-	 * this is a new connection. May have to handle differently
-	 * if we were performing auto-toggle. Allow a driver to do
-	 * any work required to leave the unattached auto-toggle mode
-	 * as well as setting the CC lines.  If auto-toggle is not
-	 * being used or was not the cause of the new connection
-	 * detection then set both CC lines to the passed pull.
+	 * Manual control of TCPC DebugAccessory enable
 	 *
 	 * @param port Type-C port number
-	 * @param pull enum tcpc_cc_pull of CC lines
-	 * @param connect Connect(1) or Disconnect(0)
-	 *
-	 * @return EC_SUCCESS or error
+	 * @param enable Debug Accessory enable or disable
 	 */
-	int (*set_connection)(int port,
-			      enum tcpc_cc_pull pull,
-			      int connect);
+	int (*debug_accessory)(int port, bool enable);
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	/**
@@ -364,14 +352,25 @@ struct tcpm_drv {
 	 *
 	 * @param port Type-C port number
 	 * @param live Fetch live chip info or hard-coded + cached info
-	 * @param info Pointer to pointer to PD chip info
+	 * @param info Pointer to PD chip info; NULL to cache the info only
 	 *
 	 * @return EC_SUCCESS or error
 	 */
 	int (*get_chip_info)(int port, int live,
-			struct ec_response_pd_chip_info_v1 **info);
+			struct ec_response_pd_chip_info_v1 *info);
 
 #ifdef CONFIG_USBC_PPC
+	/**
+	 * Request current sinking state of the TCPC
+	 * NOTE: this is most useful for PPCs that can not tell on their own
+	 *
+	 * @param port Type-C port number
+	 * @param is_sinking true for sinking, false for not
+	 *
+	 * @return EC_SUCCESS, EC_ERROR_UNIMPLEMENTED or error
+	 */
+	int (*get_snk_ctrl)(int port, bool *sinking);
+
 	/**
 	 * Send SinkVBUS or DisableSinkVBUS command
 	 *
@@ -381,6 +380,17 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	int (*set_snk_ctrl)(int port, int enable);
+
+	/**
+	 * Request current sourcing state of the TCPC
+	 * NOTE: this is most useful for PPCs that can not tell on their own
+	 *
+	 * @param port Type-C port number
+	 * @param is_sourcing true for sourcing, false for not
+	 *
+	 * @return EC_SUCCESS, EC_ERROR_UNIMPLEMENTED or error
+	 */
+	int (*get_src_ctrl)(int port, bool *sourcing);
 
 	/**
 	 * Send SourceVBUS or DisableSourceVBUS command
@@ -407,13 +417,17 @@ struct tcpm_drv {
 	int (*enter_low_power_mode)(int port);
 #endif
 
+#ifdef CONFIG_USB_PD_FRS_TCPC
 	/**
 	 * Enable/Disable TCPC FRS detection
 	 *
 	 * @param port Type-C port number
 	 * @param enable FRS enable (true) disable (false)
+	 *
+	 * @return EC_SUCCESS or error
 	 */
-	 void (*set_frs_enable)(int port, int enable);
+	 int (*set_frs_enable)(int port, int enable);
+#endif
 
 	/**
 	 * Handle TCPCI Faults
@@ -442,11 +456,14 @@ struct tcpm_drv {
  * Bit 1 --> Set to 1 if TCPC alert line is open-drain instead of push-pull.
  * Bit 2 --> Polarity for TCPC reset. Set to 1 if reset line is active high.
  * Bit 3 --> Set to 1 if TCPC is using TCPCI Revision 2.0
+ * Bit 4 --> Set to 1 if TCPC is using TCPCI Revision 2.0 but does not support
+ *           the vSafe0V bit in the EXTENDED_STATUS_REGISTER
  */
 #define TCPC_FLAGS_ALERT_ACTIVE_HIGH	BIT(0)
 #define TCPC_FLAGS_ALERT_OD		BIT(1)
 #define TCPC_FLAGS_RESET_ACTIVE_HIGH	BIT(2)
 #define TCPC_FLAGS_TCPCI_REV2_0		BIT(3)
+#define TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V	BIT(4)
 
 struct tcpc_config_t {
 	enum ec_bus_type bus_type;	/* enum ec_bus_type */

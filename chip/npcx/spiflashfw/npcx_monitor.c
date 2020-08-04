@@ -294,8 +294,15 @@ sspi_flash_upload(int spi_offset, int spi_size)
 	/* UMA Unlock */
 	CLEAR_BIT(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_LOCK);
 
-	/* Set pinmux first */
-	sspi_flash_pinmux(1);
+	/*
+	 * If UUT is used, assuming the target is the internal flash.
+	 * Don't switch the pinmux and make sure bit 7 of DEVALT0 is set.
+	 */
+	if (uut_tag == NPCX_MONITOR_UUT_TAG)
+		SET_BIT(NPCX_DEVALT(0), NPCX_DEVALT0_NO_F_SPI);
+	else
+		/* Set pinmux first */
+		sspi_flash_pinmux(1);
 
 	/* Get size of image automatically */
 	if (sz_image == 0)
@@ -313,8 +320,9 @@ sspi_flash_upload(int spi_offset, int spi_size)
 		if (sspi_flash_verify(spi_offset, sz_image, image_base))
 			*flag_upload |= 0x02;
 	}
-	/* Disable pinmux */
-	sspi_flash_pinmux(0);
+	if (uut_tag != NPCX_MONITOR_UUT_TAG)
+		/* Disable pinmux */
+		sspi_flash_pinmux(0);
 
 	/* Mark we have finished upload work */
 	*flag_upload |= 0x01;

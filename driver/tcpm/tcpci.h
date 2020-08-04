@@ -42,12 +42,15 @@
 				      TCPC_REG_ALERT_TX_FAILED)
 
 #define TCPC_REG_ALERT_MASK        0x12
+#define TCPC_REG_ALERT_MASK_VENDOR_DEF   BIT(15)
+
 #define TCPC_REG_POWER_STATUS_MASK 0x14
 #define TCPC_REG_FAULT_STATUS_MASK 0x15
 #define TCPC_REG_EXT_STATUS_MASK   0x16
 #define TCPC_REG_ALERT_EXTENDED_MASK 0x17
 
 #define TCPC_REG_CONFIG_STD_OUTPUT 0x18
+#define TCPC_REG_CONFIG_STD_OUTPUT_DBG_ACC_CONN_N    BIT(6)
 #define TCPC_REG_CONFIG_STD_OUTPUT_MUX_MASK          (3 << 2)
 #define TCPC_REG_CONFIG_STD_OUTPUT_MUX_NONE          (0 << 2)
 #define TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB           BIT(2)
@@ -61,7 +64,8 @@
  * In TCPCI Rev 2.0, this bit must be set this to generate CC status alerts when
  * a connection is found.
  */
-#define TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT  (BIT(6))
+#define TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT  BIT(6)
+#define TCPC_REG_TCPC_CTRL_DEBUG_ACC_CONTROL         BIT(4)
 
 #define TCPC_REG_ROLE_CTRL         0x1a
 #define TCPC_REG_ROLE_CTRL_DRP_MASK                    BIT(6)
@@ -112,6 +116,7 @@
 #define TCPC_REG_POWER_STATUS_SOURCING_VBUS BIT(4)
 #define TCPC_REG_POWER_STATUS_VBUS_DET  BIT(3)
 #define TCPC_REG_POWER_STATUS_VBUS_PRES BIT(2)
+#define TCPC_REG_POWER_STATUS_SINKING_VBUS BIT(0)
 
 #define TCPC_REG_FAULT_STATUS      0x1f
 #define TCPC_REG_FAULT_STATUS_ALL_REGS_RESET            BIT(7)
@@ -226,7 +231,6 @@ int tcpci_tcpm_release(int port);
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 int tcpci_set_role_ctrl(int port, int toggle, int rp, int pull);
 int tcpci_tcpc_drp_toggle(int port);
-int tcpci_tcpc_set_connection(int port, enum tcpc_cc_pull pull, int connect);
 #endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 int tcpci_enter_low_power_mode(int port);
@@ -235,17 +239,20 @@ int tcpci_enter_low_power_mode(int port);
 void tcpci_tcpc_discharge_vbus(int port, int enable);
 #endif
 void tcpci_tcpc_enable_auto_discharge_disconnect(int port, int enable);
+int tcpci_tcpc_debug_accessory(int port, bool enable);
 
 int tcpci_tcpm_mux_init(const struct usb_mux *me);
 int tcpci_tcpm_mux_set(const struct usb_mux *me, mux_state_t mux_state);
 int tcpci_tcpm_mux_get(const struct usb_mux *me, mux_state_t *mux_state);
 int tcpci_get_chip_info(int port, int live,
-			struct ec_response_pd_chip_info_v1 **chip_info);
+			struct ec_response_pd_chip_info_v1 *chip_info);
 #ifdef CONFIG_USBC_PPC
+int tcpci_tcpm_get_snk_ctrl(int port, bool *sinking);
 int tcpci_tcpm_set_snk_ctrl(int port, int enable);
+int tcpci_tcpm_get_src_ctrl(int port, bool *sourcing);
 int tcpci_tcpm_set_src_ctrl(int port, int enable);
 #endif
 
-void tcpci_tcpc_fast_role_swap_enable(int port, int enable);
+int tcpci_tcpc_fast_role_swap_enable(int port, int enable);
 
 #endif /* __CROS_EC_USB_PD_TCPM_TCPCI_H */

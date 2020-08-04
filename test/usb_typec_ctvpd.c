@@ -1521,7 +1521,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_ctvpd_behavior_case6);
 #endif
 
-	/* Do basic state machine sanity checks last. */
+	/* Do basic state machine validity checks last. */
 	RUN_TEST(test_tc_no_parent_cycles);
 	RUN_TEST(test_tc_no_empty_state);
 	RUN_TEST(test_tc_all_states_named);

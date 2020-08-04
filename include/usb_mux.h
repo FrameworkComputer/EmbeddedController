@@ -68,6 +68,14 @@ struct usb_mux_driver {
 	 * @return EC_SUCCESS on success, non-zero error code on failure.
 	 */
 	int (*enter_low_power_mode)(const struct usb_mux *me);
+
+	/**
+	 * Optional method that is called on HOOK_CHIPSET_RESET.
+	 *
+	 * @param me usb_mux
+	 * @return EC_SUCCESS on success, non-zero error code on failure.
+	 */
+	int (*chipset_reset)(const struct usb_mux *me);
 };
 
 /* Describes a USB mux present in the system */

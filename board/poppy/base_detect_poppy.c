@@ -241,7 +241,7 @@ static void base_init(void)
 	 * If we jumped to this image and chipset is already in S0, enable
 	 * base.
 	 */
-	if (system_jumped_to_this_image() && chipset_in_state(CHIPSET_STATE_ON))
+	if (system_jumped_late() && chipset_in_state(CHIPSET_STATE_ON))
 		base_enable();
 }
 DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT+1);

@@ -293,8 +293,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
-
 void board_reset_pd_mcu(void)
 {
 	if (oem == PROJECT_AKALI && board_version < 0x0200) {
@@ -317,7 +315,7 @@ void board_reset_pd_mcu(void)
 void board_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image())
+	if (!system_jumped_late())
 		board_reset_pd_mcu();
 
 	/* Enable TCPC interrupts */

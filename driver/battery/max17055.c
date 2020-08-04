@@ -190,6 +190,11 @@ int battery_serial_number(int *serial)
 	return EC_SUCCESS;
 }
 
+int battery_manufacture_date(int *year, int *month, int *day)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
 int battery_design_voltage(int *voltage)
 {
 	*voltage = battery_get_info()->voltage_normal;

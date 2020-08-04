@@ -114,6 +114,16 @@ struct ppc_drv {
 	int (*set_vconn)(int port, int enable);
 #endif
 
+#ifdef CONFIG_USB_PD_FRS_PPC
+	/**
+	 * Turn on/off the FRS trigger
+	 *
+	 * @param port: The Type-C port number.
+	 * @return EC_SUCCESS on success, error otherwise
+	 */
+	int (*set_frs_enable)(int port, int enable);
+#endif
+
 #ifdef CONFIG_CMD_PPC_DUMP
 	/**
 	 * Perform a register dump of the PPC.
@@ -148,10 +158,28 @@ struct ppc_config_t {
 	int i2c_port;
 	uint16_t i2c_addr_flags;
 	const struct ppc_drv *drv;
+	int frs_en;
 };
 
 extern struct ppc_config_t ppc_chips[];
 extern unsigned int ppc_cnt;
+
+/**
+ * Common CPRINTS implementation so that PPC driver messages are consistent.
+ *
+ * @param string: message string to display on the console.
+ * @param port: The Type-C port number
+ */
+int ppc_prints(const char *string, int port);
+
+/**
+ * Common CPRINTS for PPC drivers with an error code.
+ *
+ * @param string: message string to display on the console.
+ * @param port: The Type-C port number
+ * @param error: The error code to display at the end of the message.
+ */
+int ppc_err_prints(const char *string, int port, int error);
 
 /**
  * Increment the overcurrent event counter.
@@ -300,5 +328,13 @@ int ppc_enter_low_power_mode(int port);
  * @return 0 if interrupt is cleared, 1 if it is still on
  */
 int ppc_get_alert_status(int port);
+
+/**
+ * Turn on/off the FRS trigger
+ *
+ * @param port: The Type-C port number.
+ * @return EC_SUCCESS on success, error otherwise
+ */
+int ppc_set_frs_enable(int port, int enable);
 
 #endif /* !defined(__CROS_EC_USBC_PPC_H) */

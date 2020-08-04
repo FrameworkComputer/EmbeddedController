@@ -14,18 +14,6 @@
  */
 #define PORT0 0
 
-/*
- * Parameters for pe_run
- *
- * pe_run(port, evt, enable)
- *    evt - currently ignored in the implementation
- *    enable - 0 Disable/1 Enable
- */
-#define EVT_IGNORED 0
-
-#define ENABLED 1
-#define DISABLED 0
-
 /**
  * usb_pe_drp_sm.c locally defined.  If it changes there, it must
  * be changed here as well.
@@ -65,8 +53,8 @@
 #define PE_FLAGS_PS_RESET_COMPLETE           BIT(13)
 /* VCONN swap operation has completed */
 #define PE_FLAGS_VCONN_SWAP_COMPLETE         BIT(14)
-/* Flag to note no more discover identity messages are sent to port partner */
-#define PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE BIT(15)
+/* Flag to note no more setup VDMs (discovery, etc.) should be sent */
+#define PE_FLAGS_VDM_SETUP_DONE              BIT(15)
 /* Flag to note Swap Source Start timer should be set at PE_SRC_Startup entry */
 #define PE_FLAGS_RUN_SOURCE_START_TIMER      BIT(16)
 /* Flag to note Port Discovery port partner replied with BUSY */
@@ -143,15 +131,21 @@ enum usb_pe_state {
 	PE_BIST_RX,
 	PE_DR_SNK_GET_SINK_CAP,
 
+#ifdef CONFIG_USB_PD_REV30
 	/* PD3.0 only states below here*/
 	PE_FRS_SNK_SRC_START_AMS,
+#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
 	PE_GIVE_BATTERY_CAP,
 	PE_GIVE_BATTERY_STATUS,
+	PE_SEND_ALERT,
+#else
+	PE_SRC_CHUNK_RECEIVED,
+	PE_SNK_CHUNK_RECEIVED,
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 
-#ifdef CONFIG_USB_PD_REV30
 	/* Super States */
 	PE_PRS_FRS_SHARED,
-#endif
+#endif /* CONFIG_USB_PD_REV30 */
 };
 
 void set_state_pe(const int port, const enum usb_pe_state new_state);

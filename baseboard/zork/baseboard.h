@@ -39,9 +39,9 @@
 #define CONFIG_CPU_PROCHOT_ACTIVE_LOW
 #define CONFIG_HIBERNATE_PSL
 #define CONFIG_HOSTCMD_ESPI
-#define CONFIG_HOSTCMD_SKUID
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
+#define CONFIG_I2C_UPDATE_IF_CHANGED
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_LTO
 #define CONFIG_PWM
@@ -99,11 +99,10 @@
 /*
  * On power-on, H1 releases the EC from reset but then quickly asserts and
  * releases the reset a second time. This means the EC sees 2 resets:
- * (1) power-on reset, (2) reset-pin reset. If we add a delay between reset (1)
- * and configuring GPIO output levels, then reset (2) will happen before the
- * end of the delay so we avoid extra output toggles.
+ * (1) power-on reset, (2) reset-pin reset. This config will
+ * allow the second reset to be treated as a power-on.
  */
-#define CONFIG_GPIO_INIT_POWER_ON_DELAY_MS 100
+#define CONFIG_BOARD_RESET_AFTER_POWER_ON
 
 #define CONFIG_IO_EXPANDER
 #define CONFIG_IO_EXPANDER_NCT38XX
@@ -111,7 +110,6 @@
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PROTOCOL_8042
-#undef  CONFIG_KEYBOARD_VIVALDI
 
 /*
  * USB ID
@@ -134,7 +132,7 @@
 
 	 /* Enable TCPMv2 Fast Role Swap */
 	 /* Turn off until FRSwap is working */
-	#undef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
+	#undef CONFIG_USB_PD_FRS_TCPC
 #endif
 
 #define CONFIG_HOSTCMD_PD_CONTROL
@@ -192,8 +190,8 @@
 #define PD_VCONN_SWAP_DELAY		5000 /* us */
 
 #define PD_OPERATING_POWER_MW	15000
-#define PD_MAX_POWER_MW		60000
-#define PD_MAX_CURRENT_MA	3000
+#define PD_MAX_POWER_MW		65000
+#define PD_MAX_CURRENT_MA	3250
 #define PD_MAX_VOLTAGE_MV	20000
 
 /*
@@ -271,12 +269,6 @@
 #include "math_util.h"
 #include "registers.h"
 
-enum adc_channel {
-	ADC_TEMP_SENSOR_CHARGER,
-	ADC_TEMP_SENSOR_SOC,
-	ADC_CH_COUNT
-};
-
 enum power_signal {
 	X86_SLP_S3_N,
 	X86_SLP_S5_N,
@@ -285,26 +277,10 @@ enum power_signal {
 	POWER_SIGNAL_COUNT
 };
 
-enum temp_sensor_id {
-	TEMP_SENSOR_CHARGER = 0,
-	TEMP_SENSOR_SOC,
-	TEMP_SENSOR_CPU,
-#ifdef BOARD_MORPHIUS
-	TEMP_SENSOR_5V_REGULATOR,
-#endif
-	TEMP_SENSOR_COUNT
-};
-
 enum fan_channel {
 	FAN_CH_0 = 0,
 	/* Number of FAN channels */
 	FAN_CH_COUNT,
-};
-
-enum usba_port {
-	USBA_PORT_A0 = 0,
-	USBA_PORT_A1,
-	USBA_PORT_COUNT
 };
 
 #ifdef VARIANT_ZORK_TREMBYLE
@@ -339,10 +315,13 @@ enum sensor_id {
  */
 extern mat33_fp_t zork_base_standard_ref;
 
+extern const struct thermistor_info thermistor_info;
+
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
 
 void mst_hpd_interrupt(enum ioex_signal signal);
+void sbu_fault_interrupt(enum ioex_signal signal);
 
 #ifdef VARIANT_ZORK_TREMBYLE
 void board_reset_pd_mcu(void);
@@ -353,9 +332,8 @@ void bc12_interrupt(enum gpio_signal signal);
 void ppc_interrupt(enum gpio_signal signal);
 #endif
 
-#ifdef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
-int board_tcpc_fast_role_swap_enable(int port, int enable);
-#endif
+void pi3hdx1204_retimer_power(void);
+__override_proto int check_hdmi_hpd_status(void);
 
 #endif /* !__ASSEMBLER__ */
 

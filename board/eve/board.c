@@ -241,7 +241,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &bd9995x_drv,
 	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /**
  * Power on (or off) a single TCPC.
@@ -302,7 +301,7 @@ void board_reset_pd_mcu(void)
 void board_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image())
+	if (!system_jumped_late())
 		board_reset_pd_mcu();
 
 	/* Enable TCPC interrupts */
@@ -405,7 +404,7 @@ static void board_pmic_init(void)
 {
 	board_report_pmic_fault("SYSJUMP");
 
-	if (system_jumped_to_this_image())
+	if (system_jumped_late())
 		return;
 
 	/* DISCHGCNT2 - enable 100 ohm discharge on V3.3A and V1.8A */

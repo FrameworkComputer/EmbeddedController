@@ -16,8 +16,18 @@ test-list-y=
 # These files are compiled into RO and RW
 board-y=board.o tca6416a.o tca6424a.o
 board-y+=ioexpanders.o
+board-y+=dacs.o
+board-y+=tusb1064.o
+board-y+=pi3usb9201.o
 
 # These files are compiled into RO only
-board-y+=ro_files.o
+board-ro+=ccd_measure_sbu.o
+board-ro+=pathsel.o
+board-ro+=chg_control.o
+board-ro+=ina231s.o
+board-ro+=usb_pd_policy.o
+board-ro+=fusb302b.o
+board-ro+=usb_sm.o
+board-ro+=usb_tc_snk_sm.o
 
 all_deps=$(patsubst ro,,$(def_all_deps))

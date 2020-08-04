@@ -141,7 +141,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &bq2477x_drv,
 	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 #define TEMP_U40_REG_ADDR_FLAGS		(0x40 | I2C_FLAG_BIG_ENDIAN)
 #define TEMP_U41_REG_ADDR_FLAGS		(0x44 | I2C_FLAG_BIG_ENDIAN)

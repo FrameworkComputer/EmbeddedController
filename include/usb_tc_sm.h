@@ -12,10 +12,6 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define TC_SET_FLAG(port, flag) atomic_or(&tc[port].flags, (flag))
-#define TC_CLR_FLAG(port, flag) atomic_clear(&tc[port].flags, (flag))
-#define TC_CHK_FLAG(port, flag) (tc[port].flags & (flag))
-
 enum try_src_override_t {
 	TRY_SRC_OVERRIDE_OFF,
 	TRY_SRC_OVERRIDE_ON,
@@ -268,14 +264,6 @@ void pd_request_vconn_swap_off(int port);
  */
 enum tcpc_cc_polarity get_snk_polarity(enum tcpc_cc_voltage_status cc1,
 	enum tcpc_cc_voltage_status cc2);
-
-/**
- * Restarts the TCPC
- *
- * @param port USB-C port number
- * @returns EC_SUCCESS on success
- */
-int tc_restart_tcpc(int port);
 
 /**
  * Called by the state machine framework to initialize the

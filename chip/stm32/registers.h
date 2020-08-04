@@ -436,8 +436,9 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 
 #define EP_STATUS_OUT 0x0100
 
-#define EP_TX_RX_MASK (EP_TX_MASK | EP_RX_MASK)
+#define EP_TX_RX_MASK  (EP_TX_MASK | EP_RX_MASK)
 #define EP_TX_RX_VALID (EP_TX_VALID | EP_RX_VALID)
+#define EP_TX_RX_NAK   (EP_TX_NAK | EP_RX_NAK)
 
 #define STM32_TOGGLE_EP(n, mask, val, flags) \
 	STM32_USB_EP(n) = (((STM32_USB_EP(n) & (EP_MASK | (mask))) \
@@ -474,6 +475,8 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #include "registers-stm32f4.h"
 #elif defined(CHIP_FAMILY_STM32F7)
 #include "registers-stm32f7.h"
+#elif defined(CHIP_FAMILY_STM32G4)
+#include "registers-stm32g4.h"
 #elif defined(CHIP_FAMILY_STM32H7)
 #include "registers-stm32h7.h"
 #elif defined(CHIP_FAMILY_STM32L)

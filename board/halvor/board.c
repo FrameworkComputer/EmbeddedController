@@ -8,8 +8,11 @@
 #include "button.h"
 #include "common.h"
 #include "accelgyro.h"
+#include "cbi_ec_fw_config.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/als_tcs3400.h"
+#include "driver/ppc/sn5s330.h"
+#include "driver/ppc/syv682x.h"
 #include "driver/sync.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -25,9 +28,18 @@
 #include "tablet_mode.h"
 #include "uart.h"
 #include "usb_pd_tbt.h"
+#include "usbc_ppc.h"
 #include "util.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
+
+/*
+ * FW_CONFIG defaults for Halvor if the CBI data is not initialized.
+ */
+union volteer_cbi_fw_config fw_config_defaults = {
+	/* Set all FW_CONFIG fields default to 0 */
+	.raw_value = 0,
+};
 
 static void board_init(void)
 {
@@ -165,15 +177,57 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 /******************************************************************************/
 void halvor_tcpc_alert_event(enum gpio_signal signal)
 {
-	/* TODO (b/153705222): Need tp implement three USB-C function */
+	/* TODO (b/153705222): Need to implement three USB-C function */
 }
 
 void halvor_ppc_interrupt(enum gpio_signal signal)
 {
-	/* TODO (b/153705222): Need tp implement three USB-C function */
+	/* TODO (b/153705222): Need to implement three USB-C function */
 }
 
 void halvor_bc12_interrupt(enum gpio_signal signal)
 {
-	/* TODO (b/153705222): Need tp implement three USB-C function */
+	/* TODO (b/153705222): Need to implement three USB-C function */
+}
+
+void board_reset_pd_mcu(void)
+{
+	/* TODO (b/153705222): Need to implement three USB-C function */
+}
+
+__override void board_cbi_init(void)
+{
+	/* TODO (b/153705222): Check FW_CONFIG for USB DB options */
+}
+
+/******************************************************************************/
+/* USBC PPC configuration */
+struct ppc_config_t ppc_chips[] = {
+	[USBC_PORT_C0] = {
+		.i2c_port = I2C_PORT_USB_C0,
+		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+		.drv = &sn5s330_drv,
+	},
+	[USBC_PORT_C1] = {
+		.i2c_port = I2C_PORT_USB_C1,
+		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.drv = &syv682x_drv,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
+unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
+
+/******************************************************************************/
+/* PPC support routines */
+void ppc_interrupt(enum gpio_signal signal)
+{
+	switch (signal) {
+	case GPIO_USB_C0_PPC_INT_ODL:
+		sn5s330_interrupt(USBC_PORT_C0);
+		break;
+	case GPIO_USB_C1_PPC_INT_ODL:
+		syv682x_interrupt(USBC_PORT_C1);
+	default:
+		break;
+	}
 }

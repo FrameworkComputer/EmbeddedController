@@ -37,6 +37,11 @@ static int charge_limit_ma;
 
 /* Mock functions */
 
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	return CONFIG_USB_PD_PORT_MAX_COUNT;
+}
+
 /* Override test_mockable implementations in charge_ramp module */
 int chg_ramp_allowed(int port, int supplier)
 {

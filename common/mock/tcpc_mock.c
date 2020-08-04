@@ -146,7 +146,7 @@ __maybe_unused static int mock_drp_toggle(int port)
 }
 
 static int mock_get_chip_info(int port, int live,
-			      struct ec_response_pd_chip_info_v1 **info)
+			      struct ec_response_pd_chip_info_v1 *info)
 {
 	return EC_SUCCESS;
 }
@@ -166,8 +166,9 @@ __maybe_unused static int mock_enter_low_power_mode(int port)
 	return EC_SUCCESS;
 }
 
-void mock_set_frs_enable(int port, int enable)
+int mock_set_frs_enable(int port, int enable)
 {
+	return EC_SUCCESS;
 }
 
 const struct tcpm_drv mock_tcpc_driver = {
@@ -196,5 +197,7 @@ const struct tcpm_drv mock_tcpc_driver = {
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode = &mock_enter_low_power_mode,
 #endif
+#ifdef CONFIG_USB_PD_FRS_TCPC
 	.set_frs_enable = &mock_set_frs_enable,
+#endif
 };

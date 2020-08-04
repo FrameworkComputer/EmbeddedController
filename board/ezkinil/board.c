@@ -3,12 +3,16 @@
  * found in the LICENSE file.
  */
 
+#include "adc.h"
+#include "adc_chip.h"
 #include "button.h"
 #include "charge_state_v2.h"
+#include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/retimer/tusb544.h"
+#include "driver/temp_sensor/sb_tsi.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "driver/usb_mux/ps8743.h"
 #include "extpower.h"
@@ -24,12 +28,16 @@
 #include "switch.h"
 #include "system.h"
 #include "task.h"
+#include "thermistor.h"
+#include "temp_sensor.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
 
 #include "gpio_list.h"
 
 #ifdef HAS_TASK_MOTIONSENSE
+
+static int board_ver;
 
 /* Motion sensors */
 static struct mutex g_lid_mutex;
@@ -131,6 +139,30 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 #endif /* HAS_TASK_MOTIONSENSE */
 
+const struct power_signal_info power_signal_list[] = {
+	[X86_SLP_S3_N] = {
+		.gpio = GPIO_PCH_SLP_S3_L,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "SLP_S3_DEASSERTED",
+	},
+	[X86_SLP_S5_N] = {
+		.gpio = GPIO_PCH_SLP_S5_L,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "SLP_S5_DEASSERTED",
+	},
+	[X86_S0_PGOOD] = {
+		.gpio = GPIO_S0_PGOOD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "S0_PGOOD",
+	},
+	[X86_S5_PGOOD] = {
+		.gpio = GPIO_S5_PGOOD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "S5_PGOOD",
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
@@ -154,6 +186,11 @@ const struct mft_t mft_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
+
+const int usb_port_enable[USBA_PORT_COUNT] = {
+	IOEX_EN_USB_A0_5V,
+	IOEX_EN_USB_A1_5V_DB,
+};
 
 /*****************************************************************************
  * Retimers
@@ -306,27 +343,59 @@ const struct usb_mux usbc1_ps8743 = {
 
 void setup_fw_config(void)
 {
+	int rv;
+
+	rv = cbi_get_board_version(&board_ver);
+	if (rv) {
+		ccprints("Fail to get board_ver");
+		/* Default for v3 */
+		board_ver = 3;
+	}
+
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 
 	setup_mux();
 
-	if (ec_config_has_hdmi_conn_hpd())
-		gpio_enable_interrupt(GPIO_DP1_HPD_EC_IN);
+	if (ec_config_has_hdmi_conn_hpd()) {
+		if (board_ver < 3)
+			ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
+		else
+			gpio_enable_interrupt(GPIO_DP1_HPD_EC_IN);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
+
+__override int check_hdmi_hpd_status(void)
+{
+	int hpd = 0;
+
+	if (board_ver < 3)
+		ioex_get_level(IOEX_HDMI_CONN_HPD_3V3_DB, &hpd);
+	else
+		hpd = gpio_get_level(GPIO_DP1_HPD_EC_IN);
+
+	return hpd;
+}
 
 static void hdmi_hpd_handler(void)
 {
 	/* Pass HPD through from DB OPT1 HDMI connector to AP's DP1. */
-	int hpd = gpio_get_level(GPIO_DP1_HPD_EC_IN);
+	int hpd = check_hdmi_hpd_status();
 
 	gpio_set_level(GPIO_DP1_HPD, hpd);
 	ccprints("HDMI HPD %d", hpd);
+	pi3hdx1204_retimer_power();
 }
 DECLARE_DEFERRED(hdmi_hpd_handler);
 
 void hdmi_hpd_interrupt(enum gpio_signal signal)
+{
+	/* Debounce for 2 msec. */
+	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
+}
+
+void hdmi_hpd_interrupt_v2(enum ioex_signal signal)
 {
 	/* Debounce for 2 msec. */
 	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
@@ -355,6 +424,77 @@ const struct fan_t fans[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
+
+int board_get_temp(int idx, int *temp_k)
+{
+	int mv;
+	int temp_c;
+	enum adc_channel channel;
+
+	/* idx is the sensor index set in board temp_sensors[] */
+	switch (idx) {
+	case TEMP_SENSOR_CHARGER:
+		channel = ADC_TEMP_SENSOR_CHARGER;
+		break;
+	case TEMP_SENSOR_SOC:
+		/* thermistor is not powered in G3 */
+		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			return EC_ERROR_NOT_POWERED;
+
+		channel = ADC_TEMP_SENSOR_SOC;
+		break;
+	default:
+		return EC_ERROR_INVAL;
+	}
+
+	mv = adc_read_channel(channel);
+	if (mv < 0)
+		return EC_ERROR_INVAL;
+
+	temp_c = thermistor_linear_interpolate(mv, &thermistor_info);
+	*temp_k = C_TO_K(temp_c);
+	return EC_SUCCESS;
+}
+
+const struct adc_t adc_channels[] = {
+	[ADC_TEMP_SENSOR_CHARGER] = {
+		.name = "CHARGER",
+		.input_ch = NPCX_ADC_CH2,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_SOC] = {
+		.name = "SOC",
+		.input_ch = NPCX_ADC_CH3,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_CHARGER] = {
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_temp,
+		.idx = TEMP_SENSOR_CHARGER,
+	},
+	[TEMP_SENSOR_SOC] = {
+		.name = "SOC",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_temp,
+		.idx = TEMP_SENSOR_SOC,
+	},
+	[TEMP_SENSOR_CPU] = {
+		.name = "CPU",
+		.type = TEMP_SENSOR_TYPE_CPU,
+		.read = sb_tsi_get_val,
+		.idx = 0,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 const static struct ec_thermal_config thermal_thermistor = {
 	.temp_host = {

@@ -230,7 +230,7 @@ void host_command_received(struct host_cmd_handler_args *args);
 /**
  * Return the expected host packet size given its header.
  *
- * Also does some sanity checking on the host request.
+ * Also does some validity checking on the host request.
  *
  * @param r		Host request header
  * @return The expected packet size, or 0 if error.

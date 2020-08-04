@@ -281,8 +281,7 @@ int system_jumped_to_this_image(void)
 
 int system_jumped_late(void)
 {
-	return !(reset_flags & EC_RESET_FLAG_EFS)
-			&& (reset_flags & EC_RESET_FLAG_SYSJUMP);
+	return !(reset_flags & EC_RESET_FLAG_EFS) && jumped_to_image;
 }
 
 int system_add_jump_tag(uint16_t tag, int version, int size, const void *data)
@@ -855,6 +854,11 @@ void system_common_pre_init(void)
 	}
 }
 
+int system_is_manual_recovery(void)
+{
+	return host_is_event_set(EC_HOST_EVENT_KEYBOARD_RECOVERY);
+}
+
 /**
  * Handle a pending reboot command.
  */
@@ -868,23 +872,31 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 	case EC_REBOOT_JUMP_RW:
 		return system_run_image_copy(system_get_active_copy());
 	case EC_REBOOT_COLD:
-#ifdef HAS_TASK_PDCMD
 		/*
 		 * Reboot the PD chip(s) as well, but first suspend the ports
 		 * if this board has PD tasks running so they don't query the
 		 * TCPCs while they reset.
 		 */
-#ifdef HAS_TASK_PD_C0
-		{
+		if (IS_ENABLED(HAS_TASK_PD_C0)) {
 			int port;
 
 			for (port = 0; port < board_get_usb_pd_port_count();
 			     port++)
 				pd_set_suspend(port, 1);
+
+			/*
+			 * Give enough time to apply CC Open and brown out if
+			 * we are running with out a battery.
+			 */
+			msleep(20);
 		}
-#endif
-		board_reset_pd_mcu();
-#endif
+
+		/* Reset external PD chips. */
+		if (IS_ENABLED(HAS_TASK_PDCMD) ||
+		    IS_ENABLED(HAS_TASK_PD_INT_C0) ||
+		    IS_ENABLED(HAS_TASK_PD_INT_C1) ||
+		    IS_ENABLED(HAS_TASK_PD_INT_C2))
+			board_reset_pd_mcu();
 
 		cflush();
 		system_reset(SYSTEM_RESET_HARD);
@@ -898,9 +910,9 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 			return EC_ERROR_INVAL;
 
 		if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE)) {
-			CPRINTS("Clearing AP_OFF");
+			CPRINTS("Clearing AP_IDLE");
 			chip_save_reset_flags(chip_read_reset_flags() &
-					      ~EC_RESET_FLAG_AP_OFF);
+					      ~EC_RESET_FLAG_AP_IDLE);
 		}
 		/* Intentional fall-through */
 	case EC_REBOOT_HIBERNATE:

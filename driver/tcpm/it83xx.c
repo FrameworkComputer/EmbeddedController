@@ -336,6 +336,38 @@ static void it83xx_set_data_role(enum usbpd_port port, int pd_role)
 		(IT83XX_USBPD_PDMSR(port) & ~0xc) | ((pd_role & 0x1) << 2);
 }
 
+#ifdef CONFIG_USB_PD_FRS_TCPC
+static int it83xx_tcpm_set_frs_enable(int port, int enable)
+{
+	uint8_t mask = (USBPD_REG_FAST_SWAP_REQUEST_ENABLE |
+			USBPD_REG_FAST_SWAP_DETECT_ENABLE);
+
+	if (enable) {
+		/*
+		 * Disable HW auto turn off FRS requestion and detection
+		 * when we receive soft or hard reset.
+		 */
+		IT83XX_USBPD_PDPSR(port) &= ~USBPD_REG_MASK_AUTO_FRS_DISABLE;
+		/* W/C status */
+		IT83XX_USBPD_PD30IR(port) = 0x3f;
+		/* Enable FRS detection (cc to GND) interrupt */
+		IT83XX_USBPD_MPD30IR(port) &= ~(USBPD_REG_MASK_PD30_ISR |
+					USBPD_REG_MASK_FAST_SWAP_DETECT_ISR);
+		/* Enable FRS detection (cc to GND) */
+		IT83XX_USBPD_PDQSCR(port) = (IT83XX_USBPD_PDQSCR(port) & ~mask)
+					| USBPD_REG_FAST_SWAP_DETECT_ENABLE;
+	} else {
+		/* Disable FRS detection (cc to GND) interrupt */
+		IT83XX_USBPD_MPD30IR(port) |= (USBPD_REG_MASK_PD30_ISR |
+					USBPD_REG_MASK_FAST_SWAP_DETECT_ISR);
+		/* Disable FRS detection and requestion */
+		IT83XX_USBPD_PDQSCR(port) &= ~mask;
+	}
+
+	return EC_SUCCESS;
+}
+#endif
+
 static void it83xx_init(enum usbpd_port port, int role)
 {
 #ifdef IT83XX_USBPD_CC_PARAMETER_RELOAD
@@ -364,7 +396,7 @@ static void it83xx_init(enum usbpd_port port, int role)
 	/* enable tx done and reset detect interrupt */
 	IT83XX_USBPD_IMR(port) &= ~(USBPD_REG_MASK_MSG_TX_DONE |
 					USBPD_REG_MASK_HARD_RESET_DETECT);
-#ifdef IT83XX_INTC_PLUG_IN_SUPPORT
+#ifdef IT83XX_INTC_PLUG_IN_OUT_SUPPORT
 	/*
 	 * when tcpc detect type-c plug in (cc lines voltage change), it will
 	 * interrupt fw to wake pd task, so task can react immediately.
@@ -614,30 +646,96 @@ static int it83xx_tcpm_transmit(int port,
 }
 
 static int it83xx_tcpm_get_chip_info(int port, int live,
-			struct ec_response_pd_chip_info_v1 **chip_info)
+			struct ec_response_pd_chip_info_v1 *chip_info)
 {
-	static struct ec_response_pd_chip_info_v1 i;
-
-	*chip_info = &i;
-	i.vendor_id = USB_VID_ITE;
-	i.product_id = (IT83XX_GCTRL_CHIPID1 << 8) | IT83XX_GCTRL_CHIPID2;
-	i.device_id = IT83XX_GCTRL_CHIPVER & 0xf;
-	i.fw_version_number = 0xEC;
+	chip_info->vendor_id = USB_VID_ITE;
+	chip_info->product_id = ((IT83XX_GCTRL_CHIPID1 << 8) |
+				 IT83XX_GCTRL_CHIPID2);
+	chip_info->device_id = IT83XX_GCTRL_CHIPVER & 0xf;
+	chip_info->fw_version_number = 0xEC;
 
 	return EC_SUCCESS;
 }
+
+static void it83xx_tcpm_switch_plug_out_type(int port)
+{
+	enum tcpc_cc_voltage_status cc1, cc2;
+
+	/* Check what do we and partner cc assert */
+	it83xx_tcpm_get_cc(port, &cc1, &cc2);
+
+	if ((cc1 == TYPEC_CC_VOLT_RD && cc2 == TYPEC_CC_VOLT_RD) ||
+	    (cc1 == TYPEC_CC_VOLT_RA && cc2 == TYPEC_CC_VOLT_RA))
+		/* We're source, switch to detect audio/debug plug out. */
+		IT83XX_USBPD_TCDCR(port) = (IT83XX_USBPD_TCDCR(port) &
+				~USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE) |
+				USBPD_REG_PLUG_OUT_DETECT_TYPE_SELECT |
+				USBPD_REG_PLUG_OUT_SELECT;
+	else if (cc1 == TYPEC_CC_VOLT_RD || cc2 == TYPEC_CC_VOLT_RD)
+		/* We're source, switch to detect sink plug out. */
+		IT83XX_USBPD_TCDCR(port) = (IT83XX_USBPD_TCDCR(port) &
+				~USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE &
+				~USBPD_REG_PLUG_OUT_DETECT_TYPE_SELECT) |
+				USBPD_REG_PLUG_OUT_SELECT;
+	else if (cc1 >= TYPEC_CC_VOLT_RP_DEF || cc2 >= TYPEC_CC_VOLT_RP_DEF)
+		/*
+		 * We're sink, disable detect interrupt, so messages on cc line
+		 * won't trigger interrupt.
+		 * NOTE: Plug out is detected by TCPM polling Vbus.
+		 */
+		IT83XX_USBPD_TCDCR(port) |=
+			USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE;
+	/*
+	 * If not above cases, plug in interrupt will fire again,
+	 * and call switch_plug_out_type() to set the right state.
+	 */
+}
+
+void switch_plug_out_type(enum usbpd_port port)
+{
+	it83xx_tcpm_switch_plug_out_type(port);
+}
+
+#ifdef CONFIG_USB_PD_TCPMV2
+static void it83xx_tcpm_hook_connect(void)
+{
+	int port = TASK_ID_TO_PD_PORT(task_get_current());
+
+	/*
+	 * There are five cases that hook_connect() be called by TCPMv2:
+	 * 1)AttachWait.SNK -> Attached.SNK: disable detect interrupt.
+	 * 2)AttachWait.SRC -> Attached.SRC: enable detect plug out.
+	 * 3)AttachWait.SNK -> Try.SRC -> TryWait.SNK -> Attached.SNK: we do
+	 *   Try.SRC fail, disable detect interrupt.
+	 * 4)AttachWait.SNK -> Try.SRC -> Attached.SRC: we do Try.SRC
+	 *   successfully, need to switch to detect plug out.
+	 * 5)Attached.SRC -> TryWait.SNK -> Attached.SNK: partner do Try.SRC
+	 *   successfully, disable detect interrupt.
+	 *
+	 * NOTE: Try.SRC and TryWait.SNK are embedded respectively in
+	 * SRC_DISCONNECT and SNK_DISCONNECT in TCPMv1. Every time we go to
+	 * Try.SRC/TryWait.SNK state, the plug in interrupt will be enabled and
+	 * fire for 3), 4), 5) cases, then set correctly for the SRC detect plug
+	 * out or the SNK disable detect, so TCPMv1 needn't hook connection.
+	 */
+	it83xx_tcpm_switch_plug_out_type(port);
+}
+
+DECLARE_HOOK(HOOK_USB_PD_CONNECT, it83xx_tcpm_hook_connect, HOOK_PRIO_DEFAULT);
+#endif
 
 static void it83xx_tcpm_sw_reset(void)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
 
-#ifdef IT83XX_INTC_PLUG_IN_SUPPORT
-	/*
-	 * Enable detect type-c plug in interrupt, since the pd task has
-	 * detected a type-c physical disconnected.
-	 */
-	IT83XX_USBPD_TCDCR(port) &= ~USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE;
-#endif
+	if (IS_ENABLED(IT83XX_INTC_PLUG_IN_OUT_SUPPORT))
+		/*
+		 * Switch to detect plug in and enable detect plug in interrupt,
+		 * since pd task has detected a type-c physical disconnected.
+		 */
+		IT83XX_USBPD_TCDCR(port) &= ~(USBPD_REG_PLUG_OUT_SELECT |
+			USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE);
+
 	/* exit BIST test data mode */
 	USBPD_SW_RESET(port);
 }
@@ -657,4 +755,7 @@ const struct tcpm_drv it83xx_tcpm_drv = {
 	.get_message_raw	= &it83xx_tcpm_get_message_raw,
 	.transmit		= &it83xx_tcpm_transmit,
 	.get_chip_info		= &it83xx_tcpm_get_chip_info,
+#ifdef CONFIG_USB_PD_FRS_TCPC
+	.set_frs_enable		= &it83xx_tcpm_set_frs_enable,
+#endif
 };

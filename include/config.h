@@ -193,6 +193,16 @@
 #undef CONFIG_ACCELGYRO_BMI160_INT2_OUTPUT
 #undef CONFIG_ACCELGYRO_BMI260_INT2_OUTPUT
 
+/*
+ * If defined, use a compressed version of the BMI260 configuration file.
+ * Saves a net of about 900 bytes of flash space.
+ *
+ * TODO(b/160330682): Eliminate or reduce size of BMI260 initialization file.
+ * Remove this option once the BMI260 initialization file is moved to the
+ * kernel rootfs.
+ */
+#undef CONFIG_ACCELGYRO_BMI160_COMPRESSED_CONFIG
+
 /* Specify type of Gyrometers attached. */
 #undef CONFIG_GYRO_L3GD20H
 
@@ -641,6 +651,9 @@
 
 /*****************************************************************************/
 
+/* EC can choose power signal gpio by schematic version */
+#undef CONFIG_POWER_SIGNAL_RUNTIME_CONFIG
+
 /* EC has GPIOs to allow board to reset RTC */
 #undef CONFIG_BOARD_HAS_RTC_RESET
 
@@ -680,6 +693,18 @@
  * all resets as triggered by RESET_PIN even if it is a POWER_ON reset.
  */
 #undef CONFIG_BOARD_FORCE_RESET_PIN
+
+/*
+ * For some boards on power-on, the EC is reset by the H1 after power-on,
+ * so the EC sees 2 resets. This config enables the EC to save a flag
+ * on the first power-up restart, and then wait for the second reset before
+ * any other setup is done (such as GPIOs, timers, UART etc.)
+ * On the second reset, the saved flag is used to detect the previous
+ * power-on, and treat the second reset as a power-on instead of a reset.
+ *
+ * NOTE: Implemented only for npcx
+ */
+#undef CONFIG_BOARD_RESET_AFTER_POWER_ON
 
 /* Permanent LM4 boot configuration */
 #undef CONFIG_BOOTCFG_VALUE
@@ -849,11 +874,12 @@
 #undef CONFIG_CHARGER_MT6370_BACKLIGHT
 
 /*
- * MT6370 BC1.2 USB-PHY control.
+ * MT6360/MT6370 BC1.2 USB-PHY control.
  * If defined, USB-PHY connection is controlled by GPIO_BC12_DET_EN.
  * Assert GPIO_BC12_DET_EN to detect BC1.2 device, and deassert
  * GPIO_BC12_DET_EN to mux USB-PHY back.
  */
+#undef CONFIG_MT6360_BC12_GPIO
 #undef CONFIG_CHARGER_MT6370_BC12_GPIO
 
 /*
@@ -1102,6 +1128,14 @@
 
 /* Enable chipset reset hook, requires a deferrable function */
 #undef CONFIG_CHIPSET_RESET_HOOK
+
+/*
+ * Enable chipset resume init and suspend complete hooks. These hooks are
+ * usually used to initialize/disable the SPI driver, which goes to sleep
+ * on suspend. Require to initialize it first such that it can receive a
+ * host resume event, that notifies the normal resume hook.
+ */
+#undef CONFIG_CHIPSET_RESUME_INIT_HOOK
 
 /*
  * Enable turning on PP3300_A rail before PP5000_A rail on the Ice Lake
@@ -1908,19 +1942,6 @@
 #undef CONFIG_GESTURE_SIGMO_SKIP_MS
 #undef CONFIG_GESTURE_SIGMO_THRES_MG
 
-/*
- * Delay between power on and configuring GPIOs.
- * On power-on of some boards, H1 releases the EC from reset but then
- * quickly asserts and releases the reset a second time. This means the
- * EC sees 2 resets: (1) power-on reset, (2) reset-pin reset. If we add
- * a delay between reset (1) and configuring GPIO output levels, then
- * reset (2) will happen before the end of the delay so we avoid extra
- * output toggles.
- *
- * NOTE: Implemented only for npcx
- */
-#undef CONFIG_GPIO_INIT_POWER_ON_DELAY_MS
-
 /* Support getting gpio flags. */
 #undef CONFIG_GPIO_GET_EXTENDED
 
@@ -2082,6 +2103,13 @@
 
 /* Command to issue AP reset */
 #undef CONFIG_HOSTCMD_AP_RESET
+
+/*
+ * Support voltage regulator host command
+ * If defined, the board should also implement board functions defined in
+ * include/regulator.h
+ */
+#undef CONFIG_HOSTCMD_REGULATOR
 
 /* Flash commands over PD */
 #define CONFIG_HOSTCMD_FLASHPD
@@ -2246,6 +2274,14 @@
 #undef CONFIG_I2C_BITBANG
 
 /*
+ * If defined, reduce I2C traffic from update functions (i2c_update8/16
+ * and i2c_field_update8/16) by skipping the write if the new value is
+ * unchanged from the old value. This assumes no side effects from writing an
+ * unchanged value back out.
+ */
+#undef CONFIG_I2C_UPDATE_IF_CHANGED
+
+/*
  * Packet error checking support for SMBus.
  *
  * If defined, adds error checking support for i2c_readN, i2c_writeN,
@@ -2336,6 +2372,17 @@
  * This is valid with PLL frequency equal to 48/96MHz only.
  */
 #undef CONFIG_IT83XX_FLASH_CLOCK_48MHZ
+
+/*
+ * Enable it if EC's VBAT won't go low when system's power isn't
+ * presented (no battery and no AC)
+ * If EC's VSTBY and VBAT(power source of BRAM) aren't connected to the same
+ * power rail and VBAT doesn't go low immediately (eg: there is a larger
+ * capacitance on the rail) after all power off: PD contract recorded in BRAM
+ * won't get cleared (But actually we have unplugged type-c adaptor, so the
+ * contract should be cleared).
+ */
+#undef CONFIG_IT83XX_RESET_PD_CONTRACT_IN_BRAM
 
 /* To define it, if I2C channel C and PECI used at the same time. */
 #undef CONFIG_IT83XX_SMCLK2_ON_GPC7
@@ -2967,8 +3014,8 @@
 /* Support S0ix */
 #undef CONFIG_POWER_S0IX
 
-/* Support detecting failure to enter S0ix */
-#undef CONFIG_POWER_S0IX_FAILURE_DETECTION
+/* Support detecting failure to enter a sleep state (S0ix/S3) */
+#undef CONFIG_POWER_SLEEP_FAILURE_DETECTION
 
 /*
  * Allow the host to self-report its sleep state, in case there is some delay
@@ -3316,6 +3363,8 @@
  *
  * When defined, CBI allows ectool to reprogram all the fields. Once undefined,
  * it refuses to change certain fields. (e.g. board version, OEM ID)
+ *
+ * Also, this will enable PD in RO for TCPMv2.
  */
 #undef CONFIG_SYSTEM_UNLOCKED
 
@@ -3618,7 +3667,7 @@
  * console logs on SRAM so that the logs will be preserved after EC shutting
  * down or sysjumped. It will keep the contents across EC resets, so we have
  * more information about system states. The contents on SRAM will be cleared
- * when checksum or sanity check fails.
+ * when checksum or validity check fails.
  */
 #undef CONFIG_PRESERVE_LOGS
 
@@ -3767,6 +3816,9 @@
  * We don't want to allow communication to outside world until
  * we jump to RW. This can by overridden with the removal of
  * the write protect screw to allow for easier testing.
+ *
+ * Note: this is assumed for TCPMv2. See also CONFIG_BRINGUP for enabling PD in
+ * RO.
  */
 #undef CONFIG_USB_PD_COMM_LOCKED
 
@@ -3840,6 +3892,14 @@
  * enables PD Rev3.0 functionality.
  */
 #undef CONFIG_USB_PD_REV30
+
+/*
+ * Support USB PD 3.0 Extended Messages. This will only take effect if
+ * CONFIG_USB_PD_REV30 is also enabled. Note that Chromebooks disabling this
+ * config item are non-compliant with PD 3.0, because they have batteries but do
+ * not support Get_Battery_Cap or Get_Battery_Status.
+ */
+#define CONFIG_USB_PD_EXTENDED_MESSAGES
 
 /* Major and Minor ChromeOS specific PD device Hardware IDs. */
 #undef CONFIG_USB_PD_HW_DEV_ID_BOARD_MAJOR
@@ -3941,6 +4001,8 @@
 #undef CONFIG_USB_PD_TCPM_ANX7688
 #undef CONFIG_USB_PD_TCPM_NCT38XX
 #undef CONFIG_USB_PD_TCPM_PS8751
+#undef CONFIG_USB_PD_TCPM_PS8755
+#undef CONFIG_USB_PD_TCPM_PS8705
 #undef CONFIG_USB_PD_TCPM_PS8805
 #undef CONFIG_USB_PD_TCPM_PS8815
 #undef CONFIG_USB_PD_TCPM_MT6370
@@ -3985,6 +4047,12 @@
  * DDI1_AUX_P signals (b/122873171)
  */
 #undef CONFIG_USB_PD_TCPM_ANX7447_AUX_PU_PD
+
+/*
+ * Use this to override the TCPCI Device ID value to be 0x0002 for
+ * chip rev A1. Early A1 firmware misreports the DID as 0x0001.
+ */
+#undef CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
 
 /*
  * Use this option if the TCPC port controller supports the optional register
@@ -4057,8 +4125,14 @@
  */
 #undef CONFIG_USB_PD_PREFER_MV
 
-/* Type-C Fast Role Swap */
-#undef CONFIG_USB_TYPEC_PD_FAST_ROLE_SWAP
+/*
+ * The Fast Role Swap trigger can be implemented in either the TCPC or PPC
+ * driver. If either CONFIG_USB_PD_FRS_TCPC or CONFIG_USB_PD_FRS_PPC is set,
+ * CONFIG_USB_FRS will be set automatically to enable the protocol-side of FRS.
+ */
+#undef CONFIG_USB_PD_FRS_TCPC
+#undef CONFIG_USB_PD_FRS_PPC
+#undef CONFIG_USB_PD_FRS
 
 /*
  * USB Product ID. Each platform (e.g. baseboard set) should have a single
@@ -4161,6 +4235,7 @@
 
 /* External BC1.2 charger detection devices. */
 #undef CONFIG_BC12_DETECT_MAX14637
+#undef CONFIG_BC12_DETECT_MT6360
 #undef CONFIG_BC12_DETECT_PI3USB9201
 #undef CONFIG_BC12_DETECT_PI3USB9281
 /* Number of Pericom PI3USB9281 chips present in system */
@@ -4647,6 +4722,34 @@
 
 /******************************************************************************/
 /*
+ * If CONFIG_USB_PD_USB4 is enabled, make sure CONFIG_USBC_SS_MUX and
+ * CONFIG_USB_PD_ALT_MODE_DFP is enabled
+ */
+#ifdef CONFIG_USB_PD_USB4
+#if !defined(CONFIG_USBC_SS_MUX)
+#error CONFIG_USBC_SS_MUX must be enabled for USB4 mode support
+#endif
+# if !defined(CONFIG_USB_PD_ALT_MODE_DFP)
+#error CONFIG_USB_PD_ALT_MODE_DFP must be enabled for USB4 mode support
+#endif
+#endif
+
+/******************************************************************************/
+/*
+ * Automatically define CONFIG_USB_PD_FRS if FRS is enabled in the TCPC or PPC
+ */
+#if defined(CONFIG_USB_PD_FRS_PPC) || defined(CONFIG_USB_PD_FRS_TCPC)
+#define CONFIG_USB_PD_FRS
+#endif
+
+/******************************************************************************/
+/* Disable extended message support if PD 3.0 support is disabled. */
+#ifndef CONFIG_USB_PD_REV30
+#undef CONFIG_USB_PD_EXTENDED_MESSAGES
+#endif
+
+/******************************************************************************/
+/*
  * Ensure that CONFIG_USB_PD_TCPMV2 is being used with exactly one device type
  */
 #ifdef CONFIG_USB_PD_TCPMV2
@@ -5078,6 +5181,10 @@
 #undef CONFIG_HOSTCMD_PD
 #endif
 
+#if defined(HAS_TASK_PDCMD) && defined(HAS_TASK_PD_C0_INT)
+#error Should not use PDCMD task with PD INT tasks
+#endif
+
 /* Certain console cmds are irrelevant without parent modules. */
 #ifndef CONFIG_BATTERY
 #undef CONFIG_CMD_PWR_AVG
@@ -5123,6 +5230,10 @@
 #if defined(CONFIG_HOSTCMD_ESPI_VW_SLP_S3) && \
 	defined(CONFIG_CHIPSET_SLP_S3_L_OVERRIDE)
 #error "Cannot use CONFIG_CHIPSET_SLP_S3_L_OVERRIDE if SLP_S3 is a virtual wire"
+#endif
+
+#if defined(CONFIG_POWER_S0IX) && !defined(CONFIG_POWER_TRACK_HOST_SLEEP_STATE)
+#error "Must enable CONFIG_POWER_TRACK_HOST_SLEEP_STATE for S0ix"
 #endif
 
 /*****************************************************************************/
@@ -5177,7 +5288,7 @@
 #include "test_config.h"
 
 /*
- * Sanity checks to make sure some of the configs above make sense.
+ * Validity checks to make sure some of the configs above make sense.
  */
 
 #if (CONFIG_AUX_TIMER_PERIOD_MS) < ((HOOK_TICK_INTERVAL_MS) * 2)

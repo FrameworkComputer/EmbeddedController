@@ -1083,6 +1083,9 @@ static void dump_charge_state(void)
 	ccprintf("ocpc.*:\n");
 	DUMP_OCPC(active_chg_chip, "%d");
 	DUMP_OCPC(combined_rsys_rbatt_mo, "%dmOhm");
+	DUMP_OCPC(vsys_aux_mv, "%dmV");
+	DUMP_OCPC(vsys_mv, "%dmV");
+	DUMP_OCPC(isys_ma, "%dmA");
 	DUMP_OCPC(primary_vbus_mv, "%dmV");
 	DUMP_OCPC(primary_ibus_ma, "%dmA");
 	DUMP_OCPC(secondary_vbus_mv, "%dmV");
@@ -1256,11 +1259,11 @@ static int charge_request(int voltage, int current)
 	 * For OCPC systems, if the secondary charger is active, we need to
 	 * configure that charge IC as well.  Note that if OCPC ever supports
 	 * more than 2 charger ICs, we'll need to refactor things a bit.  The
-	 * following check should be comparing against PRIMARY_CHARGER and
+	 * following check should be comparing against CHARGER_PRIMARY and
 	 * config_secondary_charger should probably be config_auxiliary_charger
 	 * and take the active chgnum as a parameter.
 	 */
-	if (curr.ocpc.active_chg_chip == SECONDARY_CHARGER) {
+	if (curr.ocpc.active_chg_chip == CHARGER_SECONDARY) {
 		if ((current >= 0) || (voltage >= 0))
 			r3 = ocpc_config_secondary_charger(&curr.desired_input_current,
 							   &curr.ocpc,
@@ -1669,6 +1672,7 @@ void charger_task(void *u)
 	 * system in suspend or off.
 	 */
 	curr.ocpc.combined_rsys_rbatt_mo = CONFIG_OCPC_DEF_RBATT_MOHMS;
+	curr.ocpc.rbatt_mo = CONFIG_OCPC_DEF_RBATT_MOHMS;
 	charge_set_active_chg_chip(CHARGE_PORT_NONE);
 #endif /* CONFIG_OCPC */
 
@@ -2472,7 +2476,7 @@ int charge_set_input_current_limit(int ma, int mv)
 #ifdef CONFIG_OCPC
 void charge_set_active_chg_chip(int idx)
 {
-	ASSERT(idx < (int)chg_cnt);
+	ASSERT(idx < (int)board_get_charger_chip_count());
 
 	if (idx == curr.ocpc.active_chg_chip)
 		return;
@@ -2496,7 +2500,12 @@ int charge_get_active_chg_chip(void)
 #endif
 }
 
-#ifndef TEST_BUILD
+#ifdef CONFIG_USB_PD_PREFER_MV
+bool charge_is_current_stable(void)
+{
+	return get_time().val >= stable_ts.val;
+}
+
 int charge_get_plt_plus_bat_desired_mw(void)
 {
 	/*
@@ -2534,6 +2543,7 @@ void charge_reset_stable_current(void)
 	charge_reset_stable_current_us(10 * SECOND);
 }
 #endif
+
 /*****************************************************************************/
 /* Host commands */
 

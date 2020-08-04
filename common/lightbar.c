@@ -425,7 +425,7 @@ static uint32_t pending_msg;
 	do {                                                                   \
 		uint32_t msg = task_wait_event(A);                             \
 		uint32_t p_msg = pending_msg;                                  \
-		if (msg == PENDING_MSG && p_msg != st.cur_seq)                 \
+		if (msg & PENDING_MSG && p_msg != st.cur_seq)                  \
 			return p_msg;                                          \
 	} while (0)
 

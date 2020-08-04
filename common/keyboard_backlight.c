@@ -91,7 +91,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kblight_suspend, HOOK_PRIO_DEFAULT);
 
 static void kblight_resume(void)
 {
-	if (lid_is_open()) {
+	if (lid_is_open() && current_percent) {
 		kblight_enable(1);
 		kblight_set(current_percent);
 	}
@@ -100,7 +100,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, kblight_resume, HOOK_PRIO_DEFAULT);
 
 static void kblight_lid_change(void)
 {
-	kblight_enable(lid_is_open());
+	kblight_enable(lid_is_open() && current_percent);
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, kblight_lid_change, HOOK_PRIO_DEFAULT);
 
@@ -115,6 +115,8 @@ static int cc_kblight(int argc, char **argv)
 		if (*e)
 			return EC_ERROR_PARAM1;
 		if (kblight_set(i))
+			return EC_ERROR_PARAM1;
+		if (kblight_enable(i > 0))
 			return EC_ERROR_PARAM1;
 	}
 	ccprintf("Keyboard backlight: %d%%\n", kblight_get());
@@ -143,6 +145,8 @@ enum ec_status hc_set_keyboard_backlight(struct host_cmd_handler_args *args)
 	const struct ec_params_pwm_set_keyboard_backlight *p = args->params;
 
 	if (kblight_set(p->percent))
+		return EC_RES_ERROR;
+	if (kblight_enable(p->percent > 0))
 		return EC_RES_ERROR;
 	return EC_RES_SUCCESS;
 }

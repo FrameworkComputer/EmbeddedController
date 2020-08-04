@@ -438,6 +438,9 @@ void task_scheduler(void)
 		if (i < 0)
 			i = fast_forward();
 
+		now = get_time();
+		if (now.val >= tasks[i].wake_time.val)
+			tasks[i].event |= TASK_EVENT_TIMER;
 		tasks[i].wake_time.val = ~0ull;
 		running_task_id = i;
 		tasks[i].started = 1;

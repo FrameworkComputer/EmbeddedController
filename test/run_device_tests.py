@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2020 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -36,6 +36,8 @@ SINGLE_CHECK_FAILED_REGEX = re.compile(r'.*failed:.*')
 
 DATA_ACCESS_VIOLATION_8020000_REGEX = re.compile(
     r'Data access violation, mfar = 8020000\r\n')
+DATA_ACCESS_VIOLATION_8040000_REGEX = re.compile(
+    r'Data access violation, mfar = 8040000\r\n')
 DATA_ACCESS_VIOLATION_20000000_REGEX = re.compile(
     r'Data access violation, mfar = 20000000\r\n')
 
@@ -58,14 +60,21 @@ class TestConfig:
     """Configuration for a given test."""
 
     def __init__(self, name, image_to_use=ImageType.RW, finish_regexes=None,
-                 toggle_power=False):
+                 toggle_power=False, test_args=None, num_flash_attempts=2,
+                 timeout_secs=10, enable_hw_write_protect=False):
+        if test_args is None:
+            test_args = []
         if finish_regexes is None:
             finish_regexes = [ALL_TESTS_PASSED_REGEX, ALL_TESTS_FAILED_REGEX]
 
         self.name = name
         self.image_to_use = image_to_use
         self.finish_regexes = finish_regexes
+        self.test_args = test_args
         self.toggle_power = toggle_power
+        self.num_flash_attempts = num_flash_attempts
+        self.timeout_secs = timeout_secs
+        self.enable_hw_write_protect = enable_hw_write_protect
         self.logs = []
         self.passed = False
         self.num_fails = 0
@@ -83,17 +92,26 @@ ALL_TESTS = {
                    toggle_power=True),
     'flash_write_protect':
         TestConfig(name='flash_write_protect', image_to_use=ImageType.RO,
-                   toggle_power=True),
-    'mpu':
+                   toggle_power=True, enable_hw_write_protect=True),
+    'mpu_ro':
+        TestConfig(name='mpu',
+                   image_to_use=ImageType.RO,
+                   finish_regexes=[DATA_ACCESS_VIOLATION_20000000_REGEX]),
+    'mpu_rw':
         TestConfig(name='mpu',
                    finish_regexes=[DATA_ACCESS_VIOLATION_20000000_REGEX]),
     'mutex':
         TestConfig(name='mutex'),
     'pingpong':
         TestConfig(name='pingpong'),
-    'rollback':
+    'rollback_region0':
         TestConfig(name='rollback', finish_regexes=[
-            DATA_ACCESS_VIOLATION_8020000_REGEX]),
+            DATA_ACCESS_VIOLATION_8020000_REGEX],
+                   test_args=['region0']),
+    'rollback_region1':
+        TestConfig(name='rollback', finish_regexes=[
+            DATA_ACCESS_VIOLATION_8040000_REGEX],
+                   test_args=['region1']),
     'rollback_entropy':
         TestConfig(name='rollback_entropy', image_to_use=ImageType.RO),
     'rtc':
@@ -104,6 +122,8 @@ ALL_TESTS = {
         TestConfig(name='sha256_unrolled'),
     'stm32f_rtc':
         TestConfig(name='stm32f_rtc'),
+    'utils':
+        TestConfig(name='utils', timeout_secs=20),
 }
 
 BLOONCHIPPER_CONFIG = BoardConfig(
@@ -154,6 +174,22 @@ def power(board_name, board_config, on):
     subprocess.run(cmd).check_returncode()
 
 
+def hw_write_protect(board_name, enable):
+    """Enable/disable hardware write protect."""
+    if enable:
+        state = 'on'
+    else:
+        state = 'off'
+
+    cmd = [
+        'dut-control',
+        '-n', board_name,
+        'fw_wp_en' + ':' + state,
+        ]
+    logging.debug('Running command: "%s"', ' '.join(cmd))
+    subprocess.run(cmd).check_returncode()
+
+
 def build(test_name, board_name):
     """Build specified test for specified board."""
     cmd = [
@@ -180,7 +216,8 @@ def flash(test_name, board):
                                 test_name + '.bin'),
     ]
     logging.debug('Running command: "%s"', ' '.join(cmd))
-    subprocess.run(cmd).check_returncode()
+    completed_process = subprocess.run(cmd)
+    return completed_process.returncode == 0
 
 
 def readline(executor, f, timeout_secs):
@@ -202,7 +239,7 @@ def readlines_until_timeout(executor, f, timeout_secs):
         lines.append(line)
 
 
-def run_test(test, console, executor, timeout_secs=10):
+def run_test(test, console, executor):
     """Run specified test."""
     start = time.time()
     with open(console, "wb+", buffering=0) as c:
@@ -212,14 +249,16 @@ def run_test(test, console, executor, timeout_secs=10):
         if test.image_to_use == ImageType.RO:
             c.write('reboot ro\n'.encode())
             time.sleep(1)
-        c.write('runtest\n'.encode())
+
+        test_cmd = 'runtest ' + ' '.join(test.test_args) + '\n'
+        c.write(test_cmd.encode())
 
         while True:
             c.flush()
             line = readline(executor, c, 1)
             if not line:
                 now = time.time()
-                if now - start > timeout_secs:
+                if now - start > test.timeout_secs:
                     logging.debug("Test timed out")
                     return False
                 continue
@@ -313,12 +352,28 @@ def main():
         build(test.name, args.board)
 
         # flash test binary
-        flash(test.name, args.board)
+        # TODO(b/158327221): First attempt to flash fails after
+        #  flash_write_protect test is run; works after second attempt.
+        flash_succeeded = False
+        for i in range(0, test.num_flash_attempts):
+            logging.debug('Flash attempt %d', i + 1)
+            if flash(test.name, args.board):
+                flash_succeeded = True
+                break
+            time.sleep(1)
+
+        if not flash_succeeded:
+            logging.debug('Flashing failed after max attempts: %d',
+                          test.num_flash_attempts)
+            test.passed = False
+            continue
 
         if test.toggle_power:
             power(args.board, board_config, on=False)
             time.sleep(1)
             power(args.board, board_config, on=True)
+
+        hw_write_protect(args.board, test.enable_hw_write_protect)
 
         # run the test
         logging.info('Running test: "%s"', test.name)

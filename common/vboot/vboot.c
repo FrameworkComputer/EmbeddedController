@@ -165,11 +165,6 @@ __overridable void show_critical_error(void)
 	CPRINTS("%s", __func__);
 }
 
-static int is_manual_recovery(void)
-{
-	return host_is_event_set(EC_HOST_EVENT_KEYBOARD_RECOVERY);
-}
-
 static bool pd_comm_enabled;
 
 bool vboot_allow_usb_pd(void)
@@ -204,9 +199,9 @@ void vboot_main(void)
 		return;
 	}
 
-	if (is_manual_recovery() ||
+	if (system_is_manual_recovery() ||
 	    (system_get_reset_flags() & EC_RESET_FLAG_STAY_IN_RO)) {
-		if (is_manual_recovery())
+		if (system_is_manual_recovery())
 			CPRINTS("Manual recovery");
 
 		if (battery_is_present() || has_matrix_keyboard()) {

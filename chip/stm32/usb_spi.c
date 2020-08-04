@@ -14,10 +14,11 @@
 
 /* Forward declare platform specific functions. */
 static bool usb_spi_received_packet(struct usb_spi_config const *config);
+static bool usb_spi_transmitted_packet(struct usb_spi_config const *config);
 static void usb_spi_read_packet(struct usb_spi_config const *config,
-			struct usb_spi_packet_ctx_t *packet);
+			struct usb_spi_packet_ctx *packet);
 static void usb_spi_write_packet(struct usb_spi_config const *config,
-			struct usb_spi_packet_ctx_t *packet);
+			struct usb_spi_packet_ctx *packet);
 
 /*
  * Map EC error codes to USB_SPI error codes.
@@ -44,8 +45,8 @@ static int16_t usb_spi_map_error(int error)
  *
  * @returns         USB_SPI_RX_DATA_OVERFLOW if the source packet is too large
  */
-static int usb_spi_read_usb_packet(struct usb_spi_transfer_ctx_t *dst,
-				const struct usb_spi_packet_ctx_t *src)
+static int usb_spi_read_usb_packet(struct usb_spi_transfer_ctx *dst,
+				const struct usb_spi_packet_ctx *src)
 {
 	size_t max_read_length = dst->transfer_size - dst->transfer_index;
 	size_t bytes_in_buffer = src->packet_size - src->header_size;
@@ -71,8 +72,8 @@ static int usb_spi_read_usb_packet(struct usb_spi_transfer_ctx_t *dst,
  * @param dst       Destination packet context we are writing data to.
  * @param src       Source transmit context we are reading data from.
  */
-static void usb_spi_fill_usb_packet(struct usb_spi_packet_ctx_t *dst,
-				struct usb_spi_transfer_ctx_t *src)
+static void usb_spi_fill_usb_packet(struct usb_spi_packet_ctx *dst,
+				struct usb_spi_transfer_ctx *src)
 {
 	size_t transfer_size = src->transfer_size - src->transfer_index;
 	size_t max_buffer_size = USB_MAX_PACKET_SIZE - dst->header_size;
@@ -119,7 +120,230 @@ static void usb_spi_reset_interface(struct usb_spi_config const *config)
 }
 
 /*
- * Deferred function to handle state changes, process USB SPI packets,
+ * Returns if the response transfer is in progress.
+ *
+ * @param config        USB SPI config
+ *
+ * @returns         	True if a response transfer is in progress.
+ */
+static bool usb_spi_response_in_progress(struct usb_spi_config const *config)
+{
+	if ((config->state->mode == USB_SPI_MODE_START_RESPONSE) ||
+	    (config->state->mode == USB_SPI_MODE_CONTINUE_RESPONSE)) {
+		return true;
+	}
+	return false;
+}
+
+/*
+ * Prep the state to construct a new response. This sets the transfer
+ * contexts, the mode, and status code. If a non-zero status code is
+ * returned, then no payload will be transmitted.
+ *
+ * @param config        USB SPI config
+ * @param status_code	status code to set for the response.
+ */
+static void setup_transfer_response(struct usb_spi_config const *config,
+				uint16_t status_code)
+{
+	config->state->status_code = status_code;
+	config->state->spi_read_ctx.transfer_index = 0;
+	config->state->mode = USB_SPI_MODE_START_RESPONSE;
+
+	/* If an error occurred, transmit an empty start packet. */
+	if (status_code != USB_SPI_SUCCESS)
+		config->state->spi_read_ctx.transfer_size = 0;
+}
+
+/*
+ * Constructs the response packet containing the SPI configuration.
+ *
+ * @param config        USB SPI config
+ * @param packet        Packet buffer we will be transmitting.
+ */
+static void create_spi_config_response(struct usb_spi_config const *config,
+				struct usb_spi_packet_ctx *packet)
+{
+	/* Construct the response packet. */
+	packet->rsp_config.packet_id = USB_SPI_PKT_ID_RSP_USB_SPI_CONFIG;
+	packet->rsp_config.max_write_count = USB_SPI_MAX_WRITE_COUNT;
+	packet->rsp_config.max_read_count = USB_SPI_MAX_READ_COUNT;
+	/* Set the feature flags. */
+	packet->rsp_config.feature_bitmap = 0;
+#ifndef CONFIG_SPI_HALFDUPLEX
+	packet->rsp_config.feature_bitmap |=
+		USB_SPI_FEATURE_FULL_DUPLEX_SUPPORTED;
+#endif
+	packet->packet_size =
+		sizeof(struct usb_spi_response_configuration_v2);
+}
+
+/*
+ * If we have a transfer response in progress, this will construct the
+ * next entry. If no transfer is in progress or if we are unable to
+ * create the next packet, it will not modify tx_packet.
+ *
+ * @param config        USB SPI config
+ * @param packet        Packet buffer we will be transmitting.
+ */
+static void usb_spi_create_spi_transfer_response(
+				struct usb_spi_config const *config,
+				struct usb_spi_packet_ctx *transmit_packet)
+{
+
+	if (!usb_spi_response_in_progress(config))
+		return;
+
+	if (config->state->spi_read_ctx.transfer_index == 0) {
+
+		/* Transmit the first packet with the status code. */
+		transmit_packet->header_size =
+			offsetof(struct usb_spi_response_v2, data);
+		transmit_packet->rsp_start.packet_id =
+			USB_SPI_PKT_ID_RSP_TRANSFER_START;
+		transmit_packet->rsp_start.status_code =
+			config->state->status_code;
+
+		usb_spi_fill_usb_packet(transmit_packet,
+			&config->state->spi_read_ctx);
+	} else if (config->state->spi_read_ctx.transfer_index <
+		config->state->spi_read_ctx.transfer_size) {
+
+		/* Transmit the continue packets. */
+		transmit_packet->header_size =
+			offsetof(struct usb_spi_continue_v2, data);
+		transmit_packet->rsp_continue.packet_id =
+			USB_SPI_PKT_ID_RSP_TRANSFER_CONTINUE;
+		transmit_packet->rsp_continue.data_index =
+			config->state->spi_read_ctx.transfer_index;
+
+		usb_spi_fill_usb_packet(transmit_packet,
+			&config->state->spi_read_ctx);
+	}
+	if (config->state->spi_read_ctx.transfer_index <
+		config->state->spi_read_ctx.transfer_size) {
+		config->state->mode = USB_SPI_MODE_CONTINUE_RESPONSE;
+	} else {
+		config->state->mode = USB_SPI_MODE_IDLE;
+	}
+}
+
+/*
+ * Process the rx packet.
+ *
+ * @param config        USB SPI config
+ * @param packet        Received packet to process.
+ */
+static void usb_spi_process_rx_packet(struct usb_spi_config const *config,
+				struct usb_spi_packet_ctx *packet)
+{
+	if (packet->packet_size < USB_SPI_MIN_PACKET_SIZE) {
+		/* No valid packet exists smaller than the packet id. */
+		setup_transfer_response(config, USB_SPI_RX_UNEXPECTED_PACKET);
+		return;
+	}
+	/* Reset the mode until we've processed the packet. */
+	config->state->mode = USB_SPI_MODE_IDLE;
+
+	switch (packet->packet_id) {
+	case USB_SPI_PKT_ID_CMD_GET_USB_SPI_CONFIG:
+	{
+		/* The host requires the SPI configuration. */
+		config->state->mode = USB_SPI_MODE_SEND_CONFIGURATION;
+		break;
+	}
+	case USB_SPI_PKT_ID_CMD_RESTART_RESPONSE:
+	{
+		/*
+		 * The host has requested the device restart the last response.
+		 * This is used to recover from lost USB packets without
+		 * duplicating SPI transfers.
+		 */
+		setup_transfer_response(config, config->state->status_code);
+		break;
+	}
+	case USB_SPI_PKT_ID_CMD_TRANSFER_START:
+	{
+		/* The host started a new USB SPI transfer */
+		size_t write_count = packet->cmd_start.write_count;
+		size_t read_count = packet->cmd_start.read_count;
+
+		if (!config->state->enabled) {
+			setup_transfer_response(config, USB_SPI_DISABLED);
+		} else if (write_count > USB_SPI_MAX_WRITE_COUNT) {
+			setup_transfer_response(config,
+				USB_SPI_WRITE_COUNT_INVALID);
+		} else if (read_count == USB_SPI_FULL_DUPLEX_ENABLED) {
+#ifndef CONFIG_SPI_HALFDUPLEX
+			/* Full duplex mode is not supported on this device. */
+			setup_transfer_response(config,
+				USB_SPI_UNSUPPORTED_FULL_DUPLEX);
+#endif
+		} else if (read_count > USB_SPI_MAX_READ_COUNT &&
+				read_count != USB_SPI_FULL_DUPLEX_ENABLED) {
+			setup_transfer_response(config,
+				USB_SPI_READ_COUNT_INVALID);
+		} else {
+		        usb_spi_setup_transfer(config, write_count, read_count);
+		        packet->header_size =
+		        	offsetof(struct usb_spi_command_v2, data);
+		        config->state->status_code = usb_spi_read_usb_packet(
+		        	&config->state->spi_write_ctx, packet);
+		}
+
+		/* Send responses if we encountered an error. */
+		if (config->state->status_code != USB_SPI_SUCCESS) {
+			setup_transfer_response(config,
+				config->state->status_code);
+			break;
+		}
+
+		/* Start the SPI transfer when we've read all data. */
+		if (config->state->spi_write_ctx.transfer_index ==
+				config->state->spi_write_ctx.transfer_size) {
+			config->state->mode = USB_SPI_MODE_START_SPI;
+		}
+
+		break;
+	}
+	case USB_SPI_PKT_ID_CMD_TRANSFER_CONTINUE:
+	{
+		/*
+		 * The host has sent a continue packet for the SPI transfer
+		 * which contains additional data payload.
+		 */
+		packet->header_size =
+			offsetof(struct usb_spi_continue_v2, data);
+		if (config->state->status_code == USB_SPI_SUCCESS) {
+			config->state->status_code = usb_spi_read_usb_packet(
+					&config->state->spi_write_ctx, packet);
+		}
+
+		/* Send responses if we encountered an error. */
+		if (config->state->status_code != USB_SPI_SUCCESS) {
+			setup_transfer_response(config,
+				config->state->status_code);
+			break;
+		}
+
+		/* Start the SPI transfer when we've read all data. */
+		if (config->state->spi_write_ctx.transfer_index ==
+				config->state->spi_write_ctx.transfer_size) {
+			config->state->mode = USB_SPI_MODE_START_SPI;
+		}
+
+		break;
+	}
+	default:
+	{
+		/* An unknown USB packet was delivered. */
+		setup_transfer_response(config, USB_SPI_RX_UNEXPECTED_PACKET);
+		break;
+	}
+	}
+}
+
+/* Deferred function to handle state changes, process USB SPI packets,
  * and construct responses.
  *
  * @param config        USB SPI config
@@ -127,10 +351,11 @@ static void usb_spi_reset_interface(struct usb_spi_config const *config)
 void usb_spi_deferred(struct usb_spi_config const *config)
 {
 	int enabled;
-	struct usb_spi_packet_ctx_t *receive_packet =
+	struct usb_spi_packet_ctx *receive_packet =
 		&config->state->receive_packet;
-	struct usb_spi_packet_ctx_t *transmit_packet =
+	struct usb_spi_packet_ctx *transmit_packet =
 		&config->state->transmit_packet;
+	transmit_packet->packet_size = 0;
 
 	if (config->flags & USB_SPI_CONFIG_FLAGS_IGNORE_HOST_SIDE_ENABLE)
 		enabled = config->state->enabled_device;
@@ -149,51 +374,50 @@ void usb_spi_deferred(struct usb_spi_config const *config)
 		config->state->enabled = enabled;
 	}
 
-	/*
-	 * And if there is a USB packet waiting we process it and generate a
-	 * response.
-	 */
+	/* Read any packets from the endpoint. */
+
 	usb_spi_read_packet(config, receive_packet);
 	if (receive_packet->packet_size) {
-		int write_count = receive_packet->command.write_count;
-		int read_count = receive_packet->command.read_count;
-		int status_code = USB_SPI_SUCCESS;
+		usb_spi_process_rx_packet(config, receive_packet);
+	}
 
-		receive_packet->header_size =
-			offsetof(struct usb_spi_command_v1_t, data);
-		transmit_packet->header_size =
-			offsetof(struct usb_spi_response_v1_t, data);
+	/* Need to send the USB SPI configuration */
+	if (config->state->mode == USB_SPI_MODE_SEND_CONFIGURATION) {
+		create_spi_config_response(config, transmit_packet);
+		usb_spi_write_packet(config, transmit_packet);
+		config->state->mode = USB_SPI_MODE_IDLE;
+		return;
+	}
 
-		if (!config->state->enabled) {
-			status_code = USB_SPI_DISABLED;
-		} else if (write_count > USB_SPI_MAX_WRITE_COUNT ||
-			   write_count != (receive_packet->packet_size - 2)) {
-			status_code = USB_SPI_WRITE_COUNT_INVALID;
-		} else if (read_count > USB_SPI_MAX_READ_COUNT) {
-			status_code = USB_SPI_READ_COUNT_INVALID;
-		} else {
-			usb_spi_setup_transfer(config, write_count, read_count);
-
-			status_code = usb_spi_read_usb_packet(
-					&config->state->spi_write_ctx,
-					receive_packet);
+	/* Start a new SPI transfer. */
+	if (config->state->mode == USB_SPI_MODE_START_SPI) {
+		uint16_t status_code;
+		int read_count = config->state->spi_read_ctx.transfer_size;
+#ifndef CONFIG_SPI_HALFDUPLEX
+		/*
+		 * Handle the full duplex mode on supported platforms.
+		 * The read count is equal to the write count.
+		 */
+		if (read_count == USB_SPI_FULL_DUPLEX_ENABLED) {
+			config->state->spi_read_ctx.transfer_size =
+				config->state->spi_write_ctx.transfer_size;
+			read_count = SPI_READBACK_ALL;
 		}
+#endif
+		status_code = spi_transaction(SPI_FLASH_DEVICE,
+			config->state->spi_write_ctx.buffer,
+			config->state->spi_write_ctx.transfer_size,
+			config->state->spi_read_ctx.buffer,
+			read_count);
 
-		/* If no error codes are present, perform the transfer. */
-		if (status_code == USB_SPI_SUCCESS) {
-			status_code = spi_transaction(SPI_FLASH_DEVICE,
-				config->state->spi_write_ctx.buffer,
-				config->state->spi_write_ctx.transfer_size,
-				config->state->spi_read_ctx.buffer,
-				config->state->spi_read_ctx.transfer_size);
-			/* Cast the EC status code to USB SPI */
-			status_code = usb_spi_map_error(status_code);
-			usb_spi_fill_usb_packet(transmit_packet,
-					&config->state->spi_read_ctx);
-		}
+		/* Cast the EC status code to USB SPI and start the response. */
+		status_code = usb_spi_map_error(status_code);
+		setup_transfer_response(config, status_code);
+	}
 
-		transmit_packet->response.status_code = status_code;
-
+	if (usb_spi_response_in_progress(config) &&
+			usb_spi_transmitted_packet(config)) {
+		usb_spi_create_spi_transfer_response(config, transmit_packet);
 		usb_spi_write_packet(config, transmit_packet);
 	}
 }
@@ -211,7 +435,6 @@ void usb_spi_enable(struct usb_spi_config const *config, int enabled)
 	hook_call_deferred(config->deferred, 0);
 }
 
-
 /*
  * STM32 Platform: Receive the data from the endpoint into the packet and
  *  mark the endpoint as ready to accept more data.
@@ -220,7 +443,7 @@ void usb_spi_enable(struct usb_spi_config const *config, int enabled)
  * @param packet        Destination packet used to store the endpoint data.
  */
 static void usb_spi_read_packet(struct usb_spi_config const *config,
-				struct usb_spi_packet_ctx_t *packet)
+				struct usb_spi_packet_ctx *packet)
 {
 	size_t packet_size;
 
@@ -247,7 +470,7 @@ static void usb_spi_read_packet(struct usb_spi_config const *config,
  * @param packet        Source packet we will write to the endpoint data.
  */
 static void usb_spi_write_packet(struct usb_spi_config const *config,
-				struct usb_spi_packet_ctx_t *packet)
+				struct usb_spi_packet_ctx *packet)
 {
 	if (packet->packet_size == 0)
 		return;
@@ -256,7 +479,11 @@ static void usb_spi_write_packet(struct usb_spi_config const *config,
 	memcpy_to_usbram((void *)usb_sram_addr(config->ep_tx_ram),
 		packet->bytes, packet->packet_size);
 	btable_ep[config->endpoint].tx_count = packet->packet_size;
-	/* Set endpoint as valid for transmitting new packet*/
+
+	/* Mark the packet as having no data. */
+	packet->packet_size = 0;
+
+	/* Set endpoint as valid for transmitting new packet. */
 	STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_VALID, 0);
 }
 
@@ -272,14 +499,36 @@ static bool usb_spi_received_packet(struct usb_spi_config const *config)
 	return (STM32_USB_EP(config->endpoint) & EP_RX_MASK) != EP_RX_VALID;
 }
 
-/*
- * STM32 Platform: Handle interrupt for USB data received.
+/* STM32 Platform: Returns the TX endpoint status
+ *
+ * @param config        USB SPI config
+ *
+ * @returns             Returns true when the TX endpoint transmitted
+ *                      the packet written.
+ */
+static bool usb_spi_transmitted_packet(struct usb_spi_config const *config)
+{
+	return (STM32_USB_EP(config->endpoint) & EP_TX_MASK) != EP_TX_VALID;
+}
+
+/* STM32 Platform: Handle interrupt for USB data received.
  *
  * @param config        USB SPI config
  */
 void usb_spi_rx(struct usb_spi_config const *config)
 {
-	STM32_TOGGLE_EP(config->endpoint, EP_RX_MASK, EP_RX_NAK, 0);
+	/*
+	 * We need to set both the TX and RX endpoints to NAK to prevent
+	 * transfers. The protocol requires responses to follow a command, but
+	 * the USB host will request the next packet from the TX endpoint
+	 * before the USB SPI has updated the memory in the buffer. By setting
+	 * it to NAK in the ISR, it will not perform a transfer until the
+	 * next packet is ready.
+	 *
+	 * This has a side effect of disabling the endpoint interrupts until
+	 * they are set to valid or a USB reset events occurs.
+	 */
+	STM32_TOGGLE_EP(config->endpoint, EP_TX_RX_MASK, EP_TX_RX_NAK, 0);
 
 	hook_call_deferred(config->deferred, 0);
 }
@@ -292,6 +541,8 @@ void usb_spi_rx(struct usb_spi_config const *config)
 void usb_spi_tx(struct usb_spi_config const *config)
 {
 	STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_NAK, 0);
+
+	hook_call_deferred(config->deferred, 0);
 }
 
 /*

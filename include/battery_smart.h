@@ -50,7 +50,7 @@
 #define SB_DESIGN_CAPACITY              0x18
 #define SB_DESIGN_VOLTAGE               0x19
 #define SB_SPECIFICATION_INFO           0x1a
-#define SB_MANUFACTURER_DATE            0x1b
+#define SB_MANUFACTURE_DATE             0x1b
 #define SB_SERIAL_NUMBER                0x1c
 #define SB_MANUFACTURER_NAME            0x20
 #define SB_DEVICE_NAME                  0x21

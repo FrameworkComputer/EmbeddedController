@@ -453,7 +453,7 @@ static void fill_response(struct ec_response_vboot_hash *r,
 }
 
 /**
- * Start computing a hash, with sanity checking on params.
+ * Start computing a hash, with validity checking on params.
  *
  * @return EC_RES_SUCCESS if success, or other result code on error.
  */
@@ -463,7 +463,7 @@ static int host_start_hash(const struct ec_params_vboot_hash *p)
 	int size = p->size;
 	int rv;
 
-	/* Sanity-check input params */
+	/* Validity-check input params */
 	if (p->hash_type != EC_VBOOT_HASH_TYPE_SHA256)
 		return EC_RES_INVALID_PARAM;
 	if (p->nonce_size > sizeof(p->nonce_data))

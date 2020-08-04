@@ -102,7 +102,6 @@ struct charger_config_t chg_chips[] = {
 		.drv = &isl9241_drv,
 	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /*
  * If the charger is found on the V0 I2C port then re-map the port.
@@ -140,6 +139,10 @@ void baseboard_tcpc_init(void)
 	/* Enable BC 1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
+
+	/* Enable SBU fault interrupts */
+	ioex_enable_interrupt(IOEX_USB_C0_SBU_FAULT_ODL);
+	ioex_enable_interrupt(IOEX_USB_C1_SBU_FAULT_DB_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -158,7 +161,7 @@ struct ppc_config_t ppc_chips[] = {
 BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
-void ppc_interrupt(enum gpio_signal signal)
+__overridable void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_C0_PPC_FAULT_ODL:
@@ -343,7 +346,7 @@ void tcpc_alert_event(enum gpio_signal signal)
 }
 
 
-int board_tcpc_fast_role_swap_enable(int port, int enable)
+int board_pd_set_frs_enable(int port, int enable)
 {
 	int rv = EC_SUCCESS;
 
@@ -393,15 +396,6 @@ struct ioexpander_config_t ioex_config[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(ioex_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_IO_EXPANDER_PORT_COUNT == USBC_PORT_COUNT);
-
-/*****************************************************************************
- * USB-A Power
- */
-
-const int usb_port_enable[USBA_PORT_COUNT] = {
-	IOEX_EN_USB_A0_5V,
-	IOEX_EN_USB_A1_5V_DB,
-};
 
 /*****************************************************************************
  * Custom Zork USB-C1 Retimer/MUX driver

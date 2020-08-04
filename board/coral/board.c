@@ -247,7 +247,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &bd9995x_drv,
 	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 uint16_t tcpc_get_alert_status(void)
 {
@@ -372,7 +371,7 @@ static void board_tcpc_init(void)
 	}
 
 	/* Only reset TCPC if not sysjump */
-	if (!system_jumped_to_this_image())
+	if (!system_jumped_late())
 		board_reset_pd_mcu();
 
 	/*

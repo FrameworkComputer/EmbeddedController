@@ -10,9 +10,6 @@
 #ifndef __CROS_EC_OCPC_H_
 #define __CROS_EC_OCPC_H_
 
-#define PRIMARY_CHARGER   0
-#define SECONDARY_CHARGER 1
-
 #define OCPC_UNINIT 0xdededede
 
 struct ocpc_data {
@@ -20,12 +17,17 @@ struct ocpc_data {
 	int active_chg_chip;
 
 	int combined_rsys_rbatt_mo; /* System resistance b/w output and Vbatt */
+	int rsys_mo;  /* System resistance b/w output and VSYS node */
+	int rbatt_mo; /* Resistance between VSYS node and battery */
 
 	/* ADC values */
 	int primary_vbus_mv; /* VBUS measured by the primary charger IC */
 	int primary_ibus_ma; /* IBUS measrued by the primary charger IC */
 	int secondary_vbus_mv; /* VBUS measured by the secondary charger IC */
 	int secondary_ibus_ma; /* IBUS measure by the secondary charger IC */
+	int vsys_aux_mv; /* VSYS output measured by aux charger IC */
+	int vsys_mv; /* VSYS measured by main charger IC */
+	int isys_ma; /* Egress current measured by aux charger IC */
 
 	/* PID values */
 	int last_error;

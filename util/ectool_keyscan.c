@@ -101,7 +101,7 @@ static int keyscan_read_fdt_matrix(struct keyscan_info *keyscan,
 		matrix->col = (word >> 16) & 0xff;
 		matrix->keycode = word & 0xffff;
 
-		/* Hard-code some sanity limits for now */
+		/* Hard-code some limits for now */
 		if (matrix->row >= KEYBOARD_ROWS ||
 		    matrix->col >= KEYBOARD_COLS_MAX) {
 			fprintf(stderr, "Matrix pos out of range (%d,%d)\n",

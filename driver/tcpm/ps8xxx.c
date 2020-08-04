@@ -7,7 +7,9 @@
  * Type-C port manager for Parade PS8XXX with integrated superspeed muxes.
  *
  * Supported TCPCs:
+ * - PS8705
  * - PS8751
+ * - PS8755
  * - PS8805
  * - PS8815
  */
@@ -20,7 +22,9 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 
-#if !defined(CONFIG_USB_PD_TCPM_PS8751) && \
+#if !defined(CONFIG_USB_PD_TCPM_PS8705) && \
+	!defined(CONFIG_USB_PD_TCPM_PS8751) && \
+	!defined(CONFIG_USB_PD_TCPM_PS8755) && \
 	!defined(CONFIG_USB_PD_TCPM_PS8805) && \
 	!defined(CONFIG_USB_PD_TCPM_PS8815)
 #error "Unsupported PS8xxx TCPC."
@@ -182,37 +186,78 @@ static int ps8xxx_tcpc_drp_toggle(int port)
 }
 #endif
 
+#ifdef CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
+/*
+ * Early ps8815 A1 firmware reports 0x0001 in the TCPCI Device ID
+ * registers which makes it indistinguishable from A0. This
+ * overrides the Device ID based if vendor specific registers
+ * identify the chip as A1.
+ *
+ * See b/159289062.
+ */
+static int ps8815_make_device_id(int port, int *id)
+{
+	int p1_addr;
+	int val;
+	int status;
 
+	/* P1 registers are always accessible on PS8815 */
+	p1_addr = PS8751_P3_TO_P1_FLAGS(tcpc_config[port].i2c_info.addr_flags);
+
+	status = tcpc_addr_read16(port, p1_addr, PS8815_P1_REG_HW_REVISION,
+				  &val);
+	if (status != EC_SUCCESS)
+		return status;
+	switch (val) {
+	case 0x0a00:
+		*id = 1;
+		break;
+	case 0x0a01:
+		*id = 2;
+		break;
+	default:
+		return EC_ERROR_UNKNOWN;
+	}
+	return EC_SUCCESS;
+}
+#endif
 
 static int ps8xxx_get_chip_info(int port, int live,
-			struct ec_response_pd_chip_info_v1 **chip_info)
+			struct ec_response_pd_chip_info_v1 *chip_info)
 {
 	int val;
 	int rv = tcpci_get_chip_info(port, live, chip_info);
 
-	if (rv)
+	if (rv != EC_SUCCESS)
 		return rv;
 
 	if (!live) {
-		(*chip_info)->vendor_id = PS8XXX_VENDOR_ID;
-		(*chip_info)->product_id = PS8XXX_PRODUCT_ID;
+		chip_info->vendor_id = PS8XXX_VENDOR_ID;
+		chip_info->product_id = PS8XXX_PRODUCT_ID;
 	}
 
-	if ((*chip_info)->fw_version_number == 0 ||
-	    (*chip_info)->fw_version_number == -1 || live) {
+	if (chip_info->fw_version_number == 0 ||
+	    chip_info->fw_version_number == -1 || live) {
+#ifdef CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
+		if (chip_info->device_id == 0x0001) {
+			rv = ps8815_make_device_id(port, &val);
+			if (rv != EC_SUCCESS)
+				return rv;
+			chip_info->device_id = val;
+		}
+#endif
 		rv = tcpc_read(port, FW_VER_REG, &val);
-
-		if (rv)
+		if (rv != EC_SUCCESS)
 			return rv;
 
-		(*chip_info)->fw_version_number = val;
+		chip_info->fw_version_number = val;
 	}
 
 	/* Treat unexpected values as error (FW not initiated from reset) */
 	if (live && (
-	    (*chip_info)->vendor_id != PS8XXX_VENDOR_ID ||
-	    (*chip_info)->product_id != PS8XXX_PRODUCT_ID ||
-	    (*chip_info)->fw_version_number == 0))
+	    chip_info->vendor_id != PS8XXX_VENDOR_ID ||
+	    chip_info->product_id != PS8XXX_PRODUCT_ID ||
+	    chip_info->fw_version_number == 0))
 		return EC_ERROR_UNKNOWN;
 
 #if defined(CONFIG_USB_PD_TCPM_PS8751) && \
@@ -221,7 +266,7 @@ static int ps8xxx_get_chip_info(int port, int live,
 	 * Min firmware version of PS8751 to ensure that it can detect Vbus
 	 * properly. See b/109769787#comment7
 	 */
-	(*chip_info)->min_req_fw_version_number = 0x39;
+	chip_info->min_req_fw_version_number = 0x39;
 #endif
 
 	return rv;
@@ -242,7 +287,10 @@ static int ps8xxx_enter_low_power_mode(int port)
 }
 #endif
 
-#if defined(CONFIG_USB_PD_TCPM_PS8751) || defined(CONFIG_USB_PD_TCPM_PS8805)
+#if defined(CONFIG_USB_PD_TCPM_PS8705) || \
+	defined(CONFIG_USB_PD_TCPM_PS8751) || \
+	defined(CONFIG_USB_PD_TCPM_PS8755) || \
+	defined(CONFIG_USB_PD_TCPM_PS8805)
 /*
  * DCI is enabled by default and burns about 40 mW when the port is in
  * USB2 mode or when a C-to-A dongle is attached, so force it off.
@@ -265,28 +313,40 @@ static int ps8xxx_addr_dci_disable(int port, int i2c_addr, int i2c_reg)
 	}
 	return EC_SUCCESS;
 }
-#endif /* CONFIG_USB_PD_TCPM_PS8751 || CONFIG_USB_PD_TCPM_PS8805 */
+#endif /* CONFIG_USB_PD_TCPM_PS875[15] || CONFIG_USB_PD_TCPM_PS8[78]05 */
 
-#ifdef CONFIG_USB_PD_TCPM_PS8815
-static int ps8xxx_dci_disable(int port)
-{
-	/* DCI is disabled on the ps8815 */
-	return EC_SUCCESS;
-}
-#endif /* CONFIG_USB_PD_TCPM_PS8815 */
-
-#ifdef CONFIG_USB_PD_TCPM_PS8805
+#if defined(CONFIG_USB_PD_TCPM_PS8705) || \
+	defined(CONFIG_USB_PD_TCPM_PS8755) || \
+	defined(CONFIG_USB_PD_TCPM_PS8805)
 static int ps8xxx_dci_disable(int port)
 {
 	int p1_addr;
+	int p3_addr;
+	int regval;
+	int rv;
 
-	/* DCI registers are always accessible on PS8805 */
-	p1_addr = tcpc_config[port].i2c_info.addr_flags -
-		(PS8751_I2C_ADDR1_FLAGS - PS8751_I2C_ADDR1_P1_FLAGS);
-	return ps8xxx_addr_dci_disable(port, p1_addr,
-				       PS8805_P1_REG_MUX_USB_DCI_CFG);
+	/* Enable access to debug pages. */
+	p3_addr = tcpc_config[port].i2c_info.addr_flags;
+	rv = tcpc_addr_read(port, p3_addr, PS8XXX_REG_I2C_DEBUGGING_ENABLE,
+			    &regval);
+	if (rv)
+		return rv;
+
+	rv = tcpc_addr_write(port, p3_addr, PS8XXX_REG_I2C_DEBUGGING_ENABLE,
+			     PS8XXX_REG_I2C_DEBUGGING_ENABLE_ON);
+
+	/* Disable Auto DCI */
+	p1_addr = PS8751_P3_TO_P1_FLAGS(p3_addr);
+	rv = ps8xxx_addr_dci_disable(port, p1_addr,
+				     PS8XXX_P1_REG_MUX_USB_DCI_CFG);
+
+	/*
+	 * PS8705/PS8755/PS8805 will automatically re-assert bit:0 on the
+	 * PS8XXX_REG_I2C_DEBUGGING_ENABLE register.
+	 */
+	return rv;
 }
-#endif /* CONFIG_USB_PD_TCPM_PS8805 */
+#endif /* CONFIG_USB_PD_TCPM_PS8755 || CONFIG_USB_PD_TCPM_PS8[78]05 */
 
 #ifdef CONFIG_USB_PD_TCPM_PS8751
 static int ps8xxx_dci_disable(int port)
@@ -298,6 +358,14 @@ static int ps8xxx_dci_disable(int port)
 				       PS8751_REG_MUX_USB_DCI_CFG);
 }
 #endif /* CONFIG_USB_PD_TCPM_PS8751 */
+
+#ifdef CONFIG_USB_PD_TCPM_PS8815
+static int ps8xxx_dci_disable(int port)
+{
+	/* DCI is disabled on the ps8815 */
+	return EC_SUCCESS;
+}
+#endif /* CONFIG_USB_PD_TCPM_PS8815 */
 
 static int ps8xxx_tcpm_init(int port)
 {

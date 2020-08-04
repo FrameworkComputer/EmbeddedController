@@ -62,6 +62,12 @@ static const mat33_fp_t base_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
+static const mat33_fp_t lid_standard_ref = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
 /* TODO(gcc >= 5.0) Remove the casts to const pointer at rot_standard_ref */
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -75,7 +81,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_lis2dwl_data,
 	 .port = I2C_PORT_SENSOR,
 	 .i2c_spi_addr_flags = LIS2DWL_ADDR1_FLAGS,
-	 .rot_standard_ref = NULL,
+	 .rot_standard_ref = &lid_standard_ref,
 	 .default_range = 2, /* g, enough for laptop. */
 	 .min_frequency = LIS2DW12_ODR_MIN_VAL,
 	 .max_frequency = LIS2DW12_ODR_MAX_VAL,
@@ -352,7 +358,7 @@ void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(port);
 }
 
-int board_tcpc_fast_role_swap_enable(int port, int enable)
+int board_pd_set_frs_enable(int port, int enable)
 {
 	int rv = EC_SUCCESS;
 
@@ -391,6 +397,9 @@ static void setup_fw_config(void)
 	/* Enable BC 1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
 
+	/* Enable SBU fault interrupts */
+	ioex_enable_interrupt(IOEX_USB_C0_SBU_FAULT_ODL);
+
 	if (ec_config_has_lid_angle_tablet_mode()) {
 		/* Enable Gyro interrupts */
 		gpio_enable_interrupt(GPIO_6AXIS_INT_L);
@@ -426,20 +435,3 @@ const int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A0_5V,
 	GPIO_EN_USB_A1_5V,
 };
-
-/*
- * If the battery is found on the V0 I2C port then re-map the battery port.
- * Use HOOK_PRIO_INIT_I2C so we re-map before init_battery_type() and
- * charger_chips_init() want to talk to the battery.
- */
-static void check_v0_battery(void)
-{
-	int status;
-
-	if (i2c_read16(I2C_PORT_BATTERY_V0, BATTERY_ADDR_FLAGS,
-			SB_BATTERY_STATUS, &status) == EC_SUCCESS) {
-		ccprints("V0 HW detected");
-		I2C_PORT_BATTERY = I2C_PORT_BATTERY_V0;
-	}
-}
-DECLARE_HOOK(HOOK_INIT, check_v0_battery, HOOK_PRIO_INIT_I2C);

@@ -66,8 +66,10 @@ enum pd_rx_errors {
 #define PD_EVENT_SM			TASK_EVENT_CUSTOM_BIT(10)
 /* Prepare for sysjump */
 #define PD_EVENT_SYSJUMP		TASK_EVENT_CUSTOM_BIT(11)
+/* Receive a Hard Reset. */
+#define PD_EVENT_RX_HARD_RESET		TASK_EVENT_CUSTOM_BIT(12)
 /* First free event on PD task */
-#define PD_EVENT_FIRST_FREE_BIT		12
+#define PD_EVENT_FIRST_FREE_BIT		13
 
 /* Ensure TCPC is out of low power mode before handling these events. */
 #define PD_EXIT_LOW_POWER_EVENT_MASK \
@@ -186,50 +188,51 @@ enum pd_rx_errors {
 #define SVID_DISCOVERY_MAX 16
 
 /* Timers */
-#define PD_T_SINK_TX            (18*MSEC) /* between 16ms and 20 */
-#define PD_T_CHUNK_SENDER_RSP   (24*MSEC) /* between 24ms and 30ms */
-#define PD_T_CHUNK_SENDER_REQ   (24*MSEC) /* between 24ms and 30ms */
-#define PD_T_HARD_RESET_COMPLETE (5*MSEC) /* between 4ms and 5ms*/
-#define PD_T_HARD_RESET_RETRY    (1*MSEC) /* 1ms */
-#define PD_T_SEND_SOURCE_CAP   (100*MSEC) /* between 100ms and 200ms */
-#define PD_T_SINK_WAIT_CAP     (600*MSEC) /* between 310ms and 620ms */
-#define PD_T_SINK_TRANSITION    (35*MSEC) /* between 20ms and 35ms */
-#define PD_T_SOURCE_ACTIVITY    (45*MSEC) /* between 40ms and 50ms */
-#define PD_T_SENDER_RESPONSE    (30*MSEC) /* between 24ms and 30ms */
-#define PD_T_PS_TRANSITION     (500*MSEC) /* between 450ms and 550ms */
-#define PD_T_PS_SOURCE_ON      (480*MSEC) /* between 390ms and 480ms */
-#define PD_T_PS_SOURCE_OFF     (920*MSEC) /* between 750ms and 920ms */
-#define PD_T_PS_HARD_RESET      (25*MSEC) /* between 25ms and 35ms */
-#define PD_T_ERROR_RECOVERY     (25*MSEC) /* 25ms */
-#define PD_T_CC_DEBOUNCE       (100*MSEC) /* between 100ms and 200ms */
+#define PD_T_SINK_TX                (18*MSEC) /* between 16ms and 20 */
+#define PD_T_CHUNKING_NOT_SUPPORTED (45*MSEC) /* between 40ms and 50ms */
+#define PD_T_CHUNK_SENDER_RSP       (24*MSEC) /* between 24ms and 30ms */
+#define PD_T_CHUNK_SENDER_REQ       (24*MSEC) /* between 24ms and 30ms */
+#define PD_T_HARD_RESET_COMPLETE     (5*MSEC) /* between 4ms and 5ms*/
+#define PD_T_HARD_RESET_RETRY        (1*MSEC) /* 1ms */
+#define PD_T_SEND_SOURCE_CAP       (100*MSEC) /* between 100ms and 200ms */
+#define PD_T_SINK_WAIT_CAP         (600*MSEC) /* between 310ms and 620ms */
+#define PD_T_SINK_TRANSITION        (35*MSEC) /* between 20ms and 35ms */
+#define PD_T_SOURCE_ACTIVITY        (45*MSEC) /* between 40ms and 50ms */
+#define PD_T_SENDER_RESPONSE        (30*MSEC) /* between 24ms and 30ms */
+#define PD_T_PS_TRANSITION         (500*MSEC) /* between 450ms and 550ms */
+#define PD_T_PS_SOURCE_ON          (480*MSEC) /* between 390ms and 480ms */
+#define PD_T_PS_SOURCE_OFF         (920*MSEC) /* between 750ms and 920ms */
+#define PD_T_PS_HARD_RESET          (25*MSEC) /* between 25ms and 35ms */
+#define PD_T_ERROR_RECOVERY        (240*MSEC) /* min 240ms if sourcing VConn */
+#define PD_T_CC_DEBOUNCE           (100*MSEC) /* between 100ms and 200ms */
 /* DRP_SNK + DRP_SRC must be between 50ms and 100ms with 30%-70% duty cycle */
-#define PD_T_DRP_SNK           (40*MSEC) /* toggle time for sink DRP */
-#define PD_T_DRP_SRC           (30*MSEC) /* toggle time for source DRP */
-#define PD_T_DEBOUNCE          (15*MSEC) /* between 10ms and 20ms */
-#define PD_T_TRY_CC_DEBOUNCE   (15*MSEC) /* between 10ms and 20ms */
-#define PD_T_SINK_ADJ          (55*MSEC) /* between PD_T_DEBOUNCE and 60ms */
-#define PD_T_SRC_RECOVER      (760*MSEC) /* between 660ms and 1000ms */
-#define PD_T_SRC_RECOVER_MAX (1000*MSEC) /* 1000ms */
-#define PD_T_SRC_TURN_ON      (275*MSEC) /* 275ms */
-#define PD_T_SAFE_0V          (650*MSEC) /* 650ms */
-#define PD_T_NO_RESPONSE     (5500*MSEC) /* between 4.5s and 5.5s */
-#define PD_T_BIST_TRANSMIT     (50*MSEC) /* 50ms (used for task_wait arg) */
-#define PD_T_BIST_RECEIVE      (60*MSEC) /* 60ms (max time to process bist) */
-#define PD_T_BIST_CONT_MODE    (60*MSEC) /* 30ms to 60ms */
-#define PD_T_VCONN_SOURCE_ON  (100*MSEC) /* 100ms */
-#define PD_T_DRP_TRY          (125*MSEC) /* btween 75 and 150ms(monitor Vbus) */
-#define PD_T_TRY_TIMEOUT      (550*MSEC) /* between 550ms and 1100ms */
-#define PD_T_TRY_WAIT         (600*MSEC) /* Max time for TryWait.SNK state */
-#define PD_T_SINK_REQUEST     (100*MSEC) /* Wait 100ms before next request */
-#define PD_T_PD_DEBOUNCE      (15*MSEC)  /* between 10ms and 20ms */
-#define PD_T_CHUNK_SENDER_RESPONSE (25*MSEC) /* 25ms */
-#define PD_T_CHUNK_SENDER_REQUEST  (25*MSEC) /* 25ms */
-#define PD_T_SWAP_SOURCE_START     (25*MSEC) /* Min of 20ms */
-#define PD_T_RP_VALUE_CHANGE       (20*MSEC) /* 20ms */
-#define PD_T_SRC_DISCONNECT        (15*MSEC) /* 15ms */
-#define PD_T_VCONN_STABLE          (50*MSEC) /* 50ms */
-#define PD_T_DISCOVER_IDENTITY     (45*MSEC) /* between 40ms and 50ms */
-#define PD_T_SYSJUMP               (1000*MSEC) /* 1s */
+#define PD_T_DRP_SNK                (40*MSEC) /* toggle time for sink DRP */
+#define PD_T_DRP_SRC                (30*MSEC) /* toggle time for source DRP */
+#define PD_T_DEBOUNCE               (15*MSEC) /* between 10ms and 20ms */
+#define PD_T_TRY_CC_DEBOUNCE        (15*MSEC) /* between 10ms and 20ms */
+#define PD_T_SINK_ADJ               (55*MSEC) /* between tPDDebounce and 60ms */
+#define PD_T_SRC_RECOVER           (760*MSEC) /* between 660ms and 1000ms */
+#define PD_T_SRC_RECOVER_MAX      (1000*MSEC) /* 1000ms */
+#define PD_T_SRC_TURN_ON           (275*MSEC) /* 275ms */
+#define PD_T_SAFE_0V               (650*MSEC) /* 650ms */
+#define PD_T_NO_RESPONSE          (5500*MSEC) /* between 4.5s and 5.5s */
+#define PD_T_BIST_TRANSMIT          (50*MSEC) /* 50ms (for task_wait arg) */
+#define PD_T_BIST_RECEIVE           (60*MSEC) /* 60ms (time to process bist) */
+#define PD_T_BIST_CONT_MODE         (60*MSEC) /* 30ms to 60ms */
+#define PD_T_VCONN_SOURCE_ON       (100*MSEC) /* 100ms */
+#define PD_T_DRP_TRY               (125*MSEC) /* between 75ms and 150ms */
+#define PD_T_TRY_TIMEOUT           (550*MSEC) /* between 550ms and 1100ms */
+#define PD_T_TRY_WAIT              (600*MSEC) /* Wait time for TryWait.SNK */
+#define PD_T_SINK_REQUEST          (100*MSEC) /* 100ms before next request */
+#define PD_T_PD_DEBOUNCE            (15*MSEC) /* between 10ms and 20ms */
+#define PD_T_CHUNK_SENDER_RESPONSE  (25*MSEC) /* 25ms */
+#define PD_T_CHUNK_SENDER_REQUEST   (25*MSEC) /* 25ms */
+#define PD_T_SWAP_SOURCE_START      (25*MSEC) /* Min of 20ms */
+#define PD_T_RP_VALUE_CHANGE        (20*MSEC) /* 20ms */
+#define PD_T_SRC_DISCONNECT         (15*MSEC) /* 15ms */
+#define PD_T_VCONN_STABLE           (50*MSEC) /* 50ms */
+#define PD_T_DISCOVER_IDENTITY      (45*MSEC) /* between 40ms and 50ms */
+#define PD_T_SYSJUMP              (1000*MSEC) /* 1s */
 
 /* number of edges and time window to detect CC line is not idle */
 #define PD_RX_TRANSITION_COUNT  3
@@ -573,14 +576,6 @@ struct pd_cable {
 	/* For storing Discover mode response from cable */
 	union tbt_mode_resp_cable cable_mode_resp;
 
-	/* Shared fields between TCPMv1 and TCPMv2 */
-	uint8_t is_identified;
-	/* Type of cable */
-	enum idh_ptype type;
-	/* Cable attributes */
-	union product_type_vdo1 attr;
-	/* For USB PD REV3, active cable has 2 VDOs */
-	union product_type_vdo2 attr2;
 	/* Cable revision */
 	enum pd_rev_type rev;
 
@@ -899,14 +894,15 @@ enum pd_states {
 #define PD_FLAGS_LPM_REQUESTED     BIT(17)/* Tracks SW LPM state */
 #define PD_FLAGS_LPM_ENGAGED       BIT(18)/* Tracks HW LPM state */
 #define PD_FLAGS_LPM_TRANSITION    BIT(19)/* Tracks HW LPM transition */
+#define PD_FLAGS_LPM_EXIT          BIT(19)/* Tracks HW LPM exit */
 #endif
 /*
  * Tracks whether port negotiation may have stalled due to not starting reset
  * timers in SNK_DISCOVERY
  */
-#define PD_FLAGS_SNK_WAITING_BATT  BIT(20)
+#define PD_FLAGS_SNK_WAITING_BATT  BIT(21)
 /* Check vconn state in READY */
-#define PD_FLAGS_CHECK_VCONN_STATE BIT(21)
+#define PD_FLAGS_CHECK_VCONN_STATE BIT(22)
 #endif /* CONFIG_USB_PD_TCPMV1 */
 
 /* Per-port battery backed RAM flags */
@@ -1096,6 +1092,16 @@ enum pd_ext_msg_type {
 	/* 15-31 Reserved */
 };
 
+/* Alert Data Object fields for REV 3.0 */
+#define ADO_OVP_EVENT                   BIT(30)
+#define ADO_SOURCE_INPUT_CHANGE         BIT(29)
+#define ADO_OPERATING_CONDITION_CHANGE  BIT(28)
+#define ADO_OTP_EVENT                   BIT(27)
+#define ADO_OCP_EVENT                   BIT(26)
+#define ADO_BATTERY_STATUS_CHANGE       BIT(25)
+#define ADO_FIXED_BATTERIES(n)          ((n & 0xf) << 20)
+#define ADO_HOT_SWAPPABLE_BATTERIES(n)  ((n & 0xf) << 16)
+
 /* Data message type */
 enum pd_data_msg_type {
 	/* 0 Reserved */
@@ -1225,6 +1231,10 @@ enum pd_msg_type {
 
 /* Used to get extended header from the first 32-bit word of the message */
 #define GET_EXT_HEADER(msg) (msg & 0xffff)
+
+/* Extended message constants (PD 3.0, Rev. 2.0, section 6.13) */
+#define PD_MAX_EXTENDED_MSG_LEN       260
+#define PD_MAX_EXTENDED_MSG_CHUNK_LEN  26
 
 /* K-codes for special symbols */
 #define PD_SYNC1 0x18
@@ -1535,7 +1545,7 @@ __override_proto void pd_try_execute_vconn_swap(int port, int flags);
 
 /**
  * Check if we should charge from this device. This is
- * basically a white-list for chargers that are dual-role,
+ * basically a allow-list for chargers that are dual-role,
  * don't set the unconstrained bit, but we should charge
  * from by default.
  *
@@ -1641,10 +1651,12 @@ void dfp_consume_attention(int port, uint32_t *payload);
  * Consume the discover identity message
  *
  * @param port    USB-C port number
+ * @param type    Transmit type (SOP, SOP') for received modes
  * @param cnt     number of data objects in payload
  * @param payload payload data.
  */
-void dfp_consume_identity(int port, int cnt, uint32_t *payload);
+void dfp_consume_identity(int port, enum tcpm_transmit_type type, int cnt,
+		uint32_t *payload);
 
 /**
  * Consume the SVIDs
@@ -1669,21 +1681,11 @@ void dfp_consume_modes(int port, enum tcpm_transmit_type type, int cnt,
 		uint32_t *payload);
 
 /**
- * Return the discover alternate mode payload data
- *
- * @param port    USB-C port number
- * @param payload Pointer to payload data to fill
- * @return 1 if valid SVID present else 0
- */
-int dfp_discover_modes(int port, uint32_t *payload);
-
-/**
  * Initialize alternate mode discovery info for DFP
  *
  * @param port     USB-C port number
  */
 void pd_dfp_discovery_init(int port);
-
 
 /**
  * Set identity discovery state for this type and port
@@ -1748,6 +1750,21 @@ void pd_set_modes_discovery(int port, enum tcpm_transmit_type type,
  */
 enum pd_discovery_state pd_get_modes_discovery(int port,
 		enum tcpm_transmit_type type);
+
+/**
+ * Returns the mode vdo count of the specified SVID and sets
+ * the vdo_out with it's discovered mode VDO.
+ *
+ * @param port     USB-C port number
+ * @param type     Transmit type (SOP, SOP') for VDM
+ * @param svid     SVID to get
+ * @param vdo_out  Discover Mode VDO response to set
+ *                 Note: It must be able to fit wihin PDO_MODES VDOs.
+ * @return         Mode VDO cnt of specified SVID if is discovered,
+ *                 0 otherwise
+ */
+int pd_get_mode_vdo_for_svid(int port, enum tcpm_transmit_type type,
+		uint16_t svid, uint32_t *vdo_out);
 
 /**
  * Get a pointer to mode data for the next SVID with undiscovered modes. This
@@ -1850,6 +1867,14 @@ bool pd_is_mode_discovered_for_svid(int port, enum tcpm_transmit_type type,
 struct svdm_amode_data *pd_get_amode_data(int port,
 		enum tcpm_transmit_type type, uint16_t svid);
 
+/*
+ * Returns cable revision
+ *
+ * @param port          USB-C port number
+ * @return              cable revision
+ */
+enum pd_rev_type get_usb_pd_cable_revision(int port);
+
 /**
  * Returns false if previous SOP' messageId count is different from received
  * messageId count.
@@ -1897,15 +1922,6 @@ struct partner_active_modes *pd_get_partner_active_modes(int port,
 		enum tcpm_transmit_type type);
 
 /*
- * Return the pointer to PD cable attributes
- * Note: Caller function can mutate the data in this structure.
- *
- * @param port  USB-C port number
- * @return      pointer to PD cable attributes
- */
-struct pd_cable *pd_get_cable_attributes(int port);
-
-/*
  * Returns True if cable supports USB2 connection
  *
  * @param port  USB-C port number
@@ -1949,34 +1965,12 @@ void pd_set_dfp_enter_mode_flag(int port, bool set);
 void reset_pd_cable(int port);
 
 /**
- * Returns true if the number of data objects in the payload is greater than
- * than the VDO index
- *
- * @param cnt      number of data objects in payload
- * @param index    VDO Index
- * @return         True if number of data objects is greater than VDO index,
- *                 false otherwise
- */
-bool is_vdo_present(int cnt, int index);
-
-/**
  * Return the type of cable attached
  *
  * @param port	USB-C port number
  * @return	cable type
  */
 enum idh_ptype get_usb_pd_cable_type(int port);
-
-/**
- * Stores the cable's response to discover Identity SOP' request
- *
- * @param port      USB-C port number
- * @param cnt       number of data objects in payload
- * @param payload   payload data
- * @param head      PD packet header
- */
-void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
-					uint32_t head);
 
 /**
  * Returns USB4 cable speed according to the port, if port supports lesser
@@ -2002,16 +1996,6 @@ void dfp_consume_cable_response(int port, int cnt, uint32_t *payload,
  * @return          USB4 cable speed
  */
 enum usb_rev30_ss get_usb4_cable_speed(int port);
-
-/**
- * Check if attached device has USB4 VDO
- *
- * @param port      USB-C port number
- * @param cnt       number of data objects in payload
- * @param payload   payload data
- * @return          True if device has USB4 VDO
- */
-bool is_usb4_vdo(int port, int cnt, uint32_t *payload);
 
 /**
  * Return enter USB message payload
@@ -2042,22 +2026,6 @@ void disable_enter_usb4_mode(int port);
 bool should_enter_usb4_mode(int port);
 
 /**
- * Return the response of discover mode SOP prime, with SVID = 0x8087
- *
- * @param port	USB-C port number
- * @return	cable mode response vdo
- */
-union tbt_mode_resp_cable get_cable_tbt_vdo(int port);
-
-/**
- * Return the response of discover mode SOP, with SVID = 0x8087
- *
- * @param port	USB-C port number
- * @return	device mode response vdo
- */
-union tbt_mode_resp_device get_dev_tbt_vdo(int port);
-
-/**
  * Return Thunderbolt rounded support
  * Rounded support indicates if the cable can support rounding the
  * frequency depending upon the cable generation.
@@ -2066,6 +2034,16 @@ union tbt_mode_resp_device get_dev_tbt_vdo(int port);
  * @return tbt_rounded_support
  */
 enum tbt_compat_rounded_support get_tbt_rounded_support(int port);
+
+/**
+ * Returns the first discovered Mode VDO for Intel SVID
+ *
+ * @param port  USB-C port number
+ * @param type  Transmit type (SOP, SOP') for VDM
+ * @return      Discover Mode VDO for Intel SVID if the Intel mode VDO is
+ *              discovered, 0 otherwise
+ */
+uint32_t pd_get_tbt_mode_vdo(int port, enum tcpm_transmit_type type);
 
 /**
  * Sets the Mux state to Thunderbolt-Compatible mode
@@ -2083,36 +2061,6 @@ void set_tbt_compat_mode_ready(int port);
 bool is_tbt_cable_superspeed(int port);
 
 /**
- * Check if product supports any Modal Operation (Alternate Modes)
- *
- * @param port	   USB-C port number
- * @param cnt      number of data objects in payload
- * @param payload  payload data
- * @return         True if product supports Modal Operation, false otherwise
- */
-bool is_modal(int port, int cnt, const uint32_t *payload);
-
-/**
- * Checks all the SVID for USB_VID_INTEL
- *
- * @param port	        USB-C port number
- * @param prev_svid_cnt Previous SVID count
- * @return              True is SVID = USB_VID_INTEL, false otherwise
- */
-bool is_intel_svid(int port, int prev_svid_cnt);
-
-/**
- * Checks if Device discover mode response contains Thunderbolt alternate mode
- *
- * @param port	   USB-C port number
- * @param cnt      number of data objects in payload
- * @param payload  payload data
- * @return         True if Thunderbolt Alternate mode response is received,
- *                 false otherwise
- */
-bool is_tbt_compat_mode(int port, int cnt, const uint32_t *payload);
-
-/**
  * Returns Thunderbolt-compatible cable speed according to the port if,
  * port supports lesser speed than the cable
  *
@@ -2120,15 +2068,6 @@ bool is_tbt_compat_mode(int port, int cnt, const uint32_t *payload);
  * @return thunderbolt-cable cable speed
  */
 enum tbt_compat_cable_speed get_tbt_cable_speed(int port);
-
-/*
- * Checks if the cable supports Thunderbolt speed.
- *
- * @param port   USB-C port number
- * @return       True if the Thunderbolt cable speed is TBT_SS_TBT_GEN3 or
- *               TBT_SS_U32_GEN1_GEN2, false otherwise
- */
-bool cable_supports_tbt_speed(int port);
 
 /**
  * Fills the TBT3 objects in the payload and returns the number
@@ -2711,6 +2650,31 @@ bool pd_check_vbus_level(int port, enum vbus_level level);
 int pd_is_vbus_present(int port);
 
 /**
+ * Enable or disable the FRS trigger for a given port
+ *
+ * @param port   USB-C port number
+ * @param enable 1 to enable the FRS trigger, 0 to disable
+ * @return EC_SUCCESS on success, or an error
+ */
+int pd_set_frs_enable(int port, int enable);
+
+/**
+ * Optional, board-specific configuration to enable the FRS trigger on port
+ *
+ * @param port   USB-C port number
+ * @param enable 1 to enable the FRS trigger, 0 to disable
+ * @return EC_SUCCESS on success, or an error
+ */
+__override_proto int board_pd_set_frs_enable(int port, int enable);
+
+/**
+ * Optional board-level function called after TCPC detect FRS signal.
+ *
+ * @param port   USB-C port number
+ */
+__overridable void board_frs_handler(int port);
+
+/**
  * Get current DisplayPort pin mode on the specified port.
  *
  * @param port USB-C port number
@@ -2718,22 +2682,22 @@ int pd_is_vbus_present(int port);
  */
 __override_proto uint8_t get_dp_pin_mode(int port);
 
-#ifdef CONFIG_USB_PD_PORT_MAX_COUNT
-#ifdef CONFIG_USB_POWER_DELIVERY
 /**
  * Get board specific usb pd port count
  *
  * @return <= CONFIG_USB_PD_PORT_MAX_COUNT if configured in board file,
  *         else return CONFIG_USB_PD_PORT_MAX_COUNT
  */
-uint8_t board_get_usb_pd_port_count(void);
-#else
-static inline uint8_t board_get_usb_pd_port_count(void)
-{
-	return CONFIG_USB_PD_PORT_MAX_COUNT;
-}
-#endif /* CONFIG_USB_POWER_DELIVERY */
-#endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
+__override_proto uint8_t board_get_usb_pd_port_count(void);
+
+
+/**
+ * Resets external PD chips including TCPCs and MCUs.
+ *
+ * Boards must provide this when PDCMD (PD MCUs case) or PD INT (TCPC case)
+ * tasks are present.
+ */
+void board_reset_pd_mcu(void);
 
 /**
  * Return true if specified PD port is debug accessory.

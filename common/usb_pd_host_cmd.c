@@ -89,7 +89,7 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_RW_HASH_ENTRY,
 static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pd_chip_info *p = args->params;
-	struct ec_response_pd_chip_info_v1 *info;
+	struct ec_response_pd_chip_info_v1 info;
 
 	if (p->port >= board_get_usb_pd_port_count())
 		return EC_RES_INVALID_PARAM;
@@ -105,7 +105,7 @@ static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 		args->version ? sizeof(struct ec_response_pd_chip_info_v1)
 			      : sizeof(struct ec_response_pd_chip_info);
 
-	memcpy(args->response, info, args->response_size);
+	memcpy(args->response, &info, args->response_size);
 
 	return EC_RES_SUCCESS;
 }
@@ -253,8 +253,14 @@ static const mux_state_t typec_mux_map[USB_PD_CTRL_MUX_COUNT] = {
  */
 static uint8_t get_pd_control_flags(int port)
 {
-	union tbt_mode_resp_cable cable_resp = get_cable_tbt_vdo(port);
-	union tbt_mode_resp_device device_resp = get_dev_tbt_vdo(port);
+	union tbt_mode_resp_cable cable_resp;
+	union tbt_mode_resp_device device_resp;
+
+	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
+		return 0;
+
+	cable_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME);
+	device_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPC_TX_SOP);
 
 	/*
 	 * Ref: USB Type-C Cable and Connector Specification

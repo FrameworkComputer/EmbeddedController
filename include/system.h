@@ -39,6 +39,13 @@ void system_pre_init(void);
 void system_common_pre_init(void);
 
 /**
+ * Checks if manual recovery is detected or not
+ *
+ * @return Non zero if manual recovery is detected or zero otherwise.
+ */
+int system_is_manual_recovery(void);
+
+/**
  * System common re-initialization; called to reset persistent state
  * left by system_common_pre_init().  This is useful for testing
  * scenarios calling system_common_pre_init() multiple times.

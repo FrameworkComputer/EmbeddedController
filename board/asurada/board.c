@@ -8,15 +8,20 @@
 #include "adc_chip.h"
 #include "button.h"
 #include "charge_manager.h"
+#include "charge_state_v2.h"
 #include "charger.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/als_tcs3400.h"
+#include "driver/bc12/mt6360.h"
+#include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/ppc/syv682x.h"
 #include "driver/tcpm/it83xx_pd.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/it5205.h"
 #include "driver/usb_mux/ps8743.h"
 #include "extpower.h"
@@ -30,11 +35,15 @@
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
+#include "regulator.h"
+#include "spi.h"
 #include "switch.h"
 #include "tablet_mode.h"
 #include "task.h"
+#include "temp_sensor.h"
 #include "timer.h"
 #include "uart.h"
+#include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
@@ -42,6 +51,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+static void bc12_interrupt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
 static void x_ec_interrupt(enum gpio_signal signal);
 
@@ -54,7 +64,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &isl923x_drv,
 	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /*
  * PWM channels. Must be in the exactly same order as in enum pwm_channel.
@@ -103,6 +112,8 @@ static void board_init(void)
 	pwm_set_duty(PWM_CH_PWRLED, 5);
 	pwm_enable(PWM_CH_PWRLED, 1);
 
+	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
+
 	/* Enable motion sensor interrupt */
 	gpio_enable_interrupt(GPIO_BASE_IMU_INT_L);
 	gpio_enable_interrupt(GPIO_LID_ACCEL_INT_L);
@@ -112,8 +123,12 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 static void board_tcpc_init(void)
 {
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
-	if (board_get_sub_board() == SUB_BOARD_TYPEC)
-		gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+	/* C1: GPIO_USB_C1_PPC_INT_ODL & HDMI: GPIO_PS185_EC_DP_HPD */
+	gpio_enable_interrupt(GPIO_X_EC_GPIO2);
+
+	/* If this is not a Type-C subboard, disable the task. */
+	if (board_get_sub_board() != SUB_BOARD_TYPEC)
+		task_disable_task(TASK_ID_PD_C1);
 }
 /* Must be done after I2C and subboard */
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
@@ -121,15 +136,57 @@ DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
 	/* Convert to mV (3000mV/1024). */
-	{"TEMP_SENSOR_SUBPMIC", 3000, 1024, 0, CHIP_ADC_CH0},
-	{"BOARD_ID_0", 3000, 1024, 0, CHIP_ADC_CH1},
-	{"BOARD_ID_1", 3000, 1024, 0, CHIP_ADC_CH2},
-	{"TEMP_SENSOR_AMB", 3000, 1024, 0, CHIP_ADC_CH3},
-	{"TEMP_SENSOR_CHARGER", 3000, 1024, 0, CHIP_ADC_CH5},
-	{"CHARGER_PMON", 3000, 1024, 0, CHIP_ADC_CH6},
-	{"TEMP_SENSOR_AP", 3000, 1024, 0, CHIP_ADC_CH7},
+	{"TEMP_SENSOR_SUBPMIC", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0,
+	 CHIP_ADC_CH0},
+	{"BOARD_ID_0", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH1},
+	{"BOARD_ID_1", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH2},
+	{"TEMP_SENSOR_AMB", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH3},
+	{"TEMP_SENSOR_CHARGER", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0,
+	 CHIP_ADC_CH5},
+	{"CHARGER_PMON", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH6},
+	{"TEMP_SENSOR_AP", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH7},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_SUBPMIC] = {.name = "SubPMIC",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_51k1_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_SUBPMIC},
+	[TEMP_SENSOR_AMB]     = {.name = "Ambient",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_51k1_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_AMB},
+	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_51k1_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_AP]      = {.name = "AP",
+				 .type = TEMP_SENSOR_TYPE_CPU,
+				 .read = get_temp_3v3_51k1_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_AP},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+/* BC12 */
+const struct mt6360_config_t mt6360_config = {
+	.i2c_port = 0,
+	.i2c_addr_flags = MT6360_PMU_SLAVE_ADDR_FLAGS,
+};
+
+const struct pi3usb9201_config_t
+		pi3usb9201_bc12_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	/* [0]: unused */
+	[1] = {
+		.i2c_port = 4,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	}
+};
+
+struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	{ .drv = &mt6360_drv },
+	{ .drv = &pi3usb9201_drv },
+};
 
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
@@ -144,6 +201,25 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
 	},
 };
+
+static void bc12_interrupt(enum gpio_signal signal)
+{
+	if (signal == GPIO_USB_C0_BC12_INT_ODL)
+		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
+	else
+		task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
+}
+
+static void board_sub_bc12_init(void)
+{
+	if (board_get_sub_board() == SUB_BOARD_TYPEC)
+		gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
+	else
+		/* If this is not a Type-C subboard, disable the task. */
+		task_disable_task(TASK_ID_USB_CHG_P1);
+}
+/* Must be done after I2C and subboard */
+DECLARE_HOOK(HOOK_INIT, board_sub_bc12_init, HOOK_PRIO_INIT_I2C + 1);
 
 /*
  * I2C channels (A, B, and C) are using the same timing registers (00h~07h)
@@ -193,9 +269,31 @@ static void ppc_interrupt(enum gpio_signal signal)
 		syv682x_interrupt(0);
 }
 
+int debounced_hpd;
+
+/**
+ * Handle PS185 HPD changing state.
+ */
+static void ps185_hdmi_hpd_deferred(void)
+{
+	const int new_hpd = gpio_get_level(GPIO_PS185_EC_DP_HPD);
+
+	/* HPD status not changed, probably a glitch, just return. */
+	if (debounced_hpd == new_hpd)
+		return;
+
+	debounced_hpd = new_hpd;
+
+	gpio_set_level(GPIO_EC_DPBRDG_HPD_ODL, !debounced_hpd);
+	CPRINTS(debounced_hpd ? "HDMI plug" : "HDMI unplug");
+}
+DECLARE_DEFERRED(ps185_hdmi_hpd_deferred);
+
+#define PS185_HPD_DEBOUCE 250
+
 static void hdmi_hpd_interrupt(enum gpio_signal signal)
 {
-	/* TODO: implement HDMI HPD */
+	hook_call_deferred(&ps185_hdmi_hpd_deferred_data, PS185_HPD_DEBOUCE);
 }
 
 /* HDMI/TYPE-C function shared subboard interrupt */
@@ -273,6 +371,12 @@ static int board_ps8743_mux_set(const struct usb_mux *me,
 	return ps8743_write(me, PS8743_REG_MODE, reg);
 }
 
+/* USB-A */
+const int usb_port_enable[] = {
+	GPIO_EN_PP5000_USB_A0_VBUS,
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
+
 /* USB Mux */
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
@@ -305,11 +409,6 @@ void board_reset_pd_mcu(void)
 	 * C0 & C1: TCPC is embedded in the EC and processes interrupts in the
 	 * chip code (it83xx/intc.c)
 	 */
-}
-
-int board_get_version(void)
-{
-	return 0;
 }
 
 int board_set_active_charge_port(int port)
@@ -369,10 +468,19 @@ int board_set_active_charge_port(int port)
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 {
+	/*
+	 * We ignore the cc_pin because the polarity should already be set
+	 * correctly in the PPC driver via the pd state machine.
+	 */
+	if (ppc_set_vconn(port, enabled) != EC_SUCCESS)
+		cprints(CC_USBPD, "C%d: Failed %sabling vconn",
+			port, enabled ? "en" : "dis");
 }
 
 /* Called on AP S3 -> S0 transition */
@@ -403,6 +511,12 @@ static enum board_sub_board board_get_sub_board(void)
 		sub = SUB_BOARD_HDMI;
 		/* Only has 1 PPC with HDMI subboard */
 		ppc_cnt = 1;
+		/* EC_X_GPIO1 */
+		gpio_set_flags(GPIO_EN_HDMI_PWR, GPIO_OUT_HIGH);
+		/* X_EC_GPIO2 */
+		gpio_set_flags(GPIO_PS185_EC_DP_HPD, GPIO_INT_BOTH);
+		/* EC_X_GPIO3 */
+		gpio_set_flags(GPIO_PS185_PWRDN_ODL, GPIO_ODR_HIGH);
 	} else {
 		sub = SUB_BOARD_TYPEC;
 		/* EC_X_GPIO1 */
@@ -437,19 +551,61 @@ __override uint8_t board_get_usb_pd_port_count(void)
 /* This callback disables keyboard when convertibles are fully open */
 void lid_angle_peripheral_enable(int enable)
 {
-	/*
-	 * If the lid is in tablet position via other sensors,
-	 * ignore the lid angle, which might be faulty then
-	 * disable keyboard.
-	 */
-	if (tablet_get_mode())
-		enable = 0;
-	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
+
+	if (enable) {
+		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
+	} else {
+		/*
+		 * Ensure that the chipset is off before disabling the keyboard.
+		 * When the chipset is on, the EC keeps the keyboard enabled and
+		 * the AP decides whether to ignore input devices or not.
+		 */
+		if (!chipset_in_s0)
+			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
+	}
 }
 #endif
 
-/* Sensor */
+/* SD Card */
+int board_regulator_get_info(uint32_t index, char *name,
+			     uint16_t *num_voltages, uint16_t *voltages_mv)
+{
+	enum mt6360_ldo_id ldo_id = index;
 
+	return mt6360_ldo_get_info(ldo_id, name, num_voltages, voltages_mv);
+}
+
+int board_regulator_enable(uint32_t index, uint8_t enable)
+{
+	enum mt6360_ldo_id ldo_id = index;
+
+	return mt6360_ldo_enable(ldo_id, enable);
+}
+
+int board_regulator_is_enabled(uint32_t index, uint8_t *enabled)
+{
+	enum mt6360_ldo_id ldo_id = index;
+
+	return mt6360_ldo_is_enabled(ldo_id, enabled);
+}
+
+int board_regulator_set_voltage(uint32_t index, uint32_t min_mv,
+				uint32_t max_mv)
+{
+	enum mt6360_ldo_id ldo_id = index;
+
+	return mt6360_ldo_set_voltage(ldo_id, min_mv, max_mv);
+}
+
+int board_regulator_get_voltage(uint32_t index, uint32_t *voltage_mv)
+{
+	enum mt6360_ldo_id ldo_id = index;
+
+	return mt6360_ldo_get_voltage(ldo_id, voltage_mv);
+}
+
+/* Sensor */
 static struct mutex g_base_mutex;
 static struct mutex g_lid_mutex;
 
@@ -469,6 +625,59 @@ static const mat33_fp_t mag_standard_ref = {
 	{0, FLOAT_TO_FP(-1), 0},
 	{FLOAT_TO_FP(-1), 0, 0},
 	{0, 0, FLOAT_TO_FP(-1)},
+};
+
+/* TCS3400 private data */
+static struct als_drv_data_t g_tcs3400_data = {
+	.als_cal.scale = 1,
+	.als_cal.uscale = 0,
+	.als_cal.offset = 0,
+	.als_cal.channel_scale = {
+		.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kc */
+		.cover_scale = ALS_CHANNEL_SCALE(1.0),     /* CT */
+	},
+};
+
+static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
+	/*
+	 * TODO: calculate the actual coefficients and scaling factors
+	 */
+	.calibration.rgb_cal[X] = {
+		.offset = 0,
+		.scale = {
+			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kr */
+			.cover_scale = ALS_CHANNEL_SCALE(1.0)
+		},
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(0),
+	},
+	.calibration.rgb_cal[Y] = {
+		.offset = 0,
+		.scale = {
+			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kg */
+			.cover_scale = ALS_CHANNEL_SCALE(1.0)
+		},
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(0.1),
+	},
+	.calibration.rgb_cal[Z] = {
+		.offset = 0,
+		.scale = {
+			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kb */
+			.cover_scale = ALS_CHANNEL_SCALE(1.0)
+		},
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(0),
+	},
+	.calibration.irt = INT_TO_FP(1),
+	.saturation.again = TCS_DEFAULT_AGAIN,
+	.saturation.atime = TCS_DEFAULT_ATIME,
 };
 
 struct motion_sensor_t motion_sensors[] = {
@@ -564,6 +773,41 @@ struct motion_sensor_t motion_sensors[] = {
 				.odr = 10000 | ROUND_UP_FLAG,
 			},
 		},
+	},
+	[CLEAR_ALS] = {
+		.name = "Clear Light",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_TCS3400,
+		.type = MOTIONSENSE_TYPE_LIGHT,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &tcs3400_drv,
+		.drv_data = &g_tcs3400_data,
+		.port = I2C_PORT_ACCEL,
+		.i2c_spi_addr_flags = TCS3400_I2C_ADDR_FLAGS,
+		.rot_standard_ref = NULL,
+		.default_range = 0x10000, /* scale = 1x, uscale = 0 */
+		.min_frequency = TCS3400_LIGHT_MIN_FREQ,
+		.max_frequency = TCS3400_LIGHT_MAX_FREQ,
+		.config = {
+			/* Run ALS sensor in S0 */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 1000,
+			},
+		},
+	},
+	[RGB_ALS] = {
+		.name = "RGB Light",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_TCS3400,
+		.type = MOTIONSENSE_TYPE_LIGHT_RGB,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &tcs3400_rgb_drv,
+		.drv_data = &g_tcs3400_rgb_data,
+		.rot_standard_ref = NULL,
+		.default_range = 0x10000, /* scale = 1x, uscale = 0 */
+		/* freq = 0 indicates we should not use sensor directly */
+		.min_frequency = 0,
+		.max_frequency = 0,
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);

@@ -156,7 +156,7 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 void board_overcurrent_event(int port, int is_overcurrented)
 {
-	/* Sanity check the port. */
+	/* Check that port number is valid. */
 	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_MAX_COUNT))
 		return;
 
@@ -164,7 +164,7 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	gpio_set_level(GPIO_USB_C_OC, !is_overcurrented);
 }
 
-uint8_t board_get_usb_pd_port_count(void)
+__override uint8_t board_get_usb_pd_port_count(void)
 {
 	if (sku_id == 2)
 		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;

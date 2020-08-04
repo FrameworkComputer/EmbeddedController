@@ -5,6 +5,8 @@
 
 /* Trembyle board configuration */
 
+#include "adc.h"
+#include "adc_chip.h"
 #include "button.h"
 #include "cbi_ec_fw_config.h"
 #include "driver/accelgyro_bmi_common.h"
@@ -12,6 +14,7 @@
 #include "driver/accel_kx022.h"
 #include "driver/retimer/pi3dpx1207.h"
 #include "driver/retimer/ps8811.h"
+#include "driver/temp_sensor/sb_tsi.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "extpower.h"
 #include "fan.h"
@@ -26,6 +29,8 @@
 #include "switch.h"
 #include "system.h"
 #include "task.h"
+#include "thermistor.h"
+#include "temp_sensor.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
 
@@ -124,6 +129,30 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 #endif /* HAS_TASK_MOTIONSENSE */
 
+const struct power_signal_info power_signal_list[] = {
+	[X86_SLP_S3_N] = {
+		.gpio = GPIO_PCH_SLP_S3_L,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "SLP_S3_DEASSERTED",
+	},
+	[X86_SLP_S5_N] = {
+		.gpio = GPIO_PCH_SLP_S5_L,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "SLP_S5_DEASSERTED",
+	},
+	[X86_S0_PGOOD] = {
+		.gpio = GPIO_S0_PGOOD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "S0_PGOOD",
+	},
+	[X86_S5_PGOOD] = {
+		.gpio = GPIO_S5_PGOOD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "S5_PGOOD",
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
@@ -147,6 +176,11 @@ const struct mft_t mft_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
+
+const int usb_port_enable[USBA_PORT_COUNT] = {
+	IOEX_EN_USB_A0_5V,
+	IOEX_EN_USB_A1_5V_DB,
+};
 
 /*****************************************************************************
  * USB-A Retimer tuning
@@ -209,8 +243,6 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, ps8811_retimer_off, HOOK_PRIO_DEFAULT);
 static void setup_mux(void)
 {
 	if (ec_config_has_usbc1_retimer_ps8802()) {
-		ccprints("C1 PS8802 detected");
-
 		/*
 		 * Main MUX is PS8802, secondary MUX is modified FP5
 		 *
@@ -228,8 +260,6 @@ static void setup_mux(void)
 		usbc1_amd_fp5_usb_mux.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP;
 
 	} else if (ec_config_has_usbc1_retimer_ps8818()) {
-		ccprints("C1 PS8818 detected");
-
 		/*
 		 * Main MUX is FP5, secondary MUX is PS8818
 		 *
@@ -244,28 +274,6 @@ static void setup_mux(void)
 		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_ps8818;
 	}
 }
-
-/* TODO(b:151232257) Remove probe code when hardware supports CBI */
-#include "driver/retimer/ps8802.h"
-#include "driver/retimer/ps8818.h"
-static void probe_setup_mux_backup(void)
-{
-	if (usb_muxes[USBC_PORT_C1].driver != NULL)
-		return;
-
-	/*
-	 * Identifying a PS8818 is faster than the PS8802,
-	 * so do it first.
-	 */
-	if (ps8818_detect(&usbc1_ps8818) == EC_SUCCESS) {
-		set_cbi_fw_config(0x00004000);
-		setup_mux();
-	} else if (ps8802_detect(&usbc1_ps8802) == EC_SUCCESS) {
-		set_cbi_fw_config(0x00004001);
-		setup_mux();
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, probe_setup_mux_backup, HOOK_PRIO_DEFAULT);
 
 const struct pi3dpx1207_usb_control pi3dpx1207_controls[] = {
 	[USBC_PORT_C0] = {
@@ -340,6 +348,77 @@ const struct fan_t fans[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
+
+int board_get_temp(int idx, int *temp_k)
+{
+	int mv;
+	int temp_c;
+	enum adc_channel channel;
+
+	/* idx is the sensor index set in board temp_sensors[] */
+	switch (idx) {
+	case TEMP_SENSOR_CHARGER:
+		channel = ADC_TEMP_SENSOR_CHARGER;
+		break;
+	case TEMP_SENSOR_SOC:
+		/* thermistor is not powered in G3 */
+		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			return EC_ERROR_NOT_POWERED;
+
+		channel = ADC_TEMP_SENSOR_SOC;
+		break;
+	default:
+		return EC_ERROR_INVAL;
+	}
+
+	mv = adc_read_channel(channel);
+	if (mv < 0)
+		return EC_ERROR_INVAL;
+
+	temp_c = thermistor_linear_interpolate(mv, &thermistor_info);
+	*temp_k = C_TO_K(temp_c);
+	return EC_SUCCESS;
+}
+
+const struct adc_t adc_channels[] = {
+	[ADC_TEMP_SENSOR_CHARGER] = {
+		.name = "CHARGER",
+		.input_ch = NPCX_ADC_CH2,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_SOC] = {
+		.name = "SOC",
+		.input_ch = NPCX_ADC_CH3,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_CHARGER] = {
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_temp,
+		.idx = TEMP_SENSOR_CHARGER,
+	},
+	[TEMP_SENSOR_SOC] = {
+		.name = "SOC",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_temp,
+		.idx = TEMP_SENSOR_SOC,
+	},
+	[TEMP_SENSOR_CPU] = {
+		.name = "CPU",
+		.type = TEMP_SENSOR_TYPE_CPU,
+		.read = sb_tsi_get_val,
+		.idx = 0,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 const static struct ec_thermal_config thermal_thermistor = {
 	.temp_host = {

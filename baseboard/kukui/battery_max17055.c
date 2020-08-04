@@ -120,6 +120,11 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 
 int charger_profile_override(struct charge_state_data *curr)
 {
+#ifdef BOARD_KAKADU
+	static timestamp_t deadline_48;
+	static timestamp_t deadline_2;
+	int cycle_count = 0, rv, val;
+#endif
 	/* battery temp in 0.1 deg C */
 	int bat_temp_c = curr->batt.temperature - 2731;
 
@@ -201,6 +206,53 @@ int charger_profile_override(struct charge_state_data *curr)
 		break;
 	}
 
+#ifdef BOARD_KAKADU
+	/* Check cycle count to decrease charging voltage. */
+	rv = battery_cycle_count(&val);
+	if (!rv)
+		cycle_count = val;
+	if (cycle_count > 300 && cycle_count <= 600)
+		curr->requested_voltage = 4320;
+	else if (cycle_count > 600 && cycle_count <= 1000)
+		curr->requested_voltage = 4300;
+	else if (cycle_count > 1000)
+		curr->requested_voltage = 4250;
+	/* Should not keep charging voltage > 4250mV for 48hrs. */
+	if ((curr->state == ST_DISCHARGE) ||
+		curr->chg.voltage < 4250) {
+		deadline_48.val = 0;
+	/* Starting count 48hours */
+	} else if (curr->state == ST_CHARGE ||
+		curr->state == ST_PRECHARGE) {
+		if (deadline_48.val == 0)
+			deadline_48.val = get_time().val +
+				CHARGER_LIMIT_TIMEOUT_HOURS * HOUR;
+		/* If charging voltage keep > 4250 for 48hrs,
+		set charging voltage = 4250 */
+		else if (timestamp_expired(deadline_48, NULL))
+			curr->requested_voltage = 4250;
+	}
+	/* Should not keeep battery voltage > 4100mV and
+	 battery temperature > 45C for two hour */
+	if (curr->state == ST_DISCHARGE ||
+		curr->batt.voltage < 4100 ||
+		bat_temp_c < 450) {
+		deadline_2.val = 0;
+	} else if (curr->state == ST_CHARGE ||
+		curr->state == ST_PRECHARGE) {
+		if (deadline_2.val == 0)
+			deadline_2.val = get_time().val +
+				CHARGER_LIMIT_TIMEOUT_HOURS_TEMP * HOUR;
+		else if (timestamp_expired(deadline_2, NULL)) {
+			/* Set discharge and charging voltage = 4100mV */
+			if (curr->batt.voltage >= 4100) {
+				curr->requested_current = 0;
+				curr->requested_voltage = 4100;
+			}
+		}
+	}
+#endif
+
 #ifdef VARIANT_KUKUI_CHARGER_MT6370
 	mt6370_charger_profile_override(curr);
 #endif /* CONFIG_CHARGER_MT6370 */
@@ -219,3 +271,15 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 {
 	return EC_RES_INVALID_PARAM;
 }
+
+int get_battery_manufacturer_name(char *dest, int size)
+{
+	static const char * const name[] = {
+		[BATTERY_SIMPLO] = "SIMPLO",
+		[BATTERY_ATL] = "Celxpert",
+	};
+	ASSERT(dest);
+	strzcpy(dest, name[BATT_ID], size);
+	return EC_SUCCESS;
+}
+

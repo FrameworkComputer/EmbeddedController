@@ -160,6 +160,12 @@ static enum cr50_comm_err verify_hash(void)
 	const uint8_t *hash;
 	int rv;
 
+	/* Wake up Cr50 beforehand in case it's asleep. */
+	enable_packet_mode(true);
+	CPRINTS("Ping Cr50");
+	msleep(1);
+	enable_packet_mode(false);
+
 	rv = vboot_get_rw_hash(&hash);
 	if (rv)
 		return rv;
@@ -226,11 +232,6 @@ __overridable void show_power_shortage(void)
 	CPRINTS("%s", __func__);
 }
 
-static int is_manual_recovery(void)
-{
-	return host_is_event_set(EC_HOST_EVENT_KEYBOARD_RECOVERY);
-}
-
 static bool is_battery_ready(void)
 {
 	/* TODO: Add battery check (https://crbug.com/1045216) */
@@ -264,9 +265,9 @@ void vboot_main(void)
 		system_clear_reset_flags(EC_RESET_FLAG_AP_IDLE);
 	}
 
-	if (is_manual_recovery() ||
+	if (system_is_manual_recovery() ||
 	    (system_get_reset_flags() & EC_RESET_FLAG_STAY_IN_RO)) {
-		if (is_manual_recovery())
+		if (system_is_manual_recovery())
 			CPRINTS("In recovery mode");
 		if (!IS_ENABLED(CONFIG_BATTERY)
 				&& !IS_ENABLED(HAS_TASK_KEYSCAN)) {

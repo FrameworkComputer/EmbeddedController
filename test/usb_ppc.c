@@ -56,9 +56,9 @@ static int test_ppc_is_sourcing_vbus(void)
 	int rv;
 
 	rv = ppc_is_sourcing_vbus(1);
-	TEST_ASSERT(rv == EC_ERROR_INVAL);
+	TEST_ASSERT(rv == 0);
 	rv = ppc_is_sourcing_vbus(0);
-	TEST_ASSERT(rv == EC_ERROR_UNIMPLEMENTED);
+	TEST_ASSERT(rv == 0);
 
 	return EC_SUCCESS;
 }
@@ -164,9 +164,9 @@ static int test_ppc_is_vbus_present(void)
 	int rv;
 
 	rv = ppc_is_vbus_present(1);
-	TEST_ASSERT(rv == EC_ERROR_INVAL);
+	TEST_ASSERT(rv == 0);
 	rv = ppc_is_vbus_present(0);
-	TEST_ASSERT(rv == EC_ERROR_UNIMPLEMENTED);
+	TEST_ASSERT(rv == 0);
 
 	return EC_SUCCESS;
 }

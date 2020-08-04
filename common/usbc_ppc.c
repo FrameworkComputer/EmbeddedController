@@ -21,6 +21,24 @@
 #define CPRINTS(args...)
 #endif
 
+int ppc_prints(const char *string, int port)
+{
+#ifndef TEST_BUILD
+	return CPRINTS("ppc p%d %s", port, string);
+#else
+	return 0;
+#endif
+}
+
+int ppc_err_prints(const char *string, int port, int error)
+{
+#ifndef TEST_BUILD
+	return CPRINTS("ppc p%d %s (%d)", port, string, error);
+#else
+	return 0;
+#endif
+}
+
 /*
  * A per-port table that indicates how many VBUS overcurrent events have
  * occurred.  This table is cleared after detecting a physical disconnect of the
@@ -46,9 +64,9 @@ int ppc_init(int port)
 	if (ppc->drv->init) {
 		rv = ppc->drv->init(port);
 		if (rv)
-			CPRINTS("p%d: PPC init failed! (%d)", port, rv);
+			ppc_err_prints("init failed!", port, rv);
 		else
-			CPRINTS("p%d: PPC init'd.", port);
+			ppc_prints("init'd.", port);
 	}
 
 	return rv;
@@ -67,7 +85,7 @@ int ppc_add_oc_event(int port)
 	atomic_clear(&connected_ports, 1 << port);
 
 	if (oc_event_cnt_tbl[port] >= PPC_OC_CNT_THRESH)
-		CPRINTS("C%d: OC event limit reached! "
+		ppc_prints("OC event limit reached! "
 			"Source path disabled until physical disconnect.",
 			port);
 	return EC_SUCCESS;
@@ -85,7 +103,7 @@ static void clear_oc_tbl(void)
 		if ((!(BIT(port) & connected_ports)) &&
 		    oc_event_cnt_tbl[port]) {
 			oc_event_cnt_tbl[port] = 0;
-			CPRINTS("C%d: OC events cleared", port);
+			ppc_prints("OC events cleared", port);
 		}
 }
 DECLARE_DEFERRED(clear_oc_tbl);
@@ -113,12 +131,12 @@ int ppc_clear_oc_event_counter(int port)
 
 int ppc_is_sourcing_vbus(int port)
 {
-	int rv = EC_ERROR_UNIMPLEMENTED;
+	int rv = 0;
 	const struct ppc_config_t *ppc;
 
 	if ((port < 0) || (port >= ppc_cnt)) {
 		CPRINTS("%s(%d) Invalid port!", __func__, port);
-		return EC_ERROR_INVAL;
+		return 0;
 	}
 
 	ppc = &ppc_chips[port];
@@ -185,7 +203,7 @@ int ppc_is_port_latched_off(int port)
 {
 	if ((port < 0) || (port >= ppc_cnt)) {
 		CPRINTS("%s(%d) Invalid port!", __func__, port);
-		return EC_ERROR_INVAL;
+		return 0;
 	}
 
 	return oc_event_cnt_tbl[port] >= PPC_OC_CNT_THRESH;
@@ -311,8 +329,8 @@ int ppc_vbus_source_enable(int port, int enable)
 	return rv;
 }
 
-#ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
-int ppc_is_vbus_present(int port)
+#ifdef CONFIG_USB_PD_FRS_PPC
+int ppc_set_frs_enable(int port, int enable)
 {
 	int rv = EC_ERROR_UNIMPLEMENTED;
 	const struct ppc_config_t *ppc;
@@ -320,6 +338,26 @@ int ppc_is_vbus_present(int port)
 	if ((port < 0) || (port >= ppc_cnt)) {
 		CPRINTS("%s(%d) Invalid port!", __func__, port);
 		return EC_ERROR_INVAL;
+	}
+
+	ppc = &ppc_chips[port];
+
+	if (ppc->drv->set_frs_enable)
+		rv = ppc->drv->set_frs_enable(port,enable);
+
+	return rv;
+}
+#endif /* defined(CONFIG_USB_PD_FRS_PPC) */
+
+#ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
+int ppc_is_vbus_present(int port)
+{
+	int rv = 0;
+	const struct ppc_config_t *ppc;
+
+	if ((port < 0) || (port >= ppc_cnt)) {
+		CPRINTS("%s(%d) Invalid port!", __func__, port);
+		return 0;
 	}
 
 	ppc = &ppc_chips[port];

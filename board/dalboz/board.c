@@ -49,18 +49,24 @@ void c1_tcpc_interrupt(enum gpio_signal signal)
 	c1_tcpc_config_interrupt(signal);
 }
 
+/* Interrupt for C1 PPC with USB-C DB, HPD with HDMI DB. */
+void (*c1_ppc_config_interrupt)(enum gpio_signal signal) = ppc_interrupt;
+
+void c1_ppc_interrupt(enum gpio_signal signal)
+{
+	c1_ppc_config_interrupt(signal);
+}
+
 static void hdmi_hpd_handler(void)
 {
-	int hpd = 0;
-
 	/* Pass HPD through from DB OPT1 HDMI connector to AP's DP1. */
-	ioex_get_level(IOEX_HDMI_CONN_HPD_3V3_DB, &hpd);
+	int hpd = gpio_get_level(GPIO_USB_C1_PPC_INT_ODL);
 	gpio_set_level(GPIO_DP1_HPD, hpd);
 	ccprints("HDMI HPD %d", hpd);
 }
 DECLARE_DEFERRED(hdmi_hpd_handler);
 
-void hdmi_hpd_interrupt(enum ioex_signal signal)
+void hdmi_hpd_interrupt(enum gpio_signal signal)
 {
 	/* Debounce for 2 msec. */
 	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
@@ -287,7 +293,12 @@ void ppc_interrupt(enum gpio_signal signal)
 		break;
 
 	case GPIO_USB_C1_PPC_INT_ODL:
-		nx20p348x_interrupt(USBC_PORT_C1);
+		/*
+		 * Sensitive only to falling edges; GPIO is configured for both
+		 * because this input may be used for HDMI HPD instead.
+		 */
+		if (!gpio_get_level(signal))
+			nx20p348x_interrupt(USBC_PORT_C1);
 		break;
 
 	default:
@@ -479,7 +490,7 @@ void bc12_interrupt(enum gpio_signal signal)
 	}
 }
 
-int board_tcpc_fast_role_swap_enable(int port, int enable)
+int board_pd_set_frs_enable(int port, int enable)
 {
 	int rv = EC_SUCCESS;
 
@@ -520,7 +531,7 @@ static void setup_fw_config(void)
 		IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT2;
 		usb_port_enable[USBA_PORT_A1] = IOEX_EN_USB_A1_5V_DB_OPT2;
 		c1_tcpc_config_interrupt = pcal6408_interrupt;
-		ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
+		c1_ppc_config_interrupt = hdmi_hpd_interrupt;
 	} else {
 		ccprints("DB OPT1 USBC");
 		ioex_config[IOEX_C1_NCT3807].flags = 0;
@@ -529,6 +540,7 @@ static void setup_fw_config(void)
 		IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT1;
 		usb_port_enable[USBA_PORT_A1] = IOEX_EN_USB_A1_5V_DB_OPT1;
 		c1_tcpc_config_interrupt = tcpc_alert_event;
+		c1_ppc_config_interrupt = ppc_interrupt;
 	}
 
 	/* Enable PPC interrupts. */
@@ -542,6 +554,10 @@ static void setup_fw_config(void)
 	/* Enable BC 1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
+
+	/* Enable SBU fault interrupts */
+	ioex_enable_interrupt(IOEX_USB_C0_SBU_FAULT_ODL);
+	ioex_enable_interrupt(IOEX_USB_C1_SBU_FAULT_DB_ODL);
 
 	if (ec_config_has_lid_angle_tablet_mode()) {
 		/* Enable Gyro interrupts */

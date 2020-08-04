@@ -7,6 +7,7 @@
 #include "charge_manager.h"
 #include "mock/tcpc_mock.h"
 #include "mock/usb_mux_mock.h"
+#include "system.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
@@ -134,6 +135,12 @@ __maybe_unused static int test_mux_con_dis_as_snk(void)
 __maybe_unused static int test_power_role_set(void)
 {
 	mock_tcpc.num_calls_to_set_header = 0;
+
+	/*
+	 * We need to allow auto toggling to see the port partner attach
+	 * as a sink
+	 */
+	pd_set_dual_role(PORT0, PD_DRP_TOGGLE_ON);
 
 	/* Update CC lines send state machine event to process */
 	mock_tcpc.cc1 = TYPEC_CC_VOLT_OPEN;
@@ -594,6 +601,65 @@ __maybe_unused static int test_try_src_partner_does_not_switch_no_vbus(void)
 	return EC_SUCCESS;
 }
 
+/* Record the cc voltages */
+static enum tcpc_cc_pull cc_pull[16];
+static int cc_pull_count;
+static int record_cc_pull(int port, int pull)
+{
+	if (cc_pull_count < ARRAY_SIZE(cc_pull))
+		cc_pull[cc_pull_count++] = pull;
+
+	return EC_SUCCESS;
+};
+
+__maybe_unused static int test_cc_open_on_normal_reset(void)
+{
+	uint32_t flags = system_get_reset_flags();
+
+	cc_pull_count = 0;
+	mock_tcpc.callbacks.set_cc = &record_cc_pull;
+
+	system_clear_reset_flags(EC_RESET_FLAG_POWER_ON);
+
+	task_set_event(TASK_ID_PD_C0, TASK_EVENT_RESET_DONE, 0);
+	task_wait_event(SECOND * 10);
+
+	/* Ensure that the first CC set call was to open (error recovery). */
+	TEST_GT(cc_pull_count, 0, "%d");
+	TEST_EQ(cc_pull[0], TYPEC_CC_OPEN, "%d");
+
+	/* Ensure that the second CC set call was to Rd (sink) */
+	TEST_GT(cc_pull_count, 1, "%d");
+	TEST_EQ(cc_pull[1], TYPEC_CC_RD, "%d");
+
+	/* Reset system flags after test */
+	system_set_reset_flags(flags);
+
+	return EC_SUCCESS;
+}
+
+__maybe_unused static int test_cc_rd_on_por_reset(void)
+{
+	uint32_t flags = system_get_reset_flags();
+
+	cc_pull_count = 0;
+	mock_tcpc.callbacks.set_cc = &record_cc_pull;
+
+	system_set_reset_flags(EC_RESET_FLAG_POWER_ON);
+
+	task_set_event(TASK_ID_PD_C0, TASK_EVENT_RESET_DONE, 0);
+	task_wait_event(SECOND * 10);
+
+	/* Ensure that the first CC set call was to Rd (sink) */
+	TEST_GT(cc_pull_count, 0, "%d");
+	TEST_EQ(cc_pull[0], TYPEC_CC_RD, "%d");
+
+	/* Reset system flags after test */
+	system_clear_reset_flags(~flags);
+
+	return EC_SUCCESS;
+}
+
 /* TODO(b/153071799): test as SNK monitor for Vbus disconnect (not CC line) */
 /* TODO(b/153071799): test as SRC monitor for CC line state change */
 
@@ -603,12 +669,8 @@ void before_test(void)
 	mock_usb_mux_reset();
 	mock_tcpc_reset();
 
-	tc_try_src_override(TRY_SRC_NO_OVERRIDE);
-
-	tc_restart_tcpc(PORT0);
-
-	/* Ensure that PD task initializes its state machine and settles */
-	task_wake(TASK_ID_PD_C0);
+	/* Restart the PD task and let it settle */
+	task_set_event(TASK_ID_PD_C0, TASK_EVENT_RESET_DONE, 0);
 	task_wait_event(SECOND);
 
 	/* Print out TCPC calls for easier debugging */
@@ -644,7 +706,10 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_try_src_partner_does_not_switch_vbus);
 	RUN_TEST(test_try_src_partner_does_not_switch_no_vbus);
 
-	/* Do basic state machine sanity checks last. */
+	RUN_TEST(test_cc_open_on_normal_reset);
+	RUN_TEST(test_cc_rd_on_por_reset);
+
+	/* Do basic state machine validity checks last. */
 	RUN_TEST(test_tc_no_parent_cycles);
 	RUN_TEST(test_tc_no_empty_state);
 	RUN_TEST(test_tc_all_states_named);

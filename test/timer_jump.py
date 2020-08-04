@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
-# Timer test: check time sanity when jumping between images
+# Timer test: check time consistency when jumping between images
 #
 
 import time

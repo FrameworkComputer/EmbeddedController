@@ -5,12 +5,16 @@
 
 /* Berknip board configuration */
 
+#include "adc.h"
+#include "adc_chip.h"
 #include "button.h"
 #include "cbi_ec_fw_config.h"
+#include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/retimer/tusb544.h"
+#include "driver/temp_sensor/sb_tsi.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "driver/usb_mux/ps8743.h"
 #include "extpower.h"
@@ -26,6 +30,8 @@
 #include "switch.h"
 #include "system.h"
 #include "task.h"
+#include "temp_sensor.h"
+#include "thermistor.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
 
@@ -147,6 +153,29 @@ const struct mft_t mft_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
+
+const int usb_port_enable[USBA_PORT_COUNT] = {
+	IOEX_EN_USB_A0_5V,
+	IOEX_EN_USB_A1_5V_DB,
+};
+
+/*****************************************************************************
+ * Retimers
+ */
+
+static void retimers_on(void)
+{
+	/* hdmi retimer power on */
+	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, retimers_on, HOOK_PRIO_DEFAULT);
+
+static void retimers_off(void)
+{
+	/* hdmi retimer power off */
+	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, retimers_off, HOOK_PRIO_DEFAULT);
 
 /*
  * USB C0 port SBU mux use standalone PI3USB221
@@ -280,12 +309,6 @@ void setup_fw_config(void)
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 
 	setup_mux();
-
-	if (ec_config_has_mst_hub_rtd2141b())
-		ioex_enable_interrupt(IOEX_MST_HPD_OUT);
-
-	if (ec_config_has_hdmi_conn_hpd())
-		ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
 }
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
@@ -301,9 +324,9 @@ const struct fan_conf fan_conf_0 = {
 	.enable_gpio = -1,
 };
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 3100,
-	.rpm_start = 3100,
-	.rpm_max = 6900,
+	.rpm_min = 3000,
+	.rpm_start = 3500,
+	.rpm_max = 6200,
 };
 const struct fan_t fans[] = {
 	[FAN_CH_0] = {
@@ -313,84 +336,257 @@ const struct fan_t fans[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
 
-const static struct ec_thermal_config thermal_thermistor = {
+int board_get_temp(int idx, int *temp_k)
+{
+	int mv;
+	int temp_c;
+	enum adc_channel channel;
+
+	/* idx is the sensor index set in board temp_sensors[] */
+	switch (idx) {
+	case TEMP_SENSOR_CHARGER:
+		channel = ADC_TEMP_SENSOR_CHARGER;
+		break;
+	case TEMP_SENSOR_SOC:
+		/* thermistor is not powered in G3 */
+		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			return EC_ERROR_NOT_POWERED;
+
+		channel = ADC_TEMP_SENSOR_SOC;
+		break;
+	case TEMP_SENSOR_5V_REGULATOR:
+		channel = ADC_TEMP_SENSOR_5V_REGULATOR;
+		break;
+	default:
+		return EC_ERROR_INVAL;
+	}
+
+	mv = adc_read_channel(channel);
+	if (mv < 0)
+		return EC_ERROR_INVAL;
+
+	temp_c = thermistor_linear_interpolate(mv, &thermistor_info);
+	*temp_k = C_TO_K(temp_c);
+	return EC_SUCCESS;
+}
+
+const struct adc_t adc_channels[] = {
+	[ADC_TEMP_SENSOR_5V_REGULATOR] = {
+		.name = "5V_REGULATOR",
+		.input_ch = NPCX_ADC_CH0,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_CHARGER] = {
+		.name = "CHARGER",
+		.input_ch = NPCX_ADC_CH2,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_SOC] = {
+		.name = "SOC",
+		.input_ch = NPCX_ADC_CH3,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_CHARGER] = {
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_temp,
+		.idx = TEMP_SENSOR_CHARGER,
+	},
+	[TEMP_SENSOR_SOC] = {
+		.name = "SOC",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_temp,
+		.idx = TEMP_SENSOR_SOC,
+	},
+	[TEMP_SENSOR_CPU] = {
+		.name = "CPU",
+		.type = TEMP_SENSOR_TYPE_CPU,
+		.read = sb_tsi_get_val,
+		.idx = 0,
+	},
+	[TEMP_SENSOR_5V_REGULATOR] = {
+		.name = "5V_REGULATOR",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_temp,
+		.idx = TEMP_SENSOR_5V_REGULATOR,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+const static struct ec_thermal_config thermal_thermistor_0 = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(99),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(99),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(98),
 	},
-	.temp_fan_off = C_TO_K(25),
-	.temp_fan_max = C_TO_K(50),
+	.temp_fan_off = C_TO_K(37),
+	.temp_fan_max = C_TO_K(70),
+};
+
+const static struct ec_thermal_config thermal_thermistor_1 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(99),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(99),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(98),
+	},
+	.temp_fan_off = C_TO_K(98),
+	.temp_fan_max = C_TO_K(99),
 };
 
 const static struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(95),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(105),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
 	},
-	.temp_fan_off = C_TO_K(25),
-	.temp_fan_max = C_TO_K(50),
+	.temp_fan_off = C_TO_K(105),
+	.temp_fan_max = C_TO_K(105),
 };
 
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 
+struct fan_step {
+	int on;
+	int off;
+	int rpm;
+};
+
+static const struct fan_step fan_table0[] = {
+	{.on =  0, .off =  3, .rpm = 0},
+	{.on = 18, .off =  3, .rpm = 3700},
+	{.on = 33, .off = 12, .rpm = 4000},
+	{.on = 48, .off = 24, .rpm = 4500},
+	{.on = 64, .off = 36, .rpm = 4800},
+	{.on = 85, .off = 48, .rpm = 5200},
+	{.on = 100, .off = 70, .rpm = 6200},
+};
+/* All fan tables must have the same number of levels */
+#define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
+
+static const struct fan_step *fan_table = fan_table0;
+
+int fan_percent_to_rpm(int fan, int pct)
+{
+	static int current_level;
+	static int previous_pct;
+	int i;
+
+	/*
+	 * Compare the pct and previous pct, we have the three paths :
+	 *  1. decreasing path. (check the off point)
+	 *  2. increasing path. (check the on point)
+	 *  3. invariant path. (return the current RPM)
+	 */
+	if (pct < previous_pct) {
+		for (i = current_level; i >= 0; i--) {
+			if (pct <= fan_table[i].off)
+				current_level = i - 1;
+			else
+				break;
+		}
+	} else if (pct > previous_pct) {
+		for (i = current_level + 1; i < NUM_FAN_LEVELS; i++) {
+			if (pct >= fan_table[i].on)
+				current_level = i;
+			else
+				break;
+		}
+	}
+
+	if (current_level < 0)
+		current_level = 0;
+
+	previous_pct = pct;
+
+	if (fan_table[current_level].rpm !=
+		fan_get_rpm_target(FAN_CH(fan)))
+		cprints(CC_THERMAL, "Setting fan RPM to %d",
+			fan_table[current_level].rpm);
+
+	return fan_table[current_level].rpm;
+}
+
 static void setup_fans(void)
 {
-	thermal_params[TEMP_SENSOR_CHARGER] = thermal_thermistor;
-	thermal_params[TEMP_SENSOR_SOC] = thermal_thermistor;
+	thermal_params[TEMP_SENSOR_CHARGER] = thermal_thermistor_1;
+	thermal_params[TEMP_SENSOR_SOC] = thermal_thermistor_0;
 	thermal_params[TEMP_SENSOR_CPU] = thermal_cpu;
 }
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+/*
+ * Map keyboard connector pins to EC GPIO pins for factory test.
+ * Pins mapped to {-1, -1} are skipped.
+ * The connector has 24 pins total, and there is no pin 0.
+ */
+const int keyboard_factory_scan_pins[][2] = {
+		{0, 5}, {1, 1}, {1, 0}, {0, 6}, {0, 7},
+		{1, 4}, {1, 3}, {1, 6}, {1, 7}, {3, 1},
+		{2, 0}, {1, 5}, {2, 6}, {2, 7}, {2, 1},
+		{2, 4}, {2, 5}, {1, 2}, {2, 3}, {2, 2},
+		{3, 0}, {-1, -1}, {-1, -1}, {-1, -1},
+};
+
+const int keyboard_factory_scan_pins_used =
+			ARRAY_SIZE(keyboard_factory_scan_pins);
+#endif
+
 /*****************************************************************************
- * MST hub
+ * Power signals
  */
 
-static void mst_hpd_handler(void)
+struct power_signal_info power_signal_list[] = {
+	[X86_SLP_S3_N] = {
+		.gpio = GPIO_PCH_SLP_S3_L,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "SLP_S3_DEASSERTED",
+	},
+	[X86_SLP_S5_N] = {
+		.gpio = GPIO_PCH_SLP_S5_L,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "SLP_S5_DEASSERTED",
+	},
+	[X86_S0_PGOOD] = {
+		.gpio = GPIO_S0_PWROK_OD_V0,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "S0_PGOOD",
+	},
+	[X86_S5_PGOOD] = {
+		.gpio = GPIO_S5_PGOOD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "S5_PGOOD",
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+enum gpio_signal GPIO_S0_PGOOD = GPIO_S0_PWROK_OD_V0;
+
+void board_version_check(void)
 {
-	int hpd = 0;
+	uint32_t board_ver = 0;
 
-	/*
-	 * Ensure level on GPIO_DP1_HPD matches IOEX_MST_HPD_OUT, in case
-	 * we got out of sync.
-	 */
-	ioex_get_level(IOEX_MST_HPD_OUT, &hpd);
-	gpio_set_level(GPIO_DP1_HPD, hpd);
-	ccprints("MST HPD %d", hpd);
+	cbi_get_board_version(&board_ver);
+
+	if (board_ver == 2) {
+		power_signal_list[X86_S0_PGOOD].gpio = GPIO_S0_PWROK_OD_V1;
+		GPIO_S0_PGOOD = GPIO_S0_PWROK_OD_V1;
+	}
 }
-DECLARE_DEFERRED(mst_hpd_handler);
-
-void mst_hpd_interrupt(enum ioex_signal signal)
-{
-	/*
-	 * Goal is to pass HPD through from DB OPT3 MST hub to AP's DP1.
-	 * Immediately invert GPIO_DP1_HPD, to pass through the edge on
-	 * IOEX_MST_HPD_OUT. Then check level after 2 msec debounce.
-	 */
-	int hpd = !gpio_get_level(GPIO_DP1_HPD);
-
-	gpio_set_level(GPIO_DP1_HPD, hpd);
-	hook_call_deferred(&mst_hpd_handler_data, (2 * MSEC));
-}
-
-static void hdmi_hpd_handler(void)
-{
-	int hpd = 0;
-
-	/* Pass HPD through from DB OPT1 HDMI connector to AP's DP1. */
-	ioex_get_level(IOEX_HDMI_CONN_HPD_3V3_DB, &hpd);
-	gpio_set_level(GPIO_DP1_HPD, hpd);
-	ccprints("HDMI HPD %d", hpd);
-}
-DECLARE_DEFERRED(hdmi_hpd_handler);
-
-void hdmi_hpd_interrupt(enum ioex_signal signal)
-{
-	/* Debounce for 2 msec. */
-	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
-}
+DECLARE_HOOK(HOOK_INIT, board_version_check, HOOK_PRIO_INIT_I2C);

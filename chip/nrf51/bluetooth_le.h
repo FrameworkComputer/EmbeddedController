@@ -52,19 +52,19 @@ void ble_tx(struct ble_pdu *pdu);
 /* Receive a packet into pdu if one comes before the timeout */
 int ble_rx(struct ble_pdu *pdu, int timeout, int adv);
 
-/* White list handling */
+/* Allow list handling */
 
-/* Clear the white list */
-int ble_radio_clear_white_list(void);
+/* Clear the allow list */
+int ble_radio_clear_allow_list(void);
 
-/* Read the size of the white list and assign it to ret_size */
-int ble_radio_read_white_list_size(uint8_t *ret_size);
+/* Read the size of the allow list and assign it to ret_size */
+int ble_radio_read_allow_list_size(uint8_t *ret_size);
 
 /* Add the device with the address specified by addr_ptr and type */
-int ble_radio_add_device_to_white_list(const uint8_t *addr_ptr, uint8_t type);
+int ble_radio_add_device_to_allow_list(const uint8_t *addr_ptr, uint8_t type);
 
 /* Remove the device with the address specified by addr_ptr and type */
-int ble_radio_remove_device_from_white_list(const uint8_t *addr_ptr,
+int ble_radio_remove_device_from_allow_list(const uint8_t *addr_ptr,
 					    uint8_t type);
 
 #endif  /* __NRF51_BLUETOOTH_LE_H */

@@ -18,9 +18,13 @@ typedef void (*state_execution)(const int port);
  * run   - Optional method that will be run repeatedly during state machine loop
  * exit  - Optional method that will be run when this state exists
  * parent- Optional parent usb_state that contains common entry/run/exit
- *	implementation between various usb state. All parent entry/run
- *	functions will before any child entry/run functions. All parent exit
- *	functions will run after any child exit functions.
+ *	implementation among various child usb_states.
+ *	entry: Parent function executes BEFORE child function.
+ *	run: Parent function executes AFTER child function.
+ *	exit: Parent function executes AFTER child function.
+ *
+ *	Note: When transitioning between two child states with a shared parent,
+ *	that parent's exit and entry functions do not execute.
  */
 struct usb_state {
 	const state_execution entry;

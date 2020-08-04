@@ -8,7 +8,11 @@
 #ifndef __CROS_EC_F75303_H
 #define __CROS_EC_F75303_H
 
+#ifdef BOARD_MUSHU
+#define F75303_I2C_ADDR_FLAGS		0x4D
+#else
 #define F75303_I2C_ADDR_FLAGS		0x4C
+#endif
 
 enum f75303_index {
 	F75303_IDX_LOCAL = 0,

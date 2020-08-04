@@ -6,19 +6,27 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "ccd_measure_sbu.h"
+#include "chg_control.h"
 #include "common.h"
 #include "console.h"
+#include "dacs.h"
 #include "ec_version.h"
+#include "fusb302b.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "ina231s.h"
 #include "ioexpanders.h"
+#include "pathsel.h"
+#include "pi3usb9201.h"
 #include "queue_policies.h"
 #include "registers.h"
 #include "spi.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
+#include "tusb1064.h"
 #include "update_fw.h"
 #include "usart-stm32f0.h"
 #include "usart_tx_dma.h"
@@ -42,54 +50,103 @@
 #ifdef SECTION_IS_RO
 static void vbus0_evt(enum gpio_signal signal)
 {
+	task_wake(TASK_ID_PD_C0);
 }
 
 static void vbus1_evt(enum gpio_signal signal)
 {
+	task_wake(TASK_ID_PD_C1);
 }
 
 static void tca_evt(enum gpio_signal signal)
 {
-	uint8_t fault;
+	irq_ioexpanders();
+}
 
-	fault = read_faults();
+static volatile uint64_t hpd_prev_ts;
+static volatile int hpd_prev_level;
 
-	if (!(fault & USERVO_FAULT_L))
-		ccprintf("FAULT: Microservo USB A port load switch\n");
+/**
+ * Hotplug detect deferred task
+ *
+ * Called after level change on hpd GPIO to evaluate (and debounce) what event
+ * has occurred.  There are 3 events that occur on HPD:
+ *    1. low  : downstream display sink is deattached
+ *    2. high : downstream display sink is attached
+ *    3. irq  : downstream display sink signalling an interrupt.
+ *
+ * The debounce times for these various events are:
+ *   HPD_USTREAM_DEBOUNCE_LVL : min pulse width of level value.
+ *   HPD_USTREAM_DEBOUNCE_IRQ : min pulse width of IRQ low pulse.
+ *
+ * lvl(n-2) lvl(n-1)  lvl   prev_delta  now_delta event
+ * ----------------------------------------------------
+ * 1        0         1     <IRQ        n/a       low glitch (ignore)
+ * 1        0         1     >IRQ        <LVL      irq
+ * x        0         1     n/a         >LVL      high
+ * 0        1         0     <LVL        n/a       high glitch (ignore)
+ * x        1         0     n/a         >LVL      low
+ */
 
-	if (!(fault & USB3_A0_FAULT_L))
-		ccprintf("FAULT: USB3 A0 port load switch\n");
+void hpd_irq_deferred(void)
+{
+	int dp_mode = pd_alt_mode(1, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
 
-	if (!(fault & USB3_A1_FAULT_L))
-		ccprintf("FAULT: USB3 A1 port load switch\n");
-
-	if (!(fault & USB_DUTCHG_FLT_ODL))
-		ccprintf("FAULT: Overcurrent on Charger or DUB CC/SBU lines\n");
-
-	if (!(fault & PP3300_DP_FAULT_L))
-		ccprintf("FAULT: Overcurrent on DisplayPort\n");
-
-	if (!(fault & DAC_BUF1_LATCH_FAULT_L)) {
-		ccprintf("FAULT: CC1 drive circuitry has exceeded thermal ");
-		ccprintf("limits or exceeded current limits. Power ");
-		ccprintf("off DAC0 to clear the fault\n");
-	}
-
-	if (!(fault & DAC_BUF1_LATCH_FAULT_L)) {
-		ccprintf("FAULT: CC2 drive circuitry has exceeded thermal ");
-		ccprintf("limits or exceeded current limits. Power ");
-		ccprintf("off DAC1 to clear the fault\n");
+	if (dp_mode) {
+		pd_send_hpd(DUT, hpd_irq);
+		ccprintf("HPD IRQ");
 	}
 }
+DECLARE_DEFERRED(hpd_irq_deferred);
+
+void hpd_lvl_deferred(void)
+{
+	int level = gpio_get_level(GPIO_DP_HPD);
+	int dp_mode = pd_alt_mode(1, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+
+	if (level != hpd_prev_level) {
+		/* It's a glitch while in deferred or canceled action */
+		return;
+	}
+
+	if (dp_mode) {
+		pd_send_hpd(DUT, level ? hpd_high : hpd_low);
+		ccprintf("HPD: %d", level);
+	}
+}
+DECLARE_DEFERRED(hpd_lvl_deferred);
 
 static void dp_evt(enum gpio_signal signal)
 {
-	ccprintf("DP detected\n");
+	timestamp_t now = get_time();
+	int level = gpio_get_level(signal);
+	uint64_t cur_delta = now.val - hpd_prev_ts;
+
+	/* Store current time */
+	hpd_prev_ts = now.val;
+
+	/* All previous hpd level events need to be re-triggered */
+	hook_call_deferred(&hpd_lvl_deferred_data, -1);
+
+	/* It's a glitch.  Previous time moves but level is the same. */
+	if (cur_delta < HPD_USTREAM_DEBOUNCE_IRQ)
+		return;
+
+	if ((!hpd_prev_level && level) &&
+	    (cur_delta < HPD_USTREAM_DEBOUNCE_LVL)) {
+		/* It's an irq */
+		hook_call_deferred(&hpd_irq_deferred_data, 0);
+	} else if (cur_delta >= HPD_USTREAM_DEBOUNCE_LVL) {
+		hook_call_deferred(&hpd_lvl_deferred_data,
+				   HPD_USTREAM_DEBOUNCE_LVL);
+	}
+
+	hpd_prev_level = level;
 }
 
 static void tcpc_evt(enum gpio_signal signal)
 {
-	ccprintf("tcpc event\n");
+	update_status_fusb302b();
 }
 
 static void hub_evt(enum gpio_signal signal)
@@ -110,10 +167,40 @@ static void init_uservo_port(void)
 	/* Connect uservo to host hub */
 	uservo_fastboot_mux_sel(0);
 }
+
+void ext_hpd_detection_enable(int enable)
+{
+	if (enable) {
+		timestamp_t now = get_time();
+
+		hpd_prev_level = gpio_get_level(GPIO_DP_HPD);
+		hpd_prev_ts = now.val;
+		gpio_enable_interrupt(GPIO_DP_HPD);
+	} else {
+		gpio_disable_interrupt(GPIO_DP_HPD);
+	}
+}
 #else
+void snk_task(void *u)
+{
+	/* DO NOTHING */
+}
+
 void pd_task(void *u)
 {
 	/* DO NOTHING */
+}
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	return CONFIG_USB_PD_PORT_MAX_COUNT;
+}
+
+void pd_set_suspend(int port, int suspend)
+{
+	/*
+	 * Do nothing. This is only here to make the linker happy for this
+	 * old board on ToT.
+	 */
 }
 #endif /* SECTION_IS_RO */
 
@@ -278,6 +365,7 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 int usb_i2c_board_is_enabled(void) { return 1; }
 
+
 /******************************************************************************
  * Initialize board.
  */
@@ -303,6 +391,9 @@ static void board_init(void)
 	usleep(MSEC);
 
 	init_ioexpanders();
+	init_dacs();
+	init_tusb1064(1);
+	init_pi3usb9201();
 
 	/* Clear BBRAM, we don't want any PD state carried over on reset. */
 	system_set_bbram(SYSTEM_BBRAM_IDX_PD0, 0);
@@ -313,6 +404,9 @@ static void board_init(void)
 
 #ifdef SECTION_IS_RO
 	init_uservo_port();
+	init_pathsel();
+	init_ina231s();
+	init_fusb302b(1);
 
 	/* Enable DUT USB2.0 pair. */
 	gpio_set_level(GPIO_FASTBOOT_DUTHUB_MUX_EN_L, 0);
@@ -323,10 +417,20 @@ static void board_init(void)
 
 	gpio_enable_interrupt(GPIO_STM_FAULT_IRQ_L);
 	gpio_enable_interrupt(GPIO_DP_HPD);
-	gpio_enable_interrupt(GPIO_CHGSRV_TCPC_INT_ODL);
 	gpio_enable_interrupt(GPIO_USBH_I2C_BUSY_INT);
 	gpio_enable_interrupt(GPIO_BC12_INT_ODL);
 
+	/* Disable power to DUT by default */
+	chg_power_select(CHG_POWER_OFF);
+
+	/*
+	 * Voltage transition needs to occur in lockstep between the CHG and
+	 * DUT ports, so initially limit voltage to 5V.
+	 */
+	pd_set_max_voltage(PD_MIN_MV);
+
+	/* Start SuzyQ detection */
+	start_ccd_meas_sbu_cycle();
 #endif /* SECTION_IS_RO */
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

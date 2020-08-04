@@ -835,6 +835,10 @@ int tcpc_run(int port, int evt)
 {
 	int cc, i, res;
 
+	/* Don't do anything when port is not available */
+	if (port >= board_get_usb_pd_port_count())
+		return -1;
+
 	/* incoming packet ? */
 	if (pd_rx_started(port) && pd[port].rx_enabled) {
 		/* Get message and place at RX buffer head */

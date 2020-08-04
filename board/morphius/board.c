@@ -5,12 +5,19 @@
 
 /* Morphius board configuration */
 
+#include "adc.h"
+#include "adc_chip.h"
 #include "battery_smart.h"
 #include "button.h"
+#include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/ppc/aoz1380.h"
+#include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/pi3dpx1207.h"
+#include "driver/temp_sensor/sb_tsi.h"
+#include "driver/temp_sensor/tmp432.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -27,12 +34,15 @@
 #include "switch.h"
 #include "system.h"
 #include "task.h"
+#include "temp_sensor.h"
+#include "thermistor.h"
 #include "usb_mux.h"
 #include "usb_charge.h"
+#include "usbc_ppc.h"
 
 #include "gpio_list.h"
 
-
+static bool support_aoz_ppc;
 
 #ifdef HAS_TASK_MOTIONSENSE
 
@@ -135,25 +145,6 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 #endif /* HAS_TASK_MOTIONSENSE */
 
-static void trackpoint_reset_deferred(void)
-{
-	gpio_set_level(GPIO_EC_PS2_RESET, 1);
-	msleep(2);
-	gpio_set_level(GPIO_EC_PS2_RESET, 0);
-	msleep(10);
-}
-DECLARE_DEFERRED(trackpoint_reset_deferred);
-
-void send_aux_data_to_device(uint8_t data)
-{
-	ps2_transmit_byte(NPCX_PS2_CH0, data);
-}
-
-void ps2_pwr_en_interrupt(enum gpio_signal signal)
-{
-	hook_call_deferred(&trackpoint_reset_deferred_data, MSEC);
-}
-
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
@@ -182,6 +173,11 @@ const struct mft_t mft_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
+
+const int usb_port_enable[USBA_PORT_COUNT] = {
+	IOEX_EN_USB_A0_5V,
+	IOEX_EN_USB_A1_5V_DB,
+};
 
 /*****************************************************************************
  * USB-C MUX/Retimer dynamic configuration
@@ -225,28 +221,6 @@ static void setup_mux(void)
 	}
 }
 
-/* TODO(b:151232257) Remove probe code when hardware supports CBI */
-#include "driver/retimer/ps8802.h"
-#include "driver/retimer/ps8818.h"
-static void probe_setup_mux_backup(void)
-{
-	if (usb_muxes[USBC_PORT_C1].driver != NULL)
-		return;
-
-	/*
-	 * Identifying a PS8818 is faster than the PS8802,
-	 * so do it first.
-	 */
-	if (ps8818_detect(&usbc1_ps8818) == EC_SUCCESS) {
-		set_cbi_fw_config(0x00004000);
-		setup_mux();
-	} else if (ps8802_detect(&usbc1_ps8802) == EC_SUCCESS) {
-		set_cbi_fw_config(0x00004001);
-		setup_mux();
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, probe_setup_mux_backup, HOOK_PRIO_DEFAULT);
-
 const struct pi3dpx1207_usb_control pi3dpx1207_controls[] = {
 	[USBC_PORT_C0] = {
 		.enable_gpio = IOEX_USB_C0_DATA_EN,
@@ -282,6 +256,29 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
  * Use FW_CONFIG to set correct configuration.
  */
 
+enum gpio_signal gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V1;
+
+static void board_remap_gpio(void)
+{
+	uint32_t board_ver = 0;
+
+	cbi_get_board_version(&board_ver);
+
+	if (board_ver >= 3) {
+		gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V1;
+		ccprintf("GPIO_EC_PS2_RESET_V1\n");
+	} else {
+		gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V0;
+		ccprintf("GPIO_EC_PS2_RESET_V0\n");
+	}
+
+	support_aoz_ppc = (board_ver == 3);
+	if (support_aoz_ppc) {
+		ccprintf("DB USBC PPC aoz1380\n");
+		ppc_chips[USBC_PORT_C1].drv = &aoz1380_drv;
+	}
+}
+
 void setup_fw_config(void)
 {
 	/* Enable Gyro interrupts */
@@ -290,15 +287,11 @@ void setup_fw_config(void)
 	/* Enable PS2 power interrupts */
 	gpio_enable_interrupt(GPIO_EN_PWR_TOUCHPAD_PS2);
 
-	ps2_enable_channel(NPCX_PS2_CH0, 1, send_aux_data_to_host);
+	ps2_enable_channel(NPCX_PS2_CH0, 1, send_aux_data_to_host_interrupt);
 
 	setup_mux();
 
-	if (ec_config_has_mst_hub_rtd2141b())
-		ioex_enable_interrupt(IOEX_MST_HPD_OUT);
-
-	if (ec_config_has_hdmi_conn_hpd())
-		ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
+	board_remap_gpio();
 }
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
@@ -314,9 +307,9 @@ const struct fan_conf fan_conf_0 = {
 	.enable_gpio = -1,
 };
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 3000,
+	.rpm_min = 1800,
 	.rpm_start = 3000,
-	.rpm_max = 4900,
+	.rpm_max = 5200,
 };
 const struct fan_t fans[] = {
 	[FAN_CH_0] = {
@@ -326,17 +319,83 @@ const struct fan_t fans[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
 
-const static struct ec_thermal_config thermal_thermistor = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(92),
+int board_get_temp(int idx, int *temp_k)
+{
+	int mv;
+	int temp_c;
+	enum adc_channel channel;
+
+	/* idx is the sensor index set in board temp_sensors[] */
+	switch (idx) {
+	case TEMP_SENSOR_CHARGER:
+		channel = ADC_TEMP_SENSOR_CHARGER;
+		break;
+
+	case TEMP_SENSOR_5V_REGULATOR:
+		/* thermistor is not powered in G3 */
+		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			return EC_ERROR_NOT_POWERED;
+
+		channel = ADC_TEMP_SENSOR_5V_REGULATOR;
+		break;
+	default:
+		return EC_ERROR_INVAL;
+	}
+
+	mv = adc_read_channel(channel);
+	if (mv < 0)
+		return EC_ERROR_INVAL;
+
+	temp_c = thermistor_linear_interpolate(mv, &thermistor_info);
+	*temp_k = C_TO_K(temp_c);
+	return EC_SUCCESS;
+}
+
+const struct adc_t adc_channels[] = {
+	[ADC_TEMP_SENSOR_CHARGER] = {
+		.name = "CHARGER",
+		.input_ch = NPCX_ADC_CH2,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
 	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+	[ADC_TEMP_SENSOR_5V_REGULATOR] = {
+		.name = "5V_REGULATOR",
+		.input_ch = NPCX_ADC_CH3,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
 	},
-	.temp_fan_off = C_TO_K(25),
-	.temp_fan_max = C_TO_K(58),
 };
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_CHARGER] = {
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_temp,
+		.idx = TEMP_SENSOR_CHARGER,
+	},
+	[TEMP_SENSOR_5V_REGULATOR] = {
+		.name = "5V_REGULATOR",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_temp,
+		.idx = TEMP_SENSOR_5V_REGULATOR,
+	},
+	[TEMP_SENSOR_CPU] = {
+		.name = "CPU",
+		.type = TEMP_SENSOR_TYPE_CPU,
+		.read = sb_tsi_get_val,
+		.idx = 0,
+	},
+	[TEMP_SENSOR_SSD] = {
+		.name = "SSD",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = tmp432_get_val,
+		.idx = TMP432_IDX_LOCAL,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 const static struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
@@ -346,80 +405,17 @@ const static struct ec_thermal_config thermal_cpu = {
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
 	},
-	.temp_fan_off = C_TO_K(25),
-	.temp_fan_max = C_TO_K(58),
+	.temp_fan_off = C_TO_K(98),
+	.temp_fan_max = C_TO_K(99),
 };
 
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 
 static void setup_fans(void)
 {
-	thermal_params[TEMP_SENSOR_CHARGER] = thermal_thermistor;
-	thermal_params[TEMP_SENSOR_SOC] = thermal_thermistor;
 	thermal_params[TEMP_SENSOR_CPU] = thermal_cpu;
 }
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
-
-struct fan_step {
-	int on;
-	int off;
-	int rpm;
-};
-
-static const struct fan_step fan_table0[] = {
-	{.on =  0, .off =  3, .rpm = 0},
-	{.on = 32, .off =  3, .rpm = 3000},
-	{.on = 65, .off = 53, .rpm = 3500},
-	{.on = 74, .off = 62, .rpm = 3800},
-	{.on = 82, .off = 71, .rpm = 4200},
-	{.on = 91, .off = 79, .rpm = 4500},
-	{.on = 100, .off = 88, .rpm = 4900},
-};
-/* All fan tables must have the same number of levels */
-#define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
-
-static const struct fan_step *fan_table = fan_table0;
-
-int fan_percent_to_rpm(int fan, int pct)
-{
-	static int current_level;
-	static int previous_pct;
-	int i;
-
-	/*
-	 * Compare the pct and previous pct, we have the three paths :
-	 *  1. decreasing path. (check the off point)
-	 *  2. increasing path. (check the on point)
-	 *  3. invariant path. (return the current RPM)
-	 */
-	if (pct < previous_pct) {
-		for (i = current_level; i >= 0; i--) {
-			if (pct <= fan_table[i].off)
-				current_level = i - 1;
-			else
-				break;
-		}
-	} else if (pct > previous_pct) {
-		for (i = current_level + 1; i < NUM_FAN_LEVELS; i++) {
-			if (pct >= fan_table[i].on)
-				current_level = i;
-			else
-				break;
-		}
-	}
-
-	if (current_level < 0)
-		current_level = 0;
-
-	previous_pct = pct;
-
-	if (fan_table[current_level].rpm !=
-		fan_get_rpm_target(FAN_CH(fan)))
-		cprints(CC_THERMAL, "Setting fan RPM to %d",
-			fan_table[current_level].rpm);
-
-	return fan_table[current_level].rpm;
-}
 
 /* Battery functions */
 #define SB_OPTIONALMFG_FUNCTION2        0x26
@@ -447,6 +443,9 @@ static void board_chipset_startup(void)
 {
 	/* Normal charge current */
 	sb_smart_charge_mode(SB_SMART_CHARGE_DISABLE);
+
+	/* hdmi retimer power on */
+	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
@@ -455,53 +454,115 @@ static void board_chipset_suspend(void)
 {
 	/* SMART charge current */
 	sb_smart_charge_mode(SB_SMART_CHARGE_ENABLE);
+
+	/* hdmi retimer power off */
+	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
+__override void ppc_interrupt(enum gpio_signal signal)
+{
+	switch (signal) {
+	case GPIO_USB_C0_PPC_FAULT_ODL:
+		aoz1380_interrupt(USBC_PORT_C0);
+		break;
+
+	case GPIO_USB_C1_PPC_INT_ODL:
+		if (support_aoz_ppc)
+			aoz1380_interrupt(USBC_PORT_C1);
+		else
+			nx20p348x_interrupt(USBC_PORT_C1);
+		break;
+
+	default:
+		break;
+	}
+}
+
+/*
+ * In the AOZ1380 PPC, there are no programmable features.  We use
+ * the attached NCT3807 to control a GPIO to indicate 1A5 or 3A0
+ * current limits.
+ */
+__override int board_aoz1380_set_vbus_source_current_limit(int port,
+						enum tcpc_rp_value rp)
+{
+	int rv;
+
+	/* Use the TCPC to set the current limit */
+	if (port == 0) {
+		rv = ioex_set_level(IOEX_USB_C0_PPC_ILIM_3A_EN,
+			    (rp == TYPEC_RP_3A0) ? 1 : 0);
+	} else {
+		rv = ioex_set_level(IOEX_USB_C1_PPC_ILIM_3A_EN,
+			    (rp == TYPEC_RP_3A0) ? 1 : 0);
+	}
+
+	return rv;
+}
+
+static void trackpoint_reset_deferred(void)
+{
+	gpio_set_level(gpio_ec_ps2_reset, 1);
+	msleep(2);
+	gpio_set_level(gpio_ec_ps2_reset, 0);
+	msleep(10);
+}
+DECLARE_DEFERRED(trackpoint_reset_deferred);
+
+void send_aux_data_to_device(uint8_t data)
+{
+	ps2_transmit_byte(NPCX_PS2_CH0, data);
+}
+
+void ps2_pwr_en_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&trackpoint_reset_deferred_data, MSEC);
+}
+
 /*****************************************************************************
- * MST hub
+ * Power signals
  */
 
-static void mst_hpd_handler(void)
-{
-	int hpd = 0;
+const struct power_signal_info power_signal_list[] = {
+	[X86_SLP_S3_N] = {
+		.gpio = GPIO_PCH_SLP_S3_L,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "SLP_S3_DEASSERTED",
+	},
+	[X86_SLP_S5_N] = {
+		.gpio = GPIO_PCH_SLP_S5_L,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "SLP_S5_DEASSERTED",
+	},
+	[X86_S0_PGOOD] = {
+		.gpio = GPIO_S0_PGOOD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "S0_PGOOD",
+	},
+	[X86_S5_PGOOD] = {
+		.gpio = GPIO_S5_PGOOD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "S5_PGOOD",
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
-	/*
-	 * Ensure level on GPIO_DP1_HPD matches IOEX_MST_HPD_OUT, in case
-	 * we got out of sync.
-	 */
-	ioex_get_level(IOEX_MST_HPD_OUT, &hpd);
-	gpio_set_level(GPIO_DP1_HPD, hpd);
-	ccprints("MST HPD %d", hpd);
-}
-DECLARE_DEFERRED(mst_hpd_handler);
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+/*
+ * Map keyboard connector pins to EC GPIO pins for factory test.
+ * Pins mapped to {-1, -1} are skipped.
+ * The connector has 24 pins total, and there is no pin 0.
+ */
+const int keyboard_factory_scan_pins[][2] = {
+		{3, 0}, {2, 2}, {2, 3}, {1, 2}, {2, 5},
+		{2, 4}, {2, 1}, {2, 7}, {2, 6}, {1, 5},
+		{2, 0}, {3, 1}, {1, 7}, {1, 6}, {-1, -1},
+		{1, 3}, {1, 4}, {-1, -1}, {-1, -1}, {0, 7},
+		{0, 6}, {1, 0}, {1, 1}, {0, 5},
+};
 
-void mst_hpd_interrupt(enum ioex_signal signal)
-{
-	/*
-	 * Goal is to pass HPD through from DB OPT3 MST hub to AP's DP1.
-	 * Immediately invert GPIO_DP1_HPD, to pass through the edge on
-	 * IOEX_MST_HPD_OUT. Then check level after 2 msec debounce.
-	 */
-	int hpd = !gpio_get_level(GPIO_DP1_HPD);
+const int keyboard_factory_scan_pins_used =
+			ARRAY_SIZE(keyboard_factory_scan_pins);
+#endif
 
-	gpio_set_level(GPIO_DP1_HPD, hpd);
-	hook_call_deferred(&mst_hpd_handler_data, (2 * MSEC));
-}
-
-static void hdmi_hpd_handler(void)
-{
-	int hpd = 0;
-
-	/* Pass HPD through from DB OPT1 HDMI connector to AP's DP1. */
-	ioex_get_level(IOEX_HDMI_CONN_HPD_3V3_DB, &hpd);
-	gpio_set_level(GPIO_DP1_HPD, hpd);
-	ccprints("HDMI HPD %d", hpd);
-}
-DECLARE_DEFERRED(hdmi_hpd_handler);
-
-void hdmi_hpd_interrupt(enum ioex_signal signal)
-{
-	/* Debounce for 2 msec. */
-	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
-}

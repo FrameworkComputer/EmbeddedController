@@ -1037,8 +1037,8 @@ void anx74xx_tcpc_alert(int port)
 
 	if (reg & ANX74XX_REG_EXT_HARD_RST) {
 		/* hard reset received */
-		pd_execute_hard_reset(port);
-		task_wake(PD_PORT_TO_TASK_ID(port));
+		task_set_event(PD_PORT_TO_TASK_ID(port),
+			PD_EVENT_RX_HARD_RESET, 0);
 	}
 }
 
@@ -1114,7 +1114,7 @@ static int anx74xx_tcpm_init(int port)
 }
 
 static int anx74xx_get_chip_info(int port, int live,
-			struct ec_response_pd_chip_info_v1 **chip_info)
+			struct ec_response_pd_chip_info_v1 *chip_info)
 {
 	int rv = tcpci_get_chip_info(port, live, chip_info);
 	int val;
@@ -1122,14 +1122,14 @@ static int anx74xx_get_chip_info(int port, int live,
 	if (rv)
 		return rv;
 
-	if ((*chip_info)->fw_version_number == 0 ||
-	    (*chip_info)->fw_version_number == -1 || live) {
+	if (chip_info->fw_version_number == 0 ||
+	    chip_info->fw_version_number == -1 || live) {
 		rv = tcpc_read(port, ANX74XX_REG_FW_VERSION, &val);
 
 		if (rv)
 			return rv;
 
-		(*chip_info)->fw_version_number = val;
+		chip_info->fw_version_number = val;
 	}
 
 #ifdef CONFIG_USB_PD_TCPM_ANX3429
@@ -1138,7 +1138,7 @@ static int anx74xx_get_chip_info(int port, int live,
 	 * doesn't occur for e-marked cables. See b/116255749#comment8 and
 	 * b/64752060#comment11
 	 */
-	(*chip_info)->min_req_fw_version_number = 0x16;
+	chip_info->min_req_fw_version_number = 0x16;
 #endif
 
 	return rv;

@@ -506,7 +506,6 @@ void gpio_pre_init(void)
 	system_check_bbram_on_reset();
 	is_warm = system_is_reboot_warm();
 
-#ifdef CONFIG_GPIO_INIT_POWER_ON_DELAY_MS
 	/*
 	 * On power-on of some boards, H1 releases the EC from reset but then
 	 * quickly asserts and releases the reset a second time. This means the
@@ -517,11 +516,12 @@ void gpio_pre_init(void)
 	 *
 	 * Make sure to set up the timer before using udelay().
 	 */
-	if (system_get_reset_flags() & EC_RESET_FLAG_POWER_ON) {
+	if (IS_ENABLED(CONFIG_BOARD_RESET_AFTER_POWER_ON) &&
+	    system_get_reset_flags() & EC_RESET_FLAG_INITIAL_PWR) {
 		__hw_early_init_hwtimer(0);
-		udelay(CONFIG_GPIO_INIT_POWER_ON_DELAY_MS * MSEC);
+		udelay(2 * SECOND);
+		/* Shouldn't get here, but proceeding anyway... */
 	}
-#endif
 
 #ifdef CHIP_FAMILY_NPCX7
 	/*
@@ -713,6 +713,14 @@ void __gpio_wk0efgh_interrupt(void)
 	}
 }
 
+#ifdef CONFIG_HOSTCMD_RTC
+static void set_rtc_host_event(void)
+{
+	host_set_single_event(EC_HOST_EVENT_RTC);
+}
+DECLARE_DEFERRED(set_rtc_host_event);
+#endif
+
 void __gpio_rtc_interrupt(void)
 {
 	/* Check pending bit 7 */
@@ -720,7 +728,7 @@ void __gpio_rtc_interrupt(void)
 	if (NPCX_WKPND(MIWU_TABLE_0, MIWU_GROUP_4) & 0x80) {
 		/* Clear pending bit for WUI */
 		SET_BIT(NPCX_WKPCL(MIWU_TABLE_0, MIWU_GROUP_4), 7);
-		host_set_single_event(EC_HOST_EVENT_RTC);
+		hook_call_deferred(&set_rtc_host_event_data, 0);
 		return;
 	}
 #endif

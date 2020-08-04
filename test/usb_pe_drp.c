@@ -43,9 +43,16 @@ void pd_set_vbus_discharge(int port, int enable)
 	gpio_set_level(GPIO_USB_C0_DISCHARGE, enable);
 }
 
+test_static uint8_t tc_enabled = 1;
+
 uint8_t tc_get_pd_enabled(int port)
 {
-	return 1;
+	return tc_enabled;
+}
+
+void pd_comm_enable(int port, int enable)
+{
+	tc_enabled = !!enable;
 }
 
 bool pd_alt_mode_capable(int port)
@@ -53,13 +60,47 @@ bool pd_alt_mode_capable(int port)
 	return 1;
 }
 
+void pd_set_suspend(int port, int suspend)
+{
+
+}
+
+test_static void setup_source(void)
+{
+	/* Start PE. */
+	task_wait_event(10 * MSEC);
+	pe_set_flag(PORT0, PE_FLAGS_VDM_SETUP_DONE);
+	pe_set_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT);
+	set_state_pe(PORT0, PE_SRC_READY);
+	task_wait_event(10 * MSEC);
+	/* At this point, the PE should be running in PE_SRC_Ready. */
+}
+
+test_static void setup_sink(void)
+{
+	tc_set_power_role(PORT0, PD_ROLE_SINK);
+	pd_comm_enable(PORT0, 0);
+	task_wait_event(10 * MSEC);
+	pd_comm_enable(PORT0, 1);
+	task_wait_event(10 * MSEC);
+	pe_set_flag(PORT0, PE_FLAGS_VDM_SETUP_DONE);
+	pe_set_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT);
+	set_state_pe(PORT0, PE_SNK_READY);
+	task_wait_event(10 * MSEC);
+	/* At this point, the PE should be running in PE_SNK_Ready. */
+}
 /**
  * Test section
  */
 /* PE Fast Role Swap */
 static int test_pe_frs(void)
 {
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	/*
+	 * TODO: This test should validate PE boundary API differences -- not
+	 * internal state changes.
+	 */
+
+	task_wait_event(10 * MSEC);
 	TEST_ASSERT(pe_is_running(PORT0));
 
 	/*
@@ -68,10 +109,10 @@ static int test_pe_frs(void)
 	 * background tasks (ex. discovery) aren't running.
 	 */
 	tc_prs_src_snk_assert_rd(PORT0);
-	pe_set_flag(PORT0, PE_FLAGS_DISCOVER_PORT_IDENTITY_DONE);
+	pe_set_flag(PORT0, PE_FLAGS_VDM_SETUP_DONE);
 	pe_set_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT);
 	set_state_pe(PORT0, PE_SNK_READY);
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	task_wait_event(10 * MSEC);
 	TEST_ASSERT(get_state_pe(PORT0) == PE_SNK_READY);
 
 	/*
@@ -83,7 +124,7 @@ static int test_pe_frs(void)
 	/*
 	 * Verify we detected FRS and ready to start swap
 	 */
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	task_wait_event(10 * MSEC);
 	TEST_ASSERT(get_state_pe(PORT0) == PE_PRS_SNK_SRC_SEND_SWAP);
 	TEST_ASSERT(pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
 	TEST_ASSERT(!pe_chk_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT));
@@ -91,7 +132,7 @@ static int test_pe_frs(void)
 	/*
 	 * Make sure that we sent FR_Swap
 	 */
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	task_wait_event(10 * MSEC);
 	TEST_ASSERT(fake_prl_get_last_sent_ctrl_msg(PORT0) == PD_CTRL_FR_SWAP);
 	TEST_ASSERT(get_state_pe(PORT0) == PE_PRS_SNK_SRC_SEND_SWAP);
 	TEST_ASSERT(pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
@@ -101,7 +142,7 @@ static int test_pe_frs(void)
 	 */
 	rx_emsg[PORT0].header = PD_HEADER(PD_CTRL_ACCEPT, 0, 0, 0, 0, 0, 0);
 	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	task_wait_event(10 * MSEC);
 	TEST_ASSERT(!pe_chk_flag(PORT0, PE_FLAGS_MSG_RECEIVED));
 	TEST_ASSERT(get_state_pe(PORT0) == PE_PRS_SNK_SRC_TRANSITION_TO_OFF);
 	TEST_ASSERT(pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
@@ -112,29 +153,16 @@ static int test_pe_frs(void)
 	rx_emsg[PORT0].header = PD_HEADER(PD_CTRL_PS_RDY, 0, 0, 0, 0, 0, 0);
 	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
 	TEST_ASSERT(!tc_is_attached_src(PORT0));
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	task_wait_event(10 * MSEC);
 	TEST_ASSERT(!pe_chk_flag(PORT0, PE_FLAGS_MSG_RECEIVED));
 	TEST_ASSERT(tc_is_attached_src(PORT0));
-	TEST_ASSERT(get_state_pe(PORT0) == PE_PRS_SNK_SRC_ASSERT_RP);
-	TEST_ASSERT(pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
-
-	/*
-	 * We are now attached source, so move to next state
-	 */
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
 	TEST_ASSERT(get_state_pe(PORT0) == PE_PRS_SNK_SRC_SOURCE_ON);
 	TEST_ASSERT(pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
 
 	/*
-	 * Move the time to be after our wait time.
-	 */
-	force_time((timestamp_t)(get_time().val +
-				 PD_POWER_SUPPLY_TURN_ON_DELAY));
-
-	/*
 	 * After delay we are ready to send our PS_RDY
 	 */
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	task_wait_event(PD_POWER_SUPPLY_TURN_ON_DELAY);
 	TEST_ASSERT(get_state_pe(PORT0) == PE_PRS_SNK_SRC_SOURCE_ON);
 	TEST_ASSERT(pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
 	TEST_ASSERT(fake_prl_get_last_sent_ctrl_msg(PORT0) == PD_CTRL_PS_RDY);
@@ -143,7 +171,7 @@ static int test_pe_frs(void)
 	 * Fake the Transmit complete and this will bring us to Source Startup
 	 */
 	pe_set_flag(PORT0, PE_FLAGS_TX_COMPLETE);
-	pe_run(PORT0, EVT_IGNORED, ENABLED);
+	task_wait_event(10 * MSEC);
 	TEST_ASSERT(get_state_pe(PORT0) == PE_SRC_STARTUP);
 	TEST_ASSERT(!pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
 
@@ -161,14 +189,143 @@ static int test_vbus_gpio_discharge(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_extended_message_not_supported(void)
+{
+	memset(rx_emsg[PORT0].buf, 0, ARRAY_SIZE(rx_emsg[PORT0].buf));
+
+	/*
+	 * Receive an extended, non-chunked message; expect a Not Supported
+	 * response.
+	 */
+	rx_emsg[PORT0].header = PD_HEADER(
+			PD_DATA_BATTERY_STATUS, PD_ROLE_SINK, PD_ROLE_UFP, 0,
+			PDO_MAX_OBJECTS, PD_REV30, 1);
+	*(uint16_t *)rx_emsg[PORT0].buf =
+		PD_EXT_HEADER(0, 0, ARRAY_SIZE(rx_emsg[PORT0].buf)) & ~BIT(15);
+	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
+	fake_prl_clear_last_sent_ctrl_msg(PORT0);
+	task_wait_event(10 * MSEC);
+
+	pe_set_flag(PORT0, PE_FLAGS_TX_COMPLETE);
+	task_wait_event(10 * MSEC);
+	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0), PD_CTRL_NOT_SUPPORTED,
+			"%d");
+	/* At this point, the PE should again be running in PE_SRC_Ready. */
+
+	/*
+	 * Receive an extended, chunked, single-chunk message; expect a Not
+	 * Supported response.
+	 */
+	rx_emsg[PORT0].header = PD_HEADER(
+			PD_DATA_BATTERY_STATUS, PD_ROLE_SINK, PD_ROLE_UFP, 0,
+			PDO_MAX_OBJECTS, PD_REV30, 1);
+	*(uint16_t *)rx_emsg[PORT0].buf =
+		PD_EXT_HEADER(0, 0, PD_MAX_EXTENDED_MSG_CHUNK_LEN);
+	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
+	fake_prl_clear_last_sent_ctrl_msg(PORT0);
+	task_wait_event(10 * MSEC);
+
+	pe_set_flag(PORT0, PE_FLAGS_TX_COMPLETE);
+	task_wait_event(10 * MSEC);
+	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0), PD_CTRL_NOT_SUPPORTED,
+			"%d");
+	/* At this point, the PE should again be running in PE_SRC_Ready. */
+
+	/*
+	 * Receive an extended, chunked, multi-chunk message; expect a Not
+	 * Supported response after tChunkingNotSupported (not earlier).
+	 */
+	rx_emsg[PORT0].header = PD_HEADER(
+			PD_DATA_BATTERY_STATUS, PD_ROLE_SINK, PD_ROLE_UFP, 0,
+			PDO_MAX_OBJECTS, PD_REV30, 1);
+	*(uint16_t *)rx_emsg[PORT0].buf =
+		PD_EXT_HEADER(0, 0, ARRAY_SIZE(rx_emsg[PORT0].buf));
+	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
+	fake_prl_clear_last_sent_ctrl_msg(PORT0);
+	task_wait_event(10 * MSEC);
+	/*
+	 * The PE should stay in PE_SRC_Chunk_Received for
+	 * tChunkingNotSupported.
+	 */
+	task_wait_event(10 * MSEC);
+	TEST_NE(fake_prl_get_last_sent_ctrl_msg(PORT0), PD_CTRL_NOT_SUPPORTED,
+			"%d");
+
+	task_wait_event(PD_T_CHUNKING_NOT_SUPPORTED);
+	pe_set_flag(PORT0, PE_FLAGS_TX_COMPLETE);
+	task_wait_event(10 * MSEC);
+	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0), PD_CTRL_NOT_SUPPORTED,
+			"%d");
+	/* At this point, the PE should again be running in PE_SRC_Ready. */
+
+	/*
+	 * TODO(b/160374787): Test responding with Not Supported to control
+	 * messages requesting extended messages as responses.
+	 */
+
+	return EC_SUCCESS;
+}
+
+test_static int test_extended_message_not_supported_src(void)
+{
+	setup_source();
+	return test_extended_message_not_supported();
+}
+
+test_static int test_extended_message_not_supported_snk(void)
+{
+	setup_sink();
+	return test_extended_message_not_supported();
+}
+
+static int test_send_caps_error(void)
+{
+	/*
+	 * See section 8.3.3.4.1.1 PE_SRC_Send_Soft_Reset State and section
+	 * 8.3.3.2.3 PE_SRC_Send_Capabilities State.
+	 *
+	 * Transition to the PE_SRC_Discovery state when:
+	 *  1) The Protocol Layer indicates that the Message has not been sent
+	 *     and we are presently not Connected
+	 */
+	fake_prl_clear_last_sent_ctrl_msg(PORT0);
+	pe_set_flag(PORT0, PE_FLAGS_PROTOCOL_ERROR);
+	pe_clr_flag(PORT0, PE_FLAGS_PD_CONNECTION);
+	set_state_pe(PORT0, PE_SRC_SEND_CAPABILITIES);
+	task_wait_event(10 * MSEC);
+	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0), 0, "%d");
+	TEST_EQ(get_state_pe(PORT0), PE_SRC_DISCOVERY, "%d");
+
+	/*
+	 * Send soft reset when:
+	 *  1) The Protocol Layer indicates that the Message has not been sent
+	 *     and we are already Connected
+	 */
+	fake_prl_clear_last_sent_ctrl_msg(PORT0);
+	pe_set_flag(PORT0, PE_FLAGS_PROTOCOL_ERROR);
+	pe_set_flag(PORT0, PE_FLAGS_PD_CONNECTION);
+	set_state_pe(PORT0, PE_SRC_SEND_CAPABILITIES);
+	task_wait_event(10 * MSEC);
+	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0),
+		PD_CTRL_SOFT_RESET, "%d");
+	TEST_EQ(get_state_pe(PORT0), PE_SEND_SOFT_RESET, "%d");
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, char **argv)
 {
 	test_reset();
 
 	RUN_TEST(test_pe_frs);
 	RUN_TEST(test_vbus_gpio_discharge);
+#ifndef CONFIG_USB_PD_EXTENDED_MESSAGES
+	RUN_TEST(test_extended_message_not_supported_src);
+	RUN_TEST(test_extended_message_not_supported_snk);
+#endif
+	RUN_TEST(test_send_caps_error);
 
-	/* Do basic state machine sanity checks last. */
+	/* Do basic state machine validity checks last. */
 	RUN_TEST(test_pe_no_parent_cycles);
 	RUN_TEST(test_pe_no_empty_state);
 

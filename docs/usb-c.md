@@ -7,8 +7,7 @@ different modes. This includes but isn't limited to:
     power up to 100W (if supported by device).
 *   Reversed cable mode. This requires a mux to switch the signals before
     getting to the SoC (or AP).
-*   Debug accessory mode, e.g.
-    [Case Closed Debugging (CCD)](case_closed_debugging_cr50.md)
+*   Debug accessory mode, e.g. [Case Closed Debugging (CCD)]
 *   Multiple uses for the 4 differential pair signals including
     *   USB SuperSpeed mode (up to 4 lanes for USB data)
     *   DisplayPort Alternate Mode (up to 4 lanes for DisplayPort data)
@@ -209,8 +208,9 @@ TODO(https://crbug.com/974302): mention `USB_CHG_P#` and `CHARGER`
 TODO(https://crbug.com/974302): Mention how this works even though it is in depthcharge.
 Probing now. Need new driver in depthcharge
 
-[USB PD Spec Id]: https://www.usb.org/document-library/usb-power-delivery
+[Case Closed Debugging (CCD)]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md
 [Introduction to USB Power Delivery]: https://www.microchip.com/wwwAppNotes/AppNotes.aspx?appnote=en575003
-[USB TCPM Spec Id]: https://www.usb.org/document-library/usb-type-ctm-port-controller-interface-specification
+[USB PD Spec Id]: https://www.usb.org/document-library/usb-power-delivery
 [USB TC Spec Id]: https://www.usb.org/document-library/usb-type-cr-cable-and-connector-specification-revision-20-august-2019
+[USB TCPM Spec Id]: https://www.usb.org/document-library/usb-type-ctm-port-controller-interface-specification
 [config header link]: ../include/config.h

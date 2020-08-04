@@ -64,6 +64,7 @@ GPIO(ALL_SYS_PWRGD,		PIN(B, 7), GPIO_OUT_LOW)
 GPIO(EN_SLP_Z,			PIN(K, 3), GPIO_OUT_LOW)
 
 /* Required for icelake chipset code, but implemented through other means for dedede */
+UNIMPLEMENTED(AC_PRESENT)
 UNIMPLEMENTED(PG_EC_DSW_PWROK)
 UNIMPLEMENTED(PG_EC_ALL_SYS_PWRGD)
 
@@ -103,6 +104,7 @@ GPIO(CCD_MODE_ODL,		PIN(H, 5), GPIO_INPUT)
 GPIO(EC_BATTERY_PRES_ODL,	PIN(I, 4), GPIO_INPUT)
 GPIO(PEN_DET_ODL,		PIN(J, 1), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(EN_KB_BL,			PIN(J, 3), GPIO_OUT_LOW) /* Currently unused */
+GPIO(ECH1_PACKET_MODE,		PIN(H, 1), GPIO_OUT_LOW)
 
 /* NC pins, enable internal pull-down to avoid floating state. */
 GPIO(GPIOC0_NC, PIN(C, 0), GPIO_INPUT | GPIO_PULL_DOWN)

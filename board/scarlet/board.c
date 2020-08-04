@@ -90,7 +90,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &rt946x_drv,
 	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -282,7 +281,7 @@ static void board_init(void)
 	STM32_GPIO_OSPEEDR(GPIO_D) |= 0x000003cf;
 
 	/* Sensor Init */
-	if (system_jumped_to_this_image() && chipset_in_state(CHIPSET_STATE_ON))
+	if (system_jumped_late() && chipset_in_state(CHIPSET_STATE_ON))
 		board_spi_enable();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

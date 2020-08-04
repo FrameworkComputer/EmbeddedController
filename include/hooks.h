@@ -119,6 +119,24 @@ enum hook_type {
 	 */
 	HOOK_CHIPSET_SUSPEND,
 
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+	/*
+	 * Initialization before the system resumes, like enabling the SPI
+	 * driver such that it can receive a host resume event.
+	 *
+	 * Hook routines are called from the chipset task.
+	 */
+	HOOK_CHIPSET_RESUME_INIT,
+
+	/*
+	 * System has suspended. It is paired with CHIPSET_RESUME_INIT hook,
+	 * like reverting the initialization of the SPI driver.
+	 *
+	 * Hook routines are called from the chipset task.
+	 */
+	HOOK_CHIPSET_SUSPEND_COMPLETE,
+#endif
+
 	/*
 	 * System is shutting down.  All suspend rails are still on.
 	 *

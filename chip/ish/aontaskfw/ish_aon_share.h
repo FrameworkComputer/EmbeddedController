@@ -10,7 +10,7 @@
 #include "ia_structs.h"
 #include "power_mgt.h"
 
-/* magic ID for valid aontask image sanity check */
+/* magic ID for valid aontask image check */
 #define AON_MAGIC_ID			        0x544E4F41  /*"AONT"*/
 
 /* aontask error code  */
