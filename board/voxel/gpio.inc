@@ -28,6 +28,11 @@ GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4),  GPIO_INT_BOTH, power_signal_interrupt
 GPIO_INT(EC_IMU_INT_L,         PIN(5, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi260_interrupt)
 GPIO(EC_ALS_RGB_INT_L,         PIN(D, 4), GPIO_INPUT | GPIO_PULL_UP)	/* unused */
 GPIO_INT(TABLET_MODE_L,        PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
+/*
+ * Lid g-sensor interrupt unused on Voxel, configure as regular input for
+ * power saving.
+ */
+GPIO(EC_ACCEL_INT,		PIN(8, 1), GPIO_INPUT | GPIO_PULL_UP)
 
 /* USB-C interrupts */
 GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(E, 0), GPIO_INT_BOTH, tcpc_alert_event)
@@ -76,6 +81,7 @@ GPIO_INT(EC_PROCHOT_IN_L,      PIN(F, 0), GPIO_INT_BOTH, throttle_ap_prochot_inp
 GPIO(SYS_RST_ODL,              PIN(C, 5), GPIO_ODR_HIGH)
 
 GPIO(EC_PCH_INT_ODL,           PIN(B, 0), GPIO_ODR_HIGH)
+GPIO(CPU_C10_GATE_L,           PIN(6, 7), GPIO_INPUT)
 
 /* USB and USBC Signals */
 GPIO(EN_PP5000_USBA,		PIN(3, 5), GPIO_OUT_LOW)	/* Enable USB-A charging - all ports */
@@ -104,6 +110,17 @@ GPIO(UART2_EC_RX,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
 GPIO(LED_1_L,                  PIN(C, 4), GPIO_OUT_HIGH)        /* Blue */
 GPIO(LED_2_L,                  PIN(C, 3), GPIO_OUT_HIGH)        /* Yellow */
 GPIO(EC_KB_BL_EN,		PIN(8, 6), GPIO_OUT_LOW)	/* Keyboard backlight enable*/
+
+GPIO(M2_SSD_PLN,        PIN(A, 0), GPIO_ODR_HIGH)	/* SSD power-loss notification */
+GPIO(CCD_MODE_ODL,      PIN(E, 5), GPIO_INPUT)		/* Case Closed Debug Mode */
+GPIO(EC_SLP_S0IX,       PIN(7, 2), GPIO_INPUT | GPIO_PULL_UP)
+
+/* Unused signals */
+GPIO(UNUSED_GPIO34,     PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIO96,     PIN(9, 6), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIOA7,     PIN(A, 7), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIOC0,     PIN(C, 0), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIOC6,     PIN(C, 6), GPIO_INPUT | GPIO_PULL_UP)
 
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
