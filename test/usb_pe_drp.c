@@ -178,6 +178,32 @@ static int test_pe_frs(void)
 	return EC_SUCCESS;
 }
 
+static int test_snk_give_source_cap(void)
+{
+	setup_sink();
+
+	/*
+	 * Receive a Get_Source_Cap message; respond with Source_Capabilities
+	 * and return to PE_SNK_Ready once sent.
+	 */
+	rx_emsg[PORT0].header =
+		PD_HEADER(PD_CTRL_GET_SOURCE_CAP, 0, 0, 0, 0, 0, 0);
+	pe_set_flag(PORT0, PE_FLAGS_MSG_RECEIVED);
+	task_wait_event(10 * MSEC);
+
+	TEST_ASSERT(!pe_chk_flag(PORT0, PE_FLAGS_MSG_RECEIVED));
+	TEST_ASSERT(!pe_chk_flag(PORT0, PE_FLAGS_TX_COMPLETE));
+	TEST_EQ(fake_prl_get_last_sent_data_msg_type(PORT0),
+		PD_DATA_SOURCE_CAP, "%d");
+	TEST_EQ(get_state_pe(PORT0), PE_DR_SNK_GIVE_SOURCE_CAP, "%d");
+
+	pe_set_flag(PORT0, PE_FLAGS_TX_COMPLETE);
+	task_wait_event(10 * MSEC);
+	TEST_EQ(get_state_pe(PORT0), PE_SNK_READY, "%d");
+
+	return EC_SUCCESS;
+}
+
 static int test_vbus_gpio_discharge(void)
 {
 	pd_set_vbus_discharge(PORT0, 1);
@@ -318,6 +344,7 @@ void run_test(int argc, char **argv)
 	test_reset();
 
 	RUN_TEST(test_pe_frs);
+	RUN_TEST(test_snk_give_source_cap);
 	RUN_TEST(test_vbus_gpio_discharge);
 #ifndef CONFIG_USB_PD_EXTENDED_MESSAGES
 	RUN_TEST(test_extended_message_not_supported_src);

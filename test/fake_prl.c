@@ -37,6 +37,8 @@ void prl_reset_soft(int port)
 {}
 
 static enum pd_ctrl_msg_type last_ctrl_msg[CONFIG_USB_PD_PORT_MAX_COUNT];
+static enum pd_data_msg_type last_data_msg_type[CONFIG_USB_PD_PORT_MAX_COUNT];
+
 void prl_send_ctrl_msg(int port, enum tcpm_transmit_type type,
 	enum pd_ctrl_msg_type msg)
 {
@@ -45,7 +47,9 @@ void prl_send_ctrl_msg(int port, enum tcpm_transmit_type type,
 
 void prl_send_data_msg(int port, enum tcpm_transmit_type type,
 	enum pd_data_msg_type msg)
-{}
+{
+	last_data_msg_type[port] = msg;
+}
 
 void prl_send_ext_data_msg(int port, enum tcpm_transmit_type type,
 	enum pd_ext_msg_type msg)
@@ -64,4 +68,14 @@ enum pd_ctrl_msg_type fake_prl_get_last_sent_ctrl_msg(int port)
 void fake_prl_clear_last_sent_ctrl_msg(int port)
 {
 	last_ctrl_msg[port] = 0;
+}
+
+enum pd_data_msg_type fake_prl_get_last_sent_data_msg_type(int port)
+{
+	return last_data_msg_type[port];
+}
+
+void fake_prl_clear_last_sent_data_msg(int port)
+{
+	last_data_msg_type[port] = 0;
 }

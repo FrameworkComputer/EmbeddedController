@@ -251,6 +251,7 @@ enum usb_pe_state {
 	PE_BIST_RX,
 	PE_DEU_SEND_ENTER_USB,
 	PE_DR_SNK_GET_SINK_CAP,
+	PE_DR_SNK_GIVE_SOURCE_CAP,
 
 	/* AMS Start parent - runs SenderResponseTimer */
 	PE_SENDER_RESPONSE,
@@ -372,6 +373,7 @@ static const char * const pe_state_names[] = {
 	[PE_BIST_RX] = "PE_Bist_RX",
 	[PE_DEU_SEND_ENTER_USB]  = "PE_DEU_Send_Enter_USB",
 	[PE_DR_SNK_GET_SINK_CAP] = "PE_DR_SNK_Get_Sink_Cap",
+	[PE_DR_SNK_GIVE_SOURCE_CAP] = "PE_DR_SNK_Give_Source_Cap",
 
 	[PE_SENDER_RESPONSE] = "PE_SENDER_RESPONSE",
 
@@ -2807,7 +2809,7 @@ static void pe_snk_ready_run(int port)
 				/* Do nothing */
 				break;
 			case PD_CTRL_GET_SOURCE_CAP:
-				set_state_pe(port, PE_SNK_GET_SOURCE_CAP);
+				set_state_pe(port, PE_DR_SNK_GIVE_SOURCE_CAP);
 				return;
 			case PD_CTRL_GET_SINK_CAP:
 				set_state_pe(port, PE_SNK_GIVE_SINK_CAP);
@@ -5447,6 +5449,35 @@ static void pe_dr_snk_get_sink_cap_run(int port)
 }
 
 /*
+ * PE_DR_SNK_Give_Source_Cap
+ */
+static void pe_dr_snk_give_source_cap_entry(int port)
+{
+	print_current_state(port);
+
+	/* Send source capabilities. */
+	send_source_cap(port);
+}
+
+static void pe_dr_snk_give_source_cap_run(int port)
+{
+	/*
+	 * Transition back to PE_SNK_Ready when the Source_Capabilities message
+	 * has been successfully sent.
+	 *
+	 * Get Source Capabilities AMS is uninterruptible, but in case the
+	 * partner violates the spec then send a soft reset rather than get
+	 * stuck here.
+	 */
+	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+		set_state_pe(port, PE_SNK_READY);
+	} else if (PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED)) {
+		pe_send_soft_reset(port, TCPC_TX_SOP);
+	}
+}
+
+/*
  * PE_SENDER_RESPONSE
  *
  * Parent state to run first message in an AMS and start SenderResponseTimer
@@ -5821,6 +5852,10 @@ static const struct usb_state pe_states[] = {
 		.entry = pe_dr_snk_get_sink_cap_entry,
 		.run   = pe_dr_snk_get_sink_cap_run,
 		.parent = &pe_states[PE_SENDER_RESPONSE],
+	},
+	[PE_DR_SNK_GIVE_SOURCE_CAP] = {
+		.entry = pe_dr_snk_give_source_cap_entry,
+		.run = pe_dr_snk_give_source_cap_run,
 	},
 	[PE_SENDER_RESPONSE] = {
 		.entry = pe_sender_response_entry,

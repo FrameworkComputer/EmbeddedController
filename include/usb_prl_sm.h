@@ -124,6 +124,17 @@ enum pd_ctrl_msg_type fake_prl_get_last_sent_ctrl_msg(int port);
  * Fake to set the last sent control message to an invalid value.
  */
 void fake_prl_clear_last_sent_ctrl_msg(int port);
+
+/**
+ * Get the type of the last sent data message on the given port.
+ */
+enum pd_data_msg_type fake_prl_get_last_sent_data_msg_type(int port);
+
+/**
+ * Clear the last sent data message on the given port to an invalid value,
+ * making it possible to check that two of the same message were sent in order.
+ */
+void fake_prl_clear_last_sent_data_msg(int port);
 #endif
 
 #endif /* __CROS_EC_USB_PRL_H */
