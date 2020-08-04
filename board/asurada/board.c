@@ -590,38 +590,39 @@ void lid_angle_peripheral_enable(int enable)
 int board_regulator_get_info(uint32_t index, char *name,
 			     uint16_t *num_voltages, uint16_t *voltages_mv)
 {
-	enum mt6360_ldo_id ldo_id = index;
+	enum mt6360_regulator_id id = index;
 
-	return mt6360_ldo_get_info(ldo_id, name, num_voltages, voltages_mv);
+	return mt6360_regulator_get_info(id, name, num_voltages,
+					 voltages_mv);
 }
 
 int board_regulator_enable(uint32_t index, uint8_t enable)
 {
-	enum mt6360_ldo_id ldo_id = index;
+	enum mt6360_regulator_id id = index;
 
-	return mt6360_ldo_enable(ldo_id, enable);
+	return mt6360_regulator_enable(id, enable);
 }
 
 int board_regulator_is_enabled(uint32_t index, uint8_t *enabled)
 {
-	enum mt6360_ldo_id ldo_id = index;
+	enum mt6360_regulator_id id = index;
 
-	return mt6360_ldo_is_enabled(ldo_id, enabled);
+	return mt6360_regulator_is_enabled(id, enabled);
 }
 
 int board_regulator_set_voltage(uint32_t index, uint32_t min_mv,
 				uint32_t max_mv)
 {
-	enum mt6360_ldo_id ldo_id = index;
+	enum mt6360_regulator_id id = index;
 
-	return mt6360_ldo_set_voltage(ldo_id, min_mv, max_mv);
+	return mt6360_regulator_set_voltage(id, min_mv, max_mv);
 }
 
 int board_regulator_get_voltage(uint32_t index, uint32_t *voltage_mv)
 {
-	enum mt6360_ldo_id ldo_id = index;
+	enum mt6360_regulator_id id = index;
 
-	return mt6360_ldo_get_voltage(ldo_id, voltage_mv);
+	return mt6360_regulator_get_voltage(id, voltage_mv);
 }
 
 /* gpio */
