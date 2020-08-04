@@ -138,6 +138,16 @@ enum sm5803_gpio0_modes {
 #define SM5803_TINT_LOW_LEVEL		0xBF
 #define SM5803_TINT_HIGH_LEVEL		0xD1
 
+/* IBAT levels - The IBAT levels increment in 7.32mA */
+#define SM5803_REG_IBAT_CHG_MEAS_MSB	0x44
+#define SM5803_REG_IBAT_CHG_MEAS_LSB	0x45
+#define SM5803_IBAT_CHG_MEAS_LSB	GENMASK(1, 0)
+
+/* IBUS levels - The IBUS levels increment in 7.32mA */
+#define SM5803_REG_IBUS_CHG_MEAS_MSB	0x46
+#define SM5803_REG_IBUS_CHG_MEAS_LSB	0x47
+#define SM5803_IBUS_CHG_MEAS_LSB	GENMASK(1, 0)
+
 #define SM5803_REG_VBUS_MEAS_MSB	0x48
 #define SM5803_REG_VBUS_MEAS_LSB	0x49
 #define SM5803_VBUS_MEAS_LSB		GENMASK(1, 0)
@@ -147,6 +157,11 @@ enum sm5803_gpio0_modes {
 #define SM5803_VBUS_MEAS_CHG_DET	BIT(6)
 
 #define SM5803_REG_TINT_MEAS_MSB	0x4E
+
+/* VSYS levels - The VSYS levels increment in  23.4mV steps. */
+#define SM5803_REG_VSYS_MEAS_MSB	0x4C
+#define SM5803_REG_VSYS_MEAS_LSB	0x4D
+#define SM5803_VSYS_MEAS_LSB		GENMASK(1, 0)
 
 /* Charger registers (address 0x32) */
 
@@ -179,6 +194,9 @@ enum sm5803_charger_modes {
 #define SM5803_FLOW3_FW_SWITCH_RESUME	BIT(1)
 #define SM5803_FLOW3_FW_SWITCH_PAUSE	BIT(2)
 #define SM5803_FLOW3_SOFT_DISABLE_EN	BIT(3)
+
+#define SM5803_REG_SWITCHER_CONF	0x1F
+#define SM5803_SW_BCK_BST_CONF_AUTO	BIT(0)
 
 #define SM5803_REG_ANA_EN1		0x21
 #define SM5803_ANA_EN1_CLS_DISABLE	BIT(7)
@@ -249,12 +267,26 @@ enum sm5803_charger_modes {
 #define SM5803_REG_PRECHG		0x41
 #define SM5803_PRECHG_ICHG_PRE_SET	GENMASK(5, 0)
 
+/* Fast charge Termination */
+#define SM5803_REG_FAST_CONF5		0x3D
+#define SM5803_CONF5_IBAT_EOC_TH	GENMASK(3, 0)
+
+/* IR drop compensation */
+#define SM5803_REG_IR_COMP1		0x3F
+#define SM5803_IR_COMP_RES_SET_MSB	GENMASK(7, 6)
+#define SM5803_IR_COMP_RES_SET_MSB_SHIFT 6
+#define SM5803_IR_COMP_EN		BIT(5)
+
+/* LSB is in 1.67mOhm steps. */
+#define SM5803_REG_IR_COMP2		0x40
+
 #define SM5803_REG_PHOT1		0x72
 #define SM5803_PHOT1_IBAT_PHOT_COMP_EN	BIT(0)
 #define SM5803_PHOT1_IBUS_PHOT_COMP_EN	BIT(1)
 #define SM5803_PHOT1_VSYS_MON_EN	BIT(2)
 #define SM5803_PHOT1_VBUS_MON_EN	BIT(3)
 #define SM5803_PHOT1_DURATION		GENMASK(6, 4)
+#define SM5803_PHOT1_DURATION_SHIFT	4
 #define SM5803_PHOT1_IRQ_MODE		BIT(7)
 
 #define CHARGER_NAME "sm5803"
