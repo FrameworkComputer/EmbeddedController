@@ -27,6 +27,12 @@ GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4),  GPIO_INT_BOTH, power_signal_interrupt
 /* Sensor Interrupts */
 GPIO_INT(EC_IMU_INT_L,         PIN(5, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi260_interrupt)
 GPIO_INT(TABLET_MODE_L,        PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
+/*
+ * Lid g-sensor interrupt unused on Delbin, configure as regular input for
+ * power saving.
+ */
+GPIO(EC_ACCEL_INT,		PIN(8, 1), GPIO_INPUT | GPIO_PULL_UP)
+
 
 /* USB-C interrupts */
 GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(E, 0), GPIO_INT_BOTH, tcpc_alert_event)
@@ -98,6 +104,15 @@ GPIO(LED_1_L,			PIN(C, 4), GPIO_OUT_HIGH)	/* Battery Full LED: White */
 GPIO(LED_2_L,			PIN(C, 3), GPIO_OUT_HIGH)	/* Battery Charging LED: Amber */
 GPIO(LED_3_L,			PIN(C, 2), GPIO_OUT_HIGH)	/* Battery Power LED: White */
 GPIO(CCD_MODE_ODL,		PIN(E, 5), GPIO_INPUT)		/* Case Closed Debug Mode */
+
+/* Unused signals */
+GPIO(UNUSED_GPIO34,		PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIO41,		PIN(4, 1), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIO72,		PIN(7, 2), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIO96,		PIN(9, 6), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIOA7,		PIN(A, 7), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIOC0,		PIN(C, 0), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIOF2,		PIN(F, 2), GPIO_INPUT | GPIO_PULL_UP)
 
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
