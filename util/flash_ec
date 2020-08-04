@@ -982,7 +982,8 @@ function flash_flashrom() {
 		T=/tmp/flash_spi_$$
 		DELETE_LIST+=( "${T}" )
 
-		if [[ "${CHIP}" =~ ^npcx(|_int)_spi$ ]] ; then
+		if [[ "${CHIP}" =~ ^npcx(|_int)_spi$ ]] || \
+		   [[ "${CHIP}" =~ "ite_spi" ]] ; then
 		{	# Patch temp image up to SPI_SIZE
 			cat "$IMG"
 			if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
