@@ -1618,7 +1618,7 @@ static int rwsig_info(enum rwsig_info_fields fields)
 			printf("key_id: ");
 
 		for (i = 0; i < sizeof(r.key_id); i++)
-			printf("%x", r.key_id[i]);
+			printf("%02x", r.key_id[i]);
 		printf("\n");
 	}
 
