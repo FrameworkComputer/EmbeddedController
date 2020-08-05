@@ -432,6 +432,15 @@ static void sm5803_init(int chgnum)
 	reg |= pre_term << SM5803_VBAT_PRE_TERM_SHIFT;
 	rv |= chg_write8(chgnum, SM5803_REG_PRE_FAST_CONF_REG1, reg);
 
+	/*
+	 * Set up precharge current
+	 * Note it is preferred to under-shoot the precharge current requested
+	 * Upper bits of this register are read/write 1 to clear
+	 */
+	reg = SM5803_CURRENT_TO_REG(batt_info->precharge_current);
+	reg = MIN(reg, SM5803_PRECHG_ICHG_PRE_SET);
+	rv |= chg_write8(chgnum, SM5803_REG_PRECHG, reg);
+
 	if (rv)
 		CPRINTS("%s %d: Failed initialization", CHARGER_NAME, chgnum);
 }

@@ -238,6 +238,10 @@ enum sm5803_gpio0_modes {
 #define SM5803_REG_FAST_CONF4		0x3C
 #define SM5803_CONF4_ICHG_FAST		GENMASK(5, 0)
 
+/* Precharge current limit is also intervals of 100 mA */
+#define SM5803_REG_PRECHG		0x41
+#define SM5803_PRECHG_ICHG_PRE_SET	GENMASK(5, 0)
+
 #define SM5803_REG_PHOT1		0x72
 #define SM5803_PHOT1_IBAT_PHOT_COMP_EN	BIT(0)
 #define SM5803_PHOT1_IBUS_PHOT_COMP_EN	BIT(1)
