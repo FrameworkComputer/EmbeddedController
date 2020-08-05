@@ -5,6 +5,7 @@
 /* IT8xxx2 PD development board configuration */
 
 #include "adc_chip.h"
+#include "battery.h"
 #include "console.h"
 #include "it83xx_pd.h"
 #include "pwm.h"
@@ -23,6 +24,12 @@ int board_get_battery_soc(void)
 {
 	CPRINTS("%s", __func__);
 	return 100;
+}
+
+enum battery_present battery_is_present(void)
+{
+	CPRINTS("%s", __func__);
+	return BP_NO;
 }
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
