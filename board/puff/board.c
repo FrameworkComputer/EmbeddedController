@@ -334,27 +334,15 @@ const struct adc_t adc_channels[] = {
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
 	},
-	[ADC_TEMP_SENSOR_2] = {
-		.name = "TEMP_SENSOR_2",
-		.input_ch = NPCX_ADC_CH1,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_PP3300] = {
-		.name = "PP3300",
+	[TEMP_SENSOR_CORE] = {
+		.name = "Core",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_1,
-	},
-	[TEMP_SENSOR_PP5000] = {
-		.name = "PP5000",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
@@ -410,8 +398,7 @@ const static struct ec_thermal_config thermal_a = {
 };
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_PP3300] = thermal_a,
-	[TEMP_SENSOR_PP5000] = thermal_a,
+	[TEMP_SENSOR_CORE] = thermal_a,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 

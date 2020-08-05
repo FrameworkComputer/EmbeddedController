@@ -134,7 +134,7 @@ ALTERNATE(PIN_MASK(B, 0x80), 0, MODULE_PWM, 0)                  /* PWM5 - Fan 1 
 ALTERNATE(PIN_MASK(7, 0x08), 0, MODULE_PWM, 0)                  /* TA2 - Fan Tachometer */
 
 /* ADC */
-ALTERNATE(PIN_MASK(4, 0x3E), 0, MODULE_ADC, 0)                  /* ADC0-4 */
+ALTERNATE(PIN_MASK(4, 0x2A), 0, MODULE_ADC, 0)                  /* ADC0, ADC2, ADC4 */
 ALTERNATE(PIN_MASK(E, 0x02), 0, MODULE_ADC, 0)                  /* ADC7 */
 ALTERNATE(PIN_MASK(F, 0x01), 0, MODULE_ADC, 0)                  /* ADC9 */
 
@@ -147,7 +147,8 @@ UNUSED(PIN(F, 2))						/* EC_I2C_RFU_SDA */
 UNUSED(PIN(F, 3))						/* EC_I2C_RFU_SCL */
 UNUSED(PIN(C, 0))						/* FAN_PWM_2 */
 UNUSED(PIN(8, 0))						/* LED_BLUE_L */
-UNUSED(PIN(4, 2))						/* TEMP_SENSOR_3 */
+UNUSED(PIN(4, 4))						/* ADC1/TEMP_SENSOR_2 */
+UNUSED(PIN(4, 2))						/* ADC3/TEMP_SENSOR_3 */
 UNUSED(PIN(C, 2))						/* A12 NC */
 UNUSED(PIN(9, 2))						/* K8  NC */
 UNUSED(PIN(9, 1))						/* L8  NC */
