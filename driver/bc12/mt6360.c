@@ -318,7 +318,31 @@ struct mt6360_regulator_data regulator_data[MT6360_REGULATOR_COUNT] = {
 		.shift_vosel = MT6360_MASK_LDO7_VOSEL_SHIFT,
 		.mask_vocal = MT6360_MASK_LDO7_VOCAL,
 	},
+	[MT6360_BUCK1] = {
+		.name = "mt6360_buck1",
+		.addr = MT6360_PMIC_SLAVE_ADDR_FLAGS,
+		.reg_en_ctrl2 = MT6360_REG_BUCK1_EN_CTRL2,
+		.reg_ctrl3 = MT6360_REG_BUCK1_VOSEL,
+		.mask_vosel = MT6360_MASK_BUCK1_VOSEL,
+		.shift_vosel = MT6360_MASK_BUCK1_VOSEL_SHIFT,
+		.mask_vocal = MT6360_MASK_BUCK1_VOCAL,
+	},
+	[MT6360_BUCK2] = {
+		.name = "mt6360_buck2",
+		.addr = MT6360_PMIC_SLAVE_ADDR_FLAGS,
+		.reg_en_ctrl2 = MT6360_REG_BUCK2_EN_CTRL2,
+		.reg_ctrl3 = MT6360_REG_BUCK2_VOSEL,
+		.mask_vosel = MT6360_MASK_BUCK2_VOSEL,
+		.shift_vosel = MT6360_MASK_BUCK2_VOSEL_SHIFT,
+		.mask_vocal = MT6360_MASK_BUCK2_VOCAL,
+	},
 };
+
+static bool is_buck_regulator(const struct mt6360_regulator_data *data)
+{
+	/* There's no ldo_vosel_table, it's a buck. */
+	return !(data->ldo_vosel_table);
+}
 
 int mt6360_regulator_get_info(enum mt6360_regulator_id id, char *name,
 			      uint16_t *num_voltages, uint16_t *voltages_mv)
@@ -332,16 +356,33 @@ int mt6360_regulator_get_info(enum mt6360_regulator_id id, char *name,
 	data = &regulator_data[id];
 
 	strzcpy(name, data->name, EC_REGULATOR_NAME_MAX_LEN);
-	for (i = 0; i < data->ldo_vosel_table_len; i++) {
-		int mv = data->ldo_vosel_table[i];
 
-		if (!mv)
-			continue;
-		if (cnt < EC_REGULATOR_VOLTAGE_MAX_COUNT)
-			voltages_mv[cnt++] = mv;
-		else
-			CPRINTS("%s voltage info overflow: %d", data->name, mv);
+	if (is_buck_regulator(data)) {
+		for (i = 0; i < MT6360_BUCK_VOSEL_MAX_STEP; ++i) {
+			int mv = MT6360_BUCK_VOSEL_MIN +
+				 i * MT6360_BUCK_VOSEL_STEP_MV;
+
+			if (cnt < EC_REGULATOR_VOLTAGE_MAX_COUNT)
+				voltages_mv[cnt++] = mv;
+			else
+				CPRINTS("%s voltage info overflow: %d-%d",
+					data->name, mv, MT6360_BUCK_VOSEL_MAX);
+		}
+	} else {
+		/* It's a LDO */
+		for (i = 0; i < data->ldo_vosel_table_len; i++) {
+			int mv = data->ldo_vosel_table[i];
+
+			if (!mv)
+				continue;
+			if (cnt < EC_REGULATOR_VOLTAGE_MAX_COUNT)
+				voltages_mv[cnt++] = mv;
+			else
+				CPRINTS("%s voltage info overflow: %d",
+					data->name, mv);
+		}
 	}
+
 	*num_voltages = cnt;
 	return EC_SUCCESS;
 }
@@ -397,6 +438,29 @@ int mt6360_regulator_set_voltage(enum mt6360_regulator_id id, int min_mv,
 		return EC_ERROR_INVAL;
 	data = &regulator_data[id];
 
+	if (is_buck_regulator(data)) {
+		int mv;
+		int step;
+
+		if (max_mv < MT6360_BUCK_VOSEL_MIN)
+			goto error;
+
+		if (min_mv > MT6360_BUCK_VOSEL_MAX)
+			goto error;
+
+		mv = DIV_ROUND_UP((min_mv + max_mv) / 2,
+				  MT6360_BUCK_VOSEL_STEP_MV) *
+		     MT6360_BUCK_VOSEL_STEP_MV;
+		mv = MIN(MAX(mv, MT6360_BUCK_VOSEL_MIN), MT6360_BUCK_VOSEL_MAX);
+
+		step = (mv - MT6360_BUCK_VOSEL_MIN) / MT6360_BUCK_VOSEL_STEP_MV;
+
+		return mt6360_regulator_update_bits(data->addr,
+						    data->reg_ctrl3,
+						    data->mask_vosel, step);
+	}
+
+	/* It's a LDO. */
 	for (i = 0; i < data->ldo_vosel_table_len; i++) {
 		int mv = data->ldo_vosel_table[i];
 		int step;
@@ -419,6 +483,8 @@ int mt6360_regulator_set_voltage(enum mt6360_regulator_id id, int min_mv,
 			data->mask_vosel | data->mask_vocal,
 			(i << data->shift_vosel) | step);
 	}
+
+error:
 	CPRINTS("%s voltage %d - %d out of range", data->name, min_mv, max_mv);
 	return EC_ERROR_INVAL;
 }
@@ -438,6 +504,15 @@ int mt6360_regulator_get_voltage(enum mt6360_regulator_id id, int *voltage_mv)
 		CPRINTS("Error reading %s ctrl3: %d", data->name, rv);
 		return rv;
 	}
+
+	/* BUCK */
+	if (is_buck_regulator(data)) {
+		*voltage_mv = MT6360_BUCK_VOSEL_MIN +
+			      value * MT6360_BUCK_VOSEL_STEP_MV;
+		return EC_SUCCESS;
+	}
+
+	/* LDO */
 	*voltage_mv = data->ldo_vosel_table[(value & data->mask_vosel) >>
 					    data->shift_vosel];
 	if (*voltage_mv == 0) {
