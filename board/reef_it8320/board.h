@@ -9,6 +9,13 @@
 #define __CROS_EC_BOARD_H
 
 /*
+ * Enable PD in RO image for TCPMv2, otherwise there is only Type-c functions.
+ * NOTE: This configuration is only for development board and will never be
+ *       released on a chrome os device.
+ */
+#define CONFIG_SYSTEM_UNLOCKED
+
+/*
  * By default, enable all console messages excepted HC, ACPI and event:
  * The sensor stack is generating a lot of activity.
  */
@@ -81,7 +88,6 @@
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_TCPMV1
 #define CONFIG_USB_PD_COMM_LOCKED
-
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USBC_SS_MUX_DFP_ONLY
 #define CONFIG_USBC_VCONN

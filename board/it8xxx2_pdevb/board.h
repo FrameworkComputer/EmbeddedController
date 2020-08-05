@@ -11,6 +11,13 @@
 /* Select Baseboard features */
 #include "baseboard.h"
 
+/*
+ * Enable PD in RO image for TCPMv2, otherwise there is only Type-c functions.
+ * NOTE: This configuration is only for development board and will never be
+ *       released on a chrome os device.
+ */
+#define CONFIG_SYSTEM_UNLOCKED
+
 /* EC configurations, unnecessarily for PD */
 #undef CONFIG_FANS
 #undef CONFIG_IT83XX_ENABLE_MOUSE_DEVICE
