@@ -261,11 +261,17 @@ static const struct usb_mux usbc1_usb3_db_retimer = {
 	.next_mux = NULL,
 };
 
-static const struct usb_mux mux_config_p1_usb3 = {
+static const struct usb_mux mux_config_p1_usb3_active = {
 	.usb_port = USBC_PORT_C1,
 	.driver = &virtual_usb_mux_driver,
 	.hpd_update = &virtual_hpd_update,
 	.next_mux = &usbc1_usb3_db_retimer,
+};
+
+static const struct usb_mux mux_config_p1_usb3_passive = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &virtual_usb_mux_driver,
+	.hpd_update = &virtual_hpd_update,
 };
 
 /******************************************************************************/
@@ -324,11 +330,25 @@ void board_reset_pd_mcu(void)
  *   Parade PS8815 TCPC (integrated retimer)
  *   Diodes PI3USB9201 BC 1.2 chip (same as USB4 board)
  *   Silergy SYV682A PPC (same as USB4 board)
+ *   Virtual mux with stacked retimer
  */
-static void config_db_usb3(void)
+static void config_db_usb3_active(void)
 {
 	tcpc_config[USBC_PORT_C1] = tcpc_config_p1_usb3;
-	usb_muxes[USBC_PORT_C1] = mux_config_p1_usb3;
+	usb_muxes[USBC_PORT_C1] = mux_config_p1_usb3_active;
+}
+
+/*
+ * Set up support for the passive USB3 daughterboard:
+ *   TUSB422 TCPC (already the default)
+ *   PI3USB9201 BC 1.2 chip (already the default)
+ *   Silergy SYV682A PPC (already the default)
+ *   Virtual mux without stacked retimer
+ */
+
+static void config_db_usb3_passive(void)
+{
+	usb_muxes[USBC_PORT_C1] = mux_config_p1_usb3_passive;
 }
 
 static const char *db_type_prefix = "USB DB type: ";
@@ -358,8 +378,12 @@ __override void board_cbi_init(void)
 		CPRINTS("%sUSB4 Gen3", db_type_prefix);
 		break;
 	case DB_USB3_ACTIVE:
-		config_db_usb3();
+		config_db_usb3_active();
 		CPRINTS("%sUSB3 Active", db_type_prefix);
+		break;
+	case DB_USB3_PASSIVE:
+		config_db_usb3_passive();
+		CPRINTS("%sUSB3 Passive", db_type_prefix);
 		break;
 	default:
 		CPRINTS("%sID %d not supported", db_type_prefix, usb_db);
@@ -397,4 +421,3 @@ void ppc_interrupt(enum gpio_signal signal)
 		break;
 	}
 }
-
