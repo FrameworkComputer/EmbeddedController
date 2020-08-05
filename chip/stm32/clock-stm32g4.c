@@ -77,7 +77,7 @@ static void stm32g4_config_pll(uint32_t hclk_hz, uint32_t pll_src,
 	pll_n = (hclk_hz * STM32G4_PLL_R * STM32G4_AHB_PRE) /
 		STM32G4_PLL_IN_FREQ_HZ;
 
-	/* Sanity checks */
+	/* validity checks */
 	ASSERT(pll_m && (pll_m <= 16));
 	ASSERT((pll_n >= 8) && (pll_n <= 127));
 

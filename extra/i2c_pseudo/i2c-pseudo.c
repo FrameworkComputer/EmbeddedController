@@ -69,8 +69,6 @@
 #define I2CP_CTRLR_RSP_QUEUE_LIMIT	256
 /* The maximum size of a single controller read response. */
 #define I2CP_MAX_MSG_BUF_SIZE		16384
-/* Maximum length (not size!) of i2cp_cmds static array. */
-#define I2CP_CMDS_SANITY_LIMIT		64
 /* Maximum size of a controller read or write. */
 #define I2CP_RW_SIZE_LIMIT		1048576
 
@@ -78,7 +76,7 @@
  * Marks the end of a controller command or read response.
  *
  * Fundamentally, controller commands and read responses could use different end
- * marker characters, but for sanity they should be the same.
+ * marker characters, but for validity they should be the same.
  *
  * This must be a variable, not a macro, because it is passed to copy_to_user()
  * by address.  Taking the address of a character literal causes a compiler
@@ -903,7 +901,7 @@ static ssize_t i2cp_rsp_master_xfer_formatter(void *data, char **out)
 		/*
 		 * The length is not strictly necessary with the explicit
 		 * end-of-message marker (i2cp_ctrlr_end_char), however it
-		 * serves as a useful sanity check for controllers to verify
+		 * serves as a useful validity check for controllers to verify
 		 * that no bytes were lost in kernel->userspace transmission.
 		 */
 		ret = anprintf(&buf_start, I2CP_MAX_MSG_BUF_SIZE, GFP_KERNEL,
