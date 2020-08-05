@@ -207,16 +207,16 @@ You should see something like this. Leave it running:
 2019-04-11 15:21:53,777 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/usb_image_management.xml, None, 0)
 2019-04-11 15:21:53,784 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/servo_zerblebarn_overlay.xml, None, 0)
 2019-04-11 15:21:53,785 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/servoflex_v2_r0_p50.xml, None, 0)
-2019-04-11 15:21:53,792 - Servod - INFO - Initializing interface 1 to ftdi_dummy
+2019-04-11 15:21:53,792 - Servod - INFO - Initializing interface 1 to ftdi_empty
 2019-04-11 15:21:53,792 - Servod - INFO - Initializing interface 2 to ftdi_i2c
 2019-04-11 15:21:53,795 - Servod - INFO - Initializing interface 3 to ftdi_uart
 2019-04-11 15:21:53,799 - Servod - INFO - /dev/pts/8
 2019-04-11 15:21:53,799 - Servod - INFO - Initializing interface 4 to ftdi_uart
 2019-04-11 15:21:53,802 - Servod - INFO - /dev/pts/9
 2019-04-11 15:21:53,802 - Servod - INFO - Use the next FTDI part @ pid = 0x5003
-2019-04-11 15:21:53,802 - Servod - INFO - Initializing interface 5 to ftdi_dummy
+2019-04-11 15:21:53,802 - Servod - INFO - Initializing interface 5 to ftdi_empty
 2019-04-11 15:21:53,802 - Servod - INFO - Use the next FTDI part @ pid = 0x5003
-2019-04-11 15:21:53,802 - Servod - INFO - Initializing interface 6 to ftdi_dummy
+2019-04-11 15:21:53,802 - Servod - INFO - Initializing interface 6 to ftdi_empty
 2019-04-11 15:21:53,802 - Servod - INFO - Use the next FTDI part @ pid = 0x5003
 2019-04-11 15:21:53,802 - Servod - INFO - Initializing interface 7 to ftdi_uart
 2019-04-11 15:21:53,805 - Servod - INFO - /dev/pts/10
