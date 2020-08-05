@@ -312,6 +312,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			CPRINTF("\r[%pT ACPI kblight %d]",
 				PRINTF_TIMESTAMP_NOW, data);
 			kblight_set(data);
+			kblight_enable(data > 0);
 			break;
 #endif
 #ifdef CONFIG_FANS
