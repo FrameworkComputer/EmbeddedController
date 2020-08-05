@@ -80,9 +80,31 @@ IOEX(USB_A0_CHARGE_EN_L,	EXPIN(USBC_PORT_C0, 1, 6), GPIO_OUT_HIGH)	/* A0 5V High
 IOEX(USB_A1_RETIMER_EN,		EXPIN(USBC_PORT_C1, 0, 0), GPIO_OUT_LOW)	/* A1 Retimer Enable */
 IOEX(PPC_ID,			EXPIN(USBC_PORT_C1, 0, 1), GPIO_INPUT | GPIO_PULL_DOWN)	/* PPC ID */
 IOEX(USB_C1_HPD_IN_DB,		EXPIN(USBC_PORT_C1, 0, 2), GPIO_OUT_LOW)	/* C1 HPD */
+
+/*
+ * TODO(dbrockus@): remove code when older version_2 of hardware is
+ * retired and no longer needed
+ */
+#if 0
 IOEX(HDMI_POWER_EN_DB,		EXPIN(USBC_PORT_C1, 0, 3), GPIO_OUT_LOW)	/* HDMI retimer power enable */
+#else
+#define IOEX_HDMI_POWER_EN_DB		IOEX_MST_HPD_OUT
+IOEX_INT(MST_HPD_OUT,		EXPIN(USBC_PORT_C1, 0, 3), GPIO_INT_BOTH,	mst_hpd_interrupt)
+#endif
+
 IOEX(USB_C1_TCPC_FASTSW_CTL_EN,	EXPIN(USBC_PORT_C1, 0, 4), GPIO_OUT_LOW)	/* C1 FastSwitch Control */
+
+/*
+ * TODO(dbrockus@): remove code when older version_2 of hardware is
+ * retired and no longer needed
+ */
+#if 0
 IOEX(USB_C1_PPC_ILIM_3A_EN,	EXPIN(USBC_PORT_C1, 1, 0), GPIO_OUT_LOW)	/* C1 3A Current Limit Enable */
+#else
+#define IOEX_USB_C1_PPC_ILIM_3A_EN	IOEX_HDMI_CONN_HPD_3V3_DB
+IOEX_INT(HDMI_CONN_HPD_3V3_DB,	EXPIN(USBC_PORT_C1, 1, 0), GPIO_INT_BOTH,	hdmi_hpd_interrupt)
+#endif
+
 IOEX(USB_C1_MUX_RST_DB,		EXPIN(USBC_PORT_C1, 1, 1), GPIO_OUT_LOW)	/* C1 Mux Reset */
 IOEX(USB_C1_PPC_EN_L,		EXPIN(USBC_PORT_C1, 1, 3), GPIO_OUT_LOW)	/* C1 PPC Enable */
 IOEX(HDMI_DATA_EN_DB,		EXPIN(USBC_PORT_C1, 1, 4), GPIO_OUT_HIGH)	/* HDMI Retimer Enable */

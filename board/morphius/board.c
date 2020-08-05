@@ -256,20 +256,38 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
  * Use FW_CONFIG to set correct configuration.
  */
 
+static uint32_t board_ver;
 enum gpio_signal gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V1;
 
 static void board_remap_gpio(void)
 {
-	uint32_t board_ver = 0;
-
-	cbi_get_board_version(&board_ver);
-
 	if (board_ver >= 3) {
+		int rv;
+
 		gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V1;
 		ccprintf("GPIO_EC_PS2_RESET_V1\n");
+
+		/*
+		 * TODO(dbrockus@): remove code when older version_2
+		 * hardware is retired and no longer needed
+		 */
+		rv = ioex_set_flags(IOEX_HDMI_POWER_EN_DB, GPIO_OUT_LOW);
+		rv |= ioex_set_flags(IOEX_USB_C1_PPC_ILIM_3A_EN, GPIO_OUT_LOW);
+		if (rv)
+			ccprintf("IOEX Board>=3 Remap FAILED\n");
 	} else {
 		gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V0;
 		ccprintf("GPIO_EC_PS2_RESET_V0\n");
+
+		/*
+		 * TODO(dbrockus@): remove code when older version_2
+		 * hardware is retired and no longer needed
+		 */
+		if (ec_config_has_mst_hub_rtd2141b())
+			ioex_enable_interrupt(IOEX_MST_HPD_OUT);
+
+		if (ec_config_has_hdmi_retimer_pi3hdx1204())
+			ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
 	}
 
 	support_aoz_ppc = (board_ver == 3);
@@ -281,6 +299,8 @@ static void board_remap_gpio(void)
 
 void setup_fw_config(void)
 {
+	cbi_get_board_version(&board_ver);
+
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 
@@ -445,7 +465,8 @@ static void board_chipset_startup(void)
 	sb_smart_charge_mode(SB_SMART_CHARGE_DISABLE);
 
 	/* hdmi retimer power on */
-	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
+	if (board_ver >= 3)
+		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
@@ -456,7 +477,8 @@ static void board_chipset_suspend(void)
 	sb_smart_charge_mode(SB_SMART_CHARGE_ENABLE);
 
 	/* hdmi retimer power off */
-	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
+	if (board_ver >= 3)
+		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
@@ -493,9 +515,11 @@ __override int board_aoz1380_set_vbus_source_current_limit(int port,
 	if (port == 0) {
 		rv = ioex_set_level(IOEX_USB_C0_PPC_ILIM_3A_EN,
 			    (rp == TYPEC_RP_3A0) ? 1 : 0);
-	} else {
+	} else if (board_ver >= 3) {
 		rv = ioex_set_level(IOEX_USB_C1_PPC_ILIM_3A_EN,
 			    (rp == TYPEC_RP_3A0) ? 1 : 0);
+	} else {
+		rv = 1;
 	}
 
 	return rv;
@@ -566,3 +590,52 @@ const int keyboard_factory_scan_pins_used =
 			ARRAY_SIZE(keyboard_factory_scan_pins);
 #endif
 
+/*****************************************************************************
+ * MST hub
+ *
+ * TODO(dbrockus@): remove VERSION_2 code when older version of hardware is
+ * retired and no longer needed
+ */
+static void mst_hpd_handler(void)
+{
+	int hpd = 0;
+
+	/*
+	 * Ensure level on GPIO_EC_DP1_HPD matches IOEX_MST_HPD_OUT, in case
+	 * we got out of sync.
+	 */
+	ioex_get_level(IOEX_MST_HPD_OUT, &hpd);
+	gpio_set_level(GPIO_EC_DP1_HPD, hpd);
+	ccprints("MST HPD %d", hpd);
+}
+DECLARE_DEFERRED(mst_hpd_handler);
+
+void mst_hpd_interrupt(enum ioex_signal signal)
+{
+	/*
+	 * Goal is to pass HPD through from DB OPT3 MST hub to AP's DP1.
+	 * Immediately invert GPIO_EC_DP1_HPD, to pass through the edge on
+	 * IOEX_MST_HPD_OUT. Then check level after 2 msec debounce.
+	 */
+	int hpd = !gpio_get_level(GPIO_EC_DP1_HPD);
+
+	gpio_set_level(GPIO_EC_DP1_HPD, hpd);
+	hook_call_deferred(&mst_hpd_handler_data, (2 * MSEC));
+}
+
+static void hdmi_hpd_handler(void)
+{
+	int hpd = 0;
+
+	/* Pass HPD through from DB OPT1 HDMI connector to AP's DP1. */
+	ioex_get_level(IOEX_HDMI_CONN_HPD_3V3_DB, &hpd);
+	gpio_set_level(GPIO_EC_DP1_HPD, hpd);
+	ccprints("HDMI HPD %d", hpd);
+}
+DECLARE_DEFERRED(hdmi_hpd_handler);
+
+void hdmi_hpd_interrupt(enum ioex_signal signal)
+{
+	/* Debounce for 2 msec. */
+	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
+}
