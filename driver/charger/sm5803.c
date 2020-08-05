@@ -17,6 +17,7 @@
 #include "usb_charge.h"
 #include "usb_pd.h"
 #include "util.h"
+#include "watchdog.h"
 
 #ifndef CONFIG_CHARGER_NARROW_VDC
 #error "SM5803 is a NVDC charger, please enable CONFIG_CHARGER_NARROW_VDC."
@@ -863,8 +864,10 @@ static int command_sm5803_dump(int argc, char **argv)
 	for (reg = 0x01; reg <= 0xED; reg++) {
 		if (!meas_read8(chgnum, reg, &regval))
 			ccprintf("[0x%02X] = 0x%02x\n", reg, regval);
-		if (reg & 0xf)
+		if (reg & 0xf) {
 			cflush(); /* Flush periodically */
+			watchdog_reload();
+		}
 	}
 
 	/* Dump Charger regs from 0x1C to 0x7F */
@@ -872,8 +875,10 @@ static int command_sm5803_dump(int argc, char **argv)
 	for (reg = 0x1C; reg <= 0x7F; reg++) {
 		if (!chg_read8(chgnum, reg, &regval))
 			ccprintf("[0x%02X] = 0x%02x\n", reg, regval);
-		if (reg & 0xf)
+		if (reg & 0xf) {
 			cflush(); /* Flush periodically */
+			watchdog_reload();
+		}
 	}
 
 	return EC_SUCCESS;
