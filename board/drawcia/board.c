@@ -11,6 +11,7 @@
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
+#include "cros_board_info.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
@@ -44,6 +45,8 @@
 #define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
 #define INT_RECHECK_US 5000
+
+uint32_t board_version;
 
 /* GPIO to enable/disable the USB Type-A port. */
 const int usb_port_enable[USB_PORT_COUNT] = {
@@ -371,6 +374,8 @@ void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_INT_ODL);
 
+	/* Store board version for use in determining charge limits */
+	cbi_get_board_version(&board_version);
 
 	/*
 	 * If interrupt lines are already low, schedule them to be processed
@@ -467,6 +472,9 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 {
 	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
 
+	/* Limit C1 on board version 0 to 2.0 A */
+	if ((board_version == 0) && (port == 1))
+		icl = MIN(icl, 2000);
 	/*
 	 * TODO(b/151955431): Characterize the input current limit in case a
 	 * scaling needs to be applied here
