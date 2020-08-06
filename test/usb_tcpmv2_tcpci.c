@@ -256,8 +256,8 @@ __maybe_unused static int test_retry_count_sop(void)
 	 *
 	 * Source Caps is SOP message which should be retried at TCPC layer
 	 */
-	TEST_EQ(verify_tcpci_tx_retry_count(CONFIG_PD_RETRY_COUNT), EC_SUCCESS,
-		"%d");
+	TEST_EQ(verify_tcpci_tx_retry_count(TCPC_TX_SOP, CONFIG_PD_RETRY_COUNT),
+		EC_SUCCESS, "%d");
 	return EC_SUCCESS;
 }
 
@@ -299,7 +299,47 @@ __maybe_unused static int test_retry_count_hard_reset(void)
 	prl_execute_hard_reset(PORT0);
 
 	/* The retry count for hard resets should be 0 */
-	TEST_EQ(verify_tcpci_tx_retry_count(0), EC_SUCCESS, "%d");
+	TEST_EQ(verify_tcpci_tx_retry_count(TCPC_TX_HARD_RESET, 0),
+		EC_SUCCESS, "%d");
+
+	return EC_SUCCESS;
+}
+
+__maybe_unused static int test_pd3_source_send_soft_reset(void)
+{
+	/*
+	 * TD.PD.SRC3.E26.Soft_Reset sent regardless of Rp value
+	 * a) Run PROC.PD.E1 Bring-up according to the UUT role.
+	 * b) The Tester waits until it can start an AMS (Run PROC.PD.E3)...
+	 */
+	TEST_EQ(test_connect_as_pd3_source(), EC_SUCCESS, "%d");
+
+	/*
+	 * ...and sends a Get_Source_Cap message to the UUT.
+	 */
+	mock_tcpci_receive(PD_MSG_SOP,
+		PD_HEADER(PD_CTRL_GET_SOURCE_CAP, PD_ROLE_SINK,
+			PD_ROLE_UFP, 3,
+			0, PD_REV30, 0),
+		NULL);
+	mock_set_alert(TCPC_REG_ALERT_RX_STATUS);
+
+	/*
+	 * c) Upon receipt of the Source_Capabilities Message, the Tester
+	 * doesn’t reply with GoodCRC.
+	 */
+	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0, PD_DATA_SOURCE_CAP),
+		EC_SUCCESS, "%d");
+	mock_set_alert(TCPC_REG_ALERT_TX_FAILED);
+
+	/*
+	 * d) The Tester verifies that a Soft_Reset message is sent by the UUT
+	 * within tReceive max (1.1 ms) + tSoftReset max (15 ms).
+	 */
+	TEST_EQ(verify_tcpci_tx_timeout(
+			TCPC_TX_SOP, PD_CTRL_SOFT_RESET, 0, 15 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 
 	return EC_SUCCESS;
 }
@@ -323,6 +363,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_connect_as_pd3_source);
 	RUN_TEST(test_retry_count_sop);
 	RUN_TEST(test_retry_count_hard_reset);
+	RUN_TEST(test_pd3_source_send_soft_reset);
 
 	test_print_result();
 }

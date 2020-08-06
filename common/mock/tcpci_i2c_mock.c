@@ -10,7 +10,7 @@
 #include "timer.h"
 
 #define BUFFER_SIZE 100
-#define MOCK_WAIT_TIMEOUT (5 * SECOND)
+#define VERIFY_TIMEOUT (5 * SECOND)
 
 struct tcpci_reg {
 	uint8_t		offset;
@@ -138,31 +138,37 @@ static void print_header(const char *prefix, uint16_t header)
 		 id, cnt, ext);
 }
 
-int verify_tcpci_transmit(enum tcpm_transmit_type tx_type,
-				 enum pd_ctrl_msg_type ctrl_msg,
-				 enum pd_data_msg_type data_msg)
+static int verify_transmit(enum tcpm_transmit_type want_tx_type,
+			   int want_tx_retry,
+			   enum pd_ctrl_msg_type want_ctrl_msg,
+			   enum pd_data_msg_type want_data_msg,
+			   int timeout)
 {
-	uint64_t timeout = get_time().val + MOCK_WAIT_TIMEOUT;
+	uint64_t end_time = get_time().val + timeout;
 
 	TEST_EQ(tcpci_regs[TCPC_REG_TRANSMIT].value, 0, "%d");
-	while (get_time().val < timeout) {
+	while (get_time().val < end_time) {
 		if (tcpci_regs[TCPC_REG_TRANSMIT].value != 0) {
+			int tx_type = TCPC_REG_TRANSMIT_TYPE(
+				tcpci_regs[TCPC_REG_TRANSMIT].value);
+			int tx_retry = TCPC_REG_TRANSMIT_RETRY(
+				tcpci_regs[TCPC_REG_TRANSMIT].value);
 			uint16_t header = UINT16_FROM_BYTE_ARRAY_LE(
 						tx_buffer, 1);
-			int type  = PD_HEADER_TYPE(header);
-			int cnt   = PD_HEADER_CNT(header);
-			const uint16_t want_tx_reg = tx_type;
-			const uint16_t tx_wo_retry =
-				tcpci_regs[TCPC_REG_TRANSMIT].value & ~0x0030;
+			int pd_type  = PD_HEADER_TYPE(header);
+			int pd_cnt   = PD_HEADER_CNT(header);
 
-			/* Don't validate the retry portion of reg */
-			TEST_EQ(tx_wo_retry, want_tx_reg, "0x%x");
-			if (ctrl_msg != 0) {
-				TEST_EQ(ctrl_msg, type, "0x%x");
-				TEST_EQ(cnt, 0, "%d");
-			} else {
-				TEST_EQ(data_msg, type, "0x%x");
-				TEST_GE(cnt, 1, "%d");
+			TEST_EQ(tx_type, want_tx_type, "%d");
+			if (want_tx_retry >= 0)
+				TEST_EQ(tx_retry, want_tx_retry, "%d");
+
+			if (want_ctrl_msg != 0) {
+				TEST_EQ(pd_type, want_ctrl_msg, "0x%x");
+				TEST_EQ(pd_cnt, 0, "%d");
+			}
+			if (want_data_msg != 0) {
+				TEST_EQ(pd_type, want_data_msg, "0x%x");
+				TEST_GE(pd_cnt, 1, "%d");
 			}
 			tcpci_regs[TCPC_REG_TRANSMIT].value = 0;
 			return EC_SUCCESS;
@@ -173,25 +179,25 @@ int verify_tcpci_transmit(enum tcpm_transmit_type tx_type,
 	return EC_ERROR_UNKNOWN;
 }
 
-int verify_tcpci_tx_retry_count(const uint8_t retry_count)
+int verify_tcpci_transmit(enum tcpm_transmit_type tx_type,
+			  enum pd_ctrl_msg_type ctrl_msg,
+			  enum pd_data_msg_type data_msg)
 {
-	uint64_t timeout = get_time().val + MOCK_WAIT_TIMEOUT;
+	return verify_transmit(tx_type, -1, ctrl_msg, data_msg, VERIFY_TIMEOUT);
+}
 
-	TEST_EQ(tcpci_regs[TCPC_REG_TRANSMIT].value, 0, "%d");
-	while (get_time().val < timeout) {
-		if (tcpci_regs[TCPC_REG_TRANSMIT].value != 0) {
-			const uint16_t tx_retry = TCPC_REG_TRANSMIT_RETRY(
-				tcpci_regs[TCPC_REG_TRANSMIT].value);
+int verify_tcpci_tx_timeout(enum tcpm_transmit_type tx_type,
+			    enum pd_ctrl_msg_type ctrl_msg,
+			    enum pd_data_msg_type data_msg,
+			    int timeout)
+{
+	return verify_transmit(tx_type, -1, ctrl_msg, data_msg, timeout);
+}
 
-			TEST_EQ(tx_retry, retry_count, "%d");
-
-			tcpci_regs[TCPC_REG_TRANSMIT].value = 0;
-			return EC_SUCCESS;
-		}
-		task_wait_event(5 * MSEC);
-	}
-	TEST_ASSERT(0);
-	return EC_ERROR_UNKNOWN;
+int verify_tcpci_tx_retry_count(enum tcpm_transmit_type tx_type,
+				int retry_count)
+{
+	return verify_transmit(tx_type, retry_count, 0, 0, VERIFY_TIMEOUT);
 }
 
 void mock_tcpci_receive(enum pd_msg_type sop, uint16_t header,

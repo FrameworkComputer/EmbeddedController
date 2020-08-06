@@ -736,7 +736,6 @@ static inline void send_ctrl_msg(int port, enum tcpm_transmit_type type,
 #define prl_send_ext_data_msg DO_NOT_USE
 #define prl_send_ctrl_msg DO_NOT_USE
 
-
 static void pe_init(int port)
 {
 	pe[port].flags = 0;
@@ -5583,7 +5582,7 @@ uint8_t pd_get_src_cap_cnt(int port)
 
 void pd_dfp_discovery_init(int port)
 {
-	memset(&pe[port].discovery, 0, sizeof(pe[port].discovery));
+	memset(pe[port].discovery, 0, sizeof(pe[port].discovery));
 	memset(pe[port].partner_amodes, 0, sizeof(pe[port].partner_amodes));
 
 	/* Reset the DPM and DP modules to enable alternate mode entry. */
@@ -5600,13 +5599,14 @@ void pd_dfp_discovery_init(int port)
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 struct pd_discovery *pd_get_am_discovery(int port, enum tcpm_transmit_type type)
 {
+	ASSERT(type < DISCOVERY_TYPE_COUNT);
 	return &pe[port].discovery[type];
 }
 
 struct partner_active_modes *pd_get_partner_active_modes(int port,
 		enum tcpm_transmit_type type)
 {
-	assert(type < AMODE_TYPE_COUNT);
+	ASSERT(type < AMODE_TYPE_COUNT);
 	return &pe[port].partner_amodes[type];
 }
 
