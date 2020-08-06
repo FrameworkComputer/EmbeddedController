@@ -246,6 +246,116 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
+/* Sensor Mutexes */
+static struct mutex g_lid_mutex;
+static struct mutex g_base_mutex;
+
+/* Sensor Data */
+static struct accelgyro_saved_data_t g_bma253_data;
+static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
+
+/* Matrix to rotate accelrator into standard reference frame */
+static const mat33_fp_t base_standard_ref = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+static const mat33_fp_t lid_standard_ref = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+/* Drivers */
+struct motion_sensor_t motion_sensors[] = {
+	[LID_ACCEL] = {
+		.name = "Lid Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_BMA255,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &bma2x2_accel_drv,
+		.mutex = &g_lid_mutex,
+		.drv_data = &g_bma253_data,
+		.port = I2C_PORT_SENSOR,
+		.i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
+		.rot_standard_ref = &lid_standard_ref,
+		.default_range = 2,
+		.min_frequency = BMA255_ACCEL_MIN_FREQ,
+		.max_frequency = BMA255_ACCEL_MAX_FREQ,
+		.config = {
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+		},
+	},
+	[BASE_ACCEL] = {
+		.name = "Base Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_LSM6DSM,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_BASE,
+		.drv = &lsm6dsm_drv,
+		.mutex = &g_base_mutex,
+		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+				MOTIONSENSE_TYPE_ACCEL),
+		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
+		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+		.port = I2C_PORT_SENSOR,
+		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+		.rot_standard_ref = &base_standard_ref,
+		.default_range = 4,  /* g */
+		.min_frequency = LSM6DSM_ODR_MIN_VAL,
+		.max_frequency = LSM6DSM_ODR_MAX_VAL,
+		.config = {
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 13000 | ROUND_UP_FLAG,
+				.ec_rate = 100 * MSEC,
+			},
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+				.ec_rate = 100 * MSEC,
+			},
+		},
+	},
+	[BASE_GYRO] = {
+		.name = "Base Gyro",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_LSM6DSM,
+		.type = MOTIONSENSE_TYPE_GYRO,
+		.location = MOTIONSENSE_LOC_BASE,
+		.drv = &lsm6dsm_drv,
+		.mutex = &g_base_mutex,
+		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+				MOTIONSENSE_TYPE_GYRO),
+		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
+		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+		.port = I2C_PORT_SENSOR,
+		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
+		.rot_standard_ref = NULL,
+		.min_frequency = LSM6DSM_ODR_MIN_VAL,
+		.max_frequency = LSM6DSM_ODR_MAX_VAL,
+	},
+	[VSYNC] = {
+		.name = "Camera VSYNC",
+		.active_mask = SENSOR_ACTIVE_S0,
+		.chip = MOTIONSENSE_CHIP_GPIO,
+		.type = MOTIONSENSE_TYPE_SYNC,
+		.location = MOTIONSENSE_LOC_CAMERA,
+		.drv = &sync_drv,
+		.default_range = 0,
+		.min_frequency = 0,
+		.max_frequency = 1,
+	},
+};
+
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
 void board_init(void)
 {
 	int on;
@@ -272,8 +382,18 @@ void board_init(void)
 		hook_call_deferred(&check_c1_line_data, 0);
 
 	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
-	/* Enable Base Accel interrupt */
-	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+
+	if (get_cbi_fw_config_tablet_mode() == TABLET_MODE_PRESENT) {
+		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+		/* Enable Base Accel interrupt */
+		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+	} else {
+		motion_sensor_count = 0;
+		gmr_tablet_switch_disable();
+		/* Base accel is not stuffed, don't allow line to float */
+		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
+	}
 
 	/* Charger on the MB will be outputting PROCHOT_ODL and OD CHG_DET */
 	sm5803_configure_gpio0(CHARGER_PRIMARY, GPIO0_MODE_PROCHOT, 1);
@@ -437,116 +557,6 @@ const struct pwm_t pwm_channels[] = {
 	}
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
-/* Sensor Mutexes */
-static struct mutex g_lid_mutex;
-static struct mutex g_base_mutex;
-
-/* Sensor Data */
-static struct accelgyro_saved_data_t g_bma253_data;
-static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
-
-/* Matrix to rotate accelrator into standard reference frame */
-static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
-
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
-
-/* Drivers */
-struct motion_sensor_t motion_sensors[] = {
-	[LID_ACCEL] = {
-		.name = "Lid Accel",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMA255,
-		.type = MOTIONSENSE_TYPE_ACCEL,
-		.location = MOTIONSENSE_LOC_LID,
-		.drv = &bma2x2_accel_drv,
-		.mutex = &g_lid_mutex,
-		.drv_data = &g_bma253_data,
-		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
-		.rot_standard_ref = &lid_standard_ref,
-		.default_range = 2,
-		.min_frequency = BMA255_ACCEL_MIN_FREQ,
-		.max_frequency = BMA255_ACCEL_MAX_FREQ,
-		.config = {
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-			},
-			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-			},
-		},
-	},
-	[BASE_ACCEL] = {
-		.name = "Base Accel",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_LSM6DSM,
-		.type = MOTIONSENSE_TYPE_ACCEL,
-		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &lsm6dsm_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
-				MOTIONSENSE_TYPE_ACCEL),
-		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
-		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
-		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
-		.rot_standard_ref = &base_standard_ref,
-		.default_range = 4,  /* g */
-		.min_frequency = LSM6DSM_ODR_MIN_VAL,
-		.max_frequency = LSM6DSM_ODR_MAX_VAL,
-		.config = {
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 13000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-		},
-	},
-	[BASE_GYRO] = {
-		.name = "Base Gyro",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_LSM6DSM,
-		.type = MOTIONSENSE_TYPE_GYRO,
-		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &lsm6dsm_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
-				MOTIONSENSE_TYPE_GYRO),
-		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
-		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
-		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
-		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
-		.rot_standard_ref = NULL,
-		.min_frequency = LSM6DSM_ODR_MIN_VAL,
-		.max_frequency = LSM6DSM_ODR_MAX_VAL,
-	},
-	[VSYNC] = {
-		.name = "Camera VSYNC",
-		.active_mask = SENSOR_ACTIVE_S0,
-		.chip = MOTIONSENSE_CHIP_GPIO,
-		.type = MOTIONSENSE_TYPE_SYNC,
-		.location = MOTIONSENSE_LOC_CAMERA,
-		.drv = &sync_drv,
-		.default_range = 0,
-		.min_frequency = 0,
-		.max_frequency = 1,
-	},
-};
-
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
