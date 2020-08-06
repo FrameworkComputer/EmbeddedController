@@ -207,6 +207,7 @@ static inline void chipset_handle_espi_reset_assert(void) { }
 static inline void chipset_handle_reboot(void) { }
 static inline void chipset_reset_request_interrupt(enum gpio_signal signal) { }
 static inline void chipset_warm_reset_interrupt(enum gpio_signal signal) { }
+static inline void chipset_ap_rst_interrupt(enum gpio_signal signal) { }
 static inline void chipset_power_good_interrupt(enum gpio_signal signal) { }
 static inline void chipset_watchdog_interrupt(enum gpio_signal signal) { }
 
@@ -232,6 +233,14 @@ void chipset_handle_reboot(void);
  * It is used in SDM845/MT8183 chipset power sequence.
  */
 void chipset_reset_request_interrupt(enum gpio_signal signal);
+
+/**
+ * GPIO interrupt handler of AP_RST_L signal from PMIC.
+ * PMIC uses this signal to notify AP reset.
+ *
+ * It is used in Qualcomm chipset power sequence.
+ */
+void chipset_ap_rst_interrupt(enum gpio_signal signal);
 
 /**
  * GPIO interrupt handler of warm reset signal from servo or H1.

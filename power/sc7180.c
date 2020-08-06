@@ -100,6 +100,16 @@
  */
 #define PMIC_POWER_OFF_DELAY		(70 * MSEC)
 
+/* The AP_RST_L transition count of a normal AP warm reset */
+#define EXPECTED_AP_RST_TRANSITIONS	3
+
+/*
+ * The timeout of waiting the next AP_RST_L transition. We measured
+ * the interval between AP_RST_L transitions is 130ms ~ 150ms. Pick
+ * a safer value.
+ */
+#define AP_RST_TRANSITION_TIMEOUT	(450 * MSEC)
+
 /* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
 static char power_button_was_pressed;
@@ -154,6 +164,53 @@ enum power_on_event_t {
 
 	POWER_ON_EVENT_COUNT,
 };
+
+#ifdef CONFIG_CHIPSET_RESET_HOOK
+static int ap_rst_transitions;
+
+static void notify_chipset_reset(void)
+{
+	if (ap_rst_transitions != EXPECTED_AP_RST_TRANSITIONS)
+		CPRINTS("AP_RST_L transitions not expected: %d",
+			ap_rst_transitions);
+
+	ap_rst_transitions = 0;
+	hook_notify(HOOK_CHIPSET_RESET);
+}
+DECLARE_DEFERRED(notify_chipset_reset);
+#endif
+
+void chipset_ap_rst_interrupt(enum gpio_signal signal)
+{
+#ifdef CONFIG_CHIPSET_RESET_HOOK
+	int delay;
+
+	/*
+	 * Only care the raising edge and AP in S0/S3. The single raising edge
+	 * of AP power-on during S5S3 is ignored.
+	 */
+	if (gpio_get_level(GPIO_AP_RST_L) &&
+	    chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_SUSPEND)) {
+		ap_rst_transitions++;
+		if (ap_rst_transitions >= EXPECTED_AP_RST_TRANSITIONS) {
+			/*
+			 * Reach the expected transition count. AP is booting
+			 * up. Notify HOOK_CHIPSET_RESET immediately.
+			 */
+			delay = 0;
+		} else {
+			/*
+			 * Should have more transitions of the AP_RST_L signal.
+			 * In case the AP_RST_L signal is not toggled, still
+			 * notify HOOK_CHIPSET_RESET.
+			 */
+			delay = AP_RST_TRANSITION_TIMEOUT;
+		}
+		hook_call_deferred(&notify_chipset_reset_data, delay);
+	}
+#endif
+	power_signal_interrupt(signal);
+}
 
 /* Issue a request to initiate a reset sequence */
 static void request_cold_reset(void)
