@@ -77,8 +77,11 @@ enum adc_channel {
 
 enum battery_type {
 	BATTERY_SMP,
+	BATTERY_SMP_1,
 	BATTERY_LGC,
+	BATTERY_LGC_1,
 	BATTERY_CEL,
+	BATTERY_SUNWODA,
 	BATTERY_TYPE_COUNT,
 };
 
