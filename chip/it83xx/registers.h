@@ -1591,8 +1591,13 @@ enum i2c_channels {
 #define USB_DP_DM_PULL_DOWN_EN BIT(4)
 
 /* Wake pin definitions, defined at board-level */
+#ifndef CONFIG_HIBERNATE_WAKE_PINS_DYNAMIC
 extern const enum gpio_signal hibernate_wake_pins[];
 extern const int hibernate_wake_pins_used;
+#else
+extern enum gpio_signal hibernate_wake_pins[];
+extern int hibernate_wake_pins_used;
+#endif
 
 /* --- MISC (not implemented yet) --- */
 

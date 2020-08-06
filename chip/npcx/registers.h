@@ -2273,7 +2273,12 @@ static inline int npcx_is_uart(void)
 #define NPCX_PS2_PSIEN_PS2_WUE           4
 #define NPCX_PS2_PSIEN_PS2_CLK_SEL	     7
 
+#ifndef CONFIG_HIBERNATE_WAKE_PINS_DYNAMIC
 extern const enum gpio_signal hibernate_wake_pins[];
 extern const int hibernate_wake_pins_used;
+#else
+extern enum gpio_signal hibernate_wake_pins[];
+extern int hibernate_wake_pins_used;
+#endif
 
 #endif /* __CROS_EC_REGISTERS_H */

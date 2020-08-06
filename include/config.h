@@ -2169,6 +2169,9 @@
  */
 #undef CONFIG_HIBERNATE_PSL
 
+/* Wake up pins have non-const configuration. */
+#undef CONFIG_HIBERNATE_WAKE_PINS_DYNAMIC
+
 /*
  * Chip supports a 64-bit hardware timer and implements
  * __hw_clock_source_read64 and __hw_clock_source_set64.
