@@ -198,16 +198,8 @@ static inline bool ec_config_has_mst_hub_rtd2141b(void)
 		  HAS_MST_HUB_RTD2141B);
 }
 
-/*
- * USB-C0 always uses USB_C0_HPD (= DP3_HPD).
- * USB-C1 OPT1 DB uses DP2_HPD.
- * USB-C1 OPT3 DB uses DP1_HPD via RTD2141B MST hub, EC does not drive HPD.
- */
-#define PORT_TO_HPD(port) ((port == 0) \
-	? GPIO_USB_C0_HPD \
-	: (ec_config_has_mst_hub_rtd2141b()) \
-		? GPIO_NO_HPD \
-		: GPIO_DP2_HPD)
+enum gpio_signal board_usbc_port_to_hpd_gpio(int port);
+#define PORT_TO_HPD(port) board_usbc_port_to_hpd_gpio(port)
 
 extern const struct usb_mux usbc0_pi3dpx1207_usb_retimer;
 extern const struct usb_mux usbc1_ps8802;

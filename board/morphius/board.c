@@ -255,9 +255,33 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 /*****************************************************************************
  * Use FW_CONFIG to set correct configuration.
  */
-
 static uint32_t board_ver;
 enum gpio_signal gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V1;
+
+enum gpio_signal board_usbc_port_to_hpd_gpio(int port)
+{
+	/* USB-C0 always uses USB_C0_HPD (= DP3_HPD). */
+	if (port == 0)
+		return GPIO_USB_C0_HPD;
+
+	/*
+	 * USB-C1 OPT3 DB
+	 *    version_2 uses EC_DP1_HPD
+	 *    version_3 uses DP1_HPD via RTD2141B MST hub, EC does
+	 *    not drive HPD.
+	 *
+	 * This would have been ec_config_has_usbc1_retimer_ps8802
+	 * on version_2 hardware but the result is the same and
+	 * this will be removed when version_2 hardware is retired.
+	 */
+	else if (ec_config_has_mst_hub_rtd2141b())
+		return (board_ver >= 3)
+				? GPIO_NO_HPD
+				: GPIO_EC_DP1_HPD;
+
+	/* USB-C1 OPT1 DB uses DP2_HPD. */
+	return GPIO_DP2_HPD;
+}
 
 static void board_remap_gpio(void)
 {
