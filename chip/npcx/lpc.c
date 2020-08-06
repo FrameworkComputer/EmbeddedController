@@ -518,11 +518,19 @@ static void handle_host_write(int is_cmd)
 /* KB controller input buffer full ISR */
 void lpc_kbc_ibf_interrupt(void)
 {
+	uint8_t status;
 	uint8_t ibf;
 	/* If "command" input 0, else 1*/
 	if (lpc_keyboard_input_pending()) {
+		/*
+		 * Reading HIKMDI causes the IBF flag to deassert and allows
+		 * the host to write a new byte into the input buffer. So if we
+		 * don't capture the status before reading HIKMDI we will race
+		 * with the host and get an invalid value for HIKMST.A20.
+		 */
+		status = NPCX_HIKMST;
 		ibf = NPCX_HIKMDI;
-		keyboard_host_write(ibf, (NPCX_HIKMST & 0x08) ? 1 : 0);
+		keyboard_host_write(ibf, (status & 0x08) ? 1 : 0);
 		CPRINTS("ibf isr %02x", ibf);
 		task_wake(TASK_ID_KEYPROTO);
 	} else {
