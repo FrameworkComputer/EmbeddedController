@@ -54,6 +54,8 @@
 #define CONFIG_LID_ANGLE_SENSOR_LID	LID_ACCEL
 
 /* USB Type C and USB PD defines */
+#define CONFIG_USB_PD_PORT_MAX_COUNT			2
+
 /*
  * USB-C port's USB2 & USB3 mapping from schematics
  * USB2 numbering on PCH - 1 to n
@@ -84,7 +86,6 @@
 /* Enabling USB4 mode */
 #define CONFIG_USB_PD_USB4
 #define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x40
-#undef	USBC_PORT_C1_BB_RETIMER_I2C_ADDR
 #define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x41
 
 /* USB Type A Features */
@@ -151,6 +152,7 @@
 #define I2C_ADDR_EEPROM_FLAGS	0x50
 #define CONFIG_I2C_MASTER
 
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -173,6 +175,12 @@ enum sensor_id {
 	BASE_ACCEL,
 	BASE_GYRO,
 	SENSOR_COUNT,
+};
+
+enum usbc_port {
+	USBC_PORT_C0 = 0,
+	USBC_PORT_C1,
+	USBC_PORT_COUNT
 };
 
 void board_reset_pd_mcu(void);

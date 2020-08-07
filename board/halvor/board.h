@@ -42,6 +42,8 @@
 	(BIT(LID_ACCEL) | BIT(CLEAR_ALS))
 
 /* USB Type C and USB PD defines */
+#define CONFIG_USB_PD_PORT_MAX_COUNT			2
+
 /*
  * USB-C port's USB2 & USB3 mapping from schematics
  * USB2 numbering on PCH - 1 to n
@@ -71,6 +73,7 @@
 
 /* Enabling USB4 mode */
 #define CONFIG_USB_PD_USB4
+#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x40
 
 /* USB Type A Features */
 
@@ -161,6 +164,12 @@ enum sensor_id {
 	CLEAR_ALS,
 	RGB_ALS,
 	SENSOR_COUNT,
+};
+
+enum usbc_port {
+	USBC_PORT_C0 = 0,
+	USBC_PORT_C1,
+	USBC_PORT_COUNT
 };
 
 /* Definition for Halvor USB PD interrupt handlers. */
