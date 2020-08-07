@@ -242,10 +242,6 @@ void i2c_prepare_sysjump(void)
 {
 	int i;
 
-	/* Must not call mutex_lock() before task_start(). */
-	if (!task_start_called())
-		return;
-
 	/* Lock all i2c controllers */
 	for (i = 0; i < ARRAY_SIZE(port_mutex); ++i)
 		mutex_lock(port_mutex + i);
