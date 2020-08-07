@@ -570,6 +570,9 @@ static void setup_fw_config(void)
 		gpio_set_flags(GPIO_6AXIS_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 }
+/*
+ * Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init().
+ */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
 const struct pwm_t pwm_channels[] = {
@@ -619,19 +622,17 @@ static void usba_retimer_off(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, usba_retimer_off, HOOK_PRIO_DEFAULT);
 
+static void check_v0_battery(void)
+{
+	uint32_t board_version = 0;
+
+	cbi_get_board_version(&board_version);
+
+	if (board_version == 1)
+		I2C_PORT_BATTERY = I2C_PORT_BATTERY_V0;
+}
 /*
- * If the battery is found on the V0 I2C port then re-map the battery port.
  * Use HOOK_PRIO_INIT_I2C so we re-map before init_battery_type() and
  * charger_chips_init() want to talk to the battery.
  */
-static void check_v0_battery(void)
-{
-	int status;
-
-	if (i2c_read16(I2C_PORT_BATTERY_V0, BATTERY_ADDR_FLAGS,
-			SB_BATTERY_STATUS, &status) == EC_SUCCESS) {
-		ccprints("V0 HW detected");
-		I2C_PORT_BATTERY = I2C_PORT_BATTERY_V0;
-	}
-}
 DECLARE_HOOK(HOOK_INIT, check_v0_battery, HOOK_PRIO_INIT_I2C);
