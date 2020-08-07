@@ -152,6 +152,9 @@
  */
 #define PD_DISABLED_BY_POLICY       BIT(1)
 
+/* Unreachable time in future */
+#define TIMER_DISABLED 0xffffffffffffffff
+
 enum ps_reset_sequence {
 	PS_STATE0,
 	PS_STATE1,
@@ -2890,15 +2893,28 @@ static void tc_drp_auto_toggle_entry(const int port)
 {
 	print_current_state(port);
 
-	tcpm_enable_drp_toggle(port);
+	/*
+	 * We need to ensure that we are waiting in the previous Rd or Rp state
+	 * for the minimum of DRP SNK or SRC so the first toggle cause by
+	 * transition into auto toggle doesn't violate spec timing.
+	 */
+	tc[port].timeout = get_time().val + MAX(PD_T_DRP_SNK, PD_T_DRP_SRC);
 }
 
 static void tc_drp_auto_toggle_run(const int port)
 {
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	set_state_tc(port, TC_LOW_POWER_MODE);
-	return;
-#endif
+	if (tc[port].timeout != TIMER_DISABLED) {
+		if (tc[port].timeout > get_time().val)
+			return;
+
+		tc[port].timeout = TIMER_DISABLED;
+		tcpm_enable_drp_toggle(port);
+
+		if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER)) {
+			set_state_tc(port, TC_LOW_POWER_MODE);
+			return;
+		}
+	}
 
 	if (TC_CHK_FLAG(port, TC_FLAGS_CHECK_CONNECTION))
 		check_drp_connection(port);

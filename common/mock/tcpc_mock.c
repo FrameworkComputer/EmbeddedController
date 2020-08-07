@@ -9,6 +9,7 @@
 #include "memory.h"
 #include "mock/tcpc_mock.h"
 #include "tests/enum_strings.h"
+#include "timer.h"
 #include "usb_pd_tcpm.h"
 
 #ifndef CONFIG_COMMON_RUNTIME
@@ -142,6 +143,15 @@ void mock_tcpc_discharge_vbus(int port, int enable)
 
 __maybe_unused static int mock_drp_toggle(int port)
 {
+	/* Only set the time the first time this is called. */
+	if (mock_tcpc.first_call_to_enable_auto_toggle == 0)
+		mock_tcpc.first_call_to_enable_auto_toggle = get_time().val;
+
+	if (!mock_tcpc.should_print_call)
+		return EC_SUCCESS;
+
+	ccprints("[TCPC] Enabling Auto Toggle");
+
 	return EC_SUCCESS;
 }
 
