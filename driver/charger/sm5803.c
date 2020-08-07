@@ -855,20 +855,6 @@ static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 	}
 
 	/*
-	 * Vbus monitor comparator must be enabled for sourcing out voltage, and
-	 * should be disabled when sinking to prevent false Vbus PROCHOT
-	 * triggers
-	 */
-	rv = chg_read8(chgnum, SM5803_REG_PHOT1, &reg);
-	if (rv)
-		return rv;
-	if (enabled)
-		reg |= SM5803_PHOT1_VBUS_MON_EN;
-	else
-		reg &= ~SM5803_PHOT1_VBUS_MON_EN;
-	rv |= chg_write8(chgnum, SM5803_REG_PHOT1, reg);
-
-	/*
 	 * Enable: CHG_EN - turns on buck-boost
 	 *	   VBUSIN_DISCH_EN - enable discharge on Vbus
 	 *	   DIRECTCHG_SOURCE_EN - enable current loop (for designs with
