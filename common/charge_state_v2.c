@@ -2433,6 +2433,11 @@ int charge_set_input_current_limit(int ma, int mv)
 	 */
 	if (curr.batt.is_present != BP_YES && !system_is_locked() &&
 		!base_connected) {
+
+		int prev_input = 0;
+
+		charger_get_input_current(chgnum, &prev_input);
+
 #ifdef CONFIG_USB_POWER_DELIVERY
 #if ((PD_MAX_POWER_MW * 1000) / PD_MAX_VOLTAGE_MV != PD_MAX_CURRENT_MA)
 		/*
@@ -2442,14 +2447,25 @@ int charge_set_input_current_limit(int ma, int mv)
 		 * Hence, limit the input current to meet maximum allowed
 		 * input system power.
 		 */
+
 		if (mv > 0 && mv * curr.desired_input_current >
 			PD_MAX_POWER_MW * 1000)
 			ma = (PD_MAX_POWER_MW * 1000) / mv;
-		else
+		/*
+		 * If the active charger has already been initialized to at
+		 * least this current level, nothing left to do.
+		 */
+		else if (prev_input >= ma)
 			return EC_SUCCESS;
 #else
-		return EC_SUCCESS;
+		if (prev_input >= ma)
+			return EC_SUCCESS;
 #endif
+		/*
+		 * If the current needs lowered due to PD max power
+		 * considerations, or needs raised for the selected active
+		 * charger chip, fall through to set.
+		 */
 #endif /* CONFIG_USB_POWER_DELIVERY */
 	}
 
