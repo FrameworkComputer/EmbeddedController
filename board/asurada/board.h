@@ -228,7 +228,9 @@ enum battery_type {
 };
 
 enum pwm_channel {
-	PWM_CH_PWRLED,
+	PWM_CH_LED1,
+	PWM_CH_LED2,
+	PWM_CH_LED3,
 	PWM_CH_COUNT,
 };
 

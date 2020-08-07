@@ -66,7 +66,7 @@ void led_set_color_battery(enum ec_led_colors color)
 
 void led_set_color_power(enum ec_led_colors color)
 {
-	pwm_enable(PWM_CH_PWRLED, color == EC_LED_COLOR_WHITE);
+	pwm_enable(PWM_CH_LED1, color == EC_LED_COLOR_WHITE);
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
@@ -104,5 +104,13 @@ static void board_led_init(void)
 	/* set brightness to lowest value */
 	mt6360_led_set_brightness(MT6360_LED_RGB2, 0);
 	mt6360_led_set_brightness(MT6360_LED_RGB3, 0);
+
+	/* Set PWM of LEDs to 5%. */
+	pwm_set_duty(PWM_CH_LED1, 5);
+	pwm_enable(PWM_CH_LED1, 1);
+	pwm_set_duty(PWM_CH_LED2, 5);
+	pwm_enable(PWM_CH_LED2, 1);
+	pwm_set_duty(PWM_CH_LED3, 5);
+	pwm_enable(PWM_CH_LED3, 1);
 }
 DECLARE_HOOK(HOOK_INIT, board_led_init, HOOK_PRIO_DEFAULT);

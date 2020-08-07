@@ -72,10 +72,22 @@ const struct charger_config_t chg_chips[] = {
  * number of pwm channel greater than three.
  */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_PWRLED] = {
+	[PWM_CH_LED1] = {
 		.channel = 0,
 		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 500,
+		.freq_hz = 324, /* maximum supported frequency */
+		.pcfsr_sel = PWM_PRESCALER_C4
+	},
+	[PWM_CH_LED2] = {
+		.channel = 1,
+		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
+		.freq_hz = 324, /* maximum supported frequency */
+		.pcfsr_sel = PWM_PRESCALER_C4
+	},
+	[PWM_CH_LED3] = {
+		.channel = 2,
+		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
+		.freq_hz = 324, /* maximum supported frequency */
 		.pcfsr_sel = PWM_PRESCALER_C4
 	},
 };
@@ -130,10 +142,6 @@ static void board_init(void)
 {
 	/* For Rev0 only. Set GPM0~6 1.8V input. */
 	IT83XX_GPIO_GCR30 |= BIT(4);
-
-	/* Set PWM of PWRLED to 5%. */
-	pwm_set_duty(PWM_CH_PWRLED, 5);
-	pwm_enable(PWM_CH_PWRLED, 1);
 
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
 
