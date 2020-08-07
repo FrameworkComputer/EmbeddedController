@@ -104,6 +104,7 @@ GPIO(LED_1_L,			PIN(C, 4), GPIO_OUT_HIGH)	/* Battery Full LED: White */
 GPIO(LED_2_L,			PIN(C, 3), GPIO_OUT_HIGH)	/* Battery Charging LED: Amber */
 GPIO(LED_3_L,			PIN(C, 2), GPIO_OUT_HIGH)	/* Battery Power LED: White */
 GPIO(CCD_MODE_ODL,		PIN(E, 5), GPIO_INPUT)		/* Case Closed Debug Mode */
+GPIO(EC_KB_BL_EN,		PIN(8, 6), GPIO_OUT_LOW)	/* Keyboard backlight */
 
 /* Unused signals */
 GPIO(UNUSED_GPIO34,		PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
