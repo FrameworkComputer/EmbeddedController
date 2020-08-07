@@ -160,6 +160,10 @@ enum ps_reset_sequence {
 
 /* List of all TypeC-level states */
 enum usb_tc_state {
+	/* Super States */
+	TC_CC_OPEN,
+	TC_CC_RD,
+	TC_CC_RP,
 	/* Normal States */
 	TC_DISABLED,
 	TC_ERROR_RECOVERY,
@@ -171,23 +175,38 @@ enum usb_tc_state {
 	TC_ATTACHED_SRC,
 	TC_TRY_SRC,
 	TC_TRY_WAIT_SNK,
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	TC_DRP_AUTO_TOGGLE,
-#endif
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	TC_LOW_POWER_MODE,
-#endif
-#ifdef CONFIG_USB_PE_SM
 	TC_CT_UNATTACHED_SNK,
 	TC_CT_ATTACHED_SNK,
-#endif
-	/* Super States */
-	TC_CC_OPEN,
-	TC_CC_RD,
-	TC_CC_RP,
 };
 /* Forward declare the full list of states. This is indexed by usb_tc_state */
 static const struct usb_state tc_states[];
+
+/*
+ * Remove all of the states that aren't support at link time. This allows
+ * IS_ENABLED to work.
+ */
+#ifndef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+STATIC_IF(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE)
+	enum usb_tc_state TC_DRP_AUTO_TOGGLE_NOT_SUPPORTED;
+#define TC_DRP_AUTO_TOGGLE TC_DRP_AUTO_TOGGLE_NOT_SUPPORTED
+#endif /* CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE */
+
+#ifndef CONFIG_USB_PD_TCPC_LOW_POWER
+STATIC_IF(CONFIG_USB_PD_TCPC_LOW_POWER)
+	enum usb_tc_state TC_LOW_POWER_MODE_NOT_SUPPORTED;
+#define TC_LOW_POWER_MODE TC_LOW_POWER_MODE_NOT_SUPPORTED
+#endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
+
+#ifndef CONFIG_USB_PE_SM
+STATIC_IF(CONFIG_USB_PE_SM)
+	enum usb_tc_state TC_CT_UNATTACHED_SNK_NOT_SUPPORTED;
+STATIC_IF(CONFIG_USB_PE_SM)
+	enum usb_tc_state TC_CT_ATTACHED_SNK_NOT_SUPPORTED;
+#define TC_CT_UNATTACHED_SNK TC_CT_UNATTACHED_SNK_NOT_SUPPORTED
+#define TC_CT_ATTACHED_SNK TC_CT_ATTACHED_SNK_NOT_SUPPORTED
+#endif /* CONFIG_USB_PE_SM */
 
 /*
  * We will use DEBUG LABELS if we will be able to print (COMMON RUNTIME)
@@ -369,8 +388,6 @@ static struct type_c {
 	enum tcpc_cc_polarity polarity;
 	/* port flags, see TC_FLAGS_* */
 	uint32_t flags;
-	/* event timeout */
-	uint64_t evt_timeout;
 	/* Time a port shall wait before it can determine it is attached */
 	uint64_t cc_debounce;
 	/*
@@ -1938,18 +1955,16 @@ static void tc_unattached_snk_run(const int port)
 	/* Check for connection */
 	tcpm_get_cc(port, &cc1, &cc2);
 
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	/*
 	 * Attempt TCPC auto DRP toggle if it is
 	 * not already auto toggling.
 	 */
-	if (drp_state[port] == PD_DRP_TOGGLE_ON &&
-	    tcpm_auto_toggle_supported(port) &&
-	    cc_is_open(cc1, cc2)) {
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) &&
+	    drp_state[port] == PD_DRP_TOGGLE_ON &&
+	    tcpm_auto_toggle_supported(port) && cc_is_open(cc1, cc2)) {
 		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
 		return;
 	}
-#endif
 
 	/*
 	 * The port shall transition to AttachWait.SNK when a Source
@@ -1964,17 +1979,14 @@ static void tc_unattached_snk_run(const int port)
 		/* Connection Detected */
 		set_state_tc(port, TC_ATTACH_WAIT_SNK);
 	} else if (get_time().val > tc[port].next_role_swap &&
-		drp_state[port] == PD_DRP_TOGGLE_ON) {
+		   drp_state[port] == PD_DRP_TOGGLE_ON) {
 		/* DRP Toggle */
 		set_state_tc(port, TC_UNATTACHED_SRC);
-	}
-
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	else if (drp_state[port] == PD_DRP_FORCE_SINK ||
-		 drp_state[port] == PD_DRP_TOGGLE_OFF) {
+	} else if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER) &&
+		   (drp_state[port] == PD_DRP_FORCE_SINK ||
+		    drp_state[port] == PD_DRP_TOGGLE_OFF)) {
 		set_state_tc(port, TC_LOW_POWER_MODE);
 	}
-#endif
 }
 
 /**
@@ -2410,24 +2422,20 @@ static void tc_unattached_src_run(const int port)
 	if (cc_is_at_least_one_rd(cc1, cc2) || cc_is_audio_acc(cc1, cc2))
 		set_state_tc(port, TC_ATTACH_WAIT_SRC);
 	else if (get_time().val > tc[port].next_role_swap &&
-			drp_state[port] != PD_DRP_FORCE_SOURCE &&
-			drp_state[port] != PD_DRP_FREEZE)
+		 drp_state[port] != PD_DRP_FORCE_SOURCE &&
+		 drp_state[port] != PD_DRP_FREEZE)
 		set_state_tc(port, TC_UNATTACHED_SNK);
-#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	/*
 	 * Attempt TCPC auto DRP toggle
 	 */
-	else if (drp_state[port] == PD_DRP_TOGGLE_ON &&
-		 tcpm_auto_toggle_supported(port) &&
-		 cc_is_open(cc1, cc2))
+	else if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) &&
+		 drp_state[port] == PD_DRP_TOGGLE_ON &&
+		 tcpm_auto_toggle_supported(port) && cc_is_open(cc1, cc2))
 		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
-#endif
-
-#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	else if (drp_state[port] == PD_DRP_FORCE_SOURCE ||
-		 drp_state[port] == PD_DRP_TOGGLE_OFF)
+	else if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER) &&
+		 (drp_state[port] == PD_DRP_FORCE_SOURCE ||
+		  drp_state[port] == PD_DRP_TOGGLE_OFF))
 		set_state_tc(port, TC_LOW_POWER_MODE);
-#endif
 }
 
 /**
