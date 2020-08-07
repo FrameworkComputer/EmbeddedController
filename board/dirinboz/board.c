@@ -618,20 +618,3 @@ static void usba_retimer_off(void)
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, usba_retimer_off, HOOK_PRIO_DEFAULT);
-
-/*
- * If the battery is found on the V0 I2C port then re-map the battery port.
- * Use HOOK_PRIO_INIT_I2C so we re-map before init_battery_type() and
- * charger_chips_init() want to talk to the battery.
- */
-static void check_v0_battery(void)
-{
-	int status;
-
-	if (i2c_read16(I2C_PORT_BATTERY_V0, BATTERY_ADDR_FLAGS,
-			SB_BATTERY_STATUS, &status) == EC_SUCCESS) {
-		ccprints("V0 HW detected");
-		I2C_PORT_BATTERY = I2C_PORT_BATTERY_V0;
-	}
-}
-DECLARE_HOOK(HOOK_INIT, check_v0_battery, HOOK_PRIO_INIT_I2C);
