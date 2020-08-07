@@ -461,6 +461,7 @@ void sm5803_handle_interrupt(int chgnum)
 {
 	enum ec_error_list rv;
 	int int_reg, meas_reg;
+	static bool throttled;
 
 	/* Note: Interrupt register is clear on read */
 	rv = main_read8(chgnum, SM5803_REG_INT2_REQ, &int_reg);
@@ -471,16 +472,26 @@ void sm5803_handle_interrupt(int chgnum)
 	}
 
 	if (int_reg & SM5803_INT2_TINT) {
+		/*
+		 * Ignore any interrupts from the low threshold when not
+		 * throttled in order to prevent console spam when the
+		 * temperature is holding near the threshold.
+		 */
 		rv = meas_read8(chgnum, SM5803_REG_TINT_MEAS_MSB, &meas_reg);
-		if (meas_reg <= SM5803_TINT_LOW_LEVEL)
+		if ((meas_reg <= SM5803_TINT_LOW_LEVEL) && throttled) {
+			throttled = false;
 			throttle_ap(THROTTLE_OFF, THROTTLE_HARD,
 							THROTTLE_SRC_THERMAL);
-		else if (meas_reg >= SM5803_TINT_HIGH_LEVEL)
+		} else if (meas_reg >= SM5803_TINT_HIGH_LEVEL) {
+			throttled = true;
 			throttle_ap(THROTTLE_ON, THROTTLE_HARD,
 							THROTTLE_SRC_THERMAL);
-		else
-			CPRINTS("%s %d: Unexpected TINT interrupt: 0x%02x",
-				CHARGER_NAME, chgnum, meas_reg);
+		}
+		/*
+		 * If the interrupt came in and we're not currently throttling
+		 * or the level is below the upper threshold, it can likely be
+		 * ignored.
+		 */
 	}
 
 	if ((int_reg & SM5803_INT2_VBUS) &&
