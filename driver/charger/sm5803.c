@@ -859,6 +859,17 @@ static int command_sm5803_dump(int argc, char **argv)
 	if (argc > 1)
 		chgnum = atoi(argv[1]);
 
+	/* Dump base regs */
+	ccprintf("BASE regs\n");
+	for (reg = 0x01; reg <= 0x30; reg++) {
+		if (!main_read8(chgnum, reg, &regval))
+			ccprintf("[0x%02X] = 0x%02x\n", reg, regval);
+		if (reg & 0xf) {
+			cflush(); /* Flush periodically */
+			watchdog_reload();
+		}
+	}
+
 	/* Dump measure regs */
 	ccprintf("MEAS regs\n");
 	for (reg = 0x01; reg <= 0xED; reg++) {
