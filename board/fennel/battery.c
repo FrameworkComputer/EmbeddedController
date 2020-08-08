@@ -8,119 +8,95 @@
 #include "gpio.h"
 
 const struct board_batt_params board_battery_info[] = {
-	[BATTERY_PANASONIC_AC15A3J] = {
+	/* LGC L20L3PG2, Gauge IC: RAJ240047A20DNP. */
+	[BATTERY_LGC] = {
 		.fuel_gauge = {
-			.manuf_name = "PANASONIC",
-			.device_name = "AC15A3J",
+			.manuf_name = "LGC",
+			.device_name = "L20L3PG2",
 			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
 			},
 			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x4000,
-				.disconnect_val = 0x0,
+				.reg_addr = 0x34,
+				.reg_mask = 0x0100,
+				.disconnect_val = 0x0100,
 			}
 		},
 		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11580,
-			.voltage_min		= 9000,
-			.precharge_current	= 256,
+			.voltage_max		= 13050,   /* mV */
+			.voltage_normal		= 11400,   /* mV */
+			.voltage_min		= 9000,    /* mV */
+			.precharge_current	= 256,     /* mA */
 			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 73,
+		},
+	},
+	/* Sunwoda L20D3PG2, Gauge IC: BQ40Z697A. */
+	[BATTERY_SUNWODA] = {
+		.fuel_gauge = {
+			.manuf_name = "Sunwoda",
+			.device_name = "L20D3PG2",
+			.ship_mode = {
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
+			},
+			.fet = {
+				.reg_addr = 0x34,
+				.reg_mask = 0x0100,
+				.disconnect_val = 0x0100,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13050, /* mV */
+			.voltage_normal		= 11250, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 200,	 /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
 			.charging_min_c		= 0,
 			.charging_max_c		= 60,
 			.discharging_min_c	= -20,
 			.discharging_max_c	= 60,
 		},
 	},
-	[BATTERY_PANASONIC_AC16L5J] = {
+
+	/* SIMPLO L20M3PG2, Gauge IC: BQ40Z697A. */
+	[BATTERY_SMP] = {
 		.fuel_gauge = {
-			.manuf_name = "PANASONIC",
-			.device_name = "AP16L5J",
+			.manuf_name = "SMP",
+			.device_name = "L20M3PG2",
 			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
 			},
 			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x4000,
-				.disconnect_val = 0x0,
-			}
+				.reg_addr = 0x34,
+				.reg_mask = 0x0100,
+				.disconnect_val = 0x0100,
+			},
 		},
 		.batt_info = {
-			.voltage_max		= 8800,
-			.voltage_normal		= 7700,
-			.voltage_min		= 6000,
-			.precharge_current	= 256,
+			.voltage_max		= 13050, /* mV */
+			.voltage_normal		= 11250, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 256,   /* mA */
 			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
+			.start_charging_max_c	= 45,
 			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 75,
-		},
-	},
-	[BATTERY_LGC_AC16L8J] = {
-		.fuel_gauge = {
-			.manuf_name = "LGC KT0020G010",
-			.device_name = "AP16L8J",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
-			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0002,
-				.disconnect_val = 0x0,
-			}
-		},
-		.batt_info = {
-			.voltage_max            = 8700,
-			.voltage_normal         = 7500,
-			.voltage_min            = 6000,
-			.precharge_current      = 256,
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 75,
-		},
-	},
-	[BATTERY_PANASONIC_AC16L5J_KT00205009] = {
-		.fuel_gauge = {
-			.manuf_name = "PANASONIC KT00205009",
-			.device_name = "AP16L5J",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
-			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x4000,
-				.disconnect_val = 0x0,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 8800,
-			.voltage_normal		= 7700,
-			.voltage_min		= 6000,
-			.precharge_current	= 256,
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 75,
+			.charging_max_c		= 45,
+			.discharging_min_c	= -40,
+			.discharging_max_c	= 73,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_PANASONIC_AC15A3J;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_LGC;
 
 enum battery_present battery_hw_present(void)
 {
