@@ -9,6 +9,7 @@
 #include "adc_chip.h"
 #include "battery_smart.h"
 #include "button.h"
+#include "charger.h"
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"
@@ -258,6 +259,19 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 static uint32_t board_ver;
 enum gpio_signal gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V1;
 
+static void setup_v0_charger(void)
+{
+	cbi_get_board_version(&board_ver);
+
+	if (board_ver <= 2)
+		chg_chips[0].i2c_port = I2C_PORT_CHARGER_V0;
+}
+/*
+ * Use HOOK_PRIO_INIT_I2C so we re-map before charger_chips_init()
+ * talks to the charger.
+ */
+DECLARE_HOOK(HOOK_INIT, setup_v0_charger, HOOK_PRIO_INIT_I2C);
+
 enum gpio_signal board_usbc_port_to_hpd_gpio(int port)
 {
 	/* USB-C0 always uses USB_C0_HPD (= DP3_HPD). */
@@ -321,10 +335,8 @@ static void board_remap_gpio(void)
 	}
 }
 
-void setup_fw_config(void)
+static void setup_fw_config(void)
 {
-	cbi_get_board_version(&board_ver);
-
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 
@@ -337,6 +349,7 @@ void setup_fw_config(void)
 
 	board_remap_gpio();
 }
+/* Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init(). */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
 /*****************************************************************************

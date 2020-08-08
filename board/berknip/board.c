@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "button.h"
+#include "charger.h"
 #include "cbi_ec_fw_config.h"
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
@@ -302,14 +303,36 @@ const struct usb_mux usbc1_ps8743 = {
 /*****************************************************************************
  * Use FW_CONFIG to set correct configuration.
  */
+enum gpio_signal GPIO_S0_PGOOD = GPIO_S0_PWROK_OD_V0;
 
-void setup_fw_config(void)
+static void board_version_check(void)
+{
+	uint32_t board_ver = 0;
+
+	cbi_get_board_version(&board_ver);
+
+	if (board_ver == 1)
+		chg_chips[0].i2c_port = I2C_PORT_CHARGER_V0;
+
+	if (board_ver == 2) {
+		power_signal_list[X86_S0_PGOOD].gpio = GPIO_S0_PWROK_OD_V1;
+		GPIO_S0_PGOOD = GPIO_S0_PWROK_OD_V1;
+	}
+}
+/*
+ * Use HOOK_PRIO_INIT_I2C so we re-map before charger_chips_init()
+ * talks to the charger.
+ */
+DECLARE_HOOK(HOOK_INIT, board_version_check, HOOK_PRIO_INIT_I2C);
+
+static void setup_fw_config(void)
 {
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 
 	setup_mux();
 }
+/* Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init(). */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
 /*****************************************************************************
@@ -575,18 +598,3 @@ struct power_signal_info power_signal_list[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
-enum gpio_signal GPIO_S0_PGOOD = GPIO_S0_PWROK_OD_V0;
-
-void board_version_check(void)
-{
-	uint32_t board_ver = 0;
-
-	cbi_get_board_version(&board_ver);
-
-	if (board_ver == 2) {
-		power_signal_list[X86_S0_PGOOD].gpio = GPIO_S0_PWROK_OD_V1;
-		GPIO_S0_PGOOD = GPIO_S0_PWROK_OD_V1;
-	}
-}
-DECLARE_HOOK(HOOK_INIT, board_version_check, HOOK_PRIO_INIT_I2C);

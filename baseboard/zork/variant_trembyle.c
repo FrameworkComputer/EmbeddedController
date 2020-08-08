@@ -103,25 +103,6 @@ struct charger_config_t chg_chips[] = {
 	},
 };
 
-/*
- * If the charger is found on the V0 I2C port then re-map the port.
- * Use HOOK_PRIO_INIT_I2C so we re-map before charger_chips_init()
- * talks to the charger. This relies on the V1 HW not using the ISL9241 address
- * on the V0 I2C port.
- * TODO(b/155214765): Remove this check once V0 HW is no longer used.
- */
-static void check_v0_charger(void)
-{
-	int id;
-
-	if (i2c_read16(I2C_PORT_CHARGER_V0, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_MANUFACTURER_ID, &id) == EC_SUCCESS) {
-		ccprints("V0 charger HW detected");
-		chg_chips[0].i2c_port = I2C_PORT_CHARGER_V0;
-	}
-}
-DECLARE_HOOK(HOOK_INIT, check_v0_charger, HOOK_PRIO_INIT_I2C);
-
 /*****************************************************************************
  * TCPC
  */

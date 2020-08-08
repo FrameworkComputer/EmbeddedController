@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "button.h"
+#include "charger.h"
 #include "cbi_ec_fw_config.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"
@@ -310,7 +311,17 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
  * Use FW_CONFIG to set correct configuration.
  */
 
-void setup_fw_config(void)
+static void setup_v0_charger(void)
+{
+	chg_chips[0].i2c_port = I2C_PORT_CHARGER_V0;
+}
+/*
+ * Use HOOK_PRIO_INIT_I2C so we re-map before charger_chips_init()
+ * talks to the charger.
+ */
+DECLARE_HOOK(HOOK_INIT, setup_v0_charger, HOOK_PRIO_INIT_I2C);
+
+static void setup_fw_config(void)
 {
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
@@ -323,6 +334,7 @@ void setup_fw_config(void)
 	if (ec_config_has_hdmi_conn_hpd())
 		ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
 }
+/* Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init(). */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
 /*****************************************************************************

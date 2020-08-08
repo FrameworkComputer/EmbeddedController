@@ -398,7 +398,7 @@ __override int board_aoz1380_set_vbus_source_current_limit(int port,
  * Use FW_CONFIG to set correct configuration.
  */
 
-void setup_fw_config(void)
+static void setup_v0_charger(void)
 {
 	int rv;
 
@@ -409,6 +409,17 @@ void setup_fw_config(void)
 		board_ver = 3;
 	}
 
+	if (board_ver == 1)
+		chg_chips[0].i2c_port = I2C_PORT_CHARGER_V0;
+}
+/*
+ * Use HOOK_PRIO_INIT_I2C so we re-map before charger_chips_init()
+ * talks to the charger.
+ */
+DECLARE_HOOK(HOOK_INIT, setup_v0_charger, HOOK_PRIO_INIT_I2C);
+
+static void setup_fw_config(void)
+{
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 
@@ -424,6 +435,7 @@ void setup_fw_config(void)
 			gpio_enable_interrupt(GPIO_DP1_HPD_EC_IN);
 	}
 }
+/* Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init(). */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
 __override int check_hdmi_hpd_status(void)
