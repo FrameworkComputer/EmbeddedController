@@ -858,7 +858,7 @@ static void power_reset_host_sleep_state(void)
 
 static void handle_chipset_reset(void)
 {
-	if (chipset_in_state(CHIPSET_STATE_STANDBY)) {
+	if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
 		CPRINTS("Chipset reset: exit s3");
 		power_reset_host_sleep_state();
 		task_wake(TASK_ID_CHIPSET);
