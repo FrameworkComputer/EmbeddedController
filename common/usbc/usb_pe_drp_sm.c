@@ -4494,9 +4494,26 @@ static void pe_vdm_identity_request_cbl_exit(int port)
 		prl_set_rev(port, TCPC_TX_SOP_PRIME, PD_REV20);
 	}
 
+	/*
+	 * 6.6.15 DiscoverIdentityTimer
+	 *
+	 * No more than nDiscoverIdentityCount Discover Identity Messages
+	 * without a GoodCRC Message response Shall be sent. If no GoodCRC
+	 * Message response is received after nDiscoverIdentityCount Discover
+	 * Identity Command requests have been sent by a Port, the Port Shall
+	 * Not send any further SOP’/SOP’’ Messages.
+	 */
 	if (pe[port].discover_identity_counter >= N_DISCOVER_IDENTITY_COUNT)
 		pd_set_identity_discovery(port, pe[port].tx_type,
 				PD_DISC_FAIL);
+	else if (pe[port].discover_identity_counter ==
+					(N_DISCOVER_IDENTITY_COUNT / 2))
+		/*
+		 * Downgrade to PD 2.0 if the partner hasn't replied halfway
+		 * through discovery as well, in case the cable is
+		 * non-compliant about GoodCRC-ing higher revisions
+		 */
+		prl_set_rev(port, TCPC_TX_SOP_PRIME, PD_REV20);
 
 	/*
 	 * Set discover identity timer unless BUSY case already did so
