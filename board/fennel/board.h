@@ -18,12 +18,9 @@
 
 #include "baseboard.h"
 
-#ifdef BOARD_JUNIPER
 #undef CONFIG_CHIPSET_POWER_SEQ_VERSION
 #define CONFIG_CHIPSET_POWER_SEQ_VERSION 1
-
 #undef CONFIG_SYSTEM_UNLOCKED
-#endif
 
 #define CONFIG_BATTERY_HW_PRESENT_CUSTOM
 
@@ -38,6 +35,7 @@
 #define CONFIG_EXTPOWER_DEBOUNCE_MS 200
 
 #define CONFIG_I2C_BITBANG
+#undef I2C_BITBANG_PORT_COUNT
 #define I2C_BITBANG_PORT_COUNT 1
 #undef CONFIG_I2C_NACK_RETRY_COUNT
 #define CONFIG_I2C_NACK_RETRY_COUNT 10
@@ -75,11 +73,7 @@
 #define I2C_PORT_SENSORS            1
 #define I2C_PORT_IO_EXPANDER_IT8801 1
 #define I2C_PORT_VIRTUAL_BATTERY    I2C_PORT_BATTERY
-#ifdef BOARD_JACUZZI
-#define I2C_PORT_BATTERY            1
-#else /* Juniper */
 #define I2C_PORT_BATTERY            2
-#endif
 
 /* Enable Accel over SPI */
 #define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI master port (SPI2) */
