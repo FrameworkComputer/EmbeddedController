@@ -743,14 +743,24 @@ static uint8_t check_for_power_off_event(void)
 
 	/* POWER_GOOD released by AP : shutdown immediately */
 	if (!power_has_signals(IN_POWER_GOOD)) {
-		if (power_button_was_pressed)
-			timer_cancel(TASK_ID_CHIPSET);
-
 		CPRINTS("POWER_GOOD is lost");
 		return POWER_OFF_BY_POWER_GOOD_LOST;
 	}
 
 	return POWER_OFF_CANCEL;
+}
+
+/**
+ * Cancel the power button timer.
+ *
+ * The timer was previously created in the check_for_power_off_event(),
+ * which waited for the power button long press. Should cancel the timer
+ * during the power state transition; otherwise, EC will crash.
+ */
+static inline void cancel_power_button_timer(void)
+{
+	if (power_button_was_pressed)
+		timer_cancel(TASK_ID_CHIPSET);
 }
 
 /*****************************************************************************/
@@ -989,6 +999,8 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S3S0:
+		cancel_power_button_timer();
+
 #ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
 		/*
 		 * Notify the RESUME_INIT hooks, i.e. enabling SPI driver
@@ -1019,12 +1031,7 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S0S3:
-		/*
-		 * If the power button is pressing, we need cancel the long
-		 * press timer, otherwise EC will crash.
-		 */
-		if (power_button_was_pressed)
-			timer_cancel(TASK_ID_CHIPSET);
+		cancel_power_button_timer();
 
 #ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
 		/*
@@ -1048,6 +1055,8 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S5:
+		cancel_power_button_timer();
+
 		/* Call hooks before we drop power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
