@@ -327,6 +327,14 @@ int cbi_get_fw_config(uint32_t *fw_config)
 				  &size);
 }
 
+int cbi_get_ssfc(uint32_t *ssfc)
+{
+	uint8_t size = sizeof(*ssfc);
+
+	return cbi_get_board_info(CBI_TAG_SSFC, (uint8_t *)ssfc,
+				  &size);
+}
+
 int cbi_get_pcb_supplier(uint32_t *pcb_supplier)
 {
 	uint8_t size = sizeof(*pcb_supplier);
@@ -451,6 +459,7 @@ static void dump_cbi(void)
 	print_tag("SKU_ID", cbi_get_sku_id(&val), &val);
 	print_tag("FW_CONFIG", cbi_get_fw_config(&val), &val);
 	print_tag("PCB_SUPPLIER", cbi_get_pcb_supplier(&val), &val);
+	print_tag("SSFC", cbi_get_ssfc(&val), &val);
 }
 
 static int cc_cbi(int argc, char **argv)

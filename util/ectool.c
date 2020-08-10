@@ -7849,6 +7849,7 @@ static void cmd_cbi_help(char *cmd)
 	"      5: MODEL_ID\n"
 	"      6: FW_CONFIG\n"
 	"      7: PCB_VENDOR\n"
+	"      8: SSFC\n"
 	"    <size> is the size of the data in byte. It should be zero for\n"
 	"      string types.\n"
 	"    <value/string> is an integer or a string to be set\n"

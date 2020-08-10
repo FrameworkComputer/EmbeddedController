@@ -140,6 +140,8 @@ static int test_all_tags(void)
 		    == EC_SUCCESS);
 	TEST_ASSERT(cbi_set_board_info(CBI_TAG_PCB_SUPPLIER, &d8, sizeof(d8))
 		    == EC_SUCCESS);
+	TEST_ASSERT(cbi_set_board_info(CBI_TAG_SSFC, &d8, sizeof(d8))
+		    == EC_SUCCESS);
 	TEST_ASSERT(cbi_get_board_version(&d32) == EC_SUCCESS);
 	TEST_EQ(d32, d8, "0x%x");
 	TEST_ASSERT(cbi_get_oem_id(&d32) == EC_SUCCESS);
@@ -151,6 +153,8 @@ static int test_all_tags(void)
 	TEST_ASSERT(cbi_get_fw_config(&d32) == EC_SUCCESS);
 	TEST_EQ(d32, d8, "0x%x");
 	TEST_ASSERT(cbi_get_pcb_supplier(&d32) == EC_SUCCESS);
+	TEST_EQ(d32, d8, "0x%x");
+	TEST_ASSERT(cbi_get_ssfc(&d32) == EC_SUCCESS);
 	TEST_EQ(d32, d8, "0x%x");
 
 	/* Write protect */

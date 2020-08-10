@@ -5734,6 +5734,8 @@ enum cbi_data_tag {
 	CBI_TAG_MODEL_ID = 5,      /* uint32_t or smaller */
 	CBI_TAG_FW_CONFIG = 6,     /* uint32_t bit field */
 	CBI_TAG_PCB_SUPPLIER = 7,  /* uint32_t or smaller */
+	/* Second Source Factory Cache */
+	CBI_TAG_SSFC = 8,          /* uint32_t bit field */
 	CBI_TAG_COUNT,
 };
 
