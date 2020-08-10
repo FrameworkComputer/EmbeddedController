@@ -675,6 +675,9 @@ static void it83xx_init(enum usbpd_port port, int role)
 	/* Reset and disable HW auto generate message header */
 	IT83XX_USBPD_PDMSR(port) &= ~USBPD_REG_MASK_DISABLE_AUTO_GEN_TX_HEADER;
 	USBPD_SW_RESET(port);
+	/* According PD version set HW auto retry count */
+	IT83XX_USBPD_PDCSR0(port) = (IT83XX_USBPD_PDCSR0(port) & ~0xC0) |
+					(CONFIG_PD_RETRY_COUNT << 6);
 	/* Enable rx decode SOP type packet and hard reset signal */
 	IT83XX_USBPD_PDCSR1(port) = (USBPD_REG_MASK_HARD_RESET_RX_ENABLE |
 				     USBPD_REG_MASK_SOP_RX_ENABLE);
