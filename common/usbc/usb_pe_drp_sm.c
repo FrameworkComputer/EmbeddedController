@@ -4672,6 +4672,23 @@ static void pe_init_vdm_svids_request_run(int port)
 	set_state_pe(port, get_last_state_pe(port));
 }
 
+static void pe_init_vdm_svids_request_exit(int port)
+{
+	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT)) {
+		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT);
+		/*
+		 * Mark failure to respond as discovery failure.
+		 *
+		 * For PD 2.0 partners (6.10.3 Applicability of Structured VDM
+		 * Commands Note 3):
+		 *
+		 * If Structured VDMs are not supported, a Structured VDM
+		 * Command received by a DFP or UFP Shall be Ignored.
+		 */
+		pd_set_svids_discovery(port, pe[port].tx_type, PD_DISC_FAIL);
+	}
+}
+
 /**
  * PE_INIT_VDM_Modes_Request
  *
@@ -5843,6 +5860,7 @@ static const struct usb_state pe_states[] = {
 	[PE_INIT_VDM_SVIDS_REQUEST] = {
 		.entry	= pe_init_vdm_svids_request_entry,
 		.run	= pe_init_vdm_svids_request_run,
+		.exit	= pe_init_vdm_svids_request_exit,
 		.parent = &pe_states[PE_VDM_SEND_REQUEST],
 	},
 	[PE_INIT_VDM_MODES_REQUEST] = {
