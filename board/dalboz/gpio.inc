@@ -12,7 +12,7 @@ GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(3, 4), GPIO_INT_FALLING,			tcpc_alert_event)
 GPIO_INT(USB_C1_TCPC_INT_ODL,	PIN(F, 1), GPIO_INT_FALLING,			c1_tcpc_interrupt)
 GPIO_INT(USB_C0_PPC_FAULT_ODL,	PIN(6, 3), GPIO_INT_FALLING,			ppc_interrupt)
 /* PPC interrupts trigger on falling edge, but HDMI HPD triggers on rising edge. */
-GPIO_INT(USB_C1_PPC_INT_ODL,	PIN(D, 4), GPIO_INT_BOTH,				c1_ppc_interrupt)
+GPIO_INT(USB_C1_PPC_INT_ODL,	PIN(D, 4), GPIO_INT_BOTH | GPIO_PULL_UP, 	c1_ppc_interrupt)
 GPIO_INT(USB_C0_BC12_INT_ODL,	PIN(9, 3), GPIO_INT_FALLING | GPIO_PULL_UP,	bc12_interrupt)
 GPIO_INT(USB_C1_BC12_INT_ODL, 	PIN(A, 4), GPIO_INT_FALLING | GPIO_PULL_UP,	bc12_interrupt)
 GPIO_INT(SLP_S3_L,		PIN(7, 4), GPIO_INT_BOTH,			power_signal_interrupt)
