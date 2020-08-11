@@ -150,6 +150,18 @@
 					     | PE_FLAGS_MSG_DISCARDED \
 					     | PE_FLAGS_VDM_REQUEST_TIMEOUT)
 
+/*
+ * Combination to check whether a reply to a message was received.  Our message
+ * should have sent (i.e. not been discarded) and a partner message is ready to
+ * process.
+ *
+ * When chunking is disabled (ex. for PD 2.0), these flags will set
+ * on the same run cycle.  With chunking, received message will take an
+ * additional cycle to be flagged.
+ */
+#define PE_CHK_REPLY(port)	(PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED) && \
+				 !PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED))
+
 /* 6.7.3 Hard Reset Counter */
 #define N_HARD_RESET_COUNT 2
 
@@ -3524,7 +3536,7 @@ static void pe_drs_send_swap_run(int port)
 	 *   1) A Reject Message is received.
 	 *   2) Or a Wait Message is received.
 	 */
-	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+	if (PE_CHK_REPLY(port)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
 		type = PD_HEADER_TYPE(rx_emsg[port].header);
@@ -3739,7 +3751,7 @@ static void pe_prs_src_snk_send_swap_run(int port)
 	 *   1) A Reject Message is received.
 	 *   2) Or a Wait Message is received.
 	 */
-	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+	if (PE_CHK_REPLY(port)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
 		type = PD_HEADER_TYPE(rx_emsg[port].header);
@@ -4238,7 +4250,7 @@ static enum vdm_response_result parse_vdm_response_common(int port)
 	uint8_t cnt;
 	uint8_t ext;
 
-	if (!PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
+	if (!PE_CHK_REPLY(port))
 		return VDM_RESULT_WAITING;
 	PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
@@ -5170,7 +5182,7 @@ static void pe_vcs_send_swap_run(int port)
 	uint8_t cnt;
 	enum tcpm_transmit_type sop;
 
-	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+	if (PE_CHK_REPLY(port)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
 		type = PD_HEADER_TYPE(rx_emsg[port].header);
@@ -5440,7 +5452,7 @@ static void pe_dr_snk_get_sink_cap_run(int port)
 	 * Transition to PE_SEND_SOFT_RESET state when:
 	 *   1) An unexpected message is received
 	 */
-	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+	if (PE_CHK_REPLY(port)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
 		type = PD_HEADER_TYPE(rx_emsg[port].header);
