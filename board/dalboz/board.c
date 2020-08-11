@@ -192,6 +192,24 @@ void pcal6408_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&pcal6408_handler_data, 0);
 }
 
+/*****************************************************************************
+ * Retimers
+ */
+
+static void retimers_on(void)
+{
+	/* hdmi retimer power on */
+	ioex_set_level(IOEX_EN_PWR_HDMI_DB, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, retimers_on, HOOK_PRIO_DEFAULT);
+
+static void retimers_off(void)
+{
+	/* hdmi retimer power off */
+	ioex_set_level(IOEX_EN_PWR_HDMI_DB, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, retimers_off, HOOK_PRIO_DEFAULT);
+
 static int board_ps8743_mux_set(const struct usb_mux *me,
 				mux_state_t mux_state)
 {
