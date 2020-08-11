@@ -299,6 +299,8 @@ enum gpio_signal board_usbc_port_to_hpd_gpio(int port)
 
 static void board_remap_gpio(void)
 {
+	int ppc_id = 0;
+
 	if (board_ver >= 3) {
 		int rv;
 
@@ -328,7 +330,9 @@ static void board_remap_gpio(void)
 			ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
 	}
 
-	support_aoz_ppc = (board_ver == 3);
+	ioex_get_level(IOEX_PPC_ID, &ppc_id);
+
+	support_aoz_ppc = (board_ver == 3) || ((board_ver >= 4) && !ppc_id);
 	if (support_aoz_ppc) {
 		ccprintf("DB USBC PPC aoz1380\n");
 		ppc_chips[USBC_PORT_C1].drv = &aoz1380_drv;
