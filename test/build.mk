@@ -203,8 +203,7 @@ usb_prl_old-y=usb_prl_old.o usb_sm_checks.o fake_usbc.o
 usb_prl-y=usb_prl.o usb_sm_checks.o
 usb_prl_noextended-y=usb_prl_noextended.o usb_sm_checks.o fake_usbc.o
 usb_pe_drp-y=usb_pe_drp.o usb_sm_checks.o fake_prl.o fake_usbc.o
-usb_pe_drp_noextended-y=usb_pe_drp.o usb_sm_checks.o fake_battery.o fake_prl.o \
-	fake_usbc.o
+usb_pe_drp_noextended-y=usb_pe_drp.o usb_sm_checks.o fake_prl.o fake_usbc.o
 usb_tcpmv2_tcpci-y=usb_tcpmv2_tcpci.o vpd_api.o usb_sm_checks.o
 utils-y=utils.o
 utils_str-y=utils_str.o

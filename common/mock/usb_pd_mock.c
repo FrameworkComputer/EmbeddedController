@@ -22,18 +22,10 @@ enum pd_data_role pd_get_data_role(int port)
 {
 	return mock_pd_port[port].data_role;
 }
-__overridable void tc_set_data_role(int port, enum pd_data_role role)
-{
-	mock_pd_port[port].data_role = role;
-}
 
 enum pd_power_role pd_get_power_role(int port)
 {
 	return mock_pd_port[port].power_role;
-}
-__overridable void tc_set_power_role(int port, enum pd_power_role role)
-{
-	mock_pd_port[port].power_role = role;
 }
 
 enum pd_cc_states pd_get_task_cc_state(int port)
