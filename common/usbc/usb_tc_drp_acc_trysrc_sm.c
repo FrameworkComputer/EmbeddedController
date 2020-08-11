@@ -395,6 +395,11 @@ static struct type_c {
 	 * the state definitions.
 	 */
 	uint64_t pd_debounce;
+	/*
+	 * Time to ignore Vbus absence due to external IC debounce detection
+	 * logic immediately after a power role swap.
+	 */
+	uint64_t vbus_debounce_time;
 #ifdef CONFIG_USB_PD_TRY_SRC
 	/*
 	 * Time a port shall wait before it can determine it is
@@ -804,6 +809,16 @@ int tc_check_vconn_swap(int port)
 void tc_pr_swap_complete(int port, bool success)
 {
 	TC_CLR_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS);
+
+	if (IS_ATTACHED_SNK(port)) {
+		/*
+		 * Give the ADCs in the TCPC or PPC time to react following
+		 * a PS_RDY message received during a SRC to SNK swap.
+		 * Note: This is empirically determined, not strictly
+		 * part of the USB PD spec.
+		 */
+		tc[port].vbus_debounce_time = get_time().val + PD_T_DEBOUNCE;
+	}
 
 	/*
 	 * AutoDischargeDisconnect was either turned off near the SNK->SRC
@@ -2192,8 +2207,12 @@ static void tc_attached_snk_run(const int port)
 	 */
 	if (!TC_CHK_FLAG(port, TC_FLAGS_POWER_OFF_SNK) &&
 	    !TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
-		/* Detach detection */
-		if (!pd_is_vbus_present(port)) {
+		/*
+		 * Detach detection, but only after allowing for  a debounce
+		 * of the VBUS state.
+		 */
+		if ((tc[port].vbus_debounce_time < get_time().val) &&
+			!pd_is_vbus_present(port)) {
 			if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
 				pd_dfp_exit_mode(port, TCPC_TX_SOP, 0, 0);
 				pd_dfp_exit_mode(port, TCPC_TX_SOP_PRIME, 0, 0);
