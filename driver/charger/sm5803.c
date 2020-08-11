@@ -443,11 +443,8 @@ static void sm5803_init(int chgnum)
 		& SM5803_CHG_ILIM_RAW;
 	rv |= chg_write8(chgnum, SM5803_REG_CHG_ILIM, reg);
 
-	/* Set Vbus interrupt levels for 3.5V and 4.0V */
-	rv |= meas_write8(chgnum, SM5803_REG_VBUS_LOW_TH,
-			  SM5803_VBUS_LOW_LEVEL);
-	rv |= meas_write8(chgnum, SM5803_REG_VBUS_HIGH_TH,
-			  SM5803_VBUS_HIGH_LEVEL);
+	/* Configure charger insertion interrupts */
+	rv |= main_write8(chgnum, SM5803_REG_INT1_EN, SM5803_INT1_CHG);
 
 	/* Set TINT interrupts for 360 K and 330 K */
 	rv |= meas_write8(chgnum, SM5803_REG_TINT_HIGH_TH,
@@ -455,12 +452,9 @@ static void sm5803_init(int chgnum)
 	rv |= meas_write8(chgnum, SM5803_REG_TINT_LOW_TH,
 						SM5803_TINT_LOW_LEVEL);
 
-	/*
-	 * Configure TINT and Vbus interrupts to fire after thresholds are
-	 * configured
-	 */
-	rv |= main_write8(chgnum, SM5803_REG_INT2_EN, SM5803_INT2_TINT
-						      | SM5803_INT2_VBUS);
+	/* Configure TINT interrupts to fire after thresholds are set */
+	rv |= main_write8(chgnum, SM5803_REG_INT2_EN, SM5803_INT2_TINT);
+
 	/*
 	 * Configure CHG_ENABLE to only be set through I2C by setting
 	 * HOST_MODE_EN bit (all other register bits are 0 by default)
@@ -510,7 +504,29 @@ void sm5803_handle_interrupt(int chgnum)
 	int int_reg, meas_reg;
 	static bool throttled;
 
-	/* Note: Interrupt register is clear on read */
+	/* Note: Interrupt registers are clear on read */
+	rv = main_read8(chgnum, SM5803_REG_INT1_REQ, &int_reg);
+	if (rv) {
+		CPRINTS("%s %d: Failed read int1 register", CHARGER_NAME,
+			chgnum);
+		return;
+	}
+
+	if (int_reg & SM5803_INT1_CHG) {
+		rv = main_read8(chgnum, SM5803_REG_STATUS1, &meas_reg);
+		if (!(meas_reg & SM5803_STATUS1_CHG_DET)) {
+			charger_vbus[chgnum] = 0;
+			if (IS_ENABLED(CONFIG_USB_CHARGER))
+				usb_charger_vbus_change(chgnum, 0);
+			board_vbus_present_change();
+		} else {
+			charger_vbus[chgnum] = 1;
+			if (IS_ENABLED(CONFIG_USB_CHARGER))
+				usb_charger_vbus_change(chgnum, 1);
+			board_vbus_present_change();
+		}
+	}
+
 	rv = main_read8(chgnum, SM5803_REG_INT2_REQ, &int_reg);
 	if (rv) {
 		CPRINTS("%s %d: Failed read int2 register", CHARGER_NAME,
@@ -541,22 +557,6 @@ void sm5803_handle_interrupt(int chgnum)
 		 */
 	}
 
-	if ((int_reg & SM5803_INT2_VBUS) &&
-				!sm5803_is_sourcing_otg_power(chgnum, chgnum)) {
-		rv = meas_read8(chgnum, SM5803_REG_VBUS_MEAS_MSB, &meas_reg);
-		if (meas_reg <= SM5803_VBUS_LOW_LEVEL) {
-			charger_vbus[chgnum] = 0;
-			usb_charger_vbus_change(chgnum, 0);
-			board_vbus_present_change();
-		} else if (meas_reg >= SM5803_VBUS_HIGH_LEVEL) {
-			charger_vbus[chgnum] = 1;
-			usb_charger_vbus_change(chgnum, 1);
-			board_vbus_present_change();
-		} else {
-			CPRINTS("%s %d: Unexpected Vbus interrupt: 0x%02x",
-				CHARGER_NAME, chgnum, meas_reg);
-		}
-	}
 }
 
 static void sm5803_irq_deferred(void)
