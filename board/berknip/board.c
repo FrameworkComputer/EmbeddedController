@@ -311,7 +311,7 @@ static void board_version_check(void)
 
 	cbi_get_board_version(&board_ver);
 
-	if (board_ver == 1)
+	if (board_ver <= 2)
 		chg_chips[0].i2c_port = I2C_PORT_CHARGER_V0;
 
 	if (board_ver == 2) {
