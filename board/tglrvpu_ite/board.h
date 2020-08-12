@@ -21,6 +21,10 @@
 /* Temperature sensor */
 #define CONFIG_TEMP_SENSOR
 
+/* Support early firmware selection */
+#define CONFIG_VBOOT_EFS2
+#define GPIO_PACKET_MODE_EN		GPIO_ME_G3_TO_ME_EC
+
 #include "baseboard.h"
 
 #define CONFIG_CHIPSET_TIGERLAKE

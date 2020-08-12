@@ -122,6 +122,7 @@
 #define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
 
 /* Verified boot */
+#define CONFIG_CRC8
 #define CONFIG_SHA256_UNROLLED
 #define CONFIG_VBOOT_HASH
 /*
