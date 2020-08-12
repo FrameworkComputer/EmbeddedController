@@ -354,6 +354,8 @@ static void sm5803_init(int chgnum)
 
 			rv |= chg_write8(chgnum, 0x22, 0xB3);
 
+			rv |= chg_write8(chgnum, 0x3E, 0x34);
+
 			rv |= chg_write8(chgnum, 0x4B, 0xA6);
 			rv |= chg_write8(chgnum, 0x4F, 0xBF);
 
@@ -390,6 +392,8 @@ static void sm5803_init(int chgnum)
 			rv |= chg_write8(chgnum, 0x1D, 0x40);
 
 			rv |= chg_write8(chgnum, 0x22, 0xB3);
+
+			rv |= chg_write8(chgnum, 0x3E, 0x34);
 
 			rv |= chg_write8(chgnum, 0x4F, 0xBF);
 
@@ -649,8 +653,7 @@ static enum ec_error_list sm5803_set_mode(int chgnum, int mode)
 		 * Should be a part of an initial sink enable function
 		 */
 		rv |= sm5803_flow1_update(chgnum, CHARGER_MODE_SINK, MASK_SET);
-		if (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED)
-			flow2_reg |= SM5803_FLOW2_AUTO_ENABLED;
+		flow2_reg |= SM5803_FLOW2_AUTO_ENABLED;
 	}
 
 	rv |= chg_write8(chgnum, SM5803_REG_FLOW2, flow2_reg);
