@@ -26,14 +26,14 @@ int init_ioexpanders(void)
 	 * -------------------------------------------------
 	 * BIT-0 (SBU_UART_SEL)      | O   | 0
 	 * BIT-1 (ATMEL_RESET_L)     | O   | 0
-	 * BIT-2 (SBU_FLIP_SEL)      | O   | 1
+	 * BIT-2 (SBU_FLIP_SEL)      | O   | 0
 	 * BIT-3 (USB3_A0_MUX_SEL)   | O   | 0
 	 * BIT-4 (USB3_A0_MUX_EN_L)  | O   | 0
 	 * BIT-5 (USB3_A0_PWR_EN)    | O   | 0
 	 * BIT-6 (UART_18_SEL)       | O   | 0
 	 * BIT-7 (USERVO_POWER_EN)   | O   | 0
 	 */
-	ret = tca6416a_write_byte(1, TCA6416A_OUT_PORT_0, 0x04);
+	ret = tca6416a_write_byte(1, TCA6416A_OUT_PORT_0, 0x00);
 	if (ret != EC_SUCCESS)
 		return ret;
 

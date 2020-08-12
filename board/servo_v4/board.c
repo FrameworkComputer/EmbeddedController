@@ -366,6 +366,8 @@ static void init_ioexpander(void)
 	 */
 	i2c_write8(1, GPIOX_I2C_ADDR_FLAGS, GPIOX_DIR_PORT_A, 0x0);
 	i2c_write8(1, GPIOX_I2C_ADDR_FLAGS, GPIOX_DIR_PORT_B, 0x18);
+	/* Write SBU_FLIP_SEL */
+	write_ioexpander(0, 2, 0);
 }
 
 /*
@@ -390,24 +392,27 @@ static void ccd_measure_sbu(void)
 {
 	int sbu1;
 	int sbu2;
-	int mux_en;
 	static int count /* = 0 */;
 	static int last /* = 0 */;
 	static int polarity /* = 0 */;
 
+	/*
+	 * The SBU mux should be enabled so SBU is connected to the USB2
+	 * hub. The hub needs to apply its terminations to read the
+	 * correct SBU levels.
+	 */
+	gpio_set_level(GPIO_SBU_MUX_EN, 1);
+
 	/* Read sbu voltage levels */
 	sbu1 = adc_read_channel(ADC_SBU1_DET);
 	sbu2 = adc_read_channel(ADC_SBU2_DET);
-	mux_en = gpio_get_level(GPIO_SBU_MUX_EN);
 
 	/*
-	 * While SBU_MUX is disabled (SuzyQ unplugged), we'll poll the SBU lines
-	 * to check if an idling, unconfigured USB device is present.
-	 * USB FS pulls one line high for connect request.
-	 * If so, and it persists for 500ms, we'll enable the SuzyQ in that
-	 * orientation.
+	 * Poll the SBU lines to check if an idling, unconfigured USB device is
+	 * present. USB FS pulls one line high for connect request. If so, and
+	 * it persists for 500ms, we'll enable the SuzyQ in that orientation.
 	 */
-	if ((!mux_en) && (sbu1 > USB_HIGH_MV) && (sbu2 < GND_MAX_MV)) {
+	if ((sbu1 > USB_HIGH_MV) && (sbu2 < GND_MAX_MV)) {
 		/* Check flip connection polarity. */
 		if (last != MODE_SBU_FLIP) {
 			last = MODE_SBU_FLIP;
@@ -416,7 +421,7 @@ static void ccd_measure_sbu(void)
 		} else {
 			count++;
 		}
-	} else if ((!mux_en) && (sbu2 > USB_HIGH_MV) && (sbu1 < GND_MAX_MV)) {
+	} else if ((sbu2 > USB_HIGH_MV) && (sbu1 < GND_MAX_MV)) {
 		/* Check direct connection polarity. */
 		if (last != MODE_SBU_CONNECT) {
 			last = MODE_SBU_CONNECT;
@@ -426,12 +431,14 @@ static void ccd_measure_sbu(void)
 			count++;
 		}
 	/*
-	 * If SuzyQ is enabled, we'll poll for a persistent no-signal for
-	 * 500ms. Since USB is differential, we should never see GND/GND
-	 * while the device is connected.
-	 * If disconnected, electrically remove SuzyQ.
+	 * If SuzyQ is enabled, we'll poll for a persistent no-signal
+	 * for 500ms. We may see GND/GND while passing data since the
+	 * ADC's don't sample simultaneously, so there needs to be a
+	 * deglitch to not falsely detect a disconnect. If disconnected,
+	 * take no action. We need to keep the mux enabled to detect
+	 * another device.
 	 */
-	} else if ((mux_en) && (sbu1 < GND_MAX_MV) && (sbu2 < GND_MAX_MV)) {
+	} else if ((sbu1 < GND_MAX_MV) && (sbu2 < GND_MAX_MV)) {
 		/* Check for SBU disconnect if connected. */
 		if (last != MODE_SBU_DISCONNECT) {
 			last = MODE_SBU_DISCONNECT;
@@ -449,31 +456,24 @@ static void ccd_measure_sbu(void)
 	 * We have seen a new state continuously for 500ms.
 	 * Let's update the mux to enable/disable SuzyQ appropriately.
 	 */
-	if (count > 5) {
-		if (mux_en) {
-			/* Disable mux as it's disconnected now. */
-			gpio_set_level(GPIO_SBU_MUX_EN, 0);
-			msleep(10);
+	if (count == 50) {
+		if (last == MODE_SBU_DISCONNECT) {
 			CPRINTS("CCD: disconnected.");
 		} else {
 			/* SBU flip = polarity */
 			write_ioexpander(0, 2, polarity);
-			gpio_set_level(GPIO_SBU_MUX_EN, 1);
-			msleep(10);
 			CPRINTS("CCD: connected %s",
 				polarity ? "flip" : "noflip");
 		}
 	}
-
-	/* Measure every 100ms, forever. */
-	hook_call_deferred(&ccd_measure_sbu_data, 100 * MSEC);
+	/* Measure every 10ms, forever. */
+	hook_call_deferred(&ccd_measure_sbu_data, 10 * MSEC);
 }
 
 void ext_hpd_detection_enable(int enable)
 {
 	if (enable) {
 		timestamp_t now = get_time();
-
 		hpd_prev_level = gpio_get_level(GPIO_DP_HPD);
 		hpd_prev_ts = now.val;
 		gpio_enable_interrupt(GPIO_DP_HPD);
