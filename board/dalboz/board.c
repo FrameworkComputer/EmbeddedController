@@ -200,6 +200,9 @@ static void retimers_on(void)
 {
 	/* hdmi retimer power on */
 	ioex_set_level(IOEX_EN_PWR_HDMI_DB, 1);
+
+	/* usba retimer power on */
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, retimers_on, HOOK_PRIO_DEFAULT);
 
@@ -207,6 +210,9 @@ static void retimers_off(void)
 {
 	/* hdmi retimer power off */
 	ioex_set_level(IOEX_EN_PWR_HDMI_DB, 0);
+
+	/* usba retimer power off */
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, retimers_off, HOOK_PRIO_DEFAULT);
 
@@ -627,18 +633,6 @@ int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A0_5V,
 	IOEX_EN_USB_A1_5V_DB_OPT1,
 };
-
-static void usba_retimer_on(void)
-{
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, usba_retimer_on, HOOK_PRIO_DEFAULT);
-
-static void usba_retimer_off(void)
-{
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, usba_retimer_off, HOOK_PRIO_DEFAULT);
 
 static void check_v0_battery(void)
 {
