@@ -429,12 +429,12 @@ static int set_system_power(int enable)
 
 	ret = wait_switchcap_power_good(enable);
 
-	if (enable) {
-		usleep(SYSTEM_POWER_ON_DELAY);
-	} else {
+	if (!enable) {
 		/* Ensure POWER_GOOD drop to low if it is a forced shutdown */
 		ret |= wait_pmic_pwron(0, FORCE_OFF_RESPONSE_TIMEOUT);
 	}
+	usleep(SYSTEM_POWER_ON_DELAY);
+
 	return ret;
 }
 
