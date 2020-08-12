@@ -139,7 +139,9 @@ static void ipi_enable_deferred(void)
 		return;
 	}
 
+#ifdef HAS_TASK_HOSTCMD
 	hostcmd_init();
+#endif
 
 	task_enable_irq(SCP_IRQ_GIPC_IN0);
 }
