@@ -8,6 +8,7 @@
 #include "common.h"
 #include "console.h"
 #include "cros_board_info.h"
+#include "ec_commands.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "test_util.h"
@@ -125,29 +126,60 @@ static int test_all_tags(void)
 {
 	uint8_t d8;
 	uint32_t d32;
+	const char string[] = "abc";
+	uint8_t buf[32];
+	uint8_t size;
+	int count = 0;
 
 	/* Populate all data and read out */
 	d8 = 0x12;
 	TEST_ASSERT(cbi_set_board_info(CBI_TAG_BOARD_VERSION, &d8, sizeof(d8))
 		    == EC_SUCCESS);
+	count++;
 	TEST_ASSERT(cbi_set_board_info(CBI_TAG_OEM_ID, &d8, sizeof(d8))
 		    == EC_SUCCESS);
+	count++;
 	TEST_ASSERT(cbi_set_board_info(CBI_TAG_SKU_ID, &d8, sizeof(d8))
 		    == EC_SUCCESS);
+	count++;
+	TEST_ASSERT(cbi_set_board_info(CBI_TAG_DRAM_PART_NUM,
+				       string, sizeof(string))
+		    == EC_SUCCESS);
+	count++;
+	TEST_ASSERT(cbi_set_board_info(CBI_TAG_OEM_NAME,
+				       string, sizeof(string))
+		    == EC_SUCCESS);
+	count++;
 	TEST_ASSERT(cbi_set_board_info(CBI_TAG_MODEL_ID, &d8, sizeof(d8))
 		    == EC_SUCCESS);
+	count++;
 	TEST_ASSERT(cbi_set_board_info(CBI_TAG_FW_CONFIG, &d8, sizeof(d8))
 		    == EC_SUCCESS);
+	count++;
 	TEST_ASSERT(cbi_set_board_info(CBI_TAG_PCB_SUPPLIER, &d8, sizeof(d8))
 		    == EC_SUCCESS);
+	count++;
 	TEST_ASSERT(cbi_set_board_info(CBI_TAG_SSFC, &d8, sizeof(d8))
 		    == EC_SUCCESS);
+	count++;
+
+	/* Read out all */
 	TEST_ASSERT(cbi_get_board_version(&d32) == EC_SUCCESS);
 	TEST_EQ(d32, d8, "0x%x");
 	TEST_ASSERT(cbi_get_oem_id(&d32) == EC_SUCCESS);
 	TEST_EQ(d32, d8, "0x%x");
 	TEST_ASSERT(cbi_get_sku_id(&d32) == EC_SUCCESS);
 	TEST_EQ(d32, d8, "0x%x");
+	size = sizeof(buf);
+	TEST_ASSERT(cbi_get_board_info(CBI_TAG_DRAM_PART_NUM, buf, &size)
+		    == EC_SUCCESS);
+	TEST_ASSERT(strncmp(buf, string, sizeof(string)) == 0);
+	TEST_EQ((size_t)size - 1, strlen(buf), "%zu");
+	size = sizeof(buf);
+	TEST_ASSERT(cbi_get_board_info(CBI_TAG_OEM_NAME, buf, &size)
+		    == EC_SUCCESS);
+	TEST_ASSERT(strncmp(buf, string, sizeof(string)) == 0);
+	TEST_EQ((size_t)size - 1, strlen(buf), "%zu");
 	TEST_ASSERT(cbi_get_model_id(&d32) == EC_SUCCESS);
 	TEST_EQ(d32, d8, "0x%x");
 	TEST_ASSERT(cbi_get_fw_config(&d32) == EC_SUCCESS);
@@ -156,6 +188,9 @@ static int test_all_tags(void)
 	TEST_EQ(d32, d8, "0x%x");
 	TEST_ASSERT(cbi_get_ssfc(&d32) == EC_SUCCESS);
 	TEST_EQ(d32, d8, "0x%x");
+
+	/* Fail if a (new) tag is missing from the unit test. */
+	TEST_EQ(count, CBI_TAG_COUNT, "%d");
 
 	/* Write protect */
 	gpio_set_level(GPIO_WP, 1);
