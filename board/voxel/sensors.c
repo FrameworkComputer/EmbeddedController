@@ -8,7 +8,7 @@
 #include "accelgyro.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_bmi260.h"
+#include "driver/accelgyro_bmi160.h"
 #include "driver/als_tcs3400.h"
 #include "driver/sync.h"
 #include "keyboard_scan.h"
@@ -18,6 +18,7 @@
 #include "tablet_mode.h"
 #include "util.h"
 
+#define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ## args)
 /******************************************************************************/
 /* Sensors */
 static struct mutex g_lid_accel_mutex;
@@ -26,19 +27,19 @@ static struct mutex g_base_mutex;
 /* BMA253 private data */
 static struct accelgyro_saved_data_t g_bma253_data;
 
-/* BMI260 private data */
-static struct bmi_drv_data_t g_bmi260_data;
+/* BMI160 private data */
+static struct bmi_drv_data_t g_bmi160_data;
 
 /* Rotation matrix for the lid accelerometer */
 static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
 	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
+	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
 const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
 	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
@@ -72,14 +73,14 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_ACCEL] = {
 		.name = "Base Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMI260,
+		.chip = MOTIONSENSE_CHIP_BMI160,
 		.type = MOTIONSENSE_TYPE_ACCEL,
 		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi260_drv,
+		.drv = &bmi160_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi260_data,
+		.drv_data = &g_bmi160_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMI260_ADDR0_FLAGS,
+		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 		.rot_standard_ref = &base_standard_ref,
 		.min_frequency = BMI_ACCEL_MIN_FREQ,
 		.max_frequency = BMI_ACCEL_MAX_FREQ,
@@ -101,14 +102,14 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_GYRO] = {
 		.name = "Base Gyro",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMI260,
+		.chip = MOTIONSENSE_CHIP_BMI160,
 		.type = MOTIONSENSE_TYPE_GYRO,
 		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi260_drv,
+		.drv = &bmi160_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi260_data,
+		.drv_data = &g_bmi160_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMI260_ADDR0_FLAGS,
+		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 		.default_range = 1000, /* dps */
 		.rot_standard_ref = &base_standard_ref,
 		.min_frequency = BMI_GYRO_MIN_FREQ,
@@ -117,14 +118,16 @@ struct motion_sensor_t motion_sensors[] = {
 };
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-static void baseboard_sensors_init(void)
+static void board_sensors_init(void)
 {
 	/* Note - BMA253 interrupt unused by EC */
 
-	/* Enable interrupt for the BMI260 accel/gyro sensor */
+	/* Enable interrupt for the BMI160 accel/gyro sensor */
 	gpio_enable_interrupt(GPIO_EC_IMU_INT_L);
+
+	CPRINTS("Motion Sensor Count = %d", motion_sensor_count);
 }
-DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_sensors_init, HOOK_PRIO_DEFAULT);
 
 #ifndef TEST_BUILD
 void lid_angle_peripheral_enable(int enable)

@@ -33,21 +33,17 @@
 /* Keyboard features */
 
 /* Sensors */
-/* BMA253 accelerometer in base */
-#define CONFIG_ACCEL_BMA255
-
-/* BMI260 accel/gyro in base */
-#define CONFIG_ACCELGYRO_BMI260
-#define CONFIG_ACCELGYRO_BMI260_INT_EVENT \
+/* BMI160 Base accel/gyro */
+#define CONFIG_ACCELGYRO_BMI160
+#define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
-/* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
-
+/* BMA253 Lid accel */
+#define CONFIG_ACCEL_BMA255
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
-#define CONFIG_LID_ANGLE_SENSOR_BASE		BASE_ACCEL
-#define CONFIG_LID_ANGLE_SENSOR_LID		LID_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_BASE	BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID	LID_ACCEL
 
 /* USB Type C and USB PD defines */
 /*
