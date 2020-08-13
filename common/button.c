@@ -290,7 +290,16 @@ static void button_change_deferred(void)
 				 * mode so that button change processing is not
 				 * delayed.
 				 */
-				hook_call_deferred(&debug_mode_handle_data, 0);
+#ifdef CONFIG_DEDICATED_RECOVERY_BUTTON
+				/*
+				 * Only the direct signal is used for sysrq.
+				 * H1_EC_RECOVERY_BTN_ODL doesn't reflect the
+				 * true state of the recovery button.
+				 */
+				if (i == BUTTON_RECOVERY)
+#endif
+					hook_call_deferred(
+						&debug_mode_handle_data, 0);
 #endif
 				CPRINTS("Button '%s' was %s",
 					buttons[i].name, new_pressed ?
