@@ -563,7 +563,8 @@ int system_is_in_rw(void)
 	return is_rw_image(system_get_image_copy());
 }
 
-test_mockable int system_run_image_copy(enum ec_image copy)
+static int system_run_image_copy_with_flags(enum ec_image copy,
+					    uint32_t add_reset_flags)
 {
 	uintptr_t base;
 	uintptr_t init_addr;
@@ -616,12 +617,20 @@ test_mockable int system_run_image_copy(enum ec_image copy)
 			return EC_ERROR_UNKNOWN;
 	}
 
+	system_set_reset_flags(add_reset_flags);
+
 	CPRINTS("Jumping to image %s", ec_image_to_string(copy));
 
 	jump_to_image(init_addr);
 
 	/* Should never get here */
 	return EC_ERROR_UNKNOWN;
+}
+
+test_mockable int system_run_image_copy(enum ec_image copy)
+{
+	/* No reset flags needed for most jumps */
+	return system_run_image_copy_with_flags(copy, 0);
 }
 
 enum ec_image system_get_active_copy(void)
@@ -868,7 +877,8 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 	case EC_REBOOT_CANCEL:
 		return EC_SUCCESS;
 	case EC_REBOOT_JUMP_RO:
-		return system_run_image_copy(EC_IMAGE_RO);
+		return system_run_image_copy_with_flags(EC_IMAGE_RO,
+						EC_RESET_FLAG_STAY_IN_RO);
 	case EC_REBOOT_JUMP_RW:
 		return system_run_image_copy(system_get_active_copy());
 	case EC_REBOOT_COLD:
@@ -1201,7 +1211,8 @@ static int command_sysjump(int argc, char **argv)
 
 	/* Handle named images */
 	if (!strcasecmp(argv[1], "RO"))
-		return system_run_image_copy(EC_IMAGE_RO);
+		return system_run_image_copy_with_flags(EC_IMAGE_RO,
+						EC_RESET_FLAG_STAY_IN_RO);
 	else if (!strcasecmp(argv[1], "RW") || !strcasecmp(argv[1], "A"))
 		return system_run_image_copy(EC_IMAGE_RW);
 	else if (!strcasecmp(argv[1], "B")) {
