@@ -204,6 +204,11 @@ typedef int (*svdm_rsp_func)(int port, uint32_t *payload);
 
 /* List of all Policy Engine level states */
 enum usb_pe_state {
+	/* Super States */
+	PE_PRS_FRS_SHARED,
+	PE_SENDER_RESPONSE, /* AMS Start parent - runs SenderResponseTimer */
+	PE_VDM_SEND_REQUEST,
+
 	/* Normal States */
 	PE_SRC_STARTUP,
 	PE_SRC_DISCOVERY,
@@ -250,7 +255,6 @@ enum usb_pe_state {
 	PE_VCS_TURN_ON_VCONN_SWAP,
 	PE_VCS_TURN_OFF_VCONN_SWAP,
 	PE_VCS_SEND_PS_RDY_SWAP,
-	PE_VDM_SEND_REQUEST,
 	PE_VDM_IDENTITY_REQUEST_CBL,
 	PE_INIT_PORT_VDM_IDENTITY_REQUEST,
 	PE_INIT_VDM_SVIDS_REQUEST,
@@ -265,9 +269,6 @@ enum usb_pe_state {
 	PE_DR_SNK_GET_SINK_CAP,
 	PE_DR_SNK_GIVE_SOURCE_CAP,
 
-	/* AMS Start parent - runs SenderResponseTimer */
-	PE_SENDER_RESPONSE,
-
 	/* PD3.0 only states below here*/
 	PE_FRS_SNK_SRC_START_AMS,
 	PE_GIVE_BATTERY_CAP,
@@ -275,9 +276,6 @@ enum usb_pe_state {
 	PE_SEND_ALERT,
 	PE_SRC_CHUNK_RECEIVED,
 	PE_SNK_CHUNK_RECEIVED,
-
-	/* Super States */
-	PE_PRS_FRS_SHARED,
 };
 
 /*
@@ -321,6 +319,14 @@ static const struct usb_state pe_states[];
 #ifdef USB_PD_DEBUG_LABELS
 /* List of human readable state names for console debugging */
 static const char * const pe_state_names[] = {
+	/* Super States */
+#ifdef CONFIG_USB_PD_REV30
+	[PE_PRS_FRS_SHARED] = "SS:PE_PRS_FRS_SHARED",
+#endif
+	[PE_VDM_SEND_REQUEST] = "SS:PE_VDM_Send_Request",
+	[PE_VDM_RESPONSE] = "SS:PE_VDM_Response",
+
+	/* Normal States */
 	[PE_SRC_STARTUP] = "PE_SRC_Startup",
 	[PE_SRC_DISCOVERY] = "PE_SRC_Discovery",
 	[PE_SRC_SEND_CAPABILITIES] = "PE_SRC_Send_Capabilities",
@@ -366,14 +372,12 @@ static const char * const pe_state_names[] = {
 	[PE_VCS_TURN_ON_VCONN_SWAP] = "PE_VCS_Turn_On_Vconn_Swap",
 	[PE_VCS_TURN_OFF_VCONN_SWAP] = "PE_VCS_Turn_Off_Vconn_Swap",
 	[PE_VCS_SEND_PS_RDY_SWAP] = "PE_VCS_Send_Ps_Rdy_Swap",
-	[PE_VDM_SEND_REQUEST] = "PE_VDM_Send_Request",
 	[PE_VDM_IDENTITY_REQUEST_CBL] = "PE_VDM_Identity_Request_Cbl",
 	[PE_INIT_PORT_VDM_IDENTITY_REQUEST] =
 					   "PE_INIT_PORT_VDM_Identity_Request",
 	[PE_INIT_VDM_SVIDS_REQUEST] = "PE_INIT_VDM_SVIDs_Request",
 	[PE_INIT_VDM_MODES_REQUEST] = "PE_INIT_VDM_Modes_Request",
 	[PE_VDM_REQUEST_DPM] = "PE_VDM_Request_DPM",
-	[PE_VDM_RESPONSE] = "PE_VDM_Response",
 	[PE_HANDLE_CUSTOM_VDM_REQUEST] = "PE_Handle_Custom_Vdm_Request",
 	[PE_WAIT_FOR_ERROR_RECOVERY] = "PE_Wait_For_Error_Recovery",
 	[PE_BIST_TX] = "PE_Bist_TX",
@@ -395,9 +399,6 @@ static const char * const pe_state_names[] = {
 	[PE_SRC_CHUNK_RECEIVED] = "PE_SRC_Chunk_Received",
 	[PE_SNK_CHUNK_RECEIVED] = "PE_SNK_Chunk_Received",
 #endif
-
-	/* Super States */
-	[PE_PRS_FRS_SHARED] = "SS:PE_PRS_FRS_SHARED",
 #endif /* CONFIG_USB_PD_REV30 */
 };
 #else
@@ -5625,6 +5626,23 @@ uint32_t pe_get_flags(int port)
 
 
 static const struct usb_state pe_states[] = {
+	/* Super States */
+#ifdef CONFIG_USB_PD_REV30
+	[PE_PRS_FRS_SHARED] = {
+		.entry = pe_prs_frs_shared_entry,
+		.exit  = pe_prs_frs_shared_exit,
+	},
+#endif
+	[PE_VDM_SEND_REQUEST] = {
+		.entry = pe_vdm_send_request_entry,
+		.run   = pe_vdm_send_request_run,
+		.exit  = pe_vdm_send_request_exit,
+	},
+	[PE_SENDER_RESPONSE] = {
+		.entry = pe_sender_response_entry,
+		.run   = pe_sender_response_run,
+	},
+
 	/* Normal States */
 	[PE_SRC_STARTUP] = {
 		.entry = pe_src_startup_entry,
@@ -5831,11 +5849,6 @@ static const struct usb_state pe_states[] = {
 		.run   = pe_vcs_send_ps_rdy_swap_run,
 	},
 #endif /* CONFIG_USBC_VCONN */
-	[PE_VDM_SEND_REQUEST] = {
-		.entry = pe_vdm_send_request_entry,
-		.run   = pe_vdm_send_request_run,
-		.exit  = pe_vdm_send_request_exit,
-	},
 	[PE_VDM_IDENTITY_REQUEST_CBL] = {
 		.entry  = pe_vdm_identity_request_cbl_entry,
 		.run    = pe_vdm_identity_request_cbl_run,
@@ -5900,10 +5913,6 @@ static const struct usb_state pe_states[] = {
 		.entry = pe_dr_snk_give_source_cap_entry,
 		.run = pe_dr_snk_give_source_cap_run,
 	},
-	[PE_SENDER_RESPONSE] = {
-		.entry = pe_sender_response_entry,
-		.run   = pe_sender_response_run,
-	},
 #ifdef CONFIG_USB_PD_REV30
 	[PE_FRS_SNK_SRC_START_AMS] = {
 		.entry = pe_frs_snk_src_start_ams_entry,
@@ -5932,12 +5941,6 @@ static const struct usb_state pe_states[] = {
 		.run   = pe_chunk_received_run,
 	},
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
-
-	/* Super States */
-	[PE_PRS_FRS_SHARED] = {
-		.entry = pe_prs_frs_shared_entry,
-		.exit  = pe_prs_frs_shared_exit,
-	},
 #endif /* CONFIG_USB_PD_REV30 */
 };
 

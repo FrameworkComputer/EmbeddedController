@@ -70,6 +70,11 @@
 
 /* List of all Policy Engine level states */
 enum usb_pe_state {
+	/* Super States */
+	PE_PRS_FRS_SHARED,
+	PE_SENDER_RESPONSE, /* AMS Start parent - runs SenderResponseTimer */
+	PE_VDM_SEND_REQUEST,
+
 	/* Normal States */
 	PE_SRC_STARTUP,
 	PE_SRC_DISCOVERY,
@@ -116,7 +121,6 @@ enum usb_pe_state {
 	PE_VCS_TURN_ON_VCONN_SWAP,
 	PE_VCS_TURN_OFF_VCONN_SWAP,
 	PE_VCS_SEND_PS_RDY_SWAP,
-	PE_VDM_SEND_REQUEST,
 	PE_VDM_IDENTITY_REQUEST_CBL,
 	PE_INIT_PORT_VDM_IDENTITY_REQUEST,
 	PE_INIT_VDM_SVIDS_REQUEST,
@@ -131,9 +135,6 @@ enum usb_pe_state {
 	PE_DR_SNK_GET_SINK_CAP,
 	PE_DR_SNK_GIVE_SOURCE_CAP,
 
-	/* AMS Start parent - runs SenderResponseTimer */
-	PE_SENDER_RESPONSE,
-
 	/* PD3.0 only states below here*/
 	PE_FRS_SNK_SRC_START_AMS,
 	PE_GIVE_BATTERY_CAP,
@@ -141,9 +142,6 @@ enum usb_pe_state {
 	PE_SEND_ALERT,
 	PE_SRC_CHUNK_RECEIVED,
 	PE_SNK_CHUNK_RECEIVED,
-
-	/* Super States */
-	PE_PRS_FRS_SHARED,
 };
 
 void set_state_pe(const int port, const enum usb_pe_state new_state);
