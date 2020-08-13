@@ -19,6 +19,14 @@
 #define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
 #endif
 
+#ifdef BOARD_VOLTEER_NPCX797FC
+/*
+ * The RAM and flash size combination on the the NPCX797FC does not leave
+ * any unused flash space that can be used to store the .init_rom section.
+ */
+#undef CONFIG_CHIP_INIT_ROM_REGION
+#endif
+
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
