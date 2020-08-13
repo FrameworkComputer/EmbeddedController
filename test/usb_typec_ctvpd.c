@@ -1523,7 +1523,6 @@ void run_test(int argc, char **argv)
 
 	/* Do basic state machine validity checks last. */
 	RUN_TEST(test_tc_no_parent_cycles);
-	RUN_TEST(test_tc_no_empty_state);
 	RUN_TEST(test_tc_all_states_named);
 
 	/*
@@ -1532,7 +1531,6 @@ void run_test(int argc, char **argv)
 	 * te PE statemachine here so we don't have to create another test exe
 	 */
 	RUN_TEST(test_pe_no_parent_cycles);
-	RUN_TEST(test_pe_no_empty_state);
 	RUN_TEST(test_pe_all_states_named);
 
 	test_print_result();

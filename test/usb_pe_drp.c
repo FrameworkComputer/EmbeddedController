@@ -354,7 +354,6 @@ void run_test(int argc, char **argv)
 
 	/* Do basic state machine validity checks last. */
 	RUN_TEST(test_pe_no_parent_cycles);
-	RUN_TEST(test_pe_no_empty_state);
 
 	test_print_result();
 }
