@@ -346,7 +346,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_POWER_DELIVERY
 #endif
 
-#if defined(TEST_USB_PE_DRP) || defined(TEST_USB_PE_DRP_NOEXTENDED)
+#if defined(TEST_USB_PE_DRP_OLD) || defined(TEST_USB_PE_DRP_OLD_NOEXTENDED)
 #define CONFIG_TEST_USB_PE_SM
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PE_SM
@@ -355,7 +355,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #undef CONFIG_USB_PRL_SM
 #define CONFIG_USB_PD_REV30
 
-#if defined(TEST_USB_PE_DRP)
+#if defined(TEST_USB_PE_DRP_OLD)
 #define CONFIG_USB_PD_EXTENDED_MESSAGES
 #endif
 
