@@ -3125,7 +3125,7 @@ void pd_task(void *u)
 		evt = task_wait_event(timeout);
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-		if (evt & PD_EXIT_LOW_POWER_EVENT_MASK)
+		if (evt & (PD_EXIT_LOW_POWER_EVENT_MASK | TASK_EVENT_WAKE))
 			exit_low_power_mode(port);
 		if (evt & PD_EVENT_DEVICE_ACCESSED)
 			handle_device_access(port);

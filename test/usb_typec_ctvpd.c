@@ -460,10 +460,10 @@ static int test_vpd_host_src_detection_vbus(void)
 
 	host_connect_source(VBUS_0);
 
-	wait_for_state_change(port, 10 * MSEC);
-
-	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
-
+	/*
+	 * The state changes from UNATTACHED_SNK to ATTACH_WAIT_SNK immediately
+	 * if Rp is detected.
+	 */
 	wait_for_state_change(port, 10 * MSEC);
 
 	TEST_ASSERT(get_state_tc(port) == TC_ATTACH_WAIT_SNK);
@@ -523,11 +523,12 @@ static int test_vpd_host_src_detection_vconn(void)
 	 * Host Port VCONN Removed
 	 */
 
+	mock_set_host_cc_source_voltage(0);
 	mock_set_vconn(VCONN_0);
 
 	wait_for_state_change(port, 10 * MSEC);
 
-	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
+	TEST_EQ(get_state_tc(port), TC_UNATTACHED_SNK, "%d");
 
 	host_disconnect_source();
 
@@ -639,13 +640,12 @@ static int test_vpd_host_src_detection_message_reception(void)
 	 * Host Port VBUS Removed
 	 */
 
-	host_connect_source(VBUS_0);
+	host_disconnect_source();
 
 	wait_for_state_change(port, 100 * MSEC);
 
 	TEST_EQ(get_state_tc(port), TC_UNATTACHED_SNK, "%d");
 
-	host_disconnect_source();
 
 	return EC_SUCCESS;
 }
@@ -760,32 +760,28 @@ static int test_ctvpd_behavior_case1(void)
 	TEST_ASSERT(ct_connect_source(CC2, VBUS_0));
 
 	wait_for_state_change(port, 40 * MSEC);
-	TEST_ASSERT(get_state_tc(port) == TC_CT_ATTACH_WAIT_VPD);
+	TEST_EQ(get_state_tc(port), TC_CT_ATTACH_WAIT_VPD, "%d");
 
 	/* Remove Power Source */
 	TEST_ASSERT(ct_disconnect_source());
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_state_tc(port) == TC_CT_UNATTACHED_VPD);
+	TEST_EQ(get_state_tc(port), TC_CT_UNATTACHED_VPD, "%d");
 
 	/* Attach Sink */
 	TEST_ASSERT(ct_connect_sink(CC1, SRC_CON_DEF));
 
-	wait_for_state_change(port, PD_T_DRP_SNK);
-
-	TEST_ASSERT(get_state_tc(port) == TC_CT_UNATTACHED_UNSUPPORTED);
-
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_state_tc(port) == TC_CT_ATTACH_WAIT_UNSUPPORTED);
+	TEST_EQ(get_state_tc(port), TC_CT_ATTACH_WAIT_UNSUPPORTED, "%d");
 
 	/* Remove VCONN (Host detach) */
 	mock_set_vconn(VCONN_0);
 
 	wait_for_state_change(port, 40 * MSEC);
 
-	TEST_ASSERT(get_state_tc(port) == TC_UNATTACHED_SNK);
+	TEST_EQ(get_state_tc(port), TC_UNATTACHED_SNK, "%d");
 
 	return EC_SUCCESS;
 }

@@ -509,10 +509,6 @@ static int simulate_send_ctrl_msg_request_from_pe(int port,
 	prl_send_ctrl_msg(port, type, msg_type);
 	cycle_through_state_machine(port, 1, MSEC);
 
-	/* Soft reset takes another iteration through the state machine */
-	if (msg_type == PD_CTRL_SOFT_RESET)
-		cycle_through_state_machine(port, 1, MSEC);
-
 	return verify_ctrl_msg_transmission(port, msg_type);
 }
 

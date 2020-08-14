@@ -19,20 +19,18 @@
 /* PD Host command timeout */
 #define PD_HOST_COMMAND_TIMEOUT_US SECOND
 
-#ifdef CONFIG_USB_PD_PORT_MAX_COUNT
 /*
  * Define PD_PORT_TO_TASK_ID() and TASK_ID_TO_PD_PORT() macros to
  * go between PD port number and task ID. Assume that TASK_ID_PD_C0 is the
  * lowest task ID and IDs are on a continuous range.
  */
-#ifdef HAS_TASK_PD_C0
+#if defined(HAS_TASK_PD_C0) && defined(CONFIG_USB_PD_PORT_MAX_COUNT)
 #define PD_PORT_TO_TASK_ID(port) (TASK_ID_PD_C0 + (port))
 #define TASK_ID_TO_PD_PORT(id) ((id) - TASK_ID_PD_C0)
 #else
 #define PD_PORT_TO_TASK_ID(port) -1 /* stub task ID */
 #define TASK_ID_TO_PD_PORT(id) 0
-#endif /* HAS_TASK_PD_C0 */
-#endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
+#endif /* CONFIG_USB_PD_PORT_MAX_COUNT && HAS_TASK_PD_C0 */
 
 enum pd_rx_errors {
 	PD_RX_ERR_INVAL = -1,           /* Invalid packet */
@@ -75,8 +73,7 @@ enum pd_rx_errors {
 #define PD_EXIT_LOW_POWER_EVENT_MASK \
 	(PD_EVENT_CC | \
 	 PD_EVENT_UPDATE_DUAL_ROLE | \
-	 PD_EVENT_POWER_STATE_CHANGE | \
-	 TASK_EVENT_WAKE)
+	 PD_EVENT_POWER_STATE_CHANGE)
 
 /* --- PD data message helpers --- */
 #define PDO_MAX_OBJECTS   7

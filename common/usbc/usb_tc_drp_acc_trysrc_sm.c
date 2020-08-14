@@ -1439,6 +1439,7 @@ void tc_event_check(int port, int evt)
 
 	if (evt & PD_EXIT_LOW_POWER_EVENT_MASK)
 		TC_SET_FLAG(port, TC_FLAGS_CHECK_CONNECTION);
+
 	if (evt & PD_EVENT_DEVICE_ACCESSED)
 		handle_device_access(port);
 
