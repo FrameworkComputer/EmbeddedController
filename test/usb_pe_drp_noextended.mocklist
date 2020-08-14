@@ -1,0 +1,13 @@
+/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ #define CONFIG_TEST_MOCK_LIST  \
+	MOCK(USB_TC_SM) \
+	MOCK(USB_PD) \
+	MOCK(TCPC) \
+	MOCK(USB_MUX) \
+	MOCK(USB_PD_DPM) \
+	MOCK(DP_ALT_MODE) \
+	MOCK(USB_PRL)

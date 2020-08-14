@@ -19,6 +19,8 @@ struct mock_tc_port_t {
 	int msg_rx_id;
 	enum tcpm_transmit_type sop;
 	enum tcpc_rp_value lcl_rp;
+	int attached_snk;
+	int attached_src;
 };
 
 extern struct mock_tc_port_t mock_tc_port[CONFIG_USB_PD_PORT_MAX_COUNT];

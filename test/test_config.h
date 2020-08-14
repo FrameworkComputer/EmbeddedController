@@ -378,6 +378,30 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USBC_SS_MUX
 #endif
 
+#if defined(TEST_USB_PE_DRP) || defined(TEST_USB_PE_DRP_NOEXTENDED)
+#define CONFIG_TEST_USB_PE_SM
+#define CONFIG_USB_PD_PORT_MAX_COUNT 1
+#define CONFIG_USB_PE_SM
+#define CONFIG_USB_PID 0x5036
+#define CONFIG_USB_POWER_DELIVERY
+#undef CONFIG_USB_PRL_SM
+#define CONFIG_USB_PD_REV30
+
+#if defined(TEST_USB_PE_DRP)
+#define CONFIG_USB_PD_EXTENDED_MESSAGES
+#endif
+
+#define CONFIG_USB_PD_TCPMV2
+#define CONFIG_USB_PD_DECODE_SOP
+#undef CONFIG_USB_TYPEC_SM
+#define CONFIG_USBC_VCONN
+#define PD_VCONN_SWAP_DELAY 5000 /* us */
+#define CONFIG_USB_PD_DISCHARGE_GPIO
+#undef CONFIG_USB_PD_HOST_CMD
+#define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USBC_SS_MUX
+#endif
+
 /* Common TypeC tests defines */
 #if defined(TEST_USB_TYPEC_VPD) || \
 	defined(TEST_USB_TYPEC_CTVPD)
