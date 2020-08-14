@@ -5134,6 +5134,33 @@ struct __ec_align4 ec_response_ec_codec_wov_read_audio_shm {
 };
 
 /*****************************************************************************/
+/* Commands for PoE PSE controller */
+
+#define EC_CMD_PSE 0x00C0
+
+enum ec_pse_subcmd {
+	EC_PSE_STATUS = 0x0,
+	EC_PSE_ENABLE = 0x1,
+	EC_PSE_DISABLE = 0x2,
+	EC_PSE_SUBCMD_COUNT,
+};
+
+struct __ec_align1 ec_params_pse {
+	uint8_t cmd;	/* enum ec_pse_subcmd */
+	uint8_t port;	/* PSE port */
+};
+
+enum ec_pse_status {
+	EC_PSE_STATUS_DISABLED = 0x0,
+	EC_PSE_STATUS_ENABLED = 0x1,
+	EC_PSE_STATUS_POWERED = 0x2,
+};
+
+struct __ec_align1 ec_response_pse_status {
+	uint8_t status;	/* enum ec_pse_status */
+};
+
+/*****************************************************************************/
 /* System commands */
 
 /*

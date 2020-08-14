@@ -12,6 +12,7 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "string.h"
 #include "timer.h"
@@ -20,10 +21,13 @@
 #define LTC4291_I2C_ADDR	0x2C
 
 #define LTC4291_REG_SUPEVN_COR	0x0B
+#define LTC4291_REG_STATPWR	0x10
 #define LTC4291_REG_STATPIN	0x11
 #define LTC4291_REG_OPMD	0x12
 #define LTC4291_REG_DISENA	0x13
 #define LTC4291_REG_DETENA	0x14
+#define LTC4291_REG_DETPB	0x18
+#define LTC4291_REG_PWRPB	0x19
 #define LTC4291_REG_RSTPB	0x1A
 #define LTC4291_REG_ID		0x1B
 #define LTC4291_REG_DEVID	0x43
@@ -31,9 +35,15 @@
 #define LTC4291_REG_HPMD2	0x4B
 #define LTC4291_REG_HPMD3	0x50
 #define LTC4291_REG_HPMD4	0x55
+#define LTC4291_REG_LPWRPB	0x6E
 
 #define LTC4291_FLD_STATPIN_AUTO	BIT(0)
 #define LTC4291_FLD_RSTPB_RSTALL	BIT(4)
+
+#define LTC4291_STATPWR_ON_PORT(port)	(0x01 << (port))
+#define LTC4291_DETENA_EN_PORT(port)	(0x11 << (port))
+#define LTC4291_DETPB_EN_PORT(port)	(0x11 << (port))
+#define LTC4291_PWRPB_OFF_PORT(port)	(0x10 << (port))
 
 #define LTC4291_OPMD_AUTO	0xFF
 #define LTC4291_DISENA_ALL	0x0F
@@ -43,7 +53,9 @@
 #define LTC4291_HPMD_MIN	0x00
 #define LTC4291_HPMD_MAX	0xA8
 
-#define LTC4291_RESET_DELAY_US	20000
+#define LTC4291_PORT_MAX	4
+
+#define LTC4291_RESET_DELAY_US	(20 * MSEC)
 
 #define I2C_PSE_READ(reg, data) \
 	i2c_read8(I2C_PORT_PSE, LTC4291_I2C_ADDR, LTC4291_REG_##reg, (data))
@@ -79,6 +91,18 @@ static int pse_port_hpmd[4] = {
 	LTC4291_HPMD_MIN,
 	LTC4291_HPMD_MIN,
 };
+
+static int pse_port_enable(int port)
+{
+	/* Enable detection and classification */
+	return I2C_PSE_WRITE(DETPB, LTC4291_DETPB_EN_PORT(port));
+}
+
+static int pse_port_disable(int port)
+{
+	/* Request power off (this also disables detection/classification) */
+	return I2C_PSE_WRITE(PWRPB, LTC4291_PWRPB_OFF_PORT(port));
+}
 
 static int pse_init_worker(void)
 {
@@ -117,7 +141,7 @@ static int pse_init_worker(void)
 		return err;
 
 	/* Set maximum power each port is allowed to allocate. */
-	for (port = 0; port < 4; port++) {
+	for (port = 0; port < LTC4291_PORT_MAX; port++) {
 		err = pse_write_hpmd(port, pse_port_hpmd[port]);
 		if (err != 0)
 			return err;
@@ -164,18 +188,76 @@ static int command_pse(int argc, char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	port = atoi(argv[1]);
-	if (port < 1 || port > 4)
+	if (port < 0 || port >= LTC4291_PORT_MAX)
 		return EC_ERROR_PARAM1;
 
 	if (!strncmp(argv[2], "off", 3))
-		return EC_ERROR_UNIMPLEMENTED;
+		return pse_port_disable(port);
+	else if (!strncmp(argv[2], "on", 2))
+		return pse_port_enable(port);
 	else if (!strncmp(argv[2], "min", 3))
-		return pse_write_hpmd(port - 1, LTC4291_HPMD_MIN);
+		return pse_write_hpmd(port, LTC4291_HPMD_MIN);
 	else if (!strncmp(argv[2], "max", 3))
-		return pse_write_hpmd(port - 1, LTC4291_HPMD_MAX);
+		return pse_write_hpmd(port, LTC4291_HPMD_MAX);
 	else
 		return EC_ERROR_PARAM2;
 }
 DECLARE_CONSOLE_COMMAND(pse, command_pse,
-			"<port# 1-4> <off | min | max>",
+			"<port# 0-3> <off | on | min | max>",
 			"Set PSE port power");
+
+static int ec_command_pse_status(int port, uint8_t *status)
+{
+	int detena, statpwr;
+	int err;
+
+	err = I2C_PSE_READ(DETENA, &detena);
+	if (err != 0)
+		return err;
+
+	err = I2C_PSE_READ(STATPWR, &statpwr);
+	if (err != 0)
+		return err;
+
+	if ((detena & LTC4291_DETENA_EN_PORT(port)) == 0)
+		*status = EC_PSE_STATUS_DISABLED;
+	else if ((statpwr & LTC4291_STATPWR_ON_PORT(port)) == 0)
+		*status = EC_PSE_STATUS_ENABLED;
+	else
+		*status = EC_PSE_STATUS_POWERED;
+
+	return 0;
+}
+
+static enum ec_status ec_command_pse(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_pse *p = args->params;
+	int err = 0;
+
+	if (p->port >= LTC4291_PORT_MAX)
+		return EC_RES_INVALID_PARAM;
+
+	switch (p->cmd) {
+	case EC_PSE_STATUS: {
+		struct ec_response_pse_status *r = args->response;
+
+		args->response_size = sizeof(*r);
+		err = ec_command_pse_status(p->port, &r->status);
+		break;
+	}
+	case EC_PSE_ENABLE:
+		err = pse_port_enable(p->port);
+		break;
+	case EC_PSE_DISABLE:
+		err = pse_port_disable(p->port);
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+
+	if (err)
+		return EC_RES_ERROR;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PSE, ec_command_pse, EC_VER_MASK(0));
