@@ -726,10 +726,6 @@ int flash_pre_init(void)
 
 void flash_lock_mapped_storage(int lock)
 {
-	/* Must not call mutex_lock() before task_start(). */
-	if (!task_start_called())
-		return;
-
 	if (lock)
 		mutex_lock(&flash_lock);
 	else

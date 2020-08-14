@@ -858,14 +858,23 @@ static void __nvic_init_irqs(void)
 void mutex_lock(struct mutex *mtx)
 {
 	uint32_t value;
-	uint32_t id = 1 << task_get_current();
+	uint32_t id;
 
 	/*
 	 * mutex_lock() must not be used in interrupt context (because we wait
-	 * if there is contention). Task ID is not valid before task_start()
-	 * (since current_task is scratchpad).
+	 * if there is contention).
 	 */
-	ASSERT(!in_interrupt_context() && task_start_called());
+	ASSERT(!in_interrupt_context());
+
+	/*
+	 * Task ID is not valid before task_start() (since current_task is
+	 * scratchpad), and no need for mutex locking before task switching has
+	 * begun.
+	 */
+	if (!task_start_called())
+		return;
+
+	id = 1 << task_get_current();
 
 	atomic_or(&mtx->waiters, id);
 
