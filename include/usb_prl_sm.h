@@ -22,6 +22,15 @@
 int prl_is_running(int port);
 
 /**
+ * Returns true if the Protocol Layer State Machine is in the
+ * process of transmitting or receiving chunked messages.
+ *
+ * @param port USB-C port number
+ * @return true if sending or receiving a chunked message, else false
+ */
+bool prl_is_busy(int port);
+
+/**
  * Sets the debug level for the PRL layer
  *
  * @param level debug level

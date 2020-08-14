@@ -11,6 +11,7 @@
 #include "timer.h"
 #include "usb_emsg.h"
 #include "usb_mux.h"
+#include "usb_pd.h"
 #include "usb_pe.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
@@ -28,6 +29,13 @@ const struct svdm_response svdm_rsp = {
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT];
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+static bool prl_is_busy_flag;
+
+bool prl_is_busy(int port)
+{
+	return prl_is_busy_flag;
+}
 
 int board_vbus_source_enabled(int port)
 {
@@ -304,6 +312,56 @@ test_static int test_extended_message_not_supported_snk(void)
 	return test_extended_message_not_supported();
 }
 
+test_static int test_prl_is_busy(enum pd_power_role pr)
+{
+	int ready_state;
+
+	if (pr == PD_ROLE_SOURCE)
+		ready_state = PE_SRC_READY;
+	else
+		ready_state = PE_SNK_READY;
+
+	/* Start in ready state with Protocol Layer busy */
+	TEST_ASSERT(get_state_pe(PORT0) == ready_state);
+	prl_is_busy_flag = true;
+
+	/* Make a request to perform a Port Discovery */
+	pe_dpm_request(PORT0, DPM_REQUEST_PORT_DISCOVERY);
+	task_wait_event(10 * MSEC);
+	task_wait_event(10 * MSEC);
+
+	/*
+	 * We should still be in ready state because the Protocol
+	 * Layer is busy and can't send our message at this time.
+	 */
+	TEST_ASSERT(get_state_pe(PORT0) == ready_state);
+
+	/* Protocol Layer is not busy now */
+	prl_is_busy_flag = false;
+	task_wait_event(10 * MSEC);
+	task_wait_event(10 * MSEC);
+
+	/*
+	 * The Protocol Layer is no longer busy so we can switch to the
+	 * state that will handle sending the Port Discovery messages.
+	 */
+	TEST_ASSERT(get_state_pe(PORT0) != ready_state);
+
+	return EC_SUCCESS;
+}
+
+test_static int test_prl_is_busy_snk(void)
+{
+	setup_sink();
+	return test_prl_is_busy(PD_ROLE_SINK);
+}
+
+test_static int test_prl_is_busy_src(void)
+{
+	setup_source();
+	return test_prl_is_busy(PD_ROLE_SOURCE);
+}
+
 static int test_send_caps_error(void)
 {
 	/*
@@ -349,9 +407,11 @@ void run_test(int argc, char **argv)
 #ifndef CONFIG_USB_PD_EXTENDED_MESSAGES
 	RUN_TEST(test_extended_message_not_supported_src);
 	RUN_TEST(test_extended_message_not_supported_snk);
+#else
+	RUN_TEST(test_prl_is_busy_src);
+	RUN_TEST(test_prl_is_busy_snk);
 #endif
 	RUN_TEST(test_send_caps_error);
-
 	/* Do basic state machine validity checks last. */
 	RUN_TEST(test_pe_no_parent_cycles);
 
