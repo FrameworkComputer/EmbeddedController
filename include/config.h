@@ -4198,7 +4198,7 @@
 #undef CONFIG_USB_PD_TRY_SRC
 
 /* Set the default minimum battery percentage for Try.Src to be enabled */
-#define CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC 1
+#define CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC 5
 
 /*
  * Set the minimum battery percentage to allow a PD port to send resets as a

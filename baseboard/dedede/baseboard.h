@@ -174,14 +174,6 @@
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_PD_TRY_SRC
-/*
- * Don't attempt Try.Src if the battery is too low.  Even batteries which report
- * 1% state of charge can sometimes disable their discharge FET if the load is
- * too much.  Therefore, set this threshold a bit higher.  5% should leave
- * plenty of margin.
- */
-#undef CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC
-#define CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC 5
 /* #define CONFIG_USB_PD_VBUS_DETECT_CHARGER */
 #define CONFIG_USB_PD_VBUS_MEASURE_CHARGER
 #define CONFIG_USB_PD_DECODE_SOP
