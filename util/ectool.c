@@ -228,6 +228,8 @@ const char help_str[] =
 	"      Prints power-related information\n"
 	"  protoinfo\n"
 	"       Prints EC host protocol information\n"
+	"  pse\n"
+	"      Get and set PoE PSE port power status\n"
 	"  pstoreinfo\n"
 	"      Prints information on the EC host persistent storage\n"
 	"  pstoreread <offset> <size> <outfile>\n"
@@ -6310,6 +6312,69 @@ int cmd_power_info(int argc, char *argv[])
 }
 
 
+int cmd_pse(int argc, char *argv[])
+{
+	struct ec_params_pse p;
+	struct ec_response_pse_status r;
+	int rsize = 0;
+	char *e;
+	int rv;
+
+	if (argc < 2 || argc > 3 || !strcmp(argv[1], "help")) {
+		printf("Usage: %s <port> [<subcmd>]\n", argv[0]);
+		printf("'pse <port> [status]' - Get port status\n");
+		printf("'pse <port> disable' - Disable port\n");
+		printf("'pse <port> enable' - Enable port\n");
+		return -1;
+	}
+
+	p.port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port.\n");
+		return -1;
+	}
+
+	if (argc == 2 || !strcmp(argv[2], "status")) {
+		p.cmd = EC_PSE_STATUS;
+		rsize = sizeof(r);
+	} else if (!strcmp(argv[2], "disable")) {
+		p.cmd = EC_PSE_DISABLE;
+	} else if (!strcmp(argv[2], "enable")) {
+		p.cmd = EC_PSE_ENABLE;
+	} else {
+		fprintf(stderr, "Unknown command: %s\n", argv[2]);
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_PSE, 0, &p, sizeof(p), &r, rsize);
+	if (rv < 0)
+		return rv;
+
+	if (p.cmd == EC_PSE_STATUS) {
+		const char *status;
+
+		switch (r.status) {
+		case EC_PSE_STATUS_DISABLED:
+			status = "disabled";
+			break;
+		case EC_PSE_STATUS_ENABLED:
+			status = "enabled";
+			break;
+		case EC_PSE_STATUS_POWERED:
+			status = "powered";
+			break;
+		default:
+			status = "unknown";
+			break;
+		}
+
+		printf("Port %d: %s\n", p.port, status);
+	}
+
+	return 0;
+}
+
+
 int cmd_pstore_info(int argc, char *argv[])
 {
 	struct ec_response_pstore_info r;
@@ -9717,6 +9782,7 @@ const struct command commands[] = {
 	{"pdwritelog", cmd_pd_write_log},
 	{"powerinfo", cmd_power_info},
 	{"protoinfo", cmd_proto_info},
+	{"pse", cmd_pse},
 	{"pstoreinfo", cmd_pstore_info},
 	{"pstoreread", cmd_pstore_read},
 	{"pstorewrite", cmd_pstore_write},
