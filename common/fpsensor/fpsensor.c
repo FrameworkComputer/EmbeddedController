@@ -830,10 +830,13 @@ int command_fpclear(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(fpclear, command_fpclear, NULL,
 			"Clear fingerprint sensor context");
 
-
 int command_fpmaintenance(int argc, char **argv)
 {
+#ifdef HAVE_FP_PRIVATE_DRIVER
 	return fp_maintenance();
+#else
+	return EC_SUCCESS;
+#endif /* #ifdef HAVE_FP_PRIVATE_DRIVER */
 }
 DECLARE_CONSOLE_COMMAND(fpmaintenance, command_fpmaintenance, NULL,
 			"Run fingerprint sensor maintenance");

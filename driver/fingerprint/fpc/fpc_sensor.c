@@ -14,7 +14,15 @@
 #else
 #error "Sensor type not defined!"
 #endif
-#include "fpc_sensor.h"
+
+/*
+ * TODO(b/164174822): We cannot include fpc_sensor.h here, since
+ * the parent fpsensor.h header conditionally excludes fpc_sensor.h
+ * and replaces its content with default macros.
+ * Fix this header discrepancy.
+ *
+ * #include "fpc_sensor.h"
+ */
 
 int fpc_fp_maintenance(uint16_t *error_state)
 {
