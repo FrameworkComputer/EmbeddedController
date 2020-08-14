@@ -33,9 +33,6 @@
 	#define CONFIG_SPI_FLASH_REGS
 	#define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 #elif defined(VARIANT_DEDEDE_EC_IT8320)
-	/* Flash clock must be > (50Mhz / 2) */
-	#define CONFIG_IT83XX_FLASH_CLOCK_48MHZ
-
 	#define I2C_PORT_EEPROM		IT83XX_I2C_CH_A
 	#define I2C_PORT_BATTERY	IT83XX_I2C_CH_B
 	#define I2C_PORT_SENSOR		IT83XX_I2C_CH_C

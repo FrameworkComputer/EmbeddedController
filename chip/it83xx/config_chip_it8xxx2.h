@@ -14,6 +14,7 @@
 #define CHIP_ILM_DLM_ORDER
 /* The base address of EC interrupt controller registers. */
 #define CHIP_EC_INTC_BASE           0x00F03F00
+#define CONFIG_IT83XX_FLASH_CLOCK_48MHZ
 /*
  * ILM/DLM size register.
  * bit[3-0] ILM size:
