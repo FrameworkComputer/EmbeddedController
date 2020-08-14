@@ -1116,7 +1116,17 @@ enum pd_ctrl_msg_type {
 #define BSDO_DISCHARGING BIT(10)
 #define BSDO_IDLE        BIT(11)
 
-/* Get Battery Cap Message fields for REV 3.0 */
+/* Battery Capability offsets for 16-bit array indexes */
+#define BCDB_VID	0
+#define BCDB_PID	1
+#define BCDB_DESIGN_CAP	2
+#define BCDB_FULL_CAP	3
+#define BCDB_BATT_TYPE	4
+
+/*
+ * Get Battery Cap Message fields for REV 3.0 (assumes extended header is
+ * present in first two bytes)
+ */
 #define BATT_CAP_REF(n)  (((n) >> 16) & 0xff)
 
 /* Extended message type for REV 3.0 */

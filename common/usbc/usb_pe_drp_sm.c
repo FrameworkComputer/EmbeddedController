@@ -3535,31 +3535,31 @@ static void pe_src_ping_run(int port)
  */
 static void pe_give_battery_cap_entry(int port)
 {
-	uint32_t payload = *(uint32_t *)(&rx_emsg[port].buf);
+	uint8_t *payload = rx_emsg[port].buf;
 	uint16_t *msg = (uint16_t *)tx_emsg[port].buf;
 
 	if (!IS_ENABLED(CONFIG_BATTERY))
 		return;
 	print_current_state(port);
 
-	/* msg[0] - extended header is set by Protocol Layer */
-
 	/* Set VID */
-	msg[1] = USB_VID_GOOGLE;
+	msg[BCDB_VID] = USB_VID_GOOGLE;
 
 	/* Set PID */
-	msg[2] = CONFIG_USB_PID;
+	msg[BCDB_PID] = CONFIG_USB_PID;
 
 	if (battery_is_present()) {
 		/*
 		 * We only have one fixed battery,
 		 * so make sure batt cap ref is 0.
+		 * This value is the first byte after the headers.
 		 */
-		if (BATT_CAP_REF(payload) != 0) {
+		if (payload[0] != 0) {
 			/* Invalid battery reference */
-			msg[3] = 0;
-			msg[4] = 0;
-			msg[5] = 1;
+			msg[BCDB_DESIGN_CAP] = 0;
+			msg[BCDB_FULL_CAP] = 0;
+			/* Set invalid battery bit in response bit 0, byte 8 */
+			msg[BCDB_BATT_TYPE] = 1;
 		} else {
 			uint32_t v;
 			uint32_t c;
@@ -3572,7 +3572,7 @@ static void pe_give_battery_cap_entry(int port)
 			 * the Battery is unable to report its Design Capacity,
 			 * it shall return 0xFFFF
 			 */
-			msg[3] = 0xffff;
+			msg[BCDB_DESIGN_CAP] = 0xffff;
 
 			/*
 			 * The Battery Last Full Charge Capacity field shall
@@ -3583,7 +3583,7 @@ static void pe_give_battery_cap_entry(int port)
 			 * report its Design Capacity, the Battery Last Full
 			 * Charge Capacity field shall be set to 0xFFFF.
 			 */
-			msg[4] = 0xffff;
+			msg[BCDB_FULL_CAP] = 0xffff;
 
 			if (battery_design_voltage(&v) == 0) {
 				if (battery_design_capacity(&c) == 0) {
@@ -3591,8 +3591,9 @@ static void pe_give_battery_cap_entry(int port)
 					 * Wh = (c * v) / 1000000
 					 * 10th of a Wh = Wh * 10
 					 */
-					msg[3] = DIV_ROUND_NEAREST((c * v),
-								100000);
+					msg[BCDB_DESIGN_CAP] =
+						DIV_ROUND_NEAREST((c * v),
+								  100000);
 				}
 
 				if (battery_full_charge_capacity(&c) == 0) {
@@ -3600,11 +3601,22 @@ static void pe_give_battery_cap_entry(int port)
 					 * Wh = (c * v) / 1000000
 					 * 10th of a Wh = Wh * 10
 					 */
-					msg[4] = DIV_ROUND_NEAREST((c * v),
-								100000);
+					msg[BCDB_FULL_CAP] =
+						DIV_ROUND_NEAREST((c * v),
+								  100000);
 				}
 			}
+			/* Valid battery selected */
+			msg[BCDB_BATT_TYPE] = 0;
 		}
+	} else {
+		/* Battery not present indicated by 0's in the capacity */
+		msg[BCDB_DESIGN_CAP] = 0;
+		msg[BCDB_FULL_CAP] = 0;
+		if (payload[0] != 0)
+			msg[BCDB_BATT_TYPE] = 1;
+		else
+			msg[BCDB_BATT_TYPE] = 0;
 	}
 
 	/* Extended Battery Cap data is 9 bytes */
@@ -3626,7 +3638,7 @@ static void pe_give_battery_cap_run(int port)
  */
 static void pe_give_battery_status_entry(int port)
 {
-	uint32_t payload = *(uint32_t *)(&rx_emsg[port].buf);
+	uint8_t *payload = rx_emsg[port].buf;
 	uint32_t *msg = (uint32_t *)tx_emsg[port].buf;
 
 	if (!IS_ENABLED(CONFIG_BATTERY))
@@ -3637,9 +3649,11 @@ static void pe_give_battery_status_entry(int port)
 		/*
 		 * We only have one fixed battery,
 		 * so make sure batt cap ref is 0.
+		 * This value is the first byte after the headers.
 		 */
-		if (BATT_CAP_REF(payload) != 0) {
+		if (payload[0] != 0) {
 			/* Invalid battery reference */
+			*msg = BSDO_CAP(BSDO_CAP_UNKNOWN);
 			*msg |= BSDO_INVALID;
 		} else {
 			uint32_t v;
@@ -3647,13 +3661,13 @@ static void pe_give_battery_status_entry(int port)
 
 			if (battery_design_voltage(&v) != 0 ||
 					battery_remaining_capacity(&c) != 0) {
-				*msg |= BSDO_CAP(BSDO_CAP_UNKNOWN);
+				*msg = BSDO_CAP(BSDO_CAP_UNKNOWN);
 			} else {
 				/*
 				 * Wh = (c * v) / 1000000
 				 * 10th of a Wh = Wh * 10
 				 */
-				*msg |= BSDO_CAP(DIV_ROUND_NEAREST((c * v),
+				*msg = BSDO_CAP(DIV_ROUND_NEAREST((c * v),
 								100000));
 			}
 
@@ -3679,6 +3693,8 @@ static void pe_give_battery_status_entry(int port)
 		}
 	} else {
 		*msg = BSDO_CAP(BSDO_CAP_UNKNOWN);
+		if (payload[0] != 0)
+			*msg |= BSDO_INVALID;
 	}
 
 	/* Battery Status data is 4 bytes */
