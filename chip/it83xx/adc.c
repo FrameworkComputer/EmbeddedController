@@ -308,6 +308,8 @@ static void adc_accuracy_initialization(void)
 {
 	/* bit3 : start adc accuracy initialization */
 	IT83XX_ADC_ADCSTS |= 0x08;
+	/* Enable automatic HW calibration. */
+	IT83XX_ADC_KDCTL |= IT83XX_ADC_AHCE;
 	/* short delay for adc accuracy initialization */
 	IT83XX_GCTRL_WNCKR = 0;
 	/* bit3 : stop adc accuracy initialization */
