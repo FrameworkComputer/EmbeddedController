@@ -406,7 +406,7 @@ static void write_usb_pd_support(FILE *vif)
 	yn = "YES";
 #endif
 
-	fprintf(vif, "USB_PD_Support: %s", yn);
+	fprintf(vif, "USB_PD_Support: %s\n", yn);
 }
 
 static void write_pd_port_type(FILE *vif, enum dtype type)
