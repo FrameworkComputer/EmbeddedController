@@ -110,6 +110,23 @@ MEMORY
 #endif
 }
 
+/*
+ * Convenience macros for determining the correct output memory section.
+ */
+#if !defined(CONFIG_FLASH_PHYSICAL)
+	#define EC_IMAGE_LMA_MEM_REGION		IROM
+	#define EC_IMAGE_VMA_MEM_REGION		IROM
+	#define DATA_LMA_MEM_REGION		IROM
+#else
+	#define EC_IMAGE_LMA_MEM_REGION		FLASH
+	#ifdef CONFIG_EXTERNAL_STORAGE
+		#define EC_IMAGE_VMA_MEM_REGION	CDRAM
+	#else
+		#define EC_IMAGE_VMA_MEM_REGION	FLASH
+	#endif
+	#define DATA_LMA_MEM_REGION		FLASH
+#endif
+
 SECTIONS
 {
 #if defined(SECTION_IS_RO) && defined(NPCX_RO_HEADER)
@@ -158,14 +175,9 @@ SECTIONS
 		KEEP(*(.lowpower_ram2))
 		. = ALIGN(4);
 		__flash_lplfw_end = .;
-	} > CDRAM AT > FLASH
-#else
-#	if !defined(CONFIG_FLASH_PHYSICAL)
-	} > IROM
-#	else
-	} > FLASH
-#	endif /* !CONFIG_FLASH_PHYSICAL */
-#endif
+#endif /* CONFIG_EXTERNAL_STORAGE */
+	} > EC_IMAGE_VMA_MEM_REGION AT > EC_IMAGE_LMA_MEM_REGION
+
 	. = ALIGN(4);
 	.rodata : {
 		/* Symbols defined here are declared in link_defs.h */
@@ -330,16 +342,7 @@ SECTIONS
 #endif
 
 		. = ALIGN(4);
-#if !defined(CONFIG_FLASH_PHYSICAL)
-	} > IROM
-#define DATA_LMA_MEM_REGION IROM
-#elif defined(CONFIG_EXTERNAL_STORAGE)
-	} > CDRAM AT > FLASH
-#define DATA_LMA_MEM_REGION FLASH
-#else
-	} > FLASH
-#define DATA_LMA_MEM_REGION FLASH
-#endif
+	} > EC_IMAGE_VMA_MEM_REGION AT > EC_IMAGE_LMA_MEM_REGION
 
 	__data_lma_start = .;
 
@@ -467,7 +470,9 @@ SECTIONS
 	 * __image_size is stored in the struct image_data header and used
 	 * in hash calcuations.
 	 */
-	__flash_used = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(FLASH);
+	__flash_used = LOADADDR(.data) + SIZEOF(.data) -
+		       ORIGIN(EC_IMAGE_LMA_MEM_REGION);
+	__image_size = __flash_used;
 
 #ifdef CONFIG_FLASH
         /*
@@ -485,7 +490,7 @@ SECTIONS
 	 * apparently because we're sending it into IRAM, not FLASH.
 	 * Verify that all sections linked into the FLASH region will fit.
 	 */
-	ASSERT((LENGTH(FLASH)
+	ASSERT((LENGTH(EC_IMAGE_LMA_MEM_REGION)
 #if defined(CONFIG_RWSIG) && defined(SECTION_IS_RO)
 	       - CONFIG_RO_PUBKEY_SIZE
 #endif
@@ -555,11 +560,6 @@ SECTIONS
 	 * FLASH region and the bytes used in the .init_rom section.
 	 */
 	__image_size = LENGTH(FLASH) + SIZEOF(.init_rom);
-#else
-	/*
-	 * Typical build: __image_size is the same as __flash_used.
-	 */
-	__image_size = __flash_used;
 #endif /* CONFIG_CHIP_INIT_ROM_REGION */
 
 #ifdef CONFIG_CHIP_MEMORY_REGIONS
