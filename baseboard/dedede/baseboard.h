@@ -26,7 +26,6 @@
 	/* NPCX7 config */
 	#define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
 	#define NPCX_TACH_SEL2    0  /* No tach. */
-	#define NPCX7_PWM1_SEL    1  /* GPIO C2 is used as PWM1. */
 
 	/* Internal SPI flash on NPCX7 */
 	#define CONFIG_FLASH_SIZE (512 * 1024)
@@ -141,9 +140,6 @@
 
 /* LED */
 #define CONFIG_LED_COMMON
-
-/* PWM */
-#define CONFIG_PWM
 
 /* SoC */
 #define CONFIG_BOARD_HAS_RTC_RESET

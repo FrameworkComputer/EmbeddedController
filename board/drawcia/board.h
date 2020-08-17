@@ -33,6 +33,9 @@
 #define CONFIG_OCPC
 #define CONFIG_OCPC_DEF_RBATT_MOHMS 5 /* R_DS(on) 5.3mOhm */
 
+/* PWM */
+#define CONFIG_PWM
+
 /* Sensors */
 #define CONFIG_ACCEL_BMA255		/* Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
