@@ -983,8 +983,9 @@ static enum ec_error_list sm5803_set_vsys_compensation(int chgnum,
 	rv |= main_write8(CHARGER_PRIMARY, 0x1F, 0x0);
 
 	/* Enable linear mode on the primary charger IC */
-	rv |= sm5803_flow1_update(CHARGER_PRIMARY, MASK_SET,
-				  SM5803_FLOW1_LINEAR_CHARGE_EN);
+	rv |= sm5803_flow1_update(CHARGER_PRIMARY,
+				  SM5803_FLOW1_LINEAR_CHARGE_EN,
+				  MASK_SET);
 
 	/* Start pre-regulation on auxiliary charger. */
 	rv |= chg_write8(chgnum, SM5803_REG_FLOW1, CHARGER_MODE_SINK);
