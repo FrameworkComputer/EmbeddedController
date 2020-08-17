@@ -74,7 +74,7 @@
 #define PMIC_RESIN_PULSE_LENGTH		(20 * MSEC)
 
 /* The timeout of the check if the system can boot AP */
-#define CAN_BOOT_AP_CHECK_TIMEOUT	(500 * MSEC)
+#define CAN_BOOT_AP_CHECK_TIMEOUT	(1500 * MSEC)
 
 /* Wait for polling if the system can boot AP */
 #define CAN_BOOT_AP_CHECK_WAIT		(100 * MSEC)
