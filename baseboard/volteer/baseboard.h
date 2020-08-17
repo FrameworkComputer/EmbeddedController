@@ -168,6 +168,15 @@
 #define CONFIG_CMD_USB_PD_PE
 
 /*
+ * Because of the CSE Lite, an extra cold AP reset is needed, and older cr50
+ * firmware will not be able to detect it because of updated cr50 pin straps.
+ * Therefore, the AP will require the EC to reset it so that the proper reset
+ * signal will be read and verstage can execute again.
+ */
+#define CONFIG_CMD_AP_RESET_LOG
+#define CONFIG_HOSTCMD_AP_RESET
+
+/*
  * The PS8815 TCPC was found to require a 50ms delay to consistently work
  * with non-PD chargers.  Override the default low-power mode exit delay.
  */
