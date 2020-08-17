@@ -19,23 +19,23 @@ const enum ec_led_id supported_led_ids[] = {
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 struct pwm_led led_color_map[] = {
-				/* Red, Green, Blue */
-	[EC_LED_COLOR_RED] =    {  100,   0,     0 },
-	[EC_LED_COLOR_GREEN] =  {    0, 100,     0 },
-	[EC_LED_COLOR_BLUE] =   {    0,   0,   100 },
+				/* Green, Red, Blue */
+	[EC_LED_COLOR_GREEN] =  {    100,   0,    0 },
+	[EC_LED_COLOR_RED] =    {      0, 100,    0 },
+	[EC_LED_COLOR_BLUE] =   {      0,   0,  100 },
 	/* The green LED seems to be brighter than the others, so turn down
 	 * green from its natural level for these secondary colors.
 	 */
-	[EC_LED_COLOR_YELLOW] = {  100,  70,     0 },
-	[EC_LED_COLOR_WHITE] =  {  100,  70,   100 },
-	[EC_LED_COLOR_AMBER] =  {  100,  20,     0 },
+	[EC_LED_COLOR_YELLOW] = {     70, 100,    0 },
+	[EC_LED_COLOR_WHITE] =  {     70, 100,  100 },
+	[EC_LED_COLOR_AMBER] =  {     20, 100,    0 },
 };
 
 struct pwm_led pwm_leds[] = {
 	/* 2 RGB diffusers controlled by 1 set of 3 channels. */
 	[PWM_LED0] = {
-		.ch0 = PWM_CH_LED3_RED,
-		.ch1 = PWM_CH_LED2_GREEN,
+		.ch0 = PWM_CH_LED3_GREEN,
+		.ch1 = PWM_CH_LED2_RED,
 		.ch2 = PWM_CH_LED1_BLUE,
 		.enable = &pwm_enable,
 		.set_duty = &pwm_set_duty,

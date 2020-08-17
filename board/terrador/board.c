@@ -121,12 +121,12 @@ const struct pwm_t pwm_channels[] = {
 		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
 		.freq = 2400,
 	},
-	[PWM_CH_LED2_GREEN] = {
+	[PWM_CH_LED2_RED] = {
 		.channel = 0,
 		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
 		.freq = 2400,
 	},
-	[PWM_CH_LED3_RED] = {
+	[PWM_CH_LED3_GREEN] = {
 		.channel = 1,
 		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
 		.freq = 2400,
