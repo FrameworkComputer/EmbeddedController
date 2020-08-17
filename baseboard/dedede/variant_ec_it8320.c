@@ -76,7 +76,7 @@ BUILD_ASSERT(ARRAY_SIZE(vcmp_list) == VCMP_COUNT);
 /* I2C Ports */
 const struct i2c_port_t i2c_ports[] = {
 	{
-		"eeprom", I2C_PORT_EEPROM, 1000, GPIO_EC_I2C_EEPROM_SCL,
+		"eeprom", I2C_PORT_EEPROM, 400, GPIO_EC_I2C_EEPROM_SCL,
 		GPIO_EC_I2C_EEPROM_SDA
 	},
 
