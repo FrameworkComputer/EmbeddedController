@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Configuration for Kukui */
+/* Configuration for Esche */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -119,8 +119,12 @@ enum charge_port {
 };
 
 enum battery_type {
-	BATTERY_DANAPACK_HIGHPOWER,
+	BATTERY_DANAPACK_ATL,
 	BATTERY_DANAPACK_COS,
+	BATTERY_SIMPLO_COS,
+	BATTERY_SIMPLO_HIGHPOWER,
+	BATTERY_SAMSUNG_SDI,
+	BATTERY_COS,
 	BATTERY_TYPE_COUNT,
 };
 
