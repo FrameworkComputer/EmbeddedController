@@ -446,6 +446,9 @@ static void sm5803_init(int chgnum)
 
 	/* Configure charger insertion interrupts */
 	rv |= main_write8(chgnum, SM5803_REG_INT1_EN, SM5803_INT1_CHG);
+	/* Enable end of charge interrupts for logging */
+	rv |= main_write8(chgnum, SM5803_REG_INT4_EN, SM5803_INT4_CHG_FAIL |
+						      SM5803_INT4_CHG_DONE);
 
 	/* Set TINT interrupts for 360 K and 330 K */
 	rv |= meas_write8(chgnum, SM5803_REG_TINT_HIGH_TH,
@@ -558,6 +561,18 @@ void sm5803_handle_interrupt(int chgnum)
 		 */
 	}
 
+	rv = main_read8(chgnum, SM5803_REG_INT4_REQ, &int_reg);
+	if (rv) {
+		CPRINTS("%s %d: Failed to read int4 register", CHARGER_NAME,
+			chgnum);
+		return;
+	}
+
+	if (int_reg & SM5803_INT4_CHG_FAIL)
+		CPRINTS("%s %d: CHG_FAIL_INT fired!!!", CHARGER_NAME, chgnum);
+
+	if (int_reg & SM5803_INT4_CHG_DONE)
+		CPRINTS("%s %d: CHG_DONE_INT fired!!!", CHARGER_NAME, chgnum);
 }
 
 static void sm5803_irq_deferred(void)
