@@ -35,6 +35,7 @@
 #include "pwm_chip.h"
 #include "switch.h"
 #include "system.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
 #include "thermistor.h"
@@ -696,4 +697,12 @@ void hdmi_hpd_interrupt(enum ioex_signal signal)
 {
 	/* Debounce for 2 msec. */
 	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
+}
+
+void board_gmr_tablet_switch_isr(enum gpio_signal signal)
+{
+	/* Board version more than 3, DUT support GMR sensor */
+	if (board_ver >= 3)
+		gmr_tablet_switch_isr(signal);
+
 }
