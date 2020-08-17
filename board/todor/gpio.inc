@@ -144,7 +144,6 @@ ALTERNATE(PIN_MASK(B, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                       
 /* This selects between an LED module on the motherboard and one on the daughter
  * board, to be controlled by LED_{1,2,3}_L. PWM allows driving both modules at
  * the same time. */
-ALTERNATE(PIN_MASK(6, BIT(0)), 0, MODULE_PWM, 0)                                     /* LED_SIDESEL_4_L */
 ALTERNATE(PIN_MASK(C, BIT(2) | BIT(3) | BIT(4)), 0, MODULE_PWM, 0)                   /* LED_{3,2,1}_L */
 
 /* Keyboard pins */

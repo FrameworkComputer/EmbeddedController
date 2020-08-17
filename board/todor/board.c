@@ -48,9 +48,7 @@ union volteer_cbi_fw_config fw_config_defaults = {
 
 static void board_init(void)
 {
-	/* Illuminate motherboard and daughter board LEDs equally to start. */
-	pwm_enable(PWM_CH_LED4_SIDESEL, 1);
-	pwm_set_duty(PWM_CH_LED4_SIDESEL, 50);
+
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -152,14 +150,6 @@ const struct pwm_t pwm_channels[] = {
 		.channel = 1,
 		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
 		.freq = 2400,
-	},
-	[PWM_CH_LED4_SIDESEL] = {
-		.channel = 7,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		/* Run at a higher frequency than the color PWM signals to avoid
-		 * timing-based color shifts.
-		 */
-		.freq = 4800,
 	},
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
