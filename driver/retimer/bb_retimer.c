@@ -88,7 +88,7 @@ static int bb_retimer_write(const struct usb_mux *me,
 			buf, BB_RETIMER_WRITE_SIZE, NULL, 0);
 }
 
-static void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
+__overridable void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 {
 	const struct bb_usb_control *control = &bb_controls[me->usb_port];
 
@@ -105,7 +105,6 @@ static void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 		msleep(1);
 		gpio_set_level(control->retimer_rst_gpio, 1);
 		msleep(10);
-		gpio_set_level(control->force_power_gpio, 1);
 
 		/*
 		 * If BB retimer NVM is shared between multiple ports, allow
@@ -117,8 +116,6 @@ static void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 		else
 			msleep(20);
 	} else {
-		gpio_set_level(control->force_power_gpio, 0);
-		msleep(1);
 		gpio_set_level(control->retimer_rst_gpio, 0);
 		msleep(1);
 		gpio_set_level(control->usb_ls_en_gpio, 0);

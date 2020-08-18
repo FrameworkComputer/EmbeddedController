@@ -5,6 +5,7 @@
 
 /* Intel TGL-U-RVP-ITE board-specific configuration */
 
+#include "bb_retimer.h"
 #include "button.h"
 #include "charger.h"
 #include "driver/charger/isl9241.h"
@@ -154,4 +155,47 @@ int board_get_version(void)
 	CPRINTS("BID:0x%x, FID:0x%x, BOM:0x%x", board_id, fab_id, bom_id);
 
 	return board_id | (fab_id << 8);
+}
+
+__override void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
+{
+	const struct bb_usb_control *control = &bb_controls[me->usb_port];
+
+	/*
+	 * LSx based F/W updating is a POR, however to avoid the rework on
+	 * RVP retain the FORCE_PWR GPIO with EC.
+	 */
+	enum gpio_signal force_power_gpio = me->usb_port ?
+		GPIO_USB_C1_RETIMER_FORCE_PWR : GPIO_USB_C0_RETIMER_FORCE_PWR;
+
+	/* handle retimer's power domain */
+	if (on_off) {
+		gpio_set_level(control->usb_ls_en_gpio, 1);
+		/*
+		 * Tpw, minimum time from VCC to RESET_N de-assertion is 100us.
+		 * For boards that don't provide a load switch control, the
+		 * retimer_init() function ensures power is up before calling
+		 * this function.
+		 */
+		msleep(1);
+		gpio_set_level(control->retimer_rst_gpio, 1);
+		msleep(10);
+		gpio_set_level(force_power_gpio, 1);
+
+		/*
+		 * If BB retimer NVM is shared between multiple ports, allow
+		 * 40ms time for all the retimers to be initialized.
+		 * Else allow 20ms to initialize.
+		 */
+		if (control->shared_nvm)
+			msleep(40);
+		else
+			msleep(20);
+	} else {
+		gpio_set_level(force_power_gpio, 0);
+		msleep(1);
+		gpio_set_level(control->retimer_rst_gpio, 0);
+		msleep(1);
+		gpio_set_level(control->usb_ls_en_gpio, 0);
+	}
 }

@@ -95,9 +95,6 @@ GPIO(USB_C1_FRS_EN,			PIN(9, 4), GPIO_OUT_LOW)
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C0_LS_EN)
 UNIMPLEMENTED(USB_C1_LS_EN)
-/* Retimer Force Power enable is connected to AP */
-UNIMPLEMENTED(USB_C0_RT_FORCE_PWR)
-UNIMPLEMENTED(USB_C1_RT_FORCE_PWR)
 
 /* Misc Signals */
 GPIO(UART2_EC_RX,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
