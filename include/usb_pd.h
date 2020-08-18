@@ -387,6 +387,8 @@ enum pd_alternate_modes {
 struct pd_discovery {
 	/* Identity data */
 	union disc_ident_ack identity;
+	/* Identity VDO count */
+	int identity_cnt;
 	/* Supported SVIDs and corresponding mode VDOs */
 	struct svid_mode_data svids[SVID_DISCOVERY_MAX];
 	/* index of SVID currently being operated on */

@@ -334,6 +334,7 @@ void dfp_consume_identity(int port, enum tcpm_transmit_type type, int cnt,
 
 	/* Note: only store VDOs, not the VDM header */
 	memcpy(disc->identity.raw_value, payload + 1, identity_size);
+	disc->identity_cnt = identity_size / sizeof(uint32_t);
 
 	switch (ptype) {
 	case IDH_PTYPE_AMA:
