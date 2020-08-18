@@ -34,6 +34,8 @@
 #define CONFIG_CMD_USB_PD_PE
 
 /* Host commands  */
+#define CONFIG_CMD_AP_RESET_LOG
+#define CONFIG_HOSTCMD_AP_RESET
 #define CONFIG_HOSTCMD_PD_CONTROL
 
 /* Port80 display */
