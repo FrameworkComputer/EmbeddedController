@@ -1357,6 +1357,11 @@ void tc_state_init(int port)
 	else
 		first_state = TC_ERROR_RECOVERY;
 
+#ifdef CONFIG_USB_PD_TCPC_BOARD_INIT
+	/* Board specific TCPC init */
+	board_tcpc_init();
+#endif
+
 	/*
 	 * Start with ErrorRecovery state if we can to put us in
 	 * a clean state from any previous boots.
