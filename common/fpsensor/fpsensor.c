@@ -252,6 +252,9 @@ void fp_task(void)
 			} else if (mode & FP_MODE_RESET_SENSOR) {
 				fp_reset_and_clear_context();
 				sensor_mode &= ~FP_MODE_RESET_SENSOR;
+			} else if (mode & FP_MODE_SENSOR_MAINTENANCE) {
+				fp_maintenance();
+				sensor_mode &= ~FP_MODE_SENSOR_MAINTENANCE;
 			} else {
 				fp_sensor_low_power();
 			}

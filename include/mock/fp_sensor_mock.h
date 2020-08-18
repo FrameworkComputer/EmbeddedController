@@ -25,6 +25,7 @@ struct mock_ctrl_fp_sensor {
 	int fp_enrollment_begin_return;
 	int fp_enrollment_finish_return;
 	int fp_finger_enroll_return;
+	int fp_maintenance_return;
 };
 
 #define MOCK_CTRL_DEFAULT_FP_SENSOR                                    \
@@ -39,6 +40,7 @@ struct mock_ctrl_fp_sensor {
 	.fp_enrollment_begin_return                  = 0,              \
 	.fp_enrollment_finish_return                 = 0,              \
 	.fp_finger_enroll_return   = EC_MKBP_FP_ERR_ENROLL_OK,         \
+	.fp_maintenance_return			     = EC_SUCCESS      \
 }
 
 extern struct mock_ctrl_fp_sensor mock_ctrl_fp_sensor;
