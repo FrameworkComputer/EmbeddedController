@@ -19,11 +19,20 @@
 #include "usb_pd_tcpm.h"
 #include "hooks.h"
 
+#ifdef CONFIG_USB_PD_TCPMV1
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) || \
 	defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) || \
 	defined(CONFIG_USB_PD_TCPC_LOW_POWER) || \
 	defined(CONFIG_USB_PD_DISCHARGE_TCPC)
 #error "Unsupported config options of IT83xx PD driver"
+#endif
+#endif
+
+#ifdef CONFIG_USB_PD_TCPMV2
+#if defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) || \
+	defined(CONFIG_USB_PD_DISCHARGE_TCPC)
+#error "Unsupported config options of IT83xx PD driver"
+#endif
 #endif
 
 /* Wait time for vconn power switch to turn off. */
@@ -602,8 +611,21 @@ static int it83xx_tcpm_set_rx_enable(int port, int enable)
 		USBPD_DISABLE_BMC_PHY(port);
 	}
 
-	/* If any PD port Rx is enabled, then disable deep sleep */
-	for (i = 0; i < board_get_usb_pd_port_count(); ++i) {
+	/*
+	 * TCPMv1/TCPMv2 handle SLEEP_MASK_USB_PD and Rx_enable order for deep
+	 * sleep mode:
+	 * 1.Exit deep sleep mode, Rx enable -> deep sleep disable:
+	 * In deep sleep mode, ITE TCPC clock is turned off, so we should
+	 * disable deep sleep to leave the mode first then enable Rx, otherwise
+	 * we'll miss packet in the mode.
+	 * 2.Enter deep sleep mode, deep sleep enable -> Rx disable:
+	 * This is OK, but before set Rx disable, our Rx is disabled in deep
+	 * sleep mode period.
+	 *
+	 * So now, we set the SLEEP_MASK_USB_PD only by ITE driver. If any ITE
+	 * PD port Rx is enabled, then disable EC deep sleep.
+	 */
+	for (i = 0; i < CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT; ++i) {
 		if (IT83XX_USBPD_GCR(i) & USBPD_REG_MASK_BMC_PHY)
 			break;
 	}
@@ -662,6 +684,19 @@ static int it83xx_tcpm_get_chip_info(int port, int live,
 
 	return EC_SUCCESS;
 }
+
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+static int it83xx_tcpm_enter_low_power_mode(int port)
+{
+	/*
+	 * ITE embedded TCPC do low power mode in idle_task(), when all ITE
+	 * ports are Rx disabled (means not in Attach.SRC/SNK state or
+	 * pd_disabled_mask be set). In deep sleep mode, the timer wakeup PD
+	 * task every 5ms, then PD task change the CC lines termination.
+	 */
+	return EC_SUCCESS;
+}
+#endif
 
 static void it83xx_tcpm_switch_plug_out_type(int port)
 {
@@ -764,6 +799,9 @@ const struct tcpm_drv it83xx_tcpm_drv = {
 	.drp_toggle		= NULL,
 #endif
 	.get_chip_info		= &it83xx_tcpm_get_chip_info,
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
+	.enter_low_power_mode	= &it83xx_tcpm_enter_low_power_mode,
+#endif
 #ifdef CONFIG_USB_PD_FRS_TCPC
 	.set_frs_enable		= &it83xx_tcpm_set_frs_enable,
 #endif
