@@ -5952,6 +5952,10 @@ uint8_t pd_get_src_cap_cnt(int port)
 	return pe[port].src_cap_cnt;
 }
 
+
+/* Track access to the PD discovery structures during HC execution */
+uint32_t task_access[CONFIG_USB_PD_PORT_MAX_COUNT][DISCOVERY_TYPE_COUNT];
+
 void pd_dfp_discovery_init(int port)
 {
 	/*
@@ -5960,6 +5964,10 @@ void pd_dfp_discovery_init(int port)
 	 */
 	PE_CLR_FLAG(port, PE_FLAGS_VDM_SETUP_DONE |
 			  PE_FLAGS_MODAL_OPERATION);
+
+	atomic_or(&task_access[port][TCPC_TX_SOP], BIT(task_get_current()));
+	atomic_or(&task_access[port][TCPC_TX_SOP_PRIME],
+						   BIT(task_get_current()));
 
 	memset(pe[port].discovery, 0, sizeof(pe[port].discovery));
 	memset(pe[port].partner_amodes, 0, sizeof(pe[port].partner_amodes));
@@ -5976,9 +5984,22 @@ void pd_dfp_discovery_init(int port)
 }
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
+
+void pd_discovery_access_clear(int port, enum tcpm_transmit_type type)
+{
+	atomic_clear(&task_access[port][type], 0xFFFFFFFF);
+}
+
+bool pd_discovery_access_validate(int port, enum tcpm_transmit_type type)
+{
+	return !(task_access[port][type] & ~BIT(task_get_current()));
+}
+
 struct pd_discovery *pd_get_am_discovery(int port, enum tcpm_transmit_type type)
 {
 	ASSERT(type < DISCOVERY_TYPE_COUNT);
+
+	atomic_or(&task_access[port][type], BIT(task_get_current()));
 	return &pe[port].discovery[type];
 }
 

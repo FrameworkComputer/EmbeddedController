@@ -307,6 +307,8 @@ const char help_str[] =
 	"      Get/set TMP006 calibration\n"
 	"  tmp006raw <tmp006_index>\n"
 	"      Get raw TMP006 data\n"
+	"  typecdiscovery <port> <type>\n"
+	"      Get discovery information for port and type\n"
 	"  uptimeinfo\n"
 	"      Get info about how long the EC has been running and the most\n"
 	"      recent AP resets\n"
@@ -9364,6 +9366,64 @@ int cmd_pd_write_log(int argc, char *argv[])
 	return ec_command(EC_CMD_PD_WRITE_LOG_ENTRY, 0, &p, sizeof(p), NULL, 0);
 }
 
+int cmd_typec_discovery(int argc, char *argv[])
+{
+	struct ec_params_typec_discovery p;
+	struct ec_response_typec_discovery *r =
+				(struct ec_response_typec_discovery *)ec_inbuf;
+	char *e;
+	int rv, i, j;
+
+	if (argc < 3) {
+		fprintf(stderr,
+			"Usage: %s <port> <type>\n"
+			"  <port> is the type-c port to query\n"
+			"  <type> is one of:\n"
+			"    0: SOP\n"
+			"    1: SOP prime\n", argv[0]);
+		return -1;
+	}
+
+	p.port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port\n");
+		return -1;
+	}
+
+	p.partner_type = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad type\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_TYPEC_DISCOVERY, 0, &p, sizeof(p),
+			ec_inbuf, ec_max_insize);
+	if (rv < 0)
+		return -1;
+
+	if (r->identity_count == 0) {
+		printf("No identity discovered\n");
+		return 0;
+	}
+
+	printf("Identity VDOs:\n");
+	for (i = 0; i < r->identity_count; i++)
+		printf("0x%08x\n", r->discovery_vdo[i]);
+
+	if (r->svid_count == 0) {
+		printf("No SVIDs discovered\n");
+		return 0;
+	}
+
+	for (i = 0; i < r->svid_count; i++) {
+		printf("SVID 0x%04x Modes:\n", r->svids[i].svid);
+		for (j = 0; j < r->svids[i].mode_count; j++)
+			printf("0x%08x\n", r->svids[i].mode_vdo[j]);
+	}
+
+	return 0;
+}
+
 int cmd_tp_self_test(int argc, char* argv[])
 {
 	int rv;
@@ -9823,6 +9883,7 @@ const struct command commands[] = {
 	{"tpframeget", cmd_tp_frame_get},
 	{"tmp006cal", cmd_tmp006cal},
 	{"tmp006raw", cmd_tmp006raw},
+	{"typecdiscovery", cmd_typec_discovery},
 	{"uptimeinfo", cmd_uptimeinfo},
 	{"usbchargemode", cmd_usb_charge_set_mode},
 	{"usbmux", cmd_usb_mux},

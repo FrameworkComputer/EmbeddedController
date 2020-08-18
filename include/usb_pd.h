@@ -1908,8 +1908,34 @@ bool consume_sop_prime_repeat_msg(int port, uint8_t msg_id);
 bool consume_sop_prime_prime_repeat_msg(int port, uint8_t msg_id);
 
 /*
+ * Clears record of which tasks have accessed discovery data for this port and
+ * type.
+ *
+ * @param port USB-C port number
+ * @param type Transmit type (SOP, SOP')
+ */
+void pd_discovery_access_clear(int port, enum tcpm_transmit_type type);
+
+/*
+ * Validate that this current task is the only one which has retrieved the
+ * pointer from pd_get_am_discovery() since last call to
+ * pd_discovery_access_clear().
+ *
+ * @param port USB-C port number
+ * @param type Transmit type (SOP, SOP')
+ * @return     True - No other tasks have accessed the data
+ */
+bool pd_discovery_access_validate(int port, enum tcpm_transmit_type type);
+
+/*
  * Returns the pointer to PD alternate mode discovery results
+ *
  * Note: Caller function can mutate the data in this structure.
+ *
+ * TCPMv2 will track all tasks which call this function after the most recent
+ * pd_discovery_access_clear(), so that the host command task reading out this
+ * structure may run pd_discovery_access_validate() at the end of its read to
+ * verify whether data might have changed in that timeframe.
  *
  * @param port USB-C port number
  * @param type Transmit type (SOP, SOP') for discovered information
