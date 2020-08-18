@@ -56,7 +56,7 @@
 #define WIRELESS_GPIO_WLAN GPIO_WLAN_OFF_L
 #define WIRELESS_GPIO_WLAN_POWER GPIO_PP3300_DX_WLAN
 #undef CONFIG_UART_TX_BUF_SIZE
-#define CONFIG_UART_TX_BUF_SIZE 512
+#define CONFIG_UART_TX_BUF_SIZE 256
 
 /* EC console commands */
 #define CONFIG_CMD_ACCELS
@@ -64,6 +64,10 @@
 #define CONFIG_CMD_BATT_MFG_ACCESS
 #define CONFIG_CMD_CHARGER_ADC_AMON_BMON
 #define CONFIG_HOSTCMD_PD_CONTROL
+
+/* EC console history configuration */
+#undef  CONFIG_CONSOLE_HISTORY
+#define CONFIG_CONSOLE_HISTORY 1
 
 /* SOC */
 #define CONFIG_CHIPSET_SKYLAKE
@@ -148,7 +152,7 @@
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
 /* FIFO size is in power of 2. */
-#define CONFIG_ACCEL_FIFO_SIZE 512
+#define CONFIG_ACCEL_FIFO_SIZE 256
 /* Depends on how fast the AP boots and typical ODRs */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 
