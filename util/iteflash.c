@@ -688,6 +688,42 @@ static int dbgr_reset(struct common_hnd *chnd, unsigned char val)
 	return 0;
 }
 
+/* Exit DBGR mode */
+static int exit_dbgr_mode(struct common_hnd *chnd)
+{
+	int ret = 0;
+
+	printf("Exit DBGR mode...\n");
+	if (chnd->dbgr_addr_3bytes)
+		ret |= i2c_write_byte(chnd, 0x80, 0xf0);
+	ret |= i2c_write_byte(chnd, 0x2f, 0x1c);
+	ret |= i2c_write_byte(chnd, 0x2e, 0x08);
+	ret |= i2c_write_byte(chnd, 0x30, BIT(4));
+
+	if (ret < 0)
+		fprintf(stderr, "EXIT DBGR MODE FAILED\n");
+
+	return 0;
+}
+
+/* DBGR reset GPIOs to default */
+static int dbgr_reset_gpio(struct common_hnd *chnd)
+{
+	int ret = 0;
+
+	printf("Reset GPIOs to default.\n");
+	if (chnd->dbgr_addr_3bytes)
+		ret |= i2c_write_byte(chnd, 0x80, 0xf0);
+	ret |= i2c_write_byte(chnd, 0x2f, 0x20);
+	ret |= i2c_write_byte(chnd, 0x2e, 0x07);
+	ret |= i2c_write_byte(chnd, 0x30, BIT(1));
+
+	if (ret < 0)
+		fprintf(stderr, "DBGR RESET GPIO FAILED\n");
+
+	return 0;
+}
+
 /* disable watchdog */
 static int dbgr_disable_watchdog(struct common_hnd *chnd)
 {
@@ -760,6 +796,20 @@ static int spi_flash_follow_mode_exit(struct common_hnd *chnd, char *desc)
 	if (ret < 0)
 		fprintf(stderr, "Flash %s exit follow mode FAILED (%d)\n",
 			desc, ret);
+
+	return ret;
+}
+
+/* Stop EC by sending follow mode command */
+static int dbgr_stop_ec(struct common_hnd *chnd)
+{
+	int ret = 0;
+
+	ret |= spi_flash_follow_mode(chnd, "enter follow mode");
+	ret |= spi_flash_follow_mode_exit(chnd, "exit follow mode");
+
+	if (ret < 0)
+		fprintf(stderr, "DBGR STOP EC FAILED!\n");
 
 	return ret;
 }
@@ -1053,8 +1103,8 @@ static int send_special_waveform(struct common_hnd *chnd)
 		/* wait for PLL stable for 5ms (plus remaining USB transfers) */
 		usleep(10 * MSEC);
 
-		if (spi_flash_follow_mode(chnd, "enter follow mode") >= 0) {
-			spi_flash_follow_mode_exit(chnd, "exit follow mode");
+		/* Stop EC ASAP after sending special waveform. */
+		if (dbgr_stop_ec(chnd) >= 0) {
 			/*
 			 * If we can talk to chip, then we can break the retry
 			 * loop.
@@ -2277,6 +2327,9 @@ int main(int argc, char **argv)
 		if (send_special_waveform(&chnd))
 			goto return_after_init;
 	} else {
+		/* Stop EC ASAP after sending special waveform. */
+		dbgr_stop_ec(&chnd);
+
 		ret = check_chipid(&chnd);
 		if (ret) {
 			fprintf(stderr, "Failed to get ITE chip ID.  This "
@@ -2285,6 +2338,9 @@ int main(int argc, char **argv)
 			goto return_after_init;
 		}
 	}
+
+	/* Turn off power rails by reset GPIOs to default (input). */
+	dbgr_reset_gpio(&chnd);
 
 	check_flashid(&chnd);
 
@@ -2355,8 +2411,12 @@ int main(int argc, char **argv)
 	ret = 0;
 
  return_after_init:
-	/* Enable EC Host Global Reset to reset EC resource and EC domain. */
-	dbgr_reset(&chnd, RSTS_VCCDO_PW_ON|RSTS_HGRST|RSTS_GRST);
+	/*
+	 * Exit DBGR mode. This ensures EC won't hold clock/data pins of I2C.
+	 * Avoid resetting EC here because flash_ec will after iteflash exits.
+	 * This avoids double reset after flash sequence.
+	 */
+	exit_dbgr_mode(&chnd);
 
 	if (chnd.conf.i2c_mux) {
 		printf("configuring I2C MUX to none.\n");
