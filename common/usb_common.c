@@ -336,6 +336,13 @@ enum pd_drp_next_states drp_auto_toggle_next_state(
 			return DRP_TC_UNATTACHED_SRC;
 		case PD_DRP_TOGGLE_ON:
 		default:
+			if (!auto_toggle_supported) {
+				if (power_role == PD_ROLE_SINK)
+					return DRP_TC_UNATTACHED_SNK;
+				else
+					return DRP_TC_UNATTACHED_SRC;
+			}
+
 			return DRP_TC_DRP_AUTO_TOGGLE;
 		}
 	} else if ((cc_is_rp(cc1) || cc_is_rp(cc2)) &&
@@ -375,6 +382,13 @@ enum pd_drp_next_states drp_auto_toggle_next_state(
 		}
 	} else {
 		/* Anything else, keep toggling */
+		if (!auto_toggle_supported) {
+			if (power_role == PD_ROLE_SINK)
+				return DRP_TC_UNATTACHED_SNK;
+			else
+				return DRP_TC_UNATTACHED_SRC;
+		}
+
 		return DRP_TC_DRP_AUTO_TOGGLE;
 	}
 }
