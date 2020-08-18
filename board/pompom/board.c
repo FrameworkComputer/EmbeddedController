@@ -486,6 +486,10 @@ struct motion_sensor_t motion_sensors[] = {
 		 [SENSOR_CONFIG_EC_S0] = {
 			 .odr = 10000 | ROUND_UP_FLAG,
 		 },
+		 /* Sensor on for lid angle detection */
+		 [SENSOR_CONFIG_EC_S3] = {
+			 .odr = 10000 | ROUND_UP_FLAG,
+		 },
 	 },
 	},
 	[BASE_GYRO] = {
