@@ -641,6 +641,9 @@
 #define MCHP_GPIO_CTRL_FUNC_1		(1 << 12)
 #define MCHP_GPIO_CTRL_FUNC_2		(2 << 12)
 #define MCHP_GPIO_CTRL_FUNC_3		(3 << 12)
+#define MCHP_GPIO_CTRL_INPUT_DISABLE_MASK (0x01 << 15)
+#define MCHP_GPIO_CTRL_INPUT_ENABLE (0x00 << 15)
+
 #define MCHP_GPIO_CTRL_OUT_LVL		BIT(16)
 
 /* GPIO Parallel Input and Output registers.
@@ -653,7 +656,13 @@
 	((gpio_bank) << 2))
 
 /* Timer */
+
+#if defined(CHIP_FAMILY_MEC152X)
+#define MCHP_TMR16_MAX		(2)
+#else 
 #define MCHP_TMR16_MAX		(4)
+#endif /* CHIP_FAMILY_MEC152X */
+
 #define MCHP_TMR32_MAX		(2)
 #define MCHP_TMR16_BASE(x)  (0x40000c00 + (x) * 0x20)
 #define MCHP_TMR32_BASE(x)  (0x40000c80 + (x) * 0x20)
@@ -686,11 +695,22 @@
 #define MCHP_RTMR_GIRQ_BIT(x)	(1ul << 0)
 
 /* Watchdog */
+#if defined(CHIP_FAMILY_MEC152X)
+#define MCHP_WDG_BASE       0x40000400
+#define MCHP_WDG_LOAD       REG16(MCHP_WDG_BASE + 0x0)
+#define MCHP_WDG_CTL        REG32(MCHP_WDG_BASE + 0x4)
+#define MCHP_WDG_KICK       REG8(MCHP_WDG_BASE + 0x8)
+#define MCHP_WDG_CNT        REG16(MCHP_WDG_BASE + 0xc)
+#define MCHP_WDG_STATUS     REG32(MCHP_WDG_BASE + 0x10)
+#define MCHP_WDG_INT_EN     REG32(MCHP_WDG_BASE + 0x14)
+#else
 #define MCHP_WDG_BASE       0x40000000
 #define MCHP_WDG_LOAD       REG16(MCHP_WDG_BASE + 0x0)
 #define MCHP_WDG_CTL        REG8(MCHP_WDG_BASE + 0x4)
 #define MCHP_WDG_KICK       REG8(MCHP_WDG_BASE + 0x8)
 #define MCHP_WDG_CNT        REG16(MCHP_WDG_BASE + 0xc)
+#endif 
+
 
 
 /* VBAT */
@@ -798,8 +818,16 @@
  * scratch pad index cannot be more than 32 as
  * MCHP has 128 bytes = 32 indexes of scratchpad RAM
  */
+#if defined(CHIP_FAMILY_MEC17XX)
 #define MCHP_IMAGETYPE_IDX     31
+#elif defined(CHIP_FAMILY_MEC152X)
+/* Miscellaneous firmware control fields
+ * scratch pad index cannot be more than 32 as
+ * MCHP 1501 has 64 bytes = 16 indexes of scratchpad RAM
+ */
+#define MCHP_IMAGETYPE_IDX     15
 
+#endif 
 
 /* LPC */
 #define MCHP_LPC_CFG_BASE     0x400f3300
@@ -985,7 +1013,11 @@
 
 
 /* PWM */
+#if defined(CHIP_FAMILY_MEC152X)
+#define MCHP_PWM_ID_MAX		(8)
+#else
 #define MCHP_PWM_ID_MAX		(12)
+#endif 
 #define MCHP_PWM_BASE(x)	(0x40005800 + ((x) << 4))
 #define MCHP_PWM_ON(x)		REG32(MCHP_PWM_BASE(x) + 0x00)
 #define MCHP_PWM_OFF(x)		REG32(MCHP_PWM_BASE(x) + 0x04)
