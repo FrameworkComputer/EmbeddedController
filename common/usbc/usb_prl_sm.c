@@ -456,7 +456,7 @@ void pd_execute_hard_reset(int port)
 
 	PRL_HR_SET_FLAG(port, PRL_FLAGS_PORT_PARTNER_HARD_RESET);
 	set_state_prl_hr(port, PRL_HR_RESET_LAYER);
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 void prl_execute_hard_reset(int port)
@@ -467,7 +467,7 @@ void prl_execute_hard_reset(int port)
 
 	PRL_HR_SET_FLAG(port, PRL_FLAGS_PE_HARD_RESET);
 	set_state_prl_hr(port, PRL_HR_RESET_LAYER);
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 int prl_is_running(int port)
@@ -530,7 +530,7 @@ void prl_set_debug_level(enum debug_level debug_level)
 void prl_hard_reset_complete(int port)
 {
 	PRL_HR_SET_FLAG(port, PRL_FLAGS_HARD_RESET_COMPLETE);
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 void prl_send_ctrl_msg(int port,
@@ -550,7 +550,7 @@ void prl_send_ctrl_msg(int port,
 	PRL_TX_SET_FLAG(port, PRL_FLAGS_MSG_XMIT);
 #endif /* CONFIG_USB_PD_REV30 */
 
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 void prl_send_data_msg(int port,
@@ -569,7 +569,7 @@ void prl_send_data_msg(int port,
 	PRL_TX_SET_FLAG(port, PRL_FLAGS_MSG_XMIT);
 #endif /* CONFIG_USB_PD_REV30 */
 
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 #ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
@@ -582,7 +582,7 @@ void prl_send_ext_data_msg(int port,
 	pdmsg[port].ext = 1;
 
 	TCH_SET_FLAG(port, PRL_FLAGS_MSG_XMIT);
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 
@@ -1032,7 +1032,7 @@ static void prl_tx_wait_for_phy_response_run(const int port)
 		 * This event reduces the time of informing the policy engine of
 		 * the transmission by one state machine cycle
 		 */
-		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+		task_wake(PD_PORT_TO_TASK_ID(port));
 		set_state_prl_tx(port, PRL_TX_WAIT_FOR_MESSAGE_REQUEST);
 	} else if (get_time().val > prl_tx[port].tcpc_tx_timeout ||
 		   prl_tx[port].xmit_status == TCPC_TX_COMPLETE_FAILED ||
@@ -2103,7 +2103,7 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 		pe_message_received(port);
 	}
 
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 /* All necessary Protocol Transmit States (Section 6.11.2.2) */

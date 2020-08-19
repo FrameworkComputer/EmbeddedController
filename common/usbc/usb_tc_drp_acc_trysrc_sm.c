@@ -328,7 +328,6 @@ static struct bit_name event_bit_names[] = {
 	{ PD_EVENT_DEVICE_ACCESSED, "DEVICE_ACCESSED" },
 	{ PD_EVENT_POWER_STATE_CHANGE, "POWER_STATE_CHANGE" },
 	{ PD_EVENT_SEND_HARD_RESET, "SEND_HARD_RESET" },
-	{ PD_EVENT_SM, "SM" },
 	{ PD_EVENT_SYSJUMP, "SYSJUMP" },
 };
 
@@ -660,7 +659,7 @@ void pd_request_data_swap(int port)
 	 */
 	if (IS_ATTACHED_SRC(port) || IS_ATTACHED_SNK(port)) {
 		TC_SET_FLAG(port, TC_FLAGS_REQUEST_DR_SWAP);
-		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
 }
 
@@ -848,7 +847,7 @@ void tc_prs_src_snk_assert_rd(int port)
 		 * DebugAccessory.SNK assert Rd
 		 */
 		TC_SET_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP);
-		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
 }
 
@@ -864,7 +863,7 @@ void tc_prs_snk_src_assert_rp(int port)
 		 * UnorientedDebugAccessory.SRC to assert Rp
 		 */
 		TC_SET_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP);
-		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
 }
 
@@ -885,7 +884,7 @@ void tc_prs_snk_src_assert_rp(int port)
 void tc_hard_reset_request(int port)
 {
 	TC_SET_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 void tc_disc_ident_in_progress(int port)
