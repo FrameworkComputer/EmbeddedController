@@ -559,8 +559,12 @@ void tc_request_power_swap(int port)
 		/*
 		 * Must be in Attached.SRC or Attached.SNK
 		 */
-		if (IS_ATTACHED_SRC(port) || IS_ATTACHED_SNK(port))
+		if (IS_ATTACHED_SRC(port) || IS_ATTACHED_SNK(port)) {
 			TC_SET_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS);
+
+			/* Let tc_pr_swap_complete start the Vbus debounce */
+			tc[port].vbus_debounce_time = TIMER_DISABLED;
+		}
 
 		/*
 		 * TCPCI Rev2 V1.1 4.4.5.4.4
@@ -808,25 +812,28 @@ int tc_check_vconn_swap(int port)
 
 void tc_pr_swap_complete(int port, bool success)
 {
-	TC_CLR_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS);
-
 	if (IS_ATTACHED_SNK(port)) {
 		/*
 		 * Give the ADCs in the TCPC or PPC time to react following
 		 * a PS_RDY message received during a SRC to SNK swap.
 		 * Note: This is empirically determined, not strictly
 		 * part of the USB PD spec.
+		 * Note: Swap in progress should not be cleared until the
+		 * debounce is completed.
 		 */
 		tc[port].vbus_debounce_time = get_time().val + PD_T_DEBOUNCE;
-	}
+	} else {
+		/* PR Swap is no longer in progress */
+		TC_CLR_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS);
 
-	/*
-	 * AutoDischargeDisconnect was either turned off near the SNK->SRC
-	 * PR-Swap message or when we hit Safe0V on SRC->SNK PR-Swap.
-	 * Either case, we need to re-enable if we finished the swap.
-	 */
-	if (success)
-		tcpm_enable_auto_discharge_disconnect(port, 1);
+		/*
+		 * AutoDischargeDisconnect was turned off near the SNK->SRC
+		 * PR-Swap message. If the swap was a success, Vbus should be
+		 * valid, so re-enable AutoDischargeDisconnect
+		 */
+		if (success)
+			tcpm_enable_auto_discharge_disconnect(port, 1);
+	}
 }
 
 void tc_prs_src_snk_assert_rd(int port)
@@ -2202,17 +2209,32 @@ static void tc_attached_snk_run(const int port)
 	}
 
 	/*
+	 * Debounce Vbus before we drop that we are doing a PR_Swap
+	 */
+	if (TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS) &&
+	    tc[port].vbus_debounce_time < get_time().val) {
+		/* PR Swap is no longer in progress */
+		TC_CLR_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS);
+
+		/*
+		 * AutoDischargeDisconnect was turned off when we
+		 * hit Safe0V on SRC->SNK PR-Swap. We now are done
+		 * with the swap and should have Vbus, so re-enable
+		 * AutoDischargeDisconnect.
+		 */
+		tcpm_enable_auto_discharge_disconnect(port, 1);
+	}
+
+	/*
 	 * The sink will be powered off during a power role swap but we don't
 	 * want to trigger a disconnect.
 	 */
 	if (!TC_CHK_FLAG(port, TC_FLAGS_POWER_OFF_SNK) &&
 	    !TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
 		/*
-		 * Detach detection, but only after allowing for  a debounce
-		 * of the VBUS state.
+		 * Detach detection
 		 */
-		if ((tc[port].vbus_debounce_time < get_time().val) &&
-			!pd_is_vbus_present(port)) {
+		if (!pd_is_vbus_present(port)) {
 			if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
 				pd_dfp_exit_mode(port, TCPC_TX_SOP, 0, 0);
 				pd_dfp_exit_mode(port, TCPC_TX_SOP_PRIME, 0, 0);
