@@ -38,6 +38,7 @@
 #include "system.h"
 #include "task.h"
 #include "tcpci.h"
+#include "temp_sensor.h"
 #include "thermistor.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
@@ -269,3 +270,44 @@ static void set_ac_prochot(void)
 	isl9241_set_ac_prochot(CHARGER_SOLO, ZORK_AC_PROCHOT_CURRENT_MA);
 }
 DECLARE_HOOK(HOOK_INIT, set_ac_prochot, HOOK_PRIO_DEFAULT);
+
+DECLARE_DEFERRED(board_print_temps);
+int temps_interval;
+
+void board_print_temps(void)
+{
+	int t, i;
+	int rv;
+
+	cprintf(CC_THERMAL, "[%pT ", PRINTF_TIMESTAMP_NOW);
+	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
+		rv = temp_sensor_read(i, &t);
+		if (rv == EC_SUCCESS)
+			cprintf(CC_THERMAL, "%s=%dK (%dC) ",
+				temp_sensors[i].name, t, K_TO_C(t));
+	}
+	cprintf(CC_THERMAL, "]\n");
+
+	if (temps_interval > 0)
+		hook_call_deferred(&board_print_temps_data,
+				   temps_interval * SECOND);
+}
+
+static int command_temps_log(int argc, char **argv)
+{
+	char *e = NULL;
+
+	if (argc != 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	temps_interval = strtoi(argv[1], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM1;
+
+	board_print_temps();
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(tempslog, command_temps_log,
+			"seconds",
+			"Print temp sensors periodically");

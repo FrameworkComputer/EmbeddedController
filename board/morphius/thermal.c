@@ -480,10 +480,14 @@ int fan_table_to_rpm(int fan, int *temp)
 
 void board_override_fan_control(int fan, int *tmp)
 {
-	if (chipset_in_state(CHIPSET_STATE_ON |
-		CHIPSET_STATE_ANY_SUSPEND)) {
-		fan_set_rpm_mode(FAN_CH(fan), 1);
-		fan_set_rpm_target(FAN_CH(fan),
-			fan_table_to_rpm(fan, tmp));
+	if (chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND)) {
+		int new_rpm = fan_table_to_rpm(fan, tmp);
+
+		if (new_rpm != fan_get_rpm_target(FAN_CH(fan))) {
+			cprints(CC_THERMAL, "Setting fan RPM to %d", new_rpm);
+			board_print_temps();
+			fan_set_rpm_mode(FAN_CH(fan), 1);
+			fan_set_rpm_target(FAN_CH(fan), new_rpm);
+		}
 	}
 }
