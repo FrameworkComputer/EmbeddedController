@@ -122,6 +122,11 @@
 
 extern const struct charger_drv isl9241_drv;
 
+enum ec_error_list isl9241_read(int chgnum, int offset,
+					int *value);
+enum ec_error_list isl9241_write(int chgnum, int offset,
+					int value);
+__override_proto int isl9241_update_learn_mode(int chgnum, int enable);
 /**
  * Set AC prochot threshold
  *
