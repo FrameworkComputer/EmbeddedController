@@ -12,6 +12,7 @@
 #include "driver/ioexpander/pcal6408.h"
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
+#include "driver/retimer/pi3hdx1204.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "driver/usb_mux/ps8740.h"
@@ -193,28 +194,35 @@ void pcal6408_interrupt(enum gpio_signal signal)
 }
 
 /*****************************************************************************
- * Retimers
+ * Board suspend / resume
  */
 
-static void retimers_on(void)
+static void board_chipset_resume(void)
 {
-	/* hdmi retimer power on */
-	ioex_set_level(IOEX_EN_PWR_HDMI_DB, 1);
-
-	/* usba retimer power on */
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, retimers_on, HOOK_PRIO_DEFAULT);
 
-static void retimers_off(void)
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		ioex_set_level(IOEX_EN_PWR_HDMI_DB, 1);
+		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  1);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+static void board_chipset_suspend(void)
 {
-	/* hdmi retimer power off */
-	ioex_set_level(IOEX_EN_PWR_HDMI_DB, 0);
-
-	/* usba retimer power off */
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  0);
+		ioex_set_level(IOEX_EN_PWR_HDMI_DB, 0);
+	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, retimers_off, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 static int board_ps8743_mux_set(const struct usb_mux *me,
 				mux_state_t mux_state)
