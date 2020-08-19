@@ -17,6 +17,7 @@
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/pi3dpx1207.h"
+#include "driver/retimer/pi3hdx1204.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "driver/usb_mux/amd_fp5.h"
@@ -484,6 +485,7 @@ DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 #define SMART_CHARGE_ENABLE             0x02
 #define SB_SMART_CHARGE_ENABLE          1
 #define SB_SMART_CHARGE_DISABLE         0
+
 static void sb_smart_charge_mode(int enable)
 {
 	int val, rv;
@@ -499,29 +501,6 @@ static void sb_smart_charge_mode(int enable)
 		sb_write(SB_OPTIONALMFG_FUNCTION2, val);
 	}
 }
-/* Called on AP S3 -> S0 transition */
-static void board_chipset_startup(void)
-{
-	/* Normal charge current */
-	sb_smart_charge_mode(SB_SMART_CHARGE_DISABLE);
-
-	/* hdmi retimer power on */
-	if (board_ver >= 3)
-		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_startup, HOOK_PRIO_DEFAULT);
-
-/* Called on AP S0 -> S3 transition */
-static void board_chipset_suspend(void)
-{
-	/* SMART charge current */
-	sb_smart_charge_mode(SB_SMART_CHARGE_ENABLE);
-
-	/* hdmi retimer power off */
-	if (board_ver >= 3)
-		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 __override void ppc_interrupt(enum gpio_signal signal)
 {
@@ -584,6 +563,42 @@ void ps2_pwr_en_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&trackpoint_reset_deferred_data, MSEC);
 }
+
+/*****************************************************************************
+ * Board suspend / resume
+ */
+
+static void board_chipset_resume(void)
+{
+	/* Normal charge current */
+	sb_smart_charge_mode(SB_SMART_CHARGE_DISABLE);
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		if (board_ver >= 3) {
+			ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
+			msleep(PI3HDX1204_POWER_ON_DELAY_MS);
+		}
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  1);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+static void board_chipset_suspend(void)
+{
+	/* SMART charge current */
+	sb_smart_charge_mode(SB_SMART_CHARGE_ENABLE);
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  0);
+		if (board_ver >= 3)
+			ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************
  * Power signals
