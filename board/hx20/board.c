@@ -290,8 +290,10 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
  * MCHP EVB connected to KBL RVP3
  */
 const struct i2c_port_t i2c_ports[]  = {
-	{"sensors",  MCHP_I2C_PORT4, 100,  GPIO_SMB04_SCL, GPIO_SMB04_SDA},
-	{"batt",     MCHP_I2C_PORT5, 100,  GPIO_SMB05_SCL, GPIO_SMB05_SDA},
+	{"pch",      MCHP_I2C_PORT0, 100,  GPIO_I2C_1_SDA, GPIO_I2C_1_SCL},
+	{"batt",     MCHP_I2C_PORT1, 100,  GPIO_EC_SMB_CK1, GPIO_EC_SMB_DA1},
+	{"pd",      MCHP_I2C_PORT2, 100,  GPIO_EC_I2C02_PD_CLK, GPIO_EC_I2C02_PD_SDA},
+	{"sensors",  MCHP_I2C_PORT3, 100,  GPIO_EC_SMB05_CLK, GPIO_EC_SMB05_DATA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -300,8 +302,10 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
  * Ports may map to the same controller.
  */
 const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
-	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT4,
-	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT5
+	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT0,
+	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT1,
+	(MCHP_I2C_CTRL2 << 8) + MCHP_I2C_PORT2,
+	(MCHP_I2C_CTRL3 << 8) + MCHP_I2C_PORT3
 };
 
 /*
@@ -1078,9 +1082,11 @@ static void board_spi_enable(void)
 	/* Toggle SPI chip select to switch BMI160 from I2C mode
 	 * to SPI mode
 	 */
+	/*
 	gpio_set_level(GPIO_SPI0_CS0, 0);
 	udelay(10);
 	gpio_set_level(GPIO_SPI0_CS0, 1);
+	*/
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_spi_enable,
 	     MOTION_SENSE_HOOK_PRIO - 1);

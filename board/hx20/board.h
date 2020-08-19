@@ -337,13 +337,13 @@
  * CONFIG_SPI_FLASH_PORT is the index into
  * spi_devices[] in board.c
  */
-#define CONFIG_SPI_ACCEL_PORT 1
+/*#define CONFIG_SPI_ACCEL_PORT 1*/
 
 /*
  * Enable EC UART commands to read/write
  * motion sensor.
  */
-#define CONFIG_CMD_ACCELS
+/*#define CONFIG_CMD_ACCELS*/
 
 /*
  * Enable 1 slot of secure temporary storage to support
@@ -388,8 +388,8 @@
 #define GPIO_ENABLE_BACKLIGHT	GPIO_EC_BKOFF_L
 
 /* I2C ports */
-#define I2C_CONTROLLER_COUNT	2
-#define I2C_PORT_COUNT		2
+#define I2C_CONTROLLER_COUNT	4
+#define I2C_PORT_COUNT		4
 
 
 /*
@@ -409,12 +409,12 @@
 #define I2C_PORT_USB_CHARGER_1	MCHP_I2C_PORT2
 #define I2C_PORT_USB_MUX        MCHP_I2C_PORT2
 #define I2C_PORT_USB_CHARGER_2	MCHP_I2C_PORT2
-#define I2C_PORT_PD_MCU         MCHP_I2C_PORT3
+#define I2C_PORT_PD_MCU         MCHP_I2C_PORT2
 #define I2C_PORT_TCPC           MCHP_I2C_PORT3
 #define I2C_PORT_ALS            MCHP_I2C_PORT4
 #define I2C_PORT_ACCEL          MCHP_I2C_PORT4
-#define I2C_PORT_BATTERY        MCHP_I2C_PORT5
-#define I2C_PORT_CHARGER        MCHP_I2C_PORT5
+#define I2C_PORT_BATTERY        MCHP_I2C_PORT1
+#define I2C_PORT_CHARGER        MCHP_I2C_PORT1
 
 /* GPIO for power signal */
 #ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
