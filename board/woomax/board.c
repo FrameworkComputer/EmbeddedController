@@ -13,6 +13,7 @@
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/retimer/pi3dpx1207.h"
+#include "driver/retimer/pi3hdx1204.h"
 #include "driver/retimer/ps8811.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/usb_mux/amd_fp5.h"
@@ -197,17 +198,15 @@ const int usb_port_enable[USBA_PORT_COUNT] = {
 };
 
 /*****************************************************************************
- * USB-A Retimer tuning
+ * Board suspend / resume
  */
 #define PS8811_ACCESS_RETRIES 2
 
-/* PS8811 gain tuning */
-static void ps8811_tuning_init(void)
+static void board_chipset_resume(void)
 {
 	int rv;
 	int retry;
 
-	/* Turn on the retimers */
 	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 1);
 
 	/* USB-A0 can run with default settings */
@@ -222,17 +221,31 @@ static void ps8811_tuning_init(void)
 	}
 	if (rv) {
 		ioex_set_level(IOEX_USB_A0_RETIMER_EN, 0);
-		CPRINTSUSB("C0: PS8811 not detected");
+		CPRINTSUSB("A0: PS8811 not detected");
+	}
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
+		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  1);
 	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, ps8811_tuning_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
-static void ps8811_retimer_off(void)
+static void board_chipset_suspend(void)
 {
-	/* Turn on the retimers */
 	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 0);
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  0);
+		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
+	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, ps8811_retimer_off, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************
  * USB-C MUX/Retimer dynamic configuration
@@ -449,20 +462,6 @@ static void setup_fans(void)
 	thermal_params[TEMP_SENSOR_CPU] = thermal_cpu;
 }
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
-
-static void board_chipset_resume(void)
-{
-	/* HDMI retimer power on */
-	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
-
-static void board_chipset_suspend(void)
-{
-	/* HDMI retimer power off */
-	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 static const struct ec_response_keybd_config woomax_kb = {
 	.num_top_row_keys = 10,
