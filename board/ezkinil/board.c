@@ -13,6 +13,7 @@
 #include "driver/accel_kx022.h"
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
+#include "driver/retimer/pi3hdx1204.h"
 #include "driver/retimer/tusb544.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/usb_mux/amd_fp5.h"
@@ -194,28 +195,6 @@ const int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A0_5V,
 	IOEX_EN_USB_A1_5V_DB,
 };
-
-/*****************************************************************************
- * Retimers
- */
-
-static void retimers_on(void)
-{
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
-
-	/* hdmi retimer power on */
-	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, retimers_on, HOOK_PRIO_DEFAULT);
-
-static void retimers_off(void)
-{
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
-
-	/* hdmi retimer power off */
-	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, retimers_off, HOOK_PRIO_DEFAULT);
 
 /*
  * USB C0 port SBU mux use standalone FSUSB42UMX
@@ -438,7 +417,7 @@ static void setup_fw_config(void)
 /* Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init(). */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
-__override int check_hdmi_hpd_status(void)
+static int check_hdmi_hpd_status(void)
 {
 	int hpd = 0;
 
@@ -457,7 +436,10 @@ static void hdmi_hpd_handler(void)
 
 	gpio_set_level(GPIO_DP1_HPD, hpd);
 	ccprints("HDMI HPD %d", hpd);
-	pi3hdx1204_retimer_power();
+	pi3hdx1204_enable(I2C_PORT_TCPC1,
+			  PI3HDX1204_I2C_ADDR_FLAGS,
+			  chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
+			  && hpd);
 }
 DECLARE_DEFERRED(hdmi_hpd_handler);
 
@@ -472,6 +454,37 @@ void hdmi_hpd_interrupt_v2(enum ioex_signal signal)
 	/* Debounce for 2 msec. */
 	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
 }
+
+/*****************************************************************************
+ * Board suspend / resume
+ */
+
+static void board_chipset_resume(void)
+{
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
+		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  check_hdmi_hpd_status());
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+static void board_chipset_suspend(void)
+{
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  0);
+		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************
  * Fan

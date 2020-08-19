@@ -245,19 +245,6 @@ const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
 	.de_offset = PI3HDX1204_DE_DB_MINUS5,
 };
 
-void pi3hdx1204_retimer_power(void)
-{
-	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
-		int enable = chipset_in_or_transitioning_to_state(
-			CHIPSET_STATE_ON) && check_hdmi_hpd_status();
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
-				  enable);
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, pi3hdx1204_retimer_power, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pi3hdx1204_retimer_power, HOOK_PRIO_DEFAULT);
-
 void sbu_fault_interrupt(enum ioex_signal signal)
 {
 	int port = (signal == IOEX_USB_C0_SBU_FAULT_ODL) ? 0 : 1;
