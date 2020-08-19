@@ -331,25 +331,18 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 
 int board_set_active_charge_port(int port)
 {
-	int is_valid_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
-	int p0_otg, p1_otg;
+	int is_valid_port = (port >= 0 && port < board_get_usb_pd_port_count());
 
 	if (!is_valid_port && port != CHARGE_PORT_NONE)
 		return EC_ERROR_INVAL;
 
-	/* TODO(b/147440290): charger functions should take chgnum */
-	p0_otg = chg_chips[0].drv->is_sourcing_otg_power(0, 0);
-	p1_otg = chg_chips[1].drv->is_sourcing_otg_power(1, 1);
-
 	if (port == CHARGE_PORT_NONE) {
 		CPRINTUSB("Disabling all charge ports");
 
-		if (!p0_otg)
-			chg_chips[0].drv->set_mode(0,
-						   CHARGE_FLAG_INHIBIT_CHARGE);
-		if (!p1_otg)
-			chg_chips[1].drv->set_mode(1,
-						   CHARGE_FLAG_INHIBIT_CHARGE);
+		sm5803_vbus_sink_enable(CHARGER_PRIMARY, 0);
+
+		if (board_get_charger_chip_count() > 1)
+			sm5803_vbus_sink_enable(CHARGER_SECONDARY, 0);
 
 		return EC_SUCCESS;
 	}
@@ -357,28 +350,16 @@ int board_set_active_charge_port(int port)
 	CPRINTUSB("New chg p%d", port);
 
 	/*
-	 * Charger task will take care of enabling charging on the new charge
-	 * port.  Here, we ensure the other port is not charging by changing
-	 * CHG_EN
+	 * Ensure other port is turned off, then enable new charge port
 	 */
 	if (port == 0) {
-		if (p0_otg) {
-			CPRINTUSB("Skip enable p%d", port);
-			return EC_ERROR_INVAL;
-		}
-		if (!p1_otg) {
-			chg_chips[1].drv->set_mode(1,
-						   CHARGE_FLAG_INHIBIT_CHARGE);
-		}
+		if (board_get_charger_chip_count() > 1)
+			sm5803_vbus_sink_enable(CHARGER_SECONDARY, 0);
+		sm5803_vbus_sink_enable(CHARGER_PRIMARY, 1);
+
 	} else {
-		if (p1_otg) {
-			CPRINTUSB("Skip enable p%d", port);
-			return EC_ERROR_INVAL;
-		}
-		if (!p0_otg) {
-			chg_chips[0].drv->set_mode(0,
-						   CHARGE_FLAG_INHIBIT_CHARGE);
-		}
+		sm5803_vbus_sink_enable(CHARGER_PRIMARY, 0);
+		sm5803_vbus_sink_enable(CHARGER_SECONDARY, 1);
 	}
 
 	return EC_SUCCESS;

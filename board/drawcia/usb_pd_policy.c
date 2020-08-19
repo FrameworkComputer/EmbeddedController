@@ -52,8 +52,8 @@ int pd_set_power_supply_ready(int port)
 {
 	enum ec_error_list rv;
 
-	/* Disable charging */
-	rv = chg_chips[port].drv->set_mode(port, CHARGE_FLAG_INHIBIT_CHARGE);
+	/* Disable sinking */
+	rv = sm5803_vbus_sink_enable(port, 0);
 	if (rv)
 		return rv;
 

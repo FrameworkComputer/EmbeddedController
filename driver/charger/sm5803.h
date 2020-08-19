@@ -315,6 +315,7 @@ enum ec_error_list sm5803_get_chg_det(int chgnum, int *chg_det);
 
 /* Expose Vbus discharge function */
 enum ec_error_list sm5803_set_vbus_disch(int chgnum, int enable);
+enum ec_error_list sm5803_vbus_sink_enable(int chgnum, int enable);
 
 void sm5803_interrupt(int chgnum);
 
