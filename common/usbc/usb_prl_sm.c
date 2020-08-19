@@ -786,16 +786,26 @@ static void prl_tx_wait_for_message_request_run(const int port)
 	 */
 	if (IS_ENABLED(CONFIG_USB_PD_REV30) && is_sop_rev30(port) &&
 	    pe_in_local_ams(port)) {
-		if (pd_get_power_role(port) == PD_ROLE_SOURCE) {
+		if (PRL_TX_CHK_FLAG(port, PRL_FLAGS_SINK_NG)) {
+			/*
+			 * Setting the TxSinkNG requires us to wait to allow
+			 * the SNK a chance to receive the signal.  If we are
+			 * already in a source initiated AMS there is no
+			 * reason to set that again and perform the wait.  In
+			 * the case of a multi-message AMS, like PR_Swap's
+			 * PS_RDY, we want to continue the AMS even though
+			 * our role may have changed.
+			 *
+			 * Fall through
+			 */
+		} else if (pd_get_power_role(port) == PD_ROLE_SOURCE) {
 			/*
 			 * Start of SRC AMS notification received from
 			 * Policy Engine
 			 */
-			if (!PRL_TX_CHK_FLAG(port, PRL_FLAGS_SINK_NG)) {
-				PRL_TX_SET_FLAG(port, PRL_FLAGS_SINK_NG);
-				set_state_prl_tx(port, PRL_TX_SRC_SOURCE_TX);
-				return;
-			}
+			PRL_TX_SET_FLAG(port, PRL_FLAGS_SINK_NG);
+			set_state_prl_tx(port, PRL_TX_SRC_SOURCE_TX);
+			return;
 		} else {
 			/*
 			 * Start of SNK AMS notification received from
