@@ -2574,8 +2574,17 @@ static void pe_snk_select_capability_run(int port)
 				/*
 				 * Setup to get Device Policy Manager to
 				 * request Sink Capabilities for possible FRS
+				 *
+				 * TODO(b:165822172) This should be called for
+				 * FRS and non-FRS but there is a problem
+				 * currently with the GetSnkCap functionality
+				 * that is stopping PRS from working.  The
+				 * bug mentioned is to fix this path and
+				 * re-enable for all.
 				 */
-				pe_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
+				if (IS_ENABLED(CONFIG_USB_PD_FRS))
+					pe_dpm_request(port,
+						DPM_REQUEST_GET_SNK_CAPS);
 				return;
 			}
 			/*
