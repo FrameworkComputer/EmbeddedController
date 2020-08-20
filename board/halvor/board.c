@@ -51,12 +51,36 @@ struct keyboard_scan_config keyscan_config = {
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
-		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
+		0x14, 0xff, 0xff, 0xff, 0xff, 0xf4, 0xff,
+		0xa0, 0xff, 0xfe, 0x41, 0xfa, 0xc0, 0x02,
+		0x08, /* full set */
 	},
 };
 
 /******************************************************************************/
+static const struct ec_response_keybd_config halvor_kb = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_BRIGHTNESS_DOWN,	/* T5 */
+		TK_BRIGHTNESS_UP,	/* T6 */
+		TK_PLAY_PAUSE,		/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+__override const struct ec_response_keybd_config
+*board_vivaldi_keybd_config(void)
+{
+	return &halvor_kb;
+}
+
 /*
  * FW_CONFIG defaults for Halvor if the CBI data is not initialized.
  */
