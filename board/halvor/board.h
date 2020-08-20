@@ -20,9 +20,9 @@
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
 /* LED defines */
-#define CONFIG_LED_PWM
-/* Although there are 2 LEDs, they are both controlled by the same lines. */
-#define CONFIG_LED_PWM_COUNT 1
+#define CONFIG_LED_POWER_LED
+#define CONFIG_LED_ONOFF_STATES
+#define CONFIG_LED_ONOFF_STATES_BAT_LOW 10
 
 /* Keyboard features */
 

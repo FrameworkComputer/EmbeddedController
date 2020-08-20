@@ -108,6 +108,10 @@ GPIO(EC_PPEXT_EN1,		PIN(C, 2), GPIO_OUT_HIGH)
 GPIO(EC_I2CBUFFER_EN,		PIN(9, 3), GPIO_OUT_LOW)
 GPIO(UART2_EC_RX,		PIN(7, 5), GPIO_OUT_LOW)
 
+/* LED Signals */
+GPIO(LED_1_L,		PIN(C, 4), GPIO_OUT_LOW)
+GPIO(LED_2_L,		PIN(C, 3), GPIO_OUT_LOW)
+
 /* Misc Signals */
 
 /*
@@ -149,12 +153,6 @@ ALTERNATE(PIN_MASK(D, BIT(1) | BIT(0)), 0, MODULE_I2C, 0)                       
 ALTERNATE(PIN_MASK(F, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                            /* I2C4 */
 ALTERNATE(PIN_MASK(3, BIT(3) | BIT(6)), 0, MODULE_I2C, 0)                            /* I2C5 */
 ALTERNATE(PIN_MASK(B, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                            /* I2C7 */
-
-/* This selects between an LED module on the motherboard and one on the daughter
- * board, to be controlled by LED_{1,2,3}_L. PWM allows driving both modules at
- * the same time. */
-
-ALTERNATE(PIN_MASK(C, BIT(3) | BIT(4)), 0, MODULE_PWM, 0)                   /* LED_{2,1}_L */
 
 /* Fan signals */
 
