@@ -789,6 +789,9 @@ const struct tcpm_drv it83xx_tcpm_drv = {
 	.set_rx_enable		= &it83xx_tcpm_set_rx_enable,
 	.get_message_raw	= &it83xx_tcpm_get_message_raw,
 	.transmit		= &it83xx_tcpm_transmit,
+#ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	.drp_toggle		= NULL,
+#endif
 	.get_chip_info		= &it83xx_tcpm_get_chip_info,
 #ifdef CONFIG_USB_PD_FRS_TCPC
 	.set_frs_enable		= &it83xx_tcpm_set_frs_enable,
