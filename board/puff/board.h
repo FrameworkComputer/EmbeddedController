@@ -76,6 +76,10 @@
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 
+/* Enable AP Reset command for TPM with old firmware version to detect it. */
+#define CONFIG_CMD_AP_RESET_LOG
+#define CONFIG_HOSTCMD_AP_RESET
+
 /* Chipset config */
 #define CONFIG_CHIPSET_COMETLAKE_DISCRETE
 /* check */
