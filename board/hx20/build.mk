@@ -20,7 +20,8 @@ CHIP_FAMILY:=mec152x
 CHIP_VARIANT:=mec152x_3400
 endif
 
-
+# Force changes to HX20_ORB variable to trigger a full build.
+ENV_VARS := HX20_ORB
 
 CHIP_SPI_SIZE_KB:=512
 
