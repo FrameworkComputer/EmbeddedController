@@ -143,6 +143,13 @@
 #define CONFIG_USB_PD_COMM_LOCKED
 #define CONFIG_USB_PD_DISCHARGE_TCPC
 #define CONFIG_USB_PD_DP_HPD_GPIO
+#ifdef VARIANT_ZORK_TREMBYLE
+/*
+ * Use a custom HPD function that supports HPD on IO expander.
+ * TODO(b/165622386) remove this when HPD is on EC GPIO.
+ */
+#	define CONFIG_USB_PD_DP_HPD_GPIO_CUSTOM
+#endif
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 #define CONFIG_USB_PD_LOGGING

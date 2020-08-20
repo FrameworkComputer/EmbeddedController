@@ -486,10 +486,10 @@ static int board_ps8818_mux_set(const struct usb_mux *me,
 			return rv;
 
 		/* Enable IN_HPD on the DB */
-		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+		gpio_or_ioex_set_level(PORT_TO_HPD(1), 1);
 	} else {
 		/* Disable IN_HPD on the DB */
-		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
+		gpio_or_ioex_set_level(PORT_TO_HPD(1), 0);
 	}
 
 	return rv;
@@ -515,3 +515,26 @@ struct usb_mux usbc1_amd_fp5_usb_mux = {
 	.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
 	.driver = &amd_fp5_usb_mux_driver,
 };
+
+/*
+ * USB-C1 HPD may go through an IO expander, so we must use a custom HPD GPIO
+ * control function with CONFIG_USB_PD_DP_HPD_GPIO_CUSTOM.
+ *
+ * TODO(b/165622386) revert to non-custom GPIO control when HPD is no longer on
+ * the IO expander in any variants.
+ */
+void svdm_set_hpd_gpio(int port, int en)
+{
+	gpio_or_ioex_set_level(PORT_TO_HPD(port), en);
+}
+
+int svdm_get_hpd_gpio(int port)
+{
+	int out;
+
+	if (gpio_or_ioex_get_level(PORT_TO_HPD(port), &out) != EC_SUCCESS) {
+		ccprints("Failed to read current HPD for port C%d", port);
+		return 0;
+	}
+	return out;
+}
