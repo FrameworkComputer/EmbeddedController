@@ -255,7 +255,6 @@ static const struct usb_mux mux_config_p1_usb3 = {
 };
 
 static const struct bb_usb_control bb_p0_control = {
-	.shared_nvm = false,
 	.usb_ls_en_gpio = GPIO_USB_C0_LS_EN,
 	.retimer_rst_gpio = GPIO_USB_C0_RT_RST_ODL,
 };

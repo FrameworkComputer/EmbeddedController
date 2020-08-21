@@ -46,8 +46,6 @@ extern const struct usb_mux_driver bb_usb_retimer;
 
 /* Retimer driver hardware specific controls */
 struct bb_usb_control {
-	/* NVM flag if shared with multiple retimers */
-	bool shared_nvm;
 	/* Load switch enable */
 	enum gpio_signal usb_ls_en_gpio;
 	/* Retimer reset */

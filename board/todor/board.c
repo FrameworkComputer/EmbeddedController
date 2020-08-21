@@ -206,7 +206,6 @@ __override void board_cbi_init(void)
 	 */
 	setup_mux();
 	/* Reassign USB_C0_RT_RST_ODL */
-	bb_controls[USBC_PORT_C0].shared_nvm = false;
 	bb_controls[USBC_PORT_C0].usb_ls_en_gpio = GPIO_USB_C0_LS_EN;
 	bb_controls[USBC_PORT_C0].retimer_rst_gpio = GPIO_USB_C0_RT_RST_ODL;
 

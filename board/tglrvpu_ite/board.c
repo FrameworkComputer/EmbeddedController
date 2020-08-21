@@ -26,6 +26,9 @@
 #define CPRINTS(format, args...) cprints(CC_COMMAND, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ## args)
 
+/* Mutex for shared NVM access */
+static struct mutex bb_nvm_mutex;
+
 /* TCPC gpios */
 const struct tcpc_gpio_config_t tcpc_gpios[] = {
 	[TYPE_C_PORT_0] = {
@@ -170,6 +173,13 @@ __override void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 
 	/* handle retimer's power domain */
 	if (on_off) {
+		/*
+		 * BB retimer NVM can be shared between multiple ports, hence
+		 * lock enabling the retimer until the current retimer request
+		 * is complete.
+		 */
+		mutex_lock(&bb_nvm_mutex);
+
 		gpio_set_level(control->usb_ls_en_gpio, 1);
 		/*
 		 * Tpw, minimum time from VCC to RESET_N de-assertion is 100us.
@@ -182,15 +192,10 @@ __override void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 		msleep(10);
 		gpio_set_level(force_power_gpio, 1);
 
-		/*
-		 * If BB retimer NVM is shared between multiple ports, allow
-		 * 40ms time for all the retimers to be initialized.
-		 * Else allow 20ms to initialize.
-		 */
-		if (control->shared_nvm)
-			msleep(40);
-		else
-			msleep(20);
+		/* Allow 20ms time for the retimer to be initialized. */
+		msleep(20);
+
+		mutex_unlock(&bb_nvm_mutex);
 	} else {
 		gpio_set_level(force_power_gpio, 0);
 		msleep(1);

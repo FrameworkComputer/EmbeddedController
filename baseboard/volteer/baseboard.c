@@ -291,7 +291,6 @@ struct bb_usb_control bb_controls[] = {
 		/* USB-C port 0 doesn't have a retimer */
 	},
 	[USBC_PORT_C1] = {
-		.shared_nvm = false,
 		.usb_ls_en_gpio = GPIO_USB_C1_LS_EN,
 		.retimer_rst_gpio = GPIO_USB_C1_RT_RST_ODL,
 	},

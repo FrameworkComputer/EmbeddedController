@@ -79,18 +79,10 @@
 #ifdef BOARD_TGLRVPU_ITE
 	#define I2C_PORT0_BB_RETIMER_ADDR	0x42
 	#define I2C_PORT1_BB_RETIMER_ADDR	0x43
-
-	/* BB retimer nvm is shared between port 0 & 1 */
-	#define BB_RETIMER_SHARED_NVM true
 #else /* BOARD_TGLRVPY_ITE */
 	#define I2C_PORT0_BB_RETIMER_ADDR	0x42
 	#define I2C_PORT1_BB_RETIMER_ADDR	0x41
-
-	/* BB retimers have respective nvm for port 0 & 1 */
-	#define BB_RETIMER_SHARED_NVM false
 #endif /* BOARD_TGLRVPU_ITE */
-#define USB_PORT0_BB_RETIMER_SHARED_NVM	BB_RETIMER_SHARED_NVM
-#define USB_PORT1_BB_RETIMER_SHARED_NVM	BB_RETIMER_SHARED_NVM
 
 /* Enabling SOP* communication */
 #define CONFIG_USB_PD_DECODE_SOP
