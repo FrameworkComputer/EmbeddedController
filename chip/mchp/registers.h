@@ -722,7 +722,11 @@
 #define MCHP_VBAT_MONOTONIC_CTR_HI   REG32(MCHP_VBAT_BASE + 0x24)
 /* read 32-bit word at 32-bit offset x where 0 <= x <= 31 */
 #define MCHP_VBAT_RAM(x)   REG32(MCHP_VBAT_BASE + 0x400 + ((x) * 4))
+#if defined(CHIP_FAMILY_MEC152X)
+#define MCHP_VBAT_VWIRE_BACKUP       14
+#else 
 #define MCHP_VBAT_VWIRE_BACKUP       30
+#endif 
 
 /* Bit definition for MCHP_VBAT_STS */
 #define MCHP_VBAT_STS_SOFTRESET		BIT(2)
@@ -1717,8 +1721,13 @@ enum MCHP_i2c_port {
 #define MCHP_ESPI_MSVW_BASE	(MCHP_ESPI_VW_BASE)
 #define MCHP_ESPI_SMVW_BASE	((MCHP_ESPI_VW_BASE) + 0x200ul)
 
+#if defined(CHIP_FAMILY_MEC152X)
+#define MCHP_ESPI_MSVW_LEN	11
+#define MCHP_ESPI_SMVW_LEN	11
+#else
 #define MCHP_ESPI_MSVW_LEN	12
 #define MCHP_ESPI_SMVW_LEN	8
+#endif 
 
 #define MCHP_ESPI_MSVW_ADDR(n) ((MCHP_ESPI_MSVW_BASE) + \
 	((n) * (MCHP_ESPI_MSVW_LEN)))
@@ -2008,6 +2017,31 @@ enum MCHP_i2c_port {
  * 14 channels and 14 devices, we make each channel dedicated to the
  * device of the same number.
  */
+#if defined(CHIP_FAMILY_MEC152X)
+enum dma_channel {
+	/* Channel numbers */
+	MCHP_DMAC_I2C0_SLAVE =  0,
+	MCHP_DMAC_I2C0_MASTER = 1,
+
+	MCHP_DMAC_I2C1_SLAVE =  2,
+	MCHP_DMAC_I2C1_MASTER = 3,
+
+	MCHP_DMAC_I2C2_SLAVE =  4,
+	MCHP_DMAC_I2C2_MASTER = 5,
+/*
+	MCHP_DMAC_I2C3_SLAVE =  6,
+	MCHP_DMAC_I2C3_MASTER = 7,
+*/
+	MCHP_DMAC_SPI0_TX =     6,
+	MCHP_DMAC_SPI0_RX =     7,
+	MCHP_DMAC_SPI1_TX =    8,
+	MCHP_DMAC_SPI1_RX =    9,
+	MCHP_DMAC_QMSPI0_TX =  10,
+	MCHP_DMAC_QMSPI0_RX =  11,
+	/* Channel count */
+	MCHP_DMAC_COUNT =      12,
+};
+#else
 enum dma_channel {
 	/* Channel numbers */
 	MCHP_DMAC_I2C0_SLAVE =  0,
@@ -2027,6 +2061,8 @@ enum dma_channel {
 	/* Channel count */
 	MCHP_DMAC_COUNT =      14,
 };
+#endif
+
 
 
 /* Bits for DMA Main Control */
