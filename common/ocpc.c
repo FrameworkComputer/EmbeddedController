@@ -6,6 +6,7 @@
 /* OCPC - One Charger IC Per Type-C module */
 
 #include "battery.h"
+#include "battery_fuel_gauge.h"
 #include "charge_state_v2.h"
 #include "charger.h"
 #include "common.h"
@@ -13,6 +14,7 @@
 #include "hooks.h"
 #include "math_util.h"
 #include "ocpc.h"
+#include "timer.h"
 #include "util.h"
 
 /*
@@ -117,6 +119,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	enum ec_error_list result;
 	static int iterations;
 	int i_step;
+	static timestamp_t delay;
 
 	/*
 	 * There's nothing to do if we're not using this charger.  Should
@@ -127,6 +130,32 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	chgnum = charge_get_active_chg_chip();
 	if (chgnum != CHARGER_SECONDARY)
 		return EC_ERROR_INVAL;
+
+	/*
+	 * Check to see if the charge FET is disabled.  If it's disabled, the
+	 * charging loop is broken and increasing VSYS will not actually help.
+	 * Therefore, don't make any changes at this time.
+	 */
+	if (battery_is_charge_fet_disabled()) {
+		CPRINTS("CFET disabled; not changing VSYS!");
+
+		/*
+		 * Let's check back in 5 seconds to see if the CFET is enabled
+		 * now.  Note that if this continues to occur, we'll keep
+		 * pushing this out.
+		 */
+		delay = get_time();
+		delay.val += (5 * SECOND);
+		return EC_ERROR_INVALID_CONFIG;
+	}
+
+	/*
+	 * The CFET status changed recently, wait until it's no longer disabled
+	 * for awhile before modifying VSYS.  This could be the fuel gauge
+	 * performing some impedence calculations.
+	 */
+	if (!timestamp_expired(delay, NULL))
+		return EC_ERROR_BUSY;
 
 	result = charger_set_vsys_compensation(chgnum, ocpc, current_ma,
 					       voltage_mv);
