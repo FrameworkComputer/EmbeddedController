@@ -430,20 +430,6 @@ static void cbi_init(void)
 		sku_id = val;
 	if (cbi_get_fw_config(&val) == EC_SUCCESS)
 		fw_config = val;
-	else if (board_version == 1 || board_version == 2) {
-		/* Hack to set the barrel-jack adapter using SKU ID */
-		switch (sku_id) {
-		case 0x00000001:
-		case 0x00000002:
-		case 0x01000001:
-		case 0x01000003:
-		case 0x01000004:
-		case 0x02000000:
-			fw_config = 0x1;
-			break;
-		}
-		CPRINTS("F/W config NOT SET, defaulting to 0x%08x", fw_config);
-	}
 	CPRINTS("Board Version: %d, SKU ID: 0x%08x, F/W config: 0x%08x",
 		board_version, sku_id, fw_config);
 }
