@@ -560,9 +560,6 @@ void psensor_interrupt(enum gpio_signal signal);
 /* HID */
 void soc_hid_interrupt(enum gpio_signal signal);
 
-/* PD CHIP */
-void pd_chip_interrupt(enum gpio_signal signal);
-
 /* thermal sensor */
 void thermal_sensor_interrupt(enum gpio_signal signal);
 
