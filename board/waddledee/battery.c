@@ -131,6 +131,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x8000,
 				.disconnect_val = 0x8000,
+				.cfet_mask = 0x4000,
+				.cfet_off_val = 0x4000,
 			}
 		},
 		.batt_info = {
