@@ -413,8 +413,10 @@ void board_init(void)
 	sm5803_configure_gpio0(CHARGER_PRIMARY, GPIO0_MODE_PROCHOT, 1);
 	sm5803_configure_chg_det_od(CHARGER_PRIMARY, 1);
 
-	/* Charger on the sub-board will be a push-pull GPIO */
-	sm5803_configure_gpio0(CHARGER_SECONDARY, GPIO0_MODE_OUTPUT, 0);
+	if (board_get_charger_chip_count() > 1) {
+		/* Charger on the sub-board will be a push-pull GPIO */
+		sm5803_configure_gpio0(CHARGER_SECONDARY, GPIO0_MODE_OUTPUT, 0);
+	}
 
 	/* Turn on 5V if the system is on, otherwise turn it off */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND);
@@ -443,8 +445,12 @@ __override void board_power_5v_enable(int enable)
 	 * sets it through the charger GPIO.
 	 */
 	gpio_set_level(GPIO_EN_PP5000, !!enable);
-	if (sm5803_set_gpio0_level(1, !!enable))
-		CPRINTUSB("Failed to %sable sub rails!", enable ? "en" : "dis");
+
+	if (board_get_charger_chip_count() > 1) {
+		if (sm5803_set_gpio0_level(1, !!enable))
+			CPRINTUSB("Failed to %sable sub rails!", enable ?
+								  "en" : "dis");
+	}
 }
 
 __override uint8_t board_get_usb_pd_port_count(void)
@@ -453,6 +459,14 @@ __override uint8_t board_get_usb_pd_port_count(void)
 		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
 	else
 		return CONFIG_USB_PD_PORT_MAX_COUNT;
+}
+
+__override uint8_t board_get_charger_chip_count(void)
+{
+	if (get_cbi_fw_config_db() == DB_1A_HDMI)
+		return CHARGER_NUM - 1;
+	else
+		return CHARGER_NUM;
 }
 
 uint16_t tcpc_get_alert_status(void)
@@ -494,14 +508,16 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 int board_set_active_charge_port(int port)
 {
 	int is_valid_port = (port >= 0 && port < board_get_usb_pd_port_count());
-	int p0_otg, p1_otg;
+	int p0_otg = 0, p1_otg = 0;
 
 	if (!is_valid_port && port != CHARGE_PORT_NONE)
 		return EC_ERROR_INVAL;
 
 	/* TODO(b/147440290): charger functions should take chgnum */
 	p0_otg = chg_chips[0].drv->is_sourcing_otg_power(0, 0);
-	p1_otg = chg_chips[1].drv->is_sourcing_otg_power(1, 1);
+
+	if (board_get_charger_chip_count() > 1)
+		p1_otg = chg_chips[1].drv->is_sourcing_otg_power(1, 1);
 
 	if (port == CHARGE_PORT_NONE) {
 		CPRINTUSB("Disabling all charge ports");
@@ -509,10 +525,12 @@ int board_set_active_charge_port(int port)
 		if (!p0_otg)
 			chg_chips[0].drv->set_mode(0,
 						   CHARGE_FLAG_INHIBIT_CHARGE);
-		if (!p1_otg)
-			chg_chips[1].drv->set_mode(1,
-						   CHARGE_FLAG_INHIBIT_CHARGE);
 
+		if (board_get_charger_chip_count() > 1) {
+			if (!p1_otg)
+				chg_chips[1].drv->set_mode(1,
+						   CHARGE_FLAG_INHIBIT_CHARGE);
+		}
 		return EC_SUCCESS;
 	}
 
@@ -528,14 +546,18 @@ int board_set_active_charge_port(int port)
 			CPRINTUSB("Skip enable p%d", port);
 			return EC_ERROR_INVAL;
 		}
-		if (!p1_otg) {
-			chg_chips[1].drv->set_mode(1,
+		if (board_get_charger_chip_count() > 1) {
+			if (!p1_otg) {
+				chg_chips[1].drv->set_mode(1,
 						   CHARGE_FLAG_INHIBIT_CHARGE);
+			}
 		}
 	} else {
-		if (p1_otg) {
-			CPRINTUSB("Skip enable p%d", port);
-			return EC_ERROR_INVAL;
+		if (board_get_charger_chip_count() > 1) {
+			if (p1_otg) {
+				CPRINTUSB("Skip enable p%d", port);
+				return EC_ERROR_INVAL;
+			}
 		}
 		if (!p0_otg) {
 			chg_chips[0].drv->set_mode(0,
