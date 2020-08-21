@@ -84,3 +84,17 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 	/* No safety fault, battery is disconnected */
 	return BATTERY_DISCONNECTED;
 }
+
+int battery_is_charge_fet_disabled(void)
+{
+	uint8_t data[6];
+	int rv;
+
+	/* Check if battery charge FET is disabled. */
+	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
+			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+	if (rv)
+		return -1;
+
+	return !!(~data[3] & (BATTERY_CHARGING_DISABLED));
+}
