@@ -419,7 +419,7 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
 		break;
 	case TBT_INACTIVE:
 		/* Thunderbolt mode is inactive */
-		return -1;
+		return 0;
 	default:
 		 CPRINTF("%s called with invalid state %d\n",
 				__func__, tbt_state[port]);
