@@ -527,14 +527,20 @@ struct partner_active_modes {
 #define VDO_INDEX_AMA            4
 #define VDO_INDEX_PTYPE_UFP1_VDO 4
 #define VDO_INDEX_PTYPE_CABLE1   4
-#define VDO_INDEX_PTYPE_UFP2_VDO 4
+#define VDO_INDEX_PTYPE_UFP2_VDO 5
 #define VDO_INDEX_PTYPE_CABLE2   5
 #define VDO_INDEX_PTYPE_DFP_VDO  6
 #define VDO_I(name) VDO_INDEX_##name
 
+/* PD Rev 2.0 ID Header VDO */
 #define VDO_IDH(usbh, usbd, ptype, is_modal, vid)		\
 	((usbh) << 31 | (usbd) << 30 | ((ptype) & 0x7) << 27	\
 	 | (is_modal) << 26 | ((vid) & 0xffff))
+
+/* PD Rev 3.0 ID Header VDO */
+#define VDO_IDH_REV30(usbh, usbd, ptype_u, is_modal, ptype_d, ctype, vid) \
+	(VDO_IDH(usbh, usbd, ptype_u, is_modal, vid)			\
+	| ((ptype_d) & 0x7) << 23 | ((ctype) & 0x3) << 21)
 
 #define PD_IDH_PTYPE(vdo)    (((vdo) >> 27) & 0x7)
 #define PD_IDH_IS_MODAL(vdo) (((vdo) >> 26) & 0x1)

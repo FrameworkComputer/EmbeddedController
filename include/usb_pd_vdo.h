@@ -19,10 +19,60 @@
  * ############################################################################
  *
  * Reference: USB Power Delivery Specification Revision 3.0, Version 2.0
+ * Updated to ECN released on Feb 07, 2020
  *
  * ############################################################################
  */
 
+/*****************************************************************************/
+/*
+ * Table 6-29 ID Header VDO
+ * -------------------------------------------------------------
+ * <31>    : USB Communications Capable as USB Host
+ * <30>    : USB Communications Capable as a USB Device
+ * <29:27> : Product Type (UFP):
+ *           000b = Undefined
+ *           001b = PDUSB Hub
+ *           010b = PDUSB Peripheral
+ *           011b = PSD (PD 3.0)
+ *           101b = Alternate Mode Adapter (AMA)
+ *           110b = Vconn-Powered USB Device (VPD, PD 3.0)
+ *           111b = Reserved, shall NOT be used
+ *
+ *           Product Type (Cable Plug):
+ *           000b = Undefined
+ *           001b...010b = Reserved, Shall NOT be used
+ *           011b = Passive Cable
+ *           100b = Active Cable
+ *           101b...111b = Reserved, Shall NOT be used
+ * <26>    : Modal Operation Supported
+ * <25:23> : Product Type (DFP):
+ *           000b = Undefined
+ *           001b = PDUSB Hub
+ *           010b = PDUSB Host
+ *           011b = Power Brick
+ *           100b = Alternate Mode Controller (AMC)
+ *           101b...111b = Reserved, Shall NOT be used
+ * <22:21> : Connector Type
+ *           00b = Reserved for compatibility with legacy systems
+ *           01b = Reserved, Shall Not be used
+ *           10b = USB Type-C Receptacle
+ *           11b = USB Type-C Captive Plug
+ * <20:16> : Reserved
+ * <15:0>  : USB Vendor ID
+ */
+enum connector_type {
+	USB_TYPEC_RECEPTACLE = 2,
+	USB_TYPEC_CAPTIVE_PLUG,
+};
+
+enum idh_ptype_dfp {
+	IDH_PTYPE_DFP_UNDEFINED,
+	IDH_PTYPE_DFP_HUB,
+	IDH_PTYPE_DFP_HOST,
+	IDH_PTYPE_DFP_POWER_BRICK,
+	IDH_PTYPE_DFP_AMC,
+};
 /*****************************************************************************/
 /*
  * Table 6-33 Cert Stat VDO (Note: same as Revision 2.0)
@@ -50,13 +100,21 @@ struct product_vdo {
  * Table 6-35 UFP VDO 1
  * -------------------------------------------------------------
  * <31:29> : UFP VDO version
+ *           Version 1.0 = 000b
+ *           Version 1.1 = 001b
+ *           Values 010b...111b are Reserved and Shall Not be used
  * <28>    : Reserved
  * <27:24> : Device Capability
  *           0001b = USB2.0 Device capable
  *           0010b = USB2.0 Device capable (Billboard only)
  *           0100b = USB3.2 Device capable
  *           1000b = USB4 Device Capable
- * <23:6>  : Reserved
+ * <23:22> : Connector Type
+ *           00b = Reserved, Shall Not be used
+ *           01b = Reserved, Shall Not be used
+ *           10b = USB Type-C Receptacle
+ *           11b = USB Type-C Captive Plug
+ * <21:6>  : Reserved
  * <5:3>   : Alternate Modes
  *           001b = Supports TBT3 alternate mode
  *           010b = Supports Alternate Modes that reconfigure
@@ -74,6 +132,53 @@ struct product_vdo {
  */
 #define PD_PRODUCT_IS_USB4(vdo) ((vdo) >> 24 & BIT(3))
 #define PD_PRODUCT_IS_TBT3(vdo) ((vdo) >> 3 & BIT(0))
+
+/* UFP VDO Version 1.1; update the value when UFP VDO version changes */
+#define VDO_UFP1(cap, ctype, alt, speed)			\
+	((0x1) << 29 | ((cap) & 0xf) << 24			\
+	| ((ctype) & 0x3) << 22 | ((alt) & 0x7) << 3 | ((speed) & 0x7))
+
+/* UFP VDO 1 Alternate Modes */
+#define VDO_UFP1_ALT_MODE_TBT3           BIT(0)
+#define VDO_UFP1_ALT_MODE_RECONFIGURE    BIT(1)
+#define VDO_UFP1_ALT_MODE_NO_RECONFIGURE BIT(2)
+
+/* UFP VDO 1 Device Capability */
+#define VDO_UFP1_CAPABILITY_USB20           BIT(0)
+#define VDO_UFP1_CAPABILITY_USB20_BILLBOARD BIT(1)
+#define VDO_UFP1_CAPABILITY_USB32           BIT(2)
+#define VDO_UFP1_CAPABILITY_USB4            BIT(3)
+/*****************************************************************************/
+/*
+ * Table 6-37 DFP VDO
+ * -------------------------------------------------------------
+ * <31:29> : DFP VDO version
+ *           Version 1.0 = 000b
+ *           Version 1.1 = 001b
+ *           Values 010b...111b are Reserved and Shall Not be used
+ * <28:27> : Reserved
+ * <26:24> : Host Capability
+ *           001b = USB2.0 host capable
+ *           010b = USB3.2 host capable
+ *           100b = USB4 host capable
+ * <23:22> : Connector Type
+ *           00b = Reserved, Shall Not be used
+ *           01b = Reserved, Shall Not be used
+ *           10b = USB Type-C Receptacle
+ *           11b = USB Type-C Captive Plug
+ * <21:5>  : Reserved
+ * <4:0>   : Port number
+ */
+/* DFP VDO Version 1.1; update the value when DFP VDO version changes */
+#define VDO_DFP(cap, ctype, port)			\
+	((0x1) << 29 | ((cap) & 0x7) << 24	\
+	| ((ctype) & 0x3) << 22 | ((port) & 0x1f))
+
+/* DFP VDO Host Capability */
+#define VDO_DFP_HOST_CAPABILITY_USB20 BIT(0)
+#define VDO_DFP_HOST_CAPABILITY_USB32 BIT(1)
+#define VDO_DFP_HOST_CAPABILITY_USB4  BIT(2)
+
 
 /*****************************************************************************/
 /*
