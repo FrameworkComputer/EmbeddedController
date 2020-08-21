@@ -17,6 +17,9 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
+/* Battery */
+#define CONFIG_BATTERY_FUEL_GAUGE
+
 /* Charger */
 #define CONFIG_CHARGER_RAA489000
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
@@ -143,6 +146,12 @@ enum sensor_id {
 enum pwm_channel {
 	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT,
+};
+
+enum battery_type {
+	BATTERY_LGC_AP18C8K,
+	BATTERY_MURATA_AP18C4K,
+	BATTERY_TYPE_COUNT,
 };
 
 int board_is_sourcing_vbus(int port);
