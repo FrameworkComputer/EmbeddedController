@@ -485,6 +485,7 @@ static struct policy_engine {
 	uint32_t flags;
 	/* Device Policy Manager Request */
 	uint32_t dpm_request;
+	uint32_t dpm_curr_request;
 	/* state timeout timer */
 	uint64_t timeout;
 	/* last requested voltage PDO index */
@@ -732,6 +733,7 @@ static void pe_init(int port)
 {
 	pe[port].flags = 0;
 	pe[port].dpm_request = 0;
+	pe[port].dpm_curr_request = 0;
 	pe[port].source_cap_timer = TIMER_DISABLED;
 	pe[port].no_response_timer = TIMER_DISABLED;
 	pe[port].data_role = pd_get_data_role(port);
@@ -1129,6 +1131,12 @@ DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, pe_handle_detach, HOOK_PRIO_DEFAULT);
 /*
  * Private functions
  */
+static void pe_set_dpm_curr_request(const int port,
+				    const int request)
+{
+	PE_CLR_DPM_REQUEST(port, request);
+	pe[port].dpm_curr_request = request;
+}
 
 /* Set the TypeC state machine to a new state. */
 test_export_static void set_state_pe(const int port,
@@ -1147,47 +1155,43 @@ static bool common_src_snk_dpm_requests(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES) &&
 			PE_CHK_DPM_REQUEST(port, DPM_REQUEST_SEND_ALERT)) {
-		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_SEND_ALERT);
+		pe_set_dpm_curr_request(port, DPM_REQUEST_SEND_ALERT);
 		set_state_pe(port, PE_SEND_ALERT);
 		return true;
 	} else if (IS_ENABLED(CONFIG_USBC_VCONN) &&
 			PE_CHK_DPM_REQUEST(port, DPM_REQUEST_VCONN_SWAP)) {
-		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_VCONN_SWAP);
+		pe_set_dpm_curr_request(port, DPM_REQUEST_VCONN_SWAP);
 		set_state_pe(port, PE_VCS_SEND_SWAP);
 		return true;
 	} else if (PE_CHK_DPM_REQUEST(port,
 					DPM_REQUEST_BIST_RX)) {
-		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_BIST_RX);
+		pe_set_dpm_curr_request(port, DPM_REQUEST_BIST_RX);
 		set_state_pe(port, PE_BIST_RX);
 		return true;
 	} else if (PE_CHK_DPM_REQUEST(port,
 					DPM_REQUEST_BIST_TX)) {
-		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_BIST_TX);
+		pe_set_dpm_curr_request(port, DPM_REQUEST_BIST_TX);
 		set_state_pe(port, PE_BIST_TX);
 		return true;
 	} else if (PE_CHK_DPM_REQUEST(port,
 					DPM_REQUEST_SNK_STARTUP)) {
-		PE_CLR_DPM_REQUEST(port,
-					DPM_REQUEST_SNK_STARTUP);
+		pe_set_dpm_curr_request(port, DPM_REQUEST_SNK_STARTUP);
 		set_state_pe(port, PE_SNK_STARTUP);
 		return true;
 	} else if (PE_CHK_DPM_REQUEST(port,
 					DPM_REQUEST_SRC_STARTUP)) {
-		PE_CLR_DPM_REQUEST(port,
-					DPM_REQUEST_SRC_STARTUP);
+		pe_set_dpm_curr_request(port, DPM_REQUEST_SRC_STARTUP);
 		set_state_pe(port, PE_SRC_STARTUP);
 		return true;
 	} else if (PE_CHK_DPM_REQUEST(port,
 					DPM_REQUEST_SOFT_RESET_SEND)) {
-		PE_CLR_DPM_REQUEST(port,
-					DPM_REQUEST_SOFT_RESET_SEND);
+		pe_set_dpm_curr_request(port, DPM_REQUEST_SOFT_RESET_SEND);
 		/* Currently only support sending soft reset to SOP */
 		pe_send_soft_reset(port, TCPC_TX_SOP);
 		return true;
 	} else if (PE_CHK_DPM_REQUEST(port,
 					DPM_REQUEST_PORT_DISCOVERY)) {
-		PE_CLR_DPM_REQUEST(port,
-					DPM_REQUEST_PORT_DISCOVERY);
+		pe_set_dpm_curr_request(port, DPM_REQUEST_PORT_DISCOVERY);
 		if (!PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION)) {
 			/*
 			 * Clear counters and reset timer to trigger a
@@ -1202,14 +1206,12 @@ static bool common_src_snk_dpm_requests(int port)
 		}
 		return true;
 	} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_VDM)) {
-		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_VDM);
-
+		pe_set_dpm_curr_request(port, DPM_REQUEST_VDM);
 		/* Send previously set up SVDM. */
 		set_state_pe(port, PE_VDM_REQUEST_DPM);
 		return true;
 	} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_ENTER_USB)) {
-		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_ENTER_USB);
-
+		pe_set_dpm_curr_request(port, DPM_REQUEST_ENTER_USB);
 		set_state_pe(port, PE_DEU_SEND_ENTER_USB);
 		return true;
 	}
@@ -1692,27 +1694,55 @@ static void pe_src_send_capabilities_entry(int port)
 static void pe_src_send_capabilities_run(int port)
 {
 	/*
-	 * If a GoodCRC Message is received then the Policy Engine Shall:
-	 *  1) Stop the NoResponseTimer.
-	 *  2) Reset the HardResetCounter and CapsCounter to zero.
-	 *  3) Initialize and run the SenderResponseTimer.
+	 * If the sender_response_timer is DISABLED then we are still waiting
+	 * to see if the PD_DATA_SOURCE_CAP message was sent.
 	 */
-	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE) &&
-		pe[port].sender_response_timer == TIMER_DISABLED) {
-		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+	if (pe[port].sender_response_timer == TIMER_DISABLED) {
+		if (PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED)) {
+			PE_CLR_FLAG(port, PE_FLAGS_MSG_DISCARDED);
+			/*
+			 * We have a Discarded Message.
+			 *	PE_SNK/SRC_READY if DPM_REQUEST_SRC_CAP_CHANGE
+			 *	PE_SEND_SOFT_RESET otherwise
+			 */
+			if (pe[port].dpm_curr_request ==
+						DPM_REQUEST_SRC_CAP_CHANGE) {
+				/*
+				 * Restore the DPM Request before going back
+				 * to READY
+				 */
+				PE_SET_DPM_REQUEST(port,
+						DPM_REQUEST_SRC_CAP_CHANGE);
+				pe_set_ready_state(port);
+			} else {
+				pe_send_soft_reset(port, TCPC_TX_SOP);
+			}
+			return;
+		}
 
-		/* Stop the NoResponseTimer */
-		pe[port].no_response_timer = TIMER_DISABLED;
+		/*
+		 * If a GoodCRC Message is received then the Policy Engine
+		 * Shall:
+		 *  1) Stop the NoResponseTimer.
+		 *  2) Reset the HardResetCounter and CapsCounter to zero.
+		 *  3) Initialize and run the SenderResponseTimer.
+		 */
+		if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+			PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 
-		/* Reset the HardResetCounter to zero */
-		pe[port].hard_reset_counter = 0;
+			/* Stop the NoResponseTimer */
+			pe[port].no_response_timer = TIMER_DISABLED;
 
-		/* Reset the CapsCounter to zero */
-		pe[port].caps_counter = 0;
+			/* Reset the HardResetCounter to zero */
+			pe[port].hard_reset_counter = 0;
 
-		/* Initialize and run the SenderResponseTimer */
-		pe[port].sender_response_timer = get_time().val +
+			/* Reset the CapsCounter to zero */
+			pe[port].caps_counter = 0;
+
+			/* Initialize and run the SenderResponseTimer */
+			pe[port].sender_response_timer = get_time().val +
 							PD_T_SENDER_RESPONSE;
+		}
 	}
 
 	/*
@@ -1758,14 +1788,10 @@ static void pe_src_send_capabilities_run(int port)
 
 		/*
 		 * We have a Protocol Error.
-		 *	PE_SNK/SRC_READY if explicit contract
-		 *	PE_SEND_SOFT_RESET otherwise
+		 *	PE_SEND_SOFT_RESET
 		 */
-		if (PE_CHK_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT))
-			pe_set_ready_state(port);
-		else
-			pe_send_soft_reset(port, TCPC_TX_SOP);
-
+		pe_send_soft_reset(port,
+				   PD_HEADER_GET_SOP(rx_emsg[port].header));
 		return;
 	}
 
@@ -1967,6 +1993,9 @@ static void pe_src_ready_entry(int port)
 	/* Ensure any message send flags are cleaned up */
 	PE_CLR_FLAG(port, PE_FLAGS_READY_CLR);
 
+	/* Clear DPM Current Request */
+	pe[port].dpm_curr_request = 0;
+
 	/*
 	 * Wait and add jitter if we are operating in PD2.0 mode and no messages
 	 * have been sent since enter this state.
@@ -1980,7 +2009,7 @@ static void pe_src_ready_run(int port)
 	 * Don't delay handling a hard reset from the device policy manager.
 	 */
 	if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_HARD_RESET_SEND)) {
-		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_HARD_RESET_SEND);
+		pe_set_dpm_curr_request(port, DPM_REQUEST_HARD_RESET_SEND);
 		set_state_pe(port, PE_SRC_HARD_RESET);
 		return;
 	}
@@ -2145,28 +2174,33 @@ static void pe_src_ready_run(int port)
 
 			PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 
-			if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_DR_SWAP)) {
-				PE_CLR_DPM_REQUEST(port, DPM_REQUEST_DR_SWAP);
+			if (PE_CHK_DPM_REQUEST(port,
+						DPM_REQUEST_DR_SWAP)) {
+				pe_set_dpm_curr_request(port,
+						DPM_REQUEST_DR_SWAP);
 				if (PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION))
 					set_state_pe(port, PE_SRC_HARD_RESET);
 				else
 					set_state_pe(port, PE_DRS_SEND_SWAP);
 			} else if (PE_CHK_DPM_REQUEST(port,
 						DPM_REQUEST_PR_SWAP)) {
-				PE_CLR_DPM_REQUEST(port, DPM_REQUEST_PR_SWAP);
+				pe_set_dpm_curr_request(port,
+						DPM_REQUEST_PR_SWAP);
 				set_state_pe(port, PE_PRS_SRC_SNK_SEND_SWAP);
 			} else if (PE_CHK_DPM_REQUEST(port,
-							DPM_REQUEST_GOTO_MIN)) {
-				PE_CLR_DPM_REQUEST(port, DPM_REQUEST_GOTO_MIN);
+						DPM_REQUEST_GOTO_MIN)) {
+				pe_set_dpm_curr_request(port,
+						DPM_REQUEST_GOTO_MIN);
 				set_state_pe(port, PE_SRC_TRANSITION_SUPPLY);
 			} else if (PE_CHK_DPM_REQUEST(port,
 						DPM_REQUEST_SRC_CAP_CHANGE)) {
-				PE_CLR_DPM_REQUEST(port,
+				pe_set_dpm_curr_request(port,
 						DPM_REQUEST_SRC_CAP_CHANGE);
 				set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
 			} else if (PE_CHK_DPM_REQUEST(port,
 						DPM_REQUEST_SEND_PING)) {
-				PE_CLR_DPM_REQUEST(port, DPM_REQUEST_SEND_PING);
+				pe_set_dpm_curr_request(port,
+						DPM_REQUEST_SEND_PING);
 				set_state_pe(port, PE_SRC_PING);
 			} else if (!common_src_snk_dpm_requests(port)) {
 				CPRINTF("Unhandled DPM Request %x received\n",
@@ -2583,17 +2617,8 @@ static void pe_snk_select_capability_run(int port)
 				/*
 				 * Setup to get Device Policy Manager to
 				 * request Sink Capabilities for possible FRS
-				 *
-				 * TODO(b:165822172) This should be called for
-				 * FRS and non-FRS but there is a problem
-				 * currently with the GetSnkCap functionality
-				 * that is stopping PRS from working.  The
-				 * bug mentioned is to fix this path and
-				 * re-enable for all.
 				 */
-				if (IS_ENABLED(CONFIG_USB_PD_FRS))
-					pe_dpm_request(port,
-						DPM_REQUEST_GET_SNK_CAPS);
+				pe_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
 				return;
 			}
 			/*
@@ -2723,6 +2748,10 @@ static void pe_snk_ready_entry(int port)
 
 	/* Ensure any message send flags are cleaned up */
 	PE_CLR_FLAG(port, PE_FLAGS_READY_CLR);
+
+	/* Clear DPM Current Request */
+	pe[port].dpm_curr_request = 0;
+
 	/*
 	 * On entry to the PE_SNK_Ready state as the result of a wait,
 	 * then do the following:
@@ -2749,7 +2778,7 @@ static void pe_snk_ready_run(int port)
 	 * Don't delay handling a hard reset from the device policy manager.
 	 */
 	if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_HARD_RESET_SEND)) {
-		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_HARD_RESET_SEND);
+		pe_set_dpm_curr_request(port, DPM_REQUEST_HARD_RESET_SEND);
 		set_state_pe(port, PE_SNK_HARD_RESET);
 		return;
 	}
@@ -2919,29 +2948,32 @@ static void pe_snk_ready_run(int port)
 
 			PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 
-			if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_DR_SWAP)) {
-				PE_CLR_DPM_REQUEST(port, DPM_REQUEST_DR_SWAP);
+			if (PE_CHK_DPM_REQUEST(port,
+						DPM_REQUEST_DR_SWAP)) {
+				pe_set_dpm_curr_request(port,
+						DPM_REQUEST_DR_SWAP);
 				if (PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION))
 					set_state_pe(port, PE_SNK_HARD_RESET);
 				else
 					set_state_pe(port, PE_DRS_SEND_SWAP);
 			} else if (PE_CHK_DPM_REQUEST(port,
-							DPM_REQUEST_PR_SWAP)) {
-				PE_CLR_DPM_REQUEST(port, DPM_REQUEST_PR_SWAP);
+						DPM_REQUEST_PR_SWAP)) {
+				pe_set_dpm_curr_request(port,
+						DPM_REQUEST_PR_SWAP);
 				set_state_pe(port, PE_PRS_SNK_SRC_SEND_SWAP);
 			} else if (PE_CHK_DPM_REQUEST(port,
 						DPM_REQUEST_SOURCE_CAP)) {
-				PE_CLR_DPM_REQUEST(port,
-							DPM_REQUEST_SOURCE_CAP);
+				pe_set_dpm_curr_request(port,
+						DPM_REQUEST_SOURCE_CAP);
 				set_state_pe(port, PE_SNK_GET_SOURCE_CAP);
 			} else if (PE_CHK_DPM_REQUEST(port,
-					DPM_REQUEST_NEW_POWER_LEVEL)) {
-				PE_CLR_DPM_REQUEST(port,
+						DPM_REQUEST_NEW_POWER_LEVEL)) {
+				pe_set_dpm_curr_request(port,
 						DPM_REQUEST_NEW_POWER_LEVEL);
 				set_state_pe(port, PE_SNK_SELECT_CAPABILITY);
 			} else if (PE_CHK_DPM_REQUEST(port,
-					      DPM_REQUEST_GET_SNK_CAPS)) {
-				PE_CLR_DPM_REQUEST(port,
+						DPM_REQUEST_GET_SNK_CAPS)) {
+				pe_set_dpm_curr_request(port,
 						DPM_REQUEST_GET_SNK_CAPS);
 				set_state_pe(port, PE_DR_SNK_GET_SINK_CAP);
 			} else if (!common_src_snk_dpm_requests(port)) {
