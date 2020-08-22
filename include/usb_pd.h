@@ -2782,13 +2782,6 @@ extern uint32_t dp_status[CONFIG_USB_PD_PORT_MAX_COUNT];
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 
 /*
- * Configure the USB MUX in safe mode
- *
- * @param port The PD port number
- */
-void usb_mux_set_safe_mode(int port);
-
-/*
  * Set HPD GPIO level
  *
  * @param port The PD port number

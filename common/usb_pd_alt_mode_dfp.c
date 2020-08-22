@@ -10,6 +10,7 @@
 #include "task.h"
 #include "task_id.h"
 #include "timer.h"
+#include "usb_common.h"
 #include "usb_charge.h"
 #include "usb_dp_alt_mode.h"
 #include "usb_mux.h"
@@ -636,25 +637,6 @@ void notify_sysjump_ready(void)
 	if (sysjump_task_waiting != TASK_ID_INVALID)
 		task_set_event(sysjump_task_waiting,
 				TASK_EVENT_SYSJUMP_READY, 0);
-}
-
-/*
- * Before entering into alternate mode, state of the USB-C MUX
- * needs to be in safe mode.
- * Ref: USB Type-C Cable and Connector Specification
- * Section E.2.2 Alternate Mode Electrical Requirements
- */
-void usb_mux_set_safe_mode(int port)
-{
-	if (IS_ENABLED(CONFIG_USBC_SS_MUX)) {
-		usb_mux_set(port, IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) ?
-			USB_PD_MUX_SAFE_MODE : USB_PD_MUX_NONE,
-			USB_SWITCH_CONNECT, pd_get_polarity(port));
-	}
-
-	/* Isolate the SBU lines. */
-	if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
-		ppc_set_sbu(port, 0);
 }
 
 static inline bool is_rev3_vdo(int port, enum tcpm_transmit_type type)
