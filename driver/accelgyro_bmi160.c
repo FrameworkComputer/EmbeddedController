@@ -536,7 +536,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		return EC_ERROR_NOT_HANDLED;
 
 	do {
-		rv = bmi_read32(s->port, s->i2c_spi_addr_flags,
+		rv = bmi_read16(s->port, s->i2c_spi_addr_flags,
 				BMI160_INT_STATUS_0, &interrupt);
 		/*
 		 * Bail out of this loop there was an error reading the register
