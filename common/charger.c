@@ -435,16 +435,18 @@ enum ec_error_list charger_set_voltage(int chgnum, int voltage)
 
 enum ec_error_list charger_discharge_on_ac(int enable)
 {
-	int chgnum = 0;
+	int chgnum;
 	int rv = EC_ERROR_UNIMPLEMENTED;
 
-	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
-		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
-		return EC_ERROR_INVAL;
+	/*
+	 * When discharge on AC is selected, cycle through all chargers to
+	 * enable or disable this feature.
+	 */
+	for (chgnum = 0; chgnum < board_get_charger_chip_count(); chgnum++) {
+		if (chg_chips[chgnum].drv->discharge_on_ac)
+			rv = chg_chips[chgnum].drv->discharge_on_ac(chgnum,
+								    enable);
 	}
-
-	if (chg_chips[chgnum].drv->discharge_on_ac)
-		rv = chg_chips[chgnum].drv->discharge_on_ac(chgnum, enable);
 
 	return rv;
 }
