@@ -56,6 +56,7 @@ GPIO(EC_PS2_RESET_V0,		PIN(3, 2), GPIO_OUT_LOW)			/* Trackpoint reset pin V0*/
 GPIO(EC_PS2_RESET_V1,		PIN(4, 5), GPIO_OUT_LOW)			/* Trackpoint reset pin V1 */
 GPIO(EC_H1_PACKET_MODE,		PIN(8, 6), GPIO_OUT_LOW)			/* H1 Packet Mode */
 GPIO(FAN_ID,			PIN(8, 2), GPIO_INPUT)				/* Fan ID*/
+GPIO(USB_C1_HPD_IN_DB_V1,	PIN(B, 1), GPIO_OUT_LOW)			/* C1 HPD V1 */
 
 UNIMPLEMENTED(NO_HPD)
 

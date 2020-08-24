@@ -291,9 +291,11 @@ enum gpio_signal board_usbc_port_to_hpd_gpio(int port)
 	 * this will be removed when version_2 hardware is retired.
 	 */
 	else if (ec_config_has_mst_hub_rtd2141b())
-		return (board_ver >= 3)
-				? IOEX_USB_C1_HPD_IN_DB
-				: GPIO_EC_DP1_HPD;
+		return (board_ver >= 4)
+				? GPIO_USB_C1_HPD_IN_DB_V1
+				: (board_ver == 3)
+					? IOEX_USB_C1_HPD_IN_DB
+					: GPIO_EC_DP1_HPD;
 
 	/* USB-C1 OPT1 DB uses DP2_HPD. */
 	return GPIO_DP2_HPD;
