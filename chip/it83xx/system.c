@@ -38,6 +38,17 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	__enter_hibernate(seconds, microseconds);
 }
 
+/* Clear reset flags if it's not cleared in check_reset_cause() */
+static int delayed_clear_reset_flags;
+static void clear_reset_flags(void)
+{
+	if (IS_ENABLED(CONFIG_BOARD_RESET_AFTER_POWER_ON) &&
+			delayed_clear_reset_flags) {
+		chip_save_reset_flags(0);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, clear_reset_flags, HOOK_PRIO_LAST);
+
 static void check_reset_cause(void)
 {
 	uint32_t flags;
@@ -68,8 +79,40 @@ static void check_reset_cause(void)
 	if (flags & (EC_RESET_FLAG_HARD | EC_RESET_FLAG_SOFT))
 		flags &= ~EC_RESET_FLAG_WATCHDOG;
 
-	/* Clear saved reset flags. */
-	chip_save_reset_flags(0);
+	/*
+	 * On power-on of some boards, H1 releases the EC from reset but then
+	 * quickly asserts and releases the reset a second time. This means the
+	 * EC sees 2 resets. In order to carry over some important flags (e.g.
+	 * HIBERNATE) to the second resets, the reset flag will not be wiped if
+	 * we know this is the first reset.
+	 */
+	if (IS_ENABLED(CONFIG_BOARD_RESET_AFTER_POWER_ON) &&
+			(flags & EC_RESET_FLAG_POWER_ON)) {
+		if (flags & EC_RESET_FLAG_INITIAL_PWR) {
+			/* Second boot, clear the flag immediately */
+			chip_save_reset_flags(0);
+		} else {
+			/*
+			 * First boot, Keep current flags and set INITIAL_PWR
+			 * flag. EC reset should happen soon.
+			 *
+			 * It's possible that H1 never trigger EC reset, or
+			 * reset happens before this line. Both cases should be
+			 * fine because we will have the correct flag anyway.
+			 */
+			chip_save_reset_flags(chip_read_reset_flags() |
+						EC_RESET_FLAG_INITIAL_PWR);
+
+			/*
+			 * Schedule chip_save_reset_flags(0) later.
+			 * Wait until end of HOOK_INIT should be long enough.
+			 */
+			delayed_clear_reset_flags = 1;
+		}
+	} else {
+		/* Clear saved reset flags. */
+		chip_save_reset_flags(0);
+	}
 
 	system_set_reset_flags(flags);
 
