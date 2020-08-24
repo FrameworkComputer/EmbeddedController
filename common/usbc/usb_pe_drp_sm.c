@@ -5601,6 +5601,8 @@ uint8_t pd_get_src_cap_cnt(int port)
 
 void pd_dfp_discovery_init(int port)
 {
+	PE_CLR_FLAG(port, PE_FLAGS_MODAL_OPERATION);
+
 	memset(pe[port].discovery, 0, sizeof(pe[port].discovery));
 	memset(pe[port].partner_amodes, 0, sizeof(pe[port].partner_amodes));
 
