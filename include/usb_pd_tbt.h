@@ -85,9 +85,10 @@
  * <25:17> : Reserved
  * <16>    : TBT Adapter
  *           Errata: TBT Adapter bits are swapped in the document
- *           "USB Type-C cable and connector specification, Release 2.0"
- *           TODO (b/147375157): Add the errata document information once
- *           published by USB-IF.
+ *           Refer USB Type-C ENGINEERING CHANGE NOTICE (ECN)
+ *           "USB Type-C ECN Thunderbolt 3 Compatibility Updates.pdf"
+ *           with Title: Thunderbolt 3 Compatibility Updates
+ *           for the document fix published by USB-IF.
  *           0b = TBT3 Adapter
  *           1b = TBT2 Legacy Adapter
  * <15:0>  : TBT Alternate Mode
