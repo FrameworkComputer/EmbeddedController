@@ -22,6 +22,7 @@
 #include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/usb_mux/pi3usb3x532.h"
+#include "driver/retimer/ps8802.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -479,6 +480,7 @@ const struct usb_mux usbc1_retimer = {
 	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
 	.driver = &nb7v904m_usb_redriver_drv,
 };
+
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 0,
@@ -489,9 +491,8 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 1,
 		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
-		.driver = &pi3usb3x532_usb_mux_driver,
-		.next_mux = &usbc1_retimer,
+		.i2c_addr_flags = PS8802_I2C_ADDR_FLAGS,
+		.driver = &ps8802_usb_mux_driver,
 	}
 };
 
