@@ -8,6 +8,7 @@
 #define __CROS_EC_BOARD_H
 
 /* Chipset config */
+#define CONFIG_BOARD_RESET_AFTER_POWER_ON
 #define CONFIG_BRINGUP
 #define CONFIG_CHIPSET_MT8192
 #define CONFIG_CMD_POWERINDEBUG
