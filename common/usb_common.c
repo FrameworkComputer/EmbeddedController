@@ -493,14 +493,19 @@ DECLARE_DEFERRED(re_enable_ports);
 
 void pd_handle_overcurrent(int port)
 {
-	/* Keep track of the overcurrent events. */
 	CPRINTS("C%d: overcurrent!", port);
 
 	if (IS_ENABLED(CONFIG_USB_PD_LOGGING))
 		pd_log_event(PD_EVENT_PS_FAULT, PD_LOG_PORT_SIZE(port, 0),
 			PS_FAULT_OCP, NULL);
 
+	/* No action to take if disconnected, just log. */
+	if (pd_is_disconnected(port))
+		return;
+
+	/* Keep track of the overcurrent events. */
 	ppc_add_oc_event(port);
+
 	/* Let the board specific code know about the OC event. */
 	board_overcurrent_event(port, 1);
 
