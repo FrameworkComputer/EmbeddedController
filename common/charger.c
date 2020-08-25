@@ -355,6 +355,9 @@ int charger_is_sourcing_otg_power(int port)
 	int chgnum = 0;
 	int rv = 0;
 
+	if (IS_ENABLED(CONFIG_OCPC))
+		chgnum = port;
+
 	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
 		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
 		return 0;
