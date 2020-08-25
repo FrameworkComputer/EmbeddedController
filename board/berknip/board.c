@@ -464,19 +464,19 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-const static struct ec_thermal_config thermal_thermistor_0 = {
+const static struct ec_thermal_config thermal_thermistor_soc = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(99),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(99),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(73),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(98),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
 	},
-	.temp_fan_off = C_TO_K(37),
-	.temp_fan_max = C_TO_K(70),
+	.temp_fan_off = C_TO_K(39),
+	.temp_fan_max = C_TO_K(60),
 };
 
-const static struct ec_thermal_config thermal_thermistor_1 = {
+const static struct ec_thermal_config thermal_thermistor_charger = {
 	.temp_host = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(99),
 		[EC_TEMP_THRESH_HALT] = C_TO_K(99),
@@ -488,13 +488,25 @@ const static struct ec_thermal_config thermal_thermistor_1 = {
 	.temp_fan_max = C_TO_K(99),
 };
 
+const static struct ec_thermal_config thermal_thermistor_5v = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(60),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(99),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(50),
+	},
+	.temp_fan_off = C_TO_K(98),
+	.temp_fan_max = C_TO_K(99),
+};
+
 const static struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(100),
 		[EC_TEMP_THRESH_HALT] = C_TO_K(105),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(99),
 	},
 	.temp_fan_off = C_TO_K(105),
 	.temp_fan_max = C_TO_K(105),
@@ -509,13 +521,13 @@ struct fan_step {
 };
 
 static const struct fan_step fan_table0[] = {
-	{.on =  0, .off =  3, .rpm = 0},
-	{.on = 18, .off =  3, .rpm = 3700},
-	{.on = 33, .off = 12, .rpm = 4000},
-	{.on = 48, .off = 24, .rpm = 4500},
-	{.on = 64, .off = 36, .rpm = 4800},
-	{.on = 85, .off = 48, .rpm = 5200},
-	{.on = 100, .off = 70, .rpm = 6200},
+	{.on =  0, .off =  5, .rpm = 0},
+	{.on = 29, .off =  5, .rpm = 3700},
+	{.on = 38, .off = 19, .rpm = 4000},
+	{.on = 48, .off = 33, .rpm = 4500},
+	{.on = 62, .off = 43, .rpm = 4800},
+	{.on = 76, .off = 52, .rpm = 5200},
+	{.on = 100, .off = 67, .rpm = 6200},
 };
 /* All fan tables must have the same number of levels */
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
@@ -565,9 +577,10 @@ int fan_percent_to_rpm(int fan, int pct)
 
 static void setup_fans(void)
 {
-	thermal_params[TEMP_SENSOR_CHARGER] = thermal_thermistor_1;
-	thermal_params[TEMP_SENSOR_SOC] = thermal_thermistor_0;
+	thermal_params[TEMP_SENSOR_CHARGER] = thermal_thermistor_charger;
+	thermal_params[TEMP_SENSOR_SOC] = thermal_thermistor_soc;
 	thermal_params[TEMP_SENSOR_CPU] = thermal_cpu;
+	thermal_params[TEMP_SENSOR_5V_REGULATOR] = thermal_thermistor_5v;
 }
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 
