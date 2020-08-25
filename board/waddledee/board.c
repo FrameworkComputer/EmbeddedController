@@ -401,7 +401,7 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 
 	current = (rp == TYPEC_RP_3A0) ? 3000 : 1500;
 
-	chg_chips[port].drv->set_otg_current_voltage(port, current, 5000);
+	charger_set_otg_current_voltage(port, current, 5000);
 }
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
