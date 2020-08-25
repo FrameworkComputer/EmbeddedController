@@ -57,8 +57,7 @@ void tc_start_event_loop(int port)
 }
 
 /* High-priority interrupt tasks implementations */
-#if     defined(HAS_TASK_PD_INT_C0) || defined(HAS_TASK_PD_INT_C1) || \
-	defined(HAS_TASK_PD_INT_C2)
+#ifdef CONFIG_HAS_TASK_PD_INT
 
 /* Used to conditionally compile code in main pd task. */
 #define HAS_DEFFERED_INTERRUPT_HANDLER
@@ -152,7 +151,7 @@ void pd_interrupt_handler_task(void *p)
 		}
 	}
 }
-#endif /* HAS_TASK_PD_INT_C0 || HAS_TASK_PD_INT_C1 || HAS_TASK_PD_INT_C2 */
+#endif /* CONFIG_HAS_TASK_PD_INT */
 
 
 static void pd_task_init(int port)

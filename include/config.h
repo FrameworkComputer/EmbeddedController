@@ -3768,6 +3768,9 @@
 /*****************************************************************************/
 /* USB PD config */
 
+/* Config is enabled, if PD interrupt tasks are used. */
+#undef CONFIG_HAS_TASK_PD_INT
+
 /*
  * Enables USB Power Delivery
  *
@@ -5313,7 +5316,12 @@
 #undef CONFIG_HOSTCMD_PD
 #endif
 
-#if defined(HAS_TASK_PDCMD) && defined(HAS_TASK_PD_C0_INT)
+#if defined(HAS_TASK_PD_INT_C0) || defined(HAS_TASK_PD_INT_C1) || \
+	defined(HAS_TASK_PD_INT_C2) || defined(HAS_TASK_PD_INT_C3)
+#define CONFIG_HAS_TASK_PD_INT
+#endif
+
+#if defined(HAS_TASK_PDCMD) && defined(CONFIG_HAS_TASK_PD_INT)
 #error Should not use PDCMD task with PD INT tasks
 #endif
 
