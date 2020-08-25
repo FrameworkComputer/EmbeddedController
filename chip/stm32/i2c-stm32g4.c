@@ -427,8 +427,6 @@ static void i2c_freq_change_hook(void)
 	const struct i2c_port_t *p = i2c_ports;
 	int i;
 
-	i2c_freq_change();
-
 	/*
 	 * Handle CPU clock changing frequency and unlock I2C ports we locked
 	 * in pre-freq change hook
