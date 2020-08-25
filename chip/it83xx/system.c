@@ -161,8 +161,19 @@ int system_is_reboot_warm(void)
 
 void chip_pre_init(void)
 {
-	/* bit4, enable debug mode through SMBus */
-	IT83XX_SMB_SLVISELR &= ~BIT(4);
+	/* bit0, EC received the special waveform from iteflash */
+	if (IT83XX_GCTRL_DBGROS & IT83XX_SMB_DBGR) {
+		/*
+		 * Wait ~200ms, so iteflash will have enough time to let
+		 * EC enter follow mode. And once EC goes into follow mode, EC
+		 * will be stayed here (no following sequences, eg:
+		 * enable watchdog/write protect/power-on sequence...) until
+		 * we reset it.
+		 */
+		for (int i = 0; i < (200 * MSEC / 15); i++)
+			/* delay ~15.25us */
+			IT83XX_GCTRL_WNCKR = 0;
+	}
 
 	if (IS_ENABLED(IT83XX_ETWD_HW_RESET_SUPPORT))
 		/* System triggers a soft reset by default (command: reboot). */
@@ -231,6 +242,12 @@ void system_reset(int flags)
 {
 	uint32_t save_flags = 0;
 
+	/* We never get this warning message in normal case. */
+	if (IT83XX_GCTRL_DBGROS & IT83XX_SMB_DBGR) {
+		ccprintf("!Reset will be failed due to EC is in debug mode!\n");
+		cflush();
+	}
+
 	/* Disable interrupts to avoid task swaps during reboot. */
 	interrupt_disable();
 
@@ -253,13 +270,6 @@ void system_reset(int flags)
 			udelay(10000);
 		}
 	}
-
-	/*
-	 * bit4, disable debug mode through SMBus.
-	 * If we are in debug mode, we need disable it before triggering
-	 * a soft reset or reset will fail.
-	 */
-	IT83XX_SMB_SLVISELR |= BIT(4);
 
 	/* bit0: enable watchdog hardware reset. */
 #ifdef IT83XX_ETWD_HW_RESET_SUPPORT
