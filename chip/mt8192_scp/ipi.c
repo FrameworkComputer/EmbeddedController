@@ -38,14 +38,8 @@ void ipi_disable_irq(void)
 
 void ipi_enable_irq(void)
 {
-	if (atomic_dec(&disable_irq_count, 1) == 1) {
-		int pending = SCP_GIPC_IN_SET;
-
+	if (atomic_dec(&disable_irq_count, 1) == 1)
 		set_int_mask(saved_int_mask);
-
-		if (init_done && pending)
-			task_trigger_irq(SCP_IRQ_GIPC_IN0);
-	}
 }
 
 static int ipi_is_busy(void)
