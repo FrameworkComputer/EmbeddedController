@@ -316,9 +316,8 @@ enum ec_error_list charger_set_mode(int mode)
 	return rv;
 }
 
-enum ec_error_list charger_enable_otg_power(int enabled)
+enum ec_error_list charger_enable_otg_power(int chgnum, int enabled)
 {
-	int chgnum = 0;
 	int rv = EC_ERROR_UNIMPLEMENTED;
 
 	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
@@ -332,10 +331,10 @@ enum ec_error_list charger_enable_otg_power(int enabled)
 	return rv;
 }
 
-enum ec_error_list charger_set_otg_current_voltage(int output_current,
+enum ec_error_list charger_set_otg_current_voltage(int chgnum,
+						   int output_current,
 						   int output_voltage)
 {
-	int chgnum = 0;
 	int rv = EC_ERROR_UNIMPLEMENTED;
 
 	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {

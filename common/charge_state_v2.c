@@ -414,7 +414,7 @@ static void set_base_lid_current(int current_base, int allow_charge_base,
 	}
 
 	if (current_lid >= 0) {
-		ret = charge_set_output_current_limit(0, 0);
+		ret = charge_set_output_current_limit(CHARGER_SOLO, 0, 0);
 		if (ret)
 			return;
 		ret = charger_set_input_current(chgnum, current_lid);
@@ -426,7 +426,7 @@ static void set_base_lid_current(int current_base, int allow_charge_base,
 		else
 			ret = charge_request(0, 0);
 	} else {
-		ret = charge_set_output_current_limit(
+		ret = charge_set_output_current_limit(CHARGER_SOLO,
 						-current_lid, otg_voltage);
 	}
 
@@ -2390,18 +2390,18 @@ int charge_is_consuming_full_input_current(void)
 }
 
 #ifdef CONFIG_CHARGER_OTG
-int charge_set_output_current_limit(int ma, int mv)
+int charge_set_output_current_limit(int chgnum, int ma, int mv)
 {
 	int ret;
 	int enable = ma > 0;
 
 	if (enable) {
-		ret = charger_set_otg_current_voltage(ma, mv);
+		ret = charger_set_otg_current_voltage(chgnum, ma, mv);
 		if (ret != EC_SUCCESS)
 			return ret;
 	}
 
-	ret = charger_enable_otg_power(enable);
+	ret = charger_enable_otg_power(chgnum, enable);
 	if (ret != EC_SUCCESS)
 		return ret;
 
