@@ -369,7 +369,7 @@ static const struct ec_response_keybd_config delbin_kb = {
 		TK_VOL_DOWN,		/* T9 */
 		TK_VOL_UP,		/* T10 */
 	},
-	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
 };
 
 __override const struct ec_response_keybd_config
