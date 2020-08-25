@@ -25,6 +25,48 @@
 /* Flash page programming timeout.  This is 2x the datasheet max. */
 #define FLASH_TIMEOUT_US 48000
 
+/*
+ * Cros-Ec common flash APIs use the term 'bank' equivalent to how 'page' is
+ * used in the STM32 TRMs. Redifining macros here in terms of pages in order to
+ * match STM32 documentation for write protect computations in this file.
+ *
+ * Two write protect (WRP) regions can be defined in the option bytes. The
+ * assumption is that 1st WRP area is for RO and the 2nd WRP is for RW if RW WRP
+ * config is selected. If RW is being write-protected, it is assume to be the
+ * 1st page following the RO section until the last flash page. WRP areas are
+ * specified in terms of page indices with a start index and an end index.
+ * start == end means a single page is protected.
+ *
+ *     WRP1a_start = WRP1a_end  --> WRP1a_start page is protected
+ *     WRP1a_start > WRP1a_end  --> No WRP area is specified
+ *     WRP1a_start < WRP1a_end  --> Pages WRP1a_start to WRP1a_end protected
+ *
+ * These macros are from the common flash API and mean the following:
+ * WP_BANK_OFFSET         -> index of first RO page
+ * CONFIG_WP_STORAGE_SIZE -> size of RO region in bytes
+ */
+#define FLASH_PAGE_SIZE CONFIG_FLASH_BANK_SIZE
+#define FLASH_PAGE_MAX_COUNT (CONFIG_FLASH_SIZE / FLASH_PAGE_SIZE)
+#define FLASH_RO_FIRST_PAGE_IDX WP_BANK_OFFSET
+#define FLASH_RO_LAST_PAGE_IDX ((CONFIG_WP_STORAGE_SIZE / FLASH_PAGE_SIZE) \
+				 + FLASH_RO_FIRST_PAGE_IDX - 1)
+#define FLASH_RW_FIRST_PAGE_IDX (FLASH_RO_LAST_PAGE_IDX + 1)
+#define FLASH_RW_LAST_PAGE_IDX (FLASH_PAGE_MAX_COUNT - 1)
+
+
+#define FLASH_PAGE_ROLLBACK_COUNT ROLLBACK_BANK_COUNT
+#define FLASH_PAGE_ROLLBACK_FIRST_IDX ROLLBACK_BANK_OFFSET
+#define FLASH_PAGE_ROLLBACK_LAST_IDX (FLASH_PAGE_ROLLBACK_FIRST_IDX +\
+					FLASH_PAGE_ROLLBACK_COUNT -1)
+
+#define FLASH_WRP_MASK              (FLASH_PAGE_MAX_COUNT - 1)
+#define FLASH_WRP_START(val)        ((val) & FLASH_WRP_MASK)
+#define FLASH_WRP_END(val)          (((val) >> 16) & FLASH_WRP_MASK)
+#define FLASH_WRP_RANGE(start, end) (((start) & FLASH_WRP_MASK) | \
+				       (((end) & FLASH_WRP_MASK) << 16))
+#define FLASH_WRP_RANGE_DISABLED    FLASH_WRP_RANGE(FLASH_WRP_MASK, 0x00)
+#define FLASH_WRP1X_MASK FLASH_WRP_RANGE(FLASH_WRP_MASK, FLASH_WRP_MASK)
+
 static inline int calculate_flash_timeout(void)
 {
 	return (FLASH_TIMEOUT_US *
@@ -89,6 +131,9 @@ static void lock(void)
  * | 0x1FFF7820   |     |nWRP1B|      |nWRP1B|   |     | WRP1B|      | WRP1B|
  * |              |     |_END  |      |_STRT |   |     | _END |      | _STRT|
  * +--------------+------------+-------------+   +------------+-------------+
+ * | 0x1FFF7828   |     |nBOOT |      |nSEC_ |   |     | BOOT |      | SEC_ |
+ * |              |     |LOCK  |      |SIZE1 |   |     | _LOCK|      | SIZE1|
+ * +--------------+------------+-------------+   +------------+-------------+
  *
  * Note that the variable with n prefix means the complement.
  */
@@ -140,30 +185,36 @@ int flash_physical_protect_at_boot(uint32_t new_flags)
 	 */
 	if (new_flags & (EC_FLASH_PROTECT_ALL_AT_BOOT |
 			 EC_FLASH_PROTECT_RO_AT_BOOT))
-		ro_range = FLASH_WRP_RANGE(WP_BANK_OFFSET,
-					   WP_BANK_OFFSET + WP_BANK_COUNT);
+		ro_range = FLASH_WRP_RANGE(FLASH_RO_FIRST_PAGE_IDX,
+					     FLASH_RO_LAST_PAGE_IDX);
 
 	if (new_flags & EC_FLASH_PROTECT_ALL_AT_BOOT) {
-		rb_rw_range = FLASH_WRP_RANGE(WP_BANK_OFFSET + WP_BANK_COUNT,
-					      PHYSICAL_BANKS);
+		rb_rw_range = FLASH_WRP_RANGE(FLASH_RW_FIRST_PAGE_IDX,
+						FLASH_RW_LAST_PAGE_IDX);
 	} else {
-		uint8_t strt = WP_BANK_OFFSET + WP_BANK_COUNT;
-		uint8_t end = FLASH_WRP_END(FLASH_WRP_RANGE_DISABLED);
+		/*
+		 * Start index will be 1st index following RO region index. The
+		 * end index is initialized as 'no protect' value. Only if end
+		 * gets changed based on either rollback or RW protection will
+		 * the 2nd memory protection area get written in option bytes.
+		 */
+		int start = FLASH_RW_FIRST_PAGE_IDX;
+		int end = FLASH_WRP_END(FLASH_WRP_RANGE_DISABLED);
 #ifdef CONFIG_ROLLBACK
 		if (new_flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT) {
-			strt = ROLLBACK_BANK_OFFSET;
-			end = ROLLBACK_BANK_OFFSET + ROLLBACK_BANK_COUNT;
+			start = FLASH_PAGE_ROLLBACK_FIRST_IDX;
+			end = FLASH_PAGE_ROLLBACK_LAST_IDX;
 		} else {
-			strt = ROLLBACK_BANK_OFFSET + ROLLBACK_BANK_COUNT;
+			start = FLASH_PAGE_ROLLBACK_LAST_IDX;
 		}
 #endif /* !CONFIG_ROLLBACK */
 #ifdef CONFIG_FLASH_PROTECT_RW
 		if (new_flags & EC_FLASH_PROTECT_RW_AT_BOOT)
-			end = PHYSICAL_BANKS;
+			end = FLASH_RW_LAST_PAGE_IDX;
 #endif /* CONFIG_FLASH_PROTECT_RW */
 
 		if (end != FLASH_WRP_END(FLASH_WRP_RANGE_DISABLED))
-			rb_rw_range = FLASH_WRP_RANGE(strt, end);
+			rb_rw_range = FLASH_WRP_RANGE(start, end);
 	}
 
 	unlock_optb();
@@ -191,16 +242,14 @@ static int registers_need_reset(void)
 {
 	uint32_t flags = flash_get_protect();
 	int ro_at_boot = (flags & EC_FLASH_PROTECT_RO_AT_BOOT) ? 1 : 0;
-	/*
-	 * The RO region is write-protected by the WRP1AR range,
-	 * it starts at page WP_BANK_OFFSET for WP_BANK_COUNT pages.
-	 */
+	/* The RO region is write-protected by the WRP1AR range. */
 	uint32_t wrp1ar = STM32_OPTB_WRP1AR;
 	uint32_t ro_range = ro_at_boot ?
-		FLASH_WRP_RANGE(WP_BANK_OFFSET, WP_BANK_OFFSET + WP_BANK_COUNT)
+		FLASH_WRP_RANGE(FLASH_RO_FIRST_PAGE_IDX,
+				  FLASH_RO_LAST_PAGE_IDX)
 		: FLASH_WRP_RANGE_DISABLED;
 
-	return ro_range != (wrp1ar & FLASH_WRP_MASK);
+	return ro_range != (wrp1ar & FLASH_WRP1X_MASK);
 }
 
 /*****************************************************************************/
@@ -212,7 +261,7 @@ int flash_physical_write(int offset, int size, const char *data)
 	int res = EC_SUCCESS;
 	int timeout = calculate_flash_timeout();
 	int i;
-	int unaligned = (uint32_t)data & (CONFIG_FLASH_WRITE_SIZE - 1);
+	int unaligned = (uint32_t)data & (STM32_FLASH_MIN_WRITE_SIZE - 1);
 	uint32_t *data32 = (void *)data;
 
 	if (unlock(FLASH_CR_LOCK) != EC_SUCCESS)
@@ -224,7 +273,7 @@ int flash_physical_write(int offset, int size, const char *data)
 	/* set PG bit */
 	STM32_FLASH_CR |= FLASH_CR_PG;
 
-	for (; size > 0; size -= CONFIG_FLASH_WRITE_SIZE) {
+	for (; size > 0; size -= STM32_FLASH_MIN_WRITE_SIZE) {
 		/*
 		 * Reload the watchdog timer to avoid watchdog reset when doing
 		 * long writing.
@@ -246,7 +295,7 @@ int flash_physical_write(int offset, int size, const char *data)
 				   | (data[2] << 16) | (data[3] << 24);
 			*address++ = (uint32_t)data[4] | (data[5] << 8)
 				   | (data[6] << 16) | (data[7] << 24);
-			data += CONFIG_FLASH_WRITE_SIZE;
+			data += STM32_FLASH_MIN_WRITE_SIZE;
 		} else {
 			*address++ = *data32++;
 			*address++ = *data32++;
@@ -346,9 +395,9 @@ int flash_physical_get_protect(int block)
 	uint32_t wrp1br = STM32_FLASH_WRP1BR;
 
 	return ((block >= FLASH_WRP_START(wrp1ar)) &&
-		(block < FLASH_WRP_END(wrp1ar))) ||
+		(block <= FLASH_WRP_END(wrp1ar))) ||
 		((block >= FLASH_WRP_START(wrp1br)) &&
-		(block < FLASH_WRP_END(wrp1br)));
+		(block <= FLASH_WRP_END(wrp1br)));
 }
 
 /*
@@ -362,8 +411,8 @@ uint32_t flash_physical_get_protect_flags(void)
 	uint32_t wrp1br = STM32_OPTB_WRP1BR;
 
 	/* RO region protection range is in WRP1AR range */
-	if (wrp1ar == FLASH_WRP_RANGE(WP_BANK_OFFSET,
-				      WP_BANK_OFFSET + WP_BANK_COUNT))
+	if (wrp1ar == FLASH_WRP_RANGE(FLASH_RO_FIRST_PAGE_IDX,
+					FLASH_RO_LAST_PAGE_IDX))
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
 	/* Rollback and RW regions protection range is in WRP1BR range */
 	if (wrp1br != FLASH_WRP_RANGE_DISABLED) {
@@ -371,8 +420,8 @@ uint32_t flash_physical_get_protect_flags(void)
 		int strt = FLASH_WRP_START(wrp1br);
 
 #ifdef CONFIG_ROLLBACK
-		if (strt <= ROLLBACK_BANK_OFFSET &&
-		    end >= ROLLBACK_BANK_OFFSET + ROLLBACK_BANK_COUNT)
+		if (strt <= FLASH_PAGE_ROLLBACK_FIRST_IDX &&
+		    end >= FLASH_PAGE_ROLLBACK_LAST_IDX)
 			flags |= EC_FLASH_PROTECT_ROLLBACK_AT_BOOT;
 #endif /* CONFIG_ROLLBACK */
 #ifdef CONFIG_FLASH_PROTECT_RW
