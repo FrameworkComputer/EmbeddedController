@@ -839,6 +839,20 @@ static enum ec_error_list sm5803_set_voltage(int chgnum, int voltage)
 	return rv;
 }
 
+static enum ec_error_list sm5803_discharge_on_ac(int chgnum, int enable)
+{
+	enum ec_error_list rv = EC_SUCCESS;
+
+	if (enable) {
+		rv = sm5803_vbus_sink_enable(chgnum, 0);
+	} else {
+		if (chgnum == charge_manager_get_active_charge_port())
+			rv = sm5803_vbus_sink_enable(chgnum, 1);
+	}
+
+	return rv;
+}
+
 static enum ec_error_list sm5803_get_vbus_voltage(int chgnum, int port,
 						   int *voltage)
 {
@@ -1124,6 +1138,7 @@ const struct charger_drv sm5803_drv = {
 	.set_current = &sm5803_set_current,
 	.get_voltage = &sm5803_get_voltage,
 	.set_voltage = &sm5803_set_voltage,
+	.discharge_on_ac = &sm5803_discharge_on_ac,
 	.get_vbus_voltage = &sm5803_get_vbus_voltage,
 	.set_input_current = &sm5803_set_input_current,
 	.get_input_current = &sm5803_get_input_current,
