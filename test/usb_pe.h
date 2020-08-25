@@ -72,7 +72,6 @@
 enum usb_pe_state {
 	/* Super States */
 	PE_PRS_FRS_SHARED,
-	PE_SENDER_RESPONSE, /* AMS Start parent - runs SenderResponseTimer */
 	PE_VDM_SEND_REQUEST,
 
 	/* Normal States */

@@ -144,6 +144,7 @@ static int test_pe_frs(void)
 	TEST_ASSERT(fake_prl_get_last_sent_ctrl_msg(PORT0) == PD_CTRL_FR_SWAP);
 	TEST_ASSERT(get_state_pe(PORT0) == PE_PRS_SNK_SRC_SEND_SWAP);
 	TEST_ASSERT(pe_chk_flag(PORT0, PE_FLAGS_FAST_ROLE_SWAP_PATH));
+	pe_set_flag(PORT0, PE_FLAGS_TX_COMPLETE);
 
 	/*
 	 * Accept the partners PS_RDY control message
