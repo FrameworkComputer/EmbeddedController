@@ -3016,6 +3016,11 @@
  */
 #define CONFIG_DSW_PWROK_TO_PWRBTN_US (95 * MSEC)
 
+/*
+ * Board provides board_pwrbtn_to_pch function instead of GPIO_PCH_PWRBTN_L
+ * as the means for asserting power button signal to PCH.
+ */
+#undef CONFIG_POWER_BUTTON_TO_PCH_CUSTOM
 
 /* Compile common code for AP power state machine */
 #undef CONFIG_POWER_COMMON
