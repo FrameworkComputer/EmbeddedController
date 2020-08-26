@@ -362,6 +362,8 @@ union disc_ident_ack {
 
 	uint32_t raw_value[PDO_MAX_OBJECTS - 1];
 };
+BUILD_ASSERT(sizeof(union disc_ident_ack) ==
+				sizeof(uint32_t) * (PDO_MAX_OBJECTS - 1));
 
 /* Discover Identity data - ACK plus discovery state */
 struct identity_data {
