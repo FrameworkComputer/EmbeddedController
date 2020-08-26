@@ -51,7 +51,7 @@
  * FW_CONFIG defaults for Volteer if the CBI data is not initialized.
  */
 union volteer_cbi_fw_config fw_config_defaults = {
-	.usb_db = DB_USB4_GEN2,
+	.usb_db = DB_USB3_ACTIVE,
 };
 
 static void board_init(void)
@@ -360,17 +360,6 @@ static const char *db_type_prefix = "USB DB type: ";
 __override void board_cbi_init(void)
 {
 	enum ec_cfg_usb_db_type usb_db = ec_cfg_usb_db_type();
-
-	/* Reconfigure Volteer GPIOs based on the board ID */
-	if (get_board_id() == 0) {
-		CPRINTS("Configuring GPIOs for board ID 0");
-		CPRINTS("VOLUME_UP button disabled");
-
-		/* Reassign USB_C1_RT_RST_ODL */
-		bb_controls[USBC_PORT_C1].retimer_rst_gpio =
-			GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
-		ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
-	}
 
 	switch (usb_db) {
 	case DB_USB_ABSENT:
