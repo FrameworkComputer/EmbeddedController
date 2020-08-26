@@ -137,7 +137,11 @@
 #define CONFIG_SWITCH
 #define CONFIG_WATCHDOG_HELP
 
+#ifdef SECTION_IS_RO
+#undef CONFIG_SYSTEM_UNLOCKED /* Disabled in RO to save space */
+#else
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
+#endif
 
 #undef  CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
@@ -261,6 +265,7 @@
 #undef CONFIG_CMD_APTHROTTLE
 #undef CONFIG_CMD_CRASH
 #undef CONFIG_CMD_HCDEBUG
+#undef CONFIG_CMD_IDLE_STATS
 #undef CONFIG_CMD_MMAPINFO
 #undef CONFIG_CMD_PWR_AVG
 #undef CONFIG_CMD_REGULATOR
