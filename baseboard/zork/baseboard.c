@@ -328,3 +328,23 @@ __override int isl9241_update_learn_mode(int chgnum, int enable)
 
 	return isl9241_write(chgnum, ISL9241_REG_CONTROL1, reg);
 }
+
+/*
+ * b/164921478: On G3->S5, wait for RSMRST_L to be deasserted before asserting
+ * PWRBTN_L.
+ */
+void board_pwrbtn_to_pch(int level)
+{
+	/* Add delay for G3 exit if asserting PWRBTN_L and S5_PGOOD is low. */
+	if (!level && !gpio_get_level(GPIO_S5_PGOOD)) {
+		/*
+		 * From measurement, wait 80 ms for RSMRST_L to rise after
+		 * S5_PGOOD.
+		 */
+		msleep(80);
+
+		if (!gpio_get_level(GPIO_S5_PGOOD))
+			ccprints("Error: pwrbtn S5_PGOOD low");
+	}
+	gpio_set_level(GPIO_PCH_PWRBTN_L, level);
+}
