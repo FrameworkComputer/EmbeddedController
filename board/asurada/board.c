@@ -649,7 +649,8 @@ static struct bmi_drv_data_t g_bmi160_data;
 static struct stprivate_data g_lis2dwl_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
-static const mat33_fp_t base_standard_ref = {
+/* for rev 0 */
+static const mat33_fp_t base_standard_ref_rev0 = {
 	{FLOAT_TO_FP(-1), 0, 0},
 	{0, FLOAT_TO_FP(1), 0},
 	{0, 0, FLOAT_TO_FP(-1)},
@@ -673,6 +674,17 @@ static struct als_drv_data_t g_tcs3400_data = {
 		.cover_scale = ALS_CHANNEL_SCALE(1.0),     /* CT */
 	},
 };
+
+static void update_rotation_matrix(void)
+{
+	if (board_get_version() == 0) {
+		motion_sensors[BASE_ACCEL].rot_standard_ref =
+			&base_standard_ref_rev0;
+		motion_sensors[BASE_GYRO].rot_standard_ref =
+			&base_standard_ref_rev0;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, update_rotation_matrix, HOOK_PRIO_INIT_ADC + 1);
 
 static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 	/*
@@ -733,7 +745,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &g_bmi160_data,
 		.port = I2C_PORT_ACCEL,
 		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-		.rot_standard_ref = &base_standard_ref,
+		.rot_standard_ref = NULL, /* identity matrix */
 		.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
 		.min_frequency = BMI_ACCEL_MIN_FREQ,
 		.max_frequency = BMI_ACCEL_MAX_FREQ,
@@ -762,7 +774,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_ACCEL,
 		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 		.default_range = 1000, /* dps */
-		.rot_standard_ref = &base_standard_ref,
+		.rot_standard_ref = NULL, /* identity matrix */
 		.min_frequency = BMI_GYRO_MIN_FREQ,
 		.max_frequency = BMI_GYRO_MAX_FREQ,
 	},
