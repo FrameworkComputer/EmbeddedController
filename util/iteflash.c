@@ -1135,13 +1135,34 @@ static void draw_spinner(uint32_t remaining, uint32_t size)
 	windex %= sizeof(wheel);
 }
 
+/* Note: this function must be called in follow mode */
+static int spi_send_cmd_fast_read(struct common_hnd *chnd, uint32_t addr)
+{
+	int ret = 0;
+	uint8_t cmd = 0x9;
+
+	/* Fast Read command */
+	ret = spi_flash_command_short(chnd, SPI_CMD_FAST_READ, "fast read");
+	/* Send address */
+	ret |= i2c_write_byte(chnd, 0x08, ((addr >> 16) & 0xff)); /* addr_h */
+	ret |= i2c_write_byte(chnd, 0x08, ((addr >> 8) & 0xff));  /* addr_m */
+	ret |= i2c_write_byte(chnd, 0x08, (addr & 0xff));         /* addr_l */
+	/* fake byte */
+	ret |= i2c_write_byte(chnd, 0x08, 0x00);
+	/* use i2c block read command */
+	ret |= i2c_byte_transfer(chnd, I2C_CMD_ADDR, &cmd, 1, 1);
+	if (ret < 0)
+		fprintf(stderr, "Send fast read command failed\n");
+
+	return ret;
+}
+
 static int command_read_pages(struct common_hnd *chnd, uint32_t address,
 			      uint32_t size, uint8_t *buffer)
 {
 	int res = -EIO;
 	uint32_t remaining = size;
 	int cnt;
-	uint8_t addr_H, addr_M;
 
 	if (address & 0xFF) {
 		fprintf(stderr, "page read requested at non-page boundary: "
@@ -1152,30 +1173,14 @@ static int command_read_pages(struct common_hnd *chnd, uint32_t address,
 	if (spi_flash_follow_mode(chnd, "fast read") < 0)
 		goto failed_read;
 
+	if (spi_send_cmd_fast_read(chnd, address) < 0)
+		goto failed_read;
+
 	while (remaining) {
-		uint8_t cmd = 0x9;
-
 		cnt = (remaining > PAGE_SIZE) ? PAGE_SIZE : remaining;
-		addr_H = (address >> 16) & 0xFF;
-		addr_M = (address >> 8) & 0xFF;
-
 		draw_spinner(remaining, size);
 
-		/* Fast Read command */
-		if (spi_flash_command_short(chnd, SPI_CMD_FAST_READ,
-			"fast read") < 0)
-			goto failed_read;
-		res = i2c_write_byte(chnd, 0x08, addr_H);
-		res += i2c_write_byte(chnd, 0x08, addr_M);
-		res += i2c_write_byte(chnd, 0x08, 0x00);  /* addr_L */
-		res += i2c_write_byte(chnd, 0x08, 0x00);
-		if (res < 0) {
-			fprintf(stderr, "page address set failed\n");
-			goto failed_read;
-		}
-
 		/* read page data */
-		res = i2c_byte_transfer(chnd, I2C_CMD_ADDR, &cmd, 1, 1);
 		res = i2c_byte_transfer(chnd, I2C_BLOCK_ADDR, buffer, 0, cnt);
 		if (res < 0) {
 			fprintf(stderr, "page data read failed\n");
@@ -1185,6 +1190,12 @@ static int command_read_pages(struct common_hnd *chnd, uint32_t address,
 		address += cnt;
 		remaining -= cnt;
 		buffer += cnt;
+
+		/* We need to resend fast read command at 256KB boundary. */
+		if (!(address % 0x40000) && remaining) {
+			if (spi_send_cmd_fast_read(chnd, address) < 0)
+				goto failed_read;
+		}
 	}
 	/* No error so far */
 	res = size;
