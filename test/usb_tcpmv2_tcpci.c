@@ -63,6 +63,8 @@ uint16_t tcpc_get_alert_status(void)
 	return 0;
 }
 
+static int rx_id;
+
 const struct svdm_response svdm_rsp = {
 	.identity = NULL,
 	.svids = NULL,
@@ -145,8 +147,11 @@ __maybe_unused static int test_startup_and_resume(void)
 
 __maybe_unused static int test_connect_as_pd3_source(void)
 {
-	int rx_id = 0;
 	uint32_t rdo = RDO_FIXED(1, 500, 500, 0);
+	uint32_t pdo = PDO_FIXED(5000, 500,
+				 PDO_FIXED_DUAL_ROLE |
+				 PDO_FIXED_DATA_SWAP |
+				 PDO_FIXED_COMM_CAP);
 
 	/* DRP auto-toggling with AP in S0, source enabled. */
 	TEST_EQ(test_startup_and_resume(), EC_SUCCESS, "%d");
@@ -184,6 +189,7 @@ __maybe_unused static int test_connect_as_pd3_source(void)
 			PD_ROLE_UFP, rx_id,
 			1, PD_REV30, 0),
 		&rdo);
+	rx_id++;
 	mock_set_alert(TCPC_REG_ALERT_RX_STATUS);
 	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_ACCEPT, 0),
 		EC_SUCCESS, "%d");
@@ -208,9 +214,10 @@ __maybe_unused static int test_connect_as_pd3_source(void)
 	task_wait_event(10 * MSEC);
 	mock_tcpci_receive(PD_MSG_SOP_PRIME,
 		PD_HEADER(PD_CTRL_NOT_SUPPORTED, PD_PLUG_FROM_CABLE,
-			PD_ROLE_UFP, 1,
+			PD_ROLE_UFP, rx_id,
 			0, PD_REV30, 0),
 		NULL);
+	rx_id++;
 	mock_set_alert(TCPC_REG_ALERT_RX_STATUS);
 
 	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0, PD_DATA_VENDOR_DEF),
@@ -219,9 +226,22 @@ __maybe_unused static int test_connect_as_pd3_source(void)
 	task_wait_event(10 * MSEC);
 	mock_tcpci_receive(PD_MSG_SOP,
 		PD_HEADER(PD_CTRL_NOT_SUPPORTED, PD_ROLE_SINK,
-			PD_ROLE_UFP, 2,
+			PD_ROLE_UFP, rx_id,
 			0, PD_REV30, 0),
 		NULL);
+	rx_id++;
+	mock_set_alert(TCPC_REG_ALERT_RX_STATUS);
+
+	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_GET_SOURCE_CAP, 0),
+		EC_SUCCESS, "%d");
+	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+	task_wait_event(10 * MSEC);
+	mock_tcpci_receive(PD_MSG_SOP,
+		PD_HEADER(PD_DATA_SOURCE_CAP, PD_ROLE_SINK,
+			PD_ROLE_UFP, rx_id,
+			1, PD_REV30, 0),
+		&pdo);
+	rx_id++;
 	mock_set_alert(TCPC_REG_ALERT_RX_STATUS);
 
 	task_wait_event(1 * SECOND);
@@ -319,9 +339,10 @@ __maybe_unused static int test_pd3_source_send_soft_reset(void)
 	 */
 	mock_tcpci_receive(PD_MSG_SOP,
 		PD_HEADER(PD_CTRL_GET_SOURCE_CAP, PD_ROLE_SINK,
-			PD_ROLE_UFP, 3,
+			PD_ROLE_UFP, rx_id,
 			0, PD_REV30, 0),
 		NULL);
+	rx_id++;
 	mock_set_alert(TCPC_REG_ALERT_RX_STATUS);
 
 	/*
@@ -346,6 +367,8 @@ __maybe_unused static int test_pd3_source_send_soft_reset(void)
 
 void before_test(void)
 {
+	rx_id = 0;
+
 	mock_usb_mux_reset();
 	mock_tcpci_reset();
 

@@ -1927,6 +1927,11 @@ static void tc_unattached_snk_entry(const int port)
 	tc[port].data_role = PD_ROLE_DISCONNECTED;
 
 	/*
+	 * Saved SRC_Capabilities are no longer valid on disconnect
+	 */
+	pd_set_src_caps(port, 0, NULL);
+
+	/*
 	 * When data role set events are used to enable BC1.2, then CC
 	 * detach events are used to notify BC1.2 that it can be powered
 	 * down.
@@ -2402,6 +2407,11 @@ static void tc_unattached_src_entry(const int port)
 	typec_update_cc(port);
 
 	tc[port].data_role = PD_ROLE_DISCONNECTED;
+
+	/*
+	 * Saved SRC_Capabilities are no longer valid on disconnect
+	 */
+	pd_set_src_caps(port, 0, NULL);
 
 	/*
 	 * When data role set events are used to enable BC1.2, then CC

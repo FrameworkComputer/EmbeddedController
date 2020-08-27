@@ -133,6 +133,7 @@ enum usb_pe_state {
 	PE_DEU_SEND_ENTER_USB,
 	PE_DR_SNK_GET_SINK_CAP,
 	PE_DR_SNK_GIVE_SOURCE_CAP,
+	PE_DR_SRC_GET_SOURCE_CAP,
 
 	/* PD3.0 only states below here*/
 	PE_FRS_SNK_SRC_START_AMS,

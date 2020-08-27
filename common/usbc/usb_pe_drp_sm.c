@@ -276,6 +276,7 @@ enum usb_pe_state {
 	PE_DEU_SEND_ENTER_USB,
 	PE_DR_SNK_GET_SINK_CAP,
 	PE_DR_SNK_GIVE_SOURCE_CAP,
+	PE_DR_SRC_GET_SOURCE_CAP,
 
 	/* PD3.0 only states below here*/
 	PE_FRS_SNK_SRC_START_AMS,
@@ -397,6 +398,7 @@ static const char * const pe_state_names[] = {
 	[PE_DR_SNK_GET_SINK_CAP] = "PE_DR_SNK_Get_Sink_Cap",
 #endif
 	[PE_DR_SNK_GIVE_SOURCE_CAP] = "PE_DR_SNK_Give_Source_Cap",
+	[PE_DR_SRC_GET_SOURCE_CAP] = "PE_DR_SRC_Get_Source_Cap",
 
 	/* PD3.0 only states below here*/
 #ifdef CONFIG_USB_PD_REV30
@@ -2068,6 +2070,14 @@ static void pe_src_transition_supply_run(int port)
 			 */
 			PE_SET_FLAG(port, PE_FLAGS_FIRST_MSG);
 
+			/*
+			 * Setup to get Device Policy Manager to request
+			 * Source Capabilities, if needed, for possible
+			 * PR_Swap
+			 */
+			if (pd_get_src_cap_cnt(port) == 0)
+				pe_dpm_request(port, DPM_REQUEST_GET_SRC_CAPS);
+
 			set_state_pe(port, PE_SRC_READY);
 		} else {
 			/* NOTE: First pass through this code block */
@@ -2325,6 +2335,11 @@ static void pe_src_ready_run(int port)
 				pe_set_dpm_curr_request(port,
 						DPM_REQUEST_SRC_CAP_CHANGE);
 				set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
+			} else if (PE_CHK_DPM_REQUEST(port,
+						DPM_REQUEST_GET_SRC_CAPS)) {
+				pe_set_dpm_curr_request(port,
+						DPM_REQUEST_GET_SRC_CAPS);
+				set_state_pe(port, PE_DR_SRC_GET_SOURCE_CAP);
 			} else if (PE_CHK_DPM_REQUEST(port,
 						DPM_REQUEST_SEND_PING)) {
 				pe_set_dpm_curr_request(port,
@@ -2641,7 +2656,6 @@ static void pe_snk_evaluate_capability_entry(int port)
 {
 	uint32_t *pdo = (uint32_t *)rx_emsg[port].buf;
 	uint32_t num = rx_emsg[port].len >> 2;
-	int i;
 
 	print_current_state(port);
 
@@ -2659,10 +2673,7 @@ static void pe_snk_evaluate_capability_entry(int port)
 	if (prl_get_rev(port, TCPC_TX_SOP) == PD_REV20)
 		prl_set_rev(port, TCPC_TX_SOP_PRIME, PD_REV20);
 
-	pe[port].src_cap_cnt = num;
-
-	for (i = 0; i < num; i++)
-		pe[port].src_caps[i] = pdo[i];
+	pd_set_src_caps(port, num, pdo);
 
 	/* src cap 0 should be fixed PDO */
 	pe_update_pdo_flags(port, pdo[0]);
@@ -5850,6 +5861,77 @@ static void pe_dr_snk_give_source_cap_run(int port)
 	}
 }
 
+/*
+ * PE_DR_SRC_Get_Source_Cap
+ */
+static void pe_dr_src_get_source_cap_entry(int port)
+{
+	print_current_state(port);
+
+	/* Send a Get_Source_Cap Message */
+	tx_emsg[port].len = 0;
+	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_GET_SOURCE_CAP);
+	pe_sender_response_msg_entry(port);
+}
+
+static void pe_dr_src_get_source_cap_run(int port)
+{
+	int type;
+	int cnt;
+	int ext;
+	enum pe_msg_check msg_check;
+
+	/*
+	 * Check the state of the message sent
+	 */
+	msg_check = pe_sender_response_msg_run(port);
+
+	/*
+	 * Transition to PE_SRC_Ready when:
+	 *   1) A Source Capabilities Message is received.
+	 *   2) A Reject Message is received.
+	 */
+	if ((msg_check & PE_MSG_SENT) &&
+	    PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+		type = PD_HEADER_TYPE(rx_emsg[port].header);
+		cnt = PD_HEADER_CNT(rx_emsg[port].header);
+		ext = PD_HEADER_EXT(rx_emsg[port].header);
+
+		if (ext == 0) {
+			if ((cnt > 0) && (type == PD_DATA_SOURCE_CAP)) {
+				uint32_t *payload =
+					(uint32_t *)rx_emsg[port].buf;
+
+				/*
+				 * src_caps[0] & PDO_FIXED_UNCONSTRAINED
+				 * has useful information to help guide us
+				 * to possibly perform a PR_Swap if that is
+				 * desired
+				 */
+				pd_set_src_caps(port, cnt, payload);
+				set_state_pe(port, PE_SRC_READY);
+			} else if (type == PD_CTRL_REJECT ||
+				   type == PD_CTRL_NOT_SUPPORTED) {
+				set_state_pe(port, PE_SRC_READY);
+			} else {
+				set_state_pe(port, PE_SEND_SOFT_RESET);
+			}
+			return;
+		}
+	}
+
+	/*
+	 * Transition to PE_SRC_Ready state when:
+	 *   1) the SenderResponseTimer times out.
+	 *   2) Message was discarded.
+	 */
+	if ((msg_check & PE_MSG_DISCARDED) ||
+	    get_time().val > pe[port].sender_response_timer)
+		set_state_pe(port, PE_SRC_READY);
+}
+
 const uint32_t * const pd_get_src_caps(int port)
 {
 	return pe[port].src_caps;
@@ -6211,6 +6293,10 @@ static const struct usb_state pe_states[] = {
 	[PE_DR_SNK_GIVE_SOURCE_CAP] = {
 		.entry = pe_dr_snk_give_source_cap_entry,
 		.run = pe_dr_snk_give_source_cap_run,
+	},
+	[PE_DR_SRC_GET_SOURCE_CAP] = {
+		.entry = pe_dr_src_get_source_cap_entry,
+		.run   = pe_dr_src_get_source_cap_run,
 	},
 #ifdef CONFIG_USB_PD_REV30
 	[PE_FRS_SNK_SRC_START_AMS] = {
