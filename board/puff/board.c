@@ -472,6 +472,22 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+static void board_chipset_startup(void)
+{
+	/*
+	 * Workaround to restore VBUS on PPC.
+	 * PP1 is sourced from PP5000_A, and when the CPU shuts down and
+	 * this rail drops, the PPC will internally turn off PP1_EN.
+	 * When the CPU starts again, and the rail is restored, the PPC
+	 * does not turn PP1_EN on again, causing VBUS to stay turned off.
+	 * The workaround is to check whether the PPC is sourcing VBUS, and
+	 * if so, make sure it is enabled.
+	 */
+	if (ppc_is_sourcing_vbus(0))
+		ppc_vbus_source_enable(0, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
+	     HOOK_PRIO_DEFAULT);
 /******************************************************************************/
 /* USB-C PPC Configuration */
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
