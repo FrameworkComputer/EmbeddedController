@@ -263,9 +263,10 @@ static void pi3usb9201_usb_charger_task(const int port)
 		/* Interrupt from the Pericom chip, determine charger type */
 		if (evt & USB_CHG_EVENT_BC12) {
 			int client;
+			int host;
 			int rv;
 
-			rv = pi3usb9201_get_status(port, &client, NULL);
+			rv = pi3usb9201_get_status(port, &client, &host);
 			if (!rv && client)
 				/*
 				 * Any bit set in client status register
@@ -273,6 +274,28 @@ static void pi3usb9201_usb_charger_task(const int port)
 				 * completed.
 				 */
 				bc12_update_charge_manager(port, client);
+			if (!rv && host) {
+				/*
+				 * Switch to SDP after device is plugged in to
+				 * avoid noise (pulse on D-) causing USB
+				 * disconnect (b/156014140).
+				 */
+				if (host & PI3USB9201_REG_HOST_STS_DEV_PLUG)
+					pi3usb9201_set_mode(port,
+						PI3USB9201_SDP_HOST_MODE);
+				/*
+				 * Switch to CDP after device is unplugged so
+				 * we advertise higher power available for next
+				 * device.
+				 */
+				if (host & PI3USB9201_REG_HOST_STS_DEV_UNPLUG)
+					pi3usb9201_set_mode(port,
+						PI3USB9201_CDP_HOST_MODE);
+			}
+			/*
+			 * TODO(b/124061702): Use host status to allocate power
+			 * more intelligently.
+			 */
 		}
 
 #ifndef CONFIG_USB_PD_VBUS_DETECT_TCPC
@@ -302,12 +325,6 @@ static void pi3usb9201_usb_charger_task(const int port)
 			}
 		}
 
-		/*
-		 * TODO(b/124061702): For host mode, currently only setting it
-		 * to host CDP mode. However, there are 3 host status bits to
-		 * know things such as an adapter connected, but no USB device
-		 * present, or bc1.2 activity detected.
-		 */
 		if (evt & USB_CHG_EVENT_DR_DFP) {
 			int mode;
 			int rv;
@@ -325,8 +342,19 @@ static void pi3usb9201_usb_charger_task(const int port)
 			rv = pi3usb9201_get_mode(port, &mode);
 			if (!rv && (mode != PI3USB9201_CDP_HOST_MODE)) {
 				CPRINTS("pi3usb9201[p%d]: CDP_HOST mode", port);
+				/*
+				 * Read both status registers to ensure that all
+				 * interrupt indications are cleared prior to
+				 * starting DFP CDP host mode.
+				 */
+				pi3usb9201_get_status(port, NULL, NULL);
 				pi3usb9201_set_mode(port,
 						    PI3USB9201_CDP_HOST_MODE);
+				/*
+				 * Unmask interrupt to wake task when host
+				 * status changes.
+				 */
+				pi3usb9201_interrupt_mask(port, 0);
 			}
 		}
 
