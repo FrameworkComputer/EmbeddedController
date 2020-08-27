@@ -748,22 +748,28 @@ static int tcpci_rev2_0_tcpm_get_message_raw(int port, uint32_t *payload,
 	cnt = tmp[0];
 	frm = tmp[1];
 
-	/* READABLE_BYTE_COUNT includes 3 bytes for frame type and header */
+	/*
+	 * READABLE_BYTE_COUNT includes 3 bytes for frame type and header, and
+	 * may be 0 if the TCPC saw a disconnect before the message read
+	 */
 	cnt -= 3;
-	if (cnt > member_size(struct cached_tcpm_message, payload)) {
+	if ((cnt < 0) ||
+	    (cnt > member_size(struct cached_tcpm_message, payload))) {
+		/* Continue to send the stop bit with the header read */
 		rv = EC_ERROR_UNKNOWN;
-		goto clear;
+		cnt = 0;
 	}
 
 	/* The next two bytes are the header */
-	rv = tcpc_xfer_unlocked(port, NULL, 0, (uint8_t *)head, 2,
+	rv |= tcpc_xfer_unlocked(port, NULL, 0, (uint8_t *)head, 2,
 				cnt ? 0 : I2C_XFER_STOP);
 
 	/* Encode message address in bits 31 to 28 */
 	*head &= 0x0000ffff;
 	*head |= PD_HEADER_SOP(frm);
 
-	if (rv == EC_SUCCESS && cnt > 0) {
+	/* Execute read and I2C_XFER_STOP, even if header read failed */
+	if (cnt > 0) {
 		tcpc_xfer_unlocked(port, NULL, 0, (uint8_t *)payload, cnt,
 				   I2C_XFER_STOP);
 	}
@@ -773,7 +779,10 @@ clear:
 	/* Read complete, clear RX status alert bit */
 	tcpc_write16(port, TCPC_REG_ALERT, TCPC_REG_ALERT_RX_STATUS);
 
-	return rv;
+	if (rv)
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
 }
 
 static int tcpci_rev1_0_tcpm_get_message_raw(int port, uint32_t *payload,
