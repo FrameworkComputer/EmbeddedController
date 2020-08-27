@@ -5269,6 +5269,23 @@ static void pe_vcs_evaluate_swap_entry(int port)
 		/* NOTE: PE_VCS_Accept_Swap State embedded here */
 		PE_SET_FLAG(port, PE_FLAGS_ACCEPT);
 		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
+
+		/*
+		 * The USB PD 3.0 spec indicates that the initial VCONN source
+		 * shall cease sourcing VCONN within tVCONNSourceOff (25ms)
+		 * after receiving the PS_RDY message. However, some partners
+		 * begin sending SOP' messages only 1 ms after sending PS_RDY
+		 * during VCONN swap.
+		 *
+		 * Preemptively disable receipt of SOP' and SOP'' messages while
+		 * we wait for PS_RDY so we don't attempt to process messages
+		 * directed at the cable. If the partner fails to send PS_RDY we
+		 * perform a hard reset so no need to re-enable SOP' messages.
+		 *
+		 * We continue to source VCONN while we wait as required by the
+		 * spec.
+		 */
+		tcpm_sop_prime_disable(port);
 	}
 }
 
@@ -5333,12 +5350,18 @@ static void pe_vcs_send_swap_run(int port)
 			 */
 			if (type == PD_CTRL_ACCEPT) {
 				pe[port].vconn_swap_counter = 0;
-				if (tc_is_vconn_src(port))
+				if (tc_is_vconn_src(port)) {
+					/*
+					 * Prevent receiving any SOP' and SOP''
+					 * messages while a swap is in progress.
+					 */
+					tcpm_sop_prime_disable(port);
 					set_state_pe(port,
 						PE_VCS_WAIT_FOR_VCONN_SWAP);
-				else
+				} else {
 					set_state_pe(port,
 						PE_VCS_TURN_ON_VCONN_SWAP);
+				}
 				return;
 			}
 			/*

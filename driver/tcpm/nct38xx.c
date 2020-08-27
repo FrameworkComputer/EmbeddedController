@@ -201,6 +201,9 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 	.select_rp_value	= &tcpci_tcpm_select_rp_value,
 	.set_cc			= &nct38xx_tcpm_set_cc,
 	.set_polarity		= &tcpci_tcpm_set_polarity,
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	.sop_prime_disable	= &tcpci_tcpm_sop_prime_disable,
+#endif
 	.set_vconn		= &tcpci_tcpm_set_vconn,
 	.set_msg_header		= &tcpci_tcpm_set_msg_header,
 	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,

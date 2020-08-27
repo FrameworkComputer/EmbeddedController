@@ -25,10 +25,10 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-#ifdef CONFIG_USB_PD_DECODE_SOP
-static int vconn_en[CONFIG_USB_PD_PORT_MAX_COUNT];
-static int rx_en[CONFIG_USB_PD_PORT_MAX_COUNT];
-#endif
+STATIC_IF(CONFIG_USB_PD_DECODE_SOP)
+	int sop_prime_en[CONFIG_USB_PD_PORT_MAX_COUNT];
+STATIC_IF(CONFIG_USB_PD_DECODE_SOP)
+	int rx_en[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define TCPC_FLAGS_VSAFE0V(_flags) \
 	((_flags & TCPC_FLAGS_TCPCI_REV2_0) && \
@@ -608,17 +608,10 @@ int tcpci_tcpm_set_src_ctrl(int port, int enable)
 }
 #endif
 
-int tcpci_tcpm_set_vconn(int port, int enable)
+__maybe_unused static int tpcm_set_sop_prime_enable(int port, int enable)
 {
-	int reg, rv;
-
-	rv = tcpc_read(port, TCPC_REG_POWER_CTRL, &reg);
-	if (rv)
-		return rv;
-
-#ifdef CONFIG_USB_PD_DECODE_SOP
-	/* save vconn */
-	vconn_en[port] = enable;
+	/* save SOP'/SOP'' enable state */
+	sop_prime_en[port] = enable;
 
 	if (rx_en[port]) {
 		int detect_sop_en = TCPC_REG_RX_DETECT_SOP_HRST_MASK;
@@ -628,9 +621,31 @@ int tcpci_tcpm_set_vconn(int port, int enable)
 				TCPC_REG_RX_DETECT_SOP_SOPP_SOPPP_HRST_MASK;
 		}
 
-		tcpc_write(port, TCPC_REG_RX_DETECT, detect_sop_en);
+		return tcpc_write(port, TCPC_REG_RX_DETECT, detect_sop_en);
 	}
-#endif
+
+	return EC_SUCCESS;
+}
+
+__maybe_unused int tcpci_tcpm_sop_prime_disable(int port)
+{
+	return tpcm_set_sop_prime_enable(port, 0);
+}
+
+int tcpci_tcpm_set_vconn(int port, int enable)
+{
+	int reg, rv;
+
+	rv = tcpc_read(port, TCPC_REG_POWER_CTRL, &reg);
+	if (rv)
+		return rv;
+
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
+		rv = tpcm_set_sop_prime_enable(port, enable);
+		if (rv)
+			return rv;
+	}
+
 	reg &= ~TCPC_REG_POWER_CTRL_VCONN(1);
 	reg |= TCPC_REG_POWER_CTRL_VCONN(enable);
 	return tcpc_write(port, TCPC_REG_POWER_CTRL, reg);
@@ -664,24 +679,24 @@ int tcpci_tcpm_set_rx_enable(int port, int enable)
 {
 	int detect_sop_en = 0;
 
-#ifdef CONFIG_USB_PD_DECODE_SOP
-	/* save rx_on */
-	rx_en[port] = enable;
-#endif
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
+		/* save rx_on */
+		rx_en[port] = enable;
+	}
+
 
 	if (enable) {
 		detect_sop_en = TCPC_REG_RX_DETECT_SOP_HRST_MASK;
 
-#ifdef CONFIG_USB_PD_DECODE_SOP
-		/*
-		 * Only the VCONN Source is allowed to communicate
-		 * with the Cable Plugs.
-		 */
-
-		if (vconn_en[port])
+		if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP) &&
+			sop_prime_en[port]) {
+			/*
+			 * Only the VCONN Source is allowed to communicate
+			 * with the Cable Plugs.
+			 */
 			detect_sop_en =
 				TCPC_REG_RX_DETECT_SOP_SOPP_SOPPP_HRST_MASK;
-#endif
+		}
 	}
 
 	/* If enable, then set RX detect for SOP and HRST */
@@ -765,9 +780,7 @@ static int tcpci_rev1_0_tcpm_get_message_raw(int port, uint32_t *payload,
 					     int *head)
 {
 	int rv, cnt, reg = TCPC_REG_RX_DATA;
-#ifdef CONFIG_USB_PD_DECODE_SOP
 	int frm;
-#endif
 
 	rv = tcpc_read(port, TCPC_REG_RX_BYTE_CNT, &cnt);
 
@@ -782,21 +795,22 @@ static int tcpci_rev1_0_tcpm_get_message_raw(int port, uint32_t *payload,
 		goto clear;
 	}
 
-#ifdef CONFIG_USB_PD_DECODE_SOP
-	rv = tcpc_read(port, TCPC_REG_RX_BUF_FRAME_TYPE, &frm);
-	if (rv != EC_SUCCESS) {
-		rv = EC_ERROR_UNKNOWN;
-		goto clear;
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
+		rv = tcpc_read(port, TCPC_REG_RX_BUF_FRAME_TYPE, &frm);
+		if (rv != EC_SUCCESS) {
+			rv = EC_ERROR_UNKNOWN;
+			goto clear;
+		}
 	}
-#endif
 
 	rv = tcpc_read16(port, TCPC_REG_RX_HDR, (int *)head);
 
-#ifdef CONFIG_USB_PD_DECODE_SOP
-	/* Encode message address in bits 31 to 28 */
-	*head &= 0x0000ffff;
-	*head |= PD_HEADER_SOP(frm);
-#endif
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
+		/* Encode message address in bits 31 to 28 */
+		*head &= 0x0000ffff;
+		*head |= PD_HEADER_SOP(frm);
+	}
+
 	if (rv == EC_SUCCESS && cnt > 0) {
 		tcpc_read_block(port, reg, (uint8_t *)payload, cnt);
 	}
@@ -1726,6 +1740,9 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 	.select_rp_value	= &tcpci_tcpm_select_rp_value,
 	.set_cc			= &tcpci_tcpm_set_cc,
 	.set_polarity		= &tcpci_tcpm_set_polarity,
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	.sop_prime_disable	= &tcpci_tcpm_sop_prime_disable,
+#endif
 	.set_vconn		= &tcpci_tcpm_set_vconn,
 	.set_msg_header		= &tcpci_tcpm_set_msg_header,
 	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
