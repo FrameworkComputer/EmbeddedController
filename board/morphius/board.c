@@ -705,5 +705,17 @@ void board_gmr_tablet_switch_isr(enum gpio_signal signal)
 	/* Board version more than 3, DUT support GMR sensor */
 	if (board_ver >= 3)
 		gmr_tablet_switch_isr(signal);
+}
 
+int board_sensor_at_360(void)
+{
+	/*
+	 * Board version >= 3 supports GMR sensor. For older boards return 0
+	 * indicating not in 360-degree mode and rely on lid angle for tablet
+	 * mode.
+	 */
+	if (board_ver >= 3)
+		return !gpio_get_level(GMR_TABLET_MODE_GPIO_L);
+
+	return 0;
 }
