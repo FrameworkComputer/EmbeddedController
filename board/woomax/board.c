@@ -208,6 +208,7 @@ static void board_chipset_resume(void)
 	int retry;
 
 	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 1);
+	ioex_set_level(IOEX_HDMI_DATA_EN_DB, 1);
 
 	/* USB-A0 can run with default settings */
 	for (retry = 0; retry < PS8811_ACCESS_RETRIES; ++retry) {
@@ -226,7 +227,6 @@ static void board_chipset_resume(void)
 
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
 		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
-		ioex_set_level(IOEX_HDMI_DATA_EN_DB, 1);
 		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
 		pi3hdx1204_enable(I2C_PORT_TCPC1,
 				  PI3HDX1204_I2C_ADDR_FLAGS,
@@ -238,13 +238,13 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 static void board_chipset_suspend(void)
 {
 	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 0);
+	ioex_set_level(IOEX_HDMI_DATA_EN_DB, 0);
 
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
 		pi3hdx1204_enable(I2C_PORT_TCPC1,
 				  PI3HDX1204_I2C_ADDR_FLAGS,
 				  0);
 		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
-		ioex_set_level(IOEX_HDMI_DATA_EN_DB, 0);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
