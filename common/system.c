@@ -812,7 +812,7 @@ void system_common_pre_init(void)
 	 * Put the jump data before the panic data, or at the end of RAM if
 	 * panic data is not present.
 	 */
-	addr = (uintptr_t)panic_get_data();
+	addr = get_panic_data_start();
 	if (!addr)
 		addr = CONFIG_RAM_BASE + CONFIG_RAM_SIZE;
 
