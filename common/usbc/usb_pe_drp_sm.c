@@ -374,12 +374,14 @@ static const char * const pe_state_names[] = {
 	[PE_PRS_SNK_SRC_ASSERT_RP] = "PE_PRS_SNK_SRC_Assert_Rp",
 	[PE_PRS_SNK_SRC_SOURCE_ON] = "PE_PRS_SNK_SRC_Source_On",
 	[PE_PRS_SNK_SRC_SEND_SWAP] = "PE_PRS_SNK_SRC_Send_Swap",
+#ifdef CONFIG_USBC_VCONN
 	[PE_VCS_EVALUATE_SWAP] = "PE_VCS_Evaluate_Swap",
 	[PE_VCS_SEND_SWAP] = "PE_VCS_Send_Swap",
 	[PE_VCS_WAIT_FOR_VCONN_SWAP] = "PE_VCS_Wait_For_Vconn_Swap",
 	[PE_VCS_TURN_ON_VCONN_SWAP] = "PE_VCS_Turn_On_Vconn_Swap",
 	[PE_VCS_TURN_OFF_VCONN_SWAP] = "PE_VCS_Turn_Off_Vconn_Swap",
 	[PE_VCS_SEND_PS_RDY_SWAP] = "PE_VCS_Send_Ps_Rdy_Swap",
+#endif
 	[PE_VDM_IDENTITY_REQUEST_CBL] = "PE_VDM_Identity_Request_Cbl",
 	[PE_INIT_PORT_VDM_IDENTITY_REQUEST] =
 					   "PE_INIT_PORT_VDM_Identity_Request",
@@ -391,7 +393,9 @@ static const char * const pe_state_names[] = {
 	[PE_BIST_TX] = "PE_Bist_TX",
 	[PE_BIST_RX] = "PE_Bist_RX",
 	[PE_DEU_SEND_ENTER_USB]  = "PE_DEU_Send_Enter_USB",
+#ifdef CONFIG_USB_PD_FRS
 	[PE_DR_SNK_GET_SINK_CAP] = "PE_DR_SNK_Get_Sink_Cap",
+#endif
 	[PE_DR_SNK_GIVE_SOURCE_CAP] = "PE_DR_SNK_Give_Source_Cap",
 
 	/* PD3.0 only states below here*/
@@ -441,6 +445,11 @@ GEN_NOT_SUPPORTED(PE_SNK_CHUNK_RECEIVED);
 #define PE_SNK_CHUNK_RECEIVED PE_SNK_CHUNK_RECEIVED_NOT_SUPPORTED
 void pe_set_frs_enable(int port, int enable);
 #endif /* CONFIG_USB_PD_REV30 */
+
+#ifndef CONFIG_USB_PD_FRS
+GEN_NOT_SUPPORTED(PE_DR_SNK_GET_SINK_CAP);
+#define PE_DR_SNK_GET_SINK_CAP PE_DR_SNK_GET_SINK_CAP_NOT_SUPPORTED
+#endif /* CONFIG_USB_PD_FRS */
 
 #ifndef CONFIG_USB_PD_EXTENDED_MESSAGES
 GEN_NOT_SUPPORTED(PE_GIVE_BATTERY_CAP);
@@ -2741,7 +2750,9 @@ static void pe_snk_select_capability_run(int port)
 				 * Setup to get Device Policy Manager to
 				 * request Sink Capabilities for possible FRS
 				 */
-				pe_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
+				if (IS_ENABLED(CONFIG_USB_PD_FRS))
+					pe_dpm_request(port,
+						DPM_REQUEST_GET_SNK_CAPS);
 				return;
 			}
 			/*
@@ -3094,7 +3105,8 @@ static void pe_snk_ready_run(int port)
 				pe_set_dpm_curr_request(port,
 						DPM_REQUEST_NEW_POWER_LEVEL);
 				set_state_pe(port, PE_SNK_SELECT_CAPABILITY);
-			} else if (PE_CHK_DPM_REQUEST(port,
+			} else if (IS_ENABLED(CONFIG_USB_PD_FRS) &&
+				   PE_CHK_DPM_REQUEST(port,
 						DPM_REQUEST_GET_SNK_CAPS)) {
 				pe_set_dpm_curr_request(port,
 						DPM_REQUEST_GET_SNK_CAPS);
@@ -5715,7 +5727,7 @@ static void pe_vcs_send_ps_rdy_swap_run(int port)
 /*
  * PE_DR_SNK_Get_Sink_Cap
  */
-static void pe_dr_snk_get_sink_cap_entry(int port)
+static __maybe_unused void pe_dr_snk_get_sink_cap_entry(int port)
 {
 	print_current_state(port);
 
@@ -5724,7 +5736,7 @@ static void pe_dr_snk_get_sink_cap_entry(int port)
 	pe_sender_response_msg_entry(port);
 }
 
-static void pe_dr_snk_get_sink_cap_run(int port)
+static __maybe_unused void pe_dr_snk_get_sink_cap_run(int port)
 {
 	int type;
 	int cnt;
@@ -6190,10 +6202,12 @@ static const struct usb_state pe_states[] = {
 		.entry = pe_bist_rx_entry,
 		.run   = pe_bist_rx_run,
 	},
+#ifdef CONFIG_USB_PD_FRS
 	[PE_DR_SNK_GET_SINK_CAP] = {
 		.entry = pe_dr_snk_get_sink_cap_entry,
 		.run   = pe_dr_snk_get_sink_cap_run,
 	},
+#endif
 	[PE_DR_SNK_GIVE_SOURCE_CAP] = {
 		.entry = pe_dr_snk_give_source_cap_entry,
 		.run = pe_dr_snk_give_source_cap_run,
