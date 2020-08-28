@@ -113,13 +113,15 @@ void exception_panic(
 	register uint32_t esi asm("esi");
 	register uint32_t edi asm("edi");
 
+	struct panic_data * const pdata = get_panic_data_write();
+
 	/* Save registers to global panic structure */
-	PANIC_DATA_PTR->x86.eax = eax;
-	PANIC_DATA_PTR->x86.ebx = ebx;
-	PANIC_DATA_PTR->x86.ecx = ecx;
-	PANIC_DATA_PTR->x86.edx = edx;
-	PANIC_DATA_PTR->x86.esi = esi;
-	PANIC_DATA_PTR->x86.edi = edi;
+	pdata->x86.eax = eax;
+	pdata->x86.ebx = ebx;
+	pdata->x86.ecx = ecx;
+	pdata->x86.edx = edx;
+	pdata->x86.esi = esi;
+	pdata->x86.edi = edi;
 
 	/*
 	 * Convert watchdog timer vector number to be a SW
@@ -130,19 +132,19 @@ void exception_panic(
 		vector = PANIC_SW_WATCHDOG;
 
 	/* Save stack data to global panic structure */
-	PANIC_DATA_PTR->x86.vector = vector;
-	PANIC_DATA_PTR->x86.error_code = error_code;
-	PANIC_DATA_PTR->x86.eip = eip;
-	PANIC_DATA_PTR->x86.cs = cs;
-	PANIC_DATA_PTR->x86.eflags = eflags;
+	pdata->x86.vector = vector;
+	pdata->x86.error_code = error_code;
+	pdata->x86.eip = eip;
+	pdata->x86.cs = cs;
+	pdata->x86.eflags = eflags;
 
 	/* Save task information */
-	PANIC_DATA_PTR->x86.task_id = task_get_current();
+	pdata->x86.task_id = task_get_current();
 
 	/* Initialize panic data */
-	PANIC_DATA_PTR->arch = PANIC_ARCH_X86;
-	PANIC_DATA_PTR->struct_version = 2;
-	PANIC_DATA_PTR->magic = PANIC_DATA_MAGIC;
+	pdata->arch = PANIC_ARCH_X86;
+	pdata->struct_version = 2;
+	pdata->magic = PANIC_DATA_MAGIC;
 
 	/* Display the panic and reset */
 	if (panic_once)
@@ -150,7 +152,7 @@ void exception_panic(
 			     " occurred!");
 
 	panic_printf("\n========== PANIC ==========\n");
-	panic_data_print(PANIC_DATA_PTR);
+	panic_data_print(pdata);
 	panic_printf("\n");
 	panic_printf("Resetting system...\n");
 	panic_printf("===========================\n");
@@ -190,26 +192,29 @@ void software_panic(uint32_t reason, uint32_t info)
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 {
+	struct panic_data * const pdata = get_panic_data_write();
+
 	/* Setup panic data structure */
-	memset(PANIC_DATA_PTR, 0, sizeof(struct panic_data));
-	PANIC_DATA_PTR->magic = PANIC_DATA_MAGIC;
-	PANIC_DATA_PTR->struct_size = sizeof(struct panic_data);
-	PANIC_DATA_PTR->struct_version = 2;
-	PANIC_DATA_PTR->arch = PANIC_ARCH_X86;
+	memset(pdata, 0, CONFIG_PANIC_DATA_SIZE);
+	pdata->magic = PANIC_DATA_MAGIC;
+	pdata->struct_size = CONFIG_PANIC_DATA_SIZE;
+	pdata->struct_version = 2;
+	pdata->arch = PANIC_ARCH_X86;
 
 	/* Log panic cause */
-	PANIC_DATA_PTR->x86.vector = reason;
-	PANIC_DATA_PTR->x86.error_code = info;
-	PANIC_DATA_PTR->x86.eflags = exception;
+	pdata->x86.vector = reason;
+	pdata->x86.error_code = info;
+	pdata->x86.eflags = exception;
 }
 
 void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 {
-	if (PANIC_DATA_PTR->magic == PANIC_DATA_MAGIC &&
-	    PANIC_DATA_PTR->struct_version == 2) {
-		*reason = PANIC_DATA_PTR->x86.vector;
-		*info = PANIC_DATA_PTR->x86.error_code;
-		*exception = PANIC_DATA_PTR->x86.eflags;
+	struct panic_data * const pdata = panic_get_data();
+
+	if (pdata && pdata->struct_version == 2) {
+		*reason = pdata->x86.vector;
+		*info = pdata->x86.error_code;
+		*exception = pdata->x86.eflags;
 	} else {
 		*reason = *info = *exception = 0;
 	}
