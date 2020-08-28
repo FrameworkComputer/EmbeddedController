@@ -96,6 +96,10 @@ UNIMPLEMENTED(USB_C1_LS_EN)
 
 /* Misc Signals */
 GPIO(EC_H1_PACKET_MODE,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
+GPIO(LED_1_L,		        PIN(C, 4), GPIO_OUT_HIGH)	/* Battery LED: Amber */
+GPIO(LED_2_L,		        PIN(C, 3), GPIO_OUT_HIGH)	/* Battery LED: White */
+GPIO(POWER_LED_GATE,		PIN(C, 2), GPIO_OUT_LOW)	/* Power LED: White */
+
 /*
  * Despite their names, M2_SSD_PLN and M2_SSD_PLA are active-low, and M2_SSD_PLN
  * is open-drain.
@@ -148,7 +152,6 @@ ALTERNATE(PIN_MASK(B, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                       
  * board, to be controlled by LED_{1,2,3}_L. PWM allows driving both modules at
  * the same time. */
 ALTERNATE(PIN_MASK(6, BIT(0)), 0, MODULE_PWM, 0)                                     /* LED_SIDESEL_4_L */
-ALTERNATE(PIN_MASK(C, BIT(2) | BIT(3) | BIT(4)), 0, MODULE_PWM, 0)                   /* LED_{3,2,1}_L */
 
 /* Fan signals */
 GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
