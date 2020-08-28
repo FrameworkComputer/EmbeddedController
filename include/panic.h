@@ -198,12 +198,34 @@ void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception);
 void ignore_bus_fault(int ignored);
 
 /**
- * Return a pointer to the saved data from a previous panic.
+ * Return a pointer to the saved data from a previous panic that can be
+ * safely interpreted
  *
- * @param pointer to the panic data, or NULL if none available (for example,
+ * @param pointer to the valid panic data, or NULL if none available (for example,
  * the last reboot was not caused by a panic).
  */
 struct panic_data *panic_get_data(void);
+
+/**
+ * Return a pointer to the beginning of panic data. This function can be
+ * used to obtain pointer which can be used to calculate place of other
+ * structures (eg. jump_data). This function should not be used to get access
+ * to panic_data structure as it might not be valid
+ *
+ * @param pointer to the beginning of panic_data, or NULL if there is no
+ * panic_data
+ */
+uintptr_t get_panic_data_start(void);
+
+/*
+ * Return a pointer to panic_data structure that can be safely written.
+ * Please note that this function can move jump data and jump tags.
+ * It can also delete panic data from previous boot, so this function
+ * should be used when we are sure that we don't need it.
+ *
+ * @param pointer to panic_data structure that can be safely written
+ */
+struct panic_data *get_panic_data_write(void);
 
 /**
  * Chip-specific implementation for backing up panic data to persistent
