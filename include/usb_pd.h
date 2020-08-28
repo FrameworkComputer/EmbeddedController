@@ -1707,6 +1707,23 @@ uint32_t pd_dfp_enter_mode(int port, enum tcpm_transmit_type type,
 		uint16_t svid, int opos);
 
 /**
+ * Save the Enter mode command data received from the port partner for setting
+ * the retimer
+ *
+ * @param port     USB-C port number
+ * @param payload  payload data.
+ */
+void pd_ufp_set_enter_mode(int port, uint32_t *payload);
+
+/**
+ * Return Enter mode command data received from the port partner
+ *
+ * @param port     USB-C port number
+ * @return enter mode raw value requested to the UFP
+ */
+uint32_t pd_ufp_get_enter_mode(int port);
+
+/**
  *  Get DisplayPort pin mode for DFP to request from UFP's capabilities.
  *
  * @param port     USB-C port number.

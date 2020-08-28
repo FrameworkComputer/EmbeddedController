@@ -76,8 +76,6 @@ int board_vbus_source_enabled(int port)
 /* Responses specifically for the enablement of TBT mode in the role of UFP */
 
 #define OPOS_TBT 1
-static union tbt_dev_mode_enter_cmd
-	ufp_enter_mode[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static const union tbt_mode_resp_device vdo_tbt_modes[1] = {
 		{
@@ -181,14 +179,7 @@ static int svdm_tbt_compat_response_enter_mode(
 	 */
 	if ((mux_state & USB_PD_MUX_USB_ENABLED) ||
 		(mux_state & USB_PD_MUX_SAFE_MODE)) {
-
-		/*
-		 * TODO(b:157163664): set retimer config for UFP
-		 * Save TBT3 SOP VDO from request so retimer can use it
-		 */
-		ufp_enter_mode[port] =
-			(union tbt_dev_mode_enter_cmd)payload[1];
-
+		pd_ufp_set_enter_mode(port, payload);
 		set_tbt_compat_mode_ready(port);
 		CPRINTS("UFP Enter TBT mode");
 		return 1; /* ACK */
