@@ -1291,83 +1291,6 @@ failed_write:
 }
 
 /*
- * Write another program flow to match the
- * original ITE 8903 Download board.
- */
-static int command_write_pages2(struct common_hnd *chnd, uint32_t address,
-				uint32_t size, uint8_t *buffer,
-				int block_write_size)
-{
-	int res = 0;
-	uint8_t addr_H, addr_M, addr_L;
-	uint8_t data;
-
-	res |= i2c_write_byte(chnd, 0x07, 0x7f);
-	res |= i2c_write_byte(chnd, 0x06, 0xff);
-	res |= i2c_write_byte(chnd, 0x04, 0xFF);
-
-	/* SMB_SPI_Flash_Enable_Write_Status */
-	if (spi_flash_command_short(chnd, SPI_CMD_EWSR,
-		"Enable Write Status Register") < 0) {
-		res = -EIO;
-		goto failed_write;
-	}
-
-	/* SMB_SPI_Flash_Write_Status_Reg */
-	res |= i2c_write_byte(chnd, 0x05, 0xfe);
-	res |= i2c_write_byte(chnd, 0x08, 0x00);
-	res |= i2c_write_byte(chnd, 0x05, 0xfd);
-	res |= i2c_write_byte(chnd, 0x08, 0x01);
-	res |= i2c_write_byte(chnd, 0x08, 0x00);
-
-	/* SMB_SPI_Flash_Write_Enable */
-	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_ENABLE,
-		"SPI Command Write Enable") < 0) {
-		res = -EIO;
-		goto failed_write;
-	}
-
-	/* SMB_SST_SPI_Flash_AAI2_Program */
-	if (spi_flash_command_short(chnd, SPI_CMD_WORD_PROGRAM,
-		"SPI AAI2 Program") < 0) {
-		res = -EIO;
-		goto failed_write;
-	}
-
-	addr_H = (address >> 16) & 0xFF;
-	addr_M = (address >> 8) & 0xFF;
-	addr_L = address & 0xFF;
-
-	res = i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_H, 1, 1);
-	res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_M, 1, 1);
-	res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_L, 1, 1);
-	res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, buffer++, 1, 1);
-	res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, buffer++, 1, 1);
-
-	/* Wait until not busy */
-	if (spi_poll_busy(chnd, "AAI write") < 0)
-		goto failed_write;
-
-	res = i2c_write_byte(chnd, 0x10, 0x20);
-	res = i2c_byte_transfer(chnd, I2C_BLOCK_ADDR, buffer, 1,
-		block_write_size-2);
-
-	/* No error so far */
-	res = size;
-
-	data = 0xFF;
-	res = i2c_byte_transfer(chnd, I2C_DATA_ADDR, &data, 1, 1);
-	res = i2c_write_byte(chnd, 0x10, 0x00);
-
-failed_write:
-	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
-		"write disable exit AAI write") < 0)
-		res = -EIO;
-
-	return res;
-}
-
-/*
  * Test for spi page program command
  */
 static int command_write_pages3(struct common_hnd *chnd, uint32_t address,
@@ -1712,11 +1635,12 @@ static int write_flash(struct common_hnd *chnd, const char *filename,
 static int write_flash2(struct common_hnd *chnd, const char *filename,
 			uint32_t offset)
 {
-	int res, written;
+	int res;
 	int block_write_size = chnd->conf.block_write_size;
 	FILE *hnd;
 	int size = chnd->flash_size;
-	int cnt;
+	int cnt, two_bytes_sent, ret;
+	uint8_t addr_h, addr_m, addr_l, data_ff = 0xff;
 	uint8_t *buffer = malloc(size);
 
 	if (!buffer) {
@@ -1742,30 +1666,92 @@ static int write_flash2(struct common_hnd *chnd, const char *filename,
 	}
 	fclose(hnd);
 
-	offset = 0;
+	/* Enter follow mode */
+	if (spi_flash_follow_mode(chnd, "AAI write") < 0) {
+		ret = -EIO;
+		goto failed_enter_mode;
+	}
+
 	printf("Writing %d bytes at 0x%08x.......\n", res, offset);
+
+__send_aai_cmd:
+	addr_h = (offset >> 16) & 0xff;
+	addr_m = (offset >> 8) & 0xff;
+	addr_l = offset & 0xff;
+
+	/* write enable command */
+	ret = spi_flash_command_short(chnd, SPI_CMD_WRITE_ENABLE, "SPI WE");
+	/* AAI command */
+	ret |= spi_flash_command_short(chnd, SPI_CMD_WORD_PROGRAM, "SPI AAI");
+	/* address of AAI command */
+	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_h, 1, 1);
+	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_m, 1, 1);
+	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_l, 1, 1);
+	/* Send first two bytes of buffe */
+	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &buffer[offset], 1, 1);
+	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &buffer[offset+1], 1, 1);
+	/* we had sent two bytes */
+	offset += 2;
+	res -= 2;
+	two_bytes_sent = 1;
+	/* Wait until not busy */
+	if (spi_poll_busy(chnd, "wait busy bit cleared at AAI write ") < 0) {
+		ret = -EIO;
+		goto failed_write;
+	}
+	/* enable quick AAI mode */
+	ret |= i2c_write_byte(chnd, 0x10, 0x20);
+	if (ret < 0)
+		goto failed_write;
+
 	while (res) {
 		cnt = (res > block_write_size) ? block_write_size : res;
-		written = command_write_pages2(chnd, offset, cnt,
-			&buffer[offset], block_write_size);
-		if (written == -EIO)
+		/* we had sent two bytes */
+		if (two_bytes_sent) {
+			two_bytes_sent = 0;
+			cnt -= 2;
+		}
+		if (i2c_byte_transfer(chnd, I2C_BLOCK_ADDR, &buffer[offset],
+			1, cnt) < 0) {
+			ret = -EIO;
 			goto failed_write;
+		}
 
 		res -= cnt;
 		offset += cnt;
 		draw_spinner(res, res + offset);
+
+		/* We need to resend aai write command at 256KB boundary. */
+		if (!(offset % 0x40000) && res) {
+			/* disable quick AAI mode */
+			i2c_byte_transfer(chnd, I2C_DATA_ADDR, &data_ff, 1, 1);
+			i2c_write_byte(chnd, 0x10, 0x00);
+			/* write disable command */
+			spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
+				"SPI write disable");
+			goto __send_aai_cmd;
+		}
 	}
 
-	if (written != res) {
 failed_write:
-		fprintf(stderr, "%s: Error writing to flash\n", __func__);
-		free(buffer);
-		return -EIO;
-	}
-	printf("\n\rWriting Done.\n");
+	/* disable quick AAI mode */
+	i2c_byte_transfer(chnd, I2C_DATA_ADDR, &data_ff, 1, 1);
+	i2c_write_byte(chnd, 0x10, 0x00);
+	/* write disable command */
+	spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
+		"SPI write disable");
+failed_enter_mode:
+	/* exit follow mode */
+	spi_flash_follow_mode_exit(chnd, "AAI write");
+
+	if (ret < 0)
+		printf("\n\rWriting Failed.\n");
+	else
+		printf("\n\rWriting Done.\n");
+
 	free(buffer);
 
-	return 0;
+	return ret;
 }
 
 /*
