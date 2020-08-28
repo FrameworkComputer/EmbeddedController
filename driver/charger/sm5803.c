@@ -603,6 +603,23 @@ static void sm5803_init(int chgnum)
 		reg = SM5803_CURRENT_TO_REG(batt_info->precharge_current);
 		reg = MIN(reg, SM5803_PRECHG_ICHG_PRE_SET);
 		rv |= chg_write8(chgnum, SM5803_REG_PRECHG, reg);
+
+		/*
+		 * Set up BFET alerts
+		 *
+		 * We'll set the soft limit at 1.5W and the hard limit at 6W.
+		 *
+		 * The register is 29.2 mW per bit.
+		 */
+		reg = (1500 * 10) / 292;
+		rv |= meas_write8(chgnum, SM5803_REG_BFET_PWR_MAX_TH, reg);
+		reg = (6000 * 10) / 292;
+		rv |= meas_write8(chgnum, SM5803_REG_BFET_PWR_HWSAFE_MAX_TH,
+				 reg);
+		rv |= main_read8(chgnum, SM5803_REG_INT3_EN, &reg);
+		reg |= SM5803_INT3_BFET_PWR_LIMIT |
+		       SM5803_INT3_BFET_PWR_HWSAFE_LIMIT;
+		rv |= main_write8(chgnum, SM5803_REG_INT3_EN, reg);
 	}
 
 	if (rv)
@@ -624,6 +641,8 @@ void sm5803_handle_interrupt(int chgnum)
 	enum ec_error_list rv;
 	int int_reg, meas_reg;
 	static bool throttled;
+	struct batt_params bp;
+	int act_chg, val;
 
 	/* Note: Interrupt registers are clear on read */
 	rv = main_read8(chgnum, SM5803_REG_INT1_REQ, &int_reg);
@@ -676,6 +695,30 @@ void sm5803_handle_interrupt(int chgnum)
 		 * or the level is below the upper threshold, it can likely be
 		 * ignored.
 		 */
+	}
+
+	/* TODO(b/159376384): Take action on fatal BFET power alert. */
+	rv = main_read8(chgnum, SM5803_REG_INT3_REQ, &int_reg);
+	if (rv) {
+		CPRINTS("%s %d: Failed to read int3 register", CHARGER_NAME,
+			chgnum);
+		return;
+	}
+
+	if ((int_reg & SM5803_INT3_BFET_PWR_LIMIT) ||
+	    (int_reg & SM5803_INT3_BFET_PWR_HWSAFE_LIMIT)) {
+		battery_get_params(&bp);
+		act_chg = charge_manager_get_active_charge_port();
+		CPRINTS("%s BFET power limit reached! (%s)", CHARGER_NAME,
+			(int_reg & SM5803_INT3_BFET_PWR_LIMIT) ? "warn" :
+			"FATAL");
+		CPRINTS("\tVbat: %dmV", bp.voltage);
+		CPRINTS("\tIbat: %dmA", bp.current);
+		charger_get_voltage(act_chg, &val);
+		CPRINTS("\tVsys(aux): %dmV", val);
+		charger_get_current(act_chg, &val);
+		CPRINTS("\tIsys: %dmA", val);
+		cflush();
 	}
 
 	rv = main_read8(chgnum, SM5803_REG_INT4_REQ, &int_reg);
