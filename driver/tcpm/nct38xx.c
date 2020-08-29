@@ -98,6 +98,7 @@ static int nct38xx_init(int port)
 
 	return rv;
 }
+
 static int nct38xx_tcpm_init(int port)
 {
 	int rv;
@@ -109,12 +110,11 @@ static int nct38xx_tcpm_init(int port)
 	return nct38xx_init(port);
 }
 
-int nct38xx_tcpm_set_cc(int port, int pull)
+static int nct38xx_tcpm_set_cc(int port, int pull)
 {
 	/*
 	 * Setting the CC lines to open/open requires that the NCT CTRL_OUT
-	 * register has sink disabled. Otherwise the following happens, as
-	 * described by Nuvoton:
+	 * register has sink disabled. Otherwise, when no battery is connected:
 	 *
 	 * 1. You set CC lines to Open/Open. This is physically happening on
 	 *    the CC line.
@@ -125,20 +125,58 @@ int nct38xx_tcpm_set_cc(int port, int pull)
 	 * 4. When TCPC VCC gets below ~2.7V the TCPC will reset and therefore
 	 *    it will present Rd/Rd on the CC lines. Also the VBSNK_EN pin
 	 *    after reset is Hi-Z, so the sink switch will get closed again.
+	 *
+	 * Disabling SNKEN makes the VBSNK_EN pin Hi-Z, so
+	 * USB_Cx_TCPC_VBSNK_EN_L will be asserted by external
+	 * pull-down, so only do so if already sinking, otherwise
+	 * both source and sink switches can be closed, which should
+	 * never happen (b/166850036).
+	 *
+	 * SNKEN will be re-enabled in nct38xx_init above (from tcpm_init), or
+	 * when CC lines are set again, or when sinking is disabled.
 	 */
-	if (pull == TYPEC_CC_OPEN) {
-		int rv;
+	enum mask_update_action action = MASK_SET;
+	int rv;
 
-		/* Disable SNKEN, it will be re-enabled in tcpm_init path */
+	if (pull == TYPEC_CC_OPEN) {
+		bool is_sinking;
+
+		rv = tcpm_get_snk_ctrl(port, &is_sinking);
+		if (rv)
+			return rv;
+
+		if (is_sinking)
+			action = MASK_CLR;
+	}
+
+	rv = tcpc_update8(port,
+			  NCT38XX_REG_CTRL_OUT_EN,
+			  NCT38XX_REG_CTRL_OUT_EN_SNKEN,
+			  action);
+	if (rv)
+		return rv;
+
+	return tcpci_tcpm_set_cc(port, pull);
+}
+
+static int nct38xx_tcpm_set_snk_ctrl(int port, int enable)
+{
+	int rv;
+
+	/*
+	 * To disable sinking, SNKEN must be enabled so that
+	 * USB_Cx_TCPC_VBSNK_EN_L will be driven high.
+	 */
+	if (!enable) {
 		rv = tcpc_update8(port,
 				  NCT38XX_REG_CTRL_OUT_EN,
 				  NCT38XX_REG_CTRL_OUT_EN_SNKEN,
-				  MASK_CLR);
+				  MASK_SET);
 		if (rv)
 			return rv;
 	}
 
-	return tcpci_tcpm_set_cc(port, pull);
+	return tcpci_tcpm_set_snk_ctrl(port, enable);
 }
 
 static void nct38xx_tcpc_alert(int port)
@@ -222,7 +260,7 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 #endif
 #ifdef CONFIG_USBC_PPC
 	.get_snk_ctrl		= &tcpci_tcpm_get_snk_ctrl,
-	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
+	.set_snk_ctrl		= &nct38xx_tcpm_set_snk_ctrl,
 	.get_src_ctrl		= &tcpci_tcpm_get_src_ctrl,
 	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
 #endif
