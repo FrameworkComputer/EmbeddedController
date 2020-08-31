@@ -366,7 +366,6 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 
 	if (charger_get_vbus_voltage(port, &voltage))
 		voltage = 0;
-	ccprints("vbus %d", voltage);
 
 	return voltage < BC12_MIN_VOLTAGE;
 }
