@@ -45,6 +45,24 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
+/* Keyboard scan setting */
+struct keyboard_scan_config keyscan_config = {
+	/* Increase from 50 us, because KSO_02 passes through the H1. */
+	.output_settle_us = 80,
+	/* Other values should be the same as the default configuration. */
+	.debounce_down_us = 9 * MSEC,
+	.debounce_up_us = 30 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+	.actual_key_mask = {
+		0x1c, 0xfe, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xfe, 0x55, 0xfe, 0xff, 0xff,
+		0xff  /* full set */
+	},
+};
+
+/******************************************************************************/
 /*
  * FW_CONFIG defaults for Delbin if the CBI data is not initialized.
  */
@@ -382,26 +400,6 @@ __override const struct ec_response_keybd_config
 {
 	return &delbin_kb;
 }
-
-static void keyboard_init(void)
-{
-	keyscan_config.actual_key_mask[0] = 0x1c;
-	keyscan_config.actual_key_mask[1] = 0xfe;
-	keyscan_config.actual_key_mask[2] = 0xff;
-	keyscan_config.actual_key_mask[3] = 0xff;
-	keyscan_config.actual_key_mask[4] = 0xff;
-	keyscan_config.actual_key_mask[5] = 0xf5;
-	keyscan_config.actual_key_mask[6] = 0xff;
-	keyscan_config.actual_key_mask[7] = 0xa4;
-	keyscan_config.actual_key_mask[8] = 0xff;
-	keyscan_config.actual_key_mask[9] = 0xfe;
-	keyscan_config.actual_key_mask[10] = 0x55;
-	keyscan_config.actual_key_mask[11] = 0xfe;
-	keyscan_config.actual_key_mask[12] = 0xff;
-	keyscan_config.actual_key_mask[13] = 0xff;
-	keyscan_config.actual_key_mask[14] = 0xff;
-}
-DECLARE_HOOK(HOOK_INIT, keyboard_init, HOOK_PRIO_INIT_I2C + 1);
 
 /* Called on AP S0ix -> S0 transition */
 static void board_chipset_resume(void)
