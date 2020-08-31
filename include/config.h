@@ -3739,6 +3739,8 @@
 #undef CONFIG_UART_TX_REQ_CH
 #undef CONFIG_UART_RX_REQ_CH
 
+/* Driver of LN9310 switchcap */
+#undef CONFIG_LN9310
 
 /*****************************************************************************/
 /* USB PD config */
