@@ -143,12 +143,12 @@ static void usb_port_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, usb_port_init, HOOK_PRIO_DEFAULT);
 
-static void usb_port_resume(void)
+static void usb_port_startup(void)
 {
-	/* Turn on USB ports on as we go into S0 from S3 or S5. */
+	/* Turn on USB ports on as we go into S0 from S5. */
 	usb_port_all_ports_on();
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, usb_port_resume, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, usb_port_startup, HOOK_PRIO_DEFAULT);
 
 static void usb_port_shutdown(void)
 {
