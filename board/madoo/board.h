@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Waddledoo board configuration */
+/* Madoo board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -71,15 +71,6 @@
 #define I2C_PORT_ACCEL      I2C_PORT_SENSOR
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50 /* 7b address */
-
-/*
- * I2C pin names for baseboard
- *
- * Note: these lines will be set as i2c on start-up, but this should be
- * okay since they're ODL.
- */
-#define GPIO_EC_I2C_SUB_USB_C1_SCL GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL
-#define GPIO_EC_I2C_SUB_USB_C1_SDA GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL
 
 /* Sensors */
 #define CONFIG_CMD_ACCELS
