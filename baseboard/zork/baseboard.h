@@ -71,12 +71,6 @@
 #define CONFIG_CHARGER_ISL9241
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
-/*
- * We would prefer to use CONFIG_CHARGE_RAMP_HW to enable legacy BC1.2 charging
- * but that feature of ISL9241 is broken (b/160287056) so we have to use
- * CONFIG_CHARGE_RAMP_SW instead.
- */
-#define CONFIG_CHARGE_RAMP_SW
 
 #define CONFIG_CHIPSET_STONEY
 #define CONFIG_CHIPSET_CAN_THROTTLE
