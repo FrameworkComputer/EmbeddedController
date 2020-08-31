@@ -22,6 +22,9 @@
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_FLASH_SIZE (512 * 1024)  /* 512KB internal spi flash */
 
+/* Switchcap */
+#define CONFIG_LN9310
+
 /* Battery */
 #define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
@@ -62,6 +65,8 @@
 
 /* GPIO alias */
 #define GPIO_PMIC_RESIN_L GPIO_PM845_RESIN_L
+#define GPIO_SWITCHCAP_PG_INT_L GPIO_DA9313_GPIO0
+#define GPIO_SWITCHCAP_ON_L GPIO_SWITCHCAP_ON
 
 #ifndef __ASSEMBLER__
 

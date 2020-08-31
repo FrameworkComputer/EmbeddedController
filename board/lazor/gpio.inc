@@ -43,6 +43,13 @@ GPIO_INT(AP_EC_SPI_CS_L,    PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN, shi_cs
 GPIO_INT(TABLET_MODE_L,     PIN(C, 6), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi160_interrupt)  /* Accelerometer/gyro interrupt */
 
+/* Switchcap
+ *
+ * For DA9313 SKUs, it is GPIO0 of DA9313. The GPIO0 is configured as PVC_PG.
+ * For LN9310 SKUs, it is the interrupt line of LN9310.
+ */
+GPIO_INT(DA9313_GPIO0,      PIN(E, 2), GPIO_INT_FALLING, switchcap_interrupt)
+
 /*
  * EC_RST_ODL acts as a wake source from PSL hibernate mode. However, it does
  * not need to be an interrupt for normal EC operations. Thus, configure it as
@@ -64,7 +71,7 @@ GPIO(EC_INT_L,              PIN(A, 2), GPIO_ODR_HIGH)  /* Interrupt line between
 GPIO(QSIP_ON,               PIN(5, 0), GPIO_OUT_LOW)   /* Not used, for non-switchcap testing */
 
 /* Power enables */
-GPIO(SWITCHCAP_ON,          PIN(D, 5), GPIO_OUT_LOW)   /* Enable switch cap */
+GPIO(SWITCHCAP_ON,          PIN(D, 5), GPIO_INPUT)     /* Enable switch cap; will be configured as output in the board init */
 /* TODO(waihong): Remove it. The VBOB switch is for backup. */
 GPIO(VBOB_EN,               PIN(D, 3), GPIO_OUT_LOW)   /* Enable VBOB */
 GPIO(EN_PP3300_A,           PIN(A, 6), GPIO_OUT_LOW)   /* Enable PP3300 */
@@ -125,13 +132,6 @@ GPIO(BRD_ID2,               PIN(6, 3), GPIO_INPUT)
 GPIO(SKU_ID0,               PIN(F, 0), GPIO_INPUT)
 GPIO(SKU_ID1,               PIN(4, 1), GPIO_INPUT)
 GPIO(SKU_ID2,               PIN(D, 4), GPIO_INPUT)
-
-/* Switchcap */
-/*
- * GPIO0 is configured as PVC_PG. When the chip in power down mode, it outputs
- * high-Z. Set pull-down to avoid floating.
- */
-GPIO(DA9313_GPIO0,          PIN(E, 2), GPIO_INPUT | GPIO_PULL_DOWN) /* Switchcap GPIO0 */
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)            /* UART (GPIO64/65) */
