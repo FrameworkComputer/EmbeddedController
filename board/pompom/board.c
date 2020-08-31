@@ -288,6 +288,21 @@ static void board_chipset_resume(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
+void board_set_switchcap_power(int enable)
+{
+	gpio_set_level(GPIO_SWITCHCAP_ON, enable);
+}
+
+int board_is_switchcap_enabled(void)
+{
+	return gpio_get_level(GPIO_SWITCHCAP_ON);
+}
+
+int board_is_switchcap_power_good(void)
+{
+	return gpio_get_level(GPIO_DA9313_GPIO0);
+}
+
 void board_reset_pd_mcu(void)
 {
 	cprints(CC_USB, "Resetting TCPCs...");

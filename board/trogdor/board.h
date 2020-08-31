@@ -73,6 +73,10 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
+/* Swithcap functions */
+void board_set_switchcap_power(int enable);
+int board_is_switchcap_enabled(void);
+int board_is_switchcap_power_good(void);
 /* Custom function to indicate if sourcing VBUS */
 int board_is_sourcing_vbus(int port);
 /* Enable VBUS sink for a given port */
