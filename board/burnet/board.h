@@ -53,6 +53,7 @@
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 #define CONFIG_ALS
 #define CONFIG_CMD_ACCEL_INFO
+#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
@@ -138,6 +139,8 @@ int board_is_sourcing_vbus(int port);
 
 /* returns the i2c port number of charger */
 int board_get_charger_i2c(void);
+
+int board_is_convertible(void);
 
 #endif /* !__ASSEMBLER__ */
 

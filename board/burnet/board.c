@@ -240,6 +240,19 @@ void bc12_interrupt(enum gpio_signal signal)
 	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
 }
 
+/*
+ * Returns 1 for boards that are convertible into tablet mode, and
+ * zero for clamshells.
+ */
+int board_is_convertible(void)
+{
+	/*
+	 * Burnet: 17
+	 * Esche: 16
+	 */
+	return system_get_sku_id() == 17;
+}
+
 #ifndef VARIANT_KUKUI_NO_SENSORS
 static void board_spi_enable(void)
 {
@@ -281,34 +294,6 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 	     board_spi_disable,
 	     MOTION_SENSE_HOOK_PRIO + 1);
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
-
-static void board_init(void)
-{
-	/* If the reset cause is external, pulse PMIC force reset. */
-	if (system_get_reset_flags() == EC_RESET_FLAG_RESET_PIN) {
-		gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 0);
-		msleep(100);
-		gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 1);
-	}
-
-	/* Enable TCPC alert interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
-
-#ifndef VARIANT_KUKUI_NO_SENSORS
-	/* Enable interrupts from BMI160 sensor. */
-	gpio_enable_interrupt(GPIO_ACCEL_INT_ODL);
-
-	/* For some reason we have to do this again in case of sysjump */
-	board_spi_enable();
-#endif /* !VARIANT_KUKUI_NO_SENSORS */
-
-	/* Enable interrupt from PMIC. */
-	gpio_enable_interrupt(GPIO_PMIC_EC_RESETB);
-
-	/* Enable BC12 interrupt */
-	gpio_enable_interrupt(GPIO_BC12_EC_INT_ODL);
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 #ifndef VARIANT_KUKUI_NO_SENSORS
 /* Motion sensors */
@@ -408,9 +393,45 @@ struct motion_sensor_t motion_sensors[] = {
 		.max_frequency = BMI_GYRO_MAX_FREQ,
 	},
 };
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
+
+static void board_init(void)
+{
+	/* If the reset cause is external, pulse PMIC force reset. */
+	if (system_get_reset_flags() == EC_RESET_FLAG_RESET_PIN) {
+		gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 0);
+		msleep(100);
+		gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 1);
+	}
+
+	/* Enable TCPC alert interrupts */
+	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
+
+#ifndef VARIANT_KUKUI_NO_SENSORS
+	if (board_is_convertible()) {
+		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+		/* Enable interrupts from BMI160 sensor. */
+		gpio_enable_interrupt(GPIO_ACCEL_INT_ODL);
+		/* For some reason we have to do this again in case of sysjump */
+		board_spi_enable();
+	} else {
+		motion_sensor_count = 0;
+		/* Base accel is not stuffed, don't allow line to float */
+		gpio_set_flags(GPIO_ACCEL_INT_ODL,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
+		board_spi_disable();
+	}
+#endif /* !VARIANT_KUKUI_NO_SENSORS */
+
+	/* Enable interrupt from PMIC. */
+	gpio_enable_interrupt(GPIO_PMIC_EC_RESETB);
+
+	/* Enable BC12 interrupt */
+	gpio_enable_interrupt(GPIO_BC12_EC_INT_ODL);
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
