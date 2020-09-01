@@ -1937,6 +1937,14 @@ static void tc_unattached_snk_entry(const int port)
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 
+	if (IS_ENABLED(CONFIG_USBC_PPC)) {
+		/*
+		 * Clear the overcurrent event counter
+		 * since we've detected a disconnect.
+		 */
+		ppc_clear_oc_event_counter(port);
+	}
+
 	/*
 	 * Indicate that the port is disconnected so the board
 	 * can restore state from any previous data swap.
