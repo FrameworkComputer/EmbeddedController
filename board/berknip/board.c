@@ -318,11 +318,10 @@ const struct usb_mux usbc1_ps8743 = {
  * Use FW_CONFIG to set correct configuration.
  */
 enum gpio_signal GPIO_S0_PGOOD = GPIO_S0_PWROK_OD_V0;
+static uint32_t board_ver;
 
 static void board_version_check(void)
 {
-	uint32_t board_ver = 0;
-
 	cbi_get_board_version(&board_ver);
 
 	if (board_ver <= 2)
@@ -339,12 +338,25 @@ static void board_version_check(void)
  */
 DECLARE_HOOK(HOOK_INIT, board_version_check, HOOK_PRIO_INIT_I2C);
 
+static void board_remap_gpio(void)
+{
+	if (board_ver >= 3) {
+		/*
+		 * TODO: remove code when older version_2
+		 * hardware is retired and no longer needed
+		 */
+		gpio_set_flags(GPIO_USB_C1_HPD_IN_DB_V1, GPIO_OUT_LOW);
+	}
+}
+
 static void setup_fw_config(void)
 {
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 
 	setup_mux();
+
+	board_remap_gpio();
 }
 /* Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init(). */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
@@ -629,3 +641,25 @@ struct power_signal_info power_signal_list[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+enum gpio_signal board_usbc_port_to_hpd_gpio(int port)
+{
+	/* USB-C0 always uses USB_C0_HPD (= DP3_HPD). */
+	if (port == 0)
+		return GPIO_USB_C0_HPD;
+
+	/*
+	 * USB-C1 OPT3 DB
+	 *    version_2 uses GPIO_NO_HPD
+	 *    version_3 uses USB_C1_HPD_IN_DB_V1 via RTD2141B MST hub
+	 *    to drive AP HPD, EC drives MST hub HPD input
+	 *    from USB-PD messages..
+	 */
+	else if (ec_config_has_mst_hub_rtd2141b())
+		return (board_ver >= 3)
+				? GPIO_USB_C1_HPD_IN_DB_V1
+				: GPIO_NO_HPD;
+
+	/* USB-C1 OPT1 DB uses DP2_HPD. */
+	return GPIO_DP2_HPD;
+}

@@ -206,11 +206,8 @@ static inline bool ec_config_has_hdmi_conn_hpd(void)
 		  HAS_HDMI_CONN_HPD);
 }
 
-#define PORT_TO_HPD(port) ((port == 0) \
-	? GPIO_USB_C0_HPD \
-	: (ec_config_has_mst_hub_rtd2141b()) \
-		? GPIO_NO_HPD \
-		: GPIO_DP2_HPD)
+enum gpio_signal board_usbc_port_to_hpd_gpio(int port);
+#define PORT_TO_HPD(port) board_usbc_port_to_hpd_gpio(port)
 
 extern const struct usb_mux usbc1_tusb544;
 extern const struct usb_mux usbc1_ps8743;

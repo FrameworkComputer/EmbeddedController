@@ -17,7 +17,18 @@ GPIO_INT(USB_C1_BC12_INT_ODL, 	PIN(A, 4), GPIO_INT_FALLING | GPIO_PULL_UP,	bc12_
 GPIO_INT(SLP_S3_L,		PIN(7, 4), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(SLP_S5_L,		PIN(E, 0), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(S0_PWROK_OD_V0,	PIN(5, 6), GPIO_INT_BOTH,			power_signal_interrupt)
+
+/*
+ * TODO(dbrockus@): remove code when older version_2 of hardware is
+ * retired and no longer needed
+ */
+#if 0
+GPIO(USB_C1_HPD_IN_DB_V1,	PIN(B, 1), GPIO_OUT_LOW)			/* C1 HPD V1 */
+#else
+#define GPIO_USB_C1_HPD_IN_DB_V1	GPIO_S0_PWROK_OD_V1
 GPIO_INT(S0_PWROK_OD_V1,	PIN(B, 1), GPIO_INT_BOTH,			power_signal_interrupt)
+#endif
+
 GPIO_INT(EC_PWROK_OD,		PIN(3, 7), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(EC_PWR_BTN_ODL,	PIN(0, 1), GPIO_INT_BOTH,			power_button_interrupt)
 GPIO_INT(LID_OPEN,		PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	lid_interrupt)
