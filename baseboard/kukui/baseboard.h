@@ -93,6 +93,7 @@
 
 /* define this if the board is jacuzzi family */
 #ifdef VARIANT_KUKUI_JACUZZI
+#define CONFIG_HOSTCMD_AP_SET_SKUID
 #define CONFIG_IO_EXPANDER
 #define CONFIG_IO_EXPANDER_IT8801
 #define CONFIG_IO_EXPANDER_PORT_COUNT 1
