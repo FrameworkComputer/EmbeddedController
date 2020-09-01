@@ -211,20 +211,6 @@ struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{ .drv = &pi3usb9201_drv },
 };
 
-/* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
-	.output_settle_us = 35,
-	.debounce_down_us = 5 * MSEC,
-	.debounce_up_us = 40 * MSEC,
-	.scan_period_us = 3 * MSEC,
-	.min_post_scan_delay_us = 1000,
-	.poll_timeout_us = 100 * MSEC,
-	.actual_key_mask = {
-		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
-	},
-};
-
 static void bc12_interrupt(enum gpio_signal signal)
 {
 	if (signal == GPIO_USB_C0_BC12_INT_ODL)
@@ -243,6 +229,20 @@ static void board_sub_bc12_init(void)
 }
 /* Must be done after I2C and subboard */
 DECLARE_HOOK(HOOK_INIT, board_sub_bc12_init, HOOK_PRIO_INIT_I2C + 1);
+
+/* Keyboard scan setting */
+struct keyboard_scan_config keyscan_config = {
+	.output_settle_us = 35,
+	.debounce_down_us = 5 * MSEC,
+	.debounce_up_us = 40 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+	.actual_key_mask = {
+		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
+	},
+};
 
 /*
  * I2C channels (A, B, and C) are using the same timing registers (00h~07h)
@@ -366,6 +366,30 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
+uint16_t tcpc_get_alert_status(void)
+{
+	/*
+	 * C0 & C1: TCPC is embedded in the EC and processes interrupts in the
+	 * chip code (it83xx/intc.c)
+	 */
+	return 0;
+}
+
+void board_reset_pd_mcu(void)
+{
+	/*
+	 * C0 & C1: TCPC is embedded in the EC and processes interrupts in the
+	 * chip code (it83xx/intc.c)
+	 */
+}
+
+/* USB-A */
+const int usb_port_enable[] = {
+	GPIO_EN_PP5000_USB_A0_VBUS,
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
+
+/* USB Mux */
 static int board_ps8743_mux_set(const struct usb_mux *me,
 				mux_state_t mux_state)
 {
@@ -394,13 +418,6 @@ static int board_ps8743_mux_set(const struct usb_mux *me,
 	return ps8743_write(me, PS8743_REG_MODE, reg);
 }
 
-/* USB-A */
-const int usb_port_enable[] = {
-	GPIO_EN_PP5000_USB_A0_VBUS,
-};
-BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
-
-/* USB Mux */
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 0,
@@ -416,23 +433,6 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.board_set = &board_ps8743_mux_set,
 	},
 };
-
-uint16_t tcpc_get_alert_status(void)
-{
-	/*
-	 * C0 & C1: TCPC is embedded in the EC and processes interrupts in the
-	 * chip code (it83xx/intc.c)
-	 */
-	return 0;
-}
-
-void board_reset_pd_mcu(void)
-{
-	/*
-	 * C0 & C1: TCPC is embedded in the EC and processes interrupts in the
-	 * chip code (it83xx/intc.c)
-	 */
-}
 
 int board_set_active_charge_port(int port)
 {
