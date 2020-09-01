@@ -765,6 +765,12 @@ void tc_partner_usb_comm(int port, int en)
 		TC_SET_FLAG(port, TC_FLAGS_PARTNER_USB_COMM);
 	else
 		TC_CLR_FLAG(port, TC_FLAGS_PARTNER_USB_COMM);
+
+	/*
+	 * Update the mux setting according to the port partner's
+	 * USB communication capability.
+	 */
+	set_usb_mux_with_current_data_role(port);
 }
 
 void tc_partner_dr_data(int port, int en)
