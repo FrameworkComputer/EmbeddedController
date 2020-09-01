@@ -19,11 +19,9 @@ test_mockable int chg_ramp_allowed(int port, int supplier)
 
 	switch (supplier) {
 	case CHARGE_SUPPLIER_TYPEC_DTS:
-#ifdef CONFIG_CHARGE_RAMP_HW
 	/* Need ramping for USB-C chargers as well to avoid voltage droops. */
 	case CHARGE_SUPPLIER_PD:
 	case CHARGE_SUPPLIER_TYPEC:
-#endif
 		return 1;
 	/* default: fall through */
 	}
@@ -35,10 +33,8 @@ test_mockable int chg_ramp_allowed(int port, int supplier)
 test_mockable int chg_ramp_max(int port, int supplier, int sup_curr)
 {
 	switch (supplier) {
-#ifdef CONFIG_CHARGE_RAMP_HW
 	case CHARGE_SUPPLIER_PD:
 	case CHARGE_SUPPLIER_TYPEC:
-#endif
 	case CHARGE_SUPPLIER_TYPEC_DTS:
 		/*
 		 * We should not ramp DTS beyond what they advertise, otherwise
