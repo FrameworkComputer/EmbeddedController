@@ -143,6 +143,7 @@ common-$(CONFIG_USB_CONSOLE_STREAM)+=usb_console_stream.o
 common-$(CONFIG_USB_I2C)+=usb_i2c.o
 common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
+common-$(CONFIG_HAS_TASK_PD_INT)+=usbc_intr_task.o
 ifneq ($(CONFIG_USB_POWER_DELIVERY),)
 common-$(CONFIG_USB_POWER_DELIVERY)+=usb_common.o
 ifneq ($(CONFIG_USB_PD_TCPMV1),)

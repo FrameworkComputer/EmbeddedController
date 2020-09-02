@@ -2754,97 +2754,6 @@ static int pd_restart_tcpc(int port)
 }
 #endif
 
-/* High-priority interrupt tasks implementations */
-#ifdef CONFIG_HAS_TASK_PD_INT
-
-/* Used to conditionally compile code in main pd task.  */
-#define HAS_DEFFERED_INTERRUPT_HANDLER
-
-/* Events for pd_interrupt_handler_task */
-#define PD_PROCESS_INTERRUPT  BIT(0)
-
-static uint8_t pd_int_task_id[CONFIG_USB_PD_PORT_MAX_COUNT];
-
-void schedule_deferred_pd_interrupt(const int port)
-{
-	task_set_event(pd_int_task_id[port], PD_PROCESS_INTERRUPT, 0);
-}
-
-/*
- * Theoretically, we may need to support up to 480 USB-PD packets per second for
- * intensive operations such as FW update over PD.  This value has tested well
- * preventing watchdog resets with a single bad port partner plugged in.
- */
-#define ALERT_STORM_MAX_COUNT	480
-#define ALERT_STORM_INTERVAL	SECOND
-
-/**
- * Main task entry point that handles PD interrupts for a single port
- *
- * @param p The PD port number for which to handle interrupts (pointer is
- * reinterpreted as an integer directly).
- */
-void pd_interrupt_handler_task(void *p)
-{
-	const int port = (int) ((intptr_t) p);
-	const int port_mask = (PD_STATUS_TCPC_ALERT_0 << port);
-	struct {
-		int count;
-		timestamp_t time;
-	} storm_tracker[CONFIG_USB_PD_PORT_MAX_COUNT] = {};
-
-	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
-
-	pd_int_task_id[port] = task_get_current();
-
-	while (1) {
-		const int evt = task_wait_event(-1);
-
-		if (evt & PD_PROCESS_INTERRUPT) {
-			/*
-			 * While the interrupt signal is asserted; we have more
-			 * work to do. This effectively makes the interrupt a
-			 * level-interrupt instead of an edge-interrupt without
-			 * having to enable/disable a real level-interrupt in
-			 * multiple locations.
-			 *
-			 * Also, if the port is disabled do not process
-			 * interrupts. Upon existing suspend, we schedule a
-			 * PD_PROCESS_INTERRUPT to check if we missed anything.
-			 */
-			while ((tcpc_get_alert_status() & port_mask) &&
-			       pd_is_port_enabled(port)) {
-				timestamp_t now;
-
-				tcpc_alert(port);
-
-				now = get_time();
-				if (timestamp_expired(
-					storm_tracker[port].time, &now)) {
-					/* Reset timer into future */
-					storm_tracker[port].time.val =
-						now.val + ALERT_STORM_INTERVAL;
-
-					/*
-					 * Start at 1 since we are processing
-					 * an interrupt now
-					 */
-					storm_tracker[port].count = 1;
-				} else if (++storm_tracker[port].count >
-				    ALERT_STORM_MAX_COUNT) {
-					CPRINTS("C%d Interrupt storm detected. "
-						"Disabling port for 5 seconds.",
-						port);
-
-					pd_set_suspend(port, 1);
-					pd_deferred_resume(port);
-				}
-			}
-		}
-	}
-}
-#endif /* CONFIG_HAS_TASK_PD_INT */
-
 static void pd_send_enter_usb(int port, int *timeout)
 {
 	uint32_t usb4_payload;
@@ -3100,7 +3009,6 @@ void pd_task(void *u)
 	charge_manager_update_dualrole(port, CAP_UNKNOWN);
 #endif
 
-#ifdef HAS_DEFFERED_INTERRUPT_HANDLER
 	/*
 	 * Since most boards configure the TCPC interrupt as edge
 	 * and it is possible that the interrupt line was asserted between init
@@ -3108,8 +3016,8 @@ void pd_task(void *u)
 	 * Otherwise future interrupts will never fire because another edge
 	 * never happens. Note this needs to happen after set_state() is called.
 	 */
-	schedule_deferred_pd_interrupt(port);
-#endif
+	if (IS_ENABLED(CONFIG_HAS_TASK_PD_INT))
+		schedule_deferred_pd_interrupt(port);
 
 	while (1) {
 		/* process VDM messages last */
