@@ -915,13 +915,12 @@ __override void power_chipset_handle_host_sleep_event(
  */
 enum power_state power_handle_state(enum power_state state)
 {
-	uint8_t value;
-	static uint8_t boot_from_g3, shutdown_from_s0;
+	static uint8_t boot_from_off, shutdown_from_on;
 
 	switch (state) {
 	case POWER_G3:
-		boot_from_g3 = check_for_power_on_event();
-		if (boot_from_g3)
+		boot_from_off = check_for_power_on_event();
+		if (boot_from_off)
 			return POWER_G3S5;
 		break;
 
@@ -929,15 +928,11 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S5:
-		if (boot_from_g3) {
-			value = boot_from_g3;
-			boot_from_g3 = 0;
-		} else {
-			value = check_for_power_on_event();
-		}
+		if (!boot_from_off)
+			boot_from_off = check_for_power_on_event();
 
-		if (value) {
-			CPRINTS("power on %d", value);
+		if (boot_from_off) {
+			CPRINTS("power on %d", boot_from_off);
 			return POWER_S5S3;
 		}
 		break;
@@ -975,15 +970,11 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3:
-		if (shutdown_from_s0) {
-			value = shutdown_from_s0;
-			shutdown_from_s0 = 0;
-		} else {
-			value = check_for_power_off_event();
-		}
+		if (!shutdown_from_on)
+			shutdown_from_on = check_for_power_off_event();
 
-		if (value) {
-			CPRINTS("power off %d", value);
+		if (shutdown_from_on) {
+			CPRINTS("power off %d", shutdown_from_on);
 			return POWER_S3S5;
 		}
 
@@ -1004,21 +995,27 @@ enum power_state power_handle_state(enum power_state state)
 #ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
 		/*
 		 * Notify the RESUME_INIT hooks, i.e. enabling SPI driver
-		 * to receive host commands/events. The normal RESUME hook
-		 * will be notified later, after receive a host resume event.
+		 * to receive host commands/events.
+		 *
+		 * If boot from an off state, notify the RESUME hooks too;
+		 * otherwise (resume from S3), the normal RESUME hooks will
+		 * be notified later, after receive a host resume event.
 		 */
 		hook_notify(HOOK_CHIPSET_RESUME_INIT);
+		if (boot_from_off)
+			hook_notify(HOOK_CHIPSET_RESUME);
 #else
 		hook_notify(HOOK_CHIPSET_RESUME);
 #endif
 		sleep_resume_transition();
 
+		boot_from_off = 0;
 		disable_sleep(SLEEP_MASK_AP_RUN);
 		return POWER_S0;
 
 	case POWER_S0:
-		shutdown_from_s0 = check_for_power_off_event();
-		if (shutdown_from_s0) {
+		shutdown_from_on = check_for_power_off_event();
+		if (shutdown_from_on) {
 			return POWER_S0S3;
 		} else if (power_get_host_sleep_state()
 					== HOST_SLEEP_EVENT_S3_SUSPEND &&
@@ -1065,6 +1062,8 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Call hooks after we drop power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
+
+		shutdown_from_on = 0;
 
 		/*
 		 * Wait forever for the release of the power button; otherwise,
