@@ -2957,7 +2957,14 @@ static void tc_drp_auto_toggle_entry(const int port)
 
 static void tc_drp_auto_toggle_run(const int port)
 {
-	if (tc[port].timeout != TIMER_DISABLED) {
+	/*
+	 * A timer is running, but if a connection comes in while waiting
+	 * then allow that to take higher priority.
+	 */
+	if (TC_CHK_FLAG(port, TC_FLAGS_CHECK_CONNECTION))
+		check_drp_connection(port);
+
+	else if (tc[port].timeout != TIMER_DISABLED) {
 		if (tc[port].timeout > get_time().val)
 			return;
 
@@ -2966,12 +2973,8 @@ static void tc_drp_auto_toggle_run(const int port)
 
 		if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER)) {
 			set_state_tc(port, TC_LOW_POWER_MODE);
-			return;
 		}
 	}
-
-	if (TC_CHK_FLAG(port, TC_FLAGS_CHECK_CONNECTION))
-		check_drp_connection(port);
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE */
 
