@@ -16,6 +16,7 @@
 #include "driver/ppc/syv682x.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tusb422.h"
+#include "driver/tcpm/rt1715.h"
 #include "driver/retimer/bb_retimer.h"
 #include "driver/sync.h"
 #include "extpower.h"
@@ -200,26 +201,22 @@ static void kb_backlight_disable(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kb_backlight_disable, HOOK_PRIO_DEFAULT);
 
-/* USBC mux configuration - Tiger Lake includes internal mux */
-struct usb_mux usbc0_usb4_db_retimer = {
-	.usb_port = USBC_PORT_C0,
-	.driver = &bb_usb_retimer,
-	.i2c_port = I2C_PORT_USB_0_MIX,
-	.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
-};
-
-/*****************************************************************************
- * USB-C MUX/Retimer dynamic configuration.
- */
-
-static void setup_mux(void)
+/* Config TCPC dynamic by Board version */
+static void setup_board_tcpc(void)
 {
-	CPRINTS("C0 supports bb-retimer");
+	uint8_t board_id = get_board_id();
 
-	/* USB-C port 0 have a retimer */
-	usb_muxes[USBC_PORT_C0].next_mux = &usbc0_usb4_db_retimer;
+	if (board_id == 0) {
+		/* config typec C0 prot TUSB422 TCPC */
+		tcpc_config[USBC_PORT_C0].i2c_info.addr_flags
+			= TUSB422_I2C_ADDR_FLAGS;
+		tcpc_config[USBC_PORT_C0].drv = &tusb422_tcpm_drv;
+		/* config typec C1 prot TUSB422 TCPC */
+		tcpc_config[USBC_PORT_C1].i2c_info.addr_flags
+			= TUSB422_I2C_ADDR_FLAGS;
+		tcpc_config[USBC_PORT_C1].drv = &tusb422_tcpm_drv;
+	}
 }
-
 
 void board_reset_pd_mcu(void)
 {
@@ -231,12 +228,7 @@ void board_reset_pd_mcu(void)
 
 __override void board_cbi_init(void)
 {
-	/* TODO(b/159025739): Voxel: check FW_CONFIG fields for USB DB type */
-	setup_mux();
-
-	/* Reassign USB_C0_RT_RST_ODL */
-	bb_controls[USBC_PORT_C0].usb_ls_en_gpio = GPIO_USB_C0_LS_EN;
-	bb_controls[USBC_PORT_C0].retimer_rst_gpio = GPIO_USB_C0_RT_RST_ODL;
+	setup_board_tcpc();
 }
 
 /******************************************************************************/
@@ -299,18 +291,18 @@ struct tcpc_config_t tcpc_config[] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_USB_C0,
-			.addr_flags = TUSB422_I2C_ADDR_FLAGS,
+			.addr_flags = RT1715_I2C_ADDR_FLAGS,
 		},
-		.drv = &tusb422_tcpm_drv,
+		.drv = &rt1715_tcpm_drv,
 		.usb23 = USBC_PORT_0_USB2_NUM | (USBC_PORT_0_USB3_NUM << 4),
 	},
 	[USBC_PORT_C1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_USB_C1,
-			.addr_flags = TUSB422_I2C_ADDR_FLAGS,
+			.addr_flags = RT1715_I2C_ADDR_FLAGS,
 		},
-		.drv = &tusb422_tcpm_drv,
+		.drv = &rt1715_tcpm_drv,
 		.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
 	},
 };
@@ -319,6 +311,12 @@ BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 
 /******************************************************************************/
 /* USBC mux configuration - Tiger Lake includes internal mux */
+struct usb_mux usbc0_usb4_db_retimer = {
+	.usb_port = USBC_PORT_C0,
+	.driver = &bb_usb_retimer,
+	.i2c_port = I2C_PORT_USB_0_MIX,
+	.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
+};
 struct usb_mux usbc1_usb4_db_retimer = {
 	.usb_port = USBC_PORT_C1,
 	.driver = &bb_usb_retimer,
@@ -330,6 +328,7 @@ struct usb_mux usb_muxes[] = {
 		.usb_port = USBC_PORT_C0,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
+		.next_mux = &usbc0_usb4_db_retimer,
 	},
 	[USBC_PORT_C1] = {
 		.usb_port = USBC_PORT_C1,
@@ -342,7 +341,8 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
 struct bb_usb_control bb_controls[] = {
 	[USBC_PORT_C0] = {
-		/* USB-C port 0 doesn't have a retimer */
+		.usb_ls_en_gpio = GPIO_USB_C0_LS_EN,
+		.retimer_rst_gpio = GPIO_USB_C0_RT_RST_ODL,
 	},
 	[USBC_PORT_C1] = {
 		.usb_ls_en_gpio = GPIO_USB_C1_LS_EN,

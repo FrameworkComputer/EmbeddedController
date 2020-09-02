@@ -97,6 +97,9 @@
 
 /* BC 1.2 */
 
+/* TCPC */
+#define CONFIG_USB_PD_TCPM_RT1715
+
 /* Volume Button feature */
 
 /* Fan features */
