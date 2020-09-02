@@ -7,6 +7,7 @@
 #define __VOLTEER_CBI_EC_FW_CONFIG_H_
 
 #include "stdbool.h"
+#include "stdint.h"
 
 /****************************************************************************
  * CBI FW_CONFIG layout shared by all Volteer boards
