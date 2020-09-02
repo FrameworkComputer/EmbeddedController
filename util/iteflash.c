@@ -1305,32 +1305,10 @@ failed_write:
  * Test for spi page program command
  */
 static int command_write_pages3(struct common_hnd *chnd, uint32_t address,
-				uint32_t size, uint8_t *buffer,
-				int block_write_size)
+				uint32_t size, uint8_t *buffer)
 {
 	int ret = 0;
 	uint8_t addr_H, addr_M, addr_L;
-	uint8_t cmd_tmp, i;
-
-	struct cmds commands[] = {
-		{0x07, 0x7f},
-		{0x06, 0xff},
-		{0x04, 0xff},
-		{0x05, 0xfe},
-		{0x08, 0x00},
-		{0x05, 0xfd},
-		{0x08, 0x01},
-		{0x08, 0x00}
-	};
-
-	for (i = 0; i < ARRAY_SIZE(commands); i++) {
-		ret = i2c_write_byte(chnd, commands[i].addr, commands[i].cmd);
-		if (ret) {
-			fprintf(stderr, "Page Program Failed: cmd %x ,data %x\n"
-			, commands[i].addr, commands[i].cmd);
-			return ret;
-		}
-	}
 
 	/* SMB_SPI_Flash_Write_Enable */
 	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_ENABLE,
@@ -1352,23 +1330,16 @@ static int command_write_pages3(struct common_hnd *chnd, uint32_t address,
 	ret = i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_H, 1, 1);
 	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_M, 1, 1);
 	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_L, 1, 1);
+	ret |= i2c_byte_transfer(chnd, I2C_BLOCK_ADDR, buffer, 1, size);
+	if (ret < 0)
+		goto failed_write;
 
-	cmd_tmp = 0x0A;
-	ret = i2c_byte_transfer(chnd, I2C_CMD_ADDR, &cmd_tmp, 1, 1);
-
-	ret = i2c_byte_transfer(chnd, I2C_BLOCK_ADDR, buffer, 1,
-		256);
-
-	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
-		"write disable exit page program") < 0)
-		ret = -EIO;
 	/* Wait until not busy */
 	if (spi_poll_busy(chnd, "Page Program") < 0)
-		goto failed_write;
+		ret = -EIO;
 
 	/* No error so far */
 failed_write:
-
 	return ret;
 }
 
@@ -1775,14 +1746,14 @@ failed_enter_mode:
 static int write_flash3(struct common_hnd *chnd, const char *filename,
 			uint32_t offset)
 {
-	int res, written;
+	int res, ret = 0;
 	int block_write_size = chnd->conf.block_write_size;
 	FILE *hnd;
 	int size = chnd->flash_size;
 	int cnt;
-	uint8_t *buffer = malloc(size);
+	uint8_t *buf = malloc(size);
 
-	if (!buffer) {
+	if (!buf) {
 		fprintf(stderr, "%s: Cannot allocate %d bytes\n", __func__,
 			size);
 		return -ENOMEM;
@@ -1792,43 +1763,53 @@ static int write_flash3(struct common_hnd *chnd, const char *filename,
 	if (!hnd) {
 		fprintf(stderr, "%s: Cannot open file %s for reading\n",
 			__func__, filename);
-		free(buffer);
+		free(buf);
 		return -EIO;
 	}
-	res = fread(buffer, 1, size, hnd);
+	res = fread(buf, 1, size, hnd);
 	if (res <= 0) {
 		fprintf(stderr, "%s: Failed to read %d bytes from %s with "
 			"ferror() %d\n", __func__, size, filename, ferror(hnd));
 		fclose(hnd);
-		free(buffer);
+		free(buf);
 		return -EIO;
 	}
 	fclose(hnd);
 
-	offset = 0;
 	printf("Writing %d bytes at 0x%08x.......\n", res, offset);
+
+	/* Enter follow mode */
+	ret = spi_flash_follow_mode(chnd, "Page program");
+	if (ret < 0)
+		goto failed_write;
+
+	/* Page program instruction allows up to 256 bytes */
+	if (block_write_size > 256)
+		block_write_size = 256;
+
 	while (res) {
-		cnt = (res > 256) ? 256 : res;
-		written = command_write_pages3(chnd, offset, cnt,
-			&buffer[offset], block_write_size);
-		if (written == -EIO)
+		cnt = (res > block_write_size) ? block_write_size : res;
+		if (command_write_pages3(chnd, offset, cnt, &buf[offset]) < 0) {
+			ret = -EIO;
 			goto failed_write;
+		}
 
 		res -= cnt;
 		offset += cnt;
 		draw_spinner(res, res + offset);
 	}
 
-	if (written != res) {
 failed_write:
+	free(buf);
+	spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
+		"SPI write disable");
+	spi_flash_follow_mode_exit(chnd, "Page program");
+	if (ret < 0)
 		fprintf(stderr, "%s: Error writing to flash\n", __func__);
-		free(buffer);
-		return -EIO;
-	}
-	printf("\n\rWriting Done.\n");
-	free(buffer);
+	else
+		printf("\n\rWriting Done.\n");
 
-	return 0;
+	return ret;
 }
 
 
