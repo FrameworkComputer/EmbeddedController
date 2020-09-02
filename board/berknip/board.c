@@ -392,6 +392,10 @@ int board_get_temp(int idx, int *temp_k)
 		channel = ADC_TEMP_SENSOR_SOC;
 		break;
 	case TEMP_SENSOR_5V_REGULATOR:
+		/* thermistor is not powered in G3 */
+		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+			return EC_ERROR_NOT_POWERED;
+
 		channel = ADC_TEMP_SENSOR_5V_REGULATOR;
 		break;
 	default:
