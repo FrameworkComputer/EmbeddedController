@@ -43,6 +43,10 @@
 #include "usb_charge.h"
 #include "usbc_ppc.h"
 
+static void hdmi_hpd_interrupt_v2(enum ioex_signal signal);
+static void hdmi_hpd_interrupt_v3(enum gpio_signal signal);
+static void board_gmr_tablet_switch_isr(enum gpio_signal signal);
+
 #include "gpio_list.h"
 
 static bool support_aoz_ppc;
@@ -319,6 +323,9 @@ static void board_remap_gpio(void)
 		rv |= ioex_set_flags(IOEX_USB_C1_PPC_ILIM_3A_EN, GPIO_OUT_LOW);
 		if (rv)
 			ccprintf("IOEX Board>=3 Remap FAILED\n");
+
+		if (ec_config_has_hdmi_retimer_pi3hdx1204())
+			gpio_enable_interrupt(GPIO_DP1_HPD_EC_IN);
 	} else {
 		gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V0;
 		ccprintf("GPIO_EC_PS2_RESET_V0\n");
@@ -567,6 +574,18 @@ void ps2_pwr_en_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&trackpoint_reset_deferred_data, MSEC);
 }
 
+static int check_hdmi_hpd_status(void)
+{
+	int hpd = 0;
+
+	if (board_ver < 3)
+		ioex_get_level(IOEX_HDMI_CONN_HPD_3V3_DB, &hpd);
+	else
+		hpd = gpio_get_level(GPIO_DP1_HPD_EC_IN);
+
+	return hpd;
+}
+
 /*****************************************************************************
  * Board suspend / resume
  */
@@ -584,7 +603,7 @@ static void board_chipset_resume(void)
 		}
 		pi3hdx1204_enable(I2C_PORT_TCPC1,
 				  PI3HDX1204_I2C_ADDR_FLAGS,
-				  1);
+				  check_hdmi_hpd_status());
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
@@ -687,22 +706,31 @@ void mst_hpd_interrupt(enum ioex_signal signal)
 
 static void hdmi_hpd_handler(void)
 {
-	int hpd = 0;
-
 	/* Pass HPD through from DB OPT1 HDMI connector to AP's DP1. */
-	ioex_get_level(IOEX_HDMI_CONN_HPD_3V3_DB, &hpd);
+	int hpd = check_hdmi_hpd_status();
+
 	gpio_set_level(GPIO_EC_DP1_HPD, hpd);
 	ccprints("HDMI HPD %d", hpd);
+	pi3hdx1204_enable(I2C_PORT_TCPC1,
+			  PI3HDX1204_I2C_ADDR_FLAGS,
+			  chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
+			  && hpd);
 }
 DECLARE_DEFERRED(hdmi_hpd_handler);
 
-void hdmi_hpd_interrupt(enum ioex_signal signal)
+static void hdmi_hpd_interrupt_v2(enum ioex_signal signal)
 {
 	/* Debounce for 2 msec. */
 	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
 }
 
-void board_gmr_tablet_switch_isr(enum gpio_signal signal)
+static void hdmi_hpd_interrupt_v3(enum gpio_signal signal)
+{
+	/* Debounce for 2 msec. */
+	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
+}
+
+static void board_gmr_tablet_switch_isr(enum gpio_signal signal)
 {
 	/* Board version more than 3, DUT support GMR sensor */
 	if (board_ver >= 3)

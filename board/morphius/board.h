@@ -209,9 +209,6 @@ extern const struct usb_mux usbc1_ps8802;
 extern const struct usb_mux usbc1_ps8818;
 extern struct usb_mux usbc1_amd_fp5_usb_mux;
 
-void hdmi_hpd_interrupt(enum ioex_signal signal);
-void board_gmr_tablet_switch_isr(enum gpio_signal signal);
-
 #ifdef CONFIG_KEYBOARD_FACTORY_TEST
 extern const int keyboard_factory_scan_pins[][2];
 extern const int keyboard_factory_scan_pins_used;

@@ -27,6 +27,7 @@ GPIO_INT(VOLDN_BTN_ODL,		PIN(A, 6), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interru
 GPIO_INT(VOLUP_BTN_ODL,		PIN(9, 5), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
 GPIO_INT(6AXIS_INT_L,		PIN(A, 0), GPIO_INT_FALLING | GPIO_PULL_UP,	bmi160_interrupt)
 GPIO_INT(EN_PWR_TOUCHPAD_PS2,	PIN(C, 2), GPIO_INT_RISING,			ps2_pwr_en_interrupt)
+GPIO_INT(DP1_HPD_EC_IN,		PIN(7, 5), GPIO_INT_BOTH,			hdmi_hpd_interrupt_v3)
 
 /* GPIO_INT_BOTH is required for PSL wake from hibernate, but we don't need an interrupt handler. */
 GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
@@ -51,7 +52,6 @@ GPIO(USB_C0_HPD,		PIN(F, 5), GPIO_OUT_LOW)			/* C0 DP Hotplug Detect */
 GPIO(USB_C0_IN_HPD,		PIN(7, 3), GPIO_OUT_LOW)			/* C0 IN Hotplug Detect */
 GPIO(EC_DP1_HPD,		PIN(F, 4), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
 GPIO(DP2_HPD,			PIN(C, 1), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
-GPIO(DP1_HPD_EC_IN,		PIN(7, 5), GPIO_INPUT)				/* C1 IN Hotplug Detect */
 GPIO(EC_PS2_RESET_V0,		PIN(3, 2), GPIO_OUT_LOW)			/* Trackpoint reset pin V0*/
 GPIO(EC_PS2_RESET_V1,		PIN(4, 5), GPIO_OUT_LOW)			/* Trackpoint reset pin V1 */
 GPIO(EC_H1_PACKET_MODE,		PIN(8, 6), GPIO_OUT_LOW)			/* H1 Packet Mode */
@@ -104,7 +104,7 @@ IOEX(USB_C1_TCPC_FASTSW_CTL_EN,	EXPIN(USBC_PORT_C1, 0, 4), GPIO_OUT_LOW)	/* C1 F
 IOEX(USB_C1_PPC_ILIM_3A_EN,	EXPIN(USBC_PORT_C1, 1, 0), GPIO_OUT_LOW)	/* C1 3A Current Limit Enable */
 #else
 #define IOEX_USB_C1_PPC_ILIM_3A_EN	IOEX_HDMI_CONN_HPD_3V3_DB
-IOEX_INT(HDMI_CONN_HPD_3V3_DB,	EXPIN(USBC_PORT_C1, 1, 0), GPIO_INT_BOTH,	hdmi_hpd_interrupt)
+IOEX_INT(HDMI_CONN_HPD_3V3_DB,	EXPIN(USBC_PORT_C1, 1, 0), GPIO_INT_BOTH,	hdmi_hpd_interrupt_v2)
 #endif
 
 IOEX(USB_C1_MUX_RST_DB,		EXPIN(USBC_PORT_C1, 1, 1), GPIO_OUT_LOW)	/* C1 Mux Reset */
