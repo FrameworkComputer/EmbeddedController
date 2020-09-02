@@ -45,6 +45,8 @@ static void switchcap_interrupt(enum gpio_signal signal);
 
 #include "gpio_list.h"
 
+static uint8_t sku_id;
+
 /* GPIO Interrupt Handlers */
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -229,6 +231,158 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	},
 };
 
+/* Mutexes */
+static struct mutex g_base_mutex;
+static struct mutex g_lid_mutex;
+
+static struct bmi_drv_data_t g_bmi160_data;
+static struct accelgyro_saved_data_t g_bma255_data;
+
+/* Matrix to rotate accelerometer into standard reference frame */
+const mat33_fp_t base_standard_ref = {
+	{ FLOAT_TO_FP(1), 0,  0},
+	{ 0,  FLOAT_TO_FP(-1),  0},
+	{ 0,  0, FLOAT_TO_FP(-1)}
+};
+
+static const mat33_fp_t lid_standard_ref = {
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
+};
+
+struct motion_sensor_t motion_sensors[] = {
+	[LID_ACCEL] = {
+	 .name = "Lid Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_BMA255,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &bma2x2_accel_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_bma255_data,
+	 .port = I2C_PORT_SENSOR,
+	 .i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
+	 .rot_standard_ref = &lid_standard_ref,
+	 .default_range = 2, /* g, to support lid angle calculation. */
+	 .min_frequency = BMA255_ACCEL_MIN_FREQ,
+	 .max_frequency = BMA255_ACCEL_MAX_FREQ,
+	 .config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		/* Sensor on for lid angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	 },
+	},
+	/*
+	 * Note: bmi160: supports accelerometer and gyro sensor
+	 * Requirement: accelerometer sensor must init before gyro sensor
+	 * DO NOT change the order of the following table.
+	 */
+	[BASE_ACCEL] = {
+	 .name = "Base Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &bmi160_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &g_bmi160_data,
+	 .port = I2C_PORT_SENSOR,
+	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
+	 .rot_standard_ref = &base_standard_ref,
+	 .default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
+	 .min_frequency = BMI_ACCEL_MIN_FREQ,
+	 .max_frequency = BMI_ACCEL_MAX_FREQ,
+	 .config = {
+		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 10000 | ROUND_UP_FLAG,
+		 },
+	 },
+	},
+	[BASE_GYRO] = {
+	 .name = "Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .type = MOTIONSENSE_TYPE_GYRO,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &bmi160_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &g_bmi160_data,
+	 .port = I2C_PORT_SENSOR,
+	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
+	 .default_range = 1000, /* dps */
+	 .rot_standard_ref = &base_standard_ref,
+	 .min_frequency = BMI_GYRO_MIN_FREQ,
+	 .max_frequency = BMI_GYRO_MAX_FREQ,
+	},
+};
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+#ifndef TEST_BUILD
+/* This callback disables keyboard when convertibles are fully open */
+void lid_angle_peripheral_enable(int enable)
+{
+	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
+
+	if (enable) {
+		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
+	} else {
+		/*
+		 * Ensure that the chipset is off before disabling the keyboard.
+		 * When the chipset is on, the EC keeps the keyboard enabled and
+		 * the AP decides whether to ignore input devices or not.
+		 */
+		if (!chipset_in_s0)
+			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
+	}
+}
+#endif
+
+static int board_is_clamshell(void)
+{
+	/* SKU ID of Limozeen: 4, 5 */
+	return sku_id == 4 || sku_id == 5;
+}
+
+static void board_update_sensor_config_from_sku(void)
+{
+	if (board_is_clamshell()) {
+		motion_sensor_count = 0;
+		gmr_tablet_switch_disable();
+		/* The base accel is not stuffed; don't allow line to float */
+		gpio_set_flags(GPIO_ACCEL_GYRO_INT_L,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
+	} else {
+		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+		/* Enable interrupt for the base accel sensor */
+		gpio_enable_interrupt(GPIO_ACCEL_GYRO_INT_L);
+	}
+}
+
+/* Read SKU ID from GPIO and initialize variables for board variants */
+static void sku_init(void)
+{
+	uint8_t val = 0;
+
+	if (gpio_get_level(GPIO_SKU_ID0))
+		val |= 0x01;
+	if (gpio_get_level(GPIO_SKU_ID1))
+		val |= 0x02;
+	if (gpio_get_level(GPIO_SKU_ID2))
+		val |= 0x04;
+
+	sku_id = val;
+	CPRINTS("SKU: %u", sku_id);
+
+	board_update_sensor_config_from_sku();
+}
+DECLARE_HOOK(HOOK_INIT, sku_init, HOOK_PRIO_INIT_I2C + 1);
+
 static int board_has_ln9310(void)
 {
 	static int ln9310_present = -1;
@@ -319,9 +473,6 @@ static void board_init(void)
 	/* Enable BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
-
-	/* Enable interrupt for BMI160 sensor */
-	gpio_enable_interrupt(GPIO_ACCEL_GYRO_INT_L);
 
 	/*
 	 * The H1 SBU line for CCD are behind PPC chip. The PPC internal FETs
@@ -534,114 +685,3 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-/* Mutexes */
-static struct mutex g_base_mutex;
-static struct mutex g_lid_mutex;
-
-static struct bmi_drv_data_t g_bmi160_data;
-static struct accelgyro_saved_data_t g_bma255_data;
-
-/* Matrix to rotate accelerometer into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0,  FLOAT_TO_FP(-1),  0},
-	{ 0,  0, FLOAT_TO_FP(-1)}
-};
-
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
-
-struct motion_sensor_t motion_sensors[] = {
-	[LID_ACCEL] = {
-	 .name = "Lid Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMA255,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &bma2x2_accel_drv,
-	 .mutex = &g_lid_mutex,
-	 .drv_data = &g_bma255_data,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
-	 .rot_standard_ref = &lid_standard_ref,
-	 .default_range = 2, /* g, to support lid angle calculation. */
-	 .min_frequency = BMA255_ACCEL_MIN_FREQ,
-	 .max_frequency = BMA255_ACCEL_MAX_FREQ,
-	 .config = {
-		/* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-		},
-		/* Sensor on for lid angle detection */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-		},
-	 },
-	},
-	/*
-	 * Note: bmi160: supports accelerometer and gyro sensor
-	 * Requirement: accelerometer sensor must init before gyro sensor
-	 * DO NOT change the order of the following table.
-	 */
-	[BASE_ACCEL] = {
-	 .name = "Base Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &bmi160_drv,
-	 .mutex = &g_base_mutex,
-	 .drv_data = &g_bmi160_data,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-	 .rot_standard_ref = &base_standard_ref,
-	 .default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
-	 .min_frequency = BMI_ACCEL_MIN_FREQ,
-	 .max_frequency = BMI_ACCEL_MAX_FREQ,
-	 .config = {
-		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 10000 | ROUND_UP_FLAG,
-		 },
-	 },
-	},
-	[BASE_GYRO] = {
-	 .name = "Gyro",
-	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
-	 .type = MOTIONSENSE_TYPE_GYRO,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &bmi160_drv,
-	 .mutex = &g_base_mutex,
-	 .drv_data = &g_bmi160_data,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = &base_standard_ref,
-	 .min_frequency = BMI_GYRO_MIN_FREQ,
-	 .max_frequency = BMI_GYRO_MAX_FREQ,
-	},
-};
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-
-#ifndef TEST_BUILD
-/* This callback disables keyboard when convertibles are fully open */
-void lid_angle_peripheral_enable(int enable)
-{
-	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
-
-	if (enable) {
-		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
-	} else {
-		/*
-		 * Ensure that the chipset is off before disabling the keyboard.
-		 * When the chipset is on, the EC keeps the keyboard enabled and
-		 * the AP decides whether to ignore input devices or not.
-		 */
-		if (!chipset_in_s0)
-			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
-	}
-}
-#endif
