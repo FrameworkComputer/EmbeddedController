@@ -21,7 +21,7 @@ GPIO_INT(SLP_S3_L,             PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
 #endif
 GPIO_INT(SLP_SUS_L,            PIN(D, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_EC_RSMRST_ODL,     PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(DSW_PWROK,            PIN(C, 7), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(PG_EC_DSW_PWROK,      PIN(C, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4),  GPIO_INT_BOTH, power_signal_interrupt)
 
 /* Sensor Interrupts */
@@ -54,8 +54,7 @@ GPIO_INT(EC_VOLUP_BTN_ODL,		PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_inte
 GPIO(EN_PP3300_A,              PIN(A, 3), GPIO_OUT_LOW)
 GPIO(EN_PP5000_A,              PIN(A, 4), GPIO_OUT_LOW)
 GPIO(EN_PPVAR_VCCIN,           PIN(4, 3), GPIO_OUT_LOW) /* Enables VCCIN IMPV9 */
-/* The EC does not buffer this signal on Volteer. */
-UNIMPLEMENTED(PCH_DSW_PWROK)
+GPIO(EC_PCH_DSW_PWROK,         PIN(C, 0), GPIO_OUT_LOW)
 
 /* Other wake sources */
 /*
@@ -99,25 +98,28 @@ GPIO(USB_C0_OC_ODL,			PIN(B, 1), GPIO_ODR_HIGH)
 GPIO(USB_C1_OC_ODL,			PIN(5, 0), GPIO_ODR_HIGH)
 GPIO(USB_C0_RT_INT_ODL,			PIN(C, 6), GPIO_INPUT)
 GPIO(USB_C1_RT_INT_ODL,			PIN(9, 6), GPIO_INPUT)
+GPIO(USB_C0_FRS_EN,			PIN(C, 2), GPIO_OUT_LOW)
+GPIO(USB_C1_FRS_EN,			PIN(9, 4), GPIO_OUT_LOW)
 
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C0_LS_EN)
 UNIMPLEMENTED(USB_C1_LS_EN)
 
 /* Misc Signals */
-GPIO(UART2_EC_RX,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
+GPIO(EC_H1_PACKET_MODE,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
 GPIO(LED_1_L,                  PIN(C, 4), GPIO_OUT_HIGH)        /* Blue */
 GPIO(LED_2_L,                  PIN(C, 3), GPIO_OUT_HIGH)        /* Yellow */
 GPIO(EC_KB_BL_EN,		PIN(8, 6), GPIO_OUT_LOW)	/* Keyboard backlight enable*/
 
 GPIO(M2_SSD_PLN,        PIN(A, 0), GPIO_ODR_HIGH)	/* SSD power-loss notification */
+GPIO(M2_SSD_PLA,        PIN(7, 0), GPIO_INPUT)		/* SSD power-loss acknowledgment */
 GPIO(CCD_MODE_ODL,      PIN(E, 5), GPIO_INPUT)		/* Case Closed Debug Mode */
 GPIO(EC_SLP_S0IX,       PIN(7, 2), GPIO_INPUT | GPIO_PULL_UP)
 
 /* Unused signals */
 GPIO(UNUSED_GPIO34,     PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIO60,     PIN(6, 0), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIOA7,     PIN(A, 7), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(UNUSED_GPIOC0,     PIN(C, 0), GPIO_INPUT | GPIO_PULL_UP)
 
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
@@ -144,10 +146,6 @@ GPIO(EC_I2C7_EEPROM_SDA,       PIN(B, 2), GPIO_INPUT)
 
 /* Battery signals */
 GPIO(EC_BATT_PRES_ODL, 		PIN(E, 1), GPIO_INPUT)
-
-/* Physical HPD pins are not needed on EC as these are configured by PMC */
-GPIO(USB_C0_DP_HPD,		PIN(6, 0), GPIO_INPUT)
-GPIO(USB_C1_DP_HPD,		PIN(7, 0), GPIO_INPUT)
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(B, BIT(5) | BIT(4)), 0, MODULE_I2C, (GPIO_INPUT | GPIO_SEL_1P8V)) /* I2C0 */
