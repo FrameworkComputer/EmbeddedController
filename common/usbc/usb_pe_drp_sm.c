@@ -4766,7 +4766,7 @@ static void pe_vdm_identity_request_cbl_exit(int port)
 	 * desired here
 	 */
 	if (pd_get_identity_discovery(port, pe[port].tx_type) == PD_DISC_NEEDED
-			   && pe[port].discover_identity_timer > get_time().val)
+			   && pe[port].discover_identity_timer < get_time().val)
 		pe[port].discover_identity_timer = get_time().val +
 							PD_T_DISCOVER_IDENTITY;
 
