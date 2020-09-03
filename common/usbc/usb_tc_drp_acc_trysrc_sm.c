@@ -2745,35 +2745,6 @@ static void tc_attached_src_entry(const int port)
 static void tc_attached_src_run(const int port)
 {
 	enum tcpc_cc_voltage_status cc1, cc2;
-	enum pd_cc_states new_cc_state;
-
-#ifdef CONFIG_USB_PE_SM
-	/*
-	 * Enable PD communications after power supply has fully
-	 * turned on
-	 */
-	if (tc[port].timeout > 0 && get_time().val > tc[port].timeout) {
-		tc_enable_pd(port, 1);
-		tc[port].timeout = 0;
-	}
-
-	if (!tc_get_pd_enabled(port))
-		return;
-
-	/*
-	 * Handle Hard Reset from Policy Engine
-	 */
-	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED)) {
-		/* Ignoring Hard Resets while the power supply is resetting.*/
-		if (get_time().val < tc[port].timeout)
-			return;
-
-		if (tc_perform_src_hard_reset(port))
-			TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
-
-		return;
-	}
-#endif
 
 	/* Check for connection */
 	tcpm_get_cc(port, &cc1, &cc2);
@@ -2782,18 +2753,9 @@ static void tc_attached_src_run(const int port)
 		cc1 = cc2;
 
 	if (cc1 == TYPEC_CC_VOLT_OPEN)
-		new_cc_state = PD_CC_NONE;
+		tc[port].cc_state = PD_CC_NONE;
 	else
-		new_cc_state = PD_CC_UFP_ATTACHED;
-
-	/* Debounce the cc state */
-	if (new_cc_state != tc[port].cc_state) {
-		tc[port].cc_state = new_cc_state;
-		tc[port].cc_debounce = get_time().val + PD_T_SRC_DISCONNECT;
-	}
-
-	if (get_time().val < tc[port].cc_debounce)
-		return;
+		tc[port].cc_state = PD_CC_UFP_ATTACHED;
 
 	/*
 	 * When the SRC.Open state is detected on the monitored CC pin, a DRP
@@ -2826,6 +2788,32 @@ static void tc_attached_src_run(const int port)
 	}
 
 #ifdef CONFIG_USB_PE_SM
+	/*
+	 * Enable PD communications after power supply has fully
+	 * turned on
+	 */
+	if (tc[port].timeout > 0 && get_time().val > tc[port].timeout) {
+		tc_enable_pd(port, 1);
+		tc[port].timeout = 0;
+	}
+
+	if (!tc_get_pd_enabled(port))
+		return;
+
+	/*
+	 * Handle Hard Reset from Policy Engine
+	 */
+	if (TC_CHK_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED)) {
+		/* Ignoring Hard Resets while the power supply is resetting.*/
+		if (get_time().val < tc[port].timeout)
+			return;
+
+		if (tc_perform_src_hard_reset(port))
+			TC_CLR_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
+
+		return;
+	}
+
 	/*
 	 * PD swap commands
 	 */
