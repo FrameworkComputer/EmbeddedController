@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "util.h"
+#include "timer.h"
 
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
@@ -173,6 +174,22 @@ void ln9310_init(void)
 {
 	int status, val;
 	enum battery_cell_type batt;
+
+	/*
+	 * Set OPERATION_MODE update method
+	 *   - OP_MODE_MANUAL_UPDATE = 0
+	 *   - OP_MODE_SELF_SYNC_EN  = 1
+	 */
+	field_update8(LN9310_REG_PWR_CTRL,
+		      LN9310_PWR_OP_MODE_MANUAL_UPDATE_MASK,
+		      LN9310_PWR_OP_MODE_MANUAL_UPDATE_OFF);
+
+	field_update8(LN9310_REG_TIMER_CTRL,
+		      LN9310_TIMER_OP_SELF_SYNC_EN_MASK,
+		      LN9310_TIMER_OP_SELF_SYNC_EN_ON);
+
+	usleep(LN9310_CDC_DELAY);
+	CPRINTS("LN9310 OP_MODE Update method: Self-sync");
 
 	batt = board_get_battery_cell_type();
 	if (batt == BATTERY_CELL_TYPE_3S) {
