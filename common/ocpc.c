@@ -137,7 +137,9 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	 * Therefore, don't make any changes at this time.
 	 */
 	if (battery_is_charge_fet_disabled()) {
-		CPRINTS("CFET disabled; not changing VSYS!");
+		/* Only print this if there's actually a  CFET present. */
+		if (battery_is_present())
+			CPRINTS("CFET disabled; not changing VSYS!");
 
 		/*
 		 * Let's check back in 5 seconds to see if the CFET is enabled
