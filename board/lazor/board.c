@@ -260,11 +260,37 @@ static void board_switchcap_init(void)
 		gpio_set_flags(GPIO_SWITCHCAP_PG_INT_L, GPIO_INT_FALLING);
 		gpio_enable_interrupt(GPIO_SWITCHCAP_PG_INT_L);
 
-		/* Configure LN9310 enable, open-drain, active low */
-		gpio_set_flags(GPIO_SWITCHCAP_ON_L, GPIO_ODR_HIGH);
+		/*
+		 * Configure LN9310 enable, open-drain output. Don't set the
+		 * level here; otherwise, it will override its value and
+		 * shutdown the switchcap when sysjump to RW.
+		 *
+		 * Note that the gpio.inc configures it GPIO_OUT_LOW. When
+		 * sysjump to RW, will output push-pull a short period of
+		 * time. As it outputs LOW, should be fine.
+		 *
+		 * This GPIO changes like:
+		 * (1) EC boots from RO -> high-Z
+		 * (2) GPIO init according to gpio.inc -> push-pull LOW
+		 * (3) This function configures it -> open-drain HIGH
+		 * (4) Power sequence turns on the switchcap -> open-drain LOW
+		 * (5) EC sysjumps to RW
+		 * (6) GPIO init according to gpio.inc -> push-pull LOW
+		 * (7) This function configures it -> open-drain LOW
+		 */
+		gpio_set_flags(GPIO_SWITCHCAP_ON_L,
+			       GPIO_OUTPUT | GPIO_OPEN_DRAIN);
 
-		/* Init the switchcap driver */
-		ln9310_init();
+		/* Only configure the switchcap if not sysjump */
+		if (!system_jumped_late()) {
+			/*
+			 * Deassert the enable pin (set it HIGH), so the
+			 * switchcap won't be enabled after the switchcap is
+			 * configured from standby mode to switching mode.
+			 */
+			gpio_set_level(GPIO_SWITCHCAP_ON_L, 1);
+			ln9310_init();
+		}
 	} else {
 		CPRINTS("Use switchcap: DA9313");
 
@@ -274,8 +300,12 @@ static void board_switchcap_init(void)
 		 */
 		gpio_set_flags(GPIO_DA9313_GPIO0, GPIO_INPUT | GPIO_PULL_DOWN);
 
-		/* Configure DA9313 enable, push-pull, active high */
-		gpio_set_flags(GPIO_SWITCHCAP_ON, GPIO_OUT_LOW);
+		/*
+		 * Configure DA9313 enable, push-pull output. Don't set the
+		 * level here; otherwise, it will override its value and
+		 * shutdown the switchcap when sysjump to RW.
+		 */
+		gpio_set_flags(GPIO_SWITCHCAP_ON, GPIO_OUTPUT);
 	}
 }
 

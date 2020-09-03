@@ -71,7 +71,7 @@ GPIO(EC_INT_L,              PIN(A, 2), GPIO_ODR_HIGH)  /* Interrupt line between
 GPIO(QSIP_ON,               PIN(5, 0), GPIO_OUT_LOW)   /* Not used, for non-switchcap testing */
 
 /* Power enables */
-GPIO(SWITCHCAP_ON,          PIN(D, 5), GPIO_INPUT)     /* Enable switch cap; will be configured as output in the board init */
+GPIO(SWITCHCAP_ON,          PIN(D, 5), GPIO_OUT_LOW)   /* Enable switch cap; will be configured in the board init */
 /* TODO(waihong): Remove it. The VBOB switch is for backup. */
 GPIO(VBOB_EN,               PIN(D, 3), GPIO_OUT_LOW)   /* Enable VBOB */
 GPIO(EN_PP3300_A,           PIN(A, 6), GPIO_OUT_LOW)   /* Enable PP3300 */
