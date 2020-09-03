@@ -15,6 +15,7 @@
 #include "driver/accel_lis2dh.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/ppc/nx20p348x.h"
+#include "driver/ppc/syv682x.h"
 #include "driver/tcpm/anx7447.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -29,6 +30,7 @@
 #include "tcpci.h"
 #include "temp_sensor.h"
 #include "thermistor.h"
+#include "usbc_ppc.h"
 #include "util.h"
 #include "battery_smart.h"
 
@@ -39,16 +41,37 @@
 #define USB_PD_PORT_PS8751	1
 
 static uint8_t sku_id;
+static bool support_syv_ppc;
+
+/* Check PPC ID and board version to decide which one ppc is used. */
+static bool board_is_support_syv_ppc(void)
+{
+	uint32_t board_version = 0;
+
+	if (cbi_get_board_version(&board_version) != EC_SUCCESS)
+		CPRINTSUSB("Get board version failed.");
+
+	if ((board_version >= 5) && (gpio_get_level(GPIO_PPC_ID)))
+		return true;
+
+	return false;
+}
 
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_PD_C0_INT_ODL:
-		nx20p348x_interrupt(0);
+		if (support_syv_ppc)
+			syv682x_interrupt(0);
+		else
+			nx20p348x_interrupt(0);
 		break;
 
 	case GPIO_USB_PD_C1_INT_ODL:
-		nx20p348x_interrupt(1);
+		if (support_syv_ppc)
+			syv682x_interrupt(1);
+		else
+			nx20p348x_interrupt(1);
 		break;
 
 	default:
@@ -220,6 +243,8 @@ static void cbi_init(void)
 	ccprints("SKU: 0x%04x", sku_id);
 
 	board_update_sensor_config_from_sku();
+
+	support_syv_ppc = board_is_support_syv_ppc();
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -296,4 +321,41 @@ void board_overcurrent_event(int port, int is_overcurrented)
 
 	/* Note that the level is inverted because the pin is active low. */
 	gpio_set_level(GPIO_USB_C_OC, !is_overcurrented);
+}
+
+static const struct ppc_config_t ppc_syv682x_port0 = {
+		.i2c_port = I2C_PORT_TCPC0,
+		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.drv = &syv682x_drv,
+};
+
+static const struct ppc_config_t ppc_syv682x_port1 = {
+		.i2c_port = I2C_PORT_TCPC1,
+		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.drv = &syv682x_drv,
+};
+
+static void board_setup_ppc(void)
+{
+	if (!support_syv_ppc)
+		return;
+
+	memcpy(&ppc_chips[USB_PD_PORT_TCPC_0],
+		&ppc_syv682x_port0,
+		sizeof(struct ppc_config_t));
+	memcpy(&ppc_chips[USB_PD_PORT_TCPC_1],
+		&ppc_syv682x_port1,
+		sizeof(struct ppc_config_t));
+
+	gpio_set_flags(GPIO_USB_PD_C0_INT_ODL, GPIO_INT_BOTH);
+	gpio_set_flags(GPIO_USB_PD_C1_INT_ODL, GPIO_INT_BOTH);
+}
+DECLARE_HOOK(HOOK_INIT, board_setup_ppc, HOOK_PRIO_INIT_I2C + 2);
+
+int ppc_get_alert_status(int port)
+{
+	if (port == 0)
+		return gpio_get_level(GPIO_USB_PD_C0_INT_ODL) == 0;
+
+	return gpio_get_level(GPIO_USB_PD_C1_INT_ODL) == 0;
 }
