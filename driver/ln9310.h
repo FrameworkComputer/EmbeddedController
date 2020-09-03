@@ -112,6 +112,13 @@
 #define LN9310_BC_STS_B_INFET_OUT_SWITCH_OK		BIT(5)
 #define LN9310_BC_STS_B_INFET_OUT_SWITCH_OK_MASK	0x20
 
+/* Battery cell type */
+enum battery_cell_type {
+	BATTERY_CELL_TYPE_UNKNOWN = 0,
+	BATTERY_CELL_TYPE_2S = 2,
+	BATTERY_CELL_TYPE_3S = 3
+};
+
 /* Define configuration of LN9310 part */
 struct ln9310_config_t {
 	const int i2c_port;

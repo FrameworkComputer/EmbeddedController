@@ -109,6 +109,7 @@ enum battery_type {
 void board_set_switchcap_power(int enable);
 int board_is_switchcap_enabled(void);
 int board_is_switchcap_power_good(void);
+enum battery_cell_type board_get_battery_cell_type(void);
 /* Custom function to indicate if sourcing VBUS */
 int board_is_sourcing_vbus(int port);
 /* Enable VBUS sink for a given port */

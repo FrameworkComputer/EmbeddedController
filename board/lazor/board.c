@@ -349,6 +349,15 @@ static int board_is_clamshell(void)
 	return sku_id == 4 || sku_id == 5;
 }
 
+enum battery_cell_type board_get_battery_cell_type(void)
+{
+	/* SKU ID of Limozeen: 4, 5 -> 3S battery */
+	if (sku_id == 4 || sku_id == 5)
+		return BATTERY_CELL_TYPE_3S;
+
+	return BATTERY_CELL_TYPE_UNKNOWN;
+}
+
 static void board_update_sensor_config_from_sku(void)
 {
 	if (board_is_clamshell()) {

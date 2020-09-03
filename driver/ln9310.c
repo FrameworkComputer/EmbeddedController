@@ -76,11 +76,11 @@ void ln9310_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&ln9310_irq_deferred_data, 0);
 }
 
-static int is_battery_3s(void)
+static int is_battery_gt_10v(void)
 {
-	int status, val, batt3s;
+	int status, val, gt_10v;
 
-	CPRINTS("LN9310 checking input voltage (2S/3S), threshold=10V");
+	CPRINTS("LN9310 checking input voltage, threshold=10V");
 	/*
 	 * Turn on INFET_OUT_SWITCH_OK comparator;
 	 * configure INFET_OUT_SWITCH_OK to 10V.
@@ -100,21 +100,21 @@ static int is_battery_3s(void)
 	CPRINTS("LN9310 BC_STS_B: 0x%x", val);
 
 	/*
-	 * If INFET_OUT_SWITCH_OK=0, VIN < 10V --> 2S battery
-	 * If INFET_OUT_SWITCH_OK=1, VIN > 10V --> 3S battery
+	 * If INFET_OUT_SWITCH_OK=0, VIN < 10V
+	 * If INFET_OUT_SWITCH_OK=1, VIN > 10V
 	 */
-	batt3s = !!(val & LN9310_BC_STS_B_INFET_OUT_SWITCH_OK);
-	CPRINTS("LN9310 %s battery detected", batt3s ? "3S" : "2S");
+	gt_10v = !!(val & LN9310_BC_STS_B_INFET_OUT_SWITCH_OK);
+	CPRINTS("LN9310 battery %s 10V", gt_10v ? ">" : "<");
 
 	/* Turn off INFET_OUT_SWITCH_OK comparator */
 	field_update8(LN9310_REG_TRACK_CTRL,
 		      LN9310_TRACK_INFET_OUT_SWITCH_OK_EN_MASK,
 		      LN9310_TRACK_INFET_OUT_SWITCH_OK_EN_OFF);
 
-	return batt3s;
+	return gt_10v;
 }
 
-static void ln9310_init_3to1(void)
+static int ln9310_init_3to1(void)
 {
 	CPRINTS("LN9310 init (3:1 operation)");
 
@@ -136,11 +136,18 @@ static void ln9310_init_3to1(void)
 	field_update8(LN9310_REG_SYS_CTRL,
 		      LN9310_SYS_CTRL_LB_DELTA_MASK,
 		      LN9310_SYS_CTRL_LB_DELTA_3S);
+
+	return EC_SUCCESS;
 }
 
-static void ln9310_init_2to1(void)
+static int ln9310_init_2to1(void)
 {
 	CPRINTS("LN9310 init (2:1 operation)");
+
+	if (is_battery_gt_10v()) {
+		CPRINTS("LN9310 init stop. Input voltage is too high.");
+		return EC_ERROR_UNKNOWN;
+	}
 
 	/* Enable track protection and SC_OUT configs for 2:1 switching */
 	field_update8(LN9310_REG_MODE_CHANGE_CFG,
@@ -158,19 +165,27 @@ static void ln9310_init_2to1(void)
 	field_update8(LN9310_REG_SYS_CTRL,
 		      LN9310_SYS_CTRL_LB_DELTA_MASK,
 		      LN9310_SYS_CTRL_LB_DELTA_2S);
+
+	return EC_SUCCESS;
 }
 
 void ln9310_init(void)
 {
-	int status, val, batt3s;
+	int status, val;
+	enum battery_cell_type batt;
 
-	batt3s = is_battery_3s();
-	if (batt3s == -1)
+	batt = board_get_battery_cell_type();
+	if (batt == BATTERY_CELL_TYPE_3S) {
+		status = ln9310_init_3to1();
+	} else if (batt == BATTERY_CELL_TYPE_2S) {
+		status = ln9310_init_2to1();
+	} else {
+		CPRINTS("LN9310 not supported battery type: %d", batt);
 		return;
-	else if (batt3s)
-		ln9310_init_3to1();
-	else
-		ln9310_init_2to1();
+	}
+
+	if (status != EC_SUCCESS)
+		return;
 
 	/* Unmask the MODE change interrupt */
 	field_update8(LN9310_REG_INT1_MSK,
