@@ -66,6 +66,9 @@ UNIMPLEMENTED(AC_PRESENT)
 UNIMPLEMENTED(PG_EC_DSW_PWROK)
 UNIMPLEMENTED(PG_EC_ALL_SYS_PWRGD)
 
+/* Used by baseboard z-state enable, but not present on boten */
+UNIMPLEMENTED(USB_C1_INT_ODL)
+
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(EC_I2C_EEPROM_SCL,		PIN(B, 3), GPIO_INPUT)
 GPIO(EC_I2C_EEPROM_SDA,		PIN(B, 4), GPIO_INPUT)

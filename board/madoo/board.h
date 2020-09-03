@@ -29,6 +29,9 @@
 #define CONFIG_CMD_TCPC_DUMP
 #define CONFIG_CMD_CHARGER_DUMP
 
+/* GPIO for C1 interrupts, for baseboard use */
+#define GPIO_USB_C1_INT_ODL GPIO_SUB_USB_C1_INT_ODL
+
 /* Keyboard */
 #define CONFIG_PWM_KBLIGHT
 

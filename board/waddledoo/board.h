@@ -32,6 +32,14 @@
 #define CONFIG_CMD_TCPC_DUMP
 #define CONFIG_CMD_CHARGER_DUMP
 
+/*
+ * GPIO for C1 interrupts, for baseboard use
+ *
+ * Note this line might already have its pull up disabled for HDMI DBs, but
+ * it should be fine to set again before z-state.
+ */
+#define GPIO_USB_C1_INT_ODL GPIO_SUB_C1_INT_EN_RAILS_ODL
+
 /* Keyboard */
 #define CONFIG_PWM_KBLIGHT
 

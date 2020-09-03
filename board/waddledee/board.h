@@ -32,6 +32,13 @@
 #define CONFIG_OCPC
 #define CONFIG_OCPC_DEF_RBATT_MOHMS 5 /* R_DS(on) 5.3mOhm */
 
+/*
+ * GPIO for C1 interrupts, for baseboard use
+ *
+ * Note this will only be valid for board revision 1
+ */
+#define GPIO_USB_C1_INT_ODL GPIO_USB_C1_INT_V1_ODL
+
 /* LED */
 #define CONFIG_LED_PWM
 #define CONFIG_LED_PWM_COUNT 1
