@@ -15,6 +15,8 @@
 #include "compile_time_macros.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/temp_sensor/thermistor.h"
+#include "temp_sensor.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/nb7v904m.h"
@@ -114,6 +116,19 @@ const struct adc_t adc_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+/* Thermistors */
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_1] = {.name = "Memory",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_1},
+	[TEMP_SENSOR_2] = {.name = "Ambient",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_2},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 void board_init(void)
 {
