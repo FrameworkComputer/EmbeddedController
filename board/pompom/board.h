@@ -9,6 +9,7 @@
 #define __CROS_EC_BOARD_H
 
 #include "baseboard.h"
+#include "board_revs.h"
 
 /* TODO(waihong): Remove the following bringup features */
 #define CONFIG_BRINGUP
@@ -26,7 +27,11 @@
 #define CONFIG_BC12_DETECT_PI3USB9201
 
 /* USB */
+#if BOARD_REV == POMPOM_REV0
 #define CONFIG_USB_PD_TCPM_PS8751
+#else
+#define CONFIG_USB_PD_TCPM_PS8805
+#endif
 #define CONFIG_USBC_PPC_SN5S330
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 
