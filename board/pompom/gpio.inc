@@ -10,11 +10,8 @@
 
 /* USB-C interrupts */
 GPIO_INT(USB_C0_PD_INT_ODL,    PIN(E, 0), GPIO_INT_FALLING, tcpc_alert_event)  /* Interrupt from port-0 TCPC */
-GPIO_INT(USB_C1_PD_INT_ODL,    PIN(F, 5), GPIO_INT_FALLING, tcpc_alert_event)  /* Interrupt from port-1 TCPC */
 GPIO_INT(USB_C0_SWCTL_INT_ODL, PIN(0, 3), GPIO_INT_FALLING, ppc_interrupt)  /* Interrupt from port-0 PPC */
-GPIO_INT(USB_C1_SWCTL_INT_ODL, PIN(4, 0), GPIO_INT_FALLING, ppc_interrupt)  /* Interrupt from port-1 PPC */
 GPIO_INT(USB_C0_BC12_INT_L,    PIN(6, 1), GPIO_INT_FALLING, usb0_evt)  /* Interrupt from port-0 BC1.2 */
-GPIO_INT(USB_C1_BC12_INT_L,    PIN(8, 2), GPIO_INT_FALLING, usb1_evt)  /* Interrupt from port-1 BC1.2 */
 
 /* System interrupts */
 GPIO_INT(ACOK_OD,           PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)  /* AC OK? */
@@ -79,14 +76,13 @@ GPIO(TRACKPAD_INT_GATE,     PIN(7, 4), GPIO_OUT_LOW)
 
 /* USB-C */
 GPIO(USB_C0_PD_RST_L,       PIN(F, 1), GPIO_OUT_HIGH)  /* Port-0 TCPC chip reset */
-GPIO(USB_C1_PD_RST_L,       PIN(E, 4), GPIO_OUT_HIGH)  /* Port-1 TCPC chip reset */
 GPIO(DP_MUX_OE_L,           PIN(9, 6), GPIO_OUT_HIGH)  /* DP mux enable */
 GPIO(DP_MUX_SEL,            PIN(4, 5), GPIO_OUT_HIGH)  /* DP mux selection: L:C0, H:C1 */
 GPIO(DP_HOT_PLUG_DET,       PIN(9, 5), GPIO_OUT_LOW)   /* DP HPD to AP */
 /* TODO(waihong): Remove it from schematic. No use. */
 GPIO(USBC_MUX_CONF0,        PIN(5, 1), GPIO_INPUT)
 GPIO(USB_C0_VBUS_DET_L,     PIN(6, 2), GPIO_INPUT)     /* Deprecated BC1.2 VBUS detection on port-0 */
-GPIO(USB_C1_VBUS_DET_L,     PIN(8, 3), GPIO_INPUT)     /* Deprecated BC1.2 VBUS detection on port-1 */
+
 
 /* USB-A */
 GPIO(EN_USB_A_5V,           PIN(8, 6), GPIO_OUT_LOW)
@@ -112,8 +108,6 @@ GPIO(EC_I2C_POWER_SCL,      PIN(B, 5), GPIO_INPUT)
 GPIO(EC_I2C_POWER_SDA,      PIN(B, 4), GPIO_INPUT)
 GPIO(EC_I2C_USB_C0_PD_SCL,  PIN(9, 0), GPIO_INPUT)
 GPIO(EC_I2C_USB_C0_PD_SDA,  PIN(8, 7), GPIO_INPUT)
-GPIO(EC_I2C_USB_C1_PD_SCL,  PIN(9, 2), GPIO_INPUT)
-GPIO(EC_I2C_USB_C1_PD_SDA,  PIN(9, 1), GPIO_INPUT)
 GPIO(EC_I2C_EEPROM_SCL,     PIN(3, 3), GPIO_INPUT)
 GPIO(EC_I2C_EEPROM_SDA,     PIN(3, 6), GPIO_INPUT)
 GPIO(EC_I2C_SENSOR_SCL,     PIN(B, 3), GPIO_INPUT | GPIO_SEL_1P8V)

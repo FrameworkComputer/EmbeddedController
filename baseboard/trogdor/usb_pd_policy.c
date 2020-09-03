@@ -22,8 +22,12 @@ int pd_check_vconn_swap(int port)
 }
 
 static uint8_t vbus_en[CONFIG_USB_PD_PORT_MAX_COUNT];
+#if CONFIG_USB_PD_PORT_MAX_COUNT == 1
+static uint8_t vbus_rp[CONFIG_USB_PD_PORT_MAX_COUNT] = {TYPEC_RP_1A5};
+#else
 static uint8_t vbus_rp[CONFIG_USB_PD_PORT_MAX_COUNT] = {TYPEC_RP_1A5,
 							TYPEC_RP_1A5};
+#endif
 
 static void board_vbus_update_source_current(int port)
 {
@@ -88,8 +92,12 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 
 int pd_snk_is_vbus_provided(int port)
 {
+#if CONFIG_USB_PD_PORT_MAX_COUNT == 1
+	return !gpio_get_level(GPIO_USB_C0_VBUS_DET_L);
+#else
 	return !gpio_get_level(port ? GPIO_USB_C1_VBUS_DET_L :
 				      GPIO_USB_C0_VBUS_DET_L);
+#endif
 }
 
 /* ----------------- Vendor Defined Messages ------------------ */
