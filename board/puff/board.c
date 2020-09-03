@@ -397,6 +397,19 @@ const static struct ec_thermal_config thermal_a = {
 	.temp_fan_max = C_TO_K(55),
 };
 
+const static struct ec_thermal_config thermal_b = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+};
+
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_CORE] = thermal_a,
 };
@@ -468,7 +481,6 @@ static void board_init(void)
 	 */
 	if (board_version < 2)
 		button_disable_gpio(GPIO_EC_RECOVERY_BTN_ODL);
-
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -671,6 +683,26 @@ unsigned int ec_config_get_thermal_solution(void)
 {
 	return (fw_config & EC_CFG_THERMAL_MASK) >> EC_CFG_THERMAL_L;
 }
+
+static void setup_thermal(void)
+{
+	unsigned int table = ec_config_get_thermal_solution();
+	/* Configure Fan */
+	switch (table) {
+	/* Default and table0 use single fan */
+	case 0:
+	default:
+		thermal_params[TEMP_SENSOR_CORE] = thermal_a;
+		break;
+	/* Table1 is fanless */
+	case 1:
+		fan_set_count(0);
+		thermal_params[TEMP_SENSOR_CORE] = thermal_b;
+		break;
+	}
+}
+/* fan_set_count should be called before  HOOK_INIT/HOOK_PRIO_DEFAULT */
+DECLARE_HOOK(HOOK_INIT, setup_thermal, HOOK_PRIO_DEFAULT - 1);
 
 /*
  * Power monitoring and management.
