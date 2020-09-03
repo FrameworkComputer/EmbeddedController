@@ -424,6 +424,17 @@ void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+void board_hibernate(void)
+{
+	/*
+	 * Put all charger ICs present into low power mode before entering
+	 * z-state.
+	 */
+	sm5803_hibernate(CHARGER_PRIMARY);
+	if (board_get_charger_chip_count() > 1)
+		sm5803_hibernate(CHARGER_SECONDARY);
+}
+
 __override void board_ocpc_init(struct ocpc_data *ocpc)
 {
 	/* There's no provision to measure Isys */
