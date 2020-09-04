@@ -105,6 +105,7 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 #ifdef CONFIG_USBC_VCONN
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 {
+#ifndef CONFIG_USBC_PPC_VCONN
 	/*
 	 * Setting VCONN low by disabling the power switch before
 	 * enabling the VCONN on respective CC line
@@ -119,5 +120,6 @@ void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 				tcpc_gpios[port].vconn.cc2_pin :
 				tcpc_gpios[port].vconn.cc1_pin,
 				tcpc_gpios[port].vconn.pin_pol);
+#endif
 }
 #endif

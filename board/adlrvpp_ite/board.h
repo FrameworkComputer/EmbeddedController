@@ -134,6 +134,17 @@
 	#define TYPE_C_PORT_3_USB3_NUM	(3+1)
 #endif
 
+/* Enable VCONN */
+#define CONFIG_USBC_VCONN
+#define CONFIG_USBC_VCONN_SWAP
+#define PD_VCONN_SWAP_DELAY		5000 /* us */
+
+/* Enabling Thunderbolt-compatible mode */
+#define CONFIG_USB_PD_TBT_COMPAT_MODE
+
+/* Enabling USB4 mode */
+#define CONFIG_USB_PD_USB4
+
 #ifndef __ASSEMBLER__
 
 enum adlrvp_i2c_channel {
