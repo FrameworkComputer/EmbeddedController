@@ -337,7 +337,7 @@ enum motionsensor_orientation motion_sense_remap_orientation(
  */
 static inline uint16_t ec_motion_sensor_clamp_u16(const int32_t value)
 {
-	return (uint16_t)MIN(MAX(value, 0), UINT16_MAX);
+	return (uint16_t)MIN(MAX(value, 0), (int32_t)UINT16_MAX);
 }
 static inline void ec_motion_sensor_clamp_u16s(uint16_t *arr, const int32_t *v)
 {
@@ -348,7 +348,7 @@ static inline void ec_motion_sensor_clamp_u16s(uint16_t *arr, const int32_t *v)
 
 static inline int16_t ec_motion_sensor_clamp_i16(const int32_t value)
 {
-	return MIN(MAX(value, INT16_MIN), INT16_MAX);
+	return MIN(MAX(value, (int32_t)INT16_MIN), (int32_t)INT16_MAX);
 }
 static inline void ec_motion_sensor_clamp_i16s(int16_t *arr, const int32_t *v)
 {
