@@ -186,6 +186,16 @@ int charge_manager_get_override(void);
 int charge_manager_get_active_charge_port(void);
 
 /**
+ * Get the current selected charge port, as determined by charge manager.
+ * This is the charge port that is either active or that we may be
+ * transitioning to because a better choice has been given as an option
+ * but that transition has not completed.
+ *
+ * @return	Current selected charge port.
+ */
+int charge_manager_get_selected_charge_port(void);
+
+/**
  * Get the power limit set by charge manager.
  *
  * @return	Power limit (uW).

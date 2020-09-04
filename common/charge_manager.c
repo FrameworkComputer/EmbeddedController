@@ -1163,6 +1163,14 @@ int charge_manager_get_active_charge_port(void)
 	return charge_port;
 }
 
+int charge_manager_get_selected_charge_port(void)
+{
+	int port, supplier;
+
+	charge_manager_get_best_charge_port(&port, &supplier);
+	return port;
+}
+
 int charge_manager_get_charger_current(void)
 {
 	return charge_current;

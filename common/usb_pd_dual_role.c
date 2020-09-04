@@ -200,7 +200,7 @@ void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
 	 * current limit gets incorrectly set to 0.5A.
 	 */
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
-		int chg_port = charge_manager_get_active_charge_port();
+		int chg_port = charge_manager_get_selected_charge_port();
 
 		charging_allowed =
 			(chg_port == port || chg_port == CHARGE_PORT_NONE);
