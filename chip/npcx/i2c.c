@@ -709,11 +709,16 @@ static void i2c_handle_sda_irq(int controller)
 				I2C_START(controller);
 				CPUTS("-RST");
 				/*
-				 * Receiving one byte only - set nack just
-				 * before writing address byte
+				 * Receiving one byte only - set NACK just
+				 * before writing address byte.
+				 * Set NACK (ACK bit in the SMBnCTL1 register)
+				 * only in the single-byte mode.
+				 * In FIFO mode, NACK is set via LAST bit
+				 * in the SMBnTXF_CTL register.
 				 */
 				if (p_status->sz_rxbuf == 1 &&
-					(p_status->flags & I2C_XFER_STOP)) {
+					(p_status->flags & I2C_XFER_STOP) &&
+					!IS_ENABLED(NPCX_I2C_FIFO_SUPPORT)) {
 					I2C_NACK(controller);
 					CPUTS("-GNA");
 				}
@@ -804,11 +809,17 @@ void i2c_master_int_handler (int controller)
 		if (p_status->sz_rxbuf == 0)
 			i2c_done(controller);
 		/*
-		 * Otherwise we have a one-byte transaction, so nack after
+		 * Otherwise we have a one-byte transaction, so NACK after
 		 * receiving next byte, if requested.
+		 * Set NACK (ACK bit in the SMBnCTL1 register) only in the
+		 * single-byte mode.
+		 * In FIFO mode, NACK is set via LAST bit in the SMBnTXF_CTL
+		 * register.
 		 */
-		else if (p_status->flags & I2C_XFER_STOP)
+		else if ((p_status->flags & I2C_XFER_STOP) &&
+				 !IS_ENABLED(NPCX_I2C_FIFO_SUPPORT)) {
 			I2C_NACK(controller);
+		}
 
 		/* Clear STASTR to release SCL after setting NACK/STOP bits */
 		SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_STASTR);
