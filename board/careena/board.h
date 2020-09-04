@@ -30,6 +30,10 @@
 #define CONFIG_BATTERY_MEASURE_IMBALANCE
 #define CONFIG_BATTERY_BQ4050
 
+/* Additional TCPC second source in Port 1 */
+#define CONFIG_USB_PD_TCPM_MULTI_PS8XXX
+#define CONFIG_USB_PD_TCPM_PS8755
+
 #ifndef __ASSEMBLER__
 
 enum pwm_channel {
