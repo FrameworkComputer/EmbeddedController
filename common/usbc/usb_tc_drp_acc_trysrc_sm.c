@@ -1342,7 +1342,7 @@ void tc_state_init(int port)
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		pd_set_dual_role_and_event(port, PD_DRP_FORCE_SINK, 0);
 	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
-		pd_set_dual_role_and_event(port, PD_DRP_TOGGLE_OFF, 0);
+		pd_set_dual_role_and_event(port, pd_get_drp_state_in_suspend(), 0);
 	else /* CHIPSET_STATE_ON */
 		pd_set_dual_role_and_event(port, PD_DRP_TOGGLE_ON, 0);
 
@@ -3439,7 +3439,7 @@ static void pd_chipset_suspend(void)
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		pd_set_dual_role_and_event(i,
-					   PD_DRP_TOGGLE_OFF,
+					   pd_get_drp_state_in_suspend(),
 					   PD_EVENT_UPDATE_DUAL_ROLE
 					   | PD_EVENT_POWER_STATE_CHANGE);
 	}
@@ -3455,7 +3455,7 @@ static void pd_chipset_startup(void)
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		set_usb_mux_with_current_data_role(i);
 		pd_set_dual_role_and_event(i,
-					   PD_DRP_TOGGLE_OFF,
+					   pd_get_drp_state_in_suspend(),
 					   PD_EVENT_UPDATE_DUAL_ROLE
 					   | PD_EVENT_POWER_STATE_CHANGE);
 		/*

@@ -1572,6 +1572,14 @@ __override_proto void pd_execute_data_swap(int port,
 				enum pd_data_role data_role);
 
 /**
+ * Get desired dual role state when chipset is suspended.
+ * Under some circumstances we are not allowed to be source
+ * during suspend. This function should return appropriate state.
+ */
+
+__override_proto enum pd_dual_role_states pd_get_drp_state_in_suspend(void);
+
+/**
  * Get PD device info used for VDO_CMD_SEND_INFO / VDO_CMD_READ_INFO
  *
  * @param info_data pointer to info data array

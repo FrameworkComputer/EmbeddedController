@@ -548,6 +548,12 @@ __overridable void pd_execute_data_swap(int port,
 {
 }
 
+__overridable enum pd_dual_role_states pd_get_drp_state_in_suspend(void)
+{
+	/* Disable dual role when going to suspend */
+	return PD_DRP_TOGGLE_OFF;
+}
+
 __overridable void pd_try_execute_vconn_swap(int port, int flags)
 {
 	/*
