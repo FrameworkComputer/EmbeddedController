@@ -14,10 +14,6 @@
 /* TODO Define FLASH_PSTATE_LOCKED prior to building MP FW. */
 #undef CONFIG_FLASH_PSTATE_LOCKED
 
-/*
- * TODO(b/148493929): Revisit these timer values once support for STM32G4 has
- * been added. These macros are required to build the EC image.
- */
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 #define CONFIG_STM_HWTIMER32
@@ -29,17 +25,14 @@
 /* Honeybuns platform does not have a lid switch */
 #undef CONFIG_LID_SWITCH
 
-/* Host communication */
-
-/* Chipset config */
-
-/* Common Keyboard Defines */
-
-/* Sensors */
-
-/* Common charger defines */
-
-/* Common battery defines */
+/* USART and EC console configs */
+#undef CONFIG_UART_CONSOLE
+#define CONFIG_UART_CONSOLE 3
+#define CONFIG_UART_TX_DMA
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 2048
+#define CONFIG_UART_TX_DMA_CH STM32_DMAC_USART3_TX
+#define CONFIG_UART_TX_DMA_PH DMAMUX_REQ_USART3_TX
 
 /* USB Type C and USB PD defines */
 
