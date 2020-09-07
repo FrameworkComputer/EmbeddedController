@@ -356,10 +356,10 @@ __override uint16_t board_get_ps8xxx_product_id(int port)
 		return 0;
 
 	switch (get_cbi_ssfc_tcpc_p1()) {
-	case TCPC_P1_PS8755:
+	case SSFC_TCPC_P1_PS8755:
 		return PS8755_PRODUCT_ID;
-	case TCPC_P1_DEFAULT:
-	case TCPC_P1_PS8751:
+	case SSFC_TCPC_P1_DEFAULT:
+	case SSFC_TCPC_P1_PS8751:
 	default:
 		return PS8751_PRODUCT_ID;
 	}

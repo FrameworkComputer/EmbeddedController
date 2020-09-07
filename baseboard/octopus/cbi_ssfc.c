@@ -32,3 +32,8 @@ enum ssfc_tcpc_p1 get_cbi_ssfc_tcpc_p1(void)
 {
 	return ((cached_ssfc & SSFC_TCPC_P1_MASK) >> SSFC_TCPC_P1_OFFSET);
 }
+
+enum ssfc_ppc_p1 get_cbi_ssfc_ppc_p1(void)
+{
+	return ((cached_ssfc & SSFC_PPC_P1_MASK) >> SSFC_PPC_P1_OFFSET);
+}
