@@ -40,11 +40,11 @@ void watchdog_init_warning_timer(void)
 	/* Event module disable */
 	CLEAR_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_ITEN);
 	/* ITIM count down : event expired*/
-	NPCX_ITCNT16(ITIM_WDG_NO) = CONFIG_AUX_TIMER_PERIOD_MS - 1;
+	NPCX_ITCNT(ITIM_WDG_NO) = CONFIG_AUX_TIMER_PERIOD_MS - 1;
 	/* Event module enable */
 	SET_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_ITEN);
 	/* Enable interrupt of ITIM */
-	task_enable_irq(ITIM16_INT(ITIM_WDG_NO));
+	task_enable_irq(ITIM_INT(ITIM_WDG_NO));
 }
 
 static uint8_t watchdog_count(void)
@@ -116,8 +116,8 @@ void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 }
 
 /* ISR for watchdog warning naked will keep SP & LR */
-void IRQ_HANDLER(ITIM16_INT(ITIM_WDG_NO))(void) __attribute__((naked));
-void IRQ_HANDLER(ITIM16_INT(ITIM_WDG_NO))(void)
+void IRQ_HANDLER(ITIM_INT(ITIM_WDG_NO))(void) __attribute__((naked));
+void IRQ_HANDLER(ITIM_INT(ITIM_WDG_NO))(void)
 {
 	/* Naked call so we can extract raw LR and SP */
 	asm volatile("mov r0, lr\n"
@@ -130,15 +130,15 @@ void IRQ_HANDLER(ITIM16_INT(ITIM_WDG_NO))(void)
 			"pop {r0, lr}\n"
 			"b task_resched_if_needed\n");
 }
-const struct irq_priority __keep IRQ_PRIORITY(ITIM16_INT(ITIM_WDG_NO))
+const struct irq_priority __keep IRQ_PRIORITY(ITIM_INT(ITIM_WDG_NO))
 __attribute__((section(".rodata.irqprio")))
-= {ITIM16_INT(ITIM_WDG_NO), 0};
+= {ITIM_INT(ITIM_WDG_NO), 0};
 /* put the watchdog at the highest priority */
 
 void watchdog_reload(void)
 {
 	/* Disable watchdog interrupt */
-	task_disable_irq(ITIM16_INT(ITIM_WDG_NO));
+	task_disable_irq(ITIM_INT(ITIM_WDG_NO));
 
 #if 1 /* mark this for testing watchdog */
 	/* Touch watchdog & reset software counter */
@@ -146,7 +146,7 @@ void watchdog_reload(void)
 #endif
 
 	/* Enable watchdog interrupt */
-	task_enable_irq(ITIM16_INT(ITIM_WDG_NO));
+	task_enable_irq(ITIM_INT(ITIM_WDG_NO));
 }
 DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
 

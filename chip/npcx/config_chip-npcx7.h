@@ -34,6 +34,9 @@
 /* Number of UART modules. */
 #define NPCX_SECOND_UART
 #define UART_MODULE_COUNT 2
+
+/* 64-bit timer support */
+#define NPCX_ITIM64_SUPPORT
 #else
 #define UART_MODULE_COUNT 1
 #endif
