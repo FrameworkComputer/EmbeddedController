@@ -53,6 +53,7 @@
 
 /* Additional PPC second source */
 #define CONFIG_USBC_PPC_SYV682X
+#define CONFIG_USBC_PPC_DEDICATED_INT
 
 /* Additional TCPC second source in Port 1 */
 #define CONFIG_USB_PD_TCPM_MULTI_PS8XXX
