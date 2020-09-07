@@ -514,12 +514,36 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+__override enum pd_dual_role_states pd_get_drp_state_in_suspend(void)
+{
+	/*
+	 * If board is not connected to charger it will disable VBUS
+	 * on all ports that acts as source when going to suspend.
+	 * Change DRP state to force sink, to inform TCPM about that.
+	 */
+	if (!extpower_is_present())
+		return PD_DRP_FORCE_SINK;
+
+	return PD_DRP_TOGGLE_OFF;
+}
+
 /**
  * Buffer the AC present GPIO to the PCH.
+ * Set appropriate DRP state when chipset in suspend
  */
 static void board_extpower(void)
 {
+	enum pd_dual_role_states drp_state;
+	int port;
+
 	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
+
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_SUSPEND)) {
+		drp_state = pd_get_drp_state_in_suspend();
+		for (port = 0; port < board_get_usb_pd_port_count(); port++)
+			if (pd_get_dual_role(port) != drp_state)
+				pd_set_dual_role(port, drp_state);
+	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
