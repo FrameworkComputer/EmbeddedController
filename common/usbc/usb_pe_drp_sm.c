@@ -178,6 +178,15 @@
 #define N_DISCOVER_IDENTITY_COUNT 6
 
 /*
+ * tDiscoverIdentity is only defined while an explicit contract is in place.
+ * To support captive cable devices that power the SOP' responder from VBUS
+ * instead of VCONN stretch out the SOP' Discover Identity messages when
+ * no contract is present. 200 ms provides about 1 second for the cable
+ * to power up (200 * 5 retries).
+ */
+#define PE_T_DISCOVER_IDENTITY_NO_CONTRACT	(200*MSEC)
+
+/*
  * Only VCONN source can communicate with the cable plug. Hence, try VCONN swap
  * 3 times before giving up.
  *
@@ -4759,16 +4768,27 @@ static void pe_vdm_identity_request_cbl_exit(int port)
 		prl_set_rev(port, TCPC_TX_SOP_PRIME, PD_REV20);
 
 	/*
-	 * Set discover identity timer unless BUSY case already did so
-	 *
-	 * Note: DiscoverIdentityTimer only applies within an explicit
-	 * contract, so we could re-try faster from src_discovery if
-	 * desired here
+	 * Set discover identity timer unless BUSY case already did so.
 	 */
 	if (pd_get_identity_discovery(port, pe[port].tx_type) == PD_DISC_NEEDED
-			   && pe[port].discover_identity_timer < get_time().val)
-		pe[port].discover_identity_timer = get_time().val +
-							PD_T_DISCOVER_IDENTITY;
+	    && pe[port].discover_identity_timer < get_time().val) {
+		uint64_t timer;
+
+		/*
+		 * The tDiscoverIdentity timer is used during an explicit
+		 * contract when discovering whether a cable is PD capable.
+		 *
+		 * Pre-contract, slow the rate Discover Identity commands are
+		 * sent. This permits operation with captive cable devices that
+		 * power the SOP' responder from VBUS instead of VCONN.
+		 */
+		if (pe_is_explicit_contract(port))
+			timer = PD_T_DISCOVER_IDENTITY;
+		else
+			timer = PE_T_DISCOVER_IDENTITY_NO_CONTRACT;
+
+		pe[port].discover_identity_timer = get_time().val + timer;
+	}
 
 	/* Do not attempt further discovery if identity discovery failed. */
 	if (pd_get_identity_discovery(port, pe[port].tx_type) == PD_DISC_FAIL)
