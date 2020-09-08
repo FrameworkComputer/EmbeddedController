@@ -1083,9 +1083,15 @@ static void dump_charge_state(void)
 	ccprintf("ocpc.*:\n");
 	DUMP_OCPC(active_chg_chip, "%d");
 	DUMP_OCPC(combined_rsys_rbatt_mo, "%dmOhm");
+	if ((curr.ocpc.active_chg_chip != -1) &&
+	    !(curr.ocpc.chg_flags[curr.ocpc.active_chg_chip] &
+	      OCPC_NO_ISYS_MEAS_CAP)) {
+		DUMP_OCPC(rbatt_mo, "%dmOhm");
+		DUMP_OCPC(rsys_mo, "%dmOhm");
+		DUMP_OCPC(isys_ma, "%dmA");
+	}
 	DUMP_OCPC(vsys_aux_mv, "%dmV");
 	DUMP_OCPC(vsys_mv, "%dmV");
-	DUMP_OCPC(isys_ma, "%dmA");
 	DUMP_OCPC(primary_vbus_mv, "%dmV");
 	DUMP_OCPC(primary_ibus_ma, "%dmA");
 	DUMP_OCPC(secondary_vbus_mv, "%dmV");
