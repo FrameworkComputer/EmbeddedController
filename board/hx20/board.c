@@ -24,6 +24,7 @@
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/charger/isl9241.h"
 #include "driver/tcpm/tcpci.h"
 #include "extpower.h"
 #include "gpio_chip.h"
@@ -1160,5 +1161,14 @@ struct keyboard_scan_config keyscan_config = {
 	.actual_key_mask = {
 		0x14, 0xff, 0xff, 0xf2, 0xff, 0xff, 0xff,
 		0x0a, 0xff, 0xa0, 0xff, 0xff, 0x00, 0x41, 0xff, 0xff  /* full set */
+	},
+};
+
+/* Charger chips */
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL9241_ADDR_FLAGS,
+		.drv = &isl9241_drv,
 	},
 };
