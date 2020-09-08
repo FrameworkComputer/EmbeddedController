@@ -104,6 +104,7 @@
 /* Optional feature - used by ITE */
 #define CONFIG_IT83XX_ENABLE_MOUSE_DEVICE
 #define CONFIG_IT83XX_FLASH_CLOCK_48MHZ
+#define CONFIG_IT83XX_VCC_1P8V
 
 /* I2C ports */
 #define CONFIG_I2C

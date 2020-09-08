@@ -2488,6 +2488,13 @@
 #undef CONFIG_IT83XX_SMCLK2_ON_GPC7
 
 /*
+ * Enable the corresponding config option, according to EC's VCC is connected
+ * to 1.8V or 3.3V
+ */
+#undef CONFIG_IT83XX_VCC_1P8V
+#undef CONFIG_IT83XX_VCC_3P3V
+
+/*
  * If this is not defined, the firmware will revert the JTAG selection
  * triggered by the hardware strap pin.
  * Un-define this flag by default for all real platforms. see (b/129908668)

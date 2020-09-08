@@ -141,9 +141,6 @@ static enum board_sub_board board_get_sub_board(void);
 /* Initialize board. */
 static void board_init(void)
 {
-	/* For Rev0 only. Set GPM0~6 1.8V input. */
-	IT83XX_GPIO_GCR30 |= BIT(4);
-
 	gpio_enable_interrupt(GPIO_AC_PRESENT);
 
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);

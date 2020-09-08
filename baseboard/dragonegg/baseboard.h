@@ -127,6 +127,8 @@
 #define PD_MAX_CURRENT_MA	3000
 #define PD_MAX_VOLTAGE_MV	20000
 
+/* IT83XX config */
+#define CONFIG_IT83XX_VCC_1P8V
 /* I2C Bus Configuration */
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER

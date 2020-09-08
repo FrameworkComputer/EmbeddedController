@@ -58,6 +58,8 @@
 	/* Allow the EC to enter deep sleep in S0 */
 	#define CONFIG_LOW_POWER_S0
 #elif defined(VARIANT_OCTOPUS_EC_ITE8320)
+	/* IT83XX config */
+	#define CONFIG_IT83XX_VCC_1P8V
 	/* I2C Bus Configuration */
 	#define I2C_PORT_BATTERY	IT83XX_I2C_CH_A	/* Shared bus */
 	#define I2C_PORT_CHARGER	IT83XX_I2C_CH_A	/* Shared bus */

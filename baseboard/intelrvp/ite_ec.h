@@ -10,6 +10,7 @@
 
 /* Optional feature - used by ITE */
 #define CONFIG_IT83XX_FLASH_CLOCK_48MHZ
+#define CONFIG_IT83XX_VCC_1P8V
 
 /* ADC channels */
 #define ADC_TEMP_SNS_AMBIENT_CHANNEL	CHIP_ADC_CH13
