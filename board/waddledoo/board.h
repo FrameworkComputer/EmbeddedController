@@ -122,12 +122,6 @@
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
 
-/* Thermistors */
-#define CONFIG_TEMP_SENSOR
-#define CONFIG_THERMISTOR
-#define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
-#define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_EN_PP3300_A
-
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -160,12 +154,6 @@ enum pwm_channel {
 	PWM_CH_LED1_AMBER,
 	PWM_CH_LED2_WHITE,
 	PWM_CH_COUNT,
-};
-
-enum temp_sensor_id {
-	TEMP_SENSOR_1,
-	TEMP_SENSOR_2,
-	TEMP_SENSOR_COUNT
 };
 
 /* List of possible batteries */
