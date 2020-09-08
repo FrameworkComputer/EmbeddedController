@@ -667,6 +667,11 @@ int ec_config_get_usb4_present(void)
 	return !(fw_config & EC_CFG_NO_USB4_MASK);
 }
 
+unsigned int ec_config_get_thermal_solution(void)
+{
+	return (fw_config & EC_CFG_THERMAL_MASK) >> EC_CFG_THERMAL_L;
+}
+
 /*
  * Power monitoring and management.
  *
