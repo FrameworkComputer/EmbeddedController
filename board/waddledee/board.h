@@ -40,7 +40,7 @@
 #define CONFIG_PWM
 
 /* Sensors */
-#define CONFIG_ACCEL_LIS2DE		/* Lid accel */
+#define CONFIG_ACCEL_KX022		/* Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
 #define CONFIG_SYNC			/* Camera VSYNC */
 /* Sensors without hardware FIFO are in forced mode */
