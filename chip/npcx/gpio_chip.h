@@ -29,7 +29,8 @@ struct npcx_wui {
 			.bit = NPCX_DEVALT##grp##_##pin, .inverted = 0 })
 #define NPCX_ALT_INV(grp, pin) ((struct npcx_alt) {.group = ALT_GROUP_##grp, \
 			.bit = NPCX_DEVALT##grp##_##pin, .inverted = 1 })
-#define ALT(port, index, alt) { NPCX_GPIO(port, index), alt },
+#define ALT(port, index, _alt) { .gpio = NPCX_GPIO(port, index), \
+			.alt = (_alt) },
 
 #define NPCX_LVOL_CTRL_ITEMS(ctrl) { NPCX_LVOL_CTRL_##ctrl##_0, \
 				     NPCX_LVOL_CTRL_##ctrl##_1, \
@@ -54,6 +55,8 @@ void npcx_gpio2uart(void);
 /* Set input buffer of all 1.8v i2c ports. */
 void gpio_enable_1p8v_i2c_wake_up_input(int enable);
 
+void gpio_interrupt(struct npcx_wui wui_int);
+
 /*
  * Include the MIWU, alternative and low-Voltage macro functions for GPIOs
  * depends on Nuvoton chip series.
@@ -62,6 +65,8 @@ void gpio_enable_1p8v_i2c_wake_up_input(int enable);
 #include "gpio_chip-npcx5.h"
 #elif defined(CHIP_FAMILY_NPCX7)
 #include "gpio_chip-npcx7.h"
+#elif defined(CHIP_FAMILY_NPCX9)
+#include "gpio_chip-npcx9.h"
 #else
 #error "Unsupported chip family"
 #endif
