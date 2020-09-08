@@ -15,6 +15,14 @@
  * @param B/C: (Optional) Chip generation in the same series.
  */
 
+/* Chip ID for all variants */
+#define NPCX787G_CHIP_ID		0x1F
+#define NPCX796F_A_B_CHIP_ID		0x21
+#define NPCX796F_C_CHIP_ID		0x29
+#define NPCX797F_C_CHIP_ID		0x20
+#define NPCX797W_B_CHIP_ID		0x24
+#define NPCX797W_C_CHIP_ID		0x2C
+
 /*****************************************************************************/
 /* Hardware features */
 

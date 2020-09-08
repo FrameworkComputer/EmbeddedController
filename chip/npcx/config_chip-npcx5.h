@@ -13,6 +13,12 @@
  * @param G: Google EC.
  */
 
+/* Chip ID for all variants */
+#define NPCX585G_CHIP_ID		0x12
+#define NPCX575G_CHIP_ID		0x13
+#define NPCX586G_CHIP_ID		0x16
+#define NPCX576G_CHIP_ID		0x17
+
 /*****************************************************************************/
 /* Hardware features */
 

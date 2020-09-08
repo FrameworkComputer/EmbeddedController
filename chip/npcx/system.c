@@ -31,7 +31,13 @@
 #define MTC_WUI_MASK       MASK_PIN7
 
 /* ROM address of chip revision */
-#define CHIP_REV_ADDR 0x00007FFC
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+#define CHIP_REV_ADDR        0x0000FFFC
+#define CHIP_REV_STR_SIZE    12
+#else
+#define CHIP_REV_ADDR        0x00007FFC
+#define CHIP_REV_STR_SIZE    6
+#endif
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
@@ -555,8 +561,10 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 }
 #endif /* CONFIG_SUPPORT_CHIP_HIBERNATION */
 
-static char system_to_hex(uint8_t x)
+static char system_to_hex(uint8_t val)
 {
+	uint8_t x = val & 0x0F;
+
 	if (x <= 9)
 		return '0' + x;
 	return 'a' + x - 10;
@@ -821,8 +829,8 @@ const char *system_get_chip_vendor(void)
 	case 0x20:
 		return "Nuvoton";
 	default:
-		*p       = system_to_hex((fam_id & 0xF0) >> 4);
-		*(p + 1) = system_to_hex(fam_id & 0x0F);
+		*p       = system_to_hex(fam_id >> 4);
+		*(p + 1) = system_to_hex(fam_id);
 		*(p + 2) = '\0';
 		return str;
 	}
@@ -837,29 +845,34 @@ const char *system_get_chip_name(void)
 	uint8_t chip_id = NPCX_DEVICE_ID_CR;
 	switch (chip_id) {
 #if defined(CHIP_FAMILY_NPCX5)
-	case 0x12:
+	case NPCX585G_CHIP_ID:
 		return "NPCX585G";
-	case 0x13:
+	case NPCX575G_CHIP_ID:
 		return "NPCX575G";
-	case 0x16:
+	case NPCX586G_CHIP_ID:
 		return "NPCX586G";
-	case 0x17:
+	case NPCX576G_CHIP_ID:
 		return "NPCX576G";
 #elif defined(CHIP_FAMILY_NPCX7)
-	case 0x1F:
+	case NPCX787G_CHIP_ID:
 		return "NPCX787G";
-	case 0x20:
+	case NPCX797F_C_CHIP_ID:
 		return "NPCX797F";
-	case 0x21:
-	case 0x29:
+	case NPCX796F_A_B_CHIP_ID:
+	case NPCX796F_C_CHIP_ID:
 		return "NPCX796F";
-	case 0x24:
-	case 0x2C:
+	case NPCX797W_B_CHIP_ID:
+	case NPCX797W_C_CHIP_ID:
 		return "NPCX797W";
+#elif defined(CHIP_FAMILY_NPCX9)
+	case NPCX996F_CHIP_ID:
+		return "NPCX996F";
+	case NPCX993F_CHIP_ID:
+		return "NPCX993F";
 #endif
 	default:
-		*p       = system_to_hex((chip_id & 0xF0) >> 4);
-		*(p + 1) = system_to_hex(chip_id & 0x0F);
+		*p       = system_to_hex(chip_id >> 4);
+		*(p + 1) = system_to_hex(chip_id);
 		*(p + 2) = '\0';
 		return str;
 	}
@@ -867,12 +880,17 @@ const char *system_get_chip_name(void)
 
 const char *system_get_chip_revision(void)
 {
-	static char rev[6];
+	static char rev[CHIP_REV_STR_SIZE];
 	char *p = rev;
 	/* Read chip generation from SRID_CR */
 	uint8_t chip_gen = NPCX_SRID_CR;
 	/* Read ROM data for chip revision directly */
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+	uint32_t rev_num = *((uint32_t *)CHIP_REV_ADDR);
+#else
 	uint8_t rev_num = *((uint8_t *)CHIP_REV_ADDR);
+#endif
+
 #ifdef CHIP_FAMILY_NPCX7
 	uint8_t chip_id = NPCX_DEVICE_ID_CR;
 #endif
@@ -887,21 +905,34 @@ const char *system_get_chip_revision(void)
 		*p++ = 'A';
 		break;
 	case 0x07:
-		if (chip_id == 0x21 || chip_id == 0x24)
+		if (chip_id == NPCX796F_A_B_CHIP_ID ||
+			chip_id == NPCX797W_B_CHIP_ID)
 			*p++ = 'B';
 		else
 			*p++ = 'C';
 		break;
+#elif defined(CHIP_FAMILY_NPCX9)
+	case 0x09:
+		*p++ = 'A';
+		break;
 #endif
 	default:
-		*p++ = system_to_hex((chip_gen & 0xF0) >> 4);
-		*p++ = system_to_hex(chip_gen & 0x0F);
+		*p++ = system_to_hex(chip_gen >> 4);
+		*p++ = system_to_hex(chip_gen);
 		break;
 	}
 
 	*p++ = '.';
-	*p++ = system_to_hex((rev_num & 0xF0) >> 4);
-	*p++ = system_to_hex(rev_num & 0x0F);
+	/*
+	 * For npcx5/npcx7, the revision number is 1 byte.
+	 * For NPCX9 and later chips, the revision number is 4 bytes.
+	 */
+	for (int s = sizeof(rev_num) - 1; s >= 0; s--) {
+		uint8_t r = rev_num >> (s * 8);
+
+		*p++ = system_to_hex(r >> 4);
+		*p++ = system_to_hex(r);
+	}
 	*p++ = '\0';
 
 	return rev;
