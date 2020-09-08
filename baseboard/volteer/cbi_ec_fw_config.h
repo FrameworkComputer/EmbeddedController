@@ -33,16 +33,27 @@ enum ec_cfg_tabletmode_type {
 	TABLETMODE_ENABLED = 1,
 };
 
+enum ec_cfg_keyboard_backlight_type {
+	KEYBOARD_BACKLIGHT_DISABLED = 0,
+	KEYBOARD_BACKLIGHT_ENABLED = 1
+};
+
+enum ec_cfg_numeric_pad_type {
+	NUMERIC_PAD_DISABLED = 0,
+	NUMERIC_PAD_ENABLED = 1
+};
+
 union volteer_cbi_fw_config {
 	struct {
-		enum ec_cfg_usb_db_type		usb_db : 4;
-		uint32_t			thermal : 4;
-		uint32_t			audio : 3;
-		enum ec_cfg_tabletmode_type	tabletmode : 1;
-		uint32_t			lte_db : 2;
-		uint32_t			reserved_1 : 2;
-		uint32_t			sd_db : 4;
-		uint32_t			reserved_2 : 12;
+		enum ec_cfg_usb_db_type			usb_db : 4;
+		uint32_t				thermal : 4;
+		uint32_t				audio : 3;
+		enum ec_cfg_tabletmode_type		tabletmode : 1;
+		uint32_t				lte_db : 2;
+		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
+		enum ec_cfg_numeric_pad_type		num_pad : 1;
+		uint32_t				sd_db : 4;
+		uint32_t				reserved_2 : 12;
 	};
 	uint32_t raw_value;
 };
@@ -80,5 +91,21 @@ enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void);
  * clamshell operation only.
  */
 bool ec_cfg_has_tabletmode(void);
+
+/**
+ * Check if the FW_CONFIG has enabled keyboard backlight.
+ *
+ * @return true if board supports keyboard backlight, false if the board
+ * doesn't support it.
+ */
+bool ec_cfg_has_keyboard_backlight(void);
+
+/**
+ * Check if the FW_CONFIG has enabled numeric pad.
+ *
+ * @return true if board supports numeric pad, false if the board
+ * doesn't support it.
+ */
+bool ec_cfg_has_numeric_pad(void);
 
 #endif /* __VOLTEER_CBI_EC_FW_CONFIG_H_ */

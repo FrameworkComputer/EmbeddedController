@@ -26,6 +26,7 @@
 #include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -440,6 +441,9 @@ __override void board_cbi_init(void)
 	default:
 		CPRINTS("%sID %d not supported", db_type_prefix, usb_db);
 	}
+
+	if (!IS_ENABLED(TEST_BUILD) && !ec_cfg_has_numeric_pad())
+		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
 }
 
 /******************************************************************************/
