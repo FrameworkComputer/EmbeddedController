@@ -399,6 +399,13 @@ int mt6360_ldo_get_voltage(enum mt6360_ldo_id ldo_id, int *voltage_mv)
 }
 
 /* RGB LED */
+void mt6360_led_init(void)
+{
+	/* Enable LED1 software mode */
+	mt6360_set_bit(MT6360_REG_RGB_EN, MT6360_ISINK1_CHRIND_EN_SEL);
+}
+DECLARE_HOOK(HOOK_INIT, mt6360_led_init, HOOK_PRIO_DEFAULT);
+
 int mt6360_led_enable(enum mt6360_led_id led_id, int enable)
 {
 	if (!IN_RANGE(led_id, 0, MT6360_LED_COUNT))

@@ -23,6 +23,7 @@
 
 #define MT6360_REG_RGB_EN 0x80
 #define MT6360_MASK_ISINK_EN(x) BIT(7 - (x))
+#define MT6360_ISINK1_CHRIND_EN_SEL BIT(3)
 
 #define MT6360_REG_RGB_ISINK(x) (0x81 + (x))
 #define MT6360_MASK_CUR_SEL 0xF
@@ -81,6 +82,8 @@ enum mt6360_led_id {
 
 	MT6360_LED_COUNT,
 };
+
+#define MT6360_LED_BRIGHTNESS_MAX 15
 
 struct mt6360_config_t {
 	int i2c_port;

@@ -82,8 +82,6 @@
 
 /* LED */
 #define CONFIG_LED_COMMON
-#define CONFIG_LED_ONOFF_STATES
-#define CONFIG_LED_POWER_LED
 
 /* PD / USB-C / PPC */
 #define CONFIG_CMD_PPC_DUMP
