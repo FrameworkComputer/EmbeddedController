@@ -6,10 +6,8 @@
  */
 
 #include "common.h"
-#include "console.h"
 #include "i2c.h"
 #include "it5205.h"
-#include "usb_mux.h"
 #include "util.h"
 
 #define MUX_STATE_DP_USB_MASK (USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED)
@@ -22,6 +20,20 @@ static int it5205_read(const struct usb_mux *me, uint8_t reg, int *val)
 static int it5205_write(const struct usb_mux *me, uint8_t reg, uint8_t val)
 {
 	return i2c_write8(me->i2c_port, me->i2c_addr_flags, reg, val);
+}
+
+static int it5205h_sbu_update(const struct usb_mux *me, uint8_t reg,
+			      uint8_t mask, enum mask_update_action action)
+{
+	return i2c_update8(me->i2c_port, IT5205H_SBU_I2C_ADDR_FLAGS,
+			   reg, mask, action);
+}
+
+static int it5205h_sbu_field_update(const struct usb_mux *me, uint8_t reg,
+				    uint8_t field_mask, uint8_t set_value)
+{
+	return i2c_field_update8(me->i2c_port, IT5205H_SBU_I2C_ADDR_FLAGS,
+				 reg, field_mask, set_value);
 }
 
 struct mux_chip_id_t {
@@ -54,7 +66,28 @@ static int it5205_init(const struct usb_mux *me)
 			return EC_ERROR_UNKNOWN;
 	}
 
+	if (IS_ENABLED(CONFIG_USB_MUX_IT5205H_SBU_OVP)) {
+		RETURN_ERROR(it5205h_sbu_field_update(me, IT5205H_REG_VSR,
+				IT5205H_VREF_SELECT_MASK,
+				IT5205H_VREF_SELECT_3_3V));
+
+		RETURN_ERROR(it5205h_sbu_field_update(me, IT5205H_REG_CSBUOVPSR,
+				IT5205H_OVP_SELECT_MASK,
+				IT5205H_OVP_3_68V));
+
+		RETURN_ERROR(it5205h_sbu_update(me, IT5205H_REG_ISR,
+				IT5205H_ISR_CSBU_MASK, MASK_CLR));
+
+		RETURN_ERROR(it5205h_enable_csbu_switch(me, true));
+	}
+
 	return EC_SUCCESS;
+}
+
+enum ec_error_list it5205h_enable_csbu_switch(const struct usb_mux *me, bool en)
+{
+	return it5205h_sbu_update(me, IT5205H_REG_CSBUSR,
+			IT5205H_CSBUSR_SWITCH, en ? MASK_SET : MASK_CLR);
 }
 
 /* Writes control register to set switch mode */

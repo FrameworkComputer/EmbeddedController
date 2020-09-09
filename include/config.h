@@ -4538,6 +4538,9 @@
 /* 'Virtual' USB mux under host (not EC) control */
 #undef CONFIG_USB_MUX_VIRTUAL
 
+/* Enable IT5205H SBU protection switch */
+#undef CONFIG_USB_MUX_IT5205H_SBU_OVP
+
 /*****************************************************************************/
 /* USB GPIO config */
 #undef CONFIG_USB_GPIO
