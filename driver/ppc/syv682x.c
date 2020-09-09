@@ -650,7 +650,7 @@ static int syv682x_init(int port)
 	 * voltage, and thermal shutdown
 	 */
 	regval = (SYV682X_OC_DELAY_10MS << SYV682X_OC_DELAY_SHIFT)
-		| (SYV682X_DSG_TIME_200MS << SYV682X_DSG_TIME_SHIFT)
+		| (SYV682X_DSG_TIME_50MS << SYV682X_DSG_TIME_SHIFT)
 		| (SYV682X_DSG_RON_200_OHM << SYV682X_DSG_RON_SHIFT)
 		| SYV682X_CONTROL_2_SDSG;
 	rv = write_reg(port, SYV682X_CONTROL_2_REG, regval);
