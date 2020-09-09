@@ -4907,6 +4907,12 @@ static void motionsense_display_activities(uint32_t activities)
 	if (activities & BIT(MOTIONSENSE_ACTIVITY_DOUBLE_TAP))
 		printf("%d: Double tap\n",
 		       MOTIONSENSE_ACTIVITY_DOUBLE_TAP);
+	if (activities & BIT(MOTIONSENSE_ACTIVITY_ORIENTATION))
+		printf("%d: Orientation\n",
+		       MOTIONSENSE_ACTIVITY_ORIENTATION);
+	if (activities & BIT(MOTIONSENSE_ACTIVITY_BODY_DETECTION))
+		printf("%d: Body Detection\n",
+		       MOTIONSENSE_ACTIVITY_BODY_DETECTION);
 }
 
 static int cmd_motionsense(int argc, char **argv)
