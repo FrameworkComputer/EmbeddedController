@@ -81,6 +81,9 @@ static int led_set_color(enum ec_led_id led_id, enum led_color color)
 	case EC_LED_ID_BATTERY_LED:
 		rv = led_set_color_battery(color);
 		break;
+	case EC_LED_ID_POWER_LED:
+		rv = led_set_color_power(color);
+		break;
 	default:
 		return EC_ERROR_UNKNOWN;
 	}
