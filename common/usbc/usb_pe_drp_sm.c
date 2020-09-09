@@ -5925,12 +5925,16 @@ static void pe_dr_src_get_source_cap_run(int port)
 					(uint32_t *)rx_emsg[port].buf;
 
 				/*
-				 * src_caps[0] & PDO_FIXED_UNCONSTRAINED
-				 * has useful information to help guide us
-				 * to possibly perform a PR_Swap if that is
-				 * desired
+				 * Unconstrained power by the partner should
+				 * be enough to request a PR_Swap to use their
+				 * power instead of our battery
 				 */
 				pd_set_src_caps(port, cnt, payload);
+				if (pe[port].src_caps[0] &
+						PDO_FIXED_UNCONSTRAINED)
+					PE_SET_DPM_REQUEST(port,
+							DPM_REQUEST_PR_SWAP);
+
 				set_state_pe(port, PE_SRC_READY);
 			} else if (type == PD_CTRL_REJECT ||
 				   type == PD_CTRL_NOT_SUPPORTED) {
