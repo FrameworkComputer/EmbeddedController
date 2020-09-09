@@ -238,7 +238,6 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 static void board_chipset_suspend(void)
 {
 	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 0);
-	ioex_set_level(IOEX_HDMI_DATA_EN_DB, 0);
 
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
 		pi3hdx1204_enable(I2C_PORT_TCPC1,
@@ -246,6 +245,8 @@ static void board_chipset_suspend(void)
 				  0);
 		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
 	}
+
+	ioex_set_level(IOEX_HDMI_DATA_EN_DB, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
