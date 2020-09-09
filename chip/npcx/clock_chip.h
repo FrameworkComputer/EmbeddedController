@@ -40,7 +40,7 @@
 #define APB1DIV 3 /* Default APB1 clock = CORE_CLK/4 */
 /* APB2 clock divider */
 #define APB2DIV 0 /* Let APB2 = CORE_CLK since UART baudrate tolerance */
-#elif defined(CHIP_FAMILY_NPCX7)
+#elif NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 /*
  * NPCX7 clock tree: (Please refer Figure 58. for more information.)
  *
@@ -81,6 +81,10 @@
 #define APB2DIV 5 /* APB2 clock = OSC_CLK/6 */
 /* APB3 clock divider */
 #define APB3DIV 5 /* APB3 clock = OSC_CLK/6 */
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+/* APB4 clock divider */
+#define APB4DIV 5 /* APB4 clock = OSC_CLK/6 */
+#endif
 #endif
 
 /* Get APB clock freq */
@@ -133,9 +137,9 @@
 #if (OSC_CLK > 50000000)
 #error "Unsupported OSC_CLK on NPCX5 series!"
 #endif
-#elif defined(CHIP_FAMILY_NPCX7)
+#elif NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 #if (OSC_CLK > 100000000)
-#error "Unsupported OSC_CLK on NPCX7 series!"
+#error "Unsupported OSC_CLK on NPCX series!"
 #endif
 #endif
 

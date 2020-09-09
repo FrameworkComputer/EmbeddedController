@@ -466,7 +466,7 @@ static void system_set_gpios_and_wakeup_inputs_hibernate(void)
 		}
 	}
 
-#if defined(CHIP_FAMILY_NPCX7)
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 	/* Disable MIWU 2 group 6 inputs which used for the additional GPIOs */
 	NPCX_WKEN(MIWU_TABLE_2, MIWU_GROUP_6)  = 0x00;
 	NPCX_WKPCL(MIWU_TABLE_2, MIWU_GROUP_6) = 0xFF;
@@ -609,7 +609,7 @@ void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
 	SET_BIT(NPCX_WTC, NPCX_WTC_WIE);
 
 	/* Enable MTC interrupt */
-	task_enable_irq(NPCX_IRQ_MTC_WKINTAD_0);
+	task_enable_irq(NPCX_IRQ_MTC);
 
 	/* Enable wake-up input sources & clear pending bit */
 	NPCX_WKPCL(MIWU_TABLE_0, MTC_WUI_GROUP)  |= MTC_WUI_MASK;
@@ -627,7 +627,7 @@ void system_reset_rtc_alarm(void)
 	SET_BIT(NPCX_WTC, NPCX_WTC_PTO);
 
 	/* Disable MTC interrupt */
-	task_disable_irq(NPCX_IRQ_MTC_WKINTAD_0);
+	task_disable_irq(NPCX_IRQ_MTC);
 }
 
 /*
@@ -654,7 +654,7 @@ uint32_t system_get_rtc_alarm(void)
  */
 void system_enable_hib_interrupt(void)
 {
-	task_enable_irq(NPCX_IRQ_MTC_WKINTAD_0);
+	task_enable_irq(NPCX_IRQ_MTC);
 }
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
@@ -728,14 +728,20 @@ void system_pre_init(void)
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_2) = 0xFF;
 #if defined(CHIP_FAMILY_NPCX5)
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x0F; /* Skip GDMA */
-#elif defined(CHIP_FAMILY_NPCX7)
-	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x1F; /* Skip GDMA */
+#elif NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x3F; /* Skip GDMA */
 #endif
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_4) = 0xF4; /* Skip ITIM2/1_PD */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5) = 0xF8;
 
 	pwdwn6 = 0x70 |
+#if NPCX_FAMILY_VERSION <= NPCX_FAMILY_NPCX7
+		/*
+		 * Don't set PD of ITIM6 for NPCX9 and later chips because
+		 * they use it as the system timer.
+		 */
 		BIT(NPCX_PWDWN_CTL6_ITIM6_PD) |
+#endif
 		BIT(NPCX_PWDWN_CTL6_ITIM4_PD); /* Skip ITIM5_PD */
 #if !defined(CONFIG_HOSTCMD_ESPI)
 	pwdwn6 |= 1 << NPCX_PWDWN_CTL6_ESPI_PD;
@@ -750,6 +756,9 @@ void system_pre_init(void)
 #else
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0x07;
 #endif
+#endif
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0xFF;
 #endif
 
 	/* Following modules can be powered down automatically in npcx7 */
@@ -843,6 +852,7 @@ const char *system_get_chip_name(void)
 
 	/* Read Chip ID in core register */
 	uint8_t chip_id = NPCX_DEVICE_ID_CR;
+
 	switch (chip_id) {
 #if defined(CHIP_FAMILY_NPCX5)
 	case NPCX585G_CHIP_ID:

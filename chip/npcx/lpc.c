@@ -721,8 +721,16 @@ static void lpc_init(void)
 	/* Enable clock for LPC peripheral */
 	clock_enable_peripheral(CGC_OFFSET_LPC, CGC_LPC_MASK,
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
+	/*
+	 * In npcx5/7, the host interface type (HIF_TYP_SEL in the DEVCNT
+	 * register) is updated by booter after VCC1 Power-Up reset according to
+	 * VHIF voltage.
+	 * In npcx9, the booter will not do this anymore. The HIF_TYP_SEL
+	 * field should be set by firmware.
+	 */
 #ifdef CONFIG_HOSTCMD_ESPI
-	/* Initialize eSPI IP */
+	/* Initialize eSPI module */
+	NPCX_DEVCNT |= 0x08;
 	espi_init();
 #else
 	/* Switching to LPC interface */

@@ -65,8 +65,9 @@ extern unsigned int __flash_lplfw_start;
 
 /* End address for little FW; defined in linker script */
 extern unsigned int __flash_lplfw_end;
+#endif
 
-#elif defined(CHIP_FAMILY_NPCX7)
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 /* Configure PSL mode setting for the wake-up pins. */
 int system_config_psl_mode(enum gpio_signal signal);
 
