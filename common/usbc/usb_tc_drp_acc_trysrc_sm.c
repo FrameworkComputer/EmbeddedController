@@ -1204,6 +1204,9 @@ static bool tc_perform_snk_hard_reset(int port)
 {
 	switch (tc[port].ps_reset_state) {
 	case PS_STATE0:
+		/* Shutting off power, Disable AutoDischargeDisconnect */
+		tcpm_enable_auto_discharge_disconnect(port, 0);
+
 		/* Hard reset sets us back to default data role */
 		tc_set_data_role(port, PD_ROLE_UFP);
 
@@ -1254,6 +1257,8 @@ static bool tc_perform_snk_hard_reset(int port)
 			tc[port].cc_debounce = get_time().val;
 			sink_power_sub_states(port);
 
+			/* Power is back, Enable AutoDischargeDisconnect */
+			tcpm_enable_auto_discharge_disconnect(port, 1);
 			return true;
 		}
 		/*
@@ -2260,7 +2265,8 @@ static void tc_attached_snk_run(const int port)
 		 * with the swap and should have Vbus, so re-enable
 		 * AutoDischargeDisconnect.
 		 */
-		tcpm_enable_auto_discharge_disconnect(port, 1);
+		if (pd_is_vbus_present(port))
+			tcpm_enable_auto_discharge_disconnect(port, 1);
 	}
 
 	/*
