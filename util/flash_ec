@@ -796,9 +796,14 @@ function claim_pty() {
 	done
 }
 
+# Returns the serialnumber of the specified servo.
 function get_serial() {
 	if [[ "${SERVO_TYPE}" =~ "servo_v4_with_servo_micro" ]]; then
 		if [[ -z "${BOARD}" ]]; then
+			sn_ctl="servo_micro_"
+		elif [[ "$(dut_control_get "servo_micro_for_${BOARD}_serialname")" =~ \
+				"unknown" ]] ; then
+			# Fall back to servo_micro_ if S/N is uknown.
 			sn_ctl="servo_micro_"
 		else
 			sn_ctl="servo_micro_for_${BOARD}_"
