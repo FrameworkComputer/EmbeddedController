@@ -60,6 +60,8 @@ GPIO_INT(WP,                 PIN(I, 4), GPIO_INT_BOTH,
 GPIO_INT(SPI0_CS,            PIN(M, 5), GPIO_INT_FALLING,
          spi_event)        /* SPI slave Chip Select -- AP_SPI_EC_CS_L */
 GPIO_INT(X_EC_GPIO2,         PIN(B, 2), GPIO_ODR_HIGH, x_ec_interrupt)
+GPIO_INT(USB_C0_MUX_INT_L,   PIN(M, 3), GPIO_INT_FALLING | GPIO_PULL_UP,
+         it5205h_sbu_interrupt)
 
 /* Power Sequencing Signals */
 GPIO(EC_PMIC_EN_ODL,         PIN(D, 0), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
@@ -85,6 +87,7 @@ GPIO(EC_BATT_PRES_ODL,       PIN(C, 0), GPIO_INPUT)
 GPIO(BC12_DET_EN,            PIN(J, 5), GPIO_OUT_LOW) /* EN_USB_C0_BC12_DET */
 GPIO(EN_EC_ID_ODL,           PIN(H, 5), GPIO_ODR_LOW)
 GPIO(ENTERING_RW,            PIN(C, 5), GPIO_OUT_LOW) /* EC_ENTERING_RW */
+GPIO(EC_USB_C0_MUX_RESET_L,  PIN(D, 7), GPIO_OUT_HIGH)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C_A_SCL,              PIN(B, 3), GPIO_INPUT) /* I2C_CHG_BATT_SCL */
@@ -146,7 +149,6 @@ UNIMPLEMENTED_GPIO(USB_A0_FAULT_ODL,       PIN(A, 7))
 UNIMPLEMENTED_GPIO(CHARGER_PROCHOT_ODL,    PIN(C, 3))
 UNIMPLEMENTED_GPIO(USB_C0_FRS_EN,          PIN(H, 3))
 UNIMPLEMENTED_GPIO(PG_MT6315_GPU_ODL,      PIN(H, 6))
-UNIMPLEMENTED_GPIO(USB_C0_MUX_INT_L,       PIN(G, 3))
 UNIMPLEMENTED_GPIO(EN_PP3000_SD_U,         PIN(G, 1))
 /* reserved for future use */
 UNIMPLEMENTED_GPIO(CCD_MODE_ODL,           PIN(C, 4))

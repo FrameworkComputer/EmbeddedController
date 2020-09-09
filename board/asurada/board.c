@@ -6,6 +6,7 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "board/asurada/it5205_sbu.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
@@ -148,6 +149,9 @@ static void board_init(void)
 	/* Enable motion sensor interrupt */
 	gpio_enable_interrupt(GPIO_BASE_IMU_INT_L);
 	gpio_enable_interrupt(GPIO_LID_ACCEL_INT_L);
+
+	/* Enable it5205h sbu ovp interrupt */
+	gpio_enable_interrupt(GPIO_USB_C0_MUX_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -625,7 +629,7 @@ int board_regulator_get_voltage(uint32_t index, uint32_t *voltage_mv)
 /* TODO(b/163098341): Remove these after rev0 deprecated. */
 enum gpio_signal GPIO_AC_PRESENT = GPIO_AC_PRESENT_PLACEHOLDER;
 
-static void ac_present_init(void)
+static void board_gpio_init(void)
 {
 	if (board_get_version() == 0)
 		GPIO_AC_PRESENT = GPIO_EC_GPM2;
@@ -639,7 +643,7 @@ static void ac_present_init(void)
 	gpio_enable_interrupt(GPIO_AC_PRESENT);
 	extpower_interrupt(GPIO_AC_PRESENT);
 }
-DECLARE_HOOK(HOOK_INIT, ac_present_init, HOOK_PRIO_INIT_ADC + 1);
+DECLARE_HOOK(HOOK_INIT, board_gpio_init, HOOK_PRIO_INIT_ADC + 1);
 
 /* Sensor */
 static struct mutex g_base_mutex;
