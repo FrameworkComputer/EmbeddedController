@@ -448,7 +448,7 @@ static void sm5803_init(int chgnum)
 
 			rv |= chg_write8(chgnum, 0x22, 0xB3);
 
-			rv |= chg_write8(chgnum, 0x3E, 0x34);
+			rv |= chg_write8(chgnum, 0x3E, 0x3C);
 
 			rv |= chg_write8(chgnum, 0x4B, 0xA6);
 			rv |= chg_write8(chgnum, 0x4F, 0xBF);
@@ -487,7 +487,7 @@ static void sm5803_init(int chgnum)
 
 			rv |= chg_write8(chgnum, 0x22, 0xB3);
 
-			rv |= chg_write8(chgnum, 0x3E, 0x34);
+			rv |= chg_write8(chgnum, 0x3E, 0x3C);
 
 			rv |= chg_write8(chgnum, 0x4F, 0xBF);
 
