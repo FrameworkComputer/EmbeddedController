@@ -6,7 +6,13 @@
 #
 # Generate version information for the EC binary
 
+: "${BOARD:=}"
+: "${CR50_DEV:=}"
+: "${CR50_SQA:=}"
+: "${CRYPTO_TEST:=}"
 : "${REPRODUCIBLE_BUILD:=}"
+: "${STATIC_VERSION:=}"
+: "${VCSID:=}"
 
 # Use this symbol as a separator to be able to reliably concatenate strings of
 # text.
@@ -63,6 +69,7 @@ get_tree_version() {
     vbase="${ver_major}.${ver_branch}.${numcommits}${marker}${ghash}"
   else
     # Fall back to the VCSID provided by the packaging system if available.
+    # Ex VCSID: 0.0.1-r1519-9b368af6a4943b90941471d0bdf7e7208788f898
     if ghash=${VCSID##*-}; then
       vbase="1.1.9999-${ghash:0:7}"
     else
