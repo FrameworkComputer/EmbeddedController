@@ -8,27 +8,18 @@
 #include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "i2c.h"
+#include "lcd.h"
 #include "queue_policies.h"
 #include "registers.h"
 #include "task.h"
+#include "timer.h"
 #include "usart-stm32f0.h"
 #include "usart_tx_dma.h"
 #include "usart_rx_dma.h"
 #include "usb_gpio.h"
 #include "usb-stream.h"
 #include "util.h"
-#include "usb_mux.h"
-#include "usb_charge.h"
-#include "usb_common.h"
-#include "usb_pd_tcpm.h"
-#include "usb_pd.h"
-#include "charge_state.h"
-#include "tcpm.h"
-#include "i2c.h"
-#include "power.h"
-#include "power_button.h"
-#include "printf.h"
-#include "timer.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -171,6 +162,11 @@ static void board_init(void)
 	/* Enable TCPC alert interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
 
+	lcd_init(20, 4, 0);
+	lcd_set_cursor(0, 0);
+	lcd_print_string("USB-C");
+	lcd_set_cursor(0, 1);
+	lcd_print_string("Sink Advertiser");
 	queue_init(&loopback_queue);
 	queue_init(&usart_to_usb);
 	queue_init(&usb_to_usart);
