@@ -12,6 +12,10 @@
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 
+/* Debug Congifuation */
+#define DEBUG_GET_CC
+#define DEBUG_ROLE_CTRL_UPDATES
+
 /* Enable USART1,3,4 and USB streams */
 #define CONFIG_STREAM_USART
 #define CONFIG_STREAM_USART1
@@ -34,8 +38,33 @@
 #define CONFIG_USB_PID 0x1234
 #define CONFIG_USB_CONSOLE
 
+/* USB Power Delivery configuration */
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_TCPMV1
+#define CONFIG_USB_PD_PORT_MAX_COUNT 1
+#define CONFIG_USB_PD_TCPM_TCPCI
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_VBUS_DETECT_TCPC
+#define CONFIG_USB_PD_REV30
+#define CONFIG_USB_PD_DECODE_SOP
+#define CONFIG_USBC_VCONN
+#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+#define CONFIG_USB_PD_TCPM_FUSB307
+
+/* delay to turn on/off vconn */
+#define PD_VCONN_SWAP_DELAY 5000 /* us */
+/* Define operating power and max power */
+#define PD_OPERATING_POWER_MW 15000
+#define PD_MAX_VOLTAGE_MV 20000
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_POWER_MW       ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
+
+/* Degine board specific type-C power constants */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 160000  /* us */
+
 /* I2C master port connected to the TCPC */
-#define I2C_PORT_TCPC 0
+#define I2C_PORT_TCPC 1
 
 /* LCD Configuration */
 #define LCD_SLAVE_ADDR 0x27
