@@ -581,8 +581,23 @@ void tc_request_power_swap(int port)
 
 static bool pd_comm_allowed_by_policy(void)
 {
-	return IS_ENABLED(CONFIG_SYSTEM_UNLOCKED) || system_is_in_rw() ||
-	       vboot_allow_usb_pd();
+	if (system_is_in_rw())
+		return true;
+
+	if (vboot_allow_usb_pd())
+		return true;
+
+	/*
+	 * If enable PD in RO on a non-EFS2 device, a hard reset will be issued
+	 * when sysjump to RW that makes the device brownout on the dead-battery
+	 * case. Disable PD for this special case as a workaround.
+	 */
+	if (IS_ENABLED(CONFIG_SYSTEM_UNLOCKED) &&
+	    (IS_ENABLED(CONFIG_VBOOT_EFS2) ||
+	     usb_get_battery_soc() >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC))
+		return true;
+
+	return false;
 }
 
 static void tc_policy_pd_enable(int port, int en)
