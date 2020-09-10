@@ -360,7 +360,7 @@ bool pd_is_try_source_capable(void)
 	 * and at some minimum percentage.
 	 */
 	new_try_src = (try_src &&
-		usb_get_battery_soc() > CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC);
+		usb_get_battery_soc() >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC);
 
 #ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
 	/*
