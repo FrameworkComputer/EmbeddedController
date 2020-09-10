@@ -1018,6 +1018,7 @@ static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 {
 	enum ec_error_list rv;
 	int reg;
+	int selected_current;
 
 	if (enabled) {
 		rv = chg_read8(chgnum, SM5803_REG_ANA_EN1, &reg);
@@ -1060,6 +1061,19 @@ static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 		}
 	}
 
+
+	/*
+	 * In order to ensure the Vbus output doesn't overshoot too much, turn
+	 * the starting voltage down to 4.8 V and ramp up after 4 ms
+	 */
+	rv = chg_read8(chgnum, SM5803_REG_DISCH_CONF5, &reg);
+	if (rv)
+		return rv;
+
+	selected_current = (reg & SM5803_DISCH_CONF5_CLS_LIMIT) *
+							SM5803_CLS_CURRENT_STEP;
+	sm5803_set_otg_current_voltage(chgnum, selected_current, 4800);
+
 	/*
 	 * Enable: SOURCE_MODE - enable sourcing out
 	 *	   DIRECTCHG_SOURCE_EN - enable current loop (for designs with
@@ -1075,6 +1089,10 @@ static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 		rv = sm5803_flow1_update(chgnum, CHARGER_MODE_SOURCE |
 					 SM5803_FLOW1_DIRECTCHG_SRC_EN,
 					 MASK_CLR);
+
+	usleep(4000);
+
+	sm5803_set_otg_current_voltage(chgnum, selected_current, 5000);
 
 	return rv;
 }
