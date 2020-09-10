@@ -43,8 +43,13 @@ enum fw_config_tablet_mode_type {
 #define FW_CONFIG_TABLET_MODE_OFFSET		10
 #define FW_CONFIG_TABLET_MODE_MASK		GENMASK(10, 10)
 
+#define FW_CONFIG_KB_LAYOUT_OFFSET		12
+#define FW_CONFIG_KB_LAYOUT_MASK		GENMASK(13, 12)
+
 enum fw_config_db get_cbi_fw_config_db(void);
 enum fw_config_kblight_type get_cbi_fw_config_kblight(void);
 enum fw_config_tablet_mode_type get_cbi_fw_config_tablet_mode(void);
+
+int get_cbi_fw_config_keyboard(void);
 
 #endif /* _DEDEDE_CBI_FW_CONFIG__H_ */
