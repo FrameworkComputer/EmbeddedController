@@ -1759,7 +1759,8 @@ void charger_task(void *u)
 		charger_get_params(&curr.chg);
 		battery_get_params(&curr.batt);
 #ifdef CONFIG_OCPC
-		ocpc_get_adcs(&curr.ocpc);
+		if (curr.ac)
+			ocpc_get_adcs(&curr.ocpc);
 #endif /* CONFIG_OCPC */
 
 		if (prev_bp != curr.batt.is_present) {
