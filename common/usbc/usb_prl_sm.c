@@ -103,8 +103,8 @@
  * Debug log level - higher number == more log
  *   Level 0: disabled
  *   Level 1: not currently used
- *   Level 2: plus non-ping messages and PRL states
- *   Level 3: plus ping packet and packet dump on error
+ *   Level 2: plus non-ping messages
+ *   Level 3: plus ping packet and PRL states
  *
  * Note that higher log level causes timing changes and thus may affect
  * performance.
@@ -365,7 +365,7 @@ test_export_static enum usb_prl_tx_state prl_tx_get_state(const int port)
 /* Print the protocol transmit statemachine's current state. */
 static void print_current_prl_tx_state(const int port)
 {
-	if (prl_debug_level >= 2)
+	if (prl_debug_level >= DEBUG_LEVEL_3)
 		CPRINTS("C%d: %s", port,
 				prl_tx_state_names[prl_tx_get_state(port)]);
 }
@@ -386,7 +386,7 @@ enum usb_prl_hr_state prl_hr_get_state(const int port)
 /* Print the hard reset statemachine's current state. */
 static void print_current_prl_hr_state(const int port)
 {
-	if (prl_debug_level >= 2)
+	if (prl_debug_level >= DEBUG_LEVEL_3)
 		CPRINTS("C%d: %s", port,
 				prl_hr_state_names[prl_hr_get_state(port)]);
 }
@@ -409,7 +409,7 @@ test_export_static enum usb_rch_state rch_get_state(const int port)
 /* Print the chunked Rx statemachine's current state. */
 static void print_current_rch_state(const int port)
 {
-	if (prl_debug_level >= 2)
+	if (prl_debug_level >= DEBUG_LEVEL_3)
 		CPRINTS("C%d: %s", port,
 				rch_state_names[rch_get_state(port)]);
 }
@@ -437,7 +437,7 @@ test_export_static enum usb_tch_state tch_get_state(const int port)
 /* Print the chunked Tx statemachine's current state. */
 static void print_current_tch_state(const int port)
 {
-	if (prl_debug_level >= 2)
+	if (prl_debug_level >= DEBUG_LEVEL_3)
 		CPRINTS("C%d: %s", port,
 				tch_state_names[tch_get_state(port)]);
 }
