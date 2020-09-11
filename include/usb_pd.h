@@ -249,6 +249,10 @@ enum pd_rx_errors {
 #define PD_T_VPDCTDD           (4*MSEC) /* max of 4ms */
 #define PD_T_VPDDISABLE       (25*MSEC) /* min of 25ms */
 
+/* Voltage thresholds in mV (Table 7-24, PD 3.0 Version 2.0 Spec) */
+#define PD_V_SAFE0V_MAX		800
+#define PD_V_SAFE5V_MIN		4750
+
 /* function table for entered mode */
 struct amode_fx {
 	int (*status)(int port, uint32_t *payload);
