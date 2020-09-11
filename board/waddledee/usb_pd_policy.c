@@ -73,6 +73,20 @@ int pd_set_power_supply_ready(int port)
 	return EC_SUCCESS;
 }
 
+__override bool pd_check_vbus_level(int port, enum vbus_level level)
+{
+	int vbus_voltage;
+
+	/* If we're unable to speak to the charger, best to guess false */
+	if (charger_get_vbus_voltage(port, &vbus_voltage))
+		return false;
+
+	if (level == VBUS_SAFE0V)
+		return vbus_voltage < PD_V_SAFE0V_MAX;
+	else
+		return vbus_voltage > PD_V_SAFE5V_MIN;
+}
+
 int pd_snk_is_vbus_provided(int port)
 {
 	return sm5803_is_vbus_present(port);
