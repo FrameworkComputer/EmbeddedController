@@ -18,8 +18,11 @@
 #define FP_MAX_FINGER_COUNT 5
 #endif
 
-#ifdef TEST_BUILD
-/* This represents the mock of the private */
+#if defined(HAVE_PRIVATE) && defined(TEST_BUILD)
+/*
+ * For unittest in a private build, enable driver-related code in
+ * common/fpsensor/ so that they can be tested (with fp_sensor_mock).
+ */
 #define HAVE_FP_PRIVATE_DRIVER
 #endif
 
