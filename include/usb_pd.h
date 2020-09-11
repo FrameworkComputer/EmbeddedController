@@ -2679,10 +2679,13 @@ bool pd_is_disconnected(int port);
 /**
  * Return true if vbus is at level on the specified port.
  *
+ * Note that boards may override this function if they have a method outside the
+ * TCPCI driver to verify vSafe0V
+ *
  * @param port USB-C port number
  * @param level vbus_level to check against
  */
-bool pd_check_vbus_level(int port, enum vbus_level level);
+__override_proto bool pd_check_vbus_level(int port, enum vbus_level level);
 
 /**
  * Return true if vbus is at Safe5V on the specified port.

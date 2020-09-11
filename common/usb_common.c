@@ -760,7 +760,14 @@ void pd_deferred_resume(int port)
 }
 #endif /* CONFIG_USB_PD_TCPM_TCPCI */
 
-bool pd_check_vbus_level(int port, enum vbus_level level)
+
+/*
+ * Check the specified Vbus level
+ *
+ * Note that boards may override this function if they have a method outside the
+ * TCPCI driver to verify vSafe0V.
+ */
+__overridable bool pd_check_vbus_level(int port, enum vbus_level level)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_VBUS_DETECT_TCPC))
 		return tcpm_check_vbus_level(port, level);
