@@ -767,10 +767,13 @@ void tc_partner_usb_comm(int port, int en)
 		TC_CLR_FLAG(port, TC_FLAGS_PARTNER_USB_COMM);
 
 	/*
-	 * Update the mux setting according to the port partner's
-	 * USB communication capability.
+	 * If PE disables the USB communication capability, update the mux
+	 * accordingly while, if the PE enables the USB communication
+	 * capability, update the mux only if it is in disconnect state
 	 */
-	set_usb_mux_with_current_data_role(port);
+	if (!en || (IS_ENABLED(CONFIG_USBC_SS_MUX) &&
+	    usb_mux_get(port) == USB_PD_MUX_NONE))
+		set_usb_mux_with_current_data_role(port);
 }
 
 void tc_partner_dr_data(int port, int en)
