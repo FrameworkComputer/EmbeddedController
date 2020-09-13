@@ -8,10 +8,10 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
-GPIO_INT(USER_BUTTON_ENTER, PIN(A, 0), GPIO_INT_FALLING, button_event)
-GPIO_INT(USER_BUTTON_UP, PIN(A, 1), GPIO_INT_FALLING, button_event)
-GPIO_INT(USER_BUTTON_DOWN, PIN(A, 2), GPIO_INT_FALLING, button_event)
 GPIO_INT(USB_C0_PD_INT_ODL, PIN(A, 8), GPIO_INT_FALLING | GPIO_PULL_UP, tcpc_alert_event)
+GPIO_INT(USER_BUTTON_ENTER, PIN(A, 0), GPIO_INT_FALLING, button_enter_event)
+GPIO_INT(USER_BUTTON_REFRESH, PIN(A, 1), GPIO_INT_FALLING, button_refresh_event)
+GPIO_INT(USER_BUTTON_DOWN, PIN(A, 2), GPIO_INT_FALLING, button_down_event)
 
 /*
  * I2C pins should be configured as inputs until I2C module is

@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "lcd.h"
+#include "printf.h"
 #include "queue_policies.h"
 #include "registers.h"
 #include "task.h"
@@ -20,6 +21,7 @@
 #include "usart_rx_dma.h"
 #include "usb_gpio.h"
 #include "usb-stream.h"
+#include "usb_common.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -31,14 +33,119 @@ static void tcpc_alert_event(enum gpio_signal signal)
 }
 
 /******************************************************************************
+ * Handle button presses. Press BUTTON REFRESH to refresh pdos shown on lcd.
+ * Press BUTTON DOWN to select pdo. Prss BUTTON ENTER to confirm selection.
+ */
+static int count;
+
+static void button_enter_event_deferred(void)
+{
+	uint32_t ma, mv;
+
+	CPRINTS("Button enter event");
+
+	if (count >= 0 && count < pd_get_src_cap_cnt(0)) {
+		pd_extract_pdo_power(pd_get_src_caps(0)[count], &ma, &mv);
+		pd_request_source_voltage(0, mv);
+	} else {
+		CPRINTS("ERROR: button counter weird value.");
+		return;
+	}
+}
+DECLARE_DEFERRED(button_enter_event_deferred);
+
+void button_enter_event(enum gpio_signal signal)
+{
+	hook_call_deferred(&button_enter_event_deferred_data, 100 * MSEC);
+}
+
+static void button_refresh_event_deferred(void)
+{
+	int i;
+	uint32_t ma, mv;
+	char c[20];
+
+	CPRINTS("Button refresh event");
+	count = 0;
+
+	/* Display supply voltage on first page. */
+	lcd_clear();
+	for (i = 0; i < MIN(pd_get_src_cap_cnt(0), 4); i++) {
+		pd_extract_pdo_power(pd_get_src_caps(0)[i], &ma, &mv);
+		snprintf(c, ARRAY_SIZE(c), "[%d] %dmV %dmA", i, mv, ma);
+		lcd_set_cursor(0, i);
+		lcd_print_string(c);
+	}
+
+	/* Display selector */
+	lcd_set_cursor(19, 0);
+	lcd_print_string("V");
+}
+DECLARE_DEFERRED(button_refresh_event_deferred);
+
+void button_refresh_event(enum gpio_signal signal)
+{
+	hook_call_deferred(&button_refresh_event_deferred_data, 100 * MSEC);
+}
+
+static void button_down_event_deferred(void)
+{
+	int i;
+	uint32_t ma, mv;
+	char c[20];
+
+	CPRINTS("Button down event");
+	if (pd_get_src_cap_cnt(0) > 0)
+		count = (count + 1) % pd_get_src_cap_cnt(0);
+	else {
+		/* Hasn't plug in adaptor yet, do nothing. */
+		return;
+	}
+
+	/* Display all supply voltage, count will never be greater than 7 */
+	if (count == 0) {
+		lcd_clear();
+		for (i = 0; i < MIN(pd_get_src_cap_cnt(0), 4); i++) {
+			pd_extract_pdo_power(pd_get_src_caps(0)[i], &ma, &mv);
+			snprintf(c, ARRAY_SIZE(c), "[%d] %dmV %dmA", i, mv, ma);
+			lcd_set_cursor(0, i);
+			lcd_print_string(c);
+		}
+	}
+	if (count == 4) {
+		lcd_clear();
+		for (i = 4; i < pd_get_src_cap_cnt(0); i++) {
+			pd_extract_pdo_power(pd_get_src_caps(0)[i], &ma, &mv);
+			snprintf(c, ARRAY_SIZE(c), "[%d] %dmV %dmA", i, mv, ma);
+			lcd_set_cursor(0, i - 4);
+			lcd_print_string(c);
+		}
+	}
+
+	/* Clear last col on LCD */
+	for (i = 0; i < 4; i++) {
+		lcd_set_cursor(19, i);
+		lcd_print_string(" ");
+	}
+	/* Display selector */
+	lcd_set_cursor(19, count % 4);
+	lcd_print_string("V");
+}
+DECLARE_DEFERRED(button_down_event_deferred);
+
+void button_down_event(enum gpio_signal signal)
+{
+	hook_call_deferred(&button_down_event_deferred_data, 100 * MSEC);
+}
+
+/******************************************************************************
  * Build GPIO tables and expose a subset of the GPIOs over USB.
  */
-void button_event(enum gpio_signal signal);
 #include "gpio_list.h"
 
 static enum gpio_signal const usb_gpio_list[] = {
 	GPIO_USER_BUTTON_ENTER,
-	GPIO_USER_BUTTON_UP,
+	GPIO_USER_BUTTON_REFRESH,
 	GPIO_USER_BUTTON_DOWN,
 };
 
@@ -112,23 +219,6 @@ USB_STREAM_CONFIG(forward_usb,
 		  USB_STREAM_TX_SIZE,
 		  usb_to_usart,
 		  usart_to_usb)
-
-/******************************************************************************
- * Handle button presses by cycling the LEDs on the board.  Also run a tick
- * handler to cycle them when they are not actively under USB control.
- */
-static enum gpio_signal button_signal;
-
-static void button_event_deferred(void)
-{
-}
-DECLARE_DEFERRED(button_event_deferred);
-
-void button_event(enum gpio_signal signal)
-{
-	button_signal = signal;
-	hook_call_deferred(&button_event_deferred_data, 100 * MSEC);
-}
 
 /******************************************************************************
  * Define the strings used in our USB descriptors.
@@ -215,7 +305,7 @@ static void board_init(void)
 {
 	/* Enable button interrupts */
 	gpio_enable_interrupt(GPIO_USER_BUTTON_ENTER);
-	gpio_enable_interrupt(GPIO_USER_BUTTON_UP);
+	gpio_enable_interrupt(GPIO_USER_BUTTON_REFRESH);
 	gpio_enable_interrupt(GPIO_USER_BUTTON_DOWN);
 	/* Enable TCPC alert interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
