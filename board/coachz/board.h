@@ -22,9 +22,6 @@
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_FLASH_SIZE (512 * 1024)  /* 512KB internal spi flash */
 
-/* Switchcap */
-#define CONFIG_LN9310
-
 /* Battery */
 #define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
@@ -70,8 +67,6 @@
 #define GPIO_AC_PRESENT GPIO_ACOK_OD
 #define GPIO_WP_L GPIO_EC_WP_ODL
 #define GPIO_PMIC_RESIN_L GPIO_PM845_RESIN_L
-#define GPIO_SWITCHCAP_PG_INT_L GPIO_DA9313_GPIO0
-#define GPIO_SWITCHCAP_ON_L GPIO_SWITCHCAP_ON
 
 #ifndef __ASSEMBLER__
 
@@ -111,7 +106,6 @@ enum battery_type {
 void board_set_switchcap_power(int enable);
 int board_is_switchcap_enabled(void);
 int board_is_switchcap_power_good(void);
-enum battery_cell_type board_get_battery_cell_type(void);
 /* Custom function to indicate if sourcing VBUS */
 int board_is_sourcing_vbus(int port);
 /* Enable VBUS sink for a given port */

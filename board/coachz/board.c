@@ -19,7 +19,6 @@
 #include "hooks.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
-#include "ln9310.h"
 #include "pi3usb9201.h"
 #include "power.h"
 #include "power_button.h"
@@ -41,11 +40,8 @@ static void usb0_evt(enum gpio_signal signal);
 static void usb1_evt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
 static void board_connect_c0_sbu(enum gpio_signal s);
-static void switchcap_interrupt(enum gpio_signal signal);
 
 #include "gpio_list.h"
-
-static uint8_t sku_id;
 
 /* GPIO Interrupt Handlers */
 static void tcpc_alert_event(enum gpio_signal signal)
@@ -105,11 +101,6 @@ static void board_connect_c0_sbu(enum gpio_signal s)
 	hook_call_deferred(&board_connect_c0_sbu_deferred_data, 0);
 }
 
-static void switchcap_interrupt(enum gpio_signal signal)
-{
-	ln9310_interrupt(signal);
-}
-
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Measure VBUS through a 1/10 voltage divider */
@@ -153,12 +144,6 @@ const struct pwm_t pwm_channels[] = {
 	[PWM_CH_DISPLIGHT] = { .channel = 5, .flags = 0, .freq = 4800 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
-/* LN9310 switchcap */
-const struct ln9310_config_t ln9310_config = {
-	.i2c_port = I2C_PORT_POWER,
-	.i2c_addr_flags = LN9310_I2C_ADDR_0_FLAGS,
-};
 
 /* Power Path Controller */
 struct ppc_config_t ppc_chips[] = {
@@ -343,135 +328,6 @@ void lid_angle_peripheral_enable(int enable)
 }
 #endif
 
-static int board_is_clamshell(void)
-{
-	/* SKU ID of Limozeen: 4, 5 */
-	return sku_id == 4 || sku_id == 5;
-}
-
-enum battery_cell_type board_get_battery_cell_type(void)
-{
-	/* SKU ID of Limozeen: 4, 5 -> 3S battery */
-	if (sku_id == 4 || sku_id == 5)
-		return BATTERY_CELL_TYPE_3S;
-
-	return BATTERY_CELL_TYPE_UNKNOWN;
-}
-
-static void board_update_sensor_config_from_sku(void)
-{
-	if (board_is_clamshell()) {
-		motion_sensor_count = 0;
-		gmr_tablet_switch_disable();
-		/* The base accel is not stuffed; don't allow line to float */
-		gpio_set_flags(GPIO_ACCEL_GYRO_INT_L,
-			       GPIO_INPUT | GPIO_PULL_DOWN);
-	} else {
-		motion_sensor_count = ARRAY_SIZE(motion_sensors);
-		/* Enable interrupt for the base accel sensor */
-		gpio_enable_interrupt(GPIO_ACCEL_GYRO_INT_L);
-	}
-}
-
-/* Read SKU ID from GPIO and initialize variables for board variants */
-static void sku_init(void)
-{
-	uint8_t val = 0;
-
-	if (gpio_get_level(GPIO_SKU_ID0))
-		val |= 0x01;
-	if (gpio_get_level(GPIO_SKU_ID1))
-		val |= 0x02;
-	if (gpio_get_level(GPIO_SKU_ID2))
-		val |= 0x04;
-
-	sku_id = val;
-	CPRINTS("SKU: %u", sku_id);
-
-	board_update_sensor_config_from_sku();
-}
-DECLARE_HOOK(HOOK_INIT, sku_init, HOOK_PRIO_INIT_I2C + 1);
-
-static int board_has_ln9310(void)
-{
-	static int ln9310_present = -1;
-	int status, val;
-
-	/* Cache the status of LN9310 present or not */
-	if (ln9310_present == -1) {
-		status = i2c_read8(ln9310_config.i2c_port,
-				   ln9310_config.i2c_addr_flags,
-				   LN9310_REG_CHIP_ID,
-				   &val);
-
-		/*
-		 * Any error reading LN9310 CHIP_ID over I2C means the chip
-		 * not present. Fallback to use DA9313 switchcap.
-		 */
-		ln9310_present = !status && val == LN9310_CHIP_ID;
-	}
-
-	return ln9310_present;
-}
-
-static void board_switchcap_init(void)
-{
-	if (board_has_ln9310()) {
-		CPRINTS("Use switchcap: LN9310");
-
-		/* Configure and enable interrupt for LN9310 */
-		gpio_set_flags(GPIO_SWITCHCAP_PG_INT_L, GPIO_INT_FALLING);
-		gpio_enable_interrupt(GPIO_SWITCHCAP_PG_INT_L);
-
-		/*
-		 * Configure LN9310 enable, open-drain output. Don't set the
-		 * level here; otherwise, it will override its value and
-		 * shutdown the switchcap when sysjump to RW.
-		 *
-		 * Note that the gpio.inc configures it GPIO_OUT_LOW. When
-		 * sysjump to RW, will output push-pull a short period of
-		 * time. As it outputs LOW, should be fine.
-		 *
-		 * This GPIO changes like:
-		 * (1) EC boots from RO -> high-Z
-		 * (2) GPIO init according to gpio.inc -> push-pull LOW
-		 * (3) This function configures it -> open-drain HIGH
-		 * (4) Power sequence turns on the switchcap -> open-drain LOW
-		 * (5) EC sysjumps to RW
-		 * (6) GPIO init according to gpio.inc -> push-pull LOW
-		 * (7) This function configures it -> open-drain LOW
-		 */
-		gpio_set_flags(GPIO_SWITCHCAP_ON_L,
-			       GPIO_OUTPUT | GPIO_OPEN_DRAIN);
-
-		/* Only configure the switchcap if not sysjump */
-		if (!system_jumped_late()) {
-			/*
-			 * Deassert the enable pin (set it HIGH), so the
-			 * switchcap won't be enabled after the switchcap is
-			 * configured from standby mode to switching mode.
-			 */
-			gpio_set_level(GPIO_SWITCHCAP_ON_L, 1);
-			ln9310_init();
-		}
-	} else {
-		CPRINTS("Use switchcap: DA9313");
-
-		/*
-		 * When the chip in power down mode, it outputs high-Z.
-		 * Set pull-down to avoid floating.
-		 */
-		gpio_set_flags(GPIO_DA9313_GPIO0, GPIO_INPUT | GPIO_PULL_DOWN);
-
-		/*
-		 * Configure DA9313 enable, push-pull output. Don't set the
-		 * level here; otherwise, it will override its value and
-		 * shutdown the switchcap when sysjump to RW.
-		 */
-		gpio_set_flags(GPIO_SWITCHCAP_ON, GPIO_OUTPUT);
-	}
-}
-
 /* Initialize board. */
 static void board_init(void)
 {
@@ -488,8 +344,6 @@ static void board_init(void)
 
 	/* Set the backlight duty cycle to 0. AP will override it later. */
 	pwm_set_duty(PWM_CH_DISPLIGHT, 0);
-
-	board_switchcap_init();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -541,26 +395,17 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
 void board_set_switchcap_power(int enable)
 {
-	if (board_has_ln9310())
-		gpio_set_level(GPIO_SWITCHCAP_ON_L, !enable);
-	else
-		gpio_set_level(GPIO_SWITCHCAP_ON, enable);
+	gpio_set_level(GPIO_SWITCHCAP_ON, enable);
 }
 
 int board_is_switchcap_enabled(void)
 {
-	if (board_has_ln9310())
-		return !gpio_get_level(GPIO_SWITCHCAP_ON_L);
-	else
-		return gpio_get_level(GPIO_SWITCHCAP_ON);
+	return gpio_get_level(GPIO_SWITCHCAP_ON);
 }
 
 int board_is_switchcap_power_good(void)
 {
-	if (board_has_ln9310())
-		return ln9310_power_good();
-	else
-		return gpio_get_level(GPIO_DA9313_GPIO0);
+	return gpio_get_level(GPIO_DA9313_GPIO0);
 }
 
 void board_reset_pd_mcu(void)
