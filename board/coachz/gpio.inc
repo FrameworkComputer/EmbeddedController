@@ -85,9 +85,8 @@ GPIO(USB_C0_VBUS_DET_L,     PIN(6, 2), GPIO_INPUT)     /* Deprecated BC1.2 VBUS 
 GPIO(USB_C1_VBUS_DET_L,     PIN(8, 3), GPIO_INPUT)     /* Deprecated BC1.2 VBUS detection on port-1 */
 
 /* USB-A */
-GPIO(EN_USB_A_5V,           PIN(8, 6), GPIO_OUT_LOW)
-GPIO(USB_A_CDP_ILIM_EN,     PIN(7, 5), GPIO_OUT_HIGH)  /* H: CDP, L:SDP. Only one USB-A port, always CDP */
-GPIO(USB_A0_OC_ODL,         PIN(D, 1), GPIO_ODR_HIGH)
+GPIO(EN_USB_A_5V,           PIN(8, 6), GPIO_INPUT)     /* NC, backup only */
+GPIO(USB_A_CDP_ILIM_EN,     PIN(7, 5), GPIO_INPUT)     /* NC, backup only */
 
 /* LEDs */
 GPIO(EC_CHG_LED_Y_C1,       PIN(C, 3), GPIO_OUT_LOW)
