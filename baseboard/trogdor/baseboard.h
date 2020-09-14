@@ -155,11 +155,9 @@
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
-#define GPIO_AC_PRESENT		GPIO_ACOK_OD
 #define GPIO_POWER_BUTTON_L	GPIO_EC_PWR_BTN_ODL
 #define GPIO_VOLUME_DOWN_L	GPIO_EC_VOLDN_BTN_ODL
 #define GPIO_VOLUME_UP_L	GPIO_EC_VOLUP_BTN_ODL
-#define GPIO_WP_L		GPIO_EC_WP_ODL
 #define GPIO_LID_OPEN		GPIO_LID_OPEN_EC
 #define GPIO_SHI_CS_L		GPIO_AP_EC_SPI_CS_L
 #define GPIO_ENTERING_RW	GPIO_EC_ENTERING_RW
