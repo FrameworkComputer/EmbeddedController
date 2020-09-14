@@ -17,12 +17,12 @@ GPIO_INT(USB_C0_BC12_INT_L,    PIN(6, 1), GPIO_INT_FALLING, usb0_evt)  /* Interr
 GPIO_INT(USB_C1_BC12_INT_L,    PIN(8, 2), GPIO_INT_FALLING, usb1_evt)  /* Interrupt from port-1 BC1.2 */
 
 /* System interrupts */
-GPIO_INT(ACOK_OD,           PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)  /* AC OK? */
+GPIO_INT(CHG_ACOK_OD,       PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)  /* AC OK? */
 GPIO_INT(CCD_MODE_ODL,      PIN(E, 3), GPIO_INT_FALLING, board_connect_c0_sbu)  /* Case Closed Debug Mode */
 GPIO_INT(EC_PWR_BTN_ODL,    PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)  /* Power button */
 GPIO_INT(EC_VOLDN_BTN_ODL,  PIN(7, 0), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* Volume Up button */
 GPIO_INT(EC_VOLUP_BTN_ODL,  PIN(F, 2), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* Volume Down button */
-GPIO_INT(EC_WP_ODL,         PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)  /* Write protection */
+GPIO_INT(EC_FLASH_WP_ODL,   PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)  /* Write protection */
 GPIO_INT(LID_OPEN_EC,       PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)  /* Lid open? */
 GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH | GPIO_SEL_1P8V, chipset_ap_rst_interrupt)  /* PMIC to signal AP reset */
 GPIO_INT(PS_HOLD,           PIN(A, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V, power_signal_interrupt)  /* Indicate when AP triggers reset/shutdown */
@@ -72,6 +72,22 @@ GPIO(EC_BL_DISABLE_L,       PIN(B, 6), GPIO_OUT_LOW)   /* Backlight disable sign
 
 /* Sensors */
 GPIO(REVERSE_DOCK_EC,       PIN(C, 6), GPIO_INPUT)
+/* TODO(b/168714440): Implement the hall sensor interrupts */
+GPIO(LID_INT_N_HALL1,       PIN(7, 3), GPIO_INPUT)
+GPIO(LID_INT_N_HALL2,       PIN(6, 0), GPIO_INPUT)
+GPIO(LID_INT_N_HALL3,       PIN(D, 7), GPIO_INPUT)
+/* TODO(waihong): Should remove it from hardware */
+GPIO(CAM_LED,               PIN(3, 0), GPIO_INPUT)
+
+/* Stylus */
+/* TODO(b/168652326): Implement the WLC controls */
+GPIO(WLC_IRQ_CONN,          PIN(7, 4), GPIO_INPUT)
+GPIO(WLC_NRST_CONN,         PIN(C, 5), GPIO_INPUT)
+
+/* Base detection */
+/* TODO(b/168712053): Implement the base detection */
+GPIO(BASE_DET_L,            PIN(3, 7), GPIO_INPUT)
+GPIO(EN_BASE,               PIN(0, 4), GPIO_INPUT)
 
 /* USB-C */
 GPIO(USB_C0_PD_RST_L,       PIN(F, 1), GPIO_ODR_HIGH)  /* Port-0 TCPC chip reset, actaully Open-Drain */
@@ -79,10 +95,6 @@ GPIO(USB_C1_PD_RST_L,       PIN(E, 4), GPIO_ODR_HIGH)  /* Port-1 TCPC chip reset
 GPIO(DP_MUX_OE_L,           PIN(9, 6), GPIO_OUT_HIGH)  /* DP mux enable */
 GPIO(DP_MUX_SEL,            PIN(4, 5), GPIO_OUT_HIGH)  /* DP mux selection: L:C0, H:C1 */
 GPIO(DP_HOT_PLUG_DET,       PIN(9, 5), GPIO_OUT_LOW)   /* DP HPD to AP */
-/* TODO(waihong): Remove it from schematic. No use. */
-GPIO(USBC_MUX_CONF0,        PIN(5, 1), GPIO_INPUT)
-GPIO(USB_C0_VBUS_DET_L,     PIN(6, 2), GPIO_INPUT)     /* Deprecated BC1.2 VBUS detection on port-0 */
-GPIO(USB_C1_VBUS_DET_L,     PIN(8, 3), GPIO_INPUT)     /* Deprecated BC1.2 VBUS detection on port-1 */
 
 /* USB-A */
 GPIO(EN_USB_A_5V,           PIN(8, 6), GPIO_INPUT)     /* NC, backup only */
@@ -90,7 +102,7 @@ GPIO(USB_A_CDP_ILIM_EN,     PIN(7, 5), GPIO_INPUT)     /* NC, backup only */
 
 /* LEDs */
 GPIO(EC_CHG_LED_Y_C1,       PIN(C, 3), GPIO_OUT_LOW)
-GPIO(EC_CHG_LED_B_C1,       PIN(C, 4), GPIO_OUT_LOW)
+GPIO(EC_CHG_LED_W_C1,       PIN(C, 4), GPIO_OUT_LOW)
 
 /* PWM */
 GPIO(EDP_BKLTCTL,           PIN(B, 7), GPIO_INPUT)     /* PWM5 */
@@ -109,6 +121,8 @@ GPIO(EC_I2C_USB_C1_PD_SCL,  PIN(9, 2), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_PD_SDA,  PIN(9, 1), GPIO_INPUT)
 GPIO(EC_I2C_EEPROM_SCL,     PIN(3, 3), GPIO_INPUT)
 GPIO(EC_I2C_EEPROM_SDA,     PIN(3, 6), GPIO_INPUT)
+GPIO(EC_I2C_WLC_SCL,        PIN(D, 1), GPIO_INPUT)
+GPIO(EC_I2C_WLC_SDA,        PIN(D, 0), GPIO_INPUT)
 GPIO(EC_I2C_SENSOR_SCL,     PIN(B, 3), GPIO_INPUT | GPIO_SEL_1P8V)
 GPIO(EC_I2C_SENSOR_SDA,     PIN(B, 2), GPIO_INPUT | GPIO_SEL_1P8V)
 
@@ -134,6 +148,7 @@ ALTERNATE(PIN_MASK(9, 0x07), 1, MODULE_I2C, 0)             /* I2C1 SDA (GPIO90),
 ALTERNATE(PIN_MASK(8, 0x80), 1, MODULE_I2C, 0)             /* I2C1 SCL (GPIO87) */
 ALTERNATE(PIN_MASK(3, 0x48), 1, MODULE_I2C, 0)             /* I2C5 (GPIO33/36) */
 ALTERNATE(PIN_MASK(B, 0x0C), 1, MODULE_I2C, GPIO_SEL_1P8V) /* I2C7 (GPIOB2/B3) - 1.8V */
+ALTERNATE(PIN_MASK(D, 0x03), 1, MODULE_I2C, 0)             /* I2C3 (GPIOD0/D1) */
 ALTERNATE(PIN_MASK(4, 0x1C), 0, MODULE_ADC, 0)             /* ADC1 (GPIO44), ADC2 (GPIO43), ADC3 (GPIO42) */
 ALTERNATE(PIN_MASK(4, 0xC0), 1, MODULE_SPI, GPIO_SEL_1P8V) /* SHI_SDO (GPIO47), SHI_SDI (GPIO46) */
 ALTERNATE(PIN_MASK(5, 0x28), 1, MODULE_SPI, GPIO_SEL_1P8V) /* SHI_SCLK (GPIO55), SHI_CS# (GPIO53) */
