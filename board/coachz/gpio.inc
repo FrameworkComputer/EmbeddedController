@@ -40,7 +40,6 @@ GPIO_INT(WARM_RESET_L,      PIN(F, 4), GPIO_INT_BOTH | GPIO_SEL_1P8V, chipset_wa
 GPIO_INT(AP_EC_SPI_CS_L,    PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN, shi_cs_event)  /* EC SPI Chip Select */
 
 /* Sensor interrupts */
-GPIO_INT(TABLET_MODE_L,     PIN(C, 6), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi160_interrupt)  /* Accelerometer/gyro interrupt */
 
 /*
@@ -72,10 +71,10 @@ GPIO(EN_PP5000_A,           PIN(6, 7), GPIO_OUT_LOW)   /* Enable PP5000 */
 GPIO(EC_BL_DISABLE_L,       PIN(B, 6), GPIO_OUT_LOW)   /* Backlight disable signal from EC */
 
 /* Sensors */
-GPIO(LID_ACCEL_INT_L,       PIN(5, 6), GPIO_INPUT)     /* Lid accel sensor interrupt */
 /* Control the gate for trackpad IRQ. High closes the gate.
  * This is always set low so that the OS can manage the trackpad. */
 GPIO(TRACKPAD_INT_GATE,     PIN(7, 4), GPIO_OUT_LOW)
+GPIO(REVERSE_DOCK_EC,       PIN(C, 6), GPIO_INPUT)
 
 /* USB-C */
 GPIO(USB_C0_PD_RST_L,       PIN(F, 1), GPIO_ODR_HIGH)  /* Port-0 TCPC chip reset, actaully Open-Drain */
