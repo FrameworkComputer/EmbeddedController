@@ -70,7 +70,11 @@ enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
 {
 	int act_chg = ocpc->active_chg_chip;
 
-	if ((battery->current <= 0) ||
+	/*
+	 * In order to actually calculate the resistance, we need to make sure
+	 * we're actually charging the battery at a significant rate.
+	 */
+	if ((battery->current <= 1000) ||
 	    (!(ocpc->chg_flags[act_chg] & OCPC_NO_ISYS_MEAS_CAP) &&
 	     (ocpc->isys_ma <= 0)) ||
 	    (ocpc->vsys_aux_mv < ocpc->vsys_mv)) {
@@ -115,7 +119,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	struct charger_params charger;
 	int vsys_target = 0;
 	int drive = 0;
-	int i_ma;
+	int i_ma = 0;
 	int min_vsys_target;
 	int error = 0;
 	int derivative = 0;
@@ -138,13 +142,18 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	if (chgnum != CHARGER_SECONDARY)
 		return EC_ERROR_INVAL;
 
+	if (current_ma == 0) {
+		vsys_target = voltage_mv;
+		goto set_vsys;
+	}
+
 	/*
 	 * Check to see if the charge FET is disabled.  If it's disabled, the
 	 * charging loop is broken and increasing VSYS will not actually help.
 	 * Therefore, don't make any changes at this time.
 	 */
 	if (battery_is_charge_fet_disabled()) {
-		/* Only print this if there's actually a  CFET present. */
+		/* Only print this if there's actually a CFET present. */
 		if (battery_is_present())
 			CPRINTS("CFET disabled; not changing VSYS!");
 
@@ -189,10 +198,6 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 		iterations = 0;
 	}
 
-	if (current_ma == 0) {
-		vsys_target = voltage_mv;
-		goto set_vsys;
-	}
 
 	/*
 	 * We need to induce a current flow that matches the requested current
@@ -261,6 +266,10 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 		if (ABS(error) < i_step)
 			error = 0;
 
+		/* Make a note if we're significantly over target. */
+		if (error < -100)
+			CPRINTS("OCPC: over target %dmA", error * -1);
+
 		derivative = error - ocpc->last_error;
 		ocpc->last_error = error;
 		ocpc->integral +=  error;
@@ -287,12 +296,12 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 			(k_i * ocpc->integral / k_i_div) +
 			(k_d * derivative / k_d_div);
 		/*
-		 * Let's limit upward transitions to 500mV.  It's okay to reduce
+		 * Let's limit upward transitions to 200mV.  It's okay to reduce
 		 * VSYS rather quickly, but we'll be conservative on
 		 * increasing VSYS.
 		 */
-		if (drive > 500)
-			drive = 500;
+		if (drive > 200)
+			drive = 200;
 		CPRINTS_DBG("drive = %d", drive);
 	}
 
@@ -312,11 +321,12 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 		vsys_target = batt.desired_voltage;
 
 	/*
-	 * Ensure VSYS is no higher than 1V over the max battery voltage, but
-	 * greater than or equal to our minimum VSYS target.
+	 * Ensure VSYS is no higher than the specified maximum battery voltage
+	 * plus the voltage drop across the system.
 	 */
 	vsys_target = CLAMP(vsys_target, min_vsys_target,
-			    batt_info->voltage_max+1000);
+			    batt_info->voltage_max +
+			    (i_ma * ocpc->combined_rsys_rbatt_mo / 1000));
 
 	/* If we're input current limited, we cannot increase VSYS any more. */
 	CPRINTS_DBG("OCPC: Inst. Input Current: %dmA (Limit: %dmA)",
