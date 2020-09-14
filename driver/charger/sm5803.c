@@ -294,19 +294,15 @@ enum ec_error_list sm5803_vbus_sink_enable(int chgnum, int enable)
 				rv |= main_write8(CHARGER_PRIMARY, 0x1F, 0x0);
 
 				/*
-				 * Enable linear, pre-charge, and linear fast
+				 * Disable linear, pre-charge, and linear fast
 				 * charge for primary charger.
 				 */
 				rv = chg_read8(CHARGER_PRIMARY,
 					       SM5803_REG_FLOW3, &regval);
-				regval |= BIT(6) | BIT(5) | BIT(4);
+				regval &= ~(BIT(6) | BIT(5) | BIT(4));
+
 				rv |= chg_write8(CHARGER_PRIMARY,
 						 SM5803_REG_FLOW3, regval);
-
-				/* Enable linear mode on the primary IC */
-				rv |= sm5803_flow1_update(CHARGER_PRIMARY,
-						SM5803_FLOW1_LINEAR_CHARGE_EN,
-						MASK_SET);
 			}
 		}
 
@@ -349,6 +345,7 @@ static void sm5803_init(int chgnum)
 	const struct battery_info *batt_info;
 	int pre_term;
 	int cells;
+	struct batt_params batt_params;
 
 	/*
 	 * If a charger is not currently present, disable switching per OCPC
@@ -644,6 +641,21 @@ static void sm5803_init(int chgnum)
 		reg |= SM5803_INT3_BFET_PWR_LIMIT |
 		       SM5803_INT3_BFET_PWR_HWSAFE_LIMIT;
 		rv |= main_write8(chgnum, SM5803_REG_INT3_EN, reg);
+
+		rv |= chg_read8(chgnum, SM5803_REG_FLOW3, &reg);
+		reg &= ~SM5803_FLOW3_SWITCH_BCK_BST;
+		rv |= chg_write8(chgnum, SM5803_REG_FLOW3, reg);
+
+		rv |= chg_read8(chgnum, SM5803_REG_SWITCHER_CONF, &reg);
+		reg |= SM5803_SW_BCK_BST_CONF_AUTO;
+		rv |= chg_write8(chgnum, SM5803_REG_SWITCHER_CONF, reg);
+	} else {
+		/*
+		 * Set VSYS initially to VBAT to prevent a high voltage upon
+		 * adapter insertion.
+		 */
+		battery_get_params(&batt_params);
+		rv |= charger_set_voltage(chgnum, batt_params.voltage);
 	}
 
 	if (rv)
@@ -1226,6 +1238,8 @@ static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 	int reg;
 
 	if (enabled) {
+		int selected_current;
+
 		rv = chg_read8(chgnum, SM5803_REG_ANA_EN1, &reg);
 		if (rv)
 			return rv;
@@ -1233,42 +1247,6 @@ static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 		/* Enable current limit */
 		reg &= ~SM5803_ANA_EN1_CLS_DISABLE;
 		rv = chg_write8(chgnum, SM5803_REG_ANA_EN1, reg);
-	}
-
-	if (IS_ENABLED(CONFIG_OCPC) &&
-	    (chgnum == CHARGER_PRIMARY) &&
-	    (charge_get_active_chg_chip() != -1)) {
-		/* In linear mode, the sequence is a little different. */
-		if (enabled) {
-			rv = chg_read8(chgnum, SM5803_REG_FLOW3, &reg);
-			if (rv)
-				return rv;
-			reg &= ~SM5803_FLOW3_SWITCH_BCK_BST;
-			rv = chg_write8(chgnum, SM5803_REG_FLOW3, reg);
-			if (rv)
-				return rv;
-
-			rv = chg_read8(chgnum, SM5803_REG_SWITCHER_CONF, &reg);
-			if (rv)
-				return rv;
-			reg &= ~SM5803_SW_BCK_BST_CONF_AUTO;
-			rv = chg_write8(chgnum, SM5803_REG_SWITCHER_CONF, reg);
-			if (rv)
-				return rv;
-		} else {
-			rv = chg_read8(chgnum, SM5803_REG_SWITCHER_CONF, &reg);
-			if (rv)
-				return rv;
-			reg |= SM5803_SW_BCK_BST_CONF_AUTO;
-			rv = chg_write8(chgnum, SM5803_REG_SWITCHER_CONF, reg);
-			if (rv)
-				return rv;
-		}
-	}
-
-
-	if (enabled) {
-		int selected_current;
 
 		/*
 		 * In order to ensure the Vbus output doesn't overshoot too
