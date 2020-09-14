@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
 
+#include <stdbool.h>
+
 /*
  * By default, enable all console messages excepted HC
  */
@@ -265,6 +267,13 @@ unsigned char get_board_id(void);
  * the CBI data has been initialized.
  */
 __override_proto void board_cbi_init(void);
+
+/*
+ * Check battery disconnect state.
+ * This function will return if battery is initialized or not.
+ * @return true - initialized. false - not.
+ */
+__override_proto bool board_battery_is_initialized(void);
 
 #endif /* !__ASSEMBLER__ */
 
