@@ -475,10 +475,6 @@ static void board_switchcap_init(void)
 /* Initialize board. */
 static void board_init(void)
 {
-	/* Enable BC1.2 VBUS detection */
-	gpio_enable_interrupt(GPIO_USB_C0_VBUS_DET_L);
-	gpio_enable_interrupt(GPIO_USB_C1_VBUS_DET_L);
-
 	/* Enable BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);

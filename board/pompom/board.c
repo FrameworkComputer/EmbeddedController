@@ -189,9 +189,6 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 /* Initialize board. */
 static void board_init(void)
 {
-	/* Enable BC1.2 VBUS detection */
-	gpio_enable_interrupt(GPIO_USB_C0_VBUS_DET_L);
-
 	/* Enable BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 

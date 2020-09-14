@@ -92,12 +92,7 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 
 int pd_snk_is_vbus_provided(int port)
 {
-#if CONFIG_USB_PD_PORT_MAX_COUNT == 1
-	return !gpio_get_level(GPIO_USB_C0_VBUS_DET_L);
-#else
-	return !gpio_get_level(port ? GPIO_USB_C1_VBUS_DET_L :
-				      GPIO_USB_C0_VBUS_DET_L);
-#endif
+	return tcpm_check_vbus_level(port, VBUS_PRESENT);
 }
 
 /* ----------------- Vendor Defined Messages ------------------ */
