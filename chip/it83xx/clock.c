@@ -511,8 +511,8 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 
 	if (IS_ENABLED(CONFIG_USB_PD_TCPM_ITE_ON_CHIP)) {
 		/*
-		 * Disable active pd modules in hibernate for
-		 * better power consumption.
+		 * Disable active cc and pd modules and only left Rd_5.1k (Not
+		 * Rd_DB) alive in hibernate for better power consumption.
 		 */
 		for (i = 0; i < CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT; i++)
 			it83xx_disable_pd_module(i);
