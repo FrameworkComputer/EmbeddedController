@@ -36,7 +36,6 @@
 #define CONFIG_FPU
 #define CONFIG_PWM
 #define CONFIG_PWM_DISPLIGHT
-#define CONFIG_PWM_KBLIGHT
 
 #define CONFIG_VBOOT_HASH
 

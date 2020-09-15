@@ -25,6 +25,9 @@
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_FLASH_SIZE (1024 * 1024)  /* 1MB internal spi flash */
 
+/* Keyboard */
+#define CONFIG_PWM_KBLIGHT
+
 /* BC 1.2 Charger */
 #if BOARD_REV >= TROGDOR_REV1
 #define CONFIG_BC12_DETECT_PI3USB9201

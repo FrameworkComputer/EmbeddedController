@@ -25,6 +25,9 @@
 /* Switchcap */
 #define CONFIG_LN9310
 
+/* Keyboard */
+#define CONFIG_PWM_KBLIGHT
+
 /* Battery */
 #define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
 #define CONFIG_BATTERY_REVIVE_DISCONNECT

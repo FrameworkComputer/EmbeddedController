@@ -71,8 +71,7 @@ enum sensor_id {
 };
 
 enum pwm_channel {
-	PWM_CH_KBLIGHT = 0,
-	PWM_CH_DISPLIGHT,
+	PWM_CH_DISPLIGHT = 0,
 	PWM_CH_COUNT
 };
 

@@ -23,6 +23,9 @@
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_FLASH_SIZE (512 * 1024)  /* 512KB internal spi flash */
 
+/* Keyboard */
+#define CONFIG_PWM_KBLIGHT
+
 /* BC 1.2 Charger */
 #define CONFIG_BC12_DETECT_PI3USB9201
 
