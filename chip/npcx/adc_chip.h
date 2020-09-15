@@ -105,4 +105,13 @@ void npcx_set_adc_repetitive(enum npcx_adc_input_channel input_ch, int enable);
  * @param enable         - 1 to enable, 0 to disable
  */
 void npcx_adc_thresh_int_enable(int threshold_idx, int enable);
+
+/**
+ * Return the ADC value from CHNDAT register directly when the channel is
+ * configured in the repetitive mode.
+ *
+ * @param   input_ch    channel number
+ * @return  ADC data
+ */
+int adc_read_data(enum npcx_adc_input_channel input_ch);
 #endif /* __CROS_EC_ADC_CHIP_H */
