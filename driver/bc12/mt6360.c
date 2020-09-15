@@ -463,20 +463,18 @@ int mt6360_regulator_set_voltage(enum mt6360_regulator_id id, int min_mv,
 	/* It's a LDO. */
 	for (i = 0; i < data->ldo_vosel_table_len; i++) {
 		int mv = data->ldo_vosel_table[i];
-		int step;
+		int step = 0;
 
 		if (!mv)
 			continue;
 		if (mv + MT6360_LDO_VOCAL_STEP_MV * MT6360_LDO_VOCAL_MAX_STEP <
 		    min_mv)
 			continue;
-		mv = DIV_ROUND_UP(mv, MT6360_LDO_VOCAL_STEP_MV) *
-		     MT6360_LDO_VOCAL_STEP_MV;
-		if (mv > max_mv)
+		if (mv < min_mv)
+			step = DIV_ROUND_UP(min_mv - mv,
+					    MT6360_LDO_VOCAL_STEP_MV);
+		if (mv + step * MT6360_LDO_VOCAL_STEP_MV > max_mv)
 			continue;
-		step = (mv - data->ldo_vosel_table[i]) /
-		       MT6360_LDO_VOCAL_STEP_MV;
-
 		return mt6360_regulator_update_bits(
 			data->addr,
 			data->reg_ctrl3,
