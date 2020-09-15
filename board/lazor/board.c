@@ -110,6 +110,22 @@ static void switchcap_interrupt(enum gpio_signal signal)
 	ln9310_interrupt(signal);
 }
 
+/* I2C port map */
+const struct i2c_port_t i2c_ports[] = {
+	{"power",   I2C_PORT_POWER,  100, GPIO_EC_I2C_POWER_SCL,
+					  GPIO_EC_I2C_POWER_SDA},
+	{"tcpc0",   I2C_PORT_TCPC0, 1000, GPIO_EC_I2C_USB_C0_PD_SCL,
+					  GPIO_EC_I2C_USB_C0_PD_SDA},
+	{"tcpc1",   I2C_PORT_TCPC1, 1000, GPIO_EC_I2C_USB_C1_PD_SCL,
+					  GPIO_EC_I2C_USB_C1_PD_SDA},
+	{"eeprom",  I2C_PORT_EEPROM, 400, GPIO_EC_I2C_EEPROM_SCL,
+					  GPIO_EC_I2C_EEPROM_SDA},
+	{"sensor",  I2C_PORT_SENSOR, 400, GPIO_EC_I2C_SENSOR_SCL,
+					  GPIO_EC_I2C_SENSOR_SDA},
+};
+
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Measure VBUS through a 1/10 voltage divider */
