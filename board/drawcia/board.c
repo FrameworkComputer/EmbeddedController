@@ -424,6 +424,22 @@ void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+static void board_resume(void)
+{
+	sm5803_disable_low_power_mode(CHARGER_PRIMARY);
+	if (board_get_charger_chip_count() > 1)
+		sm5803_disable_low_power_mode(CHARGER_SECONDARY);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_resume, HOOK_PRIO_DEFAULT);
+
+static void board_suspend(void)
+{
+	sm5803_enable_low_power_mode(CHARGER_PRIMARY);
+	if (board_get_charger_chip_count() > 1)
+		sm5803_enable_low_power_mode(CHARGER_SECONDARY);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_suspend, HOOK_PRIO_DEFAULT);
+
 void board_hibernate(void)
 {
 	/*

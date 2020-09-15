@@ -702,6 +702,123 @@ void sm5803_hibernate(int chgnum)
 		CPRINTS("%s %d: Failed to set hibernate", CHARGER_NAME, chgnum);
 }
 
+static void sm5803_disable_runtime_low_power_mode(void)
+{
+	enum ec_error_list rv;
+	int reg;
+	int chgnum = TASK_ID_TO_PD_PORT(task_get_current());
+
+	CPRINTS("%s %d: disable runtime low power mode", CHARGER_NAME, chgnum);
+	rv = main_read8(chgnum, SM5803_REG_REFERENCE, &reg);
+	if (rv) {
+		CPRINTS("%s %d: Failed to read REFERENCE reg", CHARGER_NAME,
+			chgnum);
+		return;
+	}
+	/* Set a higher clock speed */
+	rv |= main_read8(chgnum, SM5803_REG_CLOCK_SEL, &reg);
+	reg &= ~SM5803_CLOCK_SEL_LOW;
+	rv |= main_write8(chgnum, SM5803_REG_CLOCK_SEL, reg);
+
+	/* Enable ADC sigma delta */
+	rv |= chg_read8(chgnum, SM5803_REG_CC_CONFIG1, &reg);
+	reg |= SM5803_CC_CONFIG1_SD_PWRUP;
+	rv |= chg_write8(chgnum, SM5803_REG_CC_CONFIG1, reg);
+
+	if (rv)
+		CPRINTS("%s %d: Failed to set in disable runtime LPM",
+			CHARGER_NAME, chgnum);
+}
+DECLARE_HOOK(HOOK_USB_PD_CONNECT,
+		sm5803_disable_runtime_low_power_mode,
+		HOOK_PRIO_FIRST);
+
+static void sm5803_enable_runtime_low_power_mode(void)
+{
+	enum ec_error_list rv;
+	int reg;
+	int chgnum = TASK_ID_TO_PD_PORT(task_get_current());
+
+	CPRINTS("%s %d: enable runtime low power mode", CHARGER_NAME, chgnum);
+	rv = main_read8(chgnum, SM5803_REG_REFERENCE, &reg);
+	if (rv) {
+		CPRINTS("%s %d: Failed to read REFERENCE reg", CHARGER_NAME,
+			chgnum);
+		return;
+	}
+	/* Slow the clock speed */
+	rv |= main_read8(chgnum, SM5803_REG_CLOCK_SEL, &reg);
+	reg |= SM5803_CLOCK_SEL_LOW;
+	rv |= main_write8(chgnum, SM5803_REG_CLOCK_SEL, reg);
+
+	/* Disable ADC sigma delta */
+	rv |= chg_read8(chgnum, SM5803_REG_CC_CONFIG1, &reg);
+	reg &= ~SM5803_CC_CONFIG1_SD_PWRUP;
+	rv |= chg_write8(chgnum, SM5803_REG_CC_CONFIG1, reg);
+
+	if (rv)
+		CPRINTS("%s %d: Failed to set in enable runtime LPM",
+			CHARGER_NAME, chgnum);
+}
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT,
+		sm5803_enable_runtime_low_power_mode,
+		HOOK_PRIO_LAST);
+
+void sm5803_disable_low_power_mode(int chgnum)
+{
+	enum ec_error_list rv;
+	int reg;
+
+	CPRINTS("%s %d: disable low power mode", CHARGER_NAME, chgnum);
+	rv = main_read8(chgnum, SM5803_REG_REFERENCE, &reg);
+	if (rv) {
+		CPRINTS("%s %d: Failed to read REFERENCE reg", CHARGER_NAME,
+			chgnum);
+		return;
+	}
+	/* Enable Psys DAC */
+	rv |= meas_read8(chgnum, SM5803_REG_PSYS1, &reg);
+	reg |= SM5803_PSYS1_DAC_EN;
+	rv |= meas_write8(chgnum, SM5803_REG_PSYS1, reg);
+
+	/* Enable PROCHOT comparators except Ibus */
+	rv |= chg_read8(chgnum, SM5803_REG_PHOT1, &reg);
+	reg |= SM5803_PHOT1_COMPARATOR_EN;
+	reg &= ~SM5803_PHOT1_IBUS_PHOT_COMP_EN;
+	rv |= chg_write8(chgnum, SM5803_REG_PHOT1, reg);
+
+	if (rv)
+		CPRINTS("%s %d: Failed to set in disable low power mode",
+			CHARGER_NAME, chgnum);
+}
+
+void sm5803_enable_low_power_mode(int chgnum)
+{
+	enum ec_error_list rv;
+	int reg;
+
+	CPRINTS("%s %d: enable low power mode", CHARGER_NAME, chgnum);
+	rv = main_read8(chgnum, SM5803_REG_REFERENCE, &reg);
+	if (rv) {
+		CPRINTS("%s %d: Failed to read REFERENCE reg", CHARGER_NAME,
+			chgnum);
+		return;
+	}
+	/* Disable Psys DAC */
+	rv |= meas_read8(chgnum, SM5803_REG_PSYS1, &reg);
+	reg &= ~SM5803_PSYS1_DAC_EN;
+	rv |= meas_write8(chgnum, SM5803_REG_PSYS1, reg);
+
+	/* Disable PROCHOT comparators */
+	rv |= chg_read8(chgnum, SM5803_REG_PHOT1, &reg);
+	reg &= ~SM5803_PHOT1_COMPARATOR_EN;
+	rv |= chg_write8(chgnum, SM5803_REG_PHOT1, reg);
+
+	if (rv)
+		CPRINTS("%s %d: Failed to set in enable low power mode",
+			CHARGER_NAME, chgnum);
+}
+
 /*
  * Process interrupt registers and report any Vbus changes.  Alert the AP if the
  * charger has become too hot.

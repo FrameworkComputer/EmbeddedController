@@ -335,6 +335,10 @@ enum ec_error_list sm5803_vbus_sink_enable(int chgnum, int enable);
 void sm5803_hibernate(int chgnum);
 void sm5803_interrupt(int chgnum);
 
+/* Expose low power mode functions */
+void sm5803_disable_low_power_mode(int chgnum);
+void sm5803_enable_low_power_mode(int chgnum);
+
 extern const struct charger_drv sm5803_drv;
 
 #endif
