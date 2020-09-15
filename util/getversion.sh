@@ -70,7 +70,8 @@ get_tree_version() {
   else
     # Fall back to the VCSID provided by the packaging system if available.
     # Ex VCSID: 0.0.1-r1519-9b368af6a4943b90941471d0bdf7e7208788f898
-    if ghash=${VCSID##*-}; then
+    if [[ -n "${VCSID}" ]]; then
+      ghash="${VCSID##*-}"
       vbase="1.1.9999-${ghash:0:7}"
     else
       # then ultimately fails to "no_version"
