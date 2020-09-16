@@ -5338,26 +5338,32 @@ static void pe_enter_usb_entry(int port)
 
 	memcpy(tx_emsg[port].buf, &usb4_payload, tx_emsg[port].len);
 	send_data_msg(port, TCPC_TX_SOP, PD_DATA_ENTER_USB);
-
-	pe[port].sender_response_timer = TIMER_DISABLED;
+	pe_sender_response_msg_entry(port);
 }
 
 static void pe_enter_usb_run(int port)
 {
+	enum pe_msg_check msg_check;
+
 	if (!IS_ENABLED(CONFIG_USB_PD_USB4)) {
 		pe_set_ready_state(port);
 		return;
 	}
 
-	/* Wait until message is sent */
-	if (pe[port].sender_response_timer == TIMER_DISABLED) {
-		if (!PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE))
-			return;
+	/*
+	 * Check the state of the message sent
+	 */
+	msg_check = pe_sender_response_msg_run(port);
 
-		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
-		/* Initialize and run SenderResponseTimer */
-		pe[port].sender_response_timer =
-				get_time().val + PD_T_SENDER_RESPONSE;
+	/*
+	 * Handle Discarded message, return to PE_SNK/SRC_READY
+	 */
+	if (msg_check & PE_MSG_DISCARDED) {
+		pe_set_ready_state(port);
+		return;
+	} else if (msg_check == PE_MSG_SEND_PENDING) {
+		/* Wait until message is sent */
+		return;
 	}
 
 	if (get_time().val > pe[port].sender_response_timer) {
