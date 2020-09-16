@@ -54,19 +54,47 @@ DECLARE_DEFERRED(power_monitor);
 
 static void ppc_interrupt(enum gpio_signal signal)
 {
-	if (signal == GPIO_USB_C0_TCPPC_INT_ODL)
-		sn5s330_interrupt(0);
+	switch (signal) {
+	case GPIO_USB_C0_TCPPC_INT_ODL:
+		sn5s330_interrupt(USB_PD_PORT_TCPC_0);
+		break;
+	case GPIO_USB_C1_TCPPC_INT_ODL:
+		sn5s330_interrupt(USB_PD_PORT_TCPC_1);
+		break;
+	default:
+		break;
+	}
 }
 
 int ppc_get_alert_status(int port)
 {
-	return gpio_get_level(GPIO_USB_C0_TCPPC_INT_ODL) == 0;
+	int status = 0;
+
+	switch (port) {
+	case USB_PD_PORT_TCPC_0:
+		status = gpio_get_level(GPIO_USB_C0_TCPPC_INT_ODL) == 0;
+		break;
+	case USB_PD_PORT_TCPC_1:
+		status = gpio_get_level(GPIO_USB_C1_TCPPC_INT_ODL) == 0;
+		break;
+	default:
+		break;
+	}
+	return status;
 }
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
-	if (signal == GPIO_USB_C0_TCPC_INT_ODL)
-		schedule_deferred_pd_interrupt(0);
+	switch (signal) {
+	case GPIO_USB_C0_TCPC_INT_ODL:
+		schedule_deferred_pd_interrupt(USB_PD_PORT_TCPC_0);
+		break;
+	case GPIO_USB_C1_TCPC_INT_ODL:
+		schedule_deferred_pd_interrupt(USB_PD_PORT_TCPC_1);
+		break;
+	default:
+		break;
+	}
 }
 
 uint16_t tcpc_get_alert_status(void)
@@ -84,6 +112,12 @@ uint16_t tcpc_get_alert_status(void)
 		if (gpio_get_level(GPIO_USB_C0_TCPC_RST) != level)
 			status |= PD_STATUS_TCPC_ALERT_0;
 	}
+	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL)) {
+		level = !!(tcpc_config[USB_PD_PORT_TCPC_1].flags &
+			   TCPC_FLAGS_RESET_ACTIVE_HIGH);
+		if (gpio_get_level(GPIO_USB_C1_TCPC_RST) != level)
+			status |= PD_STATUS_TCPC_ALERT_1;
+	}
 
 	return status;
 }
@@ -99,7 +133,8 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	led_alert(insufficient_power);
 }
 
-static uint8_t usbc_overcurrent;
+static uint8_t usbc_0_overcurrent;
+static uint8_t usbc_1_overcurrent;
 static int32_t base_5v_power;
 
 /*
@@ -109,8 +144,6 @@ static int32_t base_5v_power;
 #define PWR_BASE_LOAD	(5*1335)
 #define PWR_FRONT_HIGH	(5*1603)
 #define PWR_FRONT_LOW	(5*963)
-#define PWR_REAR	(5*1075)
-#define PWR_HDMI	(5*562)
 #define PWR_C_HIGH	(5*3740)
 #define PWR_C_LOW	(5*2090)
 #define PWR_MAX		(5*10000)
@@ -139,17 +172,9 @@ static void update_5v_usage(void)
 	 */
 	if (front_ports > 0)
 		base_5v_power += PWR_FRONT_HIGH - PWR_FRONT_LOW;
-	if (!gpio_get_level(GPIO_USB_A2_OC_ODL))
-		base_5v_power += PWR_REAR;
-	if (!gpio_get_level(GPIO_USB_A3_OC_ODL))
-		base_5v_power += PWR_REAR;
-	if (ec_config_get_usb4_present() && !gpio_get_level(GPIO_USB_A4_OC_ODL))
-		base_5v_power += PWR_REAR;
-	if (!gpio_get_level(GPIO_HDMI_CONN0_OC_ODL))
-		base_5v_power += PWR_HDMI;
-	if (!gpio_get_level(GPIO_HDMI_CONN1_OC_ODL))
-		base_5v_power += PWR_HDMI;
-	if (usbc_overcurrent)
+	if (usbc_0_overcurrent)
+		base_5v_power += PWR_C_HIGH;
+	if (usbc_1_overcurrent)
 		base_5v_power += PWR_C_HIGH;
 	/*
 	 * Invoke the power handler immediately.
@@ -255,11 +280,7 @@ const struct pwm_t pwm_channels[] = {
 	[PWM_CH_FAN]        = { .channel = 5,
 				.flags = PWM_CONFIG_OPEN_DRAIN,
 				.freq = 25000},
-	[PWM_CH_LED_RED]    = { .channel = 0,
-				.flags = PWM_CONFIG_ACTIVE_LOW |
-					 PWM_CONFIG_DSLEEP,
-				.freq = 2000 },
-	[PWM_CH_LED_GREEN]  = { .channel = 2,
+	[PWM_CH_LED_WHITE]  = { .channel = 0,
 				.flags = PWM_CONFIG_ACTIVE_LOW |
 					 PWM_CONFIG_DSLEEP,
 				.freq = 2000 },
@@ -277,10 +298,24 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.drv = &anx7447_tcpm_drv,
 		.flags = TCPC_FLAGS_RESET_ACTIVE_HIGH,
 	},
+	[USB_PD_PORT_TCPC_1] = {
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_TCPC1,
+			.addr_flags = AN7447_TCPC0_I2C_ADDR_FLAGS,
+		},
+		.drv = &anx7447_tcpm_drv,
+		.flags = TCPC_FLAGS_RESET_ACTIVE_HIGH,
+	},
 };
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
 		.usb_port = USB_PD_PORT_TCPC_0,
+		.driver = &anx7447_usb_mux_driver,
+		.hpd_update = &anx7447_tcpc_update_hpd_status,
+	},
+	[USB_PD_PORT_TCPC_1] = {
+		.usb_port = USB_PD_PORT_TCPC_1,
 		.driver = &anx7447_usb_mux_driver,
 		.hpd_update = &anx7447_tcpc_update_hpd_status,
 	},
@@ -291,7 +326,9 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 const struct i2c_port_t i2c_ports[] = {
 	{"ina",     I2C_PORT_INA,     400, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
 	{"ppc0",    I2C_PORT_PPC0,    400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
+	{"ppc1",    I2C_PORT_PPC1,    400, GPIO_I2C2_SCL, GPIO_I2C1_SDA},
 	{"tcpc0",   I2C_PORT_TCPC0,   400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
+	{"tcpc1",   I2C_PORT_TCPC1,   400, GPIO_I2C4_SCL, GPIO_I2C3_SDA},
 	{"power",   I2C_PORT_POWER,   400, GPIO_I2C5_SCL, GPIO_I2C5_SDA},
 	{"eeprom",  I2C_PORT_EEPROM,  400, GPIO_I2C7_SCL, GPIO_I2C7_SDA},
 };
@@ -334,15 +371,27 @@ const struct adc_t adc_channels[] = {
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
 	},
+	[ADC_TEMP_SENSOR_2] = {
+		.name = "TEMP_SENSOR_2",
+		.input_ch = NPCX_ADC_CH1,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_CORE] = {
-		.name = "Core",
+	[TEMP_SENSOR_1] = {
+		.name = "PP3300",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_1,
+	},
+	[TEMP_SENSOR_2] = {
+		.name = "PP5000",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_2,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
@@ -398,7 +447,8 @@ const static struct ec_thermal_config thermal_a = {
 };
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_CORE] = thermal_a,
+	[TEMP_SENSOR_1] = thermal_a,
+	[TEMP_SENSOR_2] = thermal_a,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
@@ -462,12 +512,6 @@ static void board_init(void)
 	/* Always claim AC is online, because we don't have a battery. */
 	memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
 	*memmap_batt_flags |= EC_BATT_FLAG_AC_PRESENT;
-	/*
-	 * For board version < 2, the directly connected recovery
-	 * button is not available.
-	 */
-	if (board_version < 2)
-		button_disable_gpio(GPIO_EC_RECOVERY_BTN_ODL);
 
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
@@ -483,8 +527,10 @@ static void board_chipset_startup(void)
 	 * The workaround is to check whether the PPC is sourcing VBUS, and
 	 * if so, make sure it is enabled.
 	 */
-	if (ppc_is_sourcing_vbus(0))
-		ppc_vbus_source_enable(0, 1);
+	if (ppc_is_sourcing_vbus(USB_PD_PORT_TCPC_0))
+		ppc_vbus_source_enable(USB_PD_PORT_TCPC_0, 1);
+	if (ppc_is_sourcing_vbus(USB_PD_PORT_TCPC_1))
+		ppc_vbus_source_enable(USB_PD_PORT_TCPC_1, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
 	     HOOK_PRIO_DEFAULT);
@@ -493,6 +539,11 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
 		.i2c_port = I2C_PORT_PPC0,
+		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+		.drv = &sn5s330_drv
+	},
+	[USB_PD_PORT_TCPC_1] = {
+		.i2c_port = I2C_PORT_PPC1,
 		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
 		.drv = &sn5s330_drv
 	},
@@ -517,24 +568,11 @@ static void board_tcpc_init(void)
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_TCPPC_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_TCPPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
 	/* Enable other overcurrent interrupts */
-	gpio_enable_interrupt(GPIO_HDMI_CONN0_OC_ODL);
-	gpio_enable_interrupt(GPIO_HDMI_CONN1_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A1_OC_ODL);
-	gpio_enable_interrupt(GPIO_USB_A2_OC_ODL);
-	gpio_enable_interrupt(GPIO_USB_A3_OC_ODL);
-	if (ec_config_get_usb4_present()) {
-		/*
-		 * By default configured as output low.
-		 */
-		gpio_set_flags(GPIO_USB_A4_OC_ODL,
-			       GPIO_INPUT | GPIO_INT_BOTH);
-		gpio_enable_interrupt(GPIO_USB_A4_OC_ODL);
-	} else {
-		/* Ensure no interrupts from pin */
-		gpio_disable_interrupt(GPIO_USB_A4_OC_ODL);
-	}
 
 }
 /* Make sure this is called after fw_config is initialised */
@@ -548,12 +586,16 @@ int64_t get_time_dsw_pwrok(void)
 
 void board_reset_pd_mcu(void)
 {
-	int level = !!(tcpc_config[USB_PD_PORT_TCPC_0].flags &
-		       TCPC_FLAGS_RESET_ACTIVE_HIGH);
+	int level0 = !!(tcpc_config[USB_PD_PORT_TCPC_0].flags &
+			TCPC_FLAGS_RESET_ACTIVE_HIGH);
+	int level1 = !!(tcpc_config[USB_PD_PORT_TCPC_1].flags &
+			TCPC_FLAGS_RESET_ACTIVE_HIGH);
 
-	gpio_set_level(GPIO_USB_C0_TCPC_RST, level);
+	gpio_set_level(GPIO_USB_C0_TCPC_RST, level0);
+	gpio_set_level(GPIO_USB_C1_TCPC_RST, level1);
 	msleep(BOARD_TCPC_C0_RESET_HOLD_DELAY);
-	gpio_set_level(GPIO_USB_C0_TCPC_RST, !level);
+	gpio_set_level(GPIO_USB_C0_TCPC_RST, !level0);
+	gpio_set_level(GPIO_USB_C1_TCPC_RST, !level1);
 	if (BOARD_TCPC_C0_RESET_POST_DELAY)
 		msleep(BOARD_TCPC_C0_RESET_POST_DELAY);
 }
@@ -605,6 +647,7 @@ int board_set_active_charge_port(int port)
 
 	switch (port) {
 	case CHARGE_PORT_TYPEC0:
+	case CHARGE_PORT_TYPEC1:
 		/* TODO(b/143975429) need to touch the PD controller? */
 		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 1);
 		break;
@@ -624,10 +667,16 @@ int board_set_active_charge_port(int port)
 
 void board_overcurrent_event(int port, int is_overcurrented)
 {
-	/* Check that port number is valid. */
-	if ((port < 0) || (port >= CONFIG_USB_PD_PORT_MAX_COUNT))
+	switch (port) {
+	case USB_PD_PORT_TCPC_0:
+		usbc_0_overcurrent = is_overcurrented;
+		break;
+	case USB_PD_PORT_TCPC_1:
+		usbc_1_overcurrent = is_overcurrented;
+		break;
+	default:
 		return;
-	usbc_overcurrent = is_overcurrented;
+	}
 	update_5v_usage();
 }
 
@@ -638,18 +687,11 @@ int extpower_is_present(void)
 
 int board_is_c10_gate_enabled(void)
 {
-	/*
-	 * Puff proto drives EN_PP5000_HDMI from EN_S0_RAILS so we cannot gate
-	 * core rails while in S0 because HDMI should remain powered.
-	 * EN_PP5000_HDMI is a separate EC output on all other boards.
-	 */
-	return board_version != 0;
+	return 1;
 }
 
 void board_enable_s0_rails(int enable)
 {
-	/* This output isn't connected on protos; safe to set anyway. */
-	gpio_set_level(GPIO_EN_PP5000_HDMI, enable);
 }
 
 unsigned int ec_config_get_bj_power(void)
@@ -660,11 +702,6 @@ unsigned int ec_config_get_bj_power(void)
 	if (bj >= ARRAY_SIZE(bj_power))
 		bj = 0;
 	return bj;
-}
-
-int ec_config_get_usb4_present(void)
-{
-	return !(fw_config & EC_CFG_NO_USB4_MASK);
 }
 
 unsigned int ec_config_get_thermal_solution(void)
@@ -820,12 +857,14 @@ static void power_monitor(void)
 			/*
 			 * If the type-C port is sourcing power,
 			 * check whether it should be throttled.
+			 * TODO(amcrae): selectively disable ports.
 			 */
-			if (ppc_is_sourcing_vbus(0) && gap <= 0) {
+			if (gap <= 0 && (ppc_is_sourcing_vbus(0) ||
+					 ppc_is_sourcing_vbus(1))) {
 				new_state |= THROT_TYPE_C;
 				headroom_5v += PWR_C_HIGH - PWR_C_LOW;
 				if (!(current_state & THROT_TYPE_C))
-					gap += POWER_GAIN_TYPE_C;
+					gap += POWER_GAIN_TYPE_C * 2;
 			}
 			/*
 			 * As a last resort, turn on PROCHOT to
@@ -857,7 +896,8 @@ static void power_monitor(void)
 		 * Check whether type C is not throttled,
 		 * and is not overcurrent.
 		 */
-		if (!((new_state & THROT_TYPE_C) || usbc_overcurrent)) {
+		if (!((new_state & THROT_TYPE_C) ||
+		       usbc_0_overcurrent || usbc_1_overcurrent)) {
 			/*
 			 * [1] Type C not in overcurrent, throttle it.
 			 */

@@ -25,11 +25,7 @@
 #define CONFIG_BOARD_HAS_RTC_RESET
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_DEDICATED_RECOVERY_BUTTON
-#define CONFIG_DEDICATED_RECOVERY_BUTTON_2
-#define CONFIG_BUTTONS_RUNTIME_CONFIG
 #define CONFIG_BOARD_RESET_AFTER_POWER_ON
-/* TODO: (b/143496253) re-enable CEC */
-/* #define CONFIG_CEC */
 #define CONFIG_CRC8
 #define CONFIG_CROS_BOARD_INFO
 #define CONFIG_EMULATED_SYSRQ
@@ -90,7 +86,13 @@
 /* Dedicated barreljack charger port */
 #undef  CONFIG_DEDICATED_CHARGE_PORT_COUNT
 #define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
-#define DEDICATED_CHARGE_PORT 1
+#define DEDICATED_CHARGE_PORT 2
+
+/*
+ * TODO(amcrae): Currently we do not allow both
+ * dedicated recovery button and volume buttons.
+ */
+#undef CONFIG_VOLUME_BUTTONS
 
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_IGNORE_LID
@@ -145,7 +147,7 @@
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_LOGGING
 #define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT TYPEC_RP_3A0
-#define CONFIG_USB_PD_PORT_MAX_COUNT 1
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_USB_PD_VBUS_DETECT_PPC
 #define CONFIG_USBC_PPC_SN5S330
 #define CONFIG_USBC_PPC_DEDICATED_INT
@@ -162,10 +164,13 @@
 #define USB_PD_PORT_TCPC_0	0
 #define BOARD_TCPC_C0_RESET_HOLD_DELAY ANX74XX_RESET_HOLD_MS
 #define BOARD_TCPC_C0_RESET_POST_DELAY ANX74XX_RESET_HOLD_MS
+#define USB_PD_PORT_TCPC_1	1
+#define BOARD_TCPC_C1_RESET_HOLD_DELAY ANX74XX_RESET_HOLD_MS
+#define BOARD_TCPC_C1_RESET_POST_DELAY ANX74XX_RESET_HOLD_MS
 
 /* USB Type A Features */
 #define CONFIG_USB_PORT_POWER_DUMB
-/* There are five ports, but power enable is ganged across all of them. */
+/* There are two ports, but power enable is ganged across all of them. */
 #define USB_PORT_COUNT 1
 
 /* I2C Bus Configuration */
@@ -173,7 +178,9 @@
 #define CONFIG_I2C_MASTER
 #define I2C_PORT_INA		NPCX_I2C_PORT0_0
 #define I2C_PORT_PPC0		NPCX_I2C_PORT1_0
+#define I2C_PORT_PPC1		NPCX_I2C_PORT2_0
 #define I2C_PORT_TCPC0		NPCX_I2C_PORT3_0
+#define I2C_PORT_TCPC1		NPCX_I2C_PORT4_1
 #define I2C_PORT_POWER		NPCX_I2C_PORT5_0
 #define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
 #define I2C_ADDR_EEPROM_FLAGS	0x50
@@ -187,6 +194,7 @@
 
 enum charge_port {
 	CHARGE_PORT_TYPEC0,
+	CHARGE_PORT_TYPEC1,
 	CHARGE_PORT_BARRELJACK,
 };
 
@@ -196,14 +204,14 @@ enum adc_channel {
 	ADC_VBUS,           /* ADC4 */
 	ADC_PPVAR_IMON,     /* ADC9 */
 	ADC_TEMP_SENSOR_1,  /* ADC0 */
+	ADC_TEMP_SENSOR_2,  /* ADC1 */
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
 
 enum pwm_channel {
 	PWM_CH_FAN,
-	PWM_CH_LED_RED,
-	PWM_CH_LED_GREEN,
+	PWM_CH_LED_WHITE,
 	/* Number of PWM channels */
 	PWM_CH_COUNT
 };
@@ -221,7 +229,8 @@ enum mft_channel {
 };
 
 enum temp_sensor_id {
-	TEMP_SENSOR_CORE,
+	TEMP_SENSOR_1,
+	TEMP_SENSOR_2,
 	TEMP_SENSOR_COUNT
 };
 
@@ -233,7 +242,7 @@ void led_alert(int enable);
 void show_critical_error(void);
 
 /*
- * firmware config fields
+ * firmware config fields - keep in sync with Puff.
  */
 /*
  * Barrel-jack power (4 bits).
@@ -242,7 +251,7 @@ void show_critical_error(void);
 #define EC_CFG_BJ_POWER_H		3
 #define EC_CFG_BJ_POWER_MASK GENMASK(EC_CFG_BJ_POWER_H, EC_CFG_BJ_POWER_L)
 /*
- * USB Connector 4 not present (1 bit).
+ * USB Connector 4 not present (1 bit) (not used).
  */
 #define EC_CFG_NO_USB4_L		4
 #define EC_CFG_NO_USB4_H		4
@@ -255,7 +264,6 @@ void show_critical_error(void);
 #define EC_CFG_THERMAL_MASK GENMASK(EC_CFG_THERMAL_H, EC_CFG_THERMAL_L)
 
 unsigned int ec_config_get_bj_power(void);
-int ec_config_get_usb4_present(void);
 unsigned int ec_config_get_thermal_solution(void);
 
 #endif /* !__ASSEMBLER__ */
@@ -265,8 +273,9 @@ unsigned int ec_config_get_thermal_solution(void);
 #define GPIO_PP5000_A_PG_OD     GPIO_PG_PP5000_A_OD
 #define GPIO_EN_PP5000		GPIO_EN_PP5000_A
 #define GPIO_RECOVERY_L         GPIO_EC_RECOVERY_BTN_ODL
-#define GPIO_RECOVERY_L_2       GPIO_H1_EC_RECOVERY_BTN_ODL
 #define GPIO_POWER_BUTTON_L	GPIO_H1_EC_PWR_BTN_ODL
+#define GPIO_VOLUME_UP_L	GPIO_EC_VOLUP_BTN_ODL
+#define GPIO_VOLUME_DOWN_L	GPIO_EC_VOLDN_BTN_ODL
 #define GPIO_PCH_WAKE_L		GPIO_EC_PCH_WAKE_ODL
 #define GPIO_PCH_PWRBTN_L	GPIO_EC_PCH_PWR_BTN_ODL
 #define GPIO_ENTERING_RW	GPIO_EC_ENTERING_RW
