@@ -644,12 +644,12 @@ __override void ocpc_get_pid_constants(int *kp, int *kp_div,
 				       int *ki, int *ki_div,
 				       int *kd, int *kd_div)
 {
-	*kp = 1;
-	*kp_div = 6;
+	*kp = 3;
+	*kp_div = 14;
 
-	*ki = 0;
-	*ki_div = 1;
+	*ki = 3;
+	*ki_div = 500;
 
-	*kd = 0;
-	*kd_div = 1;
+	*kd = 4;
+	*kd_div = 40;
 }
