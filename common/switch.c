@@ -57,7 +57,6 @@ static void switch_update(void)
 		*memmap_switches |= EC_SWITCH_WRITE_PROTECT_DISABLED;
 	else
 		*memmap_switches &= ~EC_SWITCH_WRITE_PROTECT_DISABLED;
-
 #ifdef CONFIG_SWITCH_DEDICATED_RECOVERY
 	if (gpio_get_level(GPIO_RECOVERY_L) == 0)
 		*memmap_switches |= EC_SWITCH_DEDICATED_RECOVERY;

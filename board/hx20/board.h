@@ -21,9 +21,18 @@
  */
 
 /* Keyboard features */
-/* #define CONFIG_PWM_KBLIGHT */
 #define CONFIG_KEYBOARD_CUSTOMIZATION
+/* #define CONFIG_PWM_KBLIGHT */
 /* #define CONFIG_KEYBOARD_DEBUG */
+
+/*
+ * Conbination key
+ */
+/* #define CONFIG_KEYBOARD_CUSTOMIZATION_CONBINATION_KEY */
+
+/* The Fn key function not ready yet undefined it until the function finish */
+/* #define CONFIG_KEYBOARD_SCANCODE_CALLBACK */
+
 
 /*
  * Debug on EVB with CONFIG_CHIPSET_DEBUG
