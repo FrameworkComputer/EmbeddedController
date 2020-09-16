@@ -442,7 +442,8 @@ __override void board_cbi_init(void)
 		CPRINTS("%sID %d not supported", db_type_prefix, usb_db);
 	}
 
-	if (!IS_ENABLED(TEST_BUILD) && !ec_cfg_has_numeric_pad())
+	if ((!IS_ENABLED(TEST_BUILD) && !ec_cfg_has_numeric_pad()) ||
+	    get_board_id() <= 2)
 		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
 }
 
