@@ -23,7 +23,7 @@ int remote_flashing(int argc, char **argv);
 
 static enum try_src_override_t try_src_override;
 static int test_port;
-static enum pe_dpm_request request;
+static enum pd_dpm_request request;
 static int max_volt;
 static int comm_enable;
 static int dev_info;
@@ -52,7 +52,7 @@ void pe_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 			vdm_data[i] = data[i];
 }
 
-void pe_dpm_request(int port, enum pe_dpm_request req)
+void pd_dpm_request(int port, enum pd_dpm_request req)
 {
 	test_port = port;
 	request = req;

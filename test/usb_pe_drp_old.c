@@ -327,7 +327,7 @@ test_static int test_prl_is_busy(enum pd_power_role pr)
 	prl_is_busy_flag = true;
 
 	/* Make a request to perform a Port Discovery */
-	pe_dpm_request(PORT0, DPM_REQUEST_PORT_DISCOVERY);
+	pd_dpm_request(PORT0, DPM_REQUEST_PORT_DISCOVERY);
 	task_wait_event(10 * MSEC);
 	task_wait_event(10 * MSEC);
 

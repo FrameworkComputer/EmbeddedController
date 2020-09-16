@@ -512,7 +512,7 @@ void pd_update_contract(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
 		if (IS_ATTACHED_SRC(port))
-			pe_dpm_request(port, DPM_REQUEST_SRC_CAP_CHANGE);
+			pd_dpm_request(port, DPM_REQUEST_SRC_CAP_CHANGE);
 	}
 }
 
@@ -522,9 +522,9 @@ void pd_request_source_voltage(int port, int mv)
 		pd_set_max_voltage(mv);
 
 		if (IS_ATTACHED_SNK(port))
-			pe_dpm_request(port, DPM_REQUEST_NEW_POWER_LEVEL);
+			pd_dpm_request(port, DPM_REQUEST_NEW_POWER_LEVEL);
 		else
-			pe_dpm_request(port, DPM_REQUEST_PR_SWAP);
+			pd_dpm_request(port, DPM_REQUEST_PR_SWAP);
 
 		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
@@ -537,7 +537,7 @@ void pd_set_external_voltage_limit(int port, int mv)
 
 		/* Must be in Attached.SNK when this function is called */
 		if (get_state_tc(port) == TC_ATTACHED_SNK)
-			pe_dpm_request(port, DPM_REQUEST_NEW_POWER_LEVEL);
+			pd_dpm_request(port, DPM_REQUEST_NEW_POWER_LEVEL);
 
 		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
@@ -548,7 +548,7 @@ void pd_set_new_power_request(int port)
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
 		/* Must be in Attached.SNK when this function is called */
 		if (get_state_tc(port) == TC_ATTACHED_SNK)
-			pe_dpm_request(port, DPM_REQUEST_NEW_POWER_LEVEL);
+			pd_dpm_request(port, DPM_REQUEST_NEW_POWER_LEVEL);
 	}
 }
 
@@ -1696,7 +1696,7 @@ void pd_request_vconn_swap_on(int port)
 
 void pd_request_vconn_swap(int port)
 {
-	pe_dpm_request(port, DPM_REQUEST_VCONN_SWAP);
+	pd_dpm_request(port, DPM_REQUEST_VCONN_SWAP);
 }
 #endif
 
@@ -3486,7 +3486,7 @@ static void pd_chipset_startup(void)
 		 * is an existing connection.
 		 */
 		if (IS_ENABLED(CONFIG_USB_PE_SM))
-			pe_dpm_request(i, DPM_REQUEST_PORT_DISCOVERY);
+			pd_dpm_request(i, DPM_REQUEST_PORT_DISCOVERY);
 	}
 
 	CPRINTS("PD:S5->S3");

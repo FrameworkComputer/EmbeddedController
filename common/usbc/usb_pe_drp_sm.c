@@ -1166,7 +1166,7 @@ void pe_got_soft_reset(int port)
 	set_state_pe(port, PE_SOFT_RESET);
 }
 
-void pe_dpm_request(int port, enum pe_dpm_request req)
+void pd_dpm_request(int port, enum pd_dpm_request req)
 {
 	PE_SET_DPM_REQUEST(port, req);
 }
@@ -1449,7 +1449,7 @@ void pd_request_power_swap(int port)
 	 * requested by policy.
 	 */
 	pe[port].src_snk_pr_swap_counter = 0;
-	pe_dpm_request(port, DPM_REQUEST_PR_SWAP);
+	pd_dpm_request(port, DPM_REQUEST_PR_SWAP);
 }
 
 int pd_is_port_partner_dualrole(int port)
@@ -2117,7 +2117,7 @@ static void pe_src_transition_supply_run(int port)
 			 * PR_Swap
 			 */
 			if (pd_get_src_cap_cnt(port) == 0)
-				pe_dpm_request(port, DPM_REQUEST_GET_SRC_CAPS);
+				pd_dpm_request(port, DPM_REQUEST_GET_SRC_CAPS);
 
 			set_state_pe(port, PE_SRC_READY);
 		} else {
@@ -2809,7 +2809,7 @@ static void pe_snk_select_capability_run(int port)
 				 * request Sink Capabilities for possible FRS
 				 */
 				if (IS_ENABLED(CONFIG_USB_PD_FRS))
-					pe_dpm_request(port,
+					pd_dpm_request(port,
 						DPM_REQUEST_GET_SNK_CAPS);
 				return;
 			}
