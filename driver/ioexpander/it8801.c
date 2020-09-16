@@ -14,6 +14,7 @@
 #include "registers.h"
 #include "task.h"
 #include "util.h"
+#include "keyboard_backlight.h"
 
 #define CPRINTS(format, args...) cprints(CC_KEYSCAN, format, ## args)
 
@@ -430,16 +431,17 @@ DECLARE_CONSOLE_COMMAND(it8801_dump, it8801_dump, "NULL",
 struct it8801_pwm_gpio_map {
 	int port;
 	int mask;
+	int pushpull_en;
 };
 
 const static struct it8801_pwm_gpio_map it8801_pwm_gpio_map[] = {
-	[1] = {.port = 1, .mask = BIT(2)},
-	[2] = {.port = 1, .mask = BIT(3)},
-	[3] = {.port = 1, .mask = BIT(4)},
-	[4] = {.port = 1, .mask = BIT(5)},
-	[7] = {.port = 2, .mask = BIT(0)},
-	[8] = {.port = 2, .mask = BIT(3)},
-	[9] = {.port = 2, .mask = BIT(2)},
+	[1] = {.port = 1, .mask = BIT(2), .pushpull_en = BIT(0)},
+	[2] = {.port = 1, .mask = BIT(3), .pushpull_en = BIT(1)},
+	[3] = {.port = 1, .mask = BIT(4), .pushpull_en = BIT(2)},
+	[4] = {.port = 1, .mask = BIT(5), .pushpull_en = BIT(3)},
+	[7] = {.port = 2, .mask = BIT(0), .pushpull_en = BIT(4)},
+	[8] = {.port = 2, .mask = BIT(3), .pushpull_en = BIT(5)},
+	[9] = {.port = 2, .mask = BIT(2), .pushpull_en = BIT(6)},
 };
 
 void it8801_pwm_enable(enum pwm_channel ch, int enabled)
@@ -470,9 +472,19 @@ void it8801_pwm_enable(enum pwm_channel ch, int enabled)
 	if (enabled)
 		val |= IT8801_PWMMCR_MCR_BLINKING;
 	it8801_write(IT8801_REG_PWMMCR(it8801_pwm_channels[ch].index), val);
+
+	/*
+	 * 1: enable push pull function
+	 */
+	it8801_read(IT8801_REG_PWMODDSR, &val);
+	val &= ~it8801_pwm_gpio_map[index].pushpull_en;
+	if (enabled)
+		val |= it8801_pwm_gpio_map[index].pushpull_en;
+	it8801_write(IT8801_REG_PWMODDSR, val);
+
 }
 
-int it88801_pwm_get_enabled(enum pwm_channel ch)
+int it8801_pwm_get_enabled(enum pwm_channel ch)
 {
 	int val;
 
@@ -507,4 +519,38 @@ int it8801_pwm_get_duty(enum pwm_channel ch)
 	return 100 - it8801_pwm_get_raw_duty(ch) * 100 / 255;
 }
 
+#if defined(SECTION_IS_RW) && defined(CONFIG_KEYBOARD_BACKLIGHT)
+const enum pwm_channel it8801_kblight_pwm_ch = IT8801_PWM_CH_KBLIGHT;
+
+static int it8801_kblight_enable(int enable)
+{
+	it8801_pwm_enable(it8801_kblight_pwm_ch, enable);
+	return EC_SUCCESS;
+}
+
+static int it8801_kblight_set_brightness(int percent)
+{
+	it8801_pwm_set_duty(it8801_kblight_pwm_ch, percent);
+	return EC_SUCCESS;
+}
+
+static int it8801_kblight_get_brightness(void)
+{
+	return it8801_pwm_get_duty(it8801_kblight_pwm_ch);
+}
+
+static int it8801_kblight_init(void)
+{
+	it8801_pwm_set_duty(it8801_kblight_pwm_ch, 0);
+	it8801_pwm_enable(it8801_kblight_pwm_ch, 1);
+	return EC_SUCCESS;
+}
+
+const struct kblight_drv kblight_it8801 = {
+	.init = it8801_kblight_init,
+	.set = it8801_kblight_set_brightness,
+	.get = it8801_kblight_get_brightness,
+	.enable = it8801_kblight_enable,
+};
+#endif
 #endif  /* CONFIG_IO_EXPANDER_IT8801_PWM */

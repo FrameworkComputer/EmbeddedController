@@ -87,6 +87,7 @@ GPIO(USB_C0_DISCHARGE,     PIN(B, 6),  GPIO_OUT_LOW)
 IOEX(LED_BLUE,             EXPIN(0, 1, 4), GPIO_OUT_HIGH)      /* LED BLUE */
 IOEX(LED_GREEN,            EXPIN(0, 1, 3), GPIO_OUT_HIGH)      /* LED GREEN */
 IOEX(LED_ORANGE,           EXPIN(0, 1, 2), GPIO_OUT_HIGH)      /* LED ORANGE */
+IOEX(KB_BL_EN,             EXPIN(0, 0, 7), GPIO_OUT_LOW)
 
 /*
  * TODO(b:138352732): On IT88801 expander, To be readded once IT8801 driver and

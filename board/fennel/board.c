@@ -30,6 +30,7 @@
 #include "i2c_bitbang.h"
 #include "it8801.h"
 #include "keyboard_scan.h"
+#include "keyboard_backlight.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -418,6 +419,38 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+const struct it8801_pwm_t it8801_pwm_channels[] = {
+	[IT8801_PWM_CH_KBLIGHT] = {.index = 4},
+};
+
+void board_kblight_init(void)
+{
+	kblight_register(&kblight_it8801);
+}
+
+bool board_has_kb_backlight(void)
+{
+	/* Default enable keyboard backlight */
+	return true;
+}
+
+/* Called on AP S0iX -> S0 transition */
+static void board_chipset_resume(void)
+{
+	if (board_has_kb_backlight())
+		ioex_set_level(IOEX_KB_BL_EN, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S0 -> S0iX transition */
+static void board_chipset_suspend(void)
+{
+	if (board_has_kb_backlight())
+		ioex_set_level(IOEX_KB_BL_EN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
 
