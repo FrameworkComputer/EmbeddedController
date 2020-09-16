@@ -375,7 +375,9 @@ case "${BOARD}" in
 esac
 
 case "${CHIP}" in
-	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"npcx_uut"|"ite_spi") ;;
+	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"npcx_uut"|"ite_spi"| \
+			"ite_spi_ccd_i2c")
+		;;
 	*)
 		if [[ -n "${FLAGS_read}" ]]; then
 			die "The flag is not yet supported on ${CHIP}."
@@ -906,7 +908,7 @@ function flash_flashrom() {
 	if ! on_raiden || [[ "${SERVO_TYPE}" =~ "servo_micro" ]] ; then
 		if $(in_array "${BOARDS_SPI_1800MV[@]}" "${BOARD}"); then
 			SPI_VOLTAGE="pp1800"
-		elif [[ "${CHIP}" == "ite_spi" ]]; then
+		elif [[ "${CHIP}" == "ite_spi" || "${CHIP}" == "ite_spi_ccd_i2c" ]]; then
 			SPI_VOLTAGE="pp1800"
 		else
 			SPI_VOLTAGE="pp3300"
@@ -925,7 +927,7 @@ function flash_flashrom() {
 		fi
 
 		# Enable SPI programming mode.
-		if [[ "${CHIP}" == "ite_spi" ]]; then
+		if [[ "${CHIP}" == "ite_spi" || "${CHIP}" == "ite_spi_ccd_i2c" ]]; then
 			# Set hardware strap pin (GPG6) of SPI programming as low then start ec
 			dut_control fw_up:on
 			sleep 0.1
@@ -990,6 +992,7 @@ function flash_flashrom() {
 		DELETE_LIST+=( "${T}" )
 
 		if [[ "${CHIP}" =~ ^npcx(|_int)_spi$ ]] || \
+		   [[ "${CHIP}" =~ "ite_spi_ccd_i2c" ]] ||
 		   [[ "${CHIP}" =~ "ite_spi" ]] ; then
 		{	# Patch temp image up to SPI_SIZE
 			cat "$IMG"
@@ -1318,6 +1321,15 @@ function flash_it83xx() {
 
 function flash_ite_spi() {
 	flash_flashrom
+}
+
+function flash_ite_spi_ccd_i2c() {
+	if [[ "${SERVO_TYPE}" =~ "servo_micro" || \
+	      "${SERVO_TYPE}" =~ "servo_v2" ]] ; then
+		flash_flashrom
+	else
+		flash_it83xx
+	fi
 }
 
 function flash_lm4() {
