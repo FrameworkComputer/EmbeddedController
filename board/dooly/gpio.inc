@@ -42,6 +42,7 @@ GPIO_INT(USB_C0_TCPPC_INT_ODL, PIN(E, 0), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C0_TCPC_INT_ODL,  PIN(6, 2), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(USB_C1_TCPPC_INT_ODL, PIN(A, 2), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C1_TCPC_INT_ODL,  PIN(E, 4), GPIO_INT_FALLING, tcpc_alert_event)
+GPIO_INT(PANEL_BACKLIGHT_EN,	PIN(B, 1), GPIO_INT_RISING, backlight_enable_interrupt)
 /*
  * Directly connected recovery button.
  */
@@ -141,11 +142,14 @@ ALTERNATE(PIN_MASK(F, 0x01), 0, MODULE_ADC, 0)                  /* ADC9 */
 /* UART */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)                 /* UART from EC to Servo */
 
+/* PANEL ID */
+GPIO(PANEL_ID0,			PIN(0, 2), GPIO_INPUT)
+GPIO(PANEL_ID1,			PIN(C, 6), GPIO_INPUT)
+
 /* Unused pins */
 UNUSED(PIN(D, 3))						/* E9  TP55 */
 UNUSED(PIN(9, 5))						/* H10 TP54 */
 UNUSED(PIN(4, 0))						/* E4  TP56 */
-UNUSED(PIN(B, 1))						/* F8  TP59 */
 UNUSED(PIN(5, 0))						/* G4 NC */
 UNUSED(PIN(9, 6))						/* M12 TP998 */
 UNUSED(PIN(0, 7))						/* E8  TP991 */
@@ -160,7 +164,6 @@ UNUSED(PIN(C, 2))						/* A12 NC */
 UNUSED(PIN(1, 2))						/* C6  NC */
 UNUSED(PIN(6, 6))						/* H4  NC */
 UNUSED(PIN(8, 1))						/* L6  NC */
-UNUSED(PIN(C, 6))						/* B11 NC */
 UNUSED(PIN(E, 2))						/* B8  NC */
 UNUSED(PIN(8, 5))						/* L7  NC */
 UNUSED(PIN(0, 0))						/* D11 NC */

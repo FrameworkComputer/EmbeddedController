@@ -15,6 +15,7 @@
 #include "core/cortex-m/cpu.h"
 #include "cros_board_info.h"
 #include "driver/ina3221.h"
+#include "driver/led/oz554.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -943,4 +944,30 @@ static void power_monitor(void)
 		gpio_set_level(GPIO_USB_A_LOW_PWR_OD, typea_bc);
 	}
 	hook_call_deferred(&power_monitor_data, delay);
+}
+
+__override void oz554_board_init(void)
+{
+	int pin_status = 0;
+
+	pin_status |= gpio_get_level(GPIO_PANEL_ID0) << 0;
+	pin_status |= gpio_get_level(GPIO_PANEL_ID1) << 1;
+
+	switch (pin_status) {
+	case 0x00:
+		CPRINTS("PANEL_HAN01.10A");
+		oz554_set_config(0, 0xF3);
+		oz554_set_config(2, 0x55);
+		oz554_set_config(5, 0x87);
+		break;
+	case 0x02:
+		CPRINTS("PANEL_WF9_SSA2");
+		oz554_set_config(0, 0xF3);
+		oz554_set_config(2, 0x4C);
+		oz554_set_config(5, 0xB7);
+		break;
+	default:
+		CPRINTS("PANEL UNKNOWN");
+		break;
+	}
 }

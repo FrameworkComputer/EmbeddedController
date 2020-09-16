@@ -124,9 +124,11 @@ int oz554_set_config(int offset, int data)
 		if (oz554_conf[i].offset == offset)
 			break;
 	}
-	if (i >= oz554_conf_size)
+	if (i >= oz554_conf_size) {
 		/* Matching offset not found */
+		CPRINTS("oz554: offset %d not found", i);
 		return EC_ERROR_INVAL;
+	}
 	oz554_conf[i].data = data;
 	return EC_SUCCESS;
 }
