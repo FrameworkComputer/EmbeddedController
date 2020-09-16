@@ -307,6 +307,8 @@ const char help_str[] =
 	"      Get/set TMP006 calibration\n"
 	"  tmp006raw <tmp006_index>\n"
 	"      Get raw TMP006 data\n"
+	"  typeccontrol <port> <command>\n"
+	"      Control USB PD policy\n"
 	"  typecdiscovery <port> <type>\n"
 	"      Get discovery information for port and type\n"
 	"  uptimeinfo\n"
@@ -319,7 +321,7 @@ const char help_str[] =
 	"  usbpd <port> <auto | "
 			"[toggle|toggle-off|sink|source] [none|usb|dp|dock] "
 			"[dr_swap|pr_swap|vconn_swap]>\n"
-	"      Control USB PD/type-C\n"
+	"      Control USB PD/type-C [deprecated]\n"
 	"  usbpdmuxinfo\n"
 	"      Get USB-C SS mux info\n"
 	"  usbpdpower [port]\n"
@@ -9385,6 +9387,41 @@ int cmd_pd_write_log(int argc, char *argv[])
 	return ec_command(EC_CMD_PD_WRITE_LOG_ENTRY, 0, &p, sizeof(p), NULL, 0);
 }
 
+int cmd_typec_control(int argc, char *argv[])
+{
+	struct ec_params_typec_control p;
+	char *endptr;
+	int rv;
+
+	if (argc < 3) {
+		fprintf(stderr,
+			"Usage: %s <port> <command>\n"
+			"  <port> is the type-c port to query\n"
+			"  <type> is one of:\n"
+			"    0: Exit modes\n", argv[0]);
+		return -1;
+	}
+
+	p.port = strtol(argv[1], &endptr, 0);
+	if (endptr && *endptr) {
+		fprintf(stderr, "Bad port\n");
+		return -1;
+	}
+
+	p.command = strtol(argv[2], &endptr, 0);
+	if (endptr && *endptr) {
+		fprintf(stderr, "Bad command\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_TYPEC_CONTROL, 0, &p, sizeof(p),
+			ec_inbuf, ec_max_insize);
+	if (rv < 0)
+		return -1;
+
+	return 0;
+}
+
 int cmd_typec_discovery(int argc, char *argv[])
 {
 	struct ec_params_typec_discovery p;
@@ -9902,6 +9939,7 @@ const struct command commands[] = {
 	{"tpframeget", cmd_tp_frame_get},
 	{"tmp006cal", cmd_tmp006cal},
 	{"tmp006raw", cmd_tmp006raw},
+	{"typeccontrol", cmd_typec_control},
 	{"typecdiscovery", cmd_typec_discovery},
 	{"uptimeinfo", cmd_uptimeinfo},
 	{"usbchargemode", cmd_usb_charge_set_mode},

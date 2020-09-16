@@ -174,6 +174,7 @@ static void dpm_attempt_mode_exit(int port)
 	uint16_t svid;
 	uint32_t vdm;
 
+	/* TODO(b/156749387): Support Data Reset for exiting USB4. */
 	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
 	    tbt_is_active(port))
 		svid = USB_VID_INTEL;
@@ -185,6 +186,10 @@ static void dpm_attempt_mode_exit(int port)
 		return;
 	}
 
+	/*
+	 * TODO(b/148528713): Support cable plug Exit Mode (probably outsource
+	 * VDM construction to alt mode modules).
+	 */
 	opos = pd_alt_mode(port, TCPC_TX_SOP, svid);
 	if (opos > 0 && pd_dfp_exit_mode(port, TCPC_TX_SOP, svid, opos)) {
 		/*

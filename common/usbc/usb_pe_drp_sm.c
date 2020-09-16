@@ -1309,6 +1309,10 @@ static bool common_src_snk_dpm_requests(int port)
 		pe_set_dpm_curr_request(port, DPM_REQUEST_ENTER_USB);
 		set_state_pe(port, PE_DEU_SEND_ENTER_USB);
 		return true;
+	} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_EXIT_MODES)) {
+		pe_set_dpm_curr_request(port, DPM_REQUEST_EXIT_MODES);
+		dpm_set_mode_exit_request(port);
+		return true;
 	}
 	return false;
 }

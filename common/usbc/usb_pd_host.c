@@ -94,3 +94,23 @@ static enum ec_status hc_typec_discovery(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_TYPEC_DISCOVERY,
 		     hc_typec_discovery,
 		     EC_VER_MASK(0));
+
+static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_typec_control *p = args->params;
+
+	if (p->port >= board_get_usb_pd_port_count())
+		return EC_RES_INVALID_PARAM;
+
+	switch (p->command) {
+	case TYPEC_CONTROL_COMMAND_EXIT_MODES:
+		pd_dpm_request(p->port, DPM_REQUEST_EXIT_MODES);
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_TYPEC_CONTROL, hc_typec_control, EC_VER_MASK(0));

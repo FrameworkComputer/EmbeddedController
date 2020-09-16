@@ -966,6 +966,7 @@ enum pd_dpm_request {
 	DPM_REQUEST_SEND_ALERT          = BIT(17),
 	DPM_REQUEST_ENTER_USB           = BIT(18),
 	DPM_REQUEST_GET_SRC_CAPS        = BIT(19),
+	DPM_REQUEST_EXIT_MODES          = BIT(20),
 };
 
 /**
