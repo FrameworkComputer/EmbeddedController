@@ -54,6 +54,8 @@ extern const struct hook_data __hooks_chipset_shutdown[];
 extern const struct hook_data __hooks_chipset_shutdown_end[];
 extern const struct hook_data __hooks_chipset_shutdown_complete[];
 extern const struct hook_data __hooks_chipset_shutdown_complete_end[];
+extern const struct hook_data __hooks_chipset_hard_off[];
+extern const struct hook_data __hooks_chipset_hard_off_end[];
 extern const struct hook_data __hooks_chipset_reset[];
 extern const struct hook_data __hooks_chipset_reset_end[];
 extern const struct hook_data __hooks_ac_change[];

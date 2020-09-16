@@ -152,6 +152,13 @@ enum hook_type {
 	HOOK_CHIPSET_SHUTDOWN_COMPLETE,
 
 	/*
+	 * System is in G3.  All power rails are now turned off.
+	 *
+	 * Hook routines are called from the chipset task.
+	 */
+	HOOK_CHIPSET_HARD_OFF,
+
+	/*
 	 * System reset in S0.  All rails are still up.
 	 *
 	 * Hook routines are called from the chipset task.

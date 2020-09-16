@@ -693,6 +693,10 @@ void chipset_task(void *u)
 		if (new_state != state) {
 			power_set_state(new_state);
 			power_set_active_wake_mask();
+
+			/* Call hooks before we enter G3 */
+			if (new_state == POWER_G3)
+				hook_notify(HOOK_CHIPSET_HARD_OFF);
 		}
 	}
 }
