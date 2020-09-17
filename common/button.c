@@ -817,10 +817,6 @@ DECLARE_HOOK(HOOK_TICK, debug_led_tick, HOOK_PRIO_DEFAULT);
 #endif /* !CONFIG_DEDICATED_RECOVERY_BUTTON */
 #endif /* CONFIG_EMULATED_SYSRQ */
 
-#if defined(CONFIG_VOLUME_BUTTONS) && defined(CONFIG_DEDICATED_RECOVERY_BUTTON)
-#error "A dedicated recovery button is not needed if you have volume buttons."
-#endif /* defined(CONFIG_VOLUME_BUTTONS && CONFIG_DEDICATED_RECOVERY_BUTTON) */
-
 #ifndef CONFIG_BUTTONS_RUNTIME_CONFIG
 const struct button_config buttons[BUTTON_COUNT] = {
 #else
@@ -843,7 +839,8 @@ struct button_config buttons[BUTTON_COUNT] = {
 		.flags = 0,
 	},
 
-#elif defined(CONFIG_DEDICATED_RECOVERY_BUTTON)
+#endif
+#if defined(CONFIG_DEDICATED_RECOVERY_BUTTON)
 	[BUTTON_RECOVERY] = {
 		.name = "Recovery",
 		.type = KEYBOARD_BUTTON_RECOVERY,
@@ -864,6 +861,10 @@ struct button_config buttons[BUTTON_COUNT] = {
 };
 
 #ifdef CONFIG_BUTTON_TRIGGERED_RECOVERY
+/*
+ * Prefer the dedicated recovery button over the volume buttons if
+ * both are present.
+ */
 const struct button_config *recovery_buttons[] = {
 #ifdef CONFIG_DEDICATED_RECOVERY_BUTTON
 	&buttons[BUTTON_RECOVERY],
