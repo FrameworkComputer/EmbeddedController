@@ -84,7 +84,7 @@ static inline int console_is_restricted(void)
 /* Console channels */
 enum console_channel {
 	#define CONSOLE_CHANNEL(enumeration, string) enumeration,
-	#include "include/console_channel.inc"
+	#include "console_channel.inc"
 	#undef CONSOLE_CHANNEL
 
 	/* Channel count; not itself a channel */
