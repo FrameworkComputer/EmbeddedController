@@ -511,12 +511,17 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 __override uint16_t board_get_ps8xxx_product_id(int port)
 {
-	/* Lazor (SKU_ID: 0, 1, 2, 3) rev 3+ changes TCPC to PS8805 */
+	/*
+	 * Lazor (SKU_ID: 0, 1, 2, 3) rev 3+ changes TCPC from PS8751 to
+	 * PS8805.
+	 *
+	 * Limozeen (SKU_ID: 4, 5) all-rev uses PS8805.
+	 */
 	if ((sku_id == 0 || sku_id == 1 || sku_id == 2 || sku_id == 3) &&
-	    system_get_board_version() >= 3)
-		return PS8805_PRODUCT_ID;
+	    system_get_board_version() < 3)
+		return PS8751_PRODUCT_ID;
 
-	return PS8751_PRODUCT_ID;
+	return PS8805_PRODUCT_ID;
 }
 
 void board_tcpc_init(void)
