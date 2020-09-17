@@ -25,8 +25,7 @@ GPIO_INT(PG_EC_DSW_PWROK,      PIN(C, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
 
 /* Sensor Interrupts */
-GPIO_INT(EC_IMU_INT_L,         PIN(5, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi260_interrupt)
-GPIO_INT(EC_ALS_RGB_INT_L,     PIN(D, 4), GPIO_INT_FALLING, tcs3400_interrupt)
+GPIO_INT(EC_IMU_INT_L,         PIN(5, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi160_interrupt)
 GPIO_INT(TABLET_MODE_L,        PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 /*
  * Lid g-sensor interrupt unused on Volteer, configure as regular input for
@@ -117,6 +116,7 @@ GPIO(UNUSED_GPIO96,		PIN(9, 6), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIO34,		PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIOD1,		PIN(D, 1), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIOD0,		PIN(D, 0), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIOD4,		PIN(D, 4), GPIO_INPUT | GPIO_PULL_UP)
 
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
