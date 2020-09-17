@@ -39,6 +39,8 @@ GPIO_INT(POWER_GOOD,        PIN(5, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN, chipset_p
 GPIO_INT(WARM_RESET_L,      PIN(F, 4), GPIO_INT_BOTH | GPIO_SEL_1P8V, chipset_warm_reset_interrupt)  /* AP warm reset */
 GPIO_INT(AP_EC_SPI_CS_L,    PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN, shi_cs_event)  /* EC SPI Chip Select */
 
+GPIO_INT(BASE_DET_L,        PIN(3, 7), GPIO_INT_BOTH, base_detect_interrupt)  /* Detachable base attached? */
+
 /* Sensor interrupts */
 GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi160_interrupt)  /* Accelerometer/gyro interrupt */
 
@@ -85,9 +87,7 @@ GPIO(WLC_IRQ_CONN,          PIN(7, 4), GPIO_INPUT)
 GPIO(WLC_NRST_CONN,         PIN(C, 5), GPIO_INPUT)
 
 /* Base detection */
-/* TODO(b/168712053): Implement the base detection */
-GPIO(BASE_DET_L,            PIN(3, 7), GPIO_INPUT)
-GPIO(EN_BASE,               PIN(0, 4), GPIO_INPUT)
+GPIO(EN_BASE,               PIN(0, 4), GPIO_OUT_LOW)   /* Enable power to detachable base */
 
 /* USB-C */
 GPIO(USB_C0_PD_RST_L,       PIN(F, 1), GPIO_ODR_HIGH)  /* Port-0 TCPC chip reset, actaully Open-Drain */
@@ -149,6 +149,7 @@ ALTERNATE(PIN_MASK(8, 0x80), 1, MODULE_I2C, 0)             /* I2C1 SCL (GPIO87) 
 ALTERNATE(PIN_MASK(3, 0x48), 1, MODULE_I2C, 0)             /* I2C5 (GPIO33/36) */
 ALTERNATE(PIN_MASK(B, 0x0C), 1, MODULE_I2C, GPIO_SEL_1P8V) /* I2C7 (GPIOB2/B3) - 1.8V */
 ALTERNATE(PIN_MASK(D, 0x03), 1, MODULE_I2C, 0)             /* I2C3 (GPIOD0/D1) */
+ALTERNATE(PIN_MASK(3, 0x80), 0, MODULE_ADC, 0)             /* ADC5 (GPIO37) */
 ALTERNATE(PIN_MASK(4, 0x1C), 0, MODULE_ADC, 0)             /* ADC1 (GPIO44), ADC2 (GPIO43), ADC3 (GPIO42) */
 ALTERNATE(PIN_MASK(4, 0xC0), 1, MODULE_SPI, GPIO_SEL_1P8V) /* SHI_SDO (GPIO47), SHI_SDI (GPIO46) */
 ALTERNATE(PIN_MASK(5, 0x28), 1, MODULE_SPI, GPIO_SEL_1P8V) /* SHI_SCLK (GPIO55), SHI_CS# (GPIO53) */

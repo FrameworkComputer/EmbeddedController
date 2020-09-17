@@ -42,6 +42,9 @@
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(LID_ACCEL)
 #define OPT3001_I2C_ADDR_FLAGS OPT3001_I2C_ADDR1_FLAGS
 
+#define CONFIG_TABLET_MODE
+#define CONFIG_TABLET_MODE_SWITCH
+
 /* GPIO alias */
 #define GPIO_AC_PRESENT GPIO_CHG_ACOK_OD
 #define GPIO_WP_L GPIO_EC_FLASH_WP_ODL
@@ -56,6 +59,7 @@ enum adc_channel {
 	ADC_VBUS,
 	ADC_AMON_BMON,
 	ADC_PSYS,
+	ADC_BASE_DET,
 	ADC_CH_COUNT
 };
 
@@ -88,6 +92,8 @@ int board_vbus_sink_enable(int port, int enable);
 /* Reset all TCPCs. */
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
+/* Base detection */
+void base_detect_interrupt(enum gpio_signal signal);
 
 #endif /* !defined(__ASSEMBLER__) */
 

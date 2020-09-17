@@ -153,6 +153,14 @@ const struct adc_t adc_channels[] = {
 		2,
 		0
 	},
+	/* Base detection */
+	[ADC_BASE_DET] = {
+		"BASE_DET",
+		NPCX_ADC_CH5,
+		ADC_MAX_VOLT,
+		ADC_READ_MAX + 1,
+		0
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
