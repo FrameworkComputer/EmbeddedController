@@ -221,6 +221,15 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+__override uint16_t board_get_ps8xxx_product_id(int port)
+{
+	/* Pompom rev 1+ changes TCPC from PS8751 to PS8805 */
+	if (system_get_board_version() == 0)
+		return PS8751_PRODUCT_ID;
+
+	return PS8805_PRODUCT_ID;
+}
+
 void board_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
