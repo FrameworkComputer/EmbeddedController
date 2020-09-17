@@ -147,7 +147,16 @@ static void determine_threshold_scale(int range, int resolution, int rms_noise)
 	const int data_1g = BIT(resolution - 1) / range;
 	const int multiplier = POW2(data_1g);
 	const int divisor = POW2(9800);
-	const int var_noise = POW2((int64_t)rms_noise) * POW2(98) / POW2(10000);
+	/*
+	 * We are measuring the var(X) + var(Y), so theoretically, the
+	 * var(noise) should be 2 * rms_noise^2. However, in most case, on a
+	 * very stationary plane, the average of var(noise) are less than 2 *
+	 * rms_noise^2. We can multiply the rms_noise^2 with the
+	 * CONFIG_BODY_DETECTION_VAR_NOISE_FACTOR / 100.
+	 */
+	const int var_noise = POW2((uint64_t)rms_noise) *
+			      CONFIG_BODY_DETECTION_VAR_NOISE_FACTOR * POW2(98)
+			      / 100 / POW2(10000);
 
 	var_threshold_scaled = (uint64_t)
 		(CONFIG_BODY_DETECTION_VAR_THRESHOLD + var_noise) *

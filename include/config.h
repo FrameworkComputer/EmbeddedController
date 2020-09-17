@@ -190,6 +190,9 @@
 #undef CONFIG_BODY_DETECTION_VAR_THRESHOLD
 #undef CONFIG_BODY_DETECTION_CONFIDENCE_DELTA
 
+/* How much noise affect threshold of variance */
+#undef CONFIG_BODY_DETECTION_VAR_NOISE_FACTOR
+
 /* The confidence limit of on_body/off_body */
 #undef CONFIG_BODY_DETECTION_ON_BODY_CON
 #undef CONFIG_BODY_DETECTION_OFF_BODY_CON
@@ -5728,6 +5731,7 @@
 #define CONFIG_BODY_DETECTION_MAX_WINDOW_SIZE     250 /* max sensor odr (Hz) */
 #define CONFIG_BODY_DETECTION_VAR_THRESHOLD       550 /* (mm/s^2)^2 */
 #define CONFIG_BODY_DETECTION_CONFIDENCE_DELTA    525 /* (mm/s^2)^2 */
+#define CONFIG_BODY_DETECTION_VAR_NOISE_FACTOR    120 /* % */
 #define CONFIG_BODY_DETECTION_ON_BODY_CON         50  /* % */
 #define CONFIG_BODY_DETECTION_OFF_BODY_CON        10  /* % */
 #define CONFIG_BODY_DETECTION_STATIONARY_DURATION 15  /* second */
