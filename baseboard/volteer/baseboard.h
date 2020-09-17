@@ -214,13 +214,6 @@
 /* UART COMMAND */
 #define CONFIG_CMD_CHARGEN
 
-/*
- * USB ID
- * This is allocated specifically for Volteer
- * http://google3/hardware/standards/usb/
- */
-#define CONFIG_USB_PID 0x503E
-
 /* Retimer */
 #define CONFIG_USBC_RETIMER_INTEL_BB
 #define CONFIG_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG

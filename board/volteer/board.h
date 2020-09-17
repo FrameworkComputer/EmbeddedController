@@ -72,6 +72,13 @@
 #define CONFIG_LID_ANGLE_SENSOR_LID		LID_ACCEL
 
 /* USB Type C and USB PD defines */
+/*
+ * USB ID
+ * This is allocated specifically for Volteer
+ * http://google3/hardware/standards/usb/
+ */
+#define CONFIG_USB_PID 0x503E
+
 #define CONFIG_USB_PD_PORT_MAX_COUNT			2
 
 /*
