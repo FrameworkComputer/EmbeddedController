@@ -211,18 +211,12 @@
 #define ZORK_AC_PROCHOT_CURRENT_MA 3328
 
 /*
- * Minimum conditions to start AP and perform swsync.  Note that when the
- * charger is connected via USB-PD analog signaling, the boot will proceed
- * regardless.
+ * EC will boot AP to depthcharge if: (BAT >= 4%) || (AC >= 50W)
+ * CONFIG_CHARGER_LIMIT_* is not set, so there is no additional restriction on
+ * Depthcharge to boot OS.
  */
-#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 3
-
-/*
- * Require PD negotiation to be complete when we are in a low-battery condition
- * prior to releasing depthcharge to the kernel.
- */
-#define CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW 15001
-#define CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT 3
+#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON			4
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON		50000
 
 /* Increase length of history buffer for port80 messages. */
 #undef CONFIG_PORT80_HISTORY_LEN
