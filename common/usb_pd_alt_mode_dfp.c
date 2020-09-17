@@ -590,17 +590,34 @@ struct svid_mode_data *pd_get_next_mode(int port,
 		enum tcpm_transmit_type type)
 {
 	struct pd_discovery *disc = pd_get_am_discovery(port, type);
+	struct svid_mode_data *failed_mode_data = NULL;
+	bool svid_good_discovery = false;
 	int svid_idx;
 
+	/* Walk through all of the discovery mode entries */
 	for (svid_idx = 0; svid_idx < disc->svid_cnt; ++svid_idx) {
 		struct svid_mode_data *mode_data = &disc->svids[svid_idx];
 
-		if (mode_data->discovery == PD_DISC_COMPLETE)
-			continue;
+		/* Discovery is needed, so send this one back now */
+		if (mode_data->discovery == PD_DISC_NEEDED)
+			return mode_data;
 
-		return mode_data;
+		/* Discovery already succeeded, save that it was seen */
+		if (mode_data->discovery == PD_DISC_COMPLETE)
+			svid_good_discovery = true;
+		/* Discovery already failed, save first failure */
+		else if (!failed_mode_data)
+			failed_mode_data = mode_data;
 	}
 
+	/* If no good entries were located, then return last failed */
+	if (!svid_good_discovery)
+		return failed_mode_data;
+
+	/*
+	 * Mode discovery has been attempted for every discovered SVID (if
+	 * any exist)
+	 */
 	return NULL;
 }
 

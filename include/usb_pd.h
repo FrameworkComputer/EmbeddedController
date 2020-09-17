@@ -1761,13 +1761,16 @@ void pd_set_modes_discovery(int port, enum tcpm_transmit_type type,
 
 /**
  * Get Modes discovery state for this port and SOP* type. Modes discover is
- * considered complete for a port and type when modes have been discovered for
- * all discovered SVIDs. Mode discovery is failed if mode discovery for any SVID
- * failed.
+ * considered NEEDED if there are any discovered SVIDs that still need to be
+ * discovered. Modes discover is considered COMPLETE when no discovered SVIDs
+ * need to go through discovery and at least one mode has been considered
+ * complete or if there are no discovered SVIDs. Modes discovery is
+ * considered FAIL if mode discovery for all SVIDs are failed.
  *
  * @param port USB-C port number
  * @param type SOP* type to retrieve
- * @return      Current discovery state (failed or complete)
+ * @return      Current discovery state (PD_DISC_NEEDED, PD_DISC_COMPLETE,
+ *                                       PD_DISC_FAIL)
  */
 enum pd_discovery_state pd_get_modes_discovery(int port,
 		enum tcpm_transmit_type type);
@@ -1788,14 +1791,17 @@ int pd_get_mode_vdo_for_svid(int port, enum tcpm_transmit_type type,
 		uint16_t svid, uint32_t *vdo_out);
 
 /**
- * Get a pointer to mode data for the next SVID with undiscovered modes. This
- * data may indicate that discovery failed.
+ * Get a pointer to mode data for the next SVID that needs to be discovered.
+ * This data may indicate that discovery failed.
  *
  * @param port USB-C port number
  * @param type SOP* type to retrieve
- * @return     Pointer to the first SVID-mode structure with undiscovered mode;
- *             discovery may be needed or failed; returns NULL if all SVIDs have
- *             discovered modes
+ * @return     In order of precedence:
+ *             Pointer to the first SVID-mode structure with needs discovered
+ *             mode, if any exist;
+ *             Pointer to the first SVID-mode structure with discovery failed
+ *             mode, if any exist and no modes succeeded in discovery;
+ *             NULL, otherwise
  */
 struct svid_mode_data *pd_get_next_mode(int port, enum tcpm_transmit_type type);
 
