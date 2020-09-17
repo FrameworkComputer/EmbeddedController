@@ -18,6 +18,7 @@
 #include "host_command.h"
 #include "link_defs.h"
 #include "mkbp_event.h"
+#include "overflow.h"
 #include "spi.h"
 #include "system.h"
 #include "task.h"
@@ -356,12 +357,17 @@ DECLARE_HOST_COMMAND(EC_CMD_FP_INFO, fp_command_info,
 
 BUILD_ASSERT(FP_CONTEXT_NONCE_BYTES == 12);
 
-static int validate_fp_buffer_offset(const uint32_t buffer_size,
-				     const uint32_t offset, const uint32_t size)
+int validate_fp_buffer_offset(const uint32_t buffer_size, const uint32_t offset,
+			      const uint32_t size)
 {
-	if (size > buffer_size || offset > buffer_size ||
-	    size + offset > buffer_size)
+	uint32_t bytes_requested;
+
+	if (check_add_overflow(size, offset, &bytes_requested))
+		return EC_ERROR_OVERFLOW;
+
+	if (bytes_requested > buffer_size)
 		return EC_ERROR_INVAL;
+
 	return EC_SUCCESS;
 }
 
