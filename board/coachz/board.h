@@ -73,9 +73,7 @@ enum pwm_channel {
 
 /* List of possible batteries */
 enum battery_type {
-	BATTERY_AP16L5J,
-	BATTERY_AP16L5J_009,
-	BATTERY_AP16L8J,
+	BATTERY_DS02032XL,
 	BATTERY_TYPE_COUNT,
 };
 
