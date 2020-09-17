@@ -602,6 +602,7 @@ static int it83xx_tcpm_set_msg_header(int port, int power_role, int data_role)
 static int it83xx_tcpm_set_rx_enable(int port, int enable)
 {
 	int i;
+	bool prevent_deep_sleep = false;
 
 	if (enable) {
 		IT83XX_USBPD_IMR(port) &= ~USBPD_REG_MASK_MSG_RX_DONE;
@@ -626,14 +627,27 @@ static int it83xx_tcpm_set_rx_enable(int port, int enable)
 	 * PD port Rx is enabled, then disable EC deep sleep.
 	 */
 	for (i = 0; i < CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT; ++i) {
-		if (IT83XX_USBPD_GCR(i) & USBPD_REG_MASK_BMC_PHY)
+		if (IT83XX_USBPD_GCR(i) & USBPD_REG_MASK_BMC_PHY) {
+			prevent_deep_sleep = true;
 			break;
+		}
 	}
 
-	if (i == board_get_usb_pd_port_count())
-		enable_sleep(SLEEP_MASK_USB_PD);
-	else
+	/*
+	 * Check if any other ports have a PD port partner connected.  Deep
+	 * sleep is forbidden if any PD port partner is connected.  Above, we
+	 * only checked for the ITE ports.
+	 */
+	if (!prevent_deep_sleep) {
+		for (; i < board_get_usb_pd_port_count(); i++)
+			if (pd_capable(i))
+				prevent_deep_sleep = true;
+	}
+
+	if (prevent_deep_sleep)
 		disable_sleep(SLEEP_MASK_USB_PD);
+	else
+		enable_sleep(SLEEP_MASK_USB_PD);
 
 	return EC_SUCCESS;
 }
