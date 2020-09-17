@@ -4820,6 +4820,12 @@
 /* Define to enable USB State Machine framework. */
 #undef CONFIG_TEST_SM
 
+/*
+ * This build is not a complete platform/ec based EC, but instead
+ * using the platform/ec zephyr module.
+ */
+#undef CONFIG_ZEPHYR
+
 /*****************************************************************************/
 /*
  * Include board and core configs, since those hold the CONFIG_ constants for a

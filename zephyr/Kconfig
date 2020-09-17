@@ -12,6 +12,20 @@ menuconfig PLATFORM_EC
 
 if PLATFORM_EC
 
-# Nothing here yet.
+# Below is a hack to use CONFIG_ZEPHYR in platform/ec code before
+# config.h has been included.  There is some tricky ordering in some
+# header files that we cannot use config.h (e.g., common.h and
+# compile_time_macros.h), as many board.h and config_chip.h files
+# use these macros, and thus would be included by an include of
+# config.h.  We work around this by initially defining CONFIG_ZEPHYR
+# in Kconfig as an invisible symbol (it should always be enabled).
+# Then, once config.h gets included, it subsequently gets undef'ed by
+# config.h, and then redefined by config_chip.h in the Zephyr shim.
+config ZEPHYR
+	bool
+	default y
+	help
+	  This should always be enabled.  It's a workaround for
+	  config.h not being available in some headers.
 
 endif # PLATFORM_EC
