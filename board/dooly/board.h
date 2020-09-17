@@ -88,11 +88,7 @@
 #define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
 #define DEDICATED_CHARGE_PORT 2
 
-/*
- * TODO(amcrae): Currently we do not allow both
- * dedicated recovery button and volume buttons.
- */
-#undef CONFIG_VOLUME_BUTTONS
+#define CONFIG_VOLUME_BUTTONS
 
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_IGNORE_LID
