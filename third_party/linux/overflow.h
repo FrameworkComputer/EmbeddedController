@@ -2,7 +2,8 @@
 #ifndef __LINUX_OVERFLOW_H
 #define __LINUX_OVERFLOW_H
 
-#include <linux/compiler.h>
+#include <stddef.h>
+#include <stdint.h>
 
 /*
  * In the fallback code below, we need to compute the minimum and
@@ -122,9 +123,9 @@
  * we must provide a result in *d, and in fact we must produce the
  * result promised by gcc's builtins, which is simply the possibly
  * wrapped-around value. Fortunately, we can just formally do the
- * operations in the widest relevant unsigned type (u64) and then
+ * operations in the widest relevant unsigned type (uint64_t) and then
  * truncate the result - gcc is smart enough to generate the same code
- * with and without the (u64) casts.
+ * with and without the (uint64_t) casts.
  */
 
 /*
@@ -138,7 +139,7 @@
 	typeof(d) __d = (d);			\
 	(void) (&__a == &__b);			\
 	(void) (&__a == __d);			\
-	*__d = (u64)__a + (u64)__b;		\
+	*__d = (uint64_t)__a + (uint64_t)__b;	\
 	(((~(__a ^ __b)) & (*__d ^ __a))	\
 		& type_min(typeof(__a))) != 0;	\
 })
@@ -154,7 +155,7 @@
 	typeof(d) __d = (d);			\
 	(void) (&__a == &__b);			\
 	(void) (&__a == __d);			\
-	*__d = (u64)__a - (u64)__b;		\
+	*__d = (uint64_t)__a - (uint64_t)__b;	\
 	((((__a ^ __b)) & (*__d ^ __a))		\
 		& type_min(typeof(__a))) != 0;	\
 })
@@ -183,7 +184,7 @@
 	typeof(a) __tmin = type_min(typeof(a));				\
 	(void) (&__a == &__b);						\
 	(void) (&__a == __d);						\
-	*__d = (u64)__a * (u64)__b;					\
+	*__d = (uint64_t)__a * (uint64_t)__b;				\
 	(__b > 0   && (__a > __tmax/__b || __a < __tmin/__b)) ||	\
 	(__b < (typeof(__b))-1  && (__a > __tmin/__b || __a < __tmax/__b)) || \
 	(__b == (typeof(__b))-1 && __a == __tmin);			\
@@ -231,7 +232,7 @@
 	typeof(a) _a = a;						\
 	typeof(s) _s = s;						\
 	typeof(d) _d = d;						\
-	u64 _a_full = _a;						\
+	uint64_t _a_full = _a;						\
 	unsigned int _to_shift =					\
 		is_non_negative(_s) && _s < 8 * sizeof(*d) ? _s : 0;	\
 	*_d = (_a_full << _to_shift);					\
@@ -239,6 +240,11 @@
 	(*_d >> _to_shift) != _a);					\
 })
 
+/*
+ * Disabling for EC since we don't currently have SIZE_MAX defined in our
+ * stdint.h.
+ */
+#if 0
 /**
  * array_size() - Calculate size of 2-dimensional array.
  *
@@ -250,7 +256,7 @@
  * Returns: number of bytes needed to represent the array or SIZE_MAX on
  * overflow.
  */
-static inline __must_check size_t array_size(size_t a, size_t b)
+static inline /*__must_check*/ size_t array_size(size_t a, size_t b)
 {
 	size_t bytes;
 
@@ -272,7 +278,7 @@ static inline __must_check size_t array_size(size_t a, size_t b)
  * Returns: number of bytes needed to represent the array or SIZE_MAX on
  * overflow.
  */
-static inline __must_check size_t array3_size(size_t a, size_t b, size_t c)
+static inline /*__must_check*/ size_t array3_size(size_t a, size_t b, size_t c)
 {
 	size_t bytes;
 
@@ -288,7 +294,7 @@ static inline __must_check size_t array3_size(size_t a, size_t b, size_t c)
  * Compute a*b+c, returning SIZE_MAX on overflow. Internal helper for
  * struct_size() below.
  */
-static inline __must_check size_t __ab_c_size(size_t a, size_t b, size_t c)
+static inline /*__must_check*/ size_t __ab_c_size(size_t a, size_t b, size_t c)
 {
 	size_t bytes;
 
@@ -299,6 +305,7 @@ static inline __must_check size_t __ab_c_size(size_t a, size_t b, size_t c)
 
 	return bytes;
 }
+#endif
 
 /**
  * struct_size() - Calculate size of structure with trailing array.
