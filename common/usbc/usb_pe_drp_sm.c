@@ -128,8 +128,11 @@
 #define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED     BIT(21)
 /* TODO: POLICY decision: Triggers a DR SWAP attempt from UFP to DFP */
 #define PE_FLAGS_DR_SWAP_TO_DFP              BIT(22)
-/* Flag to trigger a message resend after receiving a WAIT from port partner */
-#define PE_FLAGS_WAITING_DR_SWAP             BIT(23)
+/*
+ * TODO: POLICY decision
+ * Flag to trigger a message resend after receiving a WAIT from port partner
+ */
+#define PE_FLAGS_WAITING_PR_SWAP             BIT(23)
 /* FLAG to track if port partner is dualrole capable */
 #define PE_FLAGS_PORT_PARTNER_IS_DUALROLE    BIT(24)
 /* FLAG is set when an AMS is initiated locally. ie. AP requested a PR_SWAP */
@@ -193,6 +196,14 @@
  * Note: This is not a part of power delivery specification
  */
 #define N_VCONN_SWAP_COUNT 3
+
+/*
+ * Counter to track how many times to attempt SRC to SNK PR swaps before giving
+ * up.
+ *
+ * Note: This is not a part of power delivery specification
+ */
+#define N_SNK_SRC_PR_SWAP_COUNT 5
 
 /*
  * ChromeOS policy:
@@ -633,6 +644,12 @@ static struct policy_engine {
 	uint64_t sink_request_timer;
 
 	/*
+	 * This timer tracks the time after receiving a Wait message in response
+	 * to a PR_Swap message.
+	 */
+	uint64_t pr_swap_wait_timer;
+
+	/*
 	 * This timer combines the PSSourceOffTimer and PSSourceOnTimer timers.
 	 * For PSSourceOffTimer, when this DRP device is currently acting as a
 	 * Sink, this timer times out on a PS_RDY Message during a Power Role
@@ -721,6 +738,13 @@ static struct policy_engine {
 	 * many attempts to DR SWAP from UFP to DFP.
 	 */
 	uint32_t dr_swap_attempt_counter;
+
+	/*
+	 * This counter tracks how many PR Swap messages are sent when the
+	 * partner responds with a Wait message. Only used during SRC to SNK
+	 * PR swaps
+	 */
+	uint8_t src_snk_pr_swap_counter;
 
 	/*
 	 * This counter maintains a count of VCONN swap requests. If VCONN swap
@@ -1417,6 +1441,11 @@ static void pe_update_pdo_flags(int port, uint32_t pdo)
 
 void pd_request_power_swap(int port)
 {
+	/*
+	 * Always reset the SRC to SNK PR swap counter when a PR swap is
+	 * requested by policy.
+	 */
+	pe[port].src_snk_pr_swap_counter = 0;
 	pe_dpm_request(port, DPM_REQUEST_PR_SWAP);
 }
 
@@ -2288,6 +2317,12 @@ static void pe_src_ready_run(int port)
 		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_CONTINUE);
 		set_state_pe(port, PE_VDM_REQUEST_DPM);
 		return;
+	}
+
+	if (PE_CHK_FLAG(port, PE_FLAGS_WAITING_PR_SWAP) &&
+		get_time().val > pe[port].pr_swap_wait_timer) {
+		PE_CLR_FLAG(port, PE_FLAGS_WAITING_PR_SWAP);
+		PE_SET_DPM_REQUEST(port, DPM_REQUEST_PR_SWAP);
 	}
 
 	if (pe[port].wait_and_add_jitter_timer == TIMER_DISABLED ||
@@ -3752,10 +3787,6 @@ static void pe_drs_send_swap_run(int port)
 			} else if ((type == PD_CTRL_REJECT) ||
 					(type == PD_CTRL_WAIT) ||
 					(type == PD_CTRL_NOT_SUPPORTED)) {
-				if (type == PD_CTRL_WAIT)
-					PE_SET_FLAG(port,
-						PE_FLAGS_WAITING_DR_SWAP);
-
 				pe_set_ready_state(port);
 				return;
 			}
@@ -3961,12 +3992,25 @@ static void pe_prs_src_snk_send_swap_run(int port)
 
 		if ((ext == 0) && (cnt == 0)) {
 			if (type == PD_CTRL_ACCEPT) {
+				pe[port].src_snk_pr_swap_counter = 0;
 				tc_request_power_swap(port);
 				set_state_pe(port,
 					PE_PRS_SRC_SNK_TRANSITION_TO_OFF);
-			} else if ((type == PD_CTRL_REJECT) ||
-						(type == PD_CTRL_WAIT))
+			} else if (type == PD_CTRL_REJECT) {
+				pe[port].src_snk_pr_swap_counter = 0;
 				set_state_pe(port, PE_SRC_READY);
+			} else if (type == PD_CTRL_WAIT) {
+				if (pe[port].src_snk_pr_swap_counter <
+				    N_SNK_SRC_PR_SWAP_COUNT) {
+					PE_SET_FLAG(port,
+						PE_FLAGS_WAITING_PR_SWAP);
+					pe[port].pr_swap_wait_timer =
+						get_time().val +
+						PD_T_PR_SWAP_WAIT;
+				}
+				pe[port].src_snk_pr_swap_counter++;
+				set_state_pe(port, PE_SRC_READY);
+			}
 			return;
 		}
 	}
@@ -3987,6 +4031,13 @@ static void pe_prs_src_snk_send_swap_run(int port)
 static void pe_prs_snk_src_evaluate_swap_entry(int port)
 {
 	print_current_state(port);
+
+	/*
+	 * Cancel any pending PR swap request due to a received Wait since the
+	 * partner just sent us a PR swap message.
+	 */
+	PE_CLR_FLAG(port, PE_FLAGS_WAITING_PR_SWAP);
+	pe[port].src_snk_pr_swap_counter = 0;
 
 	if (!pd_check_power_swap(port)) {
 		/* PE_PRS_SNK_SRC_Reject_Swap state embedded here */
@@ -5937,9 +5988,11 @@ static void pe_dr_src_get_source_cap_run(int port)
 				 */
 				pd_set_src_caps(port, cnt, payload);
 				if (pe[port].src_caps[0] &
-						PDO_FIXED_UNCONSTRAINED)
+						PDO_FIXED_UNCONSTRAINED) {
+					pe[port].src_snk_pr_swap_counter = 0;
 					PE_SET_DPM_REQUEST(port,
 							DPM_REQUEST_PR_SWAP);
+				}
 
 				set_state_pe(port, PE_SRC_READY);
 			} else if (type == PD_CTRL_REJECT ||

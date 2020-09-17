@@ -229,6 +229,7 @@ enum pd_rx_errors {
 #define PD_T_VCONN_STABLE           (50*MSEC) /* 50ms */
 #define PD_T_DISCOVER_IDENTITY      (45*MSEC) /* between 40ms and 50ms */
 #define PD_T_SYSJUMP              (1000*MSEC) /* 1s */
+#define PD_T_PR_SWAP_WAIT          (100*MSEC) /* tPRSwapWait 100ms */
 
 /* number of edges and time window to detect CC line is not idle */
 #define PD_RX_TRANSITION_COUNT  3
