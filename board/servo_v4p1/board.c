@@ -35,6 +35,7 @@
 #include "usart_rx_dma.h"
 #include "usb_gpio.h"
 #include "usb_i2c.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_spi.h"
 #include "usb-stream.h"
@@ -64,6 +65,16 @@ static void tca_evt(enum gpio_signal signal)
 {
 	irq_ioexpanders();
 }
+
+const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	[CHG] = { /* CHG port connected directly to USB 3.0 hub, no mux */ },
+	[DUT] = { /* DUT port with UFP mux */
+		.usb_port = DUT,
+		.i2c_port = I2C_PORT_MASTER,
+		.i2c_addr_flags = TUSB1064_ADDR_FLAGS,
+		.driver = &tusb1064_usb_mux_driver,
+	}
+};
 
 static volatile uint64_t hpd_prev_ts;
 static volatile int hpd_prev_level;
@@ -413,7 +424,6 @@ static void board_init(void)
 
 	init_ioexpanders();
 	init_dacs();
-	init_tusb1064(1);
 	init_pi3usb9201();
 
 	/* Clear BBRAM, we don't want any PD state carried over on reset. */

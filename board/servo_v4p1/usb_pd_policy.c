@@ -18,7 +18,6 @@
 #include "task.h"
 #include "tcpm/tcpm.h"
 #include "timer.h"
-#include "tusb1064.h"
 #include "util.h"
 #include "usb_common.h"
 #include "usb_mux.h"
@@ -921,48 +920,30 @@ static int svdm_response_modes(int port, uint32_t *payload)
 	return MODE_CNT + 1;
 }
 
-static int is_typec_dp_muxed(void)
-{
-	int value;
-
-	value = tusb1064_read_byte(I2C_PORT_MASTER, TUSB1064_REG_GENERAL);
-	if (value < 0 || value & REG_GENERAL_CTLSEL_4DP_LANES)
-		return 0;
-
-	return 1;
-}
-
 static void set_typec_mux(int pin_cfg)
 {
-	int value;
+	mux_state_t state = 0;
 
-	value = tusb1064_read_byte(I2C_PORT_MASTER, TUSB1064_REG_GENERAL);
-	if (value < 0)
-		return;
-
-	value &= ~(REG_GENERAL_CTLSEL_4DP_LANES | REG_GENERAL_CTLSEL_USB3);
 	switch (pin_cfg) {
 	case 0:
 		CPRINTS("PinCfg:off");
 		break;
 	case MODE_DP_PIN_C:
-		value |= REG_GENERAL_CTLSEL_4DP_LANES;
+		state = USB_PD_MUX_DP_ENABLED;
 		CPRINTS("PinCfg:C");
 		break;
 	case MODE_DP_PIN_D:
-		value |= REG_GENERAL_CTLSEL_2DP_AND_USB3;
+		state = USB_PD_MUX_USB_ENABLED;
 		CPRINTS("PinCfg:D");
 		break;
 	default:
 		CPRINTS("PinCfg not supported: %d", pin_cfg);
 		return;
 	}
-	if (value && cc_config & CC_POLARITY)
-		value |= REG_GENERAL_FLIPSEL;
-	else
-		value &= ~REG_GENERAL_FLIPSEL;
+	if (state && cc_config & CC_POLARITY)
+		state |= USB_PD_MUX_POLARITY_INVERTED;
 
-	tusb1064_write_byte(I2C_PORT_MASTER, TUSB1064_REG_GENERAL, value);
+	usb_muxes[DUT].driver->set(&usb_muxes[DUT], state);
 }
 
 static int get_hpd_level(void)
@@ -977,6 +958,9 @@ static int dp_status(int port, uint32_t *payload)
 {
 	int opos = PD_VDO_OPOS(payload[0]);
 	int hpd = get_hpd_level();
+	mux_state_t state = 0;
+	int res = usb_muxes[DUT].driver->get(&usb_muxes[DUT], &state);
+	int dp_enabled = res == EC_SUCCESS && (state & USB_PD_MUX_DP_ENABLED);
 
 	if (opos != OPOS)
 		return 0;  /* NAK */
@@ -987,7 +971,7 @@ static int dp_status(int port, uint32_t *payload)
 		0,                /* request exit DP */
 		0,                /* request exit USB */
 		(alt_dp_config & ALT_DP_MF_PREF) != 0,  /* MF pref */
-		is_typec_dp_muxed(),
+		dp_enabled,
 		0,                /* power low */
 		hpd ? 0x2 : 0);
 
