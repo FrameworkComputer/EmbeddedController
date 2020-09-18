@@ -5,5 +5,5 @@
 # found in the LICENSE file.
 
 # Discover all the unit tests in the ec3po directory and run them.
-python2 -m unittest discover -b -s util/ec3po/ -p *_unittest.py  \
+python3 -m unittest discover -b -s util/ec3po/ -p "*_unittest.py"  \
     && touch util/ec3po/.tests-passed
