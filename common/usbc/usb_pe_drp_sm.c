@@ -1411,10 +1411,13 @@ static void pe_update_pdo_flags(int port, uint32_t pdo)
 	else
 		tc_partner_unconstrainedpower(port, 0);
 
-	if (pdo & PDO_FIXED_COMM_CAP)
-		tc_partner_usb_comm(port, 1);
-	else
-		tc_partner_usb_comm(port, 0);
+	/* Do not set USB comm if we are in an alt-mode */
+	if (pe[port].partner_amodes[TCPC_TX_SOP].amode_idx == 0) {
+		if (pdo & PDO_FIXED_COMM_CAP)
+			tc_partner_usb_comm(port, 1);
+		else
+			tc_partner_usb_comm(port, 0);
+	}
 
 	if (pdo & PDO_FIXED_DATA_SWAP)
 		tc_partner_dr_data(port, 1);
