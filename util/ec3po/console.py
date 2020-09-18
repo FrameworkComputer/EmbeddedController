@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Copyright 2015 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -9,6 +9,8 @@ console provides the console interface between the user and the interpreter.  It
 handles the presentation of the EC console including editing methods as well as
 session-persistent command history.
 """
+
+# Note: This is a py2/3 compatible file.
 
 from __future__ import print_function
 
@@ -26,11 +28,13 @@ import stat
 import sys
 import traceback
 
+import six
+
 import interpreter
 import threadproc_shim
 
 
-PROMPT = '> '
+PROMPT = b'> '
 CONSOLE_INPUT_LINE_SIZE = 80  # Taken from the CONFIG_* with the same name.
 CONSOLE_MAX_READ = 100  # Max bytes to read at a time from the user.
 LOOK_BUFFER_SIZE = 256  # Size of search window when looking for the enhanced EC
@@ -40,9 +44,9 @@ LOOK_BUFFER_SIZE = 256  # Size of search window when looking for the enhanced EC
 # enabled.  Enhanced images will print a slightly different string.  These
 # regular expressions are used to determine at reboot whether the EC image is
 # enhanced or not.
-ENHANCED_IMAGE_RE = re.compile(r'Enhanced Console is enabled '
-                               r'\(v([0-9]+\.[0-9]+\.[0-9]+)\)')
-NON_ENHANCED_IMAGE_RE = re.compile(r'Console is enabled; ')
+ENHANCED_IMAGE_RE = re.compile(br'Enhanced Console is enabled '
+                               br'\(v([0-9]+\.[0-9]+\.[0-9]+)\)')
+NON_ENHANCED_IMAGE_RE = re.compile(br'Console is enabled; ')
 
 # The timeouts are really only useful for enhanced EC images, but otherwise just
 # serve as a delay for non-enhanced EC images.  Therefore, we can keep this
@@ -57,9 +61,8 @@ NON_ENHANCED_EC_INTERROGATION_TIMEOUT = 0.3  # Maximum number of seconds to wait
 ENHANCED_EC_INTERROGATION_TIMEOUT = 1.0  # Maximum number of seconds to wait for
                                          # a response to an interrogation of an
                                          # enhanced EC image.
-INTERROGATION_MODES = ['never', 'always', 'auto']  # List of modes which control
-                                                   # when interrogations are
-                                                   # performed with the EC.
+# List of modes which control when interrogations are performed with the EC.
+INTERROGATION_MODES = [b'never', b'always', b'auto']
 # Format for printing host timestamp
 HOST_STRFTIME="%y-%m-%d %H:%M:%S.%f"
 
@@ -106,7 +109,7 @@ class Console(object):
       represents the console's read-only side of the debug pipe.  This must be a
       unidirectional pipe attached to the intepreter.  EC debug messages use
       this pipe.
-    oobm_queue: A Queue.Queue or multiprocessing.Queue which is used for out of
+    oobm_queue: A queue.Queue or multiprocessing.Queue which is used for out of
       band management for the interactive console.
     input_buffer: A string representing the current input command.
     input_buffer_pos: An integer representing the current position in the buffer
@@ -166,9 +169,9 @@ class Console(object):
     self.cmd_pipe = cmd_pipe
     self.dbg_pipe = dbg_pipe
     self.oobm_queue = threadproc_shim.Queue()
-    self.input_buffer = ''
+    self.input_buffer = b''
     self.input_buffer_pos = 0
-    self.partial_cmd = ''
+    self.partial_cmd = b''
     self.esc_state = 0
     self.line_limit = CONSOLE_INPUT_LINE_SIZE
     self.history = []
@@ -177,10 +180,10 @@ class Console(object):
     self.enhanced_ec = False
     self.interrogation_timeout = NON_ENHANCED_EC_INTERROGATION_TIMEOUT
     self.receiving_oobm_cmd = False
-    self.pending_oobm_cmd = ''
-    self.interrogation_mode = 'auto'
+    self.pending_oobm_cmd = b''
+    self.interrogation_mode = b'auto'
     self.timestamp_enabled = True
-    self.look_buffer = ''
+    self.look_buffer = b''
     self.raw_debug = False
     self.output_line_log_buffer = []
 
@@ -197,7 +200,7 @@ class Console(object):
     string.append('input_buffer_pos: %d' % self.input_buffer_pos)
     string.append('esc_state: %d' % self.esc_state)
     string.append('line_limit: %d' % self.line_limit)
-    string.append('history: [\'' + '\', \''.join(self.history) + '\']')
+    string.append('history: [\'' + '%s' % repr(self.history) + '\']')
     string.append('history_pos: %d' % self.history_pos)
     string.append('prompt: \'%s\'' % self.prompt)
     string.append('partial_cmd: \'%s\''% self.partial_cmd)
@@ -251,9 +254,9 @@ class Console(object):
     """Print the history of entered commands."""
     fd = self.master_pty
     # Make it pretty by figuring out how wide to pad the numbers.
-    wide = (len(self.history) / 10) + 1
+    wide = (len(self.history) // 10) + 1
     for i in range(len(self.history)):
-      line = ' %*d %s\r\n' % (wide, i, self.history[i])
+      line = b' %*d %s\r\n' % (wide, i, self.history[i])
       os.write(fd, line)
 
   def ShowPreviousCommand(self):
@@ -317,7 +320,7 @@ class Console(object):
       self.input_buffer = self.partial_cmd
       self.input_buffer_pos = len(self.input_buffer)
       # Now that we've printed it, clear the partial cmd storage.
-      self.partial_cmd = ''
+      self.partial_cmd = b''
       # Reset history position.
       self.history_pos = len(self.history)
       return
@@ -352,7 +355,7 @@ class Console(object):
     # Write the rest of the line
     moved_col = os.write(fd, self.input_buffer[self.input_buffer_pos:])
     # Write a space to clear out the last char
-    moved_col += os.write(fd, ' ')
+    moved_col += os.write(fd, b' ')
     # Update the input buffer position.
     self.input_buffer_pos += moved_col
     # Reset the cursor
@@ -476,7 +479,7 @@ class Console(object):
       self.history.append(self.input_buffer)
 
     # Split the command up by spaces.
-    line = self.input_buffer.split(' ')
+    line = self.input_buffer.split(b' ')
     self.logger.debug('cmd: %s', self.input_buffer)
     cmd = line[0].lower()
 
@@ -546,14 +549,15 @@ class Console(object):
       self.logger.debug('Begin OOBM command.')
       self.receiving_oobm_cmd = True
       # Print a "prompt".
-      os.write(self.master_pty, '\r\n% ')
+      os.write(self.master_pty, b'\r\n% ')
       return
 
     # Add chars to the pending OOBM command if we're currently receiving one.
     if self.receiving_oobm_cmd and byte != ControlKey.CARRIAGE_RETURN:
-      self.pending_oobm_cmd += chr(byte)
-      self.logger.debug('%s', chr(byte))
-      os.write(self.master_pty, chr(byte))
+      tmp_bytes = six.int2byte(byte)
+      self.pending_oobm_cmd += tmp_bytes
+      self.logger.debug('%s', tmp_bytes)
+      os.write(self.master_pty, tmp_bytes)
       return
 
     if byte == ControlKey.CARRIAGE_RETURN:
@@ -566,26 +570,26 @@ class Console(object):
                             self.pending_oobm_cmd)
 
         # Reset the state.
-        os.write(self.master_pty, '\r\n' + self.prompt)
-        self.input_buffer = ''
+        os.write(self.master_pty, b'\r\n' + self.prompt)
+        self.input_buffer = b''
         self.input_buffer_pos = 0
         self.receiving_oobm_cmd = False
-        self.pending_oobm_cmd = ''
+        self.pending_oobm_cmd = b''
         return
 
-      if self.interrogation_mode == 'never':
+      if self.interrogation_mode == b'never':
         self.logger.debug('Skipping interrogation because interrogation mode'
                           ' is set to never.')
-      elif self.interrogation_mode == 'always':
+      elif self.interrogation_mode == b'always':
         # Only interrogate the EC if the interrogation mode is set to 'always'.
         self.enhanced_ec = self.CheckForEnhancedECImage()
         self.logger.debug('Enhanced EC image? %r', self.enhanced_ec)
 
     if not self.enhanced_ec:
       # Send everything straight to the EC to handle.
-      self.cmd_pipe.send(chr(byte))
+      self.cmd_pipe.send(six.int2byte(byte))
       # Reset the input buffer.
-      self.input_buffer = ''
+      self.input_buffer = b''
       self.input_buffer_pos = 0
       self.logger.log(1, 'Reset input buffer.')
       return
@@ -612,7 +616,7 @@ class Console(object):
     if byte == ControlKey.CARRIAGE_RETURN:
       self.logger.debug('Enter key pressed.')
       # Put a carriage return/newline and the print the prompt.
-      os.write(fd, '\r\n')
+      os.write(fd, b'\r\n')
 
       # TODO(aaboagye): When we control the printing of all output, print the
       # prompt AFTER printing all the output.  We can't do it yet because we
@@ -623,12 +627,12 @@ class Console(object):
       # Process the input.
       self.ProcessInput()
       # Now, clear the buffer.
-      self.input_buffer = ''
+      self.input_buffer = b''
       self.input_buffer_pos = 0
       # Reset history buffer pos.
       self.history_pos = len(self.history)
       # Clear partial command.
-      self.partial_cmd = ''
+      self.partial_cmd = b''
 
     # Backspace
     elif byte == ControlKey.BACKSPACE:
@@ -696,14 +700,14 @@ class Console(object):
         self.logger.debug('Dropped char: %c(%d)', byte, byte)
         return
       # Print the character.
-      os.write(fd, chr(byte))
+      os.write(fd, six.int2byte(byte))
       # Print the rest of the line (if any).
       extra_bytes_written = os.write(fd,
                                      self.input_buffer[self.input_buffer_pos:])
 
       # Recreate the input buffer.
       self.input_buffer = (self.input_buffer[0:self.input_buffer_pos] +
-                           ('%c' % byte) +
+                           six.int2byte(byte) +
                            self.input_buffer[self.input_buffer_pos:])
       # Update the input buffer position.
       self.input_buffer_pos += 1 + extra_bytes_written
@@ -730,12 +734,12 @@ class Console(object):
     if not count:
       return
     fd = self.master_pty
-    seq = '\033[' + str(count)
+    seq = b'\033[' + str(count).encode('ascii')
     if direction == 'left':
       # Bind the movement.
       if count > self.input_buffer_pos:
         count = self.input_buffer_pos
-      seq += 'D'
+      seq += b'D'
       self.logger.debug('move cursor left %d', count)
       self.input_buffer_pos -= count
 
@@ -743,7 +747,7 @@ class Console(object):
       # Bind the movement.
       if (count + self.input_buffer_pos) > len(self.input_buffer):
         count = 0
-      seq += 'C'
+      seq += b'C'
       self.logger.debug('move cursor right %d', count)
       self.input_buffer_pos += count
 
@@ -777,15 +781,15 @@ class Console(object):
 
   def SendBackspace(self):
     """Backspace a character on the console."""
-    os.write(self.master_pty, '\033[1D \033[1D')
+    os.write(self.master_pty, b'\033[1D \033[1D')
 
   def ProcessOOBMQueue(self):
     """Retrieve an item from the OOBM queue and process it."""
     item = self.oobm_queue.get()
     self.logger.debug('OOBM cmd: %s', item)
-    cmd = item.split(' ')
+    cmd = item.split(b' ')
 
-    if cmd[0] == 'loglevel':
+    if cmd[0] == b'loglevel':
       # An integer is required in order to set the log level.
       if len(cmd) < 2:
         self.logger.debug('Insufficient args')
@@ -803,22 +807,22 @@ class Console(object):
         # Ignoring the request if an integer was not provided.
         self.PrintOOBMHelp()
 
-    elif cmd[0] == 'timestamp':
+    elif cmd[0] == b'timestamp':
       mode = cmd[1].lower()
       self.timestamp_enabled = mode == 'on'
       self.logger.info('%sabling uart timestamps.',
                        'En' if self.timestamp_enabled else 'Dis')
 
-    elif cmd[0] == 'rawdebug':
+    elif cmd[0] == b'rawdebug':
       mode = cmd[1].lower()
       self.raw_debug = mode == 'on'
       self.logger.info('%sabling per interrupt debug logs.',
                        'En' if self.raw_debug else 'Dis')
 
-    elif cmd[0] == 'interrogate' and len(cmd) >= 2:
+    elif cmd[0] == b'interrogate' and len(cmd) >= 2:
       enhanced = False
       mode = cmd[1]
-      if len(cmd) >= 3 and cmd[2] == 'enhanced':
+      if len(cmd) >= 3 and cmd[2] == b'enhanced':
         enhanced = True
 
       # Set the mode if correct.
@@ -831,7 +835,7 @@ class Console(object):
         self.logger.debug('Enhanced EC image is now %r', self.enhanced_ec)
 
         # Send command to interpreter as well.
-        self.cmd_pipe.send('enhanced ' + str(self.enhanced_ec))
+        self.cmd_pipe.send(b'enhanced ' + str(self.enhanced_ec).encode('ascii'))
       else:
         self.PrintOOBMHelp()
 
@@ -841,10 +845,10 @@ class Console(object):
   def PrintOOBMHelp(self):
     """Prints out the OOBM help."""
     # Print help syntax.
-    os.write(self.master_pty, '\r\n' + 'Known OOBM commands:\r\n')
-    os.write(self.master_pty, '  interrogate <never | always | auto> '
-             '[enhanced]\r\n')
-    os.write(self.master_pty, '  loglevel <int>\r\n')
+    os.write(self.master_pty, b'\r\n' + b'Known OOBM commands:\r\n')
+    os.write(self.master_pty, b'  interrogate <never | always | auto> '
+             b'[enhanced]\r\n')
+    os.write(self.master_pty, b'  loglevel <int>\r\n')
 
   def CheckBufferForEnhancedImage(self, data):
     """Adds data to a look buffer and checks to see for enhanced EC image.
@@ -872,11 +876,11 @@ class Console(object):
         self.enhanced_ec = False
 
       # Inform the interpreter of the result.
-      self.cmd_pipe.send('enhanced ' + str(self.enhanced_ec))
+      self.cmd_pipe.send(b'enhanced ' + str(self.enhanced_ec).encode('ascii'))
       self.logger.debug('Enhanced EC image? %r', self.enhanced_ec)
 
       # Clear look buffer since a match was found.
-      self.look_buffer = ''
+      self.look_buffer = b''
 
     # Move the sliding window.
     self.look_buffer = self.look_buffer[-LOOK_BUFFER_SIZE:]
@@ -891,7 +895,7 @@ def CanonicalizeTimeString(timestr):
   Returns:
     A string with 3 digits msec and an extra space.
   """
-  return timestr[:-3] + ' '
+  return timestr[:-3].encode('ascii') + b' '
 
 
 def IsPrintable(byte):
@@ -1021,7 +1025,7 @@ def StartLoop(console, command_active, shutdown_pipe=None):
             console.logger.debug('ec3po console received EOF from dbg_pipe')
             continue_looping = False
           else:
-            if console.interrogation_mode == 'auto':
+            if console.interrogation_mode == b'auto':
               # Search look buffer for enhanced EC image string.
               console.CheckBufferForEnhancedImage(data)
             # Write it to the user console.
@@ -1043,15 +1047,15 @@ def StartLoop(console, command_active, shutdown_pipe=None):
 
                 # Insert timestamps into the middle where appropriate
                 # except if the last character is a newline
-                nls_found = data.count('\n', 0, end)
+                nls_found = data.count(b'\n', 0, end)
                 now = datetime.now()
                 tm = CanonicalizeTimeString(now.strftime('\n' + HOST_STRFTIME))
-                data_tm = data.replace('\n', tm, nls_found)
+                data_tm = data.replace(b'\n', tm, nls_found)
               else:
                 data_tm = data
 
               # timestamp required on next input
-              if data[end] == '\n':
+              if data[end] == b'\n':
                 tm_req = True
               os.write(console.master_pty, data_tm)
             if command_active.value:
