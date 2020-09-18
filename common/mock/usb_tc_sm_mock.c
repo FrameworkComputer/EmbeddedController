@@ -24,8 +24,6 @@ void mock_tc_port_reset(void)
 	for (port = 0 ; port < CONFIG_USB_PD_PORT_MAX_COUNT ; ++port) {
 		mock_tc_port[port].rev = PD_REV30;
 		mock_tc_port[port].pd_enable = 0;
-		mock_tc_port[port].power_role = PD_ROLE_SINK;
-		mock_tc_port[port].data_role = PD_ROLE_DISCONNECTED;
 		mock_tc_port[port].msg_tx_id = 0;
 		mock_tc_port[port].msg_rx_id = 0;
 		mock_tc_port[port].sop = TCPC_TX_INVALID;
@@ -75,16 +73,6 @@ void tc_prs_src_snk_assert_rd(int port)
 int typec_update_cc(int port)
 {
 	return EC_SUCCESS;
-}
-
-void tc_set_data_role(int port, enum pd_data_role role)
-{
-	mock_tc_port[port].data_role = role;
-}
-
-void tc_set_power_role(int port, enum pd_power_role role)
-{
-	mock_tc_port[port].power_role = role;
 }
 
 int tc_check_vconn_swap(int port)
