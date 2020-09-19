@@ -172,6 +172,8 @@ const char help_str[] =
 	"      Set the delay before going into hibernation\n"
 	"  hostsleepstate\n"
 	"      Report host sleep state to the EC\n"
+	"  hostevent\n"
+	"      Get & set host event masks.\n"
 	"  i2cprotect <port> [status]\n"
 	"      Protect EC's I2C bus\n"
 	"  i2cread\n"
@@ -552,6 +554,82 @@ int cmd_hibdelay(int argc, char *argv[])
 	printf("Hibernation delay: %u s\n", r.hibernate_delay);
 	printf("Time G3: %u s\n", r.time_g3);
 	printf("Time left: %u s\n", r.time_remaining);
+	return 0;
+}
+
+static void cmd_hostevent_help(char *cmd)
+{
+	fprintf(stderr,
+	"  Usage: %s get <type>\n"
+	"  Usage: %s set <type> <value>\n"
+	"    <type> is one of:\n"
+	"      1: EC_HOST_EVENT_B\n"
+	"      2: EC_HOST_EVENT_SCI_MASK\n"
+	"      3: EC_HOST_EVENT_SMI_MASK\n"
+	"      4: EC_HOST_EVENT_ALWAYS_REPORT_MASK\n"
+	"      5: EC_HOST_EVENT_ACTIVE_WAKE_MASK\n"
+	"      6: EC_HOST_EVENT_LAZY_WAKE_MASK_S0IX\n"
+	"      7: EC_HOST_EVENT_LAZY_WAKE_MASK_S3\n"
+	"      8: EC_HOST_EVENT_LAZY_WAKE_MASK_S5\n"
+		, cmd, cmd);
+}
+
+static int cmd_hostevent(int argc, char *argv[])
+{
+	struct ec_params_host_event p;
+	struct ec_response_host_event r;
+	char *e;
+	int rv;
+
+	if (argc < 2) {
+		fprintf(stderr, "Invalid number of params\n");
+		cmd_hostevent_help(argv[0]);
+		return -1;
+	}
+
+	if (!strcasecmp(argv[1], "get")) {
+		if (argc != 3) {
+			fprintf(stderr, "Invalid number of params\n");
+			cmd_hostevent_help(argv[0]);
+			return -1;
+		}
+		p.action = EC_HOST_EVENT_GET;
+	} else if (!strcasecmp(argv[1], "set")) {
+		if (argc != 4) {
+			fprintf(stderr, "Invalid number of params\n");
+			cmd_hostevent_help(argv[0]);
+			return -1;
+		}
+		p.action = EC_HOST_EVENT_SET;
+		p.value = strtoul(argv[3], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad value\n");
+			return -1;
+		}
+	} else {
+		fprintf(stderr, "Bad subcommand: %s\n", argv[1]);
+		return -1;
+	}
+
+	p.mask_type = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad type\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_HOST_EVENT, 0, &p, sizeof(p), &r, sizeof(r));
+	if (rv == -EC_RES_ACCESS_DENIED - EECRESULT) {
+		fprintf(stderr, "%s isn't permitted for mask %d.\n",
+			p.action == EC_HOST_EVENT_SET ? "Set" : "Get",
+			p.mask_type);
+		return rv;
+	} else if (rv < 0) {
+		return rv;
+	}
+
+	if (p.action == EC_HOST_EVENT_GET)
+		printf("0x%" PRIx64 "\n", r.value);
+
 	return 0;
 }
 
@@ -9870,6 +9948,7 @@ const struct command commands[] = {
 	{"hangdetect", cmd_hang_detect},
 	{"hello", cmd_hello},
 	{"hibdelay", cmd_hibdelay},
+	{"hostevent", cmd_hostevent},
 	{"hostsleepstate", cmd_hostsleepstate},
 	{"locatechip", cmd_locate_chip},
 	{"i2cprotect", cmd_i2c_protect},
