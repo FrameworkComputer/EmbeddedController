@@ -3920,6 +3920,10 @@ struct ec_response_host_event_mask {
 /*
  * Unified host event programming interface - Should be used by newer versions
  * of BIOS/OS to program host events and masks
+ *
+ * EC returns:
+ * - EC_RES_INVALID_PARAM: Action or mask type is unknown.
+ * - EC_RES_ACCESS_DENIED: Action is prohibited for specified mask type.
  */
 
 struct ec_params_host_event {
