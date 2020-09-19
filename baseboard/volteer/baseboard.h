@@ -223,6 +223,8 @@
  * http://google3/hardware/standards/usb/
  */
 #define CONFIG_USB_PID 0x503E
+/* Device version of product. */
+#define CONFIG_USB_BCD_DEV 0x0000
 
 /* Retimer */
 #define CONFIG_USBC_RETIMER_INTEL_BB
