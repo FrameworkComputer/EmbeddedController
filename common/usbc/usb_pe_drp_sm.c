@@ -778,6 +778,11 @@ static const uint8_t vdo_ver[] = {
 	[PD_REV30] = VDM_VER20,
 };
 
+int pd_get_rev(int port, enum tcpm_transmit_type type)
+{
+	return prl_get_rev(port, type);
+}
+
 int pd_get_vdo_ver(int port, enum tcpm_transmit_type type)
 {
 	enum pd_rev_type rev = prl_get_rev(port, type);

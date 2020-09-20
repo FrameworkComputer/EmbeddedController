@@ -1311,11 +1311,23 @@ enum pd_msg_type {
 void schedule_deferred_pd_interrupt(int port);
 
 /**
- * Get current PD VDO Version
+ * Get current PD Revision
  *
  * @param port USB-C port number
  * @param type USB-C port partner
- * @return 0 for PD_REV1.0, 1 for PD_REV2.0
+ * @return PD_REV10 for PD Revision 1.0
+ *         PD_REV20 for PD Revision 2.0
+ *         PD_REV30 for PD Revision 3.0
+ */
+int pd_get_rev(int port, enum tcpm_transmit_type type);
+
+/**
+ * Get current PD VDO Version of Structured VDM
+ *
+ * @param port USB-C port number
+ * @param type USB-C port partner
+ * @return VDM_VER10 for VDM Version 1.0
+ *         VDM_VER20 for VDM Version 2.0
  */
 int pd_get_vdo_ver(int port, enum tcpm_transmit_type type);
 

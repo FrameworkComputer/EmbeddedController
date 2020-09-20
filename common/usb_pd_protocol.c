@@ -344,29 +344,32 @@ static inline void set_state_timeout(int port,
 	pd[port].timeout_state = timeout_state;
 }
 
+int pd_get_rev(int port, enum tcpm_transmit_type type)
+{
 #ifdef CONFIG_USB_PD_REV30
-int pd_get_rev(int port)
-{
-	return pd[port].rev;
-}
+	/* TCPMv1 Only stores PD revision for SOP and SOP' types */
+	ASSERT(type < NUM_SOP_STAR_TYPES - 1);
 
-int pd_get_vdo_ver(int port, enum tcpm_transmit_type type)
-{
 	if (type == TCPC_TX_SOP_PRIME)
 		return get_usb_pd_cable_revision(port);
 
-	return vdo_ver[pd[port].rev];
-}
+	return pd[port].rev;
 #else
-int pd_get_rev(int port)
-{
 	return PD_REV20;
+#endif
 }
+
 int pd_get_vdo_ver(int port, enum tcpm_transmit_type type)
 {
+#ifdef CONFIG_USB_PD_REV30
+	if (type == TCPC_TX_SOP_PRIME)
+		return vdo_ver[get_usb_pd_cable_revision(port)];
+
+	return vdo_ver[pd[port].rev];
+#else
 	return VDM_VER10;
-}
 #endif
+}
 
 /* Return flag for pd state is connected */
 int pd_is_connected(int port)
@@ -984,7 +987,7 @@ static int send_control(int port, int type)
 	int bit_len;
 	uint16_t header = PD_HEADER(type, pd[port].power_role,
 				pd[port].data_role, pd[port].msg_id, 0,
-				pd_get_rev(port), 0);
+				pd_get_rev(port, TCPC_TX_SOP), 0);
 	/*
 	 * For PD 3.0, collision avoidance logic needs to know if this message
 	 * will begin a new Atomic Message Sequence (AMS)
@@ -1022,11 +1025,11 @@ static int send_source_cap(int port, enum ams_seq ams)
 		/* No source capabilities defined, sink only */
 		header = PD_HEADER(PD_CTRL_REJECT, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, 0,
-			pd_get_rev(port), 0);
+			pd_get_rev(port, TCPC_TX_SOP), 0);
 	else
 		header = PD_HEADER(PD_DATA_SOURCE_CAP, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, src_pdo_cnt,
-			pd_get_rev(port), 0);
+			pd_get_rev(port, TCPC_TX_SOP), 0);
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, src_pdo, ams);
 	if (debug_level >= 2)
@@ -1197,7 +1200,7 @@ static void send_sink_cap(int port)
 	int bit_len;
 	uint16_t header = PD_HEADER(PD_DATA_SINK_CAP, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, pd_snk_pdo_cnt,
-			pd_get_rev(port), 0);
+			pd_get_rev(port, TCPC_TX_SOP), 0);
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, pd_snk_pdo,
 			      AMS_RESPONSE);
@@ -1210,7 +1213,7 @@ static int send_request(int port, uint32_t rdo)
 	int bit_len;
 	uint16_t header = PD_HEADER(PD_DATA_REQUEST, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, 1,
-			pd_get_rev(port), 0);
+			pd_get_rev(port, TCPC_TX_SOP), 0);
 
 	/* Note: ams will need to be AMS_START if used for PPS keep alive */
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, &rdo, AMS_RESPONSE);
@@ -1230,7 +1233,7 @@ static int send_bist_cmd(int port)
 	int bit_len;
 	uint16_t header = PD_HEADER(PD_DATA_BIST, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, 1,
-			pd_get_rev(port), 0);
+			pd_get_rev(port, TCPC_TX_SOP), 0);
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, &bdo, AMS_START);
 	CPRINTF("C%d BIST>%d\n", port, bit_len);
@@ -2172,7 +2175,8 @@ static void exit_tbt_mode_sop_prime(int port)
 
 	header = PD_HEADER(PD_DATA_VENDOR_DEF, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id,
-			(int)pd[port].vdo_count, pd_get_rev(port), 0);
+			(int)pd[port].vdo_count,
+			pd_get_rev(port, TCPC_TX_SOP), 0);
 
 	pd[port].vdo_data[0] = VDO(USB_VID_INTEL, 1,
 				   CMD_EXIT_MODE | VDO_OPOS(opos));
@@ -2225,7 +2229,7 @@ static void pd_vdm_send_state_machine(int port)
 				0,
 				pd[port].msg_id,
 				(int)pd[port].vdo_count,
-				pd_get_rev(port),
+				pd_get_rev(port, TCPC_TX_SOP),
 				0);
 			res = pd_transmit(port, msg_type, header,
 					  pd[port].vdo_data, AMS_START);
@@ -2249,7 +2253,9 @@ static void pd_vdm_send_state_machine(int port)
 						   pd[port].data_role,
 						   pd[port].msg_id,
 						   (int)pd[port].vdo_count,
-						   pd_get_rev(port), 0);
+						   pd_get_rev
+							(port, TCPC_TX_SOP),
+						   0);
 
 				if ((msg_type == TCPC_TX_SOP_PRIME_PRIME) &&
 				     IS_ENABLED(CONFIG_USBC_SS_MUX)) {
@@ -2269,7 +2275,7 @@ static void pd_vdm_send_state_machine(int port)
 					   pd[port].data_role,
 					   pd[port].msg_id,
 					   (int)pd[port].vdo_count,
-					   pd_get_rev(port), 0);
+					   pd_get_rev(port, TCPC_TX_SOP), 0);
 			res = pd_transmit(port, TCPC_TX_SOP, header,
 					  pd[port].vdo_data, AMS_START);
 		}
