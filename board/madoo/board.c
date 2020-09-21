@@ -307,9 +307,9 @@ static const mat33_fp_t lid_standard_ref = {
 };
 
 static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)},
 	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
 static struct accelgyro_saved_data_t g_bma253_data;
