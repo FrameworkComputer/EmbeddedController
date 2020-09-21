@@ -55,7 +55,7 @@ BUILD_ASSERT(ARRAY_SIZE(usbpd_ctrl_regs) >= IT83XX_USBPD_PHY_PORT_COUNT);
  * Rd_DB) analog module alive to assert Rd on CCs. EC reset or calling
  * _init() are able to re-active cc and pd.
  */
-void it83xx_disable_pd_module(int port)
+void it83xx_Rd_5_1K_only_for_hibernate(int port)
 {
 	uint8_t cc_config = (port == USBPD_PORT_C ?
 			     IT83XX_USBPD_CC_PIN_CONFIG2 :

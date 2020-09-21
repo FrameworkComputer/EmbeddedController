@@ -515,7 +515,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 		 * Rd_DB) alive in hibernate for better power consumption.
 		 */
 		for (i = 0; i < CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT; i++)
-			it83xx_disable_pd_module(i);
+			it83xx_Rd_5_1K_only_for_hibernate(i);
 	}
 
 	if (IS_ENABLED(CONFIG_ADC_VOLTAGE_COMPARATOR)) {

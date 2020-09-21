@@ -47,22 +47,34 @@ const struct usbpd_ctrl_t usbpd_ctrl_regs[] = {
 BUILD_ASSERT(ARRAY_SIZE(usbpd_ctrl_regs) == IT83XX_USBPD_PHY_PORT_COUNT);
 
 /*
- * This function disables integrated pd module and enables 5.1K resistor for
- * dead battery. A EC reset or calling _init() is able to re-active pd module.
+ * Disable cc analog and pd digital module, but only left Rd_5.1K (Not
+ * Dead Battery) analog module alive to assert Rd on CCs. EC reset or
+ * calling _init() are able to re-active cc and pd.
  */
-void it83xx_disable_pd_module(int port)
+void it83xx_Rd_5_1K_only_for_hibernate(int port)
 {
-	/* This only apply to PD port. */
+	/* This only apply to active PD port */
 	if (*usbpd_ctrl_regs[port].cc1 == IT83XX_USBPD_CC_PIN_CONFIG &&
 		*usbpd_ctrl_regs[port].cc2 == IT83XX_USBPD_CC_PIN_CONFIG) {
 		/* Disable PD PHY */
 		IT83XX_USBPD_GCR(port) &= ~(BIT(0) | BIT(4));
-		/* Power down CC1/CC2 */
-		IT83XX_USBPD_CCGCR(port) |= 0x1f;
-		/* Disable CC1/CC2 voltage detector */
-		IT83XX_USBPD_CCCSR(port) = 0xff;
-		/* Connect 5.1K resistor to CC1/CC2 for dead battery. */
-		IT83XX_USBPD_CCPSR(port) = 0x33;
+		/*
+		 * Disable CCs voltage detector, and
+		 * connect CCs analog module (ex.UP/RD/DET/TX/RX), and
+		 * connect CCs 5.1K to GND
+		 */
+		IT83XX_USBPD_CCCSR(port) = 0x22;
+		/* Disconnect CCs 5V tolerant */
+		IT83XX_USBPD_CCPSR(port) |=
+			(USBPD_REG_MASK_DISCONNECT_POWER_CC2 |
+			 USBPD_REG_MASK_DISCONNECT_POWER_CC1);
+		/*
+		 * Select Rp reserved value for not current leakage, and
+		 * CCs assert Rd, and
+		 * enable CCs analog module
+		 */
+		IT83XX_USBPD_BMCSR(port) &= ~0x08;
+		IT83XX_USBPD_CCGCR(port) &= ~0x1f;
 	}
 }
 
