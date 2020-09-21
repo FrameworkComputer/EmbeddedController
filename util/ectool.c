@@ -313,6 +313,8 @@ const char help_str[] =
 	"      Control USB PD policy\n"
 	"  typecdiscovery <port> <type>\n"
 	"      Get discovery information for port and type\n"
+	"  typecstatus <port>\n"
+	"      Get status information for port\n"
 	"  uptimeinfo\n"
 	"      Get info about how long the EC has been running and the most\n"
 	"      recent AP resets\n"
@@ -9558,6 +9560,114 @@ int cmd_typec_discovery(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_typec_status(int argc, char *argv[])
+{
+	struct ec_params_typec_status p;
+	struct ec_response_typec_status *r =
+				(struct ec_response_typec_status *)ec_inbuf;
+	char *endptr;
+	int rv;
+	char *desc;
+
+	if (argc < 2) {
+		fprintf(stderr,
+			"Usage: %s <port>\n"
+			"  <port> is the type-c port to query\n", argv[0]);
+		return -1;
+	}
+
+	p.port = strtol(argv[1], &endptr, 0);
+	if (endptr && *endptr) {
+		fprintf(stderr, "Bad port\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_TYPEC_STATUS, 0, &p, sizeof(p),
+			ec_inbuf, ec_max_insize);
+	if (rv < 0)
+		return -1;
+
+	printf("Port C%d: %s, %s  State:%s\n"
+	       "Role:%s %s%s, Polarity:CC%d\n",
+		p.port,
+		r->pd_enabled ? "enabled" : "disabled",
+		r->dev_connected ? "connected" : "disconnected",
+		r->tc_state,
+		(r->power_role == PD_ROLE_SOURCE) ? "SRC" : "SNK",
+		(r->data_role == PD_ROLE_DFP) ? "DFP" :
+			(r->data_role == PD_ROLE_UFP) ? "UFP" : "",
+		(r->vconn_role == PD_ROLE_VCONN_SRC) ? " VCONN" : "",
+		(r->polarity % 2 + 1));
+
+	switch (r->cc_state) {
+	case PD_CC_NONE:
+		desc = "None";
+		break;
+	case PD_CC_UFP_AUDIO_ACC:
+		desc = "UFP Audio accessory";
+		break;
+	case PD_CC_UFP_DEBUG_ACC:
+		desc = "UFP Debug accessory";
+		break;
+	case PD_CC_UFP_ATTACHED:
+		desc = "UFP attached";
+		break;
+	case PD_CC_DFP_DEBUG_ACC:
+		desc = "DFP Debug accessory";
+		break;
+	case PD_CC_DFP_ATTACHED:
+		desc = "DFP attached";
+		break;
+	default:
+		desc = "UNKNOWN";
+		break;
+	}
+	printf("CC State: %s\n", desc);
+
+	if (r->dp_pin) {
+		switch (r->dp_pin) {
+		case MODE_DP_PIN_A:
+			desc = "A";
+			break;
+		case MODE_DP_PIN_B:
+			desc = "B";
+			break;
+		case MODE_DP_PIN_C:
+			desc = "C";
+			break;
+		case MODE_DP_PIN_D:
+			desc = "D";
+			break;
+		case MODE_DP_PIN_E:
+			desc = "E";
+			break;
+		case MODE_DP_PIN_F:
+			desc = "F";
+			break;
+		default:
+			desc = "UNKNOWN";
+			break;
+		}
+		printf("DP pin mode: %s\n", desc);
+	}
+
+	if (r->mux_state) {
+		printf("MUX: USB=%d DP=%d POLARITY=%s HPD_IRQ=%d HPD_LVL=%d\n"
+		       "     SAFE=%d TBT=%d USB4=%d\n",
+		       !!(r->mux_state & USB_PD_MUX_USB_ENABLED),
+		       !!(r->mux_state & USB_PD_MUX_DP_ENABLED),
+			(r->mux_state & USB_PD_MUX_POLARITY_INVERTED) ?
+						"INVERTED" : "NORMAL",
+		       !!(r->mux_state & USB_PD_MUX_HPD_IRQ),
+		       !!(r->mux_state & USB_PD_MUX_HPD_LVL),
+		       !!(r->mux_state & USB_PD_MUX_SAFE_MODE),
+		       !!(r->mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED),
+		       !!(r->mux_state & USB_PD_MUX_USB4_ENABLED));
+	}
+
+	return 0;
+}
+
 int cmd_tp_self_test(int argc, char* argv[])
 {
 	int rv;
@@ -10020,6 +10130,7 @@ const struct command commands[] = {
 	{"tmp006raw", cmd_tmp006raw},
 	{"typeccontrol", cmd_typec_control},
 	{"typecdiscovery", cmd_typec_discovery},
+	{"typecstatus", cmd_typec_status},
 	{"uptimeinfo", cmd_uptimeinfo},
 	{"usbchargemode", cmd_usb_charge_set_mode},
 	{"usbmux", cmd_usb_mux},

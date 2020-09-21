@@ -47,31 +47,6 @@ enum tcpc_rp_value {
 	TYPEC_RP_RESERVED = 3,
 };
 
-enum tcpc_cc_polarity {
-	/*
-	 * _CCx: is used to indicate the polarity while not connected to
-	 * a Debug Accessory.  Only one CC line will assert a resistor and
-	 * the other will be open.
-	 */
-	POLARITY_CC1 = 0,
-	POLARITY_CC2 = 1,
-
-	/*
-	 * CCx_DTS is used to indicate the polarity while connected to a
-	 * SRC Debug Accessory.  Assert resistors on both lines.
-	 */
-	POLARITY_CC1_DTS = 2,
-	POLARITY_CC2_DTS = 3,
-
-	/*
-	 * The current TCPC code relies on these specific POLARITY values.
-	 * Adding in a check to verify if the list grows for any reason
-	 * that this will give a hint that other places need to be
-	 * adjusted.
-	 */
-	POLARITY_COUNT
-};
-
 /**
  * Returns whether the polarity without the DTS extension
  */

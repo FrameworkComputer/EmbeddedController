@@ -653,14 +653,6 @@ struct pd_cable {
 	 | ((usb) & 1) << 7 | ((gdr) & 1) << 6 | ((sign) & 0xF) << 2	\
 	 | ((sdir) & 0x3))
 
-#define MODE_DP_PIN_A 0x01
-#define MODE_DP_PIN_B 0x02
-#define MODE_DP_PIN_C 0x04
-#define MODE_DP_PIN_D 0x08
-#define MODE_DP_PIN_E 0x10
-#define MODE_DP_PIN_F 0x20
-#define MODE_DP_PIN_ALL 0x3f
-
 #define MODE_DP_DFP_PIN_SHIFT 8
 #define MODE_DP_UFP_PIN_SHIFT 16
 
@@ -1164,24 +1156,6 @@ enum pd_data_msg_type {
 	PD_DATA_VENDOR_DEF = 15,
 };
 
-/*
- * Power role. See 6.2.1.1.4 Port Power Role. Only applies to SOP packets.
- * Replaced by pd_cable_plug for SOP' and SOP" packets.
- */
-enum pd_power_role {
-	PD_ROLE_SINK = 0,
-	PD_ROLE_SOURCE = 1
-};
-
-/*
- * Data role. See 6.2.1.1.6 Port Data Role. Only applies to SOP.
- * Replaced by reserved field for SOP' and SOP" packets.
- */
-enum pd_data_role {
-	PD_ROLE_UFP = 0,
-	PD_ROLE_DFP = 1,
-	PD_ROLE_DISCONNECTED = 2,
-};
 
 /*
  * Cable plug. See 6.2.1.1.7 Cable Plug. Only applies to SOP' and SOP".

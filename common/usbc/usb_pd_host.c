@@ -10,7 +10,9 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "host_command.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
+#include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
@@ -114,3 +116,39 @@ static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_TYPEC_CONTROL, hc_typec_control, EC_VER_MASK(0));
+
+static enum ec_status hc_typec_status(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_typec_status *p = args->params;
+	struct ec_response_typec_status *r = args->response;
+	const char *tc_state_name;
+
+	if (p->port >= board_get_usb_pd_port_count())
+		return EC_RES_INVALID_PARAM;
+
+	if (args->response_max < sizeof(*r))
+		return EC_RES_RESPONSE_TOO_BIG;
+
+	args->response_size = sizeof(*r);
+
+	r->pd_enabled = pd_comm_is_enabled(p->port);
+	r->dev_connected = pd_is_connected(p->port);
+	r->sop_connected = pd_capable(p->port);
+
+	r->power_role = pd_get_power_role(p->port);
+	r->data_role = pd_get_data_role(p->port);
+	r->vconn_role = pd_get_vconn_state(p->port) ? PD_ROLE_VCONN_SRC :
+						      PD_ROLE_VCONN_OFF;
+	r->polarity = pd_get_polarity(p->port);
+	r->cc_state = pd_get_task_cc_state(p->port);
+	r->dp_pin = get_dp_pin_mode(p->port);
+	r->mux_state = usb_mux_get(p->port);
+
+	tc_state_name = pd_get_task_state_name(p->port);
+	strzcpy(r->tc_state, tc_state_name, sizeof(r->tc_state));
+
+	/* TODO(b/167700356): Add events, revisions, and source cap PDOs */
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_TYPEC_STATUS, hc_typec_status, EC_VER_MASK(0));
