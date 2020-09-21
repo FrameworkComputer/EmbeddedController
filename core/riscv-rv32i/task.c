@@ -468,12 +468,14 @@ uint32_t __ram_code task_wait_event_mask(uint32_t event_mask, int timeout_us)
 	return events & event_mask;
 }
 
-uint32_t __ram_code get_int_mask(void)
+uint32_t __ram_code read_clear_int_mask(void)
 {
-	uint32_t ret;
+	uint32_t mie, meie = BIT(11);
 
-	asm volatile ("csrr %0, mie" : "=r"(ret));
-	return ret;
+	/* Read and clear MEIE bit of MIE register. */
+	asm volatile ("csrrc %0, mie, %1" : "=r"(mie) : "r"(meie));
+
+	return mie;
 }
 
 void __ram_code set_int_mask(uint32_t val)
@@ -504,18 +506,16 @@ void task_disable_task(task_id_t tskid)
 
 void __ram_code task_enable_irq(int irq)
 {
-	uint32_t int_mask = get_int_mask();
+	uint32_t int_mask = read_clear_int_mask();
 
-	interrupt_disable();
 	chip_enable_irq(irq);
 	set_int_mask(int_mask);
 }
 
 void __ram_code task_disable_irq(int irq)
 {
-	uint32_t int_mask = get_int_mask();
+	uint32_t int_mask = read_clear_int_mask();
 
-	interrupt_disable();
 	chip_disable_irq(irq);
 	set_int_mask(int_mask);
 }

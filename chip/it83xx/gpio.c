@@ -442,10 +442,9 @@ test_mockable int gpio_get_level(enum gpio_signal signal)
 
 void gpio_set_level(enum gpio_signal signal, int value)
 {
-	uint32_t int_mask = get_int_mask();
-
 	/* critical section with interrupts off */
-	interrupt_disable();
+	uint32_t int_mask = read_clear_int_mask();
+
 	if (value)
 		IT83XX_GPIO_DATA(gpio_list[signal].port) |=
 				 gpio_list[signal].mask;
