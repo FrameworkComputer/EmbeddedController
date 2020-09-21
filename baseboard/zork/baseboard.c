@@ -246,13 +246,6 @@ __overridable int check_hdmi_hpd_status(void)
 	return 1;
 }
 
-const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
-	.eq_ch0_ch1_offset = PI3HDX1204_EQ_DB710,
-	.eq_ch2_ch3_offset = PI3HDX1204_EQ_DB710,
-	.vod_offset = PI3HDX1204_VOD_115_ALL_CHANNELS,
-	.de_offset = PI3HDX1204_DE_DB_MINUS5,
-};
-
 void sbu_fault_interrupt(enum ioex_signal signal)
 {
 	int port = (signal == IOEX_USB_C0_SBU_FAULT_ODL) ? 0 : 1;
