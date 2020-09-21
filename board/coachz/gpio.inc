@@ -101,8 +101,8 @@ GPIO(EN_USB_A_5V,           PIN(8, 6), GPIO_INPUT)     /* NC, backup only */
 GPIO(USB_A_CDP_ILIM_EN,     PIN(7, 5), GPIO_INPUT)     /* NC, backup only */
 
 /* LEDs */
-GPIO(EC_CHG_LED_Y_C1,       PIN(C, 3), GPIO_OUT_LOW)
-GPIO(EC_CHG_LED_W_C1,       PIN(C, 4), GPIO_OUT_LOW)
+GPIO(EC_CHG_LED_Y_C0,       PIN(C, 3), GPIO_OUT_LOW)
+GPIO(EC_CHG_LED_W_C0,       PIN(C, 4), GPIO_OUT_LOW)
 
 /* PWM */
 GPIO(EDP_BKLTCTL,           PIN(B, 7), GPIO_INPUT)     /* PWM5 */
