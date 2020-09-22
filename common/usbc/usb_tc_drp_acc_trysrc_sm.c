@@ -3384,8 +3384,7 @@ static void tc_cc_open_entry(const int port)
 	tc_src_power_off(port);
 
 	/* Disable VCONN */
-	if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
-		set_vconn(port, 0);
+	set_vconn(port, 0);
 
 	/*
 	 * Ensure we disable discharging before setting CC lines to open.
