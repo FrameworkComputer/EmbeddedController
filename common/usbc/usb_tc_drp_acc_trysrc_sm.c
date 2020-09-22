@@ -1381,10 +1381,15 @@ void tc_state_init(int port)
 	 * stale PD state as well.
 	 */
 	if (system_get_reset_flags() &
-	    (EC_RESET_FLAG_BROWNOUT | EC_RESET_FLAG_POWER_ON))
+	    (EC_RESET_FLAG_BROWNOUT | EC_RESET_FLAG_POWER_ON)) {
 		first_state = TC_UNATTACHED_SNK;
-	else
+
+		/* Turn off any previous sourcing */
+		tc_src_power_off(port);
+		set_vconn(port, 0);
+	} else {
 		first_state = TC_ERROR_RECOVERY;
+	}
 
 #ifdef CONFIG_USB_PD_TCPC_BOARD_INIT
 	/* Board specific TCPC init */
