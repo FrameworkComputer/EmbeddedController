@@ -1,10 +1,13 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright 2016 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# Note: This is a py2/3 compatible file.
+
+from __future__ import print_function
 import string
 import subprocess
 import sys
@@ -44,7 +47,7 @@ def inject_event(key, press):
     if len(key) >= 2 and key[0] != '<':
         key = '<' + key + '>'
     if key not in KEYMATRIX:
-        print "%s: invalid key: %s" % (this_script, key)
+        print("%s: invalid key: %s" % (this_script, key))
         sys.exit(1)
     (row, col) = KEYMATRIX[key]
     subprocess.call(["ectool", "kbpress", str(row), str(col),
@@ -65,35 +68,35 @@ def inject_string(string):
             inject_key(UNSHIFT_TABLE[c])
             inject_event("<shift_l>", False)
         else:
-            print "unimplemented character:", c
+            print("unimplemented character:", c)
             sys.exit(1)
 
 
 def usage():
-    print "Usage: %s [-s <string>] [-k <key>]" % this_script, \
-          "[-p <pressed-key>] [-r <released-key>] ..."
-    print "Examples:"
-    print "%s -s MyPassw0rd -k enter" % this_script
-    print "%s -p ctrl_l -p alt_l -k f3 -r alt_l -r ctrl_l" % this_script
+    print("Usage: %s [-s <string>] [-k <key>]" % this_script,
+          "[-p <pressed-key>] [-r <released-key>] ...")
+    print("Examples:")
+    print("%s -s MyPassw0rd -k enter" % this_script)
+    print("%s -p ctrl_l -p alt_l -k f3 -r alt_l -r ctrl_l" % this_script)
 
 
 def help():
     usage()
-    print "Valid keys are:"
+    print("Valid keys are:")
     i = 0
     for key in KEYMATRIX:
-        print "%12s" % key,
+        print("%12s" % key, end='')
         i += 1
         if i % 4 == 0:
-            print
-    print
-    print "angle brackets may be omitted"
+            print()
+    print()
+    print("angle brackets may be omitted")
 
 
 def usage_check(asserted_condition, message):
     if asserted_condition:
         return
-    print "%s:" % this_script, message
+    print("%s:" % this_script, message)
     usage()
     sys.exit(1)
 
