@@ -198,10 +198,13 @@ build_boards: | $(FAILED_BOARDS_DIR)
 	@rm -f $(FAILED_BOARDS_DIR)/*
 	$(MAKE) try_build_boards
 
-.PHONY: buildall
-buildall: build_boards build_cros_ec_commands
+.PHONY: buildall_only
+buildall_only: build_boards build_cros_ec_commands
 	$(MAKE) build_cts
 	$(MAKE) buildfuzztests
+
+.PHONY: buildall
+buildall: buildall_only
 	$(MAKE) runtests
 	@touch .tests-passed
 	@echo "$@ completed successfully!"
