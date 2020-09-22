@@ -100,7 +100,14 @@ STATIC_IF(DEBUG_GET_CC)
  * Last reported VBus Level
  *
  * BIT(VBUS_SAFE0V) will indicate if in SAFE0V
- * BIT(VBUS_PRESENT) will indicate if in PRESENT
+ * BIT(VBUS_PRESENT) will indicate if in PRESENT in the TCPCI POWER_STATUS
+ *
+ * Note that VBUS_REMOVED cannot be distinguished from !VBUS_PRESENT with
+ * this interface, but the trigger thresholds for Vbus Present should allow the
+ * same bit to be used safely for both.
+ *
+ * TODO(b/149530538): Some TCPCs may be able to implement
+ * VBUS_SINK_DISCONNECT_THRESHOLD to support vSinkDisconnectPD
  */
 static int tcpc_vbus[CONFIG_USB_PD_PORT_MAX_COUNT];
 
@@ -718,8 +725,10 @@ bool tcpci_tcpm_check_vbus_level(int port, enum vbus_level level)
 {
 	if (level == VBUS_SAFE0V)
 		return !!(tcpc_vbus[port] & BIT(VBUS_SAFE0V));
-	else
+	else if (level == VBUS_PRESENT)
 		return !!(tcpc_vbus[port] & BIT(VBUS_PRESENT));
+	else
+		return !(tcpc_vbus[port] & BIT(VBUS_PRESENT));
 }
 #endif
 

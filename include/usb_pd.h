@@ -254,6 +254,10 @@ enum pd_rx_errors {
 #define PD_V_SAFE0V_MAX		800
 #define PD_V_SAFE5V_MIN		4750
 
+/* USB Type-C voltages in mV (Table 4-3, USB Type-C Release 2.0 Spec) */
+#define PD_V_SINK_DISCONNECT_MAX 3670
+/* TODO(b/149530538): Add equation for vSinkDisconnectPD */
+
 /* function table for entered mode */
 struct amode_fx {
 	int (*status)(int port, uint32_t *payload);

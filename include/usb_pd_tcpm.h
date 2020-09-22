@@ -104,10 +104,15 @@ enum tcpc_transmit_complete {
 	TCPC_TX_COMPLETE_FAILED =    2,
 };
 
-/* USB-C PD Vbus levels */
+/*
+ * USB-C PD Vbus levels
+ *
+ * Return true on Vbus check if Vbus is...
+ */
 enum vbus_level {
-	VBUS_SAFE0V,
-	VBUS_PRESENT,
+	VBUS_SAFE0V,	/* less than vSafe0V max */
+	VBUS_PRESENT,	/* at least vSafe5V min */
+	VBUS_REMOVED,	/* less than vSinkDisconnect max */
 };
 
 /**
