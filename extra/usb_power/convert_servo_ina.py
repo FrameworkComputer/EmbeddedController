@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Copyright 2017 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -7,7 +7,9 @@
    to a sweetberry config.
 """
 
+# Note: This is a py2/3 compatible file.
 
+from __future__ import print_function
 import os
 import sys
 
@@ -31,8 +33,8 @@ def fetch_records(basename):
 
 def main(argv):
   if len(argv) != 2:
-    print "usage:"
-    print " %s input.py" % argv[0]
+    print("usage:")
+    print(" %s input.py" % argv[0])
     return
 
   inputf = argv[1]
@@ -40,7 +42,7 @@ def main(argv):
   outputf = basename + '.board'
   outputs = basename + '.scenario'
 
-  print "Converting %s to %s, %s" % (inputf, outputf, outputs)
+  print("Converting %s to %s, %s" % (inputf, outputf, outputs))
 
   inas = fetch_records(basename)
 
