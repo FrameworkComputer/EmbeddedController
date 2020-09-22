@@ -20,7 +20,6 @@
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/nb7v904m.h"
-#include "driver/sync.h"
 #include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/usb_mux/pi3usb3x532.h"
@@ -388,17 +387,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.rot_standard_ref = &base_standard_ref,
 		.min_frequency = LSM6DSM_ODR_MIN_VAL,
 		.max_frequency = LSM6DSM_ODR_MAX_VAL,
-	},
-	[VSYNC] = {
-		.name = "Camera VSYNC",
-		.active_mask = SENSOR_ACTIVE_S0,
-		.chip = MOTIONSENSE_CHIP_GPIO,
-		.type = MOTIONSENSE_TYPE_SYNC,
-		.location = MOTIONSENSE_LOC_CAMERA,
-		.drv = &sync_drv,
-		.default_range = 0,
-		.min_frequency = 0,
-		.max_frequency = 1,
 	},
 };
 

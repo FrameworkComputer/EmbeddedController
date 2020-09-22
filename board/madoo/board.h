@@ -81,7 +81,6 @@
 
 #define CONFIG_ACCEL_BMA255		/* Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
-#define CONFIG_SYNC			/* Camera VSYNC */
 
 /* Lid operates in forced mode, base in FIFO */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
@@ -90,7 +89,6 @@
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 
 #define CONFIG_ACCEL_INTERRUPTS
-#define CONFIG_SYNC_INT_EVENT TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
 
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
@@ -133,7 +131,6 @@ enum sensor_id {
 	LID_ACCEL,
 	BASE_ACCEL,
 	BASE_GYRO,
-	VSYNC,
 	SENSOR_COUNT
 };
 

@@ -40,7 +40,6 @@ GPIO_INT(LID_360_L,		PIN(A, 7), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 GPIO_INT(VOLDN_BTN_ODL,		PIN(I, 6), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(VOLUP_BTN_ODL,		PIN(I, 7), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(BASE_SIXAXIS_INT_L,	PIN(J, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V, lsm6dsm_interrupt)
-GPIO_INT(CAM_EC_VSYNC,		PIN(C, 7), GPIO_INT_RISING, sync_interrupt)
 GPIO_INT(EC_WP_OD,		PIN(A, 6), GPIO_INT_BOTH, switch_interrupt)
 
 /* Power sequence GPIOs */
