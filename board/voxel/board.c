@@ -346,7 +346,6 @@ struct tcpc_config_t tcpc_config[] = {
 			.addr_flags = RT1715_I2C_ADDR_FLAGS,
 		},
 		.drv = &rt1715_tcpm_drv,
-		.usb23 = USBC_PORT_0_USB2_NUM | (USBC_PORT_0_USB3_NUM << 4),
 	},
 	[USBC_PORT_C1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -355,7 +354,6 @@ struct tcpc_config_t tcpc_config[] = {
 			.addr_flags = RT1715_I2C_ADDR_FLAGS,
 		},
 		.drv = &rt1715_tcpm_drv,
-		.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);

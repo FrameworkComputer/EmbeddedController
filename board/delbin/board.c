@@ -287,7 +287,6 @@ static const struct tcpc_config_t tcpc_config_p0_usb3 = {
 	},
 	.flags = TCPC_FLAGS_TCPCI_REV2_0 | TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
 	.drv = &ps8xxx_tcpm_drv,
-	.usb23 = USBC_PORT_0_USB2_NUM | (USBC_PORT_0_USB3_NUM << 4),
 };
 
 static const struct tcpc_config_t tcpc_config_p1_usb3 = {
@@ -298,7 +297,6 @@ static const struct tcpc_config_t tcpc_config_p1_usb3 = {
 	},
 	.flags = TCPC_FLAGS_TCPCI_REV2_0 | TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
 	.drv = &ps8xxx_tcpm_drv,
-	.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
 };
 
 static const struct usb_mux usbc0_usb3_mb_retimer = {
@@ -491,7 +489,6 @@ struct tcpc_config_t tcpc_config[] = {
 			.addr_flags = TUSB422_I2C_ADDR_FLAGS,
 		},
 		.drv = &tusb422_tcpm_drv,
-		.usb23 = USBC_PORT_0_USB2_NUM | (USBC_PORT_0_USB3_NUM << 4),
 	},
 	[USBC_PORT_C1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -500,7 +497,6 @@ struct tcpc_config_t tcpc_config[] = {
 			.addr_flags = TUSB422_I2C_ADDR_FLAGS,
 		},
 		.drv = &tusb422_tcpm_drv,
-		.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);

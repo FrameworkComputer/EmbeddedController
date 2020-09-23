@@ -138,9 +138,6 @@ const struct tcpc_config_t tcpc_config[] = {
 		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		/* TCPC is embedded within EC so no i2c config needed */
 		.drv = &it83xx_tcpm_drv,
-#ifdef CONFIG_INTEL_VIRTUAL_MUX
-		.usb23 = TYPE_C_PORT_0_USB2_NUM | (TYPE_C_PORT_0_USB3_NUM << 4),
-#endif
 	},
 	[TYPE_C_PORT_1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -149,9 +146,6 @@ const struct tcpc_config_t tcpc_config[] = {
 			.addr_flags = I2C_ADDR_FUSB302_TCPC_AIC,
 		},
 		.drv = &fusb302_tcpm_drv,
-#ifdef CONFIG_INTEL_VIRTUAL_MUX
-		.usb23 = TYPE_C_PORT_1_USB2_NUM | (TYPE_C_PORT_1_USB3_NUM << 4),
-#endif
 	},
 	[TYPE_C_PORT_2] = {
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -160,9 +154,6 @@ const struct tcpc_config_t tcpc_config[] = {
 			.addr_flags = I2C_ADDR_FUSB302_TCPC_AIC,
 		},
 		.drv = &fusb302_tcpm_drv,
-#ifdef CONFIG_INTEL_VIRTUAL_MUX
-		.usb23 = TYPE_C_PORT_2_USB2_NUM | (TYPE_C_PORT_2_USB3_NUM << 4),
-#endif
 	},
 	[TYPE_C_PORT_3] = {
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -171,9 +162,6 @@ const struct tcpc_config_t tcpc_config[] = {
 			.addr_flags = I2C_ADDR_FUSB302_TCPC_AIC,
 		},
 		.drv = &fusb302_tcpm_drv,
-#ifdef CONFIG_INTEL_VIRTUAL_MUX
-		.usb23 = TYPE_C_PORT_3_USB2_NUM | (TYPE_C_PORT_3_USB3_NUM << 4),
-#endif
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == CONFIG_USB_PD_PORT_MAX_COUNT);

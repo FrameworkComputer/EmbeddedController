@@ -80,7 +80,6 @@
 
 /* USB PD config */
 #define CONFIG_USB_PD_PORT_MAX_COUNT 4
-#define CONFIG_INTEL_VIRTUAL_MUX
 #define CONFIG_USB_MUX_VIRTUAL
 #define PD_MAX_POWER_MW              60000
 
@@ -120,19 +119,6 @@
 #define I2C_PORT1_BB_RETIMER_ADDR	0x51
 #define I2C_PORT2_BB_RETIMER_ADDR	0x52
 #define I2C_PORT3_BB_RETIMER_ADDR	0x53
-
-/* USB-C port's USB2 & USB3 port numbers */
-#ifdef CONFIG_INTEL_VIRTUAL_MUX
-	#define TYPE_C_PORT_0_USB2_NUM	1
-	#define TYPE_C_PORT_1_USB2_NUM	2
-	#define TYPE_C_PORT_2_USB2_NUM	3
-	#define TYPE_C_PORT_3_USB2_NUM	5
-
-	#define TYPE_C_PORT_0_USB3_NUM	(0+1)
-	#define TYPE_C_PORT_1_USB3_NUM	(1+1)
-	#define TYPE_C_PORT_2_USB3_NUM	(2+1)
-	#define TYPE_C_PORT_3_USB3_NUM	(3+1)
-#endif
 
 /* Enable VCONN */
 #define CONFIG_USBC_VCONN

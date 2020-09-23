@@ -57,22 +57,6 @@
 #define CONFIG_USB_PD_TCPM_ITE_ON_CHIP
 #define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 2
 
-/* USB-C port's USB2 & USB3 port numbers */
-#if defined(BOARD_TGLRVPU_ITE) || defined(BOARD_TGLRVPU_ITE_TCPMV1)
-	#define TYPE_C_PORT_0_USB2_NUM	6
-	#define TYPE_C_PORT_1_USB2_NUM	7
-
-	#define TYPE_C_PORT_0_USB3_NUM	3
-	#define TYPE_C_PORT_1_USB3_NUM	4
-#else /* BOARD_TGLRVPY_ITE */
-	#define TYPE_C_PORT_0_USB2_NUM	6
-	#define TYPE_C_PORT_1_USB2_NUM	5
-
-	#define TYPE_C_PORT_0_USB3_NUM	3
-	#define TYPE_C_PORT_1_USB3_NUM	2
-#endif /* BOARD_TGLRVPU_ITE */
-
-
 /* Config BB retimer */
 #define CONFIG_USBC_RETIMER_INTEL_BB
 

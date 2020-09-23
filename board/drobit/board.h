@@ -51,17 +51,6 @@
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_PORT_MAX_COUNT			2
 
-/*
- * USB-C port's USB2 & USB3 mapping from schematics
- * USB2 numbering on PCH - 1 to n
- * USB3 numbering on AP - 0 to n (PMC's USB3 numbering for MUX
- * configuration is - 1 to n hence add +1)
- */
-#define USBC_PORT_0_USB2_NUM	9
-#define USBC_PORT_0_USB3_NUM	1
-#define USBC_PORT_1_USB2_NUM	4
-#define USBC_PORT_1_USB3_NUM	2
-
 /* TODO: b/144165680 - measure and check these values on Volteer */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
