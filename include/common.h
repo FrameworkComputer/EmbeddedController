@@ -15,6 +15,7 @@
 
 #ifdef CONFIG_ZEPHYR
 #include <sys/util.h>
+#include <toolchain.h>
 #endif
 
 /*
@@ -40,8 +41,10 @@
  * Compared to directly using the preprocessor # operator, this 2-stage macro
  * is safe with regards to using nested macros and defined arguments.
  */
+#ifndef CONFIG_ZEPHYR
 #define STRINGIFY0(name)  #name
 #define STRINGIFY(name)  STRINGIFY0(name)
+#endif   /* CONFIG_ZEPHYR */
 
 /* Macros to access registers */
 #define REG64_ADDR(addr) ((volatile uint64_t *)(addr))
