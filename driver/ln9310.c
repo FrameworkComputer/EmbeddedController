@@ -134,9 +134,17 @@ static int ln9310_init_3to1(void)
 		      LN9310_PWR_OP_MODE_SWITCH31);
 
 	/* 3S lower bounde delta configurations */
+	field_update8(LN9310_REG_LB_CTRL,
+		      LN9310_LB_DELTA_MASK,
+		      LN9310_LB_DELTA_3S);
+
+	/*
+	 * TODO(waihong): The LN9310_REG_SYS_CTR was set to a wrong value
+	 * accidentally. Override it to 0. This may not need.
+	 */
 	field_update8(LN9310_REG_SYS_CTRL,
-		      LN9310_SYS_CTRL_LB_DELTA_MASK,
-		      LN9310_SYS_CTRL_LB_DELTA_3S);
+		      0xff,
+		      0);
 
 	return EC_SUCCESS;
 }
@@ -163,9 +171,17 @@ static int ln9310_init_2to1(void)
 		      LN9310_PWR_OP_MODE_SWITCH21);
 
 	/* 2S lower bounde delta configurations */
+	field_update8(LN9310_REG_LB_CTRL,
+		      LN9310_LB_DELTA_MASK,
+		      LN9310_LB_DELTA_2S);
+
+	/*
+	 * TODO(waihong): The LN9310_REG_SYS_CTR was set to a wrong value
+	 * accidentally. Override it to 0. This may not need.
+	 */
 	field_update8(LN9310_REG_SYS_CTRL,
-		      LN9310_SYS_CTRL_LB_DELTA_MASK,
-		      LN9310_SYS_CTRL_LB_DELTA_2S);
+		      0xff,
+		      0);
 
 	return EC_SUCCESS;
 }
