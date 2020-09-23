@@ -43,6 +43,9 @@
 	#define CONFIG_ADC_VOLTAGE_COMPARATOR	/* ITE ADC thresholds */
 
 	#define CONFIG_DAC			/* DAC for PSYS */
+
+	#undef CONFIG_UART_TX_BUF_SIZE		/* UART */
+	#define CONFIG_UART_TX_BUF_SIZE 4096
 #else
 #error "Must define a VARIANT_DEDEDE_EC!"
 #endif
