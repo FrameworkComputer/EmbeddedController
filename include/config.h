@@ -3827,6 +3827,9 @@
 /* Driver of LN9310 switchcap */
 #undef CONFIG_LN9310
 
+/* Use this to include support for MP4245 buck boost converter */
+#undef CONFIG_MP4245
+
 /*****************************************************************************/
 /* USB PD config */
 

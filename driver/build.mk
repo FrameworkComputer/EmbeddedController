@@ -190,3 +190,6 @@ driver-$(CONFIG_MCDP28X0)+=mcdp28x0.o
 
 # Wireless Power Chargers
 driver-$(HAS_TASK_WPC) += wpc/p9221.o
+
+# Buck-Boost converters
+driver-$(CONFIG_MP4245)+=mp4245.o
