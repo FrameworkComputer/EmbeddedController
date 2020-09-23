@@ -5087,11 +5087,22 @@ static void pe_init_vdm_modes_request_run(int port)
 		uint32_t *payload = (uint32_t *) rx_emsg[port].buf;
 		int sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
 		uint8_t cnt = PD_HEADER_CNT(rx_emsg[port].header);
+		uint16_t response_svid = (uint16_t) PD_VDO_VID(payload[0]);
 
-		/* PE_INIT_VDM_Modes_ACKed embedded here */
-		dfp_consume_modes(port, sop, cnt, payload);
-		break;
+		/*
+		 * Accept ACK if the request and response SVIDs are equal;
+		 * otherwise, treat this as a NAK of the request SVID.
+		 *
+		 * TODO(b:169242812): support valid mode checking in
+		 * dfp_consume_modes.
+		 */
+		if (requested_svid == response_svid) {
+			/* PE_INIT_VDM_Modes_ACKed embedded here */
+			dfp_consume_modes(port, sop, cnt, payload);
+			break;
 		}
+		}
+		/* Fall Through */
 	case VDM_RESULT_NAK:
 		/* PE_INIT_VDM_Modes_NAKed embedded here */
 		pd_set_modes_discovery(port, pe[port].tx_type, requested_svid,
