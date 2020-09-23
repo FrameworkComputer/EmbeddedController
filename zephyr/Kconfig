@@ -28,4 +28,32 @@ config ZEPHYR
 	  This should always be enabled.  It's a workaround for
 	  config.h not being available in some headers.
 
+menuconfig PLATFORM_EC_TIMER
+	bool "Enable the EC timer module"
+	default y
+	help
+	  Enable compilation of the EC timer module
+
+if PLATFORM_EC_TIMER
+
+config PLATFORM_EC_TIMER_CMD_GETTIME
+	bool "Enable the gettime command"
+	default y
+	help
+	  Enable the "gettime" command
+
+config PLATFORM_EC_TIMER_CMD_TIMERINFO
+	bool "Enable the timerinfo command"
+	default y
+	help
+	  Enable the "timerinfo" command
+
+config PLATFORM_EC_TIMER_CMD_WAITMS
+	bool "Enable the waitms command"
+	default y
+	help
+	  Enable the "waitms" command
+
+endif # PLATFORM_EC_TIMER
+
 endif # PLATFORM_EC

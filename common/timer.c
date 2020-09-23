@@ -6,6 +6,7 @@
 /* Timer module for Chrome EC operating system */
 
 #include "atomic.h"
+#include "common.h"
 #include "console.h"
 #include "hooks.h"
 #include "hwtimer.h"
@@ -14,6 +15,13 @@
 #include "task.h"
 #include "timer.h"
 #include "watchdog.h"
+
+#ifdef CONFIG_ZEPHYR
+#include <kernel.h> /* For k_usleep() */
+#else
+extern __error("k_usleep() should only be called from Zephyr code")
+int32_t k_usleep(int32_t);
+#endif /* CONFIG_ZEPHYR */
 
 #define TIMER_SYSJUMP_TAG 0x4d54  /* "TM" */
 
@@ -154,7 +162,15 @@ void timer_cancel(task_id_t tskid)
 void usleep(unsigned us)
 {
 	uint32_t evt = 0;
-	uint32_t t0 = __hw_clock_source_read();
+	uint32_t t0;
+
+	if (IS_ENABLED(CONFIG_ZEPHYR)) {
+		while (us)
+			us = k_usleep(us);
+		return;
+	}
+
+	t0 = __hw_clock_source_read();
 
 	/* If task scheduling has not started, just delay */
 	if (!task_start_called()) {
