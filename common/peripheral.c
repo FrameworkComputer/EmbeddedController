@@ -40,9 +40,6 @@ static enum ec_status hc_locate_chip(struct host_cmd_handler_args *args)
 			resp->i2c_info.addr_flags =
 				tcpc_config[params->index].i2c_info.addr_flags;
 		}
-#ifdef CONFIG_INTEL_VIRTUAL_MUX
-		resp->reserved = tcpc_config[params->index].usb23;
-#endif
 #else
 		return EC_RES_UNAVAILABLE;
 #endif /* CONFIG_USB_PD_PORT_MAX_COUNT */

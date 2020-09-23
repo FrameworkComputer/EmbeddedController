@@ -4863,16 +4863,6 @@
 #undef CONFIG_ISH_DW_UART
 
 /*
- * On Intel devices EC's USB-C port numbers may not be physically equal to
- * AP's USB3 & USB2 port number. Because there can be MAX 15 USB2 ports on
- * PCH and MAX 15 USB3 ports on SOC, based on the complexity of the physical
- * layout of the board, USB3 & USB2 port signals of AP are routed to respective
- * USB-C port of EC. Hence, to configure the Intel Virtual MUX, information of
- * USB3 and USB2 port numbers of the respective USB-C port is needed.
- */
-#undef CONFIG_INTEL_VIRTUAL_MUX
-
-/*
  * TEST ONLY defines (CONFIG_TEST_*)
  *
  * Used to include files for unit and other builds tests.
