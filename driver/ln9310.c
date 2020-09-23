@@ -215,5 +215,11 @@ void ln9310_init(void)
 		CPRINTS("LN9310 reading INT1 failed");
 		return;
 	}
+
+	/* Clear the STANDBY_EN bit */
+	field_update8(LN9310_REG_STARTUP_CTRL,
+		      LN9310_STANDBY_EN,
+		      0);
+
 	CPRINTS("LN9310 cleared interrupts: 0x%x", val);
 }
