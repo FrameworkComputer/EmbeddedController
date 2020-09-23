@@ -489,7 +489,7 @@ static void syv682x_handle_interrupt(int port)
 static void syv682x_irq_deferred(void)
 {
 	int i;
-	uint32_t pending = atomic_read_clear(&irq_pending);
+	uint32_t pending = deprecated_atomic_read_clear(&irq_pending);
 
 	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		if (BIT(i) & pending)
@@ -499,7 +499,7 @@ DECLARE_DEFERRED(syv682x_irq_deferred);
 
 static void syv682x_interrupt_delayed(int port, int delay)
 {
-	atomic_or(&irq_pending, BIT(port));
+	deprecated_atomic_or(&irq_pending, BIT(port));
 	hook_call_deferred(&syv682x_irq_deferred_data, delay * MSEC);
 }
 

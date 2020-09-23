@@ -24,8 +24,10 @@ static int command_usart_info(int argc, char **argv)
 			 "    dropped %d bytes\n"
 			 "    overran %d times\n",
 			 config->hw->index + 1,
-			 atomic_read_clear(&(config->state->rx_dropped)),
-			 atomic_read_clear(&(config->state->rx_overrun)));
+			 deprecated_atomic_read_clear(
+				 &(config->state->rx_dropped)),
+			 deprecated_atomic_read_clear(
+				 &(config->state->rx_overrun)));
 
 		if (config->rx->info)
 			config->rx->info(config);

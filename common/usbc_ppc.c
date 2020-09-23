@@ -82,7 +82,7 @@ int ppc_add_oc_event(int port)
 	oc_event_cnt_tbl[port]++;
 
 	/* The port overcurrented, so don't clear it's OC events. */
-	atomic_clear(&connected_ports, 1 << port);
+	deprecated_atomic_clear(&connected_ports, 1 << port);
 
 	if (oc_event_cnt_tbl[port] >= PPC_OC_CNT_THRESH)
 		ppc_prints("OC event limit reached! "
@@ -264,9 +264,9 @@ void ppc_sink_is_connected(int port, int is_connected)
 	}
 
 	if (is_connected)
-		atomic_or(&connected_ports, 1 << port);
+		deprecated_atomic_or(&connected_ports, 1 << port);
 	else
-		atomic_clear(&connected_ports, 1 << port);
+		deprecated_atomic_clear(&connected_ports, 1 << port);
 }
 
 int ppc_vbus_sink_enable(int port, int enable)

@@ -81,7 +81,7 @@ static void usart_rx_dma_interrupt_common(
 		/* (new_index == old_index): nothing to add to the queue. */
 	}
 
-	atomic_add(&config->state->rx_dropped, new_bytes - added);
+	deprecated_atomic_add(&config->state->rx_dropped, new_bytes - added);
 
 	if (dma_config->state->max_bytes < new_bytes)
 		dma_config->state->max_bytes = new_bytes;
@@ -115,5 +115,5 @@ void usart_rx_dma_info(struct usart_config const *config)
 		DOWNCAST(config->rx, struct usart_rx_dma const, usart_rx);
 
 	ccprintf("    DMA RX max_bytes %d\n",
-		 atomic_read_clear(&dma_config->state->max_bytes));
+		 deprecated_atomic_read_clear(&dma_config->state->max_bytes));
 }

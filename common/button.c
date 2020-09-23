@@ -381,8 +381,8 @@ static void simulate_button_release_deferred(void)
 		/* Check state for button pressed */
 		if (sim_button_state & BIT(buttons[button_idx].type)) {
 			/* Set state of the button as released */
-			atomic_clear(&sim_button_state,
-					BIT(buttons[button_idx].type));
+			deprecated_atomic_clear(&sim_button_state,
+						BIT(buttons[button_idx].type));
 
 			button_interrupt_simulate(button_idx);
 		}
@@ -398,8 +398,8 @@ static void simulate_button(uint32_t button_mask, int press_ms)
 	for (button_idx = 0; button_idx < BUTTON_COUNT; button_idx++) {
 		if (button_mask & BIT(button_idx)) {
 			/* Set state of the button as pressed */
-			atomic_or(&sim_button_state,
-					BIT(buttons[button_idx].type));
+			deprecated_atomic_or(&sim_button_state,
+					     BIT(buttons[button_idx].type));
 
 			button_interrupt_simulate(button_idx);
 		}

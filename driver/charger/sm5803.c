@@ -945,7 +945,7 @@ void sm5803_handle_interrupt(int chgnum)
 static void sm5803_irq_deferred(void)
 {
 	int i;
-	uint32_t pending = atomic_read_clear(&irq_pending);
+	uint32_t pending = deprecated_atomic_read_clear(&irq_pending);
 
 	for (i = 0; i < CHARGER_NUM; i++)
 		if (BIT(i) & pending)
@@ -955,7 +955,7 @@ DECLARE_DEFERRED(sm5803_irq_deferred);
 
 void sm5803_interrupt(int chgnum)
 {
-	atomic_or(&irq_pending, BIT(chgnum));
+	deprecated_atomic_or(&irq_pending, BIT(chgnum));
 	hook_call_deferred(&sm5803_irq_deferred_data, 0);
 }
 

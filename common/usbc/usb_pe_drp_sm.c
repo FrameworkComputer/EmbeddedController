@@ -64,17 +64,19 @@
 #define CPRINTS_L3(format, args...) CPRINTS_LX(3, format, ## args)
 
 
-#define PE_SET_FLAG(port, flag) atomic_or(&pe[port].flags, (flag))
-#define PE_CLR_FLAG(port, flag) atomic_clear(&pe[port].flags, (flag))
+#define PE_SET_FLAG(port, flag) deprecated_atomic_or(&pe[port].flags, (flag))
+#define PE_CLR_FLAG(port, flag) deprecated_atomic_clear(&pe[port].flags, (flag))
 #define PE_CHK_FLAG(port, flag) (pe[port].flags & (flag))
 
 /*
  * These macros SET, CLEAR, and CHECK, a DPM (Device Policy Manager)
  * Request. The Requests are listed in usb_pe_sm.h.
  */
-#define PE_SET_DPM_REQUEST(port, req) atomic_or(&pe[port].dpm_request,    (req))
-#define PE_CLR_DPM_REQUEST(port, req) atomic_clear(&pe[port].dpm_request, (req))
-#define PE_CHK_DPM_REQUEST(port, req) (pe[port].dpm_request &             (req))
+#define PE_SET_DPM_REQUEST(port, req) \
+	deprecated_atomic_or(&pe[port].dpm_request, (req))
+#define PE_CLR_DPM_REQUEST(port, req) \
+	deprecated_atomic_clear(&pe[port].dpm_request, (req))
+#define PE_CHK_DPM_REQUEST(port, req) (pe[port].dpm_request & (req))
 
 /*
  * Policy Engine Layer Flags
@@ -6078,9 +6080,10 @@ void pd_dfp_discovery_init(int port)
 	PE_CLR_FLAG(port, PE_FLAGS_VDM_SETUP_DONE |
 			  PE_FLAGS_MODAL_OPERATION);
 
-	atomic_or(&task_access[port][TCPC_TX_SOP], BIT(task_get_current()));
-	atomic_or(&task_access[port][TCPC_TX_SOP_PRIME],
-						   BIT(task_get_current()));
+	deprecated_atomic_or(&task_access[port][TCPC_TX_SOP],
+			     BIT(task_get_current()));
+	deprecated_atomic_or(&task_access[port][TCPC_TX_SOP_PRIME],
+			     BIT(task_get_current()));
 
 	memset(pe[port].discovery, 0, sizeof(pe[port].discovery));
 	memset(pe[port].partner_amodes, 0, sizeof(pe[port].partner_amodes));
@@ -6100,7 +6103,7 @@ void pd_dfp_discovery_init(int port)
 
 void pd_discovery_access_clear(int port, enum tcpm_transmit_type type)
 {
-	atomic_clear(&task_access[port][type], 0xFFFFFFFF);
+	deprecated_atomic_clear(&task_access[port][type], 0xFFFFFFFF);
 }
 
 bool pd_discovery_access_validate(int port, enum tcpm_transmit_type type)
@@ -6112,7 +6115,7 @@ struct pd_discovery *pd_get_am_discovery(int port, enum tcpm_transmit_type type)
 {
 	ASSERT(type < DISCOVERY_TYPE_COUNT);
 
-	atomic_or(&task_access[port][type], BIT(task_get_current()));
+	deprecated_atomic_or(&task_access[port][type], BIT(task_get_current()));
 	return &pe[port].discovery[type];
 }
 

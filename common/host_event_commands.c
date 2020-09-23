@@ -266,9 +266,9 @@ static void host_events_atomic_or(host_event_t *e, host_event_t m)
 {
 	uint32_t *ptr = (uint32_t *)e;
 
-	atomic_or(ptr, (uint32_t)m);
+	deprecated_atomic_or(ptr, (uint32_t)m);
 #ifdef CONFIG_HOST_EVENT64
-	atomic_or(ptr + 1, (uint32_t)(m >> 32));
+	deprecated_atomic_or(ptr + 1, (uint32_t)(m >> 32));
 #endif
 }
 
@@ -276,9 +276,9 @@ static void host_events_atomic_clear(host_event_t *e, host_event_t m)
 {
 	uint32_t *ptr = (uint32_t *)e;
 
-	atomic_clear(ptr, (uint32_t)m);
+	deprecated_atomic_clear(ptr, (uint32_t)m);
 #ifdef CONFIG_HOST_EVENT64
-	atomic_clear(ptr + 1, (uint32_t)(m >> 32));
+	deprecated_atomic_clear(ptr + 1, (uint32_t)(m >> 32));
 #endif
 }
 
