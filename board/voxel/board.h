@@ -15,13 +15,11 @@
 #undef NPCX7_PWM1_SEL
 #define NPCX7_PWM1_SEL    0    /* GPIO C2 is not used as PWM1. */
 
-#ifdef BOARD_VOXEL_NPCX797FC
 /*
  * The RAM and flash size combination on the the NPCX797FC does not leave
  * any unused flash space that can be used to store the .init_rom section.
  */
 #undef CONFIG_CHIP_INIT_ROM_REGION
-#endif
 
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
