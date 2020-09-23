@@ -10,7 +10,12 @@
 
 #include <stdint.h>
 #include <inttypes.h>
+
 #include "compile_time_macros.h"
+
+#ifdef CONFIG_ZEPHYR
+#include <sys/util.h>
+#endif
 
 /*
  * Macros to concatenate 2 - 4 tokens together to form a single token.
@@ -411,7 +416,24 @@ enum ec_error_list {
  * Note: This macro will only function inside a code block due to the way
  * it checks for unknown values.
  */
+#ifndef CONFIG_ZEPHYR
 #define IS_ENABLED(option) __config_enabled(#option, option)
+#else
+/* IS_ENABLED previously defined in sys/util.h */
+#undef IS_ENABLED
+/*
+ * For Zephyr, we must create a new version of IS_ENABLED which is
+ * compatible with both Kconfig enables (for Zephyr code), which have
+ * the value defined to 1 upon enablement, and CrOS EC defines (which
+ * are defined to the empty string).
+ *
+ * To do this, we use __cfg_select from this codebase to determine if
+ * the option was defined to nothing ("enabled" in CrOS EC terms).  If
+ * not, we then check using Zephyr's Z_IS_ENABLED1 macro to determine
+ * if the config option is enabled by Zephyr's definition.
+ */
+#define IS_ENABLED(option) __cfg_select(option, 1, Z_IS_ENABLED1(option))
+#endif  /* CONFIG_ZEPHYR */
 
 /**
  * Makes a global variable static when a config option is enabled,
