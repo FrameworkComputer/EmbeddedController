@@ -285,10 +285,10 @@ static int board_tusb544_mux_set(const struct usb_mux *me,
 {
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/* Enable IN_HPD on the DB */
-		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+		ioex_set_level(board_usbc1_retimer_inhpd, 1);
 	} else {
 		/* Disable IN_HPD on the DB */
-		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
+		ioex_set_level(board_usbc1_retimer_inhpd, 0);
 	}
 	return EC_SUCCESS;
 }
@@ -298,10 +298,10 @@ static int board_ps8743_mux_set(const struct usb_mux *me,
 {
 	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		/* Enable IN_HPD on the DB */
-		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+		ioex_set_level(board_usbc1_retimer_inhpd, 1);
 	else
 		/* Disable IN_HPD on the DB */
-		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
+		ioex_set_level(board_usbc1_retimer_inhpd, 0);
 
 	return EC_SUCCESS;
 }
@@ -326,6 +326,7 @@ const struct usb_mux usbc1_ps8743 = {
  */
 enum gpio_signal GPIO_S0_PGOOD = GPIO_S0_PWROK_OD_V0;
 static uint32_t board_ver;
+int board_usbc1_retimer_inhpd = GPIO_USB_C1_HPD_IN_DB_V1;
 
 static void board_version_check(void)
 {
@@ -353,7 +354,9 @@ static void board_remap_gpio(void)
 		 * hardware is retired and no longer needed
 		 */
 		gpio_set_flags(GPIO_USB_C1_HPD_IN_DB_V1, GPIO_OUT_LOW);
-	}
+		board_usbc1_retimer_inhpd = GPIO_USB_C1_HPD_IN_DB_V1;
+	} else
+		board_usbc1_retimer_inhpd = IOEX_USB_C1_HPD_IN_DB;
 }
 
 static void setup_fw_config(void)

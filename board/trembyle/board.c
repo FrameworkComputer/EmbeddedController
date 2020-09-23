@@ -329,6 +329,8 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
  * Use FW_CONFIG to set correct configuration.
  */
 
+int board_usbc1_retimer_inhpd = IOEX_USB_C1_HPD_IN_DB;
+
 static void setup_v0_charger(void)
 {
 	chg_chips[0].i2c_port = I2C_PORT_CHARGER_V0;

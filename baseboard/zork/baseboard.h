@@ -345,6 +345,9 @@ __override_proto void ppc_interrupt(enum gpio_signal signal);
 
 void board_print_temps(void);
 
+/* GPIO or IOEX signal used to set IN_HPD on DB retimer. */
+extern int board_usbc1_retimer_inhpd;
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BASEBOARD_H */

@@ -334,6 +334,8 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
  * Use FW_CONFIG to set correct configuration.
  */
 
+int board_usbc1_retimer_inhpd = IOEX_USB_C1_HPD_IN_DB;
+
 static void setup_fw_config(void)
 {
 	/* Enable Gyro interrupts */

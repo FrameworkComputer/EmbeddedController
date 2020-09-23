@@ -420,10 +420,10 @@ static int board_ps8802_mux_set(const struct usb_mux *me,
 			return rv;
 
 		/* Enable IN_HPD on the DB */
-		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 1);
 	} else {
 		/* Disable IN_HPD on the DB */
-		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
+		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 0);
 	}
 
 	return rv;
@@ -486,10 +486,10 @@ static int board_ps8818_mux_set(const struct usb_mux *me,
 			return rv;
 
 		/* Enable IN_HPD on the DB */
-		gpio_or_ioex_set_level(PORT_TO_HPD(1), 1);
+		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 1);
 	} else {
 		/* Disable IN_HPD on the DB */
-		gpio_or_ioex_set_level(PORT_TO_HPD(1), 0);
+		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 0);
 	}
 
 	return rv;
