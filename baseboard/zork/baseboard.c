@@ -362,3 +362,13 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 
 	return voltage < BC12_MIN_VOLTAGE;
 }
+
+/**
+ * Always ramp up input current since AP needs higher power, even if battery is
+ * very low or full. We can always re-ramp if input current increases beyond
+ * what supplier can provide.
+ */
+__override int charge_is_consuming_full_input_current(void)
+{
+	return 1;
+}

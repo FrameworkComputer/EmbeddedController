@@ -2389,7 +2389,7 @@ int charge_get_battery_temp(int idx, int *temp_ptr)
 	return EC_SUCCESS;
 }
 
-int charge_is_consuming_full_input_current(void)
+__overridable int charge_is_consuming_full_input_current(void)
 {
 	int chg_pct = charge_get_percent();
 
