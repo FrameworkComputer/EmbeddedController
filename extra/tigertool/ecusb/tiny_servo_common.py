@@ -12,8 +12,8 @@ import subprocess
 import sys
 import time
 
-import pty_driver
-import stm32uart
+from . import pty_driver
+from . import stm32uart
 
 
 class TinyServoError(Exception):
@@ -40,7 +40,8 @@ def check_usb(vidpid, serialname=None):
   Returns: True if found, False, otherwise.
   """
   if serialname:
-    output = subprocess.check_output(['lsusb', '-v', '-d', vidpid])
+    output = subprocess.check_output(['lsusb', '-v', '-d', vidpid],
+                                     encoding='utf-8')
     m = re.search(r'^\s*iSerial\s+\d+\s+%s$' % serialname, output, flags=re.M)
     if m:
       return True
@@ -63,7 +64,8 @@ def check_usb_sn(vidpid):
 
   Returns: string serial number if found, None otherwise.
   """
-  output = subprocess.check_output(['lsusb', '-v', '-d', vidpid])
+  output = subprocess.check_output(['lsusb', '-v', '-d', vidpid],
+                                   encoding='utf-8')
   m = re.search(r'^\s*iSerial\s+(.*)$', output, flags=re.M)
   if m:
     return m.group(1)
