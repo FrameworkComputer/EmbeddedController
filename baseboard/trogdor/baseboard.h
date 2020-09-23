@@ -58,6 +58,14 @@
 #define CONFIG_LID_SWITCH
 #define CONFIG_EXTPOWER_GPIO
 
+/*
+ * On power-on, H1 releases the EC from reset but then quickly asserts and
+ * releases the reset a second time. This means the EC sees 2 resets:
+ * (1) power-on reset, (2) reset-pin reset. This config will
+ * allow the second reset to be treated as a power-on.
+ */
+#define CONFIG_BOARD_RESET_AFTER_POWER_ON
+
 /* Battery */
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_BATT_PRES_ODL
