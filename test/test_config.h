@@ -11,6 +11,10 @@
 /* Test config flags only apply for test builds */
 #ifdef TEST_BUILD
 
+#ifndef __ASSEMBLER__
+#include <stdint.h>
+#endif
+
 /* Host commands are sorted. */
 #define CONFIG_HOSTCMD_SECTION_SORTED
 

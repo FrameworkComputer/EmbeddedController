@@ -9,6 +9,7 @@
 #define __CROS_EC_CONSOLE_H
 
 #include "common.h"
+#include "config.h"
 
 /*
  * The EC code base has been using %h to print a hex buffer. Encode the
