@@ -5513,13 +5513,21 @@ static void pe_enter_usb_entry(int port)
 		return;
 	}
 
-	usb4_payload = enter_usb_setup_next_msg(port);
-
 	/* Port is already in USB4 mode, do not send enter USB message again */
-	if (usb4_payload < 0) {
+	if (enter_usb_entry_is_done(port)) {
 		pe_set_ready_state(port);
 		return;
 	}
+
+	if ((pe[port].tx_type == TCPC_TX_SOP_PRIME ||
+	     pe[port].tx_type == TCPC_TX_SOP_PRIME_PRIME) &&
+	     !tc_is_vconn_src(port)) {
+		if (port_try_vconn_swap(port))
+			return;
+	}
+
+	pe[port].tx_type = TCPC_TX_SOP;
+	usb4_payload = enter_usb_setup_next_msg(port, &pe[port].tx_type);
 
 	if (!usb4_payload) {
 		enter_usb_failed(port);
@@ -5527,14 +5535,10 @@ static void pe_enter_usb_entry(int port)
 		return;
 	}
 
-	/*
-	 * TODO: b/156749387 In case of Enter USB SOP'/SOP'', check if the port
-	 * is the VCONN source, if not, request for a VCONN swap.
-	 */
 	tx_emsg[port].len = sizeof(usb4_payload);
 
 	memcpy(tx_emsg[port].buf, &usb4_payload, tx_emsg[port].len);
-	send_data_msg(port, TCPC_TX_SOP, PD_DATA_ENTER_USB);
+	send_data_msg(port, pe[port].tx_type, PD_DATA_ENTER_USB);
 	pe_sender_response_msg_entry(port);
 }
 

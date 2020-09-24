@@ -2146,7 +2146,7 @@ bool is_tbt_cable_superspeed(int port);
  * port supports lesser speed than the cable
  *
  * @param port USB-C port number
- * @return thunderbolt-cable cable speed
+ * @return Thunderbolt cable speed
  */
 enum tbt_compat_cable_speed get_tbt_cable_speed(int port);
 

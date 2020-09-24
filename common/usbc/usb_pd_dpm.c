@@ -216,10 +216,28 @@ static void dpm_attempt_mode_entry(int port)
 	}
 
 	/* Check if the device and cable support USB4. */
-	if (IS_ENABLED(CONFIG_USB_PD_USB4) && enter_usb_is_capable(port) &&
-			dpm_mode_entry_requested(port, TYPEC_MODE_USB4)) {
-		pd_dpm_request(port, DPM_REQUEST_ENTER_USB);
-		return;
+	if (IS_ENABLED(CONFIG_USB_PD_USB4) &&
+	    enter_usb_port_partner_is_capable(port) &&
+	    enter_usb_cable_is_capable(port) &&
+	    dpm_mode_entry_requested(port, TYPEC_MODE_USB4)) {
+		struct pd_discovery *disc_sop_prime =
+			pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+		/*
+		 * Enter USB mode if -
+		 * 1. It's a passive cable or
+		 * 2. It's an active cable with VDM version >= 2.0 and
+		 *    VDO version >= 1.3 or
+		 * 3. The cable has entered Thunderbolt mode.
+		 */
+		if (get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE ||
+		    (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE &&
+		     pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME) >= VDM_VER20 &&
+		     disc_sop_prime->identity.product_t1.a_rev30.vdo_ver >=
+							VDO_VERSION_1_3) ||
+		     tbt_cable_entry_is_done(port)) {
+			pd_dpm_request(port, DPM_REQUEST_ENTER_USB);
+			return;
+		}
 	}
 
 	/* If not, check if they support Thunderbolt alt mode. */
@@ -284,9 +302,13 @@ static void dpm_attempt_mode_exit(int port)
 	int vdo_count = 0;
 	enum tcpm_transmit_type tx_type = TCPC_TX_SOP;
 
-	/* TODO(b/156749387): Support Data Reset for exiting USB4. */
 	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
 	    tbt_is_active(port)) {
+		/*
+		 * When the port is in USB4 mode and receives an exit request,
+		 * it leaves USB4 SOP in active state.
+		 * TODO(b/156749387): Support Data Reset for exiting USB4 SOP.
+		 */
 		CPRINTS("C%d: TBT teardown", port);
 		tbt_exit_mode_request(port);
 		vdo_count = tbt_setup_next_vdm(port, VDO_MAX_SIZE, &vdm,

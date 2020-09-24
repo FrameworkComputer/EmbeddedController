@@ -40,13 +40,22 @@ bool enter_usb_entry_is_done(int port);
 void enter_usb_failed(int port);
 
 /*
- * Returns True if port, port partner and cable supports USB4 mode
+ * Returns True if port partner supports USB4 mode
  *
  * @param port    USB-C port number
- * @return        True if USB4 mode is supported,
+ * @return        True if USB4 mode is supported by the port partner,
  *                False otherwise
  */
-bool enter_usb_is_capable(int port);
+bool enter_usb_port_partner_is_capable(int port);
+
+/*
+ * Returns True if cable supports USB4 mode
+ *
+ * @param port    USB-C port number
+ * @return        True if USB4 mode is supported by the cable,
+ *                False otherwise
+ */
+bool enter_usb_cable_is_capable(int port);
 
 /*
  * Handles accepted USB4 response
@@ -68,7 +77,8 @@ void enter_usb_rejected(int port, enum tcpm_transmit_type type);
  * Constructs the next USB4 EUDO that should be sent.
  *
  * @param port    USB-C port number
+ * @param type    Transmit type (SOP, SOP', SOP'') for request
  */
-uint32_t enter_usb_setup_next_msg(int port);
+uint32_t enter_usb_setup_next_msg(int port, enum tcpm_transmit_type *type);
 
 #endif

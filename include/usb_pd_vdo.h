@@ -243,6 +243,10 @@ union passive_cable_vdo_rev30 {
  *           011b = [USB4] Gen3
  *           100b..111b = Reserved, Shall Not be used
  */
+enum vdo_version {
+	VDO_VERSION_1_3 = 3,
+};
+
 union active_cable_vdo1_rev30 {
 	struct {
 		enum usb_rev30_ss ss: 3;
@@ -257,7 +261,7 @@ union active_cable_vdo1_rev30 {
 		uint32_t reserved0 : 1;
 		uint32_t connector : 2;
 		uint32_t reserved1 : 1;
-		uint32_t vdo_version : 3;
+		enum vdo_version vdo_ver : 3;
 		uint32_t fw_version : 4;
 		uint32_t hw_version : 4;
 	};
@@ -326,6 +330,11 @@ enum active_cable_usb2_support {
 	USB2_NOT_SUPPORTED,
 };
 
+enum active_cable_usb4_support {
+	USB4_SUPPORTED,
+	USB4_NOT_SUPPORTED,
+};
+
 union active_cable_vdo2_rev30 {
 	struct {
 		uint8_t usb_gen : 1;
@@ -335,7 +344,7 @@ union active_cable_vdo2_rev30 {
 		uint8_t usb_32_support : 1;
 		enum active_cable_usb2_support usb_20_support : 1;
 		uint8_t usb_20_hub_hop : 2;
-		uint8_t usb_40_support : 1;
+		enum active_cable_usb4_support usb_40_support : 1;
 		enum retimer_active_element active_elem : 1;
 		uint8_t physical_conn : 1;
 		uint8_t u3_to_u0 : 1;

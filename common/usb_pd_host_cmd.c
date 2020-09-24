@@ -372,7 +372,9 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 			if (mux_state & USB_PD_MUX_USB4_ENABLED) {
 				r_v2->cable_speed =
 					get_usb4_cable_speed(p->port);
-			} else if (mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED) {
+			}
+			if (mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED ||
+			    mux_state & USB_PD_MUX_USB4_ENABLED) {
 				r_v2->cable_speed =
 					get_tbt_cable_speed(p->port);
 				r_v2->cable_gen =
