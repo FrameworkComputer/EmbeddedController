@@ -448,10 +448,6 @@ def StartLoop(interp, shutdown_pipe=None):
   except KeyboardInterrupt:
     pass
 
-  # TODO(crbug.com/894870): Stop suppressing all exceptions.
-  except:
-    traceback.print_exc()
-
   finally:
     interp.cmd_pipe.close()
     interp.dbg_pipe.close()
