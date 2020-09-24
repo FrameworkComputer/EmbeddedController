@@ -9,6 +9,7 @@
 #include "button.h"
 #include "common.h"
 #include "console.h"
+#include "device_event.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "i8042_protocol.h"
@@ -956,6 +957,10 @@ void keyboard_protocol_task(void *u)
 static void send_aux_data_to_host_deferred(void)
 {
 	uint8_t data;
+
+	if (IS_ENABLED(CONFIG_DEVICE_EVENT) &&
+		chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		device_set_single_event(EC_DEVICE_EVENT_TRACKPAD);
 
 	while (!queue_is_empty(&aux_to_host_queue)) {
 		queue_remove_unit(&aux_to_host_queue, &data);
