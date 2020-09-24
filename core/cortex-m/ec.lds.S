@@ -495,7 +495,9 @@ SECTIONS
 	 * in hash calcuations.
 	 */
 	__flash_used = FLASH_USED_END - ORIGIN(EC_IMAGE_LMA_MEM_REGION);
+#ifndef CONFIG_CHIP_INIT_ROM_REGION
 	__image_size = __flash_used;
+#endif /* CONFIG_CHIP_INIT_ROM_REGION */
 
 #ifdef CONFIG_FLASH
         /*
@@ -600,7 +602,11 @@ SECTIONS
 	 * CONFIG_CHIP_INIT_ROM_REGION is enabled, this includes the entire
 	 * FLASH region and the bytes used in the .init_rom section.
 	 */
+#ifdef CONFIG_CHIP_DATA_IN_INIT_ROM
+	__image_size = LENGTH(FLASH) + SIZEOF(.init_rom) + SIZEOF(.data);
+#else
 	__image_size = LENGTH(FLASH) + SIZEOF(.init_rom);
+#endif /* CONFIG_CHIP_DATA_IN_INIT_ROM */
 #endif /* CONFIG_CHIP_INIT_ROM_REGION */
 
 #ifdef CONFIG_CHIP_MEMORY_REGIONS
