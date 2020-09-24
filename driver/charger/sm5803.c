@@ -756,6 +756,14 @@ static void sm5803_enable_runtime_low_power_mode(void)
 	reg &= ~SM5803_CC_CONFIG1_SD_PWRUP;
 	rv |= chg_write8(chgnum, SM5803_REG_CC_CONFIG1, reg);
 
+	/* If the system is off, all PROCHOT comparators may be turned off */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
+			     CHIPSET_STATE_ANY_SUSPEND)) {
+		rv |= chg_read8(chgnum, SM5803_REG_PHOT1, &reg);
+		reg &= ~SM5803_PHOT1_COMPARATOR_EN;
+		rv |= chg_write8(chgnum, SM5803_REG_PHOT1, reg);
+	}
+
 	if (rv)
 		CPRINTS("%s %d: Failed to set in enable runtime LPM",
 			CHARGER_NAME, chgnum);
@@ -809,10 +817,18 @@ void sm5803_enable_low_power_mode(int chgnum)
 	reg &= ~SM5803_PSYS1_DAC_EN;
 	rv |= meas_write8(chgnum, SM5803_REG_PSYS1, reg);
 
-	/* Disable PROCHOT comparators */
+	/*
+	 * Disable all PROCHOT comparators only if port is inactive.  Vbus
+	 * sourcing requires that the Vbus comparator be enabled, and it
+	 * cannot be enabled from HOOK_USB_PD_CONNECT since that is
+	 * called after Vbus has turned on.
+	 */
 	rv |= chg_read8(chgnum, SM5803_REG_PHOT1, &reg);
 	reg &= ~SM5803_PHOT1_COMPARATOR_EN;
+	if (pd_is_connected(chgnum))
+		reg |= SM5803_PHOT1_VBUS_MON_EN;
 	rv |= chg_write8(chgnum, SM5803_REG_PHOT1, reg);
+
 
 	if (rv)
 		CPRINTS("%s %d: Failed to set in enable low power mode",
