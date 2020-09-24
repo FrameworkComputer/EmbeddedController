@@ -292,10 +292,7 @@ void npcx_adc_register_thresh_irq(int threshold_idx,
 	else
 		CLEAR_BIT(NPCX_THRCTL(threshold_idx), NPCX_THRCTL_L_H);
 
-	/*
-	 * Set the single threshold value.  This is also the assertion threshold
-	 * value if dual threshold configuration is being used.
-	 */
+	/* Set the threshold value. */
 	mul = adc_channels[thresh_cfg->adc_ch].factor_mul;
 	div = adc_channels[thresh_cfg->adc_ch].factor_div;
 	shift = adc_channels[thresh_cfg->adc_ch].shift;
@@ -306,16 +303,10 @@ void npcx_adc_register_thresh_irq(int threshold_idx,
 	SET_FIELD(NPCX_THRCTL(threshold_idx), NPCX_THRCTL_THRVAL,
 		  raw_val);
 
-	/* Configure dual threshold detection if desired. */
-	if (thresh_cfg->thresh_deassert != -1) {
-		raw_val = (thresh_cfg->thresh_deassert - shift) * div / mul;
-		SET_FIELD(NPCX_THR_DCTL(threshold_idx),
-			  NPCX_THR_DCTL_THR_DVAL,
-			  raw_val);
-		SET_BIT(NPCX_THR_DCTL(threshold_idx), NPCX_THR_DCTL_THRD_EN);
-	} else {
-		CLEAR_BIT(NPCX_THR_DCTL(threshold_idx), NPCX_THR_DCTL_THRD_EN);
-	}
+#if NPCX_FAMILY_VERSION <= NPCX_FAMILY_NPCX7
+	/* Disable deassertion threshold function */
+	CLEAR_BIT(NPCX_THR_DCTL(threshold_idx), NPCX_THR_DCTL_THRD_EN);
+#endif
 
 	/* Enable threshold detection */
 	SET_BIT(NPCX_THRCTL(threshold_idx), NPCX_THRCTL_THEN);
