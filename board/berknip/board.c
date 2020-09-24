@@ -285,10 +285,10 @@ static int board_tusb544_mux_set(const struct usb_mux *me,
 {
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/* Enable IN_HPD on the DB */
-		ioex_set_level(board_usbc1_retimer_inhpd, 1);
+		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 1);
 	} else {
 		/* Disable IN_HPD on the DB */
-		ioex_set_level(board_usbc1_retimer_inhpd, 0);
+		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 0);
 	}
 	return EC_SUCCESS;
 }
@@ -298,10 +298,10 @@ static int board_ps8743_mux_set(const struct usb_mux *me,
 {
 	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		/* Enable IN_HPD on the DB */
-		ioex_set_level(board_usbc1_retimer_inhpd, 1);
+		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 1);
 	else
 		/* Disable IN_HPD on the DB */
-		ioex_set_level(board_usbc1_retimer_inhpd, 0);
+		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 0);
 
 	return EC_SUCCESS;
 }
