@@ -12,7 +12,11 @@
 #include "util.h"
 
 #ifdef TEST_RSA3
+#if CONFIG_RSA_KEY_SIZE == 3072
+#include "rsa3072-3.h"
+#else
 #include "rsa2048-3.h"
+#endif
 #else
 #include "rsa2048-F4.h"
 #endif
