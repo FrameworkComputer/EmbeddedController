@@ -56,14 +56,14 @@ static inline uint32_t deprecated_atomic_read_clear(volatile uint32_t *addr)
 	return ATOMIC_OP(and, 0, addr);
 }
 
-static inline uint32_t deprecated_atomic_inc(volatile uint32_t *addr,
-					     uint32_t value)
+static inline uint32_t deprecated_atomic_read_add(volatile uint32_t *addr,
+						  uint32_t value)
 {
 	return ATOMIC_OP(add, value, addr);
 }
 
-static inline uint32_t deprecated_atomic_dec(volatile uint32_t *addr,
-					     uint32_t value)
+static inline uint32_t deprecated_atomic_read_sub(volatile uint32_t *addr,
+						  uint32_t value)
 {
 	return ATOMIC_OP(add, -value, addr);
 }
