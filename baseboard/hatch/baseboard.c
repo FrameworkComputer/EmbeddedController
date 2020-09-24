@@ -345,7 +345,7 @@ void baseboard_mst_enable_control(enum mst_source src, int level)
 	if (level)
 		deprecated_atomic_or(&mst_input_levels, 1 << src);
 	else
-		deprecated_atomic_clear(&mst_input_levels, 1 << src);
+		deprecated_atomic_clear_bits(&mst_input_levels, 1 << src);
 
 	gpio_set_level(GPIO_EN_MST, mst_input_levels ? 1 : 0);
 }

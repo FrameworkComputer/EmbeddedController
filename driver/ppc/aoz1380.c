@@ -34,7 +34,7 @@ static uint32_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define AOZ1380_SET_FLAG(port, flag) deprecated_atomic_or(&flags[port], (flag))
 #define AOZ1380_CLR_FLAG(port, flag) \
-	deprecated_atomic_clear(&flags[port], (flag))
+	deprecated_atomic_clear_bits(&flags[port], (flag))
 
 static int aoz1380_init(int port)
 {

@@ -28,8 +28,8 @@
  * removed in the following patches. Please see b:169151160 for more details.
  */
 
-static inline void deprecated_atomic_clear(volatile uint32_t *addr,
-					   uint32_t bits)
+static inline void deprecated_atomic_clear_bits(volatile uint32_t *addr,
+						uint32_t bits)
 {
 	ATOMIC_OP(and, ~bits, addr);
 }

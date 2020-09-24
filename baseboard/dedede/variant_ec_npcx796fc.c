@@ -42,7 +42,7 @@ void pp3300_a_pgood_high(void)
 
 void pp3300_a_pgood_low(void)
 {
-	deprecated_atomic_clear(&pp3300_a_pgood, 1);
+	deprecated_atomic_clear_bits(&pp3300_a_pgood, 1);
 
 	/* Disable this interrupt while it's asserted. */
 	npcx_adc_thresh_int_enable(NPCX_ADC_THRESH2, 0);

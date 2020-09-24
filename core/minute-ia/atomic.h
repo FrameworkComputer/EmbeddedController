@@ -48,8 +48,8 @@ static inline void deprecated_atomic_and_u8(uint8_t *addr, uint8_t bits)
 	ATOMIC_OP(and, addr, bits);
 }
 
-static inline void deprecated_atomic_clear(uint32_t volatile *addr,
-					   uint32_t bits)
+static inline void deprecated_atomic_clear_bits(uint32_t volatile *addr,
+						uint32_t bits)
 {
 	ATOMIC_OP(andl, addr, ~bits);
 }

@@ -593,7 +593,7 @@ static enum ec_status ec_status_host_cmd(struct host_cmd_handler_args *args)
 	r->status = pd_status_flags;
 
 	/* Clear host event */
-	deprecated_atomic_clear(&(pd_status_flags), PD_STATUS_HOST_EVENT);
+	deprecated_atomic_clear_bits(&(pd_status_flags), PD_STATUS_HOST_EVENT);
 
 	args->response_size = sizeof(*r);
 
@@ -608,7 +608,7 @@ host_event_status_host_cmd(struct host_cmd_handler_args *args)
 	struct ec_response_host_event_status *r = args->response;
 
 	/* Clear host event bit to avoid sending more unnecessary events */
-	deprecated_atomic_clear(&(pd_status_flags), PD_STATUS_HOST_EVENT);
+	deprecated_atomic_clear_bits(&(pd_status_flags), PD_STATUS_HOST_EVENT);
 
 	/* Read and clear the host event status to return to AP */
 	r->status = deprecated_atomic_read_clear(&(host_event_status_flags));

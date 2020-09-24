@@ -411,7 +411,7 @@ static uint32_t __ram_code __wait_evt(int timeout_us, task_id_t resched)
 	if (timeout_us > 0) {
 		timer_cancel(me);
 		/* Ensure timer event is clear, we no longer care about it */
-		deprecated_atomic_clear(&tsk->events, TASK_EVENT_TIMER);
+		deprecated_atomic_clear_bits(&tsk->events, TASK_EVENT_TIMER);
 	}
 	return evt;
 }
@@ -526,7 +526,7 @@ void task_enable_task(task_id_t tskid)
 
 void task_disable_task(task_id_t tskid)
 {
-	deprecated_atomic_clear(&tasks_enabled, BIT(tskid));
+	deprecated_atomic_clear_bits(&tasks_enabled, BIT(tskid));
 
 	if (!in_interrupt_context() && tskid == task_get_current())
 		__schedule(0, 0, 0);
@@ -644,7 +644,7 @@ void __ram_code mutex_unlock(struct mutex *mtx)
 	}
 
 	/* Ensure no event is remaining from mutex wake-up */
-	deprecated_atomic_clear(&tsk->events, TASK_EVENT_MUTEX);
+	deprecated_atomic_clear_bits(&tsk->events, TASK_EVENT_MUTEX);
 }
 
 void task_print_list(void)

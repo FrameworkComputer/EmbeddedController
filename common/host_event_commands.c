@@ -276,9 +276,9 @@ static void host_events_atomic_clear(host_event_t *e, host_event_t m)
 {
 	uint32_t *ptr = (uint32_t *)e;
 
-	deprecated_atomic_clear(ptr, (uint32_t)m);
+	deprecated_atomic_clear_bits(ptr, (uint32_t)m);
 #ifdef CONFIG_HOST_EVENT64
-	deprecated_atomic_clear(ptr + 1, (uint32_t)(m >> 32));
+	deprecated_atomic_clear_bits(ptr + 1, (uint32_t)(m >> 32));
 #endif
 }
 

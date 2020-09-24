@@ -55,7 +55,7 @@ void device_clear_events(uint32_t mask)
 	if (device_current_events & mask)
 		CPRINTS("device event clear 0x%08x", mask);
 
-	deprecated_atomic_clear(&device_current_events, mask);
+	deprecated_atomic_clear_bits(&device_current_events, mask);
 }
 
 static void device_set_enabled_events(uint32_t mask)

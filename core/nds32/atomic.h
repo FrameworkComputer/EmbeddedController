@@ -18,8 +18,8 @@
  * removed in the following patches. Please see b:169151160 for more details.
  */
 
-static inline void deprecated_atomic_clear(uint32_t volatile *addr,
-					   uint32_t bits)
+static inline void deprecated_atomic_clear_bits(uint32_t volatile *addr,
+						uint32_t bits)
 {
 	uint32_t int_mask = read_clear_int_mask();
 

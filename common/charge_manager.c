@@ -1250,7 +1250,7 @@ void charge_manager_source_port(int port, int enable)
 	if (enable)
 		deprecated_atomic_or(&source_port_bitmap, 1 << port);
 	else
-		deprecated_atomic_clear(&source_port_bitmap, 1 << port);
+		deprecated_atomic_clear_bits(&source_port_bitmap, 1 << port);
 
 	/* No change, exit early. */
 	if (prev_bitmap == source_port_bitmap)

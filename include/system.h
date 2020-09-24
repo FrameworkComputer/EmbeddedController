@@ -503,7 +503,7 @@ extern uint32_t sleep_mask;
  */
 static inline void enable_sleep(uint32_t mask)
 {
-	deprecated_atomic_clear(&sleep_mask, mask);
+	deprecated_atomic_clear_bits(&sleep_mask, mask);
 }
 
 /**
@@ -537,7 +537,7 @@ static inline void disable_idle(void)
 
 static inline void enable_idle(void)
 {
-	deprecated_atomic_clear(&idle_disabled, 1);
+	deprecated_atomic_clear_bits(&idle_disabled, 1);
 }
 #endif
 

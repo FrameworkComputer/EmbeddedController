@@ -65,7 +65,8 @@
 
 
 #define PE_SET_FLAG(port, flag) deprecated_atomic_or(&pe[port].flags, (flag))
-#define PE_CLR_FLAG(port, flag) deprecated_atomic_clear(&pe[port].flags, (flag))
+#define PE_CLR_FLAG(port, flag) \
+	deprecated_atomic_clear_bits(&pe[port].flags, (flag))
 #define PE_CHK_FLAG(port, flag) (pe[port].flags & (flag))
 
 /*
@@ -75,7 +76,7 @@
 #define PE_SET_DPM_REQUEST(port, req) \
 	deprecated_atomic_or(&pe[port].dpm_request, (req))
 #define PE_CLR_DPM_REQUEST(port, req) \
-	deprecated_atomic_clear(&pe[port].dpm_request, (req))
+	deprecated_atomic_clear_bits(&pe[port].dpm_request, (req))
 #define PE_CHK_DPM_REQUEST(port, req) (pe[port].dpm_request & (req))
 
 /*
@@ -6156,7 +6157,7 @@ void pd_dfp_discovery_init(int port)
 
 void pd_discovery_access_clear(int port, enum tcpm_transmit_type type)
 {
-	deprecated_atomic_clear(&task_access[port][type], 0xFFFFFFFF);
+	deprecated_atomic_clear_bits(&task_access[port][type], 0xFFFFFFFF);
 }
 
 bool pd_discovery_access_validate(int port, enum tcpm_transmit_type type)

@@ -41,7 +41,7 @@ static int timer_irq;
 static void expire_timer(task_id_t tskid)
 {
 	/* we are done with this timer */
-	deprecated_atomic_clear(&timer_running, 1 << tskid);
+	deprecated_atomic_clear_bits(&timer_running, 1 << tskid);
 	/* wake up the taks waiting for this timer */
 	task_set_event(tskid, TASK_EVENT_TIMER, 0);
 }
@@ -146,7 +146,7 @@ void timer_cancel(task_id_t tskid)
 {
 	ASSERT(tskid < TASK_ID_COUNT);
 
-	deprecated_atomic_clear(&timer_running, BIT(tskid));
+	deprecated_atomic_clear_bits(&timer_running, BIT(tskid));
 	/*
 	 * Don't need to cancel the hardware timer interrupt, instead do
 	 * timer-related housekeeping when the next timer interrupt fires.

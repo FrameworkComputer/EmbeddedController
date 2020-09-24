@@ -531,8 +531,8 @@ static int reset_device_and_notify(int port)
 	 * waking the TCPC, but it has also set PD_EVENT_TCPC_RESET again, which
 	 * would result in a second, unnecessary init.
 	 */
-	deprecated_atomic_clear(task_get_event_bitmap(task_get_current()),
-				PD_EVENT_TCPC_RESET);
+	deprecated_atomic_clear_bits(task_get_event_bitmap(task_get_current()),
+				     PD_EVENT_TCPC_RESET);
 
 	waiting_tasks =
 		deprecated_atomic_read_clear(&pd[port].tasks_waiting_on_reset);
@@ -611,8 +611,8 @@ void pd_prevent_low_power_mode(int port, int prevent)
 		deprecated_atomic_or(&pd[port].tasks_preventing_lpm,
 				     current_task_mask);
 	else
-		deprecated_atomic_clear(&pd[port].tasks_preventing_lpm,
-					current_task_mask);
+		deprecated_atomic_clear_bits(&pd[port].tasks_preventing_lpm,
+					     current_task_mask);
 }
 
 /* This is only called from the PD tasks that owns the port. */
