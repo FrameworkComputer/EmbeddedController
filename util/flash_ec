@@ -89,6 +89,7 @@ BOARDS_STM32=(
 	strago_pd
 	wand
 	whiskers
+	zed
 	zinger
 )
 BOARDS_STM32_PROG_EN=(
