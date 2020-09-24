@@ -81,7 +81,7 @@ def main():
   for key, _ in header._fields_:
     v = getattr(header, key)
     if isinstance(v, ctypes.Array):
-      print(key, map(hex, v))
+      print(key, list(map(hex, v)))
     else:
       print(key, hex(v))
 
