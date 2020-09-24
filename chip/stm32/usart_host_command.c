@@ -51,11 +51,11 @@
 
 /*
  * Max data size for a version 3 request/response packet.  This is big enough
- * to handle a request/response header, flash write offset/size, and 512 bytes
- * of flash data.
+ * to handle a request/response header, flash write offset/size and 512 bytes 
+ * of request payload or 224 bytes of response payload.
  */
 #define USART_MAX_REQUEST_SIZE 0x220
-#define USART_MAX_RESPONSE_SIZE 0x220
+#define USART_MAX_RESPONSE_SIZE 0x100
 
 /*
  * FIFO size for USART DMA. Should be big enough to handle worst case
