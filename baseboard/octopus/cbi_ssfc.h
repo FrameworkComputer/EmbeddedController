@@ -32,7 +32,19 @@ enum ssfc_ppc_p1 {
 #define SSFC_PPC_P1_OFFSET		3
 #define SSFC_PPC_P1_MASK		GENMASK(5, 3)
 
+/*
+ * Charger (Bits 8-6)
+ */
+enum ssfc_charger {
+	SSFC_CHARGER_DEFAULT,
+	SSFC_CHARGER_ISL9238,
+	SSFC_CHARGER_BQ25710,
+};
+#define SSFC_CHARGER_OFFSET		6
+#define SSFC_CHARGER_MASK		GENMASK(8, 6)
+
 enum ssfc_tcpc_p1 get_cbi_ssfc_tcpc_p1(void);
 enum ssfc_ppc_p1 get_cbi_ssfc_ppc_p1(void);
+enum ssfc_charger get_cbi_ssfc_charger(void);
 
 #endif /* _OCTOPUS_CBI_SSFC__H_ */
