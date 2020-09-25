@@ -891,6 +891,7 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 	case EC_REBOOT_JUMP_RW:
 		return system_run_image_copy(system_get_active_copy());
 	case EC_REBOOT_COLD:
+	case EC_REBOOT_COLD_AP_OFF:
 		/*
 		 * Reboot the PD chip(s) as well, but first suspend the ports
 		 * if this board has PD tasks running so they don't query the
@@ -916,7 +917,11 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 			board_reset_pd_mcu();
 
 		cflush();
-		system_reset(SYSTEM_RESET_HARD);
+		if (cmd == EC_REBOOT_COLD_AP_OFF)
+			system_reset(SYSTEM_RESET_HARD |
+				     SYSTEM_RESET_LEAVE_AP_OFF);
+		else
+			system_reset(SYSTEM_RESET_HARD);
 		/* That shouldn't return... */
 		return EC_ERROR_UNKNOWN;
 	case EC_REBOOT_DISABLE_JUMP:
@@ -1618,7 +1623,8 @@ enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
 	if (p.cmd == EC_REBOOT_JUMP_RO ||
 	    p.cmd == EC_REBOOT_JUMP_RW ||
 	    p.cmd == EC_REBOOT_COLD ||
-	    p.cmd == EC_REBOOT_HIBERNATE) {
+	    p.cmd == EC_REBOOT_HIBERNATE ||
+	    p.cmd == EC_REBOOT_COLD_AP_OFF) {
 		/* Clean busy bits on host for commands that won't return */
 		args->result = EC_RES_SUCCESS;
 		host_send_response(args);
