@@ -2293,6 +2293,10 @@ extern const int pd_snk_pdo_cnt;
 /**
  * Request that a host event be sent to notify the AP of a PD power event.
  *
+ * Note: per-port events should be retrieved through pd_get_events(), but this
+ * function still notifies the AP there are events to retrieve, and directs it
+ * to the per-port events through PD_EVENT_TYPEC
+ *
  * @param mask host event mask.
  */
 #if defined(HAS_TASK_HOSTCMD) && !defined(TEST_BUILD)
@@ -2582,6 +2586,22 @@ void pd_transmit_complete(int port, int status);
  * @param port USB-C port number
  */
 enum tcpc_cc_polarity pd_get_polarity(int port);
+
+/**
+ * Get the port events.
+ *
+ * @param port USB-C port number
+ * @return PD_STATUS_EVENT_* bitmask
+ */
+uint32_t pd_get_events(int port);
+
+/**
+ * Clear selected port events
+ *
+ * @param port USB-C port number
+ * @param clear_mask bitmask of events to clear (PD_STATUS_EVENT_* bitmask)
+ */
+void pd_clear_events(int port, uint32_t clear_mask);
 
 /**
  * Get port partner data swap capable status

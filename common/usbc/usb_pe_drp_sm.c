@@ -569,6 +569,12 @@ static struct policy_engine {
 	/* last requested voltage PDO index */
 	int requested_idx;
 
+	/*
+	 * Port events - PD_STATUS_EVENT_* values
+	 * Set from PD task but may be cleared by host command
+	 */
+	uint32_t events;
+
 	/* port address where soft resets are sent */
 	enum tcpm_transmit_type soft_reset_sop;
 
@@ -841,6 +847,7 @@ static void pe_init(int port)
 	pe[port].no_response_timer = TIMER_DISABLED;
 	pe[port].data_role = pd_get_data_role(port);
 	pe[port].tx_type = TCPC_TX_INVALID;
+	pe[port].events = 0;
 
 	tc_pd_connection(port, 0);
 
@@ -1014,6 +1021,27 @@ void pe_invalidate_explicit_contract(int port)
 	/* Set Rp for current limit */
 	if (IS_ENABLED(CONFIG_USB_PD_REV30))
 		typec_update_cc(port);
+}
+
+void pe_notify_event(int port, uint32_t event_mask)
+{
+	/* Events may only be set from the PD task */
+	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
+
+	deprecated_atomic_or(&pe[port].events, event_mask);
+
+	/* Notify the host that new events are available to read */
+	pd_send_host_event(PD_EVENT_TYPEC);
+}
+
+void pd_clear_events(int port, uint32_t clear_mask)
+{
+	deprecated_atomic_clear(&pe[port].events, clear_mask);
+}
+
+uint32_t pd_get_events(int port)
+{
+	return pe[port].events;
 }
 
 /*
@@ -1228,6 +1256,9 @@ static void pe_handle_detach(void)
 	 * Note: The HardResetCounter is reset on a power cycle or Detach.
 	 */
 	pe[port].hard_reset_counter = 0;
+
+	/* Reset port events */
+	pd_clear_events(port, GENMASK(31, 0));
 }
 DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, pe_handle_detach, HOOK_PRIO_DEFAULT);
 
