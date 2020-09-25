@@ -6368,17 +6368,21 @@ struct ec_response_typec_discovery {
 
 enum typec_control_command {
 	TYPEC_CONTROL_COMMAND_EXIT_MODES,
+	TYPEC_CONTROL_COMMAND_CLEAR_EVENTS,
 };
 
 struct ec_params_typec_control {
 	uint8_t port;
-	enum typec_control_command command;
+	uint8_t command;	/* enum typec_control_command */
+	uint16_t reserved;
+
 	/*
 	 * This section will be interpreted based on |command|. Define a
 	 * placeholder structure to avoid having to increase the size and bump
 	 * the command version when adding new sub-commands.
 	 */
 	union {
+		uint32_t clear_events_mask;
 		uint8_t placeholder[128];
 	};
 } __ec_align1;

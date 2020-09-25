@@ -9475,10 +9475,11 @@ int cmd_typec_control(int argc, char *argv[])
 
 	if (argc < 3) {
 		fprintf(stderr,
-			"Usage: %s <port> <command>\n"
+			"Usage: %s <port> <command> [args]\n"
 			"  <port> is the type-c port to query\n"
 			"  <type> is one of:\n"
-			"    0: Exit modes\n", argv[0]);
+			"    0: Exit modes\n"
+			"    1: Clear events\n", argv[0]);
 		return -1;
 	}
 
@@ -9492,6 +9493,19 @@ int cmd_typec_control(int argc, char *argv[])
 	if (endptr && *endptr) {
 		fprintf(stderr, "Bad command\n");
 		return -1;
+	}
+
+	if (p.command == TYPEC_CONTROL_COMMAND_CLEAR_EVENTS) {
+		if (argc < 4) {
+			fprintf(stderr, "Missing event mask\n");
+			return -1;
+		}
+
+		p.clear_events_mask = strtol(argv[3], &endptr, 0);
+		if (endptr && *endptr) {
+			fprintf(stderr, "Bad event mask\n");
+			return -1;
+		}
 	}
 
 	rv = ec_command(EC_CMD_TYPEC_CONTROL, 0, &p, sizeof(p),
