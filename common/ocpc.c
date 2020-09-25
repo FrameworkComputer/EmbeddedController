@@ -142,6 +142,8 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	if (chgnum != CHARGER_SECONDARY)
 		return EC_ERROR_INVAL;
 
+	batt_info = battery_get_info();
+
 	if (current_ma == 0) {
 		vsys_target = voltage_mv;
 		goto set_vsys;
@@ -152,10 +154,9 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	 * charging loop is broken and increasing VSYS will not actually help.
 	 * Therefore, don't make any changes at this time.
 	 */
-	if (battery_is_charge_fet_disabled()) {
-		/* Only print this if there's actually a CFET present. */
-		if (battery_is_present())
-			CPRINTS("CFET disabled; not changing VSYS!");
+	if (battery_is_charge_fet_disabled() &&
+	    (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED)) {
+		CPRINTS("CFET disabled; not changing VSYS!");
 
 		/*
 		 * Let's check back in 5 seconds to see if the CFET is enabled
@@ -231,19 +232,21 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	}
 
 	/* Set our current target accordingly. */
-	if (batt.voltage < batt.desired_voltage) {
-		if (ph < PHASE_CV_TRIP)
-			ph = PHASE_CC;
-		i_ma = batt.desired_current;
-	} else{
-		/*
-		 * Once the battery voltage reaches the desired voltage, we
-		 * should note that we've reached the CV step and set VSYS to
-		 * the desired CV + offset.
-		 */
-		i_ma = batt.current;
-		ph = ph == PHASE_CC ? PHASE_CV_TRIP : PHASE_CV_COMPLETE;
+	if (batt.desired_voltage) {
+		if (batt.voltage < batt.desired_voltage) {
+			if (ph < PHASE_CV_TRIP)
+				ph = PHASE_CC;
+			i_ma = batt.desired_current;
+		} else{
+			/*
+			 * Once the battery voltage reaches the desired voltage,
+			 * we should note that we've reached the CV step and set
+			 * VSYS to the desired CV + offset.
+			 */
+			i_ma = batt.current;
+			ph = ph == PHASE_CC ? PHASE_CV_TRIP : PHASE_CV_COMPLETE;
 
+		}
 	}
 
 	/* Ensure our target is not negative. */
@@ -318,7 +321,9 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	 * desired voltage.
 	 */
 	if (ph >= PHASE_CV_TRIP)
-		vsys_target = batt.desired_voltage;
+		vsys_target = batt.desired_voltage +
+				((batt_info->precharge_current *
+				  ocpc->combined_rsys_rbatt_mo) / 1000);
 
 	/*
 	 * Ensure VSYS is no higher than the specified maximum battery voltage
@@ -342,6 +347,8 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	prev_limited = 0;
 
 set_vsys:
+	/* VSYS should never be below the battery's min voltage. */
+	vsys_target = MAX(vsys_target, batt_info->voltage_min);
 	/* To reduce spam, only print when we change VSYS significantly. */
 	if ((ABS(vsys_target - ocpc->last_vsys) > 10) || debug_output)
 		CPRINTS("OCPC: Target VSYS: %dmV", vsys_target);
