@@ -6465,6 +6465,9 @@ enum tcpc_cc_polarity {
 #define MODE_DP_PIN_F	BIT(6)
 #define MODE_DP_PIN_ALL	GENMASK(6, 0)
 
+#define PD_STATUS_EVENT_SOP_DISC_DONE		BIT(0)
+#define PD_STATUS_EVENT_SOP_PRIME_DISC_DONE	BIT(1)
+
 struct ec_params_typec_status {
 	uint8_t port;
 } __ec_align1;
