@@ -54,22 +54,6 @@
 /* Prochot Option bits */
 #define PROCHOT_OPTION1_SELECTOR_MASK   0x7f /* [6:0] PROCHOT SELECTOR */
 
-/* ChargeCurrent Register - 0x14 (mA) */
-#define CHARGE_I_OFF                    0
-#define CHARGE_I_MIN                    128
-#define CHARGE_I_MAX                    8128
-#define CHARGE_I_STEP                   64
-
-/* MaxChargeVoltage Register - 0x15 (mV) */
-#define CHARGE_V_MIN                    1024
-#define CHARGE_V_MAX                    19200
-#define CHARGE_V_STEP                   16
-
-/* InputCurrent Register - 0x3f (mA) */
-#define INPUT_I_MIN                    128
-#define INPUT_I_MAX                    8128
-#define INPUT_I_STEP                   64
-
 #ifdef CONFIG_CHARGER_BQ24770
 	#define CHARGER_NAME		"bq24770"
 	#define I2C_ADDR_CHARGER_FLAGS	BQ24770_ADDR_FLAGS

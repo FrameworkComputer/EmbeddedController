@@ -34,19 +34,6 @@ enum bd9995x_charge_port {
 	BD9995X_CHARGE_PORT_BOTH,
 };
 
-/* Charger parameters */
-#define CHARGER_NAME	BD9995X_CHARGER_NAME
-#define CHARGE_V_MAX	19200
-#define CHARGE_V_MIN	3072
-#define CHARGE_V_STEP	16
-#define CHARGE_I_MAX	16320
-#define CHARGE_I_MIN	128
-#define CHARGE_I_OFF	0
-#define CHARGE_I_STEP	64
-#define INPUT_I_MAX	16352
-#define INPUT_I_MIN	512
-#define INPUT_I_STEP	32
-
 /* Min. charge current w/ no battery to prevent collapse */
 #define BD9995X_NO_BATTERY_CHARGE_I_MIN	512
 

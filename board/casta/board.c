@@ -8,11 +8,14 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "battery.h"
+#include "cbi_ssfc.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
 #include "cros_board_info.h"
 #include "driver/charger/bd9995x.h"
+#include "driver/charger/bq25710.h"
+#include "driver/charger/isl923x.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -87,6 +90,16 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
+/* Charger config.  Start i2c address at isl9238, update during runtime */
+struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+};
+const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
+
 /*
  * I2C callbacks to ensure bus free time for battery I2C transactions is at
  * least 5ms.
@@ -141,7 +154,17 @@ static void cbi_init(void)
 	sku_id = val;
 	CPRINTS("SKU: %d", sku_id);
 }
-DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C);
+
+static void board_init(void)
+{
+	if(get_cbi_ssfc_charger() != SSFC_CHARGER_BQ25710)
+		return;
+
+	chg_chips[0].drv = &bq25710_drv;
+	chg_chips[0].i2c_addr_flags = BQ25710_SMBUS_ADDR1_FLAGS;
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_INIT_I2C);
 
 void board_overcurrent_event(int port, int is_overcurrented)
 {

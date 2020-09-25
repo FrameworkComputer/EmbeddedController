@@ -8,19 +8,6 @@
 #ifndef __CROS_EC_RT946X_H
 #define __CROS_EC_RT946X_H
 
-/* Charger parameters */
-#define CHARGER_NAME	RT946X_CHARGER_NAME
-#define CHARGE_V_MAX	4710
-#define CHARGE_V_MIN	3900
-#define CHARGE_V_STEP	10
-#define CHARGE_I_MAX	5000
-#define CHARGE_I_MIN	100
-#define CHARGE_I_OFF	0
-#define CHARGE_I_STEP	100
-#define INPUT_I_MAX	3250
-#define INPUT_I_MIN	100
-#define INPUT_I_STEP	50
-
 /* Registers for rt9466, rt9467 */
 #if defined(CONFIG_CHARGER_RT9466) || defined(CONFIG_CHARGER_RT9467)
 #define RT946X_REG_CORECTRL0		0x00

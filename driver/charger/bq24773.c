@@ -28,6 +28,22 @@
 #define REG8_TO_CURRENT(REG, RS) ((REG) * DEFAULT_SENSE_RESISTOR / (RS) * R8)
 #define CURRENT_TO_REG8(CUR, RS) ((CUR) * (RS) / DEFAULT_SENSE_RESISTOR / R8)
 
+/* ChargeCurrent Register - 0x14 (mA) */
+#define CHARGE_I_OFF                    0
+#define CHARGE_I_MIN                    128
+#define CHARGE_I_MAX                    8128
+#define CHARGE_I_STEP                   64
+
+/* MaxChargeVoltage Register - 0x15 (mV) */
+#define CHARGE_V_MIN                    1024
+#define CHARGE_V_MAX                    19200
+#define CHARGE_V_STEP                   16
+
+/* InputCurrent Register - 0x3f (mA) */
+#define INPUT_I_MIN                    128
+#define INPUT_I_MAX                    8128
+#define INPUT_I_STEP                   64
+
 /* Charger parameters */
 static const struct charger_info bq2477x_charger_info = {
 	.name         = CHARGER_NAME,

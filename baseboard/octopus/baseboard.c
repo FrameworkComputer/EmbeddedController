@@ -306,7 +306,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 * Empirically, the charger seems to draw a little more current that
 	 * it is set to, so we reduce our limit by 5%.
 	 */
-#ifdef VARIANT_OCTOPUS_CHARGER_ISL9238
+#if defined(CONFIG_CHARGER_BQ25710) || defined(CONFIG_CHARGER_ISL9238)
 	charge_ma = (charge_ma * 95) / 100;
 #endif
 	charge_set_input_current_limit(MAX(charge_ma,
