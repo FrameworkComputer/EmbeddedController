@@ -11,6 +11,9 @@
 #define VARIANT_DEDEDE_EC_NPCX796FC
 #include "baseboard.h"
 
+/* this change saves 1656 bytes of RW flash space */
+#define CONFIG_CHIP_INIT_ROM_REGION
+
 /*
  * Keep the system unlocked in early development.
  * TODO(b/151264302): Make sure to remove this before production!
