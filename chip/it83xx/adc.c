@@ -145,26 +145,32 @@ int adc_read_channel(enum adc_channel ch)
 	/* Wait for interrupt */
 	events = task_wait_event_mask(TASK_EVENT_ADC_DONE, ADC_TIMEOUT_US);
 	task_waiting = TASK_ID_INVALID;
+	/*
+	 * Ensure EC won't post the adc done event which is set after getting
+	 * events (events |= __wait_evt() in task_wait_event_mask()) to next
+	 * adc read.
+	 * NOTE: clear TASK_EVENT_ADC_DONE event must happen after setting
+	 * task_waiting to invalid. So TASK_EVENT_ADC_DONE would not set until
+	 * next read.
+	 */
+	atomic_clear_bits(task_get_event_bitmap(task_get_current()),
+		TASK_EVENT_ADC_DONE);
 
-	if (events & TASK_EVENT_ADC_DONE) {
-		/* data valid of adc channel[x] */
-		if (adc_data_valid(adc_ch)) {
-			/* read adc raw data msb and lsb */
-			adc_raw_data = (*adc_ctrl_regs[adc_ch].adc_datm << 8) +
-				*adc_ctrl_regs[adc_ch].adc_datl;
+	/* data valid of adc channel[x] */
+	if (adc_data_valid(adc_ch)) {
+		/* read adc raw data msb and lsb */
+		adc_raw_data = (*adc_ctrl_regs[adc_ch].adc_datm << 8) +
+			*adc_ctrl_regs[adc_ch].adc_datl;
 
-			/* W/C data valid flag */
-			if (adc_ch <= CHIP_ADC_CH7)
-				IT83XX_ADC_ADCDVSTS = BIT(adc_ch);
-			else
-				IT83XX_ADC_ADCDVSTS2 =
-					(1 << (adc_ch - CHIP_ADC_CH13));
+		/* W/C data valid flag */
+		if (adc_ch <= CHIP_ADC_CH7)
+			IT83XX_ADC_ADCDVSTS = BIT(adc_ch);
+		else
+			IT83XX_ADC_ADCDVSTS2 = (1 << (adc_ch - CHIP_ADC_CH13));
 
-			mv = adc_raw_data * adc_channels[ch].factor_mul /
-				adc_channels[ch].factor_div +
-				adc_channels[ch].shift;
-			valid = 1;
-		}
+		mv = adc_raw_data * adc_channels[ch].factor_mul /
+			adc_channels[ch].factor_div + adc_channels[ch].shift;
+		valid = 1;
 	}
 
 	if (!valid) {
