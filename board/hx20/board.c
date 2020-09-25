@@ -1172,3 +1172,39 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &isl9241_drv,
 	},
 };
+
+#ifdef CONFIG_CHARGER_CUSTOMER_SETTING
+static void charger_chips_init(void)
+{
+	int chip;
+
+	for (chip = 0; chip < board_get_charger_chip_count(); chip++) {
+		if (chg_chips[chip].drv->init)
+			chg_chips[chip].drv->init(chip);
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL2, 0x6008))
+		goto init_fail;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL3, 0x4300))
+		goto init_fail;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL4, 0x0000))
+		goto init_fail;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL0, 0x0000))
+		goto init_fail;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, 0x0287))
+		goto init_fail;
+
+init_fail:
+	CPRINTF("ISL9241 customer init failed!");
+}
+DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_INIT_I2C + 1);
+#endif
