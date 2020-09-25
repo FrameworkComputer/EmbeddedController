@@ -32,8 +32,6 @@
 #define BASE_DETECT_RETRY_US (500 * MSEC)
 
 /*
- * TODO(b:169094188): Clarify the pull-up value 601K or 100K?
- *
  * Lid has 604K pull-up, base has 30.1K pull-down, so the
  * ADC value should be around 30.1/(604+30.1)*3300 = 156
  *
@@ -42,15 +40,6 @@
  */
 #define BASE_DETECT_MIN_MV 120
 #define BASE_DETECT_MAX_MV 300
-
-/*
- * TODO(b:169094188): Clarify the pull-down present?
- *
- * When the base is connected in reverse, it presents a 100K pull-down,
- * so the ADC value should be around 100/(604+100)*3300 = 469
- */
-#define BASE_DETECT_REVERSE_MIN_MV 450
-#define BASE_DETECT_REVERSE_MAX_MV 500
 
 /* Minimum ADC value to indicate base is disconnected for sure */
 #define BASE_DETECT_DISCONNECT_MIN_MV 1500
@@ -71,7 +60,6 @@ enum base_status {
 	BASE_UNKNOWN = 0,
 	BASE_DISCONNECTED = 1,
 	BASE_CONNECTED = 2,
-	BASE_CONNECTED_REVERSE = 3,
 };
 
 static enum base_status current_base_status;
@@ -113,7 +101,6 @@ static void base_detect_deferred(void)
 	uint64_t time_now = get_time().val;
 	int v;
 	uint32_t tmp_pulse_width = pulse_width;
-	static int reverse_debounce = 1;
 
 	if (base_detect_debounce_time > time_now) {
 		hook_call_deferred(&base_detect_deferred_data,
@@ -126,29 +113,6 @@ static void base_detect_deferred(void)
 		return;
 
 	print_base_detect_value(v, tmp_pulse_width);
-
-	if (v >= BASE_DETECT_REVERSE_MIN_MV &&
-	    v <= BASE_DETECT_REVERSE_MAX_MV) {
-		/*
-		 * If we are unlucky when we sample the ADC, we may think that
-		 * the base is connected in reverse, while this may just be a
-		 * transient. Force debouncing a little longer in that case.
-		 */
-		if (current_base_status == BASE_CONNECTED_REVERSE)
-			return;
-
-		if (reverse_debounce == 0) {
-			base_detect_change(BASE_CONNECTED_REVERSE);
-			return;
-		}
-
-		reverse_debounce = 0;
-		hook_call_deferred(&base_detect_deferred_data,
-				   BASE_DETECT_DEBOUNCE_US);
-		return;
-	}
-	/* Reset reverse debounce */
-	reverse_debounce = 1;
 
 	if (v >= BASE_DETECT_MIN_MV && v <= BASE_DETECT_MAX_MV) {
 		if (current_base_status != BASE_CONNECTED) {
