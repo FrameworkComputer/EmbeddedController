@@ -1065,6 +1065,9 @@
 /* Wireless chargers */
 #undef CONFIG_WIRELESS_CHARGER_P9221_R7
 
+/* For customer initial use */
+#undef CONFIG_CHARGER_CUSTOMER_SETTING
+
 /*****************************************************************************/
 
 /*
