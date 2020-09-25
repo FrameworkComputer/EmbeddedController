@@ -488,3 +488,59 @@ int board_get_battery_i2c(void)
 {
 	return board_get_version() >= 1 ? 2 : 1;
 }
+
+#ifdef SECTION_IS_RW
+static int it8801_get_target_channel(enum pwm_channel *channel,
+				     int type, int index)
+{
+	switch (type) {
+	case EC_PWM_TYPE_GENERIC:
+		*channel = index;
+		break;
+	default:
+		return -1;
+	}
+
+	return *channel >= 1;
+}
+
+static enum ec_status
+host_command_pwm_set_duty(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_pwm_set_duty *p = args->params;
+	enum pwm_channel channel;
+	uint16_t duty;
+
+	if (it8801_get_target_channel(&channel, p->pwm_type, p->index))
+		return EC_RES_INVALID_PARAM;
+
+	duty = (uint32_t) p->duty * 255 / 65535;
+	it8801_pwm_set_raw_duty(channel, duty);
+	it8801_pwm_enable(channel, p->duty > 0);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_DUTY,
+		     host_command_pwm_set_duty,
+		     EC_VER_MASK(0));
+
+static enum ec_status
+host_command_pwm_get_duty(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_pwm_get_duty *p = args->params;
+	struct ec_response_pwm_get_duty *r = args->response;
+
+	enum pwm_channel channel;
+
+	if (it8801_get_target_channel(&channel, p->pwm_type, p->index))
+		return EC_RES_INVALID_PARAM;
+
+	r->duty = (uint32_t) it8801_pwm_get_raw_duty(channel) * 65535 / 255;
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_DUTY,
+		     host_command_pwm_get_duty,
+		     EC_VER_MASK(0));
+#endif
