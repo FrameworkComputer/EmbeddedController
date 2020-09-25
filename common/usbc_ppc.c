@@ -10,6 +10,7 @@
 #include "console.h"
 #include "hooks.h"
 #include "timer.h"
+#include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -46,7 +47,8 @@ int ppc_err_prints(const char *string, int port, int error)
  */
 static uint8_t oc_event_cnt_tbl[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-static uint32_t connected_ports;
+/* A flag for ports with sink device connected. */
+static uint32_t snk_connected_ports;
 
 /* Simple wrappers to dispatch to the drivers. */
 
@@ -82,7 +84,7 @@ int ppc_add_oc_event(int port)
 	oc_event_cnt_tbl[port]++;
 
 	/* The port overcurrented, so don't clear it's OC events. */
-	deprecated_atomic_clear_bits(&connected_ports, 1 << port);
+	deprecated_atomic_clear_bits(&snk_connected_ports, 1 << port);
 
 	if (oc_event_cnt_tbl[port] >= PPC_OC_CNT_THRESH)
 		ppc_prints("OC event limit reached! "
@@ -100,7 +102,7 @@ static void clear_oc_tbl(void)
 		 * Only clear the table if the port partner is no longer
 		 * attached after debouncing.
 		 */
-		if ((!(BIT(port) & connected_ports)) &&
+		if ((!(BIT(port) & snk_connected_ports)) &&
 		    oc_event_cnt_tbl[port]) {
 			oc_event_cnt_tbl[port] = 0;
 			ppc_prints("OC events cleared", port);
@@ -256,17 +258,27 @@ int ppc_set_vconn(int port, int enable)
 }
 #endif
 
-void ppc_sink_is_connected(int port, int is_connected)
+int ppc_dev_is_connected(int port, enum ppc_device_role dev)
 {
+	int rv = EC_SUCCESS;
+	const struct ppc_config_t *ppc;
+
 	if ((port < 0) || (port >= ppc_cnt)) {
 		CPRINTS("%s(%d) Invalid port!", __func__, port);
-		return;
+		return EC_ERROR_INVAL;
 	}
 
-	if (is_connected)
-		deprecated_atomic_or(&connected_ports, 1 << port);
+	if (dev == PPC_DEV_SNK)
+		deprecated_atomic_or(&snk_connected_ports, 1 << port);
 	else
-		deprecated_atomic_clear_bits(&connected_ports, 1 << port);
+		/* clear flag if it transitions to SRC or disconnected */
+		deprecated_atomic_clear_bits(&snk_connected_ports, 1 << port);
+
+	ppc = &ppc_chips[port];
+	if (ppc->drv->dev_is_connected)
+		rv = ppc->drv->dev_is_connected(port, dev);
+
+	return rv;
 }
 
 int ppc_vbus_sink_enable(int port, int enable)

@@ -718,7 +718,7 @@ static inline void set_state(int port, enum pd_states next_state)
 #if defined(CONFIG_USBC_PPC) && defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE)
 	/* If we're entering DRP_AUTO_TOGGLE, there is no sink connected. */
 	if (next_state == PD_STATE_DRP_AUTO_TOGGLE) {
-		ppc_sink_is_connected(port, 0);
+		ppc_dev_is_connected(port, PPC_DEV_DISCONNECTED);
 		/*
 		 * Clear the overcurrent event counter
 		 * since we've detected a disconnect.
@@ -754,10 +754,10 @@ static inline void set_state(int port, enum pd_states next_state)
 		tcpm_get_cc(port, &cc1, &cc2);
 		/*
 		 * Neither a debug accessory nor UFP attached.
-		 * Tell the PPC module that there is no sink connected.
+		 * Tell the PPC module that there is no device connected.
 		 */
 		if (!cc_is_at_least_one_rd(cc1, cc2)) {
-			ppc_sink_is_connected(port, 0);
+			ppc_dev_is_connected(port, PPC_DEV_DISCONNECTED);
 			/*
 			 * Clear the overcurrent event counter
 			 * since we've detected a disconnect.
@@ -3349,7 +3349,7 @@ void pd_task(void *u)
 			    new_cc_state == PD_CC_UFP_DEBUG_ACC) {
 #ifdef CONFIG_USBC_PPC
 				/* Inform PPC that a sink is connected. */
-				ppc_sink_is_connected(port, 1);
+				ppc_dev_is_connected(port, PPC_DEV_SNK);
 #endif /* CONFIG_USBC_PPC */
 				if (new_cc_state == PD_CC_UFP_DEBUG_ACC) {
 					pd[port].polarity =
@@ -4026,6 +4026,12 @@ void pd_task(void *u)
 			typec_set_input_current_limit(
 				port, typec_curr, TYPE_C_VOLTAGE);
 #endif
+
+#ifdef CONFIG_USBC_PPC
+			/* Inform PPC that a source is connected. */
+			ppc_dev_is_connected(port, PPC_DEV_SRC);
+#endif /* CONFIG_USBC_PPC */
+
 			/* If PD comm is enabled, enable TCPC RX */
 			if (pd_comm_is_enabled(port))
 				tcpm_set_rx_enable(port, 1);

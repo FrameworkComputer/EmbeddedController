@@ -1985,6 +1985,9 @@ static void tc_unattached_snk_entry(const int port)
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 
 	if (IS_ENABLED(CONFIG_USBC_PPC)) {
+		/* There is no source connected. */
+		ppc_dev_is_connected(port, PPC_DEV_DISCONNECTED);
+
 		/*
 		 * Clear the overcurrent event counter
 		 * since we've detected a disconnect.
@@ -2184,6 +2187,10 @@ static void tc_attached_snk_entry(const int port)
 	 * ground through Rd.
 	 */
 	typec_select_pull(port, TYPEC_CC_RD);
+
+	/* Inform PPC that a source is connected. */
+	if (IS_ENABLED(CONFIG_USBC_PPC))
+		ppc_dev_is_connected(port, PPC_DEV_SRC);
 
 #ifdef CONFIG_USB_PE_SM
 	if (TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
@@ -2479,7 +2486,7 @@ static void tc_unattached_src_entry(const int port)
 
 	if (IS_ENABLED(CONFIG_USBC_PPC)) {
 		/* There is no sink connected. */
-		ppc_sink_is_connected(port, 0);
+		ppc_dev_is_connected(port, PPC_DEV_DISCONNECTED);
 
 		/*
 		 * Clear the overcurrent event counter
@@ -2752,7 +2759,7 @@ static void tc_attached_src_entry(const int port)
 
 	/* Inform PPC that a sink is connected. */
 	if (IS_ENABLED(CONFIG_USBC_PPC))
-		ppc_sink_is_connected(port, 1);
+		ppc_dev_is_connected(port, PPC_DEV_SNK);
 
 	/*
 	 * Only notify if we're not performing a power role swap.  During a
@@ -3421,8 +3428,8 @@ static void tc_cc_open_entry(const int port)
 	typec_update_cc(port);
 
 	if (IS_ENABLED(CONFIG_USBC_PPC)) {
-		/* There is no sink connected. */
-		ppc_sink_is_connected(port, 0);
+		/* There is no device connected. */
+		ppc_dev_is_connected(port, PPC_DEV_DISCONNECTED);
 
 		/*
 		 * Clear the overcurrent event counter

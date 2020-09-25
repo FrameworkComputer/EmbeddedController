@@ -23,6 +23,13 @@
  */
 #define PPC_OC_COOLDOWN_DELAY_US (2 * SECOND)
 
+/* The role of connected device. */
+enum ppc_device_role {
+	PPC_DEV_SNK,
+	PPC_DEV_SRC,
+	PPC_DEV_DISCONNECTED,
+};
+
 /*
  * NOTE: The pointers to functions in the ppc_drv structure can now be NULL
  * which will indicate and return NOT_IMPLEMENTED from the main calling
@@ -93,6 +100,17 @@ struct ppc_drv {
 	 * @return EC_SUCCESS on success, error otherwise.
 	 */
 	int (*discharge_vbus)(int port, int enable);
+
+	/**
+	 * Inform the PPC of the device is connected or disconnected.
+	 *
+	 * @param port: The Type-C port number.
+	 * @param dev: PPC_DEV_SNK if a sink is connected, PPC_DEV_SRC if a
+	 *             source is connected, PPC_DEV_DISCONNECTED if the device
+	 *             is disconnected.
+	 * @return EC_SUCCESS on success, error otherwise.
+	 */
+	int (*dev_is_connected)(int port, enum ppc_device_role dev);
 
 #ifdef CONFIG_USBC_PPC_SBU
 	/**
@@ -239,15 +257,15 @@ int ppc_is_sourcing_vbus(int port);
 int ppc_is_vbus_present(int port);
 
 /**
- * Inform the PPC module that a sink is connected.
+ * Inform the PPC module that a device (either sink or source) is connected.
  *
- * This is used such that it can determine when to clear the overcurrent events
- * counter for a port.
+ * This is used such that it can determine when to clear the overcurrent events,
+ * and disable discharge VBUS on a source device connected.
  * @param port: The Type-C port number.
- * @param is_connected: 1: if sink is connected on this port, 0: if not
- *                      connected.
+ * @param dev: PPC_DEV_SNK if a sink is connected, PPC_DEV_SRC if a source is
+ *             connected, PPC_DEV_DISCONNECTED if the device is disconnected.
  */
-void ppc_sink_is_connected(int port, int is_connected);
+int ppc_dev_is_connected(int port, enum ppc_device_role dev);
 
 /**
  * Inform the PPC of the polarity of the CC pins.
