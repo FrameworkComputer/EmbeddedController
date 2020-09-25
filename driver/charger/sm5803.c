@@ -345,7 +345,6 @@ static void sm5803_init(int chgnum)
 	const struct battery_info *batt_info;
 	int pre_term;
 	int cells;
-	struct batt_params batt_params;
 
 	/*
 	 * If a charger is not currently present, disable switching per OCPC
@@ -649,13 +648,6 @@ static void sm5803_init(int chgnum)
 		rv |= chg_read8(chgnum, SM5803_REG_SWITCHER_CONF, &reg);
 		reg |= SM5803_SW_BCK_BST_CONF_AUTO;
 		rv |= chg_write8(chgnum, SM5803_REG_SWITCHER_CONF, reg);
-	} else {
-		/*
-		 * Set VSYS initially to VBAT to prevent a high voltage upon
-		 * adapter insertion.
-		 */
-		battery_get_params(&batt_params);
-		rv |= charger_set_voltage(chgnum, batt_params.voltage);
 	}
 
 	if (rv)
