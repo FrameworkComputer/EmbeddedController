@@ -147,7 +147,9 @@ static enum ec_status hc_typec_status(struct host_cmd_handler_args *args)
 	tc_state_name = pd_get_task_state_name(p->port);
 	strzcpy(r->tc_state, tc_state_name, sizeof(r->tc_state));
 
-	/* TODO(b/167700356): Add events, revisions, and source cap PDOs */
+	r->events = pd_get_events(p->port);
+
+	/* TODO(b/167700356): Add revisions and source cap PDOs */
 
 	return EC_RES_SUCCESS;
 }

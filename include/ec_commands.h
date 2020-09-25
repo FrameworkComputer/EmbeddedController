@@ -6487,7 +6487,9 @@ struct ec_response_typec_status {
 
 	char tc_state[32];	/* TC state name */
 
-	/* TODO(b/167700356): Add events, revisions, and source cap PDOs */
+	uint32_t events;	/* PD_STATUS_EVENT bitmask */
+
+	/* TODO(b/167700356): Add revisions and source cap PDOs */
 } __ec_align1;
 
 /*****************************************************************************/

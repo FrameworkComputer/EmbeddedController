@@ -9665,6 +9665,8 @@ int cmd_typec_status(int argc, char *argv[])
 		       !!(r->mux_state & USB_PD_MUX_USB4_ENABLED));
 	}
 
+	printf("Port events: 0x%08x\n", r->events);
+
 	return 0;
 }
 
