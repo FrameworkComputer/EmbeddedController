@@ -9583,7 +9583,7 @@ int cmd_typec_status(int argc, char *argv[])
 	int rv;
 	char *desc;
 
-	if (argc < 2) {
+	if (argc != 2) {
 		fprintf(stderr,
 			"Usage: %s <port>\n"
 			"  <port> is the type-c port to query\n", argv[0]);
@@ -9598,7 +9598,10 @@ int cmd_typec_status(int argc, char *argv[])
 
 	rv = ec_command(EC_CMD_TYPEC_STATUS, 0, &p, sizeof(p),
 			ec_inbuf, ec_max_insize);
-	if (rv < 0)
+	if (rv == -EC_RES_INVALID_COMMAND - EECRESULT)
+		/* Fall back to PD_CONTROL to support older ECs */
+		return cmd_usb_pd(argc, argv);
+	else if (rv < 0)
 		return -1;
 
 	printf("Port C%d: %s, %s  State:%s\n"
