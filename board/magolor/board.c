@@ -129,6 +129,28 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
+
+const static struct ec_thermal_config thermal_a = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(73),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+};
+
+struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
+
+static void setup_thermal(void)
+{
+	thermal_params[TEMP_SENSOR_1] = thermal_a;
+	thermal_params[TEMP_SENSOR_2] = thermal_a;
+}
+
 void board_init(void)
 {
 	int on;
@@ -141,6 +163,9 @@ void board_init(void)
 	/* Turn on 5V if the system is on, otherwise turn it off. */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND);
 	board_power_5v_enable(on);
+
+	/* Initialize THERMAL */
+	setup_thermal();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

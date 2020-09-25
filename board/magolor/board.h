@@ -11,6 +11,7 @@
 #define VARIANT_DEDEDE_EC_NPCX796FC
 #include "baseboard.h"
 
+#define CONFIG_USB_PD_DEBUG_LEVEL 2
 /* this change saves 1656 bytes of RW flash space */
 #define CONFIG_CHIP_INIT_ROM_REGION
 
@@ -50,6 +51,7 @@
 
 /* Temp sensor */
 #define CONFIG_TEMP_SENSOR
+#define CONFIG_THROTTLE_AP
 #define CONFIG_THERMISTOR_NCP15WB
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 
