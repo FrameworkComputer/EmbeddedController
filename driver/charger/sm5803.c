@@ -1081,18 +1081,41 @@ static enum ec_error_list sm5803_get_voltage(int chgnum, int *voltage)
 static enum ec_error_list sm5803_set_voltage(int chgnum, int voltage)
 {
 	enum ec_error_list rv;
-	int volt_bits;
+	int regval;
+	static int attempt_bfet_enable;
 
-	volt_bits = SM5803_VOLTAGE_TO_REG(voltage);
+	regval = SM5803_VOLTAGE_TO_REG(voltage);
 
 	/*
 	 * Note: Set both voltages on both chargers.  Vbat will only be used on
 	 * primary, which enables charging.
 	 */
-	rv = chg_write8(chgnum, SM5803_REG_VSYS_PREREG_MSB, (volt_bits >> 3));
-	rv |= chg_write8(chgnum, SM5803_REG_VSYS_PREREG_LSB, (volt_bits & 0x7));
-	rv |= chg_write8(chgnum, SM5803_REG_VBAT_FAST_MSB, (volt_bits >> 3));
-	rv |= chg_write8(chgnum, SM5803_REG_VBAT_FAST_LSB, (volt_bits & 0x7));
+	rv = chg_write8(chgnum, SM5803_REG_VSYS_PREREG_MSB, (regval >> 3));
+	rv |= chg_write8(chgnum, SM5803_REG_VSYS_PREREG_LSB, (regval & 0x7));
+	rv |= chg_write8(chgnum, SM5803_REG_VBAT_FAST_MSB, (regval >> 3));
+	rv |= chg_write8(chgnum, SM5803_REG_VBAT_FAST_LSB, (regval & 0x7));
+
+	if (IS_ENABLED(CONFIG_OCPC) && chgnum != CHARGER_PRIMARY) {
+		/*
+		 * Check to see if the BFET is enabled.  If not, enable it by
+		 * toggling linear mode on the primary charger.  The BFET can be
+		 * disabled if the system is powered up from an auxiliary charge
+		 * port and the battery is dead.
+		 */
+		rv |= chg_read8(CHARGER_PRIMARY, SM5803_REG_LOG1, &regval);
+		if (!(regval & SM5803_BATFET_ON) && !attempt_bfet_enable) {
+			CPRINTS("SM5803: Attempting to turn on BFET");
+			cflush();
+			rv |= sm5803_flow1_update(CHARGER_PRIMARY,
+						  SM5803_FLOW1_LINEAR_CHARGE_EN,
+						  MASK_SET);
+			rv |= sm5803_flow1_update(CHARGER_PRIMARY,
+						  SM5803_FLOW1_LINEAR_CHARGE_EN,
+						  MASK_CLR);
+			attempt_bfet_enable = 1;
+			sm5803_vbus_sink_enable(chgnum, 1);
+		}
+	}
 
 	return rv;
 }

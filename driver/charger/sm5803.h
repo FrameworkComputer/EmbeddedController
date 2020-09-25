@@ -294,6 +294,9 @@ enum sm5803_charger_modes {
 /* LSB is in 1.67mOhm steps. */
 #define SM5803_REG_IR_COMP2		0x40
 
+#define SM5803_REG_LOG1			0x42
+#define SM5803_BATFET_ON		BIT(2)
+
 #define SM5803_REG_PHOT1		0x72
 #define SM5803_PHOT1_IBAT_PHOT_COMP_EN	BIT(0)
 #define SM5803_PHOT1_IBUS_PHOT_COMP_EN	BIT(1)
