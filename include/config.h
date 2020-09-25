@@ -771,6 +771,12 @@
 #undef CONFIG_VOLUME_BUTTONS
 
 /*
+ * The board has volume up and volume down buttons, that are connected to ADC
+ * pins which pressed and released values are determined by the analog voltage
+ */
+#undef CONFIG_ADC_BUTTONS
+
+/*
  * Allow runtime configuration of the buttons[] array
  */
 #undef CONFIG_BUTTONS_RUNTIME_CONFIG

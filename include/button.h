@@ -87,4 +87,18 @@ int button_disable_gpio(enum button button_type);
  */
 void button_interrupt(enum gpio_signal signal);
 
+/*
+ * determined which buttons connected ADC
+ *
+ * @param signal	Signal which triggered the interrupt.
+ */
+int button_is_adc_detected(enum gpio_signal gpio);
+
+/*
+ * distinct which buttons determined by ADC voltage
+ *
+ * @param signal	Signal which triggered the interrupt.
+ */
+int adc_to_physical_value(enum gpio_signal gpio);
+
 #endif  /* __CROS_EC_BUTTON_H */

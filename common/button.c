@@ -73,8 +73,14 @@ static int raw_button_pressed(const struct button_config *button)
 	int physical_value = 0;
 	int simulated_value = 0;
 	if (!(button->flags & BUTTON_FLAG_DISABLED)) {
-		physical_value = (!!gpio_get_level(button->gpio) ==
+		if (IS_ENABLED(CONFIG_ADC_BUTTONS) &&
+			button_is_adc_detected(button->gpio)) {
+			physical_value =
+				adc_to_physical_value(button->gpio);
+		} else {
+			physical_value = (!!gpio_get_level(button->gpio) ==
 				!!(button->flags & BUTTON_FLAG_ACTIVE_HIGH));
+		}
 #ifdef CONFIG_SIMULATED_BUTTON
 		simulated_value = simulated_button_pressed(button);
 #endif
