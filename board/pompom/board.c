@@ -89,6 +89,27 @@ static void board_connect_c0_sbu(enum gpio_signal s)
 	hook_call_deferred(&board_connect_c0_sbu_deferred_data, 0);
 }
 
+/* Keyboard scan setting */
+struct keyboard_scan_config keyscan_config = {
+	/* Use 80 us, because KSO_02 passes through the H1. */
+	.output_settle_us = 80,
+	/*
+	 * Unmask 0x01 in [1] (KSO_01/KSI_00, the old location of Search key);
+	 * as it uses the new location (KSO_00/KSI_03). And T11 key, which maps
+	 * to KSO_01/KSI_00, is not there.
+	 */
+	.actual_key_mask = {
+		0x1c, 0xfe, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca
+	},
+	/* Other values should be the same as the default configuration. */
+	.debounce_down_us = 9 * MSEC,
+	.debounce_up_us = 30 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+};
+
 /* I2C port map */
 const struct i2c_port_t i2c_ports[] = {
 	{"power",   I2C_PORT_POWER,  100, GPIO_EC_I2C_POWER_SCL,

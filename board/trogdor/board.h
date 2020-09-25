@@ -26,6 +26,7 @@
 #define CONFIG_FLASH_SIZE (1024 * 1024)  /* 1MB internal spi flash */
 
 /* Keyboard */
+#define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_PWM_KBLIGHT
 
 /* BC 1.2 Charger */
