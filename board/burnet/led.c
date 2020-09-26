@@ -120,9 +120,27 @@ static void led_set_power(void)
 static void led_set_battery(void)
 {
 	static int battery_ticks;
+	static int power_ticks;
 	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
+
+	/*
+	 * Override battery LED for Esche, Esche don't have power LED,
+	 * blinking battery white LED to indicate system suspend without
+	 * charging.
+	 */
+	if (!board_is_convertible()) {
+		if (chipset_in_state(CHIPSET_STATE_SUSPEND |
+					 CHIPSET_STATE_STANDBY) &&
+			charge_get_state() != PWR_STATE_CHARGE) {
+			led_set_color_battery(power_ticks++ & 0x2 ?
+						  LED_WHITE : LED_OFF);
+			return;
+		}
+	}
+
+	power_ticks = 0;
 
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
