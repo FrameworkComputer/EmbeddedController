@@ -115,14 +115,31 @@
 #define CYP5525_PD_SET_3A_PROF          0x02
 
 /* chip/mchp/i2c.c will shift one bit to the left  */
-#define CYP5525_ADDRESS                 0x10
-#define CYP5525_ADDRESS_FLAG            (CYP5525_ADDRESS >> 1)
+#define CYP5525_ADDRESS0              0x10
+#define CYP5525_ADDRESS1              0x80
+#define CYP5525_ADDR0_FLAG            (CYP5525_ADDRESS0 >> 1)
+#define CYP5525_ADDR1_FLAG            (CYP5525_ADDRESS1 >> 1)
 
-int offsetL2M(int offset);
+enum cyp5525_state {
+    CYP5525_STATE_POWER_ON,
+    CYP5525_STATE_RESET,
+    CYP5525_STATE_SETUP,
+    CYP5525_STATE_READY,
+    CYP5525_STATE_COUNT,
+};
 
-int cyp5525_reset(void);
-int cyp5525_setup(void);
-void cyp5525_init(void);
+enum cyp5525_port_state {
+    CYP5525_DEVICE_DETACH,
+    CYP5525_DEVICE_ATTACH,
+    CYP5525_DEVICE_ATTACH_WITH_CONTRACT,
+    CYP5525_DEVICE_COUNT,
+};
+
+struct pd_chip_config_t {
+	uint16_t i2c_port;
+	uint16_t addr_flags;
+	enum cyp5525_state state;
+};
 
 /* PD CHIP */
 void pd_chip_interrupt(enum gpio_signal signal);
