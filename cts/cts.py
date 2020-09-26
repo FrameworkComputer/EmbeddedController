@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 #
 # Copyright 2016 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -16,6 +16,9 @@
 #   $ ./cts.py
 # It'll run mock tests. The result will be stored in CTS_TEST_RESULT_DIR.
 
+# Note: This is a py2/3 compatible file.
+
+from __future__ import print_function
 
 import argparse
 import os
@@ -76,10 +79,10 @@ class Cts(object):
 
   def build(self):
     """Build images for DUT and TH."""
-    print 'Building DUT image...'
+    print('Building DUT image...')
     if not self.dut.build(self.ec_dir):
       raise RuntimeError('Building module %s for DUT failed' % (self.module))
-    print 'Building TH image...'
+    print('Building TH image...')
     if not self.th.build(self.ec_dir):
       raise RuntimeError('Building module %s for TH failed' % (self.module))
 
@@ -88,11 +91,11 @@ class Cts(object):
     cts_module = 'cts_' + self.module
     image_path = os.path.join('build', self.th.board, cts_module, 'ec.bin')
     self.identify_boards()
-    print 'Flashing TH with', image_path
+    print('Flashing TH with', image_path)
     if not self.th.flash(image_path):
       raise RuntimeError('Flashing TH failed')
     image_path = os.path.join('build', self.dut.board, cts_module, 'ec.bin')
-    print 'Flashing DUT with', image_path
+    print('Flashing DUT with', image_path)
     if not self.dut.flash(image_path):
       raise RuntimeError('Flashing DUT failed')
 
@@ -212,7 +215,7 @@ class Cts(object):
 
   def get_return_code_name(self, code, strip_prefix=False):
     name = ''
-    for k, v in self.return_codes.iteritems():
+    for k, v in self.return_codes.items():
       if v == code:
         if strip_prefix:
           name = k[len(CTS_RC_PREFIX):]
@@ -299,52 +302,52 @@ class Cts(object):
 
   def run(self):
     """Resets boards, records test results in results dir."""
-    print 'Reading serials...'
+    print('Reading serials...')
     self.identify_boards()
-    print 'Opening DUT tty...'
+    print('Opening DUT tty...')
     self.dut.setup_tty()
-    print 'Opening TH tty...'
+    print('Opening TH tty...')
     self.th.setup_tty()
 
     # Boards might be still writing to tty. Wait a few seconds before flashing.
     time.sleep(3)
 
     # clear buffers
-    print 'Clearing DUT tty...'
+    print('Clearing DUT tty...')
     self.dut.read_tty()
-    print 'Clearing TH tty...'
+    print('Clearing TH tty...')
     self.th.read_tty()
 
     # Resets the boards and allows them to run tests
     # Due to current (7/27/16) version of sync function,
     # both boards must be rest and halted, with the th
     # resuming first, in order for the test suite to run in sync
-    print 'Halting TH...'
+    print('Halting TH...')
     if not self.th.reset_halt():
       raise RuntimeError('Failed to halt TH')
-    print 'Halting DUT...'
+    print('Halting DUT...')
     if not self.dut.reset_halt():
       raise RuntimeError('Failed to halt DUT')
-    print 'Resuming TH...'
+    print('Resuming TH...')
     if not self.th.resume():
       raise RuntimeError('Failed to resume TH')
-    print 'Resuming DUT...'
+    print('Resuming DUT...')
     if not self.dut.resume():
       raise RuntimeError('Failed to resume DUT')
 
     time.sleep(MAX_SUITE_TIME_SEC)
 
-    print 'Reading DUT tty...'
+    print('Reading DUT tty...')
     dut_output, _ = self.dut.read_tty()
     self.dut.close_tty()
-    print 'Reading TH tty...'
+    print('Reading TH tty...')
     th_output, _ = self.th.read_tty()
     self.th.close_tty()
 
-    print 'Halting TH...'
+    print('Halting TH...')
     if not self.th.reset_halt():
       raise RuntimeError('Failed to halt TH')
-    print 'Halting DUT...'
+    print('Halting DUT...')
     if not self.dut.reset_halt():
       raise RuntimeError('Failed to halt DUT')
 
@@ -353,7 +356,7 @@ class Cts(object):
                        'reading ttyACMx, please kill that process and try '
                        'again.')
 
-    print 'Pursing results...'
+      print('Pursing results...')
     th_results, dut_results = self.evaluate_run(dut_output, th_output)
 
     # Print out results
@@ -372,7 +375,7 @@ class Cts(object):
     with open(dest, 'w') as fl:
       fl.write(dut_output)
 
-    print self.formatted_results
+    print(self.formatted_results)
 
     # TODO(chromium:735652): Should set exit code for the shell
 
