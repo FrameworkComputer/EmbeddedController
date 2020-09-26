@@ -16,7 +16,6 @@ import time
 import tempfile
 
 import json
-import six
 
 import fw_update
 import ecusb.tiny_servo_common as c
@@ -240,13 +239,9 @@ def find_available_version(boardname, binfile):
   Returns:
     the version string.
   """
-  args = {}
-  if six.PY3:
-    args['encoding'] = 'utf-8'
-
   rawstrings = subprocess.check_output(
       ['cbfstool', binfile, 'read', '-r', 'RO_FRID', '-f', '/dev/stdout'],
-      **args)
+      **c.get_subprocess_args())
   m = re.match(r'%s_v\S+' % boardname, rawstrings)
   if m:
     newvers = m.group(0).strip(' \t\r\n\0')
