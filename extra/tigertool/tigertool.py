@@ -1,9 +1,11 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Copyright 2017 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
 """Script to control tigertail USB-C Mux board."""
+
+# Note: This is a py2/3 compatible file.
 
 import argparse
 import sys
@@ -125,7 +127,7 @@ def do_power(count, bus, pty):
           'Power        : \S+ \S+ (\d+) mW\s+' \
           'Current      : \S+ \S+ (\d+) mA'
 
-  for i in xrange(0, count):
+  for i in range(0, count):
     results = pty._issue_cmd_get_results(cmd, [regex])[0]
     c.log('%.2f,\t%s,\t%s\t%s' % (time.time() - start,
           results[1], results[2], results[3]))
