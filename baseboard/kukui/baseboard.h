@@ -144,6 +144,13 @@
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
 #endif
 
+/* free flash space */
+#ifdef SECTION_IS_RO
+#undef CONFIG_USB_PD_DEBUG_LEVEL
+#define CONFIG_USB_PD_DEBUG_LEVEL 0
+#define CONFIG_COMMON_GPIO_SHORTNAMES
+#endif
+
 #undef  CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
 #define CONFIG_UART_RX_DMA

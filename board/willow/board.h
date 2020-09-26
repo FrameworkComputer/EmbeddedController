@@ -18,13 +18,6 @@
 
 #include "baseboard.h"
 
-/* free flash space */
-#ifdef SECTION_IS_RO
-#undef CONFIG_USB_PD_DEBUG_LEVEL
-#define CONFIG_USB_PD_DEBUG_LEVEL 0
-#define CONFIG_COMMON_GPIO_SHORTNAMES
-#endif
-
 #undef CONFIG_CHIPSET_POWER_SEQ_VERSION
 #define CONFIG_CHIPSET_POWER_SEQ_VERSION 1
 
