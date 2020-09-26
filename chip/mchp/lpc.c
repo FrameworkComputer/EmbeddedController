@@ -37,7 +37,8 @@ static uint8_t
 mem_mapped[0x200] __attribute__((section(".bss.big_align")));
 
 #ifdef CONFIG_EMI_REGION1
-static uint8_t mem_mapped2[512] __aligned(8);
+static uint8_t
+mem_mapped2[0x200] __attribute__((section(".bss.big_align")));
 #endif
 
 static struct host_packet lpc_packet;
