@@ -108,6 +108,8 @@
 #define CONFIG_BATTERY_DEVICE_CHEMISTRY "LION"
 #define CONFIG_BATTERY_FUEL_GAUGE
 
+#define CONFIG_USB_MUX_RUNTIME_CONFIG
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
