@@ -33,6 +33,7 @@
 #include "i2c.h"
 #include "espi.h"
 #include "lpc_chip.h"
+#include "lpc.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "math_util.h"
@@ -746,6 +747,21 @@ static void enable_input_devices(void)
 	gpio_set_level(GPIO_ENABLE_TOUCHPAD, tp_enable);
 }
 
+#ifdef CONFIG_EMI_REGION1
+
+static void sci_enable(void);
+DECLARE_DEFERRED(sci_enable);
+
+static void sci_enable(void)
+{
+	if (*host_get_customer_memmap(0x00) == 1) {
+	/* when host set EC driver ready flag, EC need to enable SCI */
+		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0xffffffff);
+	} else
+		hook_call_deferred(&sci_enable_data, 250 * MSEC);
+}
+#endif
+
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {
@@ -755,6 +771,9 @@ static void board_chipset_startup(void)
 	gpio_set_level(GPIO_USB1_ENABLE, 1);
 	gpio_set_level(GPIO_USB2_ENABLE, 1);
 	*/ 
+#ifdef CONFIG_EMI_REGION1
+	hook_call_deferred(&sci_enable_data, 250 * MSEC);
+#endif
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
@@ -771,6 +790,9 @@ static void board_chipset_shutdown(void)
 	gpio_set_level(GPIO_USB1_ENABLE, 0);
 	gpio_set_level(GPIO_USB2_ENABLE, 0);
 	*/ 
+#ifdef CONFIG_EMI_REGION1
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
+#endif
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
