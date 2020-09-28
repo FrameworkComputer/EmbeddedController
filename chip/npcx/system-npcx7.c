@@ -11,6 +11,7 @@
 #include "cpu.h"
 #include "ec_commands.h"
 #include "hooks.h"
+#include "lct_chip.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -40,16 +41,56 @@ void system_mpu_config(void)
 #error "Do not enable CONFIG_HIBERNATE_PSL if npcx ec doesn't support PSL mode!"
 #endif
 
+static enum psl_pin_t system_gpio_to_psl(enum gpio_signal signal)
+{
+	enum psl_pin_t psl_no;
+	const struct gpio_info *g = gpio_list + signal;
+
+	if (g->port == GPIO_PORT_D && g->mask == MASK_PIN2) /* GPIOD2 */
+		psl_no = PSL_IN1;
+	else if (g->port == GPIO_PORT_0 && (g->mask & 0x07)) /* GPIO00/01/02 */
+		psl_no = GPIO_MASK_TO_NUM(g->mask) + 1;
+	else
+		psl_no = PSL_NONE;
+
+	return psl_no;
+}
+
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+void system_set_psl_gpo(int level)
+{
+	if (level)
+		SET_BIT(NPCX_GLUE_PSL_MCTL1, NPCX_GLUE_PSL_MCTL1_PSL_GPO_CTL);
+	else
+		CLEAR_BIT(NPCX_GLUE_PSL_MCTL1, NPCX_GLUE_PSL_MCTL1_PSL_GPO_CTL);
+}
+#endif
+
 void system_enter_psl_mode(void)
 {
 	/* Configure pins from GPIOs to PSL which rely on VSBY power rail. */
 	gpio_config_module(MODULE_PMU, 1);
 
 	/*
-	 * Only PSL_IN events can pull PSL_OUT to high and reboot ec.
-	 * We should treat it as wake-up pin reset.
+	 * In npcx7, only physical PSL_IN pins can pull PSL_OUT to high and
+	 * reboot ec.
+	 * In npcx9, LCT timeout event can also pull PSL_OUT.
+	 * We won't decide the wake cause now but only mark we are entering
+	 * hibernation via PSL.
+	 * The actual wakeup cause will be checked by the PSL input event bits
+	 * when ec reboots.
 	 */
-	NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_PIN;
+	NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_PSL;
+
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+	 /*
+	  * If pulse mode is enabled, the VCC power is turned off by the
+	  * external component (Ex: PMIC) but PSL_OUT. So we can just return
+	  * here.
+	  */
+	if (IS_BIT_SET(NPCX_GLUE_PSL_MCTL1, NPCX_GLUE_PSL_MCTL1_PLS_EN))
+		return;
+#endif
 
 	/*
 	 * Pull PSL_OUT (GPIO85) to low to cut off ec's VCC power rail by
@@ -67,34 +108,32 @@ noreturn void __keep __enter_hibernate_in_psl(void)
 		;
 }
 
-static void system_psl_type_sel(int psl_no, uint32_t flags)
+static void system_psl_type_sel(enum psl_pin_t psl_pin, uint32_t flags)
 {
 	/* Set PSL input events' type as level or edge trigger */
 	if ((flags & GPIO_INT_F_HIGH) || (flags & GPIO_INT_F_LOW))
-		CLEAR_BIT(NPCX_GLUE_PSL_CTS, psl_no + 4);
-	else if ((flags & GPIO_INT_F_RISING) || (flags & GPIO_INT_F_FALLING))
-		SET_BIT(NPCX_GLUE_PSL_CTS, psl_no + 4);
+		CLEAR_BIT(NPCX_GLUE_PSL_CTS, psl_pin + 4);
+	else if ((flags & GPIO_INT_F_RISING) ||
+		 (flags & GPIO_INT_F_FALLING))
+		SET_BIT(NPCX_GLUE_PSL_CTS, psl_pin + 4);
 
 	/*
 	 * Set PSL input events' polarity is low (high-to-low) active or
 	 * high (low-to-high) active
 	 */
 	if (flags & GPIO_HIB_WAKE_HIGH)
-		SET_BIT(NPCX_DEVALT(ALT_GROUP_D), 2 * psl_no);
+		SET_BIT(NPCX_DEVALT(ALT_GROUP_D), 2 * psl_pin);
 	else
-		CLEAR_BIT(NPCX_DEVALT(ALT_GROUP_D), 2 * psl_no);
+		CLEAR_BIT(NPCX_DEVALT(ALT_GROUP_D), 2 * psl_pin);
 }
 
 int system_config_psl_mode(enum gpio_signal signal)
 {
-	int psl_no;
+	enum psl_pin_t psl_no;
 	const struct gpio_info *g = gpio_list + signal;
 
-	if (g->port == GPIO_PORT_D && g->mask == MASK_PIN2) /* GPIOD2 */
-		psl_no = 0;
-	else if (g->port == GPIO_PORT_0 && (g->mask & 0x07)) /* GPIO00/01/02 */
-		psl_no = GPIO_MASK_TO_NUM(g->mask) + 1;
-	else
+	psl_no = system_gpio_to_psl(signal);
+	if (psl_no == PSL_NONE)
 		return 0;
 
 	system_psl_type_sel(psl_no, g->flags);
@@ -115,7 +154,11 @@ __enter_hibernate_in_last_block(void)
 	 * for better power consumption.
 	 */
 	NPCX_RAM_PD(0) = RAM_PD_MASK & 0xFF;
+#if defined(CHIP_FAMILY_NPCX7)
 	NPCX_RAM_PD(1) = (RAM_PD_MASK >> 8) & 0x0F;
+#elif defined(CHIP_FAMILY_NPCX9)
+	NPCX_RAM_PD(1) = (RAM_PD_MASK >> 8) & 0x7F;
+#endif
 
 	/* Set deep idle mode */
 	NPCX_PMCSR = 0x6;
@@ -131,6 +174,13 @@ __enter_hibernate_in_last_block(void)
 		 * no stack.
 		 */
 		NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_MTC;
+#ifdef NPCX_LCT_SUPPORT
+	else if (IS_BIT_SET(NPCX_LCTSTAT, NPCX_LCTSTAT_EVST)) {
+		NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_LCT;
+		/* Clear LCT event */
+		NPCX_LCTSTAT = BIT(NPCX_LCTSTAT_EVST);
+	}
+#endif
 	else
 		/* Otherwise, we treat it as GPIOs wake-up */
 		NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_PIN;
@@ -173,6 +223,9 @@ static void report_psl_wake_source(void)
 		return;
 
 	CPRINTS("PSL_CTS: 0x%x", NPCX_GLUE_PSL_CTS & 0xf);
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+	CPRINTS("PSL_MCTL1 event: 0x%x", NPCX_GLUE_PSL_MCTL1 & 0x18);
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, report_psl_wake_source, HOOK_PRIO_DEFAULT);
 #endif

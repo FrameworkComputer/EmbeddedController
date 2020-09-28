@@ -46,6 +46,13 @@
 /* Use SHI module version 2 supported by npcx7 and latter family */
 #define NPCX_SHI_V2
 
+/* PSL_OUT optional configuration */
+/* Set PSL_OUT mode to pulse mode */
+#define NPCX_PSL_CFG_PSL_OUT_PULSE	BIT(0)
+/* set PSL_OUT to open-drain */
+#define NPCX_PSL_CFG_PSL_OUT_OD		BIT(1)
+#define CONFIG_HIBERNATE_PSL_OUT_FLAGS	0
+
 /*****************************************************************************/
 /* Memory mapping */
 

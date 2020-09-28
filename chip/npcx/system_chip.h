@@ -11,6 +11,13 @@
 /* Flags for BBRM_DATA_INDEX_WAKE */
 #define HIBERNATE_WAKE_MTC        BIT(0)  /* MTC alarm */
 #define HIBERNATE_WAKE_PIN        BIT(1)  /* Wake pin */
+#define HIBERNATE_WAKE_LCT        BIT(2)  /* LCT alarm */
+/*
+ * Indicate that EC enters hibernation via PSL. When EC wakes up from
+ * hibernation and this flag is set, it will check the related status bit to
+ * know the actual wake up source. (From LCT or physical wakeup pins)
+ */
+#define HIBERNATE_WAKE_PSL        BIT(3)
 
 /* Indices for battery-backed ram (BBRAM) data position */
 enum bbram_data_index {
@@ -28,6 +35,14 @@ enum bbram_data_index {
 						* 36.
 						*/
 	BBRM_DATA_INDEX_PANIC_BKUP = 36,       /* Panic data (index 35-63)*/
+};
+
+enum psl_pin_t {
+	PSL_IN1,
+	PSL_IN2,
+	PSL_IN3,
+	PSL_IN4,
+	PSL_NONE,
 };
 
 /* Issue a watchdog reset */
@@ -77,6 +92,10 @@ void system_enter_psl_mode(void);
 /* End address for hibernate utility; defined in linker script */
 extern unsigned int __after_init_end;
 
+#endif
+
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+void system_set_psl_gpo(int level);
 #endif
 
 #endif /* __CROS_EC_SYSTEM_CHIP_H */

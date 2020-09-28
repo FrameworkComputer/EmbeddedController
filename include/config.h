@@ -2241,6 +2241,28 @@
 /* Wake up pins have non-const configuration. */
 #undef CONFIG_HIBERNATE_WAKE_PINS_DYNAMIC
 
+/* In npcx9 and later chips, enhanced PSL features are supported including:
+ *   (1) Pulse mode for PSL_OUT signal.
+ *   (2) Open-drain for PSL_OUT signal (when Pulse mode is enabled.)
+ * These features can be enabled in board configuration file by adding
+ * the following bit masks to this flag:
+ *   (1) NPCX_PSL_CFG_PSL_OUT_PULSE.
+ *   (2) NPCX_PSL_CFG_PSL_OUT_OD.
+ * Ex:  #define CONFIG_HIBERNATE_PSL_OUT_FLAGS	 \
+		 (NPCX_PSL_CFG_PSL_OUT_PULSE | NPCX_PSL_CFG_PSL_OUT_OD)
+ */
+#undef CONFIG_HIBERNATE_PSL_OUT_FLAGS
+
+/*
+ * Enable VCC1_RST pin as the input of PSL wakeup source. When Enabling this,
+ * the VCC1_RST pin must be connected to the VSBY supply via an external pull-up
+ * resistor of maximum 100K ohm .
+ * TODO: Remove this when NPCX9 A2 chip is available because A2
+ * chip will enable VCC1_RST to PSL wakeup source and lock it in
+ * the booter.
+ */
+#undef CONFIG_HIBERNATE_PSL_VCC1_RST_WAKEUP
+
 /*
  * Chip supports a 64-bit hardware timer and implements
  * __hw_clock_source_read64 and __hw_clock_source_set64.

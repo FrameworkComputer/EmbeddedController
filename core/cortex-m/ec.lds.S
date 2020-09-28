@@ -161,7 +161,7 @@ SECTIONS
 
 		. = ALIGN(4);
 		STRINGIFY(OUTDIR/core/CORE/init.o) (.text)
-#if defined(CHIP_FAMILY_NPCX7) && !defined(CONFIG_HIBERNATE_PSL)
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7 && !defined(CONFIG_HIBERNATE_PSL)
 		/* Keep hibernate utility in last code ram block */
 		. = ALIGN(4);
 		KEEP(*(.after_init))

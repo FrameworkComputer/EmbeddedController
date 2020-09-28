@@ -14,6 +14,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "hwtimer_chip.h"
+#include "lct_chip.h"
 #include "registers.h"
 #include "rom_chip.h"
 #include "sib_chip.h"
@@ -326,6 +327,38 @@ uint32_t chip_read_reset_flags(void)
 	return bbram_data_read(BBRM_DATA_INDEX_SAVED_RESET_FLAGS);
 }
 
+static void chip_set_hib_flag(uint32_t *flags, uint32_t hib_wake_flags)
+{
+	/* Hibernate via PSL */
+	if (hib_wake_flags & HIBERNATE_WAKE_PSL) {
+#ifdef NPCX_LCT_SUPPORT
+		if (npcx_lct_is_event_set()) {
+			*flags |= EC_RESET_FLAG_RTC_ALARM |
+					  EC_RESET_FLAG_HIBERNATE;
+			npcx_lct_clear_event();
+			return;
+		}
+#endif
+		*flags |= EC_RESET_FLAG_WAKE_PIN |
+				  EC_RESET_FLAG_HIBERNATE;
+	} else { /* Hibernate via non-PSL */
+#ifdef NPCX_LCT_SUPPORT
+		if (hib_wake_flags & HIBERNATE_WAKE_LCT) {
+			*flags |= EC_RESET_FLAG_RTC_ALARM |
+					  EC_RESET_FLAG_HIBERNATE;
+			return;
+		}
+#endif
+		if (hib_wake_flags & HIBERNATE_WAKE_PIN) {
+			*flags |= EC_RESET_FLAG_WAKE_PIN |
+					  EC_RESET_FLAG_HIBERNATE;
+		} else if (hib_wake_flags & HIBERNATE_WAKE_MTC) {
+			*flags |= EC_RESET_FLAG_RTC_ALARM |
+					  EC_RESET_FLAG_HIBERNATE;
+		}
+	}
+}
+
 static void check_reset_cause(void)
 {
 	uint32_t hib_wake_flags = bbram_data_read(BBRM_DATA_INDEX_WAKE);
@@ -421,11 +454,7 @@ static void check_reset_cause(void)
 		SET_BIT(NPCX_RSTCTL, NPCX_RSTCTL_DBGRST_STS);
 	}
 
-	/* Reset by hibernate */
-	if (hib_wake_flags & HIBERNATE_WAKE_PIN)
-		flags |= EC_RESET_FLAG_WAKE_PIN | EC_RESET_FLAG_HIBERNATE;
-	else if (hib_wake_flags & HIBERNATE_WAKE_MTC)
-		flags |= EC_RESET_FLAG_RTC_ALARM | EC_RESET_FLAG_HIBERNATE;
+	chip_set_hib_flag(&flags, hib_wake_flags);
 
 	/* Watchdog Reset */
 	if (IS_BIT_SET(NPCX_T0CSR, NPCX_T0CSR_WDRST_STS)) {
@@ -488,6 +517,32 @@ static void system_set_gpios_and_wakeup_inputs_hibernate(void)
 	}
 }
 
+#ifdef NPCX_LCT_SUPPORT
+static void system_set_lct_alarm(uint32_t seconds, uint32_t microseconds)
+{
+	/* The min resolution of LCT is 1 seconds */
+	if ((seconds == 0) && (microseconds != 0))
+		seconds = 1;
+
+	npcx_lct_enable(0);
+	npcx_lct_sel_power_src(NPCX_LCT_PWR_SRC_VSBY);
+#ifdef CONFIG_HIBERNATE_PSL
+	/* Enable LCT event to PSL */
+	npcx_lct_config(seconds, 1, 0);
+#else
+	/* Enable LCT event interrupt and MIWU */
+	npcx_lct_config(seconds, 0, 1);
+	task_disable_irq(NPCX_IRQ_LCT_WKINTF_2);
+	/* Enable wake-up input sources & clear pending bit */
+	NPCX_WKPCL(MIWU_TABLE_2, LCT_WUI_GROUP)  |= LCT_WUI_MASK;
+	NPCX_WKINEN(MIWU_TABLE_2, LCT_WUI_GROUP) |= LCT_WUI_MASK;
+	NPCX_WKEN(MIWU_TABLE_2, LCT_WUI_GROUP)   |= LCT_WUI_MASK;
+	task_enable_irq(NPCX_IRQ_LCT_WKINTF_2);
+#endif
+	npcx_lct_enable(1);
+}
+#endif
+
 /**
  * hibernate function for npcx ec.
  *
@@ -501,6 +556,14 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	/* Disable ADC */
 	NPCX_ADCCNF = 0;
 	usleep(1000);
+
+#ifdef NPCX_LCT_SUPPORT
+	/*
+	 * This function must be called before the ITIM (system tick)
+	 * is disabled because it calls udelay inside this function
+	 */
+	npcx_lct_enable_clk(1);
+#endif
 
 	/* Set SPI pins to be in Tri-State */
 	SET_BIT(NPCX_DEVCNT, NPCX_DEVCNT_F_SPI_TRIS);
@@ -554,8 +617,11 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	 * next event.
 	 */
 	if (seconds || microseconds)
+#ifdef NPCX_LCT_SUPPORT
+		system_set_lct_alarm(seconds, microseconds);
+#else
 		system_set_rtc_alarm(seconds, microseconds);
-
+#endif
 
 	/* execute hibernate func depend on chip series */
 	__hibernate_npcx_series();
@@ -791,6 +857,55 @@ void system_pre_init(void)
 
 #ifdef CONFIG_CHIP_PANIC_BACKUP
 	chip_panic_data_restore();
+#endif
+
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+	if (IS_ENABLED(CONFIG_HIBERNATE_PSL)) {
+		uint8_t opt_flag = CONFIG_HIBERNATE_PSL_OUT_FLAGS;
+
+		/* PSL Glitch Protection */
+		SET_BIT(NPCX_GLUE_PSL_MCTL2, NPCX_GLUE_PSL_MCTL2_PSL_GP_EN);
+
+		/*
+		 * TODO: Remove this when NPCX9 A2 chip is available because A2
+		 * chip will enable VCC1_RST to PSL wakeup source and lock it in
+		 * the booter.
+		 */
+		if (IS_ENABLED(CONFIG_HIBERNATE_PSL_VCC1_RST_WAKEUP)) {
+			/*
+			 * Enable VCC1_RST as the wake-up source from
+			 * hibernation.
+			 */
+			SET_BIT(NPCX_GLUE_PSL_MCTL1,
+					NPCX_GLUE_PSL_MCTL1_VCC1_RST_PSL);
+			/* Disable VCC_RST Pull-Up */
+			SET_BIT(NPCX_DEVALT(ALT_GROUP_G),
+					NPCX_DEVALTG_VCC1_RST_PUD);
+			/*
+			 * Lock this bit itself and VCC1_RST_PSL in the
+			 * PSL_MCTL1 register to read-only.
+			 */
+			SET_BIT(NPCX_GLUE_PSL_MCTL2,
+					NPCX_GLUE_PSL_MCTL2_VCC1_RST_PSL_LK);
+		}
+
+		/* Don't set PSL_OUT to open-drain if it is the level mode */
+		ASSERT((opt_flag & NPCX_PSL_CFG_PSL_OUT_PULSE) ||
+			 !(opt_flag & NPCX_PSL_CFG_PSL_OUT_OD));
+
+		if (opt_flag & NPCX_PSL_CFG_PSL_OUT_OD)
+			SET_BIT(NPCX_GLUE_PSL_MCTL1, NPCX_GLUE_PSL_MCTL1_OD_EN);
+		else
+			CLEAR_BIT(NPCX_GLUE_PSL_MCTL1,
+					NPCX_GLUE_PSL_MCTL1_OD_EN);
+
+		if (opt_flag & NPCX_PSL_CFG_PSL_OUT_PULSE)
+			SET_BIT(NPCX_GLUE_PSL_MCTL1,
+					NPCX_GLUE_PSL_MCTL1_PLS_EN);
+		else
+			CLEAR_BIT(NPCX_GLUE_PSL_MCTL1,
+					NPCX_GLUE_PSL_MCTL1_PLS_EN);
+	}
 #endif
 }
 

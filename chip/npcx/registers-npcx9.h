@@ -251,12 +251,6 @@ enum {
 #define NPCX_DEVALTG_PSL_OUT_SL		6
 #define NPCX_DEVALTG_PSL_GPO_SL		7
 
-/* PSL optional flags */
-/* Set PSL_OUT mode to pulse mode */
-#define NPCX_PSL_PSL_OUT_PULSE		BIT(0)
-/* set PSL_OUT to open-drain */
-#define NPCX_PSL_PSL_OUT_OD		BIT(1)
-
 /* SMBus register fields */
 #define NPCX_SMBSEL_SMB4SEL		4
 #define NPCX_SMBSEL_SMB5SEL		5
