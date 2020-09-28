@@ -268,6 +268,11 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+int board_allow_i2c_passthru(int port)
+{
+	return (port == I2C_PORT_VIRTUAL_BATTERY);
+}
+
 /* PPC */
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
