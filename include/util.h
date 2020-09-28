@@ -197,6 +197,16 @@ bool bytes_are_trivial(const uint8_t *buffer, size_t size);
 bool is_aligned(uint32_t addr, uint32_t align);
 
 /**
+ * Get the alignment of x; the number of trailing zero bits.
+ *
+ * x must not be zero, otherwise the result is undefined (and will panic
+ * in debug builds).
+ *
+ * @return the number of consecutive zero bits in x starting from the lsb
+ */
+int alignment_log2(unsigned int x);
+
+/**
  * Reverse's the byte-order of the provided buffer.
  */
 void reverse(void *dest, size_t len);

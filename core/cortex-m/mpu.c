@@ -94,6 +94,76 @@ int mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
 	return EC_SUCCESS;
 }
 
+/*
+ * Greedily configure the largest possible part of the given region from the
+ * base address.
+ *
+ * Returns EC_SUCCESS on success and sets *consumed to the number of bytes
+ * mapped from the base address. In case of error, the value of *consumed is
+ * unpredictable.
+ *
+ * For instance, if addr is 0x10070000 and size is 0x30000 then memory in the
+ * range 0x10070000-0x10080000 will be configured and *consumed will be set to
+ * 0x10000.
+ */
+static int mpu_config_region_greedy(uint8_t region, uint32_t addr,
+				    uint32_t size, uint16_t attr,
+				    uint8_t enable, uint32_t *consumed)
+{
+	/*
+	 * Compute candidate alignment to be used for the MPU region.
+	 *
+	 * This is the minimum of the base address and size alignment, since
+	 * regions must be naturally aligned to their size.
+	 */
+	uint8_t natural_alignment = MIN(addr == 0 ? 32 : alignment_log2(addr),
+				     alignment_log2(size));
+	uint8_t subregion_disable = 0;
+
+	if (natural_alignment >= 5) {
+		uint32_t subregion_base, subregion_size;
+		/*
+		 * For MPU regions larger than 256 bytes we can use subregions,
+		 * (which are a minimum of 32 bytes in size) making the actual
+		 * MPU region 8x larger. Depending on the address alignment this
+		 * can allow us to cover a larger area (and never a smaller
+		 * one).
+		 */
+		natural_alignment += 3;
+		/* Region size cannot exceed 4GB. */
+		if (natural_alignment > 32)
+			natural_alignment = 32;
+
+		/*
+		 * Generate the subregion mask by walking through each,
+		 * disabling if it is not completely contained in the requested
+		 * range.
+		 */
+		subregion_base = addr & ~((1 << natural_alignment) - 1);
+		subregion_size = 1 << (natural_alignment - 3);
+		*consumed = 0;
+		for (int sr_idx = 0; sr_idx < 8; sr_idx++) {
+			if (subregion_base < addr ||
+			    (subregion_base + subregion_size) > (addr + size))
+				/* lsb of subregion mask is lowest address */
+				subregion_disable |= 1 << sr_idx;
+			else
+				/* not disabled means consumed */
+				*consumed += subregion_size;
+
+			subregion_base += subregion_size;
+		}
+	} else {
+		/* Not using subregions; all enabled */
+		*consumed = 1 << natural_alignment;
+	}
+
+	return mpu_update_region(region,
+			       addr & ~((1 << natural_alignment) - 1),
+			       natural_alignment,
+			       attr, enable, subregion_disable);
+}
+
 /**
  * Configure a region
  *
@@ -103,76 +173,42 @@ int mpu_update_region(uint8_t region, uint32_t addr, uint8_t size_bit,
  * attr: Attribute bits. Current value will be overwritten if enable is set.
  * enable: Enables the region if non zero. Otherwise, disables the region.
  *
- * Returns EC_SUCCESS on success or -EC_ERROR_INVAL if a parameter is invalid.
+ * Returns EC_SUCCESS on success, -EC_ERROR_OVERFLOW if it is not possible to
+ * fully configure the given region, or -EC_ERROR_INVAL if a parameter is
+ * invalid (such as the address or size having unsupported alignment).
  */
 int mpu_config_region(uint8_t region, uint32_t addr, uint32_t size,
 		      uint16_t attr, uint8_t enable)
 {
 	int rv;
-	int size_bit = 0;
-	uint8_t blocks, srd1, srd2;
+	uint32_t consumed;
 
-	if (!size)
+	/* Zero size doesn't require configuration */
+	if (size == 0)
 		return EC_SUCCESS;
 
-	/* Bit position of first '1' in size */
-	size_bit = 31 - __builtin_clz(size);
-	/* Min. region size is 32 bytes */
-	if (size_bit < 5)
-		return -EC_ERROR_INVAL;
-
-	/* If size is a power of 2 then represent it with a single MPU region */
-	if (POWER_OF_TWO(size))
-		return mpu_update_region(region, addr, size_bit, attr, enable,
-					 0);
-
-	/* Sub-regions are not supported for region <= 128 bytes */
-	if (size_bit < 7)
-		return -EC_ERROR_INVAL;
-	/* Verify we can represent range with <= 2 regions */
-	if (size & ~(0x3f << (size_bit - 5)))
-		return -EC_ERROR_INVAL;
-
-	/*
-	 * Round up size of first region to power of 2.
-	 * Calculate the number of fully occupied blocks (block size =
-	 * region size / 8) in the first region.
-	 */
-	blocks = size >> (size_bit - 2);
-
-	/* Represent occupied blocks of two regions with srd mask. */
-	srd1 = BIT(blocks) - 1;
-	srd2 = (1 << ((size >> (size_bit - 5)) & 0x7)) - 1;
-
-	/*
-	 * Second region not supported for DATA_RAM_TEXT, also verify size of
-	 * second region is sufficient to support sub-regions.
-	 */
-	if (srd2 && (region == REGION_DATA_RAM_TEXT || size_bit < 10))
-		return -EC_ERROR_INVAL;
-
-	/* Write first region. */
-	rv = mpu_update_region(region, addr, size_bit + 1, attr, enable, ~srd1);
+	rv = mpu_config_region_greedy(region, addr, size,
+				      attr, enable, &consumed);
 	if (rv != EC_SUCCESS)
 		return rv;
+	ASSERT(consumed <= size);
+	addr += consumed;
+	size -= consumed;
 
-	/*
-	 * Second protection region (if necessary) begins at the first block
-	 * we marked unoccupied in the first region.
-	 * Size of the second region is the block size of first region.
-	 */
-	addr += (1 << (size_bit - 2)) * blocks;
+	/* Regions other than DATA_RAM_TEXT may use two MPU regions */
+	if (size > 0 && region != REGION_DATA_RAM_TEXT) {
+		rv = mpu_config_region_greedy(region + 1, addr, size,
+					      attr, enable, &consumed);
+		if (rv != EC_SUCCESS)
+			return rv;
+		ASSERT(consumed <= size);
+		addr += consumed;
+		size -= consumed;
+	}
 
-	/*
-	 * Now represent occupied blocks in the second region. It's possible
-	 * that the first region completely represented the occupied area, if
-	 * so then no second protection region is required.
-	 */
-	if (srd2)
-		rv = mpu_update_region(region + 1, addr, size_bit - 2, attr,
-				       enable, ~srd2);
-
-	return rv;
+	if (size > 0)
+		return EC_ERROR_OVERFLOW;
+	return EC_SUCCESS;
 }
 
 /**

@@ -568,6 +568,12 @@ bool is_aligned(uint32_t addr, uint32_t align)
 	return (addr & (align - 1)) == 0;
 }
 
+int alignment_log2(unsigned int x)
+{
+	ASSERT(x != 0);	/* ctz(0) is undefined */
+	return __builtin_ctz(x);
+}
+
 /****************************************************************************/
 /* stateful conditional stuff */
 
