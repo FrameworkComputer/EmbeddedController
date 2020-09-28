@@ -65,9 +65,6 @@
 #define CONFIG_USBC_PPC_SN5S330		/* USBC port C0 */
 #define CONFIG_USBC_PPC_SYV682X		/* USBC port C1 */
 
-/* undefine button */
-#undef CONFIG_VOLUME_BUTTONS
-
 /* BC 1.2 */
 
 /* Volume Button feature */
@@ -103,7 +100,8 @@
 #define GPIO_SYS_RESET_L		GPIO_SYS_RST_ODL
 #define GPIO_WP_L			GPIO_EC_WP_L
 #define GPIO_USB_C1_BC12_INT_ODL	GPIO_USB_C1_MIX_INT_ODL
-
+#define GPIO_VOLUME_UP_L		GPIO_EC_VOLUP_BTN_ODL
+#define GPIO_VOLUME_DOWN_L		GPIO_EC_VOLDN_MUTE_BTN_ODL
 
 /* I2C Bus Configuration */
 #define CONFIG_I2C
