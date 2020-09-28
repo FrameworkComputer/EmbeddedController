@@ -299,36 +299,6 @@ static int command_temps_log(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(tempslog, command_temps_log,
 			"seconds",
 			"Print temp sensors periodically");
-/*
- * b/163076059: Sometimes CONTROL1 reads as 0xFF03 for unknown reason
- * when the state change from S0 to S3, but the second read will get
- * the correct 0x0103. Retry CONTROL1 read before update learn mode
- * to make sure write the correct value.
- */
-__override int isl9241_update_learn_mode(int chgnum, int enable)
-{
-	int rv;
-	int i;
-	int reg;
-
-	/* Retry CONTROL1 read if high byte is 0xFF. */
-	for (i = 0; i < 10; i++) {
-		rv = isl9241_read(chgnum, ISL9241_REG_CONTROL1, &reg);
-		if (rv == EC_SUCCESS && (reg >> 8) != 0xFF)
-			break;
-		ccprints("isl9241 error: CONTROL1=0x%x (rv=%d i=%d)",
-			 reg, rv, i);
-		if (rv)
-			return rv;
-	}
-
-	if (enable)
-		reg |= ISL9241_CONTROL1_LEARN_MODE;
-	else
-		reg &= ~ISL9241_CONTROL1_LEARN_MODE;
-
-	return isl9241_write(chgnum, ISL9241_REG_CONTROL1, reg);
-}
 
 /*
  * b/164921478: On G3->S5, wait for RSMRST_L to be deasserted before asserting

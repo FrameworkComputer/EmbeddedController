@@ -60,7 +60,7 @@ static const struct charger_info isl9241_charger_info = {
 
 static enum ec_error_list isl9241_discharge_on_ac(int chgnum, int enable);
 
-inline enum ec_error_list isl9241_read(int chgnum, int offset,
+static inline enum ec_error_list isl9241_read(int chgnum, int offset,
 					      int *value)
 {
 	return i2c_read16(chg_chips[chgnum].i2c_port,
@@ -68,7 +68,7 @@ inline enum ec_error_list isl9241_read(int chgnum, int offset,
 			  offset, value);
 }
 
-inline enum ec_error_list isl9241_write(int chgnum, int offset,
+static inline enum ec_error_list isl9241_write(int chgnum, int offset,
 					       int value)
 {
 	return i2c_write16(chg_chips[chgnum].i2c_port,
@@ -304,21 +304,15 @@ static enum ec_error_list isl9241_post_init(int chgnum)
 	return EC_SUCCESS;
 }
 
-__overridable int isl9241_update_learn_mode(int chgnum, int enable)
-{
-	return isl9241_update(chgnum, ISL9241_REG_CONTROL1,
-			      ISL9241_CONTROL1_LEARN_MODE,
-			      (enable) ? MASK_SET : MASK_CLR);
-}
-
 static enum ec_error_list isl9241_discharge_on_ac(int chgnum, int enable)
 {
 	int rv;
 
 	mutex_lock(&control1_mutex);
 
-	rv = isl9241_update_learn_mode(chgnum, enable);
-
+	rv = isl9241_update(chgnum, ISL9241_REG_CONTROL1,
+			    ISL9241_CONTROL1_LEARN_MODE,
+			    (enable) ? MASK_SET : MASK_CLR);
 	if (!rv)
 		learn_mode = enable;
 
