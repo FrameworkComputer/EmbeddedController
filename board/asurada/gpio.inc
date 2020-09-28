@@ -60,8 +60,6 @@ GPIO_INT(WP,                 PIN(I, 4), GPIO_INT_BOTH,
 GPIO_INT(SPI0_CS,            PIN(M, 5), GPIO_INT_FALLING,
          spi_event)        /* SPI slave Chip Select -- AP_SPI_EC_CS_L */
 GPIO_INT(X_EC_GPIO2,         PIN(B, 2), GPIO_ODR_HIGH, x_ec_interrupt)
-GPIO_INT(USB_C0_MUX_INT_L,   PIN(M, 3), GPIO_INT_FALLING | GPIO_PULL_UP,
-         it5205h_sbu_interrupt)
 
 /* Power Sequencing Signals */
 GPIO(EC_PMIC_EN_ODL,         PIN(D, 0), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
@@ -123,7 +121,7 @@ ALTERNATE(PIN_MASK(B, 0x03), 1, MODULE_UART, 0) /* EC to Servo */
 ALTERNATE(PIN_MASK(A, 0x07), 1, MODULE_PWM, 0) /* PWM 0~2 */
 
 /* ADC */
-ALTERNATE(PIN_MASK(I, 0xEF), 0, MODULE_ADC, 0) /* ADC 0,1,2,3,5,6,7 */
+ALTERNATE(PIN_MASK(I, 0x4F), 0, MODULE_ADC, 0) /* ADC 0,1,2,3,6 */
 
 /* SPI */
 ALTERNATE(PIN_MASK(M, 0x33), 0, MODULE_SPI, 0) /* SPI */

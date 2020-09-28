@@ -122,7 +122,6 @@
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_PD_VBUS_DETECT_PPC
-#define CONFIG_USB_PD_VBUS_MEASURE_CHARGER
 #define CONFIG_USB_PID 0x5566  /* TODO: update PID */
 #define CONFIG_USB_POWER_DELIVERY
 
@@ -169,10 +168,6 @@
 
 #define CONFIG_MAG_BMI_BMM150
 #define CONFIG_MAG_CALIBRATE
-
-#define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
-#define CONFIG_TEMP_SENSOR
-#define CONFIG_THERMISTOR
 
 #define ALS_COUNT 1
 #define CONFIG_ALS_TCS3400
@@ -239,13 +234,11 @@ enum pwm_channel {
 };
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_SUBPMIC, /* ADC 0 */
+	ADC_VBUS,                /* ADC 0 */
 	ADC_BOARD_ID_0,          /* ADC 1 */
 	ADC_BOARD_ID_1,          /* ADC 2 */
-	ADC_TEMP_SENSOR_AMB,     /* ADC 3 */
-	ADC_TEMP_SENSOR_CHARGER, /* ADC 5 */
+	ADC_CHARGER_AMON_R,      /* ADC 3 */
 	ADC_CHARGER_PMON,        /* ADC 6 */
-	ADC_TEMP_SENSOR_AP,      /* ADC 7 */
 
 	/* Number of ADC channels */
 	ADC_CH_COUNT,
@@ -274,14 +267,6 @@ enum sensor_id {
 	CLEAR_ALS,
 	RGB_ALS,
 	SENSOR_COUNT,
-};
-
-enum temp_sensor_id {
-	TEMP_SENSOR_SUBPMIC,
-	TEMP_SENSOR_AMB,
-	TEMP_SENSOR_CHARGER,
-	TEMP_SENSOR_AP,
-	TEMP_SENSOR_COUNT
 };
 
 void board_reset_pd_mcu(void);
