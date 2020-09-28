@@ -28,6 +28,9 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr */
 
+/* DAC for PSYS */
+#define CONFIG_DAC
+
 /* LED */
 #define CONFIG_LED_POWER_LED
 #define CONFIG_LED_ONOFF_STATES
