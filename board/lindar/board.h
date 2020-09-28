@@ -25,10 +25,22 @@
 
 /* Keyboard features */
 
-/* Sensors not supported*/
-#undef CONFIG_ACCEL_FIFO
-#undef CONFIG_TABLET_MODE
-#undef CONFIG_MKBP_EVENT
+/* Sensors */
+#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
+#define CONFIG_ACCEL_LIS2DE             /* Lid accel */
+#define CONFIG_ACCELGYRO_LSM6DSM        /* Base accel */
+
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK \
+	BIT(LID_ACCEL)
+
+#define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_UPDATE
+#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
+
+#define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_PORT_MAX_COUNT			2
@@ -82,6 +94,7 @@
  * which purpose.
  */
 #define GPIO_AC_PRESENT			GPIO_ACOK_OD
+#define GPIO_EC_INT_L			GPIO_EC_PCH_INT_ODL
 #define GPIO_EN_PP5000			GPIO_EN_PP5000_A
 #define GPIO_ENTERING_RW		GPIO_EC_ENTERING_RW
 #define GPIO_LID_OPEN			GPIO_EC_LID_OPEN
@@ -102,9 +115,11 @@
 #define GPIO_USB_C1_BC12_INT_ODL	GPIO_USB_C1_MIX_INT_ODL
 #define GPIO_VOLUME_UP_L		GPIO_EC_VOLUP_BTN_ODL
 #define GPIO_VOLUME_DOWN_L		GPIO_EC_VOLDN_MUTE_BTN_ODL
+#define GMR_TABLET_MODE_GPIO_L		GPIO_TABLET_MODE_L
 
 /* I2C Bus Configuration */
 #define CONFIG_I2C
+#define I2C_PORT_SENSOR		NPCX_I2C_PORT0_0
 #define I2C_PORT_USB_C0		NPCX_I2C_PORT1_0
 #define I2C_PORT_USB_C1		NPCX_I2C_PORT2_0
 #define I2C_PORT_LIGHTBAR	NPCX_I2C_PORT3_0
@@ -135,6 +150,13 @@ enum pwm_channel {
 	PWM_CH_FAN,
 	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT
+};
+
+enum sensor_id {
+	LID_ACCEL = 0,
+	BASE_ACCEL,
+	BASE_GYRO,
+	SENSOR_COUNT,
 };
 
 enum usbc_port {
