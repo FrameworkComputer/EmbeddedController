@@ -83,8 +83,10 @@ __override bool pd_check_vbus_level(int port, enum vbus_level level)
 
 	if (level == VBUS_SAFE0V)
 		return vbus_voltage < PD_V_SAFE0V_MAX;
-	else
+	else if (level == VBUS_PRESENT)
 		return vbus_voltage > PD_V_SAFE5V_MIN;
+	else
+		return vbus_voltage < PD_V_SINK_DISCONNECT_MAX;
 }
 
 int pd_snk_is_vbus_provided(int port)
