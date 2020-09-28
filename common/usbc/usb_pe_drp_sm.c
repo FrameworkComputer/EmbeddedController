@@ -5281,10 +5281,12 @@ static void pe_vdm_response_entry(int port)
 		func = svdm_rsp.enter_mode;
 		break;
 	case CMD_DP_STATUS:
-		func = svdm_rsp.amode->status;
+		if (svdm_rsp.amode)
+			func = svdm_rsp.amode->status;
 		break;
 	case CMD_DP_CONFIG:
-		func = svdm_rsp.amode->config;
+		if (svdm_rsp.amode)
+			func = svdm_rsp.amode->config;
 		break;
 	case CMD_EXIT_MODE:
 		vdo_opos = PD_VDO_OPOS(rx_payload[0]);
