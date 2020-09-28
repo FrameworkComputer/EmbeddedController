@@ -251,6 +251,8 @@ static const uint16_t MT6360_LDO5_VOSEL_TABLE[8] = {
 };
 
 static const uint16_t MT6360_LDO6_VOSEL_TABLE[16] = {
+	[0x0] = 500,
+	[0x1] = 600,
 	[0x2] = 700,
 	[0x3] = 800,
 	[0x4] = 900,
