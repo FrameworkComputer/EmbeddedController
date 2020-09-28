@@ -42,96 +42,6 @@
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#ifdef HAS_TASK_MOTIONSENSE
-
-/* Motion sensors */
-static struct mutex g_lid_mutex;
-static struct mutex g_base_mutex;
-
-/* sensor private data */
-static struct kionix_accel_data g_kx022_data;
-static struct bmi_drv_data_t g_bmi160_data;
-
-/* TODO(gcc >= 5.0) Remove the casts to const pointer at rot_standard_ref */
-struct motion_sensor_t motion_sensors[] = {
-	[LID_ACCEL] = {
-	 .name = "Lid Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_KX022,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &kionix_accel_drv,
-	 .mutex = &g_lid_mutex,
-	 .drv_data = &g_kx022_data,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
-	 .rot_standard_ref = NULL,
-	 .default_range = 2, /* g, enough for laptop. */
-	 .min_frequency = KX022_ACCEL_MIN_FREQ,
-	 .max_frequency = KX022_ACCEL_MAX_FREQ,
-	 .config = {
-		 /* EC use accel for angle detection */
-		 [SENSOR_CONFIG_EC_S0] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 100,
-		 },
-		/* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-		},
-	 },
-	},
-
-	[BASE_ACCEL] = {
-	 .name = "Base Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &bmi160_drv,
-	 .mutex = &g_base_mutex,
-	 .drv_data = &g_bmi160_data,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-	 .default_range = 2, /* g, enough for laptop */
-	 .rot_standard_ref = NULL,
-	 .min_frequency = BMI_ACCEL_MIN_FREQ,
-	 .max_frequency = BMI_ACCEL_MAX_FREQ,
-	 .config = {
-		 /* EC use accel for angle detection */
-		 [SENSOR_CONFIG_EC_S0] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 100,
-		 },
-		 /* EC use accel for angle detection */
-		 [SENSOR_CONFIG_EC_S3] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-		 },
-	 },
-	},
-
-	[BASE_GYRO] = {
-	 .name = "Base Gyro",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
-	 .type = MOTIONSENSE_TYPE_GYRO,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &bmi160_drv,
-	 .mutex = &g_base_mutex,
-	 .drv_data = &g_bmi160_data,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = NULL,
-	 .min_frequency = BMI_GYRO_MIN_FREQ,
-	 .max_frequency = BMI_GYRO_MAX_FREQ,
-	},
-};
-
-unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-
-#endif /* HAS_TASK_MOTIONSENSE */
-
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
@@ -361,9 +271,6 @@ static void board_remap_gpio(void)
 
 static void setup_fw_config(void)
 {
-	/* Enable Gyro interrupts */
-	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
-
 	setup_mux();
 
 	board_remap_gpio();

@@ -259,12 +259,14 @@
 /* Thermal */
 #define CONFIG_TEMP_SENSOR_SB_TSI
 
+#ifdef HAS_TASK_MOTIONSENSE
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
 /* FIFO size is a power of 2. */
 #define CONFIG_ACCEL_FIFO_SIZE 256
 /* Depends on how fast the AP boots and typical ODRs. */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
+#endif
 
 /* Audio */
 #define CONFIG_AUDIO_CODEC
