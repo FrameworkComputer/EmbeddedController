@@ -472,6 +472,15 @@ static int board_ps8818_mux_set(const struct usb_mux *me,
 					PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
+
+		/* Set the RX input termination */
+		rv = ps8818_i2c_field_update8(me,
+					PS8818_REG_PAGE1,
+					PS8818_REG1_RX_PHY,
+					PS8818_RX_INPUT_TERM_MASK,
+					ZORK_PS8818_RX_INPUT_TERM);
+		if (rv)
+			return rv;
 	}
 
 	/* DP specific config */
