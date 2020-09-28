@@ -412,16 +412,17 @@
 #define GPIO_PCH_RSMRST_L   GPIO_EC_RSMRST_L
 #define GPIO_CPU_PROCHOT    GPIO_VCOUT1_PROCHOT_L
 #define GPIO_LID_OPEN       GPIO_LID_SW_L
-#define GPIO_ENABLE_TOUCHPAD    GPIO_EC_KBL_PWR_EN
 #define GPIO_ENABLE_BACKLIGHT   GPIO_EC_BKOFF_L
 
 /* SMBus signals */
 #define GPIO_I2C_1_SDA      GPIO_EC_SMB_SDA1
 #define GPIO_I2C_1_SCL      GPIO_EC_SMB_CLK1
-#define GPIO_I2C_2_SDA      GPIO_EC_I2C02_PD_SDA
-#define GPIO_I2C_2_SCL      GPIO_EC_I2C02_PD_CLK
+#define GPIO_I2C_2_SDA      GPIO_EC_I2C_3_SDA
+#define GPIO_I2C_2_SCL      GPIO_EC_I2C_3_SCL
 #define GPIO_I2C_3_SDA      GPIO_EC_SMB_SDA3
 #define GPIO_I2C_3_SCL      GPIO_EC_SMB_CLK3
+#define GPIO_I2C_6_SDA      GPIO_EC_I2C02_PD_SDA
+#define GPIO_I2C_6_SCL      GPIO_EC_I2C02_PD_CLK
 
 #define CONFIG_KEYBOARD_IRQ_GPIO GPIO_EC_KEYBOARD_IRQ
 
@@ -608,7 +609,10 @@ void thermal_sensor_interrupt(enum gpio_signal signal);
 void soc_signal_interrupt(enum gpio_signal signal);
 
 /* chassis function */
-void chassis_control_interrupt(enum gpio_signal signa);
+void chassis_control_interrupt(enum gpio_signal signal);
+
+/* Touchpad process */
+void touchpad_interrupt(enum gpio_signal signal);
 
 /* power sequence */
 int board_chipset_power_on(void);

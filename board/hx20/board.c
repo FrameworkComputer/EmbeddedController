@@ -297,8 +297,9 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
  */
 const struct i2c_port_t i2c_ports[]  = {
 	{"batt",     MCHP_I2C_PORT1, 100,  GPIO_I2C_1_SDA, GPIO_I2C_1_SCL},
-	{"pd",       MCHP_I2C_PORT2, 100,  GPIO_I2C_2_SDA, GPIO_I2C_2_SCL},
+	{"touchpd",  MCHP_I2C_PORT2, 100,  GPIO_I2C_2_SDA, GPIO_I2C_2_SCL},
 	{"sensors",  MCHP_I2C_PORT3, 100,  GPIO_I2C_3_SDA, GPIO_I2C_3_SCL},
+	{"pd",       MCHP_I2C_PORT6, 100,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -309,7 +310,8 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT1,
 	(MCHP_I2C_CTRL2 << 8) + MCHP_I2C_PORT2,
-	(MCHP_I2C_CTRL3 << 8) + MCHP_I2C_PORT3
+	(MCHP_I2C_CTRL3 << 8) + MCHP_I2C_PORT3,
+	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT6
 };
 
 /*
@@ -808,13 +810,9 @@ static void board_chipset_resume(void)
 	CPRINTS("MEC1701_EVG HOOK_CHIPSET_RESUME");
 	trace0(0, HOOK, 0, "HOOK_CHIPSET_RESUME - board_chipset_resume");
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
+	gpio_set_level(GPIO_EC_MUTE_L, 1);
 	gpio_set_level(GPIO_EC_WLAN_EN,1);
 	gpio_set_level(GPIO_EC_WL_OFF_L,1);
-#if 0 /* TODO not implemented in gpio.inc */
-	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 1);
-	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 1);
-#endif
-
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 	     MOTION_SENSE_HOOK_PRIO-1);
@@ -825,6 +823,7 @@ static void board_chipset_suspend(void)
 	CPRINTS("MEC1701 HOOK_CHIPSET_SUSPEND - called board_chipset_resume");
 	trace0(0, HOOK, 0, "HOOK_CHIPSET_SUSPEND - board_chipset_suspend");
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
+	gpio_set_level(GPIO_EC_MUTE_L, 0);
 	gpio_set_level(GPIO_EC_WLAN_EN,1);
 	gpio_set_level(GPIO_EC_WL_OFF_L,1);
 #if 0 /* TODO not implemented in gpio.inc */
@@ -1160,6 +1159,13 @@ void chassis_control_interrupt(enum gpio_signal signal)
 {
 	/* TODO: implement c cover open/close behavior
 	 * When c cover close, drop the EC_ON to tune off EC power
+	 */
+}
+
+void touchpad_interrupt(enum gpio_signal signal)
+{
+	/* TODO: implement touchpad process
+	 *
 	 */
 }
 
