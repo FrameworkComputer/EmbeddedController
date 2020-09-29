@@ -102,10 +102,14 @@
 
 /* Common charger defines */
 #define CONFIG_CHARGE_MANAGER
-#define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_INPUT_CURRENT		512
+
+/*
+ * Hardware based charge ramp is broken in the ISL9241 (b/169350714).
+ */
+#define CONFIG_CHARGE_RAMP_SW
 #define CONFIG_CHARGER_ISL9241
 
 #define CONFIG_USB_CHARGER

@@ -8,6 +8,7 @@
 #include "button.h"
 #include "cbi_ec_fw_config.h"
 #include "charge_manager.h"
+#include "charge_ramp.h"
 #include "charge_state.h"
 #include "cros_board_info.h"
 #include "driver/charger/isl9241.h"
@@ -357,3 +358,22 @@ static void cbi_init(void)
 	board_cbi_init();
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_FIRST);
+
+/**
+ * Return if VBUS is too low
+ */
+int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
+{
+	int voltage;
+
+	if (charger_get_vbus_voltage(port, &voltage))
+		voltage = 0;
+
+	/*
+	 * For legacy BC1.2 charging with CONFIG_CHARGE_RAMP_SW, ramp up input
+	 * current until voltage drops to the minimum input voltage of the
+	 * charger, 4.096V.
+	 */
+	return voltage < ISL9241_BC12_MIN_VOLTAGE;
+}
+
