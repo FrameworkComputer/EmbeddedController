@@ -291,10 +291,9 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
  * MCHP EVB connected to KBL RVP3
  */
 const struct i2c_port_t i2c_ports[]  = {
-	{"pch",      MCHP_I2C_PORT0, 100,  GPIO_I2C_1_SDA, GPIO_I2C_1_SCL},
-	{"batt",     MCHP_I2C_PORT1, 100,  GPIO_EC_SMB_CK1, GPIO_EC_SMB_DA1},
-	{"pd",      MCHP_I2C_PORT2, 100,  GPIO_EC_I2C02_PD_CLK, GPIO_EC_I2C02_PD_SDA},
-	{"sensors",  MCHP_I2C_PORT3, 100,  GPIO_EC_SMB05_CLK, GPIO_EC_SMB05_DATA},
+	{"batt",     MCHP_I2C_PORT1, 100,  GPIO_I2C_1_SDA, GPIO_I2C_1_SCL},
+	{"pd",       MCHP_I2C_PORT2, 100,  GPIO_I2C_2_SDA, GPIO_I2C_2_SCL},
+	{"sensors",  MCHP_I2C_PORT3, 100,  GPIO_I2C_3_SDA, GPIO_I2C_3_SCL},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -303,7 +302,6 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
  * Ports may map to the same controller.
  */
 const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
-	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT0,
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT1,
 	(MCHP_I2C_CTRL2 << 8) + MCHP_I2C_PORT2,
 	(MCHP_I2C_CTRL3 << 8) + MCHP_I2C_PORT3
@@ -1135,6 +1133,13 @@ void thermal_sensor_interrupt(enum gpio_signal signal)
 void soc_signal_interrupt(enum gpio_signal signal)
 {
 	/* TODO: EC BKOFF signal is related soc enable panel siganl */
+}
+
+void chassis_control_interrupt(enum gpio_signal signal)
+{
+	/* TODO: implement c cover open/close behavior
+	 * When c cover close, drop the EC_ON to tune off EC power
+	 */
 }
 
 int board_get_version(void)
