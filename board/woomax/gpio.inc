@@ -26,6 +26,7 @@ GPIO_INT(VOLDN_BTN_ODL,		PIN(A, 6), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interru
 GPIO_INT(VOLUP_BTN_ODL,		PIN(9, 5), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
 GPIO_INT(6AXIS_INT_L,		PIN(A, 0), GPIO_INT_FALLING | GPIO_PULL_UP,	bmi160_interrupt)
 GPIO_INT(TABLET_MODE_L,		PIN(4, 4), GPIO_INT_BOTH,			gmr_tablet_switch_isr)
+GPIO_INT(DP1_HPD_EC_IN,		PIN(7, 5), GPIO_INT_BOTH,			hdmi_hpd_interrupt)
 
 /* GPIO_INT_BOTH is required for PSL wake from hibernate, but we don't need an interrupt handler. */
 GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
@@ -50,7 +51,6 @@ GPIO(USB_C0_HPD,		PIN(F, 5), GPIO_OUT_LOW)			/* C0 DP Hotplug Detect */
 GPIO(USB_C0_IN_HPD,		PIN(7, 3), GPIO_OUT_LOW)			/* C0 IN Hotplug Detect */
 GPIO(EC_DP1_HPD,		PIN(F, 4), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
 GPIO(DP2_HPD,			PIN(C, 1), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
-GPIO(DP1_HPD_EC_IN,		PIN(7, 5), GPIO_INPUT)				/* C1 IN Hotplug Detect */
 GPIO(EC_H1_PACKET_MODE,		PIN(8, 6), GPIO_OUT_LOW)			/* H1 Packet Mode */
 GPIO(EN_PWR_TOUCHPAD_PS2,	PIN(C, 2), GPIO_INPUT)				/* Touchpad Power */
 

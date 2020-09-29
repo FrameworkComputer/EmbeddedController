@@ -213,6 +213,7 @@ static void board_chipset_resume(void)
 {
 	int rv;
 	int retry;
+	int hpd = gpio_get_level(GPIO_DP1_HPD_EC_IN);
 
 	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 1);
 	ioex_set_level(IOEX_HDMI_DATA_EN_DB, 1);
@@ -237,7 +238,7 @@ static void board_chipset_resume(void)
 		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
 		pi3hdx1204_enable(I2C_PORT_TCPC1,
 				  PI3HDX1204_I2C_ADDR_FLAGS,
-				  1);
+				  hpd);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
@@ -340,6 +341,10 @@ static void setup_fw_config(void)
 {
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
+
+	/* Enable DP1_HPD_EC_IN interrupt */
+	if (ec_config_has_hdmi_retimer_pi3hdx1204())
+		gpio_enable_interrupt(GPIO_DP1_HPD_EC_IN);
 
 	setup_mux();
 }
@@ -507,4 +512,21 @@ static void keyboard_init(void)
 	keyscan_config.actual_key_mask[14] = 0xff;
 }
 DECLARE_HOOK(HOOK_INIT, keyboard_init, HOOK_PRIO_INIT_I2C + 1);
+
+static void hdmi_hpd_handler(void)
+{
+	int hpd = gpio_get_level(GPIO_DP1_HPD_EC_IN);
+
+	pi3hdx1204_enable(I2C_PORT_TCPC1,
+			  PI3HDX1204_I2C_ADDR_FLAGS,
+			  chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
+			  && hpd);
+}
+DECLARE_DEFERRED(hdmi_hpd_handler);
+
+void hdmi_hpd_interrupt(enum gpio_signal signal)
+{
+	/* Debounce 2 msec */
+	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
+}
 
