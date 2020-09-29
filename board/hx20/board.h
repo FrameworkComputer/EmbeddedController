@@ -287,6 +287,9 @@
 /* common software SHA256 required by vboot and rollback */
 #define CONFIG_SHA256
 
+/* Enable EMI0 Region 1 */
+#define CONFIG_EMI_REGION1
+
 /*
  * Enable MCHP SHA256 hardware accelerator module.
  * API is same as software SHA256 but prefixed with "chip_"

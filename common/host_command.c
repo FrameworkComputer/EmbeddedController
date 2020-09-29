@@ -12,6 +12,7 @@
 #include "host_command.h"
 #include "link_defs.h"
 #include "lpc.h"
+#include "lpc_chip.h"
 #include "shared_mem.h"
 #include "system.h"
 #include "task.h"
@@ -94,6 +95,17 @@ uint8_t *host_get_memmap(int offset)
 	return host_memmap + offset;
 #endif
 }
+
+#ifdef CONFIG_EMI_REGION1
+uint8_t *host_get_customer_memmap(int offset)
+{
+#ifdef CONFIG_HOSTCMD_X86
+	return lpc_get_customer_memmap_range() + offset;
+#else
+	return host_memmap + offset;
+#endif
+}
+#endif
 
 test_mockable void host_send_response(struct host_cmd_handler_args *args)
 {
@@ -411,6 +423,9 @@ static void host_command_init(void)
 	host_get_memmap(EC_MEMMAP_ID)[1] = 'C';
 	*host_get_memmap(EC_MEMMAP_ID_VERSION) = 1;
 	*host_get_memmap(EC_MEMMAP_EVENTS_VERSION) = 1;
+#ifdef CONFIG_EMI_REGION1
+	*host_get_customer_memmap(0x20) = 'A'; /* for testing */
+#endif
 
 #ifdef CONFIG_HOSTCMD_EVENTS
 	host_set_single_event(EC_HOST_EVENT_INTERFACE_READY);
