@@ -48,6 +48,8 @@ ifneq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),npcx5 npcx7))
 chip-y+=lct.o
 endif
 
+chip-$(CONFIG_SHA256_HW_ACCELERATE)+=sha256_chip.o
+
 # spi monitor program fw for openocd and UUT(UART Update Tool)
 npcx-monitor-fw=chip/npcx/spiflashfw/npcx_monitor
 npcx-monitor-fw-bin=${out}/$(npcx-monitor-fw).bin

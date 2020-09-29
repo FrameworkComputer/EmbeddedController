@@ -67,6 +67,9 @@ void vboot_hash_abort(void)
 		want_abort = 0;
 		data_size = 0;
 		hash = NULL;
+#ifdef CONFIG_SHA256_HW_ACCELERATE
+		SHA256_abort(&ctx);
+#endif
 	}
 }
 

@@ -124,7 +124,13 @@ common-$(CONFIG_ONLINE_CALIB)+=stillness_detector.o kasa.o math_util.o \
 	mat44.o vec3.o newton_fit.o accel_cal.o online_calibration.o \
 	mkbp_event.o mag_cal.o math_util.o mat33.o gyro_cal.o gyro_still_det.o
 common-$(CONFIG_SHA1)+= sha1.o
-common-$(CONFIG_SHA256)+=sha256.o
+ifeq ($(CONFIG_SHA256),y)
+# use the standard software SHA256 lib if the chip cannot support SHA256
+# hardware accelerator.
+ifeq ($(CONFIG_SHA256_HW_ACCELERATE),)
+common-y+=sha256.o
+endif
+endif
 common-$(CONFIG_SOFTWARE_CLZ)+=clz.o
 common-$(CONFIG_SOFTWARE_CTZ)+=ctz.o
 common-$(CONFIG_CMD_SPI_XFER)+=spi_commands.o
@@ -160,7 +166,14 @@ common-$(CONFIG_USB_UPDATE)+=usb_update.o update_fw.o
 common-$(CONFIG_USBC_PPC)+=usbc_ppc.o
 common-$(CONFIG_VBOOT_EFS)+=vboot/vboot.o
 common-$(CONFIG_VBOOT_EFS2)+=vboot/efs2.o
-common-$(CONFIG_VBOOT_HASH)+=sha256.o vboot_hash.o
+ifeq ($(CONFIG_VBOOT_HASH),y)
+common-y+=vboot_hash.o
+# use the standard software SHA256 lib if the chip cannot support SHA256
+# hardware accelerator.
+ifeq ($(CONFIG_SHA256_HW_ACCELERATE),)
+common-y+=sha256.o
+endif
+endif
 common-$(CONFIG_VOLUME_BUTTONS)+=button.o
 common-$(CONFIG_VSTORE)+=vstore.o
 common-$(CONFIG_WEBUSB_URL)+=webusb_desc.o

@@ -166,11 +166,20 @@ void clock_turbo(void)
 #elif NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 void clock_turbo(void)
 {
-	/*
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+	/* For NPCX9:
+	 * Increase CORE_CLK (CPU) as the same as OSC_CLK. Since
+	 * CORE_CLK > 66MHz, we also need to set FIUDIV as 1 but
+	 * can keep AHB6DIV to 0.
+	 */
+	NPCX_HFCGP = 0x00;
+#else
+	/* For NPCX7:
 	 * Increase CORE_CLK (CPU) as the same as OSC_CLK. Since
 	 * CORE_CLK > 66MHz, we also need to set AHB6DIV and FIUDIV as 1.
 	 */
 	NPCX_HFCGP = 0x01;
+#endif
 	NPCX_HFCBCD = BIT(4);
 }
 

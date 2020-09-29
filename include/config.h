@@ -3334,6 +3334,9 @@
 /* Support computing of other hash sizes (without the VBOOT code) */
 #undef CONFIG_SHA256
 
+/* Compute SHA256 by using chip's hardware accelerator */
+#undef CONFIG_SHA256_HW_ACCELERATE
+
 /* Unroll some loops in SHA256_transform for better performance. */
 #undef CONFIG_SHA256_UNROLLED
 

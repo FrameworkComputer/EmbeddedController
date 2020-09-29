@@ -13,6 +13,13 @@
 #define SHA256_DIGEST_SIZE 32
 #define SHA256_BLOCK_SIZE 64
 
+#ifdef CONFIG_SHA256_HW_ACCELERATE
+/*
+ * The chip's header file must implement the SHA256 context structure and
+ * specific functions for its hardware accelerator module.
+ */
+#include "sha256_chip.h"
+#else
 /* SHA256 context */
 struct sha256_ctx {
 	uint32_t h[8];
@@ -21,6 +28,7 @@ struct sha256_ctx {
 	uint8_t block[2 * SHA256_BLOCK_SIZE];
 	uint8_t buf[SHA256_DIGEST_SIZE];  /* Used to store the final digest. */
 };
+#endif
 
 void SHA256_init(struct sha256_ctx *ctx);
 void SHA256_update(struct sha256_ctx *ctx, const uint8_t *data, uint32_t len);
