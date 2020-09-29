@@ -631,9 +631,18 @@ void __ram_code mutex_unlock(struct mutex *mtx)
 	uint32_t waiters;
 	task_ *tsk = current_task;
 
-	waiters = mtx->waiters;
-	/* give back the lock */
-	mtx->lock = 0;
+	/*
+	 * we need to read to waiters after giving the lock back
+	 * otherwise we might miss a waiter between the two calls.
+	 *
+	 * prevent compiler reordering
+	 */
+	asm volatile(
+		/* give back the lock */
+		"movi %0, #0\n\t"
+		"lwi %1, [%2]\n\t"
+		: "=&r"(mtx->lock), "=&r"(waiters)
+		: "r"(&mtx->waiters));
 
 	while (waiters) {
 		task_id_t id = __fls(waiters);
