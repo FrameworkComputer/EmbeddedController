@@ -20,6 +20,7 @@
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
+#include "cypress5525.h"
 #include "driver/als_opt3001.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
@@ -1118,11 +1119,6 @@ void psensor_interrupt(enum gpio_signal signal)
 void soc_hid_interrupt(enum gpio_signal signal)
 {
 	/* TODO: implement hid function */
-}
-
-void pd_chip_interrupt(enum gpio_signal signal)
-{
-	/* TODO: implement cypress CCG5 function */
 }
 
 void thermal_sensor_interrupt(enum gpio_signal signal)
