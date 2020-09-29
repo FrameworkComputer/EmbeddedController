@@ -88,16 +88,18 @@ int button_disable_gpio(enum button button_type);
 void button_interrupt(enum gpio_signal signal);
 
 /*
- * determined which buttons connected ADC
+ * Is this button using ADC voltages to detect state?
  *
- * @param signal	Signal which triggered the interrupt.
+ * @param gpio	The GPIO of interest.
+ * Returns 1 if button state is detected by ADC, 0 if not.
  */
 int button_is_adc_detected(enum gpio_signal gpio);
 
 /*
- * distinct which buttons determined by ADC voltage
+ * Sample the ADC voltage and convert to a physical pressed/not pressed state.
  *
- * @param signal	Signal which triggered the interrupt.
+ * @param gpio	ADC detected GPIO.
+ * Returns the physical state of the button.
  */
 int adc_to_physical_value(enum gpio_signal gpio);
 
