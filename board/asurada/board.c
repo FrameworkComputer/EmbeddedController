@@ -96,7 +96,7 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Wake-up pins for hibernate */
 enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_AC_PRESENT_PLACEHOLDER,
+	GPIO_AC_PRESENT,
 	GPIO_LID_OPEN,
 	GPIO_POWER_BUTTON_L,
 };
@@ -143,6 +143,8 @@ static void board_init(void)
 {
 	/* For Rev0 only. Set GPM0~6 1.8V input. */
 	IT83XX_GPIO_GCR30 |= BIT(4);
+
+	gpio_enable_interrupt(GPIO_AC_PRESENT);
 
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
 
@@ -605,41 +607,12 @@ int board_regulator_get_voltage(uint32_t index, uint32_t *voltage_mv)
 	return mt6360_regulator_get_voltage(id, voltage_mv);
 }
 
-/* gpio */
-
-/* TODO(b/163098341): Remove these after rev0 deprecated. */
-enum gpio_signal GPIO_AC_PRESENT = GPIO_AC_PRESENT_PLACEHOLDER;
-
-static void board_gpio_init(void)
-{
-	if (board_get_version() == 0)
-		GPIO_AC_PRESENT = GPIO_EC_GPM2;
-	else
-		GPIO_AC_PRESENT = GPIO_EC_GPE5;
-
-	/* Set wake pins to the correct one */
-	hibernate_wake_pins[0] = GPIO_AC_PRESENT;
-
-	/* Manually run extpower_init() again */
-	gpio_enable_interrupt(GPIO_AC_PRESENT);
-	extpower_interrupt(GPIO_AC_PRESENT);
-}
-DECLARE_HOOK(HOOK_INIT, board_gpio_init, HOOK_PRIO_INIT_ADC + 1);
-
 /* Sensor */
 static struct mutex g_base_mutex;
 static struct mutex g_lid_mutex;
 
 static struct bmi_drv_data_t g_bmi160_data;
 static struct stprivate_data g_lis2dwl_data;
-
-/* Matrix to rotate accelerometer into standard reference frame */
-/* for rev 0 */
-static const mat33_fp_t base_standard_ref_rev0 = {
-	{FLOAT_TO_FP(-1), 0, 0},
-	{0, FLOAT_TO_FP(1), 0},
-	{0, 0, FLOAT_TO_FP(-1)},
-};
 
 /* Matrix to rotate accelrator into standard reference frame */
 /* TODO: update the matrix after we have assembled unit */
@@ -660,16 +633,24 @@ static struct als_drv_data_t g_tcs3400_data = {
 	},
 };
 
+#ifdef BOARD_ASURADA
+/* Matrix to rotate accelerometer into standard reference frame */
+/* for rev 0 */
+static const mat33_fp_t base_standard_ref_rev0 = {
+	{FLOAT_TO_FP(-1), 0, 0},
+	{0, FLOAT_TO_FP(1), 0},
+	{0, 0, FLOAT_TO_FP(-1)},
+};
+
 static void update_rotation_matrix(void)
 {
-	if (board_get_version() == 0) {
-		motion_sensors[BASE_ACCEL].rot_standard_ref =
-			&base_standard_ref_rev0;
-		motion_sensors[BASE_GYRO].rot_standard_ref =
-			&base_standard_ref_rev0;
-	}
+	motion_sensors[BASE_ACCEL].rot_standard_ref =
+		&base_standard_ref_rev0;
+	motion_sensors[BASE_GYRO].rot_standard_ref =
+		&base_standard_ref_rev0;
 }
 DECLARE_HOOK(HOOK_INIT, update_rotation_matrix, HOOK_PRIO_INIT_ADC + 1);
+#endif
 
 static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 	/*
