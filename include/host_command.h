@@ -151,6 +151,10 @@ typedef uint32_t host_event_t;
  */
 uint8_t *host_get_memmap(int offset);
 
+#ifdef CONFIG_EMI_REGION1
+uint8_t *host_get_customer_memmap(int offset);
+#endif
+
 /**
  * Process a host command and return its response
  *

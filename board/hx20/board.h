@@ -156,24 +156,21 @@
 /* #define CONFIG_CHARGE_MANAGER */
 /* #define CONFIG_CHARGE_RAMP_SW */
 
+#undef CONFIG_HOSTCMD_LOCATE_CHIP
 
-/* #define CONFIG_CHARGER */
+#define CONFIG_CHARGER
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
 
-/* #define CONFIG_CHARGER_DISCHARGE_ON_AC */
-/* #define CONFIG_CHARGER_ISL9237 */
-/* #define CONFIG_CHARGER_ILIM_PIN_DISABLED */
-/* #define CONFIG_CHARGER_INPUT_CURRENT 512 */
+/* Charger parameter */
+#define CONFIG_CHARGER_ISL9241
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC 20 /* BOARD_RS1 */
+#define CONFIG_CHARGER_SENSE_RESISTOR 10    /* BOARD_RS2 */
+#define CONFIG_CHARGER_INPUT_CURRENT 512
 
 /*
  * MCHP disable this for Kabylake eSPI bring up
  * #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
  */
-
-/* #define CONFIG_CHARGER_NARROW_VDC */
-/* #define CONFIG_CHARGER_PROFILE_OVERRIDE */
-/* #define CONFIG_CHARGER_SENSE_RESISTOR 10 */
-/* #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20 */
-/* #define CONFIG_CMD_CHARGER_ADC_AMON_BMON */
 
 /* #define CONFIG_CHIPSET_SKYLAKE */
 /* #define CONFIG_CHIPSET_TIGERLAKE */
@@ -255,7 +252,6 @@
 #define CONFIG_USB_PD_DP_HPD_GPIO
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_LOGGING
-#define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_USB_PD_TCPM_TCPCI
 #endif
 /*
@@ -282,18 +278,13 @@
  */
 #define CONFIG_SPI_FLASH_PORT 0
 #define CONFIG_SPI_FLASH
+
 /*
- * Google uses smaller flashes on chromebook boards
- * MCHP SPI test dongle for EVB uses 16MB W25Q128F
- * Configure for smaller flash is OK for testing except
- * for SPI flash lock bit.
+ * MB use W25Q80 SPI ROM
+ * Size : 1M
  */
- #define CONFIG_FLASH_SIZE 524288
- #define CONFIG_SPI_FLASH_W25X40
-/*
- * #define CONFIG_FLASH_SIZE 0x1000000
- * #define CONFIG_SPI_FLASH_W25Q128
- */
+#define CONFIG_FLASH_SIZE 0x100000
+#define CONFIG_SPI_FLASH_W25Q80
 
 /*
  * Enable extra SPI flash and generic SPI
@@ -304,6 +295,9 @@
 
 /* common software SHA256 required by vboot and rollback */
 #define CONFIG_SHA256
+
+/* Enable EMI0 Region 1 */
+#define CONFIG_EMI_REGION1
 
 /*
  * Enable MCHP SHA256 hardware accelerator module.
@@ -373,16 +367,22 @@
 #define WIRELESS_GPIO_WLAN_POWER GPIO_PP3300_WLAN_EN
 #endif
 
-/* LED signals */
-#define GPIO_BAT_LED_RED GPIO_BATT_LOW_LED_L
-#define GPIO_BAT_LED_GREEN GPIO_BATT_CHG_LED_L
-
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
+
+
+#define CONFIG_WP_ACTIVE_HIGH
+
+#ifdef CHIP_FAMILY_MEC17XX
+/* LED signals */
+#define GPIO_BAT_LED_RED GPIO_BATT_LOW_LED_L
+#define GPIO_BAT_LED_GREEN GPIO_BATT_CHG_LED_L
+
+/* Power signals */
 #define GPIO_AC_PRESENT		GPIO_VCIN1_AC_IN
 #define GPIO_POWER_BUTTON_L	GPIO_ON_OFF
 #define GPIO_PCH_SLP_SUS_L	GPIO_SLP_SUS_L
@@ -395,6 +395,38 @@
 #define GPIO_LID_OPEN		GPIO_LID_SW_L
 #define GPIO_ENABLE_TOUCHPAD	GPIO_EC_KBL_PWR_EN
 #define GPIO_ENABLE_BACKLIGHT	GPIO_EC_BKOFF_L
+
+#else
+/* LED signals */
+#define GPIO_BAT_LED_RED    GPIO_BATT_LOW_LED_L
+#define GPIO_BAT_LED_GREEN  GPIO_BATT_CHG_LED_L
+
+/* Power signals */
+#define GPIO_AC_PRESENT     GPIO_ADP_IN
+#define GPIO_POWER_BUTTON_L GPIO_ON_OFF_BTN_L
+#define GPIO_PCH_SLP_SUS_L  GPIO_SLP_SUS_L
+#define GPIO_PCH_SLP_S3_L   GPIO_PM_SLP_S3_L
+#define GPIO_PCH_SLP_S4_L   GPIO_PM_SLP_S4_L
+#define GPIO_PCH_PWRBTN_L   GPIO_PBTN_OUT_L
+#define GPIO_PCH_ACOK       GPIO_AC_PRESENT_OUT
+#define GPIO_PCH_RSMRST_L   GPIO_EC_RSMRST_L
+#define GPIO_CPU_PROCHOT    GPIO_VCOUT1_PROCHOT_L
+#define GPIO_LID_OPEN       GPIO_LID_SW_L
+#define GPIO_ENABLE_TOUCHPAD    GPIO_EC_KBL_PWR_EN
+#define GPIO_ENABLE_BACKLIGHT   GPIO_EC_BKOFF_L
+
+/* SMBus signals */
+#define GPIO_I2C_1_SDA      GPIO_EC_SMB_SDA1
+#define GPIO_I2C_1_SCL      GPIO_EC_SMB_CLK1
+#define GPIO_I2C_2_SDA      GPIO_EC_I2C02_PD_SDA
+#define GPIO_I2C_2_SCL      GPIO_EC_I2C02_PD_CLK
+#define GPIO_I2C_3_SDA      GPIO_EC_SMB_SDA3
+#define GPIO_I2C_3_SCL      GPIO_EC_SMB_CLK3
+
+#define CONFIG_KEYBOARD_IRQ_GPIO GPIO_EC_KEYBOARD_IRQ
+
+#endif
+
 
 /* I2C ports */
 #define I2C_CONTROLLER_COUNT	4
@@ -569,14 +601,14 @@ void psensor_interrupt(enum gpio_signal signal);
 /* HID */
 void soc_hid_interrupt(enum gpio_signal signal);
 
-/* PD CHIP */
-void pd_chip_interrupt(enum gpio_signal signal);
-
 /* thermal sensor */
 void thermal_sensor_interrupt(enum gpio_signal signal);
 
 /* SOC */
 void soc_signal_interrupt(enum gpio_signal signal);
+
+/* chassis function */
+void chassis_control_interrupt(enum gpio_signal signa);
 
 /* power sequence */
 int board_chipset_power_on(void);

@@ -20,10 +20,12 @@
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
+#include "cypress5525.h"
 #include "driver/als_opt3001.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/charger/isl9241.h"
 #include "driver/tcpm/tcpci.h"
 #include "extpower.h"
 #include "gpio_chip.h"
@@ -33,6 +35,7 @@
 #include "i2c.h"
 #include "espi.h"
 #include "lpc_chip.h"
+#include "lpc.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "math_util.h"
@@ -293,10 +296,9 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
  * MCHP EVB connected to KBL RVP3
  */
 const struct i2c_port_t i2c_ports[]  = {
-	{"pch",      MCHP_I2C_PORT0, 100,  GPIO_I2C_1_SDA, GPIO_I2C_1_SCL},
-	{"batt",     MCHP_I2C_PORT1, 100,  GPIO_EC_SMB_CK1, GPIO_EC_SMB_DA1},
-	{"pd",      MCHP_I2C_PORT2, 100,  GPIO_EC_I2C02_PD_CLK, GPIO_EC_I2C02_PD_SDA},
-	{"sensors",  MCHP_I2C_PORT3, 100,  GPIO_EC_SMB05_CLK, GPIO_EC_SMB05_DATA},
+	{"batt",     MCHP_I2C_PORT1, 100,  GPIO_I2C_1_SDA, GPIO_I2C_1_SCL},
+	{"pd",       MCHP_I2C_PORT2, 100,  GPIO_I2C_2_SDA, GPIO_I2C_2_SCL},
+	{"sensors",  MCHP_I2C_PORT3, 100,  GPIO_I2C_3_SDA, GPIO_I2C_3_SCL},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -305,7 +307,6 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
  * Ports may map to the same controller.
  */
 const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
-	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT0,
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT1,
 	(MCHP_I2C_CTRL2 << 8) + MCHP_I2C_PORT2,
 	(MCHP_I2C_CTRL3 << 8) + MCHP_I2C_PORT3
@@ -749,6 +750,21 @@ static void enable_input_devices(void)
 	gpio_set_level(GPIO_ENABLE_TOUCHPAD, tp_enable);
 }
 
+#ifdef CONFIG_EMI_REGION1
+
+static void sci_enable(void);
+DECLARE_DEFERRED(sci_enable);
+
+static void sci_enable(void)
+{
+	if (*host_get_customer_memmap(0x00) == 1) {
+	/* when host set EC driver ready flag, EC need to enable SCI */
+		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0xffffffff);
+	} else
+		hook_call_deferred(&sci_enable_data, 250 * MSEC);
+}
+#endif
+
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {
@@ -758,6 +774,9 @@ static void board_chipset_startup(void)
 	gpio_set_level(GPIO_USB1_ENABLE, 1);
 	gpio_set_level(GPIO_USB2_ENABLE, 1);
 	*/ 
+#ifdef CONFIG_EMI_REGION1
+	hook_call_deferred(&sci_enable_data, 250 * MSEC);
+#endif
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
@@ -774,6 +793,9 @@ static void board_chipset_shutdown(void)
 	gpio_set_level(GPIO_USB1_ENABLE, 0);
 	gpio_set_level(GPIO_USB2_ENABLE, 0);
 	*/ 
+#ifdef CONFIG_EMI_REGION1
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
+#endif
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
@@ -1124,11 +1146,6 @@ void soc_hid_interrupt(enum gpio_signal signal)
 	/* TODO: implement hid function */
 }
 
-void pd_chip_interrupt(enum gpio_signal signal)
-{
-	/* TODO: implement cypress CCG5 function */
-}
-
 void thermal_sensor_interrupt(enum gpio_signal signal)
 {
 	/* TODO: implement thermal sensor alert interrupt function */
@@ -1137,6 +1154,13 @@ void thermal_sensor_interrupt(enum gpio_signal signal)
 void soc_signal_interrupt(enum gpio_signal signal)
 {
 	/* TODO: EC BKOFF signal is related soc enable panel siganl */
+}
+
+void chassis_control_interrupt(enum gpio_signal signal)
+{
+	/* TODO: implement c cover open/close behavior
+	 * When c cover close, drop the EC_ON to tune off EC power
+	 */
 }
 
 int board_get_version(void)
@@ -1165,6 +1189,7 @@ struct keyboard_scan_config keyscan_config = {
 		0x0a, 0xff, 0x03, 0xff, 0xff, 0x03, 0xff, 0xff, 0xef  /* full set */
 	},
 };
+
 
 #ifdef CONFIG_KEYBOARD_CUSTOMIZATION_CONBINATION_KEY
 
@@ -1261,3 +1286,12 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 	return EC_ERROR_UNIMPLEMENTED;
 }
 #endif
+
+/* Charger chips */
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL9241_ADDR_FLAGS,
+		.drv = &isl9241_drv,
+	},
+};

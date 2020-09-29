@@ -3407,6 +3407,11 @@
  */
 #undef CONFIG_MCHP_TFDP
 
+/*
+ * Mirochip EMI region 1 enable
+ */
+#undef CONFIG_EMI_REGION1
+
 /*****************************************************************************/
 /* Task config */
 

@@ -45,5 +45,8 @@ void chip_acpi_ec_config(int instance, uint32_t io_base, uint8_t mask);
 void chip_8042_config(uint32_t io_base);
 void chip_emi0_config(uint32_t io_base);
 void chip_port80_config(uint32_t io_base);
+#ifdef CONFIG_EMI_REGION1
+uint8_t *lpc_get_customer_memmap_range(void);
+#endif
 
 #endif /* __CROS_EC_LPC_CHIP_H */
