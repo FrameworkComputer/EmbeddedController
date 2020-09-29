@@ -496,6 +496,12 @@ int FLASH_DMA_CODE flash_physical_erase(int offset, int size)
 	for (; size > 0; size -= FLASH_SECTOR_ERASE_SIZE) {
 		dma_flash_erase(offset, FLASH_CMD_SECTOR_ERASE);
 		offset += FLASH_SECTOR_ERASE_SIZE;
+		/*
+		 * If requested erase size is too large at one time on KGD
+		 * flash, we need to reload watchdog to prevent the reset.
+		 */
+		if (IS_ENABLED(IT83XX_CHIP_FLASH_IS_KGD) && (size > 0x10000))
+			watchdog_reload();
 	}
 	dma_reset_immu((v_addr + v_size) >= IMMU_TAG_INDEX_BY_DEFAULT);
 	/* get the ILM address of a flash offset. */
