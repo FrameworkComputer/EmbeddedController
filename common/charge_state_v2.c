@@ -1601,6 +1601,11 @@ void charger_init(void)
 	/* Manual voltage/current set to off */
 	manual_voltage = -1;
 	manual_current = -1;
+	/*
+	 * Other tasks read the params like state_of_charge at the beginning of
+	 * their tasks. Make them ready first.
+	 */
+	battery_get_params(&curr.batt);
 }
 DECLARE_HOOK(HOOK_INIT, charger_init, HOOK_PRIO_DEFAULT);
 
@@ -1681,7 +1686,6 @@ void charger_task(void *u)
 	 * then use max input current limit so that we can pull as much power
 	 * as needed.
 	 */
-	battery_get_params(&curr.batt);
 	prev_bp = BP_NOT_INIT;
 	curr.desired_input_current = get_desired_input_current(
 			curr.batt.is_present, info);
