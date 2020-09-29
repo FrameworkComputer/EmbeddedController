@@ -59,6 +59,9 @@
 #include "util.h"
 #include "espi.h"
 #include "battery_smart.h"
+#include "keyboard_scan.h"
+#include "keyboard_8042.h"
+#include "keyboard_8042_sharedlib.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
@@ -1182,10 +1185,107 @@ struct keyboard_scan_config keyscan_config = {
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
-		0x14, 0xff, 0xff, 0xf2, 0xff, 0xff, 0xff,
-		0x0a, 0xff, 0xa0, 0xff, 0xff, 0x00, 0x41, 0xff, 0xff  /* full set */
+		0xff, 0xff, 0xff, 0x03, 0xff, 0xff, 0xff,
+		0x0a, 0xff, 0x03, 0xff, 0xff, 0x03, 0xff, 0xff, 0xef  /* full set */
 	},
 };
+
+
+#ifdef CONFIG_KEYBOARD_CUSTOMIZATION_CONBINATION_KEY
+
+static uint8_t Fn_key;
+
+enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
+					      int8_t pressed)
+{
+	const uint16_t pressed_key = *make_code;
+
+
+	if (pressed_key == SCANCODE_FN && pressed)
+		Fn_key = 1;
+	else if (pressed_key == SCANCODE_FN && !pressed)
+		Fn_key = 0;
+
+	if (!pressed)
+		return EC_SUCCESS;
+
+	if (!Fn_key)
+		return EC_SUCCESS;
+
+	switch (pressed_key) {
+	case SCANCODE_ESC: /* TODO: FUNCTION_LOCK */
+
+		break;
+	case SCANCODE_F1:  /* TODO: SPEAKER_MUTE */
+
+		break;
+	case SCANCODE_F2:  /* TODO: VOLUME_DOWN */
+
+		break;
+	case SCANCODE_F3:  /* TODO: VOLUME_UP */
+
+		break;
+	case SCANCODE_F4:  /* TODO: MIC_MUTE */
+
+		break;
+	case SCANCODE_F5:  /* TODO: PLAY_PAUSE */
+
+		break;
+	case SCANCODE_F6:  /* TODO: DIM_SCREEN */
+
+		break;
+	case SCANCODE_F7:  /* TODO: BRIGHTEN_SCREEN */
+
+		break;
+	case SCANCODE_F8:  /* TODO: EXTERNAL_DISPLAY */
+
+		break;
+	case SCANCODE_F9:  /* TODO: TOGGLE_WIFI */
+
+		break;
+	case SCANCODE_F10:  /* TODO: TOGGLE_BLUETOOTH */
+
+		break;
+	case SCANCODE_F11:  /* TODO: PRINT_SCREEN */
+
+		break;
+	case SCANCODE_F12:  /* TODO: FRAMEWORK */
+
+		break;
+	case SCANCODE_DELETE:  /* TODO: INSERT */
+
+		break;
+	case SCANCODE_B:  /* TODO: BREAK_KEY */
+
+		break;
+	case SCANCODE_K:  /* TODO: SCROLL_LOCK */
+
+		break;
+	case SCANCODE_P:  /* TODO: PAUSE */
+
+		break;
+	case SCANCODE_S:  /* TODO: SYSRQ */
+
+		break;
+	case SCANCODE_SPACE:  /* TODO: TOGGLE_KEYBOARD_BACKLIGHT */
+
+		break;
+	case SCANCODE_LEFT:  /* TODO: HOME */
+
+		break;
+	case SCANCODE_RIGHT:  /* TODO: END */
+
+		break;
+	case SCANCODE_UP:  /* TODO: PAGE_UP */
+
+		break;
+	case SCANCODE_DOWN:  /* TODO: PAGE_DOWN */
+
+		break;
+	}
+	return EC_ERROR_UNIMPLEMENTED;
+}
+#endif
 
 /* Charger chips */
 const struct charger_config_t chg_chips[] = {

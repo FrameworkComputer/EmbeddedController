@@ -2510,6 +2510,11 @@
 #undef CONFIG_KEYBOARD_CUSTOMIZATION
 
 /*
+ * implement the Combination key for the actual Fn key
+ */
+#undef CONFIG_KEYBOARD_CUSTOMIZATION_CONBINATION_KEY
+
+/*
  * Allow board-specific 8042 keyboard callback when a key state is changed.
  */
 #undef CONFIG_KEYBOARD_SCANCODE_CALLBACK

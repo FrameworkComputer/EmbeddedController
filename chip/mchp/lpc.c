@@ -396,12 +396,16 @@ void chip_8042_config(uint32_t io_base)
 	task_enable_irq(MCHP_IRQ_8042EM_IBF);
 	task_enable_irq(MCHP_IRQ_8042EM_OBE);
 
-	MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_8042_SIRQ0) = BIT(0);
-
+/* Set up SERIRQ for keyboard */
+#ifdef CHIP_FAMILY_MEC17XX
 #ifndef CONFIG_KEYBOARD_IRQ_GPIO
-	/* Set up SERIRQ for keyboard */
 	MCHP_8042_KB_CTRL |= BIT(5);
 	MCHP_LPC_SIRQ(1) = 0x01;
+#endif
+#else
+	/* Mec1521 only have ESPI */
+	MCHP_8042_KB_CTRL |= BIT(5);
+	MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_8042_SIRQ0) = BIT(0);
 #endif
 }
 
