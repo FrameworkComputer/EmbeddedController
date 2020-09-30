@@ -1156,6 +1156,7 @@ void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 	 */
 	if ((get_state_pe(port) == PE_SRC_SEND_CAPABILITIES ||
 			get_state_pe(port) == PE_SRC_TRANSITION_SUPPLY ||
+			get_state_pe(port) == PE_PRS_SNK_SRC_EVALUATE_SWAP ||
 			get_state_pe(port) == PE_PRS_SRC_SNK_WAIT_SOURCE_ON ||
 			get_state_pe(port) == PE_SRC_DISABLED ||
 			get_state_pe(port) == PE_SRC_DISCOVERY ||
@@ -4130,6 +4131,19 @@ static void pe_prs_snk_src_evaluate_swap_run(int port)
 			/* Message sent, return to PE_SNK_Ready */
 			set_state_pe(port, PE_SNK_READY);
 		}
+	}
+
+	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
+		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
+		/*
+		 * Protocol Error occurs while PR swap, this may
+		 * brown out if the port-parnter can't hold VBUS
+		 * for tSrcTransition. Notify TC that we end the PR
+		 * swap and start to watch VBUS.
+		 *
+		 * TODO(b:155181980): issue soft reset on protocol error.
+		 */
+		tc_pr_swap_complete(port, 0);
 	}
 }
 
