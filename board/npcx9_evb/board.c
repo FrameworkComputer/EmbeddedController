@@ -10,6 +10,7 @@
 #include "backlight.h"
 #include "chipset.h"
 #include "common.h"
+#include "driver/temp_sensor/tmp112.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -78,6 +79,13 @@ const struct fan_t fans[] = {
 	[FAN_CH_0] = { .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
 };
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
+
+/******************************************************************************/
+/* Temperature sensor. */
+const struct temp_sensor_t temp_sensors[] = {
+	{ "System", TEMP_SENSOR_TYPE_BOARD, tmp112_get_val, 0 },
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /******************************************************************************/
 /* MFT channels. These are logically separate from pwm_channels. */
