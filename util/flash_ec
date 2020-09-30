@@ -1195,9 +1195,6 @@ function flash_stm32_dfu() {
 		-d "${DFU_DEVICE}" -s ${ADDR}:${SIZE} -D "${IMG}"
 }
 
-# TODO(b/130165933): Implement a dut-control command to look up the correct
-# I2C adapter number, and use that here in place of the hack of looking at
-# I2C adapter names.
 function dut_i2c_dev() {
 	if [ -n "$DUT_I2C_DEV" ]; then
 		[ -e "$DUT_I2C_DEV" ] ||
@@ -1206,24 +1203,10 @@ function dut_i2c_dev() {
 		return
 	fi
 
-	if ! (
-		set -e
-		cd /sys/class/i2c-dev
-		# Sorting in reverse numerical order generally picks the correct
-		# servod I2C bus when there are multiple servos in line to the
-		# DUT, e.g. servo_v4->servo_micro, or servo_v4->CR50 (CCD).
-		for dev in $(ls | grep ^i2c- | sort -s -t- -n -k2,2 -r); do
-			if grep -q servod "$dev"/name; then
-				echo /dev/"$dev"
-				exit
-			fi
-		done
-		false
-	); then
-		die "Could not find servo I2C adapter. This could be because"\
-" the i2c-pseudo module was not loaded when servod was started."\
-" See also iteflash.md for more info."
-	fi
+	local adap_num=
+	adap_num="$(dut_control_get_or_die \
+	    "${ACTIVE_DEVICE}_i2c_pseudo_adapter_num")"
+	echo /dev/i2c-"$adap_num"
 }
 
 function flash_it83xx() {
