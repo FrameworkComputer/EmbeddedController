@@ -32,6 +32,9 @@ void keyboard_raw_init(void)
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
 	/* KSO[2] is high, others are low. */
 	IT83XX_KBS_KSOL = BIT(2);
+	/* Enable KSO2's push-pull */
+	IT83XX_KBS_KSOLGCTRL |= BIT(2);
+	IT83XX_KBS_KSOLGOEN |= BIT(2);
 #else
 	/* KSO[7:0] pins low. */
 	IT83XX_KBS_KSOL = 0x00;
