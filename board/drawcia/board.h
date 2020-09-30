@@ -31,7 +31,7 @@
 #define CONFIG_CHARGER_OTG
 #undef  CONFIG_CHARGER_SINGLE_CHIP
 #define CONFIG_OCPC
-#define CONFIG_OCPC_DEF_RBATT_MOHMS 5 /* R_DS(on) 5.3mOhm */
+#define CONFIG_OCPC_DEF_RBATT_MOHMS 21 /* R_DS(on) 10.7mOhm + 10mOhm sns rstr */
 
 /* PWM */
 #define CONFIG_PWM
