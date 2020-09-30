@@ -572,10 +572,8 @@ enum als_id {
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       45000
+#define PD_MAX_POWER_MW       60000
 #define PD_MAX_CURRENT_MA     3000
-
-/* Try to negotiate to 20V since i2c noise problems should be fixed. */
 #define PD_MAX_VOLTAGE_MV     20000
 
 /*

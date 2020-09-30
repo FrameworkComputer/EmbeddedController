@@ -19,18 +19,18 @@
 #define PARAM_CUT_OFF_LOW  0x10
 #define PARAM_CUT_OFF_HIGH 0x00
 
-/* Battery info for BQ40Z55 */
+/* Battery info for BQ40Z50 */
 static const struct battery_info info = {
-	.voltage_max = 8700,        /* mV */
-	.voltage_normal = 7600,
+	.voltage_max = 17600,        /* mV */
+	.voltage_normal = 15400,
 	.voltage_min = 6000,
-	.precharge_current = 256,   /* mA */
+	.precharge_current = 72,   /* mA */
 	.start_charging_min_c = 0,
-	.start_charging_max_c = 46,
+	.start_charging_max_c = 47,
 	.charging_min_c = 0,
-	.charging_max_c = 60,
+	.charging_max_c = 52,
 	.discharging_min_c = 0,
-	.discharging_max_c = 60,
+	.discharging_max_c = 62,
 };
 
 const struct battery_info *battery_get_info(void)
