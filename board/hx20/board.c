@@ -282,13 +282,12 @@ void tablet_mode_interrupt(enum gpio_signal signal)
  * name, factor multiplier, factor divider, shift, channel
  */
 const struct adc_t adc_channels[] = {
-	/* Vbus sensing. Converted to mV, full ADC is equivalent to 30V. */
-	[ADC_VBUS] = {"VBUS", 30000, 1024, 0, 1},
-	/* Adapter current output or battery discharging current */
-	[ADC_AMON_BMON] = {"AMON_BMON", 25000, 3072, 0, 3},
-	/* System current consumption */
-	[ADC_PSYS] = {"PSYS", 1, 1, 0, 4},
-	[ADC_CASE] = {"CASE", 1, 1, 0, 7},
+	[ADC_I_ADP]           = {"I_ADP", 3300, 4096, 0, 0},
+	[ADC_I_SYS]           = {"I_SYS", 3300, 4096, 0, 1},
+	[ADC_VCIN1_BATT_TEMP] = {"BATT_PRESENT", 3300, 4096, 0, 2},
+	[ADC_TP_BOARD_ID]     = {"TP_BID", 3300, 4096, 0, 3},
+	[ADC_AD_BID]          = {"AD_BID", 3300, 4096, 0, 4},
+	[ADC_AUDIO_BOARD_ID]  = {"AUDIO_BID", 3300, 4096, 0, 5}
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -522,7 +521,7 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 const struct temp_sensor_t temp_sensors[] = {
 	{"Battery", TEMP_SENSOR_TYPE_BATTERY, sb_temp, 0},
 	{"Ambient", TEMP_SENSOR_TYPE_BOARD, ds1624_get_val, 0},
-	{"Case", TEMP_SENSOR_TYPE_CASE, therm_get_val, (int)ADC_CASE},
+	{"Case", TEMP_SENSOR_TYPE_CASE, therm_get_val, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 #endif

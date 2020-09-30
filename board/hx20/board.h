@@ -505,10 +505,12 @@
 
 /* ADC signal */
 enum adc_channel {
-	ADC_VBUS,
-	ADC_AMON_BMON,
-	ADC_PSYS,
-	ADC_CASE,
+	ADC_I_ADP,
+	ADC_I_SYS,
+	ADC_VCIN1_BATT_TEMP,
+	ADC_TP_BOARD_ID,
+	ADC_AD_BID,
+	ADC_AUDIO_BOARD_ID,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
