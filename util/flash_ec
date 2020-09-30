@@ -246,7 +246,7 @@ function dut_control() {
 }
 
 function dut_control_or_die {
-	dut_control "$@" || die "dut-control $* exited $? (non-zero)"
+	dut_control "$@" || die "command exited $? (non-zero): dut-control $*"
 }
 
 function dut_control_get() {
@@ -256,7 +256,7 @@ function dut_control_get() {
 	fi
 
 	local ARGS DUT_GETVAL RETVAL
-	ARGS=( "${DUT_CONTROL_CMD[@]}" "-o" "${DUT_CTRL_PREFIX}$1" )
+	ARGS=( "${DUT_CONTROL_CMD[@]}" "--value_only" "${DUT_CTRL_PREFIX}$1" )
 	RETVAL=0
 	# || statement is attached to avoid an exit if error exit is enabled.
 	DUT_GETVAL=$( "${ARGS[@]}" ) || RETVAL="$?"
@@ -266,6 +266,11 @@ function dut_control_get() {
 	fi
 
 	echo "${DUT_GETVAL}"
+}
+
+function dut_control_get_or_die {
+	dut_control_get "$@" || \
+	    die "command exited $? (non-zero): dut-control --value_only $*"
 }
 
 BOARD=${FLAGS_board}
