@@ -21,6 +21,9 @@
 #define INPUT_I_MIN	4
 #define	INPUT_I_STEP	4
 
+/* Default minimum VIN voltage controlled by ISL9241_REG_VIN_VOLTAGE */
+#define ISL9241_BC12_MIN_VOLTAGE	4096
+
 /* Registers */
 
 /*
