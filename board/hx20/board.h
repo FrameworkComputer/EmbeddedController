@@ -25,6 +25,8 @@
 /* #define CONFIG_PWM_KBLIGHT */
 /* #define CONFIG_KEYBOARD_DEBUG */
 
+#define CONFIG_CUSTOMER_PORT80
+
 /*
  * Conbination key
  */
