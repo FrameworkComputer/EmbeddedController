@@ -1260,6 +1260,14 @@ static void pe_handle_detach(void)
 
 	/* Reset port events */
 	pd_clear_events(port, GENMASK(31, 0));
+
+	/* Tell Policy Engine to invalidate the explicit contract */
+	pe_invalidate_explicit_contract(port);
+
+	/*
+	 * Saved SRC_Capabilities are no longer valid on disconnect
+	 */
+	pd_set_src_caps(port, 0, NULL);
 }
 DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, pe_handle_detach, HOOK_PRIO_DEFAULT);
 

@@ -474,13 +474,14 @@ static void pd_update_try_source(void);
 
 static void sink_stop_drawing_current(int port);
 
+#ifdef CONFIG_USB_PD_TRY_SRC
 static bool is_try_src_enabled(int port)
 {
 	return IS_ENABLED(CONFIG_USB_PD_TRY_SRC) &&
 		((pd_try_src_override == TRY_SRC_OVERRIDE_ON) ||
 		(pd_try_src_override == TRY_SRC_NO_OVERRIDE && pd_try_src));
 }
-
+#endif
 /*
  * Public Functions
  *
@@ -504,15 +505,9 @@ void pd_execute_hard_reset(int port)
 	/* DO NOTHING */
 }
 
-void pd_set_vbus_discharge(int port, int enable)
+__overridable void pd_set_vbus_discharge(int port, int enable)
 {
 	/* DO NOTHING */
-}
-
-uint16_t pd_get_identity_vid(int port)
-{
-	/* DO NOTHING */
-	return 0;
 }
 
 #endif /* !CONFIG_USB_PRL_SM */
@@ -631,6 +626,7 @@ static void tc_enable_pd(int port, int en)
 				     PD_DISABLED_NO_CONNECTION);
 }
 
+#ifdef CONFIG_USB_PD_TRY_SRC
 static void tc_enable_try_src(int en)
 {
 	if (en)
@@ -638,6 +634,7 @@ static void tc_enable_try_src(int en)
 	else
 		deprecated_atomic_clear_bits(&pd_try_src, 1);
 }
+#endif
 
 static void tc_detached(int port)
 {
@@ -652,8 +649,10 @@ static inline void pd_set_dual_role_and_event(int port,
 {
 	drp_state[port] = state;
 
+#ifdef CONFIG_USB_PD_TRY_SRC
 	if (IS_ENABLED(CONFIG_USB_PD_TRY_SRC))
 		pd_update_try_source();
+#endif
 
 	if (event != 0)
 		task_set_event(PD_PORT_TO_TASK_ID(port), event, 0);
@@ -922,6 +921,7 @@ void tc_disc_ident_complete(int port)
 	TC_CLR_FLAG(port, TC_FLAGS_DISC_IDENT_IN_PROGRESS);
 }
 
+#ifdef CONFIG_USB_PD_TRY_SRC
 void tc_try_src_override(enum try_src_override_t ov)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_TRY_SRC)) {
@@ -942,6 +942,7 @@ enum try_src_override_t tc_get_try_src_override(void)
 {
 	return pd_try_src_override;
 }
+#endif
 
 void tc_snk_power_off(int port)
 {
@@ -1360,8 +1361,11 @@ void tc_state_init(int port)
 		return;
 	}
 
+
+#ifdef CONFIG_USB_PD_TRY_SRC
 	/* Allow system to set try src enable */
 	tc_try_src_override(TRY_SRC_NO_OVERRIDE);
+#endif
 
 	/*
 	 * Set initial PD communication policy.
@@ -1941,8 +1945,12 @@ static void tc_error_recovery_run(const int port)
 	 * If try src support is active (e.g. in S0). Then try to become the
 	 * SRC, otherwise we should try to be the sink.
 	 */
+#ifdef CONFIG_USB_PD_TRY_SRC
 	restart_tc_sm(port, is_try_src_enabled(port) ? TC_UNATTACHED_SRC :
 						       TC_UNATTACHED_SNK);
+#else
+	restart_tc_sm(port, TC_UNATTACHED_SNK);
+#endif
 }
 
 /**
@@ -1967,20 +1975,7 @@ static void tc_unattached_snk_entry(const int port)
 	typec_select_pull(port, TYPEC_CC_RD);
 	typec_update_cc(port);
 
-	/*
-	 * Tell Policy Engine to invalidate the explicit contract.
-	 * This mainly used to clear the BB Ram Explicit Contract
-	 * value.
-	 */
-	pe_invalidate_explicit_contract(port);
-
 	tc[port].data_role = PD_ROLE_DISCONNECTED;
-
-	/*
-	 * Saved SRC_Capabilities are no longer valid on disconnect
-	 */
-	pd_set_src_caps(port, 0, NULL);
-
 	/*
 	 * When data role set events are used to enable BC1.2, then CC
 	 * detach events are used to notify BC1.2 that it can be powered
@@ -2158,9 +2153,11 @@ static void tc_attach_wait_snk_run(const int port)
 	 */
 	if (pd_is_vbus_present(port)) {
 		if (new_cc_state == PD_CC_DFP_ATTACHED) {
+#ifdef CONFIG_USB_PD_TRY_SRC
 			if (is_try_src_enabled(port))
 				set_state_tc(port, TC_TRY_SRC);
 			else
+#endif
 				set_state_tc(port, TC_ATTACHED_SNK);
 		} else {
 			/* new_cc_state is PD_CC_DFP_DEBUG_ACC */
@@ -2478,11 +2475,6 @@ static void tc_unattached_src_entry(const int port)
 	typec_update_cc(port);
 
 	tc[port].data_role = PD_ROLE_DISCONNECTED;
-
-	/*
-	 * Saved SRC_Capabilities are no longer valid on disconnect
-	 */
-	pd_set_src_caps(port, 0, NULL);
 
 	/*
 	 * When data role set events are used to enable BC1.2, then CC
@@ -2810,8 +2802,10 @@ static void tc_attached_src_run(const int port)
 			!TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS) &&
 			!TC_CHK_FLAG(port, TC_FLAGS_DISC_IDENT_IN_PROGRESS)) {
 
+#ifdef CONFIG_USB_PD_TRY_SRC
 		const bool tryWait = is_try_src_enabled(port) &&
 				!TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER);
+#endif
 
 		if (IS_ENABLED(CONFIG_USB_PE_SM))
 			if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
@@ -2820,9 +2814,12 @@ static void tc_attached_src_run(const int port)
 				pd_dfp_exit_mode(port, TCPC_TX_SOP_PRIME_PRIME,
 						0, 0);
 			}
-
+#ifdef CONFIG_USB_PD_TRY_SRC
 		set_state_tc(port, tryWait ?
 					TC_TRY_WAIT_SNK : TC_UNATTACHED_SNK);
+#else
+		set_state_tc(port, TC_UNATTACHED_SNK);
+#endif
 		return;
 	}
 
@@ -3462,8 +3459,10 @@ void tc_run(const int port)
 	 * DISABLED
 	 */
 	if (TC_CHK_FLAG(port, TC_FLAGS_SUSPEND)) {
+#ifdef CONFIG_USB_PE_SM
 		/* Invalidate a contract, if there is one */
 		pe_invalidate_explicit_contract(port);
+#endif
 
 		set_state_tc(port, TC_DISABLED);
 	}
