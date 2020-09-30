@@ -15,7 +15,6 @@
 #include "als.h"
 #include "bd99992gw.h"
 #include "button.h"
-#include "charge_manager.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
@@ -86,14 +85,6 @@
 #define DS1624_CMD_START	0xEE
 #define DS1624_CMD_STOP		0x22
 
-/*
- * static global and routine to return smart battery
- * temperature when we do not build with charger task.
- */
-static int smart_batt_temp;
-static int ds1624_temp;
-static int sb_temp(int idx, int *temp_ptr);
-static int ds1624_get_val(int idx, int *temp_ptr);
 static int forcing_shutdown;  /* Forced shutdown in progress? */
 
 #ifdef HAS_TASK_MOTIONSENSE
@@ -114,8 +105,6 @@ static void board_spi_disable(void);
  */
 void board_config_pre_init(void)
 {
-	smart_batt_temp = 0;
-	ds1624_temp = 0;
 
 #ifdef CONFIG_CHIPSET_DEBUG
 	MCHP_EC_JTAG_EN = MCHP_JTAG_ENABLE + MCHP_JTAG_MODE_SWD_SWV;
@@ -478,54 +467,16 @@ void board_reset_pd_mcu(void)
 	//gpio_set_level(GPIO_PD_RST_L, 1);
 }
 
-/*
- *
- */
-static int therm_get_val(int idx, int *temp_ptr)
+static int board_get_temp(int idx, int *temp_k)
 {
-	if (temp_ptr != NULL) {
-		*temp_ptr = adc_read_channel(idx);
-		return EC_SUCCESS;
-	}
-
-	return EC_ERROR_PARAM2;
+    /*TODO: thermal sensor function */
+    return -1;
 }
 
-#ifdef CONFIG_TEMP_SENSOR
-#if 0 /* Chromebook design uses ADC in BD99992GW PMIC */
 const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0, 4},
-
-	/* These BD99992GW temp sensors are only readable in S0 */
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-		BD99992GW_ADC_CHANNEL_SYSTHERM0, 4},
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-		BD99992GW_ADC_CHANNEL_SYSTHERM1, 4},
-	{"DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-		BD99992GW_ADC_CHANNEL_SYSTHERM2, 4},
-	{"Wifi", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-		BD99992GW_ADC_CHANNEL_SYSTHERM3, 4},
+	{"sensor", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-#else /* mec1701_evb test I2C and EC ADC */
-/*
- * battery charge_get_battery_temp requires charger task running.
- * OR can we call into driver/battery/smart.c
- * int sb_read(int cmd, int *param)
- * sb_read(SB_TEMPERATURE, &batt_new.temperature)
- * Issue is functions in this table return a value from a memory array.
- * There's a task or hook that is actually reading the temperature.
- * We could implement a one second hook to call sb_read() and fill in
- * a static global in this module.
- */
-const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, sb_temp, 0},
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, ds1624_get_val, 0},
-	{"Case", TEMP_SENSOR_TYPE_CASE, therm_get_val, 0},
-};
-BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-#endif
-#endif
 
 #ifdef CONFIG_ALS
 /* ALS instances. Must be in same order as enum als_id. */
@@ -914,82 +865,6 @@ static void board_handle_reboot(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
 
-
-static int sb_temp(int idx, int *temp_ptr)
-{
-	if (idx != 0)
-		return EC_ERROR_PARAM1;
-
-	if (temp_ptr == NULL)
-		return EC_ERROR_PARAM2;
-
-	*temp_ptr = smart_batt_temp;
-
-	return EC_SUCCESS;
-}
-
-static int ds1624_get_val(int idx, int *temp_ptr)
-{
-	if (idx != 0)
-		return EC_ERROR_PARAM1;
-
-	if (temp_ptr == NULL)
-		return EC_ERROR_PARAM2;
-
-	*temp_ptr = ds1624_temp;
-
-	return EC_SUCCESS;
-}
-
-/* call smart battery code to get its temperature
- * output is in tenth degrees C
- */
-static void sb_update(void)
-{
-	int rv __attribute__((unused));
-
-	rv = sb_read(SB_TEMPERATURE, &smart_batt_temp);
-	smart_batt_temp = smart_batt_temp / 10;
-
-	trace12(0, BRD, 0, "sb_read temperature rv=%d  temp=%d K",
-		rv, smart_batt_temp);
-}
-
-/*
- * Read temperature from Maxim DS1624 sensor. It only has internal sensor
- * and is configured for continuous reading mode by default.
- * DS1624 does not implement temperature limits or other features of
- * sensors like the TMP411.
- * Output format is 16-bit MSB first signed celcius temperature in units
- * of 0.0625 degree Celsius.
- * b[15]=sign bit
- * b[14]=2^6, b[13]=2^5, ..., b[8]=2^0
- * b[7]=1/2, b[6]=1/4, b[5]=1/8, b[4]=1/16
- * b[3:0]=0000b
- *
- */
-static void ds1624_update(void)
-{
-	uint32_t d;
-	int temp;
-	int rv __attribute__((unused));
-
-	rv = i2c_read16(I2C_PORT_THERMAL, DS1624_I2C_ADDR_FLAGS,
-			DS1624_READ_TEMP16, &temp);
-
-	d = (temp & 0x7FFF) >> 8;
-	if ((uint32_t)temp & BIT(7))
-		d++;
-
-	if ((uint32_t)temp & BIT(15))
-		d |= (1u << 31);
-
-	ds1624_temp = (int32_t)d;
-
-	trace3(0, BRD, 0, "ds1624_update: rv=%d raw temp = 0x%04X tempC = %d",
-	       rv, temp, ds1624_temp);
-}
-
 /* Indicate scheduler is alive by blinking an LED.
  * Test I2C by reading a smart battery and temperature sensor.
  * Smart battery 16 bit temperature is in units of 1/10 degree C.
@@ -1002,9 +877,6 @@ static void board_one_sec(void)
 		gpio_set_level(GPIO_LED1_PWM, 0);
 	else
 		gpio_set_level(GPIO_LED1_PWM, 1);
-
-	sb_update();
-	ds1624_update();
 }
 DECLARE_HOOK(HOOK_SECOND, board_one_sec, HOOK_PRIO_DEFAULT);
 

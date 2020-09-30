@@ -516,15 +516,7 @@ enum adc_channel {
 };
 
 enum temp_sensor_id {
-	TEMP_SENSOR_BATTERY,
-
-	/* These temp sensors are only readable in S0 */
-	TEMP_SENSOR_AMBIENT,
-	TEMP_SENSOR_CASE,
-/*	TEMP_SENSOR_CHARGER, */
-/*	TEMP_SENSOR_DRAM, */
-/*	TEMP_SENSOR_WIFI, */
-
+	TEMP_SENSOR_BOARD,
 	TEMP_SENSOR_COUNT
 };
 
