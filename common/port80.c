@@ -52,11 +52,16 @@ void port_80_write(int data)
 	 * 0x100). This is because only 8-bit port80 messages are assumed to be
 	 * coming from the host.
 	 */
+#ifndef CONFIG_CUSTOMER_PORT80
 	if (print_in_int)
 		CPRINTF("%c[%pT Port 80: 0x%02x]",
 			scroll ? '\n' : '\r', PRINTF_TIMESTAMP_NOW, data);
 	else if (data < 0x100)
 		hook_call_deferred(&port80_dump_buffer_data, 4 * SECOND);
+#else
+	/* this is for customer design to show port80 on 7-segment display */
+	CPRINTF("PORT80: 00%02x\n", data);
+#endif
 
 	/* Save current port80 code if system is resetting */
 	if (data == PORT_80_EVENT_RESET && writes) {

@@ -2968,6 +2968,9 @@
 /* Config for power states and port80 message to be displayed on 7 -segment */
 #undef CONFIG_SEVEN_SEG_DISPLAY
 
+/* For customer desgin to show port 80 on 7-segment */
+#undef CONFIG_CUSTOMER_PORT80
+
 /* Compile common code to support power button debouncing */
 #undef CONFIG_POWER_BUTTON
 
