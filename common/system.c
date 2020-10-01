@@ -1070,9 +1070,14 @@ __maybe_unused static int command_hibernate(int argc, char **argv)
 	if (argc >= 3)
 		microseconds = strtoi(argv[2], NULL, 0);
 
-	if (seconds || microseconds)
+	if (seconds || microseconds) {
+		if (IS_ENABLED(CONFIG_HIBERNATE_PSL)) {
+			ccprintf("Hibernating with timeout not supported "
+				 "when PSL is enabled.\n");
+			return EC_ERROR_INVAL;
+		}
 		ccprintf("Hibernating for %d.%06d s\n", seconds, microseconds);
-	else
+	} else
 		ccprintf("Hibernating until wake pin asserted.\n");
 
 	/*
