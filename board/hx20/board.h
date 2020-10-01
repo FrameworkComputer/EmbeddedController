@@ -149,7 +149,7 @@
 /* #define CONFIG_ALS */
 /* #define CONFIG_ALS_OPT3001 */
 #define CONFIG_BATTERY_CUT_OFF
-#define CONFIG_BATTERY_PRESENT_GPIO GPIO_BAT_PRESENT_L
+#define CONFIG_BATTERY_PRESENT_CUSTOM
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_BUTTON_COUNT 2
@@ -165,7 +165,8 @@
 #define CONFIG_CHARGER_ISL9241
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20 /* BOARD_RS1 */
 #define CONFIG_CHARGER_SENSE_RESISTOR 10    /* BOARD_RS2 */
-#define CONFIG_CHARGER_INPUT_CURRENT 512
+#define CONFIG_CHARGER_INPUT_CURRENT 2550	/* for evt test */
+#define CONFIG_CHARGER_CUSTOMER_SETTING
 
 /*
  * MCHP disable this for Kabylake eSPI bring up
@@ -504,24 +505,18 @@
 
 /* ADC signal */
 enum adc_channel {
-	ADC_VBUS,
-	ADC_AMON_BMON,
-	ADC_PSYS,
-	ADC_CASE,
+	ADC_I_ADP,
+	ADC_I_SYS,
+	ADC_VCIN1_BATT_TEMP,
+	ADC_TP_BOARD_ID,
+	ADC_AD_BID,
+	ADC_AUDIO_BOARD_ID,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
 
 enum temp_sensor_id {
-	TEMP_SENSOR_BATTERY,
-
-	/* These temp sensors are only readable in S0 */
-	TEMP_SENSOR_AMBIENT,
-	TEMP_SENSOR_CASE,
-/*	TEMP_SENSOR_CHARGER, */
-/*	TEMP_SENSOR_DRAM, */
-/*	TEMP_SENSOR_WIFI, */
-
+	TEMP_SENSOR_BOARD,
 	TEMP_SENSOR_COUNT
 };
 
@@ -569,10 +564,8 @@ enum als_id {
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       45000
+#define PD_MAX_POWER_MW       60000
 #define PD_MAX_CURRENT_MA     3000
-
-/* Try to negotiate to 20V since i2c noise problems should be fixed. */
 #define PD_MAX_VOLTAGE_MV     20000
 
 /*
