@@ -316,9 +316,24 @@ static bool tbt_mode_is_supported(int port, int vdo_count)
 	const struct pd_discovery *disc =
 			pd_get_am_discovery(port, TCPC_TX_SOP);
 
-	return disc->identity.idh.modal_support &&
-		is_tbt_cable_superspeed(port) &&
-		get_tbt_cable_speed(port) >= TBT_SS_U31_GEN1;
+	if (!disc->identity.idh.modal_support)
+		return false;
+
+	if (!(is_tbt_cable_superspeed(port) &&
+		get_tbt_cable_speed(port) >= TBT_SS_U31_GEN1))
+		return false;
+
+	/*
+	 * TBT4 PD Discovery Flow Application Notes Revision 0.9:
+	 * Figure 2: for active cable, SOP' should support
+	 * SVID USB_VID_INTEL to enter Thunderbolt alt mode
+	 */
+	if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE &&
+		!pd_is_mode_discovered_for_svid(
+			port, TCPC_TX_SOP_PRIME, USB_VID_INTEL))
+		return false;
+
+	return true;
 }
 
 int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
