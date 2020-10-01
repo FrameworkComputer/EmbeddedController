@@ -47,7 +47,7 @@ void dpm_set_mode_exit_request(int port)
 	dpm[port].mode_exit_request = true;
 }
 
-static inline void dpm_clear_mode_exit_request(int port)
+static void dpm_clear_mode_exit_request(int port)
 {
 	dpm[port].mode_exit_request = false;
 }
