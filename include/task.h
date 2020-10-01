@@ -371,6 +371,7 @@ struct irq_def {
  * Implement the DECLARE_IRQ(irq, routine, priority) macro which is
  * a core specific helper macro to declare an interrupt handler "routine".
  */
+#ifndef CONFIG_ZEPHYR
 #ifdef CONFIG_COMMON_RUNTIME
 #include "irq_handler.h"
 #else
@@ -383,6 +384,7 @@ struct irq_def {
 /* Include ec.irqlist here for compilation dependency */
 #define ENABLE_IRQ(x)
 #include "ec.irqlist"
-#endif
+#endif /* CONFIG_COMMON_RUNTIME */
+#endif /* !CONFIG_ZEPHYR */
 
 #endif  /* __CROS_EC_TASK_H */
