@@ -343,6 +343,7 @@ UNIMPLEMENTED(USB_C0_CHARGE_EN_L)
 UNIMPLEMENTED(USB_C1_CHARGE_EN_L)
 UNIMPLEMENTED(LED1_PWM)
 UNIMPLEMENTED(EC_KEYBOARD_IRQ)
+UNIMPLEMENTED(ENABLE_TOUCHPAD)
 /* Interrupt Pin Defination */
 
 /* Power Sequence */
@@ -365,6 +366,7 @@ GPIO_INT(UART0_RX,        PIN(0105), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, \
 /* Sensor */
 GPIO_INT(EC_PD_INTA_L,    PIN(0115), GPIO_INT_FALLING, pd_chip_interrupt)
 GPIO_INT(EC_PD_INTB_L,    PIN(0127), GPIO_INT_FALLING, pd_chip_interrupt)
+GPIO_INT(SOC_TP_INT_L,    PIN(0242), GPIO_INT_FALLING, touchpad_interrupt)
 
 /* Input signal */
 GPIO(ADP_IN,              PIN(0172), GPIO_INPUT)    /* Adaptor in from charger ACOK pin */
@@ -376,12 +378,10 @@ GPIO(EC_SMB_CLK0,         PIN(04),   GPIO_INPUT)    /* Reserved for HID */
 GPIO(PLT_RST_L,           PIN(024),  GPIO_INPUT)    /* Not implement on reference board */
 GPIO(SX_EXIT_HOLDOFF_L,   PIN(025),  GPIO_INPUT)    /* Reserved for S0ix state */
 GPIO(PM_SLP_A_L,          PIN(062),  GPIO_INPUT)    /* Reserved for S0ix state */
-GPIO(LCD_TST,             PIN(0140), GPIO_INPUT)    /* Reserved for LCD test function */
 GPIO(MIC_SW,              PIN(0171), GPIO_INPUT)    /* Reserved for DMIC function */
 GPIO(SOC_EC_INT_L,        PIN(0246), GPIO_INPUT)    /* Reserved for HID */
 GPIO(VS_ON,               PIN(0241), GPIO_INPUT)    /* NC pin */
 GPIO(FP_CTRL,             PIN(0245), GPIO_INPUT)    /* Reserved for fingerprint control */
-GPIO(AC_PRESENT_PD_L,     PIN(0132), GPIO_INPUT)    /* Reserved for detect PD adaptor in */
 
 GPIO(H_PECI,              PIN(042),  GPIO_INPUT)   /* TODO: Need to implement PECI */
 
@@ -411,12 +411,15 @@ GPIO(SYS_PWROK,             PIN(0106),  GPIO_OUT_LOW)
 /* Batt CHarger */
 GPIO(EC_SMB_CLK1, PIN(0131), GPIO_INPUT)
 GPIO(EC_SMB_SDA1, PIN(0130), GPIO_INPUT)
-/* PD */
-GPIO(EC_I2C02_PD_CLK, PIN(0155),  GPIO_INPUT)
-GPIO(EC_I2C02_PD_SDA, PIN(0154),  GPIO_INPUT)
+/* Touchpad */
+GPIO(EC_I2C_3_SCL, PIN(0155),  GPIO_INPUT)
+GPIO(EC_I2C_3_SDA, PIN(0154),  GPIO_INPUT)
 /* Therm Sensor */
 GPIO(EC_SMB_CLK3, PIN(010), GPIO_INPUT)
 GPIO(EC_SMB_SDA3, PIN(07), GPIO_INPUT)
+/* PD */
+GPIO(EC_I2C02_PD_CLK, PIN(0140),  GPIO_INPUT)
+GPIO(EC_I2C02_PD_SDA, PIN(0132),  GPIO_INPUT)
 
 
 /* Fan PWM output and TACH input. PROCHOT input */
@@ -425,7 +428,7 @@ GPIO(FAN_SPEED,         PIN(050), GPIO_INPUT | GPIO_PULL_UP)
 
 
 /* Miscellaneous */
-GPIO(EC_KBL_PWR_EN,         PIN(0101), GPIO_OUT_LOW)    /* keyboard backlight control */
+GPIO(EC_KBL_PWR_EN,         PIN(0101), GPIO_OUT_HIGH)   /* keyboard backlight control */
 GPIO(ME_EN,                 PIN(060),  GPIO_OUT_LOW)
 GPIO(EC_BKOFF_L,            PIN(0102), GPIO_OUT_LOW)    /* Panel backlight control */
 GPIO(EC_PROCHOT_L,          PIN(0206), GPIO_OUT_HIGH)
@@ -435,7 +438,7 @@ GPIO(TYPEC2_VBUS_ON_EC,     PIN(0142), GPIO_ODR_HIGH)   /* Type-C VBUS select */
 GPIO(TYPEC3_VBUS_ON_EC,     PIN(0141), GPIO_ODR_HIGH)   /* Type-C VBUS select */
 GPIO(CAM_EN,                PIN(0255), GPIO_OUT_LOW)    /* Open camera power  */
 GPIO(FAN_PWM0,              PIN(053),  GPIO_OUT_HIGH)   /* EVT for fan full on */
-GPIO(EC_MUTE_L,             PIN(0242), GPIO_OUT_LOW)
+GPIO(EC_MUTE_L,             PIN(0253), GPIO_ODR_LOW)
 
 /* SPI
  * Chip select must be open drain and driven high before SPI controller
@@ -576,10 +579,11 @@ ALTERNATE(PIN_MASK(0, 0x4000), 2, MODULE_SPI_FLASH, 0)
  * SMB01_DAT - GPIO_0130 Func1, SMB01_CLK - GPIO_0131 Func1 (bank 2 bits[24:25])
  * SMB02_DAT - GPIO_0154 Func1, SMB02_CLK - GPIO_0155 Func1 (bank 3 bits[12:13])
  * SMB03_DAT - GPIO_0007 Func1, SMB03_CLK - GPIO_0010 Func1 (bank 0 bits[7:8])
+ * SMB06_DAT - GPIO_0132 Func1, SMB06_CLK - GPIO_0140 Func1 (bank 2 bit[26], bank 3 bit[0])
 */
 ALTERNATE(PIN_MASK(0, 0x3000),    1, MODULE_I2C, GPIO_ODR_HIGH)
-ALTERNATE(PIN_MASK(2, 0x3000000), 1, MODULE_I2C, GPIO_ODR_HIGH)
-ALTERNATE(PIN_MASK(3, 0x3000),    1, MODULE_I2C, GPIO_ODR_HIGH)
+ALTERNATE(PIN_MASK(2, 0x7000000), 1, MODULE_I2C, GPIO_ODR_HIGH)
+ALTERNATE(PIN_MASK(3, 0x3001),    1, MODULE_I2C, GPIO_ODR_HIGH)
 
 /* ADC pins */
 /* ADC00 - GPIO_0200 / I_ADP,			Func1 Bank 4 bit[0]
