@@ -40,8 +40,8 @@ GPIO_INT(IMVP8_VRRDY_OD,       PIN(1, 6), GPIO_INT_BOTH, power_signal_interrupt)
 /* Other interrupts */
 GPIO_INT(USB_C0_TCPPC_INT_ODL, PIN(E, 0), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C0_TCPC_INT_ODL,  PIN(6, 2), GPIO_INT_FALLING, tcpc_alert_event)
-GPIO_INT(USB_C1_TCPPC_INT_ODL, PIN(D, 6), GPIO_INT_FALLING, ppc_interrupt)
-GPIO_INT(USB_C1_TCPC_INT_ODL,  PIN(3, 2), GPIO_INT_FALLING, tcpc_alert_event)
+GPIO_INT(USB_C1_TCPPC_INT_ODL, PIN(A, 2), GPIO_INT_FALLING, ppc_interrupt)
+GPIO_INT(USB_C1_TCPC_INT_ODL,  PIN(E, 4), GPIO_INT_FALLING, tcpc_alert_event)
 /*
  * Directly connected recovery button.
  */
@@ -150,8 +150,8 @@ UNUSED(PIN(5, 0))						/* G4 NC */
 UNUSED(PIN(9, 6))						/* M12 TP998 */
 UNUSED(PIN(0, 7))						/* E8  TP991 */
 UNUSED(PIN(0, 6))						/* B10 TP992 */
-UNUSED(PIN(E, 4))						/* H8  TP993 */
-UNUSED(PIN(A, 2))						/* J11 TP994 */
+UNUSED(PIN(D, 6))						/* F6 */
+UNUSED(PIN(3, 2))						/* E5 */
 UNUSED(PIN(B, 0))						/* G8  TP49 */
 UNUSED(PIN(1, 3))						/* EC_GP_SEL1_ODL */
 UNUSED(PIN(C, 0))						/* FAN_PWM_2 */
