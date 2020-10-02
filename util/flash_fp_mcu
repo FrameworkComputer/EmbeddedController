@@ -7,6 +7,7 @@
 
 readonly DEFAULT_RETRIES=${DEFAULT_RETRIES:-4}
 readonly STM32MON_CONNECT_RETRIES=${STM32MON_CONNECT_RETRIES:-6}
+readonly STM32MON_SERIAL_BAUDRATE=${STM32MON_SERIAL_BAUDRATE:-115200}
 
 DEFINE_boolean 'read' "${FLAGS_FALSE}" 'Read instead of write' 'r'
 # Both flash read and write protection are removed by default, but you
@@ -16,6 +17,7 @@ DEFINE_boolean 'remove_flash_read_protect' "${FLAGS_TRUE}" \
 DEFINE_boolean 'remove_flash_write_protect' "${FLAGS_TRUE}" \
   'Remove flash write protection while performing command' 'u'
 DEFINE_integer 'retries' "${DEFAULT_RETRIES}" 'Specify number of retries' 'R'
+DEFINE_integer 'baudrate' "${STM32MON_SERIAL_BAUDRATE}" 'Specify UART baudrate' 'B'
 DEFINE_boolean 'hello' "${FLAGS_FALSE}" 'Only ping the bootloader' 'H'
 FLAGS_HELP="Usage: ${0} [flags] ec.bin"
 
@@ -35,6 +37,8 @@ echo "$(readlink -f "$0")"
 
 readonly CROS_EC_SPI_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-spi"
 
+readonly CROS_EC_UART_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-uart"
+
 check_hardware_write_protect_disabled() {
   local hardware_write_protect_state="$(crossystem wpsw_cur)"
   if [[ "${hardware_write_protect_state}" != "0" ]]; then
@@ -51,6 +55,20 @@ get_spiid() {
     if [[ "$(cat "${dev}/modalias")" == "${CROS_EC_SPI_MODALIAS_STR}" ]]; then
       echo "$(basename "${dev}")"
       exit 0
+    fi
+  done
+
+  exit 1
+}
+
+# Get the uartid for the fingerprint sensor based on the modalias
+get_uartid() {
+  for dev in /sys/bus/serial/devices/*; do
+    if [ -f "${dev}/modalias" ]; then
+      if [[ "$(cat "${dev}/modalias")" == "${CROS_EC_UART_MODALIAS_STR}" ]]; then
+        echo "$(basename "${dev}")"
+        exit 0
+      fi
     fi
   done
 
@@ -114,15 +132,21 @@ check_gpio_chip_exists() {
 }
 
 flash_fp_mcu_stm32() {
-  local spidev="${1}"
-  local gpio_nrst="${2}"
-  local gpio_boot0="${3}"
-  local gpio_pwren="${4}"
-  local file="${5}"
-  local spiid
+  local transport="${1}"
+  local device="${2}"
+  local gpio_nrst="${3}"
+  local gpio_boot0="${4}"
+  local gpio_pwren="${5}"
+  local file="${6}"
+  local deviceid
 
+  local stm32mon_flags="-p --retries ${STM32MON_CONNECT_RETRIES}"
 
-  local stm32mon_flags="-p --retries ${STM32MON_CONNECT_RETRIES} -s ${spidev}"
+  if [[ "${transport}" == "UART" ]]; then
+    stm32mon_flags+=" --baudrate ${FLAGS_baudrate} --device ${device}"
+  else
+    stm32mon_flags+=" -s ${device}"
+  fi
 
   if [[ "${FLAGS_hello}" -eq "${FLAGS_FALSE}" ]]; then
     if [[ "${FLAGS_remove_flash_write_protect}" -eq "${FLAGS_TRUE}" ]]; then
@@ -153,23 +177,35 @@ flash_fp_mcu_stm32() {
 
   check_hardware_write_protect_disabled
 
-  spiid="$(get_spiid)"
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to find FP sensor SPI device: ${CROS_EC_SPI_MODALIAS_STR}"
-    exit 1
+  if [[ "${transport}" == "UART" ]]; then
+    deviceid="$(get_uartid)"
+    if [[ $? -ne 0 ]]; then
+      echo "Unable to find FP sensor UART device: ${CROS_EC_UART_MODALIAS_STR}"
+      exit 1
+    fi
+  else
+    deviceid="$(get_spiid)"
+    if [[ $? -ne 0 ]]; then
+      echo "Unable to find FP sensor SPI device: ${CROS_EC_SPI_MODALIAS_STR}"
+      exit 1
+    fi
   fi
 
-  echo "Flashing SPI device ID: ${spiid}"
+  echo "Flashing ${transport} device ID: ${deviceid}"
 
   # Ensure the ACPI is not cutting power when unloading cros-ec-spi
-  if [[ -n "${gpio_pwren}" ]]; then
+  if [[ "${gpio_pwren}" -gt 0 ]]; then
     echo "${gpio_pwren}" > /sys/class/gpio/export
     echo "out" > "/sys/class/gpio/gpio${gpio_pwren}/direction"
     echo 1 > "/sys/class/gpio/gpio${gpio_pwren}/value"
   fi
 
   # Remove cros_fp if present
-  echo "${spiid}" > /sys/bus/spi/drivers/cros-ec-spi/unbind
+  if [[ "${transport}" == "UART" ]]; then
+    echo "${deviceid}" > /sys/bus/serial/drivers/cros-ec-uart/unbind
+  else
+    echo "${deviceid}" > /sys/bus/spi/drivers/cros-ec-spi/unbind
+  fi
 
   # Configure the MCU Boot0 and NRST GPIOs
   echo "${gpio_boot0}" > /sys/class/gpio/export
@@ -182,11 +218,17 @@ flash_fp_mcu_stm32() {
   echo 0 > "/sys/class/gpio/gpio${gpio_nrst}/value"
   sleep 0.001
 
-  # load spidev (fail on cros-ec-spi first to change modalias)
-  echo "${spiid}" > /sys/bus/spi/drivers/cros-ec-spi/bind 2>/dev/null
-  echo "${spiid}" > /sys/bus/spi/drivers/spidev/bind
-  # The following sleep is a workaround to mitigate the effects of a
-  # poorly behaved chip select line. See b/145023809.
+  if [[ "${transport}" == "UART" ]]; then
+    # load AMD0020:01 ttyS1
+    echo AMD0020:01 > /sys/bus/platform/drivers/dw-apb-uart/unbind;
+    echo AMD0020:01 > /sys/bus/platform/drivers/dw-apb-uart/bind;
+  else
+    # load spidev (fail on cros-ec-spi first to change modalias)
+    echo "${deviceid}" > /sys/bus/spi/drivers/cros-ec-spi/bind 2>/dev/null
+    echo "${deviceid}" > /sys/bus/spi/drivers/spidev/bind
+    # The following sleep is a workaround to mitigate the effects of a
+    # poorly behaved chip select line. See b/145023809.
+  fi
   sleep 0.5
 
   local attempt=0
@@ -195,14 +237,11 @@ flash_fp_mcu_stm32() {
 
   for attempt in $(seq ${FLAGS_retries}); do
     # Reset sequence to enter bootloader mode
-    echo "out" > "/sys/class/gpio/gpio${gpio_nrst}/direction"
-    sleep 0.001
     echo 0 > "/sys/class/gpio/gpio${gpio_nrst}/value"
     sleep 0.01
 
     # Release reset as the SPI bus is now ready
     echo 1 > "/sys/class/gpio/gpio${gpio_nrst}/value"
-    echo "in" > "/sys/class/gpio/gpio${gpio_nrst}/direction"
 
     # Print out the actual underlying command we're running and run it
     echo "# ${cmd}"
@@ -217,8 +256,10 @@ flash_fp_mcu_stm32() {
     sleep 1
   done
 
-  # unload spidev
-  echo "${spiid}" > /sys/bus/spi/drivers/spidev/unbind
+  # unload device
+  if [[ "${transport}" != "UART" ]]; then
+    echo "${deviceid}" > /sys/bus/spi/drivers/spidev/unbind
+  fi
 
   # Go back to normal mode
   echo "out" > "/sys/class/gpio/gpio${gpio_nrst}/direction"
@@ -234,32 +275,40 @@ flash_fp_mcu_stm32() {
 
   # wait for FP MCU to come back up (including RWSIG delay)
   sleep 2
-  # Put back cros_fp driver
-  echo "${spiid}" > /sys/bus/spi/drivers/cros-ec-spi/bind
-  # Kernel driver is back, we are no longer controlling power
-  if [[ -n "${gpio_pwren}" ]]; then
-    echo "${gpio_pwren}" > /sys/class/gpio/unexport
+
+  # Put back cros_fp driver if transport is SPI
+  if [[ "${transport}" != "UART" ]]; then
+    echo "${deviceid}" > /sys/bus/spi/drivers/cros-ec-spi/bind
+
+    # Kernel driver is back, we are no longer controlling power
+    if [[ "${gpio_pwren}" -gt 0 ]]; then
+      echo "${gpio_pwren}" > /sys/class/gpio/unexport
+    fi
   fi
 
   if [[ "${cmd_exit_status}" -ne 0 ]]; then
     exit 1
   fi
 
-  # Test it
-  ectool --name=cros_fp version
+  # Inform user to reboot if transport is UART.
+  # Display fw version is transport is SPI 
+  if [[ "${transport}" == "UART" ]]; then
+    echo "Please reboot this device."
+  else
+    # Test it
+    ectool --name=cros_fp version
+  fi
 }
 
 config_hatch() {
   check_gpio_chip_exists "gpiochip200"
-
-  readonly SPIDEV="/dev/spidev1.1"
-
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev1.1"
   # See
   # third_party/coreboot/src/soc/intel/cannonlake/include/soc/gpio_soc_defs.h
   # for pin name to number mapping.
   # Examine `cat /sys/kernel/debug/pinctrl/INT34BB:00/gpio-ranges` on a hatch
   # device to determine gpio number from pin number.
-
   # FPMCU RST_ODL is on GPP_A12 = 200 + 12 = 212
   readonly GPIO_NRST=212
   # FPMCU BOOT0 is on GPP_A22 = 200 + 22 = 222
@@ -268,10 +317,13 @@ config_hatch() {
   readonly GPIO_PWREN=467
 }
 
+
 config_nami() {
   check_gpio_chip_exists "gpiochip360"
 
-  readonly SPIDEV="/dev/spidev32765.0"
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev32765.0"
+
   # FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
   readonly GPIO_NRST=417
   # FPMCU BOOT0 is on GPP_D5 = 360 + 77 = 437
@@ -283,7 +335,9 @@ config_nami() {
 config_nocturne() {
   check_gpio_chip_exists "gpiochip360"
 
-  readonly SPIDEV="/dev/spidev32765.0"
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev32765.0"
+
   # FPMCU RST_ODL is on GPP_C10 = 360 + 58 = 418
   readonly GPIO_NRST=418
   # FPMCU BOOT0 is on GPP_C8 = 360 + 56 = 416
@@ -295,7 +349,8 @@ config_nocturne() {
 config_volteer() {
   check_gpio_chip_exists "gpiochip152"
 
-  readonly SPIDEV="/dev/spidev1.0"
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev1.0"
 
   # See kernel/v5.4/drivers/pinctrl/intel/pinctrl-tigerlake.c
   # for pin name and pin number.
@@ -311,6 +366,21 @@ config_volteer() {
   readonly GPIO_BOOT0=430
   # FP_PWR_EN is on GPP_A21 = 216 + (63 - 42) = 237
   readonly GPIO_PWREN=237
+}
+
+config_zork() {
+  check_gpio_chip_exists "gpiochip320"
+
+  readonly TRANSPORT="UART"
+
+  readonly DEVICE="/dev/ttyS1"
+
+  # FPMCU RST_ODL is on AGPIO 11 = 320 + 11 = 331
+  readonly GPIO_NRST=331
+  # FPMCU BOOT0 is on AGPIO 69 = 320 + 69 = 389
+  readonly GPIO_BOOT0=389
+  # FPMCU PWR_EN is not available on Zork. Set invalid value
+  readonly GPIO_PWREN=-1
 }
 
 # The "platform name" corresponds to the underlying board (reference design)
@@ -338,7 +408,8 @@ if [[ $? -ne 0 ]]; then
 fi
 
 flash_fp_mcu_stm32 \
-  "${SPIDEV}"      \
+  "${TRANSPORT}"   \
+  "${DEVICE}"      \
   "${GPIO_NRST}"   \
   "${GPIO_BOOT0}"  \
   "${GPIO_PWREN}"  \
