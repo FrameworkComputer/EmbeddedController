@@ -31,10 +31,7 @@
 #define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr */
 #define CONFIG_OCPC
 #undef  CONFIG_CHARGER_SINGLE_CHIP
-
-/* EC console commands */
-#define CONFIG_CMD_TCPC_DUMP
-#define CONFIG_CMD_CHARGER_DUMP
+#undef CONFIG_CMD_CHARGER_DUMP
 
 /* GPIO for C1 interrupts, for baseboard use */
 #define GPIO_USB_C1_INT_ODL GPIO_SUB_USB_C1_INT_ODL
