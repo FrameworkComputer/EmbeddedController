@@ -16,19 +16,16 @@ int cputs(enum console_channel channel, const char *str)
 	return cprintf(channel, "%s\n", str);
 }
 
-static const struct shell *current_shell;
-
 static void console_vprintf(enum console_channel channel, const char *format,
 			    va_list args)
 {
-	if (current_shell && channel == CC_COMMAND) {
-		shell_vfprintf(current_shell, SHELL_NORMAL, format, args);
-		return;
-	}
-
 	/*
 	 * TODO(jrosenth): investigate using the logging subsystem
 	 * and generating modules for the channels instead of printk
+	 *
+	 * TODO(b/170658516): If logging doesn't work, then we should at least
+	 * use shell_ print functions instead of printk function as they could
+	 * be on different uarts (they are not for Chrome OS Apps though).
 	 */
 	vprintk(format, args);
 }
@@ -70,20 +67,19 @@ int zshim_run_ec_console_command(int (*handler)(int argc, char **argv),
 				 char **argv, const char *help_str,
 				 const char *argdesc)
 {
+	ARG_UNUSED(shell);
+
 	for (int i = 1; i < argc; i++) {
 		if (!help_str && !argdesc)
 			break;
 		if (!strcmp(argv[i], "-h")) {
 			if (help_str)
-				shell_fprintf(shell, SHELL_NORMAL, "%s\n",
-					      help_str);
+				printk("%s\n", help_str);
 			if (argdesc)
-				shell_fprintf(shell, SHELL_NORMAL,
-					      "Usage: %s\n", argdesc);
+				printk("Usage: %s\n", argdesc);
 			return 0;
 		}
 	}
 
-	current_shell = shell;
 	return handler(argc, argv);
 }
