@@ -17,13 +17,13 @@ GPIO_INT(USB_C0_BC12_INT_L,    PIN(6, 1), GPIO_INT_FALLING, usb0_evt)  /* Interr
 GPIO_INT(USB_C1_BC12_INT_L,    PIN(8, 2), GPIO_INT_FALLING, usb1_evt)  /* Interrupt from port-1 BC1.2 */
 
 /* System interrupts */
-GPIO_INT(ACOK_OD,           PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)  /* AC OK? */
+GPIO_INT(ACOK_OD,           PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)  /* ACOK */
 GPIO_INT(CCD_MODE_ODL,      PIN(E, 3), GPIO_INT_FALLING, board_connect_c0_sbu)  /* Case Closed Debug Mode */
 GPIO_INT(EC_PWR_BTN_ODL,    PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)  /* Power button */
 GPIO_INT(EC_VOLDN_BTN_ODL,  PIN(7, 0), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* Volume Up button */
 GPIO_INT(EC_VOLUP_BTN_ODL,  PIN(F, 2), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* Volume Down button */
 GPIO_INT(EC_WP_ODL,         PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)  /* Write protection */
-GPIO_INT(LID_OPEN_EC,       PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)  /* Lid open? */
+GPIO_INT(LID_OPEN_EC,       PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)  /* Lid open */
 GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH | GPIO_SEL_1P8V, chipset_ap_rst_interrupt)  /* PMIC to signal AP reset */
 GPIO_INT(PS_HOLD,           PIN(A, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V, power_signal_interrupt)  /* Indicate when AP triggers reset/shutdown */
 GPIO_INT(PMIC_FAULT_L,      PIN(A, 3), GPIO_INT_BOTH | GPIO_SEL_1P8V, power_signal_interrupt)  /* Any PMIC fault? */
@@ -51,16 +51,10 @@ GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi160_
 GPIO_INT(DA9313_GPIO0,      PIN(E, 2), GPIO_INT_FALLING, switchcap_interrupt)
 
 /*
- * EC_RST_ODL acts as a wake source from PSL hibernate mode. However, it does
- * not need to be an interrupt for normal EC operations. Thus, configure it as
- * GPIO_INT_BOTH with wake on low-to-high edge using GPIO_HIB_WAKE_HIGH so that
- * PSL common code can configure PSL_IN correctly.
- *
- * Use the rising edge to wake EC up. If we chose the falling edge, it would
- * still wake EC up, but EC is in an intermediate state until the signal goes
- * back to high.
+ * EC_RST_ODL used to be a wake source from PSL mode. However, we disabled
+ * the PSL mode. This GPIO does nothing now. Simply set it an INPUT.
  */
-GPIO(EC_RST_ODL,            PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)  /* Wake source: EC reset */
+GPIO(EC_RST_ODL,            PIN(0, 2), GPIO_INPUT)     /* EC reset */
 GPIO(EC_ENTERING_RW,        PIN(E, 1), GPIO_OUT_LOW)   /* Indicate when EC is entering RW code */
 GPIO(EC_BATT_PRES_ODL,      PIN(E, 5), GPIO_INPUT)     /* Battery Present */
 
@@ -145,10 +139,6 @@ ALTERNATE(PIN_MASK(4, 0xC0), 1, MODULE_SPI, GPIO_SEL_1P8V) /* SHI_SDO (GPIO47), 
 ALTERNATE(PIN_MASK(5, 0x28), 1, MODULE_SPI, GPIO_SEL_1P8V) /* SHI_SCLK (GPIO55), SHI_CS# (GPIO53) */
 ALTERNATE(PIN_MASK(8, 0x01), 0, MODULE_PWM, 0)             /* PWM3 (GPIO80) - KB_BL_PWM */
 ALTERNATE(PIN_MASK(B, 0x80), 1, MODULE_PWM, 0)             /* PWM5 (GPIOB7) - EDP_BKLTCTL */
-ALTERNATE(PIN_MASK(D, 0x04), 1, MODULE_PMU, 0)             /* PSL_IN1 (GPIOD2) - LID_OPEN_EC */
-ALTERNATE(PIN_MASK(0, 0x01), 1, MODULE_PMU, 0)             /* PSL_IN2 (GPIO00) - ACOK_OD */
-ALTERNATE(PIN_MASK(0, 0x02), 1, MODULE_PMU, 0)             /* PSL_IN3 (GPIO01) - EC_PWR_BTN_ODL */
-ALTERNATE(PIN_MASK(0, 0x04), 1, MODULE_PMU, 0)             /* PSL_IN4 (GPIO02) - EC_RST_ODL */
 
 /* Keyboard */
 #define GPIO_KB_INPUT           (GPIO_INPUT | GPIO_PULL_UP)

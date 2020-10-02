@@ -153,9 +153,6 @@
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 #define CONFIG_POWER_SLEEP_FAILURE_DETECTION
 
-/* NPCX Features */
-#define CONFIG_HIBERNATE_PSL
-
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
