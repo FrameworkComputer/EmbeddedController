@@ -19,6 +19,12 @@ const enum gpio_signal hibernate_wake_pins[] = {
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
+void board_hibernate_late(void)
+{
+	/* Set the hibernate GPIO to turn off the rails */
+	gpio_set_level(GPIO_HIBERNATE_L, 0);
+}
+
 /* Power signal list. Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
 	[SC7180_AP_RST_ASSERTED] = {
