@@ -51,6 +51,18 @@ static struct mutex flow2_access_lock[CHARGER_NUM];
 
 static int charger_vbus[CHARGER_NUM];
 
+/* Tracker for charging failures per port */
+struct {
+	int count;
+	timestamp_t time;
+} failure_tracker[CHARGER_NUM] = {};
+
+/* Port to restart charging on */
+static int active_restart_port = CHARGE_PORT_NONE;
+
+#define CHARGING_FAILURE_MAX_COUNT	2
+#define CHARGING_FAILURE_INTERVAL	MINUTE
+
 static int sm5803_is_sourcing_otg_power(int chgnum, int port);
 static enum ec_error_list sm5803_get_dev_id(int chgnum, int *id);
 
@@ -840,6 +852,39 @@ void sm5803_enable_low_power_mode(int chgnum)
 }
 
 /*
+ * Restart charging on the active port, if it's still active and it hasn't
+ * exceeded our maximum number of restarts.
+ */
+void sm5803_restart_charging(void)
+{
+	int act_chg = charge_manager_get_active_charge_port();
+	timestamp_t now = get_time();
+
+	if (act_chg == active_restart_port) {
+		if (timestamp_expired(failure_tracker[act_chg].time, &now)) {
+			/*
+			 * Enough time has passed since our last failure,
+			 * restart the timing and count from now.
+			 */
+			failure_tracker[act_chg].time.val = now.val +
+						CHARGING_FAILURE_INTERVAL;
+			failure_tracker[act_chg].count = 1;
+
+			sm5803_vbus_sink_enable(act_chg, 1);
+		} else if (++failure_tracker[act_chg].count >
+			   CHARGING_FAILURE_MAX_COUNT) {
+			CPRINTS("%s %d: Exceeded charging failure retries",
+				CHARGER_NAME, act_chg);
+		} else {
+			sm5803_vbus_sink_enable(act_chg, 1);
+		}
+	}
+
+	active_restart_port = CHARGE_PORT_NONE;
+}
+DECLARE_DEFERRED(sm5803_restart_charging);
+
+/*
  * Process interrupt registers and report any Vbus changes.  Alert the AP if the
  * charger has become too hot.
  */
@@ -935,8 +980,32 @@ void sm5803_handle_interrupt(int chgnum)
 		return;
 	}
 
-	if (int_reg & SM5803_INT4_CHG_FAIL)
-		CPRINTS("%s %d: CHG_FAIL_INT fired!!!", CHARGER_NAME, chgnum);
+	if (int_reg & SM5803_INT4_CHG_FAIL) {
+		int status_reg;
+
+		act_chg = charge_manager_get_active_charge_port();
+		chg_read8(chgnum, SM5803_REG_STATUS_CHG_REG, &status_reg);
+		CPRINTS("%s %d: CHG_FAIL_INT fired.  Status 0x%02x",
+			CHARGER_NAME, chgnum, status_reg);
+
+		/* Write 1 to clear status interrupts */
+		chg_write8(chgnum, SM5803_REG_STATUS_CHG_REG, status_reg);
+
+		/*
+		 * If a survivable fault happened, re-start sinking on the
+		 * active charger after an appropriate delay.
+		 */
+		if (status_reg & SM5803_STATUS_CHG_OV_ITEMP) {
+			active_restart_port = act_chg;
+			hook_call_deferred(&sm5803_restart_charging_data,
+					   30 * SECOND);
+		} else if ((status_reg & SM5803_STATUS_CHG_OV_VBAT) &&
+						act_chg == CHARGER_PRIMARY) {
+			active_restart_port = act_chg;
+			hook_call_deferred(&sm5803_restart_charging_data,
+					   1 * SECOND);
+		}
+	}
 
 	if (int_reg & SM5803_INT4_CHG_DONE)
 		CPRINTS("%s %d: CHG_DONE_INT fired!!!", CHARGER_NAME, chgnum);
