@@ -5,6 +5,7 @@
 
 /* Dooly board-specific configuration */
 
+#include "accelgyro.h"
 #include "adc.h"
 #include "adc_chip.h"
 #include "button.h"
@@ -14,6 +15,8 @@
 #include "common.h"
 #include "core/cortex-m/cpu.h"
 #include "cros_board_info.h"
+#include "driver/accel_bma2x2.h"
+#include "driver/als_tcs3400.h"
 #include "driver/ina3221.h"
 #include "driver/led/oz554.h"
 #include "driver/ppc/sn5s330.h"
@@ -49,6 +52,128 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
+/* Sensors */
+static struct mutex g_accel_mutex;
+static struct accelgyro_saved_data_t g_bma253_data;
+
+/* TCS3400 private data */
+static struct als_drv_data_t g_tcs3400_data = {
+	.als_cal.scale = 1,
+	.als_cal.uscale = 0,
+	.als_cal.offset = 0,
+	.als_cal.channel_scale = {
+		.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kc */
+		.cover_scale = ALS_CHANNEL_SCALE(1.0),     /* CT */
+	},
+};
+static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
+	/*
+	 * TODO: calculate the actual coefficients and scaling factors
+	 */
+	.calibration.rgb_cal[X] = {
+		.offset = 0,
+		.scale = {
+			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kr */
+			.cover_scale = ALS_CHANNEL_SCALE(1.0)
+		},
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(0),
+	},
+	.calibration.rgb_cal[Y] = {
+		.offset = 0,
+		.scale = {
+			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kg */
+			.cover_scale = ALS_CHANNEL_SCALE(1.0)
+		},
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(0.1),
+	},
+	.calibration.rgb_cal[Z] = {
+		.offset = 0,
+		.scale = {
+			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kb */
+			.cover_scale = ALS_CHANNEL_SCALE(1.0)
+		},
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(0),
+	},
+	.calibration.irt = INT_TO_FP(1),
+	.saturation.again = TCS_DEFAULT_AGAIN,
+	.saturation.atime = TCS_DEFAULT_ATIME,
+};
+
+struct motion_sensor_t motion_sensors[] = {
+	[SCREEN_ACCEL] = {
+		.name = "Screen Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_BMA255,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &bma2x2_accel_drv,
+		.mutex = &g_accel_mutex,
+		.drv_data = &g_bma253_data,
+		.port = I2C_PORT_SENSORS,
+		.i2c_spi_addr_flags = BMA2x2_I2C_ADDR2_FLAGS,
+		.rot_standard_ref = NULL,
+		.default_range = 2,
+		.min_frequency = BMA255_ACCEL_MIN_FREQ,
+		.max_frequency = BMA255_ACCEL_MAX_FREQ,
+		.config = {
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+		},
+	},
+	[CLEAR_ALS] = {
+		.name = "Clear Light",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_TCS3400,
+		.type = MOTIONSENSE_TYPE_LIGHT,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &tcs3400_drv,
+		.drv_data = &g_tcs3400_data,
+		.port = I2C_PORT_SENSORS,
+		.i2c_spi_addr_flags = TCS3400_I2C_ADDR_FLAGS,
+		.rot_standard_ref = NULL,
+		.default_range = 0x10000, /* scale = 1x, uscale = 0 */
+		.min_frequency = TCS3400_LIGHT_MIN_FREQ,
+		.max_frequency = TCS3400_LIGHT_MAX_FREQ,
+		.config = {
+			/* Run ALS sensor in S0 */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 1000,
+			},
+		},
+	},
+	[RGB_ALS] = {
+		.name = "RGB Light",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_TCS3400,
+		.type = MOTIONSENSE_TYPE_LIGHT_RGB,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &tcs3400_rgb_drv,
+		.drv_data = &g_tcs3400_rgb_data,
+		.rot_standard_ref = NULL,
+		.default_range = 0x10000, /* scale = 1x, uscale = 0 */
+	},
+};
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+/* ALS instances when LPC mapping is needed. Each entry directs to a sensor. */
+const struct motion_sensor_t *motion_als_sensors[] = {
+	&motion_sensors[CLEAR_ALS],
+};
+BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 
 static void power_monitor(void);
 DECLARE_DEFERRED(power_monitor);
@@ -509,6 +634,9 @@ static void board_init(void)
 	cpu_set_interrupt_priority(NPCX_IRQ_WKINTC_0, 2);
 
 	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_L);
+
+	/* Enable interrupt for the TCS3400 color light sensor */
+	gpio_enable_interrupt(GPIO_ALS_GSENSOR_INT_ODL);
 
 	/* Always claim AC is online, because we don't have a battery. */
 	memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
