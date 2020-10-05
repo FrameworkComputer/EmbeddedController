@@ -11,6 +11,9 @@
 #include "common.h"
 #include "util.h"
 
+typedef int atomic_t;
+typedef atomic_t atomic_val_t;
+
 #define ATOMIC_OP(asm_op, a, v) do {		\
 	__asm__ __volatile__ (			\
 		ASM_LOCK_PREFIX #asm_op " %1, %0\n"	\
@@ -43,9 +46,19 @@ static inline void deprecated_atomic_or_u8(uint8_t *addr, uint8_t bits)
 	ATOMIC_OP(or, addr, bits);
 }
 
+static inline atomic_val_t atomic_or_u8(uint8_t *addr, uint8_t bits)
+{
+	return __atomic_fetch_or(addr, bits, __ATOMIC_SEQ_CST);
+}
+
 static inline void deprecated_atomic_and_u8(uint8_t *addr, uint8_t bits)
 {
 	ATOMIC_OP(and, addr, bits);
+}
+
+static inline atomic_val_t atomic_and_u8(uint8_t *addr, uint8_t bits)
+{
+	return __atomic_fetch_and(addr, bits, __ATOMIC_SEQ_CST);
 }
 
 static inline void deprecated_atomic_clear_bits(uint32_t volatile *addr,
@@ -54,9 +67,19 @@ static inline void deprecated_atomic_clear_bits(uint32_t volatile *addr,
 	ATOMIC_OP(andl, addr, ~bits);
 }
 
+static inline void atomic_clear_bits(atomic_t *addr, atomic_val_t bits)
+{
+	__atomic_fetch_and(addr, ~bits, __ATOMIC_SEQ_CST);
+}
+
 static inline void deprecated_atomic_or(uint32_t volatile *addr, uint32_t bits)
 {
 	ATOMIC_OP(orl, addr, bits);
+}
+
+static inline atomic_val_t atomic_or(atomic_t *addr, atomic_val_t bits)
+{
+	return __atomic_fetch_or(addr, bits, __ATOMIC_SEQ_CST);
 }
 
 static inline void deprecated_atomic_add(uint32_t volatile *addr,
@@ -65,16 +88,31 @@ static inline void deprecated_atomic_add(uint32_t volatile *addr,
 	ATOMIC_OP(addl, addr, value);
 }
 
+static inline atomic_val_t atomic_add(atomic_t *addr, atomic_val_t value)
+{
+	return __atomic_fetch_add(addr, value, __ATOMIC_SEQ_CST);
+}
+
 static inline void deprecated_atomic_and(uint32_t volatile *addr,
 					 uint32_t value)
 {
 	ATOMIC_OP(andl, addr, value);
 }
 
+static inline atomic_val_t atomic_and(atomic_t *addr, atomic_val_t bits)
+{
+	return __atomic_fetch_and(addr, bits, __ATOMIC_SEQ_CST);
+}
+
 static inline void deprecated_atomic_sub(uint32_t volatile *addr,
 					 uint32_t value)
 {
 	ATOMIC_OP(subl, addr, value);
+}
+
+static inline atomic_val_t atomic_sub(atomic_t *addr, atomic_val_t value)
+{
+	return __atomic_fetch_sub(addr, value, __ATOMIC_SEQ_CST);
 }
 
 static inline uint32_t deprecated_atomic_read_clear(uint32_t volatile *addr)
@@ -89,6 +127,11 @@ static inline uint32_t deprecated_atomic_read_clear(uint32_t volatile *addr)
 		     : : "memory", "cc");
 
 	return ret;
+}
+
+static inline atomic_val_t atomic_read_clear(atomic_t *addr)
+{
+	return __atomic_exchange_n(addr, 0, __ATOMIC_SEQ_CST);
 }
 
 #endif  /* __CROS_EC_ATOMIC_H */
