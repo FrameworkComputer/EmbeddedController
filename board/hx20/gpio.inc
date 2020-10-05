@@ -440,6 +440,7 @@ GPIO(TYPEC3_VBUS_ON_EC,     PIN(0141), GPIO_ODR_HIGH)   /* Type-C VBUS select */
 GPIO(CAM_EN,                PIN(0255), GPIO_OUT_LOW)    /* Open camera power  */
 GPIO(FAN_PWM0,              PIN(053),  GPIO_OUT_HIGH)   /* EVT for fan full on */
 GPIO(EC_MUTE_L,             PIN(0253), GPIO_ODR_LOW)
+GPIO(OTG_EN,                PIN(0207), GPIO_OUT_LOW)	/* Always low PWR request */
 
 /* SPI
  * Chip select must be open drain and driven high before SPI controller
