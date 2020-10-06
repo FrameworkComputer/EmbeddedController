@@ -5156,6 +5156,12 @@
 #define CONFIG_USBC_PPC_VCONN
 #endif
 
+/* The SYV682X supports VCONN and needs to be informed of CC polarity */
+#if defined(CONFIG_USBC_PPC_SYV682X)
+#define CONFIG_USBC_PPC_POLARITY
+#define CONFIG_USBC_PPC_VCONN
+#endif
+
 /*****************************************************************************/
 /*
  * Define CONFIG_USB_PD_VBUS_MEASURE_CHARGER if the charger on the board
