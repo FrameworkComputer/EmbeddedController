@@ -1037,7 +1037,7 @@ void pe_notify_event(int port, uint32_t event_mask)
 
 void pd_clear_events(int port, uint32_t clear_mask)
 {
-	deprecated_atomic_clear(&pe[port].events, clear_mask);
+	deprecated_atomic_clear_bits(&pe[port].events, clear_mask);
 }
 
 uint32_t pd_get_events(int port)

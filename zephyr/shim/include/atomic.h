@@ -14,8 +14,8 @@
  * definitions here are provided so we can shim-in modules using the
  * deprecated APIs while the transition is under way.
  */
-static inline void deprecated_atomic_clear(uint32_t volatile *addr,
-					   uint32_t bits)
+static inline void deprecated_atomic_clear_bits(uint32_t volatile *addr,
+						uint32_t bits)
 {
 	atomic_and((atomic_t *)addr, bits);
 }
