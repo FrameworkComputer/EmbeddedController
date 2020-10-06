@@ -21,7 +21,7 @@ import tempfile
 JLINK_COMMANDS = '''
 exitonerror 1
 r
-loadfile {FIRMWARE}
+loadfile {FIRMWARE} {FLASH_ADDRESS}
 r
 go
 exit
@@ -29,14 +29,18 @@ exit
 
 
 class BoardConfig:
-    def __init__(self, interface, device):
+    def __init__(self, interface, device, flash_address):
         self.interface = interface
         self.device = device
+        self.flash_address = flash_address
 
 
 SWD_INTERFACE = 'SWD'
-DRAGONCLAW_CONFIG = BoardConfig(interface=SWD_INTERFACE, device='STM32F412CG')
-ICETOWER_CONFIG = BoardConfig(interface=SWD_INTERFACE, device='STM32H743ZI')
+STM32_DEFAULT_FLASH_ADDRESS = '0x8000000'
+DRAGONCLAW_CONFIG = BoardConfig(interface=SWD_INTERFACE, device='STM32F412CG',
+                                flash_address=STM32_DEFAULT_FLASH_ADDRESS)
+ICETOWER_CONFIG = BoardConfig(interface=SWD_INTERFACE, device='STM32H743ZI',
+                              flash_address=STM32_DEFAULT_FLASH_ADDRESS)
 
 BOARD_CONFIGS = {
     'dragonclaw': DRAGONCLAW_CONFIG,
@@ -46,9 +50,11 @@ BOARD_CONFIGS = {
 }
 
 
-def create_jlink_command_file(firmware_file):
+def create_jlink_command_file(firmware_file, config):
     tmp = tempfile.NamedTemporaryFile()
-    tmp.write(JLINK_COMMANDS.format(FIRMWARE=firmware_file).encode('utf-8'))
+    tmp.write(JLINK_COMMANDS.format(FIRMWARE=firmware_file,
+                                    FLASH_ADDRESS=config.flash_address).encode(
+        'utf-8'))
     tmp.flush()
     return tmp
 
@@ -124,7 +130,7 @@ def main(argv: list):
     args.image = os.path.realpath(args.image)
     args.jlink = args.jlink
 
-    cmd_file = create_jlink_command_file(args.image)
+    cmd_file = create_jlink_command_file(args.image, config)
     ret_code = flash(args.jlink, args.ip, config.device, config.interface,
                      cmd_file.name)
     cmd_file.close()
