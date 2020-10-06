@@ -6461,13 +6461,13 @@ enum tcpc_cc_polarity {
 	POLARITY_COUNT
 };
 
-#define MODE_DP_PIN_A	BIT(1)
-#define MODE_DP_PIN_B	BIT(2)
-#define MODE_DP_PIN_C	BIT(3)
-#define MODE_DP_PIN_D	BIT(4)
-#define MODE_DP_PIN_E	BIT(5)
-#define MODE_DP_PIN_F	BIT(6)
-#define MODE_DP_PIN_ALL	GENMASK(6, 0)
+#define MODE_DP_PIN_A	BIT(0)
+#define MODE_DP_PIN_B	BIT(1)
+#define MODE_DP_PIN_C	BIT(2)
+#define MODE_DP_PIN_D	BIT(3)
+#define MODE_DP_PIN_E	BIT(4)
+#define MODE_DP_PIN_F	BIT(5)
+#define MODE_DP_PIN_ALL	GENMASK(5, 0)
 
 #define PD_STATUS_EVENT_SOP_DISC_DONE		BIT(0)
 #define PD_STATUS_EVENT_SOP_PRIME_DISC_DONE	BIT(1)
