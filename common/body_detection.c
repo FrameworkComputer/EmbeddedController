@@ -48,18 +48,18 @@ static struct body_detect_motion_data
  * x_0: oldest value in the window, will be replaced by x_n
  * x_n: new coming value
  *
- * n^2 * var(x') = n^2 * var(x) + (sum(x') - sum(x))^2 +
- *                 (n * x_n - sum(x'))^2 / n - (n * x_0 - sum(x'))^2 / n
+ * n^2 * var(x') = n^2 * var(x) + (x_n - x_0) *
+ *                 (n * (x_n + x_0) - sum(x') - sum(x))
  */
 static void update_motion_data(struct body_detect_motion_data *x, int x_n)
 {
 	const int n = window_size;
 	const int x_0 = x->history[history_idx];
-	const int new_sum = x->sum + (x_n - x->history[history_idx]);
+	const int sum_diff = x_n - x_0;
+	const int new_sum = x->sum + sum_diff;
 
-	x->n2_variance = x->n2_variance + POW2((int64_t)new_sum - x->sum) +
-			 (POW2((int64_t)x_n * n - new_sum) -
-			  POW2((int64_t)x_0 * n - new_sum)) / n;
+	x->n2_variance += sum_diff *
+			  ((int64_t)n * (x_n + x_0) - new_sum - x->sum);
 	x->sum = new_sum;
 	x->history[history_idx] = x_n;
 }
