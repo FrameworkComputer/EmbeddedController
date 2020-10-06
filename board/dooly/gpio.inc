@@ -57,7 +57,7 @@ GPIO_INT(USB_A0_OC_ODL,        PIN(F, 5), GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A1_OC_ODL,        PIN(0, 3), GPIO_INT_BOTH, port_ocp_interrupt)
 
 /* Volume button interrupts */
-GPIO_INT(EC_VOLDN_BTN_ODL,     PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(EC_VOLDN_BTN_ODL,     PIN(C, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_VOLUP_BTN_ODL,     PIN(8, 0), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 
 /* PCH/CPU signals */
