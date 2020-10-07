@@ -1909,6 +1909,8 @@ static void *fp_download_frame(struct ec_response_fp_info *info, int index)
 	int cmdver = ec_cmd_version_supported(EC_CMD_FP_INFO, 1) ? 1 : 0;
 	int rsize = cmdver == 1 ? sizeof(*info)
 				: sizeof(struct ec_response_fp_info_v0);
+	const int max_attempts = 3;
+	int num_attempts;
 
 	/* templates not supported in command v0 */
 	if (index > 0 && cmdver == 0)
@@ -1938,8 +1940,15 @@ static void *fp_download_frame(struct ec_response_fp_info *info, int index)
 	while (size) {
 		stride = MIN(ec_max_insize, size);
 		p.size = stride;
-		rv = ec_command(EC_CMD_FP_FRAME, 0, &p, sizeof(p),
-				ptr, stride);
+		num_attempts = 0;
+		while (num_attempts < max_attempts) {
+			num_attempts++;
+			rv = ec_command(EC_CMD_FP_FRAME, 0, &p, sizeof(p),
+					ptr, stride);
+			if (rv >= 0)
+				break;
+			usleep(100000);
+		}
 		if (rv < 0) {
 			free(buffer);
 			return NULL;
