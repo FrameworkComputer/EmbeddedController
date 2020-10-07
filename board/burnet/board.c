@@ -418,6 +418,10 @@ static void board_init(void)
 		board_spi_enable();
 	} else {
 		motion_sensor_count = 0;
+		/* Device is clamshell only */
+		tablet_set_mode(0);
+		/* Turn off GMR interrupt */
+		gmr_tablet_switch_disable();
 		/* Base accel is not stuffed, don't allow line to float */
 		gpio_set_flags(GPIO_ACCEL_INT_ODL,
 			       GPIO_INPUT | GPIO_PULL_DOWN);
