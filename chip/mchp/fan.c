@@ -12,6 +12,7 @@
 #include "util.h"
 #include "tfdp_chip.h"
 
+#ifdef CHIP_FAMILY_MEC17XX
 /* Maximum tach reading/target value */
 #define MAX_TACH 0x1fff
 
@@ -162,3 +163,4 @@ void fan_channel_setup(int ch, unsigned int flags)
 	MCHP_FAN_CFG2(0) = 0x1a;
 	clear_status();
 }
+#endif

@@ -312,6 +312,12 @@
  * #define CONFIG_CMD_SHA256_TEST
  */
 
+/* Support PWM */
+#define CONFIG_PWM
+
+/* Support FAN */
+#define CONFIG_FANS 1
+
 /*
  * MEC17xx EVB + SKL/KBL RVP3 does not have
  * BD99992GW PMIC with NCP15WB thermistor.
@@ -516,6 +522,17 @@ enum adc_channel {
 	ADC_AUDIO_BOARD_ID,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
+};
+
+enum pwm_channel {
+	PWM_CH_FAN,
+	PWM_CH_COUNT
+};
+
+enum fan_channel {
+	FAN_CH_0 = 0,
+	/* Number of FAN channels */
+	FAN_CH_COUNT,
 };
 
 enum temp_sensor_id {

@@ -19,5 +19,7 @@ struct pwm_t {
 extern const struct pwm_t pwm_channels[];
 
 void pwm_keep_awake(void);
+void pwm_configure(int ch, int active_low, int clock_low);
+void pwm_slp_en(int pwm_id, int sleep_en);
 
 #endif  /* __CROS_EC_PWM_CHIP_H */
