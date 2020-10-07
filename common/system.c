@@ -1071,7 +1071,8 @@ __maybe_unused static int command_hibernate(int argc, char **argv)
 		microseconds = strtoi(argv[2], NULL, 0);
 
 	if (seconds || microseconds) {
-		if (IS_ENABLED(CONFIG_HIBERNATE_PSL)) {
+		if (IS_ENABLED(CONFIG_HIBERNATE_PSL) &&
+		    !IS_ENABLED(NPCX_LCT_SUPPORT)) {
 			ccprintf("Hibernating with timeout not supported "
 				 "when PSL is enabled.\n");
 			return EC_ERROR_INVAL;
