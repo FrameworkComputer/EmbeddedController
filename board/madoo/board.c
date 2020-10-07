@@ -129,7 +129,8 @@ void board_init(void)
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 
 	/* Turn on 5V if the system is on, otherwise turn it off. */
-	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND);
+	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
+			      CHIPSET_STATE_SOFT_OFF);
 	board_power_5v_enable(on);
 	if (get_cbi_fw_config_keyboard() == CUST_UK2_KB) {
 		/*
