@@ -10,14 +10,15 @@
 
 /*
  * npcx7 EVB version:
- * 1 - for EVB version 1 which supports npcx7m6g
- * 2 - for EVB version 2 which supports npcx7m6f/npcx7m6fb/npcx7m6fc/npcx7m7wb
+ * 1 - EVB version 1 supports: npcx7m6g
+ * 2 - EVB version 2 supports:
+ *     npcx7m6f/npcx7m6fb/npcx7m6fc/npcx7m7fc/npcx7m7wb/npcx7m7wc
  */
 #if defined(CHIP_VARIANT_NPCX7M6G)
 #define BOARD_VERSION  1
 #elif defined(CHIP_VARIANT_NPCX7M6F) || defined(CHIP_VARIANT_NPCX7M6FB) || \
-	defined(CHIP_VARIANT_NPCX7M6FC) || defined(CHIP_VARIANT_NPCX7M7WB) || \
-	defined(CHIP_VARIANT_NPCX7M7WC)
+	defined(CHIP_VARIANT_NPCX7M6FC) || defined(CHIP_VARIANT_NPCX7M7FC) || \
+	defined(CHIP_VARIANT_NPCX7M7WB) || defined(CHIP_VARIANT_NPCX7M7WC)
 #define BOARD_VERSION  2
 #endif
 
@@ -65,7 +66,8 @@
 #define CONFIG_SPI_FLASH_PORT 0
 #define CONFIG_SPI_FLASH
 #define CONFIG_SPI_FLASH_REGS
-#if defined(CHIP_VARIANT_NPCX7M6FC) || defined(CHIP_VARIANT_NPCX7M7WC)
+#if defined(CHIP_VARIANT_NPCX7M6FC) || defined(CHIP_VARIANT_NPCX7M7FC) || \
+	defined(CHIP_VARIANT_NPCX7M7WC)
 #define CONFIG_SPI_FLASH_W25Q40 /* Internal spi flash type */
 #define CONFIG_FLASH_SIZE 0x00080000 /* 512 KB internal spi flash */
 #else

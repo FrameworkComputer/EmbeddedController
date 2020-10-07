@@ -336,6 +336,13 @@ enum pd_drp_next_states drp_auto_toggle_next_state(
 			return DRP_TC_UNATTACHED_SRC;
 		case PD_DRP_TOGGLE_ON:
 		default:
+			if (!auto_toggle_supported) {
+				if (power_role == PD_ROLE_SINK)
+					return DRP_TC_UNATTACHED_SNK;
+				else
+					return DRP_TC_UNATTACHED_SRC;
+			}
+
 			return DRP_TC_DRP_AUTO_TOGGLE;
 		}
 	} else if ((cc_is_rp(cc1) || cc_is_rp(cc2)) &&
@@ -375,6 +382,13 @@ enum pd_drp_next_states drp_auto_toggle_next_state(
 		}
 	} else {
 		/* Anything else, keep toggling */
+		if (!auto_toggle_supported) {
+			if (power_role == PD_ROLE_SINK)
+				return DRP_TC_UNATTACHED_SNK;
+			else
+				return DRP_TC_UNATTACHED_SRC;
+		}
+
 		return DRP_TC_DRP_AUTO_TOGGLE;
 	}
 }
@@ -430,6 +444,19 @@ void set_usb_mux_with_current_data_role(int port)
 	}
 }
 
+void usb_mux_set_safe_mode(int port)
+{
+	if (IS_ENABLED(CONFIG_USBC_SS_MUX)) {
+		usb_mux_set(port, IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) ?
+			USB_PD_MUX_SAFE_MODE : USB_PD_MUX_NONE,
+			USB_SWITCH_CONNECT, pd_get_polarity(port));
+	}
+
+	/* Isolate the SBU lines. */
+	if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
+		ppc_set_sbu(port, 0);
+}
+
 static void pd_send_hard_reset(int port)
 {
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SEND_HARD_RESET, 0);
@@ -441,7 +468,7 @@ static uint32_t port_oc_reset_req;
 
 static void re_enable_ports(void)
 {
-	uint32_t ports = atomic_read_clear(&port_oc_reset_req);
+	uint32_t ports = deprecated_atomic_read_clear(&port_oc_reset_req);
 
 	while (ports) {
 		int port = __fls(ports);
@@ -466,19 +493,24 @@ DECLARE_DEFERRED(re_enable_ports);
 
 void pd_handle_overcurrent(int port)
 {
-	/* Keep track of the overcurrent events. */
 	CPRINTS("C%d: overcurrent!", port);
 
 	if (IS_ENABLED(CONFIG_USB_PD_LOGGING))
 		pd_log_event(PD_EVENT_PS_FAULT, PD_LOG_PORT_SIZE(port, 0),
 			PS_FAULT_OCP, NULL);
 
+	/* No action to take if disconnected, just log. */
+	if (pd_is_disconnected(port))
+		return;
+
+	/* Keep track of the overcurrent events. */
 	ppc_add_oc_event(port);
+
 	/* Let the board specific code know about the OC event. */
 	board_overcurrent_event(port, 1);
 
 	/* Wait 1s before trying to re-enable the port. */
-	atomic_or(&port_oc_reset_req, BIT(port));
+	deprecated_atomic_or(&port_oc_reset_req, BIT(port));
 	hook_call_deferred(&re_enable_ports_data, SECOND);
 }
 
@@ -519,6 +551,12 @@ __overridable int pd_check_power_swap(int port)
 __overridable void pd_execute_data_swap(int port,
 	enum pd_data_role data_role)
 {
+}
+
+__overridable enum pd_dual_role_states pd_get_drp_state_in_suspend(void)
+{
+	/* Disable dual role when going to suspend */
+	return PD_DRP_TOGGLE_OFF;
 }
 
 __overridable void pd_try_execute_vconn_swap(int port, int flags)
@@ -705,7 +743,8 @@ static uint32_t pd_ports_to_resume;
 static void resume_pd_port(void)
 {
 	uint32_t port;
-	uint32_t suspended_ports = atomic_read_clear(&pd_ports_to_resume);
+	uint32_t suspended_ports =
+		deprecated_atomic_read_clear(&pd_ports_to_resume);
 
 	while (suspended_ports) {
 		port = __builtin_ctz(suspended_ports);
@@ -717,12 +756,19 @@ DECLARE_DEFERRED(resume_pd_port);
 
 void pd_deferred_resume(int port)
 {
-	atomic_or(&pd_ports_to_resume, 1 << port);
+	deprecated_atomic_or(&pd_ports_to_resume, 1 << port);
 	hook_call_deferred(&resume_pd_port_data, 5 * SECOND);
 }
 #endif /* CONFIG_USB_PD_TCPM_TCPCI */
 
-bool pd_check_vbus_level(int port, enum vbus_level level)
+
+/*
+ * Check the specified Vbus level
+ *
+ * Note that boards may override this function if they have a method outside the
+ * TCPCI driver to verify vSafe0V.
+ */
+__overridable bool pd_check_vbus_level(int port, enum vbus_level level)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_VBUS_DETECT_TCPC))
 		return tcpm_check_vbus_level(port, level);

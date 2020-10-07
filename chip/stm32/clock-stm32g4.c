@@ -24,9 +24,9 @@
 #define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
 
 #define MHZ(x) ((x) * 1000000)
-#define WAIT_STATE_FREQ_STEP_HZ	MHZ(2)
+#define WAIT_STATE_FREQ_STEP_HZ	MHZ(20)
 /* PLL configuration constants */
-#define STM32G4_SYSCLK_MAX_HZ		MHZ(17)
+#define STM32G4_SYSCLK_MAX_HZ		MHZ(170)
 #define STM32G4_HSI_CLK_HZ		MHZ(16)
 #define STM32G4_PLL_IN_FREQ_HZ		MHZ(4)
 #define STM32G4_PLL_R 2
@@ -77,7 +77,7 @@ static void stm32g4_config_pll(uint32_t hclk_hz, uint32_t pll_src,
 	pll_n = (hclk_hz * STM32G4_PLL_R * STM32G4_AHB_PRE) /
 		STM32G4_PLL_IN_FREQ_HZ;
 
-	/* Sanity checks */
+	/* validity checks */
 	ASSERT(pll_m && (pll_m <= 16));
 	ASSERT((pll_n >= 8) && (pll_n <= 127));
 
@@ -152,6 +152,7 @@ static void stm32g4_config_high_speed_clock(uint32_t hclk_hz,
 
 void stm32g4_set_flash_ws(uint32_t freq_hz)
 {
+	int ws;
 
 	ASSERT(freq_hz <= STM32G4_SYSCLK_MAX_HZ);
 	/*
@@ -160,11 +161,10 @@ void stm32g4_set_flash_ws(uint32_t freq_hz)
 	 * found in Table 9 of RM0440 - STM32G4 technical reference manual. A
 	 * table lookup is not required though as WS = HCLK (MHz) / 20
 	 */
-	STM32_FLASH_ACR = (freq_hz /  WAIT_STATE_FREQ_STEP_HZ) |
-		STM32_FLASH_ACR_PRFTEN;
+	ws = freq_hz /  WAIT_STATE_FREQ_STEP_HZ;
 	/* Enable data and instruction cache */
 	STM32_FLASH_ACR |= STM32_FLASH_ACR_DCEN | STM32_FLASH_ACR_ICEN |
-		STM32_FLASH_ACR_PRFTEN;
+		STM32_FLASH_ACR_PRFTEN | ws;
 }
 
 void clock_init(void)
@@ -229,14 +229,14 @@ int clock_get_freq(void)
 
 void clock_wait_bus_cycles(enum bus_type bus, uint32_t cycles)
 {
-	volatile uint32_t dummy __attribute__((unused));
+	volatile uint32_t unused __attribute__((unused));
 
 	if (bus == BUS_AHB) {
 		while (cycles--)
-			dummy = STM32_DMA1_REGS->isr;
+			unused = STM32_DMA1_REGS->isr;
 	} else { /* APB */
 		while (cycles--)
-			dummy = STM32_USART_BRR(STM32_USART1_BASE);
+			unused = STM32_USART_BRR(STM32_USART1_BASE);
 	}
 }
 

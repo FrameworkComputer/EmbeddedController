@@ -1,7 +1,9 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Copyright 2018 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
+# Note: This is a py2/3 compatible file.
 
 from __future__ import print_function
 import argparse
@@ -58,7 +60,7 @@ def main():
   parser.add_argument('--output', '-o', required=True)
   args = parser.parse_args()
 
-  with open(args.input) as f:
+  with open(args.input, 'rb') as f:
     bs = f.read()
 
   size = len(bs)
@@ -79,7 +81,7 @@ def main():
   for key, _ in header._fields_:
     v = getattr(header, key)
     if isinstance(v, ctypes.Array):
-      print(key, map(hex, v))
+      print(key, list(map(hex, v)))
     else:
       print(key, hex(v))
 
@@ -91,7 +93,7 @@ def main():
   with open(args.output, 'wb') as f:
     # ensure the file size
     f.seek(OUTPUT_FILE_SIZE - 1, os.SEEK_SET)
-    f.write('\x00')
+    f.write(b'\x00')
 
     f.seek(0, os.SEEK_SET)
     f.write(bs[0 : ctypes.sizeof(header)])

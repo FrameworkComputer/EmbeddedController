@@ -30,14 +30,11 @@ GPIO_INT(SUB_USB_C1_INT_ODL,	 PIN(F, 5), GPIO_INT_FALLING | GPIO_PULL_UP, sub_us
 
 /* Button interrupts */
 GPIO_INT(H1_EC_PWR_BTN_ODL,	 PIN(0, 1), GPIO_INT_BOTH | GPIO_PULL_UP, power_button_interrupt)
-GPIO_INT(VOLDN_BTN_ODL,		 PIN(4, 0), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
-GPIO_INT(VOLUP_BTN_ODL,		 PIN(7, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 
 /* Other interrupts */
 GPIO_INT(LID_OPEN,		 PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)
 GPIO_INT(EC_WP_OD,		 PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
 GPIO_INT(BASE_SIXAXIS_INT_L,	 PIN(5, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi160_interrupt)
-GPIO_INT(CAM_EC_VSYNC,		 PIN(0, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V, sync_interrupt)
 GPIO_INT(LID_360_L,		 PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 
 /* I2C Ports */
@@ -53,7 +50,7 @@ GPIO(EC_I2C_SUB_USB_C1_SCL,   PIN(9, 2), GPIO_INPUT)
 GPIO(EC_I2C_SUB_USB_C1_SDA,   PIN(9, 1), GPIO_INPUT)
 
 /* Extra Sub-board I/O pins */
-GPIO(EC_SUB_IO_1,  PIN(3, 7), GPIO_OUT_LOW)
+
 GPIO(EC_SUB_IO_2,  PIN(3, 4), GPIO_OUT_LOW)
 
 /* Misc Enables */
@@ -68,6 +65,11 @@ GPIO(EN_KB_BL,		PIN(6, 0), GPIO_OUT_LOW)
 GPIO(EN_BL_OD,		PIN(D, 3), GPIO_ODR_LOW)
 GPIO(IMVP9_PE,		PIN(E, 0), GPIO_OUT_LOW)
 GPIO(ECH1_PACKET_MODE,	PIN(7, 5), GPIO_OUT_LOW)
+
+/* LED */
+GPIO(LED_B_ODL,                  PIN(C, 2), GPIO_OUT_HIGH)        /* PWM_CH_LED2_BLUE */
+GPIO(LED_G_ODL,                  PIN(C, 3), GPIO_OUT_HIGH)        /* PWM_CH_LED1_GREEN */
+GPIO(LED_R_ODL,                  PIN(C, 4), GPIO_OUT_HIGH)        /* PWM_CH_LED2_ORANGE */
 
 /* Power Sequencing */
 GPIO(EC_AP_PSYS,	     PIN(B, 7), GPIO_OUT_LOW)
@@ -86,12 +88,16 @@ GPIO(ALL_SYS_PWRGD,	     PIN(A, 0), GPIO_OUT_LOW)
 GPIO(SYS_RST_ODL,	     PIN(C, 5), GPIO_ODR_HIGH)
 GPIO(CCD_MODE_ODL,	     PIN(E, 5), GPIO_INPUT)
 
+/* USB pins */
 GPIO(USB_C0_RST_ODL,	     PIN(9, 7), GPIO_OUT_HIGH) /* currently unused */
 GPIO(EC_AP_USB_C1_HDMI_HPD,  PIN(9, 6), GPIO_OUT_LOW)
 GPIO(EC_AP_USB_C0_HPD,	     PIN(9, 3), GPIO_OUT_LOW)
 GPIO(HDMI_SEL_L,	     PIN(7, 2), GPIO_OUT_HIGH)
 GPIO(EC_BATTERY_PRES_ODL,    PIN(E, 1), GPIO_INPUT)
-
+GPIO(USB_A0_CHARGE_EN_L, PIN(3, 7), GPIO_OUT_HIGH)	/* Enable A0 1.5A Charging */
+GPIO(USB_A1_CHARGE_EN_L, PIN(F, 3), GPIO_OUT_HIGH)	/* Enable A1 1.5A Charging */
+GPIO(EN_USB_A0_VBUS,	 PIN(4, 1), GPIO_OUT_LOW)		/* Enable A1 5V Charging */
+GPIO(EN_USB_A1_VBUS,	 PIN(F, 2), GPIO_OUT_LOW)		/* Enable A1 5V Charging */
 /*
  * Waddledoo doesn't have these physical pins coming to the EC but uses other
  * logic.
@@ -99,6 +105,8 @@ GPIO(EC_BATTERY_PRES_ODL,    PIN(E, 1), GPIO_INPUT)
 UNIMPLEMENTED(AC_PRESENT)
 UNIMPLEMENTED(PG_EC_DSW_PWROK)
 UNIMPLEMENTED(PG_EC_ALL_SYS_PWRGD)
+UNIMPLEMENTED(VOLDN_BTN_ODL)
+UNIMPLEMENTED(VOLUP_BTN_ODL)
 
 /* Alternate Functions */
 /* ADC */
@@ -115,7 +123,6 @@ ALTERNATE(PIN_MASK(8, 0x04), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)		 /* KSO14 
 GPIO(EC_KSO_02_INV, PIN(1, 7), GPIO_OUT_LOW)	/* KSO2 inverted */
 
 /* PWM */
-ALTERNATE(PIN_MASK(C, 0x1C), 0, MODULE_PWM, 0)   /* PWM0-2 */
 ALTERNATE(PIN_MASK(8, BIT(0)), 0, MODULE_PWM, 0) /* PWM3 */
 
 /* UART */

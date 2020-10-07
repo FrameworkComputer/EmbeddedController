@@ -1,7 +1,9 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Copyright 2016 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
+# Note: This is a py2/3 compatible file.
 
 from __future__ import print_function
 
@@ -14,6 +16,7 @@ import time
 import tempfile
 
 import json
+
 import fw_update
 import ecusb.tiny_servo_common as c
 
@@ -237,7 +240,8 @@ def find_available_version(boardname, binfile):
     the version string.
   """
   rawstrings = subprocess.check_output(
-      ['cbfstool', binfile, 'read', '-r', 'RO_FRID', '-f', '/dev/stdout'])
+      ['cbfstool', binfile, 'read', '-r', 'RO_FRID', '-f', '/dev/stdout'],
+      **c.get_subprocess_args())
   m = re.match(r'%s_v\S+' % boardname, rawstrings)
   if m:
     newvers = m.group(0).strip(' \t\r\n\0')

@@ -491,8 +491,8 @@ void pd_send_host_event(int mask)
 	if (!mask)
 		return;
 
-	atomic_or(&(host_event_status_flags), mask);
-	atomic_or(&(pd_status_flags), PD_STATUS_HOST_EVENT);
+	deprecated_atomic_or(&(host_event_status_flags), mask);
+	deprecated_atomic_or(&(pd_status_flags), PD_STATUS_HOST_EVENT);
 	pd_send_ec_int();
 }
 
@@ -593,7 +593,7 @@ static enum ec_status ec_status_host_cmd(struct host_cmd_handler_args *args)
 	r->status = pd_status_flags;
 
 	/* Clear host event */
-	atomic_clear(&(pd_status_flags), PD_STATUS_HOST_EVENT);
+	deprecated_atomic_clear_bits(&(pd_status_flags), PD_STATUS_HOST_EVENT);
 
 	args->response_size = sizeof(*r);
 
@@ -608,10 +608,10 @@ host_event_status_host_cmd(struct host_cmd_handler_args *args)
 	struct ec_response_host_event_status *r = args->response;
 
 	/* Clear host event bit to avoid sending more unnecessary events */
-	atomic_clear(&(pd_status_flags), PD_STATUS_HOST_EVENT);
+	deprecated_atomic_clear_bits(&(pd_status_flags), PD_STATUS_HOST_EVENT);
 
 	/* Read and clear the host event status to return to AP */
-	r->status = atomic_read_clear(&(host_event_status_flags));
+	r->status = deprecated_atomic_read_clear(&(host_event_status_flags));
 
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;

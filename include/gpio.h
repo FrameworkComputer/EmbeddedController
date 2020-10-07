@@ -254,6 +254,16 @@ void gpio_set_level_verbose(enum console_channel channel,
 void gpio_or_ioex_set_level(int signal, int value);
 
 /**
+ * Get the value of a signal that could be either a local GPIO or an IO
+ * expander GPIO
+ *
+ * @param signal	GPIO_* or IOEX_* signal to get
+ * @param value		Pointer to storage for output value, 0 = low, 1 = high
+ * @return		EC_SUCCESS or nonzero if error.
+ */
+int gpio_or_ioex_get_level(int signal, int *value);
+
+/**
  * Reset the GPIO flags and alternate function state
  *
  * This returns the GPIO to it's default state of being a GPIO (not

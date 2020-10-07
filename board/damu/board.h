@@ -98,7 +98,6 @@ enum adc_channel {
 	/* Real ADC channels begin here */
 	ADC_BOARD_ID = 0,
 	ADC_EC_SKU_ID,
-	ADC_BATT_ID,
 	ADC_CH_COUNT
 };
 

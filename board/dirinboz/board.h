@@ -28,8 +28,8 @@
 #define GPIO_USB1_ILIM_SEL IOEX_USB_A0_CHARGE_EN_L
 #define GPIO_USB2_ILIM_SEL IOEX_USB_A1_CHARGE_EN_DB_L
 
-/* Power  LEDs */
-#define CONFIG_LED_POWER_LED
+/* LED */
+#undef CONFIG_LED_ONOFF_STATES
 
 /* Motion sensing drivers */
 #define CONFIG_ACCELGYRO_LSM6DSM
@@ -83,9 +83,12 @@ enum adc_channel {
 };
 
 enum battery_type {
-	BATTERY_SMP,
-	BATTERY_LGC,
-	BATTERY_CEL,
+	BATTERY_SIMPLO_COS,
+	BATTERY_SIMPLO_HIGHPOWER,
+	BATTERY_SAMSUNG_SDI,
+	BATTERY_DANAPACK_ATL,
+	BATTERY_DANAPACK_COS,
+	BATTERY_COSMX,
 	BATTERY_TYPE_COUNT,
 };
 
@@ -97,7 +100,6 @@ enum pwm_channel {
 enum ioex_port {
 	IOEX_C0_NCT3807 = 0,
 	IOEX_C1_NCT3807,
-	IOEX_HDMI_PCAL6408,
 	IOEX_PORT_COUNT
 };
 
@@ -144,62 +146,26 @@ enum ec_cfg_usb_mb_type {
 };
 
 /**
- * DALBOZ_DB_D_OPT1_USBAC
+ * DIRINBOZ_DB_OPT1_USBC
  *	USB-A1  Speed: 5 Gbps
- *		Retimer: TUSB522
+ *		Retimer: PS8719
  *	USB-C1  Speed: 5 Gbps
- *		Retimer: PS8740
+ *		Retimer: PS8743
  *		TCPC: NCT3807
  *		PPC: NX20P3483
  *		IOEX: TCPC
  *	HDMI    Exists: no
  *		Retimer: none
  *		MST Hub: none
- *
- * DALBOZ_DB_D_OPT2_USBA_HDMI
- *	USB-A1  Speed: 5 Gbps
- *		Retimer: TUSB522
- *	USB-C1  none
- *		IOEX: PCAL6408
- *	HDMI    Exists: yes
- *		Retimer: PI3HDX1204
- *		MST Hub: none
  */
 enum ec_cfg_usb_db_type {
-	DALBOZ_DB_D_OPT1_USBAC = 0,
-	DALBOZ_DB_D_OPT2_USBA_HDMI = 1,
+	DIRINBOZ_DB_OPT1_USBC = 0,
 };
-
-#define HAS_USBC1 \
-			(BIT(DALBOZ_DB_D_OPT1_USBAC))
-
-static inline bool ec_config_has_usbc1(void)
-{
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_USBC1);
-}
-
-#define HAS_USBC1_RETIMER_PS8740 \
-			(BIT(DALBOZ_DB_D_OPT1_USBAC))
-
-static inline bool ec_config_has_usbc1_retimer_ps8740(void)
-{
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_USBC1_RETIMER_PS8740);
-}
-
-#define HAS_HDMI_RETIMER_PI3HDX1204 \
-			(BIT(DALBOZ_DB_D_OPT2_USBA_HDMI))
 
 static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
 {
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_HDMI_RETIMER_PI3HDX1204);
+	return 0;
 }
-
-/* These IO expander GPIOs vary with DB option. */
-extern enum gpio_signal IOEX_USB_A1_RETIMER_EN;
-extern enum gpio_signal IOEX_USB_A1_CHARGE_EN_DB_L;
 
 void board_reset_pd_mcu(void);
 

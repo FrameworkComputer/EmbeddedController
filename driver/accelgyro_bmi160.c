@@ -536,7 +536,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		return EC_ERROR_NOT_HANDLED;
 
 	do {
-		rv = bmi_read32(s->port, s->i2c_spi_addr_flags,
+		rv = bmi_read16(s->port, s->i2c_spi_addr_flags,
 				BMI160_INT_STATUS_0, &interrupt);
 		/*
 		 * Bail out of this loop there was an error reading the register
@@ -749,6 +749,9 @@ const struct accelgyro_drv bmi160_drv = {
 #ifdef CONFIG_GESTURE_HOST_DETECTION
 	.manage_activity = manage_activity,
 	.list_activities = list_activities,
+#endif
+#ifdef CONFIG_BODY_DETECTION
+	.get_rms_noise = bmi_get_rms_noise,
 #endif
 };
 

@@ -26,16 +26,12 @@
 	/* NPCX7 config */
 	#define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
 	#define NPCX_TACH_SEL2    0  /* No tach. */
-	#define NPCX7_PWM1_SEL    1  /* GPIO C2 is used as PWM1. */
 
 	/* Internal SPI flash on NPCX7 */
 	#define CONFIG_FLASH_SIZE (512 * 1024)
 	#define CONFIG_SPI_FLASH_REGS
 	#define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 #elif defined(VARIANT_DEDEDE_EC_IT8320)
-	/* Flash clock must be > (50Mhz / 2) */
-	#define CONFIG_IT83XX_FLASH_CLOCK_48MHZ
-
 	#define I2C_PORT_EEPROM		IT83XX_I2C_CH_A
 	#define I2C_PORT_BATTERY	IT83XX_I2C_CH_B
 	#define I2C_PORT_SENSOR		IT83XX_I2C_CH_C
@@ -46,7 +42,8 @@
 
 	#define CONFIG_ADC_VOLTAGE_COMPARATOR	/* ITE ADC thresholds */
 
-	#define CONFIG_DAC			/* DAC for PSYS */
+	#undef CONFIG_UART_TX_BUF_SIZE		/* UART */
+	#define CONFIG_UART_TX_BUF_SIZE 4096
 #else
 #error "Must define a VARIANT_DEDEDE_EC!"
 #endif
@@ -85,6 +82,13 @@
 /* Work around double CR50 reset by waiting in initial power on. */
 #define CONFIG_BOARD_RESET_AFTER_POWER_ON
 
+/* Optional console commands */
+#define CONFIG_CMD_CHARGER_DUMP
+
+/* Enable AP Reset command for TPM with old firmware version to detect it. */
+#define CONFIG_CMD_AP_RESET_LOG
+#define CONFIG_HOSTCMD_AP_RESET
+
 /* Enable i2ctrace command */
 #define CONFIG_I2C_DEBUG
 
@@ -106,6 +110,7 @@
 /* Battery */
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_EC_BATTERY_PRES_ODL
+#define CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_SMART
 
@@ -121,9 +126,9 @@
 /* Charger */
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER
+#define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_INPUT_CURRENT 256
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
-#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 15001
 #define CONFIG_USB_CHARGER
 #define CONFIG_TRICKLE_CHARGING
 
@@ -137,9 +142,6 @@
 
 /* LED */
 #define CONFIG_LED_COMMON
-
-/* PWM */
-#define CONFIG_PWM
 
 /* SoC */
 #define CONFIG_BOARD_HAS_RTC_RESET
@@ -170,14 +172,6 @@
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_PD_TRY_SRC
-/*
- * Don't attempt Try.Src if the battery is too low.  Even batteries which report
- * 1% state of charge can sometimes disable their discharge FET if the load is
- * too much.  Therefore, set this threshold a bit higher.  5% should leave
- * plenty of margin.
- */
-#undef CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC
-#define CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC 5
 /* #define CONFIG_USB_PD_VBUS_DETECT_CHARGER */
 #define CONFIG_USB_PD_VBUS_MEASURE_CHARGER
 #define CONFIG_USB_PD_DECODE_SOP
@@ -185,6 +179,7 @@
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_DRP_ACC_TRYSRC
+#define CONFIG_HOSTCMD_PD_CONTROL
 
 /* UART COMMAND */
 #define CONFIG_CMD_CHARGEN

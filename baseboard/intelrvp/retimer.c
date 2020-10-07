@@ -13,17 +13,13 @@
 #ifdef CONFIG_USBC_RETIMER_INTEL_BB
 const struct bb_usb_control bb_controls[] = {
 	[TYPE_C_PORT_0] = {
-		.shared_nvm = USB_PORT0_BB_RETIMER_SHARED_NVM,
 		.usb_ls_en_gpio = GPIO_USB_C0_LS_EN,
 		.retimer_rst_gpio = GPIO_USB_C0_RETIMER_RST,
-		.force_power_gpio = GPIO_USB_C0_RETIMER_FORCE_PWR,
 	},
 #ifdef HAS_TASK_PD_C1
 	[TYPE_C_PORT_1] = {
-		.shared_nvm = USB_PORT1_BB_RETIMER_SHARED_NVM,
 		.usb_ls_en_gpio = GPIO_USB_C1_LS_EN,
 		.retimer_rst_gpio = GPIO_USB_C1_RETIMER_RST,
-		.force_power_gpio = GPIO_USB_C1_RETIMER_FORCE_PWR,
 	},
 #endif /* HAS_TASK_PD_C1 */
 };

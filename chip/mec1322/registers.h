@@ -118,7 +118,7 @@ static inline uintptr_t gpio_port_base(int port_id)
 }
 #define MEC1322_GPIO_CTL(port, id) REG32(gpio_port_base(port) + (id << 2))
 
-#define DUMMY_GPIO_BANK 0
+#define UNIMPLEMENTED_GPIO_BANK 0
 
 
 /* Timer */
@@ -499,7 +499,12 @@ typedef volatile struct mec1322_dma_regs mec1322_dma_regs_t;
 #define MEC1322_IRQ_RTC_ALARM    92
 
 /* Wake pin definitions, defined at board-level */
+#ifndef CONFIG_HIBERNATE_WAKE_PINS_DYNAMIC
 extern const enum gpio_signal hibernate_wake_pins[];
 extern const int hibernate_wake_pins_used;
+#else
+extern enum gpio_signal hibernate_wake_pins[];
+extern int hibernate_wake_pins_used;
+#endif
 
 #endif /* __CROS_EC_REGISTERS_H */

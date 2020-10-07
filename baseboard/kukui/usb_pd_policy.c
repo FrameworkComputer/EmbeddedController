@@ -57,9 +57,9 @@ int pd_set_power_supply_ready(int port)
 #endif /* defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) */
 
 	if (IS_ENABLED(VARIANT_KUKUI_CHARGER_ISL9238))
-		charge_set_output_current_limit(3300, 5000);
+		charge_set_output_current_limit(CHARGER_SOLO, 3300, 5000);
 	else
-		charger_enable_otg_power(1);
+		charger_enable_otg_power(CHARGER_SOLO, 1);
 
 	gpio_set_level(GPIO_EN_USBC_CHARGE_L, 1);
 	gpio_set_level(GPIO_EN_PP5000_USBC, 1);
@@ -92,9 +92,9 @@ void pd_power_supply_reset(int port)
 #endif /* defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) */
 
 	if (IS_ENABLED(VARIANT_KUKUI_CHARGER_ISL9238))
-		charge_set_output_current_limit(0, 0);
+		charge_set_output_current_limit(CHARGER_SOLO, 0, 0);
 	else
-		charger_enable_otg_power(0);
+		charger_enable_otg_power(CHARGER_SOLO, 0);
 
 	gpio_set_level(GPIO_EN_PP5000_USBC, 0);
 

@@ -29,7 +29,7 @@ used for JTAG and SWD for ARM devices.
 
 *   [JLink Software] \(when using [J-Trace] or other Segger debug probes).
 *   Any tool that supports connecting `gdbserver`. This document will assume
-    [CLion] and was tested with `JLink_Linux_V670e_x86_64`.
+    [CLion] and was tested with `JLink_Linux_V684a_x86_64`.
 *   Alternatively, you can use [Ozone] a standalone debugger from Segger.
 
 ## Connecting SWD
@@ -76,7 +76,7 @@ Start the JLink gdbserver for the appropriate MCU type:
 *   Dragontalon / [Nucleo STM32H743ZI]: `STM32H743ZI`
 
 ```bash
-(outside) $ ./JLink_Linux_V670e_x86_64/JLinkGDBServerCLExe -select USB -device STM32F412CG -endian little -if SWD -speed auto -noir -noLocalhostOnly
+(outside) $ ./JLink_Linux_V684a_x86_64/JLinkGDBServerCLExe -select USB -device STM32F412CG -endian little -if SWD -speed auto -noir -noLocalhostOnly
 ```
 
 You should see the port that gdbserver is running on in the output:

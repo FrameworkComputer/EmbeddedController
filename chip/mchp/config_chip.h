@@ -44,7 +44,7 @@
  * MCHP I2C controller is master-slave capable and requires
  * a slave address be programmed even if used as master only.
  * Each I2C controller can respond to two slave address.
- * Define dummy slave addresses that aren't used on the I2C port(s)
+ * Define fake slave addresses that aren't used on the I2C port(s)
  * connected to each controller.
  */
 #define CONFIG_MCHP_I2C0_SLAVE_ADDRS	0xE3E1

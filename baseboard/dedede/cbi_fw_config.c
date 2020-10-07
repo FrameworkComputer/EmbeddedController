@@ -44,3 +44,9 @@ enum fw_config_tablet_mode_type get_cbi_fw_config_tablet_mode(void)
 	return ((cached_fw_config & FW_CONFIG_TABLET_MODE_MASK)
 			>> FW_CONFIG_TABLET_MODE_OFFSET);
 }
+
+int get_cbi_fw_config_keyboard(void)
+{
+	return ((cached_fw_config & FW_CONFIG_KB_LAYOUT_MASK)
+			>> FW_CONFIG_KB_LAYOUT_OFFSET);
+}

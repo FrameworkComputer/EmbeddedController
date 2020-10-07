@@ -126,6 +126,7 @@
 #define IT83XX_USBPD_CCGCR(p)       REG8(IT83XX_USBPD_BASE(p)+0x04)
 #define USBPD_REG_MASK_DISABLE_CC                 BIT(7)
 #define USBPD_REG_MASK_DISABLE_CC_VOL_DETECTOR    BIT(6)
+#define USBPD_REG_MASK_CC_SELECT_RP_RESERVED      (BIT(3) | BIT(2) | BIT(1))
 #define USBPD_REG_MASK_CC_SELECT_RP_DEF           (BIT(3) | BIT(2))
 #define USBPD_REG_MASK_CC_SELECT_RP_1A5           BIT(3)
 #define USBPD_REG_MASK_CC_SELECT_RP_3A0           BIT(2)
@@ -397,10 +398,7 @@ struct usbpd_ctrl_t {
 
 extern const struct usbpd_ctrl_t usbpd_ctrl_regs[];
 extern const struct tcpm_drv it83xx_tcpm_drv;
-/* Disable cc module */
-void it83xx_disable_cc_module(int port);
-/* Disable integrated pd module */
-void it83xx_disable_pd_module(int port);
+void it83xx_Rd_5_1K_only_for_hibernate(int port);
 #ifdef CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2
 void it83xx_clear_tx_error_status(enum usbpd_port port);
 void it83xx_get_tx_error_status(enum usbpd_port port);

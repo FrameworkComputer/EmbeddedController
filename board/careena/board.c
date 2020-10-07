@@ -6,6 +6,7 @@
 /* Careena board-specific configuration */
 
 #include "button.h"
+#include "driver/tcpm/ps8xxx.h"
 #include "extpower.h"
 #include "i2c.h"
 #include "lid_switch.h"
@@ -61,4 +62,25 @@ const int keyboard_factory_scan_pins[][2] = {
 
 const int keyboard_factory_scan_pins_used =
 			ARRAY_SIZE(keyboard_factory_scan_pins);
+
+static int board_is_support_ps8755_tcpc(void)
+{
+	/*
+	 * 0: PS8751
+	 * 1: PS8755
+	 */
+	return gpio_get_level(GPIO_TCPC_ID);
+}
+
+__override uint16_t board_get_ps8xxx_product_id(int port)
+{
+	/* Careena variant doesn't have ps8xxx product in the port 0 */
+	if (port == 0)
+		return 0;
+
+	if (board_is_support_ps8755_tcpc())
+		return PS8755_PRODUCT_ID;
+
+	return PS8751_PRODUCT_ID;
+}
 #endif

@@ -164,11 +164,16 @@ static uint32_t __attribute__((unused)) get_size(enum ec_image copy)
 
 int system_is_locked(void)
 {
+	static int is_locked = -1;
+
 	if (force_locked)
 		return 1;
+	if (is_locked != -1)
+		return is_locked;
 
 #ifdef CONFIG_SYSTEM_UNLOCKED
 	/* System is explicitly unlocked */
+	is_locked = 0;
 	return 0;
 
 #elif defined(CONFIG_FLASH)
@@ -177,13 +182,17 @@ int system_is_locked(void)
 	 * is not protected.
 	 */
 	if ((EC_FLASH_PROTECT_GPIO_ASSERTED | EC_FLASH_PROTECT_RO_NOW) &
-	    ~flash_get_protect())
+	    ~flash_get_protect()) {
+		is_locked = 0;
 		return 0;
+	}
 
 	/* If WP pin is asserted and lock is applied, we're locked */
+	is_locked = 1;
 	return 1;
 #else
 	/* Other configs are locked by default */
+	is_locked = 1;
 	return 1;
 #endif
 }
@@ -563,7 +572,8 @@ int system_is_in_rw(void)
 	return is_rw_image(system_get_image_copy());
 }
 
-test_mockable int system_run_image_copy(enum ec_image copy)
+static int system_run_image_copy_with_flags(enum ec_image copy,
+					    uint32_t add_reset_flags)
 {
 	uintptr_t base;
 	uintptr_t init_addr;
@@ -616,12 +626,20 @@ test_mockable int system_run_image_copy(enum ec_image copy)
 			return EC_ERROR_UNKNOWN;
 	}
 
+	system_set_reset_flags(add_reset_flags);
+
 	CPRINTS("Jumping to image %s", ec_image_to_string(copy));
 
 	jump_to_image(init_addr);
 
 	/* Should never get here */
 	return EC_ERROR_UNKNOWN;
+}
+
+test_mockable int system_run_image_copy(enum ec_image copy)
+{
+	/* No reset flags needed for most jumps */
+	return system_run_image_copy_with_flags(copy, 0);
 }
 
 enum ec_image system_get_active_copy(void)
@@ -794,7 +812,7 @@ void system_common_pre_init(void)
 	 * Put the jump data before the panic data, or at the end of RAM if
 	 * panic data is not present.
 	 */
-	addr = (uintptr_t)panic_get_data();
+	addr = get_panic_data_start();
 	if (!addr)
 		addr = CONFIG_RAM_BASE + CONFIG_RAM_SIZE;
 
@@ -868,7 +886,8 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 	case EC_REBOOT_CANCEL:
 		return EC_SUCCESS;
 	case EC_REBOOT_JUMP_RO:
-		return system_run_image_copy(EC_IMAGE_RO);
+		return system_run_image_copy_with_flags(EC_IMAGE_RO,
+						EC_RESET_FLAG_STAY_IN_RO);
 	case EC_REBOOT_JUMP_RW:
 		return system_run_image_copy(system_get_active_copy());
 	case EC_REBOOT_COLD:
@@ -893,9 +912,7 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 
 		/* Reset external PD chips. */
 		if (IS_ENABLED(HAS_TASK_PDCMD) ||
-		    IS_ENABLED(HAS_TASK_PD_INT_C0) ||
-		    IS_ENABLED(HAS_TASK_PD_INT_C1) ||
-		    IS_ENABLED(HAS_TASK_PD_INT_C2))
+		    IS_ENABLED(CONFIG_HAS_TASK_PD_INT))
 			board_reset_pd_mcu();
 
 		cflush();
@@ -1053,9 +1070,14 @@ __maybe_unused static int command_hibernate(int argc, char **argv)
 	if (argc >= 3)
 		microseconds = strtoi(argv[2], NULL, 0);
 
-	if (seconds || microseconds)
+	if (seconds || microseconds) {
+		if (IS_ENABLED(CONFIG_HIBERNATE_PSL)) {
+			ccprintf("Hibernating with timeout not supported "
+				 "when PSL is enabled.\n");
+			return EC_ERROR_INVAL;
+		}
 		ccprintf("Hibernating for %d.%06d s\n", seconds, microseconds);
-	else
+	} else
 		ccprintf("Hibernating until wake pin asserted.\n");
 
 	/*
@@ -1201,7 +1223,8 @@ static int command_sysjump(int argc, char **argv)
 
 	/* Handle named images */
 	if (!strcasecmp(argv[1], "RO"))
-		return system_run_image_copy(EC_IMAGE_RO);
+		return system_run_image_copy_with_flags(EC_IMAGE_RO,
+						EC_RESET_FLAG_STAY_IN_RO);
 	else if (!strcasecmp(argv[1], "RW") || !strcasecmp(argv[1], "A"))
 		return system_run_image_copy(EC_IMAGE_RW);
 	else if (!strcasecmp(argv[1], "B")) {

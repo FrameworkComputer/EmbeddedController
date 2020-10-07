@@ -114,7 +114,7 @@ int charge_get_display_charge(void);
  *
  * @return Board is consuming full input current
  */
-int charge_is_consuming_full_input_current(void);
+__override_proto int charge_is_consuming_full_input_current(void);
 
 /**
  * Return non-zero if discharging and battery so low we should shut down.

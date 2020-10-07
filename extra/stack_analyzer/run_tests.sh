@@ -5,5 +5,5 @@
 # found in the LICENSE file.
 
 # Discover all the unit tests in extra/stack_analyzer directory and run them.
-python2 -m unittest discover -b -s extra/stack_analyzer -p *_unittest.py  \
+python3 -m unittest discover -b -s extra/stack_analyzer -p "*_unittest.py"  \
     && touch extra/stack_analyzer/.tests-passed

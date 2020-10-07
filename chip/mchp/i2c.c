@@ -454,7 +454,7 @@ static int wait_byte_done(int controller, uint8_t mask, uint8_t expected)
  * Switch port by reset and reconfigure to handle cases where
  * the slave on current port is driving line(s) low.
  * NOTE: I2C hardware reset only requires one AHB clock, back to back
- * writes is OK but we added a dummy write as insurance.
+ * writes is OK but we added an extra write as insurance.
  */
 static void select_port(int port, int controller)
 {
@@ -465,7 +465,7 @@ static void select_port(int port, int controller)
 		return;
 
 	MCHP_I2C_CONFIG(controller) |= BIT(9);
-	MCHP_EC_ID_RO = 0; /* dummy write to read-only as delay */
+	MCHP_EC_ID_RO = 0; /* extra write to read-only as delay */
 	MCHP_I2C_CONFIG(controller) &= ~BIT(9);
 	configure_controller(controller, port_sel, i2c_ports[port].kbps);
 }
@@ -651,7 +651,7 @@ static int i2c_mrx_start(int ctrl)
 		return rv;
 	}
 	/* if STOP requested and last 1 or 2 bytes prepare controller
-	 * to NACK last byte. Do this before read of dummy data so
+	 * to NACK last byte. Do this before read of extra data so
 	 * controller is setup to NACK last byte.
 	 */
 	cdata[ctrl].flags |= (1ul << 8);

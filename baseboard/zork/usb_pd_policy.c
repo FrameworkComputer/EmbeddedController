@@ -140,7 +140,7 @@ __override void svdm_dp_post_config(int port)
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
 		return;
 
-	gpio_set_level(PORT_TO_HPD(port), 1);
+	gpio_or_ioex_set_level(PORT_TO_HPD(port), 1);
 
 	/* set the minimum time delay (2ms) for the next HPD IRQ */
 	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
@@ -155,7 +155,7 @@ __override void svdm_exit_dp_mode(int port)
 
 	usb_mux_set(port, USB_PD_MUX_NONE, USB_SWITCH_CONNECT,
 		    pd_get_polarity(port));
-	gpio_set_level(PORT_TO_HPD(port), 0);
+	gpio_or_ioex_set_level(PORT_TO_HPD(port), 0);
 
 	usb_mux_hpd_update(port, 0, 0);
 }

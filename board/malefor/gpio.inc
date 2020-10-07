@@ -83,8 +83,6 @@ GPIO(USB_C1_OC_ODL,			PIN(5, 0), GPIO_ODR_HIGH)
 
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C1_LS_EN)
-/* Retimer Force Power enable is connected to AP */
-UNIMPLEMENTED(USB_C1_RT_FORCE_PWR)
 
 /* Misc Signals */
 

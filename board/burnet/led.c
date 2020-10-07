@@ -14,7 +14,13 @@
 #define BAT_LED_ON 0
 #define BAT_LED_OFF 1
 
-const enum ec_led_id supported_led_ids[] = {EC_LED_ID_BATTERY_LED};
+#define POWER_LED_ON 0
+#define POWER_LED_OFF 1
+
+const enum ec_led_id supported_led_ids[] = {
+	EC_LED_ID_BATTERY_LED,
+	EC_LED_ID_POWER_LED
+};
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -46,6 +52,21 @@ static int led_set_color_battery(enum led_color color)
 	return EC_SUCCESS;
 }
 
+static int led_set_color_power(enum ec_led_colors color)
+{
+	switch (color) {
+	case LED_OFF:
+		ioex_set_level(IOEX_PWR_LED_WHITE_L, POWER_LED_OFF);
+		break;
+	case LED_WHITE:
+		ioex_set_level(IOEX_PWR_LED_WHITE_L, POWER_LED_ON);
+		break;
+	default:
+		return EC_ERROR_UNKNOWN;
+	}
+	return EC_SUCCESS;
+}
+
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
 	brightness_range[EC_LED_COLOR_WHITE] = 1;
@@ -59,6 +80,9 @@ static int led_set_color(enum ec_led_id led_id, enum led_color color)
 	switch (led_id) {
 	case EC_LED_ID_BATTERY_LED:
 		rv = led_set_color_battery(color);
+		break;
+	case EC_LED_ID_POWER_LED:
+		rv = led_set_color_power(color);
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
@@ -78,6 +102,21 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	return EC_SUCCESS;
 }
 
+static void led_set_power(void)
+{
+	static int power_tick;
+
+	power_tick++;
+
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		led_set_color_power(LED_WHITE);
+	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		led_set_color_power(
+			(power_tick & 0x2) ? LED_WHITE : LED_OFF);
+	else
+		led_set_color_power(LED_OFF);
+}
+
 static void led_set_battery(void)
 {
 	static int battery_ticks;
@@ -86,13 +125,19 @@ static void led_set_battery(void)
 
 	battery_ticks++;
 
-	/* override battery led for system suspend */
-	if (chipset_in_state(CHIPSET_STATE_SUSPEND |
-			     CHIPSET_STATE_STANDBY) &&
-	    charge_get_state() != PWR_STATE_CHARGE) {
-		led_set_color_battery(power_ticks++ & 0x2 ?
-				      LED_WHITE : LED_OFF);
-		return;
+	/*
+	 * Override battery LED for Esche, Esche don't have power LED,
+	 * blinking battery white LED to indicate system suspend without
+	 * charging.
+	 */
+	if (!board_is_convertible()) {
+		if (chipset_in_state(CHIPSET_STATE_SUSPEND |
+					 CHIPSET_STATE_STANDBY) &&
+			charge_get_state() != PWR_STATE_CHARGE) {
+			led_set_color_battery(power_ticks++ & 0x2 ?
+						  LED_WHITE : LED_OFF);
+			return;
+		}
 	}
 
 	power_ticks = 0;
@@ -141,6 +186,9 @@ static void led_set_battery(void)
 /* Called by hook task every TICK */
 static void led_tick(void)
 {
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		led_set_power();
+
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		led_set_battery();
 }

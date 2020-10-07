@@ -33,7 +33,12 @@ struct ocpc_data {
 	int last_error;
 	int integral;
 	int last_vsys;
+#ifdef HAS_TASK_PD_C1
+	uint32_t chg_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+#endif /* HAS_TASK_PD_C1 */
 };
+
+#define OCPC_NO_ISYS_MEAS_CAP	BIT(0)
 
 /** Set the VSYS target for the secondary charger IC.
  *
@@ -58,4 +63,19 @@ __overridable void ocpc_get_pid_constants(int *kp, int *kp_div,
 					  int *ki, int *ki_div,
 					  int *kd, int *kd_div);
 
+/*
+ ** Set up some initial values for the OCPC data structure.  This will call off
+ * to board_ocpc_init() such that boards can set up any charger flags if needed.
+ *
+ * @param ocpc: Pointer to OCPC data
+ */
+void ocpc_init(struct ocpc_data *ocpc);
+
+/**
+ * Board specific OCPC data structure initialization.  This can be used to set
+ * up and charger flags.  The default implementation does nothing.
+ *
+ * @param ocpc: Pointer to OCPC data
+ */
+__override_proto void board_ocpc_init(struct ocpc_data *ocpc);
 #endif /* __CROS_EC_OCPC_H */

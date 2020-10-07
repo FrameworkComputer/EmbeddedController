@@ -8,9 +8,6 @@
 #include "task.h"
 #include "util.h"
 
-/* Panic data goes at the end of RAM. */
-static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
-
 #ifdef CONFIG_DEBUG_EXCEPTIONS
 /**
  * bit[3-0] @ mcause, general exception type information.
@@ -55,35 +52,44 @@ void software_panic(uint32_t reason, uint32_t info)
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 {
-	uint32_t *regs = pdata_ptr->riscv.regs;
+	/*
+	 * It is safe to get pointer using get_panic_data_write().
+	 * If it was called earlier (eg. when saving riscv.mepc) calling it
+	 * once again won't remove any data
+	 */
+	struct panic_data * const pdata = get_panic_data_write();
 	uint32_t warning_mepc;
+	uint32_t *regs;
+
+	regs = pdata->riscv.regs;
 
 	/* Setup panic data structure */
 	if (reason != PANIC_SW_WATCHDOG) {
-		memset(pdata_ptr, 0, sizeof(*pdata_ptr));
+		memset(pdata, 0, CONFIG_PANIC_DATA_SIZE);
 	} else {
-		warning_mepc = pdata_ptr->riscv.mepc;
-		memset(pdata_ptr, 0, sizeof(*pdata_ptr));
-		pdata_ptr->riscv.mepc = warning_mepc;
+		warning_mepc = pdata->riscv.mepc;
+		memset(pdata, 0, CONFIG_PANIC_DATA_SIZE);
+		pdata->riscv.mepc = warning_mepc;
 	}
-	pdata_ptr->magic = PANIC_DATA_MAGIC;
-	pdata_ptr->struct_size = sizeof(*pdata_ptr);
-	pdata_ptr->struct_version = 2;
-	pdata_ptr->arch = PANIC_ARCH_RISCV_RV32I;
+	pdata->magic = PANIC_DATA_MAGIC;
+	pdata->struct_size = CONFIG_PANIC_DATA_SIZE;
+	pdata->struct_version = 2;
+	pdata->arch = PANIC_ARCH_RISCV_RV32I;
 
 	/* Log panic cause */
-	pdata_ptr->riscv.mcause = exception;
+	pdata->riscv.mcause = exception;
 	regs[SOFT_PANIC_GPR_REASON] = reason;
 	regs[SOFT_PANIC_GPR_INFO] = info;
 }
 
 void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 {
-	uint32_t *regs = pdata_ptr->riscv.regs;
+	struct panic_data * const pdata = panic_get_data();
+	uint32_t *regs;
 
-	if (pdata_ptr->magic == PANIC_DATA_MAGIC &&
-	    pdata_ptr->struct_version == 2) {
-		*exception = pdata_ptr->riscv.mcause;
+	if (pdata && pdata->struct_version == 2) {
+		regs = pdata->riscv.regs;
+		*exception = pdata->riscv.mcause;
 		*reason = regs[SOFT_PANIC_GPR_REASON];
 		*info = regs[SOFT_PANIC_GPR_INFO];
 	} else {
@@ -131,13 +137,13 @@ static void print_panic_information(uint32_t *regs, uint32_t mcause,
 void report_panic(uint32_t *regs)
 {
 	uint32_t i, mcause, mepc;
-	struct panic_data *pdata = pdata_ptr;
+	struct panic_data * const pdata = get_panic_data_write();
 
 	mepc = get_mepc();
 	mcause = get_mcause();
 
 	pdata->magic = PANIC_DATA_MAGIC;
-	pdata->struct_size = sizeof(*pdata);
+	pdata->struct_size = CONFIG_PANIC_DATA_SIZE;
 	pdata->struct_version = 2;
 	pdata->arch = PANIC_ARCH_RISCV_RV32I;
 	pdata->flags = 0;

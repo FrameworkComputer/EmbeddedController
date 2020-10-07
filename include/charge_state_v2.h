@@ -55,11 +55,12 @@ struct charge_state_data {
  * Set the output current limit and voltage. This is used to provide power from
  * the charger chip ("OTG" mode).
  *
+ * @param chgnum Charger index to act upon
  * @param ma Maximum current to provide in mA (0 to disable output).
  * @param mv Voltage in mV (ignored if ma == 0).
  * @return EC_SUCCESS or error
  */
-int charge_set_output_current_limit(int ma, int mv);
+int charge_set_output_current_limit(int chgnum, int ma, int mv);
 
 /**
  * Set the charge input current limit. This value is stored and sent every

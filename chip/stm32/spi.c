@@ -308,7 +308,7 @@ static void tx_status(uint8_t byte)
 static void setup_for_transaction(void)
 {
 	stm32_spi_regs_t *spi __attribute__((unused)) = STM32_SPI1_REGS;
-	volatile uint8_t dummy __attribute__((unused));
+	volatile uint8_t unused __attribute__((unused));
 
 	/* clear this as soon as possible */
 	setup_transaction_later = 0;
@@ -325,15 +325,15 @@ static void setup_for_transaction(void)
 	dma_disable(STM32_DMAC_SPI1_TX);
 
 	/*
-	 * Read dummy bytes in case there are some pending; this prevents the
+	 * Read unused bytes in case there are some pending; this prevents the
 	 * receive DMA from getting that byte right when we start it.
 	 */
-	dummy = SPI_RXDR;
+	unused = SPI_RXDR;
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32L4)
 	/* 4 Bytes makes sure the RX FIFO on the F0 is empty as well. */
-	dummy = spi->dr;
-	dummy = spi->dr;
-	dummy = spi->dr;
+	unused = spi->dr;
+	unused = spi->dr;
+	unused = spi->dr;
 #endif
 
 	/* Start DMA */
@@ -523,7 +523,7 @@ void spi_event(enum gpio_signal signal)
 		/*
 		 * Check how big the packet should be.  We can't just wait to
 		 * see how much data the host sends, because it will keep
-		 * sending dummy data until we respond.
+		 * sending extra data until we respond.
 		 */
 		pkt_size = host_request_expected_size(r);
 		if (pkt_size == 0 || pkt_size > sizeof(in_msg))

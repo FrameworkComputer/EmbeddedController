@@ -1373,6 +1373,9 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_WRITE,
  */
 BUILD_ASSERT(CONFIG_RO_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
 BUILD_ASSERT(CONFIG_RW_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
+BUILD_ASSERT(EC_FLASH_REGION_RO_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
+BUILD_ASSERT(CONFIG_EC_WRITABLE_STORAGE_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
+
 #endif
 
 static enum ec_status flash_command_erase(struct host_cmd_handler_args *args)
@@ -1499,12 +1502,12 @@ flash_command_region_info(struct host_cmd_handler_args *args)
 		r->offset = CONFIG_EC_PROTECTED_STORAGE_OFF +
 			    CONFIG_RO_STORAGE_OFF -
 			    EC_FLASH_REGION_START;
-		r->size = CONFIG_RO_SIZE;
+		r->size = EC_FLASH_REGION_RO_SIZE;
 		break;
 	case EC_FLASH_REGION_ACTIVE:
 		r->offset = flash_get_rw_offset(system_get_active_copy()) -
 				EC_FLASH_REGION_START;
-		r->size = CONFIG_RW_SIZE;
+		r->size = CONFIG_EC_WRITABLE_STORAGE_SIZE;
 		break;
 	case EC_FLASH_REGION_WP_RO:
 		r->offset = CONFIG_WP_STORAGE_OFF -
@@ -1514,7 +1517,7 @@ flash_command_region_info(struct host_cmd_handler_args *args)
 	case EC_FLASH_REGION_UPDATE:
 		r->offset = flash_get_rw_offset(system_get_update_copy()) -
 				EC_FLASH_REGION_START;
-		r->size = CONFIG_RW_SIZE;
+		r->size = CONFIG_EC_WRITABLE_STORAGE_SIZE;
 		break;
 	default:
 		return EC_RES_INVALID_PARAM;

@@ -456,7 +456,7 @@ void pd_rx_handler(void)
 #ifdef CONFIG_USB_CTVPD
 	/* Charge-Through Side detach event */
 	if (pending & EXTI_COMP2_MASK) {
-		task_set_event(PD_PORT_TO_TASK_ID(0), PD_EVENT_SM, 0);
+		task_wake(PD_PORT_TO_TASK_ID(0));
 		/* Clear interrupt */
 		STM32_EXTI_PR = EXTI_COMP2_MASK;
 		pending &= ~EXTI_COMP2_MASK;

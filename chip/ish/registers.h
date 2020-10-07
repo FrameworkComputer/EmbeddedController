@@ -13,7 +13,7 @@
 #include "compile_time_macros.h"
 
 /* ISH GPIO has only one port */
-#define DUMMY_GPIO_BANK -1
+#define UNIMPLEMENTED_GPIO_BANK -1
 
 /*
  * ISH3.0 has 3 controllers. Locking must occur by-controller (not by-port).

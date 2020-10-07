@@ -28,12 +28,21 @@ static bool battery_init(void)
 		!!(batt_status & STATUS_INITIALIZED);
 }
 
+__overridable bool board_battery_is_initialized(void)
+{
+	/*
+	 * Set default to return true
+	 */
+	return true;
+}
+
 /*
  * Physical detection of battery.
  */
 static enum battery_present battery_check_present_status(void)
 {
 	enum battery_present batt_pres;
+	bool batt_initialization_state;
 
 	/* Get the physical hardware status */
 	batt_pres = battery_hw_present();
@@ -52,6 +61,16 @@ static enum battery_present battery_check_present_status(void)
 	if (batt_pres == batt_pres_prev)
 		return batt_pres;
 
+	/*
+	 * Check battery initialization. If the battery is not initialized,
+	 * then return BP_NOT_SURE. Battery could be in ship
+	 * mode and might require pre-charge current to wake it up. BP_NO is not
+	 * returned here because charger state machine will not provide
+	 * pre-charge current assuming that battery is not present.
+	 */
+	batt_initialization_state = board_battery_is_initialized();
+	if (!batt_initialization_state)
+		return BP_NOT_SURE;
 	/*
 	 * Ensure that battery is:
 	 * 1. Not in cutoff

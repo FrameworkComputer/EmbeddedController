@@ -102,8 +102,8 @@ static uint32_t irq_ts;
 static struct st_tp_system_info_t system_info;
 
 static struct {
-#if ST_TP_DUMMY_BYTE == 1
-	uint8_t dummy;
+#if ST_TP_EXTRA_BYTE == 1
+	uint8_t extra_byte;
 #endif
 	union {
 		uint8_t bytes[512];
@@ -341,7 +341,7 @@ static int st_tp_read_report(void)
 static int st_tp_read_host_buffer_header(void)
 {
 	const uint8_t tx_buf[] = { ST_TP_CMD_READ_SPI_HOST_BUFFER, 0x00, 0x00 };
-	int rx_len = ST_TP_DUMMY_BYTE + sizeof(rx_buf.buffer_header);
+	int rx_len = ST_TP_EXTRA_BYTE + sizeof(rx_buf.buffer_header);
 
 	return spi_transaction(SPI, tx_buf, sizeof(tx_buf),
 			       (uint8_t *)&rx_buf, rx_len);
@@ -479,7 +479,7 @@ static int st_tp_load_host_data(uint8_t mem_id)
 	int retry, ret;
 	uint16_t count;
 	struct st_tp_host_data_header_t *header = &rx_buf.data_header;
-	int rx_len = sizeof(*header) + ST_TP_DUMMY_BYTE;
+	int rx_len = sizeof(*header) + ST_TP_EXTRA_BYTE;
 
 	st_tp_read_host_data_memory(0x0000, &rx_buf, rx_len);
 	if (header->host_data_mem_id == mem_id)
@@ -515,7 +515,7 @@ static int st_tp_load_host_data(uint8_t mem_id)
 static int st_tp_read_system_info(int reload)
 {
 	int ret = EC_SUCCESS;
-	int rx_len = ST_TP_DUMMY_BYTE + ST_TP_SYSTEM_INFO_LEN;
+	int rx_len = ST_TP_EXTRA_BYTE + ST_TP_SYSTEM_INFO_LEN;
 	uint8_t *ptr = rx_buf.bytes;
 
 	if (reload)
@@ -567,7 +567,7 @@ static void enable_deep_sleep(int enable)
 static void dump_error(void)
 {
 	uint8_t tx_buf[] = {0xFB, 0x20, 0x01, 0xEF, 0x80};
-	int rx_len = sizeof(rx_buf.dump_info) + ST_TP_DUMMY_BYTE;
+	int rx_len = sizeof(rx_buf.dump_info) + ST_TP_EXTRA_BYTE;
 	int i;
 
 	spi_transaction(SPI, tx_buf, sizeof(tx_buf),
@@ -588,7 +588,7 @@ static void dump_error(void)
  */
 static void dump_memory(void)
 {
-	uint32_t size = 0x10000, rx_len = 512 + ST_TP_DUMMY_BYTE;
+	uint32_t size = 0x10000, rx_len = 512 + ST_TP_EXTRA_BYTE;
 	uint32_t offset, i;
 	uint8_t cmd[] = {0xFB, 0x00, 0x10, 0x00, 0x00};
 
@@ -601,7 +601,7 @@ static void dump_memory(void)
 		spi_transaction(SPI, cmd, sizeof(cmd),
 				(uint8_t *)&rx_buf, rx_len);
 
-		for (i = 0; i < rx_len - ST_TP_DUMMY_BYTE; i += 32) {
+		for (i = 0; i < rx_len - ST_TP_EXTRA_BYTE; i += 32) {
 			CPRINTF("%ph %ph %ph %ph "
 				"%ph %ph %ph %ph\n",
 				HEX_BUF(rx_buf.bytes + i + 4 * 0, 4),
@@ -750,7 +750,7 @@ static void st_tp_handle_status_report(struct st_tp_event_t *e)
 static int st_tp_read_all_events(int show_error)
 {
 	uint8_t cmd = ST_TP_CMD_READ_ALL_EVENTS;
-	int rx_len = sizeof(rx_buf.events) + ST_TP_DUMMY_BYTE;
+	int rx_len = sizeof(rx_buf.events) + ST_TP_EXTRA_BYTE;
 	int i;
 
 	if (spi_transaction(SPI, &cmd, 1, (uint8_t *)&rx_buf, rx_len))
@@ -921,7 +921,7 @@ static int wait_for_flash_ready(uint8_t type)
 
 	while (retry--) {
 		ret = spi_transaction(SPI, tx_buf, sizeof(tx_buf),
-				      (uint8_t *)&rx_buf, 1 + ST_TP_DUMMY_BYTE);
+				      (uint8_t *)&rx_buf, 1 + ST_TP_EXTRA_BYTE);
 		if (ret == EC_SUCCESS && !(rx_buf.bytes[0] & 0x80))
 			break;
 		msleep(50);
@@ -1335,7 +1335,7 @@ static void touchpad_read_idle_count(void)
 	static uint32_t prev_count;
 	uint32_t count;
 	int ret;
-	int rx_len = 2 + ST_TP_DUMMY_BYTE;
+	int rx_len = 2 + ST_TP_EXTRA_BYTE;
 	uint8_t cmd_read_counter[] = {
 		0xFB, 0x00, 0x10, 0xff, 0xff
 	};
@@ -1352,7 +1352,7 @@ static void touchpad_read_idle_count(void)
 
 	/* Read idle count */
 	spi_transaction(SPI, cmd_read_counter, sizeof(cmd_read_counter),
-			(uint8_t *)&rx_buf, 4 + ST_TP_DUMMY_BYTE);
+			(uint8_t *)&rx_buf, 4 + ST_TP_EXTRA_BYTE);
 
 	count = rx_buf.dump_info[0];
 
@@ -1386,12 +1386,12 @@ static void touchpad_collect_error(void)
 	enable_deep_sleep(0);
 	spi_transaction(SPI, tx_dump_error, sizeof(tx_dump_error),
 			(uint8_t *)&rx_buf,
-			sizeof(dump_info) + ST_TP_DUMMY_BYTE);
+			sizeof(dump_info) + ST_TP_EXTRA_BYTE);
 	memcpy(dump_info, rx_buf.bytes, sizeof(dump_info));
 
 	spi_transaction(SPI, tx_dump_memory, sizeof(tx_dump_memory),
 			(uint8_t *)&rx_buf,
-			sizeof(dump_memory) + ST_TP_DUMMY_BYTE);
+			sizeof(dump_memory) + ST_TP_EXTRA_BYTE);
 	memcpy(dump_memory, rx_buf.bytes, sizeof(dump_memory));
 
 	CPRINTS("check error dump: %08x %08x", dump_info[0], dump_info[1]);
@@ -1578,7 +1578,7 @@ static void print_frame(void)
 static int st_tp_read_frame(void)
 {
 	int ret = EC_SUCCESS;
-	int rx_len = ST_TOUCH_FRAME_SIZE + ST_TP_DUMMY_BYTE;
+	int rx_len = ST_TOUCH_FRAME_SIZE + ST_TP_EXTRA_BYTE;
 	int heat_map_addr = get_heat_map_addr();
 	uint8_t tx_buf[] = {
 		ST_TP_CMD_READ_SPI_HOST_BUFFER,
@@ -1590,11 +1590,11 @@ static int st_tp_read_frame(void)
 	 * Since usb_packet.frame is already ane uint8_t byte array, we can just
 	 * make it the RX buffer for SPI transaction.
 	 *
-	 * When there is a dummy byte, since we know that flags is a one byte
+	 * When there is a extra byte, since we know that flags is a one byte
 	 * value, and we will override it later, it's okay for SPI transaction
-	 * to write the dummy byte to flags address.
+	 * to write the extra byte to flags address.
 	 */
-#if ST_TP_DUMMY_BYTE == 1
+#if ST_TP_EXTRA_BYTE == 1
 	BUILD_ASSERT(sizeof(usb_packet[0].flags) == 1);
 	uint8_t *rx_buf = &usb_packet[spi_buffer_index & 1].flags;
 #else

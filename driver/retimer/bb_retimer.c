@@ -10,6 +10,7 @@
 #include "common.h"
 #include "console.h"
 #include "i2c.h"
+#include "task.h"
 #include "timer.h"
 #include "usb_pd.h"
 #include "util.h"
@@ -34,6 +35,9 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
+/* Mutex for shared NVM access */
+static struct mutex bb_nvm_mutex;
 
 /**
  * Utility functions
@@ -88,13 +92,20 @@ static int bb_retimer_write(const struct usb_mux *me,
 			buf, BB_RETIMER_WRITE_SIZE, NULL, 0);
 }
 
-static void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
+__overridable void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 {
 	const struct bb_usb_control *control = &bb_controls[me->usb_port];
 
 	/* handle retimer's power domain */
 
 	if (on_off) {
+		/*
+		 * BB retimer NVM can be shared between multiple ports, hence
+		 * lock enabling the retimer until the current retimer request
+		 * is complete.
+		 */
+		mutex_lock(&bb_nvm_mutex);
+
 		gpio_set_level(control->usb_ls_en_gpio, 1);
 		/*
 		 * Tpw, minimum time from VCC to RESET_N de-assertion is 100us.
@@ -104,21 +115,12 @@ static void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 		 */
 		msleep(1);
 		gpio_set_level(control->retimer_rst_gpio, 1);
-		msleep(10);
-		gpio_set_level(control->force_power_gpio, 1);
 
-		/*
-		 * If BB retimer NVM is shared between multiple ports, allow
-		 * 40ms time for all the retimers to be initialized.
-		 * Else allow 20ms to initialize.
-		 */
-		if (control->shared_nvm)
-			msleep(40);
-		else
-			msleep(20);
+		/* Allow 20ms time for the retimer to be initialized. */
+		msleep(20);
+
+		mutex_unlock(&bb_nvm_mutex);
 	} else {
-		gpio_set_level(control->force_power_gpio, 0);
-		msleep(1);
 		gpio_set_level(control->retimer_rst_gpio, 0);
 		msleep(1);
 		gpio_set_level(control->usb_ls_en_gpio, 0);
@@ -318,7 +320,21 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state)
 	uint32_t set_retimer_con = 0;
 	uint8_t dp_pin_mode;
 	int port = me->usb_port;
-
+	/*
+	 * TODO(b/161327513): Remove this once we have final fix for
+	 * the Type-C MFD degradation issue.
+	 * In alternate mode, mux changes states as USB->Safe->DP Alt Mode.
+	 * As EC programs retimer into safe mode independent of virtual mux,
+	 * the super speed lanes are terminated while IOM is in the process
+	 * of establishing the super speed link, which causes a fallback to
+	 * USB 2.0 enumeration through PCH. By removing the Safe mode in retimer
+	 * Super Speed lanes are available to virtual mux and would not
+	 * interrupt the enumeration process and then entering safe.
+	 * From the protocol analyser traces the safe mode is still achieved
+	 * with virtual mux Safe mode settings.
+	 */
+	if (mux_state & USB_PD_MUX_SAFE_MODE)
+		return 0;
 	/*
 	 * Bit 0: DATA_CONNECTION_PRESENT
 	 * 0 - No connection present

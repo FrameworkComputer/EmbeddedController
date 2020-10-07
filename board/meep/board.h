@@ -53,6 +53,13 @@
 
 /* Additional PPC second source */
 #define CONFIG_USBC_PPC_SYV682X
+#define CONFIG_USBC_PPC_DEDICATED_INT
+#undef CONFIG_SYV682X_HV_ILIM
+#define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_5_50
+
+/* Additional TCPC second source in Port 1 */
+#define CONFIG_USB_PD_TCPM_MULTI_PS8XXX
+#define CONFIG_USB_PD_TCPM_PS8755
 
 #ifndef __ASSEMBLER__
 
@@ -96,6 +103,12 @@ enum battery_type {
 	BATTERY_SIMPLO_ATL,
 	BATTERY_SIMPLO_HIGHPOWER,
 	BATTERY_TYPE_COUNT,
+};
+
+enum ppc_type {
+	PPC_NX20P348X,
+	PPC_SYV682X,
+	PPC_TYPE_COUNT,
 };
 
 #ifdef CONFIG_KEYBOARD_FACTORY_TEST

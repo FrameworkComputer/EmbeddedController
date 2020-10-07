@@ -773,58 +773,94 @@ void i2c_interrupt(int port)
 	}
 }
 
-static void i2c_freq_changed(void)
+/*
+ * Set i2c standard port (A, B, or C) runs at 400kHz by using timing registers
+ * (offset 0h ~ 7h).
+ */
+static void i2c_standard_port_timing_regs_400khz(int port)
 {
-	int i, f, clk_div, psr, freq;
-	int p_ch;
+	/* Port clock frequency depends on setting of timing registers. */
+	IT83XX_SMB_SCLKTS(port) = 0;
+	/* Suggested setting of timing registers of 400kHz. */
+	IT83XX_SMB_4P7USL = 0x5;
+	IT83XX_SMB_4P0USL = 0x1;
+	IT83XX_SMB_300NS = 0x1;
+	IT83XX_SMB_250NS = 0x2;
+	IT83XX_SMB_45P3USL = 0x6a;
+	IT83XX_SMB_45P3USH = 0x1;
+	IT83XX_SMB_4P7A4P0H = 0;
+}
 
+/* Set clock frequency for i2c port A, B , or C */
+static void i2c_standard_port_set_frequency(int port, int freq_khz)
+{
 	/*
-	 * Standard I2C Channels
+	 * If port's clock frequency is 400kHz, we use timing registers
+	 * for setting. So we can adjust tlow to meet timing.
+	 * The others use basic 50/100/1000 KHz setting.
 	 */
-	for (i = 0; i < i2c_ports_used; i++) {
-		freq = i2c_ports[i].kbps;
-		if (i2c_ports[i].port < I2C_STANDARD_PORT_COUNT) {
-			for (f = ARRAY_SIZE(i2c_freq_select) - 1; f >= 0; f--) {
-				if (freq >= i2c_freq_select[f].kbps) {
-					IT83XX_SMB_SCLKTS(i2c_ports[i].port) =
+	if (freq_khz == 400) {
+		i2c_standard_port_timing_regs_400khz(port);
+	} else {
+		for (int f = ARRAY_SIZE(i2c_freq_select) - 1; f >= 0; f--) {
+			if (freq_khz >= i2c_freq_select[f].kbps) {
+				IT83XX_SMB_SCLKTS(port) =
 						i2c_freq_select[f].freq_set;
-					break;
-				}
-			}
-		} else {
-			p_ch = i2c_ch_reg_shift(i2c_ports[i].port);
-			/*
-			 * Let psr(Prescale) = IT83XX_I2C_PSR(p_ch)
-			 * Then, 1 SCL cycle = 2 x (psr + 2) x SMBus clock cycle
-			 * SMBus clock = PLL_CLOCK / clk_div
-			 * SMBus clock cycle = 1 / SMBus clock
-			 * 1 SCL cycle = 1 / (1000 x freq)
-			 * 1 / (1000 x freq) =
-			 *          2 x (psr + 2) x (1 / (PLL_CLOCK / clk_div))
-			 * psr = ((PLL_CLOCK / clk_div) x
-			 *          (1 / (1000 x freq)) x (1 / 2)) - 2
-			 */
-			if (freq) {
-				/* Get SMBus clock divide value */
-				clk_div = (IT83XX_ECPM_SCDCR2 & 0x0F) + 1;
-				/* Calculate PSR value */
-				psr = (PLL_CLOCK /
-					(clk_div * (2 * 1000 * freq))) - 2;
-				/* Set psr value under 0xFD */
-				if (psr > 0xFD)
-					psr = 0xFD;
-
-				/* Set I2C Speed */
-				IT83XX_I2C_PSR(p_ch) = (psr & 0xFF);
-				IT83XX_I2C_HSPR(p_ch) = (psr & 0xFF);
-
-				/* Backup */
-				pdata[i2c_ports[i].port].freq = (psr & 0xFF);
+				break;
 			}
 		}
 	}
+
 	/* This field defines the SMCLK0/1/2 clock/data low timeout. */
 	IT83XX_SMB_25MS = I2C_CLK_LOW_TIMEOUT;
+}
+
+/* Set clock frequency for i2c port D, E , or F */
+static void i2c_enhanced_port_set_frequency(int port, int freq_khz)
+{
+	int port_reg_shift, clk_div, psr;
+
+	/* Get base address of i2c enhanced port's registers. */
+	port_reg_shift = i2c_ch_reg_shift(port);
+	/*
+	 * Let psr(Prescale) = IT83XX_I2C_PSR(port_reg_shift)
+	 * Then, 1 SCL cycle = 2 x (psr + 2) x SMBus clock cycle
+	 * SMBus clock = PLL_CLOCK / clk_div
+	 * SMBus clock cycle = 1 / SMBus clock
+	 * 1 SCL cycle = 1 / (1000 x freq)
+	 * 1 / (1000 x freq) = 2 x (psr + 2) x (1 / (PLL_CLOCK / clk_div))
+	 * psr = ((PLL_CLOCK / clk_div) x (1 / (1000 x freq)) x (1 / 2)) - 2
+	 */
+	if (freq_khz) {
+		/* Get SMBus clock divide value */
+		clk_div = (IT83XX_ECPM_SCDCR2 & 0x0F) + 1;
+		/* Calculate PSR value */
+		psr = (PLL_CLOCK / (clk_div * (2 * 1000 * freq_khz))) - 2;
+		/* Set psr value under 0xFD */
+		if (psr > 0xFD)
+			psr = 0xFD;
+
+		/* Set I2C Speed */
+		IT83XX_I2C_PSR(port_reg_shift) = (psr & 0xFF);
+		IT83XX_I2C_HSPR(port_reg_shift) = (psr & 0xFF);
+		/* Backup */
+		pdata[port].freq = (psr & 0xFF);
+	}
+}
+
+static void i2c_freq_changed(void)
+{
+	int i, freq, port;
+
+	/* Set clock frequency for I2C ports */
+	for (i = 0; i < i2c_ports_used; i++) {
+		freq = i2c_ports[i].kbps;
+		port = i2c_ports[i].port;
+		if (port < I2C_STANDARD_PORT_COUNT)
+			i2c_standard_port_set_frequency(port, freq);
+		else
+			i2c_enhanced_port_set_frequency(port, freq);
+	}
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_changed, HOOK_PRIO_DEFAULT);
 

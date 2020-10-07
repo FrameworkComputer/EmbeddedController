@@ -11,6 +11,13 @@
 /* Select Baseboard features */
 #include "baseboard.h"
 
+/*
+ * Enable PD in RO image for TCPMv2, otherwise there is only Type-c functions.
+ * NOTE: This configuration is only for development board and will never be
+ *       released on a chrome os device.
+ */
+#define CONFIG_SYSTEM_UNLOCKED
+
 /* EC configurations, unnecessarily for PD */
 #undef CONFIG_FANS
 #undef CONFIG_IT83XX_ENABLE_MOUSE_DEVICE
@@ -35,9 +42,13 @@
 #define CONFIG_USB_PD_CHECK_MAX_REQUEST_ALLOWED
 #define CONFIG_USB_PD_CUSTOM_PDO
 #define CONFIG_USB_PD_DUAL_ROLE
-#define CONFIG_USB_PD_PORT_MAX_COUNT    3
-#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT   3
-#define CONFIG_USB_PD_TCPMV1
+#define CONFIG_USB_PD_PORT_MAX_COUNT    2
+#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT   2
+#define CONFIG_USB_PD_TCPMV2
+#define CONFIG_USB_DRP_ACC_TRYSRC
+#define CONFIG_USB_PD_REV30
+#define CONFIG_USB_PID 0x1234            /* Invalid PID for development board */
+#define CONFIG_USB_PD_DEBUG_LEVEL 2
 #define CONFIG_USB_PD_TCPM_ITE_ON_CHIP
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_PD_VBUS_DETECT_GPIO

@@ -278,6 +278,67 @@ __override_proto void power_board_handle_host_sleep_event(
  */
 #define HOST_SLEEP_EVENT_DEFAULT_RESET		0
 
+enum sleep_notify_type {
+	SLEEP_NOTIFY_NONE,
+	SLEEP_NOTIFY_SUSPEND,
+	SLEEP_NOTIFY_RESUME,
+};
+
+/**
+ * Set the sleep notify
+ *
+ * It is called in power_chipset_handle_host_sleep_event(), to set the sleep
+ * notify. The sleep notify is assigned based on the host sleep state.
+ *
+ * @param notify The sleep notify to set.
+ */
+void sleep_set_notify(enum sleep_notify_type notify);
+
+/**
+ * Notify the given hook is the sleep notify is matched.
+ *
+ * @param check_state: The sleep notify to check.
+ * @param hook_id: The hook to notify.
+ */
+void sleep_notify_transition(int check_state, int hook_id);
+
+/**
+ * Called during the suspend transition, to increase the transition counter.
+ */
+void sleep_suspend_transition(void);
+
+/**
+ * Called during the resume transition, to increase the transition counter.
+ */
+void sleep_resume_transition(void);
+
+/**
+ * Start the suspend process.
+ *
+ * It is called in power_chipset_handle_host_sleep_event(), after it receives
+ * a host sleep event to hint that the suspend process starts.
+ *
+ * @param ctx Possible sleep parameters and return values, depending on state.
+ * @param callback Will be called if timed out, i.e. suspend hang.
+ */
+void sleep_start_suspend(struct host_sleep_event_context *ctx,
+			 void (*callback)(void));
+
+/**
+ * Complete the resume process.
+ *
+ * It is called in power_chipset_handle_host_sleep_event(), after it receives
+ * a host sleep event to hint that the resume process completes.
+ *
+ * @param ctx Possible sleep parameters and return values, depending on state.
+ */
+void sleep_complete_resume(struct host_sleep_event_context *ctx);
+
+/**
+ * Reset the transition counter and timer.
+ */
+void sleep_reset_tracking(void);
+
 #ifdef CONFIG_POWER_S0IX
 /**
  * Reset the sleep state reported by the host.

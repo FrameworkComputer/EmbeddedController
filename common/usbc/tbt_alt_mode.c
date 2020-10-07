@@ -311,25 +311,32 @@ void intel_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd)
 	}
 }
 
-int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
-		enum tcpm_transmit_type *tx_type)
+static bool tbt_mode_is_supported(int port, int vdo_count)
 {
 	const struct pd_discovery *disc =
 			pd_get_am_discovery(port, TCPC_TX_SOP);
+
+	return disc->identity.idh.modal_support &&
+		is_tbt_cable_superspeed(port) &&
+		get_tbt_cable_speed(port) >= TBT_SS_U31_GEN1;
+}
+
+int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
+		enum tcpm_transmit_type *tx_type)
+{
 	struct svdm_amode_data *modep;
 	int vdo_count_ret = 0;
 
-	if (vdo_count < VDO_MAX_SIZE ||
-	    !disc->identity.idh.modal_support ||
-	    !is_tbt_cable_superspeed(port) ||
-	    get_tbt_cable_speed(port) < TBT_SS_U31_GEN1) {
-		return -1;
-	}
-
 	*tx_type = TCPC_TX_SOP;
+
+	if (vdo_count < VDO_MAX_SIZE)
+		return -1;
 
 	switch (tbt_state[port]) {
 	case TBT_START:
+		if (!tbt_mode_is_supported(port, vdo_count))
+			return 0;
+
 		if (!retry_done)
 			tbt_prints("attempt to enter mode", port);
 		else
@@ -412,7 +419,7 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
 		break;
 	case TBT_INACTIVE:
 		/* Thunderbolt mode is inactive */
-		return -1;
+		return 0;
 	default:
 		 CPRINTF("%s called with invalid state %d\n",
 				__func__, tbt_state[port]);

@@ -94,7 +94,7 @@ int clock_get_freq(void)
  */
 void clock_init(void)
 {
-	int __attribute__((unused)) dummy;
+	int __attribute__((unused)) unused;
 
 	trace0(0, MEC, 0, "Clock Init");
 
@@ -117,8 +117,8 @@ void clock_init(void)
 #endif
 	trace0(0, MEC, 0, "PLL OSC is Locked");
 #ifndef LFW
-	dummy = shared_mem_size();
-	trace11(0, MEC, 0, "Shared Memory size = 0x%08x", (uint32_t)dummy);
+	unused = shared_mem_size();
+	trace11(0, MEC, 0, "Shared Memory size = 0x%08x", (uint32_t)unused);
 #endif
 }
 

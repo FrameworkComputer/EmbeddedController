@@ -6,6 +6,11 @@
 #include "config.h"
 #include "rwsig.h"
 
+#define CONCAT_STAGE_1(w, x, y, z) w ## x ## y ## z
+#define CONCAT2(w, x) CONCAT_STAGE_1(w, x, , )
+#define CONCAT3(w, x, y) CONCAT_STAGE_1(w, x, y, )
+#define CONCAT4(w, x, y, z) CONCAT_STAGE_1(w, x, y, z)
+
 #define STRINGIFY0(name) #name
 #define STRINGIFY(name) STRINGIFY0(name)
 
@@ -19,6 +24,30 @@
 
 #define FW_SIZE_(section) CONFIG_##section##_SIZE
 #define FW_SIZE(section) FW_SIZE_(section)
+
+/*
+ * Define the VMA (virtual memory address) of the ROM_RESIDENT region within
+ * the EC image. This is full 32-bit address starting from
+ * CONFIG_PROGRAM_MEMORY_BASE.
+ */
+#define ROM_RES_OFF(section) FW_OFF(CONCAT2(section, _ROM_RESIDENT))
+#define ROM_RES_SIZE(section) FW_SIZE(CONCAT2(section, _ROM_RESIDENT))
+
+/*
+ * Define the VMA (virtual memory address) of the ROM_RESIDENT region.  Instead
+ * of a full 32-bit address, set the VMA to be an offset within the flash memory
+ * section.  Objects linked into this section can pass the address of the
+ * object unmodified to the public APIs of the flash and init_rom modules.
+ */
+#ifdef SECTION_IS_RO
+#define ROM_RES_FLASH_OFF(section) \
+	FW_MEM_OFF(CONCAT2(section, _ROM_RESIDENT)) + \
+	CONFIG_EC_PROTECTED_STORAGE_OFF
+#else
+#define ROM_RES_FLASH_OFF(section) \
+	FW_MEM_OFF(CONCAT2(section, _ROM_RESIDENT)) + \
+	CONFIG_EC_WRITABLE_STORAGE_OFF
+#endif
 
 /* Indicates where .data LMA should reside. */
 #undef DATA_LMA_MEM_REGION
@@ -41,10 +70,19 @@ MEMORY
 	 */
 	FLASH_HDR (rx) : ORIGIN = FW_OFF(RO_HDR), LENGTH = FW_SIZE(RO_HDR)
 	FLASH (rx) : ORIGIN = FW_OFF(SECTION) + FW_SIZE(RO_HDR), \
-		     LENGTH = FW_SIZE(SECTION)
+		     LENGTH = FW_SIZE(SECTION) - FW_SIZE(RO_HDR)
 #else
 	FLASH (rx) : ORIGIN = FW_OFF(SECTION), LENGTH = FW_SIZE(SECTION)
 #endif
+#ifdef CONFIG_CHIP_INIT_ROM_REGION
+	ROM_RESIDENT (r) : \
+		ORIGIN = ROM_RES_OFF(SECTION), \
+		LENGTH = ROM_RES_SIZE(SECTION)
+
+	ROM_RESIDENT_VMA (r) : \
+		ORIGIN = ROM_RES_FLASH_OFF(SECTION), \
+		LENGTH = ROM_RES_SIZE(SECTION)
+#endif /* CONFIG_CHIP_INIT_ROM_REGION */
 #ifdef CONFIG_SHAREDLIB
 	SHARED_LIB (rx) : ORIGIN = FW_OFF(SHAREDLIB), \
 			  LENGTH = FW_SIZE(SHAREDLIB)
@@ -71,6 +109,28 @@ MEMORY
 	DRAM (rwx) : ORIGIN = CONFIG_DRAM_BASE, LENGTH = CONFIG_DRAM_SIZE
 #endif
 }
+
+/*
+ * Convenience macros for determining the correct output memory section.
+ */
+#if !defined(CONFIG_FLASH_PHYSICAL)
+	#define EC_IMAGE_LMA_MEM_REGION		IROM
+	#define EC_IMAGE_VMA_MEM_REGION		IROM
+	#define DATA_LMA_MEM_REGION		IROM
+#else
+	#define EC_IMAGE_LMA_MEM_REGION		FLASH
+	#ifdef CONFIG_EXTERNAL_STORAGE
+		#define EC_IMAGE_VMA_MEM_REGION	CDRAM
+	#else
+		#define EC_IMAGE_VMA_MEM_REGION	FLASH
+	#endif
+
+	#ifdef CONFIG_CHIP_DATA_IN_INIT_ROM
+		#define DATA_LMA_MEM_REGION	ROM_RESIDENT
+	#else
+		#define DATA_LMA_MEM_REGION	FLASH
+	#endif
+#endif
 
 SECTIONS
 {
@@ -101,7 +161,7 @@ SECTIONS
 
 		. = ALIGN(4);
 		STRINGIFY(OUTDIR/core/CORE/init.o) (.text)
-#if defined(CHIP_FAMILY_NPCX7) && !defined(CONFIG_HIBERNATE_PSL)
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7 && !defined(CONFIG_HIBERNATE_PSL)
 		/* Keep hibernate utility in last code ram block */
 		. = ALIGN(4);
 		KEEP(*(.after_init))
@@ -120,14 +180,9 @@ SECTIONS
 		KEEP(*(.lowpower_ram2))
 		. = ALIGN(4);
 		__flash_lplfw_end = .;
-	} > CDRAM AT > FLASH
-#else
-#	if !defined(CONFIG_FLASH_PHYSICAL)
-	} > IROM
-#	else
-	} > FLASH
-#	endif /* !CONFIG_FLASH_PHYSICAL */
-#endif
+#endif /* CONFIG_EXTERNAL_STORAGE */
+	} > EC_IMAGE_VMA_MEM_REGION AT > EC_IMAGE_LMA_MEM_REGION
+
 	. = ALIGN(4);
 	.rodata : {
 		/* Symbols defined here are declared in link_defs.h */
@@ -274,24 +329,33 @@ SECTIONS
 		. = ALIGN(4);
 		*(.rodata*)
 
+#ifndef CONFIG_CHIP_INIT_ROM_REGION
+		/*
+		 * When a separate ROM resident section isn't enabled, ensure
+		 * the corresponding data objects are linked into the .rodata
+		 * section.
+		 */
+		. = ALIGN(4);
+		__init_rom_start = .;
+		*(.init.rom)
+		__init_rom_end = .;
+#endif /* CONFIG_CHIP_INIT_ROM_REGION */
+
 #if defined(SECTION_IS_RO) && defined(CONFIG_FLASH)
 		. = ALIGN(64);
 		KEEP(*(.google))
 #endif
 
 		. = ALIGN(4);
-#if !defined(CONFIG_FLASH_PHYSICAL)
-	} > IROM
-#define DATA_LMA_MEM_REGION IROM
-#elif defined(CONFIG_EXTERNAL_STORAGE)
-	} > CDRAM AT > FLASH
-#define DATA_LMA_MEM_REGION FLASH
-#else
-	} > FLASH
-#define DATA_LMA_MEM_REGION FLASH
-#endif
+	} > EC_IMAGE_VMA_MEM_REGION AT > EC_IMAGE_LMA_MEM_REGION
 
+#ifdef CONFIG_CHIP_DATA_IN_INIT_ROM
+	__data_lma_start = ORIGIN(ROM_RESIDENT_VMA);
+	#define INIT_ROM_LMA	(ORIGIN(ROM_RESIDENT_VMA) + SIZEOF(.data))
+#else
 	__data_lma_start = .;
+	#define INIT_ROM_LMA	ORIGIN(ROM_RESIDENT_VMA)
+#endif
 
 #ifdef CONFIG_PRESERVE_LOGS
 	.preserve_logs(NOLOAD) : {
@@ -412,33 +476,138 @@ SECTIONS
 	__ram_free = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE) -
 		     (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
 
+#ifdef CONFIG_CHIP_DATA_IN_INIT_ROM
+	/*
+	 * .data is ROM resident, last section in the EC image is the .rodata
+	 * section.
+	 */
+	#define FLASH_USED_END	(LOADADDR(.rodata) + SIZEOF(.rodata))
+#else
+	/*
+	 * .data is included in the EC image and copied to RAM by the loader.
+	 */
+	#define FLASH_USED_END	(LOADADDR(.data) + SIZEOF(.data))
+#endif
+
+	/*
+	 * __flash_used is used in flash free calculations by the makefile.
+	 * __image_size is stored in the struct image_data header and used
+	 * in hash calcuations.
+	 */
+	__flash_used = FLASH_USED_END - ORIGIN(EC_IMAGE_LMA_MEM_REGION);
+#ifndef CONFIG_CHIP_INIT_ROM_REGION
+	__image_size = __flash_used;
+#endif /* CONFIG_CHIP_INIT_ROM_REGION */
+
+#ifdef CONFIG_FLASH
+        /*
+         * These linker labels are just for analysis and not used in the code.
+         */
+	__config_flash_size = CONFIG_FLASH_SIZE;
+	__config_ro_size = CONFIG_RO_SIZE;
+	__config_ec_protected_storage_size = CONFIG_EC_PROTECTED_STORAGE_SIZE;
+	__config_rw_size = CONFIG_RW_SIZE;
+	__config_ec_writable_storage_size = CONFIG_EC_WRITABLE_STORAGE_SIZE;
+#endif
+
 	/*
 	 * The linker won't notice if the .data section is too big to fit,
 	 * apparently because we're sending it into IRAM, not FLASH.
-	 * The following symbol isn't used by the code, but running
-	 * "objdump -t *.elf | grep hey" will let us check how much
-	 * flash space we're actually using. The explicit ASSERT afterwards
-	 * will cause the linker to abort if we use too much.
+	 * Verify that all sections linked into the FLASH region will fit.
 	 */
-	__hey_flash_used = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
-
-#ifdef CONFIG_FLASH_PHYSICAL
-	ASSERT((FW_SIZE(SECTION)
+	ASSERT((LENGTH(EC_IMAGE_LMA_MEM_REGION)
 #if defined(CONFIG_RWSIG) && defined(SECTION_IS_RO)
 	       - CONFIG_RO_PUBKEY_SIZE
 #endif
 #if defined(CONFIG_RWSIG) && defined(SECTION_IS_RW)
 	       - CONFIG_RW_SIG_SIZE
 #endif
-	       ) >= (LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION)),
+	       ) >= __flash_used,
 	       "No room left in the flash")
-#endif /* CONFIG_FLASH_PHYSICAL */
 
-#if defined(SECTION_IS_RO) && defined(NPCX_RO_HEADER)
-	__image_size = __hey_flash_used - FW_SIZE(RO_HDR);
+#ifdef CONFIG_CHIP_INIT_ROM_REGION
+	/*
+	 * Image layout when ROM_RESIDENT region is used (lower addresses
+	 * at the top). This layout is setup by the LMA assignment.
+	 *
+	 *	EC image layout (LMA)		VMA
+	 *	.header (if RO image)		none
+	 *	.text				code RAM
+	 *	.rodata				code RAM + .text size
+	 *	.data				data RAM
+	 *	.fill				none
+	 *	.init_rom			flash offset
+	 *
+	 * The loader code copies the .text, .rodata, and .data sections into
+	 * the code RAM of the EC.  The .header and .init_rom sections are not
+	 * copied by the loader.
+	 *
+	 * Image layout when ROM_RESIDENT region is used, and
+	 * CONFIG_CHIP_DATA_IN_INIT_ROM is enabled.
+	 *
+	 *	EC image layout (LMA)		VMA
+	 *	.header (if RO image)		none
+	 *	.text				code RAM
+	 *	.rodata				code RAM + .text size
+	 *	.fill				none
+	 *	.data				data RAM
+	 *	.init_rom			flash offset
+	 *
+	 * The loader code copies the .text and .rodata sections into the code
+	 * RAM of the EC.  The .header, .data, and .init_rom sections are not
+	 * copied by the loader.
+	 *
+	 * EC initialization code copies the .data directly from flash to
+	 * data RAM at runtime.
+	 */
+
+	/*
+	 * The layout assumes the ROM_RESIDENT region follows the FLASH
+	 * region.
+	 */
+	ASSERT((ORIGIN(FLASH) + LENGTH(FLASH)) == ORIGIN(ROM_RESIDENT),
+		".init_rom section must follow the flash section")
+
+	.init_rom INIT_ROM_LMA : {
+		. = ALIGN(4);
+		__init_rom_start = .;
+		*(.init.rom)
+		__init_rom_end = .;
+	} > ROM_RESIDENT_VMA AT > ROM_RESIDENT
+
+	/*
+	 * The ROM_RESIDENT section is assumed to be in the same physical
+	 * flash as the FLASH section. Fill the space between.
+	 */
+	.fill : {
+		. = FLASH_USED_END;
+		. = ALIGN(4);
+		__fill_start = .;
+		FILL(0xFF);
+		. = ORIGIN(FLASH) + LENGTH(FLASH) - 1;
+		/* Need at least one byte so section is not omitted */
+		BYTE(0xFF);
+		__fill_end = .;
+	} > FLASH
+
+	/*
+	 * The end of the .fill region should also be the start of the ROM
+	 * resident region.
+	 */
+	ASSERT(__fill_end == ORIGIN(ROM_RESIDENT),
+		".fill region end not aligned to start of ROM_RESIDENT region")
+
+	/*
+	 * __image_size is used for hash calculation.  When
+	 * CONFIG_CHIP_INIT_ROM_REGION is enabled, this includes the entire
+	 * FLASH region and the bytes used in the .init_rom section.
+	 */
+#ifdef CONFIG_CHIP_DATA_IN_INIT_ROM
+	__image_size = LENGTH(FLASH) + SIZEOF(.init_rom) + SIZEOF(.data);
 #else
-	__image_size = __hey_flash_used;
-#endif
+	__image_size = LENGTH(FLASH) + SIZEOF(.init_rom);
+#endif /* CONFIG_CHIP_DATA_IN_INIT_ROM */
+#endif /* CONFIG_CHIP_INIT_ROM_REGION */
 
 #ifdef CONFIG_CHIP_MEMORY_REGIONS
 #define REGION(name, attr, start, size) \

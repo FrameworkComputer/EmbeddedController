@@ -413,6 +413,22 @@ static void setup_fw_config(void)
 }
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
+static void wwan_lte_startup(void)
+{
+	/* Turn on WWAN LTE function as we go into S0 from S5. */
+	gpio_set_level(GPIO_LTE_EN, 1);
+	gpio_set_level(GPIO_LTE_W_DISABLE_L, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, wwan_lte_startup, HOOK_PRIO_DEFAULT + 1);
+
+static void wwan_lte_shutdown(void)
+{
+	/* Turn off WWAN LTE function as we go back to S5. */
+	gpio_set_level(GPIO_LTE_EN, 0);
+	gpio_set_level(GPIO_LTE_W_DISABLE_L, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, wwan_lte_shutdown, HOOK_PRIO_DEFAULT + 1);
+
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,

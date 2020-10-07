@@ -10,8 +10,10 @@
 $(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_riscv),\
 	/opt/coreboot-sdk/bin/riscv64-elf-)
 
+# Enable FPU extension if config option of FPU is enabled.
+_FPU_EXTENSION=$(if $(CONFIG_FPU),f,)
 # CPU specific compilation flags
-CFLAGS_CPU+=-march=rv32imafc -mabi=ilp32f -Os
+CFLAGS_CPU+=-march=rv32ima$(_FPU_EXTENSION)c -mabi=ilp32$(_FPU_EXTENSION) -Os
 LDFLAGS_EXTRA+=-mrelax
 LDFLAGS_EXTRA+=-static-libgcc -lgcc
 

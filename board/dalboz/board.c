@@ -12,6 +12,7 @@
 #include "driver/ioexpander/pcal6408.h"
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
+#include "driver/retimer/pi3hdx1204.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "driver/usb_mux/ps8740.h"
@@ -191,6 +192,44 @@ void pcal6408_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&pcal6408_handler_data, 0);
 }
+
+const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
+	.eq_ch0_ch1_offset = PI3HDX1204_EQ_DB710,
+	.eq_ch2_ch3_offset = PI3HDX1204_EQ_DB710,
+	.vod_offset = PI3HDX1204_VOD_115_ALL_CHANNELS,
+	.de_offset = PI3HDX1204_DE_DB_MINUS5,
+};
+
+/*****************************************************************************
+ * Board suspend / resume
+ */
+
+static void board_chipset_resume(void)
+{
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		ioex_set_level(IOEX_EN_PWR_HDMI_DB, 1);
+		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  1);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+static void board_chipset_suspend(void)
+{
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  0);
+		ioex_set_level(IOEX_EN_PWR_HDMI_DB, 0);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 static int board_ps8743_mux_set(const struct usb_mux *me,
 				mux_state_t mux_state)
@@ -570,6 +609,9 @@ static void setup_fw_config(void)
 		gpio_set_flags(GPIO_6AXIS_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 }
+/*
+ * Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init().
+ */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
 const struct pwm_t pwm_channels[] = {
@@ -607,31 +649,17 @@ int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A1_5V_DB_OPT1,
 };
 
-static void usba_retimer_on(void)
+static void check_v0_battery(void)
 {
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, usba_retimer_on, HOOK_PRIO_DEFAULT);
+	uint32_t board_version = 0;
 
-static void usba_retimer_off(void)
-{
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, usba_retimer_off, HOOK_PRIO_DEFAULT);
+	cbi_get_board_version(&board_version);
 
+	if (board_version == 1)
+		I2C_PORT_BATTERY = I2C_PORT_BATTERY_V0;
+}
 /*
- * If the battery is found on the V0 I2C port then re-map the battery port.
  * Use HOOK_PRIO_INIT_I2C so we re-map before init_battery_type() and
  * charger_chips_init() want to talk to the battery.
  */
-static void check_v0_battery(void)
-{
-	int status;
-
-	if (i2c_read16(I2C_PORT_BATTERY_V0, BATTERY_ADDR_FLAGS,
-			SB_BATTERY_STATUS, &status) == EC_SUCCESS) {
-		ccprints("V0 HW detected");
-		I2C_PORT_BATTERY = I2C_PORT_BATTERY_V0;
-	}
-}
 DECLARE_HOOK(HOOK_INIT, check_v0_battery, HOOK_PRIO_INIT_I2C);

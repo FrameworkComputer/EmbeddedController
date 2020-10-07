@@ -19,6 +19,7 @@
 #define CONFIG_PS2
 #define CONFIG_CMD_PS2
 #define CONFIG_KEYBOARD_FACTORY_TEST
+#define CONFIG_DEVICE_EVENT
 
 #undef CONFIG_LED_ONOFF_STATES
 #define CONFIG_BATTERY_LEVEL_NEAR_FULL 91
@@ -40,6 +41,9 @@
 #define CONFIG_LID_ANGLE_UPDATE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
+#define CONFIG_GMR_TABLET_MODE
+#define CONFIG_GMR_TABLET_MODE_CUSTOM
+#define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE
 #define RPM_DEVIATION 1
 
 /* GPIO mapping from board specific name to EC common name. */
@@ -198,23 +202,13 @@ static inline bool ec_config_has_mst_hub_rtd2141b(void)
 		  HAS_MST_HUB_RTD2141B);
 }
 
-/*
- * USB-C0 always uses USB_C0_HPD (= DP3_HPD).
- * USB-C1 OPT1 DB uses DP2_HPD.
- * USB-C1 OPT3 DB uses DP1_HPD via RTD2141B MST hub, EC does not drive HPD.
- */
-#define PORT_TO_HPD(port) ((port == 0) \
-	? GPIO_USB_C0_HPD \
-	: (ec_config_has_mst_hub_rtd2141b()) \
-		? GPIO_NO_HPD \
-		: GPIO_DP2_HPD)
+enum gpio_signal board_usbc_port_to_hpd_gpio(int port);
+#define PORT_TO_HPD(port) board_usbc_port_to_hpd_gpio(port)
 
 extern const struct usb_mux usbc0_pi3dpx1207_usb_retimer;
 extern const struct usb_mux usbc1_ps8802;
 extern const struct usb_mux usbc1_ps8818;
 extern struct usb_mux usbc1_amd_fp5_usb_mux;
-
-void hdmi_hpd_interrupt(enum ioex_signal signal);
 
 #ifdef CONFIG_KEYBOARD_FACTORY_TEST
 extern const int keyboard_factory_scan_pins[][2];

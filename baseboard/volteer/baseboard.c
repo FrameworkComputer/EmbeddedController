@@ -5,17 +5,14 @@
 
 /* Volteer family-specific configuration */
 #include "adc_chip.h"
-#include "bb_retimer.h"
 #include "button.h"
 #include "cbi_ec_fw_config.h"
 #include "charge_manager.h"
+#include "charge_ramp.h"
 #include "charge_state.h"
 #include "cros_board_info.h"
-#include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl9241.h"
 #include "driver/tcpm/ps8xxx.h"
-#include "driver/tcpm/tcpci.h"
-#include "driver/tcpm/tusb422.h"
 #include "driver/temp_sensor/thermistor.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -26,9 +23,6 @@
 #include "task.h"
 #include "temp_sensor.h"
 #include "usbc_ppc.h"
-#include "usb_mux.h"
-#include "usb_pd.h"
-#include "usb_pd_tcpm.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
@@ -72,20 +66,6 @@ const struct adc_t adc_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************/
-/* BC1.2 charger detect configuration */
-const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_USB_C1,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
-
-/******************************************************************************/
 /* Wake up pins */
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_LID_OPEN,
@@ -94,23 +74,6 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_EC_RST_ODL,
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
-
-/******************************************************************************/
-/* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
-	/* Increase from 50 us, because KSO_02 passes through the H1. */
-	.output_settle_us = 80,
-	/* Other values should be the same as the default configuration. */
-	.debounce_down_us = 9 * MSEC,
-	.debounce_up_us = 30 * MSEC,
-	.scan_period_us = 3 * MSEC,
-	.min_post_scan_delay_us = 1000,
-	.poll_timeout_us = 100 * MSEC,
-	.actual_key_mask = {
-		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
-	},
-};
 
 /******************************************************************************/
 /* Charger Chip Configuration */
@@ -187,163 +150,6 @@ const struct temp_sensor_t temp_sensors[] = {
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /******************************************************************************/
-/* EC thermal management configuration */
-
-/*
- * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
- * 130 C.  However, sensor is located next to DDR, so we need to use the lower
- * DDR temperature limit (85 C)
- */
-const static struct ec_thermal_config thermal_cpu = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
-	},
-	.temp_fan_off = C_TO_K(35),
-	.temp_fan_max = C_TO_K(50),
-};
-
-/*
- * Inductor limits - used for both charger and PP3300 regulator
- *
- * Need to use the lower of the charger IC, PP3300 regulator, and the inductors
- *
- * Charger max recommended temperature 100C, max absolute temperature 125C
- * PP3300 regulator: operating range -40 C to 145 C
- *
- * Inductors: limit of 125c
- * PCB: limit is 80c
- */
-const static struct ec_thermal_config thermal_inductor = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
-	},
-	.temp_fan_off = C_TO_K(40),
-	.temp_fan_max = C_TO_K(55),
-};
-
-
-struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_CHARGER]			= thermal_inductor,
-	[TEMP_SENSOR_2_PP3300_REGULATOR]	= thermal_inductor,
-	[TEMP_SENSOR_3_DDR_SOC]			= thermal_cpu,
-	[TEMP_SENSOR_4_FAN]			= thermal_cpu,
-};
-BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-
-/******************************************************************************/
-/* USBC TCPC configuration */
-struct tcpc_config_t tcpc_config[] = {
-	[USBC_PORT_C0] = {
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_USB_C0,
-			.addr_flags = TUSB422_I2C_ADDR_FLAGS,
-		},
-		.drv = &tusb422_tcpm_drv,
-		.usb23 = USBC_PORT_0_USB2_NUM | (USBC_PORT_0_USB3_NUM << 4),
-	},
-	[USBC_PORT_C1] = {
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_USB_C1,
-			.addr_flags = TUSB422_I2C_ADDR_FLAGS,
-		},
-		.drv = &tusb422_tcpm_drv,
-		.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
-BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
-
-/******************************************************************************/
-/* USBC mux configuration - Tiger Lake includes internal mux */
-struct usb_mux usbc1_usb4_db_retimer = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &bb_usb_retimer,
-	.i2c_port = I2C_PORT_USB_1_MIX,
-	.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
-};
-struct usb_mux usb_muxes[] = {
-	[USBC_PORT_C0] = {
-		.usb_port = USBC_PORT_C0,
-		.driver = &virtual_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
-	},
-	[USBC_PORT_C1] = {
-		.usb_port = USBC_PORT_C1,
-		.driver = &virtual_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
-		.next_mux = &usbc1_usb4_db_retimer,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
-
-struct bb_usb_control bb_controls[] = {
-	[USBC_PORT_C0] = {
-		/* USB-C port 0 doesn't have a retimer */
-	},
-	[USBC_PORT_C1] = {
-		.shared_nvm = false,
-		.usb_ls_en_gpio = GPIO_USB_C1_LS_EN,
-		.retimer_rst_gpio = GPIO_USB_C1_RT_RST_ODL,
-		.force_power_gpio = GPIO_USB_C1_RT_FORCE_PWR,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(bb_controls) == USBC_PORT_COUNT);
-
-static void baseboard_tcpc_init(void)
-{
-	/* Don't reset TCPCs after initial reset */
-	if (!system_jumped_late())
-		board_reset_pd_mcu();
-
-	/* Enable PPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
-
-	/* Enable TCPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
-
-	/* Enable BC1.2 interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
-}
-DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
-
-/******************************************************************************/
-/* TCPC support routines */
-uint16_t tcpc_get_alert_status(void)
-{
-	uint16_t status = 0;
-
-	/*
-	 * Check which port has the ALERT line set
-	 */
-	if (!gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL))
-		status |= PD_STATUS_TCPC_ALERT_0;
-	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL))
-		status |= PD_STATUS_TCPC_ALERT_1;
-
-	return status;
-}
-
-int ppc_get_alert_status(int port)
-{
-	if (port == USBC_PORT_C0)
-		return gpio_get_level(GPIO_USB_C0_PPC_INT_ODL) == 0;
-	else
-		return gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
-}
-
 void tcpc_alert_event(enum gpio_signal signal)
 {
 	/* TODO: b/140572591 - check correct operation for Volteer */
@@ -434,7 +240,7 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
+__overridable void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
 	charge_set_input_current_limit(MAX(charge_ma,
@@ -499,3 +305,22 @@ static void cbi_init(void)
 	board_cbi_init();
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_FIRST);
+
+/**
+ * Return if VBUS is too low
+ */
+int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
+{
+	int voltage;
+
+	if (charger_get_vbus_voltage(port, &voltage))
+		voltage = 0;
+
+	/*
+	 * For legacy BC1.2 charging with CONFIG_CHARGE_RAMP_SW, ramp up input
+	 * current until voltage drops to the minimum input voltage of the
+	 * charger, 4.096V.
+	 */
+	return voltage < ISL9241_BC12_MIN_VOLTAGE;
+}
+

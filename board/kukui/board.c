@@ -263,7 +263,7 @@ int pd_snk_is_vbus_provided(int port)
 }
 
 #if defined(BOARD_KUKUI) || defined(BOARD_KODAMA)
-/* dummy interrupt function for kukui */
+/* fake interrupt function for kukui */
 void pogo_adc_interrupt(enum gpio_signal signal)
 {
 }

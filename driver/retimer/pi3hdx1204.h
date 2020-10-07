@@ -56,6 +56,9 @@
 #define PI3HDX1204_DE_DB_MINUS7		0xAA
 #define PI3HDX1204_DE_DB_MINUS10	0xFF
 
+/* Delay for I2C to be ready after power on. */
+#define PI3HDX1204_POWER_ON_DELAY_MS 2
+
 /* Enable or disable the PI3HDX1204. */
 int pi3hdx1204_enable(const int i2c_port,
 		      const uint16_t i2c_addr_flags,

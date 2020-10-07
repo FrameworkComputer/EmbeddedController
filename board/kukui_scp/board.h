@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+#define CC_DEFAULT (CC_ALL & ~(CC_MASK(CC_HOSTCMD) | CC_MASK(CC_IPI)))
+
 #define CONFIG_FLASH_SIZE 0x58000 /* Image file size: 256KB */
 #undef  CONFIG_LID_SWITCH
 #undef  CONFIG_FW_INCLUDE_RO

@@ -145,7 +145,10 @@ static void set_pwrbtn_to_pch(int high, int init)
 	}
 #endif
 	CPRINTS("PB PCH pwrbtn=%s", high ? "HIGH" : "LOW");
-	gpio_set_level(GPIO_PCH_PWRBTN_L, high);
+	if (IS_ENABLED(CONFIG_POWER_BUTTON_TO_PCH_CUSTOM))
+		board_pwrbtn_to_pch(high);
+	else
+		gpio_set_level(GPIO_PCH_PWRBTN_L, high);
 }
 
 void power_button_pch_press(void)

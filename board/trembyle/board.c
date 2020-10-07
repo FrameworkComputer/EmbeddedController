@@ -8,11 +8,13 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "button.h"
+#include "charger.h"
 #include "cbi_ec_fw_config.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/retimer/pi3dpx1207.h"
+#include "driver/retimer/pi3hdx1204.h"
 #include "driver/retimer/ps8811.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/usb_mux/amd_fp5.h"
@@ -182,13 +184,19 @@ const int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A1_5V_DB,
 };
 
+const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
+	.eq_ch0_ch1_offset = PI3HDX1204_EQ_DB710,
+	.eq_ch2_ch3_offset = PI3HDX1204_EQ_DB710,
+	.vod_offset = PI3HDX1204_VOD_115_ALL_CHANNELS,
+	.de_offset = PI3HDX1204_DE_DB_MINUS5,
+};
+
 /*****************************************************************************
- * USB-A Retimer tuning
+ * Board suspend / resume
  */
 #define PS8811_ACCESS_RETRIES 2
 
-/* PS8811 gain tuning */
-static void ps8811_tuning_init(void)
+static void board_chipset_resume(void)
 {
 	int rv;
 	int retry;
@@ -209,7 +217,7 @@ static void ps8811_tuning_init(void)
 	}
 	if (rv) {
 		ioex_set_level(IOEX_USB_A0_RETIMER_EN, 0);
-		CPRINTSUSB("C0: PS8811 not detected");
+		CPRINTSUSB("A0: PS8811 not detected");
 	}
 
 	/* USB-A1 needs to increase gain to get over MB/DB connector */
@@ -224,18 +232,29 @@ static void ps8811_tuning_init(void)
 	}
 	if (rv) {
 		ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
-		CPRINTSUSB("C1: PS8811 not detected");
+		CPRINTSUSB("A1: PS8811 not detected");
+	}
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  1);
 	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, ps8811_tuning_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
-static void ps8811_retimer_off(void)
+static void board_chipset_suspend(void)
 {
-	/* Turn on the retimers */
 	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 0);
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  0);
+	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, ps8811_retimer_off, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************
  * USB-C MUX/Retimer dynamic configuration
@@ -310,7 +329,19 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
  * Use FW_CONFIG to set correct configuration.
  */
 
-void setup_fw_config(void)
+int board_usbc1_retimer_inhpd = IOEX_USB_C1_HPD_IN_DB;
+
+static void setup_v0_charger(void)
+{
+	chg_chips[0].i2c_port = I2C_PORT_CHARGER_V0;
+}
+/*
+ * Use HOOK_PRIO_INIT_I2C so we re-map before charger_chips_init()
+ * talks to the charger.
+ */
+DECLARE_HOOK(HOOK_INIT, setup_v0_charger, HOOK_PRIO_INIT_I2C);
+
+static void setup_fw_config(void)
 {
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
@@ -323,6 +354,7 @@ void setup_fw_config(void)
 	if (ec_config_has_hdmi_conn_hpd())
 		ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
 }
+/* Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init(). */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
 /*****************************************************************************

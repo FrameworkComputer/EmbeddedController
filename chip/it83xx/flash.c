@@ -626,13 +626,16 @@ static void flash_code_static_dma(void)
 		IT83XX_GCTRL_RVILMCR0 &= ~ILMCR_ILM2_ENABLE;
 	IT83XX_SMFI_SCAR2H = 0x08;
 
-	/* Copy to DLM */
-	IT83XX_GCTRL_MCCR2 |= 0x20;
+	/* Enable DLM 56k~60k region and than copy data into it */
+	if (IS_ENABLED(CHIP_CORE_NDS32))
+		IT83XX_GCTRL_MCCR2 |= IT83XX_DLM14_ENABLE;
 	memcpy((void *)CHIP_RAMCODE_BASE, (const void *)FLASH_DMA_START,
 		IT83XX_ILM_BLOCK_SIZE);
 	if (IS_ENABLED(CHIP_CORE_RISCV))
 		IT83XX_GCTRL_RVILMCR0 |= ILMCR_ILM2_ENABLE;
-	IT83XX_GCTRL_MCCR2 &= ~0x20;
+	/* Disable DLM 56k~60k region and be the ram code section */
+	if (IS_ENABLED(CHIP_CORE_NDS32))
+		IT83XX_GCTRL_MCCR2 &= ~IT83XX_DLM14_ENABLE;
 
 	/*
 	 * Enable ILM

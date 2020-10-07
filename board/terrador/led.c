@@ -19,23 +19,23 @@ const enum ec_led_id supported_led_ids[] = {
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 struct pwm_led led_color_map[] = {
-				/* Red, Green, Blue */
-	[EC_LED_COLOR_RED] =    {  100,   0,     0 },
-	[EC_LED_COLOR_GREEN] =  {    0, 100,     0 },
-	[EC_LED_COLOR_BLUE] =   {    0,   0,   100 },
+				/* Green, Red, Blue */
+	[EC_LED_COLOR_GREEN] =  {    100,   0,    0 },
+	[EC_LED_COLOR_RED] =    {      0, 100,    0 },
+	[EC_LED_COLOR_BLUE] =   {      0,   0,  100 },
 	/* The green LED seems to be brighter than the others, so turn down
 	 * green from its natural level for these secondary colors.
 	 */
-	[EC_LED_COLOR_YELLOW] = {  100,  70,     0 },
-	[EC_LED_COLOR_WHITE] =  {  100,  70,   100 },
-	[EC_LED_COLOR_AMBER] =  {  100,  20,     0 },
+	[EC_LED_COLOR_YELLOW] = {     70, 100,    0 },
+	[EC_LED_COLOR_WHITE] =  {     70, 100,  100 },
+	[EC_LED_COLOR_AMBER] =  {     20, 100,    0 },
 };
 
 struct pwm_led pwm_leds[] = {
 	/* 2 RGB diffusers controlled by 1 set of 3 channels. */
 	[PWM_LED0] = {
-		.ch0 = PWM_CH_LED3_RED,
-		.ch1 = PWM_CH_LED2_GREEN,
+		.ch0 = PWM_CH_LED3_GREEN,
+		.ch1 = PWM_CH_LED2_RED,
 		.ch2 = PWM_CH_LED1_BLUE,
 		.enable = &pwm_enable,
 		.set_duty = &pwm_set_duty,
@@ -77,27 +77,3 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 	return EC_SUCCESS;
 }
-
-/* Illuminates the LED on the side of the active charging port. If not charging,
- * illuminates both LEDs.
- */
-static void led_set_charge_port_tick(void)
-{
-	int port;
-	int side_select_duty;
-
-	port = charge_manager_get_active_charge_port();
-	switch (port) {
-	case 0:
-		side_select_duty = 100;
-		break;
-	case 1:
-		side_select_duty = 0;
-		break;
-	default:
-		side_select_duty = 50;
-	}
-
-	pwm_set_duty(PWM_CH_LED4_SIDESEL, side_select_duty);
-}
-DECLARE_HOOK(HOOK_TICK, led_set_charge_port_tick, HOOK_PRIO_DEFAULT);

@@ -379,6 +379,9 @@
 #define BMI160_FF_DATA_LEN_GYR          6
 #define BMI160_FF_DATA_LEN_MAG          8
 
+/* Root mean square noise of 100 Hz accelerometer, units: ug */
+#define BMI160_ACCEL_RMS_NOISE_100HZ    1300
+
 extern const struct accelgyro_drv bmi160_drv;
 
 void bmi160_interrupt(enum gpio_signal signal);

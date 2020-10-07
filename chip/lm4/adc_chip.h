@@ -42,7 +42,7 @@ extern const struct adc_t adc_channels[];
 /* Just plain id mapping for code readability */
 #define LM4_AIN(x) (x)
 
-/* Dummy value for "channel" in adc_t if we don't have an external channel. */
+/* Mock value for "channel" in adc_t if we don't have an external channel. */
 #define LM4_AIN_NONE (-1)
 
 #endif /* __CROS_EC_ADC_CHIP_H */

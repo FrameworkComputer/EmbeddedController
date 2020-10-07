@@ -228,10 +228,9 @@ DECLARE_IRQ(CPU_INT_GROUP_3, __hw_clock_source_irq, 1);
 #define CYCLES_125NS (125*(PLL_CLOCK/SECOND) / 1000)
 uint32_t __ram_code ext_observation_reg_read(enum ext_timer_sel ext_timer)
 {
-	uint32_t prev_mask = get_int_mask();
+	uint32_t prev_mask = read_clear_int_mask();
 	uint32_t val;
 
-	interrupt_disable();
 	asm volatile(
 		/* read observation register for the first time */
 		"lwi %0,[%1]\n\t"

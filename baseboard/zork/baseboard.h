@@ -71,7 +71,12 @@
 #define CONFIG_CHARGER_ISL9241
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
-#define CONFIG_CHARGE_RAMP_HW
+/*
+ * We would prefer to use CONFIG_CHARGE_RAMP_HW to enable legacy BC1.2 charging
+ * but that feature of ISL9241 is broken (b/160287056) so we have to use
+ * CONFIG_CHARGE_RAMP_SW instead.
+ */
+#define CONFIG_CHARGE_RAMP_SW
 
 #define CONFIG_CHIPSET_STONEY
 #define CONFIG_CHIPSET_CAN_THROTTLE
@@ -84,6 +89,7 @@
 #define CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
+#define CONFIG_POWER_BUTTON_TO_PCH_CUSTOM
 
 #ifdef VARIANT_ZORK_TREMBYLE
 	#define CONFIG_FANS FAN_CH_COUNT
@@ -110,6 +116,7 @@
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PROTOCOL_8042
+#undef  CONFIG_KEYBOARD_VIVALDI
 
 /*
  * USB ID
@@ -144,6 +151,13 @@
 #define CONFIG_USB_PD_COMM_LOCKED
 #define CONFIG_USB_PD_DISCHARGE_TCPC
 #define CONFIG_USB_PD_DP_HPD_GPIO
+#ifdef VARIANT_ZORK_TREMBYLE
+/*
+ * Use a custom HPD function that supports HPD on IO expander.
+ * TODO(b/165622386) remove this when HPD is on EC GPIO.
+ */
+#	define CONFIG_USB_PD_DP_HPD_GPIO_CUSTOM
+#endif
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 #define CONFIG_USB_PD_LOGGING
@@ -194,19 +208,16 @@
 #define PD_MAX_CURRENT_MA	3250
 #define PD_MAX_VOLTAGE_MV	20000
 
-/*
- * Minimum conditions to start AP and perform swsync.  Note that when the
- * charger is connected via USB-PD analog signaling, the boot will proceed
- * regardless.
- */
-#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 3
+/* Round up 3250 max current to multiple of 128mA for ISL9241 AC prochot. */
+#define ZORK_AC_PROCHOT_CURRENT_MA 3328
 
 /*
- * Require PD negotiation to be complete when we are in a low-battery condition
- * prior to releasing depthcharge to the kernel.
+ * EC will boot AP to depthcharge if: (BAT >= 4%) || (AC >= 50W)
+ * CONFIG_CHARGER_LIMIT_* is not set, so there is no additional restriction on
+ * Depthcharge to boot OS.
  */
-#define CONFIG_CHARGER_LIMIT_POWER_THRESH_CHG_MW 15001
-#define CONFIG_CHARGER_LIMIT_POWER_THRESH_BAT_PCT 3
+#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON			4
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON		50000
 
 /* Increase length of history buffer for port80 messages. */
 #undef CONFIG_PORT80_HISTORY_LEN
@@ -248,12 +259,14 @@
 /* Thermal */
 #define CONFIG_TEMP_SENSOR_SB_TSI
 
+#ifdef HAS_TASK_MOTIONSENSE
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
 /* FIFO size is a power of 2. */
 #define CONFIG_ACCEL_FIFO_SIZE 256
 /* Depends on how fast the AP boots and typical ODRs. */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
+#endif
 
 /* Audio */
 #define CONFIG_AUDIO_CODEC
@@ -329,11 +342,13 @@ void board_reset_pd_mcu(void);
 /* Common definition for the USB PD interrupt handlers. */
 void tcpc_alert_event(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
-void ppc_interrupt(enum gpio_signal signal);
+__override_proto void ppc_interrupt(enum gpio_signal signal);
 #endif
 
-void pi3hdx1204_retimer_power(void);
-__override_proto int check_hdmi_hpd_status(void);
+void board_print_temps(void);
+
+/* GPIO or IOEX signal used to set IN_HPD on DB retimer. */
+extern int board_usbc1_retimer_inhpd;
 
 #endif /* !__ASSEMBLER__ */
 

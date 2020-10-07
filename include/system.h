@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_SYSTEM_H
 #define __CROS_EC_SYSTEM_H
 
+#include <stdnoreturn.h>
+
 #include "atomic.h"
 #include "common.h"
 #include "compile_time_macros.h"
@@ -293,7 +295,7 @@ const char *system_get_build_info(void);
  * @param flags		Reset flags; see SYSTEM_RESET_* above.
  */
 #ifndef TEST_FUZZ
-__attribute__((noreturn))
+noreturn
 #endif
 void system_reset(int flags);
 
@@ -502,7 +504,7 @@ extern uint32_t sleep_mask;
  */
 static inline void enable_sleep(uint32_t mask)
 {
-	atomic_clear(&sleep_mask, mask);
+	deprecated_atomic_clear_bits(&sleep_mask, mask);
 }
 
 /**
@@ -513,7 +515,7 @@ static inline void enable_sleep(uint32_t mask)
  */
 static inline void disable_sleep(uint32_t mask)
 {
-	atomic_or(&sleep_mask, mask);
+	deprecated_atomic_or(&sleep_mask, mask);
 }
 
 #ifdef CONFIG_LOW_POWER_IDLE_LIMITED
@@ -531,12 +533,12 @@ static inline uint32_t idle_is_disabled(void)
 
 static inline void disable_idle(void)
 {
-	atomic_or(&idle_disabled, 1);
+	deprecated_atomic_or(&idle_disabled, 1);
 }
 
 static inline void enable_idle(void)
 {
-	atomic_clear(&idle_disabled, 1);
+	deprecated_atomic_clear_bits(&idle_disabled, 1);
 }
 #endif
 

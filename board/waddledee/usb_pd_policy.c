@@ -26,14 +26,13 @@ void pd_power_supply_reset(int port)
 {
 	int prev_en;
 
-	if (port < 0 || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (port < 0 || port >= board_get_usb_pd_port_count())
 		return;
 
-	/* TODO(b/147440290): charger functions should take chgnum */
-	prev_en = chg_chips[port].drv->is_sourcing_otg_power(port, port);
+	prev_en = charger_is_sourcing_otg_power(port);
 
 	/* Disable Vbus */
-	chg_chips[port].drv->enable_otg_power(port, 0);
+	charger_enable_otg_power(port, 0);
 
 	/* Discharge Vbus if previously enabled */
 	if (prev_en)
@@ -52,8 +51,8 @@ int pd_set_power_supply_ready(int port)
 {
 	enum ec_error_list rv;
 
-	/* Disable charging */
-	rv = chg_chips[port].drv->set_mode(port, CHARGE_FLAG_INHIBIT_CHARGE);
+	/* Disable sinking */
+	rv = sm5803_vbus_sink_enable(port, 0);
 	if (rv)
 		return rv;
 
@@ -61,7 +60,7 @@ int pd_set_power_supply_ready(int port)
 	sm5803_set_vbus_disch(port, 0);
 
 	/* Provide Vbus */
-	chg_chips[port].drv->enable_otg_power(port, 1);
+	charger_enable_otg_power(port, 1);
 
 #ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
 	/* Ensure we advertise the proper available current quota */
@@ -72,6 +71,22 @@ int pd_set_power_supply_ready(int port)
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 
 	return EC_SUCCESS;
+}
+
+__override bool pd_check_vbus_level(int port, enum vbus_level level)
+{
+	int vbus_voltage;
+
+	/* If we're unable to speak to the charger, best to guess false */
+	if (charger_get_vbus_voltage(port, &vbus_voltage))
+		return false;
+
+	if (level == VBUS_SAFE0V)
+		return vbus_voltage < PD_V_SAFE0V_MAX;
+	else if (level == VBUS_PRESENT)
+		return vbus_voltage > PD_V_SAFE5V_MIN;
+	else
+		return vbus_voltage < PD_V_SINK_DISCONNECT_MAX;
 }
 
 int pd_snk_is_vbus_provided(int port)

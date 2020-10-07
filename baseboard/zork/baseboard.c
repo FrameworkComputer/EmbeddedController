@@ -10,6 +10,7 @@
 #include "button.h"
 #include "cbi_ec_fw_config.h"
 #include "charge_manager.h"
+#include "charge_ramp.h"
 #include "charge_state.h"
 #include "charge_state_v2.h"
 #include "common.h"
@@ -17,6 +18,7 @@
 #include "console.h"
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/charger/isl9241.h"
 #include "driver/retimer/pi3hdx1204.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "ec_commands.h"
@@ -37,12 +39,20 @@
 #include "system.h"
 #include "task.h"
 #include "tcpci.h"
+#include "temp_sensor.h"
 #include "thermistor.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "util.h"
 
 #define SAFE_RESET_VBUS_MV 5000
+
+/*
+ * For legacy BC1.2 charging with CONFIG_CHARGE_RAMP_SW, ramp up input current
+ * until voltage drops to 4.5V. Don't go lower than this to be kind to the
+ * charger (see b/67964166).
+ */
+#define BC12_MIN_VOLTAGE 4500
 
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_LID_OPEN,
@@ -236,29 +246,118 @@ __overridable int check_hdmi_hpd_status(void)
 	return 1;
 }
 
-const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
-	.eq_ch0_ch1_offset = PI3HDX1204_EQ_DB710,
-	.eq_ch2_ch3_offset = PI3HDX1204_EQ_DB710,
-	.vod_offset = PI3HDX1204_VOD_115_ALL_CHANNELS,
-	.de_offset = PI3HDX1204_DE_DB_MINUS5,
-};
-
-void pi3hdx1204_retimer_power(void)
-{
-	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
-		int enable = chipset_in_or_transitioning_to_state(
-			CHIPSET_STATE_ON) && check_hdmi_hpd_status();
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
-				  enable);
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, pi3hdx1204_retimer_power, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pi3hdx1204_retimer_power, HOOK_PRIO_DEFAULT);
-
 void sbu_fault_interrupt(enum ioex_signal signal)
 {
 	int port = (signal == IOEX_USB_C0_SBU_FAULT_ODL) ? 0 : 1;
 
 	pd_handle_overcurrent(port);
+}
+
+static void set_ac_prochot(void)
+{
+	isl9241_set_ac_prochot(CHARGER_SOLO, ZORK_AC_PROCHOT_CURRENT_MA);
+}
+DECLARE_HOOK(HOOK_INIT, set_ac_prochot, HOOK_PRIO_DEFAULT);
+
+DECLARE_DEFERRED(board_print_temps);
+int temps_interval;
+
+void board_print_temps(void)
+{
+	int t, i;
+	int rv;
+
+	cprintf(CC_THERMAL, "[%pT ", PRINTF_TIMESTAMP_NOW);
+	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
+		rv = temp_sensor_read(i, &t);
+		if (rv == EC_SUCCESS)
+			cprintf(CC_THERMAL, "%s=%dK (%dC) ",
+				temp_sensors[i].name, t, K_TO_C(t));
+	}
+	cprintf(CC_THERMAL, "]\n");
+
+	if (temps_interval > 0)
+		hook_call_deferred(&board_print_temps_data,
+				   temps_interval * SECOND);
+}
+
+static int command_temps_log(int argc, char **argv)
+{
+	char *e = NULL;
+
+	if (argc != 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	temps_interval = strtoi(argv[1], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM1;
+
+	board_print_temps();
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(tempslog, command_temps_log,
+			"seconds",
+			"Print temp sensors periodically");
+
+/*
+ * b/164921478: On G3->S5, wait for RSMRST_L to be deasserted before asserting
+ * PWRBTN_L.
+ */
+void board_pwrbtn_to_pch(int level)
+{
+	/* Add delay for G3 exit if asserting PWRBTN_L and S5_PGOOD is low. */
+	if (!level && !gpio_get_level(GPIO_S5_PGOOD)) {
+		/*
+		 * From measurement, wait 80 ms for RSMRST_L to rise after
+		 * S5_PGOOD.
+		 */
+		msleep(80);
+
+		if (!gpio_get_level(GPIO_S5_PGOOD))
+			ccprints("Error: pwrbtn S5_PGOOD low");
+	}
+	gpio_set_level(GPIO_PCH_PWRBTN_L, level);
+}
+
+/**
+ * Return if VBUS is sagging too low
+ */
+int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
+{
+	int voltage = 0;
+	int rv;
+
+	rv = charger_get_vbus_voltage(port, &voltage);
+
+	if (rv) {
+		ccprints("%s rv=%d", __func__, rv);
+		return 0;
+	}
+
+	/*
+	 * b/168569046: The ISL9241 sometimes incorrectly reports 0 for unknown
+	 * reason, causing ramp to stop at 0.5A. Workaround this by ignoring 0.
+	 * This partly defeats the point of ramping, but will still catch
+	 * VBUS below 4.5V and above 0V.
+	 */
+	if (voltage == 0) {
+		ccprints("%s vbus=0", __func__);
+		return 0;
+	}
+
+	if (voltage < BC12_MIN_VOLTAGE)
+		ccprints("%s vbus=%d", __func__, voltage);
+
+	return voltage < BC12_MIN_VOLTAGE;
+}
+
+/**
+ * Always ramp up input current since AP needs higher power, even if battery is
+ * very low or full. We can always re-ramp if input current increases beyond
+ * what supplier can provide.
+ */
+__override int charge_is_consuming_full_input_current(void)
+{
+	return 1;
 }

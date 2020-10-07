@@ -9,6 +9,11 @@
 #define __CROS_EC_CONSOLE_H
 
 #include "common.h"
+#include "config.h"
+
+#ifdef CONFIG_ZEPHYR
+#include "zephyr_console_shim.h"
+#endif
 
 /*
  * The EC code base has been using %h to print a hex buffer. Encode the
@@ -84,7 +89,7 @@ static inline int console_is_restricted(void)
 /* Console channels */
 enum console_channel {
 	#define CONSOLE_CHANNEL(enumeration, string) enumeration,
-	#include "include/console_channel.inc"
+	#include "console_channel.inc"
 	#undef CONSOLE_CHANNEL
 
 	/* Channel count; not itself a channel */
@@ -163,14 +168,14 @@ void console_has_input(void);
  * @param help          String with one-line description of command, or NULL.
  * @param flags         Per-command flags, if needed.
  */
-#ifndef HAS_TASK_CONSOLE
+#if !defined(HAS_TASK_CONSOLE) && !defined(CONFIG_ZEPHYR)
 #define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP)		\
 	int (ROUTINE)(int argc, char **argv) __attribute__((unused))
 #define DECLARE_SAFE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP)	\
 	int (ROUTINE)(int argc, char **argv) __attribute__((unused))
 #define DECLARE_CONSOLE_COMMAND_FLAGS(NAME, ROUTINE, ARGDESC, HELP, FLAGS) \
 	int (ROUTINE)(int argc, char **argv) __attribute__((unused))
-#else
+#elif defined(HAS_TASK_CONSOLE)
 
 /* We always provde help args, but we may discard them to save space. */
 #if defined(CONFIG_CONSOLE_CMDHELP)

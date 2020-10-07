@@ -172,6 +172,8 @@ const char help_str[] =
 	"      Set the delay before going into hibernation\n"
 	"  hostsleepstate\n"
 	"      Report host sleep state to the EC\n"
+	"  hostevent\n"
+	"      Get & set host event masks.\n"
 	"  i2cprotect <port> [status]\n"
 	"      Protect EC's I2C bus\n"
 	"  i2cread\n"
@@ -228,6 +230,8 @@ const char help_str[] =
 	"      Prints power-related information\n"
 	"  protoinfo\n"
 	"       Prints EC host protocol information\n"
+	"  pse\n"
+	"      Get and set PoE PSE port power status\n"
 	"  pstoreinfo\n"
 	"      Prints information on the EC host persistent storage\n"
 	"  pstoreread <offset> <size> <outfile>\n"
@@ -305,6 +309,12 @@ const char help_str[] =
 	"      Get/set TMP006 calibration\n"
 	"  tmp006raw <tmp006_index>\n"
 	"      Get raw TMP006 data\n"
+	"  typeccontrol <port> <command>\n"
+	"      Control USB PD policy\n"
+	"  typecdiscovery <port> <type>\n"
+	"      Get discovery information for port and type\n"
+	"  typecstatus <port>\n"
+	"      Get status information for port\n"
 	"  uptimeinfo\n"
 	"      Get info about how long the EC has been running and the most\n"
 	"      recent AP resets\n"
@@ -315,7 +325,7 @@ const char help_str[] =
 	"  usbpd <port> <auto | "
 			"[toggle|toggle-off|sink|source] [none|usb|dp|dock] "
 			"[dr_swap|pr_swap|vconn_swap]>\n"
-	"      Control USB PD/type-C\n"
+	"      Control USB PD/type-C [deprecated]\n"
 	"  usbpdmuxinfo\n"
 	"      Get USB-C SS mux info\n"
 	"  usbpdpower [port]\n"
@@ -546,6 +556,82 @@ int cmd_hibdelay(int argc, char *argv[])
 	printf("Hibernation delay: %u s\n", r.hibernate_delay);
 	printf("Time G3: %u s\n", r.time_g3);
 	printf("Time left: %u s\n", r.time_remaining);
+	return 0;
+}
+
+static void cmd_hostevent_help(char *cmd)
+{
+	fprintf(stderr,
+	"  Usage: %s get <type>\n"
+	"  Usage: %s set <type> <value>\n"
+	"    <type> is one of:\n"
+	"      1: EC_HOST_EVENT_B\n"
+	"      2: EC_HOST_EVENT_SCI_MASK\n"
+	"      3: EC_HOST_EVENT_SMI_MASK\n"
+	"      4: EC_HOST_EVENT_ALWAYS_REPORT_MASK\n"
+	"      5: EC_HOST_EVENT_ACTIVE_WAKE_MASK\n"
+	"      6: EC_HOST_EVENT_LAZY_WAKE_MASK_S0IX\n"
+	"      7: EC_HOST_EVENT_LAZY_WAKE_MASK_S3\n"
+	"      8: EC_HOST_EVENT_LAZY_WAKE_MASK_S5\n"
+		, cmd, cmd);
+}
+
+static int cmd_hostevent(int argc, char *argv[])
+{
+	struct ec_params_host_event p;
+	struct ec_response_host_event r;
+	char *e;
+	int rv;
+
+	if (argc < 2) {
+		fprintf(stderr, "Invalid number of params\n");
+		cmd_hostevent_help(argv[0]);
+		return -1;
+	}
+
+	if (!strcasecmp(argv[1], "get")) {
+		if (argc != 3) {
+			fprintf(stderr, "Invalid number of params\n");
+			cmd_hostevent_help(argv[0]);
+			return -1;
+		}
+		p.action = EC_HOST_EVENT_GET;
+	} else if (!strcasecmp(argv[1], "set")) {
+		if (argc != 4) {
+			fprintf(stderr, "Invalid number of params\n");
+			cmd_hostevent_help(argv[0]);
+			return -1;
+		}
+		p.action = EC_HOST_EVENT_SET;
+		p.value = strtoul(argv[3], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad value\n");
+			return -1;
+		}
+	} else {
+		fprintf(stderr, "Bad subcommand: %s\n", argv[1]);
+		return -1;
+	}
+
+	p.mask_type = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad type\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_HOST_EVENT, 0, &p, sizeof(p), &r, sizeof(r));
+	if (rv == -EC_RES_ACCESS_DENIED - EECRESULT) {
+		fprintf(stderr, "%s isn't permitted for mask %d.\n",
+			p.action == EC_HOST_EVENT_SET ? "Set" : "Get",
+			p.mask_type);
+		return rv;
+	} else if (rv < 0) {
+		return rv;
+	}
+
+	if (p.action == EC_HOST_EVENT_GET)
+		printf("0x%" PRIx64 "\n", r.value);
+
 	return 0;
 }
 
@@ -1618,7 +1704,7 @@ static int rwsig_info(enum rwsig_info_fields fields)
 			printf("key_id: ");
 
 		for (i = 0; i < sizeof(r.key_id); i++)
-			printf("%x", r.key_id[i]);
+			printf("%02x", r.key_id[i]);
 		printf("\n");
 	}
 
@@ -4860,6 +4946,7 @@ static const struct {
 	ST_BOTH_SIZES(tablet_mode_threshold),
 	ST_BOTH_SIZES(sensor_scale),
 	ST_BOTH_SIZES(online_calib_read),
+	ST_BOTH_SIZES(get_activity),
 };
 BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 
@@ -4902,6 +4989,12 @@ static void motionsense_display_activities(uint32_t activities)
 	if (activities & BIT(MOTIONSENSE_ACTIVITY_DOUBLE_TAP))
 		printf("%d: Double tap\n",
 		       MOTIONSENSE_ACTIVITY_DOUBLE_TAP);
+	if (activities & BIT(MOTIONSENSE_ACTIVITY_ORIENTATION))
+		printf("%d: Orientation\n",
+		       MOTIONSENSE_ACTIVITY_ORIENTATION);
+	if (activities & BIT(MOTIONSENSE_ACTIVITY_BODY_DETECTION))
+		printf("%d: Body Detection\n",
+		       MOTIONSENSE_ACTIVITY_BODY_DETECTION);
 }
 
 static int cmd_motionsense(int argc, char **argv)
@@ -5109,6 +5202,9 @@ static int cmd_motionsense(int argc, char **argv)
 			break;
 		case MOTIONSENSE_CHIP_BMI260:
 			printf("bmi260\n");
+			break;
+		case MOTIONSENSE_CHIP_ICM426XX:
+			printf("icm426xx\n");
 			break;
 		default:
 			printf("unknown\n");
@@ -5531,6 +5627,19 @@ static int cmd_motionsense(int argc, char **argv)
 				resp, ms_command_sizes[param.cmd].insize);
 		if (rv < 0)
 			return rv;
+		return 0;
+	}
+	if (argc == 4 && !strcasecmp(argv[1], "get_activity")) {
+		param.cmd = MOTIONSENSE_CMD_GET_ACTIVITY;
+		param.get_activity.sensor_num = strtol(argv[2], &e, 0);
+		param.get_activity.activity = strtol(argv[3], &e, 0);
+
+		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
+				&param, ms_command_sizes[param.cmd].outsize,
+				resp, ms_command_sizes[param.cmd].insize);
+		if (rv < 0)
+			return rv;
+		printf("State: %d\n", resp->get_activity.state);
 		return 0;
 	}
 
@@ -6305,6 +6414,69 @@ int cmd_power_info(int argc, char *argv[])
 	       r.intel.batt_dbpt_max_peak_power);
 	printf("Battery DBPT Sus Peak Power: %d Watts\n",
 	       r.intel.batt_dbpt_sus_peak_power);
+	return 0;
+}
+
+
+int cmd_pse(int argc, char *argv[])
+{
+	struct ec_params_pse p;
+	struct ec_response_pse_status r;
+	int rsize = 0;
+	char *e;
+	int rv;
+
+	if (argc < 2 || argc > 3 || !strcmp(argv[1], "help")) {
+		printf("Usage: %s <port> [<subcmd>]\n", argv[0]);
+		printf("'pse <port> [status]' - Get port status\n");
+		printf("'pse <port> disable' - Disable port\n");
+		printf("'pse <port> enable' - Enable port\n");
+		return -1;
+	}
+
+	p.port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port.\n");
+		return -1;
+	}
+
+	if (argc == 2 || !strcmp(argv[2], "status")) {
+		p.cmd = EC_PSE_STATUS;
+		rsize = sizeof(r);
+	} else if (!strcmp(argv[2], "disable")) {
+		p.cmd = EC_PSE_DISABLE;
+	} else if (!strcmp(argv[2], "enable")) {
+		p.cmd = EC_PSE_ENABLE;
+	} else {
+		fprintf(stderr, "Unknown command: %s\n", argv[2]);
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_PSE, 0, &p, sizeof(p), &r, rsize);
+	if (rv < 0)
+		return rv;
+
+	if (p.cmd == EC_PSE_STATUS) {
+		const char *status;
+
+		switch (r.status) {
+		case EC_PSE_STATUS_DISABLED:
+			status = "disabled";
+			break;
+		case EC_PSE_STATUS_ENABLED:
+			status = "enabled";
+			break;
+		case EC_PSE_STATUS_POWERED:
+			status = "powered";
+			break;
+		default:
+			status = "unknown";
+			break;
+		}
+
+		printf("Port %d: %s\n", p.port, status);
+	}
+
 	return 0;
 }
 
@@ -7849,6 +8021,7 @@ static void cmd_cbi_help(char *cmd)
 	"      5: MODEL_ID\n"
 	"      6: FW_CONFIG\n"
 	"      7: PCB_VENDOR\n"
+	"      8: SSFC\n"
 	"    <size> is the size of the data in byte. It should be zero for\n"
 	"      string types.\n"
 	"    <value/string> is an integer or a string to be set\n"
@@ -9294,6 +9467,226 @@ int cmd_pd_write_log(int argc, char *argv[])
 	return ec_command(EC_CMD_PD_WRITE_LOG_ENTRY, 0, &p, sizeof(p), NULL, 0);
 }
 
+int cmd_typec_control(int argc, char *argv[])
+{
+	struct ec_params_typec_control p;
+	char *endptr;
+	int rv;
+
+	if (argc < 3) {
+		fprintf(stderr,
+			"Usage: %s <port> <command> [args]\n"
+			"  <port> is the type-c port to query\n"
+			"  <type> is one of:\n"
+			"    0: Exit modes\n"
+			"    1: Clear events\n", argv[0]);
+		return -1;
+	}
+
+	p.port = strtol(argv[1], &endptr, 0);
+	if (endptr && *endptr) {
+		fprintf(stderr, "Bad port\n");
+		return -1;
+	}
+
+	p.command = strtol(argv[2], &endptr, 0);
+	if (endptr && *endptr) {
+		fprintf(stderr, "Bad command\n");
+		return -1;
+	}
+
+	if (p.command == TYPEC_CONTROL_COMMAND_CLEAR_EVENTS) {
+		if (argc < 4) {
+			fprintf(stderr, "Missing event mask\n");
+			return -1;
+		}
+
+		p.clear_events_mask = strtol(argv[3], &endptr, 0);
+		if (endptr && *endptr) {
+			fprintf(stderr, "Bad event mask\n");
+			return -1;
+		}
+	}
+
+	rv = ec_command(EC_CMD_TYPEC_CONTROL, 0, &p, sizeof(p),
+			ec_inbuf, ec_max_insize);
+	if (rv < 0)
+		return -1;
+
+	return 0;
+}
+
+int cmd_typec_discovery(int argc, char *argv[])
+{
+	struct ec_params_typec_discovery p;
+	struct ec_response_typec_discovery *r =
+				(struct ec_response_typec_discovery *)ec_inbuf;
+	char *e;
+	int rv, i, j;
+
+	if (argc < 3) {
+		fprintf(stderr,
+			"Usage: %s <port> <type>\n"
+			"  <port> is the type-c port to query\n"
+			"  <type> is one of:\n"
+			"    0: SOP\n"
+			"    1: SOP prime\n", argv[0]);
+		return -1;
+	}
+
+	p.port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port\n");
+		return -1;
+	}
+
+	p.partner_type = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad type\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_TYPEC_DISCOVERY, 0, &p, sizeof(p),
+			ec_inbuf, ec_max_insize);
+	if (rv < 0)
+		return -1;
+
+	if (r->identity_count == 0) {
+		printf("No identity discovered\n");
+		return 0;
+	}
+
+	printf("Identity VDOs:\n");
+	for (i = 0; i < r->identity_count; i++)
+		printf("0x%08x\n", r->discovery_vdo[i]);
+
+	if (r->svid_count == 0) {
+		printf("No SVIDs discovered\n");
+		return 0;
+	}
+
+	for (i = 0; i < r->svid_count; i++) {
+		printf("SVID 0x%04x Modes:\n", r->svids[i].svid);
+		for (j = 0; j < r->svids[i].mode_count; j++)
+			printf("0x%08x\n", r->svids[i].mode_vdo[j]);
+	}
+
+	return 0;
+}
+
+int cmd_typec_status(int argc, char *argv[])
+{
+	struct ec_params_typec_status p;
+	struct ec_response_typec_status *r =
+				(struct ec_response_typec_status *)ec_inbuf;
+	char *endptr;
+	int rv;
+	char *desc;
+
+	if (argc != 2) {
+		fprintf(stderr,
+			"Usage: %s <port>\n"
+			"  <port> is the type-c port to query\n", argv[0]);
+		return -1;
+	}
+
+	p.port = strtol(argv[1], &endptr, 0);
+	if (endptr && *endptr) {
+		fprintf(stderr, "Bad port\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_TYPEC_STATUS, 0, &p, sizeof(p),
+			ec_inbuf, ec_max_insize);
+	if (rv == -EC_RES_INVALID_COMMAND - EECRESULT)
+		/* Fall back to PD_CONTROL to support older ECs */
+		return cmd_usb_pd(argc, argv);
+	else if (rv < 0)
+		return -1;
+
+	printf("Port C%d: %s, %s  State:%s\n"
+	       "Role:%s %s%s, Polarity:CC%d\n",
+		p.port,
+		r->pd_enabled ? "enabled" : "disabled",
+		r->dev_connected ? "connected" : "disconnected",
+		r->tc_state,
+		(r->power_role == PD_ROLE_SOURCE) ? "SRC" : "SNK",
+		(r->data_role == PD_ROLE_DFP) ? "DFP" :
+			(r->data_role == PD_ROLE_UFP) ? "UFP" : "",
+		(r->vconn_role == PD_ROLE_VCONN_SRC) ? " VCONN" : "",
+		(r->polarity % 2 + 1));
+
+	switch (r->cc_state) {
+	case PD_CC_NONE:
+		desc = "None";
+		break;
+	case PD_CC_UFP_AUDIO_ACC:
+		desc = "UFP Audio accessory";
+		break;
+	case PD_CC_UFP_DEBUG_ACC:
+		desc = "UFP Debug accessory";
+		break;
+	case PD_CC_UFP_ATTACHED:
+		desc = "UFP attached";
+		break;
+	case PD_CC_DFP_DEBUG_ACC:
+		desc = "DFP Debug accessory";
+		break;
+	case PD_CC_DFP_ATTACHED:
+		desc = "DFP attached";
+		break;
+	default:
+		desc = "UNKNOWN";
+		break;
+	}
+	printf("CC State: %s\n", desc);
+
+	if (r->dp_pin) {
+		switch (r->dp_pin) {
+		case MODE_DP_PIN_A:
+			desc = "A";
+			break;
+		case MODE_DP_PIN_B:
+			desc = "B";
+			break;
+		case MODE_DP_PIN_C:
+			desc = "C";
+			break;
+		case MODE_DP_PIN_D:
+			desc = "D";
+			break;
+		case MODE_DP_PIN_E:
+			desc = "E";
+			break;
+		case MODE_DP_PIN_F:
+			desc = "F";
+			break;
+		default:
+			desc = "UNKNOWN";
+			break;
+		}
+		printf("DP pin mode: %s\n", desc);
+	}
+
+	if (r->mux_state) {
+		printf("MUX: USB=%d DP=%d POLARITY=%s HPD_IRQ=%d HPD_LVL=%d\n"
+		       "     SAFE=%d TBT=%d USB4=%d\n",
+		       !!(r->mux_state & USB_PD_MUX_USB_ENABLED),
+		       !!(r->mux_state & USB_PD_MUX_DP_ENABLED),
+			(r->mux_state & USB_PD_MUX_POLARITY_INVERTED) ?
+						"INVERTED" : "NORMAL",
+		       !!(r->mux_state & USB_PD_MUX_HPD_IRQ),
+		       !!(r->mux_state & USB_PD_MUX_HPD_LVL),
+		       !!(r->mux_state & USB_PD_MUX_SAFE_MODE),
+		       !!(r->mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED),
+		       !!(r->mux_state & USB_PD_MUX_USB4_ENABLED));
+	}
+
+	printf("Port events: 0x%08x\n", r->events);
+
+	return 0;
+}
+
 int cmd_tp_self_test(int argc, char* argv[])
 {
 	int rv;
@@ -9684,6 +10077,7 @@ const struct command commands[] = {
 	{"hangdetect", cmd_hang_detect},
 	{"hello", cmd_hello},
 	{"hibdelay", cmd_hibdelay},
+	{"hostevent", cmd_hostevent},
 	{"hostsleepstate", cmd_hostsleepstate},
 	{"locatechip", cmd_locate_chip},
 	{"i2cprotect", cmd_i2c_protect},
@@ -9715,6 +10109,7 @@ const struct command commands[] = {
 	{"pdwritelog", cmd_pd_write_log},
 	{"powerinfo", cmd_power_info},
 	{"protoinfo", cmd_proto_info},
+	{"pse", cmd_pse},
 	{"pstoreinfo", cmd_pstore_info},
 	{"pstoreread", cmd_pstore_read},
 	{"pstorewrite", cmd_pstore_write},
@@ -9752,6 +10147,9 @@ const struct command commands[] = {
 	{"tpframeget", cmd_tp_frame_get},
 	{"tmp006cal", cmd_tmp006cal},
 	{"tmp006raw", cmd_tmp006raw},
+	{"typeccontrol", cmd_typec_control},
+	{"typecdiscovery", cmd_typec_discovery},
+	{"typecstatus", cmd_typec_status},
 	{"uptimeinfo", cmd_uptimeinfo},
 	{"usbchargemode", cmd_usb_charge_set_mode},
 	{"usbmux", cmd_usb_mux},

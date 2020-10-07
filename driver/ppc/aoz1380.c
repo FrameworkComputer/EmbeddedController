@@ -32,8 +32,9 @@ static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 #define AOZ1380_FLAGS_INT_ON_DISCONNECT BIT(2)
 static uint32_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-#define AOZ1380_SET_FLAG(port, flag) atomic_or(&flags[port], (flag))
-#define AOZ1380_CLR_FLAG(port, flag) atomic_clear(&flags[port], (flag))
+#define AOZ1380_SET_FLAG(port, flag) deprecated_atomic_or(&flags[port], (flag))
+#define AOZ1380_CLR_FLAG(port, flag) \
+	deprecated_atomic_clear_bits(&flags[port], (flag))
 
 static int aoz1380_init(int port)
 {
@@ -143,7 +144,7 @@ static void aoz1380_handle_interrupt(int port)
 static void aoz1380_irq_deferred(void)
 {
 	int i;
-	uint32_t pending = atomic_read_clear(&irq_pending);
+	uint32_t pending = deprecated_atomic_read_clear(&irq_pending);
 
 	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		if (BIT(i) & pending)
@@ -153,7 +154,7 @@ DECLARE_DEFERRED(aoz1380_irq_deferred);
 
 void aoz1380_interrupt(int port)
 {
-	atomic_or(&irq_pending, BIT(port));
+	deprecated_atomic_or(&irq_pending, BIT(port));
 	hook_call_deferred(&aoz1380_irq_deferred_data, 0);
 }
 

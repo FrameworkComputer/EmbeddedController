@@ -7,6 +7,7 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
+#include "cros_board_info.h"
 #include "ec_commands.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -60,18 +61,30 @@ void led_set_color_power(enum ec_led_colors color)
 
 void led_set_color_battery(enum ec_led_colors color)
 {
+	uint32_t board_ver = 0;
+	int led_batt_on_lvl, led_batt_off_lvl;
+
+	cbi_get_board_version(&board_ver);
+	if (board_ver >= 3) {
+		led_batt_on_lvl = LED_BAT_ON_LVL;
+		led_batt_off_lvl = LED_BAT_OFF_LVL;
+	} else {
+		led_batt_on_lvl = !LED_BAT_ON_LVL;
+		led_batt_off_lvl = !LED_BAT_OFF_LVL;
+	}
+
 	switch (color) {
 	case LED_AMBER:
-		gpio_set_level(GPIO_LED_FULL_L, LED_BAT_OFF_LVL);
-		gpio_set_level(GPIO_LED_CHRG_L, LED_BAT_ON_LVL);
+		gpio_set_level(GPIO_LED_FULL_L, led_batt_off_lvl);
+		gpio_set_level(GPIO_LED_CHRG_L, led_batt_on_lvl);
 		break;
 	case LED_WHITE:
-		gpio_set_level(GPIO_LED_FULL_L, LED_BAT_ON_LVL);
-		gpio_set_level(GPIO_LED_CHRG_L, LED_BAT_OFF_LVL);
+		gpio_set_level(GPIO_LED_FULL_L, led_batt_on_lvl);
+		gpio_set_level(GPIO_LED_CHRG_L, led_batt_off_lvl);
 		break;
 	default: /* LED_OFF and other unsupported colors */
-		gpio_set_level(GPIO_LED_FULL_L, LED_BAT_OFF_LVL);
-		gpio_set_level(GPIO_LED_CHRG_L, LED_BAT_OFF_LVL);
+		gpio_set_level(GPIO_LED_FULL_L, led_batt_off_lvl);
+		gpio_set_level(GPIO_LED_CHRG_L, led_batt_off_lvl);
 		break;
 	}
 }

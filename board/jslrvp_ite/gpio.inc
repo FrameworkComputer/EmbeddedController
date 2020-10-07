@@ -48,8 +48,8 @@ GPIO_INT(TABLET_MODE_L,	PIN(K, 1), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 GPIO_INT(DC_JACK_PRESENT,   PIN(J, 2), GPIO_INT_BOTH, board_dc_jack_interrupt)
 
 /* Type-C interrupts */
-GPIO_INT(USB_C0_VBUS_INT,	PIN(L, 5), GPIO_INT_BOTH, vbus0_evt)
-GPIO_INT(USB_C1_VBUS_INT,	PIN(D, 4), GPIO_INT_BOTH, vbus1_evt)
+GPIO_INT(USB_C0_VBUS_INT,	PIN(L, 5), GPIO_INT_BOTH, tcpc_alert_event)
+GPIO_INT(USB_C1_VBUS_INT,	PIN(D, 4), GPIO_INT_BOTH, tcpc_alert_event)
 
 /* Power sequencing GPIOs */
 GPIO(CPU_PROCHOT,	PIN(B, 2), GPIO_INPUT)

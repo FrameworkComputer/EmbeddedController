@@ -10,6 +10,7 @@
 #include "task.h"
 #include "task_id.h"
 #include "timer.h"
+#include "usb_common.h"
 #include "usb_charge.h"
 #include "usb_dp_alt_mode.h"
 #include "usb_mux.h"
@@ -334,6 +335,7 @@ void dfp_consume_identity(int port, enum tcpm_transmit_type type, int cnt,
 
 	/* Note: only store VDOs, not the VDM header */
 	memcpy(disc->identity.raw_value, payload + 1, identity_size);
+	disc->identity_cnt = identity_size / sizeof(uint32_t);
 
 	switch (ptype) {
 	case IDH_PTYPE_AMA:
@@ -588,17 +590,34 @@ struct svid_mode_data *pd_get_next_mode(int port,
 		enum tcpm_transmit_type type)
 {
 	struct pd_discovery *disc = pd_get_am_discovery(port, type);
+	struct svid_mode_data *failed_mode_data = NULL;
+	bool svid_good_discovery = false;
 	int svid_idx;
 
+	/* Walk through all of the discovery mode entries */
 	for (svid_idx = 0; svid_idx < disc->svid_cnt; ++svid_idx) {
 		struct svid_mode_data *mode_data = &disc->svids[svid_idx];
 
-		if (mode_data->discovery == PD_DISC_COMPLETE)
-			continue;
+		/* Discovery is needed, so send this one back now */
+		if (mode_data->discovery == PD_DISC_NEEDED)
+			return mode_data;
 
-		return mode_data;
+		/* Discovery already succeeded, save that it was seen */
+		if (mode_data->discovery == PD_DISC_COMPLETE)
+			svid_good_discovery = true;
+		/* Discovery already failed, save first failure */
+		else if (!failed_mode_data)
+			failed_mode_data = mode_data;
 	}
 
+	/* If no good entries were located, then return last failed */
+	if (!svid_good_discovery)
+		return failed_mode_data;
+
+	/*
+	 * Mode discovery has been attempted for every discovered SVID (if
+	 * any exist)
+	 */
 	return NULL;
 }
 
@@ -635,25 +654,6 @@ void notify_sysjump_ready(void)
 	if (sysjump_task_waiting != TASK_ID_INVALID)
 		task_set_event(sysjump_task_waiting,
 				TASK_EVENT_SYSJUMP_READY, 0);
-}
-
-/*
- * Before entering into alternate mode, state of the USB-C MUX
- * needs to be in safe mode.
- * Ref: USB Type-C Cable and Connector Specification
- * Section E.2.2 Alternate Mode Electrical Requirements
- */
-void usb_mux_set_safe_mode(int port)
-{
-	if (IS_ENABLED(CONFIG_USBC_SS_MUX)) {
-		usb_mux_set(port, IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) ?
-			USB_PD_MUX_SAFE_MODE : USB_PD_MUX_NONE,
-			USB_SWITCH_CONNECT, pd_get_polarity(port));
-	}
-
-	/* Isolate the SBU lines. */
-	if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
-		ppc_set_sbu(port, 0);
 }
 
 static inline bool is_rev3_vdo(int port, enum tcpm_transmit_type type)
@@ -898,7 +898,7 @@ __overridable enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
  * For Cable rev 3.0: USB4 cable speed is set according to speed supported by
  * the port and the response received from the cable, whichever is least.
  *
- * For Cable rev 2.0: If board_is_tbt_usb4_port() is less than
+ * For Cable rev 2.0: If get_tbt_cable_speed() is less than
  * TBT_SS_U32_GEN1_GEN2, return USB_R30_SS_U2_ONLY speed since the board
  * doesn't support superspeed else the USB4 cable speed is set according to
  * the cable response.
@@ -906,7 +906,7 @@ __overridable enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
 enum usb_rev30_ss get_usb4_cable_speed(int port)
 {
 	struct pd_discovery *disc;
-	enum tbt_compat_cable_speed tbt_speed = board_get_max_tbt_speed(port);
+	enum tbt_compat_cable_speed tbt_speed = get_tbt_cable_speed(port);
 	enum usb_rev30_ss max_usb4_speed;
 
 

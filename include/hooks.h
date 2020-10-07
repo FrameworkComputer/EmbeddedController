@@ -279,7 +279,12 @@ struct deferred_data {
  */
 int hook_call_deferred(const struct deferred_data *data, int us);
 
-#ifdef CONFIG_COMMON_RUNTIME
+/*
+ * Hooks are not currently supported by the Zephyr shim.
+ * TODO(b/168799177): Implement compatible DECLARE_HOOK macro for
+ * Zephyr OS.
+ */
+#if defined(CONFIG_COMMON_RUNTIME) && !defined(CONFIG_ZEPHYR)
 /**
  * Register a hook routine.
  *
@@ -336,12 +341,11 @@ int hook_call_deferred(const struct deferred_data *data, int us);
 	CONCAT2(routine, _data)						\
 	__attribute__((section(".rodata.deferred")))			\
 	     = {routine}
-
-#else /* CONFIG_COMMON_RUNTIME */
+#else  /* !defined(CONFIG_COMMON_RUNTIME) || defined(CONFIG_ZEPHYR) */
 #define DECLARE_HOOK(t, func, p)				\
 	void CONCAT2(unused_hook_, func)(void) { func(); }
 #define DECLARE_DEFERRED(func)					\
 	void CONCAT2(unused_deferred_, func)(void) { func(); }
-#endif /* CONFIG_COMMON_RUNTIME */
+#endif
 
 #endif  /* __CROS_EC_HOOKS_H */

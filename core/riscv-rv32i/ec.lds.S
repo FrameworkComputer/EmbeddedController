@@ -227,6 +227,19 @@ SECTIONS
 		. = ALIGN(4);
 		*(.rodata*)
 
+#ifdef CONFIG_CHIP_INIT_ROM_REGION
+	ASSERT(0, "CONFIG_CHIP_INIT_ROM_REGION not supported by linker script")
+#endif /* CONFIG_CHIP_INIT_ROM_REGION */
+		/*
+		 * This linker file does not yet support a separate ROM resident
+		 * section. Ensure the corresponding data objects are linked
+		 * into the .rodata section.
+		 */
+		. = ALIGN(4);
+		__init_rom_start = .;
+		*(.init.rom)
+		__init_rom_end = .;
+
 		. = ALIGN(4);
 		*(.srodata*)
 #if defined(SECTION_IS_RO) && defined(CONFIG_FLASH)
@@ -303,11 +316,28 @@ SECTIONS
 	__ram_free = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE) -
 		     (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
 
+	/*
+	 * __flash_used is used in flash free calculations by the makefile.
+	 * __image_size is stored in the struct image_data header and used
+	 * in hash calcuations.
+	 */
 #if defined(CHIP_FAMILY_IT8XXX2)
-	__image_size = LOADADDR(.data) + SIZEOF(.data) + \
+	__flash_used = LOADADDR(.data) + SIZEOF(.data) + \
 		       CHIP_ILM_BASE - FW_OFF(SECTION);
 #else
-	__image_size = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
+	__flash_used = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
+#endif
+	__image_size = __flash_used;
+
+#ifdef CONFIG_FLASH
+        /*
+         * These linker labels are just for analysis and not used in the code.
+         */
+	__config_flash_size = CONFIG_FLASH_SIZE;
+	__config_ro_size = CONFIG_RO_SIZE;
+	__config_ec_protected_storage_size = CONFIG_EC_PROTECTED_STORAGE_SIZE;
+	__config_rw_size = CONFIG_RW_SIZE;
+	__config_ec_writable_storage_size = CONFIG_EC_WRITABLE_STORAGE_SIZE;
 #endif
 
 #if defined(CHIP_FAMILY_IT8XXX2)

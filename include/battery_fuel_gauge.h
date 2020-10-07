@@ -30,6 +30,8 @@ struct fet_info {
 	const uint8_t reg_addr;
 	const uint16_t reg_mask;
 	const uint16_t disconnect_val;
+	const uint16_t cfet_mask; /* CHG FET status mask */
+	const uint16_t cfet_off_val;
 };
 
 struct fuel_gauge_info {
@@ -67,6 +69,12 @@ int battery_bq4050_imbalance_mv(void);
 #endif
 
 #endif
+
+/**
+ * Return 1 if CFET is disabled, 0 if enabled. -1 if an error was encountered.
+ * If the CFET mask is not defined, it will return 0.
+ */
+int battery_is_charge_fet_disabled(void);
 
 /**
  * Battery cut off command via SMBus write block.

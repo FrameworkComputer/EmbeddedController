@@ -153,7 +153,7 @@ static int fifo_remove(uint8_t *buffp)
 	}
 
 	fifo_start = (fifo_start + 1) % FIFO_DEPTH;
-	atomic_sub(&fifo_entries, 1);
+	deprecated_atomic_sub(&fifo_entries, 1);
 	mutex_unlock(&fifo_remove_mutex);
 
 	return EC_SUCCESS;
@@ -250,7 +250,7 @@ test_mockable int mkbp_fifo_add(uint8_t event_type, const uint8_t *buffp)
 	fifo[fifo_end].event_type = event_type;
 	memcpy(&fifo[fifo_end].data, buffp, size);
 	fifo_end = (fifo_end + 1) % FIFO_DEPTH;
-	atomic_add(&fifo_entries, 1);
+	deprecated_atomic_add(&fifo_entries, 1);
 
 	/*
 	 * If our event didn't generate an interrupt then the host is still

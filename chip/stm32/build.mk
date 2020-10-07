@@ -15,7 +15,8 @@ CORE:=cortex-m0
 # with "svc". GCC kept that naming scheme even though the distinction is long
 # gone.
 CFLAGS_CPU+=-march=armv6s-m -mcpu=cortex-m0
-else ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32f3 stm32l4 stm32f4))
+else ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32f3 stm32l4 stm32f4 \
+stm32g4))
 # STM32F3xx and STM32L4xx sub-family has a Cortex-M4 ARM core
 CORE:=cortex-m
 # Allow the full Cortex-M4 instruction set
@@ -62,7 +63,12 @@ ifndef CONFIG_KEYBOARD_NOT_RAW
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif
 chip-$(HAS_TASK_POWERLED)+=power_led.o
+ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32g4 stm32l4))
+# STM32G4 and STM32L4 use the same flash IP block
+chip-y+=flash-stm32g4-l4.o
+else
 chip-$(CONFIG_FLASH_PHYSICAL)+=flash-$(CHIP_FAMILY).o
+endif
 ifdef CONFIG_FLASH_PHYSICAL
 chip-$(CHIP_FAMILY_STM32F0)+=flash-f.o
 chip-$(CHIP_FAMILY_STM32F3)+=flash-f.o
@@ -92,3 +98,4 @@ chip-$(CONFIG_USB_ISOCHRONOUS)+=usb_isochronous.o
 chip-$(CONFIG_USB_PD_TCPC)+=usb_pd_phy.o
 chip-$(CONFIG_USB_SPI)+=usb_spi.o
 endif
+chip-$(CONFIG_USB_PD_TCPM_STM32GX)+=ucpd-stm32gx.o

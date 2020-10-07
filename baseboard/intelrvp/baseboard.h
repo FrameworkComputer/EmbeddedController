@@ -9,7 +9,7 @@
 #define __CROS_EC_BASEBOARD_H
 
 #ifdef CHIP_FAMILY_IT83XX
-#include "ite_ec.h"
+	#include "ite_ec.h"
 #endif /* CHIP_FAMILY_IT83XX */
 
 /*
@@ -34,6 +34,8 @@
 #define CONFIG_CMD_USB_PD_PE
 
 /* Host commands  */
+#define CONFIG_CMD_AP_RESET_LOG
+#define CONFIG_HOSTCMD_AP_RESET
 #define CONFIG_HOSTCMD_PD_CONTROL
 
 /* Port80 display */
@@ -79,6 +81,14 @@
 #define CONFIG_USB_PID 0x8086
 
 /* USB PD config */
+#if defined(BOARD_TGLRVPU_ITE_TCPMV1) || defined(BOARD_TGLRVPY_ITE_TCPMV1)
+	#define CONFIG_USB_PD_TCPMV1
+#else
+	#define CONFIG_USB_DRP_ACC_TRYSRC
+	#define CONFIG_USB_PD_DECODE_SOP
+	#define CONFIG_USB_PD_TCPMV2
+	#define CONFIG_USB_PD_TCPM_MUX
+#endif
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_DUAL_ROLE
@@ -87,7 +97,6 @@
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
 #define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_USB_PD_TCPMV1
 
 /* USB MUX */
 #ifdef CONFIG_USB_MUX_VIRTUAL
@@ -122,8 +131,10 @@
 #define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
 
 /* Verified boot */
+#define CONFIG_CRC8
 #define CONFIG_SHA256_UNROLLED
 #define CONFIG_VBOOT_HASH
+
 /*
  * Enable 1 slot of secure temporary storage to support
  * suspend/resume with read/write memory training.
@@ -237,13 +248,12 @@ extern const struct tcpc_gpio_config_t tcpc_gpios[];
 
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
-void vbus0_evt(enum gpio_signal signal);
-void vbus1_evt(enum gpio_signal signal);
 void board_charging_enable(int port, int enable);
 void board_vbus_enable(int port, int enable);
 void board_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp);
 int ioexpander_read_intelrvp_version(int *port0, int *port1);
 void board_dc_jack_interrupt(enum gpio_signal signal);
+void tcpc_alert_event(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

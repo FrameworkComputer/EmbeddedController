@@ -74,7 +74,7 @@
 #define PMIC_RESIN_PULSE_LENGTH		(20 * MSEC)
 
 /* The timeout of the check if the system can boot AP */
-#define CAN_BOOT_AP_CHECK_TIMEOUT	(500 * MSEC)
+#define CAN_BOOT_AP_CHECK_TIMEOUT	(1500 * MSEC)
 
 /* Wait for polling if the system can boot AP */
 #define CAN_BOOT_AP_CHECK_WAIT		(100 * MSEC)
@@ -99,6 +99,16 @@
  * the middle of POFF duration.
  */
 #define PMIC_POWER_OFF_DELAY		(70 * MSEC)
+
+/* The AP_RST_L transition count of a normal AP warm reset */
+#define EXPECTED_AP_RST_TRANSITIONS	3
+
+/*
+ * The timeout of waiting the next AP_RST_L transition. We measured
+ * the interval between AP_RST_L transitions is 130ms ~ 150ms. Pick
+ * a safer value.
+ */
+#define AP_RST_TRANSITION_TIMEOUT	(450 * MSEC)
 
 /* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
@@ -154,6 +164,53 @@ enum power_on_event_t {
 
 	POWER_ON_EVENT_COUNT,
 };
+
+#ifdef CONFIG_CHIPSET_RESET_HOOK
+static int ap_rst_transitions;
+
+static void notify_chipset_reset(void)
+{
+	if (ap_rst_transitions != EXPECTED_AP_RST_TRANSITIONS)
+		CPRINTS("AP_RST_L transitions not expected: %d",
+			ap_rst_transitions);
+
+	ap_rst_transitions = 0;
+	hook_notify(HOOK_CHIPSET_RESET);
+}
+DECLARE_DEFERRED(notify_chipset_reset);
+#endif
+
+void chipset_ap_rst_interrupt(enum gpio_signal signal)
+{
+#ifdef CONFIG_CHIPSET_RESET_HOOK
+	int delay;
+
+	/*
+	 * Only care the raising edge and AP in S0/S3. The single raising edge
+	 * of AP power-on during S5S3 is ignored.
+	 */
+	if (gpio_get_level(GPIO_AP_RST_L) &&
+	    chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_SUSPEND)) {
+		ap_rst_transitions++;
+		if (ap_rst_transitions >= EXPECTED_AP_RST_TRANSITIONS) {
+			/*
+			 * Reach the expected transition count. AP is booting
+			 * up. Notify HOOK_CHIPSET_RESET immediately.
+			 */
+			delay = 0;
+		} else {
+			/*
+			 * Should have more transitions of the AP_RST_L signal.
+			 * In case the AP_RST_L signal is not toggled, still
+			 * notify HOOK_CHIPSET_RESET.
+			 */
+			delay = AP_RST_TRANSITION_TIMEOUT;
+		}
+		hook_call_deferred(&notify_chipset_reset_data, delay);
+	}
+#endif
+	power_signal_interrupt(signal);
+}
 
 /* Issue a request to initiate a reset sequence */
 static void request_cold_reset(void)
@@ -261,7 +318,7 @@ static int wait_switchcap_power_good(int enable)
 
 	poll_deadline = get_time();
 	poll_deadline.val += SWITCHCAP_PG_CHECK_TIMEOUT;
-	while (enable != gpio_get_level(GPIO_DA9313_GPIO0) &&
+	while (enable != board_is_switchcap_power_good() &&
 	       get_time().val < poll_deadline.val) {
 		usleep(SWITCHCAP_PG_CHECK_WAIT);
 	}
@@ -270,7 +327,7 @@ static int wait_switchcap_power_good(int enable)
 	 * Check the timeout case. Just show a message. More check later
 	 * will switch the power state.
 	 */
-	if (enable != gpio_get_level(GPIO_DA9313_GPIO0)) {
+	if (enable != board_is_switchcap_power_good()) {
 		if (enable)
 			CPRINTS("SWITCHCAP NO POWER GOOD!");
 		else
@@ -287,7 +344,7 @@ static int wait_switchcap_power_good(int enable)
  */
 static int is_system_powered(void)
 {
-	return gpio_get_level(GPIO_SWITCHCAP_ON);
+	return board_is_switchcap_enabled();
 }
 
 /**
@@ -350,7 +407,7 @@ static int wait_pmic_pwron(int enable, unsigned int timeout)
  */
 static void set_system_power_no_check(int enable)
 {
-	gpio_set_level(GPIO_SWITCHCAP_ON, enable);
+	board_set_switchcap_power(enable);
 }
 
 /**
@@ -372,12 +429,12 @@ static int set_system_power(int enable)
 
 	ret = wait_switchcap_power_good(enable);
 
-	if (enable) {
-		usleep(SYSTEM_POWER_ON_DELAY);
-	} else {
+	if (!enable) {
 		/* Ensure POWER_GOOD drop to low if it is a forced shutdown */
 		ret |= wait_pmic_pwron(0, FORCE_OFF_RESPONSE_TIMEOUT);
 	}
+	usleep(SYSTEM_POWER_ON_DELAY);
+
 	return ret;
 }
 
@@ -686,14 +743,24 @@ static uint8_t check_for_power_off_event(void)
 
 	/* POWER_GOOD released by AP : shutdown immediately */
 	if (!power_has_signals(IN_POWER_GOOD)) {
-		if (power_button_was_pressed)
-			timer_cancel(TASK_ID_CHIPSET);
-
 		CPRINTS("POWER_GOOD is lost");
 		return POWER_OFF_BY_POWER_GOOD_LOST;
 	}
 
 	return POWER_OFF_CANCEL;
+}
+
+/**
+ * Cancel the power button timer.
+ *
+ * The timer was previously created in the check_for_power_off_event(),
+ * which waited for the power button long press. Should cancel the timer
+ * during the power state transition; otherwise, EC will crash.
+ */
+static inline void cancel_power_button_timer(void)
+{
+	if (power_button_was_pressed)
+		timer_cancel(TASK_ID_CHIPSET);
 }
 
 /*****************************************************************************/
@@ -785,6 +852,61 @@ static inline int chipset_get_sleep_signal(void)
 		return fake_suspend;
 }
 
+static void suspend_hang_detected(void)
+{
+	CPRINTS("Warning: Detected sleep hang! Waking host up!");
+	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
+}
+
+static void power_reset_host_sleep_state(void)
+{
+	power_set_host_sleep_state(HOST_SLEEP_EVENT_DEFAULT_RESET);
+	sleep_reset_tracking();
+	power_chipset_handle_host_sleep_event(HOST_SLEEP_EVENT_DEFAULT_RESET,
+					      NULL);
+}
+
+static void handle_chipset_reset(void)
+{
+	if (chipset_in_state(CHIPSET_STATE_SUSPEND)) {
+		CPRINTS("Chipset reset: exit s3");
+		power_reset_host_sleep_state();
+		task_wake(TASK_ID_CHIPSET);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, handle_chipset_reset, HOOK_PRIO_FIRST);
+
+__override void power_chipset_handle_host_sleep_event(
+		enum host_sleep_event state,
+		struct host_sleep_event_context *ctx)
+{
+	CPRINTS("Handle sleep: %d", state);
+
+	if (state == HOST_SLEEP_EVENT_S3_SUSPEND) {
+		/*
+		 * Indicate to power state machine that a new host event for
+		 * S3 suspend has been received and so chipset suspend
+		 * notification needs to be sent to listeners.
+		 */
+		sleep_set_notify(SLEEP_NOTIFY_SUSPEND);
+		sleep_start_suspend(ctx, suspend_hang_detected);
+		power_signal_enable_interrupt(GPIO_AP_SUSPEND);
+
+	} else if (state == HOST_SLEEP_EVENT_S3_RESUME) {
+		/*
+		 * Wake up chipset task and indicate to power state machine that
+		 * listeners need to be notified of chipset resume.
+		 */
+		sleep_set_notify(SLEEP_NOTIFY_RESUME);
+		task_wake(TASK_ID_CHIPSET);
+		power_signal_disable_interrupt(GPIO_AP_SUSPEND);
+		sleep_complete_resume(ctx);
+
+	} else if (state == HOST_SLEEP_EVENT_DEFAULT_RESET) {
+		power_signal_disable_interrupt(GPIO_AP_SUSPEND);
+	}
+}
+
 /**
  * Power handler for steady states
  *
@@ -793,13 +915,12 @@ static inline int chipset_get_sleep_signal(void)
  */
 enum power_state power_handle_state(enum power_state state)
 {
-	uint8_t value;
-	static uint8_t boot_from_g3, shutdown_from_s0;
+	static uint8_t boot_from_off, shutdown_from_on;
 
 	switch (state) {
 	case POWER_G3:
-		boot_from_g3 = check_for_power_on_event();
-		if (boot_from_g3)
+		boot_from_off = check_for_power_on_event();
+		if (boot_from_off)
 			return POWER_G3S5;
 		break;
 
@@ -807,15 +928,11 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S5:
-		if (boot_from_g3) {
-			value = boot_from_g3;
-			boot_from_g3 = 0;
-		} else {
-			value = check_for_power_on_event();
-		}
+		if (!boot_from_off)
+			boot_from_off = check_for_power_on_event();
 
-		if (value) {
-			CPRINTS("power on %d", value);
+		if (boot_from_off) {
+			CPRINTS("power on %d", boot_from_off);
 			return POWER_S5S3;
 		}
 		break;
@@ -844,18 +961,20 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Call hooks now that AP is running */
 		hook_notify(HOOK_CHIPSET_STARTUP);
+
+		/*
+		 * Clearing the sleep failure detection tracking on the path
+		 * to S0 to handle any reset conditions.
+		 */
+		power_reset_host_sleep_state();
 		return POWER_S3;
 
 	case POWER_S3:
-		if (shutdown_from_s0) {
-			value = shutdown_from_s0;
-			shutdown_from_s0 = 0;
-		} else {
-			value = check_for_power_off_event();
-		}
+		if (!shutdown_from_on)
+			shutdown_from_on = check_for_power_off_event();
 
-		if (value) {
-			CPRINTS("power off %d", value);
+		if (shutdown_from_on) {
+			CPRINTS("power off %d", shutdown_from_on);
 			return POWER_S3S5;
 		}
 
@@ -863,41 +982,78 @@ enum power_state power_handle_state(enum power_state state)
 		 * AP has woken up and it deasserts the suspend signal;
 		 * go to S0.
 		 *
-		 * TODO(b/148149387): Add the hang detection that waits for a
-		 * host event before transits the state. It prevents changing
-		 * the state for modem paging.
+		 * In S0, it will wait for a host event and then trigger the
+		 * RESUME hook.
 		 */
 		if (!chipset_get_sleep_signal())
 			return POWER_S3S0;
 		break;
 
 	case POWER_S3S0:
-		hook_notify(HOOK_CHIPSET_RESUME);
+		cancel_power_button_timer();
 
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+		/*
+		 * Notify the RESUME_INIT hooks, i.e. enabling SPI driver
+		 * to receive host commands/events.
+		 *
+		 * If boot from an off state, notify the RESUME hooks too;
+		 * otherwise (resume from S3), the normal RESUME hooks will
+		 * be notified later, after receive a host resume event.
+		 */
+		hook_notify(HOOK_CHIPSET_RESUME_INIT);
+		if (boot_from_off)
+			hook_notify(HOOK_CHIPSET_RESUME);
+#else
+		hook_notify(HOOK_CHIPSET_RESUME);
+#endif
+		sleep_resume_transition();
+
+		boot_from_off = 0;
 		disable_sleep(SLEEP_MASK_AP_RUN);
 		return POWER_S0;
 
 	case POWER_S0:
-		shutdown_from_s0 = check_for_power_off_event();
-		if (shutdown_from_s0 || chipset_get_sleep_signal())
+		shutdown_from_on = check_for_power_off_event();
+		if (shutdown_from_on) {
 			return POWER_S0S3;
+		} else if (power_get_host_sleep_state()
+					== HOST_SLEEP_EVENT_S3_SUSPEND &&
+				chipset_get_sleep_signal()) {
+			return POWER_S0S3;
+		}
+		/* When receive the host event, trigger the RESUME hook. */
+		sleep_notify_transition(SLEEP_NOTIFY_RESUME,
+					HOOK_CHIPSET_RESUME);
 		break;
 
 	case POWER_S0S3:
-		/*
-		 * If the power button is pressing, we need cancel the long
-		 * press timer, otherwise EC will crash.
-		 */
-		if (power_button_was_pressed)
-			timer_cancel(TASK_ID_CHIPSET);
+		cancel_power_button_timer();
 
-		/* Call hooks here since we don't know it prior to AP suspend */
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+		/*
+		 * Pair with the HOOK_CHIPSET_RESUME_INIT, i.e. disabling SPI
+		 * driver, by notifying the SUSPEND_COMPLETE hook. The normal
+		 * SUSPEND hook will be notified afterward.
+		 */
+		hook_notify(HOOK_CHIPSET_SUSPEND_COMPLETE);
+#else
 		hook_notify(HOOK_CHIPSET_SUSPEND);
+#endif
+		/*
+		 * Call SUSPEND hooks only if we haven't notified listeners of
+		 * S3 suspend.
+		 */
+		sleep_notify_transition(SLEEP_NOTIFY_SUSPEND,
+					HOOK_CHIPSET_SUSPEND);
+		sleep_suspend_transition();
 
 		enable_sleep(SLEEP_MASK_AP_RUN);
 		return POWER_S3;
 
 	case POWER_S3S5:
+		cancel_power_button_timer();
+
 		/* Call hooks before we drop power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
@@ -906,6 +1062,8 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Call hooks after we drop power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
+
+		shutdown_from_on = 0;
 
 		/*
 		 * Wait forever for the release of the power button; otherwise,

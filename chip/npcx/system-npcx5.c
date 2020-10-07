@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <stdnoreturn.h>
+
 /* System module driver depends on chip series for Chrome EC */
 #include "common.h"
 #include "console.h"
@@ -59,7 +61,7 @@ void system_mpu_config(void)
 /**
  * hibernate function in low power ram for npcx5 series.
  */
-void __keep __attribute__ ((noreturn, section(".lowpower_ram")))
+noreturn void __keep __attribute__ ((section(".lowpower_ram")))
 __enter_hibernate_in_lpram(void)
 {
 	/*
@@ -146,7 +148,7 @@ void __hibernate_npcx_series(void)
 
 #ifdef CONFIG_EXTERNAL_STORAGE
 /* Sysjump utilities in low power ram for npcx5 series. */
-void __keep __attribute__ ((noreturn, section(".lowpower_ram2")))
+noreturn void __keep __attribute__ ((section(".lowpower_ram2")))
 __start_gdma(uint32_t exeAddr)
 {
 	/* Enable GDMA now */

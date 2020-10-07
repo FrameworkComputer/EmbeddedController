@@ -22,6 +22,9 @@ typedef float fp_inter_t;
 /* Fixed-point to float, for unit tests */
 #define FP_TO_FLOAT(x) ((float)(x))
 
+#define FLT_MAX (3.4028234664e+38)
+#define FLT_MIN (1.1754943508e-38)
+
 #else
 /* Fixed-point type */
 typedef int32_t fp_t;
@@ -39,7 +42,14 @@ typedef int64_t fp_inter_t;
 #define FLOAT_TO_FP(x) ((fp_t)((x) * (float)(1<<FP_BITS)))
 /* Fixed-point to float, for unit tests */
 #define FP_TO_FLOAT(x) ((float)(x) / (float)(1<<FP_BITS))
+
+#define FLT_MAX INT32_MAX
+#define FLT_MIN INT32_MIN
+
 #endif
+
+/* Some useful math functions.  Use with integers only! */
+#define POW2(x) ((x) * (x))
 
 /*
  * Fixed-point addition and subtraction can be done directly, because they

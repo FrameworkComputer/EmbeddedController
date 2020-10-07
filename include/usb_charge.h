@@ -82,7 +82,7 @@ int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode,
 #define USB_CHG_PORT_TO_TASK_ID(port) (TASK_ID_USB_CHG_P0 + (port))
 #define TASK_ID_TO_USB_CHG_PORT(id) ((id) - TASK_ID_USB_CHG_P0)
 #else
-#define USB_CHG_PORT_TO_TASK_ID(port) -1 /* dummy task ID */
+#define USB_CHG_PORT_TO_TASK_ID(port) -1 /* stub task ID */
 #define TASK_ID_TO_USB_CHG_PORT(id) 0
 #endif  /* HAS_TASK_USB_CHG_P0 */
 

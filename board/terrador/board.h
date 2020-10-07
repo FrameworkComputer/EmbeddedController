@@ -54,6 +54,8 @@
 #define CONFIG_LID_ANGLE_SENSOR_LID		LID_ACCEL
 
 /* USB Type C and USB PD defines */
+#define CONFIG_USB_PD_PORT_MAX_COUNT			2
+
 /*
  * USB-C port's USB2 & USB3 mapping from schematics
  * USB2 numbering on PCH - 1 to n
@@ -65,12 +67,26 @@
 #define USBC_PORT_1_USB2_NUM	4
 #define USBC_PORT_1_USB3_NUM	2
 
+#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
+#define PD_VCONN_SWAP_DELAY		5000 /* us */
+
+/*
+ * SN5S30 PPC supports up to 24V VBUS source and sink, however passive USB-C
+ * cables only support up to 60W.
+ */
+#define PD_OPERATING_POWER_MW	15000
+#define PD_MAX_POWER_MW		60000
+#define PD_MAX_CURRENT_MA	3000
+#define PD_MAX_VOLTAGE_MV	20000
+
 /* Enabling Thunderbolt-compatible mode */
 #define CONFIG_USB_PD_TBT_COMPAT_MODE
 
 /* Enabling USB4 mode */
 #define CONFIG_USB_PD_USB4
 #define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x40
+#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x40
 
 /* USB Type A Features */
 
@@ -84,6 +100,10 @@
 /* Fan features */
 #undef CONFIG_FANS
 
+/* charger defines */
+#define CONFIG_CHARGER_SENSE_RESISTOR		10
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC	10
+
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
@@ -96,13 +116,14 @@
 #define GPIO_ENTERING_RW		GPIO_EC_ENTERING_RW
 #define GPIO_LID_OPEN			GPIO_EC_LID_OPEN
 #define GPIO_KBD_KSO2			GPIO_EC_KSO_02_INV
-#define GPIO_PACKET_MODE_EN		GPIO_UART2_EC_RX
+#define GPIO_PACKET_MODE_EN		GPIO_EC_H1_PACKET_MODE
 #define GPIO_PCH_WAKE_L			GPIO_EC_PCH_WAKE_ODL
 #define GPIO_PCH_PWRBTN_L		GPIO_EC_PCH_PWR_BTN_ODL
 #define GPIO_PCH_RSMRST_L		GPIO_EC_PCH_RSMRST_ODL
 #define GPIO_PCH_RTCRST			GPIO_EC_PCH_RTCRST
 #define GPIO_PCH_SLP_S0_L		GPIO_SLP_S0_L
 #define GPIO_PCH_SLP_S3_L		GPIO_SLP_S3_L
+#define GPIO_PCH_DSW_PWROK		GPIO_EC_PCH_DSW_PWROK
 #define GPIO_PG_EC_DSW_PWROK		GPIO_DSW_PWROK
 #define GPIO_POWER_BUTTON_L		GPIO_H1_EC_PWR_BTN_ODL
 #define GPIO_RSMRST_L_PGOOD		GPIO_PG_EC_RSMRST_ODL
@@ -145,9 +166,8 @@ enum battery_type {
 
 enum pwm_channel {
 	PWM_CH_LED1_BLUE = 0,
-	PWM_CH_LED2_GREEN,
-	PWM_CH_LED3_RED,
-	PWM_CH_LED4_SIDESEL,
+	PWM_CH_LED2_RED,
+	PWM_CH_LED3_GREEN,
 	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT
 };
@@ -159,6 +179,12 @@ enum sensor_id {
 	CLEAR_ALS,
 	RGB_ALS,
 	SENSOR_COUNT,
+};
+
+enum usbc_port {
+	USBC_PORT_C0 = 0,
+	USBC_PORT_C1,
+	USBC_PORT_COUNT
 };
 
 void board_reset_pd_mcu(void);

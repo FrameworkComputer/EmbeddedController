@@ -231,7 +231,7 @@ static void adc_init(void)
 
 	/*
 	 * ADC clock is divided with respect to AHB, so no delay needed
-	 * here. If ADC clock is the same as AHB, a dummy read on ADC
+	 * here. If ADC clock is the same as AHB, a read on ADC
 	 * register is needed here.
 	 */
 

@@ -161,8 +161,14 @@ extern const struct accelgyro_drv bma2x2_accel_drv;
 /* Sensor resolution in number of bits. This sensor has fixed resolution. */
 #define BMA2x2_RESOLUTION               12
 
-/* Min and Max sampling frequency in mHz */
+/*
+ * Min and Max sampling frequency in mHz.
+ * Given BMA255 is polled, we limit max frequency to 125Hz.
+ * If set to 250Hz, given we can read up to 3ms before the due time
+ * (see CONFIG_MOTION_MIN_SENSE_WAIT_TIME), we may read too early when
+ * other sensors are active.
+ */
 #define BMA255_ACCEL_MIN_FREQ           7810
 #define BMA255_ACCEL_MAX_FREQ \
-	MOTION_MAX_SENSOR_FREQUENCY(1000000, 15625)
+	MOTION_MAX_SENSOR_FREQUENCY(125000, 15625)
 #endif /* __CROS_EC_ACCEL_BMA2x2_H */

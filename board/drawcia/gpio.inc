@@ -14,7 +14,7 @@ GPIO_INT(SLP_S3_L,		PIN(H, 3), GPIO_INT_BOTH, baseboard_all_sys_pgood_interrupt)
 GPIO_INT(SLP_S0_L,		PIN(E, 4), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_SUS_L,		PIN(G, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(VCCIN_AUX_VID0,	PIN(D, 0), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(RSMRST_PWRGD_L,	PIN(E, 1), GPIO_INT_BOTH | GPIO_PULL_UP, power_signal_interrupt)
+GPIO_INT(RSMRST_PWRGD_L,	PIN(E, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(CPU_C10_GATE_L,	PIN(G, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_DRAM_OD,		PIN(D, 3), GPIO_INT_BOTH, baseboard_all_sys_pgood_interrupt)
 GPIO_INT(PG_PP1050_ST_OD,	PIN(L, 1), GPIO_INT_BOTH, power_signal_interrupt)
@@ -39,8 +39,8 @@ GPIO_INT(LID_360_L,		PIN(A, 7), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 GPIO_INT(VOLDN_BTN_ODL,		PIN(I, 6), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(VOLUP_BTN_ODL_HDMI_HPD,	PIN(I, 7), GPIO_INT_BOTH, button_sub_hdmi_hpd_interrupt)
 GPIO_INT(BASE_SIXAXIS_INT_L,	PIN(J, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V, lsm6dsm_interrupt)
-GPIO_INT(CAM_EC_VSYNC,		PIN(C, 7), GPIO_INT_RISING, sync_interrupt)
 GPIO_INT(EC_WP_OD,		PIN(A, 6), GPIO_INT_BOTH, switch_interrupt)
+GPIO_INT(PEN_DET_ODL,		PIN(J, 1), GPIO_INT_BOTH | GPIO_PULL_UP, pen_detect_interrupt)
 
 /* Power sequence GPIOs */
 GPIO(EC_AP_RTCRST,		PIN(K, 2), GPIO_OUT_LOW)
@@ -100,9 +100,9 @@ GPIO(EN_BL_OD,			PIN(K, 4), GPIO_ODR_LOW)
 GPIO(EC_ENTERING_RW,		PIN(G, 0), GPIO_OUT_LOW)
 GPIO(CCD_MODE_ODL,		PIN(H, 5), GPIO_INPUT)
 GPIO(EC_BATTERY_PRES_ODL,	PIN(I, 4), GPIO_INPUT)
-GPIO(PEN_DET_ODL,		PIN(J, 1), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(EN_KB_BL,			PIN(J, 3), GPIO_OUT_LOW) /* Currently unused */
 GPIO(ECH1_PACKET_MODE,		PIN(H, 1), GPIO_OUT_LOW)
+GPIO(EN_PP5000_PEN,		PIN(B, 5), GPIO_OUT_LOW)
 
 /* NC pins, enable internal pull-down to avoid floating state. */
 GPIO(GPIOC0_NC, PIN(C, 0), GPIO_INPUT | GPIO_PULL_DOWN)
@@ -136,9 +136,6 @@ ALTERNATE(PIN_MASK(A, BIT(4) | BIT(5)), 0, MODULE_I2C, 0)		/* I2C5 */
 /* ADC */
 ALTERNATE(PIN_MASK(L, BIT(0) | BIT(2) | BIT(3)), 0, MODULE_ADC, 0)	/* ADC13: EC_SUB_ANALOG, ADC15: TEMP_SENSOR_3, ADC16: TEMP_SENSOR_4 */
 ALTERNATE(PIN_MASK(I, BIT(0) | BIT(2) | BIT(3)), 0, MODULE_ADC, 0)	/* ADC0: EC_VSNS_PP3300_A, ADC2: TEMP_SENSOR_1, ADC3: TEMP_SENSOR_2 */
-
-/* DAC */
-ALTERNATE(PIN_MASK(J, BIT(2)), 0, MODULE_DAC, 0)			/* DAC2: EC_AP_PSYS */
 
 /* PWM */
 ALTERNATE(PIN_MASK(A, BIT(0)), 0, MODULE_PWM, 0) 			/* KB_BL_PWM */

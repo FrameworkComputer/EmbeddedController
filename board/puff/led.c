@@ -201,9 +201,9 @@ void led_alert(int enable)
 		if (chipset_in_state(CHIPSET_STATE_ON))
 			led_resume();
 		else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
-			led_suspend();
+			led_suspend_hook();
 		else if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-			led_shutdown();
+			led_shutdown_hook();
 	}
 }
 

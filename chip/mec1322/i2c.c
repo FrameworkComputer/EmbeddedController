@@ -348,7 +348,7 @@ int chip_i2c_xfer(const int port,
 			cdata[controller].transaction_state =
 				I2C_TRANSACTION_OPEN;
 
-			/* Skip over the dummy byte */
+			/* Skip over the unused byte */
 			skip = 1;
 			in_size++;
 		}
@@ -388,7 +388,7 @@ int chip_i2c_xfer(const int port,
 			/*
 			 * We need to know our stop point two bytes in
 			 * advance. If we don't know soon enough, we need
-			 * to do an extra dummy read (to last_addr + 1) to
+			 * to do an extra read (to last_addr + 1) to
 			 * issue the stop.
 			 */
 			push_in_buf(&in, MEC1322_I2C_DATA(controller),

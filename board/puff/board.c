@@ -334,27 +334,15 @@ const struct adc_t adc_channels[] = {
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
 	},
-	[ADC_TEMP_SENSOR_2] = {
-		.name = "TEMP_SENSOR_2",
-		.input_ch = NPCX_ADC_CH1,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_PP3300] = {
-		.name = "PP3300",
+	[TEMP_SENSOR_CORE] = {
+		.name = "Core",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_1,
-	},
-	[TEMP_SENSOR_PP5000] = {
-		.name = "PP5000",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
@@ -375,9 +363,9 @@ const struct fan_conf fan_conf_0 = {
 };
 
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 2500,
-	.rpm_start = 2500,
-	.rpm_max = 5000,
+	.rpm_min = 1900,
+	.rpm_start = 2400,
+	.rpm_max = 4300,
 };
 
 const struct fan_t fans[] = {
@@ -397,21 +385,33 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 const static struct ec_thermal_config thermal_a = {
 	.temp_host = {
 		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(78),
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(58),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
-	.temp_fan_off = C_TO_K(25),
-	.temp_fan_max = C_TO_K(60),
+	.temp_fan_off = C_TO_K(41),
+	.temp_fan_max = C_TO_K(72),
+};
+
+const static struct ec_thermal_config thermal_b = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
 };
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_PP3300] = thermal_a,
-	[TEMP_SENSOR_PP5000] = thermal_a,
+	[TEMP_SENSOR_CORE] = thermal_a,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
@@ -443,20 +443,6 @@ static void cbi_init(void)
 		sku_id = val;
 	if (cbi_get_fw_config(&val) == EC_SUCCESS)
 		fw_config = val;
-	else if (board_version == 1 || board_version == 2) {
-		/* Hack to set the barrel-jack adapter using SKU ID */
-		switch (sku_id) {
-		case 0x00000001:
-		case 0x00000002:
-		case 0x01000001:
-		case 0x01000003:
-		case 0x01000004:
-		case 0x02000000:
-			fw_config = 0x1;
-			break;
-		}
-		CPRINTS("F/W config NOT SET, defaulting to 0x%08x", fw_config);
-	}
 	CPRINTS("Board Version: %d, SKU ID: 0x%08x, F/W config: 0x%08x",
 		board_version, sku_id, fw_config);
 }
@@ -495,10 +481,25 @@ static void board_init(void)
 	 */
 	if (board_version < 2)
 		button_disable_gpio(GPIO_EC_RECOVERY_BTN_ODL);
-
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+static void board_chipset_startup(void)
+{
+	/*
+	 * Workaround to restore VBUS on PPC.
+	 * PP1 is sourced from PP5000_A, and when the CPU shuts down and
+	 * this rail drops, the PPC will internally turn off PP1_EN.
+	 * When the CPU starts again, and the rail is restored, the PPC
+	 * does not turn PP1_EN on again, causing VBUS to stay turned off.
+	 * The workaround is to check whether the PPC is sourcing VBUS, and
+	 * if so, make sure it is enabled.
+	 */
+	if (ppc_is_sourcing_vbus(0))
+		ppc_vbus_source_enable(0, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
+	     HOOK_PRIO_DEFAULT);
 /******************************************************************************/
 /* USB-C PPC Configuration */
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
@@ -677,6 +678,31 @@ int ec_config_get_usb4_present(void)
 {
 	return !(fw_config & EC_CFG_NO_USB4_MASK);
 }
+
+unsigned int ec_config_get_thermal_solution(void)
+{
+	return (fw_config & EC_CFG_THERMAL_MASK) >> EC_CFG_THERMAL_L;
+}
+
+static void setup_thermal(void)
+{
+	unsigned int table = ec_config_get_thermal_solution();
+	/* Configure Fan */
+	switch (table) {
+	/* Default and table0 use single fan */
+	case 0:
+	default:
+		thermal_params[TEMP_SENSOR_CORE] = thermal_a;
+		break;
+	/* Table1 is fanless */
+	case 1:
+		fan_set_count(0);
+		thermal_params[TEMP_SENSOR_CORE] = thermal_b;
+		break;
+	}
+}
+/* fan_set_count should be called before  HOOK_INIT/HOOK_PRIO_DEFAULT */
+DECLARE_HOOK(HOOK_INIT, setup_thermal, HOOK_PRIO_DEFAULT - 1);
 
 /*
  * Power monitoring and management.

@@ -198,10 +198,13 @@ build_boards: | $(FAILED_BOARDS_DIR)
 	@rm -f $(FAILED_BOARDS_DIR)/*
 	$(MAKE) try_build_boards
 
-.PHONY: buildall
-buildall: build_boards build_cros_ec_commands
+.PHONY: buildall_only
+buildall_only: build_boards build_cros_ec_commands
 	$(MAKE) build_cts
 	$(MAKE) buildfuzztests
+
+.PHONY: buildall
+buildall: buildall_only
 	$(MAKE) runtests
 	@touch .tests-passed
 	@echo "$@ completed successfully!"
@@ -408,10 +411,10 @@ ifeq ($(V),0)
 cmd_size=
 else
 cmd_size=$(Q)awk '\
-  /__image_size =/ {image_size = strtonum($$1)} \
+  /__flash_used =/ {flash_used = strtonum($$1)} \
   /^FLASH/ {flash_size = strtonum($$3)} \
   /__ram_free =/ {ram_free = strtonum($$1)} \
-  END {room_free = flash_size - image_size; \
+  END {room_free = flash_size - flash_used; \
        print ram_free > "$(out)/$(1)/space_free_ram.txt"; \
        printf "  *** "; \
        if (flash_size > 0) { \

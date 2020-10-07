@@ -58,9 +58,6 @@
 	/* Allow the EC to enter deep sleep in S0 */
 	#define CONFIG_LOW_POWER_S0
 #elif defined(VARIANT_OCTOPUS_EC_ITE8320)
-	 /* Flash clock must be > (50Mhz / 2) */
-	#define CONFIG_IT83XX_FLASH_CLOCK_48MHZ
-
 	/* I2C Bus Configuration */
 	#define I2C_PORT_BATTERY	IT83XX_I2C_CH_A	/* Shared bus */
 	#define I2C_PORT_CHARGER	IT83XX_I2C_CH_A	/* Shared bus */

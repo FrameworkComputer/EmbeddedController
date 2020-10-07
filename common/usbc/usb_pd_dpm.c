@@ -15,7 +15,6 @@
 #include "usb_mode.h"
 #include "usb_pd.h"
 #include "usb_pd_dpm.h"
-#include "usb_pe_sm.h"
 #include "usb_tbt_alt_mode.h"
 #include "tcpm.h"
 
@@ -125,7 +124,7 @@ static void dpm_attempt_mode_entry(int port)
 
 	/* Check if the device and cable support USB4. */
 	if (IS_ENABLED(CONFIG_USB_PD_USB4) && enter_usb_is_capable(port)) {
-		pe_dpm_request(port, DPM_REQUEST_ENTER_USB);
+		pd_dpm_request(port, DPM_REQUEST_ENTER_USB);
 		return;
 	}
 
@@ -166,7 +165,7 @@ static void dpm_attempt_mode_entry(int port)
 		return;
 	}
 
-	pe_dpm_request(port, DPM_REQUEST_VDM);
+	pd_dpm_request(port, DPM_REQUEST_VDM);
 }
 
 static void dpm_attempt_mode_exit(int port)
@@ -175,6 +174,7 @@ static void dpm_attempt_mode_exit(int port)
 	uint16_t svid;
 	uint32_t vdm;
 
+	/* TODO(b/156749387): Support Data Reset for exiting USB4. */
 	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
 	    tbt_is_active(port))
 		svid = USB_VID_INTEL;
@@ -186,6 +186,10 @@ static void dpm_attempt_mode_exit(int port)
 		return;
 	}
 
+	/*
+	 * TODO(b/148528713): Support cable plug Exit Mode (probably outsource
+	 * VDM construction to alt mode modules).
+	 */
 	opos = pd_alt_mode(port, TCPC_TX_SOP, svid);
 	if (opos > 0 && pd_dfp_exit_mode(port, TCPC_TX_SOP, svid, opos)) {
 		/*
@@ -203,7 +207,7 @@ static void dpm_attempt_mode_exit(int port)
 			return;
 		}
 
-		pe_dpm_request(port, DPM_REQUEST_VDM);
+		pd_dpm_request(port, DPM_REQUEST_VDM);
 	}
 }
 

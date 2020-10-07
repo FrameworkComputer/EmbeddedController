@@ -21,6 +21,10 @@
 /* Temperature sensor */
 #define CONFIG_TEMP_SENSOR
 
+/* Support early firmware selection */
+#define CONFIG_VBOOT_EFS2
+#define GPIO_PACKET_MODE_EN		GPIO_ME_G3_TO_ME_EC
+
 #include "baseboard.h"
 
 #define CONFIG_CHIPSET_TIGERLAKE
@@ -40,7 +44,7 @@
 #define DEDICATED_CHARGE_PORT 2
 
 /* USB-C port's USB2 & USB3 port numbers */
-#ifdef BOARD_TGLRVPU_ITE
+#if defined(BOARD_TGLRVPU_ITE) || defined(BOARD_TGLRVPU_ITE_TCPMV1)
 	#define TYPE_C_PORT_0_USB2_NUM	6
 	#define TYPE_C_PORT_1_USB2_NUM	7
 
@@ -72,21 +76,13 @@
 
 #define I2C_ADDR_PCA9555_BOARD_ID_GPIO	0x22
 #define PORT80_I2C_ADDR			MAX695X_I2C_ADDR1_FLAGS
-#ifdef BOARD_TGLRVPU_ITE
+#if defined(BOARD_TGLRVPU_ITE) || defined(BOARD_TGLRVPU_ITE_TCPMV1)
 	#define I2C_PORT0_BB_RETIMER_ADDR	0x42
 	#define I2C_PORT1_BB_RETIMER_ADDR	0x43
-
-	/* BB retimer nvm is shared between port 0 & 1 */
-	#define BB_RETIMER_SHARED_NVM true
 #else /* BOARD_TGLRVPY_ITE */
 	#define I2C_PORT0_BB_RETIMER_ADDR	0x42
 	#define I2C_PORT1_BB_RETIMER_ADDR	0x41
-
-	/* BB retimers have respective nvm for port 0 & 1 */
-	#define BB_RETIMER_SHARED_NVM false
 #endif /* BOARD_TGLRVPU_ITE */
-#define USB_PORT0_BB_RETIMER_SHARED_NVM	BB_RETIMER_SHARED_NVM
-#define USB_PORT1_BB_RETIMER_SHARED_NVM	BB_RETIMER_SHARED_NVM
 
 /* Enabling SOP* communication */
 #define CONFIG_USB_PD_DECODE_SOP

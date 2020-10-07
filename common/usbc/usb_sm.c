@@ -6,6 +6,7 @@
 #include "common.h"
 #include "console.h"
 #include "stdbool.h"
+#include "task.h"
 #include "usb_pd.h"
 #include "usb_sm.h"
 #include "util.h"
@@ -159,6 +160,14 @@ void set_state(const int port, struct sm_ctx *const ctx,
 	 * any remaining parent states.
 	 */
 	internal->running = false;
+
+	/*
+	 * Since we are changing states, we want to ensure that we process the
+	 * next state's run method as soon as we can to ensure that we don't
+	 * delay important processing until the next task interval.
+	 */
+	if (IS_ENABLED(HAS_TASK_PD_C0))
+		task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 /*

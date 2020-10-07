@@ -105,4 +105,7 @@ struct test_sm_data {
 };
 #endif
 
+/* Creates a state machine state that will never link. Useful with IS_ENABLED */
+#define GEN_NOT_SUPPORTED(state) extern typeof(state) state ## _NOT_SUPPORTED
+
 #endif /* __CROS_EC_USB_SM_H */

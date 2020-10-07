@@ -181,7 +181,7 @@
 
 #define TCPC_REG_TRANSMIT          0x50
 #define TCPC_REG_TRANSMIT_SET_WITH_RETRY(type) \
-		(PD_RETRY_COUNT << 4 | (type))
+		(CONFIG_PD_RETRY_COUNT << 4 | (type))
 #define TCPC_REG_TRANSMIT_SET_WITHOUT_RETRY(type) (type)
 #define TCPC_REG_TRANSMIT_RETRY(reg) (((reg) & 0x30) >> 4)
 #define TCPC_REG_TRANSMIT_TYPE(reg)  ((reg) & 0x7)
@@ -221,6 +221,7 @@ bool tcpci_tcpm_check_vbus_level(int port, enum vbus_level level);
 int tcpci_tcpm_select_rp_value(int port, int rp);
 int tcpci_tcpm_set_cc(int port, int pull);
 int tcpci_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity);
+int tcpci_tcpm_sop_prime_disable(int port);
 int tcpci_tcpm_set_vconn(int port, int enable);
 int tcpci_tcpm_set_msg_header(int port, int power_role, int data_role);
 int tcpci_tcpm_set_rx_enable(int port, int enable);

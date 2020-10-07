@@ -25,6 +25,7 @@ driver-$(CONFIG_SENSORHUB_LSM6DSM)+=sensorhub_lsm6dsm.o
 driver-$(CONFIG_SYNC)+=sync.o
 driver-$(CONFIG_ACCEL_LIS2DW_COMMON)+=accel_lis2dw12.o stm_mems_common.o
 driver-$(CONFIG_ACCEL_LIS2DS)+=accel_lis2ds.o stm_mems_common.o
+driver-$(CONFIG_ACCELGYRO_ICM426XX)+=accelgyro_icm426xx.o accelgyro_icm_common.o
 
 # BC1.2 Charger Detection Devices
 driver-$(CONFIG_BC12_DETECT_MAX14637)+=bc12/max14637.o
@@ -143,8 +144,11 @@ driver-$(CONFIG_USB_PD_TCPM_PS8705)+=tcpm/ps8xxx.o
 driver-$(CONFIG_USB_PD_TCPM_PS8805)+=tcpm/ps8xxx.o
 driver-$(CONFIG_USB_PD_TCPM_PS8815)+=tcpm/ps8xxx.o
 driver-$(CONFIG_USB_PD_TCPM_TUSB422)+=tcpm/tusb422.o
+driver-$(CONFIG_USB_PD_TCPM_RT1715)+=tcpm/rt1715.o
 driver-$(CONFIG_USB_PD_TCPM_NCT38XX)+=tcpm/nct38xx.o
 driver-$(CONFIG_USB_PD_TCPM_RAA489000)+=tcpm/raa489000.o
+driver-$(CONFIG_USB_PD_TCPM_FUSB307)+=tcpm/fusb307.o
+driver-$(CONFIG_USB_PD_TCPM_STM32GX)+=tcpm/stm32gx.o
 
 # Type-C Retimer drivers
 driver-$(CONFIG_USBC_RETIMER_INTEL_BB)+=retimer/bb_retimer.o
@@ -177,6 +181,9 @@ driver-y += ppc/nx20p348x.o
 endif
 driver-$(CONFIG_USBC_PPC_SYV682X)+=ppc/syv682x.o
 driver-$(CONFIG_USBC_PPC_NX20P3483)+=ppc/nx20p348x.o
+
+# Switchcap
+driver-$(CONFIG_LN9310)+=ln9310.o
 
 # video converters
 driver-$(CONFIG_MCDP28X0)+=mcdp28x0.o

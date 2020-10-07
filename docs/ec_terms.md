@@ -92,7 +92,8 @@
     A sensor device that detects a magnetic field. These sensors differ from
     [MAG](#mag) sensors, in that they only detect magnetic fields in close
     proximity to the sensor. On Chromebooks, GMR sensors are used to detect when
-    the lid is opened.  On convertible Chromebooks, the GMR sensor also detects tablet mode when lid the is opened a full 360 degrees.
+    the lid is opened.  On convertible Chromebooks, the GMR sensor also detects
+    tablet mode when lid the is opened a full 360 degrees.
 
 *   **GPIO - General Purpose Input/Output**{#gpio}
 
@@ -108,21 +109,22 @@
 
 *   **I/O Expander**{#ioexpander}
 
-    An [I2C](#i2c) slave device that provides additional GPIO signals (anywhere
-    from 8 - 32 signals).  GPIOs behind an I/O expander are written and read
-    using I2C register accesses from the I2C master.
+    An [I2C](#i2c) peripheral device that provides additional GPIO signals
+    (anywhere from 8 - 32 signals).  GPIOs behind an I/O expander are written
+    and read using I2C register accesses from the I2C controller in the EC.
 
 *   **I2C - Inter-Integrated Circuit**{#i2c}
 
     A 2-wire synchronous communication bus, consisting of a clock signal and a
-    bidirectional data signal. An I2C bus typically contains one master device
-    and one more slave devices. The I2C standard defines supported clock speeds
-    of 100 KHz and 400 KHz. The full [I2C Specification] is available from NXP
-    (formerly Phillips).
+    bidirectional data signal. An I2C bus typically contains one controller
+    device and one or more peripheral devices. The I2C standard defines
+    supported clock speeds of 100 KHz and 400 KHz. The full [I2C Specification]
+    is available from NXP (formerly Phillips).
 
 *   **LED - Light Emitting Diode**{#led}
 
-    A Light Emitting Diode is a semiconductor that emits light when current flows through it.
+    A Light Emitting Diode is a semiconductor that emits light when current
+    flows through it.
 
 *   **LPC - [Low Pin Count bus]**{#lpc}
 
@@ -187,12 +189,21 @@
 *   **SPI - Serial Peripheral Interconnect**{#spi}
 
     A 4-wire synchronous communication bus consisting of the signals CLK
-    (clock), MOSI (master-out-slave-in), MISO (master-in-slave-out), and CS
-    (chip-select, one per SPI slave).  Clock speeds over 100 MHz are supported.
-    Communication involves a SPI frame, consisting of the assertion of chip
-    select, transmitting one or more bytes on the MOSI signal, receiving zero or
-    more bytes on the MISO signal, and de-assertion of the chip select.  The
-    contents of a SPI frame varies based on the SPI slave type.
+    (clock), SDO (Serial Data Out), SDI (Serial Data In), and CS (chip-select,
+    one per SPI peripheral).  The SDO and SDI pins are defined from the
+    perspective of the device: the SPI controller's SDO pin connects to the SPI
+    peripheral's SDI pin and vice-versa. Clock speeds over 100 MHz are
+    supported. SPI communication involves the following sequence:
+
+    * SPI controller asserts CS.
+    * SPI controller transmits one or bytes on its SDO signal, received by the
+      SPI peripheral on its SDI signal.
+    * SPI peripheral transmits zero or more bytes on its SDO signal, received
+      by the SPI controller on its SDI signal.
+    * SPI controller de-asserts CS.
+
+    The specific contents of a SPI frame varies based on the SPI peripheral
+    type.
 
 *   **SVDM - Structured Vendor Defined Messages**{#svdm}
 

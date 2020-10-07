@@ -121,11 +121,15 @@ void clock_init(void)
 #if defined(CHIP_FAMILY_NPCX5)
 	NPCX_HFCGP  = (FPRED << 4);
 	NPCX_HFCBCD = (NPCX_HFCBCD & 0xF0) | (APB1DIV | (APB2DIV << 2));
-#elif defined(CHIP_FAMILY_NPCX7)
+#elif NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 	NPCX_HFCGP   = ((FPRED << 4) | AHB6DIV);
 	NPCX_HFCBCD  = (FIUDIV << 4);
 	NPCX_HFCBCD1 = (APB1DIV | (APB2DIV << 4));
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+	NPCX_HFCBCD2 = (APB3DIV | (APB4DIV << 4));
+#else
 	NPCX_HFCBCD2 = APB3DIV;
+#endif
 #endif
 
 	/* Notify modules of frequency change */
@@ -159,7 +163,7 @@ void clock_turbo(void)
 	 */
 	NPCX_HFCBCD = NPCX_HFCBCD & 0xF3;
 }
-#elif defined(CHIP_FAMILY_NPCX7)
+#elif NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 void clock_turbo(void)
 {
 	/*
@@ -225,7 +229,7 @@ int clock_get_apb2_freq(void)
 /**
  * Return the current APB3 clock frequency in Hz.
  */
-#if defined(CHIP_FAMILY_NPCX7)
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 int clock_get_apb3_freq(void)
 {
 	return NPCX_APB_CLOCK(3);
@@ -343,7 +347,7 @@ void __idle(void)
 #if defined(CHIP_FAMILY_NPCX5)
 			/* UART-rx(console) become to GPIO (NONE INT mode) */
 			clock_uart2gpio();
-#elif defined(CHIP_FAMILY_NPCX7)
+#elif NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 			uartn_wui_en(CONFIG_CONSOLE_UART);
 #endif
 

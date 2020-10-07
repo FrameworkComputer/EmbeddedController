@@ -51,15 +51,17 @@ die() {
 BOARDS_IT83XX=(
 	glkrvp_ite
 	it83xx_evb
-	it8xxx2_pdevb
 	reef_it8320
 	tglrvpu_ite
+	tglrvpu_ite_tcpmv1
 	tglrvpy_ite
+	tglrvpy_ite_tcpmv1
 	jslrvp_ite
 )
 
 BOARDS_IT83XX_SPI_PROGRAMMING=(
 	it8xxx2_evb
+	it8xxx2_pdevb
 )
 
 BOARDS_STM32=(
@@ -87,6 +89,7 @@ BOARDS_STM32=(
 	strago_pd
 	wand
 	whiskers
+	zed
 	zinger
 )
 BOARDS_STM32_PROG_EN=(
@@ -243,7 +246,7 @@ function dut_control() {
 }
 
 function dut_control_or_die {
-	dut_control "$@" || die "dut-control $* exited $? (non-zero)"
+	dut_control "$@" || die "command exited $? (non-zero): dut-control $*"
 }
 
 function dut_control_get() {
@@ -253,7 +256,7 @@ function dut_control_get() {
 	fi
 
 	local ARGS DUT_GETVAL RETVAL
-	ARGS=( "${DUT_CONTROL_CMD[@]}" "-o" "${DUT_CTRL_PREFIX}$1" )
+	ARGS=( "${DUT_CONTROL_CMD[@]}" "--value_only" "${DUT_CTRL_PREFIX}$1" )
 	RETVAL=0
 	# || statement is attached to avoid an exit if error exit is enabled.
 	DUT_GETVAL=$( "${ARGS[@]}" ) || RETVAL="$?"
@@ -263,6 +266,11 @@ function dut_control_get() {
 	fi
 
 	echo "${DUT_GETVAL}"
+}
+
+function dut_control_get_or_die {
+	dut_control_get "$@" || \
+	    die "command exited $? (non-zero): dut-control --value_only $*"
 }
 
 BOARD=${FLAGS_board}
@@ -373,7 +381,9 @@ case "${BOARD}" in
 esac
 
 case "${CHIP}" in
-	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"npcx_uut"|"ite_spi") ;;
+	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"npcx_uut"|"ite_spi"| \
+			"ite_spi_ccd_i2c")
+		;;
 	*)
 		if [[ -n "${FLAGS_read}" ]]; then
 			die "The flag is not yet supported on ${CHIP}."
@@ -389,18 +399,24 @@ case "${CHIP}" in
 esac
 
 SERVO_TYPE="$(dut_control_get servo_type || :)"
-if [[ ${SERVO_TYPE} =~ servo_v4_with_.*_and_.* ]] ; then
+
+if [[ "${SERVO_TYPE}" =~ ^servo_v4_with_.*$ ]]; then
+	ACTIVE_DEVICE="$(dut_control_get active_v4_device)"
+else
+	ACTIVE_DEVICE="${SERVO_TYPE}"
+fi
+
+if [[ "${SERVO_TYPE}" =~ ^servo_v4_with_.*_and_.*$ ]]; then
 	# If there are two devices, servo v4 type will show both devices. The
 	# default device is first. The other device is second.
 	# servo_type:servo_v4_with_servo_micro_and_ccd_cr50
 	SECOND_DEVICE="${SERVO_TYPE#*_and_}"
-	ACTIVE_DEVICE="$(dut_control_get active_v4_device || :)"
 	SERVO_TYPE="servo_v4_with_${ACTIVE_DEVICE}"
 	# Controls sent through the default device don't have a prefix. The
 	# second device controls do. If the default device isn't active, we
 	# need to use the second device controls to send commands. Use the
 	# prefix for all dut control commands.
-	if [[ "${SECOND_DEVICE}" = "${ACTIVE_DEVICE}" ]] ; then
+	if [[ "${SECOND_DEVICE}" = "${ACTIVE_DEVICE}" ]]; then
 		DUT_CTRL_PREFIX="${ACTIVE_DEVICE}."
 	fi
 fi
@@ -794,9 +810,14 @@ function claim_pty() {
 	done
 }
 
+# Returns the serialnumber of the specified servo.
 function get_serial() {
 	if [[ "${SERVO_TYPE}" =~ "servo_v4_with_servo_micro" ]]; then
 		if [[ -z "${BOARD}" ]]; then
+			sn_ctl="servo_micro_"
+		elif [[ "$(dut_control_get "servo_micro_for_${BOARD}_serialname")" =~ \
+				"unknown" ]] ; then
+			# Fall back to servo_micro_ if S/N is uknown.
 			sn_ctl="servo_micro_"
 		else
 			sn_ctl="servo_micro_for_${BOARD}_"
@@ -899,7 +920,7 @@ function flash_flashrom() {
 	if ! on_raiden || [[ "${SERVO_TYPE}" =~ "servo_micro" ]] ; then
 		if $(in_array "${BOARDS_SPI_1800MV[@]}" "${BOARD}"); then
 			SPI_VOLTAGE="pp1800"
-		elif [[ "${CHIP}" == "ite_spi" ]]; then
+		elif [[ "${CHIP}" == "ite_spi" || "${CHIP}" == "ite_spi_ccd_i2c" ]]; then
 			SPI_VOLTAGE="pp1800"
 		else
 			SPI_VOLTAGE="pp3300"
@@ -918,7 +939,7 @@ function flash_flashrom() {
 		fi
 
 		# Enable SPI programming mode.
-		if [[ "${CHIP}" == "ite_spi" ]]; then
+		if [[ "${CHIP}" == "ite_spi" || "${CHIP}" == "ite_spi_ccd_i2c" ]]; then
 			# Set hardware strap pin (GPG6) of SPI programming as low then start ec
 			dut_control fw_up:on
 			sleep 0.1
@@ -972,8 +993,8 @@ function flash_flashrom() {
 			info "Running flashrom:" 1>&2
 			echo " ${FLASHROM_GETSIZE}" 1>&2
 		fi
-		SPI_SIZE=$(${FLASHROM_GETSIZE} | grep -oe '[0-9]\+$') || \
-			die "Failed to determine chip size!"
+		SPI_SIZE=$(${FLASHROM_GETSIZE} | grep -oe '[0-9]\+$' |
+			   tail -n1) || die "Failed to determine chip size!"
 		[[ ${SPI_SIZE} -eq 0 ]] && die "Chip size is 0!"
 
 		PATCH_SIZE=$((${SPI_SIZE} - ${IMG_SIZE}))
@@ -982,7 +1003,9 @@ function flash_flashrom() {
 		T=/tmp/flash_spi_$$
 		DELETE_LIST+=( "${T}" )
 
-		if [[ "${CHIP}" =~ ^npcx(|_int)_spi$ ]] ; then
+		if [[ "${CHIP}" =~ ^npcx(|_int)_spi$ ]] || \
+		   [[ "${CHIP}" =~ "ite_spi_ccd_i2c" ]] ||
+		   [[ "${CHIP}" =~ "ite_spi" ]] ; then
 		{	# Patch temp image up to SPI_SIZE
 			cat "$IMG"
 			if [[ ${IMG_SIZE} -lt ${SPI_SIZE} ]] ; then
@@ -1172,9 +1195,6 @@ function flash_stm32_dfu() {
 		-d "${DFU_DEVICE}" -s ${ADDR}:${SIZE} -D "${IMG}"
 }
 
-# TODO(b/130165933): Implement a dut-control command to look up the correct
-# I2C adapter number, and use that here in place of the hack of looking at
-# I2C adapter names.
 function dut_i2c_dev() {
 	if [ -n "$DUT_I2C_DEV" ]; then
 		[ -e "$DUT_I2C_DEV" ] ||
@@ -1183,24 +1203,10 @@ function dut_i2c_dev() {
 		return
 	fi
 
-	if ! (
-		set -e
-		cd /sys/class/i2c-dev
-		# Sorting in reverse numerical order generally picks the correct
-		# servod I2C bus when there are multiple servos in line to the
-		# DUT, e.g. servo_v4->servo_micro, or servo_v4->CR50 (CCD).
-		for dev in $(ls | grep ^i2c- | sort -s -t- -n -k2,2 -r); do
-			if grep -q servod "$dev"/name; then
-				echo /dev/"$dev"
-				exit
-			fi
-		done
-		false
-	); then
-		die "Could not find servo I2C adapter. This could be because"\
-" the i2c-pseudo module was not loaded when servod was started."\
-" See also iteflash.md for more info."
-	fi
+	local adap_num=
+	adap_num="$(dut_control_get_or_die \
+	    "${ACTIVE_DEVICE}_i2c_pseudo_adapter_num")"
+	echo /dev/i2c-"$adap_num"
 }
 
 function flash_it83xx() {
@@ -1310,6 +1316,15 @@ function flash_it83xx() {
 
 function flash_ite_spi() {
 	flash_flashrom
+}
+
+function flash_ite_spi_ccd_i2c() {
+	if [[ "${SERVO_TYPE}" =~ "servo_micro" || \
+	      "${SERVO_TYPE}" =~ "servo_v2" ]] ; then
+		flash_flashrom
+	else
+		flash_it83xx
+	fi
 }
 
 function flash_lm4() {

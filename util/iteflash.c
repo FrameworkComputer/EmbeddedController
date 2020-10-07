@@ -688,6 +688,42 @@ static int dbgr_reset(struct common_hnd *chnd, unsigned char val)
 	return 0;
 }
 
+/* Exit DBGR mode */
+static int exit_dbgr_mode(struct common_hnd *chnd)
+{
+	int ret = 0;
+
+	printf("Exit DBGR mode...\n");
+	if (chnd->dbgr_addr_3bytes)
+		ret |= i2c_write_byte(chnd, 0x80, 0xf0);
+	ret |= i2c_write_byte(chnd, 0x2f, 0x1c);
+	ret |= i2c_write_byte(chnd, 0x2e, 0x08);
+	ret |= i2c_write_byte(chnd, 0x30, BIT(4));
+
+	if (ret < 0)
+		fprintf(stderr, "EXIT DBGR MODE FAILED\n");
+
+	return 0;
+}
+
+/* DBGR reset GPIOs to default */
+static int dbgr_reset_gpio(struct common_hnd *chnd)
+{
+	int ret = 0;
+
+	printf("Reset GPIOs to default.\n");
+	if (chnd->dbgr_addr_3bytes)
+		ret |= i2c_write_byte(chnd, 0x80, 0xf0);
+	ret |= i2c_write_byte(chnd, 0x2f, 0x20);
+	ret |= i2c_write_byte(chnd, 0x2e, 0x07);
+	ret |= i2c_write_byte(chnd, 0x30, BIT(1));
+
+	if (ret < 0)
+		fprintf(stderr, "DBGR RESET GPIO FAILED\n");
+
+	return 0;
+}
+
 /* disable watchdog */
 static int dbgr_disable_watchdog(struct common_hnd *chnd)
 {
@@ -760,6 +796,20 @@ static int spi_flash_follow_mode_exit(struct common_hnd *chnd, char *desc)
 	if (ret < 0)
 		fprintf(stderr, "Flash %s exit follow mode FAILED (%d)\n",
 			desc, ret);
+
+	return ret;
+}
+
+/* Stop EC by sending follow mode command */
+static int dbgr_stop_ec(struct common_hnd *chnd)
+{
+	int ret = 0;
+
+	ret |= spi_flash_follow_mode(chnd, "enter follow mode");
+	ret |= spi_flash_follow_mode_exit(chnd, "exit follow mode");
+
+	if (ret < 0)
+		fprintf(stderr, "DBGR STOP EC FAILED!\n");
 
 	return ret;
 }
@@ -1053,8 +1103,8 @@ static int send_special_waveform(struct common_hnd *chnd)
 		/* wait for PLL stable for 5ms (plus remaining USB transfers) */
 		usleep(10 * MSEC);
 
-		if (spi_flash_follow_mode(chnd, "enter follow mode") >= 0) {
-			spi_flash_follow_mode_exit(chnd, "exit follow mode");
+		/* Stop EC ASAP after sending special waveform. */
+		if (dbgr_stop_ec(chnd) >= 0) {
 			/*
 			 * If we can talk to chip, then we can break the retry
 			 * loop.
@@ -1085,13 +1135,34 @@ static void draw_spinner(uint32_t remaining, uint32_t size)
 	windex %= sizeof(wheel);
 }
 
+/* Note: this function must be called in follow mode */
+static int spi_send_cmd_fast_read(struct common_hnd *chnd, uint32_t addr)
+{
+	int ret = 0;
+	uint8_t cmd = 0x9;
+
+	/* Fast Read command */
+	ret = spi_flash_command_short(chnd, SPI_CMD_FAST_READ, "fast read");
+	/* Send address */
+	ret |= i2c_write_byte(chnd, 0x08, ((addr >> 16) & 0xff)); /* addr_h */
+	ret |= i2c_write_byte(chnd, 0x08, ((addr >> 8) & 0xff));  /* addr_m */
+	ret |= i2c_write_byte(chnd, 0x08, (addr & 0xff));         /* addr_l */
+	/* fake byte */
+	ret |= i2c_write_byte(chnd, 0x08, 0x00);
+	/* use i2c block read command */
+	ret |= i2c_byte_transfer(chnd, I2C_CMD_ADDR, &cmd, 1, 1);
+	if (ret < 0)
+		fprintf(stderr, "Send fast read command failed\n");
+
+	return ret;
+}
+
 static int command_read_pages(struct common_hnd *chnd, uint32_t address,
 			      uint32_t size, uint8_t *buffer)
 {
 	int res = -EIO;
 	uint32_t remaining = size;
 	int cnt;
-	uint8_t addr_H, addr_M;
 
 	if (address & 0xFF) {
 		fprintf(stderr, "page read requested at non-page boundary: "
@@ -1102,30 +1173,14 @@ static int command_read_pages(struct common_hnd *chnd, uint32_t address,
 	if (spi_flash_follow_mode(chnd, "fast read") < 0)
 		goto failed_read;
 
+	if (spi_send_cmd_fast_read(chnd, address) < 0)
+		goto failed_read;
+
 	while (remaining) {
-		uint8_t cmd = 0x9;
-
 		cnt = (remaining > PAGE_SIZE) ? PAGE_SIZE : remaining;
-		addr_H = (address >> 16) & 0xFF;
-		addr_M = (address >> 8) & 0xFF;
-
 		draw_spinner(remaining, size);
 
-		/* Fast Read command */
-		if (spi_flash_command_short(chnd, SPI_CMD_FAST_READ,
-			"fast read") < 0)
-			goto failed_read;
-		res = i2c_write_byte(chnd, 0x08, addr_H);
-		res += i2c_write_byte(chnd, 0x08, addr_M);
-		res += i2c_write_byte(chnd, 0x08, 0x00);  /* addr_L */
-		res += i2c_write_byte(chnd, 0x08, 0x00);
-		if (res < 0) {
-			fprintf(stderr, "page address set failed\n");
-			goto failed_read;
-		}
-
 		/* read page data */
-		res = i2c_byte_transfer(chnd, I2C_CMD_ADDR, &cmd, 1, 1);
 		res = i2c_byte_transfer(chnd, I2C_BLOCK_ADDR, buffer, 0, cnt);
 		if (res < 0) {
 			fprintf(stderr, "page data read failed\n");
@@ -1135,6 +1190,12 @@ static int command_read_pages(struct common_hnd *chnd, uint32_t address,
 		address += cnt;
 		remaining -= cnt;
 		buffer += cnt;
+
+		/* We need to resend fast read command at 256KB boundary. */
+		if (!(address % 0x40000) && remaining) {
+			if (spi_send_cmd_fast_read(chnd, address) < 0)
+				goto failed_read;
+		}
 	}
 	/* No error so far */
 	res = size;
@@ -1241,112 +1302,13 @@ failed_write:
 }
 
 /*
- * Write another program flow to match the
- * original ITE 8903 Download board.
- */
-static int command_write_pages2(struct common_hnd *chnd, uint32_t address,
-				uint32_t size, uint8_t *buffer,
-				int block_write_size)
-{
-	int res = 0;
-	uint8_t addr_H, addr_M, addr_L;
-	uint8_t data;
-
-	res |= i2c_write_byte(chnd, 0x07, 0x7f);
-	res |= i2c_write_byte(chnd, 0x06, 0xff);
-	res |= i2c_write_byte(chnd, 0x04, 0xFF);
-
-	/* SMB_SPI_Flash_Enable_Write_Status */
-	if (spi_flash_command_short(chnd, SPI_CMD_EWSR,
-		"Enable Write Status Register") < 0) {
-		res = -EIO;
-		goto failed_write;
-	}
-
-	/* SMB_SPI_Flash_Write_Status_Reg */
-	res |= i2c_write_byte(chnd, 0x05, 0xfe);
-	res |= i2c_write_byte(chnd, 0x08, 0x00);
-	res |= i2c_write_byte(chnd, 0x05, 0xfd);
-	res |= i2c_write_byte(chnd, 0x08, 0x01);
-	res |= i2c_write_byte(chnd, 0x08, 0x00);
-
-	/* SMB_SPI_Flash_Write_Enable */
-	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_ENABLE,
-		"SPI Command Write Enable") < 0) {
-		res = -EIO;
-		goto failed_write;
-	}
-
-	/* SMB_SST_SPI_Flash_AAI2_Program */
-	if (spi_flash_command_short(chnd, SPI_CMD_WORD_PROGRAM,
-		"SPI AAI2 Program") < 0) {
-		res = -EIO;
-		goto failed_write;
-	}
-
-	addr_H = (address >> 16) & 0xFF;
-	addr_M = (address >> 8) & 0xFF;
-	addr_L = address & 0xFF;
-
-	res = i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_H, 1, 1);
-	res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_M, 1, 1);
-	res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_L, 1, 1);
-	res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, buffer++, 1, 1);
-	res |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, buffer++, 1, 1);
-
-	/* Wait until not busy */
-	if (spi_poll_busy(chnd, "AAI write") < 0)
-		goto failed_write;
-
-	res = i2c_write_byte(chnd, 0x10, 0x20);
-	res = i2c_byte_transfer(chnd, I2C_BLOCK_ADDR, buffer, 1,
-		block_write_size-2);
-
-	/* No error so far */
-	res = size;
-
-	data = 0xFF;
-	res = i2c_byte_transfer(chnd, I2C_DATA_ADDR, &data, 1, 1);
-	res = i2c_write_byte(chnd, 0x10, 0x00);
-
-failed_write:
-	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
-		"write disable exit AAI write") < 0)
-		res = -EIO;
-
-	return res;
-}
-
-/*
  * Test for spi page program command
  */
 static int command_write_pages3(struct common_hnd *chnd, uint32_t address,
-				uint32_t size, uint8_t *buffer,
-				int block_write_size)
+				uint32_t size, uint8_t *buffer)
 {
 	int ret = 0;
 	uint8_t addr_H, addr_M, addr_L;
-	uint8_t cmd_tmp, i;
-
-	struct cmds commands[] = {
-		{0x07, 0x7f},
-		{0x06, 0xff},
-		{0x04, 0xff},
-		{0x05, 0xfe},
-		{0x08, 0x00},
-		{0x05, 0xfd},
-		{0x08, 0x01},
-		{0x08, 0x00}
-	};
-
-	for (i = 0; i < ARRAY_SIZE(commands); i++) {
-		ret = i2c_write_byte(chnd, commands[i].addr, commands[i].cmd);
-		if (ret) {
-			fprintf(stderr, "Page Program Failed: cmd %x ,data %x\n"
-			, commands[i].addr, commands[i].cmd);
-			return ret;
-		}
-	}
 
 	/* SMB_SPI_Flash_Write_Enable */
 	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_ENABLE,
@@ -1368,23 +1330,16 @@ static int command_write_pages3(struct common_hnd *chnd, uint32_t address,
 	ret = i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_H, 1, 1);
 	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_M, 1, 1);
 	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_L, 1, 1);
+	ret |= i2c_byte_transfer(chnd, I2C_BLOCK_ADDR, buffer, 1, size);
+	if (ret < 0)
+		goto failed_write;
 
-	cmd_tmp = 0x0A;
-	ret = i2c_byte_transfer(chnd, I2C_CMD_ADDR, &cmd_tmp, 1, 1);
-
-	ret = i2c_byte_transfer(chnd, I2C_BLOCK_ADDR, buffer, 1,
-		256);
-
-	if (spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
-		"write disable exit page program") < 0)
-		ret = -EIO;
 	/* Wait until not busy */
 	if (spi_poll_busy(chnd, "Page Program") < 0)
-		goto failed_write;
+		ret = -EIO;
 
 	/* No error so far */
 failed_write:
-
 	return ret;
 }
 
@@ -1662,11 +1617,12 @@ static int write_flash(struct common_hnd *chnd, const char *filename,
 static int write_flash2(struct common_hnd *chnd, const char *filename,
 			uint32_t offset)
 {
-	int res, written;
+	int res;
 	int block_write_size = chnd->conf.block_write_size;
 	FILE *hnd;
 	int size = chnd->flash_size;
-	int cnt;
+	int cnt, two_bytes_sent, ret;
+	uint8_t addr_h, addr_m, addr_l, data_ff = 0xff;
 	uint8_t *buffer = malloc(size);
 
 	if (!buffer) {
@@ -1692,30 +1648,92 @@ static int write_flash2(struct common_hnd *chnd, const char *filename,
 	}
 	fclose(hnd);
 
-	offset = 0;
+	/* Enter follow mode */
+	if (spi_flash_follow_mode(chnd, "AAI write") < 0) {
+		ret = -EIO;
+		goto failed_enter_mode;
+	}
+
 	printf("Writing %d bytes at 0x%08x.......\n", res, offset);
+
+__send_aai_cmd:
+	addr_h = (offset >> 16) & 0xff;
+	addr_m = (offset >> 8) & 0xff;
+	addr_l = offset & 0xff;
+
+	/* write enable command */
+	ret = spi_flash_command_short(chnd, SPI_CMD_WRITE_ENABLE, "SPI WE");
+	/* AAI command */
+	ret |= spi_flash_command_short(chnd, SPI_CMD_WORD_PROGRAM, "SPI AAI");
+	/* address of AAI command */
+	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_h, 1, 1);
+	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_m, 1, 1);
+	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &addr_l, 1, 1);
+	/* Send first two bytes of buffe */
+	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &buffer[offset], 1, 1);
+	ret |= i2c_byte_transfer(chnd, I2C_DATA_ADDR, &buffer[offset+1], 1, 1);
+	/* we had sent two bytes */
+	offset += 2;
+	res -= 2;
+	two_bytes_sent = 1;
+	/* Wait until not busy */
+	if (spi_poll_busy(chnd, "wait busy bit cleared at AAI write ") < 0) {
+		ret = -EIO;
+		goto failed_write;
+	}
+	/* enable quick AAI mode */
+	ret |= i2c_write_byte(chnd, 0x10, 0x20);
+	if (ret < 0)
+		goto failed_write;
+
 	while (res) {
 		cnt = (res > block_write_size) ? block_write_size : res;
-		written = command_write_pages2(chnd, offset, cnt,
-			&buffer[offset], block_write_size);
-		if (written == -EIO)
+		/* we had sent two bytes */
+		if (two_bytes_sent) {
+			two_bytes_sent = 0;
+			cnt -= 2;
+		}
+		if (i2c_byte_transfer(chnd, I2C_BLOCK_ADDR, &buffer[offset],
+			1, cnt) < 0) {
+			ret = -EIO;
 			goto failed_write;
+		}
 
 		res -= cnt;
 		offset += cnt;
 		draw_spinner(res, res + offset);
+
+		/* We need to resend aai write command at 256KB boundary. */
+		if (!(offset % 0x40000) && res) {
+			/* disable quick AAI mode */
+			i2c_byte_transfer(chnd, I2C_DATA_ADDR, &data_ff, 1, 1);
+			i2c_write_byte(chnd, 0x10, 0x00);
+			/* write disable command */
+			spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
+				"SPI write disable");
+			goto __send_aai_cmd;
+		}
 	}
 
-	if (written != res) {
 failed_write:
-		fprintf(stderr, "%s: Error writing to flash\n", __func__);
-		free(buffer);
-		return -EIO;
-	}
-	printf("\n\rWriting Done.\n");
+	/* disable quick AAI mode */
+	i2c_byte_transfer(chnd, I2C_DATA_ADDR, &data_ff, 1, 1);
+	i2c_write_byte(chnd, 0x10, 0x00);
+	/* write disable command */
+	spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
+		"SPI write disable");
+failed_enter_mode:
+	/* exit follow mode */
+	spi_flash_follow_mode_exit(chnd, "AAI write");
+
+	if (ret < 0)
+		printf("\n\rWriting Failed.\n");
+	else
+		printf("\n\rWriting Done.\n");
+
 	free(buffer);
 
-	return 0;
+	return ret;
 }
 
 /*
@@ -1728,14 +1746,14 @@ failed_write:
 static int write_flash3(struct common_hnd *chnd, const char *filename,
 			uint32_t offset)
 {
-	int res, written;
+	int res, ret = 0;
 	int block_write_size = chnd->conf.block_write_size;
 	FILE *hnd;
 	int size = chnd->flash_size;
 	int cnt;
-	uint8_t *buffer = malloc(size);
+	uint8_t *buf = malloc(size);
 
-	if (!buffer) {
+	if (!buf) {
 		fprintf(stderr, "%s: Cannot allocate %d bytes\n", __func__,
 			size);
 		return -ENOMEM;
@@ -1745,43 +1763,53 @@ static int write_flash3(struct common_hnd *chnd, const char *filename,
 	if (!hnd) {
 		fprintf(stderr, "%s: Cannot open file %s for reading\n",
 			__func__, filename);
-		free(buffer);
+		free(buf);
 		return -EIO;
 	}
-	res = fread(buffer, 1, size, hnd);
+	res = fread(buf, 1, size, hnd);
 	if (res <= 0) {
 		fprintf(stderr, "%s: Failed to read %d bytes from %s with "
 			"ferror() %d\n", __func__, size, filename, ferror(hnd));
 		fclose(hnd);
-		free(buffer);
+		free(buf);
 		return -EIO;
 	}
 	fclose(hnd);
 
-	offset = 0;
 	printf("Writing %d bytes at 0x%08x.......\n", res, offset);
+
+	/* Enter follow mode */
+	ret = spi_flash_follow_mode(chnd, "Page program");
+	if (ret < 0)
+		goto failed_write;
+
+	/* Page program instruction allows up to 256 bytes */
+	if (block_write_size > 256)
+		block_write_size = 256;
+
 	while (res) {
-		cnt = (res > 256) ? 256 : res;
-		written = command_write_pages3(chnd, offset, cnt,
-			&buffer[offset], block_write_size);
-		if (written == -EIO)
+		cnt = (res > block_write_size) ? block_write_size : res;
+		if (command_write_pages3(chnd, offset, cnt, &buf[offset]) < 0) {
+			ret = -EIO;
 			goto failed_write;
+		}
 
 		res -= cnt;
 		offset += cnt;
 		draw_spinner(res, res + offset);
 	}
 
-	if (written != res) {
 failed_write:
+	free(buf);
+	spi_flash_command_short(chnd, SPI_CMD_WRITE_DISABLE,
+		"SPI write disable");
+	spi_flash_follow_mode_exit(chnd, "Page program");
+	if (ret < 0)
 		fprintf(stderr, "%s: Error writing to flash\n", __func__);
-		free(buffer);
-		return -EIO;
-	}
-	printf("\n\rWriting Done.\n");
-	free(buffer);
+	else
+		printf("\n\rWriting Done.\n");
 
-	return 0;
+	return ret;
 }
 
 
@@ -2277,6 +2305,9 @@ int main(int argc, char **argv)
 		if (send_special_waveform(&chnd))
 			goto return_after_init;
 	} else {
+		/* Stop EC ASAP after sending special waveform. */
+		dbgr_stop_ec(&chnd);
+
 		ret = check_chipid(&chnd);
 		if (ret) {
 			fprintf(stderr, "Failed to get ITE chip ID.  This "
@@ -2285,6 +2316,9 @@ int main(int argc, char **argv)
 			goto return_after_init;
 		}
 	}
+
+	/* Turn off power rails by reset GPIOs to default (input). */
+	dbgr_reset_gpio(&chnd);
 
 	check_flashid(&chnd);
 
@@ -2355,8 +2389,12 @@ int main(int argc, char **argv)
 	ret = 0;
 
  return_after_init:
-	/* Enable EC Host Global Reset to reset EC resource and EC domain. */
-	dbgr_reset(&chnd, RSTS_VCCDO_PW_ON|RSTS_HGRST|RSTS_GRST);
+	/*
+	 * Exit DBGR mode. This ensures EC won't hold clock/data pins of I2C.
+	 * Avoid resetting EC here because flash_ec will after iteflash exits.
+	 * This avoids double reset after flash sequence.
+	 */
+	exit_dbgr_mode(&chnd);
 
 	if (chnd.conf.i2c_mux) {
 		printf("configuring I2C MUX to none.\n");

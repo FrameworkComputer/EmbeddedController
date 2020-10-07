@@ -809,6 +809,9 @@ const struct tcpm_drv anx7447_tcpm_drv = {
 	.select_rp_value	= &tcpci_tcpm_select_rp_value,
 	.set_cc			= &anx7447_set_cc,
 	.set_polarity		= &anx7447_set_polarity,
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	.sop_prime_disable	= &tcpci_tcpm_sop_prime_disable,
+#endif
 	.set_vconn		= &tcpci_tcpm_set_vconn,
 	.set_msg_header		= &tcpci_tcpm_set_msg_header,
 	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,

@@ -155,6 +155,8 @@ int fp_sensor_init(void)
 	/* Print the BEP version and build time of the library */
 	CPRINTS("Build information - %s", fp_sensor_get_build_info());
 
+	errors = FP_ERROR_DEAD_PIXELS_UNKNOWN;
+
 	rc = fp_sensor_open();
 	if (rc) {
 		errors |= FP_ERROR_INIT_FAIL;
@@ -264,4 +266,9 @@ int fp_finger_enroll(uint8_t *image, int *completion)
 	*completion = bio_enrollment_get_percent_complete(bio_enroll);
 
 	return rc;
+}
+
+int fp_maintenance(void)
+{
+	return fpc_fp_maintenance(&errors);
 }

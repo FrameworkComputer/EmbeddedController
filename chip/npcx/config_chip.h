@@ -15,6 +15,7 @@
  */
 #define NPCX_FAMILY_NPCX5        5000
 #define NPCX_FAMILY_NPCX7        7000
+#define NPCX_FAMILY_NPCX9        9000
 
 /* Features depend on chip family */
 #if defined(CHIP_FAMILY_NPCX5)
@@ -23,6 +24,9 @@
 #elif defined(CHIP_FAMILY_NPCX7)
 #include "config_chip-npcx7.h"
 #define NPCX_FAMILY_VERSION      NPCX_FAMILY_NPCX7
+#elif defined(CHIP_FAMILY_NPCX9)
+#include "config_chip-npcx9.h"
+#define NPCX_FAMILY_VERSION      NPCX_FAMILY_NPCX9
 #else
 #error "Unsupported chip family"
 #endif

@@ -1,0 +1,59 @@
+# Copyright 2020 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC
+	bool "Enable building code from the platform/ec Zephyr module"
+	imply PRINTK
+	imply SHELL
+	help
+	  The platform/ec Zephyr module allows some code from the
+	  existing Chrome OS EC project to be "shimmed" into Zephyr.
+
+if PLATFORM_EC
+
+# Below is a hack to use CONFIG_ZEPHYR in platform/ec code before
+# config.h has been included.  There is some tricky ordering in some
+# header files that we cannot use config.h (e.g., common.h and
+# compile_time_macros.h), as many board.h and config_chip.h files
+# use these macros, and thus would be included by an include of
+# config.h.  We work around this by initially defining CONFIG_ZEPHYR
+# in Kconfig as an invisible symbol (it should always be enabled).
+# Then, once config.h gets included, it subsequently gets undef'ed by
+# config.h, and then redefined by config_chip.h in the Zephyr shim.
+config ZEPHYR
+	bool
+	default y
+	help
+	  This should always be enabled.  It's a workaround for
+	  config.h not being available in some headers.
+
+menuconfig PLATFORM_EC_TIMER
+	bool "Enable the EC timer module"
+	default y
+	help
+	  Enable compilation of the EC timer module
+
+if PLATFORM_EC_TIMER
+
+config PLATFORM_EC_TIMER_CMD_GETTIME
+	bool "Enable the gettime command"
+	default y
+	help
+	  Enable the "gettime" command
+
+config PLATFORM_EC_TIMER_CMD_TIMERINFO
+	bool "Enable the timerinfo command"
+	default y
+	help
+	  Enable the "timerinfo" command
+
+config PLATFORM_EC_TIMER_CMD_WAITMS
+	bool "Enable the waitms command"
+	default y
+	help
+	  Enable the "waitms" command
+
+endif # PLATFORM_EC_TIMER
+
+endif # PLATFORM_EC

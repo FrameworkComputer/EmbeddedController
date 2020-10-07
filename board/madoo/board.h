@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Waddledoo board configuration */
+/* Madoo board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -18,7 +18,6 @@
 #define CONFIG_SYSTEM_UNLOCKED
 
 /* Charger */
-#define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_RAA489000
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
@@ -30,24 +29,24 @@
 #define CONFIG_CMD_TCPC_DUMP
 #define CONFIG_CMD_CHARGER_DUMP
 
+/* GPIO for C1 interrupts, for baseboard use */
+#define GPIO_USB_C1_INT_ODL GPIO_SUB_USB_C1_INT_ODL
+
 /* Keyboard */
 #define CONFIG_PWM_KBLIGHT
 
-/* LED */
-#define CONFIG_LED_PWM
-#define CONFIG_LED_PWM_COUNT 1
-#undef CONFIG_LED_PWM_NEAR_FULL_COLOR
-#undef CONFIG_LED_PWM_SOC_ON_COLOR
-#undef CONFIG_LED_PWM_SOC_SUSPEND_COLOR
-#undef CONFIG_LED_PWM_LOW_BATT_COLOR
-#define CONFIG_LED_PWM_NEAR_FULL_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_SOC_ON_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_SOC_SUSPEND_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_LOW_BATT_COLOR EC_LED_COLOR_AMBER
+/* PWM */
+#define CONFIG_PWM
+#define NPCX7_PWM1_SEL    0  /* GPIO C2 is not used as PWM1. */
 
 /* USB */
 #define CONFIG_BC12_DETECT_PI3USB9201
 #define CONFIG_USBC_RETIMER_NB7V904M
+
+/* LED */
+#define CONFIG_LED_COMMON
+#define CONFIG_LED_POWER_LED
+#define CONFIG_LED_ONOFF_STATES
 
 /* USB PD */
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
@@ -76,22 +75,12 @@
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50 /* 7b address */
 
-/*
- * I2C pin names for baseboard
- *
- * Note: these lines will be set as i2c on start-up, but this should be
- * okay since they're ODL.
- */
-#define GPIO_EC_I2C_SUB_USB_C1_SCL GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL
-#define GPIO_EC_I2C_SUB_USB_C1_SDA GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL
-
 /* Sensors */
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 
 #define CONFIG_ACCEL_BMA255		/* Lid accel */
-#define CONFIG_ACCELGYRO_BMI160		/* Base accel */
-#define CONFIG_SYNC			/* Camera VSYNC */
+#define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
 
 /* Lid operates in forced mode, base in FIFO */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
@@ -100,9 +89,6 @@
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 
 #define CONFIG_ACCEL_INTERRUPTS
-#define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-#define CONFIG_SYNC_INT_EVENT TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
 
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
@@ -113,11 +99,22 @@
 #define CONFIG_TABLET_MODE_SWITCH
 #define CONFIG_GMR_TABLET_MODE
 
+#define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
 
 #define CONFIG_BATTERY_DEVICE_CHEMISTRY "LION"
 #define CONFIG_BATTERY_FUEL_GAUGE
+
+#define CONFIG_USB_MUX_RUNTIME_CONFIG
+
+/* Thermistors */
+#define CONFIG_TEMP_SENSOR
+#define CONFIG_THERMISTOR
+#define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
+#define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_EN_PP3300_A
 
 #ifndef __ASSEMBLER__
 
@@ -142,14 +139,17 @@ enum sensor_id {
 	LID_ACCEL,
 	BASE_ACCEL,
 	BASE_GYRO,
-	VSYNC,
 	SENSOR_COUNT
+};
+
+enum temp_sensor_id {
+	TEMP_SENSOR_1,
+	TEMP_SENSOR_2,
+	TEMP_SENSOR_COUNT
 };
 
 enum pwm_channel {
 	PWM_CH_KBLIGHT,
-	PWM_CH_LED1_AMBER,
-	PWM_CH_LED2_WHITE,
 	PWM_CH_COUNT,
 };
 
@@ -161,6 +161,12 @@ enum battery_type {
 	BATTERY_DynaPack_COS,
 	BATTERY_DANAPACK_ATL,
 	BATTERY_TYPE_COUNT,
+};
+
+/* Keyboard type */
+enum fw_config_keyboard_type {
+	COMMON_KB = 0,
+	CUST_UK2_KB = 1,
 };
 
 int board_is_sourcing_vbus(int port);

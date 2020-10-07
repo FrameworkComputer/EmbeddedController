@@ -14,6 +14,7 @@ common-y+=version.o printf.o queue.o queue_policies.o
 
 common-$(CONFIG_ACCELGYRO_BMI160)+=math_util.o
 common-$(CONFIG_ACCELGYRO_BMI260)+=math_util.o
+common-$(CONFIG_ACCELGYRO_ICM426XX)+=math_util.o
 common-$(CONFIG_ACCELGYRO_LSM6DS0)+=math_util.o
 common-$(CONFIG_ACCELGYRO_LSM6DSM)+=math_util.o
 common-$(CONFIG_ACCELGYRO_LSM6DSO)+=math_util.o
@@ -43,6 +44,7 @@ common-$(CONFIG_BATTERY)+=battery.o
 common-$(CONFIG_BATTERY_FUEL_GAUGE)+=battery_fuel_gauge.o
 common-$(CONFIG_BLUETOOTH_LE)+=bluetooth_le.o
 common-$(CONFIG_BLUETOOTH_LE_STACK)+=btle_hci_controller.o btle_ll.o
+common-$(CONFIG_BODY_DETECTION)+=body_detection.o
 common-$(CONFIG_CAPSENSE)+=capsense.o
 common-$(CONFIG_CEC)+=cec.o
 common-$(CONFIG_CROS_BOARD_INFO)+=cbi.o
@@ -56,7 +58,7 @@ common-$(CONFIG_CMD_I2CWEDGE)+=i2c_wedge.o
 common-$(CONFIG_COMMON_GPIO)+=gpio.o gpio_commands.o
 common-$(CONFIG_IO_EXPANDER)+=ioexpander.o
 common-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic_output.o
-common-$(CONFIG_COMMON_RUNTIME)+=hooks.o main.o system.o peripheral.o
+common-$(CONFIG_COMMON_RUNTIME)+=hooks.o main.o system.o peripheral.o init_rom.o
 common-$(CONFIG_COMMON_TIMER)+=timer.o
 common-$(CONFIG_CRC8)+= crc8.o
 common-$(CONFIG_CURVE25519)+=curve25519.o
@@ -120,7 +122,7 @@ common-$(CONFIG_RWSIG_TYPE_RWSIG)+=vboot/vb21_lib.o
 common-$(CONFIG_MATH_UTIL)+=math_util.o
 common-$(CONFIG_ONLINE_CALIB)+=stillness_detector.o kasa.o math_util.o \
 	mat44.o vec3.o newton_fit.o accel_cal.o online_calibration.o \
-	mkbp_event.o mag_cal.o math_util.o mat33.o
+	mkbp_event.o mag_cal.o math_util.o mat33.o gyro_cal.o gyro_still_det.o
 common-$(CONFIG_SHA1)+= sha1.o
 common-$(CONFIG_SHA256)+=sha256.o
 common-$(CONFIG_SOFTWARE_CLZ)+=clz.o
@@ -141,6 +143,7 @@ common-$(CONFIG_USB_CONSOLE_STREAM)+=usb_console_stream.o
 common-$(CONFIG_USB_I2C)+=usb_i2c.o
 common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
+common-$(CONFIG_HAS_TASK_PD_INT)+=usbc_intr_task.o
 ifneq ($(CONFIG_USB_POWER_DELIVERY),)
 common-$(CONFIG_USB_POWER_DELIVERY)+=usb_common.o
 ifneq ($(CONFIG_USB_PD_TCPMV1),)
@@ -208,11 +211,11 @@ endif
 
 else
 
-# generate a dummy bootblock file
-BOOTBLOCK := $(out)/.dummy-bootblock
+# generate a fake bootblock file
+BOOTBLOCK := $(out)/.fake-bootblock
 
-.PHONY: $(out)/.dummy-bootblock
-$(out)/.dummy-bootblock:
+.PHONY: $(out)/.fake-bootblock
+$(out)/.fake-bootblock:
 	@dd if=/dev/zero of=$@ bs=1 count=$(DEFAULT_BOOTBLOCK_SIZE) status=none
 
 endif # BOOTBLOCK

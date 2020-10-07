@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+#define CC_DEFAULT (CC_ALL & ~(CC_MASK(CC_HOSTCMD) | CC_MASK(CC_IPI)))
+
 #define CONFIG_FLASH_SIZE 0x58000
 #define CONFIG_LTO
 #define CONFIG_UART_CONSOLE 0

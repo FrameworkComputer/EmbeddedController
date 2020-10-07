@@ -15,6 +15,7 @@
 #include "math_util.h"
 #include "motion_lid.h"
 #include "motion_sense.h"
+#include "tablet_mode.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LIDANGLE, outstr)
@@ -164,6 +165,18 @@ static void enable_peripherals(void)
 	lid_angle_peripheral_enable(1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_peripherals, HOOK_PRIO_DEFAULT);
+
+#ifdef CONFIG_TABLET_MODE
+static void suspend_peripherals(void)
+{
+	/*
+	 * Make sure peripherals are disabled in S3 in tablet mode.
+	 */
+	if (tablet_get_mode())
+		lid_angle_peripheral_enable(0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, suspend_peripherals, HOOK_PRIO_DEFAULT);
+#endif /* CONFIG_TABLET_MODE */
 
 /* Board level callback was not linked in test build, implement it here. */
 #ifdef TEST_BUILD

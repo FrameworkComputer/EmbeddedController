@@ -22,7 +22,7 @@ GPIO_INT(EC_WP_L,		PIN(5, 0), GPIO_INT_BOTH,			switch_interrupt)
 GPIO_INT(VOLDN_BTN_ODL,		PIN(A, 6), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
 GPIO_INT(VOLUP_BTN_ODL,		PIN(9, 5), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
 GPIO_INT(6AXIS_INT_L,		PIN(A, 0), GPIO_INT_FALLING | GPIO_PULL_UP,	lsm6dsm_interrupt)
-GPIO_INT(HDMI_CONN_HPD_3V3,	PIN(D, 4), GPIO_INT_BOTH,	hdmi_hpd_interrupt)
+GPIO_INT(HDMI_CONN_HPD_3V3,	PIN(D, 4), GPIO_INT_BOTH | GPIO_PULL_UP,	hdmi_hpd_interrupt)
 
 /* GPIO_INT_BOTH is required for PSL wake from hibernate, but we don't need an interrupt handler. */
 GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
@@ -52,6 +52,10 @@ UNIMPLEMENTED(PCH_SMI_L)
 GPIO(LED_FULL_L,		PIN(6, 0), GPIO_OUT_HIGH)
 GPIO(LED_CHRG_L,		PIN(C, 0), GPIO_OUT_HIGH)
 GPIO(LED3_PWM,			PIN(C, 3), GPIO_OUT_HIGH)
+
+/* LTE control */
+GPIO(LTE_EN,            PIN(6, 2), GPIO_OUT_LOW)           /* WWAN LET Fuction enable */
+GPIO(LTE_W_DISABLE_L,   PIN(4, 0), GPIO_OUT_LOW)           /* WWAN LET flight mode */
 
 /*
  * Vilboz has only 1 HDMI DB option

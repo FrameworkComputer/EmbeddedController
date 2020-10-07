@@ -22,6 +22,13 @@
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_FLASH_SIZE (512 * 1024)  /* 512KB internal spi flash */
 
+/* Switchcap */
+#define CONFIG_LN9310
+
+/* Keyboard */
+#define CONFIG_KEYBOARD_BOARD_CONFIG
+#define CONFIG_PWM_KBLIGHT
+
 /* Battery */
 #define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
@@ -31,14 +38,19 @@
 #define CONFIG_BC12_DETECT_PI3USB9201
 
 /* USB */
+#define CONFIG_USB_PD_TCPM_MULTI_PS8XXX
 #define CONFIG_USB_PD_TCPM_PS8751
+#define CONFIG_USB_PD_TCPM_PS8805
 #define CONFIG_USBC_PPC_SN5S330
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
 
 /* USB-A */
 #define USB_PORT_COUNT 1
 #define CONFIG_USB_PORT_POWER_DUMB
 
 /* Sensors */
+#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
+
 /* BMI160 Base accel/gyro */
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCEL_INTERRUPTS
@@ -61,7 +73,11 @@
 #define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
 
 /* GPIO alias */
+#define GPIO_AC_PRESENT GPIO_ACOK_OD
+#define GPIO_WP_L GPIO_EC_WP_ODL
 #define GPIO_PMIC_RESIN_L GPIO_PM845_RESIN_L
+#define GPIO_SWITCHCAP_PG_INT_L GPIO_DA9313_GPIO0
+#define GPIO_SWITCHCAP_ON_L GPIO_SWITCHCAP_ON
 
 #ifndef __ASSEMBLER__
 
@@ -94,9 +110,16 @@ enum battery_type {
 	BATTERY_AP16L5J,
 	BATTERY_AP16L5J_009,
 	BATTERY_AP16L8J,
+	BATTERY_LGC_AP18C8K,
+	BATTERY_MURATA_AP18C4K,
 	BATTERY_TYPE_COUNT,
 };
 
+/* Swithcap functions */
+void board_set_switchcap_power(int enable);
+int board_is_switchcap_enabled(void);
+int board_is_switchcap_power_good(void);
+enum battery_cell_type board_get_battery_cell_type(void);
 /* Custom function to indicate if sourcing VBUS */
 int board_is_sourcing_vbus(int port);
 /* Enable VBUS sink for a given port */

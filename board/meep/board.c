@@ -9,6 +9,7 @@
 #include "adc_chip.h"
 #include "battery.h"
 #include "button.h"
+#include "cbi_ssfc.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
@@ -32,7 +33,6 @@
 #include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
-#include "stdbool.h"
 #include "switch.h"
 #include "system.h"
 #include "tablet_mode.h"
@@ -57,20 +57,21 @@ should not be defined."
 #endif
 
 static uint8_t sku_id;
-static bool support_syv_ppc;
+static int c0_port_ppc;
+static int c1_port_ppc;
 
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_PD_C0_INT_ODL:
-		if (support_syv_ppc)
+		if (c0_port_ppc == PPC_SYV682X)
 			syv682x_interrupt(0);
 		else
 			nx20p348x_interrupt(0);
 		break;
 
 	case GPIO_USB_PD_C1_INT_ODL:
-		if (support_syv_ppc)
+		if (c1_port_ppc == PPC_SYV682X)
 			syv682x_interrupt(1);
 		else
 			nx20p348x_interrupt(1);
@@ -252,9 +253,38 @@ static void board_update_sensor_config_from_sku(void)
 	}
 }
 
-static bool board_is_support_syv_ppc(uint32_t board_version)
+static int get_ppc_port_config(uint32_t board_version, int port)
 {
-	return ((board_version >= 6) && gpio_get_level(GPIO_PPC_ID));
+	switch (port) {
+	/*
+	 * Meep C0 port PPC was configrated by PPC ID pin only.
+	 */
+	case USB_PD_PORT_TCPC_0:
+		if ((board_version >= 6) && gpio_get_level(GPIO_PPC_ID))
+			return PPC_SYV682X;
+		else
+			return PPC_NX20P348X;
+	/*
+	 * Meep C1 port PPC was configrated by PPC ID pin or SSFC,
+	 * The first of all we should check SSFC with priority one,
+	 * then check PPC ID if board is unalbe to get SSFC.
+	 */
+	case USB_PD_PORT_TCPC_1:
+		switch (get_cbi_ssfc_ppc_p1()) {
+		case SSFC_PPC_P1_DEFAULT:
+			if ((board_version >= 6) && gpio_get_level(GPIO_PPC_ID))
+				return PPC_SYV682X;
+			else
+				return PPC_NX20P348X;
+		case SSFC_PPC_P1_SYV682X:
+			return PPC_SYV682X;
+		case SSFC_PPC_P1_NX20P348X:
+		default:
+			return PPC_NX20P348X;
+		}
+	default:
+		return PPC_NX20P348X;
+	}
 }
 
 static void cbi_init(void)
@@ -270,7 +300,8 @@ static void cbi_init(void)
 	if (cbi_get_board_version(&val) == EC_SUCCESS)
 		ccprints("Board Version: %d", val);
 
-	support_syv_ppc = board_is_support_syv_ppc(val);
+	c0_port_ppc = get_ppc_port_config(val, USB_PD_PORT_TCPC_0);
+	c1_port_ppc = get_ppc_port_config(val, USB_PD_PORT_TCPC_1);
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -348,13 +379,29 @@ __override uint32_t board_override_feature_flags0(uint32_t flags0)
 	return (flags0 &= ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
 }
 
-const struct ppc_config_t ppc_syv682x_port0 = {
+__override uint16_t board_get_ps8xxx_product_id(int port)
+{
+	/* Meep variant doesn't have ps8xxx product in the port 0 */
+	if (port == 0)
+		return 0;
+
+	switch (get_cbi_ssfc_tcpc_p1()) {
+	case SSFC_TCPC_P1_PS8755:
+		return PS8755_PRODUCT_ID;
+	case SSFC_TCPC_P1_DEFAULT:
+	case SSFC_TCPC_P1_PS8751:
+	default:
+		return PS8751_PRODUCT_ID;
+	}
+}
+
+static const struct ppc_config_t ppc_syv682x_port0 = {
 		.i2c_port = I2C_PORT_TCPC0,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
 		.drv = &syv682x_drv,
 };
 
-const struct ppc_config_t ppc_syv682x_port1 = {
+static const struct ppc_config_t ppc_syv682x_port1 = {
 		.i2c_port = I2C_PORT_TCPC1,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
 		.drv = &syv682x_drv,
@@ -362,13 +409,28 @@ const struct ppc_config_t ppc_syv682x_port1 = {
 
 static void board_setup_ppc(void)
 {
-	if (support_syv_ppc) {
+	if (c0_port_ppc == PPC_SYV682X) {
 		memcpy(&ppc_chips[USB_PD_PORT_TCPC_0],
-		       &ppc_syv682x_port0,
-		       sizeof(struct ppc_config_t));
+			   &ppc_syv682x_port0,
+			   sizeof(struct ppc_config_t));
+
+		gpio_set_flags(GPIO_USB_PD_C0_INT_ODL, GPIO_INT_BOTH);
+	}
+
+	if (c1_port_ppc == PPC_SYV682X) {
 		memcpy(&ppc_chips[USB_PD_PORT_TCPC_1],
-		       &ppc_syv682x_port1,
-		       sizeof(struct ppc_config_t));
+			   &ppc_syv682x_port1,
+			   sizeof(struct ppc_config_t));
+
+		gpio_set_flags(GPIO_USB_PD_C1_INT_ODL, GPIO_INT_BOTH);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_setup_ppc, HOOK_PRIO_INIT_I2C + 2);
+
+int ppc_get_alert_status(int port)
+{
+	if (port == 0)
+		return gpio_get_level(GPIO_USB_PD_C0_INT_ODL) == 0;
+
+	return gpio_get_level(GPIO_USB_PD_C1_INT_ODL) == 0;
+}

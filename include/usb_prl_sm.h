@@ -12,11 +12,6 @@
 #include "usb_pd_tcpm.h"
 #include "usb_sm.h"
 
-/*
- * Number of times the Protocol Layer will try to transmit a message
- * before giving up and signaling an error
- */
-#define N_RETRY_COUNT 2
 
 /**
  * Returns true if Protocol Layer State Machine is in run mode
@@ -25,6 +20,15 @@
  * @return 1 if state machine is running, else 0
  */
 int prl_is_running(int port);
+
+/**
+ * Returns true if the Protocol Layer State Machine is in the
+ * process of transmitting or receiving chunked messages.
+ *
+ * @param port USB-C port number
+ * @return true if sending or receiving a chunked message, else false
+ */
+bool prl_is_busy(int port);
 
 /**
  * Sets the debug level for the PRL layer
@@ -129,6 +133,17 @@ enum pd_ctrl_msg_type fake_prl_get_last_sent_ctrl_msg(int port);
  * Fake to set the last sent control message to an invalid value.
  */
 void fake_prl_clear_last_sent_ctrl_msg(int port);
+
+/**
+ * Get the type of the last sent data message on the given port.
+ */
+enum pd_data_msg_type fake_prl_get_last_sent_data_msg_type(int port);
+
+/**
+ * Clear the last sent data message on the given port to an invalid value,
+ * making it possible to check that two of the same message were sent in order.
+ */
+void fake_prl_clear_last_sent_data_msg(int port);
 #endif
 
 #endif /* __CROS_EC_USB_PRL_H */

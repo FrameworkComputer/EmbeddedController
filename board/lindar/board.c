@@ -4,15 +4,19 @@
  */
 
 /* Malefor board-specific configuration */
-
+#include "bb_retimer.h"
 #include "button.h"
 #include "cbi_ec_fw_config.h"
 #include "common.h"
+#include "driver/accel_lis2dh.h"
+#include "driver/accelgyro_lsm6dsm.h"
+#include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/ppc/syv682x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
+#include "driver/tcpm/tusb422.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -29,6 +33,9 @@
 #include "task.h"
 #include "tablet_mode.h"
 #include "uart.h"
+#include "usb_mux.h"
+#include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -37,6 +44,23 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
 
+/* Keyboard scan setting */
+struct keyboard_scan_config keyscan_config = {
+	/* Increase from 50 us, because KSO_02 passes through the H1. */
+	.output_settle_us = 80,
+	/* Other values should be the same as the default configuration. */
+	.debounce_down_us = 9 * MSEC,
+	.debounce_up_us = 30 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+	.actual_key_mask = {
+		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
+	},
+};
+
+/******************************************************************************/
 /*
  * FW_CONFIG defaults for Malefor if the CBI data is not initialized.
  */
@@ -46,6 +70,17 @@ union volteer_cbi_fw_config fw_config_defaults = {
 
 static void board_init(void)
 {
+	if (ec_cfg_has_tabletmode()) {
+		/* Enable gpio interrupt for base accelgyro sensor */
+		gpio_enable_interrupt(GPIO_EC_IMU_INT_L);
+	} else {
+		motion_sensor_count = 0;
+		/* Device is clamshell only */
+		tablet_set_mode(0);
+		/* Gyro is not present, don't allow line to float */
+		gpio_set_flags(GPIO_EC_IMU_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
+	}
+
 	/*
 	 * TODO: b/154447182 - Malefor will control power LED and battery LED
 	 * independently, and keep the max brightness of power LED and battery
@@ -56,6 +91,128 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+int board_is_lid_angle_tablet_mode(void)
+{
+	return ec_cfg_has_tabletmode();
+}
+
+/* Enable or disable input devices, based on tablet mode or chipset state */
+#ifndef TEST_BUILD
+void lid_angle_peripheral_enable(int enable)
+{
+	if (ec_cfg_has_tabletmode()) {
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF) ||
+			tablet_get_mode())
+			enable = 0;
+		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
+	}
+}
+#endif
+
+/******************************************************************************/
+/* Sensors */
+/* Lid and base Sensor mutex */
+static struct mutex g_lid_accel_mutex;
+static struct mutex g_base_mutex;
+
+/* Lid and base accel private data */
+static struct stprivate_data g_lis2dh_data;
+static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
+
+/* Matrix to rotate lid and base sensor into standard reference frame */
+static const mat33_fp_t lid_standard_ref = {
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+static const mat33_fp_t base_standard_ref = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+struct motion_sensor_t motion_sensors[] = {
+	[LID_ACCEL] = {
+		.name = "Lid Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_LIS2DE,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &lis2dh_drv,
+		.mutex = &g_lid_accel_mutex,
+		.drv_data = &g_lis2dh_data,
+		.port = I2C_PORT_SENSOR,
+		.i2c_spi_addr_flags = LIS2DH_ADDR1_FLAGS,
+		.rot_standard_ref = &lid_standard_ref,
+		.min_frequency = LIS2DH_ODR_MIN_VAL,
+		.max_frequency = LIS2DH_ODR_MAX_VAL,
+		.default_range = 2, /* g, to support tablet mode */
+		.config = {
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+			/* Sensor on in S3 */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+		},
+	},
+
+	[BASE_ACCEL] = {
+		.name = "Base Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_LSM6DSM,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_BASE,
+		.drv = &lsm6dsm_drv,
+		.mutex = &g_base_mutex,
+		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+				MOTIONSENSE_TYPE_ACCEL),
+		.int_signal = GPIO_EC_IMU_INT_L,
+		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+		.port = I2C_PORT_SENSOR,
+		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+		.rot_standard_ref = &base_standard_ref,
+		.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
+		.min_frequency = LSM6DSM_ODR_MIN_VAL,
+		.max_frequency = LSM6DSM_ODR_MAX_VAL,
+		.config = {
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 13000 | ROUND_UP_FLAG,
+				.ec_rate = 100 * MSEC,
+			},
+			/* Sensor on for angle detection */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+				.ec_rate = 100 * MSEC,
+			},
+		},
+	},
+
+	[BASE_GYRO] = {
+		.name = "Base Gyro",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_LSM6DSM,
+		.type = MOTIONSENSE_TYPE_GYRO,
+		.location = MOTIONSENSE_LOC_BASE,
+		.drv = &lsm6dsm_drv,
+		.mutex = &g_base_mutex,
+		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+				MOTIONSENSE_TYPE_GYRO),
+		.int_signal = GPIO_EC_IMU_INT_L,
+		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+		.port = I2C_PORT_SENSOR,
+		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
+		.rot_standard_ref = &base_standard_ref,
+		.min_frequency = LSM6DSM_ODR_MIN_VAL,
+		.max_frequency = LSM6DSM_ODR_MAX_VAL,
+	},
+};
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /******************************************************************************/
 /* Physical fans. These are logically separate from pwm_channels. */
@@ -88,6 +245,58 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 };
 
 /******************************************************************************/
+/* EC thermal management configuration */
+
+/*
+ * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
+ * 130 C.  However, sensor is located next to DDR, so we need to use the lower
+ * DDR temperature limit (85 C)
+ */
+const static struct ec_thermal_config thermal_cpu = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+	.temp_fan_off = C_TO_K(35),
+	.temp_fan_max = C_TO_K(50),
+};
+
+/*
+ * Inductor limits - used for both charger and PP3300 regulator
+ *
+ * Need to use the lower of the charger IC, PP3300 regulator, and the inductors
+ *
+ * Charger max recommended temperature 100C, max absolute temperature 125C
+ * PP3300 regulator: operating range -40 C to 145 C
+ *
+ * Inductors: limit of 125c
+ * PCB: limit is 80c
+ */
+const static struct ec_thermal_config thermal_inductor = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(55),
+};
+
+
+struct ec_thermal_config thermal_params[] = {
+	[TEMP_SENSOR_1_CHARGER]			= thermal_inductor,
+	[TEMP_SENSOR_2_PP3300_REGULATOR]	= thermal_inductor,
+	[TEMP_SENSOR_3_DDR_SOC]			= thermal_cpu,
+	[TEMP_SENSOR_4_FAN]			= thermal_cpu,
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
+
+/******************************************************************************/
 /* MFT channels. These are logically separate from pwm_channels. */
 const struct mft_t mft_channels[] = {
 	[MFT_CH_0] = {
@@ -101,6 +310,13 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 /******************************************************************************/
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
+	{
+		.name = "sensor",
+		.port = I2C_PORT_SENSOR,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C0_SENSOR_SCL,
+		.sda = GPIO_EC_I2C0_SENSOR_SDA,
+	},
 	{
 		.name = "usb_c0",
 		.port = I2C_PORT_USB_C0,
@@ -239,3 +455,120 @@ void ppc_interrupt(enum gpio_signal signal)
 	}
 }
 
+/******************************************************************************/
+/* BC1.2 charger detect configuration */
+const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
+	[USBC_PORT_C0] = {
+		.i2c_port = I2C_PORT_USB_C0,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+	[USBC_PORT_C1] = {
+		.i2c_port = I2C_PORT_USB_C1,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
+
+/******************************************************************************/
+/* USBC TCPC configuration */
+struct tcpc_config_t tcpc_config[] = {
+	[USBC_PORT_C0] = {
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_USB_C0,
+			.addr_flags = TUSB422_I2C_ADDR_FLAGS,
+		},
+		.drv = &tusb422_tcpm_drv,
+		.usb23 = USBC_PORT_0_USB2_NUM | (USBC_PORT_0_USB3_NUM << 4),
+	},
+	[USBC_PORT_C1] = {
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_USB_C1,
+			.addr_flags = TUSB422_I2C_ADDR_FLAGS,
+		},
+		.drv = &tusb422_tcpm_drv,
+		.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
+BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
+
+/******************************************************************************/
+/* USBC mux configuration - Tiger Lake includes internal mux */
+struct usb_mux usbc1_usb4_db_retimer = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &bb_usb_retimer,
+	.i2c_port = I2C_PORT_USB_1_MIX,
+	.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
+};
+struct usb_mux usb_muxes[] = {
+	[USBC_PORT_C0] = {
+		.usb_port = USBC_PORT_C0,
+		.driver = &virtual_usb_mux_driver,
+		.hpd_update = &virtual_hpd_update,
+	},
+	[USBC_PORT_C1] = {
+		.usb_port = USBC_PORT_C1,
+		.driver = &virtual_usb_mux_driver,
+		.hpd_update = &virtual_hpd_update,
+		.next_mux = &usbc1_usb4_db_retimer,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
+
+struct bb_usb_control bb_controls[] = {
+	[USBC_PORT_C0] = {
+		/* USB-C port 0 doesn't have a retimer */
+	},
+	[USBC_PORT_C1] = {
+		.usb_ls_en_gpio = GPIO_USB_C1_LS_EN,
+		.retimer_rst_gpio = GPIO_USB_C1_RT_RST_ODL,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(bb_controls) == USBC_PORT_COUNT);
+
+static void board_tcpc_init(void)
+{
+	/* Don't reset TCPCs after initial reset */
+	if (!system_jumped_late())
+		board_reset_pd_mcu();
+
+	/* Enable PPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+
+	/* Enable TCPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
+
+	/* Enable BC1.2 interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
+}
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
+
+/******************************************************************************/
+/* TCPC support routines */
+uint16_t tcpc_get_alert_status(void)
+{
+	uint16_t status = 0;
+
+	/*
+	 * Check which port has the ALERT line set
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL))
+		status |= PD_STATUS_TCPC_ALERT_0;
+	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL))
+		status |= PD_STATUS_TCPC_ALERT_1;
+
+	return status;
+}
+
+int ppc_get_alert_status(int port)
+{
+	if (port == USBC_PORT_C0)
+		return gpio_get_level(GPIO_USB_C0_PPC_INT_ODL) == 0;
+	else
+		return gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
+}

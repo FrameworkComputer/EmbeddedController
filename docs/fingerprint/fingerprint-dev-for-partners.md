@@ -207,16 +207,16 @@ You should see something like this. Leave it running:
 2019-04-11 15:21:53,777 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/usb_image_management.xml, None, 0)
 2019-04-11 15:21:53,784 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/servo_zerblebarn_overlay.xml, None, 0)
 2019-04-11 15:21:53,785 - SystemConfig - INFO - Loading XML config (/usr/lib64/python2.7/site-packages/servo/data/servoflex_v2_r0_p50.xml, None, 0)
-2019-04-11 15:21:53,792 - Servod - INFO - Initializing interface 1 to ftdi_dummy
+2019-04-11 15:21:53,792 - Servod - INFO - Initializing interface 1 to ftdi_empty
 2019-04-11 15:21:53,792 - Servod - INFO - Initializing interface 2 to ftdi_i2c
 2019-04-11 15:21:53,795 - Servod - INFO - Initializing interface 3 to ftdi_uart
 2019-04-11 15:21:53,799 - Servod - INFO - /dev/pts/8
 2019-04-11 15:21:53,799 - Servod - INFO - Initializing interface 4 to ftdi_uart
 2019-04-11 15:21:53,802 - Servod - INFO - /dev/pts/9
 2019-04-11 15:21:53,802 - Servod - INFO - Use the next FTDI part @ pid = 0x5003
-2019-04-11 15:21:53,802 - Servod - INFO - Initializing interface 5 to ftdi_dummy
+2019-04-11 15:21:53,802 - Servod - INFO - Initializing interface 5 to ftdi_empty
 2019-04-11 15:21:53,802 - Servod - INFO - Use the next FTDI part @ pid = 0x5003
-2019-04-11 15:21:53,802 - Servod - INFO - Initializing interface 6 to ftdi_dummy
+2019-04-11 15:21:53,802 - Servod - INFO - Initializing interface 6 to ftdi_empty
 2019-04-11 15:21:53,802 - Servod - INFO - Use the next FTDI part @ pid = 0x5003
 2019-04-11 15:21:53,802 - Servod - INFO - Initializing interface 7 to ftdi_uart
 2019-04-11 15:21:53,805 - Servod - INFO - /dev/pts/10
@@ -509,6 +509,9 @@ From the DUT, flash the firmware you copied:
 ```bash
 (device) $ flash_fp_mcu /tmp/ec.bin
 ```
+## Commit-queue Prototype Environment
+
+![Dragonclaw in CQ Prototype Environment]
 
 ## Troubleshooting
 
@@ -628,3 +631,6 @@ Make sure that this interface is disabled:
 
 <!-- https://docs.google.com/drawings/d/1YhOUD-Qf69NUdugT6n0cX7o7CWvb5begcdmJwv7ch6I -->
 [Dragonclaw Rev 0.2 1.8V Rework]: https://github.com/coreboot/chrome-ec/blob/master/docs/images/dragonclaw_rev_0.2_1.8v_load_switch_rework.pdf
+
+<!-- https://docs.google.com/drawings/d/1w2qbb4AsSxY-KTK2vXZ6TKeWHveWvS3Dkgh61ocu0wc -->
+[Dragonclaw in CQ Prototype Environment]: ../images/Dragonclaw_in_CQ_Prototype_Environment.jpg

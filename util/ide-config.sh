@@ -230,9 +230,8 @@ vscode() {
 
 				echo '"compilerPath": "/usr/bin/arm-none-eabi-gcc",'
 				# echo '"compilerArgs": [],'
-				# The macro __STDC_VERSION__ is 201710L,
-				# which is c18. The closest is c11.
-				echo '"cStandard": "c11",'
+				# The macro __STDC_VERSION__ is 201710L, which corresponds to c18.
+				echo '"cStandard": "c18",'
 				# echo '"cppStandard": "c++17",'
 				echo '"intelliSenseMode": "gcc-x64"'
 			} | {

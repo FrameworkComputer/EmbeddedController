@@ -60,14 +60,14 @@ static int spi_tx(const int port, const uint8_t *txdata, int txlen)
 {
 	int i;
 	int ret = EC_SUCCESS;
-	uint8_t dummy __attribute__((unused)) = 0;
+	uint8_t unused __attribute__((unused)) = 0;
 
 	for (i = 0; i < txlen; ++i) {
 		MEC1322_SPI_TD(port) = txdata[i];
 		ret = wait_byte(port);
 		if (ret != EC_SUCCESS)
 			return ret;
-		dummy = MEC1322_SPI_RD(port);
+		unused = MEC1322_SPI_RD(port);
 	}
 
 	return ret;
@@ -103,7 +103,7 @@ int spi_transaction_flush(const struct spi_device_t *spi_device)
 {
 	int port = spi_device->port;
 	int ret = dma_wait(SPI_DMA_CHANNEL(port));
-	uint8_t dummy __attribute__((unused)) = 0;
+	uint8_t unused __attribute__((unused)) = 0;
 
 	timestamp_t deadline;
 
@@ -121,7 +121,7 @@ int spi_transaction_flush(const struct spi_device_t *spi_device)
 	dma_disable(SPI_DMA_CHANNEL(port));
 	dma_clear_isr(SPI_DMA_CHANNEL(port));
 	if (MEC1322_SPI_SR(port) & 0x2)
-		dummy = MEC1322_SPI_RD(port);
+		unused = MEC1322_SPI_RD(port);
 
 	gpio_set_level(spi_device->gpio_cs, 1);
 

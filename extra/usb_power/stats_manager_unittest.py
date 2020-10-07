@@ -22,7 +22,7 @@ class TestStatsManager(unittest.TestCase):
   them in expected format.
   """
 
-  def _populate_dummy_stats(self):
+  def _populate_mock_stats(self):
     """Create a populated & processed StatsManager to test data retrieval."""
     self.data.AddSample('A', 99999.5)
     self.data.AddSample('A', 100000.5)
@@ -34,7 +34,7 @@ class TestStatsManager(unittest.TestCase):
     self.data.SetUnit('B', 'mV')
     self.data.CalculateStats()
 
-  def _populate_dummy_stats_no_unit(self):
+  def _populate_mock_stats_no_unit(self):
     self.data.AddSample('B', 1000)
     self.data.AddSample('A', 200)
     self.data.SetUnit('A', 'blue')
@@ -112,14 +112,14 @@ class TestStatsManager(unittest.TestCase):
 
   def test_GetRawData(self):
     """GetRawData returns exact same data as fed in."""
-    self._populate_dummy_stats()
+    self._populate_mock_stats()
     raw_data = self.data.GetRawData()
     self.assertListEqual([99999.5, 100000.5], raw_data['A'])
     self.assertListEqual([1.5, 2.5, 3.5], raw_data['B'])
 
   def test_GetSummary(self):
     """GetSummary returns expected stats about the data fed in."""
-    self._populate_dummy_stats()
+    self._populate_mock_stats()
     summary = self.data.GetSummary()
     self.assertEqual(2, summary['A']['count'])
     self.assertAlmostEqual(100000.5, summary['A']['max'])
@@ -134,7 +134,7 @@ class TestStatsManager(unittest.TestCase):
 
   def test_SaveRawData(self):
     """SaveRawData stores same data as fed in."""
-    self._populate_dummy_stats()
+    self._populate_mock_stats()
     dirname = 'unittest_raw_data'
     expected_files = set(['A_mW.txt', 'B_mV.txt'])
     fnames = self.data.SaveRawData(self.tempdir, dirname)
@@ -156,7 +156,7 @@ class TestStatsManager(unittest.TestCase):
 
   def test_SaveRawDataNoUnit(self):
     """SaveRawData appends no unit suffix if the unit is not specified."""
-    self._populate_dummy_stats_no_unit()
+    self._populate_mock_stats_no_unit()
     self.data.CalculateStats()
     outdir = 'unittest_raw_data'
     files = self.data.SaveRawData(self.tempdir, outdir)
@@ -168,7 +168,7 @@ class TestStatsManager(unittest.TestCase):
     """SaveRawData uses the smid when creating output filename."""
     identifier = 'ec'
     self.data = stats_manager.StatsManager(smid=identifier)
-    self._populate_dummy_stats()
+    self._populate_mock_stats()
     files = self.data.SaveRawData(self.tempdir)
     for fname in files:
       self.assertTrue(os.path.basename(fname).startswith(identifier))
@@ -202,7 +202,7 @@ class TestStatsManager(unittest.TestCase):
     """Title shows up in SummaryToString if title specified."""
     title = 'titulo'
     data = stats_manager.StatsManager(title=title)
-    self._populate_dummy_stats()
+    self._populate_mock_stats()
     summary_str = data.SummaryToString()
     self.assertIn(title, summary_str)
 
@@ -241,7 +241,7 @@ class TestStatsManager(unittest.TestCase):
 
   def test_SaveSummary(self):
     """SaveSummary properly dumps the summary into a file."""
-    self._populate_dummy_stats()
+    self._populate_mock_stats()
     fname = 'unittest_summary.txt'
     expected_fname = os.path.join(self.tempdir, fname)
     fname = self.data.SaveSummary(self.tempdir, fname)
@@ -265,13 +265,13 @@ class TestStatsManager(unittest.TestCase):
     """SaveSummary uses the smid when creating output filename."""
     identifier = 'ec'
     self.data = stats_manager.StatsManager(smid=identifier)
-    self._populate_dummy_stats()
+    self._populate_mock_stats()
     fname = os.path.basename(self.data.SaveSummary(self.tempdir))
     self.assertTrue(fname.startswith(identifier))
 
   def test_SaveSummaryJSON(self):
     """SaveSummaryJSON saves the added data properly in JSON format."""
-    self._populate_dummy_stats()
+    self._populate_mock_stats()
     fname = 'unittest_summary.json'
     expected_fname = os.path.join(self.tempdir, fname)
     fname = self.data.SaveSummaryJSON(self.tempdir, fname)
@@ -291,13 +291,13 @@ class TestStatsManager(unittest.TestCase):
     """SaveSummaryJSON uses the smid when creating output filename."""
     identifier = 'ec'
     self.data = stats_manager.StatsManager(smid=identifier)
-    self._populate_dummy_stats()
+    self._populate_mock_stats()
     fname = os.path.basename(self.data.SaveSummaryJSON(self.tempdir))
     self.assertTrue(fname.startswith(identifier))
 
   def test_SaveSummaryJSONNoUnit(self):
     """SaveSummaryJSON marks unknown units properly as N/A."""
-    self._populate_dummy_stats_no_unit()
+    self._populate_mock_stats_no_unit()
     self.data.CalculateStats()
     fname = 'unittest_summary.json'
     fname = self.data.SaveSummaryJSON(self.tempdir, fname)

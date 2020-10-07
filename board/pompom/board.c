@@ -37,7 +37,6 @@
 /* Forward declaration */
 static void tcpc_alert_event(enum gpio_signal signal);
 static void usb0_evt(enum gpio_signal signal);
-static void usb1_evt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
 static void board_connect_c0_sbu(enum gpio_signal s);
 
@@ -52,9 +51,6 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	case GPIO_USB_C0_PD_INT_ODL:
 		port = 0;
 		break;
-	case GPIO_USB_C1_PD_INT_ODL:
-		port = 1;
-		break;
 	default:
 		return;
 	}
@@ -67,19 +63,11 @@ static void usb0_evt(enum gpio_signal signal)
 	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
 }
 
-static void usb1_evt(enum gpio_signal signal)
-{
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
-}
-
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_C0_SWCTL_INT_ODL:
 		sn5s330_interrupt(0);
-		break;
-	case GPIO_USB_C1_SWCTL_INT_ODL:
-		sn5s330_interrupt(1);
 		break;
 	default:
 		break;
@@ -100,6 +88,41 @@ static void board_connect_c0_sbu(enum gpio_signal s)
 {
 	hook_call_deferred(&board_connect_c0_sbu_deferred_data, 0);
 }
+
+/* Keyboard scan setting */
+struct keyboard_scan_config keyscan_config = {
+	/* Use 80 us, because KSO_02 passes through the H1. */
+	.output_settle_us = 80,
+	/*
+	 * Unmask 0x01 in [1] (KSO_01/KSI_00, the old location of Search key);
+	 * as it uses the new location (KSO_00/KSI_03). And T11 key, which maps
+	 * to KSO_01/KSI_00, is not there.
+	 */
+	.actual_key_mask = {
+		0x1c, 0xfe, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca
+	},
+	/* Other values should be the same as the default configuration. */
+	.debounce_down_us = 9 * MSEC,
+	.debounce_up_us = 30 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+};
+
+/* I2C port map */
+const struct i2c_port_t i2c_ports[] = {
+	{"power",   I2C_PORT_POWER,  100, GPIO_EC_I2C_POWER_SCL,
+					  GPIO_EC_I2C_POWER_SDA},
+	{"tcpc0",   I2C_PORT_TCPC0, 1000, GPIO_EC_I2C_USB_C0_PD_SCL,
+					  GPIO_EC_I2C_USB_C0_PD_SDA},
+	{"eeprom",  I2C_PORT_EEPROM, 400, GPIO_EC_I2C_EEPROM_SCL,
+					  GPIO_EC_I2C_EEPROM_SDA},
+	{"sensor",  I2C_PORT_SENSOR, 400, GPIO_EC_I2C_SENSOR_SCL,
+					  GPIO_EC_I2C_SENSOR_SDA},
+};
+
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
@@ -152,11 +175,6 @@ struct ppc_config_t ppc_chips[] = {
 		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
 		.drv = &sn5s330_drv
 	},
-	{
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
@@ -166,14 +184,6 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
-		},
-		.drv = &ps8xxx_tcpm_drv,
-	},
-	{
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_TCPC1,
 			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		},
 		.drv = &ps8xxx_tcpm_drv,
@@ -193,11 +203,6 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
-	{
-		.usb_port = 1,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-	}
 };
 
 const int usb_port_enable[USB_PORT_COUNT] = {
@@ -219,13 +224,8 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 /* Initialize board. */
 static void board_init(void)
 {
-	/* Enable BC1.2 VBUS detection */
-	gpio_enable_interrupt(GPIO_USB_C0_VBUS_DET_L);
-	gpio_enable_interrupt(GPIO_USB_C1_VBUS_DET_L);
-
 	/* Enable BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
-	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
 
 	/* Enable interrupt for BMI160 sensor */
 	gpio_enable_interrupt(GPIO_ACCEL_GYRO_INT_L);
@@ -242,6 +242,15 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+__override uint16_t board_get_ps8xxx_product_id(int port)
+{
+	/* Pompom rev 1+ changes TCPC from PS8751 to PS8805 */
+	if (system_get_board_version() == 0)
+		return PS8751_PRODUCT_ID;
+
+	return PS8805_PRODUCT_ID;
+}
+
 void board_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
@@ -255,7 +264,6 @@ void board_tcpc_init(void)
 
 	/* Enable TCPC interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
 
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
@@ -288,16 +296,29 @@ static void board_chipset_resume(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
+void board_set_switchcap_power(int enable)
+{
+	gpio_set_level(GPIO_SWITCHCAP_ON, enable);
+}
+
+int board_is_switchcap_enabled(void)
+{
+	return gpio_get_level(GPIO_SWITCHCAP_ON);
+}
+
+int board_is_switchcap_power_good(void)
+{
+	return gpio_get_level(GPIO_DA9313_GPIO0);
+}
+
 void board_reset_pd_mcu(void)
 {
 	cprints(CC_USB, "Resetting TCPCs...");
 	cflush();
 
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
 	msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
-	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
 }
 
 void board_set_tcpc_power_mode(int port, int mode)
@@ -408,9 +429,6 @@ uint16_t tcpc_get_alert_status(void)
 	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL))
 		if (gpio_get_level(GPIO_USB_C0_PD_RST_L))
 			status |= PD_STATUS_TCPC_ALERT_0;
-	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL))
-		if (gpio_get_level(GPIO_USB_C1_PD_RST_L))
-			status |= PD_STATUS_TCPC_ALERT_1;
 
 	return status;
 }
@@ -425,13 +443,13 @@ static struct accelgyro_saved_data_t g_bma255_data;
 /* Matrix to rotate accelerometer into standard reference frame */
 const mat33_fp_t base_standard_ref = {
 	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0,  FLOAT_TO_FP(-1),  0},
-	{ 0,  0, FLOAT_TO_FP(-1)}
+	{ 0,  FLOAT_TO_FP(1),  0},
+	{ 0,  0, FLOAT_TO_FP(1)}
 };
 
 static const mat33_fp_t lid_standard_ref = {
+	{ 0, FLOAT_TO_FP(1), 0},
 	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
@@ -484,6 +502,10 @@ struct motion_sensor_t motion_sensors[] = {
 	 .max_frequency = BMI_ACCEL_MAX_FREQ,
 	 .config = {
 		 [SENSOR_CONFIG_EC_S0] = {
+			 .odr = 10000 | ROUND_UP_FLAG,
+		 },
+		 /* Sensor on for lid angle detection */
+		 [SENSOR_CONFIG_EC_S3] = {
 			 .odr = 10000 | ROUND_UP_FLAG,
 		 },
 	 },

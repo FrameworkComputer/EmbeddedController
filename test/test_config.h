@@ -11,6 +11,10 @@
 /* Test config flags only apply for test builds */
 #ifdef TEST_BUILD
 
+#ifndef __ASSEMBLER__
+#include <stdint.h>
+#endif
+
 /* Host commands are sorted. */
 #define CONFIG_HOSTCMD_SECTION_SORTED
 
@@ -132,6 +136,14 @@
 #endif
 
 #ifdef TEST_ONLINE_CALIBRATION
+#define CONFIG_FPU
+#define CONFIG_ONLINE_CALIB
+#define CONFIG_MKBP_EVENT
+#define CONFIG_MKBP_USE_GPIO
+#endif
+
+#ifdef TEST_GYRO_CAL
+#define CONFIG_FPU
 #define CONFIG_ONLINE_CALIB
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
@@ -142,11 +154,12 @@
 #define CONFIG_TEMP_CACHE_STALE_THRES (1 * SECOND)
 #endif /* CONFIG_ONLINE_CALIB && !CONFIG_TEMP_CACHE_STALE_THRES */
 
-#if defined(TEST_MOTION_LID) || \
+#if defined(CONFIG_ONLINE_CALIB) || \
+	defined(TEST_BODY_DETECTION) || \
 	defined(TEST_MOTION_ANGLE) || \
 	defined(TEST_MOTION_ANGLE_TABLET) || \
-	defined(TEST_MOTION_SENSE_FIFO) || \
-	defined(CONFIG_ONLINE_CALIB)
+	defined(TEST_MOTION_LID) || \
+	defined(TEST_MOTION_SENSE_FIFO)
 enum sensor_id {
 	BASE,
 	LID,
@@ -172,6 +185,11 @@ enum sensor_id {
 #define CONFIG_ACCEL_FORCE_MODE_MASK \
 	((1 << CONFIG_LID_ANGLE_SENSOR_BASE) | \
 	 (1 << CONFIG_LID_ANGLE_SENSOR_LID))
+#endif
+
+#if defined(TEST_BODY_DETECTION)
+#define CONFIG_BODY_DETECTION
+#define CONFIG_BODY_DETECTION_SENSOR BASE
 #endif
 
 #ifdef TEST_RMA_AUTH
@@ -346,6 +364,30 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_POWER_DELIVERY
 #endif
 
+#if defined(TEST_USB_PE_DRP_OLD) || defined(TEST_USB_PE_DRP_OLD_NOEXTENDED)
+#define CONFIG_TEST_USB_PE_SM
+#define CONFIG_USB_PD_PORT_MAX_COUNT 1
+#define CONFIG_USB_PE_SM
+#define CONFIG_USB_PID 0x5036
+#define CONFIG_USB_POWER_DELIVERY
+#undef CONFIG_USB_PRL_SM
+#define CONFIG_USB_PD_REV30
+
+#if defined(TEST_USB_PE_DRP_OLD)
+#define CONFIG_USB_PD_EXTENDED_MESSAGES
+#endif
+
+#define CONFIG_USB_PD_TCPMV2
+#define CONFIG_USB_PD_DECODE_SOP
+#undef CONFIG_USB_TYPEC_SM
+#define CONFIG_USBC_VCONN
+#define PD_VCONN_SWAP_DELAY 5000 /* us */
+#define CONFIG_USB_PD_DISCHARGE_GPIO
+#undef CONFIG_USB_PD_HOST_CMD
+#define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USBC_SS_MUX
+#endif
+
 #if defined(TEST_USB_PE_DRP) || defined(TEST_USB_PE_DRP_NOEXTENDED)
 #define CONFIG_TEST_USB_PE_SM
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
@@ -414,6 +456,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USBC_SS_MUX
+#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 #define CONFIG_USB_PD_VBUS_DETECT_TCPC
 #define CONFIG_USB_POWER_DELIVERY
 #undef CONFIG_USB_PRL_SM
@@ -425,6 +468,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_DRP_ACC_TRYSRC
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+#define CONFIG_USB_PD_REV30
 #define CONFIG_USB_PD_TCPC_LOW_POWER
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_PD_TCPMV2
@@ -442,6 +486,9 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_I2C
 #define CONFIG_I2C_MASTER
 #define I2C_PORT_HOST_TCPC 0
+#define CONFIG_USB_PD_DEBUG_LEVEL 3
+#define CONFIG_USB_PD_EXTENDED_MESSAGES
+#define CONFIG_USB_PD_DECODE_SOP
 #endif
 
 #ifdef TEST_USB_PD_INT

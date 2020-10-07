@@ -12,9 +12,6 @@
 #include "ec_commands.h"
 #include "i2c.h"
 
-/* Default retry count for transmitting */
-#define PD_RETRY_COUNT 3
-
 /* Time to wait for TCPC to complete transmit */
 #define PD_T_TCPC_TX_TIMEOUT  (100*MSEC)
 
@@ -50,31 +47,6 @@ enum tcpc_rp_value {
 	TYPEC_RP_RESERVED = 3,
 };
 
-enum tcpc_cc_polarity {
-	/*
-	 * _CCx: is used to indicate the polarity while not connected to
-	 * a Debug Accessory.  Only one CC line will assert a resistor and
-	 * the other will be open.
-	 */
-	POLARITY_CC1 = 0,
-	POLARITY_CC2 = 1,
-
-	/*
-	 * CCx_DTS is used to indicate the polarity while connected to a
-	 * SRC Debug Accessory.  Assert resistors on both lines.
-	 */
-	POLARITY_CC1_DTS = 2,
-	POLARITY_CC2_DTS = 3,
-
-	/*
-	 * The current TCPC code relies on these specific POLARITY values.
-	 * Adding in a check to verify if the list grows for any reason
-	 * that this will give a hint that other places need to be
-	 * adjusted.
-	 */
-	POLARITY_COUNT
-};
-
 /**
  * Returns whether the polarity without the DTS extension
  */
@@ -107,10 +79,15 @@ enum tcpc_transmit_complete {
 	TCPC_TX_COMPLETE_FAILED =    2,
 };
 
-/* USB-C PD Vbus levels */
+/*
+ * USB-C PD Vbus levels
+ *
+ * Return true on Vbus check if Vbus is...
+ */
 enum vbus_level {
-	VBUS_SAFE0V,
-	VBUS_PRESENT,
+	VBUS_SAFE0V,	/* less than vSafe0V max */
+	VBUS_PRESENT,	/* at least vSafe5V min */
+	VBUS_REMOVED,	/* less than vSinkDisconnect max */
 };
 
 /**
@@ -247,6 +224,19 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	int (*set_polarity)(int port, enum tcpc_cc_polarity polarity);
+
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	/**
+	 * Disable receive of SOP' and SOP'' messages. This is provided
+	 * separately from set_vconn so that we can preemptively disable
+	 * receipt of SOP' messages during a VCONN swap.
+	 *
+	 * @param port Type-C port number
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	int (*sop_prime_disable)(int port);
+#endif
 
 	/**
 	 * Set Vconn.

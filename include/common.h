@@ -10,7 +10,13 @@
 
 #include <stdint.h>
 #include <inttypes.h>
+
 #include "compile_time_macros.h"
+
+#ifdef CONFIG_ZEPHYR
+#include <sys/util.h>
+#include <toolchain.h>
+#endif
 
 /*
  * Macros to concatenate 2 - 4 tokens together to form a single token.
@@ -35,8 +41,10 @@
  * Compared to directly using the preprocessor # operator, this 2-stage macro
  * is safe with regards to using nested macros and defined arguments.
  */
+#ifndef CONFIG_ZEPHYR
 #define STRINGIFY0(name)  #name
 #define STRINGIFY(name)  STRINGIFY0(name)
+#endif   /* CONFIG_ZEPHYR */
 
 /* Macros to access registers */
 #define REG64_ADDR(addr) ((volatile uint64_t *)(addr))
@@ -109,6 +117,19 @@
  */
 #ifndef __bss_slow
 #define __bss_slow __attribute__((section(".bss.slow")))
+#endif
+
+/*
+ * Place a read-only object into a ROM resident section. If supported by the
+ * EC chip, the object is part of the flash image but not copied into RAM
+ * automatically. Users may only access the data using the include/init_rom.h
+ * module.
+ *
+ * Requires CONFIG_CHIP_INIT_ROM_REGION is defined, otherwise the object is
+ * linked into the .rodata section.
+ */
+#ifndef __init_rom
+#define __init_rom __attribute__((section(".init.rom")))
 #endif
 
 /* gcc does not support __has_feature */
@@ -398,7 +419,24 @@ enum ec_error_list {
  * Note: This macro will only function inside a code block due to the way
  * it checks for unknown values.
  */
+#ifndef CONFIG_ZEPHYR
 #define IS_ENABLED(option) __config_enabled(#option, option)
+#else
+/* IS_ENABLED previously defined in sys/util.h */
+#undef IS_ENABLED
+/*
+ * For Zephyr, we must create a new version of IS_ENABLED which is
+ * compatible with both Kconfig enables (for Zephyr code), which have
+ * the value defined to 1 upon enablement, and CrOS EC defines (which
+ * are defined to the empty string).
+ *
+ * To do this, we use __cfg_select from this codebase to determine if
+ * the option was defined to nothing ("enabled" in CrOS EC terms).  If
+ * not, we then check using Zephyr's Z_IS_ENABLED1 macro to determine
+ * if the config option is enabled by Zephyr's definition.
+ */
+#define IS_ENABLED(option) __cfg_select(option, 1, Z_IS_ENABLED1(option))
+#endif  /* CONFIG_ZEPHYR */
 
 /**
  * Makes a global variable static when a config option is enabled,

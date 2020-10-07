@@ -16,23 +16,10 @@
 #define CONFIG_MKBP_USE_GPIO
 
 #define RPM_DEVIATION 1
-
-/* Motion sensing drivers */
-#define CONFIG_ACCELGYRO_BMI160
-#define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-#define CONFIG_ACCEL_INTERRUPTS
-#define CONFIG_ACCEL_KX022
-#define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_ACCEL_INFO
 #define CONFIG_FAN_RPM_CUSTOM
-#define CONFIG_TABLET_MODE
+
 #undef CONFIG_LED_ONOFF_STATES
 #define CONFIG_LED_COMMON
-#define CONFIG_LID_ANGLE
-#define CONFIG_LID_ANGLE_UPDATE
-#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
-#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 
 #define CONFIG_KEYBOARD_FACTORY_TEST
 
@@ -206,11 +193,8 @@ static inline bool ec_config_has_hdmi_conn_hpd(void)
 		  HAS_HDMI_CONN_HPD);
 }
 
-#define PORT_TO_HPD(port) ((port == 0) \
-	? GPIO_USB_C0_HPD \
-	: (ec_config_has_mst_hub_rtd2141b()) \
-		? GPIO_NO_HPD \
-		: GPIO_DP2_HPD)
+enum gpio_signal board_usbc_port_to_hpd_gpio(int port);
+#define PORT_TO_HPD(port) board_usbc_port_to_hpd_gpio(port)
 
 extern const struct usb_mux usbc1_tusb544;
 extern const struct usb_mux usbc1_ps8743;

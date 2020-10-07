@@ -89,13 +89,12 @@ GPIO(USB_C0_RT_RST_ODL,			PIN(6, 1), GPIO_ODR_LOW) /* USB_C0 Reset */
 GPIO(USB_C1_RT_RST_ODL,			PIN(8, 3), GPIO_ODR_LOW) /* USB_C1 Reset */
 GPIO(USB_C0_OC_ODL,			PIN(B, 1), GPIO_ODR_HIGH)
 GPIO(USB_C1_OC_ODL,			PIN(5, 0), GPIO_ODR_HIGH)
+GPIO(USB_C0_FRS_EN,			PIN(6, 0), GPIO_OUT_LOW)
+GPIO(USB_C1_FRS_EN,			PIN(9, 4), GPIO_OUT_LOW)
 
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C0_LS_EN)
 UNIMPLEMENTED(USB_C1_LS_EN)
-/* Retimer Force Power enable is connected to AP */
-UNIMPLEMENTED(USB_C0_RT_FORCE_PWR)
-UNIMPLEMENTED(USB_C1_RT_FORCE_PWR)
 
 /* Misc Signals */
 GPIO(UART2_EC_RX,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
@@ -144,7 +143,6 @@ ALTERNATE(PIN_MASK(B, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                       
 /* This selects between an LED module on the motherboard and one on the daughter
  * board, to be controlled by LED_{1,2,3}_L. PWM allows driving both modules at
  * the same time. */
-ALTERNATE(PIN_MASK(6, BIT(0)), 0, MODULE_PWM, 0)                                     /* LED_SIDESEL_4_L */
 ALTERNATE(PIN_MASK(C, BIT(2) | BIT(3) | BIT(4)), 0, MODULE_PWM, 0)                   /* LED_{3,2,1}_L */
 
 /* Keyboard pins */

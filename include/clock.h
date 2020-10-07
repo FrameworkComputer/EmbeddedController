@@ -63,7 +63,7 @@ enum bus_type {
 /**
  * Wait for a number of peripheral bus clock cycles.
  *
- * Dummy read on peripherals for delay.
+ * Read on peripherals for delay.
  *
  * @param bus           Which bus clock cycle to use.
  * @param cycles	Number of cycles to wait.

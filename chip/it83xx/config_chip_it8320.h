@@ -54,6 +54,7 @@
 #define IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
 #elif defined(CHIP_VARIANT_IT8320DX)
 #define CONFIG_FLASH_SIZE  0x00080000
+#define CONFIG_IT83XX_FLASH_CLOCK_48MHZ
 /*
  * Disable eSPI pad, then PLL change
  * (include EC clock frequency) is succeed even CS# is low.

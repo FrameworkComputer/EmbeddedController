@@ -142,7 +142,7 @@ extern uint32_t SystemCoreClock; /*!< System Clock Frequency (Core Clock)  */
 #define GPIO_3 PORT_3 /**< Port 3  Define*/
 #define GPIO_4 PORT_4 /**< Port 4  Define*/
 
-#define DUMMY_GPIO_BANK GPIO_0
+#define UNIMPLEMENTED_GPIO_BANK GPIO_0
 
 /******************************************************************************/
 /*                                                                        I2C */

@@ -60,8 +60,11 @@ static void flash_pinmux(int enable)
 
 static void flash_execute_cmd(uint8_t code, uint8_t cts)
 {
-	/* Flash mutex must be held while executing UMA commands. */
-	ASSERT(flash_lock.lock);
+	/*
+	 * Flash mutex must be held while executing UMA commands after
+	 * task_start().
+	 */
+	ASSERT(!task_start_called() || flash_lock.lock);
 
 	/* set UMA_CODE */
 	NPCX_UMA_CODE = code;

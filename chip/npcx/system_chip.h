@@ -11,6 +11,13 @@
 /* Flags for BBRM_DATA_INDEX_WAKE */
 #define HIBERNATE_WAKE_MTC        BIT(0)  /* MTC alarm */
 #define HIBERNATE_WAKE_PIN        BIT(1)  /* Wake pin */
+#define HIBERNATE_WAKE_LCT        BIT(2)  /* LCT alarm */
+/*
+ * Indicate that EC enters hibernation via PSL. When EC wakes up from
+ * hibernation and this flag is set, it will check the related status bit to
+ * know the actual wake up source. (From LCT or physical wakeup pins)
+ */
+#define HIBERNATE_WAKE_PSL        BIT(3)
 
 /* Indices for battery-backed ram (BBRAM) data position */
 enum bbram_data_index {
@@ -28,6 +35,14 @@ enum bbram_data_index {
 						* 36.
 						*/
 	BBRM_DATA_INDEX_PANIC_BKUP = 36,       /* Panic data (index 35-63)*/
+};
+
+enum psl_pin_t {
+	PSL_IN1,
+	PSL_IN2,
+	PSL_IN3,
+	PSL_IN4,
+	PSL_NONE,
 };
 
 /* Issue a watchdog reset */
@@ -49,7 +64,7 @@ void __hibernate_npcx_series(void);
 void system_check_bbram_on_reset(void);
 
 /* The utilities and variables depend on npcx chip family */
-#if defined(CHIP_FAMILY_NPCX5)
+#if defined(CHIP_FAMILY_NPCX5) || defined(CONFIG_WORKAROUND_FLASH_DOWNLOAD_API)
 /* Bypass for GMDA issue of ROM api utilities only on npcx5 series */
 void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
 		uint32_t size, uint32_t exeAddr);
@@ -65,8 +80,9 @@ extern unsigned int __flash_lplfw_start;
 
 /* End address for little FW; defined in linker script */
 extern unsigned int __flash_lplfw_end;
+#endif
 
-#elif defined(CHIP_FAMILY_NPCX7)
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 /* Configure PSL mode setting for the wake-up pins. */
 int system_config_psl_mode(enum gpio_signal signal);
 
@@ -76,6 +92,10 @@ void system_enter_psl_mode(void);
 /* End address for hibernate utility; defined in linker script */
 extern unsigned int __after_init_end;
 
+#endif
+
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+void system_set_psl_gpo(int level);
 #endif
 
 #endif /* __CROS_EC_SYSTEM_CHIP_H */

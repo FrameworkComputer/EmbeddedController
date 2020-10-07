@@ -43,6 +43,8 @@
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
 /* USB Type C and USB PD defines */
+#define CONFIG_USB_PD_PORT_MAX_COUNT			2
+
 /*
  * USB-C port's USB2 & USB3 mapping from schematics
  * USB2 numbering on PCH - 1 to n
@@ -53,6 +55,21 @@
 #define USBC_PORT_0_USB3_NUM	1
 #define USBC_PORT_1_USB2_NUM	4
 #define USBC_PORT_1_USB3_NUM	2
+
+#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
+#define PD_VCONN_SWAP_DELAY		5000 /* us */
+
+/*
+ * SN5S30 PPC supports up to 24V VBUS source and sink, however passive USB-C
+ * cables only support up to 60W.
+ */
+#define PD_OPERATING_POWER_MW	15000
+#define PD_MAX_POWER_MW		60000
+#define PD_MAX_CURRENT_MA	3000
+#define PD_MAX_VOLTAGE_MV	20000
+/* Enabling USB4 mode */
+#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x40
 
 /* USB Type A Features */
 
@@ -65,6 +82,10 @@
 /* Volume Button feature */
 
 /* Fan features */
+
+/* charger defines */
+#define CONFIG_CHARGER_SENSE_RESISTOR		10
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC	10
 
 /*
  * Macros for GPIO signals used in common code that don't match the
@@ -111,7 +132,6 @@
 #define I2C_ADDR_EEPROM_FLAGS	0x50
 #define CONFIG_I2C_MASTER
 
-
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -136,6 +156,12 @@ enum sensor_id {
 	BASE_ACCEL,
 	BASE_GYRO,
 	SENSOR_COUNT,
+};
+
+enum usbc_port {
+	USBC_PORT_C0 = 0,
+	USBC_PORT_C1,
+	USBC_PORT_COUNT
 };
 
 void board_reset_pd_mcu(void);

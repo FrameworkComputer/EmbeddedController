@@ -8,12 +8,20 @@
 #ifndef __CROS_EC_CPU_H
 #define __CROS_EC_CPU_H
 
-#include <stdint.h>
+/*
+ * This is the space required by both irq_x_ and __switch_task to store all
+ * of the caller and callee registers for each task context before switching.
+ */
+#define TASK_SCRATCHPAD_SIZE (18)
 
 /* Process Status Word bits */
 #define PSW_GIE		BIT(0) /* Global Interrupt Enable */
 #define PSW_INTL_SHIFT	1        /* Interrupt Stack Level */
 #define PSW_INTL_MASK	(0x3 << PSW_INTL_SHIFT)
+
+#ifndef __ASSEMBLER__
+
+#include <stdint.h>
 
 /* write Process Status Word privileged register */
 static inline void set_psw(uint32_t val)
@@ -56,5 +64,7 @@ void cpu_init(void);
 
 extern uint32_t ilp;
 extern uint32_t ec_reset_lp;
+
+#endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_CPU_H */

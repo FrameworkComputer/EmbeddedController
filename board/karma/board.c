@@ -28,6 +28,13 @@ __override void oz554_board_init(void)
 		if (oz554_set_config(2, 0x55))
 			CPRINTS("oz554 config failed");
 		break;
+	case 0x06:
+		CPRINTS("PANEL_LM_SSM1");
+		if (oz554_set_config(2, 0x46))
+			CPRINTS("oz554 config failed");
+		if (oz554_set_config(5, 0x87))
+			CPRINTS("oz554 config failed");
+		break;
 	default:
 		CPRINTS("PANEL_UNKNOWN");
 		break;

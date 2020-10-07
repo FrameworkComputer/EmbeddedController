@@ -20,7 +20,7 @@
 
 static void pp3300_a_pgood_low(void)
 {
-	atomic_clear(&pp3300_a_pgood, 1);
+	deprecated_atomic_clear_bits(&pp3300_a_pgood, 1);
 
 	/* Disable low interrupt while asserted */
 	vcmp_enable(VCMP_SNS_PP3300_LOW, 0);
@@ -29,7 +29,7 @@ static void pp3300_a_pgood_low(void)
 	vcmp_enable(VCMP_SNS_PP3300_HIGH, 1);
 
 	/*
-	 * Call power_signal_interrupt() with a dummy GPIO in order for the
+	 * Call power_signal_interrupt() with a fake GPIO in order for the
 	 * chipset task to pick up the change in power sequencing signals.
 	 */
 	power_signal_interrupt(GPIO_PG_EC_DSW_PWROK);
@@ -37,7 +37,7 @@ static void pp3300_a_pgood_low(void)
 
 static void pp3300_a_pgood_high(void)
 {
-	atomic_or(&pp3300_a_pgood, 1);
+	deprecated_atomic_or(&pp3300_a_pgood, 1);
 
 	/* Disable high interrupt while asserted */
 	vcmp_enable(VCMP_SNS_PP3300_HIGH, 0);
@@ -46,7 +46,7 @@ static void pp3300_a_pgood_high(void)
 	vcmp_enable(VCMP_SNS_PP3300_LOW, 1);
 
 	/*
-	 * Call power_signal_interrupt() with a dummy GPIO in order for the
+	 * Call power_signal_interrupt() with a fake GPIO in order for the
 	 * chipset task to pick up the change in power sequencing signals.
 	 */
 	power_signal_interrupt(GPIO_PG_EC_DSW_PWROK);
@@ -76,7 +76,7 @@ BUILD_ASSERT(ARRAY_SIZE(vcmp_list) == VCMP_COUNT);
 /* I2C Ports */
 const struct i2c_port_t i2c_ports[] = {
 	{
-		"eeprom", I2C_PORT_EEPROM, 1000, GPIO_EC_I2C_EEPROM_SCL,
+		"eeprom", I2C_PORT_EEPROM, 400, GPIO_EC_I2C_EEPROM_SCL,
 		GPIO_EC_I2C_EEPROM_SDA
 	},
 
