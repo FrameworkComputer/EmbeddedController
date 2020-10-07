@@ -583,6 +583,27 @@ void tc_request_power_swap(int port)
 	}
 }
 
+/* Flag to indicate PD comm is disabled on init */
+static int pd_disabled_on_init;
+
+static void pd_update_pd_comm(void)
+{
+	int i;
+
+	/*
+	 * Some batteries take much longer time to report its SOC.
+	 * The init function disabled PD comm on startup. Need this
+	 * hook to enable PD comm when the battery level is enough.
+	 */
+	if (pd_disabled_on_init &&
+	    usb_get_battery_soc() >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC) {
+		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+			pd_comm_enable(i, 1);
+		pd_disabled_on_init = 0;
+	}
+}
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_update_pd_comm, HOOK_PRIO_DEFAULT);
+
 static bool pd_comm_allowed_by_policy(void)
 {
 	if (system_is_in_rw())
@@ -596,10 +617,15 @@ static bool pd_comm_allowed_by_policy(void)
 	 * when sysjump to RW that makes the device brownout on the dead-battery
 	 * case. Disable PD for this special case as a workaround.
 	 */
-	if (IS_ENABLED(CONFIG_SYSTEM_UNLOCKED) &&
-	    (IS_ENABLED(CONFIG_VBOOT_EFS2) ||
-	     usb_get_battery_soc() >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC))
-		return true;
+	if (IS_ENABLED(CONFIG_SYSTEM_UNLOCKED)) {
+		if (IS_ENABLED(CONFIG_VBOOT_EFS2))
+			return true;
+
+		if (usb_get_battery_soc() >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC)
+			return true;
+
+		pd_disabled_on_init = 1;
+	}
 
 	return false;
 }
