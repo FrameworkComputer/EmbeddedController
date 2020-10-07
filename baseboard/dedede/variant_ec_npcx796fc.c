@@ -16,8 +16,6 @@
 #include "i2c.h"
 #include "lid_switch.h"
 #include "power.h"
-#include "pwm.h"
-#include "pwm_chip.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -28,7 +26,7 @@
 
 void pp3300_a_pgood_high(void)
 {
-	atomic_or(&pp3300_a_pgood, 1);
+	deprecated_atomic_or(&pp3300_a_pgood, 1);
 
 	/* Disable this interrupt while it's asserted. */
 	npcx_adc_thresh_int_enable(NPCX_ADC_THRESH1, 0);
@@ -36,7 +34,7 @@ void pp3300_a_pgood_high(void)
 	npcx_adc_thresh_int_enable(NPCX_ADC_THRESH2, 1);
 
 	/*
-	 * Call power_signal_interrupt() with a dummy GPIO in order for the
+	 * Call power_signal_interrupt() with a fake GPIO in order for the
 	 * chipset task to pick up the change in power sequencing signals.
 	 */
 	power_signal_interrupt(GPIO_PG_EC_DSW_PWROK);
@@ -44,7 +42,7 @@ void pp3300_a_pgood_high(void)
 
 void pp3300_a_pgood_low(void)
 {
-	atomic_clear(&pp3300_a_pgood, 1);
+	deprecated_atomic_clear_bits(&pp3300_a_pgood, 1);
 
 	/* Disable this interrupt while it's asserted. */
 	npcx_adc_thresh_int_enable(NPCX_ADC_THRESH2, 0);
@@ -52,7 +50,7 @@ void pp3300_a_pgood_low(void)
 	npcx_adc_thresh_int_enable(NPCX_ADC_THRESH1, 1);
 
 	/*
-	 * Call power_signal_interrupt() with a dummy GPIO in order for the
+	 * Call power_signal_interrupt() with a fake GPIO in order for the
 	 * chipset task to pick up the change in power sequencing signals.
 	 */
 	power_signal_interrupt(GPIO_PG_EC_DSW_PWROK);
@@ -62,7 +60,6 @@ const struct npcx_adc_thresh_t adc_pp3300_a_pgood_high = {
 	.adc_ch = ADC_VSNS_PP3300_A,
 	.adc_thresh_cb = pp3300_a_pgood_high,
 	.thresh_assert = 2700,
-	.thresh_deassert = -1,
 };
 
 const struct npcx_adc_thresh_t adc_pp3300_a_pgood_low = {
@@ -70,7 +67,6 @@ const struct npcx_adc_thresh_t adc_pp3300_a_pgood_low = {
 	.adc_thresh_cb = pp3300_a_pgood_low,
 	.lower_or_higher = 1,
 	.thresh_assert = 600,
-	.thresh_deassert = -1,
 };
 
 static void set_up_adc_irqs(void)
@@ -190,24 +186,3 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] = {
-		.channel = 3,
-		.flags = PWM_CONFIG_DSLEEP,
-		.freq = 10000,
-	},
-
-	[PWM_CH_LED1_AMBER] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq = 2400,
-	},
-
-	[PWM_CH_LED2_WHITE] = {
-		.channel = 0,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq = 2400,
-	}
-};
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);

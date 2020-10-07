@@ -202,9 +202,9 @@ int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 		i2c_unwedge(port);
 
 		/* Clock timeout or arbitration lost.  Reset port to clear. */
-		atomic_or(LM4_SYSTEM_SRI2C_ADDR, BIT(port));
+		deprecated_atomic_or(LM4_SYSTEM_SRI2C_ADDR, BIT(port));
 		clock_wait_cycles(3);
-		atomic_clear(LM4_SYSTEM_SRI2C_ADDR, BIT(port));
+		deprecated_atomic_clear_bits(LM4_SYSTEM_SRI2C_ADDR, BIT(port));
 		clock_wait_cycles(3);
 
 		/* Restore settings */

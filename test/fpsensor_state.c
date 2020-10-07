@@ -169,6 +169,23 @@ test_static int test_fp_set_sensor_mode(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_fp_set_maintenance_mode(void)
+{
+	uint32_t output_mode = 0;
+
+	/* GIVEN request to change to maintenance sensor mode */
+	TEST_ASSERT(sensor_mode == 0);
+	/* THEN succeed */
+	TEST_ASSERT(fp_set_sensor_mode(FP_MODE_SENSOR_MAINTENANCE,
+				       &output_mode) == EC_RES_SUCCESS);
+	/* THEN requested mode is returned */
+	TEST_ASSERT(output_mode == FP_MODE_SENSOR_MAINTENANCE);
+	/* THEN sensor_mode is updated */
+	TEST_ASSERT(sensor_mode == FP_MODE_SENSOR_MAINTENANCE);
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, char **argv)
 {
 	RUN_TEST(test_fp_enc_status_valid_flags);
@@ -176,5 +193,6 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_set_fp_tpm_seed);
 	RUN_TEST(test_set_fp_tpm_seed_again);
 	RUN_TEST(test_fp_set_sensor_mode);
+	RUN_TEST(test_fp_set_maintenance_mode);
 	test_print_result();
 }

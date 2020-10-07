@@ -342,6 +342,24 @@ int battery_get_avg_voltage(void)
 }
 #endif /* CONFIG_CMD_PWR_AVG */
 
+static void apply_fake_state_of_charge(struct batt_params *batt)
+{
+	int full;
+
+	if (fake_state_of_charge < 0)
+		return;
+
+	if (batt->flags & BATT_FLAG_BAD_FULL_CAPACITY)
+		battery_design_capacity(&full);
+	else
+		full = batt->full_capacity;
+
+	batt->state_of_charge = fake_state_of_charge;
+	batt->remaining_capacity = full * fake_state_of_charge / 100;
+	batt->flags &= ~BATT_FLAG_BAD_STATE_OF_CHARGE;
+	batt->flags &= ~BATT_FLAG_BAD_REMAINING_CAPACITY;
+}
+
 void battery_get_params(struct batt_params *batt)
 {
 	struct batt_params batt_new = {0};
@@ -358,10 +376,6 @@ void battery_get_params(struct batt_params *batt)
 	if (sb_read(SB_RELATIVE_STATE_OF_CHARGE, &batt_new.state_of_charge)
 	    && fake_state_of_charge < 0)
 		batt_new.flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
-
-	/* If soc is faked, override with faked data */
-	if (fake_state_of_charge >= 0)
-		batt_new.state_of_charge = fake_state_of_charge;
 
 	if (sb_read(SB_VOLTAGE, &batt_new.voltage))
 		batt_new.flags |= BATT_FLAG_BAD_VOLTAGE;
@@ -446,6 +460,9 @@ void battery_get_params(struct batt_params *batt)
 	board_battery_compensate_params(&batt_new);
 #endif
 
+	if (IS_ENABLED(CONFIG_CMD_BATTFAKE))
+		apply_fake_state_of_charge(&batt_new);
+
 	/* Update visible battery parameters */
 	memcpy(batt, &batt_new, sizeof(*batt));
 }
@@ -486,8 +503,7 @@ static int command_battfake(int argc, char **argv)
 	}
 
 	if (fake_state_of_charge >= 0)
-		ccprintf("Fake batt %d%%\n",
-			 fake_state_of_charge);
+		ccprintf("Fake batt %d%%\n", fake_state_of_charge);
 
 	return EC_SUCCESS;
 }

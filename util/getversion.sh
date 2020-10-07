@@ -82,8 +82,8 @@ main() {
   local component
   local dir_list
   local gitdate
-  local global_dirty
   local most_recent_file
+  local most_recents
   local timestamp
   local tool_ver
   local values
@@ -97,7 +97,7 @@ main() {
     ver="STATIC_VERSION"
     tool_ver="STATIC_VERSION_TOOL"
   fi
-  global_dirty=    # set if any of the component repos is 'dirty'.
+  most_recents=()    # Non empty if any of the component repos is 'dirty'.
   dir_list=( . )   # list of component directories, always includes the EC tree
 
   case "${BOARD}" in
@@ -124,7 +124,13 @@ main() {
       component="$(basename "${git_dir}")"
       IFS="${dc}" read -r -a values <<< "$(get_tree_version)"
       vbase="${values[0]}"             # Retrieved version information.
-      global_dirty+="${values[1]}"     # Non-zero, if the repository is 'dirty'
+      if [[ -n "${values[1]}" ]]; then
+        # From each modified repo get the most recently modified file.
+        most_recent_file="$(git status --porcelain | \
+                                 awk '$1 ~ /[M|A|?]/ {print $2}' |  \
+                                 xargs ls -t | head -1)"
+        most_recents+=("$(realpath "${most_recent_file}")")
+      fi
       if [ "${component}" != "." ]; then
       ver+=" ${component}:"
       fi
@@ -164,18 +170,22 @@ main() {
 
   if [[ -n "${STATIC_VERSION}" ]]; then
     echo "#define DATE \"STATIC_VERSION_DATE\""
-  elif [[ -n "$global_dirty" ]]; then
-    most_recent_file="$(git status --porcelain | \
-               awk '$1 ~ /[M|A|?]/ {print $2}' |  \
-               xargs ls -t | head -1)"
+  elif [[ ${#most_recents[@]} != 0  ]]; then
+    # There are modified files, use the timestamp of the most recent one as
+    # the build version timestamp.
+    # shellcheck disable=SC2012
+    most_recent_file="$(ls -t "${most_recents[@]}"| head -1)"
     timestamp="$(stat -c '%y' "${most_recent_file}" | sed 's/\..*//')"
     echo "/* Repo is dirty, using time of most recent file modification. */"
     echo "#define DATE \"${timestamp}\""
   else
-    echo "/* Repo is clean, use the commit date of the last commit */"
+    echo "/* Repo is clean, use the commit date of the last commit. */"
     # If called from an ebuild we won't have a git repo, so redirect stderr
     # to avoid annoying 'Not a git repository' errors.
-    gitdate=$(git log -1 --format='%ci' HEAD 2>/dev/null | cut -d ' ' -f '1 2')
+    gitdate="$(
+      for git_dir in "${dir_list[@]}"; do
+        git -C "${git_dir}" log -1 --format='%ct %ci' HEAD 2>/dev/null
+      done | sort | tail -1 | cut -d ' ' -f '2 3')"
     echo "#define DATE \"${gitdate}\""
   fi
 }

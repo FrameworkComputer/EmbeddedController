@@ -6,6 +6,7 @@
 /* OCPC - One Charger IC Per Type-C module */
 
 #include "battery.h"
+#include "battery_fuel_gauge.h"
 #include "charge_state_v2.h"
 #include "charger.h"
 #include "common.h"
@@ -13,6 +14,7 @@
 #include "hooks.h"
 #include "math_util.h"
 #include "ocpc.h"
+#include "timer.h"
 #include "util.h"
 
 /*
@@ -29,6 +31,11 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINT_VIZ(format, args...) \
+do {							\
+	if (viz_output)				\
+		cprintf(CC_CHARGER, format, ## args);	\
+} while (0)
 #define CPRINTS_DBG(format, args...) \
 do {							\
 	if (debug_output)				\
@@ -45,6 +52,7 @@ static int k_p_div = KP_DIV;
 static int k_i_div = KI_DIV;
 static int k_d_div = KD_DIV;
 static int debug_output;
+static int viz_output;
 
 enum phase {
 	PHASE_UNKNOWN = -1,
@@ -53,10 +61,22 @@ enum phase {
 	PHASE_CV_COMPLETE,
 };
 
+__overridable void board_ocpc_init(struct ocpc_data *ocpc)
+{
+}
+
 enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
 					 struct batt_params *battery)
 {
-	if ((battery->current <= 0) || (ocpc->isys_ma <= 0) ||
+	int act_chg = ocpc->active_chg_chip;
+
+	/*
+	 * In order to actually calculate the resistance, we need to make sure
+	 * we're actually charging the battery at a significant rate.
+	 */
+	if ((battery->current <= 1000) ||
+	    (!(ocpc->chg_flags[act_chg] & OCPC_NO_ISYS_MEAS_CAP) &&
+	     (ocpc->isys_ma <= 0)) ||
 	    (ocpc->vsys_aux_mv < ocpc->vsys_mv)) {
 		CPRINTS_DBG("Not charging... won't determine resistance");
 		CPRINTS_DBG("vsys_aux_mv: %dmV vsys_mv: %dmV",
@@ -68,14 +88,24 @@ enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
 	 * The combined system and battery resistance is the delta between Vsys
 	 * and Vbatt divided by Ibatt.
 	 */
-	ocpc->rsys_mo = ((ocpc->vsys_aux_mv - ocpc->vsys_mv) * 1000) /
-			 ocpc->isys_ma;
-	ocpc->rbatt_mo = ((ocpc->vsys_mv - battery->voltage) * 1000) /
-			 battery->current;
-	ocpc->combined_rsys_rbatt_mo = ocpc->rsys_mo + ocpc->rbatt_mo;
-	CPRINTS_DBG("Rsys: %dmOhm Rbatt: %dmOhm", ocpc->rsys_mo,
-		    ocpc->rbatt_mo);
-
+	if ((ocpc->chg_flags[act_chg] & OCPC_NO_ISYS_MEAS_CAP)) {
+		/*
+		 * There's no provision to measure Isys, so we cannot separate
+		 * out Rsys from Rbatt.
+		 */
+		ocpc->combined_rsys_rbatt_mo = ((ocpc->vsys_aux_mv -
+						 battery->voltage) * 1000) /
+						 battery->current;
+		CPRINTS_DBG("Rsys+Rbatt: %dmOhm", ocpc->combined_rsys_rbatt_mo);
+	} else {
+		ocpc->rsys_mo = ((ocpc->vsys_aux_mv - ocpc->vsys_mv) * 1000) /
+				 ocpc->isys_ma;
+		ocpc->rbatt_mo = ((ocpc->vsys_mv - battery->voltage) * 1000) /
+				 battery->current;
+		ocpc->combined_rsys_rbatt_mo = ocpc->rsys_mo + ocpc->rbatt_mo;
+		CPRINTS_DBG("Rsys: %dmOhm Rbatt: %dmOhm", ocpc->rsys_mo,
+			    ocpc->rbatt_mo);
+	}
 	return EC_SUCCESS;
 }
 
@@ -89,7 +119,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	struct charger_params charger;
 	int vsys_target = 0;
 	int drive = 0;
-	int i_ma;
+	int i_ma = 0;
 	int min_vsys_target;
 	int error = 0;
 	int derivative = 0;
@@ -98,6 +128,9 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	int chgnum;
 	enum ec_error_list result;
 	static int iterations;
+	int i_step;
+	static timestamp_t delay;
+	int i, step, loc;
 
 	/*
 	 * There's nothing to do if we're not using this charger.  Should
@@ -108,6 +141,40 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	chgnum = charge_get_active_chg_chip();
 	if (chgnum != CHARGER_SECONDARY)
 		return EC_ERROR_INVAL;
+
+	batt_info = battery_get_info();
+
+	if (current_ma == 0) {
+		vsys_target = voltage_mv;
+		goto set_vsys;
+	}
+
+	/*
+	 * Check to see if the charge FET is disabled.  If it's disabled, the
+	 * charging loop is broken and increasing VSYS will not actually help.
+	 * Therefore, don't make any changes at this time.
+	 */
+	if (battery_is_charge_fet_disabled() &&
+	    (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED)) {
+		CPRINTS("CFET disabled; not changing VSYS!");
+
+		/*
+		 * Let's check back in 5 seconds to see if the CFET is enabled
+		 * now.  Note that if this continues to occur, we'll keep
+		 * pushing this out.
+		 */
+		delay = get_time();
+		delay.val += (5 * SECOND);
+		return EC_ERROR_INVALID_CONFIG;
+	}
+
+	/*
+	 * The CFET status changed recently, wait until it's no longer disabled
+	 * for awhile before modifying VSYS.  This could be the fuel gauge
+	 * performing some impedence calculations.
+	 */
+	if (!timestamp_expired(delay, NULL))
+		return EC_ERROR_BUSY;
 
 	result = charger_set_vsys_compensation(chgnum, ocpc, current_ma,
 					       voltage_mv);
@@ -132,10 +199,6 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 		iterations = 0;
 	}
 
-	if (current_ma == 0) {
-		vsys_target = voltage_mv;
-		goto set_vsys;
-	}
 
 	/*
 	 * We need to induce a current flow that matches the requested current
@@ -169,23 +232,29 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	}
 
 	/* Set our current target accordingly. */
-	if (batt.voltage < batt.desired_voltage) {
-		if (ph < PHASE_CV_TRIP)
-			ph = PHASE_CC;
-		i_ma = batt.desired_current;
-	} else{
-		/*
-		 * Once the battery voltage reaches the desired voltage, we
-		 * should note that we've reached the CV step and set VSYS to
-		 * the desired CV + offset.
-		 */
-		i_ma = batt.current;
-		ph = ph == PHASE_CC ? PHASE_CV_TRIP : PHASE_CV_COMPLETE;
+	if (batt.desired_voltage) {
+		if (batt.voltage < batt.desired_voltage) {
+			if (ph < PHASE_CV_TRIP)
+				ph = PHASE_CC;
+			i_ma = batt.desired_current;
+		} else{
+			/*
+			 * Once the battery voltage reaches the desired voltage,
+			 * we should note that we've reached the CV step and set
+			 * VSYS to the desired CV + offset.
+			 */
+			i_ma = batt.current;
+			ph = ph == PHASE_CC ? PHASE_CV_TRIP : PHASE_CV_COMPLETE;
 
+		}
 	}
 
 	/* Ensure our target is not negative. */
 	i_ma = MAX(i_ma, 0);
+
+	/* Convert desired mA to what the charger could actually regulate to. */
+	i_step = (int)charger_get_info()->current_step;
+	i_ma = (i_ma / i_step) * i_step;
 
 	/*
 	 * We'll use our current target and our combined Rsys+Rbatt to seed our
@@ -197,8 +266,12 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	if (ocpc->last_vsys != OCPC_UNINIT) {
 		error = i_ma - batt.current;
 		/* Add some hysteresis. */
-		if (ABS(error) < 4)
+		if (ABS(error) < i_step)
 			error = 0;
+
+		/* Make a note if we're significantly over target. */
+		if (error < -100)
+			CPRINTS("OCPC: over target %dmA", error * -1);
 
 		derivative = error - ocpc->last_error;
 		ocpc->last_error = error;
@@ -226,12 +299,12 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 			(k_i * ocpc->integral / k_i_div) +
 			(k_d * derivative / k_d_div);
 		/*
-		 * Let's limit upward transitions to 500mV.  It's okay to reduce
+		 * Let's limit upward transitions to 200mV.  It's okay to reduce
 		 * VSYS rather quickly, but we'll be conservative on
 		 * increasing VSYS.
 		 */
-		if (drive > 500)
-			drive = 500;
+		if (drive > 200)
+			drive = 200;
 		CPRINTS_DBG("drive = %d", drive);
 	}
 
@@ -248,14 +321,17 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	 * desired voltage.
 	 */
 	if (ph >= PHASE_CV_TRIP)
-		vsys_target = batt.desired_voltage;
+		vsys_target = batt.desired_voltage +
+				((batt_info->precharge_current *
+				  ocpc->combined_rsys_rbatt_mo) / 1000);
 
 	/*
-	 * Ensure VSYS is no higher than 1V over the max battery voltage, but
-	 * greater than or equal to our minimum VSYS target.
+	 * Ensure VSYS is no higher than the specified maximum battery voltage
+	 * plus the voltage drop across the system.
 	 */
 	vsys_target = CLAMP(vsys_target, min_vsys_target,
-			    batt_info->voltage_max+1000);
+			    batt_info->voltage_max +
+			    (i_ma * ocpc->combined_rsys_rbatt_mo / 1000));
 
 	/* If we're input current limited, we cannot increase VSYS any more. */
 	CPRINTS_DBG("OCPC: Inst. Input Current: %dmA (Limit: %dmA)",
@@ -271,11 +347,32 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	prev_limited = 0;
 
 set_vsys:
+	/* VSYS should never be below the battery's min voltage. */
+	vsys_target = MAX(vsys_target, batt_info->voltage_min);
 	/* To reduce spam, only print when we change VSYS significantly. */
 	if ((ABS(vsys_target - ocpc->last_vsys) > 10) || debug_output)
 		CPRINTS("OCPC: Target VSYS: %dmV", vsys_target);
 	charger_set_voltage(CHARGER_SECONDARY, vsys_target);
 	ocpc->last_vsys = vsys_target;
+
+	/*
+	 * Print a visualization graph of the actual current vs. the target.
+	 * Each position represents 5% of the target current.
+	 */
+	if (i_ma != 0) {
+		step = 5 * i_ma / 100;
+		loc = error / step;
+		loc = CLAMP(loc, -10, 10);
+		CPRINT_VIZ("[");
+		for (i = -10; i <= 10; i++) {
+			if (i == 0)
+				CPRINT_VIZ(loc == 0 ? "#" : "|");
+			else
+				CPRINT_VIZ(i == loc ? "o" : "-");
+		}
+		CPRINT_VIZ("] (actual)%dmA (desired)%dmA\n", batt.current,
+			   batt.desired_current);
+	}
 
 	return rv;
 }
@@ -333,19 +430,48 @@ static void ocpc_set_pid_constants(void)
 }
 DECLARE_HOOK(HOOK_INIT, ocpc_set_pid_constants, HOOK_PRIO_DEFAULT);
 
+void ocpc_init(struct ocpc_data *ocpc)
+{
+	/*
+	 * We can start off assuming that the board resistance is 0 ohms
+	 * and later on, we can update this value if we charge the
+	 * system in suspend or off.
+	 */
+	ocpc->combined_rsys_rbatt_mo = CONFIG_OCPC_DEF_RBATT_MOHMS;
+	ocpc->rbatt_mo = CONFIG_OCPC_DEF_RBATT_MOHMS;
+
+	board_ocpc_init(ocpc);
+}
+
 static int command_ocpcdebug(int argc, char **argv)
 {
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
 
-	if (!parse_bool(argv[1], &debug_output))
+	if (!strncmp(argv[1], "ena", 3)) {
+		debug_output = true;
+		viz_output = false;
+	} else if (!strncmp(argv[1], "dis", 3)) {
+		debug_output = false;
+		viz_output = false;
+	} else if (!strncmp(argv[1], "viz", 3)) {
+		debug_output = false;
+		viz_output = true;
+	} else if (!strncmp(argv[1], "all", 3)) {
+		debug_output = true;
+		viz_output = true;
+	} else {
 		return EC_ERROR_PARAM1;
+	}
 
 	return EC_SUCCESS;
 }
 DECLARE_SAFE_CONSOLE_COMMAND(ocpcdebug, command_ocpcdebug,
-			     "<enable/disable>",
-			     "enable/disable debug prints for OCPC data");
+			     "<enable/viz/all/disable",
+			     "Enable/disable debug prints for OCPC data. "
+			     "Enable turns on text debug, viz shows a graph."
+			     "Each segment is 5% of current target. All shows"
+			     " both. Disable shows no debug output.");
 
 static int command_ocpcpid(int argc, char **argv)
 {

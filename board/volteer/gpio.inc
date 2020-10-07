@@ -100,17 +100,16 @@ GPIO(USB_C1_RT_INT_ODL,			PIN(F, 3), GPIO_INPUT)
 
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C1_LS_EN)
-/* Retimer Force Power enable is connected to AP */
-UNIMPLEMENTED(USB_C1_RT_FORCE_PWR)
 
 /* Misc Signals */
 GPIO(EC_H1_PACKET_MODE,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
 /*
- * TODO(b/138954381): Determine the polarity of these SSD signals and whether
- * they are open-drain.
+ * Despite their names, M2_SSD_PLN and M2_SSD_PLA are active-low, and M2_SSD_PLN
+ * is open-drain.
+ * TODO(b/138954381): Change these names when they change on the schematic.
  */
-GPIO(M2_SSD_PLN,		PIN(A, 0), GPIO_OUT_HIGH)	/* SSD power-loss notification */
-GPIO(M2_SSD_PLA,		PIN(7, 0), GPIO_INPUT)		/* SSD power-loss acknoledgement */
+GPIO(M2_SSD_PLN,		PIN(A, 0), GPIO_ODR_HIGH)	/* SSD power-loss notification */
+GPIO(M2_SSD_PLA,		PIN(7, 0), GPIO_INPUT)		/* SSD power-loss acknowledgment */
 GPIO(CCD_MODE_ODL,		PIN(E, 5), GPIO_INPUT)		/* Case Closed Debug Mode */
 GPIO(EC_SLP_S0IX,		PIN(7, 2), GPIO_INPUT | GPIO_PULL_UP)
 

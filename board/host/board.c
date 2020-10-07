@@ -6,6 +6,7 @@
 
 #include "battery.h"
 #include "button.h"
+#include "cros_board_info.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "host_command.h"
@@ -17,6 +18,7 @@
 #include "power_button.h"
 #include "spi.h"
 #include "temp_sensor.h"
+#include "test_util.h"
 #include "timer.h"
 #include "util.h"
 
@@ -34,17 +36,17 @@ test_mockable enum battery_present battery_is_present(void)
 	return BP_YES;
 }
 
-test_mockable_static int dummy_temp_get_val(int idx, int *temp_ptr)
+test_mockable_static int mock_temp_get_val(int idx, int *temp_ptr)
 {
 	*temp_ptr = 0;
 	return EC_SUCCESS;
 }
 
 const struct temp_sensor_t temp_sensors[] = {
-	{"CPU", TEMP_SENSOR_TYPE_CPU, dummy_temp_get_val, 0},
-	{"Board", TEMP_SENSOR_TYPE_BOARD, dummy_temp_get_val, 1},
-	{"Case", TEMP_SENSOR_TYPE_CASE, dummy_temp_get_val, 2},
-	{"Battery", TEMP_SENSOR_TYPE_BOARD, dummy_temp_get_val, 3},
+	{"CPU", TEMP_SENSOR_TYPE_CPU, mock_temp_get_val, 0},
+	{"Board", TEMP_SENSOR_TYPE_BOARD, mock_temp_get_val, 1},
+	{"Case", TEMP_SENSOR_TYPE_CASE, mock_temp_get_val, 2},
+	{"Battery", TEMP_SENSOR_TYPE_BOARD, mock_temp_get_val, 3},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -65,6 +67,8 @@ const struct i2c_port_t i2c_ports[] = {
 	{"lightbar", I2C_PORT_LIGHTBAR, 100,  0, 0},
 #elif defined I2C_PORT_HOST_TCPC
 	{"tcpc", I2C_PORT_HOST_TCPC, 100,  0, 0},
+#elif defined I2C_PORT_EEPROM
+	{"eeprom", I2C_PORT_EEPROM, 100, 0, 0},
 #endif
 };
 
@@ -97,3 +101,32 @@ int board_get_entropy(void *buffer, int len)
 	return 1;
 }
 #endif
+
+static uint8_t eeprom[CBI_EEPROM_SIZE];
+
+int eeprom_i2c_xfer(int port, uint16_t addr_flags,
+		    const uint8_t *out, int out_size,
+		    uint8_t *in, int in_size, int flags)
+{
+	static int offset;
+
+	if (port != I2C_PORT_EEPROM || addr_flags != I2C_ADDR_EEPROM_FLAGS)
+		return EC_ERROR_INVAL;
+
+	if (out_size == 1 && (flags & I2C_XFER_START)) {
+		offset = *out;
+	} else {
+		if (offset + out_size > sizeof(eeprom))
+			return EC_ERROR_OVERFLOW;
+		memcpy(&eeprom[offset], out, out_size);
+	}
+
+	if (in) {
+		if (offset + in_size > sizeof(eeprom))
+			return EC_ERROR_OVERFLOW;
+		memcpy(in, &eeprom[offset], in_size);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_TEST_I2C_XFER(eeprom_i2c_xfer);

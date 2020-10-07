@@ -35,7 +35,6 @@ int port_handle = INVALID_HANDLE_VALUE;
 
 #define STS_MSG_MIN_SIZE 8
 #define STS_MSG_APP_END 0x09
-#define DUMMY_SIZE 2
 
 #define MAX_SYNC_TRIALS 3
 

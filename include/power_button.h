@@ -62,4 +62,11 @@ void power_button_pch_pulse(void);
  */
 int64_t get_time_dsw_pwrok(void);
 
+/**
+ * This must be defined when CONFIG_POWER_BUTTON_TO_PCH_CUSTOM is defined. This
+ * allows a board to override the default behavior of
+ * gpio_set_level(GPIO_PCH_PWRBTN_L, level).
+ */
+void board_pwrbtn_to_pch(int level);
+
 #endif  /* __CROS_EC_POWER_BUTTON_H */

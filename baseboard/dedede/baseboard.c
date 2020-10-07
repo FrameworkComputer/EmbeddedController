@@ -229,6 +229,10 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, baseboard_chipset_shutdown,
 
 void board_hibernate_late(void)
 {
+	/* Disable any pull-ups on C0 and C1 interrupt lines */
+	gpio_set_flags(GPIO_USB_C0_INT_ODL, GPIO_INPUT);
+	gpio_set_flags(GPIO_USB_C1_INT_ODL, GPIO_INPUT);
+
 	/*
 	 * Turn on the Z state.  This will not return as it will cut power to
 	 * the EC.

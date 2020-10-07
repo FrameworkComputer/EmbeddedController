@@ -70,9 +70,9 @@ test_export_static int command_pd(int argc, char **argv)
 
 	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE)) {
 		if (!strcasecmp(argv[2], "tx")) {
-			pe_dpm_request(port, DPM_REQUEST_SNK_STARTUP);
+			pd_dpm_request(port, DPM_REQUEST_SNK_STARTUP);
 		} else if (!strcasecmp(argv[2], "charger")) {
-			pe_dpm_request(port, DPM_REQUEST_SRC_STARTUP);
+			pd_dpm_request(port, DPM_REQUEST_SRC_STARTUP);
 		} else if (!strcasecmp(argv[2], "dev")) {
 			int max_volt;
 
@@ -84,7 +84,7 @@ test_export_static int command_pd(int argc, char **argv)
 				max_volt = pd_get_max_voltage();
 			}
 			pd_request_source_voltage(port, max_volt);
-			pe_dpm_request(port, DPM_REQUEST_NEW_POWER_LEVEL);
+			pd_dpm_request(port, DPM_REQUEST_NEW_POWER_LEVEL);
 			ccprintf("max req: %dmV\n", max_volt);
 		} else if (!strcasecmp(argv[2], "disable")) {
 			pd_comm_enable(port, 0);
@@ -95,20 +95,20 @@ test_export_static int command_pd(int argc, char **argv)
 			ccprintf("Port C%d enabled\n", port);
 			return EC_SUCCESS;
 		} else if (!strcasecmp(argv[2], "hard")) {
-			pe_dpm_request(port, DPM_REQUEST_HARD_RESET_SEND);
+			pd_dpm_request(port, DPM_REQUEST_HARD_RESET_SEND);
 		} else if (!strcasecmp(argv[2], "soft")) {
-			pe_dpm_request(port, DPM_REQUEST_SOFT_RESET_SEND);
+			pd_dpm_request(port, DPM_REQUEST_SOFT_RESET_SEND);
 		} else if (!strcasecmp(argv[2], "swap")) {
 			if (argc < 4)
 				return EC_ERROR_PARAM_COUNT;
 
 			if (!strcasecmp(argv[3], "power"))
-				pe_dpm_request(port, DPM_REQUEST_PR_SWAP);
+				pd_dpm_request(port, DPM_REQUEST_PR_SWAP);
 			else if (!strcasecmp(argv[3], "data"))
-				pe_dpm_request(port, DPM_REQUEST_DR_SWAP);
+				pd_dpm_request(port, DPM_REQUEST_DR_SWAP);
 			else if (IS_ENABLED(CONFIG_USBC_VCONN_SWAP) &&
 					!strcasecmp(argv[3], "vconn"))
-				pe_dpm_request(port, DPM_REQUEST_VCONN_SWAP);
+				pd_dpm_request(port, DPM_REQUEST_VCONN_SWAP);
 			else
 				return EC_ERROR_PARAM3;
 		} else if (!strcasecmp(argv[2], "dualrole")) {

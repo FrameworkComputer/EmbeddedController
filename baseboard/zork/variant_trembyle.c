@@ -103,25 +103,6 @@ struct charger_config_t chg_chips[] = {
 	},
 };
 
-/*
- * If the charger is found on the V0 I2C port then re-map the port.
- * Use HOOK_PRIO_INIT_I2C so we re-map before charger_chips_init()
- * talks to the charger. This relies on the V1 HW not using the ISL9241 address
- * on the V0 I2C port.
- * TODO(b/155214765): Remove this check once V0 HW is no longer used.
- */
-static void check_v0_charger(void)
-{
-	int id;
-
-	if (i2c_read16(I2C_PORT_CHARGER_V0, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_MANUFACTURER_ID, &id) == EC_SUCCESS) {
-		ccprints("V0 charger HW detected");
-		chg_chips[0].i2c_port = I2C_PORT_CHARGER_V0;
-	}
-}
-DECLARE_HOOK(HOOK_INIT, check_v0_charger, HOOK_PRIO_INIT_I2C);
-
 /*****************************************************************************
  * TCPC
  */
@@ -439,10 +420,10 @@ static int board_ps8802_mux_set(const struct usb_mux *me,
 			return rv;
 
 		/* Enable IN_HPD on the DB */
-		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 1);
 	} else {
 		/* Disable IN_HPD on the DB */
-		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
+		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 0);
 	}
 
 	return rv;
@@ -505,10 +486,10 @@ static int board_ps8818_mux_set(const struct usb_mux *me,
 			return rv;
 
 		/* Enable IN_HPD on the DB */
-		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 1);
 	} else {
 		/* Disable IN_HPD on the DB */
-		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
+		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 0);
 	}
 
 	return rv;
@@ -534,3 +515,26 @@ struct usb_mux usbc1_amd_fp5_usb_mux = {
 	.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
 	.driver = &amd_fp5_usb_mux_driver,
 };
+
+/*
+ * USB-C1 HPD may go through an IO expander, so we must use a custom HPD GPIO
+ * control function with CONFIG_USB_PD_DP_HPD_GPIO_CUSTOM.
+ *
+ * TODO(b/165622386) revert to non-custom GPIO control when HPD is no longer on
+ * the IO expander in any variants.
+ */
+void svdm_set_hpd_gpio(int port, int en)
+{
+	gpio_or_ioex_set_level(PORT_TO_HPD(port), en);
+}
+
+int svdm_get_hpd_gpio(int port)
+{
+	int out;
+
+	if (gpio_or_ioex_get_level(PORT_TO_HPD(port), &out) != EC_SUCCESS) {
+		ccprints("Failed to read current HPD for port C%d", port);
+		return 0;
+	}
+	return out;
+}

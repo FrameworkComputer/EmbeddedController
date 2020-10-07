@@ -163,6 +163,17 @@ void notify_sysjump_ready(void);
 void set_usb_mux_with_current_data_role(int port);
 
 /**
+ * Configure the USB MUX in safe mode.
+ * Before entering into alternate mode, state of the USB-C MUX needs to be in
+ * safe mode.
+ * Ref: USB Type-C Cable and Connector Specification
+ * Section E.2.2 Alternate Mode Electrical Requirements
+ *
+ * @param port The PD port number
+ */
+void usb_mux_set_safe_mode(int port);
+
+/**
  * Get the PD flags stored in BB Ram
  *
  * @param port USB-C port number

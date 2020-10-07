@@ -9,6 +9,7 @@
 #define __CROS_EC_BOARD_H
 
 #include "baseboard.h"
+#include "board_revs.h"
 
 /* TODO(waihong): Remove the following bringup features */
 #define CONFIG_BRINGUP
@@ -22,12 +23,19 @@
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_FLASH_SIZE (512 * 1024)  /* 512KB internal spi flash */
 
+/* Keyboard */
+#define CONFIG_KEYBOARD_BOARD_CONFIG
+#define CONFIG_PWM_KBLIGHT
+
 /* BC 1.2 Charger */
 #define CONFIG_BC12_DETECT_PI3USB9201
 
 /* USB */
+#define CONFIG_USB_PD_TCPM_MULTI_PS8XXX
 #define CONFIG_USB_PD_TCPM_PS8751
+#define CONFIG_USB_PD_TCPM_PS8805
 #define CONFIG_USBC_PPC_SN5S330
+#define CONFIG_USB_PD_PORT_MAX_COUNT 1
 
 /* USB-A */
 #define USB_PORT_COUNT 1
@@ -56,6 +64,8 @@
 #define GMR_TABLET_MODE_GPIO_L GPIO_LID_360_L
 
 /* GPIO alias */
+#define GPIO_AC_PRESENT GPIO_ACOK_OD
+#define GPIO_WP_L GPIO_EC_WP_ODL
 #define GPIO_EC_RST_ODL GPIO_EC_RST_ODL_GPIO02
 #define GPIO_PMIC_RESIN_L GPIO_PM7180_RESIN_D_L
 
@@ -94,6 +104,10 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
+/* Swithcap functions */
+void board_set_switchcap_power(int enable);
+int board_is_switchcap_enabled(void);
+int board_is_switchcap_power_good(void);
 /* Custom function to indicate if sourcing VBUS */
 int board_is_sourcing_vbus(int port);
 /* Enable VBUS sink for a given port */

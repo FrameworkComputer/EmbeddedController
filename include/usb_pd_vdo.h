@@ -162,18 +162,18 @@ enum usb_vbus_cur {
 union passive_cable_vdo_rev30 {
 	struct {
 		enum usb_rev30_ss ss: 3;
-		uint8_t reserved0 : 2;
+		uint32_t reserved0 : 2;
 		enum usb_vbus_cur vbus_cur : 2;
-		uint8_t reserved1 : 2;
-		uint8_t vbus_max : 2;
-		uint8_t termination : 2;
-		uint8_t latency : 4;
-		uint8_t reserved2 : 1;
-		uint8_t connector : 2;
-		uint8_t reserved3 : 1;
-		uint8_t vdo_version : 3;
-		uint8_t fw_version : 4;
-		uint8_t hw_version : 4;
+		uint32_t reserved1 : 2;
+		uint32_t vbus_max : 2;
+		uint32_t termination : 2;
+		uint32_t latency : 4;
+		uint32_t reserved2 : 1;
+		uint32_t connector : 2;
+		uint32_t reserved3 : 1;
+		uint32_t vdo_version : 3;
+		uint32_t fw_version : 4;
+		uint32_t hw_version : 4;
 	};
 	uint32_t raw_value;
 };
@@ -246,20 +246,20 @@ union passive_cable_vdo_rev30 {
 union active_cable_vdo1_rev30 {
 	struct {
 		enum usb_rev30_ss ss: 3;
-		uint8_t sop_p_p : 1;
-		uint8_t vbus_cable : 1;
+		uint32_t sop_p_p : 1;
+		uint32_t vbus_cable : 1;
 		enum usb_vbus_cur vbus_cur : 2;
-		uint8_t sbu_type : 1;
-		uint8_t sbu_support : 1;
-		uint8_t vbus_max : 2;
-		uint8_t termination : 2;
-		uint8_t latency : 4;
-		uint8_t reserved0 : 1;
-		uint8_t connector : 2;
-		uint8_t reserved1 : 1;
-		uint8_t vdo_version : 3;
-		uint8_t fw_version : 4;
-		uint8_t hw_version : 4;
+		uint32_t sbu_type : 1;
+		uint32_t sbu_support : 1;
+		uint32_t vbus_max : 2;
+		uint32_t termination : 2;
+		uint32_t latency : 4;
+		uint32_t reserved0 : 1;
+		uint32_t connector : 2;
+		uint32_t reserved1 : 1;
+		uint32_t vdo_version : 3;
+		uint32_t fw_version : 4;
+		uint32_t hw_version : 4;
 	};
 	uint32_t raw_value;
 };
@@ -594,20 +594,20 @@ enum usb_rev20_ss {
 union passive_cable_vdo_rev20 {
 	struct {
 		enum usb_rev20_ss ss: 3;
-		uint8_t reserved0 : 1;
-		uint8_t vbus_cable : 1;
+		uint32_t reserved0 : 1;
+		uint32_t vbus_cable : 1;
 		enum usb_vbus_cur vbus_cur : 2;
-		uint8_t ssrx2 : 1;
-		uint8_t ssrx1 : 1;
-		uint8_t sstx2 : 1;
-		uint8_t sstx1 : 1;
-		uint8_t termination : 2;
-		uint8_t latency : 4;
-		uint8_t reserved1 : 1;
-		uint8_t connector : 2;
-		uint8_t reserved2 : 4;
-		uint8_t fw_version : 4;
-		uint8_t hw_version : 4;
+		uint32_t ssrx2 : 1;
+		uint32_t ssrx1 : 1;
+		uint32_t sstx2 : 1;
+		uint32_t sstx1 : 1;
+		uint32_t termination : 2;
+		uint32_t latency : 4;
+		uint32_t reserved1 : 1;
+		uint32_t connector : 2;
+		uint32_t reserved2 : 4;
+		uint32_t fw_version : 4;
+		uint32_t hw_version : 4;
 	};
 	uint32_t raw_value;
 };
@@ -677,21 +677,21 @@ union passive_cable_vdo_rev20 {
 union active_cable_vdo_rev20 {
 	struct {
 		enum usb_rev20_ss ss: 3;
-		uint8_t sop_p_p : 1;
-		uint8_t vbus_cable : 1;
+		uint32_t sop_p_p : 1;
+		uint32_t vbus_cable : 1;
 		enum usb_vbus_cur vbus_cur : 2;
-		uint8_t ssrx2 : 1;
-		uint8_t ssrx1 : 1;
-		uint8_t sstx2 : 1;
-		uint8_t sstx1 : 1;
-		uint8_t termination : 2;
-		uint8_t latency : 4;
-		uint8_t reserved0 : 1;
-		uint8_t connector : 2;
-		uint8_t reserved1 : 1;
-		uint8_t vdo_version : 3;
-		uint8_t fw_version : 4;
-		uint8_t hw_version : 4;
+		uint32_t ssrx2 : 1;
+		uint32_t ssrx1 : 1;
+		uint32_t sstx2 : 1;
+		uint32_t sstx1 : 1;
+		uint32_t termination : 2;
+		uint32_t latency : 4;
+		uint32_t reserved0 : 1;
+		uint32_t connector : 2;
+		uint32_t reserved1 : 1;
+		uint32_t vdo_version : 3;
+		uint32_t fw_version : 4;
+		uint32_t hw_version : 4;
 	};
 	uint32_t raw_value;
 };
@@ -862,11 +862,13 @@ union product_type_vdo1 {
 
 	uint32_t raw_value;
 };
+BUILD_ASSERT(sizeof(uint32_t) == sizeof(union product_type_vdo1));
 
 union product_type_vdo2 {
 	union active_cable_vdo2_rev30 a2_rev30;
 
 	uint32_t raw_value;
 };
+BUILD_ASSERT(sizeof(uint32_t) == sizeof(union product_type_vdo2));
 
 #endif /* __CROS_EC_USB_PD_VDO_H */

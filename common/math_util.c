@@ -10,9 +10,6 @@
 #include "math_util.h"
 #include "util.h"
 
-/* Some useful math functions.  Use with integers only! */
-#define SQ(x) ((x) * (x))
-
 /* For cosine lookup table, define the increment and the size of the table. */
 #define COSINE_LUT_INCR_DEG	5
 #define COSINE_LUT_SIZE		((180 / COSINE_LUT_INCR_DEG) + 1)

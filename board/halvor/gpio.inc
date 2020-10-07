@@ -45,9 +45,14 @@ GPIO_INT(USB_C2_MIX_INT_ODL,	PIN(6, 1), GPIO_INT_BOTH, halvor_bc12_interrupt)
 
 /* Volume button interrupts */
 
+/* Unused signals */
+GPIO(EN_PP1050_STG,		PIN(C, 0), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(CPU_C10_GATE_L,		PIN(6, 7), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(EN_PP1050_ST_S0,		PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
 /* Power Sequencing Signals */
 GPIO(EN_PP3300_A,              PIN(A, 3), GPIO_OUT_LOW)
 GPIO(EN_PPVAR_VCCIN,	       PIN(4, 3), GPIO_OUT_LOW)
+GPIO(EN_PP5000_USB_AG,		PIN(A, 7), GPIO_OUT_HIGH)
 
 /* The EC does not buffer this signal on Halvor. */
 UNIMPLEMENTED(PCH_DSW_PWROK)
@@ -80,22 +85,20 @@ GPIO(EC_PCH_INT_ODL,           PIN(B, 0), GPIO_ODR_HIGH)
 /* USB and USBC Signals */
 GPIO(USB_C0_RT_RST_ODL,        PIN(6, 6), GPIO_ODR_LOW)
 GPIO(USB_C1_RT_RST_ODL,        PIN(8, 6), GPIO_ODR_LOW)
-GPIO(USB_C2_RT_RST_ODL,        PIN(3, 5), GPIO_ODR_LOW)
+GPIO(USB_C2_RT_RST_ODL,        PIN(9, 6), GPIO_ODR_LOW)
 
 GPIO(USB_C0_OC_ODL,            PIN(B, 1), GPIO_ODR_HIGH)
 GPIO(USB_C1_OC_ODL,            PIN(5, 0), GPIO_ODR_HIGH)
 GPIO(USB_C2_OC_ODL,            PIN(3, 2), GPIO_ODR_HIGH)
 
-GPIO(USB_CO_FRS_EN,            PIN(4, 0), GPIO_OUT_HIGH)
-GPIO(USB_C1_FRS_EN,            PIN(9, 4), GPIO_OUT_HIGH)
-GPIO(USB_C2_FRS_EN,            PIN(6, 0), GPIO_OUT_HIGH)
+
 
 /* Don't have a load switch for retimer */
+UNIMPLEMENTED(USB_C0_LS_EN)
 UNIMPLEMENTED(USB_C1_LS_EN)
+UNIMPLEMENTED(USB_C2_LS_EN)
 UNIMPLEMENTED(USB_C0_BC12_INT_ODL)
 UNIMPLEMENTED(USB_C1_BC12_INT_ODL)
-/* Retimer Force Power enable is connected to AP */
-UNIMPLEMENTED(USB_C1_RT_FORCE_PWR)
 
 /* Other input pins */
 GPIO(CCD_MODE_ODL,		PIN(E, 5),  GPIO_INPUT)
@@ -106,6 +109,10 @@ GPIO(CHARGER_INT_L,		PIN(7, 3),  GPIO_INPUT)
 GPIO(EC_PPEXT_EN1,		PIN(C, 2), GPIO_OUT_HIGH)
 GPIO(EC_I2CBUFFER_EN,		PIN(9, 3), GPIO_OUT_LOW)
 GPIO(UART2_EC_RX,		PIN(7, 5), GPIO_OUT_LOW)
+
+/* LED Signals */
+GPIO(LED_1_L,		PIN(C, 4), GPIO_OUT_LOW)
+GPIO(LED_2_L,		PIN(C, 3), GPIO_OUT_LOW)
 
 /* Misc Signals */
 
@@ -148,12 +155,6 @@ ALTERNATE(PIN_MASK(D, BIT(1) | BIT(0)), 0, MODULE_I2C, 0)                       
 ALTERNATE(PIN_MASK(F, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                            /* I2C4 */
 ALTERNATE(PIN_MASK(3, BIT(3) | BIT(6)), 0, MODULE_I2C, 0)                            /* I2C5 */
 ALTERNATE(PIN_MASK(B, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                            /* I2C7 */
-
-/* This selects between an LED module on the motherboard and one on the daughter
- * board, to be controlled by LED_{1,2,3}_L. PWM allows driving both modules at
- * the same time. */
-
-ALTERNATE(PIN_MASK(C, BIT(3) | BIT(4)), 0, MODULE_PWM, 0)                   /* LED_{2,1}_L */
 
 /* Fan signals */
 

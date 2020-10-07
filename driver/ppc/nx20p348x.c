@@ -384,7 +384,7 @@ static void nx20p348x_handle_interrupt(int port)
 static void nx20p348x_irq_deferred(void)
 {
 	int i;
-	uint32_t pending = atomic_read_clear(&irq_pending);
+	uint32_t pending = deprecated_atomic_read_clear(&irq_pending);
 
 	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		if (BIT(i) & pending)
@@ -394,7 +394,7 @@ DECLARE_DEFERRED(nx20p348x_irq_deferred);
 
 void nx20p348x_interrupt(int port)
 {
-	atomic_or(&irq_pending, BIT(port));
+	deprecated_atomic_or(&irq_pending, BIT(port));
 	hook_call_deferred(&nx20p348x_irq_deferred_data, 0);
 }
 

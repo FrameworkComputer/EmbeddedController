@@ -24,6 +24,3 @@ baseboard-$(CONFIG_USB_MUX_ANX7440)+=usb_mux.o
 
 #USB Retimer specific files
 baseboard-$(CONFIG_USBC_RETIMER_INTEL_BB)+=retimer.o
-
-#VBUS detection specific files
-baseboard-$(CONFIG_USB_PD_VBUS_DETECT_GPIO)+=vbus.o

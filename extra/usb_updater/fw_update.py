@@ -1,9 +1,10 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Copyright 2016 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
 # Upload firmware over USB
+# Note: This is a py2/3 compatible file.
 
 from __future__ import print_function
 
@@ -48,7 +49,7 @@ class Supdate(object):
     pass
 
 
-  def connect_usb(self, serialname=None ):
+  def connect_usb(self, serialname=None):
     """Initial discovery and connection to USB endpoint.
 
     This searches for a USB device matching the VID:PID specified
@@ -367,7 +368,7 @@ class Supdate(object):
       Exception on file not found or filesize not matching.
     """
     self._filesize = os.path.getsize(binfile)
-    self._binfile = open(binfile)
+    self._binfile = open(binfile, 'rb')
 
     if self._filesize != self._flashsize:
       raise Exception("Update", "Flash size 0x%x != file size 0x%x" % (self._flashsize, self._filesize))

@@ -183,7 +183,7 @@ static const irq_desc_t system_irqs[] = {
 	_DEFINE_EXN_HANDLER(vector, exception_panic_##vector)
 #define _DEFINE_EXN_HANDLER(vector, name)		\
 	void __keep name(void);				\
-	__attribute__((noreturn)) void name(void)	\
+	noreturn void name(void)	\
 	{						\
 		__asm__ ("push $0\n"			\
 			 "push $" #vector "\n"		\
@@ -195,7 +195,7 @@ static const irq_desc_t system_irqs[] = {
 	_DEFINE_EXN_HANDLER_W_ERRORCODE(vector, exception_panic_##vector)
 #define _DEFINE_EXN_HANDLER_W_ERRORCODE(vector, name)	\
 	void __keep name(void);				\
-	__attribute__((noreturn)) void name(void)	\
+	noreturn void name(void)	\
 	{						\
 		__asm__ ("push $" #vector "\n"		\
 			 "call exception_panic\n");	\
@@ -228,7 +228,7 @@ DEFINE_EXN_HANDLER(20);
  * watchdog timer expiration. However, this time, hardware does not
  * push errorcode, and we must account for that by pushing zero.
  */
-__attribute__((noreturn)) __keep
+noreturn __keep
 void exception_panic_wdt(uint32_t cs)
 {
 	exception_panic(

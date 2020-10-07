@@ -316,9 +316,8 @@ enum ec_error_list charger_set_mode(int mode)
 	return rv;
 }
 
-enum ec_error_list charger_enable_otg_power(int enabled)
+enum ec_error_list charger_enable_otg_power(int chgnum, int enabled)
 {
-	int chgnum = 0;
 	int rv = EC_ERROR_UNIMPLEMENTED;
 
 	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
@@ -332,10 +331,10 @@ enum ec_error_list charger_enable_otg_power(int enabled)
 	return rv;
 }
 
-enum ec_error_list charger_set_otg_current_voltage(int output_current,
+enum ec_error_list charger_set_otg_current_voltage(int chgnum,
+						   int output_current,
 						   int output_voltage)
 {
-	int chgnum = 0;
 	int rv = EC_ERROR_UNIMPLEMENTED;
 
 	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
@@ -354,6 +353,9 @@ int charger_is_sourcing_otg_power(int port)
 {
 	int chgnum = 0;
 	int rv = 0;
+
+	if (IS_ENABLED(CONFIG_OCPC))
+		chgnum = port;
 
 	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
 		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
@@ -435,16 +437,18 @@ enum ec_error_list charger_set_voltage(int chgnum, int voltage)
 
 enum ec_error_list charger_discharge_on_ac(int enable)
 {
-	int chgnum = 0;
+	int chgnum;
 	int rv = EC_ERROR_UNIMPLEMENTED;
 
-	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
-		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
-		return EC_ERROR_INVAL;
+	/*
+	 * When discharge on AC is selected, cycle through all chargers to
+	 * enable or disable this feature.
+	 */
+	for (chgnum = 0; chgnum < board_get_charger_chip_count(); chgnum++) {
+		if (chg_chips[chgnum].drv->discharge_on_ac)
+			rv = chg_chips[chgnum].drv->discharge_on_ac(chgnum,
+								    enable);
 	}
-
-	if (chg_chips[chgnum].drv->discharge_on_ac)
-		rv = chg_chips[chgnum].drv->discharge_on_ac(chgnum, enable);
 
 	return rv;
 }

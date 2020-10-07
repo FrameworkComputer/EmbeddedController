@@ -51,6 +51,8 @@ DEFINE_integer 'jobs' "-1" 'Number of jobs to pass to make' 'j'
 # refs at the same time. Use the -o flag.
 DEFINE_boolean 'oneref' "${FLAGS_FALSE}" \
                'Build only one set of boards at a time. This limits mem.' 'o'
+DEFINE_boolean 'private' "${FLAGS_FALSE}" \
+               'Link the private repo/dir into test build source tree.' 'p'
 
 # Usage: assoc-add-keys <associate_array_name> [item1 [item2...]]
 assoc-add-keys() {
@@ -190,6 +192,12 @@ fi
 echo "# Board Selection:"
 printf "%s\n" "${BOARDS[@]}" | sort | column
 
+# Symbolically linked directories
+LINKS=( )
+if [[ "${FLAGS_private}" == "${FLAGS_TRUE}" ]]; then
+	LINKS+=( private )
+fi
+
 ##########################################################################
 # Runtime                                                                #
 ##########################################################################
@@ -203,6 +211,7 @@ cat > "${TMP_DIR}/Makefile" <<HEREDOC
 ORIGIN ?= $(realpath .)
 CRYPTOC_DIR ?= $(realpath ../../third_party/cryptoc)
 BOARDS ?= ${BOARDS[*]}
+LINKS ?= ${LINKS[*]}
 
 .PHONY: all
 all: build-${OLD_REF} build-${NEW_REF}
@@ -210,6 +219,9 @@ all: build-${OLD_REF} build-${NEW_REF}
 ec-%:
 	git clone --quiet --no-checkout \$(ORIGIN) \$@
 	git -C \$@ checkout --quiet \$(@:ec-%=%)
+ifneq (\$(LINKS),)
+	ln -s \$(addprefix \$(ORIGIN)/,\$(LINKS)) \$@
+endif
 
 build-%: ec-%
 	\$(MAKE) --no-print-directory -C \$(@:build-%=ec-%)                   \\

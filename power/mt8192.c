@@ -172,6 +172,8 @@ void chipset_reset(enum chipset_reset_reason reason)
 
 enum power_state power_chipset_init(void)
 {
+	int exit_hard_off = 1;
+
 	/* Enable reboot / sleep control inputs from AP */
 	gpio_enable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
 	gpio_enable_interrupt(GPIO_AP_IN_SLEEP_L);
@@ -184,11 +186,17 @@ enum power_state power_chipset_init(void)
 			return POWER_S0;
 		}
 	} else if (system_get_reset_flags() & EC_RESET_FLAG_AP_OFF) {
-		/* Force shutdown from S5 if the PMIC is already up. */
-		if (power_get_signals() & IN_PGOOD_PMIC) {
-			forcing_shutdown = 1;
-			return POWER_S5;
-		}
+		exit_hard_off = 0;
+	} else if ((system_get_reset_flags() & EC_RESET_FLAG_HIBERNATE) &&
+			gpio_get_level(GPIO_AC_PRESENT)) {
+		/*
+		 * If AC present, assume this is a wake-up by AC insert.
+		 * Boot EC only.
+		 *
+		 * Note that extpower module is not initialized at this point,
+		 * the only way is to ask GPIO_AC_PRESENT directly.
+		 */
+		exit_hard_off = 0;
 	}
 
 	if (battery_is_present() == BP_YES)
@@ -199,13 +207,17 @@ enum power_state power_chipset_init(void)
 		 */
 		battery_wait_for_stable();
 
-	if (!(system_get_reset_flags() & EC_RESET_FLAG_AP_OFF))
+	if (exit_hard_off)
 		/* Auto-power on */
 		chipset_exit_hard_off();
 
 	/* Start from S5 if the PMIC is already up. */
-	if (power_get_signals() & IN_PGOOD_PMIC)
+	if (power_get_signals() & IN_PGOOD_PMIC) {
+		/* Force shutdown from S5 if the PMIC is already up. */
+		if (!exit_hard_off)
+			forcing_shutdown = 1;
 		return POWER_S5;
+	}
 
 	return POWER_G3;
 }
@@ -287,7 +299,6 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_G3S5:
 		forcing_shutdown = 0;
 
-		GPIO_SET_LEVEL(GPIO_EN_PP5000_A, 1);
 		/* Power up to next state */
 		return POWER_S5;
 
@@ -413,8 +424,6 @@ enum power_state power_handle_state(enum power_state state)
 		/* Release the power button, in case it was long pressed. */
 		if (forcing_shutdown)
 			GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
-
-		GPIO_SET_LEVEL(GPIO_EN_PP5000_A, 0);
 
 		return POWER_G3;
 	}

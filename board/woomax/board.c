@@ -13,6 +13,7 @@
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/retimer/pi3dpx1207.h"
+#include "driver/retimer/pi3hdx1204.h"
 #include "driver/retimer/ps8811.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/usb_mux/amd_fp5.h"
@@ -196,19 +197,26 @@ const int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A0_5V,
 };
 
+const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
+	.eq_ch0_ch1_offset = PI3HDX1204_EQ_DB710,
+	.eq_ch2_ch3_offset = PI3HDX1204_EQ_DB710,
+	.vod_offset = PI3HDX1204_VOD_115_ALL_CHANNELS,
+	.de_offset = PI3HDX1204_DE_DB_MINUS5,
+};
+
 /*****************************************************************************
- * USB-A Retimer tuning
+ * Board suspend / resume
  */
 #define PS8811_ACCESS_RETRIES 2
 
-/* PS8811 gain tuning */
-static void ps8811_tuning_init(void)
+static void board_chipset_resume(void)
 {
 	int rv;
 	int retry;
+	int hpd = gpio_get_level(GPIO_DP1_HPD_EC_IN);
 
-	/* Turn on the retimers */
 	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 1);
+	ioex_set_level(IOEX_HDMI_DATA_EN_DB, 1);
 
 	/* USB-A0 can run with default settings */
 	for (retry = 0; retry < PS8811_ACCESS_RETRIES; ++retry) {
@@ -222,17 +230,33 @@ static void ps8811_tuning_init(void)
 	}
 	if (rv) {
 		ioex_set_level(IOEX_USB_A0_RETIMER_EN, 0);
-		CPRINTSUSB("C0: PS8811 not detected");
+		CPRINTSUSB("A0: PS8811 not detected");
+	}
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
+		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  hpd);
 	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, ps8811_tuning_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
-static void ps8811_retimer_off(void)
+static void board_chipset_suspend(void)
 {
-	/* Turn on the retimers */
 	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 0);
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  0);
+		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
+	}
+
+	ioex_set_level(IOEX_HDMI_DATA_EN_DB, 0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, ps8811_retimer_off, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************
  * USB-C MUX/Retimer dynamic configuration
@@ -311,13 +335,20 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
  * Use FW_CONFIG to set correct configuration.
  */
 
-void setup_fw_config(void)
+int board_usbc1_retimer_inhpd = IOEX_USB_C1_HPD_IN_DB;
+
+static void setup_fw_config(void)
 {
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 
+	/* Enable DP1_HPD_EC_IN interrupt */
+	if (ec_config_has_hdmi_retimer_pi3hdx1204())
+		gpio_enable_interrupt(GPIO_DP1_HPD_EC_IN);
+
 	setup_mux();
 }
+/* Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init(). */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
 /*****************************************************************************
@@ -449,20 +480,6 @@ static void setup_fans(void)
 }
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 
-static void board_chipset_resume(void)
-{
-	/* HDMI retimer power on */
-	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
-
-static void board_chipset_suspend(void)
-{
-	/* HDMI retimer power off */
-	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
-
 static const struct ec_response_keybd_config woomax_kb = {
 	.num_top_row_keys = 10,
 	.action_keys = {
@@ -477,7 +494,7 @@ static const struct ec_response_keybd_config woomax_kb = {
 		TK_VOL_DOWN,		/* T9 */
 		TK_VOL_UP,		/* T10 */
 	},
-	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
 };
 
 __override const struct ec_response_keybd_config
@@ -495,4 +512,21 @@ static void keyboard_init(void)
 	keyscan_config.actual_key_mask[14] = 0xff;
 }
 DECLARE_HOOK(HOOK_INIT, keyboard_init, HOOK_PRIO_INIT_I2C + 1);
+
+static void hdmi_hpd_handler(void)
+{
+	int hpd = gpio_get_level(GPIO_DP1_HPD_EC_IN);
+
+	pi3hdx1204_enable(I2C_PORT_TCPC1,
+			  PI3HDX1204_I2C_ADDR_FLAGS,
+			  chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
+			  && hpd);
+}
+DECLARE_DEFERRED(hdmi_hpd_handler);
+
+void hdmi_hpd_interrupt(enum gpio_signal signal)
+{
+	/* Debounce 2 msec */
+	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
+}
 

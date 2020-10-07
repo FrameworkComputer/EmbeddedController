@@ -47,7 +47,7 @@ int dptf_query_next_sensor_event(void)
 
 	for (id = 0; id < TEMP_SENSOR_COUNT; id++)
 		if (dptf_seen & BIT(id)) {  /* atomic? */
-			atomic_clear(&dptf_seen, BIT(id));
+			deprecated_atomic_clear_bits(&dptf_seen, BIT(id));
 			return id;
 		}
 
@@ -79,13 +79,13 @@ static int dptf_check_temp_threshold(int sensor_id, int temp)
 		if (cond_went_true(&dptf_threshold[sensor_id][i].over)) {
 			CPRINTS("DPTF over threshold [%d][%d",
 				sensor_id, i);
-			atomic_or(&dptf_seen, BIT(sensor_id));
+			deprecated_atomic_or(&dptf_seen, BIT(sensor_id));
 			tripped = 1;
 		}
 		if (cond_went_false(&dptf_threshold[sensor_id][i].over)) {
 			CPRINTS("DPTF under threshold [%d][%d",
 				sensor_id, i);
-			atomic_or(&dptf_seen, BIT(sensor_id));
+			deprecated_atomic_or(&dptf_seen, BIT(sensor_id));
 			tripped = 1;
 		}
 	}
@@ -109,7 +109,7 @@ void dptf_set_temp_threshold(int sensor_id, int temp, int idx, int enable)
 		if (dptf_threshold[sensor_id][idx].temp == -1)
 			cond_init(&dptf_threshold[sensor_id][idx].over, 0);
 		dptf_threshold[sensor_id][idx].temp = temp;
-		atomic_clear(&dptf_seen, BIT(sensor_id));
+		deprecated_atomic_clear_bits(&dptf_seen, BIT(sensor_id));
 	} else {
 		dptf_threshold[sensor_id][idx].temp = -1;
 	}

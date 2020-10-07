@@ -518,11 +518,19 @@ static void handle_host_write(int is_cmd)
 /* KB controller input buffer full ISR */
 void lpc_kbc_ibf_interrupt(void)
 {
+	uint8_t status;
 	uint8_t ibf;
 	/* If "command" input 0, else 1*/
 	if (lpc_keyboard_input_pending()) {
+		/*
+		 * Reading HIKMDI causes the IBF flag to deassert and allows
+		 * the host to write a new byte into the input buffer. So if we
+		 * don't capture the status before reading HIKMDI we will race
+		 * with the host and get an invalid value for HIKMST.A20.
+		 */
+		status = NPCX_HIKMST;
 		ibf = NPCX_HIKMDI;
-		keyboard_host_write(ibf, (NPCX_HIKMST & 0x08) ? 1 : 0);
+		keyboard_host_write(ibf, (status & 0x08) ? 1 : 0);
 		CPRINTS("ibf isr %02x", ibf);
 		task_wake(TASK_ID_KEYPROTO);
 	} else {
@@ -713,8 +721,16 @@ static void lpc_init(void)
 	/* Enable clock for LPC peripheral */
 	clock_enable_peripheral(CGC_OFFSET_LPC, CGC_LPC_MASK,
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
+	/*
+	 * In npcx5/7, the host interface type (HIF_TYP_SEL in the DEVCNT
+	 * register) is updated by booter after VCC1 Power-Up reset according to
+	 * VHIF voltage.
+	 * In npcx9, the booter will not do this anymore. The HIF_TYP_SEL
+	 * field should be set by firmware.
+	 */
 #ifdef CONFIG_HOSTCMD_ESPI
-	/* Initialize eSPI IP */
+	/* Initialize eSPI module */
+	NPCX_DEVCNT |= 0x08;
 	espi_init();
 #else
 	/* Switching to LPC interface */

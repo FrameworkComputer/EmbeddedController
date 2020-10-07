@@ -44,7 +44,8 @@ struct cbi_data {
 /**
  * Board info accessors
  *
- * @param version/sku_id/oem_id/id/fw_config [OUT] Data read from EEPROM
+ * @param version/sku_id/oem_id/id/fw_config/pcb_supplier/ssfc [OUT] Data read
+ *        from EEPROM
  * @return EC_SUCCESS on success or EC_ERROR_* otherwise.
  *         EC_ERROR_BUSY to indicate data is not ready.
  */
@@ -54,6 +55,7 @@ int cbi_get_oem_id(uint32_t *oem_id);
 int cbi_get_model_id(uint32_t *id);
 int cbi_get_fw_config(uint32_t *fw_config);
 int cbi_get_pcb_supplier(uint32_t *pcb_supplier);
+int cbi_get_ssfc(uint32_t *ssfc);
 
 /**
  * Get data from CBI store
@@ -143,5 +145,14 @@ struct cbi_data *cbi_find_tag(const void *cbi, enum cbi_data_tag tag);
  *         EC_ERROR_BUSY to indicate supplemental data is not ready.
  */
 int cbi_board_override(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size);
+
+#ifdef TEST_BUILD
+/**
+ * Test only declarations. Firmware shouldn't need them.
+ */
+int cbi_create(void);
+int cbi_write(void);
+void cbi_invalidate_cache(void);
+#endif
 
 #endif /* __CROS_EC_CROS_BOARD_INFO_H */

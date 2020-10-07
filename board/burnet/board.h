@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Configuration for Kukui */
+/* Configuration for Burnet */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -45,24 +45,23 @@
 #define CONFIG_USB_MUX_IT5205
 
 /* Motion Sensors */
-#ifdef SECTION_IS_RW
-#define CONFIG_MAG_BMI_BMM150
-#define CONFIG_ACCELGYRO_SEC_ADDR_FLAGS BMM150_ADDR0_FLAGS
-#define CONFIG_MAG_CALIBRATE
-#define CONFIG_ACCELGYRO_BMI160
+#ifndef VARIANT_KUKUI_NO_SENSORS
+#define CONFIG_ACCEL_BMA255		/* Lid accel */
+#define CONFIG_ACCELGYRO_BMI160		/* Base accel */
 #define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(LID_ACCEL)
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 #define CONFIG_ALS
+#define CONFIG_CMD_ACCEL_INFO
+#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 
-#define ALS_COUNT 1
-#define CONFIG_ALS_TCS3400
-#define CONFIG_ALS_TCS3400_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
-#define CONFIG_ALS_TCS3400_EMULATED_IRQ_EVENT
-#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(CLEAR_ALS)
+#define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 
-#endif /* SECTION_IS_RW */
+#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
+
+#endif /* VARIANT_KUKUI_NO_SENSORS */
 
 /* I2C ports */
 #define I2C_PORT_BC12               0
@@ -70,6 +69,7 @@
 #define I2C_PORT_USB_MUX            0
 #define I2C_PORT_BATTERY            2
 #define I2C_PORT_CHARGER            1
+#define I2C_PORT_SENSORS            1
 #define I2C_PORT_IO_EXPANDER_IT8801 1
 #define I2C_PORT_VIRTUAL_BATTERY    I2C_PORT_BATTERY
 
@@ -90,7 +90,6 @@ enum adc_channel {
 	/* Real ADC channels begin here */
 	ADC_BOARD_ID = 0,
 	ADC_EC_SKU_ID,
-	ADC_BATT_ID,
 	ADC_CH_COUNT
 };
 
@@ -106,11 +105,8 @@ enum power_signal {
 /* Motion sensors */
 enum sensor_id {
 	LID_ACCEL = 0,
-	LID_GYRO,
-	LID_MAG,
-	CLEAR_ALS,
-	RGB_ALS,
-	VSYNC,
+	BASE_ACCEL,
+	BASE_GYRO,
 	SENSOR_COUNT,
 };
 
@@ -119,8 +115,12 @@ enum charge_port {
 };
 
 enum battery_type {
-	BATTERY_DANAPACK_HIGHPOWER,
+	BATTERY_DANAPACK_ATL,
 	BATTERY_DANAPACK_COS,
+	BATTERY_SIMPLO_COS,
+	BATTERY_SIMPLO_HIGHPOWER,
+	BATTERY_SAMSUNG_SDI,
+	BATTERY_COS,
 	BATTERY_TYPE_COUNT,
 };
 
@@ -139,6 +139,8 @@ int board_is_sourcing_vbus(int port);
 
 /* returns the i2c port number of charger */
 int board_get_charger_i2c(void);
+
+int board_is_convertible(void);
 
 #endif /* !__ASSEMBLER__ */
 

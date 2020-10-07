@@ -48,6 +48,7 @@ static inline uint32_t clear_csr(uint32_t reg, uint32_t bit)
 #define CSR_VIC_MIMASK_G0	(0x5d8)
 #define CSR_VIC_MIWAKEUP_G0	(0x5e0)
 #define CSR_VIC_MILSEL_G0	(0x5e8)
+#define CSR_VIC_MIEMASK_G0	(0x5f0)
 
 /* centralized control enable */
 #define CSR_MCTREN		(0x7c0)

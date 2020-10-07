@@ -76,6 +76,10 @@
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 
+/* Enable AP Reset command for TPM with old firmware version to detect it. */
+#define CONFIG_CMD_AP_RESET_LOG
+#define CONFIG_HOSTCMD_AP_RESET
+
 /* Chipset config */
 #define CONFIG_CHIPSET_COMETLAKE_DISCRETE
 /* check */
@@ -192,7 +196,6 @@ enum adc_channel {
 	ADC_VBUS,           /* ADC4 */
 	ADC_PPVAR_IMON,     /* ADC9 */
 	ADC_TEMP_SENSOR_1,  /* ADC0 */
-	ADC_TEMP_SENSOR_2,  /* ADC1 */
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
@@ -218,8 +221,7 @@ enum mft_channel {
 };
 
 enum temp_sensor_id {
-	TEMP_SENSOR_PP3300,
-	TEMP_SENSOR_PP5000,
+	TEMP_SENSOR_CORE,
 	TEMP_SENSOR_COUNT
 };
 
@@ -245,9 +247,16 @@ void show_critical_error(void);
 #define EC_CFG_NO_USB4_L		4
 #define EC_CFG_NO_USB4_H		4
 #define EC_CFG_NO_USB4_MASK GENMASK(EC_CFG_NO_USB4_H, EC_CFG_NO_USB4_L)
+/*
+ * Thermal solution config (3 bits).
+ */
+#define EC_CFG_THERMAL_L		5
+#define EC_CFG_THERMAL_H		7
+#define EC_CFG_THERMAL_MASK GENMASK(EC_CFG_THERMAL_H, EC_CFG_THERMAL_L)
 
 unsigned int ec_config_get_bj_power(void);
 int ec_config_get_usb4_present(void);
+unsigned int ec_config_get_thermal_solution(void);
 
 #endif /* !__ASSEMBLER__ */
 

@@ -24,6 +24,11 @@
 #error "Please upgrade your board configuration"
 #endif
 
+#if defined(CONFIG_USB_PD_REV30)
+#error "ANX74xx chips were developed before PD 3.0 and aren't PD 3.0 compliant"
+#error "Please undefine PD 3.0.  See b/159253723 for details"
+#endif
+
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 

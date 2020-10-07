@@ -61,6 +61,70 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 
+	/* SMP L20M3PG1 57W
+	 * Gauge IC: TI BQ40Z696A
+	 */
+	[BATTERY_SMP_1] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP",
+			.device_name = "L20M3PG1",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0000,
+				.reg_mask = 0x6000,
+				.disconnect_val = 0x6000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11520, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 247,	 /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
+		},
+	},
+
+	/* SMP L20M3PG0 47W
+	 * Gauge IC: TI BQ40Z696A
+	 */
+	[BATTERY_SMP_2] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP",
+			.device_name = "L20M3PG0",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0000,
+				.reg_mask = 0x6000,
+				.disconnect_val = 0x6000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11520, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 256,	 /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
+		},
+	},
+
 	/* LGC  L19L3PG1 */
 	[BATTERY_LGC] = {
 		.fuel_gauge = {
@@ -90,6 +154,68 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 
+	/* LGC L20L3PG1 57W
+	 * Gauge IC: Renesas
+	 */
+	[BATTERY_LGC_1] = {
+		.fuel_gauge = {
+			.manuf_name = "LGC",
+			.device_name = "L20L3PG1",
+			.ship_mode = {
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x0010,
+				.disconnect_val = 0x0,
+			},
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11580, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 256,	 /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
+		},
+	},
+
+	/* LGC L20L3PG0 47W
+	 * Gauge IC: Renesas
+	 */
+	[BATTERY_LGC_2] = {
+		.fuel_gauge = {
+			.manuf_name = "LGC",
+			.device_name = "L20L3PG0",
+			.ship_mode = {
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x0010,
+				.disconnect_val = 0x0,
+			},
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11580, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 256,	 /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
+		},
+	},
+
 	/* Celxpert  L19C3PG1 */
 	[BATTERY_CEL] = {
 		.fuel_gauge = {
@@ -114,6 +240,102 @@ const struct board_batt_params board_battery_info[] = {
 			.start_charging_max_c	= 60,
 			.charging_min_c		= 0,
 			.charging_max_c		= 50,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
+		},
+	},
+
+	/* Celxpert L20C3PG0 57W
+	 * Gauge IC: TI
+	 */
+	[BATTERY_CEL_1] = {
+		.fuel_gauge = {
+			.manuf_name = "Celxpert",
+			.device_name = "L20C3PG0",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0000,
+				.reg_mask = 0x6000,
+				.disconnect_val = 0x6000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11520, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 200,	 /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
+		},
+	},
+
+	/* SUNWODA L20D3PG1 57W
+	 * Gauge IC: TI
+	 */
+	[BATTERY_SUNWODA] = {
+		.fuel_gauge = {
+			.manuf_name = "Sunwoda",
+			.device_name = "L20D3PG1",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0000,
+				.reg_mask = 0x6000,
+				.disconnect_val = 0x6000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11520, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 250,	 /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
+		},
+	},
+
+	/* SUNWODA L20D3PG0 47W
+	 * Gauge IC: TI
+	 */
+	[BATTERY_SUNWODA_1] = {
+		.fuel_gauge = {
+			.manuf_name = "Sunwoda",
+			.device_name = "L20D3PG0",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0000,
+				.reg_mask = 0x6000,
+				.disconnect_val = 0x6000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11520, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 205,	 /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
 			.discharging_min_c	= -20,
 			.discharging_max_c	= 70,
 		},

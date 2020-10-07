@@ -128,7 +128,7 @@ embedded controllers either aren't fast enough or don't have any support for
 hardware flow-control.
 
 It works like this: When the AP sends a byte to the EC, if the EC doesn't have a
-response queued up in advance, a default "dummy" byte is returned. The EC
+response queued up in advance, a default byte is returned. The EC
 preconfigures that default response byte to indicate its status (ready, busy,
 waiting for more input, etc.). Once the AP has sent a complete command message,
 it continues clocking bytes to the EC (which the EC ignores) and just looks at

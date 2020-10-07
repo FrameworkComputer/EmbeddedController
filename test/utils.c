@@ -450,6 +450,20 @@ test_static int test_is_aligned(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_safe_memcmp(void)
+{
+	const char str1[] = "abc";
+	const char str2[] = "def";
+	const char str3[] = "abc";
+
+	BUILD_ASSERT(str1 != str3);
+
+	TEST_EQ(safe_memcmp(NULL, NULL, 0), 0, "%d");
+	TEST_EQ(safe_memcmp(str1, str2, sizeof(str1)), 1, "%d");
+	TEST_EQ(safe_memcmp(str1, str3, sizeof(str1)), 0, "%d");
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, char **argv)
 {
 	test_reset();
@@ -469,6 +483,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_swap);
 	RUN_TEST(test_bytes_are_trivial);
 	RUN_TEST(test_is_aligned);
+	RUN_TEST(test_safe_memcmp);
 
 	test_print_result();
 }

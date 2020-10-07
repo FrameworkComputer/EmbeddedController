@@ -25,10 +25,10 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-#ifdef CONFIG_USB_PD_DECODE_SOP
-static int vconn_en[CONFIG_USB_PD_PORT_MAX_COUNT];
-static int rx_en[CONFIG_USB_PD_PORT_MAX_COUNT];
-#endif
+STATIC_IF(CONFIG_USB_PD_DECODE_SOP)
+	int sop_prime_en[CONFIG_USB_PD_PORT_MAX_COUNT];
+STATIC_IF(CONFIG_USB_PD_DECODE_SOP)
+	int rx_en[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define TCPC_FLAGS_VSAFE0V(_flags) \
 	((_flags & TCPC_FLAGS_TCPCI_REV2_0) && \
@@ -100,7 +100,14 @@ STATIC_IF(DEBUG_GET_CC)
  * Last reported VBus Level
  *
  * BIT(VBUS_SAFE0V) will indicate if in SAFE0V
- * BIT(VBUS_PRESENT) will indicate if in PRESENT
+ * BIT(VBUS_PRESENT) will indicate if in PRESENT in the TCPCI POWER_STATUS
+ *
+ * Note that VBUS_REMOVED cannot be distinguished from !VBUS_PRESENT with
+ * this interface, but the trigger thresholds for Vbus Present should allow the
+ * same bit to be used safely for both.
+ *
+ * TODO(b/149530538): Some TCPCs may be able to implement
+ * VBUS_SINK_DISCONNECT_THRESHOLD to support vSinkDisconnectPD
  */
 static int tcpc_vbus[CONFIG_USB_PD_PORT_MAX_COUNT];
 
@@ -608,17 +615,10 @@ int tcpci_tcpm_set_src_ctrl(int port, int enable)
 }
 #endif
 
-int tcpci_tcpm_set_vconn(int port, int enable)
+__maybe_unused static int tpcm_set_sop_prime_enable(int port, int enable)
 {
-	int reg, rv;
-
-	rv = tcpc_read(port, TCPC_REG_POWER_CTRL, &reg);
-	if (rv)
-		return rv;
-
-#ifdef CONFIG_USB_PD_DECODE_SOP
-	/* save vconn */
-	vconn_en[port] = enable;
+	/* save SOP'/SOP'' enable state */
+	sop_prime_en[port] = enable;
 
 	if (rx_en[port]) {
 		int detect_sop_en = TCPC_REG_RX_DETECT_SOP_HRST_MASK;
@@ -628,9 +628,31 @@ int tcpci_tcpm_set_vconn(int port, int enable)
 				TCPC_REG_RX_DETECT_SOP_SOPP_SOPPP_HRST_MASK;
 		}
 
-		tcpc_write(port, TCPC_REG_RX_DETECT, detect_sop_en);
+		return tcpc_write(port, TCPC_REG_RX_DETECT, detect_sop_en);
 	}
-#endif
+
+	return EC_SUCCESS;
+}
+
+__maybe_unused int tcpci_tcpm_sop_prime_disable(int port)
+{
+	return tpcm_set_sop_prime_enable(port, 0);
+}
+
+int tcpci_tcpm_set_vconn(int port, int enable)
+{
+	int reg, rv;
+
+	rv = tcpc_read(port, TCPC_REG_POWER_CTRL, &reg);
+	if (rv)
+		return rv;
+
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
+		rv = tpcm_set_sop_prime_enable(port, enable);
+		if (rv)
+			return rv;
+	}
+
 	reg &= ~TCPC_REG_POWER_CTRL_VCONN(1);
 	reg |= TCPC_REG_POWER_CTRL_VCONN(enable);
 	return tcpc_write(port, TCPC_REG_POWER_CTRL, reg);
@@ -664,24 +686,24 @@ int tcpci_tcpm_set_rx_enable(int port, int enable)
 {
 	int detect_sop_en = 0;
 
-#ifdef CONFIG_USB_PD_DECODE_SOP
-	/* save rx_on */
-	rx_en[port] = enable;
-#endif
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
+		/* save rx_on */
+		rx_en[port] = enable;
+	}
+
 
 	if (enable) {
 		detect_sop_en = TCPC_REG_RX_DETECT_SOP_HRST_MASK;
 
-#ifdef CONFIG_USB_PD_DECODE_SOP
-		/*
-		 * Only the VCONN Source is allowed to communicate
-		 * with the Cable Plugs.
-		 */
-
-		if (vconn_en[port])
+		if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP) &&
+			sop_prime_en[port]) {
+			/*
+			 * Only the VCONN Source is allowed to communicate
+			 * with the Cable Plugs.
+			 */
 			detect_sop_en =
 				TCPC_REG_RX_DETECT_SOP_SOPP_SOPPP_HRST_MASK;
-#endif
+		}
 	}
 
 	/* If enable, then set RX detect for SOP and HRST */
@@ -703,8 +725,10 @@ bool tcpci_tcpm_check_vbus_level(int port, enum vbus_level level)
 {
 	if (level == VBUS_SAFE0V)
 		return !!(tcpc_vbus[port] & BIT(VBUS_SAFE0V));
-	else
+	else if (level == VBUS_PRESENT)
 		return !!(tcpc_vbus[port] & BIT(VBUS_PRESENT));
+	else
+		return !(tcpc_vbus[port] & BIT(VBUS_PRESENT));
 }
 #endif
 
@@ -733,22 +757,28 @@ static int tcpci_rev2_0_tcpm_get_message_raw(int port, uint32_t *payload,
 	cnt = tmp[0];
 	frm = tmp[1];
 
-	/* READABLE_BYTE_COUNT includes 3 bytes for frame type and header */
+	/*
+	 * READABLE_BYTE_COUNT includes 3 bytes for frame type and header, and
+	 * may be 0 if the TCPC saw a disconnect before the message read
+	 */
 	cnt -= 3;
-	if (cnt > member_size(struct cached_tcpm_message, payload)) {
+	if ((cnt < 0) ||
+	    (cnt > member_size(struct cached_tcpm_message, payload))) {
+		/* Continue to send the stop bit with the header read */
 		rv = EC_ERROR_UNKNOWN;
-		goto clear;
+		cnt = 0;
 	}
 
 	/* The next two bytes are the header */
-	rv = tcpc_xfer_unlocked(port, NULL, 0, (uint8_t *)head, 2,
+	rv |= tcpc_xfer_unlocked(port, NULL, 0, (uint8_t *)head, 2,
 				cnt ? 0 : I2C_XFER_STOP);
 
 	/* Encode message address in bits 31 to 28 */
 	*head &= 0x0000ffff;
 	*head |= PD_HEADER_SOP(frm);
 
-	if (rv == EC_SUCCESS && cnt > 0) {
+	/* Execute read and I2C_XFER_STOP, even if header read failed */
+	if (cnt > 0) {
 		tcpc_xfer_unlocked(port, NULL, 0, (uint8_t *)payload, cnt,
 				   I2C_XFER_STOP);
 	}
@@ -758,16 +788,17 @@ clear:
 	/* Read complete, clear RX status alert bit */
 	tcpc_write16(port, TCPC_REG_ALERT, TCPC_REG_ALERT_RX_STATUS);
 
-	return rv;
+	if (rv)
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
 }
 
 static int tcpci_rev1_0_tcpm_get_message_raw(int port, uint32_t *payload,
 					     int *head)
 {
 	int rv, cnt, reg = TCPC_REG_RX_DATA;
-#ifdef CONFIG_USB_PD_DECODE_SOP
 	int frm;
-#endif
 
 	rv = tcpc_read(port, TCPC_REG_RX_BYTE_CNT, &cnt);
 
@@ -782,21 +813,22 @@ static int tcpci_rev1_0_tcpm_get_message_raw(int port, uint32_t *payload,
 		goto clear;
 	}
 
-#ifdef CONFIG_USB_PD_DECODE_SOP
-	rv = tcpc_read(port, TCPC_REG_RX_BUF_FRAME_TYPE, &frm);
-	if (rv != EC_SUCCESS) {
-		rv = EC_ERROR_UNKNOWN;
-		goto clear;
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
+		rv = tcpc_read(port, TCPC_REG_RX_BUF_FRAME_TYPE, &frm);
+		if (rv != EC_SUCCESS) {
+			rv = EC_ERROR_UNKNOWN;
+			goto clear;
+		}
 	}
-#endif
 
 	rv = tcpc_read16(port, TCPC_REG_RX_HDR, (int *)head);
 
-#ifdef CONFIG_USB_PD_DECODE_SOP
-	/* Encode message address in bits 31 to 28 */
-	*head &= 0x0000ffff;
-	*head |= PD_HEADER_SOP(frm);
-#endif
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
+		/* Encode message address in bits 31 to 28 */
+		*head &= 0x0000ffff;
+		*head |= PD_HEADER_SOP(frm);
+	}
+
 	if (rv == EC_SUCCESS && cnt > 0) {
 		tcpc_read_block(port, reg, (uint8_t *)payload, cnt);
 	}
@@ -860,7 +892,7 @@ int tcpm_enqueue_message(const int port)
 	}
 
 	/* Increment atomically to ensure get_message_raw happens-before */
-	atomic_add(&q->head, 1);
+	deprecated_atomic_add(&q->head, 1);
 
 	/* Wake PD task up so it can process incoming RX messages */
 	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE, 0);
@@ -892,7 +924,7 @@ int tcpm_dequeue_message(const int port, uint32_t *const payload,
 	memcpy(payload, tail->payload, sizeof(tail->payload));
 
 	/* Increment atomically to ensure memcpy happens-before */
-	atomic_add(&q->tail, 1);
+	deprecated_atomic_add(&q->tail, 1);
 
 	return EC_SUCCESS;
 }
@@ -968,17 +1000,15 @@ int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 		}
 	}
 
-
 	/*
-	 * On receiving a received message on SOP, protocol layer
-	 * discards the pending  SOP messages queued for transmission.
-	 * But it doesn't do the same for SOP' message. So retry is
-	 * assigned to 0 to avoid multiple transmission.
+	 * We always retry in TCPC hardware since the TCPM is too slow to
+	 * respond within tRetry (~195 usec).
+	 *
+	 * The retry count used is dependent on the maximum PD revision
+	 * supported at build time.
 	 */
 	return tcpc_write(port, TCPC_REG_TRANSMIT,
-				(type == TCPC_TX_SOP_PRIME) ?
-				TCPC_REG_TRANSMIT_SET_WITHOUT_RETRY(type) :
-				TCPC_REG_TRANSMIT_SET_WITH_RETRY(type));
+			  TCPC_REG_TRANSMIT_SET_WITH_RETRY(type));
 }
 
 /*
@@ -1728,6 +1758,9 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 	.select_rp_value	= &tcpci_tcpm_select_rp_value,
 	.set_cc			= &tcpci_tcpm_set_cc,
 	.set_polarity		= &tcpci_tcpm_set_polarity,
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	.sop_prime_disable	= &tcpci_tcpm_sop_prime_disable,
+#endif
 	.set_vconn		= &tcpci_tcpm_set_vconn,
 	.set_msg_header		= &tcpci_tcpm_set_msg_header,
 	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,

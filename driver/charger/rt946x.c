@@ -567,7 +567,7 @@ static int rt946x_set_iprec(int chgnum, unsigned int iprec)
 static int rt946x_init_irq(int chgnum)
 {
 	int rv = 0;
-	int dummy;
+	int unused;
 	int i;
 
 	/* Mask all interrupts */
@@ -578,7 +578,7 @@ static int rt946x_init_irq(int chgnum)
 
 	/* Clear all interrupt flags */
 	for (i = 0; i < RT946X_IRQ_COUNT; i++) {
-		rv = rt946x_read8(chgnum, RT946X_REG_CHGSTATC + i, &dummy);
+		rv = rt946x_read8(chgnum, RT946X_REG_CHGSTATC + i, &unused);
 		if (rv)
 			return rv;
 	}

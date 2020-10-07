@@ -300,6 +300,18 @@ void board_reset_pd_mcu(void)
 
 void board_tcpc_init(void)
 {
+	int count = 0;
+	int port;
+
+	/* Wait for disconnected battery to wake up */
+	while (battery_hw_present() == BP_YES &&
+	       battery_is_present() == BP_NO) {
+		usleep(100 * MSEC);
+		/* Give up waiting after 2 seconds */
+		if (++count > 20)
+			break;
+	}
+
 	/* Only reset TCPC if not sysjump */
 	if (!system_jumped_late())
 		board_reset_pd_mcu();
@@ -318,10 +330,9 @@ void board_tcpc_init(void)
 	 * Initialize HPD to low; after sysjump SOC needs to see
 	 * HPD pulse to enable video path
 	 */
-	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
+	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
 		usb_mux_hpd_update(port, 0, 0);
 }
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
 uint16_t tcpc_get_alert_status(void)
 {
@@ -404,6 +415,16 @@ static void board_pmic_init(void)
 {
 	board_report_pmic_fault("SYSJUMP");
 
+	/* Clear power source events */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x04, 0xff);
+
+	/* Disable power button shutdown timer */
+	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x14, 0x00);
+
+	/* Disable VCCIO in ALL_SYS_PWRGD for early boards */
+	if (board_get_version() <= BOARD_VERSION_DVTB)
+		i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x18, 0x80);
+
 	if (system_jumped_late())
 		return;
 
@@ -431,11 +452,8 @@ static void board_pmic_init(void)
 
 	/* VRMODECTRL - disable low-power mode for all rails */
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x3b, 0x1f);
-
-	/* Clear power source events */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x04, 0xff);
 }
-DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
+DECLARE_DEFERRED(board_pmic_init);
 
 static void board_set_tablet_mode(void)
 {
@@ -455,25 +473,12 @@ int board_has_working_reset_flags(void)
 	int version = board_get_version();
 
 	/* board version P1b to EVTb will lose reset flags on power cycle */
-	if (version >= 3 && version < 6)
+	if (version >= BOARD_VERSION_P1B && version <= BOARD_VERSION_EVTB)
 		return 0;
 
 	/* All other board versions should have working reset flags */
 	return 1;
 }
-
-/*
- * Update status of the ACPRESENT pin on the PCH.  In order to prevent
- * Deep S3 when USB is inserted this will indicate that AC is present
- * if either port is supplying VBUS or there an external charger present.
- */
-void board_update_ac_status(void)
-{
-	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present() ||
-		       board_vbus_source_enabled(0) ||
-		       board_vbus_source_enabled(1));
-}
-DECLARE_HOOK(HOOK_AC_CHANGE, board_update_ac_status, HOOK_PRIO_DEFAULT);
 
 /* Initialize board. */
 static void board_init(void)
@@ -490,11 +495,11 @@ static void board_init(void)
 	/* Enable interrupts from BMI160 sensor. */
 	gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
 
-	/* Update AC status to the PCH */
-	board_update_ac_status();
+	/* Provide AC status to the PCH */
+	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
 
 #ifndef TEST_BUILD
-	if (board_get_version() == 4) {
+	if (board_get_version() == BOARD_VERSION_EVT) {
 		/* Set F13 to new defined key on EVT */
 		CPRINTS("Overriding F13 scan code");
 		set_scancode_set2(3, 9, 0xe007);
@@ -503,8 +508,44 @@ static void board_init(void)
 #endif
 	}
 #endif
+
+	/* Initialize PMIC */
+	hook_call_deferred(&board_pmic_init_data, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+__override enum pd_dual_role_states pd_get_drp_state_in_suspend(void)
+{
+	/*
+	 * If board is not connected to charger it will disable VBUS
+	 * on all ports that acts as source when going to suspend.
+	 * Change DRP state to force sink, to inform TCPM about that.
+	 */
+	if (!extpower_is_present())
+		return PD_DRP_FORCE_SINK;
+
+	return PD_DRP_TOGGLE_OFF;
+}
+
+/**
+ * Buffer the AC present GPIO to the PCH.
+ * Set appropriate DRP state when chipset in suspend
+ */
+static void board_extpower(void)
+{
+	enum pd_dual_role_states drp_state;
+	int port;
+
+	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
+
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_SUSPEND)) {
+		drp_state = pd_get_drp_state_in_suspend();
+		for (port = 0; port < board_get_usb_pd_port_count(); port++)
+			if (pd_get_dual_role(port) != drp_state)
+				pd_set_dual_role(port, drp_state);
+	}
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
 int pd_snk_is_vbus_provided(int port)
 {
@@ -646,10 +687,11 @@ static void enable_input_devices(void)
 void lid_angle_peripheral_enable(int enable)
 {
 	/*
-	 * If the lid is in 360 position, ignore the lid angle,
+	 * If suspended and the lid is in 360 position, ignore the lid angle,
 	 * which might be faulty. Disable keyboard and trackpad wake.
 	 */
-	if (tablet_get_mode() || chipset_in_state(CHIPSET_STATE_ANY_OFF))
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) ||
+	   (tablet_get_mode() && chipset_in_state(CHIPSET_STATE_SUSPEND)))
 		enable = 0;
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 
@@ -770,8 +812,6 @@ int board_get_version(void)
 
 void sensor_board_proc_double_tap(void)
 {
-	/* TODO: Call led update function */
-	CPRINTS("Call LED status update");
 	led_register_double_tap();
 }
 
@@ -922,7 +962,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_ALS,
 	 .i2c_spi_addr_flags = SI114X_ADDR_FLAGS,
 	 .rot_standard_ref = NULL,
-	 .default_range = 3088, /* 30.88%: int = 0 - frac = 3088/10000 */
+	 .default_range = 6000, /* 60.00%: int = 0 - frac = 6000/10000 */
 	 .min_frequency = SI114X_LIGHT_MIN_FREQ,
 	 .max_frequency = SI114X_LIGHT_MAX_FREQ,
 	 .config = {

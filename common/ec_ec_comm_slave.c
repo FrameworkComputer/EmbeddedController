@@ -163,7 +163,7 @@ static void handle_cmd_charger_control(
 	}
 
 	if (params->max_current >= 0) {
-		charge_set_output_current_limit(0, 0);
+		charge_set_output_current_limit(CHARGER_SOLO, 0, 0);
 		charge_set_input_current_limit(
 			MIN(MAX_CURRENT_MA, params->max_current), 0);
 		charging_allowed = params->allow_charging;
@@ -177,7 +177,8 @@ static void handle_cmd_charger_control(
 		/* Reset input current to minimum. */
 		charge_set_input_current_limit(CONFIG_CHARGER_INPUT_CURRENT, 0);
 		/* Setup and enable "OTG". */
-		charge_set_output_current_limit(-params->max_current,
+		charge_set_output_current_limit(CHARGER_SOLO,
+						-params->max_current,
 						params->otg_voltage);
 		charging_allowed = 0;
 	}

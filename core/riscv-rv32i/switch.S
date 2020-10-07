@@ -148,13 +148,13 @@ __switch_task:
 .global __task_start
 __task_start:
 	csrci mstatus, 0x8
-	/* area used as dummy thread stack for the first switch */
+	/* area used as thread stack for the first switch */
 	la a3, scratchpad
 	li a4, 1
 	li a2, 0    /* system call 3rd parameter : not an IRQ emulation */
 	li a1, 0    /* system call 2nd parameter : re-schedule nothing */
 	li a0, 0    /* system call 1st parameter : de-schedule nothing */
-	/* put the dummy stack pointer at the top of the stack in scratchpad */
+	/* put the stack pointer at the top of the stack in scratchpad */
 	addi sp, a3, 4 * TASK_SCRATCHPAD_SIZE
 	/* we are ready to re-schedule */
 	la t0, need_resched

@@ -5,6 +5,7 @@
 
 /* INTC control module */
 
+#include "console.h"
 #include "csr.h"
 #include "registers.h"
 
@@ -202,18 +203,13 @@ void chip_enable_irq(int irq)
 
 void chip_disable_irq(int irq)
 {
-	unsigned int word, group, mask;
-
-	word = SCP_INTC_WORD(irq);
-	group = irqs[irq].group;
-	mask = BIT(SCP_INTC_BIT(irq));
-
-	/* disable interrupt */
-	SCP_CORE0_INTC_IRQ_EN(word) &= ~mask;
-	/* clear group setting */
-	SCP_CORE0_INTC_IRQ_GRP(group, word) &= ~mask;
-	/* clear wakeup source setting */
-	SCP_CORE0_INTC_SLP_WAKE_EN(word) &= ~mask;
+	/*
+	 * Disabling INTC IRQ in runtime is unstable in MT8192 SCP.
+	 * See b/163682416#comment17.
+	 *
+	 * Ideally, this function will be removed by LTO.
+	 */
+	ccprints("WARNING: %s is unsupported", __func__);
 }
 
 void chip_clear_pending_irq(int irq)

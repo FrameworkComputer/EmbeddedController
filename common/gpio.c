@@ -212,6 +212,14 @@ void gpio_or_ioex_set_level(int signal, int value)
 		gpio_set_level(signal, value);
 }
 
+int gpio_or_ioex_get_level(int signal, int *value)
+{
+	if (IS_ENABLED(CONFIG_IO_EXPANDER) && signal_is_ioex(signal))
+		return ioex_get_level(signal, value);
+	*value = gpio_get_level(signal);
+	return EC_SUCCESS;
+}
+
 int signal_is_gpio(int signal)
 {
 	return ((signal >= GPIO_SIGNAL_START)

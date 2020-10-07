@@ -84,7 +84,7 @@ void pe_run(int port, int evt, int en)
 void pe_message_received(int port)
 {
 	pe[port].flags |= PE_FLAGS_MSG_RECEIVED;
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SM, 0);
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 /**

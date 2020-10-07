@@ -23,15 +23,20 @@
 
 /* Charger */
 #define CONFIG_CHARGE_RAMP_HW
-#define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_RAA489000
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr */
 
+/* DAC for PSYS */
+#define CONFIG_DAC
+
 /* LED */
 #define CONFIG_LED_POWER_LED
 #define CONFIG_LED_ONOFF_STATES
+
+/* PWM */
+#define CONFIG_PWM
 
 /* Sensors */
 #define CONFIG_ACCEL_LIS2DWL		/* Lid accel */

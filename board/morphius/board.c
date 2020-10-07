@@ -9,6 +9,7 @@
 #include "adc_chip.h"
 #include "battery_smart.h"
 #include "button.h"
+#include "charger.h"
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"
@@ -16,6 +17,7 @@
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/pi3dpx1207.h"
+#include "driver/retimer/pi3hdx1204.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/temp_sensor/tmp432.h"
 #include "driver/usb_mux/amd_fp5.h"
@@ -33,12 +35,17 @@
 #include "pwm_chip.h"
 #include "switch.h"
 #include "system.h"
+#include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
 #include "thermistor.h"
 #include "usb_mux.h"
 #include "usb_charge.h"
 #include "usbc_ppc.h"
+
+static void hdmi_hpd_interrupt_v2(enum ioex_signal signal);
+static void hdmi_hpd_interrupt_v3(enum gpio_signal signal);
+static void board_gmr_tablet_switch_isr(enum gpio_signal signal);
 
 #include "gpio_list.h"
 
@@ -179,6 +186,13 @@ const int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A1_5V_DB,
 };
 
+const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
+	.eq_ch0_ch1_offset = PI3HDX1204_EQ_DB710,
+	.eq_ch2_ch3_offset = PI3HDX1204_EQ_DB710,
+	.vod_offset = PI3HDX1204_VOD_115_ALL_CHANNELS,
+	.de_offset = PI3HDX1204_DE_DB_MINUS7,
+};
+
 /*****************************************************************************
  * USB-C MUX/Retimer dynamic configuration
  */
@@ -255,31 +269,101 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 /*****************************************************************************
  * Use FW_CONFIG to set correct configuration.
  */
-
+static uint32_t board_ver;
 enum gpio_signal gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V1;
+int board_usbc1_retimer_inhpd = GPIO_USB_C1_HPD_IN_DB_V1;
+
+static void setup_v0_charger(void)
+{
+	cbi_get_board_version(&board_ver);
+
+	if (board_ver <= 2)
+		chg_chips[0].i2c_port = I2C_PORT_CHARGER_V0;
+}
+/*
+ * Use HOOK_PRIO_INIT_I2C so we re-map before charger_chips_init()
+ * talks to the charger.
+ */
+DECLARE_HOOK(HOOK_INIT, setup_v0_charger, HOOK_PRIO_INIT_I2C);
+
+enum gpio_signal board_usbc_port_to_hpd_gpio(int port)
+{
+	/* USB-C0 always uses USB_C0_HPD (= DP3_HPD). */
+	if (port == 0)
+		return GPIO_USB_C0_HPD;
+
+	/*
+	 * USB-C1 OPT3 DB
+	 *    version_2 uses EC_DP1_HPD
+	 *    version_3 uses DP1_HPD via RTD2141B MST hub to drive AP
+	 *    HPD, EC drives MST hub HPD input from USB-PD messages.
+	 *
+	 * This would have been ec_config_has_usbc1_retimer_ps8802
+	 * on version_2 hardware but the result is the same and
+	 * this will be removed when version_2 hardware is retired.
+	 */
+	else if (ec_config_has_mst_hub_rtd2141b())
+		return (board_ver >= 4)
+				? GPIO_USB_C1_HPD_IN_DB_V1
+				: (board_ver == 3)
+					? IOEX_USB_C1_HPD_IN_DB
+					: GPIO_EC_DP1_HPD;
+
+	/* USB-C1 OPT1 DB uses DP2_HPD. */
+	return GPIO_DP2_HPD;
+}
 
 static void board_remap_gpio(void)
 {
-	uint32_t board_ver = 0;
-
-	cbi_get_board_version(&board_ver);
+	int ppc_id = 0;
 
 	if (board_ver >= 3) {
+		int rv;
+
 		gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V1;
 		ccprintf("GPIO_EC_PS2_RESET_V1\n");
+
+		/*
+		 * TODO(dbrockus@): remove code when older version_2
+		 * hardware is retired and no longer needed
+		 */
+		rv = ioex_set_flags(IOEX_HDMI_POWER_EN_DB, GPIO_OUT_LOW);
+		rv |= ioex_set_flags(IOEX_USB_C1_PPC_ILIM_3A_EN, GPIO_OUT_LOW);
+		if (rv)
+			ccprintf("IOEX Board>=3 Remap FAILED\n");
+
+		if (ec_config_has_hdmi_retimer_pi3hdx1204())
+			gpio_enable_interrupt(GPIO_DP1_HPD_EC_IN);
 	} else {
 		gpio_ec_ps2_reset = GPIO_EC_PS2_RESET_V0;
 		ccprintf("GPIO_EC_PS2_RESET_V0\n");
+
+		/*
+		 * TODO(dbrockus@): remove code when older version_2
+		 * hardware is retired and no longer needed
+		 */
+		if (ec_config_has_mst_hub_rtd2141b())
+			ioex_enable_interrupt(IOEX_MST_HPD_OUT);
+
+		if (ec_config_has_hdmi_retimer_pi3hdx1204())
+			ioex_enable_interrupt(IOEX_HDMI_CONN_HPD_3V3_DB);
 	}
 
-	support_aoz_ppc = (board_ver == 3);
+	if (board_ver >= 4)
+		board_usbc1_retimer_inhpd = GPIO_USB_C1_HPD_IN_DB_V1;
+	else
+		board_usbc1_retimer_inhpd = IOEX_USB_C1_HPD_IN_DB;
+
+	ioex_get_level(IOEX_PPC_ID, &ppc_id);
+
+	support_aoz_ppc = (board_ver == 3) || ((board_ver >= 4) && !ppc_id);
 	if (support_aoz_ppc) {
 		ccprintf("DB USBC PPC aoz1380\n");
 		ppc_chips[USBC_PORT_C1].drv = &aoz1380_drv;
 	}
 }
 
-void setup_fw_config(void)
+static void setup_fw_config(void)
 {
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
@@ -293,6 +377,7 @@ void setup_fw_config(void)
 
 	board_remap_gpio();
 }
+/* Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init(). */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
 /*****************************************************************************
@@ -400,7 +485,7 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 const static struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(92),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(105),
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
@@ -423,6 +508,7 @@ DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 #define SMART_CHARGE_ENABLE             0x02
 #define SB_SMART_CHARGE_ENABLE          1
 #define SB_SMART_CHARGE_DISABLE         0
+
 static void sb_smart_charge_mode(int enable)
 {
 	int val, rv;
@@ -438,27 +524,6 @@ static void sb_smart_charge_mode(int enable)
 		sb_write(SB_OPTIONALMFG_FUNCTION2, val);
 	}
 }
-/* Called on AP S3 -> S0 transition */
-static void board_chipset_startup(void)
-{
-	/* Normal charge current */
-	sb_smart_charge_mode(SB_SMART_CHARGE_DISABLE);
-
-	/* hdmi retimer power on */
-	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_startup, HOOK_PRIO_DEFAULT);
-
-/* Called on AP S0 -> S3 transition */
-static void board_chipset_suspend(void)
-{
-	/* SMART charge current */
-	sb_smart_charge_mode(SB_SMART_CHARGE_ENABLE);
-
-	/* hdmi retimer power off */
-	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 __override void ppc_interrupt(enum gpio_signal signal)
 {
@@ -493,9 +558,11 @@ __override int board_aoz1380_set_vbus_source_current_limit(int port,
 	if (port == 0) {
 		rv = ioex_set_level(IOEX_USB_C0_PPC_ILIM_3A_EN,
 			    (rp == TYPEC_RP_3A0) ? 1 : 0);
-	} else {
+	} else if (board_ver >= 3) {
 		rv = ioex_set_level(IOEX_USB_C1_PPC_ILIM_3A_EN,
 			    (rp == TYPEC_RP_3A0) ? 1 : 0);
+	} else {
+		rv = 1;
 	}
 
 	return rv;
@@ -519,6 +586,57 @@ void ps2_pwr_en_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&trackpoint_reset_deferred_data, MSEC);
 }
+
+static int check_hdmi_hpd_status(void)
+{
+	int hpd = 0;
+
+	if (board_ver < 3)
+		ioex_get_level(IOEX_HDMI_CONN_HPD_3V3_DB, &hpd);
+	else
+		hpd = gpio_get_level(GPIO_DP1_HPD_EC_IN);
+
+	return hpd;
+}
+
+/*****************************************************************************
+ * Board suspend / resume
+ */
+
+static void board_chipset_resume(void)
+{
+	/* Normal charge current */
+	sb_smart_charge_mode(SB_SMART_CHARGE_DISABLE);
+	ioex_set_level(IOEX_HDMI_DATA_EN_DB, 1);
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		if (board_ver >= 3) {
+			ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
+			msleep(PI3HDX1204_POWER_ON_DELAY_MS);
+		}
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  check_hdmi_hpd_status());
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+static void board_chipset_suspend(void)
+{
+	/* SMART charge current */
+	sb_smart_charge_mode(SB_SMART_CHARGE_ENABLE);
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  0);
+		if (board_ver >= 3)
+			ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
+	}
+
+	ioex_set_level(IOEX_HDMI_DATA_EN_DB, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************
  * Power signals
@@ -566,3 +684,81 @@ const int keyboard_factory_scan_pins_used =
 			ARRAY_SIZE(keyboard_factory_scan_pins);
 #endif
 
+/*****************************************************************************
+ * MST hub
+ *
+ * TODO(dbrockus@): remove VERSION_2 code when older version of hardware is
+ * retired and no longer needed
+ */
+static void mst_hpd_handler(void)
+{
+	int hpd = 0;
+
+	/*
+	 * Ensure level on GPIO_EC_DP1_HPD matches IOEX_MST_HPD_OUT, in case
+	 * we got out of sync.
+	 */
+	ioex_get_level(IOEX_MST_HPD_OUT, &hpd);
+	gpio_set_level(GPIO_EC_DP1_HPD, hpd);
+	ccprints("MST HPD %d", hpd);
+}
+DECLARE_DEFERRED(mst_hpd_handler);
+
+void mst_hpd_interrupt(enum ioex_signal signal)
+{
+	/*
+	 * Goal is to pass HPD through from DB OPT3 MST hub to AP's DP1.
+	 * Immediately invert GPIO_EC_DP1_HPD, to pass through the edge on
+	 * IOEX_MST_HPD_OUT. Then check level after 2 msec debounce.
+	 */
+	int hpd = !gpio_get_level(GPIO_EC_DP1_HPD);
+
+	gpio_set_level(GPIO_EC_DP1_HPD, hpd);
+	hook_call_deferred(&mst_hpd_handler_data, (2 * MSEC));
+}
+
+static void hdmi_hpd_handler(void)
+{
+	/* Pass HPD through from DB OPT1 HDMI connector to AP's DP1. */
+	int hpd = check_hdmi_hpd_status();
+
+	gpio_set_level(GPIO_EC_DP1_HPD, hpd);
+	ccprints("HDMI HPD %d", hpd);
+	pi3hdx1204_enable(I2C_PORT_TCPC1,
+			  PI3HDX1204_I2C_ADDR_FLAGS,
+			  chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
+			  && hpd);
+}
+DECLARE_DEFERRED(hdmi_hpd_handler);
+
+static void hdmi_hpd_interrupt_v2(enum ioex_signal signal)
+{
+	/* Debounce for 2 msec. */
+	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
+}
+
+static void hdmi_hpd_interrupt_v3(enum gpio_signal signal)
+{
+	/* Debounce for 2 msec. */
+	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
+}
+
+static void board_gmr_tablet_switch_isr(enum gpio_signal signal)
+{
+	/* Board version more than 3, DUT support GMR sensor */
+	if (board_ver >= 3)
+		gmr_tablet_switch_isr(signal);
+}
+
+int board_sensor_at_360(void)
+{
+	/*
+	 * Board version >= 3 supports GMR sensor. For older boards return 0
+	 * indicating not in 360-degree mode and rely on lid angle for tablet
+	 * mode.
+	 */
+	if (board_ver >= 3)
+		return !gpio_get_level(GMR_TABLET_MODE_GPIO_L);
+
+	return 0;
+}

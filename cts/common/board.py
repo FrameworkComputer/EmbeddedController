@@ -2,12 +2,18 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# Note: This is a py2/3 compatible file.
+
+from __future__ import print_function
+
 from abc import ABCMeta
 from abc import abstractmethod
 import os
 import shutil
 import subprocess as sp
 import serial
+
+import six
 
 
 OCD_SCRIPT_DIR = '/usr/share/openocd/scripts'
@@ -24,7 +30,13 @@ FLASH_OFFSETS = {
 REBOOT_MARKER = 'UART initialized after reboot'
 
 
-class Board(object):
+def get_subprocess_args():
+  if six.PY3:
+    return {'encoding': 'utf-8'}
+  return {}
+
+
+class Board(six.with_metaclass(ABCMeta, object)):
   """Class representing a single board connected to a host machine.
 
   Attributes:
@@ -37,8 +49,6 @@ class Board(object):
         UART outputs to
     tty: String of file descriptor for tty_port
   """
-
-  __metaclass__ = ABCMeta  # This is an Abstract Base Class (ABC)
 
   def __init__(self, board, module, hla_serial=None):
     """Initializes a board object with given attributes.
@@ -80,7 +90,7 @@ class Board(object):
       List of serials
     """
     usb_args = ['sudo', 'lsusb', '-v', '-d', '0x0483:0x374b']
-    st_link_info = sp.check_output(usb_args)
+    st_link_info = sp.check_output(usb_args, **get_subprocess_args())
     st_serials = []
     for line in st_link_info.split('\n'):
       if 'iSerial' not in line:
@@ -123,7 +133,7 @@ class Board(object):
 
   def dump_openocd_log(self):
     with open(self.openocd_log) as log:
-      print log.read()
+      print(log.read())
 
   def build(self, ec_dir):
     """Builds test suite module for board.
@@ -151,7 +161,7 @@ class Board(object):
 
   def dump_build_log(self):
     with open(self.build_log) as log:
-      print log.read()
+      print(log.read())
 
   def flash(self, image_path):
     """Flashes board with most recent build ec.bin."""
@@ -212,7 +222,7 @@ class Board(object):
     line = []
     boot = 0
     while True:
-      c = self.tty.read()
+      c = self.tty.read().decode('utf-8')
       if not c:
         break
       line.append(c)
@@ -240,7 +250,8 @@ class Board(object):
     for device in com_devices:
       self.tty_port = os.path.join(dev_dir, device)
       properties = sp.check_output(
-          ['udevadm', 'info', '-a', '-n', self.tty_port, '--query=property'])
+          ['udevadm', 'info', '-a', '-n', self.tty_port, '--query=property'],
+          **get_subprocess_args())
       for line in [l.strip() for l in properties.split('\n')]:
         if line.startswith(id_prefix):
           if self.hla_serial == line[len(id_prefix):]:
@@ -311,7 +322,7 @@ class TestHarness(Board):
       f.write(s)
       self.hla_serial = s
 
-    print 'Your TH serial', s, 'has been saved as', self.serial_path
+    print('Your TH serial', s, 'has been saved as', self.serial_path)
     return
 
 

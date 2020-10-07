@@ -183,7 +183,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define GPIO_J                       STM32_GPIOJ_BASE
 #define GPIO_K                       STM32_GPIOK_BASE
 
-#define DUMMY_GPIO_BANK GPIO_A
+#define UNIMPLEMENTED_GPIO_BANK GPIO_A
 
 
 /* --- I2C --- */

@@ -98,7 +98,7 @@ void __hw_clock_event_set(uint32_t deadline)
 	while (IS_BIT_SET(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN))
 		;
 
-	NPCX_ITCNT16(ITIM_EVENT_NO) = MAX(evt_cnt, 1);
+	NPCX_ITCNT(ITIM_EVENT_NO) = MAX(evt_cnt, 1);
 
 	/* Event module enable */
 	SET_BIT(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN);
@@ -108,7 +108,7 @@ void __hw_clock_event_set(uint32_t deadline)
 		;
 
 	/* Enable interrupt of ITIM */
-	task_enable_irq(ITIM16_INT(ITIM_EVENT_NO));
+	task_enable_irq(ITIM_INT(ITIM_EVENT_NO));
 }
 
 /* Returns the time-stamp of the next programmed event */
@@ -125,9 +125,9 @@ uint16_t __hw_clock_event_count(void)
 {
 	uint16_t cnt, cnt2;
 
-	cnt = NPCX_ITCNT16(ITIM_EVENT_NO);
+	cnt = NPCX_ITCNT(ITIM_EVENT_NO);
 	/* Wait for two consecutive equal values are read */
-	while ((cnt2 = NPCX_ITCNT16(ITIM_EVENT_NO)) != cnt)
+	while ((cnt2 = NPCX_ITCNT(ITIM_EVENT_NO)) != cnt)
 		cnt = cnt2;
 
 	return cnt;
@@ -158,7 +158,7 @@ void __hw_clock_event_clear(void)
 	CLEAR_BIT(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN);
 
 	/* Disable interrupt of Event */
-	task_disable_irq(ITIM16_INT(ITIM_EVENT_NO));
+	task_disable_irq(ITIM_INT(ITIM_EVENT_NO));
 
 	/* Clear event parameters */
 	evt_expired_us = 0;
@@ -172,7 +172,7 @@ void __hw_clock_event_irq(void)
 	CLEAR_BIT(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN);
 
 	/* Disable interrupt of event */
-	task_disable_irq(ITIM16_INT(ITIM_EVENT_NO));
+	task_disable_irq(ITIM_INT(ITIM_EVENT_NO));
 
 	/* Clear timeout status for event */
 	SET_BIT(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_TO_STS);
@@ -196,8 +196,7 @@ void __hw_clock_event_irq(void)
 #endif
 
 }
-DECLARE_IRQ(ITIM16_INT(ITIM_EVENT_NO), __hw_clock_event_irq, 3);
-
+DECLARE_IRQ(ITIM_INT(ITIM_EVENT_NO), __hw_clock_event_irq, 3);
 
 /*****************************************************************************/
 /* HWTimer tick handlers */
@@ -206,16 +205,16 @@ DECLARE_IRQ(ITIM16_INT(ITIM_EVENT_NO), __hw_clock_event_irq, 3);
 void hw_clock_source_set_preload(uint32_t ts, uint8_t clear)
 {
 	/* ITIM32 module disable */
-	CLEAR_BIT(NPCX_ITCTS(ITIM32), NPCX_ITCTS_ITEN);
-	CLEAR_BIT(NPCX_ITCTS(ITIM32), NPCX_ITCTS_CKSEL);
+	CLEAR_BIT(NPCX_ITCTS(ITIM_SYSTEM_NO), NPCX_ITCTS_ITEN);
+	CLEAR_BIT(NPCX_ITCTS(ITIM_SYSTEM_NO), NPCX_ITCTS_CKSEL);
 
 	/* Set preload counter to current time */
-	NPCX_ITCNT32 = TICK_ITIM32_MAX_CNT - ts;
+	NPCX_ITCNT_SYSTEM = TICK_ITIM32_MAX_CNT - ts;
 	/* Clear timeout status or not */
 	if (clear)
-		SET_BIT(NPCX_ITCTS(ITIM32), NPCX_ITCTS_TO_STS);
+		SET_BIT(NPCX_ITCTS(ITIM_SYSTEM_NO), NPCX_ITCTS_TO_STS);
 	/* ITIM32 module enable */
-	SET_BIT(NPCX_ITCTS(ITIM32), NPCX_ITCTS_ITEN);
+	SET_BIT(NPCX_ITCTS(ITIM_SYSTEM_NO), NPCX_ITCTS_ITEN);
 }
 
 /* Returns the value of the free-running counter used as clock. */
@@ -223,12 +222,12 @@ uint32_t __hw_clock_source_read(void)
 {
 	uint32_t cnt, cnt2;
 
-	cnt = NPCX_ITCNT32;
+	cnt = NPCX_ITCNT_SYSTEM;
 	/*
 	 * Wait for two consecutive equal values are read no matter
 	 * ITIM's source clock is APB2 or 32K since mux's delay.
 	 */
-	while ((cnt2 = NPCX_ITCNT32) != cnt)
+	while ((cnt2 = NPCX_ITCNT_SYSTEM) != cnt)
 		cnt = cnt2;
 
 #if DEBUG_TMR
@@ -250,7 +249,7 @@ void __hw_clock_source_set(uint32_t ts)
 void __hw_clock_source_irq(void)
 {
 	/* Is timeout trigger trigger? */
-	if (IS_BIT_SET(NPCX_ITCTS(ITIM32), NPCX_ITCTS_TO_STS)) {
+	if (IS_BIT_SET(NPCX_ITCTS(ITIM_SYSTEM_NO), NPCX_ITCTS_TO_STS)) {
 		/* Restore ITIM32 preload counter value to maximum value */
 		hw_clock_source_set_preload(0, 1);
 		/* 32-bits timer count overflow */
@@ -265,7 +264,7 @@ void __hw_clock_source_irq(void)
 #endif
 	}
 }
-DECLARE_IRQ(NPCX_IRQ_ITIM32, __hw_clock_source_irq, 3);
+DECLARE_IRQ(ITIM_INT(ITIM_SYSTEM_NO), __hw_clock_source_irq, 3);
 
 /* Handle ITIM32 overflow if interrupt is disabled */
 void __hw_clock_handle_overflow(uint32_t clksrc_high)
@@ -273,11 +272,11 @@ void __hw_clock_handle_overflow(uint32_t clksrc_high)
 	timestamp_t newtime;
 
 	/* Overflow occurred? */
-	if (!IS_BIT_SET(NPCX_ITCTS(ITIM32), NPCX_ITCTS_TO_STS))
+	if (!IS_BIT_SET(NPCX_ITCTS(ITIM_SYSTEM_NO), NPCX_ITCTS_TO_STS))
 		return;
 
 	/* Clear timeout status */
-	SET_BIT(NPCX_ITCTS(ITIM32), NPCX_ITCTS_TO_STS);
+	SET_BIT(NPCX_ITCTS(ITIM_SYSTEM_NO), NPCX_ITCTS_TO_STS);
 
 	/*
 	 * Restore ITIM32 preload counter value to maximum and execute
@@ -296,7 +295,7 @@ static void update_prescaler(void)
 	 * Ttick_unit = (PRE_8+1) * Tapb2_clk
 	 * PRE_8 = (Ttick_unit/Tapb2_clk) -1
 	 */
-	NPCX_ITPRE(ITIM32)  = (clock_get_apb2_freq() / SECOND) - 1;
+	NPCX_ITPRE(ITIM_SYSTEM_NO)  = (clock_get_apb2_freq() / SECOND) - 1;
 	/* Set event tick unit = 1/32768 sec */
 	NPCX_ITPRE(ITIM_EVENT_NO) = 0;
 
@@ -315,7 +314,7 @@ void __hw_early_init_hwtimer(uint32_t start_t)
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	/* init tick & event timer first */
-	init_hw_timer(ITIM32,  ITIM_SOURCE_CLOCK_APB2);
+	init_hw_timer(ITIM_SYSTEM_NO,  ITIM_SOURCE_CLOCK_APB2);
 	init_hw_timer(ITIM_EVENT_NO, ITIM_SOURCE_CLOCK_32K);
 
 	/* Set initial prescaler */
@@ -336,7 +335,7 @@ int __hw_clock_source_init(uint32_t start_t)
 	__hw_early_init_hwtimer(start_t);
 
 	/* Enable interrupt of ITIM */
-	task_enable_irq(NPCX_IRQ_ITIM32);
+	task_enable_irq(ITIM_INT(ITIM_SYSTEM_NO));
 
-	return NPCX_IRQ_ITIM32;
+	return ITIM_INT(ITIM_SYSTEM_NO);
 }

@@ -59,7 +59,7 @@ int chg_ramp_max(int port, int supplier, int sup_curr)
 		return 3000;
 }
 
-/* Dummy bc12_ports[] array to make linker happy */
+/* Mock bc12_ports[] array to make linker happy */
 struct bc12_config bc12_ports[0];
 
 int charge_is_consuming_full_input_current(void)

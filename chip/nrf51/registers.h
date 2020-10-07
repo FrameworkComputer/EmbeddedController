@@ -665,7 +665,7 @@
 #define NRF51_PIN_CNF_SENSE_HIGH       (2<<16)
 #define NRF51_PIN_CNF_SENSE_LOW        (3<<16)
 
-#define DUMMY_GPIO_BANK     GPIO_0  /* for UNIMPLEMENTED() macro */
+#define UNIMPLEMENTED_GPIO_BANK     GPIO_0  /* for UNIMPLEMENTED() macro */
 
 #define NRF51_PPI_BASE                 0x4001F000
 #define NRF51_PPI_CHEN                 REG32(NRF51_PPI_BASE + 0x500)

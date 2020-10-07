@@ -117,11 +117,11 @@ static int spi_rx_done(stm32_spi_regs_t *spi)
 /* Read until RX FIFO is empty (i.e. RX done) */
 static int spi_clear_rx_fifo(stm32_spi_regs_t *spi)
 {
-	uint8_t dummy __attribute__((unused));
+	uint8_t unused __attribute__((unused));
 	uint32_t start = __hw_clock_source_read(), delta;
 
 	while (!spi_rx_done(spi)) {
-		dummy = spi->dr;  /* Read one byte from FIFO */
+		unused = spi->dr;  /* Read one byte from FIFO */
 		delta = __hw_clock_source_read() - start;
 		if (delta >= SPI_TRANSACTION_TIMEOUT_USEC)
 			return EC_ERROR_TIMEOUT;

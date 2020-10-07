@@ -11,6 +11,9 @@
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/ppc/aoz1380.h"
+#include "driver/ppc/nx20p348x.h"
+#include "driver/retimer/pi3hdx1204.h"
 #include "driver/retimer/tusb544.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/usb_mux/amd_fp5.h"
@@ -32,6 +35,7 @@
 #include "temp_sensor.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
+#include "usbc_ppc.h"
 
 #include "gpio_list.h"
 
@@ -192,27 +196,12 @@ const int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A1_5V_DB,
 };
 
-/*****************************************************************************
- * Retimers
- */
-
-static void retimers_on(void)
-{
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
-
-	/* hdmi retimer power on */
-	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, retimers_on, HOOK_PRIO_DEFAULT);
-
-static void retimers_off(void)
-{
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
-
-	/* hdmi retimer power off */
-	ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, retimers_off, HOOK_PRIO_DEFAULT);
+const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
+	.eq_ch0_ch1_offset = PI3HDX1204_EQ_DB710,
+	.eq_ch2_ch3_offset = PI3HDX1204_EQ_DB710,
+	.vod_offset = PI3HDX1204_VOD_115_ALL_CHANNELS,
+	.de_offset = PI3HDX1204_DE_DB_MINUS5,
+};
 
 /*
  * USB C0 port SBU mux use standalone FSUSB42UMX
@@ -338,10 +327,64 @@ const struct usb_mux usbc1_ps8743 = {
 };
 
 /*****************************************************************************
+ * PPC
+ */
+
+static int ppc_id;
+
+static void setup_c1_ppc_config(void)
+{
+	/*
+	 * Read USB_C1_POWER_SWITCH_ID to choose DB ppc chip
+	 * 0: NX20P3483UK
+	 * 1: AOZ1380DI
+	 */
+
+	ioex_get_level(IOEX_USB_C1_POWER_SWITCH_ID, &ppc_id);
+
+	ccprints("C1: PPC is %s", ppc_id ? "AOZ1380DI" : "NX20P3483UK");
+
+	if (ppc_id) {
+		ppc_chips[USBC_PORT_C1].drv = &aoz1380_drv;
+		ioex_set_flags(IOEX_USB_C1_PPC_ILIM_3A_EN, GPIO_OUT_LOW);
+	}
+}
+
+__override void ppc_interrupt(enum gpio_signal signal)
+{
+	switch (signal) {
+	case GPIO_USB_C0_PPC_FAULT_ODL:
+		aoz1380_interrupt(USBC_PORT_C0);
+		break;
+	case GPIO_USB_C1_PPC_INT_ODL:
+		if (ppc_id)
+			aoz1380_interrupt(USBC_PORT_C1);
+		else
+			nx20p348x_interrupt(USBC_PORT_C1);
+		break;
+	default:
+		break;
+	}
+}
+
+__override int board_aoz1380_set_vbus_source_current_limit(int port,
+						enum tcpc_rp_value rp)
+{
+	int rv;
+
+	/* Use the TCPC to set the current limit */
+	rv = ioex_set_level(port ? IOEX_USB_C1_PPC_ILIM_3A_EN
+				: IOEX_USB_C0_PPC_ILIM_3A_EN,
+				(rp == TYPEC_RP_3A0) ? 1 : 0);
+
+	return rv;
+}
+
+/*****************************************************************************
  * Use FW_CONFIG to set correct configuration.
  */
 
-void setup_fw_config(void)
+static void setup_v0_charger(void)
 {
 	int rv;
 
@@ -352,10 +395,24 @@ void setup_fw_config(void)
 		board_ver = 3;
 	}
 
+	if (board_ver == 1)
+		chg_chips[0].i2c_port = I2C_PORT_CHARGER_V0;
+}
+/*
+ * Use HOOK_PRIO_INIT_I2C so we re-map before charger_chips_init()
+ * talks to the charger.
+ */
+DECLARE_HOOK(HOOK_INIT, setup_v0_charger, HOOK_PRIO_INIT_I2C);
+
+static void setup_fw_config(void)
+{
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_6AXIS_INT_L);
 
 	setup_mux();
+
+	if (board_ver >= 3)
+		setup_c1_ppc_config();
 
 	if (ec_config_has_hdmi_conn_hpd()) {
 		if (board_ver < 3)
@@ -364,9 +421,10 @@ void setup_fw_config(void)
 			gpio_enable_interrupt(GPIO_DP1_HPD_EC_IN);
 	}
 }
+/* Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init(). */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
-__override int check_hdmi_hpd_status(void)
+static int check_hdmi_hpd_status(void)
 {
 	int hpd = 0;
 
@@ -385,7 +443,10 @@ static void hdmi_hpd_handler(void)
 
 	gpio_set_level(GPIO_DP1_HPD, hpd);
 	ccprints("HDMI HPD %d", hpd);
-	pi3hdx1204_retimer_power();
+	pi3hdx1204_enable(I2C_PORT_TCPC1,
+			  PI3HDX1204_I2C_ADDR_FLAGS,
+			  chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
+			  && hpd);
 }
 DECLARE_DEFERRED(hdmi_hpd_handler);
 
@@ -400,6 +461,40 @@ void hdmi_hpd_interrupt_v2(enum ioex_signal signal)
 	/* Debounce for 2 msec. */
 	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
 }
+
+/*****************************************************************************
+ * Board suspend / resume
+ */
+
+static void board_chipset_resume(void)
+{
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
+	ioex_set_level(IOEX_HDMI_DATA_EN_DB, 1);
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
+		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  check_hdmi_hpd_status());
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+static void board_chipset_suspend(void)
+{
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
+
+	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
+		pi3hdx1204_enable(I2C_PORT_TCPC1,
+				  PI3HDX1204_I2C_ADDR_FLAGS,
+				  0);
+		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
+	}
+
+	ioex_set_level(IOEX_HDMI_DATA_EN_DB, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************
  * Fan
@@ -597,9 +692,11 @@ int fan_percent_to_rpm(int fan, int pct)
 	previous_pct = pct;
 
 	if (fan_table[current_level].rpm !=
-		fan_get_rpm_target(FAN_CH(fan)))
+		fan_get_rpm_target(FAN_CH(fan))) {
 		cprints(CC_THERMAL, "Setting fan RPM to %d",
 			fan_table[current_level].rpm);
+		board_print_temps();
+	}
 
 	return fan_table[current_level].rpm;
 }

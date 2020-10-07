@@ -128,7 +128,8 @@ static void board_led_set_battery(void)
 /* Called by hook task every TICK */
 static void led_tick(void)
 {
-	board_led_set_battery();
+	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
+		board_led_set_battery();
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 

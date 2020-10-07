@@ -4,6 +4,8 @@
 
 """Utilities for using lightweight console functions."""
 
+# Note: This is a py2/3 compatible file.
+
 import datetime
 import errno
 import os
@@ -12,8 +14,16 @@ import subprocess
 import sys
 import time
 
-import pty_driver
-import stm32uart
+import six
+
+from . import pty_driver
+from . import stm32uart
+
+
+def get_subprocess_args():
+  if six.PY3:
+    return {'encoding': 'utf-8'}
+  return {}
 
 
 class TinyServoError(Exception):
@@ -40,7 +50,8 @@ def check_usb(vidpid, serialname=None):
   Returns: True if found, False, otherwise.
   """
   if serialname:
-    output = subprocess.check_output(['lsusb', '-v', '-d', vidpid])
+    output = subprocess.check_output(['lsusb', '-v', '-d', vidpid],
+                                     **get_subprocess_args())
     m = re.search(r'^\s*iSerial\s+\d+\s+%s$' % serialname, output, flags=re.M)
     if m:
       return True
@@ -63,7 +74,8 @@ def check_usb_sn(vidpid):
 
   Returns: string serial number if found, None otherwise.
   """
-  output = subprocess.check_output(['lsusb', '-v', '-d', vidpid])
+  output = subprocess.check_output(['lsusb', '-v', '-d', vidpid],
+                                   **get_subprocess_args())
   m = re.search(r'^\s*iSerial\s+(.*)$', output, flags=re.M)
   if m:
     return m.group(1)

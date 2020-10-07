@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # Copyright 2017 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -197,8 +197,8 @@ class StackAnalyzerTest(unittest.TestCase):
     def tasklist_to_taskinfos(pointer, tasklist):
       taskinfos = []
       for task in tasklist:
-        taskinfos.append(sa.TaskInfo(name=task.name,
-                                     routine=task.routine_name,
+        taskinfos.append(sa.TaskInfo(name=task.name.encode('utf-8'),
+                                     routine=task.routine_name.encode('utf-8'),
                                      stack_size=task.stack_max_size))
 
       TaskInfoArray = sa.TaskInfo * len(taskinfos)
@@ -598,28 +598,29 @@ class StackAnalyzerTest(unittest.TestCase):
     self.assertEqual(self.analyzer.AddressToLine(0x1234),
                      [('fake_func', '/test.c', 1)])
     checkoutput_mock.assert_called_once_with(
-        ['addr2line', '-f', '-e', './ec.RW.elf', '1234'])
+        ['addr2line', '-f', '-e', './ec.RW.elf', '1234'], encoding='utf-8')
     checkoutput_mock.reset_mock()
 
     checkoutput_mock.return_value = 'fake_func\n/a.c:1\nbake_func\n/b.c:2\n'
     self.assertEqual(self.analyzer.AddressToLine(0x1234, True),
                      [('fake_func', '/a.c', 1), ('bake_func', '/b.c', 2)])
     checkoutput_mock.assert_called_once_with(
-        ['addr2line', '-f', '-e', './ec.RW.elf', '1234', '-i'])
+        ['addr2line', '-f', '-e', './ec.RW.elf', '1234', '-i'],
+        encoding='utf-8')
     checkoutput_mock.reset_mock()
 
     checkoutput_mock.return_value = 'fake_func\n/test.c:1 (discriminator 128)'
     self.assertEqual(self.analyzer.AddressToLine(0x12345),
                      [('fake_func', '/test.c', 1)])
     checkoutput_mock.assert_called_once_with(
-        ['addr2line', '-f', '-e', './ec.RW.elf', '12345'])
+        ['addr2line', '-f', '-e', './ec.RW.elf', '12345'], encoding='utf-8')
     checkoutput_mock.reset_mock()
 
     checkoutput_mock.return_value = '??\n:?\nbake_func\n/b.c:2\n'
     self.assertEqual(self.analyzer.AddressToLine(0x123456),
                      [None, ('bake_func', '/b.c', 2)])
     checkoutput_mock.assert_called_once_with(
-        ['addr2line', '-f', '-e', './ec.RW.elf', '123456'])
+        ['addr2line', '-f', '-e', './ec.RW.elf', '123456'], encoding='utf-8')
     checkoutput_mock.reset_mock()
 
     with self.assertRaisesRegexp(sa.StackAnalyzerError,
@@ -660,7 +661,7 @@ class StackAnalyzerTest(unittest.TestCase):
         'remove': [['fake_func']],
     }
 
-    with mock.patch('__builtin__.print') as print_mock:
+    with mock.patch('builtins.print') as print_mock:
       checkoutput_mock.return_value = disasm_text
       self.analyzer.Analyze()
       print_mock.assert_has_calls([
@@ -719,7 +720,7 @@ class StackAnalyzerTest(unittest.TestCase):
         'remove': [['fake_func']],
     }
 
-    with mock.patch('__builtin__.print') as print_mock:
+    with mock.patch('builtins.print') as print_mock:
       checkoutput_mock.return_value = disasm_text
       self.analyzer.Analyze()
       print_mock.assert_has_calls([
@@ -771,31 +772,31 @@ class StackAnalyzerTest(unittest.TestCase):
 
     with mock.patch('os.path.exists') as path_mock:
       path_mock.return_value = False
-      with mock.patch('__builtin__.print') as print_mock:
-        with mock.patch('__builtin__.open', mock.mock_open()) as open_mock:
+      with mock.patch('builtins.print') as print_mock:
+        with mock.patch('builtins.open', mock.mock_open()) as open_mock:
           sa.main()
           print_mock.assert_any_call(
               'Warning: Annotation file fake does not exist.')
 
     with mock.patch('os.path.exists') as path_mock:
       path_mock.return_value = True
-      with mock.patch('__builtin__.print') as print_mock:
-        with mock.patch('__builtin__.open', mock.mock_open()) as open_mock:
+      with mock.patch('builtins.print') as print_mock:
+        with mock.patch('builtins.open', mock.mock_open()) as open_mock:
           open_mock.side_effect = IOError()
           sa.main()
           print_mock.assert_called_once_with(
               'Error: Failed to open annotation file fake.')
 
-      with mock.patch('__builtin__.print') as print_mock:
-        with mock.patch('__builtin__.open', mock.mock_open()) as open_mock:
+      with mock.patch('builtins.print') as print_mock:
+        with mock.patch('builtins.open', mock.mock_open()) as open_mock:
           open_mock.return_value.read.side_effect = ['{', '']
           sa.main()
           open_mock.assert_called_once_with('fake', 'r')
           print_mock.assert_called_once_with(
               'Error: Failed to parse annotation file fake.')
 
-      with mock.patch('__builtin__.print') as print_mock:
-        with mock.patch('__builtin__.open',
+      with mock.patch('builtins.print') as print_mock:
+        with mock.patch('builtins.open',
                         mock.mock_open(read_data='')) as open_mock:
           sa.main()
           print_mock.assert_called_once_with(
@@ -803,19 +804,19 @@ class StackAnalyzerTest(unittest.TestCase):
 
     args.annotation = None
 
-    with mock.patch('__builtin__.print') as print_mock:
+    with mock.patch('builtins.print') as print_mock:
       checkoutput_mock.side_effect = [symbol_text, rodata_text]
       sa.main()
       print_mock.assert_called_once_with(
           'Error: Failed to load export_taskinfo.')
 
-    with mock.patch('__builtin__.print') as print_mock:
+    with mock.patch('builtins.print') as print_mock:
       checkoutput_mock.side_effect = subprocess.CalledProcessError(1, '')
       sa.main()
       print_mock.assert_called_once_with(
           'Error: objdump failed to dump symbol table or rodata.')
 
-    with mock.patch('__builtin__.print') as print_mock:
+    with mock.patch('builtins.print') as print_mock:
       checkoutput_mock.side_effect = OSError()
       sa.main()
       print_mock.assert_called_once_with('Error: Failed to run objdump.')

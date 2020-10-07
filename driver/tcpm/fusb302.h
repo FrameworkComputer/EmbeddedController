@@ -24,9 +24,6 @@
 /* FUSB302B11MPX */
 #define FUSB302_I2C_SLAVE_ADDR_B11_FLAGS 0x25
 
-/* Default retry count for transmitting */
-#define PD_RETRY_COUNT		3
-
 #define TCPC_REG_DEVICE_ID	0x01
 
 #define TCPC_REG_SWITCHES0	0x02

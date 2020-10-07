@@ -57,12 +57,12 @@ uint8_t *cbi_set_string(uint8_t *p, enum cbi_data_tag tag, const char *str)
 	return cbi_set_data(p, tag, str, strlen(str) + 1);
 }
 
-struct cbi_data *cbi_find_tag(const void *cbi, enum cbi_data_tag tag)
+struct cbi_data *cbi_find_tag(const void *buf, enum cbi_data_tag tag)
 {
 	struct cbi_data *d;
-	const struct cbi_header *h = cbi;
+	const struct cbi_header *h = buf;
 	const uint8_t *p;
-	for (p = h->data; p + sizeof(*d) < (uint8_t *)cbi + h->total_size;) {
+	for (p = h->data; p + sizeof(*d) < (uint8_t *)buf + h->total_size;) {
 		d = (struct cbi_data *)p;
 		if (d->tag == tag)
 			return d;
@@ -91,6 +91,26 @@ struct cbi_data *cbi_find_tag(const void *cbi, enum cbi_data_tag tag)
 static int cached_read_result = EC_ERROR_CBI_CACHE_INVALID;
 static uint8_t cbi[CBI_EEPROM_SIZE];
 static struct cbi_header * const head = (struct cbi_header *)cbi;
+
+int cbi_create(void)
+{
+	struct cbi_header * const h = (struct cbi_header *)cbi;
+
+	memset(cbi, 0, sizeof(cbi));
+	memcpy(h->magic, cbi_magic, sizeof(cbi_magic));
+	h->total_size = sizeof(*h);
+	h->major_version = CBI_VERSION_MAJOR;
+	h->minor_version = CBI_VERSION_MINOR;
+	h->crc = cbi_crc8(h);
+	cached_read_result = EC_SUCCESS;
+
+	return EC_SUCCESS;
+}
+
+void cbi_invalidate_cache(void)
+{
+	cached_read_result = EC_ERROR_CBI_CACHE_INVALID;
+}
 
 static int read_eeprom(uint8_t offset, uint8_t *in, int in_size)
 {
@@ -266,6 +286,11 @@ static int write_board_info(void)
 	return EC_SUCCESS;
 }
 
+int cbi_write(void)
+{
+	return write_board_info();
+}
+
 int cbi_get_board_version(uint32_t *ver)
 {
 	uint8_t size = sizeof(*ver);
@@ -299,6 +324,14 @@ int cbi_get_fw_config(uint32_t *fw_config)
 	uint8_t size = sizeof(*fw_config);
 
 	return cbi_get_board_info(CBI_TAG_FW_CONFIG, (uint8_t *)fw_config,
+				  &size);
+}
+
+int cbi_get_ssfc(uint32_t *ssfc)
+{
+	uint8_t size = sizeof(*ssfc);
+
+	return cbi_get_board_info(CBI_TAG_SSFC, (uint8_t *)ssfc,
 				  &size);
 }
 
@@ -357,6 +390,10 @@ static enum ec_status hc_cbi_set(struct host_cmd_handler_args *args)
 		if (read_board_info())
 			return EC_RES_ERROR;
 	}
+
+	/* Given data size exceeds the packet size. */
+	if (args->params_size < sizeof(*p) + p->size)
+		return EC_RES_INVALID_PARAM;
 
 	if (cbi_set_board_info(p->tag, p->data, p->size))
 		return EC_RES_INVALID_PARAM;
@@ -426,6 +463,7 @@ static void dump_cbi(void)
 	print_tag("SKU_ID", cbi_get_sku_id(&val), &val);
 	print_tag("FW_CONFIG", cbi_get_fw_config(&val), &val);
 	print_tag("PCB_SUPPLIER", cbi_get_pcb_supplier(&val), &val);
+	print_tag("SSFC", cbi_get_ssfc(&val), &val);
 }
 
 static int cc_cbi(int argc, char **argv)

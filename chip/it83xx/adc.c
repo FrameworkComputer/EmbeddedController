@@ -13,9 +13,12 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
+#include "system.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
 /* Global variables */
 static struct mutex adc_lock;
@@ -135,6 +138,7 @@ int adc_read_channel(enum adc_channel ch)
 
 	mutex_lock(&adc_lock);
 
+	disable_sleep(SLEEP_MASK_ADC);
 	task_waiting = task_get_current();
 	adc_ch = adc_channels[ch].channel;
 	adc_enable_channel(adc_ch);
@@ -162,7 +166,16 @@ int adc_read_channel(enum adc_channel ch)
 			valid = 1;
 		}
 	}
+
+	if (!valid) {
+		CPRINTS("ADC failed to read!!! (regs=%x, %x, ch=%d, evt=%x)",
+			IT83XX_ADC_ADCDVSTS,
+			IT83XX_ADC_ADCDVSTS2,
+			adc_ch, events);
+	}
+
 	adc_disable_channel(adc_ch);
+	enable_sleep(SLEEP_MASK_ADC);
 
 	mutex_unlock(&adc_lock);
 
@@ -308,6 +321,8 @@ static void adc_accuracy_initialization(void)
 {
 	/* bit3 : start adc accuracy initialization */
 	IT83XX_ADC_ADCSTS |= 0x08;
+	/* Enable automatic HW calibration. */
+	IT83XX_ADC_KDCTL |= IT83XX_ADC_AHCE;
 	/* short delay for adc accuracy initialization */
 	IT83XX_GCTRL_WNCKR = 0;
 	/* bit3 : stop adc accuracy initialization */

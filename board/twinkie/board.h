@@ -64,6 +64,8 @@
 
 #ifndef __ASSEMBLER__
 
+#include <stdint.h>
+
 void sniffer_init(void);
 
 int wait_packet(int pol, uint32_t min_edges, uint32_t timeout_us);

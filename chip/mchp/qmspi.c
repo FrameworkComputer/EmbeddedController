@@ -436,7 +436,7 @@ uint8_t qmspi_xfr(const struct spi_device_t *spi_device,
  * aligned >= 4 bytes and the number of bytes is a multiple of 4.
  * NOTE on SPI flash commands:
  * This routine does NOT handle SPI flash commands requiring
- * dummy clocks or special mode bytes. Dummy clocks and special mode
+ * extra clocks or special mode bytes. Extra clocks and special mode
  * bytes require additional descriptors. For example the flash read
  * dual command (0x3B):
  * 1. First descriptor transmits 4 bytes (opcode + 24-bit address) on
@@ -444,7 +444,7 @@ uint8_t qmspi_xfr(const struct spi_device_t *spi_device,
  * 2. Second descriptor set for 2 IO pins, 2 bytes, TX disabled. When
  *    this descriptor is executed QMSPI will tri-state IO0 & IO1 and
  *    output 8 clocks (dual mode 4 clocks per byte). The SPI flash may
- *    turn on its output drivers on the first dummy clock.
+ *    turn on its output drivers on the first clock.
  * 3. Third descriptor set for 2 IO pins, read data using DMA. Unit
  *    size and DMA unit size based on number of bytes to read and
  *    alignment of destination buffer.
@@ -455,14 +455,14 @@ uint8_t qmspi_xfr(const struct spi_device_t *spi_device,
  * the SPI flash that changes the default 24-bit address command to
  * require a 32-bit address.
  * 0x03 is 1-1-1
- * 0x3B is 1-1-2 with 8 dummy clocks
- * 0x6B is 1-1-4 with 8 dummy clocks
- * 0xBB is 1-2-2 with 4 dummy clocks
+ * 0x3B is 1-1-2 with 8 clocks
+ * 0x6B is 1-1-4 with 8 clocks
+ * 0xBB is 1-2-2 with 4 clocks
  * Number of IO pins for command
  * Number of IO pins for address
  * Number of IO pins for data
  * Number of bit/bytes for address (3 or 4)
- * Number of dummy clocks after address phase
+ * Number of clocks after address phase
  */
 #ifdef CONFIG_MCHP_QMSPI_TX_DMA
 int qmspi_transaction_async(const struct spi_device_t *spi_device,
@@ -671,7 +671,7 @@ int qmspi_transaction_flush(const struct spi_device_t *spi_device)
  */
 int qmspi_enable(int hw_port, int enable)
 {
-	uint8_t dummy __attribute__((unused)) = 0;
+	uint8_t unused __attribute__((unused)) = 0;
 
 	trace2(0, QMSPI, 0, "qmspi_enable: port = %d enable = %d",
 			hw_port, enable);
@@ -684,13 +684,13 @@ int qmspi_enable(int hw_port, int enable)
 	if (enable) {
 		MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_QMSPI);
 		MCHP_QMSPI0_MODE_ACT_SRST = MCHP_QMSPI_M_SOFT_RESET;
-		dummy = MCHP_QMSPI0_MODE_ACT_SRST;
+		unused = MCHP_QMSPI0_MODE_ACT_SRST;
 		MCHP_QMSPI0_MODE = (MCHP_QMSPI_M_ACTIVATE +
 				MCHP_QMSPI_M_SPI_MODE0 +
 				MCHP_QMSPI_M_CLKDIV_12M);
 	} else {
 		MCHP_QMSPI0_MODE_ACT_SRST = MCHP_QMSPI_M_SOFT_RESET;
-		dummy = MCHP_QMSPI0_MODE_ACT_SRST;
+		unused = MCHP_QMSPI0_MODE_ACT_SRST;
 		MCHP_QMSPI0_MODE_ACT_SRST = 0;
 		MCHP_PCR_SLP_EN_DEV(MCHP_PCR_QMSPI);
 	}

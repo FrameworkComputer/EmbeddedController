@@ -15,13 +15,15 @@
 #include "compile_time_macros.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/temp_sensor/thermistor.h"
+#include "temp_sensor.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/nb7v904m.h"
-#include "driver/sync.h"
 #include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/usb_mux/pi3usb3x532.h"
+#include "driver/retimer/ps8802.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -31,6 +33,8 @@
 #include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
+#include "pwm.h"
+#include "pwm_chip.h"
 #include "stdbool.h"
 #include "switch.h"
 #include "system.h"
@@ -42,6 +46,18 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
+#define ADC_VOL_UP_MASK     BIT(0)
+#define ADC_VOL_DOWN_MASK   BIT(1)
+
+static uint8_t new_adc_key_state;
+
+/******************************************************************************/
+/* USB-A Configuration */
+const int usb_port_enable[USB_PORT_COUNT] = {
+	GPIO_EN_USB_A0_VBUS,
+	GPIO_EN_USB_A1_VBUS,
+};
 
 static void tcpc_alert_event(enum gpio_signal s)
 {
@@ -105,6 +121,41 @@ const struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
+/* Thermistors */
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_1] = {.name = "Memory",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_1},
+	[TEMP_SENSOR_2] = {.name = "Ambient",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_2},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+
+const static struct ec_thermal_config thermal_a = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(73),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+};
+
+struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
+
+static void setup_thermal(void)
+{
+	thermal_params[TEMP_SENSOR_1] = thermal_a;
+	thermal_params[TEMP_SENSOR_2] = thermal_a;
+}
+
 void board_init(void)
 {
 	int on;
@@ -117,6 +168,9 @@ void board_init(void)
 	/* Turn on 5V if the system is on, otherwise turn it off. */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND);
 	board_power_5v_enable(on);
+
+	/* Initialize THERMAL */
+	setup_thermal();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -277,15 +331,15 @@ static struct mutex g_base_mutex;
 
 /* Matrices to rotate accelerometers into the standard reference. */
 static const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
 static const mat33_fp_t base_standard_ref = {
 	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
 static struct accelgyro_saved_data_t g_bma253_data;
@@ -358,17 +412,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.min_frequency = BMI_GYRO_MIN_FREQ,
 		.max_frequency = BMI_GYRO_MAX_FREQ,
 	},
-	[VSYNC] = {
-		.name = "Camera VSYNC",
-		.active_mask = SENSOR_ACTIVE_S0,
-		.chip = MOTIONSENSE_CHIP_GPIO,
-		.type = MOTIONSENSE_TYPE_SYNC,
-		.location = MOTIONSENSE_LOC_CAMERA,
-		.drv = &sync_drv,
-		.default_range = 0,
-		.min_frequency = 0,
-		.max_frequency = 1,
-	},
 };
 
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
@@ -432,6 +475,16 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	},
 };
 
+/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_KBLIGHT] = {
+		.channel = 3,
+		.flags = PWM_CONFIG_DSLEEP,
+		.freq = 10000,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -460,6 +513,7 @@ const struct usb_mux usbc1_retimer = {
 	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
 	.driver = &nb7v904m_usb_redriver_drv,
 };
+
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 0,
@@ -470,9 +524,8 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 1,
 		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
-		.driver = &pi3usb3x532_usb_mux_driver,
-		.next_mux = &usbc1_retimer,
+		.i2c_addr_flags = PS8802_I2C_ADDR_FLAGS,
+		.driver = &ps8802_usb_mux_driver,
 	}
 };
 
@@ -510,6 +563,53 @@ uint16_t tcpc_get_alert_status(void)
 
 	return status;
 }
+
+int adc_to_physical_value(enum gpio_signal gpio)
+{
+	if (gpio == GPIO_VOLUME_UP_L)
+		return !!(new_adc_key_state & ADC_VOL_UP_MASK);
+	else if (gpio == GPIO_VOLUME_DOWN_L)
+		return !!(new_adc_key_state & ADC_VOL_DOWN_MASK);
+
+	CPRINTS("Not a volume up or down key");
+	return 0;
+}
+
+int button_is_adc_detected(enum gpio_signal gpio)
+{
+	return (gpio == GPIO_VOLUME_DOWN_L) || (gpio == GPIO_VOLUME_UP_L);
+}
+
+static void adc_vol_key_press_check(void)
+{
+	int volt = adc_read_channel(ADC_SUB_ANALOG);
+	static uint8_t old_adc_key_state;
+	uint8_t adc_key_state_change;
+
+	if (volt > 2400 && volt < 2490) {
+		/* volume-up is pressed */
+		new_adc_key_state = ADC_VOL_UP_MASK;
+	} else if (volt > 2600 && volt < 2690) {
+		/* volume-down is pressed */
+		new_adc_key_state = ADC_VOL_DOWN_MASK;
+	} else if (volt < 2290) {
+		/* both volumn-up and volume-down are pressed */
+		new_adc_key_state = ADC_VOL_UP_MASK | ADC_VOL_DOWN_MASK;
+	} else if (volt > 2700) {
+		/* both volumn-up and volume-down are released */
+		new_adc_key_state = 0;
+	}
+	if (new_adc_key_state != old_adc_key_state) {
+		adc_key_state_change = old_adc_key_state ^ new_adc_key_state;
+		if (adc_key_state_change && ADC_VOL_UP_MASK)
+			button_interrupt(GPIO_VOLUME_UP_L);
+		if (adc_key_state_change && ADC_VOL_DOWN_MASK)
+			button_interrupt(GPIO_VOLUME_DOWN_L);
+
+		old_adc_key_state = new_adc_key_state;
+	}
+}
+DECLARE_HOOK(HOOK_TICK, adc_vol_key_press_check, HOOK_PRIO_DEFAULT);
 
 #ifndef TEST_BUILD
 /* This callback disables keyboard when convertibles are fully open */

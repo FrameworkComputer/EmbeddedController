@@ -19,9 +19,6 @@
 /* General purpose register (r7) for saving software panic information */
 #define SOFT_PANIC_GPR_INFO   7
 
-/* Panic data goes at the end of RAM. */
-static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
-
 #ifdef CONFIG_DEBUG_EXCEPTIONS
 /**
  * bit[4] @ ITYPE, Indicates if an exception is caused by an instruction fetch
@@ -92,35 +89,44 @@ void software_panic(uint32_t reason, uint32_t info)
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 {
-	uint32_t *regs = pdata_ptr->nds_n8.regs;
+	/*
+	 * It is safe to get pointer using get_panic_data_write().
+	 * If it was called earlier (eg. when saving nds_n8.ipc) calling it
+	 * once again won't remove any data
+	 */
+	struct panic_data * const pdata = get_panic_data_write();
 	uint32_t warning_ipc;
+	uint32_t *regs;
+
+	regs = pdata->nds_n8.regs;
 
 	/* Setup panic data structure */
 	if (reason != PANIC_SW_WATCHDOG) {
-		memset(pdata_ptr, 0, sizeof(*pdata_ptr));
+		memset(pdata, 0, CONFIG_PANIC_DATA_SIZE);
 	} else {
-		warning_ipc = pdata_ptr->nds_n8.ipc;
-		memset(pdata_ptr, 0, sizeof(*pdata_ptr));
-		pdata_ptr->nds_n8.ipc = warning_ipc;
+		warning_ipc = pdata->nds_n8.ipc;
+		memset(pdata, 0, CONFIG_PANIC_DATA_SIZE);
+		pdata->nds_n8.ipc = warning_ipc;
 	}
-	pdata_ptr->magic = PANIC_DATA_MAGIC;
-	pdata_ptr->struct_size = sizeof(*pdata_ptr);
-	pdata_ptr->struct_version = 2;
-	pdata_ptr->arch = PANIC_ARCH_NDS32_N8;
+	pdata->magic = PANIC_DATA_MAGIC;
+	pdata->struct_size = CONFIG_PANIC_DATA_SIZE;
+	pdata->struct_version = 2;
+	pdata->arch = PANIC_ARCH_NDS32_N8;
 
 	/* Log panic cause */
-	pdata_ptr->nds_n8.itype = exception;
+	pdata->nds_n8.itype = exception;
 	regs[SOFT_PANIC_GPR_REASON] = reason;
 	regs[SOFT_PANIC_GPR_INFO] = info;
 }
 
 void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 {
-	uint32_t *regs = pdata_ptr->nds_n8.regs;
+	struct panic_data * const pdata = panic_get_data();
+	uint32_t *regs;
 
-	if (pdata_ptr->magic == PANIC_DATA_MAGIC &&
-	    pdata_ptr->struct_version == 2) {
-		*exception = pdata_ptr->nds_n8.itype;
+	if (pdata && pdata->struct_version == 2) {
+		regs = pdata->nds_n8.regs;
+		*exception = pdata->nds_n8.itype;
 		*reason = regs[SOFT_PANIC_GPR_REASON];
 		*info = regs[SOFT_PANIC_GPR_INFO];
 	} else {
@@ -172,10 +178,10 @@ static void print_panic_information(uint32_t *regs, uint32_t itype,
 void report_panic(uint32_t *regs, uint32_t itype)
 {
 	int i;
-	struct panic_data *pdata = pdata_ptr;
+	struct panic_data * const pdata = get_panic_data_write();
 
 	pdata->magic = PANIC_DATA_MAGIC;
-	pdata->struct_size = sizeof(*pdata);
+	pdata->struct_size = CONFIG_PANIC_DATA_SIZE;
 	pdata->struct_version = 2;
 	pdata->arch = PANIC_ARCH_NDS32_N8;
 	pdata->flags = 0;

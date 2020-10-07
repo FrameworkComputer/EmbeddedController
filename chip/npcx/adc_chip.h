@@ -22,13 +22,17 @@ enum npcx_adc_input_channel {
 	NPCX_ADC_CH2,
 	NPCX_ADC_CH3,
 	NPCX_ADC_CH4,
-#if defined(CHIP_FAMILY_NPCX7)
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 	NPCX_ADC_CH5,
 	NPCX_ADC_CH6,
 	NPCX_ADC_CH7,
 	NPCX_ADC_CH8,
 	NPCX_ADC_CH9,
 #endif
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+	NPCX_ADC_CH10,
+	NPCX_ADC_CH11,
+ #endif
 	NPCX_ADC_CH_COUNT
 };
 
@@ -48,10 +52,8 @@ struct adc_t {
 extern const struct adc_t adc_channels[];
 
 /*
- * Boards may configure a ADC channel for use with thershold interrupts.  For
- * dual threshold detection, set both the thresh_assert and thresh_deassert
- * member variables.  The threshold levels may be set from 0 to ADC_MAX_VOLT
- * inclusive.
+ * Boards may configure a ADC channel for use with thershold interrupts.
+ * The threshold levels may be set from 0 to ADC_MAX_VOLT inclusive.
  */
 struct npcx_adc_thresh_t {
 	/* The ADC channel to monitor to generate threshold interrupts. */
@@ -63,21 +65,15 @@ struct npcx_adc_thresh_t {
 	/* If set, threshold event is asserted when <= threshold level */
 	int lower_or_higher;
 
-	/*
-	 * Desired level in mV to assert.  Set for both single and dual
-	 * thresholds.
-	 */
+	/* Desired threshold level in mV to assert. */
 	int thresh_assert;
-
-	/* Desired level in mV to de-assert. Set to -1 for single thresholds. */
-	int thresh_deassert;
 };
 
 /**
  * Boards should call this function to register their threshold interrupt with
- * one of the 3 threshold detectors.  threshold_idx is 1-based.
+ * one of the threshold detectors. 'threshold_idx' is 1-based.
  *
- * @param threshold_idx - 1-based threshold detector index (max 3)
+ * @param threshold_idx - 1-based threshold detector index
  * @param thresh_cfg - Pointer to ADC threshold interrupt configuration
  */
 void npcx_adc_register_thresh_irq(int threshold_idx,
@@ -105,4 +101,13 @@ void npcx_set_adc_repetitive(enum npcx_adc_input_channel input_ch, int enable);
  * @param enable         - 1 to enable, 0 to disable
  */
 void npcx_adc_thresh_int_enable(int threshold_idx, int enable);
+
+/**
+ * Return the ADC value from CHNDAT register directly when the channel is
+ * configured in the repetitive mode.
+ *
+ * @param   input_ch    channel number
+ * @return  ADC data
+ */
+int adc_read_data(enum npcx_adc_input_channel input_ch);
 #endif /* __CROS_EC_ADC_CHIP_H */

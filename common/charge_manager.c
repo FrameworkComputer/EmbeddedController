@@ -1163,6 +1163,14 @@ int charge_manager_get_active_charge_port(void)
 	return charge_port;
 }
 
+int charge_manager_get_selected_charge_port(void)
+{
+	int port, supplier;
+
+	charge_manager_get_best_charge_port(&port, &supplier);
+	return port;
+}
+
 int charge_manager_get_charger_current(void)
 {
 	return charge_current;
@@ -1240,9 +1248,9 @@ void charge_manager_source_port(int port, int enable)
 	int p, rp;
 
 	if (enable)
-		atomic_or(&source_port_bitmap, 1 << port);
+		deprecated_atomic_or(&source_port_bitmap, 1 << port);
 	else
-		atomic_clear(&source_port_bitmap, 1 << port);
+		deprecated_atomic_clear_bits(&source_port_bitmap, 1 << port);
 
 	/* No change, exit early. */
 	if (prev_bitmap == source_port_bitmap)

@@ -99,7 +99,7 @@ enum smb_oper_state_t {
 	SMB_MASTER_START,
 	SMB_WRITE_OPER,
 	SMB_READ_OPER,
-	SMB_DUMMY_READ_OPER,
+	SMB_FAKE_READ_OPER,
 	SMB_REPEAT_START,
 	SMB_WRITE_SUSPEND,
 	SMB_READ_SUSPEND,
@@ -144,7 +144,7 @@ const unsigned int i2c_1m_timing_used = ARRAY_SIZE(i2c_1m_timings);
 /* IRQ for each port */
 const uint32_t i2c_irqs[I2C_CONTROLLER_COUNT] = {
 		NPCX_IRQ_SMB1, NPCX_IRQ_SMB2, NPCX_IRQ_SMB3, NPCX_IRQ_SMB4,
-#if defined(CHIP_FAMILY_NPCX7)
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 		NPCX_IRQ_SMB5, NPCX_IRQ_SMB6, NPCX_IRQ_SMB7, NPCX_IRQ_SMB8,
 #endif
 };
@@ -348,7 +348,7 @@ enum smb_error i2c_master_transaction(int controller)
 	} else if (p_status->oper_state == SMB_READ_SUSPEND) {
 		if (!IS_ENABLED(NPCX_I2C_FIFO_SUPPORT)) {
 			/*
-			 * Do dummy read if read length is 1 and I2C_XFER_STOP
+			 * Do extra read if read length is 1 and I2C_XFER_STOP
 			 * is set simultaneously.
 			 */
 			if (p_status->sz_rxbuf == 1 &&
@@ -356,13 +356,13 @@ enum smb_error i2c_master_transaction(int controller)
 				/*
 				 * Since SCL is released after reading last
 				 * byte from previous transaction, adding a
-				 * dummy byte for next transaction which let
+				 * extra byte for next transaction which let
 				 * ec sets NACK bit in time is necessary.
 				 * Or i2c master cannot generate STOP
 				 * when the last byte is ACK during receiving.
 				 */
 				p_status->sz_rxbuf++;
-				p_status->oper_state = SMB_DUMMY_READ_OPER;
+				p_status->oper_state = SMB_FAKE_READ_OPER;
 			} else
 				/*
 				 * Need to read the other bytes from
@@ -475,7 +475,7 @@ void i2c_done(int controller)
 			NPCX_SMBFIF_CTS(controller) =
 						BIT(NPCX_SMBFIF_CTS_RXF_TXE);
 
-		/* Clear SDAST by writing dummy byte */
+		/* Clear SDAST by writing mock byte */
 		I2C_WRITE_BYTE(controller, 0xFF);
 	}
 
@@ -536,8 +536,8 @@ static void i2c_handle_receive(int controller)
 	I2C_READ_BYTE(controller, data);
 	CPRINTS("-R(%02x)", data);
 
-	/* Read to buf. Skip last byte if meet SMB_DUMMY_READ_OPER */
-	if (p_status->oper_state == SMB_DUMMY_READ_OPER &&
+	/* Read to buf. Skip last byte if meet SMB_FAKE_READ_OPER */
+	if (p_status->oper_state == SMB_FAKE_READ_OPER &&
 			p_status->idx_buf == (p_status->sz_rxbuf - 1))
 		p_status->idx_buf++;
 	else
@@ -709,11 +709,16 @@ static void i2c_handle_sda_irq(int controller)
 				I2C_START(controller);
 				CPUTS("-RST");
 				/*
-				 * Receiving one byte only - set nack just
-				 * before writing address byte
+				 * Receiving one byte only - set NACK just
+				 * before writing address byte.
+				 * Set NACK (ACK bit in the SMBnCTL1 register)
+				 * only in the single-byte mode.
+				 * In FIFO mode, NACK is set via LAST bit
+				 * in the SMBnTXF_CTL register.
 				 */
 				if (p_status->sz_rxbuf == 1 &&
-					(p_status->flags & I2C_XFER_STOP)) {
+					(p_status->flags & I2C_XFER_STOP) &&
+					!IS_ENABLED(NPCX_I2C_FIFO_SUPPORT)) {
 					I2C_NACK(controller);
 					CPUTS("-GNA");
 				}
@@ -735,7 +740,7 @@ static void i2c_handle_sda_irq(int controller)
 	}
 	/* 3 Handle master read operation (read or after a write operation) */
 	else if (p_status->oper_state == SMB_READ_OPER ||
-			p_status->oper_state == SMB_DUMMY_READ_OPER) {
+			p_status->oper_state == SMB_FAKE_READ_OPER) {
 		if (IS_ENABLED(NPCX_I2C_FIFO_SUPPORT))
 			i2c_fifo_handle_receive(controller);
 		else
@@ -755,7 +760,7 @@ void i2c_master_int_handler (int controller)
 		CPUTS("-SP");
 		/* Clear BER Bit */
 		SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_BER);
-		/* Mask sure slave doesn't hold bus by dummy reading */
+		/* Make sure slave doesn't hold bus by reading */
 		I2C_READ_BYTE(controller, data);
 
 		/* Set error code */
@@ -804,11 +809,17 @@ void i2c_master_int_handler (int controller)
 		if (p_status->sz_rxbuf == 0)
 			i2c_done(controller);
 		/*
-		 * Otherwise we have a one-byte transaction, so nack after
+		 * Otherwise we have a one-byte transaction, so NACK after
 		 * receiving next byte, if requested.
+		 * Set NACK (ACK bit in the SMBnCTL1 register) only in the
+		 * single-byte mode.
+		 * In FIFO mode, NACK is set via LAST bit in the SMBnTXF_CTL
+		 * register.
 		 */
-		else if (p_status->flags & I2C_XFER_STOP)
+		else if ((p_status->flags & I2C_XFER_STOP) &&
+				 !IS_ENABLED(NPCX_I2C_FIFO_SUPPORT)) {
 			I2C_NACK(controller);
+		}
 
 		/* Clear STASTR to release SCL after setting NACK/STOP bits */
 		SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_STASTR);
@@ -842,7 +853,7 @@ void i2c0_interrupt(void) { handle_interrupt(0); }
 void i2c1_interrupt(void) { handle_interrupt(1); }
 void i2c2_interrupt(void) { handle_interrupt(2); }
 void i2c3_interrupt(void) { handle_interrupt(3); }
-#if defined(CHIP_FAMILY_NPCX7)
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 void i2c4_interrupt(void) { handle_interrupt(4); }
 void i2c5_interrupt(void) { handle_interrupt(5); }
 void i2c6_interrupt(void) { handle_interrupt(6); }
@@ -853,7 +864,7 @@ DECLARE_IRQ(NPCX_IRQ_SMB1, i2c0_interrupt, 4);
 DECLARE_IRQ(NPCX_IRQ_SMB2, i2c1_interrupt, 4);
 DECLARE_IRQ(NPCX_IRQ_SMB3, i2c2_interrupt, 4);
 DECLARE_IRQ(NPCX_IRQ_SMB4, i2c3_interrupt, 4);
-#if defined(CHIP_FAMILY_NPCX7)
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 DECLARE_IRQ(NPCX_IRQ_SMB5, i2c4_interrupt, 4);
 DECLARE_IRQ(NPCX_IRQ_SMB6, i2c5_interrupt, 4);
 DECLARE_IRQ(NPCX_IRQ_SMB7, i2c6_interrupt, 4);
@@ -1009,7 +1020,7 @@ static void i2c_freq_changed(void)
 		int ctrl = i2c_port_to_controller(i2c_ports[i].port);
 		int scl_freq;
 
-#ifdef CHIP_FAMILY_NPCX7
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 		/*
 		 * SMB0/1/4/5/6/7 use APB3 clock
 		 * SMB2/3 use APB2 clock
@@ -1095,7 +1106,7 @@ void i2c_init(void)
 	/* Enable clock for I2C peripheral */
 	clock_enable_peripheral(CGC_OFFSET_I2C, CGC_I2C_MASK,
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
-#if defined(CHIP_FAMILY_NPCX7)
+#if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
 	clock_enable_peripheral(CGC_OFFSET_I2C2, CGC_I2C_MASK2,
 			CGC_MODE_RUN | CGC_MODE_SLEEP);
 #endif

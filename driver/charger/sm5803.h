@@ -52,14 +52,14 @@
 #define SM5803_INT2_VSYS		BIT(6)
 #define SM5803_INT2_TINT		BIT(7)
 
-#define SM5803_REG_INT3_REQ		0x07
-#define SM5803_REG_INT3_EN		0x0C
-#define SM5803_INT3_GPADC0		BIT(0)
-#define SM5803_INT3_VBATC1		BIT(1)
-#define SM5803_INT3_VBATC2		BIT(2)
-#define SM5803_INT3_SPARE		BIT(3)
-#define SM5803_INT3_VBUS_PWR_LIMIT	BIT(4)
-#define SM5803_INT3_IBAT		BIT(5)
+#define SM5803_REG_INT3_REQ			0x07
+#define SM5803_REG_INT3_EN			0x0C
+#define SM5803_INT3_GPADC0			BIT(0)
+#define SM5803_INT3_BFET_PWR_LIMIT		BIT(1)
+#define SM5803_INT3_BFET_PWR_HWSAFE_LIMIT	BIT(2)
+#define SM5803_INT3_SPARE			BIT(3)
+#define SM5803_INT3_VBUS_PWR_LIMIT		BIT(4)
+#define SM5803_INT3_IBAT			BIT(5)
 
 #define SM5803_REG_INT4_REQ		0x08
 #define SM5803_REG_INT4_EN		0x0D
@@ -84,6 +84,9 @@
 #define SM5803_REFERENCE_LDO3P3_PGOOD	BIT(4)
 #define SM5803_REFERENCE_LDO5_PGOOD	BIT(5)
 
+#define SM5803_REG_CLOCK_SEL		0x2A
+#define SM5803_CLOCK_SEL_LOW		BIT(0)
+
 #define SM5803_REG_GPIO0_CTRL		0x30
 #define SM5803_GPIO0_VAL		BIT(0)
 #define SM5803_GPIO0_MODE_MASK		GENMASK(2, 1)
@@ -95,6 +98,9 @@ enum sm5803_gpio0_modes {
 	GPIO0_MODE_OUTPUT,
 	GPIO0_MODE_INPUT
 };
+
+#define SM5803_REG_BFET_PWR_MAX_TH		0x35
+#define SM5803_REG_BFET_PWR_HWSAFE_MAX_TH	0x36
 
 #define SM5803_REG_PORTS_CTRL		0x40
 #define SM5803_PORTS_VBUS_DISCH		BIT(0)
@@ -118,6 +124,11 @@ enum sm5803_gpio0_modes {
 #define SM5803_GPADCC1_VSYS_EN		BIT(6)  /* NOTE: DO NOT CLEAR */
 #define SM5803_GPADCC1_TINT_EN		BIT(7)
 
+#define SM5803_REG_GPADC_CONFIG2	0x02
+
+#define SM5803_REG_PSYS1		0x04
+#define SM5803_PSYS1_DAC_EN		BIT(0)
+
 /* Note: Threshold registers all assume lower 2 bits are 0 */
 #define SM5803_REG_VBUS_LOW_TH		0x1A
 #define SM5803_REG_VBUS_HIGH_TH		0x2A
@@ -138,6 +149,16 @@ enum sm5803_gpio0_modes {
 #define SM5803_TINT_LOW_LEVEL		0xBF
 #define SM5803_TINT_HIGH_LEVEL		0xD1
 
+/* IBAT levels - The IBAT levels increment in 7.32mA */
+#define SM5803_REG_IBAT_CHG_MEAS_MSB	0x44
+#define SM5803_REG_IBAT_CHG_MEAS_LSB	0x45
+#define SM5803_IBAT_CHG_MEAS_LSB	GENMASK(1, 0)
+
+/* IBUS levels - The IBUS levels increment in 7.32mA */
+#define SM5803_REG_IBUS_CHG_MEAS_MSB	0x46
+#define SM5803_REG_IBUS_CHG_MEAS_LSB	0x47
+#define SM5803_IBUS_CHG_MEAS_LSB	GENMASK(1, 0)
+
 #define SM5803_REG_VBUS_MEAS_MSB	0x48
 #define SM5803_REG_VBUS_MEAS_LSB	0x49
 #define SM5803_VBUS_MEAS_LSB		GENMASK(1, 0)
@@ -148,13 +169,28 @@ enum sm5803_gpio0_modes {
 
 #define SM5803_REG_TINT_MEAS_MSB	0x4E
 
+/* VSYS levels - The VSYS levels increment in  23.4mV steps. */
+#define SM5803_REG_VSYS_MEAS_MSB	0x4C
+#define SM5803_REG_VSYS_MEAS_LSB	0x4D
+#define SM5803_VSYS_MEAS_LSB		GENMASK(1, 0)
+
 /* Charger registers (address 0x32) */
 
+#define SM5803_REG_CC_CONFIG1		0x01
+#define SM5803_CC_CONFIG1_SD_PWRUP	BIT(3)
+
 #define SM5803_REG_FLOW1		0x1C
-#define SM5803_FLOW1_CHG_EN		BIT(0)
-#define SM5803_FLOW1_VBUSIN_DISCHG_EN	BIT(1)
+#define SM5803_FLOW1_MODE		GENMASK(1, 0)
 #define SM5803_FLOW1_DIRECTCHG_SRC_EN	BIT(2)
+#define SM5803_FLOW1_LINEAR_CHARGE_EN	BIT(3)
 #define SM5803_FLOW1_USB_SUSP		BIT(7)
+
+enum sm5803_charger_modes {
+	CHARGER_MODE_DISABLED,
+	CHARGER_MODE_SINK,
+	CHARGER_MODE_RESERVED,
+	CHARGER_MODE_SOURCE,
+};
 
 #define SM5803_REG_FLOW2		0x1D
 #define SM5803_FLOW2_AUTO_TRKL_EN	BIT(0)
@@ -172,6 +208,9 @@ enum sm5803_gpio0_modes {
 #define SM5803_FLOW3_FW_SWITCH_RESUME	BIT(1)
 #define SM5803_FLOW3_FW_SWITCH_PAUSE	BIT(2)
 #define SM5803_FLOW3_SOFT_DISABLE_EN	BIT(3)
+
+#define SM5803_REG_SWITCHER_CONF	0x1F
+#define SM5803_SW_BCK_BST_CONF_AUTO	BIT(0)
 
 #define SM5803_REG_ANA_EN1		0x21
 #define SM5803_ANA_EN1_CLS_DISABLE	BIT(7)
@@ -238,12 +277,34 @@ enum sm5803_gpio0_modes {
 #define SM5803_REG_FAST_CONF4		0x3C
 #define SM5803_CONF4_ICHG_FAST		GENMASK(5, 0)
 
+/* Precharge current limit is also intervals of 100 mA */
+#define SM5803_REG_PRECHG		0x41
+#define SM5803_PRECHG_ICHG_PRE_SET	GENMASK(5, 0)
+
+/* Fast charge Termination */
+#define SM5803_REG_FAST_CONF5		0x3D
+#define SM5803_CONF5_IBAT_EOC_TH	GENMASK(3, 0)
+
+/* IR drop compensation */
+#define SM5803_REG_IR_COMP1		0x3F
+#define SM5803_IR_COMP_RES_SET_MSB	GENMASK(7, 6)
+#define SM5803_IR_COMP_RES_SET_MSB_SHIFT 6
+#define SM5803_IR_COMP_EN		BIT(5)
+
+/* LSB is in 1.67mOhm steps. */
+#define SM5803_REG_IR_COMP2		0x40
+
+#define SM5803_REG_LOG1			0x42
+#define SM5803_BATFET_ON		BIT(2)
+
 #define SM5803_REG_PHOT1		0x72
 #define SM5803_PHOT1_IBAT_PHOT_COMP_EN	BIT(0)
 #define SM5803_PHOT1_IBUS_PHOT_COMP_EN	BIT(1)
 #define SM5803_PHOT1_VSYS_MON_EN	BIT(2)
 #define SM5803_PHOT1_VBUS_MON_EN	BIT(3)
+#define SM5803_PHOT1_COMPARATOR_EN	GENMASK(3, 0)
 #define SM5803_PHOT1_DURATION		GENMASK(6, 4)
+#define SM5803_PHOT1_DURATION_SHIFT	4
 #define SM5803_PHOT1_IRQ_MODE		BIT(7)
 
 #define CHARGER_NAME "sm5803"
@@ -272,8 +333,14 @@ enum ec_error_list sm5803_get_chg_det(int chgnum, int *chg_det);
 
 /* Expose Vbus discharge function */
 enum ec_error_list sm5803_set_vbus_disch(int chgnum, int enable);
+enum ec_error_list sm5803_vbus_sink_enable(int chgnum, int enable);
 
+void sm5803_hibernate(int chgnum);
 void sm5803_interrupt(int chgnum);
+
+/* Expose low power mode functions */
+void sm5803_disable_low_power_mode(int chgnum);
+void sm5803_enable_low_power_mode(int chgnum);
 
 extern const struct charger_drv sm5803_drv;
 

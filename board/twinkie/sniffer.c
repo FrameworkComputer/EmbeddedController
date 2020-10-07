@@ -316,9 +316,10 @@ void sniffer_task(void)
 						+ (EP_PACKET_HEADER_SIZE>>1))),
 					samples[d >> 4]+off,
 					EP_PAYLOAD_SIZE);
-			atomic_clear((uint32_t *)&free_usb, 1 << u);
+			deprecated_atomic_clear_bits((uint32_t *)&free_usb,
+						     1 << u);
 			u = !u;
-			atomic_clear(&filled_dma, 1 << d);
+			deprecated_atomic_clear_bits(&filled_dma, 1 << d);
 		}
 		led_reset_record();
 

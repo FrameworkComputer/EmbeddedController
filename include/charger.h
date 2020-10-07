@@ -134,10 +134,17 @@ extern struct charger_config_t chg_chips[];
 __override_proto uint8_t board_get_charger_chip_count(void);
 
 #ifdef CONFIG_CHARGER_SINGLE_CHIP
+/*
+ * Note: CHARGER_SOLO should be used anywhere the charger index being called is
+ * only valid for a single-chip system.  This will then generate build errors if
+ * the callsite is compliled for a multi-chip system, which needs to re-evaluate
+ * the charger index to act upon.
+ */
 enum chg_id {
 	CHARGER_SOLO,
 	CHARGER_NUM,
 };
+
 #endif
 
 /* Get the current charger_params. Failures are reported in .flags */
@@ -193,7 +200,7 @@ enum ec_error_list charger_set_mode(int mode);
  * For chargers that are able to supply output power for OTG dongle, this
  * function enables or disables power output.
  */
-enum ec_error_list charger_enable_otg_power(int enabled);
+enum ec_error_list charger_enable_otg_power(int chgnum, int enabled);
 
 /**
  * Sets OTG current limit and voltage (independent of whether OTG power is
@@ -211,7 +218,8 @@ enum ec_error_list charger_enable_otg_power(int enabled);
  *
  * @return EC_SUCCESS on success, an error otherwise.
  */
-enum ec_error_list charger_set_otg_current_voltage(int output_current,
+enum ec_error_list charger_set_otg_current_voltage(int chgnum,
+						   int output_current,
 						   int output_voltage);
 
 /**

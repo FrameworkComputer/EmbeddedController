@@ -26,24 +26,18 @@ static struct ipc_shared_obj *const ipi_recv_buf =
 	(struct ipc_shared_obj *)(CONFIG_IPC_SHARED_OBJ_ADDR +
 				  sizeof(struct ipc_shared_obj));
 
-static uint32_t disable_irq_count;
+static uint32_t disable_irq_count, saved_int_mask;
 
 void ipi_disable_irq(void)
 {
-	if (atomic_inc(&disable_irq_count, 1) == 0)
-		task_disable_irq(SCP_IRQ_GIPC_IN0);
+	if (deprecated_atomic_read_add(&disable_irq_count, 1) == 0)
+		saved_int_mask = read_clear_int_mask();
 }
 
 void ipi_enable_irq(void)
 {
-	if (atomic_dec(&disable_irq_count, 1) == 1) {
-		int pending = SCP_GIPC_IN_SET;
-
-		task_enable_irq(SCP_IRQ_GIPC_IN0);
-
-		if (init_done && pending)
-			task_trigger_irq(SCP_IRQ_GIPC_IN0);
-	}
+	if (deprecated_atomic_read_sub(&disable_irq_count, 1) == 1)
+		set_int_mask(saved_int_mask);
 }
 
 static int ipi_is_busy(void)
@@ -139,7 +133,9 @@ static void ipi_enable_deferred(void)
 		return;
 	}
 
+#ifdef HAS_TASK_HOSTCMD
 	hostcmd_init();
+#endif
 
 	task_enable_irq(SCP_IRQ_GIPC_IN0);
 }

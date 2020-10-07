@@ -188,6 +188,19 @@ SECTIONS
 		. = ALIGN(4);
 		*(.rodata*)
 
+#ifdef CONFIG_CHIP_INIT_ROM_REGION
+	ASSERT(0, "CONFIG_CHIP_INIT_ROM_REGION not supported by linker script")
+#endif /* CONFIG_CHIP_INIT_ROM_REGION */
+		/*
+		 * This linker file does not yet support a separate ROM resident
+		 * section. Ensure the corresponding data objects are linked
+		 * into the .rodata section.
+		 */
+		. = ALIGN(4);
+		__init_rom_start = .;
+		*(.init.rom)
+		__init_rom_end = .;
+
 #if defined(SECTION_IS_RO) && defined(CONFIG_FLASH)
 		. = ALIGN(64);
 		KEEP(*(.google))
@@ -225,9 +238,10 @@ SECTIONS
 		. = ALIGN(8);
 		__bss_start = .;
 		*(.bss.tasks)
-		*(.bss.task_scratchpad)
 		. = ALIGN(8);
 		*(.bss.system_stack)
+		. = ALIGN(8);
+		*(.bss.task_scratchpad)
 		/* Rest of .bss takes care of its own alignment */
 		*(.bss)
 		*(.bss.slow)
@@ -259,7 +273,24 @@ SECTIONS
 	__ram_free = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE) -
 		     (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
 
-	__image_size = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
+	/*
+	 * __flash_used is used in flash free calculations by the makefile.
+	 * __image_size is stored in the struct image_data header and used
+	 * in hash calcuations.
+	 */
+	__flash_used = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
+	__image_size = __flash_used;
+
+#ifdef CONFIG_FLASH
+        /*
+         * These linker labels are just for analysis and not used in the code.
+         */
+	__config_flash_size = CONFIG_FLASH_SIZE;
+	__config_ro_size = CONFIG_RO_SIZE;
+	__config_ec_protected_storage_size = CONFIG_EC_PROTECTED_STORAGE_SIZE;
+	__config_rw_size = CONFIG_RW_SIZE;
+	__config_ec_writable_storage_size = CONFIG_EC_WRITABLE_STORAGE_SIZE;
+#endif
 
 #if defined(CONFIG_HOSTCMD_X86) || defined(CONFIG_I2C_SLAVE)
 	.h2ram (NOLOAD) : {

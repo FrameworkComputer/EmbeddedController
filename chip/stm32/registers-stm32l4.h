@@ -639,11 +639,8 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_FLASH_PCROP1ER        REG32(STM32_FLASH_REGS_BASE + 0x28)
 #define STM32_FLASH_WRP1AR          REG32(STM32_FLASH_REGS_BASE + 0x2C)
 #define STM32_FLASH_WRP1BR          REG32(STM32_FLASH_REGS_BASE + 0x30)
-#define  FLASH_WRP_START(val)       ((val) & 0xff)
-#define  FLASH_WRP_END(val)         (((val) >> 16) & 0xff)
-#define  FLASH_WRP_RANGE(strt, end) (((end) << 16) | (strt))
-#define  FLASH_WRP_RANGE_DISABLED   FLASH_WRP_RANGE(0xFF, 0x00)
-#define  FLASH_WRP_MASK             FLASH_WRP_RANGE(0xFF, 0xFF)
+/* Minimum number of bytes that can be written to flash */
+#define STM32_FLASH_MIN_WRITE_SIZE  CONFIG_FLASH_WRITE_SIZE
 
 #define STM32_OPTB_USER_RDP         REG32(STM32_OPTB_BASE + 0x00)
 #define STM32_OPTB_WRP1AR           REG32(STM32_OPTB_BASE + 0x18)

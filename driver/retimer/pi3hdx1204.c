@@ -24,8 +24,14 @@ int pi3hdx1204_enable(const int i2c_port,
 		[PI3HDX1204_VOD_OFFSET] = pi3hdx1204_tuning.vod_offset,
 		[PI3HDX1204_DE_OFFSET] = pi3hdx1204_tuning.de_offset,
 	};
+	int rv;
 
-	return i2c_xfer(i2c_port, i2c_addr_flags,
-			buf, PI3HDX1204_DE_OFFSET + 1,
-			NULL, 0);
+	rv = i2c_xfer(i2c_port, i2c_addr_flags,
+		      buf, PI3HDX1204_DE_OFFSET + 1,
+		      NULL, 0);
+
+	if (rv)
+		ccprints("pi3hdx1204 enable failed: %d", rv);
+
+	return rv;
 }

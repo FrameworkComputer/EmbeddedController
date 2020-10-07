@@ -18,6 +18,7 @@
 
 #define JUMP_DATA_MAGIC 0x706d754a  /* "Jump" */
 #define JUMP_DATA_VERSION 3
+#define JUMP_DATA_SIZE_V1 12  /* Size of version 1 jump data struct */
 #define JUMP_DATA_SIZE_V2 16  /* Size of version 2 jump data struct */
 
 struct jump_data {

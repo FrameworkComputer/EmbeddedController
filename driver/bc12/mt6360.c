@@ -112,16 +112,10 @@ static int mt6360_enable_bc12_detection(int en)
 	return rv;
 }
 
-static void mt6360_update_charge_manager(int port)
+static void mt6360_update_charge_manager(int port,
+					 enum charge_supplier new_bc12_type)
 {
-	static int current_bc12_type = CHARGE_SUPPLIER_NONE;
-	int reg;
-	int new_bc12_type = CHARGE_SUPPLIER_NONE;
-
-	mt6360_read8(MT6360_REG_DPDMIRQ, &reg);
-
-	if (pd_snk_is_vbus_provided(port) && (reg & MT6360_MASK_DPDMIRQ_ATTACH))
-		new_bc12_type = mt6360_get_bc12_device_type();
+	static enum charge_supplier current_bc12_type = CHARGE_SUPPLIER_NONE;
 
 	if (new_bc12_type != current_bc12_type) {
 		charge_manager_update_charge(current_bc12_type, port, NULL);
@@ -136,6 +130,23 @@ static void mt6360_update_charge_manager(int port)
 		}
 
 		current_bc12_type = new_bc12_type;
+	}
+}
+
+static void mt6360_handle_bc12_irq(int port)
+{
+	int reg;
+
+	mt6360_read8(MT6360_REG_DPDMIRQ, &reg);
+
+	if (reg & MT6360_MASK_DPDMIRQ_ATTACH) {
+		/* Check vbus again to avoid timing issue */
+		if (pd_snk_is_vbus_provided(port))
+			mt6360_update_charge_manager(
+					port, mt6360_get_bc12_device_type());
+		else
+			mt6360_update_charge_manager(
+					0, CHARGE_SUPPLIER_NONE);
 	}
 
 	/* write clear */
@@ -152,33 +163,37 @@ static void mt6360_usb_charger_task(const int port)
 		uint32_t evt = task_wait_event(-1);
 
 		/* vbus change, start bc12 detection */
-		if (evt & USB_CHG_EVENT_VBUS)
-			mt6360_enable_bc12_detection(1);
+		if (evt & USB_CHG_EVENT_VBUS) {
+			if (pd_snk_is_vbus_provided(port))
+				mt6360_enable_bc12_detection(1);
+			else
+				mt6360_update_charge_manager(
+						0, CHARGE_SUPPLIER_NONE);
+		}
 
 		/* detection done, update charge_manager and stop detection */
 		if (evt & USB_CHG_EVENT_BC12) {
-			mt6360_update_charge_manager(port);
+			mt6360_handle_bc12_irq(port);
 			mt6360_enable_bc12_detection(0);
 		}
 	}
 }
 
-/* LDO */
-static int mt6360_ldo_write8(int reg, int val)
+/* Regulator: LDO & BUCK */
+static int mt6360_regulator_write8(uint8_t addr, int reg, int val)
 {
 	/*
 	 * Note: The checksum from I2C_FLAG_PEC happens to be correct because
 	 * length == 1 -> the high 3 bits of the offset byte is 0.
 	 */
 	return i2c_write8(mt6360_config.i2c_port,
-			  MT6360_LDO_SLAVE_ADDR_FLAGS | I2C_FLAG_PEC, reg, val);
+			  addr | I2C_FLAG_PEC, reg, val);
 }
 
-static int mt6360_ldo_read8(int reg, int *val)
+static int mt6360_regulator_read8(int addr, int reg, int *val)
 {
 	int rv;
 	uint8_t crc = 0, real_crc;
-	uint8_t addr = MT6360_LDO_SLAVE_ADDR_FLAGS;
 	uint8_t out[3] = {(addr << 1) | 1, reg};
 
 	rv = i2c_read16(mt6360_config.i2c_port, addr, reg, val);
@@ -196,24 +211,25 @@ static int mt6360_ldo_read8(int reg, int *val)
 	return EC_SUCCESS;
 }
 
-static int mt6360_ldo_update_bits(int reg, int mask, int val)
+static int mt6360_regulator_update_bits(int addr, int reg, int mask, int val)
 {
 	int rv;
 	int reg_val = 0;
 
-	rv = mt6360_ldo_read8(reg, &reg_val);
+	rv = mt6360_regulator_read8(addr, reg, &reg_val);
 	if (rv)
 		return rv;
 	reg_val &= ~mask;
 	reg_val |= (mask & val);
-	rv = mt6360_ldo_write8(reg, reg_val);
+	rv = mt6360_regulator_write8(addr, reg, reg_val);
 	return rv;
 }
 
-struct mt6360_ldo_data {
+struct mt6360_regulator_data {
 	const char *name;
-	const uint16_t *vosel_table;
-	uint16_t vosel_table_len;
+	const uint16_t *ldo_vosel_table;
+	uint16_t ldo_vosel_table_len;
+	uint8_t addr;
 	uint8_t reg_en_ctrl2;
 	uint8_t reg_ctrl3;
 	uint8_t mask_vosel;
@@ -234,11 +250,37 @@ static const uint16_t MT6360_LDO5_VOSEL_TABLE[8] = {
 	[0x5] = 3300,
 };
 
-static const struct mt6360_ldo_data ldo_data[MT6360_LDO_COUNT] = {
+static const uint16_t MT6360_LDO6_VOSEL_TABLE[16] = {
+	[0x0] = 500,
+	[0x1] = 600,
+	[0x2] = 700,
+	[0x3] = 800,
+	[0x4] = 900,
+	[0x5] = 1000,
+	[0x6] = 1100,
+	[0x7] = 1200,
+	[0x8] = 1300,
+	[0x9] = 1400,
+	[0xA] = 1500,
+	[0xB] = 1600,
+	[0xC] = 1700,
+	[0xD] = 1800,
+	[0xE] = 1900,
+	[0xF] = 2000,
+};
+
+/* LDO7 VOSEL table is the same as LDO6's. */
+static const uint16_t *const MT6360_LDO7_VOSEL_TABLE = MT6360_LDO6_VOSEL_TABLE;
+static const uint16_t MT6360_LDO7_VOSEL_TABLE_SIZE =
+	ARRAY_SIZE(MT6360_LDO6_VOSEL_TABLE);
+
+static const
+struct mt6360_regulator_data regulator_data[MT6360_REGULATOR_COUNT] = {
 	[MT6360_LDO3] = {
 		.name = "mt6360_ldo3",
-		.vosel_table = MT6360_LDO3_VOSEL_TABLE,
-		.vosel_table_len = ARRAY_SIZE(MT6360_LDO3_VOSEL_TABLE),
+		.ldo_vosel_table = MT6360_LDO3_VOSEL_TABLE,
+		.ldo_vosel_table_len = ARRAY_SIZE(MT6360_LDO3_VOSEL_TABLE),
+		.addr = MT6360_LDO_SLAVE_ADDR_FLAGS,
 		.reg_en_ctrl2 = MT6360_REG_LDO3_EN_CTRL2,
 		.reg_ctrl3 = MT6360_REG_LDO3_CTRL3,
 		.mask_vosel = MT6360_MASK_LDO3_VOSEL,
@@ -247,133 +289,234 @@ static const struct mt6360_ldo_data ldo_data[MT6360_LDO_COUNT] = {
 	},
 	[MT6360_LDO5] = {
 		.name = "mt6360_ldo5",
-		.vosel_table = MT6360_LDO5_VOSEL_TABLE,
-		.vosel_table_len = ARRAY_SIZE(MT6360_LDO5_VOSEL_TABLE),
+		.ldo_vosel_table = MT6360_LDO5_VOSEL_TABLE,
+		.ldo_vosel_table_len = ARRAY_SIZE(MT6360_LDO5_VOSEL_TABLE),
+		.addr = MT6360_LDO_SLAVE_ADDR_FLAGS,
 		.reg_en_ctrl2 = MT6360_REG_LDO5_EN_CTRL2,
 		.reg_ctrl3 = MT6360_REG_LDO5_CTRL3,
 		.mask_vosel = MT6360_MASK_LDO5_VOSEL,
 		.shift_vosel = MT6360_MASK_LDO5_VOSEL_SHIFT,
 		.mask_vocal = MT6360_MASK_LDO5_VOCAL,
 	},
+	[MT6360_LDO6] = {
+		.name = "mt6360_ldo6",
+		.ldo_vosel_table = MT6360_LDO6_VOSEL_TABLE,
+		.ldo_vosel_table_len = ARRAY_SIZE(MT6360_LDO6_VOSEL_TABLE),
+		.addr = MT6360_PMIC_SLAVE_ADDR_FLAGS,
+		.reg_en_ctrl2 = MT6360_REG_LDO6_EN_CTRL2,
+		.reg_ctrl3 = MT6360_REG_LDO6_CTRL3,
+		.mask_vosel = MT6360_MASK_LDO6_VOSEL,
+		.shift_vosel = MT6360_MASK_LDO6_VOSEL_SHIFT,
+		.mask_vocal = MT6360_MASK_LDO6_VOCAL,
+	},
+	[MT6360_LDO7] = {
+		.name = "mt6360_ldo7",
+		.ldo_vosel_table = MT6360_LDO7_VOSEL_TABLE,
+		.ldo_vosel_table_len = MT6360_LDO7_VOSEL_TABLE_SIZE,
+		.addr = MT6360_PMIC_SLAVE_ADDR_FLAGS,
+		.reg_en_ctrl2 = MT6360_REG_LDO7_EN_CTRL2,
+		.reg_ctrl3 = MT6360_REG_LDO7_CTRL3,
+		.mask_vosel = MT6360_MASK_LDO7_VOSEL,
+		.shift_vosel = MT6360_MASK_LDO7_VOSEL_SHIFT,
+		.mask_vocal = MT6360_MASK_LDO7_VOCAL,
+	},
+	[MT6360_BUCK1] = {
+		.name = "mt6360_buck1",
+		.addr = MT6360_PMIC_SLAVE_ADDR_FLAGS,
+		.reg_en_ctrl2 = MT6360_REG_BUCK1_EN_CTRL2,
+		.reg_ctrl3 = MT6360_REG_BUCK1_VOSEL,
+		.mask_vosel = MT6360_MASK_BUCK1_VOSEL,
+		.shift_vosel = MT6360_MASK_BUCK1_VOSEL_SHIFT,
+		.mask_vocal = MT6360_MASK_BUCK1_VOCAL,
+	},
+	[MT6360_BUCK2] = {
+		.name = "mt6360_buck2",
+		.addr = MT6360_PMIC_SLAVE_ADDR_FLAGS,
+		.reg_en_ctrl2 = MT6360_REG_BUCK2_EN_CTRL2,
+		.reg_ctrl3 = MT6360_REG_BUCK2_VOSEL,
+		.mask_vosel = MT6360_MASK_BUCK2_VOSEL,
+		.shift_vosel = MT6360_MASK_BUCK2_VOSEL_SHIFT,
+		.mask_vocal = MT6360_MASK_BUCK2_VOCAL,
+	},
 };
 
-int mt6360_ldo_get_info(enum mt6360_ldo_id ldo_id, char *name,
-			uint16_t *num_voltages, uint16_t *voltages_mv)
+static bool is_buck_regulator(const struct mt6360_regulator_data *data)
+{
+	/* There's no ldo_vosel_table, it's a buck. */
+	return !(data->ldo_vosel_table);
+}
+
+int mt6360_regulator_get_info(enum mt6360_regulator_id id, char *name,
+			      uint16_t *num_voltages, uint16_t *voltages_mv)
 {
 	int i;
 	int cnt = 0;
-	const struct mt6360_ldo_data *data;
+	const struct mt6360_regulator_data *data;
 
-	if (ldo_id >= MT6360_LDO_COUNT)
+	if (id >= MT6360_REGULATOR_COUNT)
 		return EC_ERROR_INVAL;
-	data = &ldo_data[ldo_id];
+	data = &regulator_data[id];
 
 	strzcpy(name, data->name, EC_REGULATOR_NAME_MAX_LEN);
-	for (i = 0; i < data->vosel_table_len; i++) {
-		int mv = data->vosel_table[i];
 
-		if (!mv)
-			continue;
-		if (cnt < EC_REGULATOR_VOLTAGE_MAX_COUNT)
-			voltages_mv[cnt++] = mv;
-		else
-			CPRINTS("LDO3 Voltage info overflow: %d", mv);
+	if (is_buck_regulator(data)) {
+		for (i = 0; i < MT6360_BUCK_VOSEL_MAX_STEP; ++i) {
+			int mv = MT6360_BUCK_VOSEL_MIN +
+				 i * MT6360_BUCK_VOSEL_STEP_MV;
+
+			if (cnt < EC_REGULATOR_VOLTAGE_MAX_COUNT)
+				voltages_mv[cnt++] = mv;
+			else
+				CPRINTS("%s voltage info overflow: %d-%d",
+					data->name, mv, MT6360_BUCK_VOSEL_MAX);
+		}
+	} else {
+		/* It's a LDO */
+		for (i = 0; i < data->ldo_vosel_table_len; i++) {
+			int mv = data->ldo_vosel_table[i];
+
+			if (!mv)
+				continue;
+			if (cnt < EC_REGULATOR_VOLTAGE_MAX_COUNT)
+				voltages_mv[cnt++] = mv;
+			else
+				CPRINTS("%s voltage info overflow: %d",
+					data->name, mv);
+		}
 	}
+
 	*num_voltages = cnt;
 	return EC_SUCCESS;
 }
 
-int mt6360_ldo_enable(enum mt6360_ldo_id ldo_id, uint8_t enable)
+int mt6360_regulator_enable(enum mt6360_regulator_id id, uint8_t enable)
 {
-	const struct mt6360_ldo_data *data;
+	const struct mt6360_regulator_data *data;
 
-	if (ldo_id >= MT6360_LDO_COUNT)
+	if (id >= MT6360_REGULATOR_COUNT)
 		return EC_ERROR_INVAL;
-	data = &ldo_data[ldo_id];
+	data = &regulator_data[id];
 
 	if (enable)
-		return mt6360_ldo_update_bits(
+		return mt6360_regulator_update_bits(
+			data->addr,
 			data->reg_en_ctrl2,
-			MT6360_MASK_LDO_SW_OP_EN | MT6360_MASK_LDO_SW_EN,
-			MT6360_MASK_LDO_SW_OP_EN | MT6360_MASK_LDO_SW_EN);
+			MT6360_MASK_RGL_SW_OP_EN | MT6360_MASK_RGL_SW_EN,
+			MT6360_MASK_RGL_SW_OP_EN | MT6360_MASK_RGL_SW_EN);
 	else
-		return mt6360_ldo_update_bits(
+		return mt6360_regulator_update_bits(
+			data->addr,
 			data->reg_en_ctrl2,
-			MT6360_MASK_LDO_SW_OP_EN | MT6360_MASK_LDO_SW_EN,
-			MT6360_MASK_LDO_SW_OP_EN);
+			MT6360_MASK_RGL_SW_OP_EN | MT6360_MASK_RGL_SW_EN,
+			MT6360_MASK_RGL_SW_OP_EN);
 }
 
-int mt6360_ldo_is_enabled(enum mt6360_ldo_id ldo_id, uint8_t *enabled)
+int mt6360_regulator_is_enabled(enum mt6360_regulator_id id, uint8_t *enabled)
 {
 	int rv;
 	int value;
-	const struct mt6360_ldo_data *data;
+	const struct mt6360_regulator_data *data;
 
-	if (ldo_id >= MT6360_LDO_COUNT)
+	if (id >= MT6360_REGULATOR_COUNT)
 		return EC_ERROR_INVAL;
-	data = &ldo_data[ldo_id];
+	data = &regulator_data[id];
 
-	rv = mt6360_ldo_read8(data->reg_en_ctrl2, &value);
+	rv = mt6360_regulator_read8(data->addr, data->reg_en_ctrl2, &value);
 	if (rv) {
-		CPRINTS("Error reading LDO3 enabled: %d", rv);
+		CPRINTS("Error reading %s enabled: %d", data->name, rv);
 		return rv;
 	}
-	*enabled = !!(value & MT6360_MASK_LDO_SW_EN);
+	*enabled = !!(value & MT6360_MASK_RGL_SW_EN);
 	return EC_SUCCESS;
 }
 
-int mt6360_ldo_set_voltage(enum mt6360_ldo_id ldo_id, int min_mv, int max_mv)
+int mt6360_regulator_set_voltage(enum mt6360_regulator_id id, int min_mv,
+				 int max_mv)
 {
 	int i;
-	const struct mt6360_ldo_data *data;
+	const struct mt6360_regulator_data *data;
 
-	if (ldo_id >= MT6360_LDO_COUNT)
+	if (id >= MT6360_REGULATOR_COUNT)
 		return EC_ERROR_INVAL;
-	data = &ldo_data[ldo_id];
+	data = &regulator_data[id];
 
-	for (i = 0; i < data->vosel_table_len; i++) {
-		int mv = data->vosel_table[i];
+	if (is_buck_regulator(data)) {
+		int mv;
 		int step;
+
+		if (max_mv < MT6360_BUCK_VOSEL_MIN)
+			goto error;
+
+		if (min_mv > MT6360_BUCK_VOSEL_MAX)
+			goto error;
+
+		mv = DIV_ROUND_UP((min_mv + max_mv) / 2,
+				  MT6360_BUCK_VOSEL_STEP_MV) *
+		     MT6360_BUCK_VOSEL_STEP_MV;
+		mv = MIN(MAX(mv, MT6360_BUCK_VOSEL_MIN), MT6360_BUCK_VOSEL_MAX);
+
+		step = (mv - MT6360_BUCK_VOSEL_MIN) / MT6360_BUCK_VOSEL_STEP_MV;
+
+		return mt6360_regulator_update_bits(data->addr,
+						    data->reg_ctrl3,
+						    data->mask_vosel, step);
+	}
+
+	/* It's a LDO. */
+	for (i = 0; i < data->ldo_vosel_table_len; i++) {
+		int mv = data->ldo_vosel_table[i];
+		int step = 0;
 
 		if (!mv)
 			continue;
 		if (mv + MT6360_LDO_VOCAL_STEP_MV * MT6360_LDO_VOCAL_MAX_STEP <
 		    min_mv)
 			continue;
-		mv = DIV_ROUND_UP(mv, MT6360_LDO_VOCAL_STEP_MV) *
-		     MT6360_LDO_VOCAL_STEP_MV;
-		if (mv > max_mv)
+		if (mv < min_mv)
+			step = DIV_ROUND_UP(min_mv - mv,
+					    MT6360_LDO_VOCAL_STEP_MV);
+		if (mv + step * MT6360_LDO_VOCAL_STEP_MV > max_mv)
 			continue;
-		step = (mv - data->vosel_table[i]) / MT6360_LDO_VOCAL_STEP_MV;
-
-		return mt6360_ldo_update_bits(
+		return mt6360_regulator_update_bits(
+			data->addr,
 			data->reg_ctrl3,
 			data->mask_vosel | data->mask_vocal,
 			(i << data->shift_vosel) | step);
 	}
-	CPRINTS("LDO3 voltage %d - %d out of range", min_mv, max_mv);
+
+error:
+	CPRINTS("%s voltage %d - %d out of range", data->name, min_mv, max_mv);
 	return EC_ERROR_INVAL;
 }
 
-int mt6360_ldo_get_voltage(enum mt6360_ldo_id ldo_id, int *voltage_mv)
+int mt6360_regulator_get_voltage(enum mt6360_regulator_id id, int *voltage_mv)
 {
 	int value;
 	int rv;
-	const struct mt6360_ldo_data *data;
+	const struct mt6360_regulator_data *data;
 
-	if (ldo_id >= MT6360_LDO_COUNT)
+	if (id >= MT6360_REGULATOR_COUNT)
 		return EC_ERROR_INVAL;
-	data = &ldo_data[ldo_id];
+	data = &regulator_data[id];
 
-	rv = mt6360_ldo_read8(data->reg_ctrl3, &value);
+	rv = mt6360_regulator_read8(data->addr, data->reg_ctrl3, &value);
 	if (rv) {
-		CPRINTS("Error reading LDO3 ctrl3: %d", rv);
+		CPRINTS("Error reading %s ctrl3: %d", data->name, rv);
 		return rv;
 	}
-	*voltage_mv = data->vosel_table[(value & data->mask_vosel) >>
-					data->shift_vosel];
+
+	/* BUCK */
+	if (is_buck_regulator(data)) {
+		*voltage_mv = MT6360_BUCK_VOSEL_MIN +
+			      value * MT6360_BUCK_VOSEL_STEP_MV;
+		return EC_SUCCESS;
+	}
+
+	/* LDO */
+	*voltage_mv = data->ldo_vosel_table[(value & data->mask_vosel) >>
+					    data->shift_vosel];
 	if (*voltage_mv == 0) {
-		CPRINTS("Unknown LDO3 voltage value: %d", value);
+		CPRINTS("Unknown %s voltage value: %d", data->name, value);
 		return EC_ERROR_INVAL;
 	}
 	*voltage_mv +=
@@ -383,6 +526,13 @@ int mt6360_ldo_get_voltage(enum mt6360_ldo_id ldo_id, int *voltage_mv)
 }
 
 /* RGB LED */
+void mt6360_led_init(void)
+{
+	/* Enable LED1 software mode */
+	mt6360_set_bit(MT6360_REG_RGB_EN, MT6360_ISINK1_CHRIND_EN_SEL);
+}
+DECLARE_HOOK(HOOK_INIT, mt6360_led_init, HOOK_PRIO_DEFAULT);
+
 int mt6360_led_enable(enum mt6360_led_id led_id, int enable)
 {
 	if (!IN_RANGE(led_id, 0, MT6360_LED_COUNT))

@@ -14,8 +14,6 @@
 #include "task.h"
 #include "watchdog.h"
 
-/* Panic data goes at the end of RAM. */
-static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
 /* Enter critical period or not. */
 static int wdt_warning_fired;
 
@@ -41,6 +39,8 @@ static void watchdog_set_warning_timer(int32_t ms, int init)
 void watchdog_warning_irq(void)
 {
 #ifdef CONFIG_SOFTWARE_PANIC
+	struct panic_data * const pdata_ptr = get_panic_data_write();
+
 #if defined(CHIP_CORE_NDS32)
 	pdata_ptr->nds_n8.ipc = get_ipc();
 #elif defined(CHIP_CORE_RISCV)

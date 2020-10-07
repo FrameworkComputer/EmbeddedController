@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
 
+#include <stdbool.h>
+
 /*
  * By default, enable all console messages excepted HC
  */
@@ -20,6 +22,9 @@
 #define CONFIG_FLASH_SIZE (512 * 1024)
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
+
+/* Allow objects to be linked into a flash resident section */
+#define CONFIG_CHIP_INIT_ROM_REGION
 
 /* EC Defines */
 #define CONFIG_LTO
@@ -97,13 +102,15 @@
 
 /* Common charger defines */
 #define CONFIG_CHARGE_MANAGER
-#define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_INPUT_CURRENT		512
+
+/*
+ * Hardware based charge ramp is broken in the ISL9241 (b/169350714).
+ */
+#define CONFIG_CHARGE_RAMP_SW
 #define CONFIG_CHARGER_ISL9241
-#define CONFIG_CHARGER_SENSE_RESISTOR		10
-#define CONFIG_CHARGER_SENSE_RESISTOR_AC	10
 
 #define CONFIG_USB_CHARGER
 #define CONFIG_BC12_DETECT_PI3USB9201
@@ -134,7 +141,6 @@
 
 /* USB Type C and USB PD defines */
 /* Enable the new USB-C PD stack */
-#define CONFIG_USB_PD_DEBUG_LEVEL 1
 #define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_DRP_ACC_TRYSRC
 #define CONFIG_USB_PD_REV30
@@ -147,7 +153,6 @@
 #undef CONFIG_CMD_ACCELS
 #undef CONFIG_CMD_ACCEL_INFO
 #undef CONFIG_CMD_ACCELSPOOF
-#undef CONFIG_CMD_BATTFAKE
 #undef CONFIG_CMD_PPC_DUMP
 
 #define CONFIG_USB_POWER_DELIVERY
@@ -156,17 +161,33 @@
 #define CONFIG_USB_PD_DISCHARGE_PPC
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT		TYPEC_RP_3A0
-#define CONFIG_USB_PD_PORT_MAX_COUNT			2
 #define CONFIG_USB_PD_TCPC_RUNTIME_CONFIG
 #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 #define CONFIG_USB_PD_TCPC_LOW_POWER
 #define CONFIG_USB_PD_TCPM_TCPCI
+#define CONFIG_USB_PD_TCPM_RT1715
 #define CONFIG_USB_PD_TCPM_TUSB422	/* USBC port C0 */
 #define CONFIG_USB_PD_TCPM_PS8815	/* USBC port USB3 DB */
 #define CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_HOSTCMD_PD_CONTROL		/* Needed for TCPC FW update */
 #define CONFIG_CMD_USB_PD_PE
+
+/*
+ * Because of the CSE Lite, an extra cold AP reset is needed, and older cr50
+ * firmware will not be able to detect it because of updated cr50 pin straps.
+ * Therefore, the AP will require the EC to reset it so that the proper reset
+ * signal will be read and verstage can execute again.
+ */
+#define CONFIG_CMD_AP_RESET_LOG
+#define CONFIG_HOSTCMD_AP_RESET
+
+/*
+ * The PS8815 TCPC was found to require a 50ms delay to consistently work
+ * with non-PD chargers.  Override the default low-power mode exit delay.
+ */
+#undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
+#define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE	(50*MSEC)
 
 /* Enable USB3.2 DRD */
 #define CONFIG_USB_PD_USB32_DRD
@@ -206,25 +227,9 @@
  */
 #define CONFIG_USB_PID 0x503E
 
-/* TODO: b/144165680 - measure and check these values on Volteer */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
-#define PD_VCONN_SWAP_DELAY		5000 /* us */
-
 /* Retimer */
 #define CONFIG_USBC_RETIMER_INTEL_BB
 #define CONFIG_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
-#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x40
-
-/*
- * SN5S30 PPC supports up to 24V VBUS source and sink, however passive USB-C
- * cables only support up to 60W.
- */
-#define PD_OPERATING_POWER_MW	15000
-#define PD_MAX_POWER_MW		60000
-#define PD_MAX_CURRENT_MA	3000
-#define PD_MAX_VOLTAGE_MV	20000
-
 
 #ifndef __ASSEMBLER__
 
@@ -259,12 +264,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
-enum usbc_port {
-	USBC_PORT_C0 = 0,
-	USBC_PORT_C1,
-	USBC_PORT_COUNT
-};
-
 /* Common definition for the USB PD interrupt handlers. */
 void ppc_interrupt(enum gpio_signal signal);
 void tcpc_alert_event(enum gpio_signal signal);
@@ -279,6 +278,13 @@ unsigned char get_board_id(void);
  * the CBI data has been initialized.
  */
 __override_proto void board_cbi_init(void);
+
+/*
+ * Check battery disconnect state.
+ * This function will return if battery is initialized or not.
+ * @return true - initialized. false - not.
+ */
+__override_proto bool board_battery_is_initialized(void);
 
 #endif /* !__ASSEMBLER__ */
 

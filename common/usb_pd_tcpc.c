@@ -387,7 +387,8 @@ static int send_validate_message(int port, uint16_t header,
 	uint8_t expected_msg_id = PD_HEADER_ID(header);
 	uint8_t cnt = PD_HEADER_CNT(header);
 	int retries = PD_HEADER_TYPE(header) == PD_DATA_SOURCE_CAP ?
-		      0 : PD_RETRY_COUNT;
+				    0 :
+				    CONFIG_PD_RETRY_COUNT;
 
 	/* retry 3 times if we are not getting a valid answer */
 	for (r = 0; r <= retries; r++) {

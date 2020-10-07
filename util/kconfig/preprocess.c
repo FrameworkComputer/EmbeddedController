@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdnoreturn.h>
 
 #include "list.h"
 #include "lkc.h"
@@ -17,7 +18,7 @@
 static char *expand_string_with_args(const char *in, int argc, char *argv[]);
 static char *expand_string(const char *in);
 
-static void __attribute__((noreturn)) pperror(const char *format, ...)
+static noreturn void pperror(const char *format, ...)
 {
 	va_list ap;
 

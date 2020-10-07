@@ -15,7 +15,7 @@ import time
 import tty
 import usb
 
-import stm32usb
+from . import stm32usb
 
 
 class SuartError(Exception):

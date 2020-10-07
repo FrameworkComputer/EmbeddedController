@@ -35,9 +35,9 @@
  */
 static void clear_databuf(void)
 {
-	volatile uint8_t dummy __attribute__((unused));
+	volatile uint8_t unused __attribute__((unused));
 	while (IS_BIT_SET(NPCX_SPI_STAT, NPCX_SPI_STAT_RBF))
-		dummy = NPCX_SPI_DATA;
+		unused = NPCX_SPI_DATA;
 }
 
 /**
@@ -156,7 +156,7 @@ int spi_transaction(const struct spi_device_t *spi_device,
 		/* Waiting till reading is finished */
 		while (!IS_BIT_SET(NPCX_SPI_STAT, NPCX_SPI_STAT_RBF))
 			;
-		/* Reading the (dummy) data */
+		/* Reading the (unused) data */
 		clear_databuf();
 	}
 	CPRINTS("write end");
@@ -165,7 +165,7 @@ int spi_transaction(const struct spi_device_t *spi_device,
 		/* Making sure we can write */
 		while (IS_BIT_SET(NPCX_SPI_STAT, NPCX_SPI_STAT_BSY))
 			;
-		/* Write the (dummy) data */
+		/* Write the (unused) data */
 		NPCX_SPI_DATA =  0;
 		/* Wait till reading is finished */
 		while (!IS_BIT_SET(NPCX_SPI_STAT, NPCX_SPI_STAT_RBF))

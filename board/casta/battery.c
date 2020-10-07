@@ -5,6 +5,7 @@
  * Battery pack vendor provided charging profile
  */
 
+#include "battery.h"
 #include "battery_fuel_gauge.h"
 #include "battery_smart.h"
 #include "charge_state.h"
@@ -53,7 +54,7 @@ const struct board_batt_params board_battery_info[] = {
 			}
 		},
 		.batt_info = {
-			.voltage_max            = 8700,
+			.voltage_max            = 8650,
 			.voltage_normal         = 7700, /* mV */
 			.voltage_min            = 6000, /* mV */
 			.precharge_current      = 200,  /* mA */
@@ -76,6 +77,7 @@ int charger_profile_override(struct charge_state_data *curr)
 	int voltage;
 	/* battery temp in 0.1 deg C */
 	int bat_temp_c;
+	const struct battery_info *batt_info;
 
 	/*
 	 * Keep track of battery temperature range:
@@ -103,6 +105,7 @@ int charger_profile_override(struct charge_state_data *curr)
 	current = curr->requested_current;
 	voltage = curr->requested_voltage;
 	bat_temp_c = curr->batt.temperature - 2731;
+	batt_info = battery_get_info();
 
 	/*
 	 * If the temperature reading is bad, assume the temperature
@@ -142,6 +145,9 @@ int charger_profile_override(struct charge_state_data *curr)
 			curr->state = ST_IDLE;
 		break;
 	}
+
+	if(voltage > batt_info->voltage_max)
+		voltage = batt_info->voltage_max;
 
 	curr->requested_voltage = MIN(curr->requested_voltage, voltage);
 	curr->requested_current = MIN(curr->requested_current, current);

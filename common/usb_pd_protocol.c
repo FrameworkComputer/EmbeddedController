@@ -344,29 +344,32 @@ static inline void set_state_timeout(int port,
 	pd[port].timeout_state = timeout_state;
 }
 
+int pd_get_rev(int port, enum tcpm_transmit_type type)
+{
 #ifdef CONFIG_USB_PD_REV30
-int pd_get_rev(int port)
-{
-	return pd[port].rev;
-}
+	/* TCPMv1 Only stores PD revision for SOP and SOP' types */
+	ASSERT(type < NUM_SOP_STAR_TYPES - 1);
 
-int pd_get_vdo_ver(int port, enum tcpm_transmit_type type)
-{
 	if (type == TCPC_TX_SOP_PRIME)
 		return get_usb_pd_cable_revision(port);
 
-	return vdo_ver[pd[port].rev];
-}
+	return pd[port].rev;
 #else
-int pd_get_rev(int port)
-{
 	return PD_REV20;
+#endif
 }
+
 int pd_get_vdo_ver(int port, enum tcpm_transmit_type type)
 {
+#ifdef CONFIG_USB_PD_REV30
+	if (type == TCPC_TX_SOP_PRIME)
+		return vdo_ver[get_usb_pd_cable_revision(port)];
+
+	return vdo_ver[pd[port].rev];
+#else
 	return VDM_VER10;
-}
 #endif
+}
 
 /* Return flag for pd state is connected */
 int pd_is_connected(int port)
@@ -424,6 +427,13 @@ void pd_vbus_low(int port)
 static void set_vconn(int port, int enable)
 {
 	/*
+	 * Disable PPC Vconn first then TCPC in case the voltage feeds back
+	 * to TCPC and damages.
+	 */
+	if (IS_ENABLED(CONFIG_USBC_PPC_VCONN) && !enable)
+		ppc_set_vconn(port, 0);
+
+	/*
 	 * We always need to tell the TCPC to enable Vconn first, otherwise some
 	 * TCPCs get confused when a PPC sets secondary CC line to 5V and TCPC
 	 * immediately disconnect. If there is a PPC, both devices will
@@ -431,9 +441,9 @@ static void set_vconn(int port, int enable)
 	 * "make before break" electrical requirements when swapping anyway.
 	 */
 	tcpm_set_vconn(port, enable);
-#ifdef CONFIG_USBC_PPC_VCONN
-	ppc_set_vconn(port, enable);
-#endif
+
+	if (IS_ENABLED(CONFIG_USBC_PPC_VCONN) && enable)
+		ppc_set_vconn(port, 1);
 }
 #endif /* defined(CONFIG_USBC_VCONN) */
 
@@ -521,10 +531,11 @@ static int reset_device_and_notify(int port)
 	 * waking the TCPC, but it has also set PD_EVENT_TCPC_RESET again, which
 	 * would result in a second, unnecessary init.
 	 */
-	atomic_clear(task_get_event_bitmap(task_get_current()),
-		     PD_EVENT_TCPC_RESET);
+	deprecated_atomic_clear_bits(task_get_event_bitmap(task_get_current()),
+				     PD_EVENT_TCPC_RESET);
 
-	waiting_tasks = atomic_read_clear(&pd[port].tasks_waiting_on_reset);
+	waiting_tasks =
+		deprecated_atomic_read_clear(&pd[port].tasks_waiting_on_reset);
 
 	/*
 	 * Now that we are done waking up the device, handle device access
@@ -552,8 +563,8 @@ static void pd_wait_for_wakeup(int port)
 		reset_device_and_notify(port);
 	} else {
 		/* Otherwise, we need to wait for the TCPC reset to complete */
-		atomic_or(&pd[port].tasks_waiting_on_reset,
-			  1 << task_get_current());
+		deprecated_atomic_or(&pd[port].tasks_waiting_on_reset,
+				     1 << task_get_current());
 		/*
 		 * NOTE: We could be sending the PD task the reset event while
 		 * it is already processing the reset event. If that occurs,
@@ -597,9 +608,11 @@ void pd_prevent_low_power_mode(int port, int prevent)
 	const int current_task_mask = (1 << task_get_current());
 
 	if (prevent)
-		atomic_or(&pd[port].tasks_preventing_lpm, current_task_mask);
+		deprecated_atomic_or(&pd[port].tasks_preventing_lpm,
+				     current_task_mask);
 	else
-		atomic_clear(&pd[port].tasks_preventing_lpm, current_task_mask);
+		deprecated_atomic_clear_bits(&pd[port].tasks_preventing_lpm,
+					     current_task_mask);
 }
 
 /* This is only called from the PD tasks that owns the port. */
@@ -977,7 +990,7 @@ static int send_control(int port, int type)
 	int bit_len;
 	uint16_t header = PD_HEADER(type, pd[port].power_role,
 				pd[port].data_role, pd[port].msg_id, 0,
-				pd_get_rev(port), 0);
+				pd_get_rev(port, TCPC_TX_SOP), 0);
 	/*
 	 * For PD 3.0, collision avoidance logic needs to know if this message
 	 * will begin a new Atomic Message Sequence (AMS)
@@ -1015,11 +1028,11 @@ static int send_source_cap(int port, enum ams_seq ams)
 		/* No source capabilities defined, sink only */
 		header = PD_HEADER(PD_CTRL_REJECT, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, 0,
-			pd_get_rev(port), 0);
+			pd_get_rev(port, TCPC_TX_SOP), 0);
 	else
 		header = PD_HEADER(PD_DATA_SOURCE_CAP, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, src_pdo_cnt,
-			pd_get_rev(port), 0);
+			pd_get_rev(port, TCPC_TX_SOP), 0);
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, src_pdo, ams);
 	if (debug_level >= 2)
@@ -1190,7 +1203,7 @@ static void send_sink_cap(int port)
 	int bit_len;
 	uint16_t header = PD_HEADER(PD_DATA_SINK_CAP, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, pd_snk_pdo_cnt,
-			pd_get_rev(port), 0);
+			pd_get_rev(port, TCPC_TX_SOP), 0);
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, pd_snk_pdo,
 			      AMS_RESPONSE);
@@ -1203,7 +1216,7 @@ static int send_request(int port, uint32_t rdo)
 	int bit_len;
 	uint16_t header = PD_HEADER(PD_DATA_REQUEST, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, 1,
-			pd_get_rev(port), 0);
+			pd_get_rev(port, TCPC_TX_SOP), 0);
 
 	/* Note: ams will need to be AMS_START if used for PPS keep alive */
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, &rdo, AMS_RESPONSE);
@@ -1223,7 +1236,7 @@ static int send_bist_cmd(int port)
 	int bit_len;
 	uint16_t header = PD_HEADER(PD_DATA_BIST, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, 1,
-			pd_get_rev(port), 0);
+			pd_get_rev(port, TCPC_TX_SOP), 0);
 
 	bit_len = pd_transmit(port, TCPC_TX_SOP, header, &bdo, AMS_START);
 	CPRINTF("C%d BIST>%d\n", port, bit_len);
@@ -2165,7 +2178,8 @@ static void exit_tbt_mode_sop_prime(int port)
 
 	header = PD_HEADER(PD_DATA_VENDOR_DEF, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id,
-			(int)pd[port].vdo_count, pd_get_rev(port), 0);
+			(int)pd[port].vdo_count,
+			pd_get_rev(port, TCPC_TX_SOP), 0);
 
 	pd[port].vdo_data[0] = VDO(USB_VID_INTEL, 1,
 				   CMD_EXIT_MODE | VDO_OPOS(opos));
@@ -2218,7 +2232,7 @@ static void pd_vdm_send_state_machine(int port)
 				0,
 				pd[port].msg_id,
 				(int)pd[port].vdo_count,
-				pd_get_rev(port),
+				pd_get_rev(port, TCPC_TX_SOP),
 				0);
 			res = pd_transmit(port, msg_type, header,
 					  pd[port].vdo_data, AMS_START);
@@ -2242,7 +2256,9 @@ static void pd_vdm_send_state_machine(int port)
 						   pd[port].data_role,
 						   pd[port].msg_id,
 						   (int)pd[port].vdo_count,
-						   pd_get_rev(port), 0);
+						   pd_get_rev
+							(port, TCPC_TX_SOP),
+						   0);
 
 				if ((msg_type == TCPC_TX_SOP_PRIME_PRIME) &&
 				     IS_ENABLED(CONFIG_USBC_SS_MUX)) {
@@ -2262,7 +2278,7 @@ static void pd_vdm_send_state_machine(int port)
 					   pd[port].data_role,
 					   pd[port].msg_id,
 					   (int)pd[port].vdo_count,
-					   pd_get_rev(port), 0);
+					   pd_get_rev(port, TCPC_TX_SOP), 0);
 			res = pd_transmit(port, TCPC_TX_SOP, header,
 					  pd[port].vdo_data, AMS_START);
 		}
@@ -2747,98 +2763,6 @@ static int pd_restart_tcpc(int port)
 }
 #endif
 
-/* High-priority interrupt tasks implementations */
-#if	defined(HAS_TASK_PD_INT_C0) || defined(HAS_TASK_PD_INT_C1) || \
-	defined(HAS_TASK_PD_INT_C2)
-
-/* Used to conditionally compile code in main pd task.  */
-#define HAS_DEFFERED_INTERRUPT_HANDLER
-
-/* Events for pd_interrupt_handler_task */
-#define PD_PROCESS_INTERRUPT  BIT(0)
-
-static uint8_t pd_int_task_id[CONFIG_USB_PD_PORT_MAX_COUNT];
-
-void schedule_deferred_pd_interrupt(const int port)
-{
-	task_set_event(pd_int_task_id[port], PD_PROCESS_INTERRUPT, 0);
-}
-
-/*
- * Theoretically, we may need to support up to 480 USB-PD packets per second for
- * intensive operations such as FW update over PD.  This value has tested well
- * preventing watchdog resets with a single bad port partner plugged in.
- */
-#define ALERT_STORM_MAX_COUNT	480
-#define ALERT_STORM_INTERVAL	SECOND
-
-/**
- * Main task entry point that handles PD interrupts for a single port
- *
- * @param p The PD port number for which to handle interrupts (pointer is
- * reinterpreted as an integer directly).
- */
-void pd_interrupt_handler_task(void *p)
-{
-	const int port = (int) ((intptr_t) p);
-	const int port_mask = (PD_STATUS_TCPC_ALERT_0 << port);
-	struct {
-		int count;
-		timestamp_t time;
-	} storm_tracker[CONFIG_USB_PD_PORT_MAX_COUNT] = {};
-
-	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
-
-	pd_int_task_id[port] = task_get_current();
-
-	while (1) {
-		const int evt = task_wait_event(-1);
-
-		if (evt & PD_PROCESS_INTERRUPT) {
-			/*
-			 * While the interrupt signal is asserted; we have more
-			 * work to do. This effectively makes the interrupt a
-			 * level-interrupt instead of an edge-interrupt without
-			 * having to enable/disable a real level-interrupt in
-			 * multiple locations.
-			 *
-			 * Also, if the port is disabled do not process
-			 * interrupts. Upon existing suspend, we schedule a
-			 * PD_PROCESS_INTERRUPT to check if we missed anything.
-			 */
-			while ((tcpc_get_alert_status() & port_mask) &&
-			       pd_is_port_enabled(port)) {
-				timestamp_t now;
-
-				tcpc_alert(port);
-
-				now = get_time();
-				if (timestamp_expired(
-					storm_tracker[port].time, &now)) {
-					/* Reset timer into future */
-					storm_tracker[port].time.val =
-						now.val + ALERT_STORM_INTERVAL;
-
-					/*
-					 * Start at 1 since we are processing
-					 * an interrupt now
-					 */
-					storm_tracker[port].count = 1;
-				} else if (++storm_tracker[port].count >
-				    ALERT_STORM_MAX_COUNT) {
-					CPRINTS("C%d Interrupt storm detected. "
-						"Disabling port for 5 seconds.",
-						port);
-
-					pd_set_suspend(port, 1);
-					pd_deferred_resume(port);
-				}
-			}
-		}
-	}
-}
-#endif /* HAS_TASK_PD_INT_C0 || HAS_TASK_PD_INT_C1 || HAS_TASK_PD_INT_C2 */
-
 static void pd_send_enter_usb(int port, int *timeout)
 {
 	uint32_t usb4_payload;
@@ -2946,6 +2870,11 @@ void pd_task(void *u)
 	else
 #endif
 		set_vconn(port, 0);
+#endif
+
+#ifdef CONFIG_USB_PD_TCPC_BOARD_INIT
+	/* Board specific TCPC init */
+	board_tcpc_init();
 #endif
 
 	/* Initialize TCPM driver and wait for TCPC to be ready */
@@ -3089,7 +3018,6 @@ void pd_task(void *u)
 	charge_manager_update_dualrole(port, CAP_UNKNOWN);
 #endif
 
-#ifdef HAS_DEFFERED_INTERRUPT_HANDLER
 	/*
 	 * Since most boards configure the TCPC interrupt as edge
 	 * and it is possible that the interrupt line was asserted between init
@@ -3097,8 +3025,8 @@ void pd_task(void *u)
 	 * Otherwise future interrupts will never fire because another edge
 	 * never happens. Note this needs to happen after set_state() is called.
 	 */
-	schedule_deferred_pd_interrupt(port);
-#endif
+	if (IS_ENABLED(CONFIG_HAS_TASK_PD_INT))
+		schedule_deferred_pd_interrupt(port);
 
 	while (1) {
 		/* process VDM messages last */
@@ -3118,7 +3046,7 @@ void pd_task(void *u)
 		evt = task_wait_event(timeout);
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-		if (evt & PD_EXIT_LOW_POWER_EVENT_MASK)
+		if (evt & (PD_EXIT_LOW_POWER_EVENT_MASK | TASK_EVENT_WAKE))
 			exit_low_power_mode(port);
 		if (evt & PD_EVENT_DEVICE_ACCESSED)
 			handle_device_access(port);
@@ -5039,7 +4967,8 @@ void pd_send_hpd(int port, enum hpd_event hpd)
 		    VDO_OPOS(opos) | CMD_ATTENTION, data, 1);
 	/* Wait until VDM is done. */
 	while (pd[0].vdm_state > 0)
-		task_wait_event(USB_PD_RX_TMOUT_US * (PD_RETRY_COUNT + 1));
+		task_wait_event(USB_PD_RX_TMOUT_US *
+				(CONFIG_PD_RETRY_COUNT + 1));
 }
 #endif
 

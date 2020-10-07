@@ -8,7 +8,7 @@
 # the IC is ITE IT8320
 CHIP:=it83xx
 CHIP_FAMILY:=it8320
-CHIP_VARIANT:=it8320bx
+CHIP_VARIANT:=it8320dx
 
 board-y=board.o led.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o

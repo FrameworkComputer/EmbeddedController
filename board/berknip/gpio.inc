@@ -17,7 +17,18 @@ GPIO_INT(USB_C1_BC12_INT_ODL, 	PIN(A, 4), GPIO_INT_FALLING | GPIO_PULL_UP,	bc12_
 GPIO_INT(SLP_S3_L,		PIN(7, 4), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(SLP_S5_L,		PIN(E, 0), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(S0_PWROK_OD_V0,	PIN(5, 6), GPIO_INT_BOTH,			power_signal_interrupt)
+
+/*
+ * TODO(dbrockus@): remove code when older version_2 of hardware is
+ * retired and no longer needed
+ */
+#if 0
+GPIO(USB_C1_HPD_IN_DB_V1,	PIN(B, 1), GPIO_OUT_LOW)			/* C1 HPD V1 */
+#else
+#define GPIO_USB_C1_HPD_IN_DB_V1	GPIO_S0_PWROK_OD_V1
 GPIO_INT(S0_PWROK_OD_V1,	PIN(B, 1), GPIO_INT_BOTH,			power_signal_interrupt)
+#endif
+
 GPIO_INT(EC_PWROK_OD,		PIN(3, 7), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(EC_PWR_BTN_ODL,	PIN(0, 1), GPIO_INT_BOTH,			power_button_interrupt)
 GPIO_INT(LID_OPEN,		PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	lid_interrupt)
@@ -25,7 +36,6 @@ GPIO_INT(ACOK_OD,		PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	extpower_inter
 GPIO_INT(EC_WP_L,		PIN(5, 0), GPIO_INT_BOTH,			switch_interrupt)
 GPIO_INT(VOLDN_BTN_ODL,		PIN(A, 6), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
 GPIO_INT(VOLUP_BTN_ODL,		PIN(9, 5), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)
-GPIO_INT(6AXIS_INT_L,		PIN(A, 0), GPIO_INT_FALLING | GPIO_PULL_UP,	bmi160_interrupt)
 
 /* GPIO_INT_BOTH is required for PSL wake from hibernate, but we don't need an interrupt handler. */
 GPIO(EC_RST_ODL,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH)
@@ -50,7 +60,7 @@ GPIO(USB_C0_HPD,		PIN(F, 5), GPIO_OUT_LOW)			/* C0 DP Hotplug Detect */
 GPIO(USB_C0_IN_HPD,		PIN(7, 3), GPIO_OUT_LOW)			/* C0 IN Hotplug Detect */
 GPIO(EC_DP1_HPD,		PIN(F, 4), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
 GPIO(DP2_HPD,			PIN(C, 1), GPIO_OUT_LOW)			/* C1 DP Hotplug Detect */
-GPIO(DP1_HPD_EC_IN,		PIN(7, 5), GPIO_INPUT)			/* C1  IN Hotplug Detect */
+GPIO(DP1_HPD_EC_IN,		PIN(7, 5), GPIO_INPUT)				/* C1  IN Hotplug Detect */
 GPIO(EC_H1_PACKET_MODE,		PIN(8, 6), GPIO_OUT_LOW)			/* H1 Packet Mode */
 
 UNIMPLEMENTED(NO_HPD)
@@ -84,7 +94,7 @@ IOEX(HDMI_POWER_EN_DB,		EXPIN(USBC_PORT_C1, 0, 3), GPIO_OUT_LOW)	/* HDMI retimer
 IOEX(USB_C1_TCPC_FASTSW_CTL_EN,	EXPIN(USBC_PORT_C1, 0, 4), GPIO_OUT_LOW)	/* C1 FastSwitch Control */
 IOEX(USB_C1_MUX_RST_DB,		EXPIN(USBC_PORT_C1, 1, 1), GPIO_OUT_LOW)	/* C1 Mux Reset */
 IOEX(USB_C1_PPC_EN_L,		EXPIN(USBC_PORT_C1, 1, 3), GPIO_OUT_LOW)	/* C1 PPC Enable */
-IOEX(HDMI_DATA_EN_DB,		EXPIN(USBC_PORT_C1, 1, 4), GPIO_OUT_HIGH)	/* HDMI Retimer Enable */
+IOEX(HDMI_DATA_EN_DB,		EXPIN(USBC_PORT_C1, 1, 4), GPIO_OUT_LOW)	/* HDMI Retimer Enable */
 IOEX(USB_C1_DATA_EN,		EXPIN(USBC_PORT_C1, 1, 5), GPIO_OUT_HIGH)	/* C1 Retimer Enable */
 IOEX(EN_USB_A1_5V_DB,		EXPIN(USBC_PORT_C1, 1, 6), GPIO_OUT_LOW)	/* A1 5V Source Enable */
 IOEX(USB_A1_CHARGE_EN_DB_L,	EXPIN(USBC_PORT_C1, 1, 7), GPIO_OUT_HIGH)	/* A1 5V High Current Enable */

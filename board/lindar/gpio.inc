@@ -24,6 +24,11 @@ GPIO_INT(PG_EC_RSMRST_ODL,     PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_EC_DSW_PWROK,      PIN(C, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4),  GPIO_INT_BOTH, power_signal_interrupt)
 
+/* Sensor Interrupts */
+GPIO_INT(EC_IMU_INT_L,		PIN(5, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V, lsm6dsm_interrupt)
+GPIO(EC_ACCEL_INT_L,		PIN(8, 1), GPIO_INPUT | GPIO_SEL_1P8V)
+GPIO_INT(TABLET_MODE_L,		PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
+
 /* USB-C interrupts */
 GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(E, 0), GPIO_INT_BOTH, tcpc_alert_event)
 GPIO_INT(USB_C1_TCPC_INT_ODL,	PIN(A, 2), GPIO_INT_BOTH, tcpc_alert_event)
@@ -36,8 +41,9 @@ GPIO_INT(USB_C1_MIX_INT_ODL,	PIN(0, 3), GPIO_INT_BOTH, bc12_interrupt)
 
 /* HDMI interrupts */
 
-/* Mute button interrupts */
-GPIO(EC_VOLDN_MUTE_BTN_ODL,		PIN(9, 3), GPIO_INT_BOTH)
+/* Volume button interrupts */
+GPIO_INT(EC_VOLDN_MUTE_BTN_ODL,		PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
+GPIO_INT(EC_VOLUP_BTN_ODL,		PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 
 /* HW_ID PIN */
 GPIO(HW_ID,		PIN(D, 4), GPIO_INPUT)
@@ -74,6 +80,8 @@ GPIO(EC_PROCHOT_ODL,           PIN(6, 3), GPIO_ODR_HIGH)
 UNIMPLEMENTED(EC_PROCHOT_IN_L)
 GPIO(SYS_RST_ODL,              PIN(C, 5), GPIO_ODR_HIGH)
 
+GPIO(EC_PCH_INT_ODL,           PIN(B, 0), GPIO_ODR_HIGH)
+
 /* USB and USBC Signals */
 GPIO(USB_C1_RT_RST_ODL,			PIN(8, 3), GPIO_ODR_LOW) /* USB_C1 Reset on boards board ID >=1 */
 GPIO(USB_C0_OC_ODL,			PIN(B, 1), GPIO_ODR_HIGH)
@@ -81,8 +89,6 @@ GPIO(USB_C1_OC_ODL,			PIN(5, 0), GPIO_ODR_HIGH)
 
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C1_LS_EN)
-/* Retimer Force Power enable is connected to AP */
-UNIMPLEMENTED(USB_C1_RT_FORCE_PWR)
 
 /* Misc Signals */
 GPIO(EC_H1_PACKET_MODE,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
@@ -102,6 +108,8 @@ GPIO(M2_SSD_PLA,		PIN(7, 0), GPIO_INPUT)		/* SSD power-loss acknoledgement */
 GPIO(EC_EDP_BL_EN,             PIN(D, 3), GPIO_OUT_HIGH)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
+GPIO(EC_I2C0_SENSOR_SCL,       PIN(B, 5), GPIO_INPUT | GPIO_SEL_1P8V)
+GPIO(EC_I2C0_SENSOR_SDA,       PIN(B, 4), GPIO_INPUT | GPIO_SEL_1P8V)
 GPIO(EC_I2C1_USB_C0_SCL,       PIN(9, 0), GPIO_INPUT)
 GPIO(EC_I2C1_USB_C0_SDA,       PIN(8, 7), GPIO_INPUT)
 GPIO(EC_I2C2_USB_C1_SCL,       PIN(9, 2), GPIO_INPUT)
@@ -122,6 +130,7 @@ GPIO(LED_2_L,	 PIN(C, 3), GPIO_OUT_HIGH)	/* Battery - Red LED */
 GPIO(LED_3_L,	 PIN(C, 2), GPIO_OUT_HIGH)	/* Power - White LED */
 
 /* Alternate functions GPIO definitions */
+ALTERNATE(PIN_MASK(B, BIT(5) | BIT(4)), 0, MODULE_I2C, (GPIO_INPUT | GPIO_SEL_1P8V)) /* I2C0 */
 ALTERNATE(PIN_MASK(9, BIT(0) | BIT(2) | BIT(1)), 0, MODULE_I2C, 0)                   /* I2C1 SCL / I2C2 */
 ALTERNATE(PIN_MASK(8, BIT(7)), 0, MODULE_I2C, 0)                                     /* I2C1 SDA */
 ALTERNATE(PIN_MASK(D, BIT(1) | BIT(0)), 0, MODULE_I2C, 0)                            /* I2C3 */
@@ -154,15 +163,8 @@ ALTERNATE(PIN_MASK(0, BIT(0) | BIT(1) | BIT(2)), 0, MODULE_PMU, 0)  /* GPIO00 = 
                                                                        GPIO02 = EC_RST_ODL */
 
 /* Unused signals */
-GPIO(UNUSED_GPIO81,    PIN(8, 1), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(UNUSED_GPIOB5,    PIN(B, 5), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(UNUSED_GPIOB4,    PIN(B, 4), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(UNUSED_GPIO97,    PIN(9, 7), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIO60,    PIN(6, 0), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIO34,    PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIO96,    PIN(9, 6), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIOF2,    PIN(F, 2), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIOF3,    PIN(F, 3), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(UNUSED_GPIO56,    PIN(5, 6), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(UNUSED_GPIO95,    PIN(9, 5), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(UNUSED_GPIOB0,    PIN(B, 0), GPIO_INPUT | GPIO_PULL_UP)

@@ -12,6 +12,8 @@ additionally supports automatic command retrying if the EC drops a character in
 a command.
 """
 
+# Note: This is a py2/3 compatible file.
+
 from __future__ import print_function
 
 import binascii
@@ -19,15 +21,16 @@ import binascii
 import copy
 import logging
 import os
-import Queue
 import select
 import traceback
+
+import six
 
 
 COMMAND_RETRIES = 3  # Number of attempts to retry a command.
 EC_MAX_READ = 1024  # Max bytes to read at a time from the EC.
-EC_SYN = '\xec'  # Byte indicating EC interrogation.
-EC_ACK = '\xc0'  # Byte representing correct EC response to interrogation.
+EC_SYN = b'\xec'  # Byte indicating EC interrogation.
+EC_ACK = b'\xc0'  # Byte representing correct EC response to interrogation.
 
 
 class LoggerAdapter(logging.LoggerAdapter):
@@ -98,7 +101,7 @@ class Interpreter(object):
     interpreter_prefix = ('%s - ' % name) if name else ''
     logger = logging.getLogger('%sEC3PO.Interpreter' % interpreter_prefix)
     self.logger = LoggerAdapter(logger, {'pty': ec_uart_pty})
-    self.ec_uart_pty = open(ec_uart_pty, 'a+')
+    self.ec_uart_pty = open(ec_uart_pty, 'ab+')
     self.ec_uart_pty_name = ec_uart_pty
     self.cmd_pipe = cmd_pipe
     self.dbg_pipe = dbg_pipe
@@ -106,8 +109,8 @@ class Interpreter(object):
     self.log_level = log_level
     self.inputs = [self.ec_uart_pty, self.cmd_pipe]
     self.outputs = []
-    self.ec_cmd_queue = Queue.Queue()
-    self.last_cmd = ''
+    self.ec_cmd_queue = six.moves.queue.Queue()
+    self.last_cmd = b''
     self.enhanced_ec = False
     self.interrogating = False
     self.connected = True
@@ -167,20 +170,20 @@ class Interpreter(object):
       A string which contains the packed command.
     """
     # Don't pack a single carriage return.
-    if raw_cmd != '\r':
+    if raw_cmd != b'\r':
       # The command format is as follows.
       # &&[x][x][x][x]&{cmd}\n\n
       packed_cmd = []
-      packed_cmd.append('&&')
+      packed_cmd.append(b'&&')
       # The first pair of hex digits are the length of the command.
-      packed_cmd.append('%02x' % len(raw_cmd))
+      packed_cmd.append(b'%02x' % len(raw_cmd))
       # Then the CRC8 of cmd.
-      packed_cmd.append('%02x' % Crc8(raw_cmd))
-      packed_cmd.append('&')
+      packed_cmd.append(b'%02x' % Crc8(raw_cmd))
+      packed_cmd.append(b'&')
       # Now, the raw command followed by 2 newlines.
       packed_cmd.append(raw_cmd)
-      packed_cmd.append('\n\n')
-      return ''.join(packed_cmd)
+      packed_cmd.append(b'\n\n')
+      return b''.join(packed_cmd)
     else:
       return raw_cmd
 
@@ -190,7 +193,7 @@ class Interpreter(object):
     Args:
       command: A string representing the command sent by the user.
     """
-    if command == "disconnect":
+    if command == b'disconnect':
       if self.connected:
         self.logger.debug('UART disconnect request.')
         # Drop all pending commands if any.
@@ -200,7 +203,7 @@ class Interpreter(object):
         if self.enhanced_ec:
           # Reset retry state.
           self.cmd_retries = COMMAND_RETRIES
-          self.last_cmd = ''
+          self.last_cmd = b''
         # Get the UART that the interpreter is attached to.
         fileobj = self.ec_uart_pty
         self.logger.debug('fileobj: %r', fileobj)
@@ -216,11 +219,11 @@ class Interpreter(object):
         self.logger.debug('Disconnected from %s.', self.ec_uart_pty_name)
       return
 
-    elif command == "reconnect":
+    elif command == b'reconnect':
       if not self.connected:
         self.logger.debug('UART reconnect request.')
         # Reopen the PTY.
-        fileobj = open(self.ec_uart_pty_name, 'a+')
+        fileobj = open(self.ec_uart_pty_name, 'ab+')
         self.logger.debug('fileobj: %r', fileobj)
         self.ec_uart_pty = fileobj
         # Add the descriptor to the inputs.
@@ -231,8 +234,8 @@ class Interpreter(object):
         self.logger.debug('Connected to %s.', self.ec_uart_pty_name)
       return
 
-    elif command.startswith('enhanced'):
-      self.enhanced_ec = command.split(' ')[1] == 'True'
+    elif command.startswith(b'enhanced'):
+      self.enhanced_ec = command.split(b' ')[1] == b'True'
       return
 
     # Ignore any other commands while in the disconnected state.
@@ -245,16 +248,16 @@ class Interpreter(object):
     # For non-enhanced EC images, commands will be single characters at a time
     # and can be spaces.
     if self.enhanced_ec:
-      command = command.strip(' ')
+      command = command.strip(b' ')
 
     # There's nothing to do if the command is empty.
     if len(command) == 0:
       return
 
     # Handle log level change requests.
-    if command.startswith('loglevel'):
+    if command.startswith(b'loglevel'):
       self.logger.debug('Log level change request.')
-      new_log_level = int(command.split(' ')[1])
+      new_log_level = int(command.split(b' ')[1])
       self.logger.logger.setLevel(new_log_level)
       self.logger.info('Log level changed to %d.', new_log_level)
       return
@@ -288,7 +291,7 @@ class Interpreter(object):
       # We're out of retries, so just give up.
       self.logger.error('Command failed.  No retries left.')
       # Clear the command in progress.
-      self.last_cmd = ''
+      self.last_cmd = b''
       # Reset the retry count.
       self.cmd_retries = COMMAND_RETRIES
 
@@ -331,7 +334,7 @@ class Interpreter(object):
     # Read what the EC sent us.
     data = os.read(self.ec_uart_pty.fileno(), EC_MAX_READ)
     self.logger.log(1, 'got: \'%s\'', binascii.hexlify(data))
-    if '&E' in data and self.enhanced_ec:
+    if b'&E' in data and self.enhanced_ec:
       # We received an error, so we should retry it if possible.
       self.logger.warning('Error string found in data.')
       self.HandleCmdRetries()
@@ -376,8 +379,8 @@ def Crc8(data):
     crc >> 8: An integer representing the CRC8 value.
   """
   crc = 0
-  for byte in data:
-    crc ^= (ord(byte) << 8)
+  for byte in six.iterbytes(data):
+    crc ^= (byte << 8)
     for _ in range(8):
       if crc & 0x8000:
         crc ^= (0x1070 << 3)
@@ -447,10 +450,6 @@ def StartLoop(interp, shutdown_pipe=None):
 
   except KeyboardInterrupt:
     pass
-
-  # TODO(crbug.com/894870): Stop suppressing all exceptions.
-  except:
-    traceback.print_exc()
 
   finally:
     interp.cmd_pipe.close()

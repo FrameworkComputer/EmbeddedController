@@ -78,6 +78,12 @@ int flash_bank_erase_size(int bank);
 #error "Not supported."
 #endif
 
+/*
+ * When there is a dedicated flash bank used to store persistent state,
+ * ensure the RO flash region excludes the PSTATE bank.
+ */
+#define EC_FLASH_REGION_RO_SIZE		CONFIG_RO_SIZE
+
 #ifndef PSTATE_BANK
 #define PSTATE_BANK	    (CONFIG_FW_PSTATE_OFF / CONFIG_FLASH_BANK_SIZE)
 #endif
@@ -85,7 +91,9 @@ int flash_bank_erase_size(int bank);
 #define PSTATE_BANK_COUNT   (CONFIG_FW_PSTATE_SIZE / CONFIG_FLASH_BANK_SIZE)
 #endif
 #else   /* CONFIG_FLASH_PSTATE && CONFIG_FLASH_PSTATE_BANK */
-#define PSTATE_BANK_COUNT	0
+/* Allow flashrom to program the entire write protected area */
+#define EC_FLASH_REGION_RO_SIZE		CONFIG_WP_STORAGE_SIZE
+#define PSTATE_BANK_COUNT		0
 #endif  /* CONFIG_FLASH_PSTATE && CONFIG_FLASH_PSTATE_BANK */
 
 #ifdef CONFIG_ROLLBACK

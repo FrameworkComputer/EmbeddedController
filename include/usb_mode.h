@@ -24,8 +24,7 @@
 void enter_usb_init(int port);
 
 /*
- * Resets USB4 state and mux state on receiving an invalid state/NAK/timeout
- * or empty enter USB payload.
+ * Resets USB4 state and mux state.
  *
  * @param port USB-C port number
  */

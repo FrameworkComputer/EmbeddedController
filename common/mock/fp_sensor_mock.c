@@ -76,3 +76,8 @@ int fp_finger_enroll(uint8_t *image, int *completion)
 {
 	return mock_ctrl_fp_sensor.fp_finger_enroll_return;
 }
+
+int fp_maintenance(void)
+{
+	return mock_ctrl_fp_sensor.fp_maintenance_return;
+}

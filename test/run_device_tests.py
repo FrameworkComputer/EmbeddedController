@@ -23,7 +23,9 @@ import time
 from concurrent.futures.thread import ThreadPoolExecutor
 from enum import Enum
 from pathlib import Path
-import colorama
+from typing import Optional, BinaryIO, List
+
+import colorama  # type: ignore[import]
 
 EC_DIR = Path(os.path.dirname(os.path.realpath(__file__))).parent
 FLASH_SCRIPT = os.path.join(EC_DIR, 'util/flash_jlink.py')
@@ -139,7 +141,7 @@ BOARD_CONFIGS = {
 }
 
 
-def get_console(board_name, board_config):
+def get_console(board_name: str, board_config: BoardConfig) -> Optional[str]:
     """Get the name of the console for a given board."""
     cmd = [
         'dut-control',
@@ -149,7 +151,7 @@ def get_console(board_name, board_config):
     logging.debug('Running command: "%s"', ' '.join(cmd))
 
     with subprocess.Popen(cmd, stdout=subprocess.PIPE) as proc:
-        for line in io.TextIOWrapper(proc.stdout):
+        for line in io.TextIOWrapper(proc.stdout):  # type: ignore[arg-type]
             logging.debug(line)
             pty = line.split(':')
             if len(pty) == 2 and pty[0] == board_config.servo_uart_name:
@@ -158,7 +160,7 @@ def get_console(board_name, board_config):
     return None
 
 
-def power(board_name, board_config, on):
+def power(board_name: str, board_config: BoardConfig, on: bool) -> None:
     """Turn power to board on/off."""
     if on:
         state = 'pp3300'
@@ -174,7 +176,7 @@ def power(board_name, board_config, on):
     subprocess.run(cmd).check_returncode()
 
 
-def hw_write_protect(board_name, enable):
+def hw_write_protect(board_name: str, enable: bool) -> None:
     """Enable/disable hardware write protect."""
     if enable:
         state = 'on'
@@ -190,7 +192,7 @@ def hw_write_protect(board_name, enable):
     subprocess.run(cmd).check_returncode()
 
 
-def build(test_name, board_name):
+def build(test_name: str, board_name: str) -> None:
     """Build specified test for specified board."""
     cmd = [
         'make',
@@ -203,7 +205,7 @@ def build(test_name, board_name):
     subprocess.run(cmd).check_returncode()
 
 
-def flash(test_name, board):
+def flash(test_name: str, board: str) -> bool:
     """Flash specified test to specified board."""
     logging.info("Flashing test")
 
@@ -220,7 +222,8 @@ def flash(test_name, board):
     return completed_process.returncode == 0
 
 
-def readline(executor, f, timeout_secs):
+def readline(executor: ThreadPoolExecutor, f: BinaryIO, timeout_secs: int) -> \
+             Optional[bytes]:
     """Read a line with timeout."""
     a = executor.submit(f.readline)
     try:
@@ -229,9 +232,10 @@ def readline(executor, f, timeout_secs):
         return None
 
 
-def readlines_until_timeout(executor, f, timeout_secs):
+def readlines_until_timeout(executor, f: BinaryIO, timeout_secs: int) -> \
+                            List[bytes]:
     """Continuously read lines for timeout_secs."""
-    lines = []
+    lines: List[bytes] = []
     while True:
         line = readline(executor, f, timeout_secs)
         if not line:
@@ -239,7 +243,8 @@ def readlines_until_timeout(executor, f, timeout_secs):
         lines.append(line)
 
 
-def run_test(test, console, executor):
+def run_test(test: TestConfig, console: str, executor: ThreadPoolExecutor) ->\
+             bool:
     """Run specified test."""
     start = time.time()
     with open(console, "wb+", buffering=0) as c:
@@ -293,7 +298,7 @@ def run_test(test, console, executor):
                 pass
 
 
-def get_test_list(config, test_args):
+def get_test_list(config: BoardConfig, test_args) -> List[TestConfig]:
     """Get a list of tests to run."""
     if test_args == 'all':
         return config.test_list
@@ -301,11 +306,11 @@ def get_test_list(config, test_args):
     test_list = []
     for t in test_args:
         logging.debug('test: %s', t)
-        config = ALL_TESTS.get(t)
-        if config is None:
+        test_config = ALL_TESTS.get(t)
+        if test_config is None:
             logging.error('Unable to find test config for "%s"', t)
             sys.exit(1)
-        test_list.append(config)
+        test_list.append(test_config)
 
     return test_list
 

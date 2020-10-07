@@ -96,9 +96,6 @@ int pd_set_power_supply_ready(int port)
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 
-	/* Update AC status to the PCH */
-	board_update_ac_status();
-
 	return EC_SUCCESS; /* we are ready */
 }
 
@@ -121,9 +118,6 @@ void pd_power_supply_reset(int port)
 
 	/* notify host of power info change */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
-
-	/* Update AC status to the PCH */
-	board_update_ac_status();
 }
 
 int pd_check_vconn_swap(int port)

@@ -34,13 +34,6 @@
 #define CONFIG_I2C_NACK_RETRY_COUNT 3
 #define CONFIG_SMBUS_PEC
 
-/* free flash space */
-#ifdef SECTION_IS_RO
-#undef CONFIG_USB_PD_DEBUG_LEVEL
-#define CONFIG_USB_PD_DEBUG_LEVEL 0
-#define CONFIG_COMMON_GPIO_SHORTNAMES
-#endif
-
 /* Battery */
 #define BATTERY_DESIRED_CHARGING_CURRENT    2000  /* mA */
 

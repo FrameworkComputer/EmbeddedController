@@ -594,7 +594,7 @@
 /* MCHP implements 6 GPIO ports */
 #define MCHP_GPIO_MAX_PORT	(7)
 
-#define DUMMY_GPIO_BANK 0
+#define UNIMPLEMENTED_GPIO_BANK 0
 
 /*
  * MEC1701 documentation GPIO numbers are octal, each control
@@ -2323,8 +2323,13 @@ typedef struct MCHP_dma_chan dma_chan_t;
 #endif /* #ifdef CHIP_FAMILY */
 
 /* Wake pin definitions, defined at board-level */
+#ifndef CONFIG_HIBERNATE_WAKE_PINS_DYNAMIC
 extern const enum gpio_signal hibernate_wake_pins[];
 extern const int hibernate_wake_pins_used;
+#else
+extern enum gpio_signal hibernate_wake_pins[];
+extern int hibernate_wake_pins_used;
+#endif
 
 
 #endif /* __CROS_EC_REGISTERS_H */

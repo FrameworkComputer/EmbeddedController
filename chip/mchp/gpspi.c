@@ -56,14 +56,14 @@ static int gpspi_wait_byte(const int ctrl)
 /* NOTE: auto-read must be disabled before calling this routine! */
 static void gpspi_rx_fifo_clean(const int ctrl)
 {
-	uint8_t dummy = 0;
+	uint8_t unused = 0;
 
 	/* If ACTIVE and/or RXFF then clean it */
 	if ((MCHP_SPI_SR(ctrl) & 0x4) == 0x4)
-		dummy += MCHP_SPI_RD(ctrl);
+		unused += MCHP_SPI_RD(ctrl);
 
 	if ((MCHP_SPI_SR(ctrl) & 0x2) == 0x2)
-		dummy += MCHP_SPI_RD(ctrl);
+		unused += MCHP_SPI_RD(ctrl);
 }
 /*
  * NOTE: auto-read must be disabled before calling this routine!
@@ -73,7 +73,7 @@ static int gpspi_tx(const int ctrl, const uint8_t *txdata, int txlen)
 {
 	int i;
 	int ret;
-	uint8_t dummy = 0;
+	uint8_t unused = 0;
 
 	gpspi_rx_fifo_clean(ctrl);
 
@@ -83,7 +83,7 @@ static int gpspi_tx(const int ctrl, const uint8_t *txdata, int txlen)
 		ret = gpspi_wait_byte(ctrl);
 		if (ret != EC_SUCCESS)
 			break;
-		dummy += MCHP_SPI_RD(ctrl);
+		unused += MCHP_SPI_RD(ctrl);
 	}
 
 	return ret;

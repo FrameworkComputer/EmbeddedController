@@ -27,7 +27,7 @@ uint32_t device_get_current_events(void)
 
 static uint32_t device_get_and_clear_events(void)
 {
-	return atomic_read_clear(&device_current_events);
+	return deprecated_atomic_read_clear(&device_current_events);
 }
 
 static uint32_t device_get_enabled_events(void)
@@ -43,7 +43,7 @@ void device_set_events(uint32_t mask)
 	if ((device_current_events & mask) != mask)
 		CPRINTS("device event set 0x%08x", mask);
 
-	atomic_or(&device_current_events, mask);
+	deprecated_atomic_or(&device_current_events, mask);
 
 	/* Signal host that a device event is pending */
 	host_set_single_event(EC_HOST_EVENT_DEVICE);
@@ -55,7 +55,7 @@ void device_clear_events(uint32_t mask)
 	if (device_current_events & mask)
 		CPRINTS("device event clear 0x%08x", mask);
 
-	atomic_clear(&device_current_events, mask);
+	deprecated_atomic_clear_bits(&device_current_events, mask);
 }
 
 static void device_set_enabled_events(uint32_t mask)

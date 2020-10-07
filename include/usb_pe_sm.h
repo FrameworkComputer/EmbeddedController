@@ -19,32 +19,6 @@ enum pe_error {
 	ERR_TCH_XMIT,
 };
 
-/*
- * Device Policy Manager Requests.
- * NOTE: These are usually set by host commands from the AP.
- */
-enum pe_dpm_request {
-	DPM_REQUEST_DR_SWAP             = BIT(0),
-	DPM_REQUEST_PR_SWAP             = BIT(1),
-	DPM_REQUEST_VCONN_SWAP          = BIT(2),
-	DPM_REQUEST_GOTO_MIN            = BIT(3),
-	DPM_REQUEST_SRC_CAP_CHANGE      = BIT(4),
-	DPM_REQUEST_GET_SNK_CAPS        = BIT(5),
-	DPM_REQUEST_SEND_PING           = BIT(6),
-	DPM_REQUEST_SOURCE_CAP          = BIT(7),
-	DPM_REQUEST_NEW_POWER_LEVEL     = BIT(8),
-	DPM_REQUEST_VDM                 = BIT(9),
-	DPM_REQUEST_BIST_RX             = BIT(10),
-	DPM_REQUEST_BIST_TX             = BIT(11),
-	DPM_REQUEST_SNK_STARTUP         = BIT(12),
-	DPM_REQUEST_SRC_STARTUP         = BIT(13),
-	DPM_REQUEST_HARD_RESET_SEND     = BIT(14),
-	DPM_REQUEST_SOFT_RESET_SEND     = BIT(15),
-	DPM_REQUEST_PORT_DISCOVERY      = BIT(16),
-	DPM_REQUEST_SEND_ALERT          = BIT(17),
-	DPM_REQUEST_ENTER_USB           = BIT(18),
-};
-
 /**
  * Runs the Policy Engine State Machine
  *
@@ -150,16 +124,6 @@ void pe_vconn_swap_complete(int port);
  */
 int pe_is_explicit_contract(int port);
 
-/**
- * Instruct the Policy Engine to perform a Device Policy Manager Request
- * This function is called from the Device Policy Manager and only has effect
- * if the current Policy Engine state is Src.Ready or Snk.Ready.
- *
- * @param port  USB-C port number
- * @param req   Device Policy Manager Request
- */
-void pe_dpm_request(int port, enum pe_dpm_request req);
-
 /*
  * Return true if port partner is dualrole capable
  *
@@ -201,6 +165,14 @@ const char *pe_get_current_state(int port);
  * @return flag mask of the pe state machine
  */
 uint32_t pe_get_flags(int port);
+
+/**
+ * Sets event for PE layer to report and triggers a notification up to the AP.
+ *
+ * @param port USB-C port number
+ * @param event_mask of bits to set (PD_STATUS_EVENT_* events in ec_commands.h)
+ */
+void pe_notify_event(int port, uint32_t event_mask);
 
 #endif /* __CROS_EC_USB_PE_H */
 

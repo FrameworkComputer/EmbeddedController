@@ -143,9 +143,10 @@ void keyboard_scan_enable(int enable, enum kb_scan_disable_masks mask)
 {
 	/* Access atomically */
 	if (enable) {
-		atomic_clear((uint32_t *)&disable_scanning_mask, mask);
+		deprecated_atomic_clear_bits((uint32_t *)&disable_scanning_mask,
+					     mask);
 	} else {
-		atomic_or((uint32_t *)&disable_scanning_mask, mask);
+		deprecated_atomic_or((uint32_t *)&disable_scanning_mask, mask);
 		clear_typematic_key();
 	}
 

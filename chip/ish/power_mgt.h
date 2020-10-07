@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_POWER_MGT_H
 #define __CROS_EC_POWER_MGT_H
 
+#include <stdnoreturn.h>
+
 #include "common.h"
 #include "registers.h"
 
@@ -56,7 +58,7 @@ static inline void ish_mia_halt(void)
 }
 
 /* reset ISH mintue-ia cpu core  */
-__attribute__((noreturn))
+noreturn
 static inline void ish_mia_reset(void)
 {
 	/**
@@ -81,7 +83,7 @@ __maybe_unused static void ish_pm_init(void)
 /**
  * reset ISH (reset minute-ia cpu core, and power off main SRAM)
  */
-void ish_pm_reset(enum ish_pm_state pm_state) __attribute__((noreturn));
+noreturn void ish_pm_reset(enum ish_pm_state pm_state);
 
 /**
  * notify the power management module that the UART for the console is in use.

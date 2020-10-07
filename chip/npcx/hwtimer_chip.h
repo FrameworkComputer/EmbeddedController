@@ -8,10 +8,6 @@
 #ifndef __CROS_EC_HWTIMER_CHIP_H
 #define __CROS_EC_HWTIMER_CHIP_H
 
-/* Channel definition for ITIM */
-#define ITIM_EVENT_NO	ITIM16_1
-#define ITIM_WDG_NO	ITIM16_5
-
 /* Use ITIM32 as main hardware timer */
 #define TICK_ITIM32_MAX_CNT  0xFFFFFFFF
 /* Maximum deadline of event */
@@ -28,7 +24,7 @@ enum ITIM_SOURCE_CLOCK_T {
  *
  * Select the source clock for a timer and prepare it for use.
  *
- * @param itim_no	Timer number to init (enum ITIM16_MODULE_T)
+ * @param itim_no	Timer number to init (enum ITIM_MODULE_T)
  * @param source	Source for timer clock (enum ITIM_SOURCE_CLOCK_T)
  */
 void init_hw_timer(int itim_no, enum ITIM_SOURCE_CLOCK_T source);

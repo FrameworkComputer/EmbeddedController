@@ -4,6 +4,8 @@
 
 """Calculates statistics for lists of data and pretty print them."""
 
+# Note: This is a py2/3 compatible file.
+
 from __future__ import print_function
 
 import collections
@@ -129,8 +131,8 @@ class StatsManager(object):
       unit: unit of the domain.
     """
     if domain in self._unit:
-      self._logger.warn('overwriting the unit of %s, old unit is %s, new unit '
-                        'is %s.', domain, self._unit[domain], unit)
+      self._logger.warning('overwriting the unit of %s, old unit is %s, new '
+                           'unit is %s.', domain, self._unit[domain], unit)
     self._unit[domain] = unit
 
   def CalculateStats(self):
@@ -139,7 +141,7 @@ class StatsManager(object):
     First erases all previous stats, then calculate stats for all data.
     """
     self._summary = {}
-    for domain, data in self._data.iteritems():
+    for domain, data in self._data.items():
       data_np = numpy.array(data)
       self._summary[domain] = {
           'mean': numpy.nanmean(data_np),
@@ -247,9 +249,9 @@ class StatsManager(object):
     while os.path.exists(unique_fname):
       old_fname = unique_fname
       unique_fname = os.path.join(fdir, '%s%d%s' % (base, tag, ext))
-      self._logger.warn('Attempted to store stats information at %s, but file '
-                        'already exists. Attempting to store at %s now.',
-                        old_fname, unique_fname)
+      self._logger.warning('Attempted to store stats information at %s, but '
+                           'file already exists. Attempting to store at %s '
+                           'now.', old_fname, unique_fname)
       tag += 1
     return unique_fname
 
@@ -314,7 +316,7 @@ class StatsManager(object):
     if not os.path.exists(dirname):
       os.makedirs(dirname)
     fnames = []
-    for domain, data in self._data.iteritems():
+    for domain, data in self._data.items():
       if not domain.endswith(self._unit[domain]):
         domain = '%s_%s' % (domain, self._unit[domain])
       fname = self._MakeUniqueFName(os.path.join(dirname, '%s.txt' % domain))

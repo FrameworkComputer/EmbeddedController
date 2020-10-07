@@ -19,20 +19,18 @@
 /* PD Host command timeout */
 #define PD_HOST_COMMAND_TIMEOUT_US SECOND
 
-#ifdef CONFIG_USB_PD_PORT_MAX_COUNT
 /*
  * Define PD_PORT_TO_TASK_ID() and TASK_ID_TO_PD_PORT() macros to
  * go between PD port number and task ID. Assume that TASK_ID_PD_C0 is the
  * lowest task ID and IDs are on a continuous range.
  */
-#ifdef HAS_TASK_PD_C0
+#if defined(HAS_TASK_PD_C0) && defined(CONFIG_USB_PD_PORT_MAX_COUNT)
 #define PD_PORT_TO_TASK_ID(port) (TASK_ID_PD_C0 + (port))
 #define TASK_ID_TO_PD_PORT(id) ((id) - TASK_ID_PD_C0)
 #else
-#define PD_PORT_TO_TASK_ID(port) -1 /* dummy task ID */
+#define PD_PORT_TO_TASK_ID(port) -1 /* stub task ID */
 #define TASK_ID_TO_PD_PORT(id) 0
-#endif /* HAS_TASK_PD_C0 */
-#endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
+#endif /* CONFIG_USB_PD_PORT_MAX_COUNT && HAS_TASK_PD_C0 */
 
 enum pd_rx_errors {
 	PD_RX_ERR_INVAL = -1,           /* Invalid packet */
@@ -62,21 +60,19 @@ enum pd_rx_errors {
 #define PD_EVENT_POWER_STATE_CHANGE	TASK_EVENT_CUSTOM_BIT(8)
 /* Issue a Hard Reset. */
 #define PD_EVENT_SEND_HARD_RESET	TASK_EVENT_CUSTOM_BIT(9)
-/* PD State machine event */
-#define PD_EVENT_SM			TASK_EVENT_CUSTOM_BIT(10)
 /* Prepare for sysjump */
-#define PD_EVENT_SYSJUMP		TASK_EVENT_CUSTOM_BIT(11)
+#define PD_EVENT_SYSJUMP		TASK_EVENT_CUSTOM_BIT(10)
 /* Receive a Hard Reset. */
-#define PD_EVENT_RX_HARD_RESET		TASK_EVENT_CUSTOM_BIT(12)
+#define PD_EVENT_RX_HARD_RESET		TASK_EVENT_CUSTOM_BIT(11)
 /* First free event on PD task */
-#define PD_EVENT_FIRST_FREE_BIT		13
+#define PD_EVENT_FIRST_FREE_BIT		12
 
 /* Ensure TCPC is out of low power mode before handling these events. */
 #define PD_EXIT_LOW_POWER_EVENT_MASK \
 	(PD_EVENT_CC | \
 	 PD_EVENT_UPDATE_DUAL_ROLE | \
 	 PD_EVENT_POWER_STATE_CHANGE | \
-	 TASK_EVENT_WAKE)
+	 PD_EVENT_TCPC_RESET)
 
 /* --- PD data message helpers --- */
 #define PDO_MAX_OBJECTS   7
@@ -233,6 +229,7 @@ enum pd_rx_errors {
 #define PD_T_VCONN_STABLE           (50*MSEC) /* 50ms */
 #define PD_T_DISCOVER_IDENTITY      (45*MSEC) /* between 40ms and 50ms */
 #define PD_T_SYSJUMP              (1000*MSEC) /* 1s */
+#define PD_T_PR_SWAP_WAIT          (100*MSEC) /* tPRSwapWait 100ms */
 
 /* number of edges and time window to detect CC line is not idle */
 #define PD_RX_TRANSITION_COUNT  3
@@ -253,6 +250,14 @@ enum pd_rx_errors {
 #define PD_T_VPDCTDD           (4*MSEC) /* max of 4ms */
 #define PD_T_VPDDISABLE       (25*MSEC) /* min of 25ms */
 
+/* Voltage thresholds in mV (Table 7-24, PD 3.0 Version 2.0 Spec) */
+#define PD_V_SAFE0V_MAX		800
+#define PD_V_SAFE5V_MIN		4750
+
+/* USB Type-C voltages in mV (Table 4-3, USB Type-C Release 2.0 Spec) */
+#define PD_V_SINK_DISCONNECT_MAX 3670
+/* TODO(b/149530538): Add equation for vSinkDisconnectPD */
+
 /* function table for entered mode */
 struct amode_fx {
 	int (*status)(int port, uint32_t *payload);
@@ -261,6 +266,14 @@ struct amode_fx {
 
 /* function table for alternate mode capable responders */
 struct svdm_response {
+	/**
+	 * Gets VDM response messages
+	 *
+	 * @param port    USB-C Port number
+	 * @param payload buffer used to pass input data and store output data
+	 * @return        number of data objects in payload; <0 means BUSY;
+	 * =0 means NAK.
+	 */
 	int (*identity)(int port, uint32_t *payload);
 	int (*svids)(int port, uint32_t *payload);
 	int (*modes)(int port, uint32_t *payload);
@@ -358,6 +371,8 @@ union disc_ident_ack {
 
 	uint32_t raw_value[PDO_MAX_OBJECTS - 1];
 };
+BUILD_ASSERT(sizeof(union disc_ident_ack) ==
+				sizeof(uint32_t) * (PDO_MAX_OBJECTS - 1));
 
 /* Discover Identity data - ACK plus discovery state */
 struct identity_data {
@@ -387,6 +402,8 @@ enum pd_alternate_modes {
 struct pd_discovery {
 	/* Identity data */
 	union disc_ident_ack identity;
+	/* Identity VDO count */
+	int identity_cnt;
 	/* Supported SVIDs and corresponding mode VDOs */
 	struct svid_mode_data svids[SVID_DISCOVERY_MAX];
 	/* index of SVID currently being operated on */
@@ -635,14 +652,6 @@ struct pd_cable {
 	(((snkp) & 0xff) << 16 | ((srcp) & 0xff) << 8			\
 	 | ((usb) & 1) << 7 | ((gdr) & 1) << 6 | ((sign) & 0xF) << 2	\
 	 | ((sdir) & 0x3))
-
-#define MODE_DP_PIN_A 0x01
-#define MODE_DP_PIN_B 0x02
-#define MODE_DP_PIN_C 0x04
-#define MODE_DP_PIN_D 0x08
-#define MODE_DP_PIN_E 0x10
-#define MODE_DP_PIN_F 0x20
-#define MODE_DP_PIN_ALL 0x3f
 
 #define MODE_DP_DFP_PIN_SHIFT 8
 #define MODE_DP_UFP_PIN_SHIFT 16
@@ -927,6 +936,35 @@ enum pd_dual_role_states {
 	/* Switch to source */
 	PD_DRP_FORCE_SOURCE,
 };
+
+/*
+ * Device Policy Manager Requests.
+ * NOTE: These are usually set by host commands from the AP.
+ */
+enum pd_dpm_request {
+	DPM_REQUEST_DR_SWAP             = BIT(0),
+	DPM_REQUEST_PR_SWAP             = BIT(1),
+	DPM_REQUEST_VCONN_SWAP          = BIT(2),
+	DPM_REQUEST_GOTO_MIN            = BIT(3),
+	DPM_REQUEST_SRC_CAP_CHANGE      = BIT(4),
+	DPM_REQUEST_GET_SNK_CAPS        = BIT(5),
+	DPM_REQUEST_SEND_PING           = BIT(6),
+	DPM_REQUEST_SOURCE_CAP          = BIT(7),
+	DPM_REQUEST_NEW_POWER_LEVEL     = BIT(8),
+	DPM_REQUEST_VDM                 = BIT(9),
+	DPM_REQUEST_BIST_RX             = BIT(10),
+	DPM_REQUEST_BIST_TX             = BIT(11),
+	DPM_REQUEST_SNK_STARTUP         = BIT(12),
+	DPM_REQUEST_SRC_STARTUP         = BIT(13),
+	DPM_REQUEST_HARD_RESET_SEND     = BIT(14),
+	DPM_REQUEST_SOFT_RESET_SEND     = BIT(15),
+	DPM_REQUEST_PORT_DISCOVERY      = BIT(16),
+	DPM_REQUEST_SEND_ALERT          = BIT(17),
+	DPM_REQUEST_ENTER_USB           = BIT(18),
+	DPM_REQUEST_GET_SRC_CAPS        = BIT(19),
+	DPM_REQUEST_EXIT_MODES          = BIT(20),
+};
+
 /**
  * Get dual role state
  *
@@ -1118,24 +1156,6 @@ enum pd_data_msg_type {
 	PD_DATA_VENDOR_DEF = 15,
 };
 
-/*
- * Power role. See 6.2.1.1.4 Port Power Role. Only applies to SOP packets.
- * Replaced by pd_cable_plug for SOP' and SOP" packets.
- */
-enum pd_power_role {
-	PD_ROLE_SINK = 0,
-	PD_ROLE_SOURCE = 1
-};
-
-/*
- * Data role. See 6.2.1.1.6 Port Data Role. Only applies to SOP.
- * Replaced by reserved field for SOP' and SOP" packets.
- */
-enum pd_data_role {
-	PD_ROLE_UFP = 0,
-	PD_ROLE_DFP = 1,
-	PD_ROLE_DISCONNECTED = 2,
-};
 
 /*
  * Cable plug. See 6.2.1.1.7 Cable Plug. Only applies to SOP' and SOP".
@@ -1269,11 +1289,23 @@ enum pd_msg_type {
 void schedule_deferred_pd_interrupt(int port);
 
 /**
- * Get current PD VDO Version
+ * Get current PD Revision
  *
  * @param port USB-C port number
  * @param type USB-C port partner
- * @return 0 for PD_REV1.0, 1 for PD_REV2.0
+ * @return PD_REV10 for PD Revision 1.0
+ *         PD_REV20 for PD Revision 2.0
+ *         PD_REV30 for PD Revision 3.0
+ */
+int pd_get_rev(int port, enum tcpm_transmit_type type);
+
+/**
+ * Get current PD VDO Version of Structured VDM
+ *
+ * @param port USB-C port number
+ * @param type USB-C port partner
+ * @return VDM_VER10 for VDM Version 1.0
+ *         VDM_VER20 for VDM Version 2.0
  */
 int pd_get_vdo_ver(int port, enum tcpm_transmit_type type);
 
@@ -1564,6 +1596,14 @@ __override_proto void pd_execute_data_swap(int port,
 				enum pd_data_role data_role);
 
 /**
+ * Get desired dual role state when chipset is suspended.
+ * Under some circumstances we are not allowed to be source
+ * during suspend. This function should return appropriate state.
+ */
+
+__override_proto enum pd_dual_role_states pd_get_drp_state_in_suspend(void);
+
+/**
  * Get PD device info used for VDO_CMD_SEND_INFO / VDO_CMD_READ_INFO
  *
  * @param info_data pointer to info data array
@@ -1740,13 +1780,16 @@ void pd_set_modes_discovery(int port, enum tcpm_transmit_type type,
 
 /**
  * Get Modes discovery state for this port and SOP* type. Modes discover is
- * considered complete for a port and type when modes have been discovered for
- * all discovered SVIDs. Mode discovery is failed if mode discovery for any SVID
- * failed.
+ * considered NEEDED if there are any discovered SVIDs that still need to be
+ * discovered. Modes discover is considered COMPLETE when no discovered SVIDs
+ * need to go through discovery and at least one mode has been considered
+ * complete or if there are no discovered SVIDs. Modes discovery is
+ * considered FAIL if mode discovery for all SVIDs are failed.
  *
  * @param port USB-C port number
  * @param type SOP* type to retrieve
- * @return      Current discovery state (failed or complete)
+ * @return      Current discovery state (PD_DISC_NEEDED, PD_DISC_COMPLETE,
+ *                                       PD_DISC_FAIL)
  */
 enum pd_discovery_state pd_get_modes_discovery(int port,
 		enum tcpm_transmit_type type);
@@ -1767,14 +1810,17 @@ int pd_get_mode_vdo_for_svid(int port, enum tcpm_transmit_type type,
 		uint16_t svid, uint32_t *vdo_out);
 
 /**
- * Get a pointer to mode data for the next SVID with undiscovered modes. This
- * data may indicate that discovery failed.
+ * Get a pointer to mode data for the next SVID that needs to be discovered.
+ * This data may indicate that discovery failed.
  *
  * @param port USB-C port number
  * @param type SOP* type to retrieve
- * @return     Pointer to the first SVID-mode structure with undiscovered mode;
- *             discovery may be needed or failed; returns NULL if all SVIDs have
- *             discovered modes
+ * @return     In order of precedence:
+ *             Pointer to the first SVID-mode structure with needs discovered
+ *             mode, if any exist;
+ *             Pointer to the first SVID-mode structure with discovery failed
+ *             mode, if any exist and no modes succeeded in discovery;
+ *             NULL, otherwise
  */
 struct svid_mode_data *pd_get_next_mode(int port, enum tcpm_transmit_type type);
 
@@ -1900,8 +1946,34 @@ bool consume_sop_prime_repeat_msg(int port, uint8_t msg_id);
 bool consume_sop_prime_prime_repeat_msg(int port, uint8_t msg_id);
 
 /*
+ * Clears record of which tasks have accessed discovery data for this port and
+ * type.
+ *
+ * @param port USB-C port number
+ * @param type Transmit type (SOP, SOP')
+ */
+void pd_discovery_access_clear(int port, enum tcpm_transmit_type type);
+
+/*
+ * Validate that this current task is the only one which has retrieved the
+ * pointer from pd_get_am_discovery() since last call to
+ * pd_discovery_access_clear().
+ *
+ * @param port USB-C port number
+ * @param type Transmit type (SOP, SOP')
+ * @return     True - No other tasks have accessed the data
+ */
+bool pd_discovery_access_validate(int port, enum tcpm_transmit_type type);
+
+/*
  * Returns the pointer to PD alternate mode discovery results
+ *
  * Note: Caller function can mutate the data in this structure.
+ *
+ * TCPMv2 will track all tasks which call this function after the most recent
+ * pd_discovery_access_clear(), so that the host command task reading out this
+ * structure may run pd_discovery_access_validate() at the end of its read to
+ * verify whether data might have changed in that timeframe.
  *
  * @param port USB-C port number
  * @param type Transmit type (SOP, SOP') for discovered information
@@ -2183,6 +2255,16 @@ void pd_log_recv_vdm(int port, int cnt, uint32_t *payload);
 void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 		 int count);
 
+/**
+ * Instruct the Policy Engine to perform a Device Policy Manager Request
+ * This function is called from the Device Policy Manager and only has effect
+ * if the current Policy Engine state is Src.Ready or Snk.Ready.
+ *
+ * @param port  USB-C port number
+ * @param req   Device Policy Manager Request
+ */
+void pd_dpm_request(int port, enum pd_dpm_request req);
+
 /*
  * TODO(b/155890173): Probably, this should only be used by the DPM, and
  * pd_send_vdm should be implemented in terms of DPM functions.
@@ -2210,6 +2292,10 @@ extern const int pd_snk_pdo_cnt;
 
 /**
  * Request that a host event be sent to notify the AP of a PD power event.
+ *
+ * Note: per-port events should be retrieved through pd_get_events(), but this
+ * function still notifies the AP there are events to retrieve, and directs it
+ * to the per-port events through PD_EVENT_TYPEC
  *
  * @param mask host event mask.
  */
@@ -2502,6 +2588,22 @@ void pd_transmit_complete(int port, int status);
 enum tcpc_cc_polarity pd_get_polarity(int port);
 
 /**
+ * Get the port events.
+ *
+ * @param port USB-C port number
+ * @return PD_STATUS_EVENT_* bitmask
+ */
+uint32_t pd_get_events(int port);
+
+/**
+ * Clear selected port events
+ *
+ * @param port USB-C port number
+ * @param clear_mask bitmask of events to clear (PD_STATUS_EVENT_* bitmask)
+ */
+void pd_clear_events(int port, uint32_t clear_mask);
+
+/**
  * Get port partner data swap capable status
  *
  * @param port USB-C port number
@@ -2637,10 +2739,13 @@ bool pd_is_disconnected(int port);
 /**
  * Return true if vbus is at level on the specified port.
  *
+ * Note that boards may override this function if they have a method outside the
+ * TCPCI driver to verify vSafe0V
+ *
  * @param port USB-C port number
  * @param level vbus_level to check against
  */
-bool pd_check_vbus_level(int port, enum vbus_level level);
+__override_proto bool pd_check_vbus_level(int port, enum vbus_level level);
 
 /**
  * Return true if vbus is at Safe5V on the specified port.
@@ -2782,13 +2887,6 @@ void pd_prepare_sysjump(void);
 extern int dp_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 extern uint32_t dp_status[CONFIG_USB_PD_PORT_MAX_COUNT];
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
-
-/*
- * Configure the USB MUX in safe mode
- *
- * @param port The PD port number
- */
-void usb_mux_set_safe_mode(int port);
 
 /*
  * Set HPD GPIO level

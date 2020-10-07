@@ -32,7 +32,7 @@
 
 /******************************************************************************/
 /* SFDP Header, always located at SFDP offset 0x0. Note that the SFDP space is
- * always read in 3 Byte addressing mode with a single dummy cycle, where the
+ * always read in 3 Byte addressing mode with a single cycle, where the
  * expected SFDP address space layout looks like the following:
  *
  *  ------------------0x00
@@ -259,49 +259,49 @@ SFDP_DEFINE_BITFIELD(BFPT_1_0_DW2_N, 30, 0);
  * ------------------------------------------
  * <31:24> : 1-1-4 Fast Read Opcode
  * <23:21> : 1-1-4 Fast Read Number of Mode Bits (0 if unsupported)
- * <20:16> : 1-1-4 Fast Read Number of Wait States (Dummy Clocks)
+ * <20:16> : 1-1-4 Fast Read Number of Wait States (Wait State Clocks)
  * <15:8>  : 1-4-4 Fast Read Opcode
  * <7:5>   : 1-4-4 Fast Read Number of Mode Bits (0 if unsupported)
- * <4:0>   : 1-4-4 Fast Read Number of Wait States (Dummy CLocks)
+ * <4:0>   : 1-4-4 Fast Read Number of Wait States (Wait State CLocks)
  */
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW3_1_1_4_OPCODE, 31, 24);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW3_1_1_4_MODE_BITS, 23, 21);
-SFDP_DEFINE_BITFIELD(BFPT_1_0_DW3_1_1_4_DUMMY_CLOCKS, 20, 16);
+SFDP_DEFINE_BITFIELD(BFPT_1_0_DW3_1_1_4_WAIT_STATE_CLOCKS, 20, 16);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW3_1_4_4_OPCODE, 15, 8);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW3_1_4_4_MODE_BITS, 7, 5);
-SFDP_DEFINE_BITFIELD(BFPT_1_0_DW3_1_4_4_DUMMY_CLOCKS, 4, 0);
+SFDP_DEFINE_BITFIELD(BFPT_1_0_DW3_1_4_4_WAIT_STATE_CLOCKS, 4, 0);
 #define BFPT_1_0_DWORD_3(fr114op, fr114mb, fr114dc,                \
 				    fr144op, fr144mb, fr144dc)     \
 	(SFDP_BITFIELD(BFPT_1_0_DW3_1_1_4_OPCODE, fr114op) |       \
 	 SFDP_BITFIELD(BFPT_1_0_DW3_1_1_4_MODE_BITS, fr114mb) |    \
-	 SFDP_BITFIELD(BFPT_1_0_DW3_1_1_4_DUMMY_CLOCKS, fr114dc) | \
+	 SFDP_BITFIELD(BFPT_1_0_DW3_1_1_4_WAIT_STATE_CLOCKS, fr114dc) | \
 	 SFDP_BITFIELD(BFPT_1_0_DW3_1_4_4_OPCODE, fr144op) |       \
 	 SFDP_BITFIELD(BFPT_1_0_DW3_1_4_4_MODE_BITS, fr144mb) |    \
-	 SFDP_BITFIELD(BFPT_1_0_DW3_1_4_4_DUMMY_CLOCKS, fr144dc))
+	 SFDP_BITFIELD(BFPT_1_0_DW3_1_4_4_WAIT_STATE_CLOCKS, fr144dc))
 
 /* Basic Flash Parameter Table v1.0 4th DWORD
  * ------------------------------------------
  * <31:24> : 1-2-2 Fast Read Opcode
  * <23:21> : 1-2-2 Fast Read Number of Mode Bits (0 if unsupported)
- * <20:16> : 1-2-2 Fast Read Number of Wait States (Dummy Clocks)
+ * <20:16> : 1-2-2 Fast Read Number of Wait States (Wait State Clocks)
  * <15:8>  : 1-1-2 Fast Read Opcode
  * <7:5>   : 1-1-2 Fast Read Number of Mode Bits (0 if unsupported)
- * <4:0>   : 1-1-2 Fast Read Number of Wait States (Dummy CLocks)
+ * <4:0>   : 1-1-2 Fast Read Number of Wait States (Wait State CLocks)
  */
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW4_1_2_2_OPCODE, 31, 24);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW4_1_2_2_MODE_BITS, 23, 21);
-SFDP_DEFINE_BITFIELD(BFPT_1_0_DW4_1_2_2_DUMMY_CLOCKS, 20, 16);
+SFDP_DEFINE_BITFIELD(BFPT_1_0_DW4_1_2_2_WAIT_STATE_CLOCKS, 20, 16);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW4_1_1_2_OPCODE, 15, 8);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW4_1_1_2_MODE_BITS, 7, 5);
-SFDP_DEFINE_BITFIELD(BFPT_1_0_DW4_1_1_2_DUMMY_CLOCKS, 4, 0);
+SFDP_DEFINE_BITFIELD(BFPT_1_0_DW4_1_1_2_WAIT_STATE_CLOCKS, 4, 0);
 #define BFPT_1_0_DWORD_4(fr122op, fr122mb, fr122dc,                \
 				    fr112op, fr112mb, fr112dc)     \
 	(SFDP_BITFIELD(BFPT_1_0_DW4_1_2_2_OPCODE, fr122op) |       \
 	 SFDP_BITFIELD(BFPT_1_0_DW4_1_2_2_MODE_BITS, fr122mb) |    \
-	 SFDP_BITFIELD(BFPT_1_0_DW4_1_2_2_DUMMY_CLOCKS, fr122dc) | \
+	 SFDP_BITFIELD(BFPT_1_0_DW4_1_2_2_WAIT_STATE_CLOCKS, fr122dc) | \
 	 SFDP_BITFIELD(BFPT_1_0_DW4_1_1_2_OPCODE, fr112op) |       \
 	 SFDP_BITFIELD(BFPT_1_0_DW4_1_1_2_MODE_BITS, fr112mb) |    \
-	 SFDP_BITFIELD(BFPT_1_0_DW4_1_1_2_DUMMY_CLOCKS, fr112dc))
+	 SFDP_BITFIELD(BFPT_1_0_DW4_1_1_2_WAIT_STATE_CLOCKS, fr112dc))
 
 /* Basic Flash Parameter Table v1.0 5th DWORD
  * ------------------------------------------
@@ -322,32 +322,32 @@ SFDP_DEFINE_BITFIELD(BFPT_1_0_DW5_2_2_2_SUPPORTED, 0, 0);
  * ------------------------------------------
  * <31:24> : 2-2-2 Fast Read Opcode
  * <23:21> : 2-2-2 Fast Read Number of Mode Bits (0 if unsupported)
- * <20:16> : 2-2-2 Fast Read Number of Wait States (Dummy Clocks)
+ * <20:16> : 2-2-2 Fast Read Number of Wait States (Wait State Clocks)
  * <15:0>  : Reserved (0xFFFF)
  */
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW6_2_2_2_OPCODE, 31, 24);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW6_2_2_2_MODE_BITS, 23, 21);
-SFDP_DEFINE_BITFIELD(BFPT_1_0_DW6_2_2_2_DUMMY_CLOCKS, 20, 16);
+SFDP_DEFINE_BITFIELD(BFPT_1_0_DW6_2_2_2_WAIT_STATE_CLOCKS, 20, 16);
 #define BFPT_1_0_DWORD_6(fr222op, fr222mb, fr222dc)                \
 	(SFDP_BITFIELD(BFPT_1_0_DW6_2_2_2_OPCODE, fr222op) |       \
 	 SFDP_BITFIELD(BFPT_1_0_DW6_2_2_2_MODE_BITS, fr222mb) |    \
-	 SFDP_BITFIELD(BFPT_1_0_DW6_2_2_2_DUMMY_CLOCKS, fr222dc) | \
+	 SFDP_BITFIELD(BFPT_1_0_DW6_2_2_2_WAIT_STATE_CLOCKS, fr222dc) | \
 	 SFDP_UNUSED(15, 0))
 
 /* Basic Flash Parameter Table v1.0 7th DWORD
  * ------------------------------------------
  * <31:24> : 4-4-4 Fast Read Opcode
  * <23:21> : 4-4-4 Fast Read Number of Mode Bits (0 if unsupported)
- * <20:16> : 4-4-4 Fast Read Number of Wait States (Dummy Clocks)
+ * <20:16> : 4-4-4 Fast Read Number of Wait States (Wait State Clocks)
  * <15:0>  : Reserved (0xFFFF)
  */
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW7_4_4_4_OPCODE, 31, 24);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW7_4_4_4_MODE_BITS, 23, 21);
-SFDP_DEFINE_BITFIELD(BFPT_1_0_DW7_4_4_4_DUMMY_CLOCKS, 20, 16);
+SFDP_DEFINE_BITFIELD(BFPT_1_0_DW7_4_4_4_WAIT_STATE_CLOCKS, 20, 16);
 #define BFPT_1_0_DWORD_7(fr444op, fr444mb, fr444dc)                \
 	(SFDP_BITFIELD(BFPT_1_0_DW7_4_4_4_OPCODE, fr444op) |       \
 	 SFDP_BITFIELD(BFPT_1_0_DW7_4_4_4_MODE_BITS, fr444mb) |    \
-	 SFDP_BITFIELD(BFPT_1_0_DW7_4_4_4_DUMMY_CLOCKS, fr444dc) | \
+	 SFDP_BITFIELD(BFPT_1_0_DW7_4_4_4_WAIT_STATE_CLOCKS, fr444dc) | \
 	 SFDP_UNUSED(15, 0))
 
 /* Basic Flash Parameter Table v1.0 8th DWORD

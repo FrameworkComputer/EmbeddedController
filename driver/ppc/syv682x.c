@@ -297,6 +297,8 @@ static int syv682x_vbus_sink_enable(int port, int enable)
 		/* Select Sink mode and turn on the channel */
 		regval &= ~(SYV682X_CONTROL_1_HV_DR |
 			    SYV682X_CONTROL_1_PWR_ENB);
+		/* Set sink current limit to the configured value */
+		regval |= CONFIG_SYV682X_HV_ILIM << SYV682X_HV_ILIM_BIT_SHIFT;
 		flags[port] &= ~SYV682X_FLAGS_SOURCE_ENABLED;
 	} else {
 		/*
@@ -487,7 +489,7 @@ static void syv682x_handle_interrupt(int port)
 static void syv682x_irq_deferred(void)
 {
 	int i;
-	uint32_t pending = atomic_read_clear(&irq_pending);
+	uint32_t pending = deprecated_atomic_read_clear(&irq_pending);
 
 	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		if (BIT(i) & pending)
@@ -497,7 +499,7 @@ DECLARE_DEFERRED(syv682x_irq_deferred);
 
 static void syv682x_interrupt_delayed(int port, int delay)
 {
-	atomic_or(&irq_pending, BIT(port));
+	deprecated_atomic_or(&irq_pending, BIT(port));
 	hook_call_deferred(&syv682x_irq_deferred_data, delay * MSEC);
 }
 
@@ -619,7 +621,7 @@ static int syv682x_init(int port)
 		 * select HV channel.
 		 */
 		regval = SYV682X_CONTROL_1_PWR_ENB |
-			(SYV682X_HV_ILIM_3_30 << SYV682X_HV_ILIM_BIT_SHIFT) |
+			(CONFIG_SYV682X_HV_ILIM << SYV682X_HV_ILIM_BIT_SHIFT) |
 			/* !SYV682X_CONTROL_1_HV_DR */
 			SYV682X_CONTROL_1_CH_SEL;
 		rv = write_reg(port, SYV682X_CONTROL_1_REG, regval);
@@ -648,7 +650,7 @@ static int syv682x_init(int port)
 	 * voltage, and thermal shutdown
 	 */
 	regval = (SYV682X_OC_DELAY_10MS << SYV682X_OC_DELAY_SHIFT)
-		| (SYV682X_DSG_TIME_200MS << SYV682X_DSG_TIME_SHIFT)
+		| (SYV682X_DSG_TIME_50MS << SYV682X_DSG_TIME_SHIFT)
 		| (SYV682X_DSG_RON_200_OHM << SYV682X_DSG_RON_SHIFT)
 		| SYV682X_CONTROL_2_SDSG;
 	rv = write_reg(port, SYV682X_CONTROL_2_REG, regval);

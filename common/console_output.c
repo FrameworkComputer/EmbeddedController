@@ -29,7 +29,7 @@ static uint32_t channel_mask_saved = CC_DEFAULT;
  */
 static const char * const channel_names[] = {
 	#define CONSOLE_CHANNEL(enumeration, string) string,
-	#include "include/console_channel.inc"
+	#include "console_channel.inc"
 	#undef CONSOLE_CHANNEL
 };
 BUILD_ASSERT(ARRAY_SIZE(channel_names) == CC_CHANNEL_COUNT);

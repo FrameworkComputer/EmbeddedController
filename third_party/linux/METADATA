@@ -1,0 +1,14 @@
+name: "Linux Kernel Overflow Macros"
+description:
+    "Macros for checking arithmetic overflow."
+
+third_party {
+  url {
+    type: GIT
+    value: "https://github.com/torvalds/linux.git"
+  }
+  version: "5925fa68fe8244651b3f78a88c4af99190a88f0d"
+  last_upgrade_date { year: 2020 month: 9 day: 18 }
+  license_type: NOTICE
+}
+

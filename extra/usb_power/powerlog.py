@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Copyright 2016 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -6,6 +6,8 @@
 """Program to fetch power logging data from a sweetberry device
    or other usb device that exports a USB power logging interface.
 """
+
+# Note: This is a py2/3 compatible file.
 
 from __future__ import print_function
 import argparse
@@ -312,7 +314,7 @@ class Spower(object):
     """Clear pending reads on the stm32"""
     try:
       while True:
-        ret = self.wr_command("", read_count=512, rtimeout=100, wtimeout=50)
+        ret = self.wr_command(b"", read_count=512, rtimeout=100, wtimeout=50)
         self._logger.debug("Try Clear: read %s",
                            "success" if ret == 0 else "failure")
     except:
@@ -456,7 +458,7 @@ class Spower(object):
 
     datasize = self.report_header_size() + ina_count * record
     # Round to multiple of 4 bytes.
-    datasize = int(((datasize + 3) / 4) * 4)
+    datasize = int(((datasize + 3) // 4) * 4)
 
     return datasize
 
@@ -485,7 +487,7 @@ class Spower(object):
       self._logger.debug("READ LINE WARNING: expected %d, got %d",
           expected_bytes, len(bytesread))
 
-    packet_count = len(bytesread) / expected_bytes
+    packet_count = len(bytesread) // expected_bytes
 
     values = []
     for i in range(0, packet_count):
@@ -634,7 +636,7 @@ class powerlog(object):
                         "sweetberry, or bad board file?)" % name)
 
     # Evict unused boards.
-    for key in self._pwr.keys():
+    for key in list(self._pwr.keys()):
       if key not in used_boards:
         self._pwr.pop(key)
 

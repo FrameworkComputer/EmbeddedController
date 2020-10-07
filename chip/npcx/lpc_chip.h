@@ -11,13 +11,10 @@
 /* For host registers initialization via SIB module */
 void host_register_init(void);
 
-#ifdef CONFIG_HOSTCMD_ESPI
 /* eSPI Initialization functions */
 void espi_init(void);
 /* eSPI reset assert/de-assert interrupt */
 void espi_espirst_handler(void);
-#else
 /* LPC PLTRST assert/de-assert interrupt */
 void lpc_lreset_pltrst_handler(void);
-#endif
 #endif /* __CROS_EC_LPC_CHIP_H */

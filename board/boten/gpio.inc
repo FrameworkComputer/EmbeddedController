@@ -14,7 +14,7 @@ GPIO_INT(SLP_S3_L,		PIN(H, 3), GPIO_INT_BOTH, baseboard_all_sys_pgood_interrupt)
 GPIO_INT(SLP_S0_L,		PIN(E, 4), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_SUS_L,		PIN(G, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(VCCIN_AUX_VID0,	PIN(D, 0), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(RSMRST_PWRGD_L,	PIN(E, 1), GPIO_INT_BOTH | GPIO_PULL_UP, power_signal_interrupt)
+GPIO_INT(RSMRST_PWRGD_L,	PIN(E, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(CPU_C10_GATE_L,	PIN(G, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_DRAM_OD,		PIN(D, 3), GPIO_INT_BOTH, baseboard_all_sys_pgood_interrupt)
 GPIO_INT(PG_PP1050_ST_OD,	PIN(L, 1), GPIO_INT_BOTH, power_signal_interrupt)
@@ -65,6 +65,9 @@ GPIO(EN_SLP_Z,			PIN(K, 3), GPIO_OUT_LOW)
 UNIMPLEMENTED(AC_PRESENT)
 UNIMPLEMENTED(PG_EC_DSW_PWROK)
 UNIMPLEMENTED(PG_EC_ALL_SYS_PWRGD)
+
+/* Used by baseboard z-state enable, but not present on boten */
+UNIMPLEMENTED(USB_C1_INT_ODL)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(EC_I2C_EEPROM_SCL,		PIN(B, 3), GPIO_INPUT)

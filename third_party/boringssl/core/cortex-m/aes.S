@@ -418,13 +418,13 @@ _armv4_AES_set_encrypt_key:
 #endif
 	teq	r0,#0
 #ifdef	__thumb2__
-	itt	eq			@ Thumb2 thing, sanity check in ARM
+	itt	eq			@ Thumb2 thing, validity check in ARM
 #endif
 	moveq	r0,#-1
 	beq	.Labrt
 	teq	r2,#0
 #ifdef	__thumb2__
-	itt	eq			@ Thumb2 thing, sanity check in ARM
+	itt	eq			@ Thumb2 thing, validity check in ARM
 #endif
 	moveq	r0,#-1
 	beq	.Labrt
@@ -435,7 +435,7 @@ _armv4_AES_set_encrypt_key:
 	beq	.Lok
 	teq	r1,#256
 #ifdef	__thumb2__
-	itt	ne			@ Thumb2 thing, sanity check in ARM
+	itt	ne			@ Thumb2 thing, validity check in ARM
 #endif
 	movne	r0,#-1
 	bne	.Labrt
@@ -596,7 +596,7 @@ _armv4_AES_set_encrypt_key:
 	subs	r12,r12,#1
 	str	r3,[r11,#-12]
 #ifdef	__thumb2__
-	itt	eq				@ Thumb2 thing, sanity check in ARM
+	itt	eq			@ Thumb2 thing, validity check in ARM
 #endif
 	subeq	r2,r11,#216
 	beq	.Ldone
@@ -668,7 +668,7 @@ _armv4_AES_set_encrypt_key:
 	subs	r12,r12,#1
 	str	r3,[r11,#-20]
 #ifdef	__thumb2__
-	itt	eq				@ Thumb2 thing, sanity check in ARM
+	itt	eq			@ Thumb2 thing, validity check in ARM
 #endif
 	subeq	r2,r11,#256
 	beq	.Ldone

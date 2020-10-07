@@ -17,6 +17,13 @@
 
 /* Enable the required TCPMv1 options */
 #define CONFIG_USB_PD_TCPMV1
+
+/*
+ * Because the TPCMv1 stack has considerably smaller flash footprint, disable
+ * the CONFIG_CHIP_INIT_ROM_REGION for testing of the init_rom API and the
+ * BMI260 driver.
+ */
+#undef CONFIG_CHIP_INIT_ROM_REGION
 #endif
 
 /* Optional features */
@@ -45,7 +52,6 @@
 
 /* BMI260 accel/gyro in base */
 #define CONFIG_ACCELGYRO_BMI260
-#define CONFIG_ACCELGYRO_BMI160_COMPRESSED_CONFIG
 #define CONFIG_ACCELGYRO_BMI260_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
@@ -66,6 +72,8 @@
 #define CONFIG_LID_ANGLE_SENSOR_LID		LID_ACCEL
 
 /* USB Type C and USB PD defines */
+#define CONFIG_USB_PD_PORT_MAX_COUNT			2
+
 /*
  * USB-C port's USB2 & USB3 mapping from schematics
  * USB2 numbering on PCH - 1 to n
@@ -77,14 +85,26 @@
 #define USBC_PORT_1_USB2_NUM	4
 #define USBC_PORT_1_USB3_NUM	2
 
+/* TODO: b/144165680 - measure and check these values on Volteer */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
+#define PD_VCONN_SWAP_DELAY		5000 /* us */
+
+/*
+ * SN5S30 PPC supports up to 24V VBUS source and sink, however passive USB-C
+ * cables only support up to 60W.
+ */
+#define PD_OPERATING_POWER_MW	15000
+#define PD_MAX_POWER_MW		60000
+#define PD_MAX_CURRENT_MA	3000
+#define PD_MAX_VOLTAGE_MV	20000
+
 /* Enabling Thunderbolt-compatible mode */
 #define CONFIG_USB_PD_TBT_COMPAT_MODE
 
 /* Enabling USB4 mode */
 #define CONFIG_USB_PD_USB4
-
-/* Disabled PD extended message support to save flash space. */
-#undef CONFIG_USB_PD_EXTENDED_MESSAGES
+#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x40
 
 /* USB Type A Features */
 #define USB_PORT_COUNT			1
@@ -99,6 +119,10 @@
 /* Volume Button feature */
 
 /* Fan features */
+
+/* charger defines */
+#define CONFIG_CHARGER_SENSE_RESISTOR		10
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC	10
 
 /*
  * Macros for GPIO signals used in common code that don't match the
@@ -174,6 +198,12 @@ enum sensor_id {
 	CLEAR_ALS,
 	RGB_ALS,
 	SENSOR_COUNT,
+};
+
+enum usbc_port {
+	USBC_PORT_C0 = 0,
+	USBC_PORT_C1,
+	USBC_PORT_COUNT
 };
 
 void board_reset_pd_mcu(void);

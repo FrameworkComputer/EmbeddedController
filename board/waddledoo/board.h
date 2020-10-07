@@ -17,8 +17,10 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
+/* Battery */
+#define CONFIG_BATTERY_FUEL_GAUGE
+
 /* Charger */
-#define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_RAA489000
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
@@ -29,6 +31,14 @@
 /* EC console commands */
 #define CONFIG_CMD_TCPC_DUMP
 #define CONFIG_CMD_CHARGER_DUMP
+
+/*
+ * GPIO for C1 interrupts, for baseboard use
+ *
+ * Note this line might already have its pull up disabled for HDMI DBs, but
+ * it should be fine to set again before z-state.
+ */
+#define GPIO_USB_C1_INT_ODL GPIO_SUB_C1_INT_EN_RAILS_ODL
 
 /* Keyboard */
 #define CONFIG_PWM_KBLIGHT
@@ -44,6 +54,10 @@
 #define CONFIG_LED_PWM_SOC_ON_COLOR EC_LED_COLOR_WHITE
 #define CONFIG_LED_PWM_SOC_SUSPEND_COLOR EC_LED_COLOR_WHITE
 #define CONFIG_LED_PWM_LOW_BATT_COLOR EC_LED_COLOR_AMBER
+
+/* PWM */
+#define CONFIG_PWM
+#define NPCX7_PWM1_SEL    1  /* GPIO C2 is used as PWM1. */
 
 /* USB */
 #define CONFIG_BC12_DETECT_PI3USB9201
@@ -91,7 +105,6 @@
 
 #define CONFIG_ACCEL_BMA255		/* Lid accel */
 #define CONFIG_ACCELGYRO_BMI160		/* Base accel */
-#define CONFIG_SYNC			/* Camera VSYNC */
 
 /* Lid operates in forced mode, base in FIFO */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
@@ -102,7 +115,6 @@
 #define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-#define CONFIG_SYNC_INT_EVENT TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
 
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
@@ -139,7 +151,6 @@ enum sensor_id {
 	LID_ACCEL,
 	BASE_ACCEL,
 	BASE_GYRO,
-	VSYNC,
 	SENSOR_COUNT
 };
 
@@ -148,6 +159,12 @@ enum pwm_channel {
 	PWM_CH_LED1_AMBER,
 	PWM_CH_LED2_WHITE,
 	PWM_CH_COUNT,
+};
+
+/* List of possible batteries */
+enum battery_type {
+	BATTERY_POWER_TECH,
+	BATTERY_TYPE_COUNT,
 };
 
 int board_is_sourcing_vbus(int port);

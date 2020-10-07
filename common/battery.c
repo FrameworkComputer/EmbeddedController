@@ -579,43 +579,41 @@ DECLARE_HOOK(HOOK_INIT, battery_init, HOOK_PRIO_DEFAULT);
 void battery_compensate_params(struct batt_params *batt)
 {
 	int numer, denom;
-	int remain = batt->remaining_capacity;
-	int full = batt->full_capacity;
-	int lfcc = *(int *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
+	int *remain = &(batt->remaining_capacity);
+	int *full = &(batt->full_capacity);
 
 	if ((batt->flags & BATT_FLAG_BAD_FULL_CAPACITY) ||
 			(batt->flags & BATT_FLAG_BAD_REMAINING_CAPACITY))
 		return;
 
-	if (remain <= 0 || full <= 0)
-		return;
-
-	/* full_factor != 100 isn't supported. EC and host are not able to
-	 * act on soc changes synchronously. */
-	if (batt_host_full_factor != 100)
+	if (*remain <= 0 || *full <= 0)
 		return;
 
 	/* full_factor is effectively disabled in powerd. */
-	batt->full_capacity = full * batt_full_factor / 100;
-	if (lfcc == 0)
-		/* EC just reset. Assume host full is equal. */
-		lfcc = batt->full_capacity;
-	if (remain > lfcc) {
-		batt->remaining_capacity = lfcc;
-		remain = batt->remaining_capacity;
-	}
+	*full = *full * batt_full_factor / 100;
+	if (*remain > *full)
+		*remain = *full;
 
 	/*
 	 * Powerd uses the following equation to calculate display percentage:
-	 *   charge = 100 * remain/full;
-	 *   100 * (charge - shutdown_pct) / (full_factor - shutdown_pct);
+	 *   charge = 100 * remain / full
+	 *   display = 100 * (charge - shutdown_pct) /
+	 *		     (full_factor - shutdown_pct)
+	 *	     = 100 * ((100 * remain / full) - shutdown_pct) /
+	 *		     (full_factor - shutdown_pct)
+	 *	     = 100 * ((100 * remain) - (full * shutdown_pct)) /
+	 *		     (full * (full_factor - shutdown_pct))
+	 *
+	 * The unit of the following batt->display_charge is 0.1%.
 	 */
-	numer = (100 * remain - lfcc * batt_host_shutdown_pct) * 1000;
-	denom = lfcc * (100 - batt_host_shutdown_pct);
+	numer = 1000 * ((100 * *remain) - (*full * batt_host_shutdown_pct));
+	denom = *full * (batt_host_full_factor - batt_host_shutdown_pct);
 	/* Rounding (instead of truncating) */
 	batt->display_charge = (numer + denom / 2) / denom;
 	if (batt->display_charge < 0)
 		batt->display_charge = 0;
+	if (batt->display_charge > 1000)
+		batt->display_charge = 1000;
 }
 
 __overridable void board_battery_compensate_params(struct batt_params *batt)

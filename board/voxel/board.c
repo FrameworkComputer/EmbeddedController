@@ -4,15 +4,19 @@
  */
 
 /* Volteer board-specific configuration */
-
+#include "bb_retimer.h"
 #include "button.h"
 #include "common.h"
 #include "accelgyro.h"
 #include "cbi_ec_fw_config.h"
 #include "driver/accel_bma2x2.h"
-#include "driver/accelgyro_bmi260.h"
+#include "driver/accelgyro_bmi160.h"
 #include "driver/als_tcs3400.h"
+#include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/syv682x.h"
+#include "driver/tcpm/tcpci.h"
+#include "driver/tcpm/tusb422.h"
+#include "driver/tcpm/rt1715.h"
 #include "driver/retimer/bb_retimer.h"
 #include "driver/sync.h"
 #include "extpower.h"
@@ -20,6 +24,7 @@
 #include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -31,7 +36,10 @@
 #include "tablet_mode.h"
 #include "throttle_ap.h"
 #include "uart.h"
+#include "usb_mux.h"
+#include "usb_pd.h"
 #include "usb_pd_tbt.h"
+#include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -39,38 +47,29 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
+/* Keyboard scan setting */
+struct keyboard_scan_config keyscan_config = {
+	/* Increase from 50 us, because KSO_02 passes through the H1. */
+	.output_settle_us = 80,
+	/* Other values should be the same as the default configuration. */
+	.debounce_down_us = 9 * MSEC,
+	.debounce_up_us = 30 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+	.actual_key_mask = {
+		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
+	},
+};
+
+/******************************************************************************/
 /*
  * FW_CONFIG defaults for Voxel if the CBI data is not initialized.
  */
 union volteer_cbi_fw_config fw_config_defaults = {
 	.usb_db = DB_USB4_GEN3,
 };
-
-__override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
-{
-	/* Routing length exceeds 205mm prior to connection to re-timer */
-	if (port == USBC_PORT_C1)
-		return TBT_SS_U32_GEN1_GEN2;
-
-	/*
-	 * Thunderbolt-compatible mode not supported
-	 *
-	 * TODO (b/147726366): All the USB-C ports need to support same speed.
-	 * Need to fix once USB-C feature set is known for Volteer.
-	 */
-	return TBT_SS_RES_0;
-}
-
-__override bool board_is_tbt_usb4_port(int port)
-{
-	/*
-	 * On Proto-1 only Port 1 supports TBT & USB4
-	 *
-	 * TODO (b/147732807): All the USB-C ports need to support same
-	 * features. Need to fix once USB-C feature set is known for Volteer.
-	 */
-	return port == USBC_PORT_C1;
-}
 
 /******************************************************************************/
 /* Physical fans. These are logically separate from pwm_channels. */
@@ -101,6 +100,58 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 		.rpm = &fan_rpm_0,
 	},
 };
+
+/******************************************************************************/
+/* EC thermal management configuration */
+
+/*
+ * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
+ * 130 C.  However, sensor is located next to DDR, so we need to use the lower
+ * DDR temperature limit (85 C)
+ */
+const static struct ec_thermal_config thermal_cpu = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+	.temp_fan_off = C_TO_K(35),
+	.temp_fan_max = C_TO_K(50),
+};
+
+/*
+ * Inductor limits - used for both charger and PP3300 regulator
+ *
+ * Need to use the lower of the charger IC, PP3300 regulator, and the inductors
+ *
+ * Charger max recommended temperature 100C, max absolute temperature 125C
+ * PP3300 regulator: operating range -40 C to 145 C
+ *
+ * Inductors: limit of 125c
+ * PCB: limit is 80c
+ */
+const static struct ec_thermal_config thermal_inductor = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(55),
+};
+
+
+struct ec_thermal_config thermal_params[] = {
+	[TEMP_SENSOR_1_CHARGER]			= thermal_inductor,
+	[TEMP_SENSOR_2_PP3300_REGULATOR]	= thermal_inductor,
+	[TEMP_SENSOR_3_DDR_SOC]			= thermal_cpu,
+	[TEMP_SENSOR_4_FAN]			= thermal_cpu,
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 /******************************************************************************/
 /* MFT channels. These are logically separate from pwm_channels. */
@@ -190,26 +241,34 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
-/* USBC mux configuration - Tiger Lake includes internal mux */
-struct usb_mux usbc0_usb4_db_retimer = {
-	.usb_port = USBC_PORT_C0,
-	.driver = &bb_usb_retimer,
-	.i2c_port = I2C_PORT_USB_0_MIX,
-	.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
-};
-
-/*****************************************************************************
- * USB-C MUX/Retimer dynamic configuration.
- */
-
-static void setup_mux(void)
+static void kb_backlight_enable(void)
 {
-	CPRINTS("C0 supports bb-retimer");
-
-	/* USB-C port 0 have a retimer */
-	usb_muxes[USBC_PORT_C0].next_mux = &usbc0_usb4_db_retimer;
+	gpio_set_level(GPIO_EC_KB_BL_EN, 1);
 }
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, kb_backlight_enable, HOOK_PRIO_DEFAULT);
 
+static void kb_backlight_disable(void)
+{
+	gpio_set_level(GPIO_EC_KB_BL_EN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kb_backlight_disable, HOOK_PRIO_DEFAULT);
+
+/* Config TCPC dynamic by Board version */
+static void setup_board_tcpc(void)
+{
+	uint8_t board_id = get_board_id();
+
+	if (board_id == 0) {
+		/* config typec C0 prot TUSB422 TCPC */
+		tcpc_config[USBC_PORT_C0].i2c_info.addr_flags
+			= TUSB422_I2C_ADDR_FLAGS;
+		tcpc_config[USBC_PORT_C0].drv = &tusb422_tcpm_drv;
+		/* config typec C1 prot TUSB422 TCPC */
+		tcpc_config[USBC_PORT_C1].i2c_info.addr_flags
+			= TUSB422_I2C_ADDR_FLAGS;
+		tcpc_config[USBC_PORT_C1].drv = &tusb422_tcpm_drv;
+	}
+}
 
 void board_reset_pd_mcu(void)
 {
@@ -221,14 +280,7 @@ void board_reset_pd_mcu(void)
 
 __override void board_cbi_init(void)
 {
-	/* TODO(b/159025739): Voxel: check FW_CONFIG fields for USB DB type */
-	setup_mux();
-
-	/* Reassign USB_C0_RT_RST_ODL */
-	bb_controls[USBC_PORT_C0].shared_nvm = false;
-	bb_controls[USBC_PORT_C0].usb_ls_en_gpio = GPIO_USB_C0_LS_EN;
-	bb_controls[USBC_PORT_C0].retimer_rst_gpio = GPIO_USB_C0_RT_RST_ODL;
-	bb_controls[USBC_PORT_C0].force_power_gpio = GPIO_USB_C0_RT_FORCE_PWR;
+	setup_board_tcpc();
 }
 
 /******************************************************************************/
@@ -270,3 +322,128 @@ void ppc_interrupt(enum gpio_signal signal)
 	}
 }
 
+/******************************************************************************/
+/* BC1.2 charger detect configuration */
+const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
+	[USBC_PORT_C0] = {
+		.i2c_port = I2C_PORT_USB_C0,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+	[USBC_PORT_C1] = {
+		.i2c_port = I2C_PORT_USB_C1,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
+
+/******************************************************************************/
+/* USBC TCPC configuration */
+struct tcpc_config_t tcpc_config[] = {
+	[USBC_PORT_C0] = {
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_USB_C0,
+			.addr_flags = RT1715_I2C_ADDR_FLAGS,
+		},
+		.drv = &rt1715_tcpm_drv,
+		.usb23 = USBC_PORT_0_USB2_NUM | (USBC_PORT_0_USB3_NUM << 4),
+	},
+	[USBC_PORT_C1] = {
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_USB_C1,
+			.addr_flags = RT1715_I2C_ADDR_FLAGS,
+		},
+		.drv = &rt1715_tcpm_drv,
+		.usb23 = USBC_PORT_1_USB2_NUM | (USBC_PORT_1_USB3_NUM << 4),
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
+BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
+
+/******************************************************************************/
+/* USBC mux configuration - Tiger Lake includes internal mux */
+struct usb_mux usbc0_usb4_db_retimer = {
+	.usb_port = USBC_PORT_C0,
+	.driver = &bb_usb_retimer,
+	.i2c_port = I2C_PORT_USB_0_MIX,
+	.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
+};
+struct usb_mux usbc1_usb4_db_retimer = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &bb_usb_retimer,
+	.i2c_port = I2C_PORT_USB_1_MIX,
+	.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
+};
+struct usb_mux usb_muxes[] = {
+	[USBC_PORT_C0] = {
+		.usb_port = USBC_PORT_C0,
+		.driver = &virtual_usb_mux_driver,
+		.hpd_update = &virtual_hpd_update,
+		.next_mux = &usbc0_usb4_db_retimer,
+	},
+	[USBC_PORT_C1] = {
+		.usb_port = USBC_PORT_C1,
+		.driver = &virtual_usb_mux_driver,
+		.hpd_update = &virtual_hpd_update,
+		.next_mux = &usbc1_usb4_db_retimer,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
+
+struct bb_usb_control bb_controls[] = {
+	[USBC_PORT_C0] = {
+		.usb_ls_en_gpio = GPIO_USB_C0_LS_EN,
+		.retimer_rst_gpio = GPIO_USB_C0_RT_RST_ODL,
+	},
+	[USBC_PORT_C1] = {
+		.usb_ls_en_gpio = GPIO_USB_C1_LS_EN,
+		.retimer_rst_gpio = GPIO_USB_C1_RT_RST_ODL,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(bb_controls) == USBC_PORT_COUNT);
+
+static void board_tcpc_init(void)
+{
+	/* Don't reset TCPCs after initial reset */
+	if (!system_jumped_late())
+		board_reset_pd_mcu();
+
+	/* Enable PPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+
+	/* Enable TCPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
+
+	/* Enable BC1.2 interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
+}
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
+
+/******************************************************************************/
+/* TCPC support routines */
+uint16_t tcpc_get_alert_status(void)
+{
+	uint16_t status = 0;
+
+	/*
+	 * Check which port has the ALERT line set
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL))
+		status |= PD_STATUS_TCPC_ALERT_0;
+	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL))
+		status |= PD_STATUS_TCPC_ALERT_1;
+
+	return status;
+}
+
+int ppc_get_alert_status(int port)
+{
+	if (port == USBC_PORT_C0)
+		return gpio_get_level(GPIO_USB_C0_PPC_INT_ODL) == 0;
+	else
+		return gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
+}
