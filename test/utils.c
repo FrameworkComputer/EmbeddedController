@@ -45,13 +45,19 @@ static int test_memmove(void)
 	TEST_ASSERT_ARRAY_EQ(buf + 100, buf, len);
 
 	/* Expected about 4x speed gain. Use 3x because it fluctuates */
-#ifndef EMU_BUILD
-	/*
-	 * The speed gain is too unpredictable on host, especially on
-	 * buildbots. Skip it if we are running in the emulator.
-	 */
-	TEST_ASSERT((t1.val-t0.val) > (unsigned)(t3.val-t2.val) * 3);
-#endif
+	if (!IS_ENABLED(EMU_BUILD)) {
+		/*
+		 * The speed gain is too unpredictable on host, especially on
+		 * buildbots. Skip it if we are running in the emulator.
+		 */
+		int expected_speedup = 3;
+
+		if (IS_ENABLED(CHIP_FAMILY_STM32H7))
+			expected_speedup = 2;
+
+		TEST_ASSERT((t1.val - t0.val) >
+			    (unsigned int)(t3.val - t2.val) * expected_speedup);
+	}
 
 	/* Test small moves */
 	memmove(buf + 1, buf, 1);
@@ -168,7 +174,8 @@ static int test_memset(void)
 		 */
 		int expected_speedup = 3;
 
-		if (IS_ENABLED(CHIP_FAMILY_STM32F4))
+		if (IS_ENABLED(CHIP_FAMILY_STM32F4) ||
+		    IS_ENABLED(CHIP_FAMILY_STM32H7))
 			expected_speedup = 2;
 
 		TEST_ASSERT((t1.val - t0.val) >
