@@ -608,7 +608,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PD_CONTROL, pd_control, EC_VER_MASK(0));
 /*
  * PD host event status for host command
  * Note: this variable must be aligned on 4-byte boundary because we pass the
- * address to deprecated_atomic_ functions which use assembly to access them.
+ * address to atomic_ functions which use assembly to access them.
  */
 static uint32_t pd_host_event_status __aligned(4);
 
@@ -618,7 +618,7 @@ hc_pd_host_event_status(struct host_cmd_handler_args *args)
 	struct ec_response_host_event_status *r = args->response;
 
 	/* Read and clear the host event status to return to AP */
-	r->status = deprecated_atomic_read_clear(&pd_host_event_status);
+	r->status = atomic_read_clear(&pd_host_event_status);
 
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
@@ -633,7 +633,7 @@ void pd_send_host_event(int mask)
 	if (!mask)
 		return;
 
-	deprecated_atomic_or(&pd_host_event_status, mask);
+	atomic_or(&pd_host_event_status, mask);
 	/* interrupt the AP */
 	host_set_single_event(EC_HOST_EVENT_PD_MCU);
 }

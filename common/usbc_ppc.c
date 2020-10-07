@@ -84,7 +84,7 @@ int ppc_add_oc_event(int port)
 	oc_event_cnt_tbl[port]++;
 
 	/* The port overcurrented, so don't clear it's OC events. */
-	deprecated_atomic_clear_bits(&snk_connected_ports, 1 << port);
+	atomic_clear_bits(&snk_connected_ports, 1 << port);
 
 	if (oc_event_cnt_tbl[port] >= PPC_OC_CNT_THRESH)
 		ppc_prints("OC event limit reached! "
@@ -269,10 +269,10 @@ int ppc_dev_is_connected(int port, enum ppc_device_role dev)
 	}
 
 	if (dev == PPC_DEV_SNK)
-		deprecated_atomic_or(&snk_connected_ports, 1 << port);
+		atomic_or(&snk_connected_ports, 1 << port);
 	else
 		/* clear flag if it transitions to SRC or disconnected */
-		deprecated_atomic_clear_bits(&snk_connected_ports, 1 << port);
+		atomic_clear_bits(&snk_connected_ports, 1 << port);
 
 	ppc = &ppc_chips[port];
 	if (ppc->drv->dev_is_connected)

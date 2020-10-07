@@ -40,32 +40,26 @@
 #define CPRINTS(format, args...)
 #endif
 
-#define RCH_SET_FLAG(port, flag) deprecated_atomic_or(&rch[port].flags, (flag))
-#define RCH_CLR_FLAG(port, flag) \
-	deprecated_atomic_clear_bits(&rch[port].flags, (flag))
+#define RCH_SET_FLAG(port, flag) atomic_or(&rch[port].flags, (flag))
+#define RCH_CLR_FLAG(port, flag) atomic_clear_bits(&rch[port].flags, (flag))
 #define RCH_CHK_FLAG(port, flag) (rch[port].flags & (flag))
 
-#define TCH_SET_FLAG(port, flag) deprecated_atomic_or(&tch[port].flags, (flag))
-#define TCH_CLR_FLAG(port, flag) \
-	deprecated_atomic_clear_bits(&tch[port].flags, (flag))
+#define TCH_SET_FLAG(port, flag) atomic_or(&tch[port].flags, (flag))
+#define TCH_CLR_FLAG(port, flag) atomic_clear_bits(&tch[port].flags, (flag))
 #define TCH_CHK_FLAG(port, flag) (tch[port].flags & (flag))
 
-#define PRL_TX_SET_FLAG(port, flag) \
-	deprecated_atomic_or(&prl_tx[port].flags, (flag))
+#define PRL_TX_SET_FLAG(port, flag) atomic_or(&prl_tx[port].flags, (flag))
 #define PRL_TX_CLR_FLAG(port, flag) \
-	deprecated_atomic_clear_bits(&prl_tx[port].flags, (flag))
+	atomic_clear_bits(&prl_tx[port].flags, (flag))
 #define PRL_TX_CHK_FLAG(port, flag) (prl_tx[port].flags & (flag))
 
-#define PRL_HR_SET_FLAG(port, flag) \
-	deprecated_atomic_or(&prl_hr[port].flags, (flag))
+#define PRL_HR_SET_FLAG(port, flag) atomic_or(&prl_hr[port].flags, (flag))
 #define PRL_HR_CLR_FLAG(port, flag) \
-	deprecated_atomic_clear_bits(&prl_hr[port].flags, (flag))
+	atomic_clear_bits(&prl_hr[port].flags, (flag))
 #define PRL_HR_CHK_FLAG(port, flag) (prl_hr[port].flags & (flag))
 
-#define PDMSG_SET_FLAG(port, flag) \
-	deprecated_atomic_or(&pdmsg[port].flags, (flag))
-#define PDMSG_CLR_FLAG(port, flag) \
-	deprecated_atomic_clear_bits(&pdmsg[port].flags, (flag))
+#define PDMSG_SET_FLAG(port, flag) atomic_or(&pdmsg[port].flags, (flag))
+#define PDMSG_CLR_FLAG(port, flag) atomic_clear_bits(&pdmsg[port].flags, (flag))
 #define PDMSG_CHK_FLAG(port, flag) (pdmsg[port].flags & (flag))
 
 /* Protocol Layer Flags */

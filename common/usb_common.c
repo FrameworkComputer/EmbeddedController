@@ -468,7 +468,7 @@ static uint32_t port_oc_reset_req;
 
 static void re_enable_ports(void)
 {
-	uint32_t ports = deprecated_atomic_read_clear(&port_oc_reset_req);
+	uint32_t ports = atomic_read_clear(&port_oc_reset_req);
 
 	while (ports) {
 		int port = __fls(ports);
@@ -510,7 +510,7 @@ void pd_handle_overcurrent(int port)
 	board_overcurrent_event(port, 1);
 
 	/* Wait 1s before trying to re-enable the port. */
-	deprecated_atomic_or(&port_oc_reset_req, BIT(port));
+	atomic_or(&port_oc_reset_req, BIT(port));
 	hook_call_deferred(&re_enable_ports_data, SECOND);
 }
 
@@ -747,8 +747,7 @@ static uint32_t pd_ports_to_resume;
 static void resume_pd_port(void)
 {
 	uint32_t port;
-	uint32_t suspended_ports =
-		deprecated_atomic_read_clear(&pd_ports_to_resume);
+	uint32_t suspended_ports = atomic_read_clear(&pd_ports_to_resume);
 
 	while (suspended_ports) {
 		port = __builtin_ctz(suspended_ports);
@@ -760,7 +759,7 @@ DECLARE_DEFERRED(resume_pd_port);
 
 void pd_deferred_resume(int port)
 {
-	deprecated_atomic_or(&pd_ports_to_resume, 1 << port);
+	atomic_or(&pd_ports_to_resume, 1 << port);
 	hook_call_deferred(&resume_pd_port_data, 5 * SECOND);
 }
 #endif /* CONFIG_USB_PD_TCPM_TCPCI */

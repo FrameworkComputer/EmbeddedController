@@ -335,7 +335,7 @@ static void write_keyboard_report(void)
 		return;
 	}
 
-	if (deprecated_atomic_read_clear(&hid_ep_data_ready)) {
+	if (atomic_read_clear((int *)&hid_ep_data_ready)) {
 		/*
 		 * Endpoint is not busy, and interrupt handler did not just
 		 * send the buffer: enable TX.

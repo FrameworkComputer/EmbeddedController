@@ -33,7 +33,7 @@ static void usart_rx_interrupt_handler(struct usart_config const *config)
 		uint8_t byte = STM32_USART_RDR(base);
 
 		if (!queue_add_unit(config->producer.queue, &byte))
-			deprecated_atomic_add(&config->state->rx_dropped, 1);
+			atomic_add((uint32_t *)&(config->state->rx_dropped), 1);
 	}
 }
 

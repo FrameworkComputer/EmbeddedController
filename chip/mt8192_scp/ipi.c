@@ -30,13 +30,13 @@ static uint32_t disable_irq_count, saved_int_mask;
 
 void ipi_disable_irq(void)
 {
-	if (deprecated_atomic_read_add(&disable_irq_count, 1) == 0)
+	if (atomic_read_add(&disable_irq_count, 1) == 0)
 		saved_int_mask = read_clear_int_mask();
 }
 
 void ipi_enable_irq(void)
 {
-	if (deprecated_atomic_read_sub(&disable_irq_count, 1) == 1)
+	if (atomic_read_sub(&disable_irq_count, 1) == 1)
 		set_int_mask(saved_int_mask);
 }
 

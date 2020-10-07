@@ -502,9 +502,9 @@ enum power_state power_handle_state(enum power_state state)
 void set_pp5000_in_g3(int mask, int enable)
 {
 	if (enable)
-		deprecated_atomic_or(&pp5000_in_g3, mask);
+		atomic_or(&pp5000_in_g3, mask);
 	else
-		deprecated_atomic_clear_bits(&pp5000_in_g3, mask);
+		atomic_clear_bits(&pp5000_in_g3, mask);
 
 	/* if we are in G3 now, then set the rail accordingly */
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))

@@ -264,7 +264,7 @@ static int uart_client_init(enum UART_PORT id, uint32_t baud_rate_id, int flags)
 
 	uart_ctx[id].client_flags = flags;
 
-	deprecated_atomic_and(&uart_ctx[id].uart_state, ~UART_STATE_CG);
+	atomic_and(&uart_ctx[id].uart_state, ~UART_STATE_CG);
 	uart_hw_init(id);
 
 	return EC_SUCCESS;

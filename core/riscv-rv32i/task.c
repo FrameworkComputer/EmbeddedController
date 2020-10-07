@@ -397,7 +397,7 @@ static uint32_t __ram_code __wait_evt(int timeout_us, task_id_t resched)
 		ret = timer_arm(deadline, me);
 		ASSERT(ret == EC_SUCCESS);
 	}
-	while (!(evt = deprecated_atomic_read_clear(&tsk->events))) {
+	while (!(evt = atomic_read_clear(&tsk->events))) {
 		/* Remove ourself and get the next task in the scheduler */
 		__schedule(1, resched, 0);
 		resched = TASK_ID_IDLE;
@@ -405,7 +405,7 @@ static uint32_t __ram_code __wait_evt(int timeout_us, task_id_t resched)
 	if (timeout_us > 0) {
 		timer_cancel(me);
 		/* Ensure timer event is clear, we no longer care about it */
-		deprecated_atomic_clear_bits(&tsk->events, TASK_EVENT_TIMER);
+		atomic_clear_bits(&tsk->events, TASK_EVENT_TIMER);
 	}
 	return evt;
 }
@@ -417,12 +417,12 @@ uint32_t __ram_code task_set_event(task_id_t tskid, uint32_t event, int wait)
 	ASSERT(receiver);
 
 	/* Set the event bit in the receiver message bitmap */
-	deprecated_atomic_or(&receiver->events, event);
+	atomic_or(&receiver->events, event);
 
 	/* Re-schedule if priorities have changed */
 	if (in_interrupt_context()) {
 		/* The receiver might run again */
-		deprecated_atomic_or(&tasks_ready, 1 << tskid);
+		atomic_or(&tasks_ready, 1 << tskid);
 		if (start_called)
 			need_resched = 1;
 	} else {
@@ -463,8 +463,7 @@ uint32_t __ram_code task_wait_event_mask(uint32_t event_mask, int timeout_us)
 
 	/* Re-post any other events collected */
 	if (events & ~event_mask)
-		deprecated_atomic_or(&current_task->events,
-				     events & ~event_mask);
+		atomic_or(&current_task->events, events & ~event_mask);
 
 	return events & event_mask;
 }
@@ -494,12 +493,12 @@ void task_enable_all_tasks(void)
 
 void task_enable_task(task_id_t tskid)
 {
-	deprecated_atomic_or(&tasks_enabled, BIT(tskid));
+	atomic_or(&tasks_enabled, BIT(tskid));
 }
 
 void task_disable_task(task_id_t tskid)
 {
-	deprecated_atomic_clear_bits(&tasks_enabled, BIT(tskid));
+	atomic_clear_bits(&tasks_enabled, BIT(tskid));
 
 	if (!in_interrupt_context() && tskid == task_get_current())
 		__schedule(0, 0, 0);
@@ -558,7 +557,7 @@ void __ram_code mutex_lock(struct mutex *mtx)
 	uint32_t id = 1 << task_get_current();
 
 	ASSERT(id != TASK_ID_INVALID);
-	deprecated_atomic_or(&mtx->waiters, id);
+	atomic_or(&mtx->waiters, id);
 
 	while (1) {
 		asm volatile (
@@ -575,7 +574,7 @@ void __ram_code mutex_lock(struct mutex *mtx)
 		task_wait_event_mask(TASK_EVENT_MUTEX, 0);
 	}
 
-	deprecated_atomic_clear_bits(&mtx->waiters, id);
+	atomic_clear_bits(&mtx->waiters, id);
 }
 
 void __ram_code mutex_unlock(struct mutex *mtx)
@@ -599,7 +598,7 @@ void __ram_code mutex_unlock(struct mutex *mtx)
 	}
 
 	/* Ensure no event is remaining from mutex wake-up */
-	deprecated_atomic_clear_bits(&tsk->events, TASK_EVENT_MUTEX);
+	atomic_clear_bits(&tsk->events, TASK_EVENT_MUTEX);
 }
 
 void task_print_list(void)

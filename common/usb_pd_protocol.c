@@ -531,11 +531,10 @@ static int reset_device_and_notify(int port)
 	 * waking the TCPC, but it has also set PD_EVENT_TCPC_RESET again, which
 	 * would result in a second, unnecessary init.
 	 */
-	deprecated_atomic_clear_bits(task_get_event_bitmap(task_get_current()),
-				     PD_EVENT_TCPC_RESET);
+	atomic_clear_bits(task_get_event_bitmap(task_get_current()),
+			  PD_EVENT_TCPC_RESET);
 
-	waiting_tasks =
-		deprecated_atomic_read_clear(&pd[port].tasks_waiting_on_reset);
+	waiting_tasks = atomic_read_clear(&pd[port].tasks_waiting_on_reset);
 
 	/*
 	 * Now that we are done waking up the device, handle device access
@@ -563,8 +562,8 @@ static void pd_wait_for_wakeup(int port)
 		reset_device_and_notify(port);
 	} else {
 		/* Otherwise, we need to wait for the TCPC reset to complete */
-		deprecated_atomic_or(&pd[port].tasks_waiting_on_reset,
-				     1 << task_get_current());
+		atomic_or(&pd[port].tasks_waiting_on_reset,
+			  1 << task_get_current());
 		/*
 		 * NOTE: We could be sending the PD task the reset event while
 		 * it is already processing the reset event. If that occurs,
@@ -608,11 +607,10 @@ void pd_prevent_low_power_mode(int port, int prevent)
 	const int current_task_mask = (1 << task_get_current());
 
 	if (prevent)
-		deprecated_atomic_or(&pd[port].tasks_preventing_lpm,
-				     current_task_mask);
+		atomic_or(&pd[port].tasks_preventing_lpm, current_task_mask);
 	else
-		deprecated_atomic_clear_bits(&pd[port].tasks_preventing_lpm,
-					     current_task_mask);
+		atomic_clear_bits(&pd[port].tasks_preventing_lpm,
+				  current_task_mask);
 }
 
 /* This is only called from the PD tasks that owns the port. */

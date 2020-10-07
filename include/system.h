@@ -514,7 +514,7 @@ extern uint32_t sleep_mask;
  */
 static inline void enable_sleep(uint32_t mask)
 {
-	deprecated_atomic_clear_bits(&sleep_mask, mask);
+	atomic_clear_bits(&sleep_mask, mask);
 }
 
 /**
@@ -525,7 +525,7 @@ static inline void enable_sleep(uint32_t mask)
  */
 static inline void disable_sleep(uint32_t mask)
 {
-	deprecated_atomic_or(&sleep_mask, mask);
+	atomic_or(&sleep_mask, mask);
 }
 
 #ifdef CONFIG_LOW_POWER_IDLE_LIMITED
@@ -543,12 +543,12 @@ static inline uint32_t idle_is_disabled(void)
 
 static inline void disable_idle(void)
 {
-	deprecated_atomic_or(&idle_disabled, 1);
+	atomic_or(&idle_disabled, 1);
 }
 
 static inline void enable_idle(void)
 {
-	deprecated_atomic_clear_bits(&idle_disabled, 1);
+	atomic_clear_bits(&idle_disabled, 1);
 }
 #endif
 

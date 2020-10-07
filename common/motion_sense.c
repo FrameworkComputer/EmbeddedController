@@ -677,12 +677,11 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 
 	if (*event & TASK_EVENT_MOTION_ODR_CHANGE) {
 		const int sensor_bit = 1 << sensor_num;
-		int odr_pending =
-			deprecated_atomic_read_clear(&odr_event_required);
+		int odr_pending = atomic_read_clear(&odr_event_required);
 
 		is_odr_pending = odr_pending & sensor_bit;
 		odr_pending &= ~sensor_bit;
-		deprecated_atomic_or(&odr_event_required, odr_pending);
+		atomic_or(&odr_event_required, odr_pending);
 	}
 
 #ifdef CONFIG_ACCEL_INTERRUPTS
@@ -708,8 +707,7 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 	}
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO) &&
 	    *event & TASK_EVENT_MOTION_FLUSH_PENDING) {
-		int flush_pending =
-			deprecated_atomic_read_clear(&sensor->flush_pending);
+		int flush_pending = atomic_read_clear(&sensor->flush_pending);
 
 		for (; flush_pending > 0; flush_pending--) {
 			motion_sense_fifo_insert_async_event(
@@ -1172,8 +1170,8 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			 * The new ODR may suspend sensor, leaving samples
 			 * in the FIFO. Flush it explicitly.
 			 */
-			deprecated_atomic_or(&odr_event_required,
-					     1 << (sensor - motion_sensors));
+			atomic_or(&odr_event_required,
+				  1 << (sensor - motion_sensors));
 			task_set_event(TASK_ID_MOTIONSENSE,
 					TASK_EVENT_MOTION_ODR_CHANGE, 0);
 		}
@@ -1294,7 +1292,7 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
 
-		deprecated_atomic_add(&sensor->flush_pending, 1);
+		atomic_add(&sensor->flush_pending, 1);
 
 		task_set_event(TASK_ID_MOTIONSENSE,
 			       TASK_EVENT_MOTION_FLUSH_PENDING, 0);
@@ -1645,8 +1643,7 @@ static int command_accel_data_rate(int argc, char **argv)
 		sensor->config[config_id].odr =
 			data | (round ? ROUND_UP_FLAG : 0);
 
-		deprecated_atomic_or(&odr_event_required,
-				     1 << (sensor - motion_sensors));
+		atomic_or(&odr_event_required, 1 << (sensor - motion_sensors));
 		task_set_event(TASK_ID_MOTIONSENSE,
 				TASK_EVENT_MOTION_ODR_CHANGE, 0);
 	} else {

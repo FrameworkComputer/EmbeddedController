@@ -892,7 +892,7 @@ int tcpm_enqueue_message(const int port)
 	}
 
 	/* Increment atomically to ensure get_message_raw happens-before */
-	deprecated_atomic_add(&q->head, 1);
+	atomic_add(&q->head, 1);
 
 	/* Wake PD task up so it can process incoming RX messages */
 	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE, 0);
@@ -924,7 +924,7 @@ int tcpm_dequeue_message(const int port, uint32_t *const payload,
 	memcpy(payload, tail->payload, sizeof(tail->payload));
 
 	/* Increment atomically to ensure memcpy happens-before */
-	deprecated_atomic_add(&q->tail, 1);
+	atomic_add(&q->tail, 1);
 
 	return EC_SUCCESS;
 }

@@ -200,7 +200,7 @@ pthread_t task_get_thread(task_id_t tskid)
 
 uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 {
-	deprecated_atomic_or(&tasks[tskid].event, event);
+	atomic_or(&tasks[tskid].event, event);
 	if (wait)
 		return task_wait_event(-1);
 	return 0;
@@ -224,7 +224,7 @@ uint32_t task_wait_event(int timeout_us)
 	pthread_cond_wait(&tasks[tid].resume, &run_lock);
 
 	/* Resume */
-	ret = deprecated_atomic_read_clear(&tasks[tid].event);
+	ret = atomic_read_clear(&tasks[tid].event);
 	pthread_mutex_unlock(&interrupt_lock);
 	return ret;
 }
@@ -252,8 +252,8 @@ uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us)
 
 	/* Re-post any other events collected */
 	if (events & ~event_mask)
-		deprecated_atomic_or(&tasks[task_get_current()].event,
-				     events & ~event_mask);
+		atomic_or(&tasks[task_get_current()].event,
+			  events & ~event_mask);
 
 	return events & event_mask;
 }

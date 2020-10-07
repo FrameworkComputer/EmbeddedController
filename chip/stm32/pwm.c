@@ -99,7 +99,7 @@ static void pwm_configure(enum pwm_channel ch)
 	/* Enable auto-reload preload, start counting */
 	tim->cr1 |= BIT(7) | BIT(0);
 
-	deprecated_atomic_or(&using_pwm, 1 << ch);
+	atomic_or(&using_pwm, 1 << ch);
 
 	/* Prevent sleep */
 	disable_sleep(SLEEP_MASK_PWM);
@@ -125,7 +125,7 @@ static void pwm_disable(enum pwm_channel ch)
 	/* Allow sleep */
 	enable_sleep(SLEEP_MASK_PWM);
 
-	deprecated_atomic_clear_bits(&using_pwm, 1 << ch);
+	atomic_clear_bits(&using_pwm, 1 << ch);
 
 	/* Unless another PWM is active... Then prevent sleep */
 	if (using_pwm)
@@ -147,7 +147,7 @@ int pwm_get_enabled(enum pwm_channel ch)
 
 static void pwm_reconfigure(enum pwm_channel ch)
 {
-	deprecated_atomic_clear_bits(&using_pwm, 1 << ch);
+	atomic_clear_bits(&using_pwm, 1 << ch);
 	pwm_configure(ch);
 }
 

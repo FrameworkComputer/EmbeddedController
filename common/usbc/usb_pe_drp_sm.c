@@ -63,20 +63,17 @@
 #define CPRINTS_L2(format, args...) CPRINTS_LX(2, format, ## args)
 #define CPRINTS_L3(format, args...) CPRINTS_LX(3, format, ## args)
 
-
-#define PE_SET_FLAG(port, flag) deprecated_atomic_or(&pe[port].flags, (flag))
-#define PE_CLR_FLAG(port, flag) \
-	deprecated_atomic_clear_bits(&pe[port].flags, (flag))
+#define PE_SET_FLAG(port, flag) atomic_or(&pe[port].flags, (flag))
+#define PE_CLR_FLAG(port, flag) atomic_clear_bits(&pe[port].flags, (flag))
 #define PE_CHK_FLAG(port, flag) (pe[port].flags & (flag))
 
 /*
  * These macros SET, CLEAR, and CHECK, a DPM (Device Policy Manager)
  * Request. The Requests are listed in usb_pe_sm.h.
  */
-#define PE_SET_DPM_REQUEST(port, req) \
-	deprecated_atomic_or(&pe[port].dpm_request, (req))
+#define PE_SET_DPM_REQUEST(port, req) atomic_or(&pe[port].dpm_request, (req))
 #define PE_CLR_DPM_REQUEST(port, req) \
-	deprecated_atomic_clear_bits(&pe[port].dpm_request, (req))
+	atomic_clear_bits(&pe[port].dpm_request, (req))
 #define PE_CHK_DPM_REQUEST(port, req) (pe[port].dpm_request & (req))
 
 /*
@@ -1029,7 +1026,7 @@ void pe_notify_event(int port, uint32_t event_mask)
 	/* Events may only be set from the PD task */
 	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
 
-	deprecated_atomic_or(&pe[port].events, event_mask);
+	atomic_or(&pe[port].events, event_mask);
 
 	/* Notify the host that new events are available to read */
 	pd_send_host_event(PD_EVENT_TYPEC);
@@ -1037,7 +1034,7 @@ void pe_notify_event(int port, uint32_t event_mask)
 
 void pd_clear_events(int port, uint32_t clear_mask)
 {
-	deprecated_atomic_clear_bits(&pe[port].events, clear_mask);
+	atomic_clear_bits(&pe[port].events, clear_mask);
 }
 
 uint32_t pd_get_events(int port)
@@ -6193,10 +6190,9 @@ void pd_dfp_discovery_init(int port)
 	PE_CLR_FLAG(port, PE_FLAGS_VDM_SETUP_DONE |
 			  PE_FLAGS_MODAL_OPERATION);
 
-	deprecated_atomic_or(&task_access[port][TCPC_TX_SOP],
-			     BIT(task_get_current()));
-	deprecated_atomic_or(&task_access[port][TCPC_TX_SOP_PRIME],
-			     BIT(task_get_current()));
+	atomic_or(&task_access[port][TCPC_TX_SOP], BIT(task_get_current()));
+	atomic_or(&task_access[port][TCPC_TX_SOP_PRIME],
+		  BIT(task_get_current()));
 
 	memset(pe[port].discovery, 0, sizeof(pe[port].discovery));
 	memset(pe[port].partner_amodes, 0, sizeof(pe[port].partner_amodes));
@@ -6216,7 +6212,7 @@ void pd_dfp_discovery_init(int port)
 
 void pd_discovery_access_clear(int port, enum tcpm_transmit_type type)
 {
-	deprecated_atomic_clear_bits(&task_access[port][type], 0xFFFFFFFF);
+	atomic_clear_bits(&task_access[port][type], 0xFFFFFFFF);
 }
 
 bool pd_discovery_access_validate(int port, enum tcpm_transmit_type type)
@@ -6228,7 +6224,7 @@ struct pd_discovery *pd_get_am_discovery(int port, enum tcpm_transmit_type type)
 {
 	ASSERT(type < DISCOVERY_TYPE_COUNT);
 
-	deprecated_atomic_or(&task_access[port][type], BIT(task_get_current()));
+	atomic_or(&task_access[port][type], BIT(task_get_current()));
 	return &pe[port].discovery[type];
 }
 

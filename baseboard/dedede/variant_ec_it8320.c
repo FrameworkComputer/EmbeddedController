@@ -20,7 +20,7 @@
 
 static void pp3300_a_pgood_low(void)
 {
-	deprecated_atomic_clear_bits(&pp3300_a_pgood, 1);
+	atomic_clear_bits(&pp3300_a_pgood, 1);
 
 	/* Disable low interrupt while asserted */
 	vcmp_enable(VCMP_SNS_PP3300_LOW, 0);
@@ -37,7 +37,7 @@ static void pp3300_a_pgood_low(void)
 
 static void pp3300_a_pgood_high(void)
 {
-	deprecated_atomic_or(&pp3300_a_pgood, 1);
+	atomic_or(&pp3300_a_pgood, 1);
 
 	/* Disable high interrupt while asserted */
 	vcmp_enable(VCMP_SNS_PP3300_HIGH, 0);

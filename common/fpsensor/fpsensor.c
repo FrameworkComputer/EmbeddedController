@@ -64,7 +64,7 @@ void fps_event(enum gpio_signal signal)
 
 static void send_mkbp_event(uint32_t event)
 {
-	deprecated_atomic_or(&fp_events, event);
+	atomic_or(&fp_events, event);
 	mkbp_send_event(EC_MKBP_EVENT_FINGERPRINT);
 }
 
@@ -783,7 +783,7 @@ int command_fpenroll(int argc, char **argv)
 				       FP_MODE_ENROLL_IMAGE);
 		if (rc != EC_SUCCESS)
 			break;
-		event = deprecated_atomic_read_clear(&fp_events);
+		event = atomic_read_clear(&fp_events);
 		percent = EC_MKBP_FP_ENROLL_PROGRESS(event);
 		CPRINTS("Enroll capture: %s (%d%%)",
 			enroll_str[EC_MKBP_FP_ERRCODE(event) & 3], percent);
@@ -806,7 +806,7 @@ DECLARE_CONSOLE_COMMAND_FLAGS(fpenroll, command_fpenroll, NULL,
 int command_fpmatch(int argc, char **argv)
 {
 	enum ec_error_list rc = fp_console_action(FP_MODE_MATCH);
-	uint32_t event = deprecated_atomic_read_clear(&fp_events);
+	uint32_t event = atomic_read_clear(&fp_events);
 
 	if (rc == EC_SUCCESS && event & EC_MKBP_FP_MATCH) {
 		uint32_t errcode = EC_MKBP_FP_ERRCODE(event);
@@ -832,7 +832,7 @@ int command_fpclear(int argc, char **argv)
 	if (rc < 0)
 		CPRINTS("Failed to clear fingerprint context: %d", rc);
 
-	deprecated_atomic_read_clear(&fp_events);
+	atomic_read_clear(&fp_events);
 
 	return rc;
 }
