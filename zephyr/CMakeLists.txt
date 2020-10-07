@@ -14,8 +14,16 @@ if(NOT DEFINED ZEPHYR_CURRENT_MODULE_DIR)
           system for non-Zephyr builds.")
 endif()
 
-set(PLATFORM_EC "${ZEPHYR_CURRENT_MODULE_DIR}/.." CACHE PATH
+set(PLATFORM_EC "${ZEPHYR_CURRENT_MODULE_DIR}" CACHE PATH
     "Path to the platform/ec repo.")
+# Zephyr 2.3 will set ZEPHYR_CURRENT_MODULE_DIR to the directory of the
+# CMakeLists.txt file, whereas 2.4 will set it to the actual module
+# directory.  Try to detect the condition by searching for
+# zephyr/module.yml.
+if(NOT EXISTS "${PLATFORM_EC}/zephyr/module.yml")
+  set(PLATFORM_EC "${PLATFORM_EC}/..")
+  assert_exists("${PLATFORM_EC}/zephyr/module.yml")
+endif()
 
 zephyr_include_directories_ifdef(
   CONFIG_PLATFORM_EC
