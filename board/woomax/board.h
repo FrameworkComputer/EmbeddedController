@@ -39,6 +39,13 @@
 #define CONFIG_KEYBOARD_REFRESH_ROW3
 #define CONFIG_KEYBOARD_KEYPAD
 
+/*
+ * Woomax's battery takes several seconds to come back out of its disconnect
+ * state (~4 seconds on the unit I have, so give it a little more for margin).
+ */
+#undef CONFIG_POWER_BUTTON_INIT_TIMEOUT
+#define CONFIG_POWER_BUTTON_INIT_TIMEOUT 5
+
 /* GPIO mapping from board specific name to EC common name. */
 #define CONFIG_BATTERY_PRESENT_GPIO	GPIO_EC_BATT_PRES_ODL
 #define CONFIG_SCI_GPIO			GPIO_EC_FCH_SCI_ODL
