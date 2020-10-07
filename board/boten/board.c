@@ -62,6 +62,13 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 	pd_handle_cc_overvoltage(0);
 }
 
+static void pen_detect_interrupt(enum gpio_signal s)
+{
+	int pen_detect = !gpio_get_level(GPIO_PEN_DET_ODL);
+
+	gpio_set_level(GPIO_EN_PP5000_PEN, pen_detect);
+}
+
 /* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
@@ -146,6 +153,8 @@ void board_init(void)
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 	gpio_enable_interrupt(GPIO_HDMI_HPD_SUB_ODL);
+	/* Enable gpio interrupt for pen detect */
+	gpio_enable_interrupt(GPIO_PEN_DET_ODL);
 
 	gpio_set_level(GPIO_HDMI_EN_SUB_ODL, 0);
 
