@@ -2807,7 +2807,17 @@ static void pe_snk_select_capability_run(int port)
 	 * Handle discarded message
 	 */
 	if (msg_check & PE_MSG_DISCARDED) {
-		pe_send_soft_reset(port, TCPC_TX_SOP);
+		/*
+		 * The sent REQUEST message was discarded.  This can be at
+		 * the start of an AMS or in the middle.  Handle what to
+		 * do based on where we came from.
+		 * 1) SE_SNK_EVALUATE_CAPABILITY: sends SoftReset
+		 * 2) SE_SNK_READY: goes back to SNK Ready
+		 */
+		if (get_last_state_pe(port) == PE_SNK_EVALUATE_CAPABILITY)
+			pe_send_soft_reset(port, TCPC_TX_SOP);
+		else
+			set_state_pe(port, PE_SNK_READY);
 		return;
 	}
 
