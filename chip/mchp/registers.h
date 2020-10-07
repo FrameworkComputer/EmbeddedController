@@ -199,7 +199,10 @@
 #define MCHP_PCR_SLP_EN2_SLEEP		0x07ffffff
 
 /* Sleep Enable3, Clock Required3, Reset on Sleep3 bits */
+
+#if defined(CHIP_FAMILY_MEC17xx)
 #define MCHP_PCR_PWM9		((3 << 8) + 31)
+#endif
 #define MCHP_PCR_CCT0		((3 << 8) + 30)
 #define MCHP_PCR_HTMR1		((3 << 8) + 29)
 #define MCHP_PCR_AESHASH	((3 << 8) + 28)
@@ -228,7 +231,9 @@
 #define MCHP_PCR_ADC		((3 << 8) + 3)
 
 /* Command all blocks to sleep */
+#if defined(CHIP_FAMILY_MEC17xx)
 #define MCHP_PCR_SLP_EN3_PWM9		BIT(31)
+#endif
 #define MCHP_PCR_SLP_EN3_CCT0		BIT(30)
 #define MCHP_PCR_SLP_EN3_HTMR1		BIT(29)
 #define MCHP_PCR_SLP_EN3_AESHASH	BIT(28)
@@ -277,8 +282,10 @@
 #define MCHP_PCR_CNT16_2	((4 << 8) + 4)
 #define MCHP_PCR_CNT16_1	((4 << 8) + 3)
 #define MCHP_PCR_CNT16_0	((4 << 8) + 2)
+#if defined(CHIP_FAMILY_MEC17xx)
 #define MCHP_PCR_PWM11		((4 << 8) + 1)
 #define MCHP_PCR_PWM10		((4 << 8) + 0)
+#endif
 
 /* Command all blocks to sleep */
 #define MCHP_PCR_SLP_EN4_FJCL		BIT(15)
@@ -296,8 +303,10 @@
 #define MCHP_PCR_SLP_EN4_CNT16_1	BIT(3)
 #define MCHP_PCR_SLP_EN4_CNT16_0	BIT(2)
 #define MCHP_PCR_SLP_EN4_PWM_ALL	(3 << 0)
+#if defined(CHIP_FAMILY_MEC17xx)
 #define MCHP_PCR_SLP_EN4_PWM11		BIT(1)
 #define MCHP_PCR_SLP_EN4_PWM10		BIT(0)
+#endif
 /* all sleep enable 4 bits */
 #define MCHP_PCR_SLP_EN4_SLEEP		0x0000ffff
 
@@ -1018,7 +1027,7 @@
 
 /* PWM */
 #if defined(CHIP_FAMILY_MEC152X)
-#define MCHP_PWM_ID_MAX		(8)
+#define MCHP_PWM_ID_MAX		(9)
 #else
 #define MCHP_PWM_ID_MAX		(12)
 #endif 

@@ -103,7 +103,7 @@ void pwm_keep_awake(void)
 }
 
 
-static void pwm_configure(int ch, int active_low, int clock_low)
+void pwm_configure(int ch, int active_low, int clock_low)
 {
 	/*
 	 * clock_low=0 selects the 48MHz Ring Oscillator source
@@ -124,12 +124,14 @@ static const uint16_t pwm_pcr[MCHP_PWM_ID_MAX] = {
 	MCHP_PCR_PWM6,
 	MCHP_PCR_PWM7,
 	MCHP_PCR_PWM8,
+#if defined(CHIP_FAMILY_MEC17XX)
 	MCHP_PCR_PWM9,
 	MCHP_PCR_PWM10,
 	MCHP_PCR_PWM11,
+#endif
 };
 
-static void pwm_slp_en(int pwm_id, int sleep_en)
+void pwm_slp_en(int pwm_id, int sleep_en)
 {
 	if ((pwm_id < 0) || (pwm_id > MCHP_PWM_ID_MAX))
 		return;

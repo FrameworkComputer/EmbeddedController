@@ -27,6 +27,7 @@
 #include "driver/charger/isl9241.h"
 #include "driver/tcpm/tcpci.h"
 #include "extpower.h"
+#include "fan.h"
 #include "gpio_chip.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -43,6 +44,8 @@
 #include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
+#include "pwm.h"
+#include "pwm_chip.h"
 #include "spi.h"
 #include "spi_chip.h"
 #include "switch.h"
@@ -157,6 +160,16 @@ const struct power_signal_info power_signal_list[] = {
 	}
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+#ifdef CONFIG_PWM
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_FAN] = {
+		.channel = 0,
+		.flags = PWM_CONFIG_OPEN_DRAIN,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+#endif
 
 void chipset_handle_espi_reset_assert(void)
 {
@@ -1207,4 +1220,27 @@ init_fail:
 	CPRINTF("ISL9241 customer init failed!");
 }
 DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_INIT_I2C + 1);
+#endif
+
+#ifdef CONFIG_FANS
+/******************************************************************************/
+/* Physical fans. These are logically separate from pwm_channels. */
+
+const struct fan_conf fan_conf_0 = {
+	.flags = FAN_USE_RPM_MODE,
+	.ch = 0,	/* Use MFT id to control fan */
+	.pgood_gpio = -1,
+	.enable_gpio = -1,
+};
+
+/* Default */
+const struct fan_rpm fan_rpm_0 = {
+	.rpm_min = 3100,
+	.rpm_start = 6140,
+	.rpm_max = 6900,
+};
+
+const struct fan_t fans[FAN_CH_COUNT] = {
+	[FAN_CH_0] = { .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
+};
 #endif

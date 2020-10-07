@@ -437,7 +437,7 @@ GPIO(TYPEC1_VBUS_ON_EC,     PIN(0143), GPIO_ODR_HIGH)   /* Type-C VBUS select */
 GPIO(TYPEC2_VBUS_ON_EC,     PIN(0142), GPIO_ODR_HIGH)   /* Type-C VBUS select */
 GPIO(TYPEC3_VBUS_ON_EC,     PIN(0141), GPIO_ODR_HIGH)   /* Type-C VBUS select */
 GPIO(CAM_EN,                PIN(0255), GPIO_OUT_LOW)    /* Open camera power  */
-GPIO(FAN_PWM0,              PIN(053),  GPIO_OUT_HIGH)   /* EVT for fan full on */
+/* GPIO(FAN_PWM0,              PIN(053),  GPIO_OUT_HIGH) */   /* EVT for fan full on */
 GPIO(EC_MUTE_L,             PIN(0253), GPIO_ODR_LOW)
 GPIO(OTG_EN,                PIN(0207), GPIO_OUT_LOW)	/* Always low PWR request */
 
@@ -611,6 +611,6 @@ ALTERNATE(PIN_MASK(4,  0x003F), 1, MODULE_ADC, GPIO_ANALOG)
  *	GPIO053,  FAN_PWM0,		Func1, Bank 1 bit[11]
  *  GPIO0175, EC_BEEP,
  */
-ALTERNATE(PIN_MASK(0, 0x0000), 1, MODULE_PWM, 0)
+ALTERNATE(PIN_MASK(1, 0x0800), 1, MODULE_PWM, 0)
 
 #endif 
