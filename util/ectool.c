@@ -5473,12 +5473,9 @@ static int cmd_motionsense(int argc, char **argv)
 				if (vector->flags &
 					(MOTIONSENSE_SENSOR_FLAG_TIMESTAMP |
 					 MOTIONSENSE_SENSOR_FLAG_FLUSH)) {
-					uint32_t timestamp = 0;
 
-					memcpy(&timestamp, vector->data,
-							sizeof(uint32_t));
 					printf("Timestamp:%" PRIx32 "%s\n",
-						timestamp,
+						vector->timestamp,
 						(vector->flags &
 						 MOTIONSENSE_SENSOR_FLAG_FLUSH ?
 						 " - Flush" : ""));
