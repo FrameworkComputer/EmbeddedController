@@ -345,6 +345,35 @@ int pd_charge_from_device(uint16_t vid, uint16_t pid)
 		(pid == USB_PID1_APPLE || pid == USB_PID2_APPLE));
 }
 
+bool pd_is_battery_capable(void)
+{
+	bool capable;
+
+	/* Battery is present and at some minimum percentage. */
+	capable = (usb_get_battery_soc() >=
+		   CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC);
+
+#ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
+	/*
+	 * Not capable if the battery is in the disconnect state. The discharge
+	 * FET may not be enabled and so attempting being a SRC may cut off
+	 * our only power source at the time.
+	 */
+	capable &= (battery_get_disconnect_state() ==
+		    BATTERY_NOT_DISCONNECTED);
+#elif defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||	\
+	defined(CONFIG_BATTERY_PRESENT_GPIO)
+	/*
+	 * When battery is cutoff in ship mode it may not be reliable to
+	 * check if battery is present with its state of charge.
+	 * Also check if battery is initialized and ready to provide power.
+	 */
+	capable &= (battery_is_present() == BP_YES);
+#endif /* CONFIG_BATTERY_PRESENT_[CUSTOM|GPIO] */
+
+	return capable;
+}
+
 #ifdef CONFIG_USB_PD_TRY_SRC
 bool pd_is_try_source_capable(void)
 {
@@ -356,29 +385,10 @@ bool pd_is_try_source_capable(void)
 		try_src |= (pd_get_dual_role(i) == PD_DRP_TOGGLE_ON);
 
 	/*
-	 * Enable try source when dual-role toggling AND battery is present
-	 * and at some minimum percentage.
+	 * Enable try source when dual-role toggling AND battery is capable
+	 * of powering the whole system.
 	 */
-	new_try_src = (try_src &&
-		usb_get_battery_soc() >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC);
-
-#ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
-	/*
-	 * Don't attempt Try.Src if the battery is in the disconnect state.  The
-	 * discharge FET may not be enabled and so attempting Try.Src may cut
-	 * off our only power source at the time.
-	 */
-	new_try_src &= (battery_get_disconnect_state() ==
-			      BATTERY_NOT_DISCONNECTED);
-#elif defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||	\
-	defined(CONFIG_BATTERY_PRESENT_GPIO)
-	/*
-	 * When battery is cutoff in ship mode it may not be reliable to
-	 * check if battery is present with its state of charge.
-	 * Also check if battery is initialized and ready to provide power.
-	 */
-	new_try_src &= (battery_is_present() == BP_YES);
-#endif /* CONFIG_BATTERY_PRESENT_[CUSTOM|GPIO] */
+	new_try_src = (try_src && pd_is_battery_capable());
 
 #if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 	/*

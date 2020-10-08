@@ -995,8 +995,17 @@ enum pd_data_role pd_get_data_role(int port);
  */
 enum pd_power_role pd_get_power_role(int port);
 
-/*
- * Return true if PD is capable of trying as source else false
+/**
+ * Check if the battery is capable of powering the system
+ *
+ * @return true if capable of, else false.
+ */
+bool pd_is_battery_capable(void);
+
+/**
+ * Check if PD is capable of trying as source
+ *
+ * @return true if capable of, else false.
  */
 bool pd_is_try_source_capable(void);
 

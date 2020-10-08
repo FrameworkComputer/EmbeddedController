@@ -595,8 +595,7 @@ static void pd_update_pd_comm(void)
 	 * The init function disabled PD comm on startup. Need this
 	 * hook to enable PD comm when the battery level is enough.
 	 */
-	if (pd_disabled_on_init &&
-	    usb_get_battery_soc() >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC) {
+	if (pd_disabled_on_init && pd_is_battery_capable()) {
 		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
 			pd_comm_enable(i, 1);
 		pd_disabled_on_init = 0;
@@ -621,7 +620,7 @@ static bool pd_comm_allowed_by_policy(void)
 		if (IS_ENABLED(CONFIG_VBOOT_EFS2))
 			return true;
 
-		if (usb_get_battery_soc() >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC)
+		if (pd_is_battery_capable())
 			return true;
 
 		pd_disabled_on_init = 1;
