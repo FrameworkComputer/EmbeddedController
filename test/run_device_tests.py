@@ -40,6 +40,10 @@ DATA_ACCESS_VIOLATION_8020000_REGEX = re.compile(
     r'Data access violation, mfar = 8020000\r\n')
 DATA_ACCESS_VIOLATION_8040000_REGEX = re.compile(
     r'Data access violation, mfar = 8040000\r\n')
+DATA_ACCESS_VIOLATION_80C0000_REGEX = re.compile(
+    r'Data access violation, mfar = 80c0000\r\n')
+DATA_ACCESS_VIOLATION_80E0000_REGEX = re.compile(
+    r'Data access violation, mfar = 80e0000\r\n')
 DATA_ACCESS_VIOLATION_20000000_REGEX = re.compile(
     r'Data access violation, mfar = 20000000\r\n')
 
@@ -52,10 +56,13 @@ class ImageType(Enum):
 
 class BoardConfig:
     """Board-specific configuration."""
-    def __init__(self, test_list, servo_uart_name, servo_power_enable):
-        self.test_list = test_list
+
+    def __init__(self, servo_uart_name, servo_power_enable,
+                 rollback_region0_regex, rollback_region1_regex):
         self.servo_uart_name = servo_uart_name
         self.servo_power_enable = servo_power_enable
+        self.rollback_region0_regex = rollback_region0_regex
+        self.rollback_region1_regex = rollback_region1_regex
 
 
 class TestConfig:
@@ -84,56 +91,72 @@ class TestConfig:
 
 
 # All possible tests.
-ALL_TESTS = {
-    'aes':
-        TestConfig(name='aes'),
-    'crc32':
-        TestConfig(name='crc32'),
-    'flash_physical':
-        TestConfig(name='flash_physical', image_to_use=ImageType.RO,
-                   toggle_power=True),
-    'flash_write_protect':
-        TestConfig(name='flash_write_protect', image_to_use=ImageType.RO,
-                   toggle_power=True, enable_hw_write_protect=True),
-    'mpu_ro':
-        TestConfig(name='mpu',
-                   image_to_use=ImageType.RO,
-                   finish_regexes=[DATA_ACCESS_VIOLATION_20000000_REGEX]),
-    'mpu_rw':
-        TestConfig(name='mpu',
-                   finish_regexes=[DATA_ACCESS_VIOLATION_20000000_REGEX]),
-    'mutex':
-        TestConfig(name='mutex'),
-    'pingpong':
-        TestConfig(name='pingpong'),
-    'rollback_region0':
-        TestConfig(name='rollback', finish_regexes=[
-            DATA_ACCESS_VIOLATION_8020000_REGEX],
-                   test_args=['region0']),
-    'rollback_region1':
-        TestConfig(name='rollback', finish_regexes=[
-            DATA_ACCESS_VIOLATION_8040000_REGEX],
-                   test_args=['region1']),
-    'rollback_entropy':
-        TestConfig(name='rollback_entropy', image_to_use=ImageType.RO),
-    'rtc':
-        TestConfig(name='rtc'),
-    'sha256':
-        TestConfig(name='sha256'),
-    'sha256_unrolled':
-        TestConfig(name='sha256_unrolled'),
-    'stm32f_rtc':
-        TestConfig(name='stm32f_rtc'),
-    'utils':
-        TestConfig(name='utils', timeout_secs=20),
-}
+class AllTests:
+    """All possible tests."""
+
+    @staticmethod
+    def get(board_config: BoardConfig):
+        return {
+            'aes':
+                TestConfig(name='aes'),
+            'crc32':
+                TestConfig(name='crc32'),
+            'flash_physical':
+                TestConfig(name='flash_physical', image_to_use=ImageType.RO,
+                           toggle_power=True),
+            'flash_write_protect':
+                TestConfig(name='flash_write_protect',
+                           image_to_use=ImageType.RO,
+                           toggle_power=True, enable_hw_write_protect=True),
+            'mpu_ro':
+                TestConfig(name='mpu',
+                           image_to_use=ImageType.RO,
+                           finish_regexes=[
+                               DATA_ACCESS_VIOLATION_20000000_REGEX]),
+            'mpu_rw':
+                TestConfig(name='mpu',
+                           finish_regexes=[
+                               DATA_ACCESS_VIOLATION_20000000_REGEX]),
+            'mutex':
+                TestConfig(name='mutex'),
+            'pingpong':
+                TestConfig(name='pingpong'),
+            'rollback_region0':
+                TestConfig(name='rollback', finish_regexes=[
+                    board_config.rollback_region0_regex],
+                           test_args=['region0']),
+            'rollback_region1':
+                TestConfig(name='rollback', finish_regexes=[
+                    board_config.rollback_region1_regex],
+                           test_args=['region1']),
+            'rollback_entropy':
+                TestConfig(name='rollback_entropy', image_to_use=ImageType.RO),
+            'rtc':
+                TestConfig(name='rtc'),
+            'sha256':
+                TestConfig(name='sha256'),
+            'sha256_unrolled':
+                TestConfig(name='sha256_unrolled'),
+            'stm32f_rtc':
+                TestConfig(name='stm32f_rtc'),
+            'utils':
+                TestConfig(name='utils', timeout_secs=20),
+        }
+
 
 BLOONCHIPPER_CONFIG = BoardConfig(
-    test_list=ALL_TESTS.values(),
     servo_uart_name='raw_fpmcu_uart_pty',
-    servo_power_enable='spi1_vref'
+    servo_power_enable='spi1_vref',
+    rollback_region0_regex=DATA_ACCESS_VIOLATION_8020000_REGEX,
+    rollback_region1_regex=DATA_ACCESS_VIOLATION_8040000_REGEX,
 )
-DARTMONKEY_CONFIG = BLOONCHIPPER_CONFIG
+
+DARTMONKEY_CONFIG = BoardConfig(
+    servo_uart_name='raw_fpmcu_uart_pty',
+    servo_power_enable='spi1_vref',
+    rollback_region0_regex=DATA_ACCESS_VIOLATION_80C0000_REGEX,
+    rollback_region1_regex=DATA_ACCESS_VIOLATION_80E0000_REGEX,
+)
 
 BOARD_CONFIGS = {
     'bloonchipper': BLOONCHIPPER_CONFIG,
@@ -301,12 +324,12 @@ def run_test(test: TestConfig, console: str, executor: ThreadPoolExecutor) ->\
 def get_test_list(config: BoardConfig, test_args) -> List[TestConfig]:
     """Get a list of tests to run."""
     if test_args == 'all':
-        return config.test_list
+        return list(AllTests.get(config).values())
 
     test_list = []
     for t in test_args:
         logging.debug('test: %s', t)
-        test_config = ALL_TESTS.get(t)
+        test_config = AllTests.get(config).get(t)
         if test_config is None:
             logging.error('Unable to find test config for "%s"', t)
             sys.exit(1)
