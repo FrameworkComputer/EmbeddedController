@@ -1,10 +1,10 @@
-name: build hx20 firmware
+name: build hx20-orb firmware
 
 on: [push, pull_request]
 
 jobs:
   build:
-    name: Build hx20 evt
+    name: Build hx20-orb
     runs-on: ubuntu-20.04
 
     steps:
