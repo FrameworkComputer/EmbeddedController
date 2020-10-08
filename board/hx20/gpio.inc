@@ -418,8 +418,8 @@ GPIO(EC_I2C_3_SDA, PIN(0154),  GPIO_INPUT)
 GPIO(EC_SMB_CLK3, PIN(010), GPIO_INPUT)
 GPIO(EC_SMB_SDA3, PIN(07), GPIO_INPUT)
 /* PD */
-GPIO(EC_I2C02_PD_CLK, PIN(0140),  GPIO_INPUT)
-GPIO(EC_I2C02_PD_SDA, PIN(0132),  GPIO_INPUT)
+GPIO(EC_I2C06_PD_CLK, PIN(0140),  GPIO_INPUT)
+GPIO(EC_I2C06_PD_SDA, PIN(0132),  GPIO_INPUT)
 
 
 /* Fan PWM output and TACH input. PROCHOT input */
@@ -440,6 +440,7 @@ GPIO(CAM_EN,                PIN(0255), GPIO_OUT_LOW)    /* Open camera power  */
 /* GPIO(FAN_PWM0,              PIN(053),  GPIO_OUT_HIGH) */   /* EVT for fan full on */
 GPIO(EC_MUTE_L,             PIN(0253), GPIO_ODR_LOW)
 GPIO(OTG_EN,                PIN(0207), GPIO_OUT_LOW)	/* Always low PWR request */
+GPIO(AC_PRESENT_PD_L,		PIN(013),  GPIO_OUT_LOW)	/* Fix pd firmware issue */
 
 /* SPI
  * Chip select must be open drain and driven high before SPI controller
