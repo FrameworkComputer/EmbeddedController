@@ -54,14 +54,6 @@ void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 void dp_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd);
 
 /*
- * Reset the DisplayPort VDM state for the specified port, as when exiting
- * DisplayPort mode.
- *
- * @param port USB-C port number
- */
-void dp_teardown(int port);
-
-/*
  * Construct the next DisplayPort VDM that should be sent.
  *
  * @param port      USB-C port number

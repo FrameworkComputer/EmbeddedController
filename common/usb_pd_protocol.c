@@ -822,7 +822,8 @@ static inline void set_state(int port, enum pd_states next_state)
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 #endif
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-		pd_dfp_exit_mode(port, TCPC_TX_SOP, 0, 0);
+		if (pd_dfp_exit_mode(port, TCPC_TX_SOP, 0, 0))
+			usb_mux_set_safe_mode(port);
 #endif
 		/*
 		 * Indicate that the port is disconnected by setting role to
@@ -1357,7 +1358,8 @@ void pd_execute_hard_reset(int port)
 	invalidate_last_message_id(port);
 	tcpm_set_rx_enable(port, 0);
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-	pd_dfp_exit_mode(port, TCPC_TX_SOP, 0, 0);
+	if (pd_dfp_exit_mode(port, TCPC_TX_SOP, 0, 0))
+		usb_mux_set_safe_mode(port);
 #endif
 
 #ifdef CONFIG_USB_PD_REV30
@@ -2173,7 +2175,9 @@ static void exit_tbt_mode_sop_prime(int port)
 	 * type. TCPMv1 only uses one discovery structure, so all accesses
 	 * specify TCPC_TX_SOP.
 	 */
-	if (!pd_dfp_exit_mode(port, TCPC_TX_SOP, USB_VID_INTEL, opos))
+	if (pd_dfp_exit_mode(port, TCPC_TX_SOP, USB_VID_INTEL, opos))
+		usb_mux_set_safe_mode(port);
+	else
 		return;
 
 	header = PD_HEADER(PD_DATA_VENDOR_DEF, pd[port].power_role,
@@ -2381,6 +2385,7 @@ __maybe_unused static void exit_supported_alt_mode(int port)
 			    port, TCPC_TX_SOP, supported_modes[i].svid, opos)) {
 			CPRINTS("C%d Exiting ALT mode with SVID = 0x%x", port,
 				supported_modes[i].svid);
+			usb_mux_set_safe_mode(port);
 			pd_send_vdm(port, supported_modes[i].svid,
 				    CMD_EXIT_MODE | VDO_OPOS(opos), NULL, 0);
 			/* Wait for an ACK from port-partner */

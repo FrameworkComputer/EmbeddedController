@@ -261,7 +261,6 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 __override void svdm_exit_dp_mode(int port)
 {
-	svdm_safe_dp_mode(port);
 	gpio_set_level(GPIO_USB_C0_HPD_OD, 0);
 #ifdef VARIANT_KUKUI_DP_MUX_GPIO
 	board_set_dp_mux_control(0, 0);

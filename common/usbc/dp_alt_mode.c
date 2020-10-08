@@ -12,8 +12,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "assert.h"
-#include "usb_pd.h"
+#include "usb_common.h"
 #include "usb_dp_alt_mode.h"
+#include "usb_pd.h"
 #include "usb_pd_dpm.h"
 #include "usb_pd_tcpm.h"
 
@@ -61,12 +62,6 @@ void dp_init(int port)
 	dp_state[port] = DP_START;
 }
 
-void dp_teardown(int port)
-{
-	CPRINTS("C%d: DP teardown", port);
-	dp_state[port] = DP_INACTIVE;
-}
-
 static void dp_entry_failed(int port)
 {
 	CPRINTS("C%d: DP alt mode protocol failed!", port);
@@ -101,6 +96,7 @@ void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 	const struct svdm_amode_data *modep =
 		pd_get_amode_data(port, type, USB_SID_DISPLAYPORT);
 	const uint8_t vdm_cmd = PD_VDO_CMD(vdm[0]);
+	int opos;
 
 	if (!dp_response_valid(port, type, "ACK", vdm_cmd))
 		return;
@@ -131,6 +127,12 @@ void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 		 */
 		CPRINTS("C%d: Exited DP mode", port);
 		dp_state[port] = DP_INACTIVE;
+		opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+
+		/* Clear DisplayPort related signals */
+		pd_dfp_exit_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT,
+				     opos);
+		set_usb_mux_with_current_data_role(port);
 		break;
 	case DP_ENTER_NAKED:
 		/*
@@ -247,6 +249,7 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 		if (!(modep && modep->opos))
 			return -1;
 
+		svdm_safe_dp_mode(port);
 		vdm[0] = VDO(USB_SID_DISPLAYPORT,
 			     1, /* structured */
 			     CMD_EXIT_MODE);

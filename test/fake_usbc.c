@@ -253,10 +253,6 @@ void dpm_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 {
 }
 
-void dp_teardown(int port)
-{
-}
-
 void dpm_vdm_naked(int port, enum tcpm_transmit_type type, uint16_t svid,
 		uint8_t vdm_cmd)
 {

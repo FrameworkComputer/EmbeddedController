@@ -148,13 +148,18 @@ __override void svdm_dp_post_config(int port)
 	usb_mux_hpd_update(port, 1, 0);
 }
 
-__override void svdm_exit_dp_mode(int port)
+__override void svdm_safe_dp_mode(int port)
 {
+	/* make DP interface safe until configure */
 	dp_flags[port] = 0;
 	dp_status[port] = 0;
 
 	usb_mux_set(port, USB_PD_MUX_NONE, USB_SWITCH_CONNECT,
 		    pd_get_polarity(port));
+}
+
+__override void svdm_exit_dp_mode(int port)
+{
 	gpio_or_ioex_set_level(PORT_TO_HPD(port), 0);
 
 	usb_mux_hpd_update(port, 0, 0);

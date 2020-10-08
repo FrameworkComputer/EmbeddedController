@@ -101,7 +101,6 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 __override void svdm_exit_dp_mode(int port)
 {
-	svdm_safe_dp_mode(port);
 	board_typec_dp_off(port, dp_flags);
 }
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */

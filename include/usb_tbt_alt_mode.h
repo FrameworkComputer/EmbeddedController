@@ -23,10 +23,15 @@
 void tbt_init(int port);
 
 /*
- * Returns True if Thunderbolt mode is in active state
+ * Sets exit_mode and retry_done bits to true
+ */
+void tbt_exit_mode_request(void);
+
+/*
+ * Returns True if Thunderbolt mode is not in inactive state
  *
  * @param port      USB-C port number
- * @return          True if Thunderbolt mode is in active state
+ * @return          True if Thunderbolt mode is not in inactive state
  *                  False otherwise
  */
 bool tbt_is_active(int port);
@@ -51,14 +56,6 @@ void intel_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
  * @param vdm_cmd The VDM command of the request
  */
 void intel_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd);
-
-/*
- * Reset the Thunderbolt mode VDM state for the specified port, as when exiting
- * Thunderbolt mode.
- *
- * @param port USB-C port number
- */
-void tbt_teardown(int port);
 
 /*
  * Construct the next Thunderbolt VDM that should be sent.

@@ -253,9 +253,6 @@ __override void svdm_exit_dp_mode(int port)
 	/* Disconnect the DP port selection mux. */
 	gpio_set_level(GPIO_DP_MUX_OE_L, 1);
 
-	/* Below svdm_safe_dp_mode() will disconnect SBU and DP/USB SS lines. */
-	svdm_safe_dp_mode(port);
-
 	/* Signal AP for the HPD low event */
 	usb_mux_hpd_update(port, 0, 0);
 	gpio_set_level(GPIO_DP_HOT_PLUG_DET, 0);

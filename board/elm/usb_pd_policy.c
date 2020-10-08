@@ -87,7 +87,6 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 __override void svdm_exit_dp_mode(int port)
 {
-	svdm_safe_dp_mode(port);
 	anx7688_hpd_disable(port);
 }
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */

@@ -274,7 +274,6 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 __override void svdm_exit_dp_mode(int port)
 {
-	svdm_safe_dp_mode(port);
 #ifdef CONFIG_USB_PD_TCPM_ANX7447
 	anx7447_tcpc_clear_hpd_status(port);
 #endif

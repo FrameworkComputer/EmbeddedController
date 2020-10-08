@@ -170,45 +170,32 @@ static void dpm_attempt_mode_entry(int port)
 
 static void dpm_attempt_mode_exit(int port)
 {
-	int opos;
-	uint16_t svid;
-	uint32_t vdm;
+	uint32_t vdm = 0;
+	int vdo_count = 0;
+	enum tcpm_transmit_type tx_type = TCPC_TX_SOP;
 
 	/* TODO(b/156749387): Support Data Reset for exiting USB4. */
 	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
-	    tbt_is_active(port))
-		svid = USB_VID_INTEL;
-	else if (dp_is_active(port))
-		svid = USB_SID_DISPLAYPORT;
-	else {
+	    tbt_is_active(port)) {
+		CPRINTS("C%d: TBT teardown", port);
+		tbt_exit_mode_request();
+		vdo_count = tbt_setup_next_vdm(port, VDO_MAX_SIZE, &vdm,
+					&tx_type);
+	} else if (dp_is_active(port)) {
+		CPRINTS("C%d: DP teardown", port);
+		vdo_count = dp_setup_next_vdm(port, VDO_MAX_SIZE, &vdm);
+	} else {
 		/* Clear exit mode request */
 		dpm_clear_mode_exit_request(port);
 		return;
 	}
 
-	/*
-	 * TODO(b/148528713): Support cable plug Exit Mode (probably outsource
-	 * VDM construction to alt mode modules).
-	 */
-	opos = pd_alt_mode(port, TCPC_TX_SOP, svid);
-	if (opos > 0 && pd_dfp_exit_mode(port, TCPC_TX_SOP, svid, opos)) {
-		/*
-		 * TODO b/159717794: Delay deleting the data until after the
-		 * EXIT_MODE message is has ACKed. Unfortunately the callers
-		 * of this function expect the mode to be cleaned up before
-		 * return.
-		 */
-		vdm = VDO(svid, 1, /* Structured */
-			  VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP)) |
-			  VDO_OPOS(opos) | VDO_CMDT(CMDT_INIT) | CMD_EXIT_MODE);
-
-		if (!pd_setup_vdm_request(port, TCPC_TX_SOP, &vdm, 1)) {
-			dpm_clear_mode_exit_request(port);
-			return;
-		}
-
-		pd_dpm_request(port, DPM_REQUEST_VDM);
+	if (!pd_setup_vdm_request(port, tx_type, &vdm, vdo_count)) {
+		dpm_clear_mode_exit_request(port);
+		return;
 	}
+
+	pd_dpm_request(port, DPM_REQUEST_VDM);
 }
 
 void dpm_run(int port)

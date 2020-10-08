@@ -147,6 +147,5 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 __override void svdm_exit_dp_mode(int port)
 {
-	svdm_safe_dp_mode(port);
 	gpio_set_level(PORT_TO_HPD(port), 0);
 }

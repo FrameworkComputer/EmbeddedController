@@ -29,9 +29,3 @@ void dp_init(int port)
 {
 	CPRINTS("C%d: DP init", port);
 }
-
-void dp_teardown(int port)
-{
-	CPRINTS("C%d: DP teardown", port);
-}
-

@@ -259,6 +259,7 @@ uint32_t pd_dfp_enter_mode(int port, enum tcpm_transmit_type type,
 	return VDO(modep->fx->svid, 1, CMD_ENTER_MODE | VDO_OPOS(modep->opos));
 }
 
+/* TODO(b/170372521) : Incorporate exit mode specific changes to DPM SM */
 int pd_dfp_exit_mode(int port, enum tcpm_transmit_type type, uint16_t svid,
 		int opos)
 {
@@ -1180,7 +1181,6 @@ __overridable int svdm_dp_attention(int port, uint32_t *payload)
 
 __overridable void svdm_exit_dp_mode(int port)
 {
-	svdm_safe_dp_mode(port);
 #ifdef CONFIG_USB_PD_DP_HPD_GPIO
 	svdm_set_hpd_gpio(port, 0);
 #endif /* CONFIG_USB_PD_DP_HPD_GPIO */
@@ -1188,9 +1188,6 @@ __overridable void svdm_exit_dp_mode(int port)
 #ifdef USB_PD_PORT_TCPC_MST
 	if (port == USB_PD_PORT_TCPC_MST)
 		baseboard_mst_enable_control(port, 0);
-#endif
-#ifdef CONFIG_USB_PD_TCPMV2
-	dp_teardown(port);
 #endif
 }
 
@@ -1232,10 +1229,6 @@ __overridable int svdm_tbt_compat_enter_mode(int port, uint32_t mode_caps)
 
 __overridable void svdm_tbt_compat_exit_mode(int port)
 {
-	if (IS_ENABLED(CONFIG_USB_PD_TCPMV2)) {
-		usb_mux_set_safe_mode(port);
-		tbt_teardown(port);
-	}
 }
 
 __overridable int svdm_tbt_compat_status(int port, uint32_t *payload)
@@ -1254,6 +1247,10 @@ __overridable int svdm_tbt_compat_attention(int port, uint32_t *payload)
 }
 #endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
 
+/*
+ * TODO: b:169262276: For TCPMv2, move alternate mode specific entry, exit and
+ * configuration to Device Policy Manager.
+ */
 const struct svdm_amode_fx supported_modes[] = {
 	{
 		.svid = USB_SID_DISPLAYPORT,
