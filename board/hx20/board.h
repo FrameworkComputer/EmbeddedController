@@ -21,9 +21,20 @@
  */
 
 /* Keyboard features */
-/* #define CONFIG_PWM_KBLIGHT */
 #define CONFIG_KEYBOARD_CUSTOMIZATION
+/* #define CONFIG_PWM_KBLIGHT */
 /* #define CONFIG_KEYBOARD_DEBUG */
+
+#define CONFIG_CUSTOMER_PORT80
+
+/*
+ * Conbination key
+ */
+/* #define CONFIG_KEYBOARD_CUSTOMIZATION_CONBINATION_KEY */
+
+/* The Fn key function not ready yet undefined it until the function finish */
+/* #define CONFIG_KEYBOARD_SCANCODE_CALLBACK */
+
 
 /*
  * Debug on EVB with CONFIG_CHIPSET_DEBUG
@@ -140,31 +151,29 @@
 /* #define CONFIG_ALS */
 /* #define CONFIG_ALS_OPT3001 */
 #define CONFIG_BATTERY_CUT_OFF
-#define CONFIG_BATTERY_PRESENT_GPIO GPIO_BAT_PRESENT_L
+#define CONFIG_BATTERY_PRESENT_CUSTOM
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_BUTTON_COUNT 2
 /* #define CONFIG_CHARGE_MANAGER */
 /* #define CONFIG_CHARGE_RAMP_SW */
 
+#undef CONFIG_HOSTCMD_LOCATE_CHIP
 
-/* #define CONFIG_CHARGER */
+#define CONFIG_CHARGER
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
 
-/* #define CONFIG_CHARGER_DISCHARGE_ON_AC */
-/* #define CONFIG_CHARGER_ISL9237 */
-/* #define CONFIG_CHARGER_ILIM_PIN_DISABLED */
-/* #define CONFIG_CHARGER_INPUT_CURRENT 512 */
+/* Charger parameter */
+#define CONFIG_CHARGER_ISL9241
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC 20 /* BOARD_RS1 */
+#define CONFIG_CHARGER_SENSE_RESISTOR 10    /* BOARD_RS2 */
+#define CONFIG_CHARGER_INPUT_CURRENT 2550	/* for evt test */
+#define CONFIG_CHARGER_CUSTOMER_SETTING
 
 /*
  * MCHP disable this for Kabylake eSPI bring up
  * #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
  */
-
-/* #define CONFIG_CHARGER_NARROW_VDC */
-/* #define CONFIG_CHARGER_PROFILE_OVERRIDE */
-/* #define CONFIG_CHARGER_SENSE_RESISTOR 10 */
-/* #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20 */
-/* #define CONFIG_CMD_CHARGER_ADC_AMON_BMON */
 
 /* #define CONFIG_CHIPSET_SKYLAKE */
 /* #define CONFIG_CHIPSET_TIGERLAKE */
@@ -246,7 +255,6 @@
 #define CONFIG_USB_PD_DP_HPD_GPIO
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_LOGGING
-#define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_USB_PD_TCPM_TCPCI
 #endif
 /*
@@ -273,18 +281,13 @@
  */
 #define CONFIG_SPI_FLASH_PORT 0
 #define CONFIG_SPI_FLASH
+
 /*
- * Google uses smaller flashes on chromebook boards
- * MCHP SPI test dongle for EVB uses 16MB W25Q128F
- * Configure for smaller flash is OK for testing except
- * for SPI flash lock bit.
+ * MB use W25Q80 SPI ROM
+ * Size : 1M
  */
- #define CONFIG_FLASH_SIZE 524288
- #define CONFIG_SPI_FLASH_W25X40
-/*
- * #define CONFIG_FLASH_SIZE 0x1000000
- * #define CONFIG_SPI_FLASH_W25Q128
- */
+#define CONFIG_FLASH_SIZE 0x100000
+#define CONFIG_SPI_FLASH_W25Q80
 
 /*
  * Enable extra SPI flash and generic SPI
@@ -296,6 +299,9 @@
 /* common software SHA256 required by vboot and rollback */
 #define CONFIG_SHA256
 
+/* Enable EMI0 Region 1 */
+#define CONFIG_EMI_REGION1
+
 /*
  * Enable MCHP SHA256 hardware accelerator module.
  * API is same as software SHA256 but prefixed with "chip_"
@@ -305,6 +311,12 @@
 /* enable console command to test HW Hash engine
  * #define CONFIG_CMD_SHA256_TEST
  */
+
+/* Support PWM */
+#define CONFIG_PWM
+
+/* Support FAN */
+#define CONFIG_FANS 1
 
 /*
  * MEC17xx EVB + SKL/KBL RVP3 does not have
@@ -337,13 +349,13 @@
  * CONFIG_SPI_FLASH_PORT is the index into
  * spi_devices[] in board.c
  */
-#define CONFIG_SPI_ACCEL_PORT 1
+/*#define CONFIG_SPI_ACCEL_PORT 1*/
 
 /*
  * Enable EC UART commands to read/write
  * motion sensor.
  */
-#define CONFIG_CMD_ACCELS
+/*#define CONFIG_CMD_ACCELS*/
 
 /*
  * Enable 1 slot of secure temporary storage to support
@@ -364,16 +376,22 @@
 #define WIRELESS_GPIO_WLAN_POWER GPIO_PP3300_WLAN_EN
 #endif
 
-/* LED signals */
-#define GPIO_BAT_LED_RED GPIO_BATT_LOW_LED_L
-#define GPIO_BAT_LED_GREEN GPIO_BATT_CHG_LED_L
-
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
+
+
+#define CONFIG_WP_ACTIVE_HIGH
+
+#ifdef CHIP_FAMILY_MEC17XX
+/* LED signals */
+#define GPIO_BAT_LED_RED GPIO_BATT_LOW_LED_L
+#define GPIO_BAT_LED_GREEN GPIO_BATT_CHG_LED_L
+
+/* Power signals */
 #define GPIO_AC_PRESENT		GPIO_VCIN1_AC_IN
 #define GPIO_POWER_BUTTON_L	GPIO_ON_OFF
 #define GPIO_PCH_SLP_SUS_L	GPIO_SLP_SUS_L
@@ -387,9 +405,42 @@
 #define GPIO_ENABLE_TOUCHPAD	GPIO_EC_KBL_PWR_EN
 #define GPIO_ENABLE_BACKLIGHT	GPIO_EC_BKOFF_L
 
+#else
+/* LED signals */
+#define GPIO_BAT_LED_RED    GPIO_BATT_LOW_LED_L
+#define GPIO_BAT_LED_GREEN  GPIO_BATT_CHG_LED_L
+
+/* Power signals */
+#define GPIO_AC_PRESENT     GPIO_ADP_IN
+#define GPIO_POWER_BUTTON_L GPIO_ON_OFF_BTN_L
+#define GPIO_PCH_SLP_SUS_L  GPIO_SLP_SUS_L
+#define GPIO_PCH_SLP_S3_L   GPIO_PM_SLP_S3_L
+#define GPIO_PCH_SLP_S4_L   GPIO_PM_SLP_S4_L
+#define GPIO_PCH_PWRBTN_L   GPIO_PBTN_OUT_L
+#define GPIO_PCH_ACOK       GPIO_AC_PRESENT_OUT
+#define GPIO_PCH_RSMRST_L   GPIO_EC_RSMRST_L
+#define GPIO_CPU_PROCHOT    GPIO_VCOUT1_PROCHOT_L
+#define GPIO_LID_OPEN       GPIO_LID_SW_L
+#define GPIO_ENABLE_BACKLIGHT   GPIO_EC_BKOFF_L
+
+/* SMBus signals */
+#define GPIO_I2C_1_SDA      GPIO_EC_SMB_SDA1
+#define GPIO_I2C_1_SCL      GPIO_EC_SMB_CLK1
+#define GPIO_I2C_2_SDA      GPIO_EC_I2C_3_SDA
+#define GPIO_I2C_2_SCL      GPIO_EC_I2C_3_SCL
+#define GPIO_I2C_3_SDA      GPIO_EC_SMB_SDA3
+#define GPIO_I2C_3_SCL      GPIO_EC_SMB_CLK3
+#define GPIO_I2C_6_SDA      GPIO_EC_I2C06_PD_SDA
+#define GPIO_I2C_6_SCL      GPIO_EC_I2C06_PD_CLK
+
+#define CONFIG_KEYBOARD_IRQ_GPIO GPIO_EC_KEYBOARD_IRQ
+
+#endif
+
+
 /* I2C ports */
-#define I2C_CONTROLLER_COUNT	2
-#define I2C_PORT_COUNT		2
+#define I2C_CONTROLLER_COUNT	4
+#define I2C_PORT_COUNT		4
 
 
 /*
@@ -406,6 +457,8 @@
  */
 
 #define I2C_PORT_PMIC           MCHP_I2C_PORT10
+
+#if defined(CHIP_FAMILY_MEC17XX)
 #define I2C_PORT_USB_CHARGER_1	MCHP_I2C_PORT10
 #define I2C_PORT_USB_MUX        MCHP_I2C_PORT10
 #define I2C_PORT_USB_CHARGER_2	MCHP_I2C_PORT10
@@ -415,6 +468,18 @@
 #define I2C_PORT_ACCEL          MCHP_I2C_PORT10
 #define I2C_PORT_BATTERY        MCHP_I2C_PORT3
 #define I2C_PORT_CHARGER        MCHP_I2C_PORT3
+#else
+#define I2C_PORT_USB_CHARGER_1	MCHP_I2C_PORT2
+#define I2C_PORT_USB_MUX        MCHP_I2C_PORT2
+#define I2C_PORT_USB_CHARGER_2	MCHP_I2C_PORT2
+#define I2C_PORT_PD_MCU         MCHP_I2C_PORT2
+#define I2C_PORT_TCPC           MCHP_I2C_PORT3
+#define I2C_PORT_ALS            MCHP_I2C_PORT4
+#define I2C_PORT_ACCEL          MCHP_I2C_PORT4
+#define I2C_PORT_BATTERY        MCHP_I2C_PORT1
+#define I2C_PORT_CHARGER        MCHP_I2C_PORT1
+#endif
+
 
 /* GPIO for power signal */
 #ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
@@ -463,24 +528,29 @@
 
 /* ADC signal */
 enum adc_channel {
-	ADC_VBUS,
-	ADC_AMON_BMON,
-	ADC_PSYS,
-	ADC_CASE,
+	ADC_I_ADP,
+	ADC_I_SYS,
+	ADC_VCIN1_BATT_TEMP,
+	ADC_TP_BOARD_ID,
+	ADC_AD_BID,
+	ADC_AUDIO_BOARD_ID,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
 
+enum pwm_channel {
+	PWM_CH_FAN,
+	PWM_CH_COUNT
+};
+
+enum fan_channel {
+	FAN_CH_0 = 0,
+	/* Number of FAN channels */
+	FAN_CH_COUNT,
+};
+
 enum temp_sensor_id {
-	TEMP_SENSOR_BATTERY,
-
-	/* These temp sensors are only readable in S0 */
-	TEMP_SENSOR_AMBIENT,
-	TEMP_SENSOR_CASE,
-/*	TEMP_SENSOR_CHARGER, */
-/*	TEMP_SENSOR_DRAM, */
-/*	TEMP_SENSOR_WIFI, */
-
+	TEMP_SENSOR_BOARD,
 	TEMP_SENSOR_COUNT
 };
 
@@ -528,10 +598,8 @@ enum als_id {
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       45000
+#define PD_MAX_POWER_MW       60000
 #define PD_MAX_CURRENT_MA     3000
-
-/* Try to negotiate to 20V since i2c noise problems should be fixed. */
 #define PD_MAX_VOLTAGE_MV     20000
 
 /*
@@ -560,14 +628,17 @@ void psensor_interrupt(enum gpio_signal signal);
 /* HID */
 void soc_hid_interrupt(enum gpio_signal signal);
 
-/* PD CHIP */
-void pd_chip_interrupt(enum gpio_signal signal);
-
 /* thermal sensor */
 void thermal_sensor_interrupt(enum gpio_signal signal);
 
 /* SOC */
 void soc_signal_interrupt(enum gpio_signal signal);
+
+/* chassis function */
+void chassis_control_interrupt(enum gpio_signal signal);
+
+/* Touchpad process */
+void touchpad_interrupt(enum gpio_signal signal);
 
 /* power sequence */
 int board_chipset_power_on(void);

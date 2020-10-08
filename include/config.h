@@ -1089,6 +1089,9 @@
 /* Wireless chargers */
 #undef CONFIG_WIRELESS_CHARGER_P9221_R7
 
+/* For customer initial use */
+#undef CONFIG_CHARGER_CUSTOMER_SETTING
+
 /*
  * Workaround npcx9 A1 chip's bug for download_from_flash API in th booter.
  * This can be removed when A2 chip is available.
@@ -2610,6 +2613,11 @@
 #undef CONFIG_KEYBOARD_CUSTOMIZATION
 
 /*
+ * implement the Combination key for the actual Fn key
+ */
+#undef CONFIG_KEYBOARD_CUSTOMIZATION_CONBINATION_KEY
+
+/*
  * Allow board-specific 8042 keyboard callback when a key state is changed.
  */
 #undef CONFIG_KEYBOARD_SCANCODE_CALLBACK
@@ -3060,6 +3068,9 @@
 /* Config for power states and port80 message to be displayed on 7 -segment */
 #undef CONFIG_SEVEN_SEG_DISPLAY
 
+/* For customer desgin to show port 80 on 7-segment */
+#undef CONFIG_CUSTOMER_PORT80
+
 /* Compile common code to support power button debouncing */
 #undef CONFIG_POWER_BUTTON
 
@@ -3506,6 +3517,11 @@
  * Microchip Trace FIFO Debug Port
  */
 #undef CONFIG_MCHP_TFDP
+
+/*
+ * Mirochip EMI region 1 enable
+ */
+#undef CONFIG_EMI_REGION1
 
 /*****************************************************************************/
 /* Task config */

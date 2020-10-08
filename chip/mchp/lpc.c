@@ -36,6 +36,11 @@
 static uint8_t
 mem_mapped[0x200] __attribute__((section(".bss.big_align")));
 
+#ifdef CONFIG_EMI_REGION1
+static uint8_t
+mem_mapped2[0x200] __attribute__((section(".bss.big_align")));
+#endif
+
 static struct host_packet lpc_packet;
 static struct host_cmd_handler_args host_cmd_args;
 static uint8_t host_cmd_flags;   /* Flags from host command */
@@ -142,6 +147,12 @@ static uint8_t *lpc_get_hostcmd_data_range(void)
 	return mem_mapped;
 }
 
+#ifdef CONFIG_EMI_REGION1
+uint8_t *lpc_get_customer_memmap_range(void)
+{
+	return mem_mapped2;
+}
+#endif
 
 /**
  * Update the host event status.
@@ -385,12 +396,16 @@ void chip_8042_config(uint32_t io_base)
 	task_enable_irq(MCHP_IRQ_8042EM_IBF);
 	task_enable_irq(MCHP_IRQ_8042EM_OBE);
 
-	MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_8042_SIRQ0) = BIT(0);
-
+/* Set up SERIRQ for keyboard */
+#ifdef CHIP_FAMILY_MEC17XX
 #ifndef CONFIG_KEYBOARD_IRQ_GPIO
-	/* Set up SERIRQ for keyboard */
 	MCHP_8042_KB_CTRL |= BIT(5);
 	MCHP_LPC_SIRQ(1) = 0x01;
+#endif
+#else
+	/* Mec1521 only have ESPI */
+	MCHP_8042_KB_CTRL |= BIT(5);
+	MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_8042_SIRQ0) = BIT(0);
 #endif
 }
 
@@ -417,6 +432,13 @@ void chip_emi0_config(uint32_t io_base)
 
 	MCHP_EMI_MRL0(0) = 0x200;
 	MCHP_EMI_MWL0(0) = 0x100;
+
+#ifdef CONFIG_EMI_REGION1
+	MCHP_EMI_MBA1(0) = (uint32_t)mem_mapped2;
+
+	MCHP_EMI_MRL1(0) = 0x200;
+	MCHP_EMI_MWL1(0) = 0x100;
+#endif
 
 	MCHP_INT_ENABLE(MCHP_EMI_GIRQ) = MCHP_EMI_GIRQ_BIT(0);
 	task_enable_irq(MCHP_IRQ_EMI0);

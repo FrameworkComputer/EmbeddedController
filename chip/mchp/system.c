@@ -37,6 +37,7 @@ enum hibdata_index {
 	HIBDATA_INDEX_PD0,		/* USB-PD0 saved port state */
 	HIBDATA_INDEX_PD1,		/* USB-PD1 saved port state */
 	HIBDATA_INDEX_PD2,		/* USB-PD2 saved port state */
+	HIBDATA_INDEX_PD3,		/* USB-PD3 saved port state */
 };
 
 static void check_reset_cause(void)
@@ -307,6 +308,8 @@ static int bbram_idx_lookup(enum system_bbram_idx idx)
 		return HIBDATA_INDEX_PD1;
 	case SYSTEM_BBRAM_IDX_PD2:
 		return HIBDATA_INDEX_PD2;
+	case SYSTEM_BBRAM_IDX_PD3:
+		return HIBDATA_INDEX_PD3;
 	default:
 		return 1;
 	}

@@ -240,7 +240,7 @@ DECLARE_CONSOLE_COMMAND(charger, command_charger,
 			"Get or set charger param(s)");
 
 /* Driver wrapper functions */
-
+#ifndef CONFIG_CHARGER_CUSTOMER_SETTING
 static void charger_chips_init(void)
 {
 	int chip;
@@ -251,6 +251,7 @@ static void charger_chips_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_INIT_I2C + 1);
+#endif
 
 enum ec_error_list charger_post_init(void)
 {

@@ -20,12 +20,16 @@ CHIP_FAMILY:=mec152x
 CHIP_VARIANT:=mec152x_3400
 endif
 
-
+# Force changes to HX20_ORB variable to trigger a full build.
+ENV_VARS := HX20_ORB
 
 CHIP_SPI_SIZE_KB:=512
 
-board-y=board.o led.o power_sequence.o
+board-y=board.o led.o power_sequence.o cypress5525.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o
+ifeq ($(HX20_ORB),n)
+board-$(CONFIG_FANS)+=fan.o
+endif
 board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
 board-$(CONFIG_KEYBOARD_CUSTOMIZATION)+=keyboard_customization.o
 

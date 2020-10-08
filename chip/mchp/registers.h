@@ -199,7 +199,9 @@
 #define MCHP_PCR_SLP_EN2_SLEEP		0x07ffffff
 
 /* Sleep Enable3, Clock Required3, Reset on Sleep3 bits */
+#if defined(CHIP_FAMILY_MEC17XX)
 #define MCHP_PCR_PWM9		((3 << 8) + 31)
+#endif
 #define MCHP_PCR_CCT0		((3 << 8) + 30)
 #define MCHP_PCR_HTMR1		((3 << 8) + 29)
 #define MCHP_PCR_AESHASH	((3 << 8) + 28)
@@ -228,7 +230,9 @@
 #define MCHP_PCR_ADC		((3 << 8) + 3)
 
 /* Command all blocks to sleep */
+#if defined(CHIP_FAMILY_MEC17xx)
 #define MCHP_PCR_SLP_EN3_PWM9		BIT(31)
+#endif
 #define MCHP_PCR_SLP_EN3_CCT0		BIT(30)
 #define MCHP_PCR_SLP_EN3_HTMR1		BIT(29)
 #define MCHP_PCR_SLP_EN3_AESHASH	BIT(28)
@@ -277,8 +281,10 @@
 #define MCHP_PCR_CNT16_2	((4 << 8) + 4)
 #define MCHP_PCR_CNT16_1	((4 << 8) + 3)
 #define MCHP_PCR_CNT16_0	((4 << 8) + 2)
+#if defined(CHIP_FAMILY_MEC17XX)
 #define MCHP_PCR_PWM11		((4 << 8) + 1)
 #define MCHP_PCR_PWM10		((4 << 8) + 0)
+#endif
 
 /* Command all blocks to sleep */
 #define MCHP_PCR_SLP_EN4_FJCL		BIT(15)
@@ -296,8 +302,10 @@
 #define MCHP_PCR_SLP_EN4_CNT16_1	BIT(3)
 #define MCHP_PCR_SLP_EN4_CNT16_0	BIT(2)
 #define MCHP_PCR_SLP_EN4_PWM_ALL	(3 << 0)
+#if defined(CHIP_FAMILY_MEC17xx)
 #define MCHP_PCR_SLP_EN4_PWM11		BIT(1)
 #define MCHP_PCR_SLP_EN4_PWM10		BIT(0)
+#endif
 /* all sleep enable 4 bits */
 #define MCHP_PCR_SLP_EN4_SLEEP		0x0000ffff
 
@@ -641,6 +649,9 @@
 #define MCHP_GPIO_CTRL_FUNC_1		(1 << 12)
 #define MCHP_GPIO_CTRL_FUNC_2		(2 << 12)
 #define MCHP_GPIO_CTRL_FUNC_3		(3 << 12)
+#define MCHP_GPIO_CTRL_INPUT_DISABLE_MASK (0x01 << 15)
+#define MCHP_GPIO_CTRL_INPUT_ENABLE (0x00 << 15)
+
 #define MCHP_GPIO_CTRL_OUT_LVL		BIT(16)
 
 /* GPIO Parallel Input and Output registers.
@@ -653,7 +664,13 @@
 	((gpio_bank) << 2))
 
 /* Timer */
+
+#if defined(CHIP_FAMILY_MEC152X)
+#define MCHP_TMR16_MAX		(2)
+#else 
 #define MCHP_TMR16_MAX		(4)
+#endif /* CHIP_FAMILY_MEC152X */
+
 #define MCHP_TMR32_MAX		(2)
 #define MCHP_TMR16_BASE(x)  (0x40000c00 + (x) * 0x20)
 #define MCHP_TMR32_BASE(x)  (0x40000c80 + (x) * 0x20)
@@ -686,11 +703,22 @@
 #define MCHP_RTMR_GIRQ_BIT(x)	(1ul << 0)
 
 /* Watchdog */
+#if defined(CHIP_FAMILY_MEC152X)
+#define MCHP_WDG_BASE       0x40000400
+#define MCHP_WDG_LOAD       REG16(MCHP_WDG_BASE + 0x0)
+#define MCHP_WDG_CTL        REG32(MCHP_WDG_BASE + 0x4)
+#define MCHP_WDG_KICK       REG8(MCHP_WDG_BASE + 0x8)
+#define MCHP_WDG_CNT        REG16(MCHP_WDG_BASE + 0xc)
+#define MCHP_WDG_STATUS     REG32(MCHP_WDG_BASE + 0x10)
+#define MCHP_WDG_INT_EN     REG32(MCHP_WDG_BASE + 0x14)
+#else
 #define MCHP_WDG_BASE       0x40000000
 #define MCHP_WDG_LOAD       REG16(MCHP_WDG_BASE + 0x0)
 #define MCHP_WDG_CTL        REG8(MCHP_WDG_BASE + 0x4)
 #define MCHP_WDG_KICK       REG8(MCHP_WDG_BASE + 0x8)
 #define MCHP_WDG_CNT        REG16(MCHP_WDG_BASE + 0xc)
+#endif 
+
 
 
 /* VBAT */
@@ -702,7 +730,11 @@
 #define MCHP_VBAT_MONOTONIC_CTR_HI   REG32(MCHP_VBAT_BASE + 0x24)
 /* read 32-bit word at 32-bit offset x where 0 <= x <= 31 */
 #define MCHP_VBAT_RAM(x)   REG32(MCHP_VBAT_BASE + 0x400 + ((x) * 4))
+#if defined(CHIP_FAMILY_MEC152X)
+#define MCHP_VBAT_VWIRE_BACKUP       14
+#else 
 #define MCHP_VBAT_VWIRE_BACKUP       30
+#endif 
 
 /* Bit definition for MCHP_VBAT_STS */
 #define MCHP_VBAT_STS_SOFTRESET		BIT(2)
@@ -798,8 +830,16 @@
  * scratch pad index cannot be more than 32 as
  * MCHP has 128 bytes = 32 indexes of scratchpad RAM
  */
+#if defined(CHIP_FAMILY_MEC17XX)
 #define MCHP_IMAGETYPE_IDX     31
+#elif defined(CHIP_FAMILY_MEC152X)
+/* Miscellaneous firmware control fields
+ * scratch pad index cannot be more than 32 as
+ * MCHP 1501 has 64 bytes = 16 indexes of scratchpad RAM
+ */
+#define MCHP_IMAGETYPE_IDX     15
 
+#endif 
 
 /* LPC */
 #define MCHP_LPC_CFG_BASE     0x400f3300
@@ -985,7 +1025,11 @@
 
 
 /* PWM */
+#if defined(CHIP_FAMILY_MEC152X)
+#define MCHP_PWM_ID_MAX		(9)
+#elif defined(CHIP_FAMILY_MEC17XX)
 #define MCHP_PWM_ID_MAX		(12)
+#endif 
 #define MCHP_PWM_BASE(x)	(0x40005800 + ((x) << 4))
 #define MCHP_PWM_ON(x)		REG32(MCHP_PWM_BASE(x) + 0x00)
 #define MCHP_PWM_OFF(x)		REG32(MCHP_PWM_BASE(x) + 0x04)
@@ -1685,8 +1729,13 @@ enum MCHP_i2c_port {
 #define MCHP_ESPI_MSVW_BASE	(MCHP_ESPI_VW_BASE)
 #define MCHP_ESPI_SMVW_BASE	((MCHP_ESPI_VW_BASE) + 0x200ul)
 
+#if defined(CHIP_FAMILY_MEC152X)
+#define MCHP_ESPI_MSVW_LEN	11
+#define MCHP_ESPI_SMVW_LEN	11
+#else
 #define MCHP_ESPI_MSVW_LEN	12
 #define MCHP_ESPI_SMVW_LEN	8
+#endif 
 
 #define MCHP_ESPI_MSVW_ADDR(n) ((MCHP_ESPI_MSVW_BASE) + \
 	((n) * (MCHP_ESPI_MSVW_LEN)))
@@ -1976,6 +2025,31 @@ enum MCHP_i2c_port {
  * 14 channels and 14 devices, we make each channel dedicated to the
  * device of the same number.
  */
+#if defined(CHIP_FAMILY_MEC152X)
+enum dma_channel {
+	/* Channel numbers */
+	MCHP_DMAC_I2C0_SLAVE =  0,
+	MCHP_DMAC_I2C0_MASTER = 1,
+
+	MCHP_DMAC_I2C1_SLAVE =  2,
+	MCHP_DMAC_I2C1_MASTER = 3,
+
+	MCHP_DMAC_I2C2_SLAVE =  4,
+	MCHP_DMAC_I2C2_MASTER = 5,
+/*
+	MCHP_DMAC_I2C3_SLAVE =  6,
+	MCHP_DMAC_I2C3_MASTER = 7,
+*/
+	MCHP_DMAC_SPI0_TX =     6,
+	MCHP_DMAC_SPI0_RX =     7,
+	MCHP_DMAC_SPI1_TX =    8,
+	MCHP_DMAC_SPI1_RX =    9,
+	MCHP_DMAC_QMSPI0_TX =  10,
+	MCHP_DMAC_QMSPI0_RX =  11,
+	/* Channel count */
+	MCHP_DMAC_COUNT =      12,
+};
+#else
 enum dma_channel {
 	/* Channel numbers */
 	MCHP_DMAC_I2C0_SLAVE =  0,
@@ -1995,6 +2069,8 @@ enum dma_channel {
 	/* Channel count */
 	MCHP_DMAC_COUNT =      14,
 };
+#endif
+
 
 
 /* Bits for DMA Main Control */

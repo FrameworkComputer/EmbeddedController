@@ -118,6 +118,9 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 #ifdef CONFIG_GPIO_POWER_DOWN
 		if (flags & GPIO_POWER_DOWN) {
 			val = (MCHP_GPIO_CTRL_PWR_OFF +
+#ifdef CHIP_FAMILY_MEC152X
+					MCHP_GPIO_CTRL_INPUT_DISABLE_MASK +
+#endif 
 					MCHP_GPIO_INTDET_DISABLED);
 			MCHP_GPIO_CTL(port, i) = val;
 			continue;
@@ -141,6 +144,9 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 			val &= ~(MCHP_GPIO_OUTSEL_PAR);
 		} else {
 			val &= ~(MCHP_GPIO_OUTPUT);
+#ifdef CHIP_FAMILY_MEC152X
+			val &= ~(MCHP_GPIO_CTRL_INPUT_DISABLE_MASK); 
+#endif 
 			val |= (MCHP_GPIO_OUTSEL_PAR);
 		}
 

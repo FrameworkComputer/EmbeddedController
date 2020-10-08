@@ -15,17 +15,19 @@
 #include "als.h"
 #include "bd99992gw.h"
 #include "button.h"
-#include "charge_manager.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
+#include "cypress5525.h"
 #include "driver/als_opt3001.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/charger/isl9241.h"
 #include "driver/tcpm/tcpci.h"
 #include "extpower.h"
+#include "fan.h"
 #include "gpio_chip.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -33,6 +35,7 @@
 #include "i2c.h"
 #include "espi.h"
 #include "lpc_chip.h"
+#include "lpc.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "math_util.h"
@@ -41,6 +44,8 @@
 #include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
+#include "pwm.h"
+#include "pwm_chip.h"
 #include "spi.h"
 #include "spi_chip.h"
 #include "switch.h"
@@ -56,6 +61,9 @@
 #include "util.h"
 #include "espi.h"
 #include "battery_smart.h"
+#include "keyboard_scan.h"
+#include "keyboard_8042.h"
+#include "keyboard_8042_sharedlib.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
@@ -80,14 +88,6 @@
 #define DS1624_CMD_START	0xEE
 #define DS1624_CMD_STOP		0x22
 
-/*
- * static global and routine to return smart battery
- * temperature when we do not build with charger task.
- */
-static int smart_batt_temp;
-static int ds1624_temp;
-static int sb_temp(int idx, int *temp_ptr);
-static int ds1624_get_val(int idx, int *temp_ptr);
 static int forcing_shutdown;  /* Forced shutdown in progress? */
 
 #ifdef HAS_TASK_MOTIONSENSE
@@ -108,8 +108,6 @@ static void board_spi_disable(void);
  */
 void board_config_pre_init(void)
 {
-	smart_batt_temp = 0;
-	ds1624_temp = 0;
 
 #ifdef CONFIG_CHIPSET_DEBUG
 	MCHP_EC_JTAG_EN = MCHP_JTAG_ENABLE + MCHP_JTAG_MODE_SWD_SWV;
@@ -162,6 +160,16 @@ const struct power_signal_info power_signal_list[] = {
 	}
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+#ifdef CONFIG_PWM
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_FAN] = {
+		.channel = 0,
+		.flags = PWM_CONFIG_OPEN_DRAIN,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+#endif
 
 void chipset_handle_espi_reset_assert(void)
 {
@@ -276,13 +284,12 @@ void tablet_mode_interrupt(enum gpio_signal signal)
  * name, factor multiplier, factor divider, shift, channel
  */
 const struct adc_t adc_channels[] = {
-	/* Vbus sensing. Converted to mV, full ADC is equivalent to 30V. */
-	[ADC_VBUS] = {"VBUS", 30000, 1024, 0, 1},
-	/* Adapter current output or battery discharging current */
-	[ADC_AMON_BMON] = {"AMON_BMON", 25000, 3072, 0, 3},
-	/* System current consumption */
-	[ADC_PSYS] = {"PSYS", 1, 1, 0, 4},
-	[ADC_CASE] = {"CASE", 1, 1, 0, 7},
+	[ADC_I_ADP]           = {"I_ADP", 3300, 4096, 0, 0},
+	[ADC_I_SYS]           = {"I_SYS", 3300, 4096, 0, 1},
+	[ADC_VCIN1_BATT_TEMP] = {"BATT_PRESENT", 3300, 4096, 0, 2},
+	[ADC_TP_BOARD_ID]     = {"TP_BID", 3300, 4096, 0, 3},
+	[ADC_AD_BID]          = {"AD_BID", 3300, 4096, 0, 4},
+	[ADC_AUDIO_BOARD_ID]  = {"AUDIO_BID", 3300, 4096, 0, 5}
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -290,8 +297,16 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
  * MCHP EVB connected to KBL RVP3
  */
 const struct i2c_port_t i2c_ports[]  = {
+#if defined(CHIP_FAMILY_MEC17XX)
+/* ORB */
 	{"batt",     MCHP_I2C_PORT3, 100,  GPIO_SMB03_SCL, GPIO_SMB03_SDA},
 	{"sensors",  MCHP_I2C_PORT4, 100,  GPIO_SMB04_SCL, GPIO_SMB04_SDA}
+#else
+	{"batt",     MCHP_I2C_PORT1, 100,  GPIO_I2C_1_SDA, GPIO_I2C_1_SCL},
+	{"touchpd",  MCHP_I2C_PORT2, 100,  GPIO_I2C_2_SDA, GPIO_I2C_2_SCL},
+	{"sensors",  MCHP_I2C_PORT3, 100,  GPIO_I2C_3_SDA, GPIO_I2C_3_SCL},
+	{"pd",       MCHP_I2C_PORT6, 100,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL}
+#endif
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -300,8 +315,15 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
  * Ports may map to the same controller.
  */
 const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
+#if defined(CHIP_FAMILY_MEC17XX)
 	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT3,
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT4
+#else 
+	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT1,
+	(MCHP_I2C_CTRL2 << 8) + MCHP_I2C_PORT2,
+	(MCHP_I2C_CTRL3 << 8) + MCHP_I2C_PORT3,
+	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT6
+#endif
 };
 
 /*
@@ -471,54 +493,16 @@ void board_reset_pd_mcu(void)
 	//gpio_set_level(GPIO_PD_RST_L, 1);
 }
 
-/*
- *
- */
-static int therm_get_val(int idx, int *temp_ptr)
+static int board_get_temp(int idx, int *temp_k)
 {
-	if (temp_ptr != NULL) {
-		*temp_ptr = adc_read_channel(idx);
-		return EC_SUCCESS;
-	}
-
-	return EC_ERROR_PARAM2;
+    /*TODO: thermal sensor function */
+    return -1;
 }
 
-#ifdef CONFIG_TEMP_SENSOR
-#if 0 /* Chromebook design uses ADC in BD99992GW PMIC */
 const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0, 4},
-
-	/* These BD99992GW temp sensors are only readable in S0 */
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-		BD99992GW_ADC_CHANNEL_SYSTHERM0, 4},
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-		BD99992GW_ADC_CHANNEL_SYSTHERM1, 4},
-	{"DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-		BD99992GW_ADC_CHANNEL_SYSTHERM2, 4},
-	{"Wifi", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-		BD99992GW_ADC_CHANNEL_SYSTHERM3, 4},
+	{"sensor", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-#else /* mec1701_evb test I2C and EC ADC */
-/*
- * battery charge_get_battery_temp requires charger task running.
- * OR can we call into driver/battery/smart.c
- * int sb_read(int cmd, int *param)
- * sb_read(SB_TEMPERATURE, &batt_new.temperature)
- * Issue is functions in this table return a value from a memory array.
- * There's a task or hook that is actually reading the temperature.
- * We could implement a one second hook to call sb_read() and fill in
- * a static global in this module.
- */
-const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, sb_temp, 0},
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, ds1624_get_val, 0},
-	{"Case", TEMP_SENSOR_TYPE_CASE, therm_get_val, (int)ADC_CASE},
-};
-BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-#endif
-#endif
 
 #ifdef CONFIG_ALS
 /* ALS instances. Must be in same order as enum als_id. */
@@ -742,6 +726,21 @@ static void enable_input_devices(void)
 	gpio_set_level(GPIO_ENABLE_TOUCHPAD, tp_enable);
 }
 
+#ifdef CONFIG_EMI_REGION1
+
+static void sci_enable(void);
+DECLARE_DEFERRED(sci_enable);
+
+static void sci_enable(void)
+{
+	if (*host_get_customer_memmap(0x00) == 1) {
+	/* when host set EC driver ready flag, EC need to enable SCI */
+		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0xffffffff);
+	} else
+		hook_call_deferred(&sci_enable_data, 250 * MSEC);
+}
+#endif
+
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {
@@ -751,6 +750,9 @@ static void board_chipset_startup(void)
 	gpio_set_level(GPIO_USB1_ENABLE, 1);
 	gpio_set_level(GPIO_USB2_ENABLE, 1);
 	*/ 
+#ifdef CONFIG_EMI_REGION1
+	hook_call_deferred(&sci_enable_data, 250 * MSEC);
+#endif
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
@@ -767,6 +769,9 @@ static void board_chipset_shutdown(void)
 	gpio_set_level(GPIO_USB1_ENABLE, 0);
 	gpio_set_level(GPIO_USB2_ENABLE, 0);
 	*/ 
+#ifdef CONFIG_EMI_REGION1
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
+#endif
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
@@ -779,13 +784,9 @@ static void board_chipset_resume(void)
 	CPRINTS("MEC1701_EVG HOOK_CHIPSET_RESUME");
 	trace0(0, HOOK, 0, "HOOK_CHIPSET_RESUME - board_chipset_resume");
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
+	gpio_set_level(GPIO_EC_MUTE_L, 1);
 	gpio_set_level(GPIO_EC_WLAN_EN,1);
 	gpio_set_level(GPIO_EC_WL_OFF_L,1);
-#if 0 /* TODO not implemented in gpio.inc */
-	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 1);
-	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 1);
-#endif
-
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 	     MOTION_SENSE_HOOK_PRIO-1);
@@ -796,6 +797,7 @@ static void board_chipset_suspend(void)
 	CPRINTS("MEC1701 HOOK_CHIPSET_SUSPEND - called board_chipset_resume");
 	trace0(0, HOOK, 0, "HOOK_CHIPSET_SUSPEND - board_chipset_suspend");
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
+	gpio_set_level(GPIO_EC_MUTE_L, 0);
 	gpio_set_level(GPIO_EC_WLAN_EN,1);
 	gpio_set_level(GPIO_EC_WL_OFF_L,1);
 #if 0 /* TODO not implemented in gpio.inc */
@@ -886,82 +888,6 @@ static void board_handle_reboot(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
 
-
-static int sb_temp(int idx, int *temp_ptr)
-{
-	if (idx != 0)
-		return EC_ERROR_PARAM1;
-
-	if (temp_ptr == NULL)
-		return EC_ERROR_PARAM2;
-
-	*temp_ptr = smart_batt_temp;
-
-	return EC_SUCCESS;
-}
-
-static int ds1624_get_val(int idx, int *temp_ptr)
-{
-	if (idx != 0)
-		return EC_ERROR_PARAM1;
-
-	if (temp_ptr == NULL)
-		return EC_ERROR_PARAM2;
-
-	*temp_ptr = ds1624_temp;
-
-	return EC_SUCCESS;
-}
-
-/* call smart battery code to get its temperature
- * output is in tenth degrees C
- */
-static void sb_update(void)
-{
-	int rv __attribute__((unused));
-
-	rv = sb_read(SB_TEMPERATURE, &smart_batt_temp);
-	smart_batt_temp = smart_batt_temp / 10;
-
-	trace12(0, BRD, 0, "sb_read temperature rv=%d  temp=%d K",
-		rv, smart_batt_temp);
-}
-
-/*
- * Read temperature from Maxim DS1624 sensor. It only has internal sensor
- * and is configured for continuous reading mode by default.
- * DS1624 does not implement temperature limits or other features of
- * sensors like the TMP411.
- * Output format is 16-bit MSB first signed celcius temperature in units
- * of 0.0625 degree Celsius.
- * b[15]=sign bit
- * b[14]=2^6, b[13]=2^5, ..., b[8]=2^0
- * b[7]=1/2, b[6]=1/4, b[5]=1/8, b[4]=1/16
- * b[3:0]=0000b
- *
- */
-static void ds1624_update(void)
-{
-	uint32_t d;
-	int temp;
-	int rv __attribute__((unused));
-
-	rv = i2c_read16(I2C_PORT_THERMAL, DS1624_I2C_ADDR_FLAGS,
-			DS1624_READ_TEMP16, &temp);
-
-	d = (temp & 0x7FFF) >> 8;
-	if ((uint32_t)temp & BIT(7))
-		d++;
-
-	if ((uint32_t)temp & BIT(15))
-		d |= (1u << 31);
-
-	ds1624_temp = (int32_t)d;
-
-	trace3(0, BRD, 0, "ds1624_update: rv=%d raw temp = 0x%04X tempC = %d",
-	       rv, temp, ds1624_temp);
-}
-
 /* Indicate scheduler is alive by blinking an LED.
  * Test I2C by reading a smart battery and temperature sensor.
  * Smart battery 16 bit temperature is in units of 1/10 degree C.
@@ -974,9 +900,6 @@ static void board_one_sec(void)
 		gpio_set_level(GPIO_LED1_PWM, 0);
 	else
 		gpio_set_level(GPIO_LED1_PWM, 1);
-
-	sb_update();
-	ds1624_update();
 }
 DECLARE_HOOK(HOOK_SECOND, board_one_sec, HOOK_PRIO_DEFAULT);
 
@@ -1078,9 +1001,11 @@ static void board_spi_enable(void)
 	/* Toggle SPI chip select to switch BMI160 from I2C mode
 	 * to SPI mode
 	 */
+	/*
 	gpio_set_level(GPIO_SPI0_CS0, 0);
 	udelay(10);
 	gpio_set_level(GPIO_SPI0_CS0, 1);
+	*/
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_spi_enable,
 	     MOTION_SENSE_HOOK_PRIO - 1);
@@ -1115,11 +1040,6 @@ void soc_hid_interrupt(enum gpio_signal signal)
 	/* TODO: implement hid function */
 }
 
-void pd_chip_interrupt(enum gpio_signal signal)
-{
-	/* TODO: implement cypress CCG5 function */
-}
-
 void thermal_sensor_interrupt(enum gpio_signal signal)
 {
 	/* TODO: implement thermal sensor alert interrupt function */
@@ -1128,6 +1048,20 @@ void thermal_sensor_interrupt(enum gpio_signal signal)
 void soc_signal_interrupt(enum gpio_signal signal)
 {
 	/* TODO: EC BKOFF signal is related soc enable panel siganl */
+}
+
+void chassis_control_interrupt(enum gpio_signal signal)
+{
+	/* TODO: implement c cover open/close behavior
+	 * When c cover close, drop the EC_ON to tune off EC power
+	 */
+}
+
+void touchpad_interrupt(enum gpio_signal signal)
+{
+	/* TODO: implement touchpad process
+	 *
+	 */
 }
 
 int board_get_version(void)
@@ -1152,7 +1086,172 @@ struct keyboard_scan_config keyscan_config = {
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
-		0x14, 0xff, 0xff, 0xf2, 0xff, 0xff, 0xff,
-		0x0a, 0xff, 0xa0, 0xff, 0xff, 0x00, 0x41, 0xff, 0xff  /* full set */
+		0xff, 0xff, 0xff, 0x03, 0xff, 0xff, 0xff,
+		0x0a, 0xff, 0x03, 0xff, 0xff, 0x03, 0xff, 0xff, 0xef  /* full set */
 	},
 };
+
+
+#ifdef CONFIG_KEYBOARD_CUSTOMIZATION_CONBINATION_KEY
+
+static uint8_t Fn_key;
+
+enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
+					      int8_t pressed)
+{
+	const uint16_t pressed_key = *make_code;
+
+
+	if (pressed_key == SCANCODE_FN && pressed)
+		Fn_key = 1;
+	else if (pressed_key == SCANCODE_FN && !pressed)
+		Fn_key = 0;
+
+	if (!pressed)
+		return EC_SUCCESS;
+
+	if (!Fn_key)
+		return EC_SUCCESS;
+
+	switch (pressed_key) {
+	case SCANCODE_ESC: /* TODO: FUNCTION_LOCK */
+
+		break;
+	case SCANCODE_F1:  /* TODO: SPEAKER_MUTE */
+
+		break;
+	case SCANCODE_F2:  /* TODO: VOLUME_DOWN */
+
+		break;
+	case SCANCODE_F3:  /* TODO: VOLUME_UP */
+
+		break;
+	case SCANCODE_F4:  /* TODO: MIC_MUTE */
+
+		break;
+	case SCANCODE_F5:  /* TODO: PLAY_PAUSE */
+
+		break;
+	case SCANCODE_F6:  /* TODO: DIM_SCREEN */
+
+		break;
+	case SCANCODE_F7:  /* TODO: BRIGHTEN_SCREEN */
+
+		break;
+	case SCANCODE_F8:  /* TODO: EXTERNAL_DISPLAY */
+
+		break;
+	case SCANCODE_F9:  /* TODO: TOGGLE_WIFI */
+
+		break;
+	case SCANCODE_F10:  /* TODO: TOGGLE_BLUETOOTH */
+
+		break;
+	case SCANCODE_F11:  /* TODO: PRINT_SCREEN */
+
+		break;
+	case SCANCODE_F12:  /* TODO: FRAMEWORK */
+
+		break;
+	case SCANCODE_DELETE:  /* TODO: INSERT */
+
+		break;
+	case SCANCODE_B:  /* TODO: BREAK_KEY */
+
+		break;
+	case SCANCODE_K:  /* TODO: SCROLL_LOCK */
+
+		break;
+	case SCANCODE_P:  /* TODO: PAUSE */
+
+		break;
+	case SCANCODE_S:  /* TODO: SYSRQ */
+
+		break;
+	case SCANCODE_SPACE:  /* TODO: TOGGLE_KEYBOARD_BACKLIGHT */
+
+		break;
+	case SCANCODE_LEFT:  /* TODO: HOME */
+
+		break;
+	case SCANCODE_RIGHT:  /* TODO: END */
+
+		break;
+	case SCANCODE_UP:  /* TODO: PAGE_UP */
+
+		break;
+	case SCANCODE_DOWN:  /* TODO: PAGE_DOWN */
+
+		break;
+	}
+	return EC_ERROR_UNIMPLEMENTED;
+}
+#endif
+
+/* Charger chips */
+const struct charger_config_t chg_chips[] = {
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL9241_ADDR_FLAGS,
+		.drv = &isl9241_drv,
+	},
+};
+
+#ifdef CONFIG_CHARGER_CUSTOMER_SETTING
+static void charger_chips_init(void)
+{
+	int chip;
+
+	for (chip = 0; chip < board_get_charger_chip_count(); chip++) {
+		if (chg_chips[chip].drv->init)
+			chg_chips[chip].drv->init(chip);
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL2, 0x6008))
+		goto init_fail;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL3, 0x4300))
+		goto init_fail;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL4, 0x0000))
+		goto init_fail;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL0, 0x0000))
+		goto init_fail;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, 0x0287))
+		goto init_fail;
+
+init_fail:
+	CPRINTF("ISL9241 customer init failed!");
+}
+DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_INIT_I2C + 1);
+#endif
+
+#ifdef CONFIG_FANS
+/******************************************************************************/
+/* Physical fans. These are logically separate from pwm_channels. */
+
+const struct fan_conf fan_conf_0 = {
+	.flags = FAN_USE_RPM_MODE,
+	.ch = 0,	/* Use MFT id to control fan */
+	.pgood_gpio = -1,
+	.enable_gpio = -1,
+};
+
+/* Default */
+const struct fan_rpm fan_rpm_0 = {
+	.rpm_min = 3100,
+	.rpm_start = 6140,
+	.rpm_max = 6900,
+};
+
+const struct fan_t fans[FAN_CH_COUNT] = {
+	[FAN_CH_0] = { .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
+};
+#endif

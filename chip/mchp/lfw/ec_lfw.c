@@ -272,13 +272,22 @@ int uart_getc(void)
 
 void fault_handler(void)
 {
-	uart_puts("EXCEPTION!\nTriggering watchdog reset\n");
+#ifdef CONFIG_CHIPSET_DEBUG
+	const char * warning = "EXCEPTION!\r\n"; 
+		do {
+			while (!(MCHP_UART_LSR(0) & BIT(5)))
+				;
+			MCHP_UART_TB(0) = *warning++;
+	} while (*warning);
+
+	while (1)
+		;
+#endif /* CONFIG_CHIPSET_DEBUG */
 	/* trigger reset in 1 ms */
 	usleep(1000);
 	MCHP_PCR_SYS_RST = MCHP_PCR_SYS_SOFT_RESET;
 	while (1)
 		;
-
 }
 
 void jump_to_image(uintptr_t init_addr)
@@ -364,6 +373,7 @@ void lfw_main(void)
 #ifdef CONFIG_CHIPSET_DEBUG
 	int df; 
 	int uart_c; 
+	uint8_t spi_cmd; 
 #endif 
 
 	/* install vector table */
@@ -407,7 +417,7 @@ void lfw_main(void)
 	uart_puts("\n");
 
 #ifdef CONFIG_CHIPSET_DEBUG
-#define UART_DEBUG_WAIT_TIMEOUT_MS (1000)
+#define UART_DEBUG_WAIT_TIMEOUT_MS (2000)
 	/* Enabe SWD Access to chip early */
 #ifdef CONFIG_MCHP_JTAG_MODE
 	MCHP_EC_JTAG_EN = CONFIG_MCHP_JTAG_MODE;
@@ -420,6 +430,7 @@ void lfw_main(void)
 		uart_c = uart_getc(); 
 		/* drop to debug cmd on 'h' character */
 		if (uart_c == 0x68){
+			uart_puts("halting\n");
 			break; 
 		}
 		usleep(MSEC);
@@ -435,6 +446,13 @@ void lfw_main(void)
 				MCHP_PCR_SYS_RST = 0x01; 
 				break; 
 			case 0x65: /* e */
+				__hw_clock_source_set(0); /* restart free run timer */
+				spi_cmd = SPI_FLASH_WRITE_ENABLE;
+				spi_transaction(SPI_FLASH_DEVICE, &spi_cmd, 1, NULL, 0);
+				spi_cmd = SPI_FLASH_ERASE_CHIP;
+				spi_transaction(SPI_FLASH_DEVICE, &spi_cmd, 1, NULL, 0);
+				uart_puts("erase\n");
+				break; 
 			default: 
 				break;
 		}
