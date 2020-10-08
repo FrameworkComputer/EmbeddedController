@@ -24,6 +24,7 @@ uint16_t bkpdata_read(enum bkpdata_index index)
 int bkpdata_write(enum bkpdata_index index, uint16_t value)
 {
 	static struct mutex bkpdata_write_mutex;
+	int use_mutex = !in_interrupt_context();
 
 	if (index < 0 || index >= STM32_BKP_ENTRIES)
 		return EC_ERROR_INVAL;
@@ -32,7 +33,8 @@ int bkpdata_write(enum bkpdata_index index, uint16_t value)
 	 * Two entries share a single 32-bit register, lock mutex to prevent
 	 * read/mask/write races.
 	 */
-	mutex_lock(&bkpdata_write_mutex);
+	if (use_mutex)
+		mutex_lock(&bkpdata_write_mutex);
 	if (index & 1) {
 		uint32_t val = STM32_BKP_DATA(index >> 1);
 		val = (val & 0x0000FFFF) | (value << 16);
@@ -42,7 +44,8 @@ int bkpdata_write(enum bkpdata_index index, uint16_t value)
 		val = (val & 0xFFFF0000) | value;
 		STM32_BKP_DATA(index >> 1) = val;
 	}
-	mutex_unlock(&bkpdata_write_mutex);
+	if (use_mutex)
+		mutex_unlock(&bkpdata_write_mutex);
 
 	return EC_SUCCESS;
 }
