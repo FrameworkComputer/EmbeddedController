@@ -37,7 +37,7 @@ void dpm_init(int port)
 	dpm[port].mode_exit_request = false;
 }
 
-void dpm_set_mode_entry_done(int port)
+static void dpm_set_mode_entry_done(int port)
 {
 	dpm[port].mode_entry_done = true;
 }
@@ -122,6 +122,14 @@ static void dpm_attempt_mode_entry(int port)
 	    pd_get_modes_discovery(port, TCPC_TX_SOP) != PD_DISC_COMPLETE)
 		return;
 
+	if (dp_entry_is_done(port) ||
+	   (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
+				tbt_entry_is_done(port)) ||
+	   (IS_ENABLED(CONFIG_USB_PD_USB4) && enter_usb_entry_is_done(port))) {
+		dpm_set_mode_entry_done(port);
+		return;
+	}
+
 	/* Check if the device and cable support USB4. */
 	if (IS_ENABLED(CONFIG_USB_PD_USB4) && enter_usb_is_capable(port)) {
 		pd_dpm_request(port, DPM_REQUEST_ENTER_USB);
@@ -178,7 +186,7 @@ static void dpm_attempt_mode_exit(int port)
 	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
 	    tbt_is_active(port)) {
 		CPRINTS("C%d: TBT teardown", port);
-		tbt_exit_mode_request();
+		tbt_exit_mode_request(port);
 		vdo_count = tbt_setup_next_vdm(port, VDO_MAX_SIZE, &vdm,
 					&tx_type);
 	} else if (dp_is_active(port)) {

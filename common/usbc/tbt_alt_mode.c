@@ -8,6 +8,7 @@
  * Refer to USB Type-C Cable and Connector Specification Release 2.0 Section F
  */
 
+#include "atomic.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include "compile_time_macros.h"
@@ -16,7 +17,6 @@
 #include "usb_common.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
-#include "usb_pd_dpm.h"
 #include "usb_pd_tbt.h"
 #include "usb_pe_sm.h"
 #include "usb_tbt_alt_mode.h"
@@ -69,9 +69,14 @@
  * with a partner. It may be fixed in b/159495742, in which case this
  * logic is unneeded.
  */
-/* TODO:b/169169804 :Add entry, exit and retry flags for individual port */
-static bool retry_done;
-static bool exit_request;
+#define TBT_FLAG_RETRY_DONE BIT(0)
+#define TBT_FLAG_EXIT_DONE  BIT(1)
+
+static uint8_t tbt_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+#define TBT_SET_FLAG(port, flag) (tbt_flags[port] |= (flag))
+#define TBT_CLR_FLAG(port, flag) (tbt_flags[port] &= (~flag))
+#define TBT_CHK_FLAG(port, flag) (tbt_flags[port] & (flag))
 
 static int tbt_prints(const char *string, int port)
 {
@@ -108,7 +113,8 @@ static const uint8_t state_vdm_cmd[TBT_STATE_COUNT] = {
 void tbt_init(int port)
 {
 	tbt_state[port] = TBT_START;
-	retry_done = false;
+	TBT_CLR_FLAG(port, TBT_FLAG_RETRY_DONE);
+	TBT_SET_FLAG(port, TBT_FLAG_EXIT_DONE);
 }
 
 bool tbt_is_active(int port)
@@ -117,24 +123,30 @@ bool tbt_is_active(int port)
 	       tbt_state[port] != TBT_START;
 }
 
+bool tbt_entry_is_done(int port)
+{
+	return tbt_state[port] == TBT_ACTIVE ||
+		tbt_state[port] == TBT_INACTIVE;
+}
+
 static void tbt_exit_done(int port)
 {
 	tbt_state[port] = TBT_INACTIVE;
+	TBT_CLR_FLAG(port, TBT_FLAG_RETRY_DONE);
 
-	if (exit_request) {
+	if (!TBT_CHK_FLAG(port, TBT_FLAG_EXIT_DONE)) {
+		TBT_SET_FLAG(port, TBT_FLAG_EXIT_DONE);
 		tbt_prints("Exited alternate mode", port);
 		return;
 	}
 
-	retry_done = false;
 	tbt_prints("alt mode protocol failed!", port);
-	dpm_set_mode_entry_done(port);
 }
 
-void tbt_exit_mode_request(void)
+void tbt_exit_mode_request(int port)
 {
-	retry_done = true;
-	exit_request = true;
+	TBT_SET_FLAG(port, TBT_FLAG_RETRY_DONE);
+	TBT_CLR_FLAG(port, TBT_FLAG_EXIT_DONE);
 }
 
 static bool tbt_response_valid(int port, enum tcpm_transmit_type type,
@@ -161,7 +173,7 @@ static bool tbt_response_valid(int port, enum tcpm_transmit_type type,
 static void tbt_retry_enter_mode(int port)
 {
 	tbt_state[port] = TBT_START;
-	retry_done = true;
+	TBT_SET_FLAG(port, TBT_FLAG_RETRY_DONE);
 }
 
 /* Send Exit Mode to SOP''(if supported), or SOP' */
@@ -201,10 +213,9 @@ void intel_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 		break;
 	case TBT_ENTER_SOP:
 		set_tbt_compat_mode_ready(port);
-		dpm_set_mode_entry_done(port);
 		tbt_state[port] = TBT_ACTIVE;
-		retry_done = true;
 		tbt_prints("enter mode SOP", port);
+		TBT_SET_FLAG(port, TBT_FLAG_RETRY_DONE);
 		break;
 	case TBT_ACTIVE:
 		tbt_prints("exit mode SOP", port);
@@ -219,7 +230,7 @@ void intel_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 			/*
 			 * Exit Mode process is complete; go to inactive state.
 			 */
-			retry_done = false;
+			TBT_CLR_FLAG(port, TBT_FLAG_RETRY_DONE);
 		}
 		break;
 	case TBT_EXIT_SOP:
@@ -227,7 +238,7 @@ void intel_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 		if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE)
 			tbt_active_cable_exit_mode(port);
 		else {
-			if (retry_done)
+			if (TBT_CHK_FLAG(port, TBT_FLAG_RETRY_DONE))
 				/* retried enter mode, still failed, give up */
 				tbt_exit_done(port);
 			else
@@ -241,7 +252,7 @@ void intel_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 		break;
 	case TBT_EXIT_SOP_PRIME:
 		tbt_prints("exit mode SOP'", port);
-		if (retry_done) {
+		if (TBT_CHK_FLAG(port, TBT_FLAG_RETRY_DONE)) {
 			/*
 			 * Exit mode process is complete; go to inactive state.
 			 */
@@ -299,7 +310,7 @@ void intel_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd)
 		else {
 			tbt_prints("exit mode SOP failed", port);
 			tbt_state[port] = TBT_INACTIVE;
-			retry_done = false;
+			TBT_CLR_FLAG(port, TBT_FLAG_RETRY_DONE);
 		}
 		break;
 	case TBT_EXIT_SOP:
@@ -308,7 +319,7 @@ void intel_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd)
 		if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE)
 			tbt_active_cable_exit_mode(port);
 		else {
-			if (retry_done)
+			if (TBT_CHK_FLAG(port, TBT_FLAG_RETRY_DONE))
 				/* Retried enter mode, still failed, give up */
 				tbt_exit_done(port);
 			else
@@ -322,7 +333,7 @@ void intel_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd)
 		break;
 	case TBT_EXIT_SOP_PRIME:
 		set_usb_mux_with_current_data_role(port);
-		if (retry_done) {
+		if (TBT_CHK_FLAG(port, TBT_FLAG_RETRY_DONE)) {
 			/*
 			 * Exit mode process is complete; go to inactive state.
 			 */
@@ -381,7 +392,7 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
 		if (!tbt_mode_is_supported(port, vdo_count))
 			return 0;
 
-		if (!retry_done)
+		if (!TBT_CHK_FLAG(port, TBT_FLAG_RETRY_DONE))
 			tbt_prints("attempt to enter mode", port);
 		else
 			tbt_prints("retry to enter mode", port);

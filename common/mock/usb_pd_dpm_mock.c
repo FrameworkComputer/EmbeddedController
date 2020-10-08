@@ -36,10 +36,6 @@ void dpm_vdm_naked(int port, enum tcpm_transmit_type type, uint16_t svid,
 {
 }
 
-void dpm_set_mode_entry_done(int port)
-{
-}
-
 void dpm_set_mode_exit_request(int port)
 {
 }

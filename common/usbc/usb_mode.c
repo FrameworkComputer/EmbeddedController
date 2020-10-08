@@ -50,6 +50,12 @@ static void usb4_debug_prints(int port, enum usb4_mode_status usb4_status)
 		usb4_status);
 }
 
+bool enter_usb_entry_is_done(int port)
+{
+	return usb4_state[port] == USB4_ACTIVE ||
+		usb4_state[port] == USB4_INACTIVE;
+}
+
 void enter_usb_init(int port)
 {
 	usb4_state[port] = USB4_ENTER_SOP;
@@ -109,8 +115,6 @@ void enter_usb_accepted(int port, enum tcpm_transmit_type type)
 		/* Connect the SBU and USB lines to the connector */
 		if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
 			ppc_set_sbu(port, 1);
-
-		dpm_set_mode_entry_done(port);
 
 		usb4_state[port] = USB4_ACTIVE;
 

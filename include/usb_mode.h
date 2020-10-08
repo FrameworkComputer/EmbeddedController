@@ -24,6 +24,15 @@
 void enter_usb_init(int port);
 
 /*
+ * Checks weather the mode entry sequence for USB4 is done for a port.
+ *
+ * @param port      USB-C port number
+ * @return          True if entry sequence for USB4 is completed
+ *                  False otherwise
+ */
+bool enter_usb_entry_is_done(int port);
+
+/*
  * Resets USB4 state and mux state.
  *
  * @param port USB-C port number

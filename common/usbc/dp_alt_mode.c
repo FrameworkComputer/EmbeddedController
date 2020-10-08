@@ -15,7 +15,6 @@
 #include "usb_common.h"
 #include "usb_dp_alt_mode.h"
 #include "usb_pd.h"
-#include "usb_pd_dpm.h"
 #include "usb_pd_tcpm.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -62,11 +61,16 @@ void dp_init(int port)
 	dp_state[port] = DP_START;
 }
 
+bool dp_entry_is_done(int port)
+{
+	return dp_state[port] == DP_ACTIVE ||
+		dp_state[port] == DP_INACTIVE;
+}
+
 static void dp_entry_failed(int port)
 {
 	CPRINTS("C%d: DP alt mode protocol failed!", port);
 	dp_state[port] = DP_INACTIVE;
-	dpm_set_mode_entry_done(port);
 }
 
 static bool dp_response_valid(int port, enum tcpm_transmit_type type,
@@ -116,7 +120,6 @@ void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 	case DP_STATUS_ACKED:
 		if (modep && modep->opos && modep->fx->post_config)
 			modep->fx->post_config(port);
-		dpm_set_mode_entry_done(port);
 		dp_state[port] = DP_ACTIVE;
 		CPRINTS("C%d: Entered DP mode", port);
 		break;

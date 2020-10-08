@@ -19,14 +19,6 @@
 void dpm_init(int port);
 
 /*
- * Informs the DPM that the mode entry sequence (including appropriate
- * configuration) is done for a port.
- *
- * @param port USB-C port number
- */
-void dpm_set_mode_entry_done(int port);
-
-/*
  * Informs the DPM that Exit Mode request is received
  *
  * @param port USB-C port number
