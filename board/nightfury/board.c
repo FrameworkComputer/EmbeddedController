@@ -424,5 +424,5 @@ bool board_is_convertible(void)
 {
 	const uint8_t sku = get_board_sku();
 
-	return (sku == 255) || (sku == 1);
+	return (sku == 255) || (sku == 1) || (sku == 2);
 }
