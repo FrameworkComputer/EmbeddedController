@@ -36,6 +36,8 @@ ALL_TESTS_FAILED_REGEX = re.compile(r'Fail! \(\d+ tests\)\r\n')
 SINGLE_CHECK_PASSED_REGEX = re.compile(r'Pass: .*')
 SINGLE_CHECK_FAILED_REGEX = re.compile(r'.*failed:.*')
 
+ASSERTION_FAILURE_REGEX = re.compile(r'ASSERTION FAILURE.*')
+
 DATA_ACCESS_VIOLATION_8020000_REGEX = re.compile(
     r'Data access violation, mfar = 8020000\r\n')
 DATA_ACCESS_VIOLATION_8040000_REGEX = re.compile(
@@ -266,6 +268,30 @@ def readlines_until_timeout(executor, f: BinaryIO, timeout_secs: int) -> \
         lines.append(line)
 
 
+def process_console_output_line(line: bytes, test: TestConfig):
+    try:
+        line_str = line.decode()
+
+        if SINGLE_CHECK_PASSED_REGEX.match(line_str):
+            test.num_passes += 1
+
+        if SINGLE_CHECK_FAILED_REGEX.match(line_str):
+            test.num_fails += 1
+
+        if ALL_TESTS_FAILED_REGEX.match(line_str):
+            test.num_fails += 1
+
+        if ASSERTION_FAILURE_REGEX.match(line_str):
+            test.num_fails += 1
+
+        return line_str
+    except UnicodeDecodeError:
+        # Sometimes we get non-unicode from the console (e.g., when the
+        # board reboots.) Not much we can do in this case, so we'll just
+        # ignore it.
+        return None
+
+
 def run_test(test: TestConfig, console: str, executor: ThreadPoolExecutor) ->\
              bool:
     """Run specified test."""
@@ -294,31 +320,24 @@ def run_test(test: TestConfig, console: str, executor: ThreadPoolExecutor) ->\
             logging.debug(line)
             test.logs.append(line)
             # Look for test_print_result() output (success or failure)
-            try:
-                line_str = line.decode()
-
-                if SINGLE_CHECK_PASSED_REGEX.match(line_str):
-                    test.num_passes += 1
-
-                if SINGLE_CHECK_FAILED_REGEX.match(line_str):
-                    test.num_fails += 1
-
-                if ALL_TESTS_FAILED_REGEX.match(line_str):
-                    test.num_fails += 1
-
-                for r in test.finish_regexes:
-                    if r.match(line_str):
-                        # flush read the remaining
-                        lines = readlines_until_timeout(executor, c, 1)
-                        logging.debug(lines)
-                        test.logs.append(lines)
-                        return test.num_fails == 0
-
-            except UnicodeDecodeError:
+            line_str = process_console_output_line(line, test)
+            if line_str is None:
                 # Sometimes we get non-unicode from the console (e.g., when the
                 # board reboots.) Not much we can do in this case, so we'll just
                 # ignore it.
-                pass
+                continue
+
+            for r in test.finish_regexes:
+                if r.match(line_str):
+                    # flush read the remaining
+                    lines = readlines_until_timeout(executor, c, 1)
+                    logging.debug(lines)
+                    test.logs.append(lines)
+
+                    for line in lines:
+                        process_console_output_line(line, test)
+
+                    return test.num_fails == 0
 
 
 def get_test_list(config: BoardConfig, test_args) -> List[TestConfig]:
