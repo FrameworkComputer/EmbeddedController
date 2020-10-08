@@ -242,6 +242,26 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+void board_hibernate(void)
+{
+	int i;
+
+	/*
+	 * Board rev 2+ has the hardware fix. Don't need the following
+	 * workaround.
+	 */
+	if (system_get_board_version() >= 2)
+		return;
+
+	/*
+	 * Enable the PPC power sink path before EC enters hibernate;
+	 * otherwise, ACOK won't go High and can't wake EC up. Check the
+	 * bug b/170324206 for details.
+	 */
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+		ppc_vbus_sink_enable(i, 1);
+}
+
 __override uint16_t board_get_ps8xxx_product_id(int port)
 {
 	/* Pompom rev 1+ changes TCPC from PS8751 to PS8805 */

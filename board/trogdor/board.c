@@ -313,6 +313,19 @@ void board_tcpc_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
+void board_hibernate(void)
+{
+	int i;
+
+	/*
+	 * Enable the PPC power sink path before EC enters hibernate;
+	 * otherwise, ACOK won't go High and can't wake EC up. Check the
+	 * bug b/170324206 for details.
+	 */
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+		ppc_vbus_sink_enable(i, 1);
+}
+
 /* Called on AP S0 -> S3 transition */
 static void board_chipset_suspend(void)
 {
