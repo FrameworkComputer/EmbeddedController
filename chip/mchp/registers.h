@@ -199,8 +199,7 @@
 #define MCHP_PCR_SLP_EN2_SLEEP		0x07ffffff
 
 /* Sleep Enable3, Clock Required3, Reset on Sleep3 bits */
-
-#if defined(CHIP_FAMILY_MEC17xx)
+#if defined(CHIP_FAMILY_MEC17XX)
 #define MCHP_PCR_PWM9		((3 << 8) + 31)
 #endif
 #define MCHP_PCR_CCT0		((3 << 8) + 30)
@@ -282,7 +281,7 @@
 #define MCHP_PCR_CNT16_2	((4 << 8) + 4)
 #define MCHP_PCR_CNT16_1	((4 << 8) + 3)
 #define MCHP_PCR_CNT16_0	((4 << 8) + 2)
-#if defined(CHIP_FAMILY_MEC17xx)
+#if defined(CHIP_FAMILY_MEC17XX)
 #define MCHP_PCR_PWM11		((4 << 8) + 1)
 #define MCHP_PCR_PWM10		((4 << 8) + 0)
 #endif
@@ -1028,7 +1027,7 @@
 /* PWM */
 #if defined(CHIP_FAMILY_MEC152X)
 #define MCHP_PWM_ID_MAX		(9)
-#else
+#elif defined(CHIP_FAMILY_MEC17XX)
 #define MCHP_PWM_ID_MAX		(12)
 #endif 
 #define MCHP_PWM_BASE(x)	(0x40005800 + ((x) << 4))

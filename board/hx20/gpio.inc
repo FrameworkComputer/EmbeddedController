@@ -24,7 +24,7 @@
 
 #ifdef CHIP_FAMILY_MEC17XX
 
-UNIMPLEMENTED(WP_L)
+UNIMPLEMENTED(WP)
 UNIMPLEMENTED(ENTERING_RW)
 UNIMPLEMENTED(RSMRST_L_PGOOD)
 UNIMPLEMENTED(PMIC_DPWROK)
@@ -132,7 +132,7 @@ GPIO(ME_EN,                 PIN(060),  GPIO_ODR_HIGH)
 GPIO(EC_SW_DEBUG_SEL,       PIN(025),  GPIO_OUT_LOW)    /* SW debug function */
 GPIO(EC_SW_DEBUG_EN_L,      PIN(0240), GPIO_OUT_LOW)    /* SW debug function */
 GPIO(EC_BKOFF_L,            PIN(0212), GPIO_OUT_HIGH)   /* Panel backlight control */
-GPIO(EC_CODEC_MUTE_L,       PIN(0216), GPIO_ODR_HIGH)   /* Mute/Unmute audio amplifier */
+GPIO(EC_MUTE_L,             PIN(0224), GPIO_ODR_LOW)
 
 /* Voltage compare function pin */
 GPIO(VCIN1_ADP_PROCHOT,     PIN(0203), GPIO_INPUT)
