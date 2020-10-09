@@ -185,6 +185,9 @@
 #define I2C_PORT_EEPROM  NPCX_I2C_PORT5_0
 #define I2C_PORT_SENSOR  NPCX_I2C_PORT7_0
 
+/* UART */
+#define CONFIG_CMD_CHARGEN
+
 /* Define the host events which are allowed to wake AP up from S3 */
 #define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
 		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) | \
