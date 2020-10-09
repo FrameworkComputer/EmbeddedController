@@ -6472,31 +6472,55 @@ enum tcpc_cc_polarity {
 #define PD_STATUS_EVENT_SOP_DISC_DONE		BIT(0)
 #define PD_STATUS_EVENT_SOP_PRIME_DISC_DONE	BIT(1)
 
+/*
+ * Encode and decode for BCD revision response
+ *
+ * Note: the major revision set is written assuming that the value given is the
+ * Specification Revision from the PD header, which currently only maps to PD
+ * 1.0-3.0 with the major revision being one greater than the binary value.
+ */
+#define PD_STATUS_REV_SET_MAJOR(r)	((r + 1) << 12)
+#define PD_STATUS_REV_GET_MAJOR(r)	((r >> 12) & 0xF)
+#define PD_STATUS_REV_GET_MINOR(r)	((r >> 8)  & 0xF)
+
 struct ec_params_typec_status {
 	uint8_t port;
 } __ec_align1;
 
 struct ec_response_typec_status {
-	uint8_t pd_enabled;	/* PD communication enabled - bool */
-	uint8_t dev_connected;	/* Device connected - bool */
-	uint8_t sop_connected;	/* Device is SOP PD capable - bool */
-	uint8_t reserved1;	/* Reserved for future use */
+	uint8_t pd_enabled;		/* PD communication enabled - bool */
+	uint8_t dev_connected;		/* Device connected - bool */
+	uint8_t sop_connected;		/* Device is SOP PD capable - bool */
+	uint8_t reserved1;		/* Reserved for future use */
 
-	uint8_t power_role;	/* enum pd_power_role */
-	uint8_t data_role;	/* enum pd_data_role */
-	uint8_t vconn_role;	/* enum pd_vconn_role */
-	uint8_t reserved2;	/* Reserved for future use */
+	uint8_t power_role;		/* enum pd_power_role */
+	uint8_t data_role;		/* enum pd_data_role */
+	uint8_t vconn_role;		/* enum pd_vconn_role */
+	uint8_t reserved2;		/* Reserved for future use */
 
-	uint8_t polarity;	/* enum tcpc_cc_polarity */
-	uint8_t cc_state;	/* enum pd_cc_states */
-	uint8_t dp_pin;		/* DP pin mode (MODE_DP_IN_[A-E]) */
-	uint8_t mux_state;	/* USB_PD_MUX* - encoded USB mux state */
+	uint8_t polarity;		/* enum tcpc_cc_polarity */
+	uint8_t cc_state;		/* enum pd_cc_states */
+	uint8_t dp_pin;			/* DP pin mode (MODE_DP_IN_[A-E]) */
+	uint8_t mux_state;		/* USB_PD_MUX* - encoded mux state */
 
-	char tc_state[32];	/* TC state name */
+	char tc_state[32];		/* TC state name */
 
-	uint32_t events;	/* PD_STATUS_EVENT bitmask */
+	uint32_t events;		/* PD_STATUS_EVENT bitmask */
 
-	/* TODO(b/167700356): Add revisions and source cap PDOs */
+	/*
+	 * BCD PD revisions for partners
+	 *
+	 * The format has the PD major reversion in the upper nibble, and PD
+	 * minor version in the next nibble.  Following two nibbles are
+	 * currently 0.
+	 * ex. PD 3.2 would map to 0x3200
+	 *
+	 * PD major/minor will be 0 if no PD device is connected.
+	 */
+	uint16_t sop_revision;
+	uint16_t sop_prime_revision;
+
+	/* TODO(b/167700356): Add sink and source cap PDOs */
 } __ec_align1;
 
 /*****************************************************************************/

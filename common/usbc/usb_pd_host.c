@@ -152,7 +152,14 @@ static enum ec_status hc_typec_status(struct host_cmd_handler_args *args)
 
 	r->events = pd_get_events(p->port);
 
-	/* TODO(b/167700356): Add revisions and source cap PDOs */
+	r->sop_revision = r->sop_connected ?
+		PD_STATUS_REV_SET_MAJOR(pd_get_rev(p->port, TCPC_TX_SOP)) : 0;
+	r->sop_prime_revision = pd_get_identity_discovery(p->port,
+					TCPC_TX_SOP_PRIME) == PD_DISC_COMPLETE ?
+		PD_STATUS_REV_SET_MAJOR(pd_get_rev(p->port, TCPC_TX_SOP_PRIME))
+		: 0;
+
+	/* TODO(b/167700356): Add sink and source cap PDOs */
 
 	return EC_RES_SUCCESS;
 }
