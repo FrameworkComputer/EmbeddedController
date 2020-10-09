@@ -66,6 +66,10 @@
  */
 #define CONFIG_BOARD_RESET_AFTER_POWER_ON
 
+/* Increase console output buffer since we have the RAM available. */
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 4096
+
 /* Battery */
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_BATT_PRES_ODL
