@@ -49,6 +49,9 @@ DATA_ACCESS_VIOLATION_80E0000_REGEX = re.compile(
 DATA_ACCESS_VIOLATION_20000000_REGEX = re.compile(
     r'Data access violation, mfar = 20000000\r\n')
 
+BLOONCHIPPER = 'bloonchipper'
+DARTMONKEY = 'dartmonkey'
+
 
 class ImageType(Enum):
     """EC Image type to use for the test."""
@@ -59,8 +62,9 @@ class ImageType(Enum):
 class BoardConfig:
     """Board-specific configuration."""
 
-    def __init__(self, servo_uart_name, servo_power_enable,
+    def __init__(self, name, servo_uart_name, servo_power_enable,
                  rollback_region0_regex, rollback_region1_regex):
+        self.name = name
         self.servo_uart_name = servo_uart_name
         self.servo_power_enable = servo_power_enable
         self.rollback_region0_regex = rollback_region0_regex
@@ -98,7 +102,7 @@ class AllTests:
 
     @staticmethod
     def get(board_config: BoardConfig):
-        return {
+        tests = {
             'aes':
                 TestConfig(name='aes'),
             'crc32':
@@ -139,14 +143,18 @@ class AllTests:
                 TestConfig(name='sha256'),
             'sha256_unrolled':
                 TestConfig(name='sha256_unrolled'),
-            'stm32f_rtc':
-                TestConfig(name='stm32f_rtc'),
             'utils':
                 TestConfig(name='utils', timeout_secs=20),
         }
 
+        if board_config.name == BLOONCHIPPER:
+            tests['stm32f_rtc'] = TestConfig(name='stm32f_rtc')
+
+        return tests
+
 
 BLOONCHIPPER_CONFIG = BoardConfig(
+    name=BLOONCHIPPER,
     servo_uart_name='raw_fpmcu_uart_pty',
     servo_power_enable='spi1_vref',
     rollback_region0_regex=DATA_ACCESS_VIOLATION_8020000_REGEX,
@@ -154,6 +162,7 @@ BLOONCHIPPER_CONFIG = BoardConfig(
 )
 
 DARTMONKEY_CONFIG = BoardConfig(
+    name=DARTMONKEY,
     servo_uart_name='raw_fpmcu_uart_pty',
     servo_power_enable='spi1_vref',
     rollback_region0_regex=DATA_ACCESS_VIOLATION_80C0000_REGEX,
