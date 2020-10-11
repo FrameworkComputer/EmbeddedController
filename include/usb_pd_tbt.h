@@ -124,7 +124,17 @@ union tbt_mode_resp_device {
 /*
  * Table F-11 TBT3 Cable Discover Mode VDO Responses
  * -------------------------------------------------------------
- * <31:24> : Reserved
+ * <31:26> : Reserved
+ * <25>    : Active Passive
+ *           Errata: Reserved B25 has been changed to Active passive bit
+ *           Refer USB Type-C ENGINEERING CHANGE NOTICE (ECN)
+ *           "USB Type-C ECN Thunderbolt 3 Compatibility Updates.pdf"
+ *           with Title: Thunderbolt 3 Compatibility Updates
+ *           for the document fix published by USB-IF.
+ *           0b = Passive cable
+ *           1b = Active cable
+ *           NOTE: This change is only applicable to rev 3 cables
+ * <24>    : Reserved
  * <23>    : Active Cable Plug Link Training
  *           0 = Active with bi-directional LSRX1 communication or when Passive
  *           1 = Active with uni-directional LSRX1 communication
@@ -148,6 +158,11 @@ union tbt_mode_resp_device {
  * <15:0>  : TBT Alternate Mode
  *           0x0001 = TBT Mode
  */
+enum tbt_active_passive_cable {
+	TBT_CABLE_PASSIVE,
+	TBT_CABLE_ACTIVE,
+};
+
 enum tbt_compat_cable_speed {
 	TBT_SS_RES_0,
 	TBT_SS_U31_GEN1,
@@ -189,7 +204,9 @@ union tbt_mode_resp_cable {
 		enum tbt_cable_type tbt_cable : 1;
 		enum usb_retimer_type retimer_type : 1;
 		enum link_lsrx_comm lsrx_comm : 1;
-		uint8_t reserved0 : 8;
+		uint8_t reserved1 : 1;
+		enum tbt_active_passive_cable tbt_active_passive : 1;
+		uint8_t reserved0 : 6;
 	};
 	uint32_t raw_value;
 };

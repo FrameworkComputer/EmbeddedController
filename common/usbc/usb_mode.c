@@ -46,51 +46,61 @@ enum usb4_states {
 };
 
 /*
- * USB4 flow for Active cable
+ * USB4 PD flow:
  *
- * Structured
- * VDM version
- * (cable revision)-- <2.0 -------->|
- *     |                            |
- *     >=2.0                        |
- *     |                            |
- * VDO version---- <1.3 -------> Modal op? -- N --|
- * (B21:23 of                       |             |
- *  Discover ID SOP'-               y             |
- *  Active cable VDO1)              |             |
- *     |                         TBT SVID? -- N --|
- *     >=1.3                        |             |
- *     |                            y             |
- * Cable USB4 support? - N          |             |
- *     |                 |      Gen4 cable? - N - Skip USB4 mode entry
- *     y           Skip USB4        |
- *     |           mode entry       |
- * Enter USB4                       y
- * (SOP',SOP'',SOP)                 |
- *                                  |
- *         |<---- NAK ----- Enter mode TBT SOP'<---|
- *         |                     |                 |
- *         |                    ACK                |
- *         |                     |                 |
- *         |<---- NAK ----- Enter mode TBT SOP''   |
- *         |                     |                 |
- * Exit TBT mode SOP            ACK                |
- *         |                     |                 |
- *      ACK/NAK            Enter USB4 mode         |
- *         |                     SOP               |
- * Exit TBT mode SOP''                             |
- *         |                                       |
- *      ACK/NAK                                    |
- *         |                                       |
- * Exit TBT mode SOP'                              |
- *         |                                       |
- *      ACK/NAK                                    |
- *         |                                       |
- *         |--------Retry done? ---- N ------------|
- *                     |
- *                     y
- *                     |
- *               Skip USB4 mode entry
+ *                            Cable type
+ *                                 |
+ *            |-------- Passive ---|---- Active -----|
+ *            |                                      |
+ *      USB Highest Speed         Structured VDM version
+ *            |                   (cable revision)-- <2.0---->|
+ *    --------|--------|------|       |                       |
+ *    |       |        |      |       >=2.0                   |
+ *  >=Gen3   Gen2    Gen1  USB2.0     |                       |
+ *    |       |        |      |   VDO version--- <1.3 ---> Modal op? -- N --|
+ * Enter USB  |        |      |   (B21:23 of                  |             |
+ * SOP  with  |        |      |    Discover ID SOP'-          y             |
+ * Gen3 cable |        |    Skip   Active cable VDO1)         |             |
+ * speed      |        |    USB4      |                    TBT SVID? -- N --|
+ *            |        |    mode      >=1.3                   |             |
+ *    Is modal op?     |    entry     |                       y             |
+ *            |        |            Cable USB4  - N           |             |
+ *            y        |            support?      |       Gen4 cable? - N - Skip
+ *            |        |               |      Skip USB4       |             USB4
+ *    Is TBT SVID? -N- Enter           |      mode entry      |             mode
+ *            |       USB4 SOP         |                      |            entry
+ *            y       with Gen2        y                      |
+ *            |       cable speed      |                      |
+ *            |                        |                      |
+ *    Is Discover mode                 |                      |
+ *    SOP' B25? - N - Enter      Enter USB4 mode              |
+ *            |     USB4 SOP     (SOP, SOP', SOP'')           |
+ *            |     with speed                                |
+ *            y     from TBT mode                             |
+ *            |     SOP' VDO                                  |
+ *            |                           |<-- NAK -- Enter mode TBT SOP'<---|
+ * |---->Enter TBT SOP'-------NAK------>| |                   |              |
+ * |          |                         | |                  ACK             |
+ * |         ACK                        | |                   |              |
+ * |          |                         | |<-- NAK -- Enter mode TBT SOP''   |
+ * |     Enter USB4 SOP                 | |                   |              |
+ * |     with speed from         Exit TBT mode SOP           ACK             |
+ * |     TBT mode SOP' VDO              | |                   |              |
+ * |                                  ACK/NAK          Enter USB4 SOP        |
+ * |                                    | |            with speed from       |
+ * |                             Exit TBT mode SOP''   TBT mode SOP' VDO     |
+ * |                                    | |                                  |
+ * |                                  ACK/NAK                                |
+ * |                                    | |                                  |
+ * |                             Exit TBT mode SOP'                          |
+ * |                                    | |                                  |
+ * |                                   ACK/NAK                               |
+ * |                                    | |                                  |
+ * |---- N ----Retry done? -------------| |--------Retry done? ---- N -------|
+ *                  |                                   |
+ *                  y                                   y
+ *                  |                                   |
+ *           Skip USB4 mode entry                 Skip USB4 mode entry
  */
 
 static enum usb4_states usb4_state[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -154,8 +164,6 @@ bool enter_usb_port_partner_is_capable(int port)
 
 bool enter_usb_cable_is_capable(int port)
 {
-	/* TODO: b/156749387 Add support for LRD cable */
-
 	if (get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE) {
 		if (get_usb4_cable_speed(port) < USB_R30_SS_U32_U40_GEN1)
 			return false;

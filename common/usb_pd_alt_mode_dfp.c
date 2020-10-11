@@ -845,9 +845,11 @@ int enter_tbt_compat_mode(int port, enum tcpm_transmit_type sop,
 	enter_dev_mode.vendor_spec_b1 = dev_mode_resp.vendor_spec_b1;
 	enter_dev_mode.vendor_spec_b0 = dev_mode_resp.vendor_spec_b0;
 	enter_dev_mode.intel_spec_b0 = dev_mode_resp.intel_spec_b0;
-	enter_dev_mode.cable =
-		get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE ?
-			TBT_ENTER_PASSIVE_CABLE : TBT_ENTER_ACTIVE_CABLE;
+
+	if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE ||
+	    cable_mode_resp.tbt_active_passive == TBT_CABLE_ACTIVE)
+		enter_dev_mode.cable = TBT_ENTER_ACTIVE_CABLE;
+
 	enter_dev_mode.lsrx_comm = cable_mode_resp.lsrx_comm;
 	enter_dev_mode.retimer_type = cable_mode_resp.retimer_type;
 	enter_dev_mode.tbt_cable = cable_mode_resp.tbt_cable;
@@ -958,7 +960,12 @@ uint32_t get_enter_usb_msg_payload(int port)
 				CABLE_TYPE_ACTIVE_REDRIVER;
 		}
 	} else {
-		eudo.cable_type = CABLE_TYPE_PASSIVE;
+		cable_mode_resp.raw_value =
+			pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME);
+
+		eudo.cable_type =
+			cable_mode_resp.tbt_active_passive == TBT_CABLE_ACTIVE ?
+			CABLE_TYPE_ACTIVE_REDRIVER : CABLE_TYPE_PASSIVE;
 	}
 
 	switch (disc->identity.product_t1.p_rev20.vbus_cur) {

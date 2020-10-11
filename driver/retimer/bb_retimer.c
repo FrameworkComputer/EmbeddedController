@@ -130,7 +130,8 @@ __overridable void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 				  uint32_t *set_retimer_con)
 {
-	union tbt_mode_resp_cable cable_resp;
+	union tbt_mode_resp_cable cable_resp = {
+		.raw_value = pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME) };
 	union tbt_mode_resp_device dev_resp;
 	enum idh_ptype cable_type = get_usb_pd_cable_type(port);
 	struct pd_discovery *disc;
@@ -173,13 +174,12 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 	 * set according to Discover mode SOP' response.
 	 */
 	if ((mux_state & BB_RETIMER_MUX_USB_ALT_MODE) &&
-	    (cable_type == IDH_PTYPE_ACABLE))
+	    ((cable_type == IDH_PTYPE_ACABLE) ||
+	      cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE))
 		*set_retimer_con |= BB_RETIMER_ACTIVE_PASSIVE;
 
 	if (mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED ||
 	    mux_state & USB_PD_MUX_USB4_ENABLED) {
-		cable_resp.raw_value =
-			pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME);
 		dev_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPC_TX_SOP);
 
 		/*
@@ -227,8 +227,9 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 		 * 1 - Active with uni-directional LSRX communication
 		 * Set to "0" when passive cable plug
 		 */
-		if (cable_type == IDH_PTYPE_ACABLE &&
-		    cable_resp.lsrx_comm == UNIDIR_LSRX_COMM)
+		if ((cable_type == IDH_PTYPE_ACABLE ||
+		     cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE) &&
+		     cable_resp.lsrx_comm == UNIDIR_LSRX_COMM)
 			*set_retimer_con |= BB_RETIMER_TBT_ACTIVE_LINK_TRAINING;
 
 		/*

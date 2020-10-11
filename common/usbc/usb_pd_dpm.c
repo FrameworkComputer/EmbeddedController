@@ -222,14 +222,19 @@ static void dpm_attempt_mode_entry(int port)
 	    dpm_mode_entry_requested(port, TYPEC_MODE_USB4)) {
 		struct pd_discovery *disc_sop_prime =
 			pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+		union tbt_mode_resp_cable cable_mode_resp = {
+			.raw_value = pd_get_tbt_mode_vdo(port,
+						TCPC_TX_SOP_PRIME) };
 		/*
 		 * Enter USB mode if -
-		 * 1. It's a passive cable or
-		 * 2. It's an active cable with VDM version >= 2.0 and
+		 * 1. It's a passive cable and Thunderbolt Mode SOP' VDO
+		 *    active/passive bit (B25) is TBT_CABLE_PASSIVE or
+		 * 2. It's a active cable with VDM version >= 2.0 and
 		 *    VDO version >= 1.3 or
 		 * 3. The cable has entered Thunderbolt mode.
 		 */
-		if (get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE ||
+		if ((get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE &&
+		     cable_mode_resp.tbt_active_passive == TBT_CABLE_PASSIVE) ||
 		    (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE &&
 		     pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME) >= VDM_VER20 &&
 		     disc_sop_prime->identity.product_t1.a_rev30.vdo_ver >=
