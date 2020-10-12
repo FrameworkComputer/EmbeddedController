@@ -1947,6 +1947,8 @@ static void *fp_download_frame(struct ec_response_fp_info *info, int index)
 					ptr, stride);
 			if (rv >= 0)
 				break;
+			if (rv == -EECRESULT - EC_RES_ACCESS_DENIED)
+				break;
 			usleep(100000);
 		}
 		if (rv < 0) {
