@@ -151,3 +151,8 @@ void keyboard_raw_interrupt(void)
 	/* Wake the scan task */
 	task_wake(TASK_ID_KEYSCAN);
 }
+
+int keyboard_raw_is_input_low(int port, int id)
+{
+	return !(IT83XX_GPIO_DATA_MIRROR(port) & BIT(id));
+}
