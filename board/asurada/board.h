@@ -68,6 +68,7 @@
 #define CONFIG_CHARGE_MANAGER
 
 /* Chipset */
+#define CONFIG_HOST_COMMAND_STATUS
 
 /* Keyboard */
 #define CONFIG_CMD_KEYBOARD
