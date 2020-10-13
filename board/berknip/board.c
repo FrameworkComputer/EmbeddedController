@@ -200,7 +200,68 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 static int board_tusb544_mux_set(const struct usb_mux *me,
 				mux_state_t mux_state)
 {
+	int rv = EC_SUCCESS;
+
+	if (mux_state & USB_PD_MUX_USB_ENABLED) {
+
+		rv = tusb544_i2c_field_update8(me,
+					TUSB544_REG_USB3_1_1,
+					TUSB544_EQ_RX_MASK,
+					TUSB544_EQ_RX_DFP_04_UFP_MINUS15);
+		if (rv)
+			return rv;
+
+		rv = tusb544_i2c_field_update8(me,
+					TUSB544_REG_USB3_1_1,
+					TUSB544_EQ_TX_MASK,
+					TUSB544_EQ_TX_DFP_MINUS14_UFP_MINUS33);
+		if (rv)
+			return rv;
+
+		rv = tusb544_i2c_field_update8(me,
+					TUSB544_REG_USB3_1_2,
+					TUSB544_EQ_RX_MASK,
+					TUSB544_EQ_RX_DFP_04_UFP_MINUS15);
+		if (rv)
+			return rv;
+
+		rv = tusb544_i2c_field_update8(me,
+					TUSB544_REG_USB3_1_2,
+					TUSB544_EQ_TX_MASK,
+					TUSB544_EQ_TX_DFP_MINUS14_UFP_MINUS33);
+		if (rv)
+			return rv;
+	}
+
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
+		rv = tusb544_i2c_field_update8(me,
+					TUSB544_REG_DISPLAYPORT_1,
+					TUSB544_EQ_RX_MASK,
+					TUSB544_EQ_RX_DFP_61_UFP_43);
+		if (rv)
+			return rv;
+
+		rv = tusb544_i2c_field_update8(me,
+					TUSB544_REG_DISPLAYPORT_1,
+					TUSB544_EQ_TX_MASK,
+					TUSB544_EQ_TX_DFP_61_UFP_43);
+		if (rv)
+			return rv;
+
+		rv = tusb544_i2c_field_update8(me,
+					TUSB544_REG_DISPLAYPORT_2,
+					TUSB544_EQ_RX_MASK,
+					TUSB544_EQ_RX_DFP_61_UFP_43);
+		if (rv)
+			return rv;
+
+		rv = tusb544_i2c_field_update8(me,
+					TUSB544_REG_DISPLAYPORT_2,
+					TUSB544_EQ_TX_MASK,
+					TUSB544_EQ_TX_DFP_61_UFP_43);
+		if (rv)
+			return rv;
+
 		/* Enable IN_HPD on the DB */
 		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 1);
 	} else {
