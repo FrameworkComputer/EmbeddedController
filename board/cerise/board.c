@@ -465,3 +465,43 @@ void lid_angle_peripheral_enable(int enable)
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
 #endif
+
+/* map from sku id voltage in mv */
+const int16_t sku_id_map[] = {
+	109,   /* 51.1K , 2.2K ohm */
+	211,   /* 51.1k , 6.8K ohm */
+};
+BUILD_ASSERT(ARRAY_SIZE(sku_id_map) == BOARD_SKU_ID_COUNT);
+
+#define THRESHOLD_MV 56 /* Simply assume 1800/16/2 */
+
+int board_get_sku_id(void)
+{
+	static int version = BOARD_SKU_ID_UNKNOWN;
+	int mv;
+	int i;
+
+	if (version != BOARD_SKU_ID_UNKNOWN)
+		return version;
+
+	mv = adc_read_channel(ADC_EC_SKU_ID);
+
+	if (mv == ADC_READ_ERROR)
+		mv = adc_read_channel(ADC_EC_SKU_ID);
+
+	for (i = 0; i < BOARD_SKU_ID_COUNT; ++i) {
+		if (mv < sku_id_map[i] + THRESHOLD_MV) {
+			version = i;
+			break;
+		}
+	}
+	/*
+	 * For devices without pogo, Disable ADC module after we detect the
+	 * board version, since this is the only thing ADC module needs to do
+	 * for this board.
+	 */
+	if (version != BOARD_SKU_ID_UNKNOWN)
+		adc_disable();
+
+	return version;
+}

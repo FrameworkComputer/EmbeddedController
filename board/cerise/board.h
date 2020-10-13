@@ -50,6 +50,7 @@
 #define CONFIG_USB_MUX_IT5205
 
 #define CONFIG_LED_ONOFF_STATES
+#define CONFIG_LED_ONOFF_STATES_BAT_LOW 10
 #define CONFIG_LED_POWER_LED
 #define CONFIG_LED_COMMON
 
@@ -127,6 +128,13 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
+enum BOARD_SKU_ID {
+	BOARD_SKU_ID_UNKNOWN = -1,
+	BOARD_SKU_ID_REV0 = 0,
+	BOARD_SKU_ID_REV1 = 1,
+	BOARD_SKU_ID_COUNT,
+};
+
 #include "gpio_signal.h"
 #include "registers.h"
 
@@ -142,6 +150,7 @@ int board_is_sourcing_vbus(int port);
 
 /* returns the i2c port number of charger */
 int board_get_charger_i2c(void);
+int board_get_sku_id(void);
 
 #endif /* !__ASSEMBLER__ */
 

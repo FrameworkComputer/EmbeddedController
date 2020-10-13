@@ -10,6 +10,7 @@
 #include "ec_commands.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
+#include "hooks.h"
 
 #define LED_ON_LVL 0
 #define LED_OFF_LVL 1
@@ -20,21 +21,30 @@ const int led_charge_lvl_2 = 95;
 struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
 	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
-	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_WHITE,  LED_INDEFINITE} },
+	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
 	[STATE_DISCHARGE_S0]	     = {{LED_OFF,  LED_INDEFINITE} },
 	[STATE_DISCHARGE_S3]	     = {{LED_OFF,  LED_INDEFINITE} },
 	[STATE_DISCHARGE_S5]         = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_AMBER,  1 * LED_ONE_SEC},
-					{LED_OFF,	    1 * LED_ONE_SEC} },
-	[STATE_FACTORY_TEST]         = {{EC_LED_COLOR_WHITE,   2 * LED_ONE_SEC},
+	[STATE_DISCHARGE_S0_BAT_LOW] = {{EC_LED_COLOR_AMBER, 1 * LED_ONE_SEC},
+					{LED_OFF, 3 * LED_ONE_SEC} },
+	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_AMBER, 1 * LED_ONE_SEC},
+					{LED_OFF, 1 * LED_ONE_SEC} },
+	[STATE_FACTORY_TEST]         = {{EC_LED_COLOR_WHITE, 2 * LED_ONE_SEC},
 					{EC_LED_COLOR_AMBER, 2 * LED_ONE_SEC} },
+};
+
+struct led_descriptor led_bat_clamshell[LED_NUM_STATES][LED_NUM_PHASES] = {
+	[STATE_DISCHARGE_S0]        = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
+	[STATE_DISCHARGE_S3]        = {{EC_LED_COLOR_WHITE, 2 * LED_ONE_SEC},
+					{LED_OFF, 2 * LED_ONE_SEC} },
 };
 
 const struct led_descriptor led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
 	[PWR_LED_STATE_ON]           = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
-	[PWR_LED_STATE_SUSPEND_AC]   = {{EC_LED_COLOR_WHITE, 1 * LED_ONE_SEC},
-					{LED_OFF,	   3 * LED_ONE_SEC} },
-	[PWR_LED_STATE_SUSPEND_NO_AC] = {{LED_OFF, LED_INDEFINITE} },
+	[PWR_LED_STATE_SUSPEND_AC]   = {{EC_LED_COLOR_WHITE, 2 * LED_ONE_SEC},
+					{LED_OFF, 2 * LED_ONE_SEC} },
+	[PWR_LED_STATE_SUSPEND_NO_AC] = {{EC_LED_COLOR_WHITE, 2 * LED_ONE_SEC},
+					{LED_OFF, 2 * LED_ONE_SEC} },
 	[PWR_LED_STATE_OFF]           = {{LED_OFF, LED_INDEFINITE} },
 };
 
@@ -103,3 +113,18 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	}
 	return EC_SUCCESS;
 }
+
+static void cerise_led_init(void)
+{
+	int i;
+
+	if (board_get_sku_id() == BOARD_SKU_ID_REV0) {
+		for (i = 0; i < LED_NUM_PHASES; i++) {
+			led_bat_state_table[STATE_DISCHARGE_S0][i] =
+				led_bat_clamshell[STATE_DISCHARGE_S0][i];
+			led_bat_state_table[STATE_DISCHARGE_S3][i] =
+				led_bat_clamshell[STATE_DISCHARGE_S3][i];
+		}
+	}
+}
+DECLARE_HOOK(HOOK_INIT, cerise_led_init, HOOK_PRIO_DEFAULT);
