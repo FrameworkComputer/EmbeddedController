@@ -159,6 +159,9 @@ static int cc_pull_stored = TYPEC_CC_RD;
 
 static int user_limited_max_mv = 20000;
 
+static uint8_t allow_pr_swap = 1;
+static uint8_t allow_dr_swap = 1;
+
 static uint32_t max_supported_voltage(void)
 {
 	return user_limited_max_mv;
@@ -765,7 +768,7 @@ __override int pd_check_power_swap(int port)
 		return 0;
 
 	if (pd_snk_is_vbus_provided(CHG))
-		return 1;
+		return allow_pr_swap;
 
 	return 0;
 }
@@ -780,7 +783,7 @@ __override int pd_check_data_swap(int port,
 	if (port == CHG)
 		return 0;
 
-	return 1;
+	return allow_dr_swap;
 }
 
 __override void pd_execute_data_swap(int port,
@@ -1438,6 +1441,27 @@ static int cmd_usbc_action(int argc, char *argv[])
 		 * Drop this message if when we phase out the usbc_role control.
 		 */
 		ccprintf("CHG SRC %dmV\n", user_limited_max_mv);
+	} else if (!strcasecmp(argv[1], "drswap")) {
+		if (argc == 2) {
+			CPRINTF("allow_dr_swap = %d\n", allow_dr_swap);
+			return EC_SUCCESS;
+		}
+
+		if (argc != 3)
+			return EC_ERROR_PARAM2;
+
+		allow_dr_swap = !!atoi(argv[2]);
+
+	} else if (!strcasecmp(argv[1], "prswap")) {
+		if (argc == 2) {
+			CPRINTF("allow_pr_swap = %d\n", allow_pr_swap);
+			return EC_SUCCESS;
+		}
+
+		if (argc != 3)
+			return EC_ERROR_PARAM2;
+
+		allow_pr_swap = !!atoi(argv[2]);
 	} else {
 		return EC_ERROR_PARAM1;
 	}
@@ -1445,5 +1469,6 @@ static int cmd_usbc_action(int argc, char *argv[])
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(usbc_action, cmd_usbc_action,
-			"5v|12v|20v|dev|pol0|pol1|drp|dp|chg x(x=voltage)",
+			"5v|12v|20v|dev|pol0|pol1|drp|dp|chg x(x=voltage)|"
+			"drswap [1|0]|prswap [1|0]",
 			"Set Servo v4 type-C port state");
