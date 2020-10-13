@@ -37,6 +37,8 @@
 #include "usb_charge.h"
 #include "usb_mux.h"
 
+static void hdmi_hpd_interrupt(enum gpio_signal signal);
+
 #include "gpio_list.h"
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -78,6 +80,11 @@ const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
 	.de_offset = PI3HDX1204_DE_DB_MINUS5,
 };
 
+static int check_hdmi_hpd_status(void)
+{
+	return gpio_get_level(GPIO_DP1_HPD_EC_IN);
+}
+
 /*****************************************************************************
  * Board suspend / resume
  */
@@ -91,7 +98,7 @@ static void board_chipset_resume(void)
 		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
 		pi3hdx1204_enable(I2C_PORT_TCPC1,
 				  PI3HDX1204_I2C_ADDR_FLAGS,
-				  1);
+				  check_hdmi_hpd_status());
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
@@ -265,6 +272,10 @@ static void board_remap_gpio(void)
 		 */
 		gpio_set_flags(GPIO_USB_C1_HPD_IN_DB_V1, GPIO_OUT_LOW);
 		board_usbc1_retimer_inhpd = GPIO_USB_C1_HPD_IN_DB_V1;
+
+		if (ec_config_has_hdmi_retimer_pi3hdx1204())
+			gpio_enable_interrupt(GPIO_DP1_HPD_EC_IN);
+
 	} else
 		board_usbc1_retimer_inhpd = IOEX_USB_C1_HPD_IN_DB;
 }
@@ -277,6 +288,26 @@ static void setup_fw_config(void)
 }
 /* Use HOOK_PRIO_INIT_I2C + 2 to be after ioex_init(). */
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
+
+static void hdmi_hpd_handler(void)
+{
+	/* Pass HPD through DB OPT1 HDMI connector to AP's DP1 */
+	int hpd = check_hdmi_hpd_status();
+
+	gpio_set_level(GPIO_EC_DP1_HPD, hpd);
+	ccprints("HDMI HPD %d", hpd);
+	pi3hdx1204_enable(I2C_PORT_TCPC1,
+			  PI3HDX1204_I2C_ADDR_FLAGS,
+			  chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
+			  && hpd);
+}
+DECLARE_DEFERRED(hdmi_hpd_handler);
+
+static void hdmi_hpd_interrupt(enum gpio_signal signal)
+{
+	/* Debounce for 2 msec */
+	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
+}
 
 /*****************************************************************************
  * Fan
