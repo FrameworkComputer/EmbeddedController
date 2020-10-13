@@ -190,6 +190,8 @@ static int set_range(const struct motion_sensor_t *s, int range, int rnd)
 
 	if (newrange > LIS2DS_ACCEL_FS_MAX_VAL)
 		newrange = LIS2DS_ACCEL_FS_MAX_VAL;
+	else if (newrange < LIS2DS_ACCEL_FS_MIN_VAL)
+		newrange = LIS2DS_ACCEL_FS_MIN_VAL;
 
 	reg_val = LIS2DS_FS_REG(newrange);
 

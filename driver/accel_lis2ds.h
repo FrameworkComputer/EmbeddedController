@@ -143,6 +143,7 @@ enum lis2ds_fs {
 };
 
 #define LIS2DS_ACCEL_FS_MAX_VAL		16
+#define LIS2DS_ACCEL_FS_MIN_VAL		2
 
 /* Reg value from Full Scale */
 #define LIS2DS_FS_REG(_fs) \
