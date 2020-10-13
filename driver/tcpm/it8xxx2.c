@@ -166,6 +166,17 @@ static int it83xx_tcpm_get_message_raw(int port, uint32_t *buf, int *head)
 
 	/* Store header */
 	*head = IT83XX_USBPD_RMH(port);
+
+	/*
+	 * BIT[6:4] SOP type of Rx message
+	 * 000b=SOP, 001b=SOP', 010b=SOP", 011b=Debug SOP', 100b=Debug SOP"
+	 * 101b=HRDRST, 110b=CBLRST
+	 * 000b~100b is aligned to enum pd_msg_type.
+	 *
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
+		*head |= PD_HEADER_SOP((IT83XX_USBPD_MTSR0(port) >> 4) & 0x7);
+
 	/* Check data message */
 	if (cnt)
 		memcpy(buf, (uint32_t *)&IT83XX_USBPD_RDO(port), cnt * 4);
