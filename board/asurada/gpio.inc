@@ -33,8 +33,10 @@ GPIO_INT(BASE_IMU_INT_L,     PIN(J, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V,
          bmi160_interrupt)
 GPIO_INT(LID_ACCEL_INT_L,    PIN(J, 3), GPIO_INT_FALLING | GPIO_SEL_1P8V,
          lis2dw12_interrupt)
+#ifdef BOARD_ASURADA
 GPIO_INT(ALS_RGB_INT_ODL,    PIN(F, 0), GPIO_INT_FALLING,
          tcs3400_interrupt)
+#endif
 
 /* USB-C interrupts */
 GPIO_INT(USB_C0_PPC_INT_ODL, PIN(D, 1), GPIO_INT_BOTH, ppc_interrupt)

@@ -611,25 +611,6 @@ static struct mutex g_lid_mutex;
 static struct bmi_drv_data_t g_bmi160_data;
 static struct stprivate_data g_lis2dwl_data;
 
-/* Matrix to rotate accelrator into standard reference frame */
-/* TODO: update the matrix after we have assembled unit */
-static const mat33_fp_t mag_standard_ref = {
-	{0, FLOAT_TO_FP(-1), 0},
-	{FLOAT_TO_FP(-1), 0, 0},
-	{0, 0, FLOAT_TO_FP(-1)},
-};
-
-/* TCS3400 private data */
-static struct als_drv_data_t g_tcs3400_data = {
-	.als_cal.scale = 1,
-	.als_cal.uscale = 0,
-	.als_cal.offset = 0,
-	.als_cal.channel_scale = {
-		.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kc */
-		.cover_scale = ALS_CHANNEL_SCALE(1.0),     /* CT */
-	},
-};
-
 #ifdef BOARD_ASURADA
 /* Matrix to rotate accelerometer into standard reference frame */
 /* for rev 0 */
@@ -647,7 +628,17 @@ static void update_rotation_matrix(void)
 		&base_standard_ref_rev0;
 }
 DECLARE_HOOK(HOOK_INIT, update_rotation_matrix, HOOK_PRIO_INIT_ADC + 1);
-#endif
+
+/* TCS3400 private data */
+static struct als_drv_data_t g_tcs3400_data = {
+	.als_cal.scale = 1,
+	.als_cal.uscale = 0,
+	.als_cal.offset = 0,
+	.als_cal.channel_scale = {
+		.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kc */
+		.cover_scale = ALS_CHANNEL_SCALE(1.0),     /* CT */
+	},
+};
 
 static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 	/*
@@ -690,6 +681,7 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 	.saturation.again = TCS_DEFAULT_AGAIN,
 	.saturation.atime = TCS_DEFAULT_ATIME,
 };
+#endif /* BOARD_ASURADA */
 
 struct motion_sensor_t motion_sensors[] = {
 	/*
@@ -741,22 +733,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.min_frequency = BMI_GYRO_MIN_FREQ,
 		.max_frequency = BMI_GYRO_MAX_FREQ,
 	},
-	[BASE_MAG] = {
-		.name = "Base Mag",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMI160,
-		.type = MOTIONSENSE_TYPE_MAG,
-		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi160_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi160_data,
-		.port = I2C_PORT_ACCEL,
-		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-		.default_range = BIT(11), /* 16LSB / uT, fixed */
-		.rot_standard_ref = &mag_standard_ref,
-		.min_frequency = BMM150_MAG_MIN_FREQ,
-		.max_frequency = BMM150_MAG_MAX_FREQ(SPECIAL),
-	},
 	[LID_ACCEL] = {
 		.name = "Lid Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
@@ -785,6 +761,7 @@ struct motion_sensor_t motion_sensors[] = {
 			},
 		},
 	},
+#ifdef BOARD_ASURADA
 	[CLEAR_ALS] = {
 		.name = "Clear Light",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
@@ -820,5 +797,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.min_frequency = 0,
 		.max_frequency = 0,
 	},
+#endif /* BOARD_ASURADA */
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
