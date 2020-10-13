@@ -89,6 +89,15 @@ GPIO(EC_CHG_LED_Y_C0,       PIN(C, 3), GPIO_OUT_LOW)
 GPIO(EC_CHG_LED_W_C0,       PIN(C, 4), GPIO_OUT_LOW)
 GPIO(EC_PWR_LED_W,          PIN(6, 0), GPIO_OUT_LOW)
 
+/*
+ * SPI host interface - enable PDs by default. These will be made functional
+ * by the SHI driver when the AP powers up, and restored back to GPIO when
+ * the AP powers down.
+ */
+GPIO(AP_EC_SPI_MOSI,        PIN(4, 6), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(AP_EC_SPI_MISO,        PIN(4, 7), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(AP_EC_SPI_CLK,         PIN(5, 5), GPIO_INPUT | GPIO_PULL_DOWN)
+
 /* PWM */
 GPIO(KB_BL_PWM,             PIN(8, 0), GPIO_INPUT)     /* PWM3 */
 GPIO(EDP_BKLTCTL,           PIN(B, 7), GPIO_INPUT)     /* PWM5 */
