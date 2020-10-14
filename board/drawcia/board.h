@@ -64,6 +64,7 @@
 #define CONFIG_GMR_TABLET_MODE
 
 /* Keyboard */
+#define CONFIG_KEYBOARD_FACTORY_TEST
 #define CONFIG_PWM_KBLIGHT
 
 /* TCPC */
@@ -145,6 +146,11 @@ enum battery_type {
 };
 
 int board_is_sourcing_vbus(int port);
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+#endif
 
 #endif /* !__ASSEMBLER__ */
 

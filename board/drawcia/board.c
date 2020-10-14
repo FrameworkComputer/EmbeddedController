@@ -654,3 +654,22 @@ __override void ocpc_get_pid_constants(int *kp, int *kp_div,
 	*kd = 4;
 	*kd_div = 40;
 }
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+/*
+ * Map keyboard connector pins to EC GPIO pins for factory test.
+ * Pins mapped to {-1, -1} are skipped.
+ * The connector has 24 pins total, and there is no pin 0.
+ */
+const int keyboard_factory_scan_pins[][2] = {
+	{-1, -1}, {GPIO_KSO_H, 4}, {GPIO_KSO_H, 0}, {GPIO_KSO_H, 1},
+	{GPIO_KSO_H, 3}, {GPIO_KSO_H, 2}, {GPIO_KSO_L, 5}, {GPIO_KSO_L, 6},
+	{GPIO_KSO_L, 3}, {GPIO_KSO_L, 2}, {GPIO_KSI, 0}, {GPIO_KSO_L, 1},
+	{GPIO_KSO_L, 4}, {GPIO_KSI, 3}, {GPIO_KSI, 2}, {GPIO_KSO_L, 0},
+	{GPIO_KSI, 5}, {GPIO_KSI, 4}, {GPIO_KSO_L, 7}, {GPIO_KSI, 6},
+	{GPIO_KSI, 7}, {GPIO_KSI, 1}, {-1, -1}, {-1, -1}, {-1, -1},
+};
+
+const int keyboard_factory_scan_pins_used =
+			ARRAY_SIZE(keyboard_factory_scan_pins);
+#endif
