@@ -29,7 +29,13 @@ static uint8_t pd_int_task_id[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void schedule_deferred_pd_interrupt(const int port)
 {
-	task_set_event(pd_int_task_id[port], PD_PROCESS_INTERRUPT, 0);
+	/*
+	 * Don't set event to idle task if task id is 0. This happens when
+	 * not all the port have pd int task, the pd_int_task_id of port
+	 * that doesn't have pd int task is 0.
+	 */
+	if (pd_int_task_id[port] != 0)
+		task_set_event(pd_int_task_id[port], PD_PROCESS_INTERRUPT, 0);
 }
 
 /*
