@@ -256,6 +256,7 @@ static uint8_t get_pd_control_flags(int port)
 {
 	union tbt_mode_resp_cable cable_resp;
 	union tbt_mode_resp_device device_resp;
+	uint8_t control_flags = 0;
 
 	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
 		return 0;
@@ -268,14 +269,13 @@ static uint8_t get_pd_control_flags(int port)
 	 * Table F-11 TBT3 Cable Discover Mode VDO Responses
 	 * For Passive cables, Active Cable Plug link training is set to 0
 	 */
-	return (cable_resp.lsrx_comm == UNIDIR_LSRX_COMM ?
-			USB_PD_CTRL_ACTIVE_LINK_UNIDIR : 0) |
-		(device_resp.tbt_adapter == TBT_ADAPTER_TBT2_LEGACY ?
-			USB_PD_CTRL_TBT_LEGACY_ADAPTER : 0) |
-		(cable_resp.tbt_cable == TBT_CABLE_OPTICAL ?
-			USB_PD_CTRL_OPTICAL_CABLE : 0) |
-		(cable_resp.retimer_type == USB_RETIMER ?
-			USB_PD_CTRL_ACTIVE_CABLE : 0);
+	control_flags |= cable_resp.lsrx_comm == UNIDIR_LSRX_COMM;
+	control_flags |= device_resp.tbt_adapter == TBT_ADAPTER_TBT2_LEGACY;
+	control_flags |= cable_resp.tbt_cable == TBT_CABLE_OPTICAL;
+	control_flags |= get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE;
+	control_flags |= cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE;
+
+	return control_flags;
 }
 
 static uint8_t pd_get_role_flags(int port)
