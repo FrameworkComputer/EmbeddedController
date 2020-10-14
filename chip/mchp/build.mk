@@ -39,6 +39,7 @@ chip-$(CONFIG_I2C)+=i2c.o
 chip-$(CONFIG_MEC_GPIO_EC_CMDS)+=gpio_cmds.o
 chip-$(CONFIG_HOSTCMD_X86)+=lpc.o
 chip-$(CONFIG_MCHP_GPSPI)+=gpspi.o
+chip-$(CONFIG_MCHP_PECI)+=peci.o
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_SPI)+=spi.o qmspi.o
 chip-$(CONFIG_TFDP)+=tfdp.o
