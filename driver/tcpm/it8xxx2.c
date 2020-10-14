@@ -489,6 +489,14 @@ static int it83xx_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 	return EC_SUCCESS;
 }
 
+__maybe_unused static int it83xx_tcpm_decode_sop_prime_disable(int port)
+{
+	IT83XX_USBPD_PDCSR1(port) &= ~(USBPD_REG_MASK_SOPP_RX_ENABLE |
+				       USBPD_REG_MASK_SOPPP_RX_ENABLE);
+
+	return EC_SUCCESS;
+}
+
 static int it83xx_tcpm_set_vconn(int port, int enable)
 {
 	/*
@@ -503,9 +511,10 @@ static int it83xx_tcpm_set_vconn(int port, int enable)
 			 */
 			it83xx_enable_vconn(port, enable);
 			if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
-				/* Enable tcpc receive SOP' packet */
+				/* Enable tcpc receive SOP' and SOP'' packet */
 				IT83XX_USBPD_PDCSR1(port) |=
-					 USBPD_REG_MASK_SOPP_RX_ENABLE;
+					 (USBPD_REG_MASK_SOPP_RX_ENABLE |
+					  USBPD_REG_MASK_SOPPP_RX_ENABLE);
 		}
 		/* Turn on/off vconn power switch. */
 		board_pd_vconn_ctrl(port,
@@ -513,9 +522,8 @@ static int it83xx_tcpm_set_vconn(int port, int enable)
 				    USBPD_CC_PIN_2 : USBPD_CC_PIN_1, enable);
 		if (!enable) {
 			if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
-				/* Disable tcpc receive SOP' packet */
-				IT83XX_USBPD_PDCSR1(port) &=
-					~USBPD_REG_MASK_SOPP_RX_ENABLE;
+				/* Disable tcpc receive SOP' and SOP'' packet */
+				it83xx_tcpm_decode_sop_prime_disable(port);
 			/*
 			 * We need to make sure cc voltage detector is enabled
 			 * after vconn is turned off to avoid the potential risk
@@ -852,6 +860,9 @@ const struct tcpm_drv it83xx_tcpm_drv = {
 	.select_rp_value	= &it83xx_tcpm_select_rp_value,
 	.set_cc			= &it83xx_tcpm_set_cc,
 	.set_polarity		= &it83xx_tcpm_set_polarity,
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	.sop_prime_disable	= &it83xx_tcpm_decode_sop_prime_disable,
+#endif
 	.set_vconn		= &it83xx_tcpm_set_vconn,
 	.set_msg_header		= &it83xx_tcpm_set_msg_header,
 	.set_rx_enable		= &it83xx_tcpm_set_rx_enable,
