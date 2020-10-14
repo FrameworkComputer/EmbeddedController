@@ -9600,7 +9600,6 @@ static inline void print_pdo_battery(uint32_t pdo)
 	       PDO_BATT_MAX_VOLTAGE(pdo),
 	       PDO_BATT_MIN_VOLTAGE(pdo),
 	       PDO_BATT_MAX_POWER(pdo));
-
 }
 
 static inline void print_pdo_variable(uint32_t pdo)
@@ -9740,6 +9739,11 @@ int cmd_typec_status(int argc, char *argv[])
 		       PD_STATUS_REV_GET_MINOR(r->sop_prime_revision));
 
 	for (i = 0; i < r->source_cap_count; i++) {
+		/*
+		 * Bits 31:30 always indicate the type of PDO
+		 *
+		 * Table 6-7 PD Rev 3.0 Ver 2.0
+		 */
 		uint32_t pdo = r->source_cap_pdos[i];
 		int pdo_type = pdo & PDO_TYPE_MASK;
 
@@ -9749,6 +9753,32 @@ int cmd_typec_status(int argc, char *argv[])
 		if (pdo_type == PDO_TYPE_FIXED) {
 			print_pdo_fixed(pdo);
 			printf("\n");
+		} else if (pdo_type == PDO_TYPE_BATTERY) {
+			print_pdo_battery(pdo);
+		} else if (pdo_type == PDO_TYPE_VARIABLE) {
+			print_pdo_variable(pdo);
+		} else {
+			print_pdo_augmented(pdo);
+		}
+	}
+
+	for (i = 0; i < r->sink_cap_count; i++) {
+		/*
+		 * Bits 31:30 always indicate the type of PDO
+		 *
+		 * Table 6-7 PD Rev 3.0 Ver 2.0
+		 */
+		uint32_t pdo = r->sink_cap_pdos[i];
+		int pdo_type = pdo & PDO_TYPE_MASK;
+
+		if (i == 0)
+			printf("Sink Capabilities:\n");
+
+		if (pdo_type == PDO_TYPE_FIXED) {
+			print_pdo_fixed(pdo);
+			/* Note: FRS bits are reserved in PD 2.0 spec */
+			printf("%s\n", pdo & PDO_FIXED_FRS_CURR_MASK ?
+			       "FRS" : "");
 		} else if (pdo_type == PDO_TYPE_BATTERY) {
 			print_pdo_battery(pdo);
 		} else if (pdo_type == PDO_TYPE_VARIABLE) {

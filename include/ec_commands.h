@@ -6396,9 +6396,6 @@ struct ec_params_typec_control {
  * EC_CMD_USB_PD_CONTROL command.
  *
  * This also combines in the EC_CMD_USB_PD_MUX_INFO flags.
- *
- * Version 0 of command is under development
- * TODO(b/167700356): Remove this statement when version 0 is finalized
  */
 #define EC_CMD_TYPEC_STATUS 0x0133
 
@@ -6573,7 +6570,7 @@ struct ec_response_typec_status {
 	uint8_t power_role;		/* enum pd_power_role */
 	uint8_t data_role;		/* enum pd_data_role */
 	uint8_t vconn_role;		/* enum pd_vconn_role */
-	uint8_t reserved2;		/* Reserved for future use */
+	uint8_t sink_cap_count;		/* Number of Sink Cap PDOs */
 
 	uint8_t polarity;		/* enum tcpc_cc_polarity */
 	uint8_t cc_state;		/* enum pd_cc_states */
@@ -6599,7 +6596,7 @@ struct ec_response_typec_status {
 
 	uint32_t source_cap_pdos[7];	/* Max 7 PDOs can be present */
 
-	/* TODO(b/167700356): Add sink cap PDOs */
+	uint32_t sink_cap_pdos[7];	/* Max 7 PDOs can be present */
 } __ec_align1;
 
 /*****************************************************************************/
