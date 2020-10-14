@@ -7,6 +7,7 @@
 /dts-v1/;
 
 #include <nuvoton/npcx7m6fb.dtsi>
+#include <gpio_defines.h>
 
 / {
 	model = "Google Volteer EC";
@@ -17,6 +18,40 @@
 		zephyr,shell-uart = &uart1;
 		zephyr,flash = &flash0;
 	};
+
+	named-gpios {
+		compatible = "gpio-keys";
+
+		en_pp3300_a {
+			gpios = <&gpioa 3 GPIO_OUTPUT_LOW>;
+			label = "EN_PP3300_A";
+		};
+		en_pp5000_a {
+			gpios = <&gpioa 4 GPIO_OUTPUT_LOW>;
+			label = "EN_PP5000_A";
+		};
+		en_ppvar_vccin {
+			gpios = <&gpio4 4 GPIO_OUTPUT_LOW>;
+			label = "EN_PPVAR_VCCIN";
+		};
+		ec_pch_dsw_pwrok {
+			gpios = <&gpioc 0 GPIO_OUTPUT_LOW>;
+			label = "EC_PCH_DSW_PWROK";
+		};
+		tp_1 {
+			gpios = <&gpio8 6 (GPIO_INPUT | GPIO_PULL_UP)>;
+			label = "EC_KB_BL_EN";
+		};
+		tp_2 {
+			gpios = <&gpio5 7 (GPIO_INPUT | GPIO_PULL_UP)>;
+			label = "EC_ESPI_ALERT_L";
+		};
+		ec_batt_pres_odl {
+			gpios = <&gpioe 1 GPIO_INPUT>;
+			label = "EC_BATT_PRES_ODL";
+		};
+	};
+
 };
 
 /* Update flash size to 512KB from 196KB since we are using C variant */

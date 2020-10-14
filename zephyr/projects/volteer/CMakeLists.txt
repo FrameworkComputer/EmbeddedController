@@ -9,3 +9,6 @@ set(BOARD volteer)
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(volteer)
+
+# Include board specific header files
+zephyr_include_directories(include)
