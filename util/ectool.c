@@ -856,6 +856,7 @@ static const char * const ec_feature_names[] = {
 		"Refined tablet mode hysteresis",
 	[EC_FEATURE_EFS2] = "Early Firmware Selection v2",
 	[EC_FEATURE_ISH] = "Intel Integrated Sensor Hub",
+	[EC_FEATURE_TYPEC_CMD] = "TCPMv2 Type-C commands",
 };
 
 int cmd_inventory(int argc, char *argv[])
