@@ -11,24 +11,59 @@
 #include "common.h"
 #include "console.h"
 
-/* Flag definitions for gpio_info and gpio_alt_func */
+
+/*
+ * If compiling with Zephyr, include the GPIO_ definitions to deal with name
+ * conflicts
+ */
+#ifdef CONFIG_ZEPHYR
+#include <drivers/gpio.h>
+
+/* Validate that Zephyr's definition are the same for overlapping defines */
+#if GPIO_OPEN_DRAIN != (BIT(1) | BIT(2))
+#error GPIO_OPEN_DRAIN values are not the same!
+#elif GPIO_PULL_UP != BIT(4)
+#error GPIO_PULL_UP values are not the same!
+#elif GPIO_PULL_DOWN != BIT(5)
+#error GPIO_PULL_DOWN values are not the same!
+#elif GPIO_INPUT != BIT(8)
+#error GPIO_INPUT values are not the same!
+#elif GPIO_OUTPUT != BIT(9)
+#error GPIO_PULL_DOWN values are not the same!
+#endif
+
+/* Otherwise define overlapping GPIO_ flags ourselves */
+#else /* !CONFIG_ZEPHYR */
+#define GPIO_OPEN_DRAIN    (BIT(1) | BIT(2))  /* Output type is open-drain */
+#define GPIO_PULL_UP       BIT(4)  /* Enable on-chip pullup */
+#define GPIO_PULL_DOWN     BIT(5)  /* Enable on-chip pulldown */
+#define GPIO_INPUT         BIT(8)  /* Input */
+#define GPIO_OUTPUT        BIT(9)  /* Output */
+#endif /* CONFIG_ZEPHYR */
+
+/*
+ * All flags supported by gpio_info expect GPIO_ANALOG
+ *
+ * Only 4 flags are supported by gpio_alt_func:
+ *   GPIO_OPEN_DRAIN
+ *   GPIO_PULL_UP
+ *   GPIO_PULL_DOWN
+ *   GPIO_PULL_ANALOG
+ */
 #define GPIO_FLAG_NONE     0       /* No flag needed, default setting */
-/* The following are valid for both gpio_info and gpio_alt_func: */
-#define GPIO_OPEN_DRAIN    BIT(0)  /* Output type is open-drain */
-#define GPIO_PULL_UP       BIT(1)  /* Enable on-chip pullup */
-#define GPIO_PULL_DOWN     BIT(2)  /* Enable on-chip pulldown */
-/* The following are valid for gpio_alt_func only */
-#define GPIO_ANALOG        BIT(3)  /* Set pin to analog-mode */
-/* The following are valid for gpio_info only */
-#define GPIO_INPUT         BIT(4)  /* Input */
-#define GPIO_OUTPUT        BIT(5)  /* Output */
+#define GPIO_ANALOG        BIT(0)  /* Set pin to analog-mode */
+/* GPIO_OPEN_DRAIN         BIT(1) | BIT(2)  Output type is open-drain */
+#define GPIO_DEFAULT       BIT(3) /* Don't set up on boot */
+/* GPIO_PULL_UP            BIT(4)    Enable on-chip pullup */
+/* GPIO_PULL_DOWN          BIT(5)    Enable on-chip pulldown */
 #define GPIO_LOW           BIT(6)  /* If GPIO_OUTPUT, set level low */
 #define GPIO_HIGH          BIT(7)  /* If GPIO_OUTPUT, set level high */
-#define GPIO_INT_F_RISING  BIT(8)  /* Interrupt on rising edge */
-#define GPIO_INT_F_FALLING BIT(9)  /* Interrupt on falling edge */
-#define GPIO_INT_F_LOW     BIT(11) /* Interrupt on low level */
-#define GPIO_INT_F_HIGH    BIT(12) /* Interrupt on high level */
-#define GPIO_DEFAULT       BIT(13) /* Don't set up on boot */
+/* GPIO_INPUT              BIT(8)     Input */
+/* GPIO_OUTPUT             BIT(9)     Output */
+#define GPIO_INT_F_RISING  BIT(10) /* Interrupt on rising edge */
+#define GPIO_INT_F_FALLING BIT(11) /* Interrupt on falling edge */
+#define GPIO_INT_F_LOW     BIT(12) /* Interrupt on low level */
+#define GPIO_INT_F_HIGH    BIT(13) /* Interrupt on high level */
 #define GPIO_INT_DSLEEP    BIT(14) /* Interrupt in deep sleep */
 #define GPIO_INT_SHARED    BIT(15) /* Shared among multiple pins */
 #define GPIO_SEL_1P8V      BIT(16) /* Support 1.8v */
