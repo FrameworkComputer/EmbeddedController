@@ -683,6 +683,7 @@ bool is_usb2_cable_support(int port)
 		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
 
 	return disc->identity.idh.product_type == IDH_PTYPE_PCABLE ||
+	       pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME) < VDM_VER20 ||
 	       disc->identity.product_t2.a2_rev30.usb_20_support ==
 							USB2_SUPPORTED;
 }

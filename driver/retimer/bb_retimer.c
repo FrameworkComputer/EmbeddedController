@@ -133,8 +133,11 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 	union tbt_mode_resp_cable cable_resp;
 	union tbt_mode_resp_device dev_resp;
 	enum idh_ptype cable_type = get_usb_pd_cable_type(port);
+	struct pd_discovery *disc;
 
-	if (mux_state & USB_PD_MUX_USB_ENABLED) {
+	if (mux_state & USB_PD_MUX_USB_ENABLED ||
+	    mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED ||
+	    mux_state & USB_PD_MUX_USB4_ENABLED) {
 		/*
 		 * Bit 4: USB2_CONNECTION (ignored if BIT5=0).
 		 * 0 - No USB2 Connection
@@ -173,7 +176,8 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 	    (cable_type == IDH_PTYPE_ACABLE))
 		*set_retimer_con |= BB_RETIMER_ACTIVE_PASSIVE;
 
-	if (mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED) {
+	if (mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED ||
+	    mux_state & USB_PD_MUX_USB4_ENABLED) {
 		cable_resp.raw_value =
 			pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME);
 		dev_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPC_TX_SOP);
@@ -246,7 +250,18 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 		 */
 		*set_retimer_con |= BB_RETIMER_TBT_CABLE_GENERATION(
 				       cable_resp.tbt_rounded);
-	} else if (mux_state & USB_PD_MUX_USB4_ENABLED) {
+	}
+	if (mux_state & USB_PD_MUX_USB4_ENABLED) {
+		disc = pd_get_am_discovery(port, TCPC_TX_SOP);
+
+		/*
+		 * Bit 16: TBT_CONNECTION
+		 * 0 - Port partner doesn't support TBT3
+		 * 1 - Port partner supports TBT3
+		 */
+		if (PD_PRODUCT_IS_TBT3(disc->identity.product_t1.raw_value))
+			*set_retimer_con |= BB_RETIMER_TBT_CONNECTION;
+
 		/*
 		 * Bit 27-25: USB4 Cable speed
 		 * 000b - No functionality
@@ -293,6 +308,9 @@ static void retimer_set_state_ufp(mux_state_t mux_state,
 	 *
 	 * Bit 2: RE_TIMER_DRIVER:
 	 * Set according to b20:19 of enter USB.
+	 *
+	 * Bit 16: TBT_CONNECTION:
+	 * Set according to b14 of enter USB.
 	 *
 	 * Bit 18: CABLE_TYPE:
 	 * For Thunderbolt-compat mode, set according to bit 21 of enter mode.
