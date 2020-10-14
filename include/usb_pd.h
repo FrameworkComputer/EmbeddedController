@@ -89,19 +89,10 @@ enum pd_rx_errors {
  *    if present, shall be sent in Minimum Voltage order; lowest to highest.
  * 5. (PD3.0) The Augmented PDO is defined to allow extension beyond the 4 PDOs
  *     above by examining bits <29:28> to determine the additional PDO function.
+ *
+ * Note: Some bits and decode macros are defined in ec_commands.h
  */
-#define PDO_TYPE_FIXED     (0 << 30)
-#define PDO_TYPE_BATTERY   BIT(30)
-#define PDO_TYPE_VARIABLE  (2 << 30)
-#define PDO_TYPE_AUGMENTED (3 << 30)
-#define PDO_TYPE_MASK      (3 << 30)
-
-#define PDO_FIXED_DUAL_ROLE	BIT(29) /* Dual role device */
 #define PDO_FIXED_SUSPEND	BIT(28) /* USB Suspend supported */
-#define PDO_FIXED_UNCONSTRAINED	BIT(27) /* Unconstrained Power */
-#define PDO_FIXED_COMM_CAP	BIT(26) /* USB Communications Capable */
-#define PDO_FIXED_DATA_SWAP	BIT(25) /* Data role swap command supported */
-#define PDO_FIXED_FRS_CURR_MASK (3 << 23) /* [23..24] FRS current */
 #define PDO_FIXED_FRS_CURR_NOT_SUPPORTED  (0 << 23)
 #define PDO_FIXED_FRS_CURR_DFLT_USB_POWER (1 << 23)
 #define PDO_FIXED_FRS_CURR_1A5_AT_5V      (2 << 23)

@@ -9582,13 +9582,50 @@ int cmd_typec_discovery(int argc, char *argv[])
 	return 0;
 }
 
+/* Print shared fields of sink and source cap PDOs */
+static inline void print_pdo_fixed(uint32_t pdo)
+{
+	printf("    Fixed: %dmV %dmA %s%s%s%s",
+	       PDO_FIXED_VOLTAGE(pdo),
+	       PDO_FIXED_CURRENT(pdo),
+	       pdo & PDO_FIXED_DUAL_ROLE ? "DRP " : "",
+	       pdo & PDO_FIXED_UNCONSTRAINED ? "UP " : "",
+	       pdo & PDO_FIXED_COMM_CAP ? "USB " : "",
+	       pdo & PDO_FIXED_DATA_SWAP ? "DRD" : "");
+}
+
+static inline void print_pdo_battery(uint32_t pdo)
+{
+	printf("    Battery: max %dmV min %dmV max %dmW\n",
+	       PDO_BATT_MAX_VOLTAGE(pdo),
+	       PDO_BATT_MIN_VOLTAGE(pdo),
+	       PDO_BATT_MAX_POWER(pdo));
+
+}
+
+static inline void print_pdo_variable(uint32_t pdo)
+{
+	printf("    Variable: max %dmV min %dmV max %dmA\n",
+	       PDO_VAR_MAX_VOLTAGE(pdo),
+	       PDO_VAR_MIN_VOLTAGE(pdo),
+	       PDO_VAR_MAX_CURRENT(pdo));
+}
+
+static inline void print_pdo_augmented(uint32_t pdo)
+{
+	printf("    Augmented: max %dmV min %dmV max %dmA\n",
+	       PDO_AUG_MAX_VOLTAGE(pdo),
+	       PDO_AUG_MIN_VOLTAGE(pdo),
+	       PDO_AUG_MAX_CURRENT(pdo));
+}
+
 int cmd_typec_status(int argc, char *argv[])
 {
 	struct ec_params_typec_status p;
 	struct ec_response_typec_status *r =
 				(struct ec_response_typec_status *)ec_inbuf;
 	char *endptr;
-	int rv;
+	int rv, i;
 	char *desc;
 
 	if (argc != 2) {
@@ -9701,6 +9738,25 @@ int cmd_typec_status(int argc, char *argv[])
 		printf("SOP' PD Rev: %d.%d\n",
 		       PD_STATUS_REV_GET_MAJOR(r->sop_prime_revision),
 		       PD_STATUS_REV_GET_MINOR(r->sop_prime_revision));
+
+	for (i = 0; i < r->source_cap_count; i++) {
+		uint32_t pdo = r->source_cap_pdos[i];
+		int pdo_type = pdo & PDO_TYPE_MASK;
+
+		if (i == 0)
+			printf("Source Capabilities:\n");
+
+		if (pdo_type == PDO_TYPE_FIXED) {
+			print_pdo_fixed(pdo);
+			printf("\n");
+		} else if (pdo_type == PDO_TYPE_BATTERY) {
+			print_pdo_battery(pdo);
+		} else if (pdo_type == PDO_TYPE_VARIABLE) {
+			print_pdo_variable(pdo);
+		} else {
+			print_pdo_augmented(pdo);
+		}
+	}
 
 	return 0;
 }

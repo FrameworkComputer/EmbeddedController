@@ -159,7 +159,11 @@ static enum ec_status hc_typec_status(struct host_cmd_handler_args *args)
 		PD_STATUS_REV_SET_MAJOR(pd_get_rev(p->port, TCPC_TX_SOP_PRIME))
 		: 0;
 
-	/* TODO(b/167700356): Add sink and source cap PDOs */
+	r->source_cap_count = pd_get_src_cap_cnt(p->port);
+	memcpy(r->source_cap_pdos, pd_get_src_caps(p->port),
+	       r->source_cap_count * sizeof(uint32_t));
+
+	/* TODO(b/167700356): Add sink cap PDOs */
 
 	return EC_RES_SUCCESS;
 }
