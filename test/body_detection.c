@@ -45,7 +45,7 @@ static int get_trigger_time(const struct body_detect_test_data *data,
 	 * that we do not need to wait for 15 second if the testcase
 	 * is in off-body initially.
 	 */
-	body_detect_change_state(BODY_DETECTION_OFF_BODY);
+	body_detect_change_state(BODY_DETECTION_OFF_BODY, false);
 	for (i = 0; i < size; ++i) {
 		enum body_detect_states motion_state;
 

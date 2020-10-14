@@ -7,6 +7,7 @@
 #define __CROS_EC_BODY_DETECTION_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 enum body_detect_states {
 	BODY_DETECTION_OFF_BODY,
@@ -15,7 +16,7 @@ enum body_detect_states {
 
 /* get/set the state of body detection */
 enum body_detect_states body_detect_get_state(void);
-void body_detect_change_state(enum body_detect_states state);
+void body_detect_change_state(enum body_detect_states state, bool spoof);
 
 /* Reset the data. This should be called when ODR is changed*/
 void body_detect_reset(void);
@@ -29,5 +30,7 @@ void body_detect_set_enable(int enable);
 /* get enable state of body detection */
 int body_detect_get_enable(void);
 
+void body_detect_set_spoof(int enable);
+bool body_detect_get_spoof(void);
 
 #endif /* __CROS_EC_BODY_DETECTION_H */

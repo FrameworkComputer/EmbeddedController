@@ -1381,6 +1381,55 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 #ifdef CONFIG_ACCEL_SPOOF_MODE
 	case MOTIONSENSE_CMD_SPOOF: {
+		/* spoof activity if it is activity sensor */
+		if (IS_ENABLED(CONFIG_GESTURE_HOST_DETECTION) &&
+		    in->spoof.sensor_id == MOTION_SENSE_ACTIVITY_SENSOR_ID) {
+			switch (in->spoof.activity_num) {
+#ifdef CONFIG_BODY_DETECTION
+			case MOTIONSENSE_ACTIVITY_BODY_DETECTION:
+				switch (in->spoof.spoof_enable) {
+				case MOTIONSENSE_SPOOF_MODE_DISABLE:
+					/* Disable spoofing. */
+					body_detect_set_spoof(false);
+					break;
+				case MOTIONSENSE_SPOOF_MODE_CUSTOM:
+					/*
+					 * Enable spoofing, but use provided
+					 * state
+					 */
+					body_detect_set_spoof(true);
+					body_detect_change_state(
+						in->spoof.activity_state, true);
+					break;
+				case MOTIONSENSE_SPOOF_MODE_LOCK_CURRENT:
+					/*
+					 * Enable spoofing, but lock to current
+					 * state
+					 */
+					body_detect_set_spoof(true);
+					break;
+				case MOTIONSENSE_SPOOF_MODE_QUERY:
+					/*
+					 * Query the spoof status of the
+					 * activity
+					 */
+					out->spoof.ret =
+						body_detect_get_spoof();
+					args->response_size =
+						sizeof(out->spoof);
+					break;
+				default:
+					return EC_RES_INVALID_PARAM;
+				}
+				break;
+#endif
+			default:
+				return EC_RES_INVALID_PARAM;
+			}
+			break;
+		}
+
+		/* spoof accel data */
 		sensor = host_sensor_id_to_real_sensor(in->spoof.sensor_id);
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;

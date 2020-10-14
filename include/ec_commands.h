@@ -2877,8 +2877,19 @@ struct ec_params_motion_sense {
 			/* Ignored, used for alignment. */
 			uint8_t reserved;
 
-			/* Individual component values to spoof. */
-			int16_t components[3];
+			union {
+				/* Individual component values to spoof. */
+				int16_t components[3];
+
+				/* Used when spoofing an activity */
+				struct {
+					/* enum motionsensor_activity */
+					uint8_t activity_num;
+
+					/* spoof activity state */
+					uint8_t activity_state;
+				};
+			};
 		} spoof;
 
 		/* Used for MOTIONSENSE_CMD_TABLET_MODE_LID_ANGLE. */

@@ -4972,25 +4972,41 @@ BUILD_ASSERT(ARRAY_SIZE(ms_command_sizes) == MOTIONSENSE_NUM_CMDS);
 static int ms_help(const char *cmd)
 {
 	printf("Usage:\n");
-	printf("  %s                              - dump all motion data\n", cmd);
+	printf("  %s                              - dump all motion data\n",
+		cmd);
 	printf("  %s active                       - print active flag\n", cmd);
 	printf("  %s info NUM                     - print sensor info\n", cmd);
-	printf("  %s ec_rate [RATE_MS]            - set/get sample rate\n", cmd);
-	printf("  %s odr NUM [ODR [ROUNDUP]]      - set/get sensor ODR\n", cmd);
-	printf("  %s range NUM [RANGE [ROUNDUP]]  - set/get sensor range\n", cmd);
-	printf("  %s offset NUM [-- X Y Z [TEMP]] - set/get sensor offset\n", cmd);
-	printf("  %s kb_wake NUM                  - set/get KB wake ang\n", cmd);
+	printf("  %s ec_rate [RATE_MS]            - set/get sample rate\n",
+		cmd);
+	printf("  %s odr NUM [ODR [ROUNDUP]]      - set/get sensor ODR\n",
+		cmd);
+	printf("  %s range NUM [RANGE [ROUNDUP]]  - set/get sensor range\n",
+		cmd);
+	printf("  %s offset NUM [-- X Y Z [TEMP]] - set/get sensor offset\n",
+		cmd);
+	printf("  %s kb_wake NUM                  - set/get KB wake ang\n",
+		cmd);
 	printf("  %s fifo_info                    - print fifo info\n", cmd);
-	printf("  %s fifo_int_enable [0/1]        - enable/disable/get fifo interrupt "
-		"status\n", cmd);
+	printf("  %s fifo_int_enable [0/1]        - enable/disable/get fifo "
+		"interrupt status\n", cmd);
 	printf("  %s fifo_read MAX_DATA           - read fifo data\n", cmd);
-	printf("  %s fifo_flush NUM               - trigger fifo interrupt\n", cmd);
-	printf("  %s list_activities NUM          - list supported activities\n", cmd);
-	printf("  %s set_activity NUM ACT EN      - enable/disable activity\n", cmd);
+	printf("  %s fifo_flush NUM               - trigger fifo interrupt\n",
+		cmd);
+	printf("  %s list_activities              - list supported "
+		"activities\n", cmd);
+	printf("  %s set_activity ACT EN          - enable/disable activity\n",
+		cmd);
+	printf("  %s get_activity ACT             - get activity status\n",
+		cmd);
 	printf("  %s lid_angle                    - print lid angle\n", cmd);
-	printf("  %s spoof -- NUM [0/1] [X Y Z]   - enable/disable spoofing\n", cmd);
-	printf("  %s tablet_mode_angle ANG HYS    - set/get tablet mode angle\n", cmd);
-	printf("  %s calibrate NUM                - run sensor calibration\n", cmd);
+	printf("  %s spoof -- NUM [0/1] [X Y Z]   - enable/disable spoofing\n",
+		cmd);
+	printf("  %s spoof -- NUM activity ACT [0/1] [STATE] - enable/disable "
+		"activity spoofing\n", cmd);
+	printf("  %s tablet_mode_angle ANG HYS    - set/get tablet mode "
+		"angle\n", cmd);
+	printf("  %s calibrate NUM                - run sensor calibration\n",
+		cmd);
 
 	return 0;
 }
@@ -5612,9 +5628,8 @@ static int cmd_motionsense(int argc, char **argv)
 		return 0;
 	}
 
-	if (argc == 3 && !strcasecmp(argv[1], "list_activities")) {
+	if (argc == 2 && !strcasecmp(argv[1], "list_activities")) {
 		param.cmd = MOTIONSENSE_CMD_LIST_ACTIVITIES;
-		param.list_activities.sensor_num = strtol(argv[2], &e, 0);
 		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
 				&param, ms_command_sizes[param.cmd].outsize,
 				resp, ms_command_sizes[param.cmd].insize);
@@ -5627,11 +5642,10 @@ static int cmd_motionsense(int argc, char **argv)
 		motionsense_display_activities(resp->list_activities.disabled);
 		return 0;
 	}
-	if (argc == 5 && !strcasecmp(argv[1], "set_activity")) {
+	if (argc == 4 && !strcasecmp(argv[1], "set_activity")) {
 		param.cmd = MOTIONSENSE_CMD_SET_ACTIVITY;
-		param.set_activity.sensor_num = strtol(argv[2], &e, 0);
-		param.set_activity.activity = strtol(argv[3], &e, 0);
-		param.set_activity.enable = strtol(argv[4], &e, 0);
+		param.set_activity.activity = strtol(argv[2], &e, 0);
+		param.set_activity.enable = strtol(argv[3], &e, 0);
 
 		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
 				&param, ms_command_sizes[param.cmd].outsize,
@@ -5640,10 +5654,9 @@ static int cmd_motionsense(int argc, char **argv)
 			return rv;
 		return 0;
 	}
-	if (argc == 4 && !strcasecmp(argv[1], "get_activity")) {
+	if (argc == 3 && !strcasecmp(argv[1], "get_activity")) {
 		param.cmd = MOTIONSENSE_CMD_GET_ACTIVITY;
-		param.get_activity.sensor_num = strtol(argv[2], &e, 0);
-		param.get_activity.activity = strtol(argv[3], &e, 0);
+		param.get_activity.activity = strtol(argv[2], &e, 0);
 
 		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
 				&param, ms_command_sizes[param.cmd].outsize,
@@ -5653,7 +5666,6 @@ static int cmd_motionsense(int argc, char **argv)
 		printf("State: %d\n", resp->get_activity.state);
 		return 0;
 	}
-
 	if (argc == 2 && !strcasecmp(argv[1], "lid_angle")) {
 		param.cmd = MOTIONSENSE_CMD_LID_ANGLE;
 		rv = ec_command(EC_CMD_MOTION_SENSE_CMD, 2,
@@ -5680,8 +5692,47 @@ static int cmd_motionsense(int argc, char **argv)
 			fprintf(stderr, "Bad %s arg.\n", argv[2]);
 			return -1;
 		}
+		/* spoof activity state */
+		if (argc >= 5 && !strcasecmp(argv[3], "activity")) {
+			int enable = 0;
 
-		if (argc >= 4) {
+			param.spoof.activity_num = strtol(argv[4], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "Base %s arg.\n", argv[4]);
+				return -1;
+			}
+			if (argc >= 6) {
+				enable = strtol(argv[5], &e, 0);
+				if ((e && *e) || (enable != 0 && enable != 1)) {
+					fprintf(stderr, "Bad %s arg.\n",
+						argv[5]);
+					return -1;
+				}
+			}
+			if ((enable == 1) && (argc == 6)) {
+				/* Enable spoofing, but lock to current state */
+				param.spoof.spoof_enable =
+					MOTIONSENSE_SPOOF_MODE_LOCK_CURRENT;
+			} else if ((enable == 1) && (argc == 7)) {
+				/* Enable spoofing, but use provided state */
+				int state = strtol(argv[6], &e, 0);
+
+				if ((e && *e) || (state != 0 && state != 1)) {
+					fprintf(stderr, "Bad %s arg.\n",
+						argv[6]);
+					return -1;
+				}
+				param.spoof.activity_state = state;
+				param.spoof.spoof_enable =
+					MOTIONSENSE_SPOOF_MODE_CUSTOM;
+			} else if ((enable == 0) && (argc == 6)) {
+				param.spoof.spoof_enable =
+					MOTIONSENSE_SPOOF_MODE_DISABLE;
+			} else if (argc != 5) {
+				return ms_help(argv[0]);
+			}
+		/* spoof accel data */
+		} else if (argc >= 4) {
 			int enable, i;
 			int16_t val;
 
