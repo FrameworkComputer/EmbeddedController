@@ -16,6 +16,7 @@
 #include "driver/ppc/syv682x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
+#include "driver/tcpm/rt1715.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tusb422.h"
 #include "extpower.h"
@@ -365,10 +366,29 @@ static void config_db_usb3_passive(void)
 	usb_muxes[USBC_PORT_C1] = mux_config_p1_usb3_passive;
 }
 
+static void config_port_discrete_tcpc(int port)
+{
+	/*
+	 * Support 2 Pin-to-Pin compatible parts: TUSB422 and RT1715, for
+	 * simplicity allow either and decide which we are using.
+	 * Default to TUSB422, and switch to RT1715 after BOARD_ID >=1.
+	 */
+	if (get_board_id() >= 1) {
+		CPRINTS("C%d: RT1715", port);
+		tcpc_config[port].i2c_info.addr_flags =
+			RT1715_I2C_ADDR_FLAGS;
+		tcpc_config[port].drv = &rt1715_tcpm_drv;
+		return;
+	}
+	CPRINTS("C%d: Default to TUSB422", port);
+}
+
 static const char *db_type_prefix = "USB DB type: ";
 __override void board_cbi_init(void)
 {
 	enum ec_cfg_usb_db_type usb_db = ec_cfg_usb_db_type();
+
+	config_port_discrete_tcpc(0);
 
 	switch (usb_db) {
 	case DB_USB_ABSENT:
