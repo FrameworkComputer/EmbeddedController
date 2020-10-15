@@ -622,6 +622,10 @@ __overridable int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 	if (cnt == 0)
 		return 0;
 
+	/* Only handle custom requests for SVID Google */
+	if (PD_VDO_VID(*payload) != USB_VID_GOOGLE)
+		return 0;
+
 	switch (cmd) {
 	case VDO_CMD_VERSION:
 		/* guarantee last byte of payload is null character */
