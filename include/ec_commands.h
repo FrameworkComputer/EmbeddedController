@@ -1402,6 +1402,11 @@ enum ec_feature_code {
 	EC_FEATURE_ISH = 40,
 	/* New TCPMv2 TYPEC_ prefaced commands supported */
 	EC_FEATURE_TYPEC_CMD = 41,
+	/*
+	 * The EC will wait for direction from the AP to enter Type-C alternate
+	 * modes or USB4.
+	 */
+	EC_FEATURE_TYPEC_REQUIRE_AP_MODE_ENTRY = 42,
 };
 
 #define EC_FEATURE_MASK_0(event_code) BIT(event_code % 32)
