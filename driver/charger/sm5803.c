@@ -1319,7 +1319,7 @@ static enum ec_error_list sm5803_set_otg_current_voltage(int chgnum,
 static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 {
 	enum ec_error_list rv;
-	int reg;
+	int reg, status;
 
 	if (enabled) {
 		int selected_current;
@@ -1357,18 +1357,31 @@ static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 
 		sm5803_set_otg_current_voltage(chgnum, selected_current, 5000);
 	} else {
+		/* Always clear out discharge status before clearing FLOW1 */
+		rv = chg_read8(chgnum, SM5803_REG_STATUS_DISCHG, &status);
+		if (rv)
+			return rv;
+
+		if (status)
+			CPRINTS("%s %d: Discharge failure 0x%02x", CHARGER_NAME,
+				chgnum, status);
+
+		rv |= chg_write8(chgnum, SM5803_REG_STATUS_DISCHG, status);
+
 		/*
 		 * PD tasks will always turn off previous sourcing on init.
 		 * Protect ourselves from brown out on init by checking if we're
 		 * sinking right now.  The init process should only leave sink
 		 * mode enabled if a charger is plugged in; otherwise it's
 		 * expected to be 0.
+		 *
+		 * Always clear out sourcing if the previous source-out failed.
 		 */
-		rv = chg_read8(chgnum, SM5803_REG_FLOW1, &reg);
+		rv |= chg_read8(chgnum, SM5803_REG_FLOW1, &reg);
 		if (rv)
 			return rv;
 
-		if ((reg & SM5803_FLOW1_MODE) != CHARGER_MODE_SINK)
+		if ((reg & SM5803_FLOW1_MODE) != CHARGER_MODE_SINK || status)
 			rv = sm5803_flow1_update(chgnum, CHARGER_MODE_SOURCE |
 						 SM5803_FLOW1_DIRECTCHG_SRC_EN,
 						 MASK_CLR);
