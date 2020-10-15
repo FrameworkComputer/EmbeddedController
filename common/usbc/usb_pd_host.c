@@ -111,6 +111,9 @@ static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
 	case TYPEC_CONTROL_COMMAND_CLEAR_EVENTS:
 		pd_clear_events(p->port, p->clear_events_mask);
 		break;
+	case TYPEC_CONTROL_COMMAND_ENTER_MODE: {
+		return pd_request_enter_mode(p->port, p->mode_to_enter);
+		}
 	default:
 		return EC_RES_INVALID_PARAM;
 	}

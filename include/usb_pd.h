@@ -2609,6 +2609,18 @@ uint32_t pd_get_events(int port);
  */
 void pd_clear_events(int port, uint32_t clear_mask);
 
+/*
+ * Requests that the port enter the specified mode. A successful result just
+ * means that the request was received, not that the mode has been entered yet.
+ *
+ * @param port USB-C port number
+ * @param mode The mode to enter
+ * @return EC_RES_SUCCESS if the request was made
+ *         EC_RES_INVALID_PARAM for an invalid port or mode;
+ *         EC_RES_BUSY if another mode entry request is already in progress
+ */
+enum ec_status pd_request_enter_mode(int port, enum typec_mode mode);
+
 /**
  * Get port partner data swap capable status
  *

@@ -3905,6 +3905,12 @@
 /* Support for USB PD alternate mode of Downward Facing Port */
 #undef CONFIG_USB_PD_ALT_MODE_DFP
 
+/*
+ * Do not enter USB PD alternate modes or USB4 automatically. Wait for the AP to
+ * direct the EC to enter a mode. This requires AP software support.
+ */
+#undef CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
+
 /* HPD is sent to the GPU from the EC via a GPIO */
 #undef CONFIG_USB_PD_DP_HPD_GPIO
 
