@@ -495,21 +495,27 @@ void board_override_fan_control(int fan, int *tmp)
 
 void thermal_protect(void)
 {
-	int thermal_sensor1, thermal_sensor2;
-
-	temp_sensor_read(TEMP_SENSOR_5V_REGULATOR, &thermal_sensor1);
-	temp_sensor_read(TEMP_SENSOR_CPU, &thermal_sensor2);
-
 	if ((!lid_is_open()) && (!extpower_is_present())) {
-		if (thermal_sensor2 > C_TO_K(70)) {
-			chipset_throttle_cpu(1);
-			throttle_on = 1;
-		} else if (thermal_sensor2 < C_TO_K(60) && throttle_on) {
-			chipset_throttle_cpu(0);
-			throttle_on = 0;
-		}
+		int rv1, rv2;
+		int thermal_sensor1, thermal_sensor2;
 
-		if (thermal_sensor1 > C_TO_K(51))
+		rv1 = temp_sensor_read(TEMP_SENSOR_5V_REGULATOR,
+				       &thermal_sensor1);
+		rv2 = temp_sensor_read(TEMP_SENSOR_CPU,
+				       &thermal_sensor2);
+
+		if (rv2 == EC_SUCCESS) {
+			if (thermal_sensor2 > C_TO_K(70)) {
+				chipset_throttle_cpu(1);
+				throttle_on = 1;
+			} else if (thermal_sensor2 < C_TO_K(60) &&
+				   throttle_on) {
+				chipset_throttle_cpu(0);
+				throttle_on = 0;
+			}
+		}
+		if (rv1 == EC_SUCCESS &&
+		    thermal_sensor1 > C_TO_K(51))
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_THERMAL);
 	}
 }
