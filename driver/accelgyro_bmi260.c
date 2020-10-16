@@ -108,9 +108,6 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	if (ret != EC_SUCCESS)
 		goto accel_cleanup;
 
-	/* Wait for the change to become effective */
-	if (data->odr != 0)
-		msleep(1000000 / MIN(data->odr, normalized_rate));
 	/* Now that we have set the odr, update the driver's value. */
 	data->odr = normalized_rate;
 

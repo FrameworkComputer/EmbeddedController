@@ -198,13 +198,6 @@ int bmi_write8(const int port, const uint16_t i2c_spi_addr_flags,
 				reg, data);
 #endif
 	}
-	/*
-	 * From Bosch:  BMI needs a delay of 450us after each write if it
-	 * is in suspend mode, otherwise the operation may be ignored by
-	 * the sensor. Given we are only doing write during init, add
-	 * the delay unconditionally.
-	 */
-	msleep(1);
 	return rv;
 }
 
@@ -227,34 +220,6 @@ int bmi_read16(const int port, const uint16_t i2c_spi_addr_flags,
 				reg, data_ptr);
 #endif
 	}
-	return rv;
-}
-
-/**
- * Write 16bit register from accelerometer.
- */
-int bmi_write16(const int port, const uint16_t i2c_spi_addr_flags,
-		const int reg, int data)
-{
-	int rv = -EC_ERROR_PARAM1;
-
-	if (SLAVE_IS_SPI(i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
-		CPRINTS("%s() spi part is not implemented", __func__);
-#endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		rv = i2c_write16(port, i2c_spi_addr_flags,
-				 reg, data);
-#endif
-	}
-	/*
-	 * From Bosch:  BMI needs a delay of 450us after each write if it
-	 * is in suspend mode, otherwise the operation may be ignored by
-	 * the sensor. Given we are only doing write during init, add
-	 * the delay unconditionally.
-	 */
-	msleep(1);
 	return rv;
 }
 
@@ -320,13 +285,6 @@ int bmi_write_n(const int port, const uint16_t i2c_spi_addr_flags,
 				     reg, data_ptr, len);
 #endif
 	}
-	/*
-	 * From Bosch:  BMI needs a delay of 450us after each write if it
-	 * is in suspend mode, otherwise the operation may be ignored by
-	 * the sensor. Given we are only doing write during init, add
-	 * the delay unconditionally.
-	 */
-	msleep(1);
 	return rv;
 }
 /*
