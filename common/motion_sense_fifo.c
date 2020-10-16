@@ -597,3 +597,37 @@ void motion_sense_fifo_reset(void)
 	motion_sense_fifo_init();
 	queue_init(&fifo);
 }
+
+#ifdef CONFIG_CMD_ACCEL_FIFO
+static int motion_sense_read_fifo(int argc, char **argv)
+{
+	int count, i;
+	struct ec_response_motion_sensor_data v;
+
+	if (argc < 1)
+		return EC_ERROR_PARAM_COUNT;
+
+	/* Limit the amount of data to avoid saturating the UART buffer */
+	count = MIN(queue_count(&fifo), 16);
+	for (i = 0; i < count; i++) {
+		queue_peek_units(&fifo, &v, i, 1);
+		if (v.flags & (MOTIONSENSE_SENSOR_FLAG_TIMESTAMP |
+			       MOTIONSENSE_SENSOR_FLAG_FLUSH)) {
+			uint64_t timestamp;
+
+			memcpy(&timestamp, v.data, sizeof(v.data));
+			ccprintf("Timestamp: 0x%016llx%s\n", timestamp,
+				 (v.flags & MOTIONSENSE_SENSOR_FLAG_FLUSH ?
+				  " - Flush" : ""));
+		} else {
+			ccprintf("%d %d: %-5d %-5d %-5d\n", i, v.sensor_num,
+				 v.data[X], v.data[Y], v.data[Z]);
+		}
+	}
+	return EC_SUCCESS;
+}
+
+DECLARE_CONSOLE_COMMAND(fiforead, motion_sense_read_fifo,
+	"id",
+	"Read Fifo sensor");
+#endif /* defined(CONFIG_CMD_ACCEL_FIFO) */
