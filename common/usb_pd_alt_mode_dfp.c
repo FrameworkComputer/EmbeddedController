@@ -847,21 +847,11 @@ int enter_tbt_compat_mode(int port, enum tcpm_transmit_type sop,
 	enter_dev_mode.cable =
 		get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE ?
 			TBT_ENTER_PASSIVE_CABLE : TBT_ENTER_ACTIVE_CABLE;
-
-	if (get_tbt_cable_speed(port) == TBT_SS_TBT_GEN3) {
-		enter_dev_mode.lsrx_comm =
-			cable_mode_resp.lsrx_comm;
-		enter_dev_mode.retimer_type =
-			cable_mode_resp.retimer_type;
-		enter_dev_mode.tbt_cable =
-			cable_mode_resp.tbt_cable;
-		enter_dev_mode.tbt_rounded =
-			cable_mode_resp.tbt_rounded;
-		enter_dev_mode.tbt_cable_speed =
-			cable_mode_resp.tbt_cable_speed;
-	} else {
-		enter_dev_mode.tbt_cable_speed = TBT_SS_U32_GEN1_GEN2;
-	}
+	enter_dev_mode.lsrx_comm = cable_mode_resp.lsrx_comm;
+	enter_dev_mode.retimer_type = cable_mode_resp.retimer_type;
+	enter_dev_mode.tbt_cable = cable_mode_resp.tbt_cable;
+	enter_dev_mode.tbt_rounded = cable_mode_resp.tbt_rounded;
+	enter_dev_mode.tbt_cable_speed = get_tbt_cable_speed(port);
 	enter_dev_mode.tbt_alt_mode = TBT_ALTERNATE_MODE;
 
 	payload[1] = enter_dev_mode.raw_value;

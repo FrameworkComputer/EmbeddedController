@@ -203,25 +203,37 @@ union tbt_mode_resp_cable {
  * Table F-13 TBT3 Device Enter Mode Command SOP
  * -------------------------------------------------------------
  * <31>    : Vendor specific B1
- *           0 = Not supported
- *           1 = Supported
+ *           0b = Not supported
+ *           1b = Supported
  * <30>    : Vendor specific B0
- *           0 = Not supported
- *           1 = Supported
+ *           0b = Not supported
+ *           1b = Supported
  * <29:27> : 000b Reserved
  * <26>    : Intel specific B0
- *           0 = Not supported
- *           1 = Supported
- * <25>    : 0b Reserved
- * <24>    : Active_Passive
- *           0 = Passive cable
- *           1 = Active cable
+ *           0b = Not supported
+ *           1b = Supported
+ * <25>    : Active_Passive
+ *           Errata: Active_Passive bit is changed to B25
+ *           Refer USB Type-C ENGINEERING CHANGE NOTICE (ECN)
+ *           "USB Type-C ECN Thunderbolt 3 Compatibility Updates.pdf"
+ *           with Title: Thunderbolt 3 Compatibility Updates
+ *           for the document fix published by USB-IF.
+ *           0b = Passive cable
+ *           1b = Active cable
+ * <24>    : TBT adapter
+ *           Errata: B24 represents Thunderbolt Adapter type
+ *           Refer USB Type-C ENGINEERING CHANGE NOTICE (ECN)
+ *           "USB Type-C ECN Thunderbolt 3 Compatibility Updates.pdf"
+ *           with Title: Thunderbolt 3 Compatibility Updates
+ *           for the document fix published by USB-IF.
+ *           0b = TBT3 Adapter
+ *           1b = TBT2 Legacy Adapter
  * <23>    : Active Cable Link Training
- *           0 = Active with bi-directional LSRX1 communication or when Passive
- *           1 = Active with uni-directional LSRX1 communication
+ *           0b = Active with bi-directional LSRX1 communication or when Passive
+ *           1b = Active with uni-directional LSRX1 communication
  * <22>    : Re-timer
- *           0 = Not re-timer
- *           1 = Re-timer
+ *           0b = Not re-timer
+ *           1b = Re-timer
  * <21>    : Cable Type
  *           0b = Non-Optical
  *           1b = Optical
@@ -252,8 +264,8 @@ union tbt_dev_mode_enter_cmd {
 		enum tbt_cable_type tbt_cable : 1;
 		enum usb_retimer_type retimer_type : 1;
 		enum link_lsrx_comm lsrx_comm : 1;
+		enum tbt_adapter_type tbt_adapter : 1;
 		enum tbt_enter_cable_type cable : 1;
-		uint8_t reserved0 : 1;
 		enum vendor_specific_support intel_spec_b0 : 1;
 		uint8_t reserved1 : 3;
 		enum vendor_specific_support vendor_spec_b0 : 1;
