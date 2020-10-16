@@ -150,8 +150,10 @@ enum sm5803_gpio0_modes {
 #define SM5803_TINT_HIGH_LEVEL		0xD1
 
 /* IBAT levels - The IBAT levels increment in 7.32mA */
-#define SM5803_REG_IBAT_CHG_MEAS_MSB	0x44
-#define SM5803_REG_IBAT_CHG_MEAS_LSB	0x45
+#define SM5803_REG_IBAT_CHG_MEAS_MSB		0x44
+#define SM5803_REG_IBAT_CHG_MEAS_LSB		0x45
+#define SM5803_REG_IBAT_CHG_AVG_MEAS_MSB	0xC4
+#define SM5803_REG_IBAT_CHG_AVG_MEAS_LSB	0xC5
 #define SM5803_IBAT_CHG_MEAS_LSB	GENMASK(1, 0)
 
 /* IBUS levels - The IBUS levels increment in 7.32mA */
@@ -172,6 +174,8 @@ enum sm5803_gpio0_modes {
 /* VSYS levels - The VSYS levels increment in  23.4mV steps. */
 #define SM5803_REG_VSYS_MEAS_MSB	0x4C
 #define SM5803_REG_VSYS_MEAS_LSB	0x4D
+#define SM5803_REG_VSYS_AVG_MEAS_MSB	0xCC
+#define SM5803_REG_VSYS_AVG_MEAS_LSB	0xCD
 #define SM5803_VSYS_MEAS_LSB		GENMASK(1, 0)
 
 /* Charger registers (address 0x32) */

@@ -1127,12 +1127,12 @@ static enum ec_error_list sm5803_get_current(int chgnum, int *current)
 	int reg;
 	int curr;
 
-	rv = meas_read8(chgnum, SM5803_REG_IBAT_CHG_MEAS_MSB, &reg);
+	rv = meas_read8(chgnum, SM5803_REG_IBAT_CHG_AVG_MEAS_MSB, &reg);
 	if (rv)
 		return rv;
 	curr = reg << 2;
 
-	rv = meas_read8(chgnum, SM5803_REG_IBAT_CHG_MEAS_LSB, &reg);
+	rv = meas_read8(chgnum, SM5803_REG_IBAT_CHG_AVG_MEAS_LSB, &reg);
 	if (rv)
 		return rv;
 	curr |= reg & SM5803_IBAT_CHG_MEAS_LSB;
@@ -1164,12 +1164,12 @@ static enum ec_error_list sm5803_get_voltage(int chgnum, int *voltage)
 	int reg;
 	int volt_bits;
 
-	rv = meas_read8(chgnum, SM5803_REG_VSYS_MEAS_MSB, &reg);
+	rv = meas_read8(chgnum, SM5803_REG_VSYS_AVG_MEAS_MSB, &reg);
 	if (rv)
 		return rv;
 	volt_bits = reg << 2;
 
-	rv = meas_read8(chgnum, SM5803_REG_VSYS_MEAS_LSB, &reg);
+	rv = meas_read8(chgnum, SM5803_REG_VSYS_AVG_MEAS_LSB, &reg);
 	if (rv)
 		return rv;
 	volt_bits |= reg & 0x3;
