@@ -288,7 +288,7 @@ static void i2c_process_command(void)
 	host_packet_receive(&i2c_packet);
 }
 
-#ifdef TCPCI_I2C_SLAVE
+#ifdef TCPCI_I2C_PERIPHERAL
 static void i2c_send_tcpc_response(int len)
 {
 	/* host_buffer data range, beyond this length, will return 0xec */
@@ -310,7 +310,7 @@ static void i2c_event_handler(int port)
 {
 	int i2c_isr;
 	static int rx_pending, buf_idx;
-#ifdef TCPCI_I2C_SLAVE
+#ifdef TCPCI_I2C_PERIPHERAL
 	int addr;
 #endif
 
@@ -360,7 +360,7 @@ static void i2c_event_handler(int port)
 
 	/* Stop condition on bus */
 	if (i2c_isr & STM32_I2C_ISR_STOP) {
-#ifdef TCPCI_I2C_SLAVE
+#ifdef TCPCI_I2C_PERIPHERAL
 		/*
 		 * if tcpc is being addressed, and we received a stop
 		 * while rx is pending, then this is a write only to
@@ -420,7 +420,7 @@ static void i2c_event_handler(int port)
 				 */
 				STM32_I2C_CR1(port) &= ~STM32_I2C_CR1_TXIE;
 
-#ifdef TCPCI_I2C_SLAVE
+#ifdef TCPCI_I2C_PERIPHERAL
 				addr = STM32_I2C_ISR_ADDCODE(
 					STM32_I2C_ISR(port));
 				if (ADDR_IS_TCPC(addr))
@@ -639,7 +639,7 @@ void i2c_init(void)
 #endif
 	STM32_I2C_OAR1(I2C_PORT_EC) = 0x8000
 		| (I2C_GET_ADDR(CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS) << 1);
-#ifdef TCPCI_I2C_SLAVE
+#ifdef TCPCI_I2C_PERIPHERAL
 	/*
 	 * Configure TCPC address with OA2[1] masked so that we respond
 	 * to CONFIG_TCPC_I2C_BASE_ADDR and CONFIG_TCPC_I2C_BASE_ADDR + 2.
