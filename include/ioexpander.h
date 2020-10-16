@@ -7,6 +7,8 @@
 #ifndef __CROS_EC_IOEXPANDER_H
 #define __CROS_EC_IOEXPANDER_H
 
+enum ioex_signal;	/* from gpio_signal.h */
+
 /* IO expander signal definition structure */
 struct ioex_info {
 	/* Signal name */
