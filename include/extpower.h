@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_EXTPOWER_H
 #define __CROS_EC_EXTPOWER_H
 
-#include "common.h"
+enum gpio_signal;	/* from gpio_signal.h */
 
 /**
  * Return non-zero if external power is present.
