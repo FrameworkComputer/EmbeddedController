@@ -642,6 +642,8 @@ static void board_init(void)
 	memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
 	*memmap_batt_flags |= EC_BATT_FLAG_AC_PRESENT;
 
+	if (board_version >= 1)
+		buttons[BUTTON_VOLUME_DOWN].gpio = GPIO_EC_VOLDN_BTN_ODL_V1;
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
