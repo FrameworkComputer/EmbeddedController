@@ -196,6 +196,26 @@ int raa489000_tcpm_set_cc(int port, int pull)
 	return rv;
 }
 
+int raa489000_debug_detach(int port)
+{
+	int rv;
+	/*
+	 * Force RAA489000 to see debug detach by running:
+	 *
+	 * 1. Set POWER_CONTROL. AutoDischargeDisconnect=1
+	 * 2. Set ROLE_CONTROL=0x0F(OPEN,OPEN)
+	 * 3. Set POWER_CONTROL. AutoDischargeDisconnect=0
+	 */
+
+	tcpci_tcpc_enable_auto_discharge_disconnect(port, 1);
+
+	rv = tcpci_tcpm_set_cc(port, TYPEC_CC_OPEN);
+
+	tcpci_tcpc_enable_auto_discharge_disconnect(port, 0);
+
+	return rv;
+}
+
 /* RAA489000 is a TCPCI compatible port controller */
 const struct tcpm_drv raa489000_tcpm_drv = {
 	.init                   = &raa489000_init,
@@ -227,5 +247,6 @@ const struct tcpm_drv raa489000_tcpm_drv = {
 	.enter_low_power_mode   = &raa489000_enter_low_power_mode,
 #endif
 	.tcpc_enable_auto_discharge_disconnect =
-	&tcpci_tcpc_enable_auto_discharge_disconnect,
+		&tcpci_tcpc_enable_auto_discharge_disconnect,
+	.debug_detach		= &raa489000_debug_detach,
 };
