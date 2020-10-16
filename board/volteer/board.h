@@ -11,21 +11,6 @@
 /* Baseboard features */
 #include "baseboard.h"
 
-#ifdef BOARD_VOLTEER_TCPMV1
-/* Disable TCPMv2 configuration options */
-#undef CONFIG_USB_PD_TCPMV2
-
-/* Enable the required TCPMv1 options */
-#define CONFIG_USB_PD_TCPMV1
-
-/*
- * Because the TPCMv1 stack has considerably smaller flash footprint, disable
- * the CONFIG_CHIP_INIT_ROM_REGION for testing of the init_rom API and the
- * BMI260 driver.
- */
-#undef CONFIG_CHIP_INIT_ROM_REGION
-#endif
-
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
