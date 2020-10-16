@@ -6,6 +6,10 @@
 #ifndef __CROS_EC_GPIO_CHIP_NPCX9_H
 #define __CROS_EC_GPIO_CHIP_NPCX9_H
 
+#ifndef NPCX9_PWM1_SEL
+#define NPCX9_PWM1_SEL 0
+#endif /* NPCX9_PWM1_SEL */
+
 /*****************************************************************************/
 /* Macro functions for MIWU mapping table */
 

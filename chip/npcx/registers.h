@@ -1656,6 +1656,10 @@ extern enum gpio_signal hibernate_wake_pins[];
 extern int hibernate_wake_pins_used;
 #endif
 
+#ifndef NPCX_UART_MODULE2
+#define NPCX_UART_MODULE2 0
+#endif /* NPCX_UART_MODULE2 */
+
 #if defined(CHIP_FAMILY_NPCX5)
 #include "registers-npcx5.h"
 #elif defined(CHIP_FAMILY_NPCX7)
