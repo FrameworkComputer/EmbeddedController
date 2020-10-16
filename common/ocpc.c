@@ -215,7 +215,8 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	 * If the system is in S5/G3, we can calculate the board and battery
 	 * resistances.
 	 */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
+			     CHIPSET_STATE_ANY_SUSPEND)) {
 		/*
 		 * In the first few iterations of the loop, charging isn't
 		 * stable/correct so making the calculation then leads to some
