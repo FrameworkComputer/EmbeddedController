@@ -85,10 +85,6 @@ GPIO(USB_C1_PD_RST_L,       PIN(E, 4), GPIO_ODR_HIGH)  /* Port-1 TCPC chip reset
 GPIO(DP_MUX_OE_L,           PIN(9, 6), GPIO_OUT_HIGH)  /* DP mux enable */
 GPIO(DP_MUX_SEL,            PIN(4, 5), GPIO_OUT_HIGH)  /* DP mux selection: L:C0, H:C1 */
 GPIO(DP_HOT_PLUG_DET,       PIN(9, 5), GPIO_OUT_LOW)   /* DP HPD to AP */
-/* TODO(waihong): Remove it from schematic. No use. */
-GPIO(USBC_MUX_CONF0,        PIN(5, 1), GPIO_INPUT)
-GPIO(USB_C0_VBUS_DET_L,     PIN(6, 2), GPIO_INPUT)     /* Deprecated BC1.2 VBUS detection on port-0 */
-GPIO(USB_C1_VBUS_DET_L,     PIN(8, 3), GPIO_INPUT)     /* Deprecated BC1.2 VBUS detection on port-1 */
 
 /* USB-A */
 GPIO(EN_USB_A_5V,           PIN(8, 6), GPIO_OUT_LOW)
@@ -136,6 +132,31 @@ GPIO(BRD_ID2,               PIN(6, 3), GPIO_INPUT)
 GPIO(SKU_ID0,               PIN(F, 0), GPIO_INPUT)
 GPIO(SKU_ID1,               PIN(4, 1), GPIO_INPUT)
 GPIO(SKU_ID2,               PIN(D, 4), GPIO_INPUT)
+
+/* Unused GPIOs, NC. */
+UNUSED(PIN(5, 1))
+UNUSED(PIN(D, 0))
+UNUSED(PIN(F, 3))
+UNUSED(PIN(0, 4))
+UNUSED(PIN(C, 0))
+UNUSED(PIN(A, 7))
+UNUSED(PIN(8, 3))
+UNUSED(PIN(8, 1))
+UNUSED(PIN(3, 7))
+UNUSED(PIN(7, 6))
+UNUSED(PIN(3, 4))
+UNUSED(PIN(C, 5))
+UNUSED(PIN(7, 3))
+UNUSED(PIN(D, 7))
+UNUSED(PIN(A, 5))
+UNUSED(PIN(B, 0))
+UNUSED(PIN(9, 4))
+UNUSED(PIN(B, 1))
+UNUSED(PIN(6, 2))
+UNUSED(PIN(3, 5))
+UNUSED(PIN(9, 7))
+UNUSED(PIN(6, 0))
+UNUSED(PIN(7, 2))
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)            /* UART (GPIO64/65) */
