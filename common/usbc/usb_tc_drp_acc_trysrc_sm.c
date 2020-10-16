@@ -2474,6 +2474,9 @@ static void tc_attached_snk_exit(const int port)
 
 	/* Stop drawing power */
 	sink_stop_drawing_current(port);
+
+	if (TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER))
+		tcpm_debug_detach(port);
 }
 
 /**
@@ -2970,6 +2973,9 @@ static void tc_attached_src_exit(const int port)
 
 	/* Clear PR swap flag after checking for Vconn */
 	TC_CLR_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP);
+
+	if (TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER))
+		tcpm_debug_detach(port);
 }
 
 static __maybe_unused void check_drp_connection(const int port)

@@ -326,6 +326,14 @@ struct tcpm_drv {
 	 */
 	int (*debug_accessory)(int port, bool enable);
 
+	/**
+	 * Break debug connection, if TCPC requires specific commands to be run
+	 * in order to correctly exit a debug connection.
+	 *
+	 * @param port Type-C port number
+	 */
+	int (*debug_detach)(int port);
+
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	/**
 	 * Enable TCPC auto DRP toggling.

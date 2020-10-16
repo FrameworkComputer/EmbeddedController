@@ -312,6 +312,15 @@ static inline int tcpm_debug_accessory(int port, bool enable)
 	return EC_SUCCESS;
 }
 
+static inline int tcpm_debug_detach(int port)
+{
+	if (tcpc_config[port].drv->debug_detach)
+		return tcpc_config[port].drv->debug_detach(port);
+
+	/* No special handling for debug disconnections?  Success! */
+	return EC_SUCCESS;
+}
+
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 static inline int tcpm_enter_low_power_mode(int port)
 {
