@@ -438,6 +438,12 @@ void espi_reset_pin_asserted_interrupt(enum gpio_signal signal)
 {
 #ifdef IT83XX_ESPI_RESET_MODULE_BY_FW
 	espi_fw_reset_module();
+	/*
+	 * bit[7], enable P80L function.
+	 * bit[6], accept port 80h cycle.
+	 * bit[1-0], 10b: I2EC is read-only.
+	 */
+	IT83XX_GCTRL_SPCTRL1 |= 0xC2;
 #endif
 	/* reset vw_index_flag when espi_reset# asserted. */
 	espi_reset_vw_index_flags();
