@@ -1354,9 +1354,7 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 
 		args->response_size =
-			online_calibration_read(
-				(int)(sensor - motion_sensors),
-				out->online_calib_read.data)
+			online_calibration_read(sensor, &out->online_calib_read)
 			? sizeof(struct ec_response_online_calibration_data)
 			: 0;
 		break;

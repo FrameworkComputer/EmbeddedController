@@ -104,7 +104,7 @@ static void check_gyro_cal_new_bias(struct motion_sensor_t *sensor)
 		(struct online_calib_data *)sensor->online_calib_data;
 	struct gyro_cal_data *data =
 		(struct gyro_cal_data *)calib_data->type_specific_data;
-	size_t sensor_num = motion_sensors - sensor;
+	int sensor_num = sensor - motion_sensors;
 	int temp_out;
 	fpv3_t bias_out;
 	uint32_t timestamp_out;
@@ -228,16 +228,18 @@ bool online_calibration_has_new_values(void)
 	return has_dirty;
 }
 
-bool online_calibration_read(int sensor_num, int16_t out[3])
+bool online_calibration_read(struct motion_sensor_t *sensor,
+			     struct ec_response_online_calibration_data *out)
 {
+	int sensor_num = sensor - motion_sensors;
 	bool has_valid;
 
 	mutex_lock(&g_calib_cache_mutex);
 	has_valid = (sensor_calib_cache_valid_map & BIT(sensor_num)) != 0;
 	if (has_valid) {
 		/* Update data in out */
-		memcpy(out, motion_sensors[sensor_num].online_calib_data->cache,
-		       sizeof(out));
+		memcpy(out->data, sensor->online_calib_data->cache,
+		       sizeof(out->data));
 		/* Clear dirty bit */
 		sensor_calib_cache_dirty_map &= ~(1 << sensor_num);
 	}
@@ -250,7 +252,7 @@ int online_calibration_process_data(struct ec_response_motion_sensor_data *data,
 				    struct motion_sensor_t *sensor,
 				    uint32_t timestamp)
 {
-	size_t sensor_num = motion_sensors - sensor;
+	int sensor_num = sensor - motion_sensors;
 	int rc;
 	int temperature;
 	struct online_calib_data *calib_data;

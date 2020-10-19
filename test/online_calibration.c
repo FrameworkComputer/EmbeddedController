@@ -210,7 +210,7 @@ static int test_new_calibration_value(void)
 	TEST_EQ(rc, EC_SUCCESS, "%d");
 	TEST_EQ(online_calibration_has_new_values(), true, "%d");
 
-	rc = online_calibration_read(BASE, cal_data.data);
+	rc = online_calibration_read(&motion_sensors[BASE], &cal_data);
 	TEST_EQ(rc, true, "%d");
 	TEST_EQ(cal_data.data[X], 81, "%d");
 	TEST_EQ(cal_data.data[Y], -163, "%d");

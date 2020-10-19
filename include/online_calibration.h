@@ -41,6 +41,7 @@ bool online_calibration_has_new_values(void);
  * @param out The target to copy the data into.
  * @return True if a value was written to `out`.
  */
-bool online_calibration_read(int sensor_num, int16_t out[3]);
+bool online_calibration_read(struct motion_sensor_t *sensor,
+			     struct ec_response_online_calibration_data *out);
 
 #endif /* __CROS_EC_ONLINE_CALIBRATION_H */
