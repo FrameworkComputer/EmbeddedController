@@ -54,6 +54,7 @@ test_static int test_send_caps_error(void)
 	/* Enable PE as source, expect SOURCE_CAP. */
 	mock_pd_port[PORT0].power_role = PD_ROLE_SOURCE;
 	mock_tc_port[PORT0].pd_enable = 1;
+	mock_tc_port[PORT0].vconn_src = true;
 	task_wait_event(10 * MSEC);
 	TEST_EQ(fake_prl_get_last_sent_data_msg_type(PORT0),
 		PD_DATA_SOURCE_CAP, "%d");

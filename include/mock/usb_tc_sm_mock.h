@@ -19,6 +19,7 @@ struct mock_tc_port_t {
 	enum tcpc_rp_value lcl_rp;
 	int attached_snk;
 	int attached_src;
+	bool vconn_src;
 };
 
 extern struct mock_tc_port_t mock_tc_port[CONFIG_USB_PD_PORT_MAX_COUNT];

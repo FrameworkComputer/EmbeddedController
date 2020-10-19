@@ -30,6 +30,7 @@ void mock_tc_port_reset(void)
 		mock_tc_port[port].lcl_rp = TYPEC_RP_RESERVED;
 		mock_tc_port[port].attached_snk = 0;
 		mock_tc_port[port].attached_src = 0;
+		mock_tc_port[port].vconn_src = false;
 	}
 }
 
@@ -85,7 +86,7 @@ void tc_ctvpd_detected(int port)
 
 int tc_is_vconn_src(int port)
 {
-	return 0;
+	return mock_tc_port[port].vconn_src;
 }
 
 void tc_hard_reset_request(int port)
