@@ -239,6 +239,10 @@ enum sm5803_charger_modes {
 #define SM5803_DISCH_CONF5_CLS_LIMIT	GENMASK(6, 0)
 #define SM5803_CLS_CURRENT_STEP		50
 
+#define SM5803_REG_DISCH_CONF6		0x35
+#define SM5803_DISCH_CONF6_RAMPS_DIS	BIT(0)
+#define SM5803_DISCH_CONF6_SMOOTH_DIS	BIT(1)
+
 /*
  * Vsys is 11 bits, with the lower 3 bits in the LSB register.
  * The pre-regulation value is 2.72 V + Vsys_prereg * 10 mV
@@ -277,10 +281,6 @@ enum sm5803_charger_modes {
 #define SM5803_REG_FAST_CONF4		0x3C
 #define SM5803_CONF4_ICHG_FAST		GENMASK(5, 0)
 
-/* Precharge current limit is also intervals of 100 mA */
-#define SM5803_REG_PRECHG		0x41
-#define SM5803_PRECHG_ICHG_PRE_SET	GENMASK(5, 0)
-
 /* Fast charge Termination */
 #define SM5803_REG_FAST_CONF5		0x3D
 #define SM5803_CONF5_IBAT_EOC_TH	GENMASK(3, 0)
@@ -293,6 +293,10 @@ enum sm5803_charger_modes {
 
 /* LSB is in 1.67mOhm steps. */
 #define SM5803_REG_IR_COMP2		0x40
+
+/* Precharge current limit is also intervals of 100 mA */
+#define SM5803_REG_PRECHG		0x41
+#define SM5803_PRECHG_ICHG_PRE_SET	GENMASK(5, 0)
 
 #define SM5803_REG_LOG1			0x42
 #define SM5803_BATFET_ON		BIT(2)

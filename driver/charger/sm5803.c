@@ -1332,6 +1332,11 @@ static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 		reg &= ~SM5803_ANA_EN1_CLS_DISABLE;
 		rv = chg_write8(chgnum, SM5803_REG_ANA_EN1, reg);
 
+		/* Disable ramps on current set in discharge */
+		rv |= chg_read8(chgnum, SM5803_REG_DISCH_CONF6, &reg);
+		reg |= SM5803_DISCH_CONF6_RAMPS_DIS;
+		rv |= chg_write8(chgnum, SM5803_REG_DISCH_CONF6, reg);
+
 		/*
 		 * In order to ensure the Vbus output doesn't overshoot too
 		 * much, turn the starting voltage down to 4.8 V and ramp up
@@ -1367,6 +1372,11 @@ static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 				chgnum, status);
 
 		rv |= chg_write8(chgnum, SM5803_REG_STATUS_DISCHG, status);
+
+		/* Re-enable ramps on current set in discharge */
+		rv |= chg_read8(chgnum, SM5803_REG_DISCH_CONF6, &reg);
+		reg &= ~SM5803_DISCH_CONF6_RAMPS_DIS;
+		rv |= chg_write8(chgnum, SM5803_REG_DISCH_CONF6, reg);
 
 		/*
 		 * PD tasks will always turn off previous sourcing on init.
