@@ -91,6 +91,7 @@ GPIO(USB_C1_OC_ODL,		PIN(5, 0), GPIO_ODR_HIGH)
 GPIO(USB_C1_RT_INT_ODL,		PIN(F, 3), GPIO_INPUT)
 
 /* Don't have a load switch for retimer */
+UNIMPLEMENTED(USB_C0_LS_EN)
 UNIMPLEMENTED(USB_C1_LS_EN)
 
 /* Misc Signals */
@@ -105,11 +106,10 @@ GPIO(M2_SSD_PLA,		PIN(7, 0), GPIO_INPUT)		/* SSD power-loss acknowledgment */
 GPIO(CCD_MODE_ODL,		PIN(E, 5), GPIO_INPUT)		/* Case Closed Debug Mode */
 GPIO(EC_SLP_S0IX,		PIN(7, 2), GPIO_INPUT | GPIO_PULL_UP)
 
-/* Unused signals */
-GPIO(UNUSED_GPIO41,		PIN(4, 1), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(UNUSED_GPIOF2,		PIN(F, 2), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(UNUSED_GPIO96,		PIN(9, 6), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(UNUSED_GPIO34,		PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(USB_C0_RT_RST_ODL,		PIN(4, 1), GPIO_INPUT)		/* RST to Burnside bridge */
+GPIO(USB_C0_RT_INT_ODL,		PIN(F, 2), GPIO_INPUT)
+GPIO(CATERR_L,			PIN(3, 4), GPIO_INPUT)		/* Catastrophic error */
+GPIO(EC_ESPI_ALERT_L,		PIN(5, 7), GPIO_INPUT | GPIO_SEL_1P8V)
 
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
@@ -117,6 +117,9 @@ GPIO(UNUSED_GPIO34,		PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
  * off during sleep states.
  */
 GPIO(EC_EDP_BL_EN,             PIN(D, 3), GPIO_OUT_HIGH)
+
+/* Unused signals */
+GPIO(UNUSED_GPIO96,             PIN(9, 6), GPIO_INPUT | GPIO_PULL_UP)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(EC_I2C0_SENSOR_SCL,       PIN(B, 5), GPIO_INPUT | GPIO_SEL_1P8V)

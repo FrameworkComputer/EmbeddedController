@@ -560,6 +560,12 @@ BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 
 /******************************************************************************/
 /* USBC mux configuration - Tiger Lake includes internal mux */
+struct usb_mux usbc0_usb4_db_retimer = {
+	.usb_port = USBC_PORT_C0,
+	.driver = &bb_usb_retimer,
+	.i2c_port = I2C_PORT_USB_1_MIX,
+	.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
+};
 struct usb_mux usbc1_usb4_db_retimer = {
 	.usb_port = USBC_PORT_C1,
 	.driver = &bb_usb_retimer,
@@ -571,6 +577,7 @@ struct usb_mux usb_muxes[] = {
 		.usb_port = USBC_PORT_C0,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
+		.next_mux = &usbc0_usb4_db_retimer,
 	},
 	[USBC_PORT_C1] = {
 		.usb_port = USBC_PORT_C1,
@@ -583,7 +590,8 @@ BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
 struct bb_usb_control bb_controls[] = {
 	[USBC_PORT_C0] = {
-		/* USB-C port 0 doesn't have a retimer */
+		.usb_ls_en_gpio = GPIO_USB_C0_LS_EN,
+		.retimer_rst_gpio = GPIO_USB_C0_RT_RST_ODL,
 	},
 	[USBC_PORT_C1] = {
 		.usb_ls_en_gpio = GPIO_USB_C1_LS_EN,
