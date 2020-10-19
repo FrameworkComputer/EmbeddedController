@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Volteer board configuration */
+/* Elemi board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -23,11 +23,6 @@
 
 /* Chipset features */
 #define CONFIG_POWER_PP5000_CONTROL
-
-/* LED defines */
-#define CONFIG_LED_PWM
-/* Although there are 2 LEDs, they are both controlled by the same lines. */
-#define CONFIG_LED_PWM_COUNT 1
 
 /* Keyboard features */
 
@@ -167,10 +162,6 @@ enum battery_type {
 };
 
 enum pwm_channel {
-	PWM_CH_LED1_BLUE = 0,
-	PWM_CH_LED2_GREEN,
-	PWM_CH_LED3_RED,
-	PWM_CH_LED4_SIDESEL,
 	PWM_CH_FAN,
 	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT
