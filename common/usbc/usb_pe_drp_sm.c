@@ -4979,6 +4979,13 @@ static void pe_init_port_vdm_identity_request_run(int port)
 
 		/* PE_INIT_PORT_VDM_Identity_ACKed embedded here */
 		dfp_consume_identity(port, sop, cnt, payload);
+
+#ifdef CONFIG_CHARGE_MANAGER
+		/* Evaluate whether this is an allow-listed charger */
+		if (pd_charge_from_device(pd_get_identity_vid(port),
+					  pd_get_identity_pid(port)))
+			charge_manager_update_dualrole(port, CAP_DEDICATED);
+#endif
 		break;
 		}
 	case VDM_RESULT_NAK:
