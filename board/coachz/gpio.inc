@@ -61,8 +61,6 @@ GPIO(QSIP_ON,               PIN(5, 0), GPIO_OUT_LOW)   /* Not used, for non-swit
 /* Power enables */
 GPIO(HIBERNATE_L,           PIN(5, 2), GPIO_OUT_HIGH)  /* EC hibernate */
 GPIO(SWITCHCAP_ON,          PIN(D, 5), GPIO_OUT_LOW)   /* Enable switch cap; will be configured in the board init */
-/* TODO(waihong): Remove it. The VBOB switch is for backup. */
-GPIO(VBOB_EN,               PIN(D, 3), GPIO_OUT_LOW)   /* Enable VBOB */
 GPIO(EN_PP3300_A,           PIN(A, 6), GPIO_OUT_LOW)   /* Enable PP3300 */
 GPIO(EN_PP5000_A,           PIN(6, 7), GPIO_OUT_LOW)   /* Enable PP5000 */
 GPIO(EC_BL_DISABLE_L,       PIN(B, 6), GPIO_OUT_LOW)   /* Backlight disable signal from EC */
@@ -144,6 +142,47 @@ GPIO(SKU_ID2,               PIN(D, 4), GPIO_INPUT)
  * high-Z. Set pull-down to avoid floating.
  */
 GPIO(DA9313_GPIO0,          PIN(E, 2), GPIO_INPUT | GPIO_PULL_DOWN) /* Switchcap GPIO0 */
+
+/* Unused GPIOs, NC. Apply PU for power saving */
+UNUSED(PIN(5, 1))
+UNUSED(PIN(F, 3))
+UNUSED(PIN(3, 1))
+UNUSED(PIN(2, 7))
+UNUSED(PIN(2, 6))
+UNUSED(PIN(2, 5))
+UNUSED(PIN(2, 4))
+UNUSED(PIN(2, 3))
+UNUSED(PIN(2, 2))
+UNUSED(PIN(2, 1))
+UNUSED(PIN(2, 0))
+UNUSED(PIN(1, 7))
+UNUSED(PIN(1, 6))
+UNUSED(PIN(1, 5))
+UNUSED(PIN(1, 4))
+UNUSED(PIN(1, 3))
+UNUSED(PIN(1, 2))
+UNUSED(PIN(1, 1))
+UNUSED(PIN(1, 0))
+UNUSED(PIN(0, 7))
+UNUSED(PIN(0, 6))
+UNUSED(PIN(0, 5))
+UNUSED(PIN(9, 4))
+UNUSED(PIN(9, 7))
+UNUSED(PIN(A, 7))
+UNUSED(PIN(B, 0))
+UNUSED(PIN(A, 5))
+UNUSED(PIN(3, 5))
+UNUSED(PIN(7, 2))
+UNUSED(PIN(8, 1))
+UNUSED(PIN(7, 6))
+UNUSED(PIN(3, 4))
+UNUSED(PIN(C, 0))
+UNUSED(PIN(6, 2))
+UNUSED(PIN(8, 3))
+UNUSED(PIN(B, 1))
+UNUSED(PIN(5, 6))
+UNUSED(PIN(8, 0))
+UNUSED(PIN(D, 3))
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)            /* UART (GPIO64/65) */
