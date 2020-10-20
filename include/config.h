@@ -1980,11 +1980,8 @@
 /* Sensor sampling interval for gesture recognition */
 #undef CONFIG_GESTURE_SAMPLING_INTERVAL_MS
 
-/* Which sensor to look for double tap recognition */
+/* Enable double tap support. */
 #undef CONFIG_GESTURE_SENSOR_DOUBLE_TAP
-
-/* Use for waking up host */
-#undef CONFIG_GESTURE_SENSOR_DOUBLE_TAP_FOR_HOST
 
 /*
  * Double tap detection parameters
@@ -1997,15 +1994,19 @@
  * which to check for relatively calm periods. In between the two impulses
  * there is a minimum and maximum interstice time allowed.
  *
- * Define an acceleration threshold to dectect a tap, in mg.
+ * Define an acceleration threshold to detect a tap, in mg.
+ * Which sensor to look for double tap recognition.
+ * Use for waking up host.
  */
 #undef CONFIG_GESTURE_TAP_OUTER_WINDOW_T
 #undef CONFIG_GESTURE_TAP_INNER_WINDOW_T
 #undef CONFIG_GESTURE_TAP_MIN_INTERSTICE_T
 #undef CONFIG_GESTURE_TAP_MAX_INTERSTICE_T
 #undef CONFIG_GESTURE_TAP_THRES_MG
+#undef CONFIG_GESTURE_TAP_SENSOR
+#undef CONFIG_GESTURE_TAP_FOR_HOST
 
-/* Which sensor to look for significant motion activity */
+/* Significant motion activity */
 #undef CONFIG_GESTURE_SIGMO
 
 /*
@@ -2014,6 +2015,7 @@
  * and check for movement again with proof milli-seconds.
  */
 #undef CONFIG_GESTURE_SIGMO_PROOF_MS
+#undef CONFIG_GESTURE_SIGMO_SENSOR
 #undef CONFIG_GESTURE_SIGMO_SKIP_MS
 #undef CONFIG_GESTURE_SIGMO_THRES_MG
 
@@ -5809,5 +5811,20 @@
 #define CONFIG_BODY_DETECTION_STATIONARY_DURATION 15  /* second */
 #endif /* ifndef(CONFIG_BODY_DETECTION_CUSTOM) */
 #endif /* CONFIG_BODY_DETECTION */
+
+/*
+ * Set parameters to dummy values to use IS_ENABLED().
+ * If a parameter is already set, it will trigger a compilatin error.
+ */
+
+/* To be able to use IS_ENABLED(CONFIG_GESTURE_SENSOR_DOUBLE_TAP) */
+#ifndef CONFIG_GESTURE_SENSOR_DOUBLE_TAP
+#define CONFIG_GESTURE_TAP_THRES_MG 0
+#define CONFIG_GESTURE_TAP_MAX_INTERSTICE_T 0
+#endif /* CONFIG_GESTURE_SENSOR_DOUBLE_TAP */
+
+#ifndef CONFIG_ACCEL_FIFO
+#define CONFIG_ACCEL_FIFO_SIZE 0
+#endif
 
 #endif  /* __CROS_EC_CONFIG_H */

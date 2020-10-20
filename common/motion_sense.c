@@ -717,7 +717,7 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 	if (has_data_read) {
 #ifdef CONFIG_GESTURE_SW_DETECTION
 		/* Run gesture recognition engine */
-		if (sensor_num == CONFIG_GESTURE_SENSOR_DOUBLE_TAP)
+		if (sensor_num == CONFIG_GESTURE_TAP_SENSOR)
 			gesture_calc(event);
 #endif
 #ifdef CONFIG_BODY_DETECTION
@@ -1088,7 +1088,7 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		if (args->version >= 3) {
 			out->info_3.min_frequency = sensor->min_frequency;
 			out->info_3.max_frequency = sensor->max_frequency;
-			out->info_3.fifo_max_event_count = MAX_FIFO_EVENT_COUNT;
+			out->info_3.fifo_max_event_count = CONFIG_ACCEL_FIFO_SIZE;
 			args->response_size = sizeof(out->info_3);
 		}
 		if (args->version >= 4) {
