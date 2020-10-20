@@ -14,10 +14,12 @@ import errno
 import fcntl
 import os
 import pexpect
+import time
 from pexpect import fdpexpect
 
 # Expecting a result in 3 seconds is plenty even for slow platforms.
 DEFAULT_UART_TIMEOUT = 3
+FLUSH_UART_TIMEOUT = 1
 
 
 class ptyError(Exception):
@@ -76,9 +78,13 @@ class ptyDriver(object):
     """Flush device output to prevent previous messages interfering."""
     if self._child.sendline('') != 1:
       raise ptyError('Failed to send newline.')
-    while True:
+    # Have a maximum timeout for the flush operation. We should have cleared
+    # all data from the buffer, but if data is regularly being generated, we
+    # can't guarantee it will ever stop.
+    flush_end_time = time.time() + FLUSH_UART_TIMEOUT
+    while time.time() <= flush_end_time:
       try:
-        self._child.expect('.', timeout=0.2)
+        self._child.expect('.', timeout=0.01)
       except (pexpect.TIMEOUT, pexpect.EOF):
         break
       except OSError as e:
