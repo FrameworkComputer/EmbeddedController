@@ -870,6 +870,30 @@ static int fusb302_tcpm_transmit(int port, enum tcpm_transmit_type type,
 		buf[buf_pos++] = FUSB302_TKN_SYNC2;
 
 		return fusb302_send_message(port, header, data, buf, buf_pos);
+	case TCPC_TX_SOP_PRIME:
+
+		/* put register address first for of burst tcpc write */
+		buf[buf_pos++] = TCPC_REG_FIFOS;
+
+		/* Write the SOP' Ordered Set into TX FIFO */
+		buf[buf_pos++] = FUSB302_TKN_SYNC1;
+		buf[buf_pos++] = FUSB302_TKN_SYNC1;
+		buf[buf_pos++] = FUSB302_TKN_SYNC3;
+		buf[buf_pos++] = FUSB302_TKN_SYNC3;
+
+		return fusb302_send_message(port, header, data, buf, buf_pos);
+	case TCPC_TX_SOP_PRIME_PRIME:
+
+		/* put register address first for of burst tcpc write */
+		buf[buf_pos++] = TCPC_REG_FIFOS;
+
+		/* Write the SOP'' Ordered Set into TX FIFO */
+		buf[buf_pos++] = FUSB302_TKN_SYNC1;
+		buf[buf_pos++] = FUSB302_TKN_SYNC3;
+		buf[buf_pos++] = FUSB302_TKN_SYNC1;
+		buf[buf_pos++] = FUSB302_TKN_SYNC3;
+
+		return fusb302_send_message(port, header, data, buf, buf_pos);
 	case TCPC_TX_HARD_RESET:
 		/* Simply hit the SEND_HARD_RESET bit */
 		tcpc_read(port, TCPC_REG_CONTROL3, &reg);
