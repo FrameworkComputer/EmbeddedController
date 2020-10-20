@@ -26,7 +26,6 @@ GPIO_INT(EC_WP_ODL,         PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)  /* Writ
 GPIO_INT(LID_OPEN_EC,       PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)  /* Lid open */
 GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH | GPIO_SEL_1P8V, chipset_ap_rst_interrupt)  /* PMIC to signal AP reset */
 GPIO_INT(PS_HOLD,           PIN(A, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)  /* Indicate when AP triggers reset/shutdown */
-GPIO_INT(PMIC_FAULT_L,      PIN(A, 3), GPIO_INT_BOTH, power_signal_interrupt)  /* Any PMIC fault? */
 GPIO_INT(AP_SUSPEND,        PIN(5, 7), GPIO_INT_BOTH, power_signal_interrupt)  /* Suspend signal from PMIC */
 GPIO_INT(DEPRECATED_AP_RST_REQ, PIN(C, 2), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V, power_signal_interrupt) /* Deprecated AP initiated reset indicator */
 /*
@@ -55,6 +54,7 @@ GPIO(PMIC_RESIN_L,          PIN(3, 2), GPIO_ODR_HIGH)  /* PMIC reset trigger */
 GPIO(PMIC_KPD_PWR_ODL,      PIN(D, 6), GPIO_ODR_HIGH)  /* PMIC power button */
 GPIO(EC_INT_L,              PIN(A, 2), GPIO_ODR_HIGH)  /* Interrupt line between AP and EC */
 GPIO(QSIP_ON,               PIN(5, 0), GPIO_OUT_LOW)   /* Not used, for non-switchcap testing */
+GPIO(PMIC_FAULT_L,          PIN(A, 3), GPIO_INPUT)     /* Any PMIC fault? Deprecated since rev-1 */
 
 /* Power enables */
 GPIO(HIBERNATE_L,           PIN(5, 2), GPIO_OUT_HIGH)  /* EC hibernate */

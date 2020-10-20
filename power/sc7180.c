@@ -562,7 +562,6 @@ static void power_off(void)
 		 * switchcap off.
 		 */
 		power_signal_disable_interrupt(GPIO_AP_RST_L);
-		power_signal_disable_interrupt(GPIO_PMIC_FAULT_L);
 	}
 
 	/* Check the switchcap status */
@@ -637,7 +636,6 @@ static int power_on(void)
 
 	/* Enable signal interrupts */
 	power_signal_enable_interrupt(GPIO_AP_RST_L);
-	power_signal_enable_interrupt(GPIO_PMIC_FAULT_L);
 
 	ret = set_pmic_pwron(1);
 	if (ret != EC_SUCCESS) {
