@@ -13,6 +13,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "sm5803.h"
+#include "system.h"
 #include "throttle_ap.h"
 #include "timer.h"
 #include "usb_charge.h"
@@ -349,6 +350,35 @@ enum ec_error_list sm5803_vbus_sink_enable(int chgnum, int enable)
 
 }
 
+/*
+ * Track and store whether we've initialized the charger chips already on this
+ * boot.  This should prevent us from re-running inits after sysjumps.
+ */
+static bool chip_inited[CHARGER_NUM];
+#define SM5803_SYSJUMP_TAG	0x534D /* SM */
+#define SM5803_HOOK_VERSION	1
+
+static void init_status_preserve(void)
+{
+	system_add_jump_tag(SM5803_SYSJUMP_TAG, SM5803_HOOK_VERSION,
+			    sizeof(chip_inited), &chip_inited);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, init_status_preserve, HOOK_PRIO_DEFAULT);
+
+static void init_status_retrieve(void)
+{
+	const uint8_t *tag_contents;
+	int version, size;
+
+	tag_contents = system_get_jump_tag(SM5803_SYSJUMP_TAG,
+						  &version, &size);
+	if (tag_contents && (version == SM5803_HOOK_VERSION) &&
+					(size == sizeof(chip_inited)))
+		/* Valid init status found, restore before charger chip init */
+		memcpy(&chip_inited, tag_contents, size);
+}
+DECLARE_HOOK(HOOK_INIT, init_status_retrieve, HOOK_PRIO_FIRST);
+
 static void sm5803_init(int chgnum)
 {
 	enum ec_error_list rv;
@@ -376,6 +406,15 @@ static void sm5803_init(int chgnum)
 	} else {
 		CPRINTS("%s %d: Failed to read VBUS voltage during init",
 			CHARGER_NAME, chgnum);
+		return;
+	}
+
+	/*
+	 * A previous boot already ran inits, safe to return now that we've
+	 * checked i2c communication to the chip and cached Vbus presence
+	 */
+	if (chip_inited[chgnum]) {
+		CPRINTS("%s %d: Already initialized", CHARGER_NAME, chgnum);
 		return;
 	}
 
@@ -664,6 +703,8 @@ static void sm5803_init(int chgnum)
 
 	if (rv)
 		CPRINTS("%s %d: Failed initialization", CHARGER_NAME, chgnum);
+	else
+		chip_inited[chgnum] = true;
 }
 
 static enum ec_error_list sm5803_post_init(int chgnum)
