@@ -508,6 +508,7 @@ int gpio_clear_pending_interrupt(enum gpio_signal signal)
 void gpio_pre_init(void)
 {
 	const struct gpio_info *g = gpio_list;
+	const struct unused_pin_info *u = unused_pin_list;
 	int is_warm;
 	int flags;
 	int i, j;
@@ -614,6 +615,11 @@ void gpio_pre_init(void)
 			gpio_enable_wake_up_input(i, 0);
 	}
 #endif
+
+	/* Configure unused pins as INPUT with PU to save power. */
+	for (i = 0; i < unused_pin_count; i++, u++)
+		gpio_set_flags_by_mask(u->port, u->mask,
+				       GPIO_INPUT | GPIO_PULL_UP);
 }
 
 /*****************************************************************************/
