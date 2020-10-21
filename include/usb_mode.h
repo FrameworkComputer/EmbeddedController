@@ -24,7 +24,7 @@
 void enter_usb_init(int port);
 
 /*
- * Checks weather the mode entry sequence for USB4 is done for a port.
+ * Checks whether the mode entry sequence for USB4 is done for a port.
  *
  * @param port      USB-C port number
  * @return          True if entry sequence for USB4 is completed

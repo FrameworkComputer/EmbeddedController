@@ -33,8 +33,8 @@ void dp_init(int port);
 bool dp_is_active(int port);
 
 /*
- * Checks weather the mode entry sequence for DisplayPort alternate mode is
- * done for a port.
+ * Checks whether the mode entry sequence for DisplayPort alternate mode is done
+ * for a port.
  *
  * @param port      USB-C port number
  * @return          True if entry sequence for DisplayPort mode is completed

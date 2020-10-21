@@ -742,7 +742,7 @@ static void st_tp_handle_status_report(struct st_tp_event_t *e)
  *
  * When there are error events, suggested action will be saved in `tp_control`.
  *
- * @param show_error: weather EC should read and dump error or not.
+ * @param show_error: whether EC should read and dump error or not.
  *   ***If this is true, rx_buf.events[] will be cleared.***
  *
  * @return number of events available
