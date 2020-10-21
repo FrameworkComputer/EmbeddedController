@@ -175,11 +175,6 @@ int bmi_get_engineering_val(const int reg_val,
 			    const struct bmi_accel_param_pair *pairs,
 			    const int size);
 
-#ifdef CONFIG_SPI_ACCEL_PORT
-int bmi_spi_raw_read(const int addr, const uint8_t reg,
-		     uint8_t *data, const int len);
-#endif
-
 /**
  * Read 8bit register from accelerometer.
  */

@@ -12,6 +12,8 @@
 #include "accelgyro.h"
 #include "console.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/mag_bmm150.h"
+#include "driver/mag_lis2mdl.h"
 #include "i2c.h"
 #include "math_util.h"
 #include "motion_sense_fifo.h"
@@ -141,7 +143,7 @@ int bmi_get_engineering_val(const int reg_val,
 }
 
 #ifdef CONFIG_SPI_ACCEL_PORT
-int bmi_spi_raw_read(const int addr, const uint8_t reg,
+static int bmi_spi_raw_read(const int addr, const uint8_t reg,
 		     uint8_t *data, const int len)
 {
 	uint8_t cmd = 0x80 | reg;
@@ -319,17 +321,13 @@ void bmi_normalize(const struct motion_sensor_t *s, intv3_t v, uint8_t *input)
 	int i;
 	struct accelgyro_saved_data_t *data = BMI_GET_SAVED_DATA(s);
 
-#ifdef CONFIG_MAG_BMI_BMM150
-	if (s->type == MOTIONSENSE_TYPE_MAG)
+	if (IS_ENABLED(CONFIG_MAG_BMI_BMM150) &&
+	    (s->type == MOTIONSENSE_TYPE_MAG)) {
 		bmm150_normalize(s, v, input);
-	else
-#endif
-#ifdef CONFIG_MAG_BMI_LIS2MDL
-	if (s->type == MOTIONSENSE_TYPE_MAG)
-		lis2mdl_normalize(s, v, data);
-	else
-#endif
-	{
+	} else if (IS_ENABLED(CONFIG_MAG_BMI_LIS2MDL) &&
+		   (s->type == MOTIONSENSE_TYPE_MAG)) {
+		lis2mdl_normalize(s, v, input);
+	} else {
 		v[0] = ((int16_t)((input[1] << 8) | input[0]));
 		v[1] = ((int16_t)((input[3] << 8) | input[2]));
 		v[2] = ((int16_t)((input[5] << 8) | input[4]));
