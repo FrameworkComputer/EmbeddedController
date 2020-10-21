@@ -21,6 +21,13 @@
 #define RAA489000_PD_PHYSICAL_SETTING1	 0xE0
 #define RAA489000_PD_PHYSICAL_PARAMETER1 0xE8
 
+#define RAA489000_VBUS_CURRENT_TARGET 0x92
+#define RAA489000_VBUS_OCP_UV_THRESHOLD 0x94
+
+#define RAA489000_VBUS_CURRENT_TARGET_VALUE 0x61 /* 3.104A */
+/* Detect voltage level of overcurrent protection during Sourcing VBUS */
+#define RAA489000_OCP_THRESHOLD_VALUE 0x00BE /* 4.75V */
+
 /* Enables for reverse current protection */
 #define RAA489000_SETTING1_IP2_EN	BIT(9)
 #define RAA489000_SETTING1_IP1_EN	BIT(8)
