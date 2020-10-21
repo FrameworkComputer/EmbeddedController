@@ -92,17 +92,17 @@ static int calculate_motion_confidence(uint64_t var)
 /* Change the motion state and commit the change to AP. */
 void body_detect_change_state(enum body_detect_states state)
 {
-#ifdef CONFIG_GESTURE_HOST_DETECTION
-	struct ec_response_motion_sensor_data vector = {
-		.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP,
-		.activity = MOTIONSENSE_ACTIVITY_BODY_DETECTION,
-		.state = state,
-		.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID,
-	};
-	motion_sense_fifo_stage_data(&vector, NULL, 0,
-			__hw_clock_source_read());
-	motion_sense_fifo_commit_data();
-#endif
+	if (IS_ENABLED(CONFIG_GESTURE_HOST_DETECTION)) {
+		struct ec_response_motion_sensor_data vector = {
+			.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP,
+			.activity = MOTIONSENSE_ACTIVITY_BODY_DETECTION,
+			.state = state,
+			.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID,
+		};
+		motion_sense_fifo_stage_data(&vector, NULL, 0,
+				__hw_clock_source_read());
+		motion_sense_fifo_commit_data();
+	}
 	/* change the motion state */
 	motion_state = state;
 	if (state == BODY_DETECTION_ON_BODY) {
