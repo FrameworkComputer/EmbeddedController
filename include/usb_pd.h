@@ -775,6 +775,12 @@ struct pd_cable {
 #define USB_VID_APPLE  0x05ac
 #define USB_PID1_APPLE 0x1012
 #define USB_PID2_APPLE 0x1013
+
+#define USB_VID_HP     0x03F0
+#define USB_PID1_HP    0x0467		/* E24d monitor */
+#define USB_PID2_HP    0x096B		/* USB-C/A Univ Dock G2 */
+#define USB_PID3_HP    0x036B		/* USB-C Dock G5 */
+
 #define USB_VID_INTEL  0x8087
 
 /* Timeout for message receive in microseconds */
