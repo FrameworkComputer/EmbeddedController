@@ -100,6 +100,15 @@ static const struct motion_sensor_t * const accel_base =
 static const struct motion_sensor_t * const accel_lid =
 	&motion_sensors[CONFIG_LID_ANGLE_SENSOR_LID];
 
+STATIC_IF(CONFIG_TABLET_MODE) void motion_lid_set_tablet_mode(int reliable);
+STATIC_IF(CONFIG_TABLET_MODE) int lid_angle_set_tablet_mode_threshold(
+		int angle, int hys);
+
+STATIC_IF(CONFIG_TABLET_MODE) fp_t tablet_zone_lid_angle;
+STATIC_IF(CONFIG_TABLET_MODE) fp_t laptop_zone_lid_angle;
+STATIC_IF(CONFIG_TABLET_MODE) int tablet_mode_lid_angle;
+STATIC_IF(CONFIG_TABLET_MODE) int tablet_mode_hys_degree;
+
 #ifdef CONFIG_TABLET_MODE
 __attribute__((weak)) int board_is_lid_angle_tablet_mode(void)
 {
@@ -208,7 +217,13 @@ static int lid_angle_set_tablet_mode_threshold(int angle, int hys)
 
 #if defined(CONFIG_DPTF_MULTI_PROFILE) && \
 	defined(CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR)
+#define MOTION_LID_SET_DPTF_PROFILE
+#endif
 
+STATIC_IF(MOTION_LID_SET_DPTF_PROFILE) void motion_lid_set_dptf_profile(
+		int reliable);
+
+#ifdef MOTION_LID_SET_DPTF_PROFILE
 /*
  * If CONFIG_DPTF_MULTI_PROFILE is defined by a board, then lid motion driver
  * sets different profile numbers depending upon the current lid
@@ -264,7 +279,7 @@ static void motion_lid_set_dptf_profile(int reliable)
 	debounce_cnt = DPTF_MODE_DEBOUNCE_COUNT;
 }
 
-#endif /* CONFIG_DPTF_MULTI_PROFILE && CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR */
+#endif /* MOTION_LID_SET_DPTF_PROFILE */
 
 /**
  * Calculate the lid angle using two acceleration vectors, one recorded in
@@ -389,15 +404,14 @@ static int calculate_lid_angle(const intv3_t base, const intv3_t lid,
 	if (dot_product(cross, hinge_axis) > 0)
 		lid_to_base_fp = FLOAT_TO_FP(360) - lid_to_base_fp;
 
-#ifndef CONFIG_ACCEL_STD_REF_FRAME_OLD
 	/*
 	 * Angle is between the keyboard and the front of screen: we need to
 	 * anlge between keyboard and back of screen:
 	 * 180 instead of 0 when lid and base are flat on surface.
 	 * 0 instead of 180 when lid is closed on keyboard.
 	 */
-	lid_to_base_fp = FLOAT_TO_FP(180) - lid_to_base_fp;
-#endif
+	if (!IS_ENABLED(CONFIG_ACCEL_STD_REF_FRAME_OLD))
+		lid_to_base_fp = FLOAT_TO_FP(180) - lid_to_base_fp;
 
 	/* Place lid angle between 0 and 360 degrees. */
 	if (lid_to_base_fp < 0)
@@ -457,11 +471,8 @@ end_calculate_lid_angle:
 	if (board_is_lid_angle_tablet_mode())
 		motion_lid_set_tablet_mode(reliable);
 
-#if defined(CONFIG_DPTF_MULTI_PROFILE) && \
-	defined(CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR)
-	motion_lid_set_dptf_profile(reliable);
-#endif /* CONFIG_DPTF_MULTI_PROFILE && CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR */
-
+	if (IS_ENABLED(MOTION_LID_SET_DPTF_PROFILE))
+		motion_lid_set_dptf_profile(reliable);
 #else    /* CONFIG_TABLET_MODE */
 end_calculate_lid_angle:
 	if (reliable)
@@ -488,9 +499,8 @@ void motion_lid_calc(void)
 			accel_base->xyz, accel_lid->xyz,
 			&lid_angle_deg);
 
-#ifdef CONFIG_LID_ANGLE_UPDATE
-	lid_angle_update(motion_lid_get_angle());
-#endif
+	if (IS_ENABLED(CONFIG_LID_ANGLE_UPDATE))
+		lid_angle_update(motion_lid_get_angle());
 }
 
 /*****************************************************************************/
@@ -504,31 +514,34 @@ enum ec_status host_cmd_motion_lid(struct host_cmd_handler_args *args)
 
 	switch (in->cmd) {
 	case MOTIONSENSE_CMD_KB_WAKE_ANGLE:
-#ifdef CONFIG_LID_ANGLE_UPDATE
-		/* Set new keyboard wake lid angle if data arg has value. */
-		if (in->kb_wake_angle.data != EC_MOTION_SENSE_NO_VALUE)
-			lid_angle_set_wake_angle(in->kb_wake_angle.data);
+		if (IS_ENABLED(CONFIG_LID_ANGLE_UPDATE)) {
+			/*
+			 * Set new keyboard wake lid angle if data arg has
+			 * value.
+			 */
+			if (in->kb_wake_angle.data != EC_MOTION_SENSE_NO_VALUE)
+				lid_angle_set_wake_angle(
+						in->kb_wake_angle.data);
 
-		out->kb_wake_angle.ret = lid_angle_get_wake_angle();
-#else
-		out->kb_wake_angle.ret = 0;
-#endif
+			out->kb_wake_angle.ret = lid_angle_get_wake_angle();
+		} else {
+			out->kb_wake_angle.ret = 0;
+		}
 		args->response_size = sizeof(out->kb_wake_angle);
 
 		break;
 
 	case MOTIONSENSE_CMD_LID_ANGLE:
-#ifdef CONFIG_LID_ANGLE
-		out->lid_angle.value = motion_lid_get_angle();
-		args->response_size = sizeof(out->lid_angle);
-#else
-		return EC_RES_INVALID_PARAM;
-#endif
+		if (IS_ENABLED(CONFIG_LID_ANGLE)) {
+			out->lid_angle.value = motion_lid_get_angle();
+			args->response_size = sizeof(out->lid_angle);
+		} else {
+			return EC_RES_INVALID_PARAM;
+		}
 		break;
 
 	case MOTIONSENSE_CMD_TABLET_MODE_LID_ANGLE:
-		{
-#ifdef CONFIG_TABLET_MODE
+		if (IS_ENABLED(CONFIG_TABLET_MODE)) {
 			int ret;
 			ret = lid_angle_set_tablet_mode_threshold(
 					in->tablet_mode_threshold.lid_angle,
@@ -544,9 +557,8 @@ enum ec_status host_cmd_motion_lid(struct host_cmd_handler_args *args)
 
 			args->response_size =
 				sizeof(out->tablet_mode_threshold);
-#else
+		} else {
 			return EC_RES_INVALID_PARAM;
-#endif
 		}
 		break;
 	default:
