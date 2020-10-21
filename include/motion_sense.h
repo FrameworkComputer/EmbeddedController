@@ -263,10 +263,8 @@ extern unsigned motion_sensor_count;
 #else
 extern const unsigned motion_sensor_count;
 #endif
-#if (!defined HAS_TASK_ALS) && (defined CONFIG_ALS)
 /* Needed if reading ALS via LPC is needed */
 extern const struct motion_sensor_t *motion_als_sensors[];
-#endif
 
 /* optionally defined at board level */
 extern unsigned int motion_min_interval;
@@ -307,6 +305,7 @@ void sensor_board_proc_double_tap(void);
 #define ALL_MOTION_SENSORS (MOTION_SENSE_ACTIVITY_SENSOR_ID + 1)
 #define MAX_MOTION_SENSORS (SENSOR_COUNT + 1)
 #else
+#define MOTION_SENSE_ACTIVITY_SENSOR_ID (-1)
 #define ALL_MOTION_SENSORS (motion_sensor_count)
 #define MAX_MOTION_SENSORS (SENSOR_COUNT)
 #endif

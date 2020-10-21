@@ -123,7 +123,6 @@ struct accelgyro_drv {
 	 */
 	int (*perform_calib)(const struct motion_sensor_t *s,
 				int        enable);
-#ifdef CONFIG_ACCEL_INTERRUPTS
 	/**
 	 * handler for interrupts triggered by the sensor: it runs in task and
 	 * process the events that triggered an interrupt.
@@ -134,8 +133,6 @@ struct accelgyro_drv {
 	 * when no events have been processed.
 	 */
 	int (*irq_handler)(struct motion_sensor_t *s, uint32_t *event);
-#endif
-#ifdef CONFIG_GESTURE_DETECTION
 	/**
 	 * handler for setting/getting activity information.
 	 * Manage the high level activity detection of the chip.
@@ -158,13 +155,10 @@ struct accelgyro_drv {
 			       uint32_t *enabled,
 			       uint32_t *disabled);
 
-#endif
-#ifdef CONFIG_BODY_DETECTION
 	/**
 	 * Get the root mean square of current noise (ug/mdps) in the sensor.
 	 */
 	int (*get_rms_noise)(const struct motion_sensor_t *s);
-#endif
 };
 
 /* Index values for rgb_calibration_t.coeff array */
