@@ -42,6 +42,9 @@
 #define T(s_) V(s_)
 #endif /* !defined(CONFIG_ACCEL_KXCJ9) || !defined(CONFIG_ACCEL_KX022) */
 
+STATIC_IF(CONFIG_KX022_ORIENTATION_SENSOR) int check_orientation_locked(
+					const struct motion_sensor_t *s);
+
 /* List of range values in +/-G's and their associated register values. */
 static const struct accel_param_pair ranges[][3] = {
 #ifdef CONFIG_ACCEL_KX022
@@ -264,11 +267,11 @@ static int enable_sensor(const struct motion_sensor_t *s, int reg_val)
 		if (ret != EC_SUCCESS)
 			continue;
 
-#ifdef CONFIG_KX022_ORIENTATION_SENSOR
 		/* Enable tilt orientation mode  if lid sensor */
-		if ((s->location == MOTIONSENSE_LOC_LID) && (V(s) == 0))
+		if (IS_ENABLED(CONFIG_KX022_ORIENTATION_SENSOR) &&
+		    (s->location == MOTIONSENSE_LOC_LID) &&
+		    (V(s) == 0))
 			reg_val |= KX022_CNTL1_TPE;
-#endif
 
 		/* Enable accelerometer based on reg_val value. */
 		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
@@ -415,8 +418,7 @@ static int get_offset(const struct motion_sensor_t *s, int16_t *offset,
 	return EC_SUCCESS;
 }
 
-#ifdef CONFIG_KX022_ORIENTATION_SENSOR
-static enum motionsensor_orientation kx022_convert_orientation(
+static __maybe_unused enum motionsensor_orientation kx022_convert_orientation(
 		const struct motion_sensor_t *s,
 		int orientation)
 {
@@ -442,6 +444,7 @@ static enum motionsensor_orientation kx022_convert_orientation(
 	return res;
 }
 
+#ifdef CONFIG_KX022_ORIENTATION_SENSOR
 static int check_orientation_locked(const struct motion_sensor_t *s)
 {
 	struct kionix_accel_data *data = s->drv_data;
@@ -494,11 +497,11 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	reg = KIONIX_XOUT_L(V(s));
 	mutex_lock(s->mutex);
 	ret = raw_read_multi(s->port, s->i2c_spi_addr_flags, reg, acc, 6);
-#ifdef CONFIG_KX022_ORIENTATION_SENSOR
-	if ((s->location == MOTIONSENSE_LOC_LID) && (V(s) == 0) &&
-			(ret == EC_SUCCESS))
+	if (IS_ENABLED(CONFIG_KX022_ORIENTATION_SENSOR) &&
+	    (s->location == MOTIONSENSE_LOC_LID) &&
+	    (V(s) == 0) &&
+	    (ret == EC_SUCCESS))
 		ret = check_orientation_locked(s);
-#endif
 	mutex_unlock(s->mutex);
 
 	if (ret != EC_SUCCESS)

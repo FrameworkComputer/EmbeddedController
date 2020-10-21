@@ -184,11 +184,14 @@ enum dev_fifo {
 	FIFO_DEV_INVALID = -1,
 	FIFO_DEV_GYRO = 0,
 	FIFO_DEV_ACCEL,
-#ifdef CONFIG_LSM6DSM_SEC_I2C
 	FIFO_DEV_MAG,
-#endif
-	FIFO_DEV_NUM,
 };
+
+#ifdef CONFIG_LSM6DSM_SEC_I2C
+#define	FIFO_DEV_NUM (FIFO_DEV_MAG + 1)
+#else
+#define	FIFO_DEV_NUM (FIFO_DEV_ACCEL + 1)
+#endif
 
 struct fstatus {
 	uint16_t len;

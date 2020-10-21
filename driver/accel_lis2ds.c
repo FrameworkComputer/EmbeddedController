@@ -360,11 +360,10 @@ static int init(const struct motion_sensor_t *s)
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
-	ret = lis2ds_config_interrupt(s);
+	if (IS_ENABLED(CONFIG_ACCEL_INTERRUPTS))
+		ret = lis2ds_config_interrupt(s);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
-#endif /* CONFIG_ACCEL_INTERRUPTS */
 
 	mutex_unlock(s->mutex);
 

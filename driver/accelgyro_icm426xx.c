@@ -909,11 +909,10 @@ static int icm426xx_init(const struct motion_sensor_t *s)
 		if (ret)
 			goto out_unlock;
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
-		ret = icm426xx_config_interrupt(s);
+		if (IS_ENABLED(CONFIG_ACCEL_INTERRUPTS))
+			ret = icm426xx_config_interrupt(s);
 		if (ret)
 			goto out_unlock;
-#endif
 	}
 
 	for (i = X; i <= Z; i++)

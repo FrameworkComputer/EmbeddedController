@@ -22,6 +22,8 @@
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
 STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
+STATIC_IF(CONFIG_ACCEL_INTERRUPTS) int config_interrupt(
+		const struct motion_sensor_t *s);
 
 /*
  * When ODR change, the sensor filters need settling time;
@@ -468,11 +470,10 @@ static int init(const struct motion_sensor_t *s)
 				goto err_unlock;
 		}
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
-		ret = config_interrupt(s);
+		if (IS_ENABLED(CONFIG_ACCEL_INTERRUPTS))
+			ret = config_interrupt(s);
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
-#endif /* CONFIG_ACCEL_INTERRUPTS */
 
 		mutex_unlock(s->mutex);
 	}
