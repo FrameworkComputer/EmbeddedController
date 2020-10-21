@@ -128,6 +128,8 @@ struct bmm150_private_data {
 #define BMM150_MAG_MAX_FREQ(_preset) \
 	BMI_REG_TO_ODR(BMI_ODR_TO_REG(__BMM150_MAG_MAX_FREQ(_preset)))
 #else
+#define BMM150_COMP_REG(_s) NULL
+#define BMM150_CAL(_s) NULL
 #define BMM150_MAG_MAX_FREQ(_preset) __BMM150_MAG_MAX_FREQ(_preset)
 #endif
 
