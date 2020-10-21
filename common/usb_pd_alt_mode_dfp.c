@@ -1131,7 +1131,7 @@ __overridable int svdm_dp_attention(int port, uint32_t *payload)
 	}
 
 #ifdef CONFIG_USB_PD_DP_HPD_GPIO
-	if (irq & !lvl) {
+	if (irq && !lvl) {
 		/*
 		 * IRQ can only be generated when the level is high, because
 		 * the IRQ is signaled by a short low pulse from the high level.
@@ -1140,7 +1140,7 @@ __overridable int svdm_dp_attention(int port, uint32_t *payload)
 		return 0; /* nak */
 	}
 
-	if (irq & cur_lvl) {
+	if (irq && cur_lvl) {
 		uint64_t now = get_time().val;
 		/* wait for the minimum spacing between IRQ_HPD if needed */
 		if (now < svdm_hpd_deadline[port])
