@@ -76,20 +76,4 @@ extern const struct accelgyro_drv kionix_accel_drv;
 extern struct i2c_stress_test_dev kionix_i2c_stress_test_dev;
 #endif
 
-#ifdef CONFIG_KX022_ORIENTATION_SENSOR
-#define ORIENTATION_CHANGED(_sensor) \
-	(((struct kionix_accel_data *)(_sensor->drv_data))->orientation != \
-	((struct kionix_accel_data *)(_sensor->drv_data))->last_orientation)
-
-#define GET_ORIENTATION(_sensor) \
-	(((struct kionix_accel_data *)(_sensor->drv_data))->orientation)
-
-#define SET_ORIENTATION(_sensor, _val) \
-	(((struct kionix_accel_data *)(_sensor->drv_data))->orientation = _val)
-
-#define SET_ORIENTATION_UPDATED(_sensor) \
-	(((struct kionix_accel_data *)(_sensor->drv_data))->last_orientation = \
-	((struct kionix_accel_data *)(_sensor->drv_data))->orientation)
-#endif
-
 #endif /* __CROS_EC_ACCEL_KIONIX_H */

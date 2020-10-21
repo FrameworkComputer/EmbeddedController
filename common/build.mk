@@ -108,6 +108,7 @@ common-$(CONFIG_MAG_CALIBRATE)+= mag_cal.o math_util.o vec3.o mat33.o mat44.o \
 common-$(CONFIG_MKBP_EVENT)+=mkbp_event.o
 common-$(CONFIG_OCPC)+=ocpc.o
 common-$(CONFIG_ONEWIRE)+=onewire.o
+common-$(CONFIG_ORIENTATION_SENSOR)+=motion_orientation.o
 common-$(CONFIG_PECI_COMMON)+=peci.o
 common-$(CONFIG_POWER_BUTTON)+=power_button.o
 common-$(CONFIG_POWER_BUTTON_X86)+=power_button_x86.o

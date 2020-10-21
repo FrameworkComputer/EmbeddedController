@@ -861,3 +861,22 @@ void bmi_set_gyro_offset(const struct motion_sensor_t *gyro, intv3_t v,
 	}
 }
 
+#ifdef CONFIG_BMI_ORIENTATION_SENSOR
+bool motion_orientation_changed(const struct motion_sensor_t *s)
+{
+	return BMI_GET_DATA(s)->orientation !=
+		BMI_GET_DATA(s)->last_orientation;
+}
+
+enum motionsensor_orientation *motion_orientation_ptr(
+		const struct motion_sensor_t *s)
+{
+	return &BMI_GET_DATA(s)->orientation;
+}
+
+void motion_orientation_update(const struct motion_sensor_t *s)
+{
+	BMI_GET_DATA(s)->last_orientation = BMI_GET_DATA(s)->orientation;
+}
+#endif
+

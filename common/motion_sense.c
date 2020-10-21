@@ -22,6 +22,7 @@
 #include "motion_sense.h"
 #include "motion_sense_fifo.h"
 #include "motion_lid.h"
+#include "motion_orientation.h"
 #include "online_calibration.h"
 #include "power.h"
 #include "queue.h"
@@ -35,18 +36,6 @@
 #define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_MOTION_SENSE, format, ## args)
 
-#ifdef CONFIG_ORIENTATION_SENSOR
-/*
- * Orientation mode vectors, must match sequential ordering of
- * known orientations from enum motionsensor_orientation
- */
-const intv3_t orientation_modes[] = {
-	[MOTIONSENSE_ORIENTATION_LANDSCAPE] = { 0, -1, 0 },
-	[MOTIONSENSE_ORIENTATION_PORTRAIT] = { 1, 0, 0 },
-	[MOTIONSENSE_ORIENTATION_UPSIDE_DOWN_PORTRAIT] = { -1, 0, 0 },
-	[MOTIONSENSE_ORIENTATION_UPSIDE_DOWN_LANDSCAPE] = { 0, 1, 0 },
-};
-#endif
 
 /* Delay between FIFO interruption. */
 static unsigned int ap_event_interval;
@@ -739,25 +728,6 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 	return ret;
 }
 
-#ifdef CONFIG_ORIENTATION_SENSOR
-enum motionsensor_orientation motion_sense_remap_orientation(
-		const struct motion_sensor_t *s,
-		enum motionsensor_orientation orientation)
-{
-	enum motionsensor_orientation rotated_orientation;
-	const intv3_t *orientation_v;
-	intv3_t rotated_orientation_v;
-
-	if (orientation == MOTIONSENSE_ORIENTATION_UNKNOWN)
-		return MOTIONSENSE_ORIENTATION_UNKNOWN;
-
-	orientation_v = &orientation_modes[orientation];
-	rotate(*orientation_v, *s->rot_standard_ref, rotated_orientation_v);
-	rotated_orientation = ((2 * rotated_orientation_v[1] +
-			rotated_orientation_v[0] + 4) % 5);
-	return rotated_orientation;
-}
-#endif
 
 #ifdef CONFIG_GESTURE_DETECTION
 static void check_and_queue_gestures(uint32_t *event)
@@ -828,22 +798,24 @@ static void check_and_queue_gestures(uint32_t *event)
 		};
 
 		mutex_lock(sensor->mutex);
-		if (ORIENTATION_CHANGED(sensor) && (GET_ORIENTATION(sensor) !=
-				MOTIONSENSE_ORIENTATION_UNKNOWN)) {
-			SET_ORIENTATION_UPDATED(sensor);
-			vector.state = GET_ORIENTATION(sensor);
-			motion_sense_fifo_add_data(&vector, NULL, 0,
-						   __hw_clock_source_read());
+		if (motion_orientation_changed(sensor) &&
+				(*motion_orientation_ptr(sensor) !=
+				 MOTIONSENSE_ORIENTATION_UNKNOWN)) {
+			motion_orientation_update(sensor);
+			vector.state = *motion_orientation_ptr(sensor);
+			motion_sense_fifo_stage_data(&vector, NULL, 0,
+					__hw_clock_source_read());
+			motion_sense_fifo_commit_data();
 #ifdef CONFIG_DEBUG_ORIENTATION
 			{
 				static const char * const mode_strs[] = {
-						"Landscape",
-						"Portrait",
-						"Inv_Portrait",
-						"Inv_Landscape",
-						"Unknown"
+					"Landscape",
+					"Portrait",
+					"Inv_Portrait",
+					"Inv_Landscape",
+					"Unknown"
 				};
-				CPRINTS(mode_strs[GET_ORIENTATION(sensor)]);
+				CPRINTS(mode[vector.state]);
 			}
 #endif
 		}

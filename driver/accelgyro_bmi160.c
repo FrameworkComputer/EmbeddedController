@@ -17,6 +17,7 @@
 #include "hwtimer.h"
 #include "i2c.h"
 #include "math_util.h"
+#include "motion_orientation.h"
 #include "motion_sense_fifo.h"
 #include "spi.h"
 #include "task.h"
@@ -513,8 +514,8 @@ static void irq_set_orientation(struct motion_sensor_t *s,
 		default:
 			break;
 		}
-		orientation = motion_sense_remap_orientation(s, orientation);
-		SET_ORIENTATION(s, orientation);
+		orientation = motion_orientation_remap(s, orientation);
+		*motion_orientation_ptr(s) = orientation;
 	}
 }
 #endif

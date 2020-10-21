@@ -17,6 +17,7 @@
 #include "driver/accel_kxcj9.h"
 #include "i2c.h"
 #include "math_util.h"
+#include "motion_orientation.h"
 #include "spi.h"
 #include "task.h"
 #include "util.h"
@@ -437,7 +438,7 @@ static enum motionsensor_orientation kx022_convert_orientation(
 	default:
 		break;
 	}
-	res = motion_sense_remap_orientation(s, res);
+	res = motion_orientation_remap(s, res);
 	return res;
 }
 
@@ -457,10 +458,29 @@ static int check_orientation_locked(const struct motion_sensor_t *s)
 	if (raw_orientation && (raw_orientation != data->raw_orientation)) {
 		data->raw_orientation = raw_orientation;
 		orientation = kx022_convert_orientation(s, raw_orientation);
-		SET_ORIENTATION(s, orientation);
+		*motion_orientation_ptr(s) = orientation;
 	}
 	return ret;
 }
+
+bool motion_orientation_changed(const struct motion_sensor_t *s)
+{
+	return ((struct kionix_accel_data *)s->drv_data)->orientation !=
+		((struct kionix_accel_data *)s->drv_data)->last_orientation;
+}
+
+enum motionsensor_orientation *motion_orientation_ptr(
+		const struct motion_sensor_t *s)
+{
+	return &((struct kionix_accel_data *)s->drv_data)->orientation;
+}
+
+void motion_orientation_update(const struct motion_sensor_t *s)
+{
+	((struct kionix_accel_data *)s->drv_data)->last_orientation =
+		((struct kionix_accel_data *)s->drv_data)->orientation;
+}
+
 #endif
 
 static int read(const struct motion_sensor_t *s, intv3_t v)

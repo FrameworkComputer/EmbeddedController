@@ -84,22 +84,6 @@ struct bmi_drv_data_t {
 #define BMI_GET_SAVED_DATA(_s) \
 	(&BMI_GET_DATA(_s)->saved_data[(_s)->type])
 
-#ifdef CONFIG_BMI_ORIENTATION_SENSOR
-#define ORIENTATION_CHANGED(_sensor) \
-	(BMI_GET_DATA(_sensor)->orientation != \
-	BMI_GET_DATA(_sensor)->last_orientation)
-
-#define GET_ORIENTATION(_sensor) \
-	(BMI_GET_DATA(_sensor)->orientation)
-
-#define SET_ORIENTATION(_sensor, _val) \
-	(BMI_GET_DATA(_sensor)->orientation = _val)
-
-#define SET_ORIENTATION_UPDATED(_sensor) \
-	(BMI_GET_DATA(_sensor)->last_orientation = \
-	BMI_GET_DATA(_sensor)->orientation)
-#endif
-
 #define BMI_ACC_DATA(v) (BMI160_ACC_X_L_G + \
 	(v) * (BMI260_ACC_X_L_G - BMI160_ACC_X_L_G))
 #define BMI_GYR_DATA(v) (BMI160_GYR_X_L_G + \

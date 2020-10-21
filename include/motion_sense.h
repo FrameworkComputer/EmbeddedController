@@ -298,12 +298,6 @@ int sensor_init_done(const struct motion_sensor_t *sensor);
  */
 void sensor_board_proc_double_tap(void);
 
-#ifdef CONFIG_ORIENTATION_SENSOR
-enum motionsensor_orientation motion_sense_remap_orientation(
-		const struct motion_sensor_t *s,
-		enum motionsensor_orientation orientation);
-#endif
-
 /*
  * There are 4 variables that represent the number of sensors:
  * SENSOR_COUNT: The number of available motion sensors in board.
