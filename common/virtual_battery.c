@@ -318,6 +318,11 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 	case SB_MANUFACTURER_ACCESS:
 		/* No manuf. access reg access allowed over VB interface */
 		return EC_ERROR_INVAL;
+	case SB_SPECIFICATION_INFO:
+		/* v1.1 without PEC, no scale factor to voltage and current */
+		val = 0x0011;
+		memcpy(dest, &val, bounded_read_len);
+		break;
 	default:
 		CPRINTS("Unhandled VB reg %x", *batt_cmd_head);
 		return EC_ERROR_INVAL;
