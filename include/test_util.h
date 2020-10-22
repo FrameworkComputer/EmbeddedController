@@ -8,6 +8,24 @@
 #ifndef __CROS_EC_TEST_UTIL_H
 #define __CROS_EC_TEST_UTIL_H
 
+#ifdef CONFIG_ZEPHYR
+
+#include <ztest_assert.h>
+
+/*
+ * We need these macros so that a test can be built for either Ztest or the
+ * EC test framework.
+ *
+ * Ztest unit tests are void and do not return a value. In the EC framework,
+ * if none of the assertions fail, the test is supposed to return EC_SUCCESS,
+ * so just define that as empty and `return EC_SUCCESS;` will get pre-processed
+ * into `return ;`
+ */
+#define EC_TEST_RETURN void
+#define EC_SUCCESS
+
+#else /* CONFIG_ZEPHYR */
+
 #include "common.h"
 #include "console.h"
 #include "stack_trace.h"
@@ -301,5 +319,41 @@ int test_detach_i2c(const int port, const uint16_t slave_addr_flags);
  *         is not a detached device.
  */
 int test_attach_i2c(const int port, const uint16_t slave_addr_flags);
+
+/*
+ * We need these macros so that a test can be built for either Ztest or the
+ * EC test framework.
+ *
+ * EC unit tests return an EC_SUCCESS, or a failure code if one of the
+ * asserts in the test fails.
+ */
+#define EC_TEST_RETURN int
+
+/*
+ * Map the Ztest assertions onto EC assertions. There are two significant
+ * issues here.
+ * 1. zassert macros have extra printf-style arguments that the EC macros
+ * don't support, so we just have to drop that.
+ * 2. Some EC macros have an extra `fmt` parameter because they make their
+ * own printf-style string when the assertion fails. For some of them, we
+ * can add the correct format (the zassert_equal_ptr), but others we just
+ * don't know, so I'll just dump out the value in hex.
+ */
+#define zassert(cond, msg, ...) TEST_ASSERT(cond)
+#define zassert_unreachable(msg, ...) TEST_ASSERT(0)
+#define zassert_true(cond, msg, ...) TEST_ASSERT(cond)
+#define zassert_false(cond, msg, ...) TEST_ASSERT(!(cond))
+#define zassert_ok(cond, msg, ...) TEST_ASSERT(cond)
+#define zassert_is_null(ptr, msg, ...) TEST_ASSERT((ptr) == NULL)
+#define zassert_not_null(ptr, msg, ...) TEST_ASSERT((ptr) != NULL)
+#define zassert_equal(a, b, msg, ...) TEST_EQ((a), (b), "0x%x")
+#define zassert_not_equal(a, b, msg, ...) TEST_NE((a), (b), "0x%x")
+#define zassert_equal_ptr(a, b, msg, ...) \
+	TEST_EQ((void *)(a), (void *)(b), "0x%x")
+#define zassert_within(a, b, d, msg, ...) TEST_NEAR((a), (b), (d), "0x%x")
+#define zassert_mem_equal(buf, exp, size, msg, ...) \
+	TEST_ASSERT_ARRAY_EQ(buf, exp, size)
+
+#endif /* CONFIG_ZEPHYR */
 
 #endif /* __CROS_EC_TEST_UTIL_H */

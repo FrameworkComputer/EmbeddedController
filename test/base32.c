@@ -11,7 +11,7 @@
 #include "test_util.h"
 #include "util.h"
 
-static int test_crc5(void)
+static EC_TEST_RETURN test_crc5(void)
 {
 	uint32_t seen;
 	int i, j, c;
@@ -25,7 +25,7 @@ static int test_crc5(void)
 		seen = 0;
 		for (j = 0; j < 32; j++)
 			seen |= 1 << crc5_sym(j, i);
-		TEST_ASSERT(seen == 0xffffffff);
+		zassert_equal(seen, 0xffffffff, NULL);
 	}
 
 	/*
@@ -36,7 +36,7 @@ static int test_crc5(void)
 		seen = 0;
 		for (j = 0; j < 32; j++)
 			seen |= 1 << crc5_sym(i, j);
-		TEST_ASSERT(seen == 0xffffffff);
+		zassert_equal(seen, 0xffffffff, NULL);
 	}
 
 	/* Transposing different symbols generates distinct CRCs */
@@ -49,7 +49,7 @@ static int test_crc5(void)
 			}
 		}
 	}
-	TEST_ASSERT(errors == 0);
+	zassert_equal(errors, 0, NULL);
 
 	return EC_SUCCESS;
 }
@@ -69,17 +69,17 @@ static int enctest(const void *src, int srcbits, int crc_every,
 	return 0;
 }
 
-#define ENCTEST(a, b, c, d) TEST_ASSERT(enctest(a, b, c, d) == 0)
+#define ENCTEST(a, b, c, d) zassert_equal(enctest(a, b, c, d), 0, NULL)
 
-static int test_encode(void)
+static EC_TEST_RETURN test_encode(void)
 {
 	const uint8_t src1[5] = {0xff, 0x00, 0xff, 0x00, 0xff};
 	char enc[32];
 
 	/* Test for enough space; error produces null string */
 	*enc = 1;
-	TEST_ASSERT(base32_encode(enc, 3, src1, 15, 0) == EC_ERROR_INVAL);
-	TEST_ASSERT(*enc == 0);
+	zassert_equal(base32_encode(enc, 3, src1, 15, 0), EC_ERROR_INVAL, NULL);
+	zassert_equal(*enc, 0, NULL);
 
 	/* Empty source */
 	ENCTEST("\x00", 0, 0, "");
@@ -104,9 +104,10 @@ static int test_encode(void)
 	/* CRC requires exact multiple of symbol count */
 	ENCTEST("\xff\x00\xff\x00\xff", 40, 4, "96ARU8AH9D");
 	ENCTEST("\xff\x00\xff\x00\xff", 40, 8, "96AR8AH9L");
-	TEST_ASSERT(
-	    base32_encode(enc, 16, (uint8_t *)"\xff\x00\xff\x00\xff", 40, 6)
-	    == EC_ERROR_INVAL);
+	zassert_equal(
+		base32_encode(enc, 16, (uint8_t *)"\xff\x00\xff\x00\xff",
+			40, 6),
+		EC_ERROR_INVAL, NULL);
 	/* But what matters is symbol count, not bit count */
 	ENCTEST("\xff\x00\xff\x00\xfe", 39, 4, "96ARU8AH8P");
 
@@ -139,15 +140,15 @@ static int dectest(const void *dec, int decbits, int crc_every, const char *enc)
 	int wantbits = decbits > 0 ? decbits : 5 * strlen(enc);
 	int gotbits = base32_decode(dest, destbits, enc, crc_every);
 
-	TEST_ASSERT(gotbits == wantbits);
+	zassert_equal(gotbits, wantbits, NULL);
 	if (gotbits != wantbits)
 		return -1;
 	return cmpbytes(dec, dest, (decbits + 7) / 8, "decode");
 }
 
-#define DECTEST(a, b, c, d) TEST_ASSERT(dectest(a, b, c, d) == 0)
+#define DECTEST(a, b, c, d) zassert_equal(dectest(a, b, c, d), 0, NULL)
 
-static int test_decode(void)
+static EC_TEST_RETURN test_decode(void)
 {
 	uint8_t dec[32];
 
@@ -165,7 +166,7 @@ static int test_decode(void)
 	DECTEST("\xff\x00\xff\x00\xff", 40, 0, " 96\tA-R\r8A H9\n");
 
 	/* Invalid symbol fails */
-	TEST_ASSERT(base32_decode(dec, 16, "AI", 0) == -1);
+	zassert_equal(base32_decode(dec, 16, "AI", 0), -1, NULL);
 
 	/* If dest buffer is big, use all the source bits */
 	DECTEST("", 0, 0, "");
@@ -186,18 +187,33 @@ static int test_decode(void)
 	DECTEST("\xff\x00\xff\x00\xff", 40, 8, "96AR8AH9L");
 
 	/* CRC requires exact multiple of symbol count */
-	TEST_ASSERT(base32_decode(dec, 40, "96ARL8AH9", 4) == -1);
+	zassert_equal(base32_decode(dec, 40, "96ARL8AH9", 4), -1, NULL);
 	/* But what matters is symbol count, not bit count */
 	DECTEST("\xff\x00\xff\x00\xfe", 39, 4, "96ARU8AH8P");
 
 	/* Detect errors in data, CRC, and transposition */
-	TEST_ASSERT(base32_decode(dec, 40, "96AQL", 4) == -1);
-	TEST_ASSERT(base32_decode(dec, 40, "96ARM", 4) == -1);
-	TEST_ASSERT(base32_decode(dec, 40, "96RAL", 4) == -1);
+	zassert_equal(base32_decode(dec, 40, "96AQL", 4), -1, NULL);
+	zassert_equal(base32_decode(dec, 40, "96ARM", 4), -1, NULL);
+	zassert_equal(base32_decode(dec, 40, "96RAL", 4), -1, NULL);
 
 	return EC_SUCCESS;
 }
 
+/*
+ * Define the test cases to run. We need to do this twice, once in the format
+ * that Ztest uses, and again in the format the the EC test framework uses.
+ * If you add a test to one of them, make sure to add it to the other.
+ */
+#ifdef CONFIG_ZEPHYR
+void test_main(void)
+{
+	ztest_test_suite(test_base32_lib,
+			 ztest_unit_test(test_crc5),
+			 ztest_unit_test(test_encode),
+			 ztest_unit_test(test_decode));
+	ztest_run_test_suite(test_base32_lib);
+}
+#else
 void run_test(int argc, char **argv)
 {
 	test_reset();
@@ -208,3 +224,4 @@ void run_test(int argc, char **argv)
 
 	test_print_result();
 }
+#endif /* CONFIG_ZEPHYR */

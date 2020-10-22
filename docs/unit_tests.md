@@ -30,8 +30,9 @@ Build and run all unit tests:
 
 Unit tests live in the [`test`] subdirectory of the CrOS EC codebase.
 
-Test-related macros (e.g., `TEST_EQ`, `TEST_NE`) and functions are defined in
-[`test_util.h`].
+Existing EC unit tests will use the EC Test API, including test-related macros
+(e.g., `TEST_EQ`, `TEST_NE`) and functions defined in [`test_util.h`]. Note
+the `EC_TEST_RETURN` return type on the functions that are test cases.
 
 `test/my_test.c`:
 
@@ -45,7 +46,7 @@ static bool some_function(void)
 }
 
 /* Write a function with the following signature: */
-test_static int test_my_function(void)
+test_static EC_TEST_RETURN test_my_function(void)
 {
     /* Run some code */
     bool condition = some_function();
@@ -57,9 +58,73 @@ test_static int test_my_function(void)
 }
 ```
 
+New unit tests or significant changes to existing tests should use the Zephyr
+Ztest [API](https://docs.zephyrproject.org/latest/guides/test/ztest.html).
+
 `test/my_test.c`:
 
 ```c
+#include <stdbool.h>
+#include "test_util.h"
+
+static bool some_function(void)
+{
+    return true;
+}
+
+/* Write a function with the following signature: */
+test_static EC_TEST_RETURN test_my_function(void)
+{
+    /* Run some code */
+    bool condition = some_function();
+
+    /* Check that the expected condition is correct. */
+    zassert_true(condition, NULL);
+
+    return EC_SUCCESS;
+}
+```
+
+Note that the only difference between those two versions of `test/my_test.c`
+is the assertion:
+```c
+    TEST_EQ(condition, true, "%d");
+```
+versus
+```c
+    zassert_true(condition, NULL);
+```
+
+Currently, these tests using the Ztest API are still built with the EC test
+framework. [`test_util.h`] defines a mapping from the `zassert` macros to the
+EC `TEST_ASSERT` macros when `CONFIG_ZEPHYR` is not `#define`'d.
+
+Even though the tests are currently compiled only to the EC test framework,
+developers should still target the Ztest API for new unit tests. Future work
+will support building directly with the Ztest API. This makes the unit tests
+suitable for submitting upstream to the Zephyr project, and reduces the
+porting work when the EC transitions to the Zephyr RTOS. Similarly, when
+a development makes significant modifications to an existing unit test, they
+should consider porting the test to the Ztest API as part of the modifications.
+
+See [chromium:2492527](https://crrev.com/c/2492527) for a simple example of
+porting an EC unit test to the Ztest API.
+
+`test/my_test.c`:
+
+The EC test API enumerates the test cases using `RUN_TEST` in the `run_test`
+function, while the Ztest API enumerates the test cases using `ztest_unit_test`
+inside another macro for the test suite, inside of `test_main`.
+
+```c
+#ifdef CONFIG_ZEPHYR
+void test_main(void)
+{
+    ztest_test_suite(test_my_unit,
+             ztest_unit_test(test_my_function));
+    ztest_run_test_suite(test_my_unit);
+}
+#else
 /* The test framework will call the function named "run_test" */
 void run_test(int argc, char **argv)
 {
@@ -69,6 +134,7 @@ void run_test(int argc, char **argv)
     /* Report the results of all the tests at the end. */
     test_print_result();
 }
+#endif /* CONFIG_ZEPHYR */
 ```
 
 In the [`test`] subdirectory, create a `tasklist` file for your test that lists
