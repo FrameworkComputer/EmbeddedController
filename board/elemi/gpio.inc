@@ -95,6 +95,7 @@ UNIMPLEMENTED(USB_C1_LS_EN)
 
 /* Misc Signals */
 GPIO(EC_H1_PACKET_MODE,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
+GPIO(EC_KB_BL_EN,		PIN(8, 6), GPIO_OUT_LOW)	/* Keyboard backlight enable */
 /*
  * Despite their names, M2_SSD_PLN and M2_SSD_PLA are active-low, and M2_SSD_PLN
  * is open-drain.
