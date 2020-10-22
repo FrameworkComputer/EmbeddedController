@@ -26,13 +26,13 @@
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
 /* Transmit timeout in microseconds */
-#define I2C_TX_TIMEOUT_MASTER	(10 * MSEC)
+#define I2C_TX_TIMEOUT_CONTROLLER	(10 * MSEC)
 
 #ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
 #if (I2C_PORT_EC == STM32_I2C1_PORT)
-#define IRQ_SLAVE STM32_IRQ_I2C1
+#define IRQ_PERIPHERAL STM32_IRQ_I2C1
 #else
-#define IRQ_SLAVE STM32_IRQ_I2C2
+#define IRQ_PERIPHERAL STM32_IRQ_I2C2
 #endif
 #endif
 
@@ -46,7 +46,7 @@ static struct i2c_port_data pdata[I2C_PORT_COUNT];
 
 void i2c_set_timeout(int port, uint32_t timeout)
 {
-	pdata[port].timeout_us = timeout ? timeout : I2C_TX_TIMEOUT_MASTER;
+	pdata[port].timeout_us = timeout ? timeout : I2C_TX_TIMEOUT_CONTROLLER;
 }
 
 /* timingr register values for supported input clks / i2c clk rates */
@@ -210,7 +210,7 @@ static int i2c_init_port(const struct i2c_port_t *p)
 
 /*****************************************************************************/
 #ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
-/* Host command slave */
+/* Host command peripheral */
 /*
  * Buffer for received host command packets (including prefix byte on request,
  * and result/size on response).  After any protocol-specific headers, the
@@ -244,7 +244,7 @@ static void i2c_send_response_packet(struct host_packet *pkt)
 
 	/*
 	 * Set the transmitter to be in 'not full' state to keep sending
-	 * '0xec' in the event loop. Because of this, the master i2c
+	 * '0xec' in the event loop. Because of this, the controller i2c
 	 * doesn't need to snoop the response stream to abort transaction.
 	 */
 	STM32_I2C_CR1(host_i2c_resp_port) |= STM32_I2C_CR1_TXIE;
@@ -318,7 +318,7 @@ static void i2c_event_handler(int port)
 
 	/*
 	 * Check for error conditions. Note, arbitration loss and bus error
-	 * are the only two errors we can get as a slave allowing clock
+	 * are the only two errors we can get as a peripheral allowing clock
 	 * stretching and in non-SMBus mode.
 	 */
 	if (i2c_isr & (STM32_I2C_ISR_ARLO | STM32_I2C_ISR_BERR)) {
@@ -333,17 +333,17 @@ static void i2c_event_handler(int port)
 				STM32_I2C_ICR_ARLOCF;
 	}
 
-	/* Transfer matched our slave address */
+	/* Transfer matched our peripheral address */
 	if (i2c_isr & STM32_I2C_ISR_ADDR) {
 		if (i2c_isr & STM32_I2C_ISR_DIR) {
-			/* Transmitter slave */
+			/* Transmitter peripheral */
 			/* Clear transmit buffer */
 			STM32_I2C_ISR(port) |= STM32_I2C_ISR_TXE;
 
 			/* Enable txis interrupt to start response */
 			STM32_I2C_CR1(port) |= STM32_I2C_CR1_TXIE;
 		} else {
-			/* Receiver slave */
+			/* Receiver peripheral */
 			buf_idx = 0;
 			rx_pending = 1;
 		}
@@ -383,7 +383,7 @@ static void i2c_event_handler(int port)
 		enable_sleep(SLEEP_MASK_I2C_SLAVE);
 	}
 
-	/* Master requested STOP or RESTART */
+	/* Controller requested STOP or RESTART */
 	if (i2c_isr & STM32_I2C_ISR_NACK) {
 		/* Make sure TXIS interrupt is disabled */
 		STM32_I2C_CR1(port) &= ~STM32_I2C_CR1_TXIE;
@@ -440,17 +440,17 @@ static void i2c_event_handler(int port)
 	}
 }
 void i2c2_event_interrupt(void) { i2c_event_handler(I2C_PORT_EC); }
-DECLARE_IRQ(IRQ_SLAVE, i2c2_event_interrupt, 2);
+DECLARE_IRQ(IRQ_PERIPHERAL, i2c2_event_interrupt, 2);
 #endif
 
 /*****************************************************************************/
 /* Interface */
 
-int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
+int chip_i2c_xfer(const int port, const uint16_t addr_flags,
 		  const uint8_t *out, int out_bytes,
 		  uint8_t *in, int in_bytes, int flags)
 {
-	int addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
+	int addr_8bit = I2C_GET_ADDR(addr_flags) << 1;
 	int rv = EC_SUCCESS;
 	int i;
 	int xfer_start = flags & I2C_XFER_START;
@@ -458,7 +458,7 @@ int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 
 #if defined(CONFIG_I2C_SCL_GATE_ADDR) && defined(CONFIG_I2C_SCL_GATE_PORT)
 	if (port == CONFIG_I2C_SCL_GATE_PORT &&
-	    slave_addr_flags == CONFIG_I2C_SCL_GATE_ADDR_FLAGS)
+	    addr_flags == CONFIG_I2C_SCL_GATE_ADDR_FLAGS)
 		gpio_set_level(CONFIG_I2C_SCL_GATE_GPIO, 1);
 #endif
 
@@ -569,7 +569,7 @@ xfer_exit:
 
 		/*
 		 * Allow bus to idle for at least one 100KHz clock = 10 us.
-		 * This allows slaves on the bus to detect bus-idle before
+		 * This allows peripherals on the bus to detect bus-idle before
 		 * the next start condition.
 		 */
 		udelay(10);
@@ -582,7 +582,7 @@ xfer_exit:
 
 #ifdef CONFIG_I2C_SCL_GATE_ADDR
 	if (port == CONFIG_I2C_SCL_GATE_PORT &&
-	    slave_addr_flags == CONFIG_I2C_SCL_GATE_ADDR_FLAGS)
+	    addr_flags == CONFIG_I2C_SCL_GATE_ADDR_FLAGS)
 		gpio_set_level(CONFIG_I2C_SCL_GATE_GPIO, 0);
 #endif
 
@@ -647,7 +647,7 @@ void i2c_init(void)
 	STM32_I2C_OAR2(I2C_PORT_EC) = 0x8100
 		| (I2C_GET_ADDR(CONFIG_TCPC_I2C_BASE_ADDR_FLAGS) << 1);
 #endif
-	task_enable_irq(IRQ_SLAVE);
+	task_enable_irq(IRQ_PERIPHERAL);
 #endif
 }
 
