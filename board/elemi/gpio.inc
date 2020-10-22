@@ -84,15 +84,7 @@ GPIO(EC_PCH_INT_ODL,           PIN(B, 0), GPIO_ODR_HIGH)
 /* USB and USBC Signals */
 GPIO(EN_PP5000_USBA,		PIN(C, 6), GPIO_OUT_LOW)	/* Enable USB-A charging - all ports */
 GPIO(USB_A_LOW_PWR_OD,		PIN(6, 6), GPIO_ODR_LOW)	/* Don't limit USB-A charging by default - all ports */
-
-/*
- * USB_C1 moved from GPIO32 to GPIO83 on boards with board ID >=1.
- * GPIO83/EN_PP1800_A is DNS on board ID 0 and GPIO32 is N/C on board ID >=1
- * so it's safe to define GPIOs compatible with both designs.
- * TODO (b/149858568): remove board ID=0 support.
- */
-GPIO(USB_C1_RT_RST_ODL_BOARDID_0,	PIN(3, 2), GPIO_ODR_LOW) /* USB_C1 Reset on boards without board ID */
-GPIO(USB_C1_RT_RST_ODL,			PIN(8, 3), GPIO_ODR_LOW) /* USB_C1 Reset on boards board ID >=1 */
+GPIO(USB_C1_RT_RST_ODL,		PIN(8, 3), GPIO_ODR_LOW) /* USB_C1 Reset */
 GPIO(USB_C0_OC_ODL,			PIN(B, 1), GPIO_ODR_HIGH)
 GPIO(USB_C1_OC_ODL,			PIN(5, 0), GPIO_ODR_HIGH)
 /* There is currently no need to service this interrupt. */
