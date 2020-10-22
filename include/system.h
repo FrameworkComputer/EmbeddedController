@@ -55,6 +55,17 @@ int system_is_manual_recovery(void);
 __test_only void system_common_reset_state(void);
 
 /**
+ * @brief Allow tests to manually set the jump data address.
+ *
+ * This function allows an override of the location of the jump data (which is
+ * normally set by either a panic or at the end of RAM). This function is used
+ * by the zephyr integration to test the shim layer of the system module.
+ *
+ * @param test_jdata Pointer to the jump data memory allocated by the test.
+ */
+__test_only void system_override_jdata(void *test_jdata);
+
+/**
  * Set up flags that should be saved to battery backed RAM.
  *
  * @param reset_flags - flags passed into system_reset

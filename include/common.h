@@ -16,7 +16,10 @@
 #ifdef CONFIG_ZEPHYR
 #include <sys/util.h>
 #include <toolchain.h>
-#endif
+#ifdef CONFIG_ZTEST
+#define TEST_BUILD
+#endif /* CONFIG_ZTEST */
+#endif /* CONFIG_ZEPHYR */
 
 /*
  * Macros to concatenate 2 - 4 tokens together to form a single token.
