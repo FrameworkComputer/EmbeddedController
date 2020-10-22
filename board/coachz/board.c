@@ -244,9 +244,9 @@ static struct bmi_drv_data_t g_bmi160_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
 const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0,  FLOAT_TO_FP(-1),  0},
-	{ 0,  0, FLOAT_TO_FP(-1)}
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0,  0, FLOAT_TO_FP(1)}
 };
 
 struct motion_sensor_t motion_sensors[] = {
@@ -260,7 +260,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_BASE,
+	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &bmi160_drv,
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
@@ -281,7 +281,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_GYRO,
-	 .location = MOTIONSENSE_LOC_BASE,
+	 .location = MOTIONSENSE_LOC_LID,
 	 .drv = &bmi160_drv,
 	 .mutex = &g_lid_mutex,
 	 .drv_data = &g_bmi160_data,
@@ -301,6 +301,7 @@ static void board_init(void)
 	/* Enable BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
+	gpio_enable_interrupt(GPIO_ACCEL_GYRO_INT_L);
 
 	/*
 	 * The H1 SBU line for CCD are behind PPC chip. The PPC internal FETs
