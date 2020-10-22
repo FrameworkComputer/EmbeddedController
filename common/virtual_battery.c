@@ -289,6 +289,9 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 	case SB_DEVICE_NAME:
 		copy_memmap_string(dest, EC_MEMMAP_BATT_MODEL, read_len);
 		break;
+	case SB_DEVICE_CHEMISTRY:
+		copy_memmap_string(dest, EC_MEMMAP_BATT_TYPE, read_len);
+		break;
 	case SB_AVERAGE_TIME_TO_FULL:
 		/* This may cause an i2c transaction */
 		if (battery_time_to_full(&val))
