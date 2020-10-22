@@ -182,3 +182,6 @@ ALTERNATE(PIN_MASK(0, BIT(0) | BIT(1) | BIT(2)), 0, MODULE_PMU, 0)  /* GPIO00 = 
                                                                        GPIO01 = H1_EC_PWR_BTN_ODL
                                                                        GPIO02 = EC_RST_ODL */
 
+/* Temperature sensors */
+ALTERNATE(PIN_MASK(4, BIT(2) | BIT(4) | BIT(5)), 0, MODULE_ADC, 0) /* TEMP_SENSOR1,2,4 */
+ALTERNATE(PIN(F, 1), 0, MODULE_ADC, 0) /* TEMP_SENSOR3 */
