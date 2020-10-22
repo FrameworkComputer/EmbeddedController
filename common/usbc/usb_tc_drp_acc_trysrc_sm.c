@@ -615,7 +615,7 @@ static bool pd_comm_allowed_by_policy(void)
 	 * when sysjump to RW that makes the device brownout on the dead-battery
 	 * case. Disable PD for this special case as a workaround.
 	 */
-	if (IS_ENABLED(CONFIG_SYSTEM_UNLOCKED)) {
+	if (!system_is_locked()) {
 		if (IS_ENABLED(CONFIG_VBOOT_EFS2))
 			return true;
 
