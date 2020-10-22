@@ -369,9 +369,9 @@ const struct fan_conf fan_conf_0 = {
 	.enable_gpio = -1,
 };
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 3000,
-	.rpm_start = 3000,
-	.rpm_max = 4900,
+	.rpm_min = 1100,
+	.rpm_start = 1100,
+	.rpm_max = 5120,
 };
 const struct fan_t fans[] = {
 	[FAN_CH_0] = {
@@ -454,11 +454,11 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 const static struct ec_thermal_config thermal_thermistor = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(92),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(95),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(100),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
 	},
 	.temp_fan_off = C_TO_K(25),
 	.temp_fan_max = C_TO_K(58),
@@ -466,11 +466,11 @@ const static struct ec_thermal_config thermal_thermistor = {
 
 const static struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(92),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(95),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(100),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
 	},
 	.temp_fan_off = C_TO_K(25),
 	.temp_fan_max = C_TO_K(58),

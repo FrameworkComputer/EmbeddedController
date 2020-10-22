@@ -11,5 +11,5 @@ CHIP_FAMILY:=npcx7
 CHIP_VARIANT:=npcx7m7wc
 BASEBOARD:=zork
 
-board-y=board.o led.o
+board-y=board.o led.o thermal.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o

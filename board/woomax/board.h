@@ -46,6 +46,9 @@
 #undef CONFIG_POWER_BUTTON_INIT_TIMEOUT
 #define CONFIG_POWER_BUTTON_INIT_TIMEOUT 5
 
+/* Thermal */
+#define CONFIG_CUSTOM_FAN_CONTROL
+
 /* GPIO mapping from board specific name to EC common name. */
 #define CONFIG_BATTERY_PRESENT_GPIO	GPIO_EC_BATT_PRES_ODL
 #define CONFIG_SCI_GPIO			GPIO_EC_FCH_SCI_ODL
