@@ -52,6 +52,12 @@ CONFIG_FILE = 'include/config.h'
 # Specific files which the checker should ignore.
 ALLOWLIST = [CONFIG_FILE, 'util/config_option_check.py']
 
+# Specific directories which the checker should ignore.
+ALLOW_PATTERN = re.compile('zephyr/.*')
+
+# Specific CONFIG_* flags which the checker should ignore.
+ALLOWLIST_CONFIGS = ['CONFIG_ZTEST']
+
 def obtain_current_config_options():
   """Obtains current config options from include/config.h.
 
@@ -158,7 +164,8 @@ def print_missing_config_options(hunks, config_options):
   for h in hunks:
     for l in h.lines:
       # Check for the existence of a CONFIG_* in the line.
-      match = config_option_re.findall(l.string)
+      match = filter(lambda opt: opt in ALLOWLIST_CONFIGS,
+                     config_option_re.findall(l.string))
       if not match:
         continue
 
@@ -304,7 +311,7 @@ def get_hunks():
       match = filename_re.search(line)
       if match:
         filename = match.groups(1)[0]
-        if filename in ALLOWLIST:
+        if filename in ALLOWLIST or ALLOW_PATTERN.match(filename):
           # Skip the file if it's allowlisted.
           current_state = state.NEW_FILE
         else:
