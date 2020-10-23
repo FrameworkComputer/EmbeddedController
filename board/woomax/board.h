@@ -196,11 +196,8 @@ static inline bool ec_config_has_mst_hub_rtd2141b(void)
  *    HPD, EC drives MST hub HPD input from USB-PD messages.
  */
 
-#define PORT_TO_HPD(port) ((port == 0) \
-	? GPIO_USB_C0_HPD \
-	: (ec_config_has_mst_hub_rtd2141b()) \
-		? IOEX_USB_C1_HPD_IN_DB \
-		: GPIO_DP2_HPD)
+enum gpio_signal board_usbc_port_to_hpd_gpio(int port);
+#define PORT_TO_HPD(port) board_usbc_port_to_hpd_gpio(port)
 
 extern const struct usb_mux usbc0_pi3dpx1207_usb_retimer;
 extern const struct usb_mux usbc1_ps8802;
