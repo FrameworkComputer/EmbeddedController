@@ -52,6 +52,46 @@ static struct gpio_data data[] = {
 #endif
 };
 
+/* Maps platform/ec gpio callbacks to zephyr gpio callbacks */
+struct gpio_signal_callback {
+	/* The platform/ec gpio_signal */
+	const enum gpio_signal signal;
+	/* Zephyr callback */
+	struct gpio_callback callback;
+	/* IRQ handler from platform/ec code */
+	void (*const irq_handler)(enum gpio_signal signal);
+	/* Interrupt-related gpio flags */
+	const gpio_flags_t flags;
+};
+
+/* The single zephyr gpio handler that routes to appropriate platform/ec cb */
+static void gpio_handler_shim(const struct device *port,
+			      struct gpio_callback *cb, gpio_port_pins_t pins)
+{
+	const struct gpio_signal_callback *const gpio =
+		CONTAINER_OF(cb, struct gpio_signal_callback, callback);
+
+	/* Call the platform/ec gpio interrupt handler */
+	gpio->irq_handler(gpio->signal);
+}
+
+/*
+ * Each zephyr project should define EC_CROS_GPIO_INTERRUPTS in their gpio_map.h
+ * file if there are any interrupts that should be registered.
+ *
+ * EC_CROS_GPIO_INTERRUPTS is a space-separated list of GPIO_INT items.
+ */
+#define GPIO_INT(sig, f, cb)       \
+	{                          \
+		.signal = sig,     \
+		.flags = f,        \
+		.irq_handler = cb, \
+	},
+struct gpio_signal_callback gpio_interrupts[] = {
+#ifdef EC_CROS_GPIO_INTERRUPTS
+	EC_CROS_GPIO_INTERRUPTS
+#endif
+};
 
 int gpio_is_implemented(enum gpio_signal signal)
 {
@@ -116,20 +156,56 @@ static int init_gpios(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 
+	/* Loop through all GPIOs in device tree to set initial configuration */
 	for (size_t i = 0; i < ARRAY_SIZE(configs); ++i) {
 		data[i].dev = device_get_binding(configs[i].dev_name);
+		int rv;
 
 		if (data[i].dev == NULL) {
 			LOG_ERR("Not found (%s)", configs[i].name);
 		}
 
-		const int rv = gpio_pin_configure(data[i].dev, configs[i].pin,
-						  configs[i].init_flags);
+		rv = gpio_pin_configure(data[i].dev, configs[i].pin,
+					configs[i].init_flags);
 
 		if (rv < 0) {
 			LOG_ERR("Config failed %s (%d)", configs[i].name, rv);
 		}
 	}
+
+	/*
+	 * Loop through all interrupt pins and set their callback and interrupt-
+	 * related gpio flags.
+	 */
+	for (size_t i = 0; i < ARRAY_SIZE(gpio_interrupts); ++i) {
+		const enum gpio_signal signal = gpio_interrupts[i].signal;
+		int rv;
+
+		gpio_init_callback(&gpio_interrupts[i].callback,
+				   gpio_handler_shim, BIT(configs[signal].pin));
+		rv = gpio_add_callback(data[signal].dev,
+				       &gpio_interrupts[i].callback);
+
+		if (rv < 0) {
+			LOG_ERR("Callback reg failed %s (%d)",
+				configs[signal].name, rv);
+			continue;
+		}
+
+		/*
+		 * Reconfigure the GPIO pin with the original device tree
+		 * flags (e.g. INPUT, PULL-UP) combined with the interrupts
+		 * flags (e.g. INT_EDGE_BOTH).
+		 */
+		rv = gpio_pin_configure(data[signal].dev, configs[signal].pin,
+					(configs[signal].init_flags |
+					 gpio_interrupts[i].flags));
+		if (rv < 0) {
+			LOG_ERR("Int config failed %s (%d)",
+				configs[signal].name, rv);
+		}
+	}
+
 	return 0;
 }
 SYS_INIT(init_gpios, PRE_KERNEL_1, 50);
