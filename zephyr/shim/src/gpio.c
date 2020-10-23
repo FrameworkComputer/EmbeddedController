@@ -16,10 +16,14 @@ LOG_MODULE_REGISTER(gpio_shim, LOG_LEVEL_ERR);
  * device tree node.
  */
 struct gpio_config {
-	const char *name;	 /* GPIO net name */
-	const char *dev_name;	 /* Set at build time for lookup */
-	gpio_pin_t pin;		 /* Bit number of pin within device */
-	gpio_flags_t init_flags; /* From build time */
+	/* GPIO net name */
+	const char *name;
+	/* Set at build time for lookup */
+	const char *dev_name;
+	/* Bit number of pin within device */
+	gpio_pin_t pin;
+	/* From DTS, excludes interrupts flags */
+	gpio_flags_t init_flags;
 };
 
 #define GPIO_CONFIG(id)                                      \
@@ -37,10 +41,11 @@ static const struct gpio_config configs[] = {
 
 /* Runtime information for each GPIO that is configured in named_gpios */
 struct gpio_data {
-	const struct device *dev; /* Set during in init function */
+	/* Runtime device for gpio port. Set during in init function */
+	const struct device *dev;
 };
 
-#define GPIO_DATA(id) { },
+#define GPIO_DATA(id) {},
 static struct gpio_data data[] = {
 #if DT_NODE_EXISTS(DT_PATH(named_gpios))
 	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_DATA)
