@@ -487,7 +487,7 @@ static int ps8xxx_enter_low_power_mode(int port)
 	 * its own in ~2 seconds. Other chips don't have it. Stub it out for
 	 * PS8751.
 	 */
-	if (IS_ENABLED(CONFIG_USB_PD_TCPM_PS8751))
+	if (product_id[port] == PS8705_PRODUCT_ID)
 		return EC_SUCCESS;
 
 	return tcpci_enter_low_power_mode(port);
