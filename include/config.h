@@ -2910,6 +2910,19 @@
 #undef CONFIG_ONLINE_CALIB
 
 /*
+ * Spoof the data for online calibration. When this flag is enabled, every
+ * reading with the flag MOTIONSENSE_FLAG_IN_SPOOF_MODE will be treated as a
+ * new calibration point. This should be used in conjunction with
+ * CONFIG_ACCEL_SPOOF_MODE. To trigger an accelerometer calibration for
+ * example, enable both config flags, connect to the cr50 terminal and run:
+ * $ accelspoof id on X Y Z
+ * This will spoof a reading of (X, Y, Z) from the sensor and treat those
+ * values as the calibration result (bypassing the calibration for the given
+ * sensor ID).
+ */
+#undef CONFIG_ONLINE_CALIB_SPOOF_MODE
+
+/*
  * Duration after which an entry in the temperature cache is considered stale.
  * Defaults to 5 minutes if not set.
  */

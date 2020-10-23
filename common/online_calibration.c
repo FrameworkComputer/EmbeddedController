@@ -83,11 +83,10 @@ static void data_fp_to_int16(const struct motion_sensor_t *s, const fpv3_t data,
 		int32_t iv;
 		fp_t v = fp_div(data[i], range);
 
-		v = fp_mul(v, INT_TO_FP((data[i] >= INT_TO_FP(0)) ? 0x7fff :
-								    0x8000));
+		v = fp_mul(v, INT_TO_FP(0x7fff));
 		iv = FP_TO_INT(v);
 		/* Check for overflow */
-		out[i] = CLAMP(iv, (int32_t)0xffff8000, (int32_t)0x00007fff);
+		out[i] = ec_motion_sensor_clamp_i16(iv);
 	}
 }
 
@@ -98,28 +97,36 @@ static void data_fp_to_int16(const struct motion_sensor_t *s, const fpv3_t data,
  *
  * @param sensor Pointer to the gyroscope sensor to check.
  */
-static void check_gyro_cal_new_bias(struct motion_sensor_t *sensor)
+static bool check_gyro_cal_new_bias(struct motion_sensor_t *sensor,
+				    fpv3_t bias_out)
 {
 	struct online_calib_data *calib_data =
 		(struct online_calib_data *)sensor->online_calib_data;
 	struct gyro_cal_data *data =
 		(struct gyro_cal_data *)calib_data->type_specific_data;
-	int sensor_num = sensor - motion_sensors;
 	int temp_out;
-	fpv3_t bias_out;
 	uint32_t timestamp_out;
 
 	/* Check that we have a new bias. */
 	if (data == NULL || calib_data == NULL ||
 	    !gyro_cal_new_bias_available(&data->gyro_cal))
-		return;
+		return false;
 
 	/* Read the calibration values. */
 	gyro_cal_get_bias(&data->gyro_cal, bias_out, &temp_out, &timestamp_out);
+	return true;
+}
+
+static void set_gyro_cal_cache_values(struct motion_sensor_t *sensor,
+				      fpv3_t bias)
+{
+	size_t sensor_num = sensor - motion_sensors;
+	struct online_calib_data *calib_data =
+		(struct online_calib_data *)sensor->online_calib_data;
 
 	mutex_lock(&g_calib_cache_mutex);
-	/* Convert result to the right scale. */
-	data_fp_to_int16(sensor, bias_out, calib_data->cache);
+	/* Convert result to the right scale and save to cache. */
+	data_fp_to_int16(sensor, bias, calib_data->cache);
 	/* Set valid and dirty. */
 	sensor_calib_cache_valid_map |= BIT(sensor_num);
 	sensor_calib_cache_dirty_map |= BIT(sensor_num);
@@ -140,6 +147,7 @@ static void update_gyro_cal(struct motion_sensor_t *sensor, fpv3_t data,
 			    uint32_t timestamp)
 {
 	int i;
+	fpv3_t gyro_cal_data_out;
 
 	/*
 	 * Find gyroscopes, while we don't currently have instance where more
@@ -151,6 +159,7 @@ static void update_gyro_cal(struct motion_sensor_t *sensor, fpv3_t data,
 		struct gyro_cal_data *gyro_cal_data =
 			(struct gyro_cal_data *)
 				s->online_calib_data->type_specific_data;
+		bool has_new_gyro_cal_bias = false;
 
 		/*
 		 * If we're not looking at a gyroscope OR if the calibration
@@ -168,14 +177,19 @@ static void update_gyro_cal(struct motion_sensor_t *sensor, fpv3_t data,
 			gyro_cal_update_accel(&gyro_cal_data->gyro_cal,
 					      timestamp, data[X], data[Y],
 					      data[Z]);
-			check_gyro_cal_new_bias(s);
+			has_new_gyro_cal_bias =
+				check_gyro_cal_new_bias(s, gyro_cal_data_out);
 		} else if (sensor->type == MOTIONSENSE_TYPE_MAG &&
 			   gyro_cal_data->mag_sensor_id ==
 				   sensor - motion_sensors) {
 			gyro_cal_update_mag(&gyro_cal_data->gyro_cal, timestamp,
 					    data[X], data[Y], data[Z]);
-			check_gyro_cal_new_bias(s);
+			has_new_gyro_cal_bias =
+				check_gyro_cal_new_bias(s, gyro_cal_data_out);
 		}
+
+		if (has_new_gyro_cal_bias)
+			set_gyro_cal_cache_values(s, gyro_cal_data_out);
 	}
 }
 
@@ -256,27 +270,44 @@ int online_calibration_process_data(struct ec_response_motion_sensor_data *data,
 	int rc;
 	int temperature;
 	struct online_calib_data *calib_data;
+	fpv3_t fdata;
+	bool is_spoofed = IS_ENABLED(CONFIG_ONLINE_CALIB_SPOOF_MODE) &&
+			  (sensor->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE);
+	bool has_new_calibration_values = false;
+
+	/* Convert data to fp. */
+	data_int16_to_fp(sensor, data->data, fdata);
 
 	calib_data = sensor->online_calib_data;
 	switch (sensor->type) {
 	case MOTIONSENSE_TYPE_ACCEL: {
 		struct accel_cal *cal =
 			(struct accel_cal *)(calib_data->type_specific_data);
-		fpv3_t fdata;
 
-		/* Convert data to fp. */
-		data_int16_to_fp(sensor, data->data, fdata);
+		if (is_spoofed) {
+			/* Copy the data to the calibration result. */
+			cal->bias[X] = fdata[X];
+			cal->bias[Y] = fdata[Y];
+			cal->bias[Z] = fdata[Z];
+			has_new_calibration_values = true;
+		} else {
+			/* Possibly update the gyroscope calibration. */
+			update_gyro_cal(sensor, fdata, timestamp);
 
-		/* Possibly update the gyroscope calibration. */
-		update_gyro_cal(sensor, fdata, timestamp);
+			/*
+			 * Temperature is required for accelerometer
+			 * calibration.
+			 */
+			rc = get_temperature(sensor, &temperature);
+			if (rc != EC_SUCCESS)
+				return rc;
 
-		/* Temperature is required for accelerometer calibration. */
-		rc = get_temperature(sensor, &temperature);
-		if (rc != EC_SUCCESS)
-			return rc;
+			has_new_calibration_values = accel_cal_accumulate(
+				cal, timestamp, fdata[X], fdata[Y], fdata[Z],
+				temperature);
+		}
 
-		if (accel_cal_accumulate(cal, timestamp, fdata[X], fdata[Y],
-					 fdata[Z], temperature)) {
+		if (has_new_calibration_values) {
 			mutex_lock(&g_calib_cache_mutex);
 			/* Convert result to the right scale. */
 			data_fp_to_int16(sensor, cal->bias, calib_data->cache);
@@ -297,15 +328,21 @@ int online_calibration_process_data(struct ec_response_motion_sensor_data *data,
 			(int)data->data[Y],
 			(int)data->data[Z],
 		};
-		fpv3_t fdata;
 
-		/* Convert data to fp. */
-		data_int16_to_fp(sensor, data->data, fdata);
+		if (is_spoofed) {
+			/* Copy the data to the calibration result. */
+			cal->bias[X] = INT_TO_FP(idata[X]);
+			cal->bias[Y] = INT_TO_FP(idata[Y]);
+			cal->bias[Z] = INT_TO_FP(idata[Z]);
+			has_new_calibration_values = true;
+		} else {
+			/* Possibly update the gyroscope calibration. */
+			update_gyro_cal(sensor, fdata, timestamp);
 
-		/* Possibly update the gyroscope calibration. */
-		update_gyro_cal(sensor, fdata, timestamp);
+			has_new_calibration_values = mag_cal_update(cal, idata);
+		}
 
-		if (mag_cal_update(cal, idata)) {
+		if (has_new_calibration_values) {
 			mutex_lock(&g_calib_cache_mutex);
 			/* Copy the values */
 			calib_data->cache[X] = cal->bias[X];
@@ -321,21 +358,32 @@ int online_calibration_process_data(struct ec_response_motion_sensor_data *data,
 		break;
 	}
 	case MOTIONSENSE_TYPE_GYRO: {
-		fpv3_t fdata;
+		if (is_spoofed) {
+			/*
+			 * Gyroscope uses fdata to store the calibration
+			 * result, so there's no need to copy anything.
+			 */
+			has_new_calibration_values = true;
+		} else {
+			struct gyro_cal_data *gyro_cal_data =
+				(struct gyro_cal_data *)
+					calib_data->type_specific_data;
+			struct gyro_cal *gyro_cal = &gyro_cal_data->gyro_cal;
 
-		/* Temperature is required for gyro calibration. */
-		rc = get_temperature(sensor, &temperature);
-		if (rc != EC_SUCCESS)
-			return rc;
+			/* Temperature is required for gyro calibration. */
+			rc = get_temperature(sensor, &temperature);
+			if (rc != EC_SUCCESS)
+				return rc;
 
-		/* Convert data to fp. */
-		data_int16_to_fp(sensor, data->data, fdata);
+			/* Update gyroscope calibration. */
+			gyro_cal_update_gyro(gyro_cal, timestamp, fdata[X],
+					     fdata[Y], fdata[Z], temperature);
+			has_new_calibration_values =
+				check_gyro_cal_new_bias(sensor, fdata);
+		}
 
-		/* Update gyroscope calibration. */
-		gyro_cal_update_gyro(
-			&((struct gyro_cal_data *)calib_data->type_specific_data)->gyro_cal,
-			timestamp, fdata[X], fdata[Y], fdata[Z], temperature);
-		check_gyro_cal_new_bias(sensor);
+		if (has_new_calibration_values)
+			set_gyro_cal_cache_values(sensor, fdata);
 		break;
 	}
 	default:
