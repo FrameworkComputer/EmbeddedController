@@ -20,5 +20,21 @@
 #define GPIO_EN_PP3300_A NAMED_GPIO(en_pp3300_a)
 #define GPIO_EN_PP5000_A NAMED_GPIO(en_pp5000_a)
 
+/*
+ * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
+ *
+ * Each GPIO_INT requires three parameters:
+ *   gpio_signal - The enum gpio_signal for the interrupt gpio
+ *   interrupt_flags - The interrupt-related flags (e.g. GPIO_INT_EDGE_BOTH)
+ *   handler - The platform/ec interrupt handler.
+ *
+ * Ensure that this files includes all necessary headers to declare all
+ * referenced handler functions.
+ *
+ * For example, one could use the follow definition:
+ * #define EC_CROS_GPIO_INTERRUPTS \
+ *   GPIO_INT(NAMED_GPIO(h1_ec_pwr_btn_odl), GPIO_INT_EDGE_BOTH, button_print)
+ */
+#define EC_CROS_GPIO_INTERRUPTS
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
