@@ -236,7 +236,7 @@ void board_hibernate(void)
 		pd_request_source_voltage(port, SAFE_RESET_VBUS_MV);
 
 		/* Give PD task and PPC chip time to get to 5V */
-		msleep(300);
+		msleep(900);
 	}
 }
 
