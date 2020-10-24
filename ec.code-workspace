@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+                {
+                        "name": "hx20",
+                        "path": "board/hx20"
+                },
+		{
+			"name": "mchp",
+			"path": "chip/mchp"
+		},
+		{
+			"name": "common",
+			"path": "common"
+		},
+		{
+			"name": "include",
+			"path": "include"
+		}
+	]
+}

@@ -1,0 +1,43 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/ec.rw/ec.elf",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }, 
+                { "text": "-target-select remote localhost:3333", "description": "connect to target", "ignoreFailures": false },
+                { "text": "-file-exec-and-symbols ${workspaceFolder}/build/ec.rw/ec.elf", "description": "load file", "ignoreFailures": false},
+                { "text": "-interpreter-exec console \"monitor endian little\"", "ignoreFailures": false },
+                { "text": "-interpreter-exec console \"monitor reset\"", "ignoreFailures": false },
+                { "text": "-interpreter-exec console \"monitor halt\"", "ignoreFailures": false },
+                { "text": "-interpreter-exec console \"monitor arm semihosting enable\"", "ignoreFailures": false },
+                { "text": "-interpreter-exec console \"set mem inaccessible-by-default off\"", "ignoreFailures": false },
+            ],
+            "linux": {
+                "MIMode": "gdb",
+                "MIDebuggerPath": "arm-zephyr-eabi-gdb",
+                //"debugServerPath": "${workspaceFolder}/pyenv/bin/pyocd-gdbserver",
+                //"miDebuggerServerAddress": "localhost:3333",
+                //"debugServerArgs": "--target stm32g071rbtx --pack /opt/framework/sw/cmsis-pack/Keil.STM32G0xx_DFP.1.2.0.pack",
+                //"serverStarted": "GDB server started on port 3333"
+            },
+
+        }
+    ]
+}
