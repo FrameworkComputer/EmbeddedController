@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "config.h"
 #include "ec_commands.h"
 #include "sysjump.h"
 #include "system.h"
