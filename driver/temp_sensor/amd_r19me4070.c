@@ -53,17 +53,21 @@ int get_temp_R19ME4070(int idx, int *temp_ptr)
 	 * We shouldn't read the GPU temperature when the state
 	 * is not in S0, because GPU is enabled in S0.
 	 */
-	if ((power_get_state()) != POWER_S0)
+	if ((power_get_state()) != POWER_S0) {
+		*temp_ptr = C_TO_K(0);
 		return EC_ERROR_BUSY;
+	}
 	/* if no INIT GPU, must init it first and wait 1 sec. */
 	if (!initialized) {
 		gpu_init_temp_sensor();
+		*temp_ptr = C_TO_K(0);
 		return EC_ERROR_BUSY;
 	}
 	rv = i2c_read_block(I2C_PORT_GPU, GPU_ADDR_FLAGS,
 			GPU_TEMPERATURE_OFFSET, reg, ARRAY_SIZE(reg));
 	if (rv) {
 		CPRINTS("read GPU Temperature fail");
+		*temp_ptr = C_TO_K(0);
 		return rv;
 	}
 	/*
@@ -81,5 +85,6 @@ int get_temp_R19ME4070(int idx, int *temp_ptr)
 	 * reg[0] = 0x04
 	 */
 	*temp_ptr = C_TO_K(reg[3] >> 1);
+
 	return EC_SUCCESS;
 }
