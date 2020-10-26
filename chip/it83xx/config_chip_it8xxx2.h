@@ -125,10 +125,6 @@
 #define IT83XX_INTC_PLUG_IN_OUT_SUPPORT
 /* Wake up CPU from low power mode even if interrupts are disabled */
 #define IT83XX_RISCV_WAKEUP_CPU_WITHOUT_INT_ENABLED
-/* Auto reset rx fifo while CS# deasserted. */
-#define IT83XX_SPI_AUTO_RESET_RX_FIFO
-/* CPU accesses FIFO to reach rx valid data length. */
-#define IT83XX_SPI_RX_VALID_INT
 /* Individual setting CC1 and CC2 resistance. */
 #define IT83XX_USBPD_CC1_CC2_RESISTANCE_SEPARATE
 /* Chip actually has TCPC physical port count. */
