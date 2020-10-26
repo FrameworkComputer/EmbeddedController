@@ -48,6 +48,11 @@ void system_common_pre_init(void);
 int system_is_manual_recovery(void);
 
 /**
+ * Make sure AP shutdown completely, before call system_hibernate
+ */
+void system_enter_hibernate(uint32_t seconds, uint32_t microseconds);
+
+/**
  * System common re-initialization; called to reset persistent state
  * left by system_common_pre_init().  This is useful for testing
  * scenarios calling system_common_pre_init() multiple times.

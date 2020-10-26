@@ -454,7 +454,7 @@ static int check_runtime_keys(const uint8_t *state)
 	} else if (state[KEYBOARD_COL_KEY_H] == KEYBOARD_MASK_KEY_H) {
 		/* H = hibernate */
 		CPRINTS("KB hibernate");
-		system_hibernate(0, 0);
+		system_enter_hibernate(0, 0);
 		return 1;
 	}
 
