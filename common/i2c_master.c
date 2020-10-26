@@ -1514,7 +1514,66 @@ static int command_i2cxfer(int argc, char **argv)
 		else
 			rv = i2c_write16(port, addr_flags,
 					 offset, v);
+#ifdef CONFIG_CMD_I2C_XFER_RAW
+	} else if (strcasecmp(argv[1], "raw") == 0) {
+		/* <port> <slave_addr> <read_count> [write_bytes..] */
+		int i;
+		int write_count = 0, read_count = 0;
+		int xferflags = I2C_XFER_START;
 
+		read_count = offset;
+		if (read_count < 0 || read_count > sizeof(data))
+			return EC_ERROR_PARAM5;
+
+		if (argc >= 6) {
+			/* Parse bytes to write */
+			argc -= 5;
+			argv += 5;
+			write_count = argc;
+			if (write_count > sizeof(data)) {
+				ccprintf("Too many bytes to write\n");
+				return EC_ERROR_PARAM_COUNT;
+			}
+
+			for (i = 0; i < write_count; i++) {
+				data[i] = strtoi(argv[i], &e, 0);
+				if (*e) {
+					ccprintf("Bad write byte %d\n", i);
+					return EC_ERROR_INVAL;
+				}
+			}
+		}
+
+		if (write_count) {
+			if (read_count == 0)
+				xferflags |= I2C_XFER_STOP;
+			ccprintf("Writing %d bytes\n", write_count);
+			i2c_lock(port, 1);
+			rv = i2c_xfer_unlocked(port,
+					       addr_flags,
+					       data, write_count,
+					       NULL, 0,
+					       xferflags);
+			if (rv || read_count == 0) {
+				i2c_lock(port, 0);
+				return rv;
+			}
+		}
+		if (read_count) {
+			ccprintf("Reading %d bytes\n", read_count);
+			if (write_count == 0)
+				i2c_lock(port, 1);
+			rv = i2c_xfer_unlocked(port,
+					       addr_flags,
+					       NULL, 0,
+					       data, read_count,
+					       I2C_XFER_START | I2C_XFER_STOP);
+			i2c_lock(port, 0);
+			if (!rv)
+				ccprintf("Data: %ph\n",
+					 HEX_BUF(data, read_count));
+		}
+#endif /* CONFIG_CMD_I2C_XFER_RAW */
 	} else {
 		return EC_ERROR_PARAM1;
 	}
@@ -1522,7 +1581,11 @@ static int command_i2cxfer(int argc, char **argv)
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(i2cxfer, command_i2cxfer,
-			"r/r16/rlen/w/w16 port addr offset [value | len]",
+			"r/r16/rlen/w/w16 port addr offset [value | len]"
+#ifdef CONFIG_CMD_I2C_XFER_RAW
+			"\nraw port addr read_count [bytes_to_write..]"
+#endif /* CONFIG_CMD_I2C_XFER_RAW */
+			,
 			"Read write I2C");
 #endif
 

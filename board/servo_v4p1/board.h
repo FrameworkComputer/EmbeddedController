@@ -217,6 +217,9 @@
 #define PD_MAX_POWER_MW       60000
 #define PD_MAX_CURRENT_MA     3000
 #define PD_MAX_VOLTAGE_MV     20000
+
+/* Add the raw option to the i2c_xfer command */
+#define CONFIG_CMD_I2C_XFER_RAW
 #else
 #undef CONFIG_CMD_I2C_XFER
 #undef CONFIG_USB_POWER_DELIVERY
