@@ -17,8 +17,24 @@
  * Note we only need to create aliases for GPIOs that are referenced in common
  * platform/ec code.
  */
-#define GPIO_EN_PP3300_A NAMED_GPIO(en_pp3300_a)
-#define GPIO_EN_PP5000_A NAMED_GPIO(en_pp5000_a)
+#define GPIO_CPU_PROCHOT           NAMED_GPIO(ec_prochot_odl)
+#define GPIO_EN_PP3300_A           NAMED_GPIO(en_pp3300_a)
+#define GPIO_EN_PP5000             NAMED_GPIO(en_pp5000_a)
+#define GPIO_EN_PP5000_A           NAMED_GPIO(en_pp5000_a)
+#define GPIO_PCH_DSW_PWROK         NAMED_GPIO(ec_pch_dsw_pwrok)
+#define GPIO_PCH_PWRBTN_L          NAMED_GPIO(ec_pch_pwr_btn_odl)
+#define GPIO_PCH_RSMRST_L          NAMED_GPIO(ec_pch_rsmrst_odl)
+#define GPIO_PCH_RTCRST            NAMED_GPIO(ec_pch_rtcrst)
+#define GPIO_PCH_SLP_S0_L          NAMED_GPIO(slp_s0_l)
+#define GPIO_PCH_SLP_S3_L          NAMED_GPIO(slp_s3_l)
+#define GPIO_PCH_SLP_SUS_L         NAMED_GPIO(slp_sus_l)
+#define GPIO_PG_EC_ALL_SYS_PWRGD   NAMED_GPIO(pg_ec_all_sys_pwrgd)
+#define GPIO_PG_EC_DSW_PWROK       NAMED_GPIO(pg_ec_dsw_pwrok)
+#define GPIO_PG_EC_RSMRST_ODL      NAMED_GPIO(pg_ec_rsmrst_odl)
+#define GPIO_POWER_BUTTON_L        NAMED_GPIO(h1_ec_pwr_btn_odl)
+#define GPIO_RSMRST_L_PGOOD        NAMED_GPIO(pg_ec_rsmrst_odl)
+#define GPIO_SLP_SUS_L             NAMED_GPIO(slp_sus_l)
+#define GPIO_SYS_RESET_L           NAMED_GPIO(sys_rst_odl)
 
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
