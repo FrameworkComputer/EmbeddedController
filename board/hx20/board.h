@@ -23,7 +23,17 @@
 /* Keyboard features */
 #define CONFIG_KEYBOARD_CUSTOMIZATION
 /* #define CONFIG_PWM_KBLIGHT */
-/* #define CONFIG_KEYBOARD_DEBUG */
+#define CONFIG_KEYBOARD_DEBUG
+#undef CONFIG_8042_AUX
+
+
+/* #define CONFIG_CUSTOMER_PORT80 */
+
+/*
+ * Mouse emulation
+*/
+
+#define CONFIG_8042_AUX
 
 #define CONFIG_CUSTOMER_PORT80
 #define CONFIG_IGNORED_BTN_SCANCODE
