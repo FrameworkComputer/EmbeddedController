@@ -796,6 +796,7 @@ static void board_chipset_resume(void)
 	gpio_set_level(GPIO_EC_MUTE_L, 1);
 	gpio_set_level(GPIO_EC_WLAN_EN,1);
 	gpio_set_level(GPIO_EC_WL_OFF_L,1);
+	gpio_set_level(GPIO_CAM_EN, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 	     MOTION_SENSE_HOOK_PRIO-1);
@@ -809,6 +810,7 @@ static void board_chipset_suspend(void)
 	gpio_set_level(GPIO_EC_MUTE_L, 0);
 	gpio_set_level(GPIO_EC_WLAN_EN,1);
 	gpio_set_level(GPIO_EC_WL_OFF_L,1);
+	gpio_set_level(GPIO_CAM_EN, 0);
 #if 0 /* TODO not implemented in gpio.inc */
 	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 0);
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 0);
