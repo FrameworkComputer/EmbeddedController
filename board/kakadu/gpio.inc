@@ -30,7 +30,7 @@ GPIO_INT(AP_EC_WATCHDOG_L,  PIN(C, 2),  GPIO_INT_FALLING,
          chipset_watchdog_interrupt)
 
 GPIO_INT_RW(ACCEL_INT_ODL,  PIN(A, 4), GPIO_INT_FALLING | GPIO_SEL_1P8V | GPIO_PULL_UP,
-         lsm6dsm_interrupt)
+         bmi160_interrupt)
 GPIO_INT(CHARGER_INT_ODL,   PIN(C, 13), GPIO_INT_FALLING | GPIO_PULL_UP,
          rt946x_interrupt)
 GPIO_INT_RO(EMMC_CMD,       PIN(B, 15), GPIO_INT_FALLING,
@@ -48,8 +48,10 @@ GPIO_INT(POGO_ADC_INT_L,    PIN(A, 6),  GPIO_INT_BOTH,
 
 /* unused */
 GPIO(POGO_VBUS_PRESENT, PIN(A, 14), GPIO_INPUT)
-/* To support Apple dongle b/155242849 */
-GPIO(USB_C0_VCONN_EN_OD, PIN(C, 14), GPIO_ODR_HIGH)
+/* unused after board rev 5 */
+GPIO(USB_C0_DP_POLARITY,   PIN(C, 14), GPIO_INPUT)
+GPIO(USB_C0_DP_OE_L,       PIN(A, 5),  GPIO_INPUT)
+
 
 /* Reset pins */
 GPIO(AP_SYS_RST_L,         PIN(C, 11), GPIO_OUT_LOW)
