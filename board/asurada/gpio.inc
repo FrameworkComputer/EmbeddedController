@@ -131,9 +131,6 @@ ALTERNATE(PIN_MASK(I, 0x4F), 0, MODULE_ADC, 0) /* ADC 0,1,2,3,6 */
 /* SPI */
 ALTERNATE(PIN_MASK(M, 0x33), 0, MODULE_SPI, 0) /* SPI */
 
-/* Power Switch Logic (PSL) inputs */
-GPIO(EC_RST_ODL,             PIN(L, 1), GPIO_INPUT)
-
 /* Unimplemented Pins  */
 UNIMPLEMENTED(PCH_SMI_L)
 UNIMPLEMENTED(PCH_SCI_L)
