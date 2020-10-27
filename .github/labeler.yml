@@ -1,0 +1,31 @@
+# Add 'repo' label to any root file changes
+repo:
+  - ./*
+
+hx20:
+  - board/hx20/*
+  - board/hx20/**/*
+
+board-mistake:
+  - any: ['board/**/*', '!board/hx20/*']
+
+mchp:
+  - chip/mchp/**/*
+
+chip-mistake:
+  - any: ['chip/**/*', '!chip/mchp/*']
+
+common:
+  - common/*
+  - common/**/*
+
+baseboard:
+  - baseboard/*
+  - baseboard/**/*
+
+workflow:
+  - .github/*
+  - .github/**/*
+
+project: 
+  - .vscode/*
