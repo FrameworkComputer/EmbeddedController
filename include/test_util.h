@@ -10,7 +10,7 @@
 
 #ifdef CONFIG_ZEPHYR
 
-#include <ztest_assert.h>
+#include <ztest.h>
 
 /*
  * We need these macros so that a test can be built for either Ztest or the
