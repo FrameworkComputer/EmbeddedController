@@ -233,7 +233,13 @@ enum vif_Component_indexes {
 	PD_Power_As_Source,			/* numericFieldType */
 	USB_Suspend_May_Be_Cleared,		/* booleanFieldType */
 	Sends_Pings,				/* booleanFieldType */
+	Accepts_PR_Swap_As_Src,			/* booleanFieldType */
+	Accepts_PR_Swap_As_Snk,			/* booleanFieldType */
+	Requests_PR_Swap_As_Src,		/* booleanFieldType */
+	Requests_PR_Swap_As_Snk,		/* booleanFieldType */
+	FR_Swap_Supported_As_Initial_Sink,	/* booleanFieldType */
 	FR_Swap_Type_C_Current_Capability_As_Initial_Sink,/* numericFieldType */
+	FR_Swap_Reqd_Type_C_Current_As_Initial_Source,/* numericFieldType */
 	Master_Port,				/* booleanFieldType */
 	Num_Src_PDOs,				/* numericFieldType */
 	PD_OC_Protection,			/* booleanFieldType */
@@ -242,13 +248,7 @@ enum vif_Component_indexes {
 	No_USB_Suspend_May_Be_Set,		/* booleanFieldType */
 	GiveBack_May_Be_Set,			/* booleanFieldType */
 	Higher_Capability_Set,			/* booleanFieldType */
-	FR_Swap_Reqd_Type_C_Current_As_Initial_Source,/* numericFieldType */
 	Num_Snk_PDOs,				/* numericFieldType */
-	Accepts_PR_Swap_As_Src,			/* booleanFieldType */
-	Accepts_PR_Swap_As_Snk,			/* booleanFieldType */
-	Requests_PR_Swap_As_Src,		/* booleanFieldType */
-	Requests_PR_Swap_As_Snk,		/* booleanFieldType */
-	FR_Swap_Supported_As_Initial_Sink,	/* booleanFieldType */
 	XID_SOP,				/* numericFieldType */
 	Data_Capable_As_USB_Host_SOP,		/* booleanFieldType */
 	Data_Capable_As_USB_Device_SOP,		/* booleanFieldType */
