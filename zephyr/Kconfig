@@ -56,4 +56,12 @@ config PLATFORM_EC_TIMER_CMD_WAITMS
 
 endif # PLATFORM_EC_TIMER
 
+config PLATFORM_EC_HOOKS
+	bool "Enable hooks and deferred compatibility shim"
+	default y
+	help
+	  Enable translation of DECLARE_DEFERRED and
+	  hook_call_deferred to Zephyr's work queues, and a compatible
+	  DECLARE_HOOK implementation.
+
 endif # PLATFORM_EC

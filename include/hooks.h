@@ -235,6 +235,22 @@ enum hook_type {
 	 * USB PD cc connection event.
 	 */
 	HOOK_USB_PD_CONNECT,
+
+#ifdef TEST_BUILD
+	/*
+	 * Special hook types to be used by unit tests of the hooks
+	 * implementation only.
+	 */
+	HOOK_TEST_1,
+	HOOK_TEST_2,
+	HOOK_TEST_3,
+#endif  /* TEST_BUILD */
+
+	/*
+	 * Not a hook type (instead the number of hooks). This should
+	 * always be placed at the end of this enumeration.
+	 */
+	HOOK_TYPE_COUNT,
 };
 
 struct hook_data {
@@ -258,6 +274,14 @@ struct hook_data {
  */
 void hook_notify(enum hook_type type);
 
+/*
+ * CONFIG_PLATFORM_EC_HOOKS is enabled by default during a Zephyr
+ * build, but can be disabled via Kconfig if desired (leaving the stub
+ * implementation at the bottom of this file).
+ */
+#if defined(CONFIG_PLATFORM_EC_HOOKS)
+#include "zephyr_hooks_shim.h"
+#elif defined(CONFIG_COMMON_RUNTIME)
 struct deferred_data {
 	/* Deferred function pointer */
 	void (*routine)(void);
@@ -279,12 +303,6 @@ struct deferred_data {
  */
 int hook_call_deferred(const struct deferred_data *data, int us);
 
-/*
- * Hooks are not currently supported by the Zephyr shim.
- * TODO(b/168799177): Implement compatible DECLARE_HOOK macro for
- * Zephyr OS.
- */
-#if defined(CONFIG_COMMON_RUNTIME) && !defined(CONFIG_ZEPHYR)
 /**
  * Register a hook routine.
  *
@@ -341,7 +359,12 @@ int hook_call_deferred(const struct deferred_data *data, int us);
 	CONCAT2(routine, _data)						\
 	__attribute__((section(".rodata.deferred")))			\
 	     = {routine}
-#else  /* !defined(CONFIG_COMMON_RUNTIME) || defined(CONFIG_ZEPHYR) */
+#else
+/*
+ * Stub implementation in case hooks are disabled (neither
+ * CONFIG_COMMON_RUNTIME nor CONFIG_PLATFORM_EC_HOOKS is defined)
+ */
+#define hook_call_deferred(unused1, unused2) -1
 #define DECLARE_HOOK(t, func, p)				\
 	void CONCAT2(unused_hook_, func)(void) { func(); }
 #define DECLARE_DEFERRED(func)					\
