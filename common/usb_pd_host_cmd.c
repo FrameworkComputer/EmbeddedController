@@ -13,6 +13,7 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "host_command.h"
+#include "mkbp_event.h"
 #include "tcpm.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
@@ -466,22 +467,13 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE,
 			EC_VER_MASK(0));
 #endif /* CONFIG_HOSTCMD_FLASHPD && CONFIG_USB_PD_TCPMV2 */
 
-#ifdef CONFIG_HOSTCMD_EVENTS
+#ifdef CONFIG_MKBP_EVENT
 void pd_notify_dp_alt_mode_entry(void)
 {
-	/*
-	 * Note: EC_HOST_EVENT_PD_MCU may be a more appropriate host event to
-	 * send, but we do not send that here because there are other cases
-	 * where we send EC_HOST_EVENT_PD_MCU such as charger insertion or
-	 * removal.  Currently, those do not wake the system up, but
-	 * EC_HOST_EVENT_MODE_CHANGE does.  If we made the system wake up on
-	 * EC_HOST_EVENT_PD_MCU, we would be turning the internal display on on
-	 * every charger insertion/removal, which is not desired.
-	 */
 	CPRINTS("Notifying AP of DP Alt Mode Entry...");
-	host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
+	mkbp_send_event(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED);
 }
-#endif /* CONFIG_HOSTCMD_EVENTS */
+#endif /* CONFIG_MKBP_EVENT */
 
 __overridable enum ec_pd_port_location board_get_pd_port_location(int port)
 {
