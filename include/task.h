@@ -12,6 +12,17 @@
 #include "compile_time_macros.h"
 #include "task_id.h"
 
+#ifdef CONFIG_ZEPHYR
+#include <sys/printk.h>
+#define _ZEPHYR_WARN_UNIMPLEMENTED(func, args...) \
+	printk("WARN: not implemented - %s(%s)\n", #func, #args)
+#define _ZEPHYR_WARN_UNIMPLEMENTED_AND_RETURN(func, rv, ...) \
+	({                                                   \
+		_ZEPHYR_WARN_UNIMPLEMENTED(func, ...);       \
+		rv;                                          \
+	})
+#endif
+
 /* Task event bitmasks */
 /* Tasks may use the bits in TASK_EVENT_CUSTOM_BIT for their own events */
 #define TASK_EVENT_CUSTOM_BIT(x) BUILD_CHECK_INLINE(BIT(x), BIT(x) & 0x0ffff)
@@ -133,17 +144,27 @@ void set_int_mask(uint32_t val);
  *			interrupt context.
  * @return		The bitmap of events which occurred if wait!=0, else 0.
  */
+#ifdef CONFIG_ZEPHYR
+#define task_set_event(tskid, event, wait)                               \
+	_ZEPHYR_WARN_UNIMPLEMENTED_AND_RETURN(task_set_event, 0L, tskid, \
+					      event, wait)
+#else
 uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait);
+#endif
 
 /**
  * Wake a task.  This sends it the TASK_EVENT_WAKE event.
  *
  * @param tskid		Task to wake
  */
+#ifdef CONFIG_ZEPHYR
+#define task_wake(tskid) _ZEPHYR_WARN_UNIMPLEMENTED(task_wake, tskid)
+#else
 static inline void task_wake(task_id_t tskid)
 {
 	task_set_event(tskid, TASK_EVENT_WAKE, 0);
 }
+#endif
 
 /**
  * Return the identifier of the task currently running.
