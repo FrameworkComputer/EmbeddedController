@@ -8,7 +8,7 @@
 
 #include <devicetree.h>
 
-#define GPIO_SIGNAL(id) _CONCAT(GPIO_, id)
+#define GPIO_SIGNAL(id) DT_CAT(GPIO_, id)
 #define GPIO_SIGNAL_WITH_COMMA(id) GPIO_SIGNAL(id),
 enum gpio_signal {
 #if DT_NODE_EXISTS(DT_PATH(named_gpios))
