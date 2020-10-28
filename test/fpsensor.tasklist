@@ -6,6 +6,10 @@
 /**
  * See CONFIG_TASK_LIST in config.h for details.
  */
-#define CONFIG_TEST_TASK_LIST \
-        TASK_TEST(FPSENSOR, fp_task_simulate, NULL, TASK_STACK_SIZE)
+#define CONFIG_TEST_TASK_LIST
 
+#ifdef BOARD_HOST
+#undef CONFIG_TEST_TASK_LIST
+#define CONFIG_TEST_TASK_LIST \
+	TASK_TEST(FPSENSOR, fp_task_simulate, NULL, TASK_STACK_SIZE)
+#endif

@@ -3,10 +3,12 @@
  * found in the LICENSE file.
  */
 
- #define CONFIG_TEST_MOCK_LIST \
-        MOCK(FP_SENSOR)        \
-        MOCK(FPSENSOR_DETECT)  \
-	MOCK(FPSENSOR_STATE)   \
-        MOCK(MKBP_EVENTS)      \
-        MOCK(ROLLBACK)         \
+#ifdef BOARD_HOST
+#define CONFIG_TEST_MOCK_LIST \
+	MOCK(FP_SENSOR)       \
+	MOCK(FPSENSOR_DETECT) \
+	MOCK(FPSENSOR_STATE)  \
+	MOCK(MKBP_EVENTS)     \
+	MOCK(ROLLBACK)        \
 	MOCK(TIMER)
+#endif /* BOARD_HOST */

@@ -114,6 +114,8 @@ class AllTests:
                 TestConfig(name='flash_write_protect',
                            image_to_use=ImageType.RO,
                            toggle_power=True, enable_hw_write_protect=True),
+            'fpsensor':
+                TestConfig(name='fpsensor'),
             'mpu_ro':
                 TestConfig(name='mpu',
                            image_to_use=ImageType.RO,

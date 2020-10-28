@@ -14,6 +14,7 @@ test-list-y=\
        aes \
        compile_time_macros \
        crc32 \
+       fpsensor \
        mutex \
        pingpong \
        rsa \
