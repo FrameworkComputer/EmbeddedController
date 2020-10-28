@@ -224,7 +224,7 @@ uint32_t task_wait_event(int timeout_us)
 	pthread_cond_wait(&tasks[tid].resume, &run_lock);
 
 	/* Resume */
-	ret = atomic_read_clear(&tasks[tid].event);
+	ret = atomic_clear(&tasks[tid].event);
 	pthread_mutex_unlock(&interrupt_lock);
 	return ret;
 }

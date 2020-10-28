@@ -334,7 +334,7 @@ static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 		ret = timer_arm(deadline, me);
 		ASSERT(ret == EC_SUCCESS);
 	}
-	while (!(evt = atomic_read_clear(&tsk->events))) {
+	while (!(evt = atomic_clear(&tsk->events))) {
 		/*
 		 * We need to ensure that the execution priority is actually
 		 * decreased after the "cpsie i" in the atomic operation above

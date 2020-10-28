@@ -1055,7 +1055,7 @@ void sm5803_handle_interrupt(int chgnum)
 static void sm5803_irq_deferred(void)
 {
 	int i;
-	uint32_t pending = atomic_read_clear(&irq_pending);
+	uint32_t pending = atomic_clear(&irq_pending);
 
 	for (i = 0; i < CHARGER_NUM; i++)
 		if (BIT(i) & pending)

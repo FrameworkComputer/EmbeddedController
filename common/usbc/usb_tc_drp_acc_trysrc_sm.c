@@ -1779,7 +1779,7 @@ static __maybe_unused int reset_device_and_notify(int port)
 	atomic_clear_bits(task_get_event_bitmap(task_get_current()),
 			  PD_EVENT_TCPC_RESET);
 
-	waiting_tasks = atomic_read_clear(&tc[port].tasks_waiting_on_reset);
+	waiting_tasks = atomic_clear(&tc[port].tasks_waiting_on_reset);
 
 	/* Wake up all waiting tasks. */
 	while (waiting_tasks) {

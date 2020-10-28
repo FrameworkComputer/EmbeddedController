@@ -397,7 +397,7 @@ static uint32_t __ram_code __wait_evt(int timeout_us, task_id_t resched)
 		ret = timer_arm(deadline, me);
 		ASSERT(ret == EC_SUCCESS);
 	}
-	while (!(evt = atomic_read_clear(&tsk->events))) {
+	while (!(evt = atomic_clear(&tsk->events))) {
 		/* Remove ourself and get the next task in the scheduler */
 		__schedule(1, resched, 0);
 		resched = TASK_ID_IDLE;

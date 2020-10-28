@@ -611,7 +611,7 @@ host_event_status_host_cmd(struct host_cmd_handler_args *args)
 	atomic_clear_bits(&(pd_status_flags), PD_STATUS_HOST_EVENT);
 
 	/* Read and clear the host event status to return to AP */
-	r->status = atomic_read_clear(&(host_event_status_flags));
+	r->status = atomic_clear(&(host_event_status_flags));
 
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;

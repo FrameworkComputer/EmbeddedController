@@ -384,7 +384,7 @@ static void nx20p348x_handle_interrupt(int port)
 static void nx20p348x_irq_deferred(void)
 {
 	int i;
-	uint32_t pending = atomic_read_clear(&irq_pending);
+	uint32_t pending = atomic_clear(&irq_pending);
 
 	for (i = 0; i < board_get_usb_pd_port_count(); i++)
 		if (BIT(i) & pending)

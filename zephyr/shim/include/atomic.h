@@ -13,9 +13,4 @@ static inline void atomic_clear_bits(atomic_t *addr, atomic_val_t bits)
 	atomic_and(addr, ~bits);
 }
 
-static inline atomic_val_t atomic_read_clear(atomic_t *addr)
-{
-	return atomic_clear(addr);
-}
-
 #endif  /* __CROS_EC_ATOMIC_H */

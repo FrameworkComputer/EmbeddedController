@@ -33,7 +33,7 @@ static inline atomic_val_t atomic_sub(atomic_t *addr, atomic_val_t value)
 	return __atomic_fetch_sub(addr, value, __ATOMIC_SEQ_CST);
 }
 
-static inline atomic_val_t atomic_read_clear(atomic_t *addr)
+static inline atomic_val_t atomic_clear(atomic_t *addr)
 {
 	return __atomic_exchange_n(addr, 0, __ATOMIC_SEQ_CST);
 }

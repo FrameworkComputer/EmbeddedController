@@ -963,7 +963,7 @@ DECLARE_HOST_COMMAND(EC_CMD_CEC_GET, hc_cec_get, EC_VER_MASK(0));
 
 static int cec_get_next_event(uint8_t *out)
 {
-	uint32_t event_out = atomic_read_clear(&cec_events);
+	uint32_t event_out = atomic_clear(&cec_events);
 
 	memcpy(out, &event_out, sizeof(event_out));
 

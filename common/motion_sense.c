@@ -677,7 +677,7 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 
 	if (*event & TASK_EVENT_MOTION_ODR_CHANGE) {
 		const int sensor_bit = 1 << sensor_num;
-		int odr_pending = atomic_read_clear(&odr_event_required);
+		int odr_pending = atomic_clear(&odr_event_required);
 
 		is_odr_pending = odr_pending & sensor_bit;
 		odr_pending &= ~sensor_bit;
@@ -707,7 +707,7 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 	}
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO) &&
 	    *event & TASK_EVENT_MOTION_FLUSH_PENDING) {
-		int flush_pending = atomic_read_clear(&sensor->flush_pending);
+		int flush_pending = atomic_clear(&sensor->flush_pending);
 
 		for (; flush_pending > 0; flush_pending--) {
 			motion_sense_fifo_insert_async_event(

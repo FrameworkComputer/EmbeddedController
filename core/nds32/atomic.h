@@ -60,7 +60,7 @@ static inline atomic_val_t atomic_sub(atomic_t *addr, atomic_val_t value)
 	return ret;
 }
 
-static inline atomic_val_t atomic_read_clear(atomic_t *addr)
+static inline atomic_val_t atomic_clear(atomic_t *addr)
 {
 	atomic_val_t ret;
 	atomic_t volatile *ptr = addr;

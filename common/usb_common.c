@@ -468,7 +468,7 @@ static uint32_t port_oc_reset_req;
 
 static void re_enable_ports(void)
 {
-	uint32_t ports = atomic_read_clear(&port_oc_reset_req);
+	uint32_t ports = atomic_clear(&port_oc_reset_req);
 
 	while (ports) {
 		int port = __fls(ports);
@@ -747,7 +747,7 @@ static uint32_t pd_ports_to_resume;
 static void resume_pd_port(void)
 {
 	uint32_t port;
-	uint32_t suspended_ports = atomic_read_clear(&pd_ports_to_resume);
+	uint32_t suspended_ports = atomic_clear(&pd_ports_to_resume);
 
 	while (suspended_ports) {
 		port = __builtin_ctz(suspended_ports);

@@ -534,7 +534,7 @@ static int reset_device_and_notify(int port)
 	atomic_clear_bits(task_get_event_bitmap(task_get_current()),
 			  PD_EVENT_TCPC_RESET);
 
-	waiting_tasks = atomic_read_clear(&pd[port].tasks_waiting_on_reset);
+	waiting_tasks = atomic_clear(&pd[port].tasks_waiting_on_reset);
 
 	/*
 	 * Now that we are done waking up the device, handle device access

@@ -27,7 +27,7 @@ uint32_t device_get_current_events(void)
 
 static uint32_t device_get_and_clear_events(void)
 {
-	return atomic_read_clear(&device_current_events);
+	return atomic_clear(&device_current_events);
 }
 
 static uint32_t device_get_enabled_events(void)
