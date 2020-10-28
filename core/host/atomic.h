@@ -13,26 +13,9 @@
 typedef int atomic_t;
 typedef atomic_t atomic_val_t;
 
-/*
- * The atomic_* functions are marked as deprecated as a part of the process of
- * transaction to Zephyr compatible atomic functions. These prefixes will be
- * removed in the following patches. Please see b:169151160 for more details.
- */
-
-static inline void deprecated_atomic_clear_bits(uint32_t volatile *addr,
-						uint32_t bits)
-{
-	__sync_and_and_fetch(addr, ~bits);
-}
-
 static inline void atomic_clear_bits(atomic_t *addr, atomic_val_t bits)
 {
 	__atomic_fetch_and(addr, ~bits, __ATOMIC_SEQ_CST);
-}
-
-static inline void deprecated_atomic_or(uint32_t volatile *addr, uint32_t bits)
-{
-	__sync_or_and_fetch(addr, bits);
 }
 
 static inline atomic_val_t atomic_or(atomic_t *addr, atomic_val_t bits)
@@ -40,31 +23,14 @@ static inline atomic_val_t atomic_or(atomic_t *addr, atomic_val_t bits)
 	return __atomic_fetch_or(addr, bits, __ATOMIC_SEQ_CST);
 }
 
-static inline void deprecated_atomic_add(uint32_t volatile *addr,
-					 uint32_t value)
-{
-	__sync_add_and_fetch(addr, value);
-}
-
 static inline atomic_val_t atomic_add(atomic_t *addr, atomic_val_t value)
 {
 	return __atomic_fetch_add(addr, value, __ATOMIC_SEQ_CST);
 }
 
-static inline void deprecated_atomic_sub(uint32_t volatile *addr,
-					 uint32_t value)
-{
-	__sync_sub_and_fetch(addr, value);
-}
-
 static inline atomic_val_t atomic_sub(atomic_t *addr, atomic_val_t value)
 {
 	return __atomic_fetch_sub(addr, value, __ATOMIC_SEQ_CST);
-}
-
-static inline uint32_t deprecated_atomic_read_clear(uint32_t volatile *addr)
-{
-	return __sync_fetch_and_and(addr, 0);
 }
 
 static inline atomic_val_t atomic_read_clear(atomic_t *addr)
