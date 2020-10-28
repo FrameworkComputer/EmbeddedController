@@ -5938,6 +5938,13 @@ static void pe_vcs_send_ps_rdy_swap_run(int port)
 
 			send_ctrl_msg(port, TCPC_TX_SOP_PRIME,
 					  PD_CTRL_SOFT_RESET);
+			/*
+			 * Ensures enough time for transmission completion,
+			 * in the case of more delays.
+			 */
+			pe[port].sender_response_timer = get_time().val +
+							PD_T_SENDER_RESPONSE;
+
 			pe[port].sub = PE_SUB1;
 		}
 		break;
