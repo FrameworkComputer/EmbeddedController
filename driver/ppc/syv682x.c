@@ -53,6 +53,10 @@ static timestamp_t oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+static int syv682x_init(int port);
+
+static void syv682x_interrupt_delayed(int port, int delay);
+
 static int read_reg(uint8_t port, int reg, int *regval)
 {
 	return i2c_read8(ppc_chips[port].i2c_port,
@@ -275,9 +279,16 @@ static void syv682x_handle_control_4_interrupt(int port, int regval)
 		ppc_prints("VCONN OC!", port);
 	}
 
-	/* This should never happen unless something really bad happened */
+	/*
+	 * On VBAT OVP, CC/VCONN are cut. Re-enable before sending the hard
+	 * reset using a PPC re-init. We could reconfigure CC based on flags,
+	 * but these will be updated anyway due to a hard reset so just re-init
+	 * for simplicity.
+	 */
 	if (regval & SYV682X_CONTROL_4_VBAT_OVP) {
 		ppc_prints("VBAT OVP!", port);
+		syv682x_init(port);
+		pd_handle_cc_overvoltage(port);
 	}
 }
 
@@ -462,8 +473,6 @@ static int syv682x_dump(int port)
 	return EC_SUCCESS;
 }
 #endif /* defined(CONFIG_CMD_PPC_DUMP) */
-
-static void syv682x_interrupt_delayed(int port, int delay);
 
 static void syv682x_handle_interrupt(int port)
 {
