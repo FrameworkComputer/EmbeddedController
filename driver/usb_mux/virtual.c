@@ -8,6 +8,8 @@
 #include "common.h"
 #include "console.h"
 #include "host_command.h"
+#include "task.h"
+#include "timer.h"
 #include "usb_mux.h"
 #include "util.h"
 
@@ -26,10 +28,39 @@ static mux_state_t virtual_mux_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static inline void virtual_mux_update_state(int port, mux_state_t mux_state)
 {
+	mux_state_t previous_mux_state = virtual_mux_state[port];
+
 	virtual_mux_state[port] = mux_state;
-#ifdef CONFIG_HOSTCMD_EVENTS
+
+	if (!IS_ENABLED(CONFIG_HOSTCMD_EVENTS))
+		return;
+
 	host_set_single_event(EC_HOST_EVENT_USB_MUX);
-#endif
+
+	if (!IS_ENABLED(CONFIG_USB_MUX_AP_ACK_REQUEST))
+		return;
+
+	/* This should only be called from the PD task */
+	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
+
+	/*
+	 * EC waits for the ACK from kernel indicating that TCSS Mux
+	 * configuration is completed. This mechanism is implemented for
+	 * entering and exiting the safe mode. This is needed to remove
+	 * timing senstivity between BB retimer and TCSS Mux to allow better
+	 * synchronization between them and thereby remain in the same state
+	 * for achieving proper safe state terminations.
+	 *
+	 * Note: While the EC waits for the ACK, the value of usb_mux_get
+	 * won't match the most recently set value with usb_mux_set.
+	 */
+	if ((!(previous_mux_state & USB_PD_MUX_SAFE_MODE) &&
+	     (mux_state & USB_PD_MUX_SAFE_MODE)) ||
+	   ((previous_mux_state & USB_PD_MUX_SAFE_MODE) &&
+	    !(mux_state & USB_PD_MUX_SAFE_MODE))) {
+		task_wait_event_mask(PD_EVENT_AP_MUX_DONE, 100*MSEC);
+		usleep(12.5 * MSEC);
+	}
 }
 
 static int virtual_init(const struct usb_mux *me)

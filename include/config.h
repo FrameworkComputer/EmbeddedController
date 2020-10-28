@@ -4696,6 +4696,13 @@
 /* Enable IT5205H SBU protection switch */
 #undef CONFIG_USB_MUX_IT5205H_SBU_OVP
 
+/*
+ * Enable to inform the AP that an ACK is needed on configuring the TCSS mux.
+ * The config is enabled automatically when the board has CONFIG_USB_MUX_VIRTUAL
+ * and CONFIG_USBC_RETIMER_INTEL_BB enabled.
+ */
+#undef CONFIG_USB_MUX_AP_ACK_REQUEST
+
 /*****************************************************************************/
 /* USB GPIO config */
 #undef CONFIG_USB_GPIO
@@ -5634,6 +5641,14 @@
 #define CONFIG_CHIP_DATA_IN_INIT_ROM
 #endif
 #endif /* CONFIG_CHIP_INIT_ROM_REGION */
+
+/*
+ * By default, enable a request for an ACK from AP, on setting the mux, if the
+ * board supports Burnside Bridge retimer.
+ */
+#if defined(CONFIG_USBC_RETIMER_INTEL_BB) && defined(CONFIG_USB_MUX_VIRTUAL)
+#define CONFIG_USB_MUX_AP_ACK_REQUEST
+#endif /* CONFIG_USBC_RETIMER_INTEL_BB  */
 
 /*****************************************************************************/
 
