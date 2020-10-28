@@ -32,10 +32,8 @@ static struct {
 	uint32_t flags;
 } dpm[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-#define DPM_SET_FLAG(port, flag) \
-	deprecated_atomic_or(&dpm[(port)].flags, (flag))
-#define DPM_CLR_FLAG(port, flag) \
-	deprecated_atomic_clear_bits(&dpm[(port)].flags, (flag))
+#define DPM_SET_FLAG(port, flag) atomic_or(&dpm[(port)].flags, (flag))
+#define DPM_CLR_FLAG(port, flag) atomic_clear_bits(&dpm[(port)].flags, (flag))
 #define DPM_CHK_FLAG(port, flag) (dpm[(port)].flags & (flag))
 
 /* Flags for internal DPM state */
