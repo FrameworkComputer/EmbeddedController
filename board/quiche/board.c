@@ -78,6 +78,25 @@ void hpd_interrupt(enum gpio_signal signal)
 {
 	usb_pd_hpd_edge_event(signal);
 }
+
+void board_uf_manage_vbus(void)
+{
+	int level = gpio_get_level(GPIO_USBC_UF_MUX_VBUS_EN);
+
+	/*
+	 * GPIO_USBC_UF_MUX_VBUS_EN is an output from the PS8803 which tracks if
+	 * C2 is attached. When it's attached, this signal will be high. Use
+	 * this level to control PPC VBUS on/off.
+	 */
+	ppc_vbus_source_enable(USB_PD_PORT_USB3, level);
+	CPRINTS("C2: State = %s", level ? "Attached.SRC " : "Unattached.SRC");
+}
+DECLARE_DEFERRED(board_uf_manage_vbus);
+
+static void board_uf_manage_vbus_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&board_uf_manage_vbus_data, 0);
+}
 #endif /* SECTION_IS_RW */
 
 #include "gpio_list.h" /* Must come after other header files. */
@@ -182,6 +201,11 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_addr_flags = SN5S330_ADDR2_FLAGS,
 		.drv = &sn5s330_drv
 	},
+	[USB_PD_PORT_USB3] = {
+		.i2c_port = I2C_PORT_I2C3,
+		.i2c_addr_flags = SN5S330_ADDR1_FLAGS,
+		.drv = &sn5s330_drv
+	},
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
@@ -221,6 +245,40 @@ enum pd_dual_role_states board_tc_get_initial_drp_mode(int port)
 	return pd_dual_role_init[port];
 }
 
+static void board_config_usbc_uf_ppc(void)
+{
+	int vbus_level;
+
+	/*
+	 * This port is not usb-pd capable, but there is a ppc which must be
+	 * initialized, and keep the VBUS switch enabled.
+	 */
+	ppc_init(USB_PD_PORT_USB3);
+	vbus_level = gpio_get_level(GPIO_USBC_UF_MUX_VBUS_EN);
+
+	CPRINTS("usbc: UF PPC configured. VBUS = %s",
+		vbus_level ? "on" : "off");
+
+	/*
+	 * Check initial state as there there may not be an edge event after
+	 * interrupts are enabled if the port is attached at EC reboot time.
+	 */
+	ppc_vbus_source_enable(USB_PD_PORT_USB3, vbus_level);
+
+	/* Enable VBUS control interrupt for C2 */
+	gpio_enable_interrupt(GPIO_USBC_UF_MUX_VBUS_EN);
+}
+
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	/*
+	 * CONFIG_USB_PD_PORT_MAX_COUNT must be defined to account for C0, C1,
+	 * and C2, but TCPMv2 only knows about C0 and C1, as C2 is a type-c only
+	 * port that is managed directly by the PS8803 TCPC.
+	 */
+	return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
+}
+
 int ppc_get_alert_status(int port)
 {
 	if (port == USB_PD_PORT_HOST)
@@ -251,7 +309,7 @@ void board_overcurrent_event(int port, int is_overcurrented)
 static void board_init(void)
 {
 #ifdef SECTION_IS_RW
-
+	board_config_usbc_uf_ppc();
 #endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
