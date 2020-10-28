@@ -468,8 +468,9 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE,
 #endif /* CONFIG_HOSTCMD_FLASHPD && CONFIG_USB_PD_TCPMV2 */
 
 #ifdef CONFIG_MKBP_EVENT
-void pd_notify_dp_alt_mode_entry(void)
+__overridable void pd_notify_dp_alt_mode_entry(int port)
 {
+	(void)port;
 	CPRINTS("Notifying AP of DP Alt Mode Entry...");
 	mkbp_send_event(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED);
 }

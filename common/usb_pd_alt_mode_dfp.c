@@ -1009,7 +1009,7 @@ __overridable int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 			/*
 			 * Wake the system up since we're entering DP AltMode.
 			 */
-			pd_notify_dp_alt_mode_entry();
+			pd_notify_dp_alt_mode_entry(port);
 
 		return 0;
 	}
@@ -1121,7 +1121,7 @@ __overridable int svdm_dp_attention(int port, uint32_t *payload)
 		 * present.
 		 */
 		if (IS_ENABLED(CONFIG_MKBP_EVENT))
-			pd_notify_dp_alt_mode_entry();
+			pd_notify_dp_alt_mode_entry(port);
 
 	/* Its initial DP status message prior to config */
 	if (!(dp_flags[port] & DP_FLAGS_DP_ON)) {

@@ -79,7 +79,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		 * present.
 		 */
 		if (IS_ENABLED(CONFIG_MKBP_EVENT))
-			pd_notify_dp_alt_mode_entry();
+			pd_notify_dp_alt_mode_entry(port);
 
 	/* Its initial DP status message prior to config */
 	if (!(dp_flags[port] & DP_FLAGS_DP_ON)) {

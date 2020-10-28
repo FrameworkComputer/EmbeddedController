@@ -215,7 +215,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		 * Wake up the AP.  IRQ or level high indicates a DP sink is now
 		 * present.
 		 */
-		pd_notify_dp_alt_mode_entry();
+		pd_notify_dp_alt_mode_entry(port);
 
 	/* Configure TCPC for the HPD event, for proper muxing */
 	usb_mux_hpd_update(port, lvl, irq);

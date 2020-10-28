@@ -28,6 +28,7 @@
 #include "hooks.h"
 #include "keyboard_8042.h"
 #include "lid_switch.h"
+#include "mkbp_event.h"
 #include "power.h"
 #include "power_button.h"
 #include "ps2_chip.h"
@@ -50,6 +51,7 @@ static void board_gmr_tablet_switch_isr(enum gpio_signal signal);
 #include "gpio_list.h"
 
 static bool support_aoz_ppc;
+static bool ignore_c1_dp;
 
 #ifdef HAS_TASK_MOTIONSENSE
 
@@ -621,6 +623,12 @@ static void board_chipset_resume(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
+static void board_chipset_suspend_delay(void)
+{
+	ignore_c1_dp = false;
+}
+DECLARE_DEFERRED(board_chipset_suspend_delay);
+
 static void board_chipset_suspend(void)
 {
 	/* SMART charge current */
@@ -632,6 +640,14 @@ static void board_chipset_suspend(void)
 				  0);
 		if (board_ver >= 3)
 			ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
+	}
+
+	/* Wait 500ms before allowing DP event to cause resume. */
+	if (ec_config_has_mst_hub_rtd2141b()
+	    && (dp_flags[USBC_PORT_C1] & DP_FLAGS_DP_ON)) {
+		ignore_c1_dp = true;
+		hook_call_deferred(&board_chipset_suspend_delay_data,
+				   500 * MSEC);
 	}
 
 	ioex_set_level(IOEX_HDMI_DATA_EN_DB, 0);
@@ -761,4 +777,17 @@ int board_sensor_at_360(void)
 		return !gpio_get_level(GMR_TABLET_MODE_GPIO_L);
 
 	return 0;
+}
+
+/*
+ * b/167949458: Suppress setting the host event for 500ms after entering S3.
+ * Otherwise turning off the MST hub in S3 (via IOEX_HDMI_DATA_EN_DB) causes
+ * a VDM:Attention that immediately wakes us back up from S3.
+ */
+__override void pd_notify_dp_alt_mode_entry(int port)
+{
+	if (port == USBC_PORT_C1 && ignore_c1_dp)
+		return;
+	cprints(CC_USBPD, "Notifying AP of DP Alt Mode Entry...");
+	mkbp_send_event(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED);
 }

@@ -2841,7 +2841,7 @@ void pd_set_polarity(int port, enum tcpc_cc_polarity polarity);
  * Notify the AP that we have entered into DisplayPort Alternate Mode.  This
  * sets a DP_ALT_MODE_ENTERED MKBP event which may wake the AP.
  */
-void pd_notify_dp_alt_mode_entry(void);
+__override_proto void pd_notify_dp_alt_mode_entry(int port);
 
 /*
  * Determines the PD state of the port partner according to Table 4-10 in USB PD
