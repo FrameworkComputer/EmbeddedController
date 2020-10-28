@@ -30,6 +30,13 @@
 
 /* Keyboard features */
 
+/*
+ * Disable VOL up/down when tablet mode.
+ * TODO(b/170966461): Re-enable Vivaldi keyboard once
+ * 8042 and MKBP drivers can coexist.
+ */
+#undef  CONFIG_KEYBOARD_VIVALDI
+
 /* Sensors */
 /* BMA253 accelerometer in base */
 #define CONFIG_ACCEL_BMA255
