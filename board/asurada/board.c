@@ -414,7 +414,7 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 void board_usb_mux_init(void)
 {
 	if (board_get_sub_board() == SUB_BOARD_TYPEC)
-		ps8743_tune_usb_eq(PS8743_I2C_ADDR0_FLAG,
+		ps8743_tune_usb_eq(&usb_muxes[1],
 				   PS8743_USB_EQ_TX_12_8_DB,
 				   PS8743_USB_EQ_RX_12_8_DB);
 }

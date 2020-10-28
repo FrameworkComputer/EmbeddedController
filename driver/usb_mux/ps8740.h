@@ -84,7 +84,7 @@
 #define PS8740_USB_EQ_RX_20_1_DB 0xd0
 #define PS8740_USB_EQ_RX_21_3_DB 0xe0
 
-int ps8740_tune_usb_eq(int i2c_addr, uint8_t tx, uint8_t rx);
+int ps8740_tune_usb_eq(const struct usb_mux *me, uint8_t tx, uint8_t rx);
 int ps8740_write(const struct usb_mux *me, uint8_t reg, uint8_t val);
 int ps8740_read(const struct usb_mux *me, uint8_t reg, int *val);
 

@@ -115,10 +115,9 @@ static int ps8743_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 }
 
 /* Tune USB Tx/Rx Equalization */
-int ps8743_tune_usb_eq(int port, uint8_t tx, uint8_t rx)
+int ps8743_tune_usb_eq(const struct usb_mux *me, uint8_t tx, uint8_t rx)
 {
 	int ret;
-	const struct usb_mux *me = &usb_muxes[port];
 
 	ret = ps8743_write(me, PS8743_REG_USB_EQ_TX, tx);
 	ret |= ps8743_write(me, PS8743_REG_USB_EQ_RX, rx);

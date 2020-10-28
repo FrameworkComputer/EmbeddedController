@@ -75,7 +75,7 @@
 #define PS8743_USB_EQ_RX_21_3_DB 0xd0
 #define PS8743_USB_EQ_RX_22_2_DB 0xe0
 
-int ps8743_tune_usb_eq(int i2c_addr, uint8_t tx, uint8_t rx);
+int ps8743_tune_usb_eq(const struct usb_mux *me, uint8_t tx, uint8_t rx);
 int ps8743_write(const struct usb_mux *me, uint8_t reg, uint8_t val);
 int ps8743_read(const struct usb_mux *me, uint8_t reg, int *val);
 
