@@ -1010,13 +1010,6 @@ static void prl_tx_wait_for_phy_response_entry(const int port)
 
 static void prl_tx_wait_for_phy_response_run(const int port)
 {
-	/*
-	 * TODO(b/164154200): Revert Change-Id
-	 * If6dce35dfd78ee3a70e6216a7b6bf62d3ded5646 workaround to support
-	 * validation for Delbin build.
-	 */
-	const bool timed_out = get_time().val > prl_tx[port].tcpc_tx_timeout;
-
 	/* Wait until TX is complete */
 
 	/*
@@ -1026,8 +1019,7 @@ static void prl_tx_wait_for_phy_response_run(const int port)
 	 *       requirement.
 	 */
 
-	if ((IS_ENABLED(BOARD_DELBIN) && timed_out) ||
-	    prl_tx[port].xmit_status == TCPC_TX_COMPLETE_SUCCESS) {
+	if (prl_tx[port].xmit_status == TCPC_TX_COMPLETE_SUCCESS) {
 		/* NOTE: PRL_TX_Message_Sent State embedded here. */
 		/* Increment messageId counter */
 		increment_msgid_counter(port);
@@ -1044,7 +1036,7 @@ static void prl_tx_wait_for_phy_response_run(const int port)
 		 */
 		task_wake(PD_PORT_TO_TASK_ID(port));
 		set_state_prl_tx(port, PRL_TX_WAIT_FOR_MESSAGE_REQUEST);
-	} else if ((!IS_ENABLED(BOARD_DELBIN) && timed_out) ||
+	} else if (get_time().val > prl_tx[port].tcpc_tx_timeout ||
 		   prl_tx[port].xmit_status == TCPC_TX_COMPLETE_FAILED ||
 		   prl_tx[port].xmit_status == TCPC_TX_COMPLETE_DISCARDED) {
 		/*
