@@ -1336,12 +1336,11 @@ static int gen_vif(const char *name,
 
 	set_vif_field_b(&vif_fields[SOP_P_Capable],
 			"SOP_P_Capable",
-			(IS_ENABLED(CONFIG_USB_CTVPD) ||
-			 IS_ENABLED(CONFIG_USB_VPD)));
+			IS_ENABLED(CONFIG_USB_PD_DECODE_SOP));
 
 	set_vif_field_b(&vif_fields[SOP_PP_Capable],
 			"SOP_PP_Capable",
-			false);
+			IS_ENABLED(CONFIG_USB_PD_DECODE_SOP));
 
 	set_vif_field_b(&vif_fields[SOP_P_Debug_Capable],
 			"SOP_P_Debug_Capable",
@@ -1413,7 +1412,7 @@ static int gen_vif(const char *name,
 
 	set_vif_field_b(&vif_fields[Type_C_Is_Alt_Mode_Controller],
 			"Type_C_Is_Alt_Mode_Controller",
-			false);
+			IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP));
 
 
 	set_vif_field_b(&vif_fields[Type_C_Can_Act_As_Device],
@@ -1422,7 +1421,7 @@ static int gen_vif(const char *name,
 
 	set_vif_field_b(&vif_fields[Type_C_Is_Alt_Mode_Adapter],
 			"Type_C_Is_Alt_Mode_Adapter",
-			(IS_ENABLED(CONFIG_USB_ALT_MODE_ADAPTER)));
+			IS_ENABLED(CONFIG_USB_ALT_MODE_ADAPTER));
 
 	{
 		int ds = USB_2;
