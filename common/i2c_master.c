@@ -23,6 +23,11 @@
 #include "watchdog.h"
 #include "virtual_battery.h"
 
+#ifdef CONFIG_ZEPHYR
+#include <drivers/i2c.h>
+#include "i2c/i2c.h"
+#endif /* CONFIG_ZEPHYR */
+
 /* Delay for bitbanging i2c corresponds roughly to 100kHz. */
 #define I2C_BITBANG_DELAY_US	5
 
@@ -43,11 +48,24 @@
 #define I2C_BITBANG_PORT_COUNT 0
 #endif
 
-static struct mutex port_mutex[I2C_CONTROLLER_COUNT + I2C_BITBANG_PORT_COUNT];
+static mutex_t port_mutex[I2C_CONTROLLER_COUNT + I2C_BITBANG_PORT_COUNT];
 /* A bitmap of the controllers which are currently servicing a request. */
 static uint32_t i2c_port_active_list;
 BUILD_ASSERT(ARRAY_SIZE(port_mutex) < 32);
 static uint8_t port_protected[I2C_PORT_COUNT + I2C_BITBANG_PORT_COUNT];
+
+#ifdef CONFIG_ZEPHYR
+static int init_port_mutex(const struct device *dev)
+{
+	ARG_UNUSED(dev);
+
+	for (int i = 0; i < ARRAY_SIZE(port_mutex); ++i)
+		k_mutex_init(port_mutex + i);
+
+	return 0;
+}
+SYS_INIT(init_port_mutex, POST_KERNEL, 50);
+#endif /* CONFIG_ZEPHYR */
 
 /**
  * Non-deterministically test the lock status of the port.  If another task
@@ -67,7 +85,6 @@ static int i2c_port_is_locked(int port)
 
 	return (i2c_port_active_list >> port) & 1;
 }
-
 
 const struct i2c_port_t *get_i2c_port(const int port)
 {
@@ -89,10 +106,10 @@ const struct i2c_port_t *get_i2c_port(const int port)
 	return NULL;
 }
 
-static int chip_i2c_xfer_with_notify(const int port,
-				     const uint16_t slave_addr_flags,
-				     const uint8_t *out, int out_size,
-				     uint8_t *in, int in_size, int flags)
+__maybe_unused static int chip_i2c_xfer_with_notify(
+	const int port, const uint16_t slave_addr_flags,
+	const uint8_t *out, int out_size,
+	uint8_t *in, int in_size, int flags)
 {
 	int ret;
 	uint16_t addr_flags = slave_addr_flags;
@@ -164,7 +181,6 @@ int i2c_xfer_unlocked(const int port,
 {
 	int i;
 	int ret = EC_SUCCESS;
-
 	uint16_t addr_flags = slave_addr_flags & ~I2C_FLAG_PEC;
 
 	if (!i2c_port_is_locked(port)) {
@@ -173,7 +189,10 @@ int i2c_xfer_unlocked(const int port,
 	}
 
 	for (i = 0; i <= CONFIG_I2C_NACK_RETRY_COUNT; i++) {
-#ifdef CONFIG_I2C_XFER_LARGE_READ
+#ifdef CONFIG_ZEPHYR
+		ret = i2c_write_read(i2c_get_device_for_port(port), addr_flags,
+				     out, out_size, in, in_size);
+#elif defined(CONFIG_I2C_XFER_LARGE_READ)
 		ret = i2c_xfer_no_retry(port, addr_flags,
 					    out, out_size, in,
 					    in_size, flags);

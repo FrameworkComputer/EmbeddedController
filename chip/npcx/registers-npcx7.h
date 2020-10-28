@@ -256,7 +256,12 @@ enum {
 #define NPCX_SMBSEL_SMB5SEL		5
 #define NPCX_SMBSEL_SMB6SEL		6
 
-/* SMB enumeration: I2C port definitions. */
+/*
+ * SMB enumeration: I2C port definitions.
+ *
+ * Node: If making changes here please update the translation layer for Zephyr
+ * builds at zephyr/shim/chip/npcx/i2c.c.
+ */
 enum {
 	NPCX_I2C_PORT0_0 = 0,	/* I2C port 0, bus 0 */
 	NPCX_I2C_PORT1_0,	/* I2C port 1, bus 0 */

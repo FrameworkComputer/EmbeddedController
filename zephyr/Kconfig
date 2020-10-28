@@ -109,4 +109,14 @@ config PLATFORM_EC_LID_SWITCH
 	  commands in platform/ec.  This requires a GPIO named
 	  GPIO_LID_OPEN to be defined in gpio_map.h.
 
+config PLATFORM_EC_I2C
+	bool "Enable the EC i2c module"
+	default y
+	help
+	  Enable compilation of the EC i2c module. Once enabled, it will be
+	  possible to make calls using the old platform/ec i2c APIs defined
+	  in include/i2c.h and implemented in common/i2c_master.c. Doing so
+	  should make shimming other platform/ec modules which rely on i2c
+	  communication "just work" without requiring any further code changes.
+
 endif # PLATFORM_EC

@@ -51,4 +51,19 @@
 
 #endif  /* CONFIG_PLATFORM_EC_TIMER */
 
+/*
+ * Load the chip family specific header. Normally for npcx, this would be done
+ * by chip/npcx/config_chip.h but since this file is replacing that header
+ * we'll need (for now) to load it ourselves. Long term, the functions, enums,
+ * and constants in this header will be replaced by more Zephyr/devicetree
+ * specific code.
+ */
+#ifdef CHIP_FAMILY_NPCX7
+#include "config_chip-npcx7.h"
+#endif /* CHIP_FAMILY_NPCX7 */
+
+#ifdef CONFIG_PLATFORM_EC_I2C
+#define CONFIG_I2C
+#endif /* CONFIG_PLATFORM_EC_I2C */
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */
