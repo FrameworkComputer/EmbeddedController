@@ -27,8 +27,8 @@ test_static int test_validate_fp_buffer_offset_failure_overflow(void)
 
 void run_test(int argc, char **argv)
 {
-	test_validate_fp_buffer_offset_success();
-	test_validate_fp_buffer_offset_failure_no_overflow();
-	test_validate_fp_buffer_offset_failure_overflow();
+	RUN_TEST(test_validate_fp_buffer_offset_success);
+	RUN_TEST(test_validate_fp_buffer_offset_failure_no_overflow);
+	RUN_TEST(test_validate_fp_buffer_offset_failure_overflow);
 	test_print_result();
 }
