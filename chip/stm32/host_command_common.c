@@ -23,29 +23,19 @@ static enum ec_status host_command_protocol_info(struct host_cmd_handler_args
 	enum ec_status ret_status = EC_RES_INVALID_COMMAND;
 
 	/*
-	 * If FP sensor task is enabled, read transport type from TRANSPORT_SEL
-	 * bootstrap pin for the first time this function is called.
+	 * Read transport type from TRANSPORT_SEL bootstrap pin the first
+	 * time this function is called.
 	 */
-	if ((IS_ENABLED(HAS_TASK_FPSENSOR)) &&
-	    (curr_transport_type == FP_TRANSPORT_TYPE_UNKNOWN)) {
+	if (IS_ENABLED(CONFIG_FINGERPRINT_MCU) &&
+	    (curr_transport_type == FP_TRANSPORT_TYPE_UNKNOWN))
 		curr_transport_type = get_fp_transport_type();
-	}
 
-	/*
-	 * Transport select is only enabled on boards with fp sensor tasks.
-	 * If fp sensor task is enabled, transport is USART and
-	 * host command layer is present, call usart_get_protocol.
-	 * If fp sensor task is enabled and transport is SPI or else if only
-	 * spi layer is enabled on non fp boards, call spi_get_protocol_info.
-	 */
-	if (IS_ENABLED(HAS_TASK_FPSENSOR) &&
-	    IS_ENABLED(CONFIG_USART_HOST_COMMAND) &&
+	if (IS_ENABLED(CONFIG_USART_HOST_COMMAND) &&
 	    curr_transport_type == FP_TRANSPORT_TYPE_UART)
 		ret_status = usart_get_protocol_info(args);
-	else if (IS_ENABLED(CONFIG_SPI) ||
-		(IS_ENABLED(HAS_TASK_FPSENSOR) &&
-		 curr_transport_type == FP_TRANSPORT_TYPE_SPI))
-			ret_status = spi_get_protocol_info(args);
+	else if (IS_ENABLED(CONFIG_SPI) &&
+		 curr_transport_type == FP_TRANSPORT_TYPE_SPI)
+		ret_status = spi_get_protocol_info(args);
 
 	return ret_status;
 }

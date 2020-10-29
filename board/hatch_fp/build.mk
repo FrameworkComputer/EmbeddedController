@@ -11,11 +11,11 @@ CHIP_VARIANT:=stm32f412
 
 board-y=board.o
 
-# If we're not building a test build, use the real sensor detection. Otherwise,
-# for test builds, allow the mock version so we can test sensor/transport
-# permutations in the unit tests.
-ifeq ($(TEST_BUILD),)
-board-y+=fpsensor_detect.o
+# If we're mocking the sensor detection for testing (so we can test
+# sensor/transport permutations in the unit tests), don't build the real sensor
+# detection.
+ifeq ($(HAS_MOCK_FPSENSOR_DETECT),)
+	board-y+=fpsensor_detect.o
 endif
 
 test-list-y=\
