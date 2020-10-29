@@ -616,10 +616,13 @@ void gpio_pre_init(void)
 	}
 #endif
 
-	/* Configure unused pins as INPUT with PU to save power. */
-	for (i = 0; i < unused_pin_count; i++, u++)
+	/* Configure unused pins as GPIO INPUT with PU to save power. */
+	for (i = 0; i < unused_pin_count; i++, u++) {
 		gpio_set_flags_by_mask(u->port, u->mask,
 				       GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_alternate_function(g->port, g->mask,
+					    GPIO_ALT_FUNC_NONE);
+	}
 }
 
 /*****************************************************************************/
