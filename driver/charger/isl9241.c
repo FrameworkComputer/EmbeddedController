@@ -89,8 +89,8 @@ static inline enum ec_error_list isl9241_update(int chgnum, int offset,
 
 /*****************************************************************************/
 /* Charger interfaces */
-static enum ec_error_list isl9241_set_input_current(int chgnum,
-						    int input_current)
+static enum ec_error_list isl9241_set_input_current_limit(int chgnum,
+							  int input_current)
 {
 	int rv;
 	uint16_t reg = AC_CURRENT_TO_REG(input_current);
@@ -432,7 +432,8 @@ static void isl9241_init(int chgnum)
 		return;
 
 	/* Initialize the input current limit to the board's default. */
-	if (isl9241_set_input_current(chgnum, CONFIG_CHARGER_INPUT_CURRENT))
+	if (isl9241_set_input_current_limit(chgnum,
+					    CONFIG_CHARGER_INPUT_CURRENT))
 		goto init_fail;
 
 	return;
@@ -537,7 +538,7 @@ const struct charger_drv isl9241_drv = {
 	.set_voltage = &isl9241_set_voltage,
 	.discharge_on_ac = &isl9241_discharge_on_ac,
 	.get_vbus_voltage = &isl9241_get_vbus_voltage,
-	.set_input_current = &isl9241_set_input_current,
+	.set_input_current_limit = &isl9241_set_input_current_limit,
 	.get_input_current = &isl9241_get_input_current,
 	.manufacturer_id = &isl9241_manufacturer_id,
 	.device_id = &isl9241_device_id,

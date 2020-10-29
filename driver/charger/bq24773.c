@@ -91,8 +91,8 @@ static inline enum ec_error_list raw_write16(int chgnum, int offset, int value)
 
 /* chip specific interfaces */
 
-static enum ec_error_list bq2477x_set_input_current(int chgnum,
-						    int input_current)
+static enum ec_error_list bq2477x_set_input_current_limit(int chgnum,
+							  int input_current)
 {
 #ifdef CONFIG_CHARGER_BQ24770
 	return raw_write16(chgnum, REG_INPUT_CURRENT,
@@ -308,7 +308,7 @@ const struct charger_drv bq2477x_drv = {
 	.get_voltage = &bq2477x_get_voltage,
 	.set_voltage = &bq2477x_set_voltage,
 	.discharge_on_ac = &bq2477x_discharge_on_ac,
-	.set_input_current = &bq2477x_set_input_current,
+	.set_input_current_limit = &bq2477x_set_input_current_limit,
 	.get_input_current = &bq2477x_get_input_current,
 	.manufacturer_id = &bq2477x_manufacturer_id,
 	.device_id = &bq2477x_device_id,

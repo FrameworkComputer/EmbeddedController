@@ -211,7 +211,7 @@ static int command_charger(int argc, char **argv)
 		d = strtoi(argv[2+idx_provided], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM2+idx_provided;
-		return charger_set_input_current(chgnum, d);
+		return charger_set_input_current_limit(chgnum, d);
 	} else if (strcasecmp(argv[1+idx_provided], "current") == 0) {
 		d = strtoi(argv[2+idx_provided], &e, 0);
 		if (*e)
@@ -474,7 +474,8 @@ enum ec_error_list charger_get_vbus_voltage(int port, int *voltage)
 	return rv;
 }
 
-enum ec_error_list charger_set_input_current(int chgnum, int input_current)
+enum ec_error_list charger_set_input_current_limit(int chgnum,
+						   int input_current)
 {
 	int rv = EC_ERROR_UNIMPLEMENTED;
 
@@ -483,9 +484,9 @@ enum ec_error_list charger_set_input_current(int chgnum, int input_current)
 		return EC_ERROR_INVAL;
 	}
 
-	if (chg_chips[chgnum].drv->set_input_current)
-		rv = chg_chips[chgnum].drv->set_input_current(chgnum,
-							      input_current);
+	if (chg_chips[chgnum].drv->set_input_current_limit)
+		rv = chg_chips[chgnum].drv->set_input_current_limit(
+			chgnum, input_current);
 
 	return rv;
 }

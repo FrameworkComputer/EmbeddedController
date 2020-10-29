@@ -154,17 +154,17 @@ static enum ec_error_list isl9237_set_voltage(int chgnum, uint16_t voltage)
 
 /* chip specific interfaces */
 
-static enum ec_error_list isl923x_set_input_current(int chgnum,
-						    int input_current)
+static enum ec_error_list isl923x_set_input_current_limit(int chgnum,
+							  int input_current)
 {
 	int rv;
 	uint16_t reg = AC_CURRENT_TO_REG(input_current);
 
-	rv = raw_write16(chgnum, ISL923X_REG_ADAPTER_CURRENT1, reg);
+	rv = raw_write16(chgnum, ISL923X_REG_ADAPTER_CURRENT_LIMIT1, reg);
 	if (rv)
 		return rv;
 
-	return raw_write16(chgnum, ISL923X_REG_ADAPTER_CURRENT2, reg);
+	return raw_write16(chgnum, ISL923X_REG_ADAPTER_CURRENT_LIMIT2, reg);
 }
 
 #ifdef CONFIG_CMD_CHARGER_ADC_AMON_BMON
@@ -224,7 +224,7 @@ static enum ec_error_list isl923x_get_input_current(int chgnum,
 	if (IS_ENABLED(CONFIG_CHARGER_RAA489000))
 		reg = RAA489000_REG_ADC_INPUT_CURRENT;
 	else
-		reg = ISL923X_REG_ADAPTER_CURRENT1;
+		reg = ISL923X_REG_ADAPTER_CURRENT_LIMIT1;
 
 	rv = raw_read16(chgnum, reg, &regval);
 	if (rv)
@@ -686,8 +686,8 @@ static void isl923x_init(int chgnum)
 		/*
 		 * Initialize the input current limit to the board's default.
 		 */
-		if (isl923x_set_input_current(chgnum,
-					      CONFIG_CHARGER_INPUT_CURRENT))
+		if (isl923x_set_input_current_limit(
+				chgnum, CONFIG_CHARGER_INPUT_CURRENT))
 			goto init_fail;
 	}
 
@@ -1281,7 +1281,7 @@ const struct charger_drv isl923x_drv = {
 	.set_voltage = &isl923x_set_voltage,
 	.discharge_on_ac = &isl923x_discharge_on_ac,
 	.get_vbus_voltage = &isl923x_get_vbus_voltage,
-	.set_input_current = &isl923x_set_input_current,
+	.set_input_current_limit = &isl923x_set_input_current_limit,
 	.get_input_current = &isl923x_get_input_current,
 	.manufacturer_id = &isl923x_manufacturer_id,
 	.device_id = &isl923x_device_id,

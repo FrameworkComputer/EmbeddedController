@@ -696,8 +696,8 @@ static int rt946x_is_sourcing_otg_power(int chgnum, int port)
 }
 #endif
 
-static enum ec_error_list rt946x_set_input_current(int chgnum,
-						   int input_current)
+static enum ec_error_list rt946x_set_input_current_limit(int chgnum,
+							 int input_current)
 {
 	uint8_t reg_iin = 0;
 	const struct charger_info * const info = rt946x_get_info(chgnum);
@@ -1895,7 +1895,7 @@ const struct charger_drv rt946x_drv = {
 	.set_voltage = &rt946x_set_voltage,
 	.discharge_on_ac = &rt946x_discharge_on_ac,
 	.get_vbus_voltage = &rt946x_get_vbus_voltage,
-	.set_input_current = &rt946x_set_input_current,
+	.set_input_current_limit = &rt946x_set_input_current_limit,
 	.get_input_current = &rt946x_get_input_current,
 	.manufacturer_id = &rt946x_manufacturer_id,
 	.device_id = &rt946x_device_id,

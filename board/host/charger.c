@@ -128,7 +128,7 @@ static enum ec_error_list mock_get_input_current(int chgnum, int *input_current)
 }
 
 
-static enum ec_error_list mock_set_input_current(int chgnum, int current)
+static enum ec_error_list mock_set_input_current_limit(int chgnum, int current)
 {
 	const struct charger_info *info = mock_get_info(chgnum);
 
@@ -160,7 +160,7 @@ const struct charger_drv mock_drv = {
 	.set_current = &mock_set_current,
 	.get_voltage = &mock_get_voltage,
 	.set_voltage = &mock_set_voltage,
-	.set_input_current = &mock_set_input_current,
+	.set_input_current_limit = &mock_set_input_current_limit,
 	.get_input_current = &mock_get_input_current,
 	.manufacturer_id = &mock_manufacturer_id,
 	.device_id = &mock_device_id,

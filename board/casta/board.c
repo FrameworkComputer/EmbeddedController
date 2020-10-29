@@ -168,13 +168,13 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_INIT_I2C);
 
 static void set_input_limit_on_ac_removal(void)
 {
-        if(extpower_is_present())
-                return;
+	if (extpower_is_present())
+		return;
 
-        if(get_cbi_ssfc_charger() != SSFC_CHARGER_BQ25710)
-                return;
+	if (get_cbi_ssfc_charger() != SSFC_CHARGER_BQ25710)
+		return;
 
-        charger_set_input_current(0, CONFIG_CHARGER_INPUT_CURRENT);
+	charger_set_input_current_limit(0, CONFIG_CHARGER_INPUT_CURRENT);
 
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, set_input_limit_on_ac_removal, HOOK_PRIO_DEFAULT);

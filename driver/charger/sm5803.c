@@ -1267,8 +1267,8 @@ static enum ec_error_list sm5803_get_vbus_voltage(int chgnum, int port,
 	return rv;
 }
 
-static enum ec_error_list sm5803_set_input_current(int chgnum,
-						   int input_current)
+static enum ec_error_list sm5803_set_input_current_limit(int chgnum,
+							 int input_current)
 {
 	int reg;
 
@@ -1600,7 +1600,7 @@ const struct charger_drv sm5803_drv = {
 	.set_voltage = &sm5803_set_voltage,
 	.discharge_on_ac = &sm5803_discharge_on_ac,
 	.get_vbus_voltage = &sm5803_get_vbus_voltage,
-	.set_input_current = &sm5803_set_input_current,
+	.set_input_current_limit = &sm5803_set_input_current_limit,
 	.get_input_current = &sm5803_get_input_current,
 	.device_id = &sm5803_get_dev_id,
 	.get_option = &sm5803_get_option,
