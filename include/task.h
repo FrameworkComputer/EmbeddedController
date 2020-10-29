@@ -79,6 +79,23 @@ void interrupt_disable(void);
  */
 void interrupt_enable(void);
 
+/*
+ * Define irq_lock and irq_unlock that match the function signatures to Zephyr's
+ * functions. In reality, these simply call the current implementation of
+ * interrupt_disable() and interrupt_enable().
+ */
+#ifndef CONFIG_ZEPHYR
+__maybe_unused static inline uint32_t irq_lock(void)
+{
+	interrupt_disable();
+	return 0;
+}
+__maybe_unused static inline void irq_unlock(uint32_t key)
+{
+	interrupt_enable();
+}
+#endif /* CONFIG_ZEPHYR */
+
 /**
  * Return true if we are in interrupt context.
  */
