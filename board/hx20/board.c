@@ -744,7 +744,7 @@ static void sci_enable(void)
 {
 	if (*host_get_customer_memmap(0x00) == 1) {
 	/* when host set EC driver ready flag, EC need to enable SCI */
-		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0xffffffff);
+		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0xAF92AFF);
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }
@@ -1098,10 +1098,17 @@ struct keyboard_scan_config keyscan_config = {
 	.scan_period_us = 3 * MSEC,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
+#ifdef CHIP_FAMILY_MEC17XX
+	.actual_key_mask = {
+		0x14, 0xff, 0xff, 0xf2, 0xff, 0xff, 0xff,
+		0x0a, 0xff, 0xa0, 0xff, 0xff, 0x00, 0x41, 0xff, 0xff  /* full set */
+	},
+#else
 	.actual_key_mask = {
 		0xff, 0xff, 0xff, 0x03, 0xff, 0xff, 0xff,
-		0x0a, 0xff, 0x03, 0xff, 0xff, 0x03, 0xff, 0xff, 0xef  /* full set */
+		0xff, 0xff, 0x03, 0xff, 0xff, 0x03, 0xff, 0xff, 0xef  /* full set */
 	},
+#endif
 };
 
 
