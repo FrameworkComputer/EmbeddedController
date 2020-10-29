@@ -534,6 +534,9 @@ static void system_set_lct_alarm(uint32_t seconds, uint32_t microseconds)
 #ifdef CONFIG_HIBERNATE_PSL
 	/* Enable LCT event to PSL */
 	npcx_lct_config(seconds, 1, 0);
+	/* save the start time of LCT */
+	if (IS_ENABLED(CONFIG_HOSTCMD_RTC) || IS_ENABLED(CONFIG_CMD_RTC))
+		bbram_data_write(BBRM_DATA_INDEX_LCT_TIME, seconds);
 #else
 	/* Enable LCT event interrupt and MIWU */
 	npcx_lct_config(seconds, 0, 1);
@@ -617,21 +620,48 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	for (i = NPCX_IRQ_0 ; i < NPCX_IRQ_COUNT ; i++)
 		task_clear_pending_irq(i);
 
-	/*
-	 * Set RTC interrupt in time to wake up before
-	 * next event.
-	 */
-	if (seconds || microseconds)
+	/* Set the timer interrupt for wake up.  */
 #ifdef NPCX_LCT_SUPPORT
+	if (seconds || microseconds) {
 		system_set_lct_alarm(seconds, microseconds);
+	} else if (IS_ENABLED(CONFIG_HIBERNATE_PSL_COMPENSATE_RTC)) {
+		system_set_lct_alarm(NPCX_LCT_MAX, 0);
+	}
 #else
+	if (seconds || microseconds)
 		system_set_rtc_alarm(seconds, microseconds);
 #endif
 
 	/* execute hibernate func depend on chip series */
 	__hibernate_npcx_series();
-
 }
+
+#ifdef CONFIG_HIBERNATE_PSL_COMPENSATE_RTC
+#ifndef NPCX_LCT_SUPPORT
+#error "Do not enable CONFIG_HIBERNATE_PSL_COMPENSATE_RTC if npcx ec doesn't \
+support LCT!"
+#endif
+/*
+ * The function uses the LCT counter value to compensate for RTC after hibernate
+ * wake-up. Because system_set_rtc() will invoke udelay(), the function should
+ * execute after timer_init(). The function also should execute before
+ * npcx_lct_init() which will clear all LCT register.
+ */
+void system_compensate_rtc(void)
+{
+	uint32_t rtc_time, ltc_start_time;
+
+	ltc_start_time = bbram_data_read(BBRM_DATA_INDEX_LCT_TIME);
+	if (ltc_start_time == 0)
+		return;
+
+	rtc_time = system_get_rtc_sec();
+	rtc_time += ltc_start_time - npcx_lct_get_time();
+	system_set_rtc(rtc_time);
+	/* Clear BBRAM data to avoid compensating again. */
+	bbram_data_write(BBRM_DATA_INDEX_LCT_TIME, 0);
+}
+#endif
 #endif /* CONFIG_SUPPORT_CHIP_HIBERNATION */
 
 static char system_to_hex(uint8_t val)

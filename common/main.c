@@ -124,6 +124,10 @@ test_mockable __keep int main(void)
 	 */
 	timer_init();
 
+	/* Compensate the elapsed time for the RTC. */
+	if (IS_ENABLED(CONFIG_HIBERNATE_PSL_COMPENSATE_RTC))
+		system_compensate_rtc();
+
 	/* Main initialization stage.  Modules may enable interrupts here. */
 	cpu_init();
 
