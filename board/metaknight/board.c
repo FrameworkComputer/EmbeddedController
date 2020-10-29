@@ -45,6 +45,12 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+/* USB-A Configuration */
+const int usb_port_enable[USB_PORT_COUNT] = {
+	GPIO_EN_USB_A0_VBUS,
+	GPIO_EN_USB_A1_VBUS,
+};
+
 static void tcpc_alert_event(enum gpio_signal s)
 {
 	int port = (s == GPIO_USB_C0_INT_ODL) ? 0 : 1;
