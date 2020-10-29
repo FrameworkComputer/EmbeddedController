@@ -2052,6 +2052,24 @@ enum dma_channel {
 	/* Channel count */
 	MCHP_DMAC_COUNT =      12,
 };
+
+/*
+ * Peripheral device DMA Device ID's for bits [15:9]
+ * in DMA channel control register.
+ */
+#define MCHP_DMA_I2C0_SLV_REQ_ID    0
+#define MCHP_DMA_I2C0_MTR_REQ_ID    1
+#define MCHP_DMA_I2C1_SLV_REQ_ID    2
+#define MCHP_DMA_I2C1_MTR_REQ_ID    3
+#define MCHP_DMA_I2C2_SLV_REQ_ID    4
+#define MCHP_DMA_I2C2_MTR_REQ_ID    5
+#define MCHP_DMA_SPI0_TX_REQ_ID     6
+#define MCHP_DMA_SPI0_RX_REQ_ID     7
+#define MCHP_DMA_SPI1_TX_REQ_ID     8
+#define MCHP_DMA_SPI1_RX_REQ_ID     9
+#define MCHP_DMA_QMSPI0_TX_REQ_ID   10
+#define MCHP_DMA_QMSPI0_RX_REQ_ID   11
+
 #else
 enum dma_channel {
 	/* Channel numbers */
@@ -2072,6 +2090,25 @@ enum dma_channel {
 	/* Channel count */
 	MCHP_DMAC_COUNT =      14,
 };
+
+/*
+ * Peripheral device DMA Device ID's for bits [15:9]
+ * in DMA channel control register.
+ */
+#define MCHP_DMA_I2C0_SLV_REQ_ID	0
+#define MCHP_DMA_I2C0_MTR_REQ_ID	1
+#define MCHP_DMA_I2C1_SLV_REQ_ID	2
+#define MCHP_DMA_I2C1_MTR_REQ_ID	3
+#define MCHP_DMA_I2C2_SLV_REQ_ID	4
+#define MCHP_DMA_I2C2_MTR_REQ_ID	5
+#define MCHP_DMA_I2C3_SLV_REQ_ID	6
+#define MCHP_DMA_I2C3_MTR_REQ_ID	7
+#define MCHP_DMA_GPSPI0_TX_REQ_ID	8
+#define MCHP_DMA_GPSPI0_RX_REQ_ID	9
+#define MCHP_DMA_GPSPI1_TX_REQ_ID	10
+#define MCHP_DMA_GPSPI1_RX_REQ_ID	11
+#define MCHP_DMA_QMSPI0_TX_REQ_ID	12
+#define MCHP_DMA_QMSPI0_RX_REQ_ID	13
 #endif
 
 
@@ -2101,25 +2138,6 @@ enum dma_channel {
 #define MCHP_DMA_STS_DONE	BIT(2)
 #define MCHP_DMA_STS_HWFL_ERR	BIT(1)
 #define MCHP_DMA_STS_BUS_ERR	BIT(0)
-
-/*
- * Peripheral device DMA Device ID's for bits [15:9]
- * in DMA channel control register.
- */
-#define MCHP_DMA_I2C0_SLV_REQ_ID	0
-#define MCHP_DMA_I2C0_MTR_REQ_ID	1
-#define MCHP_DMA_I2C1_SLV_REQ_ID	2
-#define MCHP_DMA_I2C1_MTR_REQ_ID	3
-#define MCHP_DMA_I2C2_SLV_REQ_ID	4
-#define MCHP_DMA_I2C2_MTR_REQ_ID	5
-#define MCHP_DMA_I2C3_SLV_REQ_ID	6
-#define MCHP_DMA_I2C3_MTR_REQ_ID	7
-#define MCHP_DMA_GPSPI0_TX_REQ_ID	8
-#define MCHP_DMA_GPSPI0_RX_REQ_ID	9
-#define MCHP_DMA_GPSPI1_TX_REQ_ID	10
-#define MCHP_DMA_GPSPI1_RX_REQ_ID	11
-#define MCHP_DMA_QMSPI0_TX_REQ_ID	12
-#define MCHP_DMA_QMSPI0_RX_REQ_ID	13
 
 /*
  * Required structure typedef for common/dma.h interface
