@@ -139,6 +139,9 @@ GPIO(SKU_ID2,               PIN(D, 4), GPIO_INPUT)
  */
 GPIO(DA9313_GPIO0,          PIN(E, 2), GPIO_INPUT | GPIO_PULL_DOWN) /* Switchcap GPIO0 */
 
+/* Special straps */
+GPIO(ARM_X86,               PIN(6, 6), GPIO_OUT_LOW)  /* NC, low for power saving */
+
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)            /* UART (GPIO64/65) */
 ALTERNATE(PIN_MASK(B, 0x30), 1, MODULE_I2C, 0)             /* I2C0 (GPIOB4/B5) */

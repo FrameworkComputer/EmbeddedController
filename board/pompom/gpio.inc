@@ -125,6 +125,9 @@ GPIO(SKU_ID2,               PIN(D, 4), GPIO_INPUT)
  */
 GPIO(DA9313_GPIO0,          PIN(E, 2), GPIO_INPUT | GPIO_PULL_DOWN) /* Switchcap GPIO0 */
 
+/* Special straps */
+GPIO(ARM_X86,               PIN(6, 6), GPIO_OUT_LOW)  /* NC, low for power saving */
+
 /* Unused GPIOs, NC. */
 UNUSED(PIN(5, 1))
 UNUSED(PIN(D, 0))

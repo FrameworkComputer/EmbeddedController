@@ -132,6 +132,9 @@ GPIO(SKU_ID0,               PIN(F, 0), GPIO_INPUT)
 GPIO(SKU_ID1,               PIN(4, 1), GPIO_INPUT)
 GPIO(SKU_ID2,               PIN(D, 4), GPIO_INPUT)
 
+/* Special straps */
+GPIO(ARM_X86,               PIN(6, 6), GPIO_OUT_LOW)  /* NC, low for power saving */
+
 /* Unused GPIOs, NC. */
 UNUSED(PIN(5, 1))
 UNUSED(PIN(D, 0))
