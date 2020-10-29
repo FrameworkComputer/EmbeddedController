@@ -117,15 +117,7 @@ const char *gpio_get_name(enum gpio_signal signal)
 
 void gpio_set_level(enum gpio_signal signal, int value)
 {
-	int rv;
-
-	if (value != 0) {
-		rv = gpio_port_set_bits_raw(data[signal].dev,
-					    BIT(configs[signal].pin));
-	} else {
-		rv = gpio_port_clear_bits_raw(data[signal].dev,
-					      BIT(configs[signal].pin));
-	}
+	int rv = gpio_pin_set_raw(data[signal].dev, configs[signal].pin, value);
 
 	if (rv < 0) {
 		LOG_ERR("Cannot write %s (%d)", configs[signal].name, rv);
