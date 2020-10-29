@@ -116,6 +116,13 @@ void board_config_pre_init(void)
 #if defined(CONFIG_LOW_POWER_IDLE) && defined(CONFIG_MCHP_48MHZ_OUT)
 	gpio_set_alternate_function(1, 0x10000, 2);
 #endif
+
+	/* Disable BGPO function */
+	MCHP_WEEK_TIMER_BGPO_POWER &= ~(BIT(0) | BIT(1) | BIT(2));
+	/* Make sure BPGO reset is RESET_SYS */
+	MCHP_WEEK_TIMER_BGPO_RESET &= ~(BIT(0) | BIT(1) | BIT(2));
+
+
 }
 #endif /* #ifdef CONFIG_BOARD_PRE_INIT */
 
@@ -589,6 +596,8 @@ static void board_init(void)
 	CPRINTS("MEC1701 HOOK_INIT - called board_init");
 	trace0(0, HOOK, 0, "HOOK_INIT - call board_init");
 
+	gpio_enable_interrupt(GPIO_SOC_ENBKL);
+
 #ifdef CONFIG_USB_POWER_DELIVERY
 	/* Enable PD MCU interrupt */
 	gpio_enable_interrupt(GPIO_PD_MCU_INT);
@@ -783,10 +792,11 @@ static void board_chipset_resume(void)
 {
 	CPRINTS("MEC1701_EVG HOOK_CHIPSET_RESUME");
 	trace0(0, HOOK, 0, "HOOK_CHIPSET_RESUME - board_chipset_resume");
-	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
+	/*gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);*/
 	gpio_set_level(GPIO_EC_MUTE_L, 1);
 	gpio_set_level(GPIO_EC_WLAN_EN,1);
 	gpio_set_level(GPIO_EC_WL_OFF_L,1);
+	gpio_set_level(GPIO_CAM_EN, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 	     MOTION_SENSE_HOOK_PRIO-1);
@@ -796,10 +806,11 @@ static void board_chipset_suspend(void)
 {
 	CPRINTS("MEC1701 HOOK_CHIPSET_SUSPEND - called board_chipset_resume");
 	trace0(0, HOOK, 0, "HOOK_CHIPSET_SUSPEND - board_chipset_suspend");
-	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
+	/*gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);*/
 	gpio_set_level(GPIO_EC_MUTE_L, 0);
 	gpio_set_level(GPIO_EC_WLAN_EN,1);
 	gpio_set_level(GPIO_EC_WL_OFF_L,1);
+	gpio_set_level(GPIO_CAM_EN, 0);
 #if 0 /* TODO not implemented in gpio.inc */
 	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 0);
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 0);
@@ -1048,6 +1059,8 @@ void thermal_sensor_interrupt(enum gpio_signal signal)
 void soc_signal_interrupt(enum gpio_signal signal)
 {
 	/* TODO: EC BKOFF signal is related soc enable panel siganl */
+	gpio_set_level(GPIO_EC_BKOFF_L,
+		gpio_get_level(GPIO_SOC_ENBKL) ? 1 : 0);
 }
 
 void chassis_control_interrupt(enum gpio_signal signal)

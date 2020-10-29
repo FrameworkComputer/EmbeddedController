@@ -75,19 +75,11 @@ int board_chipset_power_on(void)
 		return false;
 	}
 
+	gpio_set_level(GPIO_PCH_PWR_EN, 1);
+
 	msleep(30);
 
 	gpio_set_level(GPIO_PCH_DPWROK, 1);
-
-	if (power_wait_signals(IN_PCH_SLP_SUS_DEASSERTED)) {
-		CPRINTS("timeout waiting for SLP_SUS deassert");
-		chipset_force_g3();
-		return false;
-	}
-
-	msleep(10);
-
-	gpio_set_level(GPIO_PCH_PWR_EN, 1);
 
 	msleep(5);
 
