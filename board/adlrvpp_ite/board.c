@@ -89,6 +89,7 @@ const struct i2c_port_t i2c_ports[] = {
 		.scl = GPIO_USBC_TCPC_I2C_CLK_P2,
 		.sda = GPIO_USBC_TCPC_I2C_DATA_P2,
 	},
+#if defined(BOARD_ADLRVPP_ITE)
 	[I2C_CHAN_TYPEC_2] = {
 		.name = "typec_2",
 		.port = IT83XX_I2C_CH_E,
@@ -103,6 +104,7 @@ const struct i2c_port_t i2c_ports[] = {
 		.scl = GPIO_USBC_TCPC_I2C_CLK_P3,
 		.sda = GPIO_USBC_TCPC_I2C_DATA_P3,
 	},
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_CHAN_COUNT);
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
@@ -119,6 +121,7 @@ const struct tcpc_aic_gpio_config_t tcpc_aic_gpios[] = {
 		.ppc_alert = GPIO_USBC_TCPC_PPC_ALRT_P1,
 		.ppc_intr_handler = sn5s330_interrupt,
 	},
+#if defined(BOARD_ADLRVPP_ITE)
 	[TYPE_C_PORT_2] = {
 		.tcpc_alert = GPIO_USBC_TCPC_ALRT_P2,
 		.ppc_alert = GPIO_USBC_TCPC_PPC_ALRT_P2,
@@ -129,6 +132,7 @@ const struct tcpc_aic_gpio_config_t tcpc_aic_gpios[] = {
 		.ppc_alert = GPIO_USBC_TCPC_PPC_ALRT_P3,
 		.ppc_intr_handler = sn5s330_interrupt,
 	},
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_aic_gpios) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
@@ -147,6 +151,7 @@ const struct tcpc_config_t tcpc_config[] = {
 		},
 		.drv = &fusb302_tcpm_drv,
 	},
+#if defined(BOARD_ADLRVPP_ITE)
 	[TYPE_C_PORT_2] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
@@ -163,6 +168,7 @@ const struct tcpc_config_t tcpc_config[] = {
 		},
 		.drv = &fusb302_tcpm_drv,
 	},
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
@@ -178,6 +184,7 @@ struct ppc_config_t ppc_chips[] = {
 		.i2c_addr_flags = I2C_ADDR_SN5S330_TCPC_AIC_PPC,
 		.drv = &sn5s330_drv
 	},
+#if defined(BOARD_ADLRVPP_ITE)
 	[TYPE_C_PORT_2] = {
 		.i2c_port = I2C_PORT_TYPEC_2,
 		.i2c_addr_flags = I2C_ADDR_SN5S330_TCPC_AIC_PPC,
@@ -188,6 +195,7 @@ struct ppc_config_t ppc_chips[] = {
 		.i2c_addr_flags = I2C_ADDR_SN5S330_TCPC_AIC_PPC,
 		.drv = &sn5s330_drv,
 	},
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == CONFIG_USB_PD_PORT_MAX_COUNT);
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
@@ -203,6 +211,7 @@ struct usb_mux usbc1_tcss_usb_mux = {
 	.driver = &virtual_usb_mux_driver,
 	.hpd_update = &virtual_hpd_update,
 };
+#if defined(BOARD_ADLRVPP_ITE)
 struct usb_mux usbc2_tcss_usb_mux = {
 	.usb_port = TYPE_C_PORT_2,
 	.driver = &virtual_usb_mux_driver,
@@ -213,6 +222,7 @@ struct usb_mux usbc3_tcss_usb_mux = {
 	.driver = &virtual_usb_mux_driver,
 	.hpd_update = &virtual_hpd_update,
 };
+#endif
 
 /* USB muxes Configuration */
 const struct usb_mux usb_muxes[] = {
@@ -230,6 +240,7 @@ const struct usb_mux usb_muxes[] = {
 		.i2c_port = I2C_PORT_TYPEC_1,
 		.i2c_addr_flags = I2C_PORT1_BB_RETIMER_ADDR,
 	},
+#if defined(BOARD_ADLRVPP_ITE)
 	[TYPE_C_PORT_2] = {
 		.usb_port = TYPE_C_PORT_2,
 		.next_mux = &usbc2_tcss_usb_mux,
@@ -244,6 +255,7 @@ const struct usb_mux usb_muxes[] = {
 		.i2c_port = I2C_PORT_TYPEC_3,
 		.i2c_addr_flags = I2C_PORT3_BB_RETIMER_ADDR,
 	},
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
@@ -259,6 +271,7 @@ const struct pca9675_ioexpander pca9675_iox[] = {
 		.i2c_addr_flags = I2C_ADDR_PCA9675_TCPC_AIC_IOEX,
 		.io_direction = TCPC_AIC_IOE_DIRECTION,
 	},
+#if defined(BOARD_ADLRVPP_ITE)
 	[TYPE_C_PORT_2] = {
 		.i2c_host_port = I2C_PORT_TYPEC_2,
 		.i2c_addr_flags = I2C_ADDR_PCA9675_TCPC_AIC_IOEX,
@@ -269,6 +282,7 @@ const struct pca9675_ioexpander pca9675_iox[] = {
 		.i2c_addr_flags = I2C_ADDR_PCA9675_TCPC_AIC_IOEX,
 		.io_direction = TCPC_AIC_IOE_DIRECTION,
 	},
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
@@ -284,8 +298,12 @@ const struct charger_config_t chg_chips[] = {
 void board_overcurrent_event(int port, int is_overcurrented)
 {
 	/* Port 0 & 1 and 2 & 3 share same line for over current indication */
+#if defined(BOARD_ADLRVPP_ITE)
 	int ioex = port < TYPE_C_PORT_2 ?
 			TYPE_C_PORT_1 : TYPE_C_PORT_3;
+#else
+	int ioex = TYPE_C_PORT_1;
+#endif
 
 	if (is_overcurrented)
 		pca9675_update_pins(ioex, TCPC_AIC_IOE_OC, 0);
@@ -370,9 +388,11 @@ static void tcpc_aic_init(void)
 	/* Default set the SBU lines to AUX mode on both the TCPC-AIC */
 	board_connect_c0_sbu_deferred();
 
+#if defined(BOARD_ADLRVPP_ITE)
 	 /* Only TCPC-0 can do CCD or BSSB, Default set SBU lines to AUX */
 	pca9675_update_pins(TYPE_C_PORT_2, 0,
 		TCPC_AIC_IOE_USB_MUX_CNTRL_1 | TCPC_AIC_IOE_USB_MUX_CNTRL_0);
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, tcpc_aic_init, HOOK_PRIO_INIT_PCA9675);
 

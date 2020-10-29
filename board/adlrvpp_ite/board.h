@@ -78,15 +78,21 @@
 #define PORT80_I2C_ADDR		MAX695X_I2C_ADDR1_FLAGS
 
 /* USB PD config */
+#if defined(BOARD_ADLRVPP_ITE)
 #define CONFIG_USB_PD_PORT_MAX_COUNT 4
+#else
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
+#endif
 #define CONFIG_USB_MUX_VIRTUAL
 #define PD_MAX_POWER_MW              100000
 
 /* USB-C I2C */
 #define I2C_PORT_TYPEC_0		IT83XX_I2C_CH_C
 #define I2C_PORT_TYPEC_1		IT83XX_I2C_CH_F
+#if defined(BOARD_ADLRVPP_ITE)
 #define I2C_PORT_TYPEC_2		IT83XX_I2C_CH_E
 #define I2C_PORT_TYPEC_3		IT83XX_I2C_CH_D
+#endif
 
 /* TCPC AIC config */
 /* Support NXP PCA9675 I/O expander. */
@@ -116,8 +122,10 @@
 #define CONFIG_USBC_RETIMER_INTEL_BB
 #define I2C_PORT0_BB_RETIMER_ADDR	0x50
 #define I2C_PORT1_BB_RETIMER_ADDR	0x51
+#if defined(BOARD_ADLRVPP_ITE)
 #define I2C_PORT2_BB_RETIMER_ADDR	0x52
 #define I2C_PORT3_BB_RETIMER_ADDR	0x53
+#endif
 
 /* Enable VCONN */
 #define CONFIG_USBC_VCONN
@@ -144,16 +152,20 @@ enum adlrvp_i2c_channel {
 	I2C_CHAN_BATT_CHG,
 	I2C_CHAN_TYPEC_0,
 	I2C_CHAN_TYPEC_1,
+#if defined(BOARD_ADLRVPP_ITE)
 	I2C_CHAN_TYPEC_2,
 	I2C_CHAN_TYPEC_3,
+#endif
 	I2C_CHAN_COUNT,
 };
 
 enum adlrvp_charge_ports {
 	TYPE_C_PORT_0,
 	TYPE_C_PORT_1,
+#if defined(BOARD_ADLRVPP_ITE)
 	TYPE_C_PORT_2,
 	TYPE_C_PORT_3,
+#endif
 };
 
 enum battery_type {
