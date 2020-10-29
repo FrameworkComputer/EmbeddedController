@@ -52,14 +52,10 @@ static void switch_update(void)
 	/* For lid-less systems, lid looks always open */
 	*memmap_switches |= EC_SWITCH_LID_OPEN;
 #endif
-	/* Test on EVB will trigger WTD timeout, so disable flash_get_protect() */
-	*memmap_switches |= EC_SWITCH_WRITE_PROTECT_DISABLED;
-	/*
 	if ((flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED) == 0)
 		*memmap_switches |= EC_SWITCH_WRITE_PROTECT_DISABLED;
 	else
 		*memmap_switches &= ~EC_SWITCH_WRITE_PROTECT_DISABLED;
-	*/
 
 #ifdef CONFIG_SWITCH_DEDICATED_RECOVERY
 	if (gpio_get_level(GPIO_RECOVERY_L) == 0)
