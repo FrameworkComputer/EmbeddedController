@@ -9,7 +9,14 @@ CHIP:=stm32
 CHIP_FAMILY:=stm32f4
 CHIP_VARIANT:=stm32f412
 
-board-y=board.o fpsensor_detect.o
+board-y=board.o
+
+# If we're not building a test build, use the real sensor detection. Otherwise,
+# for test builds, allow the mock version so we can test sensor/transport
+# permutations in the unit tests.
+ifeq ($(TEST_BUILD),)
+board-y+=fpsensor_detect.o
+endif
 
 test-list-y=\
        aes \

@@ -114,8 +114,16 @@ class AllTests:
                 TestConfig(name='flash_write_protect',
                            image_to_use=ImageType.RO,
                            toggle_power=True, enable_hw_write_protect=True),
-            'fpsensor':
-                TestConfig(name='fpsensor'),
+            'fpsensor_spi_ro':
+                TestConfig(name='fpsensor', image_to_use=ImageType.RO,
+                           test_args=['spi']),
+            'fpsensor_spi_rw':
+                TestConfig(name='fpsensor', test_args=['spi']),
+            'fpsensor_uart_ro':
+                TestConfig(name='fpsensor', image_to_use=ImageType.RO,
+                           test_args=['uart']),
+            'fpsensor_uart_rw':
+                TestConfig(name='fpsensor', test_args=['uart']),
             'mpu_ro':
                 TestConfig(name='mpu',
                            image_to_use=ImageType.RO,
