@@ -199,6 +199,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	} else {
 		/* Disconnect the DP port selection mux. */
 		gpio_set_level(GPIO_DP_MUX_OE_L, 1);
+		gpio_set_level(GPIO_DP_MUX_SEL, 0);
 
 		/* Disconnect the SBU lines in PPC chip. */
 		if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
@@ -252,6 +253,7 @@ __override void svdm_exit_dp_mode(int port)
 {
 	/* Disconnect the DP port selection mux. */
 	gpio_set_level(GPIO_DP_MUX_OE_L, 1);
+	gpio_set_level(GPIO_DP_MUX_SEL, 0);
 
 	/* Signal AP for the HPD low event */
 	usb_mux_hpd_update(port, 0, 0);
