@@ -325,6 +325,7 @@
  * sensor. The sensor board has a thermistor on it
  * we connect to an EC ADC channel.
  */
+/*
 #if 0
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_BD99992GW
@@ -334,6 +335,7 @@
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_DPTF
 #endif
+*/
 
 /* Enable GPSPI0 controller and port for
  * SPI Accelerometer.
