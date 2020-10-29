@@ -112,18 +112,22 @@ const struct tcpc_aic_gpio_config_t tcpc_aic_gpios[] = {
 	[TYPE_C_PORT_0] = {
 		.tcpc_alert = GPIO_USBC_TCPC_ALRT_P0,
 		.ppc_alert = GPIO_USBC_TCPC_PPC_ALRT_P0,
+		.ppc_intr_handler = sn5s330_interrupt,
 	},
 	[TYPE_C_PORT_1] = {
 		.tcpc_alert = GPIO_USBC_TCPC_ALRT_P1,
 		.ppc_alert = GPIO_USBC_TCPC_PPC_ALRT_P1,
+		.ppc_intr_handler = sn5s330_interrupt,
 	},
 	[TYPE_C_PORT_2] = {
 		.tcpc_alert = GPIO_USBC_TCPC_ALRT_P2,
 		.ppc_alert = GPIO_USBC_TCPC_PPC_ALRT_P2,
+		.ppc_intr_handler = sn5s330_interrupt,
 	},
 	[TYPE_C_PORT_3] = {
 		.tcpc_alert = GPIO_USBC_TCPC_ALRT_P3,
 		.ppc_alert = GPIO_USBC_TCPC_PPC_ALRT_P3,
+		.ppc_intr_handler = sn5s330_interrupt,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_aic_gpios) == CONFIG_USB_PD_PORT_MAX_COUNT);

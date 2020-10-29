@@ -82,7 +82,7 @@ void ppc_interrupt(enum gpio_signal signal)
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		if (signal == tcpc_aic_gpios[i].ppc_alert) {
-			sn5s330_interrupt(i);
+			tcpc_aic_gpios[i].ppc_intr_handler(i);
 			break;
 		}
 	}
