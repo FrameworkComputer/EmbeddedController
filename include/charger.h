@@ -95,6 +95,10 @@ struct charger_drv {
 	enum ec_error_list (*set_input_current_limit)(int chgnum,
 						      int input_current);
 
+	/* Get input current limit */
+	enum ec_error_list (*get_input_current_limit)(int chgnum,
+						      int *input_current);
+
 	/* Get actual input current value */
 	enum ec_error_list (*get_input_current)(int chgnum, int *input_current);
 
@@ -269,6 +273,18 @@ int charger_get_system_power(void);
 enum ec_error_list charger_set_input_current_limit(int chgnum,
 						   int input_current);
 
+/**
+ * Get desired input current limit
+ *
+ * Gets the hard limit of the input current (from AC).
+ *
+ * @param chgnum		charger IC index
+ * @param input_current		The current limit in mA.
+ *
+ * @return EC_SUCCESS on success, an error otherwise.
+ */
+enum ec_error_list charger_get_input_current_limit(int chgnum,
+						   int *input_current);
 /*
  * Get actual input current value.
  * Actual input current may be less than the desired input current set
@@ -307,4 +323,3 @@ enum ec_error_list charger_set_vsys_compensation(int chgnum,
 void print_charger_debug(int chgnum);
 
 #endif /* __CROS_EC_CHARGER_H */
-

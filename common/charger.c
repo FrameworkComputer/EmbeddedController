@@ -491,6 +491,23 @@ enum ec_error_list charger_set_input_current_limit(int chgnum,
 	return rv;
 }
 
+enum ec_error_list charger_get_input_current_limit(int chgnum,
+						   int *input_current)
+{
+	int rv = EC_ERROR_UNIMPLEMENTED;
+
+	if (chgnum < 0 || chgnum >= board_get_charger_chip_count()) {
+		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
+		return EC_ERROR_INVAL;
+	}
+
+	if (chg_chips[chgnum].drv->get_input_current_limit)
+		rv = chg_chips[chgnum].drv->get_input_current_limit(
+			chgnum, input_current);
+
+	return rv;
+}
+
 enum ec_error_list charger_get_input_current(int chgnum, int *input_current)
 {
 	int rv = EC_ERROR_UNIMPLEMENTED;
