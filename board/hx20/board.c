@@ -116,6 +116,13 @@ void board_config_pre_init(void)
 #if defined(CONFIG_LOW_POWER_IDLE) && defined(CONFIG_MCHP_48MHZ_OUT)
 	gpio_set_alternate_function(1, 0x10000, 2);
 #endif
+
+	/* Disable BGPO function */
+	MCHP_WEEK_TIMER_BGPO_POWER &= ~(BIT(0) | BIT(1) | BIT(2));
+	/* Make sure BPGO reset is RESET_SYS */
+	MCHP_WEEK_TIMER_BGPO_RESET &= ~(BIT(0) | BIT(1) | BIT(2));
+
+
 }
 #endif /* #ifdef CONFIG_BOARD_PRE_INIT */
 
