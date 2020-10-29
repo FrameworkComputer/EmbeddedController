@@ -1830,7 +1830,7 @@
 
 /*****************************************************************************/
 /* Fingerprint Sensor Configuration */
-#undef CONFIG_FP_SENSOR
+#undef CONFIG_FINGERPRINT_MCU
 #undef CONFIG_FP_SENSOR_FPC1025
 #undef CONFIG_FP_SENSOR_FPC1035
 #undef CONFIG_FP_SENSOR_FPC1145
@@ -5310,15 +5310,6 @@
 #define CONFIG_LIBCRYPTOC
 #endif
 
-/*****************************************************************************/
-/* Fingerprint Sensor Configuration */
-#if defined(CONFIG_FP_SENSOR_FPC1025) || \
-	defined(CONFIG_FP_SENSOR_FPC1035) || \
-	defined(CONFIG_FP_SENSOR_FPC1145)
-#define CONFIG_FP_SENSOR
-#endif
-
-/*****************************************************************************/
 /*
  * Handle task-dependent configs.
  *

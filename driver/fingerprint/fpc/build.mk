@@ -15,9 +15,9 @@ else ifeq ($(CONFIG_FP_SENSOR_FPC1035),rw)
 include $(_fpc_cur_dir)bep/build.mk
 endif
 
-ifeq ($(CONFIG_FP_SENSOR),rw)
+ifneq ($(CONFIG_FINGERPRINT_MCU),)
 # Make sure output directory is created (in build directory)
-dirs-y+="$(_fpc_cur_dir)"
+dirs-rw+="$(_fpc_cur_dir)"
 
 # Only build these objects for the RW image
 all-obj-rw+=$(_fpc_cur_dir)fpc_sensor.o

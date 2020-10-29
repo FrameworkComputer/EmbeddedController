@@ -35,6 +35,8 @@
 #define CONFIG_SPI_MASTER
 #define CONFIG_SPI_FP_PORT  2 /* SPI4: third master config */
 
+#define CONFIG_FINGERPRINT_MCU
+
 #ifdef SECTION_IS_RW
 	/* Select fingerprint sensor */
 #	define CONFIG_FP_SENSOR_FPC1145

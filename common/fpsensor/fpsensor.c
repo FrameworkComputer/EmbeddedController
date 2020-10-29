@@ -30,6 +30,10 @@
 #error "fpsensor requires RNG"
 #endif
 
+#if defined(SECTION_IS_RO)
+#error "fpsensor code should not be in RO image."
+#endif
+
 /* Ready to encrypt a template. */
 static timestamp_t encryption_deadline;
 
