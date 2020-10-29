@@ -325,10 +325,18 @@ int task_reset(task_id_t id, int wait);
  */
 void task_clear_pending_irq(int irq);
 
+#ifdef CONFIG_ZEPHYR
+typedef struct k_mutex mutex_t;
+
+#define mutex_lock(mtx) (k_mutex_lock(mtx, K_FOREVER))
+#define mutex_unlock(mtx) (k_mutex_unlock(mtx))
+#else
 struct mutex {
 	uint32_t lock;
 	uint32_t waiters;
 };
+
+typedef struct mutex mutex_t;
 
 /**
  * Lock a mutex.
@@ -338,12 +346,16 @@ struct mutex {
  *
  * Must not be used in interrupt context!
  */
-void mutex_lock(struct mutex *mtx);
+void mutex_lock(mutex_t *mtx);
 
 /**
  * Release a mutex previously locked by the same task.
  */
-void mutex_unlock(struct mutex *mtx);
+void mutex_unlock(mutex_t *mtx);
+
+/** Zephyr will try to init the mutex using `k_mutex_init()`. */
+#define k_mutex_init(mutex) 0
+#endif /* CONFIG_ZEPHYR */
 
 struct irq_priority {
 	uint8_t irq;
