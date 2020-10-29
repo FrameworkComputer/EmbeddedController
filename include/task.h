@@ -144,27 +144,17 @@ void set_int_mask(uint32_t val);
  *			interrupt context.
  * @return		The bitmap of events which occurred if wait!=0, else 0.
  */
-#ifdef CONFIG_ZEPHYR
-#define task_set_event(tskid, event, wait)                               \
-	_ZEPHYR_WARN_UNIMPLEMENTED_AND_RETURN(task_set_event, 0L, tskid, \
-					      event, wait)
-#else
 uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait);
-#endif
 
 /**
  * Wake a task.  This sends it the TASK_EVENT_WAKE event.
  *
  * @param tskid		Task to wake
  */
-#ifdef CONFIG_ZEPHYR
-#define task_wake(tskid) _ZEPHYR_WARN_UNIMPLEMENTED(task_wake, tskid)
-#else
 static inline void task_wake(task_id_t tskid)
 {
 	task_set_event(tskid, TASK_EVENT_WAKE, 0);
 }
-#endif
 
 /**
  * Return the identifier of the task currently running.

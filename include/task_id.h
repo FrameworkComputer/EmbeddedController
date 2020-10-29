@@ -8,11 +8,15 @@
 #ifndef __CROS_EC_TASK_ID_H
 #define __CROS_EC_TASK_ID_H
 
+/* For Zephyr builds just used shimmed tasks ids, otherwise use platform/ec's */
+#ifdef CONFIG_ZEPHYR
+#include "shimmed_task_id.h"
+#else
+
 #include "config.h"
 #include "task_filter.h"
 
 /* define the name of the header containing the list of tasks */
-#ifndef CONFIG_ZEPHYR
 #define STRINGIFY0(name)  #name
 #define STRINGIFY(name)  STRINGIFY0(name)
 #define CTS_TASK_LIST STRINGIFY(CTS_TASKFILE)
@@ -26,7 +30,6 @@
 #ifdef TEST_BUILD
 #include TEST_TASK_LIST
 #endif
-#endif /* CONFIG_ZEPHYR */
 
 /* Task identifier (8 bits) */
 typedef uint8_t task_id_t;
@@ -37,16 +40,10 @@ typedef uint8_t task_id_t;
  * the identifier of a task can be retrieved using the following constant:
  * TASK_ID_<taskname> where <taskname> is the first parameter passed to the
  * TASK macro in the TASK_LIST file.
- *
- * For Zephyr, we still need to define TASK_ID_IDLE, TASK_ID_COUNT,
- * and TASK_ID_INVALID, even though we are not using the EC's task
- * system.  These are prolific enough in the codebase that #ifdef'ing
- * out each usage would be infeasible.
  */
 #define TASK(n, ...) TASK_ID_##n,
 enum {
 	TASK_ID_IDLE,
-#ifndef CONFIG_ZEPHYR
 	/* CONFIG_TASK_LIST is a macro coming from the BOARD_TASK_LIST file */
 	CONFIG_TASK_LIST
 	/* CONFIG_TEST_TASK_LIST is a macro from the TEST_TASK_LIST file */
@@ -56,7 +53,6 @@ enum {
 #ifdef EMU_BUILD
 	TASK_ID_TEST_RUNNER,
 #endif
-#endif  /* CONFIG_ZEPHYR */
 	/* Number of tasks */
 	TASK_ID_COUNT,
 	/* Special task identifiers */
@@ -67,4 +63,5 @@ enum {
 };
 #undef TASK
 
-#endif  /* __CROS_EC_TASK_ID_H */
+#endif /* CONFIG_ZEPHYR */
+#endif /* __CROS_EC_TASK_ID_H */
