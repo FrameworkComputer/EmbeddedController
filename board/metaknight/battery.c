@@ -32,35 +32,37 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* POW-TECH Battery Information */
-	[BATTERY_POWER_TECH] = {
+	/* Simplo PC-VP-BP44 Battery Information */
+	[BATTERY_SMP_PCVPBP144] = {
 		.fuel_gauge = {
-			.manuf_name = "POW-TECH",
+			.manuf_name  = "SIMPLO",
+			.device_name = "PC-VP-BP144",
 			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x10, 0x10 },
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
 			},
 			.fet = {
 				.reg_addr       = 0x00,
-				.reg_mask       = 0x2000,
-				.disconnect_val = 0x2000,
+				.reg_mask       = 0x10,
+				.disconnect_val = 0x00,
+				.cfet_mask      = 0x08,
+				.cfet_off_val   = 0x00,
 			}
 		},
 		.batt_info = {
-			.voltage_max          = 8800,    /* mV */
-			.voltage_normal       = 7700,
-			.voltage_min          = 6000,
-			.precharge_current    = 160,       /* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c       = 0,
-			.charging_max_c       = 45,
-			.discharging_min_c    = -20,
-			.discharging_max_c    = 60,
+			.voltage_max            = 13050,  /* mV */
+			.voltage_normal         = 11250,
+			.voltage_min            = 9000,
+			.precharge_current      = 128,    /* mA */
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 45,
+			.charging_min_c         = 0,
+			.charging_max_c         = 60,
+			.discharging_min_c      = -20,
+			.discharging_max_c      = 60,
 		},
-
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_POWER_TECH;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SMP_PCVPBP144;
