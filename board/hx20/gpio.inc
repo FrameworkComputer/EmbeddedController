@@ -432,7 +432,7 @@ GPIO(FAN_SPEED,         PIN(050), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(EC_KBL_PWR_EN,         PIN(0101), GPIO_OUT_HIGH)   /* keyboard backlight control */
 GPIO(ME_EN,                 PIN(060),  GPIO_OUT_LOW)
 GPIO(EC_BKOFF_L,            PIN(0102), GPIO_OUT_LOW)    /* Panel backlight control */
-GPIO(EC_PROCHOT_L,          PIN(0206), GPIO_OUT_HIGH)
+GPIO(EC_PROCHOT_L,          PIN(0206), GPIO_ODR_HIGH)
 GPIO(TYPEC0_VBUS_ON_EC,     PIN(0144), GPIO_ODR_HIGH)   /* Type-C VBUS select */
 GPIO(TYPEC1_VBUS_ON_EC,     PIN(0143), GPIO_ODR_HIGH)   /* Type-C VBUS select */
 GPIO(TYPEC2_VBUS_ON_EC,     PIN(0142), GPIO_ODR_HIGH)   /* Type-C VBUS select */
