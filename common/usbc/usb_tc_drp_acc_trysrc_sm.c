@@ -19,6 +19,7 @@
 #include "usb_prl_sm.h"
 #include "usb_sm.h"
 #include "usb_tc_sm.h"
+#include "usbc_ocp.h"
 #include "usbc_ppc.h"
 #include "vboot.h"
 
@@ -971,6 +972,15 @@ void tc_snk_power_off(int port)
 
 int tc_src_power_on(int port)
 {
+	/*
+	 * Check our OC event counter.  If we've exceeded our threshold, then
+	 * let's latch our source path off to prevent continuous cycling.  When
+	 * the PD state machine detects a disconnection on the CC lines, we will
+	 * reset our OC event counter.
+	 */
+	if (IS_ENABLED(CONFIG_USBC_OCP) && usbc_ocp_is_port_latched_off(port))
+		return EC_ERROR_ACCESS_DENIED;
+
 	if (IS_ATTACHED_SRC(port))
 		return pd_set_power_supply_ready(port);
 
@@ -985,6 +995,23 @@ void tc_src_power_off(int port)
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 		charge_manager_set_ceil(port, CEIL_REQUESTOR_PD,
 					CHARGE_CEIL_NONE);
+}
+
+/* Set what role the partner is right now, for the PPC and OCP module */
+static void tc_set_partner_role(int port, enum ppc_device_role role)
+{
+	if (IS_ENABLED(CONFIG_USBC_PPC))
+		ppc_dev_is_connected(port, role);
+
+	if (IS_ENABLED(CONFIG_USBC_OCP)) {
+		usbc_ocp_snk_is_connected(port, role == PPC_DEV_SNK);
+		/*
+		 * Clear the overcurrent event counter
+		 * since we've detected a disconnect.
+		 */
+		if (role == PPC_DEV_DISCONNECTED)
+			usbc_ocp_clear_event_counter(port);
+	}
 }
 
 /*
@@ -1625,6 +1652,16 @@ static void set_vconn(int port, int enable)
 		TC_CLR_FLAG(port, TC_FLAGS_VCONN_ON);
 
 	/*
+	 * Check our OC event counter.  If we've exceeded our threshold, then
+	 * let's latch our source path off to prevent continuous cycling.  When
+	 * the PD state machine detects a disconnection on the CC lines, we will
+	 * reset our OC event counter.
+	 */
+	if (IS_ENABLED(CONFIG_USBC_OCP) &&
+	    enable && usbc_ocp_is_port_latched_off(port))
+		return;
+
+	/*
 	 * Disable PPC Vconn first then TCPC in case the voltage feeds back
 	 * to TCPC and damages.
 	 */
@@ -2010,16 +2047,7 @@ static void tc_unattached_snk_entry(const int port)
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 
-	if (IS_ENABLED(CONFIG_USBC_PPC)) {
-		/* There is no source connected. */
-		ppc_dev_is_connected(port, PPC_DEV_DISCONNECTED);
-
-		/*
-		 * Clear the overcurrent event counter
-		 * since we've detected a disconnect.
-		 */
-		ppc_clear_oc_event_counter(port);
-	}
+	tc_set_partner_role(port, PPC_DEV_DISCONNECTED);
 
 	/*
 	 * Indicate that the port is disconnected so the board
@@ -2215,9 +2243,8 @@ static void tc_attached_snk_entry(const int port)
 	 */
 	typec_select_pull(port, TYPEC_CC_RD);
 
-	/* Inform PPC that a source is connected. */
-	if (IS_ENABLED(CONFIG_USBC_PPC))
-		ppc_dev_is_connected(port, PPC_DEV_SRC);
+	/* Inform the PPC and OCP module that a source is connected */
+	tc_set_partner_role(port, PPC_DEV_SRC);
 
 	if (IS_ENABLED(CONFIG_USB_PE_SM) &&
 	    TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
@@ -2513,16 +2540,7 @@ static void tc_unattached_src_entry(const int port)
 	 */
 	bc12_role_change_handler(port, prev_data_role, tc[port].data_role);
 
-	if (IS_ENABLED(CONFIG_USBC_PPC)) {
-		/* There is no sink connected. */
-		ppc_dev_is_connected(port, PPC_DEV_DISCONNECTED);
-
-		/*
-		 * Clear the overcurrent event counter
-		 * since we've detected a disconnect.
-		 */
-		ppc_clear_oc_event_counter(port);
-	}
+	tc_set_partner_role(port, PPC_DEV_DISCONNECTED);
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
@@ -2548,12 +2566,12 @@ static void tc_unattached_src_run(const int port)
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_USBC_PPC)) {
+	if (IS_ENABLED(CONFIG_USBC_OCP)) {
 		/*
 		 * If the port is latched off, just continue to
 		 * monitor for a detach.
 		 */
-		if (ppc_is_port_latched_off(port))
+		if (usbc_ocp_is_port_latched_off(port))
 			return;
 	}
 
@@ -2789,9 +2807,8 @@ static void tc_attached_src_entry(const int port)
 		typec_update_cc(port);
 	}
 
-	/* Inform PPC that a sink is connected. */
-	if (IS_ENABLED(CONFIG_USBC_PPC))
-		ppc_dev_is_connected(port, PPC_DEV_SNK);
+	/* Inform PPC and OCP module that a sink is connected. */
+	tc_set_partner_role(port, PPC_DEV_SNK);
 
 	/*
 	 * Only notify if we're not performing a power role swap.  During a
@@ -3486,16 +3503,7 @@ static void tc_cc_open_entry(const int port)
 	typec_select_pull(port, TYPEC_CC_OPEN);
 	typec_update_cc(port);
 
-	if (IS_ENABLED(CONFIG_USBC_PPC)) {
-		/* There is no device connected. */
-		ppc_dev_is_connected(port, PPC_DEV_DISCONNECTED);
-
-		/*
-		 * Clear the overcurrent event counter
-		 * since we've detected a disconnect.
-		 */
-		ppc_clear_oc_event_counter(port);
-	}
+	tc_set_partner_role(port, PPC_DEV_DISCONNECTED);
 }
 
 void tc_set_debug_level(enum debug_level debug_level)

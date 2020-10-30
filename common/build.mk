@@ -164,6 +164,7 @@ common-$(CONFIG_USB_PD_ALT_MODE_DFP)+=usb_pd_alt_mode_dfp.o
 common-$(CONFIG_USB_PD_LOGGING)+=event_log.o pd_log.o
 common-$(CONFIG_USB_PD_TCPC)+=usb_pd_tcpc.o
 common-$(CONFIG_USB_UPDATE)+=usb_update.o update_fw.o
+common-$(CONFIG_USBC_OCP)+=usbc_ocp.o
 common-$(CONFIG_USBC_PPC)+=usbc_ppc.o
 common-$(CONFIG_VBOOT_EFS)+=vboot/vboot.o
 common-$(CONFIG_VBOOT_EFS2)+=vboot/efs2.o

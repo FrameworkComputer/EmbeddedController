@@ -4361,6 +4361,12 @@
  */
 #undef CONFIG_USB_PID
 
+/*
+ * Track overcurrent events for sinking partners coming from some component on
+ * the board.  Auto-enabled for drivers which contain support for this feature.
+ */
+#undef CONFIG_USBC_OCP
+
 /* PPC needs to be informed of CC polarity */
 #undef CONFIG_USBC_PPC_POLARITY
 
@@ -5199,6 +5205,16 @@
 #if defined(CONFIG_USBC_PPC_SYV682X)
 #define CONFIG_USBC_PPC_POLARITY
 #define CONFIG_USBC_PPC_VCONN
+#endif
+
+/*****************************************************************************/
+/* Define CONFIG_USBC_OCP if a component can detect overcurrent */
+#if defined(CONFIG_USBC_PPC_AOZ1380) || \
+	defined(CONFIG_USBC_PPC_NX20P3481) || \
+	defined(CONFIG_USBC_PPC_NX20P3483) || \
+	defined(CONFIG_USBC_PPC_SN5S330) || \
+	defined(CONFIG_USBC_PPC_SYV682X)
+#define CONFIG_USBC_OCP
 #endif
 
 /*****************************************************************************/

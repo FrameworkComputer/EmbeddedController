@@ -11,18 +11,6 @@
 
 /* Common APIs for USB Type-C Power Path Controllers (PPC) */
 
-/*
- * Number of times a port may overcurrent before we latch off the port until a
- * physical disconnect is detected.
- */
-#define PPC_OC_CNT_THRESH 3
-
-/*
- * Number of seconds until a latched-off port is re-enabled for sourcing after
- * detecting a physical disconnect.
- */
-#define PPC_OC_COOLDOWN_DELAY_US (2 * SECOND)
-
 /* The role of connected device. */
 enum ppc_device_role {
 	PPC_DEV_SNK,
@@ -200,22 +188,6 @@ int ppc_prints(const char *string, int port);
 int ppc_err_prints(const char *string, int port, int error);
 
 /**
- * Increment the overcurrent event counter.
- *
- * @param port: The Type-C port that has overcurrented.
- * @return EC_SUCCESS on success, EC_ERROR_INVAL if non-existent port.
- */
-int ppc_add_oc_event(int port);
-
-/**
- * Clear the overcurrent event counter.
- *
- * @param port: The Type-C port's counter to clear.
- * @return EC_SUCCESS on success, EC_ERROR_INVAL if non-existent port.
- */
-int ppc_clear_oc_event_counter(int port);
-
-/**
  * Discharge PD VBUS on src/sink disconnect & power role swap
  *
  * @param port: The Type-C port number.
@@ -231,14 +203,6 @@ int ppc_discharge_vbus(int port, int enable);
  * @return EC_SUCCESS on success, error otherwise.
  */
 int ppc_init(int port);
-
-/**
- * Is the port latched off due to multiple overcurrent events in succession?
- *
- * @param port: The Type-C port number.
- * @return 1 if the port is latched off, 0 if it is not latched off.
- */
-int ppc_is_port_latched_off(int port);
 
 /**
  * Is the port sourcing Vbus?
@@ -320,14 +284,6 @@ int ppc_vbus_sink_enable(int port, int enable);
  * @return EC_SUCCESS on success, error otherwise.
  */
 int ppc_vbus_source_enable(int port, int enable);
-
-/**
- * Board specific callback when a port overcurrents.
- *
- * @param port: The Type-C port which overcurrented.
- * @param is_overcurrented: 1 if port overcurrented, 0 if the condition is gone.
- */
-void board_overcurrent_event(int port, int is_overcurrented);
 
 /**
  * Put the PPC into its lowest power state. In this state it should still fire

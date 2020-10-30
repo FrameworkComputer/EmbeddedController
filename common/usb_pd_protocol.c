@@ -30,6 +30,7 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pd_tcpc.h"
+#include "usbc_ocp.h"
 #include "usbc_ppc.h"
 #include "version.h"
 #include "vboot.h"
@@ -717,13 +718,17 @@ static inline void set_state(int port, enum pd_states next_state)
 	/* If we're entering DRP_AUTO_TOGGLE, there is no sink connected. */
 	if (next_state == PD_STATE_DRP_AUTO_TOGGLE) {
 		ppc_dev_is_connected(port, PPC_DEV_DISCONNECTED);
-		/*
-		 * Clear the overcurrent event counter
-		 * since we've detected a disconnect.
-		 */
-		ppc_clear_oc_event_counter(port);
 		/* Disable Auto Discharge Disconnect */
 		tcpm_enable_auto_discharge_disconnect(port, 0);
+
+		if (IS_ENABLED(CONFIG_USBC_OCP)) {
+			usbc_ocp_snk_is_connected(port, false);
+			/*
+			 * Clear the overcurrent event counter
+			 * since we've detected a disconnect.
+			 */
+			usbc_ocp_clear_event_counter(port);
+		}
 	}
 #endif /* CONFIG_USBC_PPC &&  CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE */
 
@@ -756,13 +761,18 @@ static inline void set_state(int port, enum pd_states next_state)
 		 */
 		if (!cc_is_at_least_one_rd(cc1, cc2)) {
 			ppc_dev_is_connected(port, PPC_DEV_DISCONNECTED);
-			/*
-			 * Clear the overcurrent event counter
-			 * since we've detected a disconnect.
-			 */
-			ppc_clear_oc_event_counter(port);
+
+			if (IS_ENABLED(CONFIG_USBC_OCP)) {
+				usbc_ocp_snk_is_connected(port, false);
+				/*
+				 * Clear the overcurrent event counter
+				 * since we've detected a disconnect.
+				 */
+				usbc_ocp_clear_event_counter(port);
+			}
 		}
 #endif /* CONFIG_USBC_PPC */
+
 		/* Clear the holdoff timer since the port is disconnected. */
 		pd[port].ready_state_holdoff_timer = 0;
 
@@ -3343,7 +3353,7 @@ void pd_task(void *u)
 			 * If the port is latched off, just continue to
 			 * monitor for a detach.
 			 */
-			if (ppc_is_port_latched_off(port))
+			if (usbc_ocp_is_port_latched_off(port))
 				break;
 #endif /* CONFIG_USBC_PPC */
 
@@ -3354,6 +3364,8 @@ void pd_task(void *u)
 				/* Inform PPC that a sink is connected. */
 				ppc_dev_is_connected(port, PPC_DEV_SNK);
 #endif /* CONFIG_USBC_PPC */
+				if (IS_ENABLED(CONFIG_USBC_OCP))
+					usbc_ocp_snk_is_connected(port, true);
 				if (new_cc_state == PD_CC_UFP_DEBUG_ACC) {
 					pd[port].polarity =
 						board_get_src_dts_polarity(
@@ -4034,6 +4046,8 @@ void pd_task(void *u)
 			/* Inform PPC that a source is connected. */
 			ppc_dev_is_connected(port, PPC_DEV_SRC);
 #endif /* CONFIG_USBC_PPC */
+			if (IS_ENABLED(CONFIG_USBC_OCP))
+				usbc_ocp_snk_is_connected(port, false);
 
 			/* If PD comm is enabled, enable TCPC RX */
 			if (pd_comm_is_enabled(port))

@@ -34,6 +34,7 @@
 #include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usbc_ocp.h"
 #include "usbc_ppc.h"
 #include "util.h"
 

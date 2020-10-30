@@ -25,6 +25,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usbc_ocp.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -462,7 +463,7 @@ static void pd_send_hard_reset(int port)
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SEND_HARD_RESET, 0);
 }
 
-#ifdef CONFIG_USBC_PPC
+#ifdef CONFIG_USBC_OCP
 
 static uint32_t port_oc_reset_req;
 
@@ -493,18 +494,23 @@ DECLARE_DEFERRED(re_enable_ports);
 
 void pd_handle_overcurrent(int port)
 {
+	if ((port < 0) || (port >= board_get_usb_pd_port_count())) {
+		CPRINTS("%s(%d) Invalid port!", __func__, port);
+		return;
+	}
+
 	CPRINTS("C%d: overcurrent!", port);
 
 	if (IS_ENABLED(CONFIG_USB_PD_LOGGING))
 		pd_log_event(PD_EVENT_PS_FAULT, PD_LOG_PORT_SIZE(port, 0),
-			PS_FAULT_OCP, NULL);
+			     PS_FAULT_OCP, NULL);
 
 	/* No action to take if disconnected, just log. */
 	if (pd_is_disconnected(port))
 		return;
 
 	/* Keep track of the overcurrent events. */
-	ppc_add_oc_event(port);
+	usbc_ocp_add_event(port);
 
 	/* Let the board specific code know about the OC event. */
 	board_overcurrent_event(port, 1);
@@ -514,7 +520,7 @@ void pd_handle_overcurrent(int port)
 	hook_call_deferred(&re_enable_ports_data, SECOND);
 }
 
-#endif /* CONFIG_USBC_PPC */
+#endif /* CONFIG_USBC_OCP */
 
 __maybe_unused void pd_handle_cc_overvoltage(int port)
 {
