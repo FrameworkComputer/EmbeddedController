@@ -4491,6 +4491,9 @@
 /* Support USB HID keyboard backlight. */
 #undef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
 
+/* Support vivaldi compatible HID keyboard */
+#undef CONFIG_USB_HID_KEYBOARD_VIVALDI
+
 /* Support USB HID touchpad interface. */
 #undef CONFIG_USB_HID_TOUCHPAD
 

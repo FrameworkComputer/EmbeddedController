@@ -54,4 +54,13 @@ void keyboard_state_changed(int row, int col, int is_pressed);
  */
 int board_has_keyboard_backlight(void);
 
+/*
+ * This function can help change the keyboard top row layout as presented to the
+ * AP. If changing the position of the "Refresh" key from T3, you may also need
+ * to change KEYBOARD_ROW_REFRESH accordingly so that recovery mode can work on
+ * the EC side of things (also see related CONFIG_KEYBOARD_REFRESH_ROW3)
+ */
+__override_proto
+const struct ec_response_keybd_config *board_vivaldi_keybd_config(void);
+
 #endif  /* __CROS_EC_KEYBOARD_PROTOCOL_H */

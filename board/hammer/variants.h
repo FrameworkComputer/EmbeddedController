@@ -83,6 +83,7 @@
 /* Enable to send heatmap to AP */
 #define CONFIG_USB_ISOCHRONOUS
 #elif defined(BOARD_ZED)
+#define CONFIG_USB_HID_KEYBOARD_VIVALDI
 /* TODO: update correct parameters */
 #define HAS_I2C_TOUCHPAD
 #define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 3207

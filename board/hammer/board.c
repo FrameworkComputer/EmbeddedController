@@ -329,3 +329,29 @@ __override int board_write_serial(const char *serialno)
 {
 	return 0;
 }
+
+static const struct ec_response_keybd_config zed_kb = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,
+		TK_REFRESH,
+		TK_FULLSCREEN,
+		TK_OVERVIEW,
+		TK_SNAPSHOT,
+		TK_BRIGHTNESS_DOWN,
+		TK_BRIGHTNESS_UP,
+		TK_VOL_MUTE,
+		TK_VOL_DOWN,
+		TK_VOL_UP,
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+__override
+const struct ec_response_keybd_config *board_vivaldi_keybd_config(void)
+{
+	if (IS_ENABLED(BOARD_ZED))
+		return &zed_kb;
+
+	return NULL;
+}
