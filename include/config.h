@@ -2127,10 +2127,10 @@
 #undef CONFIG_HOSTCMD_FLASH_SPI_INFO
 
 /*
- * For ECs where the host command interface is I2C, slave
+ * For ECs where the host command interface is I2C, peripheral
  * address which the EC will respond to.
  */
-#undef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
+#undef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
 
 /*
  * Accept EC host commands over the SPI slave (SPS) interface.

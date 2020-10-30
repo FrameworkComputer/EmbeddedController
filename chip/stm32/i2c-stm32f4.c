@@ -25,7 +25,7 @@
 /* Transmit timeout in microseconds */
 #define I2C_TX_TIMEOUT_MASTER   (10 * MSEC)
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
 #if (I2C_PORT_EC == STM32_I2C1_PORT)
 #define IRQ_SLAVE_EV STM32_IRQ_I2C1_EV
 #define IRQ_SLAVE_ER STM32_IRQ_I2C1_ER
@@ -754,9 +754,9 @@ DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_change_hook, HOOK_PRIO_DEFAULT);
 #endif
 
 /*****************************************************************************/
-/* Slave */
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
-/* Host command slave */
+/* Peripheral */
+#ifdef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
+/* Host command peripheral */
 /*
  * Buffer for received host command packets (including prefix byte on request,
  * and result/size on response).  After any protocol-specific headers, the
@@ -991,7 +991,7 @@ void i2c_init(void)
 		i2c_init_port(p);
 
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
 	/* Enable ACK */
 	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_ACK;
 	/* Enable interrupts */
@@ -999,7 +999,7 @@ void i2c_init(void)
 			| STM32_I2C_CR2_ITERREN;
 	/* Setup host command slave */
 	STM32_I2C_OAR1(I2C_PORT_EC) = STM32_I2C_OAR1_B14
-		| (I2C_GET_ADDR(CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS) << 1);
+		| (I2C_GET_ADDR(CONFIG_HOSTCMD_I2C_ADDR_FLAGS) << 1);
 #ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
 	STM32_I2C_OAR2(I2C_PORT_EC) = STM32_I2C_OAR2_ENDUAL
 		| (I2C_GET_ADDR(CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS) << 1);

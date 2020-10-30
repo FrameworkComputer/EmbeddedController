@@ -17,7 +17,7 @@ for your board.
 - `CONFIG_I2C_CHIP_MAX_READ_SIZE <bytes>`
 - `CONFIG_I2C_NACK_RETRY_COUNT <count>`
 - `CONFIG_I2C_EXTRA_PACKET_SIZE <bytes>` - Only used on STM32 EC's if
-  `CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS` is defined.
+  `CONFIG_HOSTCMD_I2C_ADDR_FLAGS` is defined.
 
 ## GPIOs and Alternate Pins
 

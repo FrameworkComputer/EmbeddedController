@@ -28,7 +28,7 @@
 /* Transmit timeout in microseconds */
 #define I2C_TX_TIMEOUT_CONTROLLER	(10 * MSEC)
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
 #if (I2C_PORT_EC == STM32_I2C1_PORT)
 #define IRQ_PERIPHERAL STM32_IRQ_I2C1
 #else
@@ -117,7 +117,7 @@ int chip_i2c_set_freq(int port, enum i2c_freq freq)
 {
 	enum stm32_i2c_clk_src src = I2C_CLK_SRC_48MHZ;
 
-#if defined(CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS) && \
+#if defined(CONFIG_HOSTCMD_I2C_ADDR_FLAGS) && \
 	defined(CONFIG_LOW_POWER_IDLE) && \
 	(I2C_PORT_EC == STM32_I2C1_PORT)
 	if (port == STM32_I2C1_PORT) {
@@ -164,7 +164,7 @@ static int i2c_init_port(const struct i2c_port_t *p)
 		STM32_RCC_APB1ENR |= 1 << (21 + port);
 
 	if (port == STM32_I2C1_PORT) {
-#if defined(CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS) && \
+#if defined(CONFIG_HOSTCMD_I2C_ADDR_FLAGS) && \
 	defined(CONFIG_LOW_POWER_IDLE) && \
 	(I2C_PORT_EC == STM32_I2C1_PORT)
 		/*
@@ -209,7 +209,7 @@ static int i2c_init_port(const struct i2c_port_t *p)
 }
 
 /*****************************************************************************/
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
 /* Host command peripheral */
 /*
  * Buffer for received host command packets (including prefix byte on request,
@@ -625,7 +625,7 @@ void i2c_init(void)
 	for (i = 0; i < i2c_ports_used; i++, p++)
 		i2c_init_port(p);
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
 	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_RXIE | STM32_I2C_CR1_ERRIE
 			| STM32_I2C_CR1_ADDRIE | STM32_I2C_CR1_STOPIE
 			| STM32_I2C_CR1_NACKIE;
@@ -638,7 +638,7 @@ void i2c_init(void)
 	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_WUPEN;
 #endif
 	STM32_I2C_OAR1(I2C_PORT_EC) = 0x8000
-		| (I2C_GET_ADDR(CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS) << 1);
+		| (I2C_GET_ADDR(CONFIG_HOSTCMD_I2C_ADDR_FLAGS) << 1);
 #ifdef TCPCI_I2C_PERIPHERAL
 	/*
 	 * Configure TCPC address with OA2[1] masked so that we respond

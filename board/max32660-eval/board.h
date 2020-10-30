@@ -25,7 +25,7 @@
 #define CONFIG_I2C
 
 #define CONFIG_I2C_SLAVE
-#define CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS (0x51) /* 7 bit right-aligned, bits 6 to 0 */
+#define CONFIG_HOSTCMD_I2C_ADDR_FLAGS (0x51) /* 7 bit right-aligned */
 
 /* Slave I2C port configuration */
 #define I2C_PORT_SLAVE 1

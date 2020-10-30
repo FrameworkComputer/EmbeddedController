@@ -26,7 +26,7 @@
 /* Transmit timeout in microseconds */
 #define I2C_TX_TIMEOUT_MASTER	(10 * MSEC)
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
 #define I2C_SLAVE_ERROR_CODE	0xec
 #if (I2C_PORT_EC == STM32_I2C1_PORT)
 #define IRQ_SLAVE STM32_IRQ_I2C1
@@ -177,7 +177,7 @@ static void i2c_init_port(const struct i2c_port_t *p)
 
 /*****************************************************************************/
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
 
 static void i2c_event_handler(int port)
 {
@@ -453,12 +453,12 @@ void i2c_init(void)
 	for (i = 0; i < i2c_ports_used; i++, p++)
 		i2c_init_port(p);
 
-#ifdef CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
 	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_RXIE | STM32_I2C_CR1_ERRIE
 			| STM32_I2C_CR1_ADDRIE | STM32_I2C_CR1_STOPIE
 			| STM32_I2C_CR1_NACKIE;
 	STM32_I2C_OAR1(I2C_PORT_EC) = 0x8000
-		| (I2C_GET_ADDR(CONFIG_HOSTCMD_I2C_SLAVE_ADDR_FLAGS) << 1);
+		| (I2C_GET_ADDR(CONFIG_HOSTCMD_I2C_ADDR_FLAGS) << 1);
 	task_enable_irq(IRQ_SLAVE);
 #endif
 }
