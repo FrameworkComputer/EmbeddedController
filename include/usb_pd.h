@@ -777,9 +777,12 @@ struct pd_cable {
 #define USB_PID2_APPLE 0x1013
 
 #define USB_VID_HP     0x03F0
-#define USB_PID1_HP    0x0467		/* E24d monitor */
-#define USB_PID2_HP    0x096B		/* USB-C/A Univ Dock G2 */
-#define USB_PID3_HP    0x036B		/* USB-C Dock G5 */
+#define USB_PID_HP_USB_C_DOCK_G5	0x036B
+#define USB_PID_HP_USB_C_A_UNIV_DOCK_G2	0x096B
+#define USB_PID_HP_E24D_DOCK_MONITOR	0x0467
+#define USB_PID_HP_ELITE_E233_MONITOR	0x1747
+#define USB_PID_HP_E244D_DOCK_MONITOR	0x056D
+#define USB_PID_HP_E274D_DOCK_MONITOR	0x016E
 
 #define USB_VID_INTEL  0x8087
 
