@@ -1232,9 +1232,6 @@ static bool tc_perform_snk_hard_reset(int port)
 {
 	switch (tc[port].ps_reset_state) {
 	case PS_STATE0:
-		/* Shutting off power, Disable AutoDischargeDisconnect */
-		tcpm_enable_auto_discharge_disconnect(port, 0);
-
 		/* Hard reset sets us back to default data role */
 		tc_set_data_role(port, PD_ROLE_UFP);
 
@@ -1258,6 +1255,10 @@ static bool tc_perform_snk_hard_reset(int port)
 	case PS_STATE1:
 		if (get_time().val < tc[port].timeout)
 			return false;
+
+		/* Power shut off? Disable AutoDischargeDisconnect */
+		if (!pd_is_vbus_present(port))
+			tcpm_enable_auto_discharge_disconnect(port, 0);
 
 		/* Watch for Vbus to return */
 		tc[port].ps_reset_state = PS_STATE2;
