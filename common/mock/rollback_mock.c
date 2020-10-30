@@ -16,6 +16,10 @@
 #include "util.h"
 #include "mock/rollback_mock.h"
 
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
+#endif
+
 struct mock_ctrl_rollback mock_ctrl_rollback = MOCK_CTRL_DEFAULT_ROLLBACK;
 
 static const uint8_t fake_rollback_secret[] = {

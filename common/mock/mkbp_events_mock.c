@@ -13,7 +13,11 @@
 #include "common.h"
 #include "mock/mkbp_events_mock.h"
 
-struct mock_ctrl_mkbp_events mock_ctrl_mkbp_events = \
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
+#endif
+
+struct mock_ctrl_mkbp_events mock_ctrl_mkbp_events =
 	MOCK_CTRL_DEFAULT_MKBP_EVENTS;
 
 int mkbp_send_event(uint8_t event_type)

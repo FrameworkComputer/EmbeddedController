@@ -9,6 +9,10 @@
 #include "test_util.h"
 #include "timer.h"
 
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
+#endif
+
 #define BUFFER_SIZE 100
 #define VERIFY_TIMEOUT (5 * SECOND)
 

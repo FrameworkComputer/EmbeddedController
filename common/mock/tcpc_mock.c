@@ -17,6 +17,10 @@
 #define cprints(format, args...)
 #endif
 
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
+#endif
+
 /* Public API for controlling/inspecting this mock */
 struct mock_tcpc_ctrl mock_tcpc;
 

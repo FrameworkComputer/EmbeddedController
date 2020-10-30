@@ -14,6 +14,10 @@
 #define cprints(format, args...)
 #endif
 
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
+#endif
+
 /* Public API for controlling/inspecting this mock */
 struct mock_usb_mux_ctrl mock_usb_mux;
 

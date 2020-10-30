@@ -9,6 +9,10 @@
 #include "memory.h"
 #include "mock/tcpm_mock.h"
 
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
+#endif
+
 struct mock_tcpm_t mock_tcpm[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /**

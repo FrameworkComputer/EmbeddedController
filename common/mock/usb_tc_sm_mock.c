@@ -15,6 +15,10 @@
 #define cprints(format, args...)
 #endif
 
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
+#endif
+
 struct mock_tc_port_t mock_tc_port[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void mock_tc_port_reset(void)

@@ -11,6 +11,10 @@
 #include "usb_prl_sm.h"
 #include "mock/usb_prl_mock.h"
 
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
+#endif
+
 /* Defaults should all be 0 values. */
 struct extended_msg rx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 struct extended_msg tx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];

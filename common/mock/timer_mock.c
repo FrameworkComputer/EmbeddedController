@@ -5,6 +5,10 @@
 
 #include "mock/timer_mock.h"
 
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
+#endif
+
 static timestamp_t now;
 
 void set_time(timestamp_t now_)

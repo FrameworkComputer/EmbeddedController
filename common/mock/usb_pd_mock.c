@@ -11,6 +11,10 @@
 #include "mock/usb_pd_mock.h"
 #include "memory.h"
 
+#ifndef TEST_BUILD
+#error "Mocks should only be in the test build."
+#endif
+
 struct mock_pd_port_t mock_pd_port[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void mock_pd_reset(void)
