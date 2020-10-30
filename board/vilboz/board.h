@@ -38,7 +38,12 @@
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 
-
+/*
+ * Vilboz's battery takes ~3 seconds to come back out of its disconnect state,
+ * so give it a little more for margin.
+ */
+#undef CONFIG_POWER_BUTTON_INIT_TIMEOUT
+#define CONFIG_POWER_BUTTON_INIT_TIMEOUT 4
 
 /* GPIO mapping from board specific name to EC common name. */
 #define CONFIG_BATTERY_PRESENT_GPIO	GPIO_EC_BATT_PRES_ODL
