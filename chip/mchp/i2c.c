@@ -741,7 +741,7 @@ int chip_i2c_xfer(int port, uint16_t slave_addr_flags,
 	cdata[ctrl].hwsts3 = 0;
 	cdata[ctrl].hwsts4 = 0;
 	cdata[ctrl].port = port & 0xff;
-	cdata[ctrl].slv_addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
+	cdata[ctrl].slv_addr_8bit = I2C_STRIP_FLAGS(slave_addr_flags) << 1;
 	cdata[ctrl].out_size = out_size;
 	cdata[ctrl].outp = out;
 	cdata[ctrl].in_size = in_size;

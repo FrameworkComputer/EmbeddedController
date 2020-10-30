@@ -556,7 +556,7 @@ static int init(const struct motion_sensor_t *s)
 			 */
 			if (!SLAVE_IS_SPI(s->i2c_spi_addr_flags)) {
 				const uint16_t i2c_alt_addr_flags =
-					I2C_GET_ADDR(
+					I2C_STRIP_FLAGS(
 						s->i2c_spi_addr_flags)
 					& ~2;
 				ret = raw_write8(s->port,

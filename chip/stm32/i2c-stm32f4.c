@@ -552,7 +552,7 @@ int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 		  const uint8_t *out, int out_bytes,
 		  uint8_t *in, int in_bytes, int flags)
 {
-	int addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
+	int addr_8bit = I2C_STRIP_FLAGS(slave_addr_flags) << 1;
 	int started = (flags & I2C_XFER_START) ? 0 : 1;
 	int rv = EC_SUCCESS;
 	int i;
@@ -928,7 +928,7 @@ static void i2c_event_handler(int port)
 				STM32_I2C_CR2(port) &= ~STM32_I2C_CR2_ITBUFEN;
 #ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
 				if ((addr_8bit >> 1) ==
-				    I2C_GET_ADDR(
+				    I2C_STRIP_FLAGS(
 					    CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS))
 					i2c_process_board_command(1, addr_8bit,
 								  buf_idx);
@@ -955,7 +955,7 @@ static void i2c_event_handler(int port)
 #ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
 		if (rx_pending &&
 		    (addr_8b >> 1) ==
-		    I2C_GET_ADDR(CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS))
+		    I2C_STRIP_FLAGS(CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS))
 			i2c_process_board_command(0, addr_8bit, buf_idx);
 #endif
 		rx_pending = 0;
@@ -999,10 +999,10 @@ void i2c_init(void)
 			| STM32_I2C_CR2_ITERREN;
 	/* Setup host command slave */
 	STM32_I2C_OAR1(I2C_PORT_EC) = STM32_I2C_OAR1_B14
-		| (I2C_GET_ADDR(CONFIG_HOSTCMD_I2C_ADDR_FLAGS) << 1);
+		| (I2C_STRIP_ADDR(CONFIG_HOSTCMD_I2C_ADDR_FLAGS) << 1);
 #ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
 	STM32_I2C_OAR2(I2C_PORT_EC) = STM32_I2C_OAR2_ENDUAL
-		| (I2C_GET_ADDR(CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS) << 1);
+		| (I2C_STRIP_FLAGS(CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS) << 1);
 #endif
 	task_enable_irq(IRQ_SLAVE_EV);
 	task_enable_irq(IRQ_SLAVE_ER);

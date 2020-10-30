@@ -665,7 +665,7 @@ int chip_i2c_xfer(int port, uint16_t slave_addr_flags,
 	pd->widx = 0;
 	pd->ridx = 0;
 	pd->err = 0;
-	pd->addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
+	pd->addr_8bit = I2C_STRIP_FLAGS(slave_addr_flags) << 1;
 
 	/* Make sure we're in a good state to start */
 	if ((flags & I2C_XFER_START) && (i2c_is_busy(port)

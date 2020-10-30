@@ -146,7 +146,7 @@ static int i2c_master_write(const int port, const uint16_t slave_addr_flags,
 	int bytes_sent;
 	int timeout = I2C_TIMEOUT;
 
-	NRF51_TWI_ADDRESS(port) = I2C_GET_ADDR(slave_addr_flags);
+	NRF51_TWI_ADDRESS(port) = I2C_STRIP_FLAGS(slave_addr_flags);
 
 	/* Clear the sent bit */
 	NRF51_TWI_TXDSENT(port) = 0;
@@ -192,7 +192,7 @@ static int i2c_master_read(const int port, const uint16_t slave_addr_flags,
 	int curr_byte;
 	int timeout = I2C_TIMEOUT;
 
-	NRF51_TWI_ADDRESS(port) = I2C_GET_ADDR(slave_addr_flags);
+	NRF51_TWI_ADDRESS(port) = I2C_STRIP_FLAGS(slave_addr_flags);
 
 	if (size == 1) /* Last byte: stop after this one. */
 		NRF51_PPI_TEP(i2c_ppi_chan[port]) =

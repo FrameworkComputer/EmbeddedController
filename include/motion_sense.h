@@ -95,7 +95,7 @@ enum sensor_config {
 #define SLAVE_MK_I2C_ADDR_FLAGS(addr)	(addr)
 #define SLAVE_MK_SPI_ADDR_FLAGS(addr)	((addr) | I2C_FLAG_ADDR_IS_SPI)
 
-#define SLAVE_GET_I2C_ADDR(addr_flags)	(I2C_GET_ADDR(addr_flags))
+#define SLAVE_GET_I2C_ADDR(addr_flags)	(I2C_STRIP_FLAGS(addr_flags))
 #define SLAVE_GET_SPI_ADDR(addr_flags)	((addr_flags) & I2C_ADDR_MASK)
 
 #define SLAVE_IS_SPI(addr_flags)	((addr_flags) & I2C_FLAG_ADDR_IS_SPI)

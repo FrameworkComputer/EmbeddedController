@@ -450,7 +450,7 @@ int chip_i2c_xfer(const int port, const uint16_t addr_flags,
 		  const uint8_t *out, int out_bytes,
 		  uint8_t *in, int in_bytes, int flags)
 {
-	int addr_8bit = I2C_GET_ADDR(addr_flags) << 1;
+	int addr_8bit = I2C_STRIP_FLAGS(addr_flags) << 1;
 	int rv = EC_SUCCESS;
 	int i;
 	int xfer_start = flags & I2C_XFER_START;
@@ -638,14 +638,14 @@ void i2c_init(void)
 	STM32_I2C_CR1(I2C_PORT_EC) |= STM32_I2C_CR1_WUPEN;
 #endif
 	STM32_I2C_OAR1(I2C_PORT_EC) = 0x8000
-		| (I2C_GET_ADDR(CONFIG_HOSTCMD_I2C_ADDR_FLAGS) << 1);
+		| (I2C_STRIP_FLAGS(CONFIG_HOSTCMD_I2C_ADDR_FLAGS) << 1);
 #ifdef TCPCI_I2C_PERIPHERAL
 	/*
 	 * Configure TCPC address with OA2[1] masked so that we respond
 	 * to CONFIG_TCPC_I2C_BASE_ADDR and CONFIG_TCPC_I2C_BASE_ADDR + 2.
 	 */
 	STM32_I2C_OAR2(I2C_PORT_EC) = 0x8100
-		| (I2C_GET_ADDR(CONFIG_TCPC_I2C_BASE_ADDR_FLAGS) << 1);
+		| (I2C_STRIP_FLAGS(CONFIG_TCPC_I2C_BASE_ADDR_FLAGS) << 1);
 #endif
 	task_enable_irq(IRQ_PERIPHERAL);
 #endif

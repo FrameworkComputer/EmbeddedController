@@ -657,7 +657,7 @@ static void i2c_fifo_handle_receive(int controller)
 static void i2c_handle_sda_irq(int controller)
 {
 	volatile struct i2c_status *p_status = i2c_stsobjs + controller;
-	uint8_t addr_8bit = I2C_GET_ADDR(p_status->slave_addr_flags) << 1;
+	uint8_t addr_8bit = I2C_STRIP_FLAGS(p_status->slave_addr_flags) << 1;
 
 	/* 1 Issue Start is successful ie. write address byte */
 	if (p_status->oper_state == SMB_MASTER_START

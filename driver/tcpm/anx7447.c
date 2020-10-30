@@ -300,17 +300,17 @@ static int anx7447_init(int port)
 	 * specified TCPC slave address
 	 */
 	for (i = 0; i < ARRAY_SIZE(anx7447_i2c_addrs_flags); i++) {
-		if (I2C_GET_ADDR(tcpc_config[port].i2c_info.addr_flags) ==
-		    I2C_GET_ADDR(
+		if (I2C_STRIP_FLAGS(tcpc_config[port].i2c_info.addr_flags) ==
+		    I2C_STRIP_FLAGS(
 			    anx7447_i2c_addrs_flags[i].tcpc_slave_addr_flags)) {
 			anx[port].i2c_slave_addr_flags =
 				anx7447_i2c_addrs_flags[i].spi_slave_addr_flags;
 			break;
 		}
 	}
-	if (!I2C_GET_ADDR(anx[port].i2c_slave_addr_flags)) {
+	if (!I2C_STRIP_FLAGS(anx[port].i2c_slave_addr_flags)) {
 		ccprintf("TCPC I2C slave addr 0x%x is invalid for ANX7447\n",
-			 I2C_GET_ADDR(tcpc_config[port]
+			 I2C_STRIP_FLAGS(tcpc_config[port]
 				      .i2c_info.addr_flags));
 		return EC_ERROR_UNKNOWN;
 	}

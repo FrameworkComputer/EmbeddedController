@@ -302,7 +302,7 @@ int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 	uint64_t expire_ts;
 	struct i2c_context *ctx;
 	ssize_t curr_index = 0;
-	uint16_t addr = I2C_GET_ADDR(slave_addr_flags);
+	uint16_t addr = I2C_STRIP_FLAGS(slave_addr_flags);
 	int begin_indx;
 	uint8_t repeat_start = 0;
 

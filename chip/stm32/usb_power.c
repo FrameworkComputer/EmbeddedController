@@ -416,7 +416,7 @@ uint16_t ina2xx_readagain(uint8_t port, uint16_t slave_addr_flags)
 
 	if (res) {
 		CPRINTS("INA2XX I2C readagain failed p:%d a:%02x",
-			(int)port, (int)I2C_GET_ADDR(slave_addr_flags));
+			(int)port, (int)I2C_STRIP_FLAGS(slave_addr_flags));
 		return 0x0bad;
 	}
 	return (val >> 8) | ((val & 0xff) << 8);
@@ -432,7 +432,7 @@ uint16_t ina2xx_read(uint8_t port, uint16_t slave_addr_flags,
 	res = i2c_read16(port, slave_addr_flags, reg, &val);
 	if (res) {
 		CPRINTS("INA2XX I2C read failed p:%d a:%02x, r:%02x",
-			(int)port, (int)I2C_GET_ADDR(slave_addr_flags),
+			(int)port, (int)I2C_STRIP_FLAGS(slave_addr_flags),
 			(int)reg);
 		return 0x0bad;
 	}
@@ -514,7 +514,7 @@ static int usb_power_init_inas(struct usb_power_config const *config)
 		cal = ina2xx_read(ina->port, ina->addr_flags,
 				  INA231_REG_CAL);
 		CPRINTS("[CAP] %d (%d,0x%02x): conf:%x, cal:%x",
-			i, ina->port, I2C_GET_ADDR(ina->addr_flags),
+			i, ina->port, I2C_STRIP_FLAGS(ina->addr_flags),
 			conf, cal);
 		}
 #endif
@@ -570,7 +570,7 @@ static int usb_power_init_inas(struct usb_power_config const *config)
 		actual = ina2xx_read(ina->port, ina->addr_flags,
 				     INA231_REG_CONF);
 		CPRINTS("[CAP] %d (%d,0x%02x): conf:%x, act:%x",
-			i, ina->port, I2C_GET_ADDR(ina->addr_flags),
+			i, ina->port, I2C_STRIP_FLAGS(ina->addr_flags),
 			value, actual);
 		}
 #endif
@@ -582,7 +582,7 @@ static int usb_power_init_inas(struct usb_power_config const *config)
 			 * 125) / 100;
 
 		CPRINTS("[CAP] %d (%d,0x%02x): busv:%dmv",
-			i, ina->port, I2C_GET_ADDR(ina->addr_flags),
+			i, ina->port, I2C_STRIP_FLAGS(ina->addr_flags),
 			busv_mv);
 		}
 #endif
@@ -678,7 +678,7 @@ static int usb_power_get_samples(struct usb_power_config const *config)
 		int uW = (((int)power * ina->scale*25)/100);
 
 		CPRINTS("[CAP] %d (%d,0x%02x): %dmV / %dmO = %dmA",
-			i, ina->port, I2C_GET_ADDR(ina->addr_flags),
+			i, ina->port, I2C_STRIP_FLAGS(ina->addr_flags),
 			uV/1000, ina->rs, uA/1000);
 		CPRINTS("[CAP] %duV %dmV %duA %dCuA "
 			"%duW v:%04x, b:%04x, p:%04x",

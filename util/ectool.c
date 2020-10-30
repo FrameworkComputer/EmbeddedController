@@ -7300,7 +7300,7 @@ int cmd_locate_chip(int argc, char *argv[])
 	 */
 	printf("Bus: %s; Port: %d; Address: 0x%02x (7-bit format)\n",
 	       bus_type[r.bus_type], r.i2c_info.port,
-	       I2C_GET_ADDR(r.i2c_info.addr_flags));
+	       I2C_STRIP_FLAGS(r.i2c_info.addr_flags));
 
 	printf("reserved: 0x%x\n", r.reserved);
 

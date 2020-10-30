@@ -165,7 +165,7 @@ static int config_slv0_read(const struct motion_sensor_t *s,
 			    uint16_t reg, uint8_t len)
 {
 	int ret;
-	uint16_t addr_8bit = I2C_GET_ADDR(slv_addr_flags) << 1;
+	uint16_t addr_8bit = I2C_STRIP_FLAGS(slv_addr_flags) << 1;
 
 	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
 			    LSM6DSM_SLV0_ADD_ADDR,

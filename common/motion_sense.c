@@ -1742,7 +1742,7 @@ static int command_display_accel_info(int argc, char **argv)
 		ccprintf("type: %d\n", motion_sensors[i].type);
 		ccprintf("location: %d\n", motion_sensors[i].location);
 		ccprintf("port: %d\n", motion_sensors[i].port);
-		ccprintf("addr: %d\n", I2C_GET_ADDR(motion_sensors[i]
+		ccprintf("addr: %d\n", I2C_STRIP_FLAGS(motion_sensors[i]
 						    .i2c_spi_addr_flags));
 		ccprintf("range: %d\n", motion_sensors[i].default_range);
 		ccprintf("min_freq: %d\n", motion_sensors[i].min_frequency);

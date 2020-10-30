@@ -287,7 +287,7 @@ int chip_i2c_xfer(const int port,
 	if (out_size) {
 		if (send_start) {
 			MEC1322_I2C_DATA(controller) =
-				(uint8_t)(I2C_GET_ADDR(slave_addr_flags)
+				(uint8_t)(I2C_STRIP_FLAGS(slave_addr_flags)
 					  << 1);
 
 			/* Clock out the slave address, sending START bit */
@@ -332,7 +332,7 @@ int chip_i2c_xfer(const int port,
 							       CTRL_ENI;
 
 			MEC1322_I2C_DATA(controller) =
-				(uint8_t)(I2C_GET_ADDR(slave_addr_flags)
+				(uint8_t)(I2C_STRIP_FLAGS(slave_addr_flags)
 					  << 1)
 				| 0x01;
 

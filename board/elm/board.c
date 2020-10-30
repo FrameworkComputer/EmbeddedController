@@ -96,7 +96,7 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 int anx7688_passthru_allowed(const struct i2c_port_t *port,
 			     const uint16_t addr_flags)
 {
-	uint16_t addr = I2C_GET_ADDR(addr_flags);
+	uint16_t addr = I2C_STRIP_FLAGS(addr_flags);
 
 	/* Allow access to 0x2c (TCPC) */
 	if (addr == 0x2c)

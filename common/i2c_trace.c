@@ -28,7 +28,7 @@ void i2c_trace_notify(int port, uint16_t slave_addr_flags,
 		      const uint8_t *in_data, size_t in_size)
 {
 	size_t i;
-	uint16_t addr = I2C_GET_ADDR(slave_addr_flags);
+	uint16_t addr = I2C_STRIP_FLAGS(slave_addr_flags);
 
 	for (i = 0; i < ARRAY_SIZE(trace_entries); i++)
 		if (trace_entries[i].enabled
