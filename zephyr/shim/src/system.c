@@ -11,6 +11,9 @@
 #include <string.h>
 #include <errno.h>
 
+/* Ongoing actions preventing going into deep-sleep mode. */
+uint32_t sleep_mask;
+
 /* Round up to a multiple of 4. */
 #define ROUNDUP4(x) (((x) + 3) & ~3)
 
