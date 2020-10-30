@@ -248,8 +248,8 @@ void i2c_prepare_sysjump(void)
 }
 
 /* i2c_readN with optional error checking */
-static int i2c_read(const int port, const uint16_t slave_addr_flags,
-			uint8_t reg, uint8_t *in, int in_size)
+static int platform_ec_i2c_read(const int port, const uint16_t slave_addr_flags,
+				uint8_t reg, uint8_t *in, int in_size)
 {
 	if (!IS_ENABLED(CONFIG_SMBUS_PEC) && I2C_USE_PEC(slave_addr_flags))
 		return EC_ERROR_UNIMPLEMENTED;
@@ -257,7 +257,7 @@ static int i2c_read(const int port, const uint16_t slave_addr_flags,
 	if (IS_ENABLED(CONFIG_SMBUS_PEC) && I2C_USE_PEC(slave_addr_flags)) {
 		int i, rv;
 		/* addr_8bit = 7 bit addr_flags + 1 bit r/w */
-		uint8_t addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
+		uint8_t addr_8bit = I2C_STRIP_FLAGS(slave_addr_flags) << 1;
 		uint8_t out[3] = {addr_8bit, reg, addr_8bit | 1};
 		uint8_t pec_local = 0, pec_remote;
 
@@ -289,15 +289,16 @@ static int i2c_read(const int port, const uint16_t slave_addr_flags,
 }
 
 /* i2c_writeN with optional error checking */
-static int i2c_write(const int port, const uint16_t slave_addr_flags,
-			 const uint8_t *out, int out_size)
+static int platform_ec_i2c_write(const int port,
+				 const uint16_t slave_addr_flags,
+				 const uint8_t *out, int out_size)
 {
 	if (!IS_ENABLED(CONFIG_SMBUS_PEC) && I2C_USE_PEC(slave_addr_flags))
 		return EC_ERROR_UNIMPLEMENTED;
 
 	if (IS_ENABLED(CONFIG_SMBUS_PEC) && I2C_USE_PEC(slave_addr_flags)) {
 		int i, rv;
-		uint8_t addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
+		uint8_t addr_8bit = I2C_STRIP_FLAGS(slave_addr_flags) << 1;
 		uint8_t pec;
 
 		pec = crc8(&addr_8bit, 1);
@@ -334,7 +335,8 @@ int i2c_read32(const int port,
 
 	reg = offset & 0xff;
 	/* I2C read 32-bit word: transmit 8-bit offset, and read 32bits */
-	rv = i2c_read(port, slave_addr_flags, reg, buf, sizeof(uint32_t));
+	rv = platform_ec_i2c_read(port, slave_addr_flags, reg, buf,
+				  sizeof(uint32_t));
 
 	if (rv)
 		return rv;
@@ -369,7 +371,8 @@ int i2c_write32(const int port,
 		buf[4] = (data >> 24) & 0xff;
 	}
 
-	return i2c_write(port, slave_addr_flags, buf, sizeof(uint32_t) + 1);
+	return platform_ec_i2c_write(port, slave_addr_flags, buf,
+				     sizeof(uint32_t) + 1);
 }
 
 int i2c_read16(const int port,
@@ -381,7 +384,8 @@ int i2c_read16(const int port,
 
 	reg = offset & 0xff;
 	/* I2C read 16-bit word: transmit 8-bit offset, and read 16bits */
-	rv = i2c_read(port, slave_addr_flags, reg, buf, sizeof(uint16_t));
+	rv = platform_ec_i2c_read(port, slave_addr_flags, reg, buf,
+				  sizeof(uint16_t));
 
 	if (rv)
 		return rv;
@@ -410,7 +414,8 @@ int i2c_write16(const int port,
 		buf[2] = (data >> 8) & 0xff;
 	}
 
-	return i2c_write(port, slave_addr_flags, buf, 1 + sizeof(uint16_t));
+	return platform_ec_i2c_write(port, slave_addr_flags, buf,
+				     1 + sizeof(uint16_t));
 }
 
 int i2c_read8(const int port,
@@ -423,7 +428,8 @@ int i2c_read8(const int port,
 
 	reg = offset;
 
-	rv = i2c_read(port, slave_addr_flags, reg, &buf, sizeof(uint8_t));
+	rv = platform_ec_i2c_read(port, slave_addr_flags, reg, &buf,
+				  sizeof(uint8_t));
 	if (!rv)
 		*data = buf;
 
@@ -439,7 +445,7 @@ int i2c_write8(const int port,
 	buf[0] = offset;
 	buf[1] = data;
 
-	return i2c_write(port, slave_addr_flags, buf, sizeof(buf));
+	return platform_ec_i2c_write(port, slave_addr_flags, buf, sizeof(buf));
 }
 
 int i2c_update8(const int port,
@@ -660,7 +666,8 @@ int i2c_read_string(const int port,
 
 		if (IS_ENABLED(CONFIG_SMBUS_PEC) &&
 				I2C_USE_PEC(slave_addr_flags)) {
-			uint8_t addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
+			uint8_t addr_8bit =
+				I2C_STRIP_FLAGS(slave_addr_flags) << 1;
 			uint8_t out[3] = {addr_8bit, reg, addr_8bit | 1};
 			uint8_t pec, pec_remote;
 
@@ -713,9 +720,8 @@ int i2c_read_string(const int port,
 	return rv;
 }
 
-int i2c_read_block(const int port,
-		   const uint16_t slave_addr_flags,
-		   int offset, uint8_t *data, int len)
+int i2c_read_block(const int port, const uint16_t slave_addr_flags, int offset,
+		   uint8_t *data, int len)
 {
 	int rv;
 	uint8_t reg_address = offset;
@@ -735,7 +741,7 @@ int i2c_write_block(const int port,
 		return EC_ERROR_UNIMPLEMENTED;
 
 	if (IS_ENABLED(CONFIG_SMBUS_PEC) && I2C_USE_PEC(slave_addr_flags)) {
-		uint8_t addr_8bit = I2C_GET_ADDR(slave_addr_flags) << 1;
+		uint8_t addr_8bit = I2C_STRIP_FLAGS(slave_addr_flags) << 1;
 
 		pec = crc8(&addr_8bit, sizeof(uint8_t));
 		pec = crc8_arg(data, len, pec);
@@ -1114,7 +1120,8 @@ static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 
 	/* Loop and process messages */
 	resp->i2c_status = 0;
-	out = args->params + sizeof(*params) + params->num_msgs * sizeof(*msg);
+	out = (uint8_t *)args->params + sizeof(*params) +
+		params->num_msgs * sizeof(*msg);
 	in_len = 0;
 
 	for (resp->num_msgs = 0, msg = params->msg;
@@ -1224,7 +1231,7 @@ static void i2c_passthru_protect_tcpc_ports(void)
 
 	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		/* TCPC tunnel not configured. No need to protect anything */
-		if (!I2C_GET_ADDR(tcpc_config[i].i2c_info.addr_flags))
+		if (!I2C_STRIP_FLAGS(tcpc_config[i].i2c_info.addr_flags))
 			continue;
 		i2c_passthru_protect_port(tcpc_config[i].i2c_info.port);
 	}
