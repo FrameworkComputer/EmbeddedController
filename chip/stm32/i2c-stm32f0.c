@@ -351,7 +351,7 @@ static void i2c_event_handler(int port)
 		/* Clear ADDR bit by writing to ADDRCF bit */
 		STM32_I2C_ICR(port) |= STM32_I2C_ICR_ADDRCF;
 		/* Inhibit sleep mode when addressed until STOPF flag is set */
-		disable_sleep(SLEEP_MASK_I2C_SLAVE);
+		disable_sleep(SLEEP_MASK_I2C_PERIPHERAL);
 	}
 
 	/* Receiver full event */
@@ -380,7 +380,7 @@ static void i2c_event_handler(int port)
 		STM32_I2C_ICR(port) |= STM32_I2C_ICR_STOPCF;
 
 		/* No longer inhibit deep sleep after stop condition */
-		enable_sleep(SLEEP_MASK_I2C_SLAVE);
+		enable_sleep(SLEEP_MASK_I2C_PERIPHERAL);
 	}
 
 	/* Controller requested STOP or RESTART */

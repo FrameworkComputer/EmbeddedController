@@ -466,7 +466,7 @@ enum {
 	SLEEP_MASK_USB_PWR    = BIT(4), /* USB power loop ongoing */
 	SLEEP_MASK_USB_PD     = BIT(5), /* USB PD device connected */
 	SLEEP_MASK_SPI        = BIT(6), /* SPI communications ongoing */
-	SLEEP_MASK_I2C_SLAVE  = BIT(7), /* I2C slave communication ongoing */
+	SLEEP_MASK_I2C_PERIPHERAL = BIT(7), /* I2C peripheral comms ongoing */
 	SLEEP_MASK_FAN        = BIT(8), /* Fan control loop ongoing */
 	SLEEP_MASK_USB_DEVICE = BIT(9), /* Generic USB device in use */
 	SLEEP_MASK_PWM        = BIT(10), /* PWM output is enabled */

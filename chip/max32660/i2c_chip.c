@@ -582,7 +582,7 @@ static void i2c_slave_handler(mxc_i2c_regs_t *i2c)
 		i2c->int_en0 = MXC_F_I2C_INT_EN0_DONE |
 			I2C_ERROR | MXC_F_I2C_INT_EN0_ADDR_MATCH;
 		/* Inhibit sleep mode when addressed until STOPF flag is set. */
-		disable_sleep(SLEEP_MASK_I2C_SLAVE);
+		disable_sleep(SLEEP_MASK_I2C_PERIPHERAL);
 	}
 
 	/* Check for DONE interrupt. */
@@ -615,7 +615,7 @@ static void i2c_slave_handler(mxc_i2c_regs_t *i2c)
 		i2c_slave_service(req);
 
 		/* No longer inhibit deep sleep after done. */
-		enable_sleep(SLEEP_MASK_I2C_SLAVE);
+		enable_sleep(SLEEP_MASK_I2C_PERIPHERAL);
 	}
 
 	/* Check for an I2C Master Read or Write. */

@@ -906,7 +906,7 @@ static void i2c_event_handler(int port)
 		unused = STM32_I2C_SR1(port);
 		unused = STM32_I2C_SR2(port);
 		/* Inhibit stop mode when addressed until STOPF flag is set */
-		disable_sleep(SLEEP_MASK_I2C_SLAVE);
+		disable_sleep(SLEEP_MASK_I2C_PERIPHERAL);
 	}
 
 	/* I2C in slave transmitter */
@@ -968,7 +968,7 @@ static void i2c_event_handler(int port)
 		STM32_I2C_CR1(port) = i2c_cr1 | STM32_I2C_CR1_PE;
 
 		/* No longer inhibit deep sleep after stop condition */
-		enable_sleep(SLEEP_MASK_I2C_SLAVE);
+		enable_sleep(SLEEP_MASK_I2C_PERIPHERAL);
 	}
 
 	/* Enable again */
