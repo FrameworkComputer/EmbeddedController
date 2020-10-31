@@ -291,7 +291,7 @@ flash_fp_mcu_stm32() {
   fi
 
   # Inform user to reboot if transport is UART.
-  # Display fw version is transport is SPI 
+  # Display fw version is transport is SPI
   if [[ "${transport}" == "UART" ]]; then
     echo "Please reboot this device."
   else
