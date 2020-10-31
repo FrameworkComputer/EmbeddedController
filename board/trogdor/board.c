@@ -318,6 +318,15 @@ void board_hibernate(void)
 	int i;
 
 	/*
+	 * Sensors are unpowered in hibernate. Apply PD to the
+	 * interrupt lines such that they don't float.
+	 */
+	gpio_set_flags(GPIO_ACCEL_GYRO_INT_L,
+		       GPIO_INPUT | GPIO_PULL_DOWN);
+	gpio_set_flags(GPIO_LID_ACCEL_INT_L,
+		       GPIO_INPUT | GPIO_PULL_DOWN);
+
+	/*
 	 * Enable the PPC power sink path before EC enters hibernate;
 	 * otherwise, ACOK won't go High and can't wake EC up. Check the
 	 * bug b/170324206 for details.

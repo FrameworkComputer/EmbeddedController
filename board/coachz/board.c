@@ -344,6 +344,13 @@ void board_hibernate(void)
 	int i;
 
 	/*
+	 * Sensors are unpowered in hibernate. Apply PD to the
+	 * interrupt lines such that they don't float.
+	 */
+	gpio_set_flags(GPIO_ACCEL_GYRO_INT_L,
+		       GPIO_INPUT | GPIO_PULL_DOWN);
+
+	/*
 	 * Board rev 1+ has the hardware fix. Don't need the following
 	 * workaround.
 	 */
