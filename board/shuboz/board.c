@@ -650,17 +650,3 @@ int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A1_5V_DB_OPT1,
 };
 
-static void check_v0_battery(void)
-{
-	uint32_t board_version = 0;
-
-	cbi_get_board_version(&board_version);
-
-	if (board_version == 1)
-		I2C_PORT_BATTERY = I2C_PORT_BATTERY_V0;
-}
-/*
- * Use HOOK_PRIO_INIT_I2C so we re-map before init_battery_type() and
- * charger_chips_init() want to talk to the battery.
- */
-DECLARE_HOOK(HOOK_INIT, check_v0_battery, HOOK_PRIO_INIT_I2C);
