@@ -124,14 +124,14 @@ int in_interrupt_context(void)
 	return !!in_interrupt;
 }
 
-void interrupt_disable(void)
+test_mockable void interrupt_disable(void)
 {
 	pthread_mutex_lock(&interrupt_lock);
 	interrupt_disabled = 1;
 	pthread_mutex_unlock(&interrupt_lock);
 }
 
-void interrupt_enable(void)
+test_mockable void interrupt_enable(void)
 {
 	pthread_mutex_lock(&interrupt_lock);
 	interrupt_disabled = 0;

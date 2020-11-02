@@ -85,15 +85,29 @@ void interrupt_enable(void);
  * interrupt_disable() and interrupt_enable().
  */
 #ifndef CONFIG_ZEPHYR
-__maybe_unused static inline uint32_t irq_lock(void)
-{
-	interrupt_disable();
-	return 0;
-}
-__maybe_unused static inline void irq_unlock(uint32_t key)
-{
-	interrupt_enable();
-}
+/**
+ * Perform the same operation as interrupt_disable but allow nesting. The
+ * return value from this function should be used as the argument to
+ * irq_unlock. Do not attempt to parse the value, it is a representation
+ * of the state and not an indication of any form of count.
+ *
+ * For more information see:
+ * https://docs.zephyrproject.org/latest/reference/kernel/other/interrupts.html#c.irq_lock
+ *
+ * @return Lock key to use for restoring the state via irq_unlock.
+ */
+uint32_t irq_lock(void);
+
+/**
+ * Perform the same operation as interrupt_enable but allow nesting. The key
+ * should be the unchanged value returned by irq_lock.
+ *
+ * For more information see:
+ * https://docs.zephyrproject.org/latest/reference/kernel/other/interrupts.html#c.irq_unlock
+ *
+ * @param key The lock-out key used to restore the interrupt state.
+ */
+void irq_unlock(uint32_t key);
 #endif /* CONFIG_ZEPHYR */
 
 /**
