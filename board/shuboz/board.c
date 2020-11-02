@@ -9,10 +9,8 @@
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
-#include "driver/ioexpander/pcal6408.h"
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
-#include "driver/retimer/pi3hdx1204.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "driver/usb_mux/ps8740.h"
@@ -41,38 +39,6 @@
 
 /* This I2C moved. Temporarily detect and support the V0 HW. */
 int I2C_PORT_BATTERY = I2C_PORT_BATTERY_V1;
-
-/* Interrupt handler varies with DB option. */
-void (*c1_tcpc_config_interrupt)(enum gpio_signal signal) = tcpc_alert_event;
-
-void c1_tcpc_interrupt(enum gpio_signal signal)
-{
-	c1_tcpc_config_interrupt(signal);
-}
-
-/* Interrupt for C1 PPC with USB-C DB, HPD with HDMI DB. */
-void (*c1_ppc_config_interrupt)(enum gpio_signal signal) = ppc_interrupt;
-
-void c1_ppc_interrupt(enum gpio_signal signal)
-{
-	c1_ppc_config_interrupt(signal);
-}
-
-static void hdmi_hpd_handler(void)
-{
-	/* Pass HPD through from DB OPT1 HDMI connector to AP's DP1. */
-	int hpd = gpio_get_level(GPIO_USB_C1_PPC_INT_ODL);
-
-	gpio_set_level(GPIO_DP1_HPD, hpd);
-	ccprints("HDMI HPD %d", hpd);
-}
-DECLARE_DEFERRED(hdmi_hpd_handler);
-
-void hdmi_hpd_interrupt(enum gpio_signal signal)
-{
-	/* Debounce for 2 msec. */
-	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
-}
 
 #include "gpio_list.h"
 
@@ -179,28 +145,6 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 #endif /* HAS_TASK_MOTIONSENSE */
 
-/* These IO expander GPIOs vary with DB option. */
-enum gpio_signal IOEX_USB_A1_RETIMER_EN = IOEX_USB_A1_RETIMER_EN_OPT1;
-enum gpio_signal IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT1;
-
-static void pcal6408_handler(void)
-{
-	pcal6408_ioex_event_handler(IOEX_HDMI_PCAL6408);
-}
-DECLARE_DEFERRED(pcal6408_handler);
-
-void pcal6408_interrupt(enum gpio_signal signal)
-{
-	hook_call_deferred(&pcal6408_handler_data, 0);
-}
-
-const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
-	.eq_ch0_ch1_offset = PI3HDX1204_EQ_DB710,
-	.eq_ch2_ch3_offset = PI3HDX1204_EQ_DB710,
-	.vod_offset = PI3HDX1204_VOD_115_ALL_CHANNELS,
-	.de_offset = PI3HDX1204_DE_DB_MINUS5,
-};
-
 /*****************************************************************************
  * Board suspend / resume
  */
@@ -208,27 +152,12 @@ const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
 static void board_chipset_resume(void)
 {
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
-
-	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
-		ioex_set_level(IOEX_EN_PWR_HDMI_DB, 1);
-		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
-				  1);
-	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
 static void board_chipset_suspend(void)
 {
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
-
-	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
-				  0);
-		ioex_set_level(IOEX_EN_PWR_HDMI_DB, 0);
-	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
@@ -305,6 +234,7 @@ struct usb_mux usb_muxes[] = {
 		.i2c_port = I2C_PORT_TCPC1,
 		.i2c_addr_flags = PS8743_I2C_ADDR1_FLAG,
 		.driver = &ps8743_usb_mux_driver,
+		.board_set = &board_ps8743_mux_set,
 		.next_mux = &usbc1_amd_fp5_usb_mux,
 	}
 };
@@ -548,41 +478,6 @@ int board_pd_set_frs_enable(int port, int enable)
 
 static void setup_fw_config(void)
 {
-	uint32_t board_version = 0;
-
-	if (cbi_get_board_version(&board_version) == EC_SUCCESS
-	    && board_version >= 2) {
-		ccprints("PS8743 USB MUX");
-		usb_muxes[USBC_PORT_C1].i2c_addr_flags = PS8743_I2C_ADDR1_FLAG;
-		usb_muxes[USBC_PORT_C1].driver = &ps8743_usb_mux_driver;
-		usb_muxes[USBC_PORT_C1].board_set = &board_ps8743_mux_set;
-	} else {
-		ccprints("PS8740 USB MUX");
-		usb_muxes[USBC_PORT_C1].i2c_addr_flags = PS8740_I2C_ADDR0_FLAG;
-		usb_muxes[USBC_PORT_C1].driver = &ps8740_usb_mux_driver;
-		usb_muxes[USBC_PORT_C1].board_set = NULL;
-	}
-
-	if (ec_config_get_usb_db() == DALBOZ_DB_D_OPT2_USBA_HDMI) {
-		ccprints("DB OPT2 HDMI");
-		ioex_config[IOEX_HDMI_PCAL6408].flags = 0;
-		ioex_init(IOEX_HDMI_PCAL6408);
-		IOEX_USB_A1_RETIMER_EN = IOEX_USB_A1_RETIMER_EN_OPT2;
-		IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT2;
-		usb_port_enable[USBA_PORT_A1] = IOEX_EN_USB_A1_5V_DB_OPT2;
-		c1_tcpc_config_interrupt = pcal6408_interrupt;
-		c1_ppc_config_interrupt = hdmi_hpd_interrupt;
-	} else {
-		ccprints("DB OPT1 USBC");
-		ioex_config[IOEX_C1_NCT3807].flags = 0;
-		ioex_init(IOEX_C1_NCT3807);
-		IOEX_USB_A1_RETIMER_EN = IOEX_USB_A1_RETIMER_EN_OPT1;
-		IOEX_USB_A1_CHARGE_EN_DB_L = IOEX_USB_A1_CHARGE_EN_DB_L_OPT1;
-		usb_port_enable[USBA_PORT_A1] = IOEX_EN_USB_A1_5V_DB_OPT1;
-		c1_tcpc_config_interrupt = tcpc_alert_event;
-		c1_ppc_config_interrupt = ppc_interrupt;
-	}
-
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_FAULT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
@@ -634,19 +529,12 @@ struct ioexpander_config_t ioex_config[] = {
 		.i2c_host_port = I2C_PORT_TCPC1,
 		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
 		.drv = &nct38xx_ioexpander_drv,
-		.flags = IOEX_FLAGS_DISABLED,
-	},
-	[IOEX_HDMI_PCAL6408] = {
-		.i2c_host_port = I2C_PORT_TCPC1,
-		.i2c_slave_addr = PCAL6408_I2C_ADDR0,
-		.drv = &pcal6408_ioexpander_drv,
-		.flags = IOEX_FLAGS_DISABLED,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(ioex_config) == CONFIG_IO_EXPANDER_PORT_COUNT);
 
 int usb_port_enable[USBA_PORT_COUNT] = {
 	IOEX_EN_USB_A0_5V,
-	IOEX_EN_USB_A1_5V_DB_OPT1,
+	IOEX_EN_USB_A1_5V_DB,
 };
 

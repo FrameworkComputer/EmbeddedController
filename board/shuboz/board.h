@@ -13,7 +13,6 @@
 #include <stdbool.h>
 #include "baseboard.h"
 
-#define CONFIG_IO_EXPANDER_PCAL6408
 #define CONFIG_MKBP_USE_GPIO
 
 #define CONFIG_USBC_PPC_NX20P3483
@@ -95,7 +94,6 @@ enum pwm_channel {
 enum ioex_port {
 	IOEX_C0_NCT3807 = 0,
 	IOEX_C1_NCT3807,
-	IOEX_HDMI_PCAL6408,
 	IOEX_PORT_COUNT
 };
 
@@ -128,7 +126,7 @@ enum usbc_port {
 #include "cbi_ec_fw_config.h"
 
 /**
- * DALBOZ_MB_USBAC
+ * SHUBOZ_MB_USBAC
  *	USB-A0  Speed: 5 Gbps
  *		Retimer: none
  *	USB-C0  Speed: 5 Gbps
@@ -138,11 +136,11 @@ enum usbc_port {
  *		IOEX: TCPC
  */
 enum ec_cfg_usb_mb_type {
-	DALBOZ_MB_USBAC = 0,
+	SHUBOZ_MB_USBAC = 0,
 };
 
 /**
- * DALBOZ_DB_D_OPT1_USBAC
+ * SHUBOZ_DB_D_OPT1_USBAC
  *	USB-A1  Speed: 5 Gbps
  *		Retimer: TUSB522
  *	USB-C1  Speed: 5 Gbps
@@ -153,51 +151,10 @@ enum ec_cfg_usb_mb_type {
  *	HDMI    Exists: no
  *		Retimer: none
  *		MST Hub: none
- *
- * DALBOZ_DB_D_OPT2_USBA_HDMI
- *	USB-A1  Speed: 5 Gbps
- *		Retimer: TUSB522
- *	USB-C1  none
- *		IOEX: PCAL6408
- *	HDMI    Exists: yes
- *		Retimer: PI3HDX1204
- *		MST Hub: none
  */
 enum ec_cfg_usb_db_type {
-	DALBOZ_DB_D_OPT1_USBAC = 0,
-	DALBOZ_DB_D_OPT2_USBA_HDMI = 1,
+	SHUBOZ_DB_D_OPT1_USBAC = 0,
 };
-
-#define HAS_USBC1 \
-			(BIT(DALBOZ_DB_D_OPT1_USBAC))
-
-static inline bool ec_config_has_usbc1(void)
-{
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_USBC1);
-}
-
-#define HAS_USBC1_RETIMER_PS8740 \
-			(BIT(DALBOZ_DB_D_OPT1_USBAC))
-
-static inline bool ec_config_has_usbc1_retimer_ps8740(void)
-{
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_USBC1_RETIMER_PS8740);
-}
-
-#define HAS_HDMI_RETIMER_PI3HDX1204 \
-			(BIT(DALBOZ_DB_D_OPT2_USBA_HDMI))
-
-static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
-{
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_HDMI_RETIMER_PI3HDX1204);
-}
-
-/* These IO expander GPIOs vary with DB option. */
-extern enum gpio_signal IOEX_USB_A1_RETIMER_EN;
-extern enum gpio_signal IOEX_USB_A1_CHARGE_EN_DB_L;
 
 void board_reset_pd_mcu(void);
 
