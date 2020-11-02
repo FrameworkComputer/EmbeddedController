@@ -63,4 +63,25 @@ static inline uint32_t clear_csr(uint32_t reg, uint32_t bit)
 #define   CSR_MCTREN_CG		BIT(7)
 #define   CSR_MCTREN_MPU	BIT(8)
 
+/* MPU */
+#define CSR_MPU_ENTRY_EN	(0x9c0)
+#define CSR_MPU_LITCM		(0x9dc)
+#define CSR_MPU_LDTCM		(0x9dd)
+#define CSR_MPU_HITCM		(0x9de)
+#define CSR_MPU_HDTCM		(0x9df)
+#define CSR_MPU_L(n)		(0x9e0 + (n))
+#define CSR_MPU_H(n)		(0x9f0 + (n))
+/* MPU attributes: set if permitted */
+/* Privilege, machine mode in RISC-V.  We don't use the flag because
+ * we don't separate user / machine mode in EC OS. */
+#define   MPU_ATTR_P		BIT(5)
+/* Readable */
+#define   MPU_ATTR_R		BIT(6)
+/* Writable */
+#define   MPU_ATTR_W		BIT(7)
+/* Cacheable */
+#define   MPU_ATTR_C		BIT(8)
+/* Bufferable */
+#define   MPU_ATTR_B		BIT(9)
+
 #endif /* __CROS_EC_CSR_H */

@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "cache.h"
 #include "registers.h"
 #include "stdint.h"
 
@@ -79,6 +80,8 @@ void memmap_init(void)
 		(uint32_t)addr_map[0xd] << 8 |
 		(uint32_t)addr_map[0xe] << 16 |
 		(uint32_t)addr_map[0xf] << 24;
+
+	cache_init();
 }
 
 int memmap_ap_to_scp(uintptr_t ap_addr, uintptr_t *scp_addr)
