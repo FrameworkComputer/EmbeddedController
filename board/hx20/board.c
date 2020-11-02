@@ -174,6 +174,30 @@ const struct pwm_t pwm_channels[] = {
 		.channel = 0,
 		.flags = PWM_CONFIG_OPEN_DRAIN,
 	},
+	[PWM_CH_DB0_LED_RED] = {
+		.channel = 5,
+		.flags = PWM_CONFIG_DSLEEP,
+	},
+	[PWM_CH_DB0_LED_GREEN] = {
+		.channel = 6,
+		.flags = PWM_CONFIG_DSLEEP,
+	},
+	[PWM_CH_DB0_LED_BLUE] = {
+		.channel = 7,
+		.flags = PWM_CONFIG_DSLEEP,
+	},
+	[PWM_CH_DB1_LED_RED] = {
+		.channel = 1,
+		.flags = PWM_CONFIG_DSLEEP,
+	},
+	[PWM_CH_DB1_LED_GREEN] = {
+		.channel = 4,
+		.flags = PWM_CONFIG_DSLEEP,
+	},
+	[PWM_CH_DB1_LED_BLUE] = {
+		.channel = 8,
+		.flags = PWM_CONFIG_DSLEEP,
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 #endif
@@ -1077,11 +1101,51 @@ void touchpad_interrupt(enum gpio_signal signal)
 	 */
 }
 
+struct {
+	enum hx20_board_version version;
+	int thresh_mv;
+} const hx20_board_versions[] = {
+	/* Vin = 3.3V, Ideal voltage */
+	{ BOARD_VERSION_0, 203 },  /* 100 mV, 0 Kohm */
+	{ BOARD_VERSION_1, 409 },  /* 310 mV, Kohm */
+	{ BOARD_VERSION_2, 615 },  /* 520 mV, Kohm */
+	{ BOARD_VERSION_3, 821 },  /* 720 mV, Kohm */
+	{ BOARD_VERSION_4, 1028},   /* 930 mV, Kohm */
+	{ BOARD_VERSION_5, 1234 }, /* 1130 mV, Kohm */
+	{ BOARD_VERSION_6, 1440 }, /* 1340 mV, Kohm */
+	{ BOARD_VERSION_7, 1646 }, /* 1550 mV, Kohm */
+	{ BOARD_VERSION_8, 1853 }, /* 1750 mV, Kohm */
+	{ BOARD_VERSION_9, 2059 }, /* 1960 mV, Kohm */
+	{ BOARD_VERSION_10, 2265 }, /* 2170 mV, Kohm */
+	{ BOARD_VERSION_11, 2471 }, /* 2370 mV, Kohm */
+	{ BOARD_VERSION_12, 2678 }, /* 2580 mV, Kohm */
+	{ BOARD_VERSION_13, 2884 }, /* 2780 mV, Kohm */
+	{ BOARD_VERSION_14, 3090 }, /* 2990 mV, Kohm */
+	{ BOARD_VERSION_15, 3300 }, /* 3300 mV, Kohm */
+};
+BUILD_ASSERT(ARRAY_SIZE(hx20_board_versions) == BOARD_VERSION_COUNT);
+
 int board_get_version(void)
 {
-	static int ver = -1;
-	/* TODO FRAMEWORK */
-	return ver; 
+	static int version = BOARD_VERSION_UNKNOWN;
+	int mv;
+	int i;
+
+	if (version != BOARD_VERSION_UNKNOWN)
+		return version;
+
+	mv = adc_read_channel(ADC_AD_BID);
+
+	if (mv == ADC_READ_ERROR)
+		return BOARD_VERSION_UNKNOWN;
+
+	for (i = 0; i < BOARD_VERSION_COUNT; i++)
+		if (mv < hx20_board_versions[i].thresh_mv) {
+			CPRINTS("Board version: %d", hx20_board_versions[i].version);
+			return hx20_board_versions[i].version;
+		}
+
+	return BOARD_VERSION_UNKNOWN;
 }
 
 /* Keyboard scan setting */

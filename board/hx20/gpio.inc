@@ -441,7 +441,7 @@ GPIO(CAM_EN,                PIN(0255), GPIO_OUT_LOW)    /* Open camera power  */
 /* GPIO(FAN_PWM0,              PIN(053),  GPIO_OUT_HIGH) */   /* EVT for fan full on */
 GPIO(EC_MUTE_L,             PIN(0253), GPIO_ODR_LOW)
 GPIO(OTG_EN,                PIN(0207), GPIO_OUT_LOW)	/* Always low PWR request */
-GPIO(AC_PRESENT_PD_L,		PIN(013),  GPIO_OUT_LOW)	/* Fix pd firmware issue */
+GPIO(AC_PRESENT_PD_L,		PIN(013),  GPIO_ODR_HIGH)	/* Fix pd firmware issue */
 
 /* SPI
  * Chip select must be open drain and driven high before SPI controller
@@ -468,14 +468,6 @@ GPIO(QMSPI_CS0,		PIN(055),  GPIO_ODR_HIGH)
 GPIO(FPR_LED_R,	PIN(0156), GPIO_OUT_LOW)    /* TODO: implement PWM */
 GPIO(FPR_LED_G,	PIN(0157), GPIO_OUT_LOW)    /* TODO: implement PWM */
 GPIO(FPR_LED_B,	PIN(0153), GPIO_OUT_LOW)    /* TODO: implement PWM */
-
-GPIO(TYPEC_R_DRV1,	PIN(002), GPIO_OUT_LOW) /* TODO: implement PWM */
-GPIO(TYPEC_G_DRV1,	PIN(014), GPIO_OUT_LOW) /* TODO: implement PWM */
-GPIO(TYPEC_B_DRV1,	PIN(015), GPIO_OUT_LOW) /* TODO: implement PWM */
-
-GPIO(TYPEC_R_DRV2,	PIN(054), GPIO_OUT_LOW) /* TODO: implement PWM */
-GPIO(TYPEC_G_DRV2,	PIN(011), GPIO_OUT_LOW) /* TODO: implement PWM */
-GPIO(TYPEC_B_DRV2,	PIN(035), GPIO_OUT_LOW) /* TODO: implement PWM */
 
 GPIO(CAP_LED_L,     PIN(0114), GPIO_OUT_HIGH)
 
@@ -611,8 +603,25 @@ ALTERNATE(PIN_MASK(4,  0x003F), 1, MODULE_ADC, GPIO_ANALOG)
 /* PWM*/
 /*
  *	GPIO053,  FAN_PWM0,		Func1, Bank 1 bit[11]
+ */
+ALTERNATE(PIN_MASK(1, 0x800), 1, MODULE_PWM, GPIO_ODR_HIGH)
+ /*
+ *	GPIO054,  TYPEC_R_DRV2,		Func1, Bank 1 bit[12]
+ */
+ALTERNATE(PIN_MASK(1, 0x1000), 1, MODULE_PWM, 0)
+
+/*
+ *	GPIO011,  TYPEC_G_DRV2,		Func2, Bank 0 bit[9]
+ */
+ALTERNATE(PIN_MASK(0, 0x0200), 2, MODULE_PWM, 0)
+/*
+ *	GPIO02,   TYPEC_R_DRV1,		Func1, Bank 0 bit[2]
+ *	GPIO014,  TYPEC_G_DRV1,		Func1, Bank 0 bit[12]
+ *	GPIO015,  TYPEC_B_DRV1,		Func1, Bank 0 bit[13]
+ *	GPIO035,  TYPEC_B_DRV2,		Func1, Bank 0 bit[29]
+
  *  GPIO0175, EC_BEEP,
  */
-ALTERNATE(PIN_MASK(1, 0x0800), 1, MODULE_PWM, 0)
+ALTERNATE(PIN_MASK(0, 0x20003004), 1, MODULE_PWM, 0)
 
 #endif 
