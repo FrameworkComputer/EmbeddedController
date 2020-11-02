@@ -45,7 +45,7 @@ ec_parse_panicinfo-objs=ec_parse_panicinfo.o ec_panicinfo.o
 # USB type-C Vendor Information File generation
 ifeq ($(CONFIG_USB_POWER_DELIVERY),y)
 build-util-bin+=genvif
-build-util-art+=$(BOARD)_vif.txt
+build-util-art+=$(BOARD)_vif.xml
 
 # usb_pd_policy.c can be in baseboard, or board, or both.
 genvif-pd-srcs=$(sort $(wildcard $(BASEDIR)/usb_pd_policy.c \

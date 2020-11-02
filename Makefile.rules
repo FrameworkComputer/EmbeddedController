@@ -463,7 +463,7 @@ $(out)/%.bin: $(out)/%.obj
 			$(call quiet,copyrw-y,COPY_RW))
 	$(call quiet,mv_from_tmp,MV     )
 
-$(out)/$(BOARD)_vif.txt: $(out)/util/genvif
+$(out)/$(BOARD)_vif.xml: $(out)/util/genvif
 	$(call quiet,vif,VIF    )
 
 flat-y := $(out)/RW/$(PROJECT).RW.flat

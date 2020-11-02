@@ -1772,7 +1772,7 @@ int main(int argc, char **argv)
 
 	init_src_pdos();
 
-	name_size = asprintf(&name, "%s/%s_vif.txt", out, board);
+	name_size = asprintf(&name, "%s/%s_vif.xml", out, board);
 	if (name_size < 0) {
 		fprintf(stderr, "ERROR: Out of memory.\n");
 		return 1;
