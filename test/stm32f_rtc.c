@@ -6,7 +6,7 @@
 #include "clock-f.h"
 #include "test_util.h"
 
-static volatile uint32_t rtc_fired;
+static uint32_t rtc_fired;
 static struct rtc_time_reg rtc_irq;
 static const int rtc_delay_ms = 500;
 
