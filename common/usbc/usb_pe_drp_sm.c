@@ -345,9 +345,8 @@ static const struct usb_state pe_states[];
 #define USB_PD_DEBUG_LABELS
 #endif
 
-#ifdef USB_PD_DEBUG_LABELS
 /* List of human readable state names for console debugging */
-static const char * const pe_state_names[] = {
+__maybe_unused static const char * const pe_state_names[] = {
 	/* Super States */
 #ifdef CONFIG_USB_PD_REV30
 	[PE_PRS_FRS_SHARED] = "SS:PE_PRS_FRS_SHARED",
@@ -433,13 +432,6 @@ static const char * const pe_state_names[] = {
 #endif
 #endif /* CONFIG_USB_PD_REV30 */
 };
-#else
-/*
- * Here and below, ensure that invalid states don't link properly. This lets us
- * use guard code with IS_ENABLED instead of ifdefs and still save flash space.
- */
-STATIC_IF(USB_PD_DEBUG_LABELS) const char **pe_state_names;
-#endif
 
 #ifndef CONFIG_USBC_VCONN
 GEN_NOT_SUPPORTED(PE_VCS_EVALUATE_SWAP);
@@ -1435,16 +1427,19 @@ static void pe_send_request_msg(int port)
 
 static void pe_update_pdo_flags(int port, uint32_t pdo)
 {
-#ifdef CONFIG_CHARGE_MANAGER
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
-	int charge_allowlisted =
-		(pd_get_power_role(port) == PD_ROLE_SINK &&
-			pd_charge_from_device(pd_get_identity_vid(port),
-			pd_get_identity_pid(port)));
-#else
-	const int charge_allowlisted = 0;
-#endif
-#endif
+	int charge_allowlisted;
+
+	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
+		if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
+			charge_allowlisted =
+				(pd_get_power_role(port) == PD_ROLE_SINK &&
+				 pd_charge_from_device(
+						pd_get_identity_vid(port),
+						pd_get_identity_pid(port)));
+		} else {
+			charge_allowlisted = 0;
+		}
+	}
 
 	/* can only parse PDO flags if type is fixed */
 	if ((pdo & PDO_TYPE_MASK) != PDO_TYPE_FIXED)
@@ -1473,22 +1468,23 @@ static void pe_update_pdo_flags(int port, uint32_t pdo)
 	else
 		tc_partner_dr_data(port, 0);
 
-#ifdef CONFIG_CHARGE_MANAGER
 	/*
 	 * Treat device as a dedicated charger (meaning we should charge
 	 * from it) if it does not support power swap, or if it is unconstrained
 	 * power, or if we are a sink and the device identity matches a
 	 * charging allow-list.
 	 */
-	if (!(pdo & PDO_FIXED_DUAL_ROLE) || (pdo & PDO_FIXED_UNCONSTRAINED) ||
-		charge_allowlisted) {
-		PE_CLR_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
-		charge_manager_update_dualrole(port, CAP_DEDICATED);
-	} else {
-		PE_SET_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
-		charge_manager_update_dualrole(port, CAP_DUALROLE);
+	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
+		if (!(pdo & PDO_FIXED_DUAL_ROLE) ||
+		    (pdo & PDO_FIXED_UNCONSTRAINED) ||
+		    charge_allowlisted) {
+			PE_CLR_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
+			charge_manager_update_dualrole(port, CAP_DEDICATED);
+		} else {
+			PE_SET_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
+			charge_manager_update_dualrole(port, CAP_DUALROLE);
+		}
 	}
-#endif
 }
 
 void pd_request_power_swap(int port)
@@ -1523,7 +1519,6 @@ static bool port_try_vconn_swap(int port)
 	return false;
 }
 
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
 /*
  * Run discovery at our leisure from PE_SNK_Ready or PE_SRC_Ready, after
  * attempting to get into the desired default policy of DFP/Vconn source
@@ -1531,8 +1526,11 @@ static bool port_try_vconn_swap(int port)
  * Return indicates whether set_state was called, in which case the calling
  * function should return as well.
  */
-static bool pe_attempt_port_discovery(int port)
+__maybe_unused static bool pe_attempt_port_discovery(int port)
 {
+	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
+		assert(0);
+
 	/*
 	 * DONE set once modal entry is successful, discovery completes, or
 	 * discovery results in a NAK
@@ -1615,7 +1613,6 @@ static bool pe_attempt_port_discovery(int port)
 
 	return false;
 }
-#endif
 
 bool pd_setup_vdm_request(int port, enum tcpm_transmit_type tx_type,
 		uint32_t *vdm, uint32_t vdo_cnt)
@@ -3480,7 +3477,6 @@ static void pe_send_not_supported_run(int port)
 	}
 }
 
-#if defined(CONFIG_USB_PD_REV30) && !defined(CONFIG_USB_PD_EXTENDED_MESSAGES)
 /**
  * PE_SRC_Chunk_Received and PE_SNK_Chunk_Received
  *
@@ -3495,19 +3491,26 @@ static void pe_send_not_supported_run(int port)
  * 6.6.18.1 ChunkingNotSupportedTimer
  * 8.3.3.6  Not Supported Message State Diagrams
  */
-static void pe_chunk_received_entry(int port)
+__maybe_unused static void pe_chunk_received_entry(int port)
 {
+	if (!IS_ENABLED(CONFIG_USB_PD_REV30) ||
+	    IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES))
+		assert(0);
+
 	print_current_state(port);
 	pe[port].chunking_not_supported_timer =
 		get_time().val + PD_T_CHUNKING_NOT_SUPPORTED;
 }
 
-static void pe_chunk_received_run(int port)
+__maybe_unused static void pe_chunk_received_run(int port)
 {
+	if (!IS_ENABLED(CONFIG_USB_PD_REV30) ||
+	    IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES))
+		assert(0);
+
 	if (get_time().val > pe[port].chunking_not_supported_timer)
 		set_state_pe(port, PE_SEND_NOT_SUPPORTED);
 }
-#endif
 
 /**
  * PE_SRC_Ping
@@ -4387,12 +4390,14 @@ static void pe_prs_snk_src_send_swap_run(int port)
 	}
 }
 
-#ifdef CONFIG_USB_PD_REV30
 /**
  * PE_FRS_SNK_SRC_Start_AMS
  */
-static void pe_frs_snk_src_start_ams_entry(int port)
+__maybe_unused static void pe_frs_snk_src_start_ams_entry(int port)
 {
+	if (!IS_ENABLED(CONFIG_USB_PD_REV30))
+		assert(0);
+
 	print_current_state(port);
 
 	/* Contract is invalid now */
@@ -4409,8 +4414,11 @@ static void pe_frs_snk_src_start_ams_entry(int port)
 /**
  * PE_PRS_FRS_SHARED
  */
-static void pe_prs_frs_shared_entry(int port)
+__maybe_unused static void pe_prs_frs_shared_entry(int port)
 {
+	if (!IS_ENABLED(CONFIG_USB_PD_REV30))
+		assert(0);
+
 	/*
 	 * Shared PRS/FRS code, assume PRS path
 	 *
@@ -4422,15 +4430,17 @@ static void pe_prs_frs_shared_entry(int port)
 	PE_CLR_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH);
 }
 
-static void pe_prs_frs_shared_exit(int port)
+__maybe_unused static void pe_prs_frs_shared_exit(int port)
 {
+	if (!IS_ENABLED(CONFIG_USB_PD_REV30))
+		assert(0);
+
 	/*
 	 * Shared PRS/FRS code, when not in shared path
 	 * indicate PRS path
 	 */
 	PE_CLR_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH);
 }
-#endif /* CONFIG_USB_PD_REV30 */
 
 /**
  * BIST TX
@@ -4983,12 +4993,11 @@ static void pe_init_port_vdm_identity_request_run(int port)
 		/* PE_INIT_PORT_VDM_Identity_ACKed embedded here */
 		dfp_consume_identity(port, sop, cnt, payload);
 
-#ifdef CONFIG_CHARGE_MANAGER
 		/* Evaluate whether this is an allow-listed charger */
-		if (pd_charge_from_device(pd_get_identity_vid(port),
+		if (IS_ENABLED(CONFIG_CHARGE_MANAGER) &&
+		    pd_charge_from_device(pd_get_identity_vid(port),
 					  pd_get_identity_pid(port)))
 			charge_manager_update_dualrole(port, CAP_DEDICATED);
-#endif
 		break;
 		}
 	case VDM_RESULT_NAK:
@@ -6216,41 +6225,54 @@ void pd_dfp_discovery_init(int port)
 		enter_usb_init(port);
 }
 
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
-
-void pd_discovery_access_clear(int port, enum tcpm_transmit_type type)
+__maybe_unused void pd_discovery_access_clear(int port,
+			enum tcpm_transmit_type type)
 {
+	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
+		assert(0);
+
 	atomic_clear_bits(&task_access[port][type], 0xFFFFFFFF);
 }
 
-bool pd_discovery_access_validate(int port, enum tcpm_transmit_type type)
+__maybe_unused bool pd_discovery_access_validate(int port,
+			enum tcpm_transmit_type type)
 {
+	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
+		assert(0);
+
 	return !(task_access[port][type] & ~BIT(task_get_current()));
 }
 
-struct pd_discovery *pd_get_am_discovery(int port, enum tcpm_transmit_type type)
+__maybe_unused struct pd_discovery *pd_get_am_discovery(int port,
+			enum tcpm_transmit_type type)
 {
+	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
+		assert(0);
 	ASSERT(type < DISCOVERY_TYPE_COUNT);
 
 	atomic_or(&task_access[port][type], BIT(task_get_current()));
 	return &pe[port].discovery[type];
 }
 
-struct partner_active_modes *pd_get_partner_active_modes(int port,
-		enum tcpm_transmit_type type)
+__maybe_unused struct partner_active_modes *pd_get_partner_active_modes(
+			int port, enum tcpm_transmit_type type)
 {
+	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
+		assert(0);
 	ASSERT(type < AMODE_TYPE_COUNT);
 	return &pe[port].partner_amodes[type];
 }
 
-void pd_set_dfp_enter_mode_flag(int port, bool set)
+__maybe_unused void pd_set_dfp_enter_mode_flag(int port, bool set)
 {
+	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
+		assert(0);
+
 	if (set)
 		PE_SET_FLAG(port, PE_FLAGS_MODAL_OPERATION);
 	else
 		PE_CLR_FLAG(port, PE_FLAGS_MODAL_OPERATION);
 }
-#endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 
 const char *pe_get_current_state(int port)
 {

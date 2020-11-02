@@ -105,9 +105,9 @@ enum usb_tc_state {
 static const struct usb_state tc_states[];
 
 
-#ifdef CONFIG_COMMON_RUNTIME
 /* List of human readable state names for console debugging */
-const char * const tc_state_names[] = {
+__maybe_unused const char * const tc_state_names[] = {
+#ifdef CONFIG_COMMON_RUNTIME
 	[TC_DISABLED] = "Disabled",
 	[TC_UNATTACHED_SNK] = "Unattached.SNK",
 	[TC_ATTACH_WAIT_SNK] = "AttachWait.SNK",
@@ -126,8 +126,8 @@ const char * const tc_state_names[] = {
 	[TC_CT_DISABLED_VPD] = "CTDisabled.VPD",
 	[TC_CT_ATTACHED_VPD] = "CTAttached.VPD",
 	[TC_CT_ATTACH_WAIT_VPD] = "CTAttachWait.VPD",
-};
 #endif
+};
 
 /* Forward declare private, common functions */
 static void set_state_tc(const int port, enum usb_tc_state new_state);

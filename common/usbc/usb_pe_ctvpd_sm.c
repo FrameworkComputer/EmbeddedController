@@ -190,12 +190,8 @@ static void pe_request_run(const int port)
 			VPD_MAX_VBUS_20V,
 			VPD_VBUS_IMP(VPD_VBUS_IMPEDANCE),
 			VPD_GND_IMP(VPD_GND_IMPEDANCE),
-#ifdef CONFIG_USB_CTVPD
-			VPD_CTS_SUPPORTED
-#else
-			VPD_CTS_NOT_SUPPORTED
-#endif
-		);
+			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_CTS_SUPPORTED
+						     : VPD_CTS_NOT_SUPPORTED);
 
 		/* 20 bytes, 5 data objects */
 		tx_emsg[port].len = 20;

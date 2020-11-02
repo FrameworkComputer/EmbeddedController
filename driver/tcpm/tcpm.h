@@ -303,6 +303,7 @@ static inline int tcpm_auto_toggle_supported(int port)
 {
 	return false;
 }
+int tcpm_enable_drp_toggle(int port);
 #endif
 
 static inline int tcpm_debug_accessory(int port, bool enable)
@@ -326,6 +327,8 @@ static inline int tcpm_enter_low_power_mode(int port)
 {
 	return tcpc_config[port].drv->enter_low_power_mode(port);
 }
+#else
+int tcpm_enter_low_power_mode(int port);
 #endif
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
