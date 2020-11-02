@@ -114,6 +114,7 @@ static int command_cable(int argc, char **argv)
 	struct pd_discovery *disc;
 	enum idh_ptype ptype;
 	int cable_rev;
+	union tbt_mode_resp_cable cable_mode_resp;
 
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;
@@ -134,6 +135,9 @@ static int command_cable(int argc, char **argv)
 
 	cable_rev = pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME);
 	disc = pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+	cable_mode_resp.raw_value =
+		pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME);
+
 
 	/* Cable revision */
 	ccprintf("Cable Rev: %d.0\n", cable_rev + 1);
@@ -186,6 +190,28 @@ static int command_cable(int argc, char **argv)
 				disc->identity.product_t2.a2_rev30.usb_lanes);
 		}
 	}
+
+	if (!cable_mode_resp.raw_value)
+		return EC_SUCCESS;
+
+	ccprintf("Rounded support: %s\n",
+		cable_mode_resp.tbt_rounded ==
+			TBT_GEN3_GEN4_ROUNDED_NON_ROUNDED ? "Yes" : "No");
+
+	ccprintf("Optical cable: %s\n",
+		cable_mode_resp.tbt_cable == TBT_CABLE_OPTICAL ? "Yes" : "No");
+
+	ccprintf("Retimer support: %s\n",
+		cable_mode_resp.retimer_type == USB_RETIMER ?
+			"Yes" : "No");
+
+	ccprintf("Link training: %s-directional\n",
+		cable_mode_resp.lsrx_comm == BIDIR_LSRX_COMM ? "Bi" : "Uni");
+
+	ccprintf("Thunderbolt cable type: %s\n",
+		cable_mode_resp.tbt_active_passive == TBT_CABLE_ACTIVE ?
+		"Active" : "Passive");
+
 	return EC_SUCCESS;
 }
 
