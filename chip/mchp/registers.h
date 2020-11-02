@@ -393,6 +393,7 @@
 #define MCHP_WEEK_TIMER_BGPO_POWER  REG32(MCHP_WEEK_TIMER_BASE + 0x20)
 #define MCHP_WEEK_TIMER_BGPO_RESET  REG32(MCHP_WEEK_TIMER_BASE + 0x24)
 
+
 /* Interrupt aggregator */
 #define MCHP_INT_BASE       0x4000e000
 #define MCHP_INTx_BASE(x)   (MCHP_INT_BASE + ((x)<<4) + ((x)<<2) - 160)
@@ -602,6 +603,9 @@
 #define MCHP_GPIO_CTL(port, id) REG32(MCHP_GPIO_BASE + \
 	(((port << 5) + id) << 2))
 
+#define MCHP_GPIO_CTL2(port, id) REG32(MCHP_GPIO_BASE + 0x500 + \
+	(((port << 5) + id) << 2))
+
 /* MCHP implements 6 GPIO ports */
 #define MCHP_GPIO_MAX_PORT	(7)
 
@@ -612,6 +616,9 @@
  * register is located on a 32-bit boundary.
  */
 #define MCHP_GPIO_CTRL(gpio_num) REG32(MCHP_GPIO_BASE + \
+	((gpio_num) << 2))
+
+#define MCHP_GPIO_CTRL2(gpio_num) REG32(MCHP_GPIO_BASE + 0x500 + \
 	((gpio_num) << 2))
 
 /*
@@ -646,8 +653,8 @@
 #define MCHP_GPIO_POLARITY_NINV		(0u << 11)
 #define MCHP_GPIO_POLARITY_INV		(1u << 11)
 #define MCHP_GPIO_CTRL_ALT_FUNC_BITPOS	12
-#define MCHP_GPIO_CTRL_ALT_FUNC_MASK0	0x0F
-#define MCHP_GPIO_CTRL_ALT_FUNC_MASK	(0x0F << 12)
+#define MCHP_GPIO_CTRL_ALT_FUNC_MASK0	0x03
+#define MCHP_GPIO_CTRL_ALT_FUNC_MASK	(0x03 << 12)
 #define MCHP_GPIO_CTRL_FUNC_GPIO	(0 << 12)
 #define MCHP_GPIO_CTRL_FUNC_1		(1 << 12)
 #define MCHP_GPIO_CTRL_FUNC_2		(2 << 12)
@@ -656,6 +663,21 @@
 #define MCHP_GPIO_CTRL_INPUT_ENABLE (0x00 << 15)
 
 #define MCHP_GPIO_CTRL_OUT_LVL		BIT(16)
+#define MCHP_GPIO_CTRL_IN_LVL		BIT(24)
+
+
+#define MCHP_GPIO_CTRL2_DRIVE_STRENGTH_BITPOS		4
+#define MCHP_GPIO_CTRL2_SLEW_RATE_MASK				0x01
+
+#define MCHP_GPIO_CTRL2_DRIVE_STRENGTH_MASK0		0x03
+#define MCHP_GPIO_CTRL2_DRIVE_STRENGTH_MASK			(0x03 << 4)
+#define MCHP_GPIO_CTRL2_DRIVE_STRENGTH_2MA			(0x00)
+#define MCHP_GPIO_CTRL2_DRIVE_STRENGTH_4MA			(0x10)
+#define MCHP_GPIO_CTRL2_DRIVE_STRENGTH_8MA			(0x20)
+#define MCHP_GPIO_CTRL2_DRIVE_STRENGTH_12MA			(0x30)
+
+
+
 
 /* GPIO Parallel Input and Output registers.
  * gpio_bank in [0, 5]
