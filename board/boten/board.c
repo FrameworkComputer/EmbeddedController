@@ -282,6 +282,19 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
+/* Matrices to rotate accelerometers into the standard reference. */
+static const mat33_fp_t lid_standard_ref = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+static const mat33_fp_t base_standard_ref = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
 /* Sensor Data */
 static struct stprivate_data g_lis2dwl_data;
 static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
@@ -299,7 +312,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &g_lis2dwl_data,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LIS2DWL_ADDR1_FLAGS,
-		.rot_standard_ref = NULL,
+		.rot_standard_ref = &lid_standard_ref,
 		.default_range = 2, /* g */
 		.min_frequency = LIS2DW12_ODR_MIN_VAL,
 		.max_frequency = LIS2DW12_ODR_MAX_VAL,
@@ -326,7 +339,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
-		.rot_standard_ref = NULL,
+		.rot_standard_ref = &base_standard_ref,
 		.default_range = 4,  /* g */
 		.min_frequency = LSM6DSM_ODR_MIN_VAL,
 		.max_frequency = LSM6DSM_ODR_MAX_VAL,
@@ -356,7 +369,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
-		.rot_standard_ref = NULL,
+		.rot_standard_ref = &base_standard_ref,
 		.min_frequency = LSM6DSM_ODR_MIN_VAL,
 		.max_frequency = LSM6DSM_ODR_MAX_VAL,
 	},
