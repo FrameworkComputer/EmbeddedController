@@ -353,7 +353,6 @@ static const char * const pe_state_names[] = {
 	[PE_PRS_FRS_SHARED] = "SS:PE_PRS_FRS_SHARED",
 #endif
 	[PE_VDM_SEND_REQUEST] = "SS:PE_VDM_Send_Request",
-	[PE_VDM_RESPONSE] = "SS:PE_VDM_Response",
 
 	/* Normal States */
 	[PE_SRC_STARTUP] = "PE_SRC_Startup",
@@ -409,6 +408,7 @@ static const char * const pe_state_names[] = {
 	[PE_INIT_VDM_SVIDS_REQUEST] = "PE_INIT_VDM_SVIDs_Request",
 	[PE_INIT_VDM_MODES_REQUEST] = "PE_INIT_VDM_Modes_Request",
 	[PE_VDM_REQUEST_DPM] = "PE_VDM_Request_DPM",
+	[PE_VDM_RESPONSE] = "PE_VDM_Response",
 	[PE_HANDLE_CUSTOM_VDM_REQUEST] = "PE_Handle_Custom_Vdm_Request",
 	[PE_WAIT_FOR_ERROR_RECOVERY] = "PE_Wait_For_Error_Recovery",
 	[PE_BIST_TX] = "PE_Bist_TX",
