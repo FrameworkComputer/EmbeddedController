@@ -12,6 +12,8 @@
 #include "usb_pd.h"
 #include "util.h"
 
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+
 #if defined(PD_MAX_VOLTAGE_MV) && defined(PD_OPERATING_POWER_MW)
 /*
  * As a sink, this is the max voltage (in millivolts) we can request
@@ -371,7 +373,7 @@ int pd_charge_from_device(uint16_t vid, uint16_t pid)
 		    pid == allow_list[i].pid)
 			return 1;
 	}
-	ccprints("Allow_List pair not found: vid=0x%X pid=0x%X", vid, pid);
+	CPRINTS("allow_list[] pair not found: vid=0x%X pid=0x%X", vid, pid);
 	return 0;
 }
 
