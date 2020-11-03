@@ -224,9 +224,9 @@ void intc_cpu_int_group_6(void)
 	int intc_group_6 = intc_get_ec_int();
 
 	switch (intc_group_6) {
-#if defined(CONFIG_I2C_CONTROLLER) || defined(CONFIG_I2C_SLAVE)
+#if defined(CONFIG_I2C_CONTROLLER) || defined(CONFIG_I2C_PERIPHERAL)
 	case IT83XX_IRQ_SMB_A:
-#ifdef CONFIG_I2C_SLAVE
+#ifdef CONFIG_I2C_PERIPHERAL
 		if (IT83XX_SMB_SFFCTL & IT83XX_SMB_SAFE)
 			i2c_slv_interrupt(IT83XX_I2C_CH_A);
 		else
@@ -243,7 +243,7 @@ void intc_cpu_int_group_6(void)
 		break;
 
 	case IT83XX_IRQ_SMB_D:
-#ifdef CONFIG_I2C_SLAVE
+#ifdef CONFIG_I2C_PERIPHERAL
 		if (!(IT83XX_I2C_CTR(3) & IT83XX_I2C_MODE))
 			i2c_slv_interrupt(IT83XX_I2C_CH_D);
 		else
@@ -252,7 +252,7 @@ void intc_cpu_int_group_6(void)
 		break;
 
 	case IT83XX_IRQ_SMB_E:
-#ifdef CONFIG_I2C_SLAVE
+#ifdef CONFIG_I2C_PERIPHERAL
 		if (!(IT83XX_I2C_CTR(0) & IT83XX_I2C_MODE))
 			i2c_slv_interrupt(IT83XX_I2C_CH_E);
 		else
@@ -261,7 +261,7 @@ void intc_cpu_int_group_6(void)
 		break;
 
 	case IT83XX_IRQ_SMB_F:
-#ifdef CONFIG_I2C_SLAVE
+#ifdef CONFIG_I2C_PERIPHERAL
 		if (!(IT83XX_I2C_CTR(1) & IT83XX_I2C_MODE))
 			i2c_slv_interrupt(IT83XX_I2C_CH_F);
 		else

@@ -37,4 +37,4 @@ ifndef CONFIG_KEYBOARD_NOT_RAW
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif
 chip-$(CONFIG_I2C_CONTROLLER)+=i2c.o
-chip-$(CONFIG_I2C_SLAVE)+=i2c_slave.o
+chip-$(CONFIG_I2C_PERIPHERAL)+=i2c_slave.o

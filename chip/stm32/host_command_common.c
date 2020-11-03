@@ -9,7 +9,7 @@
 #include "spi.h"
 #include "usart_host_command.h"
 
-#ifndef CONFIG_I2C_SLAVE
+#ifndef CONFIG_I2C_PERIPHERAL
 
 /* Store current transport type */
 static enum fp_transport_type curr_transport_type = FP_TRANSPORT_TYPE_UNKNOWN;
@@ -43,4 +43,4 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
 		     host_command_protocol_info,
 		     EC_VER_MASK(0));
 
-#endif /* CONFIG_I2C_SLAVE */
+#endif /* CONFIG_I2C_PERIPHERAL */

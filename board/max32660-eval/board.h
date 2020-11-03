@@ -24,7 +24,7 @@
 #undef CONFIG_HOSTCMD_EVENTS
 #define CONFIG_I2C
 
-#define CONFIG_I2C_SLAVE
+#define CONFIG_I2C_PERIPHERAL
 #define CONFIG_HOSTCMD_I2C_ADDR_FLAGS (0x51) /* 7 bit right-aligned */
 
 /* Slave I2C port configuration */
