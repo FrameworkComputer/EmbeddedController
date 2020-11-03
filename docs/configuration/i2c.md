@@ -6,7 +6,7 @@ The I2C options are prefixed with `CONFIG_I2C*`. Evaluate whether each option is
 appropriate to add to your board.
 
 A typical EC and board should at a minimum set `CONFIG_I2C` and
-`CONFIG_I2C_MASTER`.
+`CONFIG_I2C_CONTROLLER`.
 
 ## Feature Parameters
 

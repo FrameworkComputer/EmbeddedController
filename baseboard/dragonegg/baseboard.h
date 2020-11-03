@@ -131,7 +131,7 @@
 #define CONFIG_IT83XX_VCC_1P8V
 /* I2C Bus Configuration */
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_BATTERY	IT83XX_I2C_CH_F	/* Shared bus */
 #define I2C_PORT_CHARGER	IT83XX_I2C_CH_F	/* Shared bus */
 #define I2C_PORT_SENSOR		IT83XX_I2C_CH_B

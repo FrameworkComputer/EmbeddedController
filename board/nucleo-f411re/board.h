@@ -40,7 +40,7 @@
 #define CONFIG_CMD_FLASH
 
 /* I2C ports configuration */
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define CONFIG_I2C_DEBUG
 #define I2C_PORT_MASTER 1
 #define I2C_PORT_SLAVE 0        /* needed for DMAC macros (ugh) */

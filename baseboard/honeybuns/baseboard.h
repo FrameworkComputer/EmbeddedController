@@ -47,7 +47,7 @@
 
 /* I2C Bus Configuration */
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_USBC		0
 #define I2C_PORT_MST		1
 #define I2C_PORT_EEPROM	2

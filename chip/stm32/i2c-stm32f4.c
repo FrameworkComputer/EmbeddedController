@@ -715,7 +715,7 @@ int i2c_get_line_levels(int port)
 /*****************************************************************************/
 /* Hooks */
 
-#ifdef CONFIG_I2C_MASTER
+#ifdef CONFIG_I2C_CONTROLLER
 /* Handle CPU clock changing frequency */
 static void i2c_freq_change(void)
 {

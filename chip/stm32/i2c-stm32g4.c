@@ -408,7 +408,7 @@ int i2c_get_line_levels(int port)
 /*****************************************************************************/
 /* Hooks */
 
-#ifdef CONFIG_I2C_MASTER
+#ifdef CONFIG_I2C_CONTROLLER
 /* Handle an upcoming frequency change. */
 static void i2c_pre_freq_change_hook(void)
 {

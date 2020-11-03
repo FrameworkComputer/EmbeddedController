@@ -2321,11 +2321,11 @@
 #undef CONFIG_I2C_XFER_BOARD_CALLBACK
 
 /*
- * EC uses an I2C master interface.
+ * EC uses an I2C controller interface.
  * Note: if this is defined, i2c_init() will be called
  * automatically at board boot.
  */
-#undef CONFIG_I2C_MASTER
+#undef CONFIG_I2C_CONTROLLER
 
 /* EC uses an I2C slave interface */
 #undef CONFIG_I2C_SLAVE

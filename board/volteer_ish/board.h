@@ -29,7 +29,7 @@
 #define CONFIG_FLASH_SIZE 0x80000
 #define CONFIG_FPU
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 
 /* BMA253 Lid accel */
 #define CONFIG_ACCEL_BMA255

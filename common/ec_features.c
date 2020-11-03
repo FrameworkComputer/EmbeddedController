@@ -59,7 +59,7 @@ uint32_t get_feature_flags0(void)
 #ifdef CONFIG_COMMON_GPIO
 		| EC_FEATURE_MASK_0(EC_FEATURE_GPIO)
 #endif
-#ifdef CONFIG_I2C_MASTER
+#ifdef CONFIG_I2C_CONTROLLER
 		| EC_FEATURE_MASK_0(EC_FEATURE_I2C)
 #endif
 #ifdef CONFIG_CHARGER

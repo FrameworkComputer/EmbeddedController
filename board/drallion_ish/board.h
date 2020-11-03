@@ -22,7 +22,7 @@
 #define CONFIG_FLASH_SIZE 0x80000
 #define CONFIG_FPU
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 
 /* Base sensor: LNG2DM (uses LIS2DH driver) */
 #define CONFIG_ACCEL_LNG2DM

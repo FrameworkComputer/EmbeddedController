@@ -23,7 +23,7 @@
 #define STM32_IRQ_EXT2_3_PRIORITY	2
 #ifdef CTS_MODULE_I2C
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #endif
 #endif
 

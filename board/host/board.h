@@ -90,7 +90,7 @@ void fps_event(enum gpio_signal signal);
 #define CONFIG_CRC8
 
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_EEPROM		0
 #define I2C_ADDR_EEPROM_FLAGS	0x50
 

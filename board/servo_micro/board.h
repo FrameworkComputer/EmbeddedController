@@ -85,7 +85,7 @@
 /* Enable control of I2C over USB */
 #define CONFIG_USB_I2C
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_MASTER 0
 
 /* See i2c_ite_flash_support.c for more information about these values */

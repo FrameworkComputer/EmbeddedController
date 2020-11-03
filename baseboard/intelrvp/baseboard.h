@@ -155,7 +155,7 @@
 
 /* I2C ports */
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 
 /* EC exclude modules */
 

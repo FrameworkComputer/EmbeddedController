@@ -42,7 +42,7 @@
 
 #define CONFIG_ADC
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 
 #ifndef __ASSEMBLER__
 

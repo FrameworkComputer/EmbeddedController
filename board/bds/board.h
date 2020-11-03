@@ -11,7 +11,7 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED  /* Allow dangerous commands */
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 
 /* LM4 modules we don't use on link but still want to keep compiling */
 #define CONFIG_EEPROM

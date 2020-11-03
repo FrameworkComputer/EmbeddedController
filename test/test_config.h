@@ -262,7 +262,7 @@ enum sensor_id {
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
 #define CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 int board_discharge_on_ac(int enabled);
 #define I2C_PORT_MASTER 0
 #define I2C_PORT_BATTERY 0
@@ -273,7 +273,7 @@ int board_discharge_on_ac(int enabled);
 #define CONFIG_CHIPSET_CAN_THROTTLE
 #define CONFIG_FANS 1
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_THROTTLE_AP
 #define CONFIG_THERMISTOR
@@ -298,7 +298,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_BATTERY_SMART
 #define CONFIG_CHARGER_INPUT_CURRENT 4032
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_MASTER 0
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0
@@ -310,7 +310,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 
 #ifdef TEST_LIGHTBAR
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_LIGHTBAR 0
 #define CONFIG_ALS_LIGHTBAR_DIMMING 0
 #endif
@@ -484,7 +484,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define PD_VCONN_SWAP_DELAY 5000 /* us */
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_HOST_TCPC 0
 #define CONFIG_USB_PD_DEBUG_LEVEL 3
 #define CONFIG_USB_PD_EXTENDED_MESSAGES
@@ -538,7 +538,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_BATTERY
 #define CONFIG_BATTERY_SMART
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_BATTERY 0
 #endif /* TEST_CHARGE_MANAGER_* */
 
@@ -583,7 +583,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 
 #ifdef TEST_I2C_BITBANG
 #define CONFIG_I2C
-#define CONFIG_I2C_MASTER
+#define CONFIG_I2C_CONTROLLER
 #define CONFIG_I2C_BITBANG
 #define I2C_BITBANG_PORT_COUNT 1
 #endif
