@@ -24,6 +24,7 @@
 #include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "keyboard_8042_sharedlib.h"
 #include "keyboard_raw.h"
 #include "lid_switch.h"
 #include "keyboard_scan.h"
@@ -414,6 +415,13 @@ __override void board_cbi_init(void)
 	if ((!IS_ENABLED(TEST_BUILD) && !ec_cfg_has_numeric_pad()) ||
 	    get_board_id() < 1)
 		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
+
+	/*
+	 * If keyboard is US2(KB_LAYOUT_1), we need translate right ctrl
+	 * to backslash(\|) key.
+	 */
+	if (ec_cfg_keyboard_layout() == KB_LAYOUT_1)
+		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
 }
 
 /******************************************************************************/
