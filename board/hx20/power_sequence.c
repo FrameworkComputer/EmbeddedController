@@ -234,6 +234,12 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S5G3:
 		CPRINTS("power handle state in S5G3");
+		if (!extpower_is_present())
+		{
+			chipset_force_g3();
+			CPRINTS("Shutdown!");
+			MCHP_VCI_REGISTER &= ~(BIT(10) + BIT(11));
+		}
 		return POWER_G3;
 		break;
 	}

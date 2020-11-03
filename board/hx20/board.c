@@ -614,6 +614,9 @@ static void board_init(void)
 	trace0(0, HOOK, 0, "HOOK_INIT - call board_init");
 	board_get_version();
 
+	/* Switch VCI control from VCI_OUT to GPIO Pin Control */
+	MCHP_VCI_REGISTER |= (BIT(10) + BIT(11));
+
 	gpio_enable_interrupt(GPIO_SOC_ENBKL);
 	gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);
 

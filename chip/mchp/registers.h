@@ -1288,6 +1288,10 @@ enum MCHP_i2c_port {
 /* HTIMER[0:1] -> GIRQ21 bits[1:2] */
 #define MCHP_HTIMER_GIRQ_BIT(x)	(1ul << ((x) + 1))
 
+/* VBAT-Powered Control Interface */
+#define MCHP_VCI_BASE      0x4000ae00
+#define MCHP_VCI_REGISTER   REG32(MCHP_VCI_BASE + 0x0)
+
 
 /* General Purpose SPI (GP-SPI) */
 #define MCHP_SPI_BASE(port) (0x40009400 + ((port) << 7))
