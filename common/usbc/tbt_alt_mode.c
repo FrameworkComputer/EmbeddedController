@@ -138,7 +138,8 @@ bool tbt_cable_entry_is_done(int port)
 
 static void tbt_exit_done(int port)
 {
-	tbt_state[port] = TBT_INACTIVE;
+	tbt_state[port] = IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY)
+		? TBT_START : TBT_INACTIVE;
 	TBT_CLR_FLAG(port, TBT_FLAG_RETRY_DONE);
 	TBT_CLR_FLAG(port, TBT_FLAG_CABLE_ENTRY_DONE);
 
@@ -328,7 +329,9 @@ void intel_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd)
 			tbt_active_cable_exit_mode(port);
 		else {
 			tbt_prints("exit mode SOP failed", port);
-			tbt_state[port] = TBT_INACTIVE;
+			tbt_state[port] =
+				IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY)
+				? TBT_START : TBT_INACTIVE;
 			TBT_CLR_FLAG(port, TBT_FLAG_RETRY_DONE);
 		}
 		break;

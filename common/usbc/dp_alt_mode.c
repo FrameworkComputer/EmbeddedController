@@ -70,7 +70,8 @@ bool dp_entry_is_done(int port)
 static void dp_entry_failed(int port)
 {
 	CPRINTS("C%d: DP alt mode protocol failed!", port);
-	dp_state[port] = DP_INACTIVE;
+	dp_state[port] = IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY)
+		? DP_START : DP_INACTIVE;
 }
 
 static bool dp_response_valid(int port, enum tcpm_transmit_type type,
@@ -129,7 +130,8 @@ void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 		 * inactive state.
 		 */
 		CPRINTS("C%d: Exited DP mode", port);
-		dp_state[port] = DP_INACTIVE;
+		dp_state[port] = IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY)
+			? DP_START : DP_INACTIVE;
 		opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
 
 		/* Clear DisplayPort related signals */
