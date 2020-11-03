@@ -184,12 +184,12 @@ static mxc_i2c_regs_t *i2c_bus_ports[] = {MXC_I2C0, MXC_I2C1};
 
 #ifdef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
 
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_BOARD_I2C_ADDR_FLAGS
 static void i2c_send_board_response(int len);
 static void i2c_process_board_command(int read, int addr, int len);
 void board_i2c_process(int read, uint8_t addr, int len, char *buffer,
 		       void (*send_response)(int len));
-#endif /* CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS */
+#endif /* CONFIG_BOARD_I2C_ADDR_FLAGS */
 #endif /* CONFIG_HOSTCMD_I2C_ADDR_FLAGS */
 
 /**
@@ -283,7 +283,7 @@ void i2c_init(void)
 #ifdef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
 	/* Initialize the I2C Slave */
 	init_i2cs(I2C_PORT_EC);
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_BOARD_I2C_ADDR_FLAGS
 	/*
 	 * Set the secondary I2C slave address for the board.
 	 */
@@ -296,8 +296,8 @@ void i2c_init(void)
 	/* Set the secondary slave address. */
 	i2c_bus_ports[I2C_PORT_EC]->slave_addr =
 		(1 << MXC_F_I2C_SLAVE_ADDR_SLAVE_ADDR_IDX_POS) |
-		CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS;
-#endif /* CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS */
+		CONFIG_BOARD_I2C_ADDR_FLAGS;
+#endif /* CONFIG_BOARD_I2C_ADDR_FLAGS */
 #endif /* CONFIG_HOSTCMD_I2C_ADDR_FLAGS */
 
 }
@@ -394,13 +394,13 @@ void i2c_slave_service(i2c_req_t *req)
 		/* A response to this write is pending. */
 		/* Assume that there is nothing to send back to the HOST. */
 		req->tx_remain = -1;
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_BOARD_I2C_ADDR_FLAGS
 		if (req->addr_match_flag != 0x1) {
 			i2c_process_board_command(
-				0, CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS,
+				0, CONFIG_BOARD_I2C_ADDR_FLAGS,
 				req->received_count);
 		} else
-#endif /* CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS */
+#endif /* CONFIG_BOARD_I2C_ADDR_FLAGS */
 		{
 			i2c_process_command();
 		}
@@ -565,7 +565,7 @@ static void i2c_slave_handler(mxc_i2c_regs_t *i2c)
 			/* Set the threshold for TX, the threshold is a four bit field. */
 			i2c->tx_ctrl0 = ((i2c->tx_ctrl0 & ~(MXC_F_I2C_TX_CTRL0_TX_THRESH)) |
 				(2 << MXC_F_I2C_TX_CTRL0_TX_THRESH_POS));
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_BOARD_I2C_ADDR_FLAGS
 			/*
 			* If this is a board address match and there is not
 			* already a pending response to the I2C Master then
@@ -574,9 +574,9 @@ static void i2c_slave_handler(mxc_i2c_regs_t *i2c)
 			if ((req->response_pending == 0) &&
 				(req->addr_match_flag != 0x1)) {
 				i2c_process_board_command(
-					1, CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS, 0);
+					1, CONFIG_BOARD_I2C_ADDR_FLAGS, 0);
 			}
-#endif /* CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS */
+#endif /* CONFIG_BOARD_I2C_ADDR_FLAGS */
 		}
 		/* Only enable done, error and address match interrupts. */
 		i2c->int_en0 = MXC_F_I2C_INT_EN0_DONE |
@@ -710,7 +710,7 @@ static int i2c_slave_async(mxc_i2c_regs_t *i2c, i2c_req_t *req)
 	return EC_SUCCESS;
 }
 
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_BOARD_I2C_ADDR_FLAGS
 
 static void i2c_send_board_response(int len)
 {
@@ -726,7 +726,7 @@ static void i2c_process_board_command(int read, int addr, int len)
 	board_i2c_process(read, addr, len, &host_buffer[0],
 			  i2c_send_board_response);
 }
-#endif /* CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS */
+#endif /* CONFIG_BOARD_I2C_ADDR_FLAGS */
 #endif /* CONFIG_HOSTCMD_I2C_ADDR_FLAGS */
 
 /**

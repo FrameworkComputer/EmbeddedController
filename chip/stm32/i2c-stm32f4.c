@@ -834,7 +834,7 @@ static void i2c_process_command(void)
 	host_packet_receive(&i2c_packet);
 }
 
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_BOARD_I2C_ADDR_FLAGS
 static void i2c_send_board_response(int len)
 {
 	/* host_buffer data range, beyond this length, will return 0xec */
@@ -888,7 +888,7 @@ static void i2c_event_handler(int port)
 		if (i2c_sr2 & STM32_I2C_SR2_TRA) {
 			/* Transmitter slave */
 			i2c_sr1 |= STM32_I2C_SR1_TXE;
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_BOARD_I2C_ADDR_FLAGS
 			if (!rx_pending && !tx_pending) {
 				tx_pending = 1;
 				i2c_process_board_command(1, addr_8bit, 0);
@@ -926,10 +926,10 @@ static void i2c_event_handler(int port)
 				host_i2c_resp_port = port;
 				/* Disable buffer interrupt */
 				STM32_I2C_CR2(port) &= ~STM32_I2C_CR2_ITBUFEN;
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_BOARD_I2C_ADDR_FLAGS
 				if ((addr_8bit >> 1) ==
 				    I2C_STRIP_FLAGS(
-					    CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS))
+					    CONFIG_BOARD_I2C_ADDR_FLAGS))
 					i2c_process_board_command(1, addr_8bit,
 								  buf_idx);
 				else
@@ -952,10 +952,10 @@ static void i2c_event_handler(int port)
 		/* Disable buffer interrupt */
 		STM32_I2C_CR2(port) &= ~STM32_I2C_CR2_ITBUFEN;
 
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_BOARD_I2C_ADDR_FLAGS
 		if (rx_pending &&
 		    (addr_8b >> 1) ==
-		    I2C_STRIP_FLAGS(CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS))
+		    I2C_STRIP_FLAGS(CONFIG_BOARD_I2C_ADDR_FLAGS))
 			i2c_process_board_command(0, addr_8bit, buf_idx);
 #endif
 		rx_pending = 0;
@@ -1000,9 +1000,9 @@ void i2c_init(void)
 	/* Setup host command slave */
 	STM32_I2C_OAR1(I2C_PORT_EC) = STM32_I2C_OAR1_B14
 		| (I2C_STRIP_ADDR(CONFIG_HOSTCMD_I2C_ADDR_FLAGS) << 1);
-#ifdef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
+#ifdef CONFIG_BOARD_I2C_ADDR_FLAGS
 	STM32_I2C_OAR2(I2C_PORT_EC) = STM32_I2C_OAR2_ENDUAL
-		| (I2C_STRIP_FLAGS(CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS) << 1);
+		| (I2C_STRIP_FLAGS(CONFIG_BOARD_I2C_ADDR_FLAGS) << 1);
 #endif
 	task_enable_irq(IRQ_SLAVE_EV);
 	task_enable_irq(IRQ_SLAVE_ER);

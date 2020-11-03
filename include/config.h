@@ -703,8 +703,8 @@
  */
 #undef CONFIG_BOARD_VERSION_GPIO
 
-/* EC responses to a board defined I2C slave address */
-#undef CONFIG_BOARD_I2C_SLAVE_ADDR_FLAGS
+/* EC responses to a board defined I2C address */
+#undef CONFIG_BOARD_I2C_ADDR_FLAGS
 
 /*
  * The board is unable to distinguish EC reset from power-on so it should treat
