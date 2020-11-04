@@ -26,7 +26,7 @@
 
 #define VIF_APP_VENDOR_VALUE	"Google"
 #define VIF_APP_NAME_VALUE	"EC GENVIF"
-#define VIF_APP_VERSION_VALUE	"3.0.0.3"
+#define VIF_APP_VERSION_VALUE	"3.0.0.4"
 #define VENDOR_NAME_VALUE	"Google"
 
 
@@ -432,9 +432,14 @@ static void vif_output_vif_xml(FILE *vif_file, struct vif_t *vif, int level)
 		       vif->vif_field, Vendor_Name, VIF_Indexes);
 }
 
-static void vif_output_xml(FILE *vif_file, struct vif_t *vif)
+static int vif_output_xml(const char *name, struct vif_t *vif)
 {
 	int level = 0;
+	FILE *vif_file;
+
+	vif_file = fopen(name, "w+");
+	if (vif_file == NULL)
+		return 1;
 
 	vif_out_str(vif_file, level,
 		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
@@ -446,6 +451,9 @@ static void vif_output_xml(FILE *vif_file, struct vif_t *vif)
 	vif_output_vif_component(vif_file, vif, level);
 
 	vif_out_str(vif_file, --level, "</VIF>");
+
+	fclose(vif_file);
+	return 0;
 }
 /*
  * VIF XML Output Functions
@@ -653,7 +661,9 @@ __maybe_unused static void set_vif_field_itis(struct vif_field_t *vif_field,
  *	Cable_Superspeed_Support		numericFieldType
  *	Cable_USB_Highest_Speed			numericFieldType
  *	Max_VBUS_Voltage_Vdm_V2			numericFieldType
- *	Manufacturer_Info_VID			numericFieldType
+ *	Manufacturer_Info_Supported,		booleanFieldType
+ *	Manufacturer_Info_VID,			numericFieldType
+ *	Manufacturer_Info_PID,			numericFieldType
  *	Chunking_Implemented			booleanFieldType
  *	Security_Msgs_Supported			booleanFieldType
  *	ID_Header_Connector_Type		numericFieldType
@@ -710,6 +720,9 @@ __maybe_unused static int32_t set_vif_snk_pdo(struct vif_snkPdoList_t *snkPdo,
 	int32_t power_mw;
 	char str[40];
 
+	/*********************************************************************
+	 * Sink PDOs
+	 */
 	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_FIXED) {
 		uint32_t current = pdo & 0x3ff;
 		uint32_t current_ma = current * 10;
@@ -827,6 +840,9 @@ __maybe_unused static int32_t set_vif_src_pdo(struct vif_srcPdoList_t *srcPdo,
 	int32_t power_mw;
 	char str[40];
 
+	/*********************************************************************
+	 * Source PDOs
+	 */
 	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_FIXED) {
 		uint32_t current = pdo & 0x3ff;
 		uint32_t current_ma = current * 10;
@@ -949,10 +965,12 @@ static int gen_vif(const char *name,
 		   const char *board,
 		   const char *vif_producer)
 {
-	FILE *vif_file;
 	enum dtype type;
 	struct vif_t vif;
 	struct vif_field_t *vif_fields;
+
+	int32_t src_max_power = 0;
+
 
 	/* Determine if we are DRP, SRC or SNK */
 	if (is_drp())
@@ -971,7 +989,9 @@ static int gen_vif(const char *name,
 	/* Start with an empty vif */
 	memset(&vif, 0, sizeof(struct vif_t));
 
-	/* VIF */
+	/*********************************************************************
+	 * VIF Fields
+	 */
 	vif_fields = vif.vif_field;
 
 	set_vif_field(&vif_fields[VIF_Specification],
@@ -1035,10 +1055,10 @@ static int gen_vif(const char *name,
 				NULL,
 				CONFIG_USB_PD_TID);
 	#else
-		set_vif_field_stis(&vif_fields[TID],
+		set_vif_field(&vif_fields[TID],
 				"TID",
 				NULL,
-				12345);
+				"12345");
 	#endif
 
 	set_vif_field(&vif_fields[VIF_Product_Type],
@@ -1051,19 +1071,23 @@ static int gen_vif(const char *name,
 			"1",
 			"Reference Platform");
 
-	/* VIF/Product */
+	/*********************************************************************
+	 * VIF/Product Fields
+	 */
 	vif_fields = vif.Product.vif_field;
 
 	{
-		char str[10];
+		char hex_str[10];
 
-		sprintf(str, "%X", USB_VID_GOOGLE);
+		sprintf(hex_str, "%04X", USB_VID_GOOGLE);
 		set_vif_field_itss(&vif_fields[Product_VID],
 				"Product_VID",
-				USB_VID_GOOGLE, str);
+				USB_VID_GOOGLE, hex_str);
 	}
 
-	/* VIF/Component[0] */
+	/*********************************************************************
+	 * VIF/Component[] Fields
+	 */
 	vif_fields = vif.Component[0].vif_field;
 
 	#if defined(CONFIG_USB_PD_PORT_LABEL)
@@ -1138,15 +1162,35 @@ static int gen_vif(const char *name,
 			"0",
 			"None");
 
+	/*********************************************************************
+	 * General PD Fields
+	 */
 	if (IS_ENABLED(CONFIG_USB_PD_REV30) || IS_ENABLED(CONFIG_USB_PRL_SM)) {
+		set_vif_field(&vif_fields[PD_Spec_Revision_Major],
+				"PD_Spec_Revision_Major",
+				"3",
+				NULL);
+		set_vif_field(&vif_fields[PD_Spec_Revision_Minor],
+				"PD_Spec_Revision_Minor",
+				"0",
+				NULL);
+		set_vif_field(&vif_fields[PD_Spec_Version_Major],
+				"PD_Spec_Version_Major",
+				"2",
+				NULL);
+		set_vif_field(&vif_fields[PD_Spec_Version_Minor],
+				"PD_Spec_Version_Minor",
+				"0",
+				NULL);
+
 		set_vif_field(&vif_fields[PD_Specification_Revision],
 				"PD_Specification_Revision",
 				"2",
 				"Revision 3.0");
-
+	} else {
 		set_vif_field(&vif_fields[PD_Spec_Revision_Major],
 				"PD_Spec_Revision_Major",
-				"3",
+				"2",
 				NULL);
 		set_vif_field(&vif_fields[PD_Spec_Revision_Minor],
 				"PD_Spec_Revision_Minor",
@@ -1154,41 +1198,23 @@ static int gen_vif(const char *name,
 				NULL);
 		set_vif_field(&vif_fields[PD_Spec_Version_Major],
 				"PD_Spec_Version_Major",
-				"2",
+				"1",
 				NULL);
 		set_vif_field(&vif_fields[PD_Spec_Version_Minor],
 				"PD_Spec_Version_Minor",
-				"0",
+				"3",
 				NULL);
-	} else {
+
 		set_vif_field(&vif_fields[PD_Specification_Revision],
 				"PD_Specification_Revision",
 				"1",
 				"Revision 2.0");
-
-		set_vif_field(&vif_fields[PD_Spec_Revision_Major],
-				"PD_Spec_Revision_Major",
-				"2",
-				NULL);
-		set_vif_field(&vif_fields[PD_Spec_Revision_Minor],
-				"PD_Spec_Revision_Minor",
-				"0",
-				NULL);
-		set_vif_field(&vif_fields[PD_Spec_Version_Major],
-				"PD_Spec_Version_Major",
-				"1",
-				NULL);
-		set_vif_field(&vif_fields[PD_Spec_Version_Minor],
-				"PD_Spec_Version_Minor",
-				"3",
-				NULL);
 	}
 
 	set_vif_field_b(&vif_fields[USB_Comms_Capable],
 			"USB_Comms_Capable",
 			(!(IS_ENABLED(CONFIG_USB_VPD) ||
 			   IS_ENABLED(CONFIG_USB_CTVPD))));
-
 
 	{
 		bool supports_to_dfp = true;
@@ -1289,24 +1315,20 @@ static int gen_vif(const char *name,
 			"Manufacturer_Info_Supported_Port",
 			IS_ENABLED(CONFIG_USB_PD_MANUFACTURER_INFO));
 
-	#if defined(USB_PID_GOOGLE)
+	#if defined(CONFIG_USB_PID)
 	{
 		char hex_str[10];
 
-		sprintf(hex_str, "0x%04X", USB_PID_GOOGLE);
-		set_vif_field(&vif_fields[Manufacturer_Info_PID_Port],
+		sprintf(hex_str, "%04X", CONFIG_USB_PID);
+		set_vif_field_itss(&vif_fields[Manufacturer_Info_PID_Port],
 			      "Manufacturer_Info_PID_Port",
-			      hex_str, hex_str);
+			      CONFIG_USB_PID, hex_str);
 	}
 	#endif
 
 	set_vif_field_b(&vif_fields[Security_Msgs_Supported_SOP],
 			"Security_Msgs_Supported_SOP",
 			IS_ENABLED(CONFIG_USB_PD_SECURITY_MSGS));
-
-	set_vif_field(&vif_fields[Port_Source_Power_Type],
-			"Port_Source_Power_Type",
-			"0", "Assured");
 
 	#if defined(CONFIG_NUM_FIXED_BATTERIES)
 		set_vif_field_itss(&vif_fields[Num_Fixed_Batteries],
@@ -1330,6 +1352,9 @@ static int gen_vif(const char *name,
 			"ID_Header_Connector_Type_SOP",
 			"2", "USB Type-C Receptacle");
 
+	/*********************************************************************
+	 * SOP* Capabilities
+	 */
 	set_vif_field_b(&vif_fields[SOP_Capable],
 			"SOP_Capable",
 			can_act_as_host());
@@ -1350,6 +1375,9 @@ static int gen_vif(const char *name,
 			"SOP_PP_Debug_Capable",
 			false);
 
+	/*********************************************************************
+	 * USB Type-C Fields
+	 */
 	set_vif_field_b(&vif_fields[Type_C_Implements_Try_SRC],
 			"Type_C_Implements_Try_SRC",
 			IS_ENABLED(CONFIG_USB_PD_TRY_SRC));
@@ -1414,7 +1442,6 @@ static int gen_vif(const char *name,
 			"Type_C_Is_Alt_Mode_Controller",
 			IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP));
 
-
 	set_vif_field_b(&vif_fields[Type_C_Can_Act_As_Device],
 			"Type_C_Can_Act_As_Device",
 			can_act_as_device());
@@ -1422,50 +1449,6 @@ static int gen_vif(const char *name,
 	set_vif_field_b(&vif_fields[Type_C_Is_Alt_Mode_Adapter],
 			"Type_C_Is_Alt_Mode_Adapter",
 			IS_ENABLED(CONFIG_USB_ALT_MODE_ADAPTER));
-
-	{
-		int ds = USB_2;
-
-		switch (ds) {
-		case USB_2:
-			set_vif_field_itss(&vif_fields[Host_Speed],
-					"Host_Speed",
-					USB_2, "USB 2");
-			break;
-		case USB_GEN11:
-			set_vif_field_itss(&vif_fields[Host_Speed],
-					"Host_Speed",
-					USB_GEN11, "USB 3.2 GEN 1x1");
-			break;
-		case USB_GEN21:
-			set_vif_field_itss(&vif_fields[Host_Speed],
-					"Host_Speed",
-					USB_GEN21, "USB 3.2 GEN 2x1");
-			break;
-		case USB_GEN12:
-			set_vif_field_itss(&vif_fields[Host_Speed],
-					"Host_Speed",
-					USB_GEN12, "USB 3.2 GEN 1x2");
-			break;
-		case USB_GEN22:
-			set_vif_field_itss(&vif_fields[Host_Speed],
-					"Host_Speed",
-					USB_GEN22, "USB 3.2 GEN 2x2");
-			break;
-		default:
-			set_vif_field_itss(&vif_fields[Host_Speed],
-					"Host_Speed",
-					ds, NULL);
-		}
-	}
-
-	set_vif_field_b(&vif_fields[Host_Contains_Captive_Retimer],
-			"Host_Contains_Captive_Retimer",
-			false);
-
-	set_vif_field_b(&vif_fields[Host_Is_Embedded],
-			"Host_Is_Embedded",
-			false);
 
 	{
 		int ps = 1;
@@ -1510,6 +1493,9 @@ static int gen_vif(const char *name,
 			"Type_C_Sources_VCONN",
 			IS_ENABLED(CONFIG_USBC_VCONN));
 
+	/*********************************************************************
+	 * USB Data - Upstream Facing Port Fields
+	 */
 	{
 		int ds = USB_2;
 
@@ -1546,14 +1532,63 @@ static int gen_vif(const char *name,
 		}
 	}
 
+	/*********************************************************************
+	 * USB Data - Downstream Facing Port Fields
+	 */
+	{
+		int ds = USB_2;
+
+		switch (ds) {
+		case USB_2:
+			set_vif_field_itss(&vif_fields[Host_Speed],
+					"Host_Speed",
+					USB_2, "USB 2");
+			break;
+		case USB_GEN11:
+			set_vif_field_itss(&vif_fields[Host_Speed],
+					"Host_Speed",
+					USB_GEN11, "USB 3.2 GEN 1x1");
+			break;
+		case USB_GEN21:
+			set_vif_field_itss(&vif_fields[Host_Speed],
+					"Host_Speed",
+					USB_GEN21, "USB 3.2 GEN 2x1");
+			break;
+		case USB_GEN12:
+			set_vif_field_itss(&vif_fields[Host_Speed],
+					"Host_Speed",
+					USB_GEN12, "USB 3.2 GEN 1x2");
+			break;
+		case USB_GEN22:
+			set_vif_field_itss(&vif_fields[Host_Speed],
+					"Host_Speed",
+					USB_GEN22, "USB 3.2 GEN 2x2");
+			break;
+		default:
+			set_vif_field_itss(&vif_fields[Host_Speed],
+					"Host_Speed",
+					ds, NULL);
+		}
+	}
+
+	set_vif_field_b(&vif_fields[Host_Contains_Captive_Retimer],
+			"Host_Contains_Captive_Retimer",
+			false);
+
+	set_vif_field_b(&vif_fields[Host_Is_Embedded],
+			"Host_Is_Embedded",
+			false);
+
+	/*********************************************************************
+	 * PD Source Fields
+	 */
 	if (type == DRP || type == SRC) {
-		uint32_t max_power = 0;
 		int i;
-		int32_t pwr;
-		char str[40];
 
 		/* Source PDOs */
 		for (i = 0; i < src_pdo_cnt; i++) {
+			int32_t pwr;
+
 			pwr = set_vif_src_pdo(&vif.Component[0].SrcPdoList[i],
 					      src_pdo[i]);
 			if (pwr < 0) {
@@ -1561,29 +1596,49 @@ static int gen_vif(const char *name,
 				return 1;
 			}
 
-			if (pwr > max_power)
-				max_power = pwr;
+			if (pwr > src_max_power)
+				src_max_power = pwr;
 		}
 
-		/* Source Fields */
 		set_vif_field_itss(&vif_fields[PD_Power_As_Source],
 				"PD_Power_As_Source",
-				max_power, NULL);
+				src_max_power, NULL);
+	}
+
+	if (type == DRP || type == SRC)
 		set_vif_field_b(&vif_fields[USB_Suspend_May_Be_Cleared],
 				"USB_Suspend_May_Be_Cleared",
 				true);
+
+	if (type == DRP || type == SRC)
 		set_vif_field_b(&vif_fields[Sends_Pings],
 				"Sends_Pings",
 				false);
+
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
+	    type == DRP &&
+	    IS_ENABLED(CONFIG_USB_PD_FRS))
+		set_vif_field(&vif_fields[
+			FR_Swap_Type_C_Current_Capability_As_Initial_Sink],
+			"FR_Swap_Type_C_Current_Capability_As_Initial_Sink",
+			"3", "3A @ 5V");
+	else
+		set_vif_field(&vif_fields[
+			FR_Swap_Type_C_Current_Capability_As_Initial_Sink],
+			"FR_Swap_Type_C_Current_Capability_As_Initial_Sink",
+			"0", "FR_Swap not supported");
+
+	if (IS_ENABLED(CONFIG_USB_PD_REV30) || IS_ENABLED(CONFIG_USB_PRL_SM))
+		set_vif_field_b(&vif_fields[Master_Port],
+				"Master_Port",
+				false);
+
+	if (type == DRP || type == SRC)
 		set_vif_field_itss(&vif_fields[Num_Src_PDOs],
 				"Num_Src_PDOs",
 				src_pdo_cnt, NULL);
 
-		sprintf(str, "%dmW", max_power);
-		set_vif_field_itss(&vif_fields[Product_Total_Source_Power_mW],
-				"Product_Total_Source_Power_mW",
-				max_power, str);
-
+	if (type == DRP || type == SRC) {
 		if (IS_ENABLED(CONFIG_USBC_PPC)) {
 			int resp = 0;
 
@@ -1619,98 +1674,114 @@ static int gen_vif(const char *name,
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_USB_PD_REV30) || IS_ENABLED(CONFIG_USB_PRL_SM))
-		set_vif_field_b(&vif_fields[Master_Port],
-				"Master_Port",
-				false);
-
+	/*********************************************************************
+	 * PD Sink Fields
+	 */
 	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
 	    (type == DRP || type == SNK)) {
-		uint32_t max_power = 0;
-		int32_t pwr;
 		int i;
-		bool giveback = false;
-
-		if (IS_ENABLED(CONFIG_USB_PD_GIVE_BACK))
-			giveback = true;
+		int32_t snk_max_power = 0;
 
 		/* Sink PDOs */
 		for (i = 0; i < pd_snk_pdo_cnt; i++) {
+			int32_t pwr;
+
 			pwr = set_vif_snk_pdo(&vif.Component[0].SnkPdoList[i],
 					      pd_snk_pdo[i]);
-
 			if (pwr < 0) {
 				fprintf(stderr, "ERROR: Setting SNK PDO.\n");
 				return 1;
 			}
 
-			if (pwr > max_power)
-				max_power = pwr;
+			if (pwr > snk_max_power)
+				snk_max_power = pwr;
 		}
 
-		/* Sink Fields */
 		set_vif_field_itss(&vif_fields[PD_Power_As_Sink],
 				"PD_Power_As_Sink",
-				max_power, NULL);
-		set_vif_field_b(&vif_fields[No_USB_Suspend_May_Be_Set],
-				"No_USB_Suspend_May_Be_Set",
-				true);
-		set_vif_field_b(&vif_fields[GiveBack_May_Be_Set],
-				"GiveBack_May_Be_Set",
-				giveback);
-		set_vif_field_b(&vif_fields[Higher_Capability_Set],
-				"Higher_Capability_Set",
-				false);
-		set_vif_field_itss(&vif_fields[Num_Snk_PDOs],
-				"Num_Snk_PDOs",
-				pd_snk_pdo_cnt, NULL);
-	}
-
-	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&  type == DRP) {
-		set_vif_field_b(&vif_fields[Accepts_PR_Swap_As_Src],
-				"Accepts_PR_Swap_As_Src",
-				true);
-		set_vif_field_b(&vif_fields[Accepts_PR_Swap_As_Snk],
-				"Accepts_PR_Swap_As_Snk",
-				true);
-		set_vif_field_b(&vif_fields[Requests_PR_Swap_As_Src],
-				"Requests_PR_Swap_As_Src",
-				true);
-		set_vif_field_b(&vif_fields[Requests_PR_Swap_As_Snk],
-				"Requests_PR_Swap_As_Snk",
-				true);
-		set_vif_field_b(&vif_fields[FR_Swap_Supported_As_Initial_Sink],
-				"FR_Swap_Supported_As_Initial_Sink",
-				IS_ENABLED(CONFIG_USB_PD_FRS));
+				snk_max_power, NULL);
 	}
 
 	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
-	    type == DRP &&
-	    IS_ENABLED(CONFIG_USB_PD_FRS))
+	    (type == DRP || type == SNK))
+		set_vif_field_b(&vif_fields[No_USB_Suspend_May_Be_Set],
+				"No_USB_Suspend_May_Be_Set",
+				true);
+
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
+	    (type == DRP || type == SNK))
+		set_vif_field_b(&vif_fields[GiveBack_May_Be_Set],
+				"GiveBack_May_Be_Set",
+				IS_ENABLED(CONFIG_USB_PD_GIVE_BACK));
+
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
+	    (type == DRP || type == SNK))
+		set_vif_field_b(&vif_fields[Higher_Capability_Set],
+				"Higher_Capability_Set",
+				false);
+
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
+	    (type == DRP || type == SNK))
 		set_vif_field(&vif_fields[
-			FR_Swap_Type_C_Current_Capability_As_Initial_Sink],
-			"FR_Swap_Type_C_Current_Capability_As_Initial_Sink",
-			"3", "3A @ 5V");
-	else
-		set_vif_field(&vif_fields[
-			FR_Swap_Type_C_Current_Capability_As_Initial_Sink],
-			"FR_Swap_Type_C_Current_Capability_As_Initial_Sink",
-			"0", "FR_Swap not supported");
+				FR_Swap_Reqd_Type_C_Current_As_Initial_Source],
+				"FR_Swap_Reqd_Type_C_Current_As_Initial_Source",
+				"0", "FR_Swap not supported");
 
-	set_vif_field(&vif_fields[
-			FR_Swap_Reqd_Type_C_Current_As_Initial_Source],
-			"FR_Swap_Reqd_Type_C_Current_As_Initial_Source",
-			"0", "FR_Swap not supported");
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
+	    (type == DRP || type == SNK))
+		set_vif_field_itss(&vif_fields[Num_Snk_PDOs],
+				"Num_Snk_PDOs",
+				pd_snk_pdo_cnt, NULL);
 
-	/* Format the structure in XML */
-	vif_file = fopen(name, "w+");
-	if (vif_file == NULL)
-		return 1;
+	/*********************************************************************
+	 * PD Dual Role Fields
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&  type == DRP)
+		set_vif_field_b(&vif_fields[Accepts_PR_Swap_As_Src],
+				"Accepts_PR_Swap_As_Src",
+				true);
 
-	vif_output_xml(vif_file, &vif);
-	fclose(vif_file);
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&  type == DRP)
+		set_vif_field_b(&vif_fields[Accepts_PR_Swap_As_Snk],
+				"Accepts_PR_Swap_As_Snk",
+				true);
 
-	return 0;
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&  type == DRP)
+		set_vif_field_b(&vif_fields[Requests_PR_Swap_As_Src],
+				"Requests_PR_Swap_As_Src",
+				true);
+
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&  type == DRP)
+		set_vif_field_b(&vif_fields[Requests_PR_Swap_As_Snk],
+				"Requests_PR_Swap_As_Snk",
+				true);
+
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&  type == DRP)
+		set_vif_field_b(&vif_fields[FR_Swap_Supported_As_Initial_Sink],
+				"FR_Swap_Supported_As_Initial_Sink",
+				IS_ENABLED(CONFIG_USB_PD_FRS));
+
+	/*********************************************************************
+	 * Product Power Fields
+	 */
+	if (type == DRP || type == SRC) {
+		char str[10];
+
+		sprintf(str, "%dmW", src_max_power);
+		set_vif_field_itss(&vif_fields[Product_Total_Source_Power_mW],
+				"Product_Total_Source_Power_mW",
+				src_max_power, str);
+	}
+
+	if (type == DRP || type == SRC)
+		set_vif_field(&vif_fields[Port_Source_Power_Type],
+				"Port_Source_Power_Type",
+				"0", "Assured");
+
+	/*********************************************************************
+	 * Format the structure in XML and output it to file
+	 */
+	return vif_output_xml(name, &vif);
 }
 /*
  * VIF Structure Initialization from Config Functions
