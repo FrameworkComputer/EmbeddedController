@@ -1617,7 +1617,7 @@ static int gen_vif(const char *name,
 	if (type == DRP || type == SRC)
 		set_vif_field_b(&vif_fields[USB_Suspend_May_Be_Cleared],
 				"USB_Suspend_May_Be_Cleared",
-				true);
+				false);
 
 	if (type == DRP || type == SRC)
 		set_vif_field_b(&vif_fields[Sends_Pings],
