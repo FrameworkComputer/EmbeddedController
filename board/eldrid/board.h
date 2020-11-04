@@ -27,6 +27,7 @@
 /* LED defines */
 #define CONFIG_LED_POWER_LED
 #define CONFIG_LED_ONOFF_STATES
+#define CONFIG_LED_ONOFF_STATES_BAT_LOW 10
 
 /* Keyboard features */
 
