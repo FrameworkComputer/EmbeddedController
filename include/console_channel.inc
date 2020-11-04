@@ -75,6 +75,9 @@ CONSOLE_CHANNEL(CC_PORT80,       "port80")
 #ifdef CONFIG_PS2
 CONSOLE_CHANNEL(CC_PS2,          "ps2")
 #endif
+#ifdef CONFIG_PERIPHERAL_CHARGER
+CONSOLE_CHANNEL(CC_PCHG,         "pchg")
+#endif
 #if defined(CONFIG_PWM) || defined(CONFIG_FANS)
 CONSOLE_CHANNEL(CC_PWM,          "pwm")
 #endif

@@ -3046,6 +3046,11 @@
  */
 #undef CONFIG_PECI_TJMAX
 
+/*
+ * Enable peripheral charge manager (e.g. NFC/WLC, WPC Qi)
+ */
+#undef CONFIG_PERIPHERAL_CHARGER
+
 /*****************************************************************************/
 /* PMU config */
 

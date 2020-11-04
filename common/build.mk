@@ -110,6 +110,7 @@ common-$(CONFIG_OCPC)+=ocpc.o
 common-$(CONFIG_ONEWIRE)+=onewire.o
 common-$(CONFIG_ORIENTATION_SENSOR)+=motion_orientation.o
 common-$(CONFIG_PECI_COMMON)+=peci.o
+common-$(CONFIG_PERIPHERAL_CHARGER)+=peripheral_charger.o
 common-$(CONFIG_POWER_BUTTON)+=power_button.o
 common-$(CONFIG_POWER_BUTTON_X86)+=power_button_x86.o
 common-$(CONFIG_PSTORE)+=pstore_commands.o
