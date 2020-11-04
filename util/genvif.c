@@ -55,6 +55,15 @@ enum usb_speed {
 	USB_GEN22 = 4
 };
 
+/*
+ * BC_1_2_SUPPORT options
+ */
+enum bc_1_2_support {
+	BC_1_2_SUPPORT_NONE = 0,
+	BC_1_2_SUPPORT_PORTABLE_DEVICE = 1,
+	BC_1_2_SUPPORT_CHARGING_PORT = 2,
+	BC_1_2_SUPPORT_BOTH = 3
+};
 
 /*****************************************************************************
  * Generic Helper Functions
@@ -622,7 +631,6 @@ __maybe_unused static void set_vif_field_itis(struct vif_field_t *vif_field,
  *	Device_Truncates_DP_For_tDHPResponse	booleanFieldType
  *	Device_Gen1x1_tLinkTurnaround		numericFieldType
  *	Device_Gen2x1_tLinkTurnaround		numericFieldType
- *	BC_1_2_Charging_Port_Type		numericFieldType
  *	XID_SOP					numericFieldType
  *	Data_Capable_As_USB_Host_SOP		booleanFieldType
  *	Data_Capable_As_USB_Device_SOP		booleanFieldType
@@ -972,6 +980,7 @@ static int gen_vif(const char *name,
 	struct vif_field_t *vif_fields;
 
 	int32_t src_max_power = 0;
+	enum bc_1_2_support bc_support;
 
 
 	/* Determine if we are DRP, SRC or SNK */
@@ -1159,10 +1168,42 @@ static int gen_vif(const char *name,
 			"Port_Battery_Powered",
 			IS_ENABLED(CONFIG_BATTERY));
 
-	set_vif_field(&vif_fields[BC_1_2_Support],
-			"BC_1_2_Support",
-			"0",
-			"None");
+	bc_support = BC_1_2_SUPPORT_NONE;
+	if (IS_ENABLED(CONFIG_BC12_DETECT_MAX14637))
+		bc_support = BC_1_2_SUPPORT_PORTABLE_DEVICE;
+	if (IS_ENABLED(CONFIG_BC12_DETECT_MT6360))
+		bc_support = BC_1_2_SUPPORT_PORTABLE_DEVICE;
+	if (IS_ENABLED(CONFIG_BC12_DETECT_PI3USB9201))
+		bc_support = BC_1_2_SUPPORT_BOTH;
+	if (IS_ENABLED(CONFIG_BC12_DETECT_PI3USB9281))
+		bc_support = BC_1_2_SUPPORT_PORTABLE_DEVICE;
+
+	switch (bc_support) {
+	case BC_1_2_SUPPORT_NONE:
+		set_vif_field(&vif_fields[BC_1_2_Support],
+				"BC_1_2_Support",
+				"0",
+				"None");
+		break;
+	case BC_1_2_SUPPORT_PORTABLE_DEVICE:
+		set_vif_field(&vif_fields[BC_1_2_Support],
+				"BC_1_2_Support",
+				"1",
+				"Portable Device");
+		break;
+	case BC_1_2_SUPPORT_CHARGING_PORT:
+		set_vif_field(&vif_fields[BC_1_2_Support],
+				"BC_1_2_Support",
+				"2",
+				"Charging Port");
+		break;
+	case BC_1_2_SUPPORT_BOTH:
+		set_vif_field(&vif_fields[BC_1_2_Support],
+				"BC_1_2_Support",
+				"3",
+				"Both");
+		break;
+	}
 
 	/*********************************************************************
 	 * General PD Fields
@@ -1769,6 +1810,16 @@ static int gen_vif(const char *name,
 		set_vif_field_b(&vif_fields[FR_Swap_Supported_As_Initial_Sink],
 				"FR_Swap_Supported_As_Initial_Sink",
 				IS_ENABLED(CONFIG_USB_PD_FRS));
+
+	/*********************************************************************
+	 * Battery Charging 1.2 Fields
+	 */
+	if (bc_support == BC_1_2_SUPPORT_CHARGING_PORT ||
+	    bc_support == BC_1_2_SUPPORT_BOTH)
+		set_vif_field(&vif_fields[BC_1_2_Charging_Port_Type],
+				"BC_1_2_Charging_Port_Type",
+				"1",
+				"CDP");
 
 	/*********************************************************************
 	 * Product Power Fields
