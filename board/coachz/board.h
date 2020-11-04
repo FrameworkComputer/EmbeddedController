@@ -54,6 +54,11 @@
 #define GPIO_KS_ATTACHED_L GPIO_LID_INT_N_HALL1
 #define GPIO_KS_OPEN GPIO_LID_INT_N_HALL2
 
+/* WLC pins */
+#define GPIO_PCHG_P0 GPIO_WLC_IRQ_CONN
+#define CONFIG_PERIPHERAL_CHARGER
+#define CONFIG_CTN730
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"

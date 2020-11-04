@@ -9,6 +9,7 @@
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "common.h"
 #include "extpower.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi_common.h"
@@ -20,11 +21,13 @@
 #include "keyboard_mkbp.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "peripheral_charger.h"
 #include "pi3usb9201.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
+#include "queue.h"
 #include "system.h"
 #include "shi_chip.h"
 #include "switch.h"
@@ -46,6 +49,20 @@ static void board_connect_c0_sbu(enum gpio_signal s);
 static void ks_interrupt(enum gpio_signal s);
 
 #include "gpio_list.h"
+
+extern struct pchg_drv ctn730_drv;
+
+struct pchg pchgs[] = {
+	[0] = {
+		.cfg = &(const struct pchg_config) {
+			.drv = &ctn730_drv,
+			.i2c_port = I2C_PORT_WLC,
+			.irq_pin = GPIO_WLC_IRQ_CONN,
+		},
+		.events = QUEUE_NULL(PCHG_EVENT_QUEUE_SIZE, enum pchg_event),
+	},
+};
+const int pchg_count = ARRAY_SIZE(pchgs);
 
 /* GPIO Interrupt Handlers */
 static void tcpc_alert_event(enum gpio_signal signal)
@@ -167,7 +184,7 @@ const struct i2c_port_t i2c_ports[] = {
 					  GPIO_EC_I2C_USB_C0_PD_SDA},
 	{"tcpc1",   I2C_PORT_TCPC1, 1000, GPIO_EC_I2C_USB_C1_PD_SCL,
 					  GPIO_EC_I2C_USB_C1_PD_SDA},
-	{"wlc",     I2C_PORT_WLC,   1000, GPIO_EC_I2C_WLC_SCL,
+	{"wlc",     I2C_PORT_WLC,    400, GPIO_EC_I2C_WLC_SCL,
 					  GPIO_EC_I2C_WLC_SDA},
 	{"eeprom",  I2C_PORT_EEPROM, 400, GPIO_EC_I2C_EEPROM_SCL,
 					  GPIO_EC_I2C_EEPROM_SDA},

@@ -28,6 +28,10 @@ GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH | GPIO_SEL_1P8V, chipset_ap
 GPIO_INT(PS_HOLD,           PIN(A, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)  /* Indicate when AP triggers reset/shutdown */
 GPIO_INT(AP_SUSPEND,        PIN(5, 7), GPIO_INT_BOTH, power_signal_interrupt)  /* Suspend signal from PMIC */
 GPIO_INT(DEPRECATED_AP_RST_REQ, PIN(C, 2), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V, power_signal_interrupt) /* Deprecated AP initiated reset indicator */
+
+/* WLC interrupt */
+GPIO_INT(WLC_IRQ_CONN, PIN(7, 4), GPIO_INT_RISING, pchg_irq)
+
 /*
  * When switch-cap is off, the POWER_GOOD signal is floating. Need a pull-down
  * to make it low. Overload the interrupt function chipset_warm_reset_interrupt
@@ -72,7 +76,6 @@ GPIO(CAM_LED,               PIN(3, 0), GPIO_INPUT)
 
 /* Stylus */
 /* TODO(b/168652326): Implement the WLC controls */
-GPIO(WLC_IRQ_CONN,          PIN(7, 4), GPIO_INPUT)
 GPIO(WLC_NRST_CONN,         PIN(C, 5), GPIO_INPUT)
 
 /* Base detection */
