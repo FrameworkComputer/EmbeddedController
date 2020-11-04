@@ -259,9 +259,10 @@ const char help_str[] =
 	"  reboot_ec <RO|RW|cold|hibernate|hibernate-clear-ap-off|disable-jump|cold-ap-off>"
 			" [at-shutdown|switch-slot]\n"
 	"      Reboot EC to RO or RW\n"
-	"  reboot_ap_on_g3\n"
-	"      Requests that the EC will automatically reboot the AP the next time\n"
-	"      we enter the G3 power state.\n"
+	"  reboot_ap_on_g3 [<delay>]\n"
+	"      Requests that the EC will automatically reboot the AP after a\n"
+	"      configurable number of seconds the next time we enter the G3\n"
+	"      power state.\n"
 	"  rollbackinfo\n"
 	"      Print rollback block information\n"
 	"  rtcget\n"
@@ -1196,9 +1197,26 @@ int cmd_reboot_ec(int argc, char *argv[])
 
 int cmd_reboot_ap_on_g3(int argc, char *argv[])
 {
+	struct ec_params_reboot_ap_on_g3_v1 p;
 	int rv;
+	char *e;
+	int cmdver;
 
-	rv = ec_command(EC_CMD_REBOOT_AP_ON_G3, 0, NULL, 0, NULL, 0);
+	if (argc < 2) {
+		p.reboot_ap_at_g3_delay = 0;
+	} else {
+		p.reboot_ap_at_g3_delay = strtol(argv[1], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "invalid number\n");
+			return -1;
+		}
+	}
+	if (ec_cmd_version_supported(EC_CMD_REBOOT_AP_ON_G3, 1))
+		cmdver = 1;
+	else
+		cmdver = 0;
+
+	rv = ec_command(EC_CMD_REBOOT_AP_ON_G3, cmdver, &p, sizeof(p), NULL, 0);
 	return (rv < 0 ? rv : 0);
 }
 
