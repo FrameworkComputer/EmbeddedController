@@ -13,7 +13,6 @@
 #include "gpio.h"
 #include "power.h"
 #include "task.h"
-#include "tcpm.h"
 #include "timer.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
