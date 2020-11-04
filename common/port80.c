@@ -60,7 +60,7 @@ void port_80_write(int data)
 		hook_call_deferred(&port80_dump_buffer_data, 4 * SECOND);
 #else
 	/* this is for customer design to show port80 on 7-segment display */
-	CPRINTF("PORT80: 00%02x\n", data);
+	CPRINTF("PORT80: 00%02X\n", data);
 #endif
 
 	/* Save current port80 code if system is resetting */
