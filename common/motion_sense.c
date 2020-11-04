@@ -390,10 +390,8 @@ static void motion_sense_switch_sensor_rate(void)
 			}
 		} else {
 			/* The sensors are being powered off */
-			if (sensor->state == SENSOR_INITIALIZED) {
-				sensor->drv->set_data_rate(sensor, 0, 0);
+			if (sensor->state == SENSOR_INITIALIZED)
 				sensor->state = SENSOR_NOT_INITIALIZED;
-			}
 		}
 	}
 	motion_sense_set_motion_intervals();
