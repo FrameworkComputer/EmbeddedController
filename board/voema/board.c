@@ -358,16 +358,14 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_PP5000_USBA,
 };
 
-static enum gpio_signal ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL;
-
 static void ps8815_reset(void)
 {
 	int val;
 
-	gpio_set_level(ps8xxx_rst_odl, 0);
+	gpio_set_level(GPIO_USB_C1_RT_RST_ODL, 0);
 	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
 			   PS8815_PWR_H_RST_H_DELAY_MS));
-	gpio_set_level(ps8xxx_rst_odl, 1);
+	gpio_set_level(GPIO_USB_C1_RT_RST_ODL, 1);
 	msleep(PS8815_FW_INIT_DELAY_MS);
 
 	/*
@@ -458,16 +456,6 @@ __override void board_cbi_init(void)
 {
 	enum ec_cfg_usb_db_type usb_db = ec_cfg_usb_db_type();
 
-	/* Reconfigure Volteer GPIOs based on the board ID */
-	if (get_board_id() == 0) {
-		CPRINTS("Configuring GPIOs for board ID 0");
-		CPRINTS("VOLUME_UP button disabled");
-
-		/* Reassign USB_C1_RT_RST_ODL */
-		bb_controls[USBC_PORT_C1].retimer_rst_gpio =
-			GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
-		ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL_BOARDID_0;
-	}
 	config_port_discrete_tcpc(0);
 	switch (usb_db) {
 	case DB_USB_ABSENT:
