@@ -55,4 +55,8 @@ static void baseboard_init(void)
 		CPRINTS("usbc: Failed to set up sink path");
 #endif
 }
-DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT);
+/*
+ * Power sequencing must run before any other chip init is attempted, so run
+ * power sequencing as soon as I2C bus is initialized.
+ */
+DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_INIT_I2C + 1);
