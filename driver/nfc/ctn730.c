@@ -44,6 +44,7 @@ static const int _detection_interval_ms = 100;
 #define WLC_HOST_CTRL_RESET			0b000000
 #define WLC_HOST_CTRL_DUMP_STATUS		0b001100
 #define WLC_HOST_CTRL_GENERIC_ERROR		0b001111
+#define WLC_HOST_CTRL_BIST			0b000110
 #define WLC_CHG_CTRL_ENABLE			0b010000
 #define WLC_CHG_CTRL_DISABLE			0b010001
 #define WLC_CHG_CTRL_DEVICE_STATE		0b010010
@@ -129,6 +130,8 @@ static const char *_text_instruction(uint8_t instruction)
 		return "DUMP_STATUS";
 	case WLC_HOST_CTRL_GENERIC_ERROR:
 		return "GENERIC_ERROR";
+	case WLC_HOST_CTRL_BIST:
+		return "BIST";
 	case WLC_CHG_CTRL_ENABLE:
 		return "ENABLE";
 	case WLC_CHG_CTRL_DISABLE:
@@ -155,6 +158,46 @@ static const char *_text_message_type(uint8_t type)
 		return "EVT";
 	default:
 		return "BAD";
+	}
+}
+
+static const char *_text_status_code(uint8_t code)
+{
+	switch (code) {
+	case WLC_HOST_STATUS_OK:
+		return "OK";
+	case WLC_HOST_STATUS_PARAMETER_ERROR:
+		return "PARAMETER_ERR";
+	case WLC_HOST_STATUS_STATE_ERROR:
+		return "STATE_ERR";
+	case WLC_HOST_STATUS_VALUE_ERROR:
+		return "VALUE_ERR";
+	case WLC_HOST_STATUS_REJECTED:
+		return "REJECTED";
+	case WLC_HOST_STATUS_RESOURCE_ERROR:
+		return "RESOURCE_ERR";
+	case WLC_HOST_STATUS_TXLDO_ERROR:
+		return "TXLDO_ERR";
+	case WLC_HOST_STATUS_ANTENNA_SELECTION_ERROR:
+		return "ANTENNA_SELECTION_ERR";
+	case WLC_HOST_STATUS_BIST_FAILED:
+		return "BIST_FAILED";
+	case WLC_HOST_STATUS_BIST_NO_WLC_CAP:
+		return "BIST_NO_WLC_CAP";
+	case WLC_HOST_STATUS_BIST_TXLDO_CURRENT_OVERFLOW:
+		return "BIST_TXLDO_CURRENT_OVERFLOW";
+	case WLC_HOST_STATUS_BIST_TXLDO_CURRENT_UNDERFLOW:
+		return "BIST_TXLDO_CURRENT_UNDERFLOW";
+	case WLC_HOST_STATUS_FW_VERSION_ERROR:
+		return "FW_VERSION_ERR";
+	case WLC_HOST_STATUS_FW_VERIFICATION_ERROR:
+		return "FW_VERIFICATION_ERR";
+	case WLC_HOST_STATUS_NTAG_BLOCK_PARAMETER_ERROR:
+		return "NTAG_BLOCK_PARAMETER_ERR";
+	case WLC_HOST_STATUS_NTAG_READ_ERROR:
+		return "NTAG_READ_ERR";
+	default:
+		return "UNDEF";
 	}
 }
 
@@ -393,6 +436,68 @@ static int ctn730_get_event(struct pchg *ctx)
 	return EC_ERROR_UNKNOWN;
 }
 
+/**
+ * Send command in blocking loop
+ *
+ * @param ctx     PCHG port context
+ * @param buf     [IN] Command header and payload to send.
+ *                [OUT] Response header and payload received.
+ * @param buf_len Size of <buf>
+ * @return        enum ec_error_list
+ */
+static int _send_command_blocking(struct pchg *ctx, uint8_t *buf, int buf_len)
+{
+	int i2c_port = ctx->cfg->i2c_port;
+	int irq_pin = ctx->cfg->irq_pin;
+	struct ctn730_msg *cmd = (void *)buf;
+	struct ctn730_msg *res = (void *)buf;
+	timestamp_t deadline;
+	int rv;
+
+	gpio_disable_interrupt(irq_pin);
+
+	rv = _send_command(ctx, cmd);
+	if (rv)
+		goto exit;
+
+	deadline.val = get_time().val + CTN730_COMMAND_TIME_OUT;
+
+	/* Busy loop */
+	while (gpio_get_level(irq_pin) == 0 && !rv) {
+		udelay(1 * MSEC);
+		rv = timestamp_expired(deadline, NULL);
+		watchdog_reload();
+	}
+
+	if (rv) {
+		ccprintf("Response timeout\n");
+		rv = EC_ERROR_TIMEOUT;
+		goto exit;
+	}
+
+	rv = _i2c_read(i2c_port, buf, sizeof(*res));
+	if (rv)
+		goto exit;
+
+	_print_header(res);
+
+	if (sizeof(*res) + res->length > buf_len) {
+		ccprintf("RSP size exceeds buffer\n");
+		rv = EC_ERROR_OVERFLOW;
+		goto exit;
+	}
+
+	rv = _i2c_read(i2c_port, res->payload, res->length);
+	if (rv)
+		goto exit;
+
+exit:
+	gpio_clear_pending_interrupt(irq_pin);
+	gpio_enable_interrupt(irq_pin);
+
+	return rv;
+}
+
 const struct pchg_drv ctn730_drv = {
 	.init = ctn730_init,
 	.enable = ctn730_enable,
@@ -402,13 +507,11 @@ const struct pchg_drv ctn730_drv = {
 static int cc_ctn730(int argc, char **argv)
 {
 	int port;
-	const struct pchg_config *cfg;
 	char *end;
 	uint8_t buf[CTN730_MESSAGE_BUFFER_SIZE];
 	struct ctn730_msg *cmd = (void *)buf;
 	struct ctn730_msg *res = (void *)buf;
-	timestamp_t deadline;
-	int timeout;
+	int rv;
 
 	if (argc < 4)
 		return EC_ERROR_PARAM_COUNT;
@@ -417,64 +520,53 @@ static int cc_ctn730(int argc, char **argv)
 	if (*end || port < 0 || pchg_count <= port)
 		return EC_ERROR_PARAM2;
 
-	cfg = pchgs[port].cfg;
+	cmd->message_type = CTN730_MESSAGE_TYPE_COMMAND;
 
 	if (!strcasecmp(argv[2], "dump")) {
-		int tag;
-
-		tag = strtoi(argv[3], &end, 0);
+		int tag = strtoi(argv[3], &end, 0);
 
 		if (*end || tag < 0 || 0x07 < tag)
 			return EC_ERROR_PARAM3;
 
-		gpio_disable_interrupt(cfg->irq_pin);
-
-		cmd->message_type = CTN730_MESSAGE_TYPE_COMMAND;
 		cmd->instruction = WLC_HOST_CTRL_DUMP_STATUS;
 		cmd->length = WLC_HOST_CTRL_DUMP_STATUS_CMD_SIZE;
 		cmd->payload[0] = tag;
+	} else if (!strcasecmp(argv[2], "bist")) {
+		int id = strtoi(argv[3], &end, 0);
 
-		_send_command(&pchgs[port], cmd);
+		if (*end || id < 0)
+			return EC_ERROR_PARAM3;
 
-		deadline.val = get_time().val + CTN730_COMMAND_TIME_OUT;
-		timeout = 0;
+		cmd->instruction = WLC_HOST_CTRL_BIST;
+		cmd->payload[0] = id;
 
-		/* Busy loop */
-		while (gpio_get_level(cfg->irq_pin) == 0 && !timeout) {
-			udelay(1 * MSEC);
-			timeout = timestamp_expired(deadline, NULL);
-			watchdog_reload();
+		switch (id) {
+		case 0x01:
+			/* Switch on RF field. Tx driver conf not implemented */
+			cmd->length = 1;
+			break;
+		case 0x04:
+			/* WLC device activation test */
+			cmd->length = 1;
+			break;
+		default:
+			return EC_ERROR_PARAM3;
 		}
-
-		if (timeout) {
-			ccprintf("Response timeout\n");
-			gpio_clear_pending_interrupt(cfg->irq_pin);
-			gpio_enable_interrupt(cfg->irq_pin);
-			return EC_ERROR_TIMEOUT;
-		}
-
-		_i2c_read(cfg->i2c_port, buf, sizeof(*res));
-		ccprintf("Response header: %s, %s, LEN=%d\n",
-			_text_message_type(res->message_type),
-			_text_instruction(res->instruction), res->length);
-
-		if (res->length > sizeof(buf)) {
-			ccprintf("Response size exceeds buffer\n");
-			gpio_clear_pending_interrupt(cfg->irq_pin);
-			gpio_enable_interrupt(cfg->irq_pin);
-			return EC_ERROR_OVERFLOW;
-		}
-
-		_i2c_read(cfg->i2c_port, buf, res->length);
-		ccprintf("Response payload: status=0x%x tag=0x%x len=%d\n",
-			 buf[0], buf[1], buf[2]);
-
-		gpio_clear_pending_interrupt(cfg->irq_pin);
-		gpio_enable_interrupt(cfg->irq_pin);
+	} else {
+		return EC_ERROR_PARAM2;
 	}
+
+	rv = _send_command_blocking(&pchgs[port], buf, sizeof(buf));
+	if (rv)
+		return rv;
+
+	ccprintf("STATUS_%s\n", _text_status_code(res->payload[0]));
+	hexdump(res->payload, res->length);
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(ctn730, cc_ctn730,
-			"<port> dump <tag>",
+			"<port> dump/bist <tag/id>"
+			"\n\t<port> dump <tag>"
+			"\n\t<port> bist <test_id>",
 			"Control ctn730");
