@@ -1078,8 +1078,8 @@ static int gen_vif(const char *name,
 
 	set_vif_field(&vif_fields[Certification_Type],
 			"Certification_Type",
-			"1",
-			"Reference Platform");
+			"0",
+			"End Product");
 
 	/*********************************************************************
 	 * VIF/Product Fields
