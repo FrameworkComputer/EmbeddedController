@@ -1337,7 +1337,8 @@ static int gen_vif(const char *name,
 
 	set_vif_field_b(&vif_fields[Responds_To_Discov_SOP_DFP],
 			"Responds_To_Discov_SOP_DFP",
-			false);
+			(IS_ENABLED(CONFIG_USB_PD_USB4) ||
+			 IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)));
 
 	set_vif_field_b(&vif_fields[Attempts_Discov_SOP],
 			"Attempts_Discov_SOP",
