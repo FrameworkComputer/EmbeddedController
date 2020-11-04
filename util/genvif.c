@@ -26,7 +26,7 @@
 
 #define VIF_APP_VENDOR_VALUE	"Google"
 #define VIF_APP_NAME_VALUE	"EC GENVIF"
-#define VIF_APP_VERSION_VALUE	"3.0.0.4"
+#define VIF_APP_VERSION_VALUE	"3.0.0.5"
 #define VENDOR_NAME_VALUE	"Google"
 
 
@@ -1109,7 +1109,7 @@ static int gen_vif(const char *name,
 
 	set_vif_field_b(&vif_fields[USB4_Supported],
 			"USB4_Supported",
-			false);
+			IS_ENABLED(CONFIG_USB_PD_USB4));
 
 	set_vif_field_b(&vif_fields[USB_PD_Support],
 			"USB_PD_Support",
