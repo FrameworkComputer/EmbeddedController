@@ -61,7 +61,7 @@ struct {
 /* Port to restart charging on */
 static int active_restart_port = CHARGE_PORT_NONE;
 
-#define CHARGING_FAILURE_MAX_COUNT	2
+#define CHARGING_FAILURE_MAX_COUNT	5
 #define CHARGING_FAILURE_INTERVAL	MINUTE
 
 static int sm5803_is_sourcing_otg_power(int chgnum, int port);
