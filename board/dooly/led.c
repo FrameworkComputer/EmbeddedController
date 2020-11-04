@@ -33,27 +33,47 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 enum led_color {
 	LED_OFF = 0,
+	LED_RED,
 	LED_WHITE,
-
+	LED_PINK,
 	/* Number of colors, not a color itself */
 	LED_COLOR_COUNT
 };
 
 static int set_color_power(enum led_color color, int duty)
 {
+	int white = 0;
+	int red = 0;
+
 	if (duty < 0 || 100 < duty)
 		return EC_ERROR_UNKNOWN;
 
 	switch (color) {
 	case LED_OFF:
-		pwm_set_duty(PWM_CH_LED_WHITE, 0);
 		break;
 	case LED_WHITE:
-		pwm_set_duty(PWM_CH_LED_WHITE, duty);
+		white = 1;
+		break;
+	case LED_RED:
+		red = 1;
+		break;
+	case LED_PINK:
+		white = 1;
+		red = 1;
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
 	}
+
+	if (red)
+		pwm_set_duty(PWM_CH_LED_RED, duty);
+	else
+		pwm_set_duty(PWM_CH_LED_RED, 0);
+
+	if (white)
+		pwm_set_duty(PWM_CH_LED_WHITE, duty);
+	else
+		pwm_set_duty(PWM_CH_LED_WHITE, 0);
 
 	return EC_SUCCESS;
 }
@@ -165,6 +185,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, led_resume, HOOK_PRIO_DEFAULT);
 static void led_init(void)
 {
 	pwm_enable(PWM_CH_LED_WHITE, 1);
+	pwm_enable(PWM_CH_LED_RED, 1);
 }
 DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_INIT_PWM + 1);
 
@@ -204,8 +225,12 @@ static int command_led(int argc, char **argv)
 		ccprintf("o%s\n", led_auto_control_is_enabled(id) ? "ff" : "n");
 	} else if (!strcasecmp(argv[1], "off")) {
 		set_color(id, LED_OFF, 0);
+	} else if (!strcasecmp(argv[1], "red")) {
+		set_color(id, LED_RED, 100);
 	} else if (!strcasecmp(argv[1], "white")) {
 		set_color(id, LED_WHITE, 100);
+	} else if (!strcasecmp(argv[1], "pink")) {
+		set_color(id, LED_PINK, 100);
 	} else if (!strcasecmp(argv[1], "alert")) {
 		led_alert(1);
 	} else if (!strcasecmp(argv[1], "crit")) {
@@ -216,7 +241,7 @@ static int command_led(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(led, command_led,
-			"[debug|red|green|amber|off|alert|crit]",
+			"[debug|red|white|pink|off|alert|crit]",
 			"Turn on/off LED.");
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)

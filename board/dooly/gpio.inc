@@ -134,6 +134,7 @@ ALTERNATE(PIN_MASK(3, 0x48), 0, MODULE_I2C, 0)                  /* I2C5 */
 ALTERNATE(PIN_MASK(B, 0x0C), 0, MODULE_I2C, 0)                  /* I2C7 */
 
 /* PWM */
+ALTERNATE(PIN_MASK(C, 0x08), 0, MODULE_PWM, 0)                  /* PWM0 - Red Led */
 ALTERNATE(PIN_MASK(C, 0x10), 0, MODULE_PWM, 0)                  /* PWM2 - White Led */
 ALTERNATE(PIN_MASK(B, 0x80), 0, MODULE_PWM, 0)                  /* PWM5 - Fan 1 */
 ALTERNATE(PIN_MASK(7, 0x08), 0, MODULE_PWM, 0)                  /* TA2 - Fan Tachometer */
