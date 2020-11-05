@@ -1,7 +1,9 @@
 name: build hx20-orb firmware
 
 on: [push, pull_request]
-
+  #disable this workflow for now
+  branches-ignore:
+    - '**'
 jobs:
   build:
     name: Build hx20-orb
