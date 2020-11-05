@@ -40,9 +40,9 @@
  * tInterFrameGap = 1.625 uS * 17 = 27.625 uS
  */
 #define UCPD_PSC_DIV 1
-#define UCPD_HBIT_DIV 26
-#define UCPD_TRANSWIN_HBIT_CNT 8
-#define UCPD_IFRGAP_HBIT_CNT 17
+#define UCPD_HBIT_DIV 27
+#define UCPD_TRANSWIN_CNT 8
+#define UCPD_IFRGAP_CNT 17
 
 #define UCPD_ANASUB_TO_RP(r) ((r - 1) & 0x3)
 #define UCPD_RP_TO_ANASUB(r) ((r + 1) & 0x3)
