@@ -36,6 +36,7 @@ used for JTAG and SWD for ARM devices.
 
 The connector for SWD is `J4` on Dragonclaw v0.2.
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: Pay attention to the location of pin 1 (red wire) in the
 photos below so that you connect with the correct orientation.
@@ -45,6 +46,7 @@ photos below so that you connect with the correct orientation.
 If you want to connect a 20-Pin ARM Standard JTAG Connector (0.10" / 2.54 mm),
 you can use the following [adapter][JTAG to SWD Adapter] and [cable][SWD Cable].
 ***
+<!-- mdformat on -->
 
 Dragonclaw v0.2 with 20-pin SWD (0.05" / 1.27mm) on J4. Only half the pins are connected. |
 ----------------------------------------------------------------------------------------- |

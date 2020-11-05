@@ -33,6 +33,7 @@ This FPMCU board is the Dragonclaw Rev 0.2. |
 
 Download the [Dragonclaw schematics, layout, and BOM][dragonclaw schematics].
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **Googlers**: You can pick up the Dragonclaw development board at Chromestop.
 **Partners**: You can request a Dragonclaw development board from Google.
@@ -43,6 +44,7 @@ Dragonclaw Rev 0.2 needs a [rework](#dragonclaw-rev-0.2-rework) for the FPC
 sensor to work while being powered through Servo. All of the boards at Chromestop
 have already been reworked.
 ***
+<!-- mdformat on -->
 
 This FPMCU board is the Dartmonkey Rev 0.1. |
 ------------------------------------------- |
@@ -65,9 +67,11 @@ for single step debugging, but Dragonclaw v0.2 has an
 --------------------------- | ----------------------------------
 ![Servo Micro]              | ServoV2 ![Servo v2] Yoshi Flex ![Standard Yoshi Flex]
 
+<!-- mdformat off(b/139308852) -->
 *** note
 For more information about both servos, see [servo].
 ***
+<!-- mdformat on -->
 
 ### Servo Micro
 
@@ -79,9 +83,11 @@ to the developer's computer over micro USB.
 
 ![Servo Micro with Dragonclaw]
 
+<!-- mdformat off(b/139308852) -->
 *** note
 For more information about Servo Micro, see [Servo Micro Info].
 ***
+<!-- mdformat on -->
 
 #### Using SWD (Optional) {#servo-micro-swd}
 
@@ -94,9 +100,11 @@ Servo V2 is the original full featured debugger. It requires a
 
 ![Servo v2]
 
+<!-- mdformat off(b/139308852) -->
 *** note
 NOTE: More information on servo can be found in the [servo] documentation.
 ***
+<!-- mdformat on -->
 
 #### Yoshi Flex Cable
 
@@ -168,9 +176,11 @@ Open **two** terminals and enter the chroot in each:
 (outside chroot) $ cros_sdk --no-ns-pid
 ```
 
+<!-- mdformat off(b/139308852) -->
 *** note
 NOTE: More information on servo can be found in the [servo] documentation.
 ***
+<!-- mdformat on -->
 
 In one of the terminals, build and start `servod`
 
@@ -180,10 +190,12 @@ Build and install `servod` in the chroot:
 (chroot) $ sudo emerge hdctools
 ```
 
+<!-- mdformat off(b/139308852) -->
 *** note
 In all of the following commands, replace `<BOARD>` in the command with
 `bloonchipper` or `dartmonkey` depending on the development board you are using.
 ***
+<!-- mdformat on -->
 
 Run `servod`:
 
@@ -348,6 +360,7 @@ You can get a summary of the power over `N` seconds with:
 (chroot) $ dut-control -t N pp3300_dx_mcu_mv pp3300_dx_fp_mv pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
 ```
 
+<!-- mdformat off(b/139308852) -->
 *** note
 The `_mv` suffix denotes millivolt and `_mw` suffix denotes milliwatt.
 ***
@@ -355,6 +368,7 @@ The `_mv` suffix denotes millivolt and `_mw` suffix denotes milliwatt.
 *** note
 See [Power Measurement Documentation] for more information.
 ***
+<!-- mdformat on -->
 
 ### Toggling Hardware Write Protect
 
@@ -413,6 +427,7 @@ register for an account on the [Internal Gerrit]. Refer to the
 account, your contact at Google can make sure you have the necessary permissions
 to access the private repository.
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: In order to use a private repository you will have to manually add it
 to the repo manifest file before running `repo sync`. Check with your contact
@@ -435,6 +450,7 @@ at Google for the exact values to use below:
         review="https://chrome-internal-review.googlesource.com" />
 ```
 ***
+<!-- mdformat on -->
 
 ### Tracking Issues and Communication
 
@@ -517,10 +533,12 @@ From the DUT, flash the firmware you copied:
 
 ### Dragonclaw Rev 0.2 Rework {#dragonclaw-rev-0.2-rework}
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: All Dragonclaw v0.2 boards have been reworked, so it is not necessary
 to perform the rework yourself.
 ***
+<!-- mdformat on -->
 
 Dragonclaw **Rev 0.2** has two load switches (`U4` and `U6`) that enable the
 1.8V power rail from the servo connector or motherboard connector. However, this

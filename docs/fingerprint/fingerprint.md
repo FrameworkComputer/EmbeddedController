@@ -2,16 +2,20 @@
 
 [TOC]
 
+<!-- mdformat off(b/139308852) -->
 *** note
 NOTE: The build commands assume you are in the `~/trunk/src/platform/ec`
 directory inside the chroot.
 ***
+<!-- mdformat on -->
 
+<!-- mdformat off(b/139308852) -->
 *** note
 WARNING: When switching branches in the EC codebase, you probably want to nuke
 the `build` directory or at least the board you're working on: `rm -rf
 build/<board>` or `make clobber` to prevent compilation errors.
 ***
+<!-- mdformat on -->
 
 ## Software
 
@@ -45,11 +49,13 @@ in the chroot to determine the FPMCU:
 (chroot) $  cros_config_host -c /build/<BOARD>/usr/share/chromeos-config/yaml/config.yaml -m <MODEL> get /fingerprint board
 ```
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: If you get an empty response when running these commands, the
 [Chrome OS Config] properties for fingerprint may not have been set up yet. See
 the [section on updating Chrome OS Config](#update-chromeos-config).
 ***
+<!-- mdformat on -->
 
 ## Building FPMCU Firmware Locally
 
@@ -82,10 +88,12 @@ Before uploading a change to Gerrit via `repo upload`, you'll need to build
 *all* the boards in the EC codebase to make sure your changes do not break any
 others.
 
+<!-- mdformat off(b/139308852) -->
 *** note
 NOTE: If you forget to do this, do not worry. `repo upload` will warn you and
 prevent you from uploading.
 ***
+<!-- mdformat on -->
 
 ```bash
 (chroot) ~/trunk/src/platform/ec $ make buildall -j
@@ -146,11 +154,13 @@ kernel:
 
 ### `fp_updater.sh` and `bio_fw_updater`
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: The auto-update process requires a working version of the firmware
 running on the FPMCU. See [Fingerprint Factory Requirements] for details on
 flashing in the factory.
 ***
+<!-- mdformat on -->
 
 [`fp_updater.sh`] and [`bio_fw_updater`] are wrappers around [`flashrom`] and
 require already-functioning RO firmware running on the FPMCU. It’s meant to be
@@ -168,12 +178,14 @@ user disables [hardware write protection]).
 
 ### `flash_fp_mcu`
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: This tool is really just for us to use during development or during
 the RMA flow (must go through finalization again in that case). We never update
 RO in the field (can’t by design). See [Fingerprint Factory Requirements] for
 details on flashing in the factory.
 ***
+<!-- mdformat on -->
 
 [`flash_fp_mcu`] enables spidev and toggles some GPIOs to put the FPMCU (STM32)
 into bootloader mode. At that point it uses [`stm32mon`] to rewrite the entire
@@ -318,10 +330,12 @@ fingerprint development boards.
 
 ### Dragontalon
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: The sensor doesn't work on Dragontalon, so the measurements below show
 zero for the sensor.
 ***
+<!-- mdformat on -->
 
 ```bash
 (chroot) $  dut-control -t 60 pp3300_h7_mv pp3300_h7_mw pp1800_fpc_mv pp1800_fpc_mw
@@ -392,9 +406,11 @@ See the [Hatch baseboard `make.defaults`] for an example.
 Once you have added the `FPMCU_FIRMWARE` flag and rebuilt the
 [`chromeos-firmware-fpmcu` ebuild], the firmware will show up in the the chroot:
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: This requires access to the [internal manifest].
 ***
+<!-- mdformat on -->
 
 ```bash
 (chroot) $ emerge-<BOARD> chromeos-firmware-fpmcu
