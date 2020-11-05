@@ -1249,6 +1249,8 @@ void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 			get_state_pe(port) == PE_SRC_DISABLED ||
 			get_state_pe(port) == PE_SRC_DISCOVERY ||
 			get_state_pe(port) == PE_VDM_IDENTITY_REQUEST_CBL) ||
+			(PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH) &&
+			    get_state_pe(port) == PE_PRS_SNK_SRC_SEND_SWAP) ||
 			(IS_ENABLED(CONFIG_USBC_VCONN) &&
 				get_state_pe(port) == PE_VCS_SEND_PS_RDY_SWAP)
 			) {
@@ -4654,6 +4656,19 @@ static void pe_prs_snk_src_send_swap_run(int port)
 				: PE_SNK_READY);
 		else
 			set_state_pe(port, PE_SNK_READY);
+		return;
+	}
+	/*
+	 * FRS Only: Transition to ErrorRecovery state when:
+	 *   2) The FR_Swap Message is not sent after retries (a GoodCRC Message
+	 *      has not been received). A soft reset Shall Not be initiated in
+	 *      this case.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
+	    PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH) &&
+		PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
+		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
+		set_state_pe(port, PE_WAIT_FOR_ERROR_RECOVERY);
 	}
 }
 
