@@ -124,7 +124,11 @@ int strncmp(const char *s1, const char *s2, size_t n);
 
 /* Like strtol(), but for integers. */
 int strtoi(const char *nptr, char **endptr, int base);
+
+/* TODO(b/172592963): This should be unsigned long, and conflicts with Zephyr */
+#ifndef CONFIG_ZEPHYR
 uint64_t strtoul(const char *nptr, char **endptr, int base);
+#endif
 
 /* Like strncpy(), but guarantees null termination. */
 char *strzcpy(char *dest, const char *src, int len);

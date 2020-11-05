@@ -6,6 +6,7 @@
 #include <common.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <util.h>
 
 /* Int and Long are same size, just forward to existing Long implementation */
 int strtoi(const char *nptr, char **endptr, int base)
@@ -23,5 +24,25 @@ int strcasecmp(const char *s1, const char *s2)
 		if (diff)
 			return diff;
 	} while (*(s1++) && *(s2++));
+	return 0;
+}
+
+int parse_bool(const char *s, int *dest)
+{
+	/* off, disable, false, no */
+	if (!strcasecmp(s, "off") || !strncasecmp(s, "dis", 3) ||
+	    tolower(*s) == 'f' || tolower(*s) == 'n') {
+		*dest = 0;
+		return 1;
+	}
+
+	/* on, enable, true, yes */
+	if (!strcasecmp(s, "on") || !strncasecmp(s, "ena", 3) ||
+	    tolower(*s) == 't' || tolower(*s) == 'y') {
+		*dest = 1;
+		return 1;
+	}
+
+	/* dunno */
 	return 0;
 }
