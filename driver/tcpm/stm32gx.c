@@ -25,6 +25,9 @@
 #error "Unsupported config options of Stm32gx PD driver"
 #endif
 
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+
 /* Wait time for vconn power switch to turn off. */
 #ifndef PD_STM32GX_VCONN_TURN_OFF_DELAY_US
 #define PD_STM32GX_VCONN_TURN_OFF_DELAY_US 500
@@ -35,8 +38,7 @@ static int cached_rp[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int stm32gx_tcpm_get_message_raw(int port, uint32_t *buf, int *head)
 {
-	/* TODO(b/167601672): Need to implement this for USB-PD support */
-	return EC_SUCCESS;
+	return stm32gx_ucpd_get_message_raw(port, buf, head);
 }
 
 static int stm32gx_tcpm_init(int port)
@@ -77,24 +79,22 @@ static int stm32gx_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 
 static int stm32gx_tcpm_set_vconn(int port, int enable)
 {
-	/*
-	 * TODO(b/167601672): VCONN is not provided by ucpd peripheral, so the
-	 * only action required here will be to remove Rp from the CC line that
-	 * is supplying VCONN.
-	 */
+	stm32gx_ucpd_vconn_disc_rp(port, enable);
+
+	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
+		stm32gx_ucpd_sop_prime_enable(port, enable);
+
 	return EC_SUCCESS;
 }
 
 static int stm32gx_tcpm_set_msg_header(int port, int power_role, int data_role)
 {
-	/* TODO(b/167601672): Need to implement this for USB-PD support */
-	return EC_SUCCESS;
+	return stm32gx_ucpd_set_msg_header(port, power_role, data_role);
 }
 
 static int stm32gx_tcpm_set_rx_enable(int port, int enable)
 {
-	/* TODO(b/167601672): Need to implement this for USB-PD support */
-	return EC_SUCCESS;
+	return stm32gx_ucpd_set_rx_enable(port, enable);
 }
 
 static int stm32gx_tcpm_transmit(int port,
@@ -102,22 +102,19 @@ static int stm32gx_tcpm_transmit(int port,
 			uint16_t header,
 			const uint32_t *data)
 {
-	/* TODO(b/167601672): Need to implement this for USB-PD support */
-	return EC_SUCCESS;
+	return stm32gx_ucpd_transmit(port, type, header, data);
 }
 
 static int stm32gx_tcpm_sop_prime_enable(int port, bool enable)
 {
-	/* TODO(b/167601672): Need to implement this for USB-PD support */
-	return EC_SUCCESS;
+	return stm32gx_ucpd_sop_prime_enable(port, enable);
 }
 
 
 static int stm32gx_tcpm_get_chip_info(int port, int live,
 			struct ec_response_pd_chip_info_v1 *chip_info)
 {
-	/* TODO(b/167601672): Need to implement this for USB-PD support */
-	return EC_SUCCESS;
+	return stm32gx_ucpd_get_chip_info(port, live, chip_info);
 }
 
 static void stm32gx_tcpm_sw_reset(void)
@@ -140,7 +137,6 @@ const struct tcpm_drv stm32gx_tcpm_drv = {
 #ifdef CONFIG_USB_PD_DECODE_SOP
 	.sop_prime_enable      = &stm32gx_tcpm_sop_prime_enable,
 #endif
-
 	.set_vconn		= &stm32gx_tcpm_set_vconn,
 	.set_msg_header		= &stm32gx_tcpm_set_msg_header,
 	.set_rx_enable		= &stm32gx_tcpm_set_rx_enable,
