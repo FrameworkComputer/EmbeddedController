@@ -379,13 +379,22 @@ DECLARE_HOOK(HOOK_INIT, tcpc_aic_init, HOOK_PRIO_INIT_PCA9675);
 /******************************************************************************/
 /* PWROK signal configuration */
 /*
- * On ADLRVP the ALL_SYS_PWRGD, VCCST_PWRGD, PCH_PWROK, and SYS_PWROK
- * signals are handled by the board. No EC control needed.
+ * On ADLRVP, SYS_PWROK_EC is an output controlled by EC and uses ALL_SYS_PWRGD
+ * as input.
  */
-const struct intel_x86_pwrok_signal pwrok_signal_assert_list[] = {};
+const struct intel_x86_pwrok_signal pwrok_signal_assert_list[] = {
+	{
+		.gpio = GPIO_SYS_PWROK_EC,
+		.delay_ms = 3,
+	},
+};
 const int pwrok_signal_assert_count = ARRAY_SIZE(pwrok_signal_assert_list);
 
-const struct intel_x86_pwrok_signal pwrok_signal_deassert_list[] = {};
+const struct intel_x86_pwrok_signal pwrok_signal_deassert_list[] = {
+	{
+		.gpio = GPIO_SYS_PWROK_EC,
+	},
+};
 const int pwrok_signal_deassert_count = ARRAY_SIZE(pwrok_signal_assert_list);
 
 /*

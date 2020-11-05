@@ -84,7 +84,7 @@ UNIMPLEMENTED(EN_PP5000)
  * so that state can be monitored using the console.
  */
 GPIO(PCH_PWROK_EC_R,	PIN(K, 4), GPIO_INPUT)
-GPIO(SYS_PWROK_EC,	PIN(D, 1), GPIO_INPUT)
+GPIO(SYS_PWROK_EC,	PIN(D, 1), GPIO_OUT_LOW)
 GPIO(DSW_PWROK_EC,	PIN(L, 6), GPIO_OUT_LOW)
 
 /* Host communication GPIOs */
