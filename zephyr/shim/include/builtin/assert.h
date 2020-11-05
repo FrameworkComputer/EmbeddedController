@@ -9,6 +9,7 @@
 #include <sys/__assert.h>
 
 #undef ASSERT
+#undef assert
 #define ASSERT __ASSERT_NO_MSG
 #define assert __ASSERT_NO_MSG
 
