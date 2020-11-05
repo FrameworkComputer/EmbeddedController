@@ -161,14 +161,14 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 
 		/* Set up interrupt */
 		val &= ~(MCHP_GPIO_INTDET_MASK);
-		switch (flags & GPIO_INT_ANY) {
+		switch (flags & GPIO_INT_MASK) {
 		case GPIO_INT_F_RISING:
 			val |= MCHP_GPIO_INTDET_EDGE_RIS;
 			break;
 		case GPIO_INT_F_FALLING:
 			val |= MCHP_GPIO_INTDET_EDGE_FALL;
 			break;
-		case GPIO_INT_BOTH: /* both edges */
+		case (GPIO_INT_F_RISING | GPIO_INT_F_FALLING): /* both edges */
 			val |= MCHP_GPIO_INTDET_EDGE_BOTH;
 			break;
 		case GPIO_INT_F_LOW:
