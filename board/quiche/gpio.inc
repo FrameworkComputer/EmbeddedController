@@ -8,6 +8,8 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
+GPIO_INT(HOST_USBC_PPC_INT_ODL,  PIN(D,  9),      GPIO_INT_FALLING | GPIO_PULL_UP, ppc_interrupt)
+
 /* Power sequencing signals */
 GPIO(PWR_BTN,                       PIN(A,  0), GPIO_INPUT)
 GPIO(EN_AC_JACK,                    PIN(A,  1), GPIO_OUT_LOW)
@@ -38,8 +40,17 @@ GPIO(USBC_DP_PD_RST_L,              PIN(E,  9), GPIO_ODR_LOW)
 GPIO(USBC_UF_RESET_L,               PIN(D,  2), GPIO_ODR_LOW)
 
 /* USB Hubs signals */
-GPIO(EC_HUB2_RESET_L,               PIN(C,  5), GPIO_ODR_LOW)
-GPIO(EC_HUB3_RESET_L,               PIN(C, 10), GPIO_ODR_LOW)
+GPIO(EC_HUB2_RESET_L,               PIN(C,  5), GPIO_ODR_HIGH)
+GPIO(EC_HUB3_RESET_L,               PIN(C, 10), GPIO_ODR_HIGH)
+
+/* USB-A Current limit switches, set default to 1.5A */
+
+GPIO(USB3_A1_CDP_EN,                PIN(C,  3), GPIO_OUT_LOW)
+GPIO(USB3_A2_CDP_EN,                PIN(C,  2), GPIO_OUT_LOW)
+GPIO(USB3_A3_CDP_EN,                PIN(C,  0), GPIO_OUT_LOW)
+GPIO(USB3_A4_CDP_EN,                PIN(C,  1), GPIO_OUT_LOW)
+GPIO(USB3_A5_CDP_EN,                PIN(B,  9), GPIO_OUT_LOW)
+GPIO(USB3_A6_CDP_EN,                PIN(C, 13), GPIO_OUT_LOW)
 
 /* Write protect */
 GPIO(EC_FLASH_WP_ODL,               PIN(A,  3), GPIO_ODR_HIGH)

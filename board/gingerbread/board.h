@@ -17,19 +17,15 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
-/* Keyboard features */
-
-/* Sensors */
-
 /* USB Type C and USB PD defines */
+#define USB_PD_PORT_HOST   0
+#define USB_PD_PORT_DP   1
+#define CONFIG_USB_PD_PORT_MAX_COUNT 1
+
 
 /* USB Type A Features */
 
 /* BC 1.2 */
-
-/* Volume Button feature */
-
-/* Fan features */
 
 /*
  * Macros for GPIO signals used in common code that don't match the

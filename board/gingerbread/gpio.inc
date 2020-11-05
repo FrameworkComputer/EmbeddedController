@@ -8,6 +8,8 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
+GPIO_INT(HOST_USBC_PPC_INT_ODL,  PIN(B, 0),       GPIO_INT_FALLING,  ppc_interrupt)
+
 /* Power sequencing interrupts */
 GPIO(PWR_BTN,                       PIN(A, 0),  GPIO_INPUT)
 GPIO(EN_AC_JACK,                    PIN(A, 1),  GPIO_OUT_LOW)
