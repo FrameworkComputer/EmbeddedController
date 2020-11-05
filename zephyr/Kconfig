@@ -66,6 +66,15 @@ config PLATFORM_EC_KEYBOARD_PROTOCOL_8042
 
 endchoice # PLATFORM_EC_KEYBOARD
 
+config PLATFORM_EC_KEYBOARD_COL2_INVERTED
+	bool "A mechanism for passing KSO2 to H1 which inverts the signal."
+	help
+	  This option enables a mechanism for passing the column 2
+	  to H1 which inverts the signal. The signal passing through H1
+	  adds more delay. Need a larger delay value. Otherwise, pressing
+	  Refresh key will also trigger T key, which is in the next scanning
+	  column line. See http://b/156007029.
+
 endif # PLATFORM_EC_KEYBOARD
 
 config PLATFORM_EC_CONSOLE_CMD_KEYBOARD_8042
