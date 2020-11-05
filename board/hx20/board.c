@@ -619,8 +619,10 @@ static void board_init(void)
 {
 	CPRINTS("MEC1701 HOOK_INIT - called board_init");
 	trace0(0, HOOK, 0, "HOOK_INIT - call board_init");
+	board_get_version();
 
 	gpio_enable_interrupt(GPIO_SOC_ENBKL);
+
 
 #ifdef CONFIG_USB_POWER_DELIVERY
 	/* Enable PD MCU interrupt */

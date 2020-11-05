@@ -365,8 +365,6 @@ GPIO_INT(UART0_RX,        PIN(0105), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, \
 	 uart_deepsleep_interrupt)
 
 /* Sensor */
-GPIO_INT(EC_PD_INTA_L,    PIN(0115), GPIO_INT_FALLING, pd_chip_interrupt)
-GPIO_INT(EC_PD_INTB_L,    PIN(0127), GPIO_INT_FALLING, pd_chip_interrupt)
 GPIO_INT(SOC_TP_INT_L,    PIN(0242), GPIO_INT_FALLING, touchpad_interrupt)
 
 /* Input signal */
@@ -423,6 +421,16 @@ GPIO(EC_I2C06_PD_CLK, PIN(0140),  GPIO_INPUT)
 GPIO(EC_I2C06_PD_SDA, PIN(0132),  GPIO_INPUT)
 
 
+/* PD controller */
+GPIO_INT(EC_PD_INTA_L,    PIN(0115), GPIO_INT_FALLING, pd_chip_interrupt)
+GPIO_INT(EC_PD_INTB_L,    PIN(0127), GPIO_INT_FALLING, pd_chip_interrupt)
+GPIO_INT(AC_PRESENT_PD_L, PIN(013),  GPIO_INT_BOTH, pd_chip_interrupt)
+GPIO(TYPEC0_VBUS_ON_EC,     PIN(0144), GPIO_ODR_HIGH)   /* Type-C VBUS select */
+GPIO(TYPEC1_VBUS_ON_EC,     PIN(0143), GPIO_ODR_HIGH)   /* Type-C VBUS select */
+GPIO(TYPEC2_VBUS_ON_EC,     PIN(0142), GPIO_ODR_HIGH)   /* Type-C VBUS select */
+GPIO(TYPEC3_VBUS_ON_EC,     PIN(0141), GPIO_ODR_HIGH)   /* Type-C VBUS select */
+GPIO(EC_PROCHOT_L,          PIN(0206), GPIO_ODR_HIGH)
+
 /* Fan PWM output and TACH input. PROCHOT input */
 /* MEC1701H GPIO_0050/FAN_TACH0 OK */
 GPIO(FAN_SPEED,         PIN(050), GPIO_INPUT | GPIO_PULL_UP)
@@ -432,16 +440,11 @@ GPIO(FAN_SPEED,         PIN(050), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(EC_KBL_PWR_EN,         PIN(0101), GPIO_OUT_HIGH)   /* keyboard backlight control */
 GPIO(ME_EN,                 PIN(060),  GPIO_OUT_LOW)
 GPIO(EC_BKOFF_L,            PIN(0102), GPIO_OUT_LOW)    /* Panel backlight control */
-GPIO(EC_PROCHOT_L,          PIN(0206), GPIO_ODR_HIGH)
-GPIO(TYPEC0_VBUS_ON_EC,     PIN(0144), GPIO_ODR_HIGH)   /* Type-C VBUS select */
-GPIO(TYPEC1_VBUS_ON_EC,     PIN(0143), GPIO_ODR_HIGH)   /* Type-C VBUS select */
-GPIO(TYPEC2_VBUS_ON_EC,     PIN(0142), GPIO_ODR_HIGH)   /* Type-C VBUS select */
-GPIO(TYPEC3_VBUS_ON_EC,     PIN(0141), GPIO_ODR_HIGH)   /* Type-C VBUS select */
+
 GPIO(CAM_EN,                PIN(0255), GPIO_OUT_LOW)    /* Open camera power  */
 /* GPIO(FAN_PWM0,              PIN(053),  GPIO_OUT_HIGH) */   /* EVT for fan full on */
 GPIO(EC_MUTE_L,             PIN(0253), GPIO_ODR_LOW)
 GPIO(OTG_EN,                PIN(0207), GPIO_OUT_LOW)	/* Always low PWR request */
-GPIO(AC_PRESENT_PD_L,		PIN(013),  GPIO_ODR_HIGH)	/* Fix pd firmware issue */
 
 /* SPI
  * Chip select must be open drain and driven high before SPI controller
