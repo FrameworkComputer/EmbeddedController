@@ -192,6 +192,13 @@ void power_button_interrupt(enum gpio_signal signal)
 			   power_button.debounce_us);
 }
 
+void power_button_set_simulated_state(int level)
+{
+	simulate_power_pressed = level;
+	power_button_is_stable = 0;
+	hook_call_deferred(&power_button_change_deferred_data, 0);
+}
+
 /*****************************************************************************/
 /* Console commands */
 

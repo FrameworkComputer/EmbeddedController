@@ -348,7 +348,7 @@ UNIMPLEMENTED(ENABLE_TOUCHPAD)
 /* Interrupt Pin Defination */
 
 /* Power Sequence */
-GPIO_INT(ON_OFF_BTN_L,    PIN(0162), GPIO_INT_BOTH, power_button_interrupt)
+GPIO_INT(ON_OFF_BTN_L,    PIN(0162), GPIO_INT_BOTH, mainboard_power_button_interrupt)
 GPIO_INT(ON_OFF_FP_L,     PIN(0163), GPIO_INT_BOTH, power_button_interrupt)
 GPIO_INT(PWR_3V5V_PG,     PIN(051),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_SUS_L,       PIN(0221), GPIO_INT_BOTH, power_signal_interrupt)

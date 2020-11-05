@@ -416,7 +416,7 @@
 
 /* Power signals */
 #define GPIO_AC_PRESENT     GPIO_ADP_IN
-#define GPIO_POWER_BUTTON_L GPIO_ON_OFF_BTN_L
+#define GPIO_POWER_BUTTON_L GPIO_ON_OFF_FP_L
 #define GPIO_PCH_SLP_SUS_L  GPIO_SLP_SUS_L
 #define GPIO_PCH_SLP_S3_L   GPIO_PM_SLP_S3_L
 #define GPIO_PCH_SLP_S4_L   GPIO_PM_SLP_S4_L
@@ -671,6 +671,8 @@ void chassis_control_interrupt(enum gpio_signal signal);
 /* Touchpad process */
 void touchpad_interrupt(enum gpio_signal signal);
 
+/* Mainboard power button handler*/
+void mainboard_power_button_interrupt(enum gpio_signal signal);
 /* power sequence */
 int board_chipset_power_on(void);
 

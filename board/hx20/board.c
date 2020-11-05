@@ -622,6 +622,7 @@ static void board_init(void)
 	board_get_version();
 
 	gpio_enable_interrupt(GPIO_SOC_ENBKL);
+	gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);
 
 
 #ifdef CONFIG_USB_POWER_DELIVERY
@@ -1341,3 +1342,20 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 	[FAN_CH_0] = { .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
 };
 #endif
+
+int mainboard_power_button_first_state;
+static void mainboard_power_button_change_deferred(void)
+{
+	if (mainboard_power_button_first_state == gpio_get_level(GPIO_ON_OFF_BTN_L)) {
+		CPRINTF("Got Mainboard Power Button event");
+		power_button_set_simulated_state(!gpio_get_level(GPIO_ON_OFF_BTN_L));
+	}
+}
+DECLARE_DEFERRED(mainboard_power_button_change_deferred);
+
+void mainboard_power_button_interrupt(enum gpio_signal signal)
+{
+	mainboard_power_button_first_state = gpio_get_level(GPIO_ON_OFF_BTN_L);
+	hook_call_deferred(&mainboard_power_button_change_deferred_data,
+			   50);
+}

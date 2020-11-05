@@ -69,4 +69,9 @@ int64_t get_time_dsw_pwrok(void);
  */
 void board_pwrbtn_to_pch(int level);
 
+/**
+ * This allows an external function to set/get the power button level
+ */
+void power_button_set_simulated_state(int level);
+
 #endif  /* __CROS_EC_POWER_BUTTON_H */
