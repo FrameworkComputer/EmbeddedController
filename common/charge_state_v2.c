@@ -892,7 +892,7 @@ static int update_static_battery_info(void)
 	 */
 	int rv, ret;
 
-	struct ec_response_battery_static_info *const bs =
+	struct ec_response_battery_static_info_v1 *const bs =
 		&battery_static[BATT_IDX_MAIN];
 
 	/* Clear all static information. */
@@ -901,7 +901,8 @@ static int update_static_battery_info(void)
 	/* Smart battery serial number is 16 bits */
 	rv = battery_serial_number(&batt_serial);
 	if (!rv)
-		snprintf(bs->serial, sizeof(bs->serial), "%04X", batt_serial);
+		snprintf(bs->serial_ext, sizeof(bs->serial_ext),
+			 "%04X", batt_serial);
 
 	/* Design Capacity of Full */
 	ret = battery_design_capacity(&val);
@@ -922,14 +923,14 @@ static int update_static_battery_info(void)
 	rv |= ret;
 
 	/* Battery Manufacturer string */
-	rv |= battery_manufacturer_name(bs->manufacturer,
-					sizeof(bs->manufacturer));
+	rv |= battery_manufacturer_name(bs->manufacturer_ext,
+					sizeof(bs->manufacturer_ext));
 
 	/* Battery Model string */
-	rv |= battery_device_name(bs->model, sizeof(bs->model));
+	rv |= battery_device_name(bs->model_ext, sizeof(bs->model_ext));
 
 	/* Battery Type string */
-	rv |= battery_device_chemistry(bs->type, sizeof(bs->type));
+	rv |= battery_device_chemistry(bs->type_ext, sizeof(bs->type_ext));
 
 	/* Zero the dynamic entries. They'll come next. */
 	memset(&battery_dynamic[BATT_IDX_MAIN], 0,

@@ -32,7 +32,7 @@ const static int batt_host_shutdown_pct = CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE;
  * Store battery information in these 2 structures. Main (lid) battery is always
  * at index 0, and secondary (base) battery at index 1.
  */
-struct ec_response_battery_static_info battery_static[CONFIG_BATTERY_COUNT];
+struct ec_response_battery_static_info_v1 battery_static[CONFIG_BATTERY_COUNT];
 struct ec_response_battery_dynamic_info battery_dynamic[CONFIG_BATTERY_COUNT];
 #endif
 
@@ -467,19 +467,44 @@ static enum ec_status
 host_command_battery_get_static(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_battery_static_info *p = args->params;
-	struct ec_response_battery_static_info *r = args->response;
+	struct ec_response_battery_static_info_v1 *bat;
 
 	if (p->index < 0 || p->index >= CONFIG_BATTERY_COUNT)
 		return EC_RES_INVALID_PARAM;
+	bat = &battery_static[p->index];
+
 	battery_update(p->index);
-	args->response_size = sizeof(*r);
-	memcpy(r, &battery_static[p->index], sizeof(*r));
+	if (args->version == 0) {
+		struct ec_response_battery_static_info *r = args->response;
+
+		args->response_size = sizeof(*r);
+		r->design_capacity = bat->design_capacity;
+		r->design_voltage = bat->design_voltage;
+		r->cycle_count = bat->cycle_count;
+
+		/* Truncate strings to reduced v0 size */
+		memcpy(&r->manufacturer, &bat->manufacturer_ext,
+		       sizeof(r->manufacturer));
+		r->manufacturer[sizeof(r->manufacturer) - 1] = 0;
+		memcpy(&r->model, &bat->model_ext, sizeof(r->model));
+		r->model[sizeof(r->model) - 1] = 0;
+		memcpy(&r->serial, &bat->serial_ext, sizeof(r->serial));
+		r->serial[sizeof(r->serial) - 1] = 0;
+		memcpy(&r->type, &bat->type_ext, sizeof(r->type));
+		r->type[sizeof(r->type) - 1] = 0;
+	} else {
+		/* v1 command stores the same data internally */
+		struct ec_response_battery_static_info_v1 *r = args->response;
+
+		args->response_size = sizeof(*r);
+		memcpy(r, bat, sizeof(*r));
+	}
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_BATTERY_GET_STATIC,
 		     host_command_battery_get_static,
-		     EC_VER_MASK(0));
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 static enum ec_status
 host_command_battery_get_dynamic(struct host_cmd_handler_args *args)
@@ -515,7 +540,8 @@ static void battery_update(enum battery_index i)
 
 	/* Smart battery serial number is 16 bits */
 	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_SERIAL);
-	memcpy(batt_str, battery_static[i].serial, EC_MEMMAP_TEXT_MAX);
+	memcpy(batt_str, battery_static[i].serial_ext, EC_MEMMAP_TEXT_MAX);
+	batt_str[EC_MEMMAP_TEXT_MAX - 1] = 0;
 
 	/* Design Capacity of Full */
 	*memmap_dcap = battery_static[i].design_capacity;
@@ -528,15 +554,19 @@ static void battery_update(enum battery_index i)
 
 	/* Battery Manufacturer string */
 	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_MFGR);
-	memcpy(batt_str, battery_static[i].manufacturer, EC_MEMMAP_TEXT_MAX);
+	memcpy(batt_str, battery_static[i].manufacturer_ext,
+	       EC_MEMMAP_TEXT_MAX);
+	batt_str[EC_MEMMAP_TEXT_MAX - 1] = 0;
 
 	/* Battery Model string */
 	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_MODEL);
-	memcpy(batt_str, battery_static[i].model, EC_MEMMAP_TEXT_MAX);
+	memcpy(batt_str, battery_static[i].model_ext, EC_MEMMAP_TEXT_MAX);
+	batt_str[EC_MEMMAP_TEXT_MAX - 1] = 0;
 
 	/* Battery Type string */
 	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_TYPE);
-	memcpy(batt_str, battery_static[i].type, EC_MEMMAP_TEXT_MAX);
+	memcpy(batt_str, battery_static[i].type_ext, EC_MEMMAP_TEXT_MAX);
+	batt_str[EC_MEMMAP_TEXT_MAX - 1] = 0;
 
 	*memmap_volt = battery_dynamic[i].actual_voltage;
 	*memmap_rate = battery_dynamic[i].actual_current;

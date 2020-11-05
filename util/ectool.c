@@ -7705,7 +7705,7 @@ void print_battery_flags(int flags)
 int get_battery_command(int index)
 {
 	struct ec_params_battery_static_info static_p;
-	struct ec_response_battery_static_info static_r;
+	struct ec_response_battery_static_info_v1 static_r;
 	struct ec_params_battery_dynamic_info dynamic_p;
 	struct ec_response_battery_dynamic_info dynamic_r;
 	int rv;
@@ -7713,7 +7713,7 @@ int get_battery_command(int index)
 	printf("Battery %d info:\n", index);
 
 	static_p.index = index;
-	rv = ec_command(EC_CMD_BATTERY_GET_STATIC, 0,
+	rv = ec_command(EC_CMD_BATTERY_GET_STATIC, 1,
 			&static_p, sizeof(static_p),
 			&static_r, sizeof(static_r));
 	if (rv < 0)
@@ -7731,21 +7731,21 @@ int get_battery_command(int index)
 		return -1;
 	}
 
-	if (!is_string_printable(static_r.manufacturer))
+	if (!is_string_printable(static_r.manufacturer_ext))
 		goto cmd_error;
-	printf("  OEM name:               %s\n", static_r.manufacturer);
+	printf("  OEM name:               %s\n", static_r.manufacturer_ext);
 
-	if (!is_string_printable(static_r.model))
+	if (!is_string_printable(static_r.model_ext))
 		goto cmd_error;
-	printf("  Model number:           %s\n", static_r.model);
+	printf("  Model number:           %s\n", static_r.model_ext);
 
-	if (!is_string_printable(static_r.type))
+	if (!is_string_printable(static_r.type_ext))
 		goto cmd_error;
-	printf("  Chemistry   :           %s\n", static_r.type);
+	printf("  Chemistry   :           %s\n", static_r.type_ext);
 
-	if (!is_string_printable(static_r.serial))
+	if (!is_string_printable(static_r.serial_ext))
 		goto cmd_error;
-	printf("  Serial number:          %s\n", static_r.serial);
+	printf("  Serial number:          %s\n", static_r.serial_ext);
 
 	if (!is_battery_range(static_r.design_capacity))
 		goto cmd_error;
@@ -7807,15 +7807,15 @@ int cmd_battery(int argc, char *argv[])
 			fprintf(stderr, "Bad battery index.\n");
 			return -1;
 		}
-
-		if (index > 0)
-			return get_battery_command(index);
 	}
 
 	/*
-	 * TODO(b:65697620): When supported/required, read battery 0 information
-	 * through EC commands as well.
+	 * Read non-primary batteries through hostcmd, and all batteries
+	 * if longer strings are supported for static info.
 	 */
+	if (index > 0 ||
+	    ec_cmd_version_supported(EC_CMD_BATTERY_GET_STATIC, 1))
+		return get_battery_command(index);
 
 	val = read_mapped_mem8(EC_MEMMAP_BATTERY_VERSION);
 	if (val < 1) {

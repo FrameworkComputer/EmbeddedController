@@ -61,6 +61,16 @@
 #define CONFIG_BATTERY_FUEL_GAUGE
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_SMART
+/*
+ * Enable support for battery hostcmd, supporting longer strings.
+ *
+ * Vilboz battery options' model names vary in the 8th character, which is
+ * truncated in the memory mapped battery info; differentiating them requires
+ * support for EC_CMD_BATTERY_GET_STATIC version 1.
+ */
+#define CONFIG_BATTERY_V2
+#define CONFIG_BATTERY_COUNT 1
+#define CONFIG_HOSTCMD_BATTERY_V2
 
 #define CONFIG_BC12_DETECT_PI3USB9201
 

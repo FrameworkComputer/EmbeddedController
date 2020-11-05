@@ -19,7 +19,7 @@ enum battery_index {
 };
 
 #ifdef CONFIG_BATTERY_V2
-extern struct ec_response_battery_static_info
+extern struct ec_response_battery_static_info_v1
 	battery_static[CONFIG_BATTERY_COUNT];
 extern struct ec_response_battery_dynamic_info
 	battery_dynamic[CONFIG_BATTERY_COUNT];
