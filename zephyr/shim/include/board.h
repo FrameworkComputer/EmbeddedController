@@ -9,10 +9,11 @@
 #include <devicetree.h>
 
 /* Included shimed version of gpio signal. */
-#include <gpio_signal.h>
-/* Include board specific gpio mapping/aliases if named_gpios node exists */
+#include "gpio_signal.h"
+
+/* Include board specific gpio mapping/aliases if named_pgios node exists */
 #if DT_NODE_EXISTS(DT_PATH(named_gpios))
-#include <gpio_map.h>
+#include "gpio_map.h"
 #endif
 
 #endif  /* __BOARD_H */

@@ -3,13 +3,14 @@
  * found in the LICENSE file.
  */
 
+#include <errno.h>
+#include <string.h>
+#include <sys/util.h>
+
 #include "config.h"
 #include "ec_commands.h"
 #include "sysjump.h"
 #include "system.h"
-#include <sys/util.h>
-#include <string.h>
-#include <errno.h>
 
 /* Ongoing actions preventing going into deep-sleep mode. */
 uint32_t sleep_mask;

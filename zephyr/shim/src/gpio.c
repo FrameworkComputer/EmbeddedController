@@ -4,10 +4,11 @@
  */
 
 #include <device.h>
-#include <gpio.h>
 #include <init.h>
 #include <kernel.h>
 #include <logging/log.h>
+
+#include "gpio.h"
 
 LOG_MODULE_REGISTER(gpio_shim, LOG_LEVEL_ERR);
 

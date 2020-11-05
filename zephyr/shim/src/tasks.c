@@ -6,9 +6,9 @@
 #include <kernel.h>
 #include <init.h>
 #include <sys/atomic.h>
-#include <task.h>
 
 #include "shimmed_tasks.h"
+#include "task.h"
 
 BUILD_ASSERT(CONFIG_NUM_PREEMPT_PRIORITIES >= TASK_ID_COUNT,
 	     "Must increase number of available preempt priorities");
