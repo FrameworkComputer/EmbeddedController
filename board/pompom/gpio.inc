@@ -11,7 +11,7 @@
 /* USB-C interrupts */
 GPIO_INT(USB_C0_PD_INT_ODL,    PIN(E, 0), GPIO_INT_FALLING, tcpc_alert_event)  /* Interrupt from port-0 TCPC */
 GPIO_INT(USB_C0_SWCTL_INT_ODL, PIN(0, 3), GPIO_INT_FALLING, ppc_interrupt)  /* Interrupt from port-0 PPC */
-GPIO_INT(USB_C0_BC12_INT_L,    PIN(6, 1), GPIO_INT_FALLING, usb0_evt)  /* Interrupt from port-0 BC1.2 */
+GPIO_INT(USB_C0_BC12_INT_L,    PIN(6, 1), GPIO_INT_FALLING | GPIO_PULL_UP, usb0_evt)  /* Interrupt from port-0 BC1.2 */
 
 /* System interrupts */
 GPIO_INT(ACOK_OD,           PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)  /* ACOK */
