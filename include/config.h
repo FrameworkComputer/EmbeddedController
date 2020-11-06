@@ -2688,6 +2688,12 @@
 #undef CONFIG_LED_PWM
 
 /*
+ * Support common PWM-controlled LEDs that do not conform to the Chrom OS LED
+ * behavior specification
+ */
+#undef CONFIG_LED_PWM_TASK_DISABLED
+
+/*
  * Here are some recommended color settings by default, but a board can change
  * the colors to one of "enum ec_led_colors" as they see fit.
  */
@@ -5231,7 +5237,7 @@
 #endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON) */
 
 
-#ifdef CONFIG_LED_PWM_COUNT
+#if defined(CONFIG_LED_PWM_COUNT)
 #define CONFIG_LED_PWM
 #endif /* defined(CONFIG_LED_PWM_COUNT) */
 

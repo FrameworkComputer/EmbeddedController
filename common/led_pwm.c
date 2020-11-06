@@ -31,7 +31,9 @@
 
 #define PULSE_TICK (250 * MSEC)
 
+#if !defined(CONFIG_LED_PWM_TASK_DISABLED)
 static uint8_t led_is_pulsing;
+#endif /* CONFIG_LED_PWM_TASK_DISABLED */
 
 static int get_led_id_color(enum pwm_led_id id, int color)
 {
@@ -89,6 +91,11 @@ static void set_led_color(int color)
 	if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
 		set_pwm_led_color(PWM_LED1, get_led_id_color(PWM_LED1, color));
 #endif /* CONFIG_LED_PWM_COUNT >= 2 */
+
+#if CONFIG_LED_PWM_COUNT >= 3
+	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		set_pwm_led_color(PWM_LED2, get_led_id_color(PWM_LED2, color));
+#endif
 }
 
 static void set_pwm_led_enable(enum pwm_led_id id, int enable)
@@ -117,8 +124,13 @@ static void init_leds_off(void)
 #if CONFIG_LED_PWM_COUNT >= 2
 	set_pwm_led_enable(PWM_LED1, 1);
 #endif /* CONFIG_LED_PWM_COUNT >= 2 */
+#if CONFIG_LED_PWM_COUNT >= 3
+	set_pwm_led_enable(PWM_LED2, 1);
+#endif /* CONFIG_LED_PWM_COUNT >= 3 */
 }
 DECLARE_HOOK(HOOK_INIT, init_leds_off, HOOK_PRIO_INIT_PWM + 1);
+
+#if !defined(CONFIG_LED_PWM_TASK_DISABLED)
 
 static uint8_t pulse_period;
 static uint8_t pulse_ontime;
@@ -159,7 +171,6 @@ static void pulse_leds(enum ec_led_colors color, int ontime, int period)
 	led_is_pulsing = 1;
 	pulse_leds_deferred();
 }
-
 static int show_charge_state(void)
 {
 	enum charge_state chg_st = charge_get_state();
@@ -239,6 +250,7 @@ static int show_chipset_state(void)
 }
 #endif /* CONFIG_LED_PWM_CHARGE_STATE_ONLY */
 
+
 static void update_leds(void)
 {
 	/* Reflecting the charge state is the highest priority. */
@@ -256,6 +268,8 @@ static void update_leds(void)
 	set_led_color(-1);
 }
 DECLARE_HOOK(HOOK_TICK, update_leds, HOOK_PRIO_DEFAULT);
+
+#endif/* CONFIG_LED_PWM_TASK_DISABLED */
 
 #ifdef CONFIG_CMD_LEDTEST
 int command_ledtest(int argc, char **argv)

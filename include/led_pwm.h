@@ -24,6 +24,9 @@ enum pwm_led_id {
 #if CONFIG_LED_PWM_COUNT >= 2
 	PWM_LED1,
 #endif /* CONFIG_LED_PWM_COUNT > 2 */
+#if CONFIG_LED_PWM_COUNT >= 3
+	PWM_LED2,
+#endif /* CONFIG_LED_PWM_COUNT > 3 */
 };
 
 /*
