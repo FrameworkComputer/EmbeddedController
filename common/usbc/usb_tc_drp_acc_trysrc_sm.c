@@ -685,7 +685,7 @@ static inline void pd_set_dual_role_and_event(int port,
 		pd_update_try_source();
 
 	if (event != 0)
-		task_set_event(PD_PORT_TO_TASK_ID(port), event, 0);
+		task_set_event(PD_PORT_TO_TASK_ID(port), event);
 }
 
 void pd_set_dual_role(int port, enum pd_dual_role_states state)
@@ -1160,7 +1160,7 @@ static void bc12_role_change_handler(int port, enum pd_data_role prev_data_role,
 	}
 
 	if (event)
-		task_set_event(task_id, event, 0);
+		task_set_event(task_id, event);
 }
 
 /*
@@ -1818,7 +1818,7 @@ static __maybe_unused int reset_device_and_notify(int port)
 	while (waiting_tasks) {
 		task = __fls(waiting_tasks);
 		waiting_tasks &= ~BIT(task);
-		task_set_event(task, TASK_EVENT_PD_AWAKE, 0);
+		task_set_event(task, TASK_EVENT_PD_AWAKE);
 	}
 
 	return rv;
@@ -1845,8 +1845,7 @@ void pd_wait_exit_low_power(int port)
 		 * happen much, but it if starts occurring, we can add a guard
 		 * to prevent/reduce it.
 		 */
-		task_set_event(PD_PORT_TO_TASK_ID(port),
-			       PD_EVENT_TCPC_RESET, 0);
+		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TCPC_RESET);
 		task_wait_event_mask(TASK_EVENT_PD_AWAKE, -1);
 	}
 }
@@ -1861,7 +1860,7 @@ void pd_device_accessed(int port)
 		handle_device_access(port);
 	else
 		task_set_event(PD_PORT_TO_TASK_ID(port),
-			PD_EVENT_DEVICE_ACCESSED, 0);
+			       PD_EVENT_DEVICE_ACCESSED);
 }
 
 /*

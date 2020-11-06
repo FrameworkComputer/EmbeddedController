@@ -34,7 +34,7 @@ static struct ec_host_request *req = (struct ec_host_request *)req_buf;
 
 static void hostcmd_respond(struct host_packet *pkt)
 {
-	task_set_event(TASK_ID_TEST_RUNNER, TASK_EVENT_HOSTCMD_DONE, 0);
+	task_set_event(TASK_ID_TEST_RUNNER, TASK_EVENT_HOSTCMD_DONE);
 }
 
 static char calculate_checksum(const char *buf, int size)
@@ -151,7 +151,7 @@ int test_fuzz_one_input(const uint8_t *data, unsigned int size)
 	if (hostcmd_fill(data, size) < 0)
 		return 0;
 
-	task_set_event(TASK_ID_TEST_RUNNER, TASK_EVENT_FUZZ, 0);
+	task_set_event(TASK_ID_TEST_RUNNER, TASK_EVENT_FUZZ);
 	pthread_cond_wait(&done_cond, &lock);
 
 #ifdef VALID_REQUEST_ONLY

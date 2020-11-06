@@ -446,7 +446,7 @@ static void i2c_interrupt_handler(struct i2c_context *ctx)
 
 	/* disable interrupts */
 	i2c_intr_switch(ctx->base, DISABLE_INT);
-	task_set_event(ctx->wait_task_id, TASK_EVENT_I2C_IDLE, 0);
+	task_set_event(ctx->wait_task_id, TASK_EVENT_I2C_IDLE);
 }
 
 static void i2c_isr_bus0(void)

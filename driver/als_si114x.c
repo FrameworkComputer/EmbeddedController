@@ -167,16 +167,13 @@ static int si114x_read_results(struct motion_sensor_t *s, int nb)
 
 void si114x_interrupt(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_MOTIONSENSE,
-		       CONFIG_ALS_SI114X_INT_EVENT, 0);
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ALS_SI114X_INT_EVENT);
 }
 
 #ifdef CONFIG_ALS_SI114X_POLLING
 static void si114x_read_deferred(void)
 {
-	task_set_event(TASK_ID_MOTIONSENSE,
-		       CONFIG_ALS_SI114X_INT_EVENT, 0);
-
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ALS_SI114X_INT_EVENT);
 }
 DECLARE_DEFERRED(si114x_read_deferred);
 #endif

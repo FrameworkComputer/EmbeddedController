@@ -98,7 +98,7 @@ static void anx74xx_cable_det_handler(void)
 	 * and if in normal mode, then there is no need to trigger a tcpc reset.
 	 */
 	if (cable_det && !reset_n)
-		task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET, 0);
+		task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET);
 }
 DECLARE_DEFERRED(anx74xx_cable_det_handler);
 

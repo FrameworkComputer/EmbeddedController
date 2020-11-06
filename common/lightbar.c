@@ -1658,7 +1658,7 @@ void lightbar_sequence_f(enum lightbar_sequence num, const char *f)
 		CPRINTS("LB %s() requests %d %s", f, num,
 			lightbar_cmds[num].string);
 		pending_msg = num;
-		task_set_event(TASK_ID_LIGHTBAR, PENDING_MSG, 0);
+		task_set_event(TASK_ID_LIGHTBAR, PENDING_MSG);
 	} else
 		CPRINTS("LB %s() requests %d - ignored", f, num);
 }

@@ -426,7 +426,7 @@ static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 	return evt;
 }
 
-uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
+uint32_t task_set_event(task_id_t tskid, uint32_t event)
 {
 	task_ *receiver = __task_id_to_ptr(tskid);
 	ASSERT(receiver);
@@ -443,10 +443,7 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 			need_resched_or_profiling = 1;
 #endif
 	} else {
-		if (wait)
-			return __wait_evt(-1, tskid);
-		else
-			__schedule(0, tskid);
+		__schedule(0, tskid);
 	}
 
 	return 0;
@@ -765,8 +762,7 @@ int task_reset_cleanup(void)
 			 */
 			if (notify_id < TASK_ID_COUNT)
 				task_set_event(notify_id,
-					       TASK_EVENT_RESET_DONE,
-					       0);
+					       TASK_EVENT_RESET_DONE);
 		}
 	}
 
@@ -917,7 +913,7 @@ void mutex_unlock(struct mutex *mtx)
 		waiters &= ~BIT(id);
 
 		/* Somebody is waiting on the mutex */
-		task_set_event(id, TASK_EVENT_MUTEX, 0);
+		task_set_event(id, TASK_EVENT_MUTEX);
 	}
 
 	/* Ensure no event is remaining from mutex wake-up */

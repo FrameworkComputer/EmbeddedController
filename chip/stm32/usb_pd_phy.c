@@ -303,7 +303,7 @@ static void tx_dma_done(void *data)
 	pd_tx_disable(port, polarity);
 
 #if defined(CONFIG_COMMON_RUNTIME) && defined(CONFIG_DMA_DEFAULT_HANDLERS)
-	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_DMA_TC, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_DMA_TC);
 #endif
 }
 

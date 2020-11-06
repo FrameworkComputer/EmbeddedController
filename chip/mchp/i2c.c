@@ -950,7 +950,7 @@ static void handle_interrupt(int controller)
 
 	/* Wake up the task which was waiting on the I2C interrupt, if any. */
 	if (id != TASK_ID_INVALID)
-		task_set_event(id, TASK_EVENT_I2C_IDLE, 0);
+		task_set_event(id, TASK_EVENT_I2C_IDLE);
 }
 
 void i2c0_interrupt(void) { handle_interrupt(0); }

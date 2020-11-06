@@ -354,7 +354,7 @@ static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 	return evt;
 }
 
-uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
+uint32_t task_set_event(task_id_t tskid, uint32_t event)
 {
 	task_ *receiver = __task_id_to_ptr(tskid);
 	ASSERT(receiver);
@@ -374,19 +374,15 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
 			CPU_SCB_ICSR = BIT(28);
 		}
 	} else {
-		if (wait) {
-			return __wait_evt(-1, tskid);
-		} else {
-			/*
-			 * We need to ensure that the execution priority is
-			 * actually decreased after the "cpsie i" in the atomic
-			 * operation above else the "svc" in the __schedule
-			 * call below will trigger a HardFault.
-			 * Use a barrier to force it at that point.
-			 */
-			asm volatile("isb");
-			__schedule(0, tskid);
-		}
+		/*
+		 * We need to ensure that the execution priority is
+		 * actually decreased after the "cpsie i" in the atomic
+		 * operation above else the "svc" in the __schedule
+		 * call below will trigger a HardFault.
+		 * Use a barrier to force it at that point.
+		 */
+		asm volatile("isb");
+		__schedule(0, tskid);
 	}
 
 	return 0;
@@ -535,7 +531,7 @@ void mutex_unlock(struct mutex *mtx)
 		waiters &= ~BIT(id);
 
 		/* Somebody is waiting on the mutex */
-		task_set_event(id, TASK_EVENT_MUTEX, 0);
+		task_set_event(id, TASK_EVENT_MUTEX);
 	}
 
 	/* Ensure no event is remaining from mutex wake-up */

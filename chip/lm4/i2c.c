@@ -393,7 +393,7 @@ static void handle_interrupt(int port)
 
 	/* If done doing work, wake up the task waiting for the transfer */
 	if (!i2c_do_work(port))
-		task_set_event(id, TASK_EVENT_I2C_IDLE, 0);
+		task_set_event(id, TASK_EVENT_I2C_IDLE);
 }
 
 void i2c0_interrupt(void) { handle_interrupt(0); }

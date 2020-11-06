@@ -63,7 +63,7 @@ static void set_event_before_task_start2(void)
 static void test_set_event_before_task_start(void)
 {
 	/* Send event before tasks start */
-	task_set_event(TASK_ID_TASK_1, 0xAAAA, 0);
+	task_set_event(TASK_ID_TASK_1, 0xAAAA);
 
 	start_ec_tasks();
 
@@ -121,7 +121,7 @@ static void event_delivered2(void)
 {
 	k_sleep(K_SECONDS(5));
 
-	task_set_event(TASK_ID_TASK_1, 0x1234, 0);
+	task_set_event(TASK_ID_TASK_1, 0x1234);
 }
 
 static void test_event_delivered(void)
@@ -132,7 +132,7 @@ static void test_event_delivered(void)
 
 static void event_mask_not_delivered1(void)
 {
-	task_set_event(TASK_ID_TASK_2, 0x007F, 0);
+	task_set_event(TASK_ID_TASK_2, 0x007F);
 }
 
 static void event_mask_not_delivered2(void)
@@ -159,7 +159,7 @@ static void event_mask_extra1(void)
 {
 	k_sleep(K_SECONDS(1));
 
-	task_set_event(TASK_ID_TASK_2, 0x00FF, 0);
+	task_set_event(TASK_ID_TASK_2, 0x00FF);
 }
 
 static void event_mask_extra2(void)
@@ -189,9 +189,9 @@ static void empty_set_mask1(void)
 	 * It is generally invalid to set a 0 event, but this simulates a race
 	 * condition and exercises fallback code in task_wait_event
 	 */
-	task_set_event(TASK_ID_TASK_2, 0, 0);
+	task_set_event(TASK_ID_TASK_2, 0);
 	k_sleep(K_SECONDS(1));
-	task_set_event(TASK_ID_TASK_2, 0x1234, 0);
+	task_set_event(TASK_ID_TASK_2, 0x1234);
 }
 
 static void empty_set_mask2(void)

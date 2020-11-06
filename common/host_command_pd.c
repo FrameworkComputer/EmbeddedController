@@ -51,12 +51,12 @@ void host_command_pd_send_status(enum pd_charge_state new_chg_state)
 		charge_state = new_chg_state;
 #endif
 	/* Wake PD HC task to send status */
-	task_set_event(TASK_ID_PDCMD, TASK_EVENT_EXCHANGE_PD_STATUS, 0);
+	task_set_event(TASK_ID_PDCMD, TASK_EVENT_EXCHANGE_PD_STATUS);
 }
 
 void host_command_pd_request_hibernate(void)
 {
-	task_set_event(TASK_ID_PDCMD, TASK_EVENT_HIBERNATING, 0);
+	task_set_event(TASK_ID_PDCMD, TASK_EVENT_HIBERNATING);
 }
 
 #ifdef CONFIG_HOSTCMD_PD

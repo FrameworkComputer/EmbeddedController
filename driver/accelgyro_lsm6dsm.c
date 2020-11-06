@@ -450,8 +450,7 @@ static void handle_interrupt_for_fifo(uint32_t ts)
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO) &&
 	    time_after(ts, last_interrupt_timestamp))
 		last_interrupt_timestamp = ts;
-	task_set_event(TASK_ID_MOTIONSENSE,
-		       CONFIG_ACCEL_LSM6DSM_INT_EVENT, 0);
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCEL_LSM6DSM_INT_EVENT);
 }
 
 /**

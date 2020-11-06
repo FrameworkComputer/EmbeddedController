@@ -128,8 +128,7 @@ void lis2ds_interrupt(enum gpio_signal signal)
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
 		last_interrupt_timestamp = __hw_clock_source_read();
 
-	task_set_event(TASK_ID_MOTIONSENSE,
-		       CONFIG_ACCEL_LIS2DS_INT_EVENT, 0);
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCEL_LIS2DS_INT_EVENT);
 }
 
 /**

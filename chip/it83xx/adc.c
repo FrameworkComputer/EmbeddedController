@@ -208,7 +208,7 @@ void adc_interrupt(void)
 	task_disable_irq(IT83XX_IRQ_ADC);
 	/* Wake up the task which was waiting for the interrupt */
 	if (task_waiting != TASK_ID_INVALID)
-		task_set_event(task_waiting, TASK_EVENT_ADC_DONE, 0);
+		task_set_event(task_waiting, TASK_EVENT_ADC_DONE);
 }
 
 #ifdef CONFIG_ADC_VOLTAGE_COMPARATOR

@@ -962,7 +962,7 @@ void pd_task(void *u)
 
 void pd_rx_event(int port)
 {
-	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE);
 }
 
 int tcpc_alert_status(int port, int *alert)
@@ -1041,7 +1041,7 @@ int tcpc_set_cc(int port, int pull)
 #ifdef CONFIG_USB_POWER_DELIVERY
 	tcpc_run(port, PD_EVENT_CC);
 #else
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC);
 #endif
 	return EC_SUCCESS;
 }
@@ -1139,7 +1139,7 @@ int tcpc_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
 #ifdef CONFIG_USB_POWER_DELIVERY
 	tcpc_run(port, PD_EVENT_TX);
 #else
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TX, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TX);
 #endif
 	return EC_SUCCESS;
 }

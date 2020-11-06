@@ -287,7 +287,7 @@ static void pi3usb9281_set_switches(int port, enum usb_switch setting)
 	if (setting != USB_SWITCH_RESTORE)
 		usb_switch_state[port] = setting;
 	CPRINTS("USB MUX %d", usb_switch_state[port]);
-	task_set_event(TASK_ID_USB_CHG_P0 + port, USB_CHG_EVENT_MUX, 0);
+	task_set_event(TASK_ID_USB_CHG_P0 + port, USB_CHG_EVENT_MUX);
 }
 
 static int pc3usb9281_read_interrupt(int port)

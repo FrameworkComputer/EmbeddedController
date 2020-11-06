@@ -208,7 +208,7 @@ static void bc12_chipset_startup(void)
 	 */
 	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++)
 		task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
-			       USB_CHG_EVENT_VBUS, 0);
+			       USB_CHG_EVENT_VBUS);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, bc12_chipset_startup, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, bc12_chipset_startup, HOOK_PRIO_DEFAULT);

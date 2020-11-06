@@ -67,7 +67,7 @@ void interrupt_enable(void)
 	asm("cpsie i");
 }
 
-uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
+uint32_t task_set_event(task_id_t tskid, uint32_t event)
 {
 	last_event = event;
 
@@ -229,7 +229,7 @@ uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us)
 
 	/* Restore any pending events not in the event_mask */
 	if (evt & ~event_mask)
-		task_set_event(0, evt & ~event_mask, 0);
+		task_set_event(0, evt & ~event_mask);
 
 	return evt & event_mask;
 }

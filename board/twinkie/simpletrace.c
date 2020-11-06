@@ -197,7 +197,7 @@ void rx_event(void)
 				pd_rx_disable_monitoring(0);
 				/* trigger the analysis in the task */
 #ifdef HAS_TASK_SNIFFER
-				task_set_event(TASK_ID_SNIFFER, 1 << i, 0);
+				task_set_event(TASK_ID_SNIFFER, 1 << i);
 #endif
 				/* start reception only one CC line */
 				break;

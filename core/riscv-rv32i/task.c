@@ -410,7 +410,19 @@ static uint32_t __ram_code __wait_evt(int timeout_us, task_id_t resched)
 	return evt;
 }
 
-uint32_t __ram_code task_set_event(task_id_t tskid, uint32_t event, int wait)
+/* TODO: Remove the remove_me function.
+ * At the moment "make BOARD=it8xxx2_evb" returns an error
+ * "relocation truncated to fit" without it.
+ */
+uint32_t __ram_code remove_me(task_id_t tskid)
+{
+	task_ *receiver = __task_id_to_ptr(tskid);
+
+	ASSERT(receiver);
+	return 0;
+}
+
+uint32_t __ram_code task_set_event(task_id_t tskid, uint32_t event)
 {
 	task_ *receiver = __task_id_to_ptr(tskid);
 
@@ -426,10 +438,7 @@ uint32_t __ram_code task_set_event(task_id_t tskid, uint32_t event, int wait)
 		if (start_called)
 			need_resched = 1;
 	} else {
-		if (wait)
-			return __wait_evt(-1, tskid);
-		else
-			__schedule(0, tskid, 0);
+		__schedule(0, tskid, 0);
 	}
 
 	return 0;
@@ -594,7 +603,7 @@ void __ram_code mutex_unlock(struct mutex *mtx)
 		waiters &= ~BIT(id);
 
 		/* Somebody is waiting on the mutex */
-		task_set_event(id, TASK_EVENT_MUTEX, 0);
+		task_set_event(id, TASK_EVENT_MUTEX);
 	}
 
 	/* Ensure no event is remaining from mutex wake-up */

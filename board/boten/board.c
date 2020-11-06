@@ -53,7 +53,7 @@ static void usb_c0_interrupt(enum gpio_signal s)
 	 * chip.
 	 */
 	schedule_deferred_pd_interrupt(0);
-	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
+	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
 }
 
 static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)

@@ -493,8 +493,7 @@ void i2c_done(int controller)
 		task_disable_irq(i2c_irqs[controller]);
 
 	/* Notify upper layer */
-	task_set_event(p_status->task_waiting,
-		       TASK_EVENT_I2C_IDLE, 0);
+	task_set_event(p_status->task_waiting, TASK_EVENT_I2C_IDLE);
 	CPUTS("-END");
 }
 
@@ -551,8 +550,7 @@ static void i2c_handle_receive(int controller)
 		/* Set error code */
 		p_status->err_code = SMB_OK;
 		/* Notify upper layer of missing data */
-		task_set_event(p_status->task_waiting,
-				TASK_EVENT_I2C_IDLE, 0);
+		task_set_event(p_status->task_waiting, TASK_EVENT_I2C_IDLE);
 		CPUTS("-END");
 	}
 }
@@ -647,8 +645,7 @@ static void i2c_fifo_handle_receive(int controller)
 		/* Set error code */
 		p_status->err_code = SMB_OK;
 		/* Notify upper layer of missing data */
-		task_set_event(p_status->task_waiting,
-				TASK_EVENT_I2C_IDLE, 0);
+		task_set_event(p_status->task_waiting, TASK_EVENT_I2C_IDLE);
 		CPUTS("-END");
 	}
 
@@ -767,7 +764,7 @@ void i2c_master_int_handler (int controller)
 		p_status->err_code = SMB_BUS_ERROR;
 		/* Notify upper layer */
 		p_status->oper_state = SMB_IDLE;
-		task_set_event(p_status->task_waiting, TASK_EVENT_I2C_IDLE, 0);
+		task_set_event(p_status->task_waiting, TASK_EVENT_I2C_IDLE);
 		CPUTS("-BER");
 
 		/*
@@ -791,7 +788,7 @@ void i2c_master_int_handler (int controller)
 		p_status->err_code = SMB_MASTER_NO_ADDRESS_MATCH;
 		/* Notify upper layer */
 		p_status->oper_state = SMB_IDLE;
-		task_set_event(p_status->task_waiting, TASK_EVENT_I2C_IDLE, 0);
+		task_set_event(p_status->task_waiting, TASK_EVENT_I2C_IDLE);
 		CPUTS("-NA");
 	}
 

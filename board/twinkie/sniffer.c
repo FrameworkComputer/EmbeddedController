@@ -109,7 +109,7 @@ static void ep_tx(void)
 								 : EP_BUF_SIZE;
 	STM32_TOGGLE_EP(USB_EP_SNIFFER, EP_TX_MASK, EP_TX_VALID, 0);
 	/* wake up the processing */
-	task_set_event(TASK_ID_SNIFFER, USB_EVENT, 0);
+	task_set_event(TASK_ID_SNIFFER, USB_EVENT);
 }
 
 static void ep_event(enum usb_ep_event evt)
@@ -218,7 +218,7 @@ void tim_dma_handler(void)
 	else
 		tim_rx1_handler(stat);
 	/* time to process the samples */
-	task_set_event(TASK_ID_SNIFFER, USB_EVENT, 0);
+	task_set_event(TASK_ID_SNIFFER, USB_EVENT);
 }
 DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_4_7, tim_dma_handler, 1);
 

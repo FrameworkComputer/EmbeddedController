@@ -45,7 +45,7 @@
 /* C0 interrupt line shared by BC 1.2 and charger */
 static void usb_c0_interrupt(enum gpio_signal s)
 {
-	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
+	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
 	sm5803_interrupt(0);
 }
 
@@ -53,7 +53,7 @@ static void usb_c0_interrupt(enum gpio_signal s)
 static void usb_c1_interrupt(enum gpio_signal s)
 {
 	schedule_deferred_pd_interrupt(1);
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
+	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
 	sm5803_interrupt(1);
 }
 

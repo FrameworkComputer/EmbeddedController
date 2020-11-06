@@ -192,7 +192,7 @@ int fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output)
 
 	if (!(mode & FP_MODE_DONT_CHANGE)) {
 		sensor_mode = mode;
-		task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_UPDATE_CONFIG, 0);
+		task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_UPDATE_CONFIG);
 	}
 
 	*mode_output = sensor_mode;

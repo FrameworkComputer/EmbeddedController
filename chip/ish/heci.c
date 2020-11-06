@@ -706,7 +706,7 @@ static int handle_flow_control_cmd(struct hbm_flow_control *flow_ctrl)
 	mutex_unlock(&connect->cred_lock);
 
 	if (waiting_task)
-		task_set_event(waiting_task, TASK_EVENT_IPC_READY, 0);
+		task_set_event(waiting_task, TASK_EVENT_IPC_READY);
 
 	return EC_SUCCESS;
 }

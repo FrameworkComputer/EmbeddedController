@@ -43,7 +43,7 @@ static void expire_timer(task_id_t tskid)
 	/* we are done with this timer */
 	atomic_clear_bits(&timer_running, 1 << tskid);
 	/* wake up the taks waiting for this timer */
-	task_set_event(tskid, TASK_EVENT_TIMER, 0);
+	task_set_event(tskid, TASK_EVENT_TIMER);
 }
 
 int timestamp_expired(timestamp_t deadline, const timestamp_t *now)

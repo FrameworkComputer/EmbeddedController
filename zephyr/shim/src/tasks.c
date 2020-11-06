@@ -69,14 +69,13 @@ task_id_t task_get_current(void)
 	return 0;
 }
 
-uint32_t task_set_event(task_id_t cros_task_id, uint32_t event, int wait)
+uint32_t task_set_event(task_id_t cros_task_id, uint32_t event)
 {
 	struct task_ctx *const ctx = &shimmed_tasks[cros_task_id];
 
 	atomic_or(&ctx->event_mask, event);
 	k_poll_signal_raise(&ctx->new_event, 0);
 
-	/* TODO(b/172360521): Remove wait parameter from EC. No one uses it */
 	return 0;
 }
 

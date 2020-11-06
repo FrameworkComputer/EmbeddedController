@@ -79,7 +79,7 @@ static inline void _i2c_dma_wake_callback(void *cb_data, int port)
 	task_id_t id = (task_id_t)(int)cb_data;
 
 	if (id != TASK_ID_INVALID)
-		task_set_event(id, TASK_EVENT_I2C_COMPLETION(port), 0);
+		task_set_event(id, TASK_EVENT_I2C_COMPLETION(port));
 }
 
 /* Each callback is hardcoded to an I2C channel. */

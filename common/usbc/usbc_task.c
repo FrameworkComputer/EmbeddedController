@@ -52,7 +52,7 @@ void tc_start_event_loop(int port)
 	 */
 	if (paused[port]) {
 		paused[port] = 0;
-		task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE, 0);
+		task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE);
 	}
 }
 

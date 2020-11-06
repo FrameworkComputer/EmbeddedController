@@ -541,7 +541,7 @@ static int reset_device_and_notify(int port)
 	while (waiting_tasks) {
 		task = __fls(waiting_tasks);
 		waiting_tasks &= ~BIT(task);
-		task_set_event(task, TASK_EVENT_PD_AWAKE, 0);
+		task_set_event(task, TASK_EVENT_PD_AWAKE);
 	}
 
 	return rv;
@@ -564,8 +564,7 @@ static void pd_wait_for_wakeup(int port)
 		 * happen much, but it if starts occurring, we can add a guard
 		 * to prevent/reduce it.
 		 */
-		task_set_event(PD_PORT_TO_TASK_ID(port),
-			       PD_EVENT_TCPC_RESET, 0);
+		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TCPC_RESET);
 		task_wait_event_mask(TASK_EVENT_PD_AWAKE, -1);
 	}
 }
@@ -590,7 +589,7 @@ void pd_device_accessed(int port)
 		handle_device_access(port);
 	} else {
 		task_set_event(PD_PORT_TO_TASK_ID(port),
-			       PD_EVENT_DEVICE_ACCESSED, 0);
+			       PD_EVENT_DEVICE_ACCESSED);
 	}
 }
 
@@ -793,7 +792,7 @@ static inline void set_state(int port, enum pd_states next_state)
 		 * down.
 		 */
 		task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
-			       USB_CHG_EVENT_CC_OPEN, 0);
+			       USB_CHG_EVENT_CC_OPEN);
 #endif /* CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER */
 #ifdef CONFIG_USBC_VCONN
 		set_vconn(port, 0);
@@ -891,7 +890,7 @@ void pd_transmit_complete(int port, int status)
 		inc_id(port);
 
 	pd[port].tx_status = status;
-	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TX, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TX);
 }
 
 static int pd_transmit(int port, enum tcpm_transmit_type type,
@@ -1326,10 +1325,10 @@ static void pd_set_data_role(int port, enum pd_data_role role)
 	 */
 	if (role == PD_ROLE_UFP)
 		task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
-			       USB_CHG_EVENT_DR_UFP, 0);
+			       USB_CHG_EVENT_DR_UFP);
 	else if (role == PD_ROLE_DFP)
 		task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
-			       USB_CHG_EVENT_DR_DFP, 0);
+			       USB_CHG_EVENT_DR_DFP);
 #endif /* CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER */
 }
 
@@ -2499,8 +2498,7 @@ void pd_set_dual_role(int port, enum pd_dual_role_states state)
 	pd_set_dual_role_no_wakeup(port, state);
 
 	/* Wake task up to process change */
-	task_set_event(PD_PORT_TO_TASK_ID(port),
-		       PD_EVENT_UPDATE_DUAL_ROLE, 0);
+	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_UPDATE_DUAL_ROLE);
 }
 
 static int pd_is_power_swapping(int port)
@@ -2982,7 +2980,7 @@ void pd_task(void *u)
 		 * can hear back from our port partner if maintaining our old
 		 * connection.
 		 */
-		task_set_event(task_get_current(), PD_EVENT_TCPC_RESET, 0);
+		task_set_event(task_get_current(), PD_EVENT_TCPC_RESET);
 	}
 #endif /* defined(CONFIG_USB_PD_DUAL_ROLE) */
 	/* Set the power role if we haven't already. */
@@ -3180,7 +3178,7 @@ void pd_task(void *u)
 			/* Check if there are any more messages */
 			if (tcpm_has_pending_message(port))
 				task_set_event(PD_PORT_TO_TASK_ID(port),
-					       TASK_EVENT_WAKE, 0);
+					       TASK_EVENT_WAKE);
 		}
 
 		if (pd[port].req_suspend_state)
@@ -4881,8 +4879,7 @@ static void pd_chipset_startup(void)
 		reset_pd_cable(i);
 		task_set_event(PD_PORT_TO_TASK_ID(i),
 			       PD_EVENT_POWER_STATE_CHANGE |
-				       PD_EVENT_UPDATE_DUAL_ROLE,
-			       0);
+				       PD_EVENT_UPDATE_DUAL_ROLE);
 	}
 	CPRINTS("PD:S5->S3");
 }
@@ -4896,8 +4893,7 @@ static void pd_chipset_shutdown(void)
 		pd_set_dual_role_no_wakeup(i, PD_DRP_FORCE_SINK);
 		task_set_event(PD_PORT_TO_TASK_ID(i),
 			       PD_EVENT_POWER_STATE_CHANGE |
-				       PD_EVENT_UPDATE_DUAL_ROLE,
-			       0);
+				       PD_EVENT_UPDATE_DUAL_ROLE);
 	}
 	CPRINTS("PD:S3->S5");
 }

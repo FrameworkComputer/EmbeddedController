@@ -45,7 +45,7 @@ void before_test(void)
 	mock_prl_reset();
 
 	/* Restart the PD task and let it settle */
-	task_set_event(TASK_ID_PD_C0, TASK_EVENT_RESET_DONE, 0);
+	task_set_event(TASK_ID_PD_C0, TASK_EVENT_RESET_DONE);
 	task_wait_event(SECOND);
 }
 

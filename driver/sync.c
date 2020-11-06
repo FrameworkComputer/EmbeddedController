@@ -76,7 +76,7 @@ void sync_interrupt(enum gpio_signal signal)
 	next_event.counter++;
 	queue_add_unit(&sync_event_queue, &next_event);
 
-	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_SYNC_INT_EVENT, 0);
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_SYNC_INT_EVENT);
 }
 
 /* Bottom half of the irq handler */

@@ -1011,7 +1011,7 @@ void anx74xx_tcpc_alert(int port)
 
 	if (reg & ANX74XX_REG_IRQ_CC_STATUS_INT)
 		/* CC status changed, wake task */
-		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
+		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC);
 
 	/* Read and clear extended alert register 1 */
 	reg = 0;
@@ -1043,7 +1043,7 @@ void anx74xx_tcpc_alert(int port)
 	if (reg & ANX74XX_REG_EXT_HARD_RST) {
 		/* hard reset received */
 		task_set_event(PD_PORT_TO_TASK_ID(port),
-			PD_EVENT_RX_HARD_RESET, 0);
+			       PD_EVENT_RX_HARD_RESET);
 	}
 }
 

@@ -276,7 +276,7 @@ static inline void _dma_wake_callback(void *cb_data)
 {
 	task_id_t id = (task_id_t)(int)cb_data;
 	if (id != TASK_ID_INVALID)
-		task_set_event(id, TASK_EVENT_DMA_TC, 0);
+		task_set_event(id, TASK_EVENT_DMA_TC);
 }
 
 void dma_enable_tc_interrupt(enum dma_channel channel)

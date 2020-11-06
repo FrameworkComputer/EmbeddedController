@@ -975,7 +975,7 @@ void fusb302_tcpc_alert(int port)
 
 	if (interrupt & TCPC_REG_INTERRUPT_BC_LVL) {
 		/* CC Status change */
-		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
+		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC);
 	}
 
 	if (interrupt & TCPC_REG_INTERRUPT_COLLISION) {
@@ -1024,7 +1024,7 @@ void fusb302_tcpc_alert(int port)
 		/* bring FUSB302 out of reset */
 		fusb302_pd_reset(port);
 		task_set_event(PD_PORT_TO_TASK_ID(port),
-			PD_EVENT_RX_HARD_RESET, 0);
+			       PD_EVENT_RX_HARD_RESET);
 	}
 
 	if (interruptb & TCPC_REG_INTERRUPTB_GCRCSENT) {

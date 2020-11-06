@@ -769,7 +769,7 @@ void i2c_interrupt(int port)
 	/* If done doing work, wake up the task waiting for the transfer */
 	if (!i2c_transaction(port)) {
 		task_disable_irq(i2c_ctrl_regs[port].irq);
-		task_set_event(id, TASK_EVENT_I2C_IDLE, 0);
+		task_set_event(id, TASK_EVENT_I2C_IDLE);
 	}
 }
 

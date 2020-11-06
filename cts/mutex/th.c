@@ -82,7 +82,8 @@ static enum cts_rc lock_unlock_test(void)
 	/* --- Serialization to test simple contention --- */
 	ccprintf("Simple contention :\n");
 	/* lock the mutex from the other task */
-	task_set_event(TASK_ID_MTX2, TASK_EVENT_WAKE, 1);
+	task_set_event(TASK_ID_MTX2, TASK_EVENT_WAKE);
+	task_wait_event(0);
 	/* block on the mutex */
 	ccprintf("MTX1: blocking...\n");
 	mutex_lock(&mtx);

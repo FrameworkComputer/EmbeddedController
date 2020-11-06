@@ -189,7 +189,7 @@ static void handle_interrupt(int ss)
 
 	/* Wake up the task which was waiting on the interrupt, if any */
 	if (id != TASK_ID_INVALID)
-		task_set_event(id, TASK_EVENT_ADC_DONE, 0);
+		task_set_event(id, TASK_EVENT_ADC_DONE);
 }
 
 void ss0_interrupt(void) { handle_interrupt(0); }

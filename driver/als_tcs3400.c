@@ -79,7 +79,7 @@ static inline int tcs3400_i2c_write8(const struct motion_sensor_t *s,
 
 static void tcs3400_read_deferred(void)
 {
-	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ALS_TCS3400_INT_EVENT, 0);
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ALS_TCS3400_INT_EVENT);
 }
 DECLARE_DEFERRED(tcs3400_read_deferred);
 
@@ -491,8 +491,7 @@ void tcs3400_interrupt(enum gpio_signal signal)
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
 		last_interrupt_timestamp = __hw_clock_source_read();
 
-	task_set_event(TASK_ID_MOTIONSENSE,
-		       CONFIG_ALS_TCS3400_INT_EVENT, 0);
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ALS_TCS3400_INT_EVENT);
 }
 
 /*

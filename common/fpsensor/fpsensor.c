@@ -63,7 +63,7 @@ BUILD_ASSERT(sizeof(struct ec_fp_template_encryption_metadata) % 4 == 0);
 /* Interrupt line from the fingerprint sensor */
 void fps_event(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_SENSOR_IRQ, 0);
+	task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_SENSOR_IRQ);
 }
 
 static void send_mkbp_event(uint32_t event)
@@ -793,12 +793,12 @@ int command_fpenroll(int argc, char **argv)
 			enroll_str[EC_MKBP_FP_ERRCODE(event) & 3], percent);
 		/* wait for finger release between captures */
 		sensor_mode = FP_MODE_ENROLL_SESSION | FP_MODE_FINGER_UP;
-		task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_UPDATE_CONFIG, 0);
+		task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_UPDATE_CONFIG);
 		while (tries-- && sensor_mode & FP_MODE_FINGER_UP)
 			usleep(20 * MSEC);
 	} while (percent < 100);
 	sensor_mode = 0; /* reset FP_MODE_ENROLL_SESSION */
-	task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_UPDATE_CONFIG, 0);
+	task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_UPDATE_CONFIG);
 
 	return rc;
 }

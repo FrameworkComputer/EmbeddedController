@@ -200,8 +200,7 @@ static void lis2dw12_handle_interrupt_for_fifo(uint32_t ts)
 	    time_after(ts, last_interrupt_timestamp))
 		last_interrupt_timestamp = ts;
 
-	task_set_event(TASK_ID_MOTIONSENSE,
-		       CONFIG_ACCEL_LIS2DW12_INT_EVENT, 0);
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCEL_LIS2DW12_INT_EVENT);
 }
 
 /**

@@ -78,7 +78,7 @@ void board_set_charge_limit(int port, int supplier, int limit_ma,
 {
 	charge_limit_ma = limit_ma;
 	if (charge_limit_ma > overcurrent_current_ma)
-		task_set_event(TASK_ID_TEST_RUNNER, TASK_EVENT_OVERCURRENT, 0);
+		task_set_event(TASK_ID_TEST_RUNNER, TASK_EVENT_OVERCURRENT);
 }
 
 /* Test utilities */

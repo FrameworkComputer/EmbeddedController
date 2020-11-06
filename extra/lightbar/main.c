@@ -95,9 +95,8 @@ uint32_t task_wait_event(int timeout_us)
 	return event;
 }
 
-uint32_t task_set_event(task_id_t tskid,	/* always LIGHTBAR */
-			uint32_t event,
-			int wait_for_reply)	/* always 0 */
+uint32_t task_set_event(task_id_t tskid, /* always LIGHTBAR */
+			uint32_t event)
 {
 	pthread_mutex_lock(&task_mutex);
 	task_event = event;

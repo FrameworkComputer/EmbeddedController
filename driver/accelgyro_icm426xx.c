@@ -241,7 +241,7 @@ void icm426xx_interrupt(enum gpio_signal signal)
 		last_interrupt_timestamp = __hw_clock_source_read();
 
 	task_set_event(TASK_ID_MOTIONSENSE,
-		       CONFIG_ACCELGYRO_ICM426XX_INT_EVENT, 0);
+		       CONFIG_ACCELGYRO_ICM426XX_INT_EVENT);
 }
 
 /**

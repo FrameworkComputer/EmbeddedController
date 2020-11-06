@@ -35,7 +35,7 @@ void schedule_deferred_pd_interrupt(const int port)
 	 * that doesn't have pd int task is 0.
 	 */
 	if (pd_int_task_id[port] != 0)
-		task_set_event(pd_int_task_id[port], PD_PROCESS_INTERRUPT, 0);
+		task_set_event(pd_int_task_id[port], PD_PROCESS_INTERRUPT);
 }
 
 /*

@@ -147,7 +147,7 @@ void set_int_mask(uint32_t val);
  *			interrupt context.
  * @return		The bitmap of events which occurred if wait!=0, else 0.
  */
-uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait);
+uint32_t task_set_event(task_id_t tskid, uint32_t event);
 
 /**
  * Wake a task.  This sends it the TASK_EVENT_WAKE event.
@@ -156,7 +156,7 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait);
  */
 static inline void task_wake(task_id_t tskid)
 {
-	task_set_event(tskid, TASK_EVENT_WAKE, 0);
+	task_set_event(tskid, TASK_EVENT_WAKE);
 }
 
 /**

@@ -254,12 +254,12 @@ enum rwsig_status rwsig_get_status(void)
 
 void rwsig_abort(void)
 {
-	task_set_event(TASK_ID_RWSIG, TASK_EVENT_ABORT, 0);
+	task_set_event(TASK_ID_RWSIG, TASK_EVENT_ABORT);
 }
 
 void rwsig_continue(void)
 {
-	task_set_event(TASK_ID_RWSIG, TASK_EVENT_CONTINUE, 0);
+	task_set_event(TASK_ID_RWSIG, TASK_EVENT_CONTINUE);
 }
 
 void rwsig_task(void *u)

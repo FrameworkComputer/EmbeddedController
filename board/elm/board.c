@@ -67,7 +67,7 @@ DECLARE_DEFERRED(deferred_reset_pd_mcu);
 void usb_evt(enum gpio_signal signal)
 {
 	if (!gpio_get_level(GPIO_BC12_WAKE_L))
-		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
+		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
 }
 
 #include "gpio_list.h"
@@ -206,7 +206,7 @@ void deferred_reset_pd_mcu(void)
 		gpio_set_level(GPIO_USB_C0_RST, 1);
 		hook_call_deferred(&deferred_reset_pd_mcu_data, 1*MSEC);
 		/* on PD reset, trigger PD task to reset state */
-		task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET, 0);
+		task_set_event(TASK_ID_PD_C0, PD_EVENT_TCPC_RESET);
 		break;
 	case 3:
 		/*

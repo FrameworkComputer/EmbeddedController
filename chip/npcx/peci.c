@@ -271,7 +271,7 @@ DECLARE_HOOK(HOOK_INIT, peci_init, HOOK_PRIO_DEFAULT);
 /* If received a PECI DONE interrupt, post the event to PECI task */
 void peci_done_interrupt(void){
 	if (peci_pending_task_id != NULL_PENDING_TASK_ID)
-		task_set_event(peci_pending_task_id, TASK_EVENT_PECI_DONE, 0);
+		task_set_event(peci_pending_task_id, TASK_EVENT_PECI_DONE);
 	peci_sts = NPCX_PECI_CTL_STS & 0x18;
 	/* no matter what, clear status bit again */
 	SET_BIT(NPCX_PECI_CTL_STS, NPCX_PECI_CTL_STS_DONE);

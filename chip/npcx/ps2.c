@@ -293,7 +293,7 @@ void ps2_int_handler(void)
 			/* Change the PS/2 module to receive mode */
 			CLEAR_BIT(NPCX_PS2_PSCON, NPCX_PS2_PSCON_XMT);
 			ps2_ch_data[active_ch].opr_mode = PS2_RX_MODE;
-			task_set_event(task_waiting, TASK_EVENT_PS2_DONE, 0);
+			task_set_event(task_waiting, TASK_EVENT_PS2_DONE);
 		} else {
 			if (!ps2_is_rx_error(active_ch)) {
 				uint8_t data_read = NPCX_PS2_PSDAT;

@@ -777,7 +777,7 @@ static void ucpd_send_good_crc(int port, uint16_t rx_header)
 	ucpd_tx_buffers[TX_MSG_GOOD_CRC].type = tx_type;
 
 	/* Notify ucpd task that a GoodCRC message tx request is pending */
-	task_set_event(TASK_ID_UCPD, UCPD_EVT_GOOD_CRC_REQ, 0);
+	task_set_event(TASK_ID_UCPD, UCPD_EVT_GOOD_CRC_REQ);
 }
 
 int stm32gx_ucpd_transmit(int port,
@@ -800,7 +800,7 @@ int stm32gx_ucpd_transmit(int port,
 	       len - 2);
 
 	/* Notify ucpd task that a TCPM message tx request is pending */
-	task_set_event(TASK_ID_UCPD, UCPD_EVT_TCPM_MSG_REQ, 0);
+	task_set_event(TASK_ID_UCPD, UCPD_EVT_TCPM_MSG_REQ);
 
 	return EC_SUCCESS;
 }
@@ -847,7 +847,7 @@ void stm32gx_ucpd1_irq(void)
 
 	/* Check for CC events, set event to wake PD task */
 	if (sr & (STM32_UCPD_SR_TYPECEVT1 | STM32_UCPD_SR_TYPECEVT2))
-		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC, 0);
+		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC);
 
 	/*
 	 * Check for Tx events. tx_mask includes all status bits related to the
@@ -858,18 +858,17 @@ void stm32gx_ucpd1_irq(void)
 	if (sr & tx_done_mask) {
 		/* Check for tx message complete */
 		if (sr & STM32_UCPD_SR_TXMSGSENT) {
-			task_set_event(TASK_ID_UCPD, UCPD_EVT_TX_MSG_SUCCESS,
-				       0);
+			task_set_event(TASK_ID_UCPD, UCPD_EVT_TX_MSG_SUCCESS);
 #ifdef CONFIG_STM32G4_UCPD_DEBUG
 			ucpd_log_mark_tx_comp();
 #endif
 		} else if (sr & (STM32_UCPD_SR_TXMSGABT |
 			       STM32_UCPD_SR_TXMSGDISC |STM32_UCPD_SR_TXUND)) {
-			task_set_event(TASK_ID_UCPD, UCPD_EVT_TX_MSG_FAIL, 0);
+			task_set_event(TASK_ID_UCPD, UCPD_EVT_TX_MSG_FAIL);
 		} else if (sr & STM32_UCPD_SR_HRSTSENT) {
-			task_set_event(TASK_ID_UCPD, UCPD_EVT_HR_DONE, 0);
+			task_set_event(TASK_ID_UCPD, UCPD_EVT_HR_DONE);
 		} else if (sr & STM32_UCPD_SR_HRSTDISC) {
-			task_set_event(TASK_ID_UCPD, UCPD_EVT_HR_FAIL, 0);
+			task_set_event(TASK_ID_UCPD, UCPD_EVT_HR_FAIL);
 		}
 		/* Disable Tx interrupts */
 		ucpd_tx_interrupts_enable(port, 0);
@@ -906,7 +905,7 @@ void stm32gx_ucpd1_irq(void)
 				ucpd_send_good_crc(port, *rx_header);
 			} else {
 				task_set_event(TASK_ID_UCPD,
-						       UCPD_EVT_RX_GOOD_CRC, 0);
+						       UCPD_EVT_RX_GOOD_CRC);
 				ucpd_crc_id = PD_HEADER_ID(*rx_header);
 			}
 		}
@@ -915,7 +914,7 @@ void stm32gx_ucpd1_irq(void)
 	if (sr & STM32_UCPD_SR_RXHRSTDET) {
 		/* hard reset received */
 		pd_execute_hard_reset(port);
-		task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE, 0);
+		task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE);
 		hook_call_deferred(&ucpd_hard_reset_rx_log_data, 0);
 	}
 

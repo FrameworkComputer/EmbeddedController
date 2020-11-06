@@ -338,7 +338,7 @@ void adc_interrupt(void)
 
 		/* Wake up the task which was waiting for the interrupt */
 		if (task_waiting != TASK_ID_INVALID)
-			task_set_event(task_waiting, TASK_EVENT_ADC_DONE, 0);
+			task_set_event(task_waiting, TASK_EVENT_ADC_DONE);
 	}
 
 	for (i = NPCX_THRCTS_THR1_STS; i < NPCX_ADC_THRESH_CNT; i++) {

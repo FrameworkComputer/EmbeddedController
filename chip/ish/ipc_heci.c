@@ -377,7 +377,7 @@ static void handle_msg_recv_interrupt(const uint32_t peer_id)
 	if (!invalid_msg) {
 		/* send event to task */
 		task_set_event(ctx->msg_events[protocol].task_id,
-			       ctx->msg_events[protocol].event, 0);
+			       ctx->msg_events[protocol].event);
 	} else {
 		CPRINTS("discard msg (%d) : %d", protocol, invalid_msg);
 

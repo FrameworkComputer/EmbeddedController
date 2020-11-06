@@ -149,7 +149,7 @@ void pd_prepare_sysjump(void)
 			continue;
 
 		sysjump_task_waiting = task_get_current();
-		task_set_event(PD_PORT_TO_TASK_ID(i), PD_EVENT_SYSJUMP, 0);
+		task_set_event(PD_PORT_TO_TASK_ID(i), PD_EVENT_SYSJUMP);
 		task_wait_event_mask(TASK_EVENT_SYSJUMP_READY, -1);
 		sysjump_task_waiting = TASK_ID_INVALID;
 	}
@@ -653,8 +653,7 @@ void notify_sysjump_ready(void)
 	 * task waiting on us to complete.
 	 */
 	if (sysjump_task_waiting != TASK_ID_INVALID)
-		task_set_event(sysjump_task_waiting,
-				TASK_EVENT_SYSJUMP_READY, 0);
+		task_set_event(sysjump_task_waiting, TASK_EVENT_SYSJUMP_READY);
 }
 
 static inline bool is_rev3_vdo(int port, enum tcpm_transmit_type type)

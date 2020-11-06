@@ -198,11 +198,9 @@ pthread_t task_get_thread(task_id_t tskid)
 	return tasks[tskid].thread;
 }
 
-uint32_t task_set_event(task_id_t tskid, uint32_t event, int wait)
+uint32_t task_set_event(task_id_t tskid, uint32_t event)
 {
 	atomic_or(&tasks[tskid].event, event);
-	if (wait)
-		return task_wait_event(-1);
 	return 0;
 }
 
@@ -286,7 +284,7 @@ void mutex_unlock(struct mutex *mtx)
 	for (v = 31; v >= 0; --v)
 		if ((1ul << v) & mtx->waiters) {
 			mtx->waiters &= ~(1ul << v);
-			task_set_event(v, TASK_EVENT_MUTEX, 0);
+			task_set_event(v, TASK_EVENT_MUTEX);
 			break;
 		}
 }
