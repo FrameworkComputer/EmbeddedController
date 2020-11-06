@@ -265,6 +265,8 @@
 /* all sleep enable 3 bits */
 #define MCHP_PCR_SLP_EN3_SLEEP		0xfffffeed
 #define MCHP_PCR_SLP_EN3_PWM_ALL	(1ul << 31)
+#define MCHP_PCR_SLP_EN3_LED_ALL	((0x07ul << 16) + (1ul << 25))
+
 
 /* Sleep Enable4, Clock Required4, Reset on Sleep4 bits */
 #define MCHP_PCR_FJCL		((4 << 8) + 15)
@@ -796,7 +798,11 @@
  * 4 instances
  */
 #define MCHP_BBLED_BASE(x)	(0x4000B800 + (((x) & 0x03) << 8))
+#if defined(CHIP_FAMILY_MEC152X)
+#define MCHP_BBLEN_INSTANCES	3
+#else
 #define MCHP_BBLEN_INSTANCES	4
+#endif
 
 #define MCHP_BBLED_CONFIG(x)		REG32(MCHP_BBLED_BASE(x) + 0x00)
 #define MCHP_BBLED_LIMITS(x)		REG32(MCHP_BBLED_BASE(x) + 0x04)
