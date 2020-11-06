@@ -1,0 +1,4 @@
+# Copyright 2020 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+rsource "cros_kb_raw/Kconfig"

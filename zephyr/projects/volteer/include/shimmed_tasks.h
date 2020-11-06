@@ -13,6 +13,7 @@
 #define HAS_TASK_CHIPSET 1
 #define HAS_TASK_HOSTCMD 1
 #define HAS_TASK_KEYPROTO 1
+#define HAS_TASK_KEYSCAN 1
 #define HAS_TASK_POWERBTN 1
 
 /*
@@ -23,6 +24,7 @@
 	CROS_EC_TASK(CHIPSET, chipset_task, 0, 512)            \
 	CROS_EC_TASK(HOSTCMD, host_command_task, 0, 512)       \
 	CROS_EC_TASK(KEYPROTO, keyboard_protocol_task, 0, 512) \
-	CROS_EC_TASK(POWERBTN, power_button_task, 0, 512)
+	CROS_EC_TASK(POWERBTN, power_button_task, 0, 512)      \
+	CROS_EC_TASK(KEYSCAN, keyboard_scan_task, 0, 512)
 
 #endif /* __CROS_EC_SHIMMED_TASKS_H */

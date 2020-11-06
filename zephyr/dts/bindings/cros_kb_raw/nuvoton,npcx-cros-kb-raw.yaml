@@ -1,0 +1,32 @@
+# Copyright 2020 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: Nuvoton, NPCX-cros-kb-raw node
+
+compatible: "nuvoton,npcx-cros-kb-raw"
+
+include: cros-kb-raw-controller.yaml
+
+properties:
+    reg:
+        required: true
+
+    clocks:
+        required: true
+
+    pinctrl-0:
+        type: phandles
+        required: true
+        description: configurations of pinmux controllers
+
+    wui_maps:
+        type: phandles
+        required: true
+        description: |
+            Mapping table between Wake-Up Input (WUI) and 8 IOs belong to this device.
+            Please notice not all IOs connect to WUIs.
+
+            In this case, it will be presented by wui_none.
+            For example the WUI mapping on NPCX7 KSI pads would be
+               wui_maps = <&wui_io30 &wui_io31 &wui_io27 &wui_io26
+                           &wui_io25 &wui_io24 &wui_io23 &wui_io22>;

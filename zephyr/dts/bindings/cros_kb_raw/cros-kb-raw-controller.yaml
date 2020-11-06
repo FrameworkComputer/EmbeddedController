@@ -1,0 +1,12 @@
+# Copyright 2020 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+# Common fields for Chrome OS raw keyboard devices
+
+include: base.yaml
+
+bus: croskb
+
+properties:
+    label:
+      required: true

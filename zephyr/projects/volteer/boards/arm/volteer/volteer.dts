@@ -345,6 +345,43 @@
 			label = "EC_KSO_02_INV";
 		};
 	};
+
+	soc {
+		cros_kb_raw: cros-kb-raw@400a3000 {
+			compatible = "nuvoton,npcx-cros-kb-raw";
+			reg = <0x400a3000 0x2000>;
+			label = "CROS_KB_RAW_0";
+			interrupts = <49 0>;
+			clocks = <&pcc NPCX_CLOCK_BUS_APB1 NPCX_PWDWN_CTL1 0>;
+			/* No KSO2 (it's inverted and implemented by GPIO.) */
+			pinctrl-0 = <&alt7_no_ksi0_sl /* KSI0 PIN31 */
+				     &alt7_no_ksi1_sl /* KSI1 PIN30 */
+				     &alt7_no_ksi2_sl /* KSI2 PIN27 */
+				     &alt7_no_ksi3_sl /* KSI3 PIN26 */
+				     &alt7_no_ksi4_sl /* KSI4 PIN25 */
+				     &alt7_no_ksi5_sl /* KSI5 PIN24 */
+				     &alt7_no_ksi6_sl /* KSI6 PIN23 */
+				     &alt7_no_ksi7_sl /* KSI7 PIN22 */
+				     &alt8_no_kso00_sl /* KSO00 PIN21 */
+				     &alt8_no_kso01_sl /* KSO01 PIN20 */
+				     &alt8_no_kso03_sl /* KSO03 PIN16 */
+				     &alt8_no_kso04_sl /* KSO04 PIN15 */
+				     &alt8_no_kso05_sl /* KSO05 PIN14 */
+				     &alt8_no_kso06_sl /* KSO06 PIN13 */
+				     &alt8_no_kso07_sl /* KSO07 PIN12 */
+				     &alt9_no_kso08_sl /* KSO08 PIN11 */
+				     &alt9_no_kso09_sl /* KSO09 PIN10 */
+				     &alt9_no_kso10_sl /* KSO10 PIN07 */
+				     &alt9_no_kso11_sl /* KSO11 PIN06 */
+				     &alt9_no_kso12_sl /* KSO12 PIN05 */
+				     &alt9_no_kso13_sl /* KSO13 PIN04 */
+				     &alt9_no_kso14_sl /* KSO14 PIN82 */
+				     >;
+			wui_maps = <&wui_io31 &wui_io30 &wui_io27 &wui_io26
+				    &wui_io25 &wui_io24 &wui_io23 &wui_io22>;
+			status = "disabled";
+		};
+	};
 };
 
 /* Update flash size to 512KB from 196KB since we are using C variant */
@@ -379,5 +416,9 @@
 };
 
 &i2c7_0 {
+	status = "okay";
+};
+
+&cros_kb_raw {
 	status = "okay";
 };

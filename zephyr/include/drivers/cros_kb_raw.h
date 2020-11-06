@@ -1,0 +1,169 @@
+/*
+ * Copyright 2020 Google LLC
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/**
+ * @file
+ * @brief Chrome OS-specific API for raw keyboard access
+ * This exists only support the interface expected by the Chrome OS EC. It seems
+ * better to implement this so we can make use of most of the existing code in
+ * its keyboard_scan.c file and thus make sure we operate the same way.
+ *
+ * It provides raw access to keyboard GPIOs.
+ *
+ * The keyboard matrix is read (by the caller, keyboard_scan.c in ECOS) by
+ * driving output signals on the column lines and reading the row lines.
+ *
+ * This API and any drivers should be removed once we can safely move to using
+ * the Zephyr kscan API.
+ */
+
+#ifndef ZEPHYR_INCLUDE_DRIVERS_CROS_KB_RAW_H_
+#define ZEPHYR_INCLUDE_DRIVERS_CROS_KB_RAW_H_
+
+#include <kernel.h>
+#include <device.h>
+
+/**
+ * @brief CROS Keyboard Raw Driver APIs
+ * @defgroup cros_kb_raw_interface CROS Keyboard Raw Driver APIs
+ * @ingroup io_interfaces
+ * @{
+ */
+
+/**
+ * @cond INTERNAL_HIDDEN
+ *
+ * cros keyboard raw driver API definition and system call entry points
+ *
+ * (Internal use only.)
+ */
+typedef int (*cros_kb_raw_api_init)(const struct device *dev);
+
+typedef int (*cros_kb_raw_api_drive_column)(const struct device *dev, int col);
+
+typedef int (*cros_kb_raw_api_read_rows)(const struct device *dev);
+
+typedef int (*cros_kb_raw_api_enable_interrupt)(const struct device *dev,
+						int enable);
+
+__subsystem struct cros_kb_raw_driver_api {
+	cros_kb_raw_api_init init;
+	cros_kb_raw_api_drive_column drive_colum;
+	cros_kb_raw_api_read_rows read_rows;
+	cros_kb_raw_api_enable_interrupt enable_interrupt;
+};
+
+/**
+ * @endcond
+ */
+
+/**
+ * @brief Initialize the raw keyboard interface.
+ *
+ * Must be called before any other functions in this interface.
+ *
+ * @param dev Pointer to the device structure for the keyboard driver instance.
+ *
+ * @return 0 If successful.
+ * @retval -ENOTSUP Not supported api function.
+ */
+__syscall int cros_kb_raw_init(const struct device *dev);
+
+static inline int z_impl_cros_kb_raw_init(const struct device *dev)
+{
+	const struct cros_kb_raw_driver_api *api =
+		(const struct cros_kb_raw_driver_api *)dev->api;
+
+	if (!api->init) {
+		return -ENOTSUP;
+	}
+
+	return api->init(dev);
+}
+
+/**
+ * @brief Drive the specified column low.
+ *
+ * Other columns are tristated.  See enum keyboard_column_index for special
+ * values for <col>.
+ *
+ * @param dev Pointer to the device structure for the keyboard driver instance.
+ * @param col Specified column is driven to low.
+ *
+ * @return 0 If successful.
+ * @retval -ENOTSUP Not supported api function.
+ */
+__syscall int cros_kb_raw_drive_column(const struct device *dev, int col);
+static inline int z_impl_cros_kb_raw_drive_column(const struct device *dev,
+						  int col)
+{
+	const struct cros_kb_raw_driver_api *api =
+		(const struct cros_kb_raw_driver_api *)dev->api;
+
+	if (!api->drive_colum) {
+		return -ENOTSUP;
+	}
+
+	return api->drive_colum(dev, col);
+}
+
+/**
+ * @brief Read raw row state.
+ *
+ * Bits are 1 if signal is present, 0 if not present.
+ *
+ * @param dev Pointer to the device structure for the keyboard driver instance.
+ *
+ * @return current raw row state value.
+ */
+__syscall int cros_kb_raw_read_rows(const struct device *dev);
+static inline int z_impl_cros_kb_raw_read_rows(const struct device *dev)
+{
+	const struct cros_kb_raw_driver_api *api =
+		(const struct cros_kb_raw_driver_api *)dev->api;
+
+	if (!api->read_rows) {
+		return 0;
+	}
+
+	return api->read_rows(dev);
+}
+
+/**
+ * @brief Enable or disable keyboard interrupts.
+ *
+ * Enabling interrupts will clear any pending interrupt bits.  To avoid missing
+ * any interrupts that occur between the end of scanning and then, you should
+ * call cros_kb_raw_read_rows() after this.  If it returns non-zero, disable
+ * interrupts and go back to polling mode instead of waiting for an interrupt.
+ *
+ * @param dev Pointer to the device structure for the keyboard driver instance.
+ * @param enable If 1, enable keyboard interrupt. Otherwise, disable it.
+ *
+ * @return 0 If successful.
+ * @retval -ENOTSUP Not supported api function.
+ */
+__syscall int cros_kb_raw_enable_interrupt(const struct device *dev,
+					   int enable);
+
+static inline int z_impl_cros_kb_raw_enable_interrupt(const struct device *dev,
+						      int enable)
+{
+	const struct cros_kb_raw_driver_api *api =
+		(const struct cros_kb_raw_driver_api *)dev->api;
+
+	if (!api->enable_interrupt) {
+		return -ENOTSUP;
+	}
+
+	return api->enable_interrupt(dev, enable);
+}
+
+/**
+ * @}
+ */
+#include <syscalls/cros_kb_raw.h>
+#endif /* ZEPHYR_INCLUDE_DRIVERS_CROS_KB_RAW_H_ */

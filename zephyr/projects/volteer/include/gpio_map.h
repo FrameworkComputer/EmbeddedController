@@ -28,6 +28,7 @@
 #define GPIO_EN_PP5000             NAMED_GPIO(en_pp5000_a)
 #define GPIO_EN_PP5000_A           NAMED_GPIO(en_pp5000_a)
 #define GPIO_EN_PPVAR_VCCIN        NAMED_GPIO(en_ppvar_vccin)
+#define GPIO_KBD_KSO2              NAMED_GPIO(ec_kso_02_inv)
 #define GPIO_LID_OPEN              NAMED_GPIO(ec_lid_open)
 #define GPIO_PCH_DSW_PWROK         NAMED_GPIO(ec_pch_dsw_pwrok)
 #define GPIO_PCH_PWRBTN_L          NAMED_GPIO(ec_pch_pwr_btn_odl)
