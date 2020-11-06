@@ -134,21 +134,27 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		 * glitch the signal when changing the line to
 		 * an output.
 		 */
-		if (flags & GPIO_OPEN_DRAIN)
+		if (flags & GPIO_OPEN_DRAIN) {
 			val |= (MCHP_GPIO_OPEN_DRAIN);
+		}
 		else
 			val &= ~(MCHP_GPIO_OPEN_DRAIN);
 
 		if (flags & GPIO_OUTPUT) {
 			val |= (MCHP_GPIO_OUTPUT);
 			val &= ~(MCHP_GPIO_OUTSEL_PAR);
+#ifdef CHIP_FAMILY_MEC152X
+			if (flags & GPIO_INPUT)
+				val &= ~(MCHP_GPIO_CTRL_INPUT_DISABLE_MASK);
+#endif
 		} else {
 			val &= ~(MCHP_GPIO_OUTPUT);
+			val |= (MCHP_GPIO_OUTSEL_PAR);
 #ifdef CHIP_FAMILY_MEC152X
 			val &= ~(MCHP_GPIO_CTRL_INPUT_DISABLE_MASK); 
 #endif 
-			val |= (MCHP_GPIO_OUTSEL_PAR);
 		}
+
 
 		/* Handle pull-up / pull-down */
 		val &= ~(MCHP_GPIO_CTRL_PUD_MASK);
