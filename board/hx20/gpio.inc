@@ -425,10 +425,10 @@ GPIO(EC_I2C06_PD_SDA, PIN(0132),  GPIO_INPUT)
 GPIO_INT(EC_PD_INTA_L,    PIN(0115), GPIO_INT_FALLING, pd_chip_interrupt)
 GPIO_INT(EC_PD_INTB_L,    PIN(0127), GPIO_INT_FALLING, pd_chip_interrupt)
 GPIO_INT(AC_PRESENT_PD_L, PIN(013),  GPIO_INT_BOTH, pd_chip_interrupt)
-GPIO(TYPEC0_VBUS_ON_EC,     PIN(0144), GPIO_ODR_HIGH)   /* Type-C VBUS select */
-GPIO(TYPEC1_VBUS_ON_EC,     PIN(0143), GPIO_ODR_HIGH)   /* Type-C VBUS select */
-GPIO(TYPEC2_VBUS_ON_EC,     PIN(0142), GPIO_ODR_HIGH)   /* Type-C VBUS select */
-GPIO(TYPEC3_VBUS_ON_EC,     PIN(0141), GPIO_ODR_HIGH)   /* Type-C VBUS select */
+GPIO(TYPEC0_VBUS_ON_EC,     PIN(0144), GPIO_INPUT | GPIO_ODR_HIGH)   /* Type-C VBUS select */
+GPIO(TYPEC1_VBUS_ON_EC,     PIN(0143), GPIO_INPUT | GPIO_ODR_HIGH)   /* Type-C VBUS select */
+GPIO(TYPEC2_VBUS_ON_EC,     PIN(0142), GPIO_INPUT | GPIO_ODR_HIGH)   /* Type-C VBUS select */
+GPIO(TYPEC3_VBUS_ON_EC,     PIN(0141), GPIO_INPUT | GPIO_ODR_HIGH)   /* Type-C VBUS select */
 GPIO(EC_PROCHOT_L,          PIN(0206), GPIO_ODR_HIGH)
 
 /* Fan PWM output and TACH input. PROCHOT input */
@@ -468,9 +468,9 @@ GPIO(QMSPI_CS0,		PIN(055),  GPIO_ODR_HIGH)
  * mec1701 LED control unit. Remove these GPIO definitions once the LED
  * control unit is functional.
  */
-GPIO(FPR_LED_R,	PIN(0156), GPIO_OUT_LOW)    /* TODO: implement PWM */
-GPIO(FPR_LED_G,	PIN(0157), GPIO_OUT_LOW)    /* TODO: implement PWM */
-GPIO(FPR_LED_B,	PIN(0153), GPIO_OUT_LOW)    /* TODO: implement PWM */
+/*GPIO(FPR_LED_R,	PIN(0156), GPIO_OUT_LOW)*/    /* TODO: implement PWM */
+/*GPIO(FPR_LED_G,	PIN(0157), GPIO_OUT_LOW)*/    /* TODO: implement PWM */
+/*GPIO(FPR_LED_B,	PIN(0153), GPIO_OUT_LOW)*/    /* TODO: implement PWM */
 
 GPIO(CAP_LED_L,     PIN(0114), GPIO_OUT_HIGH)
 
@@ -598,10 +598,8 @@ ALTERNATE(PIN_MASK(4,  0x003F), 1, MODULE_ADC, GPIO_ANALOG)
 *	GPIO156, LED0_PWM, Func1, Bank 3 bit[14]
 *	GPIO157, LED1_PWM, Func1, Bank 3 bit[15]
 *	GPIO153, LED2_PWM, Func1, Bank 3 bit[11]
-*	GPIO226, LED3_PWM, Func1, Bank 4 bit[22]
 */	
-/* ALTERNATE(PIN_MASK(3, 0xc800), 1, MODULE_POWER_LED, 0) */
-/* ALTERNATE(PIN_MASK(4, 0x400000), 1, MODULE_POWER_LED, 0) */
+ALTERNATE(PIN_MASK(3, 0xc800), 1, MODULE_PWM, 0)
 
 /* PWM*/
 /*

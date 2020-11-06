@@ -198,6 +198,18 @@ const struct pwm_t pwm_channels[] = {
 		.channel = 8,
 		.flags = PWM_CONFIG_DSLEEP,
 	},
+	[PWM_CH_FPR_LED_RED] = {
+		.channel = (MCHP_PWM_ID_MAX+1),
+		.flags = PWM_CONFIG_DSLEEP,
+	},
+	[PWM_CH_FPR_LED_GREEN] = {
+		.channel = (MCHP_PWM_ID_MAX+0),
+		.flags = PWM_CONFIG_DSLEEP,
+	},
+	[PWM_CH_FPR_LED_BLUE] = {
+		.channel = (MCHP_PWM_ID_MAX+2),
+		.flags = PWM_CONFIG_DSLEEP,
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 #endif
@@ -650,8 +662,11 @@ static void board_init(void)
 	}
 #endif
 
+
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+
 
 
 /**
@@ -933,11 +948,6 @@ DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
 static void board_one_sec(void)
 {
 	trace0(0, BRD, 0, "HOOK_SECOND");
-
-	if (gpio_get_level(GPIO_LED1_PWM))
-		gpio_set_level(GPIO_LED1_PWM, 0);
-	else
-		gpio_set_level(GPIO_LED1_PWM, 1);
 }
 DECLARE_HOOK(HOOK_SECOND, board_one_sec, HOOK_PRIO_DEFAULT);
 
