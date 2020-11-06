@@ -100,11 +100,16 @@ static bool can_act_as_host(void)
 
 static void init_src_pdos(void)
 {
-	if (IS_ENABLED(CONFIG_USB_PD_DYNAMIC_SRC_CAP))
+	if (IS_ENABLED(CONFIG_USB_PD_DYNAMIC_SRC_CAP)) {
 		src_pdo_cnt = charge_manager_get_source_pdo(&src_pdo, 0);
-	else {
-		src_pdo_cnt = pd_src_pdo_cnt;
-		src_pdo = pd_src_pdo;
+	} else {
+		if (IS_ENABLED(CONFIG_USB_PD_CUSTOM_PDO)) {
+			src_pdo_cnt = pd_src_pdo_cnt;
+			src_pdo = pd_src_pdo;
+		} else {
+			src_pdo_cnt = pd_src_pdo_max_cnt;
+			src_pdo = pd_src_pdo_max;
+		}
 	}
 }
 
