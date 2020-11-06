@@ -10,7 +10,8 @@
 #include "shimmed_tasks.h"
 #include "task.h"
 
-BUILD_ASSERT(CONFIG_NUM_PREEMPT_PRIORITIES >= TASK_ID_COUNT,
+/* We need to ensure that is one lower priority for the deferred task */
+BUILD_ASSERT(CONFIG_NUM_PREEMPT_PRIORITIES + 1 >= TASK_ID_COUNT,
 	     "Must increase number of available preempt priorities");
 
 /* Ensure all of the manually defined HAS_TASK_ defines are present */
@@ -196,6 +197,6 @@ void start_ec_tasks(void)
 		ctx->zephyr_tid = k_thread_create(
 			&ctx->zephyr_thread, ctx->stack, ctx->stack_size,
 			task_entry, ctx, NULL, NULL,
-			K_PRIO_PREEMPT(TASK_ID_COUNT - i), 0, K_NO_WAIT);
+			K_PRIO_PREEMPT(TASK_ID_COUNT - i - 1), 0, K_NO_WAIT);
 	}
 }
