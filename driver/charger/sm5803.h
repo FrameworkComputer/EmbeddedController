@@ -229,6 +229,14 @@ enum sm5803_charger_modes {
 #define SM5803_CURRENT_TO_REG(c)	(c / SM5803_CURRENT_STEP)
 
 /*
+ * DPM Voltage loop regulation contains the 8 bits with MSB register
+ * and the lower 3 bits with LSB register.
+ * The regulation value is 2.72 V + DPM_VL_SET * 10mV
+ */
+#define SM5803_REG_DPM_VL_SET_MSB		0x26
+#define SM5803_REG_DPM_VL_SET_LSB		0x27
+
+/*
  * Output voltage uses the same equation as Vsys
  * Lower saturation value is 3 V, upper 20.5 V
  */
@@ -323,6 +331,9 @@ enum sm5803_charger_modes {
 #define SM5803_STATUS_DISCHG_ISO_CURR	BIT(5)
 #define SM5803_STATUS_DISCHG_VBUS_SHORT	BIT(6)
 #define SM5803_STATUS_DISCHG_OV_ITEMP	BIT(7)
+
+#define SM5803_REG_CHG_MON_REG		0x5C
+#define SM5803_DPM_LOOP_EN		BIT(0)
 
 #define SM5803_REG_PHOT1		0x72
 #define SM5803_PHOT1_IBAT_PHOT_COMP_EN	BIT(0)

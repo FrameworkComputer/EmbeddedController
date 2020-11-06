@@ -127,32 +127,7 @@ static inline enum ec_error_list test_update8(int chgnum, const int offset,
 static enum ec_error_list sm5803_flow1_update(int chgnum, const uint8_t mask,
 					const enum mask_update_action action)
 {
-	int reg, rv, dev_id;
-
-	/*
-	 * On Si rev 3, confirm that init value in 0x5C is intact before
-	 * enabling charging.
-	 */
-	rv = sm5803_get_dev_id(chgnum, &dev_id);
-	if (rv)
-		return rv;
-
-	if (dev_id == 0x03) {
-		rv = chg_read8(chgnum, 0x5C, &reg);
-		if (rv) {
-			CPRINTS("%s %d: Failed 0x5C read",
-				CHARGER_NAME, chgnum);
-			return rv;
-		}
-
-		if (reg != 0x7A) {
-			CPRINTS("%s %d: Unexpected 0x5C reg: 0x%02x. File bug",
-				CHARGER_NAME, chgnum, reg);
-
-			/* Fix it before enabling charging */
-			rv = chg_write8(chgnum, 0x5C, 0x7A);
-		}
-	}
+	int rv;
 
 	/* Safety checks done, onto the actual register update */
 	mutex_lock(&flow1_access_lock[chgnum]);
@@ -602,6 +577,11 @@ static void sm5803_init(int chgnum)
 	reg |= SM5803_PHOT1_COMPARATOR_EN;
 	reg &= ~SM5803_PHOT1_IBUS_PHOT_COMP_EN;
 	rv |= chg_write8(chgnum, SM5803_REG_PHOT1, reg);
+
+	/* Set DPM Voltage to 4200 mv, see b:172173517 */
+	reg = SM5803_VOLTAGE_TO_REG(4200);
+	rv = chg_write8(chgnum, SM5803_REG_DPM_VL_SET_MSB, (reg >> 3));
+	rv |= chg_write8(chgnum, SM5803_REG_DPM_VL_SET_LSB, (reg & 0x7));
 
 	if (chgnum != CHARGER_PRIMARY) {
 		/*
@@ -1484,6 +1464,52 @@ static enum ec_error_list sm5803_set_vsys_compensation(int chgnum,
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
+/* Hardware current ramping (aka DPM: Dynamic Power Management) */
+
+#ifdef CONFIG_CHARGE_RAMP_HW
+static enum ec_error_list sm5803_set_hw_ramp(int chgnum, int enable)
+{
+	enum ec_error_list rv;
+	int reg;
+
+	rv = chg_read8(chgnum, SM5803_REG_CHG_MON_REG, &reg);
+
+	if (enable)
+		reg |= SM5803_DPM_LOOP_EN;
+	else
+		reg &= ~SM5803_DPM_LOOP_EN;
+
+	rv |= chg_write8(chgnum, SM5803_REG_CHG_MON_REG, reg);
+
+	return rv;
+}
+
+static int sm5803_ramp_is_stable(int chgnum)
+{
+	/*
+	 * There is no way to read current limit that the ramp has
+	 * settled on with sm5803, so we don't consider the ramp stable,
+	 * because we never know what the stable limit is.
+	 */
+	return 0;
+}
+
+static int sm5803_ramp_is_detected(int chgnum)
+{
+	return 1;
+}
+
+static int sm5803_ramp_get_current_limit(int chgnum)
+{
+	int rv;
+	int input_current = 0;
+
+	rv = sm5803_get_input_current(chgnum, &input_current);
+
+	return rv ? -1 : input_current;
+}
+#endif /* CONFIG_CHARGE_RAMP_HW */
+
 #ifdef CONFIG_CMD_CHARGER_DUMP
 static int command_sm5803_dump(int argc, char **argv)
 {
@@ -1554,4 +1580,10 @@ const struct charger_drv sm5803_drv = {
 	.enable_otg_power = &sm5803_enable_otg_power,
 	.is_sourcing_otg_power = &sm5803_is_sourcing_otg_power,
 	.set_vsys_compensation = &sm5803_set_vsys_compensation,
+#ifdef CONFIG_CHARGE_RAMP_HW
+	.set_hw_ramp = &sm5803_set_hw_ramp,
+	.ramp_is_stable = &sm5803_ramp_is_stable,
+	.ramp_is_detected = &sm5803_ramp_is_detected,
+	.ramp_get_current_limit = &sm5803_ramp_get_current_limit,
+#endif
 };
