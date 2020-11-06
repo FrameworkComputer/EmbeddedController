@@ -53,6 +53,19 @@ config PLATFORM_EC_KEYBOARD_PROTOCOL_8042
 
 endchoice # PLATFORM_EC_KEYBOARD
 
+config PLATFORM_EC_CONSOLE_CMD_KEYBOARD_8042
+	bool "Enable the keyboard commands"
+	default y if PLATFORM_EC_KEYBOARD_PROTOCOL_8042
+	help
+	  Enable the '8042' command, which includes the following subcommands:
+
+	    codeset	- Get/set keyboard codeset
+	    ctrlram	- Get/set keyboard controller RAM
+	    internal    - Show internal information
+	    kbd		- Print or toggle keyboard info
+	    kblog	- Print or toggle keyboard event log (current disabled)
+	    typematic	- Get/set typematic delays
+
 menuconfig PLATFORM_EC_TIMER
 	bool "Enable the EC timer module"
 	default y

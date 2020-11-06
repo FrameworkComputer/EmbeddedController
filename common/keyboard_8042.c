@@ -1070,10 +1070,6 @@ static int command_typematic(int argc, char **argv)
 	ccputs("}\n");
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(typematic, command_typematic,
-			"[first] [inter]",
-			"Get/set typematic delays");
-
 
 static int command_codeset(int argc, char **argv)
 {
@@ -1093,10 +1089,6 @@ static int command_codeset(int argc, char **argv)
 	ccprintf("I8042_XLATE: %d\n", controller_ram[0] & I8042_XLATE ? 1 : 0);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(codeset, command_codeset,
-			"[set]",
-			"Get/set keyboard codeset");
-
 
 static int command_controller_ram(int argc, char **argv)
 {
@@ -1115,9 +1107,6 @@ static int command_controller_ram(int argc, char **argv)
 	ccprintf("%d = 0x%02x\n", index, controller_ram[index]);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(ctrlram, command_controller_ram,
-			"index [value]",
-			"Get/set keyboard controller RAM");
 
 static int command_keyboard_log(int argc, char **argv)
 {
@@ -1161,11 +1150,6 @@ static int command_keyboard_log(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-#if CMD_KEYBOARD_LOG
-DECLARE_CONSOLE_COMMAND(kblog, command_keyboard_log,
-			"[on | off]",
-			"Print or toggle keyboard event log");
-#endif
 
 static int command_keyboard(int argc, char **argv)
 {
@@ -1181,10 +1165,6 @@ static int command_keyboard(int argc, char **argv)
 	ccprintf("Enabled: %d\n", keyboard_enabled);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(kbd, command_keyboard,
-			"[on | off]",
-			"Print or toggle keyboard info");
-
 
 static int command_8042_internal(int argc, char **argv)
 {
@@ -1229,6 +1209,24 @@ static int command_8042_internal(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
+/* Zephyr only provides these as subcommands*/
+#ifndef CONFIG_ZEPHYR
+DECLARE_CONSOLE_COMMAND(typematic, command_typematic,
+			"[first] [inter]",
+			"Get/set typematic delays");
+DECLARE_CONSOLE_COMMAND(codeset, command_codeset,
+			"[set]",
+			"Get/set keyboard codeset");
+DECLARE_CONSOLE_COMMAND(ctrlram, command_controller_ram,
+			"index [value]",
+			"Get/set keyboard controller RAM");
+DECLARE_CONSOLE_COMMAND(kblog, command_keyboard_log,
+			"[on | off]",
+			"Print or toggle keyboard event log");
+DECLARE_CONSOLE_COMMAND(kbd, command_keyboard,
+			"[on | off]",
+			"Print or toggle keyboard info");
+#endif
 
 static int command_8042(int argc, char **argv)
 {
