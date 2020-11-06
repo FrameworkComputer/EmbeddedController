@@ -13,7 +13,7 @@
 
 int cputs(enum console_channel channel, const char *str)
 {
-	return cprintf(channel, "%s\n", str);
+	return cprintf(channel, "%s", str);
 }
 
 static void console_vprintf(enum console_channel channel, const char *format,
