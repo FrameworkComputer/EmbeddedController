@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_TEST_UTIL_H
 #define __CROS_EC_TEST_UTIL_H
 
-#ifdef CONFIG_ZEPHYR
+#ifdef CONFIG_ZTEST
 
 #include <ztest.h>
 
@@ -24,7 +24,7 @@
 #define EC_TEST_RETURN void
 #define EC_SUCCESS
 
-#else /* CONFIG_ZEPHYR */
+#else /* CONFIG_ZTEST */
 
 #include "common.h"
 #include "console.h"
@@ -354,6 +354,6 @@ int test_attach_i2c(const int port, const uint16_t slave_addr_flags);
 #define zassert_mem_equal(buf, exp, size, msg, ...) \
 	TEST_ASSERT_ARRAY_EQ(buf, exp, size)
 
-#endif /* CONFIG_ZEPHYR */
+#endif /* CONFIG_ZTEST */
 
 #endif /* __CROS_EC_TEST_UTIL_H */
