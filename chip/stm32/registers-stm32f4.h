@@ -417,6 +417,8 @@
 #define STM32F4_APB1_PRE 0x0
 #define STM32F4_APB2_PRE 0x0
 #define STM32_FLASH_ACR_LATENCY     BIT(0)
+/* optimized flash latency for < 30Mhz clock (0-WS) e.g. HSI/HSE */
+#define STM32_FLASH_ACR_LATENCY_SLOW      0
 
 #elif defined(CHIP_VARIANT_STM32F412)
 /* Required or recommended clocks for stm32f412 */
@@ -433,6 +435,8 @@
 #define STM32F4_APB1_PRE 0x4
 #define STM32F4_APB2_PRE 0x4
 #define STM32_FLASH_ACR_LATENCY     (3 << 0)
+/* optimized flash latency for < 30Mhz clock (0-WS) e.g. HSI/HSE */
+#define STM32_FLASH_ACR_LATENCY_SLOW      0
 
 #elif defined(CHIP_VARIANT_STM32F411)
 /* Required or recommended clocks for stm32f411 */
@@ -449,6 +453,8 @@
 #define STM32F4_APB1_PRE 0x0
 #define STM32F4_APB2_PRE 0x0
 #define STM32_FLASH_ACR_LATENCY     BIT(0)
+/* optimized flash latency for < 30Mhz clock (0-WS) e.g. HSI/HSE */
+#define STM32_FLASH_ACR_LATENCY_SLOW    0
 
 #elif defined(CHIP_VARIANT_STM32F76X)
 /* Required or recommended clocks for stm32f767/769 */
@@ -465,6 +471,8 @@
 #define STM32F4_APB1_PRE 0x5 /* APB1 = AHB /4 = 45 Mhz */
 #define STM32F4_APB2_PRE 0x5 /* APB2 = AHB /4 = 45 Mhz */
 #define STM32_FLASH_ACR_LATENCY     (5 << 0)
+/* optimized flash latency for < 30Mhz clock (0-WS) e.g. HSI/HSE */
+#define STM32_FLASH_ACR_LATENCY_SLOW      0
 
 #else
 #error "No valid clocks defined"
