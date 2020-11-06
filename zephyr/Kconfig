@@ -125,4 +125,12 @@ config PLATFORM_EC_I2C
 	  should make shimming other platform/ec modules which rely on i2c
 	  communication "just work" without requiring any further code changes.
 
+config PLATFORM_EC_POWER_BUTTON
+	bool "Enable the power button module"
+	depends on PLATFORM_EC_HOSTCMD
+	help
+	  Enable shimming the power button implementation and related
+	  commands in platform/ec.  This requires a GPIO named
+	  GPIO_POWER_BUTTON_L in gpio_map.h.
+
 endif # PLATFORM_EC
