@@ -9,6 +9,8 @@
 #include <devicetree.h>
 #include <gpio_signal.h>
 
+#include "lid_switch.h"
+
 /*
  * Without https://github.com/zephyrproject-rtos/zephyr/pull/29282, we need
  * to manually link GPIO_ defines that platform/ec code expects to the
@@ -21,6 +23,7 @@
 #define GPIO_EN_PP3300_A           NAMED_GPIO(en_pp3300_a)
 #define GPIO_EN_PP5000             NAMED_GPIO(en_pp5000_a)
 #define GPIO_EN_PP5000_A           NAMED_GPIO(en_pp5000_a)
+#define GPIO_LID_OPEN              NAMED_GPIO(ec_lid_open)
 #define GPIO_PCH_DSW_PWROK         NAMED_GPIO(ec_pch_dsw_pwrok)
 #define GPIO_PCH_PWRBTN_L          NAMED_GPIO(ec_pch_pwr_btn_odl)
 #define GPIO_PCH_RSMRST_L          NAMED_GPIO(ec_pch_rsmrst_odl)
@@ -51,6 +54,7 @@
  * #define EC_CROS_GPIO_INTERRUPTS \
  *   GPIO_INT(NAMED_GPIO(h1_ec_pwr_btn_odl), GPIO_INT_EDGE_BOTH, button_print)
  */
-#define EC_CROS_GPIO_INTERRUPTS
+#define EC_CROS_GPIO_INTERRUPTS \
+	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt)
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
