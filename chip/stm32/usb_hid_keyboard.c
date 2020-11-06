@@ -238,6 +238,18 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_KEYBOARD, 02) = {
 	0x75, 0x01, /* Report Size (1) */				\
 	0x81, 0x01, /* Input (Constant), ;1-bit padding */
 
+#define KEYBOARD_TOP_ROW_FEATURE_DESC					\
+	0x06, 0xd1, 0xff, /* Usage Page (Google) */			\
+	0x09, 0x01,       /* Usage (Top Row List) */			\
+	0xa1, 0x02,       /* Collection (Logical) */			\
+	0x05, 0x0a,       /*   Usage Page (Ordinal) */			\
+	0x19, 0x01,       /*   Usage Minimum (1) */			\
+	0x29, CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS, /* Usage Maximum */	\
+	0x95, CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS, /* Report Count */	\
+	0x75, 0x20,       /*   Report Size (32) */			\
+	0xb1, 0x03,       /*   Feature (Cnst,Var,Abs) */		\
+	0xc0,             /* End Collection */
+
 /*
  * Vendor-defined Usage Page 0xffd1:
  *  - 0x18: Assistant key
@@ -316,6 +328,7 @@ static const uint8_t report_desc[] = {
 
 #ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
 	KEYBOARD_TOP_ROW_DESC
+	KEYBOARD_TOP_ROW_FEATURE_DESC
 #endif
 	0xC0        /* End Collection */
 };
@@ -334,6 +347,7 @@ static const uint8_t report_desc_with_backlight[] = {
 
 #ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
 	KEYBOARD_TOP_ROW_DESC
+	KEYBOARD_TOP_ROW_FEATURE_DESC
 #endif
 	KEYBOARD_BACKLIGHT_DESC
 
@@ -472,10 +486,68 @@ USB_DECLARE_EP(USB_EP_HID_KEYBOARD, hid_keyboard_tx,
 #endif
 	       hid_keyboard_event);
 
+struct action_key_config {
+	uint32_t mask; /* bit position of usb_hid_keyboard_report.top_row */
+	uint32_t usage; /*usage ID */
+};
+
+static const struct action_key_config action_key[] = {
+	[TK_BACK] = { .mask = BIT(0), .usage = 0x000C0224 },
+	[TK_FORWARD] = { .mask = BIT(1), .usage = 0x000C0225 },
+	[TK_REFRESH] = { .mask = BIT(2), .usage = 0x000C0227 },
+	[TK_FULLSCREEN] = { .mask = BIT(3), .usage = 0x000C0232 },
+	[TK_OVERVIEW] = { .mask = BIT(4), .usage = 0x000C029F },
+	[TK_BRIGHTNESS_DOWN] = { .mask = BIT(5), .usage = 0x000C0070 },
+	[TK_BRIGHTNESS_UP] = { .mask = BIT(6), .usage = 0x000C006F },
+	[TK_VOL_MUTE] = { .mask = BIT(7), .usage = 0x000C00E2 },
+	[TK_VOL_DOWN] = { .mask = BIT(8), .usage = 0x000C00EA },
+	[TK_VOL_UP] = { .mask = BIT(9), .usage = 0x000C00E9 },
+	[TK_SNAPSHOT] = { .mask = BIT(10), .usage = 0x00070046 },
+	[TK_PRIVACY_SCRN_TOGGLE] = { .mask = BIT(11), .usage = 0x000C02D0 },
+	[TK_KBD_BKLIGHT_DOWN] = { .mask = BIT(12), .usage = 0x000C007A },
+	[TK_KBD_BKLIGHT_UP] = { .mask = BIT(13), .usage = 0x000C0079 },
+	[TK_PLAY_PAUSE] = { .mask = BIT(14), .usage = 0x000C00CD },
+	[TK_NEXT_TRACK] = { .mask = BIT(15), .usage = 0x000C00B5 },
+	[TK_PREV_TRACK] = { .mask = BIT(16), .usage = 0x000C00B6 },
+};
+
+#ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
+static uint32_t feature_report[CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS];
+
+static void hid_keyboard_feature_init(void)
+{
+	const struct ec_response_keybd_config *config =
+		board_vivaldi_keybd_config();
+
+	for (int i = 0; i < CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS; i++) {
+		int key = config->action_keys[i];
+
+		if (IN_RANGE(key, 0, ARRAY_SIZE(action_key)))
+			feature_report[i] = action_key[key].usage;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, hid_keyboard_feature_init, HOOK_PRIO_DEFAULT - 1);
+
+static int hid_keyboard_get_report(uint8_t report_id, uint8_t report_type,
+				   const uint8_t **buffer_ptr, int *buffer_size)
+{
+	if (report_type == REPORT_TYPE_FEATURE) {
+		*buffer_ptr = (uint8_t *)feature_report;
+		*buffer_size = sizeof(feature_report);
+		return 0;
+	}
+
+	return -1;
+}
+#endif
+
 static struct usb_hid_config_t hid_config_kb = {
 	.report_desc = report_desc,
 	.report_size = sizeof(report_desc),
 	.hid_desc = &hid_desc_kb,
+#ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
+	.get_report = &hid_keyboard_get_report,
+#endif
 };
 
 static int hid_keyboard_iface_request(usb_uint *ep0_buf_rx,
@@ -536,27 +608,6 @@ void keyboard_clear_buffer(void)
 	write_keyboard_report();
 }
 
-/* mapping from action_key to bit mask of usb_hid_keyboard_report.top_row */
-static const uint32_t action_key_mapping[] = {
-	[TK_BACK] = BIT(0),
-	[TK_FORWARD] = BIT(1),
-	[TK_REFRESH] = BIT(2),
-	[TK_FULLSCREEN] = BIT(3),
-	[TK_OVERVIEW] = BIT(4),
-	[TK_BRIGHTNESS_DOWN] = BIT(5),
-	[TK_BRIGHTNESS_UP] = BIT(6),
-	[TK_VOL_MUTE] = BIT(7),
-	[TK_VOL_DOWN] = BIT(8),
-	[TK_VOL_UP] = BIT(9),
-	[TK_SNAPSHOT] = BIT(10),
-	[TK_PRIVACY_SCRN_TOGGLE] = BIT(11),
-	[TK_KBD_BKLIGHT_DOWN] = BIT(12),
-	[TK_KBD_BKLIGHT_UP] = BIT(13),
-	[TK_PLAY_PAUSE] = BIT(14),
-	[TK_NEXT_TRACK] = BIT(15),
-	[TK_PREV_TRACK] = BIT(16),
-};
-
 /*
  * Convert a function key to the bit mask of corresponding action key.
  *
@@ -586,7 +637,7 @@ static uint32_t maybe_convert_function_key(int keycode)
 	if (index >= config->num_top_row_keys ||
 			config->action_keys[index] == TK_ABSENT)
 		return 0; /* not mapped */
-	return action_key_mapping[config->action_keys[index]];
+	return action_key[config->action_keys[index]].mask;
 }
 
 static void keyboard_process_queue(void)

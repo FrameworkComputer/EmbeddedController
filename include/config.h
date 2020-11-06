@@ -4519,8 +4519,14 @@
 /* Support USB HID keyboard backlight. */
 #undef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
 
-/* Support vivaldi compatible HID keyboard */
+/*
+ * Support vivaldi compatible HID keyboard.
+ * If defined, the board must implement a function board_vivaldi_keybd_config(),
+ * and define a macro CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS which is equal to
+ * board_vivaldi_keybd_config()->num_top_row_keys.
+ */
 #undef CONFIG_USB_HID_KEYBOARD_VIVALDI
+#undef CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS
 
 /* Support USB HID touchpad interface. */
 #undef CONFIG_USB_HID_TOUCHPAD
