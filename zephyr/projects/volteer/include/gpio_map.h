@@ -10,6 +10,7 @@
 #include <gpio_signal.h>
 
 #include "lid_switch.h"
+#include "power_button.h"
 
 /*
  * Without https://github.com/zephyrproject-rtos/zephyr/pull/29282, we need
@@ -54,7 +55,9 @@
  * #define EC_CROS_GPIO_INTERRUPTS \
  *   GPIO_INT(NAMED_GPIO(h1_ec_pwr_btn_odl), GPIO_INT_EDGE_BOTH, button_print)
  */
-#define EC_CROS_GPIO_INTERRUPTS \
-	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt)
+#define EC_CROS_GPIO_INTERRUPTS                                    \
+	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt) \
+	GPIO_INT(GPIO_POWER_BUTTON_L, GPIO_INT_EDGE_BOTH,          \
+		 power_button_interrupt)
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
