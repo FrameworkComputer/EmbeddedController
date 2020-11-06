@@ -60,8 +60,10 @@ int pd_snk_is_vbus_provided(int port)
 {
 	int vbus_intr;
 
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 	if (port == DEDICATED_CHARGE_PORT)
 		return 1;
+#endif
 
 	vbus_intr = gpio_get_level(tcpc_gpios[port].vbus.pin);
 

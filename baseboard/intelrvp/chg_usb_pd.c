@@ -15,14 +15,23 @@
 
 bool is_typec_port(int port)
 {
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 	return !(port == DEDICATED_CHARGE_PORT || port == CHARGE_PORT_NONE);
+#else
+	return !(port == CHARGE_PORT_NONE);
+#endif /* CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0 */
 }
 
 static inline int board_dc_jack_present(void)
 {
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 	return gpio_get_level(GPIO_DC_JACK_PRESENT);
+#else
+	return 0;
+#endif
 }
 
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 static void board_dc_jack_handle(void)
 {
 	struct charge_port_info charge_dc_jack;
@@ -40,10 +49,13 @@ static void board_dc_jack_handle(void)
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 				DEDICATED_CHARGE_PORT, &charge_dc_jack);
 }
+#endif
 
 void board_dc_jack_interrupt(enum gpio_signal signal)
 {
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 	board_dc_jack_handle();
+#endif
 }
 
 static void board_charge_init(void)
@@ -61,7 +73,9 @@ static void board_charge_init(void)
 				&charge_init);
 	}
 
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 	board_dc_jack_handle();
+#endif /* CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0 */
 }
 DECLARE_HOOK(HOOK_INIT, board_charge_init, HOOK_PRIO_DEFAULT);
 
@@ -79,6 +93,7 @@ int board_set_active_charge_port(int port)
 		return EC_ERROR_INVAL;
 	}
 
+#if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 	/*
 	 * Do not enable Type-C port if the DC Jack is present.
 	 * When the Type-C is active port, hardware circuit will
@@ -88,6 +103,7 @@ int board_set_active_charge_port(int port)
 		CPRINTS("DC Jack present, Skip enable p%d", port);
 		return EC_ERROR_INVAL;
 	}
+#endif /* CONFIG_DEDICATED_CHARGE_PORT_COUNT */
 
 	/* Make sure non-charging ports are disabled */
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {

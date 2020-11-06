@@ -76,5 +76,7 @@ int pd_snk_is_vbus_provided(int port)
 
 int board_vbus_source_enabled(int port)
 {
-	return (port != DEDICATED_CHARGE_PORT && ppc_is_sourcing_vbus(port));
+	if (is_typec_port(port))
+		return ppc_is_sourcing_vbus(port);
+	return 0;
 }
