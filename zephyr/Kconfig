@@ -102,6 +102,12 @@ config PLATFORM_EC_HOOKS
 	  hook_call_deferred to Zephyr's work queues, and a compatible
 	  DECLARE_HOOK implementation.
 
+config PLATFORM_EC_HOSTCMD
+	bool "Enable host commands shim"
+	default y if AP
+	help
+	  Enable the host commands shim in platform/ec.
+
 config PLATFORM_EC_LID_SWITCH
 	bool "Enable the lid switch module"
 	help
