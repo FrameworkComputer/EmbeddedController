@@ -138,7 +138,6 @@ void wait_for_valid_sample(void)
 
 	sample = *lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
 	usleep(TEST_LID_EC_RATE);
-	task_wake(TASK_ID_MOTIONSENSE);
 	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
 		usleep(TEST_LID_SLEEP_RATE);
 }
