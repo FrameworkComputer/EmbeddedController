@@ -93,6 +93,27 @@ struct gpio_signal_callback gpio_interrupts[] = {
 #endif
 };
 
+/**
+ * get_interrupt_from_signal() - Translate a gpio_signal to the
+ * corresponding gpio_signal_callback
+ *
+ * @signal		The signal to convert.
+ *
+ * Return: A pointer to the corresponding entry in gpio_interrupts, or
+ * NULL if one does not exist.
+ */
+static struct gpio_signal_callback *
+get_interrupt_from_signal(enum gpio_signal signal)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(gpio_interrupts); i++) {
+		if (gpio_interrupts[i].signal == signal)
+			return &gpio_interrupts[i];
+	}
+
+	LOG_ERR("No interrupt defined for GPIO %s", configs[signal].name);
+	return NULL;
+}
+
 int gpio_is_implemented(enum gpio_signal signal)
 {
 	/* All GPIOs listed in Device Tree are consider implemented */
@@ -201,3 +222,38 @@ static int init_gpios(const struct device *unused)
 	return 0;
 }
 SYS_INIT(init_gpios, PRE_KERNEL_1, 50);
+
+int gpio_enable_interrupt(enum gpio_signal signal)
+{
+	int rv;
+	struct gpio_signal_callback *interrupt;
+
+	interrupt = get_interrupt_from_signal(signal);
+
+	if (!interrupt)
+		return -1;
+
+	rv = gpio_pin_interrupt_configure(data[signal].dev, configs[signal].pin,
+					  (interrupt->flags | GPIO_INT_ENABLE) &
+						  ~GPIO_INT_DISABLE);
+	if (rv < 0) {
+		LOG_ERR("Failed to enable interrupt on %s (%d)",
+			configs[signal].name, rv);
+	}
+
+	return rv;
+}
+
+int gpio_disable_interrupt(enum gpio_signal signal)
+{
+	int rv;
+
+	rv = gpio_pin_interrupt_configure(data[signal].dev, configs[signal].pin,
+					  GPIO_INT_DISABLE);
+	if (rv < 0) {
+		LOG_ERR("Failed to enable interrupt on %s (%d)",
+			configs[signal].name, rv);
+	}
+
+	return rv;
+}
