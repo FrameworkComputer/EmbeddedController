@@ -183,10 +183,8 @@ static void task_entry(void *task_contex, void *unused1, void *unused2)
 	ctx->entry((void *)ctx->parameter);
 }
 
-static int start_ec_tasks(const struct device *unused)
+void start_ec_tasks(void)
 {
-	ARG_UNUSED(unused);
-
 	for (size_t i = 0; i < ARRAY_SIZE(shimmed_tasks); ++i) {
 		struct task_ctx *const ctx = &shimmed_tasks[i];
 
@@ -200,6 +198,4 @@ static int start_ec_tasks(const struct device *unused)
 			task_entry, ctx, NULL, NULL,
 			K_PRIO_PREEMPT(TASK_ID_COUNT - i), 0, K_NO_WAIT);
 	}
-	return 0;
 }
-SYS_INIT(start_ec_tasks, APPLICATION, 10);

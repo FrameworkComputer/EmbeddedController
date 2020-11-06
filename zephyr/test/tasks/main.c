@@ -4,8 +4,10 @@
  */
 
 #include <kernel.h>
-#include <task.h>
 #include <ztest.h>
+
+#include "ec_tasks.h"
+#include "task.h"
 
 /* Second for platform/ec task API (in microseconds). */
 #define TASK_SEC(s) (s * 1000 * 1000)
@@ -188,6 +190,9 @@ static void test_empty_set_mask(void)
 
 void test_main(void)
 {
+	/* Manually start the EC tasks. This normally happens in main. */
+	start_ec_tasks();
+
 	ztest_test_suite(test_task_shim,
 			 ztest_unit_test(test_task_get_current),
 			 ztest_unit_test(test_timeout),

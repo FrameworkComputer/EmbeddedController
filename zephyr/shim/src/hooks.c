@@ -85,11 +85,3 @@ void hook_notify(enum hook_type type)
 	for (p = hook_registry[type]; p; p = p->next)
 		p->routine();
 }
-
-static int run_init_hooks(const struct device *unused)
-{
-	ARG_UNUSED(unused);
-	hook_notify(HOOK_INIT);
-	return 0;
-}
-SYS_INIT(run_init_hooks, APPLICATION, 2);
