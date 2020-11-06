@@ -20,7 +20,9 @@
 #define POWER_LED_OFF 1
 
 #define LED_TICKS_PER_CYCLE 10
+#define LED_TICKS_PER_CYCLE_S3 35
 #define LED_ON_TICKS 5
+#define POWER_LED_ON_S3_TICKS 5
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_LEFT_LED,
@@ -145,10 +147,12 @@ static void led_set_battery(void)
 
 		power_ticks++;
 
-		led_set_color_battery(RIGHT_PORT, power_ticks & 0x4 ?
-					  LED_WHITE : LED_OFF);
-		led_set_color_battery(LEFT_PORT, power_ticks & 0x4 ?
-					  LED_WHITE : LED_OFF);
+		led_set_color_battery(RIGHT_PORT, power_ticks
+				% LED_TICKS_PER_CYCLE_S3 < POWER_LED_ON_S3_TICKS
+				? LED_WHITE : LED_OFF);
+		led_set_color_battery(LEFT_PORT, power_ticks
+				% LED_TICKS_PER_CYCLE_S3 < POWER_LED_ON_S3_TICKS
+				? LED_WHITE : LED_OFF);
 		return;
 	}
 
