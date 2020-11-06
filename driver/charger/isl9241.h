@@ -48,7 +48,10 @@
 
 /* Configures various charger options */
 #define ISL9241_REG_CONTROL1		0x3C
-#define ISL9241_CONTROL1_LEARN_MODE	BIT(12)
+#define ISL9241_CONTROL1_LEARN_MODE	    BIT(12)
+#define ISL9241_CONTROL1_PROCHOT_REF_6800   (7 << 0)
+#define ISL9241_CONTROL1_SWITCH_FREQ        (5 << 7)
+#define ISL9241_CONTROL1_SUPPLEMENTAL_SUPPORT_MODE  BIT(10)
 
 /* Configures various charger options */
 #define ISL9241_REG_CONTROL2		0x3D
@@ -68,6 +71,8 @@
 #define ISL9241_CONTROL2_TWO_LEVEL_ADP_CURR	BIT(12)
 /* 10:9 PROCHOT# debounce time in uS */
 #define ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000	(3 << 9)
+#define ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR BIT(3)
+#define ISL9241_CONTROL2_TRICKLE_CHG_CURR_128   (3 << 13)
 
 /* MinSystemVoltage [13:6] 8-bit (0x0000h = disables all battery charging) */
 #define ISL9241_REG_MIN_SYSTEM_VOLTAGE	0x3E
@@ -91,6 +96,8 @@
 #define ISL9241_CONTROL3_DIGITAL_RESET	BIT(2)
 /* 0: Enable ADC (0 - Active when charging, 1 - Active always) */
 #define ISL9241_CONTROL3_ENABLE_ADC	BIT(0)
+#define ISL9241_CONTROL3_PSYS_GAIN  (3 << 8)
+#define ISL9241_CONTROL3_ACLIM_RELOAD   BIT(14)
 
 /* Indicates various charger status */
 #define ISL9241_REG_INFORMATION2	0x4D
@@ -101,6 +108,8 @@
 
 #define ISL9241_REG_CONTROL4		0x4E
 /* 13: Enable VSYS slew rate control (0 - disable, 1 - enable) */
+#define ISL9241_CONTROL4_ACOK_PROCHOT       BIT(5)
+#define ISL9241_CONTROL4_OTG_CURR_PROCHOT   BIT(7)
 #define ISL9241_CONTROL4_SLEW_RATE_CTRL     BIT(13)
 
 #define ISL9241_REG_CONTROL5		0x4F

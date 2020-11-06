@@ -1189,17 +1189,19 @@ static void charger_chips_init(void)
 	}
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL2, 0x6008))
+		ISL9241_REG_CONTROL2, ISL9241_CONTROL2_TRICKLE_CHG_CURR_128 |
+			ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR))
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL3, 0x4300))
+		ISL9241_REG_CONTROL3, ISL9241_CONTROL3_PSYS_GAIN |
+			ISL9241_CONTROL3_ACLIM_RELOAD))
 		goto init_fail;
 
 	if (extpower_is_present() && battery_is_present()) {
-		val = 0x0020;
+		val |= ISL9241_CONTROL4_ACOK_PROCHOT;
 	} else if (battery_is_present()) {
-		val = 0x0080;
+		val |= ISL9241_CONTROL4_OTG_CURR_PROCHOT;
 	}
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
@@ -1210,8 +1212,11 @@ static void charger_chips_init(void)
 		ISL9241_REG_CONTROL0, 0x0000))
 		goto init_fail;
 
+	val = ISL9241_CONTROL1_PROCHOT_REF_6800 | ISL9241_CONTROL1_SWITCH_FREQ;
+
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL1, (battery_is_present() ? 0x0687 : 0x0287)))
+		ISL9241_REG_CONTROL1, (battery_is_present() ? val | 
+			ISL9241_CONTROL1_SUPPLEMENTAL_SUPPORT_MODE : val)))
 		goto init_fail;
 
 	return;
