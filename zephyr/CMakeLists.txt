@@ -38,5 +38,7 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/base32.c"
 zephyr_sources_ifdef(CONFIG_SHELL               "${PLATFORM_EC}/common/gpio_commands.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_8042
                                                 "${PLATFORM_EC}/common/keyboard_8042.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_LID_SWITCH
+                                                "${PLATFORM_EC}/common/lid_switch.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/queue.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TIMER   "${PLATFORM_EC}/common/timer.c")

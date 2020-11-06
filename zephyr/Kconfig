@@ -102,4 +102,11 @@ config PLATFORM_EC_HOOKS
 	  hook_call_deferred to Zephyr's work queues, and a compatible
 	  DECLARE_HOOK implementation.
 
+config PLATFORM_EC_LID_SWITCH
+	bool "Enable the lid switch module"
+	help
+	  Enable shimming the lid switch implementation and related
+	  commands in platform/ec.  This requires a GPIO named
+	  GPIO_LID_OPEN to be defined in gpio_map.h.
+
 endif # PLATFORM_EC
