@@ -1176,7 +1176,12 @@ const struct charger_config_t chg_chips[] = {
 #ifdef CONFIG_CHARGER_CUSTOMER_SETTING
 static void charger_chips_init(void)
 {
+	/* Battery present need ADC function ready, so change the initail priority
+	 * after ADC
+	 */
+
 	int chip;
+	uint16_t val = 0x0000; /*default ac setting */
 
 	for (chip = 0; chip < board_get_charger_chip_count(); chip++) {
 		if (chg_chips[chip].drv->init)
@@ -1191,8 +1196,14 @@ static void charger_chips_init(void)
 		ISL9241_REG_CONTROL3, 0x4300))
 		goto init_fail;
 
+	if (extpower_is_present() && battery_is_present()) {
+		val = 0x0020;
+	} else if (battery_is_present()) {
+		val = 0x0080;
+	}
+
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL4, 0x0000))
+		ISL9241_REG_CONTROL4, val))
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
@@ -1200,13 +1211,15 @@ static void charger_chips_init(void)
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL1, 0x0287))
+		ISL9241_REG_CONTROL1, (battery_is_present() ? 0x0687 : 0x0287)))
 		goto init_fail;
+
+	return;
 
 init_fail:
 	CPRINTF("ISL9241 customer init failed!");
 }
-DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_INIT_ADC + 1);
 #endif
 
 
