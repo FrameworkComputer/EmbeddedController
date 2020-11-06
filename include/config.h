@@ -18,6 +18,15 @@
 #ifndef __CROS_EC_CONFIG_H
 #define __CROS_EC_CONFIG_H
 
+/*
+ * When building for Zephyr, a shimmed_tasks.h header may be defined
+ * to create all the HAS_TASK_* definitions.  Since those are used in
+ * config.h, we need to include that header first.
+ */
+#ifdef CONFIG_SHIMMED_TASKS
+#include "shimmed_tasks.h"
+#endif
+
 #ifdef INCLUDE_ENV_CONFIG
 /*
  * When building for an EC target, pick up the .h file which allows to

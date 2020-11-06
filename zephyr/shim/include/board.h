@@ -15,9 +15,4 @@
 #include <gpio_map.h>
 #endif
 
-/* Once SHIMMED_TASKS is enabled, must provide a shimmed_tasks header */
-#ifdef CONFIG_SHIMMED_TASKS
-#include "shimmed_tasks.h"
-#endif
-
 #endif  /* __BOARD_H */
