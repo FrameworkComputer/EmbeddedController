@@ -4289,6 +4289,9 @@
 /* Allow run-time configuration of the Burnside Bridge driver structure */
 #undef CONFIG_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
 
+/* Enables debug console commands for the STM32 UCPD driver */
+#undef CONFIG_STM32G4_UCPD_DEBUG
+
 /*
  * Adds an EC console command to erase the ANX7447 OCM flash.
  * Note: this is intended to be a temporary option and

@@ -67,6 +67,8 @@
 #define CONFIG_USBC_PPC_DEDICATED_INT
 #define CONFIG_CMD_PPC_DUMP
 
+#define CONFIG_STM32G4_UCPD_DEBUG
+
 /* TODO(b/167711550): Temporary, will be replaced by correct mux config */
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USB_MUX_VIRTUAL
