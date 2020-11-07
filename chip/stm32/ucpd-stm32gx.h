@@ -22,37 +22,44 @@
 #define UCPD_RST2  0x19u
 #define UCPD_EOP   0x0Du
 
+/* This order of this enum matches tcpm_transmit_type */
 enum ucpd_tx_ordset {
 	TX_ORDERSET_SOP =	(UCPD_SYNC1 |
 				(UCPD_SYNC1<<5u) |
 				(UCPD_SYNC1<<10u) |
 				(UCPD_SYNC2<<15u)),
-	TX_ORDERSET_SOP1 =	(UCPD_SYNC1 |
+
+	TX_ORDERSET_SOP_PRIME =	(UCPD_SYNC1 |
 				(UCPD_SYNC1<<5u) |
 				(UCPD_SYNC3<<10u) |
 				(UCPD_SYNC3<<15u)),
-	TX_ORDERSET_SOP2 =	(UCPD_SYNC1 |
+
+	TX_ORDERSET_SOP_PRIME_PRIME =	(UCPD_SYNC1 |
 				(UCPD_SYNC3<<5u) |
 				(UCPD_SYNC1<<10u) |
 				(UCPD_SYNC3<<15u)),
+
+	TX_ORDERSET_SOP_PRIME_DEBUG =	(UCPD_SYNC1 |
+					(UCPD_RST2<<5u) |
+					(UCPD_RST2<<10u) |
+					(UCPD_SYNC3<<15u)),
+
+	TX_ORDERSET_SOP_PRIME_PRIME_DEBUG =	(UCPD_SYNC1 |
+					(UCPD_RST2<<5u) |
+					(UCPD_SYNC3<<10u) |
+					(UCPD_SYNC2<<15u)),
+
 	TX_ORDERSET_HARD_RESET =	(UCPD_RST1  |
 					(UCPD_RST1<<5u) |
 					(UCPD_RST1<<10u)  |
 					(UCPD_RST2<<15u)),
-	TX_ORDERSET_CABLE_RESET =
-					(UCPD_RST1 |
+
+	TX_ORDERSET_CABLE_RESET =	(UCPD_RST1 |
 					(UCPD_SYNC1<<5u) |
 					(UCPD_RST1<<10u)  |
 					(UCPD_SYNC3<<15u)),
-	TX_ORDERSET_SOP1_DEBUG =	(UCPD_SYNC1 |
-					(UCPD_RST2<<5u) |
-					(UCPD_RST2<<10u) |
-					(UCPD_SYNC3<<15u)),
-	TX_ORDERSET_SOP2_DEBUG =	(UCPD_SYNC1 |
-					(UCPD_RST2<<5u) |
-					(UCPD_SYNC3<<10u) |
-					(UCPD_SYNC2<<15u)),
 };
+
 
 /**
  * STM32Gx UCPD implementation of tcpci .init method
@@ -107,5 +114,48 @@ int stm32gx_ucpd_set_cc(int usbc_port, int cc_pull, int rp);
  * @return EC_SUCCESS
  */
 int stm32gx_ucpd_set_polarity(int usbc_port, enum tcpc_cc_polarity polarity);
+
+/**
+ * STM32Gx UCPD implementation of tcpci .set_rx_enable method
+ *
+ * @param usbc_port -> USB-C Port number
+ * @param enable -> on/off for USB-PD messages
+ * @return EC_SUCCESS
+ */
+int stm32gx_ucpd_set_rx_enable(int port, int enable);
+
+/**
+ * STM32Gx UCPD implementation of tcpci .set_msg_header method
+ *
+ * @param usbc_port -> USB-C Port number
+ * @param power_role -> port's current power role
+ * @param data_role -> port's current data role
+ * @return EC_SUCCESS
+ */
+int stm32gx_ucpd_set_msg_header(int port, int power_role, int data_role);
+
+/**
+ * STM32Gx UCPD implementation of tcpci .transmit method
+ *
+ * @param usbc_port -> USB-C Port number
+ * @param type -> SOP/SOP'/SOP'' etc
+ * @param header -> usb pd message header
+ * @param *data -> pointer to message contents
+ * @return EC_SUCCESS
+ */
+int stm32gx_ucpd_transmit(int port,
+			enum tcpm_transmit_type type,
+			uint16_t header,
+			  const uint32_t *data);
+
+/**
+ * STM32Gx UCPD implementation of tcpci .get_message_raw method
+ *
+ * @param usbc_port -> USB-C Port number
+ * @param *payload -> pointer to where message should be written
+ * @param *head -> pointer to message header
+ * @return EC_SUCCESS
+ */
+int stm32gx_ucpd_get_message_raw(int port, uint32_t *payload, int *head);
 
 #endif /* __CROS_EC_UCPD_STM32GX_H */

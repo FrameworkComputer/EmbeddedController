@@ -334,6 +334,11 @@
 #define STM32_UCPD_CR_CC1TCDIS              BIT(20)
 #define STM32_UCPD_CR_CC2TCDIS              BIT(21)
 
+/* TX mode message types */
+#define STM32_UCPD_CR_TXMODE_DEF            0
+#define STM32_UCPD_CR_TXMODE_CBL_RST        1
+#define STM32_UCPD_CR_TXMODE_BIST           2
+
 /* --- UCPD IMR Bit Definitions --- */
 #define STM32_UCPD_IMR_TXISIE               BIT(0)
 #define STM32_UCPD_IMR_TXMSGDISCIE          BIT(1)
