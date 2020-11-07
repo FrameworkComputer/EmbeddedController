@@ -259,6 +259,9 @@
 /* Control4: GP comparator control bit */
 #define RAA489000_C4_DISABLE_GP_CMP BIT(12)
 
+/* Control4: Ignores BATGONE input */
+#define RAA489000_C4_BATGONE_DISABLE BIT(15)
+
 /* Control6: charger current and maximum system voltage slew rate control. */
 #define ISL9238C_C6_SLEW_RATE_CONTROL BIT(6)
 

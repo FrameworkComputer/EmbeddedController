@@ -574,6 +574,24 @@ static void isl923x_init(int chgnum)
 			goto init_fail;
 	}
 
+#ifdef CONFIG_OCPC
+	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
+		/*
+		 * Ignore BATGONE on auxiliary charger ICs as it's not connected
+		 * there.
+		 */
+		if (chgnum != CHARGER_PRIMARY) {
+			if (raw_read16(chgnum, ISL9238_REG_CONTROL4, &reg))
+				goto init_fail;
+
+			reg |= RAA489000_C4_BATGONE_DISABLE;
+
+			if (raw_write16(chgnum, ISL9238_REG_CONTROL4, reg))
+				goto init_fail;
+		}
+	}
+#endif /* CONFIG_OCPC */
+
 	return;
 init_fail:
 	CPRINTS("%s init failed!", CHARGER_NAME);
