@@ -210,29 +210,31 @@ void i2c_lock(int port, int lock)
 	/* Lock the controller, not the port */
 	port = i2c_port_to_controller(port);
 #endif
-	if (port < 0)
+	if (port < 0 || port >= ARRAY_SIZE(port_mutex))
 		return;
 
 	if (lock) {
+		uint32_t irq_lock_key;
+
 		mutex_lock(port_mutex + port);
 
 		/* Disable interrupt during changing counter for preemption. */
-		interrupt_disable();
+		irq_lock_key = irq_lock();
 
 		i2c_port_active_list |= 1 << port;
 		/* Ec cannot enter sleep if there's any i2c port active. */
 		disable_sleep(SLEEP_MASK_I2C_MASTER);
 
-		interrupt_enable();
+		irq_unlock(irq_lock_key);
 	} else {
-		interrupt_disable();
+		uint32_t irq_lock_key = irq_lock();
 
 		i2c_port_active_list &= ~BIT(port);
 		/* Once there is no i2c port active, enable sleep bit of i2c. */
 		if (!i2c_port_active_list)
 			enable_sleep(SLEEP_MASK_I2C_MASTER);
 
-		interrupt_enable();
+		irq_unlock(irq_lock_key);
 
 		mutex_unlock(port_mutex + port);
 	}
