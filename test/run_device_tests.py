@@ -105,8 +105,8 @@ class AllTests:
         tests = {
             'aes':
                 TestConfig(name='aes'),
-            'crc32':
-                TestConfig(name='crc32'),
+            'crc':
+                TestConfig(name='crc'),
             'flash_physical':
                 TestConfig(name='flash_physical', image_to_use=ImageType.RO,
                            toggle_power=True),
