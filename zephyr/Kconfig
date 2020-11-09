@@ -28,6 +28,15 @@ config ZEPHYR
 	  This should always be enabled.  It's a workaround for
 	  config.h not being available in some headers.
 
+config PLATFORM_EC_EXTPOWER_GPIO
+	bool "Enable the GPIO-based external power detection module"
+	depends on PLATFORM_EC_HOOKS && PLATFORM_EC_HOSTCMD
+	help
+	  Enable shimming the extpower_gpio module, which provides
+	  GPIO-based external power presence detection features.  The
+	  project should define a GPIO pin named GPIO_AC_PRESENT, with
+	  extpower_interrupt configured as the handler in gpio_map.h.
+
 menuconfig PLATFORM_EC_KEYBOARD
 	bool "Enable keybaord support"
 	default y
