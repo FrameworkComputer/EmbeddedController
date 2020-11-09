@@ -1363,6 +1363,11 @@ static void init_vif_component_general_pd_fields(
 				"Manufacturer_Info_Supported_Port",
 				true);
 
+		sprintf(hex_str, "%04X", USB_VID_GOOGLE);
+		set_vif_field_itss(&vif_fields[Manufacturer_Info_VID_Port],
+				"Manufacturer_Info_VID_Port",
+				USB_VID_GOOGLE, hex_str);
+
 		#if defined(CONFIG_USB_PID)
 			sprintf(hex_str, "%04X", CONFIG_USB_PID);
 			set_vif_field_itss(&vif_fields[
