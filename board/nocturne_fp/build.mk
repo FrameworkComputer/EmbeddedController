@@ -17,7 +17,7 @@ board-y=board.o fpsensor_detect.o
 test-list-y=\
        aes \
        compile_time_macros \
-       crc32 \
+       crc \
        flash_physical \
        flash_write_protect \
        fpsensor \
