@@ -9,6 +9,7 @@
 #include <devicetree.h>
 #include <gpio_signal.h>
 
+#include "extpower.h"
 #include "lid_switch.h"
 #include "power_button.h"
 
@@ -20,6 +21,7 @@
  * Note we only need to create aliases for GPIOs that are referenced in common
  * platform/ec code.
  */
+#define GPIO_AC_PRESENT            NAMED_GPIO(acok_od)
 #define GPIO_CPU_PROCHOT           NAMED_GPIO(ec_prochot_odl)
 #define GPIO_EN_PP3300_A           NAMED_GPIO(en_pp3300_a)
 #define GPIO_EN_PP5000             NAMED_GPIO(en_pp5000_a)
@@ -55,9 +57,10 @@
  * #define EC_CROS_GPIO_INTERRUPTS \
  *   GPIO_INT(NAMED_GPIO(h1_ec_pwr_btn_odl), GPIO_INT_EDGE_BOTH, button_print)
  */
-#define EC_CROS_GPIO_INTERRUPTS                                    \
-	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt) \
-	GPIO_INT(GPIO_POWER_BUTTON_L, GPIO_INT_EDGE_BOTH,          \
+#define EC_CROS_GPIO_INTERRUPTS                                           \
+	GPIO_INT(GPIO_AC_PRESENT, GPIO_INT_EDGE_BOTH, extpower_interrupt) \
+	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt)        \
+	GPIO_INT(GPIO_POWER_BUTTON_L, GPIO_INT_EDGE_BOTH,                 \
 		 power_button_interrupt)
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
