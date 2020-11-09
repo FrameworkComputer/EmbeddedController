@@ -1356,12 +1356,12 @@ static void init_vif_component_general_pd_fields(
 			"Unchunked_Extended_Messages_Supported",
 			false);
 
-	set_vif_field_b(&vif_fields[Manufacturer_Info_Supported_Port],
-			"Manufacturer_Info_Supported_Port",
-			IS_ENABLED(CONFIG_USB_PD_MANUFACTURER_INFO));
-
-	{
+	if (IS_ENABLED(CONFIG_USB_PD_MANUFACTURER_INFO)) {
 		char hex_str[10];
+
+		set_vif_field_b(&vif_fields[Manufacturer_Info_Supported_Port],
+				"Manufacturer_Info_Supported_Port",
+				true);
 
 		#if defined(CONFIG_USB_PID)
 			sprintf(hex_str, "%04X", CONFIG_USB_PID);
@@ -1376,6 +1376,10 @@ static void init_vif_component_general_pd_fields(
 					"Manufacturer_Info_PID_Port",
 					DEFAULT_MISSING_PID, hex_str);
 		#endif
+	} else {
+		set_vif_field_b(&vif_fields[Manufacturer_Info_Supported_Port],
+				"Manufacturer_Info_Supported_Port",
+				false);
 	}
 
 	set_vif_field_b(&vif_fields[Security_Msgs_Supported_SOP],
