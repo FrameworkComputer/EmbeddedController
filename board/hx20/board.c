@@ -1225,6 +1225,40 @@ init_fail:
 	CPRINTF("ISL9241 customer init failed!");
 }
 DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_INIT_ADC + 1);
+
+void charger_update(void)
+{
+	static int pre_ac_state = 0;
+	static int pre_dc_state = 0;
+	uint16_t val = 0x0000;
+
+	if (pre_ac_state != extpower_is_present() ||
+		pre_dc_state != battery_is_present())
+	{
+		CPRINTS("update charger!!");
+		if (extpower_is_present() && battery_is_present()) {
+			val |= ISL9241_CONTROL4_ACOK_PROCHOT;
+		} else if (battery_is_present()) {
+			val |= ISL9241_CONTROL4_OTG_CURR_PROCHOT;
+		}
+
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_CONTROL4, val)) {
+			CPRINTS("update charger control4 fail!");
+		}
+
+		val = ISL9241_CONTROL1_PROCHOT_REF_6800 | ISL9241_CONTROL1_SWITCH_FREQ;
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_CONTROL1, (battery_is_present() ? val |
+			ISL9241_CONTROL1_SUPPLEMENTAL_SUPPORT_MODE : val))) {
+			CPRINTS("Update charger control1 fail");
+		}
+
+		pre_ac_state = extpower_is_present();
+		pre_dc_state = battery_is_present();
+	}
+}
+DECLARE_HOOK(HOOK_TICK, charger_update, HOOK_PRIO_DEFAULT);
 #endif
 
 
