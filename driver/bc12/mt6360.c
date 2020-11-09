@@ -203,7 +203,7 @@ static int mt6360_regulator_read8(int addr, int reg, int *val)
 	real_crc = (*val >> 8) & 0xFF;
 	*val &= 0xFF;
 	out[2] = *val;
-	crc = crc8(out, ARRAY_SIZE(out));
+	crc = cros_crc8(out, ARRAY_SIZE(out));
 
 	if (crc != real_crc)
 		return EC_ERROR_CRC;

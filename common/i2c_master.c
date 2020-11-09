@@ -294,8 +294,8 @@ static int platform_ec_i2c_read(const int port, const uint16_t slave_addr_flags,
 			if (rv)
 				continue;
 
-			pec_local = crc8(out, ARRAY_SIZE(out));
-			pec_local = crc8_arg(in, in_size, pec_local);
+			pec_local = cros_crc8(out, ARRAY_SIZE(out));
+			pec_local = cros_crc8_arg(in, in_size, pec_local);
 			if (pec_local == pec_remote)
 				break;
 
@@ -322,8 +322,8 @@ static int platform_ec_i2c_write(const int port,
 		uint8_t addr_8bit = I2C_STRIP_FLAGS(slave_addr_flags) << 1;
 		uint8_t pec;
 
-		pec = crc8(&addr_8bit, 1);
-		pec = crc8_arg(out, out_size, pec);
+		pec = cros_crc8(&addr_8bit, 1);
+		pec = cros_crc8_arg(out, out_size, pec);
 
 		i2c_lock(port, 1);
 		for (i = 0; i <= CONFIG_I2C_NACK_RETRY_COUNT; i++) {
@@ -698,9 +698,9 @@ int i2c_read_string(const int port,
 			if (rv)
 				continue;
 
-			pec = crc8(out, sizeof(out));
-			pec = crc8_arg(&block_length, 1, pec);
-			pec = crc8_arg(data, data_length, pec);
+			pec = cros_crc8(out, sizeof(out));
+			pec = cros_crc8_arg(&block_length, 1, pec);
+			pec = cros_crc8_arg(data, data_length, pec);
 
 			/* read all remaining bytes */
 			block_length -= data_length;
@@ -711,7 +711,7 @@ int i2c_read_string(const int port,
 						       NULL, 0, &byte, 1, 0);
 				if (rv)
 					break;
-				pec = crc8_arg(&byte, 1, pec);
+				pec = cros_crc8_arg(&byte, 1, pec);
 				--block_length;
 			}
 			if (rv)
@@ -764,8 +764,8 @@ int i2c_write_block(const int port,
 	if (IS_ENABLED(CONFIG_SMBUS_PEC) && I2C_USE_PEC(slave_addr_flags)) {
 		uint8_t addr_8bit = I2C_STRIP_FLAGS(slave_addr_flags) << 1;
 
-		pec = crc8(&addr_8bit, sizeof(uint8_t));
-		pec = crc8_arg(data, len, pec);
+		pec = cros_crc8(&addr_8bit, sizeof(uint8_t));
+		pec = cros_crc8_arg(data, len, pec);
 	}
 
 	/*
