@@ -195,45 +195,40 @@ GPIO(PWR_LED_L,         PIN(0133), GPIO_OUT_HIGH)
 ALTERNATE(PIN_MASK(2, 0x30), 1, MODULE_UART, 0)
 
 /* KB pins */
-/*
- * MEC1704H (144 pin package)
- * KSO00 = GPIO_0040 Func3 bank 1 bit 0
- * KSO01 = GPIO_0045 Func3 bank 1 bit 5
- * KSO02 = GPIO_0046 Func3 bank 1 bit 6
- * KSO03 = GPIO_0047 Func3 bank 1 bit 7
- * KSO04 = GPIO_0107 Func3 bank 2 bit 7
- * KSO05 = GPIO_0112 Func3 bank 2 bit 10
- * KSO06 = GPIO_0113 Func3 bank 2 bit 11
- * KSO07 = GPIO_0120 Func3 bank 2 bit 16
- * KSO08 = GPIO_0121 Func3 bank 2 bit 17
- * KSO09 = GPIO_0122 Func3 bank 2 bit 18
- * KSO10 = GPIO_0123 Func3 bank 2 bit 19
- * KSO11 = GPIO_0124 Func3 bank 2 bit 20
- * KSO12 = GPIO_0125 Func3 bank 2 bit 21
- * For 8x16 test keyboard add KSO13 - KSO15
- * KSO13 = GPIO_0126 Func3 bank 2 bit 22
- * KSO14 = GPIO_0132 Func3 bank 2 bit 26
- * KSO15 = GPIO_0151 Func3 bank 3 bit 9
+/* MEC1521 WFBGA144
+ * KSI1 = GPIO_20 Bank 0, Func 1
+ * KSI2 = GPIO_21 Bank 0, Func 1
+ * KSI3 = GPIO_26 Bank 0, Func 1
+ * KSI4 = GPIO_27 Bank 0, Func 1
+ * KSI5 = GPIO_30 Bank 0, Func 1
+ * KSI6 = GPIO_31 Bank 0, Func 1
+ * KSI7 = GPIO_32 Bank 0, Func 1
  *
- * KSI0 = GPIO_0017 Func3 bank 0 bit 15
- * KSI1 = GPIO_0020 Func3 bank 0 bit 16
- * KSI2 = GPIO_0021 Func3 bank 0 bit 17
- * KSI3 = GPIO_0026 Func3 bank 0 bit 22
- * KSI4 = GPIO_0027 Func3 bank 0 bit 23
- * KSI5 = GPIO_0030 Func3 bank 0 bit 24
- * KSI6 = GPIO_0031 Func3 bank 0 bit 25
- * KSI7 = GPIO_0032 Func3 bank 0 bit 26
+ * KSO0 = GPIO_40 Bank 1, Func 1
+ * KSO1 = GPIO_45 Bank 1, Func 1
+ * KSO2 = GPIO_46 Bank 1, Func 1
+ * KSO3 = GPIO_47 Bank 1, Func 1
+ * KSO4 = GPIO_107 Bank 2, Func 1
+ * KSO5 = GPIO_112 Bank 2, Func 1
+ * KSO6 = GPIO_113 Bank 2, Func 1
+ * KSO7 = GPIO_120 Bank 2, Func 1
+ * KSO8 = GPIO_121 Bank 2, Func 1
+ * KSO9 = GPIO_122 Bank 2, Func 1
+ * KSO10 = GPIO_123 Bank 2, Func 1
+ * KSO11 = GPIO_124 Bank 2, Func 1
+ * KSO12 = GPIO_125 Bank 2, Func 1
+ * KSO13 = GPIO_126 Bank 2, Func 1
+ * KSO15 = GPIO_151 Bank 3, Func 1
+ * KSO14 = GPIO_152 Bank 3, Func 1
  */
-/* KSI 0-7, Bank 0, Func3, bits 15-17, 22-26 */
-ALTERNATE(PIN_MASK(0, 0x07C38000),	3, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT)
-/* KSO 0-3 Bank 1, Func3, bits 0, 5-7 */
-ALTERNATE(PIN_MASK(1, 0xE1), 		3, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT)
-/* KSO 4-12, Bank 2, Func3, bits 7, 10-11, 16-21 */
-ALTERNATE(PIN_MASK(2, 0x003F0C80),	3, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT)
-/* KSO 13-14, Bank 2, Func3, bits 22, 26 */
-ALTERNATE(PIN_MASK(2, 0x04400000),	3, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT)
-/* KSO 15, Bank 3, Func3, bit 9 */
-ALTERNATE(PIN_MASK(3, 0x00000200),	3, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT)
+/* KSI 0-7, Bank 0, Func1 */
+ALTERNATE(PIN_MASK(0, 0x07C38000),	1, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT)
+/* KSO 0-3 Bank 1, Func1 */
+ALTERNATE(PIN_MASK(1, 0xE1), 		1, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT)
+/* KSO 4-12, Bank 2, Func1 */
+ALTERNATE(PIN_MASK(2, 0x007F0C80),	1, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT)
+/* KSO 15, Bank 3, Func1, bit 9 */
+ALTERNATE(PIN_MASK(3, 0x00000600),	1, MODULE_KEYBOARD_SCAN, GPIO_KB_OUTPUT)
 
 /* eSPI pins */
 /* ESPI_RESET# - GPIO_0061 Function 2, Bank 1 bit[17] */
