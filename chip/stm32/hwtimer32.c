@@ -142,7 +142,7 @@ defined(CHIP_FAMILY_STM32H7)
 }
 
 #if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32L4) || \
-	defined(CHIP_FAMILY_STM32H7)
+	defined(CHIP_FAMILY_STM32F4) || defined(CHIP_FAMILY_STM32H7)
 /* for families using a variable clock feeding the timer */
 static void update_prescaler(void)
 {
@@ -183,7 +183,8 @@ static void update_prescaler(void)
 #endif  /* CONFIG_WATCHDOG_HELP */
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, update_prescaler, HOOK_PRIO_DEFAULT);
-#endif /* CHIP_FAMILY_STM32L || CHIP_FAMILY_STM32L4 || CHIP_FAMILY_STM32H7 */
+#endif /* CHIP_FAMILY_STM32L  || CHIP_FAMILY_STM32L4 || */
+	/*  CHIP_FAMILY_STM32F4 || CHIP_FAMILY_STM32H7 */
 
 int __hw_clock_source_init(uint32_t start_t)
 {
