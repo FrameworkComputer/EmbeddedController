@@ -149,10 +149,10 @@ static int write_command(uint16_t command,
 	request_header->command = command;
 	request_header->data_len = req_len;
 	request_header->header_crc =
-		crc8((uint8_t *)request_header, sizeof(*request_header)-1);
+		cros_crc8((uint8_t *)request_header, sizeof(*request_header)-1);
 	if (req_len > 0)
 		data[sizeof(*request_header) + req_len] =
-			crc8(&data[sizeof(*request_header)], req_len);
+			cros_crc8(&data[sizeof(*request_header)], req_len);
 
 	ret = uart_alt_pad_write_read((void *)data, tx_length,
 				      (void *)data, rx_length, timeout_us);
@@ -179,8 +179,8 @@ static int write_command(uint16_t command,
 	}
 
 	if (response_header->header_crc !=
-			crc8((uint8_t *)response_header,
-				sizeof(*response_header)-1)) {
+	    cros_crc8((uint8_t *)response_header,
+		      sizeof(*response_header) - 1)) {
 		INCR_COMM_STATS(errcrc);
 		return EC_ERROR_CRC;
 	}
@@ -206,9 +206,10 @@ static int write_command(uint16_t command,
 	}
 
 	/* Check data CRC. */
-	if (hascrc && data[rx_length - 1] !=
-		    crc8(&data[tx_length + sizeof(*request_header)],
-				 resp_len)) {
+	if (hascrc &&
+	    data[rx_length - 1] !=
+		    cros_crc8(&data[tx_length + sizeof(*request_header)],
+			      resp_len)) {
 		INCR_COMM_STATS(errdatacrc);
 		return EC_ERROR_CRC;
 	}

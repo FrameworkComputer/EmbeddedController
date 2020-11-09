@@ -217,7 +217,7 @@ static int handle_command(char *input)
 	/* Lastly, verify the CRC8 of the command. */
 	if (i+command_len > input_len)
 		goto command_has_error;
-	if (packed_crc8 != crc8(&input[i], command_len)) {
+	if (packed_crc8 != cros_crc8(&input[i], command_len)) {
 command_has_error:
 		/* Send back the error string. */
 		ccprintf("&&EE\n");
