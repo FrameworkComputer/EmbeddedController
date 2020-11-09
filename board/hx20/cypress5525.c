@@ -585,3 +585,28 @@ static int cmd_cypd_get_status(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(cypdstatus, cmd_cypd_get_status,
 			"[number]",
 			"Get Cypress PD controller status");
+
+
+static int cmd_cypd_control(int argc, char **argv)
+{
+	int i, enable;
+	char *e;
+	if (argc == 3) {
+		i = strtoi(argv[1], &e, 0);
+		if (*e || i >= PD_CHIP_COUNT)
+			return EC_ERROR_PARAM1;
+
+		if (!parse_bool(argv[2], &enable))
+			return EC_ERROR_PARAM2; 
+
+		if (enable)
+			gpio_enable_interrupt(pd_chip_config[i].gpio);
+		else
+			gpio_disable_interrupt(pd_chip_config[i].gpio);
+
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(cypdctl, cmd_cypd_control,
+			"[number] [enable/disable]",
+			"Set if handling is active for controller");
