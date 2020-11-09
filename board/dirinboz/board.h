@@ -24,6 +24,8 @@
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_USB_PORT_ENABLE_DYNAMIC
 
+#define CONFIG_KEYBOARD_FACTORY_TEST
+
 /* USB-A config */
 #define GPIO_USB1_ILIM_SEL IOEX_USB_A0_CHARGE_EN_L
 #define GPIO_USB2_ILIM_SEL IOEX_USB_A1_CHARGE_EN_DB_L
@@ -173,6 +175,11 @@ void board_reset_pd_mcu(void);
 void tcpc_alert_event(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
 void ppc_interrupt(enum gpio_signal signal);
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+#endif
 
 #endif /* !__ASSEMBLER__ */
 
