@@ -260,6 +260,8 @@ static void clock_pll_configure(void)
 		PLLCFGR_PLLR(i2sdiv);
 }
 
+void low_power_init(void);
+
 void config_hispeed_clock(void)
 {
 #ifdef CONFIG_STM32_CLOCK_HSE_HZ
@@ -273,8 +275,10 @@ void config_hispeed_clock(void)
 
 	/* Switch SYSCLK to PLL, setup bus prescalers. */
 	clock_switch_osc(OSC_PLL);
-	/* we cannot go to low power mode as we are running on the PLL */
-	disable_sleep(SLEEP_MASK_PLL);
+
+#ifdef CONFIG_LOW_POWER_IDLE
+	low_power_init();
+#endif
 }
 
 void clock_wait_bus_cycles(enum bus_type bus, uint32_t cycles)
@@ -421,3 +425,114 @@ void rtc_set(uint32_t sec)
 	rtc_lock_regs();
 }
 #endif
+
+#ifdef CONFIG_LOW_POWER_IDLE
+/* Low power idle statistics */
+static int idle_sleep_cnt;
+static int idle_dsleep_cnt;
+static uint64_t idle_dsleep_time_us;
+static int dsleep_recovery_margin_us = 1000000;
+
+/* STOP_MODE_LATENCY: delay to wake up from STOP mode with main regulator off */
+#define STOP_MODE_LATENCY 50 /* us */
+/*
+ * SET_RTC_MATCH_DELAY: max time to set RTC match alarm. If we set the alarm
+ * in the past, it will never wake up and cause a watchdog.
+ */
+#define SET_RTC_MATCH_DELAY 120 /* us */
+
+
+void low_power_init(void)
+{
+	/* Turn off the main regulator during stop mode */
+	STM32_PWR_CR |= STM32_PWR_CR_LPSDSR /* aka LPDS */;
+}
+
+void clock_refresh_console_in_use(void)
+{
+}
+
+void __idle(void)
+{
+	timestamp_t t0;
+	uint32_t rtc_diff;
+	int next_delay, margin_us;
+	struct rtc_time_reg rtc0, rtc1;
+
+	while (1) {
+		asm volatile("cpsid i");
+
+		t0 = get_time();
+		next_delay = __hw_clock_event_get() - t0.le.lo;
+
+		if (DEEP_SLEEP_ALLOWED &&
+		    (next_delay > (STOP_MODE_LATENCY + SET_RTC_MATCH_DELAY))) {
+			/* Deep-sleep in STOP mode */
+			idle_dsleep_cnt++;
+
+			/*
+			 * TODO(b/174337385) no support for wake-up on USART
+			 * uart_enable_wakeup(1);
+			 */
+
+			/* Set deep sleep bit */
+			CPU_SCB_SYSCTRL |= 0x4;
+
+			set_rtc_alarm(0, next_delay - STOP_MODE_LATENCY,
+				      &rtc0, 0);
+			/* ensure outstanding memory transactions complete */
+			asm volatile("dsb");
+
+			asm("wfi");
+
+			CPU_SCB_SYSCTRL &= ~0x4;
+
+			/*uart_enable_wakeup(0);*/
+
+			/* Fast forward timer according to RTC counter */
+			reset_rtc_alarm(&rtc1);
+			rtc_diff = get_rtc_diff(&rtc0, &rtc1);
+			t0.val = t0.val + rtc_diff;
+			force_time(t0);
+
+			/* Record time spent in deep sleep. */
+			idle_dsleep_time_us += rtc_diff;
+
+			/* Calculate how close we were to missing deadline */
+			margin_us = next_delay - rtc_diff;
+			if (margin_us < 0)
+				/* Use CPUTS to save stack space */
+				CPUTS("Idle overslept!\n");
+
+			/* Record the closest to missing a deadline. */
+			if (margin_us < dsleep_recovery_margin_us)
+				dsleep_recovery_margin_us = margin_us;
+		} else {
+			idle_sleep_cnt++;
+
+			/* Normal idle : only CPU clock stopped */
+			asm("wfi");
+		}
+		asm volatile("cpsie i");
+	}
+}
+
+/* Print low power idle statistics. */
+static int command_idle_stats(int argc, char **argv)
+{
+	timestamp_t ts = get_time();
+
+	ccprintf("Num idle calls that sleep:           %d\n", idle_sleep_cnt);
+	ccprintf("Num idle calls that deep-sleep:      %d\n", idle_dsleep_cnt);
+	ccprintf("Time spent in deep-sleep:            %.6llds\n",
+			idle_dsleep_time_us);
+	ccprintf("Total time on:                       %.6llds\n", ts.val);
+	ccprintf("Deep-sleep closest to wake deadline: %dus\n",
+			dsleep_recovery_margin_us);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
+			"",
+			"Print last idle stats");
+#endif /* CONFIG_LOW_POWER_IDLE */
