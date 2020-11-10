@@ -1108,18 +1108,27 @@ bool pd_is_disconnected(int port)
 	return !pd_is_connected(port);
 }
 
-static __maybe_unused void bc12_role_change_handler(int port)
+static void bc12_role_change_handler(int port, enum pd_data_role prev_data_role,
+	enum pd_data_role data_role)
 {
-	int event;
+	int event = 0;
 	int task_id = USB_CHG_PORT_TO_TASK_ID(port);
+	bool role_changed = (data_role != prev_data_role);
+
+	if (!IS_ENABLED(CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER))
+		return;
 
 	/* Get the data role of our device */
-	switch (pd_get_data_role(port)) {
+	switch (data_role) {
 	case PD_ROLE_UFP:
-		event = USB_CHG_EVENT_DR_UFP;
+		/* Only trigger BC12 detection on a role change */
+		if (role_changed)
+			event = USB_CHG_EVENT_DR_UFP;
 		break;
 	case PD_ROLE_DFP:
-		event = USB_CHG_EVENT_DR_DFP;
+		/* Only trigger BC12 host mode on a role change */
+		if (role_changed)
+			event = USB_CHG_EVENT_DR_DFP;
 		break;
 	case PD_ROLE_DISCONNECTED:
 		event = USB_CHG_EVENT_CC_OPEN;
@@ -1127,7 +1136,9 @@ static __maybe_unused void bc12_role_change_handler(int port)
 	default:
 		return;
 	}
-	task_set_event(task_id, event, 0);
+
+	if (event)
+		task_set_event(task_id, event, 0);
 }
 
 /*
@@ -1563,6 +1574,9 @@ void tc_event_check(int port, int evt)
 
 void tc_set_data_role(int port, enum pd_data_role role)
 {
+	enum pd_data_role prev_data_role;
+
+	prev_data_role = tc[port].data_role;
 	tc[port].data_role = role;
 
 	if (IS_ENABLED(CONFIG_USBC_SS_MUX))
@@ -1579,8 +1593,7 @@ void tc_set_data_role(int port, enum pd_data_role role)
 	 * instead of VBUS changes, need to set an event to wake up the USB_CHG
 	 * task and indicate the current data role.
 	 */
-	if (IS_ENABLED(CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER))
-		bc12_role_change_handler(port);
+	bc12_role_change_handler(port, prev_data_role, tc[port].data_role);
 
 	/* Notify TCPC of role update */
 	tcpm_set_msg_header(port, tc[port].power_role, tc[port].data_role);
@@ -1967,6 +1980,8 @@ static void tc_error_recovery_run(const int port)
  */
 static void tc_unattached_snk_entry(const int port)
 {
+	enum pd_data_role prev_data_role;
+
 	if (get_last_state_tc(port) != TC_UNATTACHED_SRC) {
 		tc_detached(port);
 		print_current_state(port);
@@ -1984,14 +1999,14 @@ static void tc_unattached_snk_entry(const int port)
 	typec_select_pull(port, TYPEC_CC_RD);
 	typec_update_cc(port);
 
+	prev_data_role = tc[port].data_role;
 	tc[port].data_role = PD_ROLE_DISCONNECTED;
 	/*
 	 * When data role set events are used to enable BC1.2, then CC
 	 * detach events are used to notify BC1.2 that it can be powered
 	 * down.
 	 */
-	if (IS_ENABLED(CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER))
-		bc12_role_change_handler(port);
+	bc12_role_change_handler(port, prev_data_role, tc[port].data_role);
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
@@ -2469,6 +2484,8 @@ static void tc_attached_snk_exit(const int port)
  */
 static void tc_unattached_src_entry(const int port)
 {
+	enum pd_data_role prev_data_role;
+
 	if (get_last_state_tc(port) != TC_UNATTACHED_SNK) {
 		tc_detached(port);
 		print_current_state(port);
@@ -2487,6 +2504,7 @@ static void tc_unattached_src_entry(const int port)
 	typec_select_src_current_limit_rp(port, CONFIG_USB_PD_PULLUP);
 	typec_update_cc(port);
 
+	prev_data_role = tc[port].data_role;
 	tc[port].data_role = PD_ROLE_DISCONNECTED;
 
 	/*
@@ -2494,8 +2512,7 @@ static void tc_unattached_src_entry(const int port)
 	 * detach events are used to notify BC1.2 that it can be powered
 	 * down.
 	 */
-	if (IS_ENABLED(CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER))
-		bc12_role_change_handler(port);
+	bc12_role_change_handler(port, prev_data_role, tc[port].data_role);
 
 	if (IS_ENABLED(CONFIG_USBC_PPC)) {
 		/* There is no sink connected. */
