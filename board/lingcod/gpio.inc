@@ -85,6 +85,7 @@ GPIO(USB_C1_OC_ODL,			PIN(5, 0), GPIO_ODR_HIGH)
 UNIMPLEMENTED(USB_C1_LS_EN)
 
 /* Misc Signals */
+GPIO(EC_H1_PACKET_MODE,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
 
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
