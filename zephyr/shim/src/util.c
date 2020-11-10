@@ -3,10 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <common.h>
-#include <stdlib.h>
 #include <ctype.h>
-#include <util.h>
+#include <stdlib.h>
+#include <strings.h>
+
+#define HIDE_EC_STDLIB
+#include "common.h"
+#include "util.h"
 
 /* Int and Long are same size, just forward to existing Long implementation */
 int strtoi(const char *nptr, char **endptr, int base)
