@@ -813,7 +813,7 @@ static void charger_enable_psys(void)
 out:
 	mutex_unlock(&control1_mutex);
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, charger_enable_psys, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, charger_enable_psys, HOOK_PRIO_DEFAULT);
 
 static void charger_disable_psys(void)
 {
@@ -837,7 +837,7 @@ static void charger_disable_psys(void)
 out:
 	mutex_unlock(&control1_mutex);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, charger_disable_psys, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, charger_disable_psys, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CHARGER_PSYS_READ
 int charger_get_system_power(void)
