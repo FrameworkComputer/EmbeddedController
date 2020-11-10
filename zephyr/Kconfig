@@ -47,6 +47,8 @@ menuconfig PLATFORM_EC_KEYBOARD
 	  keyboard_state_changed() (for i8042) or its client calling
 	  keyboard_scan_get_state() (for MKBP).
 
+if PLATFORM_EC_KEYBOARD
+
 choice "Protocol select"
 	prompt "Select the keyboard protocol to use"
 
@@ -61,6 +63,8 @@ config PLATFORM_EC_KEYBOARD_PROTOCOL_8042
 	  See here for docs: https://wiki.osdev.org/%228042%22_PS/2_Controller
 
 endchoice # PLATFORM_EC_KEYBOARD
+
+endif # PLATFORM_EC_KEYBOARD
 
 config PLATFORM_EC_CONSOLE_CMD_KEYBOARD_8042
 	bool "Enable the keyboard commands"
