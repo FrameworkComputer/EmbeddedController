@@ -327,24 +327,11 @@
 /* Support FAN */
 #define CONFIG_FANS 1
 
-/*
- * MEC17xx EVB + SKL/KBL RVP3 does not have
- * BD99992GW PMIC with NCP15WB thermistor.
- * We have connected a Maxim DS1624 I2C temperature
- * sensor. The sensor board has a thermistor on it
- * we connect to an EC ADC channel.
- */
-/*
-#if 0
-#define CONFIG_TEMP_SENSOR
-#define CONFIG_TEMP_SENSOR_BD99992GW
-#define CONFIG_THERMISTOR_NCP15WB
-#define CONFIG_DPTF
-#else
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_DPTF
-#endif
-*/
+#define CONFIG_TEMP_SENSOR_F75303
+#define F75303_I2C_ADDR_FLAGS 0x4D
+
 
 /* Enable GPSPI0 controller and port for
  * SPI Accelerometer.
@@ -491,6 +478,8 @@
 #define I2C_PORT_ACCEL          MCHP_I2C_PORT4
 #define I2C_PORT_BATTERY        MCHP_I2C_PORT1
 #define I2C_PORT_CHARGER        MCHP_I2C_PORT1
+#define I2C_PORT_THERMAL		MCHP_I2C_PORT3
+
 #endif
 
 
@@ -519,11 +508,7 @@
 				  IN_PCH_SLP_SUS_DEASSERTED)
 
 /* Thermal sensors read through PMIC ADC interface */
-#if 0
-#define I2C_PORT_THERMAL	I2C_PORT_PMIC
-#else
-#define I2C_PORT_THERMAL	MCHP_I2C_PORT4
-#endif
+
 
 /* Ambient Light Sensor address */
 #define OPT3001_I2C_ADDR_FLAGS	OPT3001_I2C_ADDR1_FLAGS
@@ -593,7 +578,10 @@ enum fan_channel {
 };
 
 enum temp_sensor_id {
-	TEMP_SENSOR_BOARD,
+	TEMP_SENSOR_LOCAL,
+	TEMP_SENSOR_CPU,
+	TEMP_SENSOR_DDR,
+	TEMP_SENSOR_BATTERY,
 	TEMP_SENSOR_COUNT
 };
 

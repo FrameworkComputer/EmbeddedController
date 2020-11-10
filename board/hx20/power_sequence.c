@@ -25,6 +25,7 @@
 #include "timer.h"
 #include "util.h"
 #include "wireless.h"
+#include "driver/temp_sensor/f75303.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
@@ -51,6 +52,8 @@ static void chipset_force_g3(void)
 	gpio_set_level(GPIO_PCH_PWR_EN, 0);
 	gpio_set_level(GPIO_PCH_DPWROK, 0);
 	gpio_set_level(GPIO_EC_ON, 0);
+	f75303_set_enabled(0);
+
 }
 
 void chipset_reset(enum chipset_reset_reason reason)
@@ -183,6 +186,7 @@ enum power_state power_handle_state(enum power_state state)
         gpio_set_level(GPIO_SUSP_L, 1);
 
         msleep(10);
+		f75303_set_enabled(1);
 
         gpio_set_level(GPIO_EC_VCCST_PG, 1);
 
@@ -197,6 +201,7 @@ enum power_state power_handle_state(enum power_state state)
 			gpio_set_level(GPIO_SUSP_L, 0);
             gpio_set_level(GPIO_EC_VCCST_PG, 0);
             gpio_set_level(GPIO_VR_ON, 0);
+			f75303_set_enabled(0);
 			return POWER_S3;
 		}
 
@@ -217,6 +222,7 @@ enum power_state power_handle_state(enum power_state state)
         gpio_set_level(GPIO_VR_ON, 0);
 		gpio_set_level(GPIO_PCH_PWROK, 0);
 		gpio_set_level(GPIO_SYS_PWROK, 0);
+		f75303_set_enabled(0);
 		return POWER_S3;
 		break;
 

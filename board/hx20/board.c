@@ -52,6 +52,7 @@
 #include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
+#include "driver/temp_sensor/f75303.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_charge.h"
@@ -536,14 +537,14 @@ void board_reset_pd_mcu(void)
 	//gpio_set_level(GPIO_PD_RST_L, 1);
 }
 
-static int board_get_temp(int idx, int *temp_k)
-{
-    /*TODO: thermal sensor function */
-    return -1;
-}
-
 const struct temp_sensor_t temp_sensors[] = {
-	{"sensor", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 0},
+	{"F75303_Local", TEMP_SENSOR_TYPE_BOARD, f75303_get_val,
+		F75303_IDX_LOCAL},
+	{"F75303_CPU", TEMP_SENSOR_TYPE_CPU, f75303_get_val,
+		F75303_IDX_REMOTE1},
+	{"F75303_DDR", TEMP_SENSOR_TYPE_BOARD, f75303_get_val,
+		F75303_IDX_REMOTE2},
+	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 

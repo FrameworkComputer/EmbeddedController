@@ -7,11 +7,12 @@
 
 #ifndef __CROS_EC_F75303_H
 #define __CROS_EC_F75303_H
-
+#ifndef F75303_I2C_ADDR_FLAGS
 #ifdef BOARD_MUSHU
 #define F75303_I2C_ADDR_FLAGS		0x4D
 #else
 #define F75303_I2C_ADDR_FLAGS		0x4C
+#endif
 #endif
 
 enum f75303_index {
@@ -36,5 +37,14 @@ enum f75303_index {
  * @return EC_SUCCESS if successful, non-zero if error.
  */
 int f75303_get_val(int idx, int *temp);
+
+/**
+ * Set if the underlying polling task will read the sensor
+ * or if it will skip, as the rail this sensor is on
+ * may sometimes be powered off
+ *
+ * @param enabled	Set if the sensor should be polled or skipped
+ */
+void f75303_set_enabled(uint8_t enabled);
 
 #endif  /* __CROS_EC_F75303_H */
