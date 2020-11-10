@@ -9,6 +9,12 @@
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
+#include "keyboard_backlight.h"
+
+/* Console output macros */
+#define CPUTS(outstr) cputs(CC_KEYBOARD, outstr)
+#define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_KEYBOARD, format, ## args)
 
 uint16_t scancode_set2[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 #ifdef CHIP_FAMILY_MEC17XX
@@ -130,5 +136,184 @@ void set_keycap_label(uint8_t row, uint8_t col, char val)
 {
 	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS)
 		keycap_label[col][row] = val;
+}
+#endif
+
+
+#ifdef CONFIG_KEYBOARD_BACKLIGHT
+
+
+
+static int hx20_kblight_enable(int enable)
+{
+	return EC_SUCCESS;
+}
+
+static int hx20_kblight_set_brightness(int percent)
+{
+	gpio_set_level(GPIO_EC_KBL_PWR_EN, percent ? 1 : 0);
+	return EC_SUCCESS;
+}
+
+static int hx20_kblight_get_brightness(void)
+{
+	return gpio_get_level(GPIO_EC_KBL_PWR_EN) ? 100 : 0;
+}
+
+static int hx20_kblight_init(void)
+{
+	gpio_set_level(GPIO_EC_KBL_PWR_EN, 0);
+	return EC_SUCCESS;
+}
+
+const struct kblight_drv kblight_hx20 = {
+	.init = hx20_kblight_init,
+	.set = hx20_kblight_set_brightness,
+	.get = hx20_kblight_get_brightness,
+	.enable = hx20_kblight_enable,
+};
+
+void board_kblight_init(void)
+{
+	kblight_register(&kblight_hx20);
+}
+#endif
+
+#ifdef CONFIG_KEYBOARD_CUSTOMIZATION_COMBINATION_KEY
+#define FN_PRESSED BIT(0)
+#define FN_LOCKED BIT(1)
+static uint8_t Fn_key;
+static uint8_t backlight_state;
+enum backlight_brightness {
+	KEYBOARD_BL_BRIGHTNESS_OFF = 0,
+	KEYBOARD_BL_BRIGHTNESS_LOW = 20,
+	KEYBOARD_BL_BRIGHTNESS_MED = 100,
+	KEYBOARD_BL_BRIGHTNESS_HIGH = 255,
+};
+
+enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
+					      int8_t pressed)
+{
+	const uint16_t pressed_key = *make_code;
+
+
+	if (pressed_key == SCANCODE_FN && pressed)
+		Fn_key |= FN_PRESSED;
+	else if (pressed_key == SCANCODE_FN && !pressed)
+		Fn_key &= ~FN_PRESSED;
+
+	if (!pressed)
+		return EC_SUCCESS;
+
+	/*
+	*If the function key is not held, then
+	* we pass through all events without modifying them
+	*/
+	if (Fn_key == 0)
+		return EC_SUCCESS;
+
+	switch (pressed_key) {
+	case SCANCODE_ESC: /* TODO: FUNCTION_LOCK */
+		break;
+	case SCANCODE_F1:  /* SPEAKER_MUTE */
+		*make_code = SCANCODE_VOLUME_MUTE;
+		break;
+	case SCANCODE_F2:  /* VOLUME_DOWN */
+		*make_code = SCANCODE_VOLUME_DOWN;
+
+		break;
+	case SCANCODE_F3:  /* VOLUME_UP */
+		*make_code = SCANCODE_VOLUME_UP;
+
+		break;
+	case SCANCODE_F4:  /* TODO: MIC_MUTE */
+
+		break;
+	case SCANCODE_F5:  /* PLAY_PAUSE */
+		*make_code = SCANCODE_PLAY_PAUSE;
+
+		break;
+	case SCANCODE_F6:  /* DIM_SCREEN */
+		*make_code = SCANCODE_BRIGHTNESS_DOWN;
+
+		break;
+	case SCANCODE_F7:  /* BRIGHTEN_SCREEN */
+		*make_code = SCANCODE_BRIGHTNESS_UP;
+
+		break;
+	case SCANCODE_F8:  /* TODO: EXTERNAL_DISPLAY */
+
+		break;
+	case SCANCODE_F9:  /* TODO: TOGGLE_WIFI */
+
+		break;
+	case SCANCODE_F10:  /* TODO: TOGGLE_BLUETOOTH */
+
+		break;
+	case SCANCODE_F11:
+			/* *
+			* TODO this might need an
+			* extra key combo of:
+			* 0xE012 0xE07C to simulate
+			* PRINT_SCREEN
+			*/
+		*make_code = 0xE07C;
+		break;
+	case SCANCODE_F12:  /* TODO: FRAMEWORK */
+		*make_code = 0xE02F;
+
+		break;
+	case SCANCODE_DELETE:  /* TODO: INSERT */
+		*make_code = 0xE070;
+		break;
+	case SCANCODE_B:
+			/* *
+			* TODO this might need an
+			* extra key combo of: E1 14 77 E1 F0 14 F0 77
+			* TODO: BREAK_KEY
+			*/
+		break;
+	case SCANCODE_K:  /* TODO: SCROLL_LOCK */
+		*make_code = 0x7E;
+		break;
+	case SCANCODE_P:  /* TODO: PAUSE */
+		break;
+	case SCANCODE_S:  /* TODO: SYSRQ */
+
+		break;
+	case SCANCODE_SPACE:	/* TODO: TOGGLE_KEYBOARD_BACKLIGHT */
+		switch (backlight_state) {
+		case KEYBOARD_BL_BRIGHTNESS_LOW:
+			backlight_state = KEYBOARD_BL_BRIGHTNESS_MED;
+			break;
+		case KEYBOARD_BL_BRIGHTNESS_MED:
+			backlight_state = KEYBOARD_BL_BRIGHTNESS_HIGH;
+			break;
+		case KEYBOARD_BL_BRIGHTNESS_HIGH:
+			backlight_state = KEYBOARD_BL_BRIGHTNESS_OFF;
+			break;
+		default:
+		case KEYBOARD_BL_BRIGHTNESS_OFF:
+			backlight_state = KEYBOARD_BL_BRIGHTNESS_LOW;
+			break;
+		}
+		kblight_set(backlight_state);
+		/* we dont want to pass the space key event to the OS */
+		return EC_ERROR_UNKNOWN;
+		break;
+	case SCANCODE_LEFT:  /* HOME */
+		*make_code = 0xE06C;
+		break;
+	case SCANCODE_RIGHT:  /* END */
+		*make_code = 0xE069;
+		break;
+	case SCANCODE_UP:  /* PAGE_UP */
+		*make_code = 0xE07D;
+		break;
+	case SCANCODE_DOWN:  /* PAGE_DOWN */
+		*make_code = 0xE07A;
+		break;
+	}
+	return EC_SUCCESS;
 }
 #endif

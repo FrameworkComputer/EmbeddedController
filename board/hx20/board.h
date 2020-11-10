@@ -28,14 +28,15 @@
 #define CONFIG_CUSTOMER_PORT80
 
 /*
- * Conbination key
+ * Combination key
  */
-/* #define CONFIG_KEYBOARD_CUSTOMIZATION_CONBINATION_KEY */
+#define CONFIG_KEYBOARD_CUSTOMIZATION_COMBINATION_KEY
 
 /* The Fn key function not ready yet undefined it until the function finish */
-/* #define CONFIG_KEYBOARD_SCANCODE_CALLBACK */
+#define CONFIG_KEYBOARD_SCANCODE_CALLBACK
 
-
+#define CONFIG_KEYBOARD_BACKLIGHT
+/*Assume we should move to CONFIG_PWM_KBLIGHT later*/
 /*
  * Debug on EVB with CONFIG_CHIPSET_DEBUG
  * Keep WDG disabled and JTAG enabled.
