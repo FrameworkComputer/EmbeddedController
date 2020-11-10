@@ -123,6 +123,9 @@ int gpio_is_implemented(enum gpio_signal signal)
 
 int gpio_get_level(enum gpio_signal signal)
 {
+	if (signal >= ARRAY_SIZE(configs))
+		return 0;
+
 	const int l = gpio_pin_get_raw(data[signal].dev, configs[signal].pin);
 
 	if (l < 0) {
@@ -134,11 +137,17 @@ int gpio_get_level(enum gpio_signal signal)
 
 const char *gpio_get_name(enum gpio_signal signal)
 {
+	if (signal >= ARRAY_SIZE(configs))
+		return "";
+
 	return configs[signal].name;
 }
 
 void gpio_set_level(enum gpio_signal signal, int value)
 {
+	if (signal >= ARRAY_SIZE(configs))
+		return;
+
 	int rv = gpio_pin_set_raw(data[signal].dev, configs[signal].pin, value);
 
 	if (rv < 0) {
@@ -248,6 +257,9 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 int gpio_disable_interrupt(enum gpio_signal signal)
 {
 	int rv;
+
+	if (signal >= ARRAY_SIZE(configs))
+		return -1;
 
 	rv = gpio_pin_interrupt_configure(data[signal].dev, configs[signal].pin,
 					  GPIO_INT_DISABLE);
