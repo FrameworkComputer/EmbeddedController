@@ -18,6 +18,7 @@
 #include "timer.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
+#include "usbc_ocp.h"
 #include "util.h"
 #include "watchdog.h"
 
@@ -602,7 +603,8 @@ static void sm5803_init(int chgnum)
 	rv |= main_write8(chgnum, SM5803_REG_INT1_EN, SM5803_INT1_CHG);
 	/* Enable end of charge interrupts for logging */
 	rv |= main_write8(chgnum, SM5803_REG_INT4_EN, SM5803_INT4_CHG_FAIL |
-						      SM5803_INT4_CHG_DONE);
+						      SM5803_INT4_CHG_DONE |
+						      SM5803_INT4_OTG_FAIL);
 
 	/* Set TINT interrupts for 360 K and 330 K */
 	rv |= meas_write8(chgnum, SM5803_REG_TINT_HIGH_TH,
@@ -1030,6 +1032,33 @@ void sm5803_handle_interrupt(int chgnum)
 
 	if (int_reg & SM5803_INT4_CHG_DONE)
 		CPRINTS("%s %d: CHG_DONE_INT fired!!!", CHARGER_NAME, chgnum);
+
+	if (int_reg & SM5803_INT4_OTG_FAIL) {
+		int status_reg;
+
+		/*
+		 * Gather status to detect if this was overcurrent
+		 *
+		 * Note: a status of 0 with this interrupt also indicates an
+		 * overcurrent (see b/170517117)
+		 */
+		chg_read8(chgnum, SM5803_REG_STATUS_DISCHG, &status_reg);
+		CPRINTS("%s %d: OTG_FAIL_INT fired. Status 0x%02x",
+			CHARGER_NAME, chgnum, status_reg);
+		if ((status_reg == 0) ||
+		    (status_reg == SM5803_STATUS_DISCHG_VBUS_SHORT)) {
+			pd_handle_overcurrent(chgnum);
+		}
+
+		/*
+		 * Clear source mode here when status is 0, since OTG disable
+		 * will detect us as sinking in this failure case.
+		 */
+		if (status_reg == 0)
+			rv = sm5803_flow1_update(chgnum, CHARGER_MODE_SOURCE |
+						 SM5803_FLOW1_DIRECTCHG_SRC_EN,
+						 MASK_CLR);
+	}
 }
 
 static void sm5803_irq_deferred(void)
