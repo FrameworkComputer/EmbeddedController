@@ -508,8 +508,8 @@ const struct fan_conf fan_conf_0 = {
 	.enable_gpio = -1,
 };
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 2800,
-	.rpm_start = 2800,
+	.rpm_min = 3200,
+	.rpm_start = 3200,
 	.rpm_max = 6000,
 };
 const struct fan_t fans[] = {
@@ -611,8 +611,8 @@ const static struct ec_thermal_config thermal_soc = {
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
 	},
-	.temp_fan_off = 0,
-	.temp_fan_max = 0,
+	.temp_fan_off = C_TO_K(32),
+	.temp_fan_max = C_TO_K(75),
 };
 
 const static struct ec_thermal_config thermal_cpu = {
@@ -623,8 +623,8 @@ const static struct ec_thermal_config thermal_cpu = {
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
 	},
-	.temp_fan_off = C_TO_K(37),
-	.temp_fan_max = C_TO_K(90),
+	.temp_fan_off = 0,
+	.temp_fan_max = 0,
 };
 
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
@@ -637,14 +637,14 @@ struct fan_step {
 
 /* Note: Do not make the fan on/off point equal to 0 or 100 */
 static const struct fan_step fan_table0[] = {
-	{.on =  0, .off =  2, .rpm = 0},
-	{.on = 15, .off =  2, .rpm = 2800},
-	{.on = 23, .off = 13, .rpm = 3200},
-	{.on = 30, .off = 21, .rpm = 3400},
-	{.on = 38, .off = 28, .rpm = 3700},
-	{.on = 45, .off = 36, .rpm = 4200},
-	{.on = 55, .off = 43, .rpm = 4500},
-	{.on = 66, .off = 53, .rpm = 5300},
+	{.on =  0, .off =  1, .rpm = 0},
+	{.on =  9, .off =  1, .rpm = 3200},
+	{.on = 21, .off =  7, .rpm = 3500},
+	{.on = 28, .off = 16, .rpm = 3900},
+	{.on = 37, .off = 26, .rpm = 4200},
+	{.on = 47, .off = 35, .rpm = 4600},
+	{.on = 56, .off = 44, .rpm = 5100},
+	{.on = 72, .off = 60, .rpm = 5500},
 };
 /* All fan tables must have the same number of levels */
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
