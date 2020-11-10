@@ -109,6 +109,12 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 	.saturation.atime = TCS_DEFAULT_ATIME,
 };
 
+const mat33_fp_t screen_standard_ref = {
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(1), 0,  0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
 struct motion_sensor_t motion_sensors[] = {
 	[SCREEN_ACCEL] = {
 		.name = "Screen Accel",
@@ -121,7 +127,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &g_bma253_data,
 		.port = I2C_PORT_SENSORS,
 		.i2c_spi_addr_flags = BMA2x2_I2C_ADDR2_FLAGS,
-		.rot_standard_ref = NULL,
+		.rot_standard_ref = &screen_standard_ref,
 		.default_range = 2,
 		.min_frequency = BMA255_ACCEL_MIN_FREQ,
 		.max_frequency = BMA255_ACCEL_MAX_FREQ,
