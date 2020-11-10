@@ -264,12 +264,55 @@ static void activate_mkbp_with_events(uint32_t events_to_add)
 static void force_mkbp_if_events(void)
 {
 	int toggled = 0;
+	int send_mkbp_interrupt = 0;
 
 	mutex_lock(&state.lock);
-	if (state.interrupt == INTERRUPT_ACTIVE) {
+	if (state.interrupt == INTERRUPT_INACTIVE) {
+		/*
+		 * When this function is called with state of interrupt set
+		 * to INACTIVE, it means that EC failed to send MKBP interrupt
+		 * to AP. In this case we are going to send interrupt once
+		 * again (without limits).
+		 */
+		send_mkbp_interrupt = 1;
+	} else if (state.interrupt == INTERRUPT_ACTIVE) {
+		/*
+		 * When this function is called with state of interrupt set
+		 * to ACTIVE, it means that AP failed to respond.
+		 *
+		 * It is safe to mark interrupt state as INACTIVE, because
+		 * force_mkbp_with_events() function can be only scheduled by
+		 * activate_mkbp_with_event() which will set interrupt state
+		 * to ACTIVE (and allow to increment failed_attempts counter).
+		 * After 3 attempts, we are setting interrupt state to INACTIVE
+		 * but we are not going to call activate_mkbp_with_events().
+		 * This was meant to unblock MKBP interrupt mechanism for new
+		 * events.
+		 */
+		state.interrupt = INTERRUPT_INACTIVE;
+		/*
+		 * Failed attempts counter is cleared only when AP pulls all
+		 * of events or we exceed number of attempts, so marking
+		 * interrupt as INACTIVE doesn't affect failed_attempts counter.
+		 * If we need to send interrupt once again
+		 * activate_mkbp_with_events() will set interrupt state to ACTIVE
+		 * before this function will be called.
+		 */
 		if (++state.failed_attempts < 3) {
-			state.interrupt = INTERRUPT_INACTIVE;
+			send_mkbp_interrupt = 1;
 			toggled = 1;
+		} else {
+			/*
+			 * If we exceed maximum number of failed attempts we
+			 * will stop trying to send MKBP interrupt for current
+			 * event (send_mkbp_interrupt == 0), but leaving
+			 * possibility to send MKBP interrupts for future
+			 * events (state of interrupt makred as inactive).
+			 * Future events should have a chance to be sent
+			 * 3 times, so we should clear failed attempts
+			 * counter now
+			 */
+			state.failed_attempts = 0;
 		}
 	}
 	mutex_unlock(&state.lock);
@@ -277,7 +320,8 @@ static void force_mkbp_if_events(void)
 	if (toggled)
 		CPRINTS("MKBP not cleared within threshold, toggling.");
 
-	activate_mkbp_with_events(0);
+	if (send_mkbp_interrupt)
+		activate_mkbp_with_events(0);
 }
 
 test_mockable int mkbp_send_event(uint8_t event_type)
