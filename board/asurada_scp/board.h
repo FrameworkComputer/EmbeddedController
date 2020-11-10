@@ -62,6 +62,9 @@
 
 #define SCP_IPI_NS_SERVICE 0xFF
 
+/* MPU settings */
+#define NR_MPU_ENTRIES 16
+
 #ifndef __ASSEMBLER__
 #include "gpio_signal.h"
 #endif /* !__ASSEMBLER__ */
