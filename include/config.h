@@ -4937,7 +4937,12 @@
 #define CONFIG_HOST_ESPI_VW_POWER_SIGNAL
 #endif
 
-#if defined(CONFIG_HOST_ESPI_VW_POWER_SIGNAL) && !defined(CONFIG_HOSTCMD_ESPI)
+/*
+ * Note that in Zephyr OS, eSPI can be enabled for virtual wires
+ * without using eSPI for host commands.
+ */
+#if (!defined(CONFIG_ZEPHYR) && defined(CONFIG_HOST_ESPI_VW_POWER_SIGNAL) && \
+     !defined(CONFIG_HOSTCMD_ESPI))
 #error Must enable eSPI to enable virtual wires.
 #endif
 

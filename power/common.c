@@ -92,7 +92,7 @@ DECLARE_HOST_COMMAND(EC_CMD_REBOOT_AP_ON_G3,
 
 __overridable int power_signal_get_level(enum gpio_signal signal)
 {
-	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI)) {
+	if (IS_ENABLED(CONFIG_HOST_ESPI_VW_POWER_SIGNAL)) {
 		/* Check signal is from GPIOs or VWs */
 		if (espi_signal_is_vw(signal))
 			return espi_vw_get_wire(signal);
@@ -102,7 +102,7 @@ __overridable int power_signal_get_level(enum gpio_signal signal)
 
 int power_signal_disable_interrupt(enum gpio_signal signal)
 {
-	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI)) {
+	if (IS_ENABLED(CONFIG_HOST_ESPI_VW_POWER_SIGNAL)) {
 		/* Check signal is from GPIOs or VWs */
 		if (espi_signal_is_vw(signal))
 			return espi_vw_disable_wire_int(signal);
@@ -112,7 +112,7 @@ int power_signal_disable_interrupt(enum gpio_signal signal)
 
 int power_signal_enable_interrupt(enum gpio_signal signal)
 {
-	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI)) {
+	if (IS_ENABLED(CONFIG_HOST_ESPI_VW_POWER_SIGNAL)) {
 		/* Check signal is from GPIOs or VWs */
 		if (espi_signal_is_vw(signal))
 			return espi_vw_enable_wire_int(signal);
