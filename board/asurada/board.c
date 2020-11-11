@@ -620,7 +620,7 @@ static struct mutex g_lid_mutex;
 static struct bmi_drv_data_t g_bmi160_data;
 static struct stprivate_data g_lis2dwl_data;
 
-#ifdef BOARD_ASURADA
+#ifdef BOARD_ASURADA_REV0
 /* Matrix to rotate accelerometer into standard reference frame */
 /* for rev 0 */
 static const mat33_fp_t base_standard_ref_rev0 = {
@@ -690,7 +690,7 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 	.saturation.again = TCS_DEFAULT_AGAIN,
 	.saturation.atime = TCS_DEFAULT_ATIME,
 };
-#endif /* BOARD_ASURADA */
+#endif /* BOARD_ASURADA_REV0 */
 
 struct motion_sensor_t motion_sensors[] = {
 	/*
@@ -770,7 +770,7 @@ struct motion_sensor_t motion_sensors[] = {
 			},
 		},
 	},
-#ifdef BOARD_ASURADA
+#ifdef BOARD_ASURADA_REV0
 	[CLEAR_ALS] = {
 		.name = "Clear Light",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
@@ -806,6 +806,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.min_frequency = 0,
 		.max_frequency = 0,
 	},
-#endif /* BOARD_ASURADA */
+#endif /* BOARD_ASURADA_REV0 */
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);

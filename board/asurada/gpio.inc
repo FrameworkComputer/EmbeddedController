@@ -33,7 +33,7 @@ GPIO_INT(BASE_IMU_INT_L,     PIN(J, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V,
          bmi160_interrupt)
 GPIO_INT(LID_ACCEL_INT_L,    PIN(J, 3), GPIO_INT_FALLING | GPIO_SEL_1P8V,
          lis2dw12_interrupt)
-#ifdef BOARD_ASURADA
+#ifdef BOARD_ASURADA_REV0
 GPIO_INT(ALS_RGB_INT_ODL,    PIN(F, 0), GPIO_INT_FALLING,
          tcs3400_interrupt)
 #endif
@@ -51,7 +51,7 @@ GPIO_INT(VOLUME_UP_L,        PIN(D, 6), GPIO_INT_BOTH | GPIO_PULL_UP,
          button_interrupt) /* EC_VOLUP_BTN_ODL */
 
 /* Other interrupts */
-#ifdef BOARD_ASURADA
+#ifdef BOARD_ASURADA_REV0
 GPIO_INT(AC_PRESENT,         PIN(M, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,
          extpower_interrupt) /* AC_OK / AC_PRESENT in rev0 */
 #else /* HAYATO */
