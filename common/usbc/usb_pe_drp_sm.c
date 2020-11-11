@@ -295,7 +295,7 @@ enum usb_pe_state {
 	PE_BIST_TX,
 	PE_BIST_RX,
 	PE_DEU_SEND_ENTER_USB,
-	PE_DR_SNK_GET_SINK_CAP,
+	PE_DR_GET_SINK_CAP,
 	PE_DR_SNK_GIVE_SOURCE_CAP,
 	PE_DR_SRC_GET_SOURCE_CAP,
 
@@ -414,9 +414,7 @@ __maybe_unused static const char * const pe_state_names[] = {
 	[PE_BIST_TX] = "PE_Bist_TX",
 	[PE_BIST_RX] = "PE_Bist_RX",
 	[PE_DEU_SEND_ENTER_USB]  = "PE_DEU_Send_Enter_USB",
-#ifdef CONFIG_USB_PD_FRS
-	[PE_DR_SNK_GET_SINK_CAP] = "PE_DR_SNK_Get_Sink_Cap",
-#endif
+	[PE_DR_GET_SINK_CAP] = "PE_DR_Get_Sink_Cap",
 	[PE_DR_SNK_GIVE_SOURCE_CAP] = "PE_DR_SNK_Give_Source_Cap",
 	[PE_DR_SRC_GET_SOURCE_CAP] = "PE_DR_SRC_Get_Source_Cap",
 
@@ -460,11 +458,6 @@ GEN_NOT_SUPPORTED(PE_SNK_CHUNK_RECEIVED);
 #define PE_SNK_CHUNK_RECEIVED PE_SNK_CHUNK_RECEIVED_NOT_SUPPORTED
 void pe_set_frs_enable(int port, int enable);
 #endif /* CONFIG_USB_PD_REV30 */
-
-#ifndef CONFIG_USB_PD_FRS
-GEN_NOT_SUPPORTED(PE_DR_SNK_GET_SINK_CAP);
-#define PE_DR_SNK_GET_SINK_CAP PE_DR_SNK_GET_SINK_CAP_NOT_SUPPORTED
-#endif /* CONFIG_USB_PD_FRS */
 
 #ifndef CONFIG_USB_PD_EXTENDED_MESSAGES
 GEN_NOT_SUPPORTED(PE_GIVE_BATTERY_CAP);
@@ -1351,6 +1344,11 @@ static bool common_src_snk_dpm_requests(int port)
 		pe_set_dpm_curr_request(port, DPM_REQUEST_EXIT_MODES);
 		dpm_set_mode_exit_request(port);
 		return true;
+	} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_GET_SNK_CAPS)) {
+		pe_set_dpm_curr_request(port,
+					DPM_REQUEST_GET_SNK_CAPS);
+		set_state_pe(port, PE_DR_GET_SINK_CAP);
+		return true;
 	}
 	return false;
 }
@@ -1818,6 +1816,9 @@ static void pe_src_startup_entry(int port)
 
 		/* Reset VCONN swap counter */
 		pe[port].vconn_swap_counter = 0;
+
+		/* Request partner sink caps */
+		pd_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
 	}
 }
 
@@ -2876,9 +2877,7 @@ static void pe_snk_select_capability_run(int port)
 				 * Setup to get Device Policy Manager to
 				 * request Sink Capabilities for possible FRS
 				 */
-				if (IS_ENABLED(CONFIG_USB_PD_FRS))
-					pd_dpm_request(port,
-						DPM_REQUEST_GET_SNK_CAPS);
+				pd_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
 				return;
 			}
 			/*
@@ -3241,12 +3240,6 @@ static void pe_snk_ready_run(int port)
 				pe_set_dpm_curr_request(port,
 						DPM_REQUEST_NEW_POWER_LEVEL);
 				set_state_pe(port, PE_SNK_SELECT_CAPABILITY);
-			} else if (IS_ENABLED(CONFIG_USB_PD_FRS) &&
-				   PE_CHK_DPM_REQUEST(port,
-						DPM_REQUEST_GET_SNK_CAPS)) {
-				pe_set_dpm_curr_request(port,
-						DPM_REQUEST_GET_SNK_CAPS);
-				set_state_pe(port, PE_DR_SNK_GET_SINK_CAP);
 			} else if (!common_src_snk_dpm_requests(port)) {
 				CPRINTF("Unhandled DPM Request %x received\n",
 					dpm_request);
@@ -6035,9 +6028,9 @@ static void pe_vcs_send_ps_rdy_swap_run(int port)
 #endif /* CONFIG_USBC_VCONN */
 
 /*
- * PE_DR_SNK_Get_Sink_Cap
+ * PE_DR_SNK_Get_Sink_Cap and PE_SRC_Get_Sink_Cap State (shared)
  */
-static __maybe_unused void pe_dr_snk_get_sink_cap_entry(int port)
+static void pe_dr_get_sink_cap_entry(int port)
 {
 	print_current_state(port);
 
@@ -6046,13 +6039,14 @@ static __maybe_unused void pe_dr_snk_get_sink_cap_entry(int port)
 	pe_sender_response_msg_entry(port);
 }
 
-static __maybe_unused void pe_dr_snk_get_sink_cap_run(int port)
+static void pe_dr_get_sink_cap_run(int port)
 {
 	int type;
 	int cnt;
 	int ext;
 	int rev;
 	enum pe_msg_check msg_check;
+	enum tcpm_transmit_type sop;
 
 	/*
 	 * Check the state of the message sent
@@ -6062,7 +6056,7 @@ static __maybe_unused void pe_dr_snk_get_sink_cap_run(int port)
 	/*
 	 * Determine if FRS is possible based on the returned Sink Caps
 	 *
-	 * Transition to PE_SNK_Ready when:
+	 * Transition to PE_[SRC,SNK]_Ready when:
 	 *   1) A Sink_Capabilities Message is received
 	 *   2) Or SenderResponseTimer times out
 	 *   3) Or a Reject Message is received.
@@ -6078,8 +6072,9 @@ static __maybe_unused void pe_dr_snk_get_sink_cap_run(int port)
 		cnt = PD_HEADER_CNT(rx_emsg[port].header);
 		ext = PD_HEADER_EXT(rx_emsg[port].header);
 		rev = PD_HEADER_REV(rx_emsg[port].header);
+		sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
 
-		if (ext == 0) {
+		if (ext == 0 && sop == TCPC_TX_SOP) {
 			if ((cnt > 0) && (type == PD_DATA_SINK_CAP)) {
 				uint32_t payload =
 					*(uint32_t *)rx_emsg[port].buf;
@@ -6110,25 +6105,28 @@ static __maybe_unused void pe_dr_snk_get_sink_cap_run(int port)
 						break;
 					}
 				}
-				set_state_pe(port, PE_SNK_READY);
-			} else if (type == PD_CTRL_REJECT ||
-				   type == PD_CTRL_NOT_SUPPORTED) {
-				set_state_pe(port, PE_SNK_READY);
-			} else {
-				set_state_pe(port, PE_SEND_SOFT_RESET);
+				pe_set_ready_state(port);
+				return;
+			} else if (cnt == 0 && (type == PD_CTRL_REJECT ||
+				   type == PD_CTRL_NOT_SUPPORTED)) {
+				pe_set_ready_state(port);
+				return;
 			}
-			return;
+			/* Unexpected messages fall through to soft reset */
 		}
+
+		pe_send_soft_reset(port, sop);
+		return;
 	}
 
 	/*
-	 * Transition to PE_SNK_Ready state when:
+	 * Transition to PE_[SRC,SNK]_Ready state when:
 	 *   1) SenderResponseTimer times out.
 	 *   2) Message was discarded.
 	 */
 	if ((msg_check & PE_MSG_DISCARDED) ||
 	    get_time().val > pe[port].sender_response_timer)
-		set_state_pe(port, PE_SNK_READY);
+		pe_set_ready_state(port);
 }
 
 /*
@@ -6624,12 +6622,10 @@ static const struct usb_state pe_states[] = {
 		.entry = pe_bist_rx_entry,
 		.run   = pe_bist_rx_run,
 	},
-#ifdef CONFIG_USB_PD_FRS
-	[PE_DR_SNK_GET_SINK_CAP] = {
-		.entry = pe_dr_snk_get_sink_cap_entry,
-		.run   = pe_dr_snk_get_sink_cap_run,
+	[PE_DR_GET_SINK_CAP] = {
+		.entry = pe_dr_get_sink_cap_entry,
+		.run   = pe_dr_get_sink_cap_run,
 	},
-#endif
 	[PE_DR_SNK_GIVE_SOURCE_CAP] = {
 		.entry = pe_dr_snk_give_source_cap_entry,
 		.run = pe_dr_snk_give_source_cap_run,

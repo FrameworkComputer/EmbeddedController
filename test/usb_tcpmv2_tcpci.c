@@ -244,6 +244,18 @@ __maybe_unused static int test_connect_as_pd3_source(void)
 	rx_id++;
 	mock_set_alert(TCPC_REG_ALERT_RX_STATUS);
 
+	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_GET_SINK_CAP, 0),
+		EC_SUCCESS, "%d");
+	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+	task_wait_event(10 * MSEC);
+	mock_tcpci_receive(PD_MSG_SOP,
+		PD_HEADER(PD_DATA_SINK_CAP, PD_ROLE_SINK,
+			PD_ROLE_UFP, rx_id,
+			1, PD_REV30, 0),
+		&pdo);
+	rx_id++;
+	mock_set_alert(TCPC_REG_ALERT_RX_STATUS);
+
 	task_wait_event(1 * SECOND);
 	TEST_EQ(tc_is_attached_src(PORT0), true, "%d");
 	TEST_EQ(TCPC_REG_ROLE_CTRL_RP(mock_tcpci_get_reg(TCPC_REG_ROLE_CTRL)),

@@ -103,6 +103,23 @@ test_static int test_send_caps_error(void)
 	task_wait_event(200 * MSEC);
 
 	/*
+	 * Expect GET_SINK_CAP, reply with a simple Sink Cap since sink partners
+	 * must support this message.
+	 */
+	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0),
+		PD_CTRL_GET_SINK_CAP, "%d");
+	fake_prl_message_sent(PORT0);
+	task_wait_event(10 * MSEC);
+	rx_emsg[PORT0].header = PD_HEADER(PD_DATA_SINK_CAP, PD_ROLE_SINK,
+			PD_ROLE_UFP, 2,
+			1, PD_REV30, 0);
+	rx_emsg[PORT0].len = 4;
+	*(uint32_t *)rx_emsg[PORT0].buf = PDO_FIXED(5000, 500,
+						    PDO_FIXED_COMM_CAP);
+	fake_prl_message_received(PORT0);
+	task_wait_event(200 * MSEC);
+
+	/*
 	 * Now connected. Send GET_SOURCE_CAP, to check how error sending
 	 * SOURCE_CAP is handled.
 	 */
