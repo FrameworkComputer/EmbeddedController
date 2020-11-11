@@ -332,6 +332,8 @@
 #define CONFIG_TEMP_SENSOR_F75303
 #define F75303_I2C_ADDR_FLAGS 0x4D
 
+#define CONFIG_THROTTLE_AP
+
 
 /* Enable GPSPI0 controller and port for
  * SPI Accelerometer.
@@ -582,6 +584,9 @@ enum temp_sensor_id {
 	TEMP_SENSOR_CPU,
 	TEMP_SENSOR_DDR,
 	TEMP_SENSOR_BATTERY,
+#ifdef CONFIG_PECI
+	TEMP_SENSOR_PECI,
+#endif /* CONFIG_PECI */
 	TEMP_SENSOR_COUNT
 };
 
