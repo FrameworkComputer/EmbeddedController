@@ -2,4 +2,5 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-zephyr_sources(i2c.c)
+string(TOLOWER "i2c-${CHIP_FAMILY}.c" chip_specific_i2c_shim)
+zephyr_sources(${chip_specific_i2c_shim})
