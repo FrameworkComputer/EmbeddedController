@@ -218,6 +218,7 @@
 #define PD_MAX_CURRENT_MA     3000
 #define PD_MAX_VOLTAGE_MV     20000
 #else
+#undef CONFIG_CMD_I2C_XFER
 #undef CONFIG_USB_POWER_DELIVERY
 #endif /* SECTION_IS_RO */
 
