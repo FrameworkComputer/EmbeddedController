@@ -13,8 +13,8 @@
  * SCP address	AP address	Note
  *
  * 0x0000_0000			SRAM
- * 0x1000_0000	0x6000_0000	un-cached DRAM
- * 0x2000_0000	0x7000_0000	un-cached DRAM
+ * 0x1000_0000	0x5000_0000	CPU DRAM
+ * 0x2000_0000	0x7000_0000
  * 0x3000_0000
  *
  * 0x4000_0000
@@ -30,7 +30,7 @@
  * 0xc000_0000	0x8000_0000
  * 0xd000_0000	0x2000_0000
  * 0xe000_0000	0x3000_0000
- * 0xf000_0000	0x5000_0000
+ * 0xf000_0000	0x6000_0000
  */
 
 #define REMAP_ADDR_SHIFT		28
@@ -40,7 +40,7 @@
 
 static const uint8_t addr_map[16] = {
 	MAP_INVALID,	/* SRAM */
-	0x6,		/* ext_addr_0x1 */
+	0x5,		/* ext_addr_0x1 */
 	0x7,		/* ext_addr_0x2 */
 	MAP_INVALID,	/* no ext_addr_0x3 */
 
@@ -57,7 +57,7 @@ static const uint8_t addr_map[16] = {
 	0x8,		/* ext_addr_0xc */
 	0x2,		/* ext_addr_0xd */
 	0x3,		/* ext_addr_0xe */
-	0x5,		/* ext_addr_0xf */
+	0x6,		/* ext_addr_0xf */
 };
 
 void memmap_init(void)
