@@ -180,9 +180,9 @@ void fan_set_rpm_target(int ch, int rpm)
 
 #if 0
 	CPRINTS(" Fan delta : %drpm %dintegral, commanded %d",
-	 		delta, integral_factor[ch],
-	 		pct +
-	 		integral_factor[ch]/FAN_PID_I_INV);
+			delta, integral_factor[ch],
+			pct +
+			integral_factor[ch]/FAN_PID_I_INV);
 #endif
 
 	if (rpm == 0)
