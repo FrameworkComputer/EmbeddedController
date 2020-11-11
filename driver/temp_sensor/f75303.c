@@ -14,6 +14,15 @@
 
 static int temps[F75303_IDX_COUNT];
 static int8_t fake_temp[F75303_IDX_COUNT] = {-1, -1, -1};
+static uint8_t f75303_enabled = 1;
+
+/**
+ * Enable or disable reading from the sensor
+ */
+void f75303_set_enabled(uint8_t enabled)
+{
+	f75303_enabled = enabled;
+}
 
 /**
  * Read 8 bits register from temp sensor.
@@ -30,8 +39,10 @@ static int get_temp(const int offset, int *temp)
 	int temp_raw = 0;
 
 	rv = raw_read8(offset, &temp_raw);
-	if (rv != 0)
+	if (rv != 0) {
+		*temp = 0;
 		return rv;
+	}
 
 	*temp = C_TO_K(temp_raw);
 	return EC_SUCCESS;
@@ -46,6 +57,8 @@ int f75303_get_val(int idx, int *temp)
 		*temp = C_TO_K(fake_temp[idx]);
 		return EC_SUCCESS;
 	}
+	if (!f75303_enabled)
+		return EC_ERROR_NOT_POWERED;
 
 	*temp = temps[idx];
 	return EC_SUCCESS;
@@ -53,9 +66,11 @@ int f75303_get_val(int idx, int *temp)
 
 static void f75303_sensor_poll(void)
 {
-	get_temp(F75303_TEMP_LOCAL, &temps[F75303_IDX_LOCAL]);
-	get_temp(F75303_TEMP_REMOTE1, &temps[F75303_IDX_REMOTE1]);
-	get_temp(F75303_TEMP_REMOTE2, &temps[F75303_IDX_REMOTE2]);
+	if (f75303_enabled) {
+		get_temp(F75303_TEMP_LOCAL, &temps[F75303_IDX_LOCAL]);
+		get_temp(F75303_TEMP_REMOTE1, &temps[F75303_IDX_REMOTE1]);
+		get_temp(F75303_TEMP_REMOTE2, &temps[F75303_IDX_REMOTE2]);
+	}
 }
 DECLARE_HOOK(HOOK_SECOND, f75303_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 

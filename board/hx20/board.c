@@ -52,6 +52,7 @@
 #include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
+#include "driver/temp_sensor/f75303.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_charge.h"
@@ -536,16 +537,6 @@ void board_reset_pd_mcu(void)
 	//gpio_set_level(GPIO_PD_RST_L, 1);
 }
 
-static int board_get_temp(int idx, int *temp_k)
-{
-    /*TODO: thermal sensor function */
-    return -1;
-}
-
-const struct temp_sensor_t temp_sensors[] = {
-	{"sensor", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 0},
-};
-BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 #ifdef CONFIG_ALS
 /* ALS instances. Must be in same order as enum als_id. */
@@ -1236,6 +1227,43 @@ init_fail:
 DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_INIT_I2C + 1);
 #endif
 
+
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_LOCAL] = {
+		.name = "F75303_Local",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = f75303_get_val,
+		.idx = F75303_IDX_LOCAL
+	},
+	[TEMP_SENSOR_CPU] = {
+		.name = "F75303_CPU",
+		.type = TEMP_SENSOR_TYPE_CPU,
+		.read = f75303_get_val,
+		.idx = F75303_IDX_REMOTE1
+	},
+	[TEMP_SENSOR_DDR] = {
+		.name = "F75303_DDR",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = f75303_get_val,
+		.idx = F75303_IDX_REMOTE2
+	},
+	[TEMP_SENSOR_BATTERY] = {
+		.name = "Battery",
+		.type = TEMP_SENSOR_TYPE_BATTERY,
+		.read = charge_get_battery_temp,
+		.idx = 0
+	},
+#ifdef CONFIG_PECI
+	[TEMP_SENSOR_PECI] = {
+		.name = "PECI",
+		.type = TEMP_SENSOR_TYPE_CPU,
+		.read = peci_temp_sensor_get_val,
+		.idx = 0,
+	},
+#endif /* CONFIG_PECI */
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
 #ifdef CONFIG_FANS
 /******************************************************************************/
 /* Physical fans. These are logically separate from pwm_channels. */
@@ -1243,21 +1271,98 @@ DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_INIT_I2C + 1);
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
 	.ch = 0,	/* Use MFT id to control fan */
-	.pgood_gpio = -1,
+	.pgood_gpio = GPIO_PWR_3V5V_PG,
 	.enable_gpio = -1,
 };
 
 /* Default */
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 3100,
-	.rpm_start = 6140,
-	.rpm_max = 6900,
+	.rpm_min = 1200,
+	.rpm_start = 1200,
+	.rpm_max = 5500,
 };
 
 const struct fan_t fans[FAN_CH_COUNT] = {
-	[FAN_CH_0] = { .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
+	[FAN_CH_0] = {
+		.conf = &fan_conf_0,
+		.rpm = &fan_rpm_0,
+	},
+};
+
+/*
+ * Inductor limits - used for both charger and regulator
+ *
+ * Need to use the lower of the charger IC, regulator, and the inductors
+ *
+ * Charger max recommended temperature 100C, max absolute temperature 125C
+ * ISL9241 regulator: operating range -40 C to 125 C
+ *
+ * Inductors: limit of ?C
+ * PCB: limit is 80c
+ */
+const static struct ec_thermal_config thermal_inductor = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(55),
+};
+
+const static struct ec_thermal_config thermal_battery = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(50),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(60),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(40),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(50),
+};
+#ifdef CONFIG_PECI
+const static struct ec_thermal_config thermal_cpu = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(95),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(100),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(101),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(55),
+	.temp_fan_max = C_TO_K(90),
 };
 #endif
+
+struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
+static void setup_fans(void)
+{
+	thermal_params[TEMP_SENSOR_LOCAL] = thermal_inductor;
+	thermal_params[TEMP_SENSOR_CPU] = thermal_inductor;
+	thermal_params[TEMP_SENSOR_DDR] = thermal_inductor;
+	thermal_params[TEMP_SENSOR_BATTERY] = thermal_battery;
+#ifdef CONFIG_PECI
+	thermal_params[TEMP_SENSOR_PECI] = thermal_cpu;
+#endif
+}
+DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
+#endif
+
+
+
 
 int mainboard_power_button_first_state;
 static void mainboard_power_button_change_deferred(void)
