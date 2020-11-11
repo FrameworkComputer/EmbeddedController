@@ -215,6 +215,14 @@ int system_jumped_to_this_image(void)
 	return jumped_to_image;
 }
 
+void system_hibernate(uint32_t seconds, uint32_t microseconds)
+{
+	/*
+	 * TODO(b:173787365): implement this.  For now, doing nothing
+	 * won't break anything, just will eat power.
+	 */
+}
+
 __test_only void system_common_reset_state(void)
 {
 	jdata = 0;
