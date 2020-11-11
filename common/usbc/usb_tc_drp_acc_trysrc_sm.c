@@ -356,8 +356,9 @@ void print_flag(int set_or_clear, int flag)
 }
 #endif /* DEBUG_PRINT_FLAG_AND_EVENT_NAMES */
 
-/* Generate a compiler error if invalid states are referenced */
 #ifndef CONFIG_USB_PD_TRY_SRC
+extern int TC_TRY_SRC_UNDEFINED;
+extern int TC_TRY_WAIT_SNK_UNDEFINED;
 #define TC_TRY_SRC	TC_TRY_SRC_UNDEFINED
 #define TC_TRY_WAIT_SNK	TC_TRY_WAIT_SNK_UNDEFINED
 #endif
@@ -456,12 +457,10 @@ static void pd_update_dual_role_config(int port);
 static void set_state_tc(const int port, const enum usb_tc_state new_state);
 test_export_static enum usb_tc_state get_state_tc(const int port);
 
-#ifdef CONFIG_USB_PD_TRY_SRC
 /* Enable variable for Try.SRC states */
 static uint32_t pd_try_src;
 static volatile enum try_src_override_t pd_try_src_override;
 static void pd_update_try_source(void);
-#endif
 
 static void sink_stop_drawing_current(int port);
 
@@ -1610,13 +1609,13 @@ static void sink_stop_drawing_current(int port)
 	}
 }
 
-#ifdef CONFIG_USB_PD_TRY_SRC
 static void pd_update_try_source(void)
 {
+#ifdef CONFIG_USB_PD_TRY_SRC
 	tc_enable_try_src(pd_is_try_source_capable());
+#endif
 }
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, pd_update_try_source, HOOK_PRIO_DEFAULT);
-#endif /* CONFIG_USB_PD_TRY_SRC */
 
 static void set_vconn(int port, int enable)
 {
