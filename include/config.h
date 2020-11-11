@@ -3456,6 +3456,8 @@
  */
 #undef CONFIG_MCHP_GPSPI
 
+#undef CONFIG_MCHP_PECI
+
 /* Default stack size to use for tasks, in bytes */
 #undef CONFIG_STACK_SIZE
 

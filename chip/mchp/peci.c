@@ -5,6 +5,7 @@
 
 /* PECI interface for Chrome EC */
 #include "chipset.h"
+#include "console.h"
 #include "hooks.h"
 #include "peci_chip.h"
 #include "registers.h"
@@ -15,6 +16,8 @@
 #define PECI_MAX_FIFO_SIZE  32
 #define WAIT_IDLE_TIMEOUT   60   /* ms */
 #define POLYNOMIAL          0x07
+
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
 /* PECI 3.0 does not support multiple originators (hosts) */
 #define HOST_ID             0x00
@@ -254,7 +257,7 @@ static uint8_t peci_trans(struct peci_params_t *peci)
             {
                 read_databytes(peci->data_fifo, (peci->read_length+1));
 
-                if((!error) && (peci->cmd_FCS == 0))
+                if((!error) && (peci->cmd_FCS != 0))
                 {
                     for(i = 0; i < (peci-> read_length+1); i++)
                     {
@@ -387,6 +390,7 @@ void peci_protocol(uint8_t peci_addr, uint8_t cmd_code, uint8_t domain,
     uint8_t aw_FCS_calc;
     int index;
     int len = out_size - 3;
+    int dlen;
 
     peci_params.cmd_fifo[0] = peci_addr;
     peci_params.cmd_fifo[1] = len;
@@ -434,6 +438,8 @@ void peci_protocol(uint8_t peci_addr, uint8_t cmd_code, uint8_t domain,
     peci_trans(&peci_params);
 
     /* TODO: check error message, if no error, pass the data fifo to *in*/
-    in = peci_params.data_fifo;
+    for (dlen = 0; dlen < peci_params.read_length; dlen++) {
+        in[dlen] = peci_params.data_fifo[dlen];
+    }
 }
 

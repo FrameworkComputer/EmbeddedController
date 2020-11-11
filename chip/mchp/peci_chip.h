@@ -18,6 +18,7 @@
 #define CC_PASSED       0x40        /* command passed */
 #define CC_TIMED_OUT    0x80        /* command timed-out */
 #define CC_BAD          0x90        /* unknown-invalid-illegal request */
+#define CPU_ADDR        0x30
 
 /* PECI Command Code */
 enum peci_command_t {
@@ -36,4 +37,4 @@ enum peci_command_t {
 void peci_protocol(uint8_t peci_addr, uint8_t cmd_code, uint8_t domain,
         const uint8_t *out, int out_size, uint8_t *in, int in_size);
 
-#endif  /* __CROS_EC_PS2_CHIP_H */
+#endif  /* __CROS_EC_PECI_CHIP_H */
