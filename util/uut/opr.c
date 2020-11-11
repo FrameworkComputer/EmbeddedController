@@ -239,7 +239,7 @@ void opr_write_mem(uint8_t *buffer, uint32_t addr, uint32_t size)
 			 * data buffer
 			 */
 			(*(uint32_t *)data_buf) =
-				strtoul(token, &stop_str, BASE_HEXADECIMAL);
+				strtoull(token, &stop_str, BASE_HEXADECIMAL);
 
 			/* Prepare the next iteration */
 			token = strtok(NULL, seps);

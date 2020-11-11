@@ -99,59 +99,59 @@ static int test_strtoi(void)
 	return EC_SUCCESS;
 }
 
-static int test_strtoul(void)
+static int test_strtoull(void)
 {
 	char *e;
 
-	TEST_ASSERT(strtoul("10", &e, 0) == 10);
+	TEST_ASSERT(strtoull("10", &e, 0) == 10);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoul("010", &e, 0) == 8);
+	TEST_ASSERT(strtoull("010", &e, 0) == 8);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoul("+010", &e, 0) == 8);
+	TEST_ASSERT(strtoull("+010", &e, 0) == 8);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoul("-010", &e, 0) == 0);
+	TEST_ASSERT(strtoull("-010", &e, 0) == 0);
 	TEST_ASSERT(e && (*e == '-'));
-	TEST_ASSERT(strtoul("0x1f z", &e, 0) == 31);
+	TEST_ASSERT(strtoull("0x1f z", &e, 0) == 31);
 	TEST_ASSERT(e && (*e == ' '));
-	TEST_ASSERT(strtoul("0X1f z", &e, 0) == 31);
+	TEST_ASSERT(strtoull("0X1f z", &e, 0) == 31);
 	TEST_ASSERT(e && (*e == ' '));
-	TEST_ASSERT(strtoul("10a", &e, 16) == 266);
+	TEST_ASSERT(strtoull("10a", &e, 16) == 266);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoul("0x02C", &e, 16) == 44);
+	TEST_ASSERT(strtoull("0x02C", &e, 16) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoul("+0x02C", &e, 16) == 44);
+	TEST_ASSERT(strtoull("+0x02C", &e, 16) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoul("-0x02C", &e, 16) == 0);
+	TEST_ASSERT(strtoull("-0x02C", &e, 16) == 0);
 	TEST_ASSERT(e && (*e == '-'));
-	TEST_ASSERT(strtoul("0x02C", &e, 0) == 44);
+	TEST_ASSERT(strtoull("0x02C", &e, 0) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoul("+0x02C", &e, 0) == 44);
+	TEST_ASSERT(strtoull("+0x02C", &e, 0) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoul("-0x02C", &e, 0) == 0);
+	TEST_ASSERT(strtoull("-0x02C", &e, 0) == 0);
 	TEST_ASSERT(e && (*e == '-'));
-	TEST_ASSERT(strtoul("0X02C", &e, 16) == 44);
+	TEST_ASSERT(strtoull("0X02C", &e, 16) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoul("+0X02C", &e, 16) == 44);
+	TEST_ASSERT(strtoull("+0X02C", &e, 16) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoul("-0X02C", &e, 16) == 0);
+	TEST_ASSERT(strtoull("-0X02C", &e, 16) == 0);
 	TEST_ASSERT(e && (*e == '-'));
-	TEST_ASSERT(strtoul("0X02C", &e, 0) == 44);
+	TEST_ASSERT(strtoull("0X02C", &e, 0) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoul("+0X02C", &e, 0) == 44);
+	TEST_ASSERT(strtoull("+0X02C", &e, 0) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoul("-0X02C", &e, 0) == 0);
+	TEST_ASSERT(strtoull("-0X02C", &e, 0) == 0);
 	TEST_ASSERT(e && (*e == '-'));
-	TEST_ASSERT(strtoul("   -12", &e, 0) == 0);
+	TEST_ASSERT(strtoull("   -12", &e, 0) == 0);
 	TEST_ASSERT(e && (*e == '-'));
-	TEST_ASSERT(strtoul("!", &e, 0) == 0);
+	TEST_ASSERT(strtoull("!", &e, 0) == 0);
 	TEST_ASSERT(e && (*e == '!'));
-	TEST_ASSERT(strtoul("+!", &e, 0) == 0);
+	TEST_ASSERT(strtoull("+!", &e, 0) == 0);
 	TEST_ASSERT(e && (*e == '!'));
-	TEST_ASSERT(strtoul("+0!", &e, 0) == 0);
+	TEST_ASSERT(strtoull("+0!", &e, 0) == 0);
 	TEST_ASSERT(e && (*e == '!'));
-	TEST_ASSERT(strtoul("+0x!", &e, 0) == 0);
+	TEST_ASSERT(strtoull("+0x!", &e, 0) == 0);
 	TEST_ASSERT(e && (*e == '!'));
-	TEST_ASSERT(strtoul("+0X!", &e, 0) == 0);
+	TEST_ASSERT(strtoull("+0X!", &e, 0) == 0);
 	TEST_ASSERT(e && (*e == '!'));
 
 	return EC_SUCCESS;
@@ -268,7 +268,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_isprint);
 	RUN_TEST(test_strstr);
 	RUN_TEST(test_strtoi);
-	RUN_TEST(test_strtoul);
+	RUN_TEST(test_strtoull);
 	RUN_TEST(test_parse_bool);
 	RUN_TEST(test_strzcpy);
 	RUN_TEST(test_strncpy);

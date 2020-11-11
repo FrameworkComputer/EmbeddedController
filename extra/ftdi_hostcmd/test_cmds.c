@@ -596,9 +596,9 @@ int main(int argc, char *argv[])
 
 	/* Range (no error checking) */
 	if (optind < argc)
-		start = (uint16_t)strtoul(argv[optind++], 0, 0);
+		start = (uint16_t)strtoull(argv[optind++], 0, 0);
 	if (optind < argc)
-		stop = (uint16_t)strtoul(argv[optind++], 0, 0);
+		stop = (uint16_t)strtoull(argv[optind++], 0, 0);
 
 	/* Find something to talk to */
 	mpsse = MPSSE(SPI0, 1000000, 0);

@@ -1009,7 +1009,7 @@ static enum string_value_kind expr_parse_string(const char *str,
 		kind = k_signed;
 		break;
 	case S_HEX:
-		val->u = strtoull(str, &tail, 16);
+		val->u = strtoulll(str, &tail, 16);
 		kind = k_unsigned;
 		break;
 	default:

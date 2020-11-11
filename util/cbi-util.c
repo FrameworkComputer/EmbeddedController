@@ -221,7 +221,7 @@ static int parse_integer_field(const char *arg, struct integer_field *f)
 	char *e;
 	char *ch;
 
-	val = strtoul(arg, &e, 0);
+	val = strtoull(arg, &e, 0);
 	if (val > UINT32_MAX || !*arg || (e && *e && *e != ':')) {
 		fprintf(stderr, "Invalid integer value\n");
 		return -1;
@@ -231,7 +231,7 @@ static int parse_integer_field(const char *arg, struct integer_field *f)
 	ch = strchr(arg, ':');
 	if (ch) {
 		ch++;
-		val = strtoul(ch, &e , 0);
+		val = strtoull(ch, &e, 0);
 		if (val < 1 || 4 < val || !*ch || (e && *e)) {
 			fprintf(stderr, "Invalid size suffix\n");
 			return -1;
@@ -291,7 +291,7 @@ static int cmd_create(int argc, char **argv)
 			set_mask |= ARGS_MASK_BOARD_VERSION;
 			break;
 		case OPT_ERASE_BYTE:
-			erase = strtoul(optarg, &e, 0);
+			erase = strtoull(optarg, &e, 0);
 			if (!*optarg || (e && *e)) {
 				fprintf(stderr, "Invalid --erase_byte\n");
 				return -1;
@@ -306,7 +306,7 @@ static int cmd_create(int argc, char **argv)
 				return -1;
 			break;
 		case OPT_SIZE:
-			val = strtoul(optarg, &e, 0);
+			val = strtoull(optarg, &e, 0);
 			if (val > UINT16_MAX || !*optarg || (e && *e)) {
 				fprintf(stderr, "Invalid --size\n");
 				return -1;

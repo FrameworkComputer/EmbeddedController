@@ -91,21 +91,21 @@ static void parse_cmdline(int argc, char *argv[])
 			firmware_binary = optarg;
 			break;
 		case 'p':
-			pid = (uint16_t) strtoul(optarg, &e, 16);
+			pid = (uint16_t) strtoull(optarg, &e, 16);
 			if (!*optarg || (e && *e)) {
 				printf("Invalid argument: \"%s\"\n", optarg);
 				errorcnt++;
 			}
 			break;
 		case 'v':
-			vid = (uint16_t) strtoul(optarg, &e, 16);
+			vid = (uint16_t) strtoull(optarg, &e, 16);
 			if (!*optarg || (e && *e)) {
 				printf("Invalid argument: \"%s\"\n", optarg);
 				errorcnt++;
 			}
 			break;
 		case 'e':
-			ep_num = (uint8_t) strtoul(optarg, &e, 0);
+			ep_num = (uint8_t) strtoull(optarg, &e, 0);
 			if (!*optarg || (e && *e)) {
 				printf("Invalid argument: \"%s\"\n", optarg);
 				errorcnt++;

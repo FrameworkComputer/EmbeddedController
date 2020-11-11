@@ -2122,7 +2122,7 @@ static int parse_range_options(char *str, struct iteflash_config *conf)
 		return -1;
 	}
 
-	conf->range_base = strtoul(str, &size, 16);
+	conf->range_base = strtoull(str, &size, 16);
 	if (!size || !*size)
 		return 0;
 
@@ -2136,7 +2136,7 @@ static int parse_range_options(char *str, struct iteflash_config *conf)
 		return -1;
 	}
 
-	conf->range_size = strtoul(size, &size, 16);
+	conf->range_size = strtoull(size, &size, 16);
 	if ((size && *size) || !conf->range_size) {
 		fprintf(stderr, "wrong range size specification\n");
 		return -1;

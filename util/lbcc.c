@@ -291,7 +291,7 @@ static int split_line(char *buf, char *delim, struct parse_s *elt, int max)
 	     i < max && (w = strtok_r(ptr, delim, &buf_savetok)) != 0;
 	     ptr = 0, i++) {
 		elt[i].word = w;
-		elt[i].val = (uint32_t)strtoul(w, &e, 0);
+		elt[i].val = (uint32_t)strtoull(w, &e, 0);
 		if (!e || !*e)
 			elt[i].is_num = 1;
 
@@ -315,7 +315,7 @@ static int is_led_set(char *buf, uint8_t *valp)
 
 	buf++;
 	for (;;) {
-		next_led = strtoul(buf, &ptr, 0);
+		next_led = strtoull(buf, &ptr, 0);
 		if (buf == ptr) {
 			if (buf[0] == '}' && buf[1] == 0) {
 				*valp = led;

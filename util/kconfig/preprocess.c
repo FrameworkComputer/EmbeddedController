@@ -360,7 +360,7 @@ static char *eval_clause(const char *str, size_t len, int argc, char *argv[])
 	 * from a user-function call (i.e. local-scope variable).  If not
 	 * available, then look-up global-scope variables.
 	 */
-	n = strtoul(tmp, &endptr, 10);
+	n = strtoull(tmp, &endptr, 10);
 	if (!*endptr && n > 0 && n <= argc) {
 		res = xstrdup(argv[n - 1]);
 		goto free_tmp;

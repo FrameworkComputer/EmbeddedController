@@ -191,7 +191,8 @@ __stdlib_compat int strtoi(const char *nptr, char **endptr, int base)
 	return neg ? -result : result;
 }
 
-__stdlib_compat uint64_t strtoul(const char *nptr, char **endptr, int base)
+__stdlib_compat unsigned long long int strtoull(const char *nptr, char **endptr,
+						int base)
 {
 	uint64_t result = 0;
 	int c = '\0';
@@ -226,6 +227,7 @@ __stdlib_compat uint64_t strtoul(const char *nptr, char **endptr, int base)
 		*endptr = (char *)nptr - 1;
 	return result;
 }
+BUILD_ASSERT(sizeof(unsigned long long int) == sizeof(uint64_t));
 
 __stdlib_compat int parse_bool(const char *s, int *dest)
 {

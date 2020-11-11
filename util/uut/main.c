@@ -441,7 +441,7 @@ int main(int argc, char *argv[])
 
 	/* Write buffer data to chosen address */
 	if (strcmp(opr_name, OPR_WRITE_MEM) == 0) {
-		addr = strtoul(addr_str, &stop_str, 0);
+		addr = strtoull(addr_str, &stop_str, 0);
 
 		if (console) {
 			/*
@@ -468,21 +468,21 @@ int main(int argc, char *argv[])
 	} else if (strcmp(opr_name, OPR_READ_MEM) == 0) {
 		/* Read data to chosen address */
 
-		addr = strtoul(addr_str, &stop_str, 0);
-		size = strtoul(size_str, &stop_str, 0);
+		addr = strtoull(addr_str, &stop_str, 0);
+		size = strtoull(size_str, &stop_str, 0);
 
 		opr_read_mem(file_name, addr, size);
 	} else if (strcmp(opr_name, OPR_EXECUTE_EXIT) == 0) {
 		/* Execute From Address a non-return code */
 
-		addr = strtoul(addr_str, &stop_str, 0);
+		addr = strtoull(addr_str, &stop_str, 0);
 
 		opr_execute_exit(addr);
 		exit_uart_app(EC_OK);
 	} else if (strcmp(opr_name, OPR_EXECUTE_CONT) == 0) {
 		/* Execute From Address a returnable code */
 
-		addr = strtoul(addr_str, &stop_str, 0);
+		addr = strtoull(addr_str, &stop_str, 0);
 
 		opr_execute_return(addr);
 	} else {

@@ -454,7 +454,7 @@ int cmd_adc_read(int argc, char *argv[])
 		return -1;
 	}
 
-	p.adc_channel = (uint8_t)strtoul(argv[1], &e, 0);
+	p.adc_channel = (uint8_t)strtoull(argv[1], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "\"%s\": invalid channel!\n", argv[1]);
 		return -1;
@@ -539,7 +539,7 @@ int cmd_hibdelay(int argc, char *argv[])
 	if (argc < 2) {
 		p.seconds = 0; /* Just read the current settings. */
 	} else {
-		p.seconds = strtoul(argv[1], &e, 0);
+		p.seconds = strtoull(argv[1], &e, 0);
 		if (e && *e) {
 			fprintf(stderr, "invalid number\n");
 			return -1;
@@ -603,7 +603,7 @@ static int cmd_hostevent(int argc, char *argv[])
 			return -1;
 		}
 		p.action = EC_HOST_EVENT_SET;
-		p.value = strtoul(argv[3], &e, 0);
+		p.value = strtoull(argv[3], &e, 0);
 		if (e && *e) {
 			fprintf(stderr, "Bad value\n");
 			return -1;
@@ -698,7 +698,7 @@ int cmd_hostsleepstate(int argc, char *argv[])
 
 			if (argc > 2) {
 				p1.suspend_params.sleep_timeout_ms =
-					strtoul(argv[2], &afterscan, 0);
+					strtoull(argv[2], &afterscan, 0);
 
 				if ((*afterscan != '\0') ||
 				    (afterscan == argv[2])) {
@@ -4823,7 +4823,7 @@ static int cmd_lightbar(int argc, char **argv)
 		int rv;
 		if (argc > 2) {
 			param.set_brightness.num = 0xff &
-				strtoul(argv[2], &e, 16);
+				strtoull(argv[2], &e, 16);
 			return lb_do_cmd(LIGHTBAR_CMD_SET_BRIGHTNESS,
 					 &param, &resp);
 		}
@@ -4862,7 +4862,7 @@ static int cmd_lightbar(int argc, char **argv)
 		uint8_t num;
 		if (argc == 2)
 			return lb_show_msg_names();
-		num = 0xff & strtoul(argv[2], &e, 16);
+		num = 0xff & strtoull(argv[2], &e, 16);
 		if (e && *e)
 			num = lb_find_msg_by_name(argv[2]);
 		if (num >= LIGHTBAR_NUM_SEQUENCES) {
@@ -4880,25 +4880,25 @@ static int cmd_lightbar(int argc, char **argv)
 
 	if (argc == 4) {
 		char *e;
-		param.reg.ctrl = 0xff & strtoul(argv[1], &e, 16);
-		param.reg.reg = 0xff & strtoul(argv[2], &e, 16);
-		param.reg.value = 0xff & strtoul(argv[3], &e, 16);
+		param.reg.ctrl = 0xff & strtoull(argv[1], &e, 16);
+		param.reg.reg = 0xff & strtoull(argv[2], &e, 16);
+		param.reg.value = 0xff & strtoull(argv[3], &e, 16);
 		return lb_do_cmd(LIGHTBAR_CMD_REG, &param, &resp);
 	}
 
 	if (argc == 5) {
 		char *e;
-		param.set_rgb.led = strtoul(argv[1], &e, 16);
-		param.set_rgb.red = strtoul(argv[2], &e, 16);
-		param.set_rgb.green = strtoul(argv[3], &e, 16);
-		param.set_rgb.blue = strtoul(argv[4], &e, 16);
+		param.set_rgb.led = strtoull(argv[1], &e, 16);
+		param.set_rgb.red = strtoull(argv[2], &e, 16);
+		param.set_rgb.green = strtoull(argv[3], &e, 16);
+		param.set_rgb.blue = strtoull(argv[4], &e, 16);
 		return lb_do_cmd(LIGHTBAR_CMD_SET_RGB, &param, &resp);
 	}
 
 	/* Only thing left is to try to read an LED value */
 	if (argc == 2) {
 		char *e;
-		param.get_rgb.led = strtoul(argv[1], &e, 0);
+		param.get_rgb.led = strtoull(argv[1], &e, 0);
 		if (!(e && *e)) {
 			r = lb_do_cmd(LIGHTBAR_CMD_GET_RGB, &param, &resp);
 			if (r)
@@ -7503,7 +7503,7 @@ static int cmd_charge_state(int argc, char **argv)
 			if (!strcasecmp(argv[2], "help"))
 				break;
 			param.cmd = CHARGE_STATE_CMD_GET_PARAM;
-			p = strtoul(argv[2], &e, 0);
+			p = strtoull(argv[2], &e, 0);
 			if (e && *e) {
 				fprintf(stderr, "Bad param: %s\n", argv[2]);
 				return -1;
@@ -7521,12 +7521,12 @@ static int cmd_charge_state(int argc, char **argv)
 			return 0;
 		case 4:
 			param.cmd = CHARGE_STATE_CMD_SET_PARAM;
-			p = strtoul(argv[2], &e, 0);
+			p = strtoull(argv[2], &e, 0);
 			if (e && *e) {
 				fprintf(stderr, "Bad param: %s\n", argv[2]);
 				return -1;
 			}
-			v = strtoul(argv[3], &e, 0);
+			v = strtoull(argv[3], &e, 0);
 			if (e && *e) {
 				fprintf(stderr, "Bad value: %s\n", argv[3]);
 				return -1;
@@ -10310,7 +10310,7 @@ int main(int argc, char *argv[])
 			break;
 
 		case OPT_DEV:
-			dev = strtoul(optarg, &e, 0);
+			dev = strtoull(optarg, &e, 0);
 			if (!*optarg || (e && *e)) {
 				fprintf(stderr, "Invalid --dev\n");
 				parse_error = 1;
@@ -10336,7 +10336,7 @@ int main(int argc, char *argv[])
 			device_name[40] = '\0';
 			break;
 		case OPT_I2C_BUS:
-			i2c_bus = strtoul(optarg, &e, 0);
+			i2c_bus = strtoull(optarg, &e, 0);
 			if (*optarg == '\0' || (e && *e != '\0')
 			    || i2c_bus < 0) {
 				fprintf(stderr, "Invalid --i2c_bus\n");

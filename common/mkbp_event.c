@@ -479,7 +479,7 @@ static int command_mkbp_wake_mask(int argc, char **argv)
 {
 	if (argc == 3) {
 		char *e;
-		uint32_t new_mask = strtoul(argv[2], &e, 0);
+		uint32_t new_mask = strtoull(argv[2], &e, 0);
 
 		if (*e)
 			return EC_ERROR_PARAM2;

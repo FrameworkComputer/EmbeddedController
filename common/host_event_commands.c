@@ -459,7 +459,7 @@ static int command_host_event(int argc, char **argv)
 	/* Handle sub-commands */
 	if (argc == 3) {
 		char *e;
-		host_event_t i = strtoul(argv[2], &e, 0);
+		host_event_t i = strtoull(argv[2], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM2;
 
