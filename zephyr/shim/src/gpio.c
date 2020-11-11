@@ -167,19 +167,39 @@ void gpio_set_level(enum gpio_signal signal, int value)
 	}
 }
 
+/* GPIO flags which are the same in Zephyr and this codebase */
+#define GPIO_CONVERSION_SAME_BITS                                       \
+	(GPIO_OPEN_DRAIN | GPIO_PULL_UP | GPIO_PULL_DOWN | GPIO_INPUT | \
+	 GPIO_OUTPUT)
+
 static int convert_from_zephyr_flags(const gpio_flags_t zephyr)
 {
-	int ec_flags = 0;
+	/* Start out with the bits that are the same. */
+	int ec_flags = zephyr & GPIO_CONVERSION_SAME_BITS;
+	gpio_flags_t unhandled_flags = zephyr & ~GPIO_CONVERSION_SAME_BITS;
 
-	/*
-	 * Convert from Zephyr flags to EC flags. Note that a few flags have
-	 * the same value in both builds environments (e.g. GPIO_OUTPUT)
-	 */
-	if (zephyr | GPIO_OUTPUT) {
-		ec_flags |= GPIO_OUTPUT;
+	/* TODO(b/173789980): handle conversion of more bits? */
+	if (unhandled_flags) {
+		LOG_WRN("Unhandled GPIO bits in zephyr->ec conversion: 0x%08X",
+			unhandled_flags);
 	}
 
 	return ec_flags;
+}
+
+static gpio_flags_t convert_to_zephyr_flags(int ec_flags)
+{
+	/* Start out with the bits that are the same. */
+	gpio_flags_t zephyr_flags = ec_flags & GPIO_CONVERSION_SAME_BITS;
+	int unhandled_flags = ec_flags & ~GPIO_CONVERSION_SAME_BITS;
+
+	/* TODO(b/173789980): handle conversion of more bits? */
+	if (unhandled_flags) {
+		LOG_WRN("Unhandled GPIO bits in ec->zephyr conversion: 0x%08X",
+			unhandled_flags);
+	}
+
+	return zephyr_flags;
 }
 
 int gpio_get_default_flags(enum gpio_signal signal)
@@ -284,4 +304,22 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 	}
 
 	return rv;
+}
+
+void gpio_reset(enum gpio_signal signal)
+{
+	if (signal >= ARRAY_SIZE(configs))
+		return;
+
+	gpio_pin_configure(data[signal].dev, configs[signal].pin,
+			   configs[signal].init_flags);
+}
+
+void gpio_set_flags(enum gpio_signal signal, int flags)
+{
+	if (signal >= ARRAY_SIZE(configs))
+		return;
+
+	gpio_pin_configure(data[signal].dev, configs[signal].pin,
+			   convert_to_zephyr_flags(flags));
 }
