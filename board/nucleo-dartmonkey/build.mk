@@ -13,7 +13,7 @@ board-y+=fpsensor_detect.o
 test-list-y=\
        aes \
        compile_time_macros \
-       crc \
+       crc32 \
        fpsensor \
        mutex \
        pingpong \

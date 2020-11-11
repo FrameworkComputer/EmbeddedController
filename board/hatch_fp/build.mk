@@ -23,7 +23,7 @@ endif
 test-list-y=\
        aes \
        compile_time_macros \
-       crc \
+       crc32 \
        flash_physical \
        flash_write_protect \
        fpsensor \
