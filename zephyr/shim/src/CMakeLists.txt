@@ -5,7 +5,6 @@
 zephyr_sources(console.c)
 zephyr_sources(gpio.c)
 zephyr_sources(util.c)
-zephyr_sources(crc.c)
 
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOOKS hooks.c)
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TIMER hwtimer.c)
