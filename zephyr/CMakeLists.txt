@@ -49,5 +49,13 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_LID_SWITCH
                                                 "${PLATFORM_EC}/common/lid_switch.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWER_BUTTON
                                                 "${PLATFORM_EC}/common/power_button.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_INTEL
+                                                "${PLATFORM_EC}/common/power_button_x86.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/queue.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TIMER   "${PLATFORM_EC}/common/timer.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
+                                                "${PLATFORM_EC}/power/common.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_INTEL
+                                                "${PLATFORM_EC}/power/intel_x86.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_ICELAKE
+                                                "${PLATFORM_EC}/power/icelake.c")

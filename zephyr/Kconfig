@@ -12,6 +12,8 @@ menuconfig PLATFORM_EC
 
 if PLATFORM_EC
 
+rsource "Kconfig.powerseq"
+
 # Below is a hack to use CONFIG_ZEPHYR in platform/ec code before
 # config.h has been included.  There is some tricky ordering in some
 # header files that we cannot use config.h (e.g., common.h and

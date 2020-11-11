@@ -1,0 +1,80 @@
+# Copyright 2020 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC_POWERSEQ
+	bool "Enable power sequencing"
+	depends on AP
+	help
+	  Enable shimming the platform/ec AP power sequencing code.
+
+if PLATFORM_EC_POWERSEQ
+
+menuconfig PLATFORM_EC_POWERSEQ_INTEL
+	bool "Enable shimming common Intel power sequencing code"
+	depends on AP_X86_INTEL
+	default y
+	help
+	  Enable shimming platform/ec AP power sequencing code for
+	  Intel.
+
+if PLATFORM_EC_POWERSEQ_INTEL
+
+config PLATFORM_EC_POWERSEQ_CPU_PROCHOT_ACTIVE_LOW
+	bool "The CPU_PROCHOT signal is an active low signal"
+	default y
+	help
+	  If CPU_PROCHOT should be treated as active-low, enable this
+	  configuration option.
+
+config PLATFORM_EC_POWERSEQ_PP5000_CONTROL
+	bool "Enable a task-safe way to control the PP5000 rail"
+	default y
+	help
+	  Guard access to the PP5000 GPIO using mutex locks, allowing
+	  the rail to be changed in a task-safe manner.
+
+config PLATFORM_EC_POWERSEQ_RSMRST_DELAY
+	bool "Wait at least 10ms before deasserting RSMRST to PCH"
+	default y if AP_X86_INTEL_TGL
+	help
+	  Wait at least 10ms between power signals going high and
+	  deasserting RSMRST to PCH.
+
+config PLATFORM_EC_POWERSEQ_RTC_RESET
+	bool "Board has an RTC reset"
+	help
+	  This project has a gpio named GPIO_PCH_RTCRST defined in
+	  gpio_map.h, which can be used to reset the AP's RTC when set
+	  high.
+
+menuconfig PLATFORM_EC_POWERSEQ_ICELAKE
+	bool "Use common Icelake code for power sequencing"
+	default y if AP_X86_INTEL_TGL
+	default y if AP_X86_INTEL_ADL
+	help
+	  Use the Icelake common code for power sequencing.  Note that
+	  this applies to more platforms than just Icelake.  For
+	  example, Tigerlake uses this code too.
+
+if PLATFORM_EC_POWERSEQ_ICELAKE
+
+config PLATFORM_EC_POWERSEQ_SLP_S3_L_OVERRIDE
+	bool "Enable a quirk to release SLP_S3_L after DSW_PWROK is high"
+	default y if AP_X86_INTEL_TGL
+	help
+	  Enable a quirk to reconfigure SLP_S3_L back to an input a
+	  short delay after DSW_PWROK goes high.
+
+config PLATFORM_EC_POWERSEQ_PP3300_RAIL_FIRST
+	bool "Turn on the PP3300 rail before PP5000"
+	default y if AP_X86_INTEL_TGL
+	help
+	  When switching from G3 to S5, turn on the PP3300 rail before
+	  the PP5500 rail.
+
+endif # PLATFORM_EC_POWERSEQ_ICELAKE
+
+endif # PLATFORM_EC_POWERSEQ_INTEL
+
+endif # PLATFORM_EC_POWERSEQ
