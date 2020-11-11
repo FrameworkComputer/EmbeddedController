@@ -23,9 +23,11 @@
  */
 #define GPIO_AC_PRESENT            NAMED_GPIO(acok_od)
 #define GPIO_CPU_PROCHOT           NAMED_GPIO(ec_prochot_odl)
+#define GPIO_EC_PCH_SYS_PWROK      NAMED_GPIO(ec_pch_sys_pwrok)
 #define GPIO_EN_PP3300_A           NAMED_GPIO(en_pp3300_a)
 #define GPIO_EN_PP5000             NAMED_GPIO(en_pp5000_a)
 #define GPIO_EN_PP5000_A           NAMED_GPIO(en_pp5000_a)
+#define GPIO_EN_PPVAR_VCCIN        NAMED_GPIO(en_ppvar_vccin)
 #define GPIO_LID_OPEN              NAMED_GPIO(ec_lid_open)
 #define GPIO_PCH_DSW_PWROK         NAMED_GPIO(ec_pch_dsw_pwrok)
 #define GPIO_PCH_PWRBTN_L          NAMED_GPIO(ec_pch_pwr_btn_odl)
@@ -60,6 +62,18 @@
 #define EC_CROS_GPIO_INTERRUPTS                                           \
 	GPIO_INT(GPIO_AC_PRESENT, GPIO_INT_EDGE_BOTH, extpower_interrupt) \
 	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt)        \
+	GPIO_INT(GPIO_PCH_SLP_S0_L, GPIO_INT_EDGE_BOTH,                   \
+		 power_signal_interrupt)                                  \
+	GPIO_INT(GPIO_PCH_SLP_S3_L, GPIO_INT_EDGE_BOTH,                   \
+		 power_signal_interrupt)                                  \
+	GPIO_INT(GPIO_PCH_SLP_SUS_L, GPIO_INT_EDGE_BOTH,                  \
+		 power_signal_interrupt)                                  \
+	GPIO_INT(GPIO_PG_EC_RSMRST_ODL, GPIO_INT_EDGE_BOTH,               \
+		 power_signal_interrupt)                                  \
+	GPIO_INT(GPIO_PCH_DSW_PWROK, GPIO_INT_EDGE_BOTH,                  \
+		 power_signal_interrupt)                                  \
+	GPIO_INT(GPIO_PG_EC_ALL_SYS_PWRGD, GPIO_INT_EDGE_BOTH,            \
+		 power_signal_interrupt)                                  \
 	GPIO_INT(GPIO_POWER_BUTTON_L, GPIO_INT_EDGE_BOTH,                 \
 		 power_button_interrupt)
 

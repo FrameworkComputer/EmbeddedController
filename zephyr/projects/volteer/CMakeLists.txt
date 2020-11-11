@@ -12,3 +12,4 @@ project(volteer)
 
 # Include board specific header files
 zephyr_include_directories(include)
+target_sources(app PRIVATE "src/pwrok_signals.c")
