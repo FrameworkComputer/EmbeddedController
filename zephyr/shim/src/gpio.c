@@ -106,6 +106,9 @@ struct gpio_signal_callback gpio_interrupts[] = {
 static struct gpio_signal_callback *
 get_interrupt_from_signal(enum gpio_signal signal)
 {
+	if (signal >= ARRAY_SIZE(configs))
+		return NULL;
+
 	for (size_t i = 0; i < ARRAY_SIZE(gpio_interrupts); i++) {
 		if (gpio_interrupts[i].signal == signal)
 			return &gpio_interrupts[i];
@@ -172,6 +175,9 @@ static int convert_from_zephyr_flags(const gpio_flags_t zephyr)
 
 int gpio_get_default_flags(enum gpio_signal signal)
 {
+	if (signal >= ARRAY_SIZE(configs))
+		return 0;
+
 	return convert_from_zephyr_flags(configs[signal].init_flags);
 }
 
