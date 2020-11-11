@@ -1277,8 +1277,8 @@ const struct fan_conf fan_conf_0 = {
 
 /* Default */
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 1000,
-	.rpm_start = 1000,
+	.rpm_min = 1200,
+	.rpm_start = 1200,
 	.rpm_max = 5500,
 };
 
@@ -1289,11 +1289,22 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 	},
 };
 
-const static struct ec_thermal_config thermal_a = {
+/*
+ * Inductor limits - used for both charger and regulator
+ *
+ * Need to use the lower of the charger IC, regulator, and the inductors
+ *
+ * Charger max recommended temperature 100C, max absolute temperature 125C
+ * ISL9241 regulator: operating range -40 C to 125 C
+ *
+ * Inductors: limit of ?C
+ * PCB: limit is 80c
+ */
+const static struct ec_thermal_config thermal_inductor = {
 	.temp_host = {
 		[EC_TEMP_THRESH_WARN] = 0,
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_WARN] = 0,
@@ -1301,7 +1312,7 @@ const static struct ec_thermal_config thermal_a = {
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
 	.temp_fan_off = C_TO_K(40),
-	.temp_fan_max = C_TO_K(80),
+	.temp_fan_max = C_TO_K(55),
 };
 
 const static struct ec_thermal_config thermal_battery = {
@@ -1321,14 +1332,17 @@ const static struct ec_thermal_config thermal_battery = {
 #ifdef CONFIG_PECI
 const static struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(95),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(100),
+		[EC_TEMP_THRESH_WARN] = C_TO_K(95),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(100),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(101),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = 0,
 	},
-	.temp_fan_off = C_TO_K(90),
-	.temp_fan_max = C_TO_K(95),
+	.temp_fan_off = C_TO_K(55),
+	.temp_fan_max = C_TO_K(90),
 };
 #endif
 
@@ -1336,9 +1350,9 @@ struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 static void setup_fans(void)
 {
-	thermal_params[TEMP_SENSOR_LOCAL] = thermal_a;
-	thermal_params[TEMP_SENSOR_CPU] = thermal_a;
-	thermal_params[TEMP_SENSOR_DDR] = thermal_a;
+	thermal_params[TEMP_SENSOR_LOCAL] = thermal_inductor;
+	thermal_params[TEMP_SENSOR_CPU] = thermal_inductor;
+	thermal_params[TEMP_SENSOR_DDR] = thermal_inductor;
 	thermal_params[TEMP_SENSOR_BATTERY] = thermal_battery;
 #ifdef CONFIG_PECI
 	thermal_params[TEMP_SENSOR_PECI] = thermal_cpu;
