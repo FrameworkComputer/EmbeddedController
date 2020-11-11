@@ -63,7 +63,8 @@ void chipset_reset(enum chipset_reset_reason reason)
 
 void chipset_throttle_cpu(int throttle)
 {
-	/* TODO */
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		gpio_set_level(GPIO_EC_PROCHOT_L, !throttle);
 }
 
 int board_chipset_power_on(void)
@@ -112,18 +113,6 @@ enum power_state power_handle_state(enum power_state state)
 
 	switch (state) {
 	case POWER_G3:
-		CPRINTS("power handle state in G3");
-		if (extpower_is_present()) {
-			/* AC-mode enable power on signal */
-			if (board_chipset_power_on()){
-				CPRINTS("Chipset power on in AC mode");
-				gpio_set_level(GPIO_AC_PRESENT_OUT, 1);
-			}
-		} else {
-			/* DC-mode disable power on signal */
-			CPRINTS("Chipset power off to G3 in DC mode");
-			chipset_force_g3();
-		}
 		break;
 
 	case POWER_S5:
@@ -163,6 +152,7 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("power handle state in G3S5");
 
 		if (board_chipset_power_on()) {
+			gpio_set_level(GPIO_AC_PRESENT_OUT, extpower_is_present());
 			return POWER_S5;
 		} else {
 			return POWER_G3;
@@ -172,6 +162,10 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S5S3:
 		CPRINTS("power handle state in S5S3");
 
+		/*Power up camera*/
+		gpio_set_level(GPIO_CAM_EN, 1);
+
+		
         gpio_set_level(GPIO_SYSON, 1);
 
         /* Call hooks now that rails are up */
@@ -229,6 +223,9 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S3S5:
 		CPRINTS("power handle state in S3S5");
 		gpio_set_level(GPIO_SYSON, 0);
+
+		/*Power down camera*/
+		gpio_set_level(GPIO_CAM_EN, 0);
 		return POWER_S5;
 		break;
 
@@ -237,8 +234,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (!extpower_is_present())
 		{
 			chipset_force_g3();
-			CPRINTS("Shutdown!");
-			MCHP_VCI_REGISTER &= ~(BIT(10) + BIT(11));
+			board_power_off();
 		}
 		return POWER_G3;
 		break;

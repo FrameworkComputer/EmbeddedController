@@ -370,10 +370,10 @@ void lfw_main(void)
 
 	uintptr_t init_addr;
 
-#ifdef CONFIG_CHIPSET_DEBUG
-	int df; 
-	int uart_c; 
-	uint8_t spi_cmd; 
+#ifdef CONFIG_LFW_STARTUP_DEBUG
+	int df;
+	int uart_c;
+	uint8_t spi_cmd;
 #endif 
 
 	/* install vector table */
@@ -416,14 +416,16 @@ void lfw_main(void)
 	uart_puts(current_image_data.version);
 	uart_puts("\n");
 
-#ifdef CONFIG_CHIPSET_DEBUG
-#define UART_DEBUG_WAIT_TIMEOUT_MS (2000)
 	/* Enabe SWD Access to chip early */
 #ifdef CONFIG_MCHP_JTAG_MODE
 	MCHP_EC_JTAG_EN = CONFIG_MCHP_JTAG_MODE;
 #else
 	MCHP_EC_JTAG_EN |= 0x01;
 #endif
+
+#ifdef CONFIG_LFW_STARTUP_DEBUG
+#define UART_DEBUG_WAIT_TIMEOUT_MS (2000)
+
 	uart_puts("dbg - press 'h' to halt boot\n");
 	/* Delay boot and optionally halt boot if user enters 'h' */
 	for(df = 0; df < UART_DEBUG_WAIT_TIMEOUT_MS; df++){
@@ -462,7 +464,7 @@ void lfw_main(void)
 #endif /* CONFIG_WATCHDOG */
 	}
 	uart_puts("dbg - continuing\n");
-#endif /* CONFIG_DEBUG*/
+#endif /* CONFIG_LFW_STARTUP_DEBUG*/
 
 	switch (system_get_image_copy()) {
 	case EC_IMAGE_RW:

@@ -187,7 +187,6 @@
 #define CONFIG_HOSTCMD_ESPI_VW_SLP_S4
 
 #define CONFIG_CLOCK_CRYSTAL
-#define CONFIG_EXTPOWER_GPIO
 /* #define CONFIG_HOSTCMD_PD */
 /* #define CONFIG_HOSTCMD_PD_PANIC */
 #define CONFIG_I2C
@@ -663,6 +662,8 @@ void mainboard_power_button_interrupt(enum gpio_signal signal);
 int board_chipset_power_on(void);
 
 int board_get_version(void);
+
+void board_power_off(void);
 
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);

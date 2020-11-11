@@ -607,6 +607,50 @@ static void board_pmic_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 
+static void board_power_off_deferred(void)
+{
+	MCHP_VCI_REGISTER &= ~(MCHP_VCI_REGISTER_FW_CNTRL + MCHP_VCI_REGISTER_FW_EXT);
+}
+DECLARE_DEFERRED(board_power_off_deferred);
+
+void board_power_off(void)
+{
+	CPRINTS("Shutting down system!");
+
+	hook_call_deferred(&board_power_off_deferred_data, 5000 * MSEC);
+}
+static void vci_init(void)
+{
+	/**
+	 * Switch VCI control from VCI_OUT to GPIO Pin Control
+	 * These have to be done in sequence to prevent glitching
+	 * the output pin
+	 */
+	MCHP_VCI_REGISTER |= MCHP_VCI_REGISTER_FW_CNTRL;
+	MCHP_VCI_REGISTER |= MCHP_VCI_REGISTER_FW_EXT;
+	/**
+	 * only enable input for fp, powerbutton for now
+	 */
+	MCHP_VCI_INPUT_ENABLE = BIT(0) |  BIT(1);
+	/* todo implement chassis open  detection*/
+	/*MCHP_VCI_LATCH_ENABLE = BIT(0) |  BIT(1);*/
+}
+DECLARE_HOOK(HOOK_INIT, vci_init, HOOK_PRIO_FIRST);
+
+
+
+int extpower_is_present(void)
+{
+	/*Todo improve this logic if we implement PPS charging*/
+	int usb_c_extpower_present = 0;
+	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC0_VBUS_ON_EC);
+	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC1_VBUS_ON_EC);
+	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC2_VBUS_ON_EC);
+	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC3_VBUS_ON_EC);
+
+	return usb_c_extpower_present;
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
@@ -614,8 +658,7 @@ static void board_init(void)
 	trace0(0, HOOK, 0, "HOOK_INIT - call board_init");
 	board_get_version();
 
-	/* Switch VCI control from VCI_OUT to GPIO Pin Control */
-	MCHP_VCI_REGISTER |= (BIT(10) + BIT(11));
+
 
 	gpio_enable_interrupt(GPIO_SOC_ENBKL);
 	gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);
@@ -1404,6 +1447,8 @@ int mainboard_power_button_first_state;
 static void mainboard_power_button_change_deferred(void)
 {
 	if (mainboard_power_button_first_state == gpio_get_level(GPIO_ON_OFF_BTN_L)) {
+		/*If we were pending a power off, cancel it!*/
+		hook_call_deferred(&board_power_off_deferred_data, -1);
 		CPRINTF("Got Mainboard Power Button event");
 		power_button_set_simulated_state(!gpio_get_level(GPIO_ON_OFF_BTN_L));
 	}

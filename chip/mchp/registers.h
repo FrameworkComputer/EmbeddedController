@@ -1290,8 +1290,12 @@ enum MCHP_i2c_port {
 
 /* VBAT-Powered Control Interface */
 #define MCHP_VCI_BASE      0x4000ae00
-#define MCHP_VCI_REGISTER   REG32(MCHP_VCI_BASE + 0x0)
+#define MCHP_VCI_REGISTER   REG32(MCHP_VCI_BASE + 0x00)
+#define MCHP_VCI_LATCH_ENABLE   REG32(MCHP_VCI_BASE + 0x04)
+#define MCHP_VCI_INPUT_ENABLE   REG32(MCHP_VCI_BASE + 0x0c)
 
+#define MCHP_VCI_REGISTER_FW_CNTRL	BIT(10)
+#define MCHP_VCI_REGISTER_FW_EXT	BIT(11)
 
 /* General Purpose SPI (GP-SPI) */
 #define MCHP_SPI_BASE(port) (0x40009400 + ((port) << 7))
