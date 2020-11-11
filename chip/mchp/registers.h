@@ -2000,7 +2000,7 @@ enum MCHP_i2c_port {
 #define MCHP_ESPI_MSVW_SRC_GIRQ_BIT(v, n) \
 	(((v) > 6) ? (1ul << (((v)-7)+(n))) : (1ul << ((v)+(n))))
 
-#if defined(CHIP_FAMILY_MEC152X) 
+#if defined(CHIP_FAMILY_MEC152X)
 /* PECI register */
 #define MCHP_PECI_BASE		0x40006400
 #define MCHP_PECI_WRITE_DATA			REG8(MCHP_PECI_BASE)

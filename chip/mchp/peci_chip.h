@@ -8,9 +8,6 @@
 
 #include "common.h"
 
-/* PECI paramters */
-
-
 /*completion codes*/
 #define COMP_CODE       0
 #define CC_PASS_MASK    (0 << 7)
@@ -35,6 +32,6 @@ enum peci_command_t {
 };
 
 void peci_protocol(uint8_t peci_addr, uint8_t cmd_code, uint8_t domain,
-        const uint8_t *out, int out_size, uint8_t *in, int in_size);
+		const uint8_t *out, int out_size, uint8_t *in, int in_size);
 
 #endif  /* __CROS_EC_PECI_CHIP_H */
