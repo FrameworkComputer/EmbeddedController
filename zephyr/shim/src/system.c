@@ -210,6 +210,11 @@ void system_clear_reset_flags(uint32_t flags)
 	reset_flags &= ~flags;
 }
 
+int system_jumped_to_this_image(void)
+{
+	return jumped_to_image;
+}
+
 __test_only void system_common_reset_state(void)
 {
 	jdata = 0;
