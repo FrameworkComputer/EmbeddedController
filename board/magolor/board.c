@@ -19,7 +19,6 @@
 #include "temp_sensor.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
-#include "driver/retimer/nb7v904m.h"
 #include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/usb_mux/pi3usb3x532.h"
@@ -51,6 +50,9 @@
 #define ADC_VOL_DOWN_MASK   BIT(1)
 
 static uint8_t new_adc_key_state;
+
+static void ps8762_chaddr_deferred(void);
+DECLARE_DEFERRED(ps8762_chaddr_deferred);
 
 /******************************************************************************/
 /* USB-A Configuration */
@@ -229,6 +231,15 @@ static void set_5v_gpio(int level)
 	gpio_set_level(gpio, level);
 }
 
+static void ps8762_chaddr_deferred(void)
+{
+	/* Switch PS8762 I2C Address to 0x50*/
+	if (ps8802_chg_i2c_addr(I2C_PORT_SUB_USB_C1) == EC_SUCCESS)
+		CPRINTS("Switch PS8762 address to 0x50 success");
+	else
+		CPRINTS("Switch PS8762 address to 0x50 failed");
+}
+
 __override void board_power_5v_enable(int enable)
 {
 	/*
@@ -240,6 +251,13 @@ __override void board_power_5v_enable(int enable)
 	if (isl923x_set_comparator_inversion(1, !!enable))
 		CPRINTS("Failed to %sable sub rails!", enable ? "en" : "dis");
 
+	if (!enable)
+		return;
+	/*
+	 * Port C1 the PP3300_USB_C1  assert, delay 15ms
+	 * colud be accessed PS8762 by I2C.
+	 */
+	hook_call_deferred(&ps8762_chaddr_deferred_data, 15 * MSEC);
 }
 
 int board_is_sourcing_vbus(int port)
@@ -509,13 +527,6 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-const struct usb_mux usbc1_retimer = {
-	.usb_port = 1,
-	.i2c_port = I2C_PORT_SUB_USB_C1,
-	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
-	.driver = &nb7v904m_usb_redriver_drv,
-};
-
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 0,
@@ -526,7 +537,7 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 1,
 		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = PS8802_I2C_ADDR_FLAGS,
+		.i2c_addr_flags = PS8802_I2C_ADDR_FLAGS_CUSTOM,
 		.driver = &ps8802_usb_mux_driver,
 	}
 };
