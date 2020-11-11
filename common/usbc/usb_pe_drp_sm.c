@@ -3599,9 +3599,6 @@ static void pe_give_battery_cap_entry(int port)
 			/* Set invalid battery bit in response bit 0, byte 8 */
 			msg[BCDB_BATT_TYPE] = 1;
 		} else {
-			uint32_t v;
-			uint32_t c;
-
 			/*
 			 * The Battery Design Capacity field shall return the
 			 * Battery’s design capacity in tenths of Wh. If the
@@ -3623,26 +3620,61 @@ static void pe_give_battery_cap_entry(int port)
 			 */
 			msg[BCDB_FULL_CAP] = 0xffff;
 
-			if (battery_design_voltage(&v) == 0) {
-				if (battery_design_capacity(&c) == 0) {
-					/*
-					 * Wh = (c * v) / 1000000
-					 * 10th of a Wh = Wh * 10
-					 */
-					msg[BCDB_DESIGN_CAP] =
-						DIV_ROUND_NEAREST((c * v),
-								  100000);
+
+			if (IS_ENABLED(HAS_TASK_HOSTCMD) &&
+			    *host_get_memmap(EC_MEMMAP_BATTERY_VERSION) != 0) {
+				int design_volt, design_cap, full_cap;
+
+				design_volt = *(int *)host_get_memmap(
+							EC_MEMMAP_BATT_DVLT);
+				design_cap = *(int *)host_get_memmap(
+							EC_MEMMAP_BATT_DCAP);
+				full_cap = *(int *)host_get_memmap(
+							EC_MEMMAP_BATT_LFCC);
+
+				/*
+				 * Wh = (c * v) / 1000000
+				 * 10th of a Wh = Wh * 10
+				 */
+				msg[BCDB_DESIGN_CAP] = DIV_ROUND_NEAREST(
+						(design_cap * design_volt),
+						 100000);
+				/*
+				 * Wh = (c * v) / 1000000
+				 * 10th of a Wh = Wh * 10
+				 */
+				msg[BCDB_FULL_CAP] = DIV_ROUND_NEAREST(
+						(design_cap * full_cap),
+						 100000);
+			} else {
+				uint32_t v;
+				uint32_t c;
+
+				if (battery_design_voltage(&v) == 0) {
+					if (battery_design_capacity(&c) == 0) {
+						/*
+						 * Wh = (c * v) / 1000000
+						 * 10th of a Wh = Wh * 10
+						 */
+						msg[BCDB_DESIGN_CAP] =
+							DIV_ROUND_NEAREST(
+							(c * v),
+							 100000);
+					}
+
+					if (battery_full_charge_capacity(&c)
+									== 0) {
+						/*
+						 * Wh = (c * v) / 1000000
+						 * 10th of a Wh = Wh * 10
+						 */
+						msg[BCDB_FULL_CAP] =
+							DIV_ROUND_NEAREST(
+							(c * v),
+							 100000);
+					}
 				}
 
-				if (battery_full_charge_capacity(&c) == 0) {
-					/*
-					 * Wh = (c * v) / 1000000
-					 * 10th of a Wh = Wh * 10
-					 */
-					msg[BCDB_FULL_CAP] =
-						DIV_ROUND_NEAREST((c * v),
-								  100000);
-				}
 			}
 			/* Valid battery selected */
 			msg[BCDB_BATT_TYPE] = 0;
@@ -3697,16 +3729,29 @@ static void pe_give_battery_status_entry(int port)
 			uint32_t v;
 			uint32_t c;
 
-			if (battery_design_voltage(&v) != 0 ||
-					battery_remaining_capacity(&c) != 0) {
-				*msg = BSDO_CAP(BSDO_CAP_UNKNOWN);
-			} else {
+			*msg = BSDO_CAP(BSDO_CAP_UNKNOWN);
+
+			if (IS_ENABLED(HAS_TASK_HOSTCMD) &&
+			    *host_get_memmap(EC_MEMMAP_BATTERY_VERSION) != 0) {
+				v = *(int *)host_get_memmap(
+							EC_MEMMAP_BATT_DVLT);
+				c = *(int *)host_get_memmap(
+							EC_MEMMAP_BATT_CAP);
+
 				/*
 				 * Wh = (c * v) / 1000000
 				 * 10th of a Wh = Wh * 10
 				 */
 				*msg = BSDO_CAP(DIV_ROUND_NEAREST((c * v),
-								100000));
+						 100000));
+			} else if (battery_design_voltage(&v) == 0 &&
+				   battery_remaining_capacity(&c) == 0) {
+				/*
+				 * Wh = (c * v) / 1000000
+				 * 10th of a Wh = Wh * 10
+				 */
+				*msg = BSDO_CAP(DIV_ROUND_NEAREST((c * v),
+								  100000));
 			}
 
 			/* Battery is present */
