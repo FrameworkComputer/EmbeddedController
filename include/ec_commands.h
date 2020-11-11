@@ -32,7 +32,10 @@ extern "C" {
 #include "compile_time_macros.h"
 
 #else
+/* If BUILD_ASSERT isn't already defined, make it a no-op */
+#ifndef BUILD_ASSERT
 #define BUILD_ASSERT(_cond)
+#endif /* !BUILD_ASSERT */
 #endif  /* CHROMIUM_EC */
 
 #ifdef __KERNEL__
