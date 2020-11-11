@@ -8,6 +8,10 @@
 
 #include "compile_time_macros.h"
 
+#ifdef CONFIG_ZEPHYR
+#include "zephyr_gpio_signal.h"
+#else
+
 /*
  * There are 3 different IO signal types used by the EC.
  * Ensure they each use a unique range of values so we can tell them apart.
@@ -45,5 +49,7 @@ enum ioex_signal {
 BUILD_ASSERT(IOEX_SIGNAL_END < IOEX_LIMIT);
 
 #define IOEX_COUNT (IOEX_SIGNAL_END - IOEX_SIGNAL_START)
+
+#endif /* !CONFIG_ZEPHYR */
 
 #endif /* __CROS_EC_GPIO_SIGNAL_H */

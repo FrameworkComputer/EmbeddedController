@@ -3,8 +3,10 @@
  * found in the LICENSE file.
  */
 
-#ifndef __CROS_EC_GPIO_SIGNAL_H
-#define __CROS_EC_GPIO_SIGNAL_H
+#if !defined(__CROS_EC_GPIO_SIGNAL_H) || defined(__CROS_EC_ZEPHYR_GPIO_SIGNAL_H)
+#error "This file must only be included from gpio_signal.h. Include gpio_signal.h directly."
+#endif
+#define __CROS_EC_ZEPHYR_GPIO_SIGNAL_H
 
 #include <devicetree.h>
 #include <toolchain.h>
@@ -42,5 +44,3 @@ enum ioex_signal {
 BUILD_ASSERT(IOEX_SIGNAL_END < IOEX_LIMIT);
 
 #define IOEX_COUNT (IOEX_SIGNAL_END - IOEX_SIGNAL_START)
-
-#endif  /* __CROS_EC_GPIO_SIGNAL_H */
