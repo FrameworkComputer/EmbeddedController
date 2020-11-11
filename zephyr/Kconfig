@@ -107,6 +107,29 @@ config PLATFORM_EC_TIMER_CMD_WAITMS
 
 endif # PLATFORM_EC_TIMER
 
+menuconfig PLATFORM_EC_ESPI
+	bool "Enable eSPI compatibility in platform/ec"
+	depends on ESPI && AP
+	default y
+	help
+	  Enable eSPI shim layer.
+
+if PLATFORM_EC_ESPI
+
+config PLATFORM_EC_ESPI_VW_SLP_S3
+	bool "SLP_S3 is an eSPI virtual wire instead of a GPIO"
+	help
+	  For power sequencing, use an eSPI virtual wire instead of
+	  defining GPIO_PCH_SLP_S3 in gpio_map.h.
+
+config PLATFORM_EC_ESPI_VW_SLP_S4
+	bool "SLP_S4 is an eSPI virtual wire instead of a GPIO"
+	help
+	  For power sequencing, use an eSPI virtual wire instead of
+	  defining GPIO_PCH_SLP_S4 in gpio_map.h.
+
+endif # PLATFORM_EC_ESPI
+
 config PLATFORM_EC_HOOKS
 	bool "Enable hooks and deferred compatibility shim"
 	default y

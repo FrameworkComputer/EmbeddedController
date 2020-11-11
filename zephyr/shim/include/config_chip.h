@@ -53,6 +53,15 @@
 
 #endif  /* CONFIG_PLATFORM_EC_TIMER */
 
+/* eSPI signals */
+#ifdef CONFIG_PLATFORM_EC_ESPI_VW_SLP_S3
+#define CONFIG_HOSTCMD_ESPI_VW_SLP_S3
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_ESPI_VW_SLP_S4
+#define CONFIG_HOSTCMD_ESPI_VW_SLP_S4
+#endif
+
 /*
  * Load the chip family specific header. Normally for npcx, this would be done
  * by chip/npcx/config_chip.h but since this file is replacing that header
