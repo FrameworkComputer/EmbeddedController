@@ -188,8 +188,8 @@ void pd_power_supply_reset(int port)
 
 int pd_check_vconn_swap(int port)
 {
-	/* TODO: Only allow vconn swap if PP4200_G rail is enabled , s3/s0 on */
-	return 0;
+	/* Allow Vconn swap if AP is on. */
+	return chipset_in_state(CHIPSET_STATE_SUSPEND | CHIPSET_STATE_ON);
 }
 
 int pd_set_power_supply_ready(int port)
