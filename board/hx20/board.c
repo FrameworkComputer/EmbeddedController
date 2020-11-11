@@ -341,16 +341,10 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
  * MCHP EVB connected to KBL RVP3
  */
 const struct i2c_port_t i2c_ports[]  = {
-#if defined(CHIP_FAMILY_MEC17XX)
-/* ORB */
-	{"batt",     MCHP_I2C_PORT3, 100,  GPIO_SMB03_SCL, GPIO_SMB03_SDA},
-	{"sensors",  MCHP_I2C_PORT4, 100,  GPIO_SMB04_SCL, GPIO_SMB04_SDA}
-#else
 	{"batt",     MCHP_I2C_PORT1, 100,  GPIO_I2C_1_SDA, GPIO_I2C_1_SCL},
 	{"touchpd",  MCHP_I2C_PORT2, 100,  GPIO_I2C_2_SDA, GPIO_I2C_2_SCL},
 	{"sensors",  MCHP_I2C_PORT3, 100,  GPIO_I2C_3_SDA, GPIO_I2C_3_SCL},
 	{"pd",       MCHP_I2C_PORT6, 100,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL}
-#endif
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -359,15 +353,10 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
  * Ports may map to the same controller.
  */
 const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
-#if defined(CHIP_FAMILY_MEC17XX)
-	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT3,
-	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT4
-#else 
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT1,
 	(MCHP_I2C_CTRL2 << 8) + MCHP_I2C_PORT2,
 	(MCHP_I2C_CTRL3 << 8) + MCHP_I2C_PORT3,
 	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT6
-#endif
 };
 
 /*
@@ -1166,17 +1155,10 @@ struct keyboard_scan_config keyscan_config = {
 	.scan_period_us = 3 * MSEC,
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
-#ifdef CHIP_FAMILY_MEC17XX
-	.actual_key_mask = {
-		0x14, 0xff, 0xff, 0xf2, 0xff, 0xff, 0xff,
-		0x0a, 0xff, 0xa0, 0xff, 0xff, 0x00, 0x41, 0xff, 0xff  /* full set */
-	},
-#else
 	.actual_key_mask = {
 		0xff, 0xff, 0xff, 0x03, 0xff, 0xff, 0xff,
 		0xff, 0xff, 0x03, 0xff, 0xff, 0x03, 0xff, 0xff, 0xef  /* full set */
 	},
-#endif
 };
 
 

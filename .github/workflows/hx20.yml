@@ -16,9 +16,8 @@ jobs:
       - name: build hx20 board
         env:
           BOARD: hx20
-          ORB: n
         run: |
-          make -j BOARD=$BOARD HX20_ORB=$ORB CROSS_COMPILE=arm-none-eabi-
+          make -j BOARD=$BOARD CROSS_COMPILE=arm-none-eabi-
           echo Built $BOARD ec
       - name: file sha256
         run: sha256sum build/hx20/ec.bin
