@@ -26,8 +26,8 @@
  */
 uint8_t cbi_crc8(const struct cbi_header *h)
 {
-	return cros_crc8((uint8_t *)&h->crc + 1,
-			 h->total_size - sizeof(h->magic) - sizeof(h->crc));
+	return crc8((uint8_t *)&h->crc + 1,
+		    h->total_size - sizeof(h->magic) - sizeof(h->crc));
 }
 
 uint8_t *cbi_set_data(uint8_t *p, enum cbi_data_tag tag,

@@ -141,7 +141,7 @@ static enum cr50_comm_err cmd_to_cr50(enum cr50_comm_cmd cmd,
 	p->type = cmd;
 	p->size = size;
 	memcpy(p->data, data, size);
-	p->crc = cros_crc8((uint8_t *)&p->type,
+	p->crc = crc8((uint8_t *)&p->type,
 		      sizeof(p->type) + sizeof(p->size) + size);
 
 	do {

@@ -88,13 +88,13 @@ static void write_response(uint16_t res, int seq, const void *data, int len)
 	header.data_len = len;
 	header.reserved = 0;
 	header.header_crc =
-		cros_crc8((uint8_t *)&header, sizeof(header)-1);
+		crc8((uint8_t *)&header, sizeof(header)-1);
 	QUEUE_ADD_UNITS(&ec_ec_comm_slave_output,
 			(uint8_t *)&header, sizeof(header));
 
 	if (len > 0) {
 		QUEUE_ADD_UNITS(&ec_ec_comm_slave_output, data, len);
-		crc = cros_crc8(data, len);
+		crc = crc8(data, len);
 		QUEUE_ADD_UNITS(&ec_ec_comm_slave_output, &crc, sizeof(crc));
 	}
 }
@@ -243,8 +243,8 @@ void ec_ec_comm_slave_task(void *u)
 
 		/* Validate version and crc. */
 		if ((header.fields0 & EC_PACKET4_0_STRUCT_VERSION_MASK) != 4 ||
-		    header.header_crc !=
-			    cros_crc8((uint8_t *)&header, sizeof(header) - 1)) {
+			   header.header_crc !=
+				crc8((uint8_t *)&header, sizeof(header)-1)) {
 			CPRINTS("%s header/crc error", __func__);
 			goto discard;
 		}
@@ -277,7 +277,7 @@ void ec_ec_comm_slave_task(void *u)
 		}
 
 		/* Check data CRC */
-		if (hascrc && params[len-1] != cros_crc8(params, len-1)) {
+		if (hascrc && params[len-1] != crc8(params, len-1)) {
 			CPRINTS("%s data crc error", __func__);
 			write_response(EC_RES_INVALID_CHECKSUM, seq, NULL, 0);
 			goto discard;
