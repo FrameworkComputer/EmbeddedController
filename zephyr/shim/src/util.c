@@ -49,3 +49,53 @@ int parse_bool(const char *s, int *dest)
 	/* dunno */
 	return 0;
 }
+
+static int find_base(int base, int *c, const char **nptr)
+{
+	if ((base == 0 || base == 16) && *c == '0' &&
+	    (**nptr == 'x' || **nptr == 'X')) {
+		*c = (*nptr)[1];
+		(*nptr) += 2;
+		base = 16;
+	} else if (base == 0) {
+		base = *c == '0' ? 8 : 10;
+	}
+	return base;
+}
+
+unsigned long long int strtoull(const char *nptr, char **endptr, int base)
+{
+	uint64_t result = 0;
+	int c = '\0';
+
+	while ((c = *nptr++) && isspace(c))
+		;
+
+	if (c == '+') {
+		c = *nptr++;
+	} else if (c == '-') {
+		if (endptr)
+			*endptr = (char *)nptr - 1;
+		return result;
+	}
+
+	base = find_base(base, &c, &nptr);
+
+	while (c) {
+		if (c >= '0' && c < '0' + MIN(base, 10))
+			result = result * base + (c - '0');
+		else if (c >= 'A' && c < 'A' + base - 10)
+			result = result * base + (c - 'A' + 10);
+		else if (c >= 'a' && c < 'a' + base - 10)
+			result = result * base + (c - 'a' + 10);
+		else
+			break;
+
+		c = *nptr++;
+	}
+
+	if (endptr)
+		*endptr = (char *)nptr - 1;
+	return result;
+}
+BUILD_ASSERT(sizeof(unsigned long long int) == sizeof(uint64_t));
