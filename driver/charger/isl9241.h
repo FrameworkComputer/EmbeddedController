@@ -48,6 +48,7 @@
 
 /* Configures various charger options */
 #define ISL9241_REG_CONTROL1		0x3C
+#define ISL9241_CONTROL1_PSYS		BIT(3)
 #define ISL9241_CONTROL1_LEARN_MODE	BIT(12)
 
 /* Configures various charger options */
@@ -67,6 +68,8 @@
 /* 12 - Two-Level Adapter Current Limit */
 #define ISL9241_CONTROL2_TWO_LEVEL_ADP_CURR	BIT(12)
 /* 10:9 PROCHOT# debounce time in uS */
+#define ISL9241_CONTROL2_PROCHOT_DEBOUNCE_MASK  GENMASK(10, 9)
+#define ISL9241_CONTROL2_PROCHOT_DEBOUNCE_500	(2 << 9)
 #define ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000	(3 << 9)
 
 /* MinSystemVoltage [13:6] 8-bit (0x0000h = disables all battery charging) */
@@ -100,6 +103,8 @@
 #define ISL9241_INFORMATION2_ACOK_PIN		BIT(14)
 
 #define ISL9241_REG_CONTROL4		0x4E
+/* 11: Rsense (Rs1:Rs2) ratio for PSYS (0 - 2:1, 1 - 1:1) */
+#define ISL9241_CONTROL4_PSYS_RSENSE_RATIO  BIT(11)
 /* 13: Enable VSYS slew rate control (0 - disable, 1 - enable) */
 #define ISL9241_CONTROL4_SLEW_RATE_CTRL     BIT(13)
 
@@ -133,5 +138,19 @@ extern const struct charger_drv isl9241_drv;
  * @return EC_SUCCESS or error
  */
 int isl9241_set_ac_prochot(int chgnum, int ma);
+
+/**
+ * Set DC prochot threshold
+ *
+ * @param chgnum: Index into charger chips
+ * @param ma: DC prochot threshold current in mA, multiple of 256mA
+ * @return EC_SUCCESS or error
+ */
+int isl9241_set_dc_prochot(int chgnum, int ma);
+
+#define ISL9241_AC_PROCHOT_CURRENT_MIN  128     /* mA */
+#define ISL9241_AC_PROCHOT_CURRENT_MAX  6400    /* mA */
+#define ISL9241_DC_PROCHOT_CURRENT_MIN  256     /* mA */
+#define ISL9241_DC_PROCHOT_CURRENT_MAX  12800   /* mA */
 
 #endif /* __CROS_EC_ISL9241_H */

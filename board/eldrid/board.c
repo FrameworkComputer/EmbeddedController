@@ -24,6 +24,7 @@
 #include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "isl9241.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_raw.h"
 #include "lid_switch.h"
@@ -73,10 +74,58 @@ union volteer_cbi_fw_config fw_config_defaults = {
 	.usb_db = DB_USB3_ACTIVE,
 };
 
+static void board_charger_config(void)
+{
+	/*
+	 * b/166728543, we configured charger setting to throttle CPU
+	 * when the system loading is at battery current limit.
+	 */
+	int reg;
+
+	/*
+	 * Set DCProchot# to 5120mA
+	 */
+	isl9241_set_dc_prochot(CHARGER_SOLO, 5120);
+
+	/*
+	 * Set Control1 bit<3> = 1, PSYS = 1
+	 */
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		       ISL9241_REG_CONTROL1, &reg) == EC_SUCCESS) {
+		reg |= ISL9241_CONTROL1_PSYS;
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			    ISL9241_REG_CONTROL1, reg))
+			CPRINTS("Failed to set isl9241");
+	}
+
+	/*
+	 * Set Control2 bit<10:9> = 00, PROCHOT# Debounce = 7us
+	 */
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		       ISL9241_REG_CONTROL2, &reg) == EC_SUCCESS) {
+		reg &= ~ISL9241_CONTROL2_PROCHOT_DEBOUNCE_MASK;
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			    ISL9241_REG_CONTROL2, reg))
+			CPRINTS("Failed to set isl9241");
+	}
+
+	/*
+	 * Set Control4 bit<11> = 1, PSYS Rsense Ratio = 1:1
+	 */
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		       ISL9241_REG_CONTROL4, &reg) == EC_SUCCESS) {
+		reg |= ISL9241_CONTROL4_PSYS_RSENSE_RATIO;
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			    ISL9241_REG_CONTROL4, reg))
+			CPRINTS("Failed to set isl9241");
+	}
+}
+
 static void board_init(void)
 {
 	pwm_enable(PWM_CH_LED4_SIDESEL, 1);
 	pwm_set_duty(PWM_CH_LED4_SIDESEL, 100);
+	board_charger_config();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -124,6 +173,15 @@ __override bool board_is_tbt_usb4_port(int port)
 __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
+	/*
+	 * b/166728543
+	 * Set different AC_PROCHOT value when using different wattage ADT.
+	 */
+	if (max_ma * charge_mv == PD_MAX_POWER_MW * 1000)
+		isl9241_set_ac_prochot(0, 3072);
+	else
+		isl9241_set_ac_prochot(0, 2816);
+
 	/*
 	 * Follow OEM request to limit the input current to
 	 * 90% negotiated limit when S0.
