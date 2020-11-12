@@ -1198,11 +1198,10 @@ static void charger_chips_init(void)
 			ISL9241_CONTROL3_ACLIM_RELOAD))
 		goto init_fail;
 
-	if (extpower_is_present() && battery_is_present()) {
+	if (extpower_is_present() && battery_is_present())
 		val |= ISL9241_CONTROL4_ACOK_PROCHOT;
-	} else if (battery_is_present()) {
+	else if (battery_is_present())
 		val |= ISL9241_CONTROL4_OTG_CURR_PROCHOT;
-	}
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL4, val))
@@ -1215,8 +1214,8 @@ static void charger_chips_init(void)
 	val = ISL9241_CONTROL1_PROCHOT_REF_6800 | ISL9241_CONTROL1_SWITCH_FREQ;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL1, (battery_is_present() ? val | 
-			ISL9241_CONTROL1_SUPPLEMENTAL_SUPPORT_MODE : val)))
+		ISL9241_REG_CONTROL1, (battery_is_present() ? val |
+		ISL9241_CONTROL1_SUPPLEMENTAL_SUPPORT_MODE : val)))
 		goto init_fail;
 
 	return;
@@ -1228,19 +1227,18 @@ DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_INIT_ADC + 1);
 
 void charger_update(void)
 {
-	static int pre_ac_state = 0;
-	static int pre_dc_state = 0;
+	static int pre_ac_state;
+	static int pre_dc_state;
 	uint16_t val = 0x0000;
 
 	if (pre_ac_state != extpower_is_present() ||
 		pre_dc_state != battery_is_present())
 	{
 		CPRINTS("update charger!!");
-		if (extpower_is_present() && battery_is_present()) {
+		if (extpower_is_present() && battery_is_present())
 			val |= ISL9241_CONTROL4_ACOK_PROCHOT;
-		} else if (battery_is_present()) {
+		else if (battery_is_present())
 			val |= ISL9241_CONTROL4_OTG_CURR_PROCHOT;
-		}
 
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 			ISL9241_REG_CONTROL4, val)) {
