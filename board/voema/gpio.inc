@@ -87,8 +87,8 @@ GPIO(USB_A_LOW_PWR_OD,		PIN(6, 6), GPIO_ODR_LOW)	/* Don't limit USB-A charging b
 GPIO(USB_C1_RT_RST_ODL,		PIN(8, 3), GPIO_ODR_LOW)
 GPIO(USB_C0_OC_ODL,		PIN(B, 1), GPIO_ODR_HIGH)
 GPIO(USB_C1_OC_ODL,		PIN(5, 0), GPIO_ODR_HIGH)
-/* There is currently no need to service this interrupt. */
-GPIO(USB_C1_RT_INT_ODL,		PIN(F, 3), GPIO_INPUT)
+GPIO(USB_C0_FRS_EN,		PIN(6, 0), GPIO_OUT_LOW)
+GPIO(USB_C1_FRS_EN,		PIN(9, 4), GPIO_OUT_LOW)
 
 /* Don't have a load switch for retimer */
 UNIMPLEMENTED(USB_C1_LS_EN)
@@ -103,16 +103,16 @@ GPIO(EC_H1_PACKET_MODE,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
 GPIO(M2_SSD_PLN,		PIN(A, 0), GPIO_ODR_HIGH)	/* SSD power-loss notification */
 GPIO(M2_SSD_PLA,		PIN(7, 0), GPIO_INPUT)		/* SSD power-loss acknowledgment */
 GPIO(CCD_MODE_ODL,		PIN(E, 5), GPIO_INPUT)		/* Case Closed Debug Mode */
-GPIO(EC_SLP_S0IX,		PIN(7, 2), GPIO_INPUT | GPIO_PULL_UP)
 
 /* Unused signals */
+GPIO(UNUSED_GPIO72,		PIN(7, 2), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIO41,		PIN(4, 1), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIOF2,		PIN(F, 2), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIO96,		PIN(9, 6), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIO34,		PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIO57,		PIN(5, 7), GPIO_INPUT | GPIO_PULL_UP)
 /* Only connected to test points */
 GPIO(EC_KB_BL_EN,		PIN(8, 6), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(EC_ESPI_ALERT_L,		PIN(5, 7), GPIO_INPUT | GPIO_PULL_UP)
 
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
