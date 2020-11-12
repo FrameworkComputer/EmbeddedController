@@ -54,7 +54,7 @@ genvif-pd-objs=$(genvif-pd-srcs:%.c=$(out)/util/%.o)
 genvif-pd-objs += $(out)/common/usb_common.o
 deps-$(CONFIG_USB_POWER_DELIVERY) += $(genvif-pd-objs:%.o=%.o.d)
 
-$(out)/util/genvif: $(genvif-pd-objs) board/$(BOARD)/board.h \
+$(out)/util/genvif: $(genvif-pd-objs) util/genvif.h board/$(BOARD)/board.h \
 			include/usb_pd.h include/usb_pd_tcpm.h
 $(out)/util/genvif: BUILD_LDFLAGS+=$(genvif-pd-objs) -flto
 
