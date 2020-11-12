@@ -1426,59 +1426,63 @@ static void pe_send_request_msg(int port)
 	send_data_msg(port, TCPC_TX_SOP, PD_DATA_REQUEST);
 }
 
-static void pe_update_pdo_flags(int port, uint32_t pdo)
+static void pe_update_src_pdo_flags(int port, int pdo_cnt, uint32_t *pdos)
 {
-	int charge_allowlisted;
-
-	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
-		if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
-			charge_allowlisted =
-				(pd_get_power_role(port) == PD_ROLE_SINK &&
-				 pd_charge_from_device(
-						pd_get_identity_vid(port),
-						pd_get_identity_pid(port)));
-		} else {
-			charge_allowlisted = 0;
-		}
-	}
-
-	/* can only parse PDO flags if type is fixed */
-	if ((pdo & PDO_TYPE_MASK) != PDO_TYPE_FIXED)
+	/*
+	 * Only parse PDO flags if type is fixed
+	 *
+	 * Note: From 6.4.1 Capabilities Message "The vSafe5V Fixed Supply
+	 * Object Shall always be the first object." so hitting this condition
+	 * would mean the partner is voilating spec.
+	 */
+	if ((pdos[0] & PDO_TYPE_MASK) != PDO_TYPE_FIXED)
 		return;
 
-	if (pdo & PDO_FIXED_DUAL_ROLE)
+	if (pdos[0] & PDO_FIXED_DUAL_ROLE)
 		tc_partner_dr_power(port, 1);
 	else
 		tc_partner_dr_power(port, 0);
 
-	if (pdo & PDO_FIXED_UNCONSTRAINED)
+	if (pdos[0] & PDO_FIXED_UNCONSTRAINED)
 		tc_partner_unconstrainedpower(port, 1);
 	else
 		tc_partner_unconstrainedpower(port, 0);
 
 	/* Do not set USB comm if we are in an alt-mode */
 	if (pe[port].partner_amodes[TCPC_TX_SOP].amode_idx == 0) {
-		if (pdo & PDO_FIXED_COMM_CAP)
+		if (pdos[0] & PDO_FIXED_COMM_CAP)
 			tc_partner_usb_comm(port, 1);
 		else
 			tc_partner_usb_comm(port, 0);
 	}
 
-	if (pdo & PDO_FIXED_DATA_SWAP)
+	if (pdos[0] & PDO_FIXED_DATA_SWAP)
 		tc_partner_dr_data(port, 1);
 	else
 		tc_partner_dr_data(port, 0);
 
 	/*
 	 * Treat device as a dedicated charger (meaning we should charge
-	 * from it) if it does not support power swap, or if it is unconstrained
-	 * power, or if we are a sink and the device identity matches a
-	 * charging allow-list.
+	 * from it) if:
+	 *   - it does not support power swap, or
+	 *   - it is unconstrained power, or
+	 *   - it presents at least 27 W of available power
 	 */
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
-		if (!(pdo & PDO_FIXED_DUAL_ROLE) ||
-		    (pdo & PDO_FIXED_UNCONSTRAINED) ||
-		    charge_allowlisted) {
+		uint32_t max_ma, max_mv, max_pdo, max_mw;
+
+		/*
+		 * Get max power that the partner offers (not necessarily what
+		 * this board will request)
+		 */
+		pd_find_pdo_index(pdo_cnt, pdos, PD_REV3_MAX_VOLTAGE,
+				  &max_pdo);
+		pd_extract_pdo_power(max_pdo, &max_ma, &max_mv);
+		max_mw = max_ma*max_mv/1000;
+
+		if (!(pdos[0] & PDO_FIXED_DUAL_ROLE) ||
+		    (pdos[0] & PDO_FIXED_UNCONSTRAINED) ||
+		    max_mw >= PD_DRP_CHARGE_POWER_MIN) {
 			PE_CLR_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
 			charge_manager_update_dualrole(port, CAP_DEDICATED);
 		} else {
@@ -2777,8 +2781,7 @@ static void pe_snk_evaluate_capability_entry(int port)
 
 	pd_set_src_caps(port, num, pdo);
 
-	/* src cap 0 should be fixed PDO */
-	pe_update_pdo_flags(port, pdo[0]);
+	pe_update_src_pdo_flags(port, num, pdo);
 
 	/* Evaluate the options based on supplied capabilities */
 	pd_process_source_cap(port, pe[port].src_cap_cnt, pe[port].src_caps);
@@ -5051,11 +5054,6 @@ static void pe_init_port_vdm_identity_request_run(int port)
 		/* PE_INIT_PORT_VDM_Identity_ACKed embedded here */
 		dfp_consume_identity(port, sop, cnt, payload);
 
-		/* Evaluate whether this is an allow-listed charger */
-		if (IS_ENABLED(CONFIG_CHARGE_MANAGER) &&
-		    pd_charge_from_device(pd_get_identity_vid(port),
-					  pd_get_identity_pid(port)))
-			charge_manager_update_dualrole(port, CAP_DEDICATED);
 		break;
 		}
 	case VDM_RESULT_NAK:
