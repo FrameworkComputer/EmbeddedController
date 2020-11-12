@@ -48,6 +48,28 @@ void task2_entry(void *p)
 	}
 }
 
+static void set_event_before_task_start1(void)
+{
+	const uint32_t events = task_wait_event(TASK_SEC(2));
+
+	zassert_equal(events, 0xAAAA, "Should have 0xAAAA events");
+}
+
+static void set_event_before_task_start2(void)
+{
+	/* Do nothing */
+}
+
+static void test_set_event_before_task_start(void)
+{
+	/* Send event before tasks start */
+	task_set_event(TASK_ID_TASK_1, 0xAAAA, 0);
+
+	start_ec_tasks();
+
+	run_test(set_event_before_task_start1, set_event_before_task_start2);
+}
+
 static void task_get_current1(void)
 {
 	zassert_equal(task_get_current(), TASK_ID_TASK_1, "ID matches");
@@ -190,10 +212,9 @@ static void test_empty_set_mask(void)
 
 void test_main(void)
 {
-	/* Manually start the EC tasks. This normally happens in main. */
-	start_ec_tasks();
-
+	/* Note that test_set_event_before_task_start calls start_ec_tasks */
 	ztest_test_suite(test_task_shim,
+			 ztest_unit_test(test_set_event_before_task_start),
 			 ztest_unit_test(test_task_get_current),
 			 ztest_unit_test(test_timeout),
 			 ztest_unit_test(test_event_delivered),

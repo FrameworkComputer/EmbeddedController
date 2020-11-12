@@ -177,9 +177,6 @@ static void task_entry(void *task_contex, void *unused1, void *unused2)
 	/* Name thread for debugging */
 	k_thread_name_set(ctx->zephyr_tid, ctx->name);
 
-	/* Initialize the new_event structure */
-	k_poll_signal_init(&ctx->new_event);
-
 	/* Call into task entry point */
 	ctx->entry((void *)ctx->parameter);
 }
@@ -200,3 +197,23 @@ void start_ec_tasks(void)
 			K_PRIO_PREEMPT(TASK_ID_COUNT - i - 1), 0, K_NO_WAIT);
 	}
 }
+
+/*
+ * Initialize all of the kernel objects before application code starts.
+ * This allows us to set events on tasks before they even start, e.g. in
+ * INIT_HOOKS.
+ */
+int init_signals(const struct device *unused)
+{
+	ARG_UNUSED(unused);
+
+	for (size_t i = 0; i < ARRAY_SIZE(shimmed_tasks); ++i) {
+		struct task_ctx *const ctx = &shimmed_tasks[i];
+
+		/* Initialize the new_event structure */
+		k_poll_signal_init(&ctx->new_event);
+	}
+
+	return 0;
+}
+SYS_INIT(init_signals, POST_KERNEL, 50);
