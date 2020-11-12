@@ -79,6 +79,7 @@ static int ioex_is_valid_interrupt_signal(enum ioex_signal signal)
 
 	return EC_SUCCESS;
 }
+
 int ioex_enable_interrupt(enum ioex_signal signal)
 {
 	int rv;
@@ -254,24 +255,24 @@ static int ioex_get_default_flags(enum ioex_signal signal)
 /* IO expander commands */
 static enum ioex_signal find_ioex_by_name(const char *name)
 {
-	int i;
+	enum ioex_signal signal;
 
 	if (!name)
-		return -1;
+		return IOEX_SIGNAL_END;
 
-	for (i = IOEX_SIGNAL_START; i < IOEX_SIGNAL_END; i++) {
-		if (!strcasecmp(name, ioex_get_name(i)))
-			return i;
+	for (signal = IOEX_SIGNAL_START; signal < IOEX_SIGNAL_END; signal++) {
+		if (!strcasecmp(name, ioex_get_name(signal)))
+			return signal;
 	}
 
-	return -1;
+	return IOEX_SIGNAL_END;
 }
 
 static enum ec_error_list ioex_set(const char *name, int value)
 {
 	enum ioex_signal signal = find_ioex_by_name(name);
 
-	if (signal == -1)
+	if (!signal_is_ioex(signal))
 		return EC_ERROR_INVAL;
 
 	if (!(ioex_get_default_flags(signal) & GPIO_OUTPUT))
@@ -303,21 +304,21 @@ DECLARE_CONSOLE_COMMAND(ioexset, command_ioex_set,
 
 static int command_ioex_get(int argc, char **argv)
 {
-	int i;
+	enum ioex_signal signal;
 
 	/* If a signal is specified, print only that one */
 	if (argc == 2) {
-		i = find_ioex_by_name(argv[1]);
-		if (i == -1)
+		signal = find_ioex_by_name(argv[1]);
+		if (!signal_is_ioex(signal))
 			return EC_ERROR_PARAM1;
-		print_ioex_info(i);
+		print_ioex_info(signal);
 
 		return EC_SUCCESS;
 	}
 
 	/* Otherwise print them all */
-	for (i = IOEX_SIGNAL_START; i < IOEX_SIGNAL_END; i++)
-		print_ioex_info(i);
+	for (signal = IOEX_SIGNAL_START; signal < IOEX_SIGNAL_END; signal++)
+		print_ioex_info(signal);
 
 	return EC_SUCCESS;
 }
