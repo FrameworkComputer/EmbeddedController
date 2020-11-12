@@ -17,7 +17,7 @@
 
 
 struct vif_field_t {
-	char *name;
+	const char *name;
 	char *tag_value;
 	char *str_value;
 };
@@ -378,9 +378,6 @@ struct vif_Product_t {
 
 enum vif_indexes {
 	VIF_Specification,		/* version */
-	VIF_App_Vendor,			/* nonEmptyString */
-	VIF_App_Name,			/* nonEmptyString */
-	VIF_App_Version,		/* version */
 	Vendor_Name,			/* nonEmptyString */
 	Model_Part_Number,		/* nonEmptyString */
 	Product_Revision,		/* nonEmptyString */
@@ -389,8 +386,15 @@ enum vif_indexes {
 	Certification_Type,		/* numericFieldType */
 	VIF_Indexes
 };
+enum vif_app_indexes {
+	Vendor,				/* nonEmptyString */
+	Name,				/* nonEmptyString */
+	Version,			/* version */
+	VIF_App_Indexes
+};
 struct vif_t {
 	struct vif_field_t		vif_field[VIF_Indexes];
+	struct vif_field_t		vif_app_field[VIF_App_Indexes];
 
 	struct vif_Product_t		Product;
 	struct vif_Component_t		Component[MAX_NUM_COMPONENTS];
