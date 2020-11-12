@@ -58,6 +58,11 @@
 .incbin FW_IMAGE_SIGN(RW,)
 #endif
 
+#ifdef CONFIG_IPI
+.section .ipi_buffer, "aw"
+.space (CONFIG_IPC_SHARED_OBJ_BUF_SIZE + 8) * 2, 0
+#endif
+
 #ifdef CONFIG_DRAM_BASE
 /* Read Write firmware in DRAM */
 .section .image.RW.dram, "ax"

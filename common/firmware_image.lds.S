@@ -44,6 +44,10 @@ MEMORY
 {
 	FLASH (rx) : ORIGIN = CONFIG_PROGRAM_MEMORY_BASE,
 		     LENGTH = CONFIG_FLASH_SIZE
+#ifdef CONFIG_IPI
+	IPI_BUFFER (rw) : ORIGIN = CONFIG_IPC_SHARED_OBJ_ADDR,
+			  LENGTH = (CONFIG_IPC_SHARED_OBJ_BUF_SIZE + 8) * 2
+#endif
 #ifdef CONFIG_DRAM_BASE
 	DRAM (rx) : ORIGIN = CONFIG_DRAM_BASE_LOAD, LENGTH = CONFIG_DRAM_SIZE
 #endif
@@ -95,6 +99,12 @@ SECTIONS
 	.padding : AT(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_FLASH_SIZE - 1) {
 		BYTE(0xff);
 	} > FLASH =0xff
+
+#ifdef CONFIG_IPI
+	/* The section holds address of IPI buffer but no symbols. */
+	.ipi_buffer(NOLOAD) : {
+	} > IPI_BUFFER
+#endif
 
 #ifdef CONFIG_DRAM_BASE
 	.image.RW.dram : AT(CONFIG_DRAM_BASE_LOAD) {
