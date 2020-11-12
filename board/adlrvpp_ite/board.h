@@ -81,7 +81,7 @@
 /* USB PD config */
 #define CONFIG_USB_PD_PORT_MAX_COUNT 4
 #define CONFIG_USB_MUX_VIRTUAL
-#define PD_MAX_POWER_MW              60000
+#define PD_MAX_POWER_MW              100000
 
 /* USB-C I2C */
 #define I2C_PORT_TYPEC_0		IT83XX_I2C_CH_C
