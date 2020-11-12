@@ -373,7 +373,10 @@ int pd_charge_from_device(uint16_t vid, uint16_t pid)
 		    pid == allow_list[i].pid)
 			return 1;
 	}
-	CPRINTS("allow_list[] pair not found: vid=0x%X pid=0x%X", vid, pid);
+
+	if (vid != 0)
+		CPRINTS("allow_list[] pair not found: vid=0x%X pid=0x%X",
+			vid, pid);
 	return 0;
 }
 
