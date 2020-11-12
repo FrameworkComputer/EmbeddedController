@@ -18,8 +18,7 @@ void system_pre_init(void)
 	/* enable CPU DCM */
 	set_csr(CSR_MCTREN, CSR_MCTREN_CG);
 
-	/* Disable jump (it has only RW) and enable MPU. */
-	/* TODO: implement MPU */
+	/* Disable jump (it has only RW) */
 	system_disable_jump();
 }
 
