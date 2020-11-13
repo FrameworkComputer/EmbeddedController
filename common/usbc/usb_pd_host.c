@@ -165,8 +165,9 @@ static enum ec_status hc_typec_status(struct host_cmd_handler_args *args)
 	memcpy(r->source_cap_pdos, pd_get_src_caps(p->port),
 	       r->source_cap_count * sizeof(uint32_t));
 
-	/* TODO(b/160009733): Populate sink cap PDOs */
-	r->sink_cap_count = 0;
+	r->sink_cap_count = pd_get_snk_cap_cnt(p->port);
+	memcpy(r->sink_cap_pdos, pd_get_snk_caps(p->port),
+	       r->sink_cap_count * sizeof(uint32_t));
 
 	return EC_RES_SUCCESS;
 }

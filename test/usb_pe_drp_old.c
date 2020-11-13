@@ -79,6 +79,8 @@ test_static void setup_source(void)
 	task_wait_event(10 * MSEC);
 	pe_set_flag(PORT0, PE_FLAGS_VDM_SETUP_DONE);
 	pe_set_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT);
+	/* As long as we're hacking our way to ready, clear any DPM requests */
+	pe_clr_dpm_requests(PORT0);
 	set_state_pe(PORT0, PE_SRC_READY);
 	task_wait_event(10 * MSEC);
 	/* At this point, the PE should be running in PE_SRC_Ready. */
@@ -93,6 +95,8 @@ test_static void setup_sink(void)
 	task_wait_event(10 * MSEC);
 	pe_set_flag(PORT0, PE_FLAGS_VDM_SETUP_DONE);
 	pe_set_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT);
+	/* As long as we're hacking our way to ready, clear any DPM requests */
+	pe_clr_dpm_requests(PORT0);
 	set_state_pe(PORT0, PE_SNK_READY);
 	task_wait_event(10 * MSEC);
 	/* At this point, the PE should be running in PE_SNK_Ready. */
@@ -104,8 +108,8 @@ test_static void setup_sink(void)
 static int test_pe_frs(void)
 {
 	/*
-	 * TODO: This test should validate PE boundary API differences -- not
-	 * internal state changes.
+	 * TODO(b/173791979): This test should validate PE boundary API
+	 * differences -- not internal state changes.
 	 */
 
 	task_wait_event(10 * MSEC);
@@ -119,6 +123,7 @@ static int test_pe_frs(void)
 	tc_prs_src_snk_assert_rd(PORT0);
 	pe_set_flag(PORT0, PE_FLAGS_VDM_SETUP_DONE);
 	pe_set_flag(PORT0, PE_FLAGS_EXPLICIT_CONTRACT);
+	pe_clr_dpm_requests(PORT0);
 	set_state_pe(PORT0, PE_SNK_READY);
 	task_wait_event(10 * MSEC);
 	TEST_ASSERT(get_state_pe(PORT0) == PE_SNK_READY);

@@ -749,6 +749,10 @@ static struct policy_engine {
 	uint32_t src_caps[PDO_MAX_OBJECTS];
 	int src_cap_cnt;
 
+	/* Last received sink cap */
+	uint32_t snk_caps[PDO_MAX_OBJECTS];
+	int snk_cap_cnt;
+
 	/* Attached ChromeOS device id, RW hash, and current RO / RW image */
 	uint16_t dev_id;
 	uint32_t dev_rw_hash[PD_RW_HASH_SIZE/4];
@@ -1028,6 +1032,23 @@ uint32_t pd_get_events(int port)
 	return pe[port].events;
 }
 
+void pe_set_snk_caps(int port, int cnt, uint32_t *snk_caps)
+{
+	pe[port].snk_cap_cnt = cnt;
+
+	memcpy(pe[port].snk_caps, snk_caps, sizeof(uint32_t) * cnt);
+}
+
+const uint32_t * const pd_get_snk_caps(int port)
+{
+	return pe[port].snk_caps;
+}
+
+uint8_t pd_get_snk_cap_cnt(int port)
+{
+	return pe[port].snk_cap_cnt;
+}
+
 /*
  * Determine if this port may communicate with the cable plug.
  *
@@ -1249,9 +1270,10 @@ static void pe_handle_detach(void)
 	pe_invalidate_explicit_contract(port);
 
 	/*
-	 * Saved SRC_Capabilities are no longer valid on disconnect
+	 * Saved Source and Sink Capabilities are no longer valid on disconnect
 	 */
 	pd_set_src_caps(port, 0, NULL);
+	pe_set_snk_caps(port, 0, NULL);
 }
 DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, pe_handle_detach, HOOK_PRIO_DEFAULT);
 
@@ -2681,6 +2703,12 @@ static void pe_snk_startup_entry(int port)
 		 */
 		PE_SET_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
 		PE_SET_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON);
+
+		/*
+		 * Set up to get Device Policy Manager to
+		 * request Sink Capabilities
+		 */
+		pd_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
 	}
 }
 
@@ -2873,11 +2901,6 @@ static void pe_snk_select_capability_run(int port)
 
 				set_state_pe(port, PE_SNK_TRANSITION_SINK);
 
-				/*
-				 * Setup to get Device Policy Manager to
-				 * request Sink Capabilities for possible FRS
-				 */
-				pd_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
 				return;
 			}
 			/*
@@ -6121,8 +6144,12 @@ static void pe_dr_get_sink_cap_run(int port)
 
 		if (ext == 0 && sop == TCPC_TX_SOP) {
 			if ((cnt > 0) && (type == PD_DATA_SINK_CAP)) {
-				uint32_t payload =
-					*(uint32_t *)rx_emsg[port].buf;
+				uint32_t *payload =
+					(uint32_t *)rx_emsg[port].buf;
+				uint8_t cap_cnt = rx_emsg[port].len /
+							sizeof(uint32_t);
+
+				pe_set_snk_caps(port, cap_cnt, payload);
 
 				/*
 				 * Check message to see if we can handle
@@ -6136,8 +6163,8 @@ static void pe_dr_get_sink_cap_run(int port)
 				 */
 				if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
 					(rev > PD_REV20) &&
-					(payload & PDO_FIXED_DUAL_ROLE)) {
-					switch (payload &
+					(payload[0] & PDO_FIXED_DUAL_ROLE)) {
+					switch (payload[0] &
 						PDO_FIXED_FRS_CURR_MASK) {
 					case PDO_FIXED_FRS_CURR_NOT_SUPPORTED:
 						break;
@@ -6299,7 +6326,6 @@ uint8_t pd_get_src_cap_cnt(int port)
 {
 	return pe[port].src_cap_cnt;
 }
-
 
 /* Track access to the PD discovery structures during HC execution */
 uint32_t task_access[CONFIG_USB_PD_PORT_MAX_COUNT][DISCOVERY_TYPE_COUNT];
@@ -6711,6 +6737,7 @@ static const struct usb_state pe_states[] = {
 };
 
 #ifdef TEST_BUILD
+/* TODO(b/173791979): Unit tests shouldn't need to access internal states */
 const struct test_sm_data test_pe_sm_data[] = {
 	{
 		.base = pe_states,
@@ -6741,5 +6768,9 @@ int pe_get_all_flags(int port)
 void pe_set_all_flags(int port, int flags)
 {
 	pe[port].flags = flags;
+}
+void pe_clr_dpm_requests(int port)
+{
+	pe[port].dpm_request = 0;
 }
 #endif

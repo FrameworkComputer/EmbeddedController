@@ -2759,6 +2759,20 @@ uint8_t pd_get_src_cap_cnt(int port);
 void pd_set_src_caps(int port, int cnt, uint32_t *src_caps);
 
 /**
+ * Returns the sink caps list
+ *
+ * @param port USB-C port number
+ */
+const uint32_t * const pd_get_snk_caps(int port);
+
+/**
+ * Returns the number of sink caps
+ *
+ * @param port USB-C port number
+ */
+uint8_t pd_get_snk_cap_cnt(int port);
+
+/**
  * Return true if partner port is capable of communication over USB data
  * lines.
  *
