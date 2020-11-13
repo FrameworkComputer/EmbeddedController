@@ -3089,6 +3089,13 @@
 /* Support sending the power button signal to x86 chipsets */
 #undef CONFIG_POWER_BUTTON_X86
 
+/* Support sending the power button signal by custom */
+#undef CONFIG_POWER_BUTTON_CUSTOM
+
+#if defined(CONFIG_POWER_BUTTON_X86) && defined(CONFIG_POWER_BUTTON_CUSTOM)
+#error Only can define one version of power button state machine
+#endif
+
 /* Set power button state idle at init. Implemented only for npcx. */
 #undef CONFIG_POWER_BUTTON_INIT_IDLE
 
