@@ -10,12 +10,6 @@
 
 #include "baseboard.h"
 
-/* TODO(waihong): Remove the following bringup features */
-#define CONFIG_USB_PD_DEBUG_LEVEL 3
-#define CONFIG_CMD_GPIO_EXTENDED
-#define CONFIG_CMD_POWERINDEBUG
-#define CONFIG_I2C_DEBUG
-
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_FLASH_SIZE (512 * 1024)  /* 512KB internal spi flash */
 
