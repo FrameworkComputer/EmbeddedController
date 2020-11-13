@@ -150,9 +150,11 @@ enum vif_Component_indexes {
 	Port_Label,				/* nonEmptyString */
 	Connector_Type,				/* numericFieldType */
 	USB4_Supported,				/* booleanFieldType */
+	USB4_Router_Index,			/* numericFieldType */
 	USB_PD_Support,				/* booleanFieldType */
 	PD_Port_Type,				/* numericFieldType */
 	Type_C_State_Machine,			/* numericFieldType */
+	Captive_Cable,				/* booleanFieldType */
 	Port_Battery_Powered,			/* booleanFieldType */
 	BC_1_2_Support,				/* numericFieldType */
 	PD_Spec_Revision_Major,			/* numericFieldType */
@@ -160,14 +162,6 @@ enum vif_Component_indexes {
 	PD_Spec_Version_Major,			/* numericFieldType */
 	PD_Spec_Version_Minor,			/* numericFieldType */
 	PD_Specification_Revision,		/* numericFieldType */
-	SOP_Capable,				/* booleanFieldType */
-	SOP_P_Capable,				/* booleanFieldType */
-	SOP_PP_Capable,				/* booleanFieldType */
-	SOP_P_Debug_Capable,			/* booleanFieldType */
-	SOP_PP_Debug_Capable,			/* booleanFieldType */
-	Manufacturer_Info_Supported_Port,	/* booleanFieldType */
-	Manufacturer_Info_VID_Port,		/* numericFieldType */
-	Manufacturer_Info_PID_Port,		/* numericFieldType */
 	USB_Comms_Capable,			/* booleanFieldType */
 	DR_Swap_To_DFP_Supported,		/* booleanFieldType */
 	DR_Swap_To_UFP_Supported,		/* booleanFieldType */
@@ -179,27 +173,33 @@ enum vif_Component_indexes {
 	Attempts_Discov_SOP,			/* booleanFieldType */
 	Chunking_Implemented_SOP,		/* booleanFieldType */
 	Unchunked_Extended_Messages_Supported,	/* booleanFieldType */
+	Manufacturer_Info_Supported_Port,	/* booleanFieldType */
+	Manufacturer_Info_VID_Port,		/* numericFieldType */
+	Manufacturer_Info_PID_Port,		/* numericFieldType */
 	Security_Msgs_Supported_SOP,		/* booleanFieldType */
 	Num_Fixed_Batteries,			/* numericFieldType */
 	Num_Swappable_Battery_Slots,		/* numericFieldType */
 	ID_Header_Connector_Type_SOP,		/* numericFieldType */
-	Type_C_Can_Act_As_Host,			/* booleanFieldType */
-	Type_C_Can_Act_As_Device,		/* booleanFieldType */
+	SOP_Capable,				/* booleanFieldType */
+	SOP_P_Capable,				/* booleanFieldType */
+	SOP_PP_Capable,				/* booleanFieldType */
+	SOP_P_Debug_Capable,			/* booleanFieldType */
+	SOP_PP_Debug_Capable,			/* booleanFieldType */
 	Type_C_Implements_Try_SRC,		/* booleanFieldType */
 	Type_C_Implements_Try_SNK,		/* booleanFieldType */
-	Type_C_Supports_Audio_Accessory,	/* booleanFieldType */
+	RP_Value,				/* numericFieldType */
 	Type_C_Supports_VCONN_Powered_Accessory,/* booleanFieldType */
 	Type_C_Is_VCONN_Powered_Accessory,	/* booleanFieldType */
 	Type_C_Is_Debug_Target_SRC,		/* booleanFieldType */
 	Type_C_Is_Debug_Target_SNK,		/* booleanFieldType */
-	Captive_Cable,				/* booleanFieldType */
-	RP_Value,				/* numericFieldType */
-	Type_C_Port_On_Hub,			/* booleanFieldType */
-	Type_C_Power_Source,			/* numericFieldType */
-	Type_C_Sources_VCONN,			/* booleanFieldType */
+	Type_C_Can_Act_As_Host,			/* booleanFieldType */
 	Type_C_Is_Alt_Mode_Controller,		/* booleanFieldType */
+	Type_C_Can_Act_As_Device,		/* booleanFieldType */
 	Type_C_Is_Alt_Mode_Adapter,		/* booleanFieldType */
-	USB4_Router_Index,			/* numericFieldType */
+	Type_C_Power_Source,			/* numericFieldType */
+	Type_C_Port_On_Hub,			/* booleanFieldType */
+	Type_C_Supports_Audio_Accessory,	/* booleanFieldType */
+	Type_C_Sources_VCONN,			/* booleanFieldType */
 	USB4_Lane_0_Adapter,			/* numericFieldType */
 	USB4_Max_Speed,				/* numericFieldType */
 	USB4_DFP_Supported,			/* booleanFieldType */
@@ -213,33 +213,26 @@ enum vif_Component_indexes {
 	USB4_Num_Retimers,			/* numericFieldType */
 	USB4_DP_Bit_Rate,			/* numericFieldType */
 	USB4_Num_DP_Lanes,			/* numericFieldType */
-	Host_Supports_USB_Data,			/* booleanFieldType */
-	Host_Speed,				/* numericFieldType */
-	Host_Contains_Captive_Retimer,		/* booleanFieldType */
-	Host_Truncates_DP_For_tDHPResponse,	/* booleanFieldType */
-	Host_Gen1x1_tLinkTurnaround,		/* numericFieldType */
-	Host_Gen2x1_tLinkTurnaround,		/* numericFieldType */
-	Host_Is_Embedded,			/* booleanFieldType */
-	Host_Suspend_Supported,			/* booleanFieldType */
-	Is_DFP_On_Hub,				/* booleanFieldType */
-	Hub_Port_Number,			/* numericFieldType */
 	Device_Supports_USB_Data,		/* booleanFieldType */
 	Device_Speed,				/* numericFieldType */
 	Device_Contains_Captive_Retimer,	/* booleanFieldType */
 	Device_Truncates_DP_For_tDHPResponse,	/* booleanFieldType */
 	Device_Gen1x1_tLinkTurnaround,		/* numericFieldType */
 	Device_Gen2x1_tLinkTurnaround,		/* numericFieldType */
-	BC_1_2_Charging_Port_Type,		/* numericFieldType */
+	Host_Supports_USB_Data,			/* booleanFieldType */
+	Host_Speed,				/* numericFieldType */
+	Is_DFP_On_Hub,				/* booleanFieldType */
+	Hub_Port_Number,			/* numericFieldType */
+	Host_Contains_Captive_Retimer,		/* booleanFieldType */
+	Host_Truncates_DP_For_tDHPResponse,	/* booleanFieldType */
+	Host_Gen1x1_tLinkTurnaround,		/* numericFieldType */
+	Host_Gen2x1_tLinkTurnaround,		/* numericFieldType */
+	Host_Is_Embedded,			/* booleanFieldType */
+	Host_Suspend_Supported,			/* booleanFieldType */
 	PD_Power_As_Source,			/* numericFieldType */
 	USB_Suspend_May_Be_Cleared,		/* booleanFieldType */
 	Sends_Pings,				/* booleanFieldType */
-	Accepts_PR_Swap_As_Src,			/* booleanFieldType */
-	Accepts_PR_Swap_As_Snk,			/* booleanFieldType */
-	Requests_PR_Swap_As_Src,		/* booleanFieldType */
-	Requests_PR_Swap_As_Snk,		/* booleanFieldType */
-	FR_Swap_Supported_As_Initial_Sink,	/* booleanFieldType */
 	FR_Swap_Type_C_Current_Capability_As_Initial_Sink,/* numericFieldType */
-	FR_Swap_Reqd_Type_C_Current_As_Initial_Source,/* numericFieldType */
 	Master_Port,				/* booleanFieldType */
 	Num_Src_PDOs,				/* numericFieldType */
 	PD_OC_Protection,			/* booleanFieldType */
@@ -248,7 +241,13 @@ enum vif_Component_indexes {
 	No_USB_Suspend_May_Be_Set,		/* booleanFieldType */
 	GiveBack_May_Be_Set,			/* booleanFieldType */
 	Higher_Capability_Set,			/* booleanFieldType */
+	FR_Swap_Reqd_Type_C_Current_As_Initial_Source,/* numericFieldType */
 	Num_Snk_PDOs,				/* numericFieldType */
+	Accepts_PR_Swap_As_Src,			/* booleanFieldType */
+	Accepts_PR_Swap_As_Snk,			/* booleanFieldType */
+	Requests_PR_Swap_As_Src,		/* booleanFieldType */
+	Requests_PR_Swap_As_Snk,		/* booleanFieldType */
+	FR_Swap_Supported_As_Initial_Sink,	/* booleanFieldType */
 	XID_SOP,				/* numericFieldType */
 	Data_Capable_As_USB_Host_SOP,		/* booleanFieldType */
 	Data_Capable_As_USB_Device_SOP,		/* booleanFieldType */
@@ -259,19 +258,16 @@ enum vif_Component_indexes {
 	USB_VID_SOP,				/* numericFieldType */
 	PID_SOP,				/* numericFieldType */
 	bcdDevice_SOP,				/* numericFieldType */
-	SVID_Fixed_SOP,				/* booleanFieldType */
 	Num_SVIDs_Min_SOP,			/* numericFieldType */
 	Num_SVIDs_Max_SOP,			/* numericFieldType */
+	SVID_Fixed_SOP,				/* booleanFieldType */
 	AMA_HW_Vers,				/* numericFieldType */
 	AMA_FW_Vers,				/* numericFieldType */
-	AMA_VCONN_Reqd,				/* booleanFieldType */
 	AMA_VCONN_Power,			/* booleanFieldType */
+	AMA_VCONN_Reqd,				/* booleanFieldType */
 	AMA_VBUS_Reqd,				/* booleanFieldType */
 	AMA_Superspeed_Support,			/* numericFieldType */
-	Product_Total_Source_Power_mW,		/* numericFieldType */
-	Port_Source_Power_Type,			/* numericFieldType */
-	Port_Source_Power_Gang,			/* nonEmptyString */
-	Port_Source_Power_Gang_Max_Power,	/* numericFieldType */
+	BC_1_2_Charging_Port_Type,		/* numericFieldType */
 	XID,					/* numericFieldType */
 	Data_Capable_As_USB_Host,		/* booleanFieldType */
 	Data_Capable_As_USB_Device,		/* booleanFieldType */
@@ -286,8 +282,8 @@ enum vif_Component_indexes {
 	Type_C_To_Type_C_Capt_Vdm_V2,		/* numericFieldType */
 	Cable_Latency,				/* numericFieldType */
 	Cable_Termination_Type,			/* numericFieldType */
-	VBUS_Through_Cable,			/* booleanFieldType */
 	Cable_VBUS_Current,			/* numericFieldType */
+	VBUS_Through_Cable,			/* booleanFieldType */
 	Cable_Superspeed_Support,		/* numericFieldType */
 	Cable_USB_Highest_Speed,		/* numericFieldType */
 	Max_VBUS_Voltage_Vdm_V2,		/* numericFieldType */
@@ -297,16 +293,9 @@ enum vif_Component_indexes {
 	Chunking_Implemented,			/* booleanFieldType */
 	Security_Msgs_Supported,		/* booleanFieldType */
 	ID_Header_Connector_Type,		/* numericFieldType */
-	SVID_Fixed,				/* booleanFieldType */
 	Cable_Num_SVIDs_Min,			/* numericFieldType */
 	Cable_Num_SVIDs_Max,			/* numericFieldType */
-	VPD_HW_Vers,				/* numericFieldType */
-	VPD_FW_Vers,				/* numericFieldType */
-	VPD_Max_VBUS_Voltage,			/* numericFieldType */
-	VPD_Charge_Through_Support,		/* booleanFieldType */
-	VPD_Charge_Through_Current,		/* numericFieldType */
-	VPD_VBUS_Impedance,			/* numericFieldType */
-	VPD_Ground_Impedance,			/* numericFieldType */
+	SVID_Fixed,				/* booleanFieldType */
 	Cable_SOP_PP_Controller,		/* booleanFieldType */
 	SBU_Supported,				/* booleanFieldType */
 	SBU_Type,				/* numericFieldType */
@@ -319,14 +308,25 @@ enum vif_Component_indexes {
 	Active_Cable_Physical_Connection,	/* numericFieldType */
 	Active_Cable_Active_Element,		/* numericFieldType */
 	Active_Cable_USB4_Support,		/* booleanFieldType */
-	Active_Cable_USB2_Hub_Hops_Consumed,	/* numericFieldType */
 	Active_Cable_USB2_Supported,		/* booleanFieldType */
+	Active_Cable_USB2_Hub_Hops_Consumed,	/* numericFieldType */
 	Active_Cable_USB32_Supported,		/* booleanFieldType */
 	Active_Cable_USB_Lanes,			/* numericFieldType */
 	Active_Cable_Optically_Isolated,	/* booleanFieldType */
 	Active_Cable_USB_Gen,			/* numericFieldType */
+	VPD_HW_Vers,				/* numericFieldType */
+	VPD_FW_Vers,				/* numericFieldType */
+	VPD_Max_VBUS_Voltage,			/* numericFieldType */
+	VPD_Charge_Through_Support,		/* booleanFieldType */
+	VPD_Charge_Through_Current,		/* numericFieldType */
+	VPD_VBUS_Impedance,			/* numericFieldType */
+	VPD_Ground_Impedance,			/* numericFieldType */
 	Repeater_One_Type,			/* numericFieldType */
 	Repeater_Two_Type,			/* numericFieldType */
+	Product_Total_Source_Power_mW,		/* numericFieldType */
+	Port_Source_Power_Type,			/* numericFieldType */
+	Port_Source_Power_Gang,			/* nonEmptyString */
+	Port_Source_Power_Gang_Max_Power,	/* numericFieldType */
 	Component_Indexes
 };
 struct vif_Component_t {
