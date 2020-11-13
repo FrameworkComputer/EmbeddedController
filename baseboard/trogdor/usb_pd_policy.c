@@ -158,6 +158,12 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 	dp_status[port] = payload[1];
 
+	if (!is_dp_muxable(port)) {
+		/* TODO(waihong): Info user? */
+		CPRINTS("p%d: The other port is already muxed.", port);
+		return 0;
+	}
+
 	/*
 	 * Initial implementation to handle HPD. Only the first-plugged port
 	 * works, i.e. sending HPD signal to AP. The second-plugged port
@@ -167,35 +173,29 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	 * is then unplugged, switch to the second-plugged port and signal AP?
 	 */
 	if (lvl) {
-		if (is_dp_muxable(port)) {
-			/*
-			 * Enable and switch the DP port selection mux to the
-			 * correct port.
-			 *
-			 * TODO(waihong): Better to move switching DP mux to
-			 * the usb_mux abstraction.
-			 */
-			gpio_set_level(GPIO_DP_MUX_SEL, port == 1);
-			gpio_set_level(GPIO_DP_MUX_OE_L, 0);
+		/*
+		 * Enable and switch the DP port selection mux to the
+		 * correct port.
+		 *
+		 * TODO(waihong): Better to move switching DP mux to
+		 * the usb_mux abstraction.
+		 */
+		gpio_set_level(GPIO_DP_MUX_SEL, port == 1);
+		gpio_set_level(GPIO_DP_MUX_OE_L, 0);
 
-			/* Connect the SBU lines in PPC chip. */
-			if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
-				ppc_set_sbu(port, 1);
+		/* Connect the SBU lines in PPC chip. */
+		if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
+			ppc_set_sbu(port, 1);
 
-			/*
-			 * Connect the USB SS/DP lines in TCPC chip.
-			 *
-			 * When mf_pref not true, still use the dock muxing
-			 * because of the board USB-C topology (limited to 2
-			 * lanes DP).
-			 */
-			usb_mux_set(port, USB_PD_MUX_DOCK,
-				    USB_SWITCH_CONNECT, pd_get_polarity(port));
-		} else {
-			/* TODO(waihong): Info user? */
-			CPRINTS("p%d: The other port is already muxed.", port);
-			return 0;  /* Nack */
-		}
+		/*
+		 * Connect the USB SS/DP lines in TCPC chip.
+		 *
+		 * When mf_pref not true, still use the dock muxing
+		 * because of the board USB-C topology (limited to 2
+		 * lanes DP).
+		 */
+		usb_mux_set(port, USB_PD_MUX_DOCK,
+			    USB_SWITCH_CONNECT, pd_get_polarity(port));
 	} else {
 		/* Disconnect the DP port selection mux. */
 		gpio_set_level(GPIO_DP_MUX_OE_L, 1);
@@ -238,7 +238,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 			HPD_USTREAM_DEBOUNCE_LVL;
 	} else if (irq & !lvl) {
 		CPRINTF("ERR:HPD:IRQ&LOW\n");
-		return 0;  /* Nak */
+		return 0;
 	} else {
 		gpio_set_level(hpd, lvl);
 		/* Set the minimum time delay (2ms) for the next HPD IRQ */
@@ -246,17 +246,19 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 			HPD_USTREAM_DEBOUNCE_LVL;
 	}
 
-	return 1;  /* Ack */
+	return 1;
 }
 
 __override void svdm_exit_dp_mode(int port)
 {
-	/* Disconnect the DP port selection mux. */
-	gpio_set_level(GPIO_DP_MUX_OE_L, 1);
-	gpio_set_level(GPIO_DP_MUX_SEL, 0);
+	if (is_dp_muxable(port)) {
+		/* Disconnect the DP port selection mux. */
+		gpio_set_level(GPIO_DP_MUX_OE_L, 1);
+		gpio_set_level(GPIO_DP_MUX_SEL, 0);
 
-	/* Signal AP for the HPD low event */
-	usb_mux_hpd_update(port, 0, 0);
-	gpio_set_level(GPIO_DP_HOT_PLUG_DET, 0);
+		/* Signal AP for the HPD low event */
+		usb_mux_hpd_update(port, 0, 0);
+		gpio_set_level(GPIO_DP_HOT_PLUG_DET, 0);
+	}
 }
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
