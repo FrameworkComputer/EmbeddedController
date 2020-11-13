@@ -13,6 +13,7 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "i2c.h"
+#include "string.h"
 #include "util.h"
 
 /* Shutdown mode parameter to write to manufacturer access register */
@@ -72,3 +73,33 @@ enum battery_present battery_is_present(void)
 
 	return bp;
 }
+
+#ifdef CONFIG_EMI_REGION1
+
+void battery_params_to_emi0(struct charge_state_data *emi_info)
+{
+	char text[32];
+	char *str = "LION";
+	int value;
+
+	*host_get_customer_memmap(0x03) = (emi_info->batt.temperature - 2731)/10;
+	*host_get_customer_memmap(0x06) = emi_info->batt.display_charge/10;
+	
+	if (emi_info->batt.status & STATUS_FULLY_CHARGED)
+		*host_get_customer_memmap(0x07) |= BIT(0);
+	else
+		*host_get_customer_memmap(0x07) &= ~BIT(0);
+
+	battery_device_chemistry(text, sizeof(text));
+	if (!strncmp(text, str, 4))
+		*host_get_customer_memmap(0x07) |= BIT(1);
+	else
+		*host_get_customer_memmap(0x07) &= ~BIT(1);
+
+	battery_get_mode(&value);
+	if (value & MODE_CAPACITY)
+		*host_get_customer_memmap(0x07) |= BIT(2);
+	else
+		*host_get_customer_memmap(0x07) &= ~BIT(2);
+}
+#endif

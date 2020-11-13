@@ -1762,6 +1762,10 @@ void charger_task(void *u)
 
 		charger_get_params(&curr.chg);
 		battery_get_params(&curr.batt);
+#ifdef CONFIG_EMI_REGION1
+		battery_params_to_emi0(&curr);
+#endif
+
 #ifdef CONFIG_OCPC
 		if (curr.ac)
 			ocpc_get_adcs(&curr.ocpc);
