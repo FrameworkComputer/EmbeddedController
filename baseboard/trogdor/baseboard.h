@@ -13,7 +13,7 @@
  * The sensor stack is generating a lot of activity.
  * They can be enabled through the console command 'chan'.
  */
-#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_HOSTCMD)))
+#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_HOSTCMD)))
 
 /* NPCX7 config */
 #define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
