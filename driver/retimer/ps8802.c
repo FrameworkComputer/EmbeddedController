@@ -273,3 +273,18 @@ const struct usb_mux_driver ps8802_usb_mux_driver = {
 	.set = ps8802_set_mux,
 	.get = ps8802_get_mux,
 };
+
+/*
+ * If PS8802 I2c slave address was conflicted, change
+ * the I2c slave address in page 0x0A, offset 0xB0
+ * switch to 0x50 slave address
+ */
+int ps8802_chg_i2c_addr(int i2c_port)
+{
+	int rv;
+
+	rv = i2c_write8(i2c_port,
+			PS8802_P1_ADDR, PS8802_ADDR_CFG, PS8802_I2C_SLAV_ADDR);
+
+	return rv;
+}
