@@ -1283,9 +1283,6 @@ static bool tc_perform_snk_hard_reset(int port)
 		/* Hard reset sets us back to default data role */
 		tc_set_data_role(port, PD_ROLE_UFP);
 
-		/* Clear the input current limit */
-		sink_stop_drawing_current(port);
-
 		/*
 		 * When VCONN is supported, the Hard Reset Shall cause
 		 * the Port with the Rd resistor asserted to turn off
@@ -1295,25 +1292,46 @@ static bool tc_perform_snk_hard_reset(int port)
 		    TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
 			set_vconn(port, 0);
 
-		/* Wait tSafe0V + tSrcRecover, then check for Vbus presence */
+		/* Wait up to tVSafe0V for Vbus to disappear */
 		tc[port].ps_reset_state = PS_STATE1;
-		tc[port].timeout = get_time().val + PD_T_SAFE_0V +
-							PD_T_SRC_RECOVER_MAX;
+		tc[port].timeout = get_time().val + PD_T_SAFE_0V;
 		return false;
 	case PS_STATE1:
-		if (get_time().val < tc[port].timeout)
-			return false;
+		if (pd_check_vbus_level(port, VBUS_SAFE0V)) {
+			/*
+			 * Partner dropped Vbus, reduce our current consumption
+			 * and await its return.
+			 */
+			sink_stop_drawing_current(port);
 
-		/* Power shut off? Disable AutoDischargeDisconnect */
-		if (!pd_is_vbus_present(port))
 			tcpm_enable_auto_discharge_disconnect(port, 0);
 
-		/* Watch for Vbus to return */
-		tc[port].ps_reset_state = PS_STATE2;
-		tc[port].timeout = get_time().val + PD_T_SRC_TURN_ON;
+			/* Move on to waiting for the return of Vbus */
+			tc[port].ps_reset_state = PS_STATE2;
+			tc[port].timeout = get_time().val +
+						PD_T_SRC_RECOVER_MAX +
+						PD_T_SRC_TURN_ON;
+		}
+
+		if (get_time().val > tc[port].timeout) {
+			/*
+			 * No Vbus drop likely indicates a non-PD port partner,
+			 * move to the next stage anyway.
+			 */
+			tc[port].ps_reset_state = PS_STATE2;
+			tc[port].timeout = get_time().val +
+						PD_T_SRC_RECOVER_MAX +
+						PD_T_SRC_TURN_ON;
+
+		}
 		return false;
 	case PS_STATE2:
-		if (pd_is_vbus_present(port)) {
+		/*
+		 * Look for the voltage to be above disconnect.  Since we didn't
+		 * drop our draw on non-PD partners, they may have dipped below
+		 * vSafe5V but still be in a valid connected voltage.
+		 */
+		if (!pd_check_vbus_level(port, VBUS_REMOVED)) {
 			/*
 			 * Inform policy engine that power supply
 			 * reset is complete
