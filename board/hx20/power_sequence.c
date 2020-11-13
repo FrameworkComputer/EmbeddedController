@@ -98,6 +98,8 @@ int board_chipset_power_on(void)
 
 	/* Deassert RSMRST# */
 	gpio_set_level(GPIO_PCH_RSMRST_L, 1);
+
+	msleep(50);
 	return true;
 }
 
