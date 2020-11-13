@@ -151,8 +151,10 @@ ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)                 /* UART from EC 
 GPIO(PANEL_ID0,			PIN(0, 2), GPIO_INPUT)
 GPIO(PANEL_ID1,			PIN(C, 6), GPIO_INPUT)
 
+/* EDID write protect control */
+GPIO(EC_EDID_WP_DISABLE_L,	PIN(D, 3), GPIO_OUT_HIGH)			/* LOW to disable EDID WP */
+
 /* Unused pins */
-UNUSED(PIN(D, 3))						/* E9  TP55 */
 UNUSED(PIN(9, 5))						/* H10 TP54 */
 UNUSED(PIN(4, 0))						/* E4  TP56 */
 UNUSED(PIN(5, 0))						/* G4 NC */
