@@ -202,6 +202,8 @@
 #define USBPD_REG_PLUG_IN_OUT_DETECT_DISABLE      BIT(1)
 #define USBPD_REG_PLUG_IN_OUT_DETECT_STAT         BIT(0)
 #define IT83XX_USBPD_CCPSR0(p)      REG8(IT83XX_USBPD_BASE(p)+0x70)
+#define IT83XX_USBPD_CCPSR3_RISE(p) REG8(IT83XX_USBPD_BASE(p)+0x73)
+#define IT83XX_USBPD_CCPSR4_FALL(p) REG8(IT83XX_USBPD_BASE(p)+0x74)
 #endif /* !defined(CONFIG_USB_PD_TCPM_DRIVER_IT83XX) */
 
 /*
@@ -390,10 +392,23 @@ enum usbpd_power_role {
 	USBPD_POWER_ROLE_PROVIDER_CONSUMER,
 };
 
+enum tuning_unit {
+	IT83XX_TX_PRE_DRIVING_TIME_DEFAULT,
+	IT83XX_TX_PRE_DRIVING_TIME_1_UNIT,
+	IT83XX_TX_PRE_DRIVING_TIME_2_UNIT,
+	IT83XX_TX_PRE_DRIVING_TIME_3_UNIT,
+};
+
 struct usbpd_ctrl_t {
 	volatile uint8_t *cc1;
 	volatile uint8_t *cc2;
 	uint8_t irq;
+};
+
+/* Data structure for board to adjust pd port rising and falling time */
+struct cc_para_t {
+	enum tuning_unit rising_time;
+	enum tuning_unit falling_time;
 };
 
 extern const struct usbpd_ctrl_t usbpd_ctrl_regs[];
@@ -404,5 +419,10 @@ void it83xx_clear_tx_error_status(enum usbpd_port port);
 void it83xx_get_tx_error_status(enum usbpd_port port);
 #endif
 void switch_plug_out_type(enum usbpd_port port);
+/*
+ * Board-level callback function to get cc tuning parameters
+ * NOTE: board must define CONFIG_IT83XX_TUNE_CC_PHY
+ */
+const struct cc_para_t *board_get_cc_tuning_parameter(enum usbpd_port port);
 
 #endif /* __CROS_EC_DRIVER_TCPM_IT83XX_H */

@@ -2503,6 +2503,13 @@
 #undef CONFIG_IT83XX_SMCLK2_ON_GPC7
 
 /*
+ * Enable board to tune cc physical parameters (ex.rising, falling time).
+ * NOTE: board must define board_get_cc_tuning_parameter(enum usbpd_port port)
+ *       function.
+ */
+#undef CONFIG_IT83XX_TUNE_CC_PHY
+
+/*
  * Enable the corresponding config option, according to EC's VCC is connected
  * to 1.8V or 3.3V
  */
