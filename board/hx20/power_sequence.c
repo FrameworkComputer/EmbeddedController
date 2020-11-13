@@ -152,6 +152,7 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("power handle state in G3S5");
 
 		if (board_chipset_power_on()) {
+			cancel_board_power_off();
 			return POWER_S5;
 		} else {
 			return POWER_G3;

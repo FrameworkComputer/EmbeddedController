@@ -600,6 +600,11 @@ void board_power_off(void)
 	hook_call_deferred(&board_power_off_deferred_data, 30000 * MSEC);
 }
 
+void cancel_board_power_off(void)
+{
+	CPRINTS("Cancel shutdown");
+	hook_call_deferred(&board_power_off_deferred_data, -1);
+}
 
 /**
  * Notify PCH of the AC presence.
