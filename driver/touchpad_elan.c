@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "byteorder.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -46,8 +47,10 @@
 #define ETP_I2C_MAX_X_AXIS_CMD		0x0106
 #define ETP_I2C_MAX_Y_AXIS_CMD		0x0107
 #define ETP_I2C_RESOLUTION_CMD		0x0108
+#define ETP_I2C_IAP_VERSION_CMD		0x0110
 #define ETP_I2C_PRESSURE_CMD		0x010A
 #define ETP_I2C_SET_CMD			0x0300
+#define ETP_I2C_IAP_TYPE_CMD		0x0304
 #define ETP_I2C_POWER_CMD		0x0307
 #define ETP_I2C_FW_CHECKSUM_CMD		0x030F
 
@@ -88,7 +91,6 @@
 #ifdef CONFIG_USB_UPDATE
 /* The actual FW_SIZE depends on IC. */
 #define FW_SIZE			CONFIG_TOUCHPAD_VIRTUAL_SIZE
-#define FW_PAGE_SIZE		64
 #endif
 
 struct {
@@ -100,6 +102,10 @@ struct {
 	uint16_t width_y;
 	/* Pressure adjustment */
 	uint8_t pressure_adj;
+	uint16_t ic_type;
+	uint16_t page_count;
+	uint16_t page_size;
+	uint16_t iap_version;
 } elan_tp_params;
 
 /*
@@ -270,6 +276,41 @@ static int elan_tp_read_report(void)
 	return 0;
 }
 
+static int elan_get_fwinfo(void)
+{
+	uint16_t ic_type = elan_tp_params.ic_type;
+	uint16_t iap_version = elan_tp_params.iap_version;
+
+	switch (ic_type) {
+	case 0x09:
+		elan_tp_params.page_count = 768;
+		break;
+	case 0x0D:
+		elan_tp_params.page_count = 896;
+		break;
+	case 0x00:
+	case 0x10:
+	case 0x14:
+		elan_tp_params.page_count = 1024;
+		break;
+	default:
+		CPRINTS("unknown ic_type: %d", ic_type);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	if (ic_type == 0x14 && iap_version >= 2) {
+		elan_tp_params.page_count /= 8;
+		elan_tp_params.page_size = 512;
+	} else if (ic_type >= 0x0D && iap_version >= 1) {
+		elan_tp_params.page_count /= 2;
+		elan_tp_params.page_size = 128;
+	} else {
+		elan_tp_params.page_size = 64;
+	}
+
+	return EC_SUCCESS;
+}
+
 /* Initialize the controller ICs after reset */
 static void elan_tp_init(void)
 {
@@ -286,6 +327,24 @@ static void elan_tp_init(void)
 		      NULL, 0, val, sizeof(val));
 
 	CPRINTS("reset rv %d buf=%04x", rv, *((uint16_t *)val));
+	if (rv)
+		goto out;
+
+	/* Read IC type, IAP version */
+	rv = elan_tp_read_cmd(ETP_I2C_OSM_VERSION_CMD, &elan_tp_params.ic_type);
+	CPRINTS("%s: ic_type:%04X.", __func__, elan_tp_params.ic_type);
+	elan_tp_params.ic_type >>= 8;
+	if (rv)
+		goto out;
+
+	rv = elan_tp_read_cmd(ETP_I2C_IAP_VERSION_CMD,
+			&elan_tp_params.iap_version);
+	CPRINTS("%s: iap_version:%04X.", __func__, elan_tp_params.iap_version);
+	elan_tp_params.iap_version >>= 8;
+	if (rv)
+		goto out;
+
+	rv = elan_get_fwinfo();
 	if (rv)
 		goto out;
 
@@ -401,22 +460,23 @@ static int elan_in_main_mode(void)
 	return val & ETP_I2C_MAIN_MODE_ON;
 }
 
-static int elan_get_ic_page_count(void)
+static int elan_read_write_iap_type(void)
 {
-	uint16_t ic_type;
+	for (int retry = 0; retry < 3; ++retry) {
+		uint16_t val;
 
-	elan_tp_read_cmd(ETP_I2C_OSM_VERSION_CMD, &ic_type);
-	CPRINTS("%s: ic_type:%04X.", __func__, ic_type);
-	switch (ic_type >> 8) {
-	case 0x09:
-		return 768;
-	case 0x0D:
-		return 896;
-	case 0x00:
-	case 0x10:
-		return 1024;
+		if (elan_tp_write_cmd(ETP_I2C_IAP_TYPE_CMD,
+					elan_tp_params.page_size / 2))
+			return EC_ERROR_UNKNOWN;
+
+		if (elan_tp_read_cmd(ETP_I2C_IAP_TYPE_CMD, &val))
+			return EC_ERROR_UNKNOWN;
+
+		if (val == elan_tp_params.page_size / 2)
+			return EC_SUCCESS;
+
 	}
-	return -1;
+	return EC_ERROR_UNKNOWN;
 }
 
 static int elan_prepare_for_update(void)
@@ -440,6 +500,11 @@ static int elan_prepare_for_update(void)
 		return EC_ERROR_UNKNOWN;
 	}
 
+	if (elan_tp_params.ic_type >= 0x0D && elan_tp_params.iap_version >= 1) {
+		if (elan_read_write_iap_type())
+			return EC_ERROR_UNKNOWN;
+	}
+
 	/* Send the passphrase again */
 	elan_tp_write_cmd(ETP_I2C_IAP_CMD, ETP_I2C_IAP_PASSWORD);
 	msleep(30);
@@ -459,26 +524,39 @@ static int elan_prepare_for_update(void)
 
 static int touchpad_update_page(const uint8_t *data)
 {
-	uint8_t page_store[FW_PAGE_SIZE + 4];
+	const uint8_t cmd[2] = {ETP_I2C_IAP_REG_L, ETP_I2C_IAP_REG_H};
 	uint16_t checksum = 0;
 	uint16_t rx_buf;
 	int i, rv;
 
-	for (i = 0; i < FW_PAGE_SIZE; i += 2)
+	for (i = 0; i < elan_tp_params.page_size; i += 2)
 		checksum += ((uint16_t)(data[i + 1]) << 8) | (data[i]);
+	checksum = htole16(checksum);
 
-	page_store[0] = ETP_I2C_IAP_REG_L;
-	page_store[1] = ETP_I2C_IAP_REG_H;
-	memcpy(page_store + 2, data, FW_PAGE_SIZE);
-	page_store[FW_PAGE_SIZE + 2 + 0] = checksum & 0xff;
-	page_store[FW_PAGE_SIZE + 2 + 1] = (checksum >> 8) & 0xff;
+	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 1);
 
-	rv = i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT,
-		      CONFIG_TOUCHPAD_I2C_ADDR_FLAGS,
-		      page_store, sizeof(page_store), NULL, 0);
+	rv = i2c_xfer_unlocked(CONFIG_TOUCHPAD_I2C_PORT,
+			       CONFIG_TOUCHPAD_I2C_ADDR_FLAGS,
+			       cmd, sizeof(cmd), NULL, 0, I2C_XFER_START);
+	if (rv)
+		goto fail;
+	rv = i2c_xfer_unlocked(CONFIG_TOUCHPAD_I2C_PORT,
+			       CONFIG_TOUCHPAD_I2C_ADDR_FLAGS,
+			       data, elan_tp_params.page_size, NULL, 0, 0);
+	if (rv)
+		goto fail;
+	rv = i2c_xfer_unlocked(CONFIG_TOUCHPAD_I2C_PORT,
+			       CONFIG_TOUCHPAD_I2C_ADDR_FLAGS,
+			       (uint8_t *)&checksum, sizeof(checksum), NULL, 0,
+			       I2C_XFER_STOP);
+	if (rv)
+		goto fail;
+
+fail:
+	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 0);
 	if (rv)
 		return rv;
-	msleep(20);
+	msleep(elan_tp_params.page_size >= 512 ? 50 : 35);
 
 	rv = elan_tp_read_cmd(ETP_I2C_IAP_CTRL_CMD, &rx_buf);
 
@@ -493,16 +571,17 @@ static int touchpad_update_page(const uint8_t *data)
 int touchpad_update_write(int offset, int size, const uint8_t *data)
 {
 	static int iap_addr = -1;
-	int addr, rv, page_count;
+	int addr, rv;
 
 	CPRINTS("%s %08x %d", __func__, offset, size);
 
 	if (offset == 0) {
 		/* Verify the IC type is aligned with defined firmware size */
-		page_count = elan_get_ic_page_count();
-		if (FW_PAGE_SIZE * page_count != FW_SIZE) {
+		if (elan_tp_params.page_size * elan_tp_params.page_count
+				!= FW_SIZE) {
 			CPRINTS("%s: IC(%d*%d) size and FW_SIZE(%d) mismatch",
-				__func__, page_count, FW_PAGE_SIZE, FW_SIZE);
+				__func__, elan_tp_params.page_count,
+				elan_tp_params.page_size, FW_SIZE);
 			return EC_ERROR_UNKNOWN;
 		}
 
@@ -521,18 +600,18 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 		CPRINTS("%s: payload starts from 0x%x.", __func__, iap_addr);
 	}
 
-	/* Data that comes in must align with FW_PAGE_SIZE */
-	if (offset % FW_PAGE_SIZE)
+	/* Data that comes in must align with page_size */
+	if (offset % elan_tp_params.page_size)
 		return EC_ERROR_INVAL;
 
-	for (addr = (offset / FW_PAGE_SIZE) * FW_PAGE_SIZE;
-			addr < (offset + size); addr += FW_PAGE_SIZE) {
+	for (addr = offset; addr < (offset + size);
+			addr += elan_tp_params.page_size) {
 		if (iap_addr > addr) /* Skip chunk */
 			continue;
 		rv = touchpad_update_page(data + addr - offset);
 		if (rv)
 			return rv;
-		CPRINTF("/p%d", addr / FW_PAGE_SIZE);
+		CPRINTF("/p%d", addr / elan_tp_params.page_size);
 		watchdog_reload();
 	}
 	CPRINTF("\n");
