@@ -97,6 +97,7 @@
 /* Volume Button feature */
 
 /* Fan features */
+#undef CONFIG_FANS
 
 /* charger defines */
 #define CONFIG_CHARGER_SENSE_RESISTOR		10
@@ -160,7 +161,6 @@ enum battery_type {
 };
 
 enum pwm_channel {
-	PWM_CH_FAN,
 	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT
 };

@@ -22,8 +22,6 @@
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tusb422.h"
 #include "extpower.h"
-#include "fan.h"
-#include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_raw.h"
@@ -121,36 +119,6 @@ __override bool board_is_tbt_usb4_port(int port)
 }
 
 /******************************************************************************/
-/* Physical fans. These are logically separate from pwm_channels. */
-
-const struct fan_conf fan_conf_0 = {
-	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
-	.pgood_gpio = -1,
-	.enable_gpio = GPIO_EN_PP5000_FAN,
-};
-
-/*
- * Fan specs from datasheet:
- * Max speed 5900 rpm (+/- 7%), minimum duty cycle 30%.
- * Minimum speed not specified by RPM. Set minimum RPM to max speed (with
- * margin) x 30%.
- *    5900 x 1.07 x 0.30 = 1894, round up to 1900
- */
-const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 1900,
-	.rpm_start = 1900,
-	.rpm_max = 5900,
-};
-
-const struct fan_t fans[FAN_CH_COUNT] = {
-	[FAN_CH_0] = {
-		.conf = &fan_conf_0,
-		.rpm = &fan_rpm_0,
-	},
-};
-
-/******************************************************************************/
 /* EC thermal management configuration */
 
 /*
@@ -166,8 +134,6 @@ const static struct ec_thermal_config thermal_cpu = {
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
 	},
-	.temp_fan_off = C_TO_K(35),
-	.temp_fan_max = C_TO_K(50),
 };
 
 /*
@@ -189,8 +155,6 @@ const static struct ec_thermal_config thermal_inductor = {
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
 	},
-	.temp_fan_off = C_TO_K(40),
-	.temp_fan_max = C_TO_K(55),
 };
 
 
@@ -201,17 +165,6 @@ struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_4_FAN]			= thermal_cpu,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-
-/******************************************************************************/
-/* MFT channels. These are logically separate from pwm_channels. */
-const struct mft_t mft_channels[] = {
-	[MFT_CH_0] = {
-		.module = NPCX_MFT_MODULE_1,
-		.clk_src = TCKC_LFCLK,
-		.pwm_id = PWM_CH_FAN,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 /******************************************************************************/
 /* I2C port map configuration */
@@ -264,11 +217,6 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 /******************************************************************************/
 /* PWM configuration */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_FAN] = {
-		.channel = 5,
-		.flags = PWM_CONFIG_OPEN_DRAIN,
-		.freq = 25000
-	},
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
 		.flags = 0,
