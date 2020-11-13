@@ -56,6 +56,7 @@ GPIO_INT(VR_PWRGD,        PIN(057),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SOC_ENBKL,       PIN(0165), GPIO_INT_BOTH, soc_signal_interrupt)
 GPIO_INT(LID_SW_L,        PIN(0254), GPIO_INT_BOTH, lid_interrupt)
 GPIO_INT(CHASSIS_OPEN,    PIN(0161), GPIO_INT_BOTH, chassis_control_interrupt) /* monitor C cover open */
+GPIO_INT(ADP_IN,              PIN(0172), GPIO_INT_BOTH, extpower_interrupt)    /* Adaptor in from charger ACOK pin */
 
 /* UART input */
 GPIO_INT(UART0_RX,        PIN(0105), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, \
@@ -65,7 +66,6 @@ GPIO_INT(UART0_RX,        PIN(0105), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, \
 GPIO_INT(SOC_TP_INT_L,    PIN(0242), GPIO_INT_FALLING, touchpad_interrupt)
 
 /* Input signal */
-GPIO(ADP_IN,              PIN(0172), GPIO_INPUT)    /* Adaptor in from charger ACOK pin */
 GPIO(CAM_SW,              PIN(067),  GPIO_INPUT)    /* Monitor to close CAM PWR */
 
 /* Reserve Pin Defination */
