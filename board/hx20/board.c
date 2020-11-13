@@ -552,67 +552,6 @@ const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 };
 */
 
-/* MCHP mec1701_evb connected to Intel SKL RVP3 with Kabylake
- * processor we do not control the PMIC on SKL.
- */
-static void board_pmic_init(void)
-{
-	int rv, cfg;
-
-	/* No need to re-init PMIC since settings are sticky across sysjump */
-	if (system_jumped_to_this_image())
-		return;
-
-#if 0 /* BD99992GW PMIC on a real Chromebook */
-	/* Set CSDECAYEN / VCCIO decays to 0V at assertion of SLP_S0# */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0x4a);
-
-	/*
-	 * Set V100ACNT / V1.00A Control Register:
-	 * Nominal output = 1.0V.
-	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x37, 0x1a);
-
-	/*
-	 * Set V085ACNT / V0.85A Control Register:
-	 * Lower power mode = 0.7V.
-	 * Nominal output = 1.0V.
-	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x7a);
-
-	/* VRMODECTRL - enable low-power mode for VCCIO and V0.85A */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3b, 0x18);
-#else
-	CPRINTS("HOOK_INIT - called board_pmic_init");
-	trace0(0, HOOK, 0, "HOOK_INIT - call board_pmic_init");
-
-	/* Config DS1624 temperature sensor for continuous conversion */
-	cfg = 0x66;
-	rv = i2c_read8(I2C_PORT_THERMAL, DS1624_I2C_ADDR_FLAGS,
-		       DS1624_ACCESS_CFG, &cfg);
-	trace2(0, BRD, 0, "Read DS1624 Config rv = %d  cfg = 0x%02X",
-	       rv, cfg);
-
-	if ((rv == EC_SUCCESS) && (cfg & (1u << 0))) {
-		/* one-shot mode switch to continuous */
-		rv = i2c_write8(I2C_PORT_THERMAL, DS1624_I2C_ADDR_FLAGS,
-				DS1624_ACCESS_CFG, 0);
-		trace1(0, BRD, 0, "Write DS1624 Config to 0, rv = %d", rv);
-		/* writes to config require 10ms until next I2C command */
-		if (rv == EC_SUCCESS)
-			udelay(10000);
-	}
-
-	/* Send start command */
-	rv = i2c_write8(I2C_PORT_THERMAL, DS1624_I2C_ADDR_FLAGS,
-			DS1624_CMD_START, 1);
-	trace1(0, BRD, 0, "Send Start command to DS1624 rv = %d", rv);
-
-	return;
-#endif
-}
-DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
-
 static void vci_init(void)
 {
 	/**
@@ -631,59 +570,35 @@ static void vci_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, vci_init, HOOK_PRIO_FIRST);
 
-int extpower_is_present(void)
+/**
+ * We should really really use mchp/system.c hibernate function.
+ * however for now the EE design does not allow us to keep the EC on
+ * without also keeping on the 5v3v ALW supplies, so we just wack
+ * power to ourselves.
+ */
+static void board_power_off_deferred(void)
 {
-	/*Todo improve this logic if we implement PPS charging*/
-	int usb_c_extpower_present = 0;
-	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC0_VBUS_ON_EC);
-	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC1_VBUS_ON_EC);
-	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC2_VBUS_ON_EC);
-	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC3_VBUS_ON_EC);
-	extpower_handle_update(usb_c_extpower_present);
-	return usb_c_extpower_present;
+	int i;
+
+	/* Disable interrupts */
+	interrupt_disable();
+	for (i = 0; i < MCHP_IRQ_MAX; ++i) {
+		task_disable_irq(i);
+		task_clear_pending_irq(i);
+	}
+	MCHP_VCI_REGISTER &= ~(MCHP_VCI_REGISTER_FW_CNTRL + MCHP_VCI_REGISTER_FW_EXT);
+		/* Wait for power rails to die */
+	while (1)
+		;
 }
-static int old_extpower_presence;
-static void extpower_deferred(void)
+DECLARE_DEFERRED(board_power_off_deferred);
+
+void board_power_off(void)
 {
-	int extpower_presence = extpower_is_present();
+	CPRINTS("Shutting down system in 30 seconds!");
 
-	if (extpower_presence == old_extpower_presence)
-		return;
-
-	old_extpower_presence = extpower_presence;
-	/*
-	extpower_handle_update(extpower_presence);
-	*/
-
+	hook_call_deferred(&board_power_off_deferred_data, 30000 * MSEC);
 }
-DECLARE_DEFERRED(extpower_deferred);
-
-void extpower_is_present_interrupt(enum gpio_signal signal)
-{
-	/*Todo improve this logic if we implement PPS charging*/
-	/* Trigger deferred notification of external power change */
-	hook_call_deferred(&extpower_deferred_data,
-			1 * MSEC);
-}
-
-
-void extpower_init(void)
-{
-	uint8_t *memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
-	old_extpower_presence = extpower_is_present();
-	gpio_enable_interrupt(GPIO_TYPEC0_VBUS_ON_EC);
-	gpio_enable_interrupt(GPIO_TYPEC1_VBUS_ON_EC);
-	gpio_enable_interrupt(GPIO_TYPEC2_VBUS_ON_EC);
-	gpio_enable_interrupt(GPIO_TYPEC3_VBUS_ON_EC);
-
-		/* Initialize the memory-mapped AC_PRESENT flag */
-	if (old_extpower_presence)
-		*memmap_batt_flags |= EC_BATT_FLAG_AC_PRESENT;
-	else
-		*memmap_batt_flags &= ~EC_BATT_FLAG_AC_PRESENT;
-}
-
-DECLARE_HOOK(HOOK_INIT, extpower_init, HOOK_PRIO_INIT_EXTPOWER);
 
 
 /**

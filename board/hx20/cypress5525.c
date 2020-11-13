@@ -44,6 +44,53 @@ BUILD_ASSERT(ARRAY_SIZE(pd_chip_config) == PD_CHIP_COUNT);
 
 int state = CYP5525_STATE_RESET;
 
+
+int pd_extpower_is_present(void)
+{
+	/*Todo improve this logic if we implement PPS charging*/
+	int usb_c_extpower_present = 0;
+
+	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC0_VBUS_ON_EC) ? BIT(0) : 0;
+	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC1_VBUS_ON_EC) ? BIT(1) : 0;
+	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC2_VBUS_ON_EC) ? BIT(2) : 0;
+	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC3_VBUS_ON_EC) ? BIT(3) : 0;
+	return usb_c_extpower_present;
+}
+static int pd_old_extpower_presence;
+static void pd_extpower_deferred(void)
+{
+	int extpower_presence = pd_extpower_is_present();
+
+	if (extpower_presence == pd_old_extpower_presence)
+		return;
+	CPRINTS("PD Source supply changed! old=0x%x, new=0x%02x",
+			pd_old_extpower_presence, extpower_presence);
+	pd_old_extpower_presence = extpower_presence;
+	/* todo handle safety */
+}
+DECLARE_DEFERRED(pd_extpower_deferred);
+
+void pd_extpower_is_present_interrupt(enum gpio_signal signal)
+{
+	/*Todo improve this logic if we implement PPS charging*/
+	/* Trigger deferred notification of external power change */
+	hook_call_deferred(&pd_extpower_deferred_data,
+			1 * MSEC);
+}
+
+
+void pd_extpower_init(void)
+{
+	pd_old_extpower_presence = pd_extpower_is_present();
+	gpio_enable_interrupt(GPIO_TYPEC0_VBUS_ON_EC);
+	gpio_enable_interrupt(GPIO_TYPEC1_VBUS_ON_EC);
+	gpio_enable_interrupt(GPIO_TYPEC2_VBUS_ON_EC);
+	gpio_enable_interrupt(GPIO_TYPEC3_VBUS_ON_EC);
+}
+
+DECLARE_HOOK(HOOK_INIT, pd_extpower_init, HOOK_PRIO_INIT_EXTPOWER);
+
+
 int cypd_write_reg16(int controller, int reg, int data)
 {
 	int rv;
