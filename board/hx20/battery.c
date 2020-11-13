@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "adc_chip.h"
+#include "board.h"
 #include "battery.h"
 #include "battery_smart.h"
 #include "charge_state.h"
@@ -17,6 +18,7 @@
 #include "system.h"
 #include "i2c.h"
 #include "string.h"
+#include "system.h"
 #include "util.h"
 #include "hooks.h"
 
@@ -24,7 +26,7 @@
 #define PARAM_CUT_OFF_LOW  0x10
 #define PARAM_CUT_OFF_HIGH 0x00
 
-/* Battery info for BQ40Z50 */
+/* Battery info for BQ40Z50 4-cell */
 static const struct battery_info info = {
 	.voltage_max = 17600,        /* mV */
 	.voltage_normal = 15400,
@@ -91,26 +93,26 @@ void battery_customize(struct charge_state_data *emi_info)
 	int new_btp;
 	static int batt_state;
 
-	/* Update EMI */
-	*host_get_customer_memmap(0x03) = (emi_info->batt.temperature - 2731)/10;
-	*host_get_customer_memmap(0x06) = emi_info->batt.display_charge/10;
+	*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_AVER_TEMP) = 
+							(emi_info->batt.temperature - 2731)/10;
+	*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_PERCENTAGE) = emi_info->batt.display_charge/10;
 	
 	if (emi_info->batt.status & STATUS_FULLY_CHARGED)
-		*host_get_customer_memmap(0x07) |= BIT(0);
+		*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_STATUS) |= EC_BATT_FLAG_FULL;
 	else
-		*host_get_customer_memmap(0x07) &= ~BIT(0);
+		*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_STATUS) &= ~EC_BATT_FLAG_FULL;
 
 	battery_device_chemistry(text, sizeof(text));
 	if (!strncmp(text, str, 4))
-		*host_get_customer_memmap(0x07) |= BIT(1);
+		*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_STATUS) |= EC_BATT_TYPE;
 	else
-		*host_get_customer_memmap(0x07) &= ~BIT(1);
+		*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_STATUS) &= ~EC_BATT_TYPE;
 
 	battery_get_mode(&value);
 	if (value & MODE_CAPACITY)
-		*host_get_customer_memmap(0x07) |= BIT(2);
+		*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_STATUS) |= EC_BATT_MODE;
 	else
-		*host_get_customer_memmap(0x07) &= ~BIT(2);
+		*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_STATUS) &= ~EC_BATT_MODE;
 	
 	/* BTP: Notify AP update battery */
 	new_btp = *host_get_customer_memmap(0x08) + (*host_get_customer_memmap(0x09) << 8);
@@ -179,7 +181,9 @@ static void bettery_percentage_control(void)
 DECLARE_HOOK(HOOK_AC_CHANGE, bettery_percentage_control, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, bettery_percentage_control, HOOK_PRIO_DEFAULT);
 
+/*****************************************************************************/
 /* Customize host command */
+
 /*
  * Charging limit control.
  */

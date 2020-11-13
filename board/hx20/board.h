@@ -165,7 +165,6 @@
 #define CONFIG_BUTTON_COUNT 2
 /* #define CONFIG_CHARGE_MANAGER */
 /* #define CONFIG_CHARGE_RAMP_SW */
-#define CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD
 
 #undef CONFIG_HOSTCMD_LOCATE_CHIP
 
@@ -331,6 +330,25 @@
 
 /* Enable EMI0 Region 1 */
 #define CONFIG_EMI_REGION1
+#ifdef CONFIG_EMI_REGION1
+#define EC_MEMMAP_ER1_BATT_AVER_TEMP		0x03 /* Battery Temp */
+#define EC_MEMMAP_ER1_BATT_PERCENTAGE		0x06 /* Battery Percentage */
+#define EC_MEMMAP_ER1_BATT_STATUS			0x07 /* Battery information */
+
+#define EC_BATT_FLAG_FULL		BIT(0) /* Full Charged */
+#define EC_BATT_TYPE			BIT(1) /* (0: NiMh,1: LION) */
+#define EC_BATT_MODE			BIT(2) /* (0=mW, 1=mA) */
+#endif
+
+/*
+ * Battery Protect
+ */
+#define CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD
+/* EC's thresholds. 3%: boot, 2%: no boot. Required for soft sync. */
+#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON		3
+#define CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
+#undef  CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT
+#define CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT 5
 
 /*
  * Enable MCHP SHA256 hardware accelerator module.
