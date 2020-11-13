@@ -27,7 +27,7 @@
 
 #define VIF_APP_VENDOR_VALUE	"Google"
 #define VIF_APP_NAME_VALUE	"EC GENVIF"
-#define VIF_APP_VERSION_VALUE	"3.0.0.6"
+#define VIF_APP_VERSION_VALUE	"3.0.0.7"
 #define VENDOR_NAME_VALUE	"Google"
 
 #define DEFAULT_MISSING_TID	0xFFFF
@@ -390,7 +390,7 @@ BUILD_ASSERT(ARRAY_SIZE(vif_product_usb4_router_name) == USB4_Router_Indexes);
 
 static bool streq(const char *str1, const char *str2)
 {
-	return strcmp(str1, str2) == 0;
+	return strcasecmp(str1, str2) == 0;
 }
 
 /*****************************************************************************
@@ -686,7 +686,7 @@ static void vif_out_field(FILE *vif_file, int level,
 				vif_field->str_value,
 				vif_field->name);
 		else
-			fprintf(vif_file, "/>\r\n");
+			fprintf(vif_file, " />\r\n");
 	}
 }
 
@@ -992,7 +992,7 @@ static int vif_output_xml(const char *name, struct vif_t *vif)
 	}
 
 	vif_out_str(vif_file, level,
-		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		"<?xml version=\"1.0\" encoding=\"utf-8\"?>");
 	vif_out_str(vif_file, level++,
 		"<VIF xmlns=\"http://usb.org/VendorInfoFile.xsd\">");
 
@@ -2133,11 +2133,11 @@ __maybe_unused static int32_t init_vif_snk_pdo(struct vif_snkPdoList_t *snkPdo,
 		set_vif_field(&snkPdo->vif_field[Snk_PDO_Supply_Type],
 			vif_component_snk_pdo_name[Snk_PDO_Supply_Type],
 			"0", "Fixed");
-		sprintf(str, "%dmV", voltage_mv);
+		sprintf(str, "%d mV", voltage_mv);
 		set_vif_field_itss(&snkPdo->vif_field[Snk_PDO_Voltage],
 			vif_component_snk_pdo_name[Snk_PDO_Voltage],
 			voltage, str);
-		sprintf(str, "%dmA", current_ma);
+		sprintf(str, "%d mA", current_ma);
 		set_vif_field_itss(&snkPdo->vif_field[Snk_PDO_Op_Current],
 			vif_component_snk_pdo_name[Snk_PDO_Op_Current],
 			current, str);
@@ -2155,15 +2155,15 @@ __maybe_unused static int32_t init_vif_snk_pdo(struct vif_snkPdoList_t *snkPdo,
 		set_vif_field(&snkPdo->vif_field[Snk_PDO_Supply_Type],
 			vif_component_snk_pdo_name[Snk_PDO_Supply_Type],
 			"1", "Battery");
-		sprintf(str, "%dmV", min_voltage_mv);
+		sprintf(str, "%d mV", min_voltage_mv);
 		set_vif_field_itss(&snkPdo->vif_field[Snk_PDO_Min_Voltage],
 			vif_component_snk_pdo_name[Snk_PDO_Min_Voltage],
 			min_voltage, str);
-		sprintf(str, "%dmV", max_voltage_mv);
+		sprintf(str, "%d mV", max_voltage_mv);
 		set_vif_field_itss(&snkPdo->vif_field[Snk_PDO_Max_Voltage],
 			vif_component_snk_pdo_name[Snk_PDO_Max_Voltage],
 			max_voltage, str);
-		sprintf(str, "%dmW", power_mw);
+		sprintf(str, "%d mW", power_mw);
 		set_vif_field_itss(&snkPdo->vif_field[Snk_PDO_Op_Power],
 			vif_component_snk_pdo_name[Snk_PDO_Op_Power],
 			power, str);
@@ -2180,16 +2180,16 @@ __maybe_unused static int32_t init_vif_snk_pdo(struct vif_snkPdoList_t *snkPdo,
 
 		set_vif_field(&snkPdo->vif_field[Snk_PDO_Supply_Type],
 			vif_component_snk_pdo_name[Snk_PDO_Supply_Type],
-			"2", "Variable (non-battery)");
-		sprintf(str, "%dmV", min_voltage_mv);
+			"2", "Variable");
+		sprintf(str, "%d mV", min_voltage_mv);
 		set_vif_field_itss(&snkPdo->vif_field[Snk_PDO_Min_Voltage],
 			vif_component_snk_pdo_name[Snk_PDO_Min_Voltage],
 			min_voltage, str);
-		sprintf(str, "%dmV", max_voltage_mv);
+		sprintf(str, "%d mV", max_voltage_mv);
 		set_vif_field_itss(&snkPdo->vif_field[Snk_PDO_Max_Voltage],
 			vif_component_snk_pdo_name[Snk_PDO_Max_Voltage],
 			max_voltage, str);
-		sprintf(str, "%dmA", current_ma);
+		sprintf(str, "%d mA", current_ma);
 		set_vif_field_itss(&snkPdo->vif_field[Snk_PDO_Op_Current],
 			vif_component_snk_pdo_name[Snk_PDO_Op_Current],
 			current, str);
@@ -2213,15 +2213,15 @@ __maybe_unused static int32_t init_vif_snk_pdo(struct vif_snkPdoList_t *snkPdo,
 		set_vif_field(&snkPdo->vif_field[Snk_PDO_Supply_Type],
 			vif_component_snk_pdo_name[Snk_PDO_Supply_Type],
 			"3", "PPS");
-		sprintf(str, "%dmA", pps_current_ma);
+		sprintf(str, "%d mA", pps_current_ma);
 		set_vif_field_itss(&snkPdo->vif_field[Snk_PDO_Op_Current],
 			vif_component_snk_pdo_name[Snk_PDO_Op_Current],
 			pps_current, str);
-		sprintf(str, "%dmV", pps_min_voltage_mv);
+		sprintf(str, "%d mV", pps_min_voltage_mv);
 		set_vif_field_itss(&snkPdo->vif_field[Snk_PDO_Min_Voltage],
 			vif_component_snk_pdo_name[Snk_PDO_Min_Voltage],
 			pps_min_voltage, str);
-		sprintf(str, "%dmV", pps_max_voltage_mv);
+		sprintf(str, "%d mV", pps_max_voltage_mv);
 		set_vif_field_itss(&snkPdo->vif_field[Snk_PDO_Max_Voltage],
 			vif_component_snk_pdo_name[Snk_PDO_Max_Voltage],
 			pps_max_voltage, str);
@@ -2268,11 +2268,11 @@ __maybe_unused static int32_t init_vif_src_pdo(struct vif_srcPdoList_t *srcPdo,
 		set_vif_field(&srcPdo->vif_field[Src_PDO_Peak_Current],
 			vif_component_src_pdo_name[Src_PDO_Peak_Current],
 			"0", "100% IOC");
-		sprintf(str, "%dmV", voltage_mv);
+		sprintf(str, "%d mV", voltage_mv);
 		set_vif_field_itss(&srcPdo->vif_field[Src_PDO_Voltage],
 			vif_component_src_pdo_name[Src_PDO_Voltage],
 			voltage, str);
-		sprintf(str, "%dmA", current_ma);
+		sprintf(str, "%d mA", current_ma);
 		set_vif_field_itss(&srcPdo->vif_field[Src_PDO_Max_Current],
 			vif_component_src_pdo_name[Src_PDO_Max_Current],
 			current, str);
@@ -2290,15 +2290,15 @@ __maybe_unused static int32_t init_vif_src_pdo(struct vif_srcPdoList_t *srcPdo,
 		set_vif_field(&srcPdo->vif_field[Src_PDO_Supply_Type],
 			vif_component_src_pdo_name[Src_PDO_Supply_Type],
 			"1", "Battery");
-		sprintf(str, "%dmV", min_voltage_mv);
+		sprintf(str, "%d mV", min_voltage_mv);
 		set_vif_field_itss(&srcPdo->vif_field[Src_PDO_Min_Voltage],
 			vif_component_src_pdo_name[Src_PDO_Min_Voltage],
 			min_voltage, str);
-		sprintf(str, "%dmV", max_voltage_mv);
+		sprintf(str, "%d mV", max_voltage_mv);
 		set_vif_field_itss(&srcPdo->vif_field[Src_PDO_Max_Voltage],
 			vif_component_src_pdo_name[Src_PDO_Max_Voltage],
 			max_voltage, str);
-		sprintf(str, "%dmW", power_mw);
+		sprintf(str, "%d mW", power_mw);
 		set_vif_field_itss(&srcPdo->vif_field[Src_PDO_Max_Power],
 			vif_component_src_pdo_name[Src_PDO_Max_Power],
 			power, str);
@@ -2315,19 +2315,19 @@ __maybe_unused static int32_t init_vif_src_pdo(struct vif_srcPdoList_t *srcPdo,
 
 		set_vif_field(&srcPdo->vif_field[Src_PDO_Supply_Type],
 			vif_component_src_pdo_name[Src_PDO_Supply_Type],
-			"2", "Variable (non-battery)");
+			"2", "Variable");
 		set_vif_field(&srcPdo->vif_field[Src_PDO_Peak_Current],
 			vif_component_src_pdo_name[Src_PDO_Peak_Current],
 			"0", "100% IOC");
-		sprintf(str, "%dmV", min_voltage_mv);
+		sprintf(str, "%d mV", min_voltage_mv);
 		set_vif_field_itss(&srcPdo->vif_field[Src_PDO_Min_Voltage],
 			vif_component_src_pdo_name[Src_PDO_Min_Voltage],
 			min_voltage, str);
-		sprintf(str, "%dmV", max_voltage_mv);
+		sprintf(str, "%d mV", max_voltage_mv);
 		set_vif_field_itss(&srcPdo->vif_field[Src_PDO_Max_Voltage],
 			vif_component_src_pdo_name[Src_PDO_Max_Voltage],
 			max_voltage, str);
-		sprintf(str, "%dmA", current_ma);
+		sprintf(str, "%d mA", current_ma);
 		set_vif_field_itss(&srcPdo->vif_field[Src_PDO_Max_Current],
 			vif_component_src_pdo_name[Src_PDO_Max_Current],
 			current, str);
@@ -2351,15 +2351,15 @@ __maybe_unused static int32_t init_vif_src_pdo(struct vif_srcPdoList_t *srcPdo,
 		set_vif_field(&srcPdo->vif_field[Src_PDO_Supply_Type],
 			vif_component_src_pdo_name[Src_PDO_Supply_Type],
 			"3", "PPS");
-		sprintf(str, "%dmA", pps_current_ma);
+		sprintf(str, "%d mA", pps_current_ma);
 		set_vif_field_itss(&srcPdo->vif_field[Src_PDO_Max_Current],
 			vif_component_src_pdo_name[Src_PDO_Max_Current],
 			pps_current, str);
-		sprintf(str, "%dmV", pps_min_voltage_mv);
+		sprintf(str, "%d mV", pps_min_voltage_mv);
 		set_vif_field_itss(&srcPdo->vif_field[Src_PDO_Min_Voltage],
 			vif_component_src_pdo_name[Src_PDO_Min_Voltage],
 			pps_min_voltage, str);
-		sprintf(str, "%dmV", pps_max_voltage_mv);
+		sprintf(str, "%d mV", pps_max_voltage_mv);
 		set_vif_field_itss(&srcPdo->vif_field[Src_PDO_Max_Voltage],
 			vif_component_src_pdo_name[Src_PDO_Max_Voltage],
 			pps_max_voltage, str);
@@ -2500,7 +2500,7 @@ static void init_vif_component_fields(struct vif_field_t *vif_fields,
 	set_vif_field(&vif_fields[Connector_Type],
 		vif_component_name[Connector_Type],
 		"2",
-		"USB Type-C");
+		"Type-C®");
 
 	set_vif_field_b(&vif_fields[USB4_Supported],
 		vif_component_name[USB4_Supported],
@@ -2618,7 +2618,7 @@ static void init_vif_component_general_pd_fields(
 		set_vif_field(&vif_fields[PD_Specification_Revision],
 			vif_component_name[PD_Specification_Revision],
 			"2",
-			"Revision 3.0");
+			"Revision 3");
 	} else {
 		set_vif_field(&vif_fields[PD_Spec_Revision_Major],
 			vif_component_name[PD_Spec_Revision_Major],
@@ -2640,7 +2640,7 @@ static void init_vif_component_general_pd_fields(
 		set_vif_field(&vif_fields[PD_Specification_Revision],
 			vif_component_name[PD_Specification_Revision],
 			"1",
-			"Revision 2.0");
+			"Revision 2");
 	}
 
 	set_vif_field_b(&vif_fields[USB_Comms_Capable],
@@ -2818,7 +2818,7 @@ static void init_vif_component_general_pd_fields(
 
 	set_vif_field(&vif_fields[ID_Header_Connector_Type_SOP],
 		vif_component_name[ID_Header_Connector_Type_SOP],
-		"2", "USB Type-C Receptacle");
+		"2", "USB Type-C® Receptacle");
 }
 
 /*********************************************************************
@@ -3099,6 +3099,7 @@ static int init_vif_component_pd_source_fields(
 {
 	if (type == DRP || type == SRC) {
 		int i;
+		char str[40];
 
 		/* Source PDOs */
 		for (i = 0; i < src_pdo_cnt; i++) {
@@ -3115,9 +3116,10 @@ static int init_vif_component_pd_source_fields(
 				*src_max_power = pwr;
 		}
 
+		sprintf(str, "%d mW", *src_max_power);
 		set_vif_field_itss(&vif_fields[PD_Power_As_Source],
 			vif_component_name[PD_Power_As_Source],
-			*src_max_power, NULL);
+			*src_max_power, str);
 	}
 
 	if (type == DRP || type == SRC)
@@ -3204,6 +3206,7 @@ static int init_vif_component_pd_sink_fields(
 {
 	int i;
 	int32_t snk_max_power = 0;
+	char str[40];
 
 	if (!IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) || type == SRC)
 		return 0;
@@ -3223,9 +3226,10 @@ static int init_vif_component_pd_sink_fields(
 			snk_max_power = pwr;
 	}
 
+	sprintf(str, "%d mW", snk_max_power);
 	set_vif_field_itss(&vif_fields[PD_Power_As_Sink],
 		vif_component_name[PD_Power_As_Sink],
-		snk_max_power, NULL);
+		snk_max_power, str);
 
 	set_vif_field_b(&vif_fields[No_USB_Suspend_May_Be_Set],
 		vif_component_name[No_USB_Suspend_May_Be_Set],
@@ -3312,7 +3316,7 @@ static void init_vif_component_sop_discovery_fields(
 	set_vif_field(&vif_fields[XID_SOP],
 		vif_component_name[XID_SOP],
 		"0",
-		"0");
+		NULL);
 
 	#if defined(CONFIG_USB_PID)
 		sprintf(hex_str, "%04X", CONFIG_USB_PID);
@@ -3362,7 +3366,7 @@ static void init_vif_component_product_power_fields(
 	if (type == DRP || type == SRC) {
 		char str[10];
 
-		sprintf(str, "%dmW", src_max_power);
+		sprintf(str, "%d mW", src_max_power);
 		set_vif_field_itss(&vif_fields[Product_Total_Source_Power_mW],
 			vif_component_name[Product_Total_Source_Power_mW],
 			src_max_power, str);
