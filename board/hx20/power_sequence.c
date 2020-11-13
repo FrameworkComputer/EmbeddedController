@@ -52,6 +52,7 @@ static void chipset_force_g3(void)
 	gpio_set_level(GPIO_PCH_PWR_EN, 0);
 	gpio_set_level(GPIO_PCH_DPWROK, 0);
 	gpio_set_level(GPIO_EC_ON, 0);
+	gpio_set_level(GPIO_PCH_PWRBTN_L, 0);
 	f75303_set_enabled(0);
 
 }
@@ -80,6 +81,10 @@ int board_chipset_power_on(void)
 	}
 
 	gpio_set_level(GPIO_PCH_PWR_EN, 1);
+
+	msleep(10);
+
+	gpio_set_level(GPIO_PCH_PWRBTN_L, 1);
 
 	msleep(30);
 
@@ -146,6 +151,8 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("power handle state in S0");
 		if ((power_get_signals() & IN_PCH_SLP_S3_DEASSERTED) == 0) {
 			/* Power down to next state */
+			gpio_set_level(GPIO_EC_VCCST_PG, 0);
+			gpio_set_level(GPIO_VR_ON, 0);
 			return POWER_S0S3;
 		}
 		break;
@@ -195,8 +202,8 @@ enum power_state power_handle_state(enum power_state state)
 
         if (power_wait_signals(IN_PGOOD_PWR_VR)) {
 			gpio_set_level(GPIO_SUSP_L, 0);
-            gpio_set_level(GPIO_EC_VCCST_PG, 0);
-            gpio_set_level(GPIO_VR_ON, 0);
+			gpio_set_level(GPIO_EC_VCCST_PG, 0);
+			gpio_set_level(GPIO_VR_ON, 0);
 			f75303_set_enabled(0);
 			return POWER_S3;
 		}
@@ -214,8 +221,6 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0S3:
 		CPRINTS("power handle state in S0S3");
 		gpio_set_level(GPIO_SUSP_L, 0);
-        gpio_set_level(GPIO_EC_VCCST_PG, 0);
-        gpio_set_level(GPIO_VR_ON, 0);
 		gpio_set_level(GPIO_PCH_PWROK, 0);
 		gpio_set_level(GPIO_SYS_PWROK, 0);
 		f75303_set_enabled(0);

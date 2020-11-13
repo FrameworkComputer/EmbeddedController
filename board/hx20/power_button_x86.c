@@ -9,6 +9,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -62,6 +63,7 @@
  * pulse length for simulated power button presses when the system is off.
  */
 #define PWRBTN_INITIAL_US  (200 * MSEC)
+#define PWRBTN_WAIT_RSMRST (20 * MSEC)
 
 enum power_button_state {
 	/* Button up; state machine idle */
@@ -213,58 +215,8 @@ static void power_button_released(uint64_t tnow)
  */
 static void set_initial_pwrbtn_state(void)
 {
-	uint32_t reset_flags = system_get_reset_flags();
-
-	if (system_jumped_to_this_image() &&
-	    chipset_in_state(CHIPSET_STATE_ON)) {
-		/*
-		 * Jumped to this image while the chipset was already on, so
-		 * simply reflect the actual power button state unless power
-		 * button pulse is disabled. If power button SMI pulse is
-		 * enabled, then it should be honored, else setting power
-		 * button to PCH could lead to x86 platform shutting down. If
-		 * power button is still held by the time control reaches
-		 * state_machine(), it would take the appropriate action there.
-		 */
-		if (power_button_is_pressed() && power_button_pulse_enabled) {
-			CPRINTS("PB init-jumped-held");
-			set_pwrbtn_to_pch(0, 0);
-		} else {
-			CPRINTS("PB init-jumped");
-		}
-		return;
-	} else if ((reset_flags & EC_RESET_FLAG_AP_OFF) ||
-		   (keyboard_scan_get_boot_keys() == BOOT_KEY_DOWN_ARROW)) {
-		/* Clear AP_OFF so that it won't be carried over to RW. */
-		system_clear_reset_flags(EC_RESET_FLAG_AP_OFF);
-		/*
-		 * Reset triggered by keyboard-controlled reset, and down-arrow
-		 * was held down.  Or reset flags request AP off.
-		 *
-		 * Leave the main processor off.  This is a fail-safe
-		 * combination for debugging failures booting the main
-		 * processor.
-		 *
-		 * Don't let the PCH see that the power button was pressed.
-		 * Otherwise, it might power on.
-		 */
-		CPRINTS("PB init-off");
-		power_button_pch_release();
-		return;
-	} else if (reset_flags & EC_RESET_FLAG_AP_IDLE) {
-		system_clear_reset_flags(EC_RESET_FLAG_AP_IDLE);
-		pwrbtn_state = PWRBTN_STATE_IDLE;
-		CPRINTS("PB idle");
-		return;
-	}
-
-#ifdef CONFIG_BRINGUP
-	pwrbtn_state = PWRBTN_STATE_IDLE;
-#else
 	pwrbtn_state = PWRBTN_STATE_INIT_ON;
-#endif
-	CPRINTS("PB %s",
-		pwrbtn_state == PWRBTN_STATE_INIT_ON ? "init-on" : "idle");
+	CPRINTS("PB init-on");
 }
 
 /**
@@ -293,8 +245,16 @@ static void state_machine(uint64_t tnow)
 			 * hard off state.
 			 */
 			chipset_exit_hard_off();
+
+			if (!gpio_get_level(GPIO_PCH_RSMRST_L)) {
+				tnext_state = tnow + PWRBTN_WAIT_RSMRST;
+				CPRINTS("BTN wait RSMRST to asserted");
+				break;
+			}
+
 			tnext_state = tnow + PWRBTN_INITIAL_US;
 			pwrbtn_state = PWRBTN_STATE_WAS_OFF;
+			msleep(20);
 			set_pwrbtn_to_pch(0, 0);
 		} else {
 			if (power_button_pulse_enabled) {
@@ -333,17 +293,6 @@ static void state_machine(uint64_t tnow)
 	case PWRBTN_STATE_INIT_ON:
 
 		/*
-		 * Before attempting to power the system on, we need to allow
-		 * time for charger, battery and USB-C PD initialization to be
-		 * ready to supply sufficient power. Check every 100
-		 * milliseconds, and give up CONFIG_POWER_BUTTON_INIT_TIMEOUT
-		 * seconds after the PB task was started. Here, it is
-		 * important to check the current time against PB task start
-		 * time to prevent unnecessary timeouts happening in recovery
-		 * case where the tasks could start as late as 30 seconds
-		 * after EC reset.
-		 */
-
 		if (!IS_ENABLED(CONFIG_CHARGER) || charge_prevent_power_on(0)) {
 			if (tnow >
 				(tpb_task_start +
@@ -357,23 +306,23 @@ static void state_machine(uint64_t tnow)
 				break;
 			}
 		}
+		*/
 
-		/*
-		 * Power the system on if possible.  Gating due to insufficient
-		 * battery is handled inside set_pwrbtn_to_pch().
-		 */
-		/* chipset_exit_hard_off(); TODO FRAMEWORK REVIEW*/
-#ifdef CONFIG_DELAY_DSW_PWROK_TO_PWRBTN
-		/* Check if power button is ready. If not, we'll come back. */
-		if (get_time().val - get_time_dsw_pwrok() <
-				CONFIG_DSW_PWROK_TO_PWRBTN_US) {
-			tnext_state = get_time_dsw_pwrok() +
-					CONFIG_DSW_PWROK_TO_PWRBTN_US;
-			break;
+		if (!extpower_is_present()) {
+			if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+				chipset_exit_hard_off();
+
+			/* Need to wait RSMRST signal then asserted BTN */
+			if (!gpio_get_level(GPIO_PCH_RSMRST_L)) {
+				/* TODO: need to add the retry limit */
+				tnext_state = tnow + PWRBTN_WAIT_RSMRST;
+				CPRINTS("BTN wait RSMRST to asserted (INIT)");
+				break;
+			}
+			msleep(20);
+			set_pwrbtn_to_pch(0, 1);
 		}
-#endif
 
-		/* set_pwrbtn_to_pch(0, 1); TODO FRAMEWORK REVIEW */ 
 		tnext_state = get_time().val + PWRBTN_INITIAL_US;
 		pwrbtn_state = PWRBTN_STATE_BOOT_KB_RESET;
 		break;
