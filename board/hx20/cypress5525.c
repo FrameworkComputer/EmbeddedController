@@ -15,6 +15,8 @@
 #include "uart.h"
 #include "util.h"
 #include "chipset.h"
+#include "driver/charger/isl9241.h"
+#include "charger.h"
 
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -40,6 +42,30 @@ static struct pd_chip_config_t pd_chip_config[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pd_chip_config) == PD_CHIP_COUNT);
+
+
+enum pd_port {
+	PD_PORT_0,
+	PD_PORT_1,
+	PD_PORT_2,
+	PD_PORT_3,
+	PD_PORT_COUNT
+};
+
+static struct pd_port_current_state_t pd_port_states[] = {
+	[PD_PORT_0] = {
+
+	},
+	[PD_PORT_1] = {
+
+	},
+	[PD_PORT_2] = {
+
+	},
+	[PD_PORT_3] = {
+
+	}
+};
 
 
 int state = CYP5525_STATE_RESET;
@@ -90,6 +116,45 @@ void pd_extpower_init(void)
 
 DECLARE_HOOK(HOOK_INIT, pd_extpower_init, HOOK_PRIO_INIT_EXTPOWER);
 
+
+void cyp5525_update_charger(void)
+{
+	int active_port_mask = pd_extpower_is_present();
+	int active_port = -1;
+
+	switch (active_port_mask) {
+	case BIT(0):
+		active_port = 0;
+		break;
+	case BIT(1):
+		active_port = 1;
+		break;
+	case BIT(2):
+		active_port = 2;
+		break;
+	case BIT(3):
+		active_port = 3;
+		break;
+	case 0:
+		break;
+	default:
+		CPRINTS("WARNING! Danger! PD active ports are more than 1!!! 0x%02x",
+				active_port_mask);
+		break;
+	}
+
+	if (active_port >= 0) {
+		CPRINTS("Updating charger to active port %d",
+			active_port);
+		isl9241_set_ac_prochot(0, pd_port_states[active_port].current*100/95);
+		charger_set_input_current(0, pd_port_states[active_port].current);
+	} else {
+		CPRINTS("No usb-c input active. Not charging");
+		charger_set_input_current(0, 0);
+
+	}
+
+}
 
 int cypd_write_reg16(int controller, int reg, int data)
 {
@@ -268,9 +333,18 @@ void cyp5525_port_int(int controller, int port)
 			active_current = (data2[0] + ((data2[1] & 0x3) << 8)) * 10;
 			active_voltage = (((data2[1] & 0xFC) >> 2) + ((data2[2] & 0xF) << 6)) * 50;
 			CPRINTS("C%d, current:%d mA, voltage:%d mV", port, active_current, active_voltage);
+			pd_port_states[(controller << 1) + port].current = active_current;
+			pd_port_states[(controller << 1) + port].voltage = active_voltage;
+			cyp5525_update_charger();
 			/*i2c_read_offset16_block(I2C_PORT_PD_MCU, CYP5525_ADDRESS_FLAG, offsetL2M(CYP5525_CURRENT_RDO_REG(port)), &data2, 4);*/
 			/* TODO: charge_manager to switch the VBUS */
 		}
+	}
+
+	if (state == CYP5525_DEVICE_DETACH) {
+		pd_port_states[(controller << 1) + port].current = 0;
+		pd_port_states[(controller << 1) + port].voltage = 0;
+		cyp5525_update_charger();
 	}
 }
 
@@ -585,3 +659,29 @@ static int cmd_cypd_get_status(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(cypdstatus, cmd_cypd_get_status,
 			"[number]",
 			"Get Cypress PD controller status");
+
+
+static int cmd_cypd_control(int argc, char **argv)
+{
+	int i, enable;
+	char *e;
+
+	if (argc == 3) {
+		i = strtoi(argv[1], &e, 0);
+		if (*e || i >= PD_CHIP_COUNT)
+			return EC_ERROR_PARAM1;
+
+		if (!parse_bool(argv[2], &enable))
+			return EC_ERROR_PARAM2;
+
+		if (enable)
+			gpio_enable_interrupt(pd_chip_config[i].gpio);
+		else
+			gpio_disable_interrupt(pd_chip_config[i].gpio);
+
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(cypdctl, cmd_cypd_control,
+			"[number] [enable/disable]",
+			"Set if handling is active for controller");
