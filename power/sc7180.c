@@ -77,7 +77,7 @@
 #define CAN_BOOT_AP_CHECK_TIMEOUT	(1500 * MSEC)
 
 /* Wait for polling if the system can boot AP */
-#define CAN_BOOT_AP_CHECK_WAIT		(100 * MSEC)
+#define CAN_BOOT_AP_CHECK_WAIT		(200 * MSEC)
 
 /* The timeout of the check if the switchcap outputs good voltage */
 #define SWITCHCAP_PG_CHECK_TIMEOUT	(50 * MSEC)
@@ -945,14 +945,17 @@ enum power_state power_handle_state(enum power_state state)
 		power_button_wait_for_release(-1);
 
 		/* If no enough power, return back to S5. */
-		if (!power_is_enough())
+		if (!power_is_enough()) {
+			boot_from_off = 0;
 			return POWER_S5;
+		}
 
 		/* Initialize components to ready state before AP is up. */
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
 		if (power_on() != EC_SUCCESS) {
 			power_off();
+			boot_from_off = 0;
 			return POWER_S5;
 		}
 		CPRINTS("AP running ...");
