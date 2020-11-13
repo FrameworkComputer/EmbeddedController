@@ -553,3 +553,15 @@ int ppc_get_alert_status(int port)
 	else
 		return gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
 }
+
+static void kb_backlight_enable(void)
+{
+	gpio_set_level(GPIO_EC_KB_BL_EN, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, kb_backlight_enable, HOOK_PRIO_DEFAULT);
+
+static void kb_backlight_disable(void)
+{
+	gpio_set_level(GPIO_EC_KB_BL_EN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kb_backlight_disable, HOOK_PRIO_DEFAULT);
