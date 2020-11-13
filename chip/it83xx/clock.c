@@ -449,7 +449,7 @@ int clock_ec_wake_from_sleep(void)
 	return ec_sleep;
 }
 
-void clock_cpu_standby(void)
+void __ram_code clock_cpu_standby(void)
 {
 	/* standby instruction */
 	if (IS_ENABLED(CHIP_CORE_NDS32)) {
@@ -598,7 +598,7 @@ defined(CONFIG_HOSTCMD_ESPI)
 /**
  * Low power idle task. Executed when no tasks are ready to be scheduled.
  */
-void __idle(void)
+void __ram_code __idle(void)
 {
 	console_expire_time.val = get_time().val + CONSOLE_IN_USE_ON_BOOT_TIME;
 	/* init hw timer and clock source is 32.768 KHz */

@@ -8,7 +8,7 @@
 #include "config.h"
 #include "cpu.h"
 
-.text
+.section .ram_code
 
 /**
  * Task context switching
@@ -73,6 +73,7 @@ __switch_task:
 	/* restore PC and PSW */
 	iret
 
+.text
 /**
  * Start the task scheduling.
  *
