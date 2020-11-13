@@ -345,6 +345,10 @@
 #define CONFIG_MCHP_GPSPI	0x01
 #endif
 
+#define CONFIG_PECI
+#define CONFIG_PECI_COMMON
+#define CONFIG_PECI_TJMAX 100
+
 /* SPI Accelerometer
  * CONFIG_SPI_FLASH_PORT is the index into
  * spi_devices[] in board.c

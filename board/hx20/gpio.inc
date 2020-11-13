@@ -79,8 +79,6 @@ GPIO(SOC_EC_INT_L,        PIN(0246), GPIO_INPUT)    /* Reserved for HID */
 GPIO(VS_ON,               PIN(0241), GPIO_INPUT)    /* NC pin */
 GPIO(FP_CTRL,             PIN(0245), GPIO_INPUT)    /* Reserved for fingerprint control */
 
-GPIO(H_PECI,              PIN(042),  GPIO_INPUT)   /* TODO: Need to implement PECI */
-
 /* power sequence output pins */
 /*
  * This pulldown should be removed and SLP_S0 should be enabled as a power
@@ -322,6 +320,10 @@ ALTERNATE(PIN_MASK(0, 0x0200), 2, MODULE_PWM, 0)
  */
 ALTERNATE(PIN_MASK(0, 0x20003004), 1, MODULE_PWM, 0)
 
-/* TACH*/
 ALTERNATE(PIN_MASK(1, 0x100), 1, MODULE_PWM, 0)
 
+/* PECI
+ *  GPIO042,  H_PECI,       Func1, Bank 1 bit[2]
+ *  GPIO044,  VREF_VTT,     Func1, Bank 1 bit[4]
+ */
+ALTERNATE(PIN_MASK(1, 0x0014), 1, MODULE_PECI, 0)
