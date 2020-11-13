@@ -261,6 +261,13 @@ struct pd_chip_config_t {
 	int gpio;
 };
 
+struct pd_port_current_state_t {
+	enum cyp5525_port_state port_state;
+	int voltage;
+	int current;
+	int enabled;
+};
+
 /* PD CHIP */
 void pd_chip_interrupt(enum gpio_signal signal);
 
