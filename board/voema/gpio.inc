@@ -111,6 +111,7 @@ GPIO(UNUSED_GPIOF2,		PIN(F, 2), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIO96,		PIN(9, 6), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIO34,		PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIO57,		PIN(5, 7), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIOC2,		PIN(C, 2), GPIO_INPUT | GPIO_PULL_UP)
 /* Only connected to test points */
 GPIO(EC_KB_BL_EN,		PIN(8, 6), GPIO_INPUT | GPIO_PULL_UP)
 
@@ -138,6 +139,10 @@ GPIO(EC_I2C7_EEPROM_PWR_SDA_R, PIN(B, 2), GPIO_INPUT)
 /* Battery signals */
 GPIO(EC_BATT_PRES_ODL, 		PIN(E, 1), GPIO_INPUT)
 
+ /* LED */
+GPIO(LED_1_L,                  PIN(C, 4), GPIO_OUT_HIGH)        /* Blue */
+GPIO(LED_2_L,                  PIN(C, 3), GPIO_OUT_HIGH)        /* Amber */
+
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(B, BIT(5) | BIT(4)), 0, MODULE_I2C, (GPIO_INPUT | GPIO_SEL_1P8V)) /* I2C0 */
 ALTERNATE(PIN_MASK(9, BIT(0) | BIT(2) | BIT(1)), 0, MODULE_I2C, 0)                   /* I2C1 SCL / I2C2 */
@@ -145,12 +150,6 @@ ALTERNATE(PIN_MASK(8, BIT(7)), 0, MODULE_I2C, 0)                                
 ALTERNATE(PIN_MASK(D, BIT(1) | BIT(0)), 0, MODULE_I2C, 0)                            /* I2C3 */
 ALTERNATE(PIN_MASK(3, BIT(3) | BIT(6)), 0, MODULE_I2C, 0)                            /* I2C5 */
 ALTERNATE(PIN_MASK(B, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                            /* I2C7 */
-
-/* This selects between an LED module on the motherboard and one on the daughter
- * board, to be controlled by LED_{1,2,3}_L. PWM allows driving both modules at
- * the same time. */
-ALTERNATE(PIN_MASK(6, BIT(0)), 0, MODULE_PWM, 0)                                     /* LED_SIDESEL_4_L */
-ALTERNATE(PIN_MASK(C, BIT(2) | BIT(3) | BIT(4)), 0, MODULE_PWM, 0)                   /* LED_{3,2,1}_L */
 
 /* Fan signals */
 GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
