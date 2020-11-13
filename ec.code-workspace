@@ -18,6 +18,13 @@
 		{
 			"name": "include",
 			"path": "include"
-		}
-	]
+		},
+                {
+                        "name": "driver"
+                        "path": "driver"
+                }
+	],
+        "settings": {
+
+        }
 }
