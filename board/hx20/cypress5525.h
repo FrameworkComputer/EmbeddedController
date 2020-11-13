@@ -264,4 +264,6 @@ struct pd_chip_config_t {
 /* PD CHIP */
 void pd_chip_interrupt(enum gpio_signal signal);
 
+void pd_extpower_is_present_interrupt(enum gpio_signal signal);
+
 #endif	/* __CROS_EC_CYPRESS5525_H */

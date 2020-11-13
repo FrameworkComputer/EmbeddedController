@@ -659,10 +659,16 @@ void touchpad_interrupt(enum gpio_signal signal);
 
 /* Mainboard power button handler*/
 void mainboard_power_button_interrupt(enum gpio_signal signal);
+
+void board_power_off(void);
+void cancel_board_power_off(void);
+
 /* power sequence */
 int board_chipset_power_on(void);
 
 int board_get_version(void);
+
+void board_power_off(void);
 
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);

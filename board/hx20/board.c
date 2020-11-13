@@ -431,9 +431,15 @@ const struct spi_device_t spi_devices[] = {
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 const enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_AC_PRESENT,
 	GPIO_LID_OPEN,
 	GPIO_POWER_BUTTON_L,
+	GPIO_ON_OFF_BTN_L,
+	GPIO_TYPEC0_VBUS_ON_EC,
+	GPIO_TYPEC1_VBUS_ON_EC,
+	GPIO_TYPEC2_VBUS_ON_EC,
+	GPIO_TYPEC3_VBUS_ON_EC,
+	GPIO_EC_PD_INTA_L,
+	GPIO_EC_PD_INTB_L
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
@@ -546,66 +552,69 @@ const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
 };
 */
 
-/* MCHP mec1701_evb connected to Intel SKL RVP3 with Kabylake
- * processor we do not control the PMIC on SKL.
- */
-static void board_pmic_init(void)
+static void vci_init(void)
 {
-	int rv, cfg;
-
-	/* No need to re-init PMIC since settings are sticky across sysjump */
-	if (system_jumped_to_this_image())
-		return;
-
-#if 0 /* BD99992GW PMIC on a real Chromebook */
-	/* Set CSDECAYEN / VCCIO decays to 0V at assertion of SLP_S0# */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x30, 0x4a);
-
-	/*
-	 * Set V100ACNT / V1.00A Control Register:
-	 * Nominal output = 1.0V.
+	/**
+	 * Switch VCI control from VCI_OUT to GPIO Pin Control
+	 * These have to be done in sequence to prevent glitching
+	 * the output pin
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x37, 0x1a);
-
-	/*
-	 * Set V085ACNT / V0.85A Control Register:
-	 * Lower power mode = 0.7V.
-	 * Nominal output = 1.0V.
+	MCHP_VCI_REGISTER |= MCHP_VCI_REGISTER_FW_CNTRL;
+	MCHP_VCI_REGISTER |= MCHP_VCI_REGISTER_FW_EXT;
+	/**
+	 * only enable input for fp, powerbutton for now
 	 */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x38, 0x7a);
-
-	/* VRMODECTRL - enable low-power mode for VCCIO and V0.85A */
-	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992, 0x3b, 0x18);
-#else
-	CPRINTS("HOOK_INIT - called board_pmic_init");
-	trace0(0, HOOK, 0, "HOOK_INIT - call board_pmic_init");
-
-	/* Config DS1624 temperature sensor for continuous conversion */
-	cfg = 0x66;
-	rv = i2c_read8(I2C_PORT_THERMAL, DS1624_I2C_ADDR_FLAGS,
-		       DS1624_ACCESS_CFG, &cfg);
-	trace2(0, BRD, 0, "Read DS1624 Config rv = %d  cfg = 0x%02X",
-	       rv, cfg);
-
-	if ((rv == EC_SUCCESS) && (cfg & (1u << 0))) {
-		/* one-shot mode switch to continuous */
-		rv = i2c_write8(I2C_PORT_THERMAL, DS1624_I2C_ADDR_FLAGS,
-				DS1624_ACCESS_CFG, 0);
-		trace1(0, BRD, 0, "Write DS1624 Config to 0, rv = %d", rv);
-		/* writes to config require 10ms until next I2C command */
-		if (rv == EC_SUCCESS)
-			udelay(10000);
-	}
-
-	/* Send start command */
-	rv = i2c_write8(I2C_PORT_THERMAL, DS1624_I2C_ADDR_FLAGS,
-			DS1624_CMD_START, 1);
-	trace1(0, BRD, 0, "Send Start command to DS1624 rv = %d", rv);
-
-	return;
-#endif
+	MCHP_VCI_INPUT_ENABLE = BIT(0) |  BIT(1);
+	/* todo implement chassis open  detection*/
+	/*MCHP_VCI_LATCH_ENABLE = BIT(0) | BIT(1) | BIT(2);*/
 }
-DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, vci_init, HOOK_PRIO_FIRST);
+
+/**
+ * We should really really use mchp/system.c hibernate function.
+ * however for now the EE design does not allow us to keep the EC on
+ * without also keeping on the 5v3v ALW supplies, so we just wack
+ * power to ourselves.
+ */
+static void board_power_off_deferred(void)
+{
+	int i;
+
+	/* Disable interrupts */
+	interrupt_disable();
+	for (i = 0; i < MCHP_IRQ_MAX; ++i) {
+		task_disable_irq(i);
+		task_clear_pending_irq(i);
+	}
+	MCHP_VCI_REGISTER &= ~(MCHP_VCI_REGISTER_FW_CNTRL + MCHP_VCI_REGISTER_FW_EXT);
+		/* Wait for power rails to die */
+	while (1)
+		;
+}
+DECLARE_DEFERRED(board_power_off_deferred);
+
+void board_power_off(void)
+{
+	CPRINTS("Shutting down system in 30 seconds!");
+
+	hook_call_deferred(&board_power_off_deferred_data, 30000 * MSEC);
+}
+
+void cancel_board_power_off(void)
+{
+	CPRINTS("Cancel shutdown");
+	hook_call_deferred(&board_power_off_deferred_data, -1);
+}
+
+/**
+ * Notify PCH of the AC presence.
+ */
+static void board_extpower(void)
+{
+	gpio_set_level(GPIO_AC_PRESENT_OUT, extpower_is_present());
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
+
 
 /* Initialize board. */
 static void board_init(void)
@@ -613,6 +622,8 @@ static void board_init(void)
 	CPRINTS("MEC1701 HOOK_INIT - called board_init");
 	trace0(0, HOOK, 0, "HOOK_INIT - call board_init");
 	board_get_version();
+
+
 
 	gpio_enable_interrupt(GPIO_SOC_ENBKL);
 	gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);
@@ -629,11 +640,7 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
 #endif
-	/* Enable tablet mode interrupt for input device enable */
-	/* gpio_enable_interrupt(GPIO_TABLET_MODE_L); TODO FRAMEWORK */
 
-	/* Provide AC status to the PCH */
-	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
 
 #ifdef HAS_TASK_MOTIONSENSE
 	if (system_jumped_to_this_image() &&
@@ -647,19 +654,6 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-
-
-
-/**
- * Buffer the AC present GPIO to the PCH.
- */
-static void board_extpower(void)
-{
-	CPRINTS("MEC1701 HOOK_AC_CHANGE - called board_extpower");
-	trace0(0, HOOK, 0, "HOOK_AC_CHANGET - call board_extpower");
-	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
-}
-DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CHARGER
 /**
