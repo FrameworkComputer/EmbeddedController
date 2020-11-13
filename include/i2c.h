@@ -167,9 +167,9 @@ extern const int i2c_test_dev_used;
 
 /**
  * Transmit one block of raw data, then receive one block of raw data. However,
- * received data might be capped at CONFIG_I2C_CHIP_MAX_READ_SIZE if
- * CONFIG_I2C_XFER_LARGE_READ is not defined.  The transfer is strictly atomic,
- * by locking the I2C port and performing an I2C_XFER_SINGLE transfer.
+ * transferred data might be capped at CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE if
+ * CONFIG_I2C_XFER_LARGE_TRANSFER is not defined.  The transfer is strictly
+ * atomic, by locking the I2C port and performing an I2C_XFER_SINGLE transfer.
  *
  * @param port		Port to access
  * @param slave_addr	Slave device address

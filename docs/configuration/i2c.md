@@ -14,7 +14,7 @@ The following parameters control the behavior of the I2C library. [config.h]
 defines a reasonable default value, but you may need to change the default value
 for your board.
 
-- `CONFIG_I2C_CHIP_MAX_READ_SIZE <bytes>`
+- `CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE <bytes>`
 - `CONFIG_I2C_NACK_RETRY_COUNT <count>`
 - `CONFIG_I2C_EXTRA_PACKET_SIZE <bytes>` - Only used on STM32 EC's if
   `CONFIG_HOSTCMD_I2C_ADDR_FLAGS` is defined.

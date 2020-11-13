@@ -180,7 +180,7 @@
 #undef CONFIG_USB_I2C_MAX_READ_COUNT
 #define CONFIG_USB_I2C_MAX_READ_COUNT (1024 - 6) /* 6 is maximum header size */
 
-#define CONFIG_I2C_XFER_LARGE_READ
+#define CONFIG_I2C_XFER_LARGE_TRANSFER
 
 /* No lid switch */
 #undef CONFIG_LID_SWITCH

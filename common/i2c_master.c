@@ -142,37 +142,48 @@ __maybe_unused static int chip_i2c_xfer_with_notify(
 	return ret;
 }
 
-#ifdef CONFIG_I2C_XFER_LARGE_READ
+#ifdef CONFIG_I2C_XFER_LARGE_TRANSFER
 /*
- * Internal function that splits reading into multiple chip_i2c_xfer() calls
- * if in_size exceeds CONFIG_I2C_CHIP_MAX_READ_SIZE.
+ * Internal function that splits transfer into multiple chip_i2c_xfer() calls
+ * if in_size or out_size exceeds CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE.
  */
 static int i2c_xfer_no_retry(const int port,
 			     const uint16_t slave_addr_flags,
 			     const uint8_t *out, int out_size,
 			     uint8_t *in, int in_size, int flags)
 {
-	int ret;
-	int out_flags = flags & I2C_XFER_START;
-	int in_chunk_size = MIN(in_size, CONFIG_I2C_CHIP_MAX_READ_SIZE);
+	for (int offset = 0; offset < out_size; ) {
+		int chunk_size = MIN(out_size - offset,
+				CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE);
+		int out_flags = 0;
 
-	in_size -= in_chunk_size;
-	out_flags |= !in_size ? (flags & I2C_XFER_STOP) : 0;
-	ret = chip_i2c_xfer_with_notify(port, slave_addr_flags,
-					out, out_size, in,
-					in_chunk_size, out_flags);
-	in += in_chunk_size;
-	while (in_size && ret == EC_SUCCESS) {
-		in_chunk_size = MIN(in_size, CONFIG_I2C_CHIP_MAX_READ_SIZE);
-		in_size -= in_chunk_size;
-		ret = chip_i2c_xfer_with_notify(port, slave_addr_flags,
-			NULL, 0, in,
-			in_chunk_size, !in_size ? (flags & I2C_XFER_STOP) : 0);
-		in += in_chunk_size;
+		if (offset == 0)
+			out_flags |= flags & I2C_XFER_START;
+		if (in_size == 0 && offset + chunk_size == out_size)
+			out_flags |= flags & I2C_XFER_STOP;
+
+		RETURN_ERROR(chip_i2c_xfer_with_notify(port, slave_addr_flags,
+				out + offset, chunk_size, NULL, 0,
+				out_flags));
+		offset += chunk_size;
 	}
-	return ret;
+	for (int offset = 0; offset < in_size; ) {
+		int chunk_size = MIN(in_size - offset,
+				CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE);
+		int in_flags = 0;
+
+		if (offset == 0)
+			in_flags |= flags & I2C_XFER_START;
+		if (offset + chunk_size == in_size)
+			in_flags |= flags & I2C_XFER_STOP;
+
+		RETURN_ERROR(chip_i2c_xfer_with_notify(port, slave_addr_flags,
+				NULL, 0, in + offset, chunk_size, in_flags));
+		offset += chunk_size;
+	}
+	return EC_SUCCESS;
 }
-#endif /* CONFIG_I2C_XFER_LARGE_READ */
+#endif /* CONFIG_I2C_XFER_LARGE_TRANSFER */
 
 int i2c_xfer_unlocked(const int port,
 		      const uint16_t slave_addr_flags,
@@ -192,7 +203,7 @@ int i2c_xfer_unlocked(const int port,
 #ifdef CONFIG_ZEPHYR
 		ret = i2c_write_read(i2c_get_device_for_port(port), addr_flags,
 				     out, out_size, in, in_size);
-#elif defined(CONFIG_I2C_XFER_LARGE_READ)
+#elif defined(CONFIG_I2C_XFER_LARGE_TRANSFER)
 		ret = i2c_xfer_no_retry(port, addr_flags,
 					    out, out_size, in,
 					    in_size, flags);
@@ -200,7 +211,7 @@ int i2c_xfer_unlocked(const int port,
 		ret = chip_i2c_xfer_with_notify(port, addr_flags,
 						    out, out_size,
 						    in, in_size, flags);
-#endif /* CONFIG_I2C_XFER_LARGE_READ */
+#endif /* CONFIG_I2C_XFER_LARGE_TRANSFER */
 		if (ret != EC_ERROR_BUSY)
 			break;
 	}

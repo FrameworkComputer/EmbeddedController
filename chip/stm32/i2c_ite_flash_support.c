@@ -42,11 +42,11 @@
 
 /*
  * iteflash requires 256 byte reads for verifying ITE EC firmware.  Without this
- * the limit is CONFIG_I2C_CHIP_MAX_READ_SIZE which is 255 for STM32F0 due to an
- * 8 bit field, per src/platform/ec/include/config.h comment.
+ * the limit is CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE which is 255 for STM32F0 due
+ * to an 8 bit field, per src/platform/ec/include/config.h comment.
  */
-#ifndef CONFIG_I2C_XFER_LARGE_READ
-#error Must define CONFIG_I2C_XFER_LARGE_READ
+#ifndef CONFIG_I2C_XFER_LARGE_TRANSFER
+#error Must define CONFIG_I2C_XFER_LARGE_TRANSFER
 #endif
 
 #define KHz 1000

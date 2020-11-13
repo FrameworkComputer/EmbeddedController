@@ -90,7 +90,7 @@
 
 /* See i2c_ite_flash_support.c for more information about these values */
 #define CONFIG_ITE_FLASH_SUPPORT
-#define CONFIG_I2C_XFER_LARGE_READ
+#define CONFIG_I2C_XFER_LARGE_TRANSFER
 #undef CONFIG_USB_I2C_MAX_WRITE_COUNT
 #undef CONFIG_USB_I2C_MAX_READ_COUNT
 #define CONFIG_USB_I2C_MAX_WRITE_COUNT ((1<<9) - 4)

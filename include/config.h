@@ -2313,16 +2313,16 @@
 #undef CONFIG_I2C_BUS_MAY_BE_UNPOWERED
 
 /*
- * Conservative I2C reading size per single transaction. For example, register
- * of stm32f0 and stm32l4 are limited to be 8 bits for this field.
+ * Conservative I2C transmission size per single transaction. For example,
+ * register of stm32f0 and stm32l4 are limited to be 8 bits for this field.
  */
-#define CONFIG_I2C_CHIP_MAX_READ_SIZE 255
+#define CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE 255
 
 /*
  * Enable i2c_xfer() for receiving request larger than
- * CONFIG_I2C_CHIP_MAX_READ_SIZE.
+ * CONFIG_I2C_CHIP_MAX_TRANSFER_SIZE.
  */
-#undef CONFIG_I2C_XFER_LARGE_READ
+#undef CONFIG_I2C_XFER_LARGE_TRANSFER
 
 /*
  * If defined, makes i2c_xfer callback into board-provided functions before the
