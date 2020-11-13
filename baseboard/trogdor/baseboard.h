@@ -158,6 +158,7 @@
 #define CONFIG_POWER_PP5000_CONTROL
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 #define CONFIG_POWER_SLEEP_FAILURE_DETECTION
+#define CONFIG_CMD_AP_RESET_LOG
 
 /*
  * Macros for GPIO signals used in common code that don't match the
