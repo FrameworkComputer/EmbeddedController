@@ -56,7 +56,7 @@ GPIO_INT(VR_PWRGD,        PIN(057),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SOC_ENBKL,       PIN(0165), GPIO_INT_BOTH, soc_signal_interrupt)
 GPIO_INT(LID_SW_L,        PIN(0254), GPIO_INT_BOTH, lid_interrupt)
 GPIO_INT(CHASSIS_OPEN,    PIN(0161), GPIO_INT_BOTH, chassis_control_interrupt) /* monitor C cover open */
-GPIO_INT(ADP_IN,              PIN(0172), GPIO_INT_BOTH, extpower_interrupt)    /* Adaptor in from charger ACOK pin */
+/*GPIO_INT(ADP_IN,          PIN(0172), GPIO_INT_BOTH, extpower_interrupt)*/    /* Adaptor in from charger ACOK pin */
 
 /* UART input */
 GPIO_INT(UART0_RX,        PIN(0105), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, \
@@ -120,10 +120,10 @@ GPIO(EC_I2C06_PD_SDA, PIN(0132),  GPIO_INPUT)
 GPIO_INT(EC_PD_INTA_L,    PIN(0115), GPIO_INT_FALLING, pd_chip_interrupt)
 GPIO_INT(EC_PD_INTB_L,    PIN(0127), GPIO_INT_FALLING, pd_chip_interrupt)
 GPIO_INT(AC_PRESENT_PD_L, PIN(013),  GPIO_INT_BOTH, pd_chip_interrupt)
-GPIO(TYPEC0_VBUS_ON_EC,     PIN(0144), GPIO_INPUT | GPIO_ODR_HIGH)   /* Type-C VBUS select */
-GPIO(TYPEC1_VBUS_ON_EC,     PIN(0143), GPIO_INPUT | GPIO_ODR_HIGH)   /* Type-C VBUS select */
-GPIO(TYPEC2_VBUS_ON_EC,     PIN(0142), GPIO_INPUT | GPIO_ODR_HIGH)   /* Type-C VBUS select */
-GPIO(TYPEC3_VBUS_ON_EC,     PIN(0141), GPIO_INPUT | GPIO_ODR_HIGH)   /* Type-C VBUS select */
+GPIO_INT(TYPEC0_VBUS_ON_EC,     PIN(0144), GPIO_INT_BOTH | GPIO_ODR_HIGH, extpower_is_present_interrupt)   /* Type-C VBUS select */
+GPIO_INT(TYPEC1_VBUS_ON_EC,     PIN(0143), GPIO_INT_BOTH | GPIO_ODR_HIGH, extpower_is_present_interrupt)   /* Type-C VBUS select */
+GPIO_INT(TYPEC2_VBUS_ON_EC,     PIN(0142), GPIO_INT_BOTH | GPIO_ODR_HIGH, extpower_is_present_interrupt)   /* Type-C VBUS select */
+GPIO_INT(TYPEC3_VBUS_ON_EC,     PIN(0141), GPIO_INT_BOTH | GPIO_ODR_HIGH, extpower_is_present_interrupt)   /* Type-C VBUS select */
 GPIO(EC_PROCHOT_L,          PIN(0206), GPIO_ODR_HIGH)
 
 /* Fan PWM output and TACH input. PROCHOT input */

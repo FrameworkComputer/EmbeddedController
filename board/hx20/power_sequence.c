@@ -152,7 +152,6 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("power handle state in G3S5");
 
 		if (board_chipset_power_on()) {
-			gpio_set_level(GPIO_AC_PRESENT_OUT, extpower_is_present());
 			return POWER_S5;
 		} else {
 			return POWER_G3;
@@ -234,7 +233,6 @@ enum power_state power_handle_state(enum power_state state)
 		if (!extpower_is_present())
 		{
 			chipset_force_g3();
-			board_power_off();
 		}
 		return POWER_G3;
 		break;

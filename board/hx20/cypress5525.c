@@ -307,7 +307,7 @@ void pd_chip_interrupt(enum gpio_signal signal)
 		schedule_deferred_cypd_interrupt(CYPD_PROCESS_CONTROLLER_AC_PRESENT);
 		/*Pass AC_PRESENT signal to CPU*/
 		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND | CHIPSET_STATE_ON))
-			gpio_set_level(GPIO_AC_PRESENT, !gpio_get_level(GPIO_AC_PRESENT_PD_L));
+			gpio_set_level(GPIO_AC_PRESENT_OUT, !gpio_get_level(GPIO_AC_PRESENT_PD_L));
 	}
 }
 

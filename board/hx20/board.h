@@ -187,6 +187,7 @@
 #define CONFIG_HOSTCMD_ESPI_VW_SLP_S4
 
 #define CONFIG_CLOCK_CRYSTAL
+#define CONFIG_EXTPOWER
 /* #define CONFIG_HOSTCMD_PD */
 /* #define CONFIG_HOSTCMD_PD_PANIC */
 #define CONFIG_I2C
@@ -395,7 +396,7 @@
 #define GPIO_BAT_LED_GREEN  GPIO_BATT_CHG_LED_L
 */
 /* Power signals */
-#define GPIO_AC_PRESENT     GPIO_ADP_IN
+/*#define GPIO_AC_PRESENT     GPIO_ADP_IN*/
 #define GPIO_POWER_BUTTON_L GPIO_ON_OFF_FP_L
 #define GPIO_PCH_SLP_SUS_L  GPIO_SLP_SUS_L
 #define GPIO_PCH_SLP_S3_L   GPIO_PM_SLP_S3_L
@@ -658,6 +659,9 @@ void touchpad_interrupt(enum gpio_signal signal);
 
 /* Mainboard power button handler*/
 void mainboard_power_button_interrupt(enum gpio_signal signal);
+
+/*Extpower gpio interrupt handler */
+void extpower_is_present_interrupt(enum gpio_signal signal);
 /* power sequence */
 int board_chipset_power_on(void);
 

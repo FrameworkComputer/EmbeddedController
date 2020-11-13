@@ -431,9 +431,15 @@ const struct spi_device_t spi_devices[] = {
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 const enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_AC_PRESENT,
 	GPIO_LID_OPEN,
 	GPIO_POWER_BUTTON_L,
+	GPIO_ON_OFF_BTN_L,
+	GPIO_TYPEC0_VBUS_ON_EC,
+	GPIO_TYPEC1_VBUS_ON_EC,
+	GPIO_TYPEC2_VBUS_ON_EC,
+	GPIO_TYPEC3_VBUS_ON_EC,
+	GPIO_EC_PD_INTA_L,
+	GPIO_EC_PD_INTB_L
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
@@ -607,18 +613,6 @@ static void board_pmic_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_pmic_init, HOOK_PRIO_DEFAULT);
 
-static void board_power_off_deferred(void)
-{
-	MCHP_VCI_REGISTER &= ~(MCHP_VCI_REGISTER_FW_CNTRL + MCHP_VCI_REGISTER_FW_EXT);
-}
-DECLARE_DEFERRED(board_power_off_deferred);
-
-void board_power_off(void)
-{
-	CPRINTS("Shutting down system!");
-
-	hook_call_deferred(&board_power_off_deferred_data, 5000 * MSEC);
-}
 static void vci_init(void)
 {
 	/**
@@ -633,11 +627,9 @@ static void vci_init(void)
 	 */
 	MCHP_VCI_INPUT_ENABLE = BIT(0) |  BIT(1);
 	/* todo implement chassis open  detection*/
-	/*MCHP_VCI_LATCH_ENABLE = BIT(0) |  BIT(1);*/
+	/*MCHP_VCI_LATCH_ENABLE = BIT(0) | BIT(1) | BIT(2);*/
 }
 DECLARE_HOOK(HOOK_INIT, vci_init, HOOK_PRIO_FIRST);
-
-
 
 int extpower_is_present(void)
 {
@@ -647,9 +639,62 @@ int extpower_is_present(void)
 	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC1_VBUS_ON_EC);
 	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC2_VBUS_ON_EC);
 	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC3_VBUS_ON_EC);
-
+	extpower_handle_update(usb_c_extpower_present);
 	return usb_c_extpower_present;
 }
+static int old_extpower_presence;
+static void extpower_deferred(void)
+{
+	int extpower_presence = extpower_is_present();
+
+	if (extpower_presence == old_extpower_presence)
+		return;
+
+	old_extpower_presence = extpower_presence;
+	/*
+	extpower_handle_update(extpower_presence);
+	*/
+
+}
+DECLARE_DEFERRED(extpower_deferred);
+
+void extpower_is_present_interrupt(enum gpio_signal signal)
+{
+	/*Todo improve this logic if we implement PPS charging*/
+	/* Trigger deferred notification of external power change */
+	hook_call_deferred(&extpower_deferred_data,
+			1 * MSEC);
+}
+
+
+void extpower_init(void)
+{
+	uint8_t *memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
+	old_extpower_presence = extpower_is_present();
+	gpio_enable_interrupt(GPIO_TYPEC0_VBUS_ON_EC);
+	gpio_enable_interrupt(GPIO_TYPEC1_VBUS_ON_EC);
+	gpio_enable_interrupt(GPIO_TYPEC2_VBUS_ON_EC);
+	gpio_enable_interrupt(GPIO_TYPEC3_VBUS_ON_EC);
+
+		/* Initialize the memory-mapped AC_PRESENT flag */
+	if (old_extpower_presence)
+		*memmap_batt_flags |= EC_BATT_FLAG_AC_PRESENT;
+	else
+		*memmap_batt_flags &= ~EC_BATT_FLAG_AC_PRESENT;
+}
+
+DECLARE_HOOK(HOOK_INIT, extpower_init, HOOK_PRIO_INIT_EXTPOWER);
+
+
+/**
+ * Notify PCH of the AC presence.
+ */
+static void board_extpower(void)
+{
+	gpio_set_level(GPIO_AC_PRESENT_OUT, extpower_is_present());
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
+
 
 /* Initialize board. */
 static void board_init(void)
@@ -675,11 +720,7 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
 #endif
-	/* Enable tablet mode interrupt for input device enable */
-	/* gpio_enable_interrupt(GPIO_TABLET_MODE_L); TODO FRAMEWORK */
 
-	/* Provide AC status to the PCH */
-	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
 
 #ifdef HAS_TASK_MOTIONSENSE
 	if (system_jumped_to_this_image() &&
@@ -693,19 +734,6 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-
-
-
-/**
- * Buffer the AC present GPIO to the PCH.
- */
-static void board_extpower(void)
-{
-	CPRINTS("MEC1701 HOOK_AC_CHANGE - called board_extpower");
-	trace0(0, HOOK, 0, "HOOK_AC_CHANGET - call board_extpower");
-	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
-}
-DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CHARGER
 /**
@@ -1447,8 +1475,6 @@ int mainboard_power_button_first_state;
 static void mainboard_power_button_change_deferred(void)
 {
 	if (mainboard_power_button_first_state == gpio_get_level(GPIO_ON_OFF_BTN_L)) {
-		/*If we were pending a power off, cancel it!*/
-		hook_call_deferred(&board_power_off_deferred_data, -1);
 		CPRINTF("Got Mainboard Power Button event");
 		power_button_set_simulated_state(!gpio_get_level(GPIO_ON_OFF_BTN_L));
 	}
