@@ -256,11 +256,11 @@ const struct pwm_t pwm_channels[] = {
 				.flags = PWM_CONFIG_OPEN_DRAIN,
 				.freq = 25000},
 	[PWM_CH_LED_RED]    = { .channel = 0,
-				.flags = PWM_CONFIG_ACTIVE_LOW |
+				.flags = PWM_CONFIG_OPEN_DRAIN |
 					 PWM_CONFIG_DSLEEP,
 				.freq = 2000 },
-	[PWM_CH_LED_GREEN]  = { .channel = 2,
-				.flags = PWM_CONFIG_ACTIVE_LOW |
+	[PWM_CH_LED_WHITE]  = { .channel = 2,
+				.flags = PWM_CONFIG_OPEN_DRAIN |
 					 PWM_CONFIG_DSLEEP,
 				.freq = 2000 },
 };
