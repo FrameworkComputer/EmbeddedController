@@ -385,6 +385,20 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
+static void kb_backlight_enable(void)
+{
+	if (ec_cfg_has_keyboard_backlight() == 1)
+		gpio_set_level(GPIO_EC_KB_BL_EN, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, kb_backlight_enable, HOOK_PRIO_DEFAULT);
+
+static void kb_backlight_disable(void)
+{
+	if (ec_cfg_has_keyboard_backlight() == 1)
+		gpio_set_level(GPIO_EC_KB_BL_EN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kb_backlight_disable, HOOK_PRIO_DEFAULT);
+
 /* USBC TCPC configuration for port 1 on USB3 board */
 static const struct tcpc_config_t tcpc_config_p1_usb3 = {
 	.bus_type = EC_BUS_TYPE_I2C,
