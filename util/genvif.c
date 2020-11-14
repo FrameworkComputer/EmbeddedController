@@ -21,7 +21,6 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "charge_manager.h"
-#include "system.h"
 
 #include "genvif.h"
 
@@ -3378,9 +3377,7 @@ static void init_vif_component_product_power_fields(
 			"0", "Assured");
 }
 
-static int gen_vif(const char *name,
-		   const char *board,
-		   const char *vif_producer,
+static int gen_vif(const char *board,
 		   struct vif_t *vif)
 {
 	int override_value;
@@ -3503,10 +3500,7 @@ static int gen_vif(const char *name,
 			src_max_power,
 			type);
 
-	/*********************************************************************
-	 * Format the structure in XML and output it to file
-	 */
-	return vif_output_xml(name, vif);
+	return 0;
 }
 /*
  * VIF Structure Initialization from Config Functions
@@ -3518,20 +3512,19 @@ int main(int argc, char **argv)
 	int ret;
 	const char *out = NULL;
 	const char *board = NULL;
-	const char *vif_producer;
+	bool do_config_init = true;
 	DIR *vifdir;
 	char *name;
 	int name_size;
-	const char * const short_opt = "hb:o:";
+	const char * const short_opt = "hb:o:nv:";
 	const struct option long_opts[] = {
-		{ "help",  0, NULL, 'h' },
-		{ "board", 1, NULL, 'b' },
-		{ "out",   1, NULL, 'o' },
-		{ "over",  1, NULL, 'v'},
+		{ "help",      0, NULL, 'h' },
+		{ "board",     1, NULL, 'b' },
+		{ "out",       1, NULL, 'o' },
+		{ "no-config", 0, NULL, 'n' },
+		{ "over",      1, NULL, 'v' },
 		{ NULL }
 	};
-
-	vif_producer = argv[0];
 
 	/* Clear the VIF structure */
 	memset(&vif, 0, sizeof(struct vif_t));
@@ -3540,8 +3533,10 @@ int main(int argc, char **argv)
 		nopt = getopt_long(argc, argv, short_opt, long_opts, NULL);
 		switch (nopt) {
 		case 'h': /* -h or --help */
-			printf("USAGE: %s -b <board name> -o <out directory>"
-				" --over <override XML file>\n", vif_producer);
+			printf("USAGE: genvif -b|--board <board name>\n"
+			       "              -o|--out <out directory>\n"
+			       "              [-n|--no-config]\n"
+			       "              [-v|--over <override XML file>]\n");
 			return 1;
 
 		case 'b': /* -b or --board */
@@ -3552,7 +3547,11 @@ int main(int argc, char **argv)
 			out = optarg;
 			break;
 
-		case 'v': /* --over */
+		case 'n': /* -n or --no-config */
+			do_config_init = false;
+			break;
+
+		case 'v': /* -v or --over */
 			/* Handle overrides */
 			if (override_gen_vif(optarg, &vif))
 				return 1;
@@ -3579,14 +3578,21 @@ int main(int argc, char **argv)
 
 	init_src_pdos();
 
+	/* Finish CONFIG initialization file */
+	if (do_config_init) {
+		ret = gen_vif(board, &vif);
+		if (ret)
+			return 1;
+	}
+
 	name_size = asprintf(&name, "%s/%s_vif.xml", out, board);
 	if (name_size < 0) {
 		fprintf(stderr, "ERROR: Out of memory.\n");
 		return 1;
 	}
 
-	/* Finish CONFIG initialization and output the file */
-	ret = gen_vif(name, board, vif_producer, &vif);
+	/* Format the structure in XML and output it to file */
+	ret = vif_output_xml(name, &vif);
 
 	free(name);
 	return ret;
