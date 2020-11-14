@@ -273,6 +273,9 @@ enum ec_error_list {
 	/* Sometimes operation is expected to have to be repeated. */
 	EC_ERROR_TRY_AGAIN = 26,
 
+	/* Operation was successful but completion is pending. */
+	EC_SUCCESS_IN_PROGRESS = 27,
+
 	/* Verified boot errors */
 	EC_ERROR_VBOOT_SIGNATURE = 0x1000, /* 4096 */
 	EC_ERROR_VBOOT_SIG_MAGIC = 0x1001,
