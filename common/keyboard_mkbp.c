@@ -474,6 +474,9 @@ static uint32_t get_supported_switches(void)
 #ifdef CONFIG_BASE_ATTACHED_SWITCH
 	val |= BIT(EC_MKBP_BASE_ATTACHED);
 #endif
+#ifdef CONFIG_FRONT_PROXIMITY_SWITCH
+	val |= BIT(EC_MKBP_FRONT_PROXIMITY);
+#endif
 	return val;
 }
 

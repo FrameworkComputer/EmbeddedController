@@ -3528,6 +3528,12 @@
 #undef CONFIG_BASE_ATTACHED_SWITCH
 
 /*
+ * Add a virtual switch to indicate whether a nearby object is present in front
+ * of the device.
+ */
+#undef CONFIG_FRONT_PROXIMITY_SWITCH
+
+/*
  * Microchip Trace FIFO Debug Port
  */
 #undef CONFIG_MCHP_TFDP
