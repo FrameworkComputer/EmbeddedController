@@ -463,7 +463,7 @@ void chip_port80_config(uint32_t io_base)
 #else
 	MCHP_LPC_P80DBG0_BAR = (io_base << 16) + (1ul << 15);
 #endif
-	MCHP_P80_CFG(0) = MCHP_P80_FIFO_THRHOLD_14 +
+	MCHP_P80_CFG(0) = MCHP_P80_FIFO_THRHOLD_1 +
 			MCHP_P80_TIMEBASE_1500KHZ +
 			MCHP_P80_TIMER_ENABLE;
 
