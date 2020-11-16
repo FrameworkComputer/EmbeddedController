@@ -106,7 +106,12 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 		/* generate IRQ_HPD pulse */
 		svdm_set_hpd_gpio(port, 0);
-		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
+		/*
+		 * b/171172053#comment14: since the HPD_DSTREAM_DEBOUNCE_IRQ is
+		 * very short (500us), we can use udelay instead of usleep for
+		 * more stable pulse period.
+		 */
+		udelay(HPD_DSTREAM_DEBOUNCE_IRQ);
 		svdm_set_hpd_gpio(port, 1);
 	} else {
 		svdm_set_hpd_gpio(port, lvl);
