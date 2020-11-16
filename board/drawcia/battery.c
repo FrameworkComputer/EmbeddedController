@@ -45,6 +45,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {
@@ -74,6 +76,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {
@@ -103,6 +107,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {
@@ -132,6 +138,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {
@@ -161,6 +169,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {
@@ -190,6 +200,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {
@@ -219,6 +231,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {
@@ -248,6 +262,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {
@@ -277,6 +293,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {
