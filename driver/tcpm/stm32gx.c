@@ -106,7 +106,7 @@ static int stm32gx_tcpm_transmit(int port,
 	return EC_SUCCESS;
 }
 
-static int stm32gx_tcpm_sop_prime_disable(int port)
+static int stm32gx_tcpm_sop_prime_enable(int port, bool enable)
 {
 	/* TODO(b/167601672): Need to implement this for USB-PD support */
 	return EC_SUCCESS;
@@ -138,7 +138,7 @@ const struct tcpm_drv stm32gx_tcpm_drv = {
 	.set_cc			= &stm32gx_tcpm_set_cc,
 	.set_polarity		= &stm32gx_tcpm_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
-       .sop_prime_disable      = &stm32gx_tcpm_sop_prime_disable,
+	.sop_prime_enable      = &stm32gx_tcpm_sop_prime_enable,
 #endif
 
 	.set_vconn		= &stm32gx_tcpm_set_vconn,

@@ -26,7 +26,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
 STATIC_IF(CONFIG_USB_PD_DECODE_SOP)
-	int sop_prime_en[CONFIG_USB_PD_PORT_MAX_COUNT];
+	bool sop_prime_en[CONFIG_USB_PD_PORT_MAX_COUNT];
 STATIC_IF(CONFIG_USB_PD_DECODE_SOP)
 	int rx_en[CONFIG_USB_PD_PORT_MAX_COUNT];
 
@@ -616,7 +616,7 @@ int tcpci_tcpm_set_src_ctrl(int port, int enable)
 }
 #endif
 
-__maybe_unused static int tpcm_set_sop_prime_enable(int port, int enable)
+__maybe_unused int tcpci_tcpm_sop_prime_enable(int port, bool enable)
 {
 	/* save SOP'/SOP'' enable state */
 	sop_prime_en[port] = enable;
@@ -635,11 +635,6 @@ __maybe_unused static int tpcm_set_sop_prime_enable(int port, int enable)
 	return EC_SUCCESS;
 }
 
-__maybe_unused int tcpci_tcpm_sop_prime_disable(int port)
-{
-	return tpcm_set_sop_prime_enable(port, 0);
-}
-
 int tcpci_tcpm_set_vconn(int port, int enable)
 {
 	int reg, rv;
@@ -649,7 +644,7 @@ int tcpci_tcpm_set_vconn(int port, int enable)
 		return rv;
 
 	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
-		rv = tpcm_set_sop_prime_enable(port, enable);
+		rv = tcpci_tcpm_sop_prime_enable(port, enable);
 		if (rv)
 			return rv;
 	}
@@ -1760,7 +1755,7 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 	.set_cc			= &tcpci_tcpm_set_cc,
 	.set_polarity		= &tcpci_tcpm_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
-	.sop_prime_disable	= &tcpci_tcpm_sop_prime_disable,
+	.sop_prime_enable	= &tcpci_tcpm_sop_prime_enable,
 #endif
 	.set_vconn		= &tcpci_tcpm_set_vconn,
 	.set_msg_header		= &tcpci_tcpm_set_msg_header,

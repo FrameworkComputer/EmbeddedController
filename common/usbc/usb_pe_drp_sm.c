@@ -5684,7 +5684,7 @@ static void pe_vcs_evaluate_swap_entry(int port)
 		 * We continue to source VCONN while we wait as required by the
 		 * spec.
 		 */
-		tcpm_sop_prime_disable(port);
+		tcpm_sop_prime_enable(port, false);
 	}
 }
 
@@ -5762,7 +5762,7 @@ static void pe_vcs_send_swap_run(int port)
 					 * Prevent receiving any SOP' and SOP''
 					 * messages while a swap is in progress.
 					 */
-					tcpm_sop_prime_disable(port);
+					tcpm_sop_prime_enable(port, false);
 					set_state_pe(port,
 						PE_VCS_WAIT_FOR_VCONN_SWAP);
 				} else {

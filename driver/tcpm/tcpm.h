@@ -193,10 +193,10 @@ static inline int tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 	return tcpc_config[port].drv->set_polarity(port, polarity);
 }
 
-static inline int tcpm_sop_prime_disable(int port)
+static inline int tcpm_sop_prime_enable(int port, bool enable)
 {
 #ifdef CONFIG_USB_PD_DECODE_SOP
-	return tcpc_config[port].drv->sop_prime_disable(port);
+	return tcpc_config[port].drv->sop_prime_enable(port, enable);
 #else
 	return EC_SUCCESS;
 #endif
