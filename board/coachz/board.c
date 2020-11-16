@@ -17,6 +17,7 @@
 #include "driver/tcpm/tcpci.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "keyboard_mkbp.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "pi3usb9201.h"
@@ -33,6 +34,8 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
+#define KS_DEBOUNCE_US    (30 * MSEC)  /* Debounce time for kickstand switch */
 
 /* Forward declaration */
 static void tcpc_alert_event(enum gpio_signal signal);
@@ -102,9 +105,58 @@ static void board_connect_c0_sbu(enum gpio_signal s)
 	hook_call_deferred(&board_connect_c0_sbu_deferred_data, 0);
 }
 
+static int debounced_ks_attached;
+static int debounced_ks_open;
+
+/**
+ * Kickstand switch initialization
+ */
+static void ks_init(void)
+{
+	debounced_ks_attached = !gpio_get_level(GPIO_KS_ATTACHED_L);
+	debounced_ks_open = gpio_get_level(GPIO_KS_OPEN);
+
+	/* Enable interrupts, now that we've initialized */
+	gpio_enable_interrupt(GPIO_KS_ATTACHED_L);
+	gpio_enable_interrupt(GPIO_KS_OPEN);
+}
+DECLARE_HOOK(HOOK_INIT, ks_init, HOOK_PRIO_INIT_SWITCH);
+
+/**
+ * Handle debounced kickstand switch changing state.
+ */
+static void ks_change_deferred(void)
+{
+	const int ks_attached = !gpio_get_level(GPIO_KS_ATTACHED_L);
+	const int ks_open = gpio_get_level(GPIO_KS_OPEN);
+	int proximity_detected;
+
+	/* If the switches haven't changed, nothing to do */
+	if (ks_attached == debounced_ks_attached &&
+	    ks_open == debounced_ks_open)
+		return;
+
+	/*
+	 * A heuristic method to use the kickstand position to approach
+	 * the human body proximity.
+	 */
+	proximity_detected = !(ks_attached && ks_open);
+	CPRINTS("ks %s %s -> proximity %s",
+		ks_attached ? "attached" : "detached",
+		ks_open ? "open" : "close",
+		proximity_detected ? "on" : "off");
+
+	debounced_ks_attached = ks_attached;
+	debounced_ks_open = ks_open;
+
+	mkbp_update_switches(EC_MKBP_FRONT_PROXIMITY, proximity_detected);
+}
+DECLARE_DEFERRED(ks_change_deferred);
+
 static void ks_interrupt(enum gpio_signal s)
 {
-	/* TODO(b/168714440): Implement the interrupt */
+	/* Reset kickstand debounce time */
+	hook_call_deferred(&ks_change_deferred_data, KS_DEBOUNCE_US);
 }
 
 /* I2C port map */
