@@ -41,6 +41,9 @@ GPIO_INT(AP_EC_SPI_CS_L,    PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN, shi_cs
 GPIO_INT(BASE_DET_L,        PIN(3, 7), GPIO_INT_BOTH, base_detect_interrupt)  /* Detachable base attached? */
 
 /* Sensor interrupts */
+GPIO_INT(LID_360_L,         PIN(7, 3), GPIO_INT_BOTH, gmr_tablet_switch_isr)
+GPIO_INT(LID_INT_N_HALL1,   PIN(D, 7), GPIO_INT_BOTH, ks_interrupt)  /* Kickstand attached (0) or detached (1) */
+GPIO_INT(LID_INT_N_HALL2,   PIN(6, 0), GPIO_INT_BOTH, ks_interrupt)  /* Kickstand close (0) or open (1) */
 GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 0), GPIO_INT_FALLING, bmi160_interrupt)  /* Accelerometer/gyro interrupt */
 
 /*
@@ -64,12 +67,6 @@ GPIO(EN_PP3300_A,           PIN(A, 6), GPIO_OUT_LOW)   /* Enable PP3300 */
 GPIO(EN_PP5000_A,           PIN(6, 7), GPIO_OUT_LOW)   /* Enable PP5000 */
 GPIO(EC_BL_DISABLE_L,       PIN(B, 6), GPIO_OUT_LOW)   /* Backlight disable signal from EC */
 
-/* Sensors */
-GPIO(REVERSE_DOCK_EC,       PIN(C, 6), GPIO_INPUT)
-/* TODO(b/168714440): Implement the hall sensor interrupts */
-GPIO(LID_INT_N_HALL1,       PIN(7, 3), GPIO_INPUT)
-GPIO(LID_INT_N_HALL2,       PIN(6, 0), GPIO_INPUT)
-GPIO(LID_INT_N_HALL3,       PIN(D, 7), GPIO_INPUT)
 /* TODO(waihong): Should remove it from hardware */
 GPIO(CAM_LED,               PIN(3, 0), GPIO_INPUT)
 
@@ -178,6 +175,7 @@ UNUSED(PIN(7, 2))
 UNUSED(PIN(8, 1))
 UNUSED(PIN(7, 6))
 UNUSED(PIN(3, 4))
+UNUSED(PIN(C, 6))
 UNUSED(PIN(C, 0))
 UNUSED(PIN(A, 3))
 UNUSED(PIN(6, 2))

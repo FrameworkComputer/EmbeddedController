@@ -40,6 +40,7 @@ static void usb0_evt(enum gpio_signal signal);
 static void usb1_evt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
 static void board_connect_c0_sbu(enum gpio_signal s);
+static void ks_interrupt(enum gpio_signal s);
 
 #include "gpio_list.h"
 
@@ -99,6 +100,11 @@ DECLARE_DEFERRED(board_connect_c0_sbu_deferred);
 static void board_connect_c0_sbu(enum gpio_signal s)
 {
 	hook_call_deferred(&board_connect_c0_sbu_deferred_data, 0);
+}
+
+static void ks_interrupt(enum gpio_signal s)
+{
+	/* TODO(b/168714440): Implement the interrupt */
 }
 
 /* I2C port map */
