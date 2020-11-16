@@ -386,14 +386,14 @@ void lid_angle_peripheral_enable(int enable)
 
 static int board_is_clamshell(void)
 {
-	/* SKU ID of Limozeen: 4, 5 */
-	return sku_id == 4 || sku_id == 5;
+	/* SKU ID of Limozeen: 4, 5, 6 */
+	return sku_id == 4 || sku_id == 5 || sku_id == 6;
 }
 
 enum battery_cell_type board_get_battery_cell_type(void)
 {
-	/* SKU ID of Limozeen: 4, 5 -> 3S battery */
-	if (sku_id == 4 || sku_id == 5)
+	/* SKU ID of Limozeen: 4, 5, 6 -> 3S battery */
+	if (sku_id == 4 || sku_id == 5 || sku_id == 6)
 		return BATTERY_CELL_TYPE_3S;
 
 	return BATTERY_CELL_TYPE_UNKNOWN;
@@ -573,7 +573,7 @@ __override uint16_t board_get_ps8xxx_product_id(int port)
 	 * Lazor (SKU_ID: 0, 1, 2, 3) rev 3+ changes TCPC from PS8751 to
 	 * PS8805.
 	 *
-	 * Limozeen (SKU_ID: 4, 5) all-rev uses PS8805.
+	 * Limozeen (SKU_ID: 4, 5, 6) all-rev uses PS8805.
 	 */
 	if ((sku_id == 0 || sku_id == 1 || sku_id == 2 || sku_id == 3) &&
 	    system_get_board_version() < 3)
