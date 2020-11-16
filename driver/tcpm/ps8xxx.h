@@ -89,11 +89,8 @@
 #define PS8751_REG_MUX_USB_DCI_CFG              0xED
 #endif
 
-#if defined(CONFIG_USB_PD_TCPM_PS8815)
 /* Vendor defined registers */
 #define PS8815_P1_REG_HW_REVISION		0xF0
-
-#endif
 
 extern const struct tcpm_drv ps8xxx_tcpm_drv;
 

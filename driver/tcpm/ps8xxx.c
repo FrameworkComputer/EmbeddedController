@@ -61,6 +61,16 @@
 static uint16_t product_id[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /*
+ * Revisions A1 and A0 of the PS8815 can corrupt the transmit buffer when
+ * updating the transmit buffer within 1ms of writing the ROLE_CONTROL
+ * register. When this version of silicon is detected, add a 1ms delay before
+ * all writes to the transmit buffer.
+ *
+ * See b/171430855 for details.
+ */
+static bool ps8815_role_control_delay[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+/*
  * timestamp of the next possible toggle to ensure the 2-ms spacing
  * between IRQ_HPD.
  */
@@ -352,6 +362,23 @@ static int ps8xxx_tcpm_release(int port)
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+static int ps8xxx_set_role_ctrl(int port, enum tcpc_drp drp,
+	enum tcpc_rp_value rp, enum tcpc_cc_pull pull)
+{
+	int rv;
+
+	rv = tcpci_set_role_ctrl(port, drp, rp, pull);
+
+	/*
+	 * b/171430855 delay 1 ms after ROLE_CONTROL updates to prevent
+	 * transmit buffer corruption
+	 */
+	if (ps8815_role_control_delay[port])
+		msleep(1);
+
+	return rv;
+}
+
 static int ps8xxx_tcpc_drp_toggle(int port)
 {
 	int rv;
@@ -376,7 +403,7 @@ static int ps8xxx_tcpc_drp_toggle(int port)
 		}
 
 		/* Set auto drp toggle, starting with the opposite pull */
-		rv |= tcpci_set_role_ctrl(port, TYPEC_DRP, TYPEC_RP_USB,
+		rv |= ps8xxx_set_role_ctrl(port, TYPEC_DRP, TYPEC_RP_USB,
 			opposite_pull);
 
 		/* Set Look4Connection command */
@@ -506,11 +533,43 @@ static int ps8xxx_dci_disable(int port)
 	return EC_ERROR_INVAL;
 }
 
+__maybe_unused static void ps8815_transmit_buffer_workaround_check(int port)
+{
+	int p1_addr;
+	int val;
+	int status;
+
+	ps8815_role_control_delay[port] = false;
+
+	if (product_id[port] != PS8815_PRODUCT_ID)
+		return;
+
+	/* P1 registers are always accessible on PS8815 */
+	p1_addr = PS8751_P3_TO_P1_FLAGS(tcpc_config[port].i2c_info.addr_flags);
+
+	status = tcpc_addr_read16(port, p1_addr, PS8815_P1_REG_HW_REVISION,
+				  &val);
+	if (status != EC_SUCCESS)
+		return;
+
+	switch (val) {
+	case 0x0a00:
+	case 0x0a01:
+		ps8815_role_control_delay[port] = true;
+		break;
+	default:
+		break;
+	}
+}
+
 static int ps8xxx_tcpm_init(int port)
 {
 	int status;
 
 	product_id[port] = board_get_ps8xxx_product_id(port);
+
+	if (IS_ENABLED(CONFIG_USB_PD_TCPM_PS8815))
+		ps8815_transmit_buffer_workaround_check(port);
 
 	status = tcpci_tcpm_init(port);
 	if (status != EC_SUCCESS)
@@ -552,6 +611,22 @@ static int ps8751_get_gcc(int port, enum tcpc_cc_voltage_status *cc1,
 }
 #endif
 
+static int ps8xxx_tcpm_set_cc(int port, int pull)
+{
+	int rv;
+
+	rv = tcpci_tcpm_set_cc(port, pull);
+
+	/*
+	 * b/171430855 delay 1 ms after ROLE_CONTROL updates to prevent
+	 * transmit buffer corruption
+	 */
+	if (ps8815_role_control_delay[port])
+		msleep(1);
+
+	return rv;
+}
+
 static int ps8xxx_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 			 enum tcpc_cc_voltage_status *cc2)
 {
@@ -571,7 +646,7 @@ const struct tcpm_drv ps8xxx_tcpm_drv = {
 	.check_vbus_level	= &tcpci_tcpm_check_vbus_level,
 #endif
 	.select_rp_value	= &tcpci_tcpm_select_rp_value,
-	.set_cc			= &tcpci_tcpm_set_cc,
+	.set_cc			= &ps8xxx_tcpm_set_cc,
 	.set_polarity		= &tcpci_tcpm_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
 	.sop_prime_disable	= &tcpci_tcpm_sop_prime_disable,
