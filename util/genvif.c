@@ -76,6 +76,11 @@ enum bc_1_2_support {
 	BC_1_2_SUPPORT_BOTH = 3
 };
 
+enum power_source {
+	POWER_EXTERNAL = 0,
+	POWER_UFP = 1,
+	POWER_BOTH = 2,
+};
 
 /*
  * TAG Name Strings
@@ -2928,25 +2933,29 @@ static void init_vif_component_usb_type_c_fields(
 		IS_ENABLED(CONFIG_USB_ALT_MODE_ADAPTER));
 
 	{
-		int ps = 1;
+		int ps = POWER_UFP;
 
-		#if defined(CONFIG_DEDICATED_CHARGE_PORT_COUNT)
-			if (CONFIG_DEDICATED_CHARGE_PORT_COUNT == 1)
-				ps = 0;
-		#endif
+		if (IS_ENABLED(CONFIG_BATTERY))
+			ps = POWER_BOTH;
+#if defined(CONFIG_DEDICATED_CHARGE_PORT_COUNT)
+		else if (CONFIG_DEDICATED_CHARGE_PORT_COUNT == 1)
+			ps = POWER_EXTERNAL;
+		else if (CONFIG_DEDICATED_CHARGE_PORT_COUNT > 1)
+			ps = POWER_BOTH;
+#endif
 
 		switch (ps) {
-		case 0:
+		case POWER_EXTERNAL:
 			set_vif_field(&vif_fields[Type_C_Power_Source],
 				vif_component_name[Type_C_Power_Source],
 				"0", "Externally Powered");
 			break;
-		case 1:
+		case POWER_UFP:
 			set_vif_field(&vif_fields[Type_C_Power_Source],
 				vif_component_name[Type_C_Power_Source],
 				"1", "UFP-powered");
 			break;
-		case 2:
+		case POWER_BOTH:
 			set_vif_field(&vif_fields[Type_C_Power_Source],
 				vif_component_name[Type_C_Power_Source],
 				"2", "Both");
