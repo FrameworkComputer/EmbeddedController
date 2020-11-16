@@ -2643,6 +2643,16 @@ static void pe_snk_startup_entry(int port)
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE);
+
+		/*
+		 * Some port partners may violate spec and attempt to
+		 * communicate with the cable after power role swaps, despite
+		 * not being Vconn source.  Disable our SOP' receiving here to
+		 * avoid GoodCRC-ing any erroneous cable probes, and re-enable
+		 * after our contract is in place.
+		 */
+		if (tc_is_vconn_src(port))
+			tcpm_sop_prime_enable(port, false);
 	} else {
 		/*
 		 * Set DiscoverIdentityTimer to trigger when we enter
@@ -2950,6 +2960,16 @@ static void pe_snk_transition_sink_run(int port)
 			 * jitter delay when operating in PD2.0 mode.
 			 */
 			PE_SET_FLAG(port, PE_FLAGS_FIRST_MSG);
+
+			/*
+			 * If we've successfully completed our new power
+			 * contract, ensure SOP' communication is enabled before
+			 * entering PE_SNK_READY.  It may have been disabled
+			 * during a power role swap to avoid interoperability
+			 * issues with out-of-spec partners.
+			 */
+			if (tc_is_vconn_src(port))
+				tcpm_sop_prime_enable(port, true);
 
 			set_state_pe(port, PE_SNK_READY);
 			return;
