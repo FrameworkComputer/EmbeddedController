@@ -376,7 +376,8 @@ static int ps8xxx_tcpc_drp_toggle(int port)
 		}
 
 		/* Set auto drp toggle, starting with the opposite pull */
-		rv |= tcpci_set_role_ctrl(port, 1, TYPEC_RP_USB, opposite_pull);
+		rv |= tcpci_set_role_ctrl(port, TYPEC_DRP, TYPEC_RP_USB,
+			opposite_pull);
 
 		/* Set Look4Connection command */
 		rv |= tcpc_write(port, TCPC_REG_COMMAND,

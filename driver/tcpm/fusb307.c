@@ -28,7 +28,7 @@ static int fusb307_tcpm_init(int port)
 
 	rv = tcpci_tcpm_init(port);
 
-	rv = tcpci_set_role_ctrl(port, 1, TYPEC_RP_USB, TYPEC_CC_RD);
+	rv = tcpci_set_role_ctrl(port, TYPEC_DRP, TYPEC_RP_USB, TYPEC_CC_RD);
 	pd_set_dual_role(port, PD_DRP_TOGGLE_ON);
 
 	return rv;

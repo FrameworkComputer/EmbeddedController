@@ -47,6 +47,12 @@ enum tcpc_rp_value {
 	TYPEC_RP_RESERVED = 3,
 };
 
+/* DRP (dual-role-power) setting */
+enum tcpc_drp {
+	TYPEC_NO_DRP = 0,
+	TYPEC_DRP = 1,
+};
+
 /**
  * Returns whether the polarity without the DTS extension
  */

@@ -73,7 +73,10 @@
 #define TCPC_REG_ROLE_CTRL_CC2_MASK                    (BIT(3)|BIT(2))
 #define TCPC_REG_ROLE_CTRL_CC1_MASK                    (BIT(1)|BIT(0))
 #define TCPC_REG_ROLE_CTRL_SET(drp, rp, cc1, cc2) \
-		((drp) << 6 | (rp) << 4 | (cc2) << 2 | (cc1))
+		((((drp) << 6) & TCPC_REG_ROLE_CTRL_DRP_MASK) | \
+		(((rp) << 4) & TCPC_REG_ROLE_CTRL_RP_MASK) | \
+		(((cc2) << 2) & TCPC_REG_ROLE_CTRL_CC2_MASK) | \
+		((cc1) & TCPC_REG_ROLE_CTRL_CC1_MASK))
 #define TCPC_REG_ROLE_CTRL_DRP(reg) \
 		(((reg) & TCPC_REG_ROLE_CTRL_DRP_MASK) >> 6)
 #define TCPC_REG_ROLE_CTRL_RP(reg) \
@@ -230,7 +233,8 @@ int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 			uint16_t header, const uint32_t *data);
 int tcpci_tcpm_release(int port);
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-int tcpci_set_role_ctrl(int port, int toggle, int rp, int pull);
+int tcpci_set_role_ctrl(int port, enum tcpc_drp drp, enum tcpc_rp_value rp,
+	enum tcpc_cc_pull pull);
 int tcpci_tcpc_drp_toggle(int port);
 #endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
