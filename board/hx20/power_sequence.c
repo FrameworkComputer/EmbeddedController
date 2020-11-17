@@ -124,9 +124,12 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S5:
 		CPRINTS("power handle state in S5");
 
-		if (power_wait_signals(IN_PCH_SLP_S4_DEASSERTED)) {
-			CPRINTS("timeout waiting for S4 exit");
-			return POWER_S5G3;
+		/* Wait for S5 exit for global reset */
+		while ((power_get_signals() & IN_PCH_SLP_S4_DEASSERTED) == 0) {
+			if (task_wait_event(SECOND*9) == TASK_EVENT_TIMER) {
+				CPRINTS("timeout waiting for S5 exit");
+				return POWER_S5G3; /* Power up again */
+			}
 		}
 
 		return POWER_S5S3; /* Power up to next state */
