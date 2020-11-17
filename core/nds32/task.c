@@ -236,7 +236,8 @@ task_id_t task_get_current(void)
 	/* If we haven't done a context switch then our task ID isn't valid */
 	ASSERT(current_task != (task_ *)scratchpad);
 #endif
-	return current_task - tasks;
+	/* return invalid task id if task scheduling is not yet start */
+	return start_called ? (current_task - tasks) : TASK_ID_INVALID;
 }
 
 uint32_t *task_get_event_bitmap(task_id_t tskid)
