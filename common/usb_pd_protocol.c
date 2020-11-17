@@ -392,15 +392,6 @@ int pd_is_connected(int port)
 		pd[port].task_state != PD_STATE_SRC_DISCONNECTED_DEBOUNCE);
 }
 
-/*
- * Return true if partner port is a DTS or TS capable of entering debug
- * mode (eg. is presenting Rp/Rp or Rd/Rd).
- */
-int pd_ts_dts_plugged(int port)
-{
-	return pd[port].flags & PD_FLAGS_TS_DTS_PARTNER;
-}
-
 /* Return true if partner port is known to be PD capable. */
 bool pd_capable(int port)
 {
@@ -2529,12 +2520,11 @@ static void pd_update_dual_role_config(int port)
 {
 	/*
 	 * Change to sink if port is currently a source AND (new DRP
-	 * state is force sink OR new DRP state is either toggle off
-	 * or debug accessory toggle only and we are in the source
-	 * disconnected state).
+	 * state is force sink OR new DRP state is toggle off and we are in the
+	 * source disconnected state).
 	 */
 	if (pd[port].power_role == PD_ROLE_SOURCE &&
-	    ((drp_state[port] == PD_DRP_FORCE_SINK && !pd_ts_dts_plugged(port))
+	    (drp_state[port] == PD_DRP_FORCE_SINK
 	     || (drp_state[port] == PD_DRP_TOGGLE_OFF
 		 && pd[port].task_state == PD_STATE_SRC_DISCONNECTED))) {
 		pd_set_power_role(port, PD_ROLE_SINK);

@@ -2726,14 +2726,6 @@ void pd_prepare_reset(void);
 void pd_set_new_power_request(int port);
 
 /**
- * Return true if partner port is a DTS or TS capable of entering debug
- * mode (eg. is presenting Rp/Rp or Rd/Rd).
- *
- * @param port USB-C port number
- */
-int pd_ts_dts_plugged(int port);
-
-/**
  * Return true if partner port is known to be PD capable.
  *
  * @param port USB-C port number
