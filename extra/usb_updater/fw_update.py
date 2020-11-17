@@ -257,7 +257,7 @@ class Supdate(object):
       offset += pagesize
 
       # Validate that the micro thinks it successfully wrote the data.
-      read = self.wr_command("", read_count=4)
+      read = self.wr_command(b"", read_count=4)
       result = struct.unpack("<I", read)
       result = result[0]
       if result != 0:
