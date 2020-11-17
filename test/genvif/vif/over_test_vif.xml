@@ -1,0 +1,19 @@
+<VIF>
+  <!-- Override the following fields -->
+  <Model_Part_Number>SuperTestWithOverride</Model_Part_Number>
+  <Product_Revision>Final</Product_Revision>
+  <TID>12345</TID>
+
+  <Component>
+    <!-- Remove Sends_Pings -->
+    <Sends_Pings />
+
+    <SrcPdoList>
+      <SrcPDO>
+        <!-- Add in missing fields for SrcPdo0 -->
+        <Src_PD_OCP_OC_Debounce value="50">50 msec</Src_PD_OCP_OC_Debounce>
+        <Src_PD_OCP_OC_Threshold value="360">3600 mA</Src_PD_OCP_OC_Threshold>
+      </SrcPDO>
+    </SrcPdoList>
+  </Component>
+</VIF>

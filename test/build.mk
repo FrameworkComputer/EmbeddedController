@@ -228,3 +228,7 @@ is_enabled_error-y=is_enabled_error.o.cmd
 
 host-static_if_error: TEST_SCRIPT=static_if_error.sh
 static_if_error-y=static_if_error.o.cmd
+
+run-genvif_test:
+	@echo "  TEST    genvif_test"
+	@test/genvif/genvif.sh

@@ -359,7 +359,7 @@ hosttests: $(host-test-targets)
 runhosttests: TEST_FLAG=TEST_HOSTTEST=y
 runhosttests: $(run-test-targets)
 runfuzztests: $(run-fuzz-test-targets)
-runtests: runhosttests runfuzztests
+runtests: runhosttests runfuzztests run-genvif_test
 
 # Automatically enumerate all suites.
 cts_excludes := common
