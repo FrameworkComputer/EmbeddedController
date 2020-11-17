@@ -51,7 +51,6 @@ static void chipset_force_g3(void)
 	gpio_set_level(GPIO_EC_KBL_PWR_EN, 0);
 	gpio_set_level(GPIO_PCH_PWR_EN, 0);
 	gpio_set_level(GPIO_PCH_DPWROK, 0);
-	gpio_set_level(GPIO_EC_ON, 0);
 	gpio_set_level(GPIO_PCH_PWRBTN_L, 0);
 	f75303_set_enabled(0);
 
@@ -238,8 +237,8 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S5G3:
 		CPRINTS("power handle state in S5G3");
+		chipset_force_g3();
 		if (!extpower_is_present()) {
-			chipset_force_g3();
 			board_power_off();
 		}
 		return POWER_G3;

@@ -89,7 +89,7 @@ GPIO(FP_CTRL,             PIN(0245), GPIO_INPUT)    /* Reserved for fingerprint 
  */
 GPIO(PBTN_OUT_L,            PIN(0243),  GPIO_OUT_LOW)
 GPIO(AC_PRESENT_OUT,        PIN(0240),  GPIO_ODR_LOW)
-GPIO(EC_RSMRST_L,           PIN(036),   GPIO_OUT_LOW)
+GPIO(EC_RSMRST_L,           PIN(036),   GPIO_INPUT | GPIO_OUT_LOW)
 GPIO(EC_ON,                 PIN(0250),  GPIO_OUT_HIGH) /* keep +3VL_EC to power on */
 GPIO(PCH_DPWROK,            PIN(012),   GPIO_ODR_LOW)
 GPIO(PCH_PWR_EN,            PIN(0244),  GPIO_ODR_LOW)
