@@ -83,6 +83,11 @@ enum power_source {
 };
 
 /*
+ * index of component being set
+ */
+int component_index;
+
+/*
  * TAG Name Strings
  */
 #define NAME_INIT(str) [str] = #str
@@ -480,7 +485,7 @@ static bool is_src(void)
 
 	/* Determine if we are DRP, SRC or SNK */
 	was_overridden = get_vif_field_tag_number(
-				&vif.Component[0]
+				&vif.Component[component_index]
 					.vif_field[Type_C_State_Machine],
 				&override_value);
 	if (was_overridden) {
@@ -497,7 +502,7 @@ static bool is_src(void)
 	}
 	if (!was_overridden) {
 		was_overridden = get_vif_field_tag_number(
-					&vif.Component[0]
+					&vif.Component[component_index]
 						.vif_field[PD_Port_Type],
 					&override_value);
 		if (was_overridden) {
@@ -521,7 +526,7 @@ static bool is_snk(void)
 
 	/* Determine if we are DRP, SRC or SNK */
 	was_overridden = get_vif_field_tag_number(
-				&vif.Component[0]
+				&vif.Component[component_index]
 					.vif_field[Type_C_State_Machine],
 				&override_value);
 	if (was_overridden) {
@@ -538,7 +543,7 @@ static bool is_snk(void)
 	}
 	if (!was_overridden) {
 		was_overridden = get_vif_field_tag_number(
-					&vif.Component[0]
+					&vif.Component[component_index]
 						.vif_field[PD_Port_Type],
 					&override_value);
 		if (was_overridden) {
@@ -562,7 +567,7 @@ static bool is_drp(void)
 
 	/* Determine if we are DRP, SRC or SNK */
 	was_overridden = get_vif_field_tag_number(
-				&vif.Component[0]
+				&vif.Component[component_index]
 					.vif_field[Type_C_State_Machine],
 				&override_value);
 	if (was_overridden) {
@@ -579,7 +584,7 @@ static bool is_drp(void)
 	}
 	if (!was_overridden) {
 		was_overridden = get_vif_field_tag_number(
-					&vif.Component[0]
+					&vif.Component[component_index]
 						.vif_field[PD_Port_Type],
 					&override_value);
 		if (was_overridden) {
@@ -605,7 +610,8 @@ static bool can_act_as_device(void)
 	bool was_overridden;
 
 	was_overridden = get_vif_field_bool(
-		&vif.Component[0].vif_field[Type_C_Can_Act_As_Device],
+		&vif.Component[component_index]
+			.vif_field[Type_C_Can_Act_As_Device],
 		&override_value);
 	if (was_overridden)
 		return override_value;
@@ -623,7 +629,8 @@ static bool can_act_as_host(void)
 	bool was_overridden;
 
 	was_overridden = get_vif_field_bool(
-		&vif.Component[0].vif_field[Type_C_Can_Act_As_Host],
+		&vif.Component[component_index]
+			.vif_field[Type_C_Can_Act_As_Host],
 		&override_value);
 	if (was_overridden)
 		return override_value;
@@ -1805,8 +1812,8 @@ static void override_vif_fields(struct vif_t *vif)
 	char name[80];
 	char tag_value[80];
 	char str_value[80];
-	int component_index = 0;
 
+	component_index = 0;
 	while (get_next_tag(name, tag_value, str_value)) {
 		if (streq(name, "/VIF"))
 			break;
@@ -2495,10 +2502,10 @@ static void init_vif_component_fields(struct vif_field_t *vif_fields,
 			NULL,
 			CONFIG_USB_PD_PORT_LABEL);
 	#else
-		set_vif_field(&vif_fields[Port_Label],
+		set_vif_field_stis(&vif_fields[Port_Label],
 			vif_component_name[Port_Label],
 			NULL,
-			"0");
+			component_index);
 	#endif
 
 	set_vif_field(&vif_fields[Connector_Type],
@@ -3389,63 +3396,7 @@ static void init_vif_component_product_power_fields(
 static int gen_vif(const char *board,
 		   struct vif_t *vif)
 {
-	int override_value;
-	bool was_overridden;
-	enum dtype type;
-	int32_t src_max_power = 0;
-	enum bc_1_2_support bc_support = BC_1_2_SUPPORT_NONE;
-
-	/* Determine if we are DRP, SRC or SNK */
-	was_overridden = get_vif_field_tag_number(
-				&vif->Component[0]
-					.vif_field[Type_C_State_Machine],
-				&override_value);
-	if (was_overridden) {
-		switch (override_value) {
-		case SRC:
-		case SNK:
-		case DRP:
-			type = (enum dtype)override_value;
-			break;
-		default:
-			was_overridden = false;
-		}
-	}
-	if (!was_overridden) {
-		was_overridden = get_vif_field_tag_number(
-					&vif->Component[0]
-						.vif_field[PD_Port_Type],
-					&override_value);
-		if (was_overridden) {
-			switch (override_value) {
-			case PORT_CONSUMER_ONLY:	/* SNK */
-				type = SNK;
-				break;
-			case PORT_PROVIDER_ONLY:	/* SRC */
-				type = SRC;
-				break;
-			case PORT_DRP:			/* DRP */
-				type = DRP;
-				break;
-			default:
-				was_overridden = false;
-			}
-		}
-	}
-	if (!was_overridden) {
-		if (is_drp())
-			type = DRP;
-		else if (is_src() && is_snk())
-			/* No DRP with SRC and SNK PDOs detected. So ignore. */
-			/* ie. Twinkie or Plankton */
-			return 0;
-		else if (is_src())
-			type = SRC;
-		else if (is_snk())
-			type = SNK;
-		else
-			return 1;
-	}
+	int max_component_index = board_get_usb_pd_port_count();
 
 	/*********************************************************************
 	 * Initialize the vif structure
@@ -3458,56 +3409,123 @@ static int gen_vif(const char *board,
 	init_vif_product_fields(
 			vif->Product.vif_field);
 
-	init_vif_component_fields(
-			vif->Component[0].vif_field,
-			&bc_support,
-			type);
+	for (component_index = 0;
+	     component_index < max_component_index;
+	     component_index++) {
+		int override_value;
+		bool was_overridden;
+		enum dtype type;
+		int32_t src_max_power = 0;
+		enum bc_1_2_support bc_support = BC_1_2_SUPPORT_NONE;
 
-	init_vif_component_general_pd_fields(
-			vif->Component[0].vif_field,
-			type);
+		/* Determine if we are DRP, SRC or SNK */
+		was_overridden =
+			get_vif_field_tag_number(
+				&vif->Component[component_index]
+					.vif_field[Type_C_State_Machine],
+				&override_value);
+		if (was_overridden) {
+			switch (override_value) {
+			case SRC:
+			case SNK:
+			case DRP:
+				type = (enum dtype)override_value;
+				break;
+			default:
+				was_overridden = false;
+			}
+		}
+		if (!was_overridden) {
+			was_overridden =
+				get_vif_field_tag_number(
+					&vif->Component[component_index]
+						.vif_field[PD_Port_Type],
+					&override_value);
+			if (was_overridden) {
+				switch (override_value) {
+				case PORT_CONSUMER_ONLY:	/* SNK */
+					type = SNK;
+					break;
+				case PORT_PROVIDER_ONLY:	/* SRC */
+					type = SRC;
+					break;
+				case PORT_DRP:			/* DRP */
+					type = DRP;
+					break;
+				default:
+					was_overridden = false;
+				}
+			}
+		}
+		if (!was_overridden) {
+			if (is_drp())
+				type = DRP;
+			else if (is_src() && is_snk())
+				/*
+				 * No DRP with SRC and SNK PDOs detected. So
+				 * ignore.  ie. Twinkie or Plankton
+				 */
+				return 0;
+			else if (is_src())
+				type = SRC;
+			else if (is_snk())
+				type = SNK;
+			else
+				return 1;
+		}
 
-	init_vif_component_sop_capabilities_fields(
-			vif->Component[0].vif_field);
 
-	init_vif_component_usb_type_c_fields(
-			vif->Component[0].vif_field,
-			type);
+		init_vif_component_fields(
+				vif->Component[component_index].vif_field,
+				&bc_support,
+				type);
 
-	init_vif_component_usb_data_ufp_fields(
-			vif->Component[0].vif_field);
+		init_vif_component_general_pd_fields(
+				vif->Component[component_index].vif_field,
+				type);
 
-	init_vif_component_usb_data_dfp_fields(
-			vif->Component[0].vif_field);
+		init_vif_component_sop_capabilities_fields(
+				vif->Component[component_index].vif_field);
 
-	if (init_vif_component_pd_source_fields(
-			vif->Component[0].vif_field,
-			vif->Component[0].SrcPdoList,
-			&src_max_power,
-			type))
-		return 1;
+		init_vif_component_usb_type_c_fields(
+				vif->Component[component_index].vif_field,
+				type);
 
-	if (init_vif_component_pd_sink_fields(
-			vif->Component[0].vif_field,
-			vif->Component[0].SnkPdoList,
-			type))
-		return 1;
+		init_vif_component_usb_data_ufp_fields(
+				vif->Component[component_index].vif_field);
 
-	init_vif_component_pd_dual_role_fields(
-			vif->Component[0].vif_field,
-			type);
+		init_vif_component_usb_data_dfp_fields(
+				vif->Component[component_index].vif_field);
 
-	init_vif_component_sop_discovery_fields(
-			vif->Component[0].vif_field);
+		if (init_vif_component_pd_source_fields(
+				vif->Component[component_index].vif_field,
+				vif->Component[component_index].SrcPdoList,
+				&src_max_power,
+				type))
+			return 1;
 
-	init_vif_component_bc_1_2_fields(
-			vif->Component[0].vif_field,
-			bc_support);
+		if (init_vif_component_pd_sink_fields(
+				vif->Component[component_index].vif_field,
+				vif->Component[component_index].SnkPdoList,
+				type))
+			return 1;
 
-	init_vif_component_product_power_fields(
-			vif->Component[0].vif_field,
-			src_max_power,
-			type);
+		init_vif_component_pd_dual_role_fields(
+				vif->Component[component_index].vif_field,
+				type);
+
+		init_vif_component_sop_discovery_fields(
+				vif->Component[component_index].vif_field);
+
+		init_vif_component_bc_1_2_fields(
+				vif->Component[component_index].vif_field,
+				bc_support);
+
+		init_vif_component_product_power_fields(
+				vif->Component[component_index].vif_field,
+				src_max_power,
+				type);
+	}
 
 	return 0;
 }

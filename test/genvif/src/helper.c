@@ -27,3 +27,7 @@ const uint32_t pd_snk_pdo[] = {
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 #endif /* CONFIG_USB_PD_CUSTOM_PDO */
 
+uint8_t board_get_usb_pd_port_count(void)
+{
+	return 1;
+}
