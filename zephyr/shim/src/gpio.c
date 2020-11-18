@@ -78,10 +78,18 @@ static void gpio_handler_shim(const struct device *port,
 
 /*
  * Each zephyr project should define EC_CROS_GPIO_INTERRUPTS in their gpio_map.h
- * file if there are any interrupts that should be registered.
+ * file if there are any interrupts that should be registered.  The
+ * corresponding handler will be declared here, which will prevent
+ * needing to include headers with complex dependencies in gpio_map.h.
  *
  * EC_CROS_GPIO_INTERRUPTS is a space-separated list of GPIO_INT items.
  */
+#define GPIO_INT(sig, f, cb) void cb(enum gpio_signal signal);
+#ifdef EC_CROS_GPIO_INTERRUPTS
+EC_CROS_GPIO_INTERRUPTS
+#endif
+#undef GPIO_INT
+
 #define GPIO_INT(sig, f, cb)       \
 	{                          \
 		.signal = sig,     \
@@ -92,6 +100,7 @@ struct gpio_signal_callback gpio_interrupts[] = {
 #ifdef EC_CROS_GPIO_INTERRUPTS
 	EC_CROS_GPIO_INTERRUPTS
 #endif
+#undef GPIO_INT
 };
 
 /**
