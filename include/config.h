@@ -4074,8 +4074,8 @@
 #undef CONFIG_USB_PD_IDENTITY_HW_VERS
 #undef CONFIG_USB_PD_IDENTITY_SW_VERS
 
-/* USB PD MCU slave address for host commands */
-#define CONFIG_USB_PD_I2C_SLAVE_ADDR_FLAGS 0x1E
+/* USB PD MCU I2C address for host commands */
+#define CONFIG_USB_PD_I2C_ADDR_FLAGS 0x1E
 
 /* Define if using internal comparator for PD receive */
 #undef CONFIG_USB_PD_INTERNAL_COMP

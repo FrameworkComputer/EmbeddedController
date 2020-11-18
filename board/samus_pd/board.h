@@ -95,7 +95,7 @@
 
 /* peripheral address for host commands */
 #ifdef HAS_TASK_HOSTCMD
-#define CONFIG_HOSTCMD_I2C_ADDR_FLAGS CONFIG_USB_PD_I2C_SLAVE_ADDR_FLAGS
+#define CONFIG_HOSTCMD_I2C_ADDR_FLAGS CONFIG_USB_PD_I2C_ADDR_FLAGS
 #endif
 
 #ifndef __ASSEMBLER__
