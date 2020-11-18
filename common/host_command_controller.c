@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Host command master module for Chrome EC */
+/* Host command controller module for Chrome EC */
 
 #include "common.h"
 #include "console.h"
