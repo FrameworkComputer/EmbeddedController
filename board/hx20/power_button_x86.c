@@ -307,8 +307,9 @@ static void state_machine(uint64_t tnow)
 			}
 		}
 		*/
-
-		if (!extpower_is_present()) {
+		if (!extpower_is_present() ||
+			(system_get_reset_flags() & EC_RESET_FLAG_HARD) ==
+			EC_RESET_FLAG_HARD) {
 			if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 				chipset_exit_hard_off();
 
