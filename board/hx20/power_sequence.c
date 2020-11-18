@@ -164,10 +164,6 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S5S3:
 		CPRINTS("power handle state in S5S3");
 
-		/*Power up camera*/
-		gpio_set_level(GPIO_CAM_EN, 0);
-
-
         gpio_set_level(GPIO_SYSON, 1);
 
         /* Call hooks now that rails are up */
@@ -226,8 +222,6 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("power handle state in S3S5");
 		gpio_set_level(GPIO_SYSON, 0);
 
-		/*Power down camera*/
-		gpio_set_level(GPIO_CAM_EN, 1);
 		return POWER_S5;
 		break;
 
