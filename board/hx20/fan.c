@@ -32,12 +32,12 @@
 
 /*
  * RPM = (n - 1) * m * f * 60 / poles / TACH
- *   n = number of edges = 5
+ *   n = number of edges = 9
  *   m = multiplier defined by RANGE = 1 in our case
  *   f = 100K
  *   poles = 2
  */
-#define TACH_TO_RPM(tach) ((100000*60) / MAX((tach), 1))
+#define TACH_TO_RPM(tach) ((2*100000*60) / MAX((tach), 1))
 
 
 #define FAN_PID_I_INV	100
@@ -227,7 +227,7 @@ void fan_channel_setup(int ch, unsigned int flags)
 		MCHP_TACH_CTRL(i) = MCHP_TACH_CTRL_MODE_SELECT +
 							MCHP_TACH_CTRL_ENABLE +
 							MCHP_TACH_CTRL_FILTER_EN +
-							MCHP_TACH_CTRL_TACH_EDGES_5;
+							MCHP_TACH_CTRL_TACH_EDGES_9;
 	}
 }
 
