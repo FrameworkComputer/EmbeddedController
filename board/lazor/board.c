@@ -30,6 +30,7 @@
 #include "switch.h"
 #include "tablet_mode.h"
 #include "task.h"
+#include "usbc_ocp.h"
 #include "usbc_ppc.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -39,6 +40,7 @@
 static void tcpc_alert_event(enum gpio_signal signal);
 static void usb0_evt(enum gpio_signal signal);
 static void usb1_evt(enum gpio_signal signal);
+static void usba_oc_interrupt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
 static void board_connect_c0_sbu(enum gpio_signal s);
 static void switchcap_interrupt(enum gpio_signal signal);
@@ -74,6 +76,19 @@ static void usb0_evt(enum gpio_signal signal)
 static void usb1_evt(enum gpio_signal signal)
 {
 	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
+}
+
+static void usba_oc_deferred(void)
+{
+	/* Use next number after all USB-C ports to indicate the USB-A port */
+	board_overcurrent_event(CONFIG_USB_PD_PORT_MAX_COUNT,
+				!gpio_get_level(GPIO_USB_A0_OC_ODL));
+}
+DECLARE_DEFERRED(usba_oc_deferred);
+
+static void usba_oc_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&usba_oc_deferred_data, 0);
 }
 
 static void ppc_interrupt(enum gpio_signal signal)
@@ -521,6 +536,9 @@ static void board_init(void)
 	/* Enable BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
+
+	/* Enable USB-A overcurrent interrupt */
+	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
 
 	/*
 	 * The H1 SBU line for CCD are behind PPC chip. The PPC internal FETs
