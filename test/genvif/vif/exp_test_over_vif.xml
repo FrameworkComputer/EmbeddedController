@@ -60,8 +60,8 @@
     <Type_C_Port_On_Hub value="false">NO</Type_C_Port_On_Hub>
     <Type_C_Supports_Audio_Accessory value="false">NO</Type_C_Supports_Audio_Accessory>
     <Type_C_Sources_VCONN value="false">NO</Type_C_Sources_VCONN>
-    <Device_Speed value="0">USB 2</Device_Speed>
-    <Host_Speed value="0">USB 2</Host_Speed>
+    <Device_Speed value="1">USB 3.2 GEN 1x1</Device_Speed>
+    <Host_Speed value="1">USB 3.2 GEN 1x1</Host_Speed>
     <Host_Contains_Captive_Retimer value="false">NO</Host_Contains_Captive_Retimer>
     <Host_Is_Embedded value="false">NO</Host_Is_Embedded>
     <PD_Power_As_Source value="15000">15000 mW</PD_Power_As_Source>
