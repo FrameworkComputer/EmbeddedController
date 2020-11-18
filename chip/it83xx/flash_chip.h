@@ -13,6 +13,9 @@
  */
 extern const char __flash_dma_start;
 
+/* This symbol is the begin address of the __ilm0_ram_code section. */
+extern const char __ilm0_ram_code;
+
 /* This symbol is the begin address of the text section. */
 extern const char __flash_text_start;
 

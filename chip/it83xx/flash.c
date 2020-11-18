@@ -19,6 +19,7 @@
 
 #define FLASH_DMA_START ((uint32_t) &__flash_dma_start)
 #define FLASH_DMA_CODE __attribute__((section(".flash_direct_map")))
+#define FLASH_ILM0_ADDR ((uint32_t) &__ilm0_ram_code)
 
 /* erase size of sector is 1KB or 4KB */
 #define FLASH_SECTOR_ERASE_SIZE CONFIG_FLASH_ERASE_SIZE
@@ -640,6 +641,37 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 	return ret;
 }
 
+static void flash_enable_second_ilm(void)
+{
+#ifdef CHIP_CORE_RISCV
+	/* Make sure no interrupt while enable static cache */
+	interrupt_disable();
+
+	/* Invalid ILM0 */
+	IT83XX_GCTRL_RVILMCR0 &= ~ILMCR_ILM0_ENABLE;
+	IT83XX_SMFI_SCAR0H = BIT(3);
+	/* copy code to ram */
+	memcpy((void *)CHIP_RAMCODE_ILM0,
+		(const void *)FLASH_ILM0_ADDR,
+		IT83XX_ILM_BLOCK_SIZE);
+	/*
+	 * Set the logic memory address(flash code of RO/RW) in flash
+	 * by programming the register SCAR0x bit19-bit0.
+	 */
+	IT83XX_SMFI_SCAR0L = FLASH_ILM0_ADDR & GENMASK(7, 0);
+	IT83XX_SMFI_SCAR0M = (FLASH_ILM0_ADDR >> 8) & GENMASK(7, 0);
+	IT83XX_SMFI_SCAR0H = (FLASH_ILM0_ADDR >> 16) & GENMASK(2, 0);
+	if (FLASH_ILM0_ADDR & BIT(19))
+		IT83XX_SMFI_SCAR0H |= BIT(7);
+	else
+		IT83XX_SMFI_SCAR0H &= ~BIT(7);
+	/* Enable ILM 0 */
+	IT83XX_GCTRL_RVILMCR0 |= ILMCR_ILM0_ENABLE;
+
+	interrupt_enable();
+#endif
+}
+
 static void flash_code_static_dma(void)
 {
 
@@ -703,6 +735,11 @@ int flash_pre_init(void)
 	if (IS_ENABLED(IT83XX_CHIP_FLASH_IS_KGD))
 		IT83XX_SMFI_FLHCTRL6R |= IT83XX_SMFI_MASK_ECINDPP;
 	flash_code_static_dma();
+	/*
+	 * Enable second ilm (ILM0 of it8xxx2 series), so we can pull more code
+	 * (4kB) into static cache to save latency of fetching code from flash.
+	 */
+	flash_enable_second_ilm();
 
 	reset_flags = system_get_reset_flags();
 	prot_flags = flash_get_protect();

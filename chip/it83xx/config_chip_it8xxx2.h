@@ -133,6 +133,7 @@
 #error "Unsupported chip variant!"
 #endif
 
+#define CHIP_RAMCODE_ILM0 (CONFIG_RAM_BASE + 0)      /* base+0000h~base+0FFF */
 #define CHIP_H2RAM_BASE   (CONFIG_RAM_BASE + 0x1000) /* base+1000h~base+1FFF */
 #define CHIP_RAMCODE_BASE (CONFIG_RAM_BASE + 0x2000) /* base+2000h~base+2FFF */
 
