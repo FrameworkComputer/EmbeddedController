@@ -1186,6 +1186,7 @@ const struct tcpm_drv anx74xx_tcpm_drv = {
 	.drp_toggle		= &anx74xx_tcpc_drp_toggle,
 	.enter_low_power_mode	= &anx74xx_enter_low_power_mode,
 #endif
+	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
 };
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC

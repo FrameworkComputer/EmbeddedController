@@ -265,6 +265,7 @@ const struct tcpm_drv raa489000_tcpm_drv = {
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode   = &raa489000_enter_low_power_mode,
 #endif
+	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
 	.tcpc_enable_auto_discharge_disconnect =
 		&tcpci_tcpc_enable_auto_discharge_disconnect,
 	.debug_detach		= &raa489000_debug_detach,

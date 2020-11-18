@@ -353,6 +353,17 @@ static inline int tcpm_get_chip_info(int port, int live,
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
+static inline enum ec_error_list tcpc_set_bist_test_mode(int port, bool enable)
+{
+	const struct tcpm_drv *tcpc;
+	int rv = EC_SUCCESS;
+
+	tcpc = tcpc_config[port].drv;
+	if (tcpc->set_bist_test_mode)
+		rv = tcpc->set_bist_test_mode(port, enable);
+	return rv;
+}
+
 #ifdef CONFIG_USB_PD_FRS_TCPC
 static inline int tcpm_set_frs_enable(int port, int enable)
 {

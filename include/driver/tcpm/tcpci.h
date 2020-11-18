@@ -9,6 +9,7 @@
 #define __CROS_EC_USB_PD_TCPM_TCPCI_H
 
 #include "config.h"
+#include "ec_commands.h"
 #include "tcpm/tcpm.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
@@ -67,6 +68,7 @@
  */
 #define TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT  BIT(6)
 #define TCPC_REG_TCPC_CTRL_DEBUG_ACC_CONTROL         BIT(4)
+#define TCPC_REG_TCPC_CTRL_BIST_TEST_MODE            BIT(1)
 
 #define TCPC_REG_ROLE_CTRL         0x1a
 #define TCPC_REG_ROLE_CTRL_DRP_MASK                    BIT(6)
@@ -265,6 +267,8 @@ int tcpci_tcpc_drp_toggle(int port);
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 int tcpci_enter_low_power_mode(int port);
 #endif
+enum ec_error_list tcpci_set_bist_test_mode(const int port,
+		const bool enable);
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
 void tcpci_tcpc_discharge_vbus(int port, int enable);
 #endif

@@ -10,6 +10,8 @@
 #include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"
+#include "hooks.h"
+#include "i2c.h"
 #include "ps8xxx.h"
 #include "task.h"
 #include "tcpm/tcpci.h"
@@ -1062,6 +1064,19 @@ static int tcpci_handle_fault(int port, int fault)
 	return rv;
 }
 
+enum ec_error_list tcpci_set_bist_test_mode(const int port,
+		const bool enable)
+{
+	int rv;
+
+	rv = tcpc_update8(port, TCPC_REG_TCPC_CTRL,
+			TCPC_REG_TCPC_CTRL_BIST_TEST_MODE,
+			enable ? MASK_SET : MASK_CLR);
+	rv |= tcpc_update16(port, TCPC_REG_ALERT_MASK,
+			TCPC_REG_ALERT_RX_STATUS, enable ? MASK_CLR : MASK_SET);
+	return rv;
+}
+
 static int tcpci_clear_fault(int port, int fault)
 {
 	int rv;
@@ -1778,6 +1793,7 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
 #endif
+	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
 #ifdef CONFIG_CMD_TCPC_DUMP
 	.dump_registers		= &tcpc_dump_std_registers,
 #endif

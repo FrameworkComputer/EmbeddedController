@@ -9,6 +9,7 @@
 #define __CROS_EC_USB_PD_TCPM_H
 
 #include <stdbool.h>
+#include "common.h"
 #include "ec_commands.h"
 #include "i2c.h"
 
@@ -444,6 +445,17 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	 int (*handle_fault)(int port, int fault);
+
+	/**
+	 * Controls BIST Test Mode (or analogous functionality) in the TCPC and
+	 * associated behavior changes. Disables message Rx alerts while the
+	 * port is in Test Mode.
+	 *
+	 * @param port   USB-C port number
+	 * @param enable true to enter BIST Test Mode; false to exit
+	 * @return EC_SUCCESS or error code
+	 */
+	 enum ec_error_list (*set_bist_test_mode)(int port, bool enable);
 
 #ifdef CONFIG_CMD_TCPC_DUMP
 	/**

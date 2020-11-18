@@ -98,5 +98,6 @@ const struct tcpm_drv fusb307_tcpm_drv = {
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE)
 	.drp_toggle		= &tcpci_tcpc_drp_toggle,
 #endif
+	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
 };
 

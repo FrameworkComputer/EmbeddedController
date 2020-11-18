@@ -626,6 +626,7 @@ const struct tcpm_drv ps8xxx_tcpm_drv = {
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode	= &ps8xxx_enter_low_power_mode,
 #endif
+	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
 };
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC

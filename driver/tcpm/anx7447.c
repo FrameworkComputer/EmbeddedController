@@ -832,6 +832,7 @@ const struct tcpm_drv anx7447_tcpm_drv = {
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
 #endif
+	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
 #ifdef CONFIG_CMD_TCPC_DUMP
 	.dump_registers		= &anx7447_dump_registers,
 #endif

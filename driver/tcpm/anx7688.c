@@ -209,6 +209,7 @@ const struct tcpm_drv anx7688_tcpm_drv = {
 	.get_message_raw	= &tcpci_tcpm_get_message_raw,
 	.transmit		= &tcpci_tcpm_transmit,
 	.tcpc_alert		= &anx7688_tcpc_alert,
+	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
 };
 
 #ifdef CONFIG_USB_PD_TCPM_MUX

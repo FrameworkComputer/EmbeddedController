@@ -968,6 +968,9 @@ void pe_got_hard_reset(int port)
 	 */
 	pe[port].power_role = pd_get_power_role(port);
 
+	/* Exit BIST Test mode, in case the TCPC entered it. */
+	tcpc_set_bist_test_mode(port, false);
+
 	if (pe[port].power_role == PD_ROLE_SOURCE)
 		set_state_pe(port, PE_SRC_HARD_RESET_RECEIVED);
 	else
@@ -1444,6 +1447,9 @@ static void pe_handle_detach(void)
 	pe_set_snk_caps(port, 0, NULL);
 
 	dpm_remove_sink(port);
+
+	/* Exit BIST Test mode, in case the TCPC entered it. */
+	tcpc_set_bist_test_mode(port, false);
 }
 DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, pe_handle_detach, HOOK_PRIO_DEFAULT);
 
@@ -4855,6 +4861,8 @@ static void pe_bist_tx_entry(int port)
 		 * response to received Messages.... The test Shall be ended by
 		 * sending Hard Reset Signaling to reset the UUT.
 		 */
+		if (tcpc_set_bist_test_mode(port, true) != EC_SUCCESS)
+			CPRINTS("C%d: Failed to enter BIST Test Mode", port);
 		pe[port].bist_cont_mode_timer = TIMER_DISABLED;
 	} else {
 		/* Ignore unsupported BIST messages. */
