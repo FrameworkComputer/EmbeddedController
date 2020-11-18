@@ -11,7 +11,8 @@
 #include "common.h"
 #include "compile_time_macros.h"
 
-#define __ram_code __attribute__((section(".ram_code")))
+#define __RAM_CODE_SECTION_NAME ".ram_code"
+#define __ram_code __attribute__((section(__RAM_CODE_SECTION_NAME)))
 
 /* IRQ numbers */
 /* Group 0 */

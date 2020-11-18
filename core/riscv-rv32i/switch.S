@@ -8,7 +8,9 @@
 #include "config.h"
 #include "cpu.h"
 
-.section .ram_code
+#ifdef __RAM_CODE_SECTION_NAME
+.section __RAM_CODE_SECTION_NAME
+#endif
 
 /**
  * Task context switching
