@@ -219,12 +219,13 @@
 
 /*
  * The time that we allow the port partner to send any messages after an
- * explicit contract is established.  400ms was chosen somewhat arbitrarily as
+ * explicit contract is established.  200ms was chosen somewhat arbitrarily as
  * it should be long enough for sources to decide to send a message if they were
  * going to, but not so long that a "low power charger connected" notification
- * would be shown in the chrome OS UI.
+ * would be shown in the chrome OS UI. Setting t0o large a delay can cause
+ * problems if the PD discovery time exceeds 1s (tAMETimeout)
  */
-#define SRC_SNK_READY_HOLD_OFF_US (400 * MSEC)
+#define SRC_SNK_READY_HOLD_OFF_US (200 * MSEC)
 
 /*
  * Function pointer to a Structured Vendor Defined Message (SVDM) response
@@ -2174,14 +2175,17 @@ static void pe_src_transition_supply_run(int port)
 		if (PE_CHK_FLAG(port, PE_FLAGS_PS_READY)) {
 			PE_CLR_FLAG(port, PE_FLAGS_PS_READY);
 			/* NOTE: Second pass through this code block */
-			/* Explicit Contract is now in place */
-			pe_set_explicit_contract(port);
 
 			/*
 			 * Set first message flag to trigger a wait and add
-			 * jitter delay when operating in PD2.0 mode.
+			 * jitter delay when operating in PD2.0 mode. Skip
+			 * if we already have a contract.
 			 */
-			PE_SET_FLAG(port, PE_FLAGS_FIRST_MSG);
+			if (!pe_is_explicit_contract(port))
+				PE_SET_FLAG(port, PE_FLAGS_FIRST_MSG);
+
+			/* Explicit Contract is now in place */
+			pe_set_explicit_contract(port);
 
 			/*
 			 * Setup to get Device Policy Manager to request
