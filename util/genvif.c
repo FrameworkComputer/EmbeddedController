@@ -652,6 +652,48 @@ static bool is_usb4_supported(void)
 	return usb4_supported;
 }
 
+static bool is_usb_pd_supported(void)
+{
+	bool pd_supported;
+
+	if (!get_vif_field_tag_bool(
+			&vif.Component[component_index]
+				.vif_field[USB_PD_Support],
+			&pd_supported))
+		pd_supported = IS_ENABLED(CONFIG_USB_PRL_SM) ||
+			       IS_ENABLED(CONFIG_USB_POWER_DELIVERY);
+
+	return pd_supported;
+}
+
+static bool does_respond_to_discov_sop_ufp(void)
+{
+	bool responds;
+
+	if (!get_vif_field_tag_bool(
+			&vif.Component[component_index]
+				.vif_field[Responds_To_Discov_SOP_UFP],
+			&responds))
+		responds = is_usb4_supported() ||
+			   IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE);
+
+	return responds;
+}
+
+static bool does_respond_to_discov_sop_dfp(void)
+{
+	bool responds;
+
+	if (!get_vif_field_tag_bool(
+			&vif.Component[component_index]
+				.vif_field[Responds_To_Discov_SOP_DFP],
+			&responds))
+		responds = is_usb4_supported() ||
+			   IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE);
+
+	return responds;
+}
+
 static void init_src_pdos(void)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_DYNAMIC_SRC_CAP)) {
@@ -2551,8 +2593,7 @@ static void init_vif_component_fields(struct vif_field_t *vif_fields,
 
 	set_vif_field_b(&vif_fields[USB_PD_Support],
 		vif_component_name[USB_PD_Support],
-		(IS_ENABLED(CONFIG_USB_PRL_SM) ||
-		 IS_ENABLED(CONFIG_USB_POWER_DELIVERY)));
+		is_usb_pd_supported());
 
 	switch (type) {
 	case SNK:
@@ -2784,13 +2825,11 @@ static void init_vif_component_general_pd_fields(
 
 	set_vif_field_b(&vif_fields[Responds_To_Discov_SOP_UFP],
 		vif_component_name[Responds_To_Discov_SOP_UFP],
-		(IS_ENABLED(CONFIG_USB_PD_USB4) ||
-		 IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)));
+		does_respond_to_discov_sop_ufp());
 
 	set_vif_field_b(&vif_fields[Responds_To_Discov_SOP_DFP],
 		vif_component_name[Responds_To_Discov_SOP_DFP],
-		(IS_ENABLED(CONFIG_USB_PD_USB4) ||
-		 IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)));
+		does_respond_to_discov_sop_dfp());
 
 	set_vif_field_b(&vif_fields[Attempts_Discov_SOP],
 		vif_component_name[Attempts_Discov_SOP],
@@ -2963,13 +3002,21 @@ static void init_vif_component_usb_type_c_fields(
 		vif_component_name[Type_C_Is_Alt_Mode_Controller],
 		IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP));
 
-	set_vif_field_b(&vif_fields[Type_C_Can_Act_As_Device],
-		vif_component_name[Type_C_Can_Act_As_Device],
-		can_act_as_device());
+	if (can_act_as_device()) {
+		set_vif_field_b(&vif_fields[Type_C_Can_Act_As_Device],
+			vif_component_name[Type_C_Can_Act_As_Device],
+			true);
 
-	set_vif_field_b(&vif_fields[Type_C_Is_Alt_Mode_Adapter],
-		vif_component_name[Type_C_Is_Alt_Mode_Adapter],
-		IS_ENABLED(CONFIG_USB_ALT_MODE_ADAPTER));
+		if (is_usb_pd_supported() &&
+		    does_respond_to_discov_sop_ufp())
+			set_vif_field_b(&vif_fields[Type_C_Is_Alt_Mode_Adapter],
+				vif_component_name[Type_C_Is_Alt_Mode_Adapter],
+				IS_ENABLED(CONFIG_USB_ALT_MODE_ADAPTER));
+	} else {
+		set_vif_field_b(&vif_fields[Type_C_Can_Act_As_Device],
+			vif_component_name[Type_C_Can_Act_As_Device],
+			false);
+	}
 
 	{
 		int ps = POWER_UFP;

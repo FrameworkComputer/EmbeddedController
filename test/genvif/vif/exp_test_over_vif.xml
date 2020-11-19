@@ -55,7 +55,6 @@
     <Type_C_Can_Act_As_Host value="true">YES</Type_C_Can_Act_As_Host>
     <Type_C_Is_Alt_Mode_Controller value="false">NO</Type_C_Is_Alt_Mode_Controller>
     <Type_C_Can_Act_As_Device value="false">NO</Type_C_Can_Act_As_Device>
-    <Type_C_Is_Alt_Mode_Adapter value="false">NO</Type_C_Is_Alt_Mode_Adapter>
     <Type_C_Power_Source value="1">UFP-powered</Type_C_Power_Source>
     <Type_C_Port_On_Hub value="false">NO</Type_C_Port_On_Hub>
     <Type_C_Supports_Audio_Accessory value="false">NO</Type_C_Supports_Audio_Accessory>
