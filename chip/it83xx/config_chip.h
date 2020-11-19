@@ -121,4 +121,6 @@
 #define GPIO_PIN(port, index) GPIO_##port, BIT(index)
 #define GPIO_PIN_MASK(p, m) .port = GPIO_##p, .mask = (m)
 
+#define __RAM_CODE_SECTION_NAME ".ram_code"
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */
