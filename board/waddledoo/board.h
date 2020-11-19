@@ -79,6 +79,15 @@
 /* Variant references the TCPCs to determine Vbus sourcing */
 #define CONFIG_USB_PD_5V_EN_CUSTOM
 
+#undef PD_POWER_SUPPLY_TURN_ON_DELAY
+#undef PD_POWER_SUPPLY_TURN_OFF_DELAY
+#undef PD_VCONN_SWAP_DELAY
+/* 20% margin added for these timings */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY	13080	/* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY	16080	/* us */
+#define PD_VCONN_SWAP_DELAY		787	/* us */
+
+
 /* I2C configuration */
 #define I2C_PORT_EEPROM     NPCX_I2C_PORT7_0
 #define I2C_PORT_BATTERY    NPCX_I2C_PORT5_0
