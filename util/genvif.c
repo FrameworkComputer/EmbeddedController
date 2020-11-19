@@ -3041,33 +3041,41 @@ static void init_vif_component_usb_data_ufp_fields(
 	 * TOTO(b:172441959) Adjust the speed based on CONFIG_
 	 */
 	enum usb_speed ds = USB_GEN11;
+	bool supports_usb_data;
 
-	switch (ds) {
-	case USB_2:
-		set_vif_field_itss(&vif_fields[Device_Speed],
-			vif_component_name[Device_Speed],
-			USB_2, "USB 2");
-		break;
-	case USB_GEN11:
-		set_vif_field_itss(&vif_fields[Device_Speed],
-			vif_component_name[Device_Speed],
-			USB_GEN11, "USB 3.2 GEN 1x1");
-		break;
-	case USB_GEN21:
-		set_vif_field_itss(&vif_fields[Device_Speed],
-			vif_component_name[Device_Speed],
-			USB_GEN21, "USB 3.2 GEN 2x1");
-		break;
-	case USB_GEN12:
-		set_vif_field_itss(&vif_fields[Device_Speed],
-			vif_component_name[Device_Speed],
-			USB_GEN12, "USB 3.2 GEN 1x2");
-		break;
-	case USB_GEN22:
-		set_vif_field_itss(&vif_fields[Device_Speed],
-			vif_component_name[Device_Speed],
-			USB_GEN22, "USB 3.2 GEN 2x2");
-		break;
+	if (!get_vif_field_tag_bool(
+			&vif_fields[Device_Supports_USB_Data],
+			&supports_usb_data))
+		supports_usb_data = false;
+
+	if (supports_usb_data) {
+		switch (ds) {
+		case USB_2:
+			set_vif_field_itss(&vif_fields[Device_Speed],
+				vif_component_name[Device_Speed],
+				USB_2, "USB 2");
+			break;
+		case USB_GEN11:
+			set_vif_field_itss(&vif_fields[Device_Speed],
+				vif_component_name[Device_Speed],
+				USB_GEN11, "USB 3.2 GEN 1x1");
+			break;
+		case USB_GEN21:
+			set_vif_field_itss(&vif_fields[Device_Speed],
+				vif_component_name[Device_Speed],
+				USB_GEN21, "USB 3.2 GEN 2x1");
+			break;
+		case USB_GEN12:
+			set_vif_field_itss(&vif_fields[Device_Speed],
+				vif_component_name[Device_Speed],
+				USB_GEN12, "USB 3.2 GEN 1x2");
+			break;
+		case USB_GEN22:
+			set_vif_field_itss(&vif_fields[Device_Speed],
+				vif_component_name[Device_Speed],
+				USB_GEN22, "USB 3.2 GEN 2x2");
+			break;
+		}
 	}
 }
 
@@ -3095,42 +3103,50 @@ static void init_vif_component_usb_data_dfp_fields(
 	 * TOTO(b:172438944) Adjust the speed based on CONFIG_
 	 */
 	enum usb_speed ds = USB_GEN11;
+	bool supports_usb_data;
 
-	switch (ds) {
-	case USB_2:
-		set_vif_field_itss(&vif_fields[Host_Speed],
-			vif_component_name[Host_Speed],
-			USB_2, "USB 2");
-		break;
-	case USB_GEN11:
-		set_vif_field_itss(&vif_fields[Host_Speed],
-			vif_component_name[Host_Speed],
-			USB_GEN11, "USB 3.2 GEN 1x1");
-		break;
-	case USB_GEN21:
-		set_vif_field_itss(&vif_fields[Host_Speed],
-			vif_component_name[Host_Speed],
-			USB_GEN21, "USB 3.2 GEN 2x1");
-		break;
-	case USB_GEN12:
-		set_vif_field_itss(&vif_fields[Host_Speed],
-			vif_component_name[Host_Speed],
-			USB_GEN12, "USB 3.2 GEN 1x2");
-		break;
-	case USB_GEN22:
-		set_vif_field_itss(&vif_fields[Host_Speed],
-			vif_component_name[Host_Speed],
-			USB_GEN22, "USB 3.2 GEN 2x2");
-		break;
+	if (!get_vif_field_tag_bool(
+			&vif_fields[Host_Supports_USB_Data],
+			&supports_usb_data))
+		supports_usb_data = false;
+
+	if (supports_usb_data) {
+		switch (ds) {
+		case USB_2:
+			set_vif_field_itss(&vif_fields[Host_Speed],
+				vif_component_name[Host_Speed],
+				USB_2, "USB 2");
+			break;
+		case USB_GEN11:
+			set_vif_field_itss(&vif_fields[Host_Speed],
+				vif_component_name[Host_Speed],
+				USB_GEN11, "USB 3.2 GEN 1x1");
+			break;
+		case USB_GEN21:
+			set_vif_field_itss(&vif_fields[Host_Speed],
+				vif_component_name[Host_Speed],
+				USB_GEN21, "USB 3.2 GEN 2x1");
+			break;
+		case USB_GEN12:
+			set_vif_field_itss(&vif_fields[Host_Speed],
+				vif_component_name[Host_Speed],
+				USB_GEN12, "USB 3.2 GEN 1x2");
+			break;
+		case USB_GEN22:
+			set_vif_field_itss(&vif_fields[Host_Speed],
+				vif_component_name[Host_Speed],
+				USB_GEN22, "USB 3.2 GEN 2x2");
+			break;
+		}
+
+		set_vif_field_b(&vif_fields[Host_Contains_Captive_Retimer],
+			vif_component_name[Host_Contains_Captive_Retimer],
+			false);
+
+		set_vif_field_b(&vif_fields[Host_Is_Embedded],
+			vif_component_name[Host_Is_Embedded],
+			false);
 	}
-
-	set_vif_field_b(&vif_fields[Host_Contains_Captive_Retimer],
-		vif_component_name[Host_Contains_Captive_Retimer],
-		false);
-
-	set_vif_field_b(&vif_fields[Host_Is_Embedded],
-		vif_component_name[Host_Is_Embedded],
-		false);
 }
 
 /*********************************************************************
