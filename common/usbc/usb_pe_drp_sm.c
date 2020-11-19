@@ -182,11 +182,23 @@
 #define N_DISCOVER_IDENTITY_COUNT 6
 
 /*
- * tDiscoverIdentity is only defined while an explicit contract is in place.
- * To support captive cable devices that power the SOP' responder from VBUS
- * instead of VCONN stretch out the SOP' Discover Identity messages when
- * no contract is present. 200 ms provides about 1 second for the cable
- * to power up (200 * 5 retries).
+ * It is permitted to send SOP' Discover Identity messages before a PD contract
+ * is in place. However, this is only beneficial if the cable powers up quickly
+ * solely from VCONN. Limit the number of retries without a contract to
+ * ensure we attempt some cable discovery after a contract is in place.
+ */
+#define N_DISCOVER_IDENTITY_PRECONTRACT_LIMIT	2
+
+/*
+ * Once this limit of SOP' Discover Identity messages has been set, downgrade
+ * to PD 2.0 in case the cable is non-compliant about GoodCRC-ing higher
+ * revisions.  This limit should be higher than the precontract limit.
+ */
+#define N_DISCOVER_IDENTITY_PD3_0_LIMIT		4
+
+/*
+ * tDiscoverIdentity is only defined while an explicit contract is in place, so
+ * extend the interval between retries pre-contract.
  */
 #define PE_T_DISCOVER_IDENTITY_NO_CONTRACT	(200*MSEC)
 
@@ -1946,7 +1958,9 @@ static void pe_src_discovery_run(int port)
 	 */
 	if (pd_get_identity_discovery(port, TCPC_TX_SOP_PRIME) == PD_DISC_NEEDED
 			&& get_time().val > pe[port].discover_identity_timer
-			&& pe_can_send_sop_prime(port)) {
+			&& pe_can_send_sop_prime(port)
+			&& (pe[port].discover_identity_counter <
+				N_DISCOVER_IDENTITY_PRECONTRACT_LIMIT)) {
 		pe[port].tx_type = TCPC_TX_SOP_PRIME;
 		set_state_pe(port, PE_VDM_IDENTITY_REQUEST_CBL);
 		return;
@@ -2209,7 +2223,6 @@ static void pe_src_transition_supply_run(int port)
 
 		if (PE_CHK_FLAG(port, PE_FLAGS_PS_READY)) {
 			PE_CLR_FLAG(port, PE_FLAGS_PS_READY);
-			/* NOTE: Second pass through this code block */
 
 			/*
 			 * Set first message flag to trigger a wait and add
@@ -2219,6 +2232,7 @@ static void pe_src_transition_supply_run(int port)
 			if (!pe_is_explicit_contract(port))
 				PE_SET_FLAG(port, PE_FLAGS_FIRST_MSG);
 
+			/* NOTE: Second pass through this code block */
 			/* Explicit Contract is now in place */
 			pe_set_explicit_contract(port);
 
@@ -5068,10 +5082,10 @@ static void pe_vdm_identity_request_cbl_exit(int port)
 		pd_set_identity_discovery(port, pe[port].tx_type,
 				PD_DISC_FAIL);
 	else if (pe[port].discover_identity_counter ==
-					(N_DISCOVER_IDENTITY_COUNT / 2))
+			N_DISCOVER_IDENTITY_PD3_0_LIMIT)
 		/*
-		 * Downgrade to PD 2.0 if the partner hasn't replied halfway
-		 * through discovery as well, in case the cable is
+		 * Downgrade to PD 2.0 if the partner hasn't replied before
+		 * all retries are exhausted in case the cable is
 		 * non-compliant about GoodCRC-ing higher revisions
 		 */
 		prl_set_rev(port, TCPC_TX_SOP_PRIME, PD_REV20);
