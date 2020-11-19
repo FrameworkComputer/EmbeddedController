@@ -19,8 +19,8 @@
 /* LED_SIDESEL_4_L=1, MB BAT LED open
  * LED_SIDESEL_4_L=0, DB BAT LED open
  */
-#define LED_SISESEL_MB_PORT 0
-#define LED_SISESEL_DB_PORT 1
+#define LED_SIDESEL_MB_PORT 0
+#define LED_SIDESEL_DB_PORT 1
 
 const int led_charge_lvl_1 = 5;
 
@@ -67,12 +67,28 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 void led_set_color_battery(enum ec_led_colors color)
 {
 	int port;
+	int side_select_duty;
 
 	port = charge_manager_get_active_charge_port();
 
+	switch (port) {
+	case LED_SIDESEL_MB_PORT:
+		side_select_duty = 0;
+		break;
+	case LED_SIDESEL_DB_PORT:
+		side_select_duty = 100;
+		break;
+	default:
+	/*
+	 * We need to turn off led here since curr.ac won't update
+	 * immediately but led will update every 200ms.
+	 */
+		side_select_duty = 50;
+		color = LED_OFF;
+	}
+
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
-		pwm_set_duty(PWM_CH_LED4_SIDESEL,
-			(port == LED_SISESEL_MB_PORT ? 0 : 100));
+		pwm_set_duty(PWM_CH_LED4_SIDESEL, side_select_duty);
 
 	switch (color) {
 	case EC_LED_COLOR_AMBER:
