@@ -22,4 +22,5 @@ board-$(CONFIG_BATTERY_SMART)+=battery.o
 board-$(CONFIG_FANS)+=fan.o
 board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
 board-$(CONFIG_KEYBOARD_CUSTOMIZATION)+=keyboard_customization.o
+board-$(CONFIG_POWER_BUTTON_CUSTOM) += power_button_x86.o
 
