@@ -30,8 +30,8 @@ import traceback
 
 import six
 
-import interpreter
-import threadproc_shim
+from ec3po import interpreter
+from ec3po import threadproc_shim
 
 
 PROMPT = b'> '

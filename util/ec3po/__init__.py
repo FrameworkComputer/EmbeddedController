@@ -19,7 +19,3 @@ could be something like autotest.  The interpreter is also responsible for the
 automatic command retrying if the EC drops a character in a command.  This is a
 stopgap until all commands are communicated via host commands.
 """
-
-import console
-import interpreter
-import threadproc_shim

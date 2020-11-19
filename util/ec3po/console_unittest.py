@@ -18,9 +18,9 @@ import unittest
 
 import six
 
-import console
-import interpreter
-import threadproc_shim
+from ec3po import console
+from ec3po import interpreter
+from ec3po import threadproc_shim
 
 ESC_STRING = six.int2byte(console.ControlKey.ESC)
 
