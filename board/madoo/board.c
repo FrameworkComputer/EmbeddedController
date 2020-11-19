@@ -292,9 +292,11 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
 
 	/*
-	 * TODO(b:147463641): Characterize the input current limit in case that
-	 * a scaling needs to be applied here.
+	 * b/147463641: The charger IC seems to overdraw ~4%, therefore we
+	 reduce
+	 * our target accordingly.
 	 */
+	icl = icl * 96 / 100;
 	charge_set_input_current_limit(icl, charge_mv);
 }
 
