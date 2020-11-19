@@ -23,9 +23,9 @@ jobs:
         run: sha256sum build/hx20/ec.bin
       - name: generate artifact version
         run: |
-          echo "::set-env name=VERSION_NAME::$(date -u +'%Y-%m-%d-%H-%M-%S')_$(git rev-parse --short HEAD)"
+          echo "VERSIONINFO=$(date -u +'%Y-%m-%d-%H-%M-%S')_$GITHUB_SHA" >> $GITHUB_ENV
 
       - uses: actions/upload-artifact@v2
         with:
-          name: hx20.${{env.VERSION_NAME}}.bin
+          name: hx20.${{ env.VERSIONINFO }}.bin
           path: build/hx20/ec.bin
