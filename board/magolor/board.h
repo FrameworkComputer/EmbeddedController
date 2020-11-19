@@ -21,6 +21,10 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
+/* Remove default commands to free flash space */
+#undef CONFIG_CMD_ACCELSPOOF
+#undef CONFIG_CMD_BATTFAKE
+
 /* Battery */
 #define CONFIG_BATTERY_FUEL_GAUGE
 
