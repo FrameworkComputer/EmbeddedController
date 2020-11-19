@@ -3,8 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Malefor board-specific configuration */
-#include "bb_retimer.h"
+/* lindar board-specific configuration */
 #include "button.h"
 #include "cbi_ec_fw_config.h"
 #include "common.h"
@@ -399,41 +398,40 @@ static void kb_backlight_disable(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kb_backlight_disable, HOOK_PRIO_DEFAULT);
 
-/* USBC TCPC configuration for port 1 on USB3 board */
-static const struct tcpc_config_t tcpc_config_p1_usb3 = {
-	.bus_type = EC_BUS_TYPE_I2C,
-	.i2c_info = {
-		.port = I2C_PORT_USB_C1,
-		.addr_flags = PS8751_I2C_ADDR1_FLAGS,
-	},
-	.flags = TCPC_FLAGS_TCPCI_REV2_0 | TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
-	.drv = &ps8xxx_tcpm_drv,
-};
+static void ps8815_reset(void)
+{
+	int val;
 
-static const struct usb_mux usbc1_usb3_db_retimer = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &tcpci_tcpm_usb_mux_driver,
-	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-	.next_mux = NULL,
-};
+	gpio_set_level(GPIO_USB_C1_RT_RST_ODL, 0);
+	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
+			   PS8815_PWR_H_RST_H_DELAY_MS));
+	gpio_set_level(GPIO_USB_C1_RT_RST_ODL, 1);
+	msleep(PS8815_FW_INIT_DELAY_MS);
 
-static const struct usb_mux mux_config_p1_usb3 = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-	.next_mux = &usbc1_usb3_db_retimer,
-};
+	/*
+	 * b/144397088
+	 * ps8815 firmware 0x01 needs special configuration
+	 */
+
+	CPRINTS("%s: patching ps8815 registers", __func__);
+
+	if (i2c_read8(I2C_PORT_USB_C1,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f was %02x", val);
+
+	if (i2c_write8(I2C_PORT_USB_C1,
+		       PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f set to 0x31");
+
+	if (i2c_read8(I2C_PORT_USB_C1,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f now %02x", val);
+}
 
 void board_reset_pd_mcu(void)
 {
-	/* TODO(b/159024035): Malefor: check USB PD reset operation */
-}
-
-__override void board_cbi_init(void)
-{
-	/* Config DB USB3 */
-	tcpc_config[USBC_PORT_C1] = tcpc_config_p1_usb3;
-	usb_muxes[USBC_PORT_C1] = mux_config_p1_usb3;
+	ps8815_reset();
+	usb_mux_hpd_update(USBC_PORT_C1, 0, 0);
 }
 
 /******************************************************************************/
@@ -484,7 +482,7 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
 
 /******************************************************************************/
 /* USBC TCPC configuration */
-struct tcpc_config_t tcpc_config[] = {
+const struct tcpc_config_t tcpc_config[] = {
 	[USBC_PORT_C0] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
@@ -497,9 +495,11 @@ struct tcpc_config_t tcpc_config[] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_USB_C1,
-			.addr_flags = TUSB422_I2C_ADDR_FLAGS,
+			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		},
-		.drv = &tusb422_tcpm_drv,
+		.flags = TCPC_FLAGS_TCPCI_REV2_0
+		 | TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
+		.drv = &ps8xxx_tcpm_drv,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
@@ -507,37 +507,28 @@ BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 
 /******************************************************************************/
 /* USBC mux configuration - Tiger Lake includes internal mux */
-struct usb_mux usbc1_usb4_db_retimer = {
+static const struct usb_mux usbc1_usb3_db_retimer = {
 	.usb_port = USBC_PORT_C1,
-	.driver = &bb_usb_retimer,
-	.i2c_port = I2C_PORT_USB_1_MIX,
-	.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
+	.driver = &tcpci_tcpm_usb_mux_driver,
+	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	.next_mux = NULL,
 };
-struct usb_mux usb_muxes[] = {
+
+const struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.usb_port = USBC_PORT_C0,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
+		.next_mux = NULL,
 	},
 	[USBC_PORT_C1] = {
 		.usb_port = USBC_PORT_C1,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
-		.next_mux = &usbc1_usb4_db_retimer,
+		.next_mux = &usbc1_usb3_db_retimer,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
-
-struct bb_usb_control bb_controls[] = {
-	[USBC_PORT_C0] = {
-		/* USB-C port 0 doesn't have a retimer */
-	},
-	[USBC_PORT_C1] = {
-		.usb_ls_en_gpio = GPIO_USB_C1_LS_EN,
-		.retimer_rst_gpio = GPIO_USB_C1_RT_RST_ODL,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(bb_controls) == USBC_PORT_COUNT);
 
 static void board_tcpc_init(void)
 {
