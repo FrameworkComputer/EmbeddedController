@@ -69,15 +69,15 @@ GPIO_INT(SOC_TP_INT_L,    PIN(0242), GPIO_INT_FALLING, touchpad_interrupt)
 GPIO(CAM_SW,              PIN(067),  GPIO_INPUT)    /* Monitor to close CAM PWR */
 
 /* Reserve Pin Defination */
-GPIO(EC_SMB_SDA0,         PIN(03),   GPIO_INPUT)    /* Reserved for HID */
-GPIO(EC_SMB_CLK0,         PIN(04),   GPIO_INPUT)    /* Reserved for HID */
-GPIO(PLT_RST_L,           PIN(024),  GPIO_INPUT)    /* Not implement on reference board */
-GPIO(SX_EXIT_HOLDOFF_L,   PIN(025),  GPIO_INPUT)    /* Reserved for S0ix state */
-GPIO(PM_SLP_A_L,          PIN(062),  GPIO_INPUT)    /* Reserved for S0ix state */
-GPIO(MIC_SW,              PIN(0171), GPIO_INPUT)    /* Reserved for DMIC function */
-GPIO(SOC_EC_INT_L,        PIN(0246), GPIO_INPUT)    /* Reserved for HID */
+GPIO(EC_SMB_SDA0,         PIN(03),   GPIO_INPUT | GPIO_PULL_DOWN)    /* Reserved for HID */
+GPIO(EC_SMB_CLK0,         PIN(04),   GPIO_INPUT | GPIO_PULL_DOWN)    /* Reserved for HID */
+GPIO(PLT_RST_L,           PIN(024),  GPIO_INPUT | GPIO_PULL_DOWN)    /* Not implement on reference board */
+GPIO(SX_EXIT_HOLDOFF_L,   PIN(025),  GPIO_INPUT | GPIO_PULL_DOWN)    /* Reserved for S0ix state */
+GPIO(PM_SLP_A_L,          PIN(062),  GPIO_INPUT | GPIO_PULL_DOWN)    /* Reserved for S0ix state */
+GPIO(MIC_SW,              PIN(0171), GPIO_INPUT | GPIO_PULL_DOWN)    /* Reserved for DMIC function */
+GPIO(SOC_EC_INT_L,        PIN(0246), GPIO_INPUT | GPIO_PULL_DOWN)    /* Reserved for HID */
 GPIO(VS_ON,               PIN(0241), GPIO_OUT_HIGH)    /* 3.3V and 5V rails */
-GPIO(FP_CTRL,             PIN(0245), GPIO_INPUT)    /* Reserved for fingerprint control */
+GPIO(FP_CTRL,             PIN(0245), GPIO_INPUT | GPIO_PULL_DOWN)    /* Reserved for fingerprint control */
 
 /* power sequence output pins */
 /*

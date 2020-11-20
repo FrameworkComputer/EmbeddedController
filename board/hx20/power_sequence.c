@@ -52,6 +52,7 @@ static void chipset_force_g3(void)
 	gpio_set_level(GPIO_PCH_PWR_EN, 0);
 	gpio_set_level(GPIO_PCH_DPWROK, 0);
 	gpio_set_level(GPIO_PCH_PWRBTN_L, 0);
+	gpio_set_level(GPIO_AC_PRESENT_OUT, 0);
 	f75303_set_enabled(0);
 
 }
@@ -102,6 +103,8 @@ int board_chipset_power_on(void)
 
 	/* Deassert RSMRST# */
 	gpio_set_level(GPIO_PCH_RSMRST_L, 1);
+
+	gpio_set_level(GPIO_AC_PRESENT_OUT, 1);
 
 	msleep(50);
 	return true;
