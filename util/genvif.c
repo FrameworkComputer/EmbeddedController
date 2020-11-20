@@ -667,6 +667,21 @@ static bool is_usb_pd_supported(void)
 	return pd_supported;
 }
 
+static bool is_usb_comms_capable(void)
+{
+	bool capable;
+
+	if (!get_vif_field_tag_bool(
+			&vif.Component[component_index]
+				.vif_field[USB_Comms_Capable],
+			&capable))
+		capable = is_usb4_supported() ||
+			  (!(IS_ENABLED(CONFIG_USB_VPD) ||
+			     IS_ENABLED(CONFIG_USB_CTVPD)));
+
+	return capable;
+}
+
 static bool does_respond_to_discov_sop_ufp(void)
 {
 	bool responds;
@@ -2741,8 +2756,7 @@ static void init_vif_component_general_pd_fields(
 
 	set_vif_field_b(&vif_fields[USB_Comms_Capable],
 			vif_component_name[USB_Comms_Capable],
-			(!(IS_ENABLED(CONFIG_USB_VPD) ||
-			   IS_ENABLED(CONFIG_USB_CTVPD))));
+			is_usb_comms_capable());
 
 	{
 		bool supports_to_dfp = true;
