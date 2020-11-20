@@ -660,7 +660,8 @@ static bool is_usb_pd_supported(void)
 			&vif.Component[component_index]
 				.vif_field[USB_PD_Support],
 			&pd_supported))
-		pd_supported = IS_ENABLED(CONFIG_USB_PRL_SM) ||
+		pd_supported = is_usb4_supported() ||
+			       IS_ENABLED(CONFIG_USB_PRL_SM) ||
 			       IS_ENABLED(CONFIG_USB_POWER_DELIVERY);
 
 	return pd_supported;
@@ -2595,32 +2596,43 @@ static void init_vif_component_fields(struct vif_field_t *vif_fields,
 		vif_component_name[USB_PD_Support],
 		is_usb_pd_supported());
 
+	if (is_usb_pd_supported()) {
+		switch (type) {
+		case SNK:
+			set_vif_field(&vif_fields[PD_Port_Type],
+				vif_component_name[PD_Port_Type],
+				"0",
+				"Consumer Only");
+			break;
+		case SRC:
+			set_vif_field(&vif_fields[PD_Port_Type],
+				vif_component_name[PD_Port_Type],
+				"3",
+				"Provider Only");
+			break;
+		case DRP:
+			set_vif_field(&vif_fields[PD_Port_Type],
+				vif_component_name[PD_Port_Type],
+				"4",
+				"DRP");
+			break;
+		}
+	}
+
 	switch (type) {
 	case SNK:
-		set_vif_field(&vif_fields[PD_Port_Type],
-			vif_component_name[PD_Port_Type],
-			"0",
-			"Consumer Only");
 		set_vif_field(&vif_fields[Type_C_State_Machine],
 			vif_component_name[Type_C_State_Machine],
 			"1",
 			"SNK");
 		break;
 	case SRC:
-		set_vif_field(&vif_fields[PD_Port_Type],
-			vif_component_name[PD_Port_Type],
-			"3",
-			"Provider Only");
 		set_vif_field(&vif_fields[Type_C_State_Machine],
 			vif_component_name[Type_C_State_Machine],
 			"0",
 			"SRC");
 		break;
 	case DRP:
-		set_vif_field(&vif_fields[PD_Port_Type],
-			vif_component_name[PD_Port_Type],
-			"4",
-			"DRP");
 		set_vif_field(&vif_fields[Type_C_State_Machine],
 			vif_component_name[Type_C_State_Machine],
 			"2",
