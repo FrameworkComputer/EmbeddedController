@@ -129,9 +129,9 @@ flashprotect enable/disable`, which sends the `EC_CMD_FLASH_PROTECT` command
 toggling `EC_FLASH_PROTECT_RO_AT_BOOT` (changing `--name` to target different
 ECs).
 
-### Changing Software Write Protection with `ectool`
+### Changing Software Write Protection with ectool
 
-#### `ectool flashprotect`
+#### ectool flashprotect
 
 Print out current flash protection state.
 
@@ -168,17 +168,17 @@ Flags:
 *   `INCONSISTENT` - One or more banks of flash is not protected when it should
     be (should not happen during normal operation. Read only.).
 
-#### `ectool flashprotect enable`
+#### ectool flashprotect enable
 
 Set `ro_at_boot` flag. The next time the EC is reset it will protect the flash.
 Note that this requires a cold reset.
 
-#### `ectool flashprotect enable now`
+#### ectool flashprotect enable now
 
 Set `ro_at_boot` `ro_now all_now` flags and immediately protect the flash. Note
 that this will fail if hardware write protect is disabled.
 
-#### `ectool flashprotect disable`
+#### ectool flashprotect disable
 
 Clear `ro_at_boot` flag. This can only be cleared if the EC booted without
 hardware write protect enabled.
@@ -188,7 +188,7 @@ If the `ro_at_boot` flag set and the EC resets with the HW gpio disabled, the EC
 will leave the flash unprotected (`ro_now` and `all_now` flags are not set) but
 leave `ro_at_boot` flag set.
 
-### Changing Software Write Protection with `flashrom`
+### Changing Software Write Protection with flashrom
 
 #### View the current state of software write protection
 
@@ -261,7 +261,7 @@ WP: write protect range: start=0x00000000, len=0x00000000
 SUCCESS
 ```
 
-## `system_is_locked()`
+## system_is_locked()
 
 The [`system_is_locked()`] function in the EC code returns false if the HW write
 protect GPIO is disabled or the read-only firmware is not protected.
