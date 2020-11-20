@@ -7,3 +7,4 @@ supported-zephyr-versions:
   - v2.4
 toolchain: zephyr
 output-type: elf
+is-test: true
