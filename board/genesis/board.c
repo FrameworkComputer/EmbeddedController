@@ -193,6 +193,10 @@ static const struct {
 	.voltage = 19000,
 	.current = 4740
 	},
+	{ /* 2 - 240W */
+	.voltage = 19000,
+	.current = 4740
+	},
 };
 
 #define ADP_DEBOUNCE_MS		1000  /* Debounce time for BJ plug/unplug */
@@ -201,20 +205,14 @@ static int8_t adp_connected = -1;
 static void adp_connect_deferred(void)
 {
 	struct charge_port_info pi = { 0 };
-	int connected = !gpio_get_level(GPIO_BJ_ADP_PRESENT_L);
+	unsigned int bj = ec_config_get_bj_power();
 
-	/* Debounce */
-	if (connected == adp_connected)
-		return;
-	if (connected) {
-		unsigned int bj = ec_config_get_bj_power();
+	pi.voltage = bj_power[bj].voltage;
+	pi.current = bj_power[bj].current;
 
-		pi.voltage = bj_power[bj].voltage;
-		pi.current = bj_power[bj].current;
-	}
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 				     DEDICATED_CHARGE_PORT, &pi);
-	adp_connected = connected;
+	adp_connected = 1;
 }
 DECLARE_DEFERRED(adp_connect_deferred);
 
@@ -226,6 +224,9 @@ void adp_connect_interrupt(enum gpio_signal signal)
 
 static void adp_state_init(void)
 {
+	struct charge_port_info pi = { 0 };
+	unsigned int bj = ec_config_get_bj_power();
+
 	/*
 	 * Initialize all charge suppliers to 0. The charge manager waits until
 	 * all ports have reported in before doing anything.
@@ -237,6 +238,13 @@ static void adp_state_init(void)
 
 	/* Report charge state from the barrel jack. */
 	adp_connect_deferred();
+
+	pi.voltage = bj_power[bj].voltage;
+	pi.current = bj_power[bj].current;
+
+	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
+				     DEDICATED_CHARGE_PORT, &pi);
+	adp_connected = 1;
 }
 DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
 
@@ -617,15 +625,15 @@ int board_set_active_charge_port(int port)
 
 	switch (port) {
 	case CHARGE_PORT_TYPEC0:
-		/* TODO(b/143975429) need to touch the PD controller? */
-		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 1);
+		/* Genesis doesn't support power over Type-C */
+		return EC_ERROR_INVAL;
 		break;
 	case CHARGE_PORT_BARRELJACK:
-		/* Make sure BJ adapter is sourcing power */
-		if (gpio_get_level(GPIO_BJ_ADP_PRESENT_L))
-			return EC_ERROR_INVAL;
-		/* TODO(b/143975429) need to touch the PD controller? */
-		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 0);
+		/*
+		 * No need to check GPIO_ADP_PRESENT_L before pulling this
+		 * low as the only power source available on Genesis is BJ.
+		 */
+		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 1);
 		break;
 	default:
 		return EC_ERROR_INVAL;
