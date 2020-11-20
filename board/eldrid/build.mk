@@ -8,7 +8,12 @@
 
 CHIP:=npcx
 CHIP_FAMILY:=npcx7
+
+ifeq ($(BOARD),eldrid_npcx796fc)
 CHIP_VARIANT:=npcx7m6fc
+else
+CHIP_VARIANT:=npcx7m7fc
+endif
 BASEBOARD:=volteer
 
 board-y=board.o
