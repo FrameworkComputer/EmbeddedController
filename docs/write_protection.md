@@ -41,7 +41,7 @@ firmware jumps to it.
 On modern Chrome OS devices, the Cr50 (aka GSC / TPM) provides a "hardware
 write protect" GPIO that is connected to the AP SPI flash, EC SPI flash,
 EEPROM, and FPMCU via a [GPIO][write_protect_gpio].  This "hardware write
-protect" can only be disabled with servo or suzyq (["CCD open"]) and
+protect" can only be disabled with [Servo] or [SuzyQ] (["CCD open"]) and
 corresponds to [`OverrideWP`] in ccd. Disabling this write protect disables it
 for everything connected to this signal.
 
@@ -299,3 +299,4 @@ etc.) return an error if `EC_FLASH_PROTECT_ALL_NOW` is set.
 [`system_is_locked()`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/aaba1d5efd51082d143ce2ac64e6caf9cb14d5e5/common/system.c#195
 [wp_screw]: https://www.chromium.org/chromium-os/firmware-porting-guide/firmware-ec-write-protection
 [write_protect_gpio]: https://chromium.googlesource.com/chromiumos/platform/ec/+/aaba1d5efd51082d143ce2ac64e6caf9cb14d5e5/include/ec_commands.h#1599
+[SuzyQ]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/docs/ccd.md#SuzyQ-SuzyQable
