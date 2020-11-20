@@ -3,8 +3,8 @@
 [TOC]
 
 This is a somewhat tricky topic since write protection implementations can
-differ between chips and the hardware write protection has changed over time, so
-please edit or open a bug if something is not clear.
+differ between chips, and the hardware write protection has changed over time,
+so please edit or open a bug if something is not clear.
 
 ## Terminology
 
@@ -13,9 +13,9 @@ please edit or open a bug if something is not clear.
 MCUs running the EC code have read-only (RO) and read-write (RW) firmware.
 Coming out of reset, the MCU boots into its RO firmware.
 
-In the case of the EC, the RO firmware boots the host and asks it verify a hash
-of the RW firmware (software sync). If the RW firmware is invalid, it is updated
-from a copy in the host's RW firmware.
+In the case of the EC, the RO firmware boots the host and asks it to verify a
+hash of the RW firmware (software sync). If the RW firmware is invalid, it is
+updated from a copy in the host's RW firmware.
 
 In the case of the FPMCU, the RO firmware uses the public key embedded in it to
 validate the signature of the RW firmware. If the RW firmware is invalid it does
@@ -108,7 +108,7 @@ enabled or disabled (note that some implementations require an EC reset to
 disable software write protect).
 
 The underlying mechanism implementing software write protect may differ between
-EC chips. However the common requirements are that software write protect can
+EC chips. However, the common requirements are that software write protect can
 only be disabled when hardware write protect is off and that the RO firmware
 must be protected before jumping to RW firmware if protection is enabled.
 
@@ -184,9 +184,9 @@ Clear `ro_at_boot` flag. This can only be cleared if the EC booted without
 hardware write protect enabled.
 
 Note that you must reset the EC to clear write protect after removing the screw.
-If the `ro_at_boot` flag set and the EC resets with the HW gpio disabled, the EC
-will leave the flash unprotected (`ro_now` and `all_now` flags are not set) but
-leave `ro_at_boot` flag set.
+If the `ro_at_boot` flag set, and the EC resets with the HW gpio disabled, the
+EC will leave the flash unprotected (`ro_now` and `all_now` flags are not set)
+but leave `ro_at_boot` flag set.
 
 ### Changing Software Write Protection with flashrom
 
@@ -240,7 +240,7 @@ FAILED
 ```
 
 Reboot with [hardware write protection](#hw_wp) disabled. Note that protection
-is still enabled but the protection range is zero.
+is still enabled, but the protection range is zero.
 
 ```bash
 (chroot) $ flashrom -p ec --wp-status
@@ -264,7 +264,7 @@ SUCCESS
 ## system_is_locked()
 
 The [`system_is_locked()`] function in the EC code returns false if the HW write
-protect GPIO is disabled or the read-only firmware is not protected.
+protect GPIO is disabled, or the read-only firmware is not protected.
 
 One way this is used in the FPMCU source is to compile test or debug
 functionality into the firmware. Guarding the test functionality with
