@@ -74,9 +74,6 @@
 /* Enabling Thunderbolt-compatible mode */
 #define CONFIG_USB_PD_TBT_COMPAT_MODE
 
-/* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
-#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x40
 /*
  * For USB4, set the total budget for source current to 4.5A so that the first
  * connected port is allowed to source 3A while sourcing 1.5A on other type-C
@@ -89,8 +86,10 @@
 #define CONFIG_USB_PORT_POWER_DUMB
 
 /* USBC PPC*/
-#define CONFIG_USBC_PPC_SN5S330		/* USBC port C0 */
-#define CONFIG_USBC_PPC_SYV682X		/* USBC port C1 */
+#define CONFIG_USBC_PPC_SYV682X		/* USBC port C0/C1 */
+#undef CONFIG_USB_PD_TCPC_RUNTIME_CONFIG
+#undef CONFIG_USB_PD_TCPM_TUSB422
+#undef CONFIG_USB_MUX_RUNTIME_CONFIG
 
 /* BC 1.2 */
 
@@ -102,6 +101,10 @@
 /* charger defines */
 #define CONFIG_CHARGER_SENSE_RESISTOR		10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC	10
+
+/* Retimer */
+#undef CONFIG_USBC_RETIMER_INTEL_BB
+#undef CONFIG_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
 
 /*
  * Macros for GPIO signals used in common code that don't match the
