@@ -307,7 +307,7 @@ hex: $(hex-y)
 utils-art: $(build-art)
 
 .PHONY: utils-host
-utils-host: $(host-utils)
+utils-host: $(host-utils) $(host-utils-cxx)
 
 .PHONY: utils-build
 utils-build: $(build-utils)
@@ -671,6 +671,9 @@ $(build-utils): $(out)/%:$(build-srcs)
 
 $(host-utils): $(out)/%:$(host-srcs)
 	$(call quiet,c_to_host,HOSTCC )
+
+$(host-utils-cxx): $(out)/%:$(host-srcs-cxx)
+	$(call quiet,cxx_to_host,HOSTCXX )
 
 $(out)/cscope.files: $(out)/$(PROJECT).bin
 	$(call quiet,deps_to_list,SH     )

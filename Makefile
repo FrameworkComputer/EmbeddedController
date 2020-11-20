@@ -345,12 +345,15 @@ $(eval $(call get_sources,ro))
 # See commit bc4c1b4 for more context.
 build-utils := $(call objs_from_dir,$(out)/util,build-util-bin)
 host-utils := $(call objs_from_dir,$(out)/util,host-util-bin)
+host-utils-cxx := $(call objs_from_dir,$(out)/util,host-util-bin-cxx)
 build-art := $(call objs_from_dir,$(out),build-util-art)
 # Use the util_name with an added .c AND the special <util_name>-objs variable.
 build-srcs := $(foreach u,$(build-util-bin-y),$(sort $($(u)-objs:%.o=util/%.c) \
                 $(wildcard util/$(u).c)))
 host-srcs := $(foreach u,$(host-util-bin-y),$(sort $($(u)-objs:%.o=util/%.c) \
                $(wildcard util/$(u).c)))
+host-srcs-cxx := $(foreach u,$(host-util-bin-cxx-y), \
+	$(sort $($(u)-objs:%.o=util/%.cc) $(wildcard util/$(u).cc)))
 
 dirs=core/$(CORE) chip/$(CHIP) $(BASEDIR) $(BDIR) common fuzz power test \
 	cts/common cts/$(CTS_MODULE) $(out)/gen
