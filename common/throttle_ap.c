@@ -95,6 +95,16 @@ static void prochot_input_deferred(void)
 	if (prochot_in == debounced_prochot_in)
 		return;
 
+	/*
+	 * b/173180788 Confirmed from Intel internal that SLP_S3# asserts low
+	 * about 10us before PROCHOT# asserts low, which means that
+	 * the CPU is already in reset and therefore the PROCHOT#
+	 * asserting low is normal behavior and not a concern
+	 * for PROCHOT# event.  Ignore all PROCHOT changes while the AP is off
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return;
+
 	debounced_prochot_in = prochot_in;
 
 	if (debounced_prochot_in) {
