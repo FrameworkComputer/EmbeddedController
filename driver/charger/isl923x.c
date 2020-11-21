@@ -484,6 +484,28 @@ static void isl923x_init(int chgnum)
 					RAA489000_C4_PSYS_RSNS_RATIO_1_TO_1))
 				goto init_fail;
 		}
+
+		/*
+		 * Enable hysteresis for CCM/DCM boundary to help with ripple.
+		 */
+		if (raw_read16(chgnum, ISL9238_REG_CONTROL3, &reg))
+			goto init_fail;
+
+		if (raw_write16(chgnum, ISL9238_REG_CONTROL3,
+				reg |
+				RAA489000_C3_DCM_CCM_HYSTERESIS_ENABLE))
+			goto init_fail;
+
+		/* Set switching frequency to 600KHz to help with ripple. */
+		if (raw_read16(chgnum, ISL923X_REG_CONTROL1, &reg))
+			goto init_fail;
+
+		reg &= ~ISL923X_C1_SWITCH_FREQ_MASK;
+
+		if (raw_write16(chgnum, ISL923X_REG_CONTROL1,
+				reg |
+				ISL9237_C1_SWITCH_FREQ_599K))
+			goto init_fail;
 	}
 
 	if (IS_ENABLED(CONFIG_TRICKLE_CHARGING))

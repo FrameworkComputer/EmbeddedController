@@ -247,6 +247,9 @@
 /* Control3: Enables or disables Battery Ship mode */
 #define ISL9238_C3_BGATE_OFF BIT(10)
 
+/* Control3: Enable or disable DCM/CCM Hysteresis */
+#define RAA489000_C3_DCM_CCM_HYSTERESIS_ENABLE BIT(10)
+
 /* Control3: Don't reload ACLIM on ACIN. */
 #define ISL9238_C3_NO_RELOAD_ACLIM_ON_ACIN BIT(14)
 
