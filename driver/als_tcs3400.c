@@ -606,6 +606,13 @@ static int tcs3400_perform_calib(struct motion_sensor_t *s, int enable)
 	return EC_SUCCESS;
 }
 
+static int tcs3400_rgb_set_range(struct motion_sensor_t *s,
+				 int range,
+				 int rnd)
+{
+	return EC_SUCCESS;
+}
+
 static int tcs3400_set_range(struct motion_sensor_t *s,
 			     int range,
 			     int rnd)
@@ -770,6 +777,7 @@ const struct accelgyro_drv tcs3400_drv = {
 const struct accelgyro_drv tcs3400_rgb_drv = {
 	.init = tcs3400_rgb_init,
 	.read = tcs3400_rgb_read,
+	.set_range = tcs3400_rgb_set_range,
 	.set_offset = tcs3400_rgb_set_offset,
 	.get_offset = tcs3400_rgb_get_offset,
 	.set_scale = tcs3400_rgb_set_scale,
