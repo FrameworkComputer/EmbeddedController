@@ -77,45 +77,13 @@ test_static void rx_message(enum pd_msg_type sop,
 	mock_prl_message_received(PORT0);
 }
 
-
-test_static int test_send_caps_error(void)
+/*
+ * This sequence is used by multiple tests, so pull out into a function to
+ * avoid duplication.
+ */
+test_static int finish_src_discovery(void)
 {
 	int i;
-
-	/* Enable PE as source, expect SOURCE_CAP. */
-	mock_pd_port[PORT0].power_role = PD_ROLE_SOURCE;
-	mock_tc_port[PORT0].pd_enable = 1;
-	mock_tc_port[PORT0].vconn_src = true;
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 0, PD_DATA_SOURCE_CAP, 20 * MSEC),
-		EC_SUCCESS, "%d");
-	mock_prl_message_sent(PORT0);
-	task_wait_event(10 * MSEC);
-
-	/* REQUEST 5V, expect ACCEPT, PS_RDY. */
-	rx_message(PD_MSG_SOP, 0, PD_DATA_REQUEST,
-		   PD_ROLE_SINK, PD_ROLE_UFP, RDO_FIXED(1, 500, 500, 0));
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 PD_CTRL_ACCEPT, 0, 20 * MSEC),
-		EC_SUCCESS, "%d");
-	mock_prl_message_sent(PORT0);
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 PD_CTRL_PS_RDY, 0, 20 * MSEC),
-		EC_SUCCESS, "%d");
-	mock_prl_message_sent(PORT0);
-
-	/*
-	 * Expect VENDOR_DEF for cable identity, simulate no cable (so no
-	 * GoodCRC, so ERR_TCH_XMIT). Don't reply NOT_SUPPORTED, since the spec
-	 * says a cable never does that.
-	 * TODO: Add tests for cable replying to identity, and replying
-	 * NOT_SUPPORTED (since we should be robust to cables doing the wrong
-	 * thing).
-	 */
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
-					 0, PD_DATA_VENDOR_DEF, 20 * MSEC),
-		EC_SUCCESS, "%d");
-	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
 
 	/* Expect GET_SOURCE_CAP, reply NOT_SUPPORTED. */
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
@@ -160,6 +128,119 @@ test_static int test_send_caps_error(void)
 	rx_message(PD_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0,
 		   PD_ROLE_SINK, PD_ROLE_UFP, 0);
 
+	return EC_SUCCESS;
+}
+
+/*
+ * Verify that, before connection, PE_SRC_Send_Capabilities goes to
+ * PE_SRC_Discovery on send error, not PE_Send_Soft_Reset.
+ */
+test_static int test_send_caps_error_before_connected(void)
+{
+	/* Enable PE as source, expect SOURCE_CAP. */
+	mock_pd_port[PORT0].power_role = PD_ROLE_SOURCE;
+	mock_tc_port[PORT0].pd_enable = 1;
+	mock_tc_port[PORT0].vconn_src = true;
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 0, PD_DATA_SOURCE_CAP, 20 * MSEC),
+		EC_SUCCESS, "%d");
+
+	/*
+	 * Simulate error sending SOURCE_CAP, to test that before connection,
+	 * PE_SRC_Send_Capabilities goes to PE_SRC_Discovery on send error (and
+	 * does not send soft reset).
+	 */
+	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP);
+
+	/*
+	 * We should have gone to PE_SRC_Discovery on above error, so expect
+	 * VENDOR_DEF for cable identity, simulate no cable.
+	 */
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
+					 0, PD_DATA_VENDOR_DEF, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
+
+	/*
+	 * Expect SOURCE_CAP again. This is a retry since the first one above
+	 * got ERR_TCH_XMIT. Now simulate success (ie GoodCRC).
+	 */
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 0, PD_DATA_SOURCE_CAP, 120 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+	task_wait_event(10 * MSEC);
+
+	/*
+	 * From here, the sequence is very similar between
+	 * test_send_caps_error_before_connected and
+	 * test_send_caps_error_when_connected. We could end the test now, but
+	 * keep going just to check that the slightly different ordering of
+	 * cable identity discovery doesn't cause any issue below.
+	 */
+
+	/* REQUEST 5V, expect ACCEPT, PS_RDY. */
+	rx_message(PD_MSG_SOP, 0, PD_DATA_REQUEST,
+		   PD_ROLE_SINK, PD_ROLE_UFP, RDO_FIXED(1, 500, 500, 0));
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 PD_CTRL_ACCEPT, 0, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 PD_CTRL_PS_RDY, 0, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+
+	TEST_EQ(finish_src_discovery(), EC_SUCCESS, "%d");
+
+	task_wait_event(5 * SECOND);
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Verify that, after connection, PE_SRC_Send_Capabilities goes to
+ * PE_Send_Soft_Reset on send error, not PE_SRC_Discovery.
+ */
+test_static int test_send_caps_error_when_connected(void)
+{
+	/* Enable PE as source, expect SOURCE_CAP. */
+	mock_pd_port[PORT0].power_role = PD_ROLE_SOURCE;
+	mock_tc_port[PORT0].pd_enable = 1;
+	mock_tc_port[PORT0].vconn_src = true;
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 0, PD_DATA_SOURCE_CAP, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+	task_wait_event(10 * MSEC);
+
+	/* REQUEST 5V, expect ACCEPT, PS_RDY. */
+	rx_message(PD_MSG_SOP, 0, PD_DATA_REQUEST,
+		   PD_ROLE_SINK, PD_ROLE_UFP, RDO_FIXED(1, 500, 500, 0));
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 PD_CTRL_ACCEPT, 0, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 PD_CTRL_PS_RDY, 0, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+
+	/*
+	 * Expect VENDOR_DEF for cable identity, simulate no cable (so no
+	 * GoodCRC, so ERR_TCH_XMIT). Don't reply NOT_SUPPORTED, since the spec
+	 * says a cable never does that.
+	 * TODO: Add tests for cable replying to identity, and replying
+	 * NOT_SUPPORTED (since we should be robust to cables doing the wrong
+	 * thing).
+	 */
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
+					 0, PD_DATA_VENDOR_DEF, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
+
+	TEST_EQ(finish_src_discovery(), EC_SUCCESS, "%d");
+
 	task_wait_event(5 * SECOND);
 
 	/*
@@ -196,7 +277,8 @@ void run_test(int argc, char **argv)
 {
 	test_reset();
 
-	RUN_TEST(test_send_caps_error);
+	RUN_TEST(test_send_caps_error_before_connected);
+	RUN_TEST(test_send_caps_error_when_connected);
 
 	/* Do basic state machine validity checks last. */
 	RUN_TEST(test_pe_no_parent_cycles);
