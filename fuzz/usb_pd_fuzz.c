@@ -158,7 +158,7 @@ static pthread_cond_t done_cond;
 static pthread_mutex_t lock;
 
 enum tcpc_cc_voltage_status next_cc1, next_cc2;
-const int MAX_MESSAGES = 8;
+#define MAX_MESSAGES 8
 static struct message messages[MAX_MESSAGES];
 
 void run_test(int argc, char **argv)
