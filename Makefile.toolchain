@@ -42,6 +42,7 @@ PKG_CONFIG?=pkg-config
 BUILDCC?=$(CCACHE) gcc
 HOSTCC?=$(CCACHE) $(HOST_CROSS_COMPILE)gcc
 HOSTCXX?=$(CCACHE) $(HOST_CROSS_COMPILE)g++
+HOST_PKG_CONFIG?=$(HOST_CROSS_COMPILE)pkg-config
 PROTOC?=protoc
 
 C_WARN = -Wstrict-prototypes -Wdeclaration-after-statement -Wno-pointer-sign
