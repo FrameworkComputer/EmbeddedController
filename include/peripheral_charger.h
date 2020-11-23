@@ -90,19 +90,6 @@ enum pchg_event {
 	PCHG_EVENT_DISABLE,
 };
 
-enum pchg_state {
-	/* Charger is reset and not initialized. */
-	PCHG_STATE_RESET = 0,
-	/* Charger is initialized or disabled. */
-	PCHG_STATE_INITIALIZED,
-	/* Charger is enabled and ready to detect a device. */
-	PCHG_STATE_ENABLED,
-	/* Device is detected in proximity. */
-	PCHG_STATE_DETECTED,
-	/* Device is being charged. */
-	PCHG_STATE_CHARGING,
-};
-
 enum pchg_error {
 	PCHG_ERROR_NONE = 0,
 	/* Error initiated by host. */
