@@ -24,16 +24,6 @@ GPIO_INT(PG_EC_RSMRST_ODL,     PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_EC_DSW_PWROK,      PIN(C, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
 
-/* Sensor Interrupts */
-GPIO_INT(EC_IMU_INT_L,         PIN(5, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi260_interrupt)
-GPIO_INT(EC_ALS_RGB_INT_L,     PIN(D, 4), GPIO_INT_FALLING, tcs3400_interrupt)
-GPIO_INT(TABLET_MODE_L,        PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
-/*
- * Lid g-sensor interrupt unused on Volteer, configure as regular input for
- * power saving.
- */
-GPIO(EC_ACCEL_INT,		PIN(8, 1), GPIO_INPUT | GPIO_PULL_UP)
-
 /* USB-C interrupts */
 GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(E, 0), GPIO_INT_BOTH, tcpc_alert_event)
 GPIO_INT(USB_C1_TCPC_INT_ODL,	PIN(A, 2), GPIO_INT_BOTH, tcpc_alert_event)
@@ -45,10 +35,6 @@ GPIO_INT(USB_C0_BC12_INT_ODL,	PIN(E, 4), GPIO_INT_BOTH, bc12_interrupt)
 GPIO_INT(USB_C1_MIX_INT_ODL,	PIN(0, 3), GPIO_INT_BOTH, bc12_interrupt)
 
 /* HDMI interrupts */
-
-/* Volume button interrupts */
-GPIO_INT(EC_VOLDN_BTN_ODL,		PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
-GPIO_INT(EC_VOLUP_BTN_ODL,		PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 
 /* Power Sequencing Signals */
 GPIO(EN_PP3300_A,              PIN(A, 3), GPIO_OUT_LOW)
@@ -115,6 +101,14 @@ GPIO(UNUSED_GPIO41,		PIN(4, 1), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIOF2,		PIN(F, 2), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIO96,		PIN(9, 6), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIO34,		PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIO56,		PIN(5, 6), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIOD4,		PIN(D, 4), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIO95,		PIN(9, 5), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIO81,		PIN(8, 1), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIO93,		PIN(9, 3), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIO97,		PIN(9, 7), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(UNUSED_GPIOB5,		PIN(B, 5), GPIO_INPUT | GPIO_SEL_1P8V)	/* Unused I2C port, Set input only */
+GPIO(UNUSED_GPIOB4,		PIN(B, 4), GPIO_INPUT | GPIO_SEL_1P8V)	/* Unused I2C port, Set input only */
 
 /*
  * eDP backlight - both PCH and EC have enable pins that must be high
@@ -124,8 +118,6 @@ GPIO(UNUSED_GPIO34,		PIN(3, 4), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(EC_EDP_BL_EN,             PIN(D, 3), GPIO_OUT_HIGH)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
-GPIO(EC_I2C0_SENSOR_SCL,       PIN(B, 5), GPIO_INPUT | GPIO_SEL_1P8V)
-GPIO(EC_I2C0_SENSOR_SDA,       PIN(B, 4), GPIO_INPUT | GPIO_SEL_1P8V)
 GPIO(EC_I2C1_USB_C0_SCL,       PIN(9, 0), GPIO_INPUT)
 GPIO(EC_I2C1_USB_C0_SDA,       PIN(8, 7), GPIO_INPUT)
 GPIO(EC_I2C2_USB_C1_SCL,       PIN(9, 2), GPIO_INPUT)
@@ -141,7 +133,6 @@ GPIO(EC_I2C7_EEPROM_PWR_SDA_R, PIN(B, 2), GPIO_INPUT)
 GPIO(EC_BATT_PRES_ODL, 		PIN(E, 1), GPIO_INPUT)
 
 /* Alternate functions GPIO definitions */
-ALTERNATE(PIN_MASK(B, BIT(5) | BIT(4)), 0, MODULE_I2C, (GPIO_INPUT | GPIO_SEL_1P8V)) /* I2C0 */
 ALTERNATE(PIN_MASK(9, BIT(0) | BIT(2) | BIT(1)), 0, MODULE_I2C, 0)                   /* I2C1 SCL / I2C2 */
 ALTERNATE(PIN_MASK(8, BIT(7)), 0, MODULE_I2C, 0)                                     /* I2C1 SDA */
 ALTERNATE(PIN_MASK(D, BIT(1) | BIT(0)), 0, MODULE_I2C, 0)                            /* I2C3 */
