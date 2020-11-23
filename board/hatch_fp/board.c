@@ -16,6 +16,12 @@
 #include "usart_host_command.h"
 #include "util.h"
 
+/*
+ * Some platforms have a broken SLP_S0_L signal (stuck to 0 in S0)
+ * if set, ignore it and only uses SLP_S3_L for the AP state.
+ */
+static bool broken_slp_s0;
+
 /**
  * Disable restricted commands when the system is locked.
  *
@@ -36,12 +42,12 @@ static void ap_deferred(void)
 {
 	/*
 	 * in S3:   SLP_S3_L is 0 and SLP_S0_L is X.
-	 * in S0ix: SLP_S3_L is X and SLP_S0_L is 0.
+	 * in S0ix: SLP_S3_L is 1 and SLP_S0_L is 0.
 	 * in S0:   SLP_S3_L is 1 and SLP_S0_L is 1.
 	 * in S5/G3, the FP MCU should not be running.
 	 */
 	int running = gpio_get_level(GPIO_PCH_SLP_S3_L)
-			&& gpio_get_level(GPIO_PCH_SLP_S0_L);
+			&& (gpio_get_level(GPIO_PCH_SLP_S0_L) || broken_slp_s0);
 
 	if (running) { /* S0 */
 		disable_sleep(SLEEP_MASK_AP_RUN);
@@ -87,6 +93,9 @@ static void board_init(void)
 {
 	enum fp_transport_type ret_transport = get_fp_transport_type();
 
+	/* Run until the first S3 entry */
+	disable_sleep(SLEEP_MASK_AP_RUN);
+
 	/* Configure and enable SPI as master for FP sensor */
 	configure_fp_sensor_spi();
 
@@ -105,6 +114,15 @@ static void board_init(void)
 
 		/* Disable SPI interrupt to disable SPI transport layer */
 		gpio_disable_interrupt(GPIO_SPI1_NSS);
+
+		/*
+		 * The Zork variants currently have a broken SLP_S0_L signal
+		 * (stuck to 0 in S0). For now, unconditionally ignore it here
+		 * as they are the only UART users and the AP has no S0ix state.
+		 * TODO(b/174695987) once the RW AP firmware has been updated
+		 * on all those machines, remove this workaround.
+		 */
+		broken_slp_s0 = true;
 		break;
 
 	case FP_TRANSPORT_TYPE_SPI:
