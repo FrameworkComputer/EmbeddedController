@@ -405,7 +405,7 @@ static bool streq(const char *str1, const char *str2)
 /*****************************************************************************
  * VIF Structure Override Value Retrieve Functions
  */
-__maybe_unused
+/** Number **/
 static bool get_vif_field_tag_number(struct vif_field_t *vif_field, int *value)
 {
 	if (vif_field->tag_value == NULL)
@@ -414,7 +414,6 @@ static bool get_vif_field_tag_number(struct vif_field_t *vif_field, int *value)
 	*value = atoi(vif_field->tag_value);
 	return true;
 }
-__maybe_unused
 static bool get_vif_field_str_number(struct vif_field_t *vif_field, int *value)
 {
 	if (vif_field->str_value == NULL)
@@ -423,7 +422,28 @@ static bool get_vif_field_str_number(struct vif_field_t *vif_field, int *value)
 	*value = atoi(vif_field->str_value);
 	return true;
 }
+static bool get_vif_field_number(struct vif_field_t *vif_field, int *value)
+{
+	bool rv;
 
+	rv = get_vif_field_tag_number(vif_field, value);
+	if (!rv)
+		rv = get_vif_field_str_number(vif_field, value);
+
+	return rv;
+}
+__maybe_unused
+static bool get_vif_number(struct vif_field_t *vif_field, int default_value)
+{
+	int ret_value;
+
+	if (!get_vif_field_number(vif_field, &ret_value))
+		ret_value = default_value;
+
+	return ret_value;
+}
+
+/** Boolean **/
 static bool get_vif_field_tag_bool(struct vif_field_t *vif_field, bool *value)
 {
 	if (vif_field->tag_value == NULL)
@@ -440,7 +460,6 @@ static bool get_vif_field_str_bool(struct vif_field_t *vif_field, bool *value)
 	*value = streq(vif_field->str_value, "YES");
 	return true;
 }
-__maybe_unused
 static bool get_vif_field_bool(struct vif_field_t *vif_field, bool *value)
 {
 	bool rv;
@@ -451,7 +470,17 @@ static bool get_vif_field_bool(struct vif_field_t *vif_field, bool *value)
 
 	return rv;
 }
+static bool get_vif_bool(struct vif_field_t *vif_field, bool default_value)
+{
+	bool ret_value;
 
+	if (!get_vif_field_bool(vif_field, &ret_value))
+		ret_value = default_value;
+
+	return ret_value;
+}
+
+/** String **/
 __maybe_unused
 static bool get_vif_field_tag_str(struct vif_field_t *vif_field, char **value)
 {
@@ -606,108 +635,63 @@ static bool is_drp(void)
 
 static bool can_act_as_device(void)
 {
-	bool override_value;
-	bool was_overridden;
-
-	was_overridden = get_vif_field_bool(
-		&vif.Component[component_index]
-			.vif_field[Type_C_Can_Act_As_Device],
-		&override_value);
-	if (was_overridden)
-		return override_value;
-
-	#if defined(USB_DEV_CLASS) && defined(USB_CLASS_BILLBOARD)
-		return (USB_DEV_CLASS == USB_CLASS_BILLBOARD);
-	#else
-		return false;
-	#endif
+	return get_vif_bool(&vif.Component[component_index]
+				.vif_field[Type_C_Can_Act_As_Device],
+#if defined(USB_DEV_CLASS) && defined(USB_CLASS_BILLBOARD)
+			    USB_DEV_CLASS == USB_CLASS_BILLBOARD
+#else
+			    false
+#endif
+			);
 }
 
 static bool can_act_as_host(void)
 {
-	bool override_value;
-	bool was_overridden;
-
-	was_overridden = get_vif_field_bool(
-		&vif.Component[component_index]
-			.vif_field[Type_C_Can_Act_As_Host],
-		&override_value);
-	if (was_overridden)
-		return override_value;
-
-	return (!(IS_ENABLED(CONFIG_USB_CTVPD) ||
-		IS_ENABLED(CONFIG_USB_VPD)));
+	return get_vif_bool(&vif.Component[component_index]
+				.vif_field[Type_C_Can_Act_As_Host],
+			    (!(IS_ENABLED(CONFIG_USB_CTVPD) ||
+			       IS_ENABLED(CONFIG_USB_VPD))));
 }
 
 static bool is_usb4_supported(void)
 {
-	bool usb4_supported;
-
-	if (!get_vif_field_tag_bool(
-			&vif.Component[component_index]
+	return get_vif_bool(&vif.Component[component_index]
 				.vif_field[USB4_Supported],
-			&usb4_supported))
-		usb4_supported = IS_ENABLED(CONFIG_USB_PD_USB4);
-
-	return usb4_supported;
+			    IS_ENABLED(CONFIG_USB_PD_USB4));
 }
 
 static bool is_usb_pd_supported(void)
 {
-	bool pd_supported;
-
-	if (!get_vif_field_tag_bool(
-			&vif.Component[component_index]
+	return get_vif_bool(&vif.Component[component_index]
 				.vif_field[USB_PD_Support],
-			&pd_supported))
-		pd_supported = is_usb4_supported() ||
-			       IS_ENABLED(CONFIG_USB_PRL_SM) ||
-			       IS_ENABLED(CONFIG_USB_POWER_DELIVERY);
-
-	return pd_supported;
+			    (is_usb4_supported() ||
+			     IS_ENABLED(CONFIG_USB_PRL_SM) ||
+			     IS_ENABLED(CONFIG_USB_POWER_DELIVERY)));
 }
 
 static bool is_usb_comms_capable(void)
 {
-	bool capable;
-
-	if (!get_vif_field_tag_bool(
-			&vif.Component[component_index]
+	return get_vif_bool(&vif.Component[component_index]
 				.vif_field[USB_Comms_Capable],
-			&capable))
-		capable = is_usb4_supported() ||
-			  (!(IS_ENABLED(CONFIG_USB_VPD) ||
-			     IS_ENABLED(CONFIG_USB_CTVPD)));
-
-	return capable;
+			    is_usb4_supported() ||
+			    (!(IS_ENABLED(CONFIG_USB_VPD) ||
+			       IS_ENABLED(CONFIG_USB_CTVPD))));
 }
 
 static bool does_respond_to_discov_sop_ufp(void)
 {
-	bool responds;
-
-	if (!get_vif_field_tag_bool(
-			&vif.Component[component_index]
+	return get_vif_bool(&vif.Component[component_index]
 				.vif_field[Responds_To_Discov_SOP_UFP],
-			&responds))
-		responds = is_usb4_supported() ||
-			   IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE);
-
-	return responds;
+			    (is_usb4_supported() ||
+			     IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)));
 }
 
 static bool does_respond_to_discov_sop_dfp(void)
 {
-	bool responds;
-
-	if (!get_vif_field_tag_bool(
-			&vif.Component[component_index]
+	return get_vif_bool(&vif.Component[component_index]
 				.vif_field[Responds_To_Discov_SOP_DFP],
-			&responds))
-		responds = is_usb4_supported() ||
-			   IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE);
-
-	return responds;
+			    (is_usb4_supported() ||
+			     IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)));
 }
 
 static void init_src_pdos(void)
