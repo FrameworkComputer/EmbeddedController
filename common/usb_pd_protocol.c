@@ -2200,7 +2200,7 @@ static void exit_tbt_mode_sop_prime(int port)
 		    AMS_START);
 
 	usb_mux_set(port, USB_PD_MUX_USB_ENABLED, USB_SWITCH_CONNECT,
-		   pd_get_polarity(port));
+		   polarity_rm_dts(pd_get_polarity(port)));
 }
 
 static void pd_vdm_send_state_machine(int port)

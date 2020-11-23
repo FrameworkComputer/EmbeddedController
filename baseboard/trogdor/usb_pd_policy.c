@@ -195,7 +195,8 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		 * lanes DP).
 		 */
 		usb_mux_set(port, USB_PD_MUX_DOCK,
-			    USB_SWITCH_CONNECT, pd_get_polarity(port));
+			    USB_SWITCH_CONNECT,
+			    polarity_rm_dts(pd_get_polarity(port)));
 	} else {
 		/* Disconnect the DP port selection mux. */
 		gpio_set_level(GPIO_DP_MUX_OE_L, 1);
@@ -207,7 +208,8 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 		/* Disconnect the DP but keep the USB SS lines in TCPC chip. */
 		usb_mux_set(port, USB_PD_MUX_USB_ENABLED,
-			    USB_SWITCH_CONNECT, pd_get_polarity(port));
+			    USB_SWITCH_CONNECT,
+			    polarity_rm_dts(pd_get_polarity(port)));
 	}
 
 	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&

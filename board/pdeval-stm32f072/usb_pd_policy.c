@@ -194,7 +194,10 @@ __override void svdm_safe_dp_mode(int port)
 {
 	/* make DP interface safe until configure */
 	dp_flags[port] = 0;
-	/* board_set_usb_mux(port, USB_PD_MUX_NONE, pd_get_polarity(port)); */
+	/*
+	 * board_set_usb_mux(port, USB_PD_MUX_NONE,
+	 * polarity_rm_dts(pd_get_polarity(port)));
+	 */
 }
 
 __override int svdm_dp_config(int port, uint32_t *payload)
@@ -207,7 +210,7 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 
 #ifdef CONFIG_USB_PD_TCPM_ANX7447
 	mux_state_t mux_state = USB_PD_MUX_NONE;
-	if (pd_get_polarity(port))
+	if (polarity_rm_dts(pd_get_polarity(port)))
 		mux_state |= USB_PD_MUX_POLARITY_INVERTED;
 #endif
 
@@ -234,7 +237,7 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 
 	/*
 	 * board_set_usb_mux(port, USB_PD_MUX_DP_ENABLED,
-	 * pd_get_polarity(port));
+	 * polarity_rm_dts(pd_get_polarity(port)));
 	 */
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_CONFIG | VDO_OPOS(opos));

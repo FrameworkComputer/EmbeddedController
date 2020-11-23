@@ -97,7 +97,8 @@ __override void svdm_safe_dp_mode(int port)
 {
 	/* make DP interface safe until configure */
 	usb_mux_set(port, USB_PD_MUX_NONE,
-		USB_SWITCH_CONNECT, pd_get_polarity(port));
+		USB_SWITCH_CONNECT,
+		polarity_rm_dts(pd_get_polarity(port)));
 
 	/*
 	 * Isolate the SBU lines.

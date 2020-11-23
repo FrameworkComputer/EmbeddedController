@@ -749,7 +749,8 @@ void set_tbt_compat_mode_ready(int port)
 
 		/* Set usb mux to Thunderbolt-compatible mode */
 		usb_mux_set(port, USB_PD_MUX_TBT_COMPAT_ENABLED,
-			USB_SWITCH_CONNECT, pd_get_polarity(port));
+			USB_SWITCH_CONNECT,
+			polarity_rm_dts(pd_get_polarity(port)));
 	}
 }
 
@@ -1078,7 +1079,8 @@ __overridable int svdm_dp_config(int port, uint32_t *payload)
 	/* Connect the SBU and USB lines to the connector. */
 	if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
 		ppc_set_sbu(port, 1);
-	usb_mux_set(port, mux_mode, USB_SWITCH_CONNECT, pd_get_polarity(port));
+	usb_mux_set(port, mux_mode, USB_SWITCH_CONNECT,
+		polarity_rm_dts(pd_get_polarity(port)));
 
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_CONFIG | VDO_OPOS(opos));

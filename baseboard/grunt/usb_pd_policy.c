@@ -116,7 +116,7 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 	 */
 	if (mux_mode == USB_PD_MUX_DP_ENABLED)
 		usb_mux_set(port, USB_PD_MUX_NONE, USB_SWITCH_CONNECT,
-			    pd_get_polarity(port));
+			    polarity_rm_dts(pd_get_polarity(port)));
 
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_CONFIG | VDO_OPOS(opos));
@@ -132,7 +132,7 @@ __override void svdm_dp_post_config(int port)
 	/* Connect the SBU and USB lines to the connector. */
 	ppc_set_sbu(port, 1);
 	usb_mux_set(port, svdm_dp_mux_mode(port), USB_SWITCH_CONNECT,
-		    pd_get_polarity(port));
+		    polarity_rm_dts(pd_get_polarity(port)));
 
 	dp_flags[port] |= DP_FLAGS_DP_ON;
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))

@@ -129,7 +129,7 @@ void enter_usb_failed(int port)
 	 * to USB mode on receiving a NAK.
 	 */
 	usb_mux_set(port, USB_PD_MUX_USB_ENABLED, USB_SWITCH_CONNECT,
-		    pd_get_polarity(port));
+		    polarity_rm_dts(pd_get_polarity(port)));
 
 	usb4_debug_prints(port, USB4_MODE_FAILURE);
 	usb4_state[port] = USB4_INACTIVE;
@@ -235,7 +235,7 @@ void enter_usb_accepted(int port, enum tcpm_transmit_type type)
 
 		/* Set usb mux to USB4 mode */
 		usb_mux_set(port, USB_PD_MUX_USB4_ENABLED, USB_SWITCH_CONNECT,
-			    pd_get_polarity(port));
+			    polarity_rm_dts(pd_get_polarity(port)));
 
 		usb4_debug_prints(port, USB4_MODE_SUCCESS);
 		break;

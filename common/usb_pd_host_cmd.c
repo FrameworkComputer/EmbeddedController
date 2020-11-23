@@ -325,7 +325,7 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 			    typec_mux_map[p->mux] == USB_PD_MUX_NONE ?
 			    USB_SWITCH_DISCONNECT :
 			    USB_SWITCH_CONNECT,
-			    pd_get_polarity(p->port));
+			    polarity_rm_dts(pd_get_polarity(p->port)));
 
 	if (p->swap == USB_PD_CTRL_SWAP_DATA) {
 		pd_request_data_swap(p->port);

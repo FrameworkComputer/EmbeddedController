@@ -441,7 +441,7 @@ void set_usb_mux_with_current_data_role(int port)
 				USB_SWITCH_DISCONNECT : USB_SWITCH_CONNECT;
 
 		usb_mux_set(port, mux_mode, usb_switch_mode,
-				pd_get_polarity(port));
+				polarity_rm_dts(pd_get_polarity(port)));
 	}
 }
 
@@ -450,7 +450,8 @@ void usb_mux_set_safe_mode(int port)
 	if (IS_ENABLED(CONFIG_USBC_SS_MUX)) {
 		usb_mux_set(port, IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) ?
 			USB_PD_MUX_SAFE_MODE : USB_PD_MUX_NONE,
-			USB_SWITCH_CONNECT, pd_get_polarity(port));
+			USB_SWITCH_CONNECT,
+			polarity_rm_dts(pd_get_polarity(port)));
 	}
 
 	/* Isolate the SBU lines. */

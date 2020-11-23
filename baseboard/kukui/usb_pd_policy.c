@@ -22,9 +22,9 @@ static int board_get_polarity(int port)
 {
 	/* Krane's aux mux polarity is reversed. Workaround to flip it back. */
 	if (IS_ENABLED(BOARD_KRANE) && board_get_version() == 3)
-		return !pd_get_polarity(port);
+		return !polarity_rm_dts(pd_get_polarity(port));
 
-	return pd_get_polarity(port);
+	return polarity_rm_dts(pd_get_polarity(port));
 }
 
 static uint8_t vbus_en;

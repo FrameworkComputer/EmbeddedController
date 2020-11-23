@@ -191,11 +191,13 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 		usb_mux_set(port, mf_pref ?
 			    USB_PD_MUX_DOCK : USB_PD_MUX_DP_ENABLED,
-			    USB_SWITCH_CONNECT, pd_get_polarity(port));
+			    USB_SWITCH_CONNECT,
+			    polarity_rm_dts(pd_get_polarity(port)));
 	} else {
 		usb_mux_set(port, mf_pref ?
 			    USB_PD_MUX_USB_ENABLED : USB_PD_MUX_NONE,
-			    USB_SWITCH_CONNECT, pd_get_polarity(port));
+			    USB_SWITCH_CONNECT,
+			    polarity_rm_dts(pd_get_polarity(port)));
 	}
 
 	/* ack */

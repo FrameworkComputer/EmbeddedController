@@ -351,7 +351,7 @@ static int command_typec(int argc, char **argv)
 	usb_mux_set(port, mux, mux == USB_PD_MUX_NONE ?
 				      USB_SWITCH_DISCONNECT :
 				      USB_SWITCH_CONNECT,
-			  pd_get_polarity(port));
+			  polarity_rm_dts(pd_get_polarity(port)));
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(typec, command_typec,
