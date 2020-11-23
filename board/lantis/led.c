@@ -3,9 +3,10 @@
  * found in the LICENSE file.
  */
 
-/* Drawcia specific LED settings. */
+/* Lantis specific LED settings. */
 
 #include "cbi_fw_config.h"
+#include "charge_manager.h"
 #include "charge_state.h"
 #include "extpower.h"
 #include "hooks.h"
@@ -18,7 +19,8 @@
 #define POWER_LED_OFF 1
 
 const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED,
+	EC_LED_ID_LEFT_LED,
+	EC_LED_ID_RIGHT_LED,
 	EC_LED_ID_POWER_LED
 };
 
@@ -31,20 +33,32 @@ enum led_color {
 	LED_COLOR_COUNT  /* Number of colors, not a color itself */
 };
 
-static int led_set_color_battery(enum led_color color)
+enum led_port {
+	LEFT_PORT = 0,
+	RIGHT_PORT
+};
+
+static int led_set_color_battery(int port, enum led_color color)
 {
+	enum gpio_signal amber_led, white_led;
+
+	amber_led = (port == RIGHT_PORT ? GPIO_BAT_LED_AMBER_C1 :
+				 GPIO_BAT_LED_AMBER_C0);
+	white_led = (port == RIGHT_PORT ? GPIO_BAT_LED_WHITE_C1 :
+				 GPIO_BAT_LED_WHITE_C0);
+
 	switch (color) {
 	case LED_OFF:
-		gpio_set_level(GPIO_BAT_LED_WHITE_L, BAT_LED_OFF);
-		gpio_set_level(GPIO_BAT_LED_AMBER_L, BAT_LED_OFF);
+		gpio_set_level(white_led, BAT_LED_OFF);
+		gpio_set_level(amber_led, BAT_LED_OFF);
 		break;
 	case LED_WHITE:
-		gpio_set_level(GPIO_BAT_LED_WHITE_L, BAT_LED_ON);
-		gpio_set_level(GPIO_BAT_LED_AMBER_L, BAT_LED_OFF);
+		gpio_set_level(white_led, BAT_LED_ON);
+		gpio_set_level(amber_led, BAT_LED_OFF);
 		break;
 	case LED_AMBER:
-		gpio_set_level(GPIO_BAT_LED_WHITE_L, BAT_LED_OFF);
-		gpio_set_level(GPIO_BAT_LED_AMBER_L, BAT_LED_ON);
+		gpio_set_level(white_led, BAT_LED_OFF);
+		gpio_set_level(amber_led, BAT_LED_ON);
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
@@ -70,7 +84,11 @@ static int led_set_color_power(enum ec_led_colors color)
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
 	switch (led_id) {
-	case EC_LED_ID_BATTERY_LED:
+	case EC_LED_ID_LEFT_LED:
+		brightness_range[EC_LED_COLOR_WHITE] = 1;
+		brightness_range[EC_LED_COLOR_AMBER] = 1;
+		break;
+	case EC_LED_ID_RIGHT_LED:
 		brightness_range[EC_LED_COLOR_WHITE] = 1;
 		brightness_range[EC_LED_COLOR_AMBER] = 1;
 		break;
@@ -87,8 +105,11 @@ static int led_set_color(enum ec_led_id led_id, enum led_color color)
 	int rv;
 
 	switch (led_id) {
-	case EC_LED_ID_BATTERY_LED:
-		rv = led_set_color_battery(color);
+	case EC_LED_ID_RIGHT_LED:
+		rv = led_set_color_battery(RIGHT_PORT, color);
+		break;
+	case EC_LED_ID_LEFT_LED:
+		rv = led_set_color_battery(LEFT_PORT, color);
 		break;
 	case EC_LED_ID_POWER_LED:
 		rv = led_set_color_power(color);
@@ -111,6 +132,22 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	return EC_SUCCESS;
 }
 
+/*
+ * Set active charge port color to the parameter, turn off all others.
+ * If no port is active (-1), turn off all LEDs.
+ */
+static void set_active_port_color(enum led_color color)
+{
+	int port = charge_manager_get_active_charge_port();
+
+	if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
+		led_set_color_battery(RIGHT_PORT,
+				(port == RIGHT_PORT) ? color : LED_OFF);
+	if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
+		led_set_color_battery(LEFT_PORT,
+				(port == LEFT_PORT) ? color : LED_OFF);
+}
+
 static void led_set_battery(void)
 {
 	static int battery_ticks;
@@ -120,14 +157,16 @@ static void led_set_battery(void)
 	battery_ticks++;
 
 	/*
-	 * Override battery LED for Drawlet/Drawman, Drawlet/Drawman
-	 * don't have power LED, blinking battery white LED to indicate
-	 * system suspend without charging.
+	 * Override battery LED for clamshell SKU, which doesn't have power
+	 * LED, blinking battery white LED to indicate system suspend without
+	 * charging.
 	 */
 	if (get_cbi_fw_config_tablet_mode() == TABLET_MODE_ABSENT) {
 		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
 			charge_get_state() != PWR_STATE_CHARGE) {
-			led_set_color_battery(power_ticks++ & 0x2 ?
+			led_set_color_battery(RIGHT_PORT, power_ticks++ & 0x2 ?
+						  LED_WHITE : LED_OFF);
+			led_set_color_battery(LEFT_PORT, power_ticks++ & 0x2 ?
 						  LED_WHITE : LED_OFF);
 			return;
 		}
@@ -137,11 +176,11 @@ static void led_set_battery(void)
 
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
-		led_set_color_battery(LED_AMBER);
+		set_active_port_color(LED_AMBER);
 		break;
 	case PWR_STATE_DISCHARGE_FULL:
 		if (extpower_is_present()) {
-			led_set_color_battery(LED_WHITE);
+			set_active_port_color(LED_WHITE);
 			break;
 		}
 		/* Intentional fall-through */
@@ -151,24 +190,24 @@ static void led_set_battery(void)
 		 * when battery capacity is less than 10%
 		 */
 		if (charge_get_percent() < 10)
-			led_set_color_battery(
+			led_set_color_battery(RIGHT_PORT,
 				(battery_ticks & 0x2) ? LED_WHITE : LED_OFF);
 		else
-			led_set_color_battery(LED_OFF);
+			set_active_port_color(LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
-		led_set_color_battery(
+		set_active_port_color(
 			(battery_ticks % 0x2) ? LED_WHITE : LED_OFF);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
-		led_set_color_battery(LED_WHITE);
+		set_active_port_color(LED_WHITE);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
 		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			led_set_color_battery(
+			set_active_port_color(
 				(battery_ticks & 0x2) ? LED_AMBER : LED_OFF);
 		else
-			led_set_color_battery(LED_WHITE);
+			set_active_port_color(LED_WHITE);
 		break;
 	default:
 		/* Other states don't alter LED behavior */
@@ -197,7 +236,6 @@ static void led_tick(void)
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 		led_set_power();
 
-	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
-		led_set_battery();
+	led_set_battery();
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
