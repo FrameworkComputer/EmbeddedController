@@ -1735,6 +1735,8 @@
 
 /* Base address of program memory */
 #undef CONFIG_PROGRAM_MEMORY_BASE
+/* Base address of program memory (physical address of AP) */
+#undef CONFIG_PROGRAM_MEMORY_BASE_LOAD
 
 /*
  * EC code can reside on internal or external storage. Only one of these
