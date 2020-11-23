@@ -1208,6 +1208,58 @@ void pe_got_soft_reset(int port)
 	set_state_pe(port, PE_SOFT_RESET);
 }
 
+static bool pd_can_source_from_device(const int pdo_cnt, const uint32_t *pdos)
+{
+	/* Don't attempt to source from a device we have no SrcCaps from */
+	if (pdo_cnt == 0)
+		return false;
+
+	/*
+	 * Treat device as a dedicated charger (meaning we should charge
+	 * from it) if:
+	 *   - it does not support power swap, or
+	 *   - it is unconstrained power, or
+	 *   - it presents at least 27 W of available power
+	 */
+
+	/* Unconstrained Power or NOT Dual Role Power we can charge from */
+	if (pdos[0] & PDO_FIXED_UNCONSTRAINED ||
+	    (pdos[0] & PDO_FIXED_DUAL_ROLE) == 0)
+		return true;
+
+	/* [virtual] allow_list */
+	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
+		uint32_t max_ma, max_mv, max_pdo, max_mw;
+
+		/*
+		 * Get max power that the partner offers (not necessarily what
+		 * this board will request)
+		 */
+		pd_find_pdo_index(pdo_cnt, pdos,
+				  PD_REV3_MAX_VOLTAGE,
+				  &max_pdo);
+		pd_extract_pdo_power(max_pdo, &max_ma, &max_mv);
+		max_mw = max_ma * max_mv / 1000;
+
+		if (max_mw >= PD_DRP_CHARGE_POWER_MIN)
+			return true;
+	}
+	return false;
+}
+
+void pd_resume_check_pr_swap_needed(int port)
+{
+	/*
+	 * Explicit contract, current power role of SNK and the device
+	 * indicates it should not power us then trigger a PR_Swap
+	 */
+	if (pe_is_explicit_contract(port) &&
+	    pd_get_power_role(port) == PD_ROLE_SINK &&
+	    !pd_can_source_from_device(pd_get_src_cap_cnt(port),
+				       pd_get_src_caps(port)))
+		pd_dpm_request(port, DPM_REQUEST_PR_SWAP);
+}
+
 void pd_dpm_request(int port, enum pd_dpm_request req)
 {
 	PE_SET_DPM_REQUEST(port, req);
