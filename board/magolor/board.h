@@ -12,8 +12,17 @@
 #include "baseboard.h"
 
 #define CONFIG_USB_PD_DEBUG_LEVEL 2
+
+#ifdef BOARD_MAGOLOR_LEGACY
 /* this change saves 1656 bytes of RW flash space */
 #define CONFIG_CHIP_INIT_ROM_REGION
+#else
+/*
+ * The RAM and flash size combination on the the NPCX797FC does not leave
+ * any unused flash space that can be used to store the .init_rom section.
+ */
+#undef CONFIG_CHIP_INIT_ROM_REGION
+#endif
 
 /*
  * Keep the system unlocked in early development.
