@@ -16,6 +16,9 @@
 #define PS8802_DEBUG 0
 #define PS8802_I2C_WAKE_DELAY 500
 
+#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+
 int ps8802_i2c_read(const struct usb_mux *me, int page, int offset, int *data)
 {
 	int rv;
@@ -189,8 +192,26 @@ int ps8802_i2c_wake(const struct usb_mux *me)
 	return rv;
 }
 
+/*
+ * Setting operation mode to standby mode
+ */
+static int ps8802_enter_low_power_mode(const struct usb_mux *me)
+{
+	int rv;
+
+	rv = ps8802_i2c_write(me, PS8802_REG_PAGE2, PS8802_REG2_MODE,
+		  PS8802_MODE_STANDBY_MODE);
+
+	if (rv)
+		CPRINTS("C%d: PS8802: Failed to enter low power mode!",
+			me->usb_port);
+
+	return rv;
+}
+
 static int ps8802_init(const struct usb_mux *me)
 {
+	ps8802_enter_low_power_mode(me);
 	return EC_SUCCESS;
 }
 
@@ -272,6 +293,7 @@ const struct usb_mux_driver ps8802_usb_mux_driver = {
 	.init = ps8802_init,
 	.set = ps8802_set_mux,
 	.get = ps8802_get_mux,
+	.enter_low_power_mode = &ps8802_enter_low_power_mode,
 };
 
 /*

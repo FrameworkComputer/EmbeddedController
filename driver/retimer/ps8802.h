@@ -74,6 +74,14 @@
 #define PS8802_MODE_IN_HPD_REG_CONTROL		BIT(1)
 #define PS8802_MODE_IN_HPD_ENABLE		BIT(0)
 
+/*
+ * Support power saving mode, Bit7 Disable
+ * CE_DP, Bit5 Disable CE_USB, Bit3 Disable
+ * FLIP pin, Bit1 Display IN_HPD pin, [Bit6 Bit4]
+ * 00: I2C standy by mode.
+ */
+#define PS8802_MODE_STANDBY_MODE		0xAA
+
 #define PS8802_REG2_DPEQ_LEVEL		0x07
 #define PS8802_DPEQ_LEVEL_UP_9DB		0x00
 #define PS8802_DPEQ_LEVEL_UP_11DB		0x01
