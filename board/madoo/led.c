@@ -5,6 +5,7 @@
  * Power and battery LED control for madoo
  */
 
+#include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "led_common.h"
@@ -63,16 +64,30 @@ void led_set_color_battery(enum ec_led_colors color)
 {
 	switch (color) {
 	case EC_LED_COLOR_WHITE:
-		gpio_set_level(GPIO_BAT_LED_WHITE_L, LED_ON_LVL);
-		gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_OFF_LVL);
+		/* Ports are controlled by different GPIO */
+		if (charge_manager_get_active_charge_port()) {
+			gpio_set_level(GPIO_BAT_LED_WHITE_L, LED_ON_LVL);
+			gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_OFF_LVL);
+		} else {
+			gpio_set_level(GPIO_EC_CHG_LED_R_W, LED_ON_LVL);
+			gpio_set_level(GPIO_EC_CHG_LED_R_Y, LED_OFF_LVL);
+		}
 		break;
 	case EC_LED_COLOR_AMBER:
-		gpio_set_level(GPIO_BAT_LED_WHITE_L, LED_OFF_LVL);
-		gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_ON_LVL);
+		/* Ports are controlled by different GPIO */
+		if (charge_manager_get_active_charge_port()) {
+			gpio_set_level(GPIO_BAT_LED_WHITE_L, LED_OFF_LVL);
+			gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_ON_LVL);
+		} else {
+			gpio_set_level(GPIO_EC_CHG_LED_R_W, LED_OFF_LVL);
+			gpio_set_level(GPIO_EC_CHG_LED_R_Y, LED_ON_LVL);
+		}
 		break;
 	default: /* LED_OFF and other unsupported colors */
 		gpio_set_level(GPIO_BAT_LED_WHITE_L, LED_OFF_LVL);
 		gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_OFF_LVL);
+		gpio_set_level(GPIO_EC_CHG_LED_R_W, LED_OFF_LVL);
+		gpio_set_level(GPIO_EC_CHG_LED_R_Y, LED_OFF_LVL);
 		break;
 	}
 }
