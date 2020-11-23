@@ -365,11 +365,9 @@ int peci_transaction(struct peci_data *peci)
 		/* GetDIB and GetTemp only command byte */
 		if (!(peci->cmd_code == PECI_CMD_GET_DIB ||
 			peci->cmd_code == PECI_CMD_GET_TEMP)) {
-			if (peci->r_len == 1) {
-				/*Write command */
-				for (index = 0; index < peci->w_len; index++)
-					peci_params.cmd_fifo[index+4] = peci->w_buf[index];
-			}
+
+			for (index = 0; index < peci->w_len; index++)
+				peci_params.cmd_fifo[index+4] = peci->w_buf[index];
 
 			peci_params.check_completion = 1;
 			peci_params.retry_valid = 1;
