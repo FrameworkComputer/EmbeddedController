@@ -10,7 +10,7 @@
 #include "util.h"
 
 /*
- * Battery info for all Dirinboz battery types. Note that the fields
+ * Battery info for all Gumboz battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
  * The effective temperature limits are given by discharging_min/max_c.
  *
@@ -148,7 +148,7 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 
-	/* DynaPack Coslight Battery Information */
+	/* DynaPack Cosmx Battery Information */
 	[BATTERY_DANAPACK_COS] = {
 		.fuel_gauge = {
 			.manuf_name = "333-2C-DA-A",
@@ -177,6 +177,7 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 
+	/* Cosmx Battery Information */
 	[BATTERY_COSMX] = {
 		.fuel_gauge = {
 			.manuf_name = "333-AC-DA-A",

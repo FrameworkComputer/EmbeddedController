@@ -148,7 +148,7 @@ enum ec_cfg_usb_mb_type {
 };
 
 /**
- * DIRINBOZ_DB_OPT1_USBC
+ * GUMBOZ_DB_OPT1_USBC
  *	USB-A1  Speed: 5 Gbps
  *		Retimer: PS8719
  *	USB-C1  Speed: 5 Gbps
@@ -161,7 +161,7 @@ enum ec_cfg_usb_mb_type {
  *		MST Hub: none
  */
 enum ec_cfg_usb_db_type {
-	DIRINBOZ_DB_OPT1_USBC = 0,
+	GUMBOZ_DB_OPT1_USBC = 0,
 };
 
 static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)

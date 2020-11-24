@@ -55,7 +55,7 @@ GPIO(LED_FULL_L,		PIN(6, 0), GPIO_OUT_HIGH)
 GPIO(LED_CHRG_L,		PIN(C, 0), GPIO_OUT_HIGH)
 
 /*
- * Dirinboz has 1 DB options.
+ * Gumboz has 1 DB options.
  * IOEX_C1_NCT3807 is the DB (USB-C1).
  */
 
