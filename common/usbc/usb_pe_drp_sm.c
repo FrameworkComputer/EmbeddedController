@@ -1189,6 +1189,36 @@ void pe_report_discard(int port)
 	/* TODO(b/157228506): Ensure all states are checking discard */
 }
 
+/*
+ * Utility function to check for an outgoing message discard during states which
+ * send a message as a part of an AMS and wait for the transmit to complete.
+ * Note these states should not be power transitioning.
+ *
+ * In these states, discard due to an incoming message is a protocol error.
+ */
+static bool pe_check_outgoing_discard(int port)
+{
+	/*
+	 * On outgoing discard, soft reset with SOP* of incoming message
+	 *
+	 * See Table 6-65 Response to an incoming Message (except VDM) in PD 3.0
+	 * Version 2.0 Specification.
+	 */
+	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED) &&
+				PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		enum tcpm_transmit_type sop =
+				PD_HEADER_GET_SOP(rx_emsg[port].header);
+
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_DISCARDED);
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+		pe_send_soft_reset(port, sop);
+		return true;
+	}
+
+	return false;
+}
+
 void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 {
 	/* This should only be called from the PD task */
@@ -4780,7 +4810,11 @@ static void pe_snk_give_sink_cap_run(int port)
 	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 		pe_set_ready_state(port);
+		return;
 	}
+
+	if (pe_check_outgoing_discard(port))
+		return;
 }
 
 /**
@@ -5929,23 +5963,8 @@ static void pe_vcs_evaluate_swap_run(int port)
 		return;
 	}
 
-	/*
-	 * On outgoing discard, soft reset with SOP of incoming message
-	 *
-	 * See Table 6-65 Response to an incoming Message (except VDM) in PD 3.0
-	 * Version 2.0 Specification.
-	 */
-	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED) &&
-				PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
-		enum tcpm_transmit_type sop =
-				PD_HEADER_GET_SOP(rx_emsg[port].header);
-
-		PE_CLR_FLAG(port, PE_FLAGS_MSG_DISCARDED);
-		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
-
-		pe_send_soft_reset(port, sop);
+	if (pe_check_outgoing_discard(port))
 		return;
-	}
 }
 
 /*
