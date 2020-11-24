@@ -343,6 +343,23 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
+const struct cc_para_t *board_get_cc_tuning_parameter(enum usbpd_port port)
+{
+	const static struct cc_para_t
+		cc_parameter[CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT] = {
+		{
+			.rising_time = IT83XX_TX_PRE_DRIVING_TIME_1_UNIT,
+			.falling_time = IT83XX_TX_PRE_DRIVING_TIME_2_UNIT,
+		},
+		{
+			.rising_time = IT83XX_TX_PRE_DRIVING_TIME_1_UNIT,
+			.falling_time = IT83XX_TX_PRE_DRIVING_TIME_2_UNIT,
+		},
+	};
+
+	return &cc_parameter[port];
+}
+
 uint16_t tcpc_get_alert_status(void)
 {
 	/*
