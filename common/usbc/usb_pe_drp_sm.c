@@ -1534,28 +1534,8 @@ static void pe_update_src_pdo_flags(int port, int pdo_cnt, uint32_t *pdos)
 	else
 		tc_partner_dr_data(port, 0);
 
-	/*
-	 * Treat device as a dedicated charger (meaning we should charge
-	 * from it) if:
-	 *   - it does not support power swap, or
-	 *   - it is unconstrained power, or
-	 *   - it presents at least 27 W of available power
-	 */
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
-		uint32_t max_ma, max_mv, max_pdo, max_mw;
-
-		/*
-		 * Get max power that the partner offers (not necessarily what
-		 * this board will request)
-		 */
-		pd_find_pdo_index(pdo_cnt, pdos, PD_REV3_MAX_VOLTAGE,
-				  &max_pdo);
-		pd_extract_pdo_power(max_pdo, &max_ma, &max_mv);
-		max_mw = max_ma*max_mv/1000;
-
-		if (!(pdos[0] & PDO_FIXED_DUAL_ROLE) ||
-		    (pdos[0] & PDO_FIXED_UNCONSTRAINED) ||
-		    max_mw >= PD_DRP_CHARGE_POWER_MIN) {
+		if (pd_can_source_from_device(pdo_cnt, pdos)) {
 			PE_CLR_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
 			charge_manager_update_dualrole(port, CAP_DEDICATED);
 		} else {
@@ -6329,18 +6309,9 @@ static void pe_dr_src_get_source_cap_run(int port)
 				uint32_t *payload =
 					(uint32_t *)rx_emsg[port].buf;
 
-				/*
-				 * Unconstrained power by the partner should
-				 * be enough to request a PR_Swap to use their
-				 * power instead of our battery
-				 */
 				pd_set_src_caps(port, cnt, payload);
-				if (pe[port].src_caps[0] &
-						PDO_FIXED_UNCONSTRAINED) {
-					pe[port].src_snk_pr_swap_counter = 0;
-					PE_SET_DPM_REQUEST(port,
-							DPM_REQUEST_PR_SWAP);
-				}
+				if (pd_can_source_from_device(cnt, payload))
+					pd_request_power_swap(port);
 
 				set_state_pe(port, PE_SRC_READY);
 			} else if (type == PD_CTRL_REJECT ||
