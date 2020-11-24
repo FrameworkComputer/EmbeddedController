@@ -64,6 +64,8 @@
 #undef CONFIG_USB_MUX_RUNTIME_CONFIG
 
 /* USB Type A Features */
+#define USB_PORT_COUNT			1
+#define CONFIG_USB_PORT_POWER_DUMB
 
 /* USBC PPC*/
 #define CONFIG_USBC_PPC_SN5S330		/* USBC port C0 */
