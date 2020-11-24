@@ -466,7 +466,7 @@ enum {
 	 */
 	SLEEP_MASK_AP_RUN     = BIT(0), /* the main CPU is running */
 	SLEEP_MASK_UART       = BIT(1), /* UART communication ongoing */
-	SLEEP_MASK_I2C_MASTER = BIT(2), /* I2C master communication ongoing */
+	SLEEP_MASK_I2C_CONTROLLER = BIT(2), /* I2C controller comms ongoing */
 	SLEEP_MASK_CHARGING   = BIT(3), /* Charging loop ongoing */
 	SLEEP_MASK_USB_PWR    = BIT(4), /* USB power loop ongoing */
 	SLEEP_MASK_USB_PD     = BIT(5), /* USB PD device connected */
