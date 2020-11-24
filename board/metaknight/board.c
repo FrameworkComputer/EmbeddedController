@@ -90,6 +90,28 @@ static void sub_hdmi_hpd_interrupt(enum gpio_signal s)
 	gpio_set_level(GPIO_EC_AP_USB_C1_HDMI_HPD, !hdmi_hpd_odl);
 }
 
+/**
+ * Handle debounced pen input changing state.
+ */
+static void pen_input_deferred(void)
+{
+	int pen_exist = !gpio_get_level(GPIO_PEN_DET_ODL);
+
+	if (pen_exist)
+		gpio_set_level(GPIO_EN_PP3300_PEN, 1);
+	else
+		gpio_set_level(GPIO_EN_PP3300_PEN, 0);
+
+	CPRINTS("Pen charge %sable", pen_exist ? "en" : "dis");
+}
+DECLARE_DEFERRED(pen_input_deferred);
+
+void pen_input_interrupt(enum gpio_signal signal)
+{
+	/* pen input debounce time */
+	hook_call_deferred(&pen_input_deferred_data, (100 * MSEC));
+}
+
 #include "gpio_list.h"
 
 /* ADC channels */
@@ -164,6 +186,8 @@ void board_init(void)
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
 			      CHIPSET_STATE_SOFT_OFF);
 	board_power_5v_enable(on);
+
+	gpio_enable_interrupt(GPIO_PEN_DET_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
