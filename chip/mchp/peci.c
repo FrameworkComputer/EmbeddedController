@@ -199,7 +199,7 @@ uint8_t calc_AWFCS(uint8_t *data_blk_ptr, unsigned int length)
 	unsigned int i, j;
 
 	for (i = 0; i < length; i++) {
-		data_byte = *data_blk_ptr;
+		data_byte = *data_blk_ptr++;
 
 		for (j = 0; j < 8; j++) {
 			bit0 = (data_byte & 0x80) ? 0x80 : 0;
@@ -324,7 +324,6 @@ static uint8_t peci_trans(struct peci_params_t *peci)
 		zero_error = 0;
 		cc_error = 0;
 	}
-
 	return error;
 
 }
@@ -349,6 +348,7 @@ int peci_transaction(struct peci_data *peci)
 	struct peci_params_t peci_params;
 	int index;
 	int dlen;
+	uint8_t aw_FCS_calc;
 
 	peci_params.cmd_fifo[0] = peci->addr;
 	peci_params.cmd_fifo[1] = peci->w_len+1;
@@ -373,6 +373,12 @@ int peci_transaction(struct peci_data *peci)
 			peci_params.retry_valid = 1;
 			peci_params.host_byte = 4;
 		}
+	}
+
+	/* calculate the AW FCS value for 1 less byte */
+	if (peci->cmd_code == PECI_CMD_WR_PKG_CFG) {
+		aw_FCS_calc = calc_AWFCS(peci_params.cmd_fifo, peci_params.cmd_length - 1);
+		peci_params.cmd_fifo[peci_params.cmd_length - 1] = aw_FCS_calc;
 	}
 
 	peci_trans(&peci_params);

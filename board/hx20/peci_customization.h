@@ -9,6 +9,12 @@
 #define PECI_RD_PKG_CONFIG_READ_LENGTH_DWORD    5
 #define PECI_RD_PKG_CONFIG_TIMEOUT_US           200
 
+#define PECI_WR_PKG_CONFIG_WRITE_LENGTH_BYTE    6
+#define PECI_WR_PKG_CONFIG_WRITE_LENGTH_WORD    7
+#define PECI_WR_PKG_CONFIG_WRITE_LENGTH_DWORD   9
+#define PECI_WR_PKG_CONFIG_READ_LENGTH          1
+#define PECI_WR_PKG_CONFIG_TIMEOUT_US           200
+
 
 /* RdPkgConfig and WrPkgConfig CPU Thermal and Power Optimiztion Services */
 #define PECI_INDEX_PACKAGE_INDENTIFIER_READ     0x00
@@ -22,4 +28,12 @@
 #define PECI_INDEX_TEMP_TARGET_READ             0x10
 #define PECI_PARAMS_PROCESSOR_TEMP              0x0000
 
+#define PECI_INDEX_POWER_LIMITS_PL1             0x1A
+#define PECI_PARAMS_POWER_LIMITS_PL1            0x0000
+#define PECI_PL1_CONTROL_TIME_WINDOWS           (0x6E << 17)
+#define PECI_PL1_POWER_LIMIT_ENABLE             (0x01 << 15)
+#define PECI_PL1_POWER_LIMIT(x)                 (x << 3)
+
+
 int peci_Rd_Pkg_Config(uint8_t index, uint16_t parameter, int rlen, uint8_t *in);
+int peci_Wr_Pkg_Config(uint8_t index, uint16_t parameter, uint32_t data, int wlen);
