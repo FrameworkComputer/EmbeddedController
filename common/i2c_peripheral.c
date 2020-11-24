@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* I2C slave cross-platform code for Chrome EC */
+/* I2C peripheral cross-platform code for Chrome EC */
 
 #include "host_command.h"
 #include "i2c.h"
