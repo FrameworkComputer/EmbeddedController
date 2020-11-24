@@ -30,10 +30,31 @@
 
 #define PECI_INDEX_POWER_LIMITS_PL1             0x1A
 #define PECI_PARAMS_POWER_LIMITS_PL1            0x0000
-#define PECI_PL1_CONTROL_TIME_WINDOWS           (0x6E << 17)
+#define PECI_PL1_CONTROL_TIME_WINDOWS           (0xDC << 16) /* 28 seconds */
 #define PECI_PL1_POWER_LIMIT_ENABLE             (0x01 << 15)
 #define PECI_PL1_POWER_LIMIT(x)                 (x << 3)
+
+#define PECI_INDEX_POWER_LIMITS_PL2             0x1B
+#define PECI_PARAMS_POWER_LIMITS_PL2            0x0000
+#define PECI_PL2_CONTROL_TIME_WINDOWS           (0x00 << 16)
+#define PECI_PL2_POWER_LIMIT_ENABLE             (0x01 << 15)
+#define PECI_PL2_POWER_LIMIT(x)                 (x << 3)
+
+#define PECI_INDEX_POWER_LIMITS_PSYS_PL2        0x3B
+#define PECI_PARAMS_POWER_LIMITS_PSYS_PL2       0x0000
+#define PECI_PSYS_PL2_CONTROL_TIME_WINDOWS      (0xDC << 16) /* 28 seconds */
+#define PECI_PSYS_PL2_POWER_LIMIT_ENABLE        (0x01 << 15)
+#define PECI_PSYS_PL2_POWER_LIMIT(x)            (x << 3)
+
+#define PECI_INDEX_POWER_LIMITS_PL4             0x3C
+#define PECI_PARAMS_POWER_LIMITS_PL4            0x0000
+#define PECI_PL4_POWER_LIMIT(x)                 (x << 3)
 
 
 int peci_Rd_Pkg_Config(uint8_t index, uint16_t parameter, int rlen, uint8_t *in);
 int peci_Wr_Pkg_Config(uint8_t index, uint16_t parameter, uint32_t data, int wlen);
+
+int peci_update_PL1(int watt);
+int peci_update_PL2(int watt);
+int peci_update_PL4(int watt);
+int peci_update_PsysPL2(int watt);
