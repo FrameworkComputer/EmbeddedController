@@ -511,9 +511,6 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 {
 	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
 
-	/* Limit C1 on board version 0 to 2.0 A */
-	if ((board_version == 0) && (port == 1))
-		icl = MIN(icl, 2000);
 	/*
 	 * TODO(b/151955431): Characterize the input current limit in case a
 	 * scaling needs to be applied here
