@@ -82,6 +82,12 @@ enum jslrvp_i2c_channel {
 	I2C_CHAN_COUNT,
 };
 
+enum battery_type {
+	BATTERY_SIMPLO_SMP_HHP_408,
+	BATTERY_SIMPLO_SMP_CA_445,
+	BATTERY_TYPE_COUNT,
+};
+
 /* Define max power */
 #define PD_MAX_POWER_MW        45000
 

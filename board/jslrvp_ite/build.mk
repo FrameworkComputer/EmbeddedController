@@ -13,3 +13,4 @@ CHIP_VARIANT:=it8320dx
 BASEBOARD:=intelrvp
 
 board-y=board.o
+board-$(CONFIG_BATTERY_SMART)+=battery.o

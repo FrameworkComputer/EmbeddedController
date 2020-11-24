@@ -9,7 +9,6 @@
 #Intel RVP common files
 baseboard-y=baseboard.o
 baseboard-$(CONFIG_LED_COMMON)+=led.o led_states.o
-baseboard-$(CONFIG_BATTERY_SMART)+=battery.o
 
 ifneq ($(CONFIG_USB_POWER_DELIVERY),)
 baseboard-$(CONFIG_USB_POWER_DELIVERY)+=chg_usb_pd.o

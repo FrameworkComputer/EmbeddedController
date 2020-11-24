@@ -156,6 +156,11 @@ enum adlrvp_charge_ports {
 	TYPE_C_PORT_3,
 };
 
+enum battery_type {
+	BATTERY_GETAC_SMP_HHP_408,
+	BATTERY_TYPE_COUNT,
+};
+
 void espi_reset_pin_asserted_interrupt(enum gpio_signal signal);
 void extpower_interrupt(enum gpio_signal signal);
 void ppc_interrupt(enum gpio_signal signal);
