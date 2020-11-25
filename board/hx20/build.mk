@@ -24,4 +24,5 @@ board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
 board-$(CONFIG_KEYBOARD_CUSTOMIZATION)+=keyboard_customization.o
 board-$(CONFIG_POWER_BUTTON_CUSTOM) += power_button_x86.o
 board-$(CONFIG_PECI) += peci_customization.o
+board-$(HAS_TASK_HOSTCMD) += host_command_customization.o
 
