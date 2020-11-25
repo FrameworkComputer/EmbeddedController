@@ -2749,28 +2749,47 @@ static void init_vif_component_general_pd_fields(
 			vif_component_name[USB_Comms_Capable],
 			is_usb_comms_capable());
 
+	/*
+	 * DR_Swap_To_DFP_Supported
+	 *
+	 * Set to YES if Qualifying Product can respond with an Accept to a
+	 * DR_Swap request to switch from a UFP to a DFP.
+	 *
+	 * If Type_C_State_Machine is set to DRP and Type_C_Can_Act_As_Host
+	 * is set to YES and Type_C_Can_Act_As_Device is set to NO then this
+	 * field shall be set to YES.
+	 *
+	 * If Type_C_State_Machine is set to SNK and either
+	 * Type_C_Can_Act_As_Host or Type_C_Is_Alt_Mode_Controller is set to
+	 * YES, then this field shall be set to YES.
+	 *
+	 * If Type_C_State_Machine is set to SRC and Type_C_Can_Act_As_Device
+	 * is set to YES, then this field shall be set to YES.
+	 *
+	 * If VIF_Product_Type is set to 1 (Cable) or PD_Port_Type is set to
+	 * 5 (eMarker) then this field shall be ignored by Testers.
+	 *
+	 * TODO(b/172437046): USB4 has not been added and this last statement
+	 * needs to be handled when it is:
+	 * If USB4_DFP_Supported is set to YES and Type_C_Port_On_Hub is set
+	 * to NO, then this field shall be set to YES.
+	 */
 	{
-		bool supports_to_dfp = true;
+		bool supports_to_dfp;
 
-		if (type == DRP || type == SNK)
-			/*
-			 * DR_Swap_To_DFP_Supported requires
-			 *    Type_C_Can_Act_As_Host to be YES
-			 */
-			supports_to_dfp &= can_act_as_host();
-
-		if (type == DRP)
-			/*
-			 * DR_Swap_To_DFP_Supported requires
-			 *    Type_C_Can_Act_As_Device to be NO
-			 */
-			supports_to_dfp &= !can_act_as_device();
-		else if (type == SRC)
-			/*
-			 * DR_Swap_To_DFP_Supported requires
-			 *    Type_C_Can_Act_As_Device to be YES
-			 */
-			supports_to_dfp &= can_act_as_device();
+		switch (type) {
+		case SRC:
+			supports_to_dfp = can_act_as_device();
+			break;
+		case SNK:
+			supports_to_dfp = (can_act_as_host() ||
+					   is_alt_mode_controller());
+			break;
+		case DRP:
+			supports_to_dfp = (can_act_as_host() &&
+					   !can_act_as_device());
+			break;
+		}
 
 		set_vif_field_b(&vif_fields[DR_Swap_To_DFP_Supported],
 			vif_component_name[DR_Swap_To_DFP_Supported],
