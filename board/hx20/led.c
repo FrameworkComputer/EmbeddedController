@@ -143,6 +143,8 @@ static void led_set_battery(void)
 			if (charge_get_percent() < 10)
 				set_active_port_color((battery_ticks & 0x2) ?
 					EC_LED_COLOR_RED : -1);
+			else
+				set_active_port_color(-1);
 		}
 		break;
 	case PWR_STATE_ERROR:
