@@ -28,7 +28,7 @@
 #define GPIO_USB2_ILIM_SEL IOEX_USB_A1_CHARGE_EN_DB_L
 
 /* Power  LEDs */
-#define CONFIG_LED_POWER_LED
+#define CONFIG_LED_ONOFF_STATES_BAT_LOW 10
 
 /* Motion sensing drivers */
 #define CONFIG_ACCELGYRO_LSM6DSM

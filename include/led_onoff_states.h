@@ -94,4 +94,7 @@ void led_set_color_battery(enum ec_led_colors color);
 void led_set_color_power(enum ec_led_colors color);
 #endif
 
+__override_proto enum led_states
+board_get_led_state(enum led_states desired_state);
+
 #endif /* __CROS_EC_ONOFFSTATES_LED_H */

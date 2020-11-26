@@ -54,7 +54,6 @@ UNIMPLEMENTED(PCH_SMI_L)
 
 GPIO(LED_FULL_L,		PIN(6, 0), GPIO_OUT_HIGH)
 GPIO(LED_CHRG_L,		PIN(C, 0), GPIO_OUT_HIGH)
-GPIO(LED3_PWM,			PIN(C, 3), GPIO_OUT_HIGH)
 
 /*
  * Dalboz has 2 DB options, with different IO expanders. IOEX_C1_NCT3807 is the

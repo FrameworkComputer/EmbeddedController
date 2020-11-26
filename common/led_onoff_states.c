@@ -83,12 +83,19 @@ static enum led_states led_get_state(void)
 	return new_state;
 }
 
+__overridable enum led_states board_led_get_state(enum led_states desired_state)
+{
+	return desired_state;
+}
+
 static void led_update_battery(void)
 {
 	static uint8_t ticks, period;
 	static int led_state = LED_NUM_STATES;
 	int phase;
 	enum led_states desired_state = led_get_state();
+
+	desired_state = board_led_get_state(desired_state);
 
 	/*
 	 * We always need to check the current state since the value could
