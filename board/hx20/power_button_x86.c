@@ -415,8 +415,8 @@ DECLARE_HOOK(HOOK_INIT, powerbtn_x86_init, HOOK_PRIO_DEFAULT);
  */
 static void powerbtn_x86_lid_change(void)
 {
-	/* If chipset is off, pulse the power button on lid open to wake it. */
-	if (lid_is_open() && chipset_in_state(CHIPSET_STATE_ANY_OFF)
+	/* If chipset is s3 or s0ix, pulse the power button on lid open to wake it. */
+	if (lid_is_open() && chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)
 	    && pwrbtn_state != PWRBTN_STATE_INIT_ON)
 		power_button_pch_pulse();
 }
