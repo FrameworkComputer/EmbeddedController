@@ -444,12 +444,41 @@ bool board_has_kb_backlight(void)
 	/* Default enable keyboard backlight */
 	return true;
 }
+#endif /* !VARIANT_KUKUI_NO_SENSORS */
+
+/* Battery functions */
+#define SB_SMARTCHARGE				0x26
+/* Quick charge enable bit */
+#define SMART_QUICK_CHARGE			0x02
+/* Quick charge support bit */
+#define MODE_QUICK_CHARGE_SUPPORT		0x01
+
+static void sb_quick_charge_mode(int enable)
+{
+	int val, rv;
+
+	rv = sb_read(SB_SMARTCHARGE, &val);
+	if (rv || !(val & MODE_QUICK_CHARGE_SUPPORT))
+		return;
+
+	if (enable)
+		val |= SMART_QUICK_CHARGE;
+	else
+		val &= ~SMART_QUICK_CHARGE;
+
+	sb_write(SB_SMARTCHARGE, val);
+}
 
 /* Called on AP S0iX -> S0 transition */
 static void board_chipset_resume(void)
 {
+#ifndef VARIANT_KUKUI_NO_SENSORS
 	if (board_has_kb_backlight())
 		ioex_set_level(IOEX_KB_BL_EN, 1);
+#endif
+
+	/* Normal charge mode */
+	sb_quick_charge_mode(0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_INIT, board_chipset_resume, HOOK_PRIO_DEFAULT);
@@ -457,12 +486,15 @@ DECLARE_HOOK(HOOK_INIT, board_chipset_resume, HOOK_PRIO_DEFAULT);
 /* Called on AP S0 -> S0iX transition */
 static void board_chipset_suspend(void)
 {
+#ifndef VARIANT_KUKUI_NO_SENSORS
 	if (board_has_kb_backlight())
 		ioex_set_level(IOEX_KB_BL_EN, 0);
+#endif
+
+	/* Quick charge mode */
+	sb_quick_charge_mode(1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
-
-#endif /* !VARIANT_KUKUI_NO_SENSORS */
 
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
