@@ -39,6 +39,33 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	/* TODO */
 }
 
+/*
+ * check EMI region 1 0x02 bit 0 to control pch power
+ * if bit set up will keep pch power for RTCwake
+ * when the unit is vpro type also will keep pch
+ *
+ * @return true will keep pch power
+ */
+
+int keep_pch_power(void)
+{
+	int version = board_get_version();
+
+	if (version & BIT(0))
+		return true;
+#ifdef CONFIG_EMI_REGION1
+	else
+		return *host_get_customer_memmap(0x02) & BIT(0);
+#endif
+}
+
+#ifdef CONFIG_EMI_REGION1
+static void clear_rtcwake(void)
+{
+	*host_get_customer_memmap(0x02) &= ~BIT(0);
+}
+#endif
+
 static void chipset_force_g3(void)
 {
 	gpio_set_level(GPIO_SUSP_L, 0);
@@ -47,12 +74,17 @@ static void chipset_force_g3(void)
 	gpio_set_level(GPIO_PCH_PWROK, 0);
 	gpio_set_level(GPIO_SYS_PWROK, 0);
 	gpio_set_level(GPIO_SYSON, 0);
-	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 	gpio_set_level(GPIO_EC_KBL_PWR_EN, 0);
-	gpio_set_level(GPIO_PCH_PWR_EN, 0);
-	gpio_set_level(GPIO_PCH_DPWROK, 0);
-	gpio_set_level(GPIO_PCH_PWRBTN_L, 0);
-	gpio_set_level(GPIO_AC_PRESENT_OUT, 0);
+
+	/* keep pch power for RTCwake or vpro type */
+	if (!keep_pch_power()) {
+		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
+		gpio_set_level(GPIO_PCH_PWR_EN, 0);
+		gpio_set_level(GPIO_PCH_DPWROK, 0);
+		gpio_set_level(GPIO_PCH_PWRBTN_L, 0);
+		gpio_set_level(GPIO_AC_PRESENT_OUT, 0);
+	}
+
 	f75303_set_enabled(0);
 
 }
@@ -122,6 +154,12 @@ enum power_state power_handle_state(enum power_state state)
 
 	switch (state) {
 	case POWER_G3:
+#ifdef CONFIG_EMI_REGION1
+		if (keep_pch_power()) {
+			if ((power_get_signals() & IN_PCH_SLP_S5_DEASSERTED))
+				return POWER_G3S5;
+		}
+#endif
 		break;
 
 	case POWER_S5:
@@ -214,7 +252,9 @@ enum power_state power_handle_state(enum power_state state)
         msleep(10);
 
         gpio_set_level(GPIO_SYS_PWROK, 1);
-
+#ifdef CONFIG_EMI_REGION1
+		clear_rtcwake();
+#endif
         return POWER_S0;
 
 		break;
@@ -231,7 +271,7 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S3S5:
 		CPRINTS("power handle state in S3S5");
 		gpio_set_level(GPIO_SYSON, 0);
-
+		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 		return POWER_S5;
 		break;
 
