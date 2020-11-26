@@ -1,0 +1,24 @@
+# Copyright 2020 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: Nuvoton, NPCX-cros-flash node
+
+compatible: "nuvoton,npcx-cros-flash"
+
+include: cros-flash-controller.yaml
+
+properties:
+    reg:
+        required: true
+
+    clocks:
+        required: true
+
+    size:
+        type: int
+        required: true
+
+    pinctrl-0:
+        type: phandles
+        required: true
+        description: configurations of pinmux controllers

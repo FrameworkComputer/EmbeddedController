@@ -1,0 +1,12 @@
+# Copyright 2020 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+# Common fields for Chrome OS flash devices
+
+include: base.yaml
+
+bus: crosflash
+
+properties:
+    label:
+      required: true

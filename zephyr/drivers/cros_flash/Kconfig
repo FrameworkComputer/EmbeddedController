@@ -1,0 +1,13 @@
+
+# Copyright 2020 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig CROS_FLASH_NPCX
+	bool "Nuvoton NPCX flash driver for the Zephyr shim"
+	depends on SOC_FAMILY_NPCX
+	default y
+	help
+	  This option enables a flash unit interface (FIU) driver for the NPCX
+	  chip. This is used instead of the flash memory interface so we can
+	  continue to use most of the existing flash memory processing code in
+	  ECOS.
