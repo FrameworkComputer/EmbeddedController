@@ -210,7 +210,7 @@ static void board_chipset_resume(void)
 		int val;
 
 		rv = i2c_read8(I2C_PORT_USBA0,
-				PS8811_I2C_ADDR_FLAGS + PS8811_REG_PAGE1,
+				PS8811_I2C_ADDR_FLAGS3 + PS8811_REG_PAGE1,
 				PS8811_REG1_USB_BEQ_LEVEL, &val);
 		if (!rv)
 			break;
@@ -223,7 +223,7 @@ static void board_chipset_resume(void)
 	/* USB-A1 needs to increase gain to get over MB/DB connector */
 	for (retry = 0; retry < PS8811_ACCESS_RETRIES; ++retry) {
 		rv = i2c_write8(I2C_PORT_USBA1,
-				PS8811_I2C_ADDR_FLAGS + PS8811_REG_PAGE1,
+				PS8811_I2C_ADDR_FLAGS3 + PS8811_REG_PAGE1,
 				PS8811_REG1_USB_BEQ_LEVEL,
 				PS8811_BEQ_I2C_LEVEL_UP_13DB |
 				PS8811_BEQ_PIN_LEVEL_UP_18DB);

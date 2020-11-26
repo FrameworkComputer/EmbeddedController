@@ -9,10 +9,19 @@
 #define __CROS_EC_USB_RETIMER_PS8811_H
 
 /*
+ * PS8811 uses 7-bit I2C addresses 0x28 to 0x29 (ADDR=LL).
+ * Page 0 = 0x28, Page 1 = 0x29.
+ * PS8811 uses 7-bit I2C addresses 0x2A to 0x2B (ADDR=LH).
+ * Page 0 = 0x2A, Page 1 = 0x2B.
+ * PS8811 uses 7-bit I2C addresses 0x70 to 0x71 (ADDR=HL).
+ * Page 0 = 0x70, Page 1 = 0x71.
  * PS8811 uses 7-bit I2C addresses 0x72 to 0x73 (ADDR=HH).
  * Page 0 = 0x72, Page 1 = 0x73.
  */
-#define PS8811_I2C_ADDR_FLAGS	0x72
+#define PS8811_I2C_ADDR_FLAGS0	0x28
+#define PS8811_I2C_ADDR_FLAGS1	0x2A
+#define PS8811_I2C_ADDR_FLAGS2	0x70
+#define PS8811_I2C_ADDR_FLAGS3	0x72
 
 /*
  * PAGE 1 Register Definitions

@@ -224,7 +224,7 @@ static void board_chipset_resume(void)
 		int val;
 
 		rv = i2c_read8(I2C_PORT_USBA0,
-				PS8811_I2C_ADDR_FLAGS + PS8811_REG_PAGE1,
+				PS8811_I2C_ADDR_FLAGS3 + PS8811_REG_PAGE1,
 				PS8811_REG1_USB_BEQ_LEVEL, &val);
 		if (!rv)
 			break;

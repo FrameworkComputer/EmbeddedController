@@ -12,6 +12,7 @@
 #include "driver/accelgyro_bmi260.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/syv682x.h"
+#include "driver/retimer/ps8811.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tusb422.h"
@@ -341,6 +342,34 @@ __override const struct ec_response_keybd_config
 {
 	return &delbin_kb;
 }
+
+static void ps8811_init(void)
+{
+	int rv;
+
+	/* Set Channel A output swing to Level1 */
+	rv = i2c_write8(I2C_PORT_USB_1_MIX,
+		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0x66, 0x10);
+	/* Set 50 ohm termination adjuct for B channel: -9%*/
+	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
+		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0x73, 0x04);
+	/* Set Channel B output swing to Level3 */
+	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
+		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0xA4, 0x03);
+	/* Set PS level for B channel */
+	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
+		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0xA5, 0x84);
+	/* Set DE level for B channel */
+	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
+		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0xA6, 0x16);
+}
+
+/* Called on AP S5 -> S0ix transition */
+static void board_chipset_startup(void)
+{
+	ps8811_init();
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 /* Called on AP S0ix -> S0 transition */
 static void board_chipset_resume(void)
