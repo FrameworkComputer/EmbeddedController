@@ -5,6 +5,7 @@
 
 #include "atomic.h"
 #include "common.h"
+#include "device_event.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "peripheral_charger.h"
@@ -320,6 +321,12 @@ void pchg_task(void *u)
 				pchg_run(ctx);
 			} while (queue_count(&ctx->events));
 		}
+		/*
+		 * Send one host event for all ports. Currently PCHG supports
+		 * only WLC but in the future other types (e.g. WPC Qi) should
+		 * send different device events.
+		 */
+		device_set_single_event(EC_DEVICE_EVENT_WLC);
 		task_wait_event(-1);
 	}
 }

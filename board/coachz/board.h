@@ -17,6 +17,7 @@
 #define CONFIG_CMD_GPIO_EXTENDED
 #define CONFIG_CMD_POWERINDEBUG
 #define CONFIG_I2C_DEBUG
+#define CONFIG_DEVICE_EVENT
 
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_FLASH_SIZE (512 * 1024)  /* 512KB internal spi flash */
