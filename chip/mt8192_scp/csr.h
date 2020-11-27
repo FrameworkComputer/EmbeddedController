@@ -84,4 +84,28 @@ static inline uint32_t clear_csr(uint32_t reg, uint32_t bit)
 /* Bufferable */
 #define   MPU_ATTR_B		BIT(9)
 
+/* PMU */
+#define CSR_PMU_MPMUCTR		(0xbc0)
+#define   CSR_PMU_MPMUCTR_C	BIT(0)
+#define   CSR_PMU_MPMUCTR_I	BIT(1)
+#define   CSR_PMU_MPMUCTR_H3	BIT(2)
+#define   CSR_PMU_MPMUCTR_H4	BIT(3)
+#define   CSR_PMU_MPMUCTR_H5	BIT(4)
+
+#define CSR_PMU_MCYCLE		(0xb00)
+#define CSR_PMU_MINSTRET	(0xb02)
+#define CSR_PMU_MHPMCOUNTER3	(0xb03)
+#define CSR_PMU_MHPMCOUNTER4	(0xb04)
+#define CSR_PMU_MHPMCOUNTER5	(0xb05)
+
+#define CSR_PMU_MCYCLEH		(0xb80)
+#define CSR_PMU_MINSTRETH	(0xb82)
+#define CSR_PMU_MHPMCOUNTER3H	(0xb83)
+#define CSR_PMU_MHPMCOUNTER4H	(0xb84)
+#define CSR_PMU_MHPMCOUNTER5H	(0xb85)
+
+#define CSR_PMU_MHPMEVENT3	(0x323)
+#define CSR_PMU_MHPMEVENT4	(0x324)
+#define CSR_PMU_MHPMEVENT5	(0x325)
+
 #endif /* __CROS_EC_CSR_H */
