@@ -11,6 +11,7 @@
 #include "common.h"
 #include "console.h"
 #include "dacs.h"
+#include <driver/gl3590.h>
 #include "ec_version.h"
 #include "fusb302b.h"
 #include "gpio.h"
@@ -149,9 +150,20 @@ static void tcpc_evt(enum gpio_signal signal)
 	update_status_fusb302b();
 }
 
+#define HOST_HUB		0
+struct uhub_i2c_iface_t uhub_config[] = {
+	{I2C_PORT_MASTER, GL3590_I2C_ADDR0},
+};
+
+static void host_hub_evt(void)
+{
+	gl3590_irq_handler(HOST_HUB);
+}
+DECLARE_DEFERRED(host_hub_evt);
+
 static void hub_evt(enum gpio_signal signal)
 {
-	ccprintf("hub event\n");
+	hook_call_deferred(&host_hub_evt_data, 0);
 }
 
 static void bc12_evt(enum gpio_signal signal)
