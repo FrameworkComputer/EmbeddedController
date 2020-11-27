@@ -175,6 +175,9 @@ driver-$(CONFIG_USB_MUX_PS8742)+=usb_mux/ps8740.o
 driver-$(CONFIG_USB_MUX_PS8743)+=usb_mux/ps8743.o
 driver-$(CONFIG_USB_MUX_VIRTUAL)+=usb_mux/virtual.o
 
+# USB Hub with I2C interface
+driver-$(CONFIG_USB_HUB_GL3590)+=gl3590.o
+
 # Type-C Power Path Controllers (PPC)
 driver-$(CONFIG_USBC_PPC_AOZ1380)+=ppc/aoz1380.o
 driver-$(CONFIG_USBC_PPC_SN5S330)+=ppc/sn5s330.o
