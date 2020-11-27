@@ -337,16 +337,20 @@ void clock_enable_module(enum module_id module, int enable)
 #define RTC_FREQ (STM32F4_LSI_CLOCK / (RTC_PREDIV_A + 1)) /* Hz */
 #endif
 #define RTC_PREDIV_S (RTC_FREQ - 1)
-#define US_PER_RTC_TICK (1000000 / RTC_FREQ)
+/*
+ * Scaling factor to ensure that the intermediate values computed from/to the
+ * RTC frequency are fitting in a 32-bit integer.
+ */
+#define SCALING 1000
 
 int32_t rtcss_to_us(uint32_t rtcss)
 {
-	return ((RTC_PREDIV_S - rtcss) * US_PER_RTC_TICK);
+	return ((RTC_PREDIV_S - rtcss) * (SECOND/SCALING) / (RTC_FREQ/SCALING));
 }
 
 uint32_t us_to_rtcss(int32_t us)
 {
-	return (RTC_PREDIV_S - (us / US_PER_RTC_TICK));
+	return (RTC_PREDIV_S - (us * (RTC_FREQ/SCALING) / (SECOND/SCALING)));
 }
 
 void rtc_init(void)
