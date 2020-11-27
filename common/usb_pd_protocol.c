@@ -2512,6 +2512,18 @@ void pd_set_dual_role(int port, enum pd_dual_role_states state)
 		       PD_EVENT_UPDATE_DUAL_ROLE, 0);
 }
 
+static int pd_is_power_swapping(int port)
+{
+	/* return true if in the act of swapping power roles */
+	return  pd[port].task_state == PD_STATE_SNK_SWAP_SNK_DISABLE ||
+		pd[port].task_state == PD_STATE_SNK_SWAP_SRC_DISABLE ||
+		pd[port].task_state == PD_STATE_SNK_SWAP_STANDBY ||
+		pd[port].task_state == PD_STATE_SNK_SWAP_COMPLETE ||
+		pd[port].task_state == PD_STATE_SRC_SWAP_SNK_DISABLE ||
+		pd[port].task_state == PD_STATE_SRC_SWAP_SRC_DISABLE ||
+		pd[port].task_state == PD_STATE_SRC_SWAP_STANDBY;
+}
+
 /* This must only be called from the PD task */
 static void pd_update_dual_role_config(int port)
 {
@@ -2534,26 +2546,18 @@ static void pd_update_dual_role_config(int port)
 
 	/*
 	 * Change to source if port is currently a sink and the
-	 * new DRP state is force source.
+	 * new DRP state is force source. If we are performing
+	 * power swap we won't change anything because
+	 * changing state will disrupt power swap process
+	 * and we are power swapping to desired power role.
 	 */
 	if (pd[port].power_role == PD_ROLE_SINK &&
-	    drp_state[port] == PD_DRP_FORCE_SOURCE) {
+	    drp_state[port] == PD_DRP_FORCE_SOURCE &&
+	    !pd_is_power_swapping(port)) {
 		pd_set_power_role(port, PD_ROLE_SOURCE);
 		set_state(port, PD_STATE_SRC_DISCONNECTED);
 		tcpm_set_cc(port, TYPEC_CC_RP);
 	}
-}
-
-static int pd_is_power_swapping(int port)
-{
-	/* return true if in the act of swapping power roles */
-	return  pd[port].task_state == PD_STATE_SNK_SWAP_SNK_DISABLE ||
-		pd[port].task_state == PD_STATE_SNK_SWAP_SRC_DISABLE ||
-		pd[port].task_state == PD_STATE_SNK_SWAP_STANDBY ||
-		pd[port].task_state == PD_STATE_SNK_SWAP_COMPLETE ||
-		pd[port].task_state == PD_STATE_SRC_SWAP_SNK_DISABLE ||
-		pd[port].task_state == PD_STATE_SRC_SWAP_SRC_DISABLE ||
-		pd[port].task_state == PD_STATE_SRC_SWAP_STANDBY;
 }
 
 /*
