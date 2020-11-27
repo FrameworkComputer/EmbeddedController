@@ -710,6 +710,9 @@ __override int pd_check_power_swap(int port)
 	if (port == CHG)
 		return 0;
 
+	if (pd_get_power_role(port) == PD_ROLE_SINK && !(cc_config & CC_ALLOW_SRC))
+		return 0;
+
 	if (pd_snk_is_vbus_provided(CHG))
 		return allow_pr_swap;
 
