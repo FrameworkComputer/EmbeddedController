@@ -21,7 +21,6 @@
 
 /* Chipset */
 #define CONFIG_CHIPSET_TIGERLAKE
-#define CONFIG_POWER_PP5000_CONTROL
 
 /*
  * Macros for GPIO signals used in common code that don't match the
