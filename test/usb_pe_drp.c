@@ -49,92 +49,131 @@ void before_test(void)
 	task_wait_event(SECOND);
 }
 
+/*
+ * This assumes data messages only contain a single data object (uint32_t data).
+ * TODO: Add support for multiple data objects (when a test is added here that
+ * needs it).
+ */
+test_static void rx_message(enum pd_msg_type sop,
+			    enum pd_ctrl_msg_type ctrl_msg,
+			    enum pd_data_msg_type data_msg,
+			    enum pd_power_role prole,
+			    enum pd_data_role drole,
+			    uint32_t data)
+{
+	int type, cnt;
+
+	if (ctrl_msg != 0) {
+		type = ctrl_msg;
+		cnt = 0;
+	} else {
+		type = data_msg;
+		cnt = 1;
+	}
+	rx_emsg[PORT0].header = (PD_HEADER_SOP(sop)
+		| PD_HEADER(type, prole, drole, 0, cnt, PD_REV30, 0));
+	rx_emsg[PORT0].len = cnt * 4;
+	*(uint32_t *)rx_emsg[PORT0].buf = data;
+	mock_prl_message_received(PORT0);
+}
+
+
 test_static int test_send_caps_error(void)
 {
+	int i;
+
 	/* Enable PE as source, expect SOURCE_CAP. */
 	mock_pd_port[PORT0].power_role = PD_ROLE_SOURCE;
 	mock_tc_port[PORT0].pd_enable = 1;
 	mock_tc_port[PORT0].vconn_src = true;
-	task_wait_event(10 * MSEC);
-	TEST_EQ(fake_prl_get_last_sent_data_msg_type(PORT0),
-		PD_DATA_SOURCE_CAP, "%d");
-	fake_prl_message_sent(PORT0);
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 0, PD_DATA_SOURCE_CAP, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
 	task_wait_event(10 * MSEC);
 
 	/* REQUEST 5V, expect ACCEPT, PS_RDY. */
-	rx_emsg[PORT0].header = PD_HEADER(PD_DATA_REQUEST, PD_ROLE_SINK,
-			PD_ROLE_UFP, 0,
-			1, PD_REV30, 0);
-	rx_emsg[PORT0].len = 4;
-	*(uint32_t *)rx_emsg[PORT0].buf = RDO_FIXED(1, 500, 500, 0);
-	fake_prl_message_received(PORT0);
-	task_wait_event(10 * MSEC);
-	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0),
-		PD_CTRL_ACCEPT, "%d");
-	fake_prl_message_sent(PORT0);
-	task_wait_event(10 * MSEC);
-	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0),
-		PD_CTRL_PS_RDY, "%d");
-	fake_prl_message_sent(PORT0);
-	task_wait_event(30 * MSEC);
+	rx_message(PD_MSG_SOP, 0, PD_DATA_REQUEST,
+		   PD_ROLE_SINK, PD_ROLE_UFP, RDO_FIXED(1, 500, 500, 0));
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 PD_CTRL_ACCEPT, 0, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 PD_CTRL_PS_RDY, 0, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
 
-	/* Expect VENDOR_DEF, reply NOT_SUPPORTED. */
-	TEST_EQ(fake_prl_get_last_sent_data_msg_type(PORT0),
-		PD_DATA_VENDOR_DEF, "%d");
-	fake_prl_message_sent(PORT0);
-	task_wait_event(10 * MSEC);
-	rx_emsg[PORT0].header = PD_HEADER(PD_CTRL_NOT_SUPPORTED, PD_ROLE_SINK,
-			PD_ROLE_UFP, 2,
-			0, PD_REV30, 0);
-	rx_emsg[PORT0].len = 0;
-	fake_prl_message_received(PORT0);
-	task_wait_event(30 * MSEC);
+	/*
+	 * Expect VENDOR_DEF for cable identity, simulate no cable (so no
+	 * GoodCRC, so ERR_TCH_XMIT). Don't reply NOT_SUPPORTED, since the spec
+	 * says a cable never does that.
+	 * TODO: Add tests for cable replying to identity, and replying
+	 * NOT_SUPPORTED (since we should be robust to cables doing the wrong
+	 * thing).
+	 */
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
+					 0, PD_DATA_VENDOR_DEF, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
 
 	/* Expect GET_SOURCE_CAP, reply NOT_SUPPORTED. */
-	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0),
-		PD_CTRL_GET_SOURCE_CAP, "%d");
-	fake_prl_message_sent(PORT0);
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 PD_CTRL_GET_SOURCE_CAP, 0, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
 	task_wait_event(10 * MSEC);
-	rx_emsg[PORT0].header = PD_HEADER(PD_CTRL_NOT_SUPPORTED, PD_ROLE_SINK,
-			PD_ROLE_UFP, 2,
-			0, PD_REV30, 0);
-	rx_emsg[PORT0].len = 0;
-	fake_prl_message_received(PORT0);
-	task_wait_event(200 * MSEC);
+	rx_message(PD_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0,
+		   PD_ROLE_SINK, PD_ROLE_UFP, 0);
 
 	/*
 	 * Expect GET_SINK_CAP, reply with a simple Sink Cap since sink partners
 	 * must support this message.
 	 */
-	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0),
-		PD_CTRL_GET_SINK_CAP, "%d");
-	fake_prl_message_sent(PORT0);
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 PD_CTRL_GET_SINK_CAP, 0, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
 	task_wait_event(10 * MSEC);
-	rx_emsg[PORT0].header = PD_HEADER(PD_DATA_SINK_CAP, PD_ROLE_SINK,
-			PD_ROLE_UFP, 2,
-			1, PD_REV30, 0);
-	rx_emsg[PORT0].len = 4;
-	*(uint32_t *)rx_emsg[PORT0].buf = PDO_FIXED(5000, 500,
-						    PDO_FIXED_COMM_CAP);
-	fake_prl_message_received(PORT0);
-	task_wait_event(200 * MSEC);
+	rx_message(PD_MSG_SOP, 0, PD_DATA_SINK_CAP,
+		   PD_ROLE_SINK, PD_ROLE_UFP,
+		   PDO_FIXED(5000, 500, PDO_FIXED_COMM_CAP));
+
+	/*
+	 * Cable identity discovery is attempted 6 times total. 1 was done
+	 * above, so expect 5 more now.
+	 */
+	for (i = 0; i < 5; i++) {
+		TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
+						 0, PD_DATA_VENDOR_DEF,
+						 60 * MSEC),
+			EC_SUCCESS, "%d");
+		mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
+	}
+
+	/* Expect VENDOR_DEF for partner identity, reply NOT_SUPPORTED. */
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 0, PD_DATA_VENDOR_DEF, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+	task_wait_event(10 * MSEC);
+	rx_message(PD_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0,
+		   PD_ROLE_SINK, PD_ROLE_UFP, 0);
+
+	task_wait_event(5 * SECOND);
 
 	/*
 	 * Now connected. Send GET_SOURCE_CAP, to check how error sending
 	 * SOURCE_CAP is handled.
 	 */
-	rx_emsg[PORT0].header = PD_HEADER(PD_CTRL_GET_SOURCE_CAP, PD_ROLE_SINK,
-			PD_ROLE_UFP, 3,
-			0, PD_REV30, 0);
-	rx_emsg[PORT0].len = 0;
-	fake_prl_message_received(PORT0);
-	task_wait_event(10 * MSEC);
-	TEST_EQ(fake_prl_get_last_sent_data_msg_type(PORT0),
-		PD_DATA_SOURCE_CAP, "%d");
+	rx_message(PD_MSG_SOP, PD_CTRL_GET_SOURCE_CAP, 0,
+		   PD_ROLE_SINK, PD_ROLE_UFP, 0);
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 0, PD_DATA_SOURCE_CAP, 20 * MSEC),
+		EC_SUCCESS, "%d");
 
 	/* Simulate error sending SOURCE_CAP. */
-	fake_prl_report_error(PORT0, ERR_TCH_XMIT);
-	task_wait_event(20 * MSEC);
+	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP);
 
 	/*
 	 * Expect SOFT_RESET.
@@ -143,9 +182,11 @@ test_static int test_send_caps_error(void)
 	 * "The PE_SRC_Send_Soft_Reset state Shall be entered from any state
 	 * when ... A Message has not been sent after retries to the Sink"
 	 */
-	TEST_EQ(fake_prl_get_last_sent_ctrl_msg(PORT0),
-		PD_CTRL_SOFT_RESET, "%d");
-	fake_prl_message_sent(PORT0);
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 PD_CTRL_SOFT_RESET, 0, 20 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+
 	task_wait_event(5 * SECOND);
 
 	return EC_SUCCESS;

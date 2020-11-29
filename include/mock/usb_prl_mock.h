@@ -12,18 +12,23 @@
 
 void mock_prl_reset(void);
 
-enum pd_ctrl_msg_type fake_prl_get_last_sent_ctrl_msg(int port);
+int mock_prl_wait_for_tx_msg(int port,
+			     enum tcpm_transmit_type tx_type,
+			     enum pd_ctrl_msg_type ctrl_msg,
+			     enum pd_data_msg_type data_msg,
+			     int timeout);
 
-void fake_prl_clear_last_sent_ctrl_msg(int port);
+enum pd_ctrl_msg_type mock_prl_get_last_sent_ctrl_msg(int port);
 
-enum pd_data_msg_type fake_prl_get_last_sent_data_msg_type(int port);
+enum pd_data_msg_type mock_prl_get_last_sent_data_msg(int port);
 
-void fake_prl_clear_last_sent_data_msg(int port);
+void mock_prl_clear_last_sent_msg(int port);
 
-void fake_prl_message_sent(int port);
+void mock_prl_message_sent(int port);
 
-void fake_prl_message_received(int port);
+void mock_prl_message_received(int port);
 
-void fake_prl_report_error(int port, enum pe_error e);
+void mock_prl_report_error(int port, enum pe_error e,
+			   enum tcpm_transmit_type tx_type);
 
 #endif /* __MOCK_DP_ALT_MODE_MOCK_H */
