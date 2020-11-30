@@ -65,8 +65,6 @@
     <Master_Port value="false">NO</Master_Port>
     <Num_Src_PDOs value="1" />
     <PD_OC_Protection value="false">NO</PD_OC_Protection>
-    <XID_SOP value="0" />
-    <PID_SOP value="65535">FFFF</PID_SOP>
     <Product_Total_Source_Power_mW value="15000">15000 mW</Product_Total_Source_Power_mW>
     <Port_Source_Power_Type value="0">Assured</Port_Source_Power_Type>
     <SrcPdoList>

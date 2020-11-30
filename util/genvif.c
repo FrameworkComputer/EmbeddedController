@@ -31,6 +31,7 @@
 
 #define DEFAULT_MISSING_TID	0xFFFF
 #define DEFAULT_MISSING_PID	0xFFFF
+#define DEFAULT_MISSING_BCD_DEV	0x0000
 
 const uint32_t *src_pdo;
 uint32_t src_pdo_cnt;
@@ -3454,14 +3455,9 @@ static void init_vif_component_pd_dual_role_fields(
  * Fields that are not currently being initialized
  *
  * vif_Component
- *	Data_Capable_As_USB_Host_SOP		booleanFieldType
- *	Data_Capable_As_USB_Device_SOP		booleanFieldType
  *	Product_Type_UFP_SOP			numericFieldType
  *	Product_Type_DFP_SOP			numericFieldType
- *	DFP_VDO_Port_Number			numericFieldType
  *	Modal_Operation_Supported_SOP		booleanFieldType
- *	USB_VID_SOP				numericFieldType
- *	bcdDevice_SOP				numericFieldType
  *	Num_SVIDs_Min_SOP			numericFieldType
  *	Num_SVIDs_Max_SOP			numericFieldType
  *	SVID_Fixed_SOP				booleanFieldType
@@ -3471,10 +3467,47 @@ static void init_vif_component_sop_discovery_fields(
 {
 	char hex_str[10];
 
+	/*
+	 * The fields in this section shall be ignored by Testers unless at
+	 * least one of Responds_To_Discov_SOP_UFP and
+	 * Responds_To_Discov_SOP_DFP is set to YES.
+	 */
+	if (!does_respond_to_discov_sop_ufp() &&
+	    !does_respond_to_discov_sop_dfp())
+		return;
+
 	set_vif_field(&vif_fields[XID_SOP],
 		vif_component_name[XID_SOP],
 		"0",
 		NULL);
+
+	set_vif_field_b(&vif_fields[Data_Capable_As_USB_Host_SOP],
+		vif_component_name[Data_Capable_As_USB_Host_SOP],
+		can_act_as_host());
+
+	set_vif_field_b(&vif_fields[Data_Capable_As_USB_Device_SOP],
+		vif_component_name[Data_Capable_As_USB_Device_SOP],
+		can_act_as_device());
+
+	if (does_respond_to_discov_sop_dfp() &&
+	    is_usb4_supported()) {
+#if defined(CONFIG_USB_PD_PORT_LABEL)
+		set_vif_field_stis(&vif_fields[DFP_VDO_Port_Number],
+			vif_component_name[DFP_VDO_Port_Number],
+			NULL,
+			CONFIG_USB_PD_PORT_LABEL);
+#else
+		set_vif_field_stis(&vif_fields[DFP_VDO_Port_Number],
+			vif_component_name[DFP_VDO_Port_Number],
+			NULL,
+			component_index);
+#endif
+	}
+
+	sprintf(hex_str, "%04X", USB_VID_GOOGLE);
+	set_vif_field_itss(&vif_fields[USB_VID_SOP],
+		vif_product_name[USB_VID_SOP],
+		USB_VID_GOOGLE, hex_str);
 
 	#if defined(CONFIG_USB_PID)
 		sprintf(hex_str, "%04X", CONFIG_USB_PID);
@@ -3486,6 +3519,18 @@ static void init_vif_component_sop_discovery_fields(
 		set_vif_field_itss(&vif_fields[PID_SOP],
 			vif_component_name[PID_SOP],
 			DEFAULT_MISSING_PID, hex_str);
+	#endif
+
+	#if defined(CONFIG_USB_BCD_DEV)
+		sprintf(hex_str, "%04X", CONFIG_USB_BCD_DEV);
+		set_vif_field_itss(&vif_fields[bcdDevice_SOP],
+			vif_component_name[bcdDevice_SOP],
+			CONFIG_USB_BCD_DEV, hex_str);
+	#else
+		sprintf(hex_str, "%04X", DEFAULT_MISSING_BCD_DEV);
+		set_vif_field_itss(&vif_fields[bcdDevice_SOP],
+			vif_component_name[bcdDevice_SOP],
+			DEFAULT_MISSING_BCD_DEV, hex_str);
 	#endif
 }
 
