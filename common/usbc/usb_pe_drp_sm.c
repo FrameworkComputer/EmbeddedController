@@ -4117,10 +4117,6 @@ static void pe_prs_src_snk_wait_source_on_entry(int port)
 
 static void pe_prs_src_snk_wait_source_on_run(int port)
 {
-	int type;
-	int cnt;
-	int ext;
-
 	if (pe[port].ps_source_timer == TIMER_DISABLED &&
 			PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
@@ -4135,20 +4131,28 @@ static void pe_prs_src_snk_wait_source_on_run(int port)
 	 *   1) A PS_RDY Message is received.
 	 */
 	if (pe[port].ps_source_timer != TIMER_DISABLED &&
-			PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
-		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+	    PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		int type = PD_HEADER_TYPE(rx_emsg[port].header);
+		int cnt = PD_HEADER_CNT(rx_emsg[port].header);
+		int ext = PD_HEADER_EXT(rx_emsg[port].header);
 
-		type = PD_HEADER_TYPE(rx_emsg[port].header);
-		cnt = PD_HEADER_CNT(rx_emsg[port].header);
-		ext = PD_HEADER_EXT(rx_emsg[port].header);
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
 		if ((ext == 0) && (cnt == 0) && (type == PD_CTRL_PS_RDY)) {
 			pe[port].ps_source_timer = TIMER_DISABLED;
 
 			PE_SET_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE);
 			set_state_pe(port, PE_SNK_STARTUP);
-			return;
+		} else {
+			int sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
+			/*
+			 * USB PD 3.0 6.8.1:
+			 * Receiving an unexpected message shall be responded
+			 * to with a soft reset message.
+			 */
+			pe_send_soft_reset(port, sop);
 		}
+		return;
 	}
 
 	/*
