@@ -825,7 +825,7 @@ int extpower_is_present(void)
 
 int board_is_c10_gate_enabled(void)
 {
-	return 1;
+	return 0;
 }
 
 void board_enable_s0_rails(int enable)
