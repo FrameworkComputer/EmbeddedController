@@ -39,17 +39,21 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 		gpio_disable_interrupt(GPIO_LID_SW_L);
 		break;
 	case FLASH_PD_FIRMWARE:
+		gpio_disable_interrupt(GPIO_EC_PD_INTA_L);
+		gpio_disable_interrupt(GPIO_EC_PD_INTB_L);
 		CPRINTS("Start flashing PD firmware, lock the SMBUS");
 		break;
 	case FLASH_EC_DONE:
 	case FLASH_BIOS_DONE:
-		CPRINTS("Flash doen, recover the power button, lid");
+		CPRINTS("Flash done, recover the power button, lid");
 		gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);
 		gpio_enable_interrupt(GPIO_ON_OFF_FP_L);
 		gpio_enable_interrupt(GPIO_LID_SW_L);
 		break;
 	case FLASH_PD_DONE:
-		CPRINTS("Flash doen, recover the SMBUS");
+		CPRINTS("Flash done, recover the SMBUS");
+		gpio_enable_interrupt(GPIO_EC_PD_INTA_L);
+		gpio_enable_interrupt(GPIO_EC_PD_INTB_L);
 		break;
 	default:
 		return EC_ERROR_INVAL;
