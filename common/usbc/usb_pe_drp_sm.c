@@ -1064,6 +1064,48 @@ uint8_t pd_get_snk_cap_cnt(int port)
 }
 
 /*
+ * Evaluate a sink PDO for reported FRS support on the given port.
+ *
+ * If the requirements in the PDO are compatible with what we can supply,
+ * FRS will be enabled on the port. If the provided PDO does not specify
+ * FRS requirements (because it is not a fixed PDO) or PD 3.0 and FRS support
+ * are not enabled, do nothing.
+ */
+__maybe_unused static void pe_evaluate_frs_snk_pdo(int port, uint32_t pdo)
+{
+	if (!(IS_ENABLED(CONFIG_USB_PD_REV30) && IS_ENABLED(CONFIG_USB_PD_FRS)))
+		return;
+
+	if ((pdo & PDO_TYPE_MASK) != PDO_TYPE_FIXED) {
+		/*
+		 * PDO must be a fixed supply: either the caller chose the
+		 * wrong PDO or the partner is not compliant.
+		 */
+		CPRINTS("C%d: Sink PDO %x is not a fixed supply,"
+			" cannot support FRS", port, pdo);
+		return;
+	}
+	/*
+	 * TODO(b/14191267): Make sure we can handle the required current
+	 * before we enable FRS.
+	 */
+	if ((pdo & PDO_FIXED_DUAL_ROLE)) {
+		switch (pdo & PDO_FIXED_FRS_CURR_MASK) {
+		case PDO_FIXED_FRS_CURR_NOT_SUPPORTED:
+			break;
+		case PDO_FIXED_FRS_CURR_DFLT_USB_POWER:
+		case PDO_FIXED_FRS_CURR_1A5_AT_5V:
+		case PDO_FIXED_FRS_CURR_3A0_AT_5V:
+			CPRINTS("C%d: Partner FRS is OK: enabling PE support",
+				port);
+			typec_set_source_current_limit(port, TYPEC_RP_3A0);
+			pe_set_frs_enable(port, 1);
+			break;
+		}
+	}
+}
+
+/*
  * Determine if this port may communicate with the cable plug.
  *
  * In both PD 2.0 and 3.0 (2.5.4 SOP'/SOP'' Communication with Cable Plugs):
@@ -2757,10 +2799,7 @@ static void pe_snk_startup_entry(int port)
 		PE_SET_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
 		PE_SET_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON);
 
-		/*
-		 * Set up to get Device Policy Manager to
-		 * request Sink Capabilities
-		 */
+		/* Opportunistically request sink caps for FRS evaluation. */
 		pd_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
 	}
 }
@@ -3108,6 +3147,40 @@ static void pe_snk_ready_entry(int port)
 				get_time().val + PD_T_SINK_REQUEST;
 	} else {
 		pe[port].sink_request_timer = TIMER_DISABLED;
+	}
+
+	/*
+	 * If port partner sink capabilities are known (because we requested
+	 * and got them earlier), evaluate them for FRS support and enable
+	 * if appropriate. If not known, request that we get them through DPM
+	 * which will eventually come back here with known capabilities. Don't
+	 * do anything if FRS is already enabled.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_FRS) &&
+	    !PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_ENABLED)) {
+		if (pd_get_snk_cap_cnt(port) > 0) {
+			/*
+			 * Have partner sink caps. FRS support is only specified
+			 * in fixed PDOs, and "the vSafe5V Fixed Supply Object
+			 * Shall always be the first object" in a capabilities
+			 * message so take the first one.
+			 */
+			const uint32_t *snk_caps = pd_get_snk_caps(port);
+
+			pe_evaluate_frs_snk_pdo(port, snk_caps[0]);
+		} else {
+			/*
+			 * Don't have caps; request them. A sink port "shall
+			 * minimally offer one Power Data Object," so a
+			 * compliant partner that supports sink operation will
+			 * never fail to return sink capabilities in a way which
+			 * would cause us to endlessly request them. Non-DRPs
+			 * will never support FRS and may not support sink
+			 * operation, so avoid requesting caps from them.
+			 */
+			if (pd_is_port_partner_dualrole(port))
+				pd_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
+		}
 	}
 
 	/*
@@ -6169,7 +6242,6 @@ static void pe_dr_get_sink_cap_run(int port)
 	int type;
 	int cnt;
 	int ext;
-	int rev;
 	enum pe_msg_check msg_check;
 	enum tcpm_transmit_type sop;
 
@@ -6179,8 +6251,6 @@ static void pe_dr_get_sink_cap_run(int port)
 	msg_check = pe_sender_response_msg_run(port);
 
 	/*
-	 * Determine if FRS is possible based on the returned Sink Caps
-	 *
 	 * Transition to PE_[SRC,SNK]_Ready when:
 	 *   1) A Sink_Capabilities Message is received
 	 *   2) Or SenderResponseTimer times out
@@ -6196,7 +6266,6 @@ static void pe_dr_get_sink_cap_run(int port)
 		type = PD_HEADER_TYPE(rx_emsg[port].header);
 		cnt = PD_HEADER_CNT(rx_emsg[port].header);
 		ext = PD_HEADER_EXT(rx_emsg[port].header);
-		rev = PD_HEADER_REV(rx_emsg[port].header);
 		sop = PD_HEADER_GET_SOP(rx_emsg[port].header);
 
 		if (ext == 0 && sop == TCPC_TX_SOP) {
@@ -6207,33 +6276,6 @@ static void pe_dr_get_sink_cap_run(int port)
 							sizeof(uint32_t);
 
 				pe_set_snk_caps(port, cap_cnt, payload);
-
-				/*
-				 * Check message to see if we can handle
-				 * FRS for this connection. Multiple PDOs
-				 * may be returned, for FRS only Fixed PDOs
-				 * shall be used, and this shall be the 1st
-				 * PDO returned.
-				 *
-				 * TODO(b/14191267): Make sure we can handle
-				 * the required current before we enable FRS.
-				 */
-				if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
-					(rev > PD_REV20) &&
-					(payload[0] & PDO_FIXED_DUAL_ROLE)) {
-					switch (payload[0] &
-						PDO_FIXED_FRS_CURR_MASK) {
-					case PDO_FIXED_FRS_CURR_NOT_SUPPORTED:
-						break;
-					case PDO_FIXED_FRS_CURR_DFLT_USB_POWER:
-					case PDO_FIXED_FRS_CURR_1A5_AT_5V:
-					case PDO_FIXED_FRS_CURR_3A0_AT_5V:
-						typec_set_source_current_limit(
-							port, TYPEC_RP_3A0);
-						pe_set_frs_enable(port, 1);
-						break;
-					}
-				}
 				pe_set_ready_state(port);
 				return;
 			} else if (cnt == 0 && (type == PD_CTRL_REJECT ||
