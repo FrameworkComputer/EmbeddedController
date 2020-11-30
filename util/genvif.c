@@ -26,7 +26,7 @@
 
 #define VIF_APP_VENDOR_VALUE	"Google"
 #define VIF_APP_NAME_VALUE	"EC GENVIF"
-#define VIF_APP_VERSION_VALUE	"3.0.0.7"
+#define VIF_APP_VERSION_VALUE	"3.0.0.8"
 #define VENDOR_NAME_VALUE	"Google"
 
 #define DEFAULT_MISSING_TID	0xFFFF
@@ -2546,14 +2546,6 @@ static void init_vif_product_fields(struct vif_field_t *vif_fields)
 
 /*********************************************************************
  * Init VIF/Component[] Fields
- *
- * TODO: Generic todo to fill in additional fields as the need presents
- * itself
- *
- * Fields that are not currently being initialized
- *
- * vif_Component
- *	USB4_Router_Index			numericFieldType
  */
 static void init_vif_component_fields(struct vif_field_t *vif_fields,
 			enum bc_1_2_support *bc_support,
@@ -3126,7 +3118,6 @@ static void init_vif_component_usb_type_c_fields(
  * Fields that are not currently being initialized
  *
  * vif_Component
- *	Device_Supports_USB_Data		booleanFieldType
  *	Device_Contains_Captive_Retimer		booleanFieldType
  *	Device_Truncates_DP_For_tDHPResponse	booleanFieldType
  *	Device_Gen1x1_tLinkTurnaround		numericFieldType
@@ -3140,6 +3131,22 @@ static void init_vif_component_usb_data_ufp_fields(
 	 */
 	enum usb_speed ds = USB_GEN11;
 	bool supports_usb_data;
+
+	/*
+	 * The fields in this section shall be ignored by Testers unless
+	 * Connector_Type is set to 1 (Type-B) or 3 (Micro A/B), or
+	 * Connector_Type is set to 2 (Type-C) and Type_C_Can_Act_As_Device
+	 * is set to YES.
+	 *
+	 * NOTE: We currently are always a Connector_Type of 2 (Type-C)
+	 */
+	if (!can_act_as_device())
+		return;
+
+	set_vif_field_b(
+		&vif_fields[Device_Supports_USB_Data],
+		vif_component_name[Device_Supports_USB_Data],
+		true);
 
 	if (!get_vif_field_tag_bool(
 			&vif_fields[Device_Supports_USB_Data],
