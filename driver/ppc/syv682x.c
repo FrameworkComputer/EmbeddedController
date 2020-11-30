@@ -274,7 +274,7 @@ static void syv682x_handle_status_interrupt(int port, int regval)
 	}
 }
 
-static void syv682x_handle_control_4_interrupt(int port, int regval)
+static int syv682x_handle_control_4_interrupt(int port, int regval)
 {
 	/*
 	 * VCONN OC is actually notifying that it is current limiting
@@ -305,13 +305,16 @@ static void syv682x_handle_control_4_interrupt(int port, int regval)
 	 * On VBAT OVP, CC/VCONN are cut. Re-enable before sending the hard
 	 * reset using a PPC re-init. We could reconfigure CC based on flags,
 	 * but these will be updated anyway due to a hard reset so just re-init
-	 * for simplicity.
+	 * for simplicity. If this happens return an error since this isn't
+	 * recoverable.
 	 */
 	if (regval & SYV682X_CONTROL_4_VBAT_OVP) {
 		ppc_prints("VBAT or CC OVP!", port);
 		syv682x_init(port);
 		pd_handle_cc_overvoltage(port);
+		return EC_ERROR_UNKNOWN;
 	}
+	return EC_SUCCESS;
 }
 
 static int syv682x_vbus_sink_enable(int port, int enable)
@@ -457,7 +460,9 @@ static int syv682x_set_vconn(int port, int enable)
 	 * register value to see if there are interrupts to avoid race
 	 * conditions with the interrupt handler
 	 */
-	syv682x_handle_control_4_interrupt(port, regval);
+	rv = syv682x_handle_control_4_interrupt(port, regval);
+	if (rv)
+		return rv;
 
 	regval &= ~(SYV682X_CONTROL_4_VCONN2 | SYV682X_CONTROL_4_VCONN1);
 	if (enable) {
