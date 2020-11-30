@@ -240,6 +240,14 @@
  */
 #define CONFIG_MCHP_DEEP_SLP_DEBUG
 
+#ifdef CONFIG_CHIPSET_DEBUG
+/* if we are built with debug mode flags the chip
+ * will never halt, so never properly sleep
+ * otherwise the ec will stop responding to commands
+ */
+#undef CONFIG_HIBERNATE_DELAY_SEC
+#define CONFIG_HIBERNATE_DELAY_SEC (60*60*24*365)
+#endif /* CONFIG_CHIPSET_DEBUG */
 /*
  * MCHP debug EC code turn off GCC link-time-optimization
  * #define CONFIG_LTO
