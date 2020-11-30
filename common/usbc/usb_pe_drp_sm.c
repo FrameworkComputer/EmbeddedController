@@ -915,6 +915,7 @@ void pe_message_received(int port)
 	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
 
 	PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 void pe_hard_reset_sent(int port)
@@ -954,7 +955,7 @@ void pe_got_hard_reset(int port)
 void pd_got_frs_signal(int port)
 {
 	PE_SET_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_SIGNALED);
-	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE, 0);
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 /*
@@ -1170,6 +1171,7 @@ void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 				get_state_pe(port) == PE_VCS_SEND_PS_RDY_SWAP)
 			) {
 		PE_SET_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
+		task_wake(PD_PORT_TO_TASK_ID(port));
 		return;
 	}
 
@@ -1287,6 +1289,7 @@ void pe_message_sent(int port)
 	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
 
 	PE_SET_FLAG(port, PE_FLAGS_TX_COMPLETE);
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,

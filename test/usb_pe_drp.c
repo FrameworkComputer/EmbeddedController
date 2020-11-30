@@ -87,7 +87,7 @@ test_static int finish_src_discovery(void)
 
 	/* Expect GET_SOURCE_CAP, reply NOT_SUPPORTED. */
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 PD_CTRL_GET_SOURCE_CAP, 0, 20 * MSEC),
+					 PD_CTRL_GET_SOURCE_CAP, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 	task_wait_event(10 * MSEC);
@@ -99,7 +99,7 @@ test_static int finish_src_discovery(void)
 	 * must support this message.
 	 */
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 PD_CTRL_GET_SINK_CAP, 0, 20 * MSEC),
+					 PD_CTRL_GET_SINK_CAP, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 	task_wait_event(10 * MSEC);
@@ -121,7 +121,7 @@ test_static int finish_src_discovery(void)
 
 	/* Expect VENDOR_DEF for partner identity, reply NOT_SUPPORTED. */
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 0, PD_DATA_VENDOR_DEF, 20 * MSEC),
+					 0, PD_DATA_VENDOR_DEF, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 	task_wait_event(10 * MSEC);
@@ -142,7 +142,7 @@ test_static int test_send_caps_error_before_connected(void)
 	mock_tc_port[PORT0].pd_enable = 1;
 	mock_tc_port[PORT0].vconn_src = true;
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 0, PD_DATA_SOURCE_CAP, 20 * MSEC),
+					 0, PD_DATA_SOURCE_CAP, 10 * MSEC),
 		EC_SUCCESS, "%d");
 
 	/*
@@ -157,7 +157,7 @@ test_static int test_send_caps_error_before_connected(void)
 	 * VENDOR_DEF for cable identity, simulate no cable.
 	 */
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
-					 0, PD_DATA_VENDOR_DEF, 20 * MSEC),
+					 0, PD_DATA_VENDOR_DEF, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
 
@@ -166,7 +166,7 @@ test_static int test_send_caps_error_before_connected(void)
 	 * got ERR_TCH_XMIT. Now simulate success (ie GoodCRC).
 	 */
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 0, PD_DATA_SOURCE_CAP, 120 * MSEC),
+					 0, PD_DATA_SOURCE_CAP, 110 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 	task_wait_event(10 * MSEC);
@@ -183,11 +183,11 @@ test_static int test_send_caps_error_before_connected(void)
 	rx_message(PD_MSG_SOP, 0, PD_DATA_REQUEST,
 		   PD_ROLE_SINK, PD_ROLE_UFP, RDO_FIXED(1, 500, 500, 0));
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 PD_CTRL_ACCEPT, 0, 20 * MSEC),
+					 PD_CTRL_ACCEPT, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 PD_CTRL_PS_RDY, 0, 20 * MSEC),
+					 PD_CTRL_PS_RDY, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 
@@ -209,7 +209,7 @@ test_static int test_send_caps_error_when_connected(void)
 	mock_tc_port[PORT0].pd_enable = 1;
 	mock_tc_port[PORT0].vconn_src = true;
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 0, PD_DATA_SOURCE_CAP, 20 * MSEC),
+					 0, PD_DATA_SOURCE_CAP, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 	task_wait_event(10 * MSEC);
@@ -218,11 +218,11 @@ test_static int test_send_caps_error_when_connected(void)
 	rx_message(PD_MSG_SOP, 0, PD_DATA_REQUEST,
 		   PD_ROLE_SINK, PD_ROLE_UFP, RDO_FIXED(1, 500, 500, 0));
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 PD_CTRL_ACCEPT, 0, 20 * MSEC),
+					 PD_CTRL_ACCEPT, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 PD_CTRL_PS_RDY, 0, 20 * MSEC),
+					 PD_CTRL_PS_RDY, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 
@@ -235,7 +235,7 @@ test_static int test_send_caps_error_when_connected(void)
 	 * thing).
 	 */
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
-					 0, PD_DATA_VENDOR_DEF, 20 * MSEC),
+					 0, PD_DATA_VENDOR_DEF, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
 
@@ -250,7 +250,7 @@ test_static int test_send_caps_error_when_connected(void)
 	rx_message(PD_MSG_SOP, PD_CTRL_GET_SOURCE_CAP, 0,
 		   PD_ROLE_SINK, PD_ROLE_UFP, 0);
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 0, PD_DATA_SOURCE_CAP, 20 * MSEC),
+					 0, PD_DATA_SOURCE_CAP, 10 * MSEC),
 		EC_SUCCESS, "%d");
 
 	/* Simulate error sending SOURCE_CAP. */
@@ -264,7 +264,7 @@ test_static int test_send_caps_error_when_connected(void)
 	 * when ... A Message has not been sent after retries to the Sink"
 	 */
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 PD_CTRL_SOFT_RESET, 0, 20 * MSEC),
+					 PD_CTRL_SOFT_RESET, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 
