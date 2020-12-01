@@ -61,6 +61,10 @@
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
 #define CONFIG_I2C_XFER_BOARD_CALLBACK
 
+/* The board needs 100ms for VBUS_C[0|1]_BC12 to drop to lower VvbusUVLO */
+#undef CONFIG_BC12_MAX14637_DELAY_FROM_OFF_TO_ON_MS
+#define CONFIG_BC12_MAX14637_DELAY_FROM_OFF_TO_ON_MS 100
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
