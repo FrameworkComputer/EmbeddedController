@@ -656,10 +656,10 @@ __override void ocpc_get_pid_constants(int *kp, int *kp_div,
 				       int *kd, int *kd_div)
 {
 	*kp = 3;
-	*kp_div = 14;
+	*kp_div = 20;
 
 	*ki = 3;
-	*ki_div = 500;
+	*ki_div = 125;
 
 	*kd = 4;
 	*kd_div = 40;
