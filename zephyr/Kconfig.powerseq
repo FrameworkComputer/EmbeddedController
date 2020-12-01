@@ -7,8 +7,15 @@ menuconfig PLATFORM_EC_POWERSEQ
 	depends on AP
 	help
 	  Enable shimming the platform/ec AP power sequencing code.
+	  This config implies HAS_TASK_CHIPSET.
 
 if PLATFORM_EC_POWERSEQ
+
+menuconfig TASK_CHIPSET_STACK_SIZE
+	hex "The size of the chipset task stack size"
+	default 0x200
+	help
+	  The stack size of the shipset task.
 
 menuconfig PLATFORM_EC_POWERSEQ_INTEL
 	bool "Enable shimming common Intel power sequencing code"

@@ -13,6 +13,7 @@ menuconfig PLATFORM_EC
 if PLATFORM_EC
 
 rsource "Kconfig.powerseq"
+rsource "Kconfig.tasks"
 
 # Below is a hack to use CONFIG_ZEPHYR in platform/ec code before
 # config.h has been included.  There is some tricky ordering in some
@@ -84,9 +85,15 @@ menuconfig PLATFORM_EC_KEYBOARD
 	  the resulting input to the AP over the host interface. This consists
 	  of a keyboard-scanning task which provides key scans via it calling
 	  keyboard_state_changed() (for i8042) or its client calling
-	  keyboard_scan_get_state() (for MKBP).
+	  keyboard_scan_get_state() (for MKBP). This implies HAS_TASK_KEYSCAN.
 
 if PLATFORM_EC_KEYBOARD
+
+config TASK_KEYSCAN_STACK_SIZE
+	hex "keyscan task stack size"
+	default 0x200
+	help
+	  The size of the keyboard scan task stack.
 
 choice "Protocol select"
 	prompt "Select the keyboard protocol to use"
@@ -145,11 +152,21 @@ config PLATFORM_EC_I2C
 	  should make shimming other platform/ec modules which rely on i2c
 	  communication "just work" without requiring any further code changes.
 
-config PLATFORM_EC_HOSTCMD
+menuconfig PLATFORM_EC_HOSTCMD
 	bool "Enable host commands shim"
 	default y if AP
 	help
 	  Enable the host commands shim in platform/ec.
+
+if PLATFORM_EC_HOSTCMD
+
+config TASK_HOSTCMD_STACK_SIZE
+	hex "hostcmd task stack size"
+	default 0x200
+	help
+	  The size of the host command task stack.
+
+endif # PLATFORM_EC_HOSTCMD
 
 config PLATFORM_EC_LID_SWITCH
 	bool "Enable the lid switch module"

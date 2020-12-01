@@ -1,0 +1,35 @@
+# Copyright 2020 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config HAS_TASK_KEYPROTO
+	bool "Whether or not the keyproto task should be run."
+	default n
+	help
+	  This turns on the keyproto task.
+
+if HAS_TASK_KEYPROTO
+
+config TASK_KEYPROTO_STACK_SIZE
+	hex "keyproto task stack size"
+	default 0x200
+	help
+	  The stack size of the keyproto task.
+
+endif # HAS_TASK_KEYPROTO
+
+config HAS_TASK_POWERBTN
+	bool "Whether or not the power button task should be run."
+	default n
+	help
+	  This turns on the power button task.
+
+if HAS_TASK_POWERBTN
+
+config TASK_POWERBTN_STACK_SIZE
+	hex "powerbtn task stack size"
+	default 0x200
+	help
+	  The stack size of the power button task.
+
+endif # HAS_TASK_POWERBTN

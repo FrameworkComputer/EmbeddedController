@@ -7,18 +7,12 @@
 #include <init.h>
 #include <sys/atomic.h>
 
-#include "shimmed_tasks.h"
+#include "common.h"
 #include "task.h"
 
 /* We need to ensure that is one lower priority for the deferred task */
 BUILD_ASSERT(CONFIG_NUM_PREEMPT_PRIORITIES + 1 >= TASK_ID_COUNT,
 	     "Must increase number of available preempt priorities");
-
-/* Ensure all of the manually defined HAS_TASK_ defines are present */
-#define CROS_EC_TASK(name, ...) \
-	BUILD_ASSERT(HAS_TASK_##name, "Must define HAS_TASK_*");
-CROS_EC_TASK_LIST
-#undef CROS_EC_TASK
 
 /* Declare all task stacks here */
 #define CROS_EC_TASK(name, e, p, size) \
