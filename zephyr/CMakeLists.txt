@@ -35,6 +35,8 @@ zephyr_include_directories_ifdef(
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
 
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/base32.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
+                                                "${PLATFORM_EC}/common/chipset.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ESPI    "${PLATFORM_EC}/common/espi.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/extpower_common.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_EXTPOWER_GPIO
