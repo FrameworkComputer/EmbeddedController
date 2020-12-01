@@ -225,6 +225,9 @@ int command_enable_pmu(int argc, char **argv)
 		break;
 	}
 
+	cache_invalidate_icache();
+	cache_flush_dcache();
+
 	/* enable all PMU */
 	set_csr(CSR_PMU_MPMUCTR,
 		CSR_PMU_MPMUCTR_C | CSR_PMU_MPMUCTR_I |
