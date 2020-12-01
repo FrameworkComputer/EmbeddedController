@@ -229,6 +229,8 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, baseboard_chipset_shutdown,
 
 void board_hibernate_late(void)
 {
+	volatile uint32_t busy = 0;
+
 	/* Disable any pull-ups on C0 and C1 interrupt lines */
 	gpio_set_flags(GPIO_USB_C0_INT_ODL, GPIO_INPUT);
 	gpio_set_flags(GPIO_USB_C1_INT_ODL, GPIO_INPUT);
@@ -238,6 +240,24 @@ void board_hibernate_late(void)
 	 * the EC.
 	 */
 	gpio_set_level(GPIO_EN_SLP_Z, 1);
+
+	/*
+	 * Interrupts are disabled at this point, so busy-loop to consume some
+	 * time (something on the order of at least 1 second, depending on EC
+	 * chip being used)
+	 */
+	while (busy < 100000)
+		busy++;
+
+	/*
+	 * Still awake despite turning on zombie state?  Reset with AP off is
+	 * the best we can do in this situation.
+	 */
+	system_reset(SYSTEM_RESET_LEAVE_AP_OFF);
+
+	/* Await our reset */
+	while (1)
+		;
 }
 
 int board_is_i2c_port_powered(int port)
