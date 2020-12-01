@@ -133,17 +133,11 @@ const struct fan_conf fan_conf_0 = {
 	.enable_gpio = GPIO_EN_PP5000_FAN,
 };
 
-/*
- * Fan specs from datasheet:
- * Max speed 5900 rpm (+/- 7%), minimum duty cycle 30%.
- * Minimum speed not specified by RPM. Set minimum RPM to max speed (with
- * margin) x 30%.
- *    5900 x 1.07 x 0.30 = 1894, round up to 1900
- */
+/* Default */
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 1900,
-	.rpm_start = 1900,
-	.rpm_max = 5900,
+	.rpm_min = 3000,
+	.rpm_start = 3000,
+	.rpm_max = 10000,
 };
 
 const struct fan_t fans[FAN_CH_COUNT] = {
@@ -156,11 +150,6 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 /******************************************************************************/
 /* EC thermal management configuration */
 
-/*
- * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
- * 130 C.  However, sensor is located next to DDR, so we need to use the lower
- * DDR temperature limit (85 C)
- */
 const static struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
@@ -169,7 +158,7 @@ const static struct ec_thermal_config thermal_cpu = {
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
 	},
-	.temp_fan_off = C_TO_K(35),
+	.temp_fan_off = C_TO_K(15),
 	.temp_fan_max = C_TO_K(50),
 };
 
@@ -177,12 +166,6 @@ const static struct ec_thermal_config thermal_cpu = {
  * Inductor limits - used for both charger and PP3300 regulator
  *
  * Need to use the lower of the charger IC, PP3300 regulator, and the inductors
- *
- * Charger max recommended temperature 100C, max absolute temperature 125C
- * PP3300 regulator: operating range -40 C to 145 C
- *
- * Inductors: limit of 125c
- * PCB: limit is 80c
  */
 const static struct ec_thermal_config thermal_inductor = {
 	.temp_host = {
@@ -192,7 +175,7 @@ const static struct ec_thermal_config thermal_inductor = {
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
 	},
-	.temp_fan_off = C_TO_K(40),
+	.temp_fan_off = C_TO_K(15),
 	.temp_fan_max = C_TO_K(55),
 };
 
