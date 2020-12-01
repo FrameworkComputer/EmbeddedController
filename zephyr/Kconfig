@@ -172,6 +172,13 @@ config PLATFORM_EC_I2C
 	  should make shimming other platform/ec modules which rely on i2c
 	  communication "just work" without requiring any further code changes.
 
+config PLATFORM_EC_PORT80
+	bool "Enable the port80 module"
+	default y if AP_X86 && PLATFORM_EC_POWERSEQ
+	help
+	  Enable the port80 module, which will buffer calls to port_80_write and
+	  occasionally print when there's new writes.
+
 config PLATFORM_EC_POWER_BUTTON
 	bool "Enable the power button module"
 	depends on PLATFORM_EC_HOSTCMD
