@@ -657,6 +657,7 @@ enum host_event_code {
 	/* WoV */
 	EC_HOST_EVENT_WOV = 31,
 
+#ifndef CONFIG_HOST_EVENT64
 	/*
 	 * The high bit of the event mask is not used as a host event code.  If
 	 * it reads back as set, then the entire event mask should be
@@ -665,6 +666,23 @@ enum host_event_code {
 	 * not initialized on the EC, or improperly configured on the host.
 	 */
 	EC_HOST_EVENT_INVALID = 32
+
+#else
+
+	/* UCSI done */
+	EC_HOST_EVENT_UCSI = 33,
+
+	/* BTP fundtion: update battery capacity */
+	EC_HOST_EVENT_BATT_BTP = 34,
+
+	/* For modern satndby */
+	EC_HOST_EVENT_PB_RELEASE = 51,
+
+	/* high bit as invalid bit */
+	EC_HOST_EVENT_INVALID = 64
+
+#endif /* CONFIG_HOST_EVENT64 */
+
 };
 /* Host event mask */
 #define EC_HOST_EVENT_MASK(event_code) BIT_ULL((event_code) - 1)
