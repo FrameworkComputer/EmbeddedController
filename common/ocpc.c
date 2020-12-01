@@ -321,7 +321,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	if (ocpc->last_vsys != OCPC_UNINIT) {
 		error = i_ma - batt.current;
 		/* Add some hysteresis. */
-		if (ABS(error) < i_step)
+		if (ABS(error) < (i_step / 2))
 			error = 0;
 
 		/* Make a note if we're significantly over target. */
