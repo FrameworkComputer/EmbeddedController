@@ -128,8 +128,8 @@ GPIO(EC_I2C7_EEPROM_SDA,       PIN(B, 2), GPIO_INPUT)
 GPIO(EC_BATT_PRES_ODL, 		PIN(E, 1), GPIO_INPUT)
 
 /* LED */
-GPIO(LED_1_L,	 PIN(C, 4), GPIO_OUT_HIGH)	/* Battery - Green LED */
-GPIO(LED_2_L,	 PIN(C, 3), GPIO_OUT_HIGH)	/* Battery - Red LED */
+GPIO(LED_1_L,	 PIN(C, 4), GPIO_OUT_HIGH)	/* Battery - White LED */
+GPIO(LED_2_L,	 PIN(C, 3), GPIO_OUT_HIGH)	/* Battery - Amber LED */
 GPIO(LED_3_L,	 PIN(C, 2), GPIO_OUT_HIGH)	/* Power - White LED */
 
 /* Alternate functions GPIO definitions */
