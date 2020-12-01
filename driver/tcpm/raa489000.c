@@ -14,6 +14,10 @@
 #include "tcpci.h"
 #include "tcpm.h"
 
+#define DEFAULT_R_AC 20
+#define R_AC CONFIG_CHARGER_SENSE_RESISTOR_AC
+#define AC_CURRENT_TO_REG(CUR) ((CUR) * R_AC / DEFAULT_R_AC)
+
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
@@ -177,8 +181,13 @@ int raa489000_init(int port)
 		board_set_active_charge_port(port);
 	}
 
+	/* Check value according to current sense by project, set ceiling
+	 * value when it has remainder to avoid insufficient current.
+	 */
+	regval = AC_CURRENT_TO_REG(RAA489000_VBUS_CURRENT_TARGET_VALUE) +
+		RAA489000_VBUS_CURRENT_TARGET_VALUE % (DEFAULT_R_AC/R_AC);
 	rv = tcpc_write16(port, RAA489000_VBUS_CURRENT_TARGET,
-				RAA489000_VBUS_CURRENT_TARGET_VALUE);
+				regval);
 	if (rv)
 		CPRINTS("c%d: failed to set target current", port);
 
