@@ -397,8 +397,8 @@ static enum ec_error_list bq25710_set_input_current_limit(int chgnum,
 			  BQ25710_CHARGE_IIN_BIT_0FFSET);
 }
 
-static enum ec_error_list bq25710_get_input_current(int chgnum,
-						    int *input_current)
+static enum ec_error_list bq25710_get_input_current_limit(int chgnum,
+							  int *input_current)
 {
 	int rv, reg;
 
@@ -670,7 +670,7 @@ const struct charger_drv bq25710_drv = {
 	.discharge_on_ac = &bq25710_discharge_on_ac,
 	.get_vbus_voltage = &bq25710_get_vbus_voltage,
 	.set_input_current_limit = &bq25710_set_input_current_limit,
-	.get_input_current = &bq25710_get_input_current,
+	.get_input_current_limit = &bq25710_get_input_current_limit,
 	.manufacturer_id = &bq25710_manufacturer_id,
 	.device_id = &bq25710_device_id,
 	.get_option = &bq25710_get_option,

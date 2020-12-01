@@ -56,8 +56,8 @@ static enum ec_error_list bq24715_set_input_current_limit(int chgnum,
 			 CURRENT_TO_REG(input_current, R_AC));
 }
 
-static enum ec_error_list bq24715_get_input_current(int chgnum,
-						    int *input_current)
+static enum ec_error_list bq24715_get_input_current_limit(int chgnum,
+							  int *input_current)
 {
 	int rv;
 	int reg;
@@ -244,7 +244,7 @@ const struct charger_drv bq24715_drv = {
 	.set_voltage = &bq24715_set_voltage,
 	.discharge_on_ac = &bq24715_discharge_on_ac,
 	.set_input_current_limit = &bq24715_set_input_current_limit,
-	.get_input_current = &bq24715_get_input_current,
+	.get_input_current_limit = &bq24715_get_input_current_limit,
 	.manufacturer_id = &bq24715_manufacturer_id,
 	.device_id = &bq24715_device_id,
 	.get_option = &bq24715_get_option,

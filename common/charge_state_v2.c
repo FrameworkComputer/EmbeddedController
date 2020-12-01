@@ -2449,7 +2449,7 @@ int charge_set_input_current_limit(int ma, int mv)
 
 		int prev_input = 0;
 
-		charger_get_input_current(chgnum, &prev_input);
+		charger_get_input_current_limit(chgnum, &prev_input);
 
 #ifdef CONFIG_USB_POWER_DELIVERY
 #if ((PD_MAX_POWER_MW * 1000) / PD_MAX_VOLTAGE_MV != PD_MAX_CURRENT_MA)

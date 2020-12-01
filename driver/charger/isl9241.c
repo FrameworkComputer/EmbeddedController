@@ -102,8 +102,8 @@ static enum ec_error_list isl9241_set_input_current_limit(int chgnum,
 	return isl9241_write(chgnum, ISL9241_REG_ADAPTER_CUR_LIMIT2, reg);
 }
 
-static enum ec_error_list isl9241_get_input_current(int chgnum,
-						    int *input_current)
+static enum ec_error_list isl9241_get_input_current_limit(int chgnum,
+							  int *input_current)
 {
 	int rv;
 
@@ -539,7 +539,7 @@ const struct charger_drv isl9241_drv = {
 	.discharge_on_ac = &isl9241_discharge_on_ac,
 	.get_vbus_voltage = &isl9241_get_vbus_voltage,
 	.set_input_current_limit = &isl9241_set_input_current_limit,
-	.get_input_current = &isl9241_get_input_current,
+	.get_input_current_limit = &isl9241_get_input_current_limit,
 	.manufacturer_id = &isl9241_manufacturer_id,
 	.device_id = &isl9241_device_id,
 	.get_option = &isl9241_get_option,

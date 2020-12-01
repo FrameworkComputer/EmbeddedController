@@ -634,8 +634,8 @@ static enum ec_error_list bd9995x_set_input_current_limit(int chgnum,
 				BD9995X_BAT_CHG_COMMAND);
 }
 
-static enum ec_error_list bd9995x_get_input_current(int chgnum,
-						    int *input_current)
+static enum ec_error_list bd9995x_get_input_current_limit(int chgnum,
+							  int *input_current)
 {
 	return ch_raw_read16(chgnum, BD9995X_CMD_CUR_ILIM_VAL, input_current,
 			     BD9995X_EXTENDED_COMMAND);
@@ -1732,7 +1732,7 @@ const struct charger_drv bd9995x_drv = {
 	.discharge_on_ac = &bd9995x_discharge_on_ac,
 	.get_vbus_voltage = &bd9995x_get_vbus_voltage,
 	.set_input_current_limit = &bd9995x_set_input_current_limit,
-	.get_input_current = &bd9995x_get_input_current,
+	.get_input_current_limit = &bd9995x_get_input_current_limit,
 	.manufacturer_id = &bd9995x_manufacturer_id,
 	.device_id = &bd9995x_device_id,
 	.get_option = &bd9995x_get_option,

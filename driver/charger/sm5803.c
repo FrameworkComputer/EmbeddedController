@@ -1277,6 +1277,20 @@ static enum ec_error_list sm5803_set_input_current_limit(int chgnum,
 	return chg_write8(chgnum, SM5803_REG_CHG_ILIM, reg);
 }
 
+static enum ec_error_list sm5803_get_input_current_limit(int chgnum,
+							 int *input_current)
+{
+	int rv;
+	int val;
+
+	rv = chg_read8(chgnum, SM5803_REG_CHG_ILIM, &val);
+	if (rv)
+		return rv;
+
+	*input_current = SM5803_REG_TO_CURRENT(val & SM5803_CHG_ILIM_RAW);
+	return rv;
+}
+
 static enum ec_error_list sm5803_get_input_current(int chgnum,
 						   int *input_current)
 {
@@ -1533,7 +1547,7 @@ static int sm5803_ramp_get_current_limit(int chgnum)
 	int rv;
 	int input_current = 0;
 
-	rv = sm5803_get_input_current(chgnum, &input_current);
+	rv = sm5803_get_input_current_limit(chgnum, &input_current);
 
 	return rv ? -1 : input_current;
 }
@@ -1601,6 +1615,7 @@ const struct charger_drv sm5803_drv = {
 	.discharge_on_ac = &sm5803_discharge_on_ac,
 	.get_vbus_voltage = &sm5803_get_vbus_voltage,
 	.set_input_current_limit = &sm5803_set_input_current_limit,
+	.get_input_current_limit = &sm5803_get_input_current_limit,
 	.get_input_current = &sm5803_get_input_current,
 	.device_id = &sm5803_get_dev_id,
 	.get_option = &sm5803_get_option,

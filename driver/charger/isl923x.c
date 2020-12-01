@@ -214,30 +214,55 @@ static int get_amon_bmon(int chgnum, enum isl923x_amon_bmon amon,
 }
 #endif
 
-static enum ec_error_list isl923x_get_input_current(int chgnum,
+static enum ec_error_list isl923x_get_input_current_limit(int chgnum,
+							  int *input_current)
+{
+	int rv;
+	int regval;
+
+	rv = raw_read16(chgnum, ISL923X_REG_ADAPTER_CURRENT_LIMIT1, &regval);
+	if (rv)
+		return rv;
+
+	*input_current = AC_REG_TO_CURRENT(regval);
+	return EC_SUCCESS;
+}
+
+#ifdef CONFIG_CHARGER_RAA489000
+static enum ec_error_list raa489000_get_input_current(int chgnum,
 						    int *input_current)
 {
 	int rv;
 	int regval;
 	int reg;
 
-	if (IS_ENABLED(CONFIG_CHARGER_RAA489000))
-		reg = RAA489000_REG_ADC_INPUT_CURRENT;
-	else
-		reg = ISL923X_REG_ADAPTER_CURRENT_LIMIT1;
+	reg = RAA489000_REG_ADC_INPUT_CURRENT;
 
 	rv = raw_read16(chgnum, reg, &regval);
 	if (rv)
 		return rv;
 
-	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
-		/* LSB is 22.2mA */
-		regval *= 22;
-	}
+	/* LSB is 22.2mA */
+	regval *= 22;
 
 	*input_current = AC_REG_TO_CURRENT(regval);
 	return EC_SUCCESS;
 }
+#elif defined(CONFIG_CMD_CHARGER_ADC_AMON_BMON)
+static enum ec_error_list isl923x_get_input_current(int chgnum,
+						    int *input_current)
+{
+	int rv, adc;
+
+	rv = get_amon_bmon(chgnum, AMON, MON_CHARGE, &adc);
+	if (rv)
+		return rv;
+
+	*input_current = adc / CONFIG_CHARGER_SENSE_RESISTOR_AC;
+
+	return EC_SUCCESS;
+}
+#endif /* CONFIG_CHARGER_RAA489000 */
 
 #if defined(CONFIG_CHARGER_OTG) && defined(CHARGER_ISL9238X)
 static enum ec_error_list isl923x_enable_otg_power(int chgnum, int enabled)
@@ -913,7 +938,7 @@ static int isl923x_ramp_get_current_limit(int chgnum)
 	 */
 	int input_current;
 
-	if (isl923x_get_input_current(chgnum, &input_current) != EC_SUCCESS)
+	if (isl923x_get_input_current_limit(chgnum, &input_current))
 		return 0;
 	return input_current;
 }
@@ -1282,7 +1307,12 @@ const struct charger_drv isl923x_drv = {
 	.discharge_on_ac = &isl923x_discharge_on_ac,
 	.get_vbus_voltage = &isl923x_get_vbus_voltage,
 	.set_input_current_limit = &isl923x_set_input_current_limit,
+	.get_input_current_limit = &isl923x_get_input_current_limit,
+#ifdef CONFIG_CHARGER_RAA489000
+	.get_input_current = &raa489000_get_input_current,
+#elif defined(CONFIG_CMD_CHARGER_ADC_AMON_BMON)
 	.get_input_current = &isl923x_get_input_current,
+#endif
 	.manufacturer_id = &isl923x_manufacturer_id,
 	.device_id = &isl923x_device_id,
 	.get_option = &isl923x_get_option,

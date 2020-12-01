@@ -712,8 +712,8 @@ static enum ec_error_list rt946x_set_input_current_limit(int chgnum,
 		reg_iin << RT946X_SHIFT_AICR);
 }
 
-static enum ec_error_list rt946x_get_input_current(int chgnum,
-						   int *input_current)
+static enum ec_error_list rt946x_get_input_current_limit(int chgnum,
+							 int *input_current)
 {
 	int rv;
 	int val = 0;
@@ -1061,7 +1061,7 @@ static int rt946x_ramp_get_current_limit(int chgnum)
 	int rv;
 	int input_current = 0;
 
-	rv = rt946x_get_input_current(chgnum, &input_current);
+	rv = rt946x_get_input_current_limit(chgnum, &input_current);
 
 	return rv ? -1 : input_current;
 }
@@ -1341,7 +1341,7 @@ int rt946x_get_adc(enum rt946x_adc_in_sel adc_sel, int *adc_val)
 		goto out;
 
 	if (adc_sel == MT6370_ADC_IBUS) {
-		rv = charger_get_input_current(CHARGER_SOLO, &aicr);
+		rv = charger_get_input_current_limit(CHARGER_SOLO, &aicr);
 		if (rv)
 			goto out;
 	}
@@ -1896,7 +1896,7 @@ const struct charger_drv rt946x_drv = {
 	.discharge_on_ac = &rt946x_discharge_on_ac,
 	.get_vbus_voltage = &rt946x_get_vbus_voltage,
 	.set_input_current_limit = &rt946x_set_input_current_limit,
-	.get_input_current = &rt946x_get_input_current,
+	.get_input_current_limit = &rt946x_get_input_current_limit,
 	.manufacturer_id = &rt946x_manufacturer_id,
 	.device_id = &rt946x_device_id,
 	.get_option = &rt946x_get_option,

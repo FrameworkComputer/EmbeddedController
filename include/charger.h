@@ -285,10 +285,17 @@ enum ec_error_list charger_set_input_current_limit(int chgnum,
  */
 enum ec_error_list charger_get_input_current_limit(int chgnum,
 						   int *input_current);
-/*
+
+/**
  * Get actual input current value.
+ *
  * Actual input current may be less than the desired input current set
  * due to current ratings of the wall adapter.
+ *
+ * @param chgnum		charger IC index
+ * @param input_current		The input current in mA.
+ *
+ * @return EC_SUCCESS on success, an error otherwise.
  */
 enum ec_error_list charger_get_input_current(int chgnum, int *input_current);
 
