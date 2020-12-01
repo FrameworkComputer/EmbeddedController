@@ -4496,6 +4496,8 @@
 #undef CONFIG_BC12_DETECT_PI3USB9281
 /* Number of Pericom PI3USB9281 chips present in system */
 #undef CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT
+/* The delay in ms from power off to power on for MAX14637 */
+#define CONFIG_BC12_MAX14637_DELAY_FROM_OFF_TO_ON_MS 1
 
 
 /* Enable USB serial console module. */
