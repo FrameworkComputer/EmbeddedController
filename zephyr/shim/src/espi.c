@@ -196,12 +196,12 @@ int espi_vw_get_wire(enum espi_vw_signal signal)
 
 int espi_vw_enable_wire_int(enum espi_vw_signal signal)
 {
-	atomic_or(signal_interrupt_enabled, signal_to_interrupt_bit(signal));
+	atomic_or(&signal_interrupt_enabled, signal_to_interrupt_bit(signal));
 	return 0;
 }
 
 int espi_vw_disable_wire_int(enum espi_vw_signal signal)
 {
-	atomic_and(signal_interrupt_enabled, ~signal_to_interrupt_bit(signal));
+	atomic_and(&signal_interrupt_enabled, ~signal_to_interrupt_bit(signal));
 	return 0;
 }
