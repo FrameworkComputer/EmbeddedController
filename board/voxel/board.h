@@ -37,6 +37,12 @@
 #define CONFIG_LED_ONOFF_STATES
 
 /* Keyboard features */
+/*
+ * Disable VOL up/down when tablet mode.
+ * TODO(b/170966461): Re-enable Vivaldi keyboard once
+ * 8042 and MKBP drivers can coexist.
+ */
+#undef CONFIG_KEYBOARD_VIVALDI
 
 /* Sensors */
 /* BMI160 Base accel/gyro */
