@@ -88,6 +88,9 @@
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
+enum isl923x_amon_bmon { AMON, BMON };
+enum isl923x_mon_dir { MON_CHARGE = 0, MON_DISCHARGE = 1 };
+
 static int learn_mode;
 
 /* Mutex for CONTROL1 register, that can be updated from multiple tasks. */
@@ -163,6 +166,53 @@ static enum ec_error_list isl923x_set_input_current(int chgnum,
 
 	return raw_write16(chgnum, ISL923X_REG_ADAPTER_CURRENT2, reg);
 }
+
+#ifdef CONFIG_CMD_CHARGER_ADC_AMON_BMON
+static int get_amon_bmon(int chgnum, enum isl923x_amon_bmon amon,
+			 enum isl923x_mon_dir direction, int *adc)
+{
+	int reg, ret;
+
+	if (IS_ENABLED(CHARGER_ISL9238X)) {
+		ret = raw_read16(chgnum, ISL9238_REG_CONTROL3, &reg);
+		if (ret)
+			return ret;
+
+		/* Switch direction */
+		if (direction)
+			reg |= ISL9238_C3_AMON_BMON_DIRECTION;
+		else
+			reg &= ~ISL9238_C3_AMON_BMON_DIRECTION;
+		ret = raw_write16(chgnum, ISL9238_REG_CONTROL3, reg);
+		if (ret)
+			return ret;
+	}
+
+	mutex_lock(&control1_mutex);
+
+	ret = raw_read16(chgnum, ISL923X_REG_CONTROL1, &reg);
+	if (!ret) {
+		/* Switch between AMON/BMON */
+		if (amon == AMON)
+			reg &= ~ISL923X_C1_SELECT_BMON;
+		else
+			reg |= ISL923X_C1_SELECT_BMON;
+
+		/* Enable monitor */
+		reg &= ~ISL923X_C1_DISABLE_MON;
+		ret = raw_write16(chgnum, ISL923X_REG_CONTROL1, reg);
+	}
+
+	mutex_unlock(&control1_mutex);
+
+	if (ret)
+		return ret;
+
+	*adc = adc_read_channel(ADC_AMON_BMON);
+
+	return ret;
+}
+#endif
 
 static enum ec_error_list isl923x_get_input_current(int chgnum,
 						    int *input_current)
@@ -958,52 +1008,18 @@ DECLARE_CONSOLE_COMMAND(psys, console_command_psys,
 #endif /* CONFIG_CHARGER_PSYS */
 
 #ifdef CONFIG_CMD_CHARGER_ADC_AMON_BMON
-enum amon_bmon { AMON, BMON };
-
-static int print_amon_bmon(int chgnum, enum amon_bmon amon,
-					  int direction, int resistor)
+static int print_amon_bmon(int chgnum, enum isl923x_amon_bmon amon,
+			   enum isl923x_mon_dir direction, int resistor)
 {
-	int adc, curr, reg, ret;
+	int ret, adc, curr;
 
-	if (IS_ENABLED(CHARGER_ISL9238X)) {
-		ret = raw_read16(chgnum, ISL9238_REG_CONTROL3, &reg);
-		if (ret)
-			return ret;
-
-		/* Switch direction */
-		if (direction)
-			reg |= ISL9238_C3_AMON_BMON_DIRECTION;
-		else
-			reg &= ~ISL9238_C3_AMON_BMON_DIRECTION;
-		ret = raw_write16(chgnum, ISL9238_REG_CONTROL3, reg);
-		if (ret)
-			return ret;
-	}
-
-	mutex_lock(&control1_mutex);
-
-	ret = raw_read16(chgnum, ISL923X_REG_CONTROL1, &reg);
-	if (!ret) {
-		/* Switch between AMON/BMON */
-		if (amon == AMON)
-			reg &= ~ISL923X_C1_SELECT_BMON;
-		else
-			reg |= ISL923X_C1_SELECT_BMON;
-
-		/* Enable monitor */
-		reg &= ~ISL923X_C1_DISABLE_MON;
-		ret = raw_write16(chgnum, ISL923X_REG_CONTROL1, reg);
-	}
-
-	mutex_unlock(&control1_mutex);
-
+	ret = get_amon_bmon(chgnum, amon, direction, &adc);
 	if (ret)
 		return ret;
 
-	adc = adc_read_channel(ADC_AMON_BMON);
 	curr = adc / resistor;
 	ccprintf("%cMON(%sharging): %d uV, %d mA\n", amon == AMON ? 'A' : 'B',
-		direction ? "Disc" : "C", adc, curr);
+		direction == MON_DISCHARGE ? "Disc" : "C", adc, curr);
 
 	return ret;
 }
@@ -1037,23 +1053,23 @@ static int console_command_amon_bmon(int argc, char **argv)
 
 	if (print_ac) {
 		if (print_charge)
-			ret |= print_amon_bmon(chgnum, AMON, 0,
+			ret |= print_amon_bmon(chgnum, AMON, MON_CHARGE,
 					CONFIG_CHARGER_SENSE_RESISTOR_AC);
 		if (IS_ENABLED(CHARGER_ISL9238X) && print_discharge)
-			ret |= print_amon_bmon(chgnum, AMON, 1,
+			ret |= print_amon_bmon(chgnum, AMON, MON_DISCHARGE,
 					CONFIG_CHARGER_SENSE_RESISTOR_AC);
 	}
 
 	if (print_battery) {
 		if (IS_ENABLED(CHARGER_ISL9238X) && print_charge)
-			ret |= print_amon_bmon(chgnum, BMON, 0,
+			ret |= print_amon_bmon(chgnum, BMON, MON_CHARGE,
 					/*
 					 * charging current monitor has
 					 * 2x amplification factor
 					 */
 					2 * CONFIG_CHARGER_SENSE_RESISTOR);
 		if (print_discharge)
-			ret |= print_amon_bmon(chgnum, BMON, 1,
+			ret |= print_amon_bmon(chgnum, BMON, MON_DISCHARGE,
 					CONFIG_CHARGER_SENSE_RESISTOR);
 	}
 
