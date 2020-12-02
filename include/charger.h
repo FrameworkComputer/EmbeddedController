@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "ocpc.h"
+#include "stdbool.h"
 
 /* Charger information
  * voltage unit: mV
@@ -122,6 +123,9 @@ struct charger_drv {
 						    struct ocpc_data *o,
 						    int current_ma,
 						    int voltage_mv);
+
+	/* Is the input current limit reached? */
+	enum ec_error_list (*is_icl_reached)(int chgnum, bool *reached);
 };
 
 struct charger_config_t {
@@ -322,6 +326,15 @@ enum ec_error_list charger_set_vsys_compensation(int chgnum,
 						 struct ocpc_data *ocpc,
 						 int current_ma,
 						 int voltage_mv);
+
+/**
+ * Is the input current limit been reached?
+ *
+ * @param chgnum: Active charge port
+ * @param reached: Pointer to reached
+ * @return EC_SUCCESS on success, error otherwise.
+ */
+enum ec_error_list charger_is_icl_reached(int chgnum, bool *reached);
 
 /*
  * Print all charger info for debugging purposes
