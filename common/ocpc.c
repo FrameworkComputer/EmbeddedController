@@ -185,6 +185,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	int i_step;
 	static timestamp_t delay;
 	int i, step, loc;
+	bool icl_reached = false;
 
 	/*
 	 * There's nothing to do if we're not using this charger.  Should
@@ -391,8 +392,19 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	/* If we're input current limited, we cannot increase VSYS any more. */
 	CPRINTS_DBG("OCPC: Inst. Input Current: %dmA (Limit: %dmA)",
 		    ocpc->secondary_ibus_ma, *desired_input_current);
-	if ((ocpc->secondary_ibus_ma >= (*desired_input_current * 95 / 100)) &&
-	    (vsys_target > ocpc->last_vsys) &&
+
+	if (charger_is_icl_reached(chgnum, &icl_reached) != EC_SUCCESS) {
+		/*
+		 * If the charger doesn't support telling us, assume that the
+		 * input current limit is reached if we're consuming more than
+		 * 95% of the limit.
+		 */
+		if (ocpc->secondary_ibus_ma >=
+		     (*desired_input_current * 95 / 100))
+			icl_reached = true;
+	}
+
+	if (icl_reached && (vsys_target > ocpc->last_vsys) &&
 	    (ocpc->last_vsys != OCPC_UNINIT)) {
 		if (!prev_limited)
 			CPRINTS("Input limited! Not increasing VSYS");
