@@ -355,12 +355,12 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 			(k_i * ocpc->integral / k_i_div) +
 			(k_d * derivative / k_d_div);
 		/*
-		 * Let's limit upward transitions to 200mV.  It's okay to reduce
+		 * Let's limit upward transitions to 10mV.  It's okay to reduce
 		 * VSYS rather quickly, but we'll be conservative on
 		 * increasing VSYS.
 		 */
-		if (drive > 200)
-			drive = 200;
+		if (drive > 10)
+			drive = 10;
 		CPRINTS_DBG("drive = %d", drive);
 	}
 
