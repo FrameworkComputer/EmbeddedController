@@ -14,8 +14,6 @@
 #include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
-#include "driver/accel_bma2x2.h"
-#include "driver/accelgyro_bmi_common.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/nb7v904m.h"
@@ -28,15 +26,11 @@
 #include "i2c.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
-#include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
-#include "pwm.h"
-#include "pwm_chip.h"
 #include "stdbool.h"
 #include "switch.h"
 #include "system.h"
-#include "tablet_mode.h"
 #include "task.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
@@ -146,8 +140,6 @@ void board_init(void)
 		/* Enable C1 interrupts */
 		gpio_enable_interrupt(GPIO_SUB_C1_INT_EN_RAILS_ODL);
 	}
-	/* Enable gpio interrupt for base accelgyro sensor */
-	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 
 	/* Turn on 5V if the system is on, otherwise turn it off. */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
@@ -190,40 +182,9 @@ void board_reset_pd_mcu(void)
 	 */
 }
 
-static void reconfigure_5v_gpio(void)
-{
-	/*
-	 * b/147257497: On early boards, GPIO_EN_PP5000 was swapped with
-	 * GPIO_VOLUP_BTN_ODL. Therefore, we'll actually need to set that GPIO
-	 * instead for those boards.  Note that this breaks the volume up button
-	 * functionality.
-	 */
-	if (system_get_board_version() < 0) {
-		CPRINTS("old board - remapping 5V en");
-		gpio_set_flags(GPIO_VOLUP_BTN_ODL, GPIO_OUT_LOW);
-	}
-}
-DECLARE_HOOK(HOOK_INIT, reconfigure_5v_gpio, HOOK_PRIO_INIT_I2C+1);
-
 static void set_5v_gpio(int level)
 {
-	int version;
-	enum gpio_signal gpio;
-
-	/*
-	 * b/147257497: On early boards, GPIO_EN_PP5000 was swapped with
-	 * GPIO_VOLUP_BTN_ODL. Therefore, we'll actually need to set that GPIO
-	 * instead for those boards.  Note that this breaks the volume up button
-	 * functionality.
-	 */
-	version = system_get_board_version();
-
-	/*
-	 * If the CBI EEPROM wasn't formatted, assume it's a very early board.
-	 */
-	gpio = version < 0 ? GPIO_VOLUP_BTN_ODL : GPIO_EN_PP5000;
-
-	gpio_set_level(gpio, level);
+	gpio_set_level(GPIO_EN_PP5000, level);
 }
 
 __override void board_power_5v_enable(int enable)
@@ -347,97 +308,6 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	charge_set_input_current_limit(icl, charge_mv);
 }
 
-/* Sensors */
-static struct mutex g_lid_mutex;
-static struct mutex g_base_mutex;
-
-/* Matrices to rotate accelerometers into the standard reference. */
-static const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
-
-static const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
-
-static struct accelgyro_saved_data_t g_bma253_data;
-static struct bmi_drv_data_t g_bmi160_data;
-
-struct motion_sensor_t motion_sensors[] = {
-	[LID_ACCEL] = {
-		.name = "Lid Accel",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMA255,
-		.type = MOTIONSENSE_TYPE_ACCEL,
-		.location = MOTIONSENSE_LOC_LID,
-		.drv = &bma2x2_accel_drv,
-		.mutex = &g_lid_mutex,
-		.drv_data = &g_bma253_data,
-		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
-		.rot_standard_ref = &lid_standard_ref,
-		.default_range = 2,
-		.min_frequency = BMA255_ACCEL_MIN_FREQ,
-		.max_frequency = BMA255_ACCEL_MAX_FREQ,
-		.config = {
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-			},
-			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-			},
-		},
-	},
-	[BASE_ACCEL] = {
-		.name = "Base Accel",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMI160,
-		.type = MOTIONSENSE_TYPE_ACCEL,
-		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi160_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi160_data,
-		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-		.rot_standard_ref = &base_standard_ref,
-		.default_range = 4,
-		.min_frequency = BMI_ACCEL_MIN_FREQ,
-		.max_frequency = BMI_ACCEL_MAX_FREQ,
-		.config = {
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 13000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-		},
-	},
-	[BASE_GYRO] = {
-		.name = "Base Gyro",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMI160,
-		.type = MOTIONSENSE_TYPE_GYRO,
-		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi160_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi160_data,
-		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-		.default_range = 1000, /* dps */
-		.rot_standard_ref = &base_standard_ref,
-		.min_frequency = BMI_GYRO_MIN_FREQ,
-		.max_frequency = BMI_GYRO_MAX_FREQ,
-	},
-};
-
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-
 __override void ocpc_get_pid_constants(int *kp, int *kp_div,
 				       int *ki, int *ki_div,
 				       int *kd, int *kd_div)
@@ -495,28 +365,6 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 		.flags = PI3USB9201_ALWAYS_POWERED,
 	},
 };
-
-/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] = {
-		.channel = 3,
-		.flags = PWM_CONFIG_DSLEEP,
-		.freq = 10000,
-	},
-
-	[PWM_CH_LED1_AMBER] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq = 2400,
-	},
-
-	[PWM_CH_LED2_WHITE] = {
-		.channel = 0,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq = 2400,
-	}
-};
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
@@ -597,31 +445,3 @@ uint16_t tcpc_get_alert_status(void)
 
 	return status;
 }
-
-#ifndef TEST_BUILD
-/* This callback disables keyboard when convertibles are fully open */
-void lid_angle_peripheral_enable(int enable)
-{
-	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
-
-	/*
-	 * If the lid is in tablet position via other sensors,
-	 * ignore the lid angle, which might be faulty then
-	 * disable keyboard.
-	 */
-	if (tablet_get_mode())
-		enable = 0;
-
-	if (enable) {
-		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
-	} else {
-		/*
-		 * Ensure that the chipset is off before disabling the keyboard.
-		 * When the chipset is on, the EC keeps the keyboard enabled and
-		 * the AP decides whether to ignore input devices or not.
-		 */
-		if (!chipset_in_s0)
-			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
-	}
-}
-#endif

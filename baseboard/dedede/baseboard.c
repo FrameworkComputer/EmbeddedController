@@ -213,16 +213,20 @@ void baseboard_all_sys_pgood_interrupt(enum gpio_signal signal)
 
 void baseboard_chipset_startup(void)
 {
+#ifdef CONFIG_PWM_KBLIGHT
 	/* Allow keyboard backlight to be enabled */
 	gpio_set_level(GPIO_EN_KB_BL, 1);
+#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, baseboard_chipset_startup,
 	     HOOK_PRIO_DEFAULT);
 
 void baseboard_chipset_shutdown(void)
 {
+#ifdef CONFIG_PWM_KBLIGHT
 	/* Turn off the keyboard backlight if it's on. */
 	gpio_set_level(GPIO_EN_KB_BL, 0);
+#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, baseboard_chipset_shutdown,
 	     HOOK_PRIO_DEFAULT);
