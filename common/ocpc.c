@@ -174,6 +174,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	int vsys_target = 0;
 	int drive = 0;
 	int i_ma = 0;
+	static int i_ma_CC_CV;
 	int min_vsys_target;
 	int error = 0;
 	int derivative = 0;
@@ -301,6 +302,8 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 			 */
 			i_ma = batt.current;
 			ph = ph == PHASE_CC ? PHASE_CV_TRIP : PHASE_CV_COMPLETE;
+			if (ph == PHASE_CV_TRIP)
+				i_ma_CC_CV = batt.current;
 
 		}
 	}
@@ -376,7 +379,13 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	 * Once we're in the CV region, all we need to do is keep VSYS at the
 	 * desired voltage.
 	 */
-	if (ph >= PHASE_CV_TRIP)
+	if (ph == PHASE_CV_TRIP) {
+		vsys_target = batt.desired_voltage +
+				((i_ma_CC_CV *
+				  ocpc->combined_rsys_rbatt_mo) / 1000);
+		CPRINTS_DBG("i_ma_CC_CV = %d", i_ma_CC_CV);
+	}
+	if (ph == PHASE_CV_COMPLETE)
 		vsys_target = batt.desired_voltage +
 				((batt_info->precharge_current *
 				  ocpc->combined_rsys_rbatt_mo) / 1000);
