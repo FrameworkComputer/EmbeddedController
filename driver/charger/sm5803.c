@@ -14,6 +14,7 @@
 #include "i2c.h"
 #include "sm5803.h"
 #include "system.h"
+#include "stdbool.h"
 #include "throttle_ap.h"
 #include "timer.h"
 #include "usb_charge.h"
@@ -1331,6 +1332,21 @@ static enum ec_error_list sm5803_get_option(int chgnum, int *option)
 	return rv;
 }
 
+static enum ec_error_list sm5803_is_input_current_limit_reached(int chgnum,
+								bool *reached)
+{
+	enum ec_error_list rv;
+	int reg;
+
+	rv = chg_read8(chgnum, SM5803_REG_LOG2, &reg);
+	if (rv)
+		return rv;
+
+	*reached = (reg & SM5803_ISOLOOP_ON) ? true : false;
+
+	return EC_SUCCESS;
+}
+
 static enum ec_error_list sm5803_set_option(int chgnum, int option)
 {
 	enum ec_error_list rv;
@@ -1624,6 +1640,7 @@ const struct charger_drv sm5803_drv = {
 	.enable_otg_power = &sm5803_enable_otg_power,
 	.is_sourcing_otg_power = &sm5803_is_sourcing_otg_power,
 	.set_vsys_compensation = &sm5803_set_vsys_compensation,
+	.is_icl_reached = &sm5803_is_input_current_limit_reached,
 #ifdef CONFIG_CHARGE_RAMP_HW
 	.set_hw_ramp = &sm5803_set_hw_ramp,
 	.ramp_is_stable = &sm5803_ramp_is_stable,
