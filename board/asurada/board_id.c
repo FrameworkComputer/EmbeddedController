@@ -3,12 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <adc.h>
-#include <common.h>
-#include <console.h>
-#include <gpio.h>
-#include <timer.h>
-#include <util.h>
+#include "adc.h"
+#include "common.h"
+#include "console.h"
+#include "gpio.h"
+#include "hooks.h"
+#include "timer.h"
+#include "util.h"
 
 /**
  * Conversion based on following table:
@@ -85,13 +86,11 @@ static int adc_value_to_numeric_id(enum adc_channel ch)
 	return -EC_ERROR_UNKNOWN;
 }
 
-int board_get_version(void)
+static int version = -1;
+
+/* b/163963220: Cache ADC value before board_hibernate_late() reads it */
+static void board_version_init(void)
 {
-	static int version = -1;
-
-	if (version >= 0)
-		return version;
-
 	version = adc_value_to_numeric_id(ADC_BOARD_ID_0);
 	if (version < 0) {
 		ccprints("WARNING: failed to read ADC_BOARD_ID_0");
@@ -99,6 +98,10 @@ int board_get_version(void)
 
 		version = 0;
 	}
+}
+DECLARE_HOOK(HOOK_INIT, board_version_init, HOOK_PRIO_INIT_ADC + 1);
 
+int board_get_version(void)
+{
 	return version;
 }
