@@ -14,12 +14,9 @@
 
 enum ec_flash_notified_flags {
 	/* Enable/Disable power button pulses for x86 devices */
-	FLASH_EC_FIRMWARE   = BIT(0),
-	FLASH_BIOS_FIRMWARE = BIT(1),
-    FLASH_PD_FIRMWARE   = BIT(2),
-	FLASH_EC_DONE       = BIT(3),
-	FLASH_BIOS_DONE     = BIT(4),
-	FLASH_PD_DONE       = BIT(5),
+	FLASH_FIRMWARE_START  = BIT(0),
+	FLASH_FIRMWARE_DONE   = BIT(1),
+	FLASH_FLAG_PD         = BIT(4),
 };
 
 struct ec_params_flash_notified {
