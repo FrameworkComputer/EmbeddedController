@@ -6,8 +6,8 @@
 
 /dts-v1/;
 
+#include <dt-bindings/gpio_defines.h>
 #include <nuvoton/npcx7m6fb.dtsi>
-#include <gpio_defines.h>
 
 / {
 	model = "Google Volteer EC";
