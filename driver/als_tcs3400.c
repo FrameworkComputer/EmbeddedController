@@ -429,8 +429,9 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 
 	/* if clear channel data changed, send illuminance upstream */
 	last_v = s->raw_xyz;
-	if ((raw_data[CLEAR_CRGB_IDX] != TCS_SATURATION_LEVEL) &&
-	    (last_v[X] != lux)) {
+	if (is_calibration ||
+	    ((raw_data[CLEAR_CRGB_IDX] != TCS_SATURATION_LEVEL) &&
+	     (last_v[X] != lux))) {
 		if (is_spoof(s))
 			last_v[X] = s->spoof_xyz[X];
 		else
@@ -451,11 +452,12 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 	 * send it upstream
 	 */
 	last_v = rgb_s->raw_xyz;
-	if (((last_v[X] != xyz_data[X]) || (last_v[Y] != xyz_data[Y]) ||
-		(last_v[Z] != xyz_data[Z])) &&
-		((raw_data[RED_CRGB_IDX] != TCS_SATURATION_LEVEL) &&
-		(raw_data[BLUE_CRGB_IDX] != TCS_SATURATION_LEVEL) &&
-		(raw_data[GREEN_CRGB_IDX] != TCS_SATURATION_LEVEL))) {
+	if (is_calibration ||
+	    (((last_v[X] != xyz_data[X]) || (last_v[Y] != xyz_data[Y]) ||
+	     (last_v[Z] != xyz_data[Z])) &&
+	     ((raw_data[RED_CRGB_IDX] != TCS_SATURATION_LEVEL) &&
+	      (raw_data[BLUE_CRGB_IDX] != TCS_SATURATION_LEVEL) &&
+	      (raw_data[GREEN_CRGB_IDX] != TCS_SATURATION_LEVEL)))) {
 
 		if (is_spoof(rgb_s)) {
 			memcpy(last_v, rgb_s->spoof_xyz, sizeof(rgb_s->spoof_xyz));
