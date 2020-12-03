@@ -30,7 +30,8 @@
 
 static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 static uint8_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
-static timestamp_t oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
+static timestamp_t vbus_oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
+static timestamp_t vconn_oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define SYV682X_VBUS_DET_THRESH_MV		4000
 /* Longest time that can be programmed in DSG_TIME field */
@@ -39,6 +40,7 @@ static timestamp_t oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
 #define INTERRUPT_DELAY_MS 10
 /* Deglitch in ms of sourcing overcurrent detection */
 #define SOURCE_OC_DEGLITCH_MS 100
+#define VCONN_OC_DEGLITCH_MS 100
 
 #if SOURCE_OC_DEGLITCH_MS < INTERRUPT_DELAY_MS
 #error "SOURCE_OC_DEGLITCH_MS should be at least INTERRUPT_DELAY_MS"
@@ -245,11 +247,11 @@ static void syv682x_handle_status_interrupt(int port, int regval)
 	 */
 	if (syv682x_interrupt_filter(port, regval, SYV682X_STATUS_OC_5V,
 				     SYV682X_FLAGS_5V_OC)) {
-		oc_timer[port].val =
+		vbus_oc_timer[port].val =
 			get_time().val + SOURCE_OC_DEGLITCH_MS * MSEC;
 	} else if ((regval & SYV682X_STATUS_OC_5V) &&
-		   (get_time().val > oc_timer[port].val)) {
-		oc_timer[port].val = UINT64_MAX;
+		   (get_time().val > vbus_oc_timer[port].val)) {
+		vbus_oc_timer[port].val = UINT64_MAX;
 		flags[port] &= ~SYV682X_FLAGS_5V_OC;
 		syv682x_vbus_source_enable(port, 0);
 		pd_handle_overcurrent(port);
@@ -274,8 +276,28 @@ static void syv682x_handle_status_interrupt(int port, int regval)
 
 static void syv682x_handle_control_4_interrupt(int port, int regval)
 {
+	/*
+	 * VCONN OC is actually notifying that it is current limiting
+	 * to 600mA. If this happens for a long time, we will trip TSD
+	 * which will disable the channel. We should disable the sourcing path
+	 * before that happens for safety reasons.
+	 *
+	 * On first check, set the flag and set the timer. This also clears the
+	 * flag if the OC is gone.
+	 */
 	if (syv682x_interrupt_filter(port, regval, SYV682X_CONTROL_4_VCONN_OCP,
 				     SYV682X_FLAGS_VCONN_OCP)) {
+		vconn_oc_timer[port].val =
+			get_time().val + VCONN_OC_DEGLITCH_MS * MSEC;
+	} else if ((regval & SYV682X_CONTROL_4_VCONN_OCP) &&
+		   (get_time().val > vconn_oc_timer[port].val)) {
+		vconn_oc_timer[port].val = UINT64_MAX;
+		flags[port] &= ~SYV682X_FLAGS_VCONN_OCP;
+		/* Disable VCONN */
+		regval &=
+			~(SYV682X_CONTROL_4_VCONN2 | SYV682X_CONTROL_4_VCONN1);
+		write_reg(port, SYV682X_CONTROL_4_REG, regval);
+
 		ppc_prints("VCONN OC!", port);
 	}
 
