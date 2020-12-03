@@ -10,17 +10,7 @@
 
 #include "gpio_map.h"
 #include "gpio_signal.h"
-
-/*
- * TODO(b:173798264): This struct actually comes from
- * power/intel_x86.h in platform/ec, but we have no way to reach it right
- * now.  Remove this once we can get that header somehow.
- */
-struct intel_x86_pwrok_signal {
-	enum gpio_signal gpio;
-	bool active_low;
-	int delay_ms;
-};
+#include "power/intel_x86.h"
 
 const struct intel_x86_pwrok_signal pwrok_signal_assert_list[] = {
 	{
