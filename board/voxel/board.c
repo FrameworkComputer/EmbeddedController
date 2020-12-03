@@ -87,11 +87,13 @@ const struct fan_conf fan_conf_0 = {
  * Minimum speed not specified by RPM. Set minimum RPM to max speed (with
  * margin) x 30%.
  *    5900 x 1.07 x 0.30 = 1894, round up to 1900
+ * reference that temperature and fan settings
+ * are derived from data in b/167523658#33
  */
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 1900,
-	.rpm_start = 1900,
-	.rpm_max = 5900,
+	.rpm_min = 3300,
+	.rpm_start = 3300,
+	.rpm_max = 5800,
 };
 
 const struct fan_t fans[FAN_CH_COUNT] = {
@@ -105,49 +107,24 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 /* EC thermal management configuration */
 
 /*
- * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
- * 130 C.  However, sensor is located next to DDR, so we need to use the lower
- * DDR temperature limit (85 C)
+ * Reference that temperature and fan settings
+ * are derived from data in b/167523658#33
  */
 const static struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
-	},
-	.temp_fan_off = C_TO_K(35),
-	.temp_fan_max = C_TO_K(50),
-};
-
-/*
- * Inductor limits - used for both charger and PP3300 regulator
- *
- * Need to use the lower of the charger IC, PP3300 regulator, and the inductors
- *
- * Charger max recommended temperature 100C, max absolute temperature 125C
- * PP3300 regulator: operating range -40 C to 145 C
- *
- * Inductors: limit of 125c
- * PCB: limit is 80c
- */
-const static struct ec_thermal_config thermal_inductor = {
-	.temp_host = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
 	},
-	.temp_fan_off = C_TO_K(40),
-	.temp_fan_max = C_TO_K(55),
+	.temp_fan_off = C_TO_K(25),
+	.temp_fan_max = C_TO_K(75),
 };
-
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_CHARGER]			= thermal_inductor,
-	[TEMP_SENSOR_2_PP3300_REGULATOR]	= thermal_inductor,
+	[TEMP_SENSOR_1_CHARGER]			= thermal_cpu,
+	[TEMP_SENSOR_2_PP3300_REGULATOR]	= thermal_cpu,
 	[TEMP_SENSOR_3_DDR_SOC]			= thermal_cpu,
 	[TEMP_SENSOR_4_FAN]			= thermal_cpu,
 };
