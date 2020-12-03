@@ -66,6 +66,7 @@ static int lb;
 
 enum phase {
 	PHASE_UNKNOWN = -1,
+	PHASE_PRECHARGE,
 	PHASE_CC,
 	PHASE_CV_TRIP,
 	PHASE_CV_COMPLETE,
@@ -74,6 +75,8 @@ enum phase {
 __overridable void board_ocpc_init(struct ocpc_data *ocpc)
 {
 }
+
+static enum ec_error_list ocpc_precharge_enable(bool enable);
 
 static void calc_resistance_stats(void)
 {
@@ -187,6 +190,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	static timestamp_t delay;
 	int i, step, loc;
 	bool icl_reached = false;
+	static timestamp_t precharge_exit;
 
 	/*
 	 * There's nothing to do if we're not using this charger.  Should
@@ -252,6 +256,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 
 	if (ocpc->last_vsys == OCPC_UNINIT) {
 		ph = PHASE_UNKNOWN;
+		precharge_exit.val = 0;
 		iterations = 0;
 	}
 
@@ -290,11 +295,56 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 
 	/* Set our current target accordingly. */
 	if (batt.desired_voltage) {
-		if (batt.voltage < batt.desired_voltage) {
-			if (ph < PHASE_CV_TRIP)
+		if (((batt.voltage < batt_info->voltage_min) ||
+		    ((batt.voltage < batt_info->voltage_normal) &&
+		    (batt.desired_current <= batt_info->precharge_current))) &&
+		    (ph != PHASE_PRECHARGE)) {
+			/*
+			 * If the charger IC doesn't support the linear charge
+			 * feature, proceed to the CC phase.
+			 */
+			result = ocpc_precharge_enable(true);
+			if (result == EC_ERROR_UNIMPLEMENTED) {
+				ph = PHASE_CC;
+			} else if (result == EC_SUCCESS) {
+				CPRINTS("OCPC: Enabling linear precharge");
+				ph = PHASE_PRECHARGE;
+				i_ma = batt.desired_current;
+			}
+		} else if (batt.voltage < batt.desired_voltage) {
+			if ((ph == PHASE_PRECHARGE) &&
+			    (batt.desired_current >
+			     batt_info->precharge_current)) {
+				/*
+				 * Precharge phase is complete.  Now set the
+				 * target VSYS to the battery voltage to prevent
+				 * a large current spike during the transition.
+				 */
+				/*
+				 * If we'd like to exit precharge, let's wait a
+				 * short delay.
+				 */
+				if (!precharge_exit.val) {
+					CPRINTS("OCPC: Preparing to exit "
+						"precharge");
+					precharge_exit = get_time();
+					precharge_exit.val += 3 * SECOND;
+				}
+				if (timestamp_expired(precharge_exit, NULL)) {
+					CPRINTS("OCPC: Precharge complete");
+					charger_set_voltage(CHARGER_SECONDARY,
+							    batt.voltage);
+					ocpc->last_vsys = batt.voltage;
+					ocpc_precharge_enable(false);
+					ph = PHASE_CC;
+					precharge_exit.val = 0;
+				}
+			}
+
+			if ((ph != PHASE_PRECHARGE) && (ph < PHASE_CV_TRIP))
 				ph = PHASE_CC;
 			i_ma = batt.desired_current;
-		} else{
+		} else {
 			/*
 			 * Once the battery voltage reaches the desired voltage,
 			 * we should note that we've reached the CV step and set
@@ -334,7 +384,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 
 		derivative = error - ocpc->last_error;
 		ocpc->last_error = error;
-		ocpc->integral +=  error;
+		ocpc->integral += error;
 		if (ocpc->integral > 500)
 			ocpc->integral = 500;
 	}
@@ -353,7 +403,8 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	CPRINTS_DBG("min_vsys_target = %d", min_vsys_target);
 
 	/* Obtain the drive from our PID controller. */
-	if (ocpc->last_vsys != OCPC_UNINIT) {
+	if ((ocpc->last_vsys != OCPC_UNINIT) &&
+	    (ph > PHASE_PRECHARGE)) {
 		drive = (k_p * error / k_p_div) +
 			(k_i * ocpc->integral / k_i_div) +
 			(k_d * derivative / k_d_div);
@@ -368,11 +419,18 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	}
 
 	/*
+	 * For the pre-charge phase, simply keep the VSYS target at the desired
+	 * voltage.
+	 */
+	if (ph == PHASE_PRECHARGE)
+		vsys_target = batt.desired_voltage;
+
+	/*
 	 * Adjust our VSYS target by applying the calculated drive.  Note that
 	 * we won't apply our drive the first time through this function such
 	 * that we can determine our initial error.
 	 */
-	if (ocpc->last_vsys != OCPC_UNINIT)
+	if ((ocpc->last_vsys != OCPC_UNINIT) && (ph > PHASE_PRECHARGE))
 		vsys_target = ocpc->last_vsys + drive;
 
 	/*
@@ -498,6 +556,18 @@ __overridable void ocpc_get_pid_constants(int *kp, int *kp_div,
 					  int *ki, int *ki_div,
 					  int *kd, int *kd_div)
 {
+}
+
+static enum ec_error_list ocpc_precharge_enable(bool enable)
+{
+	/* Enable linear charging on the primary charger IC. */
+	int rv = charger_enable_linear_charge(CHARGER_PRIMARY, enable);
+
+	if (rv)
+		CPRINTS("OCPC: Failed to %sble linear charge!", enable ? "ena"
+			: "dis");
+
+	return rv;
 }
 
 static void ocpc_set_pid_constants(void)
