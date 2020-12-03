@@ -5,12 +5,12 @@
 
 /* Cannonlake chipset power control module for Chrome EC */
 
-#include "cannonlake.h"
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
-#include "intel_x86.h"
 #include "power.h"
+#include "power/cannonlake.h"
+#include "power/intel_x86.h"
 #include "power_button.h"
 #include "task.h"
 #include "timer.h"

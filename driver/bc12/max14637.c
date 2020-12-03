@@ -13,7 +13,6 @@
  */
 
 #include "max14637.h"
-#include "cannonlake.h"
 #include "charge_manager.h"
 #include "chipset.h"
 #include "common.h"
@@ -21,6 +20,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "power.h"
+#include "power/cannonlake.h"
 #include "task.h"
 #include "tcpm.h"
 #include "timer.h"

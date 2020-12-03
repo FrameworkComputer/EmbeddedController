@@ -8,7 +8,7 @@
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
-#include "intel_x86.h"
+#include "power/intel_x86.h"
 #include "task.h"
 #include "timer.h"
 

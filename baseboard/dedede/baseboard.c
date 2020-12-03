@@ -14,7 +14,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "intel_x86.h"
+#include "power/intel_x86.h"
 #include "system.h"
 #include "usb_pd.h"
 
