@@ -44,6 +44,7 @@
 #define GPIO_RSMRST_L_PGOOD        NAMED_GPIO(pg_ec_rsmrst_odl)
 #define GPIO_SLP_SUS_L             NAMED_GPIO(slp_sus_l)
 #define GPIO_SYS_RESET_L           NAMED_GPIO(sys_rst_odl)
+#define GPIO_WP_L                  NAMED_GPIO(ec_wp_l)
 
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
