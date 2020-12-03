@@ -156,7 +156,8 @@ static int tcs3400_rgb_read(const struct motion_sensor_t *s, intv3_t v)
 static int
 tcs3400_adjust_sensor_for_saturation(struct motion_sensor_t *s,
 				     uint16_t cur_lux,
-				     uint16_t *crgb_data)
+				     uint16_t *crgb_data,
+				     uint32_t status)
 {
 	struct tcs_saturation_t *sat_p =
 			&TCS3400_RGB_DRV_DATA(s+1)->saturation;
@@ -164,14 +165,9 @@ tcs3400_adjust_sensor_for_saturation(struct motion_sensor_t *s,
 	const uint8_t save_atime = sat_p->atime;
 	uint16_t max_val =  0;
 	int ret;
-	int status = 0;
 	int percent_left = 0;
 
 	/* Adjust for saturation if needed */
-	ret = tcs3400_i2c_read8(s, TCS_I2C_STATUS, &status);
-	if (ret)
-		return ret;
-
 	if (!(status & TCS_I2C_STATUS_RGBC_VALID))
 		return EC_SUCCESS;
 
@@ -382,7 +378,9 @@ static bool is_spoof(struct motion_sensor_t *s)
 	       (s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE);
 }
 
-static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
+static int tcs3400_post_events(struct motion_sensor_t *s,
+			       uint32_t last_ts,
+			       uint32_t status)
 {
 	/*
 	 * Rule says RGB sensor is right after ALS sensor.
@@ -396,22 +394,29 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 	int32_t xyz_data[3] = { 0, 0, 0 };
 	uint16_t raw_data[CRGB_COUNT]; /* holds raw CRGB assembled from buf[] */
 	int *last_v;
-	int32_t lux, data = 0;
-	int i, ret;
+	int32_t lux = 0;
+	int ret;
 
-	i = 20;	/* 400ms max */
-	while (i--) {
-		/* Make sure data is valid */
-		ret = tcs3400_i2c_read8(s, TCS_I2C_STATUS, &data);
-		if (ret)
-			return ret;
-		if (data & TCS_I2C_STATUS_RGBC_VALID)
-			break;
-		msleep(20);
-	}
-	if (i < 0) {
-		CPRINTS("RGBC invalid (0x%x)", data);
-		return EC_ERROR_UNCHANGED;
+	if (IS_ENABLED(CONFIG_ALS_TCS3400_EMULATED_IRQ_EVENT)) {
+		int i = 5;	/* 100ms max */
+
+		while (i--) {
+			/* Make sure data is valid */
+			if (status & TCS_I2C_STATUS_RGBC_VALID)
+				break;
+			msleep(20);
+			/*
+			 * When not in interrupt mode, we could have scheduled
+			 * the handler too early.
+			 */
+			ret = tcs3400_i2c_read8(s, TCS_I2C_STATUS, &status);
+			if (ret)
+				return ret;
+		}
+		if (i < 0) {
+			CPRINTS("RGBC invalid (0x%x)", status);
+			return EC_ERROR_UNCHANGED;
+		}
 	}
 
 	/* Read the light registers */
@@ -481,7 +486,7 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts)
 
 	if (!is_calibration)
 		ret = tcs3400_adjust_sensor_for_saturation(s, xyz_data[Y],
-							   raw_data);
+							   raw_data, status);
 
 	return ret;
 }
@@ -506,7 +511,7 @@ void tcs3400_interrupt(enum gpio_signal signal)
  */
 static int tcs3400_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
-	int status = 0;
+	uint32_t status = 0;
 	int ret = EC_SUCCESS;
 
 	if (!(*event & CONFIG_ALS_TCS3400_INT_EVENT))
@@ -522,10 +527,8 @@ static int tcs3400_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		return ret;
 
 	if ((status & TCS_I2C_STATUS_RGBC_VALID) ||
-			((status & TCS_I2C_STATUS_ALS_IRQ) &&
-			(status & TCS_I2C_STATUS_ALS_SATURATED)) ||
-			IS_ENABLED(CONFIG_ALS_TCS3400_EMULATED_IRQ_EVENT)) {
-		ret = tcs3400_post_events(s, last_interrupt_timestamp);
+	    IS_ENABLED(CONFIG_ALS_TCS3400_EMULATED_IRQ_EVENT)) {
+		ret = tcs3400_post_events(s, last_interrupt_timestamp, status);
 		if (ret)
 			return ret;
 	}
