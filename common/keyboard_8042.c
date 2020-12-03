@@ -405,7 +405,9 @@ void keyboard_clear_buffer(void)
 
 static void keyboard_wakeup(void)
 {
-	host_set_single_event(EC_HOST_EVENT_KEY_PRESSED);
+	/* send host event notice AP wake up  */
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		host_set_single_event(EC_HOST_EVENT_KEY_PRESSED);
 }
 
 static void set_typematic_key(const uint8_t *scan_code, int32_t len)
