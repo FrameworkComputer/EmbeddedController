@@ -126,6 +126,9 @@ struct charger_drv {
 
 	/* Is the input current limit reached? */
 	enum ec_error_list (*is_icl_reached)(int chgnum, bool *reached);
+
+	/* Enable/disable linear charging */
+	enum ec_error_list (*enable_linear_charge)(int chgnum, bool enable);
 };
 
 struct charger_config_t {
@@ -335,6 +338,18 @@ enum ec_error_list charger_set_vsys_compensation(int chgnum,
  * @return EC_SUCCESS on success, error otherwise.
  */
 enum ec_error_list charger_is_icl_reached(int chgnum, bool *reached);
+
+/**
+ * Enable/disable linear charging
+ *
+ * For charger ICs that support it, this allows the charger IC to operate the
+ * BFET in the linear region.
+ *
+ * @param chgnum: Active charge port
+ * @param enable: Whether to enable or disable linear charging.
+ * @return EC_SUCCESS on success, error otherwise.
+ */
+enum ec_error_list charger_enable_linear_charge(int chgnum, bool enable);
 
 /*
  * Print all charger info for debugging purposes

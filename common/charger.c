@@ -656,3 +656,17 @@ enum ec_error_list charger_is_icl_reached(int chgnum, bool *reached)
 
 	return EC_ERROR_UNIMPLEMENTED;
 }
+
+enum ec_error_list charger_enable_linear_charge(int chgnum, bool enable)
+{
+	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
+		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
+		return EC_ERROR_INVAL;
+	}
+
+	if (chg_chips[chgnum].drv->enable_linear_charge)
+		return chg_chips[chgnum].drv->enable_linear_charge(chgnum,
+								   enable);
+
+	return EC_ERROR_UNIMPLEMENTED;
+}
