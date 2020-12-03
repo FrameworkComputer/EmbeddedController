@@ -26,7 +26,7 @@
 
 #define VIF_APP_VENDOR_VALUE	"Google"
 #define VIF_APP_NAME_VALUE	"EC GENVIF"
-#define VIF_APP_VERSION_VALUE	"3.0.0.8"
+#define VIF_APP_VERSION_VALUE	"3.0.0.9"
 #define VENDOR_NAME_VALUE	"Google"
 
 #define DEFAULT_MISSING_TID	0xFFFF
@@ -3513,7 +3513,7 @@ static void init_vif_component_sop_discovery_fields(
 
 	sprintf(hex_str, "%04X", USB_VID_GOOGLE);
 	set_vif_field_itss(&vif_fields[USB_VID_SOP],
-		vif_product_name[USB_VID_SOP],
+		vif_component_name[USB_VID_SOP],
 		USB_VID_GOOGLE, hex_str);
 
 	#if defined(CONFIG_USB_PID)
