@@ -9,6 +9,7 @@
 
 #define HIDE_EC_STDLIB
 #include "common.h"
+#include "console.h"
 #include "util.h"
 
 /* Int and Long are same size, just forward to existing Long implementation */
@@ -99,3 +100,33 @@ unsigned long long int strtoull(const char *nptr, char **endptr, int base)
 	return result;
 }
 BUILD_ASSERT(sizeof(unsigned long long int) == sizeof(uint64_t));
+
+void hexdump(const uint8_t *data, int len)
+{
+	/*
+	 * NOTE: Could be replaced with LOG_HEXDUMP_INF(data, len, "CBI RAW");
+	 * if we enabled CONFIG_LOG=y in future.
+	 */
+	int i, j;
+
+	if (!data || !len)
+		return;
+
+	for (i = 0; i < len; i += 16) {
+		/* Left column (Hex) */
+		for (j = i; j < i + 16; j++) {
+			if (j < len)
+				ccprintf(" %02x", data[j]);
+			else
+				ccprintf("   ");
+		}
+		/* Right column (ASCII) */
+		ccprintf(" |");
+		for (j = i; j < i + 16; j++) {
+			int c = j < len ? data[j] : ' ';
+
+			ccprintf("%c", isprint(c) ? c : '.');
+		}
+		ccprintf("|\n");
+	}
+}
