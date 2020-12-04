@@ -151,6 +151,74 @@ class StatsManager(object):
           'count': data_np.size,
       }
 
+  @property
+  def DomainsToDisplay(self):
+    """List of domains that the manager will output in summaries."""
+    return set(self._summary.keys()) - set(self._hide_domains)
+
+  @property
+  def NanInOutput(self):
+    """Return whether any of the domains to display have NaN values."""
+    return bool(len(set(self._nan_domains) & self.DomainsToDisplay))
+
+  def _SummaryTable(self):
+    """Generate the matrix to output as a summary.
+
+    Returns:
+      A 2d matrix of headers and their data for each domain
+      e.g.
+      [[NAME, COUNT, MEAN, STDDEV, MAX, MIN],
+       [pp5000_mw, 10, 50, 0, 50, 50]]
+    """
+    headers = ('NAME', 'COUNT', 'MEAN', 'STDDEV', 'MAX', 'MIN')
+    table = [headers]
+    # determine what domains to display & and the order
+    domains_to_display = self.DomainsToDisplay
+    display_order = [key for key in self._order if key in domains_to_display]
+    domains_to_display -= set(display_order)
+    display_order.extend(sorted(domains_to_display))
+    for domain in display_order:
+      stats = self._summary[domain]
+      if not domain.endswith(self._unit[domain]):
+        domain = '%s_%s' % (domain, self._unit[domain])
+      if domain in self._nan_domains:
+        domain = '%s%s' % (domain, NAN_TAG)
+      row = [domain]
+      row.append(str(stats['count']))
+      for entry in headers[2:]:
+        row.append('%.2f' % stats[entry.lower()])
+      table.append(row)
+    return table
+
+  def SummaryToMarkdownString(self):
+    """Format the summary into a b/ compatible markdown table string.
+
+    This requires this sort of output format
+
+    | header1   | header2   | header3   | ...
+    | --------- | --------- | --------- | ...
+    | sample1h1 | sample1h2 | sample1h3 | ...
+    .
+    .
+    .
+
+    Returns:
+      formatted summary string.
+    """
+    # All we need to do before processing is insert a row of '-' between
+    # the headers, and the data
+    table = self._SummaryTable()
+    columns = len(table[0])
+    # Using '-:' to allow the numbers to be right aligned
+    sep_row = ['-'] + ['-:'] * (columns - 1)
+    table.insert(1, sep_row)
+    text_rows = ['|'.join(r) for r in table]
+    body = '\n'.join(['|%s|' % r for r in text_rows])
+    if self._title:
+      title_section = '**%s**  \n\n' % self._title
+      body = title_section + body
+    return body
+
   def SummaryToString(self, prefix=STATS_PREFIX):
     """Format summary into a string, ready for pretty print.
 
@@ -162,27 +230,7 @@ class StatsManager(object):
     Returns:
       formatted summary string.
     """
-    headers = ('NAME', 'COUNT', 'MEAN', 'STDDEV', 'MAX', 'MIN')
-    table = [headers]
-    # determine what domains to display & and the order
-    domains_to_display = set(self._summary.keys()) - set(self._hide_domains)
-    display_order = [key for key in self._order if key in domains_to_display]
-    domains_to_display -= set(display_order)
-    display_order.extend(sorted(domains_to_display))
-    nan_in_output = False
-    for domain in display_order:
-      stats = self._summary[domain]
-      if not domain.endswith(self._unit[domain]):
-        domain = '%s_%s' % (domain, self._unit[domain])
-      if domain in self._nan_domains:
-        domain = '%s%s' % (domain, NAN_TAG)
-        nan_in_output = True
-      row = [domain]
-      row.append(str(stats['count']))
-      for entry in headers[2:]:
-        row.append('%.2f' % stats[entry.lower()])
-      table.append(row)
-
+    table = self._SummaryTable()
     max_col_width = []
     for col_idx in range(len(table[0])):
       col_item_widths = [len(row[col_idx]) for row in table]
@@ -194,7 +242,7 @@ class StatsManager(object):
       for i in range(len(row)):
         formatted_row += row[i].rjust(max_col_width[i] + 2)
       formatted_lines.append(formatted_row)
-    if nan_in_output:
+    if self.NanInOutput:
       formatted_lines.append('%s %s' % (prefix, NAN_DESCRIPTION))
 
     if self._title:
@@ -236,7 +284,7 @@ class StatsManager(object):
       fname: filename to ensure uniqueness.
 
     Returns:
-      {smid_}fname{tag}.ext
+      {smid_}fname{tag}.[b].ext
       the smid portion gets prepended if |smid| is defined
       the tag portion gets appended if necessary to ensure unique fname
     """
@@ -267,12 +315,7 @@ class StatsManager(object):
       full path of summary save location
     """
     summary_str = self.SummaryToString(prefix=prefix) + '\n'
-    if not os.path.exists(directory):
-      os.makedirs(directory)
-    fname = self._MakeUniqueFName(os.path.join(directory, fname))
-    with open(fname, 'w') as f:
-      f.write(summary_str)
-    return fname
+    return self._SaveSummary(summary_str, directory, fname)
 
   def SaveSummaryJSON(self, directory, fname='summary.json'):
     """Save summary (only MEAN) into a JSON file.
@@ -289,11 +332,38 @@ class StatsManager(object):
       unit = LONG_UNIT.get(self._unit[domain], self._unit[domain])
       data_entry = {'mean': self._summary[domain]['mean'], 'unit': unit}
       data[domain] = data_entry
+    summary_str = json.dumps(data, indent=2)
+    return self._SaveSummary(summary_str, directory, fname)
+
+  def SaveSummaryMD(self, directory, fname='summary.md'):
+    """Save summary into a MD file to paste into b/.
+
+    Args:
+      directory: directory to save the MD summary in.
+      fname: filename to save summary under.
+
+    Returns:
+      full path of summary save location
+    """
+    summary_str = self.SummaryToMarkdownString()
+    return self._SaveSummary(summary_str, directory, fname)
+
+  def _SaveSummary(self, output_str, directory, fname):
+    """Wrote |output_str| to |fname|.
+
+    Args:
+      output_str: formatted output string
+      directory: directory to save the summary in.
+      fname: filename to save summary under.
+
+    Returns:
+      full path of summary save location
+    """
     if not os.path.exists(directory):
       os.makedirs(directory)
     fname = self._MakeUniqueFName(os.path.join(directory, fname))
     with open(fname, 'w') as f:
-      json.dump(data, f)
+      f.write(output_str)
     return fname
 
   def GetRawData(self):
