@@ -286,7 +286,7 @@ static void syv682x_handle_control_4_interrupt(int port, int regval)
 	 * for simplicity.
 	 */
 	if (regval & SYV682X_CONTROL_4_VBAT_OVP) {
-		ppc_prints("VBAT OVP!", port);
+		ppc_prints("VBAT or CC OVP!", port);
 		syv682x_init(port);
 		pd_handle_cc_overvoltage(port);
 	}
