@@ -413,22 +413,51 @@ static void setup_fw_config(void)
 }
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
-static void wwan_lte_startup(void)
+static void lte_function_resume(void)
 {
-	/* Turn on WWAN LTE function as we go into S0 from S5. */
+	gpio_set_level(GPIO_LTE_FCPO, 1);
+}
+DECLARE_DEFERRED(lte_function_resume);
+
+static void lte_power_resume(void)
+{
 	gpio_set_level(GPIO_LTE_EN, 1);
 	gpio_set_level(GPIO_LTE_W_DISABLE_L, 1);
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, wwan_lte_startup, HOOK_PRIO_DEFAULT + 1);
+DECLARE_DEFERRED(lte_power_resume);
 
-static void wwan_lte_shutdown(void)
+static void lte_power_suspend(void)
 {
-	/* Turn off WWAN LTE function as we go back to S5. */
 	gpio_set_level(GPIO_LTE_EN, 0);
 	gpio_set_level(GPIO_LTE_W_DISABLE_L, 0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, wwan_lte_shutdown, HOOK_PRIO_DEFAULT + 1);
+DECLARE_DEFERRED(lte_power_suspend);
 
+static void lte_function_suspend(void)
+{
+	gpio_set_level(GPIO_LTE_FCPO, 0);
+	hook_call_deferred(&lte_power_suspend_data, 100 * MSEC);
+}
+DECLARE_DEFERRED(lte_function_suspend);
+
+static void wwan_lte_resume_hook(void)
+{
+	/* Turn on WWAN LTE function as we go into S0 from S3/S5. */
+	hook_call_deferred(&lte_function_suspend_data, -1);
+	hook_call_deferred(&lte_power_suspend_data, -1);
+	lte_power_resume();
+	hook_call_deferred(&lte_function_resume_data, 10 * MSEC);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, wwan_lte_resume_hook, HOOK_PRIO_DEFAULT);
+
+static void wwan_lte_suspend_hook(void)
+{
+	/* Turn off WWAN LTE function as we go into S3/S5 from S0. */
+	hook_call_deferred(&lte_power_resume_data, -1);
+	hook_call_deferred(&lte_function_resume_data, -1);
+	hook_call_deferred(&lte_function_suspend_data, 20 * MSEC);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, wwan_lte_suspend_hook, HOOK_PRIO_DEFAULT);
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
