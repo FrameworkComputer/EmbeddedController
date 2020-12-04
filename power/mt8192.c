@@ -425,6 +425,10 @@ enum power_state power_handle_state(enum power_state state)
 		if (forcing_shutdown)
 			GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
 
+		/* If PMIC is not off, go back to S5 and try again. */
+		if (power_get_signals() & IN_PGOOD_PMIC)
+			return POWER_S5;
+
 		return POWER_G3;
 	}
 
