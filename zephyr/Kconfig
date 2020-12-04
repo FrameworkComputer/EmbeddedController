@@ -203,6 +203,15 @@ config PLATFORM_EC_POWER_BUTTON
 	  commands in platform/ec.  This requires a GPIO named
 	  GPIO_POWER_BUTTON_L in gpio_map.h.
 
+config PLATFORM_EC_CONSOLE_CMD_SHMEM
+	bool "Enable the 'shmem' command"
+	default y
+	help
+	  This command prints basic information about the EC shared memory,
+	  located at the top of RAM, above all RAM symbols: total size, bytes
+	  used and the maximum number of bytes that have been used since
+	  the EC started running.
+
 menuconfig PLATFORM_EC_TIMER
 	bool "Enable the EC timer module"
 	default y

@@ -15,6 +15,10 @@
 #include "task.h"
 #include "test_util.h"
 
+#ifdef CONFIG_ZEPHYR
+#include <linker.h>
+#endif
+
 /* Console commands */
 extern const struct console_command __cmds[];
 extern const struct console_command __cmds_end[];
