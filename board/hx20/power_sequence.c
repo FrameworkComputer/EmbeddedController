@@ -32,6 +32,14 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 
+/*
+ * define wake source for keep PCH power
+ * BIT0 for RTCwake
+ * BIT1 for USBwake
+ */
+#define RTCWAKE  BIT(0)
+#define USBWAKE  BIT(1)
+
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
@@ -40,23 +48,29 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 }
 
 /*
- * check EMI region 1 0x02 bit 0 to control pch power
+ * check EMI region 1 0x02 to control pch power
  * if bit set up will keep pch power for RTCwake
  * when the unit is vpro type also will keep pch
  *
- * @return true will keep pch power
+ * @return false to disable pch power, true will keep pch
  */
 
 int keep_pch_power(void)
 {
 	int version = board_get_version();
+	int wake_source = *host_get_customer_memmap(0x02);
 
 	if (version & BIT(0))
 		return true;
 #ifdef CONFIG_EMI_REGION1
-	else
-		return *host_get_customer_memmap(0x02) & BIT(0);
+	else if (wake_source & RTCWAKE)
+		return true;
+	/* when BIT1 setup, need check AC is exist*/
+	else if (wake_source & USBWAKE && gpio_get_level(GPIO_AC_PRESENT) == 1)
+		return true;
 #endif
+	else
+		return false;
 }
 
 #ifdef CONFIG_EMI_REGION1
@@ -76,7 +90,7 @@ static void chipset_force_g3(void)
 	gpio_set_level(GPIO_SYSON, 0);
 	gpio_set_level(GPIO_EC_KBL_PWR_EN, 0);
 
-	/* keep pch power for RTCwake or vpro type */
+	/* keep pch power for wake source or vpro type */
 	if (!keep_pch_power()) {
 		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 		gpio_set_level(GPIO_PCH_PWR_EN, 0);
