@@ -1271,13 +1271,13 @@ const struct temp_sensor_t temp_sensors[] = {
 		.name = "F75303_CPU",
 		.type = TEMP_SENSOR_TYPE_CPU,
 		.read = f75303_get_val,
-		.idx = F75303_IDX_REMOTE1
+		.idx = F75303_IDX_REMOTE2
 	},
 	[TEMP_SENSOR_DDR] = {
 		.name = "F75303_DDR",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = f75303_get_val,
-		.idx = F75303_IDX_REMOTE2
+		.idx = F75303_IDX_REMOTE1
 	},
 	[TEMP_SENSOR_BATTERY] = {
 		.name = "Battery",
