@@ -215,39 +215,49 @@ class Console(object):
     when it sees backspaces.
 
     Args:
-      data: binary string received from MCU
+      data: bytes - string received from MCU
     """
     data = list(data)
+    # For compatibility with python2 and python3, standardize on the data
+    # being a list of integers. This requires one more transformation in py2
+    if not isinstance(data[0], int):
+      data = [ord(c) for c in data]
 
     # This is a list of already filtered characters (or placeholders).
     line = self.output_line_log_buffer
 
+    # TODO(b/177480273): use raw strings here
     symbols = {
-            b'\n': u'\\n',
-            b'\r': u'\\r',
-            b'\t': u'\\t'
+            ord(b'\n'): u'\\n',
+            ord(b'\r'): u'\\r',
+            ord(b'\t'): u'\\t'
     }
     # self.logger.debug(u'%s + %r', u''.join(line), ''.join(data))
     while data:
+      # Recall, data is a list of integers, namely the byte values sent by
+      # the MCU.
       byte = data.pop(0)
-      if byte == '\n':
+      # This means that |byte| is an int.
+      if byte == ord('\n'):
         line.append(symbols[byte])
         if line:
           self.logger.debug(u'%s', ''.join(line))
         line = []
-      elif byte == b'\b':
+      elif byte == ord('\b'):
         # Backspace: trim the last character off the buffer
         if line:
           line.pop(-1)
       elif byte in symbols:
         line.append(symbols[byte])
-      elif byte < b' ' or byte > b'~':
+      elif byte < ord(' ') or byte > ord('~'):
         # Turn any character that isn't printable ASCII into escaped hex.
         # ' ' is chr(20), and 0-19 are unprintable control characters.
         # '~' is chr(126), and 127 is DELETE.  128-255 are control and Latin-1.
-        line.append(u'\\x%02x' % ord(byte))
+        line.append(u'\\x%02x' % byte)
       else:
-        line.append(u'%s' % byte)
+        # byte is printable. Thus it is safe to use chr() to get the printable
+        # character out of it again.
+        line.append(u'%s' % chr(byte))
     self.output_line_log_buffer = line
 
   def PrintHistory(self):
