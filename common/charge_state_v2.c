@@ -1251,8 +1251,17 @@ static int charge_request(int voltage, int current)
 	 * up. This helps avoid large current spikes when connecting
 	 * battery.
 	 */
-	if (current >= 0)
-		r2 = charger_set_current(0, current);
+	if (current >= 0) {
+#ifdef CONFIG_OCPC
+		/*
+		 * For OCPC systems, don't unconditionally modify the primary
+		 * charger IC's charge current.  It may be handled by the
+		 * charger drivers directly.
+		 */
+		if (curr.ocpc.active_chg_chip == CHARGER_PRIMARY)
+#endif
+			r2 = charger_set_current(0, current);
+	}
 	if (r2 != EC_SUCCESS)
 		problem(PR_SET_CURRENT, r2);
 
