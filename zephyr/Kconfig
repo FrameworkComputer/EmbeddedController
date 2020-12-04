@@ -30,6 +30,43 @@ config ZEPHYR
 	  This should always be enabled.  It's a workaround for
 	  config.h not being available in some headers.
 
+# Define PLATFORM_EC_... options to enable EC features. Each Kconfig should be
+# matched by a line in zephyr/shim/include/config_chip.h which #edefines the
+# corresponding EC CONFIG if this Kconfig is enabled.
+#
+# Please keep these in alphabetical order
+
+config PLATFORM_EC_CBI
+	bool "Enable the CBI EEPROM module"
+	depends on PLATFORM_EC_I2C
+	help
+	  Enables various CBI accessors and host and console commands. One must
+	  specify both I2C_PORT_EEPROM and I2C_ADDR_EEPROM_FLAGS to the CBI
+	  EEPROM's i2c port and 7-bit i2c address.
+
+menuconfig PLATFORM_EC_ESPI
+	bool "Enable eSPI compatibility in platform/ec"
+	depends on ESPI && AP
+	default y
+	help
+	  Enable eSPI shim layer.
+
+if PLATFORM_EC_ESPI
+
+config PLATFORM_EC_ESPI_VW_SLP_S3
+	bool "SLP_S3 is an eSPI virtual wire instead of a GPIO"
+	help
+	  For power sequencing, use an eSPI virtual wire instead of
+	  defining GPIO_PCH_SLP_S3 in gpio_map.h.
+
+config PLATFORM_EC_ESPI_VW_SLP_S4
+	bool "SLP_S4 is an eSPI virtual wire instead of a GPIO"
+	help
+	  For power sequencing, use an eSPI virtual wire instead of
+	  defining GPIO_PCH_SLP_S4 in gpio_map.h.
+
+endif # PLATFORM_EC_ESPI
+
 config PLATFORM_EC_EXTPOWER_GPIO
 	bool "Enable the GPIO-based external power detection module"
 	depends on PLATFORM_EC_HOOKS && PLATFORM_EC_HOSTCMD
@@ -40,7 +77,7 @@ config PLATFORM_EC_EXTPOWER_GPIO
 	  extpower_interrupt configured as the handler in gpio_map.h.
 
 menuconfig PLATFORM_EC_KEYBOARD
-	bool "Enable keybaord support"
+	bool "Enable keyboard support"
 	default y
 	help
 	  Enable compilation of support for scanning a keyboard and providing
@@ -75,8 +112,6 @@ config PLATFORM_EC_KEYBOARD_COL2_INVERTED
 	  Refresh key will also trigger T key, which is in the next scanning
 	  column line. See http://b/156007029.
 
-endif # PLATFORM_EC_KEYBOARD
-
 config PLATFORM_EC_CONSOLE_CMD_KEYBOARD_8042
 	bool "Enable the keyboard commands"
 	default y if PLATFORM_EC_KEYBOARD_PROTOCOL_8042
@@ -89,6 +124,54 @@ config PLATFORM_EC_CONSOLE_CMD_KEYBOARD_8042
 	    kbd		- Print or toggle keyboard info
 	    kblog	- Print or toggle keyboard event log (current disabled)
 	    typematic	- Get/set typematic delays
+
+endif # PLATFORM_EC_KEYBOARD
+
+config PLATFORM_EC_HOOKS
+	bool "Enable hooks and deferred compatibility shim"
+	default y
+	help
+	  Enable translation of DECLARE_DEFERRED and
+	  hook_call_deferred to Zephyr's work queues, and a compatible
+	  DECLARE_HOOK implementation.
+
+config PLATFORM_EC_I2C
+	bool "Enable the EC i2c module"
+	default y
+	help
+	  Enable compilation of the EC i2c module. Once enabled, it will be
+	  possible to make calls using the old platform/ec i2c APIs defined
+	  in include/i2c.h and implemented in common/i2c_master.c. Doing so
+	  should make shimming other platform/ec modules which rely on i2c
+	  communication "just work" without requiring any further code changes.
+
+config PLATFORM_EC_HOSTCMD
+	bool "Enable host commands shim"
+	default y if AP
+	help
+	  Enable the host commands shim in platform/ec.
+
+config PLATFORM_EC_LID_SWITCH
+	bool "Enable the lid switch module"
+	help
+	  Enable shimming the lid switch implementation and related
+	  commands in platform/ec.  This requires a GPIO named
+	  GPIO_LID_OPEN to be defined in gpio_map.h.
+
+config PLATFORM_EC_PORT80
+	bool "Enable the port80 module"
+	default y if AP_X86 && PLATFORM_EC_POWERSEQ
+	help
+	  Enable the port80 module, which will buffer calls to port_80_write and
+	  occasionally print when there's new writes.
+
+config PLATFORM_EC_POWER_BUTTON
+	bool "Enable the power button module"
+	depends on PLATFORM_EC_HOSTCMD
+	help
+	  Enable shimming the power button implementation and related
+	  commands in platform/ec.  This requires a GPIO named
+	  GPIO_POWER_BUTTON_L in gpio_map.h.
 
 menuconfig PLATFORM_EC_TIMER
 	bool "Enable the EC timer module"
@@ -117,82 +200,5 @@ config PLATFORM_EC_TIMER_CMD_WAITMS
 	  Enable the "waitms" command
 
 endif # PLATFORM_EC_TIMER
-
-menuconfig PLATFORM_EC_ESPI
-	bool "Enable eSPI compatibility in platform/ec"
-	depends on ESPI && AP
-	default y
-	help
-	  Enable eSPI shim layer.
-
-if PLATFORM_EC_ESPI
-
-config PLATFORM_EC_ESPI_VW_SLP_S3
-	bool "SLP_S3 is an eSPI virtual wire instead of a GPIO"
-	help
-	  For power sequencing, use an eSPI virtual wire instead of
-	  defining GPIO_PCH_SLP_S3 in gpio_map.h.
-
-config PLATFORM_EC_ESPI_VW_SLP_S4
-	bool "SLP_S4 is an eSPI virtual wire instead of a GPIO"
-	help
-	  For power sequencing, use an eSPI virtual wire instead of
-	  defining GPIO_PCH_SLP_S4 in gpio_map.h.
-
-endif # PLATFORM_EC_ESPI
-
-config PLATFORM_EC_HOOKS
-	bool "Enable hooks and deferred compatibility shim"
-	default y
-	help
-	  Enable translation of DECLARE_DEFERRED and
-	  hook_call_deferred to Zephyr's work queues, and a compatible
-	  DECLARE_HOOK implementation.
-
-config PLATFORM_EC_HOSTCMD
-	bool "Enable host commands shim"
-	default y if AP
-	help
-	  Enable the host commands shim in platform/ec.
-
-config PLATFORM_EC_LID_SWITCH
-	bool "Enable the lid switch module"
-	help
-	  Enable shimming the lid switch implementation and related
-	  commands in platform/ec.  This requires a GPIO named
-	  GPIO_LID_OPEN to be defined in gpio_map.h.
-
-config PLATFORM_EC_I2C
-	bool "Enable the EC i2c module"
-	default y
-	help
-	  Enable compilation of the EC i2c module. Once enabled, it will be
-	  possible to make calls using the old platform/ec i2c APIs defined
-	  in include/i2c.h and implemented in common/i2c_master.c. Doing so
-	  should make shimming other platform/ec modules which rely on i2c
-	  communication "just work" without requiring any further code changes.
-
-config PLATFORM_EC_PORT80
-	bool "Enable the port80 module"
-	default y if AP_X86 && PLATFORM_EC_POWERSEQ
-	help
-	  Enable the port80 module, which will buffer calls to port_80_write and
-	  occasionally print when there's new writes.
-
-config PLATFORM_EC_POWER_BUTTON
-	bool "Enable the power button module"
-	depends on PLATFORM_EC_HOSTCMD
-	help
-	  Enable shimming the power button implementation and related
-	  commands in platform/ec.  This requires a GPIO named
-	  GPIO_POWER_BUTTON_L in gpio_map.h.
-
-config PLATFORM_EC_CBI
-	bool "Enable the CBI EEPROM module"
-	depends on PLATFORM_EC_I2C
-	help
-	  Enables various CBI accessors and host and console commands. One must
-	  specify both I2C_PORT_EEPROM and I2C_ADDR_EEPROM_FLAGS to the CBI
-	  EEPROM's i2c port and 7-bit i2c address.
 
 endif # PLATFORM_EC
