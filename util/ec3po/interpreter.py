@@ -101,7 +101,11 @@ class Interpreter(object):
     interpreter_prefix = ('%s - ' % name) if name else ''
     logger = logging.getLogger('%sEC3PO.Interpreter' % interpreter_prefix)
     self.logger = LoggerAdapter(logger, {'pty': ec_uart_pty})
-    self.ec_uart_pty = open(ec_uart_pty, 'ab+')
+    # TODO(https://crbug.com/1162189): revist the 2 TODOs below
+    # TODO(https://bugs.python.org/issue27805, python3.7+): revert to ab+
+    # TODO(https://bugs.python.org/issue20074): removing buffering=0 if/when
+    # that gets fixed, or keep two pty: one for reading and one for writing
+    self.ec_uart_pty = open(ec_uart_pty, 'r+b', buffering=0)
     self.ec_uart_pty_name = ec_uart_pty
     self.cmd_pipe = cmd_pipe
     self.dbg_pipe = dbg_pipe
@@ -223,7 +227,10 @@ class Interpreter(object):
       if not self.connected:
         self.logger.debug('UART reconnect request.')
         # Reopen the PTY.
-        fileobj = open(self.ec_uart_pty_name, 'ab+')
+        # TODO(https://bugs.python.org/issue27805, python3.7+): revert to ab+
+        # TODO(https://bugs.python.org/issue20074): removing buffering=0 if/when
+        # that gets fixed, or keep two pty: one for reading and one for writing
+        fileobj = open(self.ec_uart_pty_name, 'r+b', buffering=0)
         self.logger.debug('fileobj: %r', fileobj)
         self.ec_uart_pty = fileobj
         # Add the descriptor to the inputs.
