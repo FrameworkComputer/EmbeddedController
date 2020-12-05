@@ -317,6 +317,10 @@ void battery_get_params(struct batt_params *batt)
 		batt->is_present = BP_NO;
 	}
 
+	/* update the battery status */
+	if (battery_status(&batt->status))
+		batt->flags |= BATT_FLAG_BAD_STATUS;
+
 	v = 0;
 	if (battery_charging_allowed(&v)) {
 		batt->flags |= BATT_FLAG_BAD_ANY;
