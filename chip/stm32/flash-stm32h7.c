@@ -8,6 +8,7 @@
 #include "clock.h"
 #include "cpu.h"
 #include "flash.h"
+#include "flash-regs.h"
 #include "hooks.h"
 #include "registers.h"
 #include "panic.h"
@@ -110,11 +111,7 @@ static int unlock_optb(void)
 	if (unlock(0))
 		return EC_ERROR_UNKNOWN;
 
-	/*
-	 * Always use bank 0 flash controller as there is only one option bytes
-	 * set for both banks.
-	 */
-	if (STM32_FLASH_OPTCR(0) & FLASH_OPTCR_OPTLOCK) {
+	if (flash_option_bytes_locked()) {
 		/*
 		 * We may have already locked the flash module and get a bus
 		 * fault in the attempt to unlock. Need to disable bus fault
@@ -122,13 +119,12 @@ static int unlock_optb(void)
 		 */
 		ignore_bus_fault(1);
 
-		STM32_FLASH_OPTKEYR(0) = FLASH_OPTKEYR_KEY1;
-		STM32_FLASH_OPTKEYR(0) = FLASH_OPTKEYR_KEY2;
+		unlock_flash_option_bytes();
 		ignore_bus_fault(0);
 	}
 
-	return STM32_FLASH_OPTCR(0) & FLASH_OPTCR_OPTLOCK ? EC_ERROR_UNKNOWN
-							  : EC_SUCCESS;
+	return flash_option_bytes_locked() ? EC_ERROR_UNKNOWN
+					   : EC_SUCCESS;
 }
 
 static int commit_optb(void)
@@ -142,7 +138,7 @@ static int commit_optb(void)
 	while (STM32_FLASH_OPTSR_CUR(0) & FLASH_OPTSR_BUSY && timeout-- > 0)
 		;
 
-	STM32_FLASH_OPTCR(0) |= FLASH_OPTCR_OPTLOCK;
+	lock_flash_option_bytes();
 	lock(0);
 
 	return (timeout > 0) ? EC_SUCCESS : EC_ERROR_TIMEOUT;
@@ -156,6 +152,87 @@ static void protect_blocks(uint32_t blocks)
 	STM32_FLASH_WPSN_PRG(1) &= ~((blocks >> BLOCKS_PER_HWBANK)
 				& BLOCKS_HWBANK_MASK);
 	commit_optb();
+}
+
+
+/*
+ * Helper function definitions for consistency with F4 to enable flash
+ * physical unitesting
+ */
+void unlock_flash_control_register(void)
+{
+	unlock(0);
+	unlock(1);
+}
+
+void unlock_flash_option_bytes(void)
+{
+	/*
+	 * Always use bank 0 flash controller as there is only one option bytes
+	 * set for both banks. See http://b/181130245
+	 *
+	 * Consecutively program values. Ref: RM0433:4.9.2
+	 */
+	STM32_FLASH_OPTKEYR(0) = FLASH_OPTKEYR_KEY1;
+	STM32_FLASH_OPTKEYR(0) = FLASH_OPTKEYR_KEY2;
+}
+
+void disable_flash_option_bytes(void)
+{
+	ignore_bus_fault(1);
+	/*
+	 * Always use bank 0 flash controller as there is only one option bytes
+	 * set for both banks. See http://b/181130245
+	 *
+	 * Writing anything other than the pre-defined keys to the option key
+	 * register results in a bus fault and the register being locked until
+	 * reboot (even with a further correct key write).
+	 */
+	STM32_FLASH_OPTKEYR(0) = 0xffffffff;
+	ignore_bus_fault(0);
+}
+
+void disable_flash_control_register(void)
+{
+	ignore_bus_fault(1);
+	/*
+	 * Writing anything other than the pre-defined keys to a key
+	 * register results in a bus fault and the register being locked until
+	 * reboot (even with a further correct key write).
+	 */
+	STM32_FLASH_KEYR(0) = 0xffffffff;
+	STM32_FLASH_KEYR(1) = 0xffffffff;
+	ignore_bus_fault(0);
+}
+
+void lock_flash_control_register(void)
+{
+	lock(0);
+	lock(1);
+}
+
+void lock_flash_option_bytes(void)
+{
+	/*
+	 * Always use bank 0 flash controller as there is only one option bytes
+	 * set for both banks. See http://b/181130245
+	 */
+	STM32_FLASH_OPTCR(0) |= FLASH_OPTCR_OPTLOCK;
+}
+
+bool flash_option_bytes_locked(void)
+{
+	/*
+	 * Always use bank 0 flash controller as there is only one option bytes
+	 * set for both banks. See http://b/181130245
+	 */
+	return  !!(STM32_FLASH_OPTCR(0) & FLASH_OPTCR_OPTLOCK);
+}
+
+bool flash_control_register_locked(void)
+{
+	return !!(STM32_FLASH_CR(0) & FLASH_CR_LOCK) &&
+	       !!(STM32_FLASH_CR(1) & FLASH_CR_LOCK);
 }
 
 /*
@@ -409,18 +486,15 @@ int flash_physical_protect_now(int all)
 	 * permanently locked until reset, a correct keyring write
 	 * will not unlock it.
 	 */
-	ignore_bus_fault(1);
 
 	if (all) {
 		/* cannot do any write/erase access until next reboot */
-		STM32_FLASH_KEYR(0) = 0xffffffff;
-		STM32_FLASH_KEYR(1) = 0xffffffff;
+		disable_flash_control_register();
 		access_disabled = 1;
 	}
 	/* cannot modify the WP bits in the option bytes until reboot */
-	STM32_FLASH_OPTKEYR(0) = 0xffffffff;
+	disable_flash_option_bytes();
 	option_disabled = 1;
-	ignore_bus_fault(0);
 
 	return EC_SUCCESS;
 }

@@ -9,6 +9,7 @@
 #include "common.h"
 #include "flash.h"
 #include "flash-f.h"
+#include "flash-regs.h"
 #include "hooks.h"
 #include "registers.h"
 #include "system.h"
