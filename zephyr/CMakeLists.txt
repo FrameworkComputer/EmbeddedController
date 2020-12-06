@@ -34,7 +34,15 @@ zephyr_include_directories_ifdef(
 
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/base32.c")
+# CONFIG_PLATFORM_EC files that don't relate to something below should be
+# included here, sorted by filename. This is common functionality which is
+# supported by all boards and emulators (including unit tests) using the shim
+# layer.
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/base32.c"
+                                                "${PLATFORM_EC}/common/queue.c")
+
+# Now include files that depend on or relate to other CONFIG options, sorted by
+# CONFIG
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CBI     "${PLATFORM_EC}/common/cbi.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
                                                 "${PLATFORM_EC}/common/chipset.c")
@@ -42,27 +50,26 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ESPI    "${PLATFORM_EC}/common/espi.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/extpower_common.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_EXTPOWER_GPIO
                                                 "${PLATFORM_EC}/common/extpower_gpio.c")
-zephyr_sources_ifdef(CONFIG_SHELL               "${PLATFORM_EC}/common/gpio_commands.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD "${PLATFORM_EC}/common/host_command.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD "${PLATFORM_EC}/common/host_event_commands.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_I2C     "${PLATFORM_EC}/common/i2c_controller.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD
+                                                "${PLATFORM_EC}/common/keyboard_scan.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_8042
                                                 "${PLATFORM_EC}/common/keyboard_8042.c"
                                                 "${PLATFORM_EC}/common/keyboard_8042_sharedlib.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD
-                                                "${PLATFORM_EC}/common/keyboard_scan.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_LID_SWITCH
                                                 "${PLATFORM_EC}/common/lid_switch.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_PORT80  "${PLATFORM_EC}/common/port80.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWER_BUTTON
                                                 "${PLATFORM_EC}/common/power_button.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_INTEL
-                                                "${PLATFORM_EC}/common/power_button_x86.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/queue.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TIMER   "${PLATFORM_EC}/common/timer.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
                                                 "${PLATFORM_EC}/power/common.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_INTEL
-                                                "${PLATFORM_EC}/power/intel_x86.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_ICELAKE
                                                 "${PLATFORM_EC}/power/icelake.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_INTEL
+                                                "${PLATFORM_EC}/common/power_button_x86.c"
+                                                "${PLATFORM_EC}/power/intel_x86.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TIMER   "${PLATFORM_EC}/common/timer.c")
+
+zephyr_sources_ifdef(CONFIG_SHELL               "${PLATFORM_EC}/common/gpio_commands.c")
