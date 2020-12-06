@@ -1,0 +1,52 @@
+# Copyright 2020 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_BATTERY
+	bool "Support batteries"
+	help
+	  Enables battery support on the board. Requires selection of a battery
+	  and a charger IC.
+
+	  If using I2C batteries, you must dedine I2C_PORT_BATTERY in your
+	  board's i2c_map.h file so that the EC code will know which I2C
+	  port the battery is on.
+
+if PLATFORM_EC_BATTERY
+
+choice "Battery select"
+	prompt "Select the battery to use"
+	help
+	  Select the battery used on the board. If you are ensure, select the
+	  smart battery option.
+
+config PLATFORM_EC_BATTERY_SMART
+	bool "Support a smart battery"
+	depends on PLATFORM_EC_I2C
+	help
+	  Many batteries support the Smart Battery Specification and therefore
+	  have common registers which can be accessed to control and monitor
+	  the battery.
+
+	  See here for the spec: http://sbs-forum.org/specs/sbdat110.pdf
+
+endchoice
+
+choice "Charger select"
+	prompt "Select the charger to use"
+	help
+	  Select the battery charger IC used on the board. Only one charger may
+	  be selected.
+
+config PLATFORM_EC_CHARGER_ISL9237
+	bool "Use the ISL9237 charger"
+	depends on PLATFORM_EC_I2C
+	help
+	  Enables a driver for the ISL9237 VCD Battery Charger. This is a
+	  buck-boost, narrow-output-voltage charger supporting an input voltage
+	  of 3.2-23.4V and output of 2.4 V-13.8V. It provides an I2C interace
+	  for configuration.
+
+endchoice
+
+endif # PLATFORM_EC_BATTERY
