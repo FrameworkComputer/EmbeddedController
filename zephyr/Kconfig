@@ -12,6 +12,7 @@ menuconfig PLATFORM_EC
 
 if PLATFORM_EC
 
+rsource "Kconfig.battery"
 rsource "Kconfig.powerseq"
 rsource "Kconfig.tasks"
 
