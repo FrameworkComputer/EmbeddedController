@@ -83,7 +83,6 @@ void power_set_host_sleep_state(enum host_sleep_event state)
 	host_sleep_state = state;
 }
 
-#ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
 /* Flag to notify listeners about suspend/resume events. */
 enum sleep_notify_type sleep_notify = SLEEP_NOTIFY_NONE;
 
@@ -104,6 +103,8 @@ void sleep_notify_transition(int check_state, int hook_id)
 	hook_notify(hook_id);
 	sleep_set_notify(SLEEP_NOTIFY_NONE);
 }
+
+#ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
 
 static uint16_t sleep_signal_timeout;
 static uint32_t sleep_signal_transitions;
@@ -190,14 +191,6 @@ void sleep_reset_tracking(void)
 #else /* !CONFIG_POWER_SLEEP_FAILURE_DETECTION */
 
 /* No action */
-void sleep_set_notify(enum sleep_notify_type notify)
-{
-}
-
-void sleep_notify_transition(int check_state, int hook_id)
-{
-}
-
 void sleep_suspend_transition(void)
 {
 }
