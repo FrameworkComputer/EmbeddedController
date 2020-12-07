@@ -19,6 +19,7 @@
 
 /* Save some flash space */
 #define CONFIG_CHIP_INIT_ROM_REGION
+#define CONFIG_DEBUG_ASSERT_BRIEF
 
 /* EC console commands */
 #define CONFIG_CMD_TCPC_DUMP
