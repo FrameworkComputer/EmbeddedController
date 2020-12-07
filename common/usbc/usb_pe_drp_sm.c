@@ -1577,29 +1577,6 @@ static void pe_update_src_pdo_flags(int port, int pdo_cnt, uint32_t *pdos)
 	if ((pdos[0] & PDO_TYPE_MASK) != PDO_TYPE_FIXED)
 		return;
 
-	if (pdos[0] & PDO_FIXED_DUAL_ROLE)
-		tc_partner_dr_power(port, 1);
-	else
-		tc_partner_dr_power(port, 0);
-
-	if (pdos[0] & PDO_FIXED_UNCONSTRAINED)
-		tc_partner_unconstrainedpower(port, 1);
-	else
-		tc_partner_unconstrainedpower(port, 0);
-
-	/* Do not set USB comm if we are in an alt-mode */
-	if (pe[port].partner_amodes[TCPC_TX_SOP].amode_idx == 0) {
-		if (pdos[0] & PDO_FIXED_COMM_CAP)
-			tc_partner_usb_comm(port, 1);
-		else
-			tc_partner_usb_comm(port, 0);
-	}
-
-	if (pdos[0] & PDO_FIXED_DATA_SWAP)
-		tc_partner_dr_data(port, 1);
-	else
-		tc_partner_dr_data(port, 0);
-
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
 		if (pd_can_source_from_device(pdo_cnt, pdos)) {
 			PE_CLR_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);

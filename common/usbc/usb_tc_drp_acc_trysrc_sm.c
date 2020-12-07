@@ -102,26 +102,18 @@ void print_flag(int set_or_clear, int flag);
 #define TC_FLAGS_REQUEST_DR_SWAP        BIT(10)
 /* Flag to note request to power off sink */
 #define TC_FLAGS_POWER_OFF_SNK          BIT(11)
-/* Flag to note port partner has unconstrained power */
-#define TC_FLAGS_PARTNER_UNCONSTRAINED  BIT(12)
-/* Flag to note port partner is Dual Role Data */
-#define TC_FLAGS_PARTNER_DR_DATA        BIT(13)
-/* Flag to note port partner is Dual Role Power */
-#define TC_FLAGS_PARTNER_DR_POWER       BIT(14)
 /* Flag to note port partner is Power Delivery capable */
-#define TC_FLAGS_PARTNER_PD_CAPABLE     BIT(15)
+#define TC_FLAGS_PARTNER_PD_CAPABLE     BIT(12)
 /* Flag to note hard reset has been requested */
-#define TC_FLAGS_HARD_RESET_REQUESTED   BIT(16)
-/* Flag to note port partner is USB comms capable */
-#define TC_FLAGS_PARTNER_USB_COMM       BIT(17)
+#define TC_FLAGS_HARD_RESET_REQUESTED   BIT(13)
 /* Flag to note we are currently performing PR Swap */
-#define TC_FLAGS_PR_SWAP_IN_PROGRESS    BIT(18)
+#define TC_FLAGS_PR_SWAP_IN_PROGRESS    BIT(14)
 /* Flag to note we are performing Discover Identity */
-#define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(19)
+#define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(15)
 /* Flag to note we should check for connection */
-#define TC_FLAGS_CHECK_CONNECTION       BIT(20)
+#define TC_FLAGS_CHECK_CONNECTION       BIT(16)
 /* Flag to note pd_set_suspend SUSPEND state */
-#define TC_FLAGS_SUSPEND                BIT(21)
+#define TC_FLAGS_SUSPEND                BIT(17)
 
 /*
  * Clear all flags except TC_FLAGS_LPM_ENGAGED and TC_FLAGS_SUSPEND.
@@ -299,12 +291,8 @@ static struct bit_name flag_bit_names[] = {
 	{ TC_FLAGS_REQUEST_PR_SWAP, "REQUEST_PR_SWAP" },
 	{ TC_FLAGS_REQUEST_DR_SWAP, "REQUEST_DR_SWAP" },
 	{ TC_FLAGS_POWER_OFF_SNK, "POWER_OFF_SNK" },
-	{ TC_FLAGS_PARTNER_UNCONSTRAINED, "PARTNER_UNCONSTRAINED" },
-	{ TC_FLAGS_PARTNER_DR_DATA, "PARTNER_DR_DATA" },
-	{ TC_FLAGS_PARTNER_DR_POWER, "PARTNER_DR_POWER" },
 	{ TC_FLAGS_PARTNER_PD_CAPABLE, "PARTNER_PD_CAPABLE" },
 	{ TC_FLAGS_HARD_RESET_REQUESTED, "HARD_RESET_REQUESTED" },
-	{ TC_FLAGS_PARTNER_USB_COMM, "PARTNER_USB_COMM" },
 	{ TC_FLAGS_PR_SWAP_IN_PROGRESS, "PR_SWAP_IN_PROGRESS" },
 	{ TC_FLAGS_DISC_IDENT_IN_PROGRESS, "DISC_IDENT_IN_PROGRESS" },
 	{ TC_FLAGS_CHECK_CONNECTION, "CHECK_CONNECTION" },
@@ -750,38 +738,6 @@ int tc_is_attached_src(int port)
 int tc_is_attached_snk(int port)
 {
 	return IS_ATTACHED_SNK(port);
-}
-
-void tc_partner_dr_power(int port, int en)
-{
-	if (en)
-		TC_SET_FLAG(port, TC_FLAGS_PARTNER_DR_POWER);
-	else
-		TC_CLR_FLAG(port, TC_FLAGS_PARTNER_DR_POWER);
-}
-
-void tc_partner_unconstrainedpower(int port, int en)
-{
-	if (en)
-		TC_SET_FLAG(port, TC_FLAGS_PARTNER_UNCONSTRAINED);
-	else
-		TC_CLR_FLAG(port, TC_FLAGS_PARTNER_UNCONSTRAINED);
-}
-
-void tc_partner_usb_comm(int port, int en)
-{
-	if (en)
-		TC_SET_FLAG(port, TC_FLAGS_PARTNER_USB_COMM);
-	else
-		TC_CLR_FLAG(port, TC_FLAGS_PARTNER_USB_COMM);
-}
-
-void tc_partner_dr_data(int port, int en)
-{
-	if (en)
-		TC_SET_FLAG(port, TC_FLAGS_PARTNER_DR_DATA);
-	else
-		TC_CLR_FLAG(port, TC_FLAGS_PARTNER_DR_DATA);
 }
 
 void tc_pd_connection(int port, int en)
