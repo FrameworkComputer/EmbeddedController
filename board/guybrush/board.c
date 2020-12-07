@@ -5,14 +5,16 @@
 
 /* Guybrush board-specific configuration */
 
+#include "button.h"
 #include "common.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "lid_switch.h"
+#include "power.h"
+#include "power_button.h"
 #include "switch.h"
-#include "system.h"
-#include "task.h"
-#include "uart.h"
-#include "util.h"
+#include "tablet_mode.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
 

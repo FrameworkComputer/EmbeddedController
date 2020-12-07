@@ -5,31 +5,150 @@
  * found in the LICENSE file.
  */
 
-/* Declare symbolic names for all the GPIOs that we care about. */
+/* GSC Signals */
+GPIO_INT(EC_WP_L,		PIN(5, 0), GPIO_INT_BOTH,			switch_interrupt)	/* Write Protect Enabled */
+GPIO(CCD_MODE_ODL,		PIN(C, 6), GPIO_INPUT)							/* Case Closed Debug Mode */
+GPIO(EC_GSC_PACKET_MODE,	PIN(B, 1), GPIO_OUT_LOW)						/* GSC Packet Mode */
+ALTERNATE(			PIN_MASK(6, BIT(4) | BIT(5)), 0,		MODULE_UART, 0) 	/* UART_EC_TX_GSC_DBG_RX_R, UART_GSC_DBG_TX_EC_RX_R */
 
-/* Wake Source interrupts */
-GPIO_INT(LID_OPEN,		PIN(0, 2), GPIO_INT_BOTH,	switch_interrupt)
-GPIO_INT(EC_WP_L,		PIN(A, 1), GPIO_INT_BOTH,	switch_interrupt)
+/* Power Signals */
+GPIO_INT(MECH_PWR_BTN_ODL,	PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_LOW, 	power_button_interrupt)	/* Mechanical Power Button */
+GPIO_INT(EC_PWR_BTN_ODL,	PIN(0, 0), GPIO_INT_BOTH, 			power_button_interrupt) /* Power Button */
+GPIO_INT(SLP_S3_L,		PIN(6, 1), GPIO_INT_BOTH,			power_signal_interrupt)	/* Sleep S3 */
+GPIO_INT(SLP_S5_L,		PIN(7, 2), GPIO_INT_BOTH,			power_signal_interrupt) /* Sleep S5 */
+GPIO_INT(SLP_S3_S0I3_L,		PIN(7, 4), GPIO_INT_BOTH,			power_signal_interrupt) /* Sleep S0ix */
+GPIO_INT(S5_PWROK,		PIN(C, 0), GPIO_INT_BOTH,			power_signal_interrupt)	/* S5 Power OK */
+GPIO_INT(S0_PWROK_OD,		PIN(B, 6), GPIO_INT_BOTH, 			power_signal_interrupt) /* S0 Power OK */
+GPIO_INT(ACOK_OD,		PIN(0, 1), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	extpower_interrupt)	/* AC Power Present */
+GPIO_INT(EC_PCORE_INT_ODL,	PIN(F, 0), GPIO_INT_BOTH | GPIO_PULL_UP,	power_signal_interrupt)	/* Power Core Interrupt */
+GPIO_INT(PG_GROUPC_S0_OD,	PIN(A, 3), GPIO_INT_BOTH, 			power_signal_interrupt)	/* Power Group C S0 */
+GPIO_INT(PG_LPDDR4X_S3,		PIN(9, 5), GPIO_INT_BOTH, 			power_signal_interrupt)	/* Power Group LPDDR4 S3 */
+GPIO(EN_PWR_S5,			PIN(B, 7), GPIO_OUT_LOW)						/* Enable S5 Power */
+GPIO(EN_PWR_S0_R,		PIN(F, 1), GPIO_OUT_LOW)
+GPIO(EN_PWR_Z1,			PIN(8, 5), GPIO_OUT_LOW)						/* Enable Z1 Power */
+GPIO(PCORE_EN_R,		PIN(E, 1), GPIO_OUT_LOW)
+ALTERNATE(/*MECH_PWR_BTN_ODL*/	PIN_MASK(D, BIT(2)), 0,				MODULE_PMU, 0)		/* PSL - Mechanical Power Button */
+ALTERNATE(/*LID_OPEN*/		PIN_MASK(0, BIT(2)), 0, 			MODULE_PMU, 0)		/* PSL - Lid Open */
+ALTERNATE(/*ACOK_OD*/		PIN_MASK(0, BIT(1)), 0,				MODULE_PMU, 0)		/* PSL - AC Power Present */
 
-/* Power sequencing interrupts */
+/* SOC Signals */
+UNIMPLEMENTED(ENTERING_RW) 										/* GPIO_ENTERING_RW */
+GPIO(EC_SYS_RST_L,		PIN(7, 6), GPIO_ODR_HIGH)						/* Cold Reset SOC */
+GPIO(EC_SOC_RSMRST_L,		PIN(C, 5), GPIO_OUT_LOW)						/* Resume Reset SOC */
+GPIO(EC_CLR_CMOS,		PIN(A, 1), GPIO_OUT_LOW)						/* Clear SOC CMOS */
+GPIO(EC_MEM_EVENT,		PIN(A, 5), GPIO_OUT_LOW)						/* Memory Thermal Event to SOC*/
+GPIO(EC_SOC_PWR_BTN_L,		PIN(6, 3), GPIO_OUT_HIGH)						/* Power Button to SOC */
+GPIO(EC_SOC_PWR_GOOD,		PIN(D, 3), GPIO_OUT_LOW)						/* Power Good to SOC */
+GPIO(EC_SOC_WAKE_L,		PIN(0, 3), GPIO_OUT_HIGH)						/* Wake SOC */
+GPIO(EC_SOC_INT_L,		PIN(8, 3), GPIO_OUT_HIGH)						/* Matrix Keyboard Protocol Event to SOC */
+GPIO(PROCHOT_ODL,		PIN(D, 5), GPIO_ODR_HIGH)						/* Force SOC into HTC-active state */
+GPIO(SOC_ALERT_EC_L,		PIN(E, 2), GPIO_INPUT)							/* Sideband-Temperature Iterrupt */
+GPIO(SOC_THERMTRIP_ODL, 	PIN(E, 5), GPIO_INPUT)							/* Temperature Trip Sensor */
 
-/* Sensor Interrupts */
+/* USB Signals */
+GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(E, 0), GPIO_INT_FALLING,			tcpc_alert_event)
+GPIO_INT(USB_C1_TCPC_INT_ODL,	PIN(C, 7), GPIO_INT_FALLING,			tcpc_alert_event)
+GPIO_INT(USB_C0_PPC_INT_ODL,	PIN(7, 5), GPIO_INT_FALLING,			ppc_interrupt)
+GPIO_INT(USB_C1_PPC_INT_ODL,	PIN(D, 4), GPIO_INT_FALLING,			ppc_interrupt)
+GPIO_INT(USB_C0_BC12_INT_ODL,	PIN(A, 4), GPIO_INT_FALLING | GPIO_PULL_UP,	bc12_interrupt)
+GPIO_INT(USB_C1_BC12_INT_ODL, 	PIN(9, 6), GPIO_INT_FALLING | GPIO_PULL_UP,	bc12_interrupt)
+GPIO(USB_C0_C1_FAULT_ODL,	PIN(7, 3), GPIO_ODR_HIGH)						/* C0/C1 Fault to SOC */
+GPIO(USB_C0_TCPC_RST_L,		PIN(3, 4), GPIO_OUT_HIGH)						/* C0 TCPC Reset */
+GPIO(USB_C1_TCPC_RST_L,		PIN(3, 7), GPIO_OUT_HIGH)						/* C1 TCPC Reset */
+GPIO(USB_C0_HPD,		PIN(F, 5), GPIO_OUT_LOW)						/* C0 DP Hotplug Detect */
+GPIO(USB_C1_HPD,		PIN(F, 4), GPIO_OUT_LOW)						/* C1 DP Hotplug Detect */
 
-/* USB-C interrupts */
+/* Sensor Signals */
+/* TODO: Make 6AXIS_INT_L an interrupt */
+GPIO(6AXIS_INT_L,		PIN(A, 0), GPIO_INT_FALLING | GPIO_PULL_UP)				/* 6 Axis IMU */
+GPIO(3AXIS_INT_L,		PIN(A, 2), GPIO_INPUT | GPIO_PULL_DOWN)					/* 3 Axis Accel */
+GPIO_INT(LID_OPEN,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	lid_interrupt)		/* Lid Open */
+GPIO_INT(TABLET_MODE,		PIN(C, 1), GPIO_INT_BOTH,			gmr_tablet_switch_isr)	/* 360 Tablet Mode */
+GPIO_INT(VOLDN_BTN_ODL,		PIN(A, 7), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)	/* Volume Down */
+GPIO_INT(VOLUP_BTN_ODL,		PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, 	button_interrupt)	/* Volume Up */
+GPIO(EC_BATT_PRES_ODL,		PIN(9, 4), GPIO_INPUT | GPIO_PULL_UP)					/* Battery Present */
+ALTERNATE(/*TEMP_SOC|CHRG|MEM*/	PIN_MASK(4, BIT(3) | BIT(4) | BIT(5)), 0, 	MODULE_PWM, 0)		/* SOC, Charger and Memory Temperature */
+ALTERNATE(			PIN_MASK(4, BIT(1) | BIT(2)), 0,		MODULE_PWM, 0)		/* EC_ADC_CORE_IMON1, EC_ADC_SOC_IMON2 */
 
-/* HDMI interrupts */
+/* LED Signals */
+GPIO(EC_DISABLE_DISP_BL,	PIN(A, 6), GPIO_OUT_HIGH)						/* Disable Display Backlight */
+ALTERNATE(/*EC_PWM_LED_CHRG_L*/	PIN_MASK(C, BIT(4)), 0, 			MODULE_PWM, 0)		/* Charging LED */
+ALTERNATE(/*EC_PWM_LED_FULL_L*/	PIN_MASK(8, BIT(0)), 0, 			MODULE_PWM, 0)		/* Full LED */
 
-/* Volume button interrupts */
+/* Fan Signals */
+ALTERNATE(			PIN_MASK(C, BIT(3)), 0, 			MODULE_PWM, 0)		/* EC_FAN_PWM - Fan PWM */
+ALTERNATE(			PIN_MASK(4, BIT(0)), 0, 			MODULE_PWM, 0)		/* EC_FAN_SPEED - Fan Speed */
 
-/* AP Signals */
-UNIMPLEMENTED(ENTERING_RW) /* GPIO_ENTERING_RW */
+/* I2C Signals -- i2c pins need to be exposed as GPIO for bit banging, even though set to alternate mode below */
+GPIO(EC_I2C_USB_A0_C0_SCL,	PIN(B, 5), GPIO_INPUT)
+GPIO(EC_I2C_USB_A0_C0_SDA,	PIN(B, 4), GPIO_INPUT)
+GPIO(EC_I2C_USB_A1_C1_SCL,	PIN(9, 0), GPIO_INPUT)
+GPIO(EC_I2C_USB_A1_C1_SDA,	PIN(8, 7), GPIO_INPUT)
+GPIO(EC_I2C_BATT_SCL,		PIN(9, 2), GPIO_INPUT)
+GPIO(EC_I2C_BATT_SDA,		PIN(9, 1), GPIO_INPUT)
+GPIO(EC_I2C_USBC_MUX_SCL,	PIN(D, 1), GPIO_INPUT)
+GPIO(EC_I2C_USBC_MUX_SDA,	PIN(D, 0), GPIO_INPUT)
+GPIO(EC_I2C_POWER_SCL,		PIN(F, 3), GPIO_INPUT)
+GPIO(EC_I2C_POWER_SDA,		PIN(F, 2), GPIO_INPUT)
+GPIO(EC_I2C_CBI_SCL,		PIN(3, 3), GPIO_INPUT)
+GPIO(EC_I2C_CBI_SDA,		PIN(3, 6), GPIO_INPUT)
+GPIO(EC_I2C_SENSOR_SCL,		PIN(E, 4), GPIO_INPUT | GPIO_SEL_1P8V)
+GPIO(EC_I2C_SENSOR_SDA,		PIN(E, 3), GPIO_INPUT | GPIO_SEL_1P8V)
+GPIO(EC_I2C_SOC_SIC,		PIN(B, 3), GPIO_INPUT)
+GPIO(EC_I2C_SOC_SID,		PIN(B, 2), GPIO_INPUT)
 
-/* USB and USBC Signals */
+ALTERNATE(			PIN_MASK(B, BIT(4) | BIT(5)), 0, 		MODULE_I2C, 0)		/* I2C0 */
+ALTERNATE(			PIN_MASK(9, BIT(0) | BIT(1) | BIT(2)), 0, 	MODULE_I2C, 0)		/* I2C1 SCL / I2C2 */
+ALTERNATE(			PIN_MASK(8, BIT(7)), 0, MODULE_I2C, 0)					/* I2C1 SDA */
+ALTERNATE(			PIN_MASK(D, BIT(0) | BIT(1)), 0, 		MODULE_I2C, 0)		/* I2C3 */
+ALTERNATE(			PIN_MASK(F, BIT(2) | BIT(3)), 0, 		MODULE_I2C, 0)		/* I2C4 */
+ALTERNATE(			PIN_MASK(3, BIT(3) | BIT(6)), 0, 		MODULE_I2C, 0)		/* I2C5 */
+ALTERNATE(			PIN_MASK(E, BIT(3) | BIT(4)), 0, 		MODULE_I2C, 0)		/* I2C6 */
+ALTERNATE(			PIN_MASK(B, BIT(2) | BIT(3)), 0, 		MODULE_I2C, 0)		/* I2C7 */
 
-/* Misc Signals */
+/* Keyboard Signals */
+GPIO(EN_KB_BL, 			PIN(9, 7), GPIO_OUT_HIGH)						/* Enable Keyboard Backlight */
+ALTERNATE(/*PWM_KB_BL*/ 	PIN_MASK(C, BIT(2)), 0, 			MODULE_PWM, 0)		/* Keyboard Backlight Level */
+ALTERNATE(/*KSI_00-01*/		PIN_MASK(3, BIT(0) | BIT(1)), 0, 		MODULE_KEYBOARD_SCAN, GPIO_INPUT)
+ALTERNATE(/*KSI_02-07*/		PIN_MASK(2, GENMASK(7, 2)), 0, 			MODULE_KEYBOARD_SCAN, GPIO_INPUT)
+ALTERNATE(/*KSO_00-01*/		PIN_MASK(2, BIT(0) | BIT(1)), 0, 		MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)
+GPIO(EC_KSO_02_INV, 		PIN(1, 7), GPIO_OUT_LOW)						/* KSO_02 inverted */
+ALTERNATE(/*KSO_03-09*/		PIN_MASK(1, GENMASK(6, 0)), 0,			MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)
+ALTERNATE(/*KSO_10-13*/		PIN_MASK(0, GENMASK(7, 4)), 0, 			MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)
+ALTERNATE(/*KSO_14*/		PIN_MASK(8, BIT(2)), 0, 			MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)
 
-/* UART */
+/* SOC eSPI Bus */
+GPIO(ESPI_SOC_CLK,		PIN(5, 5), GPIO_DEFAULT)
+GPIO(ESPI_SOC_CS_EC_L,		PIN(5, 3), GPIO_DEFAULT)
+GPIO(ESPI_SOC_D0_EC,		PIN(4, 6), GPIO_DEFAULT)
+GPIO(ESPI_SOC_D1_EC,		PIN(4, 7), GPIO_DEFAULT)
+GPIO(ESPI_SOC_D2_EC,		PIN(5, 1), GPIO_DEFAULT)
+GPIO(ESPI_SOC_D3_EC,		PIN(5, 2), GPIO_DEFAULT)
+GPIO(EC_ESPI_RST_L,		PIN(5, 4), GPIO_DEFAULT)
+GPIO(ESPI_EC_ALERT_SOC_L,	PIN(5, 7), GPIO_DEFAULT)
 
-/* I2C pins - these will be reconfigured for alternate function below */
+/* TCPC C0 */
+IOEX(USB_C0_PPC_EN_L,		EXPIN(USBC_PORT_C0, 1, 0), GPIO_OUT_HIGH)
+IOEX(USB_C0_PPC_ILIM_3A_EN,	EXPIN(USBC_PORT_C0, 1, 1), GPIO_OUT_LOW)
+IOEX_INT(USB_C0_SBU_FAULT_ODL,	EXPIN(USBC_PORT_C0, 1, 2), GPIO_INT_FALLING,	sbu_fault_interrupt)
+IOEX(EN_PP5000_USB_A0_VBUS,	EXPIN(USBC_PORT_C0, 1, 5), GPIO_OUT_LOW)
+IOEX(USB_A0_LIMIT_SDP,		EXPIN(USBC_PORT_C0, 1, 6), GPIO_OUT_LOW)
+IOEX(USB_C0_SBU_FLIP,		EXPIN(USBC_PORT_C0, 1, 7), GPIO_OUT_LOW)
 
-/* Power Switch Logic (PSL) inputs */
+/* TCPC C1 */
+IOEX(USB_C1_IN_HPD,		EXPIN(USBC_PORT_C1, 0, 3), GPIO_OUT_LOW)
+IOEX(USB_C1_PPC_EN_L,		EXPIN(USBC_PORT_C1, 1, 0), GPIO_OUT_HIGH)
+IOEX(USB_C1_PPC_ILIM_3A_EN,	EXPIN(USBC_PORT_C1, 1, 1), GPIO_OUT_LOW)
+IOEX_INT(USB_C1_SBU_FAULT_ODL,	EXPIN(USBC_PORT_C1, 1, 2), GPIO_INT_FALLING,	sbu_fault_interrupt)
+IOEX(EN_PP5000_USB_A1_VBUS_DB,	EXPIN(USBC_PORT_C1, 1, 5), GPIO_OUT_LOW)
+IOEX(USB_A1_LIMIT_SDP_DB,	EXPIN(USBC_PORT_C1, 1, 6), GPIO_OUT_LOW)
+
+/* Test Points */
+GPIO(EC_GPIO56,			PIN(5, 6), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(EC_PS2_CLK,		PIN(6, 7), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(EC_PS2_DAT,		PIN(7, 0), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(EC_PS2_RST,		PIN(6, 2), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(EC_GPIOB0,			PIN(B, 0), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(EC_GPIO81,			PIN(8, 1), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(EC_PSL_GPO,		PIN(D, 7), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(EC_PWM7,			PIN(6, 0), GPIO_INPUT | GPIO_PULL_UP)

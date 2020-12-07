@@ -5,6 +5,6 @@
  * found in the LICENSE file.
  */
 
-/* Declare symbolic names for all the GPIOs that we care about. */
+/* Declare symbolic names for all the board GPIOs that we care about. */
 
 #include "base_gpio.inc"

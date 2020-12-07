@@ -9,4 +9,5 @@
 CHIP:=npcx
 CHIP_FAMILY:=npcx9
 CHIP_VARIANT:=npcx9m3f
+
 baseboard-y=baseboard.o
