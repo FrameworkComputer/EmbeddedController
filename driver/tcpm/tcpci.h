@@ -183,8 +183,8 @@
 #define TCPC_REG_RX_BUFFER         0x30
 
 #define TCPC_REG_TRANSMIT          0x50
-#define TCPC_REG_TRANSMIT_SET_WITH_RETRY(type) \
-		(CONFIG_PD_RETRY_COUNT << 4 | (type))
+#define TCPC_REG_TRANSMIT_SET_WITH_RETRY(retries, type) \
+		((retries) << 4 | (type))
 #define TCPC_REG_TRANSMIT_SET_WITHOUT_RETRY(type) (type)
 #define TCPC_REG_TRANSMIT_RETRY(reg) (((reg) & 0x30) >> 4)
 #define TCPC_REG_TRANSMIT_TYPE(reg)  ((reg) & 0x7)

@@ -1004,7 +1004,8 @@ int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
 	 * supported at build time.
 	 */
 	return tcpc_write(port, TCPC_REG_TRANSMIT,
-			  TCPC_REG_TRANSMIT_SET_WITH_RETRY(type));
+			  TCPC_REG_TRANSMIT_SET_WITH_RETRY(
+				  pd_get_retry_count(port, type), type));
 }
 
 /*

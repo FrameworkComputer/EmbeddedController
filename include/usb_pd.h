@@ -1342,6 +1342,15 @@ int pd_get_rev(int port, enum tcpm_transmit_type type);
 int pd_get_vdo_ver(int port, enum tcpm_transmit_type type);
 
 /**
+ * Get transmit retry count for active PD revision.
+ *
+ * @param port The port to query
+ * @param type The partner to query (SOP, SOP', or SOP'')
+ * @return The number of retries to perform when transmitting.
+ */
+int pd_get_retry_count(int port, enum tcpm_transmit_type type);
+
+/**
  * Check if max voltage request is allowed (only used if
  * CONFIG_USB_PD_CHECK_MAX_REQUEST_ALLOWED is defined).
  *

@@ -56,6 +56,11 @@ __overridable enum pd_cable_plug tc_get_cable_plug(int port)
 	return PD_PLUG_FROM_DFP_UFP;
 }
 
+__overridable int pd_get_rev(int port, enum tcpm_transmit_type type)
+{
+	return IS_ENABLED(CONFIG_USB_PD_REV30) ? PD_REV30 : PD_REV20;
+}
+
 int tc_check_vconn_swap(int port)
 {
 	return 0;

@@ -521,6 +521,11 @@ void pd_set_src_caps(int port, int cnt, uint32_t *src_caps)
 {
 }
 
+int pd_get_rev(int port, enum tcpm_transmit_type type)
+{
+	return PD_REV30;
+}
+
 #endif /* !CONFIG_USB_PR_SM */
 
 void pd_update_contract(int port)

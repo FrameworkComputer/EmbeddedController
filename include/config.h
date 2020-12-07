@@ -5035,6 +5035,7 @@
  * PD 2.0 retires three times (for a total of 4 attempts).
  *
  * Note must be [0-3] since it must fit within 2 bits.
+ * TODO(b/175236718): Set retry count dynamically based on active spec revision.
  */
 #ifdef CONFIG_USB_PD_REV30
 #define CONFIG_PD_RETRY_COUNT 2
