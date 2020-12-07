@@ -31,9 +31,8 @@
 #define CONFIG_POWER_PP5000_CONTROL
 
 /* LED defines */
-#define CONFIG_LED_PWM
-/* Although there are 2 LEDs, they are both controlled by the same lines. */
-#define CONFIG_LED_PWM_COUNT 1
+#define CONFIG_LED_ONOFF_STATES
+#define CONFIG_LED_ONOFF_STATES_BAT_LOW	10
 
 /* Keyboard features */
 #define CONFIG_KEYBOARD_VIVALDI
@@ -143,11 +142,7 @@ enum battery_type {
 };
 
 enum pwm_channel {
-	PWM_CH_LED1_BLUE = 0,
-	PWM_CH_LED2_GREEN,
-	PWM_CH_LED3_RED,
-	PWM_CH_LED4_SIDESEL,
-	PWM_CH_FAN,
+	PWM_CH_FAN = 0,
 	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT
 };
