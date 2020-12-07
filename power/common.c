@@ -84,6 +84,10 @@ host_command_reboot_ap_on_g3(struct host_cmd_handler_args *args)
 	/* Store request for processing at g3 */
 	want_reboot_ap_at_g3 = true;
 
+#ifdef CONFIG_CUSTOM_BOOT_G3
+	boot_ap_on_g3();
+#endif
+
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_REBOOT_AP_ON_G3,
