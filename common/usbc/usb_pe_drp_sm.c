@@ -3485,7 +3485,7 @@ static void pe_snk_transition_to_default_run(int port)
 {
 	if (PE_CHK_FLAG(port, PE_FLAGS_PS_RESET_COMPLETE)) {
 		/* PE_SNK_Startup clears all flags */
-
+		PE_CLR_FLAG(port, PE_FLAGS_PS_RESET_COMPLETE);
 		/* Inform the Protocol Layer that the Hard Reset is complete */
 		prl_hard_reset_complete(port);
 		set_state_pe(port, PE_SNK_STARTUP);
