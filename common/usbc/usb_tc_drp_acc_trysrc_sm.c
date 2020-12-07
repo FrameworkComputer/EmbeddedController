@@ -678,12 +678,6 @@ void pd_set_dual_role(int port, enum pd_dual_role_states state)
 	pd_set_dual_role_and_event(port, state, PD_EVENT_UPDATE_DUAL_ROLE);
 }
 
-bool pd_get_partner_data_swap_capable(int port)
-{
-	/* return data swap capable status of port partner */
-	return !!TC_CHK_FLAG(port, TC_FLAGS_PARTNER_DR_DATA);
-}
-
 int pd_comm_is_enabled(int port)
 {
 	return tc_get_pd_enabled(port);
@@ -715,15 +709,6 @@ int pd_ts_dts_plugged(int port)
 bool pd_capable(int port)
 {
 	return !!TC_CHK_FLAG(port, TC_FLAGS_PARTNER_PD_CAPABLE);
-}
-
-/*
- * Return true if partner port is capable of communication over USB data
- * lines.
- */
-bool pd_get_partner_usb_comm_capable(int port)
-{
-	return !!TC_CHK_FLAG(port, TC_FLAGS_PARTNER_USB_COMM);
 }
 
 enum pd_dual_role_states pd_get_dual_role(int port)
@@ -1101,16 +1086,6 @@ bool pd_get_vconn_state(int port)
 	return !!TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON);
 }
 
-bool pd_get_partner_dual_role_power(int port)
-{
-	return !!TC_CHK_FLAG(port, TC_FLAGS_PARTNER_DR_POWER);
-}
-
-bool pd_get_partner_unconstr_power(int port)
-{
-	return !!TC_CHK_FLAG(port, TC_FLAGS_PARTNER_UNCONSTRAINED);
-}
-
 const char *pd_get_task_state_name(int port)
 {
 	return tc_get_current_state(port);
@@ -1132,6 +1107,53 @@ int pd_is_connected(int port)
 bool pd_is_disconnected(int port)
 {
 	return !pd_is_connected(port);
+}
+
+/*
+ * PD functions which query our fixed PDO flags.  Both the source and sink
+ * capabilities can present these values, and they should match between the two
+ * for compliant partners.
+ */
+static bool pd_check_fixed_flag(int port, uint32_t flag)
+{
+	uint32_t fixed_pdo;
+
+	if (pd_get_src_cap_cnt(port) != 0)
+		fixed_pdo = *pd_get_src_caps(port);
+	else if (pd_get_snk_cap_cnt(port) != 0)
+		fixed_pdo = *pd_get_snk_caps(port);
+	else
+		return false;
+
+	/*
+	 * Error check that first PDO is fixed, as 6.4.1 Capabilities requires
+	 * in the Power Delivery Specification.
+	 * "The vSafe5V Fixed Supply Object Shall always be the first object"
+	 */
+	if ((fixed_pdo & PDO_TYPE_MASK) != PDO_TYPE_FIXED)
+		return false;
+
+	return fixed_pdo & flag;
+}
+
+bool pd_get_partner_data_swap_capable(int port)
+{
+	return pd_check_fixed_flag(port, PDO_FIXED_DATA_SWAP);
+}
+
+bool pd_get_partner_usb_comm_capable(int port)
+{
+	return pd_check_fixed_flag(port, PDO_FIXED_COMM_CAP);
+}
+
+bool pd_get_partner_dual_role_power(int port)
+{
+	return pd_check_fixed_flag(port, PDO_FIXED_DUAL_ROLE);
+}
+
+bool pd_get_partner_unconstr_power(int port)
+{
+	return pd_check_fixed_flag(port, PDO_FIXED_UNCONSTRAINED);
 }
 
 static void bc12_role_change_handler(int port, enum pd_data_role prev_data_role,
