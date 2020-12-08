@@ -6,9 +6,6 @@
 # Board specific files build
 #
 
-CHIP:=npcx
-CHIP_FAMILY:=npcx9
-CHIP_VARIANT:=npcx9m3f
 BASEBOARD:=guybrush
 
 board-y=board.o
