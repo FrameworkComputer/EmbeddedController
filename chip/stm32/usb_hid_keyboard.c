@@ -527,27 +527,33 @@ static void hid_keyboard_feature_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, hid_keyboard_feature_init, HOOK_PRIO_DEFAULT - 1);
+#endif
 
 static int hid_keyboard_get_report(uint8_t report_id, uint8_t report_type,
 				   const uint8_t **buffer_ptr, int *buffer_size)
 {
+	if (report_type == REPORT_TYPE_INPUT) {
+		*buffer_ptr = (uint8_t *)&report;
+		*buffer_size = sizeof(report);
+		return 0;
+	}
+
+#ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
 	if (report_type == REPORT_TYPE_FEATURE) {
 		*buffer_ptr = (uint8_t *)feature_report;
 		*buffer_size = sizeof(feature_report);
 		return 0;
 	}
+#endif
 
 	return -1;
 }
-#endif
 
 static struct usb_hid_config_t hid_config_kb = {
 	.report_desc = report_desc,
 	.report_size = sizeof(report_desc),
 	.hid_desc = &hid_desc_kb,
-#ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
 	.get_report = &hid_keyboard_get_report,
-#endif
 };
 
 static int hid_keyboard_iface_request(usb_uint *ep0_buf_rx,
