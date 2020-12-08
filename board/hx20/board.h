@@ -27,6 +27,8 @@
 
 #define CONFIG_CUSTOMER_PORT80
 
+
+#define CONFIG_SYSTEMSERIAL_DEBUG
 /*
  * Combination key
  */

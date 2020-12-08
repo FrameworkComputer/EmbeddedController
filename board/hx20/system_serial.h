@@ -36,12 +36,11 @@ enum ec_serial_idx {
 	SN_THERMAL_ASSY,
 	SN_WIFI_MODULE,
 	SN_SPEAKER,
-	SN_RAM,
+	SN_RAM_SLOT_1,
+	SN_RAM_SLOT_2,
 	SN_SSD,
 	SN_RESERVED1,
 	SN_RESERVED2,
-	SN_RESERVED3,
-
 	SN_MAX
 };
 struct ec_flash_serial_info {
