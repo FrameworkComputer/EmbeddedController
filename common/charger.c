@@ -473,7 +473,11 @@ enum ec_error_list charger_set_input_current_limit(int chgnum,
 enum ec_error_list charger_get_input_current_limit(int chgnum,
 						   int *input_current)
 {
-	if (chgnum < 0 || chgnum >= board_get_charger_chip_count()) {
+	/* Note: may be called with CHARGE_PORT_NONE regularly */
+	if (chgnum < 0)
+		return EC_ERROR_INVAL;
+
+	if (chgnum >= board_get_charger_chip_count()) {
 		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
 		return EC_ERROR_INVAL;
 	}
