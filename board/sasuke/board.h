@@ -20,9 +20,6 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
-/* Save some flash space */
-#define CONFIG_CHIP_INIT_ROM_REGION
-
 /* EC console commands */
 #define CONFIG_CMD_TCPC_DUMP
 #define CONFIG_CMD_CHARGER_DUMP
