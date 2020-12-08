@@ -136,22 +136,6 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 	enum idh_ptype cable_type = get_usb_pd_cable_type(port);
 	struct pd_discovery *disc;
 
-	if (mux_state & USB_PD_MUX_USB_ENABLED ||
-	    mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED ||
-	    mux_state & USB_PD_MUX_USB4_ENABLED) {
-		/*
-		 * Bit 4: USB2_CONNECTION (ignored if BIT5=0).
-		 * 0 - No USB2 Connection
-		 * 1 - USB2 connection
-		 *
-		 * For passive cable, USB2_CONNECTION = 1
-		 * For active cable, USB2_CONNECTION =
-		 * According to Active cable VDO2 Bit 5, USB 2.0 support.
-		 */
-		if (is_usb2_cable_support(port))
-			*set_retimer_con |= BB_RETIMER_USB_2_CONNECTION;
-	}
-
 	/*
 	 * Bit 2: RE_TIMER_DRIVER
 	 * 0 - Re-driver
