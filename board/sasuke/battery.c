@@ -10,7 +10,7 @@
 #include "common.h"
 
 /*
- * Battery info for all waddledoo battery types. Note that the fields
+ * Battery info for all sasuke battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
  * The effective temperature limits are given by discharging_min/max_c.
  *
@@ -30,37 +30,47 @@
  * The assumption for battery types supported is that the charge/discharge FET
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
+ *
+ * Battery FET Status in Manufacture Access : bit15 & bit14
+ *  b'00 - dfet : on / cfet : on
+ *  b'01 - dfet : on / cfet : off
+ *  b'10 - dfet : off / cfet : off
+ *  b'11 - dfet : off / cfet : on
+ *  The value b'10 is disconnect_val, so we can use b'01 for cfet_off_val
  */
 const struct board_batt_params board_battery_info[] = {
-	/* POW-TECH Battery Information */
-	[BATTERY_POWER_TECH] = {
+	/* SDI Battery Information */
+	[BATTERY_SDI] = {
 		.fuel_gauge = {
-			.manuf_name = "POW-TECH",
+			.manuf_name = "SDI",
+			.device_name = "4432D53",
 			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x10, 0x10 },
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.reg_addr       = 0x00,
-				.reg_mask       = 0x2000,
-				.disconnect_val = 0x2000,
+				.mfgacc_support = 0,
+				.reg_addr = 0x00,
+				.reg_mask = 0xc000,
+				.disconnect_val = 0x8000,
+				.cfet_mask = 0xc000,
+				.cfet_off_val = 0x2000,
 			}
 		},
 		.batt_info = {
-			.voltage_max          = 8800,    /* mV */
-			.voltage_normal       = 7700,
-			.voltage_min          = 6000,
-			.precharge_current    = 160,       /* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c       = 0,
-			.charging_max_c       = 45,
-			.discharging_min_c    = -20,
-			.discharging_max_c    = 60,
+			.voltage_max            = 8860,
+			.voltage_normal         = 7720, /* mV */
+			.voltage_min            = 6000, /* mV */
+			.precharge_current      = 200,  /* mA */
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 45,
+			.charging_min_c         = 0,
+			.charging_max_c         = 55,
+			.discharging_min_c      = -20,
+			.discharging_max_c      = 70,
 		},
-
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_POWER_TECH;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SDI;
