@@ -894,7 +894,7 @@ __overridable enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
  * the port and the response received from the cable, whichever is least.
  *
  * For Cable rev 2.0: If get_tbt_cable_speed() is less than
- * TBT_SS_U32_GEN1_GEN2, return USB_R30_SS_U2_ONLY speed since the board
+ * TBT_SS_U31_GEN1, return USB_R30_SS_U2_ONLY speed since the board
  * doesn't support superspeed else the USB4 cable speed is set according to
  * the cable response.
  */
@@ -905,7 +905,7 @@ enum usb_rev30_ss get_usb4_cable_speed(int port)
 	enum usb_rev30_ss max_usb4_speed;
 
 
-	if (tbt_speed < TBT_SS_U32_GEN1_GEN2)
+	if (tbt_speed < TBT_SS_U31_GEN1)
 		return USB_R30_SS_U2_ONLY;
 
 	/*
