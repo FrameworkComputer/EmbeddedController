@@ -27,19 +27,6 @@
 /* Unreachable time in future */
 #define TIMER_DISABLED 0xffffffffffffffff
 
-/* TODO(b/153071799): Move these pd_* and pe_* function into mock */
-__overridable void pd_request_power_swap(int port)
-{}
-
-void pd_set_src_caps(int port, int cnt, uint32_t *src_caps)
-{
-}
-
-__overridable void pe_invalidate_explicit_contract(int port)
-{
-}
-/* End pd_ mock section */
-
 /* Install Mock TCPC and MUX drivers */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{

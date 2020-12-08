@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "usb_pd.h"
 #include "usb_pe_sm.h"
 #include "mock/usb_pe_sm_mock.h"
 #include "memory.h"
@@ -86,3 +87,28 @@ bool pe_in_local_ams(int port)
 	return false;
 }
 
+const uint32_t * const pd_get_src_caps(int port)
+{
+	return NULL;
+}
+
+uint8_t pd_get_src_cap_cnt(int port)
+{
+	return 0;
+}
+
+void pd_set_src_caps(int port, int cnt, uint32_t *src_caps)
+{
+}
+
+void pd_request_power_swap(int port)
+{}
+
+int pd_get_rev(int port, enum tcpm_transmit_type type)
+{
+	return IS_ENABLED(CONFIG_USB_PD_REV30) ? PD_REV30 : PD_REV20;
+}
+
+void pe_invalidate_explicit_contract(int port)
+{
+}

@@ -14,7 +14,6 @@ mock-$(HAS_MOCK_TCPM) += tcpm_mock.o
 mock-$(HAS_MOCK_TCPCI_I2C) += tcpci_i2c_mock.o
 mock-$(HAS_MOCK_TIMER) += timer_mock.o
 mock-$(HAS_MOCK_USB_MUX) += usb_mux_mock.o
-mock-$(HAS_MOCK_USB_PD) += usb_pd_mock.o
 mock-$(HAS_MOCK_USB_PE_SM) += usb_pe_sm_mock.o
 mock-$(HAS_MOCK_USB_TC_SM) += usb_tc_sm_mock.o
 mock-$(HAS_MOCK_USB_PD_DPM) += usb_pd_dpm_mock.o

@@ -16,7 +16,6 @@
 #include "mock/usb_tc_sm_mock.h"
 #include "mock/tcpc_mock.h"
 #include "mock/usb_mux_mock.h"
-#include "mock/usb_pd_mock.h"
 #include "mock/usb_pd_dpm_mock.h"
 #include "mock/dp_alt_mode_mock.h"
 #include "mock/usb_prl_mock.h"
@@ -39,7 +38,6 @@ void before_test(void)
 	mock_tc_port_reset();
 	mock_tcpc_reset();
 	mock_usb_mux_reset();
-	mock_pd_reset();
 	mock_dpm_reset();
 	mock_dp_alt_mode_reset();
 	mock_prl_reset();
@@ -138,7 +136,7 @@ test_static int finish_src_discovery(void)
 test_static int test_send_caps_error_before_connected(void)
 {
 	/* Enable PE as source, expect SOURCE_CAP. */
-	mock_pd_port[PORT0].power_role = PD_ROLE_SOURCE;
+	mock_tc_port[PORT0].power_role = PD_ROLE_SOURCE;
 	mock_tc_port[PORT0].pd_enable = 1;
 	mock_tc_port[PORT0].vconn_src = true;
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
@@ -205,7 +203,7 @@ test_static int test_send_caps_error_before_connected(void)
 test_static int test_send_caps_error_when_connected(void)
 {
 	/* Enable PE as source, expect SOURCE_CAP. */
-	mock_pd_port[PORT0].power_role = PD_ROLE_SOURCE;
+	mock_tc_port[PORT0].power_role = PD_ROLE_SOURCE;
 	mock_tc_port[PORT0].pd_enable = 1;
 	mock_tc_port[PORT0].vconn_src = true;
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,

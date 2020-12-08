@@ -126,6 +126,7 @@ int mock_prl_wait_for_tx_msg(int port,
 		}
 		task_wait_event(5 * MSEC);
 	}
+	/* A message of the expected type should have been sent by end_time. */
 	TEST_ASSERT(0);
 	return EC_ERROR_UNKNOWN;
 }

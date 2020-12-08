@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "usb_tc_sm.h"
 #include "mock/usb_tc_sm_mock.h"
 #include "memory.h"
@@ -35,6 +36,8 @@ void mock_tc_port_reset(void)
 		mock_tc_port[port].attached_snk = 0;
 		mock_tc_port[port].attached_src = 0;
 		mock_tc_port[port].vconn_src = false;
+		mock_tc_port[port].data_role = PD_ROLE_UFP;
+		mock_tc_port[port].power_role = PD_ROLE_SINK;
 	}
 }
 
@@ -127,4 +130,62 @@ void tc_snk_power_off(int port)
 
 void tc_request_power_swap(int port)
 {
+}
+
+enum pd_dual_role_states pd_get_dual_role(int port)
+{
+	return PD_DRP_TOGGLE_ON;
+}
+
+enum pd_data_role pd_get_data_role(int port)
+{
+	return mock_tc_port[port].data_role;
+}
+
+enum pd_power_role pd_get_power_role(int port)
+{
+	return mock_tc_port[port].power_role;
+}
+
+enum pd_cc_states pd_get_task_cc_state(int port)
+{
+	return PD_CC_NONE;
+}
+
+int pd_is_connected(int port)
+{
+	return 1;
+}
+
+bool pd_is_disconnected(int port)
+{
+	return false;
+}
+
+bool pd_get_partner_usb_comm_capable(int port)
+{
+	return true;
+}
+
+void pd_set_suspend(int port, int suspend)
+{
+}
+
+enum tcpc_cc_polarity pd_get_polarity(int port)
+{
+	return POLARITY_CC1;
+}
+
+void pd_request_data_swap(int port)
+{}
+
+void pd_request_vconn_swap_off(int port)
+{}
+
+void pd_request_vconn_swap_on(int port)
+{}
+
+bool pd_alt_mode_capable(int port)
+{
+	return false;
 }
