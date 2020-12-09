@@ -26,6 +26,13 @@
 #define CONFIG_CHIPSET_TIGERLAKE
 #endif
 
+/* eSPI configuration */
+#ifdef CONFIG_PLATFORM_EC_ESPI
+
+#ifdef CONFIG_PLATFORM_EC_HOSTCMD
+#define CONFIG_HOSTCMD_ESPI
+#endif
+
 /* eSPI signals */
 #ifdef CONFIG_PLATFORM_EC_ESPI_VW_SLP_S3
 #define CONFIG_HOSTCMD_ESPI_VW_SLP_S3
@@ -34,6 +41,8 @@
 #ifdef CONFIG_PLATFORM_EC_ESPI_VW_SLP_S4
 #define CONFIG_HOSTCMD_ESPI_VW_SLP_S4
 #endif
+
+#endif /* CONFIG_PLATFORM_EC_ESPI */
 
 #ifdef CONFIG_PLATFORM_EC_I2C
 /* Also see shim/include/i2c/i2c.h which defines the ports enum */

@@ -12,7 +12,9 @@
 #include <zephyr.h>
 
 #include "chipset.h"
+#include "common.h"
 #include "espi.h"
+#include "lpc.h"
 #include "port80.h"
 #include "zephyr_espi_shim.h"
 
@@ -204,4 +206,17 @@ int espi_vw_disable_wire_int(enum espi_vw_signal signal)
 {
 	atomic_and(&signal_interrupt_enabled, ~signal_to_interrupt_bit(signal));
 	return 0;
+}
+
+static uint8_t lpc_memmap[256] __aligned(8);
+
+uint8_t *lpc_get_memmap_range(void)
+{
+	/* TODO(b/175217186): implement eSPI functions for host commands */
+	return lpc_memmap;
+}
+
+void lpc_update_host_event_status(void)
+{
+	/* TODO(b/175217186): implement eSPI functions for host commands */
 }
