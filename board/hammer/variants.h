@@ -28,8 +28,7 @@
 #elif defined(BOARD_WHISKERS)
 #define CONFIG_USB_PID 0x5030
 #elif defined(BOARD_ZED)
-/* TODO: update PID */
-#define CONFIG_USB_PID 0x5022
+#define CONFIG_USB_PID 0x504c
 #else
 #error "Invalid board"
 #endif
