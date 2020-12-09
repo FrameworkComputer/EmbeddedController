@@ -450,10 +450,9 @@ out_unlock:
 	return ret;
 }
 
-static int icm426xx_set_range(const struct motion_sensor_t *s, int range,
+static int icm426xx_set_range(struct motion_sensor_t *s, int range,
 			      int rnd)
 {
-	struct accelgyro_saved_data_t *data = ICM_GET_SAVED_DATA(s);
 	int reg, ret, reg_val;
 	int newrange;
 
@@ -859,7 +858,7 @@ static int icm426xx_init_config(const struct motion_sensor_t *s)
 	return icm_field_update8(s, ICM426XX_REG_INTF_CONFIG0, mask, val);
 }
 
-static int icm426xx_init(const struct motion_sensor_t *s)
+static int icm426xx_init(struct motion_sensor_t *s)
 {
 	struct icm_drv_data_t *st = ICM_GET_DATA(s);
 	struct accelgyro_saved_data_t *saved_data = ICM_GET_SAVED_DATA(s);
