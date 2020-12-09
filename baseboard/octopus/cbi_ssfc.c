@@ -42,3 +42,8 @@ enum ssfc_charger get_cbi_ssfc_charger(void)
 {
 	return ((cached_ssfc & SSFC_CHARGER_MASK) >> SSFC_CHARGER_OFFSET);
 }
+
+enum ssfc_sensor get_cbi_ssfc_sensor(void)
+{
+	return ((cached_ssfc & SSFC_SENSOR_MASK) >> SSFC_SENSOR_OFFSET);
+}

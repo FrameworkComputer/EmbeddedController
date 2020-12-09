@@ -43,8 +43,24 @@ enum ssfc_charger {
 #define SSFC_CHARGER_OFFSET		6
 #define SSFC_CHARGER_MASK		GENMASK(8, 6)
 
+/*
+ * Audio (Bits 11-9)
+ */
+
+/*
+ * Sensor (Bits 14-12)
+ */
+enum ssfc_sensor {
+	SSFC_SENSOR_DEFAULT,
+	SSFC_SENSOR_BMI160,
+	SSFC_SENSOR_ICM426XX,
+};
+#define SSFC_SENSOR_OFFSET		12
+#define SSFC_SENSOR_MASK		GENMASK(14, 12)
+
 enum ssfc_tcpc_p1 get_cbi_ssfc_tcpc_p1(void);
 enum ssfc_ppc_p1 get_cbi_ssfc_ppc_p1(void);
 enum ssfc_charger get_cbi_ssfc_charger(void);
+enum ssfc_sensor get_cbi_ssfc_sensor(void);
 
 #endif /* _OCTOPUS_CBI_SSFC__H_ */
