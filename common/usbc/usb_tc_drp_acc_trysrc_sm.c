@@ -3536,7 +3536,9 @@ static void pd_chipset_resume(void)
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		pd_resume_check_pr_swap_needed(i);
+		if(IS_ENABLED(CONFIG_USB_PE_SM))
+			pd_resume_check_pr_swap_needed(i);
+
 		pd_set_dual_role_and_event(i,
 					   PD_DRP_TOGGLE_ON,
 					   PD_EVENT_UPDATE_DUAL_ROLE
