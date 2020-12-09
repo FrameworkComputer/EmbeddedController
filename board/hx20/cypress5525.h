@@ -273,4 +273,8 @@ void pd_chip_interrupt(enum gpio_signal signal);
 
 void pd_extpower_is_present_interrupt(enum gpio_signal signal);
 
+int cypd_get_active_power_budget(void);
+
+int cypd_get_pps_power_budget(void);
+
 #endif	/* __CROS_EC_CYPRESS5525_H */

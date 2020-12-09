@@ -565,6 +565,26 @@ void cypd_interrupt_handler_task(void *p)
 	}
 }
 
+int cypd_get_active_power_budget(void)
+{
+	/* TODO:
+	 * We need to select the max power port, current design does not disable other port
+	 */
+	int power = 60;
+
+	return power;
+}
+
+int cypd_get_pps_power_budget(void)
+{
+	/* TODO:
+	 * Implement PPS function and get pps power budget
+	 */
+	int power = 0;
+
+	return power;
+}
+
 static int cmd_cypd_get_status(int argc, char **argv)
 {
 	int i, data;
