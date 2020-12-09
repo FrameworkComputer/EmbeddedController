@@ -60,6 +60,7 @@ enum ec_cfg_base_gyro_sensor_type {
 	BASE_GYRO_NONE = 0,
 	BASE_GYRO_BMI160 = 1,
 	BASE_GYRO_LSM6DSM = 2,
+	BASE_GYRO_ICM426XX = 3,
 };
 #define EC_CFG_BASE_GYRO_SENSOR_L		11
 #define EC_CFG_BASE_GYRO_SENSOR_H		13
