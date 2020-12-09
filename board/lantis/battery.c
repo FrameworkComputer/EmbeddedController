@@ -10,7 +10,7 @@
 #include "common.h"
 
 /*
- * Battery info for all drawcia battery types. Note that the fields
+ * Battery info for all lantis battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
  * The effective temperature limits are given by discharging_min/max_c.
  *
@@ -45,6 +45,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {
@@ -74,93 +76,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
-			},
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
-		},
-	},
-
-	/* DynaPack HIGHPOWER Battery Information */
-	[BATTERY_DANAPACK_HIGHPOWER] = {
-		.fuel_gauge = {
-			.manuf_name = "333-2D-0D-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
-			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
-			},
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
-		},
-	},
-
-	/* DynaPack BYD Battery Information */
-	[BATTERY_DANAPACK_BYD] = {
-		.fuel_gauge = {
-			.manuf_name = "333-2E-0D-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
-			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
-			},
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
-		},
-	},
-
-	/* Samsung SDI Battery Information */
-	[BATTERY_SAMSUNG_SDI] = {
-		.fuel_gauge = {
-			.manuf_name = "333-54-DA-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
-			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {
@@ -190,6 +107,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {
@@ -219,6 +138,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {
@@ -235,10 +156,10 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 
-	/* CosMX Battery Information */
+	/* CosMX B00C4473A9D0002 Battery Information */
 	[BATTERY_COS] = {
 		.fuel_gauge = {
-			.manuf_name = "333-AC-0D-A",
+			.manuf_name = "333-AC-DA-A",
 			.ship_mode = {
 				.reg_addr = 0x00,
 				.reg_data = { 0x0010, 0x0010 },
@@ -248,6 +169,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0,
 			},
 		},
 		.batt_info = {

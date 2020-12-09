@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Drawcia board-specific configuration */
+/* Lantis board-specific configuration */
 
 #include "adc_chip.h"
 #include "button.h"
