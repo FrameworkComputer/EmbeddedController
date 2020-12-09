@@ -51,7 +51,7 @@ const struct led_descriptor
 	[PWR_LED_STATE_SUSPEND_AC]   =  {{EC_LED_COLOR_WHITE,  1 * LED_ONE_SEC},
 		{LED_OFF,	           1 * LED_ONE_SEC} },
 	[PWR_LED_STATE_SUSPEND_NO_AC] = {{EC_LED_COLOR_WHITE,  1 * LED_ONE_SEC},
-		{LED_OFF,	           1 * LED_ONE_SEC} },
+		{LED_OFF,	           6 * LED_ONE_SEC} },
 	[PWR_LED_STATE_OFF]           = {
 		{LED_OFF,             LED_INDEFINITE} },
 };
