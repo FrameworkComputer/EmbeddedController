@@ -18,8 +18,6 @@
 /* Config options automatically enabled, re-enable once support added */
 #undef CONFIG_ADC
 #undef CONFIG_SWITCH
-#undef CONFIG_SPI_FLASH
-#undef CONFIG_SUPPORT_CHIP_HIBERNATION
 
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
@@ -29,6 +27,9 @@
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_VOLUME_BUTTONS
+
+/* See config_chip-npcx9.h for SPI flash configuration */
+#undef CONFIG_SPI_FLASH /* Don't enable external flash interface */
 
 /*
  * Macros for GPIO signals used in common code that don't match the
