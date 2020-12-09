@@ -83,6 +83,9 @@ int peci_update_PL1(int watt)
 	int rv;
 	uint32_t data;
 
+	if (!chipset_in_state(CHIPSET_STATE_ON))
+		return EC_ERROR_NOT_POWERED;
+
 	data = PECI_PL1_CONTROL_TIME_WINDOWS | PECI_PL1_POWER_LIMIT_ENABLE |
 		PECI_PL1_POWER_LIMIT(watt);
 
@@ -99,6 +102,9 @@ int peci_update_PL2(int watt)
 {
 	int rv;
 	uint32_t data;
+
+	if (!chipset_in_state(CHIPSET_STATE_ON))
+		return EC_ERROR_NOT_POWERED;
 
 	data = PECI_PL2_CONTROL_TIME_WINDOWS | PECI_PL2_POWER_LIMIT_ENABLE |
 		PECI_PL2_POWER_LIMIT(watt);
@@ -117,6 +123,9 @@ int peci_update_PL4(int watt)
 	int rv;
 	uint32_t data;
 
+	if (!chipset_in_state(CHIPSET_STATE_ON))
+		return EC_ERROR_NOT_POWERED;
+
 	data = PECI_PL4_POWER_LIMIT(watt);
 
 	rv = peci_Wr_Pkg_Config(PECI_INDEX_POWER_LIMITS_PL4, PECI_PARAMS_POWER_LIMITS_PL4,
@@ -132,6 +141,9 @@ int peci_update_PsysPL2(int watt)
 {
 	int rv;
 	uint32_t data;
+
+	if (!chipset_in_state(CHIPSET_STATE_ON))
+		return EC_ERROR_NOT_POWERED;
 
 	data = PECI_PSYS_PL2_CONTROL_TIME_WINDOWS | PECI_PSYS_PL2_POWER_LIMIT_ENABLE |
 		PECI_PSYS_PL2_POWER_LIMIT(watt);

@@ -206,6 +206,7 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S0:
 		CPRINTS("power handle state in S0");
+		update_power_limit();
 		if ((power_get_signals() & IN_PCH_SLP_S3_DEASSERTED) == 0) {
 			/* Power down to next state */
 			gpio_set_level(GPIO_EC_VCCST_PG, 0);
