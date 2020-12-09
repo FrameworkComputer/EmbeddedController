@@ -75,4 +75,12 @@ extern uint8_t keyboard_cols;
 #ifdef CONFIG_KEYBOARD_BACKLIGHT
 int hx20_kblight_enable(int enable);
 #endif
+
+#ifdef CONFIG_FACTORY_SUPPORT
+void factory_setting(uint8_t enable);
+void factory_power_button(int level);
+int factory_status(void);
+int fp_power_button_press(int level);
+#endif
+
 #endif /* __KEYBOARD_CUSTOMIZATION_H */

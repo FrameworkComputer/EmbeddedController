@@ -1553,3 +1553,32 @@ static int cmd_spimux(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(spimux, cmd_spimux,
 			"[enable/disable]",
 			"Set if spi CLK is in SPI mode (true) or PWM mode");
+
+int fingerprint_power_button_first_state;
+static void fingerprint_power_button_change_deferred(void)
+{
+	factory_power_button(!gpio_get_level(GPIO_ON_OFF_FP_L));
+}
+DECLARE_DEFERRED(fingerprint_power_button_change_deferred);
+
+void fingerprint_power_button_interrupt(enum gpio_signal signal)
+{
+	fingerprint_power_button_first_state = gpio_get_level(GPIO_ON_OFF_FP_L);
+
+	/*
+	 * If fp power button is pressed, disable the matrix scan as soon as
+	 * possible to reduce the risk of false-reboot triggered by those keys
+	 * on the same column with refresh key.
+	 */
+	if (fp_power_button_press(!fingerprint_power_button_first_state))
+		keyboard_scan_enable(0, KB_SCAN_DISABLE_POWER_BUTTON);
+
+	if (fingerprint_power_button_first_state == gpio_get_level(GPIO_ON_OFF_FP_L)) {
+		CPRINTF("Got FP Power Button event");
+		if (!factory_status())
+			power_button_set_simulated_state(!gpio_get_level(GPIO_ON_OFF_FP_L));
+		else
+			hook_call_deferred(&fingerprint_power_button_change_deferred_data,
+					50);
+	}
+}

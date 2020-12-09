@@ -46,7 +46,7 @@ UNIMPLEMENTED(ENABLE_TOUCHPAD)
 
 /* Power Sequence */
 GPIO_INT(ON_OFF_BTN_L,    PIN(0162), GPIO_INT_BOTH, mainboard_power_button_interrupt)
-GPIO_INT(ON_OFF_FP_L,     PIN(0163), GPIO_INT_BOTH, power_button_interrupt)
+GPIO_INT(ON_OFF_FP_L,     PIN(0163), GPIO_INT_BOTH, fingerprint_power_button_interrupt)
 GPIO_INT(PWR_3V5V_PG,     PIN(051),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_SUS_L,       PIN(0221), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(VCCIN_AUX_VR_PG, PIN(043),  GPIO_INT_BOTH, power_signal_interrupt)

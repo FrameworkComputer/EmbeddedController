@@ -182,6 +182,10 @@ enum scancode_values {
 	SCANCODE_P = 0x004D,
 	SCANCODE_S = 0x001B,
 	SCANCODE_SPACE= 0x0029,
+#ifdef CONFIG_FACTORY_SUPPORT
+	SCANCODE_FAKE_FN = 0xe0ff,
+	SCANCODE_FAKE_POWER = 0xe0fe,
+#endif
 #endif
 
 };

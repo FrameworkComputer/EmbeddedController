@@ -10,6 +10,7 @@
 #include "host_command.h"
 #include "host_command_customization.h"
 #include "hooks.h"
+#include "keyboard_customization.h"
 #include "lid_switch.h"
 #include "power_button.h"
 #include "switch.h"
@@ -71,5 +72,22 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_NOTIFIED, flash_notified,
 			EC_VER_MASK(0));
 
-/*****************************************************************************/
-/* Hooks */
+
+#ifdef CONFIG_FACTORY_SUPPORT
+
+static enum ec_status factory_mode(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_factory_notified *p = args->params;
+	int enable = 1;
+
+
+	if (p->flags)
+		factory_setting(enable);
+	else
+		factory_setting(!enable);
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FACTORY_MODE, factory_mode,
+			EC_VER_MASK(0));
+#endif

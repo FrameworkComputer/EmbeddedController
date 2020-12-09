@@ -11,6 +11,7 @@
 /*****************************************************************************/
 /* Configure the behavior of the flash notify */
 #define EC_CMD_FLASH_NOTIFIED 0x3E01
+#define EC_CMD_FACTORY_MODE	0x3E02
 
 enum ec_flash_notified_flags {
 	/* Enable/Disable power button pulses for x86 devices */
@@ -50,5 +51,10 @@ struct ec_response_chg_limit_control {
 	uint8_t max_percentage;
 	uint8_t min_percentage;
 } __ec_align1;
+struct ec_params_factory_notified {
+	/* factory mode enable */
+	uint8_t flags;
+} __ec_align1;
+
 
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */
