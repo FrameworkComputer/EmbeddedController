@@ -271,19 +271,6 @@ static int board_tusb544_mux_set(const struct usb_mux *me,
 	return EC_SUCCESS;
 }
 
-static int board_ps8743_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
-{
-	if (mux_state & USB_PD_MUX_DP_ENABLED)
-		/* Enable IN_HPD on the DB */
-		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 1);
-	else
-		/* Disable IN_HPD on the DB */
-		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 0);
-
-	return EC_SUCCESS;
-}
-
 const struct usb_mux usbc1_tusb544 = {
 	.usb_port = USBC_PORT_C1,
 	.i2c_port = I2C_PORT_TCPC1,
@@ -296,7 +283,6 @@ const struct usb_mux usbc1_ps8743 = {
 	.i2c_port = I2C_PORT_TCPC1,
 	.i2c_addr_flags = PS8743_I2C_ADDR1_FLAG,
 	.driver = &ps8743_usb_mux_driver,
-	.board_set = &board_ps8743_mux_set,
 };
 
 /*****************************************************************************
