@@ -98,8 +98,10 @@ void body_detect_change_state(enum body_detect_states state, bool spoof)
 	if (IS_ENABLED(CONFIG_GESTURE_HOST_DETECTION)) {
 		struct ec_response_motion_sensor_data vector = {
 			.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP,
-			.activity = MOTIONSENSE_ACTIVITY_BODY_DETECTION,
-			.state = state,
+			.activity_data = {
+				.activity = MOTIONSENSE_ACTIVITY_BODY_DETECTION,
+				.state = state,
+			},
 			.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID,
 		};
 		motion_sense_fifo_stage_data(&vector, NULL, 0,

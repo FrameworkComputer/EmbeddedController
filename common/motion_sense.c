@@ -771,8 +771,9 @@ static void check_and_queue_gestures(uint32_t *event)
 				vector.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP;
 			else
 				vector.flags = 0;
-			vector.activity = MOTIONSENSE_ACTIVITY_DOUBLE_TAP;
-			vector.state = 1; /* triggered */
+			vector.activity_data.activity =
+					MOTIONSENSE_ACTIVITY_DOUBLE_TAP;
+			vector.activity_data.state = 1 /* triggered */;
 			vector.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID;
 			motion_sense_fifo_stage_data(&vector, NULL, 0,
 					__hw_clock_source_read());
@@ -790,8 +791,9 @@ static void check_and_queue_gestures(uint32_t *event)
 
 			/* Send events to the FIFO */
 			vector.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP;
-			vector.activity = MOTIONSENSE_ACTIVITY_SIG_MOTION;
-			vector.state = 1; /* triggered */
+			vector.activity_data.activity =
+					MOTIONSENSE_ACTIVITY_SIG_MOTION;
+			vector.activity_data.state = 1 /* triggered */;
 			vector.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID;
 			motion_sense_fifo_stage_data(&vector, NULL, 0,
 					__hw_clock_source_read());
@@ -812,7 +814,8 @@ static void check_and_queue_gestures(uint32_t *event)
 				(sensor->state == SENSOR_INITIALIZED)) {
 			struct ec_response_motion_sensor_data vector = {
 				.flags = 0,
-				.activity = MOTIONSENSE_ACTIVITY_ORIENTATION,
+				.activity_data.activity =
+					MOTIONSENSE_ACTIVITY_ORIENTATION,
 				.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID,
 			};
 
@@ -821,7 +824,8 @@ static void check_and_queue_gestures(uint32_t *event)
 					(*motion_orientation_ptr(sensor) !=
 					 MOTIONSENSE_ORIENTATION_UNKNOWN)) {
 				motion_orientation_update(sensor);
-				vector.state = *motion_orientation_ptr(sensor);
+				vector.activity_data.state =
+					*motion_orientation_ptr(sensor);
 				motion_sense_fifo_stage_data(&vector, NULL, 0,
 						__hw_clock_source_read());
 				motion_sense_fifo_commit_data();
@@ -833,7 +837,8 @@ static void check_and_queue_gestures(uint32_t *event)
 						"Inv_Landscape",
 						"Unknown"
 					};
-					CPRINTS(mode[vector.state]);
+					CPRINTS(mode[
+						vector.activity_data.state]);
 				}
 			}
 			mutex_unlock(sensor->mutex);
