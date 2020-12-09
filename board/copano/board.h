@@ -94,6 +94,9 @@
 /* USBC PPC*/
 #define CONFIG_USBC_PPC_SYV682X		/* USBC port C0/C1 */
 
+#undef CONFIG_USB_PD_TCPC_RUNTIME_CONFIG
+#undef CONFIG_USB_PD_TCPM_TUSB422
+
 /* BC 1.2 */
 
 /* Volume Button feature */
