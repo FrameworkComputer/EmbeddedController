@@ -87,6 +87,8 @@ GPIO(USB_C0_DISCHARGE,     PIN(B, 6),  GPIO_OUT_LOW)
 IOEX(PWR_LED_WHITE_L,      EXPIN(0, 1, 4), GPIO_OUT_HIGH)
 IOEX(BAT_LED_WHITE_L,      EXPIN(0, 1, 3), GPIO_OUT_HIGH)
 IOEX(BAT_LED_AMBER_L,      EXPIN(0, 1, 2), GPIO_OUT_HIGH)
+IOEX(5V_DC_DC_MODE_CTRL,   EXPIN(0, 0, 7), GPIO_OUT_LOW)
+
 /*
  * TODO(b:138352732): On IT88801 expander, To be readded once IT8801 driver and
  * gpio expander framework has landed.

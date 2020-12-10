@@ -324,6 +324,9 @@ static void board_init(void)
 
 	/* Enable BC12 interrupt */
 	gpio_enable_interrupt(GPIO_BC12_EC_INT_ODL);
+
+	/* Enable USM mode */
+	ioex_set_level(IOEX_5V_DC_DC_MODE_CTRL, 1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -446,6 +449,22 @@ static void board_chipset_shutdown(void)
 	gpio_set_level(GPIO_EN_USBA_5V, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S3 -> S0 transition, 5V DC-DC ctrl  */
+static void board_chipset_resume(void)
+{
+	/* Enable USM mode */
+	ioex_set_level(IOEX_5V_DC_DC_MODE_CTRL, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S0 -> S3 transition */
+static void board_chipset_suspend(void)
+{
+	/* Enable Normal mode */
+	ioex_set_level(IOEX_5V_DC_DC_MODE_CTRL, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 int board_get_charger_i2c(void)
 {
