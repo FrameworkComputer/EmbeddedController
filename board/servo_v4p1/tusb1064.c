@@ -11,9 +11,6 @@ int init_tusb1064(int port)
 {
 	uint8_t val;
 
-	/* Enable the TUSB1064 redriver */
-	cmux_en(1);
-
 	/* Disconnect USB3.1 and DP */
 	val = tusb1064_read_byte(port, TUSB1064_REG_GENERAL);
 	if (val < 0)

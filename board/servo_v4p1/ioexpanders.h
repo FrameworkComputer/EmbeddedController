@@ -129,21 +129,20 @@ int usb3_a1_mux_sel(int en);
 int board_id_det(void);
 
 /**
- * USBC 4:6 redriver enable
- *
- * @param en	0 - TUSB1064 disabled
- *		1 - TUSB1064 enabled
- * @return EC_SUCCESS or EC_xxx on error
- */
-int cmux_en(int en);
-
-/**
  * Reads the TypeA/TypeC DUT cable assembly pigtail
  *
  * @return	0 - for TypeA
  *		1 - for TypeC
  */
 int dongle_det(void);
+
+/**
+ * Reads state of BC1.2 on host connection
+ *
+ * @return	0 - BC1.2 not present
+ * 		1 - BC1.2 present
+ */
+int get_host_chrg_det(void);
 
 /**
  * Enable signal for supplemental power supply. This supply will support higher
@@ -267,6 +266,23 @@ int host_or_chg_ctl(int en);
  *			  1 - host cable is source
  */
 int read_faults(void);
+
+#define HOST_CHRG_DET	BIT(0)
+#define SYS_PWR_IRQ_ODL	BIT(6)
+
+/**
+ * Read irqs which indicate some system event.
+ *
+ * BIT
+ * 0 (HOST_CHRG_DET)   - Change of state of BC1.2 on host connection
+ *                       0 - BC1.2 not present
+ *                       1 - BC1.2 present
+ * 6 (SYS_PWR_IRQ_ODL) - IRQ from system full power INA231 monitor. IRQ can be
+ *                       programmed to trip on wattage threshold.
+ *                       0 - IRQ asserted
+ *                       1 - no IRQ
+ */
+int read_irqs(void);
 
 /**
  * Enables active discharge for USB DUT Charger

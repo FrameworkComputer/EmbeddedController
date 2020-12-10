@@ -166,9 +166,9 @@ static void hub_evt(enum gpio_signal signal)
 	hook_call_deferred(&host_hub_evt_data, 0);
 }
 
-static void bc12_evt(enum gpio_signal signal)
+static void dut_pwr_evt(enum gpio_signal signal)
 {
-	ccprintf("bc12_evt\n");
+	ccprintf("dut_pwr_evt\n");
 }
 
 /* Enable uservo USB. */
@@ -430,7 +430,7 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_STM_FAULT_IRQ_L);
 	gpio_enable_interrupt(GPIO_DP_HPD);
 	gpio_enable_interrupt(GPIO_USBH_I2C_BUSY_INT);
-	gpio_enable_interrupt(GPIO_BC12_INT_ODL);
+	gpio_enable_interrupt(GPIO_DUT_PWR_IRQ_ODL);
 
 	/* Disable power to DUT by default */
 	chg_power_select(CHG_POWER_OFF);

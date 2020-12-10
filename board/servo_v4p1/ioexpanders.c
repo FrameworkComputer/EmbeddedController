@@ -14,6 +14,7 @@
  */
 
 static int dut_chg_en_state;
+static int bc12_charger;
 
 /* Enable all ioexpander outputs. */
 int init_ioexpanders(void)
@@ -51,10 +52,10 @@ int init_ioexpanders(void)
 	 * BIT-3 (BOARD_ID)                | I   | x
 	 * BIT-4 (BOARD ID)                | I   | x
 	 * BIT-5 (BOARD_ID)                | I   | x
-	 * BIT-6 (CMUX_EN)                 | O   | 1
+	 * BIT-6 (VBUS_DISCHRG_EN)         | O   | 0
 	 * BIT-7 (DONGLE_DET)              | I   | x
 	 */
-	ret = tca6416a_write_byte(1, TCA6416A_OUT_PORT_1, 0x40);
+	ret = tca6416a_write_byte(1, TCA6416A_OUT_PORT_1, 0x0);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -73,7 +74,7 @@ int init_ioexpanders(void)
 	 * BIT-4 (EN_VOUT_BUF_CC1)   | O   | 0
 	 * BIT-5 (EN_VOUT_BUF_CC2)   | O   | 0
 	 * BIT-6 (DUT_CHG_EN)        | O   | 0
-	 * BIT-7 (HOST_OR_CHG_CTL    | O   | 0
+	 * BIT-7 (HOST_OR_CHG_CTL)   | O   | 0
 	 */
 	ret = tca6424a_write_byte(1, TCA6424A_OUT_PORT_0, 0x02);
 	if (ret != EC_SUCCESS)
@@ -104,34 +105,43 @@ int init_ioexpanders(void)
 	 * Init TCA6424A, PORT 2
 	 * NAME                      | DIR | Initial setting
 	 * ------------------------------------------------
-	 * BIT-0 (VBUS_DISCHRG_EN)   | O   | 0
+	 * BIT-0 (HOST_CHRG_DET)     | I   | x
 	 * BIT-1 (USBH_PWRDN_L)      | O   | 1
 	 * BIT-2 (UNUSED)            | I   | x
 	 * BIT-3 (UNUSED)            | I   | x
 	 * BIT-4 (UNUSED)            | I   | x
 	 * BIT-5 (UNUSED)            | I   | x
-	 * BIT-6 (UNUSED)            | I   | x
+	 * BIT-6 (SYS_PWR_IRQ_ODL)   | I   | x
 	 * BIT-7 (DBG_LED_K_ODL)     | O   | 0
 	 */
 	ret = tca6424a_write_byte(1, TCA6424A_OUT_PORT_2, 0x02);
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	ret = tca6424a_write_byte(1, TCA6424A_DIR_PORT_2, 0x7c);
+	ret = tca6424a_write_byte(1, TCA6424A_DIR_PORT_2, 0x7d);
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	/* Clear any faults */
+	/* Clear any faults and other IRQs*/
 	read_faults();
+	read_irqs();
+
+	/*
+	 * Cache initial value for BC1.2 indicator. This is the only pin, which
+	 * notifies about event on both low and high levels, while notification
+	 * should happen only when state has changed.
+	 */
+	bc12_charger = get_host_chrg_det();
 
 	return EC_SUCCESS;
 }
 
 static void ioexpanders_irq(void)
 {
-	int fault;
+	int fault, irqs;
 
 	fault = read_faults();
+	irqs = read_irqs();
 
 	if (!(fault & USERVO_FAULT_L))
 		ccprintf("FAULT: Microservo USB A port load switch\n");
@@ -159,6 +169,15 @@ static void ioexpanders_irq(void)
 		ccprintf("limits or exceeded current limits. Power ");
 		ccprintf("off DAC1 to clear the fault\n");
 	}
+
+	if ((irqs & HOST_CHRG_DET) != bc12_charger) {
+		ccprintf("BC1.2 charger %s\n", (irqs & HOST_CHRG_DET) ?
+			 "plugged" : "unplugged");
+		bc12_charger = irqs & HOST_CHRG_DET;
+	}
+
+	if (!(irqs & SYS_PWR_IRQ_ODL))
+		ccprintf("System full power threshold exceeded\n");
 }
 DECLARE_DEFERRED(ioexpanders_irq);
 
@@ -235,14 +254,14 @@ inline int board_id_det(void)
 	return (id >> 3) & 0x7;
 }
 
-inline int cmux_en(int en)
-{
-	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_1, 6, en);
-}
-
 inline int dongle_det(void)
 {
 	return tca6416a_read_bit(1, TCA6416A_IN_PORT_1, 7);
+}
+
+inline int get_host_chrg_det(void)
+{
+	return tca6424a_read_bit(1, TCA6424A_IN_PORT_2, 0);
 }
 
 inline int en_pp5000_alt_3p3(int en)
@@ -296,9 +315,14 @@ inline int read_faults(void)
 	return tca6424a_read_byte(1, TCA6424A_IN_PORT_1);
 }
 
+inline int read_irqs(void)
+{
+	return tca6424a_read_byte(1, TCA6424A_IN_PORT_2);
+}
+
 inline int vbus_dischrg_en(int en)
 {
-	return tca6424a_write_bit(1, TCA6424A_OUT_PORT_2, 0, en);
+	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_1, 6, en);
 }
 
 inline int usbh_pwrdn_l(int en)
