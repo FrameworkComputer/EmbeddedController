@@ -81,6 +81,7 @@ void battery_params_to_emi0(struct charge_state_data *emi_info)
 	char text[32];
 	char *str = "LION";
 	int value;
+	static int batt_state;
 
 	*host_get_customer_memmap(0x03) = (emi_info->batt.temperature - 2731)/10;
 	*host_get_customer_memmap(0x06) = emi_info->batt.display_charge/10;
@@ -101,5 +102,13 @@ void battery_params_to_emi0(struct charge_state_data *emi_info)
 		*host_get_customer_memmap(0x07) |= BIT(2);
 	else
 		*host_get_customer_memmap(0x07) &= ~BIT(2);
+
+	/*
+	 * When the battery present have change notify AP
+	 */
+	if (batt_state != emi_info->batt.is_present) {
+		host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
+		batt_state = emi_info->batt.is_present;
+	}
 }
 #endif
