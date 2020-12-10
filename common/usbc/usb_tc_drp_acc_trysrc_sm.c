@@ -492,6 +492,33 @@ __overridable void pd_set_vbus_discharge(int port, int enable)
 
 #endif /* !CONFIG_USB_PRL_SM */
 
+#ifndef CONFIG_USB_PE_SM
+
+/*
+ * These pd_ functions are implemented in the PE layer
+ */
+const uint32_t * const pd_get_src_caps(int port)
+{
+	return NULL;
+}
+
+uint8_t pd_get_src_cap_cnt(int port)
+{
+	return 0;
+}
+
+const uint32_t * const pd_get_snk_caps(int port)
+{
+	return NULL;
+}
+
+uint8_t pd_get_snk_cap_cnt(int port)
+{
+	return 0;
+}
+
+#endif /* !CONFIG_USB_PR_SM */
+
 void pd_update_contract(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {

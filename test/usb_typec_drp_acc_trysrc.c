@@ -31,26 +31,6 @@
 __overridable void pd_request_power_swap(int port)
 {}
 
-uint8_t pd_get_src_cap_cnt(int port)
-{
-	return 0;
-}
-
-const uint32_t * const pd_get_src_caps(int port)
-{
-	return NULL;
-}
-
-uint8_t pd_get_snk_cap_cnt(int port)
-{
-	return 0;
-}
-
-const uint32_t * const pd_get_snk_caps(int port)
-{
-	return NULL;
-}
-
 void pd_set_src_caps(int port, int cnt, uint32_t *src_caps)
 {
 }
