@@ -11,15 +11,15 @@
 #include "config.h"
 
 /* We need registers.h to get the chip specific defines for now */
-#include "registers.h"
+#include "i2c/i2c.h"
 
 #define I2C_PORT_ACCEL          I2C_PORT_SENSOR
-#define I2C_PORT_SENSOR         NPCX_I2C_PORT0_0
-#define I2C_PORT_USB_C0		NPCX_I2C_PORT1_0
-#define I2C_PORT_USB_C1		NPCX_I2C_PORT2_0
-#define I2C_PORT_USB_1_MIX	NPCX_I2C_PORT3_0
-#define I2C_PORT_POWER		NPCX_I2C_PORT5_0
-#define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
+#define I2C_PORT_SENSOR         NAMED_I2C(sensor)
+#define I2C_PORT_USB_C0		NAMED_I2C(usb_c0)
+#define I2C_PORT_USB_C1		NAMED_I2C(usb_c1)
+#define I2C_PORT_USB_1_MIX	NAMED_I2C(usb1_mix)
+#define I2C_PORT_POWER		NAMED_I2C(power)
+#define I2C_PORT_EEPROM		NAMED_I2C(eeprom)
 
 #define I2C_ADDR_EEPROM_FLAGS	0x50
 
