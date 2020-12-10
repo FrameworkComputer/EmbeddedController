@@ -2168,14 +2168,6 @@ uint32_t pd_get_tbt_mode_vdo(int port, enum tcpm_transmit_type type);
 void set_tbt_compat_mode_ready(int port);
 
 /**
- * Checks if the attached cable supports superspeed
- *
- * @param port	USB-C port number
- * @return      True if cable is superspeed, false otherwise
- */
-bool is_tbt_cable_superspeed(int port);
-
-/**
  * Returns Thunderbolt-compatible cable speed according to the port if,
  * port supports lesser speed than the cable
  *
@@ -2197,7 +2189,7 @@ int enter_tbt_compat_mode(int port, enum tcpm_transmit_type sop,
 			uint32_t *payload);
 
 /**
- * Return maximum allowed speed for Thunderbolt-compatible mode
+ * Return maximum speed supported by the port to enter into Thunderbolt mode
  *
  * NOTE: Chromebooks require that all USB-C ports support the same features,
  * so the maximum speed returned by this function should be set to the lowest

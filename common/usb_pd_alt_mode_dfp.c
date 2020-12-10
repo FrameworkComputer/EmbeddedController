@@ -757,7 +757,7 @@ void set_tbt_compat_mode_ready(int port)
  * Ref: USB Type-C Cable and Connector Specification
  * Figure F-1 TBT3 Discovery Flow
  */
-bool is_tbt_cable_superspeed(int port)
+static bool is_tbt_cable_superspeed(int port)
 {
 	struct pd_discovery *disc;
 
@@ -791,10 +791,15 @@ bool is_tbt_cable_superspeed(int port)
 
 enum tbt_compat_cable_speed get_tbt_cable_speed(int port)
 {
-	union tbt_mode_resp_cable cable_mode_resp = {
-		.raw_value = pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME) };
-	enum tbt_compat_cable_speed max_tbt_speed =
-				board_get_max_tbt_speed(port);
+	union tbt_mode_resp_cable cable_mode_resp;
+	enum tbt_compat_cable_speed max_tbt_speed;
+
+	if (!is_tbt_cable_superspeed(port))
+		return TBT_SS_RES_0;
+
+	cable_mode_resp.raw_value =
+		pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME);
+	max_tbt_speed = board_get_max_tbt_speed(port);
 
 	/*
 	 * Ref: USB Type-C Cable and Connector Specification,
@@ -872,13 +877,9 @@ enum tbt_compat_rounded_support get_tbt_rounded_support(int port)
 	return cable_mode_resp.tbt_rounded;
 }
 
-/* Return the current cable speed received from Cable Discover Mode command */
 __overridable enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
 {
-	union tbt_mode_resp_cable cable_mode_resp = {
-		.raw_value = pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME) };
-
-	return cable_mode_resp.tbt_cable_speed;
+	return TBT_SS_TBT_GEN3;
 }
 /*
  * ############################################################################

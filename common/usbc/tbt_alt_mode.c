@@ -405,8 +405,7 @@ static bool tbt_mode_is_supported(int port, int vdo_count)
 	if (!disc->identity.idh.modal_support)
 		return false;
 
-	if (!(is_tbt_cable_superspeed(port) &&
-		get_tbt_cable_speed(port) >= TBT_SS_U31_GEN1))
+	if (get_tbt_cable_speed(port) < TBT_SS_U31_GEN1)
 		return false;
 
 	/*

@@ -487,7 +487,8 @@ static int process_am_discover_ident_sop_prime(int port, int cnt,
 	 * Disable Thunderbolt-compatible mode if the cable does not support
 	 * superspeed.
 	 */
-	if (is_tbt_compat_enabled(port) && !is_tbt_cable_superspeed(port))
+	if (is_tbt_compat_enabled(port) &&
+	    get_tbt_cable_speed(port) < TBT_SS_U31_GEN1)
 		disable_tbt_compat_mode(port);
 
 	return dfp_discover_svids(payload);
