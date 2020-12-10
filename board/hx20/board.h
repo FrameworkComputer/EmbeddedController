@@ -165,6 +165,7 @@
 
 #define CONFIG_CHARGER
 #define CONFIG_USB_PD_PORT_MAX_COUNT 4
+#define CONFIG_CHARGER_DISCHARGE_ON_AC
 
 /* Charger parameter */
 #define CONFIG_CHARGER_ISL9241
