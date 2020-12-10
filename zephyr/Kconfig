@@ -32,7 +32,7 @@ config ZEPHYR
 	  config.h not being available in some headers.
 
 # Define PLATFORM_EC_... options to enable EC features. Each Kconfig should be
-# matched by a line in zephyr/shim/include/config_chip.h which #edefines the
+# matched by a line in zephyr/shim/include/config_chip.h which #defines the
 # corresponding EC CONFIG if this Kconfig is enabled.
 #
 # Please keep these in alphabetical order
