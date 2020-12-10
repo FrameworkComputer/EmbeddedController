@@ -40,6 +40,7 @@
 #define RTCWAKE  BIT(0)
 #define USBWAKE  BIT(1)
 
+static bool want_boot_ap_at_g3;
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
@@ -151,6 +152,16 @@ int board_chipset_power_on(void)
 	gpio_set_level(GPIO_PCH_RSMRST_L, 1);
 
 	gpio_set_level(GPIO_AC_PRESENT_OUT, 1);
+
+	if (want_boot_ap_at_g3) {
+		CPRINTS("press power button for G3 Boot!");
+		/* assert the power button to power on system */
+		msleep(30);
+		gpio_set_level(GPIO_PCH_PWRBTN_L, 0);
+		msleep(30);
+		gpio_set_level(GPIO_PCH_PWRBTN_L, 1);
+		want_boot_ap_at_g3 = 0;
+	}
 
 	msleep(50);
 	return true;
@@ -300,4 +311,10 @@ enum power_state power_handle_state(enum power_state state)
 	}
 
 	return state;
+}
+
+void boot_ap_on_g3(void)
+{
+	CPRINTS("Need to boot ap on g3");
+	want_boot_ap_at_g3 = 1;
 }

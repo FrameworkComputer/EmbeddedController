@@ -258,6 +258,11 @@
 #define CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD 30
 
 /*
+ * Use for customer boot from G3
+ */
+#define CONFIG_CUSTOM_BOOT_G3
+
+/*
  * MEC1701H SCI is virtual wire on eSPI
  *#define CONFIG_SCI_GPIO GPIO_PCH_SCI_L
  */
@@ -685,6 +690,8 @@ int board_chipset_power_on(void);
 int board_get_version(void);
 
 void board_power_off(void);
+
+void boot_ap_on_g3(void);
 
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);
