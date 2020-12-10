@@ -13,12 +13,6 @@
 uint32_t sleep_mask;
 
 /* Unused: required for shimming i2c. */
-const struct device *i2c_get_device_for_port(int port)
-{
-	return NULL;
-}
-
-/* Unused: required for shimming i2c. */
 void watchdog_reload(void)
 {
 }

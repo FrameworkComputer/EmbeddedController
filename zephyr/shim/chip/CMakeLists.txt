@@ -18,18 +18,5 @@ zephyr_compile_definitions("CHIP_VARIANT_${CHIP_VARIANT}")
 
 if ("${CHIP_FAMILY}" MATCHES "^NPCX[0-9]$")
 	add_subdirectory(npcx)
-	zephyr_include_directories("${PLATFORM_EC}/chip/npcx")
-	string(TOLOWER "npcx/i2c-${CHIP_FAMILY}.c" chip_specific_i2c_impl)
-endif()
-
-# Adding chip specific i2c implementation here. These contain the specific
-# code used to implement generic information about platform/ec
-# port numbers and their properties. As such they're basically the
-# platform/ec's abstraction of devicetree and aren't worth replacing
-# quite yet until a cleaner picture of how the full migration for i2c
-# will be done.
-if (DEFINED chip_specific_i2c_impl)
-	zephyr_sources_ifdef(CONFIG_PLATFORM_EC_I2C
-		"${PLATFORM_EC}/chip/${chip_specific_i2c_impl}")
 endif()
 

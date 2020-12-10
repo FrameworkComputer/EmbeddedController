@@ -10,12 +10,7 @@
 #include <devicetree.h>
 
 #ifdef CONFIG_PLATFORM_EC_I2C
-/*
- * Define the i2c_ports enum for Ztests only right now. In full builds this
- * will clash with the definitions in config_chip-npcx7.h. Once we've migrated
- * away from platform/ec/chip/... files we can remove this guard.
- */
-#if defined(CONFIG_ZTEST) && DT_NODE_EXISTS(DT_PATH(named_i2c_ports))
+#if DT_NODE_EXISTS(DT_PATH(named_i2c_ports))
 #define I2C_PORT(id) DT_CAT(I2C_, id)
 #define I2C_PORT_WITH_COMMA(id) I2C_PORT(id),
 enum i2c_ports {
@@ -23,7 +18,7 @@ DT_FOREACH_CHILD(DT_PATH(named_i2c_ports), I2C_PORT_WITH_COMMA)
 I2C_PORT_COUNT
 };
 #define NAMED_I2C(name) I2C_PORT(DT_PATH(named_i2c_ports, name))
-#endif /* CONFIG_ZTEST && named_i2c_ports */
+#endif /* named_i2c_ports */
 #endif /* CONFIG_PLATFORM_EC_I2C */
 
 /**
