@@ -22,32 +22,42 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
-/* EC Config Defines */
+/* Power Config */
+#undef  CONFIG_EXTPOWER_DEBOUNCE_MS
+#define CONFIG_EXTPOWER_DEBOUNCE_MS 200
+#define CONFIG_EXTPOWER_GPIO
+#define CONFIG_POWER_COMMON
+#define CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_X86
-#define CONFIG_EXTPOWER_GPIO
-#define CONFIG_VOLUME_BUTTONS
+#define GPIO_AC_PRESENT		GPIO_ACOK_OD
+#define GPIO_POWER_BUTTON_L	GPIO_MECH_PWR_BTN_ODL
+#define GPIO_PCH_PWRBTN_L	GPIO_EC_SOC_PWR_BTN_L
+#define GPIO_PCH_RSMRST_L	GPIO_EC_SOC_RSMRST_L
+#define GPIO_PCH_WAKE_L		GPIO_EC_SOC_WAKE_L
+#define GPIO_PCH_SLP_S0_L	GPIO_SLP_S3_S0I3_L
+#define GPIO_PCH_SLP_S3_L	GPIO_SLP_S3_L
+#define GPIO_PCH_SLP_S5_L	GPIO_SLP_S5_L
+#define GPIO_S0_PGOOD		GPIO_S0_PWROK_OD
+#define GPIO_S5_PGOOD		GPIO_S5_PWROK
+#define GPIO_PCH_SYS_PWROK	GPIO_EC_SOC_PWR_GOOD
+#define GPIO_SYS_RESET_L	GPIO_EC_SYS_RST_L
+#define GPIO_EN_PWR_A		GPIO_EN_PWR_Z1
 
+/* Thermal Config */
+#define GPIO_CPU_PROCHOT	GPIO_PROCHOT_ODL
+
+/* Flash Config */
 /* See config_chip-npcx9.h for SPI flash configuration */
 #undef CONFIG_SPI_FLASH /* Don't enable external flash interface */
-
-/*
- * Macros for GPIO signals used in common code that don't match the
- * schematic names. Signal names in gpio.inc match the schematic and are
- * then redefined here to so it's more clear which signal is being used for
- * which purpose.
- */
 #define GPIO_WP_L			GPIO_EC_WP_L
-#define GPIO_POWER_BUTTON_L		GPIO_MECH_PWR_BTN_ODL
-#define GPIO_AC_PRESENT			GPIO_ACOK_OD
-#define GPIO_SYS_RESET_L		GPIO_EC_SYS_RST_L
-#define GPIO_PCH_PWRBTN_L		GPIO_EC_SOC_PWR_BTN_L
-#define GPIO_VOLUME_UP_L		GPIO_VOLUP_BTN_ODL
-#define GPIO_VOLUME_DOWN_L		GPIO_VOLDN_BTN_ODL
 
 /* Host communication */
 
 /* Chipset config */
+#define CONFIG_CHIPSET_STONEY
+#define CONFIG_CHIPSET_CAN_THROTTLE
+#define CONFIG_CHIPSET_RESET_HOOK
 
 /* Common Keyboard Defines */
 
@@ -69,7 +79,10 @@
 
 /* I2C Bus Configuration */
 
-/* Volume Button feature */
+/* Volume Button Config */
+#define CONFIG_VOLUME_BUTTONS
+#define GPIO_VOLUME_UP_L		GPIO_VOLUP_BTN_ODL
+#define GPIO_VOLUME_DOWN_L		GPIO_VOLDN_BTN_ODL
 
 /* Fan features */
 
@@ -78,17 +91,31 @@
 #include "gpio_signal.h"
 #include "registers.h"
 
-/* Common definition for the USB PD interrupt handlers. */
-void tcpc_alert_event(enum gpio_signal signal);
-void bc12_interrupt(enum gpio_signal signal);
-void ppc_interrupt(enum gpio_signal signal);
-void sbu_fault_interrupt(enum ioex_signal signal);
+/* Power input signals */
+enum power_signal {
+	X86_SLP_S0_N,		/* SOC  -> SLP_S3_S0I3_L */
+	X86_SLP_S3_N,		/* SOC  -> SLP_S3_L */
+	X86_SLP_S5_N,		/* SOC  -> SLP_S5_L */
 
+	X86_S0_PGOOD,		/* PMIC -> S0_PWROK_OD */
+	X86_S5_PGOOD,		/* PMIC -> S5_PWROK */
+
+	/* Number of X86 signals */
+	POWER_SIGNAL_COUNT,
+};
+
+/* USB-C ports */
 enum usbc_port {
 	USBC_PORT_C0 = 0,
 	USBC_PORT_C1,
 	USBC_PORT_COUNT
 };
+
+/* Common definition for the USB PD interrupt handlers. */
+void tcpc_alert_event(enum gpio_signal signal);
+void bc12_interrupt(enum gpio_signal signal);
+void ppc_interrupt(enum gpio_signal signal);
+void sbu_fault_interrupt(enum ioex_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 
