@@ -8,18 +8,13 @@
 #include "i2c.h"
 #include "i2c/i2c.h"
 
-/* Shorthand for getting the device binding for a given devicetree label. */
-#define BINDING_FOR(label)                                                 \
-	device_get_binding(                                                \
-		COND_CODE_1(DT_NODE_HAS_STATUS(DT_NODELABEL(label), okay), \
-			    (DT_LABEL(DT_NODELABEL(label))), ("")))
-
 /*
  * Initialize device bindings in i2c_devices.
  * This macro should be called from within DT_FOREACH_CHILD.
  */
 #define INIT_DEV_BINDING(id) \
-	i2c_devices[I2C_PORT(id)] = BINDING_FOR(id);
+	i2c_devices[I2C_PORT(id)] = device_get_binding( \
+		DT_PROP_BY_PHANDLE(id, i2c_port, label));
 
 /*
  * Long term we will not need these, for now they're needed to get things to
