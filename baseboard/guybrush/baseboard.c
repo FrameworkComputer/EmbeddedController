@@ -5,10 +5,14 @@
 
 /* Guybrush family-specific configuration */
 
+#include "adc.h"
+#include "adc_chip.h"
 #include "chipset.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "power.h"
+#include "temp_sensor.h"
+#include "thermal.h"
 
 /* Wake Sources */
 const enum gpio_signal hibernate_wake_pins[] = {
@@ -100,13 +104,117 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 	{
 		.name = "soc_thermal",
-		.port = I2C_PORT_SOC_THERMAL,
+		.port = I2C_PORT_THERMAL_AP,
 		.kbps = 400,
 		.scl = GPIO_EC_I2C_SOC_SIC,
 		.sda = GPIO_EC_I2C_SOC_SID,
 	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+/* ADC Channels */
+const struct adc_t adc_channels[] = {
+	[ADC_TEMP_SENSOR_SOC] = {
+		.name = "SOC",
+		.input_ch = NPCX_ADC_CH0,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_CHARGER] = {
+		.name = "CHARGER",
+		.input_ch = NPCX_ADC_CH1,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_MEMORY] = {
+		.name = "MEMORY",
+		.input_ch = NPCX_ADC_CH2,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+/* Temp Sensors */
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_SOC] = {
+		.name = "SOC",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = baseboard_get_temp,
+		.idx = TEMP_SENSOR_SOC,
+	},
+	[TEMP_SENSOR_CHARGER] = {
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = baseboard_get_temp,
+		.idx = TEMP_SENSOR_CHARGER,
+	},
+	[TEMP_SENSOR_MEMORY] = {
+		.name = "Memory",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = baseboard_get_temp,
+		.idx = TEMP_SENSOR_MEMORY,
+	},
+	[TEMP_SENSOR_CPU] = {
+		.name = "CPU",
+		.type = TEMP_SENSOR_TYPE_CPU,
+		.read = baseboard_get_temp,
+		.idx = TEMP_SENSOR_CPU,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT] = {
+	[TEMP_SENSOR_SOC] = {
+		.temp_host = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+			[EC_TEMP_THRESH_HALT] = C_TO_K(92),
+		},
+		.temp_host_release = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		},
+		.temp_fan_off = C_TO_K(32),
+		.temp_fan_max = C_TO_K(75),
+	},
+	[TEMP_SENSOR_CHARGER] = {
+		.temp_host = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+			[EC_TEMP_THRESH_HALT] = C_TO_K(92),
+		},
+		.temp_host_release = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		},
+		.temp_fan_off = 0,
+		.temp_fan_max = 0,
+	},
+	[TEMP_SENSOR_MEMORY] = {
+		.temp_host = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+			[EC_TEMP_THRESH_HALT] = C_TO_K(92),
+		},
+		.temp_host_release = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		},
+		.temp_fan_off = 0,
+		.temp_fan_max = 0,
+	},
+	[TEMP_SENSOR_CPU] = {
+		.temp_host = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+			[EC_TEMP_THRESH_HALT] = C_TO_K(92),
+		},
+		.temp_host_release = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		},
+		.temp_fan_off = 0,
+		.temp_fan_max = 0,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 int board_is_i2c_port_powered(int port)
 {
@@ -115,7 +223,7 @@ int board_is_i2c_port_powered(int port)
 	case I2C_PORT_SENSOR:
 		/* USB mux and sensor i2c bus is unpowered in Z1 */
 		return chipset_in_state(CHIPSET_STATE_HARD_OFF) ? 0 : 1;
-	case I2C_PORT_SOC_THERMAL:
+	case I2C_PORT_THERMAL_AP:
 		/* SOC thermal i2c bus is unpowered in S0i3/S3/S5/Z1 */
 		return chipset_in_state(CHIPSET_STATE_ANY_OFF |
 					CHIPSET_STATE_ANY_SUSPEND) ? 0 : 1;
@@ -142,4 +250,10 @@ void ppc_interrupt(enum gpio_signal signal)
 void bc12_interrupt(enum gpio_signal signal)
 {
 	/* TODO */
+}
+
+int baseboard_get_temp(int idx, int *temp_ptr)
+{
+	/* TODO */
+	return 0;
 }
