@@ -15,6 +15,7 @@ if PLATFORM_EC
 rsource "Kconfig.battery"
 rsource "Kconfig.powerseq"
 rsource "Kconfig.tasks"
+rsource "Kconfig.usbc"
 
 # Below is a hack to use CONFIG_ZEPHYR in platform/ec code before
 # config.h has been included.  There is some tricky ordering in some

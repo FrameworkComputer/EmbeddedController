@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_USB_SM_H
 #define __CROS_EC_USB_SM_H
 
+#include "compiler.h"	/* for typeof() on Zephyr */
+
 /* Function pointer that implements a portion of a usb state */
 typedef void (*state_execution)(const int port);
 
