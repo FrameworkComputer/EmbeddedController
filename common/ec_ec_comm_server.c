@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * EC-EC communication, task and functions for slave.
+ * EC-EC communication, task and functions for server.
  */
 
 #include "common.h"
@@ -27,7 +27,7 @@
 /* Print extra debugging information */
 #undef EXTRA_DEBUG
 
-/* Set if the master allows the slave to charge the battery. */
+/* Set if the client allows the server to charge the battery. */
 static int charging_allowed;
 
 /*
@@ -52,7 +52,7 @@ BUILD_ASSERT(LARGEST_PARAMS_SIZE >=
 #define COMMAND_TIMEOUT_US (5 * MSEC)
 
 
-void ec_ec_comm_slave_written(struct consumer const *consumer, size_t count)
+void ec_ec_comm_server_written(struct consumer const *consumer, size_t count)
 {
 	task_wake(TASK_ID_ECCOMM);
 }
@@ -66,13 +66,13 @@ void ec_ec_comm_slave_written(struct consumer const *consumer, size_t count)
 static void discard_queue(void)
 {
 	do {
-		queue_advance_head(&ec_ec_comm_slave_input,
-				queue_count(&ec_ec_comm_slave_input));
+		queue_advance_head(&ec_ec_comm_server_input,
+				queue_count(&ec_ec_comm_server_input));
 		usleep(1 * MSEC);
-	} while (queue_count(&ec_ec_comm_slave_input) > 0);
+	} while (queue_count(&ec_ec_comm_server_input) > 0);
 }
 
-/* Write response to master. */
+/* Write response to client. */
 static void write_response(uint16_t res, int seq, const void *data, int len)
 {
 	struct ec_host_response4 header;
@@ -89,13 +89,13 @@ static void write_response(uint16_t res, int seq, const void *data, int len)
 	header.reserved = 0;
 	header.header_crc =
 		cros_crc8((uint8_t *)&header, sizeof(header)-1);
-	QUEUE_ADD_UNITS(&ec_ec_comm_slave_output,
+	QUEUE_ADD_UNITS(&ec_ec_comm_server_output,
 			(uint8_t *)&header, sizeof(header));
 
 	if (len > 0) {
-		QUEUE_ADD_UNITS(&ec_ec_comm_slave_output, data, len);
+		QUEUE_ADD_UNITS(&ec_ec_comm_server_output, data, len);
 		crc = cros_crc8(data, len);
-		QUEUE_ADD_UNITS(&ec_ec_comm_slave_output, &crc, sizeof(crc));
+		QUEUE_ADD_UNITS(&ec_ec_comm_server_output, &crc, sizeof(crc));
 	}
 }
 
@@ -108,7 +108,7 @@ static int read_data(void *buffer, size_t len, uint32_t start)
 {
 	uint32_t delta;
 
-	while (queue_count(&ec_ec_comm_slave_input) < len) {
+	while (queue_count(&ec_ec_comm_server_input) < len) {
 		delta = __hw_clock_source_read() - start;
 		if (delta >= COMMAND_TIMEOUT_US)
 			return EC_ERROR_TIMEOUT;
@@ -118,7 +118,7 @@ static int read_data(void *buffer, size_t len, uint32_t start)
 	}
 
 	/* Fetch header */
-	QUEUE_REMOVE_UNITS(&ec_ec_comm_slave_input, buffer, len);
+	QUEUE_REMOVE_UNITS(&ec_ec_comm_server_input, buffer, len);
 
 	return EC_SUCCESS;
 }
@@ -191,13 +191,13 @@ out:
 }
 
 /*
- * On dual-battery slave, we use the charging allowed signal from master to
+ * On dual-battery server, we use the charging allowed signal from client to
  * indicate whether external power is present.
  *
- * In most cases, this actually matches the external power status of the master
- * (slave battery charging when AC is connected, or discharging when slave
- * battery still has enough capacity), with one exception: when we do master to
- * slave battery charging (in this case the "external" power is the master).
+ * In most cases, this actually matches the external power status of the client
+ * (server battery charging when AC is connected, or discharging when server
+ * battery still has enough capacity), with one exception: when we do client to
+ * server battery charging (in this case the "external" power is the client).
  */
 int extpower_is_present(void)
 {
@@ -205,7 +205,7 @@ int extpower_is_present(void)
 }
 #endif
 
-void ec_ec_comm_slave_task(void *u)
+void ec_ec_comm_server_task(void *u)
 {
 	struct ec_host_request4 header;
 	/*
@@ -219,7 +219,7 @@ void ec_ec_comm_slave_task(void *u)
 	while (1) {
 		task_wait_event(-1);
 
-		if (queue_count(&ec_ec_comm_slave_input) == 0)
+		if (queue_count(&ec_ec_comm_server_input) == 0)
 			continue;
 
 		/* We got some data, start timeout counter. */

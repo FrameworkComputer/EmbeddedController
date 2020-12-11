@@ -145,15 +145,15 @@ struct keyboard_scan_config keyscan_config = {
 struct consumer const ec_ec_usart_consumer;
 static struct usart_config const ec_ec_usart;
 
-struct queue const ec_ec_comm_slave_input = QUEUE_DIRECT(64, uint8_t,
+struct queue const ec_ec_comm_server_input = QUEUE_DIRECT(64, uint8_t,
 				ec_ec_usart.producer, ec_ec_usart_consumer);
-struct queue const ec_ec_comm_slave_output = QUEUE_DIRECT(64, uint8_t,
+struct queue const ec_ec_comm_server_output = QUEUE_DIRECT(64, uint8_t,
 				null_producer, ec_ec_usart.consumer);
 
 struct consumer const ec_ec_usart_consumer = {
-	.queue = &ec_ec_comm_slave_input,
+	.queue = &ec_ec_comm_server_input,
 	.ops   = &((struct consumer_ops const) {
-		.written = ec_ec_comm_slave_written,
+		.written = ec_ec_comm_server_written,
 	}),
 };
 
@@ -163,8 +163,8 @@ static struct usart_config const ec_ec_usart =
 		usart_tx_interrupt,
 		115200,
 		USART_CONFIG_FLAG_HDSEL,
-		ec_ec_comm_slave_input,
-		ec_ec_comm_slave_output);
+		ec_ec_comm_server_input,
+		ec_ec_comm_server_output);
 #endif /* BOARD_WAND && SECTION_IS_RW */
 
 /******************************************************************************
@@ -184,8 +184,8 @@ static void board_init(void)
 
 #ifdef BOARD_WAND
 	/* USB to serial queues */
-	queue_init(&ec_ec_comm_slave_input);
-	queue_init(&ec_ec_comm_slave_output);
+	queue_init(&ec_ec_comm_server_input);
+	queue_init(&ec_ec_comm_server_output);
 
 	/* UART init */
 	usart_init(&ec_ec_usart);

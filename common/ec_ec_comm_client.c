@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * EC-EC communication, functions and definitions for master.
+ * EC-EC communication, functions and definitions for client.
  */
 
 #include "battery.h"
@@ -22,11 +22,11 @@
  * TODO(b:65697962): The packed structures below do not play well if we force EC
  * host commands structures to be aligned on 32-bit boundary. There are ways to
  * fix that, possibly requiring copying data around, or modifying
- * uart_alt_pad_write_read API to write the actual slave response to a separate
+ * uart_alt_pad_write_read API to write the actual server response to a separate
  * buffer.
  */
 #ifdef CONFIG_HOSTCMD_ALIGNED
-#error "Cannot define CONFIG_HOSTCMD_ALIGNED with EC-EC communication master."
+#error "Cannot define CONFIG_HOSTCMD_ALIGNED with EC-EC communication client."
 #endif
 
 #define EC_EC_HOSTCMD_VERSION 4
@@ -78,7 +78,7 @@ struct {
  * crc8 are verified by this function).
  *
  * This format is required as the EC-EC UART is half-duplex, and all the
- * transmitted data is received back, i.e. the master writes req, then reads
+ * transmitted data is received back, i.e. the client writes req, then reads
  * req, followed by resp.
  *
  * When a command does not take parameters, param/crc8 must be omitted in
@@ -113,12 +113,12 @@ static int write_command(uint16_t command,
 
 	struct ec_host_response4 *response_header =
 		(void *)&data[tx_length];
-	/* RX length is TX length + response from slave. */
+	/* RX length is TX length + response from server. */
 	int rx_length = tx_length +
 		sizeof(*request_header) + ((resp_len > 0) ? (resp_len + 1) : 0);
 
 	/*
-	 * Make sure there is a gap between each command, so that the slave
+	 * Make sure there is a gap between each command, so that the server
 	 * can recover its state machine after each command.
 	 *
 	 * TODO(b:65697962): We can be much smarter than this, and record the
@@ -241,7 +241,7 @@ static int handle_error(const char *func, int ret, int request_result)
 }
 
 #ifdef CONFIG_EC_EC_COMM_BATTERY
-int ec_ec_master_base_get_dynamic_info(void)
+int ec_ec_client_base_get_dynamic_info(void)
 {
 	int ret;
 	struct {
@@ -281,7 +281,7 @@ int ec_ec_master_base_get_dynamic_info(void)
 	return EC_RES_SUCCESS;
 }
 
-int ec_ec_master_base_get_static_info(void)
+int ec_ec_client_base_get_static_info(void)
 {
 	int ret;
 	struct {
@@ -321,7 +321,7 @@ int ec_ec_master_base_get_static_info(void)
 	return EC_RES_SUCCESS;
 }
 
-int ec_ec_master_base_charge_control(int max_current,
+int ec_ec_client_base_charge_control(int max_current,
 				     int otg_voltage,
 				     int allow_charging)
 {
@@ -347,7 +347,7 @@ int ec_ec_master_base_charge_control(int max_current,
 	return handle_error(__func__, ret, data.resp.head.result);
 }
 
-int ec_ec_master_hibernate(void)
+int ec_ec_client_hibernate(void)
 {
 	int ret;
 	struct {

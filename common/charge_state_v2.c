@@ -306,11 +306,11 @@ static void update_base_battery_info(void)
 		int flags_changed;
 		int old_full_capacity = bd->full_capacity;
 
-		ec_ec_master_base_get_dynamic_info();
+		ec_ec_client_base_get_dynamic_info();
 		flags_changed = (old_flags != bd->flags);
 		/* Fetch static information when flags change. */
 		if (flags_changed)
-			ec_ec_master_base_get_static_info();
+			ec_ec_client_base_get_static_info();
 
 		battery_memmap_refresh(BATT_IDX_BASE);
 
@@ -350,7 +350,7 @@ static int set_base_current(int current_base, int allow_charge_base)
 	const int otg_voltage = db_policy.otg_voltage;
 	int ret;
 
-	ret = ec_ec_master_base_charge_control(current_base,
+	ret = ec_ec_client_base_charge_control(current_base,
 					otg_voltage, allow_charge_base);
 	if (ret) {
 		/* Ignore errors until the base is responsive. */
@@ -560,7 +560,7 @@ static void charge_allocate_input_current_limit(void)
 			if (base_responsive) {
 				/* Base still responsive, put it to sleep. */
 				CPRINTF("Hibernating base\n");
-				ec_ec_master_hibernate();
+				ec_ec_client_hibernate();
 				base_responsive = 0;
 				board_enable_base_power(0);
 			}
@@ -2088,7 +2088,7 @@ wait_for_it:
 #endif
 #ifdef CONFIG_EC_EC_COMM_BATTERY_SLAVE
 			/*
-			 * On EC-EC slave, do not charge if curr.ac is 0: there
+			 * On EC-EC server, do not charge if curr.ac is 0: there
 			 * might still be some external power available but we
 			 * do not want to use it for charging.
 			 */
