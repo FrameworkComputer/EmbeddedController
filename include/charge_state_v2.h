@@ -9,7 +9,7 @@
 #include "battery_smart.h"
 #include "charger.h"
 #include "chipset.h"
-#include "ec_ec_comm_master.h"
+#include "ec_ec_comm_client.h"
 #include "ocpc.h"
 #include "timer.h"
 

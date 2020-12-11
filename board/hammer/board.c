@@ -10,7 +10,7 @@
 #include "driver/charger/isl923x.h"
 #include "driver/led/lm3630a.h"
 #include "ec_version.h"
-#include "ec_ec_comm_slave.h"
+#include "ec_ec_comm_server.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "hwtimer.h"

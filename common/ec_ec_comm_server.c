@@ -11,7 +11,7 @@
 #include "console.h"
 #include "crc8.h"
 #include "ec_commands.h"
-#include "ec_ec_comm_slave.h"
+#include "ec_ec_comm_server.h"
 #include "extpower.h"
 #include "hwtimer.h"
 #include "hooks.h"

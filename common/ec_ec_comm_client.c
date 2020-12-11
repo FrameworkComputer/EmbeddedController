@@ -10,7 +10,7 @@
 #include "console.h"
 #include "crc8.h"
 #include "ec_commands.h"
-#include "ec_ec_comm_master.h"
+#include "ec_ec_comm_client.h"
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
