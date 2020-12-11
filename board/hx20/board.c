@@ -770,6 +770,8 @@ static void sci_enable(void)
 	if (*host_get_customer_memmap(0x00) == 1) {
 	/* when host set EC driver ready flag, EC need to enable SCI */
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0x20AF92AFF);
+
+		update_power_limit();
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }
