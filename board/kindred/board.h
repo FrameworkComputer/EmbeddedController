@@ -32,12 +32,19 @@
 /* Sensors */
 /* BMI160 Base accel/gyro */
 #define CONFIG_ACCEL_INTERRUPTS
+
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+
+#define CONFIG_ACCELGYRO_ICM426XX
+#define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+
 #define CONFIG_ACCELGYRO_BMI160_INT2_OUTPUT
 /* BMA253 Lid accel */
 #define CONFIG_ACCEL_BMA255
+#define CONFIG_ACCEL_KX022
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
@@ -174,7 +181,7 @@ enum battery_type {
 
 extern const int keyboard_factory_scan_pins[][2];
 extern const int keyboard_factory_scan_pins_used;
-
+void motion_interrupt(enum gpio_signal signal);
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */
