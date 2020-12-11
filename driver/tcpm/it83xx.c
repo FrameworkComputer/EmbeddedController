@@ -36,7 +36,9 @@
 #endif
 
 /* Wait time for vconn power switch to turn off. */
-#ifndef PD_IT83XX_VCONN_TURN_OFF_DELAY_US
+#ifdef PD_VCONN_SWAP_DELAY
+#define PD_IT83XX_VCONN_TURN_OFF_DELAY_US PD_VCONN_SWAP_DELAY
+#else
 #define PD_IT83XX_VCONN_TURN_OFF_DELAY_US 500
 #endif
 
