@@ -49,40 +49,9 @@ includes selectable sub-configurations for every board/image pair.
     can select a configuration by pressing `Ctrl-Shift-P` and selecting the
     `C/C++ Select a Configuration...` option.
 
-5.  Add the EC specific file associations and style settings. Modify
-    `.vscode/settings.json` to have the following elements:
+5.  Add the EC specific file associations and style settings. Do the following
+    to copy the default settings to `.vscode/settings.json`:
 
-    ```json
-    {
-        "editor.rulers": [80],
-        /* C, Makefiles, ASM, Linkerfiles, Properties */
-        "editor.insertSpaces": false,
-        "editor.tabSize": 8,
-        /* Some exceptions based on current trends */
-        "[markdown]": {
-            "editor.insertSpaces": true,
-            "editor.tabSize": 2
-        },
-        "[python]": {
-            "editor.insertSpaces": true,
-            "editor.tabSize": 2
-        },
-        "[shellscript]": {
-            "editor.insertSpaces": true,
-            "editor.tabSize": 2
-        },
-        "[yaml]": {
-            "editor.insertSpaces": true,
-            "editor.tabSize": 2
-        },
-        "files.associations": {
-            "Makefile.*": "makefile",
-            "*.inc": "c",
-            "*.wrap": "c",
-            "*.tasklist": "c",
-            "*.irqlist": "c",
-            "*.mocklist": "c",
-            "*.testlist": "c"
-        }
-    }
+    ```bash
+    cp .vscode/settings.json.default .vscode/settings.json
     ```

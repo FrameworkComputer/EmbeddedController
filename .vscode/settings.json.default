@@ -1,0 +1,35 @@
+/* Copy this file to settings.json to active these defaults. */
+{
+   "editor.rulers": [
+      80
+   ],
+   /* C, Makefiles, ASM, Linkerfiles, Properties */
+   "editor.insertSpaces": false,
+   "editor.tabSize": 8,
+   /* Some exceptions based on current trends */
+   "[markdown]": {
+      "editor.insertSpaces": true,
+      "editor.tabSize": 2
+   },
+   "[python]": {
+      "editor.insertSpaces": true,
+      "editor.tabSize": 2
+   },
+   "[shellscript]": {
+      "editor.insertSpaces": true,
+      "editor.tabSize": 2
+   },
+   "[yaml]": {
+      "editor.insertSpaces": true,
+      "editor.tabSize": 2
+   },
+   "files.associations": {
+      "Makefile.*": "makefile",
+      "*.inc": "c",
+      "*.wrap": "c",
+      "*.tasklist": "c",
+      "*.irqlist": "c",
+      "*.mocklist": "c",
+      "*.testlist": "c"
+   }
+}

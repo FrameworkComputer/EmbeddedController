@@ -11,3 +11,9 @@ cscope.*
 .tests-passed
 .failedboards/
 .sizes.txt
+
+# VSCode IDE
+.vscode/*
+!.vscode/README.md
+!.vscode/settings.json.default
+*.code-workspace
