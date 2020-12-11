@@ -133,7 +133,7 @@ GPIO(FAN_SPEED,         PIN(050), GPIO_INPUT)
 
 
 /* Miscellaneous */
-GPIO(EC_KBL_PWR_EN,         PIN(0101), GPIO_OUT_HIGH)   /* keyboard backlight control */
+GPIO(TYPEC_G_DRV2_EN,       PIN(0101), GPIO_OUT_LOW)   /* LED drv */
 GPIO(ME_EN,                 PIN(060),  GPIO_OUT_LOW)
 GPIO(EC_BKOFF_L,            PIN(0102), GPIO_OUT_LOW)    /* Panel backlight control */
 
@@ -257,8 +257,6 @@ ALTERNATE(PIN_MASK(1, 0xf000000), 1, MODULE_LPC, 0)
  */
 /* GPIO_0055 Function 2, Bank 1 bit[13] */
 ALTERNATE(PIN_MASK(1, 0x2000), 2, MODULE_SPI_FLASH, GPIO_ODR_HIGH)
-/* SHD_CLK - GPIO_0056 Function 2, Bank 1 bit[14] */
-ALTERNATE(PIN_MASK(1, 0x4000), 2, MODULE_SPI_FLASH, 0)
 /* MOSI(SHD_IO0) - GPIO_0223 Function 1, Bank 4 bit[19] */
 /* MISO(SHD_IO1) - GPIO_0224 Function 2, Bank 4 bit[20] */
 /* nWP(SHD_IO2) - GPIO_0227 Function 1, Bank 4 bit[23] */
@@ -308,7 +306,8 @@ ALTERNATE(PIN_MASK(1, 0x800), 1, MODULE_PWM, GPIO_ODR_HIGH)
 ALTERNATE(PIN_MASK(1, 0x1000), 1, MODULE_PWM, 0)
 
 /*
- *	GPIO011,  TYPEC_G_DRV2,		Func2, Bank 0 bit[9]
+ *  EVT-GPIO011,  TYPEC_G_DRV2,		Func2, Bank 0 bit[9]
+ *	DVT-GPIO011,  EC_KBL_PWR_EN,	Func2, Bank 0 bit[9]
  */
 ALTERNATE(PIN_MASK(0, 0x0200), 2, MODULE_PWM, 0)
 /*
@@ -322,6 +321,12 @@ ALTERNATE(PIN_MASK(0, 0x0200), 2, MODULE_PWM, 0)
 ALTERNATE(PIN_MASK(0, 0x20003004), 1, MODULE_PWM, 0)
 
 ALTERNATE(PIN_MASK(1, 0x100), 1, MODULE_PWM, 0)
+
+/* SHD_CLK - GPIO_0056 Function 2, Bank 1 bit[14]
+ * TYPEC_G_DRV2 - GPIO_0056 Function 1, Bank 1 bit[14]
+ * in DVT normal enable to PWM Module, need flash  switch to SHD_CLK.
+ */
+ALTERNATE(PIN_MASK(1, 0x4000), 1, MODULE_PWM, 0)
 
 /* PECI
  *  GPIO042,  H_PECI,       Func1, Bank 1 bit[2]
