@@ -226,9 +226,11 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 			usleep(svdm_hpd_deadline[port] - now);
 
 		/* Generate IRQ_HPD pulse */
+		CPRINTS("C%d: Recv IRQ. HPD->0", port);
 		gpio_set_level(hpd, 0);
 		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
 		gpio_set_level(hpd, 1);
+		CPRINTS("C%d: Recv IRQ. HPD->1", port);
 
 		/* Set the minimum time delay (2ms) for the next HPD IRQ */
 		svdm_hpd_deadline[port] = get_time().val +
@@ -237,6 +239,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		CPRINTF("ERR:HPD:IRQ&LOW\n");
 		return 0;
 	} else {
+		CPRINTS("C%d: Recv lvl. HPD->%d", port, lvl);
 		gpio_set_level(hpd, lvl);
 		/* Set the minimum time delay (2ms) for the next HPD IRQ */
 		svdm_hpd_deadline[port] = get_time().val +
@@ -248,6 +251,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 __override void svdm_exit_dp_mode(int port)
 {
+	CPRINTS("%s(%d)", __func__, port);
 	if (is_dp_muxable(port)) {
 		/* Disconnect the DP port selection mux. */
 		gpio_set_level(GPIO_DP_MUX_OE_L, 1);
@@ -256,6 +260,7 @@ __override void svdm_exit_dp_mode(int port)
 		/* Signal AP for the HPD low event */
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
 					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+		CPRINTS("C%d: DP exit. HPD->0", port);
 		gpio_set_level(GPIO_DP_HOT_PLUG_DET, 0);
 	}
 }
