@@ -72,4 +72,7 @@ extern uint8_t keyboard_cols;
 #define KEYBOARD_ROW_LEFT_SHIFT 5
 #define KEYBOARD_MASK_LEFT_SHIFT KEYBOARD_ROW_TO_MASK(KEYBOARD_ROW_LEFT_SHIFT)
 
+#ifdef CONFIG_KEYBOARD_BACKLIGHT
+int hx20_kblight_disable(void);
+#endif
 #endif /* __KEYBOARD_CUSTOMIZATION_H */

@@ -10,6 +10,7 @@
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
 #include "keyboard_backlight.h"
+#include "pwm.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYBOARD, outstr)
@@ -122,28 +123,58 @@ void set_keycap_label(uint8_t row, uint8_t col, char val)
 
 
 #ifdef CONFIG_KEYBOARD_BACKLIGHT
-
-
+static uint8_t backlight_state;
+enum backlight_brightness {
+	KEYBOARD_BL_BRIGHTNESS_OFF = 0,
+	KEYBOARD_BL_BRIGHTNESS_LOW = 20,
+	KEYBOARD_BL_BRIGHTNESS_MED = 50,
+	KEYBOARD_BL_BRIGHTNESS_HIGH = 100,
+};
 
 static int hx20_kblight_enable(int enable)
 {
+	if (board_get_version() > 4)
+		pwm_set_duty(PWM_CH_KBL, 0);
+
+	return EC_SUCCESS;
+}
+
+int hx20_kblight_disable(void)
+{
+	if (board_get_version() > 4)
+		pwm_set_duty(PWM_CH_KBL, 0);
+
+	backlight_state = KEYBOARD_BL_BRIGHTNESS_OFF;
+
 	return EC_SUCCESS;
 }
 
 static int hx20_kblight_set_brightness(int percent)
 {
-	gpio_set_level(GPIO_EC_KBL_PWR_EN, percent ? 1 : 0);
+	if (board_get_version() > 4)
+		pwm_set_duty(PWM_CH_KBL, percent);
+	else
+		gpio_set_level(GPIO_EC_KBL_PWR_EN, percent ? 1 : 0);
+
 	return EC_SUCCESS;
 }
 
 static int hx20_kblight_get_brightness(void)
 {
-	return gpio_get_level(GPIO_EC_KBL_PWR_EN) ? 100 : 0;
+	if (board_get_version() > 4)
+		return pwm_get_duty(PWM_CH_KBL);
+	else
+		return gpio_get_level(GPIO_EC_KBL_PWR_EN) ? 100 : 0;
+
 }
 
 static int hx20_kblight_init(void)
 {
-	gpio_set_level(GPIO_EC_KBL_PWR_EN, 0);
+	if (board_get_version() > 4)
+		pwm_set_duty(PWM_CH_KBL, 0);
+	else
+		gpio_set_level(GPIO_EC_KBL_PWR_EN, 0);
+
 	return EC_SUCCESS;
 }
 
@@ -164,13 +195,6 @@ void board_kblight_init(void)
 #define FN_PRESSED BIT(0)
 #define FN_LOCKED BIT(1)
 static uint8_t Fn_key;
-static uint8_t backlight_state;
-enum backlight_brightness {
-	KEYBOARD_BL_BRIGHTNESS_OFF = 0,
-	KEYBOARD_BL_BRIGHTNESS_LOW = 20,
-	KEYBOARD_BL_BRIGHTNESS_MED = 100,
-	KEYBOARD_BL_BRIGHTNESS_HIGH = 255,
-};
 
 enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 					      int8_t pressed)
