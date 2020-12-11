@@ -58,6 +58,12 @@
 
 /* default Itime is about 10Hz */
 #define BH1730_10000_MHZ (10*1000)
+#define BH1730_MAX_FREQ BH1730_10000_MHZ
+/*
+ * 10Hz is too fast for the AP: allow the AP query data less often, the EC will
+ * downsample.
+ */
+#define BH1730_MIN_FREQ (BH1730_MAX_FREQ / 100)
 
 /*
  * Use default lux calculation formula parameters if board specific
