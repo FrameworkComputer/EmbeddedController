@@ -41,6 +41,12 @@ do {							\
 	if (debug_output)				\
 		cprints(CC_CHARGER, format, ## args);	\
 } while (0)
+#define CPRINTF_DBG(format, args...) \
+do {							\
+	if (debug_output)				\
+		cprintf(CC_CHARGER, format, ## args);	\
+} while (0)
+
 
 /* Code refactor will be needed if more than 2 charger chips are present */
 BUILD_ASSERT(CHARGER_NUM == 2);
@@ -55,14 +61,25 @@ static int debug_output;
 static int viz_output;
 
 #define NUM_RESISTANCE_SAMPLES 8
-static int resistance_tbl[NUM_RESISTANCE_SAMPLES] = {
-	CONFIG_OCPC_DEF_RBATT_MOHMS
+#define COMBINED_IDX 0
+#define RBATT_IDX 1
+#define RSYS_IDX 2
+static int resistance_tbl[NUM_RESISTANCE_SAMPLES][3] = {
+	/* Rsys+Rbatt                   Rbatt                    Rsys */
+	{CONFIG_OCPC_DEF_RBATT_MOHMS, CONFIG_OCPC_DEF_RBATT_MOHMS, 0},
+	{CONFIG_OCPC_DEF_RBATT_MOHMS, CONFIG_OCPC_DEF_RBATT_MOHMS, 0},
+	{CONFIG_OCPC_DEF_RBATT_MOHMS, CONFIG_OCPC_DEF_RBATT_MOHMS, 0},
+	{CONFIG_OCPC_DEF_RBATT_MOHMS, CONFIG_OCPC_DEF_RBATT_MOHMS, 0},
+	{CONFIG_OCPC_DEF_RBATT_MOHMS, CONFIG_OCPC_DEF_RBATT_MOHMS, 0},
+	{CONFIG_OCPC_DEF_RBATT_MOHMS, CONFIG_OCPC_DEF_RBATT_MOHMS, 0},
+	{CONFIG_OCPC_DEF_RBATT_MOHMS, CONFIG_OCPC_DEF_RBATT_MOHMS, 0},
+	{CONFIG_OCPC_DEF_RBATT_MOHMS, CONFIG_OCPC_DEF_RBATT_MOHMS, 0},
 };
 static int resistance_tbl_idx;
-static int mean_resistance;
-static int stddev_resistance;
-static int ub;
-static int lb;
+static int mean_resistance[3];
+static int stddev_resistance[3];
+static int ub[3];
+static int lb[3];
 
 enum phase {
 	PHASE_UNKNOWN = -1,
@@ -78,28 +95,71 @@ __overridable void board_ocpc_init(struct ocpc_data *ocpc)
 
 static enum ec_error_list ocpc_precharge_enable(bool enable);
 
-static void calc_resistance_stats(void)
+static void calc_resistance_stats(struct ocpc_data *ocpc)
 {
 	int i;
-	int sum = 0;
+	int j;
+	int sum;
+	int cols = 3;
+	int act_chg = ocpc->active_chg_chip;
+
+	/* Only perform separate stats on Rsys and Rbatt if necessary. */
+	if ((ocpc->chg_flags[act_chg] & OCPC_NO_ISYS_MEAS_CAP))
+		cols = 1;
 
 	/* Calculate mean */
-	for (i = 0; i < NUM_RESISTANCE_SAMPLES; i++)
-		sum += resistance_tbl[i];
+	for (i = 0; i < cols; i++) {
+		sum = 0;
+		for (j = 0; j < NUM_RESISTANCE_SAMPLES; j++) {
+			sum += resistance_tbl[j][i];
+			CPRINTF_DBG("%d ", resistance_tbl[j][i]);
+		}
+		CPRINTF_DBG("\n");
 
-	mean_resistance = sum / NUM_RESISTANCE_SAMPLES;
+		mean_resistance[i] = sum / NUM_RESISTANCE_SAMPLES;
 
-	/* Calculate standard deviation */
-	sum = 0;
-	for (i = 0; i < NUM_RESISTANCE_SAMPLES; i++)
-		sum += POW2(resistance_tbl[i] - mean_resistance);
+		/* Calculate standard deviation */
+		sum = 0;
+		for (j = 0; j < NUM_RESISTANCE_SAMPLES; j++)
+			sum += POW2(resistance_tbl[j][i] - mean_resistance[i]);
 
-	stddev_resistance = fp_sqrtf(INT_TO_FP(sum / NUM_RESISTANCE_SAMPLES));
-	stddev_resistance = FP_TO_INT(stddev_resistance);
-	CPRINTS_DBG("Rbatt+Rsys: mean: %d stddev: %d", mean_resistance,
-		    stddev_resistance);
-	lb = MAX(0, mean_resistance - (3 * stddev_resistance));
-	ub = mean_resistance + (3 * stddev_resistance);
+		stddev_resistance[i] = fp_sqrtf(INT_TO_FP(sum /
+						       NUM_RESISTANCE_SAMPLES));
+		stddev_resistance[i] = FP_TO_INT(stddev_resistance[i]);
+		/*
+		 * Don't let our stddev collapse to 0 to continually consider
+		 * new values.
+		 */
+		stddev_resistance[i] = MAX(stddev_resistance[i], 1);
+		CPRINTS_DBG("%d: mean: %d stddev: %d", i, mean_resistance[i],
+			    stddev_resistance[i]);
+		lb[i] = MAX(0, mean_resistance[i] - (3 * stddev_resistance[i]));
+		ub[i] = mean_resistance[i] + (3 * stddev_resistance[i]);
+	}
+}
+
+static bool is_within_range(struct ocpc_data *ocpc, int combined, int rbatt,
+			    int rsys)
+{
+	int act_chg = ocpc->active_chg_chip;
+	bool valid;
+
+	/* Discard measurements not within a 6 std. dev. window. */
+	if ((ocpc->chg_flags[act_chg] & OCPC_NO_ISYS_MEAS_CAP)) {
+		/* We only know the combined Rsys+Rbatt */
+		valid = (combined > 0) &&
+			(combined <= ub[COMBINED_IDX]) &&
+			(combined >= lb[COMBINED_IDX]);
+	} else {
+		valid = (rsys <= ub[RSYS_IDX]) && (rsys >= lb[RSYS_IDX]) &&
+			(rbatt <= ub[RBATT_IDX]) && (rbatt >= lb[RBATT_IDX]) &&
+			(rsys > 0) && (rbatt > 0);
+	}
+
+	if (!valid)
+		CPRINTS_DBG("Discard Rc:%d Rb:%d Rs:%d", combined, rbatt, rsys);
+
+	return valid;
 }
 
 enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
@@ -108,7 +168,9 @@ enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
 	int act_chg = ocpc->active_chg_chip;
 	static bool seeded;
 	static int initial_samples;
-	int val;
+	int combined;
+	int rsys = -1;
+	int rbatt = -1;
 
 	/*
 	 * In order to actually calculate the resistance, we need to make sure
@@ -133,30 +195,45 @@ enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
 		 * There's no provision to measure Isys, so we cannot separate
 		 * out Rsys from Rbatt.
 		 */
-		val = ((ocpc->vsys_aux_mv - battery->voltage) * 1000) /
-			battery->current;
+		combined = ((ocpc->vsys_aux_mv - battery->voltage) * 1000) /
+			    battery->current;
 	} else {
-		ocpc->rsys_mo = ((ocpc->vsys_aux_mv - ocpc->vsys_mv) * 1000) /
+		rsys = ((ocpc->vsys_aux_mv - ocpc->vsys_mv) * 1000) /
 				 ocpc->isys_ma;
-		ocpc->rbatt_mo = ((ocpc->vsys_mv - battery->voltage) * 1000) /
+		rbatt = ((ocpc->vsys_mv - battery->voltage) * 1000) /
 				 battery->current;
-		val = ocpc->rsys_mo + ocpc->rbatt_mo;
-		CPRINTS_DBG("Rsys: %dmOhm Rbatt: %dmOhm", ocpc->rsys_mo,
-			    ocpc->rbatt_mo);
+		combined = rsys + rbatt;
 	}
 
 	/* Discard measurements not within a 6 std dev window. */
 	if ((!seeded) ||
-	    (seeded && ((val <= ub) && (val >= lb)))) {
-		resistance_tbl[resistance_tbl_idx] = val;
-		calc_resistance_stats();
+	    (seeded && is_within_range(ocpc, combined, rbatt, rsys))) {
+		if (!(ocpc->chg_flags[act_chg] & OCPC_NO_ISYS_MEAS_CAP)) {
+			resistance_tbl[resistance_tbl_idx][RSYS_IDX] =
+				MAX(rsys, 0);
+			resistance_tbl[resistance_tbl_idx][RBATT_IDX] =
+				MAX(rbatt, CONFIG_OCPC_DEF_RBATT_MOHMS);
+		}
+		resistance_tbl[resistance_tbl_idx][COMBINED_IDX] =
+			MAX(combined, CONFIG_OCPC_DEF_RBATT_MOHMS);
+		calc_resistance_stats(ocpc);
 		resistance_tbl_idx = (resistance_tbl_idx + 1) %
 					NUM_RESISTANCE_SAMPLES;
 	}
 
 	if (seeded) {
-		ocpc->combined_rsys_rbatt_mo = MAX(mean_resistance,
-						   CONFIG_OCPC_DEF_RBATT_MOHMS);
+		ocpc->combined_rsys_rbatt_mo =
+					MAX(mean_resistance[COMBINED_IDX],
+					    CONFIG_OCPC_DEF_RBATT_MOHMS);
+
+		if (!(ocpc->chg_flags[act_chg] & OCPC_NO_ISYS_MEAS_CAP)) {
+			ocpc->rsys_mo = mean_resistance[RSYS_IDX];
+			ocpc->rbatt_mo = MAX(mean_resistance[RBATT_IDX],
+					     CONFIG_OCPC_DEF_RBATT_MOHMS);
+			CPRINTS_DBG("Rsys: %dmOhm Rbatt: %dmOhm",
+				    ocpc->rsys_mo, ocpc->rbatt_mo);
+		}
+
 		CPRINTS_DBG("Rsys+Rbatt: %dmOhm", ocpc->combined_rsys_rbatt_mo);
 	} else {
 		seeded = ++initial_samples >= (2 * NUM_RESISTANCE_SAMPLES) ?
