@@ -94,7 +94,7 @@ enum enhanced_i2c_ctl {
 	E_RX_MODE = 0x80,
 	/* State reset and hardware reset */
 	E_STS_AND_HW_RST = (E_STS_RST | E_HW_RST),
-	/* Generate start condition and transmit slave address */
+	/* Generate start condition and transmit peripheral address */
 	E_START_ID = (E_INT_EN | E_MODE_SEL | E_ACK | E_START | E_HW_RST),
 	/* Generate stop condition */
 	E_FINISH = (E_INT_EN | E_MODE_SEL | E_ACK | E_STOP | E_HW_RST),
@@ -284,7 +284,7 @@ static void i2c_pio_trans_data(int p, enum enhanced_i2c_transfer_direct direct,
 	p_ch = i2c_ch_reg_shift(p);
 
 	if (first_byte) {
-		/* First byte must be slave address. */
+		/* First byte must be peripheral address. */
 		IT83XX_I2C_DTR(p_ch) =
 			data | (direct == RX_DIRECT ? BIT(0) : 0);
 		/* start or repeat start signal. */
@@ -317,7 +317,7 @@ static int i2c_tran_write(int p)
 		IT83XX_SMB_HOCTL2(p) = 0x13;
 		/*
 		 * bit0, Direction of the host transfer.
-		 * bit[1:7}, Address of the targeted slave.
+		 * bit[1:7}, Address of the targeted peripheral.
 		 */
 		IT83XX_SMB_TRASLA(p) = pd->addr_8bit;
 		/* Send first byte */
@@ -377,7 +377,7 @@ static int i2c_tran_read(int p)
 		IT83XX_SMB_HOCTL2(p) = 0x13;
 		/*
 		 * bit0, Direction of the host transfer.
-		 * bit[1:7}, Address of the targeted slave.
+		 * bit[1:7}, Address of the targeted peripheral.
 		 */
 		IT83XX_SMB_TRASLA(p) = pd->addr_8bit | 0x01;
 		/* clear start flag */
@@ -641,7 +641,7 @@ int i2c_is_busy(int port)
 	return (IT83XX_I2C_STR(p_ch) & E_HOSTA_BB);
 }
 
-int chip_i2c_xfer(int port, uint16_t slave_addr_flags,
+int chip_i2c_xfer(int port, uint16_t addr_flags,
 		  const uint8_t *out, int out_size,
 		  uint8_t *in, int in_size, int flags)
 {
@@ -665,7 +665,7 @@ int chip_i2c_xfer(int port, uint16_t slave_addr_flags,
 	pd->widx = 0;
 	pd->ridx = 0;
 	pd->err = 0;
-	pd->addr_8bit = I2C_STRIP_FLAGS(slave_addr_flags) << 1;
+	pd->addr_8bit = I2C_STRIP_FLAGS(addr_flags) << 1;
 
 	/* Make sure we're in a good state to start */
 	if ((flags & I2C_XFER_START) && (i2c_is_busy(port)

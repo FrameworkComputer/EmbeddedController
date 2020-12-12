@@ -4,7 +4,6 @@
  */
 
 /* I2C module for Chrome EC */
-
 #include "clock.h"
 #include "compile_time_macros.h"
 #include "console.h"
@@ -26,10 +25,10 @@
 #define I2C_READ_MAXFIFO_DATA 16
 #define I2C_ENHANCED_CH_INTERVAL 0x80
 
-/* Store master to slave data of channel D, E, F by DMA */
+/* Store controller to peripheral data of channel D, E, F by DMA */
 static uint8_t in_data[I2C_ENHANCED_PORT_COUNT][I2C_MAX_BUFFER_SIZE]
 			__attribute__((section(".h2ram.pool.i2cslv")));
-/* Store slave to master data of channel D, E, F by DMA */
+/* Store peripheral to controller data of channel D, E, F by DMA */
 static uint8_t out_data[I2C_ENHANCED_PORT_COUNT][I2C_MAX_BUFFER_SIZE]
 			__attribute__((section(".h2ram.pool.i2cslv")));
 /* Store read and write data of channel A by FIFO mode */
@@ -47,17 +46,17 @@ void buffer_index_reset(void)
 	r_index = 0;
 }
 
-/* Data structure to define I2C slave control configuration. */
-struct i2c_slv_ctrl_t {
-	int irq;              /* slave irq */
+/* Data structure to define I2C peripheral control configuration. */
+struct i2c_periph_ctrl_t {
+	int irq;              /* peripheral irq */
 	/* offset from base 0x00F03500 register; -1 means unused. */
 	int offset;
 	enum clock_gate_offsets clock_gate;
 	int dma_index;
 };
 
-/* I2C slave control */
-const struct i2c_slv_ctrl_t i2c_slv_ctrl[] = {
+/* I2C peripheral control */
+const struct i2c_periph_ctrl_t i2c_periph_ctrl[] = {
 	[IT83XX_I2C_CH_A] = {.irq = IT83XX_IRQ_SMB_A, .offset = -1,
 		.clock_gate = CGC_OFFSET_SMBA, .dma_index = -1},
 	[IT83XX_I2C_CH_D] = {.irq = IT83XX_IRQ_SMB_D, .offset = 0x180,
@@ -68,37 +67,37 @@ const struct i2c_slv_ctrl_t i2c_slv_ctrl[] = {
 		.clock_gate = CGC_OFFSET_SMBF, .dma_index = 2},
 };
 
-void i2c_slave_read_write_data(int port)
+void i2c_peripheral_read_write_data(int port)
 {
-	int slv_status, i;
+	int periph_status, i;
 
-	/* I2C slave channel A FIFO mode */
+	/* I2C peripheral channel A FIFO mode */
 	if (port < I2C_STANDARD_PORT_COUNT) {
 		int count;
 
-		slv_status = IT83XX_SMB_SLSTA;
+		periph_status = IT83XX_SMB_SLSTA;
 
 		/* bit0-4 : FIFO byte count */
 		count = IT83XX_SMB_SFFSTA & 0x1F;
 
-		/* Slave data register is waiting for read or write. */
-		if (slv_status & IT83XX_SMB_SDS) {
-			/* Master to read data */
-			if (slv_status & IT83XX_SMB_RCS) {
+		/* Peripheral data register is waiting for read or write. */
+		if (periph_status & IT83XX_SMB_SDS) {
+			/* Controller to read data */
+			if (periph_status & IT83XX_SMB_RCS) {
 				for (i = 0; i < I2C_READ_MAXFIFO_DATA; i++)
-					/* Return buffer data to master */
+					/* Return buffer data to controller */
 					IT83XX_SMB_SLDA =
 					pbuffer[(i + r_index) & I2C_SIZE_MASK];
 
 				/* Index to next 16 bytes of read buffer */
 				r_index += I2C_READ_MAXFIFO_DATA;
 			}
-			/* Master to write data */
+			/* Controller to write data */
 			else {
 				/* FIFO Full */
 				if (IT83XX_SMB_SFFSTA & IT83XX_SMB_SFFFULL) {
 					for (i = 0; i < count; i++)
-				/* Get data from master to buffer */
+				/* Get data from controller to buffer */
 						pbuffer[(w_index + i) &
 					I2C_SIZE_MASK] = IT83XX_SMB_SLDA;
 				}
@@ -108,19 +107,19 @@ void i2c_slave_read_write_data(int port)
 			}
 		}
 		/* Stop condition, indicate stop condition detected. */
-		if (slv_status & IT83XX_SMB_SPDS) {
+		if (periph_status & IT83XX_SMB_SPDS) {
 			/* Read data less 16 bytes status */
-			if (slv_status & IT83XX_SMB_RCS) {
+			if (periph_status & IT83XX_SMB_RCS) {
 				/* Disable FIFO mode to clear left count */
 				IT83XX_SMB_SFFCTL &= ~IT83XX_SMB_SAFE;
 
-				/* Slave A FIFO Enable */
+				/* Peripheral A FIFO Enable */
 				IT83XX_SMB_SFFCTL |= IT83XX_SMB_SAFE;
 			}
-			/* Master to write data */
+			/* Controller to write data */
 			else {
 				for (i = 0; i < count; i++)
-					/* Get data from master to buffer */
+					/* Get data from controller to buffer */
 					pbuffer[(i + w_index) &
 					I2C_SIZE_MASK] = IT83XX_SMB_SLDA;
 			}
@@ -128,31 +127,31 @@ void i2c_slave_read_write_data(int port)
 			/* Reset read and write buffer index */
 			buffer_index_reset();
 		}
-		/* Slave time status, timeout status occurs. */
-		if (slv_status & IT83XX_SMB_STS) {
+		/* Peripheral time status, timeout status occurs. */
+		if (periph_status & IT83XX_SMB_STS) {
 			/* Reset read and write buffer index */
 			buffer_index_reset();
 		}
 
-		/* Write clear the slave status */
-		IT83XX_SMB_SLSTA = slv_status;
+		/* Write clear the peripheral status */
+		IT83XX_SMB_SLSTA = periph_status;
 	}
-	/* Enhanced I2C slave channel D, E, F DMA mode */
+	/* Enhanced I2C peripheral channel D, E, F DMA mode */
 	else {
 		int ch, idx;
 
 		/* Get enhanced i2c channel */
-		ch = i2c_slv_ctrl[port].offset / I2C_ENHANCED_CH_INTERVAL;
+		ch = i2c_periph_ctrl[port].offset / I2C_ENHANCED_CH_INTERVAL;
 
-		idx = i2c_slv_ctrl[port].dma_index;
+		idx = i2c_periph_ctrl[port].dma_index;
 
 		/* Interrupt pending */
 		if (IT83XX_I2C_STR(ch) & IT83XX_I2C_INTPEND) {
 
-			slv_status = IT83XX_I2C_IRQ_ST(ch);
+			periph_status = IT83XX_I2C_IRQ_ST(ch);
 
-			/* Master to read data */
-			if (slv_status & IT83XX_I2C_IDR_CLR) {
+			/* Controller to read data */
+			if (periph_status & IT83XX_I2C_IDR_CLR) {
 			/*
 			 * TODO(b:129360157): Return buffer data by
 			 * "out_data" array.
@@ -161,16 +160,16 @@ void i2c_slave_read_write_data(int port)
 				for (i = 0; i < I2C_MAX_BUFFER_SIZE; i++)
 					out_data[idx][i] = i;
 			}
-			/* Master to write data */
-			if (slv_status & IT83XX_I2C_IDW_CLR) {
-				/* Master to write data finish flag */
+			/* Controller to write data */
+			if (periph_status & IT83XX_I2C_IDW_CLR) {
+				/* Controller to write data finish flag */
 				wr_done[idx] = 1;
 			}
-			/* Slave finish */
-			if (slv_status & IT83XX_I2C_P_CLR) {
+			/* Peripheral finish */
+			if (periph_status & IT83XX_I2C_P_CLR) {
 				if (wr_done[idx]) {
 			/*
-			 * TODO(b:129360157): Handle master write
+			 * TODO(b:129360157): Handle controller write
 			 * data by "in_data" array.
 			 */
 					CPRINTS("WData: %ph",
@@ -180,8 +179,8 @@ void i2c_slave_read_write_data(int port)
 				}
 			}
 
-			/* Write clear the slave status */
-			IT83XX_I2C_IRQ_ST(ch) = slv_status;
+			/* Write clear the peripheral status */
+			IT83XX_I2C_IRQ_ST(ch) = periph_status;
 		}
 
 		/* Hardware reset */
@@ -189,54 +188,54 @@ void i2c_slave_read_write_data(int port)
 	}
 }
 
-void i2c_slv_interrupt(int port)
+void i2c_periph_interrupt(int port)
 {
-	/* Slave to read and write fifo data */
-	i2c_slave_read_write_data(port);
+	/* Peripheral to read and write fifo data */
+	i2c_peripheral_read_write_data(port);
 
 	/* Clear the interrupt status */
-	task_clear_pending_irq(i2c_slv_ctrl[port].irq);
+	task_clear_pending_irq(i2c_periph_ctrl[port].irq);
 }
 
-void i2c_slave_enable(int port, uint8_t slv_addr)
+void i2c_peripheral_enable(int port, uint8_t periph_addr)
 {
 
-	clock_enable_peripheral(i2c_slv_ctrl[port].clock_gate, 0, 0);
+	clock_enable_peripheral(i2c_periph_ctrl[port].clock_gate, 0, 0);
 
-	/* I2C slave channel A FIFO mode */
+	/* I2C peripheral channel A FIFO mode */
 	if (port < I2C_STANDARD_PORT_COUNT) {
 
 		/* This field defines the SMCLK0/1/2 clock/data low timeout. */
 		IT83XX_SMB_25MS = I2C_CLK_LOW_TIMEOUT;
 
-		/* bit0 : Slave A FIFO Enable */
+		/* bit0 : Peripheral A FIFO Enable */
 		IT83XX_SMB_SFFCTL |= IT83XX_SMB_SAFE;
 
 		/*
-		 * bit1 : Slave interrupt enable.
+		 * bit1 : Peripheral interrupt enable.
 		 * bit2 : SMCLK/SMDAT will be released if timeout.
-		 * bit3 : Slave detect STOP condition interrupt enable.
+		 * bit3 : Peripheral detect STOP condition interrupt enable.
 		 */
 		IT83XX_SMB_SICR = 0x0E;
 
-		/* Slave address 1 */
-		IT83XX_SMB_RESLADR = slv_addr;
+		/* Peripheral address 1 */
+		IT83XX_SMB_RESLADR = periph_addr;
 
-		/* Write clear all slave status */
+		/* Write clear all peripheral status */
 		IT83XX_SMB_SLSTA = 0xE7;
 
-		/* bit5 : Enable the SMBus slave device */
+		/* bit5 : Enable the SMBus peripheral device */
 		IT83XX_SMB_HOCTL2(port) |= IT83XX_SMB_SLVEN;
 	}
-	/* Enhanced I2C slave channel D, E, F DMA mode */
+	/* Enhanced I2C peripheral channel D, E, F DMA mode */
 	else {
 		int ch, idx;
 		uint32_t in_data_addr, out_data_addr;
 
 		/* Get enhanced i2c channel */
-		ch = i2c_slv_ctrl[port].offset / I2C_ENHANCED_CH_INTERVAL;
+		ch = i2c_periph_ctrl[port].offset / I2C_ENHANCED_CH_INTERVAL;
 
-		idx = i2c_slv_ctrl[port].dma_index;
+		idx = i2c_periph_ctrl[port].dma_index;
 
 		switch (port) {
 		case IT83XX_I2C_CH_D:
@@ -263,18 +262,18 @@ void i2c_slave_enable(int port, uint8_t slv_addr)
 		/* Bit stretching */
 		IT83XX_I2C_TOS(ch) |= IT83XX_I2C_CLK_STR;
 
-		/* Slave address(8-bit)*/
-		IT83XX_I2C_IDR(ch) = slv_addr << 1;
+		/* Peripheral address(8-bit)*/
+		IT83XX_I2C_IDR(ch) = periph_addr << 1;
 
 		/* I2C interrupt enable and set acknowledge */
 		IT83XX_I2C_CTR(ch) = IT83XX_I2C_HALT |
 			IT83XX_I2C_INTEN | IT83XX_I2C_ACK;
 
 		/*
-		 * bit3 : Slave ID write flag
-		 * bit2 : Slave ID read flag
-		 * bit1 : Slave received data flag
-		 * bit0 : Slave finish
+		 * bit3 : Peripheral ID write flag
+		 * bit2 : Peripheral ID read flag
+		 * bit1 : Peripheral received data flag
+		 * bit0 : Peripheral finish
 		 */
 		IT83XX_I2C_IRQ_ST(ch) = 0xFF;
 
@@ -319,27 +318,27 @@ void i2c_slave_enable(int port, uint8_t slv_addr)
 	}
 }
 
-static void i2c_slave_init(void)
+static void i2c_peripheral_init(void)
 {
 	int  i, p;
 
 	/* DLM 52k~56k size select enable */
 	IT83XX_GCTRL_MCCR2 |= (1 << 4);
 
-	/* Enable I2C Slave function */
-	for (i = 0; i < i2c_slvs_used; i++) {
+	/* Enable I2C Peripheral function */
+	for (i = 0; i < i2c_periphs_used; i++) {
 
-		/* I2c slave port mapping. */
-		p = i2c_slv_ports[i].port;
+		/* I2c peripheral port mapping. */
+		p = i2c_periph_ports[i].port;
 
-		/* To enable slave ch[x] */
-		i2c_slave_enable(p, i2c_slv_ports[i].slave_adr);
+		/* To enable peripheral ch[x] */
+		i2c_peripheral_enable(p, i2c_periph_ports[i].addr);
 
 		/* Clear the interrupt status */
-		task_clear_pending_irq(i2c_slv_ctrl[p].irq);
+		task_clear_pending_irq(i2c_periph_ctrl[p].irq);
 
 		/* enable i2c interrupt */
-		task_enable_irq(i2c_slv_ctrl[p].irq);
+		task_enable_irq(i2c_periph_ctrl[p].irq);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, i2c_slave_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, i2c_peripheral_init, HOOK_PRIO_INIT_I2C + 1);

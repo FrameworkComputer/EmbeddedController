@@ -32,7 +32,7 @@ void voltage_comparator_interrupt(void);
 #endif
 void i2c_interrupt(int port);
 #ifdef CONFIG_I2C_PERIPHERAL
-void i2c_slv_interrupt(int port);
+void i2c_periph_interrupt(int port);
 #endif
 void clock_sleep_mode_wakeup_isr(void);
 int clock_ec_wake_from_sleep(void);
