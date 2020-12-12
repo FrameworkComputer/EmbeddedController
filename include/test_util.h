@@ -289,7 +289,7 @@ struct test_i2c_write_dev {
  *
  * When this function is called, it should either perform the desired
  * mock functionality, or return EC_ERROR_INVAL to indicate it does
- * not respond to the specified port and slave address.
+ * not respond to the specified port and peripheral address.
  *
  * @param routine     Function pointer, with the same prototype as i2c_xfer()
  */
@@ -301,24 +301,24 @@ struct test_i2c_write_dev {
 
 /*
  * Detach an I2C device. Once detached, any read/write command regarding the
- * specified port and slave address returns error.
+ * specified port and peripheral address returns error.
  *
  * @param port       The port that the detached device is connected to
- * @param slave_addr The address of the detached device
+ * @param addr_flags The address of the detached device
  * @return EC_SUCCESS if detached; EC_ERROR_OVERFLOW if too many devices are
  *         detached.
  */
-int test_detach_i2c(const int port, const uint16_t slave_addr_flags);
+int test_detach_i2c(const int port, const uint16_t addr_flags);
 
 /*
  * Re-attach an I2C device.
  *
  * @param port       The port that the detached device is connected to
- * @param slave_addr The address of the detached device
+ * @param addr_flags The address of the detached device
  * @return EC_SUCCESS if re-attached; EC_ERROR_INVAL if the specified device
  *         is not a detached device.
  */
-int test_attach_i2c(const int port, const uint16_t slave_addr_flags);
+int test_attach_i2c(const int port, const uint16_t addr_flags);
 
 /*
  * We need these macros so that a test can be built for either Ztest or the
