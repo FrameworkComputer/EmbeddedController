@@ -10,7 +10,7 @@
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "i2c_slave.h"
+#include "i2c_peripheral.h"
 #include "registers.h"
 #include <stddef.h>
 #include <string.h>
