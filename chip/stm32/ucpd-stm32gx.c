@@ -22,6 +22,8 @@
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+
+#define USB_VID_STM32 0x0483
 /*
  * UCPD is fed directly from HSI which is @ 16MHz. The ucpd_clk goes to
  * a prescaler who's output feeds the 'half-bit' divider which is used
@@ -153,6 +155,7 @@ static int ucpd_txorderset[] = {
 static int ucpd_rx_byte_count;
 static uint8_t ucpd_rx_buffer[UCPD_BUF_LEN];
 static int ucpd_crc_id;
+static bool ucpd_rx_sop_prime_enabled;
 
 #ifdef CONFIG_STM32G4_UCPD_DEBUG
 /* Defines and macros used for ucpd pd message logging */
@@ -433,6 +436,9 @@ int stm32gx_ucpd_init(int port)
 	STM32_UCPD_ICR(port) = STM32_UCPD_ICR_TYPECEVT1CF |
 		STM32_UCPD_ICR_TYPECEVT2CF;
 
+	/* SOP'/SOP'' must be enabled via TCPCI call */
+	ucpd_rx_sop_prime_enabled = false;
+
 	/* Enable UCPD interrupts */
 	task_enable_irq(STM32_IRQ_UCPD1);
 
@@ -546,6 +552,34 @@ int stm32gx_ucpd_get_role_control(int port)
 	return role_control;
 }
 
+int stm32gx_ucpd_vconn_disc_rp(int port, int enable)
+{
+	int cr = STM32_UCPD_CR(port);
+	int pol;
+	int cc_disable_mask;
+
+	/*
+	 * This function is called when tcpm_set_vconn() method is called to
+	 * enable VCONN. ucpd does not provide vconn, but Rp must be
+	 * disconnected from the CCx line prior to enabling vconn.
+	 */
+	if (enable) {
+		/* Get CC polarity */
+		pol = !!(cr & STM32_UCPD_CR_PHYCCSEL);
+		/* Disconnect cc line that is not being used for PD messaging */
+		cc_disable_mask = 1 << (STM32_UCPD_CR_CCENABLE_SHIFT + !pol);
+		cr &= ~cc_disable_mask;
+		CPRINTS("ucpd: vconn disable Rp, pol = %d, cr = %x", pol, cr);
+	} else {
+		/* make sure Rp/Rd is connected */
+		cr |= STM32_UCPD_CR_CCENABLE_MASK;
+	}
+	/* Apply cc pull resistor change */
+	STM32_UCPD_CR(port) = cr;
+
+	return EC_SUCCESS;
+}
+
 int stm32gx_ucpd_set_cc(int port, int cc_pull, int rp)
 {
 	uint32_t cr = STM32_UCPD_CR(port);
@@ -624,6 +658,26 @@ int stm32gx_ucpd_set_msg_header(int port, int power_role, int data_role)
 {
 	msg_header.pr = power_role;
 	msg_header.dr = data_role;
+
+	return EC_SUCCESS;
+}
+
+int stm32gx_ucpd_sop_prime_enable(int port, bool enable)
+{
+	/* Update static varialbe used to filter SOP//SOP'' messages */
+	ucpd_rx_sop_prime_enabled = enable;
+
+	CPRINTS("ucpd: sop_prime_enable = %d", enable);
+	return EC_SUCCESS;
+}
+
+int stm32gx_ucpd_get_chip_info(int port, int live,
+			struct ec_response_pd_chip_info_v1 *chip_info)
+{
+	chip_info->vendor_id = USB_VID_STM32;
+	chip_info->product_id = 0;
+	chip_info->device_id = STM32_DBGMCU_IDCODE & 0xfff;
+	chip_info->fw_version_number = 0xEC;
 
 	return EC_SUCCESS;
 }
@@ -1079,12 +1133,28 @@ void stm32gx_ucpd1_irq(void)
 		if (!(sr & STM32_UCPD_SR_RXERR)) {
 			int rv;
 			uint16_t *rx_header = (uint16_t *)ucpd_rx_buffer;
+			enum tcpm_transmit_type type;
+			int good_crc = 0;
+
+			type = STM32_UCPD_RX_ORDSETR(port) &
+				STM32_UCPD_RXORDSETR_MASK;
+
+			good_crc = ucpd_msg_is_good_crc(*rx_header);
 
 #ifdef CONFIG_STM32G4_UCPD_DEBUG
 			ucpd_log_add_msg(*rx_header, 1);
 #endif
-			/* Don't pass GoodCRC control messages TCPM */
-			if (!ucpd_msg_is_good_crc(*rx_header)) {
+			/*
+			 * Don't pass GoodCRC control messages to the TCPM
+			 * layer. In addition, need to filter for SOP'/SOP''
+			 * packets if those are not enabled. SOP'/SOP''
+			 * reception is controlled by a static variable. The
+			 * hardware orderset detection pattern can't be changed
+			 * without disabling the ucpd peripheral.
+			 */
+			if (!good_crc && (ucpd_rx_sop_prime_enabled ||
+					  type == TCPC_TX_SOP)) {
+
 				/* TODO - Add error checking here */
 				rv = tcpm_enqueue_message(port);
 				if (rv)
@@ -1092,7 +1162,7 @@ void stm32gx_ucpd1_irq(void)
 							   0);
 				/* Send GoodCRC message (if required) */
 				ucpd_send_good_crc(port, *rx_header);
-			} else {
+			} else if (good_crc) {
 				task_set_event(TASK_ID_UCPD,
 						       UCPD_EVT_RX_GOOD_CRC);
 				ucpd_crc_id = PD_HEADER_ID(*rx_header);

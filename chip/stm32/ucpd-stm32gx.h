@@ -158,4 +158,33 @@ int stm32gx_ucpd_transmit(int port,
  */
 int stm32gx_ucpd_get_message_raw(int port, uint32_t *payload, int *head);
 
+/**
+ * STM32Gx method to remove Rp when VCONN is being supplied
+ *
+ * @param usbc_port -> USB-C Port number
+ * @param enable -> connect/disc Rp
+ * @return EC_SUCCESS
+ */
+int stm32gx_ucpd_vconn_disc_rp(int port, int enable);
+
+/**
+ * STM32Gx UCPD implementation of tcpci .sop_prime_enable method
+ *
+ * @param usbc_port -> USB-C Port number
+ * @param enable -> control of SOP'/SOP'' messages
+ * @return EC_SUCCESS
+ */
+int stm32gx_ucpd_sop_prime_enable(int port, bool enable);
+
+int stm32gx_ucpd_get_chip_info(int port, int live,
+			       struct ec_response_pd_chip_info_v1 *chip_info);
+
+/**
+ * This function is used to enable/disable a ucpd debug feature that is used to
+ * mark the ucpd message log when there is a usbc detach event.
+ *
+ * @param enable -> on/off control for debug feature
+ */
+void ucpd_cc_detect_notify_enable(int enable);
+
 #endif /* __CROS_EC_UCPD_STM32GX_H */
