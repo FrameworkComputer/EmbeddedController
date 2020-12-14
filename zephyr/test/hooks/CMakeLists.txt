@@ -4,8 +4,8 @@
 
 cmake_minimum_required(VERSION 3.13.1)
 set(BOARD native_posix)
-project(hooks)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+project(hooks)
 
 # Need to ensure that we are including only zephyr definitions in include files
 # We cannot set these via kconfig, since this unit test does not bring in the

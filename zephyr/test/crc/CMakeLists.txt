@@ -5,8 +5,8 @@
 
 cmake_minimum_required(VERSION 3.13.1)
 set(BOARD native_posix)
-project(tasks)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+project(tasks)
 
 # We need to include the EC include directory and this local test directory
 # for the task defines
