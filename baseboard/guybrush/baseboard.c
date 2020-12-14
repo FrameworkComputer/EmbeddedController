@@ -5,7 +5,9 @@
 
 /* Guybrush family-specific configuration */
 
+#include "chipset.h"
 #include "gpio.h"
+#include "i2c.h"
 #include "power.h"
 
 /* Wake Sources */
@@ -45,6 +47,82 @@ const struct power_signal_info power_signal_list[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
+
+const struct i2c_port_t i2c_ports[] = {
+	{
+		.name = "tcpc0",
+		.port = I2C_PORT_TCPC0,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C_USB_A0_C0_SCL,
+		.sda = GPIO_EC_I2C_USB_A0_C0_SDA,
+	},
+	{
+		.name = "tcpc1",
+		.port = I2C_PORT_TCPC1,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C_USB_A1_C1_SCL,
+		.sda = GPIO_EC_I2C_USB_A1_C1_SDA,
+	},
+	{
+		.name = "battery",
+		.port = I2C_PORT_BATTERY,
+		.kbps = 100,
+		.scl = GPIO_EC_I2C_BATT_SCL,
+		.sda = GPIO_EC_I2C_BATT_SDA,
+	},
+	{
+		.name = "usb_mux",
+		.port = I2C_PORT_USB_MUX,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C_USBC_MUX_SCL,
+		.sda = GPIO_EC_I2C_USBC_MUX_SDA,
+	},
+	{
+		.name = "charger",
+		.port = I2C_PORT_CHARGER,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C_POWER_SCL,
+		.sda = GPIO_EC_I2C_POWER_SDA,
+	},
+	{
+		.name = "eeprom",
+		.port = I2C_PORT_EEPROM,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C_CBI_SCL,
+		.sda = GPIO_EC_I2C_CBI_SDA,
+	},
+	{
+		.name = "sensor",
+		.port = I2C_PORT_SENSOR,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C_SENSOR_SCL,
+		.sda = GPIO_EC_I2C_SENSOR_SDA,
+	},
+	{
+		.name = "soc_thermal",
+		.port = I2C_PORT_SOC_THERMAL,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C_SOC_SIC,
+		.sda = GPIO_EC_I2C_SOC_SID,
+	},
+};
+const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+int board_is_i2c_port_powered(int port)
+{
+	switch (port) {
+	case I2C_PORT_USB_MUX:
+	case I2C_PORT_SENSOR:
+		/* USB mux and sensor i2c bus is unpowered in Z1 */
+		return chipset_in_state(CHIPSET_STATE_HARD_OFF) ? 0 : 1;
+	case I2C_PORT_SOC_THERMAL:
+		/* SOC thermal i2c bus is unpowered in S0i3/S3/S5/Z1 */
+		return chipset_in_state(CHIPSET_STATE_ANY_OFF |
+					CHIPSET_STATE_ANY_SUSPEND) ? 0 : 1;
+	default:
+		return 1;
+	}
+}
 
 void sbu_fault_interrupt(enum ioex_signal signal)
 {
