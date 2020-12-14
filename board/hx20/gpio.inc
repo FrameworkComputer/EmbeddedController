@@ -76,7 +76,7 @@ GPIO(SX_EXIT_HOLDOFF_L,   PIN(025),  GPIO_INPUT)    /* Reserved for S0ix state *
 GPIO(PM_SLP_A_L,          PIN(062),  GPIO_INPUT)    /* Reserved for S0ix state */
 GPIO(MIC_SW,              PIN(0171), GPIO_INPUT)    /* Reserved for DMIC function */
 GPIO(SOC_EC_INT_L,        PIN(0246), GPIO_INPUT)    /* Reserved for HID */
-GPIO(VS_ON,               PIN(0241), GPIO_OUT_HIGH)    /* 3.3V and 5V rails */
+GPIO(VS_ON,               PIN(0241), GPIO_OUT_LOW)  /* 3.3V and 5V rails */
 GPIO(FP_CTRL,             PIN(0245), GPIO_INPUT)    /* Reserved for fingerprint control */
 GPIO(GPIO170_STRAP,       PIN(0170), GPIO_INPUT)
 
