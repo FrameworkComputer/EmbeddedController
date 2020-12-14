@@ -546,6 +546,18 @@ int pd_get_rev(int port, enum tcpm_transmit_type type)
 
 #endif /* !CONFIG_USB_PR_SM */
 
+#ifndef HAS_TASK_CHIPSET
+__overridable enum pd_dual_role_states board_tc_get_initial_drp_mode(int port)
+{
+	/*
+	 * DRP state is typically adjusted as the chipset state is changed. For
+	 * projects which don't include an AP this function can be used for to
+	 * specify what the starting DRP state should be.
+	 */
+	return PD_DRP_FORCE_SINK;
+}
+#endif
+
 void pd_update_contract(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
@@ -1510,6 +1522,7 @@ void tc_state_init(int port)
 	 */
 	tc_policy_pd_enable(port, pd_comm_allowed_by_policy());
 
+#ifdef HAS_TASK_CHIPSET
 	/* Set dual-role state based on chipset power state */
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		pd_set_dual_role_and_event(port, PD_DRP_FORCE_SINK, 0);
@@ -1517,6 +1530,9 @@ void tc_state_init(int port)
 		pd_set_dual_role_and_event(port, pd_get_drp_state_in_suspend(), 0);
 	else /* CHIPSET_STATE_ON */
 		pd_set_dual_role_and_event(port, PD_DRP_TOGGLE_ON, 0);
+#else
+	pd_set_dual_role_and_event(port, board_tc_get_initial_drp_mode(port), 0);
+#endif
 
 	/*
 	 * If we just lost power, don't apply CC open. Otherwise we would boot
@@ -2074,6 +2090,8 @@ static void tc_error_recovery_entry(const int port)
 
 static void tc_error_recovery_run(const int port)
 {
+	enum usb_tc_state start_state;
+
 	if (get_time().val < tc[port].timeout)
 		return;
 
@@ -2083,7 +2101,8 @@ static void tc_error_recovery_run(const int port)
 	 * because we just did that. So transition to the state directly.
 	 */
 	if (tc[port].ctx.previous == NULL) {
-		set_state_tc(port, TC_UNATTACHED_SNK);
+		set_state_tc(port, drp_state[port] == PD_DRP_FORCE_SOURCE ?
+			     TC_UNATTACHED_SRC : TC_UNATTACHED_SNK);
 		return;
 	}
 
@@ -2091,12 +2110,13 @@ static void tc_error_recovery_run(const int port)
 	 * If try src support is active (e.g. in S0). Then try to become the
 	 * SRC, otherwise we should try to be the sink.
 	 */
+	start_state = TC_UNATTACHED_SNK;
 	if (IS_ENABLED(CONFIG_USB_PD_TRY_SRC))
-		restart_tc_sm(port, is_try_src_enabled(port)
-						? TC_UNATTACHED_SRC
-						: TC_UNATTACHED_SNK);
-	else
-		restart_tc_sm(port, TC_UNATTACHED_SNK);
+		if (is_try_src_enabled(port) ||
+		    drp_state[port] == PD_DRP_FORCE_SOURCE)
+			start_state = TC_UNATTACHED_SRC;
+
+	restart_tc_sm(port, start_state);
 }
 
 /**
@@ -2728,7 +2748,10 @@ static void tc_attach_wait_src_run(const int port)
 		new_cc_state = PD_CC_UFP_AUDIO_ACC;
 	} else {
 		/* No UFP */
-		set_state_tc(port, TC_UNATTACHED_SNK);
+		if (drp_state[port] == PD_DRP_FORCE_SOURCE)
+			set_state_tc(port, TC_UNATTACHED_SRC);
+		else
+			set_state_tc(port, TC_UNATTACHED_SNK);
 		return;
 	}
 
@@ -2939,16 +2962,19 @@ static void tc_attached_src_run(const int port)
 			!TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS) &&
 			!TC_CHK_FLAG(port, TC_FLAGS_DISC_IDENT_IN_PROGRESS)) {
 		bool tryWait;
+		enum usb_tc_state new_tc_state = TC_UNATTACHED_SNK;
 
 		if (IS_ENABLED(CONFIG_USB_PD_TRY_SRC))
 			tryWait = is_try_src_enabled(port) &&
 				!TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER);
 
-		if (IS_ENABLED(CONFIG_USB_PD_TRY_SRC))
-			set_state_tc(port, tryWait ?
-					TC_TRY_WAIT_SNK : TC_UNATTACHED_SNK);
-		else
-			set_state_tc(port, TC_UNATTACHED_SNK);
+		if (drp_state[port] == PD_DRP_FORCE_SOURCE)
+			new_tc_state = TC_UNATTACHED_SRC;
+		else if(IS_ENABLED(CONFIG_USB_PD_TRY_SRC))
+			new_tc_state = tryWait ?
+				TC_TRY_WAIT_SNK : TC_UNATTACHED_SNK;
+
+		set_state_tc(port, new_tc_state);
 		return;
 	}
 
