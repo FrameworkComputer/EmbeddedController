@@ -15,8 +15,13 @@ supported-zephyr-versions:
 # grows a configuration option to handle ecst.
 output-type: raw
 
-# Note: the Zephyr SDK is not available by default in the chroot.
-# Please follow
+# Note: coreboot-sdk toolchain will build, but may have runtime
+# issues.  This is set to "coreboot-sdk" so the automated CQ builder
+# can use it for build tests.
+#
+# For compiling for a real device, you need to use the Zephyr SDK
+# toolchain, which is not available in the chroot (and thus, to the CQ
+# builder).  Please follow
 # https://docs.zephyrproject.org/latest/getting_started/installation_linux.html
 # for instructions on installing the SDK.
 #
@@ -24,4 +29,5 @@ output-type: raw
 # arm-none-eabi-gcc toolchain seems to work fine.  If you prefer this
 # toolchain, you can pass --toolchain=arm-none-eabi to zmake
 # configure, and that will work as well.
-toolchain: zephyr
+toolchain: coreboot-sdk
+prefer-zephyr-sdk: true
