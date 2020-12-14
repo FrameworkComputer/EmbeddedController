@@ -663,8 +663,6 @@ void chipset_task(void *u)
 	static uint32_t last_in_signals;
 
 	while (1) {
-		msleep(100);
-		continue;
 		/*
 		 * In order to prevent repeated console spam, only print the
 		 * current power state if something has actually changed.  It's
