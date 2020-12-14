@@ -191,4 +191,6 @@ void charge_reset_stable_current_us(uint64_t us);
  */
 bool charge_is_current_stable(void);
 
+int set_chg_ctrl_mode(enum ec_charge_control_mode mode);
+
 #endif /* __CROS_EC_CHARGE_STATE_V2_H */
