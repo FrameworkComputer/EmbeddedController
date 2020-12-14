@@ -14,12 +14,18 @@
 #include "chipset.h"
 #include "common.h"
 #include "espi.h"
+#include "hooks.h"
 #include "lpc.h"
 #include "port80.h"
 #include "power.h"
+#include "timer.h"
 #include "zephyr_espi_shim.h"
 
+#define VWIRE_PULSE_TRIGGER_TIME 65
+
 LOG_MODULE_REGISTER(espi_shim, CONFIG_ESPI_LOG_LEVEL);
+
+static bool init_done;
 
 /*
  * A mapping of platform/ec signals to Zephyr virtual wires.
@@ -181,7 +187,13 @@ int zephyr_shim_setup_espi(void)
 
 int espi_vw_set_wire(enum espi_vw_signal signal, uint8_t level)
 {
-	return espi_send_vwire(espi_dev, signal_to_zephyr_vwire(signal), level);
+	int ret = espi_send_vwire(espi_dev, signal_to_zephyr_vwire(signal),
+				  level);
+
+	if (ret != 0)
+		LOG_ERR("Encountered error sending virtual wire signal");
+
+	return ret;
 }
 
 int espi_vw_get_wire(enum espi_vw_signal signal)
@@ -209,15 +221,125 @@ int espi_vw_disable_wire_int(enum espi_vw_signal signal)
 	return 0;
 }
 
-static uint8_t lpc_memmap[256] __aligned(8);
-
 uint8_t *lpc_get_memmap_range(void)
 {
-	/* TODO(b/175217186): implement eSPI functions for host commands */
-	return lpc_memmap;
+	uint32_t lpc_memmap = 0;
+
+	if (espi_read_lpc_request(espi_dev, EACPI_GET_SHARED_MEMORY,
+				  &lpc_memmap) != 0) {
+		LOG_ERR("Get lpc_memmap failed!\n");
+	}
+
+	return (uint8_t *)lpc_memmap;
+}
+
+/**
+ * Update the level-sensitive wake signal to the AP.
+ *
+ * @param wake_events	Currently asserted wake events
+ */
+static void lpc_update_wake(host_event_t wake_events)
+{
+	/*
+	 * Mask off power button event, since the AP gets that through a
+	 * separate dedicated GPIO.
+	 */
+	wake_events &= ~EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON);
+
+	/* Signal is asserted low when wake events is non-zero */
+	gpio_set_level(NAMED_GPIO(ec_pch_wake_odl), !wake_events);
+}
+
+static void lpc_generate_smi(void)
+{
+	/* Enforce signal-high for long enough to debounce high */
+	espi_vw_set_wire(VW_SMI_L, 1);
+	udelay(VWIRE_PULSE_TRIGGER_TIME);
+	espi_vw_set_wire(VW_SMI_L, 0);
+	udelay(VWIRE_PULSE_TRIGGER_TIME);
+	espi_vw_set_wire(VW_SMI_L, 1);
+}
+
+static void lpc_generate_sci(void)
+{
+	/* Enforce signal-high for long enough to debounce high */
+	espi_vw_set_wire(VW_SCI_L, 1);
+	udelay(VWIRE_PULSE_TRIGGER_TIME);
+	espi_vw_set_wire(VW_SCI_L, 0);
+	udelay(VWIRE_PULSE_TRIGGER_TIME);
+	espi_vw_set_wire(VW_SCI_L, 1);
 }
 
 void lpc_update_host_event_status(void)
 {
-	/* TODO(b/175217186): implement eSPI functions for host commands */
+	uint32_t enable;
+	uint32_t status;
+	int need_sci = 0;
+	int need_smi = 0;
+
+	if (!init_done)
+		return;
+
+	/* Disable PMC1 interrupt while updating status register */
+	enable = 0;
+	espi_write_lpc_request(espi_dev, ECUSTOM_HOST_SUBS_INTERRUPT_EN,
+			       &enable);
+
+	espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
+	if (lpc_get_host_events_by_type(LPC_HOST_EVENT_SMI)) {
+		/* Only generate SMI for first event */
+		if (!(status & EC_LPC_STATUS_SMI_PENDING))
+			need_smi = 1;
+
+		status |= EC_LPC_STATUS_SMI_PENDING;
+		espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+	} else {
+		status &= ~EC_LPC_STATUS_SMI_PENDING;
+		espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+	}
+
+	espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
+	if (lpc_get_host_events_by_type(LPC_HOST_EVENT_SCI)) {
+		/* Generate SCI for every event */
+		need_sci = 1;
+
+		status |= EC_LPC_STATUS_SCI_PENDING;
+		espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+	} else {
+		status &= ~EC_LPC_STATUS_SCI_PENDING;
+		espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+	}
+
+	*(host_event_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) =
+		lpc_get_host_events();
+
+	enable = 1;
+	espi_write_lpc_request(espi_dev, ECUSTOM_HOST_SUBS_INTERRUPT_EN,
+			       &enable);
+
+	/* Process the wake events. */
+	lpc_update_wake(lpc_get_host_events_by_type(LPC_HOST_EVENT_WAKE));
+
+	/* Send pulse on SMI signal if needed */
+	if (need_smi)
+		lpc_generate_smi();
+
+	/* ACPI 5.0-12.6.1: Generate SCI for SCI_EVT=1. */
+	if (need_sci)
+		lpc_generate_sci();
 }
+
+static void host_command_init(void)
+{
+	/* We support LPC args and version 3 protocol */
+	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
+		EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED |
+		EC_HOST_CMD_FLAG_VERSION_3;
+
+	/* Sufficiently initialized */
+	init_done = 1;
+
+	lpc_update_host_event_status();
+}
+
+DECLARE_HOOK(HOOK_INIT, host_command_init, HOOK_PRIO_INIT_LPC);
