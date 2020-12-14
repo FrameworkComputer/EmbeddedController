@@ -5,7 +5,10 @@
  * Renesas (Intersil) ISL-9241 battery charger driver.
  */
 
+/* TODO(b/175881324) */
+#ifndef CONFIG_ZEPHYR
 #include "adc.h"
+#endif
 #include "battery.h"
 #include "battery_smart.h"
 #include "charger.h"
@@ -42,7 +45,7 @@
 static int learn_mode;
 
 /* Mutex for CONTROL1 register, that can be updated from multiple tasks. */
-static struct mutex control1_mutex;
+static mutex_t control1_mutex;
 
 /* Charger parameters */
 static const struct charger_info isl9241_charger_info = {
@@ -370,6 +373,9 @@ int isl9241_set_dc_prochot(int chgnum, int ma)
 static void isl9241_init(int chgnum)
 {
 	const struct battery_info *bi = battery_get_info();
+
+	/* Init the mutex for ZephyrOS (nop for non-Zephyr builds) */
+	(void)k_mutex_init(&control1_mutex);
 
 	/*
 	 * Set the MaxSystemVoltage to battery maximum,
