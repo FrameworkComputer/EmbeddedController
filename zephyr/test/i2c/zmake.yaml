@@ -5,6 +5,6 @@
 board: native_posix
 supported-zephyr-versions:
   - v2.4
-toolchain: zephyr
+toolchain: llvm
 output-type: elf
 is-test: true
