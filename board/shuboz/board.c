@@ -164,6 +164,8 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 static int board_ps8743_mux_set(const struct usb_mux *me,
 				mux_state_t mux_state)
 {
+	int res;
+
 	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		/* Enable IN_HPD on the DB */
 		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
@@ -171,7 +173,8 @@ static int board_ps8743_mux_set(const struct usb_mux *me,
 		/* Disable IN_HPD on the DB */
 		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
 
-	return EC_SUCCESS;
+	res = ps8743_write(me, PS8743_REG_USB_EQ_RX, 0xB0);
+	return res;
 }
 
 
