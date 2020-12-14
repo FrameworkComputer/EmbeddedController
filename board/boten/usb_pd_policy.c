@@ -76,5 +76,5 @@ int pd_snk_is_vbus_provided(int port)
 	int regval = 0;
 
 	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
-	return regval & TCPC_REG_POWER_STATUS_VBUS_PRES;
+	return regval & TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
 }
