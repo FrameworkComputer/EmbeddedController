@@ -569,8 +569,18 @@ static void sm5803_init(int chgnum)
 	reg &= ~SM5803_CLOCK_SEL_LOW;
 	rv |= main_write8(chgnum, SM5803_REG_CLOCK_SEL, reg);
 
-	/* Turn on GPADCs to default */
-	rv |= meas_write8(chgnum, SM5803_REG_GPADC_CONFIG1, 0xF3);
+	/*
+	 * Turn on GPADCs to default.  Enable the IBAT_CHG ADC in order to
+	 * measure battery current and calculate system resistance.
+	 */
+	reg = SM5803_GPADCC1_TINT_EN     |
+	      SM5803_GPADCC1_VSYS_EN     |
+	      SM5803_GPADCC1_VCHGPWR_EN  |
+	      SM5803_GPADCC1_VBUS_EN     |
+	      SM5803_GPADCC1_IBAT_CHG_EN |
+	      SM5803_GPADCC1_IBAT_DIS_EN |
+	      SM5803_GPADCC1_VBATSNSP_EN;
+	rv |= meas_write8(chgnum, SM5803_REG_GPADC_CONFIG1, reg);
 
 	/* Enable Psys DAC */
 	rv |= meas_read8(chgnum, SM5803_REG_PSYS1, &reg);
@@ -592,16 +602,6 @@ static void sm5803_init(int chgnum)
 	reg = SM5803_VOLTAGE_TO_REG(4200);
 	rv = chg_write8(chgnum, SM5803_REG_DPM_VL_SET_MSB, (reg >> 3));
 	rv |= chg_write8(chgnum, SM5803_REG_DPM_VL_SET_LSB, (reg & 0x7));
-
-	if (chgnum != CHARGER_PRIMARY) {
-		/*
-		 * Enable the IBAT_CHG adc in order to calculate
-		 * system resistance.
-		 */
-		rv |= meas_read8(chgnum, SM5803_REG_GPADC_CONFIG1, &reg);
-		reg |= SM5803_GPADCC1_IBAT_CHG_EN;
-		rv |= meas_write8(chgnum, SM5803_REG_GPADC_CONFIG1, reg);
-	}
 
 	/* Set default input current */
 	reg = SM5803_CURRENT_TO_REG(CONFIG_CHARGER_INPUT_CURRENT)
