@@ -3077,6 +3077,9 @@
 /* For customer desgin to show port 80 on 7-segment */
 #undef CONFIG_CUSTOMER_PORT80
 
+/* For customer boot from G3 */
+#undef CONFIG_CUSTOM_BOOT_G3
+
 /* Compile common code to support power button debouncing */
 #undef CONFIG_POWER_BUTTON
 

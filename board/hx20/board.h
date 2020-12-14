@@ -165,6 +165,7 @@
 
 #define CONFIG_CHARGER
 #define CONFIG_USB_PD_PORT_MAX_COUNT 4
+#define CONFIG_CHARGER_DISCHARGE_ON_AC
 
 /* Charger parameter */
 #define CONFIG_CHARGER_ISL9241
@@ -256,6 +257,11 @@
 #define CONFIG_POWER_BUTTON_CUSTOM
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD 30
+
+/*
+ * Use for customer boot from G3
+ */
+#define CONFIG_CUSTOM_BOOT_G3
 
 /*
  * MEC1701H SCI is virtual wire on eSPI
@@ -685,6 +691,8 @@ int board_chipset_power_on(void);
 int board_get_version(void);
 
 void board_power_off(void);
+
+void boot_ap_on_g3(void);
 
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);

@@ -84,6 +84,7 @@ void battery_customize(struct charge_state_data *emi_info)
 	char *str = "LION";
 	int value;
 	int new_btp;
+	static int batt_state;
 
 	/* Update EMI */
 	*host_get_customer_memmap(0x03) = (emi_info->batt.temperature - 2731)/10;
@@ -125,6 +126,13 @@ void battery_customize(struct charge_state_data *emi_info)
 			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
 			ccprintf ("trigger lower BTP: %d", old_btp);
 		}
+
+	/*
+	 * When the battery present have change notify AP
+	 */
+	if (batt_state != emi_info->batt.is_present) {
+		host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
+		batt_state = emi_info->batt.is_present;
 	}
 }
 
