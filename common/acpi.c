@@ -8,16 +8,17 @@
 #include "common.h"
 #include "console.h"
 #include "dptf.h"
+#include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "keyboard_backlight.h"
 #include "lpc.h"
-#include "ec_commands.h"
-#include "tablet_mode.h"
 #include "pwm.h"
 #include "timer.h"
+#include "tablet_mode.h"
 #include "usb_charge.h"
+#include "usb_common.h"
 #include "util.h"
 
 /* Console output macros */
@@ -280,7 +281,11 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			break;
 			}
 #endif
-
+#ifdef CONFIG_USBC_RETIMER_FW_UPDATE
+		case EC_ACPI_MEM_USB_RETIMER_FW_UPDATE:
+			result = usb_retimer_fw_update_get_result();
+			break;
+#endif
 		default:
 			result = acpi_read(acpi_addr);
 			break;
@@ -376,7 +381,13 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			break;
 			}
 #endif
-
+#ifdef CONFIG_USBC_RETIMER_FW_UPDATE
+		case EC_ACPI_MEM_USB_RETIMER_FW_UPDATE:
+			usb_retimer_fw_update_process_op(
+				EC_ACPI_MEM_USB_RETIMER_PORT(data),
+				EC_ACPI_MEM_USB_RETIMER_OP(data));
+			break;
+#endif
 		default:
 			CPRINTS("ACPI write 0x%02x = 0x%02x (ignored)",
 				acpi_addr, data);

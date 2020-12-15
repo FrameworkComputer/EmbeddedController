@@ -36,6 +36,8 @@ all-obj-$(CONFIG_CMD_PD)+=$(_usbc_dir)usb_pd_console.o
 all-obj-$(CONFIG_USB_PD_HOST_CMD)+=$(_usbc_dir)usb_pd_host.o
 endif # CONFIG_USB_PE_SM
 
+# Retimer firmware update
+all-obj-$(CONFIG_USBC_RETIMER_FW_UPDATE)+=$(_usbc_dir)usb_retimer_fw_update.o
 endif # CONFIG_USB_PD_TCPMV2
 
 # For testing

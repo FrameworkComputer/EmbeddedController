@@ -372,6 +372,24 @@ const char *tc_get_current_state(int port);
  */
 uint32_t tc_get_flags(int port);
 
+/**
+ * USB retimer firmware update set run flag
+ * Setting this flag indicates firmware update operations can be
+ * processed unconditionally.
+ *
+ * @param port USB-C port number
+ */
+void tc_usb_firmware_fw_update_run(int port);
+
+/**
+ * USB retimer firmware update set limited run flag
+ * Setting this flag indicates firmware update operations can be
+ * processed under limitation: PD task has to be suspended.
+ *
+ * @param port USB-C port number
+ */
+void tc_usb_firmware_fw_update_limited_run(int port);
+
 #ifdef CONFIG_USB_CTVPD
 
 /**

@@ -120,9 +120,12 @@ void print_flag(int port, int set_or_clear, int flag);
 #define TC_FLAGS_UPDATE_CURRENT		BIT(19)
 /* Flag to indicate USB mux should be updated */
 #define TC_FLAGS_UPDATE_USB_MUX		BIT(20)
+/* Flag for retimer firmware update */
+#define TC_FLAGS_USB_RETIMER_FW_UPDATE_RUN     BIT(21)
+#define TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN BIT(22)
 
 /* For checking flag_bit_names[] array */
-#define TC_FLAGS_COUNT			21
+#define TC_FLAGS_COUNT			23
 
 /* On disconnect, clear most of the flags. */
 #define CLR_FLAGS_ON_DISCONNECT(port) TC_CLR_FLAG(port, \
@@ -307,6 +310,10 @@ static struct bit_name flag_bit_names[] = {
 	{ TC_FLAGS_SUSPENDED, "SUSPENDED" },
 	{ TC_FLAGS_UPDATE_CURRENT, "UPDATE_CURRENT" },
 	{ TC_FLAGS_UPDATE_USB_MUX, "UPDATE_USB_MUX" },
+	{ TC_FLAGS_USB_RETIMER_FW_UPDATE_RUN,
+			"USB_RETIMER_FW_UPDATE_RUN" },
+	{ TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN,
+			"USB_RETIMER_FW_UPDATE_LTD_RUN" },
 };
 BUILD_ASSERT(ARRAY_SIZE(flag_bit_names) == TC_FLAGS_COUNT);
 
@@ -3570,6 +3577,18 @@ void tc_set_debug_level(enum debug_level debug_level)
 #endif
 }
 
+void tc_usb_firmware_fw_update_limited_run(int port)
+{
+	TC_SET_FLAG(port, TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN);
+	tc_start_event_loop(port);
+}
+
+void tc_usb_firmware_fw_update_run(int port)
+{
+	TC_SET_FLAG(port, TC_FLAGS_USB_RETIMER_FW_UPDATE_RUN);
+	tc_start_event_loop(port);
+}
+
 void tc_run(const int port)
 {
 	/*
@@ -3583,6 +3602,21 @@ void tc_run(const int port)
 			pe_invalidate_explicit_contract(port);
 
 		set_state_tc(port, TC_DISABLED);
+	}
+
+	if (IS_ENABLED(CONFIG_USBC_RETIMER_FW_UPDATE)) {
+		if (TC_CHK_FLAG(port, TC_FLAGS_SUSPENDED) &&
+			TC_CHK_FLAG(port,
+				TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN)) {
+			TC_CLR_FLAG(port,
+				TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN);
+			usb_retimer_fw_update_process_op_cb(port);
+		}
+
+		if (TC_CHK_FLAG(port, TC_FLAGS_USB_RETIMER_FW_UPDATE_RUN)) {
+			TC_CLR_FLAG(port, TC_FLAGS_USB_RETIMER_FW_UPDATE_RUN);
+			usb_retimer_fw_update_process_op_cb(port);
+		}
 	}
 
 	run_state(port, &tc[port].ctx);
