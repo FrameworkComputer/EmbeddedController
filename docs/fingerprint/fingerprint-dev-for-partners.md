@@ -530,6 +530,8 @@ From the DUT, flash the firmware you copied:
 
 ![Dragonclaw in CQ Prototype Environment]
 
+![Icetower in CQ Prototype Environment]
+
 ## Troubleshooting
 
 ### Dragonclaw Rev 0.2 Rework {#dragonclaw-rev-0.2-rework}
@@ -655,3 +657,7 @@ Make sure that this interface is disabled:
 <!-- https://docs.google.com/drawings/d/1w2qbb4AsSxY-KTK2vXZ6TKeWHveWvS3Dkgh61ocu0wc -->
 
 [Dragonclaw in CQ Prototype Environment]: ../images/Dragonclaw_in_CQ_Prototype_Environment.jpg
+
+<!-- https://docs.google.com/drawings/d/1qvpDKCBjmdLQkSw0X5SwFJ01h9XmcXhWy3ohtg9xqDQ -->
+
+[Icetower in CQ Prototype Environment]: ../images/Icetower_in_CQ_Prototype_Environment.jpg
