@@ -2619,6 +2619,18 @@ uint8_t pd_get_task_state(int port)
 	return pd[port].task_state;
 }
 
+#ifdef CONFIG_USB_PD_DUAL_ROLE
+uint32_t pd_get_requested_voltage(int port)
+{
+	return pd[port].supply_voltage;
+}
+
+uint32_t pd_get_requested_current(int port)
+{
+	return pd[port].curr_limit;
+}
+#endif
+
 const char *pd_get_task_state_name(int port)
 {
 #ifdef CONFIG_USB_PD_TCPMV1_DEBUG

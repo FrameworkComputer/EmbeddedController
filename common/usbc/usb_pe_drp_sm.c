@@ -1084,6 +1084,16 @@ uint8_t pd_get_snk_cap_cnt(int port)
 	return pe[port].snk_cap_cnt;
 }
 
+uint32_t pd_get_requested_voltage(int port)
+{
+	return pe[port].supply_voltage;
+}
+
+uint32_t pd_get_requested_current(int port)
+{
+	return pe[port].curr_limit;
+}
+
 /*
  * Evaluate a sink PDO for reported FRS support on the given port.
  *

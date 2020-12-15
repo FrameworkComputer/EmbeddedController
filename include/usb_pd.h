@@ -2809,6 +2809,20 @@ const uint32_t * const pd_get_snk_caps(int port);
 uint8_t pd_get_snk_cap_cnt(int port);
 
 /**
+ * Returns requested voltage
+ *
+ * @param port USB-C port number
+ */
+uint32_t pd_get_requested_voltage(int port);
+
+/**
+ * Returns requested current
+ *
+ * @param port USB-C port number
+ */
+uint32_t pd_get_requested_current(int port);
+
+/**
  * Return true if partner port is capable of communication over USB data
  * lines.
  *
