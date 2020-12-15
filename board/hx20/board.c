@@ -342,7 +342,9 @@ const struct adc_t adc_channels[] = {
 	[ADC_VCIN1_BATT_TEMP] = {"BATT_PRESENT", 3300, 4096, 0, 2},
 	[ADC_TP_BOARD_ID]     = {"TP_BID", 3300, 4096, 0, 3},
 	[ADC_AD_BID]          = {"AD_BID", 3300, 4096, 0, 4},
-	[ADC_AUDIO_BOARD_ID]  = {"AUDIO_BID", 3300, 4096, 0, 5}
+	[ADC_AUDIO_BOARD_ID]  = {"AUDIO_BID", 3300, 4096, 0, 5},
+	[ADC_PROCHOT_L]       = {"PROCHOT_L", 3300, 4096, 0, 6}
+
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -1445,7 +1447,13 @@ DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 static int prochot_low_time = 0;
 void prochot_monitor(void)
 {
-	if (gpio_get_level(GPIO_EC_PROCHOT_L)) {
+	int val_l;
+	/* TODO Enable this once PROCHOT has moved to VCCIN_AUX_CORE_ALERT#_R
+	* Right now the voltage for this is too low for us to sample using gpio.
+	*/
+	val_l = adc_read_channel(ADC_PROCHOT_L) > 500;
+	/*val_l = gpio_get_level(GPIO_EC_val_lPROCHOT_L);*/
+	if (val_l) {
 		prochot_low_time = 0;
 	} else {
 		prochot_low_time++;
