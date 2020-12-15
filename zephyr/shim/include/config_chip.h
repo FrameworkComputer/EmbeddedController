@@ -252,6 +252,11 @@ enum battery_type {
 #define CONFIG_FAKE_SHMEM
 #endif
 
+#undef CONFIG_PWM
+#ifdef CONFIG_PLATFORM_EC_PWM
+#define CONFIG_PWM
+#endif
+
 #undef CONFIG_CMD_SHMEM
 #ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_SHMEM
 #define CONFIG_CMD_SHMEM

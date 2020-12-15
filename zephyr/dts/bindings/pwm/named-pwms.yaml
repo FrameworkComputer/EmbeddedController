@@ -1,0 +1,24 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: PWM KEYS parent node
+
+compatible: "named-pwms"
+
+child-binding:
+  description: Named PWMs child node
+  properties:
+    pwms:
+      type: phandle-array
+      required: true
+    label:
+      required: true
+      type: string
+      description:
+        Human readable string describing the device (used as
+        device_get_binding() argument)
+    frequency:
+      required: true
+      type: int
+      description: PWM frequency, in Hz

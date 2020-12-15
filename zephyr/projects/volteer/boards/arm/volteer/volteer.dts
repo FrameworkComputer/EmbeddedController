@@ -57,6 +57,31 @@
 		};
 	};
 
+	named-pwms {
+		compatible = "named-pwms";
+
+		led1_blue {
+			pwms = <&pwm2 0 PWM_POLARITY_INVERTED>;
+			label = "LED1_BLUE";
+			frequency = <4800>;
+		};
+		led2_green  {
+			pwms = <&pwm0 0 PWM_POLARITY_INVERTED>;
+			label = "LED2_GREEN";
+			frequency = <4800>;
+		};
+		led3_red {
+			pwms = <&pwm1 0 PWM_POLARITY_INVERTED>;
+			label = "LED3_RED";
+			frequency = <4800>;
+		};
+		led3_sidesel {
+			pwms = <&pwm7 0 PWM_POLARITY_INVERTED>;
+			label = "LED4_SIDESEL";
+			frequency = <2400>;
+		};
+	};
+
 	named-gpios {
 		compatible = "named-gpios";
 
@@ -465,5 +490,25 @@
 };
 
 &cros_kb_raw {
+	status = "okay";
+};
+
+/* Green LED */
+&pwm0 {
+	status = "okay";
+};
+
+/* Red LED */
+&pwm1 {
+	status = "okay";
+};
+
+/* Blue LED */
+&pwm2 {
+	status = "okay";
+};
+
+/* Side selection LED */
+&pwm7 {
 	status = "okay";
 };

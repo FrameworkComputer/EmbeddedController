@@ -453,6 +453,13 @@ config PLATFORM_EC_POWER_BUTTON
 
 	  This requires a GPIO named GPIO_POWER_BUTTON_L in gpio_map.h.
 
+config PLATFORM_EC_PWM
+	bool "PWM (Pulse Width Modulation) module"
+	help
+	  Enable the PWM (Pulse Width Modulation) module. This module is used to
+	  support variable brightness LEDs, backlight controls, and
+	  variable-speed fans.
+
 config PLATFORM_EC_CONSOLE_CMD_SHMEM
 	bool "Console command: shmem"
 	default y
