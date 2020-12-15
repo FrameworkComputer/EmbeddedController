@@ -8,6 +8,7 @@
 #include "charger.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "system.h"
 #include "timer.h"
 #include "usb_mux.h"
@@ -28,6 +29,31 @@ static int board_get_polarity(int port)
 }
 
 static uint8_t vbus_en;
+
+#define VBUS_EN_SYSJUMP_TAG		0x5645 /* VE */
+#define VBUS_EN_HOOK_VERSION	1
+
+static void vbus_en_preserve_state(void)
+{
+	system_add_jump_tag(VBUS_EN_SYSJUMP_TAG, VBUS_EN_HOOK_VERSION,
+			    sizeof(vbus_en), &vbus_en);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, vbus_en_preserve_state, HOOK_PRIO_DEFAULT);
+
+static void vbus_en_restore_state(void)
+{
+	const uint8_t *prev_vbus_en;
+	int size, version;
+
+	prev_vbus_en = (const uint8_t *)system_get_jump_tag(
+		VBUS_EN_SYSJUMP_TAG, &version, &size);
+
+	if (prev_vbus_en && version == VBUS_EN_HOOK_VERSION &&
+		size == sizeof(*prev_vbus_en)) {
+		memcpy(&vbus_en, prev_vbus_en, sizeof(vbus_en));
+	}
+}
+DECLARE_HOOK(HOOK_INIT, vbus_en_restore_state, HOOK_PRIO_DEFAULT);
 
 int board_vbus_source_enabled(int port)
 {
