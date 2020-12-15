@@ -36,10 +36,10 @@ void task_abc(void *data)
 		wake_count[id]++;
 		if (id == 2 && wake_count[id] == repeat_count) {
 			task_set_event(TASK_ID_CTS, TASK_EVENT_WAKE);
-			task_wait_event(-1);
+			task_wait_event(0);
 		} else {
 			task_set_event(next, TASK_EVENT_WAKE);
-			task_wait_event(-1);
+			task_wait_event(0);
 		}
 	}
 }
