@@ -1442,6 +1442,18 @@ static void setup_fans(void)
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 #endif
 
+static int prochot_low_time = 0;
+void prochot_monitor(void)
+{
+	if (gpio_get_level(GPIO_EC_PROCHOT_L)) {
+		prochot_low_time = 0;
+	} else {
+		prochot_low_time++;
+		if ((prochot_low_time & 0xF) == 0xF && chipset_in_state(CHIPSET_STATE_ON)) 
+					CPRINTF("PROCHOT has been low for too long - investigate");
+	}
+}
+DECLARE_HOOK(HOOK_SECOND, prochot_monitor, HOOK_PRIO_DEFAULT);
 
 
 
