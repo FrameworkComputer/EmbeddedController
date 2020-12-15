@@ -872,8 +872,29 @@ static void charge_manager_refresh(void)
 #endif
 
 	/* New power requests must be set only after updating the globals. */
-	if (is_pd_port(updated_new_port))
-		pd_set_new_power_request(updated_new_port);
+	if (is_pd_port(updated_new_port)) {
+		/* Check if we can get requested voltage/current */
+		if ((IS_ENABLED(CONFIG_USB_PD_TCPMV1) &&
+		    IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE)) ||
+		    (IS_ENABLED(CONFIG_USB_PD_TCPMV2) &&
+		    IS_ENABLED(CONFIG_USB_PE_SM))) {
+			/*
+			 * Check if new voltage/current is different
+			 * than requested. If yes, send new power request
+			 */
+			if (pd_get_requested_voltage(updated_new_port) !=
+			    charge_voltage ||
+			    pd_get_requested_current(updated_new_port) !=
+			    charge_current_uncapped)
+				pd_set_new_power_request(updated_new_port);
+		} else {
+			/*
+			 * Functions for getting requested voltage/current
+			 * are not available. Send new power request.
+			 */
+			pd_set_new_power_request(updated_new_port);
+		}
+	}
 	if (is_pd_port(updated_old_port))
 		pd_set_new_power_request(updated_old_port);
 
