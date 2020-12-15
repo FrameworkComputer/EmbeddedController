@@ -434,7 +434,7 @@ static void dump_flash(void)
 
 static void print_tag(const char * const tag, int rv, const uint32_t *val)
 {
-	ccprintf(tag);
+	ccprintf("%s", tag);
 	if (rv == EC_SUCCESS && val)
 		ccprintf(": %u (0x%x)\n", *val, *val);
 	else

@@ -16,6 +16,7 @@
 #include "espi.h"
 #include "lpc.h"
 #include "port80.h"
+#include "power.h"
 #include "zephyr_espi_shim.h"
 
 LOG_MODULE_REGISTER(espi_shim, CONFIG_ESPI_LOG_LEVEL);
