@@ -36,8 +36,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-/* Mutex for shared NVM access */
-static mutex_t bb_nvm_mutex;
+#define BB_RETIMER_I2C_RETRY	3
 
 /**
  * Utility functions
@@ -45,20 +44,35 @@ static mutex_t bb_nvm_mutex;
 static int bb_retimer_read(const struct usb_mux *me,
 			   const uint8_t offset, uint32_t *data)
 {
-	int rv;
+	int rv, retry = 0;
 	uint8_t buf[BB_RETIMER_READ_SIZE];
 
 	/*
-	 * Read sequence
-	 * Slave Addr(w) - Reg offset - repeated start - Slave Addr(r)
-	 * byte[0]   : Read size
-	 * byte[1:4] : Data [LSB -> MSB]
-	 * Stop
+	 * This I2C message will trigger retimer's internal read sequence
+	 * if its a NAK, sleep and resend same I2C
 	 */
-	rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags,
+	while (1) {
+		/*
+		 * Read sequence
+		 * Slave Addr(w) - Reg offset - repeated start - Slave Addr(r)
+		 * byte[0]   : Read size
+		 * byte[1:4] : Data [LSB -> MSB]
+		 * Stop
+		 */
+		rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags,
 		      &offset, 1, buf, BB_RETIMER_READ_SIZE);
-	if (rv)
-		return rv;
+
+		if (!rv)
+			break;
+
+		if (++retry >= BB_RETIMER_I2C_RETRY) {
+			CPRINTS("C%d: Retimer I2C read err=%d",
+				me->usb_port, rv);
+			return rv;
+		}
+		msleep(20);
+	}
+
 	if (buf[0] != BB_RETIMER_REG_SIZE)
 		return EC_ERROR_UNKNOWN;
 
@@ -70,6 +84,7 @@ static int bb_retimer_read(const struct usb_mux *me,
 static int bb_retimer_write(const struct usb_mux *me,
 			    const uint8_t offset, uint32_t data)
 {
+	int rv, retry = 0;
 	uint8_t buf[BB_RETIMER_WRITE_SIZE];
 
 	/*
@@ -87,9 +102,25 @@ static int bb_retimer_write(const struct usb_mux *me,
 	buf[4] = (data >> 16) & 0xFF;
 	buf[5] = (data >> 24) & 0xFF;
 
-	return i2c_xfer(me->i2c_port,
-			me->i2c_addr_flags,
-			buf, BB_RETIMER_WRITE_SIZE, NULL, 0);
+	/*
+	 * This I2C message will trigger retimer's internal write sequence
+	 * if its a NAK, sleep and resend same I2C
+	 */
+	while (1) {
+		rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags, buf,
+			     BB_RETIMER_WRITE_SIZE, NULL, 0);
+
+		if (!rv)
+			break;
+
+		if (++retry >= BB_RETIMER_I2C_RETRY) {
+			CPRINTS("C%d: Retimer I2C write err=%d",
+				me->usb_port, rv);
+			break;
+		}
+		msleep(20);
+	}
+	return rv;
 }
 
 __overridable void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
@@ -99,13 +130,6 @@ __overridable void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 	/* handle retimer's power domain */
 
 	if (on_off) {
-		/*
-		 * BB retimer NVM can be shared between multiple ports, hence
-		 * lock enabling the retimer until the current retimer request
-		 * is complete.
-		 */
-		mutex_lock(&bb_nvm_mutex);
-
 		gpio_set_level(control->usb_ls_en_gpio, 1);
 		/*
 		 * Tpw, minimum time from VCC to RESET_N de-assertion is 100us.
@@ -115,11 +139,11 @@ __overridable void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 		 */
 		msleep(1);
 		gpio_set_level(control->retimer_rst_gpio, 1);
-
-		/* Allow 20ms time for the retimer to be initialized. */
-		msleep(20);
-
-		mutex_unlock(&bb_nvm_mutex);
+		/*
+		 * Allow 1ms time for the retimer to power up lc_domain
+		 * which powers I2C controller within retimer
+		 */
+		msleep(1);
 	} else {
 		gpio_set_level(control->retimer_rst_gpio, 0);
 		msleep(1);
@@ -474,8 +498,6 @@ static int retimer_init(const struct usb_mux *me)
 	int rv;
 	uint32_t data;
 
-	(void)k_mutex_init(&bb_nvm_mutex);
-
 	/* Burnside Bridge is powered by main AP rail */
 	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
 		/* Ensure reset is asserted while chip is not powered */
@@ -490,13 +512,13 @@ static int retimer_init(const struct usb_mux *me)
 		return rv;
 	if ((data != BB_RETIMER_VENDOR_ID_1) &&
 			data != BB_RETIMER_VENDOR_ID_2)
-		return EC_ERROR_UNKNOWN;
+		return EC_ERROR_INVAL;
 
 	rv = bb_retimer_read(me, BB_RETIMER_REG_DEVICE_ID, &data);
 	if (rv)
 		return rv;
 	if (data != BB_RETIMER_DEVICE_ID)
-		return EC_ERROR_UNKNOWN;
+		return EC_ERROR_INVAL;
 
 	return EC_SUCCESS;
 }
