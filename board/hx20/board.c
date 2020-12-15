@@ -735,7 +735,17 @@ int charge_want_shutdown(void)
 
 int charge_prevent_power_on(int power_button_pressed)
 {
-	return 0;
+	/* TODO: when adp power < 20W or battery < 10% cannot power on */
+	int battery_percent;
+	int active_power;
+
+	battery_percent = charge_get_percent();
+	active_power = cypd_get_active_power_budget();
+
+	if (active_power < 20 || (battery_percent < 10 && active_power < 55))
+		return 1;
+	else
+		return 0;
 }
 
 
