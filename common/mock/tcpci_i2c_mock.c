@@ -70,6 +70,7 @@ static struct tcpci_reg tcpci_regs[] = {
 
 static uint8_t tx_buffer[BUFFER_SIZE];
 static int tx_pos = -1;
+static int tx_retry_cnt = -1;
 static uint8_t rx_buffer[BUFFER_SIZE];
 static int rx_pos = -1;
 
@@ -146,11 +147,11 @@ static int verify_transmit(enum tcpm_transmit_type want_tx_type,
 			   int want_tx_retry,
 			   enum pd_ctrl_msg_type want_ctrl_msg,
 			   enum pd_data_msg_type want_data_msg,
-			   int timeout)
+			   int timeout,
+			   uint16_t *old_transmit)
 {
 	uint64_t end_time = get_time().val + timeout;
 
-	TEST_EQ(tcpci_regs[TCPC_REG_TRANSMIT].value, 0, "%d");
 	while (get_time().val < end_time) {
 		if (tcpci_regs[TCPC_REG_TRANSMIT].value != 0) {
 			int tx_type = TCPC_REG_TRANSMIT_TYPE(
@@ -174,6 +175,11 @@ static int verify_transmit(enum tcpm_transmit_type want_tx_type,
 				TEST_EQ(pd_type, want_data_msg, "0x%x");
 				TEST_GE(pd_cnt, 1, "%d");
 			}
+
+			if (old_transmit)
+				*old_transmit =
+					tcpci_regs[TCPC_REG_TRANSMIT].value;
+
 			tcpci_regs[TCPC_REG_TRANSMIT].value = 0;
 			return EC_SUCCESS;
 		}
@@ -187,7 +193,31 @@ int verify_tcpci_transmit(enum tcpm_transmit_type tx_type,
 			  enum pd_ctrl_msg_type ctrl_msg,
 			  enum pd_data_msg_type data_msg)
 {
-	return verify_transmit(tx_type, -1, ctrl_msg, data_msg, VERIFY_TIMEOUT);
+	return verify_transmit(tx_type, -1,
+			       ctrl_msg, data_msg,
+			       VERIFY_TIMEOUT, NULL);
+}
+
+int verify_tcpci_ignore_transmit(enum tcpm_transmit_type tx_type,
+				 enum pd_ctrl_msg_type ctrl_msg,
+				 enum pd_data_msg_type data_msg)
+{
+	int rv;
+	uint16_t transmit;
+
+	rv = verify_transmit(tx_type, -1,
+			     ctrl_msg, data_msg,
+			     VERIFY_TIMEOUT, &transmit);
+	if (rv == EC_SUCCESS) {
+		if (tx_retry_cnt == -1)
+			tx_retry_cnt = TCPC_REG_TRANSMIT_RETRY(transmit);
+
+		if (tx_retry_cnt > 0) {
+			tx_retry_cnt--;
+			tcpci_regs[TCPC_REG_TRANSMIT].value = transmit;
+		}
+	}
+	return rv;
 }
 
 int verify_tcpci_tx_timeout(enum tcpm_transmit_type tx_type,
@@ -195,13 +225,45 @@ int verify_tcpci_tx_timeout(enum tcpm_transmit_type tx_type,
 			    enum pd_data_msg_type data_msg,
 			    int timeout)
 {
-	return verify_transmit(tx_type, -1, ctrl_msg, data_msg, timeout);
+	return verify_transmit(tx_type, -1,
+			       ctrl_msg, data_msg,
+			       timeout, NULL);
 }
 
 int verify_tcpci_tx_retry_count(enum tcpm_transmit_type tx_type,
 				int retry_count)
 {
-	return verify_transmit(tx_type, retry_count, 0, 0, VERIFY_TIMEOUT);
+	return verify_transmit(tx_type, retry_count,
+			       0, 0,
+			       VERIFY_TIMEOUT, NULL);
+}
+
+bool mock_rm_if_tx(enum tcpm_transmit_type want_tx_type,
+		   enum pd_ctrl_msg_type want_ctrl_msg,
+		   enum pd_data_msg_type want_data_msg)
+{
+	if (tcpci_regs[TCPC_REG_TRANSMIT].value != 0) {
+		int tx_type = TCPC_REG_TRANSMIT_TYPE(
+			tcpci_regs[TCPC_REG_TRANSMIT].value);
+		uint16_t header = UINT16_FROM_BYTE_ARRAY_LE(
+					tx_buffer, 1);
+		int pd_type  = PD_HEADER_TYPE(header);
+		int pd_cnt   = PD_HEADER_CNT(header);
+
+		if (tx_type != want_tx_type)
+			return false;
+		if (want_ctrl_msg != 0)
+			if (pd_type != want_ctrl_msg ||
+			    pd_cnt != 0)
+				return false;
+		if (want_data_msg != 0)
+			if (pd_type != want_data_msg ||
+			    pd_cnt < 1)
+				return false;
+		tcpci_regs[TCPC_REG_TRANSMIT].value = 0;
+		return true;
+	}
+	return false;
 }
 
 void mock_tcpci_receive(enum pd_msg_type sop, uint16_t header,
@@ -244,6 +306,26 @@ void mock_tcpci_set_reg(int reg_offset, uint16_t value)
 
 	reg->value = value;
 	ccprints("TCPCI mock set %s = 0x%x",  reg->name, reg->value);
+}
+
+void mock_tcpci_set_reg_bits(int reg_offset, uint16_t mask)
+{
+	struct tcpci_reg *reg = tcpci_regs + reg_offset;
+	uint16_t old_value = reg->value;
+
+	reg->value |= mask;
+	ccprints("TCPCI mock set bits %s (mask=0x%x) = 0x%x -> 0x%x",
+		 reg->name, mask, old_value, reg->value);
+}
+
+void mock_tcpci_clr_reg_bits(int reg_offset, uint16_t mask)
+{
+	struct tcpci_reg *reg = tcpci_regs + reg_offset;
+	uint16_t old_value = reg->value;
+
+	reg->value &= ~mask;
+	ccprints("TCPCI mock clr bits %s (mask=0x%x) = 0x%x -> 0x%x",
+		 reg->name, mask, old_value, reg->value);
 }
 
 uint16_t mock_tcpci_get_reg(int reg_offset)
@@ -296,6 +378,7 @@ int tcpci_i2c_xfer(int port, uint16_t slave_addr_flags,
 			print_header("TX", UINT16_FROM_BYTE_ARRAY_LE(
 						tx_buffer, 1));
 			tx_pos = -1;
+			tx_retry_cnt = -1;
 		}
 		return EC_SUCCESS;
 	}
@@ -363,3 +446,369 @@ int tcpci_i2c_xfer(int port, uint16_t slave_addr_flags,
 	return EC_SUCCESS;
 }
 DECLARE_TEST_I2C_XFER(tcpci_i2c_xfer);
+
+void tcpci_register_dump(void)
+{
+	int reg;
+	int cc1, cc2;
+
+	ccprints("********* TCPCI Register Dump ***********");
+	reg = mock_tcpci_get_reg(TCPC_REG_ALERT);
+	ccprints("TCPC_REG_ALERT        = 0x%08X", reg);
+	if (reg) {
+		if (reg & BIT(0))
+			ccprints("\t0001: CC Status");
+		if (reg & BIT(1))
+			ccprints("\t0002: Power Status");
+		if (reg & BIT(2))
+			ccprints("\t0004: Received SOP* Message Status");
+		if (reg & BIT(3))
+			ccprints("\t0008: Received Hard Reset");
+		if (reg & BIT(4))
+			ccprints("\t0010: Transmit SOP* Message Failed");
+		if (reg & BIT(5))
+			ccprints("\t0020: Transmit SOP* Message Discarded");
+		if (reg & BIT(6))
+			ccprints("\t0040: Transmit SOP* Message Successful");
+		if (reg & BIT(7))
+			ccprints("\t0080: Vbus Voltage Alarm Hi");
+		if (reg & BIT(8))
+			ccprints("\t0100: Vbus Voltage Alarm Lo");
+		if (reg & BIT(9))
+			ccprints("\t0200: Fault");
+		if (reg & BIT(10))
+			ccprints("\t0400: Rx Buffer Overflow");
+		if (reg & BIT(11))
+			ccprints("\t0800: Vbus Sink Disconnect Detected");
+		if (reg & BIT(12))
+			ccprints("\t1000: Beginning SOP* Message Status");
+		if (reg & BIT(13))
+			ccprints("\t2000: Extended Status");
+		if (reg & BIT(14))
+			ccprints("\t4000: Alert Extended");
+		if (reg & BIT(15))
+			ccprints("\t8000: Vendor Defined Alert");
+	}
+
+	reg = mock_tcpci_get_reg(TCPC_REG_TCPC_CTRL);
+	ccprints("TCPC_REG_TCPC_CTRL    = 0x%04X", reg);
+	if (reg & BIT(0))
+		ccprints("\t01: Plug Orientation FLIP");
+	if (reg & BIT(1))
+		ccprints("\t02: BIST Test Mode");
+	if (reg & (BIT(2) | BIT(3))) {
+		switch ((reg >> 2) & 3) {
+		case 2:
+			ccprints("\t08: Enable Clock Stretching");
+			break;
+		case 3:
+			ccprints("\t0C: Enable Clock Stretching if !Alert");
+			break;
+		}
+	}
+	if (reg & BIT(4))
+		ccprints("\t10: Debug Accessory controlled by TCPM");
+	if (reg & BIT(5))
+		ccprints("\t20: Watchdog Timer enabled");
+	if (reg & BIT(6))
+		ccprints("\t40: Looking4Connection Alert enabled");
+	if (reg & BIT(7))
+		ccprints("\t80: SMBus PEC enabled");
+
+	reg = mock_tcpci_get_reg(TCPC_REG_ROLE_CTRL);
+	ccprints("TCPC_REG_ROLE_CTRL    = 0x%04X", reg);
+	cc1 = (reg >> 0) & 3;
+	switch (cc1) {
+	case 0:
+		ccprints("\t00: CC1 == Ra");
+		break;
+	case 1:
+		ccprints("\t01: CC1 == Rp");
+		break;
+	case 2:
+		ccprints("\t02: CC1 == Rd");
+		break;
+	case 3:
+		ccprints("\t03: CC1 == OPEN");
+		break;
+	}
+	cc2 = (reg >> 2) & 3;
+	switch (cc2) {
+	case 0:
+		ccprints("\t00: CC2 == Ra");
+		break;
+	case 1:
+		ccprints("\t04: CC2 == Rp");
+		break;
+	case 2:
+		ccprints("\t08: CC2 == Rd");
+		break;
+	case 3:
+		ccprints("\t0C: CC2 == OPEN");
+		break;
+	}
+	switch ((reg >> 4) & 3) {
+	case 0:
+		ccprints("\t00: Rp Value == default");
+		break;
+	case 1:
+		ccprints("\t10: Rp Value == 1.5A");
+		break;
+	case 2:
+		ccprints("\t20: Rp Value == 3A");
+		break;
+	}
+	if (reg & BIT(6))
+		ccprints("\t40: DRP");
+
+	reg = mock_tcpci_get_reg(TCPC_REG_FAULT_CTRL);
+	ccprints("TCPC_REG_FAULT_CTRL   = 0x%04X", reg);
+	if (reg & BIT(0))
+		ccprints("\t01: Vconn Over Current Fault");
+	if (reg & BIT(1))
+		ccprints("\t02: Vbus OVP Fault");
+	if (reg & BIT(2))
+		ccprints("\t04: Vbus OCP Fault");
+	if (reg & BIT(3))
+		ccprints("\t08: Vbus Discharge Fault");
+	if (reg & BIT(4))
+		ccprints("\t10: Force OFF Vbus");
+
+	reg = mock_tcpci_get_reg(TCPC_REG_POWER_CTRL);
+	ccprints("TCPC_REG_POWER_CTRL   = 0x%04X", reg);
+	if (reg & BIT(0))
+		ccprints("\t01: Enable Vconn");
+	if (reg & BIT(1))
+		ccprints("\t02: Vconn Power Supported");
+	if (reg & BIT(2))
+		ccprints("\t04: Force Discharge");
+	if (reg & BIT(3))
+		ccprints("\t08: Enable Bleed Discharge");
+	if (reg & BIT(4))
+		ccprints("\t10: Auto Discharge Disconnect");
+	if (reg & BIT(5))
+		ccprints("\t20: Disable Voltage Alarms");
+	if (reg & BIT(6))
+		ccprints("\t40: VBUS_VOLTAGE monitor disabled");
+	if (reg & BIT(7))
+		ccprints("\t80: Fast Role Swap enabled");
+
+	reg = mock_tcpci_get_reg(TCPC_REG_CC_STATUS);
+	ccprints("TCPC_REG_CC_STATUS    = 0x%04X", reg);
+	switch ((reg >> 0) & 3) {
+	case 0:
+		switch (cc1) {
+		case 1:
+			ccprints("\t00: CC1-Rp SRC.Open");
+			break;
+		case 2:
+			ccprints("\t00: CC1-Rd SNK.Open");
+			break;
+		}
+		break;
+	case 1:
+		switch (cc1) {
+		case 1:
+			ccprints("\t01: CC1-Rp SRC.Ra");
+			break;
+		case 2:
+			ccprints("\t01: CC1-Rd SNK.Default");
+			break;
+		}
+		break;
+	case 2:
+		switch (cc1) {
+		case 1:
+			ccprints("\t02: CC1-Rp SRC.Rd");
+			break;
+		case 2:
+			ccprints("\t02: CC1-Rd SNK.Power1.5");
+			break;
+		}
+		break;
+	case 3:
+		switch (cc1) {
+		case 2:
+			ccprints("\t03: CC1-Rd SNK.Power3.0");
+			break;
+		}
+		break;
+	}
+	switch ((reg >> 2) & 3) {
+	case 0:
+		switch (cc2) {
+		case 1:
+			ccprints("\t00: CC2-Rp SRC.Open");
+			break;
+		case 2:
+			ccprints("\t00: CC2-Rd SNK.Open");
+			break;
+		}
+		break;
+	case 1:
+		switch (cc2) {
+		case 1:
+			ccprints("\t04: CC2-Rp SRC.Ra");
+			break;
+		case 2:
+			ccprints("\t04: CC2-Rd SNK.Default");
+			break;
+		}
+		break;
+	case 2:
+		switch (cc2) {
+		case 1:
+			ccprints("\t08: CC2-Rp SRC.Rd");
+			break;
+		case 2:
+			ccprints("\t08: CC2-Rd SNK.Power1.5");
+			break;
+		}
+		break;
+	case 3:
+		switch (cc2) {
+		case 2:
+			ccprints("\t0C: CC2-Rd SNK.Power3.0");
+			break;
+		}
+		break;
+	}
+	if (reg & BIT(4))
+		ccprints("\t10: Presenting Rd");
+	else
+		ccprints("\t00: Presenting Rp");
+	if (reg & BIT(5))
+		ccprints("\t20: Looking4Connection");
+
+	reg = mock_tcpci_get_reg(TCPC_REG_POWER_STATUS);
+	ccprints("TCPC_REG_POWER_STATUS = 0x%04X", reg);
+	if (reg & BIT(0))
+		ccprints("\t01: Sinking Vbus");
+	if (reg & BIT(1))
+		ccprints("\t02: Vconn Present");
+	if (reg & BIT(2))
+		ccprints("\t04: Vbus Present");
+	if (reg & BIT(3))
+		ccprints("\t08: Vbus Detect enabled");
+	if (reg & BIT(4))
+		ccprints("\t10: Sourcing Vbus");
+	if (reg & BIT(5))
+		ccprints("\t20: Sourcing non-default voltage");
+	if (reg & BIT(6))
+		ccprints("\t40: TCPC Initialization");
+	if (reg & BIT(7))
+		ccprints("\t80: Debug Accessory Connected");
+
+	reg = mock_tcpci_get_reg(TCPC_REG_FAULT_STATUS);
+	ccprints("TCPC_REG_FAULT_STATUS = 0x%04X", reg);
+	if (reg & BIT(0))
+		ccprints("\t01: I2C Interface Error");
+	if (reg & BIT(1))
+		ccprints("\t02: Vconn Over Current Fault");
+	if (reg & BIT(2))
+		ccprints("\t04: Vbus OVP Fault");
+	if (reg & BIT(3))
+		ccprints("\t08: Vbus OCP Fault");
+	if (reg & BIT(4))
+		ccprints("\t10: Forced Discharge Failed");
+	if (reg & BIT(5))
+		ccprints("\t20: Auto Discharge Failed");
+	if (reg & BIT(6))
+		ccprints("\t40: Force OFF Vbus");
+	if (reg & BIT(7))
+		ccprints("\t80: TCPCI Registers Reset2Default");
+
+	reg = mock_tcpci_get_reg(TCPC_REG_EXT_STATUS);
+	ccprints("TCPC_REG_EXT_STATUS   = 0x%04X", reg);
+	if (reg & BIT(0))
+		ccprints("\t01: Vbus is at vSafe0V");
+
+	reg = mock_tcpci_get_reg(TCPC_REG_ALERT_EXT);
+	ccprints("TCPC_REG_ALERT_EXT    = 0x%04X", reg);
+	if (reg & BIT(0))
+		ccprints("\t01: SNK Fast Role Swap");
+	if (reg & BIT(1))
+		ccprints("\t02: SRC Fast Role Swap");
+	if (reg & BIT(2))
+		ccprints("\t04: Timer Expired");
+
+	reg = mock_tcpci_get_reg(TCPC_REG_COMMAND);
+	ccprints("TCPC_REG_COMMAND      = 0x%04X", reg);
+	switch (reg) {
+	case 0x11:
+		ccprints("\t11: WakeI2C");
+		break;
+	case 0x22:
+		ccprints("\t22: DisableVbusDetect");
+		break;
+	case 0x33:
+		ccprints("\t33: EnableVbusDetect");
+		break;
+	case 0x44:
+		ccprints("\t44: DisableSinkVbus");
+		break;
+	case 0x55:
+		ccprints("\t55: SinkVbus");
+		break;
+	case 0x66:
+		ccprints("\t66: DisableSourceVbus");
+		break;
+	case 0x77:
+		ccprints("\t77: SourceVbusDefaultVoltage");
+		break;
+	case 0x88:
+		ccprints("\t88: SourceVbusNondefaultVoltage");
+		break;
+	case 0x99:
+		ccprints("\t99: Looking4Connection");
+		break;
+	case 0xAA:
+		ccprints("\tAA: RxOneMore");
+		break;
+	case 0xCC:
+		ccprints("\tCC: SendFRSwapSignal");
+		break;
+	case 0xDD:
+		ccprints("\tDD: ResetTransmitBuffer");
+		break;
+	case 0xEE:
+		ccprints("\tEE: ResetReceiveBuffer");
+		break;
+	case 0xFF:
+		ccprints("\tFF: I2C Idle");
+		break;
+	}
+
+	reg = mock_tcpci_get_reg(TCPC_REG_MSG_HDR_INFO);
+	ccprints("TCPC_REG_MSG_HDR_INFO = 0x%04X", reg);
+	if (reg & BIT(0))
+		ccprints("\t01: Power Role SRC");
+	else
+		ccprints("\t00: Power Role SNK");
+	switch ((reg >> 1) & 3) {
+	case 0:
+		ccprints("\t00: PD Revision 1.0");
+		break;
+	case 1:
+		ccprints("\t02: PD Revision 2.0");
+		break;
+	case 2:
+		ccprints("\t04: PD Revision 3.0");
+		break;
+	}
+	if (reg & BIT(3))
+		ccprints("\t08: Data Role DFP");
+	else
+		ccprints("\t00: Data Role UFP");
+	if (reg & BIT(4))
+		ccprints("\t10: Message originating from Cable Plug");
+	else
+		ccprints("\t00: Message originating from SRC/SNK/DRP");
+
+	reg = mock_tcpci_get_reg(TCPC_REG_RX_BUFFER);
+	ccprints("TCPC_REG_RX_BUFFER    = 0x%04X", reg);
+
+	reg = mock_tcpci_get_reg(TCPC_REG_TRANSMIT);
+	ccprints("TCPC_REG_TRANSMIT     = 0x%04X", reg);
+	ccprints("*****************************************");
+}
