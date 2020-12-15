@@ -78,12 +78,17 @@ static inline void cache_barrier_dcache(void)
 static inline void cache_writeback_dcache(void)
 {
 	cache_op_all(COP_OP_WRITEBACK_DCACHE);
+	cache_barrier_icache();
+	cache_barrier_dcache();
 }
 
 /* writeback a range of D$ */
 static inline int cache_writeback_dcache_range(uintptr_t addr, uint32_t length)
 {
-	return cache_op_addr(addr, length, COP_OP_WRITEBACK_DCACHE_ADDR);
+	int ret = cache_op_addr(addr, length, COP_OP_WRITEBACK_DCACHE_ADDR);
+	cache_barrier_icache();
+	cache_barrier_dcache();
+	return ret;
 }
 
 /* invalidate all D$ */
@@ -102,12 +107,17 @@ static inline int cache_invalidate_dcache_range(uintptr_t addr, uint32_t length)
 static inline void cache_flush_dcache(void)
 {
 	cache_op_all(COP_OP_FLUSH_DCACHE);
+	cache_barrier_icache();
+	cache_barrier_dcache();
 }
 
 /* writeback and invalidate a range of D$ */
 static inline int cache_flush_dcache_range(uintptr_t addr, uint32_t length)
 {
-	return cache_op_addr(addr, length, COP_OP_FLUSH_DCACHE_ADDR);
+	int ret = cache_op_addr(addr, length, COP_OP_FLUSH_DCACHE_ADDR);
+	cache_barrier_icache();
+	cache_barrier_dcache();
+	return ret;
 }
 
 struct mpu_entry {
