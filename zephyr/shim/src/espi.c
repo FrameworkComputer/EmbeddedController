@@ -111,7 +111,7 @@ static void espi_vwire_handler(const struct device *dev,
 {
 	int ec_signal = zephyr_vwire_to_signal(event.evt_details);
 
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_POWERseQ) &&
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_POWERSEQ) &&
 	    (signal_interrupt_enabled & signal_to_interrupt_bit(ec_signal))) {
 		power_signal_interrupt(ec_signal);
 	}
