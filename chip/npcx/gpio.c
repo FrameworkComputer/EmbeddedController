@@ -524,14 +524,10 @@ void gpio_pre_init(void)
 	 * reset (2) will happen before the end of the delay so we avoid extra
 	 * output toggles.
 	 *
-	 * Waking from PSL hibernate is power-on for EC but not for H1, so
-	 * do not add delay.
-	 *
 	 * Make sure to set up the timer before using udelay().
 	 */
 	if (IS_ENABLED(CONFIG_BOARD_RESET_AFTER_POWER_ON) &&
-	    system_get_reset_flags() & EC_RESET_FLAG_INITIAL_PWR
-	    && !(system_get_reset_flags() & EC_RESET_FLAG_HIBERNATE)) {
+	    system_get_reset_flags() & EC_RESET_FLAG_INITIAL_PWR) {
 		__hw_early_init_hwtimer(0);
 		udelay(2 * SECOND);
 		/* Shouldn't get here, but proceeding anyway... */
