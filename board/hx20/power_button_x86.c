@@ -138,10 +138,11 @@ static void set_pwrbtn_to_pch(int high, int init)
 	 * If the battery is discharging and low enough we'd shut down the
 	 * system, don't press the power button. Also, don't press the
 	 * power button if the battery is charging but the battery level
-	 * is too low.*/
+	 * is too low.
+	 */
 #ifdef CONFIG_CHARGER
-       if (chipset_in_state(CHIPSET_STATE_ANY_OFF) && !high &&
-	   (charge_want_shutdown() || charge_prevent_power_on(!init))) {
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) && !high &&
+		(charge_want_shutdown() || charge_prevent_power_on(!init))) {
 		CPRINTS("PB PCH pwrbtn ignored due to battery level");
 		high = 1;
 	}
@@ -342,7 +343,10 @@ static void state_machine(uint64_t tnow)
 		 * button until it's released, so that holding down the
 		 * recovery combination doesn't cause the chipset to shut back
 		 * down. */
-		set_pwrbtn_to_pch(1, 0);
+		if (!extpower_is_present() || (system_get_reset_flags() & 
+				EC_RESET_FLAG_HARD) == EC_RESET_FLAG_HARD)
+			set_pwrbtn_to_pch(1, 0);
+
 		if (power_button_is_pressed())
 			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
 		else
