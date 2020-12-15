@@ -43,6 +43,7 @@
 #include "motion_lid.h"
 #include "pi3usb9281.h"
 #include "peci.h"
+#include "peci_customization.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -89,6 +90,8 @@
 #define DS1624_ACCESS_CFG	0xAC	/* read/write 8-bit config */
 #define DS1624_CMD_START	0xEE
 #define DS1624_CMD_STOP		0x22
+
+#define POWER_LIMIT_1_W	28
 
 static int forcing_shutdown;  /* Forced shutdown in progress? */
 
@@ -767,6 +770,8 @@ static void sci_enable(void)
 	if (*host_get_customer_memmap(0x00) == 1) {
 	/* when host set EC driver ready flag, EC need to enable SCI */
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0x20AF92AFF);
+
+		update_power_limit();
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }
@@ -1257,6 +1262,50 @@ void charger_update(void)
 	}
 }
 DECLARE_HOOK(HOOK_TICK, charger_update, HOOK_PRIO_DEFAULT);
+
+void update_power_limit(void)
+{
+	/*
+	 * power limit is related to AC state, battery percentage, and power budget
+	 */
+
+	int active_power;
+	int pps_power_budget;
+	int battery_percent;
+	int pl2_watt = 0;
+	int pl4_watt = 0;
+	int psys_watt = 0;
+
+	/* TODO: get the power and pps_power_budget */
+	battery_percent = charge_get_percent();
+	active_power = cypd_get_active_power_budget();
+	pps_power_budget = cypd_get_pps_power_budget();
+
+	if (!extpower_is_present() || (active_power < 55)) {
+		/* Battery only or ADP < 55W */
+		pl2_watt = POWER_LIMIT_1_W;
+		pl4_watt = 50 - pps_power_budget;
+		psys_watt = 52 - pps_power_budget;
+	} else if (battery_percent < 30) {
+		/* ADP > 55W and Battery percentage < 30% */
+		pl4_watt = active_power - 15 - pps_power_budget;
+		pl2_watt = MIN((pl4_watt * 90) / 100, 64);
+		psys_watt = ((active_power * 95) / 100) - pps_power_budget;
+	} else {
+		/* ADP > 55W and Battery percentage >= 30% */
+		pl2_watt = 64;
+		pl4_watt = 121;
+		psys_watt = ((active_power * 95) / 100) - pps_power_budget;
+	}
+
+	peci_update_PL1(POWER_LIMIT_1_W);
+	peci_update_PL2(pl2_watt);
+	peci_update_PL4(pl4_watt);
+	peci_update_PsysPL2(psys_watt);
+
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, update_power_limit, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, update_power_limit, HOOK_PRIO_DEFAULT);
 #endif
 
 
