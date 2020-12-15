@@ -125,7 +125,7 @@ GPIO_INT(TYPEC0_VBUS_ON_EC,     PIN(0144), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_ext
 GPIO_INT(TYPEC1_VBUS_ON_EC,     PIN(0143), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
 GPIO_INT(TYPEC2_VBUS_ON_EC,     PIN(0142), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
 GPIO_INT(TYPEC3_VBUS_ON_EC,     PIN(0141), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
-GPIO(EC_PROCHOT_L,          PIN(0206), GPIO_ODR_HIGH)
+GPIO(EC_PROCHOT_L,          PIN(0206), GPIO_INPUT | GPIO_ODR_HIGH)
 
 /* Fan PWM output and TACH input. PROCHOT input */
 /* MEC1701H GPIO_0050/FAN_TACH0 OK */

@@ -342,7 +342,9 @@ const struct adc_t adc_channels[] = {
 	[ADC_VCIN1_BATT_TEMP] = {"BATT_PRESENT", 3300, 4096, 0, 2},
 	[ADC_TP_BOARD_ID]     = {"TP_BID", 3300, 4096, 0, 3},
 	[ADC_AD_BID]          = {"AD_BID", 3300, 4096, 0, 4},
-	[ADC_AUDIO_BOARD_ID]  = {"AUDIO_BID", 3300, 4096, 0, 5}
+	[ADC_AUDIO_BOARD_ID]  = {"AUDIO_BID", 3300, 4096, 0, 5},
+	[ADC_PROCHOT_L]       = {"PROCHOT_L", 3300, 4096, 0, 6}
+
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -1276,6 +1278,10 @@ void update_power_limit(void)
 	int pl4_watt = 0;
 	int psys_watt = 0;
 
+	static int old_pl2_watt = -1;
+	static int old_pl4_watt = -1;
+	static int old_psys_watt = -1;
+
 	/* TODO: get the power and pps_power_budget */
 	battery_percent = charge_get_percent();
 	active_power = cypd_get_active_power_budget();
@@ -1297,11 +1303,18 @@ void update_power_limit(void)
 		pl4_watt = 121;
 		psys_watt = ((active_power * 95) / 100) - pps_power_budget;
 	}
+	if (pl2_watt != old_pl2_watt || pl4_watt != old_pl4_watt || psys_watt != old_psys_watt) {
+		old_psys_watt = psys_watt;
+		old_pl4_watt = pl4_watt;
+		old_pl2_watt = pl2_watt;
+		CPRINTS("Updating SOC Power Limits: PL2 %d, PL4 %d, Psys %d, Adapter %d", 
+				pl2_watt, pl4_watt, psys_watt, active_power);
+		peci_update_PL1(POWER_LIMIT_1_W);
+		peci_update_PL2(pl2_watt);
+		peci_update_PL4(pl4_watt);
+		peci_update_PsysPL2(psys_watt);
+	}
 
-	peci_update_PL1(POWER_LIMIT_1_W);
-	peci_update_PL2(pl2_watt);
-	peci_update_PL4(pl4_watt);
-	peci_update_PsysPL2(psys_watt);
 
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, update_power_limit, HOOK_PRIO_DEFAULT);
@@ -1442,6 +1455,24 @@ static void setup_fans(void)
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 #endif
 
+static int prochot_low_time;
+void prochot_monitor(void)
+{
+	int val_l;
+	/* TODO Enable this once PROCHOT has moved to VCCIN_AUX_CORE_ALERT#_R
+	* Right now the voltage for this is too low for us to sample using gpio.
+	*/
+	val_l = adc_read_channel(ADC_PROCHOT_L) > 500;
+	/*val_l = gpio_get_level(GPIO_EC_val_lPROCHOT_L);*/
+	if (val_l) {
+		prochot_low_time = 0;
+	} else {
+		prochot_low_time++;
+		if ((prochot_low_time & 0xF) == 0xF && chipset_in_state(CHIPSET_STATE_ON))
+			CPRINTF("PROCHOT has been low for too long - investigate");
+	}
+}
+DECLARE_HOOK(HOOK_SECOND, prochot_monitor, HOOK_PRIO_DEFAULT);
 
 
 
