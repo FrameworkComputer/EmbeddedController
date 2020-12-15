@@ -379,5 +379,5 @@ void board_hibernate(void)
 	 * with any PD contract renegotiation, and tcpm to put TCPC into low
 	 * power mode if required.
 	 */
-	msleep(300);
+	msleep(1500);
 }
