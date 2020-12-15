@@ -350,7 +350,7 @@ void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
 		/* Get max power info that we could request */
 		pd_find_pdo_index(pd_get_src_cap_cnt(port),
 					pd_get_src_caps(port),
-					PD_MAX_VOLTAGE_MV, &pdo);
+					pd_get_max_voltage(), &pdo);
 		pd_extract_pdo_power(pdo, &ma, &mv);
 
 		/* Set max. limit, but apply 500mA ceiling */
