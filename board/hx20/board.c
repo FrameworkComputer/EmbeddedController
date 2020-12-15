@@ -622,6 +622,11 @@ void cancel_board_power_off(void)
 static void board_extpower(void)
 {
 	gpio_set_level(GPIO_AC_PRESENT_OUT, extpower_is_present());
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) && !extpower_is_present()) {
+		/* if AC disconnected, need to power_off EC_ON */
+		board_power_off();
+	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
