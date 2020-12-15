@@ -142,9 +142,6 @@ void set_int_mask(uint32_t val);
  *
  * @param tskid		Task to set event for
  * @param event		Event bitmap to set (TASK_EVENT_*)
- * @param wait		If non-zero, after setting the event, de-schedule the
- *			calling task to wait for a response event.  Ignored in
- *			interrupt context.
  * @return		The bitmap of events which occurred if wait!=0, else 0.
  */
 uint32_t task_set_event(task_id_t tskid, uint32_t event);
