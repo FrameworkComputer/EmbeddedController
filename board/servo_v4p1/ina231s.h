@@ -56,4 +56,10 @@ int sr_chg_current(void);
  */
 int sr_chg_power(void);
 
+/*
+ * Set power limit on servo charger input to `limit` milliWatts,
+ * configure interrupt
+ */
+int set_sr_chg_power_limit(int limit);
+
 #endif /* __CROS_EC_INA231S_H */

@@ -29,5 +29,6 @@ board-ro+=usb_pd_policy.o
 board-ro+=fusb302b.o
 board-ro+=usb_sm.o
 board-ro+=usb_tc_snk_sm.o
+board-ro+=power_mgmt.o
 
 all_deps=$(patsubst ro,,$(def_all_deps))

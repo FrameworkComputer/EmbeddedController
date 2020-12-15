@@ -7,12 +7,15 @@
 #include "console.h"
 #include "fusb302b.h"
 #include "ioexpanders.h"
+#include "pwr_defs.h"
+#include "power_mgmt.h"
 #include "system.h"
 #include "task.h"
 #include "usb_common.h"
 #include "usb_pd.h"
 #include "usb_sm.h"
 #include "usb_tc_sm.h"
+#include "usb_tc_snk_sm.h"
 
 #define EVT_TIMEOUT_NEVER  (-1)
 #define EVT_TIMEOUT_5MS    (5 * MSEC)
@@ -85,6 +88,28 @@ static void restart_tc_sm(enum usb_tc_state start_state)
 	tc.evt_timeout = EVT_TIMEOUT_NEVER;
 }
 
+int get_alternate_port_pwr(struct pwr_con_t *pwr)
+{
+	enum tcpc_cc_voltage_status cc;
+
+	cc = tc.polarity ? tc.cc2 : tc.cc1;
+
+	pwr->volts = 5;
+
+	if (cc == TYPEC_CC_VOLT_RP_1_5) {
+		pwr->milli_amps = 1500;
+	} else if (cc == TYPEC_CC_VOLT_RP_3_0) {
+		pwr->milli_amps = 3000;
+	} else if (cc == TYPEC_CC_VOLT_RP_DEF) {
+		pwr->milli_amps = 900;
+	} else {
+		pwr->milli_amps = 0;
+		return -1;
+	}
+
+	return 0;
+}
+
 /*
  * Private Functions
  */
@@ -145,6 +170,9 @@ static void sink_power_sub_states(void)
 
 	tc.cc_debounce = 0;
 	print_alt_power();
+
+	/* Update board power configuration */
+	evaluate_input_power();
 }
 
 /*
@@ -219,6 +247,8 @@ static void tc_attach_wait_snk_run(int port)
 static void tc_attached_snk_entry(int port)
 {
 	print_alt_power();
+	/* Update board power configuration */
+	evaluate_input_power();
 
 	tc.evt_timeout = EVT_TIMEOUT_NEVER;
 	tc.cc_debounce = 0;

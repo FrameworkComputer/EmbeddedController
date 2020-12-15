@@ -21,6 +21,7 @@
 #include "ioexpanders.h"
 #include "pathsel.h"
 #include "pi3usb9201.h"
+#include "power_mgmt.h"
 #include "queue_policies.h"
 #include "registers.h"
 #include "spi.h"
@@ -387,6 +388,14 @@ int board_get_version(void)
 	return board_id_det();
 }
 
+#ifdef SECTION_IS_RO
+static void evaluate_input_power_def(void)
+{
+	evaluate_input_power();
+}
+DECLARE_DEFERRED(evaluate_input_power_def);
+#endif
+
 static void board_init(void)
 {
 	/* USB to serial queues */
@@ -419,6 +428,16 @@ static void board_init(void)
 	init_pathsel();
 	init_ina231s();
 	init_fusb302b(1);
+
+	/*
+	 * Get data about available input power. Add additional check after a
+	 * delay, since we need to wait for USB2/USB3 enumeration on host hub
+	 * as well as I2C interface of this hub needs to be initialized.
+	 * 3 seconds is experimentally selected value, by this time hub should
+	 * be up and running.
+	 */
+	evaluate_input_power();
+	hook_call_deferred(&evaluate_input_power_def_data, 3 * SECOND);
 
 	/* Enable DUT USB2.0 pair. */
 	gpio_set_level(GPIO_FASTBOOT_DUTHUB_MUX_EN_L, 0);

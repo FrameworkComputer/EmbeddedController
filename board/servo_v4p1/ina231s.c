@@ -67,3 +67,19 @@ int sr_chg_power(void)
 {
 	return ina2xx_get_power(SR_CHG_IDX);
 }
+
+int set_sr_chg_power_limit(int limit)
+{
+	int enable;
+	int rv;
+
+	/* Configure PowerOverLimit alert */
+	enable = ina2xx_get_mask(SR_CHG_IDX);
+	enable |= 0x800;
+
+	rv = ina2xx_set_alert(SR_CHG_IDX, limit / 25);
+	if (rv)
+		return rv;
+
+	return ina2xx_set_mask(SR_CHG_IDX, enable);
+}
