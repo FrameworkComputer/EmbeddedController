@@ -75,6 +75,26 @@ int ina2xx_get_power(uint8_t idx)
 	return INA2XX_POW_MW((int)pow);
 }
 
+int ina2xx_get_mask(uint8_t idx)
+{
+	return ina2xx_read(idx, INA2XX_REG_MASK);
+}
+
+int ina2xx_set_mask(uint8_t idx, uint16_t mask)
+{
+	return ina2xx_write(idx, INA2XX_REG_MASK, mask);
+}
+
+int ina2xx_get_alert(uint8_t idx)
+{
+	return ina2xx_read(idx, INA2XX_REG_ALERT);
+}
+
+int ina2xx_set_alert(uint8_t idx, uint16_t alert)
+{
+	return ina2xx_write(idx, INA2XX_REG_ALERT, alert);
+}
+
 #ifdef CONFIG_CMD_INA
 static void ina2xx_dump(uint8_t idx)
 {
