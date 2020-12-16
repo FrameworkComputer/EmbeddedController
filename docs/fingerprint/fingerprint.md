@@ -322,17 +322,32 @@ fingerprint development boards.
 (chroot) $  dut-control -t 60 pp3300_dx_mcu_mv pp3300_dx_fp_mv pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
 ```
 
-**Firmware Version**: `bloonchipper_v2.0.4277-9f652bb3`
+**Firmware Version**: `bloonchipper_v2.0.6509-80a3a4a2`
+
+When the MCU is idling waiting for an AP message:
 
 ```
 @@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
-@@       sample_msecs    128   469.05   33.79   641.75   399.90
-@@    pp1800_dx_fp_mv    128  1802.06    3.50  1808.00  1800.00
-@@    pp1800_dx_fp_mw    128     0.00    0.00     0.00     0.00
-@@    pp3300_dx_fp_mv    128  3296.00    0.00  3296.00  3296.00
-@@    pp3300_dx_fp_mw    128     0.00    0.03     0.26     0.00
-@@   pp3300_dx_mcu_mv    128  3288.00    0.00  3288.00  3288.00
-@@   pp3300_dx_mcu_mw    128    24.20    0.00    24.20    24.20
+@@       sample_msecs   1285    46.71   24.16   394.68    17.88
+@@    pp1800_dx_fp_mv   1285  1807.90    0.89  1808.00  1800.00
+@@    pp1800_dx_fp_mw   1285     0.00    0.00     0.00     0.00
+@@    pp3300_dx_fp_mv   1285  3288.00    0.00  3288.00  3288.00
+@@    pp3300_dx_fp_mw   1285     0.01    0.04     0.26     0.00
+@@   pp3300_dx_mcu_mv   1285  3280.93    2.56  3288.00  3280.00
+@@   pp3300_dx_mcu_mw   1285    21.26    0.08    22.36    20.99
+```
+
+When the MCU is in **low power** mode during the AP suspend (as emulated by `dut-control slp_s3:on`):
+
+```
+@@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
+@@       sample_msecs   1243    48.27   24.90   385.11    17.12
+@@    pp1800_dx_fp_mv   1243  1807.92    0.81  1808.00  1800.00
+@@    pp1800_dx_fp_mw   1243     0.00    0.00     0.00     0.00
+@@    pp3300_dx_fp_mv   1243  3288.04    0.55  3296.00  3288.00
+@@    pp3300_dx_fp_mw   1243     0.01    0.04     0.26     0.00
+@@   pp3300_dx_mcu_mv   1243  3288.00    0.00  3288.00  3288.00
+@@   pp3300_dx_mcu_mw   1243     2.25    0.39    10.26     2.10
 ```
 
 ### Dragontalon
