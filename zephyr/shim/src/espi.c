@@ -25,6 +25,13 @@
 
 LOG_MODULE_REGISTER(espi_shim, CONFIG_ESPI_LOG_LEVEL);
 
+/* host command packet handler structure */
+static struct host_packet lpc_packet;
+/*
+ * For the eSPI host command, request & response use the same share memory.
+ * This is for input request temp buffer.
+ */
+static uint8_t params_copy[EC_LPC_HOST_PACKET_SIZE] __aligned(4);
 static bool init_done;
 
 /*
@@ -124,6 +131,8 @@ static void espi_vwire_handler(const struct device *dev,
 	}
 }
 
+static void handle_host_write(uint32_t data);
+
 static void espi_peripheral_handler(const struct device *dev,
 				    struct espi_callback *cb,
 				    struct espi_event event)
@@ -133,6 +142,11 @@ static void espi_peripheral_handler(const struct device *dev,
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_PORT80) &&
 	    event_type == ESPI_PERIPHERAL_DEBUG_PORT80) {
 		port_80_write(event.evt_data);
+	}
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD) &&
+	    event_type == ESPI_PERIPHERAL_EC_HOST_CMD) {
+		handle_host_write(event.evt_data);
 	}
 }
 
@@ -343,3 +357,45 @@ static void host_command_init(void)
 }
 
 DECLARE_HOOK(HOOK_INIT, host_command_init, HOOK_PRIO_INIT_LPC);
+
+static void lpc_send_response_packet(struct host_packet *pkt)
+{
+	uint32_t data;
+
+	/* TODO(b/176523211): check whether add EC_RES_IN_PROGRESS handle */
+
+	/* Write result to the data byte.  This sets the TOH status bit. */
+	data = pkt->driver_result;
+	espi_write_lpc_request(espi_dev, ECUSTOM_HOST_CMD_SEND_RESULT, &data);
+}
+
+static void handle_host_write(uint32_t data)
+{
+	uint32_t shm_mem_host_cmd;
+
+	if (EC_COMMAND_PROTOCOL_3 != (data & 0xff)) {
+		LOG_ERR("Don't support this version of the host command");
+		/* TODO:(b/175217186): error response for other versions */
+		return;
+	}
+
+	espi_read_lpc_request(espi_dev, ECUSTOM_HOST_CMD_GET_PARAM_MEMORY,
+			      &shm_mem_host_cmd);
+
+	lpc_packet.send_response = lpc_send_response_packet;
+
+	lpc_packet.request = (const void *)shm_mem_host_cmd;
+	lpc_packet.request_temp = params_copy;
+	lpc_packet.request_max = sizeof(params_copy);
+	/* Don't know the request size so pass in the entire buffer */
+	lpc_packet.request_size = EC_LPC_HOST_PACKET_SIZE;
+
+	lpc_packet.response = (void *)shm_mem_host_cmd;
+	lpc_packet.response_max = EC_LPC_HOST_PACKET_SIZE;
+	lpc_packet.response_size = 0;
+
+	lpc_packet.driver_result = EC_RES_SUCCESS;
+
+	host_packet_receive(&lpc_packet);
+	return;
+}

@@ -4,3 +4,4 @@
 
 zephyr_sources(clock.c)
 zephyr_sources(keyboard_raw.c)
+zephyr_sources_ifdef(CONFIG_CROS_EC           system.c)
