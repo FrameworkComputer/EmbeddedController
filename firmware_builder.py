@@ -24,8 +24,8 @@ def build(opts):
     metrics = firmware_pb2.FwBuildMetricList()
     with open(opts.metrics, 'w') as f:
         f.write(json_format.MessageToJson(metrics))
-    return subprocess.run(['make', 'buildall_only', '-j{}'.format(opts.cpus)],
-                          cwd=os.path.dirname(__file__)).returncode
+    subprocess.run(['make', 'buildall_only', '-j{}'.format(opts.cpus)],
+                   cwd=os.path.dirname(__file__), check=True)
 
 
 def test(opts):
@@ -36,17 +36,15 @@ def test(opts):
         f.write(json_format.MessageToJson(metrics))
 
     # Verify all posix-based unit tests build and pass
-    rv = subprocess.run(['make', 'runtests', '-j{}'.format(opts.cpus)],
-                        cwd=os.path.dirname(__file__)).returncode
-    if rv != 0:
-        return rv
+    subprocess.run(['make', 'runtests', '-j{}'.format(opts.cpus)],
+                   cwd=os.path.dirname(__file__), check=True)
 
     # Verify compilation of the on-device unit test binaries.
     # TODO(b/172501728) These should build  for all boards, but they've bit
     # rotted, so we only build the ones that compile.
-    return subprocess.run(
+    subprocess.run(
         ['make', 'BOARD=bloonchipper', 'tests', '-j{}'.format(opts.cpus)],
-        cwd=os.path.dirname(__file__)).returncode
+        cwd=os.path.dirname(__file__), check=True)
 
 
 def main(args):
@@ -58,7 +56,12 @@ def main(args):
         return -1
 
     # Run selected sub command function
-    return opts.func(opts)
+    try:
+        opts.func(opts)
+    except subprocess.CalledProcessError:
+        return 1
+    else:
+        return 0
 
 
 def parse_args(args):
