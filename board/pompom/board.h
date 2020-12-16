@@ -24,6 +24,7 @@
 
 /* Keyboard */
 #define CONFIG_KEYBOARD_BOARD_CONFIG
+#define CONFIG_KEYBOARD_REFRESH_ROW3
 #define CONFIG_PWM_KBLIGHT
 
 /* BC 1.2 Charger */
