@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <zephyr.h>
 
+#include "acpi.h"
 #include "chipset.h"
 #include "common.h"
 #include "espi.h"
@@ -18,6 +19,7 @@
 #include "lpc.h"
 #include "port80.h"
 #include "power.h"
+#include "soc_espi.h"
 #include "timer.h"
 #include "zephyr_espi_shim.h"
 
@@ -132,6 +134,7 @@ static void espi_vwire_handler(const struct device *dev,
 }
 
 static void handle_host_write(uint32_t data);
+static void handle_acpi_write(uint32_t data);
 
 static void espi_peripheral_handler(const struct device *dev,
 				    struct espi_callback *cb,
@@ -142,6 +145,11 @@ static void espi_peripheral_handler(const struct device *dev,
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_PORT80) &&
 	    event_type == ESPI_PERIPHERAL_DEBUG_PORT80) {
 		port_80_write(event.evt_data);
+	}
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_ACPI) &&
+	    event_type == ESPI_PERIPHERAL_HOST_IO) {
+		handle_acpi_write(event.evt_data);
 	}
 
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD) &&
@@ -358,6 +366,32 @@ static void host_command_init(void)
 
 DECLARE_HOOK(HOOK_INIT, host_command_init, HOOK_PRIO_INIT_LPC);
 
+static void handle_acpi_write(uint32_t data)
+{
+	uint8_t value, result;
+	uint8_t is_cmd = (data >> NPCX_ACPI_TYPE_POS) & 0x01;
+	uint32_t status;
+
+	value = (data >> NPCX_ACPI_DATA_POS) & 0xff;
+
+	/* Handle whatever this was. */
+	if (acpi_ap_to_ec(is_cmd, value, &result)) {
+		data = result;
+		espi_write_lpc_request(espi_dev, EACPI_WRITE_CHAR, &data);
+	}
+
+	/* Clear processing flag */
+	espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
+	status &= ~EC_LPC_STATUS_PROCESSING;
+	espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+
+	/*
+	 * ACPI 5.0-12.6.1: Generate SCI for Input Buffer Empty / Output Buffer
+	 * Full condition on the kernel channel.
+	 */
+	lpc_generate_sci();
+}
+
 static void lpc_send_response_packet(struct host_packet *pkt)
 {
 	uint32_t data;
@@ -398,4 +432,20 @@ static void handle_host_write(uint32_t data)
 
 	host_packet_receive(&lpc_packet);
 	return;
+}
+
+void lpc_set_acpi_status_mask(uint8_t mask)
+{
+	uint32_t status;
+	espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
+	status |= mask;
+	espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
+}
+
+void lpc_clear_acpi_status_mask(uint8_t mask)
+{
+	uint32_t status;
+	espi_read_lpc_request(espi_dev, EACPI_READ_STS, &status);
+	status &= ~mask;
+	espi_write_lpc_request(espi_dev, EACPI_WRITE_STS, &status);
 }

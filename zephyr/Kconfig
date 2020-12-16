@@ -55,6 +55,13 @@ config ZEPHYR
 #
 # Please keep these in alphabetical order
 
+config PLATFORM_EC_ACPI
+	bool "Enable the ACPI module"
+	default y if AP_X86 && PLATFORM_EC_ESPI
+	help
+	  Enable shimming the ACPI handler, which will handle the Host data from
+	  the ACPI I/O port for X86 AP.
+
 config PLATFORM_EC_CBI
 	bool "Enable the CBI EEPROM module"
 	depends on PLATFORM_EC_I2C
