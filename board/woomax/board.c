@@ -16,6 +16,7 @@
 #include "driver/retimer/pi3dpx1207.h"
 #include "driver/retimer/pi3hdx1204.h"
 #include "driver/retimer/ps8811.h"
+#include "driver/retimer/ps8818.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/usb_mux/amd_fp5.h"
 #include "extpower.h"
@@ -262,6 +263,94 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 /*****************************************************************************
  * USB-C MUX/Retimer dynamic configuration
  */
+static int woomax_ps8818_mux_set(const struct usb_mux *me,
+				 mux_state_t mux_state)
+{
+	int rv = EC_SUCCESS;
+
+	/* USB specific config */
+	if (mux_state & USB_PD_MUX_USB_ENABLED) {
+		/* Boost the USB gain */
+		rv = ps8818_i2c_field_update8(me,
+					PS8818_REG_PAGE1,
+					PS8818_REG1_APTX1EQ_10G_LEVEL,
+					PS8818_EQ_LEVEL_UP_MASK,
+					PS8818_EQ_LEVEL_UP_19DB);
+		if (rv)
+			return rv;
+
+		rv = ps8818_i2c_field_update8(me,
+					PS8818_REG_PAGE1,
+					PS8818_REG1_APTX2EQ_10G_LEVEL,
+					PS8818_EQ_LEVEL_UP_MASK,
+					PS8818_EQ_LEVEL_UP_19DB);
+		if (rv)
+			return rv;
+
+		rv = ps8818_i2c_field_update8(me,
+					PS8818_REG_PAGE1,
+					PS8818_REG1_APTX1EQ_5G_LEVEL,
+					PS8818_EQ_LEVEL_UP_MASK,
+					PS8818_EQ_LEVEL_UP_19DB);
+		if (rv)
+			return rv;
+
+		rv = ps8818_i2c_field_update8(me,
+					PS8818_REG_PAGE1,
+					PS8818_REG1_APTX2EQ_5G_LEVEL,
+					PS8818_EQ_LEVEL_UP_MASK,
+					PS8818_EQ_LEVEL_UP_19DB);
+		if (rv)
+			return rv;
+	}
+
+	/* DP specific config */
+	if (mux_state & USB_PD_MUX_DP_ENABLED) {
+		/* Boost the DP gain */
+		rv = ps8818_i2c_field_update8(me,
+					PS8818_REG_PAGE1,
+					PS8818_REG1_DPEQ_LEVEL,
+					PS8818_DPEQ_LEVEL_UP_MASK,
+					PS8818_DPEQ_LEVEL_UP_19DB);
+		if (rv)
+			return rv;
+
+		/* Enable IN_HPD on the DB */
+		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 1);
+	} else {
+		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 0);
+	}
+
+	if (!(mux_state & USB_PD_MUX_POLARITY_INVERTED)) {
+		rv = ps8818_i2c_field_update8(me,
+					PS8818_REG_PAGE1,
+					PS8818_REG1_CRX1EQ_10G_LEVEL,
+					PS8818_EQ_LEVEL_UP_MASK,
+					PS8818_EQ_LEVEL_UP_19DB);
+		rv |= ps8818_i2c_write(me, PS8818_REG_PAGE1,
+					PS8818_REG1_APRX1_DE_LEVEL, 0x02);
+	}
+
+	/* set the RX input termination */
+	rv |= ps8818_i2c_field_update8(me,
+				PS8818_REG_PAGE1,
+				PS8818_REG1_RX_PHY,
+				PS8818_RX_INPUT_TERM_MASK,
+				PS8818_RX_INPUT_TERM_85_OHM);
+	/* set register 0x40 ICP1 for 1G PD loop */
+	rv |= ps8818_i2c_write(me, PS8818_REG_PAGE1, 0x40, 0x84);
+
+	return rv;
+}
+
+const struct usb_mux usbc1_woomax_ps8818 = {
+	.usb_port = USBC_PORT_C1,
+	.i2c_port = I2C_PORT_TCPC1,
+	.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
+	.driver = &ps8818_usb_retimer_driver,
+	.board_set = &woomax_ps8818_mux_set,
+};
+
 static void setup_mux(void)
 {
 	if (ec_config_has_usbc1_retimer_ps8802()) {
@@ -297,7 +386,7 @@ static void setup_mux(void)
 		       sizeof(struct usb_mux));
 
 		/* Set the PS8818 as the secondary MUX */
-		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_ps8818;
+		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_woomax_ps8818;
 	}
 }
 
