@@ -28,7 +28,6 @@
 #define CONFIG_CUSTOMER_PORT80
 
 
-#define CONFIG_SYSTEMSERIAL_DEBUG
 /*
  * Combination key
  */
@@ -50,6 +49,11 @@
 #ifndef CONFIG_BOARD_PRE_INIT
 #define CONFIG_BOARD_PRE_INIT
 #endif
+#endif
+
+/* Add commands to read/write ec serial data structure */
+#ifdef CONFIG_CHIPSET_DEBUG
+#define CONFIG_SYSTEMSERIAL_DEBUG
 #endif
 
 /*

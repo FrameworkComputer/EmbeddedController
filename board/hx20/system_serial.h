@@ -36,7 +36,7 @@ enum ec_serial_idx {
 	SN_THERMAL_ASSY,
 	SN_WIFI_MODULE, /*Currently not used*/
 	SN_SPEAKER,
-	SN_RAM_SLOT_1, /*Currently not used*/ 
+	SN_RAM_SLOT_1, /*Currently not used*/
 	SN_RAM_SLOT_2, /*Currently not used*/
 	SN_SSD, /*Currently not used*/
 	SN_AUDIO_FFC,
