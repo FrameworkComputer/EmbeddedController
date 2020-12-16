@@ -3,5 +3,9 @@
 # Don't inherit owners from elsewhere in the manifest
 set noparent
 
-tomhughes@chromium.org
 adlr@chromium.org
+hesling@chromium.org
+jora@google.com
+josienordrum@google.com
+tomhughes@chromium.org
+yichengli@chromium.org
