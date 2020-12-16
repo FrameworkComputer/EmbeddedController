@@ -17,10 +17,10 @@ CRYPTOC_DIR ?= $(realpath ../../third_party/cryptoc)
 
 # SUPPORT_UNALIGNED indicates to libcryptoc that provided data buffers
 # may be unaligned and please handle them safely.
-cmd_libcryptoc_make = $(MAKE) -C $(CRYPTOC_DIR) \
+cmd_libcryptoc = $(MAKE) -C $(CRYPTOC_DIR) \
 	obj=$(realpath $(out))/cryptoc \
 	SUPPORT_UNALIGNED=1
-cmd_libcryptoc = $(cmd_libcryptoc_make) -q || $(cmd_libcryptoc_make)
+cmd_libcryptoc_clean = $(cmd_libcryptoc) -q && echo clean
 
 ifneq ($(BOARD),host)
 CPPFLAGS += -I$(abspath ./builtin)
@@ -28,8 +28,14 @@ endif
 CPPFLAGS += -I$(CRYPTOC_DIR)/include
 CRYPTOC_LDFLAGS := -L$(out)/cryptoc -lcryptoc
 
-# Force the external build each time, so it can look for changed sources.
+# Conditionally force the rebuilding of libcryptoc.a only if it would be
+# changed.
+# Note, we use ifndef to ensure the likelyhood of rebuilding is much higher.
+# For example, if variable cmd_libcryptoc_clean is modified or blank,
+# we will rebuild.
+ifneq ($(shell $(cmd_libcryptoc_clean)),clean)
 .PHONY: $(out)/cryptoc/libcryptoc.a
+endif
 $(out)/cryptoc/libcryptoc.a:
 	+$(call quiet,libcryptoc,MAKE   )
 
