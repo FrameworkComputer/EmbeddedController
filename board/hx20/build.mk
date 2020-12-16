@@ -25,4 +25,6 @@ board-$(CONFIG_KEYBOARD_CUSTOMIZATION)+=keyboard_customization.o
 board-$(CONFIG_POWER_BUTTON_CUSTOM) += power_button_x86.o
 board-$(CONFIG_PECI) += peci_customization.o
 board-$(HAS_TASK_HOSTCMD) += host_command_customization.o
+board-$(CONFIG_SYSTEMSERIAL_DEBUG) += system_serial.o
+
 
