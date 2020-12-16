@@ -226,7 +226,7 @@ endif
 build-%: ec-%
 	\$(MAKE) --no-print-directory -C \$(@:build-%=ec-%)                   \\
 		STATIC_VERSION=1                                              \\
-		CRYPTOCLIB=\$(CRYPTOC_DIR)                                    \\
+		CRYPTOC_DIR=\$(CRYPTOC_DIR)                                   \\
 		\$(addprefix proj-,\$(BOARDS))
 	@printf "  MKDIR   %s\n" "\$@"
 	@mkdir -p \$@

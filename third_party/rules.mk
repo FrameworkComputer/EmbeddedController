@@ -10,11 +10,11 @@
 # Build and link against libcryptoc.
 ifeq ($(CONFIG_LIBCRYPTOC),y)
 
-CRYPTOCLIB ?= $(realpath ../../third_party/cryptoc)
+CRYPTOC_DIR ?= $(realpath ../../third_party/cryptoc)
 
 # SUPPORT_UNALIGNED indicates to libcryptoc that provided data buffers
 # may be unaligned and please handle them safely.
-cmd_libcryptoc_make = $(MAKE) -C $(CRYPTOCLIB) \
+cmd_libcryptoc_make = $(MAKE) -C $(CRYPTOC_DIR) \
 	obj=$(realpath $(out))/cryptoc \
 	SUPPORT_UNALIGNED=1
 cmd_libcryptoc = $(cmd_libcryptoc_make) -q || $(cmd_libcryptoc_make)
@@ -22,7 +22,7 @@ cmd_libcryptoc = $(cmd_libcryptoc_make) -q || $(cmd_libcryptoc_make)
 ifneq ($(BOARD),host)
 CPPFLAGS += -I$(abspath ./builtin)
 endif
-CPPFLAGS += -I$(CRYPTOCLIB)/include
+CPPFLAGS += -I$(CRYPTOC_DIR)/include
 CRYPTOC_LDFLAGS := -L$(out)/cryptoc -lcryptoc
 
 # Force the external build each time, so it can look for changed sources.
