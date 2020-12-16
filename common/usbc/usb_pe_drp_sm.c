@@ -1423,6 +1423,8 @@ static void pe_handle_detach(void)
 	 */
 	pd_set_src_caps(port, 0, NULL);
 	pe_set_snk_caps(port, 0, NULL);
+
+	dpm_remove_sink(port);
 }
 DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, pe_handle_detach, HOOK_PRIO_DEFAULT);
 
@@ -2302,6 +2304,14 @@ static void pe_src_transition_supply_run(int port)
 			if (pd_get_src_cap_cnt(port) == 0)
 				pd_dpm_request(port, DPM_REQUEST_GET_SRC_CAPS);
 
+			/*
+			 * Evaluate port's sink caps for preferred current, if
+			 * already available
+			 */
+			if (pd_get_snk_cap_cnt(port) > 0)
+				dpm_evaluate_sink_fixed_pdo(port,
+							*pd_get_snk_caps(port));
+
 			set_state_pe(port, PE_SRC_READY);
 		} else {
 			/* NOTE: First pass through this code block */
@@ -2792,6 +2802,8 @@ static void pe_snk_startup_entry(int port)
 		 */
 		if (tc_is_vconn_src(port))
 			tcpm_sop_prime_enable(port, false);
+
+		dpm_remove_sink(port);
 	} else {
 		/*
 		 * Set DiscoverIdentityTimer to trigger when we enter
@@ -6300,6 +6312,10 @@ static void pe_dr_get_sink_cap_run(int port)
 							sizeof(uint32_t);
 
 				pe_set_snk_caps(port, cap_cnt, payload);
+
+				if (pe[port].power_role == PD_ROLE_SOURCE)
+					dpm_evaluate_sink_fixed_pdo(port,
+								payload[0]);
 				pe_set_ready_state(port);
 				return;
 			} else if (cnt == 0 && (type == PD_CTRL_REJECT ||

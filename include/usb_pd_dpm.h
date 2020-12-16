@@ -58,4 +58,21 @@ void dpm_vdm_naked(int port, enum tcpm_transmit_type type, uint16_t svid,
  */
 void dpm_run(int port);
 
+/*
+ * Determines the current allocation for the connection, past the basic
+ * CONFIG_USB_PD_PULLUP value set by the TC (generally 1.5 A)
+ *
+ * @param port		USB-C port number
+ * @param vsafe5v_pdo	Copy of first Sink_Capability PDO, which should
+ *			represent the vSafe5V fixed PDO
+ */
+void dpm_evaluate_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo);
+
+/*
+ * Remove this port as a sink, and reallocate maximum current as needed.
+ *
+ * @param port		USB-C port number
+ */
+void dpm_remove_sink(int port);
+
 #endif  /* __CROS_EC_USB_DPM_H */
