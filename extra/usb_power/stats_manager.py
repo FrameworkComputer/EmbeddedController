@@ -95,7 +95,7 @@ class StatsManager(object):
     self._accept_nan = accept_nan
     self._nan_domains = set()
     self._summary = {}
-    self._logger = logging.getLogger('StatsManager')
+    self._logger = logging.getLogger(type(self).__name__)
 
   def AddSample(self, domain, sample):
     """Add one sample for a domain.
@@ -217,7 +217,8 @@ class StatsManager(object):
     if self._title:
       title_section = '**%s**  \n\n' % self._title
       body = title_section + body
-    return body
+    # Make sure that the body is terminated with a newline.
+    return body + '\n'
 
   def SummaryToString(self, prefix=STATS_PREFIX):
     """Format summary into a string, ready for pretty print.
