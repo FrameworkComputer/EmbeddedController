@@ -40,26 +40,55 @@
 #define CPRINTS(format, args...)
 #endif
 
-#define RCH_SET_FLAG(port, flag) atomic_or(&rch[port].flags, (flag))
-#define RCH_CLR_FLAG(port, flag) atomic_clear_bits(&rch[port].flags, (flag))
+/*
+ * Define DEBUG_PRINT_FLAG_NAMES to print flag names when set and cleared.
+ */
+#undef DEBUG_PRINT_FLAG_NAMES
+
+#ifdef DEBUG_PRINT_FLAG_NAMES
+__maybe_unused static void print_flag(const char *group,
+				      int set_or_clear,
+				      int flag);
+#define SET_FLAG(group, flags, flag)                     \
+	do {                                             \
+		print_flag(group, 1, flag);              \
+		atomic_or(flags, (flag));                \
+	} while (0)
+#define CLR_FLAG(group, flags, flag)                     \
+	do {                                             \
+		int before = *flags;                     \
+		atomic_clear_bits(flags, (flag));        \
+		if (*flags != before)                    \
+			print_flag(group, 0, flag);      \
+	} while (0)
+#else
+#define SET_FLAG(group, flags, flag) atomic_or(flags, (flag))
+#define CLR_FLAG(group, flags, flag) atomic_clear_bits(flags, (flag))
+#endif
+
+
+#define RCH_SET_FLAG(port, flag) SET_FLAG("RCH", &rch[port].flags, (flag))
+#define RCH_CLR_FLAG(port, flag) CLR_FLAG("RCH", &rch[port].flags, (flag))
 #define RCH_CHK_FLAG(port, flag) (rch[port].flags & (flag))
 
-#define TCH_SET_FLAG(port, flag) atomic_or(&tch[port].flags, (flag))
-#define TCH_CLR_FLAG(port, flag) atomic_clear_bits(&tch[port].flags, (flag))
+#define TCH_SET_FLAG(port, flag) SET_FLAG("TCH", &tch[port].flags, (flag))
+#define TCH_CLR_FLAG(port, flag) CLR_FLAG("TCH", &tch[port].flags, (flag))
 #define TCH_CHK_FLAG(port, flag) (tch[port].flags & (flag))
 
-#define PRL_TX_SET_FLAG(port, flag) atomic_or(&prl_tx[port].flags, (flag))
+#define PRL_TX_SET_FLAG(port, flag) \
+	SET_FLAG("PRL_TX", &prl_tx[port].flags, (flag))
 #define PRL_TX_CLR_FLAG(port, flag) \
-	atomic_clear_bits(&prl_tx[port].flags, (flag))
+	CLR_FLAG("PRL_TX", &prl_tx[port].flags, (flag))
 #define PRL_TX_CHK_FLAG(port, flag) (prl_tx[port].flags & (flag))
 
-#define PRL_HR_SET_FLAG(port, flag) atomic_or(&prl_hr[port].flags, (flag))
+#define PRL_HR_SET_FLAG(port, flag) \
+	SET_FLAG("PRL_HR", &prl_hr[port].flags, (flag))
 #define PRL_HR_CLR_FLAG(port, flag) \
-	atomic_clear_bits(&prl_hr[port].flags, (flag))
+	CLR_FLAG("PRL_HR", &prl_hr[port].flags, (flag))
 #define PRL_HR_CHK_FLAG(port, flag) (prl_hr[port].flags & (flag))
 
-#define PDMSG_SET_FLAG(port, flag) atomic_or(&pdmsg[port].flags, (flag))
-#define PDMSG_CLR_FLAG(port, flag) atomic_clear_bits(&pdmsg[port].flags, (flag))
+#define PDMSG_SET_FLAG(port, flag) SET_FLAG("PDMSG", &pdmsg[port].flags, (flag))
+#define PDMSG_CLR_FLAG(port, flag) CLR_FLAG("PDMSG", &pdmsg[port].flags, (flag))
 #define PDMSG_CHK_FLAG(port, flag) (pdmsg[port].flags & (flag))
 
 /* Protocol Layer Flags */
@@ -93,6 +122,53 @@
 #define PRL_FLAGS_ABORT                   BIT(9)
 /* Flag to note current TX message uses chunking */
 #define PRL_FLAGS_CHUNKING                BIT(10)
+
+struct bit_name {
+	int		value;
+	const char	*name;
+};
+
+static struct bit_name flag_bit_names[] = {
+	{ PRL_FLAGS_TX_COMPLETE, "PRL_FLAGS_TX_COMPLETE" },
+	{ PRL_FLAGS_SINK_NG, "PRL_FLAGS_SINK_NG" },
+	{ PRL_FLAGS_WAIT_SINK_OK, "PRL_FLAGS_WAIT_SINK_OK" },
+	{ PRL_FLAGS_TX_ERROR, "PRL_FLAGS_TX_ERROR" },
+	{ PRL_FLAGS_PE_HARD_RESET, "PRL_FLAGS_PE_HARD_RESET" },
+	{ PRL_FLAGS_HARD_RESET_COMPLETE, "PRL_FLAGS_HARD_RESET_COMPLETE" },
+	{ PRL_FLAGS_PORT_PARTNER_HARD_RESET,
+		"PRL_FLAGS_PORT_PARTNER_HARD_RESET" },
+	{ PRL_FLAGS_MSG_XMIT, "PRL_FLAGS_MSG_XMIT" },
+	{ PRL_FLAGS_MSG_RECEIVED, "PRL_FLAGS_MSG_RECEIVED" },
+	{ PRL_FLAGS_ABORT, "PRL_FLAGS_ABORT" },
+	{ PRL_FLAGS_CHUNKING, "PRL_FLAGS_CHUNKING" },
+};
+
+__maybe_unused static void print_bits(const char *group,
+				      const char *desc,
+				      int value,
+				      struct bit_name *names,
+				      int names_size)
+{
+	int i;
+
+	CPRINTF("%s %s 0x%x : ", group, desc, value);
+	for (i = 0; i < names_size; i++) {
+		if (value & names[i].value)
+			CPRINTF("%s | ", names[i].name);
+		value &= ~names[i].value;
+	}
+	if (value != 0)
+		CPRINTF("0x%x", value);
+	CPRINTF("\n");
+}
+
+__maybe_unused static void print_flag(const char *group,
+				      int set_or_clear,
+				      int flag)
+{
+	print_bits(group, set_or_clear ? "Set" : "Clr", flag, flag_bit_names,
+		   ARRAY_SIZE(flag_bit_names));
+}
 
 /* PD counter definitions */
 #define PD_MESSAGE_ID_COUNT 7
