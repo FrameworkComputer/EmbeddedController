@@ -40,9 +40,6 @@ static inline void virtual_mux_update_state(int port, mux_state_t mux_state)
 	if (!IS_ENABLED(CONFIG_USB_MUX_AP_ACK_REQUEST))
 		return;
 
-	/* This should only be called from the PD task */
-	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
-
 	/*
 	 * EC waits for the ACK from kernel indicating that TCSS Mux
 	 * configuration is completed. This mechanism is implemented for
@@ -58,6 +55,9 @@ static inline void virtual_mux_update_state(int port, mux_state_t mux_state)
 	     (mux_state & USB_PD_MUX_SAFE_MODE)) ||
 	   ((previous_mux_state & USB_PD_MUX_SAFE_MODE) &&
 	    !(mux_state & USB_PD_MUX_SAFE_MODE))) {
+		/* This should only be called from the PD task */
+		assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
+
 		task_wait_event_mask(PD_EVENT_AP_MUX_DONE, 100*MSEC);
 		usleep(12.5 * MSEC);
 	}
