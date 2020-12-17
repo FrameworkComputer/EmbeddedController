@@ -1263,15 +1263,9 @@ void charger_update(void)
 		}
 
 		val = ISL9241_CONTROL1_PROCHOT_REF_6800 | ISL9241_CONTROL1_SWITCH_FREQ;
-		if (battery_is_present()) {
-			if (extpower_is_present() && (charge_get_percent() < 30)) {
-				val |= ISL9241_CONTROL1_SUPPLEMENTAL_SUPPORT_MODE +
-						ISL9241_CONTROL1_BGATE_DISABEL;
-			}
-			else
-				val |= ISL9241_CONTROL1_SUPPLEMENTAL_SUPPORT_MODE;
-		}
-		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL1, val)) {
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_CONTROL1, (battery_is_present() ? val |
+			ISL9241_CONTROL1_SUPPLEMENTAL_SUPPORT_MODE : val))) {
 			CPRINTS("Update charger control1 fail");
 		}
 
@@ -1279,8 +1273,7 @@ void charger_update(void)
 		pre_dc_state = battery_is_present();
 	}
 }
-DECLARE_HOOK(HOOK_AC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_TICK, charger_update, HOOK_PRIO_DEFAULT);
 
 void update_power_limit(void)
 {
