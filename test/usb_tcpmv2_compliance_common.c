@@ -185,12 +185,13 @@ int proc_pd_e1(enum pd_data_role data_role)
 	switch (data_role) {
 	case PD_ROLE_UFP:
 		/*
-		 * b) The tester applies Rp (3A) and waits for the UUT
-		 *    attachment.
+		 * b) The tester applies Rp (PD3=1.5A, PD2=3A) and waits for
+		 * the UUT attachment.
 		 */
 		mock_set_cc(MOCK_CC_DUT_IS_SNK,
 			    MOCK_CC_SNK_OPEN,
-			    MOCK_CC_SNK_RP_3_0);
+			    (partner_get_pd_rev() == PD_REV30 ?
+			    MOCK_CC_SNK_RP_1_5 : MOCK_CC_SNK_RP_3_0));
 		mock_set_alert(TCPC_REG_ALERT_CC_STATUS);
 		task_wait_event(5 * MSEC);
 
