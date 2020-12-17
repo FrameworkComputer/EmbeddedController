@@ -7,6 +7,7 @@
 
 #include "adc_chip.h"
 #include "button.h"
+#include "cbi_fw_config.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
@@ -21,6 +22,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "intc.h"
+#include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -234,6 +236,49 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
+static const struct ec_response_keybd_config galith_kb = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
+};
+
+static const struct ec_response_keybd_config galtic_kb = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_FORWARD,		/* T2 */
+		TK_REFRESH,		/* T3 */
+		TK_FULLSCREEN,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+__override const struct ec_response_keybd_config
+*board_vivaldi_keybd_config(void)
+{
+	if (get_cbi_fw_config_numeric_pad() == NUMERIC_PAD_PRESENT)
+		return &galith_kb;
+	else
+		return &galtic_kb;
+}
+
 void board_init(void)
 {
 	int on;
@@ -258,6 +303,17 @@ void board_init(void)
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
 			      CHIPSET_STATE_SOFT_OFF);
 	board_power_5v_enable(on);
+
+	if (get_cbi_fw_config_numeric_pad() == NUMERIC_PAD_ABSENT) {
+		/* Disable scanning KSO13 and 14 if keypad isn't present. */
+		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
+	} else {
+		/* Setting scan mask KSO11, KSO12, KSO13 and KSO14 */
+		keyscan_config.actual_key_mask[11] = 0xfe;
+		keyscan_config.actual_key_mask[12] = 0xff;
+		keyscan_config.actual_key_mask[13] = 0xff;
+		keyscan_config.actual_key_mask[14] = 0xff;
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

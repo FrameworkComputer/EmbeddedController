@@ -83,6 +83,11 @@
 
 #define CONFIG_USBC_RETIMER_TUSB544		/* C1 Redriver: TUSB544 */
 
+/* Keyboard */
+#define CONFIG_KEYBOARD_VIVALDI
+#define CONFIG_KEYBOARD_REFRESH_ROW3
+#define CONFIG_KEYBOARD_KEYPAD
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
