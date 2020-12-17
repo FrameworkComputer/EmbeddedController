@@ -831,7 +831,7 @@ static void it83xx_tcpm_hook_connect(void)
 DECLARE_HOOK(HOOK_USB_PD_CONNECT, it83xx_tcpm_hook_connect, HOOK_PRIO_DEFAULT);
 #endif
 
-static void it83xx_tcpm_sw_reset(void)
+static void it83xx_tcpm_hook_disconnect(void)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
 
@@ -857,7 +857,8 @@ static void it83xx_tcpm_sw_reset(void)
 	set_pd_sleep_mask(port);
 }
 
-DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, it83xx_tcpm_sw_reset, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, it83xx_tcpm_hook_disconnect,
+	     HOOK_PRIO_DEFAULT);
 
 const struct tcpm_drv it83xx_tcpm_drv = {
 	.init			= &it83xx_tcpm_init,

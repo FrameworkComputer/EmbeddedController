@@ -419,8 +419,8 @@ extern const struct usbpd_ctrl_t usbpd_ctrl_regs[];
 extern const struct tcpm_drv it83xx_tcpm_drv;
 void it83xx_Rd_5_1K_only_for_hibernate(int port);
 #ifdef CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2
-void it83xx_clear_tx_error_status(enum usbpd_port port);
-void it83xx_get_tx_error_status(enum usbpd_port port);
+void it8xxx2_clear_tx_error_status(enum usbpd_port port);
+void it8xxx2_get_tx_error_status(enum usbpd_port port);
 #endif
 void switch_plug_out_type(enum usbpd_port port);
 /*
