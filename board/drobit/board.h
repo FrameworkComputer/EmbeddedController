@@ -67,12 +67,6 @@
 
 /* Enabling USB4 mode */
 #define CONFIG_USB_PD_USB4
-/*
- * For USB4, set the total budget for source current to 4.5A so that the first
- * connected port is allowed to source 3A while sourcing 1.5A on other type-C
- * ports.
- */
-#define CONFIG_USB_PD_MAX_TOTAL_SOURCE_CURRENT		4500
 
 #define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x40
 #define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x41

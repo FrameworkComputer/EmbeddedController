@@ -5069,6 +5069,27 @@
 
 /******************************************************************************/
 /*
+ * Ensure that CONFIG_USB_PD_TCPMV2 is not being used with charge_manager source
+ * defines, and define a default number of 3.0 A ports if not selected.  Note
+ * that the functionality of this default of 1 is equivalent to both previous
+ * defines, which only ever allocated one 3.0 A port.
+ */
+#ifdef CONFIG_USB_PD_TCPMV2
+#if defined(CONFIG_USB_PD_MAX_TOTAL_SOURCE_CURRENT) || \
+	defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT)
+#error Define CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT is limited to TCPMv1
+#endif
+#ifndef CONFIG_USB_PD_3A_PORTS
+#define CONFIG_USB_PD_3A_PORTS	1
+#endif
+/* USB4 support requires at least one port providing 3.0 A */
+#if defined(CONFIG_USB_PD_USB4) && CONFIG_USB_PD_3A_PORTS == 0
+#error USB4 support requires at least one 3.0 A port
+#endif
+#endif
+
+/******************************************************************************/
+/*
  * Automatically define CONFIG_HOSTCMD_X86 if either child option is defined.
  * Ensure LPC and eSPI are mutually exclusive
  */

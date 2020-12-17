@@ -34,7 +34,7 @@ void board_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 	/* Only Type-C ports can source VBUS */
 	if (is_typec_port(port)) {
 		/* Enable SRC ILIM if rp is MAX single source current */
-		ilim_en = (rp == CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT &&
+		ilim_en = (rp ==  TYPEC_RP_3A0 &&
 			board_vbus_source_enabled(port));
 
 		gpio_set_level(tcpc_gpios[port].src_ilim.pin,

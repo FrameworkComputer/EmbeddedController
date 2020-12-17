@@ -24,6 +24,7 @@
 #include "usb_common.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_dpm.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ocp.h"
 #include "usbc_ppc.h"
@@ -263,7 +264,10 @@ int pd_check_requested_voltage(uint32_t rdo, const int port)
 	int idx = RDO_POS(rdo);
 	uint32_t pdo;
 	uint32_t pdo_ma;
-#if defined(CONFIG_USB_PD_DYNAMIC_SRC_CAP) || \
+#if defined(CONFIG_USB_PD_TCPMV2) && defined(CONFIG_USB_PE_SM)
+	const uint32_t *src_pdo;
+	const int pdo_cnt = dpm_get_source_pdo(&src_pdo, port);
+#elif defined(CONFIG_USB_PD_DYNAMIC_SRC_CAP) || \
 		defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT)
 	const uint32_t *src_pdo;
 	const int pdo_cnt = charge_manager_get_source_pdo(&src_pdo, port);

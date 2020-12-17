@@ -1549,14 +1549,8 @@ static void print_current_state(const int port)
 
 static void send_source_cap(int port)
 {
-#if defined(CONFIG_USB_PD_DYNAMIC_SRC_CAP) || \
-		defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT)
 	const uint32_t *src_pdo;
-	const int src_pdo_cnt = charge_manager_get_source_pdo(&src_pdo, port);
-#else
-	const uint32_t *src_pdo = pd_src_pdo;
-	const int src_pdo_cnt = pd_src_pdo_cnt;
-#endif
+	const int src_pdo_cnt = dpm_get_source_pdo(&src_pdo, port);
 
 	if (src_pdo_cnt == 0) {
 		/* No source capabilities defined, sink only */

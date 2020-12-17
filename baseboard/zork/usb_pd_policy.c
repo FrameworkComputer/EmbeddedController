@@ -39,11 +39,6 @@ void pd_power_supply_reset(int port)
 			pd_set_vbus_discharge(port, 1);
 	}
 
-#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
-	/* Give back the current quota we are no longer using */
-	charge_manager_source_port(port, 0);
-#endif /* defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) */
-
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
@@ -64,11 +59,6 @@ int pd_set_power_supply_ready(int port)
 	rv = ppc_vbus_source_enable(port, 1);
 	if (rv)
 		return rv;
-
-#ifdef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
-	/* Ensure we advertise the proper available current quota */
-	charge_manager_source_port(port, 1);
-#endif /* defined(CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT) */
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);

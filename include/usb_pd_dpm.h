@@ -75,4 +75,13 @@ void dpm_evaluate_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo);
  */
 void dpm_remove_sink(int port);
 
+/*
+ * Return the appropriate Source Capability PDO to offer this port
+ *
+ * @param src_pdo	Will point to appropriate PDO to offer
+ * @param port		USB-C port number
+ * @return		Number of PDOs
+ */
+int dpm_get_source_pdo(const uint32_t **src_pdo, const int port);
+
 #endif  /* __CROS_EC_USB_DPM_H */

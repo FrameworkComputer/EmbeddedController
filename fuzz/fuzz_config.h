@@ -60,6 +60,7 @@
 #define PD_VCONN_SWAP_DELAY 5000
 #define CONFIG_SHA256
 #define CONFIG_SW_CRC
+#define CONFIG_USB_PD_3A_PORTS 0 /* Host does not define a 3.0 A PDO */
 #endif /* TEST_USB_TCPM_V2_REV30_FUZZ */
 
 #ifdef TEST_USB_TCPM_V2_REV20_FUZZ
@@ -80,6 +81,7 @@
 #define PD_VCONN_SWAP_DELAY 5000
 #define CONFIG_SHA256
 #define CONFIG_SW_CRC
+#define CONFIG_USB_PD_3A_PORTS 0 /* Host does not define a 3.0 A PDO */
 #endif /* TEST_USB_TCPM_V2_REV20_FUZZ */
 
 #endif  /* TEST_FUZZ */

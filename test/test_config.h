@@ -497,6 +497,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_DEBUG_LEVEL 3
 #define CONFIG_USB_PD_EXTENDED_MESSAGES
 #define CONFIG_USB_PD_DECODE_SOP
+#define CONFIG_USB_PD_3A_PORTS 0 /* Host does not define a 3.0 A PDO */
 #endif
 
 #ifdef TEST_USB_PD_INT
