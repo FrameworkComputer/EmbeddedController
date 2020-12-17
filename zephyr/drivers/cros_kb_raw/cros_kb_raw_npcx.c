@@ -88,8 +88,8 @@ static int kb_raw_npcx_init(const struct device *dev)
 }
 
 /* Cros ec keyboard raw api functions */
-static void cros_kb_raw_npcx_enable_interrupt(const struct device *dev,
-					      int enable)
+static int cros_kb_raw_npcx_enable_interrupt(const struct device *dev,
+					     int enable)
 {
 	const struct cros_kb_raw_npcx_config *const config = DRV_CONFIG(dev);
 
@@ -97,6 +97,8 @@ static void cros_kb_raw_npcx_enable_interrupt(const struct device *dev,
 		irq_enable(config->irq);
 	else
 		irq_disable(config->irq);
+
+	return 0;
 }
 
 static int cros_kb_raw_npcx_read_row(const struct device *dev)
@@ -213,6 +215,7 @@ static const struct cros_kb_raw_driver_api cros_kb_raw_npcx_driver_api = {
 	.init = cros_kb_raw_npcx_init,
 	.drive_colum = cros_kb_raw_npcx_drive_column,
 	.read_rows = cros_kb_raw_npcx_read_row,
+	.enable_interrupt = cros_kb_raw_npcx_enable_interrupt,
 };
 
 static const struct npcx_alt cros_kb_raw_alts[] = DT_NPCX_ALT_ITEMS_LIST(0);
