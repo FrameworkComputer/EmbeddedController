@@ -36,6 +36,8 @@
 #define CONFIG_LED_PWM_COUNT 1
 
 /* Keyboard features */
+#define CONFIG_KEYBOARD_VIVALDI
+#define CONFIG_KEYBOARD_REFRESH_ROW3
 
 /* Sensors */
 #undef CONFIG_TABLET_MODE
