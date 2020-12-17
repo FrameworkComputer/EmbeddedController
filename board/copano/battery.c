@@ -32,25 +32,23 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* LGC\011 L17L3PB0 Battery Information */
-	/*
-	 * Battery info provided by ODM on b/143477210, comment #11
-	 */
-	[BATTERY_LGC011] = {
+	[BATTERY_C433] = {
 		.fuel_gauge = {
-			.manuf_name = "LGC",
+			.manuf_name = "AS1GVPc3KB",
+			.device_name = "C433-41",
 			.ship_mode = {
 				.reg_addr = 0x00,
 				.reg_data = { 0x10, 0x10 },
 			},
 			.fet = {
-				.reg_addr = 0x0,
+				.mfgacc_support = 1,
+				.reg_addr = 0x44,
 				.reg_mask = 0x6000,
 				.disconnect_val = 0x6000,
 			}
 		},
 		.batt_info = {
-			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
+			.voltage_max		= 13200,
 			.voltage_normal		= 11550, /* mV */
 			.voltage_min		= 9000, /* mV */
 			.precharge_current	= 256,	/* mA */
@@ -58,39 +56,11 @@ const struct board_batt_params board_battery_info[] = {
 			.start_charging_max_c	= 45,
 			.charging_min_c		= 0,
 			.charging_max_c		= 60,
-			.discharging_min_c	= 0,
-			.discharging_max_c	= 75,
-		},
-	},
-	/* LGC AP18C8K Battery Information */
-	 [BATTERY_LGC_AP18C8K] = {
-		.fuel_gauge = {
-			.manuf_name = "LGC KT0030G020",
-			.device_name = "AP18C8K",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
-			},
-			.fet = {
-				.reg_addr = 0x43,
-				.reg_mask = 0x0001,
-				.disconnect_val = 0x0,
-			},
-		},
-		.batt_info = {
-			.voltage_max            = 13050,
-			.voltage_normal         = 11250,
-			.voltage_min            = 9000,
-			.precharge_current      = 256,
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 75,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 60,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_LGC011;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_C433;
