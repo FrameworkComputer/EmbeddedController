@@ -12,6 +12,13 @@
 
 #define ADC_READ_ERROR -1  /* Value returned by adc_read_channel() on error */
 
+#ifdef CONFIG_ZEPHYR
+/* TODO(b/175881324): Add a shim for ADC */
+enum adc_channel {
+	ADC_NONE,
+};
+#endif
+
 /*
  * Boards which use the ADC interface must provide enum adc_channel in the
  * board.h file.  See chip/$CHIP/adc_chip.h for additional chip-specific
