@@ -11,7 +11,6 @@
 /* EC modules */
 #define CONFIG_ADC
 #define CONFIG_PWM
-#define CONFIG_SPI
 #define CONFIG_I2C
 /* Features of eSPI */
 #define CONFIG_HOSTCMD_ESPI
@@ -37,7 +36,6 @@
 #define CONFIG_CMD_STACKOVERFLOW
 #define CONFIG_CMD_JUMPTAGS
 #define CONFIG_CMD_FLASH
-#define CONFIG_CMD_SPI_FLASH
 #define CONFIG_CMD_SCRATCHPAD
 #define CONFIG_CMD_I2CWEDGE
 
