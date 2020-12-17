@@ -400,12 +400,8 @@ static void balance_source_ports(void)
 		if (count_port_bits(max_current_claimed) <
 						CONFIG_USB_PD_3A_PORTS) {
 			max_current_claimed |= BIT(new_max_port);
-			typec_set_source_current_limit(new_max_port,
-						       TYPEC_RP_3A0);
 			typec_select_src_current_limit_rp(new_max_port,
 							  TYPEC_RP_3A0);
-			pd_update_contract(new_max_port);
-
 		} else {
 			/* TODO(b/141690755): Check lower priority claims */
 			goto unlock;

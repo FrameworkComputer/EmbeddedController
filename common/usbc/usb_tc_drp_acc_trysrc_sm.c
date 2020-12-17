@@ -114,6 +114,8 @@ void print_flag(int set_or_clear, int flag);
 #define TC_FLAGS_CHECK_CONNECTION       BIT(16)
 /* Flag to note pd_set_suspend SUSPEND state */
 #define TC_FLAGS_SUSPEND                BIT(17)
+/* Flag to indicate the port current limit has changed */
+#define TC_FLAGS_UPDATE_CURRENT		BIT(18)
 
 /*
  * Clear all flags except TC_FLAGS_LPM_ENGAGED and TC_FLAGS_SUSPEND.
@@ -297,6 +299,7 @@ static struct bit_name flag_bit_names[] = {
 	{ TC_FLAGS_DISC_IDENT_IN_PROGRESS, "DISC_IDENT_IN_PROGRESS" },
 	{ TC_FLAGS_CHECK_CONNECTION, "CHECK_CONNECTION" },
 	{ TC_FLAGS_SUSPEND, "SUSPEND" },
+	{ TC_FLAGS_UPDATE_CURRENT, "UPDATE_CURRENT" },
 };
 
 static struct bit_name event_bit_names[] = {
@@ -1182,6 +1185,8 @@ static void typec_select_pull(int port, enum tcpc_cc_pull pull)
 void typec_select_src_current_limit_rp(int port, enum tcpc_rp_value rp)
 {
 	tc[port].select_current_limit_rp = rp;
+	if (IS_ATTACHED_SRC(port))
+		TC_SET_FLAG(port, TC_FLAGS_UPDATE_CURRENT);
 }
 void typec_select_src_collision_rp(int port, enum tcpc_rp_value rp)
 {
@@ -2976,6 +2981,14 @@ static void tc_attached_src_run(const int port)
 		}
 	}
 #endif
+
+	if (TC_CHK_FLAG(port, TC_FLAGS_UPDATE_CURRENT)) {
+		/* TODO(b/141690755): Also set new CC if needed for non-PD */
+		TC_CLR_FLAG(port, TC_FLAGS_UPDATE_CURRENT);
+		typec_set_source_current_limit(port,
+					tc[port].select_current_limit_rp);
+		pd_update_contract(port);
+	}
 }
 
 static void tc_attached_src_exit(const int port)
