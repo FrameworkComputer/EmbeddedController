@@ -25,6 +25,8 @@ int verify_tcpci_ignore_transmit(enum tcpm_transmit_type tx_type,
 				 enum pd_data_msg_type data_msg);
 
 int verify_tcpci_tx_retry_count(enum tcpm_transmit_type tx_type,
+				enum pd_ctrl_msg_type ctrl_msg,
+				enum pd_data_msg_type data_msg,
 				int retry_count);
 
 int verify_tcpci_tx_timeout(enum tcpm_transmit_type tx_type,

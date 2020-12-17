@@ -19,7 +19,9 @@
  */
 static int td_pd_ll_e3(enum pd_data_role data_role)
 {
-	int retry, retries;
+	int retries;
+
+	partner_set_pd_rev(PD_REV20);
 
 	TEST_EQ(tcpci_startup(), EC_SUCCESS, "%d");
 
@@ -31,49 +33,64 @@ static int td_pd_ll_e3(enum pd_data_role data_role)
 	/*
 	 * Make sure we are idle. Reject everything that is pending
 	 */
-	for (;;) {
-		if (mock_rm_if_tx(TCPC_TX_SOP,
-				  PD_CTRL_DR_SWAP, 0)) {
-			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+	if (data_role == PD_ROLE_DFP) {
+		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP_PRIME, 0,
+				PD_DATA_VENDOR_DEF),
+			EC_SUCCESS, "%d");
+		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		task_wait_event(10 * MSEC);
+		partner_send_msg(PD_MSG_SOP_PRIME, PD_CTRL_NOT_SUPPORTED, 0, 0,
+			NULL);
 
-			partner_send_msg(PD_MSG_SOP,
-					 PD_CTRL_REJECT,
-					 0, 0, NULL);
-			task_wait_event(1 * MSEC);
-			continue;
-		}
-		if (mock_rm_if_tx(TCPC_TX_SOP,
-				  PD_CTRL_VCONN_SWAP, 0)) {
-			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0,
+				PD_DATA_VENDOR_DEF),
+			EC_SUCCESS, "%d");
+		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		task_wait_event(10 * MSEC);
+		partner_send_msg(PD_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0, 0, NULL);
 
-			partner_send_msg(PD_MSG_SOP,
-					 PD_CTRL_REJECT,
-					 0, 0, NULL);
-			task_wait_event(1 * MSEC);
-			continue;
-		}
-		if (mock_rm_if_tx(TCPC_TX_SOP,
-				  0, PD_DATA_VENDOR_DEF)) {
-			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
+				PD_CTRL_GET_SOURCE_CAP, 0),
+			EC_SUCCESS, "%d");
+		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		task_wait_event(10 * MSEC);
+		partner_send_msg(PD_MSG_SOP, PD_DATA_SOURCE_CAP, 1, 0, &pdo);
 
-			partner_send_msg(PD_MSG_SOP,
-					 PD_CTRL_NOT_SUPPORTED,
-					 0, 0, NULL);
-			task_wait_event(1 * MSEC);
-			continue;
-		}
-		if (mock_rm_if_tx(TCPC_TX_SOP,
-				  PD_CTRL_GET_SINK_CAP, 0)) {
-			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
+				PD_CTRL_GET_SINK_CAP, 0),
+			EC_SUCCESS, "%d");
+		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		task_wait_event(10 * MSEC);
+		partner_send_msg(PD_MSG_SOP, PD_DATA_SINK_CAP, 1, 0, &pdo);
+	} else if (data_role == PD_ROLE_UFP) {
+		int vcs;
 
-			partner_send_msg(PD_MSG_SOP,
-					 PD_CTRL_REJECT,
-					 0, 0, NULL);
-			task_wait_event(1 * MSEC);
-			continue;
+		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_DR_SWAP, 0),
+			EC_SUCCESS, "%d");
+		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		task_wait_event(10 * MSEC);
+		partner_send_msg(PD_MSG_SOP, PD_CTRL_REJECT, 0, 0, NULL);
+
+		for (vcs = 0; vcs < 4; vcs++) {
+			TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
+					PD_CTRL_VCONN_SWAP, 0),
+				EC_SUCCESS, "%d");
+			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+			task_wait_event(10 * MSEC);
+			partner_send_msg(PD_MSG_SOP, PD_CTRL_REJECT, 0, 0,
+				NULL);
 		}
-		break;
+
+		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
+				PD_CTRL_GET_SINK_CAP, 0),
+			EC_SUCCESS, "%d");
+		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		task_wait_event(10 * MSEC);
+		partner_send_msg(PD_MSG_SOP, PD_DATA_SINK_CAP, 1, 0, &pdo);
 	}
+
+	/* Should be idle now. */
+	task_wait_event(10 * SECOND);
 
 	/*
 	 * b) Send a Get_Sink_Cap message to the UUT, wait for a reply
@@ -85,12 +102,10 @@ static int td_pd_ll_e3(enum pd_data_role data_role)
 			 0, 0, NULL);
 
 	retries = (partner_get_pd_rev() == PD_REV30) ? 2 : 3;
-	for (retry = 0; retry <= retries; retry++) {
-		TEST_EQ(verify_tcpci_ignore_transmit(
-				TCPC_TX_SOP,
-				0, PD_DATA_SINK_CAP),
-			EC_SUCCESS, "%d");
-	}
+	TEST_EQ(verify_tcpci_tx_retry_count(TCPC_TX_SOP, 0, PD_DATA_SINK_CAP,
+			retries),
+		EC_SUCCESS, "%d");
+	mock_set_alert(TCPC_REG_ALERT_TX_FAILED);
 
 	/*
 	 * c) Check that the UUT issues a Soft Reset.
@@ -104,7 +119,6 @@ static int td_pd_ll_e3(enum pd_data_role data_role)
 	 * d) Handle correctly the Soft Reset procedure.
 	 */
 	partner_send_msg(PD_MSG_SOP, PD_CTRL_ACCEPT, 0, 0, NULL);
-	task_wait_event(1 * MSEC);
 
 	/*
 	 * e) Continue the bring-up procedure and check that the link is
@@ -133,6 +147,7 @@ static int td_pd_ll_e3(enum pd_data_role data_role)
 		partner_send_msg(PD_MSG_SOP, PD_CTRL_ACCEPT, 0, 0, NULL);
 		task_wait_event(1 * MSEC);
 	} else {
+		task_wait_event(10 * MSEC);
 		partner_send_msg(PD_MSG_SOP, PD_DATA_SOURCE_CAP, 1, 0, &pdo);
 
 		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0, PD_DATA_REQUEST),

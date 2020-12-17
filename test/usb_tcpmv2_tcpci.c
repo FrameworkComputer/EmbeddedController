@@ -288,7 +288,8 @@ __maybe_unused static int test_retry_count_sop(void)
 	 *
 	 * Source Caps is SOP message which should be retried at TCPC layer
 	 */
-	TEST_EQ(verify_tcpci_tx_retry_count(TCPC_TX_SOP, CONFIG_PD_RETRY_COUNT),
+	TEST_EQ(verify_tcpci_tx_retry_count(TCPC_TX_SOP, 0, PD_DATA_SOURCE_CAP,
+			CONFIG_PD_RETRY_COUNT),
 		EC_SUCCESS, "%d");
 	return EC_SUCCESS;
 }
@@ -331,7 +332,7 @@ __maybe_unused static int test_retry_count_hard_reset(void)
 	prl_execute_hard_reset(PORT0);
 
 	/* The retry count for hard resets should be 0 */
-	TEST_EQ(verify_tcpci_tx_retry_count(TCPC_TX_HARD_RESET, 0),
+	TEST_EQ(verify_tcpci_tx_retry_count(TCPC_TX_HARD_RESET, 0, 0, 0),
 		EC_SUCCESS, "%d");
 
 	return EC_SUCCESS;
