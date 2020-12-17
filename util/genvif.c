@@ -702,6 +702,29 @@ static bool does_respond_to_discov_sop_dfp(void)
 			     IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE)));
 }
 
+static bool does_support_device_usb_data(void)
+{
+	return get_vif_bool(&vif.Component[component_index]
+				.vif_field[Device_Supports_USB_Data],
+			    (is_usb4_supported() ||
+			     can_act_as_device()));
+}
+
+static bool does_support_host_usb_data(void)
+{
+	int type_c_state_machine;
+
+	if (!get_vif_field_tag_number(
+			&vif.Component[component_index]
+				.vif_field[Type_C_State_Machine],
+			&type_c_state_machine))
+		return false;
+
+	return get_vif_bool(&vif.Component[component_index]
+				.vif_field[Host_Supports_USB_Data],
+			    can_act_as_host());
+}
+
 static void init_src_pdos(void)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_DYNAMIC_SRC_CAP)) {
@@ -3143,15 +3166,11 @@ static void init_vif_component_usb_data_ufp_fields(
 	if (!can_act_as_device())
 		return;
 
+	supports_usb_data = does_support_device_usb_data();
 	set_vif_field_b(
 		&vif_fields[Device_Supports_USB_Data],
 		vif_component_name[Device_Supports_USB_Data],
-		true);
-
-	if (!get_vif_field_tag_bool(
-			&vif_fields[Device_Supports_USB_Data],
-			&supports_usb_data))
-		supports_usb_data = false;
+		supports_usb_data);
 
 	if (supports_usb_data) {
 		switch (ds) {
@@ -3193,8 +3212,6 @@ static void init_vif_component_usb_data_ufp_fields(
  * Fields that are not currently being initialized
  *
  * vif_Component
- *	Host_Supports_USB_Data			booleanFieldType
- *	Is_DFP_On_Hub				booleanFieldType
  *	Hub_Port_Number				numericFieldType
  *	Host_Truncates_DP_For_tDHPResponse	booleanFieldType
  *	Host_Gen1x1_tLinkTurnaround		numericFieldType
@@ -3209,11 +3226,24 @@ static void init_vif_component_usb_data_dfp_fields(
 	 */
 	enum usb_speed ds = USB_GEN11;
 	bool supports_usb_data;
+	bool is_dfp_on_hub;
 
-	if (!get_vif_field_tag_bool(
-			&vif_fields[Host_Supports_USB_Data],
-			&supports_usb_data))
-		supports_usb_data = false;
+	/*
+	 * The fields in this section shall be ignored by Testers unless
+	 * Connector_Type is set to 0 (Type-A), or
+	 * COnnector Type is set to 3 (Micro A/B); or
+	 * Connector_Type is set to 2 (Type-C) and Type_C_Can_Act_As_Host
+	 * is set to YES
+	 *
+	 * NOTE: We currently are always a Connector_Type of 2 (Type-C)
+	 */
+	if (!can_act_as_host())
+		return;
+
+	supports_usb_data = does_support_host_usb_data();
+	set_vif_field_b(&vif_fields[Host_Supports_USB_Data],
+		vif_component_name[Host_Supports_USB_Data],
+		supports_usb_data);
 
 	if (supports_usb_data) {
 		switch (ds) {
@@ -3243,6 +3273,15 @@ static void init_vif_component_usb_data_dfp_fields(
 				USB_GEN22, "USB 3.2 GEN 2x2");
 			break;
 		}
+
+		if (!get_vif_field_tag_bool(
+				&vif_fields[Type_C_Port_On_Hub],
+				&is_dfp_on_hub))
+			is_dfp_on_hub = false;
+
+		set_vif_field_b(&vif_fields[Is_DFP_On_Hub],
+			vif_component_name[Is_DFP_On_Hub],
+			is_dfp_on_hub);
 
 		set_vif_field_b(&vif_fields[Host_Contains_Captive_Retimer],
 			vif_component_name[Host_Contains_Captive_Retimer],

@@ -64,6 +64,11 @@
     <FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="0">FR_Swap not supported</FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
     <Master_Port value="false">NO</Master_Port>
     <Num_Src_PDOs value="1" />
+    <Host_Supports_USB_Data value="true">YES</Host_Supports_USB_Data>
+    <Host_Speed value="1">USB 3.2 GEN 1x1</Host_Speed>
+    <Is_DFP_On_Hub value="false">NO</Is_DFP_On_Hub>
+    <Host_Contains_Captive_Retimer value="false">NO</Host_Contains_Captive_Retimer>
+    <Host_Is_Embedded value="false">NO</Host_Is_Embedded>
     <PD_OC_Protection value="false">NO</PD_OC_Protection>
     <Product_Total_Source_Power_mW value="15000">15000 mW</Product_Total_Source_Power_mW>
     <Port_Source_Power_Type value="0">Assured</Port_Source_Power_Type>
