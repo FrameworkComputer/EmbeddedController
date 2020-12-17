@@ -11,6 +11,7 @@
 #include "test_util.h"
 #include "timer.h"
 #include "usb_tcpmv2_compliance.h"
+#include "usb_tc_sm.h"
 
 int partner_tx_id;
 
@@ -127,7 +128,8 @@ void partner_send_msg(enum pd_msg_type sop,
 
 	partner_tx_id &= 7;
 	header = PD_HEADER(type,
-			partner_get_power_role(),
+			sop == PD_MSG_SOP ? partner_get_power_role()
+			: PD_PLUG_FROM_CABLE,
 			partner_get_data_role(),
 			partner_tx_id,
 			cnt,
@@ -174,6 +176,9 @@ int proc_pd_e1(enum pd_data_role data_role)
 	/*
 	 * a) The test starts in a disconnected state.
 	 */
+	mock_tcpci_set_reg(TCPC_REG_EXT_STATUS, TCPC_REG_EXT_STATUS_SAFE0V);
+	mock_set_alert(TCPC_REG_ALERT_EXT_STATUS);
+	task_wait_event(10 * SECOND);
 	TEST_EQ(pd_get_data_role(I2C_PORT_HOST_TCPC),
 		PD_ROLE_DISCONNECTED, "%d");
 
@@ -285,5 +290,50 @@ int proc_pd_e1(enum pd_data_role data_role)
 	}
 
 	TEST_EQ(pd_get_data_role(I2C_PORT_HOST_TCPC), data_role, "%d");
+	return EC_SUCCESS;
+}
+
+/*****************************************************************************
+ * PROC.PD.E3. Wait to Start AMS for DFP(Source) UUT
+ */
+int proc_pd_e3(void)
+{
+	/*
+	 * PROC.PD.E3. Wait to Start AMS for DFP(Source) UUT:
+	 * a) The Tester keeps monitoring the Rp value and if the UUT doesn't
+	 * set the value to SinkTXOK if it doesn't have anything to send in 1s,
+	 * the test fails. During this period, the Tester replies any message
+	 * sent from the UUT with a proper response.
+	 */
+	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP_PRIME, 0, PD_DATA_VENDOR_DEF),
+		EC_SUCCESS, "%d");
+	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+	task_wait_event(10 * MSEC);
+	partner_send_msg(PD_MSG_SOP_PRIME, PD_CTRL_NOT_SUPPORTED, 0, 0, NULL);
+
+	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0, PD_DATA_VENDOR_DEF),
+		EC_SUCCESS, "%d");
+	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+	task_wait_event(10 * MSEC);
+	partner_send_msg(PD_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0, 0, NULL);
+
+	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_GET_SOURCE_CAP, 0),
+		EC_SUCCESS, "%d");
+	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+	task_wait_event(10 * MSEC);
+	partner_send_msg(PD_MSG_SOP, PD_DATA_SOURCE_CAP, 1, 0, &pdo);
+
+	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_GET_SINK_CAP, 0),
+		EC_SUCCESS, "%d");
+	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+	task_wait_event(10 * MSEC);
+	partner_send_msg(PD_MSG_SOP, PD_DATA_SINK_CAP, 1, 0, &pdo);
+
+	task_wait_event(1 * SECOND);
+	TEST_EQ(tc_is_attached_src(PORT0), true, "%d");
+	TEST_EQ(TCPC_REG_ROLE_CTRL_RP(mock_tcpci_get_reg(TCPC_REG_ROLE_CTRL)),
+		SINK_TX_OK, "%d");
+
+	task_wait_event(10 * SECOND);
 	return EC_SUCCESS;
 }

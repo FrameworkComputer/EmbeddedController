@@ -61,8 +61,10 @@ void partner_send_msg(enum pd_msg_type sop,
 		      uint32_t *payload);
 
 int proc_pd_e1(enum pd_data_role data_role);
+int proc_pd_e3(void);
 
 int test_td_pd_ll_e3_dfp(void);
 int test_td_pd_ll_e3_ufp(void);
+int test_td_pd_src3_e26(void);
 
 #endif /* USB_TCPMV2_COMPLIANCE_H */

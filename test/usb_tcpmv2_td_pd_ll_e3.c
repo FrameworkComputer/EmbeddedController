@@ -24,14 +24,6 @@ static int td_pd_ll_e3(enum pd_data_role data_role)
 	TEST_EQ(tcpci_startup(), EC_SUCCESS, "%d");
 
 	/*
-	 * Set Vbus to Safe0V
-	 */
-	mock_tcpci_set_reg_bits(TCPC_REG_EXT_STATUS,
-				TCPC_REG_EXT_STATUS_SAFE0V);
-	mock_set_alert(TCPC_REG_ALERT_EXT_STATUS);
-	task_wait_event(10 * SECOND);
-
-	/*
 	 * a) Run PROC.PD.E1 Bring-up according to the UUT role.
 	 */
 	TEST_EQ(proc_pd_e1(data_role), EC_SUCCESS, "%d");

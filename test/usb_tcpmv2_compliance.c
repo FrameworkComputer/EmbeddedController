@@ -29,6 +29,7 @@ void run_test(int argc, char **argv)
 
 	RUN_TEST(test_td_pd_ll_e3_dfp);
 	RUN_TEST(test_td_pd_ll_e3_ufp);
+	RUN_TEST(test_td_pd_src3_e26);
 
 	test_print_result();
 }
