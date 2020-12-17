@@ -189,6 +189,16 @@ test_static int test_send_caps_error_before_connected(void)
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 
+	/*
+	 * Cable soft reset is always issued after entry into Src/Snk_Ready
+	 * simulate no cable response.
+	 */
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
+					 PD_CTRL_SOFT_RESET, 0,
+					 60 * MSEC),
+					 EC_SUCCESS, "%d");
+	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
+
 	TEST_EQ(finish_src_discovery(), EC_SUCCESS, "%d");
 
 	task_wait_event(5 * SECOND);
@@ -223,6 +233,16 @@ test_static int test_send_caps_error_when_connected(void)
 					 PD_CTRL_PS_RDY, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
+
+	/*
+	 * Cable soft reset is always issued after entry into Src/Snk_Ready
+	 * simulate no cable response.
+	 */
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
+					 PD_CTRL_SOFT_RESET, 0,
+					 60 * MSEC),
+					 EC_SUCCESS, "%d");
+	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
 
 	/*
 	 * Expect VENDOR_DEF for cable identity, simulate no cable (so no

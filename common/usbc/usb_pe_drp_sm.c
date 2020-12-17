@@ -297,6 +297,7 @@ enum usb_pe_state {
 	PE_VCS_TURN_ON_VCONN_SWAP,
 	PE_VCS_TURN_OFF_VCONN_SWAP,
 	PE_VCS_SEND_PS_RDY_SWAP,
+	PE_VCS_CBL_SEND_SOFT_RESET,
 	PE_VDM_IDENTITY_REQUEST_CBL,
 	PE_INIT_PORT_VDM_IDENTITY_REQUEST,
 	PE_INIT_VDM_SVIDS_REQUEST,
@@ -413,6 +414,7 @@ __maybe_unused static const char * const pe_state_names[] = {
 	[PE_VCS_TURN_ON_VCONN_SWAP] = "PE_VCS_Turn_On_Vconn_Swap",
 	[PE_VCS_TURN_OFF_VCONN_SWAP] = "PE_VCS_Turn_Off_Vconn_Swap",
 	[PE_VCS_SEND_PS_RDY_SWAP] = "PE_VCS_Send_Ps_Rdy_Swap",
+	[PE_VCS_CBL_SEND_SOFT_RESET] = "PE_VCS_CBL_Send_Soft_Reset",
 #endif
 	[PE_VDM_IDENTITY_REQUEST_CBL] = "PE_VDM_Identity_Request_Cbl",
 	[PE_INIT_PORT_VDM_IDENTITY_REQUEST] =
@@ -1248,6 +1250,7 @@ void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 			get_state_pe(port) == PE_PRS_SRC_SNK_WAIT_SOURCE_ON ||
 			get_state_pe(port) == PE_SRC_DISABLED ||
 			get_state_pe(port) == PE_SRC_DISCOVERY ||
+			get_state_pe(port) == PE_VCS_CBL_SEND_SOFT_RESET ||
 			get_state_pe(port) == PE_VDM_IDENTITY_REQUEST_CBL) ||
 			(PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH) &&
 			    get_state_pe(port) == PE_PRS_SNK_SRC_SEND_SWAP) ||
@@ -1685,6 +1688,18 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 		}
 	}
 
+	/*
+	 * TODO(b/177001425): TCPMv2 - move SOP' soft reset check into
+	 * common_src_snk_dpm_requests()
+	 */
+	if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND)) {
+		pe_set_dpm_curr_request(port,
+			DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND);
+		pe[port].tx_type = TCPC_TX_SOP_PRIME;
+		set_state_pe(port, PE_VCS_CBL_SEND_SOFT_RESET);
+		return true;
+	}
+
 	/* If mode entry was successful, disable the timer */
 	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_SETUP_DONE)) {
 		pe[port].discover_identity_timer = TIMER_DISABLED;
@@ -1893,6 +1908,13 @@ static void pe_src_startup_entry(int port)
 
 	/* Reset the protocol layer */
 	prl_reset(port);
+
+	/*
+	 * Protocol layer reset clears the message IDs for all SOP types.
+	 * Indicate that a SOP' soft reset is required before any other
+	 * messages are sent to the cable.
+	 */
+	pd_dpm_request(port, DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND);
 
 	/* Set initial data role */
 	pe[port].data_role = pd_get_data_role(port);
@@ -2769,6 +2791,13 @@ static void pe_snk_startup_entry(int port)
 
 	/* Reset the protocol layer */
 	prl_reset(port);
+
+	/*
+	 * Protocol layer reset clears the message IDs for all SOP types.
+	 * Indicate that a SOP' soft reset is required before any other
+	 * messages are sent to the cable.
+	 */
+	pd_dpm_request(port, DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND);
 
 	/* Set initial data role */
 	pe[port].data_role = pd_get_data_role(port);
@@ -6169,6 +6198,13 @@ static void pe_vcs_send_ps_rdy_swap_run(int port)
 	/* TODO(b/152058087): TCPMv2: Break up pe_vcs_send_ps_rdy_swap */
 	switch (pe[port].sub) {
 	case PE_SUB0:
+
+		/*
+		 * TODO: use DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND to
+		 * send cable soft reset.
+		 */
+		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND);
+
 		/*
 		 * After a VCONN Swap the VCONN Source needs to reset
 		 * the Cable Plug’s Protocol Layer in order to ensure
@@ -6233,6 +6269,80 @@ static void pe_vcs_send_ps_rdy_swap_run(int port)
 		}
 	}
 }
+
+/*
+ * PE_VCS_CBL_SEND_SOFT_RESET
+ * Note - Entry is only when directed by the DPM. Protocol errors are handled
+ * by the PE_SEND_SOFT_RESET state.
+ */
+static void pe_vcs_cbl_send_soft_reset_entry(int port)
+{
+	print_current_state(port);
+
+	if (!pe_can_send_sop_prime(port)) {
+		/*
+		 * If we're not VCONN source, return the appropriate state.
+		 * A VCONN swap re-triggers sending SOP' soft reset
+		 */
+		if (pe_is_explicit_contract(port)) {
+			/* Return to PE_{SRC,SNK}_Ready state */
+			pe_set_ready_state(port);
+		} else {
+			/*
+			 * Not in Explicit Contract, so we must be a SRC,
+			 * return to PE_Src_Send_Capabilities.
+			 */
+			set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
+		}
+		return;
+	}
+
+	send_ctrl_msg(port, TCPC_TX_SOP_PRIME, PD_CTRL_SOFT_RESET);
+	pe[port].sender_response_timer = TIMER_DISABLED;
+}
+
+static void pe_vcs_cbl_send_soft_reset_run(int port)
+{
+	bool cable_soft_reset_complete = false;
+
+	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+		pe[port].sender_response_timer = get_time().val +
+						PD_T_SENDER_RESPONSE;
+	}
+
+	/* Got ACCEPT or REJECT from Cable Plug */
+	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+		cable_soft_reset_complete = true;
+	}
+
+	/* No GoodCRC received, cable is not present */
+	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
+		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
+		/*
+		 * TODO(b/171823328): TCPMv2: Implement cable reset
+		 * Cable reset will only be done here if we know for certain
+		 * a cable is present (we've received the SOP' DiscId response).
+		 */
+		cable_soft_reset_complete = true;
+	}
+
+	if (cable_soft_reset_complete ||
+		get_time().val > pe[port].sender_response_timer) {
+		if (pe_is_explicit_contract(port)) {
+			/* Return to PE_{SRC,SNK}_Ready state */
+			pe_set_ready_state(port);
+		} else {
+			/*
+			 * Not in Explicit Contract, so we must be a SRC,
+			 * return to PE_Src_Send_Capabilities.
+			 */
+			set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
+		}
+	}
+}
+
 #endif /* CONFIG_USBC_VCONN */
 
 /*
@@ -6748,6 +6858,10 @@ static const struct usb_state pe_states[] = {
 	[PE_VCS_SEND_PS_RDY_SWAP] = {
 		.entry = pe_vcs_send_ps_rdy_swap_entry,
 		.run   = pe_vcs_send_ps_rdy_swap_run,
+	},
+	[PE_VCS_CBL_SEND_SOFT_RESET] = {
+		.entry  = pe_vcs_cbl_send_soft_reset_entry,
+		.run    = pe_vcs_cbl_send_soft_reset_run,
 	},
 #endif /* CONFIG_USBC_VCONN */
 	[PE_VDM_IDENTITY_REQUEST_CBL] = {
