@@ -64,6 +64,11 @@ static int get_battery_type(void)
 	return battery_type;
 }
 
+__overridable int board_get_default_battery_type(void)
+{
+	return DEFAULT_BATTERY_TYPE;
+}
+
 /*
  * Initialize the battery type for the board.
  *
@@ -82,7 +87,7 @@ static inline const struct board_batt_params *get_batt_params(void)
 	int type = get_battery_type();
 
 	return &board_battery_info[type == BATTERY_TYPE_COUNT ?
-		DEFAULT_BATTERY_TYPE : type];
+		board_get_default_battery_type() : type];
 }
 
 const struct battery_info *battery_get_info(void)

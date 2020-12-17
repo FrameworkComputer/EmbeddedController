@@ -71,6 +71,13 @@ int battery_bq4050_imbalance_mv(void);
 #endif
 
 /**
+ * Return the board-specific default battery type.
+ *
+ * @return a value of `enum battery_type`.
+ */
+__override_proto int board_get_default_battery_type(void);
+
+/**
  * Return 1 if CFET is disabled, 0 if enabled. -1 if an error was encountered.
  * If the CFET mask is not defined, it will return 0.
  */
