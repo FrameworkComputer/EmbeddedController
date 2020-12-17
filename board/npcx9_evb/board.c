@@ -98,13 +98,6 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /******************************************************************************/
-/* SPI devices */
-const struct spi_device_t spi_devices[] = {
-	{ CONFIG_SPI_FLASH_PORT, 0, GPIO_SPI_CS_L},
-};
-const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
-
-/******************************************************************************/
 /* Wake-up pins for hibernate */
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_AC_PRESENT,

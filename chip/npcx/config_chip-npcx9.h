@@ -98,8 +98,6 @@
 #endif
 
 /* Internal spi-flash setting */
-#define CONFIG_SPI_FLASH_PORT 0
-#define CONFIG_SPI_FLASH
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q40 /* Internal spi flash type */
 #define CONFIG_FLASH_SIZE 0x00080000 /* 512 KB internal spi flash */
