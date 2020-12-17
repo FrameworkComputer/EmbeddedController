@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "console.h"
-#include "driver/ppc/nx20p348x.h"
+#include "nx20p348x.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"

@@ -12,7 +12,7 @@
 
 #include "common.h"
 #include "console.h"
-#include "driver/ppc/sn5s330.h"
+#include "sn5s330.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "system.h"

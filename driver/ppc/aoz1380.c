@@ -14,7 +14,7 @@
 #include "atomic.h"
 #include "common.h"
 #include "console.h"
-#include "driver/ppc/aoz1380.h"
+#include "aoz1380.h"
 #include "hooks.h"
 #include "system.h"
 #include "tcpm.h"

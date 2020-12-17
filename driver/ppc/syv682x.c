@@ -7,7 +7,7 @@
 #include "common.h"
 #include "config.h"
 #include "console.h"
-#include "driver/ppc/syv682x.h"
+#include "syv682x.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "system.h"
