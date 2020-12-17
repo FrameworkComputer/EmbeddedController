@@ -34,5 +34,9 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_td_pd_src3_e26);
 	RUN_TEST(test_td_pd_snk3_e12);
 
+	RUN_TEST(test_connect_as_nonpd_sink);
+	RUN_TEST(test_retry_count_sop);
+	RUN_TEST(test_retry_count_hard_reset);
+
 	test_print_result();
 }

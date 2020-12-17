@@ -206,28 +206,6 @@ int verify_tcpci_transmit(enum tcpm_transmit_type tx_type,
 			       VERIFY_TIMEOUT, NULL);
 }
 
-int verify_tcpci_ignore_transmit(enum tcpm_transmit_type tx_type,
-				 enum pd_ctrl_msg_type ctrl_msg,
-				 enum pd_data_msg_type data_msg)
-{
-	int rv;
-	uint16_t transmit;
-
-	rv = verify_transmit(tx_type, -1,
-			     ctrl_msg, data_msg,
-			     VERIFY_TIMEOUT, &transmit);
-	if (rv == EC_SUCCESS) {
-		if (tx_retry_cnt == -1)
-			tx_retry_cnt = TCPC_REG_TRANSMIT_RETRY(transmit);
-
-		if (tx_retry_cnt > 0) {
-			tx_retry_cnt--;
-			tcpci_regs[TCPC_REG_TRANSMIT].value = transmit;
-		}
-	}
-	return rv;
-}
-
 int verify_tcpci_tx_timeout(enum tcpm_transmit_type tx_type,
 			    enum pd_ctrl_msg_type ctrl_msg,
 			    enum pd_data_msg_type data_msg,
@@ -246,34 +224,6 @@ int verify_tcpci_tx_retry_count(enum tcpm_transmit_type tx_type,
 	return verify_transmit(tx_type, retry_count,
 			       ctrl_msg, data_msg,
 			       VERIFY_TIMEOUT, NULL);
-}
-
-bool mock_rm_if_tx(enum tcpm_transmit_type want_tx_type,
-		   enum pd_ctrl_msg_type want_ctrl_msg,
-		   enum pd_data_msg_type want_data_msg)
-{
-	if (tcpci_regs[TCPC_REG_TRANSMIT].value != 0) {
-		int tx_type = TCPC_REG_TRANSMIT_TYPE(
-			tcpci_regs[TCPC_REG_TRANSMIT].value);
-		uint16_t header = UINT16_FROM_BYTE_ARRAY_LE(
-					tx_buffer, 1);
-		int pd_type  = PD_HEADER_TYPE(header);
-		int pd_cnt   = PD_HEADER_CNT(header);
-
-		if (tx_type != want_tx_type)
-			return false;
-		if (want_ctrl_msg != 0)
-			if (pd_type != want_ctrl_msg ||
-			    pd_cnt != 0)
-				return false;
-		if (want_data_msg != 0)
-			if (pd_type != want_data_msg ||
-			    pd_cnt < 1)
-				return false;
-		tcpci_regs[TCPC_REG_TRANSMIT].value = 0;
-		return true;
-	}
-	return false;
 }
 
 void mock_tcpci_receive(enum pd_msg_type sop, uint16_t header,

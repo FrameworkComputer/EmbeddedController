@@ -70,4 +70,8 @@ int test_td_pd_ll_e4_ufp(void);
 int test_td_pd_src3_e26(void);
 int test_td_pd_snk3_e12(void);
 
+int test_connect_as_nonpd_sink(void);
+int test_retry_count_sop(void);
+int test_retry_count_hard_reset(void);
+
 #endif /* USB_TCPMV2_COMPLIANCE_H */
