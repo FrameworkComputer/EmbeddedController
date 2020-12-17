@@ -9,7 +9,7 @@
 #define __CROS_EC_USB_PD_TCPM_TCPCI_H
 
 #include "config.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
 

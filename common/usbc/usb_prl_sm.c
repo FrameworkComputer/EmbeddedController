@@ -19,7 +19,7 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "util.h"
 #include "usb_charge.h"
 #include "usb_mux.h"

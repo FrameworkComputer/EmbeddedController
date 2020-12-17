@@ -24,7 +24,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_prl_sm.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
 #include "usb_sm.h"

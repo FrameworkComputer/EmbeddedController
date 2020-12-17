@@ -13,7 +13,7 @@
 #include <stdint.h>
 #include "compile_time_macros.h"
 #include "console.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "usb_common.h"
 #include "usb_mode.h"
 #include "usb_mux.h"

@@ -30,7 +30,8 @@ zephyr_include_directories_ifdef(
   "${PLATFORM_EC}/zephyr/shim/include"
   "${PLATFORM_EC}/fuzz"
   "${PLATFORM_EC}/test"
-  "${PLATFORM_EC}/include")
+  "${PLATFORM_EC}/include"
+  "${PLATFORM_EC}/include/driver")
 
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
 

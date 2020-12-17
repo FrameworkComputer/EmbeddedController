@@ -11,7 +11,7 @@
 #include "mock/usb_tc_sm_mock.h"
 #include "task.h"
 #include "tcpci.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "test_util.h"
 #include "timer.h"
 #include "usb_emsg.h"

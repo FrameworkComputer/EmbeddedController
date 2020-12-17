@@ -7,7 +7,7 @@
 #include "common.h"
 #include "crc.h"
 #include "task.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "test_util.h"
 #include "timer.h"
 #include "usb_emsg.h"

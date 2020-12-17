@@ -20,7 +20,7 @@
 #include "driver/wpc/p9221.h"
 #include "rt946x.h"
 #include "task.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_charge.h"
 #include "usb_pd.h"

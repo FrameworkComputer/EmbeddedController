@@ -13,7 +13,7 @@
 
 #include <stdint.h>
 
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 
 /*
  * Initialize Thunderbolt state for the specified port.

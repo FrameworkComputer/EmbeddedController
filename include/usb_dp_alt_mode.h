@@ -14,7 +14,7 @@
 
 #include <stdint.h>
 
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 
 /*
  * Initialize DP state for the specified port.

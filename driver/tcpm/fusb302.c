@@ -12,7 +12,7 @@
 #include "task.h"
 #include "hooks.h"
 #include "tcpci.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_charge.h"
 #include "usb_pd.h"

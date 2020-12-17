@@ -15,7 +15,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "system.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"

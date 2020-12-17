@@ -10,7 +10,7 @@
 
 #include "ec_commands.h"
 #include "i2c.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
 

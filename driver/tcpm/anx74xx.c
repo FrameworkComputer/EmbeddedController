@@ -11,7 +11,7 @@
 #include "anx74xx.h"
 #include "task.h"
 #include "tcpci.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_charge.h"
 #include "usb_mux.h"

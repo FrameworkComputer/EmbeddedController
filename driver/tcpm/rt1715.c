@@ -8,7 +8,7 @@
 #include "common.h"
 #include "rt1715.h"
 #include "tcpci.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_pd.h"
 

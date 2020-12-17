@@ -7,7 +7,7 @@
 #define HIDE_EC_STDLIB
 #include "common.h"
 #include "task.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "test_util.h"
 #include "timer.h"
 #include "usb_pd.h"

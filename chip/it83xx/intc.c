@@ -9,7 +9,7 @@
 #include "kmsc_chip.h"
 #include "registers.h"
 #include "task.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "usb_pd.h"
 
 #if defined(CONFIG_USB_PD_TCPM_ITE_ON_CHIP)

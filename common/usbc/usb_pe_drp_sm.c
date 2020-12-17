@@ -15,7 +15,7 @@
 #include "stdbool.h"
 #include "system.h"
 #include "task.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "util.h"
 #include "usb_common.h"
 #include "usb_dp_alt_mode.h"

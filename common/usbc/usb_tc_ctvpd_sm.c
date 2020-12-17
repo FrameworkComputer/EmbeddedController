@@ -7,7 +7,7 @@
 #include "console.h"
 #include "system.h"
 #include "task.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "usb_pd.h"
 #include "usb_tc_sm.h"
 #include "vpd_api.h"

@@ -18,7 +18,7 @@
 #include "sha256.h"
 #include "system.h"
 #include "task.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "util.h"
 #include "usb_api.h"

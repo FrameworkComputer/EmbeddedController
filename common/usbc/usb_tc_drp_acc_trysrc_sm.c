@@ -10,7 +10,7 @@
 #include "hooks.h"
 #include "system.h"
 #include "task.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "usb_common.h"
 #include "usb_mux.h"
 #include "usb_pd.h"

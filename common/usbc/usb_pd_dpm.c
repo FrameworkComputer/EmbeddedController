@@ -13,7 +13,7 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "system.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "usb_dp_alt_mode.h"
 #include "usb_mode.h"
 #include "usb_pd.h"

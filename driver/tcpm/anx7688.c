@@ -7,7 +7,7 @@
 
 #include "hooks.h"
 #include "tcpci.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_mux.h"
 

@@ -17,7 +17,7 @@
 #include "aoz1380.h"
 #include "hooks.h"
 #include "system.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpc.h"
 #include "usbc_ppc.h"

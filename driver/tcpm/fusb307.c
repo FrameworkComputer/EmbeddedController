@@ -10,7 +10,7 @@
 #include "hooks.h"
 #include "task.h"
 #include "tcpci.h"
-#include "tcpm.h"
+#include "tcpm/tcpm.h"
 #include "timer.h"
 #include "util.h"
 
