@@ -10,6 +10,7 @@
 #include <dt-bindings/clock/npcx_clock.h>
 #include <logging/log.h>
 #include <soc.h>
+#include <soc_gpio.h>
 #include <zephyr.h>
 
 #include "drivers/cros_kb_raw.h"
