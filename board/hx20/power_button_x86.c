@@ -227,7 +227,7 @@ static void set_initial_pwrbtn_state(void)
  */
 static void state_machine(uint64_t tnow)
 {
-	static int initail_delay = 7; /* 700 ms */
+	static int initial_delay = 7; /* 700 ms */
 
 	/* Not the time to move onto next state */
 	if (tnow < tnext_state)
@@ -310,9 +310,9 @@ static void state_machine(uint64_t tnow)
 			}
 		}
 		*/
-		if (initail_delay != 0) {
+		if (initial_delay != 0) {
 			tnext_state = tnow + PWRBTN_DELAY_INITIAL;
-			initail_delay--;
+			initial_delay--;
 		} else {
 			if (!extpower_is_present() ||
 				(system_get_reset_flags() & EC_RESET_FLAG_HARD) ==

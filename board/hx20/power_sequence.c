@@ -98,9 +98,7 @@ static void chipset_force_g3(void)
 		gpio_set_level(GPIO_PCH_DPWROK, 0);
 		gpio_set_level(GPIO_PCH_PWRBTN_L, 0);
 		gpio_set_level(GPIO_AC_PRESENT_OUT, 0);
-		
-		if (board_get_version() > 4)
-			gpio_set_level(GPIO_VS_ON, 0);
+		gpio_set_level(GPIO_VS_ON, 0);
 	}
 
 	f75303_set_enabled(0);
@@ -120,8 +118,7 @@ void chipset_throttle_cpu(int throttle)
 
 int board_chipset_power_on(void)
 {
-	if (board_get_version() > 4)
-		gpio_set_level(GPIO_VS_ON, 1);
+	gpio_set_level(GPIO_VS_ON, 1);
 
 	msleep(5);
 
