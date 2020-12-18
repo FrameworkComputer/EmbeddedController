@@ -34,24 +34,26 @@ _dir_create := $(foreach d,$(dirs) $(dirs-y),\
 # Note: if cmd_* includes a $(MAKE) invocation, use the '+' prefix
 # to inherit parallel make execution: "+$(call quiet,...)"
 ifeq ($(V),0)
+# V=0
 Q := @
 echo = echo -n;
 quiet = echo -n; $(cmd_$(1))
 silent = 1>/dev/null
 silent_err = 2>/dev/null
 MAKEFLAGS += --no-print-directory
-else
-echo = echo $(1);
-ifeq ($(V),)
+else ifeq ($(V),)
+# V=
 Q := @
+echo = echo $(1);
 quiet = @echo '  $(2)' $(patsubst $(out)/%,%,$@) ; $(cmd_$(1))
 silent = 1>/dev/null
 silent_err = 2>/dev/null
 MAKEFLAGS += --no-print-directory
 else
+# V=*
 Q :=
+echo = echo $(1);
 quiet = $(cmd_$(1))
-endif
 endif
 
 # Provide an option to use a consistent ec_version.h file when
