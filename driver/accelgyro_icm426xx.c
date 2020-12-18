@@ -915,6 +915,8 @@ static int icm426xx_init(struct motion_sensor_t *s)
 	for (i = X; i <= Z; i++)
 		saved_data->scale[i] = MOTION_SENSE_DEFAULT_SCALE;
 
+	saved_data->odr = 0;
+
 	/* set sensor filter */
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
