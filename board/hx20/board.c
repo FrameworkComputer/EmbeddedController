@@ -1553,3 +1553,22 @@ static int cmd_spimux(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(spimux, cmd_spimux,
 			"[enable/disable]",
 			"Set if spi CLK is in SPI mode (true) or PWM mode");
+
+int fingerprint_power_button_first_state;
+static void fingerprint_power_button_change_deferred(void)
+{
+	if (fingerprint_power_button_first_state == gpio_get_level(GPIO_ON_OFF_FP_L))
+		factory_power_button(!gpio_get_level(GPIO_ON_OFF_FP_L));
+}
+DECLARE_DEFERRED(fingerprint_power_button_change_deferred);
+
+void fingerprint_power_button_interrupt(enum gpio_signal signal)
+{
+	if (!factory_status())
+		power_button_interrupt(signal);
+	else {
+		fingerprint_power_button_first_state = gpio_get_level(GPIO_ON_OFF_FP_L);
+		hook_call_deferred(&fingerprint_power_button_change_deferred_data,
+				50);
+	}
+}

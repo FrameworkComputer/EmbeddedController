@@ -355,6 +355,9 @@
 
 #define CONFIG_THROTTLE_AP
 
+/* Factory mode support */
+#define CONFIG_FACTORY_SUPPORT
+
 
 /* Enable GPSPI0 controller and port for
  * SPI Accelerometer.
@@ -694,6 +697,9 @@ void touchpad_interrupt(enum gpio_signal signal);
 
 /* Mainboard power button handler*/
 void mainboard_power_button_interrupt(enum gpio_signal signal);
+
+/* fingerprint power button handler*/
+void fingerprint_power_button_interrupt(enum gpio_signal signal);
 
 void board_power_off(void);
 void cancel_board_power_off(void);

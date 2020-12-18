@@ -9,8 +9,10 @@
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
+#include "keyboard_scan.h"
 #include "keyboard_backlight.h"
 #include "pwm.h"
+#include "hooks.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYBOARD, outstr)
@@ -315,4 +317,53 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 	}
 	return EC_SUCCESS;
 }
+#endif
+
+#ifdef CONFIG_FACTORY_SUPPORT
+/* By default the power button is active low */
+#ifndef CONFIG_FP_POWER_BUTTON_FLAGS
+#define CONFIG_FP_POWER_BUTTON_FLAGS 0
+#endif
+static uint8_t factory_enable;
+static int debounced_fp_pressed;
+
+static void fp_power_button_deferred(void)
+{
+	keyboard_update_button(KEYBOARD_BUTTON_POWER_FAKE,
+			debounced_fp_pressed);
+}
+DECLARE_DEFERRED(fp_power_button_deferred);
+
+void factory_power_button(int level)
+{
+	/* Re-enable keyboard scanning if fp power button is no longer pressed */
+	if (!level)
+		keyboard_scan_enable(1, KB_SCAN_DISABLE_POWER_BUTTON);
+
+	if (level == debounced_fp_pressed) {
+		return;
+	}
+	debounced_fp_pressed = level;
+
+	hook_call_deferred(&fp_power_button_deferred_data, 50);
+}
+
+void factory_setting(uint8_t enable)
+{
+	if (enable) {
+		factory_enable = 1;
+		debounced_fp_pressed = 1;
+		set_scancode_set2(2, 2, SCANCODE_FAKE_FN);
+	} else {
+		factory_enable = 0;
+		debounced_fp_pressed = 0;
+		set_scancode_set2(2, 2, SCANCODE_FN);
+	}
+}
+
+int factory_status(void)
+{
+	return factory_enable;
+}
+
 #endif
