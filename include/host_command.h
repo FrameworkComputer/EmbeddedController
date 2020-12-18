@@ -244,7 +244,21 @@ int host_request_expected_size(const struct ec_host_request *r);
  */
 void host_packet_receive(struct host_packet *pkt);
 
-#ifdef HAS_TASK_HOSTCMD
+/**
+ * Find the handler for a command in Zephyr OS.
+ *
+ * @command		Command to handle (EC_CMD_...)
+ *
+ * Return: handler for the command, or NULL if not found.
+ */
+#ifndef CONFIG_ZEPHYR
+__error("This function should only be called from Zephyr OS code")
+#endif
+struct host_command *zephyr_find_host_command(int command);
+
+#if defined(CONFIG_PLATFORM_EC_HOSTCMD)
+#include "zephyr_host_command.h"
+#elif defined(HAS_TASK_HOSTCMD)
 #define EXPAND(off, cmd) __host_cmd_(off, cmd)
 #define __host_cmd_(off, cmd) __host_cmd_##off##cmd
 #define EXPANDSTR(off, cmd) "__host_cmd_"#off#cmd
