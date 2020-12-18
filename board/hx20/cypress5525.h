@@ -99,6 +99,14 @@
 #define CYP5525_PDPORT_DISABLE  0x00
 #define CYP5525_PDPORT_ENABLE   0x01
 
+/************************************************/
+/*	POWER STATE DEFINITION                      */
+/************************************************/
+#define CYP5525_POWERSTATE_S0	0x00
+#define CYP5525_POWERSTATE_S3	0x01
+#define CYP5525_POWERSTATE_S4	0x02
+#define CYP5525_POWERSTATE_S5	0x03
+
 
 /************************************************
  *	PD COMMAND DEFINITION
@@ -239,6 +247,7 @@ enum cyp5525_state {
 	CYP5525_STATE_ERROR,
 	CYP5525_STATE_POWER_ON,
 	CYP5525_STATE_BOOTING,
+	CYP5525_STATE_I2C_RESET,
 	CYP5525_STATE_RESET,
 	CYP5525_STATE_SETUP,
 	CYP5525_STATE_READY,
@@ -272,5 +281,9 @@ struct pd_port_current_state_t {
 void pd_chip_interrupt(enum gpio_signal signal);
 
 void pd_extpower_is_present_interrupt(enum gpio_signal signal);
+
+int cypd_get_active_power_budget(void);
+
+int cypd_get_pps_power_budget(void);
 
 #endif	/* __CROS_EC_CYPRESS5525_H */

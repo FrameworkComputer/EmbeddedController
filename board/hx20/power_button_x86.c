@@ -64,6 +64,7 @@
  */
 #define PWRBTN_INITIAL_US  (200 * MSEC)
 #define PWRBTN_WAIT_RSMRST (20 * MSEC)
+#define PWRBTN_DELAY_INITIAL	(100 * MSEC)
 
 enum power_button_state {
 	/* Button up; state machine idle */
@@ -141,7 +142,7 @@ static void set_pwrbtn_to_pch(int high, int init)
 	 */
 #ifdef CONFIG_CHARGER
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) && !high &&
-	   (charge_want_shutdown() || charge_prevent_power_on(!init))) {
+		(charge_want_shutdown() || charge_prevent_power_on(!init))) {
 		CPRINTS("PB PCH pwrbtn ignored due to battery level");
 		high = 1;
 	}
@@ -226,6 +227,8 @@ static void set_initial_pwrbtn_state(void)
  */
 static void state_machine(uint64_t tnow)
 {
+	static int initial_delay = 7; /* 700 ms */
+
 	/* Not the time to move onto next state */
 	if (tnow < tnext_state)
 		return;
@@ -307,25 +310,32 @@ static void state_machine(uint64_t tnow)
 			}
 		}
 		*/
-		if (!extpower_is_present() ||
-			(system_get_reset_flags() & EC_RESET_FLAG_HARD) ==
-			EC_RESET_FLAG_HARD) {
-			if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-				chipset_exit_hard_off();
+		if (initial_delay != 0) {
+			tnext_state = tnow + PWRBTN_DELAY_INITIAL;
+			initial_delay--;
+		} else {
+			if (!extpower_is_present() ||
+				(system_get_reset_flags() & EC_RESET_FLAG_HARD) ==
+				EC_RESET_FLAG_HARD) {
+				if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+					chipset_exit_hard_off();
 
-			/* Need to wait RSMRST signal then asserted BTN */
-			if (!gpio_get_level(GPIO_PCH_RSMRST_L)) {
-				/* TODO: need to add the retry limit */
-				tnext_state = tnow + PWRBTN_WAIT_RSMRST;
-				CPRINTS("BTN wait RSMRST to asserted (INIT)");
-				break;
+				/* Need to wait RSMRST signal then asserted BTN */
+				if (!gpio_get_level(GPIO_PCH_RSMRST_L)) {
+					/* TODO: need to add the retry limit */
+					tnext_state = tnow + PWRBTN_WAIT_RSMRST;
+					CPRINTS("BTN wait RSMRST to asserted (INIT)");
+					break;
+				}
+				msleep(20);
+				set_pwrbtn_to_pch(0, 1);
 			}
-			msleep(20);
-			set_pwrbtn_to_pch(0, 1);
+
+			tnext_state = get_time().val + PWRBTN_INITIAL_US;
+			pwrbtn_state = PWRBTN_STATE_BOOT_KB_RESET;
 		}
 
-		tnext_state = get_time().val + PWRBTN_INITIAL_US;
-		pwrbtn_state = PWRBTN_STATE_BOOT_KB_RESET;
+
 		break;
 
 	case PWRBTN_STATE_BOOT_KB_RESET:
@@ -333,7 +343,10 @@ static void state_machine(uint64_t tnow)
 		 * button until it's released, so that holding down the
 		 * recovery combination doesn't cause the chipset to shut back
 		 * down. */
-		set_pwrbtn_to_pch(1, 0);
+		if (!extpower_is_present() || (system_get_reset_flags() & 
+				EC_RESET_FLAG_HARD) == EC_RESET_FLAG_HARD)
+			set_pwrbtn_to_pch(1, 0);
+
 		if (power_button_is_pressed())
 			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
 		else

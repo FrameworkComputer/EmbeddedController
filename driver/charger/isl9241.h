@@ -51,6 +51,7 @@
 #define ISL9241_CONTROL1_LEARN_MODE	    BIT(12)
 #define ISL9241_CONTROL1_PROCHOT_REF_6800   (7 << 0)
 #define ISL9241_CONTROL1_SWITCH_FREQ        (5 << 7)
+#define ISL9241_CONTROL1_PSYS           BIT(3)
 #define ISL9241_CONTROL1_SUPPLEMENTAL_SUPPORT_MODE  BIT(10)
 
 /* Configures various charger options */

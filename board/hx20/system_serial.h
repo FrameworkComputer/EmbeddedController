@@ -28,20 +28,19 @@ enum ec_serial_idx {
 	SN_C_COVER,
 	SN_D_COVER,
 	SN_ANTENNA_MAIN,
-	SN_ANTENNA_AUX,
+	SN_ANTENNA_AUX, /*Currently not used*/
 	SN_TOUCHPAD_FPC,
 	SN_FINGERPRINT_FFC,
 	SN_EDP_CABLE,
 	SN_LCD_CABLE,
 	SN_THERMAL_ASSY,
-	SN_WIFI_MODULE,
+	SN_WIFI_MODULE, /*Currently not used*/
 	SN_SPEAKER,
-	SN_RAM,
-	SN_SSD,
+	SN_RAM_SLOT_1, /*Currently not used*/
+	SN_RAM_SLOT_2, /*Currently not used*/
+	SN_SSD, /*Currently not used*/
+	SN_AUDIO_FFC,
 	SN_RESERVED1,
-	SN_RESERVED2,
-	SN_RESERVED3,
-
 	SN_MAX
 };
 struct ec_flash_serial_info {

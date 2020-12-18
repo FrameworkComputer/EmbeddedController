@@ -39,6 +39,7 @@ static const struct battery_info info = {
 };
 
 static uint8_t charging_maximum_level = NEED_RESTORE;
+static int old_btp;
 
 const struct battery_info *battery_get_info(void)
 {
@@ -82,13 +83,15 @@ enum battery_present battery_is_present(void)
 
 #ifdef CONFIG_EMI_REGION1
 
-void battery_params_to_emi0(struct charge_state_data *emi_info)
+void battery_customize(struct charge_state_data *emi_info)
 {
 	char text[32];
 	char *str = "LION";
 	int value;
+	int new_btp;
 	static int batt_state;
 
+	/* Update EMI */
 	*host_get_customer_memmap(0x03) = (emi_info->batt.temperature - 2731)/10;
 	*host_get_customer_memmap(0x06) = emi_info->batt.display_charge/10;
 	
@@ -108,6 +111,27 @@ void battery_params_to_emi0(struct charge_state_data *emi_info)
 		*host_get_customer_memmap(0x07) |= BIT(2);
 	else
 		*host_get_customer_memmap(0x07) &= ~BIT(2);
+	
+	/* BTP: Notify AP update battery */
+	new_btp = *host_get_customer_memmap(0x08) + (*host_get_customer_memmap(0x09) << 8);
+	if (new_btp > old_btp)
+	{
+		if (emi_info->batt.remaining_capacity > new_btp)
+		{
+			old_btp = new_btp;
+			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
+			ccprintf ("trigger higher BTP: %d", old_btp);
+		}
+	}
+	else if (new_btp < old_btp)
+	{
+		if (emi_info->batt.remaining_capacity < new_btp)
+		{
+			old_btp = new_btp;
+			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
+			ccprintf ("trigger lower BTP: %d", old_btp);
+		}
+	}
 
 	/*
 	 * When the battery present have change notify AP
@@ -117,6 +141,7 @@ void battery_params_to_emi0(struct charge_state_data *emi_info)
 		batt_state = emi_info->batt.is_present;
 	}
 }
+
 #endif
 
 static void bettery_percentage_control(void)

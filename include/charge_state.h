@@ -151,7 +151,7 @@ const struct batt_params *charger_current_battery_params(void);
 #include "charge_state_v2.h"
 
 #ifdef CONFIG_EMI_REGION1
-void battery_params_to_emi0(struct charge_state_data *emi_info);
+void battery_customize(struct charge_state_data *emi_info);
 #endif
 
 #endif	/* __CROS_EC_CHARGE_STATE_H */

@@ -27,6 +27,7 @@
 
 #define CONFIG_CUSTOMER_PORT80
 
+
 /*
  * Combination key
  */
@@ -48,6 +49,11 @@
 #ifndef CONFIG_BOARD_PRE_INIT
 #define CONFIG_BOARD_PRE_INIT
 #endif
+#endif
+
+/* Add commands to read/write ec serial data structure */
+#ifdef CONFIG_CHIPSET_DEBUG
+#define CONFIG_SYSTEMSERIAL_DEBUG
 #endif
 
 /*
@@ -536,6 +542,7 @@ enum adc_channel {
 	ADC_TP_BOARD_ID,
 	ADC_AD_BID,
 	ADC_AUDIO_BOARD_ID,
+	ADC_PROCHOT_L,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
@@ -693,6 +700,7 @@ int board_get_version(void);
 void board_power_off(void);
 
 void boot_ap_on_g3(void);
+void update_power_limit(void);
 
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);

@@ -43,6 +43,7 @@
 #include "motion_lid.h"
 #include "pi3usb9281.h"
 #include "peci.h"
+#include "peci_customization.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -89,6 +90,8 @@
 #define DS1624_ACCESS_CFG	0xAC	/* read/write 8-bit config */
 #define DS1624_CMD_START	0xEE
 #define DS1624_CMD_STOP		0x22
+
+#define POWER_LIMIT_1_W	28
 
 static int forcing_shutdown;  /* Forced shutdown in progress? */
 
@@ -339,7 +342,9 @@ const struct adc_t adc_channels[] = {
 	[ADC_VCIN1_BATT_TEMP] = {"BATT_PRESENT", 3300, 4096, 0, 2},
 	[ADC_TP_BOARD_ID]     = {"TP_BID", 3300, 4096, 0, 3},
 	[ADC_AD_BID]          = {"AD_BID", 3300, 4096, 0, 4},
-	[ADC_AUDIO_BOARD_ID]  = {"AUDIO_BID", 3300, 4096, 0, 5}
+	[ADC_AUDIO_BOARD_ID]  = {"AUDIO_BID", 3300, 4096, 0, 5},
+	[ADC_PROCHOT_L]       = {"PROCHOT_L", 3300, 4096, 0, 6}
+
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -617,6 +622,11 @@ void cancel_board_power_off(void)
 static void board_extpower(void)
 {
 	gpio_set_level(GPIO_AC_PRESENT_OUT, extpower_is_present());
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) && !extpower_is_present()) {
+		/* if AC disconnected, need to power_off EC_ON */
+		board_power_off();
+	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
@@ -730,7 +740,17 @@ int charge_want_shutdown(void)
 
 int charge_prevent_power_on(int power_button_pressed)
 {
-	return 0;
+	/* TODO: when adp power < 20W or battery < 10% cannot power on */
+	int battery_percent;
+	int active_power;
+
+	battery_percent = charge_get_percent();
+	active_power = cypd_get_active_power_budget();
+
+	if (active_power < 20 || (battery_percent < 10 && active_power < 55))
+		return 1;
+	else
+		return 0;
 }
 
 
@@ -766,7 +786,9 @@ static void sci_enable(void)
 {
 	if (*host_get_customer_memmap(0x00) == 1) {
 	/* when host set EC driver ready flag, EC need to enable SCI */
-		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0x10AF92AFF);
+		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0x20AF92AFF);
+
+		update_power_limit();
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }
@@ -819,6 +841,7 @@ static void board_chipset_resume(void)
 	gpio_set_level(GPIO_EC_WLAN_EN,1);
 	gpio_set_level(GPIO_EC_WL_OFF_L,1);
 	gpio_set_level(GPIO_CAM_EN, 1);
+	gpio_set_flags(GPIO_ME_EN, GPIO_ODR_HIGH);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 	     MOTION_SENSE_HOOK_PRIO-1);
@@ -833,6 +856,7 @@ static void board_chipset_suspend(void)
 	gpio_set_level(GPIO_EC_WLAN_EN,1);
 	gpio_set_level(GPIO_EC_WL_OFF_L,1);
 	gpio_set_level(GPIO_CAM_EN, 0);
+	gpio_set_flags(GPIO_ME_EN, GPIO_OUT_LOW);
 #if 0 /* TODO not implemented in gpio.inc */
 	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 0);
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 0);
@@ -1245,18 +1269,81 @@ void charger_update(void)
 			CPRINTS("update charger control4 fail!");
 		}
 
-		val = ISL9241_CONTROL1_PROCHOT_REF_6800 | ISL9241_CONTROL1_SWITCH_FREQ;
+		val = ISL9241_CONTROL1_PROCHOT_REF_6800 |
+				ISL9241_CONTROL1_SWITCH_FREQ | ISL9241_CONTROL1_PSYS;
+
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 			ISL9241_REG_CONTROL1, (battery_is_present() ? val |
 			ISL9241_CONTROL1_SUPPLEMENTAL_SUPPORT_MODE : val))) {
 			CPRINTS("Update charger control1 fail");
 		}
 
+		/* Set DC prochot to 6.912A */
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_DC_PROCHOT, 0x1B00))
+			CPRINTS("Update DC prochot fail");
+
 		pre_ac_state = extpower_is_present();
 		pre_dc_state = battery_is_present();
 	}
 }
-DECLARE_HOOK(HOOK_TICK, charger_update, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_AC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
+
+void update_power_limit(void)
+{
+	/*
+	 * power limit is related to AC state, battery percentage, and power budget
+	 */
+
+	int active_power;
+	int pps_power_budget;
+	int battery_percent;
+	int pl2_watt = 0;
+	int pl4_watt = 0;
+	int psys_watt = 0;
+
+	static int old_pl2_watt = -1;
+	static int old_pl4_watt = -1;
+	static int old_psys_watt = -1;
+
+	/* TODO: get the power and pps_power_budget */
+	battery_percent = charge_get_percent();
+	active_power = cypd_get_active_power_budget();
+	pps_power_budget = cypd_get_pps_power_budget();
+
+	if (!extpower_is_present() || (active_power < 55)) {
+		/* Battery only or ADP < 55W */
+		pl2_watt = POWER_LIMIT_1_W;
+		pl4_watt = 50 - pps_power_budget;
+		psys_watt = 52 - pps_power_budget;
+	} else if (battery_percent < 30) {
+		/* ADP > 55W and Battery percentage < 30% */
+		pl4_watt = active_power - 15 - pps_power_budget;
+		pl2_watt = MIN((pl4_watt * 90) / 100, 64);
+		psys_watt = ((active_power * 95) / 100) - pps_power_budget;
+	} else {
+		/* ADP > 55W and Battery percentage >= 30% */
+		pl2_watt = 64;
+		pl4_watt = 121;
+		psys_watt = ((active_power * 95) / 100) - pps_power_budget;
+	}
+	if (pl2_watt != old_pl2_watt || pl4_watt != old_pl4_watt || psys_watt != old_psys_watt) {
+		old_psys_watt = psys_watt;
+		old_pl4_watt = pl4_watt;
+		old_pl2_watt = pl2_watt;
+		CPRINTS("Updating SOC Power Limits: PL2 %d, PL4 %d, Psys %d, Adapter %d", 
+				pl2_watt, pl4_watt, psys_watt, active_power);
+		peci_update_PL1(POWER_LIMIT_1_W);
+		peci_update_PL2(pl2_watt);
+		peci_update_PL4(pl4_watt);
+		peci_update_PsysPL2(psys_watt);
+	}
+
+
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, update_power_limit, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, update_power_limit, HOOK_PRIO_DEFAULT);
 #endif
 
 
@@ -1393,6 +1480,24 @@ static void setup_fans(void)
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 #endif
 
+static int prochot_low_time;
+void prochot_monitor(void)
+{
+	int val_l;
+	/* TODO Enable this once PROCHOT has moved to VCCIN_AUX_CORE_ALERT#_R
+	* Right now the voltage for this is too low for us to sample using gpio.
+	*/
+	val_l = adc_read_channel(ADC_PROCHOT_L) > 500;
+	/*val_l = gpio_get_level(GPIO_EC_val_lPROCHOT_L);*/
+	if (val_l) {
+		prochot_low_time = 0;
+	} else {
+		prochot_low_time++;
+		if ((prochot_low_time & 0xF) == 0xF && chipset_in_state(CHIPSET_STATE_ON))
+			CPRINTF("PROCHOT has been low for too long - investigate");
+	}
+}
+DECLARE_HOOK(HOOK_SECOND, prochot_monitor, HOOK_PRIO_DEFAULT);
 
 
 
