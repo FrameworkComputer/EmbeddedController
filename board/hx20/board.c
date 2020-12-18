@@ -201,16 +201,16 @@ const struct pwm_t pwm_channels[] = {
 		.channel = 1,
 		.flags = PWM_CONFIG_DSLEEP,
 	},
-	[PWM_CH_DB1_LED_BLUE] = {
-		.channel = 8,
-		.flags = PWM_CONFIG_DSLEEP,
-	},
-	[PWM_CH_DB1_LED_GREEN] = {
+	[PWM_CH_DB1_LED_GREEN_EVT] = {
 		.channel = 4,
 		.flags = PWM_CONFIG_DSLEEP,
 	},
-	[PWM_CH_DB1_LED_GREEN_DVT] = {
+	[PWM_CH_DB1_LED_GREEN] = {
 		.channel = 3,
+		.flags = PWM_CONFIG_DSLEEP,
+	},
+	[PWM_CH_DB1_LED_BLUE] = {
+		.channel = 8,
 		.flags = PWM_CONFIG_DSLEEP,
 	},
 	[PWM_CH_FPR_LED_RED] = {
