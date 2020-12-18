@@ -137,7 +137,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_SENSOR,
 	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = NULL,
+	 .rot_standard_ref = &base_standard_ref,
 	 .min_frequency = BMI_GYRO_MIN_FREQ,
 	 .max_frequency = BMI_GYRO_MAX_FREQ,
 	},
