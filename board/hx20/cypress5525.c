@@ -172,8 +172,8 @@ void cyp5525_update_charger(void)
 	if (active_port >= 0) {
 		CPRINTS("Updating charger to active port %d",
 			active_port);
-		isl9241_set_ac_prochot(0, current*100/95);
-		charger_set_input_current(0, current);
+		isl9241_set_ac_prochot(0, current);
+		charger_set_input_current(0, current*85/100);
 	} else {
 		CPRINTS("No usb-c input active. Not charging");
 		charger_set_input_current(0, 0);

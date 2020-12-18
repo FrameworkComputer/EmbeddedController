@@ -740,7 +740,17 @@ int charge_want_shutdown(void)
 
 int charge_prevent_power_on(int power_button_pressed)
 {
-	return 0;
+	/* TODO: when adp power < 20W or battery < 10% cannot power on */
+	int battery_percent;
+	int active_power;
+
+	battery_percent = charge_get_percent();
+	active_power = cypd_get_active_power_budget();
+
+	if (active_power < 20 || (battery_percent < 10 && active_power < 55))
+		return 1;
+	else
+		return 0;
 }
 
 
@@ -1259,18 +1269,26 @@ void charger_update(void)
 			CPRINTS("update charger control4 fail!");
 		}
 
-		val = ISL9241_CONTROL1_PROCHOT_REF_6800 | ISL9241_CONTROL1_SWITCH_FREQ;
+		val = ISL9241_CONTROL1_PROCHOT_REF_6800 |
+				ISL9241_CONTROL1_SWITCH_FREQ | ISL9241_CONTROL1_PSYS;
+
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 			ISL9241_REG_CONTROL1, (battery_is_present() ? val |
 			ISL9241_CONTROL1_SUPPLEMENTAL_SUPPORT_MODE : val))) {
 			CPRINTS("Update charger control1 fail");
 		}
 
+		/* Set DC prochot to 6.912A */
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_DC_PROCHOT, 0x1B00))
+			CPRINTS("Update DC prochot fail");
+
 		pre_ac_state = extpower_is_present();
 		pre_dc_state = battery_is_present();
 	}
 }
-DECLARE_HOOK(HOOK_TICK, charger_update, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_AC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 
 void update_power_limit(void)
 {
