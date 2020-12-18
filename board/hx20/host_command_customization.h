@@ -51,6 +51,7 @@ struct ec_response_chg_limit_control {
 	uint8_t max_percentage;
 	uint8_t min_percentage;
 } __ec_align1;
+
 struct ec_params_factory_notified {
 	/* factory mode enable */
 	uint8_t flags;

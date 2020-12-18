@@ -1558,7 +1558,7 @@ int fingerprint_power_button_first_state;
 static void fingerprint_power_button_change_deferred(void)
 {
 	if (fingerprint_power_button_first_state == gpio_get_level(GPIO_ON_OFF_FP_L))
-	factory_power_button(!gpio_get_level(GPIO_ON_OFF_FP_L));
+		factory_power_button(!gpio_get_level(GPIO_ON_OFF_FP_L));
 }
 DECLARE_DEFERRED(fingerprint_power_button_change_deferred);
 

@@ -327,12 +327,6 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 static uint8_t factory_enable;
 static int debounced_fp_pressed;
 
-static int fp_power_button_signal_asserted(void)
-{
-	return !!(gpio_get_level(GPIO_POWER_BUTTON_L)
-		== (CONFIG_FP_POWER_BUTTON_FLAGS & BUTTON_FLAG_ACTIVE_HIGH) ? 1 : 0);
-}
-
 static void fp_power_button_deferred(void)
 {
 	keyboard_update_button(KEYBOARD_BUTTON_POWER_FAKE,
@@ -365,24 +359,6 @@ void factory_setting(uint8_t enable)
 		debounced_fp_pressed = 0;
 		set_scancode_set2(2, 2, SCANCODE_FN);
 	}
-}
-
-int fp_power_button_press(int level)
-{
-	if (level)
-		return 1;
-
-#ifndef CONFIG_POWER_BUTTON_IGNORE_LID
-	/*
-	 * Always indicate power button released if the lid is closed.
-	 * This prevents waking the system if the device is squashed enough to
-	 * press the power button through the closed lid.
-	 */
-	if (!lid_is_open())
-		return 0;
-#endif
-
-	return fp_power_button_signal_asserted();
 }
 
 int factory_status(void)
