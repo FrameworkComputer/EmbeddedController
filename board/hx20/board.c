@@ -622,6 +622,11 @@ void cancel_board_power_off(void)
 static void board_extpower(void)
 {
 	gpio_set_level(GPIO_AC_PRESENT_OUT, extpower_is_present());
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) && !extpower_is_present()) {
+		/* if AC disconnected, need to power_off EC_ON */
+		board_power_off();
+	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
@@ -826,6 +831,7 @@ static void board_chipset_resume(void)
 	gpio_set_level(GPIO_EC_WLAN_EN,1);
 	gpio_set_level(GPIO_EC_WL_OFF_L,1);
 	gpio_set_level(GPIO_CAM_EN, 1);
+	gpio_set_flags(GPIO_ME_EN, GPIO_ODR_HIGH);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 	     MOTION_SENSE_HOOK_PRIO-1);
@@ -840,6 +846,7 @@ static void board_chipset_suspend(void)
 	gpio_set_level(GPIO_EC_WLAN_EN,1);
 	gpio_set_level(GPIO_EC_WL_OFF_L,1);
 	gpio_set_level(GPIO_CAM_EN, 0);
+	gpio_set_flags(GPIO_ME_EN, GPIO_OUT_LOW);
 #if 0 /* TODO not implemented in gpio.inc */
 	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 0);
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 0);
