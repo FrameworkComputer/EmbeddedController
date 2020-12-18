@@ -123,7 +123,6 @@ void set_keycap_label(uint8_t row, uint8_t col, char val)
 
 
 #ifdef CONFIG_KEYBOARD_BACKLIGHT
-static uint8_t backlight_state;
 enum backlight_brightness {
 	KEYBOARD_BL_BRIGHTNESS_OFF = 0,
 	KEYBOARD_BL_BRIGHTNESS_LOW = 20,
@@ -141,6 +140,7 @@ int hx20_kblight_enable(int enable)
 	}
 	return EC_SUCCESS;
 }
+
 
 static int hx20_kblight_set_brightness(int percent)
 {
@@ -193,7 +193,7 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 					      int8_t pressed)
 {
 	const uint16_t pressed_key = *make_code;
-
+	uint8_t bl_brightness = 0;
 
 	if (pressed_key == SCANCODE_FN && pressed)
 		Fn_key |= FN_PRESSED;
@@ -280,22 +280,23 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 
 		break;
 	case SCANCODE_SPACE:	/* TODO: TOGGLE_KEYBOARD_BACKLIGHT */
-		switch (backlight_state) {
+		bl_brightness = kblight_get();
+		switch (bl_brightness) {
 		case KEYBOARD_BL_BRIGHTNESS_LOW:
-			backlight_state = KEYBOARD_BL_BRIGHTNESS_MED;
+			bl_brightness = KEYBOARD_BL_BRIGHTNESS_MED;
 			break;
 		case KEYBOARD_BL_BRIGHTNESS_MED:
-			backlight_state = KEYBOARD_BL_BRIGHTNESS_HIGH;
+			bl_brightness = KEYBOARD_BL_BRIGHTNESS_HIGH;
 			break;
 		case KEYBOARD_BL_BRIGHTNESS_HIGH:
-			backlight_state = KEYBOARD_BL_BRIGHTNESS_OFF;
+			bl_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
 			break;
 		default:
 		case KEYBOARD_BL_BRIGHTNESS_OFF:
-			backlight_state = KEYBOARD_BL_BRIGHTNESS_LOW;
+			bl_brightness = KEYBOARD_BL_BRIGHTNESS_LOW;
 			break;
 		}
-		kblight_set(backlight_state);
+		kblight_set(bl_brightness);
 		/* we dont want to pass the space key event to the OS */
 		return EC_ERROR_UNKNOWN;
 		break;
