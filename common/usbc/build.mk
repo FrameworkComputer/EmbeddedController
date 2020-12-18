@@ -38,6 +38,9 @@ endif # CONFIG_USB_PE_SM
 
 # Retimer firmware update
 all-obj-$(CONFIG_USBC_RETIMER_FW_UPDATE)+=$(_usbc_dir)usb_retimer_fw_update.o
+
+# ALT-DP mode for UFP ports
+all-obj-$(CONFIG_USB_PD_ALT_MODE_UFP_DP)+=$(_usbc_dir)usb_pd_dp_ufp.o
 endif # CONFIG_USB_PD_TCPMV2
 
 # For testing
