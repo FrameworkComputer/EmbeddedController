@@ -199,6 +199,9 @@ static void led_tick(void)
 static void led_configure(void)
 {
 	int i;
+
+	if (board_get_version() == 4)
+		pwm_leds[PWM_LED1].ch1 = PWM_CH_DB1_LED_GREEN_EVT;
 		/*Initialize PWM channels*/
 	for (i = 0; i < PWM_CH_COUNT; i++) {
 		pwm_enable(i, 1);

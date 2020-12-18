@@ -89,8 +89,6 @@ static void chipset_force_g3(void)
 	gpio_set_level(GPIO_PCH_PWROK, 0);
 	gpio_set_level(GPIO_SYS_PWROK, 0);
 	gpio_set_level(GPIO_SYSON, 0);
-	gpio_set_level(GPIO_EC_KBL_PWR_EN, 0);
-
 	/* keep pch power for wake source or vpro type */
 	if (!keep_pch_power()) {
 		gpio_set_level(GPIO_PCH_RSMRST_L, 0);

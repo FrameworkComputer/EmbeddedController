@@ -184,6 +184,10 @@ const struct pwm_t pwm_channels[] = {
 		.channel = 0,
 		.flags = PWM_CONFIG_OPEN_DRAIN,
 	},
+	[PWM_CH_KBL] = {
+		.channel = 4,
+		.flags = PWM_CONFIG_DSLEEP,
+	},
 	[PWM_CH_DB0_LED_RED] = {
 		.channel = 5,
 		.flags = PWM_CONFIG_DSLEEP,
@@ -200,8 +204,12 @@ const struct pwm_t pwm_channels[] = {
 		.channel = 1,
 		.flags = PWM_CONFIG_DSLEEP,
 	},
-	[PWM_CH_DB1_LED_GREEN] = {
+	[PWM_CH_DB1_LED_GREEN_EVT] = {
 		.channel = 4,
+		.flags = PWM_CONFIG_DSLEEP,
+	},
+	[PWM_CH_DB1_LED_GREEN] = {
+		.channel = 3,
 		.flags = PWM_CONFIG_DSLEEP,
 	},
 	[PWM_CH_DB1_LED_BLUE] = {
@@ -1517,3 +1525,31 @@ void mainboard_power_button_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&mainboard_power_button_change_deferred_data,
 			   50);
 }
+
+
+
+
+static int cmd_spimux(int argc, char **argv)
+{
+	int enable;
+	if (argc == 2) {
+		if (!parse_bool(argv[1], &enable))
+			return EC_ERROR_PARAM1;
+
+		if (enable){
+			/* Disable LED drv */
+			gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 0);
+			/* Set GPIO56 as SPI for access SPI ROM */
+			gpio_set_alternate_function(1, 0x4000, 2);
+		} else {
+			/* Enable LED drv */
+			gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 1);
+			/* Set GPIO56 as SPI for access SPI ROM */
+			gpio_set_alternate_function(1, 0x4000, 1);
+		}
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(spimux, cmd_spimux,
+			"[enable/disable]",
+			"Set if spi CLK is in SPI mode (true) or PWM mode");
