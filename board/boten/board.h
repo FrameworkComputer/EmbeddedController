@@ -72,6 +72,9 @@
 #define CONFIG_USB_PD_DISCHARGE_TCPC
 #define CONFIG_USB_PD_TCPC_LOW_POWER
 
+/* EC console commands */
+#define CONFIG_CMD_TCPC_DUMP
+
 /* Variant references the TCPCs to determine Vbus sourcing */
 #define CONFIG_USB_PD_5V_EN_CUSTOM
 

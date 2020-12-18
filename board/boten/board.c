@@ -40,20 +40,50 @@
 #include "usb_pd_tcpm.h"
 
 #define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define INT_RECHECK_US 5000
+
+/* C0 interrupt line shared by BC 1.2 and charger */
+static void check_c0_line(void);
+DECLARE_DEFERRED(check_c0_line);
 
 static void hdmi_hpd_interrupt(enum gpio_signal s)
 {
 	gpio_set_level(GPIO_USB_C1_DP_HPD, !gpio_get_level(s));
 }
 
-static void usb_c0_interrupt(enum gpio_signal s)
+static void notify_c0_chips(void)
 {
 	/*
 	 * The interrupt line is shared between the TCPC and BC 1.2 detection
-	 * chip.
+	 * chip.  Therefore we'll need to check both ICs.
 	 */
 	schedule_deferred_pd_interrupt(0);
 	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
+}
+
+static void check_c0_line(void)
+{
+	/*
+	 * If line is still being held low, see if there's more to process from
+	 * one of the chips
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_INT_ODL)) {
+		notify_c0_chips();
+		hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
+	}
+}
+
+static void usb_c0_interrupt(enum gpio_signal s)
+{
+	/* Cancel any previous calls to check the interrupt line */
+	hook_call_deferred(&check_c0_line_data, -1);
+
+	/* Notify all chips using this line that an interrupt came in */
+	notify_c0_chips();
+
+	/* Check the line again in 5ms */
+	hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
+
 }
 
 static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
@@ -162,6 +192,13 @@ void board_init(void)
 	pwm_set_duty(PWM_CH_LED_RED, 70);
 	pwm_set_duty(PWM_CH_LED_GREEN, 70);
 	pwm_set_duty(PWM_CH_LED_WHITE, 70);
+
+	/*
+	 * If interrupt lines are already low, schedule them to be processed
+	 * after inits are completed.
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_INT_ODL))
+		hook_call_deferred(&check_c0_line_data, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
