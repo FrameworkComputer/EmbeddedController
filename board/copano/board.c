@@ -12,7 +12,6 @@
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi260.h"
 #include "driver/bc12/pi3usb9201.h"
-#include "driver/als_tcs3400.h"
 #include "driver/ppc/syv682x.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/rt1715.h"
