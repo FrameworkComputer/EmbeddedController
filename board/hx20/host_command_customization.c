@@ -59,10 +59,12 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 		gpio_enable_interrupt(GPIO_EC_PD_INTB_L);
 
 		if (board_get_version() > 4) {
+
+			/* Set GPIO56 as PWM */
+			gpio_set_alternate_function(1, 0x4000, 1);
+
 			/* Enable LED drv */
 			gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 1);
-			/* Set GPIO56 as SPI for access SPI ROM */
-			gpio_set_alternate_function(1, 0x4000, 1);
 		}
 
 		break;

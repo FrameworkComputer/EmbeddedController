@@ -131,21 +131,14 @@ enum backlight_brightness {
 	KEYBOARD_BL_BRIGHTNESS_HIGH = 100,
 };
 
-static int hx20_kblight_enable(int enable)
+int hx20_kblight_enable(int enable)
 {
-	if (board_get_version() > 4)
-		pwm_set_duty(PWM_CH_KBL, 0);
-
-	return EC_SUCCESS;
-}
-
-int hx20_kblight_disable(void)
-{
-	if (board_get_version() > 4)
-		pwm_set_duty(PWM_CH_KBL, 0);
-
-	backlight_state = KEYBOARD_BL_BRIGHTNESS_OFF;
-
+	if (board_get_version() > 4) {
+		/*Sets PCR mask for low power handling*/
+		pwm_enable(PWM_CH_KBL, enable);
+	} else if (enable == 0) {
+		gpio_set_level(GPIO_EC_KBL_PWR_EN, 0);
+	}
 	return EC_SUCCESS;
 }
 

@@ -13,7 +13,6 @@
 #include "console.h"
 #include "extpower.h"
 #include "i2c.h"
-#include "keyboard_customization.h"
 #include "lb_common.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -90,9 +89,7 @@ static void chipset_force_g3(void)
 	gpio_set_level(GPIO_PCH_PWROK, 0);
 	gpio_set_level(GPIO_SYS_PWROK, 0);
 	gpio_set_level(GPIO_SYSON, 0);
-#ifdef CONFIG_KEYBOARD_BACKLIGHT
-	hx20_kblight_disable();
-#endif
+
 	/* keep pch power for wake source or vpro type */
 	if (!keep_pch_power()) {
 		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
