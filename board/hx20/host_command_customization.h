@@ -20,8 +20,35 @@ enum ec_flash_notified_flags {
 };
 
 struct ec_params_flash_notified {
-	/* See enum ec_config_power_button_flags */
+	/* See enum ec_flash_notified_flags */
 	uint8_t flags;
+} __ec_align1;
+
+/* Configure the behavior of the charge limit control */
+#define EC_CMD_CHARGE_LIMIT_CONTROL 0x3E03
+#define NEED_RESTORE 0x7F
+
+enum ec_chg_limit_control_modes {
+	/* Disable all setting, charge control by charge_manage */
+	CHG_LIMIT_DISABLE	= BIT(0),
+	/* Set maximum and minimum percentage */
+	CHG_LIMIT_SET_LIMIT	= BIT(1),
+	/* Host read current setting */
+	CHG_LIMIT_GET_LIMIT	= BIT(3),
+	/* Enable override mode, allow charge to full this time */
+	CHG_LIMIT_OVERRIDE	= BIT(7),
+};
+
+struct ec_params_ec_chg_limit_control {
+	/* See enum ec_chg_limit_control_modes */
+	uint8_t modes;
+	uint8_t max_percentage;
+	uint8_t min_percentage;
+} __ec_align1;
+
+struct ec_response_chg_limit_control {
+	uint8_t max_percentage;
+	uint8_t min_percentage;
 } __ec_align1;
 
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */

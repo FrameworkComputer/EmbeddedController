@@ -1322,7 +1322,7 @@ void chgstate_set_manual_voltage(int volt_mv)
 }
 
 /* Force charging off before the battery is full. */
-static int set_chg_ctrl_mode(enum ec_charge_control_mode mode)
+int set_chg_ctrl_mode(enum ec_charge_control_mode mode)
 {
 	if (mode == CHARGE_CONTROL_NORMAL) {
 		chg_ctl_mode = mode;

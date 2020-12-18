@@ -70,3 +70,6 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_NOTIFIED, flash_notified,
 			EC_VER_MASK(0));
+
+/*****************************************************************************/
+/* Hooks */

@@ -12,9 +12,13 @@
 #include "charge_state.h"
 #include "console.h"
 #include "ec_commands.h"
+#include "host_command.h"
+#include "host_command_customization.h"
+#include "system.h"
 #include "i2c.h"
 #include "string.h"
 #include "util.h"
+#include "hooks.h"
 
 /* Shutdown mode parameter to write to manufacturer access register */
 #define PARAM_CUT_OFF_LOW  0x10
@@ -34,6 +38,7 @@ static const struct battery_info info = {
 	.discharging_max_c = 62,
 };
 
+static uint8_t charging_maximum_level = NEED_RESTORE;
 static int old_btp;
 
 const struct battery_info *battery_get_info(void)
@@ -138,3 +143,84 @@ void battery_customize(struct charge_state_data *emi_info)
 }
 
 #endif
+
+static void bettery_percentage_control(void)
+{
+	static enum ec_charge_control_mode before_mode;
+	enum ec_charge_control_mode new_mode;
+	int rv;
+
+
+	if(charging_maximum_level == NEED_RESTORE)
+		charging_maximum_level = 0;
+		// TODO
+		// system_get_bbram(SYSTEM_BBRAM_IDX_CHG_MAX, &charging_maximum_level);
+
+	if( charging_maximum_level < 20 )
+		new_mode = CHARGE_CONTROL_NORMAL;
+	else if( charge_get_percent() > charging_maximum_level){
+		new_mode = CHARGE_CONTROL_DISCHARGE;
+	}
+	else if( charge_get_percent() == charging_maximum_level)
+		new_mode = CHARGE_CONTROL_IDLE;
+	else
+		new_mode = CHARGE_CONTROL_NORMAL;
+
+	if( before_mode != new_mode ){
+		before_mode = new_mode;
+		set_chg_ctrl_mode(before_mode);
+#ifdef CONFIG_CHARGER_DISCHARGE_ON_AC
+		rv = charger_discharge_on_ac(before_mode == CHARGE_CONTROL_DISCHARGE);
+#endif
+		if (rv != EC_SUCCESS)
+			ccprintf("fail to discharge.");
+	}
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, bettery_percentage_control, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, bettery_percentage_control, HOOK_PRIO_DEFAULT);
+
+/* Customize host command */
+/*
+ * Charging limit control.
+ */
+static enum ec_status cmd_charging_limit_control(struct host_cmd_handler_args *args)
+{
+
+	const struct ec_params_ec_chg_limit_control *p = args->params;
+	// TDDO: read limit
+	// struct ec_response_chg_limit_control *r = args->response;
+	// TODO: bbram
+	// system_get_bbram(SYSTEM_BBRAM_IDX_CHG_MAX, &charging_maximum_level);
+
+	if (p->modes & CHG_LIMIT_DISABLE){
+		charging_maximum_level = 0;
+	}
+
+	if (p->modes & CHG_LIMIT_SET_LIMIT){
+		if( p->max_percentage < 20 )
+			return EC_RES_ERROR;
+
+		charging_maximum_level = p->max_percentage;
+	}
+
+	if (p->modes & CHG_LIMIT_OVERRIDE)
+		charging_maximum_level = charging_maximum_level | CHG_LIMIT_OVERRIDE;
+
+	// TODO: bbran
+	// system_set_bbram(SYSTEM_BBRAM_IDX_CHG_MAX, charging_maximum_level);
+
+	if (p->modes & CHG_LIMIT_GET_LIMIT){
+		// TODO: read limit
+		/*
+		system_get_bbram(SYSTEM_BBRAM_IDX_CHG_MAX, &charging_maximum_level);
+		r->max_percentage = charging_maximum_level;
+		args->response_size = sizeof(*r);
+		*/
+	}
+
+	bettery_percentage_control();
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CHARGE_LIMIT_CONTROL, cmd_charging_limit_control,
+			EC_VER_MASK(0));
