@@ -311,7 +311,6 @@ static void espi_vw_restore(void)
 	}
 	MCHP_ESPI_VW_M2S_SRC_ALL(MSVW_H02) = r;
 	CPRINTS("eSPI restore MSVW00(Index 02h) = 0x%08x", r);
-	trace11(0, ESPI, 0, "eSPI restore MSVW00(Index 02h) = 0x%08x", r);
 
 	vb >>= 4;
 	r = 0;
@@ -321,7 +320,6 @@ static void espi_vw_restore(void)
 	}
 	MCHP_ESPI_VW_M2S_SRC_ALL(MSVW_H42) = r;
 	CPRINTS("eSPI restore MSVW00(Index 42h) = 0x%08x", r);
-	trace11(0, ESPI, 0, "eSPI restore MSVW04(Index 42h) = 0x%08x", r);
 
 	r = MCHP_VBAT_RAM(MCHP_VBAT_VWIRE_BACKUP);
 	MCHP_VBAT_RAM(MCHP_VBAT_VWIRE_BACKUP) = r & 0xFFFFFF00;
@@ -416,7 +414,6 @@ static void espi_vw_pre_init(void)
 	uint32_t i;
 
 	CPRINTS("eSPI VW Pre-Init");
-	trace0(0, ESPI, 0, "eSPI VW Pre-Init");
 
 #ifdef CONFIG_MCHP_ESPI_VW_SAVE_ON_SLEEP
 	espi_vw_restore();
@@ -449,7 +446,6 @@ static void espi_vw_pre_init(void)
 	task_enable_irq(MCHP_IRQ_GIRQ25);
 
 	CPRINTS("eSPI VW Pre-Init Done");
-	trace0(0, ESPI, 0, "eSPI VW Pre-Init Done");
 }
 
 
@@ -472,7 +468,6 @@ static void espi_send_boot_load_done(void)
 	MCHP_ESPI_VW_S2M_SRC0(SMVW_H05) = 1;
 
 	CPRINTS("eSPI Send SLAVE_BOOT_LOAD_STATUS/DONE = 1");
-	trace0(0, ESPI, 0, "VW SLAVE_BOOT_LOAD_STATUS/DONE = 1");
 }
 
 
@@ -498,7 +493,6 @@ static void espi_send_boot_load_done(void)
 static void espi_host_init(void)
 {
 	CPRINTS("eSPI - espi_host_init");
-	trace0(0, ESPI, 0, "eSPI Host Init");
 
 	/* BAR's */
 
@@ -546,7 +540,6 @@ static void espi_host_init(void)
 	lpc_update_host_event_status();
 
 	CPRINTS("eSPI - espi_host_init Done");
-	trace0(0, ESPI, 0, "eSPI Host Init Done");
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, espi_host_init, HOOK_PRIO_FIRST);
 
@@ -578,7 +571,6 @@ static void espi_pc_flush(void)
 void espi_vw_power_signal_interrupt(enum espi_vw_signal signal)
 {
 	CPRINTS("eSPI power signal interrupt for VW %d", signal);
-	trace1(0, ESPI, 0, "eSPI pwr intr VW %d", (signal - VW_SIGNAL_START));
 	power_signal_interrupt((enum gpio_signal) signal);
 }
 
@@ -624,8 +616,6 @@ int espi_vw_set_wire(enum espi_vw_signal signal, uint8_t level)
 #ifdef CONFIG_MCHP_ESPI_DEBUG
 	CPRINTS("eSPI VW Set Wire %s = %d",
 		espi_vw_get_wire_name(signal), level);
-	trace2(0, ESPI, 0, "VW SetWire[%d] = %d",
-	       ((uint32_t)signal - VW_SIGNAL_START), level);
 #endif
 
 	return EC_SUCCESS;
@@ -693,8 +683,6 @@ int espi_vw_pulse_wire(enum espi_vw_signal signal, int pulse_level)
 #ifdef CONFIG_MCHP_ESPI_DEBUG
 	CPRINTS("eSPI VW Pulse Wire %s to %d",
 		espi_vw_get_wire_name(signal), level);
-	trace2(0, ESPI, 0, "eSPI pulse VW[%d] = %d", signal, level);
-	trace2(0, ESPI, 0, " S2M index=%d src=%d", ridx, src_num);
 #endif
 
 	/* set requested inactive state */
@@ -734,8 +722,6 @@ int espi_vw_get_wire(enum espi_vw_signal signal)
 #ifdef CONFIG_MCHP_ESPI_DEBUG
 		CPRINTS("VW GetWire %s = %d",
 			espi_vw_get_wire_name(signal), vw);
-		trace2(0, ESPI, 0, "VW GetWire[%d] = %d",
-		       ((uint32_t)signal - VW_SIGNAL_START), vw);
 #endif
 	}
 
@@ -764,8 +750,6 @@ int espi_vw_enable_wire_int(enum espi_vw_signal signal)
 #ifdef CONFIG_MCHP_ESPI_DEBUG
 	CPRINTS("VW IntrEn for VW[%s]",
 		espi_vw_get_wire_name(signal));
-	trace1(0, ESPI, 0, "VW IntrEn for VW[%d]",
-	       ((uint32_t)signal - VW_SIGNAL_START));
 #endif
 
 	ridx = vw_info_tbl[tidx].reg_idx;
@@ -815,8 +799,6 @@ int espi_vw_disable_wire_int(enum espi_vw_signal signal)
 #ifdef CONFIG_MCHP_ESPI_DEBUG
 	CPRINTS("VW IntrDis for VW[%s]",
 		espi_vw_get_wire_name(signal));
-	trace1(0, ESPI, 0, "VW IntrDis for VW[%d]",
-	       (signal - VW_SIGNAL_START));
 #endif
 
 	ridx = vw_info_tbl[tidx].reg_idx;
@@ -859,28 +841,24 @@ DECLARE_DEFERRED(espi_chipset_reset);
 void espi_vw_evt_slp_s3_n(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("VW SLP_S3: %d", wire_state);
-	trace1(0, ESPI, 0, "VW_SLP_S3_L change to %d", wire_state);
 	espi_vw_power_signal_interrupt(VW_SLP_S3_L);
 }
 
 void espi_vw_evt_slp_s4_n(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("VW SLP_S4: %d", wire_state);
-	trace1(0, ESPI, 0, "VW_SLP_S4_L change to %d", wire_state);
 	espi_vw_power_signal_interrupt(VW_SLP_S4_L);
 }
 
 void espi_vw_evt_slp_s5_n(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("VW SLP_S5: %d", wire_state);
-	trace1(0, ESPI, 0, "VW_SLP_S5_L change to %d", wire_state);
 	espi_vw_power_signal_interrupt(VW_SLP_S5_L);
 }
 
 void espi_vw_evt_sus_stat_n(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("VW SUS_STAT: %d", wire_state);
-	trace1(0, ESPI, 0, "VW_SUS_STAT change to %d", wire_state);
 	espi_vw_power_signal_interrupt(VW_SUS_STAT_L);
 }
 
@@ -888,7 +866,6 @@ void espi_vw_evt_sus_stat_n(uint32_t wire_state, uint32_t bpos)
 void espi_vw_evt_pltrst_n(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("VW PLTRST#: %d", wire_state);
-	trace1(0, ESPI, 0, "VW_PLTRST# change to %d", wire_state);
 
 	if (wire_state) /* Platform Reset de-assertion */
 		espi_host_init();
@@ -903,7 +880,6 @@ void espi_vw_evt_pltrst_n(uint32_t wire_state, uint32_t bpos)
 void espi_vw_evt_oob_rst_warn(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("VW OOB_RST_WARN: %d", wire_state);
-	trace1(0, ESPI, 0, "VW_OOB_RST_WARN change to %d", wire_state);
 
 	espi_oob_flush();
 
@@ -914,7 +890,6 @@ void espi_vw_evt_oob_rst_warn(uint32_t wire_state, uint32_t bpos)
 void espi_vw_evt_sus_warn_n(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("VW SUS_WARN#: %d", wire_state);
-	trace1(0, ESPI, 0, "VW_SUS_WARN# change to %d", wire_state);
 
 	udelay(100);
 
@@ -938,7 +913,6 @@ void espi_vw_evt_sus_warn_n(uint32_t wire_state, uint32_t bpos)
  */
 void espi_vw_evt_sus_pwrdn_ack(uint32_t wire_state, uint32_t bpos)
 {
-	trace1(0, ESPI, 0, "VW_SUS_PWRDN_ACK change to %d", wire_state);
 	CPRINTS("VW SUS_PWRDN_ACK: %d", wire_state);
 }
 
@@ -946,7 +920,6 @@ void espi_vw_evt_sus_pwrdn_ack(uint32_t wire_state, uint32_t bpos)
 void espi_vw_evt_slp_a_n(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("VW SLP_A: %d", wire_state);
-	trace1(0, ESPI, 0, "VW_SLP_A# change to %d", wire_state);
 
 	/* Put handling of ASW well devices here, if any */
 }
@@ -955,7 +928,6 @@ void espi_vw_evt_slp_a_n(uint32_t wire_state, uint32_t bpos)
 void espi_vw_evt_host_rst_warn(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("VW HOST_RST_WARN: %d", wire_state);
-	trace1(0, ESPI, 0, "VW_HOST_RST_WARN change to %d", wire_state);
 
 	espi_pc_flush();
 
@@ -967,32 +939,28 @@ void espi_vw_evt_host_rst_warn(uint32_t wire_state, uint32_t bpos)
 void espi_vw_evt_slp_lan_n(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("VW SLP_LAN: %d", wire_state);
-	trace1(0, ESPI, 0, "VW_SLP_LAN# change to %d", wire_state);
 }
 
 /* SLP_WLAN# */
 void espi_vw_evt_slp_wlan_n(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("VW SLP_WLAN: %d", wire_state);
-	trace1(0, ESPI, 0, "VW_SLP_WLAN# change to %d", wire_state);
+
 }
 
 void espi_vw_evt_host_c10(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("VW HOST_C10: %d", wire_state);
-	trace1(0, ESPI, 0, "VW_HOST_C10 change to %d", wire_state);
 }
 
 void espi_vw_evt1_dflt(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("Unknown M2S VW: state=%d GIRQ24 bitpos=%d", wire_state, bpos);
-	MCHP_INT_DISABLE(24) = (1ul << bpos);
 }
 
 void espi_vw_evt2_dflt(uint32_t wire_state, uint32_t bpos)
 {
 	CPRINTS("Unknown M2S VW: state=%d GIRQ25 bitpos=%d", wire_state, bpos);
-	MCHP_INT_DISABLE(25) = (1ul << bpos);
 }
 
 /************************************************************************/
@@ -1187,7 +1155,6 @@ void espi_reset_isr(void)
 		MCHP_ESPI_FC_IEN = (1ul << 1);
 		MCHP_ESPI_PC_IEN = (1ul << 25);
 		CPRINTS("eSPI Reset de-assert");
-		trace0(0, ESPI, 0, "eSPI Reset de-assert");
 
 	} else { /* falling edge - reset asserted */
 		MCHP_INT_SOURCE(MCHP_ESPI_GIRQ) = (
@@ -1205,7 +1172,6 @@ void espi_reset_isr(void)
 		chipset_handle_espi_reset_assert();
 
 		CPRINTS("eSPI Reset assert");
-		trace0(0, ESPI, 0, "eSPI Reset assert");
 	}
 }
 DECLARE_IRQ(MCHP_IRQ_ESPI_RESET, espi_reset_isr, 3);
@@ -1224,7 +1190,6 @@ void espi_vw_en_isr(void)
 	espi_channels_ready |= (1ul << 0);
 
 	CPRINTS("eSPI VW Enable received, set VW Ready");
-	trace0(0, ESPI, 0, "VW Enable. Set VW Ready");
 
 	if (0x03 == (espi_channels_ready & 0x03))
 		espi_send_boot_load_done();
@@ -1249,16 +1214,13 @@ void espi_oob_tx_isr(void)
 			MCHP_ESPI_IO_OOB_READY = 1;
 			espi_channels_ready |= (1ul << 2);
 			CPRINTS("eSPI OOB_UP ISR: OOB Channel Enable");
-			trace0(0, ESPI, 0, "OOB_TX OOB Enable");
 		} else { /* no, disabled by Master */
 			espi_channels_ready &= ~(1ul << 2);
 			CPRINTS("eSPI OOB_UP ISR: OOB Channel Disable");
-			trace0(0, ESPI, 0, "eSPI OOB_TX OOB Disable");
 		}
 	} else {
 		/* Handle OOB Up transmit status: done and/or errors, here */
 		CPRINTS("eSPI OOB_UP status = 0x%x", sts);
-		trace11(0, ESPI, 0, "eSPI OOB_TX Status = 0x%08x", sts);
 	}
 }
 DECLARE_IRQ(MCHP_IRQ_ESPI_OOB_UP, espi_oob_tx_isr, 2);
@@ -1274,7 +1236,6 @@ void espi_oob_rx_isr(void)
 	MCHP_INT_SOURCE(MCHP_ESPI_GIRQ) = MCHP_ESPI_OOB_RX_GIRQ_BIT;
 	/* Handle OOB Up transmit status: done and/or errors, if any */
 	CPRINTS("eSPI OOB_DN status = 0x%x", sts);
-	trace11(0, ESPI, 0, "eSPI OOB_RX Status = 0x%08x", sts);
 }
 DECLARE_IRQ(MCHP_IRQ_ESPI_OOB_DN, espi_oob_rx_isr, 2);
 
@@ -1296,18 +1257,15 @@ void espi_fc_isr(void)
 			MCHP_ESPI_IO_FC_READY = 1;
 			espi_channels_ready |= (1ul << 1);
 			CPRINTS("eSPI FC ISR: Enable");
-			trace0(0, ESPI, 0, "eSPI FC Enable");
 			if (0x03 == (espi_channels_ready & 0x03))
 				espi_send_boot_load_done();
 		} else { /* no, disabled by Master */
 			espi_channels_ready &= ~(1ul << 1);
 			CPRINTS("eSPI FC ISR: Disable");
-			trace0(0, ESPI, 0, "eSPI FC Disable");
 		}
 	} else {
 		/* Handle FC command status: done and/or errors */
 		CPRINTS("eSPI FC status = 0x%x", sts);
-		trace11(0, ESPI, 0, "eSPI FC Status = 0x%08x", sts);
 	}
 }
 DECLARE_IRQ(MCHP_IRQ_ESPI_FC, espi_fc_isr, 2);
@@ -1326,17 +1284,14 @@ void espi_pc_isr(void)
 			MCHP_ESPI_IO_PC_READY = 1;
 			espi_channels_ready |= (1ul << 3);
 			CPRINTS("eSPI PC Channel Enable");
-			trace0(0, ESPI, 0, "eSPI PC Enable");
 		} else {
 			espi_channels_ready &= ~(1ul << 3);
 			CPRINTS("eSPI PC Channel Disable");
-			trace0(0, ESPI, 0, "eSPI PC Disable");
 		}
 
 	} else {
 		/* Handler PC channel errors here */
 		CPRINTS("eSPI PC status = 0x%x", sts);
-		trace11(0, ESPI, 0, "eSPI PC Status = 0x%08x", sts);
 	}
 }
 DECLARE_IRQ(MCHP_IRQ_ESPI_PC, espi_pc_isr, 2);
@@ -1383,7 +1338,6 @@ void espi_init(void)
 	espi_channels_ready = 0;
 
 	CPRINTS("eSPI - espi_init");
-	trace0(0, ESPI, 0, "eSPI Init");
 
 	/* Clear PCR eSPI sleep enable */
 	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_ESPI);
@@ -1462,8 +1416,8 @@ void espi_init(void)
 	MCHP_ESPI_PC_STATUS = 0xfffffffful;
 	MCHP_ESPI_OOB_RX_STATUS = 0xfffffffful;
 	MCHP_ESPI_FC_STATUS = 0xfffffffful;
-	MCHP_INT_DISABLE(MCHP_ESPI_GIRQ) = 0x1FFul;
-	MCHP_INT_SOURCE(MCHP_ESPI_GIRQ) = 0x1FFul;
+	MCHP_INT_DISABLE(MCHP_ESPI_GIRQ) = 0xfffffffful;
+	MCHP_INT_SOURCE(MCHP_ESPI_GIRQ) = 0xfffffffful;
 
 	task_enable_irq(MCHP_IRQ_ESPI_PC);
 	task_enable_irq(MCHP_IRQ_ESPI_OOB_UP);
@@ -1476,19 +1430,15 @@ void espi_init(void)
 	 * and will be controlled by espi_vw_enable/disable_wire_in
 	 */
 	CPRINTS("eSPI - enable ESPI_RESET# interrupt");
-	trace0(0, ESPI, 0, "Enable ESPI_RESET# interrupt");
 
 	/* Enable ESPI_RESET# interrupt and clear status */
 	espi_reset_ictrl(1, 1);
 
 	CPRINTS("eSPI - espi_init - done");
-	trace0(0, ESPI, 0, "eSPI Init Done");
-
 }
 
 
 #ifdef CONFIG_MCHP_ESPI_EC_CMD
-/* TODO */
 static int command_espi(int argc, char **argv)
 {
 	uint32_t chan, w0, w1, w2;

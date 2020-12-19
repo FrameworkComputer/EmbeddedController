@@ -240,7 +240,7 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 
 	/*
 	 * Clear processing flag in hardware and
-         * sticky status in interrupt aggregator.
+	 * sticky status in interrupt aggregator.
 	 */
 	MCHP_ACPI_EC_STATUS(1) &= ~EC_LPC_STATUS_PROCESSING;
 	MCHP_INT_SOURCE(MCHP_ACPI_EC_GIRQ) =
@@ -282,36 +282,47 @@ void lpc_mem_mapped_init(void)
 		EC_HOST_CMD_FLAG_VERSION_3;
 }
 
-const int acpi_ec_pcr_slp[MCHP_ACPI_EC_MAX] = {
+const int acpi_ec_pcr_slp[] = {
 	MCHP_PCR_ACPI_EC0,
 	MCHP_PCR_ACPI_EC1,
 	MCHP_PCR_ACPI_EC2,
 	MCHP_PCR_ACPI_EC3,
+#ifdef CHIP_FAMILY_MEC170X
 	MCHP_PCR_ACPI_EC4,
+#endif
 };
+BUILD_ASSERT(ARRAY_SIZE(acpi_ec_pcr_slp) == MCHP_ACPI_EC_INSTANCES);
 
-const int acpi_ec_nvic_ibf[MCHP_ACPI_EC_MAX] = {
+const int acpi_ec_nvic_ibf[] = {
 	MCHP_IRQ_ACPIEC0_IBF,
 	MCHP_IRQ_ACPIEC1_IBF,
 	MCHP_IRQ_ACPIEC2_IBF,
 	MCHP_IRQ_ACPIEC3_IBF,
+#ifdef CHIP_FAMILY_MEC170X
 	MCHP_IRQ_ACPIEC4_IBF,
+#endif
 };
+BUILD_ASSERT(ARRAY_SIZE(acpi_ec_nvic_ibf) == MCHP_ACPI_EC_INSTANCES);
 
 #ifdef CONFIG_HOSTCMD_ESPI
-const int acpi_ec_espi_bar_id[MCHP_ACPI_EC_MAX] = {
+const int acpi_ec_espi_bar_id[] = {
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC0,
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC1,
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC2,
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC3,
+#ifdef CHIP_FAMILY_MEC170X
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC4,
+#endif
 };
+BUILD_ASSERT(ARRAY_SIZE(acpi_ec_espi_bar_id) == MCHP_ACPI_EC_INSTANCES);
 #endif
 
 void chip_acpi_ec_config(int instance, uint32_t io_base, uint8_t mask)
 {
-	if (instance >= MCHP_ACPI_EC_MAX)
+	if (instance >= MCHP_ACPI_EC_INSTANCES) {
 		CPUTS("ACPI EC CFG invalid");
+		return;
+	}
 
 	MCHP_PCR_SLP_DIS_DEV(acpi_ec_pcr_slp[instance]);
 
@@ -361,7 +372,12 @@ void chip_8042_config(uint32_t io_base)
 #ifndef CONFIG_KEYBOARD_IRQ_GPIO
 	/* Set up SERIRQ for keyboard */
 	MCHP_8042_KB_CTRL |= BIT(5);
+#ifdef CONFIG_HOSTCMD_ESPI
+	/* Delivery 8042 keyboard interrupt as IRQ1 using eSPI SERIRQ */
+	MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_SIRQ_8042_KB) = 1;
+#else
 	MCHP_LPC_SIRQ(1) = 0x01;
+#endif
 #endif
 }
 
@@ -371,7 +387,7 @@ void chip_8042_config(uint32_t io_base)
  * in SRAM. EMI hardware adds 16-bit offset Host programs into
  * EC_Address_LSB/MSB registers.
  * Limit EMI read / write range. First 256 bytes are RW for host
- * commands. Second 256 bytes are RO for mem-mapped data.
+ * commands. Second 256 bytes are RO for memory-mapped data.
  * Hardware decodes a fixed 16 byte IO range.
  */
 void chip_emi0_config(uint32_t io_base)
@@ -393,9 +409,9 @@ void chip_emi0_config(uint32_t io_base)
 	task_enable_irq(MCHP_IRQ_EMI0);
 }
 
-/* Setup Port80 Debug Hardware ports.
+/* Setup Port 80 Debug Hardware ports.
  * First instance for I/O 80h only.
- * Clear FIFO's and timestamp.
+ * Clear FIFO's and time stamp.
  * Set FIFO interrupt threshold to maximum of 14 bytes.
  */
 void chip_port80_config(uint32_t io_base)
@@ -418,8 +434,8 @@ void chip_port80_config(uint32_t io_base)
 
 	MCHP_P80_ACTIVATE(0) = 1;
 
-	MCHP_INT_SOURCE(15) = MCHP_INT15_P80(0);
-	MCHP_INT_ENABLE(15) = MCHP_INT15_P80(0);
+	MCHP_INT_SOURCE(15) = MCHP_P80_GIRQ_BIT(0);
+	MCHP_INT_ENABLE(15) = MCHP_P80_GIRQ_BIT(0);
 	task_enable_irq(MCHP_IRQ_PORT80DBG0);
 }
 
@@ -449,8 +465,6 @@ static void chip_lpc_iobar_debug(void)
 #ifndef CONFIG_HOSTCMD_ESPI
 static void setup_lpc(void)
 {
-	TRACE0(55, LPC, 0, "setup_lpc");
-
 	MCHP_LPC_CFG_BAR |= (1ul << 15);
 
 	/* Set up ACPI0 for 0x62/0x66 */
