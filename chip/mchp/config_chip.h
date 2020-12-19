@@ -10,7 +10,11 @@
 #include "core/cortex-m/config_core.h"
 
 /* Number of IRQ vectors on the NVIC */
+#ifdef CHIP_FAMILY_MEC152X
+#define CONFIG_IRQ_COUNT	174
+#elif defined(CHIP_FAMILY_MEC170X)
 #define CONFIG_IRQ_COUNT	157
+#endif
 
 /* Use a bigger console output buffer */
 #undef CONFIG_UART_TX_BUF_SIZE
@@ -51,13 +55,18 @@
 #define CONFIG_MCHP_I2C1_SLAVE_ADDRS	0xE3E1
 #define CONFIG_MCHP_I2C2_SLAVE_ADDRS	0xE3E1
 #define CONFIG_MCHP_I2C3_SLAVE_ADDRS	0xE3E1
-
+#ifdef CHIP_FAMILY_MEC152X
+#define CONFIG_MCHP_I2C4_SLAVE_ADDRS	0xE3E1
+#define CONFIG_MCHP_I2C5_SLAVE_ADDRS	0xE3E1
+#define CONFIG_MCHP_I2C6_SLAVE_ADDRS	0xE3E1
+#define CONFIG_MCHP_I2C7_SLAVE_ADDRS	0xE3E1
+#endif
 
 /************************************************************************/
 /* Memory mapping */
 
 /*
- * MEC1701H has a total of 256KB SRAM.
+ * MEC170x-H and MEC152x-H have a total of 256KB SRAM.
  *   CODE at 0xE0000 - 0x117FFF, DATA at 0x118000 - 0x11FFFF
  *   MCHP MEC can fetch code from data or data from code.
  */
@@ -94,7 +103,7 @@
  * TODO: Large stack consumption
  * https://code.google.com/p/chrome-os-partner/issues/detail?id=49245
  */
-/* dsw original = 800, if stack exceptions expand to 1024 for debug */
+/* original = 800, if stack exceptions expand to 1024 for debug */
 #define PD_TASK_STACK_SIZE		2048
 
 /* Default task stack size */
@@ -159,7 +168,9 @@
  * Use DMA when transmitting commands & data
  * with GPSPI controllers.
  */
+#ifdef CHIP_FAMILY_MEC170X
 #define CONFIG_MCHP_GPSPI_TX_DMA
+#endif
 
 /*
  * Use DMA when transmitting command & data of length
