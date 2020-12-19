@@ -35,7 +35,7 @@
  * used for EC firmware SPI flash access.
  */
 #ifdef CONFIG_MCHP_GPSPI
-#error "FORCED BUILD ERROR: CONFIG_MCHP_CMX_GPSPI is defined"
+#error "FORCED BUILD ERROR: CONFIG_MCHP_GPSPI is defined"
 #endif
 
 #define LFW_SPI_BYTE_TRANSFER_TIMEOUT_US (1 * MSEC)
@@ -62,7 +62,7 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
  * At POR or EC reset MCHP Boot-ROM should only load LFW and jumps
  * into LFW entry point located at offset 0x04 of LFW.
  * Entry point is programmed into SPI Header by Python SPI image
- * builder at chip/mec1701/util/pack_ec.py
+ * builder in chip/mchp/util.
  *
  * EC_RO/RW calling LFW should enter through this routine if you
  * want the vector table updated. The stack should be set to
@@ -107,7 +107,7 @@ void timer_init(void)
 
 	val = MCHP_TMR32_CTL(0);
 
-	/* Pre-scale = 48 -> 1MHz -> Period = 1us */
+	/* Prescale = 48 -> 1MHz -> Period = 1 us */
 	val = (val & 0xffff) | (47 << 16);
 
 	MCHP_TMR32_CTL(0) = val;
@@ -239,6 +239,10 @@ timestamp_t get_time(void)
 	return ts;
 }
 
+#ifdef CONFIG_UART_CONSOLE
+
+BUILD_ASSERT(CONFIG_UART_CONSOLE < MCHP_UART_INSTANCES);
+
 void uart_write_c(char c)
 {
 	/* Put in carriage return prior to newline to mimic uart_vprintf() */
@@ -246,9 +250,9 @@ void uart_write_c(char c)
 		uart_write_c('\r');
 
 	/* Wait for space in transmit FIFO. */
-	while (!(MCHP_UART_LSR(0) & BIT(5)))
+	while (!(MCHP_UART_LSR(CONFIG_UART_CONSOLE) & BIT(5)))
 		;
-	MCHP_UART_TB(0) = c;
+	MCHP_UART_TB(CONFIG_UART_CONSOLE) = c;
 }
 
 void uart_puts(const char *str)
@@ -260,6 +264,45 @@ void uart_puts(const char *str)
 		uart_write_c(*str++);
 	} while (*str);
 }
+
+void uart_init(void)
+{
+	/* Set UART to reset on VCC1_RESET instead of nSIO_RESET */
+	MCHP_UART_CFG(CONFIG_UART_CONSOLE) &= ~BIT(1);
+
+	/* Baud rate = 115200. 1.8432MHz clock. Divisor = 1 */
+
+	/* Set CLK_SRC = 0 */
+	MCHP_UART_CFG(CONFIG_UART_CONSOLE) &= ~BIT(0);
+
+	/* Set DLAB = 1 */
+	MCHP_UART_LCR(CONFIG_UART_CONSOLE) |= BIT(7);
+
+	/* PBRG0/PBRG1 */
+	MCHP_UART_PBRG0(CONFIG_UART_CONSOLE) = 1;
+	MCHP_UART_PBRG1(CONFIG_UART_CONSOLE) = 0;
+
+	/* Set DLAB = 0 */
+	MCHP_UART_LCR(CONFIG_UART_CONSOLE) &= ~BIT(7);
+
+	/* Set word length to 8-bit */
+	MCHP_UART_LCR(CONFIG_UART_CONSOLE) |= BIT(0) | BIT(1);
+
+	/* Enable FIFO */
+	MCHP_UART_FCR(CONFIG_UART_CONSOLE) = BIT(0);
+
+	/* Activate UART */
+	MCHP_UART_ACT(CONFIG_UART_CONSOLE) |= BIT(0);
+
+	gpio_config_module(MODULE_UART, 1);
+}
+#else
+void uart_write_c(char c __attribute__((unused))) {}
+
+void uart_puts(const char *str __attribute__((unused))) {}
+
+void uart_init(void) {}
+#endif /* #ifdef CONFIG_UART_CONSOLE */
 
 void fault_handler(void)
 {
@@ -277,38 +320,6 @@ void jump_to_image(uintptr_t init_addr)
 	void (*resetvec)(void) = (void(*)(void))init_addr;
 
 	resetvec();
-}
-
-void uart_init(void)
-{
-	/* Set UART to reset on VCC1_RESET instaed of nSIO_RESET */
-	MCHP_UART_CFG(0) &= ~BIT(1);
-
-	/* Baud rate = 115200. 1.8432MHz clock. Divisor = 1 */
-
-	/* Set CLK_SRC = 0 */
-	MCHP_UART_CFG(0) &= ~BIT(0);
-
-	/* Set DLAB = 1 */
-	MCHP_UART_LCR(0) |= BIT(7);
-
-	/* PBRG0/PBRG1 */
-	MCHP_UART_PBRG0(0) = 1;
-	MCHP_UART_PBRG1(0) = 0;
-
-	/* Set DLAB = 0 */
-	MCHP_UART_LCR(0) &= ~BIT(7);
-
-	/* Set word length to 8-bit */
-	MCHP_UART_LCR(0) |= BIT(0) | BIT(1);
-
-	/* Enable FIFO */
-	MCHP_UART_FCR(0) = BIT(0);
-
-	/* Activate UART */
-	MCHP_UART_ACT(0) |= BIT(0);
-
-	gpio_config_module(MODULE_UART, 1);
 }
 
 /*

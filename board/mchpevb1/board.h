@@ -39,6 +39,10 @@
  * #define CONFIG_MCHP_LFW_DEBUG
  */
 
+/*
+ * EC UART console on UART 0 or 1
+ */
+#define CONFIG_UART_CONSOLE 0
 
 /*
  * Override Boot-ROM JTAG mode

@@ -16,6 +16,8 @@
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 
+/* EC console on UART 0 */
+#define CONFIG_UART_CONSOLE 0
 
 /* EC console commands  */
 #define CONFIG_CMD_ACCELS
