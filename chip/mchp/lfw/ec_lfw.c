@@ -319,7 +319,7 @@ void system_init(void)
 {
 	uint32_t wdt_sts = MCHP_VBAT_STS & MCHP_VBAT_STS_ANY_RST;
 	uint32_t rst_sts = MCHP_PCR_PWR_RST_STS &
-				MCHP_PWR_RST_STS_VTR;
+				MCHP_PWR_RST_STS_SYS;
 
 	trace12(0, LFW, 0,
 		"VBAT_STS = 0x%08x  PCR_PWR_RST_STS = 0x%08x",
