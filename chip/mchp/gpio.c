@@ -38,12 +38,11 @@ struct gpio_int_mapping {
  * 4		0200 - 0235	12
  * 5		0240 - 0276	26
  */
-static const struct gpio_int_mapping int_map[6] = {
+static const struct gpio_int_mapping int_map[] = {
 	{ 11, 0 }, { 10, 1 }, { 9, 2 },
 	{ 8, 3 }, { 12, 4 }, { 26, 5 }
 };
-
-
+BUILD_ASSERT(ARRAY_SIZE(int_map) == MCHP_GPIO_MAX_PORT);
 
 /*
  * NOTE: GCC __builtin_ffs(val) returns (index + 1) of least significant
@@ -54,6 +53,9 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask,
 {
 	int i;
 	uint32_t val;
+
+	if (port >= MCHP_GPIO_MAX_PORT)
+		return;
 
 	while (mask) {
 		i = __builtin_ffs(mask) - 1;
@@ -98,17 +100,20 @@ void gpio_set_level(enum gpio_signal signal, int value)
 
 /*
  * Add support for new #ifdef CONFIG_CMD_GPIO_POWER_DOWN.
- * If GPIO_POWER_DONW flag is set force GPIO Control to
+ * If GPIO_POWER_DOWN flag is set force GPIO Control to
  * GPIO input, interrupt detect disabled, power control field
  * in bits[3:2]=10b.
  * NOTE: if interrupt detect is enabled when pin is powered down
  * then a false edge may be detected.
- *
+ * NOTE 2: MEC152x family implements input pad disable (bit[15]=1).
  */
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 {
 	int i;
 	uint32_t val;
+
+	if (port >= MCHP_GPIO_MAX_PORT)
+		return;
 
 	while (mask) {
 		i = GPIO_MASK_TO_NUM(mask);
@@ -117,15 +122,18 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 
 #ifdef CONFIG_GPIO_POWER_DOWN
 		if (flags & GPIO_POWER_DOWN) {
-			val = (MCHP_GPIO_CTRL_PWR_OFF +
-					MCHP_GPIO_INTDET_DISABLED);
+			val = (MCHP_GPIO_CTRL_PWR_OFF
+				| MCHP_GPIO_INTDET_DISABLED
+				| MCHP_GPIO_CTRL_DIS_INPUT_BIT);
+
 			MCHP_GPIO_CTL(port, i) = val;
 			continue;
 		}
 #endif
-		val &= ~(MCHP_GPIO_CTRL_PWR_MASK);
-		val |= MCHP_GPIO_CTRL_PWR_VTR;
+		val &= ~(MCHP_GPIO_CTRL_PWR_MASK
+			| MCHP_GPIO_CTRL_DIS_INPUT_BIT);
 
+		val |= MCHP_GPIO_CTRL_PWR_VTR;
 		/*
 		 * Select open drain first, so that we don't
 		 * glitch the signal when changing the line to
@@ -190,12 +198,15 @@ void gpio_power_off_by_mask(uint32_t port, uint32_t mask)
 {
 	int i;
 
+	if (port >= MCHP_GPIO_MAX_PORT)
+		return;
+
 	while (mask) {
 		i = GPIO_MASK_TO_NUM(mask);
 		mask &= ~BIT(i);
-
-		MCHP_GPIO_CTL(port, i) = (MCHP_GPIO_CTRL_PWR_OFF +
-					MCHP_GPIO_INTDET_DISABLED);
+		MCHP_GPIO_CTL(port, i) = (MCHP_GPIO_CTRL_PWR_OFF
+					| MCHP_GPIO_INTDET_DISABLED
+					| MCHP_GPIO_CTRL_DIS_INPUT_BIT);
 	}
 }
 
@@ -208,9 +219,9 @@ int gpio_power_off(enum gpio_signal signal)
 
 	i = GPIO_MASK_TO_NUM(gpio_list[signal].mask);
 	port = gpio_list[signal].port;
-
-	MCHP_GPIO_CTL(port, i) = (MCHP_GPIO_CTRL_PWR_OFF +
-			MCHP_GPIO_INTDET_DISABLED);
+	MCHP_GPIO_CTL(port, i) = (MCHP_GPIO_CTRL_PWR_OFF
+				| MCHP_GPIO_INTDET_DISABLED
+				| MCHP_GPIO_CTRL_DIS_INPUT_BIT);
 
 	return EC_SUCCESS;
 }

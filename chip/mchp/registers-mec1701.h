@@ -474,13 +474,12 @@
 
 /* Bit defines for MCHP_PCR_PWR_RST_STS */
 #define MCHP_PWR_RST_STS_MASK_RO	0xc8c
-#define MCHP_PWR_RST_STS_MASK_RWC	0x170
+#define MCHP_PWR_RST_STS_MASK_RWC	0x060
 #define MCHP_PWR_RST_STS_MASK \
 	((MCHP_PWR_RST_STS_MASK_RO) | (MCHP_PWR_RST_STS_MASK_RWC))
 
 #define MCHP_PWR_RST_STS_ESPI_CLK_ACT	BIT(11) /* RO */
 #define MCHP_PWR_RST_STS_32K_ACT	BIT(10) /* RO */
-#define MCHP_PWR_RST_STS_WDT		BIT(8) /* R/WC */
 #define MCHP_PWR_RST_STS_JTAG_RSTN	BIT(7) /* RO */
 #define MCHP_PWR_RST_STS_SYS		BIT(6) /* R/WC */
 /* same function, old bit name */
@@ -764,7 +763,7 @@
 
 /* MCHP implements 6 GPIO ports */
 #define MCHP_GPIO_MAX_PORT	6
-
+#define UNIMPLEMENTED_GPIO_BANK	MCHP_GPIO_MAX_PORT
 /*
  * In MECxxxx documentation GPIO numbers are octal, each control
  * register is located on a 32-bit boundary.
@@ -811,6 +810,9 @@
 #define MCHP_GPIO_CTRL_FUNC_2		(2 << 12)
 #define MCHP_GPIO_CTRL_FUNC_3		(3 << 12)
 #define MCHP_GPIO_CTRL_OUT_LVL		BIT(16)
+/* MEC170x reserved read-only 0 bit. Value set to 0 */
+#define MCHP_GPIO_CTRL_DIS_INPUT_BITPOS	15
+#define MCHP_GPIO_CTRL_DIS_INPUT_BIT	0
 
 /*
  * GPIO Parallel Input and Output registers.
