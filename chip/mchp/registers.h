@@ -13,7 +13,7 @@
 
 #if defined(CHIP_FAMILY_MEC152X)
 #include "registers-mec152x.h"
-#elif defined(CHIP_FAMILY_MEC17XX)
+#elif defined(CHIP_FAMILY_MEC170X)
 #include "registers-mec1701.h"
 #else
 #error "Unsupported chip family"

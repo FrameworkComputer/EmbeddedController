@@ -7,8 +7,8 @@
 #
 
 CHIP:=mchp
-CHIP_FAMILY:=mec17xx
-CHIP_VARIANT:=mec1701h
+CHIP_FAMILY:=mec170x
+CHIP_VARIANT:=mec1701
 CHIP_SPI_SIZE_KB:=512
 
 board-y=board.o led.o
