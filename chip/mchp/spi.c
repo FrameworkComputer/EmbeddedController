@@ -28,7 +28,9 @@
 #define SPI_BYTE_TRANSFER_TIMEOUT_US (3 * MSEC)
 #define SPI_BYTE_TRANSFER_POLL_INTERVAL_US 100
 
-
+#if defined(CONFIG_MCHP_GPSPI) && defined(CHIP_FAMILY_MEC152X)
+#error "FORCED BUILD ERROR: MEC152X does not implement GPSPI!"
+#endif
 
 static const struct dma_option spi_rx_option[] = {
 	{
