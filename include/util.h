@@ -95,11 +95,17 @@ extern "C" {
 
 /* Standard library functions */
 int atoi(const char *nptr);
+
+#ifdef CONFIG_ZEPHYR
+#include <ctype.h>
+#else
 int isdigit(int c);
 int isspace(int c);
 int isalpha(int c);
 int isupper(int c);
 int isprint(int c);
+#endif
+
 int memcmp(const void *s1, const void *s2, size_t len);
 void *memcpy(void *dest, const void *src, size_t len);
 void *memset(void *dest, int c, size_t len);

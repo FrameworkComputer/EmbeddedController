@@ -56,12 +56,19 @@ extern "C" {
 #define BIT_ULL(nr)     (1ULL << (nr))
 #endif
 
+/*
+ * When building Zephyr, this file ends up being included before Zephyr's
+ * include/sys/util.h so causes a warning there. We don't want to add an #ifdef
+ * in that file since it won't be accepted upstream. So work around it here.
+ */
+#ifndef CONFIG_ZEPHYR
 #ifndef GENMASK
 #define GENMASK(h, l) (((BIT(h) << 1) - 1) ^ (BIT(l) - 1))
 #endif
 
 #ifndef GENMASK_ULL
 #define GENMASK_ULL(h, l) (((BIT_ULL(h) << 1) - 1) ^ (BIT_ULL(l) - 1))
+#endif
 #endif
 
 #endif  /* __KERNEL__ */
