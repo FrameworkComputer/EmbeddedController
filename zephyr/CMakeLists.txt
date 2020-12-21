@@ -45,6 +45,8 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/base32.c"
 # Now include files that depend on or relate to other CONFIG options, sorted by
 # CONFIG
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY "${PLATFORM_EC}/common/battery.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_FUEL_GAUGE
+                                                "${PLATFORM_EC}/common/battery_fuel_gauge.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_SMART
                                                 "${PLATFORM_EC}/driver/battery/smart.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_ISL9241

@@ -81,4 +81,12 @@ config PLATFORM_EC_CHARGER_ISL9241
 
 endchoice
 
+config PLATFORM_EC_BATTERY_FUEL_GAUGE
+	bool "Board supplies battery info"
+	help
+	  The fuel gauge information is used to cut off the battery for shipping
+	  mode and to check the charge/discharge FET status.  The battery
+	  information is used to set voltage, current and temperature operating
+	  limits for the battery.
+
 endif # PLATFORM_EC_BATTERY
