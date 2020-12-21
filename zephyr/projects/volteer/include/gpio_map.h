@@ -23,6 +23,7 @@
  */
 #define GPIO_AC_PRESENT            NAMED_GPIO(acok_od)
 #define GPIO_CPU_PROCHOT           NAMED_GPIO(ec_prochot_odl)
+#define GPIO_EC_BATT_PRES_ODL      NAMED_GPIO(ec_batt_pres_odl)
 #define GPIO_EC_PCH_SYS_PWROK      NAMED_GPIO(ec_pch_sys_pwrok)
 #define GPIO_EN_PP3300_A           NAMED_GPIO(en_pp3300_a)
 #define GPIO_EN_PP5000             NAMED_GPIO(en_pp5000_a)
