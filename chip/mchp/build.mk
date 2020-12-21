@@ -58,11 +58,17 @@ ifeq ($(CONFIG_MCHP_LFW_DEBUG),y)
 	TEST_SPI=--test_spi
 endif
 
+# Select chip. Default is MEC170X
+PACK_EC=pack_ec.py
+ifeq ($(CHIP_FAMILY),mec152x)
+	PACK_EC=pack_ec_mec152x.py
+endif
+
 # pack_ec.py creates SPI flash image for MEC
 # _rw_size is CONFIG_RW_SIZE
 # Commands to convert $^ to $@.tmp
 cmd_obj_to_bin = $(OBJCOPY) --gap-fill=0xff -O binary $< $@.tmp1 ; \
-		 ${SCRIPTDIR}/pack_ec.py -o $@.tmp -i $@.tmp1 \
+		 ${SCRIPTDIR}/${PACK_EC} -o $@.tmp -i $@.tmp1 \
 		--loader_file $(chip-lfw-flat) ${TEST_SPI} \
 		--spi_size ${CHIP_SPI_SIZE_KB} \
 		--image_size $(_rw_size) ${SCRIPTVERBOSE}; rm -f $@.tmp1
