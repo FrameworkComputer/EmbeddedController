@@ -19,6 +19,9 @@ typedef uint8_t task_id_t;
  */
 #ifndef CONFIG_ZTEST
 #define CROS_EC_TASK_LIST                                                 \
+	COND_CODE_1(HAS_TASK_CHARGER,                                     \
+		     (CROS_EC_TASK(CHARGER, charger_task, 0,              \
+				   CONFIG_TASK_CHARGER_STACK_SIZE)), ())  \
 	COND_CODE_1(HAS_TASK_CHIPSET,                                     \
 		     (CROS_EC_TASK(CHIPSET, chipset_task, 0,              \
 				   CONFIG_TASK_CHIPSET_STACK_SIZE)), ())  \

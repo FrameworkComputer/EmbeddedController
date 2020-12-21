@@ -33,3 +33,23 @@ config TASK_POWERBTN_STACK_SIZE
 	  The stack size of the power button task.
 
 endif # HAS_TASK_POWERBTN
+
+config HAS_TASK_CHARGER
+	bool "Whether or not the charger task should be run."
+	help
+	  This turns on the charger task. This deals with monitoring the
+	  battery to make sure it is present and is responding properly to
+	  requests. If the battery is not full, it enables charging from a
+	  suitable power source.
+
+if HAS_TASK_CHARGER
+
+config TASK_CHARGER_STACK_SIZE
+	hex "charger task stack size"
+	default 0x400	# EC uses VENTI_TASK_STACK_SIZE which is 896
+	help
+	  The stack size of the charger task.
+
+	  See b/176180736 for checking these stack sizes.
+
+endif # HAS_TASK_CHARGER
