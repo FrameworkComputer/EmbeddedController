@@ -32,6 +32,36 @@ config PLATFORM_EC_BATTERY_SMART
 
 endchoice
 
+choice "Battery presence detection"
+	prompt "Method to use to detect the battery"
+	help
+	  This selects the method to use to detect the presence of a battery.
+
+	  Battery detection is important since it can be used to indicate that
+	  the case is open, so security features can be disabled. It is also
+	  useful to report to the user when the battery is missing, e.g. with
+	  a desktop icon.
+
+config PLATFORM_EC_BATTERY_PRESENT_CUSTOM
+	bool "Call a board-provided function"
+	help
+	  Use this method to provide a board-provided battery_is_present()
+	  function to determine whether the battery is currently present.
+	  This should be implemented in the board code and can use any
+	  reasonable method to detect the battery.
+
+config PLATFORM_EC_BATTERY_PRESENT_GPIO
+	bool "Check a GPIO"
+	help
+	  Use this method if a GPIO signals whether the battery is present. The
+	  GPIO should read low if the battery is present, high if absent,
+
+	  TODO:
+	  The actual GPIO to use is not defined by this option. Perhaps this
+	  needs to be placed in the devicetree.
+
+endchoice  # battery presence
+
 choice "Charger select"
 	prompt "Select the charger to use"
 	help
