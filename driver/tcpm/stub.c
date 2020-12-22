@@ -65,7 +65,7 @@ int tcpm_set_cc(int port, int pull)
 
 int tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
-	return tcpc_set_polarity(port, polarity);
+	return tcpc_set_polarity(port, polarity_rm_dts(polarity));
 }
 
 int tcpm_set_vconn(int port, int enable)
