@@ -488,16 +488,6 @@ GEN_NOT_SUPPORTED(PE_SNK_CHUNK_RECEIVED);
 #define PE_SNK_CHUNK_RECEIVED PE_SNK_CHUNK_RECEIVED_NOT_SUPPORTED
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 
-/*
- * This enum is used to implement a state machine consisting of at most
- * 3 states, inside a Policy Engine State.
- */
-enum sub_state {
-	PE_SUB0,
-	PE_SUB1,
-	PE_SUB2
-};
-
 static enum sm_local_state local_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /*
@@ -578,9 +568,6 @@ static struct policy_engine {
 	/* Current limit / voltage based on the last request message */
 	uint32_t curr_limit;
 	uint32_t supply_voltage;
-
-	/* state specific state machine variable */
-	enum sub_state sub;
 
 	/* PD_VDO_INVALID is used when there is an invalid VDO */
 	int32_t ama_vdo;
@@ -1253,9 +1240,7 @@ void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 			get_state_pe(port) == PE_VCS_CBL_SEND_SOFT_RESET ||
 			get_state_pe(port) == PE_VDM_IDENTITY_REQUEST_CBL) ||
 			(PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH) &&
-			    get_state_pe(port) == PE_PRS_SNK_SRC_SEND_SWAP) ||
-			(IS_ENABLED(CONFIG_USBC_VCONN) &&
-				get_state_pe(port) == PE_VCS_SEND_PS_RDY_SWAP)
+			    get_state_pe(port) == PE_PRS_SNK_SRC_SEND_SWAP)
 			) {
 		PE_SET_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
 		task_wake(PD_PORT_TO_TASK_ID(port));
@@ -6190,83 +6175,33 @@ static void pe_vcs_send_ps_rdy_swap_entry(int port)
 
 	/* Send a PS_RDY Message */
 	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
-	pe[port].sub = PE_SUB0;
 }
 
 static void pe_vcs_send_ps_rdy_swap_run(int port)
 {
-	/* TODO(b/152058087): TCPMv2: Break up pe_vcs_send_ps_rdy_swap */
-	switch (pe[port].sub) {
-	case PE_SUB0:
-
+	/*
+	 * After a VCONN Swap the VCONN Source needs to reset
+	 * the Cable Plug’s Protocol Layer in order to ensure
+	 * MessageID synchronization.
+	 */
+	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 		/*
-		 * TODO: use DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND to
-		 * send cable soft reset.
+		 * A VCONN Swap Shall reset the
+		 * DiscoverIdentityCounter to zero
 		 */
-		PE_CLR_DPM_REQUEST(port, DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND);
+		pe[port].discover_identity_counter = 0;
+		pe[port].dr_swap_attempt_counter = 0;
 
-		/*
-		 * After a VCONN Swap the VCONN Source needs to reset
-		 * the Cable Plug’s Protocol Layer in order to ensure
-		 * MessageID synchronization.
-		 */
-		if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
-			PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
-
-			send_ctrl_msg(port, TCPC_TX_SOP_PRIME,
-					  PD_CTRL_SOFT_RESET);
-			/*
-			 * Ensures enough time for transmission completion,
-			 * in the case of more delays.
-			 */
-			pe[port].sender_response_timer = get_time().val +
-							PD_T_SENDER_RESPONSE;
-
-			pe[port].sub = PE_SUB1;
-		}
-		break;
-	case PE_SUB1:
-		if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
-			PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
-			pe[port].sender_response_timer = get_time().val +
-							PD_T_SENDER_RESPONSE;
-		}
-
-		/* Got ACCEPT or REJECT from Cable Plug */
-		if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED) ||
-		    get_time().val > pe[port].sender_response_timer) {
-			PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
-			/*
-			 * A VCONN Swap Shall reset the
-			 * DiscoverIdentityCounter to zero
-			 */
-			pe[port].discover_identity_counter = 0;
-			pe[port].dr_swap_attempt_counter = 0;
-
-			if (pe[port].power_role == PD_ROLE_SOURCE)
-				set_state_pe(port, PE_SRC_READY);
-			else
-				set_state_pe(port, PE_SNK_READY);
-		}
-		break;
-	case PE_SUB2:
-		/* Do nothing */
-		break;
+		/* A SOP' soft reset is required after VCONN swap */
+		pd_dpm_request(port, DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND);
+		pe_set_ready_state(port);
 	}
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
-
-		if (pe[port].sub == PE_SUB0) {
-			/* PS_RDY didn't send, soft reset */
-			pe_send_soft_reset(port, TCPC_TX_SOP);
-		} else {
-			/*
-			 * Cable plug wasn't present,
-			 * return to ready state
-			 */
-			pe_set_ready_state(port);
-		}
+		/* PS_RDY didn't send, soft reset */
+		pe_send_soft_reset(port, TCPC_TX_SOP);
 	}
 }
 
