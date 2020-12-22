@@ -216,8 +216,7 @@ usb_pe_drp_old-y=usb_pe_drp_old.o usb_sm_checks.o fake_usbc.o
 usb_pe_drp_old_noextended-y=usb_pe_drp_old.o usb_sm_checks.o fake_usbc.o
 usb_pe_drp-y=usb_pe_drp.o usb_sm_checks.o
 usb_pe_drp_noextended-y=usb_pe_drp_noextended.o usb_sm_checks.o
-usb_tcpmv2_compliance-y=usb_tcpmv2_compliance.o vpd_api.o usb_sm_checks.o \
-	usb_tcpmv2_compliance_common.o \
+usb_tcpmv2_compliance-y=usb_tcpmv2_compliance.o usb_tcpmv2_compliance_common.o \
 	usb_tcpmv2_td_pd_ll_e3.o \
 	usb_tcpmv2_td_pd_ll_e4.o \
 	usb_tcpmv2_td_pd_src3_e26.o \
