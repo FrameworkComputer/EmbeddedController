@@ -266,3 +266,14 @@ int system_jumped_late(void)
 {
 	return !(reset_flags & EC_RESET_FLAG_EFS) && jumped_to_image;
 }
+
+/* TODO(b/176171847): Implement these stubs fully */
+int system_is_locked(void)
+{
+	return 0;
+}
+
+enum ec_image system_get_image_copy(void)
+{
+	return EC_IMAGE_UNKNOWN;
+}
