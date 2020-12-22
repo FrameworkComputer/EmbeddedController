@@ -862,6 +862,8 @@ static const char * const ec_feature_names[] = {
 	[EC_FEATURE_TYPEC_CMD] = "TCPMv2 Type-C commands",
 	[EC_FEATURE_TYPEC_REQUIRE_AP_MODE_ENTRY] =
 		"Host-controlled Type-C mode entry",
+	[EC_FEATURE_TYPEC_MUX_REQUIRE_AP_ACK] =
+		"AP ack for Type-C mux configuration",
 };
 
 int cmd_inventory(int argc, char *argv[])
