@@ -69,6 +69,13 @@ static int active_restart_port = CHARGE_PORT_NONE;
  */
 static int attempt_bfet_enable;
 
+/*
+ * Note if auto fast charge for the primary port is disabled due to a
+ * disconnected battery, at re-enable auto fast charge later when the battery
+ * has connected.
+ */
+static bool fast_charge_disabled;
+
 
 #define CHARGING_FAILURE_MAX_COUNT	5
 #define CHARGING_FAILURE_INTERVAL	MINUTE
@@ -281,9 +288,23 @@ enum ec_error_list sm5803_vbus_sink_enable(int chgnum, int enable)
 				rv |= test_write8(chgnum, 0x44, 0x2);
 				rv |= main_write8(chgnum, 0x1F, 0);
 			}
-			rv = sm5803_flow2_update(chgnum,
+			/*
+			 * Only enable auto fast charge when a battery is
+			 * connected and out of cutoff.
+			 */
+			if (battery_get_disconnect_state() ==
+			    BATTERY_NOT_DISCONNECTED) {
+				rv = sm5803_flow2_update(chgnum,
 						 SM5803_FLOW2_AUTO_ENABLED,
 						 MASK_SET);
+				fast_charge_disabled = false;
+			} else {
+				rv = sm5803_flow2_update(chgnum,
+						SM5803_FLOW2_AUTO_TRKL_EN |
+						SM5803_FLOW2_AUTO_PRECHG_EN,
+						MASK_SET);
+				fast_charge_disabled = true;
+			}
 		} else {
 			if (dev_id >= 3) {
 				/* Touch of magic on the primary charger */
@@ -1265,6 +1286,15 @@ static enum ec_error_list sm5803_set_voltage(int chgnum, int voltage)
 	rv |= chg_write8(chgnum, SM5803_REG_VSYS_PREREG_LSB, (regval & 0x7));
 	rv |= chg_write8(chgnum, SM5803_REG_VBAT_FAST_MSB, (regval >> 3));
 	rv |= chg_write8(chgnum, SM5803_REG_VBAT_FAST_LSB, (regval & 0x7));
+
+	/* Once battery is connected, set up fast charge enable */
+	if (fast_charge_disabled && chgnum == CHARGER_PRIMARY &&
+	    battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED) {
+		rv = sm5803_flow2_update(chgnum,
+					 SM5803_FLOW2_AUTO_ENABLED,
+					 MASK_SET);
+		fast_charge_disabled = false;
+	}
 
 	if (IS_ENABLED(CONFIG_OCPC) && chgnum != CHARGER_PRIMARY) {
 		/*
