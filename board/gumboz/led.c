@@ -7,6 +7,7 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
+#include "cros_board_info.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "host_command.h"
@@ -45,24 +46,35 @@ enum led_port {
 static void led_set_color_battery(int port, enum led_color color)
 {
 	enum gpio_signal amber_led, white_led;
+	uint32_t board_ver = 0;
+	int led_batt_on_lvl, led_batt_off_lvl;
 
+	cbi_get_board_version(&board_ver);
 	amber_led = (port == LEFT_PORT ? GPIO_LED_CHRG_L :
 				 IOEX_C1_CHARGER_LED_AMBER_DB);
 	white_led = (port == LEFT_PORT ? GPIO_LED_FULL_L :
 				 IOEX_C1_CHARGER_LED_WHITE_DB);
 
+	if ((board_ver >= 2) && (port == RIGHT_PORT)) {
+		led_batt_on_lvl = 1;
+		led_batt_off_lvl = 0;
+	} else {
+		led_batt_on_lvl = 0;
+		led_batt_off_lvl = 1;
+	}
+
 	switch (color) {
 	case LED_WHITE:
-		gpio_or_ioex_set_level(white_led, BAT_LED_ON);
-		gpio_or_ioex_set_level(amber_led, BAT_LED_OFF);
+		gpio_or_ioex_set_level(white_led, led_batt_on_lvl);
+		gpio_or_ioex_set_level(amber_led, led_batt_off_lvl);
 		break;
 	case LED_AMBER:
-		gpio_or_ioex_set_level(white_led, BAT_LED_OFF);
-		gpio_or_ioex_set_level(amber_led, BAT_LED_ON);
+		gpio_or_ioex_set_level(white_led, led_batt_off_lvl);
+		gpio_or_ioex_set_level(amber_led, led_batt_on_lvl);
 		break;
 	case LED_OFF:
-		gpio_or_ioex_set_level(white_led, BAT_LED_OFF);
-		gpio_or_ioex_set_level(amber_led, BAT_LED_OFF);
+		gpio_or_ioex_set_level(white_led, led_batt_off_lvl);
+		gpio_or_ioex_set_level(amber_led, led_batt_off_lvl);
 		break;
 	default:
 		break;
