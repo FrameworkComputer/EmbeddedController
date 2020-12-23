@@ -306,7 +306,6 @@ enum usb_pe_state {
 	PE_HANDLE_CUSTOM_VDM_REQUEST,
 	PE_WAIT_FOR_ERROR_RECOVERY,
 	PE_BIST_TX,
-	PE_BIST_RX,
 	PE_DEU_SEND_ENTER_USB,
 	PE_DR_GET_SINK_CAP,
 	PE_DR_SNK_GIVE_SOURCE_CAP,
@@ -425,7 +424,6 @@ __maybe_unused static const char * const pe_state_names[] = {
 	[PE_HANDLE_CUSTOM_VDM_REQUEST] = "PE_Handle_Custom_Vdm_Request",
 	[PE_WAIT_FOR_ERROR_RECOVERY] = "PE_Wait_For_Error_Recovery",
 	[PE_BIST_TX] = "PE_Bist_TX",
-	[PE_BIST_RX] = "PE_Bist_RX",
 	[PE_DEU_SEND_ENTER_USB]  = "PE_DEU_Send_Enter_USB",
 	[PE_DR_GET_SINK_CAP] = "PE_DR_Get_Sink_Cap",
 	[PE_DR_SNK_GIVE_SOURCE_CAP] = "PE_DR_SNK_Give_Source_Cap",
@@ -1462,11 +1460,6 @@ static bool common_src_snk_dpm_requests(int port)
 			PE_CHK_DPM_REQUEST(port, DPM_REQUEST_VCONN_SWAP)) {
 		pe_set_dpm_curr_request(port, DPM_REQUEST_VCONN_SWAP);
 		set_state_pe(port, PE_VCS_SEND_SWAP);
-		return true;
-	} else if (PE_CHK_DPM_REQUEST(port,
-					DPM_REQUEST_BIST_RX)) {
-		pe_set_dpm_curr_request(port, DPM_REQUEST_BIST_RX);
-		set_state_pe(port, PE_BIST_RX);
 		return true;
 	} else if (PE_CHK_DPM_REQUEST(port,
 					DPM_REQUEST_BIST_TX)) {
@@ -4769,36 +4762,6 @@ static void pe_bist_tx_run(int port)
 }
 
 /**
- * BIST RX
- */
-static void pe_bist_rx_entry(int port)
-{
-	/* currently only support bist carrier 2 */
-	uint32_t bdo = BDO(BDO_MODE_CARRIER2, 0);
-
-	print_current_state(port);
-
-	tx_emsg[port].len = sizeof(bdo);
-	memcpy(tx_emsg[port].buf, (uint8_t *)&bdo, tx_emsg[port].len);
-	send_data_msg(port, TCPC_TX_SOP, PD_DATA_BIST);
-
-	/* Delay at least enough for partner to finish BIST */
-	pe[port].bist_cont_mode_timer =
-				get_time().val + PD_T_BIST_RECEIVE;
-}
-
-static void pe_bist_rx_run(int port)
-{
-	if (get_time().val < pe[port].bist_cont_mode_timer)
-		return;
-
-	if (pe[port].power_role == PD_ROLE_SOURCE)
-		set_state_pe(port, PE_SRC_TRANSITION_TO_DEFAULT);
-	else
-		set_state_pe(port, PE_SNK_TRANSITION_TO_DEFAULT);
-}
-
-/**
  * Give_Sink_Cap Message
  */
 static void pe_snk_give_sink_cap_entry(int port)
@@ -6821,10 +6784,6 @@ static const struct usb_state pe_states[] = {
 	[PE_BIST_TX] = {
 		.entry = pe_bist_tx_entry,
 		.run   = pe_bist_tx_run,
-	},
-	[PE_BIST_RX] = {
-		.entry = pe_bist_rx_entry,
-		.run   = pe_bist_rx_run,
 	},
 	[PE_DR_GET_SINK_CAP] = {
 		.entry = pe_dr_get_sink_cap_entry,
