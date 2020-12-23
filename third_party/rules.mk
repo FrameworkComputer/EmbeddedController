@@ -8,8 +8,11 @@
 #
 
 # Build and link against libcryptoc.
+# See https://chromium.googlesource.com/chromiumos/third_party/cryptoc .
 ifeq ($(CONFIG_LIBCRYPTOC),y)
 
+# The cryptoc path can be overridden on invocation, as in the following example:
+# $ make CRYPTOC_DIR=~/src/cryptoc BOARD=bloonchipper
 CRYPTOC_DIR ?= $(realpath ../../third_party/cryptoc)
 
 # SUPPORT_UNALIGNED indicates to libcryptoc that provided data buffers
