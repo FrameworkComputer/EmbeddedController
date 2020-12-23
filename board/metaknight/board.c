@@ -144,14 +144,15 @@ static void sub_hdmi_hpd_interrupt(enum gpio_signal s)
  */
 static void pen_input_deferred(void)
 {
-	int pen_exist = !gpio_get_level(GPIO_PEN_DET_ODL);
+	int pen_charge_enable = !gpio_get_level(GPIO_PEN_DET_ODL) && 
+			!chipset_in_state(CHIPSET_STATE_ANY_OFF);
 
-	if (pen_exist)
+	if (pen_charge_enable)
 		gpio_set_level(GPIO_EN_PP3300_PEN, 1);
 	else
 		gpio_set_level(GPIO_EN_PP3300_PEN, 0);
 
-	CPRINTS("Pen charge %sable", pen_exist ? "en" : "dis");
+	CPRINTS("Pen charge %sable", pen_charge_enable ? "en" : "dis");
 }
 DECLARE_DEFERRED(pen_input_deferred);
 
@@ -160,6 +161,13 @@ void pen_input_interrupt(enum gpio_signal signal)
 	/* pen input debounce time */
 	hook_call_deferred(&pen_input_deferred_data, (100 * MSEC));
 }
+
+static void pen_charge_check(void)
+{
+	hook_call_deferred(&pen_input_deferred_data, (100 * MSEC));
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pen_charge_check, HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pen_charge_check, HOOK_PRIO_LAST);
 
 #include "gpio_list.h"
 
