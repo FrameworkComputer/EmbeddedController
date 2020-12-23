@@ -201,8 +201,45 @@ int i2c_xfer_unlocked(const int port,
 
 	for (i = 0; i <= CONFIG_I2C_NACK_RETRY_COUNT; i++) {
 #ifdef CONFIG_ZEPHYR
-		ret = i2c_write_read(i2c_get_device_for_port(port), no_pec_af,
-				     out, out_size, in, in_size);
+		struct i2c_msg msg[2];
+		int num_msgs = 0;
+
+		/* Be careful to respect the flags passed in */
+		if (out_size) {
+			unsigned int wflags = I2C_MSG_WRITE;
+
+			msg[num_msgs].buf = (uint8_t *)out;
+			msg[num_msgs].len = out_size;
+
+			/* If this is the last write, add a stop */
+			if (!in_size && (flags & I2C_XFER_STOP))
+				wflags |= I2C_MSG_STOP;
+			msg[num_msgs].flags = wflags;
+			num_msgs++;
+		}
+		if (in_size) {
+			unsigned int rflags = I2C_MSG_READ;
+
+			msg[num_msgs].buf = (uint8_t *)in;
+			msg[num_msgs].len = in_size;
+			rflags = I2C_MSG_READ;
+
+			/* If a stop is requested, add it */
+			if (flags & I2C_XFER_STOP)
+				rflags |= I2C_MSG_STOP;
+
+			/*
+			 * If this read follows a write (above) then we need a
+			 * restart
+			 */
+			if (num_msgs)
+				rflags |= I2C_MSG_RESTART;
+			msg[num_msgs].flags = rflags;
+			num_msgs++;
+		}
+
+		return i2c_transfer(i2c_get_device_for_port(port), msg,
+				    num_msgs, no_pec_af);
 #elif defined(CONFIG_I2C_XFER_LARGE_TRANSFER)
 		ret = i2c_xfer_no_retry(port, no_pec_af,
 					    out, out_size, in,
