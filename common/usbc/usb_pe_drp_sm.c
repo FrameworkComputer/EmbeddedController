@@ -10,6 +10,8 @@
 #include "charge_state.h"
 #include "common.h"
 #include "console.h"
+#include "driver/tcpm/tcpm.h"
+#include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "stdbool.h"
@@ -4817,6 +4819,21 @@ static void pe_bist_tx_entry(int port)
 
 	print_current_state(port);
 
+	/*
+	 * Ignore BIST messages when not operating at vSafe5V. If charge_manager
+	 * isn't enabled, but PD has gotten this far, then VBUS should be at
+	 * vSafe5V.
+	 */
+	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
+		int vbus_voltage_mv = charge_manager_get_vbus_voltage(port);
+
+		if (vbus_voltage_mv < PD_V_SAFE5V_MIN ||
+				vbus_voltage_mv > PD_V_SAFE5V_MAX) {
+			pe_set_ready_state(port);
+			return;
+		}
+	}
+
 	if (mode == BIST_CARRIER_MODE_2) {
 		/*
 		 * PE_BIST_Carrier_Mode embedded here.
@@ -4839,6 +4856,10 @@ static void pe_bist_tx_entry(int port)
 		 * sending Hard Reset Signaling to reset the UUT.
 		 */
 		pe[port].bist_cont_mode_timer = TIMER_DISABLED;
+	} else {
+		/* Ignore unsupported BIST messages. */
+		pe_set_ready_state(port);
+		return;
 	}
 }
 
