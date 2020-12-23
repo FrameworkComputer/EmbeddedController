@@ -167,7 +167,9 @@ void board_init(void)
 {
 	int on;
 
+	/* Enable C0 interrupt and check if it needs processing */
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
+	check_c0_line();
 
 	if (get_cbi_fw_config_db() == DB_1A_HDMI) {
 		/* Disable i2c on HDMI pins */
@@ -192,21 +194,12 @@ void board_init(void)
 		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL,
 			       GPIO_INPUT);
 
-		/* Enable C1 interrupts */
+		/* Enable C1 interrupt and check if it needs processing */
 		gpio_enable_interrupt(GPIO_SUB_C1_INT_EN_RAILS_ODL);
+		check_c1_line();
 	}
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
-
-	/*
-	 * If interrupt lines are already low, schedule them to be processed
-	 * after inits are completed.
-	 */
-	if (!gpio_get_level(GPIO_USB_C0_INT_ODL))
-		hook_call_deferred(&check_c0_line_data, 0);
-	if (!gpio_get_level(GPIO_SUB_C1_INT_EN_RAILS_ODL))
-		hook_call_deferred(&check_c1_line_data, 0);
-
 
 	/* Turn on 5V if the system is on, otherwise turn it off. */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
