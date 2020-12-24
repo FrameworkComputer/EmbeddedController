@@ -833,8 +833,9 @@ static struct si114x_drv_data_t g_si114x_data = {
 		},
 		/* light */
 		{
-			.base_data_reg = SI114X_REG_ALSVIS_DATA0,
-			.irq_flags = SI114X_ALS_INT_FLAG,
+			.base_data_reg = SI114X_ALS_VIS_DATA0,
+			.irq_flags = SI114X_IRQ_ENABLE_ALS_IE_INT0 |
+				     SI114X_IRQ_ENABLE_ALS_IE_INT1,
 			.scale = 1,
 			.offset = -256,
 		}
