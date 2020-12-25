@@ -218,16 +218,16 @@ static const struct cros_kb_raw_driver_api cros_kb_raw_npcx_driver_api = {
 	.enable_interrupt = cros_kb_raw_npcx_enable_interrupt,
 };
 
-static const struct npcx_alt cros_kb_raw_alts[] = DT_NPCX_ALT_ITEMS_LIST(0);
+static const struct npcx_alt cros_kb_raw_alts[] = NPCX_DT_ALT_ITEMS_LIST(0);
 
 static const struct cros_kb_raw_npcx_config cros_kb_raw_cfg = {
 	.base = DT_INST_REG_ADDR(0),
 	.alts_size = ARRAY_SIZE(cros_kb_raw_alts),
 	.alts_list = cros_kb_raw_alts,
-	.clk_cfg = DT_NPCX_CLK_CFG_ITEM(0),
+	.clk_cfg = NPCX_DT_CLK_CFG_ITEM(0),
 	.irq = DT_INST_IRQN(0),
-	.wui_size = DT_NPCX_WUI_ITEMS_LEN(0),
-	.wui_maps = DT_NPCX_WUI_ITEMS_LIST(0),
+	.wui_size = NPCX_DT_WUI_ITEMS_LEN(0),
+	.wui_maps = NPCX_DT_WUI_ITEMS_LIST(0),
 };
 
 DEVICE_AND_API_INIT(cros_kb_raw_npcx_0, DT_INST_LABEL(0), kb_raw_npcx_init,
