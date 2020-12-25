@@ -4889,6 +4889,9 @@
 /* Define to supprt factory mode */
 #undef CONFIG_FACTORY_SUPPORT
 
+/* Define to supprt capsled */
+#undef CONFIG_CAPSLED_SUPPORT
+
 /*****************************************************************************/
 /*
  * Include board and core configs, since those hold the CONFIG_ constants for a
