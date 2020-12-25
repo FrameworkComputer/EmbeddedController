@@ -723,12 +723,6 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 				rsize = process_am_discover_ident_sop(port,
 						cnt, head, payload, rtype);
 			}
-#ifdef CONFIG_CHARGE_MANAGER
-			if (pd_charge_from_device(pd_get_identity_vid(port),
-						  pd_get_identity_pid(port)))
-				charge_manager_update_dualrole(port,
-							       CAP_DEDICATED);
-#endif
 			break;
 		case CMD_DISCOVER_SVID:
 			rsize = process_am_discover_svids(port, cnt, payload,

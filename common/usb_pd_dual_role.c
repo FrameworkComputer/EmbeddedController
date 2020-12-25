@@ -21,31 +21,6 @@
  */
 static unsigned int max_request_mv = PD_MAX_VOLTAGE_MV;
 
-/*
- * Partner allow_list pair data to override ability for us to sink from them
- * even if they do not present Unconstrained Power in their SRC_Caps. The
- * partner pairs in this list should be able to perform as a dual role partner
- * and should not present Unconstrained Power. It is best for the partner to
- * fix the device so it is not required to be in this list but some devices
- * are already out in the wild and will require this for the user's sake.
- */
-struct allow_list_pair {
-	uint16_t vid;
-	uint16_t pid;
-};
-
-static struct allow_list_pair allow_list[] = {
-	{USB_VID_APPLE, USB_PID1_APPLE},
-	{USB_VID_APPLE, USB_PID2_APPLE},
-	{USB_VID_HP, USB_PID_HP_USB_C_DOCK_G5},
-	{USB_VID_HP, USB_PID_HP_USB_C_A_UNIV_DOCK_G2},
-	{USB_VID_HP, USB_PID_HP_E24D_DOCK_MONITOR},
-	{USB_VID_HP, USB_PID_HP_ELITE_E233_MONITOR},
-	{USB_VID_HP, USB_PID_HP_E244D_DOCK_MONITOR},
-	{USB_VID_HP, USB_PID_HP_E274D_DOCK_MONITOR},
-};
-static int allow_list_count = ARRAY_SIZE(allow_list);
-
 STATIC_IF_NOT(CONFIG_USB_PD_PREFER_MV)
 struct pd_pref_config_t __maybe_unused pd_pref_config;
 
@@ -359,26 +334,6 @@ void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
 	}
 }
 #endif /* defined(PD_MAX_VOLTAGE_MV) && defined(PD_OPERATING_POWER_MW) */
-
-int pd_charge_from_device(uint16_t vid, uint16_t pid)
-{
-	int i;
-
-	/*
-	 * Allow list check for partners that do not set unconstrained bit
-	 * but we still need to charge from it when we are a sink.
-	 */
-	for (i = 0; i < allow_list_count; ++i) {
-		if (vid == allow_list[i].vid &&
-		    pid == allow_list[i].pid)
-			return 1;
-	}
-
-	if (vid != 0)
-		CPRINTS("allow_list[] pair not found: vid=0x%X pid=0x%X",
-			vid, pid);
-	return 0;
-}
 
 bool pd_is_battery_capable(void)
 {

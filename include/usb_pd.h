@@ -1625,17 +1625,6 @@ __override_proto void pd_check_dr_role(int port,
 __override_proto void pd_try_execute_vconn_swap(int port, int flags);
 
 /**
- * Check if we should charge from this device. This is
- * basically a allow-list for chargers that are dual-role,
- * don't set the unconstrained bit, but we should charge
- * from by default.
- *
- * @param vid Port partner Vendor ID
- * @param pid Port partner Product ID
- */
-int pd_charge_from_device(uint16_t vid, uint16_t pid);
-
-/**
  * Execute data swap.
  *
  * @param port USB-C port number

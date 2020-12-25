@@ -1487,59 +1487,60 @@ static int pd_send_request_msg(int port, int always_send_request)
 }
 #endif
 
-static void pd_update_pdo_flags(int port, uint32_t pdo)
+static void pd_update_pdo_flags(int port, int pdo_cnt, uint32_t *pdos)
 {
-#ifdef CONFIG_CHARGE_MANAGER
-#ifdef CONFIG_USB_PD_ALT_MODE_DFP
-	int charge_allowlisted =
-		(pd[port].power_role == PD_ROLE_SINK &&
-		 pd_charge_from_device(pd_get_identity_vid(port),
-				       pd_get_identity_pid(port)));
-#else
-	const int charge_allowlisted = 0;
-#endif
-#endif
-
 	/* can only parse PDO flags if type is fixed */
-	if ((pdo & PDO_TYPE_MASK) != PDO_TYPE_FIXED)
+	if ((pdos[0] & PDO_TYPE_MASK) != PDO_TYPE_FIXED)
 		return;
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-	if (pdo & PDO_FIXED_DUAL_ROLE)
+	if (pdos[0] & PDO_FIXED_DUAL_ROLE)
 		pd[port].flags |= PD_FLAGS_PARTNER_DR_POWER;
 	else
 		pd[port].flags &= ~PD_FLAGS_PARTNER_DR_POWER;
 
-	if (pdo & PDO_FIXED_UNCONSTRAINED)
+	if (pdos[0] & PDO_FIXED_UNCONSTRAINED)
 		pd[port].flags |= PD_FLAGS_PARTNER_UNCONSTR;
 	else
 		pd[port].flags &= ~PD_FLAGS_PARTNER_UNCONSTR;
 
-	if (pdo & PDO_FIXED_COMM_CAP)
+	if (pdos[0] & PDO_FIXED_COMM_CAP)
 		pd[port].flags |= PD_FLAGS_PARTNER_USB_COMM;
 	else
 		pd[port].flags &= ~PD_FLAGS_PARTNER_USB_COMM;
 #endif
 
-	if (pdo & PDO_FIXED_DATA_SWAP)
+	if (pdos[0] & PDO_FIXED_DATA_SWAP)
 		pd[port].flags |= PD_FLAGS_PARTNER_DR_DATA;
 	else
 		pd[port].flags &= ~PD_FLAGS_PARTNER_DR_DATA;
 
-#ifdef CONFIG_CHARGE_MANAGER
 	/*
 	 * Treat device as a dedicated charger (meaning we should charge
-	 * from it) if it does not support power swap, or has unconstrained
-	 * power, or if we are a sink and the device identity matches a
-	 * charging allow-list.
+	 * from it) if:
+	 *   - it does not support power swap, or
+	 *   - it is unconstrained power, or
+	 *   - it presents at least 27 W of available power
 	 */
-	if (!(pd[port].flags & PD_FLAGS_PARTNER_DR_POWER) ||
-	    (pd[port].flags & PD_FLAGS_PARTNER_UNCONSTR) ||
-	    charge_allowlisted)
-		charge_manager_update_dualrole(port, CAP_DEDICATED);
-	else
-		charge_manager_update_dualrole(port, CAP_DUALROLE);
-#endif
+	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
+		uint32_t max_ma, max_mv, max_pdo, max_mw;
+
+		/*
+		 * Get max power that the partner offers (not necessarily what
+		 * this board will request)
+		 */
+		pd_find_pdo_index(pdo_cnt, pdos, PD_REV3_MAX_VOLTAGE,
+				  &max_pdo);
+		pd_extract_pdo_power(max_pdo, &max_ma, &max_mv);
+		max_mw = max_ma * max_mv / 1000;
+
+		if (!(pdos[0] & PDO_FIXED_DUAL_ROLE) ||
+		    (pdos[0] & PDO_FIXED_UNCONSTRAINED) ||
+		    max_mw >= PD_DRP_CHARGE_POWER_MIN)
+			charge_manager_update_dualrole(port, CAP_DEDICATED);
+		else
+			charge_manager_update_dualrole(port, CAP_DUALROLE);
+	}
 }
 
 static void handle_data_request(int port, uint32_t head,
@@ -1570,7 +1571,7 @@ static void handle_data_request(int port, uint32_t head,
 			pd[port].flags |= PD_FLAGS_PREVIOUS_PD_CONN;
 
 			/* src cap 0 should be fixed PDO */
-			pd_update_pdo_flags(port, payload[0]);
+			pd_update_pdo_flags(port, cnt, payload);
 
 			pd_process_source_cap(port, cnt, payload);
 
@@ -1633,7 +1634,7 @@ static void handle_data_request(int port, uint32_t head,
 	case PD_DATA_SINK_CAP:
 		pd[port].flags |= PD_FLAGS_SNK_CAP_RECVD;
 		/* snk cap 0 should be fixed PDO */
-		pd_update_pdo_flags(port, payload[0]);
+		pd_update_pdo_flags(port, cnt, payload);
 		if (pd[port].task_state == PD_STATE_SRC_GET_SINK_CAP)
 			set_state(port, PD_STATE_SRC_READY);
 		break;
