@@ -94,6 +94,35 @@ static int parse_panic_info_nds32(const struct panic_data *pdata)
 	return 0;
 }
 
+static int parse_panic_info_rv32i(const struct panic_data *pdata)
+{
+	uint32_t *regs, mcause, mepc;
+
+	regs = (uint32_t *)pdata->riscv.regs;
+	mcause = pdata->riscv.mcause;
+	mepc = pdata->riscv.mepc;
+
+	printf("=== EXCEPTION: MCAUSE=%x ===\n", mcause);
+	printf("S11 %08x S10 %08x  S9 %08x  S8   %08x\n",
+	       regs[0], regs[1], regs[2], regs[3]);
+	printf("S7  %08x S6  %08x  S5 %08x  S4   %08x\n",
+	       regs[4], regs[5], regs[6], regs[7]);
+	printf("S3  %08x S2  %08x  S1 %08x  S0   %08x\n",
+	       regs[8], regs[9], regs[10], regs[11]);
+	printf("T6  %08x T5  %08x  T4 %08x  T3   %08x\n",
+	       regs[12], regs[13], regs[14], regs[15]);
+	printf("T2  %08x T1  %08x  T0 %08x  A7   %08x\n",
+	       regs[16], regs[17], regs[18], regs[19]);
+	printf("A6  %08x A5  %08x  A4 %08x  A3   %08x\n",
+	       regs[20], regs[21], regs[22], regs[23]);
+	printf("A2  %08x A1  %08x  A0 %08x  TP   %08x\n",
+	       regs[24], regs[25], regs[26], regs[27]);
+	printf("GP  %08x RA  %08x  SP %08x  MEPC %08x\n",
+	       regs[28], regs[29], regs[30], mepc);
+
+	return 0;
+}
+
 int parse_panic_info(const struct panic_data *pdata)
 {
 	/*
@@ -118,6 +147,8 @@ int parse_panic_info(const struct panic_data *pdata)
 		return parse_panic_info_cm(pdata);
 	case PANIC_ARCH_NDS32_N8:
 		return parse_panic_info_nds32(pdata);
+	case PANIC_ARCH_RISCV_RV32I:
+		return parse_panic_info_rv32i(pdata);
 	default:
 		fprintf(stderr, "Unknown architecture (%d).\n", pdata->arch);
 		break;
