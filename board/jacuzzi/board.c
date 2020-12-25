@@ -16,6 +16,8 @@
 #include "console.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm_common.h"
+#include "driver/accelgyro_icm426xx.h"
 #include "driver/battery/max17055.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
@@ -336,15 +338,28 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Rotation matrixes */
-static const mat33_fp_t base_standard_ref = {
+static const mat33_fp_t base_bmi160_ref = {
 	{FLOAT_TO_FP(1), 0, 0},
 	{0, FLOAT_TO_FP(1), 0},
+	{0, 0, FLOAT_TO_FP(1)}
+};
+
+static const mat33_fp_t base_icm426xx_ref = {
+	{0, FLOAT_TO_FP(-1), 0},
+	{FLOAT_TO_FP(-1), 0, 0},
 	{0, 0, FLOAT_TO_FP(1)}
 };
 
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
 static struct bmi_drv_data_t g_bmi160_data;
+static struct icm_drv_data_t g_icm426xx_data;
+
+enum base_accelgyro_type {
+	BASE_GYRO_NONE = 0,
+	BASE_GYRO_BMI160 = 1,
+	BASE_GYRO_ICM426XX = 2,
+};
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -387,7 +402,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv_data = &g_bmi160_data,
 	 .port = CONFIG_SPI_ACCEL_PORT,
 	 .i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
-	 .rot_standard_ref = &base_standard_ref,
+	 .rot_standard_ref = &base_bmi160_ref,
 	 .default_range = 2,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
 	 .min_frequency = BMI_ACCEL_MIN_FREQ,
 	 .max_frequency = BMI_ACCEL_MAX_FREQ,
@@ -416,13 +431,92 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = CONFIG_SPI_ACCEL_PORT,
 	 .i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
 	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = &base_standard_ref,
+	 .rot_standard_ref = &base_bmi160_ref,
 	 .min_frequency = BMI_GYRO_MIN_FREQ,
 	 .max_frequency = BMI_GYRO_MAX_FREQ,
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
+struct motion_sensor_t icm426xx_base_accel = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = CONFIG_SPI_ACCEL_PORT,
+	.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
+	.default_range = 2, /* g, enough for laptop */
+	.rot_standard_ref = &base_icm426xx_ref,
+	.min_frequency = ICM426XX_ACCEL_MIN_FREQ,
+	.max_frequency = ICM426XX_ACCEL_MAX_FREQ,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
+
+struct motion_sensor_t icm426xx_base_gyro = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = CONFIG_SPI_ACCEL_PORT,
+	.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = &base_icm426xx_ref,
+	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
+	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
+};
+
+static int base_accelgyro_config;
+
+void motion_interrupt(enum gpio_signal signal)
+{
+	switch (base_accelgyro_config) {
+	case BASE_GYRO_ICM426XX:
+		icm426xx_interrupt(signal);
+		break;
+	case BASE_GYRO_BMI160:
+	default:
+		bmi160_interrupt(signal);
+		break;
+	}
+}
+
+static void board_detect_motionsensor(void)
+{
+	int val;
+	/* Check base accelgyro chip */
+	if (base_accelgyro_config != BASE_GYRO_NONE)
+		return;
+
+	icm_read8(&icm426xx_base_accel, ICM426XX_REG_WHO_AM_I, &val);
+	if (val == ICM426XX_CHIP_ICM40608) {
+		motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
+		motion_sensors[BASE_GYRO] = icm426xx_base_gyro;
+	}
+	base_accelgyro_config = (val == ICM426XX_CHIP_ICM40608)
+		 ? BASE_GYRO_ICM426XX : BASE_GYRO_BMI160;
+	CPRINTS("Base Accelgyro: %s", (val == ICM426XX_CHIP_ICM40608)
+		 ? "ICM40608" : "BMI160");
+}
+DECLARE_HOOK(HOOK_INIT, board_detect_motionsensor, HOOK_PRIO_DEFAULT - 1);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_detect_motionsensor,
+		 HOOK_PRIO_DEFAULT - 1);
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
 
 /* Called on AP S5 -> S3 transition */
