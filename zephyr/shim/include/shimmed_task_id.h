@@ -37,6 +37,11 @@ typedef uint8_t task_id_t;
 	COND_CODE_1(HAS_TASK_KEYSCAN,                                     \
 		     (CROS_EC_TASK(KEYSCAN, keyboard_scan_task, 0,        \
 				   CONFIG_TASK_KEYSCAN_STACK_SIZE)), ())
+#elif defined(CONFIG_HAS_TEST_TASKS)
+#include "shimmed_test_tasks.h"
+#ifndef CROS_EC_TASK_LIST
+#error "shimmed_test_tasks.h should define CROS_EC_TASK_LIST"
+#endif /* !CROS_EC_TASK_LIST */
 #endif /* !CONFIG_ZTEST */
 
 #ifndef CROS_EC_TASK_LIST

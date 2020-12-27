@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __CROS_EC_SHIMMED_TASKS_H
-#define __CROS_EC_SHIMMED_TASKS_H
+#ifndef __CROS_EC_SHIMMED_TEST_TASKS_H
+#define __CROS_EC_SHIMMED_TEST_TASKS_H
 
 /*
  * Manually define these HAS_TASK_* defines. There is a build time assert
@@ -17,4 +17,4 @@
 	CROS_EC_TASK(TASK_1, task1_entry, 0, 512) \
 	CROS_EC_TASK(TASK_2, task2_entry, 0, 512)
 
-#endif /* __CROS_EC_SHIMMED_TASKS_H */
+#endif /* __CROS_EC_SHIMMED_TEST_TASKS_H */
