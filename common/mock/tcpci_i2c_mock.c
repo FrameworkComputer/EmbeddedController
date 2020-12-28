@@ -147,8 +147,7 @@ static int verify_transmit(enum tcpm_transmit_type want_tx_type,
 			   int want_tx_retry,
 			   enum pd_ctrl_msg_type want_ctrl_msg,
 			   enum pd_data_msg_type want_data_msg,
-			   int timeout,
-			   uint16_t *old_transmit)
+			   int timeout)
 {
 	uint64_t end_time = get_time().val + timeout;
 
@@ -184,10 +183,6 @@ static int verify_transmit(enum tcpm_transmit_type want_tx_type,
 				TEST_GE(pd_cnt, 1, "%d");
 			}
 
-			if (old_transmit)
-				*old_transmit =
-					tcpci_regs[TCPC_REG_TRANSMIT].value;
-
 			tcpci_regs[TCPC_REG_TRANSMIT].value = 0;
 			return EC_SUCCESS;
 		}
@@ -203,7 +198,7 @@ int verify_tcpci_transmit(enum tcpm_transmit_type tx_type,
 {
 	return verify_transmit(tx_type, -1,
 			       ctrl_msg, data_msg,
-			       VERIFY_TIMEOUT, NULL);
+			       VERIFY_TIMEOUT);
 }
 
 int verify_tcpci_tx_timeout(enum tcpm_transmit_type tx_type,
@@ -213,7 +208,7 @@ int verify_tcpci_tx_timeout(enum tcpm_transmit_type tx_type,
 {
 	return verify_transmit(tx_type, -1,
 			       ctrl_msg, data_msg,
-			       timeout, NULL);
+			       timeout);
 }
 
 int verify_tcpci_tx_retry_count(enum tcpm_transmit_type tx_type,
@@ -223,7 +218,7 @@ int verify_tcpci_tx_retry_count(enum tcpm_transmit_type tx_type,
 {
 	return verify_transmit(tx_type, retry_count,
 			       ctrl_msg, data_msg,
-			       VERIFY_TIMEOUT, NULL);
+			       VERIFY_TIMEOUT);
 }
 
 void mock_tcpci_receive(enum pd_msg_type sop, uint16_t header,
