@@ -19,6 +19,7 @@
 #include "driver/retimer/nb7v904m.h"
 #include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/pi3usb3x532.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -32,6 +33,7 @@
 #include "switch.h"
 #include "system.h"
 #include "task.h"
+#include "temp_sensor.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
@@ -107,6 +109,20 @@ const struct adc_t adc_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+/* Thermistors */
+const struct temp_sensor_t temp_sensors[] = {
+        [TEMP_SENSOR_1] = {.name = "Memory",
+                           .type = TEMP_SENSOR_TYPE_BOARD,
+                           .read = get_temp_3v3_51k1_47k_4050b,
+                           .idx = ADC_TEMP_SENSOR_1},
+        [TEMP_SENSOR_2] = {.name = "Charger",
+                           .type = TEMP_SENSOR_TYPE_BOARD,
+                           .read = get_temp_3v3_51k1_47k_4050b,
+                           .idx = ADC_TEMP_SENSOR_2},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
 
 void board_init(void)
 {
