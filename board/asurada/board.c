@@ -709,6 +709,27 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 };
 #endif /* BOARD_ASURADA_REV0 */
 
+#ifdef BOARD_HAYATO
+/* Matrix to rotate accelerometer into standard reference frame */
+/* for Hayato */
+static const mat33_fp_t base_standard_ref = {
+	{0, FLOAT_TO_FP(1), 0},
+	{FLOAT_TO_FP(-1), 0 , 0},
+	{0, 0, FLOAT_TO_FP(1)},
+};
+
+static void update_rotation_matrix(void)
+{
+	if (board_get_version() >= 2) {
+		motion_sensors[BASE_ACCEL].rot_standard_ref =
+			&base_standard_ref;
+		motion_sensors[BASE_GYRO].rot_standard_ref =
+			&base_standard_ref;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, update_rotation_matrix, HOOK_PRIO_INIT_ADC + 1);
+#endif
+
 struct motion_sensor_t motion_sensors[] = {
 	/*
 	 * Note: bmi160: supports accelerometer and gyro sensor
