@@ -143,6 +143,16 @@ static void print_header(const char *prefix, uint16_t header)
 		 id, cnt, ext);
 }
 
+static bool dead_battery(void)
+{
+	return false;
+}
+
+static bool debug_accessory_indicator_supported(void)
+{
+	return true;
+}
+
 static int verify_transmit(enum tcpm_transmit_type want_tx_type,
 			   int want_tx_retry,
 			   enum pd_ctrl_msg_type want_ctrl_msg,
@@ -247,12 +257,104 @@ void mock_tcpci_receive(enum pd_msg_type sop, uint16_t header,
 	rx_pos = 0;
 }
 
-void mock_tcpci_reset(void)
+/*****************************************************************************
+ * TCPCI register reset values
+ *
+ * These values are from USB Type-C Port Controller Interface Specification
+ * Revision 2.0, Version 1.2,
+ */
+static void tcpci_reset_register_masks(void)
+{
+	/*
+	 * Using table 4-1 for default mask values
+	 */
+	tcpci_regs[TCPC_REG_ALERT_MASK].value =			0x7FFF;
+	tcpci_regs[TCPC_REG_POWER_STATUS_MASK].value =		0xFF;
+	tcpci_regs[TCPC_REG_FAULT_STATUS_MASK].value =		0xFF;
+	tcpci_regs[TCPC_REG_EXT_STATUS_MASK].value =		0x01;
+	tcpci_regs[TCPC_REG_ALERT_EXTENDED_MASK].value =	0x07;
+}
+
+static void tcpci_reset_register_defaults(void)
 {
 	int i;
 
+	/* Default all registers to 0 and then overwrite if they are not */
 	for (i = 0; i < ARRAY_SIZE(tcpci_regs); i++)
 		tcpci_regs[i].value = 0;
+
+	/* Type-C Release 1,3 */
+	tcpci_regs[TCPC_REG_TC_REV].value =			0x0013;
+	/* PD Revision 3.0 Version 1.2 */
+	tcpci_regs[TCPC_REG_PD_REV].value =			0x3012;
+	/* PD Interface Revision 2.0, Version 1.1 */
+	tcpci_regs[TCPC_REG_PD_INT_REV].value =			0x2011;
+
+	tcpci_reset_register_masks();
+
+	tcpci_regs[TCPC_REG_CONFIG_STD_OUTPUT].value =
+			TCPC_REG_CONFIG_STD_OUTPUT_AUDIO_CONN_N |
+			TCPC_REG_CONFIG_STD_OUTPUT_DBG_ACC_CONN_N;
+
+	tcpci_regs[TCPC_REG_POWER_CTRL].value =
+			TCPC_REG_POWER_CTRL_VOLT_ALARM_DIS |
+			TCPC_REG_POWER_CTRL_VBUS_VOL_MONITOR_DIS;
+
+	tcpci_regs[TCPC_REG_FAULT_STATUS].value =
+			TCPC_REG_FAULT_STATUS_ALL_REGS_RESET;
+
+	tcpci_regs[TCPC_REG_DEV_CAP_1].value =
+			TCPC_REG_DEV_CAP_1_SOURCE_VBUS |
+			TCPC_REG_DEV_CAP_1_SINK_VBUS |
+			TCPC_REG_DEV_CAP_1_PWRROLE_SRC_SNK_DRP |
+			TCPC_REG_DEV_CAP_1_SRC_RESISTOR_RP_3P0_1P5_DEF;
+
+	/*
+	 * Using table 4-17 to get the default Role Control and
+	 * Message Header Info register values.
+	 */
+	switch (mock_tcpci_get_reg(TCPC_REG_DEV_CAP_1) &
+			TCPC_REG_DEV_CAP_1_PWRROLE_MASK) {
+	case TCPC_REG_DEV_CAP_1_PWRROLE_SRC_OR_SNK:
+	case TCPC_REG_DEV_CAP_1_PWRROLE_SNK:
+	case TCPC_REG_DEV_CAP_1_PWRROLE_SNK_ACC:
+		tcpci_regs[TCPC_REG_ROLE_CTRL].value =		0x0A;
+		tcpci_regs[TCPC_REG_MSG_HDR_INFO].value =	0x04;
+		break;
+
+	case TCPC_REG_DEV_CAP_1_PWRROLE_DRP:
+		if (dead_battery())
+			tcpci_regs[TCPC_REG_ROLE_CTRL].value =	0x0A;
+		else if (debug_accessory_indicator_supported())
+			tcpci_regs[TCPC_REG_ROLE_CTRL].value =	0x4A;
+		else
+			tcpci_regs[TCPC_REG_ROLE_CTRL].value =	0x0F;
+		tcpci_regs[TCPC_REG_MSG_HDR_INFO].value =	0x04;
+		break;
+
+	case TCPC_REG_DEV_CAP_1_PWRROLE_SRC:
+		if (!dead_battery())
+			tcpci_regs[TCPC_REG_ROLE_CTRL].value =	0x05;
+		tcpci_regs[TCPC_REG_MSG_HDR_INFO].value =	0x0D;
+		break;
+
+	case TCPC_REG_DEV_CAP_1_PWRROLE_SRC_SNK_DRP_ADPT_CBL:
+	case TCPC_REG_DEV_CAP_1_PWRROLE_SRC_SNK_DRP:
+		if (dead_battery())
+			tcpci_regs[TCPC_REG_ROLE_CTRL].value =	0x0A;
+		else if (debug_accessory_indicator_supported())
+			tcpci_regs[TCPC_REG_ROLE_CTRL].value =	0x4A;
+		else
+			tcpci_regs[TCPC_REG_ROLE_CTRL].value =	0x0F;
+		tcpci_regs[TCPC_REG_MSG_HDR_INFO].value =	0x04;
+		break;
+	}
+}
+/*****************************************************************************/
+
+void mock_tcpci_reset(void)
+{
+	tcpci_reset_register_defaults();
 }
 
 void mock_tcpci_set_reg(int reg_offset, uint16_t value)
