@@ -211,7 +211,8 @@ void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
 	check_c0_line();
 
-	if (get_cbi_fw_config_db() == DB_1A_HDMI) {
+	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
+		get_cbi_fw_config_db() == DB_LTE_HDMI) {
 		/* Disable i2c on HDMI pins */
 		gpio_config_pin(MODULE_I2C,
 				GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL, 0);
@@ -253,14 +254,16 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 /* Enable HDMI any time the SoC is on */
 static void hdmi_enable(void)
 {
-	if (get_cbi_fw_config_db() == DB_1A_HDMI)
+	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
+		get_cbi_fw_config_db() == DB_LTE_HDMI)
 		gpio_set_level(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, hdmi_enable, HOOK_PRIO_DEFAULT);
 
 static void hdmi_disable(void)
 {
-	if (get_cbi_fw_config_db() == DB_1A_HDMI)
+	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
+		get_cbi_fw_config_db() == DB_LTE_HDMI)
 		gpio_set_level(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, hdmi_disable, HOOK_PRIO_DEFAULT);
@@ -330,7 +333,8 @@ __override void board_power_5v_enable(int enable)
 	 */
 	set_5v_gpio(!!enable);
 
-	if (get_cbi_fw_config_db() == DB_1A_HDMI) {
+	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
+		get_cbi_fw_config_db() == DB_LTE_HDMI) {
 		gpio_set_level(GPIO_SUB_C1_INT_EN_RAILS_ODL, !enable);
 	} else {
 		if (isl923x_set_comparator_inversion(1, !!enable))
@@ -342,7 +346,8 @@ __override void board_power_5v_enable(int enable)
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {
-	if (get_cbi_fw_config_db() == DB_1A_HDMI)
+	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
+		get_cbi_fw_config_db() == DB_LTE_HDMI)
 		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
 	else
 		return CONFIG_USB_PD_PORT_MAX_COUNT;
@@ -350,7 +355,8 @@ __override uint8_t board_get_usb_pd_port_count(void)
 
 __override uint8_t board_get_charger_chip_count(void)
 {
-	if (get_cbi_fw_config_db() == DB_1A_HDMI)
+	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
+		get_cbi_fw_config_db() == DB_LTE_HDMI)
 		return CHARGER_NUM - 1;
 	else
 		return CHARGER_NUM;
@@ -568,23 +574,11 @@ const struct charger_config_t chg_chips[] = {
 		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
 		.drv = &isl923x_drv,
 	},
-
-	{
-		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
-		.drv = &isl923x_drv,
-	},
 };
 
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	{
 		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-		.flags = PI3USB9201_ALWAYS_POWERED,
-	},
-
-	{
-		.i2c_port = I2C_PORT_SUB_USB_C1,
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
 		.flags = PI3USB9201_ALWAYS_POWERED,
 	},
@@ -610,24 +604,8 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.flags = TCPC_FLAGS_TCPCI_REV2_0,
 		.drv = &raa489000_tcpm_drv,
 	},
-
-	{
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_SUB_USB_C1,
-			.addr_flags = RAA489000_TCPC0_I2C_FLAGS,
-		},
-		.flags = TCPC_FLAGS_TCPCI_REV2_0,
-		.drv = &raa489000_tcpm_drv,
-	},
 };
 
-const struct usb_mux usbc1_retimer = {
-	.usb_port = 1,
-	.i2c_port = I2C_PORT_SUB_USB_C1,
-	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
-	.driver = &nb7v904m_usb_redriver_drv,
-};
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 0,
@@ -635,13 +613,6 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
 		.driver = &pi3usb3x532_usb_mux_driver,
 	},
-	{
-		.usb_port = 1,
-		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
-		.driver = &pi3usb3x532_usb_mux_driver,
-		.next_mux = &usbc1_retimer,
-	}
 };
 
 uint16_t tcpc_get_alert_status(void)
