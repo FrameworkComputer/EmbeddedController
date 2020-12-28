@@ -165,61 +165,92 @@ int tcpci_startup(void)
 	TEST_EQ(mock_tcpci_get_reg(TCPC_REG_COMMAND),
 		TCPC_REG_COMMAND_I2CIDLE, "%d");
 
+	/* TODO: this should be performed in TCPCI mock on startup but needs
+	 * more TCPCI functionality added before that can happen.  So until
+	 * that time, if the FAULT register is set, send the alert here.
+	 */
+	if (mock_tcpci_get_reg(TCPC_REG_FAULT_STATUS))
+		mock_set_alert(TCPC_REG_ALERT_FAULT);
+
 	return EC_SUCCESS;
 }
 
 /*****************************************************************************
  * PROC.PD.E1. Bring-up procedure
  */
-int proc_pd_e1(enum pd_data_role data_role)
+int proc_pd_e1(enum pd_data_role data_role, bool initial_attach)
 {
-	/*
-	 * a) The test starts in a disconnected state.
-	 */
-	mock_tcpci_set_reg(TCPC_REG_EXT_STATUS, TCPC_REG_EXT_STATUS_SAFE0V);
-	mock_set_alert(TCPC_REG_ALERT_EXT_STATUS);
-	task_wait_event(10 * SECOND);
-	TEST_EQ(pd_get_data_role(I2C_PORT_HOST_TCPC),
-		PD_ROLE_DISCONNECTED, "%d");
-
-	switch (data_role) {
-	case PD_ROLE_UFP:
+	if (initial_attach) {
 		/*
-		 * b) The tester applies Rp (PD3=1.5A, PD2=3A) and waits for
-		 * the UUT attachment.
+		 * a) The test starts in a disconnected state.
 		 */
-		mock_set_cc(MOCK_CC_DUT_IS_SNK,
-			    MOCK_CC_SNK_OPEN,
-			    (partner_get_pd_rev() == PD_REV30 ?
-			    MOCK_CC_SNK_RP_1_5 : MOCK_CC_SNK_RP_3_0));
-		mock_set_alert(TCPC_REG_ALERT_CC_STATUS);
-		task_wait_event(5 * MSEC);
+		mock_tcpci_set_reg(TCPC_REG_EXT_STATUS,
+				   TCPC_REG_EXT_STATUS_SAFE0V);
+		mock_set_alert(TCPC_REG_ALERT_EXT_STATUS);
+		task_wait_event(10 * SECOND);
+		TEST_EQ(pd_get_data_role(I2C_PORT_HOST_TCPC),
+			PD_ROLE_DISCONNECTED, "%d");
 
-		partner_set_data_role(PD_ROLE_DFP);
-		partner_set_power_role(PD_ROLE_SOURCE);
+		partner_set_data_role((data_role == PD_ROLE_UFP)
+						? PD_ROLE_DFP
+						: PD_ROLE_UFP);
 
-		/*
-		 * c) If Ra is detected, the tester applies Vconn.
-		 */
+		partner_set_power_role((data_role == PD_ROLE_UFP)
+						? PD_ROLE_SOURCE
+						: PD_ROLE_SINK);
 
-		/*
-		 * d) The tester applies Vbus and waits 50 ms.
-		 */
-		mock_tcpci_set_reg_bits(TCPC_REG_POWER_STATUS,
+		switch (partner_get_power_role()) {
+		case PD_ROLE_SOURCE:
+			/*
+			 * b) The tester applies Rp (PD3=1.5A, PD2=3A) and
+			 *    waits for the UUT attachment.
+			 */
+			mock_set_cc(MOCK_CC_DUT_IS_SNK,
+				    MOCK_CC_SNK_OPEN,
+				    (partner_get_pd_rev() == PD_REV30
+					? MOCK_CC_SNK_RP_1_5
+					: MOCK_CC_SNK_RP_3_0));
+			mock_set_alert(TCPC_REG_ALERT_CC_STATUS);
+			task_wait_event(5 * MSEC);
+
+			/*
+			 * c) If Ra is detected, the tester applies Vconn.
+			 */
+
+			/*
+			 * d) The tester applies Vbus and waits 50 ms.
+			 */
+			mock_tcpci_set_reg_bits(TCPC_REG_POWER_STATUS,
 					TCPC_REG_POWER_STATUS_VBUS_PRES);
 
-		mock_tcpci_clr_reg_bits(TCPC_REG_EXT_STATUS,
+			mock_tcpci_clr_reg_bits(TCPC_REG_EXT_STATUS,
 					TCPC_REG_EXT_STATUS_SAFE0V);
-		mock_set_alert(TCPC_REG_ALERT_EXT_STATUS |
-			       TCPC_REG_ALERT_POWER_STATUS);
+			mock_set_alert(TCPC_REG_ALERT_EXT_STATUS |
+				       TCPC_REG_ALERT_POWER_STATUS);
+			task_wait_event(50 * MSEC);
+			break;
 
-		task_wait_event(50 * MSEC);
+		case PD_ROLE_SINK:
+			/*
+			 * b) The tester applies Rd and waits for Vbus for
+			 *    tNoResponse max (5.5 s).
+			 */
+			mock_set_cc(MOCK_CC_DUT_IS_SRC,
+				    MOCK_CC_SRC_OPEN,
+				    MOCK_CC_SRC_RD);
+			mock_set_alert(TCPC_REG_ALERT_CC_STATUS);
+			break;
+		}
+	}
 
+	switch (partner_get_power_role()) {
+	case PD_ROLE_SOURCE:
 		/*
 		 * e) The tester transmits Source Capabilities until reception
 		 *    of GoodCrc for tNoResponse max (5.5s). The Source
 		 *    Capabilities includes Fixed 5V 3A PDO.
 		 */
+		task_wait_event(1 * MSEC);
 		partner_send_msg(PD_MSG_SOP, PD_DATA_SOURCE_CAP, 1, 0, &pdo);
 
 		/*
@@ -238,21 +269,11 @@ int proc_pd_e1(enum pd_data_role data_role)
 		task_wait_event(10 * MSEC);
 		partner_send_msg(PD_MSG_SOP, PD_CTRL_PS_RDY, 0, 0, NULL);
 		task_wait_event(1 * MSEC);
+
+		TEST_EQ(tc_is_attached_snk(PORT0), true, "%d");
 		break;
 
-	case PD_ROLE_DFP:
-		/*
-		 * b) The tester applies Rd and waits for Vbus for tNoResponse
-		 *    max (5.5 s).
-		 */
-		mock_set_cc(MOCK_CC_DUT_IS_SRC,
-			    MOCK_CC_SRC_OPEN,
-			    MOCK_CC_SRC_RD);
-		mock_set_alert(TCPC_REG_ALERT_CC_STATUS);
-
-		partner_set_data_role(PD_ROLE_UFP);
-		partner_set_power_role(PD_ROLE_SINK);
-
+	case PD_ROLE_SINK:
 		/*
 		 * c) The tester waits Source Capabilities for for tNoResponse
 		 *    max (5.5 s).
@@ -284,13 +305,14 @@ int proc_pd_e1(enum pd_data_role data_role)
 		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_PS_RDY, 0),
 			EC_SUCCESS, "%d");
 		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-		break;
+		task_wait_event(1 * MSEC);
 
-	case PD_ROLE_DISCONNECTED:
+		TEST_EQ(tc_is_attached_src(PORT0), true, "%d");
 		break;
 	}
 
-	TEST_EQ(pd_get_data_role(I2C_PORT_HOST_TCPC), data_role, "%d");
+	TEST_EQ(pd_get_data_role(I2C_PORT_HOST_TCPC),
+		data_role, "%d");
 	return EC_SUCCESS;
 }
 
@@ -300,41 +322,88 @@ int proc_pd_e1(enum pd_data_role data_role)
 int proc_pd_e3(void)
 {
 	/*
+	 * Make sure we are idle. Reject everything that is pending
+	 */
+	TEST_EQ(handle_attach_expected_msgs(PD_ROLE_DFP), EC_SUCCESS, "%d");
+
+	/*
 	 * PROC.PD.E3. Wait to Start AMS for DFP(Source) UUT:
 	 * a) The Tester keeps monitoring the Rp value and if the UUT doesn't
 	 * set the value to SinkTXOK if it doesn't have anything to send in 1s,
 	 * the test fails. During this period, the Tester replies any message
 	 * sent from the UUT with a proper response.
 	 */
-	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP_PRIME, 0, PD_DATA_VENDOR_DEF),
-		EC_SUCCESS, "%d");
-	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-	task_wait_event(10 * MSEC);
-	partner_send_msg(PD_MSG_SOP_PRIME, PD_CTRL_NOT_SUPPORTED, 0, 0, NULL);
-
-	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0, PD_DATA_VENDOR_DEF),
-		EC_SUCCESS, "%d");
-	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-	task_wait_event(10 * MSEC);
-	partner_send_msg(PD_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0, 0, NULL);
-
-	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_GET_SOURCE_CAP, 0),
-		EC_SUCCESS, "%d");
-	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-	task_wait_event(10 * MSEC);
-	partner_send_msg(PD_MSG_SOP, PD_DATA_SOURCE_CAP, 1, 0, &pdo);
-
-	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_GET_SINK_CAP, 0),
-		EC_SUCCESS, "%d");
-	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-	task_wait_event(10 * MSEC);
-	partner_send_msg(PD_MSG_SOP, PD_DATA_SINK_CAP, 1, 0, &pdo);
-
-	task_wait_event(1 * SECOND);
 	TEST_EQ(tc_is_attached_src(PORT0), true, "%d");
 	TEST_EQ(TCPC_REG_ROLE_CTRL_RP(mock_tcpci_get_reg(TCPC_REG_ROLE_CTRL)),
 		SINK_TX_OK, "%d");
 
 	task_wait_event(10 * SECOND);
+	return EC_SUCCESS;
+}
+
+/*****************************************************************************
+ * handle_attach_expected_msgs
+ *
+ * Depending on the data role, the DUT will send a sequence of messages on
+ * attach. Most of these can be rejected.
+ */
+int handle_attach_expected_msgs(enum pd_data_role data_role)
+{
+	if (data_role == PD_ROLE_DFP) {
+		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP_PRIME, 0,
+				PD_DATA_VENDOR_DEF),
+			EC_SUCCESS, "%d");
+		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		task_wait_event(10 * MSEC);
+		partner_send_msg(PD_MSG_SOP_PRIME, PD_CTRL_NOT_SUPPORTED, 0, 0,
+			NULL);
+
+		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0,
+				PD_DATA_VENDOR_DEF),
+			EC_SUCCESS, "%d");
+		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		task_wait_event(10 * MSEC);
+		partner_send_msg(PD_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0, 0, NULL);
+
+		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
+				PD_CTRL_GET_SOURCE_CAP, 0),
+			EC_SUCCESS, "%d");
+		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		task_wait_event(10 * MSEC);
+		partner_send_msg(PD_MSG_SOP, PD_DATA_SOURCE_CAP, 1, 0, &pdo);
+
+		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
+				PD_CTRL_GET_SINK_CAP, 0),
+			EC_SUCCESS, "%d");
+		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		task_wait_event(10 * MSEC);
+		partner_send_msg(PD_MSG_SOP, PD_DATA_SINK_CAP, 1, 0, &pdo);
+	} else if (data_role == PD_ROLE_UFP) {
+		int vcs;
+
+		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_DR_SWAP, 0),
+			EC_SUCCESS, "%d");
+		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		task_wait_event(10 * MSEC);
+		partner_send_msg(PD_MSG_SOP, PD_CTRL_REJECT, 0, 0, NULL);
+
+		for (vcs = 0; vcs < 4; vcs++) {
+			TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
+					PD_CTRL_VCONN_SWAP, 0),
+				EC_SUCCESS, "%d");
+			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+			task_wait_event(10 * MSEC);
+			partner_send_msg(PD_MSG_SOP, PD_CTRL_REJECT, 0, 0,
+				NULL);
+		}
+
+		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
+				PD_CTRL_GET_SINK_CAP, 0),
+			EC_SUCCESS, "%d");
+		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		task_wait_event(10 * MSEC);
+		partner_send_msg(PD_MSG_SOP, PD_DATA_SINK_CAP, 1, 0, &pdo);
+	}
+	task_wait_event(1 * SECOND);
 	return EC_SUCCESS;
 }

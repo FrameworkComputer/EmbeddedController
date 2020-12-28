@@ -60,7 +60,13 @@ void partner_send_msg(enum pd_msg_type sop,
 		      uint16_t ext,
 		      uint32_t *payload);
 
-int proc_pd_e1(enum pd_data_role data_role);
+
+int handle_attach_expected_msgs(enum pd_data_role data_role);
+
+
+#define INITIAL_ATTACH true
+#define ALREADY_ATTACHED false
+int proc_pd_e1(enum pd_data_role data_role, bool initial_attach);
 int proc_pd_e3(void);
 
 int test_td_pd_ll_e3_dfp(void);
