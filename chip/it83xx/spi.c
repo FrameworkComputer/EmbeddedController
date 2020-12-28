@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "intc.h"
 #include "registers.h"
 #include "spi.h"
 #include "system.h"
@@ -235,6 +236,22 @@ void spi_event(enum gpio_signal signal)
 
 void spi_slv_int_handler(void)
 {
+	if (IS_ENABLED(CONFIG_BOOTBLOCK) &&
+	    (IT83XX_SPI_ISR & IT83XX_SPI_RX_FIFO_FULL) &&
+	    (IT83XX_SPI_EMMCBMR & IT83XX_SPI_EMMCABM)) {
+		spi_host_request_data(in_msg, 128);
+		/* End CPU access RX FIFO */
+		IT83XX_SPI_TXRXFAR = 0;
+		/* Write to clear interrupt status */
+		IT83XX_SPI_ISR = 0xff;
+		/*
+		 * Handle eMMC CMD0:
+		 * GO_IDLE_STATE, GO_PRE_IDLE_STATE, and BOOT_INITIATION
+		 */
+		spi_emmc_cmd0_isr((uint32_t *)in_msg);
+		return;
+	}
+
 	/*
 	 * The status of SPI end detection interrupt bit is set, it
 	 * means that host command parse has been completed and AP
