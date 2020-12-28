@@ -14,12 +14,17 @@ config HAS_TEST_TASKS
 endif # ZTEST
 
 menuconfig PLATFORM_EC
-	bool "Enable building code from the platform/ec Zephyr module"
+	bool "Chromium OS EC shim"
 	imply PRINTK
 	imply SHELL
 	help
 	  The platform/ec Zephyr module allows some code from the
-	  existing Chrome OS EC project to be "shimmed" into Zephyr.
+	  existing Chromium OS EC project to be "shimmed" into Zephyr. With
+	  this it is possible to use the existing code base within Zephyr.
+
+	  Once we manage to get a platform fully running with Zephyr we will
+	  progressively upstream components and turn off the shim for each
+	  one until eventually all code is on the Zephyr side.
 
 if PLATFORM_EC
 
