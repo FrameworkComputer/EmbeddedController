@@ -8,24 +8,6 @@
 #ifndef __CROS_EC_TEST_UTIL_H
 #define __CROS_EC_TEST_UTIL_H
 
-#ifdef CONFIG_ZTEST
-
-#include <ztest.h>
-
-/*
- * We need these macros so that a test can be built for either Ztest or the
- * EC test framework.
- *
- * Ztest unit tests are void and do not return a value. In the EC framework,
- * if none of the assertions fail, the test is supposed to return EC_SUCCESS,
- * so just define that as empty and `return EC_SUCCESS;` will get pre-processed
- * into `return ;`
- */
-#define EC_TEST_RETURN void
-#define EC_SUCCESS
-
-#else /* CONFIG_ZTEST */
-
 #include "common.h"
 #include "console.h"
 #include "stack_trace.h"
@@ -329,6 +311,9 @@ int test_attach_i2c(const int port, const uint16_t addr_flags);
  */
 #define EC_TEST_RETURN int
 
+/* An EC task only has one void parameter */
+#define TASK_PARAMS void *p1
+
 /*
  * Map the Ztest assertions onto EC assertions. There are two significant
  * issues here.
@@ -353,7 +338,5 @@ int test_attach_i2c(const int port, const uint16_t addr_flags);
 #define zassert_within(a, b, d, msg, ...) TEST_NEAR((a), (b), (d), "0x%x")
 #define zassert_mem_equal(buf, exp, size, msg, ...) \
 	TEST_ASSERT_ARRAY_EQ(buf, exp, size)
-
-#endif /* CONFIG_ZTEST */
 
 #endif /* __CROS_EC_TEST_UTIL_H */

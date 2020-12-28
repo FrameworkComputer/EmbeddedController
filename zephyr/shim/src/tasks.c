@@ -17,13 +17,17 @@ BUILD_ASSERT(CONFIG_NUM_PREEMPT_PRIORITIES + 1 >= TASK_ID_COUNT,
 /* Declare all task stacks here */
 #define CROS_EC_TASK(name, e, p, size) \
 	K_THREAD_STACK_DEFINE(name##_STACK, size);
+#define TASK_TEST(name, e, p, size) CROS_EC_TASK(name, e, p, size)
 CROS_EC_TASK_LIST
 #undef CROS_EC_TASK
+#undef TASK_TEST
 
 /* Forward declare all task entry point functions */
 #define CROS_EC_TASK(name, entry, ...) void entry(void *p);
+#define TASK_TEST(name, entry, ...) CROS_EC_TASK(name, entry)
 CROS_EC_TASK_LIST
 #undef CROS_EC_TASK
+#undef TASK_TEST
 
 /** Context for each CROS EC task that is run in its own zephyr thread */
 struct task_ctx {
@@ -55,8 +59,11 @@ struct task_ctx {
 		.stack_size = _size,                   \
 		.name = #_name,                        \
 	},
+#define TASK_TEST(_name, _entry, _parameter, _size) \
+	CROS_EC_TASK(_name, _entry, _parameter, _size)
 static struct task_ctx shimmed_tasks[] = { CROS_EC_TASK_LIST };
 #undef CROS_EC_TASK
+#undef TASK_TEST
 
 task_id_t task_get_current(void)
 {
