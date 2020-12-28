@@ -1222,21 +1222,13 @@ static void charger_chips_init(void)
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL2, ISL9241_CONTROL2_TRICKLE_CHG_CURR_128 |
-			ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR | ISL9241_CONTROL2_PROCHOT_DEBOUNCE_100))
+			ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR |
+			ISL9241_CONTROL2_PROCHOT_DEBOUNCE_100))
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL3, ISL9241_CONTROL3_PSYS_GAIN |
 			ISL9241_CONTROL3_ACLIM_RELOAD))
-		goto init_fail;
-
-	if (extpower_is_present() && battery_is_present())
-		val |= ISL9241_CONTROL4_ACOK_PROCHOT;
-	else if (battery_is_present())
-		val |= ISL9241_CONTROL4_OTG_CURR_PROCHOT;
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL4, val))
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
@@ -1246,8 +1238,7 @@ static void charger_chips_init(void)
 	val = ISL9241_CONTROL1_PROCHOT_REF_6800 | ISL9241_CONTROL1_SWITCH_FREQ;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL1, (battery_is_present() ? val |
-		ISL9241_CONTROL1_SUPPLEMENTAL_SUPPORT_MODE : val)))
+		ISL9241_REG_CONTROL1, val))
 		goto init_fail;
 
 	return;
@@ -1267,15 +1258,6 @@ void charger_update(void)
 		pre_dc_state != battery_is_present())
 	{
 		CPRINTS("update charger!!");
-		if (extpower_is_present() && battery_is_present())
-			val |= ISL9241_CONTROL4_ACOK_PROCHOT;
-		else if (battery_is_present())
-			val |= ISL9241_CONTROL4_OTG_CURR_PROCHOT;
-
-		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_CONTROL4, val)) {
-			CPRINTS("update charger control4 fail!");
-		}
 
 		val = ISL9241_CONTROL1_PROCHOT_REF_6800 |
 				ISL9241_CONTROL1_SWITCH_FREQ | ISL9241_CONTROL1_PSYS;
