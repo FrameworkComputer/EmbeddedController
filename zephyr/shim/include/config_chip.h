@@ -94,6 +94,7 @@ enum battery_type {
 #undef CONFIG_CMD_FLASHINFO
 #undef CONFIG_CMD_FLASH
 #define CONFIG_FLASH
+#define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 #define CONFIG_FLASH_SIZE	0x80000
 /* TODO(b:176490413): use DT_PROP(DT_INST(inst, DT_DRV_COMPAT), size) ? */
 #define CONFIG_MAPPED_STORAGE_BASE 0x64000000
