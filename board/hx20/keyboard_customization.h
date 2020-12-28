@@ -82,4 +82,8 @@ void factory_power_button(int level);
 int factory_status(void);
 #endif
 
+#ifdef CONFIG_CAPSLED_SUPPORT
+void hx20_8042_led_control(int data);
+#endif
+
 #endif /* __KEYBOARD_CUSTOMIZATION_H */

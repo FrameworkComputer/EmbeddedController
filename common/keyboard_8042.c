@@ -596,6 +596,9 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 
 	case STATE_SETLEDS:
 		CPRINTS5("KB eaten by STATE_SETLEDS");
+#ifdef CONFIG_CAPSLED_SUPPORT
+		hx20_8042_led_control(data);
+#endif
 		output[out_len++] = I8042_RET_ACK;
 		data_port_state = STATE_NORMAL;
 		break;

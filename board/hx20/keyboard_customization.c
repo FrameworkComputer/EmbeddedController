@@ -123,6 +123,21 @@ void set_keycap_label(uint8_t row, uint8_t col, char val)
 }
 #endif
 
+#ifdef CONFIG_CAPSLED_SUPPORT
+enum led_8042_list {
+	SCROLL_LED = 0,
+	NUM_LED,
+	CAPS_LED,
+};
+
+void hx20_8042_led_control(int data)
+{
+	if (data == CAPS_LED)
+		gpio_set_level(GPIO_CAP_LED_L, 0);
+	else
+		gpio_set_level(GPIO_CAP_LED_L, 1);
+}
+#endif
 
 #ifdef CONFIG_KEYBOARD_BACKLIGHT
 enum backlight_brightness {
