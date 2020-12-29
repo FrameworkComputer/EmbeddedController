@@ -33,13 +33,7 @@ static const char * const exc_type[16] = {
 };
 #endif /* CONFIG_DEBUG_EXCEPTIONS */
 
-#ifdef CONFIG_SOFTWARE_PANIC
-/* General purpose register (s0) for saving software panic reason */
-#define SOFT_PANIC_GPR_REASON 11
-/* General purpose register (s1) for saving software panic information */
-#define SOFT_PANIC_GPR_INFO   10
-
-void software_panic(uint32_t reason, uint32_t info)
+void exception_panic(uint32_t reason, uint32_t info)
 {
 	asm volatile ("mv s0, %0" : : "r"(reason));
 	asm volatile ("mv s1, %0" : : "r"(info));
@@ -48,6 +42,17 @@ void software_panic(uint32_t reason, uint32_t info)
 	else
 		asm("ebreak");
 	__builtin_unreachable();
+}
+
+#ifdef CONFIG_SOFTWARE_PANIC
+/* General purpose register (s0) for saving software panic reason */
+#define SOFT_PANIC_GPR_REASON 11
+/* General purpose register (s1) for saving software panic information */
+#define SOFT_PANIC_GPR_INFO   10
+
+void software_panic(uint32_t reason, uint32_t info)
+{
+	exception_panic(reason, info);
 }
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
