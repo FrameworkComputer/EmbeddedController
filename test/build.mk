@@ -220,6 +220,7 @@ usb_tcpmv2_compliance-y=usb_tcpmv2_compliance.o usb_tcpmv2_compliance_common.o \
 	usb_tcpmv2_td_pd_ll_e3.o \
 	usb_tcpmv2_td_pd_ll_e4.o \
 	usb_tcpmv2_td_pd_ll_e5.o \
+	usb_tcpmv2_td_pd_src_e1.o \
 	usb_tcpmv2_td_pd_src3_e26.o \
 	usb_tcpmv2_td_pd_snk3_e12.o \
 	usb_tcpmv2_td_pd_other.o

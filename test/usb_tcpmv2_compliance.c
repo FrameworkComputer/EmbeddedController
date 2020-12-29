@@ -33,6 +33,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_td_pd_ll_e4_ufp);
 	RUN_TEST(test_td_pd_ll_e5_dfp);
 	RUN_TEST(test_td_pd_ll_e5_ufp);
+	RUN_TEST(test_td_pd_src_e1);
 	RUN_TEST(test_td_pd_src3_e26);
 	RUN_TEST(test_td_pd_snk3_e12);
 
