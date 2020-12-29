@@ -81,6 +81,7 @@ int test_td_pd_ll_e5_ufp(void);
 
 int test_td_pd_src_e1(void);
 int test_td_pd_src_e2(void);
+int test_td_pd_src_e5(void);
 
 int test_td_pd_src3_e26(void);
 
