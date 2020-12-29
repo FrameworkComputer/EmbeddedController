@@ -330,7 +330,7 @@ static const mat33_fp_t lid_standard_ref_kx022 = {
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 	 .name = "Lid Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
 	 .chip = MOTIONSENSE_CHIP_BMA255,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_LID,
@@ -361,7 +361,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 */
 	[BASE_ACCEL] = {
 	 .name = "Base Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_BASE,
@@ -387,7 +387,7 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 	[BASE_GYRO] = {
 	 .name = "Gyro",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
 	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_GYRO,
 	 .location = MOTIONSENSE_LOC_BASE,
@@ -406,7 +406,7 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 struct motion_sensor_t kx022_lid_accel = {
 	.name = "Lid Accel",
-	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.active_mask = SENSOR_ACTIVE_S0_S3_S5,
 	.chip = MOTIONSENSE_CHIP_KX022,
 	.type = MOTIONSENSE_TYPE_ACCEL,
 	.location = MOTIONSENSE_LOC_LID,
@@ -433,7 +433,7 @@ struct motion_sensor_t kx022_lid_accel = {
 
 struct motion_sensor_t icm426xx_base_accel = {
 	.name = "Base Accel",
-	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.active_mask = SENSOR_ACTIVE_S0_S3_S5,
 	.chip = MOTIONSENSE_CHIP_ICM426XX,
 	.type = MOTIONSENSE_TYPE_ACCEL,
 	.location = MOTIONSENSE_LOC_BASE,
@@ -460,7 +460,7 @@ struct motion_sensor_t icm426xx_base_accel = {
 
 struct motion_sensor_t icm426xx_base_gyro = {
 	.name = "Base Gyro",
-	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.active_mask = SENSOR_ACTIVE_S0_S3_S5,
 	.chip = MOTIONSENSE_CHIP_ICM426XX,
 	.type = MOTIONSENSE_TYPE_GYRO,
 	.location = MOTIONSENSE_LOC_BASE,
@@ -545,13 +545,12 @@ static void board_detect_motionsensor(void)
 	int val;
 
 	/* Check lid accel chip */
-	ret = i2c_read8(I2C_PORT_SENSOR, KX022_ADDR1_FLAGS,
-		KX022_WHOAMI, &val);
-
-	if (!ret)
+	ret = i2c_read8(I2C_PORT_SENSOR, BMA2x2_I2C_ADDR1_FLAGS,
+		BMA2x2_CHIP_ID_ADDR, &val);
+	if (ret)
 		motion_sensors[LID_ACCEL] = kx022_lid_accel;
 
-	CPRINTS("Lid Accel: %s", ret ? "BMA255" : "KX022");
+	CPRINTS("Lid Accel: %s", ret ? "KX022" : "BMA255");
 
 	/* Check base accelgyro chip */
 	ret = icm_read8(&icm426xx_base_accel, ICM426XX_REG_WHO_AM_I, &val);
