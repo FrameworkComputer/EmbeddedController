@@ -5,7 +5,7 @@
 if ZTEST
 
 config HAS_TEST_TASKS
-	bool "Whether or not this test includes custom tasks."
+	bool "Whether or not this test includes custom tasks"
 	help
 	  This enables custom tasks for tests. When set to 'y', the file
 	  "shimmed_test_tasks.h" will be included and is expected to set
@@ -63,19 +63,36 @@ config PLATFORM_EC_ACPI
 	  the ACPI I/O port for X86 AP.
 
 config PLATFORM_EC_CBI
-	bool "Enable the CBI EEPROM module"
+	bool "CBI EEPROM support"
 	depends on PLATFORM_EC_I2C
 	help
-	  Enables various CBI accessors and host and console commands. One must
-	  specify both I2C_PORT_EEPROM and I2C_ADDR_EEPROM_FLAGS to the CBI
-	  EEPROM's i2c port and 7-bit i2c address.
+	  Enables various Chromium OS Board Info (CBI) accessors as well as
+	  host and console commands. CBI is a means for accessing information
+	  about a board, typically written during the factory process.
+
+	  One must specify both I2C_PORT_EEPROM and I2C_ADDR_EEPROM_FLAGS to the
+	  CBI EEPROM's i2c port and 7-bit i2c address.
+
+	  See here for information on CBI:
+
+	  https://chromium.googlesource.com/chromiumos/docs/+/master/design_docs/cros_board_info.md
 
 menuconfig PLATFORM_EC_ESPI
-	bool "Enable eSPI compatibility in platform/ec"
+	bool "eSPI"
 	depends on ESPI && AP
 	default y
 	help
-	  Enable eSPI shim layer.
+	  Enable the Enhanced Serial Peripheral Interface (eSPI) shim layer.
+	  eSPI supports a shared physical connection between several on-board
+	  devices, similar to SPI. It adds a few optional signals and a protocol
+	  layer to provide independent 'channels' for each device to communicate
+	  over.
+
+	  eSPI is the replacement for LPC (Low-Pin-Count bus).
+
+	  See here for information about eSPI:
+
+	  https://www.intel.com/content/dam/support/us/en/documents/software/chipset-software/327432-004_espi_base_specification_rev1.0_cb.pdf
 
 if PLATFORM_EC_ESPI
 
@@ -94,7 +111,7 @@ config PLATFORM_EC_ESPI_VW_SLP_S4
 endif # PLATFORM_EC_ESPI
 
 config PLATFORM_EC_EXTPOWER_GPIO
-	bool "Enable the GPIO-based external power detection module"
+	bool "GPIO-based external power detection"
 	depends on PLATFORM_EC_HOOKS && PLATFORM_EC_HOSTCMD
 	help
 	  Enable shimming the extpower_gpio module, which provides
@@ -145,7 +162,7 @@ config PLATFORM_EC_MAPPED_STORAGE
 endif # PLATFORM_EC_FLASH
 
 menuconfig PLATFORM_EC_KEYBOARD
-	bool "Enable keyboard support"
+	bool "Keyboard support"
 	select HAS_TASK_KEYSCAN
 	default y
 	help
@@ -177,7 +194,7 @@ config PLATFORM_EC_KEYBOARD_PROTOCOL_8042
 endchoice # PLATFORM_EC_KEYBOARD
 
 config PLATFORM_EC_KEYBOARD_COL2_INVERTED
-	bool "A mechanism for passing KSO2 to H1 which inverts the signal."
+	bool "A mechanism for passing KSO2 to H1 which inverts the signal"
 	help
 	  This option enables a mechanism for passing the column 2
 	  to H1 which inverts the signal. The signal passing through H1
@@ -186,10 +203,11 @@ config PLATFORM_EC_KEYBOARD_COL2_INVERTED
 	  column line. See http://b/156007029.
 
 config PLATFORM_EC_CONSOLE_CMD_KEYBOARD_8042
-	bool "Enable the keyboard commands"
+	bool "Console command: i8042"
 	default y if PLATFORM_EC_KEYBOARD_PROTOCOL_8042
 	help
-	  Enable the '8042' command, which includes the following subcommands:
+	  This command prints the state of the i8042 keyboard protocol and
+	  includes the following subcommands:
 
 	    codeset	- Get/set keyboard codeset
 	    ctrlram	- Get/set keyboard controller RAM
@@ -201,15 +219,18 @@ config PLATFORM_EC_CONSOLE_CMD_KEYBOARD_8042
 endif # PLATFORM_EC_KEYBOARD
 
 config PLATFORM_EC_HOOKS
-	bool "Enable hooks and deferred compatibility shim"
+	bool "Hooks and deferred compatibility shim"
 	default y
 	help
-	  Enable translation of DECLARE_DEFERRED and
-	  hook_call_deferred to Zephyr's work queues, and a compatible
-	  DECLARE_HOOK implementation.
+	  Enable translation of DECLARE_DEFERRED() and hook_call_deferred()
+	  to Zephyr's work queues, along with a compatible DECLARE_HOOK
+	  implementation.
+
+	  This option is needed by many features in the EC. Disabling it will
+	  likely cause build errors.
 
 config PLATFORM_EC_I2C
-	bool "Enable the EC i2c module"
+	bool "I2C shim"
 	default y
 	help
 	  Enable compilation of the EC i2c module. Once enabled, it will be
@@ -219,37 +240,51 @@ config PLATFORM_EC_I2C
 	  communication "just work" without requiring any further code changes.
 
 menuconfig PLATFORM_EC_HOSTCMD
-	bool "Enable host commands shim"
+	bool "Host commands"
 	default y if AP
 	select HAS_TASK_HOSTCMD
 	help
-	  Enable the host commands shim in platform/ec.
+	  Enable the host commands shim in platform/ec. This handles
+	  communication with the AP. The AP sends a command to the EC and it
+	  responds when able. An interrupt can be used to indicate to the AP
+	  that the EC has something for it.
 
 config PLATFORM_EC_LID_SWITCH
-	bool "Enable the lid switch module"
+	bool "Lid switch"
 	help
 	  Enable shimming the lid switch implementation and related
-	  commands in platform/ec.  This requires a GPIO named
-	  GPIO_LID_OPEN to be defined in gpio_map.h.
+	  commands in platform/ec. The lid switch can affect power-on
+	  behaviour. For example, when the lid is opened, the device may
+	  automatically power on.
+
+	  This requires a GPIO named GPIO_LID_OPEN to be defined in gpio_map.h.
 
 config PLATFORM_EC_PORT80
-	bool "Enable the port80 module"
+	bool "Port 80 support"
 	default y if AP_X86 && PLATFORM_EC_POWERSEQ
 	help
-	  Enable the port80 module, which will buffer calls to port_80_write and
-	  occasionally print when there's new writes.
+	  Enable the port80 module, a way to report progress of the AP's boot
+	  sequence, assuming that the EC can detect these writes on the I/O
+	  bus. The EC buffers calls to port_80_write() and occasionally prints
+	  a message when there are new writes.
+
+	  See here for more information:
+
+	  https://en.wikipedia.org/wiki/Power-on_self-test#Progress_and_error_reporting
 
 config PLATFORM_EC_POWER_BUTTON
-	bool "Enable the power button module"
+	bool "Power-button support"
 	select HAS_TASK_POWERBTN
 	depends on PLATFORM_EC_HOSTCMD
 	help
 	  Enable shimming the power button implementation and related
-	  commands in platform/ec.  This requires a GPIO named
-	  GPIO_POWER_BUTTON_L in gpio_map.h.
+	  commands in platform/ec.  This is used to implement the Chromium OS
+	  shutdown sequence.
+
+	  This requires a GPIO named GPIO_POWER_BUTTON_L in gpio_map.h.
 
 config PLATFORM_EC_CONSOLE_CMD_SHMEM
-	bool "Enable the 'shmem' command"
+	bool "Console command: shmem"
 	default y
 	help
 	  This command prints basic information about the EC shared memory,
@@ -258,10 +293,14 @@ config PLATFORM_EC_CONSOLE_CMD_SHMEM
 	  the EC started running.
 
 menuconfig PLATFORM_EC_TIMER
-	bool "Enable the EC timer module"
+	bool "Timer module"
 	default y
 	help
-	  Enable compilation of the EC timer module
+	  Enable compilation of the EC timer module. This provides support for
+	  delays, getting the current time and setting alarms.
+
+	  This option is needed by many features in the EC. Disabling it will
+	  likely cause build errors.
 
 if PLATFORM_EC_TIMER
 
