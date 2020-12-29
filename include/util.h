@@ -104,6 +104,7 @@ int isspace(int c);
 int isalpha(int c);
 int isupper(int c);
 int isprint(int c);
+int tolower(int c);
 #endif
 
 int memcmp(const void *s1, const void *s2, size_t len);
@@ -154,8 +155,6 @@ char *strzcpy(char *dest, const char *src, int len);
  * Other strings return 0 and leave *dest unchanged.
  */
 int parse_bool(const char *s, int *dest);
-
-int tolower(int c);
 #endif  /* !HIDE_EC_STDLIB */
 
 /**
