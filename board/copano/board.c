@@ -133,21 +133,6 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 /******************************************************************************/
 /* PWM configuration */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED1_BLUE] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 2400,
-	},
-	[PWM_CH_LED2_RED] = {
-		.channel = 0,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 2400,
-	},
-	[PWM_CH_LED3_GREEN] = {
-		.channel = 1,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 2400,
-	},
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
 		.flags = 0,

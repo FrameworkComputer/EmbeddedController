@@ -27,10 +27,12 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
+#undef NPCX_PWM1_SEL
+#define NPCX_PWM1_SEL 0		/* GPIO C2 is not used as PWM1 */
+
 /* LED defines */
-#define CONFIG_LED_PWM
-/* Although there are 2 LEDs, they are both controlled by the same lines. */
-#define CONFIG_LED_PWM_COUNT 1
+#define CONFIG_LED_ONOFF_STATES
+#define CONFIG_LED_ONOFF_STATES_BAT_LOW	10
 
 /* Keyboard features */
 
@@ -154,10 +156,7 @@ enum battery_type {
 };
 
 enum pwm_channel {
-	PWM_CH_LED1_BLUE = 0,
-	PWM_CH_LED2_RED,
-	PWM_CH_LED3_GREEN,
-	PWM_CH_KBLIGHT,
+	PWM_CH_KBLIGHT = 0,
 	PWM_CH_COUNT
 };
 
