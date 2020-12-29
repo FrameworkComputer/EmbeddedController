@@ -5879,7 +5879,7 @@ struct ec_params_set_cbi {
  */
 #define EC_CMD_GET_UPTIME_INFO 0x0121
 
-/* Reset causes */
+/* EC reset causes */
 #define EC_RESET_FLAG_OTHER       BIT(0)   /* Other known reason */
 #define EC_RESET_FLAG_RESET_PIN   BIT(1)   /* Reset pin asserted */
 #define EC_RESET_FLAG_BROWNOUT    BIT(2)   /* Brownout */
@@ -5908,6 +5908,72 @@ struct ec_params_set_cbi {
 #define EC_RESET_FLAG_AP_IDLE     BIT(21)  /* Leave alone AP */
 #define EC_RESET_FLAG_INITIAL_PWR BIT(22)  /* EC had power, then was reset */
 
+/*
+ * Reason codes used by the AP after a shutdown to figure out why it was reset
+ * by the EC.  These are sent in EC commands.  Therefore, to maintain protocol
+ * compatibility:
+ * - New entries must be inserted prior to the _COUNT field
+ * - If an existing entry is no longer in service, it must be replaced with a
+ *   RESERVED entry instead.
+ * - The semantic meaning of an entry should not change.
+ * - Do not exceed 2^15 - 1 for reset reasons or 2^16 - 1 for shutdown reasons.
+ */
+enum chipset_reset_reason {
+	CHIPSET_RESET_BEGIN = 0,
+	CHIPSET_RESET_UNKNOWN = CHIPSET_RESET_BEGIN,
+	/* Custom reason defined by a board.c or baseboard.c file */
+	CHIPSET_RESET_BOARD_CUSTOM,
+	/* Believe that the AP has hung */
+	CHIPSET_RESET_HANG_REBOOT,
+	/* Reset by EC console command */
+	CHIPSET_RESET_CONSOLE_CMD,
+	/* Reset by EC host command */
+	CHIPSET_RESET_HOST_CMD,
+	/* Keyboard module reset key combination */
+	CHIPSET_RESET_KB_SYSRESET,
+	/* Keyboard module warm reboot */
+	CHIPSET_RESET_KB_WARM_REBOOT,
+	/* Debug module warm reboot */
+	CHIPSET_RESET_DBG_WARM_REBOOT,
+	/* I cannot self-terminate.  You must lower me into the steel. */
+	CHIPSET_RESET_AP_REQ,
+	/* Reset as side-effect of startup sequence */
+	CHIPSET_RESET_INIT,
+	/* EC detected an AP watchdog event. */
+	CHIPSET_RESET_AP_WATCHDOG,
+
+	CHIPSET_RESET_COUNT,
+};
+
+/*
+ * AP hard shutdowns are logged on the same path as resets.
+ */
+enum chipset_shutdown_reason {
+	CHIPSET_SHUTDOWN_BEGIN = BIT(15),
+	CHIPSET_SHUTDOWN_POWERFAIL = CHIPSET_SHUTDOWN_BEGIN,
+	/* Forcing a shutdown as part of EC initialization */
+	CHIPSET_SHUTDOWN_INIT,
+	/* Custom reason on a per-board basis. */
+	CHIPSET_SHUTDOWN_BOARD_CUSTOM,
+	/* This is a reason to inhibit startup, not cause shut down. */
+	CHIPSET_SHUTDOWN_BATTERY_INHIBIT,
+	/* A power_wait_signal is being asserted */
+	CHIPSET_SHUTDOWN_WAIT,
+	/* Critical battery level. */
+	CHIPSET_SHUTDOWN_BATTERY_CRIT,
+	/* Because you told me to. */
+	CHIPSET_SHUTDOWN_CONSOLE_CMD,
+	/* Forcing a shutdown to effect entry to G3. */
+	CHIPSET_SHUTDOWN_G3,
+	/* Force shutdown due to over-temperature. */
+	CHIPSET_SHUTDOWN_THERMAL,
+	/* Force a chipset shutdown from the power button through EC */
+	CHIPSET_SHUTDOWN_BUTTON,
+
+	CHIPSET_SHUTDOWN_COUNT,
+};
+
+
 struct ec_response_uptime_info {
 	/*
 	 * Number of milliseconds since the last EC boot. Sysjump resets
@@ -5935,10 +6001,7 @@ struct ec_response_uptime_info {
 
 	/* Empty log entries have both the cause and timestamp set to zero. */
 	struct ap_reset_log_entry {
-		/*
-		 * See include/chipset.h: enum chipset_{reset,shutdown}_reason
-		 * for details.
-		 */
+		/* See enum chipset_{reset,shutdown}_reason for details. */
 		uint16_t reset_cause;
 
 		/* Reserved for protocol growth. */
