@@ -26,6 +26,26 @@ config TASK_CHARGER_STACK_SIZE
 
 endif # HAS_TASK_CHARGER
 
+config HAS_TASK_CHIPSET
+	bool "Chipset task"
+	depends on PLATFORM_EC_POWERSEQ
+	help
+	  This turns on the chipset task which handles powering the chipset
+	  on and off. Powering on involves going through a sequence of enabling
+	  different power rails (e.g. by enabling GPIOs that control a PMIC)
+	  and monitoring power-good indicators to meet the specifications
+	  defined by the vendor.
+
+if HAS_TASK_CHIPSET
+
+config TASK_CHIPSET_STACK_SIZE
+	hex "Stack size"
+	default 0x200
+	help
+	  The stack size of the power button task.
+
+endif # HAS_TASK_CHIPSET
+
 config HAS_TASK_KEYPROTO
 	bool "Keyboard-protocol task (x86)"
 	help
