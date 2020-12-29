@@ -2,42 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# Please keep these tasks in alphabetical order
+
 menu "Tasks"
 
-config HAS_TASK_KEYPROTO
-	bool "Whether or not the keyproto task should be run."
-	default n
-	help
-	  This turns on the keyproto task.
-
-if HAS_TASK_KEYPROTO
-
-config TASK_KEYPROTO_STACK_SIZE
-	hex "keyproto task stack size"
-	default 0x200
-	help
-	  The stack size of the keyproto task.
-
-endif # HAS_TASK_KEYPROTO
-
-config HAS_TASK_POWERBTN
-	bool "Whether or not the power button task should be run."
-	default n
-	help
-	  This turns on the power button task.
-
-if HAS_TASK_POWERBTN
-
-config TASK_POWERBTN_STACK_SIZE
-	hex "powerbtn task stack size"
-	default 0x200
-	help
-	  The stack size of the power button task.
-
-endif # HAS_TASK_POWERBTN
-
 config HAS_TASK_CHARGER
-	bool "Whether or not the charger task should be run."
+	bool "Charger task"
 	help
 	  This turns on the charger task. This deals with monitoring the
 	  battery to make sure it is present and is responding properly to
@@ -47,7 +17,7 @@ config HAS_TASK_CHARGER
 if HAS_TASK_CHARGER
 
 config TASK_CHARGER_STACK_SIZE
-	hex "charger task stack size"
+	hex "Stack size"
 	default 0x400	# EC uses VENTI_TASK_STACK_SIZE which is 896
 	help
 	  The stack size of the charger task.
@@ -55,5 +25,43 @@ config TASK_CHARGER_STACK_SIZE
 	  See b/176180736 for checking these stack sizes.
 
 endif # HAS_TASK_CHARGER
+
+config HAS_TASK_KEYPROTO
+	bool "Keyboard-protocol task (x86)"
+	help
+	  This turns on the keyproto task which handles conversion of keyboard
+	  scans into i8042 messages on x86 platforms. This is not used or needed
+	  on ARM platforms, which send the raw keyboard scans to the AP for
+	  processing.
+
+if HAS_TASK_KEYPROTO
+
+config TASK_KEYPROTO_STACK_SIZE
+	hex "Stack size"
+	default 0x200
+	help
+	  The stack size of the keyproto task.
+
+endif # HAS_TASK_KEYPROTO
+
+config HAS_TASK_POWERBTN
+	bool "Power-button task (x86)"
+	help
+	  This turns on the powerbtn task which handles monitoring the power
+	  button. When the application processor (AP) is off (S5 or G3 states),
+	  this task triggers a power-up sequence on a power-button press. When
+	  the AP is on (S3 or above state) x86 machines normally reset when the
+	  power button is held for 4 seconds but this tasks adjusts that to 8
+	  seconds, to allow time for the usual Chromium OS shutdown sequence.
+
+if HAS_TASK_POWERBTN
+
+config TASK_POWERBTN_STACK_SIZE
+	hex "Stack size"
+	default 0x200
+	help
+	  The stack size of the power button task.
+
+endif # HAS_TASK_POWERBTN
 
 endmenu # Tasks
