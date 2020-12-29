@@ -8,6 +8,7 @@ menu "Tasks"
 
 config HAS_TASK_CHARGER
 	bool "Charger task"
+	depends on PLATFORM_EC_BATTERY
 	help
 	  This turns on the charger task. This deals with monitoring the
 	  battery to make sure it is present and is responding properly to

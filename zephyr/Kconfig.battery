@@ -4,6 +4,7 @@
 
 menuconfig PLATFORM_EC_BATTERY
 	bool "Battery support"
+	select HAS_TASK_CHARGER
 	help
 	  Enables battery support on the board. Requires selection of a battery
 	  and a charger IC.
