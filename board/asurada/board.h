@@ -17,6 +17,7 @@
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED
+#define CONFIG_LTO
 #define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_EXTPOWER_GPIO
 /*
