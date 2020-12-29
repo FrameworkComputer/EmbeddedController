@@ -47,6 +47,25 @@ config TASK_CHIPSET_STACK_SIZE
 
 endif # HAS_TASK_CHIPSET
 
+config HAS_TASK_HOSTCMD
+	bool "Host-command task"
+	depends on PLATFORM_EC_HOSTCMD
+	help
+	  This turns on the hostcmd task which handles communication with the
+	  AP. The AP sends a command to the EC and it responds when able. An
+	  interrupt can be used to indicate to the AP that the EC has something
+	  for it.
+
+if HAS_TASK_HOSTCMD
+
+config TASK_HOSTCMD_STACK_SIZE
+	hex "Stack size"
+	default 0x200
+	help
+	  The size of the host-command task stack.
+
+endif # HAS_TASK_HOSTCMD
+
 config HAS_TASK_KEYPROTO
 	bool "Keyboard-protocol task (x86)"
 	depends on PLATFORM_EC_KEYBOARD_PROTOCOL_8042

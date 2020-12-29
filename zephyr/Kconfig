@@ -221,18 +221,9 @@ config PLATFORM_EC_I2C
 menuconfig PLATFORM_EC_HOSTCMD
 	bool "Enable host commands shim"
 	default y if AP
+	select HAS_TASK_HOSTCMD
 	help
 	  Enable the host commands shim in platform/ec.
-
-if PLATFORM_EC_HOSTCMD
-
-config TASK_HOSTCMD_STACK_SIZE
-	hex "hostcmd task stack size"
-	default 0x200
-	help
-	  The size of the host command task stack.
-
-endif # PLATFORM_EC_HOSTCMD
 
 config PLATFORM_EC_LID_SWITCH
 	bool "Enable the lid switch module"
