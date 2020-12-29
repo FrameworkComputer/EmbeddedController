@@ -178,9 +178,9 @@ int tcpci_startup(void)
 /*****************************************************************************
  * PROC.PD.E1. Bring-up procedure
  */
-int proc_pd_e1(enum pd_data_role data_role, bool initial_attach)
+int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 {
-	if (initial_attach) {
+	if (attach & INITIAL_ATTACH) {
 		/*
 		 * a) The test starts in a disconnected state.
 		 */
@@ -243,76 +243,85 @@ int proc_pd_e1(enum pd_data_role data_role, bool initial_attach)
 		}
 	}
 
-	switch (partner_get_power_role()) {
-	case PD_ROLE_SOURCE:
-		/*
-		 * e) The tester transmits Source Capabilities until reception
-		 *    of GoodCrc for tNoResponse max (5.5s). The Source
-		 *    Capabilities includes Fixed 5V 3A PDO.
-		 */
-		task_wait_event(1 * MSEC);
-		partner_send_msg(PD_MSG_SOP, PD_DATA_SOURCE_CAP, 1, 0, &pdo);
+	if (attach & ALREADY_ATTACHED) {
+		switch (partner_get_power_role()) {
+		case PD_ROLE_SOURCE:
+			/*
+			 * e) The tester transmits Source Capabilities until
+			 *    reception of GoodCrc for tNoResponse max (5.5s).
+			 *    The Source Capabilities includes Fixed 5V 3A PDO.
+			 */
+			task_wait_event(1 * MSEC);
+			partner_send_msg(PD_MSG_SOP, PD_DATA_SOURCE_CAP, 1, 0,
+					 &pdo);
 
-		/*
-		 * f) The tester waits for the Request from the UUT for
-		 *    tSenderResponse max (30 ms).
-		 */
-		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0, PD_DATA_REQUEST),
-			EC_SUCCESS, "%d");
-		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+			/*
+			 * f) The tester waits for the Request from the UUT for
+			 *    tSenderResponse max (30 ms).
+			 */
+			TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0,
+						      PD_DATA_REQUEST),
+				EC_SUCCESS, "%d");
+			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 
-		/*
-		 * g) The tester sends Accept, and when Vbus is stable at the
-		 *    target voltage, sends PS_RDY.
-		 */
-		partner_send_msg(PD_MSG_SOP, PD_CTRL_ACCEPT, 0, 0, NULL);
-		task_wait_event(10 * MSEC);
-		partner_send_msg(PD_MSG_SOP, PD_CTRL_PS_RDY, 0, 0, NULL);
-		task_wait_event(1 * MSEC);
+			/*
+			 * g) The tester sends Accept, and when Vbus is stable
+			 *    at the target voltage, sends PS_RDY.
+			 */
+			partner_send_msg(PD_MSG_SOP, PD_CTRL_ACCEPT, 0, 0,
+					 NULL);
+			task_wait_event(10 * MSEC);
+			partner_send_msg(PD_MSG_SOP, PD_CTRL_PS_RDY, 0, 0,
+					 NULL);
+			task_wait_event(1 * MSEC);
 
-		TEST_EQ(tc_is_attached_snk(PORT0), true, "%d");
-		break;
+			TEST_EQ(tc_is_attached_snk(PORT0), true, "%d");
+			break;
 
-	case PD_ROLE_SINK:
-		/*
-		 * c) The tester waits Source Capabilities for for tNoResponse
-		 *    max (5.5 s).
-		 */
-		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
-					      0,
-					      PD_DATA_SOURCE_CAP),
-			EC_SUCCESS, "%d");
+		case PD_ROLE_SINK:
+			/*
+			 * c) The tester waits Source Capabilities for for
+			 *    tNoResponse max (5.5 s).
+			 */
+			TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0,
+						      PD_DATA_SOURCE_CAP),
+				EC_SUCCESS, "%d");
 
-		/*
-		 * d) The tester replies GoodCrc on reception of the Source
-		 *    Capabilities.
-		 */
-		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-		task_wait_event(10 * MSEC);
+			/*
+			 * d) The tester replies GoodCrc on reception of the
+			 *    Source Capabilities.
+			 */
+			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+			task_wait_event(10 * MSEC);
 
-		/*
-		 * e) The tester requests 5V 0.5A.
-		 */
-		partner_send_msg(PD_MSG_SOP, PD_DATA_REQUEST, 1, 0, &rdo);
+			/*
+			 * e) The tester requests 5V 0.5A.
+			 */
+			partner_send_msg(PD_MSG_SOP, PD_DATA_REQUEST, 1, 0,
+					 &rdo);
 
-		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_ACCEPT, 0),
-			EC_SUCCESS, "%d");
-		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+			TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
+						      PD_CTRL_ACCEPT, 0),
+				EC_SUCCESS, "%d");
+			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 
-		/*
-		 * f) The tester waits PS_RDY for tPSSourceOn max (480 ms).
-		 */
-		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_PS_RDY, 0),
-			EC_SUCCESS, "%d");
-		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-		task_wait_event(1 * MSEC);
+			/*
+			 * f) The tester waits PS_RDY for tPSSourceOn max
+			 *    (480 ms).
+			 */
+			TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
+						      PD_CTRL_PS_RDY, 0),
+				EC_SUCCESS, "%d");
+			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+			task_wait_event(1 * MSEC);
 
-		TEST_EQ(tc_is_attached_src(PORT0), true, "%d");
-		break;
+			TEST_EQ(tc_is_attached_src(PORT0), true, "%d");
+			break;
+		}
+		TEST_EQ(pd_get_data_role(I2C_PORT_HOST_TCPC),
+			data_role, "%d");
 	}
 
-	TEST_EQ(pd_get_data_role(I2C_PORT_HOST_TCPC),
-		data_role, "%d");
 	return EC_SUCCESS;
 }
 

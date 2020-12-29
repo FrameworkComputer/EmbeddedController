@@ -64,9 +64,12 @@ void partner_send_msg(enum pd_msg_type sop,
 int handle_attach_expected_msgs(enum pd_data_role data_role);
 
 
-#define INITIAL_ATTACH true
-#define ALREADY_ATTACHED false
-int proc_pd_e1(enum pd_data_role data_role, bool initial_attach);
+enum proc_pd_e1_attach {
+	INITIAL_ATTACH			= BIT(0),
+	ALREADY_ATTACHED		= BIT(1),
+	INITIAL_AND_ALREADY_ATTACHED	= INITIAL_ATTACH | ALREADY_ATTACHED
+};
+int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach);
 int proc_pd_e3(void);
 
 int test_td_pd_ll_e3_dfp(void);

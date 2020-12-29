@@ -26,7 +26,8 @@ int test_td_pd_src3_e26(void)
 	 * b) The Tester waits until it can start an AMS (Run PROC.PD.E3)...
 	 */
 	TEST_EQ(tcpci_startup(), EC_SUCCESS, "%d");
-	TEST_EQ(proc_pd_e1(PD_ROLE_DFP, INITIAL_ATTACH), EC_SUCCESS, "%d");
+	TEST_EQ(proc_pd_e1(PD_ROLE_DFP, INITIAL_AND_ALREADY_ATTACHED),
+		EC_SUCCESS, "%d");
 	TEST_EQ(proc_pd_e3(), EC_SUCCESS, "%d");
 
 	/*

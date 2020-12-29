@@ -25,7 +25,8 @@ int test_td_pd_snk3_e12(void)
 	 * a) Run PROC.PD.E1 Bring-up according to the UUT role.
 	 */
 	TEST_EQ(tcpci_startup(), EC_SUCCESS, "%d");
-	TEST_EQ(proc_pd_e1(PD_ROLE_UFP, INITIAL_ATTACH), EC_SUCCESS, "%d");
+	TEST_EQ(proc_pd_e1(PD_ROLE_UFP, INITIAL_AND_ALREADY_ATTACHED),
+		EC_SUCCESS, "%d");
 
 	/*
 	 * b) The Tester keeps the Rp value as SinkTXNG and sends a
