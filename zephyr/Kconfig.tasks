@@ -48,6 +48,7 @@ endif # HAS_TASK_CHIPSET
 
 config HAS_TASK_KEYPROTO
 	bool "Keyboard-protocol task (x86)"
+	depends on PLATFORM_EC_KEYBOARD_PROTOCOL_8042
 	help
 	  This turns on the keyproto task which handles conversion of keyboard
 	  scans into i8042 messages on x86 platforms. This is not used or needed
@@ -63,6 +64,25 @@ config TASK_KEYPROTO_STACK_SIZE
 	  The stack size of the keyproto task.
 
 endif # HAS_TASK_KEYPROTO
+
+config HAS_TASK_KEYSCAN
+	bool "Keyboard-scanning task"
+	depends on PLATFORM_EC_KEYBOARD
+	help
+	  This turns on the keyscan task which handles scanning the keyboard
+	  and producing a list of changes in the key state. This list can either
+	  be sent to the keyboard-protocol task or directly to the AP for
+	  processing.
+
+if HAS_TASK_KEYSCAN
+
+config TASK_KEYSCAN_STACK_SIZE
+	hex "Stack size"
+	default 0x200
+	help
+	  The stack size of the keyscan task.
+
+endif # HAS_TASK_KEYSCAN
 
 config HAS_TASK_POWERBTN
 	bool "Power-button task (x86)"

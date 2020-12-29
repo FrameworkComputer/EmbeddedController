@@ -146,27 +146,26 @@ endif # PLATFORM_EC_FLASH
 
 menuconfig PLATFORM_EC_KEYBOARD
 	bool "Enable keyboard support"
+	select HAS_TASK_KEYSCAN
 	default y
 	help
 	  Enable compilation of support for scanning a keyboard and providing
 	  the resulting input to the AP over the host interface. This consists
 	  of a keyboard-scanning task which provides key scans via it calling
 	  keyboard_state_changed() (for i8042) or its client calling
-	  keyboard_scan_get_state() (for MKBP). This implies HAS_TASK_KEYSCAN.
+	  keyboard_scan_get_state() (for MKBP).
+
+	  Enabling this automatically enables HAS_TASK_KEYSCAN since keyboard
+	  scanning must run in its own task.
 
 if PLATFORM_EC_KEYBOARD
-
-config TASK_KEYSCAN_STACK_SIZE
-	hex "keyscan task stack size"
-	default 0x200
-	help
-	  The size of the keyboard scan task stack.
 
 choice "Protocol select"
 	prompt "Select the keyboard protocol to use"
 
 config PLATFORM_EC_KEYBOARD_PROTOCOL_8042
 	bool "i8042"
+	select HAS_TASK_KEYPROTO
 	help
 	  Use the i8042 protocol to communicate with the AP. This dates from the
 	  Intel 8042 keyboard controller chip released in 1976. It uses two-way
