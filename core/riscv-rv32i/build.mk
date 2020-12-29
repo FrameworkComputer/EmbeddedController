@@ -17,4 +17,9 @@ CFLAGS_CPU+=-march=rv32ima$(_FPU_EXTENSION)c -mabi=ilp32$(_FPU_EXTENSION) -Os
 LDFLAGS_EXTRA+=-mrelax
 LDFLAGS_EXTRA+=-static-libgcc -lgcc
 
+ifneq ($(CONFIG_LTO),)
+CFLAGS_CPU+=-flto
+LDFLAGS_EXTRA+=-flto
+endif
+
 core-y=cpu.o init.o panic.o task.o switch.o __builtin.o math.o
