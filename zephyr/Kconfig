@@ -250,6 +250,7 @@ config PLATFORM_EC_PORT80
 
 config PLATFORM_EC_POWER_BUTTON
 	bool "Enable the power button module"
+	select HAS_TASK_POWERBTN
 	depends on PLATFORM_EC_HOSTCMD
 	help
 	  Enable shimming the power button implementation and related
