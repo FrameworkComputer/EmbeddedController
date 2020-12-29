@@ -1853,6 +1853,7 @@ int cmd_sysinfo(int argc, char **argv)
 			goto sysinfo_error_usage;
 	}
 
+	memset(&r, '\0', sizeof(r));
 	if (sysinfo(&r) != 0)
 		return -1;
 
