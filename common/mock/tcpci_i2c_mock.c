@@ -70,6 +70,7 @@ static struct tcpci_reg tcpci_regs[] = {
 
 static uint8_t tx_buffer[BUFFER_SIZE];
 static int tx_pos = -1;
+static int tx_msg_cnt;
 static int tx_retry_cnt = -1;
 static uint8_t rx_buffer[BUFFER_SIZE];
 static int rx_pos = -1;
@@ -231,6 +232,26 @@ int verify_tcpci_tx_retry_count(enum tcpm_transmit_type tx_type,
 			       VERIFY_TIMEOUT);
 }
 
+int verify_tcpci_tx_with_data(enum tcpm_transmit_type tx_type,
+			      enum pd_data_msg_type data_msg,
+			      uint8_t *data,
+			      int data_bytes,
+			      int *msg_len)
+{
+	int rv;
+
+	rv = verify_transmit(tx_type, -1,
+			     0, data_msg,
+			     VERIFY_TIMEOUT);
+	if (!rv) {
+		TEST_NE(data, NULL, "%p");
+		TEST_GE(data_bytes, tx_msg_cnt, "%d");
+		memcpy(data, tx_buffer, tx_msg_cnt);
+		if (msg_len)
+			*msg_len = tx_msg_cnt;
+	}
+	return rv;
+}
 void mock_tcpci_receive(enum pd_msg_type sop, uint16_t header,
 			uint32_t *payload)
 {
@@ -431,6 +452,7 @@ int tcpci_i2c_xfer(int port, uint16_t slave_addr_flags,
 		}
 		memcpy(tx_buffer + tx_pos, out, out_size);
 		tx_pos += out_size;
+		tx_msg_cnt = tx_pos;
 		if (tx_pos > 0 && tx_pos == tx_buffer[0] + 1) {
 			print_header("TX", UINT16_FROM_BYTE_ARRAY_LE(
 						tx_buffer, 1));
@@ -450,6 +472,7 @@ int tcpci_i2c_xfer(int port, uint16_t slave_addr_flags,
 			return EC_ERROR_UNKNOWN;
 		}
 		tx_pos = 0;
+		tx_msg_cnt = 0;
 		if (out_size != 1) {
 			ccprints("ERROR: TCPC_REG_TX_BUFFER out_size != 1");
 			return EC_ERROR_UNKNOWN;
