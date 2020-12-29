@@ -31,8 +31,11 @@ toolchain incompatibilities may require extra debug.
 1.  Build your EC image:
 
     ```bash
-    HOSTCC=x86_64-linux-gnu-gcc make BOARD=$board
+    HOSTCC=x86_64-linux-gnu-gcc CROSS_COMPILE_arm=arm-none-eabi- make BOARD=${BOARD}
     ```
+
+    Note: the EC supports multiple architectures, check `core/*/build.mk` files
+    for other supported `CROSS_COMPILE_` variables.
 
 ## External Dependencies
 
@@ -51,14 +54,7 @@ from the Chromium OS chroot:
 1.  Run
 
     ```bash
-    repo init -u https://chromium.googlesource.com/chromiumos/manifest.git --repo-url https://chromium.googlesource.com/external/repo.git -g minilayout
-    ```
-
-1.  Edit `.repo/manifest.xml`, and add `groups="minilayout"` to the platform/ec
-    project, so the line becomes:
-
-    ```
-    <project path="src/platform/ec" name="chromiumos/platform/ec" groups="minilayout" />
+    repo init -u https://chromium.googlesource.com/chromiumos/manifest -g minilayout,firmware
     ```
 
 1.  Run `repo sync`:
@@ -76,21 +72,21 @@ from the Chromium OS chroot:
 1.  Set up your board:
 
     ```bash
-    ./setup_board --board=$BOARD
+    setup_board --board=${BOARD}
     ```
 
-    (ex. `./setup_board --board=glados`)
+    (ex. `setup_board --board=glados`)
 
 1.  Build EC:
 
     ```bash
-    ./build_packages --board=$BOARD chromeos-ec
+    ./build_packages --board=${BOARD} chromeos-ec
     ```
 
 1.  Now, EC images for any board can be built with:
 
     ```bash
-    cd ~/trunk/src/platform/ec; make BOARD=$board -j
+    cd ~/trunk/src/platform/ec; make BOARD=${BOARD} -j
     ```
 
 ## Building `futility` outside the chroot {#building-futility}
