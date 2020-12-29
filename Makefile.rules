@@ -741,6 +741,8 @@ help:
 	@echo "  savesizes            - Save the filesizes of currently built boards for comparison"
 	@echo "  newsizes             - Compare previously saved filesizes against new sizes"
 	@echo "  utils [BOARD=]       - Build all host side utilities"
+	@echo "  dis   [BOARD=]       - Generate the complete disassembly of the RO and RW images"
+	@echo "  hex   [BOARD=]       - Generate an Intel hex formated output binary"
 	@echo ""
 	@echo "  tests [BOARD=]       - Build all on-device unit tests for a specific board"
 	@echo "  hosttests            - Build all host unit tests"
