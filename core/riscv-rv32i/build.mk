@@ -14,6 +14,10 @@ $(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_riscv),\
 _FPU_EXTENSION=$(if $(CONFIG_FPU),f,)
 # CPU specific compilation flags
 CFLAGS_CPU+=-march=rv32ima$(_FPU_EXTENSION)c -mabi=ilp32$(_FPU_EXTENSION) -Os
+# RISC-V does not trap division by zero, enable the sanitizer to check those.
+# TODO(b:173969773): It might be better to add a new compiler flag for this
+# (e.g. -mcheck-zero-division that is only only available on MIPS currently).
+CFLAGS_CPU+=-fsanitize=integer-divide-by-zero
 LDFLAGS_EXTRA+=-mrelax
 LDFLAGS_EXTRA+=-static-libgcc -lgcc
 

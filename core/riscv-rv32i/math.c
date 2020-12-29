@@ -4,6 +4,8 @@
  */
 
 #include "common.h"
+#include "cpu.h"
+#include "panic.h"
 
 #ifdef CONFIG_FPU
 /* Single precision floating point square root. */
@@ -17,3 +19,9 @@ float sqrtf(float x)
 	return x;
 }
 #endif
+
+void __ubsan_handle_divrem_overflow(void *data,
+				    void *lhs, void *rhs)
+{
+	exception_panic(PANIC_SW_DIV_ZERO, 0);
+}
