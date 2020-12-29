@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 menuconfig PLATFORM_EC_POWERSEQ
-	bool "Enable power sequencing"
+	bool "Power sequencing"
 	depends on AP
 	help
 	  Enable shimming the platform/ec AP power sequencing code.

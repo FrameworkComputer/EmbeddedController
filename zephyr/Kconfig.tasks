@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+menu "Tasks"
+
 config HAS_TASK_KEYPROTO
 	bool "Whether or not the keyproto task should be run."
 	default n
@@ -53,3 +55,5 @@ config TASK_CHARGER_STACK_SIZE
 	  See b/176180736 for checking these stack sizes.
 
 endif # HAS_TASK_CHARGER
+
+endmenu # Tasks
