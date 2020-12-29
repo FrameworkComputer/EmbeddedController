@@ -1,9 +1,17 @@
-#include <console.h>
-#include <i2c.h>
-#include <system.h>
-#include <util.h>
+/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
 
-#include <gl3590.h>
+#include "console.h"
+#include "i2c.h"
+#include "system.h"
+#include "util.h"
+#include "pwr_defs.h"
+
+#include "gl3590.h"
+
+#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
 /* GL3590 is unique in terms of i2c_read, since it doesn't support repeated
  * start sequence. One need to issue two separate transactions - first is write
@@ -141,4 +149,47 @@ exit:
 	/* Try to clear interrupt */
 	buf = GL3590_INT_CLEAR;
 	gl3590_write(hub, GL3590_INT_REG, &buf, sizeof(buf));
+}
+
+enum ec_error_list gl3590_ufp_pwr(int hub, struct pwr_con_t *pwr)
+{
+	uint8_t hub_sts, hub_mode;
+	int rv = 0;
+
+	if (gl3590_read(hub, GL3590_HUB_STS_REG, &hub_sts, sizeof(hub_sts))) {
+		CPRINTF("Error reading HUB_STS %d\n", rv);
+		return EC_ERROR_BUSY;
+	}
+
+	pwr->volts = 5;
+
+	switch ((hub_sts & GL3590_HUB_STS_HOST_PWR_MASK) >>
+		GL3590_HUB_STS_HOST_PWR_SHIFT) {
+	case GL3590_DEFAULT_HOST_PWR_SRC:
+		if (gl3590_read(hub, GL3590_HUB_MODE_REG, &hub_mode,
+				sizeof(hub_mode))) {
+			CPRINTF("Error reading HUB_MODE %d\n", rv);
+			return EC_ERROR_BUSY;
+		}
+		if (hub_mode & GL3590_HUB_MODE_USB3_EN) {
+			pwr->milli_amps = 900;
+			return EC_SUCCESS;
+		} else if (hub_mode & GL3590_HUB_MODE_USB2_EN) {
+			pwr->milli_amps = 500;
+			return EC_SUCCESS;
+		} else {
+			CPRINTF("GL3590: Neither USB3 nor USB2 hubs "
+				 "configured\n");
+			return EC_ERROR_HW_INTERNAL;
+		}
+	case GL3590_1_5_A_HOST_PWR_SRC:
+		pwr->milli_amps = 1500;
+		return EC_SUCCESS;
+	case GL3590_3_0_A_HOST_PWR_SRC:
+		pwr->milli_amps = 3000;
+		return EC_SUCCESS;
+	default:
+		CPRINTF("GL3590: Unkown host power source %d\n", hub_sts);
+		return EC_ERROR_UNKNOWN;
+	}
 }
