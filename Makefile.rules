@@ -750,6 +750,7 @@ help:
 	@echo "  coverage             - Build and run all host unit tests for code coverage"
 	@echo "  buildfuzztests       - Build all host fuzzers"
 	@echo "  runfuzztests         - Build and run all host fuzzers for one round"
+	@echo "  analyzestack [BOARD=]- Run max stack size analysis"
 	@echo ""
 	@echo "  flash     [BOARD=]   - Use OpenOCD to flash the latest image"
 	@echo "  flash_ec  [BOARD=]   - Use flash_ec to flash the latest image"
