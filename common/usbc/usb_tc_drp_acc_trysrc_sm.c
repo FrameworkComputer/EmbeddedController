@@ -131,8 +131,13 @@ void print_flag(int port, int set_or_clear, int flag);
 #define CLR_FLAGS_ON_DISCONNECT(port) TC_CLR_FLAG(port, \
 	~(TC_FLAGS_LPM_ENGAGED | TC_FLAGS_REQUEST_SUSPEND | TC_FLAGS_SUSPENDED))
 
-/* 100 ms is enough time for any TCPC transaction to complete. */
-#define PD_LPM_DEBOUNCE_US (100 * MSEC)
+/*
+ * 10 ms is enough time for any TCPC transaction to complete
+ *
+ * This value must be below ~39.7 ms to put ANX7447 into LPM due to bug in
+ * silicon (see b/77544959 and b/149761477 for more details).
+ */
+#define PD_LPM_DEBOUNCE_US (10 * MSEC)
 
 /*
  * This delay is not part of the USB Type-C specification or the USB port
