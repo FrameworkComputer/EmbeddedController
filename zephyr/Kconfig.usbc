@@ -53,6 +53,17 @@ config PLATFORM_EC_USBC_OCP
 	  This should be enabled by drivers which can detect over-current. It
 	  cannot be set otherwise, even in prj.conf
 
+config PLATFORM_EC_USB_PID
+	hex "USB Product ID"
+	help
+	  Each platform (e.g. baseboard set) should have a single VID/PID
+	  combination. If there is a big enough change within a platform,
+	  then we can differentiate USB topologies by varying the hardware
+	  version field in the Sink and Source Capabilities Extended messages.
+
+	  To reserve a new PID within Google, use go/usb and see
+	  http://google3/hardware/standards/usb
+
 menuconfig PLATFORM_EC_USB_POWER_DELIVERY
 	bool "USB Type-C Power Delivery (PD)"
 	default y
