@@ -70,6 +70,7 @@ static struct mutex fifo_remove_mutex;
 /* Button and switch state. */
 static uint32_t mkbp_button_state;
 static uint32_t mkbp_switch_state;
+static bool mkbp_init_done;
 #ifndef HAS_TASK_KEYSCAN
 /* Keys simulated-pressed */
 static uint8_t __bss_slow simulated_key[KEYBOARD_COLS_MAX];
@@ -270,8 +271,14 @@ void mkbp_update_switches(uint32_t sw, int state)
 	mkbp_switch_state &= ~BIT(sw);
 	mkbp_switch_state |= (!!state << sw);
 
-	mkbp_fifo_add(EC_MKBP_EVENT_SWITCH,
-		      (const uint8_t *)&mkbp_switch_state);
+	/*
+	 * Only inform AP mkbp changes when all switches initialized, in case
+	 * of the middle states causing the weird behaviour in the AP side,
+	 * especially when sysjumped while AP up.
+	 */
+	if (mkbp_init_done)
+		mkbp_fifo_add(EC_MKBP_EVENT_SWITCH,
+			      (const uint8_t *)&mkbp_switch_state);
 }
 
 #ifdef CONFIG_LID_SWITCH
@@ -304,6 +311,15 @@ DECLARE_HOOK(HOOK_BASE_ATTACHED_CHANGE, mkbp_base_attached_change,
 	     HOOK_PRIO_LAST);
 DECLARE_HOOK(HOOK_INIT, mkbp_base_attached_change, HOOK_PRIO_INIT_LID+1);
 #endif
+
+static void mkbp_report_switch_on_init(void)
+{
+	/* All switches initialized, report switch state to AP */
+	mkbp_init_done = true;
+	mkbp_fifo_add(EC_MKBP_EVENT_SWITCH,
+		      (const uint8_t *)&mkbp_switch_state);
+}
+DECLARE_HOOK(HOOK_INIT, mkbp_report_switch_on_init, HOOK_PRIO_LAST);
 
 void keyboard_update_button(enum keyboard_button_type button, int is_pressed)
 {
