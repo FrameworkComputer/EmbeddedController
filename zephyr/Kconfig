@@ -131,15 +131,15 @@ config PLATFORM_EC_FLASH
 if PLATFORM_EC_FLASH
 
 config PLATFORM_EC_CONSOLE_CMD_FLASH
-	bool "Enable the flash commands"
+	bool "Console commands: flasherase, flashread, flashwp, flashwrite"
 	default y
 	help
 	  Enables various console commands:
 
-	     flashread - read from flash to memory
 	     flasherase - erase flash region
-	     flashwrite - write memory to flash
+	     flashread - read from flash to memory
 	     flashwp - change write-protection settings
+	     flashwrite - write memory to flash
 
 config PLATFORM_EC_EXTERNAL_STORAGE
 	bool "Flash is stored external to the EC"
@@ -305,22 +305,47 @@ menuconfig PLATFORM_EC_TIMER
 if PLATFORM_EC_TIMER
 
 config PLATFORM_EC_TIMER_CMD_GETTIME
-	bool "Enable the gettime command"
+	bool "Console command: gettime"
 	default y
 	help
-	  Enable the "gettime" command
+	  Enable the "gettime" command. This shows the current time (in
+	  microseconds since boot) in both hex and in decimal converted to
+	  seconds. For example:
+
+	     Time: 0x0000000002706a62 = 40.921698 s
+
 
 config PLATFORM_EC_TIMER_CMD_TIMERINFO
-	bool "Enable the timerinfo command"
+	bool "Console command: timerinfo"
 	default y
 	help
-	  Enable the "timerinfo" command
+	  Enable the "timerinfo" command which shows the current time (in
+	  microseconds and seconds since boot), the deadline (next time the EC
+	  needs to wake up) and a list of active timers along with when they
+	  will next fire.
+
+	  Example:
+
+	    Time:     0x0000000002706a62 us,   40.921698 s
+	    Deadline: 0x000000000270774d ->    0.003307 s from now
+	    Active timers:
+	      Tsk  1  0x000000000271db8f ->    0.094509
+	      Tsk  4  0x00000000027396b3 ->    0.207953
+	      Tsk 13  0x00000000027133a1 ->    0.051519
+
 
 config PLATFORM_EC_TIMER_CMD_WAITMS
-	bool "Enable the waitms command"
+	bool "Console command: waitms"
 	default y
 	help
-	  Enable the "waitms" command
+	  Enable the "waitms" command. This waits for a given number of
+	  milliseconds. For example:
+
+	    waitms 100
+
+	  waits for 100ms. Note that long waits can introduce problems since
+	  it stops the EC from executing its normal tasks. For example, a
+	  two-second wait can cause the EC to reset.
 
 endif # PLATFORM_EC_TIMER
 
