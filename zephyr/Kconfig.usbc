@@ -361,6 +361,29 @@ config PLATFORM_EC_USB_PD_TCPM_TCPCI
 
 endchoice  # Type-C Port Manager (TCPM)
 
+menuconfig PLATFORM_EC_USB_MUX
+	bool "USB muxes"
+	default y
+	help
+	  Enables support for USB muxes. These allow multiplexing
+
+if PLATFORM_EC_USB_MUX
+
+config PLATFORM_EC_USB_MUX_RUNTIME_CONFIG
+	bool "USB mux runtime config"
+	default y
+	help
+	  Allows the configuration of the USB mux to be set up at runtime. This
+	  makes the usb_muxes[] array writable, i.e. not const. It should be
+	  declared as such in the board config.
+
+	  This is useful when the board has runtime information that changes
+	  the configuration, such as Chromium OS Board Info (CBI set in the
+	  factory. Without this, multiple EC images would need to be installed
+	  depending on the board.
+
+endif  # PLATFORM_EC_USB_MUX
+
 config PLATFORM_EC_CONSOLE_CMD_PPC_DUMP
 	bool "Console command: ppc_dump"
 	depends on PLATFORM_EC_USBC_PPC
@@ -372,16 +395,32 @@ config PLATFORM_EC_CONSOLE_CMD_PPC_DUMP
 	  reference to the datasheet for the part this can help you figure out
 	  what is going on.
 
+if PLATFORM_EC_USB_PD_TCPM_TCPCI
+
+config PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG
+	bool "Type-C Port Controller runtime config"
+	default y
+	help
+	  Allows the configuration of the TCPC to be set up at runtime. This
+	  makes the tcpc_config[] array writable, i.e. not const. It should be
+	  declared as such in the board config.
+
+	  This is useful when the board has runtime information that sets
+	  the configuration, such as Chromium OS Board Info (CBI set in the
+	  factory. Without this, multiple EC images would need to be installed
+	  depending on the board.
+
 config PLATFORM_EC_CMD_TCPC_DUMP
 	bool "Console command: tcpc_dump"
 	# anx7447 also supports this command, but is not yet enabled
-	depends on PLATFORM_EC_USB_PD_TCPM_TCPCI
 	default y
 	help
 	  Allows dumping of the Type-C Port Controller (TCPC) state, which is
 	  basically a list of registers and their values. By reference to the
 	  Universal Serial Bus Type-C Port Controller Interface Specification
 	  this can help you figure out what is going on.
+
+endif  # PLATFORM_EC_USB_PD_TCPM_TCPCI
 
 endif  # PLATFORM_EC_USBC_PPC
 
