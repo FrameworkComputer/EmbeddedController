@@ -64,7 +64,7 @@ void board_overcurrent_event(int port, int is_overcurrented)
 
 /******************************************************************************/
 /* USBC TCPC configuration */
-const struct tcpc_config_t tcpc_config[] = {
+struct tcpc_config_t tcpc_config[] = {
 	[USBC_PORT_C0] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
