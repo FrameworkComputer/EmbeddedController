@@ -10,7 +10,7 @@
 #include "console.h"
 #include "driver/ppc/sn5s330.h"
 #include "hooks.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "system.h"
 #include "usbc_ppc.h"
 

@@ -6,7 +6,7 @@
 /* ANX7688 port manager */
 
 #include "hooks.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_mux.h"

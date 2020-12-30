@@ -26,7 +26,7 @@
 #include "power/icelake.h"
 #include "timer.h"
 #include "util.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "usbc_ppc.h"
 #include "util.h"
 

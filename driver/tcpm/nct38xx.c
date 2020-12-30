@@ -11,7 +11,7 @@
 #include "hooks.h"
 #include "nct38xx.h"
 #include "task.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "usb_common.h"
 
 #if !defined(CONFIG_USB_PD_TCPM_TCPCI)

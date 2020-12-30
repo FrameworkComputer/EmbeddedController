@@ -17,7 +17,7 @@
 #include "common.h"
 #include "console.h"
 #include "ps8xxx.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_mux.h"

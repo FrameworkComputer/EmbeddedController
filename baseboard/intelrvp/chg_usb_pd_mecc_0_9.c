@@ -7,7 +7,7 @@
 
 #include "console.h"
 #include "hooks.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "system.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)

@@ -13,7 +13,7 @@
 #include "i2c.h"
 #include "registers.h"
 #include "task.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "usb_descriptor.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"

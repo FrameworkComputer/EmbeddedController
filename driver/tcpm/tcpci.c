@@ -12,7 +12,7 @@
 #include "ec_commands.h"
 #include "ps8xxx.h"
 #include "task.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_charge.h"

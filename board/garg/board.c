@@ -33,7 +33,7 @@
 #include "switch.h"
 #include "system.h"
 #include "tablet_mode.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "temp_sensor.h"
 #include "thermistor.h"
 #include "usb_mux.h"

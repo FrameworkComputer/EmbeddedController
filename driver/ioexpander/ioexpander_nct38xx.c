@@ -11,7 +11,7 @@
 #include "i2c.h"
 #include "ioexpander.h"
 #include "nct38xx.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 
 #define CPRINTF(format, args...) cprintf(CC_GPIO, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)

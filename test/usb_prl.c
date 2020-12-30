@@ -10,7 +10,7 @@
 #include "mock/usb_pe_sm_mock.h"
 #include "mock/usb_tc_sm_mock.h"
 #include "task.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "tcpm/tcpm.h"
 #include "test_util.h"
 #include "timer.h"

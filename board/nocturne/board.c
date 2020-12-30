@@ -39,7 +39,7 @@
 #include "system_chip.h"
 #include "switch.h"
 #include "task.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "temp_sensor.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"

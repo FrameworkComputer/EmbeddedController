@@ -9,7 +9,7 @@
 #include "hooks.h"
 #include "mt6370.h"
 #include "task.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "tcpm/tcpm.h"
 #include "timer.h"
 #include "usb_mux.h"

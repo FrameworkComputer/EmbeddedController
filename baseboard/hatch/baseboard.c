@@ -26,7 +26,7 @@
 #include "power.h"
 #include "stdbool.h"
 #include "system.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "timer.h"
 #include "usbc_ppc.h"
 #include "util.h"

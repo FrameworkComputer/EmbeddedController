@@ -12,7 +12,7 @@
 #include "ec_commands.h"
 #include "gpio.h"
 #include "system.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "tcpm/tcpm.h"
 #include "usb_mux.h"
 #include "usb_pd.h"

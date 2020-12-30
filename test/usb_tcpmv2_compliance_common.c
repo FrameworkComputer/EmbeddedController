@@ -7,7 +7,7 @@
 #include "mock/tcpci_i2c_mock.h"
 #include "mock/usb_mux_mock.h"
 #include "task.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "test_util.h"
 #include "timer.h"
 #include "usb_tcpmv2_compliance.h"

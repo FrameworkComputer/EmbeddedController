@@ -8,7 +8,7 @@
 #include "console.h"
 #include "hooks.h"
 #include "task.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "system.h"
 #include "usb_mux.h"
 #include "util.h"

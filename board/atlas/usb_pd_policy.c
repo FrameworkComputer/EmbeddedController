@@ -16,7 +16,7 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
-#include "tcpci.h"
+#include "tcpm/tcpci.h"
 #include "timer.h"
 #include "util.h"
 #include "usb_mux.h"
