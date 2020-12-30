@@ -769,6 +769,7 @@ help:
 	@echo "Common Variables:"
 	@echo "  V=1                  - Show make output"
 	@echo "  BOARD=               - Set the board name to build (Default is $(BOARD))"
+	@echo "  STATIC_VERSION=1     - Force a constant version string for reproducable builds"
 	@echo "  CROSS_COMPILE=       - Set the compiler for the board"
 	@echo "  CROSS_COMPILE_arch=  - Set the compiler for arch"
 	@echo "     The board picks its CROSS_COMPILE_arch if CROSS_COMPILE is not set."
