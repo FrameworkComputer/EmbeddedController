@@ -14,7 +14,6 @@
 #include "baseboard.h"
 
 #define CONFIG_USBC_RETIMER_PI3DPX1207
-#define CONFIG_MKBP_USE_GPIO
 
 /* Motion sensing drivers */
 #define CONFIG_ACCELGYRO_BMI160

@@ -14,7 +14,6 @@
 #include "baseboard.h"
 
 #define CONFIG_IO_EXPANDER_PCAL6408
-#define CONFIG_MKBP_USE_GPIO
 
 #define CONFIG_USBC_PPC_NX20P3483
 #define CONFIG_USB_MUX_PS8740

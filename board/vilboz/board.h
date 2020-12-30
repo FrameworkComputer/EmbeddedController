@@ -13,8 +13,6 @@
 #include <stdbool.h>
 #include "baseboard.h"
 
-#define CONFIG_MKBP_USE_GPIO
-
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 
 /* USB-A config */

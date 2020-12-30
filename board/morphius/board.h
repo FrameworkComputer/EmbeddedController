@@ -14,7 +14,6 @@
 #include "baseboard.h"
 
 #define CONFIG_USBC_RETIMER_PI3DPX1207
-#define CONFIG_MKBP_USE_GPIO
 #define CONFIG_8042_AUX
 #define CONFIG_PS2
 #define CONFIG_CMD_PS2

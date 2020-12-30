@@ -11,7 +11,6 @@
 #include <stdbool.h>
 #include "baseboard.h"
 
-#define CONFIG_MKBP_USE_GPIO
 #define CONFIG_FAN_RPM_CUSTOM
 
 /* Motion sensing drivers */

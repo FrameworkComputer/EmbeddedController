@@ -13,8 +13,6 @@
 #include <stdbool.h>
 #include "baseboard.h"
 
-#define CONFIG_MKBP_USE_GPIO
-
 #define RPM_DEVIATION 1
 #define CONFIG_FAN_RPM_CUSTOM
 

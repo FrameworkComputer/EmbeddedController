@@ -263,8 +263,13 @@
 
 #define I2C_ADDR_EEPROM_FLAGS	0x50
 
-/* Sensors */
 #define CONFIG_MKBP_EVENT
+/* Host event is required to wake from sleep */
+#define CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT
+/* Required to enable runtime configuration */
+#define CONFIG_MKBP_EVENT_WAKEUP_MASK (BIT(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED))
+
+/* Sensors */
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 
 /* Thermal */
