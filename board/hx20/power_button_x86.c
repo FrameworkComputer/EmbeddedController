@@ -345,7 +345,7 @@ static void state_machine(uint64_t tnow)
 		 * down. */
 		if (!extpower_is_present() || (system_get_reset_flags() & 
 				EC_RESET_FLAG_HARD) == EC_RESET_FLAG_HARD)
-			set_pwrbtn_to_pch(1, 0);
+			set_pwrbtn_to_pch(1, 1);
 
 		if (power_button_is_pressed())
 			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
