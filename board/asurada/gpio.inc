@@ -62,7 +62,7 @@ GPIO_INT(AC_PRESENT,         PIN(E, 5), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,
 #endif
 GPIO_INT(UART1_RX,           PIN(B, 0), GPIO_INT_FALLING,
          uart_deepsleep_interrupt) /* UART_DEBUG_TX_EC_RX */
-GPIO_INT(WP,                 PIN(I, 4), GPIO_INT_BOTH,
+GPIO_INT(WP,                 PIN(I, 4), GPIO_INT_BOTH | GPIO_SEL_1P8V,
          switch_interrupt) /* EC_FLASH_WP_OD */
 GPIO_INT(SPI0_CS,            PIN(M, 5), GPIO_INT_FALLING,
          spi_event)        /* SPI slave Chip Select -- AP_SPI_EC_CS_L */
@@ -77,14 +77,14 @@ GPIO(PG_MT6360_ODL,          PIN(F, 1), GPIO_INPUT)
 GPIO(PG_PP5000_A_ODL,        PIN(A, 6), GPIO_INPUT)
 GPIO(EN_SLP_Z,               PIN(E, 3), GPIO_OUT_LOW)
 GPIO(SYS_RST_ODL,            PIN(B, 6), GPIO_ODR_LOW)
-GPIO(EC_BL_EN_OD,            PIN(B, 5), GPIO_ODR_LOW)
+GPIO(EC_BL_EN_OD,            PIN(B, 5), GPIO_ODR_LOW | GPIO_SEL_1P8V)
 
 /* MKBP event synchronization */
-GPIO(EC_INT_L,               PIN(E, 6), GPIO_ODR_HIGH) /* EC_AP_INT_ODL */
+GPIO(EC_INT_L,               PIN(E, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V) /* EC_AP_INT_ODL */
 
 /* USB and USBC Signals */
 GPIO(DP_AUX_PATH_SEL,        PIN(G, 0), GPIO_OUT_HIGH)
-GPIO(EC_DPBRDG_HPD_ODL,      PIN(J, 0), GPIO_ODR_HIGH)
+GPIO(EC_DPBRDG_HPD_ODL,      PIN(J, 0), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
 GPIO(EN_PP5000_USB_A0_VBUS,  PIN(B, 7), GPIO_OUT_LOW)
 GPIO(USB_C0_FRS_EN,          PIN(H, 3), GPIO_OUT_LOW)
 
@@ -98,8 +98,8 @@ GPIO(EC_USB_C0_MUX_RESET_L,  PIN(D, 7), GPIO_OUT_HIGH)
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C_A_SCL,              PIN(B, 3), GPIO_INPUT) /* I2C_CHG_BATT_SCL */
 GPIO(I2C_A_SDA,              PIN(B, 4), GPIO_INPUT) /* I2C_CHG_BATT_SDA */
-GPIO(I2C_B_SCL,              PIN(C, 1), GPIO_INPUT) /* I2C_SENSOR_SCL */
-GPIO(I2C_B_SDA,              PIN(C, 2), GPIO_INPUT) /* I2C_SENSOR_SDA */
+GPIO(I2C_B_SCL,              PIN(C, 1), GPIO_INPUT | GPIO_SEL_1P8V) /* I2C_SENSOR_SCL */
+GPIO(I2C_B_SDA,              PIN(C, 2), GPIO_INPUT | GPIO_SEL_1P8V) /* I2C_SENSOR_SDA */
 GPIO(I2C_C_SCL,              PIN(F, 6), GPIO_INPUT) /* I2C_USB_C0_SCL */
 GPIO(I2C_C_SDA,              PIN(F, 7), GPIO_INPUT) /* I2C_USB_C0_SCL */
 GPIO(I2C_E_SCL,              PIN(E, 0), GPIO_INPUT) /* I2C_USB_C1_SCL */
@@ -117,7 +117,7 @@ GPIO(EC_X_GPIO3,             PIN(J, 1), GPIO_INPUT)
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(B, 0x18), 1, MODULE_I2C, 0) /* I2C A */
-ALTERNATE(PIN_MASK(C, 0x06), 1, MODULE_I2C, 0) /* I2C B */
+ALTERNATE(PIN_MASK(C, 0x06), 1, MODULE_I2C, GPIO_SEL_1P8V) /* I2C B */
 ALTERNATE(PIN_MASK(F, 0xC0), 1, MODULE_I2C, 0) /* I2C C */
 ALTERNATE(PIN_MASK(E, 0x81), 1, MODULE_I2C, 0) /* I2C E */
 
@@ -134,21 +134,24 @@ ALTERNATE(PIN_MASK(I, 0x4F), 0, MODULE_ADC, 0) /* ADC 0,1,2,3,6 */
 ALTERNATE(PIN_MASK(M, 0x33), 0, MODULE_SPI, 0) /* SPI */
 
 /* Unimplemented Pins  */
-GPIO(SET_VMC_VOLT_AT_1V8,    PIN(D, 4), GPIO_INPUT | GPIO_PULL_DOWN)
-GPIO(EN_PP3000_VMC_PMU,      PIN(D, 2), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(SET_VMC_VOLT_AT_1V8,    PIN(D, 4), GPIO_INPUT | GPIO_PULL_DOWN | GPIO_SEL_1P8V)
+GPIO(EN_PP3000_VMC_PMU,      PIN(D, 2), GPIO_INPUT | GPIO_PULL_DOWN | GPIO_SEL_1P8V)
 GPIO(PACKET_MODE_EN,         PIN(A, 3), GPIO_INPUT | GPIO_PULL_DOWN)
 /* b/160218054: behavior not defined */
 /* *_ODL pin has external pullup so don't pull it down. */
 GPIO(USB_A0_FAULT_ODL,       PIN(A, 7), GPIO_INPUT)
 GPIO(CHARGER_PROCHOT_ODL,    PIN(C, 3), GPIO_INPUT)
 GPIO(PG_MT6315_GPU_ODL,      PIN(H, 6), GPIO_INPUT)
-GPIO(EN_PP3000_SD_U,         PIN(G, 1), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(EN_PP3000_SD_U,         PIN(G, 1), GPIO_INPUT | GPIO_PULL_DOWN | GPIO_SEL_1P8V)
 /* reserved for future use */
 GPIO(CCD_MODE_ODL,           PIN(C, 4), GPIO_INPUT)
-
-/* NC pins, enable internal pull-up to avoid floating state. */
-GPIO(NC_GPI5,                PIN(I, 5), GPIO_INPUT | GPIO_PULL_UP)
-GPIO(NC_GPI7,                PIN(I, 7), GPIO_INPUT | GPIO_PULL_UP)
+/*
+ * ADC pins don't have internal pull-down capability,
+ * so we set them as output low.
+ */
+GPIO(NC_GPI5,                PIN(I, 5), GPIO_OUT_LOW)
+GPIO(NC_GPI7,                PIN(I, 7), GPIO_OUT_LOW)
+/* NC pins, enable internal pull-up/down to avoid floating state. */
 #ifdef BOARD_ASURADA_REV0
 GPIO(NC_GPE5,                PIN(E, 5), GPIO_INPUT | GPIO_PULL_UP)
 #else /* HAYATO */
