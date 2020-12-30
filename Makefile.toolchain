@@ -3,10 +3,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
-# Toolchain configuration build system
-#
-
 # Toolchain configuration
+#
+# BUILD - Refers to the system doing the "build".
+#         For example, you would compile servo_ectool to run on your local
+#         build machine.
+# HOST  - Refers to target platform on top of the EC.
+#         For example, you would compile ectool to run on the Chrome OS device.
 
 min_make_version:=3.82
 make_version_ok:=$(filter $(min_make_version), \
