@@ -1120,7 +1120,7 @@ function flash_stm32() {
 	if [[ -z "${IMG_READ}" ]]; then
 		info "Programming EC firmware image."
 		# Unprotect flash, erase, and write
-		local STM32MON_COMMAND="${STM32MON} ${STM32MON_OPT} -u -e -w"
+		local STM32MON_COMMAND="${STM32MON} ${STM32MON_OPT} -U -u -e -w"
 		if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
 			echo "${STM32MON_COMMAND} ${IMG}"
 		fi
