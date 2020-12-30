@@ -40,9 +40,9 @@
 /* BMA253 accelerometer in base */
 #define CONFIG_ACCEL_BMA255
 
-/* BMI260 accel/gyro in base */
-#define CONFIG_ACCELGYRO_BMI260
-#define CONFIG_ACCELGYRO_BMI260_INT_EVENT \
+/* BMI160 accel/gyro in base */
+#define CONFIG_ACCELGYRO_BMI160
+#define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
 /* Sensors without hardware FIFO are in forced mode */
