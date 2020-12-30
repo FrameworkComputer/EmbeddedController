@@ -32,7 +32,8 @@
 #define TEST_ASSERT(n) \
 	do { \
 		if (!(n)) { \
-			ccprintf("%d: ASSERTION failed: %s\n", __LINE__, #n); \
+			ccprintf("%s:%d: ASSERTION failed: %s\n", \
+				 __FILE__, __LINE__, #n); \
 			task_dump_trace(); \
 			return EC_ERROR_UNKNOWN; \
 		} \
@@ -47,8 +48,8 @@
 		__auto_type _a = (a);                                       \
 		__auto_type _b = (b);                                       \
 		if (!(_a op _b)) {                                          \
-			ccprintf("%d: ASSERTION failed: %s " #op " %s\n",   \
-				 __LINE__, #a, #b);                         \
+			ccprintf("%s:%d: ASSERTION failed: %s " #op " %s\n",   \
+				 __FILE__, __LINE__, #a, #b);               \
 			ccprintf("\t\tEVAL: " fmt " " #op " " fmt "\n",     \
 				 _a, _b);                                   \
 			task_dump_trace();                                  \
@@ -78,8 +79,9 @@
 		int __i; \
 		for (__i = 0; __i < n; ++__i) \
 			if ((s)[__i] != (d)[__i]) { \
-				ccprintf("%d: ASSERT_ARRAY_EQ failed at " \
-					 "index=%d: %d != %d\n", __LINE__, \
+				ccprintf("%s:%d: ASSERT_ARRAY_EQ failed at " \
+					 "index=%d: %d != %d\n", \
+					 __FILE__,  __LINE__, \
 					 __i, (int)(s)[__i], (int)(d)[__i]); \
 				task_dump_trace(); \
 				return EC_ERROR_UNKNOWN; \
@@ -91,8 +93,9 @@
 		int __i; \
 		for (__i = 0; __i < n; ++__i) \
 			if ((d)[__i] != (c)) { \
-				ccprintf("%d: ASSERT_MEMSET failed at " \
-					 "index=%d: %d != %d\n", __LINE__, \
+				ccprintf("%s:%d: ASSERT_MEMSET failed at " \
+					 "index=%d: %d != %d\n", \
+					 __FILE__, __LINE__, \
 					 __i, (int)(d)[__i], (c)); \
 				task_dump_trace(); \
 				return EC_ERROR_UNKNOWN; \
