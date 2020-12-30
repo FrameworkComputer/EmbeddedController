@@ -10,12 +10,6 @@
 FLATSIZE_FILE ?= .sizes.txt
 BUILD_DIR := $(firstword $(subst /, ,$(out)))
 
-build-utils := $(foreach u,$(build-util-bin),$(out)/util/$(u))
-host-utils := $(foreach u,$(host-util-bin),$(out)/util/$(u))
-build-art := $(foreach u,$(build-util-art),$(out)/$(u))
-build-srcs := $(foreach u,$(build-util-bin),$(sort $($(u)-objs:%.o=util/%.c) $(wildcard util/$(u).c)))
-host-srcs := $(foreach u,$(host-util-bin),$(sort $($(u)-objs:%.o=util/%.c) $(wildcard util/$(u).c)))
-
 # Don't do a build test on the following boards:
 skip_boards = OWNERS cr50 host
 boards := $(filter-out $(skip_boards),$(notdir $(wildcard board/* private*/board/*)))

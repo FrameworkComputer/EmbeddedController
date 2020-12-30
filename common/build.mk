@@ -240,7 +240,7 @@ $(out)/.fake-bootblock:
 
 endif # BOOTBLOCK
 
-build-util-bin += gen_emmc_transfer_data
+build-util-bin-y += gen_emmc_transfer_data
 
 # Bootblock is only packed in RO image.
 $(out)/util/gen_emmc_transfer_data: BUILD_LDFLAGS += -DSECTION_IS_RO=$(EMPTY)
