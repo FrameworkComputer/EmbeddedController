@@ -76,16 +76,6 @@ const enum gpio_signal hibernate_wake_pins[] = {
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /******************************************************************************/
-/* Charger Chip Configuration */
-const struct charger_config_t chg_chips[] = {
-	{
-		.i2c_port = I2C_PORT_CHARGER,
-		.i2c_addr_flags = ISL9241_ADDR_FLAGS,
-		.drv = &isl9241_drv,
-	},
-};
-
-/******************************************************************************/
 /*
  * PWROK signal configuration, see the PWROK Generation Flow Diagram (Figure
  * 235) in the Tiger Lake Platform Design Guide for the list of potential
