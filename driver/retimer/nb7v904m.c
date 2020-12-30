@@ -58,6 +58,18 @@ static int nb7v904m_enter_low_power_mode(const struct usb_mux *me)
 	return rv;
 }
 
+/* Tune USB Eq : This must be called on board_init context */
+int nb7v904m_tune_usb_eq_rx(const struct usb_mux *me, uint8_t eq_a,
+			uint8_t eq_d)
+{
+	int rv;
+
+	rv = nb7v904m_write(me, NB7V904M_REG_CH_A_EQ_SETTINGS, eq_a);
+	rv |= nb7v904m_write(me, NB7V904M_REG_CH_D_EQ_SETTINGS, eq_d);
+
+	return rv;
+}
+
 static int nb7v904m_init(const struct usb_mux *me)
 {
 	int rv = set_low_power_mode(me, 0);
