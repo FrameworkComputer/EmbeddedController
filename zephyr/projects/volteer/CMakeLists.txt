@@ -19,10 +19,23 @@ list(APPEND
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(volteer)
 
+set(PLATFORM_EC_BOARD "${PLATFORM_EC}/board/volteer" CACHE PATH
+    "Path to the platform/ec board directory")
+set(PLATFORM_EC_BASEBOARD "${PLATFORM_EC}/baseboard/volteer" CACHE PATH
+    "Path to the platform/ec baseboard directory")
+
 # Include board specific header files
-zephyr_include_directories(include)
+zephyr_include_directories(
+  include
+  ${PLATFORM_EC_BASEBOARD}
+  ${PLATFORM_EC_BOARD})
+
+# Include selected EC source for the baseboard
+target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/battery_presence.c")
+
+# Local sources to make things build. These are being removed as we are able
+# to build the EC source instead.
 target_sources(app PRIVATE "src/battery.c")
-target_sources(app PRIVATE "src/battery_presence.c")
 target_sources(app PRIVATE "src/pwrok_signals.c")
 target_sources(app PRIVATE "src/usbc_config.c")
 target_sources(app PRIVATE "src/usb_pd_policy.c")
