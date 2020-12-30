@@ -774,6 +774,10 @@ help:
 	@echo "  CROSS_COMPILE_arch=  - Set the compiler for arch"
 	@echo "     The board picks its CROSS_COMPILE_arch if CROSS_COMPILE is not set."
 	@echo "     arch may be one of 'arm', 'i386', 'nds32'."
+	@echo "  HOST_CROSS_COMPILE=  - Set the compiler for the target platform on top of"
+	@echo "     the EC. For example, this may be 32-bit x86 linux ('i686-pc-linux-gnu-'),"
+	@echo "     64-bit x86 linux ('x86_64-pc-linux-gnu-'), or maybe 64-bit ARM linux"
+	@echo "     ('aarch64-cros-linux-gnu-')."
 	@echo "Example:"
 	@echo "  make BOARD=reef CROSS_COMPILE_arm='arm-eabi-'"
 
