@@ -47,6 +47,19 @@
 #define GPIO_SYS_RESET_L           NAMED_GPIO(sys_rst_odl)
 #define GPIO_WP_L                  NAMED_GPIO(ec_wp_l)
 
+/* USB-C interrupts */
+#define GPIO_USB_C0_TCPC_INT_ODL   NAMED_GPIO(usb_c0_tcpc_int_odl)
+#define GPIO_USB_C1_TCPC_INT_ODL   NAMED_GPIO(usb_c1_tcpc_int_odl)
+
+#define GPIO_USB_C0_PPC_INT_ODL    NAMED_GPIO(usb_c0_ppc_int_odl)
+#define GPIO_USB_C1_PPC_INT_ODL    NAMED_GPIO(usb_c1_ppc_int_odl)
+
+#define GPIO_USB_C0_BC12_INT_ODL   NAMED_GPIO(usb_c0_bc12_int_odl)
+#define GPIO_USB_C1_MIX_INT_ODL    NAMED_GPIO(usb_c1_mix_int_odl)
+
+#define GPIO_USB_C0_OC_ODL         NAMED_GPIO(usb_c0_oc_odl)
+#define GPIO_USB_C1_OC_ODL         NAMED_GPIO(usb_c1_oc_odl)
+
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
  *

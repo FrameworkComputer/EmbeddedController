@@ -32,10 +32,13 @@ zephyr_include_directories(
 
 # Include selected EC source for the baseboard
 target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/battery_presence.c")
+target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/charger.c")
 target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/usb_pd_policy.c")
+
+# Include selected EC source for the board
+target_sources(app PRIVATE "${PLATFORM_EC_BOARD}/usbc_config.c")
 
 # Local sources to make things build. These are being removed as we are able
 # to build the EC source instead.
 target_sources(app PRIVATE "src/battery.c")
 target_sources(app PRIVATE "src/pwrok_signals.c")
-target_sources(app PRIVATE "src/usbc_config.c")
