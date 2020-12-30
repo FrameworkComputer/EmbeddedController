@@ -10,6 +10,8 @@
 
 #include "common.h"
 
+#include "driver/ppc/sn5s330_public.h"
+
 struct sn5s330_config {
 	uint8_t i2c_port;
 	uint8_t i2c_addr_flags;
@@ -24,11 +26,6 @@ enum sn5s330_pp_idx {
 	SN5S330_PP2,
 	SN5S330_PP_COUNT,
 };
-
-#define SN5S330_ADDR0_FLAGS 0x40
-#define SN5S330_ADDR1_FLAGS 0x41
-#define SN5S330_ADDR2_FLAGS 0x42
-#define SN5S330_ADDR3_FLAGS 0x43
 
 #define SN5S330_FUNC_SET1  0x50
 #define SN5S330_FUNC_SET2  0x51
@@ -160,18 +157,5 @@ enum sn5s330_pp_idx {
  * For falling edge registers, this indicates VBUS has fallen below 4.0V.
  */
 #define SN5S330_VBUS_GOOD_MASK BIT(0)
-
-extern const struct ppc_drv sn5s330_drv;
-
-/**
- * Interrupt Handler for the SN5S330.
- *
- * By default, the only interrupt sources that are unmasked are overcurrent
- * conditions for PP1, and VBUS_GOOD if PPC is being used to detect VBUS
- * (CONFIG_USB_PD_VBUS_DETECT_PPC).
- *
- * @param port: The Type-C port which triggered the interrupt.
- */
-void sn5s330_interrupt(int port);
 
 #endif /* defined(__CROS_EC_SN5S330_H) */
