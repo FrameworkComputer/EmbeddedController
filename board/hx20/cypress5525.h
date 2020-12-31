@@ -286,4 +286,6 @@ int cypd_get_active_power_budget(void);
 
 int cypd_get_pps_power_budget(void);
 
+void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int len);
+
 #endif	/* __CROS_EC_CYPRESS5525_H */
