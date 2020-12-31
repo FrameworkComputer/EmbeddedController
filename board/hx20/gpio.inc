@@ -168,7 +168,7 @@ GPIO(QMSPI_CS0,		PIN(055),  GPIO_ODR_HIGH)
 /*GPIO(FPR_LED_G,	PIN(0157), GPIO_OUT_LOW)*/    /* TODO: implement PWM */
 /*GPIO(FPR_LED_B,	PIN(0153), GPIO_OUT_LOW)*/    /* TODO: implement PWM */
 
-GPIO(CAP_LED_L,     PIN(0114), GPIO_OUT_HIGH)
+GPIO(CAP_LED_L,     PIN(0114), GPIO_OUT_LOW)
 
 
 /* Alternate functions GPIO definitions */
