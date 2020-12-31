@@ -675,6 +675,12 @@ enum als_id {
 #define PD_MAX_CURRENT_MA     3000
 #define PD_MAX_VOLTAGE_MV     20000
 
+
+/*#define PD_VERBOSE_LOGGING*/
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE	4096
+
+
 /*
  * include TFDP macros from mchp chip level
  */

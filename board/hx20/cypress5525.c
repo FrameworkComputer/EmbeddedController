@@ -377,12 +377,9 @@ void cyp5525_port_int(int controller, int port)
 	rv = i2c_read_offset16_block(i2c_port, addr_flags, CYP5525_PORT_PD_RESPONSE_REG(port), data2, 4);
 	if (rv != EC_SUCCESS)
 		CPRINTS("PORT_PD_RESPONSE_REG failed");
-
-	CPRINTS("PD_RESPONSE Controller %d Port %d  Code 0x%02x %s Len: 0x%02x",
-		controller,
+		print_pd_response_code(controller,
 		port,
 		data2[0],
-		data2[0] & 0x80 ? "Response" : "Event",
 		data2[1]);
 
 	switch (data2[0]) {
@@ -410,9 +407,10 @@ int cyp5525_device_int(int controller)
 
 	CPRINTS("INTR_REG TODO Handle Device");
 	if (cypd_read_reg16(controller, CYP5525_RESPONSE_REG, &data) == EC_SUCCESS) {
-		CPRINTS("RESPONSE: Code: 0x%02x", data);
-		CPRINTS("RESPONSE: Length: 0x%02x", data>>8);
-		CPRINTS("RESPONSE: msg type %s", data & 0x80 ? "Async" : "Response Ack");
+		print_pd_response_code(controller,
+		-1,
+		data & 0xff,
+		data>>8);
 	} else {
 		return EC_ERROR_INVAL;
 	}
@@ -465,8 +463,11 @@ void cyp5525_interrupt(int controller)
 				CPRINTS("CYPD %d boot ok", controller);
 				pd_chip_config[controller].state = CYP5525_STATE_RESET;
 			}
+			clear_mask = CYP5525_DEV_INTR;
+		} else {
+			/* There may be port interrupts pending from previous boot so clear them here */
+			clear_mask = data;
 		}
-		clear_mask = CYP5525_DEV_INTR;
 
 		break;
 	case CYP5525_STATE_BOOTING:
@@ -594,7 +595,6 @@ void cypd_interrupt_handler_task(void *p)
 			case CYP5525_STATE_POWER_ON:
 				if (gpio_get_level(pd_chip_config[i].gpio) == 0) {
 					cyp5525_interrupt(i);
-
 				} else {
 					if (charge_get_state() != PWR_STATE_ERROR){
 						/*
@@ -664,6 +664,12 @@ void cypd_interrupt_handler_task(void *p)
 				}
 				break;
 			case CYP5525_STATE_BOOTLOADER:
+				if (cypd_read_reg8(i, CYP5525_DEVICE_MODE, &data) == EC_SUCCESS) {
+					if ((data & 0x03) != 0x00) {
+						CPRINTS("CYPD %d is in FW %d", i, data & 0x03);
+						pd_chip_config[i].state = CYP5525_STATE_SETUP;
+					}
+				}
 				break;
 			case CYP5525_STATE_READY:
 
@@ -735,6 +741,9 @@ void cypd_interrupt_handler_task(void *p)
 				loop_count++;
 				if (loop_count > 100) {
 					CPRINTS("WARNING: cypd_interrupt_handler_task has exceeded loop count!");
+					for (i = 0; i < PD_CHIP_COUNT; i++) {
+						CPRINTS("Controller %d State: %d, Interrupt %d", i, pd_chip_config[i].state, gpio_get_level(pd_chip_config[i].gpio));
+					}
 					break;
 				}
 			}
@@ -765,6 +774,103 @@ int cypd_get_pps_power_budget(void)
 	int power = 0;
 
 	return power;
+}
+
+void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int len)
+{
+	const char *code;
+#ifdef PD_VERBOSE_LOGGING
+	static const char *response_codes[256] = {
+		[0x00] = "NONE",
+		[0x02] = "SUCCESS",
+		[0x03] = "FLASH_DATA_AVAILABLE",
+		[0x05] = "INVALID_COMMAND",
+		[0x06] = "INVALID_STATE",
+		[0x07] = "FLASH_UPDATE_FAILED",
+		[0x08] = "INVALID_FW",
+		[0x09] = "INVALID_ARGUMENTS",
+		[0x0A] = "NOT_SUPPORTED",
+		[0x0C] = "TRANSACTION_FAILED",
+		[0x0D] = "PD_COMMAND_FAILED",
+		[0x0F] = "UNDEFINED_ERROR",
+		[0x10] = "READ_PDO_DATA",
+		[0x11] = "CMD_ABORTED",
+		[0x12] = "PORT_BUSY",
+		[0x13] = "MINMAX_CURRENT",
+		[0x14] = "EXT_SRC_CAP",
+		[0x18] = "DID_RESPONSE",
+		[0x19] = "SVID_RESPONSE",
+		[0x1A] = "DISCOVER_MODE_RESPONSE",
+		[0x1B] = "CABLE_COMM_NOT_ALLOWED",
+		[0x1C] = "EXT_SNK_CAP",
+		[0x40] = "FWCT_IDENT_INVALID",
+		[0x41] = "FWCT_INVALID_GUID",
+		[0x42] = "FWCT_INVALID_VERSION",
+		[0x43] = "HPI_CMD_INVALID_SEQ",
+		[0x44] = "FWCT_AUTH_FAILED",
+		[0x45] = "HASH_FAILED",
+		[0x80] = "RESET_COMPLETE",
+		[0x81] = "MESSAGE_QUEUE_OVERFLOW",
+		[0x82] = "OVER_CURRENT",
+		[0x83] = "OVER_VOLT",
+		[0x84] = "PORT_CONNECT",
+		[0x85] = "PORT_DISCONNECT",
+		[0x86] = "PD_CONTRACT_NEGOTIATION_COMPLETE",
+		[0x87] = "SWAP_COMPLETE",
+		[0x8A] = "PS_RDY_MSG_PENDING",
+		[0x8B] = "GOTO_MIN_PENDING",
+		[0x8C] = "ACCEPT_MSG_RX",
+		[0x8D] = "REJECT_MSG_RX",
+		[0x8E] = "WAIT_MSG_RX",
+		[0x8F] = "HARD_RESET_RX",
+		[0x90] = "VDM_RX",
+		[0x91] = "SOURCE_CAP_MSG_RX",
+		[0x92] = "SINK_CAP_MSG_RX",
+		[0x93] = "USB4_DATA_RESET_RX",
+		[0x94] = "USB4_DATA_RESET_COMPLETE",
+		[0x95] = "USB4_ENTRY_COMPLETE",
+		[0x9A] = "HARD_RESET_SENT",
+		[0x9B] = "SOFT_RESET_SENT",
+		[0x9C] = "CABLE_RESET_SENT",
+		[0x9D] = "SOURCEDISABLED",
+		[0x9E] = "SENDER_RESPONSE_TIMEOUT",
+		[0x9F] = "NO_VDM_RESPONSE_RX",
+		[0xA0] = "UNEXPECTED_VOLTAGE",
+		[0xA1] = "TYPE_C_ERROR_RECOVERY",
+		[0xA2] = "BATTERY_STATUS_RX",
+		[0xA3] = "ALERT_RX",
+		[0xA4] = "UNSUPPORTED_MSG_RX",
+		[0xA6] = "EMCA_DETECTED",
+		[0xA7] = "CABLE_DISCOVERY_FAILED",
+		[0xAA] = "RP_CHANGE_DETECTED",
+		[0xAC] = "EXT_MSG_SOP_RX",
+		[0xB0] = "ALT_MODE_EVENT",
+		[0xB1] = "ALT_MODE_HW_EVENT",
+		[0xB4] = "EXT_SOP1_RX",
+		[0xB5] = "EXT_SOP2_RX",
+		[0xB6] = "OVER_TEMP",
+		[0xB8] = "HARDWARE_ERROR",
+		[0xB9] = "VCONN_OCP_ERROR",
+		[0xBA] = "CC_OVP_ERROR",
+		[0xBB] = "SBU_OVP_ERROR",
+		[0xBC] = "VBUS_SHORT_ERROR",
+		[0xBD] = "REVERSE_CURRENT_ERROR",
+		[0xBE] = "SINK_STANDBY"
+	};
+	code = response_codes[id];
+	if (code == NULL)
+		code = "UNKNOWN";
+#else /*PD_VERBOSE_LOGGING*/
+	code = "";
+#endif /*PD_VERBOSE_LOGGING*/
+
+	CPRINTS("PD Controller %d Port %d  Code 0x%02x %s %s Len: 0x%02x",
+	controller,
+	port,
+	id,
+	code,
+	id & 0x80 ? "Response" : "Event",
+	len);
 }
 
 static int cmd_cypd_get_status(int argc, char **argv)
