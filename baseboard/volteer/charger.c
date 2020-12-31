@@ -6,7 +6,7 @@
 /* Volteer family-specific configuration */
 #include "common.h"
 #include "charger.h"
-#include "driver/charger/isl9241.h"
+#include "driver/charger/isl9241_public.h"
 
 /* Charger Chip Configuration */
 const struct charger_config_t chg_chips[] = {
