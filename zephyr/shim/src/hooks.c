@@ -42,17 +42,22 @@ static int init_deferred_work_queue(const struct device *unused)
 }
 SYS_INIT(init_deferred_work_queue, APPLICATION, 0);
 
-void zephyr_shim_setup_deferred(struct deferred_data *data)
+void zephyr_shim_setup_deferred(const struct deferred_data *data)
 {
-	k_delayed_work_init(&data->delayed_work, deferred_work_queue_handler);
+	struct deferred_data *non_const = (struct deferred_data *)data;
+
+	k_delayed_work_init(&non_const->delayed_work,
+			    deferred_work_queue_handler);
 }
 
-int hook_call_deferred(struct deferred_data *data, int us)
+int hook_call_deferred(const struct deferred_data *data, int us)
 {
+	struct deferred_data *non_const = (struct deferred_data *)data;
 	int rv;
 
 	rv = k_delayed_work_submit_to_queue(&deferred_work_queue,
-					    &data->delayed_work, K_USEC(us));
+					    &non_const->delayed_work,
+					    K_USEC(us));
 	if (rv < 0)
 		cprints(CC_HOOK, "Warning: deferred call not submitted.");
 	return rv;

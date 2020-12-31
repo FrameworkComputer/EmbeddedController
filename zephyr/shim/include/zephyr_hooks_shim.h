@@ -25,21 +25,25 @@ struct deferred_data {
 /**
  * See include/hooks.h for documentation.
  */
-int hook_call_deferred(struct deferred_data *data, int us);
+int hook_call_deferred(const struct deferred_data *data, int us);
 
 /**
  * Runtime helper to setup deferred data.
  *
  * @param data		The struct deferred_data.
  */
-void zephyr_shim_setup_deferred(struct deferred_data *data);
+void zephyr_shim_setup_deferred(const struct deferred_data *data);
 
 /**
  * See include/hooks.h for documentation.
+ *
+ * Typically Zephyr would put const data in the rodata section but that is
+ * write-protected with native_posix. So force it into .data instead.
  */
 #define DECLARE_DEFERRED(routine) _DECLARE_DEFERRED(routine)
 #define _DECLARE_DEFERRED(_routine)                                        \
-	static __maybe_unused struct deferred_data _routine##_data = {     \
+	__maybe_unused const struct deferred_data _routine##_data          \
+		__attribute__((section(".data.hooks"))) = {                \
 		.routine = _routine,                                       \
 	};                                                                 \
 	static int _setup_deferred_##_routine(const struct device *unused) \

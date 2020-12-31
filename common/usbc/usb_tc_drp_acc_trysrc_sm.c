@@ -2243,13 +2243,11 @@ static void tc_attach_wait_snk_run(const int port)
 			set_state_tc(port, TC_ATTACHED_SNK);
 		}
 
-#ifndef CONFIG_ZEPHYR /* TODO(b/176110981) */
 		if (IS_ENABLED(CONFIG_USB_PE_SM) &&
 				IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
 			hook_call_deferred(&pd_usb_billboard_deferred_data,
 								PD_T_AME);
 		}
-#endif
 	}
 }
 
