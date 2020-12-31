@@ -200,8 +200,8 @@ printf "%s\n" "${BOARDS[@]}" | sort | column
 # Symbolically linked directories
 LINKS=( )
 if [[ "${FLAGS_private}" == "${FLAGS_TRUE}" ]]; then
-	echo "# Requesting private directory link"
-	LINKS+=( private )
+  echo "# Requesting private directory link"
+  LINKS+=( private )
 fi
 
 ##########################################################################
