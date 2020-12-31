@@ -604,6 +604,7 @@ static void board_power_off_deferred(void)
 		task_disable_irq(i);
 		task_clear_pending_irq(i);
 	}
+	gpio_set_level(GPIO_VS_ON, 0);
 	MCHP_VCI_REGISTER &= ~(MCHP_VCI_REGISTER_FW_CNTRL + MCHP_VCI_REGISTER_FW_EXT);
 		/* Wait for power rails to die */
 	while (1)
