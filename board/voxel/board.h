@@ -47,12 +47,17 @@
 /* Sensors */
 /* BMI160 Base accel/gyro */
 #define CONFIG_ACCELGYRO_BMI160
+#define CONFIG_ACCELGYRO_ICM426XX	/* Base accel second source*/
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+#define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+
 /* Lid operates in forced mode, base in FIFO */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
 
 /* BMA253 Lid accel */
+#define CONFIG_ACCEL_KX022	/* Lid accel */
 #define CONFIG_ACCEL_BMA255
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
@@ -182,6 +187,8 @@ enum usbc_port {
 };
 
 void board_reset_pd_mcu(void);
+
+void motion_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 
