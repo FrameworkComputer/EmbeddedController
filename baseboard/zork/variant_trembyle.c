@@ -418,12 +418,6 @@ static int board_ps8802_mux_set(const struct usb_mux *me,
 					PS8802_DPEQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
-
-		/* Enable IN_HPD on the DB */
-		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 1);
-	} else {
-		/* Disable IN_HPD on the DB */
-		gpio_or_ioex_set_level(board_usbc1_retimer_inhpd, 0);
 	}
 
 	return rv;
