@@ -461,8 +461,8 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, wwan_lte_suspend_hook, HOOK_PRIO_DEFAULT);
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
-		.flags = PWM_CONFIG_DSLEEP,
-		.freq = 100,
+		.flags = 0,
+		.freq = 15000,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
