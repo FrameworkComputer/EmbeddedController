@@ -38,6 +38,11 @@
 
 . /usr/share/misc/shflags
 
+FLAGS_PRIVATE_DEFAULT="${FLAGS_FALSE}"
+if [[ -d private ]]; then
+  FLAGS_PRIVATE_DEFAULT="${FLAGS_TRUE}"
+fi
+
 DEFINE_string 'boards' "nocturne_fp" 'Boards to build (all, fp, stm32, hatch)' \
               'b'
 DEFINE_string 'ref1' "HEAD" 'Git reference (commit, branch, etc)'
@@ -51,8 +56,8 @@ DEFINE_integer 'jobs' "-1" 'Number of jobs to pass to make' 'j'
 # refs at the same time. Use the -o flag.
 DEFINE_boolean 'oneref' "${FLAGS_FALSE}" \
                'Build only one set of boards at a time. This limits mem.' 'o'
-DEFINE_boolean 'private' "${FLAGS_FALSE}" \
-               'Link the private repo/dir into test build source tree.' 'p'
+DEFINE_boolean 'private' "${FLAGS_PRIVATE_DEFAULT}" \
+               'Link the private repo/dir into test build source tree.'
 
 # Usage: assoc-add-keys <associate_array_name> [item1 [item2...]]
 assoc-add-keys() {
@@ -195,6 +200,7 @@ printf "%s\n" "${BOARDS[@]}" | sort | column
 # Symbolically linked directories
 LINKS=( )
 if [[ "${FLAGS_private}" == "${FLAGS_TRUE}" ]]; then
+	echo "# Requesting private directory link"
 	LINKS+=( private )
 fi
 
