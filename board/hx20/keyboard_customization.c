@@ -132,9 +132,9 @@ void set_keycap_label(uint8_t row, uint8_t col, char val)
 void hx20_8042_led_control(int data)
 {
 	if (data & CAPS_LED)
-		gpio_set_level(GPIO_CAP_LED_L, 0);
-	else
 		gpio_set_level(GPIO_CAP_LED_L, 1);
+	else
+		gpio_set_level(GPIO_CAP_LED_L, 0);
 }
 #endif
 
