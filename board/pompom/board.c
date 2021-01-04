@@ -179,7 +179,7 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = { .channel = 3, .flags = 0, .freq = 10000 },
 	/* TODO(waihong): Assign a proper frequency. */
-	[PWM_CH_DISPLIGHT] = { .channel = 5, .flags = 0, .freq = 4800 },
+	[PWM_CH_DISPLIGHT] = { .channel = 5, .flags = 0, .freq = 200 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
