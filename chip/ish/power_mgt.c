@@ -624,6 +624,11 @@ void ish_pm_init(void)
 	if (IS_ENABLED(CONFIG_ISH_PM_AONTASK))
 		init_aon_task();
 
+	if (IS_ENABLED(CONFIG_ISH_NEW_PM)) {
+		PMU_GPIO_WAKE_MASK0 = 0;
+		PMU_GPIO_WAKE_MASK1 = 0;
+	}
+
 	/* unmask all wake up events */
 	PMU_MASK_EVENT = ~PMU_MASK_EVENT_BIT_ALL;
 
