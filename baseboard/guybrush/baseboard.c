@@ -19,6 +19,7 @@
 #include "driver/tcpm/nct38xx.h"
 #include "gpio.h"
 #include "i2c.h"
+#include "ioexpander.h"
 #include "isl9241.h"
 #include "nct38xx.h"
 #include "pi3usb9201.h"
@@ -359,6 +360,22 @@ struct usb_mux usb_muxes[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
+struct ioexpander_config_t ioex_config[] = {
+	[USBC_PORT_C0] = {
+		.i2c_host_port = I2C_PORT_TCPC0,
+		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
+		.drv = &nct38xx_ioexpander_drv,
+	},
+	[USBC_PORT_C1] = {
+		.i2c_host_port = I2C_PORT_TCPC1,
+		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
+		.drv = &nct38xx_ioexpander_drv,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(ioex_config) == USBC_PORT_COUNT);
+BUILD_ASSERT(CONFIG_IO_EXPANDER_PORT_COUNT == USBC_PORT_COUNT);
+
+
 int board_set_active_charge_port(int port)
 {
 
@@ -389,8 +406,13 @@ int board_is_i2c_port_powered(int port)
 int board_aoz1380_set_vbus_source_current_limit(int port,
 						enum tcpc_rp_value rp)
 {
-	/* TODO */
-	return 0;
+	int rv;
+
+	/* Use the TCPC to set the current limit */
+	rv = ioex_set_level(IOEX_USB_C0_PPC_ILIM_3A_EN,
+			    (rp == TYPEC_RP_3A0) ? 1 : 0);
+
+	return rv;
 }
 
 void board_set_charge_limit(int port, int supplier, int charge_ma,
