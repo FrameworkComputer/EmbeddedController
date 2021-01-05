@@ -432,7 +432,65 @@ void sbu_fault_interrupt(enum ioex_signal signal)
 
 void tcpc_alert_event(enum gpio_signal signal)
 {
-	/* TODO */
+	int port;
+
+	switch (signal) {
+	case GPIO_USB_C0_TCPC_INT_ODL:
+		port = 0;
+		break;
+	case GPIO_USB_C1_TCPC_INT_ODL:
+		port = 1;
+		break;
+	default:
+		return;
+	}
+
+	schedule_deferred_pd_interrupt(port);
+}
+
+static void reset_pd_port(int port, enum gpio_signal reset_gpio_l,
+			  int hold_delay, int post_delay)
+{
+	gpio_set_level(reset_gpio_l, 0);
+	msleep(hold_delay);
+	gpio_set_level(reset_gpio_l, 1);
+	if (post_delay)
+		msleep(post_delay);
+}
+
+
+void board_reset_pd_mcu(void)
+{
+	/* Reset TCPC0 */
+	reset_pd_port(USBC_PORT_C0, GPIO_USB_C0_TCPC_RST_L,
+		      NCT38XX_RESET_HOLD_DELAY_MS,
+		      NCT38XX_RESET_POST_DELAY_MS);
+
+	/* Reset TCPC1 */
+	reset_pd_port(USBC_PORT_C1, GPIO_USB_C1_TCPC_RST_L,
+		      NCT38XX_RESET_HOLD_DELAY_MS,
+		      NCT38XX_RESET_POST_DELAY_MS);
+}
+
+uint16_t tcpc_get_alert_status(void)
+{
+	uint16_t status = 0;
+
+	/*
+	 * Check which port has the ALERT line set and ignore if that TCPC has
+	 * its reset line active.
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL)) {
+		if (gpio_get_level(GPIO_USB_C0_TCPC_RST_L) != 0)
+			status |= PD_STATUS_TCPC_ALERT_0;
+	}
+
+	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL)) {
+		if (gpio_get_level(GPIO_USB_C1_TCPC_RST_L) != 0)
+			status |= PD_STATUS_TCPC_ALERT_1;
+	}
+
+	return status;
 }
 
 void ppc_interrupt(enum gpio_signal signal)
