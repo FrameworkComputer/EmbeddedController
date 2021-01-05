@@ -208,7 +208,7 @@ static int _i2c_read(int i2c_port, uint8_t *in, int in_len)
 	memset(in, 0, in_len);
 
 	rv = i2c_xfer(i2c_port, CTN730_I2C_ADDR, NULL, 0, in, in_len);
-	if (rv == EC_ERROR_BUSY) {
+	if (rv) {
 		msleep(_wake_up_delay_ms);
 		rv = i2c_xfer(i2c_port, CTN730_I2C_ADDR, NULL, 0, in, in_len);
 	}
@@ -236,7 +236,7 @@ static int _send_command(struct pchg *ctx, const struct ctn730_msg *cmd)
 	rv = i2c_xfer(i2c_port, CTN730_I2C_ADDR, (void *)cmd,
 		      sizeof(*cmd) + cmd->length, NULL, 0);
 
-	if (rv == EC_ERROR_BUSY) {
+	if (rv) {
 		msleep(_wake_up_delay_ms);
 		rv = i2c_xfer(i2c_port, CTN730_I2C_ADDR, (void *)cmd,
 			      sizeof(*cmd) + cmd->length, NULL, 0);
