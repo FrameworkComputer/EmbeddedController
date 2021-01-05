@@ -276,6 +276,12 @@ void system_reset(int flags)
 	if (flags & SYSTEM_RESET_HARD)
 		IT83XX_GCTRL_ETWDUARTCR |= ETWD_HW_RST_EN;
 #endif
+	/* Set GPG1 as output high and wait until EC reset. */
+	if (IS_ENABLED(CONFIG_IT83XX_HARD_RESET_BY_GPG1)) {
+		IT83XX_GPIO_CTRL(GPIO_G, 1) = GPCR_PORT_PIN_MODE_OUTPUT;
+		IT83XX_GPIO_DATA(GPIO_G) |= BIT(1);
+		goto system_wait_until_reset;
+	}
 	/*
 	 * Writing invalid key to watchdog module triggers a soft or hardware
 	 * reset. It depends on the setting of bit0 at ETWDUARTCR register.
@@ -283,6 +289,7 @@ void system_reset(int flags)
 	IT83XX_ETWD_ETWCFG |= 0x20;
 	IT83XX_ETWD_EWDKEYR = 0x00;
 
+system_wait_until_reset:
 	/* Spin and wait for reboot; should never return */
 	while (1)
 		;
