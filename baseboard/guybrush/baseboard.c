@@ -418,7 +418,9 @@ int board_aoz1380_set_vbus_source_current_limit(int port,
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	/* TODO */
+	charge_set_input_current_limit(MAX(charge_ma,
+					   CONFIG_CHARGER_INPUT_CURRENT),
+				       charge_mv);
 }
 
 void sbu_fault_interrupt(enum ioex_signal signal)
