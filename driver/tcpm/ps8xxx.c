@@ -48,6 +48,13 @@
 
 #endif /* CONFIG_USB_PD_TCPM_PS8751 */
 
+#ifdef CONFIG_USB_PD_TCPM_PS8751_CUSTOM_MUX_DRIVER
+#if !defined(CONFIG_USB_PD_TCPM_PS8751)
+#error "Custom MUX driver is available only for PS8751"
+#endif
+
+#endif /* CONFIG_USB_PD_TCPM_PS8751_CUSTOM_MUX_DRIVER */
+
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
@@ -75,6 +82,8 @@ static bool ps8815_role_control_delay[CONFIG_USB_PD_PORT_MAX_COUNT];
  * between IRQ_HPD.
  */
 static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+void ps8xxx_wake_from_standby(const struct usb_mux *me);
 
 #if defined(CONFIG_USB_PD_TCPM_PS8705) || \
 	defined(CONFIG_USB_PD_TCPM_PS8751) || \
@@ -299,6 +308,11 @@ void ps8xxx_tcpc_update_hpd_status(const struct usb_mux *me,
 				   int hpd_lvl, int hpd_irq)
 {
 	int port = me->usb_port;
+
+	if (IS_ENABLED(CONFIG_USB_PD_TCPM_PS8751_CUSTOM_MUX_DRIVER) &&
+	    product_id[me->usb_port] == PS8751_PRODUCT_ID &&
+	    me->flags & USB_MUX_FLAG_NOT_TCPC)
+		ps8xxx_wake_from_standby(me);
 
 	dp_set_hpd(me, hpd_lvl);
 
@@ -640,3 +654,96 @@ struct i2c_stress_test_dev ps8xxx_i2c_stress_test_dev = {
 	.i2c_write = &tcpc_i2c_write,
 };
 #endif /* CONFIG_CMD_I2C_STRESS_TEST_TCPC */
+
+#ifdef CONFIG_USB_PD_TCPM_PS8751_CUSTOM_MUX_DRIVER
+
+static int ps8xxx_mux_init(const struct usb_mux *me)
+{
+	RETURN_ERROR(tcpci_tcpm_mux_init(me));
+
+	/* If this MUX is also the TCPC, then skip init */
+	if (!(me->flags & USB_MUX_FLAG_NOT_TCPC))
+		return EC_SUCCESS;
+
+	product_id[me->usb_port] = board_get_ps8xxx_product_id(me->usb_port);
+
+	return EC_SUCCESS;
+}
+
+/*
+ * PS8751 goes to standby mode automatically when both CC lines are set to RP.
+ * In standby mode it doesn't respond to first I2C access, but next
+ * transactions are working fine (until it goes to sleep again).
+ *
+ * To wake device documentation recommends read content of 0xA0 register.
+ */
+void ps8xxx_wake_from_standby(const struct usb_mux *me)
+{
+	int reg;
+
+	/* Since we are waking up device, this call will most likely fail */
+	mux_read(me, PS8XXX_REG_I2C_DEBUGGING_ENABLE, &reg);
+	msleep(10);
+}
+
+static int ps8xxx_mux_set(const struct usb_mux *me, mux_state_t mux_state)
+{
+
+	if (product_id[me->usb_port] == PS8751_PRODUCT_ID &&
+	    me->flags & USB_MUX_FLAG_NOT_TCPC) {
+		ps8xxx_wake_from_standby(me);
+
+		/*
+		 * To operate properly, when working as mux only, PS8751 CC
+		 * lines needs to be RD all the time. Changing to RP after
+		 * setting mux breaks SuperSpeed connection.
+		 */
+		if (mux_state != USB_PD_MUX_NONE)
+			RETURN_ERROR(mux_write(me, TCPC_REG_ROLE_CTRL,
+					TCPC_REG_ROLE_CTRL_SET(TYPEC_NO_DRP,
+							       TYPEC_RP_USB,
+							       TYPEC_CC_RD,
+							       TYPEC_CC_RD)));
+	}
+
+	return tcpci_tcpm_mux_set(me, mux_state);
+}
+
+static int ps8xxx_mux_get(const struct usb_mux *me, mux_state_t *mux_state)
+{
+	if (product_id[me->usb_port] == PS8751_PRODUCT_ID &&
+	    me->flags & USB_MUX_FLAG_NOT_TCPC)
+		ps8xxx_wake_from_standby(me);
+
+	return tcpci_tcpm_mux_get(me, mux_state);
+}
+
+static int ps8xxx_mux_enter_low_power(const struct usb_mux *me)
+{
+	/*
+	 * Set PS8751 lines to RP. This allows device to standby
+	 * automatically after ~2 seconds
+	 */
+	if (product_id[me->usb_port] == PS8751_PRODUCT_ID &&
+	    me->flags & USB_MUX_FLAG_NOT_TCPC) {
+		/*
+		 * It may happen that this write will fail, but
+		 * RP seems to be set correctly
+		 */
+		mux_write(me, TCPC_REG_ROLE_CTRL,
+			  TCPC_REG_ROLE_CTRL_SET(TYPEC_NO_DRP, TYPEC_RP_USB,
+						 TYPEC_CC_RP, TYPEC_CC_RP));
+		return EC_SUCCESS;
+	}
+
+	return tcpci_tcpm_mux_enter_low_power(me);
+}
+
+const struct usb_mux_driver ps8xxx_usb_mux_driver = {
+	.init = &ps8xxx_mux_init,
+	.set = &ps8xxx_mux_set,
+	.get = &ps8xxx_mux_get,
+	.enter_low_power_mode = &ps8xxx_mux_enter_low_power,
+};
+
+#endif /* CONFIG_USB_PD_TCPM_PS8751_CUSTOM_MUX_DRIVER */

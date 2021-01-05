@@ -63,4 +63,12 @@ void ps8xxx_tcpc_update_hpd_status(const struct usb_mux *me,
 extern struct i2c_stress_test_dev ps8xxx_i2c_stress_test_dev;
 #endif /* defined(CONFIG_CMD_I2C_STRESS_TEST_TCPC) */
 
+/*
+ * This driver was designed to use Low Power Mode on PS8751 TCPC/MUX chip
+ * when running as MUX only (CC lines are not connected, eg. Ampton).
+ * To achieve this RP on CC lines is set when device should enter LPM and
+ * RD when mux should work.
+ */
+extern const struct usb_mux_driver ps8xxx_usb_mux_driver;
+
 #endif /* __CROS_EC_DRIVER_TCPM_PS8XXX_PUBLIC_H */

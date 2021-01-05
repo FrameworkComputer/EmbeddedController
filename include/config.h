@@ -4292,6 +4292,17 @@
 #undef CONFIG_USB_PD_TCPM_PS8815
 
 /*
+ * Enable PS8751 custom mux driver. It was designed to make use of Low Power
+ * Mode on PS8751 TCPC/MUX chip when running as MUX only (CC lines are not
+ * connected, eg. Ampton).
+ *
+ * If your PS8751 is working in the ordinary way (as TCPC and MUX) or you don't
+ * need to take advantage of Low Power Mode when working as MUX only, standard
+ * TCPC MUX driver (CONFIG_USB_PD_TCPM_MUX) will work fine.
+ */
+#undef CONFIG_USB_PD_TCPM_PS8751_CUSTOM_MUX_DRIVER
+
+/*
  * Defined automatically by chip and depends on chip. This guards the onboard
  * TCPM driver, but CONFIG_USB_PD_TCPM_ITE_ON_CHIP needs to be defined in
  * board.h for either of these driver to actually be included in the final
