@@ -1818,10 +1818,9 @@ enum sysinfo_fields {
 
 static int sysinfo(struct ec_response_sysinfo *info)
 {
-	struct ec_response_sysinfo r;
 	int rv;
 
-	rv = ec_command(EC_CMD_SYSINFO, 0, NULL, 0, &r, sizeof(r));
+	rv = ec_command(EC_CMD_SYSINFO, 0, NULL, 0, info, sizeof(*info));
 	if (rv < 0) {
 		fprintf(stderr, "ERROR: EC_CMD_SYSINFO failed: %d\n", rv);
 		return rv;
