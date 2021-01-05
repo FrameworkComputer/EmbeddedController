@@ -4,6 +4,7 @@
  */
 
 /* Silergy SYV682x USB-C Power Path Controller */
+#include "atomic.h"
 #include "common.h"
 #include "config.h"
 #include "console.h"
@@ -19,17 +20,20 @@
 #include "util.h"
 
 #define SYV682X_FLAGS_SOURCE_ENABLED	BIT(0)
+#define SYV682X_FLAGS_SINK_ENABLED	BIT(1)
 /* 0 -> CC1, 1 -> CC2 */
-#define SYV682X_FLAGS_CC_POLARITY	BIT(1)
-#define SYV682X_FLAGS_VBUS_PRESENT	BIT(2)
-#define SYV682X_FLAGS_OCP		BIT(3)
-#define SYV682X_FLAGS_OVP		BIT(4)
-#define SYV682X_FLAGS_5V_OC		BIT(5)
-#define SYV682X_FLAGS_RVS		BIT(6)
-#define SYV682X_FLAGS_VCONN_OCP		BIT(7)
+#define SYV682X_FLAGS_CC_POLARITY	BIT(2)
+#define SYV682X_FLAGS_VBUS_PRESENT	BIT(3)
+#define SYV682X_FLAGS_TSD		BIT(4)
+#define SYV682X_FLAGS_OVP		BIT(5)
+#define SYV682X_FLAGS_5V_OC		BIT(6)
+#define SYV682X_FLAGS_RVS		BIT(7)
+#define SYV682X_FLAGS_VCONN_OCP		BIT(8)
 
 static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
-static uint8_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+static uint32_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+/* Running count of sink ocp events */
+static uint32_t sink_ocp_count[CONFIG_USB_PD_PORT_MAX_COUNT];
 static timestamp_t vbus_oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
 static timestamp_t vconn_oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
 
@@ -41,6 +45,8 @@ static timestamp_t vconn_oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
 /* Deglitch in ms of sourcing overcurrent detection */
 #define SOURCE_OC_DEGLITCH_MS 100
 #define VCONN_OC_DEGLITCH_MS 100
+/* Max. number of OC events allowed before disabling port */
+#define OCP_COUNT_LIMIT 3
 
 #if SOURCE_OC_DEGLITCH_MS < INTERRUPT_DELAY_MS
 #error "SOURCE_OC_DEGLITCH_MS should be at least INTERRUPT_DELAY_MS"
@@ -54,6 +60,8 @@ static timestamp_t vconn_oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
 #endif
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+
+static int syv682x_vbus_sink_enable(int port, int enable);
 
 static int syv682x_init(int port);
 
@@ -172,10 +180,12 @@ static int syv682x_vbus_source_enable(int port, int enable)
 	if (rv)
 		return rv;
 
-	if (enable)
-		flags[port] |= SYV682X_FLAGS_SOURCE_ENABLED;
-	else
-		flags[port] &= ~SYV682X_FLAGS_SOURCE_ENABLED;
+	if (enable) {
+		atomic_or(&flags[port], SYV682X_FLAGS_SOURCE_ENABLED);
+		atomic_clear_bits(&flags[port], SYV682X_FLAGS_SINK_ENABLED);
+	} else {
+		atomic_clear_bits(&flags[port], SYV682X_FLAGS_SOURCE_ENABLED);
+	}
 
 #if defined(CONFIG_USB_CHARGER) && defined(CONFIG_USB_PD_VBUS_DETECT_PPC)
 	/*
@@ -194,11 +204,11 @@ static bool syv682x_interrupt_filter(int port, int regval, int regmask,
 {
 	if (regval & regmask) {
 		if (!(flags[port] & flagmask)) {
-			flags[port] |= flagmask;
+			atomic_or(&flags[port], flagmask);
 			return true;
 		}
 	} else {
-		flags[port] &= ~flagmask;
+		atomic_clear_bits(&flags[port], flagmask);
 	}
 	return false;
 }
@@ -215,7 +225,8 @@ static void syv682x_handle_status_interrupt(int port, int regval)
 	/* An FRS will automatically enable the source path */
 	if (IS_ENABLED(CONFIG_USB_PD_FRS_PPC) &&
 	    (regval & SYV682X_STATUS_FRS)) {
-		flags[port] |= SYV682X_FLAGS_SOURCE_ENABLED;
+		atomic_or(&flags[port], SYV682X_FLAGS_SOURCE_ENABLED);
+		atomic_clear_bits(&flags[port], SYV682X_FLAGS_SINK_ENABLED);
 		/*
 		 * Workaround for bug in SYV692.
 		 *
@@ -231,10 +242,6 @@ static void syv682x_handle_status_interrupt(int port, int regval)
 		if (!IS_ENABLED(CONFIG_USB_PD_FRS_TCPC))
 			pd_got_frs_signal(port);
 	}
-
-	/* These conditions automatically turn off VBUS sourcing */
-	if (regval & (SYV682X_STATUS_OVP | SYV682X_STATUS_TSD))
-		flags[port] &= ~SYV682X_FLAGS_SOURCE_ENABLED;
 
 	/*
 	 * 5V OC is actually notifying that it is current limiting
@@ -252,22 +259,53 @@ static void syv682x_handle_status_interrupt(int port, int regval)
 	} else if ((regval & SYV682X_STATUS_OC_5V) &&
 		   (get_time().val > vbus_oc_timer[port].val)) {
 		vbus_oc_timer[port].val = UINT64_MAX;
-		flags[port] &= ~SYV682X_FLAGS_5V_OC;
+		atomic_clear_bits(&flags[port], SYV682X_FLAGS_5V_OC);
 		syv682x_vbus_source_enable(port, 0);
 		pd_handle_overcurrent(port);
 	}
 
-	if (syv682x_interrupt_filter(port, regval,
-				     SYV682X_STATUS_OC_HV | SYV682X_STATUS_TSD,
-				     SYV682X_FLAGS_OCP))
-		pd_handle_overcurrent(port);
-
-	/* No PD handler for VBUS OVP/RVS events */
-
+	/*
+	 * No PD handling for VBUS OVP or TSD events.
+	 * For TSD, this means we are in danger of burning the device so turn
+	 *   everything off and leave it off. The power paths will be
+	 *   automatically disabled.
+	 * In the case of OVP, the channels will be
+	 *   disabled but don't unset the sink flag, since a sink OCP can
+	 *   inadvertently cause an OVP, and we'd want to re-enable the sink
+	 *   path in that situation.
+	 */
+	if (syv682x_interrupt_filter(port, regval, SYV682X_STATUS_TSD,
+				     SYV682X_FLAGS_TSD)) {
+		ppc_prints("TSD!", port);
+		atomic_clear_bits(&flags[port],
+				  SYV682X_FLAGS_SOURCE_ENABLED |
+					  SYV682X_FLAGS_SINK_ENABLED);
+	}
 	if (syv682x_interrupt_filter(port, regval, SYV682X_STATUS_OVP,
 				     SYV682X_FLAGS_OVP)) {
 		ppc_prints("VBUS OVP!", port);
+		atomic_clear_bits(&flags[port], SYV682X_FLAGS_SOURCE_ENABLED);
 	}
+
+	/*
+	 * HV OC is a hard limit that will disable the sink path (automatically
+	 * removing this alert condition), so try re-enabling if we hit an OCP.
+	 * If we get multiple OCPs, don't re-enable. The OCP counter is reset on
+	 * the sink path being explicitly disabled or on a PPC init.
+	 */
+	if (regval & SYV682X_STATUS_OC_HV) {
+		ppc_prints("Sink OCP!", port);
+		atomic_add(&sink_ocp_count[port], 1);
+		if ((sink_ocp_count[port] < OCP_COUNT_LIMIT) &&
+		    (flags[port] & SYV682X_FLAGS_SINK_ENABLED)) {
+			syv682x_vbus_sink_enable(port, 1);
+		} else {
+			ppc_prints("Disable sink", port);
+			atomic_clear_bits(&flags[port],
+					  SYV682X_FLAGS_SINK_ENABLED);
+		}
+	}
+
 	if (syv682x_interrupt_filter(port, regval, SYV682X_STATUS_RVS,
 				     SYV682X_FLAGS_RVS)) {
 		ppc_prints("VBUS Reverse Voltage!", port);
@@ -292,7 +330,8 @@ static int syv682x_handle_control_4_interrupt(int port, int regval)
 	} else if ((regval & SYV682X_CONTROL_4_VCONN_OCP) &&
 		   (get_time().val > vconn_oc_timer[port].val)) {
 		vconn_oc_timer[port].val = UINT64_MAX;
-		flags[port] &= ~SYV682X_FLAGS_VCONN_OCP;
+		atomic_clear_bits(&flags[port], SYV682X_FLAGS_VCONN_OCP);
+
 		/* Disable VCONN */
 		regval &=
 			~(SYV682X_CONTROL_4_VCONN2 | SYV682X_CONTROL_4_VCONN1);
@@ -322,11 +361,20 @@ static int syv682x_vbus_sink_enable(int port, int enable)
 	int regval;
 	int rv;
 
-	if (!enable && syv682x_is_sourcing_vbus(port)) {
+	if (!enable) {
+		atomic_clear(&sink_ocp_count[port]);
+		atomic_clear_bits(&flags[port], SYV682X_FLAGS_SINK_ENABLED);
 		/*
 		 * We're currently a source, so nothing more to do
 		 */
-		return EC_SUCCESS;
+		if (syv682x_is_sourcing_vbus(port))
+			return EC_SUCCESS;
+	} else if (sink_ocp_count[port] > OCP_COUNT_LIMIT) {
+		/*
+		 * Don't re-enable the channel until an explicit sink disable
+		 * resets the ocp counter.
+		 */
+		return EC_ERROR_UNKNOWN;
 	}
 
 	/*
@@ -345,7 +393,8 @@ static int syv682x_vbus_sink_enable(int port, int enable)
 			    SYV682X_CONTROL_1_PWR_ENB);
 		/* Set sink current limit to the configured value */
 		regval |= CONFIG_SYV682X_HV_ILIM << SYV682X_HV_ILIM_BIT_SHIFT;
-		flags[port] &= ~SYV682X_FLAGS_SOURCE_ENABLED;
+		atomic_clear_bits(&flags[port], SYV682X_FLAGS_SOURCE_ENABLED);
+		atomic_or(&flags[port], SYV682X_FLAGS_SINK_ENABLED);
 	} else {
 		/*
 		 * No need to change the voltage path or channel direction. But,
@@ -384,9 +433,9 @@ static int syv682x_is_vbus_present(int port)
 		usb_charger_vbus_change(port, vbus);
 
 	if (vbus)
-		flags[port] |= SYV682X_FLAGS_VBUS_PRESENT;
+		atomic_or(&flags[port], SYV682X_FLAGS_VBUS_PRESENT);
 	else
-		flags[port] &= ~SYV682X_FLAGS_VBUS_PRESENT;
+		atomic_clear_bits(&flags[port], SYV682X_FLAGS_VBUS_PRESENT);
 #endif
 
 	return vbus;
@@ -438,9 +487,9 @@ static int syv682x_set_polarity(int port, int polarity)
 	 * polarity = CC1.
 	 */
 	if (polarity)
-		flags[port] |= SYV682X_FLAGS_CC_POLARITY;
+		atomic_or(&flags[port], SYV682X_FLAGS_CC_POLARITY);
 	else
-		flags[port] &= ~SYV682X_FLAGS_CC_POLARITY;
+		atomic_clear_bits(&flags[port], SYV682X_FLAGS_CC_POLARITY);
 
 	return EC_SUCCESS;
 }
@@ -670,6 +719,7 @@ static int syv682x_init(int port)
 	rv = read_reg(port, SYV682X_CONTROL_1_REG, &control_1);
 	if (rv)
 		return rv;
+	atomic_clear(&sink_ocp_count[port]);
 
 	if (!syv682x_is_sink(control_1)
 		|| (status & SYV682X_STATUS_VSAFE_0V)) {
