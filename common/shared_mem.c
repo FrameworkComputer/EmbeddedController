@@ -15,8 +15,14 @@
 static int buf_in_use;
 static int max_used;
 
+/* 1 MB buffer for fake shared memory implementation */
+STATIC_IF(CONFIG_FAKE_SHMEM) char fake_shmem_buf[BIT(20)];
+
 int shared_mem_size(void)
 {
+	if (IS_ENABLED(CONFIG_FAKE_SHMEM))
+		return sizeof(fake_shmem_buf);
+
 	/*
 	 * Use all the RAM we can.  The shared memory buffer is the last thing
 	 * allocated from the start of RAM, so we can use everything up to the
@@ -39,7 +45,10 @@ int shared_mem_acquire(int size, char **dest_ptr)
 	 */
 
 	buf_in_use = size;
-	*dest_ptr = __shared_mem_buf;
+	if (IS_ENABLED(CONFIG_FAKE_SHMEM))
+		*dest_ptr = fake_shmem_buf;
+	else
+		*dest_ptr = __shared_mem_buf;
 
 	if (max_used < size)
 		max_used = size;

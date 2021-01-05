@@ -1683,6 +1683,9 @@
 /* Default debounce time for external power signal */
 #define CONFIG_EXTPOWER_DEBOUNCE_MS 30
 
+/* Enable fake shared memory buffer, which is used by emulators. */
+#undef CONFIG_FAKE_SHMEM
+
 /*****************************************************************************/
 /* Number of cooling fans. Undef if none. */
 #undef CONFIG_FANS
