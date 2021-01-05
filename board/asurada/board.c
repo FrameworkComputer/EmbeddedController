@@ -847,3 +847,12 @@ struct motion_sensor_t motion_sensors[] = {
 #endif /* BOARD_ASURADA_REV0 */
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+int board_accel_force_mode_mask(void)
+{
+	int version = board_get_version();
+
+	if (version == -1 || version >= 2)
+		return 0;
+	return BIT(LID_ACCEL);
+}

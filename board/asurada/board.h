@@ -194,7 +194,7 @@
 #define CONFIG_ACCEL_FORCE_MODE_MASK (BIT(LID_ACCEL) | BIT(CLEAR_ALS))
 #else
 /* TODO(b/171931139): remove this after rev1 board deprecated */
-#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
+#define CONFIG_ACCEL_FORCE_MODE_MASK (board_accel_force_mode_mask())
 #endif
 
 /* SPI / Host Command */
@@ -294,6 +294,7 @@ enum sensor_id {
 
 void board_reset_pd_mcu(void);
 int board_get_version(void);
+int board_accel_force_mode_mask(void);
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */
