@@ -425,7 +425,9 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 
 void sbu_fault_interrupt(enum ioex_signal signal)
 {
-	/* TODO */
+	int port = (signal == IOEX_USB_C0_SBU_FAULT_ODL) ? 0 : 1;
+
+	pd_handle_overcurrent(port);
 }
 
 void tcpc_alert_event(enum gpio_signal signal)
