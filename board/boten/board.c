@@ -99,6 +99,15 @@ static void pen_detect_interrupt(enum gpio_signal s)
 	gpio_set_level(GPIO_EN_PP5000_PEN, pen_detect);
 }
 
+void board_hibernate(void)
+{
+	/*
+	 * Charger IC need to be put into their "low power mode" before
+	 * entering the Z-state.
+	 */
+	raa489000_hibernate(0);
+}
+
 /* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
