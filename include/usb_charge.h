@@ -11,6 +11,7 @@
 #include "charge_manager.h"
 #include "common.h"
 #include "ec_commands.h"
+#include "task.h"
 
 /* USB charger voltage */
 #define USB_CHARGER_VOLTAGE_MV  5000

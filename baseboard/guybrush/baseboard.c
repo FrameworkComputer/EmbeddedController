@@ -511,7 +511,18 @@ void ppc_interrupt(enum gpio_signal signal)
 
 void bc12_interrupt(enum gpio_signal signal)
 {
-	/* TODO */
+	switch (signal) {
+	case GPIO_USB_C0_BC12_INT_ODL:
+		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
+		break;
+
+	case GPIO_USB_C1_BC12_INT_ODL:
+		task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
+		break;
+
+	default:
+		break;
+	}
 }
 
 int baseboard_get_temp(int idx, int *temp_ptr)
