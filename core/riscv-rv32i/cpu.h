@@ -21,7 +21,6 @@
 
 #ifndef __ASSEMBLER__
 #include <stdint.h>
-#include <stdnoreturn.h>
 
 /* write Exception Program Counter register */
 static inline void set_mepc(uint32_t val)
@@ -46,9 +45,6 @@ static inline uint32_t get_mcause(void)
 	asm volatile ("csrr %0, mcause" : "=r"(ret));
 	return ret;
 }
-
-/* Trigger a panic. */
-noreturn void exception_panic(uint32_t reason, uint32_t info);
 
 /* Generic CPU core initialization */
 void cpu_init(void);
