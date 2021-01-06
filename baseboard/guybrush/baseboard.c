@@ -565,3 +565,23 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 
 	return voltage < BC12_MIN_VOLTAGE;
 }
+
+/**
+ * b/175324615: On G3->S5, wait for RSMRST_L to be deasserted before asserting
+ * PCH_PWRBTN_L.
+ */
+void board_pwrbtn_to_pch(int level)
+{
+	/* Add delay for G3 exit if asserting PWRBTN_L and S5_PGOOD is low. */
+	if (!level && !gpio_get_level(GPIO_S5_PGOOD)) {
+		/*
+		 * From measurement, wait 80 ms for RSMRST_L to rise after
+		 * S5_PGOOD.
+		 */
+		msleep(G3_TO_PWRBTN_DELAY_MS);
+
+		if (!gpio_get_level(GPIO_S5_PGOOD))
+			ccprints("Error: pwrbtn S5_PGOOD low");
+	}
+	gpio_set_level(GPIO_PCH_PWRBTN_L, level);
+}
