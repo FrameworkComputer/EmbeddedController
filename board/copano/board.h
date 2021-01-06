@@ -27,6 +27,9 @@
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
+/* Chipset features */
+#define CONFIG_POWER_PP5000_CONTROL
+
 #undef NPCX_PWM1_SEL
 #define NPCX_PWM1_SEL 0		/* GPIO C2 is not used as PWM1 */
 
@@ -78,6 +81,8 @@
 #define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x40
 
 /* USB Type A Features */
+#define USB_PORT_COUNT			1
+#define CONFIG_USB_PORT_POWER_DUMB
 
 /* USBC PPC*/
 #define CONFIG_USBC_PPC_SYV682X		/* USBC port C0/C1 */
