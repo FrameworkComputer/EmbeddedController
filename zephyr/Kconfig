@@ -853,4 +853,27 @@ config PLATFORM_EC_SYSTEM_UNLOCKED
 
 	  Also, this enables PD in RO for TCPMv2.
 
+menuconfig PLATFORM_EC_WATCHDOG
+	bool "watchdog"
+	depends on WATCHDOG
+	default y
+	help
+	  Enable the watchdog functionality. The watchdog timer will reboot the
+	  system if the hook task (which is the lowest-priority task on the
+	  system) gets starved for CPU time and isn't able to fire its
+	  HOOK_TICK event.
+
+if PLATFORM_EC_WATCHDOG
+
+config PLATFORM_EC_WATCHDOG_PERIOD_MS
+	int "Watchdog timeout in ms"
+	default 1600
+	help
+	  Set the timeout of the watchdog timer. The watchdog timer reboots
+	  the system if no one reloads the watchdog timer before the timeout.
+	  The interval between reloads of the watchdog timer should be less than
+	  half of the watchdog period.
+
+endif # PLATFORM_EC_WATCHDOG
+
 endif # PLATFORM_EC

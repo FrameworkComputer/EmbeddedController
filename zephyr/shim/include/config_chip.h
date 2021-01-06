@@ -48,12 +48,22 @@
 /*
  * ECOS specific options, not used in Zephyr.
  */
+
+ /*
+  * The Zephyr npcx watchdog driver provider a delay set by
+  * CONFIG_WDT_NPCX_DELAY_CYCLES for displaying the warning message.
+  * CONFIG_AUX_TIMER_PERIOD_MS isn't used by the Zephyr code.
+  */
+#undef CONFIG_AUX_TIMER_PERIOD_MS
 #undef CONFIG_CONSOLE_UART /* Only used by the Chromium EC chip drivers */
 #undef CONFIG_I2C_MULTI_PORT_CONTROLLER /* Not required by I2C shim */
 #undef CONFIG_IRQ_COUNT /* Only used by Chromium EC core drivers */
 #undef CONFIG_LTO /* Link time optimization enabled by Zephyr build system */
 #ifndef CONFIG_FPU
 #undef CONFIG_FPU /* Used in Zephyr as well, enabled in Kconfig directly */
+#endif
+#ifndef CONFIG_WATCHDOG
+#undef CONFIG_WATCHDOG /* Used in Zephyr as well, enabled in Kconfig directly */
 #endif
 
 /*
@@ -72,6 +82,7 @@
 
 /* EC chipset configuration */
 #define HOOK_TICK_INTERVAL	CONFIG_CROS_EC_HOOK_TICK_INTERVAL
+#define HOOK_TICK_INTERVAL_MS	(HOOK_TICK_INTERVAL / 1000)
 
 /* Chipset and power configuration */
 #ifdef CONFIG_AP_X86_INTEL_CML
@@ -453,7 +464,6 @@ enum battery_type {
 #ifdef CONFIG_PLATFORM_EC_TIMER
 #define CONFIG_HWTIMER_64BIT
 #define CONFIG_HW_SPECIFIC_UDELAY
-#undef CONFIG_WATCHDOG
 
 #undef CONFIG_CMD_GETTIME
 #ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_GETTIME
@@ -1137,6 +1147,18 @@ enum battery_type {
 #undef CONFIG_CMD_SYSJUMP
 #ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_SYSJUMP
 #define CONFIG_CMD_SYSJUMP
+#endif
+
+#undef CONFIG_WATCHDOG_PERIOD_MS
+#ifdef CONFIG_PLATFORM_EC_WATCHDOG_PERIOD_MS
+#define CONFIG_WATCHDOG_PERIOD_MS CONFIG_PLATFORM_EC_WATCHDOG_PERIOD_MS
+/*
+ * Chromium ec uses hook tick to reload the watchdog. Interval between reloads
+ * of the watchdog timer should be less than half of the watchdog period.
+ */
+#if (CONFIG_WATCHDOG_PERIOD_MS) < ((HOOK_TICK_INTERVAL_MS) * 2)
+#error "CONFIG_WATCHDOG_PERIOD_MS must be at least 2x HOOK_TICK_INTERVAL_MS"
+#endif
 #endif
 
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

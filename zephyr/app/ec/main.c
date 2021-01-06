@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "keyboard_scan.h"
 #include "system.h"
+#include "watchdog.h"
 #include "zephyr_espi_shim.h"
 
 void main(void)
@@ -28,6 +29,10 @@ void main(void)
 	 */
 	if (IS_ENABLED(CONFIG_CMD_AP_RESET_LOG)) {
 		init_reset_log();
+	}
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG)) {
+		watchdog_init();
 	}
 
 	if (IS_ENABLED(HAS_TASK_KEYSCAN)) {

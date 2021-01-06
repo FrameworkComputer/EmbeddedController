@@ -4862,7 +4862,9 @@
  * if the hook task (which is the lowest-priority task on the system) gets
  * starved for CPU time and isn't able to fire its HOOK_TICK event.
  */
+#ifndef CONFIG_ZEPHYR
 #define CONFIG_WATCHDOG
+#endif
 
 /*
  * Try to detect a watchdog that is about to fire, and print a trace.  This is
@@ -5812,8 +5814,15 @@
  * Validity checks to make sure some of the configs above make sense.
  */
 
+/*
+ * Chromium ec uses hook tick to reload the watchdog. The interval between
+ * reloads of the watchdog timer should be less than half of the watchdog
+ * period.
+ */
+#if !defined(CONFIG_ZEPHYR) && defined(CONFIG_WATCHDOG)
 #if (CONFIG_AUX_TIMER_PERIOD_MS) < ((HOOK_TICK_INTERVAL_MS) * 2)
 #error "CONFIG_AUX_TIMER_PERIOD_MS must be at least 2x HOOK_TICK_INTERVAL_MS"
+#endif
 #endif
 
 #ifdef CONFIG_USB_SERIALNO
