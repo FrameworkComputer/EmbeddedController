@@ -633,3 +633,22 @@ void board_pwrbtn_to_pch(int level)
 	}
 	gpio_set_level(GPIO_PCH_PWRBTN_L, level);
 }
+
+void board_hibernate(void)
+{
+	int port;
+
+	/*
+	 * If we are charging, then drop the Vbus level down to 5V to ensure
+	 * that we don't get locked out of the 6.8V OVLO for our PPCs in
+	 * dead-battery mode. This is needed when the TCPC/PPC rails go away.
+	 * (b/79218851, b/143778351, b/147007265)
+	 */
+	port = charge_manager_get_active_charge_port();
+	if (port != CHARGE_PORT_NONE) {
+		pd_request_source_voltage(port, SAFE_RESET_VBUS_MV);
+
+		/* Give PD task and PPC chip time to get to 5V */
+		msleep(SAFE_RESET_VBUS_DELAY_MS);
+	}
+}
