@@ -65,7 +65,8 @@ int test_td_pd_src_e2(void)
 					  PD_DATA_SOURCE_CAP,
 					  data,
 					  sizeof(data),
-					  &msg_len),
+					  &msg_len,
+					  0),
 		EC_SUCCESS, "%d");
 	TEST_GE(msg_len, HEADER_BYTE_CNT, "%d");
 

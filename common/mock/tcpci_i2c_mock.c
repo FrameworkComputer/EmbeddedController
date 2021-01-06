@@ -262,13 +262,17 @@ int verify_tcpci_tx_with_data(enum tcpm_transmit_type tx_type,
 			      enum pd_data_msg_type data_msg,
 			      uint8_t *data,
 			      int data_bytes,
-			      int *msg_len)
+			      int *msg_len,
+			      int timeout)
 {
 	int rv;
 
+	if (timeout <= 0)
+		timeout = VERIFY_TIMEOUT;
+
 	rv = verify_transmit(tx_type, -1,
 			     0, data_msg,
-			     VERIFY_TIMEOUT);
+			     timeout);
 	if (!rv) {
 		TEST_NE(data, NULL, "%p");
 		TEST_GE(data_bytes, tx_msg_cnt, "%d");

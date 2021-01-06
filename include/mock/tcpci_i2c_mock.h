@@ -34,7 +34,8 @@ int verify_tcpci_tx_with_data(enum tcpm_transmit_type tx_type,
 			      enum pd_data_msg_type data_msg,
 			      uint8_t *data,
 			      int data_bytes,
-			      int *msg_len);
+			      int *msg_len,
+			      int timeout);
 
 void mock_tcpci_receive(enum pd_msg_type sop, uint16_t header,
 			uint32_t *payload);
