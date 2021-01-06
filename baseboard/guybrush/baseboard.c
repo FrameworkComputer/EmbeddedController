@@ -381,6 +381,54 @@ BUILD_ASSERT(CONFIG_IO_EXPANDER_PORT_COUNT == USBC_PORT_COUNT);
 
 int board_set_active_charge_port(int port)
 {
+	int is_valid_port = (port >= 0 &&
+			     port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int i;
+
+	if (port == CHARGE_PORT_NONE) {
+		CPRINTSUSB("Disabling all charger ports");
+
+		/* Disable all ports. */
+		for (i = 0; i < ppc_cnt; i++) {
+			/*
+			 * Do not return early if one fails otherwise we can
+			 * get into a boot loop assertion failure.
+			 */
+			if (ppc_vbus_sink_enable(i, 0))
+				CPRINTSUSB("Disabling C%d as sink failed.", i);
+		}
+
+		return EC_SUCCESS;
+	} else if (!is_valid_port) {
+		return EC_ERROR_INVAL;
+	}
+
+
+	/* Check if the port is sourcing VBUS. */
+	if (ppc_is_sourcing_vbus(port)) {
+		CPRINTFUSB("Skip enable C%d", port);
+		return EC_ERROR_INVAL;
+	}
+
+	CPRINTSUSB("New charge port: C%d", port);
+
+	/*
+	 * Turn off the other ports' sink path FETs, before enabling the
+	 * requested charge port.
+	 */
+	for (i = 0; i < ppc_cnt; i++) {
+		if (i == port)
+			continue;
+
+		if (ppc_vbus_sink_enable(i, 0))
+			CPRINTSUSB("C%d: sink path disable failed.", i);
+	}
+
+	/* Enable requested charge port. */
+	if (ppc_vbus_sink_enable(port, 1)) {
+		CPRINTSUSB("C%d: sink path enable failed.", port);
+		return EC_ERROR_UNKNOWN;
+	}
 
 	return EC_SUCCESS;
 }
