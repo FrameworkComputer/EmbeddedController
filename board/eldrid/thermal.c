@@ -164,7 +164,7 @@ int fan_table_to_rpm(int fan, int *temp)
 		for (i = current_level; i < num_fan_levels; i++) {
 			if (temp[TEMP_SENSOR_3_DDR_SOC] >
 				fan_table[i].on[TEMP_SENSOR_3_DDR_SOC])
-				current_level = i + 1;
+				current_level = i;
 			else
 				break;
 		}
