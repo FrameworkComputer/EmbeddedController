@@ -273,7 +273,7 @@ void intel_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 			/*
 			 * Exit Mode process is complete; go to inactive state.
 			 */
-			TBT_CLR_FLAG(port, TBT_FLAG_RETRY_DONE);
+			tbt_exit_done(port);
 		}
 		break;
 	case TBT_EXIT_SOP:
