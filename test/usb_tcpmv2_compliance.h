@@ -23,8 +23,6 @@ enum mock_connect_result {
 };
 
 
-extern int partner_tx_id;
-
 extern uint32_t rdo;
 extern uint32_t pdo;
 
@@ -42,6 +40,8 @@ bool vboot_allow_usb_pd(void);
 int pd_check_vconn_swap(int port);
 void board_reset_pd_mcu(void);
 
+#define TCPC_TX_SOP_ALL -1
+void mock_tcpci_tx_msg_id_reset(int sop);
 
 int tcpci_startup(void);
 
