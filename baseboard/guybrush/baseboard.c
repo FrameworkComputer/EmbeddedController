@@ -18,6 +18,7 @@
 #include "driver/ppc/nx20p348x.h"
 #include "driver/tcpm/nct38xx.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "ioexpander.h"
 #include "isl9241.h"
@@ -652,3 +653,20 @@ void board_hibernate(void)
 		msleep(SAFE_RESET_VBUS_DELAY_MS);
 	}
 }
+
+static void baseboard_chipset_suspend(void)
+{
+	/* Disable display and keyboard backlights. */
+	gpio_set_level(GPIO_EC_DISABLE_DISP_BL, 1);
+	ioex_set_level(GPIO_EN_KB_BL, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, baseboard_chipset_suspend,
+	     HOOK_PRIO_DEFAULT);
+
+static void baseboard_chipset_resume(void)
+{
+	/* Enable display and keyboard backlights. */
+	gpio_set_level(GPIO_EC_DISABLE_DISP_BL, 0);
+	ioex_set_level(GPIO_EN_KB_BL, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);
