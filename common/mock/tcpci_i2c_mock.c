@@ -282,6 +282,80 @@ int verify_tcpci_tx_with_data(enum tcpm_transmit_type tx_type,
 	}
 	return rv;
 }
+
+int verify_tcpci_possible_tx(struct possible_tx possible[],
+			     int possible_cnt,
+			     int *found_index,
+			     uint8_t *data,
+			     int data_bytes,
+			     int *msg_len,
+			     int timeout)
+{
+	uint64_t end_time;
+
+	*found_index = -1;
+
+	if (timeout <= 0)
+		timeout = VERIFY_TIMEOUT;
+	end_time = get_time().val + timeout;
+
+	/*
+	 * Check that nothing was already transmitted. This ensures that all
+	 * transmits are checked, and the test stays in sync with the code
+	 * being tested.
+	 */
+	TEST_EQ(tcpci_regs[TCPC_REG_TRANSMIT].value, 0, "%d");
+
+	/* Now wait for the expected message to be transmitted. */
+	while (get_time().val < end_time) {
+		if (tcpci_regs[TCPC_REG_TRANSMIT].value != 0) {
+			int i;
+			int tx_type = TCPC_REG_TRANSMIT_TYPE(
+				tcpci_regs[TCPC_REG_TRANSMIT].value);
+			uint16_t header = UINT16_FROM_BYTE_ARRAY_LE(
+						tx_buffer, 1);
+			int pd_type  = PD_HEADER_TYPE(header);
+			int pd_cnt   = PD_HEADER_CNT(header);
+
+			for (i = 0; i < possible_cnt; ++i) {
+				int want_tx_type = possible[i].tx_type;
+				int want_ctrl_msg = possible[i].ctrl_msg;
+				int want_data_msg = possible[i].data_msg;
+
+				if (tx_type != want_tx_type)
+					continue;
+
+				if (want_ctrl_msg != 0) {
+					if (pd_type != want_ctrl_msg ||
+					    pd_cnt != 0)
+						continue;
+				}
+				if (want_data_msg != 0) {
+					if (pd_type != want_data_msg ||
+					    pd_cnt == 0)
+						continue;
+
+					if (data != NULL) {
+						TEST_GE(data_bytes,
+							tx_msg_cnt, "%d");
+						memcpy(data, tx_buffer,
+						       tx_msg_cnt);
+					}
+					if (msg_len != NULL)
+						*msg_len = tx_msg_cnt;
+				}
+				*found_index = i;
+				tcpci_regs[TCPC_REG_TRANSMIT].value = 0;
+				return EC_SUCCESS;
+			}
+			break;
+		}
+		task_wait_event(5 * MSEC);
+	}
+	TEST_ASSERT(0);
+	return EC_ERROR_UNKNOWN;
+}
+
 void mock_tcpci_receive(enum pd_msg_type sop, uint16_t header,
 			uint32_t *payload)
 {

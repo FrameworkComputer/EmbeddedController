@@ -493,6 +493,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
+#define CONFIG_BATTERY
 #define I2C_PORT_HOST_TCPC 0
 #define CONFIG_USB_PD_DEBUG_LEVEL 3
 #define CONFIG_USB_PD_EXTENDED_MESSAGES

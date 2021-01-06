@@ -5,4 +5,5 @@
 
  #define CONFIG_TEST_MOCK_LIST  \
 	MOCK(USB_MUX)           \
-	MOCK(TCPCI_I2C)
+	MOCK(TCPCI_I2C)         \
+	MOCK(BATTERY)

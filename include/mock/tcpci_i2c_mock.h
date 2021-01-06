@@ -37,6 +37,20 @@ int verify_tcpci_tx_with_data(enum tcpm_transmit_type tx_type,
 			      int *msg_len,
 			      int timeout);
 
+struct possible_tx {
+	enum tcpm_transmit_type tx_type;
+	enum pd_ctrl_msg_type ctrl_msg;
+	enum pd_data_msg_type data_msg;
+};
+
+int verify_tcpci_possible_tx(struct possible_tx possible[],
+			     int possible_cnt,
+			     int *found_index,
+			     uint8_t *data,
+			     int data_bytes,
+			     int *msg_len,
+			     int timeout);
+
 void mock_tcpci_receive(enum pd_msg_type sop, uint16_t header,
 			uint32_t *payload);
 
