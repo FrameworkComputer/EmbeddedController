@@ -76,38 +76,61 @@ static uint8_t rx_buffer[BUFFER_SIZE];
 static int rx_pos = -1;
 
 static const char * const ctrl_msg_name[] = {
-	[0]                      = "RSVD-C0",
-	[PD_CTRL_GOOD_CRC]       = "GOODCRC",
-	[PD_CTRL_GOTO_MIN]       = "GOTOMIN",
-	[PD_CTRL_ACCEPT]         = "ACCEPT",
-	[PD_CTRL_REJECT]         = "REJECT",
-	[PD_CTRL_PING]           = "PING",
-	[PD_CTRL_PS_RDY]         = "PSRDY",
-	[PD_CTRL_GET_SOURCE_CAP] = "GSRCCAP",
-	[PD_CTRL_GET_SINK_CAP]   = "GSNKCAP",
-	[PD_CTRL_DR_SWAP]        = "DRSWAP",
-	[PD_CTRL_PR_SWAP]        = "PRSWAP",
-	[PD_CTRL_VCONN_SWAP]     = "VCONNSW",
-	[PD_CTRL_WAIT]           = "WAIT",
-	[PD_CTRL_SOFT_RESET]     = "SFT-RST",
-	[14]                     = "RSVD-C14",
-	[15]                     = "RSVD-C15",
-	[PD_CTRL_NOT_SUPPORTED]  = "NOT-SUPPORTED",
-	[PD_CTRL_GET_SOURCE_CAP_EXT] = "GSRCCAP-EXT",
-	[PD_CTRL_GET_STATUS]     = "GET-STATUS",
-	[PD_CTRL_FR_SWAP]        = "FRSWAP",
-	[PD_CTRL_GET_PPS_STATUS] = "GET-PPS-STATUS",
-	[PD_CTRL_GET_COUNTRY_CODES] = "GET-COUNTRY-CODES",
+	[0]				= "C-RSVD_0",
+	[PD_CTRL_GOOD_CRC]		= "C-GOODCRC",
+	[PD_CTRL_GOTO_MIN]		= "C-GOTOMIN",
+	[PD_CTRL_ACCEPT]		= "C-ACCEPT",
+	[PD_CTRL_REJECT]		= "C-REJECT",
+	[PD_CTRL_PING]			= "C-PING",
+	[PD_CTRL_PS_RDY]		= "C-PSRDY",
+	[PD_CTRL_GET_SOURCE_CAP]	= "C-GET_SRC_CAP",
+	[PD_CTRL_GET_SINK_CAP]		= "C-GET_SNK_CAP",
+	[PD_CTRL_DR_SWAP]		= "C-DR_SWAP",
+	[PD_CTRL_PR_SWAP]		= "C-PR_SWAP",
+	[PD_CTRL_VCONN_SWAP]		= "C-VCONN_SW",
+	[PD_CTRL_WAIT]			= "C-WAIT",
+	[PD_CTRL_SOFT_RESET]		= "C-SOFT-RESET",
+	[14]				= "C-RSVD_14",
+	[15]				= "C-RSVD_15",
+	[PD_CTRL_NOT_SUPPORTED]		= "C-NOT_SUPPORTED",
+	[PD_CTRL_GET_SOURCE_CAP_EXT]	= "C-GET_SRC_CAP-EXT",
+	[PD_CTRL_GET_STATUS]		= "C-GET-STATUS",
+	[PD_CTRL_FR_SWAP]		= "C-FR_SWAP",
+	[PD_CTRL_GET_PPS_STATUS]	= "C-GET_PPS_STATUS",
+	[PD_CTRL_GET_COUNTRY_CODES]	= "C-GET_COUNTRY_CODES",
 };
 
 static const char * const data_msg_name[] = {
-	[0]                      = "RSVD-D0",
-	[PD_DATA_SOURCE_CAP]     = "SRCCAP",
-	[PD_DATA_REQUEST]        = "REQUEST",
-	[PD_DATA_BIST]           = "BIST",
-	[PD_DATA_SINK_CAP]       = "SNKCAP",
-	/* 5-14 Reserved */
-	[PD_DATA_VENDOR_DEF]     = "VDM",
+	[0]				= "D-RSVD_0",
+	[PD_DATA_SOURCE_CAP]		= "D-SRC_CAP",
+	[PD_DATA_REQUEST]		= "D-REQUEST",
+	[PD_DATA_BIST]			= "D-BIST",
+	[PD_DATA_SINK_CAP]		= "D-SNK_CAP",
+	/* 5-14 Reserved for REV 2.0 */
+	[PD_DATA_BATTERY_STATUS]	= "D-BATTERY_STATUS",
+	[PD_DATA_ALERT]			= "D-ALERT",
+	[PD_DATA_GET_COUNTRY_INFO]	= "D-GET_COUNTRY_CODES",
+	/* 8-14 Reserved for REV 3.0 */
+	[PD_DATA_ENTER_USB]		= "D-ENTER_USB",
+	[PD_DATA_VENDOR_DEF]		= "D-VDM",
+};
+
+static const char * const ext_msg_name[] = {
+	[0]				= "X-RSVD_0",
+	[PD_EXT_SOURCE_CAP]		= "X-SRC_CAP",
+	[PD_EXT_STATUS]			= "X-STATUS",
+	[PD_EXT_GET_BATTERY_CAP]	= "X-GET_BATTERY_CAP",
+	[PD_EXT_GET_BATTERY_STATUS]	= "X-GET_BATTERY_STATUS",
+	[PD_EXT_BATTERY_CAP]		= "X-BATTERY_CAP",
+	[PD_EXT_GET_MANUFACTURER_INFO]	= "X-GET_MFR_INFO",
+	[PD_EXT_MANUFACTURER_INFO]	= "X-MFR_INFO",
+	[PD_EXT_SECURITY_REQUEST]	= "X-SECURITY_REQ",
+	[PD_EXT_SECURITY_RESPONSE]	= "X-SECURITY_RESP",
+	[PD_EXT_FIRMWARE_UPDATE_REQUEST] = "X-FW_UP_REQ",
+	[PD_EXT_FIRMWARE_UPDATE_RESPONSE] = "X-FW_UP_RESP",
+	[PD_EXT_PPS_STATUS]		= "X-PPS_STATUS",
+	[PD_EXT_COUNTRY_INFO]		= "X-COUNTRY_INFO",
+	[PD_EXT_COUNTRY_CODES]		= "X-COUNTRY_CODES",
 };
 
 static const char * const rev_name[] = {
@@ -136,7 +159,10 @@ static void print_header(const char *prefix, uint16_t header)
 	int id    = PD_HEADER_ID(header);
 	int cnt   = PD_HEADER_CNT(header);
 	int ext   = PD_HEADER_EXT(header);
-	const char *name = cnt ? data_msg_name[type] : ctrl_msg_name[type];
+	const char *name = ext	? ext_msg_name[type]
+				: cnt
+					? data_msg_name[type]
+					: ctrl_msg_name[type];
 
 	ccprints("%s header=0x%x [%s %s %s %s id=%d cnt=%d ext=%d]",
 		 prefix, header,
