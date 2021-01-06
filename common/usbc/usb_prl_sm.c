@@ -999,13 +999,27 @@ static void prl_tx_snk_start_ams_run(const int port)
  */
 static void prl_tx_layer_reset_for_transmit_entry(const int port)
 {
-	int i;
-
 	print_current_prl_tx_state(port);
 
-	/* Reset MessageIdCounters */
-	for (i = 0; i < NUM_SOP_STAR_TYPES; i++)
-		prl_tx[port].msg_id_counter[i] = 0;
+	if (pdmsg[port].xmit_type < NUM_SOP_STAR_TYPES) {
+		/*
+		 * This state is only used during soft resets. Reset only the
+		 * matching message type.
+		 *
+		 * From section 6.3.13 Soft Reset Message in the USB PD 3.0
+		 * v2.0 spec, Soft_Reset Message Shall be targeted at a
+		 * specific entity depending on the type of SOP* Packet used.
+		 */
+		prl_tx[port].msg_id_counter[pdmsg[port].xmit_type] = 0;
+
+		/*
+		 * From section 6.11.2.3.2, the MessageID should be cleared
+		 * from the PRL_Rx_Layer_Reset_for_Receive state. However, we
+		 * don't implement a full state machine for PRL RX states so
+		 * clear the MessageID here.
+		 */
+		prl_rx[port].msg_id[pdmsg[port].xmit_type] = -1;
+	}
 }
 
 static void prl_tx_layer_reset_for_transmit_run(const int port)
@@ -1244,15 +1258,6 @@ static void prl_hr_reset_layer_entry(const int port)
 
 	print_current_prl_hr_state(port);
 
-	/* reset messageIDCounters */
-	for (i = 0; i < NUM_SOP_STAR_TYPES; i++)
-		prl_tx[port].msg_id_counter[i] = 0;
-	/*
-	 * Protocol Layer message transmission transitions to
-	 * PRL_Tx_Wait_For_Message_Request state.
-	 */
-	set_state_prl_tx(port, PRL_TX_WAIT_FOR_MESSAGE_REQUEST);
-
 	if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES)) {
 		tch[port].flags = 0;
 		rch[port].flags = 0;
@@ -1260,7 +1265,7 @@ static void prl_hr_reset_layer_entry(const int port)
 
 	pdmsg[port].flags = 0;
 
-	/* Reset message ids */
+	/* Hard reset resets messageIDCounters for all TX types */
 	for (i = 0; i < NUM_SOP_STAR_TYPES; i++) {
 		prl_rx[port].msg_id[i] = -1;
 		prl_tx[port].msg_id_counter[i] = 0;
@@ -1272,6 +1277,12 @@ static void prl_hr_reset_layer_entry(const int port)
 		vpd_rx_enable(0);
 	else
 		tcpm_set_rx_enable(port, 0);
+
+	/*
+	 * Protocol Layer message transmission transitions to
+	 * PRL_Tx_Wait_For_Message_Request state.
+	 */
+	set_state_prl_tx(port, PRL_TX_WAIT_FOR_MESSAGE_REQUEST);
 
 	return;
 }
@@ -2071,14 +2082,10 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 
 	/* Handle incoming soft reset as special case */
 	if (cnt == 0 && type == PD_CTRL_SOFT_RESET) {
-		int i;
-
-		for (i = 0; i < NUM_SOP_STAR_TYPES; i++) {
-			/* Clear MessageIdCounter */
-			prl_tx[port].msg_id_counter[i] = 0;
-			/* Clear stored MessageID value */
-			prl_rx[port].msg_id[i] = -1;
-		}
+		/* Clear MessageIdCounter */
+		prl_tx[port].msg_id_counter[prl_rx[port].sop] = 0;
+		/* Clear stored MessageID value */
+		prl_rx[port].msg_id[prl_rx[port].sop] = -1;
 
 		/* Soft Reset occurred */
 		set_state_prl_tx(port, PRL_TX_PHY_LAYER_RESET);
