@@ -173,8 +173,13 @@
  */
 #define CONFIG_USB_PID 0x504D
 
-
 /* BC 1.2 */
+/*
+ * For legacy BC1.2 charging with CONFIG_CHARGE_RAMP_SW, ramp up input current
+ * until voltage drops to 4.5V. Don't go lower than this to be kind to the
+ * charger (see b/67964166).
+ */
+#define BC12_MIN_VOLTAGE 4500
 
 /* I2C Bus Configuration */
 #define CONFIG_I2C

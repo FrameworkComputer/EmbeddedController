@@ -30,6 +30,9 @@
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
 /* Wake Sources */
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_LID_OPEN,
@@ -531,8 +534,34 @@ int baseboard_get_temp(int idx, int *temp_ptr)
 	return 0;
 }
 
+/**
+ * Return if VBUS is sagging too low
+ */
 int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 {
-	/* TODO */
-	return false;
+	int voltage = 0;
+	int rv;
+
+	rv = charger_get_vbus_voltage(port, &voltage);
+
+	if (rv) {
+		CPRINTSUSB("%s rv=%d", __func__, rv);
+		return 0;
+	}
+
+	/*
+	 * b/168569046: The ISL9241 sometimes incorrectly reports 0 for unknown
+	 * reason, causing ramp to stop at 0.5A. Workaround this by ignoring 0.
+	 * This partly defeats the point of ramping, but will still catch
+	 * VBUS below 4.5V and above 0V.
+	 */
+	if (voltage == 0) {
+		CPRINTSUSB("%s vbus=0", __func__);
+		return 0;
+	}
+
+	if (voltage < BC12_MIN_VOLTAGE)
+		CPRINTSUSB("%s vbus=%d", __func__, voltage);
+
+	return voltage < BC12_MIN_VOLTAGE;
 }
