@@ -8,6 +8,7 @@
 #include "clock_chip.h"
 #include "console.h"
 #include "cpu.h"
+#include "cros_version.h"
 #include "flash.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -16,7 +17,6 @@
 #include "system.h"
 #include "task.h"
 #include "util.h"
-#include "version.h"
 #include "watchdog.h"
 
 /*

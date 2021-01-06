@@ -35,7 +35,7 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
-#include "version.h"
+#include "cros_version.h"
 #include "watchdog.h"
 
 /* Console output macros */

@@ -11,6 +11,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "cros_version.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -30,7 +31,6 @@
 #include "usb_emsg.h"
 #include "usb_sm.h"
 #include "vpd_api.h"
-#include "version.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)

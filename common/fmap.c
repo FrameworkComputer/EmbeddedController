@@ -7,9 +7,9 @@
 #include <stddef.h>
 
 #include "common.h"
+#include "cros_version.h"
 #include "rwsig.h"
 #include "util.h"
-#include "version.h"
 
 /*
  * FMAP structs.

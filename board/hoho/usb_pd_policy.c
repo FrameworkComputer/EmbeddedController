@@ -7,6 +7,7 @@
 #include "board.h"
 #include "common.h"
 #include "console.h"
+#include "cros_version.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -17,7 +18,6 @@
 #include "usb_bb.h"
 #include "usb_pd.h"
 #include "util.h"
-#include "version.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)

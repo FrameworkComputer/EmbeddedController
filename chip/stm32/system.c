@@ -9,6 +9,7 @@
 #include "clock.h"
 #include "console.h"
 #include "cpu.h"
+#include "cros_version.h"
 #include "flash.h"
 #include "gpio_chip.h"
 #include "hooks.h"
@@ -18,7 +19,6 @@
 #include "system.h"
 #include "task.h"
 #include "util.h"
-#include "version.h"
 #include "watchdog.h"
 
 #ifdef CONFIG_STM32_CLOCK_LSE

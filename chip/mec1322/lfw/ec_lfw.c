@@ -9,6 +9,7 @@
 #include <stdint.h>
 
 #include "config.h"
+#include "cros_version.h"
 #include "gpio.h"
 #include "spi.h"
 #include "spi_flash.h"
@@ -19,7 +20,6 @@
 #include "cpu.h"
 #include "clock.h"
 #include "system.h"
-#include "version.h"
 #include "hwtimer.h"
 #include "gpio_list.h"
 

@@ -8,11 +8,11 @@
 #include <stdint.h>
 #include "common.h"
 #include "compile_time_macros.h"
+#include "cros_version.h"
 #include "ec_commands.h"
 #include "ec_version.h"
 #include "stddef.h"
 #include "system.h"
-#include "version.h"
 
 BUILD_ASSERT(CONFIG_ROLLBACK_VERSION >= 0);
 BUILD_ASSERT(CONFIG_ROLLBACK_VERSION <= INT32_MAX);

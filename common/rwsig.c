@@ -8,6 +8,7 @@
  */
 
 #include "console.h"
+#include "cros_version.h"
 #include "ec_commands.h"
 #include "flash.h"
 #include "host_command.h"
@@ -22,7 +23,6 @@
 #include "util.h"
 #include "vb21_struct.h"
 #include "vboot.h"
-#include "version.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
