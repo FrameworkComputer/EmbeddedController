@@ -8,6 +8,7 @@
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
+#include "usb_tc_sm.h"
 #include "usb_tcpmv2_compliance.h"
 
 void before_test(void)
@@ -21,6 +22,12 @@ void before_test(void)
 	/* Restart the PD task and let it settle */
 	task_set_event(TASK_ID_PD_C0, TASK_EVENT_RESET_DONE);
 	task_wait_event(SECOND);
+
+	/*
+	 * Default to not allowing DUT to TRY.SRC and set it to be allowed
+	 * specifically in the TRY.SRC tests
+	 */
+	tc_try_src_override(TRY_SRC_OVERRIDE_OFF);
 }
 
 void run_test(int argc, char **argv)
