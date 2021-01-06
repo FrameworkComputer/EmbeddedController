@@ -1300,6 +1300,10 @@ function flash_it83xx() {
 		ERROR_MSG="${MSG_PROGRAM_FAIL}"
 	fi
 
+	if [[ "${FLAGS_verify}" == "${FLAGS_FALSE}" ]]; then
+		ITEFLASH_ARGS+=( "--noverify" )
+	fi
+
 	if [[ "${FLAGS_verbose}" == ${FLAGS_TRUE} ]]; then
 		ITEFLASH_ARGS+=( "--debug" )
 		echo "${ITEFLASH_ARGS[@]}"
