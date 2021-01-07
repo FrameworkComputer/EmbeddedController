@@ -13,27 +13,6 @@
 
 #define PS8751_P3_TO_P1_FLAGS(p3_flags)	((p3_flags) - 2)
 
-/* Minimum Delay for reset assertion */
-#define PS8XXX_RESET_DELAY_MS 1
-
-/* Delay between releasing reset and the first I2C read */
-#define PS8805_FW_INIT_DELAY_MS 10
-
-/* Delay from power on to reset de-asserted */
-#define PS8815_PWR_H_RST_H_DELAY_MS 20
-/*
- * Delay between releasing reset and the first I2C read
- *
- * If the delay is too short, I2C fails.
- * If the delay is marginal I2C reads return garbage.
- *
- * With firmware 0x03:
- *   10ms is too short
- *   20ms is marginal
- *   25ms is OK
- */
-#define PS8815_FW_INIT_DELAY_MS 40
-
 #define PS8751_BIST_TIMER_FREQ  15000000
 #define PS8751_BIST_DELAY_MS    50
 

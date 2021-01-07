@@ -18,6 +18,27 @@
 
 #define PS8XXX_VENDOR_ID  0x1DA0
 
+/* Minimum Delay for reset assertion */
+#define PS8XXX_RESET_DELAY_MS 1
+
+/* Delay between releasing reset and the first I2C read */
+#define PS8805_FW_INIT_DELAY_MS 10
+
+/* Delay from power on to reset de-asserted */
+#define PS8815_PWR_H_RST_H_DELAY_MS 20
+/*
+ * Delay between releasing reset and the first I2C read
+ *
+ * If the delay is too short, I2C fails.
+ * If the delay is marginal I2C reads return garbage.
+ *
+ * With firmware 0x03:
+ *   10ms is too short
+ *   20ms is marginal
+ *   25ms is OK
+ */
+#define PS8815_FW_INIT_DELAY_MS 40
+
 extern const struct tcpm_drv ps8xxx_tcpm_drv;
 
 /**
