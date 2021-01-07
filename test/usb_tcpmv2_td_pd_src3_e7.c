@@ -22,7 +22,7 @@
 
 static int number_of_fixed_batteries(void)
 {
-	return 1;
+	return CONFIG_NUM_FIXED_BATTERIES;
 }
 
 static int number_of_swappable_batteries(void)
