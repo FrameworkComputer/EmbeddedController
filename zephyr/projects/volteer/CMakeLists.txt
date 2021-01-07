@@ -34,6 +34,7 @@ zephyr_include_directories(
 target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/battery_presence.c")
 target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/charger.c")
 target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/usb_pd_policy.c")
+target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/usbc_config.c")
 
 # Include selected EC source for the board
 target_sources(app PRIVATE "${PLATFORM_EC_BOARD}/battery.c")

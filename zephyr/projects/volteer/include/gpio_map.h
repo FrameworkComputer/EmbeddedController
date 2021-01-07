@@ -60,6 +60,8 @@
 #define GPIO_USB_C0_OC_ODL         NAMED_GPIO(usb_c0_oc_odl)
 #define GPIO_USB_C1_OC_ODL         NAMED_GPIO(usb_c1_oc_odl)
 
+#define GPIO_USB_C1_BC12_INT_ODL   GPIO_USB_C1_MIX_INT_ODL
+
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
  *
