@@ -12,7 +12,6 @@
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi260.h"
 #include "driver/als_tcs3400.h"
-#include "driver/bc12/pi3usb9201.h"
 #include "driver/retimer/bb_retimer.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -360,20 +359,6 @@ __override void board_cbi_init(void)
 	    get_board_id() <= 2)
 		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
 }
-
-/******************************************************************************/
-/* BC1.2 charger detect configuration */
-const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_USB_C1,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
 
 /******************************************************************************/
 /* USBC mux configuration - Tiger Lake includes internal mux */

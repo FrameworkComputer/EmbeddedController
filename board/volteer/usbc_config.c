@@ -9,6 +9,7 @@
 #include "usbc_config.h"
 #include "usbc_ppc.h"
 #include "usb_mux.h"
+#include "driver/bc12/pi3usb9201_public.h"
 #include "driver/ppc/sn5s330_public.h"
 #include "driver/ppc/syv682x_public.h"
 #include "driver/tcpm/ps8xxx_public.h"
@@ -191,3 +192,17 @@ struct tcpc_config_t tcpc_config[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
+
+/******************************************************************************/
+/* BC1.2 charger detect configuration */
+const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
+	[USBC_PORT_C0] = {
+		.i2c_port = I2C_PORT_USB_C0,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+	[USBC_PORT_C1] = {
+		.i2c_port = I2C_PORT_USB_C1,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
