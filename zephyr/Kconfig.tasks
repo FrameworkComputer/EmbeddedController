@@ -27,6 +27,27 @@ config TASK_CHARGER_STACK_SIZE
 
 endif # HAS_TASK_CHARGER
 
+config HAS_TASK_CHG_RAMP
+	bool "Charger-ramp task"
+	depends on PLATFORM_EC_BATTERY
+	help
+	  This turns on the charger ramp task. This attempts to ramp up the
+	  current from an attached charger to the maximum available current.
+	  It handles the incoming VBUS voltage sagging as well as the user
+	  attaching different chargers.
+
+if HAS_TASK_CHG_RAMP
+
+config TASK_CHG_RAMP_STACK_SIZE
+	hex "Stack size"
+	default 0x200	# EC uses TASK_STACK_SIZE which is 512 for npcx
+	help
+	  The stack size of the charger task.
+
+	  See b/176180736 for checking these stack sizes.
+
+endif # HAS_TASK_CHG_RAMP
+
 config HAS_TASK_CHIPSET
 	bool "Chipset task"
 	depends on PLATFORM_EC_POWERSEQ

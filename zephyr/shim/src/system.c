@@ -277,3 +277,9 @@ enum ec_image system_get_image_copy(void)
 {
 	return EC_IMAGE_UNKNOWN;
 }
+
+int system_is_in_rw(void)
+{
+	/* Return true for now, since that makes more things work */
+	return true;
+}

@@ -90,4 +90,38 @@ config PLATFORM_EC_BATTERY_FUEL_GAUGE
 	  information is used to set voltage, current and temperature operating
 	  limits for the battery.
 
+config PLATFORM_EC_CHARGE_RAMP_SW
+	bool "Software-controlled charging"
+	default y
+	select HAS_TASK_CHG_RAMP
+	help
+	  Enables ramping up charging from an external source to the maximum
+	  available within the source's limits and taking into account the
+	  current needs of the device. It handles the user plugging chargers in
+	  and removing them.
+
+config PLATFORM_EC_CMD_CHGRAMP
+	bool "Console command: chgramp"
+	depends on PLATFORM_EC_CHARGE_RAMP_SW
+	default y
+	help
+	  Enable the "chgramp" command. This shows the current state of the
+	  chg_ramp task. It shows the state of each port and the current limit
+	  for each port. The 'State' shown is from enum chg_ramp_state.
+
+	  Chg Ramp:
+	    State: 5
+	    Min ICL: 2000
+	    Active ICL: 2000
+	    Port 0:
+	      OC idx:0
+	      OC 0: s-1 oc_det0 icl0
+	      OC 1: s0 oc_det0 icl0
+	      OC 2: s0 oc_det0 icl0
+	    Port 1:
+	      OC idx:0
+	      OC 0: s-1 oc_det0 icl0
+	      OC 1: s0 oc_det0 icl0
+	      OC 2: s0 oc_det0 icl0
+
 endif # PLATFORM_EC_BATTERY

@@ -61,6 +61,9 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
                                                 "${PLATFORM_EC}/common/charger.c"
                                                 "${PLATFORM_EC}/common/charge_manager.c"
                                                 "${PLATFORM_EC}/common/charge_state_v2.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_RAMP_SW
+                                                "${PLATFORM_EC}/common/charge_ramp.c"
+                                                "${PLATFORM_EC}/common/charge_ramp_sw.c")
 
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CBI     "${PLATFORM_EC}/common/cbi.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ

@@ -19,6 +19,9 @@ typedef uint8_t task_id_t;
  */
 #ifndef CONFIG_ZTEST
 #define CROS_EC_TASK_LIST                                                 \
+	COND_CODE_1(HAS_TASK_CHG_RAMP,                                    \
+		     (CROS_EC_TASK(CHG_RAMP, chg_ramp_task, 0,            \
+				   CONFIG_TASK_CHG_RAMP_STACK_SIZE)), ()) \
 	COND_CODE_1(HAS_TASK_USB_CHG_P0,                                  \
 		     (CROS_EC_TASK(USB_CHG_P0, usb_charger_task, 0,       \
 				   CONFIG_TASK_USB_CHG_STACK_SIZE)), ())  \
