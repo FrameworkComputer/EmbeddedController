@@ -64,6 +64,44 @@ config PLATFORM_EC_USB_PID
 	  To reserve a new PID within Google, use go/usb and see
 	  http://google3/hardware/standards/usb
 
+config PLATFORM_EC_USBC_RETIMER_INTEL_BB
+	bool "Support Intel Burnside Bridge retimer"
+	help
+	  Enable this to support the Intel Burnside Bridge Thunderbolt / USB /
+	  DisplayPort retimer. This is present on some Intel SoCs.
+
+	  Intel Burnside Bridge is a Type-C multi-protocol retimer to be used
+	  in on-board applications. Burnside Bridge offers the ability to latch
+	  protocol signals into on-chip memory before retransmitting them
+	  onwards. It can be used to extend the physical length of the system
+	  without increasing high-frequency jitter.
+
+	  Burnside Bridge supports spec compliant retimer of following
+	  protocols:
+
+	    - Display Port: four unidirectional DP lanes
+	    - USB3.1 Gen1/2: one bi-directional USB lane
+	    - Thunderbolt: two bi-directional CIO lanes
+	    - Multifunction Display (MFD): two unidirectional lanes of DP and
+	      one bidirectional lane of USB3.1 Gen1/2
+
+config PLATFORM_EC_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
+	bool "Use runtime configuration of Intel Burnside Bridge"
+	depends on PLATFORM_EC_USBC_RETIMER_INTEL_BB
+	default y
+	help
+	  Enable this to allow run-time configuration of the Burnside Bridge
+	  driver structure. This makes the bb_controls[] array writable, i.e.
+	  not const. It should be declared as such in the board config.
+
+	  This is useful when the board has runtime information that changes
+	  the configuration, such as Chromium OS Board Info (CBI set in the
+	  factory. Without this, multiple EC images would need to be installed
+	  depending on the board.
+
+	  This is also an entry in the competition for the lonest Kconfig
+	  option. The abreviation BB is clearly a missed opportunity.
+
 menuconfig PLATFORM_EC_USB_POWER_DELIVERY
 	bool "USB Type-C Power Delivery (PD)"
 	default y
@@ -400,6 +438,24 @@ config PLATFORM_EC_USB_MUX_RUNTIME_CONFIG
 	  the configuration, such as Chromium OS Board Info (CBI set in the
 	  factory. Without this, multiple EC images would need to be installed
 	  depending on the board.
+
+config PLATFORM_EC_USBC_SS_MUX
+	bool "SuperSpeed mux"
+	default y
+	help
+	  Enable this to support the USB Type-C SuperSpeed Mux. If enabled,
+	  the USB stack will call usb_mux_set() to change the mux settings.
+	  The board must provide a driver in usb_muxes[] for each port so
+	  that this can work.
+
+config PLATFORM_EC_USB_MUX_VIRTUAL
+	bool "USB Mux is virtual"
+	depends on PLATFORM_EC_USBC_SS_MUX
+	help
+	  Enable this if a virtual USB mux is supported on the EC, which is
+	  actually handled by the AP. In this case the AP gets an interrupt
+	  and is is informed when status changes, via the
+	  EC_CMD_USB_PD_MUX_INFO host command.
 
 endif  # PLATFORM_EC_USB_MUX
 

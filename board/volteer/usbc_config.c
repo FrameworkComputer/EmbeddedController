@@ -194,7 +194,6 @@ struct tcpc_config_t tcpc_config[] = {
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 
-#ifndef CONFIG_ZEPHYR  /* Requires a few more CLs to build */
 /******************************************************************************/
 /* USBC mux configuration - Tiger Lake includes internal mux */
 struct usb_mux usbc1_tcss_usb_mux = {
@@ -229,7 +228,6 @@ struct bb_usb_control bb_controls[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(bb_controls) == USBC_PORT_COUNT);
-#endif /* CONFIG_ZEPHYR */
 
 /******************************************************************************/
 /* BC1.2 charger detect configuration */

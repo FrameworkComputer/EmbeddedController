@@ -102,6 +102,14 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_CHARGER
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_POWER_DELIVERY
                                                 "${PLATFORM_EC}/common/usb_common.c"
                                                 "${PLATFORM_EC}/common/usbc/usb_sm.c")
+
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB
+                                                "${PLATFORM_EC}/driver/retimer/bb_retimer.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_SS_MUX
+                                                "${PLATFORM_EC}/driver/usb_mux/usb_mux.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_MUX_VIRTUAL
+                                                "${PLATFORM_EC}/driver/usb_mux/virtual.c")
+
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_OCP
                                                 "${PLATFORM_EC}/common/usbc_ocp.c")
 

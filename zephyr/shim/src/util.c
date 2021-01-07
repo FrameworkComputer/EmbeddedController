@@ -205,3 +205,10 @@ int uint64divmod(uint64_t *n, int d)
 	*n = q;
 	return r;
 }
+
+int get_next_bit(uint32_t *mask)
+{
+	int bit = 31 - __builtin_clz(*mask);
+	*mask &= ~BIT(bit);
+	return bit;
+}
