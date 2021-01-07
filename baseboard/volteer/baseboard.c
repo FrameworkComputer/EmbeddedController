@@ -136,43 +136,6 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-/******************************************************************************/
-void tcpc_alert_event(enum gpio_signal signal)
-{
-	/* TODO: b/140572591 - check correct operation for Volteer */
-
-	int port = -1;
-
-	switch (signal) {
-	case GPIO_USB_C0_TCPC_INT_ODL:
-		port = USBC_PORT_C0;
-		break;
-	case GPIO_USB_C1_TCPC_INT_ODL:
-		port = USBC_PORT_C1;
-		break;
-	default:
-		return;
-	}
-
-	schedule_deferred_pd_interrupt(port);
-}
-
-void bc12_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_BC12_INT_ODL:
-		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
-		break;
-
-	case GPIO_USB_C1_BC12_INT_ODL:
-		task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
-		break;
-
-	default:
-		break;
-	}
-}
-
 static void baseboard_init(void)
 {
 	/* Enable monitoring of the PROCHOT input to the EC */
@@ -217,22 +180,4 @@ static void cbi_init(void)
 	board_cbi_init();
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_FIRST);
-
-/**
- * Return if VBUS is too low
- */
-int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
-{
-	int voltage;
-
-	if (charger_get_vbus_voltage(port, &voltage))
-		voltage = 0;
-
-	/*
-	 * For legacy BC1.2 charging with CONFIG_CHARGE_RAMP_SW, ramp up input
-	 * current until voltage drops to the minimum input voltage of the
-	 * charger, 4.096V.
-	 */
-	return voltage < ISL9241_BC12_MIN_VOLTAGE;
-}
 
