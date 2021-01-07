@@ -53,6 +53,8 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_FUEL_GAUGE
                                                 "${PLATFORM_EC}/common/battery_fuel_gauge.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_SMART
                                                 "${PLATFORM_EC}/driver/battery/smart.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BC12_DETECT_PI3USB9201
+                                                "${PLATFORM_EC}/driver/bc12/pi3usb9201.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_ISL9241
                                                 "${PLATFORM_EC}/driver/charger/isl9241.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER

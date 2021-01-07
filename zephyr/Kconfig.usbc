@@ -426,12 +426,26 @@ endif  # PLATFORM_EC_USBC_PPC
 
 config PLATFORM_EC_USB_CHARGER
 	bool "Support charging from a USB-C port"
-	# default y  (next CL, once we can compile the code)
-	# select HAS_TASK_USB_CHG_P0  (next CL, once we can compile the code)
+	default y
+	select HAS_TASK_USB_CHG_P0
 	help
 	  This enables common BC1.2 (Battery-Charging Specification Rev1.2)
 	  charger-detection routines. With this is possible to negotiate a
 	  power contract with an attached battery charger and use this to
 	  charge the device's battery.
+
+if PLATFORM_EC_USB_CHARGER
+
+config PLATFORM_EC_BC12_DETECT_PI3USB9201
+	bool "Enable support for Pericom PI3USB9201"
+	help
+	  This is a Dual-Role USB Charging-Type Detector. It can operate in
+	  host or client mode. It supports Battery Charging Specification, rev
+	  1.2 (BC1.2) with Standard/Charging/Dedicated downstream port
+	  (SDP/CDP/DCP) advertisement when in host mode. In client mode it
+	  starts BC1.2 detection to detect the attached host type. It provides
+	  an I2C interface to report detection results.
+
+endif  # PLATFORM_EC_USB_CHARGER
 
 endif  # PLATFORM_EC_USBC
