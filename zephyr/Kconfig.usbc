@@ -424,4 +424,14 @@ endif  # PLATFORM_EC_USB_PD_TCPM_TCPCI
 
 endif  # PLATFORM_EC_USBC_PPC
 
+config PLATFORM_EC_USB_CHARGER
+	bool "Support charging from a USB-C port"
+	# default y  (next CL, once we can compile the code)
+	# select HAS_TASK_USB_CHG_P0  (next CL, once we can compile the code)
+	help
+	  This enables common BC1.2 (Battery-Charging Specification Rev1.2)
+	  charger-detection routines. With this is possible to negotiate a
+	  power contract with an attached battery charger and use this to
+	  charge the device's battery.
+
 endif  # PLATFORM_EC_USBC

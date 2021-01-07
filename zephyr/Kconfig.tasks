@@ -125,4 +125,45 @@ config TASK_POWERBTN_STACK_SIZE
 
 endif # HAS_TASK_POWERBTN
 
+config HAS_TASK_USB_CHG_P0
+	bool "USB Charger (port 0)"
+	depends on PLATFORM_EC_USB_CHARGER
+	help
+	  This turns on the USB charger task for port 0. This handles
+	  negotiating power from an attached charger, trying to get the maximum
+	  available power consistent with the needs of the device.
+
+	  There is one of these tasks for each USB-C port on the device.
+
+if HAS_TASK_USB_CHG_P0
+
+config TASK_USB_CHG_STACK_SIZE
+	hex "(all ports) task stack size"
+	default 0x400	# EC uses VENTI_TASK_STACK_SIZE which is 896
+	help
+	  The stack size of the USB charger task. If there are multiple tasks,
+	  each one gets the same stack size.
+
+	  See b/176180736 for checking these stack sizes.
+
+endif # HAS_TASK_USB_CHG_P0
+
+config HAS_TASK_USB_CHG_P1
+	bool "USB Charger (port 1)"
+	help
+	  This turns on the USB charger task for port 1. This handles
+	  negotiating power from an attached charger, trying to get the maximum
+	  available power consistent with the needs of the device.
+
+	  There is one of these tasks for each USB-C port on the device.
+
+config HAS_TASK_USB_CHG_P2
+	bool "USB Charger (port 2)"
+	help
+	  This turns on the USB charger task for port 2. This handles
+	  negotiating power from an attached charger, trying to get the maximum
+	  available power consistent with the needs of the device.
+
+	  There is one of these tasks for each USB-C port on the device.
+
 endmenu # Tasks

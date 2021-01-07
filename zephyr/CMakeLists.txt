@@ -91,6 +91,9 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_INTEL
                                                 "${PLATFORM_EC}/power/intel_x86.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TIMER   "${PLATFORM_EC}/common/timer.c")
 
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_CHARGER
+                                                "${PLATFORM_EC}/common/usb_charger.c")
+
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_POWER_DELIVERY
                                                 "${PLATFORM_EC}/common/usb_common.c"
                                                 "${PLATFORM_EC}/common/usbc/usb_sm.c")
