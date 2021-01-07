@@ -482,6 +482,12 @@ void sbu_fault_interrupt(enum ioex_signal signal)
 	pd_handle_overcurrent(port);
 }
 
+static void set_ac_prochot(void)
+{
+	isl9241_set_ac_prochot(CHARGER_SOLO, GUYBRUSH_AC_PROCHOT_CURRENT_MA);
+}
+DECLARE_HOOK(HOOK_INIT, set_ac_prochot, HOOK_PRIO_DEFAULT);
+
 void tcpc_alert_event(enum gpio_signal signal)
 {
 	int port;
