@@ -60,6 +60,14 @@
 #define GPIO_USB_C0_OC_ODL         NAMED_GPIO(usb_c0_oc_odl)
 #define GPIO_USB_C1_OC_ODL         NAMED_GPIO(usb_c1_oc_odl)
 
+/* USB and USBC Signals */
+#define GPIO_EN_PP5000_USBA        NAMED_GPIO(en_pp5000_usba)
+#define GPIO_USB_C1_RT_RST_ODL     NAMED_GPIO(usb_c1_rt_rst_odl_boardid_0)
+
+/* Don't have a load switch for retimer */
+/* TODO(b/176559881): How to do unimplemented GPIOs? */
+#define GPIO_USB_C1_LS_EN          NAMED_GPIO(unused_gpio41)
+
 #define GPIO_USB_C1_BC12_INT_ODL   GPIO_USB_C1_MIX_INT_ODL
 
 /*
