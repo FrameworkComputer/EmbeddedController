@@ -678,7 +678,7 @@ enum als_id {
 
 /*#define PD_VERBOSE_LOGGING*/
 #undef CONFIG_UART_TX_BUF_SIZE
-#define CONFIG_UART_TX_BUF_SIZE	4096
+#define CONFIG_UART_TX_BUF_SIZE	1024
 
 
 /*
