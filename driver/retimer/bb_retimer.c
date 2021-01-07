@@ -37,7 +37,7 @@
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 /* Mutex for shared NVM access */
-static struct mutex bb_nvm_mutex;
+static mutex_t bb_nvm_mutex;
 
 /**
  * Utility functions
@@ -473,6 +473,8 @@ static int retimer_init(const struct usb_mux *me)
 {
 	int rv;
 	uint32_t data;
+
+	(void)k_mutex_init(&bb_nvm_mutex);
 
 	/* Burnside Bridge is powered by main AP rail */
 	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {

@@ -10,6 +10,7 @@
 
 #include "gpio.h"
 #include "usb_mux.h"
+#include "driver/retimer/bb_retimer_public.h"
 
 /* Burnside Bridge I2C Configuration Space */
 #define BB_RETIMER_REG_VENDOR_ID	0
@@ -40,35 +41,5 @@
 #define BB_RETIMER_USB4_ENABLED			BIT(23)
 #define BB_RETIMER_USB4_TBT_CABLE_SPEED_SUPPORT(x)	(((x) & 0x7) << 25)
 #define BB_RETIMER_TBT_CABLE_GENERATION(x)		(((x) & 0x3) << 28)
-
-/* Supported USB retimer drivers */
-extern const struct usb_mux_driver bb_usb_retimer;
-
-/* Retimer driver hardware specific controls */
-struct bb_usb_control {
-	/* Load switch enable */
-	enum gpio_signal usb_ls_en_gpio;
-	/* Retimer reset */
-	enum gpio_signal retimer_rst_gpio;
-};
-
-#ifndef CONFIG_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
-extern const struct bb_usb_control bb_controls[];
-#else
-extern struct bb_usb_control bb_controls[];
-#endif
-
-/**
- * Handle the power state of BB retimer
- *
- * Define override function at board level if the platform specific changes
- * are needed to handle the power state of BB retimer.
- *
- * @param me     Pointer to USB mux
- * @param on_off BB retimer state to be changed
- *
- */
-__override_proto void bb_retimer_power_handle(const struct usb_mux *me,
-						int on_off);
 
 #endif /* __CROS_EC_BB_RETIMER_H */
