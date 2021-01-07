@@ -136,6 +136,10 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_DRP_ACC_TRYSRC
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PRL_SM
                                                 "${PLATFORM_EC}/common/usbc/usb_prl_sm.c")
 
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_PS8815
+                                                "${PLATFORM_EC}/driver/tcpm/ps8xxx.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_RT1715
+                                                "${PLATFORM_EC}/driver/tcpm/rt1715.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_TUSB422
                                                 "${PLATFORM_EC}/driver/tcpm/tusb422.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_TCPCI
