@@ -82,16 +82,6 @@ int pd_check_vconn_swap(int port)
 
 void board_reset_pd_mcu(void) {}
 
-static int partner_tx_id[6];
-void mock_tcpci_tx_msg_id_reset(int sop)
-{
-	if (sop == TCPC_TX_SOP_ALL)
-		for (sop = PD_MSG_SOP; sop <= PD_MSG_SOP_CBL_RST; ++sop)
-			partner_tx_id[sop] = 0;
-	else
-		partner_tx_id[sop] = 0;
-}
-
 /*****************************************************************************
  * Partner utility functions
  */
@@ -123,6 +113,16 @@ void partner_set_pd_rev(enum pd_rev_type pd_rev)
 enum pd_rev_type partner_get_pd_rev(void)
 {
 	return partner_pd_rev;
+}
+
+static int partner_tx_id[NUM_SOP_STAR_TYPES];
+void partner_tx_msg_id_reset(int sop)
+{
+	if (sop == TCPC_TX_SOP_ALL)
+		for (sop = 0; sop < NUM_SOP_STAR_TYPES; ++sop)
+			partner_tx_id[sop] = 0;
+	else
+		partner_tx_id[sop] = 0;
 }
 
 void partner_send_msg(enum pd_msg_type sop,

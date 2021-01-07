@@ -40,9 +40,6 @@ bool vboot_allow_usb_pd(void);
 int pd_check_vconn_swap(int port);
 void board_reset_pd_mcu(void);
 
-#define TCPC_TX_SOP_ALL -1
-void mock_tcpci_tx_msg_id_reset(int sop);
-
 int tcpci_startup(void);
 
 void partner_set_data_role(enum pd_data_role data_role);
@@ -53,6 +50,9 @@ enum pd_power_role partner_get_power_role(void);
 
 void partner_set_pd_rev(enum pd_rev_type pd_rev);
 enum pd_rev_type partner_get_pd_rev(void);
+
+#define TCPC_TX_SOP_ALL -1
+void partner_tx_msg_id_reset(int sop);
 
 void partner_send_msg(enum pd_msg_type sop,
 		      uint16_t type,

@@ -14,10 +14,10 @@
 void before_test(void)
 {
 	partner_set_pd_rev(PD_REV30);
+	partner_tx_msg_id_reset(TCPC_TX_SOP_ALL);
 
 	mock_usb_mux_reset();
 	mock_tcpci_reset();
-	mock_tcpci_tx_msg_id_reset(TCPC_TX_SOP_ALL);
 
 	/* Restart the PD task and let it settle */
 	task_set_event(TASK_ID_PD_C0, TASK_EVENT_RESET_DONE);
