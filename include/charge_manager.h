@@ -223,6 +223,14 @@ int charge_manager_get_charger_voltage(void);
  */
 enum charge_supplier charge_manager_get_supplier(void);
 
+/**
+ * Get the current VBUS voltage.
+ *
+ * @param port The USB-C port to query
+ * @return The current VBUS voltage in mV or 0 if it could not be determined
+ */
+int charge_manager_get_vbus_voltage(int port);
+
 #ifdef CONFIG_USB_PD_LOGGING
 /* Save power state log entry for the given port */
 void charge_manager_save_log(int port);
