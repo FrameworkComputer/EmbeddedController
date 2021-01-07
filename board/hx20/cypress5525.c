@@ -249,6 +249,13 @@ int cypd_clear_int(int controller, int mask)
 	return rv;
 }
 
+/* update current when the AC status get stable */
+static void cyp5225_current_update(void)
+{
+	cyp5525_update_charger();
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, cyp5225_current_update, HOOK_PRIO_DEFAULT+1);
+
 /* we need to do PD reset every power on */
 int cyp5525_reset(int controller)
 {
