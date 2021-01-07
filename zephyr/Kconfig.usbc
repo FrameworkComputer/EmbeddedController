@@ -194,6 +194,25 @@ config PLATFORM_EC_CONFIG_USB_PD_REV30
 	  This defaults to y because PD Rev3.0 is required for USB4
 	  functionality.
 
+config PLATFORM_EC_USB_PD_ALT_MODE
+	bool "USB Power Delivery alternate mode"
+	default y
+	help
+	  Enable this to support USB PD alternate mode. This allows negotiation
+	  of a different mode of operation to allow non-USB traffic to pass over
+	  a USB Type-C link. This makes use of some or all of the USB 3.0 bus
+	  differential pairs. If all are used for the alternate mode, then USB
+	  transmission is not available at all while in this mode.
+
+config PLATFORM_EC_USB_PD_ALT_MODE_DFP
+	bool "Downward Facing Port support"
+	default y
+	help
+	  Enable support for USB Power Delivery alternate mode of Downward
+	  Facing Port.
+
+	  TODO: Add more help here
+
 choice "VBUS detection method"
 	prompt "Select the method to detect VBUS"
 
