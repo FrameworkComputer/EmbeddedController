@@ -471,6 +471,7 @@ config PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG
 
 config PLATFORM_EC_USB_PD_TCPM_PS8815
 	bool "Parade PS8815 USB-C Gen 2 Type-C Port Controller"
+	select PLATFORM_EC_USB_PD_TCPM_MUX
 	help
 	  The Parade Technologies PS8815 is an active retiming/redriving
 	  (respectively for USB 3.1 Gen 2 / DisplayPort 1.4a HBR3) integrated
@@ -498,6 +499,29 @@ config PLATFORM_EC_USB_PD_TCPM_TUSB422
 	  interfaces. An external microprocessor, containing USB Type-C Port
 	  Manager (TCPM), communicates with the TUSB422 through an I2C
 	  interface.
+
+config PLATFORM_EC_USB_PD_TCPM_MUX
+	bool "Support optional register 18h steer the high-speed muxes"
+	help
+	  Enable this option if the TCPC port controller supports the optional
+	  register 18h CONFIG_STANDARD_OUTPUT to steer the high-speed muxes.
+
+	  See section 4.4.4 (CONFIGURE STANDARD OUTPUT) of the USB Type-C Port
+	  Controller Interface Specification, Revision 2.0, Version 1.2 for more
+	  information.
+
+config PLATFORM_EC_USB_MUX_RUNTIME_CONFIG
+	bool "USB mux runtime config"
+	default y
+	help
+	  Allows the configuration of the USB mux to be set up at runtime. This
+	  makes the usb_muxes[] array writable, i.e. not const. It should be
+	  declared as such in the board config.
+
+	  This is useful when the board has runtime information that changes
+	  the configuration, such as Chromium OS Board Info (CBI set in the
+	  factory. Without this, multiple EC images would need to be installed
+	  depending on the board.
 
 config PLATFORM_EC_CMD_TCPC_DUMP
 	bool "Console command: tcpc_dump"

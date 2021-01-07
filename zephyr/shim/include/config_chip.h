@@ -466,4 +466,9 @@ enum battery_type {
 #define CONFIG_USB_MUX_VIRTUAL
 #endif
 
+#undef CONFIG_USB_PD_TCPM_MUX
+#ifdef CONFIG_PLATFORM_EC_USB_PD_TCPM_MUX
+#define CONFIG_USB_PD_TCPM_MUX
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */
