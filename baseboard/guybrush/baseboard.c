@@ -696,3 +696,16 @@ static void baseboard_chipset_resume(void)
 	ioex_set_level(GPIO_EN_KB_BL, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);
+
+void board_overcurrent_event(int port, int is_overcurrented)
+{
+	switch (port) {
+	case USBC_PORT_C0:
+	case USBC_PORT_C1:
+		gpio_set_level(GPIO_USB_C0_C1_FAULT_ODL, !is_overcurrented);
+		break;
+
+	default:
+		break;
+	}
+}
