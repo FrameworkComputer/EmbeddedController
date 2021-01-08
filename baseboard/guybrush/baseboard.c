@@ -709,3 +709,13 @@ void board_overcurrent_event(int port, int is_overcurrented)
 		break;
 	}
 }
+
+void baseboard_en_pwr_pcore_s0(enum gpio_signal signal)
+{
+
+	/* EC must AND signals PG_LPDDR4X_S3_OD and PG_GROUPC_S0_OD */
+	gpio_set_level(GPIO_EN_PWR_PCORE_S0_R,
+					gpio_get_level(GPIO_PG_LPDDR4X_S3_OD) &&
+					gpio_get_level(GPIO_PG_GROUPC_S0_OD));
+}
+
