@@ -493,4 +493,9 @@ enum battery_type {
 #define CONFIG_USBC_PPC_DEDICATED_INT
 #endif
 
+#ifdef CONFIG_HAS_TASK_PD_INT_C0
+/* This must be defined if any task is active */
+#define CONFIG_HAS_TASK_PD_INT
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */
