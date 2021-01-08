@@ -242,3 +242,20 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
+
+/******************************************************************************/
+/* TCPC support routines */
+uint16_t tcpc_get_alert_status(void)
+{
+	uint16_t status = 0;
+
+	/*
+	 * Check which port has the ALERT line set
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL))
+		status |= PD_STATUS_TCPC_ALERT_0;
+	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL))
+		status |= PD_STATUS_TCPC_ALERT_1;
+
+	return status;
+}

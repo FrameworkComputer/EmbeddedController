@@ -381,21 +381,6 @@ static void board_tcpc_init(void)
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
 
 /******************************************************************************/
-/* TCPC support routines */
-uint16_t tcpc_get_alert_status(void)
-{
-	uint16_t status = 0;
-
-	/*
-	 * Check which port has the ALERT line set
-	 */
-	if (!gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL))
-		status |= PD_STATUS_TCPC_ALERT_0;
-	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL))
-		status |= PD_STATUS_TCPC_ALERT_1;
-
-	return status;
-}
 
 int ppc_get_alert_status(int port)
 {
