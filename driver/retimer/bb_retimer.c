@@ -488,13 +488,13 @@ static int retimer_init(const struct usb_mux *me)
 	rv = bb_retimer_read(me, BB_RETIMER_REG_VENDOR_ID, &data);
 	if (rv)
 		return rv;
-	if (data != BB_RETIMER_VENDOR_ID)
+	if ((data != BB_RETIMER_VENDOR_ID_1) &&
+			data != BB_RETIMER_VENDOR_ID_2)
 		return EC_ERROR_UNKNOWN;
 
 	rv = bb_retimer_read(me, BB_RETIMER_REG_DEVICE_ID, &data);
 	if (rv)
 		return rv;
-
 	if (data != BB_RETIMER_DEVICE_ID)
 		return EC_ERROR_UNKNOWN;
 
