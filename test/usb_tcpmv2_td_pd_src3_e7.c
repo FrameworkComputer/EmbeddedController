@@ -13,6 +13,9 @@
 #include "usb_tc_sm.h"
 
 #define BUFFER_SIZE 100
+
+#define HEADER_BYTE_OFFSET 1
+#define HEADER_BYTE_CNT 2
 #define SRC_CAP_EXT_NUM_BATTERY_OFFSET 22
 
 #define EXT_MSG_CHUNKED BIT(15)
@@ -101,7 +104,9 @@ int test_td_pd_src3_e7(void)
 		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 		task_wait_event(10 * MSEC);
 
-		if (data[2+SRC_CAP_EXT_NUM_BATTERY_OFFSET] == 0)
+		if (data[HEADER_BYTE_OFFSET +
+			 HEADER_BYTE_CNT +
+			 SRC_CAP_EXT_NUM_BATTERY_OFFSET] == 0)
 			return EC_SUCCESS;
 	}
 
