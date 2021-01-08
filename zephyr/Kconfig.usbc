@@ -137,6 +137,26 @@ config PLATFORM_EC_USB_PD_PORT_MAX_COUNT
 	  source_enabled[] so that plenty of ports are supported without this
 	  configuration option?
 
+config PLATFORM_EC_CONSOLE_CMD_PD
+	bool "Console command: pd"
+	default y
+	help
+	  Provides information about the current USB Power Delivery state and
+	  also allows various changes to be made for testing purposes.
+
+	  It has a number of subcommands:
+
+	     pd dump <n>  - sets the debug level (0-3). This affects all layers
+	                    of the stack
+	     pd trysrc [0/1/2] - prints or sets the Try.SRC override. Use 0 to
+	                    force Try.SRC off, 1 to force Try.SRC on, and 2 to
+	                    let USB PD stack control the Try.SRC behavior.
+	     pd version   - show PD version in use
+	     pd <port> state  - show start for a PD port
+
+	  Ssee usb_pd_console.c for full details including various commands
+	  for role swap, reset, enable/disable, requesting SNK or SRC, etc.
+
 choice "Measuring VBUS voltage"
 	prompt "Select how VBUS voltage is measured"
 
