@@ -4,7 +4,6 @@ private*/
 local/
 *~
 *.swp
-*.pyc
 tags
 TAGS
 cscope.*
@@ -17,3 +16,8 @@ cscope.*
 !.vscode/README.md
 !.vscode/settings.json.default
 *.code-workspace
+
+# Python ignores
+*.pyc
+__pycache__
+*.egg-info
