@@ -67,6 +67,11 @@ enum battery_type {
 #define CONFIG_CHARGER_INPUT_CURRENT		512
 #endif
 
+#ifdef CONFIG_PLATFORM_EC_EXTPOWER_GPIO
+/* This always needs to be defined for this option to work */
+#define CONFIG_EXTPOWER
+#endif
+
 /* eSPI configuration */
 #ifdef CONFIG_PLATFORM_EC_ESPI
 
