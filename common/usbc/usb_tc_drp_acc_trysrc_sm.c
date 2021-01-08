@@ -1570,8 +1570,11 @@ void tc_event_check(int port, int evt)
 	if (evt & PD_EVENT_RX_HARD_RESET)
 		pd_execute_hard_reset(port);
 
-	if (evt & PD_EVENT_SEND_HARD_RESET)
-		tc_hard_reset_request(port);
+	if (evt & PD_EVENT_SEND_HARD_RESET) {
+		/* Pass Hard Reset request to PE layer if available */
+		if (IS_ENABLED(CONFIG_USB_PE_SM) && tc_get_pd_enabled(port))
+			pd_dpm_request(port, DPM_REQUEST_HARD_RESET_SEND);
+	}
 
 #ifdef CONFIG_POWER_COMMON
 	if (IS_ENABLED(CONFIG_POWER_COMMON)) {
