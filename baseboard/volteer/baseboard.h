@@ -234,6 +234,7 @@
 
 #include "gpio_signal.h"
 #include "common.h"
+#include "baseboard_usbc_config.h"
 
 enum adc_channel {
 	ADC_TEMP_SENSOR_1_CHARGER,
@@ -262,11 +263,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_4_FAN,
 	TEMP_SENSOR_COUNT
 };
-
-/* Common definition for the USB PD interrupt handlers. */
-void ppc_interrupt(enum gpio_signal signal);
-void tcpc_alert_event(enum gpio_signal signal);
-void bc12_interrupt(enum gpio_signal signal);
 
 unsigned char get_board_id(void);
 

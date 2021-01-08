@@ -13,6 +13,7 @@
 #include "task.h"
 #ifdef CONFIG_ZEPHYR
 #include "usbc_config.h"
+#include "baseboard_usbc_config.h"
 #endif
 #include "usbc_ppc.h"
 #include "usb_pd.h"
