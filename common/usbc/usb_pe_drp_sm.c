@@ -762,6 +762,7 @@ static struct policy_engine {
 test_export_static enum usb_pe_state get_state_pe(const int port);
 test_export_static void set_state_pe(const int port,
 				     const enum usb_pe_state new_state);
+static void pe_set_dpm_curr_request(const int port, const int request);
 /*
  * The spec. revision is used to index into this array.
  *  PD 1.0 (VDO 1.0) - return VDM_VER10
@@ -882,6 +883,27 @@ void pe_run(int port, int evt, int en)
 			 */
 			set_state(port, &pe[port].ctx, NULL);
 			break;
+		}
+
+		/*
+		 * 8.3.3.3.8 PE_SNK_Hard_Reset State
+		 * The Policy Engine Shall transition to the PE_SNK_Hard_Reset
+		 * state from any state when:
+		 * - Hard Reset request from Device Policy Manager
+		 *
+		 * USB PD specification clearly states that we should go to
+		 * PE_SNK_Hard_Reset from ANY state (including states in which
+		 * port is source) when DPM requests that. This can lead to
+		 * execute Hard Reset path for sink when actually our power
+		 * role is source. In our implementation we will choose Hard
+		 * Reset path depending on current power role.
+		 */
+		if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_HARD_RESET_SEND)) {
+			pe_set_dpm_curr_request(port, DPM_REQUEST_HARD_RESET_SEND);
+			if (pd_get_power_role(port) == PD_ROLE_SOURCE)
+				set_state_pe(port, PE_SRC_HARD_RESET);
+			else
+				set_state_pe(port, PE_SNK_HARD_RESET);
 		}
 
 		/*
@@ -2374,15 +2396,6 @@ static void pe_src_ready_entry(int port)
 static void pe_src_ready_run(int port)
 {
 	/*
-	 * Don't delay handling a hard reset from the device policy manager.
-	 */
-	if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_HARD_RESET_SEND)) {
-		pe_set_dpm_curr_request(port, DPM_REQUEST_HARD_RESET_SEND);
-		set_state_pe(port, PE_SRC_HARD_RESET);
-		return;
-	}
-
-	/*
 	 * Handle incoming messages before discovery and DPMs other than hard
 	 * reset
 	 */
@@ -3223,15 +3236,6 @@ static void pe_snk_ready_entry(int port)
 
 static void pe_snk_ready_run(int port)
 {
-	/*
-	 * Don't delay handling a hard reset from the device policy manager.
-	 */
-	if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_HARD_RESET_SEND)) {
-		pe_set_dpm_curr_request(port, DPM_REQUEST_HARD_RESET_SEND);
-		set_state_pe(port, PE_SNK_HARD_RESET);
-		return;
-	}
-
 	/*
 	 * Handle incoming messages before discovery and DPMs other than hard
 	 * reset
