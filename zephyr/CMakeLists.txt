@@ -103,7 +103,9 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_CHARGER
 
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_POWER_DELIVERY
                                                 "${PLATFORM_EC}/common/usb_common.c"
-                                                "${PLATFORM_EC}/common/usbc/usb_sm.c")
+                                                "${PLATFORM_EC}/common/usbc/usbc_task.c"
+                                                "${PLATFORM_EC}/common/usbc/usb_sm.c"
+                                                "${PLATFORM_EC}/common/usbc_intr_task.c")
 
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB
                                                 "${PLATFORM_EC}/driver/retimer/bb_retimer.c")
@@ -124,10 +126,6 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DUAL_ROLE
                                                 "${PLATFORM_EC}/common/usb_pd_dual_role.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_HOST_CMD
                                                 "${PLATFORM_EC}/common/usb_pd_host_cmd.c")
-
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC
-                                                "${PLATFORM_EC}/common/usbc/usb_sm.c"
-                                                "${PLATFORM_EC}/common/usbc/usbc_task.c")
 
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_VPD "${PLATFORM_EC}/common/usbc/usb_tc_vpd_sm.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_CTVPD
