@@ -303,13 +303,3 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_PP5000_USBA,
 };
-
-/******************************************************************************/
-
-int ppc_get_alert_status(int port)
-{
-	if (port == USBC_PORT_C0)
-		return gpio_get_level(GPIO_USB_C0_PPC_INT_ODL) == 0;
-	else
-		return gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
-}

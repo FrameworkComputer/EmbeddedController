@@ -324,3 +324,13 @@ uint16_t tcpc_get_alert_status(void)
 
 	return status;
 }
+
+/******************************************************************************/
+
+int ppc_get_alert_status(int port)
+{
+	if (port == USBC_PORT_C0)
+		return gpio_get_level(GPIO_USB_C0_PPC_INT_ODL) == 0;
+	else
+		return gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
+}
