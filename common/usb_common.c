@@ -701,6 +701,7 @@ __overridable bool vboot_allow_usb_pd(void)
 	return false;
 }
 
+#ifndef CONFIG_ZEPHYR  /* TODO(b/176110981) */
 /* VDM utility functions */
 static void pd_usb_billboard_deferred(void)
 {
@@ -718,6 +719,7 @@ static void pd_usb_billboard_deferred(void)
 	}
 }
 DECLARE_DEFERRED(pd_usb_billboard_deferred);
+#endif /* CONFIG_ZEPHYR */
 
 #ifdef CONFIG_USB_PD_DISCHARGE
 static void gpio_discharge_vbus(int port, int enable)
