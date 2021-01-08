@@ -10,10 +10,17 @@
 #include <zephyr.h>
 
 #include "console.h"
+#include "printf.h"
 
 int cputs(enum console_channel channel, const char *str)
 {
 	return cprintf(channel, "%s", str);
+}
+
+static int printk_putchar(void *context, int c)
+{
+	printk("%c", c);
+	return 0;
 }
 
 static void console_vprintf(enum console_channel channel, const char *format,
@@ -27,7 +34,7 @@ static void console_vprintf(enum console_channel channel, const char *format,
 	 * use shell_ print functions instead of printk function as they could
 	 * be on different uarts (they are not for Chrome OS Apps though).
 	 */
-	vprintk(format, args);
+	vfnprintf(printk_putchar, NULL, format, args);
 }
 
 __attribute__((__format__(__printf__, 2, 3))) int
@@ -46,7 +53,7 @@ cprints(enum console_channel channel, const char *format, ...)
 {
 	va_list args;
 
-	cprintf(channel, "[%lld ", k_uptime_get());
+	cprintf(channel, "[%pT ", PRINTF_TIMESTAMP_NOW);
 	va_start(args, format);
 	console_vprintf(channel, format, args);
 	va_end(args);

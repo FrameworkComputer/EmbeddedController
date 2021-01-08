@@ -275,7 +275,9 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 					continue;
 				/* %pT - print a timestamp. */
 				if (ptrspec == 'T' &&
-				    !IS_ENABLED(NO_UINT64_SUPPORT)) {
+				    !IS_ENABLED(NO_UINT64_SUPPORT) &&
+				    (!IS_ENABLED(CONFIG_ZEPHYR) ||
+				     IS_ENABLED(CONFIG_PLATFORM_EC_TIMER))) {
 					flags |= PF_64BIT;
 					if (ptrval == PRINTF_TIMESTAMP_NOW)
 						v = get_time().val;
@@ -461,6 +463,12 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 	return EC_SUCCESS;
 }
 
+/*
+ * These symbols are already defined by the Zephyr OS kernel, and we
+ * don't want to use the EC implementation.
+ */
+#ifndef CONFIG_ZEPHYR
+
 /* Context for snprintf() */
 struct snprintf_context {
 	char *str;
@@ -516,3 +524,5 @@ int vsnprintf(char *str, int size, const char *format, va_list args)
 
 	return (rv == EC_SUCCESS) ? (ctx.str - str) : -rv;
 }
+
+#endif /* !CONFIG_ZEPHYR */

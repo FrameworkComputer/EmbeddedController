@@ -25,4 +25,5 @@ target_sources(app PRIVATE
 	"${PLATFORM_EC}/zephyr/shim/src/console.c"
 	"${PLATFORM_EC}/zephyr/shim/src/i2c.c"
 	"${PLATFORM_EC}/zephyr/shim/src/util.c"
-	"${PLATFORM_EC}/common/i2c_controller.c")
+	"${PLATFORM_EC}/common/i2c_controller.c"
+	"${PLATFORM_EC}/common/printf.c")

@@ -23,5 +23,7 @@ zephyr_include_directories(
 
 # Include test file, test under test and console dependency
 target_sources(app PRIVATE hooks.c)
+target_sources(app PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../../common/printf.c")
 target_sources(app PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../shim/src/hooks.c")
 target_sources(app PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../shim/src/console.c")
+target_sources(app PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../shim/src/util.c")

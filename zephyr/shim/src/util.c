@@ -161,3 +161,47 @@ int parse_offset_size(int argc, char **argv, int shift, int *offset, int *size)
 
 	return EC_SUCCESS;
 }
+
+int uint64divmod(uint64_t *n, int d)
+{
+	uint64_t q = 0, mask;
+	int r = 0;
+
+	/* Divide-by-zero returns zero */
+	if (!d) {
+		*n = 0;
+		return 0;
+	}
+
+	/* Common powers of 2 = simple shifts */
+	if (d == 2) {
+		r = *n & 1;
+		*n >>= 1;
+		return r;
+	} else if (d == 16) {
+		r = *n & 0xf;
+		*n >>= 4;
+		return r;
+	}
+
+	/* If v fits in 32-bit, we're done. */
+	if (*n <= 0xffffffff) {
+		uint32_t v32 = *n;
+		r = v32 % d;
+		*n = v32 / d;
+		return r;
+	}
+
+	/* Otherwise do integer division the slow way. */
+	for (mask = (1ULL << 63); mask; mask >>= 1) {
+		r <<= 1;
+		if (*n & mask)
+			r |= 1;
+		if (r >= d) {
+			r -= d;
+			q |= mask;
+		}
+	}
+	*n = q;
+	return r;
+}
