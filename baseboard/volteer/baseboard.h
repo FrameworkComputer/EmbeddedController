@@ -235,6 +235,7 @@
 #include "gpio_signal.h"
 #include "common.h"
 #include "baseboard_usbc_config.h"
+#include "cbi.h"
 
 enum adc_channel {
 	ADC_TEMP_SENSOR_1_CHARGER,
@@ -263,16 +264,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_4_FAN,
 	TEMP_SENSOR_COUNT
 };
-
-unsigned char get_board_id(void);
-
-/**
- * Configure run-time data structures and operation based on CBI data. This
- * typically includes customization for changes in the BOARD_VERSION and
- * FW_CONFIG fields in CBI. This routine is called from the baseboard after
- * the CBI data has been initialized.
- */
-__override_proto void board_cbi_init(void);
 
 /*
  * Check battery disconnect state.
