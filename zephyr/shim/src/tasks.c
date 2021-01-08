@@ -76,6 +76,13 @@ task_id_t task_get_current(void)
 	return 0;
 }
 
+uint32_t *task_get_event_bitmap(task_id_t cros_task_id)
+{
+	struct task_ctx *const ctx = &shimmed_tasks[cros_task_id];
+
+	return &ctx->event_mask;
+}
+
 uint32_t task_set_event(task_id_t cros_task_id, uint32_t event)
 {
 	struct task_ctx *const ctx = &shimmed_tasks[cros_task_id];

@@ -102,6 +102,7 @@ config PLATFORM_EC_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
 menuconfig PLATFORM_EC_USB_POWER_DELIVERY
 	bool "USB Type-C Power Delivery (PD)"
 	default y
+	select HAS_TASK_PD_C0
 	help
 	  USB has always provided basic power to an attached peripheral. USB-C
 	  PD is part of the USB 3.0 standard and allows a lot more functionality
@@ -247,6 +248,18 @@ config PLATFORM_EC_USB_PD_ALT_MODE_DFP
 	  Facing Port.
 
 	  TODO: Add more help here
+
+config PLATFORM_EC_USB_PD_ALT_MODE_UFP
+	bool "Upward Facing Port support"
+	help
+	  Enable support for USB Power Delivery alternate mode of Upward
+	  Facing Port (UFP).
+
+	  By default, Chromium OS only enables alternate modes (Display Port,
+	  USB4, Thuderbolt, etc) when the USB data role resolves to the
+	  Downstream Facing Port (DFP) role. Enable this option to support
+	  USB4 and ThunderBolt operation when the Chromium OS data role
+	  resolves to the UFP role.
 
 choice "VBUS detection method"
 	prompt "Select the method to detect VBUS"

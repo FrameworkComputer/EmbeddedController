@@ -146,6 +146,44 @@ config TASK_POWERBTN_STACK_SIZE
 
 endif # HAS_TASK_POWERBTN
 
+config HAS_TASK_PD_C0
+	bool "USB Power Delivery task"
+	depends on PLATFORM_EC_USB_POWER_DELIVERY
+	default y
+	help
+	  This turns on the PD_C0 task which handles the rather complex USB
+	  Power Delivery protocol for port 0. There is one of these tasks for
+	  each USB-C port on the device, but they are enabled separately
+	  depending on how many ports are present.
+
+if HAS_TASK_PD_C0
+
+config TASK_PD_STACK_SIZE
+	hex "Stack size"
+	default 0x400	# EC uses VENTI_TASK_STACK_SIZE which is 896
+	help
+	  The stack size of the PD_Cx tasks.
+
+endif # HAS_TASK_PD_C0
+
+config HAS_TASK_PD_C1
+	bool "USB Power Delivery task"
+	depends on PLATFORM_EC_USB_POWER_DELIVERY
+	help
+	  This turns on the PD_C1 task for devices with >=2 ports.
+
+config HAS_TASK_PD_C2
+	bool "USB Power Delivery task"
+	depends on PLATFORM_EC_USB_POWER_DELIVERY
+	help
+	  This turns on the PD_C2 task for devices with >=3 ports.
+
+config HAS_TASK_PD_C3
+	bool "USB Power Delivery task"
+	depends on PLATFORM_EC_USB_POWER_DELIVERY
+	help
+	  This turns on the PD_C3 task for devices with 4 ports.
+
 config HAS_TASK_USB_CHG_P0
 	bool "USB Charger (port 0)"
 	depends on PLATFORM_EC_USB_CHARGER
