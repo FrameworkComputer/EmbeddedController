@@ -101,6 +101,18 @@
 	GPIO_INT(GPIO_PG_EC_ALL_SYS_PWRGD, GPIO_INT_EDGE_BOTH,            \
 		 power_signal_interrupt)                                  \
 	GPIO_INT(GPIO_POWER_BUTTON_L, GPIO_INT_EDGE_BOTH,                 \
-		 power_button_interrupt)
+		 power_button_interrupt)                                  \
+	GPIO_INT(GPIO_USB_C0_TCPC_INT_ODL, GPIO_INT_EDGE_BOTH,            \
+		 tcpc_alert_event)                                        \
+	GPIO_INT(GPIO_USB_C1_TCPC_INT_ODL, GPIO_INT_EDGE_BOTH,            \
+		 tcpc_alert_event)                                        \
+	GPIO_INT(GPIO_USB_C0_PPC_INT_ODL, GPIO_INT_EDGE_BOTH,             \
+		 ppc_interrupt)                                           \
+	GPIO_INT(GPIO_USB_C1_PPC_INT_ODL, GPIO_INT_EDGE_BOTH,             \
+		 ppc_interrupt)                                           \
+	GPIO_INT(GPIO_USB_C0_BC12_INT_ODL, GPIO_INT_EDGE_BOTH,            \
+		 bc12_interrupt)                                          \
+	GPIO_INT(GPIO_USB_C1_MIX_INT_ODL, GPIO_INT_EDGE_BOTH,             \
+		 bc12_interrupt)
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
