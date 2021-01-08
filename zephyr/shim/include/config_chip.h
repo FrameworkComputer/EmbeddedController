@@ -335,7 +335,14 @@ enum battery_type {
 
 #undef CONFIG_CONFIG_USB_PD_REV30
 #ifdef CONFIG_PLATFORM_EC_CONFIG_USB_PD_REV30
-#define CONFIG_CONFIG_USB_PD_REV30
+#define CONFIG_USB_PD_REV30
+
+/*
+ * Support USB PD 3.0 Extended Messages. Note that Chromebooks disabling this
+ * config item are non-compliant with PD 3.0, because they have batteries but do
+ * not support Get_Battery_Cap or Get_Battery_Status.
+ */
+#define CONFIG_USB_PD_EXTENDED_MESSAGES
 #endif
 
 #undef CONFIG_USB_PD_VBUS_DETECT_TCPC
