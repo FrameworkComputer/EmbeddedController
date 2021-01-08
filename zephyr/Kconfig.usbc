@@ -385,6 +385,17 @@ config PLATFORM_EC_USBC_PPC_SYV682X
 	  features. It provides protection against overcurrent, overvoltage,
 	  thermal shutdown, and undervoltage conditions.
 
+config PLATFORM_EC_USBC_PPC_DEDICATED_INT
+	bool "Power Power Controller has a dedicated interrupt pin"
+	help
+	  Enable this if the Power Power Controller (PPC) has level interrupts
+	  (as opposed to edge) and a dedicated interrupt pin to check the
+	  current state.
+
+	  If this is enabled the USB Power Delivery (PD) stack will call
+	  ppc_get_alert_status() to find out he interrupt status for a port.
+	  This function should be provided by the board code.
+
 choice "Type-C Port Manager (TCPM)"
 	prompt "Choose a Type-C Port Manager (TCPM) to manage TCPC"
 
