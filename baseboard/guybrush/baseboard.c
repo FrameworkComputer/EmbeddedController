@@ -719,3 +719,14 @@ void baseboard_en_pwr_pcore_s0(enum gpio_signal signal)
 					gpio_get_level(GPIO_PG_GROUPC_S0_OD));
 }
 
+void baseboard_en_pwr_s0(enum gpio_signal signal)
+{
+
+	/* EC must AND signals SLP_S3_L and PG_PWR_S5 */
+	gpio_set_level(GPIO_EN_PWR_S0_R,
+					gpio_get_level(GPIO_SLP_S3_L) &&
+					gpio_get_level(GPIO_PG_PWR_S5));
+
+	/* Now chain off to the normal power signal interrupt handler. */
+	power_signal_interrupt(signal);
+}
