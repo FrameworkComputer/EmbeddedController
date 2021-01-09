@@ -121,8 +121,8 @@ static int ln9310_update_startup_seq(void)
 
 	/* Startup sequence instruction swap */
 	field_update8(LN9310_REG_LION_CTRL,
-		      0xff,
-		      0xaa);
+		      LN9310_LION_CTRL_MASK,
+		      LN9310_LION_CTRL_UNLOCK);
 
 	field_update8(LN9310_REG_SWAP_CTRL_0,
 		      0xff,
@@ -156,8 +156,8 @@ static int ln9310_update_startup_seq(void)
 
 
 	field_update8(LN9310_REG_LION_CTRL,
-		      0xff,
-		      0x00);
+		      LN9310_LION_CTRL_MASK,
+		      LN9310_LION_CTRL_LOCK);
 
 	return EC_SUCCESS;
 }
@@ -233,10 +233,51 @@ static int ln9310_init_2to1(void)
 	return EC_SUCCESS;
 }
 
+static int ln9310_update_infet(void)
+{
+	CPRINTS("LN9310 update infet configuration");
+
+
+	field_update8(LN9310_REG_LION_CTRL,
+		      LN9310_LION_CTRL_MASK,
+		      LN9310_LION_CTRL_UNLOCK);
+
+	/* Update Infet register settings */
+	field_update8(LN9310_REG_CFG_5,
+		      LN9310_CFG_5_INGATE_PD_EN_MASK,
+			  LN9310_CFG_5_INGATE_PD_EN_OFF);
+
+	field_update8(LN9310_REG_CFG_5,
+		      LN9310_CFG_5_INFET_CP_PD_BIAS_CFG_MASK,
+			  LN9310_CFG_5_INFET_CP_PD_BIAS_CFG_LOWEST);
+
+	/* enable automatic infet control */
+	field_update8(LN9310_REG_PWR_CTRL,
+				LN9310_PWR_INFET_AUTO_MODE_MASK,
+				LN9310_PWR_INFET_AUTO_MODE_ON);
+
+ 	/* disable LS_HELPER during IDLE by setting MSK bit high  */
+	field_update8(LN9310_REG_CFG_0,
+				LN9310_CFG_0_LS_HELPER_IDLE_MSK_MASK,
+				LN9310_CFG_0_LS_HELPER_IDLE_MSK_ON);
+
+	field_update8(LN9310_REG_LION_CTRL,
+		      LN9310_LION_CTRL_MASK,
+		      LN9310_LION_CTRL_LOCK);
+
+	return EC_SUCCESS;
+}
+
 void ln9310_init(void)
 {
 	int status, val;
 	enum battery_cell_type batt;
+
+	/* Update INFET configuration  */
+	status = ln9310_update_infet();
+
+	if (status != EC_SUCCESS)
+		return;
 
 	/*
 	 * Set OPERATION_MODE update method
