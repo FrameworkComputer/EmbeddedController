@@ -43,7 +43,7 @@ struct charge_state_data {
 #ifdef CONFIG_CHARGER_OTG
 	int output_current;
 #endif
-#ifdef CONFIG_EC_EC_COMM_BATTERY_MASTER
+#ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
 	int input_voltage;
 #endif
 #ifdef CONFIG_OCPC
