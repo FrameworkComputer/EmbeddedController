@@ -278,6 +278,14 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
+/* Servo V4.1 Board ID mappings */
+enum servo_board_id {
+	BOARD_ID_UNSET = -1,
+	BOARD_ID_REV0 = 0, /* Proto */
+	BOARD_ID_REV1 = 1, /* EVT */
+	BOARD_ID_REV2 = 2, /* DVT */
+};
+
 /**
  * Compare cc_voltage to disconnect threshold
  *
