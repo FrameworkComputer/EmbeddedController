@@ -31,14 +31,14 @@ static void i2c_bitbang_unwedge(const struct i2c_port_t *i2c_port)
 	gpio_set_level(i2c_port->scl, 1);
 	/*
 	 * If clock is low, wait for a while in case of clock stretched
-	 * by a slave.
+	 * by a peripheral.
 	 */
 	if (!gpio_get_level(i2c_port->scl)) {
 		for (i = 0;; i++) {
 			if (i >= UNWEDGE_SCL_ATTEMPTS) {
 				/*
-				 * If we get here, a slave is holding the clock
-				 * low and there is nothing we can do.
+				 * If we get here, a peripheral is holding the
+				 * clock low and there is nothing we can do.
 				 */
 				CPRINTS("I2C%d unwedge failed, "
 					"SCL is held low", i2c_port->port);
@@ -62,9 +62,9 @@ static void i2c_bitbang_unwedge(const struct i2c_port_t *i2c_port)
 		i2c_delay();
 
 		/*
-		 * Clock through the problem by clocking out 9 bits. If slave
-		 * releases the SDA line, then we can stop clocking bits and
-		 * send a STOP.
+		 * Clock through the problem by clocking out 9 bits. If
+		 * peripheral releases the SDA line, then we can stop clocking
+		 * bits and send a STOP.
 		 */
 		for (j = 0; j < 9; j++) {
 			if (gpio_get_level(i2c_port->sda))
@@ -110,9 +110,9 @@ static void i2c_stop_cond(const struct i2c_port_t *i2c_port)
 	 * SMBus 3.0, 4.2.5
 	 *
 	 *  the recommendation is that if SMBDAT is still low tTIMEOUT,MAX after
-	 *  SMBCLK has gone high at the end of a transaction the master should
-	 *  hold SMBCLK low for at least tTIMEOUT,MAX in an attempt to reset the
-	 *  SMBus interface of all of the devices on the bus.
+	 *  SMBCLK has gone high at the end of a transaction the controller
+	 *  should hold SMBCLK low for at least tTIMEOUT,MAX in an attempt to
+	 *  reset the SMBus interface of all of the devices on the bus.
 	 */
 	for (i = 0; i < 7000; i++) {
 		if (gpio_get_level(i2c_port->scl))
@@ -145,7 +145,7 @@ static int clock_stretching(const struct i2c_port_t *i2c_port)
 	 * Devices participating in a transfer can abort the transfer in
 	 * progress and release the bus when any single clock low interval
 	 * exceeds the value of tTIMEOUT,MIN(=25ms).
-	 * After the master in a transaction detects this condition, it must
+	 * After the controller in a transaction detects this condition, it must
 	 * generate a stop condition within or after the current data byte in
 	 * the transfer process.
 	 */
@@ -249,10 +249,11 @@ static int i2c_write_byte(const struct i2c_port_t *i2c_port, uint8_t byte)
 
 	if (nack) {
 		/*
-		 * The slave device detects an invalid command or invalid data.
-		 * In this case the slave device must NACK the received byte.
-		 * The master upon detection of this condition must generate a
-		 * STOP condition and retry the transaction
+		 * The peripheral device detects an invalid command or invalid
+		 * data. In this case the peripheral device must NACK the
+		 * received byte. The controller upon detection of this
+		 * condition must generate a STOP condition and retry the
+		 * transaction
 		 */
 		i2c_stop_cond(i2c_port);
 		/* return EC_ERROR_BUSY to indicate i2c_xfer() to retry */
@@ -280,11 +281,11 @@ static int i2c_read_byte(const struct i2c_port_t *i2c_port, uint8_t *byte,
 }
 
 static int i2c_bitbang_xfer(const struct i2c_port_t *i2c_port,
-		const uint16_t slave_addr_flags,
+		const uint16_t addr_flags,
 		const uint8_t *out, int out_size,
 		uint8_t *in, int in_size, int flags)
 {
-	uint16_t addr_8bit = slave_addr_flags << 1, err = EC_SUCCESS;
+	uint16_t addr_8bit = addr_flags << 1, err = EC_SUCCESS;
 	int i = 0;
 
 	if (i2c_port->kbps != 100)
