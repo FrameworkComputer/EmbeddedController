@@ -1392,9 +1392,12 @@ static void restart_tc_sm(int port, enum usb_tc_state start_state)
 	}
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
-		/* Initialize PD and type-C supplier current limits to 0 */
+		/*
+		 * Only initialize PD supplier current limit to 0.
+		 * Defer initializing type-C supplier current limit
+		 * to Unattached.SNK or Attached.SNK.
+		 */
 		pd_set_input_current_limit(port, 0, 0);
-		typec_set_input_current_limit(port, 0, 0);
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 	}
 
@@ -2095,17 +2098,6 @@ static void tc_unattached_snk_run(const int port)
 	tcpm_get_cc(port, &cc1, &cc2);
 
 	/*
-	 * Attempt TCPC auto DRP toggle if it is
-	 * not already auto toggling.
-	 */
-	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) &&
-	    drp_state[port] == PD_DRP_TOGGLE_ON &&
-	    tcpm_auto_toggle_supported(port) && cc_is_open(cc1, cc2)) {
-		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
-		return;
-	}
-
-	/*
 	 * The port shall transition to AttachWait.SNK when a Source
 	 * connection is detected, as indicated by the SNK.Rp state
 	 * on at least one of its CC pins.
@@ -2117,9 +2109,34 @@ static void tc_unattached_snk_run(const int port)
 	if (cc_is_rp(cc1) || cc_is_rp(cc2)) {
 		/* Connection Detected */
 		set_state_tc(port, TC_ATTACH_WAIT_SNK);
-	} else if (get_time().val > tc[port].next_role_swap &&
-		   drp_state[port] == PD_DRP_TOGGLE_ON) {
-		/* DRP Toggle */
+		return;
+	}
+
+	/*
+	 * Debounce the CC open status. Some TCPC needs time to get the CC
+	 * status valid. Before that, CC open is reported by default. Wait
+	 * to make sure the CC is really open. Reuse the role toggle timer.
+	 */
+	if (get_time().val < tc[port].next_role_swap)
+		return;
+
+	/*
+	 * Initialize type-C supplier current limits to 0. The charge
+	 * manage is now seeded if it was not.
+	 */
+	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
+		typec_set_input_current_limit(port, 0, 0);
+
+	/*
+	 * Attempt TCPC auto DRP toggle if it is
+	 * not already auto toggling.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) &&
+	    drp_state[port] == PD_DRP_TOGGLE_ON &&
+	    tcpm_auto_toggle_supported(port)) {
+		set_state_tc(port, TC_DRP_AUTO_TOGGLE);
+	} else if (drp_state[port] == PD_DRP_TOGGLE_ON) {
+		/* DRP Toggle. The timer was checked above. */
 		set_state_tc(port, TC_UNATTACHED_SRC);
 	} else if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER) &&
 		   (drp_state[port] == PD_DRP_FORCE_SINK ||
