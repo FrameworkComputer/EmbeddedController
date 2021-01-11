@@ -212,3 +212,17 @@ int get_next_bit(uint32_t *mask)
 	*mask &= ~BIT(bit);
 	return bit;
 }
+
+char *strzcpy(char *dest, const char *src, int len)
+{
+	char *d = dest;
+
+	if (len <= 0)
+		return dest;
+	while (len > 1 && *src) {
+		*(d++) = *(src++);
+		len--;
+	}
+	*d = '\0';
+	return dest;
+}
