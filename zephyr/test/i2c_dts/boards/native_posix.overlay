@@ -1,0 +1,22 @@
+/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+    named-i2c-ports {
+        compatible = "i2c-keys";
+        accel-0 {
+            i2c-port = <&bmi_i2c>;
+            label = "ACCEL_0";
+        };
+    };
+};
+
+&i2c0 {
+    bmi_i2c: bmi@68 {
+        compatible = "bosch,bmi160";
+        reg = <0x68>;
+        label = "accel-i2c";
+    };
+};
