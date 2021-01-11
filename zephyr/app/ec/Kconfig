@@ -1,0 +1,96 @@
+# Copyright 2020 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig CROS_EC
+	bool "Chromium OS EC app"
+	imply SHELL
+	imply PRINTK
+	help
+	  Enable the common Chromium OS EC application. This prints a message,
+	  starts the EC tasks and sets up any drivers that are needed.
+
+	  This depends on PLATFORM_EC at present, since without the shimmed
+	  tasks, almost nothing can operate.
+
+if CROS_EC
+
+rsource "soc/Kconfig"
+
+choice
+	prompt "Chromium OS EC firmware section"
+
+config CROS_EC_RO
+	bool "This build is will be for the RO copy of the EC"
+	help
+	  This build will be used to produce a copy for the read-only
+	  section of the EC firmware.
+
+config CROS_EC_RW
+	bool "This build is will be for the RW copy of the EC"
+	help
+	  This build will be used to produce a copy for the read-write
+	  section of the EC firmware.
+
+endchoice
+
+config CROS_EC_ACTIVE_COPY
+	string
+	default "RO" if CROS_EC_RO
+	default "RW" if CROS_EC_RW
+	help
+	  When the active copy name is output to a console, this
+	  string will be displayed.
+
+config CROS_EC_RAM_SIZE
+	hex "The total available RAM size."
+	help
+		This value describes the total available RAM size for the chip.
+
+config CROS_EC_DATA_RAM_SIZE
+	hex "The total available RAM size for data."
+	help
+		This value describes the total available RAM size for data on the chip.
+
+config CROS_EC_RAM_BASE
+	hex "Base address of RAM for the chip."
+	help
+		Base address of RAM for the chip.
+
+config CROS_EC_PROGRAM_MEMORY_BASE
+	hex "The base address of the program memory region."
+	help
+		This will be used (among other things) to calculate the current PC's
+		offset within the program memory.
+
+config CROS_EC_RO_MEM_OFF
+	hex "The RO region's offset."
+	help
+		This will be used to determine if the current PC is in the RO section.
+
+config CROS_EC_RO_SIZE
+	hex "The size of the RO region."
+	help
+		This will be used (along with SYSTEM_RO_MEM_OFF) to determine if the
+		current PC is in the RO section.
+
+config CROS_EC_RW_MEM_OFF
+	hex "The RW region's offset."
+	help
+		This will be used to determine if the current PC is in the RW section.
+
+config CROS_EC_RW_SIZE
+	hex "The size of the RW region."
+	help
+		This will be used (along with SYSTEM_RW_MEM_OFF) to determine if the
+		current PC is in the RW section.
+
+config SHIMMED_TASKS
+	bool "Add support for shimming in platform/ec tasks as Zephyr threads"
+	help
+	  When this option is enabled, a shimmed_tasks.h header with the
+	  CROS_EC_TASK_LIST defined needs to be included for the project to
+	  build. The CROS_EC_TASK_LIST defines a list of CROS_EC_TASK that
+	  should be shimmed in.
+
+endif # CROS_EC

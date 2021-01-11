@@ -33,6 +33,8 @@ zephyr_include_directories_ifdef(
   "${PLATFORM_EC}/include"
   "${PLATFORM_EC}/include/driver")
 
+add_subdirectory("app")
+
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
 
 # CONFIG_PLATFORM_EC files that don't relate to something below should be
