@@ -174,4 +174,5 @@ L_dont_sub4:
 
 __aeabi_ldiv0:
 	ldr	SOFTWARE_PANIC_REASON_REG, =PANIC_SW_DIV_ZERO
+	mov	SOFTWARE_PANIC_INFO_REG, r14
 	bl	exception_panic
