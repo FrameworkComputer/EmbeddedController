@@ -153,13 +153,6 @@ const struct adc_t adc_channels[] = {
 		.shift = 0,
 		.channel = CHIP_ADC_CH15
 	},
-	[ADC_SUB_ANALOG] = {
-		.name = "SUB_ANALOG",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH13
-	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -465,19 +458,6 @@ int board_set_active_charge_port(int port)
 
 	return EC_SUCCESS;
 
-}
-
-/* Vconn control for integrated ITE TCPC */
-void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
-{
-	/* Vconn control is only for port 0 */
-	if (port)
-		return;
-
-	if (cc_pin == USBPD_CC_PIN_1)
-		gpio_set_level(GPIO_EN_USB_C0_CC1_VCONN, !!enabled);
-	else
-		gpio_set_level(GPIO_EN_USB_C0_CC2_VCONN, !!enabled);
 }
 
 __override void ocpc_get_pid_constants(int *kp, int *kp_div,
