@@ -324,7 +324,7 @@ static int command_crash(int argc, char **argv)
 		volatile int zero = 0;
 
 		cflush();
-		ccprintf("%08x", 1 / zero);
+		ccprintf("%08x", 1U / zero);
 #ifdef CONFIG_CMD_STACKOVERFLOW
 	} else if (!strcasecmp(argv[1], "stack")) {
 		stack_overflow_recurse(1);
