@@ -3459,7 +3459,7 @@ void pd_task(void *u)
 				set_state(port, PD_STATE_SRC_DISCONNECTED);
 				break;
 			}
-#ifdef CONFIG_USB_PD_TCPM_TCPCI
+#if defined(CONFIG_USB_PD_TCPM_TCPCI) || defined(CONFIG_USB_PD_TCPM_STUB)
 			/*
 			 * After transmitting hard reset, TCPM writes
 			 * to RECEIVE_DETECT register to enable
@@ -3467,7 +3467,7 @@ void pd_task(void *u)
 			 */
 			if (pd_comm_is_enabled(port))
 				tcpm_set_rx_enable(port, 1);
-#endif /* CONFIG_USB_PD_TCPM_TCPCI */
+#endif /* CONFIG_USB_PD_TCPM_TCPCI  || CONFIG_USB_PD_TCPM_STUB */
 
 			set_state(port, PD_STATE_SRC_STARTUP);
 			break;
@@ -4119,7 +4119,7 @@ void pd_task(void *u)
 			/* Wait for source cap expired only if we are enabled */
 			if ((pd[port].last_state != pd[port].task_state)
 			    && pd_comm_is_enabled(port)) {
-#ifdef CONFIG_USB_PD_TCPM_TCPCI
+#if defined(CONFIG_USB_PD_TCPM_TCPCI) || defined(CONFIG_USB_PD_TCPM_STUB)
 				/*
 				 * If we come from hard reset recover state,
 				 * then we can process the source capabilities
@@ -4129,7 +4129,7 @@ void pd_task(void *u)
 				if (pd[port].last_state ==
 				    PD_STATE_SNK_HARD_RESET_RECOVER)
 					tcpm_set_rx_enable(port, 1);
-#endif /* CONFIG_USB_PD_TCPM_TCPCI */
+#endif /* CONFIG_USB_PD_TCPM_TCPCI  || CONFIG_USB_PD_TCPM_STUB */
 #ifdef CONFIG_USB_PD_RESET_MIN_BATT_SOC
 				/*
 				 * If the battery has not met a configured safe
