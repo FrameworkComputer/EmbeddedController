@@ -47,6 +47,49 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
+static const struct ec_response_keybd_config zbu_new_kb = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,
+		TK_REFRESH,
+		TK_FULLSCREEN,
+		TK_OVERVIEW,
+		TK_SNAPSHOT,
+		TK_BRIGHTNESS_DOWN,
+		TK_BRIGHTNESS_UP,
+		TK_VOL_MUTE,
+		TK_VOL_DOWN,
+		TK_VOL_UP,
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+static const struct ec_response_keybd_config zbu_old_kb = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_FORWARD,		/* T2 */
+		TK_REFRESH,		/* T3 */
+		TK_FULLSCREEN,		/* T4 */
+		TK_OVERVIEW,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+__override
+const struct ec_response_keybd_config *board_vivaldi_keybd_config(void)
+{
+	if (get_board_id() > 2)
+		return &zbu_new_kb;
+	else
+		return &zbu_old_kb;
+}
+
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
 	/* Increase from 50 us, because KSO_02 passes through the H1. */
