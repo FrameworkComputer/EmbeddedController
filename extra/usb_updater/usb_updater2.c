@@ -1113,7 +1113,7 @@ int main(int argc, char *argv[])
 
 			data = get_file_or_die(optarg, &data_len);
 			printf("read %zd(%#zx) bytes from %s\n",
-				data_len, data_len, argv[optind]);
+				data_len, data_len, argv[optind - 1]);
 
 			break;
 		case 'r':
