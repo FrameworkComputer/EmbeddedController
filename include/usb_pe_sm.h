@@ -140,6 +140,15 @@ int pd_is_port_partner_dualrole(int port);
 void pe_invalidate_explicit_contract(int port);
 
 /*
+ * Return true if the PE is in middle of a fast role swap (FRS). If so, the
+ * Rp/Rd will be flipped from the actual power roles.
+ *
+ *
+ * @param port USB-C port number
+ */
+bool pe_in_frs_mode(int port);
+
+/*
  * Return true if the PE is is within an atomic
  * messaging sequence that it initiated with a SOP* port partner.
  *

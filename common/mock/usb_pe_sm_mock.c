@@ -81,6 +81,11 @@ void pe_got_soft_reset(int port)
 	mock_pe_port[port].mock_got_soft_reset = 1;
 }
 
+bool pe_in_frs_mode(int port)
+{
+	return false;
+}
+
 bool pe_in_local_ams(int port)
 {
 	/* We will probably want to change this in the future */

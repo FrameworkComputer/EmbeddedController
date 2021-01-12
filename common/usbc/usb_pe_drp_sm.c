@@ -853,6 +853,11 @@ int pe_is_running(int port)
 	return local_state[port] == SM_RUN;
 }
 
+bool pe_in_frs_mode(int port)
+{
+	return PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH);
+}
+
 bool pe_in_local_ams(int port)
 {
 	return !!PE_CHK_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
@@ -1263,7 +1268,7 @@ void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 			get_state_pe(port) == PE_SRC_DISCOVERY ||
 			get_state_pe(port) == PE_VCS_CBL_SEND_SOFT_RESET ||
 			get_state_pe(port) == PE_VDM_IDENTITY_REQUEST_CBL) ||
-			(PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH) &&
+			(pe_in_frs_mode(port) &&
 			    get_state_pe(port) == PE_PRS_SNK_SRC_SEND_SWAP)
 			) {
 		PE_SET_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
@@ -1579,7 +1584,7 @@ static void print_current_state(const int port)
 	const char *mode = "";
 
 	if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
-			PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH))
+			pe_in_frs_mode(port))
 		mode = " FRS-MODE";
 
 	if (IS_ENABLED(USB_PD_DEBUG_LABELS))
@@ -4498,7 +4503,7 @@ static void pe_prs_snk_src_transition_to_off_entry(int port)
 	print_current_state(port);
 
 	if (!IS_ENABLED(CONFIG_USB_PD_REV30) ||
-			!PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH))
+			!pe_in_frs_mode(port))
 		tc_snk_power_off(port);
 
 	pe[port].ps_source_timer = get_time().val + PD_T_PS_SOURCE_OFF;
@@ -4561,7 +4566,7 @@ static void pe_prs_snk_src_assert_rp_run(int port)
 	/* Wait until TypeC is in the Attached.SRC state */
 	if (tc_is_attached_src(port)) {
 		if (!IS_ENABLED(CONFIG_USB_PD_REV30) ||
-			!PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH)) {
+			!pe_in_frs_mode(port)) {
 			/* Contract is invalid now */
 			pe_invalidate_explicit_contract(port);
 		}
@@ -4647,7 +4652,7 @@ static void pe_prs_snk_src_send_swap_entry(int port)
 	if (IS_ENABLED(CONFIG_USB_PD_REV30)) {
 		send_ctrl_msg(port,
 			TCPC_TX_SOP,
-			PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH)
+			pe_in_frs_mode(port)
 				? PD_CTRL_FR_SWAP
 				: PD_CTRL_PR_SWAP);
 	} else {
@@ -4672,7 +4677,7 @@ static void pe_prs_snk_src_send_swap_run(int port)
 	 * Handle discarded message
 	 */
 	if (msg_check & PE_MSG_DISCARDED) {
-		if (PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH))
+		if (pe_in_frs_mode(port))
 			set_state_pe(port, PE_SNK_HARD_RESET);
 		else
 			set_state_pe(port, PE_SNK_READY);
@@ -4705,8 +4710,7 @@ static void pe_prs_snk_src_send_swap_run(int port)
 						(type == PD_CTRL_WAIT)) {
 				if (IS_ENABLED(CONFIG_USB_PD_REV30))
 					set_state_pe(port,
-						PE_CHK_FLAG(port,
-						PE_FLAGS_FAST_ROLE_SWAP_PATH)
+						pe_in_frs_mode(port)
 					   ? PE_WAIT_FOR_ERROR_RECOVERY
 					   : PE_SNK_READY);
 				else
@@ -4724,7 +4728,7 @@ static void pe_prs_snk_src_send_swap_run(int port)
 	if (get_time().val > pe[port].sender_response_timer) {
 		if (IS_ENABLED(CONFIG_USB_PD_REV30))
 			set_state_pe(port,
-				PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH)
+				pe_in_frs_mode(port)
 				? PE_WAIT_FOR_ERROR_RECOVERY
 				: PE_SNK_READY);
 		else
@@ -4738,7 +4742,7 @@ static void pe_prs_snk_src_send_swap_run(int port)
 	 *      this case.
 	 */
 	if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
-	    PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH) &&
+	    pe_in_frs_mode(port) &&
 		PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
 		set_state_pe(port, PE_WAIT_FOR_ERROR_RECOVERY);

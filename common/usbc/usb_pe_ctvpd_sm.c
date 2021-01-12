@@ -53,6 +53,12 @@ static void pe_init(int port)
 	set_state_pe(port, PE_REQUEST);
 }
 
+bool pe_in_frs_mode(int port)
+{
+	/* Will never be in FRS mode */
+	return false;
+}
+
 bool pe_in_local_ams(int port)
 {
 	/* We never start a local AMS */

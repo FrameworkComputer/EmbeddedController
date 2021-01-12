@@ -1204,9 +1204,15 @@ static void prl_tx_snk_pending_run(const int port)
 {
 	enum tcpc_cc_voltage_status cc1, cc2;
 
-	/* Wait unit the SRC applies SINK_TX_OK so we can transmit */
+	/*
+	 * Wait unit the SRC applies SINK_TX_OK so we can transmit. In FRS mode,
+	 * don't wait for SINK_TX_OK since either the source (and Rp) could be
+	 * gone or the TCPC CC_STATUS update time could be too long to meet
+	 * tFRSwapInit.
+	 */
 	tcpm_get_cc(port, &cc1, &cc2);
-	if (cc1 == TYPEC_CC_VOLT_RP_3_0 || cc2 == TYPEC_CC_VOLT_RP_3_0) {
+	if (cc1 == TYPEC_CC_VOLT_RP_3_0 || cc2 == TYPEC_CC_VOLT_RP_3_0 ||
+	    pe_in_frs_mode(port)) {
 		/*
 		 * We clear the pending XMIT flag here right before we send so
 		 * we can detect if we discarded this message or not
