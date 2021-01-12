@@ -4,6 +4,7 @@
  */
 
 #include "pwr_defs.h"
+#include "stdbool.h"
 
 /* Registers definitions */
 #define GL3590_HUB_MODE_REG		0x0
@@ -14,6 +15,7 @@
 #define GL3590_INT_CLEAR		0x1
 #define GL3590_RESPONSE_REG		0x2
 #define GL3590_RESPONSE_REG_SYNC_MASK	0x80
+#define GL3590_PORT_DISABLED_REG	0x4
 #define GL3590_HUB_STS_REG 		0xA
 #define GL3590_HUB_STS_HOST_PWR_MASK	0x30
 #define GL3590_HUB_STS_HOST_PWR_SHIFT	4
@@ -34,6 +36,18 @@ void gl3590_irq_handler(int hub);
 
 /* Get power capabilities of UFP host connection */
 enum ec_error_list gl3590_ufp_pwr(int hub, struct pwr_con_t *pwr);
+
+#define GL3590_DFP1	BIT(0)
+#define GL3590_DFP2	BIT(1)
+#define GL3590_DFP3	BIT(2)
+#define GL3590_DFP4	BIT(3)
+#define GL3590_DFP5	BIT(4)
+#define GL3590_DFP6	BIT(5)
+#define GL3590_DFP7	BIT(6)
+#define GL3590_DFP8	BIT(7)
+
+/* Enable/disable power to particular downstream facing ports */
+int gl3590_enable_ports(int hub, uint8_t port_mask, bool enable);
 
 /* Generic USB HUB I2C interface */
 struct uhub_i2c_iface_t {

@@ -193,3 +193,20 @@ enum ec_error_list gl3590_ufp_pwr(int hub, struct pwr_con_t *pwr)
 		return EC_ERROR_UNKNOWN;
 	}
 }
+
+int gl3590_enable_ports(int hub, uint8_t port_mask, bool enable)
+{
+	uint8_t buf[4] = {0};
+	uint8_t en_mask = 0;
+	int rv;
+
+	if (!enable)
+		en_mask = port_mask;
+
+	buf[0] = en_mask;
+	buf[2] = port_mask;
+
+	rv = gl3590_write(hub, GL3590_PORT_DISABLED_REG, buf, sizeof(buf));
+
+	return rv;
+}
