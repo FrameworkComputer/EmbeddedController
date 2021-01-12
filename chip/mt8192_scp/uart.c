@@ -148,6 +148,7 @@ static void uart_irq_handler(void)
 	case UART_RX_IRQ(UARTN):
 		uart_process();
 		SCP_CORE0_INTC_UART_RX_IRQ(UARTN) = BIT(0);
+		asm volatile ("fence.i" ::: "memory");
 		task_clear_pending_irq(ec_int);
 		break;
 	}
