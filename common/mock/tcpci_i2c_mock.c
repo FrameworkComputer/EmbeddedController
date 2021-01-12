@@ -515,7 +515,7 @@ uint16_t mock_tcpci_get_reg(int reg_offset)
 	return tcpci_regs[reg_offset].value;
 }
 
-int tcpci_i2c_xfer(int port, uint16_t slave_addr_flags,
+int tcpci_i2c_xfer(int port, uint16_t addr_flags,
 		const uint8_t *out, int out_size,
 		uint8_t *in, int in_size, int flags)
 {
@@ -525,8 +525,8 @@ int tcpci_i2c_xfer(int port, uint16_t slave_addr_flags,
 		ccprints("ERROR: wrong I2C port %d", port);
 		return EC_ERROR_UNKNOWN;
 	}
-	if (slave_addr_flags != MOCK_TCPCI_I2C_ADDR_FLAGS) {
-		ccprints("ERROR: wrong I2C address 0x%x", slave_addr_flags);
+	if (addr_flags != MOCK_TCPCI_I2C_ADDR_FLAGS) {
+		ccprints("ERROR: wrong I2C address 0x%x", addr_flags);
 		return EC_ERROR_UNKNOWN;
 	}
 
