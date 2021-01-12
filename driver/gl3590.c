@@ -210,3 +210,35 @@ int gl3590_enable_ports(int hub, uint8_t port_mask, bool enable)
 
 	return rv;
 }
+
+#ifdef CONFIG_CMD_GL3590
+static int command_gl3590(int argc, char **argv)
+{
+	char *e;
+	int port;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	port = strtoi(argv[2], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM2;
+
+	if (strcasecmp(argv[1], "enable") == 0) {
+		if (!gl3590_enable_ports(0, port, 1))
+			return EC_SUCCESS;
+		else
+			return EC_ERROR_HW_INTERNAL;
+	} else if (strcasecmp(argv[1], "disable") == 0) {
+		if (!gl3590_enable_ports(0, port, 0))
+			return EC_SUCCESS;
+		else
+			return EC_ERROR_HW_INTERNAL;
+	}
+
+	return EC_ERROR_PARAM1;
+}
+DECLARE_CONSOLE_COMMAND(gl3590, command_gl3590,
+			"<enable | disable> <port_bitmask>",
+			"Manage GL3590 USB3.1 hub and its ports");
+#endif /* CONFIG_CMD_GL3590 */
