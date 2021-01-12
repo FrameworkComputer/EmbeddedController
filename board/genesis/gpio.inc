@@ -93,8 +93,8 @@ GPIO(USB_C0_TCPC_RST,          PIN(9, 7), GPIO_OUT_LOW)
 GPIO(M2_SSD_PLN,               PIN(A, 0), GPIO_INPUT)
 GPIO(EC_ENTERING_RW,           PIN(E, 3), GPIO_OUT_LOW)
 GPIO(CCD_MODE_ODL,             PIN(E, 5), GPIO_ODR_HIGH)
-GPIO(EN_PP_MST_OD,             PIN(9, 6), GPIO_ODR_HIGH)
 GPIO(PACKET_MODE_EN,           PIN(7, 5), GPIO_OUT_LOW)
+GPIO(EC_RST_LTC4291_L,         PIN(9, 6), GPIO_OUT_HIGH)        /* PSE controller reset */
 
 /* HDMI/CEC */
 GPIO(EN_PP5000_HDMI,           PIN(5, 0), GPIO_OUT_LOW)
@@ -110,6 +110,8 @@ GPIO(I2C1_SCL,                 PIN(9, 0), GPIO_INPUT)           /* EC_I2C_USB_C0
 GPIO(I2C1_SDA,                 PIN(8, 7), GPIO_INPUT)           /* EC_I2C_USB_C0_TCPPC_SDA */
 GPIO(I2C3_SCL,                 PIN(D, 1), GPIO_INPUT)           /* EC_I2C_USB_C0_TCPC_SCL */
 GPIO(I2C3_SDA,                 PIN(D, 0), GPIO_INPUT)           /* EC_I2C_USB_C0_TCPC_SDA */
+GPIO(I2C4_SCL,                 PIN(F, 3), GPIO_INPUT)           /* EC_I2C_LTC_SCL */
+GPIO(I2C4_SDA,                 PIN(F, 2), GPIO_INPUT)           /* EC_I2C_LTC_SDA */
 GPIO(I2C5_SCL,                 PIN(3, 3), GPIO_INPUT)           /* EC_I2C_IMVP8_SCL */
 GPIO(I2C5_SDA,                 PIN(3, 6), GPIO_INPUT)           /* EC_I2C_IMVP8_SDA */
 GPIO(I2C7_SCL,                 PIN(B, 3), GPIO_INPUT)           /* EC_I2C_EEPROM_SCL */
@@ -120,6 +122,7 @@ ALTERNATE(PIN_MASK(B, 0x30), 0, MODULE_I2C, 0)                  /* I2C0 */
 ALTERNATE(PIN_MASK(9, 0x01), 0, MODULE_I2C, 0)                  /* I2C1 SCL */
 ALTERNATE(PIN_MASK(8, 0x80), 0, MODULE_I2C, 0)                  /* I2C1 SDA */
 ALTERNATE(PIN_MASK(D, 0x03), 0, MODULE_I2C, 0)                  /* I2C3 */
+ALTERNATE(PIN_MASK(F, 0x0C), 0, MODULE_I2C, 0)                  /* I2C4 */
 ALTERNATE(PIN_MASK(3, 0x48), 0, MODULE_I2C, 0)                  /* I2C5 */
 ALTERNATE(PIN_MASK(B, 0x0C), 0, MODULE_I2C, 0)                  /* I2C7 */
 
@@ -139,8 +142,6 @@ ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)                 /* UART from EC 
 
 /* Unused pins */
 UNUSED(PIN(1, 3))						/* EC_GP_SEL1_ODL */
-UNUSED(PIN(F, 2))						/* EC_I2C_RFU_SDA */
-UNUSED(PIN(F, 3))						/* EC_I2C_RFU_SCL */
 UNUSED(PIN(C, 0))						/* FAN_PWM_2 */
 UNUSED(PIN(8, 0))						/* LED_BLUE_L */
 UNUSED(PIN(4, 4))						/* ADC1/TEMP_SENSOR_2 */
