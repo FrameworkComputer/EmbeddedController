@@ -32,15 +32,15 @@ int init_ioexpanders(void)
 	 * BIT-2 (SBU_FLIP_SEL)      | O   | 1
 	 * BIT-3 (USB3_A0_MUX_SEL)   | O   | 0
 	 * BIT-4 (USB3_A0_MUX_EN_L)  | O   | 0
-	 * BIT-5 (USB3_A0_PWR_EN)    | O   | 0
+	 * BIT-5 (USB3_A0_PWR_EN)    | I   | x
 	 * BIT-6 (UART_18_SEL)       | O   | 0
-	 * BIT-7 (USERVO_POWER_EN)   | O   | 0
+	 * BIT-7 (USERVO_POWER_EN)   | I   | x
 	 */
 	ret = tca6416a_write_byte(1, TCA6416A_OUT_PORT_0, 0x04);
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	ret = tca6416a_write_byte(1, TCA6416A_DIR_PORT_0, 0x00);
+	ret = tca6416a_write_byte(1, TCA6416A_DIR_PORT_0, 0xa0);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -49,7 +49,7 @@ int init_ioexpanders(void)
 	 * NAME                            | DIR | Initial setting
 	 * -------------------------------------------------------
 	 * BIT-0 (USERVO_FASTBOOT_MUX_SEL) | O   | 0
-	 * BIT-1 (USB3_A1_PWR_EN)          | O   | 0
+	 * BIT-1 (USB3_A1_PWR_EN)          | I   | x
 	 * BIT-2 (USB3_A1_MUX_SEL)         | O   | 0
 	 * BIT-3 (BOARD_ID)                | I   | x
 	 * BIT-4 (BOARD ID)                | I   | x
@@ -61,7 +61,7 @@ int init_ioexpanders(void)
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	ret = tca6416a_write_byte(1, TCA6416A_DIR_PORT_1, 0xb8);
+	ret = tca6416a_write_byte(1, TCA6416A_DIR_PORT_1, 0xba);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -123,6 +123,13 @@ int init_ioexpanders(void)
 	ret = tca6424a_write_byte(1, TCA6424A_DIR_PORT_2, 0x7d);
 	if (ret != EC_SUCCESS)
 		return ret;
+
+	/*
+	 * Now we are able to read board revision, let EC manage USB ports power
+	 * for REV0 and REV1 boards.
+	 */
+	if (board_id_det() <= BOARD_ID_REV1)
+		ec_manage_usb_pwr();
 
 	/* Clear any faults and other IRQs*/
 	read_faults();
@@ -189,6 +196,34 @@ int irq_ioexpanders(void)
 	return 0;
 }
 
+int ec_manage_usb_pwr(void)
+{
+	int ret;
+
+	/*
+	 * Configure USB3_A0_PWR_EN & USERVO_POWER_EN as outputs with initial
+	 * value 0.
+	 */
+	ret = tca6416a_write_byte(1, TCA6416A_OUT_PORT_0, 0x04);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	ret = tca6416a_write_byte(1, TCA6416A_DIR_PORT_0, 0x0);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	/* Configure USB3_A1_PWR_EN as output with initial value 0. */
+	ret = tca6416a_write_byte(1, TCA6416A_OUT_PORT_1, 0x0);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	ret = tca6416a_write_byte(1, TCA6416A_DIR_PORT_1, 0xb8);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	return ret;
+}
+
 inline int sbu_uart_sel(int en)
 {
 	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_0, 0, en);
@@ -214,7 +249,11 @@ inline int usb3_a0_mux_en_l(int en)
 	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_0, 4, en);
 }
 
-inline int usb3_a0_pwr_en(int en)
+/*
+ * Warning: This method works only on REV0 & REV1 revisions! For REV2 host hub
+ * manages power to USB ports.
+ */
+inline int ec_usb3_a0_pwr_en(int en)
 {
 	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_0, 5, en);
 }
@@ -224,7 +263,11 @@ inline int uart_18_sel(int en)
 	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_0, 6, en);
 }
 
-inline int uservo_power_en(int en)
+/*
+ * Warning: This method works only on REV0 & REV1 revisions! For REV2 host hub
+ * manages power to USB ports.
+ */
+inline int ec_uservo_power_en(int en)
 {
 	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_0, 7, en);
 }
@@ -234,7 +277,11 @@ inline int uservo_fastboot_mux_sel(enum uservo_fastboot_mux_sel_t sel)
 	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_1, 0, sel);
 }
 
-inline int usb3_a1_pwr_en(int en)
+/*
+ * Warning: This method works only on REV0 & REV1 revisions! For REV2 host hub
+ * manages power to USB ports.
+ */
+inline int ec_usb3_a1_pwr_en(int en)
 {
 	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_1, 1, en);
 }

@@ -187,7 +187,11 @@ static void dut_pwr_evt(enum gpio_signal signal)
 static void init_uservo_port(void)
 {
 	/* Enable USERVO_POWER_EN */
-	uservo_power_en(1);
+	if (board_id_det() <= BOARD_ID_REV1)
+		ec_uservo_power_en(1);
+
+	gl3590_enable_ports(0, GL3590_DFP4, 1);
+
 	/* Connect uservo to host hub */
 	uservo_fastboot_mux_sel(0);
 }
@@ -425,6 +429,9 @@ static void evaluate_input_power_def(void)
 	gl3590_init(HOST_HUB);
 
 	evaluate_input_power();
+
+	init_uservo_port();
+	init_pathsel();
 }
 #endif
 
@@ -459,8 +466,6 @@ static void board_init(void)
 	atmel_reset_l(1);
 
 #ifdef SECTION_IS_RO
-	init_uservo_port();
-	init_pathsel();
 	init_ina231s();
 	init_fusb302b(1);
 

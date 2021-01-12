@@ -225,6 +225,9 @@
 
 /* Add the raw option to the i2c_xfer command */
 #define CONFIG_CMD_I2C_XFER_RAW
+
+/* Enable command for managing host hub */
+#define CONFIG_CMD_GL3590
 #else
 #undef CONFIG_CMD_I2C_XFER
 #undef CONFIG_USB_POWER_DELIVERY
