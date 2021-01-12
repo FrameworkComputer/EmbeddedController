@@ -62,12 +62,54 @@ void led_set_color_power(enum ec_led_colors color)
 		gpio_set_level(GPIO_PWR_LED_WHITE_L, LED_OFF_LVL);
 }
 
+/*
+ * Turn off battery LED, if AC is present but battery is not charging.
+ * It could be caused by battery's protection like OTP.
+ */
+int battery_safety_check(void)
+{
+	uint8_t data[6];
+	int rv;
+
+	/* ignore battery in error state because it has other behavior */
+	if (charge_get_state() == PWR_STATE_ERROR)
+		return false;
+
+	/* turn off LED due to a safety fault */
+	rv = sb_read_mfgacc(PARAM_SAFETY_STATUS,
+			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+	if (rv)
+		return false;
+	/*
+	 * Each bit represents for one safey status, and normally they should
+	 * all be 0. Data reads from LSB to MSB.
+	 * data[2] - BIT 7-0
+	 * AOLDL, AOLD, OCD2, OCD1, OCC2, OCC1, COV, CUV
+	 *
+	 * data[3] - BIT 15-8
+	 * RSVD, CUVC, OTD, OTC, ASCDL, ASCD, ASCCL, ASCC
+	 *
+	 * data[4] - BIT 23-16
+	 * CHGC, OC, RSVD, CTO, RSVD, PTO, RSVD, OTF
+	 *
+	 * data[5] - BIT 31-24
+	 * RSVD, RSVD, OCDL, COVL, UTD, UTC, PCHGC, CHGV
+	 */
+	if (data[2] || data[3] || data[4] || data[5])
+		return true;
+
+	return false;
+}
+
 void led_set_color_battery(enum ec_led_colors color)
 {
 	switch (color) {
 	case EC_LED_COLOR_WHITE:
 		/* Ports are controlled by different GPIO */
-		if (charge_manager_get_active_charge_port() == 1 ||
+		if (battery_safety_check()) {
+			gpio_set_level(GPIO_BAT_LED_WHITE_L, LED_OFF_LVL);
+			gpio_set_level(GPIO_EC_CHG_LED_R_W, LED_OFF_LVL);
+		} else if (charge_manager_get_active_charge_port() == 1 ||
 			system_get_board_version() < 3) {
 			gpio_set_level(GPIO_BAT_LED_WHITE_L, LED_ON_LVL);
 			gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_OFF_LVL);
@@ -78,7 +120,10 @@ void led_set_color_battery(enum ec_led_colors color)
 		break;
 	case EC_LED_COLOR_AMBER:
 		/* Ports are controlled by different GPIO */
-		if (charge_get_state() == PWR_STATE_ERROR &&
+		if (battery_safety_check()) {
+			gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_OFF_LVL);
+			gpio_set_level(GPIO_EC_CHG_LED_R_Y, LED_OFF_LVL);
+		} else if (charge_get_state() == PWR_STATE_ERROR &&
 				system_get_board_version() >= 3) {
 			gpio_set_level(GPIO_EC_CHG_LED_R_W, LED_OFF_LVL);
 			gpio_set_level(GPIO_EC_CHG_LED_R_Y, LED_ON_LVL);
@@ -86,6 +131,7 @@ void led_set_color_battery(enum ec_led_colors color)
 				system_get_board_version() < 3) {
 			gpio_set_level(GPIO_BAT_LED_WHITE_L, LED_OFF_LVL);
 			gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_ON_LVL);
+			gpio_set_level(GPIO_EC_CHG_LED_R_Y, LED_OFF_LVL);
 		} else if (charge_manager_get_active_charge_port() == 0) {
 			gpio_set_level(GPIO_EC_CHG_LED_R_W, LED_OFF_LVL);
 			gpio_set_level(GPIO_EC_CHG_LED_R_Y, LED_ON_LVL);
