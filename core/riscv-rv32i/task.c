@@ -574,7 +574,7 @@ void __ram_code mutex_lock(struct mutex *mtx)
 			"li %0, 2\n\t"
 			/* attempt to acquire lock */
 			"amoswap.w.aq %0, %0, %1\n\t"
-			: "=r" (locked), "+A" (mtx->lock));
+			: "=&r" (locked), "+A" (mtx->lock));
 		/* we got it ! */
 		if (!locked)
 			break;
