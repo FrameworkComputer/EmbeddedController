@@ -43,6 +43,11 @@ class Zmake:
                   toolchain=None, ignore_unsupported_zephyr_version=False,
                   build_after_configure=False, test_after_configure=False):
         """Set up a build directory to later be built by "zmake build"."""
+        # Make sure the build directory is clean.
+        if os.path.exists(build_dir):
+            self.logger.info("Clearing old build directory %s", build_dir)
+            shutil.rmtree(build_dir)
+
         project = zmake.project.Project(project_dir)
         if version:
             # Ignore the patchset.
