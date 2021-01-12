@@ -109,7 +109,7 @@ struct ble_connection_params {
 	uint32_t	transmitWindowOffset;
 	uint32_t	transmitWindowSize;
 	uint32_t	connInterval;
-	uint16_t	connSlaveLatency;
+	uint16_t	connLatency;
 	uint32_t	connSupervisionTimeout;
 };
 

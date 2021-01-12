@@ -297,7 +297,7 @@ uint8_t initialize_connection(void)
 	conn_params.transmitWindowOffset = conn_params.win_offset * 1250;
 	conn_params.connInterval = conn_params.interval * 1250;
 	/* The following two lines convert ms -> microseconds */
-	conn_params.connSlaveLatency = 1000 * conn_params.latency;
+	conn_params.connLatency = 1000 * conn_params.latency;
 	conn_params.connSupervisionTimeout = 10000 * conn_params.timeout;
 	/* All these times are in microseconds! */
 
@@ -674,7 +674,7 @@ int connected_communicate(void)
 		 * This listens for 1.25 times the expected amount
 		 * of time. This is a margin of error. This line is
 		 * only called when a connection has failed (a missed
-		 * packet). The slave and the master could have
+		 * packet). The peripheral and the controller could have
 		 * missed this packet due to a disagreement on when
 		 * the packet should have arrived. We listen for
 		 * slightly longer than expected in the case that
