@@ -22,6 +22,35 @@ def test_read_output_from_pipe():
     logger.log.assert_called_with(logging.DEBUG, 'Hello')
 
 
+def test_read_output_change_log_level():
+    barrier = threading.Barrier(2)
+    pipe = os.pipe()
+    fd = io.TextIOWrapper(os.fdopen(pipe[0], 'rb'), encoding='utf-8')
+    logger = mock.Mock(spec=logging.Logger)
+    logger.log.side_effect = lambda log_lvl, line: barrier.wait()
+    # This call will log output from fd (the file descriptor) to DEBUG, though
+    # when the line starts with 'World', the logging level will be switched to
+    # CRITICAL (see the content of the log_lvl_override_func).
+    zmake.multiproc.log_output(
+        logger=logger,
+        log_level=logging.DEBUG,
+        file_descriptor=fd,
+        log_level_override_func=lambda line, lvl:
+            logging.CRITICAL if line.startswith('World') else lvl)
+    os.write(pipe[1], 'Hello\n'.encode('utf-8'))
+    barrier.wait()
+    barrier.reset()
+    os.write(pipe[1], 'World\n'.encode('utf-8'))
+    barrier.wait()
+    barrier.reset()
+    os.write(pipe[1], 'Bye\n'.encode('utf-8'))
+    barrier.wait()
+    barrier.reset()
+    logger.log.assert_has_calls([mock.call(logging.DEBUG, 'Hello'),
+                                 mock.call(logging.CRITICAL, 'World'),
+                                 mock.call(logging.CRITICAL, 'Bye')])
+
+
 def test_read_output_from_second_pipe():
     """Test that we can read from more than one pipe.
 

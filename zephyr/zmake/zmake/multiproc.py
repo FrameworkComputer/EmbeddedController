@@ -34,7 +34,7 @@ def _log_fd(fd):
     removed from the map as it is no longer valid.
     """
     with _logging_cv:
-        logger, log_level = _logging_map[fd]
+        logger, log_level, log_level_override_func = _logging_map[fd]
         if fd.closed:
             del _logging_map[fd]
             _logging_cv.notify_all()
@@ -47,6 +47,14 @@ def _log_fd(fd):
             return
         line = line.strip()
         if line:
+            if log_level_override_func:
+                # Get the new log level and update the default. The reason we
+                # want to update the default is that if we hit an error, all
+                # future logging should be moved to the new logging level. This
+                # greatly simplifies the logic that is needed to update the log
+                # level.
+                log_level = log_level_override_func(line, log_level)
+                _logging_map[fd] = (logger, log_level, log_level_override_func)
             logger.log(log_level, line)
 
 
@@ -99,18 +107,23 @@ def _logging_loop():
 _logging_thread = threading.Thread(target=_logging_loop, daemon=True)
 
 
-def log_output(logger, log_level, file_descriptor):
+def log_output(logger, log_level, file_descriptor,
+               log_level_override_func=None):
     """Log the output from the given file descriptor.
 
     Args:
         logger: The logger object to use.
         log_level: The logging level to use.
         file_descriptor: The file descriptor to read from.
+        log_level_override_func: A function used to override the log level. The
+          function will be called once per line prior to logging and will be
+          passed the arguments of the line and the default log level.
     """
     with _logging_cv:
         if not _logging_thread.is_alive():
             _logging_thread.start()
-        _logging_map[file_descriptor] = (logger, log_level)
+        _logging_map[file_descriptor] = (logger, log_level,
+                                         log_level_override_func)
         # Write a dummy byte to the pipe to break the select so we can add the
         # new fd.
         os.write(_logging_interrupt_pipe[1], b'x')

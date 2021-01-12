@@ -19,6 +19,22 @@ import zmake.toolchains as toolchains
 import zmake.util as util
 
 
+def ninja_log_level_override(line, default_log_level):
+    """Update the log level for ninja builds if we hit an error.
+
+    Ninja builds print everything to stdout, but really we want to start
+    logging things to CRITICAL
+
+    Args:
+        line: The line that is about to be logged.
+        default_log_level: The default logging level that will be used for the
+          line.
+    """
+    if line.startswith("FAILED: "):
+        return logging.CRITICAL
+    return default_log_level
+
+
 class Zmake:
     """Wrapper class encapsulating zmake's supported operations."""
     def __init__(self, checkout=None, jobserver=None, jobs=0):
@@ -156,7 +172,11 @@ class Zmake:
                 stderr=subprocess.PIPE,
                 encoding='utf-8',
                 errors='replace')
-            zmake.multiproc.log_output(self.logger, logging.DEBUG, proc.stdout)
+            zmake.multiproc.log_output(
+                logger=self.logger,
+                log_level=logging.DEBUG,
+                file_descriptor=proc.stdout,
+                log_level_override_func=ninja_log_level_override)
             zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
             procs.append(proc)
 
