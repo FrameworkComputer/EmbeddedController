@@ -242,13 +242,14 @@ void board_reset_pd_mcu(void)
 	 */
 }
 
+#ifdef BOARD_WADDLEDOO
 static void reconfigure_5v_gpio(void)
 {
 	/*
-	 * b/147257497: On early boards, GPIO_EN_PP5000 was swapped with
-	 * GPIO_VOLUP_BTN_ODL. Therefore, we'll actually need to set that GPIO
-	 * instead for those boards.  Note that this breaks the volume up button
-	 * functionality.
+	 * b/147257497: On early waddledoo boards, GPIO_EN_PP5000 was swapped
+	 * with GPIO_VOLUP_BTN_ODL. Therefore, we'll actually need to set that
+	 * GPIO instead for those boards.  Note that this breaks the volume up
+	 * button functionality.
 	 */
 	if (system_get_board_version() < 0) {
 		CPRINTS("old board - remapping 5V en");
@@ -256,24 +257,28 @@ static void reconfigure_5v_gpio(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, reconfigure_5v_gpio, HOOK_PRIO_INIT_I2C+1);
+#endif /* BOARD_WADDLEDOO */
 
 static void set_5v_gpio(int level)
 {
 	int version;
-	enum gpio_signal gpio;
+	enum gpio_signal gpio = GPIO_EN_PP5000;
 
 	/*
-	 * b/147257497: On early boards, GPIO_EN_PP5000 was swapped with
-	 * GPIO_VOLUP_BTN_ODL. Therefore, we'll actually need to set that GPIO
-	 * instead for those boards.  Note that this breaks the volume up button
-	 * functionality.
+	 * b/147257497: On early waddledoo boards, GPIO_EN_PP5000 was swapped
+	 * with GPIO_VOLUP_BTN_ODL. Therefore, we'll actually need to set that
+	 * GPIO instead for those boards.  Note that this breaks the volume up
+	 * button functionality.
 	 */
-	version = system_get_board_version();
+	if (IS_ENABLED(BOARD_WADDLEDOO)) {
+		version = system_get_board_version();
 
-	/*
-	 * If the CBI EEPROM wasn't formatted, assume it's a very early board.
-	 */
-	gpio = version < 0 ? GPIO_VOLUP_BTN_ODL : GPIO_EN_PP5000;
+		/*
+		 * If the CBI EEPROM wasn't formatted, assume it's a very early
+		 * board.
+		 */
+		gpio = version < 0 ? GPIO_VOLUP_BTN_ODL : GPIO_EN_PP5000;
+	}
 
 	gpio_set_level(gpio, level);
 }
