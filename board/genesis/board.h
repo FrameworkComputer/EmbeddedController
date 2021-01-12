@@ -87,11 +87,6 @@
 #define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_CPU_PROCHOT_ACTIVE_LOW
 
-/* Dedicated barreljack charger port */
-#undef  CONFIG_DEDICATED_CHARGE_PORT_COUNT
-#define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
-#define DEDICATED_CHARGE_PORT 1
-
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_IGNORE_LID
 #define CONFIG_POWER_BUTTON_X86
@@ -106,16 +101,6 @@
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 #define CONFIG_INA3221
 
-/* b/143501304 */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY	4000	/* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY	2000	/* us */
-#define PD_VCONN_SWAP_DELAY		8000	/* us */
-
-#define PD_OPERATING_POWER_MW	CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
-#define PD_MAX_POWER_MW		100000
-#define PD_MAX_CURRENT_MA	5000
-#define PD_MAX_VOLTAGE_MV	20000
-
 /* Fan and temp. */
 #define CONFIG_FANS 1
 #undef CONFIG_FAN_INIT_SPEED
@@ -126,41 +111,7 @@
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
 #define CONFIG_THROTTLE_AP
 
-/* Charger */
-#define CONFIG_CHARGE_MANAGER
-/* Less than this much blocks AP power-on. */
-#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 30000
-#undef CONFIG_CHARGE_MANAGER_SAFE_MODE
-
-/* USB type C */
-#define CONFIG_USB_PD_TCPMV2 /* Use TCPMv2 */
-#define CONFIG_USB_PD_REV30 /* Enable PD 3.0 functionality */
-#define CONFIG_USB_PD_DECODE_SOP
-#undef CONFIG_USB_CHARGER
-#define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_USB_PID		0x5040
-#define CONFIG_USB_PD_ALT_MODE
-#define CONFIG_USB_PD_ALT_MODE_DFP
-#define CONFIG_USB_PD_DISCHARGE_PPC
-#define CONFIG_USB_PD_DUAL_ROLE
-#define CONFIG_USB_PD_LOGGING
-#define CONFIG_USB_PD_PORT_MAX_COUNT 1
-#define CONFIG_USB_PD_VBUS_DETECT_PPC
-#define CONFIG_USBC_PPC_SN5S330
-#define CONFIG_USBC_PPC_DEDICATED_INT
-#define CONFIG_USB_PD_TCPM_MUX
-#define CONFIG_USB_PD_TCPM_TCPCI
-#define CONFIG_USB_PD_TCPM_ANX7447
-#define CONFIG_USB_PD_TRY_SRC
-#define CONFIG_USB_DRP_ACC_TRYSRC
-#define CONFIG_USBC_SS_MUX
-#define CONFIG_USBC_SS_MUX_DFP_ONLY
-#define CONFIG_USBC_VCONN
-#define CONFIG_USBC_VCONN_SWAP
-
-#define USB_PD_PORT_TCPC_0	0
-#define BOARD_TCPC_C0_RESET_HOLD_DELAY ANX74XX_RESET_HOLD_MS
-#define BOARD_TCPC_C0_RESET_POST_DELAY ANX74XX_RESET_HOLD_MS
+#define CONFIG_USB_PD_PORT_MAX_COUNT 0
 
 /* USB Type A Features */
 #define CONFIG_USB_PORT_POWER_DUMB
@@ -183,11 +134,6 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
-
-enum charge_port {
-	CHARGE_PORT_TYPEC0,
-	CHARGE_PORT_BARRELJACK,
-};
 
 enum adc_channel {
 	ADC_SNS_PP3300,     /* ADC2 */
@@ -253,7 +199,6 @@ void show_critical_error(void);
 #define EC_CFG_THERMAL_H		7
 #define EC_CFG_THERMAL_MASK GENMASK(EC_CFG_THERMAL_H, EC_CFG_THERMAL_L)
 
-unsigned int ec_config_get_bj_power(void);
 int ec_config_get_usb4_present(void);
 unsigned int ec_config_get_thermal_solution(void);
 
