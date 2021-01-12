@@ -17,24 +17,24 @@
 struct i2c_trace_range {
 	bool enabled;
 	int port;
-	int slave_addr_lo; /* Inclusive */
-	int slave_addr_hi; /* Inclusive */
+	int addr_lo; /* Inclusive */
+	int addr_hi; /* Inclusive */
 };
 
 static struct i2c_trace_range trace_entries[8];
 
-void i2c_trace_notify(int port, uint16_t slave_addr_flags,
+void i2c_trace_notify(int port, uint16_t addr_flags,
 		      const uint8_t *out_data, size_t out_size,
 		      const uint8_t *in_data, size_t in_size)
 {
 	size_t i;
-	uint16_t addr = I2C_STRIP_FLAGS(slave_addr_flags);
+	uint16_t addr = I2C_STRIP_FLAGS(addr_flags);
 
 	for (i = 0; i < ARRAY_SIZE(trace_entries); i++)
 		if (trace_entries[i].enabled
 		    && trace_entries[i].port == port
-		    && trace_entries[i].slave_addr_lo <= addr
-		    && trace_entries[i].slave_addr_hi >= addr)
+		    && trace_entries[i].addr_lo <= addr
+		    && trace_entries[i].addr_hi >= addr)
 			goto trace_enabled;
 	return;
 
@@ -68,11 +68,11 @@ static int command_i2ctrace_list(void)
 				 i,
 				 trace_entries[i].port,
 				 i2c_port->name,
-				 trace_entries[i].slave_addr_lo);
-			if (trace_entries[i].slave_addr_hi
-			    != trace_entries[i].slave_addr_lo)
+				 trace_entries[i].addr_lo);
+			if (trace_entries[i].addr_hi
+			    != trace_entries[i].addr_lo)
 				ccprintf(" to 0x%X",
-					 trace_entries[i].slave_addr_hi);
+					 trace_entries[i].addr_hi);
 			ccprintf("\n");
 		}
 	}
@@ -89,8 +89,8 @@ static int command_i2ctrace_disable(size_t id)
 	return EC_SUCCESS;
 }
 
-static int command_i2ctrace_enable(int port, int slave_addr_lo,
-				   int slave_addr_hi)
+static int command_i2ctrace_enable(int port, int addr_lo,
+				   int addr_hi)
 {
 	struct i2c_trace_range *t;
 	struct i2c_trace_range *new_entry = NULL;
@@ -98,7 +98,7 @@ static int command_i2ctrace_enable(int port, int slave_addr_lo,
 	if (!get_i2c_port(port))
 		return EC_ERROR_PARAM2;
 
-	if (slave_addr_lo > slave_addr_hi)
+	if (addr_lo > addr_hi)
 		return EC_ERROR_PARAM3;
 
 	/*
@@ -110,36 +110,36 @@ static int command_i2ctrace_enable(int port, int slave_addr_lo,
 	     t++) {
 		if (t->enabled && t->port == port) {
 			/* Subset of existing range, do nothing */
-			if (t->slave_addr_lo <= slave_addr_lo &&
-			    t->slave_addr_hi >= slave_addr_hi)
+			if (t->addr_lo <= addr_lo &&
+			    t->addr_hi >= addr_hi)
 				return EC_SUCCESS;
 
 			/* Extends exising range on both directions, replace */
-			if (t->slave_addr_lo >= slave_addr_lo &&
-			    t->slave_addr_hi <= slave_addr_hi) {
+			if (t->addr_lo >= addr_lo &&
+			    t->addr_hi <= addr_hi) {
 				t->enabled = 0;
 				return command_i2ctrace_enable(
-					port, slave_addr_lo, slave_addr_hi);
+					port, addr_lo, addr_hi);
 			}
 
 			/* Extends existing range below */
-			if (t->slave_addr_lo - 1 <= slave_addr_hi &&
-			    t->slave_addr_hi >= slave_addr_hi) {
+			if (t->addr_lo - 1 <= addr_hi &&
+			    t->addr_hi >= addr_hi) {
 				t->enabled = 0;
 				return command_i2ctrace_enable(
 					port,
-					slave_addr_lo,
-					t->slave_addr_hi);
+					addr_lo,
+					t->addr_hi);
 			}
 
 			/* Extends existing range above */
-			if (t->slave_addr_lo <= slave_addr_lo &&
-			    t->slave_addr_hi + 1 >= slave_addr_lo) {
+			if (t->addr_lo <= addr_lo &&
+			    t->addr_hi + 1 >= addr_lo) {
 				t->enabled = 0;
 				return command_i2ctrace_enable(
 					port,
-					t->slave_addr_lo,
-					slave_addr_hi);
+					t->addr_lo,
+					addr_hi);
 			}
 		} else if (!t->enabled && !new_entry) {
 			new_entry = t;
@@ -150,8 +150,8 @@ static int command_i2ctrace_enable(int port, int slave_addr_lo,
 	if (new_entry) {
 		new_entry->enabled = 1;
 		new_entry->port = port;
-		new_entry->slave_addr_lo = slave_addr_lo;
-		new_entry->slave_addr_hi = slave_addr_hi;
+		new_entry->addr_lo = addr_lo;
+		new_entry->addr_hi = addr_hi;
 		return EC_SUCCESS;
 	}
 
