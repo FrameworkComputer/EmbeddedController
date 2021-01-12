@@ -4378,7 +4378,7 @@ struct ec_response_power_info_v1 {
 #define EC_I2C_STATUS_ERROR	(EC_I2C_STATUS_NAK | EC_I2C_STATUS_TIMEOUT)
 
 struct ec_params_i2c_passthru_msg {
-	uint16_t addr_flags;	/* I2C slave address and flags */
+	uint16_t addr_flags;	/* I2C peripheral address and flags */
 	uint16_t len;		/* Number of bytes to read or write */
 } __ec_align2;
 
@@ -7171,7 +7171,7 @@ struct ec_response_battery_dynamic_info {
 } __ec_align2;
 
 /*
- * Control charger chip. Used to control charger chip on the slave.
+ * Control charger chip. Used to control charger chip on the peripheral.
  */
 #define EC_CMD_CHARGER_CONTROL 0x0602
 
