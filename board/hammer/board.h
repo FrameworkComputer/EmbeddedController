@@ -91,8 +91,8 @@
 #define CONFIG_USB_UPDATE
 
 #undef CONFIG_UPDATE_PDU_SIZE
-#ifdef BOARD_WAND
-/* Wand does not have enough space to fit 4k PDU. */
+#if defined(BOARD_WAND) || defined(BOARD_ZED)
+/* Wand/Zed does not have enough space to fit 4k PDU. */
 #define CONFIG_UPDATE_PDU_SIZE 2048
 #else
 #define CONFIG_UPDATE_PDU_SIZE 4096
@@ -175,7 +175,12 @@
  * buffer size have to be power of two.
  */
 #undef CONFIG_USB_I2C_MAX_WRITE_COUNT
+#ifdef BOARD_ZED
+/* Zed requires 516 byte per packet for touchpad update */
+#define CONFIG_USB_I2C_MAX_WRITE_COUNT (1024 - 4) /* 4 is maximum header size */
+#else
 #define CONFIG_USB_I2C_MAX_WRITE_COUNT (128 - 4) /* 4 is maximum header size */
+#endif
 
 #undef CONFIG_USB_I2C_MAX_READ_COUNT
 #define CONFIG_USB_I2C_MAX_READ_COUNT (1024 - 6) /* 6 is maximum header size */

@@ -25,13 +25,16 @@ static uint8_t extended_i2c_exercise;		/* non-zero to exercise */
 static char *firmware_binary = "144.0_2.0.bin";	/* firmware blob */
 
 /* Firmware binary blob related */
-#define FW_PAGE_SIZE			64
+#define MAX_FW_PAGE_SIZE	512
 #define MAX_FW_PAGE_COUNT	1024
-#define MAX_FW_SIZE			(MAX_FW_PAGE_COUNT*FW_PAGE_SIZE)
+#define MAX_FW_SIZE		(128 * 1024)
 
 static uint8_t fw_data[MAX_FW_SIZE];
 int fw_page_count;
+int fw_page_size;
 int fw_size;
+uint8_t ic_type;
+int iap_version;
 
 /* Utility functions */
 static int le_bytes_to_int(uint8_t *buf)
@@ -292,7 +295,7 @@ static int check_read_status(int r, int expected, int actual)
 #define PRIMITIVE_READING_SIZE		60
 
 static int libusb_single_write_and_read(
-		uint8_t *to_write, uint16_t write_length,
+		const uint8_t *to_write, uint16_t write_length,
 		uint8_t *to_read, uint16_t read_length)
 {
 	int r;
@@ -304,9 +307,9 @@ static int libusb_single_write_and_read(
 	tx_transfer = rx_transfer = 0;
 
 	memmove(tx_buf + offset, to_write, write_length);
-	tx_buf[0] = I2C_PORT_ON_HAMMER;
+	tx_buf[0] = I2C_PORT_ON_HAMMER | ((write_length >> 8) << 4);
 	tx_buf[1] = I2C_ADDRESS_ON_HAMMER;
-	tx_buf[2] = write_length;
+	tx_buf[2] = write_length & 0xff;
 	if (read_length > PRIMITIVE_READING_SIZE) {
 		tx_buf[3] = (read_length & 0x7f) | (1 << 7);
 		tx_buf[4] = read_length >> 7;
@@ -388,33 +391,46 @@ static int elan_write_cmd(int reg, int cmd)
 #define ETP_I2C_FW_CHECKSUM_CMD		0x030F
 #define ETP_I2C_OSM_VERSION_CMD		0x0103
 
-static int elan_get_ic_page_count(void)
-{
-	uint8_t ic_type;
-
-	elan_read_cmd(ETP_I2C_OSM_VERSION_CMD);
-
-	ic_type = rx_buf[5];
-
-	switch (ic_type) {
-	case 0x09:
-		return 768;
-	case 0x0D:
-		return 896;
-	case 0x00:
-	case 0x10:
-		return 1024;
-	default:
-		request_exit("The IC type is not supported.\n");
-	}
-	return -1;
-}
-
 static int elan_get_version(int is_iap)
 {
 	elan_read_cmd(
 		is_iap ? ETP_I2C_IAP_VERSION_CMD : ETP_I2C_FW_VERSION_CMD);
 	return le_bytes_to_int(rx_buf + 4);
+}
+
+static void elan_get_ic_page_count(void)
+{
+	elan_read_cmd(ETP_I2C_OSM_VERSION_CMD);
+
+	ic_type = rx_buf[5];
+	printf("ic_type: %02x\n", ic_type);
+
+	switch (ic_type) {
+	case 0x09:
+		fw_page_count = 768;
+		break;
+	case 0x0D:
+		fw_page_count = 896;
+		break;
+	case 0x00:
+	case 0x10:
+	case 0x14:
+		fw_page_count = 1024;
+		break;
+	default:
+		request_exit("The IC type is not supported.\n");
+	}
+
+	iap_version = elan_get_version(1);
+	if (ic_type == 0x14 && iap_version >= 2) {
+		fw_page_count /= 8;
+		fw_page_size = 512;
+	} else if (ic_type >= 0x0D && iap_version >= 1) {
+		fw_page_count /= 2;
+		fw_page_size = 128;
+	} else {
+		fw_page_size = 64;
+	}
 }
 
 static int elan_get_checksum(int is_iap)
@@ -426,7 +442,6 @@ static int elan_get_checksum(int is_iap)
 
 static uint16_t elan_get_fw_info(void)
 {
-	int iap_version = -1;
 	int fw_version = -1;
 	uint16_t iap_checksum = 0xffff;
 	uint16_t fw_checksum = 0xffff;
@@ -450,11 +465,34 @@ static uint16_t elan_get_fw_info(void)
 #define ETP_I2C_MAIN_MODE_ON		(1 << 9)
 #define ETP_I2C_IAP_CMD			0x0311
 #define ETP_I2C_IAP_PASSWORD		0x1EA5
+#define ETP_I2C_IAP_TYPE_CMD		0x0304
 
 static int elan_in_main_mode(void)
 {
 	elan_read_cmd(ETP_I2C_IAP_CTRL_CMD);
 	return le_bytes_to_int(rx_buf + 4) & ETP_I2C_MAIN_MODE_ON;
+}
+
+static int elan_read_write_iap_type(void)
+{
+	for (int retry = 0; retry < 3; ++retry) {
+		uint16_t val;
+
+		if (elan_write_cmd(ETP_I2C_IAP_TYPE_CMD,
+				   fw_page_size / 2))
+			return -1;
+
+		if (elan_read_cmd(ETP_I2C_IAP_TYPE_CMD))
+			return -1;
+
+		val = le_bytes_to_int(rx_buf + 4);
+		if (val == fw_page_size / 2) {
+			printf("%s: OK\n", __func__);
+			return 0;
+		}
+
+	}
+	return -1;
 }
 
 static void elan_prepare_for_update(void)
@@ -474,7 +512,12 @@ static void elan_prepare_for_update(void)
 
 	/* We should be in the IAP mode now */
 	if (elan_in_main_mode())
-		request_exit("Failure to enter IAP mode, still in main mode");
+		request_exit("Failure to enter IAP mode, still in main mode\n");
+
+	if (ic_type >= 0x0D && iap_version >= 1) {
+		if (elan_read_write_iap_type())
+			request_exit("Failure to set IAP mode\n");
+	}
 
 	/* Send the passphrase again */
 	elan_write_cmd(ETP_I2C_IAP_CMD, ETP_I2C_IAP_PASSWORD);
@@ -512,19 +555,20 @@ static int elan_get_iap_addr(void)
 
 static int elan_write_fw_block(uint8_t *raw_data, uint16_t checksum)
 {
-	uint8_t page_store[FW_PAGE_SIZE + 4];
+	uint8_t page_store[MAX_FW_PAGE_SIZE + 4];
 	int rv;
+
 	page_store[0] = ETP_I2C_IAP_REG_L;
 	page_store[1] = ETP_I2C_IAP_REG_H;
-	memcpy(page_store + 2, raw_data, FW_PAGE_SIZE);
-	page_store[FW_PAGE_SIZE + 2 + 0] = (checksum >> 0) & 0xff;
-	page_store[FW_PAGE_SIZE + 2 + 1] = (checksum >> 8) & 0xff;
+	memcpy(page_store + 2, raw_data, fw_page_size);
+	page_store[fw_page_size + 2 + 0] = (checksum >> 0) & 0xff;
+	page_store[fw_page_size + 2 + 1] = (checksum >> 8) & 0xff;
 
 	rv = libusb_single_write_and_read(
-			page_store, sizeof(page_store), rx_buf, 0);
+			page_store, fw_page_size + 4, rx_buf, 0);
 	if (rv)
 		return rv;
-	usleep(20 * 1000);
+	usleep((fw_page_size >= 512 ? 50 : 35) * 1000);
 	elan_read_cmd(ETP_I2C_IAP_CTRL_CMD);
 	rv = le_bytes_to_int(rx_buf + 4);
 	if (rv & (ETP_FW_IAP_PAGE_ERR | ETP_FW_IAP_INTF_ERR)) {
@@ -542,13 +586,13 @@ static uint16_t elan_update_firmware(void)
 
 	printf("%s\n", __func__);
 
-	for (int i = elan_get_iap_addr(); i < fw_size; i += FW_PAGE_SIZE) {
-		printf("\rUpdating page %3d...", i / FW_PAGE_SIZE);
+	for (int i = elan_get_iap_addr(); i < fw_size; i += fw_page_size) {
+		printf("\rUpdating page %3d...", i / fw_page_size);
 		fflush(stdout);
-		block_checksum = elan_calc_checksum(fw_data + i, FW_PAGE_SIZE);
+		block_checksum = elan_calc_checksum(fw_data + i, fw_page_size);
 		rv = elan_write_fw_block(fw_data + i, block_checksum);
 		if (rv)
-			request_exit("Failed to update.");
+			request_exit("Failed to update.\n");
 		checksum += block_checksum;
 		printf(" Updated, checksum: %d", checksum);
 		fflush(stdout);
@@ -579,9 +623,9 @@ int main(int argc, char *argv[])
 	 * Judge IC type  and get page count first.
 	 * Then check the FW file.
 	 */
-	fw_page_count = elan_get_ic_page_count();
-	fw_size = fw_page_count * FW_PAGE_SIZE;
-	printf("IC page count is %04X\n", fw_page_count);
+	elan_get_ic_page_count();
+	fw_size = fw_page_count * fw_page_size;
+	printf("FW has %d bytes x %d pages\n", fw_page_size, fw_page_count);
 
 	/* Read the FW file */
 	FILE *f = fopen(firmware_binary, "rb");
