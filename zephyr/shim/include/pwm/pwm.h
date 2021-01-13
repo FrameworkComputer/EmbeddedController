@@ -19,6 +19,8 @@ enum pwm_channel {
 		PWM_CH_COUNT,
 };
 
+#define NAMED_PWM(name) PWM_CHANNEL(DT_PATH(named_pwms, name))
+
 #endif /* named_pwms */
 
 #endif /* ZEPHYR_SHIM_INCLUDE_PWM_PWM_H_ */

@@ -8,6 +8,10 @@
 
 #include "ec_commands.h"
 
+#ifdef CONFIG_ZEPHYR
+#include "pwm/pwm.h"
+#endif
+
 #define PWM_LED_NO_CHANNEL -1
 
 struct pwm_led {
