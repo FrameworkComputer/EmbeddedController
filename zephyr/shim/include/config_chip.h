@@ -474,8 +474,8 @@ enum battery_type {
 #undef CONFIG_USBC_RETIMER_INTEL_BB
 #ifdef CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB
 
-/* TODO(b/176505554): Consider using devicetree */
-#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x40
+#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR \
+	DT_REG_ADDR(DT_NODELABEL(usb_c1_bb_retimer))
 #define CONFIG_USBC_RETIMER_INTEL_BB
 #endif
 
