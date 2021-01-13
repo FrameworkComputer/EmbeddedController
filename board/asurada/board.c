@@ -653,7 +653,7 @@ static void update_rotation_matrix(void)
 	motion_sensors[BASE_GYRO].rot_standard_ref =
 		&base_standard_ref_rev0;
 }
-DECLARE_HOOK(HOOK_INIT, update_rotation_matrix, HOOK_PRIO_INIT_ADC + 1);
+DECLARE_HOOK(HOOK_INIT, update_rotation_matrix, HOOK_PRIO_INIT_ADC + 2);
 
 /* TCS3400 private data */
 static struct als_drv_data_t g_tcs3400_data = {
@@ -727,7 +727,7 @@ static void update_rotation_matrix(void)
 			&base_standard_ref;
 	}
 }
-DECLARE_HOOK(HOOK_INIT, update_rotation_matrix, HOOK_PRIO_INIT_ADC + 1);
+DECLARE_HOOK(HOOK_INIT, update_rotation_matrix, HOOK_PRIO_INIT_ADC + 2);
 #endif
 
 struct motion_sensor_t motion_sensors[] = {
