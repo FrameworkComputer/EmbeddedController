@@ -144,6 +144,7 @@ static void detect_or_power_down_ic(const int port)
 	} else {
 		/* Let charge manager know there's no more charge available. */
 		charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, port, NULL);
+		bc12_detect(port);
 #if defined(CONFIG_POWER_PP5000_CONTROL) && defined(HAS_TASK_CHIPSET)
 		/* Issue a request to turn off the rail. */
 		power_5v_enable(task_get_current(), 0);
