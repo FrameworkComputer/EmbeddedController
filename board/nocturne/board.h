@@ -166,7 +166,7 @@
 #define PD_MAX_CURRENT_MA     3000
 #define PD_MAX_POWER_MW       45000
 #define PD_OPERATING_POWER_MW 15000
-#define PD_VCONN_SWAP_DELAY   5000 /* us */
+#define CONFIG_USBC_VCONN_SWAP_DELAY_US   5000 /* us */
 
 /* TODO(aaboagye): Verify these timings. */
 /*

@@ -37,8 +37,8 @@
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
 /* Wait time for vconn power switch to turn off. */
-#ifdef PD_VCONN_SWAP_DELAY
-#define PD_IT83XX_VCONN_TURN_OFF_DELAY_US PD_VCONN_SWAP_DELAY
+#ifdef CONFIG_USBC_VCONN_SWAP_DELAY_US
+#define PD_IT83XX_VCONN_TURN_OFF_DELAY_US CONFIG_USBC_VCONN_SWAP_DELAY_US
 #else
 #define PD_IT83XX_VCONN_TURN_OFF_DELAY_US 500
 #endif

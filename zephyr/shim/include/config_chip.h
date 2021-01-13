@@ -238,7 +238,7 @@ enum battery_type {
 /* TODO: b/144165680 - measure and check these values on Volteer */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
-#define PD_VCONN_SWAP_DELAY		5000 /* us */
+#define CONFIG_USBC_VCONN_SWAP_DELAY_US		5000 /* us */
 #endif
 
 #undef CONFIG_CMD_PPC_DUMP

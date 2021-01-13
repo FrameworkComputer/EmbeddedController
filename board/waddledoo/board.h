@@ -82,11 +82,11 @@
 
 #undef PD_POWER_SUPPLY_TURN_ON_DELAY
 #undef PD_POWER_SUPPLY_TURN_OFF_DELAY
-#undef PD_VCONN_SWAP_DELAY
+#undef CONFIG_USBC_VCONN_SWAP_DELAY_US
 /* 20% margin added for these timings */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	13080	/* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	16080	/* us */
-#define PD_VCONN_SWAP_DELAY		787	/* us */
+#define CONFIG_USBC_VCONN_SWAP_DELAY_US		787	/* us */
 
 
 /* I2C configuration */

@@ -389,7 +389,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_DECODE_SOP
 #undef CONFIG_USB_TYPEC_SM
 #define CONFIG_USBC_VCONN
-#define PD_VCONN_SWAP_DELAY 5000 /* us */
+#define CONFIG_USBC_VCONN_SWAP_DELAY_US 5000 /* us */
 #define CONFIG_USB_PD_DISCHARGE_GPIO
 #undef CONFIG_USB_PD_HOST_CMD
 #define CONFIG_USB_PD_ALT_MODE_DFP
@@ -413,7 +413,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_DECODE_SOP
 #undef CONFIG_USB_TYPEC_SM
 #define CONFIG_USBC_VCONN
-#define PD_VCONN_SWAP_DELAY 5000 /* us */
+#define CONFIG_USBC_VCONN_SWAP_DELAY_US 5000 /* us */
 #define CONFIG_USB_PD_DISCHARGE_GPIO
 #undef CONFIG_USB_PD_HOST_CMD
 #define CONFIG_USB_PD_ALT_MODE_DFP
@@ -491,7 +491,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 #define CONFIG_USB_PID 0x5036
-#define PD_VCONN_SWAP_DELAY 5000 /* us */
+#define CONFIG_USBC_VCONN_SWAP_DELAY_US 5000 /* us */
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER

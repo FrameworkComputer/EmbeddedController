@@ -58,7 +58,7 @@
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 /* delay to turn on/off vconn */
-#define PD_VCONN_SWAP_DELAY 5000 /* us */
+#define CONFIG_USBC_VCONN_SWAP_DELAY_US 5000 /* us */
 
 /* USB Configuration */
 #define CONFIG_USB

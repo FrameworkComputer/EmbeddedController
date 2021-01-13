@@ -4446,12 +4446,14 @@ void pd_task(void *u)
 					/* Turn VCONN on and wait for it */
 					set_vconn(port, 1);
 					set_state_timeout(port,
-					  get_time().val + PD_VCONN_SWAP_DELAY,
-					  PD_STATE_VCONN_SWAP_READY);
+						get_time().val +
+						CONFIG_USBC_VCONN_SWAP_DELAY_US,
+						PD_STATE_VCONN_SWAP_READY);
 				} else {
 					set_state_timeout(port,
-					  get_time().val + PD_T_VCONN_SOURCE_ON,
-					  READY_RETURN_STATE(port));
+						get_time().val +
+							PD_T_VCONN_SOURCE_ON,
+						READY_RETURN_STATE(port));
 				}
 			}
 			break;
@@ -4460,9 +4462,9 @@ void pd_task(void *u)
 				if (!(pd[port].flags & PD_FLAGS_VCONN_ON)) {
 					/* VCONN is now on, send PS_RDY */
 					pd_set_vconn_role(port,
-							  PD_ROLE_VCONN_ON);
+							PD_ROLE_VCONN_ON);
 					res = send_control(port,
-							   PD_CTRL_PS_RDY);
+							PD_CTRL_PS_RDY);
 					if (res == -1) {
 						timeout = 10*MSEC;
 						/*
@@ -4470,19 +4472,20 @@ void pd_task(void *u)
 						 * send soft reset
 						 */
 						set_state(port,
-							  PD_STATE_SOFT_RESET);
+							PD_STATE_SOFT_RESET);
 						break;
 					}
 					set_state(port,
-						  READY_RETURN_STATE(port));
+						READY_RETURN_STATE(port));
 				} else {
 					/* Turn VCONN off and wait for it */
 					set_vconn(port, 0);
 					pd_set_vconn_role(port,
-							  PD_ROLE_VCONN_OFF);
+							PD_ROLE_VCONN_OFF);
 					set_state_timeout(port,
-					  get_time().val + PD_VCONN_SWAP_DELAY,
-					  READY_RETURN_STATE(port));
+						get_time().val +
+						CONFIG_USBC_VCONN_SWAP_DELAY_US,
+						READY_RETURN_STATE(port));
 				}
 			}
 			break;

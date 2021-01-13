@@ -147,7 +147,7 @@
 #define PD_MAX_POWER_MW 60000
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
-#define PD_VCONN_SWAP_DELAY 5000 /* us */
+#define CONFIG_USBC_VCONN_SWAP_DELAY_US 5000 /* us */
 
 /* Optional console commands */
 #define CONFIG_CMD_FLASH

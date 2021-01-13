@@ -6221,7 +6221,8 @@ static void pe_vcs_turn_on_vconn_swap_run(int port)
 	if (pe[port].timeout == 0 &&
 			PE_CHK_FLAG(port, PE_FLAGS_VCONN_SWAP_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_VCONN_SWAP_COMPLETE);
-		pe[port].timeout = get_time().val + PD_VCONN_SWAP_DELAY;
+		pe[port].timeout =
+			get_time().val + CONFIG_USBC_VCONN_SWAP_DELAY_US;
 	}
 
 	if (pe[port].timeout > 0 && get_time().val > pe[port].timeout)
@@ -6246,7 +6247,8 @@ static void pe_vcs_turn_off_vconn_swap_run(int port)
 	if (pe[port].timeout == 0 &&
 			PE_CHK_FLAG(port, PE_FLAGS_VCONN_SWAP_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_VCONN_SWAP_COMPLETE);
-		pe[port].timeout = get_time().val + PD_VCONN_SWAP_DELAY;
+		pe[port].timeout =
+			get_time().val + CONFIG_USBC_VCONN_SWAP_DELAY_US;
 	}
 
 	if (pe[port].timeout > 0 && get_time().val > pe[port].timeout) {
