@@ -49,6 +49,15 @@ static void clear_reset_flags(void)
 }
 DECLARE_HOOK(HOOK_INIT, clear_reset_flags, HOOK_PRIO_LAST);
 
+static void system_reset_ec_by_gpg1(void)
+{
+	/* Set GPG1 as output high and wait until EC reset. */
+	IT83XX_GPIO_CTRL(GPIO_G, 1) = GPCR_PORT_PIN_MODE_OUTPUT;
+	IT83XX_GPIO_DATA(GPIO_G) |= BIT(1);
+	while (1)
+		;
+}
+
 static void check_reset_cause(void)
 {
 	uint32_t flags;
@@ -65,6 +74,18 @@ static void check_reset_cause(void)
 	/* Determine if watchdog reset or power on reset. */
 	if (raw_reset_cause & 0x02) {
 		flags |= EC_RESET_FLAG_WATCHDOG;
+		if (IS_ENABLED(CONFIG_IT83XX_HARD_RESET_BY_GPG1)) {
+			/*
+			 * Save watchdog reset flag to BRAM so we can restore
+			 * the flag on next reboot.
+			 */
+			chip_save_reset_flags(EC_RESET_FLAG_WATCHDOG);
+			/*
+			 * Assert GPG1 to reset EC and then EC_RST_ODL will be
+			 * toggled.
+			 */
+			system_reset_ec_by_gpg1();
+		}
 	} else if (raw_reset_cause & 0x01) {
 		flags |= EC_RESET_FLAG_POWER_ON;
 	} else {
@@ -277,11 +298,9 @@ void system_reset(int flags)
 		IT83XX_GCTRL_ETWDUARTCR |= ETWD_HW_RST_EN;
 #endif
 	/* Set GPG1 as output high and wait until EC reset. */
-	if (IS_ENABLED(CONFIG_IT83XX_HARD_RESET_BY_GPG1)) {
-		IT83XX_GPIO_CTRL(GPIO_G, 1) = GPCR_PORT_PIN_MODE_OUTPUT;
-		IT83XX_GPIO_DATA(GPIO_G) |= BIT(1);
-		goto system_wait_until_reset;
-	}
+	if (IS_ENABLED(CONFIG_IT83XX_HARD_RESET_BY_GPG1))
+		system_reset_ec_by_gpg1();
+
 	/*
 	 * Writing invalid key to watchdog module triggers a soft or hardware
 	 * reset. It depends on the setting of bit0 at ETWDUARTCR register.
@@ -289,7 +308,6 @@ void system_reset(int flags)
 	IT83XX_ETWD_ETWCFG |= 0x20;
 	IT83XX_ETWD_EWDKEYR = 0x00;
 
-system_wait_until_reset:
 	/* Spin and wait for reboot; should never return */
 	while (1)
 		;
