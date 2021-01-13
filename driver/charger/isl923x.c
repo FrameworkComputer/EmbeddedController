@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "battery.h"
 #include "battery_smart.h"
+#include "charge_state_v2.h"
 #include "charger.h"
 #include "compile_time_macros.h"
 #include "console.h"
@@ -1176,6 +1177,74 @@ static enum ec_error_list isl923x_get_vbus_voltage(int chgnum, int port,
 }
 
 #if defined(CONFIG_CHARGER_RAA489000) && defined(CONFIG_OCPC)
+static enum ec_error_list raa489000_enable_linear_charge(int chgnum,
+							 bool enable)
+{
+	const struct battery_info *batt_info;
+	int trickle_regval;
+	int precharge_current;
+	int regval;
+	enum ec_error_list rv;
+	int act_chg = charge_get_active_chg_chip();
+
+	batt_info = battery_get_info();
+
+	if (enable) {
+		/* Set the auxiliary max VSYS to 300mV + min VSYS. */
+		rv = isl9237_set_voltage(act_chg, batt_info->voltage_min + 300);
+
+		/* Disable charge current loop for the aux charger. */
+		rv |= raw_update16(act_chg, RAA489000_REG_CONTROL10,
+				   RAA489000_C10_DISABLE_DVC_CC_LOOP,
+				   MASK_SET);
+
+		/*
+		 * Set primary charger charge current to the desired precharge
+		 * current.
+		 */
+		rv |= isl9237_set_current(CHARGER_PRIMARY,
+				    batt_info->precharge_current);
+
+		/*
+		 * Set primary charger max VSYS to the max of the battery.
+		 */
+		rv |= isl9237_set_voltage(CHARGER_PRIMARY,
+					  batt_info->voltage_max);
+
+		/*
+		 * Set trickle charging level.
+		 *
+		 * 64mA is the minimum current level we must set.
+		 */
+		precharge_current = MAX(64, batt_info->precharge_current);
+		trickle_regval = precharge_current / 32;
+		trickle_regval--; /* convert to 0-based field */
+		rv |= raw_read16(CHARGER_PRIMARY, ISL923X_REG_CONTROL2,
+				 &regval);
+		regval &= ~(GENMASK(15, 13));
+		regval |= trickle_regval << 13;
+		rv |= raw_write16(CHARGER_PRIMARY, ISL923X_REG_CONTROL2,
+				  regval);
+
+		/* Enable DVC trickle charge and DVC charge mode. */
+		rv |= raw_update16(CHARGER_PRIMARY, RAA489000_REG_CONTROL10,
+				   RAA489000_C10_ENABLE_DVC_MODE |
+				   RAA489000_C10_ENABLE_DVC_TRICKLE_CHARGE,
+				   MASK_SET);
+
+		if (rv)
+			return EC_ERROR_UNKNOWN;
+
+	} else {
+		/* Disable DVC trickle charge. */
+		rv = raw_update16(CHARGER_PRIMARY, RAA489000_REG_CONTROL10,
+				  RAA489000_C10_ENABLE_DVC_TRICKLE_CHARGE,
+				  MASK_CLR);
+	}
+
+	return rv;
+}
+
 static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 							  struct ocpc_data *o,
 							  int current_ma,
@@ -1324,6 +1393,7 @@ const struct charger_drv isl923x_drv = {
 	.ramp_get_current_limit = &isl923x_ramp_get_current_limit,
 #endif
 #if defined(CONFIG_CHARGER_RAA489000) && defined(CONFIG_OCPC)
+	.enable_linear_charge = &raa489000_enable_linear_charge,
 	.set_vsys_compensation = &raa489000_set_vsys_compensation,
 #endif
 };
