@@ -365,6 +365,20 @@ int proc_pd_e3(void)
 int handle_attach_expected_msgs(enum pd_data_role data_role)
 {
 	if (data_role == PD_ROLE_DFP) {
+		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
+				PD_CTRL_GET_SOURCE_CAP, 0),
+			EC_SUCCESS, "%d");
+		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		task_wait_event(10 * MSEC);
+		partner_send_msg(PD_MSG_SOP, PD_DATA_SOURCE_CAP, 1, 0, &pdo);
+
+		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
+				PD_CTRL_GET_SINK_CAP, 0),
+			EC_SUCCESS, "%d");
+		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+		task_wait_event(10 * MSEC);
+		partner_send_msg(PD_MSG_SOP, PD_DATA_SINK_CAP, 1, 0, &pdo);
+
 		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP_PRIME,
 				PD_CTRL_SOFT_RESET, 0),
 			EC_SUCCESS, "%d");
@@ -387,13 +401,8 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 		task_wait_event(10 * MSEC);
 		partner_send_msg(PD_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0, 0, NULL);
-
-		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
-				PD_CTRL_GET_SOURCE_CAP, 0),
-			EC_SUCCESS, "%d");
-		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-		task_wait_event(10 * MSEC);
-		partner_send_msg(PD_MSG_SOP, PD_DATA_SOURCE_CAP, 1, 0, &pdo);
+	} else if (data_role == PD_ROLE_UFP) {
+		int vcs;
 
 		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
 				PD_CTRL_GET_SINK_CAP, 0),
@@ -401,8 +410,6 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 		task_wait_event(10 * MSEC);
 		partner_send_msg(PD_MSG_SOP, PD_DATA_SINK_CAP, 1, 0, &pdo);
-	} else if (data_role == PD_ROLE_UFP) {
-		int vcs;
 
 		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_DR_SWAP, 0),
 			EC_SUCCESS, "%d");
@@ -419,13 +426,6 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 			partner_send_msg(PD_MSG_SOP, PD_CTRL_REJECT, 0, 0,
 				NULL);
 		}
-
-		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
-				PD_CTRL_GET_SINK_CAP, 0),
-			EC_SUCCESS, "%d");
-		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-		task_wait_event(10 * MSEC);
-		partner_send_msg(PD_MSG_SOP, PD_DATA_SINK_CAP, 1, 0, &pdo);
 	}
 	task_wait_event(1 * SECOND);
 	return EC_SUCCESS;

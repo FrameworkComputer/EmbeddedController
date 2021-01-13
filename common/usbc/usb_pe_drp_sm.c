@@ -1556,7 +1556,15 @@ static bool common_src_snk_dpm_requests(int port)
 					DPM_REQUEST_GET_SNK_CAPS);
 		set_state_pe(port, PE_DR_GET_SINK_CAP);
 		return true;
+	} else if (PE_CHK_DPM_REQUEST(port,
+				      DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND)) {
+		pe_set_dpm_curr_request(port,
+			DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND);
+		pe[port].tx_type = TCPC_TX_SOP_PRIME;
+		set_state_pe(port, PE_VCS_CBL_SEND_SOFT_RESET);
+		return true;
 	}
+
 	return false;
 }
 
@@ -1722,18 +1730,6 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 			set_state_pe(port, PE_VCS_SEND_SWAP);
 			return true;
 		}
-	}
-
-	/*
-	 * TODO(b/177001425): TCPMv2 - move SOP' soft reset check into
-	 * common_src_snk_dpm_requests()
-	 */
-	if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND)) {
-		pe_set_dpm_curr_request(port,
-			DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND);
-		pe[port].tx_type = TCPC_TX_SOP_PRIME;
-		set_state_pe(port, PE_VCS_CBL_SEND_SOFT_RESET);
-		return true;
 	}
 
 	/* If mode entry was successful, disable the timer */
@@ -2566,13 +2562,6 @@ static void pe_src_ready_run(int port)
 		pe[port].wait_and_add_jitter_timer = TIMER_DISABLED;
 
 		/*
-		 * Attempt discovery if possible, and return if state was
-		 * changed for that discovery.
-		 */
-		if (pe_attempt_port_discovery(port))
-			return;
-
-		/*
 		 * Handle Device Policy Manager Requests
 		 */
 
@@ -2633,6 +2622,13 @@ static void pe_src_ready_run(int port)
 
 			return;
 		}
+
+		/*
+		 * Attempt discovery if possible, and return if state was
+		 * changed for that discovery.
+		 */
+		if (pe_attempt_port_discovery(port))
+			return;
 
 		/* No DPM requests; attempt mode entry/exit if needed */
 		dpm_run(port);
@@ -3406,13 +3402,6 @@ static void pe_snk_ready_run(int port)
 		}
 
 		/*
-		 * Attempt discovery if possible, and return if state was
-		 * changed for that discovery.
-		 */
-		if (pe_attempt_port_discovery(port))
-			return;
-
-		/*
 		 * Handle Device Policy Manager Requests
 		 */
 		/*
@@ -3463,6 +3452,13 @@ static void pe_snk_ready_run(int port)
 
 			return;
 		}
+
+		/*
+		 * Attempt discovery if possible, and return if state was
+		 * changed for that discovery.
+		 */
+		if (pe_attempt_port_discovery(port))
+			return;
 
 		/* No DPM requests; attempt mode entry/exit if needed */
 		dpm_run(port);

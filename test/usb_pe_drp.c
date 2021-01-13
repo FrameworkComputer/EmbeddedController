@@ -78,8 +78,11 @@ test_static void rx_message(enum pd_msg_type sop,
 /*
  * This sequence is used by multiple tests, so pull out into a function to
  * avoid duplication.
+ *
+ * Send in how many SOP' DiscoverIdentity requests have been processed so far,
+ * as this may vary depending on startup sequencing as a source.
  */
-test_static int finish_src_discovery(void)
+test_static int finish_src_discovery(int startup_cable_probes)
 {
 	int i;
 
@@ -106,10 +109,20 @@ test_static int finish_src_discovery(void)
 		   PDO_FIXED(5000, 500, PDO_FIXED_COMM_CAP));
 
 	/*
+	 * Cable soft reset is always issued after entry into Src/Snk_Ready
+	 * simulate no cable response.
+	 */
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
+					 PD_CTRL_SOFT_RESET, 0,
+					 60 * MSEC),
+					 EC_SUCCESS, "%d");
+	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
+
+	/*
 	 * Cable identity discovery is attempted 6 times total. 1 was done
 	 * above, so expect 5 more now.
 	 */
-	for (i = 0; i < 5; i++) {
+	for (i = startup_cable_probes; i < 6; i++) {
 		TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
 						 0, PD_DATA_VENDOR_DEF,
 						 60 * MSEC),
@@ -189,17 +202,7 @@ test_static int test_send_caps_error_before_connected(void)
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 
-	/*
-	 * Cable soft reset is always issued after entry into Src/Snk_Ready
-	 * simulate no cable response.
-	 */
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
-					 PD_CTRL_SOFT_RESET, 0,
-					 60 * MSEC),
-					 EC_SUCCESS, "%d");
-	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
-
-	TEST_EQ(finish_src_discovery(), EC_SUCCESS, "%d");
+	TEST_EQ(finish_src_discovery(1), EC_SUCCESS, "%d");
 
 	task_wait_event(5 * SECOND);
 
@@ -234,30 +237,7 @@ test_static int test_send_caps_error_when_connected(void)
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 
-	/*
-	 * Cable soft reset is always issued after entry into Src/Snk_Ready
-	 * simulate no cable response.
-	 */
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
-					 PD_CTRL_SOFT_RESET, 0,
-					 60 * MSEC),
-					 EC_SUCCESS, "%d");
-	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
-
-	/*
-	 * Expect VENDOR_DEF for cable identity, simulate no cable (so no
-	 * GoodCRC, so ERR_TCH_XMIT). Don't reply NOT_SUPPORTED, since the spec
-	 * says a cable never does that.
-	 * TODO: Add tests for cable replying to identity, and replying
-	 * NOT_SUPPORTED (since we should be robust to cables doing the wrong
-	 * thing).
-	 */
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
-					 0, PD_DATA_VENDOR_DEF, 10 * MSEC),
-		EC_SUCCESS, "%d");
-	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
-
-	TEST_EQ(finish_src_discovery(), EC_SUCCESS, "%d");
+	TEST_EQ(finish_src_discovery(0), EC_SUCCESS, "%d");
 
 	task_wait_event(5 * SECOND);
 
