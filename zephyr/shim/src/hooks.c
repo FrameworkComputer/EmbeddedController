@@ -9,6 +9,8 @@
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
+#include "task.h"
+#include "timer.h"
 
 #define DEFERRED_STACK_SIZE 1024
 
@@ -90,3 +92,38 @@ void hook_notify(enum hook_type type)
 	for (p = hook_registry[type]; p; p = p->next)
 		p->routine();
 }
+
+void hook_task(void *u)
+{
+	/* Periodic hooks will be called first time through the loop */
+	static uint64_t last_second = -SECOND;
+	static uint64_t last_tick = -HOOK_TICK_INTERVAL;
+
+	while (1) {
+		uint64_t t = get_time().val;
+		int next = 0;
+
+		if (t - last_tick >= HOOK_TICK_INTERVAL) {
+			hook_notify(HOOK_TICK);
+			last_tick = t;
+		}
+
+		if (t - last_second >= SECOND) {
+			hook_notify(HOOK_SECOND);
+			last_second = t;
+		}
+
+		/* Calculate when next tick needs to occur */
+		t = get_time().val;
+		if (last_tick + HOOK_TICK_INTERVAL > t)
+			next = last_tick + HOOK_TICK_INTERVAL - t;
+
+		/*
+		 * Sleep until next tick, unless we've already exceeded
+		 * HOOK_TICK_INTERVAL.
+		 */
+		if (next > 0)
+			task_wait_event(next);
+	}
+}
+

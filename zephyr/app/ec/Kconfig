@@ -42,6 +42,15 @@ config CROS_EC_ACTIVE_COPY
 	  When the active copy name is output to a console, this
 	  string will be displayed.
 
+config CROS_EC_HOOK_TICK_INTERVAL
+	int "The interval time for the HOOK_TICK"
+	default 250000
+	help
+	  Specificies the interval time for the HOOK_TICK, specified in
+	  microseconds. Modules register with HOOK_TICK to be called
+	  periodically by the HOOKS task. The interval must be shorter than
+	  1 second and is set according the EC chipset's sleep requirements.
+
 # When building for the host, we still need values for the various memory
 # sizes, though they aren't actually used, so just set some reasonable-looking
 # values and then ignore them.

@@ -21,6 +21,9 @@
 #define CONFIG_ZEPHYR
 #define CHROMIUM_EC
 
+/* EC chipset configuration */
+#define HOOK_TICK_INTERVAL	CONFIG_CROS_EC_HOOK_TICK_INTERVAL
+
 /* Chipset and power configuration */
 #ifdef CONFIG_AP_X86_INTEL_CML
 #define CONFIG_CHIPSET_COMETLAKE
