@@ -302,6 +302,23 @@ int pd_dfp_exit_mode(int port, enum tcpm_transmit_type type, uint16_t svid,
 	return 1;
 }
 
+/*
+ * Check if the SVID has been recorded previously. Some peripherals provide
+ * duplicated SVID.
+ */
+static bool is_svid_duplicated(const struct pd_discovery *disc, uint16_t svid)
+{
+	int i;
+
+	for (i = 0; i < disc->svid_cnt; ++i)
+		if (disc->svids[i].svid == svid) {
+			CPRINTF("ERR:SVIDDUP\n");
+			return true;
+		}
+
+	return false;
+}
+
 void dfp_consume_attention(int port, uint32_t *payload)
 {
 	uint16_t svid = PD_VDO_VID(payload[0]);
@@ -383,14 +400,17 @@ void dfp_consume_svids(int port, enum tcpm_transmit_type type, int cnt,
 		svid0 = PD_VDO_SVID_SVID0(*ptr);
 		if (!svid0)
 			break;
-		disc->svids[i].svid = svid0;
-		disc->svid_cnt++;
+
+		if (!is_svid_duplicated(disc, svid0))
+			disc->svids[disc->svid_cnt++].svid = svid0;
 
 		svid1 = PD_VDO_SVID_SVID1(*ptr);
 		if (!svid1)
 			break;
-		disc->svids[i + 1].svid = svid1;
-		disc->svid_cnt++;
+
+		if (!is_svid_duplicated(disc, svid1))
+			disc->svids[disc->svid_cnt++].svid = svid1;
+
 		ptr++;
 		vdo++;
 	}
