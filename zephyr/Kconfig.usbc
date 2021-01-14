@@ -489,6 +489,24 @@ config PLATFORM_EC_USB_PD_TRY_SRC
 	  for laptops, for example, since when attaching to a cellphone we want
 	  the laptop to charge the phone, not vice versa.
 
+config PLATFORM_EC_USB_PD_USB4
+	bool "USB4 support"
+	depends on PLATFORM_EC_CONFIG_USB_PD_REV30
+	default y
+	help
+	  This enables support for entering into USB4 mode between two port
+	  partners. The provides new features such as higher speeds and more
+	  flexible multiplexing of data on the cable for different purposes,
+	  e.g. attaching multiple displays and storage devices on the same bus.
+
+config PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
+	bool "Thunderbolt-compatible mode support"
+	depends on PLATFORM_EC_CONFIG_USB_PD_REV30
+	default y
+	help
+	  Enable this to allow entering into Thunderbolt-compatible mode between
+	  two port partners. This does not require that USB4 mode be enabled.
+
 endif  # PLATFORM_EC_USB_POWER_DELIVERY
 
 menuconfig PLATFORM_EC_USBC_PPC

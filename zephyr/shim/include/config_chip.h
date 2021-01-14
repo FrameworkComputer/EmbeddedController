@@ -574,4 +574,14 @@ enum battery_type {
 #define CONFIG_CMD_USB_PD_CABLE
 #endif
 
+#undef CONFIG_USB_PD_TBT_COMPAT_MODE
+#ifdef CONFIG_PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
+#define CONFIG_USB_PD_TBT_COMPAT_MODE
+#endif
+
+#undef CONFIG_USB_PD_USB4
+#ifdef CONFIG_PLATFORM_EC_USB_PD_USB4
+#define CONFIG_USB_PD_USB4
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */
