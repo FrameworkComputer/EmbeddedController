@@ -552,4 +552,9 @@ enum battery_type {
 #define CONFIG_USB_PD_USB32_DRD
 #endif
 
+#undef CONFIG_HOSTCMD_PD_CONTROL
+#ifdef CONFIG_PLATFORM_EC_HOSTCMD_PD_CONTROL
+#define CONFIG_HOSTCMD_PD_CONTROL
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */
