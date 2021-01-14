@@ -128,6 +128,8 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TIMER   "${PLATFORM_EC}/common/timer.c")
 
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_CHARGER
                                                 "${PLATFORM_EC}/common/usb_charger.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB
+                                                "${PLATFORM_EC}/common/usb_port_power_dumb.c")
 
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_POWER_DELIVERY
                                                 "${PLATFORM_EC}/common/usb_common.c"
