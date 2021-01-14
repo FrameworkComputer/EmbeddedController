@@ -423,9 +423,47 @@ menuconfig PLATFORM_EC_USBC_PPC
 
 if PLATFORM_EC_USBC_PPC
 
+config PLATFORM_EC_USBC_PPC_POLARITY
+	bool
+	help
+	  Enable this if a Power Path Controller needs to be informed of
+	  the polarity of the Configuration Channel (CC) pins. This can change
+	  depending on which way up the USB-C cable is inserted into the
+	  device.
+
+	  This should be enabled by drivers which can detect this. It cannot be
+	  set otherwise, even in prj.conf
+
+config PLATFORM_EC_USBC_PPC_SBU
+	bool
+	help
+	  Enable this if a Power Path Controller is capable of gating the
+	  Sideband Use (SBU) lines. If so, the USB mux will use this feature
+	  to isolate the lines before entering into alternate mode.
+
+	  This should be enabled by drivers which can detect this. It cannot be
+	  set otherwise, even in prj.conf
+
+config PLATFORM_EC_USBC_PPC_VCONN
+	bool
+	depends on PLATFORM_EC_USBC_VCONN
+	help
+	  Enable this if a Power Path Controller is capable of providing
+	  VCONN. If so, the USB stack will enable / disable VCONN as needed.
+
+	  This should be enabled by drivers which can detect this. It cannot be
+	  set otherwise, even in prj.conf
+
+	  Note: This may not be true, as there may be scenarios where the board
+	  might need to disable this feature (for instance when both the PPC and
+	  TCPC can supply VCONN). We can cross that bridge when we come to it.
+
 config PLATFORM_EC_USBC_PPC_SN5S330
 	bool "TI SN5S330 PD 3.0 power mux"
 	select PLATFORM_EC_USBC_OCP
+	select PLATFORM_EC_USBC_PPC_POLARITY
+	select PLATFORM_EC_USBC_PPC_SBU
+	select PLATFORM_EC_USBC_PPC_VCONN if PLATFORM_EC_USBC_VCONN
 	help
 	  This is a USB Type-C Power Delivery 3.0 Bidirectional Power Mux with
 	  CC and SBU short-to-VBUS Protection and Integrated Dead Battery
@@ -437,6 +475,8 @@ config PLATFORM_EC_USBC_PPC_SN5S330
 config PLATFORM_EC_USBC_PPC_SYV682X
 	bool "SYV682X which is a Power Mux for USB PD"
 	select PLATFORM_EC_USBC_OCP
+	select PLATFORM_EC_USBC_PPC_POLARITY
+	select PLATFORM_EC_USBC_PPC_VCONN if PLATFORM_EC_USBC_VCONN
 	help
 	  The SYV682A is a 2 to 1 power mux switch for USB PD applications. The
 	  SYV682A supports dead battery wake up function and Fast Role Swap
