@@ -91,12 +91,7 @@ class Zmake:
         base_config = zmake.build_config.BuildConfig(
             environ_defs={'ZEPHYR_BASE': str(zephyr_base),
                           'PATH': '/usr/bin'},
-            cmake_defs={'DTS_ROOT': '{};{}'.format(
-                # TODO(b/177003034): remove zephyr-chrome from here
-                # once all dts files have migrated to platform/ec.
-                module_paths['zephyr-chrome'],
-                module_paths['ec-shim'] / 'zephyr',
-            )})
+            cmake_defs={'DTS_ROOT': str(module_paths['ec-shim'] / 'zephyr')})
         module_config = zmake.modules.setup_module_symlinks(
             build_dir / 'modules', module_paths)
 
