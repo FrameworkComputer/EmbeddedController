@@ -461,7 +461,7 @@ void dpm_remove_sink(int port)
  * match a criteria on the 3.0 A priority list (ex. though sink capability
  * probing), at which point they will be offered a new 3.0 A source capability.
  */
-int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
+__overridable int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
 {
 	/* Max PDO may not exist on boards which don't offer 3 A */
 #if CONFIG_USB_PD_3A_PORTS > 0
