@@ -20,14 +20,14 @@
 
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
 	!defined(CONFIG_USB_PD_TCPC_LOW_POWER)
-#error "TUSB422 driver requires CONFIG_USB_PD_TCPC_LOW_POWER if"
-#error "CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE is enabled"
+#error "TUSB422 driver requires CONFIG_USB_PD_TCPC_LOW_POWER if " \
+		"CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE is enabled"
 #endif
 
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
 	defined(CONFIG_USB_PD_DISCHARGE_TCPC)
-#error "TUSB422 must disable TCPC discharge to support enabling Auto Discharge"
-#error "Disconnect all the time."
+#error "TUSB422 must disable TCPC discharge to support enabling Auto " \
+		"Discharge Disconnect all the time."
 #endif
 
 enum tusb422_reg_addr {
