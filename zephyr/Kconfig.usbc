@@ -309,6 +309,15 @@ config PLATFORM_EC_USB_PD_ALT_MODE_UFP
 	  USB4 and ThunderBolt operation when the Chromium OS data role
 	  resolves to the UFP role.
 
+config PLATFORM_EC_USB_PD_USB32_DRD
+	bool "Port is cable of operating as an USB3.2 device"
+	default y
+	help
+	  Enable this if the board's USB Power Delivery Downward Facing Port is
+	  able to support the USB3.2 standard. This is advertised to the
+	  other end so that it can potentially take advantage of the additional
+	  features available.
+
 choice "VBUS detection method"
 	prompt "Select the method to detect VBUS"
 
