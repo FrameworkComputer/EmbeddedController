@@ -100,7 +100,10 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, kblight_resume, HOOK_PRIO_DEFAULT);
 
 static void kblight_lid_change(void)
 {
-	kblight_enable(lid_is_open() && current_percent);
+	if (lid_is_open() && current_percent)
+		kblight_resume();
+	else
+		kblight_enable(0);
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, kblight_lid_change, HOOK_PRIO_DEFAULT);
 
