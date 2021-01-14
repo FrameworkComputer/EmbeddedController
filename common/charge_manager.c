@@ -699,10 +699,21 @@ static void charge_manager_refresh(void)
 		 * the port, for example, if the port has become a charge
 		 * source.
 		 */
-		if ((active_charge_port_initialized &&
+		if (active_charge_port_initialized &&
 		     new_port == charge_port &&
-		     new_supplier == charge_supplier) ||
-		     board_set_active_charge_port(new_port) == EC_SUCCESS)
+		     new_supplier == charge_supplier)
+			break;
+
+		/*
+		 * For OCPC systems, reset the OCPC state to prevent current
+		 * spikes.
+		 */
+		if (IS_ENABLED(CONFIG_OCPC)) {
+			charge_set_active_chg_chip(new_port);
+			trigger_ocpc_reset();
+		}
+
+		if (board_set_active_charge_port(new_port) == EC_SUCCESS)
 			break;
 
 		/* 'Dont charge' request must be accepted. */
@@ -719,10 +730,6 @@ static void charge_manager_refresh(void)
 	}
 
 	active_charge_port_initialized = 1;
-
-	/* Set the active charger chip based upon the selected charge port. */
-	if (IS_ENABLED(CONFIG_OCPC))
-		charge_set_active_chg_chip(new_port);
 
 	/*
 	 * Clear override if it wasn't selected as the 'best' port -- it means

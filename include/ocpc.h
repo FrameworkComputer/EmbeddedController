@@ -72,6 +72,14 @@ __overridable void ocpc_get_pid_constants(int *kp, int *kp_div,
 void ocpc_init(struct ocpc_data *ocpc);
 
 /**
+ * Reset the OCPC module.  This also sets the initial VSYS target to the current
+ * battery voltage
+ *
+ * @param ocpc: Pointer to OCPC data
+ */
+void ocpc_reset(struct ocpc_data *ocpc);
+
+/**
  * Board specific OCPC data structure initialization.  This can be used to set
  * up and charger flags.  The default implementation does nothing.
  *
