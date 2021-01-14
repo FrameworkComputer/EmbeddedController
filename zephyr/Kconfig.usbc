@@ -400,6 +400,16 @@ config PLATFORM_EC_USB_DRP_ACC_TRYSRC
 
 endchoice  # USB-C device type
 
+config PLATFORM_EC_USB_PD_TRY_SRC
+	bool "Enable Try.SRC mode"
+	depends on PLATFORM_EC_USB_DRP_ACC_TRYSRC
+	default y
+	help
+	  This enables Try.SRC mode so that the board will try to be a source
+	  for power if the other end offers both options. This can be useful
+	  for laptops, for example, since when attaching to a cellphone we want
+	  the laptop to charge the phone, not vice versa.
+
 endif  # PLATFORM_EC_USB_POWER_DELIVERY
 
 menuconfig PLATFORM_EC_USBC_PPC
