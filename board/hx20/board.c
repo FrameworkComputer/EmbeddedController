@@ -73,32 +73,9 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-
-/* NOTE: MEC17xx EVB + SKL RVP3 does not use BD99992 PMIC.
- * RVP3 PMIC controlled by RVP3 logic.
- */
-#define I2C_ADDR_BD99992_FLAGS	0x30
-
-/*
- * Maxim DS1624 I2C temperature sensor used for testing I2C.
- * DS1624 contains one internal temperature sensor
- * and EEPROM. It has no external temperature inputs.
- */
-#define DS1624_I2C_ADDR_FLAGS	(0x48 | I2C_FLAG_BIG_ENDIAN)
-#define DS1624_IDX_LOCAL	0
-#define DS1624_READ_TEMP16	0xAA	/* read 16-bit temperature */
-#define DS1624_ACCESS_CFG	0xAC	/* read/write 8-bit config */
-#define DS1624_CMD_START	0xEE
-#define DS1624_CMD_STOP		0x22
-
 #define POWER_LIMIT_1_W	28
 
 static int forcing_shutdown;  /* Forced shutdown in progress? */
-
-#ifdef HAS_TASK_MOTIONSENSE
-static void board_spi_enable(void);
-static void board_spi_disable(void);
-#endif
 
 #ifdef CONFIG_BOARD_PRE_INIT
 /*
@@ -178,7 +155,6 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
-#ifdef CONFIG_PWM
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_FAN] = {
 		.channel = 0,
@@ -230,7 +206,6 @@ const struct pwm_t pwm_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-#endif
 
 void chipset_handle_espi_reset_assert(void)
 {
@@ -246,49 +221,6 @@ void chipset_handle_espi_reset_assert(void)
 		forcing_shutdown = 0;
 	}
 }
-/*
- * Use EC to handle ALL_SYS_PWRGD signal.
- * MEC17xx connected to SKL/KBL RVP3 reference board
- * is required to monitor ALL_SYS_PWRGD and drive SYS_RESET_L
- * after a 10 to 100 ms delay.
- */
-#ifdef CONFIG_BOARD_EC_HANDLES_ALL_SYS_PWRGD
-
-static void board_all_sys_pwrgd(void)
-{
-	int allsys_in = gpio_get_level(GPIO_ALL_SYS_PWRGD);
-	int allsys_out = gpio_get_level(GPIO_SYS_RESET_L);
-
-	if (allsys_in == allsys_out)
-		return;
-
-	CPRINTS("ALL_SYS_PWRGD=%d SYS_RESET_L=%d", allsys_in, allsys_out);
-
-	trace2(0, BRD, 0, "ALL_SYS_PWRGD=%d SYS_RESET_L=%d",
-			allsys_in, allsys_out);
-
-	/*
-	 * Wait at least 10 ms between power signals going high
-	 */
-	if (allsys_in)
-		msleep(100);
-
-	if (!allsys_out) {
-		/* CPRINTS("Set SYS_RESET_L = %d", allsys_in); */
-		trace1(0, BRD, 0, "Set SYS_RESET_L=%d", allsys_in);
-		gpio_set_level(GPIO_SYS_RESET_L, allsys_in);
-		/* Force fan on for kabylake RVP */
-		gpio_set_level(GPIO_EC_FAN1_PWM, 1);
-	}
-}
-DECLARE_DEFERRED(board_all_sys_pwrgd);
-
-void all_sys_pwrgd_interrupt(enum gpio_signal signal)
-{
-	trace0(0, ISR, 0, "ALL_SYS_PWRGD Edge");
-	hook_call_deferred(&board_all_sys_pwrgd_data, 0);
-}
-#endif /* #ifdef CONFIG_BOARD_HAS_ALL_SYS_PWRGD */
 
 
 #ifdef HAS_TASK_PDCMD
@@ -300,44 +232,6 @@ static void pd_mcu_interrupt(enum gpio_signal signal)
 
 }
 #endif
-
-#ifdef CONFIG_USB_POWER_DELIVERY
-void vbus0_evt(enum gpio_signal signal)
-{
-	/* VBUS present GPIO is inverted */
-	usb_charger_vbus_change(0, !gpio_get_level(signal));
-	task_wake(TASK_ID_PD_C0);
-}
-
-void vbus1_evt(enum gpio_signal signal)
-{
-	/* VBUS present GPIO is inverted */
-	usb_charger_vbus_change(1, !gpio_get_level(signal));
-	task_wake(TASK_ID_PD_C1);
-}
-
-void usb0_evt(enum gpio_signal signal)
-{
-	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12, 0);
-}
-
-void usb1_evt(enum gpio_signal signal)
-{
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12, 0);
-}
-#endif
-
-/*
- * enable_input_devices() is called by the tablet_mode ISR, but changes the
- * state of GPIOs, so its definition must reside after including gpio_list.
- */
-static void enable_input_devices(void);
-DECLARE_DEFERRED(enable_input_devices);
-
-void tablet_mode_interrupt(enum gpio_signal signal)
-{
-	hook_call_deferred(&enable_input_devices_data, 0);
-}
 
 #include "gpio_list.h"
 
@@ -392,19 +286,7 @@ int board_i2c_p2c(int port)
 
 	return -1;
 }
-
-#ifdef CONFIG_USB_POWER_DELIVERY
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{I2C_PORT_TCPC,
-	 CONFIG_TCPC_I2C_BASE_ADDR_FLAGS,
-	 &tcpci_tcpm_drv},
-
-	{I2C_PORT_TCPC,
-	 CONFIG_TCPC_I2C_BASE_ADDR_FLAGS + 1,
-	 &tcpci_tcpm_drv},
-};
-#endif
-
+#ifdef I2C_SLAVE
 const uint32_t i2c_ctrl_slave_addrs[I2C_CONTROLLER_COUNT] = {
 #ifdef CONFIG_BOARD_MCHP_I2C0_SLAVE_ADDRS
 	(MCHP_I2C_CTRL0 + (CONFIG_BOARD_MCHP_I2C0_SLAVE_ADDRS << 16)),
@@ -437,7 +319,7 @@ uint16_t board_i2c_slave_addrs(int controller)
 
 	return CONFIG_MCHP_I2C0_SLAVE_ADDRS;
 }
-
+#endif
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
@@ -510,65 +392,14 @@ void board_resume_from_deep_sleep(void)
 }
 #endif
 
-#ifdef CONFIG_USB_MUX_PI3USB30532
-struct pi3usb9281_config pi3usb9281_chips[] = {
-	{
-		.i2c_port = I2C_PORT_USB_CHARGER_1,
-		.mux_lock = NULL,
-	},
-	{
-		.i2c_port = I2C_PORT_USB_CHARGER_2,
-		.mux_lock = NULL,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
-	     CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
-
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.usb_port = 0,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
-		.driver = &pi3usb3x532_usb_mux_driver,
-	},
-	{
-		.usb_port = 1,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = 0x10,
-		.driver = &ps874x_usb_mux_driver,
-	}
-};
-#endif
 
 /**
  * Reset PD MCU
  */
 void board_reset_pd_mcu(void)
 {
-	// TODO FRAMEWORK
-	//gpio_set_level(GPIO_PD_RST_L, 0);
-	usleep(100);
-	//gpio_set_level(GPIO_PD_RST_L, 1);
+
 }
-
-
-#ifdef CONFIG_ALS
-/* ALS instances. Must be in same order as enum als_id. */
-struct als_t als[] = {
-	{"TI", opt3001_init, opt3001_read_lux, 5},
-};
-BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
-#endif
-
-/*
-TODO FRAMEWORK 
-const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
-	{"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN, GPIO_VOLUME_DOWN_L,
-	 30 * MSEC, 0},
-	{"Volume Up", KEYBOARD_BUTTON_VOLUME_UP, GPIO_VOLUME_UP_L,
-	 30 * MSEC, 0},
-};
-*/
 
 static void vci_init(void)
 {
@@ -644,60 +475,12 @@ DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 static void board_init(void)
 {
 	CPRINTS("MEC1701 HOOK_INIT - called board_init");
-	trace0(0, HOOK, 0, "HOOK_INIT - call board_init");
 	board_get_version();
-
-
 
 	gpio_enable_interrupt(GPIO_SOC_ENBKL);
 	gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);
-
-
-#ifdef CONFIG_USB_POWER_DELIVERY
-	/* Enable PD MCU interrupt */
-	gpio_enable_interrupt(GPIO_PD_MCU_INT);
-	/* Enable VBUS interrupt */
-	gpio_enable_interrupt(GPIO_USB_C0_VBUS_WAKE_L);
-	gpio_enable_interrupt(GPIO_USB_C1_VBUS_WAKE_L);
-
-	/* Enable pericom BC1.2 interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
-	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
-#endif
-
-
-#ifdef HAS_TASK_MOTIONSENSE
-	if (system_jumped_to_this_image() &&
-	    chipset_in_state(CHIPSET_STATE_ON)) {
-		trace0(0, BRD, 0, "board_init: S0 call board_spi_enable");
-		board_spi_enable();
-	}
-#endif
-
-
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
-/*
- * Enable or disable input devices,
- * based upon chipset state and tablet mode
- */
-static void enable_input_devices(void)
-{
-	int kb_enable = 1;
-	int tp_enable = 1;
-
-	/* Disable both TP and KB in tablet mode */
-	/* if (!gpio_get_level(GPIO_TABLET_MODE_L))
-		kb_enable = tp_enable = 0; 
-	*/
-	/* Disable TP if chipset is off */
-	// TODO FRAMEWORK else if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		tp_enable = 0;
-
-	keyboard_scan_enable(kb_enable, KB_SCAN_DISABLE_LID_CLOSED);
-	gpio_set_level(GPIO_ENABLE_TOUCHPAD, tp_enable);
-}
 
 #ifdef CONFIG_EMI_REGION1
 
@@ -719,16 +502,11 @@ static void sci_enable(void)
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {
-	CPRINTS("MEC1701 HOOK_CHIPSET_STARTUP - called board_chipset_startup");
-	trace0(0, HOOK, 0, "HOOK_CHIPSET_STARTUP - board_chipset_startup");
-	/* TODO FRAMEWORK 
-	gpio_set_level(GPIO_USB1_ENABLE, 1);
-	gpio_set_level(GPIO_USB2_ENABLE, 1);
-	*/ 
+	CPRINTS("HOOK_CHIPSET_STARTUP - called board_chipset_startup");
+
 #ifdef CONFIG_EMI_REGION1
 	hook_call_deferred(&sci_enable_data, 250 * MSEC);
 #endif
-	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 		board_chipset_startup,
@@ -737,17 +515,11 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 /* Called on AP S3 -> S5 transition */
 static void board_chipset_shutdown(void)
 {
-	CPRINTS("MEC1701 HOOK_CHIPSET_SHUTDOWN board_chipset_shutdown");
-	trace0(0, HOOK, 0,
-	       "HOOK_CHIPSET_SHUTDOWN board_chipset_shutdown");
-	/* TODO FRAMEWORK 
-	gpio_set_level(GPIO_USB1_ENABLE, 0);
-	gpio_set_level(GPIO_USB2_ENABLE, 0);
-	*/ 
+	CPRINTS(" HOOK_CHIPSET_SHUTDOWN board_chipset_shutdown");
+
 #ifdef CONFIG_EMI_REGION1
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
 #endif
-	hook_call_deferred(&enable_input_devices_data, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 		board_chipset_shutdown,
@@ -756,12 +528,9 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
-	CPRINTS("MEC1701_EVG HOOK_CHIPSET_RESUME");
-	trace0(0, HOOK, 0, "HOOK_CHIPSET_RESUME - board_chipset_resume");
+	CPRINTS("HOOK_CHIPSET_RESUME");
 	/*gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);*/
 	gpio_set_level(GPIO_EC_MUTE_L, 1);
-	gpio_set_level(GPIO_EC_WLAN_EN,1);
-	gpio_set_level(GPIO_EC_WL_OFF_L,1);
 	gpio_set_level(GPIO_CAM_EN, 1);
 	gpio_set_flags(GPIO_ME_EN, GPIO_ODR_HIGH);
 }
@@ -775,8 +544,6 @@ static void board_chipset_suspend(void)
 	trace0(0, HOOK, 0, "HOOK_CHIPSET_SUSPEND - board_chipset_suspend");
 	/*gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);*/
 	gpio_set_level(GPIO_EC_MUTE_L, 0);
-	gpio_set_level(GPIO_EC_WLAN_EN,1);
-	gpio_set_level(GPIO_EC_WL_OFF_L,1);
 	gpio_set_level(GPIO_CAM_EN, 0);
 	gpio_set_flags(GPIO_ME_EN, GPIO_OUT_LOW);
 #if 0 /* TODO not implemented in gpio.inc */
@@ -806,218 +573,8 @@ void board_hibernate_late(void)
 	/*
 	gpio_set_level(GPIO_USB_PD_WAKE, 0);
 	*/
-
-#ifdef CONFIG_USB_PD_PORT_MAX_COUNT
-	/*
-	 * Leave USB-C charging enabled in hibernate, in order to
-	 * allow wake-on-plug. 5V enable must be pulled low.
-	 */
-#if CONFIG_USB_PD_PORT_MAX_COUNT > 0
-	gpio_set_flags(GPIO_USB_C0_5V_EN, GPIO_PULL_DOWN | GPIO_INPUT);
-	gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 0);
-#endif
-#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
-	gpio_set_flags(GPIO_USB_C1_5V_EN, GPIO_PULL_DOWN | GPIO_INPUT);
-	gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 0);
-#endif
-#endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
 }
 
-/* Any glados boards post version 2 should have ROP_LDO_EN stuffed. */
-#define BOARD_MIN_ID_LOD_EN 2
-/* Make the pmic re-sequence the power rails under these conditions. */
-#define PMIC_RESET_FLAGS \
-	(EC_RESET_FLAG_WATCHDOG | EC_RESET_FLAG_SOFT | EC_RESET_FLAG_HARD)
-static void board_handle_reboot(void)
-{
-#if 0 /* MEC17xx EVB + SKL-RVP3 does not use chromebook PMIC design */
-	int flags;
-#endif
-	CPRINTS("MEC HOOK_INIT - called board_handle_reboot");
-	trace0(0, HOOK, 0, "HOOK_INIT - board_handle_reboot");
-
-	if (system_jumped_to_this_image())
-		return;
-
-	if (system_get_board_version() < BOARD_MIN_ID_LOD_EN)
-		return;
-
-#if 0 /* TODO MCHP KBL hack not PMIC system */
-	/* Interrogate current reset flags from previous reboot. */
-	flags = system_get_reset_flags();
-
-	if (!(flags & PMIC_RESET_FLAGS))
-		return;
-
-	/* Preserve AP off request. */
-	if (flags & EC_RESET_FLAG_AP_OFF)
-		chip_save_reset_flags(EC_RESET_FLAG_AP_OFF);
-
-	ccprintf("Restarting system with PMIC.\n");
-	/* Flush console */
-	cflush();
-
-	/* Bring down all rails but RTC rail (including EC power). */
-	gpio_set_flags(GPIO_BATLOW_L_PMIC_LDO_EN, GPIO_OUT_HIGH);
-	while (1)
-		; /* wait here */
-#else
-	return;
-#endif
-}
-DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
-
-/* Indicate scheduler is alive by blinking an LED.
- * Test I2C by reading a smart battery and temperature sensor.
- * Smart battery 16 bit temperature is in units of 1/10 degree C.
- */
-static void board_one_sec(void)
-{
-	trace0(0, BRD, 0, "HOOK_SECOND");
-}
-DECLARE_HOOK(HOOK_SECOND, board_one_sec, HOOK_PRIO_DEFAULT);
-
-#ifdef HAS_TASK_MOTIONSENSE
-/* Motion sensors */
-
-static struct mutex g_base_mutex;
-/* BMI160 private data */
-static struct bmi_drv_data_t g_bmi160_data;
-
-#ifdef CONFIG_ACCEL_KX022
-static struct mutex g_lid_mutex;
-/* KX022 private data */
-static struct kionix_accel_data g_kx022_data;
-#endif
-
-struct motion_sensor_t motion_sensors[] = {
-	/*
-	 * Note: bmi160: supports accelerometer and gyro sensor
-	 * Requirement: accelerometer sensor must init before gyro sensor
-	 * DO NOT change the order of the following table.
-	 */
-	[BASE_ACCEL] = {
-		.name = "Base Accel",
-		.active_mask = SENSOR_ACTIVE_S0,
-		.chip = MOTIONSENSE_CHIP_BMI160,
-		.type = MOTIONSENSE_TYPE_ACCEL,
-		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi160_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi160_data,
-		.port = CONFIG_SPI_ACCEL_PORT,
-		.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(
-			CONFIG_SPI_ACCEL_PORT),
-		.rot_standard_ref = NULL, /* Identity matrix. */
-		.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
-		.min_frequency = BMI_ACCEL_MIN_FREQ,
-		.max_frequency = BMI_ACCEL_MAX_FREQ,
-		.config = {
-			/* EC use accel for angle detection */
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-		},
-	},
-
-	[BASE_GYRO] = {
-		.name = "Base Gyro",
-		.active_mask = SENSOR_ACTIVE_S0,
-		.chip = MOTIONSENSE_CHIP_BMI160,
-		.type = MOTIONSENSE_TYPE_GYRO,
-		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi160_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi160_data,
-		.port = CONFIG_SPI_ACCEL_PORT,
-		.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(
-			CONFIG_SPI_ACCEL_PORT),
-		.default_range = 1000, /* dps */
-		.rot_standard_ref = NULL, /* Identity Matrix. */
-		.min_frequency = BMI_GYRO_MIN_FREQ,
-		.max_frequency = BMI_GYRO_MAX_FREQ,
-	},
-#ifdef CONFIG_ACCEL_KX022
-	[LID_ACCEL] = {
-		.name = "Lid Accel",
-		.active_mask = SENSOR_ACTIVE_S0,
-		.chip = MOTIONSENSE_CHIP_KX022,
-		.type = MOTIONSENSE_TYPE_ACCEL,
-		.location = MOTIONSENSE_LOC_LID,
-		.drv = &kionix_accel_drv,
-		.mutex = &g_lid_mutex,
-		.drv_data = &g_kx022_data,
-		.port = I2C_PORT_ACCEL,
-		.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
-		.rot_standard_ref = NULL, /* Identity matrix. */
-		.default_range = 2, /* g, enough for laptop. */
-		.min_frequency = KX022_ACCEL_MIN_FREQ,
-		.max_frequency = KX022_ACCEL_MAX_FREQ,
-		.config = {
-			/* EC use accel for angle detection */
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-		},
-	},
-#endif /* #ifdef CONFIG_ACCEL_KX022 */
-};
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-
-static void board_spi_enable(void)
-{
-	trace0(0, BRD, 0, "HOOK_CHIPSET_STARTUP - board_spi_enable");
-
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
-
-	/* Toggle SPI chip select to switch BMI160 from I2C mode
-	 * to SPI mode
-	 */
-	/*
-	gpio_set_level(GPIO_SPI0_CS0, 0);
-	udelay(10);
-	gpio_set_level(GPIO_SPI0_CS0, 1);
-	*/
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_spi_enable,
-	     MOTION_SENSE_HOOK_PRIO - 1);
-
-static void board_spi_disable(void)
-{
-	trace0(0, BRD, 0, "HOOK_CHIPSET_SHUTDOWN - board_spi_disable");
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_spi_disable,
-	     MOTION_SENSE_HOOK_PRIO + 1);
-#endif /* defined(HAS_TASK_MOTIONSENSE) */
-
-#ifdef MEC1701_EVB_TACH_TEST /* PWM/TACH test */
-void tach0_isr(void)
-{
-	MCHP_INT_DISABLE(MCHP_TACH_GIRQ) = MCHP_TACH_GIRQ_BIT(0);
-	MCHP_INT_SOURCE(MCHP_TACH_GIRQ) = MCHP_TACH_GIRQ_BIT(0);
-}
-DECLARE_IRQ(MCHP_IRQ_TACH_0, tach0_isr, 1);
-#endif
-
-void psensor_interrupt(enum gpio_signal signal)
-{
-	/* TODO: implement p-sensor interrupt function
-	* when object close to p-sensor, trun on system to S0
-	*/
-}
-
-void soc_hid_interrupt(enum gpio_signal signal)
-{
-	/* TODO: implement hid function */
-}
-
-void thermal_sensor_interrupt(enum gpio_signal signal)
-{
-	/* TODO: implement thermal sensor alert interrupt function */
-}
 
 void soc_signal_interrupt(enum gpio_signal signal)
 {
@@ -1080,11 +637,11 @@ int board_get_version(void)
 
 	for (i = 0; i < BOARD_VERSION_COUNT; i++)
 		if (mv < hx20_board_versions[i].thresh_mv) {
-			CPRINTS("Board version: %d", hx20_board_versions[i].version);
-			return hx20_board_versions[i].version;
+			version = hx20_board_versions[i].version;
+			return version;
 		}
 
-	return BOARD_VERSION_UNKNOWN;
+	return version;
 }
 
 /* Keyboard scan setting */
@@ -1193,6 +750,8 @@ void charger_update(void)
 DECLARE_HOOK(HOOK_AC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 
+#endif
+
 void update_soc_power_limit(void)
 {
 	/*
@@ -1247,8 +806,6 @@ void update_soc_power_limit(void)
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, update_soc_power_limit, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, update_soc_power_limit, HOOK_PRIO_DEFAULT);
-#endif
-
 
 const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_LOCAL] = {

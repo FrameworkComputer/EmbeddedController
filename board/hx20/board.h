@@ -154,10 +154,7 @@
 #define CONFIG_SYSTEM_UNLOCKED
 
 /* Optional features */
-#define CONFIG_ACCELGYRO_BMI160
-/* #define CONFIG_ACCEL_KX022 */
-/* #define CONFIG_ALS */
-/* #define CONFIG_ALS_OPT3001 */
+
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_PRESENT_CUSTOM
 #define CONFIG_BATTERY_SMART
@@ -238,7 +235,7 @@
  * DEBUG: Configure MEC17xx GPIO060 as 48MHZ_OUT to
  * verify & debug clock is shutdown in heavy sleep.
  */
-#define CONFIG_MCHP_48MHZ_OUT
+/*#define CONFIG_MCHP_48MHZ_OUT*/
 
 /*
  * DEBUG: Save and print out PCR sleep enables,
@@ -460,8 +457,6 @@
 #define GPIO_I2C_3_SCL      GPIO_EC_SMB_CLK3
 #define GPIO_I2C_6_SDA      GPIO_EC_I2C06_PD_SDA
 #define GPIO_I2C_6_SCL      GPIO_EC_I2C06_PD_CLK
-
-#define CONFIG_KEYBOARD_IRQ_GPIO GPIO_EC_KEYBOARD_IRQ
 
 
 /* EVT - DVT cover */
@@ -705,11 +700,6 @@ void board_reset_pd_mcu(void);
 /* P sensor */
 void psensor_interrupt(enum gpio_signal signal);
 
-/* HID */
-void soc_hid_interrupt(enum gpio_signal signal);
-
-/* thermal sensor */
-void thermal_sensor_interrupt(enum gpio_signal signal);
 
 /* SOC */
 void soc_signal_interrupt(enum gpio_signal signal);
