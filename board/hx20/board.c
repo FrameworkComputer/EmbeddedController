@@ -710,7 +710,7 @@ static void sci_enable(void)
 	/* when host set EC driver ready flag, EC need to enable SCI */
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0x20AF92AFF);
 
-		update_power_limit();
+		update_soc_power_limit();
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }
@@ -1193,7 +1193,7 @@ void charger_update(void)
 DECLARE_HOOK(HOOK_AC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 
-void update_power_limit(void)
+void update_soc_power_limit(void)
 {
 	/*
 	 * power limit is related to AC state, battery percentage, and power budget
@@ -1245,8 +1245,8 @@ void update_power_limit(void)
 
 
 }
-DECLARE_HOOK(HOOK_AC_CHANGE, update_power_limit, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, update_power_limit, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_AC_CHANGE, update_soc_power_limit, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, update_soc_power_limit, HOOK_PRIO_DEFAULT);
 #endif
 
 

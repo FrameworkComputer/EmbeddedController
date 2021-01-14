@@ -376,6 +376,7 @@ void cyp5525_get_sink_power(int controller, int port)
 	int active_voltage = 0;
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
+	int port_idx = (controller << 1) + port;
 
 	rv = i2c_read_offset16_block(i2c_port, addr_flags, CYP5525_PD_STATUS_REG(port), data2, 4);
 	if (rv != EC_SUCCESS)
@@ -385,16 +386,16 @@ void cyp5525_get_sink_power(int controller, int port)
 		rv = i2c_read_offset16_block(i2c_port, addr_flags, CYP5525_CURRENT_PDO_REG(port), data2, 4);
 		active_current = (data2[0] + ((data2[1] & 0x3) << 8)) * 10;
 		active_voltage = (((data2[1] & 0xFC) >> 2) + ((data2[2] & 0xF) << 6)) * 50;
-		CPRINTS("C%d, current:%d mA, voltage:%d mV", port, active_current, active_voltage);
-		pd_port_states[(controller << 1) + port].current = active_current;
-		pd_port_states[(controller << 1) + port].voltage = active_voltage;
+		CPRINTS("C%d, current:%d mA, voltage:%d mV", port_idx, active_current, active_voltage);
+		pd_port_states[port_idx].current = active_current;
+		pd_port_states[port_idx].voltage = active_voltage;
 		if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
 			/* Set ceiling based on what's negotiated */
-			pd_set_input_current_limit(port, active_current,
+			pd_set_input_current_limit(port_idx, active_current,
 						   active_voltage);
-			charge_manager_set_ceil((controller << 1) + port, CEIL_REQUESTOR_PD,
+			charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
 							active_current);
-			charge_manager_update_dualrole((controller << 1) + port, CAP_DEDICATED);
+			charge_manager_update_dualrole(port_idx, CAP_DEDICATED);
 
 		}
 	}

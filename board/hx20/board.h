@@ -737,7 +737,7 @@ int board_get_version(void);
 void board_power_off(void);
 
 void boot_ap_on_g3(void);
-void update_power_limit(void);
+void update_soc_power_limit(void);
 
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);
