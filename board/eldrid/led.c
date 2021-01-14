@@ -69,26 +69,26 @@ void led_set_color_battery(enum ec_led_colors color)
 	int port;
 	int side_select_duty;
 
-	port = charge_manager_get_active_charge_port();
+	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
+		port = charge_manager_get_active_charge_port();
+		switch (port) {
+		case LED_SIDESEL_MB_PORT:
+			side_select_duty = 0;
+			break;
+		case LED_SIDESEL_DB_PORT:
+			side_select_duty = 100;
+			break;
+		default:
+		/*
+		 * We need to turn off led here since curr.ac won't update
+		 * immediately but led will update every 200ms.
+		 */
+			side_select_duty = 50;
+			color = LED_OFF;
+		}
 
-	switch (port) {
-	case LED_SIDESEL_MB_PORT:
-		side_select_duty = 0;
-		break;
-	case LED_SIDESEL_DB_PORT:
-		side_select_duty = 100;
-		break;
-	default:
-	/*
-	 * We need to turn off led here since curr.ac won't update
-	 * immediately but led will update every 200ms.
-	 */
-		side_select_duty = 50;
-		color = LED_OFF;
-	}
-
-	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		pwm_set_duty(PWM_CH_LED4_SIDESEL, side_select_duty);
+	}
 
 	switch (color) {
 	case EC_LED_COLOR_AMBER:
@@ -128,6 +128,7 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
 	if (led_id == EC_LED_ID_BATTERY_LED) {
+		led_auto_control(led_id, 0);
 		if (brightness[EC_LED_COLOR_AMBER] != 0)
 			led_set_color_battery(EC_LED_COLOR_AMBER);
 		else if (brightness[EC_LED_COLOR_WHITE] != 0)
