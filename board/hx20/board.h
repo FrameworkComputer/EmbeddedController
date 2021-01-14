@@ -163,7 +163,7 @@
 #define CONFIG_BATTERY_SMART
 #define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_BUTTON_COUNT 2
-/* #define CONFIG_CHARGE_MANAGER */
+#define CONFIG_CHARGE_MANAGER
 /* #define CONFIG_CHARGE_RAMP_SW */
 
 #undef CONFIG_HOSTCMD_LOCATE_CHIP
@@ -177,6 +177,7 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20 /* BOARD_RS1 */
 #define CONFIG_CHARGER_SENSE_RESISTOR 10    /* BOARD_RS2 */
 #define CONFIG_CHARGER_INPUT_CURRENT 500	/* Minimum for USB - will negociate higher */
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 55000 /* only if battery is not present*/
 #define CONFIG_CHARGER_CUSTOMER_SETTING
 #define CONFIG_CMD_CHARGER_DUMP
 /*
@@ -672,7 +673,7 @@ enum als_id {
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
 #define PD_MAX_POWER_MW       60000
-#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_CURRENT_MA     5000
 #define PD_MAX_VOLTAGE_MV     20000
 
 

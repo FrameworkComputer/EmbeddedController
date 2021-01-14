@@ -678,93 +678,6 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-
-#ifdef CONFIG_CHARGER
-/**
- * Set active charge port -- only one port can be active at a time.
- *
- * @param charge_port   Charge port to enable.
- *
- * Returns EC_SUCCESS if charge port is accepted and made active,
- * EC_ERROR_* otherwise.
- */
-int board_set_active_charge_port(int charge_port)
-{
-	/* charge port is a realy physical port */
-	int is_real_port = (charge_port >= 0 &&
-			    charge_port < CONFIG_USB_PD_PORT_MAX_COUNT);
-	/* check if we are source vbus on that port */
-	int source = gpio_get_level(charge_port == 0 ? GPIO_USB_C0_5V_EN :
-						       GPIO_USB_C1_5V_EN);
-
-	if (is_real_port && source) {
-		CPRINTS("MEC1701 Skip enable p%d", charge_port);
-		trace1(0, BOARD, 0, "Skip enable charge port %d",
-			charge_port);
-		return EC_ERROR_INVAL;
-	}
-
-	CPRINTS("MEC1701 New chg p%d", charge_port);
-	trace1(0, BOARD, 0, "New charge port %d", charge_port);
-
-	if (charge_port == CHARGE_PORT_NONE) {
-		/* Disable both ports */
-		gpio_set_level(GPIO_USB_C0_CHARGE_EN_L, 1);
-		gpio_set_level(GPIO_USB_C1_CHARGE_EN_L, 1);
-	} else {
-		/* Make sure non-charging port is disabled */
-		gpio_set_level(charge_port ? GPIO_USB_C0_CHARGE_EN_L :
-					     GPIO_USB_C1_CHARGE_EN_L, 1);
-		/* Enable charging port */
-		gpio_set_level(charge_port ? GPIO_USB_C1_CHARGE_EN_L :
-					     GPIO_USB_C0_CHARGE_EN_L, 0);
-	}
-
-	return EC_SUCCESS;
-}
-
-/**
- * Set the charge limit based upon desired maximum.
- *
- * @param port          Port number.
- * @param supplier      Charge supplier type.
- * @param charge_ma     Desired charge limit (mA).
- * @param charge_mv     Negotiated charge voltage (mV).
- */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
-{
-	charge_set_input_current_limit(MAX(charge_ma,
-				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
-}
-#else
-/*
- * TODO HACK providing functions from common/charge_state_v2.c
- * which is not compiled in when no charger
- */
-int charge_want_shutdown(void)
-{
-	return 0;
-}
-
-int charge_prevent_power_on(int power_button_pressed)
-{
-	/* TODO: when adp power < 20W or battery < 10% cannot power on */
-	int battery_percent;
-	int active_power;
-
-	battery_percent = charge_get_percent();
-	active_power = cypd_get_active_power_budget();
-
-	if (active_power < 20 || (battery_percent < 10 && active_power < 55))
-		return 1;
-	else
-		return 0;
-}
-
-
-#endif
-
 /*
  * Enable or disable input devices,
  * based upon chipset state and tablet mode
@@ -1299,7 +1212,7 @@ void update_power_limit(void)
 
 	/* TODO: get the power and pps_power_budget */
 	battery_percent = charge_get_percent();
-	active_power = cypd_get_active_power_budget();
+	active_power = charge_manager_get_power_limit_uw()/1000000;
 	pps_power_budget = cypd_get_pps_power_budget();
 
 	if (!extpower_is_present() || (active_power < 55)) {

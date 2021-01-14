@@ -7,7 +7,7 @@
 
 #ifndef __CROS_EC_CYPRESS5525_H
 #define __CROS_EC_CYPRESS5525_H
-
+#include "usb_pd.h"
 /************************************************/
 /*	REGISTER ADDRESS DEFINITION                 */
 /************************************************/
@@ -262,6 +262,17 @@ enum cyp5525_port_state {
 	CYP5525_DEVICE_COUNT,
 };
 
+/*TYPE_C_STATUS_DEVICE*/
+enum cyp5525_port_status {
+	CYPD_STATUS_NOTHING,
+	CYPD_STATUS_SINK,
+	CYPD_STATUS_SOURCE,
+	CYPD_STATUS_DEBUG,
+	CYPD_STATUS_AUDIO,
+	CYPD_STATUS_POWERED_ACC,
+	CYPD_STATUS_UNSUPPORTED,
+	CYPD_STATUS_INVALID,
+};
 
 struct pd_chip_config_t {
 	uint16_t i2c_port;
@@ -275,14 +286,14 @@ struct pd_port_current_state_t {
 	int voltage;
 	int current;
 	int enabled;
+	int cc;
+	enum pd_power_role role;
 };
 
 /* PD CHIP */
 void pd_chip_interrupt(enum gpio_signal signal);
 
 void pd_extpower_is_present_interrupt(enum gpio_signal signal);
-
-int cypd_get_active_power_budget(void);
 
 int cypd_get_pps_power_budget(void);
 
