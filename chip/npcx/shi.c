@@ -357,25 +357,31 @@ static void shi_parse_header(void)
 /* This routine fills out all SHI output buffer with status byte */
 static void shi_fill_out_status(uint8_t status)
 {
-	uint8_t offset;
-	uint8_t *obuf_ptr;
+	uint8_t start, end;
+	uint8_t *fill_ptr;
+	uint8_t *fill_end;
 	uint8_t *obuf_end;
 
 	/* Disable interrupts in case the interfere by the other interrupts */
 	interrupt_disable();
 
-	offset = SHI_OBUF_VALID_OFFSET;
+	/*
+	 * Fill out output buffer with status byte and leave a gap for PREAMBLE.
+	 * The gap guarantees the synchronization. The critical section should
+	 * be done within this gap. No racing happens.
+	 */
+	start = SHI_OBUF_VALID_OFFSET;
+	end = ((start + SHI_OBUF_FULL_SIZE - SHI_OUT_PREAMBLE_LENGTH)
+	       % SHI_OBUF_FULL_SIZE);
 
-	/* Fill out all output buffer with status byte */
-	obuf_ptr = (uint8_t *)SHI_OBUF_START_ADDR + offset;
+	fill_ptr = (uint8_t *)SHI_OBUF_START_ADDR + start;
+	fill_end = (uint8_t *)SHI_OBUF_START_ADDR + end;
 	obuf_end = (uint8_t *)SHI_OBUF_START_ADDR + SHI_OBUF_FULL_SIZE;
-	while (obuf_ptr != obuf_end)
-		*(obuf_ptr++) = status;
-
-	obuf_ptr = (uint8_t *)SHI_OBUF_START_ADDR;
-	obuf_end = (uint8_t *)SHI_OBUF_START_ADDR + offset;
-	while (obuf_ptr != obuf_end)
-		*(obuf_ptr++) = status;
+	while (fill_ptr != fill_end) {
+		*(fill_ptr++) = status;
+		if (fill_ptr == obuf_end)
+			fill_ptr = (uint8_t *)SHI_OBUF_START_ADDR;
+	}
 
 	/* End of critical section */
 	interrupt_enable();
