@@ -203,6 +203,17 @@ config PLATFORM_EC_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
 
 endchoice  # Measuring VBUS voltage
 
+config PLATFORM_EC_USBC_VCONN
+	bool "Support USB Type-C VCONN"
+	default y
+	help
+	  This enables support for USB Type-C connector voltage (VCONN). This
+	  option must be enabled to communicate with electronically marked
+	  (E-Mark) cables. This option is required for operation with USB4 and
+	  Thunderbolt devices.
+
+	  This is not needed for captive cables.
+
 config PLATFORM_EC_USB_PD_DUAL_ROLE
 	bool "Board can act as a dual-role Power Delivery port"
 	default y

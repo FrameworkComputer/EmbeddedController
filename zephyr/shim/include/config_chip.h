@@ -519,4 +519,12 @@ enum battery_type {
 #define CONFIG_USB_PD_DEBUG_LEVEL	CONFIG_PLATFORM_EC_USB_PD_DEBUG_LEVEL
 #endif
 
+#undef CONFIG_USBC_VCONN
+#ifdef CONFIG_PLATFORM_EC_USBC_VCONN
+#define CONFIG_USBC_VCONN
+
+/* This must be defined as well */
+#define CONFIG_USBC_VCONN_SWAP
+#endif /* CONFIG_PLATFORM_EC_USBC_VCONN */
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */
