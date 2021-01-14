@@ -119,7 +119,6 @@
 /* TODO(b/111281797): Use correct PD delay values */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000	/* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	250000	/* us */
-#define CONFIG_USBC_VCONN_SWAP_DELAY_US		5000	/* us */
 
 /* TODO(b/111281797): Use correct PD power values */
 #define PD_OPERATING_POWER_MW	15000

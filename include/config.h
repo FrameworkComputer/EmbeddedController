@@ -4484,9 +4484,10 @@
 
 /*
  * The amount of time in microseconds that the board takes to turn VCONN on or
- * off after being directed to do so. Typically a property of the PPC.
+ * off after being directed to do so. Typically a property of the PPC. Default
+ * to 5 ms.
  */
-#undef CONFIG_USBC_VCONN_SWAP_DELAY_US
+#define CONFIG_USBC_VCONN_SWAP_DELAY_US 5000
 
 /* USB Binary device Object Store support */
 #undef CONFIG_USB_BOS

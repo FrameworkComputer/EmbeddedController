@@ -73,7 +73,6 @@
 /* TODO: b/144165680 - measure and check these values on Volteer */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
-#define CONFIG_USBC_VCONN_SWAP_DELAY_US		5000 /* us */
 /*
  * SN5S30 PPC supports up to 24V VBUS source and sink, however passive USB-C
  * cables only support up to 60W.

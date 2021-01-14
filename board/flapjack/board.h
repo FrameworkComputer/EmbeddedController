@@ -180,7 +180,6 @@
 
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000  /* us */
-#define CONFIG_USBC_VCONN_SWAP_DELAY_US 5000 /* us */
 
 /* Timer selection */
 #define TIM_CLOCK32  2

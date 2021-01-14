@@ -49,7 +49,6 @@
 /* TCPC MT6370 */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
-#define CONFIG_USBC_VCONN_SWAP_DELAY_US 5000 /* us */
 
 /*
  * The Maximum input voltage is 13.5V, need another 5% tolerance.
@@ -67,7 +66,6 @@
 /* TCPC FUSB302 */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  160000  /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
-#define CONFIG_USBC_VCONN_SWAP_DELAY_US 5000 /* us */
 
 /* b/2230219: 15V has better charging performance than 20V */
 #define PD_MAX_VOLTAGE_MV 15000

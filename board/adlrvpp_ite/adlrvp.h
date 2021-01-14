@@ -67,7 +67,6 @@
 /* Enable VCONN */
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
-#define CONFIG_USBC_VCONN_SWAP_DELAY_US	5000 /* us */
 
 /* Enabling Thunderbolt-compatible mode */
 #define CONFIG_USB_PD_TBT_COMPAT_MODE

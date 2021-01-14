@@ -96,7 +96,6 @@ enum adc_channel {
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
 /* delay to turn on/off vconn */
-#define CONFIG_USBC_VCONN_SWAP_DELAY_US 5000 /* us */
 
 void board_pd_vbus_ctrl(int port, int enabled);
 
