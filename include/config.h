@@ -4422,7 +4422,7 @@
  * then we can differentiate USB topologies by varying the HW version field
  * in the Sink and Source Capabilities Extended messages.
  *
- * To reserve a new PID, use go/usb.
+ * To reserve a new PID, use go/usb-pid.
  */
 #undef CONFIG_USB_PID
 
