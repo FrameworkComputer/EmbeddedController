@@ -193,7 +193,7 @@ int flash_physical_protect_now(int all)
 	if (all) {
 		/* Protect the entire flash */
 		all_protected = 1;
-		protect_banks(0, CONFIG_FLASH_SIZE /
+		protect_banks(0, CONFIG_FLASH_SIZE_BYTES /
 			      CONFIG_FLASH_BANK_SIZE);
 	} else
 		/* Protect the WP region (read-only section and pstate) */

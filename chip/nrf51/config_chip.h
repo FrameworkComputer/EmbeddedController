@@ -37,7 +37,7 @@
 
 /* Flash mapping */
 #define CONFIG_PROGRAM_MEMORY_BASE 0x00000000
-#define CONFIG_FLASH_SIZE 0x00040000
+#define CONFIG_FLASH_SIZE_BYTES 0x00040000
 #define CONFIG_FLASH_BANK_SIZE  0x1000
 
 /* Memory-mapped internal flash */

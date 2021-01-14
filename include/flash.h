@@ -61,7 +61,7 @@ int flash_bank_erase_size(int bank);
 #else  /* CONFIG_FLASH_MULTIPLE_REGION */
 /* Number of physical flash banks */
 #ifndef PHYSICAL_BANKS
-#define PHYSICAL_BANKS (CONFIG_FLASH_SIZE / CONFIG_FLASH_BANK_SIZE)
+#define PHYSICAL_BANKS (CONFIG_FLASH_SIZE_BYTES / CONFIG_FLASH_BANK_SIZE)
 #endif
 
 /* WP region offset and size in units of flash banks */

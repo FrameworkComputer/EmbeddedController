@@ -27,7 +27,7 @@
 #define CONFIG_RO_SIZE 0
 /* Fake full size if we had a RO partition */
 #undef CONFIG_RW_SIZE
-#define CONFIG_RW_SIZE CONFIG_FLASH_SIZE
+#define CONFIG_RW_SIZE CONFIG_FLASH_SIZE_BYTES
 #endif /* HAS_TASK_CONSOLE */
 
 /* 48 MHz SYSCLK clock frequency */

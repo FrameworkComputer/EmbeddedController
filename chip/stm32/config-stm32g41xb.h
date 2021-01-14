@@ -21,7 +21,7 @@
  * without being constrained by flash space issue. Currently only using RO image
  * flashed with STM32 debugger.
  */
-#define CONFIG_FLASH_SIZE       (256 * 1024)
+#define CONFIG_FLASH_SIZE_BYTES       (256 * 1024)
 #define CONFIG_FLASH_WRITE_SIZE 0x0004
 #define CONFIG_FLASH_BANK_SIZE (2 * 1024)
 #define CONFIG_FLASH_ERASE_SIZE CONFIG_FLASH_BANK_SIZE

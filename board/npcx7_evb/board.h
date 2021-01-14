@@ -69,10 +69,10 @@
 #if defined(CHIP_VARIANT_NPCX7M6FC) || defined(CHIP_VARIANT_NPCX7M7FC) || \
 	defined(CHIP_VARIANT_NPCX7M7WC)
 #define CONFIG_SPI_FLASH_W25Q40 /* Internal spi flash type */
-#define CONFIG_FLASH_SIZE 0x00080000 /* 512 KB internal spi flash */
+#define CONFIG_FLASH_SIZE_BYTES 0x00080000 /* 512 KB internal spi flash */
 #else
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal spi flash type */
-#define CONFIG_FLASH_SIZE 0x00100000 /* 1 MB internal spi flash */
+#define CONFIG_FLASH_SIZE_BYTES 0x00100000 /* 1 MB internal spi flash */
 #endif
 
 /* New features on npcx7 ec */

@@ -163,7 +163,7 @@ int spi_flash_protect_to_reg(unsigned int start, unsigned int len, uint8_t *sr1,
 		return EC_ERROR_INVAL;
 
 	/* Invalid data */
-	if ((start && !len) || start + len > CONFIG_FLASH_SIZE)
+	if ((start && !len) || start + len > CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
 
 	for (i = 0; i < ARRAY_SIZE(spi_flash_protect_ranges); ++i) {

@@ -26,7 +26,7 @@ uint32_t flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 	uint32_t wrp01 = REG32(STM32_OPTB_BASE + STM32_OPTB_WRP01);
-#if CONFIG_FLASH_SIZE > 64 * 1024
+#if CONFIG_FLASH_SIZE_BYTES > 64 * 1024
 	uint32_t wrp23 = REG32(STM32_OPTB_BASE + STM32_OPTB_WRP23);
 #endif
 
@@ -76,12 +76,12 @@ uint32_t flash_physical_get_protect_flags(void)
 
 		switch (i) {
 		case 8:
-#if CONFIG_FLASH_SIZE > 64 * 1024
+#if CONFIG_FLASH_SIZE_BYTES > 64 * 1024
 		case 24:
 #endif
 			shift += 8;
 			break;
-#if CONFIG_FLASH_SIZE > 64 * 1024
+#if CONFIG_FLASH_SIZE_BYTES > 64 * 1024
 		case 16:
 			reg = 1;
 			shift = 0;
@@ -96,7 +96,7 @@ uint32_t flash_physical_get_protect_flags(void)
 	for (i = 0; i < FLASH_REGION_COUNT; i++) {
 		if (!(wrp01 & wrp_mask[i][0]) &&
 			(wrp01 & wrp_mask[i][0] << 8) == (wrp_mask[i][0] << 8))
-#if CONFIG_FLASH_SIZE > 64 * 1024
+#if CONFIG_FLASH_SIZE_BYTES > 64 * 1024
 			if (!(wrp23 & wrp_mask[i][1]) &&
 			     (wrp23 & wrp_mask[i][1] << 8) ==
 							 (wrp_mask[i][1] << 8))
@@ -106,7 +106,7 @@ uint32_t flash_physical_get_protect_flags(void)
 #endif /* CONFIG_FLASH_PROTECT_RW || CONFIG_ROLLBACK */
 
 	if (wrp01 == 0xff00ff00)
-#if CONFIG_FLASH_SIZE > 64 * 1024
+#if CONFIG_FLASH_SIZE_BYTES > 64 * 1024
 		if (wrp23 == 0xff00ff00)
 #endif
 			flags |= EC_FLASH_PROTECT_ALL_AT_BOOT;

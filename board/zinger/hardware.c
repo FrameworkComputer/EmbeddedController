@@ -308,7 +308,8 @@ int flash_physical_write(int offset, int size, const char *data)
 	int res = EC_SUCCESS;
 	int i;
 
-	if ((uint32_t)address > CONFIG_PROGRAM_MEMORY_BASE + CONFIG_FLASH_SIZE)
+	if ((uint32_t)address >
+	    CONFIG_PROGRAM_MEMORY_BASE + CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
 
 	/* unlock CR if needed */

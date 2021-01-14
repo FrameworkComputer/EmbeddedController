@@ -36,7 +36,7 @@ struct ec_flash_bank const flash_bank_array[] = {
 		.protect_size_exp = __fls(SIZE_128KB),
 	},
 	{
-		.count = (CONFIG_FLASH_SIZE - SIZE_256KB) / SIZE_256KB,
+		.count = (CONFIG_FLASH_SIZE_BYTES - SIZE_256KB) / SIZE_256KB,
 		.write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE),
 		.size_exp = __fls(SIZE_256KB),
 		.erase_size_exp = __fls(SIZE_256KB),
@@ -70,7 +70,7 @@ struct ec_flash_bank const flash_bank_array[] = {
 		.protect_size_exp = __fls(SIZE_64KB),
 	},
 	{
-		.count = (CONFIG_FLASH_SIZE - SIZE_128KB) / SIZE_128KB,
+		.count = (CONFIG_FLASH_SIZE_BYTES - SIZE_128KB) / SIZE_128KB,
 		.write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE),
 		.size_exp = __fls(SIZE_128KB),
 		.erase_size_exp = __fls(SIZE_128KB),

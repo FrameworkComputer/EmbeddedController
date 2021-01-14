@@ -83,7 +83,7 @@ static int spi_flash_readloc(uint8_t *buf_usr,
 				(offset >> 8) & 0xFF,
 				offset & 0xFF};
 
-	if (offset + bytes > CONFIG_FLASH_SIZE)
+	if (offset + bytes > CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
 
 	return spi_transaction(SPI_FLASH_DEVICE, cmd, 4, buf_usr, bytes);

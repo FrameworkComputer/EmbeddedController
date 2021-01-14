@@ -353,7 +353,7 @@ static int test_flash_info(void)
 	TEST_ASSERT(test_send_host_command(EC_CMD_FLASH_INFO, 1, NULL, 0,
 		    &resp, sizeof(resp)) == EC_RES_SUCCESS);
 
-	TEST_CHECK((resp.flash_size == CONFIG_FLASH_SIZE) &&
+	TEST_CHECK((resp.flash_size == CONFIG_FLASH_SIZE_BYTES) &&
 		   (resp.write_block_size == CONFIG_FLASH_WRITE_SIZE) &&
 		   (resp.erase_block_size == CONFIG_FLASH_ERASE_SIZE) &&
 		   (resp.protect_block_size == CONFIG_FLASH_BANK_SIZE));

@@ -1825,7 +1825,7 @@
 #undef CONFIG_FLASH_REGION_TYPE_COUNT
 
 /* Total size of writable flash */
-#undef CONFIG_FLASH_SIZE
+#undef CONFIG_FLASH_SIZE_BYTES
 
 /* Minimum flash write size (in bytes) */
 #undef CONFIG_FLASH_WRITE_SIZE

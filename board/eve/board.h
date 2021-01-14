@@ -24,7 +24,7 @@
 #define CONFIG_DEVICE_EVENT
 #define CONFIG_DPTF
 #define CONFIG_DPTF_MULTI_PROFILE
-#define CONFIG_FLASH_SIZE 0x80000
+#define CONFIG_FLASH_SIZE_BYTES 0x80000
 #define CONFIG_FPU
 /* 7 day delay before hibernate */
 #undef  CONFIG_HIBERNATE_DELAY_SEC

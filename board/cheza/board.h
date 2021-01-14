@@ -28,7 +28,7 @@
 #define NPCX7_PWM1_SEL    0  /* GPIO C2 is not used as PWM1. */
 
 /* Internal SPI flash on NPCX7 */
-#define CONFIG_FLASH_SIZE (1024 * 1024)  /* 1MB internal spi flash */
+#define CONFIG_FLASH_SIZE_BYTES (1024 * 1024)  /* 1MB internal spi flash */
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 #define CONFIG_HOSTCMD_FLASH_SPI_INFO

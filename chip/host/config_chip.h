@@ -10,14 +10,14 @@
 
 /* Memory mapping */
 #if !defined(TEST_NVMEM) && !defined(TEST_CR50_FUZZ)
-#define CONFIG_FLASH_SIZE 0x00020000
+#define CONFIG_FLASH_SIZE_BYTES 0x00020000
 #define CONFIG_FLASH_BANK_SIZE 0x1000
 #else
-#define CONFIG_FLASH_SIZE (512 * 1024)
+#define CONFIG_FLASH_SIZE_BYTES (512 * 1024)
 #define CONFIG_FLASH_BANK_SIZE 0x800
 #endif
 
-extern char __host_flash[CONFIG_FLASH_SIZE];
+extern char __host_flash[CONFIG_FLASH_SIZE_BYTES];
 
 #define CONFIG_PROGRAM_MEMORY_BASE ((uintptr_t)__host_flash)
 #define CONFIG_FLASH_ERASE_SIZE 0x0010	     /* erase bank size */

@@ -503,7 +503,7 @@ SECTIONS
         /*
          * These linker labels are just for analysis and not used in the code.
          */
-	__config_flash_size = CONFIG_FLASH_SIZE;
+	__config_flash_size = CONFIG_FLASH_SIZE_BYTES;
 	__config_ro_size = CONFIG_RO_SIZE;
 	__config_ec_protected_storage_size = CONFIG_EC_PROTECTED_STORAGE_SIZE;
 	__config_rw_size = CONFIG_RW_SIZE;

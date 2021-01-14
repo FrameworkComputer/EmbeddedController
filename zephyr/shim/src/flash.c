@@ -126,7 +126,7 @@ static int flash_set_status_for_prot(int reg1, int reg2)
 static int flash_check_prot_range(unsigned int offset, unsigned int bytes)
 {
 	/* Invalid value */
-	if (offset + bytes > CONFIG_FLASH_SIZE)
+	if (offset + bytes > CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
 
 	/* Check if ranges overlap */
@@ -158,7 +158,7 @@ static int flash_check_prot_reg(unsigned int offset, unsigned int bytes)
 	sr2 = flash_get_status2();
 
 	/* Invalid value */
-	if (offset + bytes > CONFIG_FLASH_SIZE)
+	if (offset + bytes > CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
 
 	/* Compute current protect range */
@@ -181,7 +181,7 @@ static int flash_write_prot_reg(unsigned int offset, unsigned int bytes,
 	uint8_t sr2 = flash_get_status2();
 
 	/* Invalid values */
-	if (offset + bytes > CONFIG_FLASH_SIZE)
+	if (offset + bytes > CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
 
 	/* Compute desired protect range */

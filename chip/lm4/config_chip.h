@@ -61,7 +61,7 @@
  * in order to emulate per-bank write-protection UNTIL REBOOT. The hardware
  * doesn't support a write-protect pin, and if we make the write-protection
  * permanent, it can't be undone easily enough to support RMA. */
-#define CONFIG_FLASH_SIZE  0x00040000
+#define CONFIG_FLASH_SIZE_BYTES  0x00040000
 
 /****************************************************************************/
 /* Define our flash layout. */

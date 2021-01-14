@@ -36,7 +36,7 @@
  * doesn't support a write-protect pin, and if we make the write-protection
  * permanent, it can't be undone easily enough to support RMA.
  */
-#define CONFIG_FLASH_SIZE  0x00040000
+#define CONFIG_FLASH_SIZE_BYTES  0x00040000
 /* For IT8320BX, we have to reload cc parameters after ec softreset. */
 #define IT83XX_USBPD_CC_PARAMETER_RELOAD
 /*
@@ -53,7 +53,7 @@
  */
 #define IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
 #elif defined(CHIP_VARIANT_IT8320DX)
-#define CONFIG_FLASH_SIZE  0x00080000
+#define CONFIG_FLASH_SIZE_BYTES  0x00080000
 #define CONFIG_IT83XX_FLASH_CLOCK_48MHZ
 /*
  * Disable eSPI pad, then PLL change

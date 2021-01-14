@@ -44,7 +44,7 @@
  * not what is called 'bank' in the common code (ie Write-Protect sectors)
  * both have the same number of 128KB blocks.
  */
-#define HWBANK_SIZE  (CONFIG_FLASH_SIZE / 2)
+#define HWBANK_SIZE  (CONFIG_FLASH_SIZE_BYTES / 2)
 #define BLOCKS_PER_HWBANK (HWBANK_SIZE / CONFIG_FLASH_ERASE_SIZE)
 #define BLOCKS_HWBANK_MASK (BIT(BLOCKS_PER_HWBANK) - 1)
 

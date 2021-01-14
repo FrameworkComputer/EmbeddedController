@@ -28,7 +28,7 @@
 	#define NPCX_TACH_SEL2    0  /* No tach. */
 
 	/* Internal SPI flash on NPCX7 */
-	#define CONFIG_FLASH_SIZE (512 * 1024)
+	#define CONFIG_FLASH_SIZE_BYTES (512 * 1024)
 	#define CONFIG_SPI_FLASH_REGS
 	#define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 #elif defined(VARIANT_DEDEDE_EC_IT8320)

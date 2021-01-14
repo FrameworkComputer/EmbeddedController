@@ -34,7 +34,7 @@
 #define CONFIG_SHA256_UNROLLED
 
 /* Internal SPI flash on NPCX7 */
-#define CONFIG_FLASH_SIZE (512 * 1024) /* It's really 1MB. */
+#define CONFIG_FLASH_SIZE_BYTES (512 * 1024) /* It's really 1MB. */
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 

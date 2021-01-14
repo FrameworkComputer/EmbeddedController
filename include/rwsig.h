@@ -91,7 +91,7 @@ void rwsig_jump_now(void);
  * which might actually be in the PSTATE region.
  */
 #define CONFIG_RO_PUBKEY_ADDR (CONFIG_PROGRAM_MEMORY_BASE	\
-			       + (CONFIG_FLASH_SIZE / 2)	\
+			       + (CONFIG_FLASH_SIZE_BYTES / 2)	\
 			       - CONFIG_RO_PUBKEY_SIZE)
 #endif
 #endif /* CONFIG_RO_PUBKEY_ADDR */

@@ -37,7 +37,7 @@
 
 #if defined(CHIP_VARIANT_IT83202BX)
 /* TODO(b/133460224): enable properly chip config option. */
-#define CONFIG_FLASH_SIZE           0x00080000
+#define CONFIG_FLASH_SIZE_BYTES           0x00080000
 #define CONFIG_RAM_BASE             0x80080000
 #define CONFIG_RAM_SIZE             0x00010000
 
@@ -80,7 +80,7 @@
 || defined(CHIP_VARIANT_IT81202AX_1024) \
 || defined(CHIP_VARIANT_IT81302BX_1024) \
 || defined(CHIP_VARIANT_IT81202BX_1024)
-#define CONFIG_FLASH_SIZE           0x00100000
+#define CONFIG_FLASH_SIZE_BYTES           0x00100000
 #define CONFIG_RAM_BASE             0x80100000
 #define CONFIG_RAM_SIZE             0x0000f000
 

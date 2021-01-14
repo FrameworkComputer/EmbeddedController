@@ -14,7 +14,7 @@
 #include "util.h"
 
 /* This needs to be aligned to the erase bank size for NVCTR. */
-__aligned(CONFIG_FLASH_ERASE_SIZE) char __host_flash[CONFIG_FLASH_SIZE];
+__aligned(CONFIG_FLASH_ERASE_SIZE) char __host_flash[CONFIG_FLASH_SIZE_BYTES];
 uint8_t __host_flash_protect[PHYSICAL_BANKS];
 
 /* Override this function to make flash erase/write operation fail */

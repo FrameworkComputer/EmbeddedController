@@ -15,7 +15,7 @@
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
-#define CONFIG_FLASH_SIZE          0x00800000 /* 8MB spi flash */
+#define CONFIG_FLASH_SIZE_BYTES          0x00800000 /* 8MB spi flash */
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q64
 #define CONFIG_I2C
