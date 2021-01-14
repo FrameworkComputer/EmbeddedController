@@ -416,6 +416,25 @@ config PLATFORM_EC_USBC_PPC_DEDICATED_INT
 	  ppc_get_alert_status() to find out he interrupt status for a port.
 	  This function should be provided by the board code.
 
+config PLATFORM_EC_USB_PD_TCPC_LOW_POWER
+	bool "Allow Type-C Port Controller to enter low-power mode"
+	default y
+	help
+	  Allows entry to a low power mode when the USB port is idle.
+	  When enabled, an enter_low_power_mode member is present in tcpm_drv
+	  and should be set to a function that selects that mode, such as
+	  tcpci_enter_low_power_mode() for TCPCI-compatible TCPCs.
+
+config PLATFORM_EC_USB_PD_TCPC_LPM_EXIT_DEBOUNCE_US
+	int "Debounce delay when exiting low-power mode (uS)"
+	depends on PLATFORM_EC_USB_PD_TCPC_LOW_POWER
+	default 25000
+	help
+	  Some TCPCs need additional time following a VBUS change to internally
+	  debounce the CC line status and update the CC_STATUS register. This
+	  is the delay in microseconds to allow before checking the CC line
+	  status in the EC.
+
 choice "Type-C Port Manager (TCPM)"
 	prompt "Choose a Type-C Port Manager (TCPM) to manage TCPC"
 
