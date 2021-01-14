@@ -18,6 +18,7 @@
 #include "driver/charger/isl9241.h"
 #include "charger.h"
 #include "charge_state.h"
+#include "charge_manager.h"
 
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -142,6 +143,7 @@ int cypd_get_active_charging_port(void)
 				active_port_mask);
 		break;
 	}
+
 	return active_port;
 }
 int cypd_get_adapter_power(int *voltage, int *current)
@@ -173,11 +175,8 @@ void cyp5525_update_charger(void)
 		CPRINTS("Updating charger to active port %d",
 			active_port);
 		isl9241_set_ac_prochot(0, current);
-		charger_set_input_current(0, current*85/100);
 	} else {
 		CPRINTS("No usb-c input active. Not charging");
-		charger_set_input_current(0, 0);
-
 	}
 
 }
@@ -249,13 +248,6 @@ int cypd_clear_int(int controller, int mask)
 	return rv;
 }
 
-/* update current when the AC status get stable */
-static void cyp5225_current_update(void)
-{
-	cyp5525_update_charger();
-}
-DECLARE_HOOK(HOOK_AC_CHANGE, cyp5225_current_update, HOOK_PRIO_DEFAULT+1);
-
 /* we need to do PD reset every power on */
 int cyp5525_reset(int controller)
 {
@@ -300,6 +292,31 @@ int cyp5225_set_power_state(int power_state)
 			break;
 	}
 	return rv;
+}
+
+void cypd_update_port_state(int controller, int port)
+{
+	int data;
+	int state_idx = (controller << 1) + port;
+
+	cypd_read_reg8(controller, CYP5525_TYPE_C_STATUS_REG(port), &data);
+
+	pd_port_states[state_idx].enabled = data & 0x1;
+	pd_port_states[state_idx].cc = (data & 0x2) ? 2 : 1;
+
+	switch ((data >> 2) & 0x3) {
+	case CYPD_STATUS_NOTHING:
+		pd_port_states[state_idx].role = PD_ROLE_SOURCE;
+		break;
+	case CYPD_STATUS_SINK:
+		pd_port_states[state_idx].role = PD_ROLE_SOURCE;
+		break;
+	case CYPD_STATUS_SOURCE:
+		pd_port_states[state_idx].role = PD_ROLE_SINK;
+		break;
+	default:
+		break;
+	}
 }
 
 int cyp5525_setup(int controller)
@@ -359,6 +376,7 @@ void cyp5525_get_sink_power(int controller, int port)
 	int active_voltage = 0;
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
+	int port_idx = (controller << 1) + port;
 
 	rv = i2c_read_offset16_block(i2c_port, addr_flags, CYP5525_PD_STATUS_REG(port), data2, 4);
 	if (rv != EC_SUCCESS)
@@ -368,9 +386,18 @@ void cyp5525_get_sink_power(int controller, int port)
 		rv = i2c_read_offset16_block(i2c_port, addr_flags, CYP5525_CURRENT_PDO_REG(port), data2, 4);
 		active_current = (data2[0] + ((data2[1] & 0x3) << 8)) * 10;
 		active_voltage = (((data2[1] & 0xFC) >> 2) + ((data2[2] & 0xF) << 6)) * 50;
-		CPRINTS("C%d, current:%d mA, voltage:%d mV", port, active_current, active_voltage);
-		pd_port_states[(controller << 1) + port].current = active_current;
-		pd_port_states[(controller << 1) + port].voltage = active_voltage;
+		CPRINTS("C%d, current:%d mA, voltage:%d mV", port_idx, active_current, active_voltage);
+		pd_port_states[port_idx].current = active_current;
+		pd_port_states[port_idx].voltage = active_voltage;
+		if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
+			/* Set ceiling based on what's negotiated */
+			pd_set_input_current_limit(port_idx, active_current,
+						   active_voltage);
+			charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
+							active_current);
+			charge_manager_update_dualrole(port_idx, CAP_DEDICATED);
+
+		}
 	}
 }
 
@@ -380,6 +407,7 @@ void cyp5525_port_int(int controller, int port)
 	uint8_t data2[4];
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
+	int port_idx = (controller << 1) + port;
 
 	rv = i2c_read_offset16_block(i2c_port, addr_flags, CYP5525_PORT_PD_RESPONSE_REG(port), data2, 4);
 	if (rv != EC_SUCCESS)
@@ -392,9 +420,21 @@ void cyp5525_port_int(int controller, int port)
 	switch (data2[0]) {
 	case CYPD_RESPONSE_PORT_DISCONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_DISCONNECT");
-		pd_port_states[(controller << 1) + port].current = 0;
-		pd_port_states[(controller << 1) + port].voltage = 0;
+		pd_port_states[port_idx].current = 0;
+		pd_port_states[port_idx].voltage = 0;
+		pd_set_input_current_limit(port, 0, 0);
+		charge_manager_set_ceil((controller << 1) + port,
+				CEIL_REQUESTOR_PD, CHARGE_CEIL_NONE);
+		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
+			charge_manager_update_dualrole(port_idx, CAP_UNKNOWN);
+		cypd_update_port_state(controller, port);
+
+		typec_set_input_current_limit(port_idx,
+						    0,
+						    0);
+
 		cyp5525_update_charger();
+
 		break;
 	case CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE");
@@ -404,6 +444,7 @@ void cyp5525_port_int(int controller, int port)
 		break;
 	case CYPD_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT");
+		cypd_update_port_state(controller, port);
 		break;
 	}
 }
@@ -585,11 +626,17 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, pd_enter_s0,
 void cypd_interrupt_handler_task(void *p)
 {
 	int loop_count = 0;
-	int i, data, setup_pending;
+	int i, j, data, setup_pending;
 	int gpio_asserted = 0;
 	timestamp_t now;
 	timestamp_t expire_time;
 	cypd_int_task_id = task_get_current();
+
+	/* Initialize all charge suppliers to 0 */
+	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
+		for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
+			charge_manager_update_charge(j, i, NULL);
+	}
 	/* wait for pd controller to init*/
 	msleep(25);
 	now = get_time();
@@ -758,21 +805,6 @@ void cypd_interrupt_handler_task(void *p)
 	}
 }
 
-int cypd_get_active_power_budget(void)
-{
-	/* TODO:
-	 * We need to select the max power port, current design does not disable other port
-	 */
-	int power = 60;
-	int voltage = 0;
-	int current = 0;
-	
-	cypd_get_adapter_power(&voltage, &current);
-	power = (voltage * current/(1000*1000));
-
-	return power;
-}
-
 int cypd_get_pps_power_budget(void)
 {
 	/* TODO:
@@ -781,6 +813,65 @@ int cypd_get_pps_power_budget(void)
 	int power = 0;
 
 	return power;
+}
+
+
+/* Stub out the following for charge manager, we dont use this for the bios */
+void pd_send_host_event(int mask) { }
+
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	return CONFIG_USB_PD_PORT_MAX_COUNT;
+}
+
+enum pd_power_role pd_get_power_role(int port)
+{
+	return pd_port_states[port].port_state;
+}
+
+int pd_is_connected(int port)
+{
+	return pd_port_states[port].enabled;
+}
+void pd_request_power_swap(int port)
+{
+	CPRINTS("TODO Implement %s port %d", __func__, port);
+}
+
+void pd_set_new_power_request(int port)
+{
+	/*we probably dont need to do this since we will always request max*/
+	CPRINTS("TODO Implement %s port %d", __func__, port);
+
+}
+
+/**
+ * Set active charge port -- only one port can be active at a time.
+ *
+ * @param charge_port   Charge port to enable.
+ *
+ * Returns EC_SUCCESS if charge port is accepted and made active,
+ * EC_ERROR_* otherwise.
+ */
+int board_set_active_charge_port(int charge_port)
+{
+	CPRINTS("TODO Implement %s port %d", __func__, charge_port);
+	return EC_SUCCESS;
+}
+
+/**
+ * Set the charge limit based upon desired maximum.
+ *
+ * @param port          Port number.
+ * @param supplier      Charge supplier type.
+ * @param charge_ma     Desired charge limit (mA).
+ * @param charge_mv     Negotiated charge voltage (mV).
+ */
+void board_set_charge_limit(int port, int supplier, int charge_ma,
+			    int max_ma, int charge_mv)
+{
+	charge_set_input_current_limit(MAX(charge_ma,
+				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int len)
