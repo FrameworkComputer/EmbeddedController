@@ -157,6 +157,23 @@ config PLATFORM_EC_CONSOLE_CMD_PD
 	  Ssee usb_pd_console.c for full details including various commands
 	  for role swap, reset, enable/disable, requesting SNK or SRC, etc.
 
+config PLATFORM_EC_USB_PD_DEBUG_FIXED_LEVEL
+	bool "USB Power Delivery debug level is fixed at build time"
+	help
+	  Enable this to set the debug level to a fixed value in the build.
+	  This saves space but means that the level cannot be changed using
+	  commands like 'pd dump'. Typically this should be set when a platform
+	  is shipped.
+
+config PLATFORM_EC_USB_PD_DEBUG_LEVEL
+	int "Debug level to use"
+	depends on PLATFORM_EC_USB_PD_DEBUG_FIXED_LEVEL
+	help
+	  Sets the value of the debug level to use. If this is 0 then no
+	  debugging output is available from the USB Power Delivery stack.
+	  The meaning of each level depends on the module in question, but
+	  the maximum available level is 3.
+
 choice "Measuring VBUS voltage"
 	prompt "Select how VBUS voltage is measured"
 
