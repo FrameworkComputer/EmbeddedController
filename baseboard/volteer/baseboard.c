@@ -14,10 +14,8 @@
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/temp_sensor/thermistor.h"
 #include "gpio.h"
-#include "hooks.h"
 #include "i2c.h"
 #include "keyboard_scan.h"
-#include "power/icelake.h"
 #include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
@@ -73,48 +71,6 @@ const enum gpio_signal hibernate_wake_pins[] = {
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /******************************************************************************/
-/*
- * PWROK signal configuration, see the PWROK Generation Flow Diagram (Figure
- * 235) in the Tiger Lake Platform Design Guide for the list of potential
- * signals.
- *
- * Volteer uses this power sequence:
- *	GPIO_EN_PPVAR_VCCIN - Turns on the VCCIN rail. Also used as a delay to
- *		the VCCST_PWRGD input to the AP so this signal must be delayed
- *		5 ms to meet the tCPU00 timing requirement.
- *	GPIO_EC_PCH_SYS_PWROK - Asserts the SYS_PWROK input to the AP. Delayed
- *		a total of 50 ms after ALL_SYS_PWRGD input is asserted. See
- *		b/144478941 for full discussion.
- *
- * Volteer does not provide direct EC control for the VCCST_PWRGD and PCH_PWROK
- * signals. If your board adds these signals to the EC, copy this array
- * to your board.c file and modify as needed.
- */
-const struct intel_x86_pwrok_signal pwrok_signal_assert_list[] = {
-	{
-		.gpio = GPIO_EN_PPVAR_VCCIN,
-		.delay_ms = 5,
-	},
-	{
-		.gpio = GPIO_EC_PCH_SYS_PWROK,
-		.delay_ms = 50 - 5,
-	},
-};
-const int pwrok_signal_assert_count = ARRAY_SIZE(pwrok_signal_assert_list);
-
-const struct intel_x86_pwrok_signal pwrok_signal_deassert_list[] = {
-	/* No delays needed during S0 exit */
-	{
-		.gpio = GPIO_EC_PCH_SYS_PWROK,
-	},
-	/* Turn off VCCIN last */
-	{
-		.gpio = GPIO_EN_PPVAR_VCCIN,
-	},
-};
-const int pwrok_signal_deassert_count = ARRAY_SIZE(pwrok_signal_deassert_list);
-
-/******************************************************************************/
 /* Temperature sensor configuration */
 const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_1_CHARGER] = {.name = "Charger",
@@ -135,10 +91,3 @@ const struct temp_sensor_t temp_sensors[] = {
 				 .idx = ADC_TEMP_SENSOR_4_FAN},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
-static void baseboard_init(void)
-{
-	/* Enable monitoring of the PROCHOT input to the EC */
-	gpio_enable_interrupt(GPIO_EC_PROCHOT_IN_L);
-}
-DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT);

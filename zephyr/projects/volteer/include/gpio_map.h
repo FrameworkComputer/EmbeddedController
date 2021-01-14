@@ -73,6 +73,8 @@
 
 #define GPIO_USB_C1_BC12_INT_ODL   GPIO_USB_C1_MIX_INT_ODL
 
+#define GPIO_EC_PROCHOT_IN_L       NAMED_GPIO(ec_prochot_in_l)
+
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
  *
@@ -116,6 +118,8 @@
 	GPIO_INT(GPIO_USB_C0_BC12_INT_ODL, GPIO_INT_EDGE_BOTH,            \
 		 bc12_interrupt)                                          \
 	GPIO_INT(GPIO_USB_C1_MIX_INT_ODL, GPIO_INT_EDGE_BOTH,             \
-		 bc12_interrupt)
+		 bc12_interrupt)                                          \
+	GPIO_INT(GPIO_EC_PROCHOT_IN_L, GPIO_INT_EDGE_BOTH,                \
+		 throttle_ap_prochot_input_interrupt)
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
