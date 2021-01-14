@@ -6,6 +6,7 @@
 /* Volteer family-specific USB-C configuration */
 #include "common.h"
 #include "cbi_ec_fw_config.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "system.h"
 #include "timer.h"
@@ -196,6 +197,13 @@ struct tcpc_config_t tcpc_config[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
+
+/******************************************************************************/
+/* USB-A charging control */
+
+const int usb_port_enable[USB_PORT_COUNT] = {
+	GPIO_EN_PP5000_USBA,
+};
 
 /******************************************************************************/
 /* USBC mux configuration - Tiger Lake includes internal mux */
