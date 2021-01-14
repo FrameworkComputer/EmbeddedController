@@ -23,7 +23,7 @@
 #define NPCX_PWM1_SEL 0	/* GPIO C2 is not used as PWM1. */
 
 /* Optional features */
-#define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
+#undef CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
 #define CONFIG_VBOOT_EFS2
 
