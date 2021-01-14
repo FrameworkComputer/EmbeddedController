@@ -835,14 +835,13 @@ int pd_is_connected(int port)
 }
 void pd_request_power_swap(int port)
 {
-	CPRINTS("TODO Implement %s", __func__);
-
+	CPRINTS("TODO Implement %s port %d", __func__, port);
 }
 
 void pd_set_new_power_request(int port)
 {
 	/*we probably dont need to do this since we will always request max*/
-	CPRINTS("TODO Implement %s", __func__);
+	CPRINTS("TODO Implement %s port %d", __func__, port);
 
 }
 
@@ -856,7 +855,7 @@ void pd_set_new_power_request(int port)
  */
 int board_set_active_charge_port(int charge_port)
 {
-	CPRINTS("TODO Implement %s", __func__);
+	CPRINTS("TODO Implement %s port %d", __func__, charge_port);
 	return EC_SUCCESS;
 }
 
