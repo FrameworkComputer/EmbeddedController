@@ -93,6 +93,65 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c	= 75,
 		},
 	},
+	/* AP19B8M */
+	[BATTERY_AP19B8M] = {
+		.fuel_gauge = {
+			.manuf_name = "LGC KT0030G024",
+			.ship_mode = {
+				.reg_addr = 0x3A,
+				.reg_data = { 0xC574, 0xC574 },
+			},
+			.fet = {
+				.reg_addr = 0x43,
+				.reg_mask = 0x0001,
+				.disconnect_val = 0x0,
+				.cfet_mask = 0x0002,
+				.cfet_off_val = 0x0000,
+			}
+		},
+		.batt_info = {
+			.voltage_max          = 13350,
+			.voltage_normal       = 11610,
+			.voltage_min          = 9000,
+			.precharge_current    = 256,
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 50,
+			.charging_min_c       = 0,
+			.charging_max_c       = 60,
+			.discharging_min_c    = -20,
+			.discharging_max_c    = 75,
+		},
+	},
+	/* AP18C7M */
+	[BATTERY_AP18C7M] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP KT00407008",
+			.ship_mode = {
+				.reg_addr = 0x3A,
+				.reg_data = { 0xC574, 0xC574 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0002,
+				.disconnect_val = 0x0000,
+				.cfet_mask = 0x4000,
+				.cfet_off_val = 0x4000,
+			}
+		},
+		.batt_info = {
+			.voltage_max          = 17600,
+			.voltage_normal       = 15400,
+			.voltage_min          = 12000,
+			.precharge_current    = 256,
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c       = 0,
+			.charging_max_c       = 60,
+			.discharging_min_c    = -20,
+			.discharging_max_c    = 70,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
