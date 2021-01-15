@@ -15,6 +15,13 @@ menuconfig PLATFORM_EC_POWERSEQ
 
 if PLATFORM_EC_POWERSEQ
 
+config PLATFORM_EC_POWERSEQ_HOST_SLEEP
+	bool "Track host sleep states"
+	help
+	  Enable EC code to track the AP sleep states.  This is
+	  required for S0ix support on Intel platforms, and optional
+	  for boards without S0ix support.
+
 menuconfig PLATFORM_EC_POWERSEQ_INTEL
 	bool "Enable shimming common Intel power sequencing code"
 	depends on AP_X86_INTEL
@@ -52,6 +59,14 @@ config PLATFORM_EC_POWERSEQ_RTC_RESET
 	  This project has a gpio named GPIO_PCH_RTCRST defined in
 	  gpio_map.h, which can be used to reset the AP's RTC when set
 	  high.
+
+config PLATFORM_EC_POWERSEQ_S0IX
+	bool "Enable S0ix sleep states"
+	select PLATFORM_EC_POWERSEQ_HOST_SLEEP
+	help
+	  Enable the CONFIG_POWER_S0IX platform/ec configuration
+	  option, Intel's low-power idle sleep state, also known as
+	  "modern sleep".
 
 config PLATFORM_EC_POWERSEQ_COMETLAKE
 	bool "Use common Comet Lake code for power sequencing"
