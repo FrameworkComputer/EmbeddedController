@@ -163,7 +163,8 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_ALT_MODE_UFP
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DUAL_ROLE
                                                 "${PLATFORM_EC}/common/usb_pd_dual_role.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_HOST_CMD
-                                                "${PLATFORM_EC}/common/usb_pd_host_cmd.c")
+                                                "${PLATFORM_EC}/common/usb_pd_host_cmd.c"
+                                                "${PLATFORM_EC}/common/usbc/usb_pd_host.c")
 
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_VPD "${PLATFORM_EC}/common/usbc/usb_tc_vpd_sm.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_CTVPD
