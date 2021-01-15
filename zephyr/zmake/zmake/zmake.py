@@ -85,9 +85,6 @@ class Zmake:
         if not module_paths:
             module_paths = zmake.modules.locate_modules(self.checkout, version)
 
-        if not module_paths['zephyr-chrome']:
-            raise OSError("Missing zephyr-chrome module")
-
         base_config = zmake.build_config.BuildConfig(
             environ_defs={'ZEPHYR_BASE': str(zephyr_base),
                           'PATH': '/usr/bin'},
@@ -256,9 +253,7 @@ class Zmake:
     def testall(self, fail_fast=False):
         """Test all the valid test targets"""
         modules = zmake.modules.locate_modules(self.checkout, version=None)
-        root_dirs = [modules['zephyr-chrome'] / 'projects',
-                     modules['zephyr-chrome'] / 'tests',
-                     modules['ec-shim'] / 'zephyr/test']
+        root_dirs = [modules['ec-shim'] / 'zephyr']
         project_dirs = []
         for root_dir in root_dirs:
             self.logger.info('Finding zmake target under \'%s\'.', root_dir)
@@ -281,7 +276,7 @@ class Zmake:
                     build_after_configure=True,
                     test_after_configure=is_test))
 
-        # Run pytest on zephyr-chrome/tests and platform/ec/zephyr/zmake.
+        # Run pytest on platform/ec/zephyr/zmake.
         executor.append(func=lambda: self._run_pytest(
             directory=modules['ec-shim'] / 'zephyr'))
 

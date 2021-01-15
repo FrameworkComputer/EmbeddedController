@@ -12,7 +12,7 @@ setuptools.setup(
     description='CrOS Zephyr Utilities',
     long_description='Utilities used for working on a Zephyr-based EC',
 
-    url='https://chromium.googlesource.com/chromiumos/platform/zephyr-chrome',
+    url='https://chromium.googlesource.com/chromiumos/platform/ec',
 
     author='Chromium OS Authors',
     author_email='chromiumos-dev@chromium.org',

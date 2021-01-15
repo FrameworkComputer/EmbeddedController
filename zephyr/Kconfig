@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 rsource "app/Kconfig"
+rsource "drivers/Kconfig"
 
 if ZTEST
 

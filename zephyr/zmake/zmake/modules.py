@@ -32,8 +32,6 @@ known_modules = {
     'cmsis': third_party_module,
     'ec-shim': lambda name, checkout, version: (
         checkout / 'src' / 'platform' / 'ec'),
-    'zephyr-chrome': lambda name, checkout, version: (
-        checkout / 'src' / 'platform' / 'zephyr-chrome'),
 }
 
 

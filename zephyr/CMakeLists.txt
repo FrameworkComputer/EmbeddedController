@@ -59,6 +59,7 @@ zephyr_include_directories_ifdef(
   "${PLATFORM_EC}/include/driver")
 
 add_subdirectory("app")
+add_subdirectory("drivers")
 
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
 
