@@ -91,6 +91,22 @@ config PLATFORM_EC_BOARD_RESET_AFTER_POWER_ON
 	  the EC starts up, performs some amount of processing and then gets a
 	  reset that it is not expecting.
 
+config PLATFORM_EC_BRINGUP
+	bool "Enable early bringup debugging features"
+	help
+	  Enable the CONFIG_BRINGUP platform/ec configuration option,
+	  turning on a variety of miscellaneous early bringup
+	  debugging features.
+
+	  These features include:
+	  - The device will not power on when the EC starts.  The
+	    power button will need to be pressed, or the "powerbtn"
+	    command issued.
+	  - Enable power signal logging, showing relative timestamps
+	    for each power signal change.
+	  - And more!  You can search the codebase for CONFIG_BRINGUP
+            to see all of the features this flag will toggle.
+
 config PLATFORM_EC_CBI
 	bool "CBI EEPROM support"
 	depends on PLATFORM_EC_I2C

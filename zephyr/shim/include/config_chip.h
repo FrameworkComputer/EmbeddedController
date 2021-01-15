@@ -102,6 +102,11 @@ enum battery_type {
 #define CONFIG_EXTPOWER
 #endif
 
+/* Bringup configuration */
+#ifdef CONFIG_PLATFORM_EC_BRINGUP
+#define CONFIG_BRINGUP
+#endif
+
 /* eSPI configuration */
 #ifdef CONFIG_PLATFORM_EC_ESPI
 

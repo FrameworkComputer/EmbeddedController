@@ -57,7 +57,8 @@ class Zmake:
     def configure(self, project_dir, build_dir,
                   version=None, zephyr_base=None, module_paths=None,
                   toolchain=None, ignore_unsupported_zephyr_version=False,
-                  build_after_configure=False, test_after_configure=False):
+                  build_after_configure=False, test_after_configure=False,
+                  bringup=False):
         """Set up a build directory to later be built by "zmake build"."""
         # Make sure the build directory is clean.
         if os.path.exists(build_dir):
@@ -96,6 +97,11 @@ class Zmake:
             toolchain = project.config.toolchain
 
         toolchain_config = toolchains.get_toolchain(toolchain, module_paths)
+
+        if bringup:
+            base_config |= zmake.build_config.BuildConfig(
+                kconfig_defs={'CONFIG_PLATFORM_EC_BRINGUP': 'y'})
+
         if not build_dir.exists():
             build_dir = build_dir.mkdir()
         processes = []
