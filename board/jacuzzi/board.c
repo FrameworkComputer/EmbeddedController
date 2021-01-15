@@ -514,9 +514,7 @@ static void board_detect_motionsensor(void)
 	CPRINTS("Base Accelgyro: %s", (val == ICM426XX_CHIP_ICM40608)
 		 ? "ICM40608" : "BMI160");
 }
-DECLARE_HOOK(HOOK_INIT, board_detect_motionsensor, HOOK_PRIO_DEFAULT - 1);
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_detect_motionsensor,
-		 HOOK_PRIO_DEFAULT - 1);
+DECLARE_HOOK(HOOK_INIT, board_detect_motionsensor, HOOK_PRIO_DEFAULT);
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
 
 /* Called on AP S5 -> S3 transition */
