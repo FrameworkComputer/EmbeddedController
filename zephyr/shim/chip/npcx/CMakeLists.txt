@@ -3,5 +3,5 @@
 # found in the LICENSE file.
 
 zephyr_sources(clock.c)
-zephyr_sources(keyboard_raw.c)
+zephyr_sources_ifdef(CONFIG_CROS_KB_RAW_NPCX  keyboard_raw.c)
 zephyr_sources_ifdef(CONFIG_CROS_EC           system.c)
