@@ -37,6 +37,9 @@ static uint32_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 /* The following bit is used to configure virtual mux in disconnect mode */
 #define USB_MUX_FLAG_DISCONNECT_LATCH	BIT(1)
 
+/* Device initialized at least once */
+#define USB_MUX_FLAG_INIT		BIT(2)
+
 enum mux_config_type {
 	USB_MUX_INIT,
 	USB_MUX_LOW_POWER,
@@ -178,6 +181,9 @@ void usb_mux_init(int port)
 
 	rv = configure_mux(port, USB_MUX_INIT, NULL);
 
+	if (rv == EC_SUCCESS)
+		flags[port] |= USB_MUX_FLAG_INIT;
+
 	/*
 	 * Mux may fail initialization if it's not powered. Mark this port
 	 * as in LPM mode to try initialization again.
@@ -203,6 +209,10 @@ void usb_mux_set(int port, mux_state_t mux_mode,
 	if (port >= board_get_usb_pd_port_count()) {
 		return;
 	}
+
+	/* Perform initialization if not initialized yet */
+	if (!(flags[port] & USB_MUX_FLAG_INIT))
+		usb_mux_init(port);
 
 	/* Configure USB2.0 */
 	if (IS_ENABLED(CONFIG_USB_CHARGER))
@@ -247,6 +257,10 @@ mux_state_t usb_mux_get(int port)
 	if (port >= board_get_usb_pd_port_count()) {
 		return USB_PD_MUX_NONE;
 	}
+
+	/* Perform initialization if not initialized yet */
+	if (!(flags[port] & USB_MUX_FLAG_INIT))
+		usb_mux_init(port);
 
 	if (flags[port] & USB_MUX_FLAG_IN_LPM)
 		return USB_PD_MUX_NONE;
@@ -293,6 +307,10 @@ void usb_mux_flip(int port)
 		return;
 	}
 
+	/* Perform initialization if not initialized yet */
+	if (!(flags[port] & USB_MUX_FLAG_INIT))
+		usb_mux_init(port);
+
 	exit_low_power_mode(port);
 
 	if (configure_mux(port, USB_MUX_GET_MODE, &mux_state))
@@ -314,6 +332,10 @@ void usb_mux_hpd_update(int port, int hpd_lvl, int hpd_irq)
 	if (port >= board_get_usb_pd_port_count()) {
 		return;
 	}
+
+	/* Perform initialization if not initialized yet */
+	if (!(flags[port] & USB_MUX_FLAG_INIT))
+		usb_mux_init(port);
 
 	for (; mux_ptr; mux_ptr = mux_ptr->next_mux)
 		if (mux_ptr->hpd_update)
