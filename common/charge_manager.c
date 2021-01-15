@@ -21,6 +21,10 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
+#ifdef HAS_MOCK_CHARGE_MANAGER
+#error Mock defined HAS_MOCK_CHARGE_MANAGER
+#endif
+
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
 #define POWER(charge_port) ((charge_port.current) * (charge_port.voltage))
