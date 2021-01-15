@@ -22,6 +22,11 @@
 #define CHROMIUM_EC
 
 /* Chipset and power configuration */
+#ifdef CONFIG_AP_X86_INTEL_CML
+#define CONFIG_CHIPSET_COMETLAKE
+#define CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK
+#endif
+
 #ifdef CONFIG_AP_X86_INTEL_TGL
 #define CONFIG_CHIPSET_TIGERLAKE
 #endif

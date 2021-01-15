@@ -117,6 +117,8 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWER_BUTTON
                                                 "${PLATFORM_EC}/common/power_button.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
                                                 "${PLATFORM_EC}/power/common.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_COMETLAKE
+                                                "${PLATFORM_EC}/power/cometlake.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_ICELAKE
                                                 "${PLATFORM_EC}/power/icelake.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_INTEL

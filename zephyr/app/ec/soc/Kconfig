@@ -10,6 +10,12 @@ if AP
 choice
 	prompt "SoC chipset generation"
 
+config AP_X86_INTEL_CML
+	bool "AP is CML chipset"
+	select AP_X86_INTEL
+	help
+	  The application processor is Intel Comet Lake (CML) chipset.
+
 config AP_X86_INTEL_TGL
 	bool "AP is TGL chipset"
 	select AP_X86_INTEL

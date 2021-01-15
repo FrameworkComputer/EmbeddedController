@@ -53,6 +53,13 @@ config PLATFORM_EC_POWERSEQ_RTC_RESET
 	  gpio_map.h, which can be used to reset the AP's RTC when set
 	  high.
 
+config PLATFORM_EC_POWERSEQ_COMETLAKE
+	bool "Use common Comet Lake code for power sequencing"
+	depends on AP_X86_INTEL_CML
+	default y
+	help
+	  Use the Comet Lake code for power sequencing.
+
 menuconfig PLATFORM_EC_POWERSEQ_ICELAKE
 	bool "Use common Icelake code for power sequencing"
 	default y if AP_X86_INTEL_TGL
