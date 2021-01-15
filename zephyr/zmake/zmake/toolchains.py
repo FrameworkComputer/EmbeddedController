@@ -40,10 +40,10 @@ def find_zephyr_sdk():
 # Mapping of toolchain names -> (λ (module-paths) build-config)
 toolchains = {
     'coreboot-sdk': lambda modules: build_config.BuildConfig(
-        cmake_defs={'TOOLCHAIN_ROOT': str(modules['zephyr-chrome']),
+        cmake_defs={'TOOLCHAIN_ROOT': str(modules['ec-shim'] / 'zephyr'),
                     'ZEPHYR_TOOLCHAIN_VARIANT': 'coreboot-sdk'}),
     'llvm': lambda modules: build_config.BuildConfig(
-        cmake_defs={'TOOLCHAIN_ROOT': str(modules['zephyr-chrome']),
+        cmake_defs={'TOOLCHAIN_ROOT': str(modules['ec-shim'] / 'zephyr'),
                     'ZEPHYR_TOOLCHAIN_VARIANT': 'llvm'}),
     'zephyr': lambda _: build_config.BuildConfig(
         cmake_defs={'ZEPHYR_TOOLCHAIN_VARIANT': 'zephyr',
