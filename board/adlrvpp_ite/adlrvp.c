@@ -21,9 +21,6 @@
 #define CPRINTS(format, args...) cprints(CC_COMMAND, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ## args)
 
-/* Mutex for BB retimer shared NVM access */
-static struct mutex bb_nvm_mutex;
-
 /* TCPC AIC GPIO Configuration */
 const struct tcpc_aic_gpio_config_t tcpc_aic_gpios[] = {
 	[TYPE_C_PORT_0] = {
@@ -205,13 +202,6 @@ __override void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 {
 	/* Handle retimer's power domain.*/
 	if (on_off) {
-		/*
-		 * BB retimer NVM can be shared between multiple ports, hence
-		 * lock enabling the retimer until the current retimer request
-		 * is complete.
-		 */
-		mutex_lock(&bb_nvm_mutex);
-
 		pca9675_update_pins(me->usb_port,
 				TCPC_AIC_IOE_BB_RETIMER_LS_EN, 0);
 
@@ -225,10 +215,11 @@ __override void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 		pca9675_update_pins(me->usb_port,
 				TCPC_AIC_IOE_BB_RETIMER_RST, 0);
 
-		/* Allow 20ms time for the retimer to be initialized. */
-		msleep(20);
+		/* Allow 1ms time for the retimer to power up lc_domain
+		 * which powers I2C controller within retimer
+		 */
+		msleep(1);
 
-		mutex_unlock(&bb_nvm_mutex);
 	} else {
 		pca9675_update_pins(me->usb_port,
 				0, TCPC_AIC_IOE_BB_RETIMER_RST);
