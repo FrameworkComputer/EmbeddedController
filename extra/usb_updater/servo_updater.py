@@ -40,8 +40,46 @@ COMMON_PATH = 'share/servo_updater'
 FIRMWARE_DIR = "firmware/"
 CONFIGS_DIR = "configs/"
 
+RETRIES_COUNT = 10
+RETRIES_DELAY = 1
+
+def do_with_retries(func, *args):
+  """
+  Call function passed as argument and check if no error happened.
+  If exception was raised by function,
+  it will be retried up to RETRIES_COUNT times.
+
+  Args:
+    func: function that will be called
+    args: arguments passed to 'func'
+
+  Returns:
+    If call to function was successful, its result will be returned.
+    If retries count was exceeded, exception will be raised.
+  """
+
+  retry = 0
+  while retry < RETRIES_COUNT:
+    try:
+      return func(*args)
+    except Exception as e:
+      print("Retrying function %s: %s" % (func.__name__, e))
+      retry = retry + 1
+      time.sleep(RETRIES_DELAY)
+      continue
+
+  raise Exception("'{}' failed after {} retries".format(func.__name__, RETRIES_COUNT))
+
 def flash(brdfile, serialno, binfile):
-  """Call fw_update to upload to updater USB endpoint."""
+  """
+  Call fw_update to upload to updater USB endpoint.
+
+  Args:
+    brdfile:  path to board configuration file
+    serialno: device serial number
+    binfile:  firmware file
+  """
+
   p = fw_update.Supdate()
   p.load_board(brdfile)
   p.connect_usb(serialname=serialno)
@@ -58,7 +96,15 @@ def flash(brdfile, serialno, binfile):
   p.stop()
 
 def flash2(vidpid, serialno, binfile):
-  """Call fw update via usb_updater2 commandline."""
+  """
+  Call fw update via usb_updater2 commandline.
+
+  Args:
+    vidpid:   vendor id and product id of device
+    serialno: device serial number (optional)
+    binfile:  firmware file
+  """
+
   tool = 'usb_updater2'
   cmd = "%s -d %s" % (tool, vidpid)
   if serialno:
@@ -83,7 +129,16 @@ def flash2(vidpid, serialno, binfile):
     raise ServoUpdaterException("%s exit with res = %d" % (cmd, res))
 
 def select(tinys, region):
-  """Ensure the servo is in the expected ro/rw partition."""
+  """
+  Ensure the servo is in the expected ro/rw region.
+  This function jumps to the required region and verify if jump was
+  successful by executing 'sysinfo' command and reading current region.
+  If response was not received or region is invalid, exception is raised.
+
+  Args:
+    tinys:  TinyServod object
+    region: region to jump to, only "rw" and "ro" is allowed
+  """
 
   if region not in ["rw", "ro"]:
     raise Exception("Region must be ro or rw")
@@ -92,9 +147,17 @@ def select(tinys, region):
     cmd = "reboot"
   else:
     cmd = "sysjump %s" % region
+
   tinys.pty._issue_cmd(cmd)
+
+  tinys.close()
   time.sleep(2)
   tinys.reinitialize()
+
+  res = tinys.pty._issue_cmd_get_results("sysinfo", ["Copy:[\s]+(RO|RW)"])
+  current_region = res[0][1].lower()
+  if current_region != region:
+    raise Exception("Invalid region: %s/%s" % (current_region, region))
 
 def do_version(tinys):
   """Check version via ec console 'pty'.
@@ -252,8 +315,8 @@ def main():
   iface = int(data['console'], 0)
   boardname = data['board']
 
-
   # Make sure device is up.
+  print("===== Waiting for USB device =====")
   c.wait_for_usb(vidpid, serialname=serialno)
   # We need a tiny_servod to query some information. Set it up first.
   tinys = tiny_servod.TinyServod(vid, pid, iface, serialno, args.verbose)
@@ -273,14 +336,16 @@ def main():
     else:
       print("Updating to recommended version.")
 
-
   # Make sure the servo MCU is in RO
-  select(tinys, 'ro')
+  print("===== Jumping to RO =====")
+  do_with_retries(select, tinys, 'ro')
 
-  vers = do_updater_version(tinys)
+  print("===== Flashing RW =====")
+  vers = do_with_retries(do_updater_version, tinys)
   # To make sure that the tiny_servod here does not interfere with other
   # processes, close it out.
   tinys.close()
+
   if vers == 2:
     flash(brdfile, serialno, binfile)
   elif vers == 6:
@@ -294,9 +359,12 @@ def main():
   tinys.reinitialize()
 
   # Make sure the servo MCU is in RW
-  select(tinys, 'rw')
+  print("===== Jumping to RW =====")
+  do_with_retries(select, tinys, 'rw')
 
-  vers = do_updater_version(tinys)
+  print("===== Flashing RO =====")
+  vers = do_with_retries(do_updater_version, tinys)
+
   if vers == 2:
     flash(brdfile, serialno, binfile)
   elif vers == 6:
@@ -305,7 +373,10 @@ def main():
     raise ServoUpdaterException("Can't detect updater version")
 
   # Make sure the servo MCU is in RO
-  select(tinys, 'ro')
+  print("===== Rebooting =====")
+  do_with_retries(select, tinys, 'ro')
+
+  print("===== Finished =====")
 
 if __name__ == "__main__":
   main()
