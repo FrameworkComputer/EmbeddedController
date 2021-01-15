@@ -98,9 +98,10 @@ const struct usb_mux ampton_usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 static int tune_mux(const struct usb_mux *me)
 {
 	/* Auto EQ disabled, compensate for channel lost up to 3.6dB */
-	mux_write(me, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98);
+	RETURN_ERROR(mux_write(me, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98));
 	/* DP output swing adjustment +15% */
-	mux_write(me, PS8XXX_REG_MUX_DP_OUTPUT_CONFIGURATION, 0xc0);
+	RETURN_ERROR(mux_write(me, PS8XXX_REG_MUX_DP_OUTPUT_CONFIGURATION,
+			       0xc0));
 
 	return EC_SUCCESS;
 }
