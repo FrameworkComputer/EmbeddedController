@@ -15,6 +15,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "espi.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "lpc.h"
 #include "port80.h"
@@ -269,7 +270,7 @@ static void lpc_update_wake(host_event_t wake_events)
 	wake_events &= ~EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON);
 
 	/* Signal is asserted low when wake events is non-zero */
-	gpio_set_level(NAMED_GPIO(ec_pch_wake_odl), !wake_events);
+	gpio_set_level(GPIO_EC_PCH_WAKE_ODL, !wake_events);
 }
 
 static void lpc_generate_smi(void)

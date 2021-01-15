@@ -9,7 +9,7 @@
 #include <devicetree.h>
 #include <gpio_signal.h>
 
-/* TODO(b/177609422): add kohaku GPIOs */
+#define GPIO_EC_PCH_WAKE_ODL		NAMED_GPIO(pch_wake_l)
 
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
