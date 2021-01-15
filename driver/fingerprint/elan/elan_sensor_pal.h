@@ -19,10 +19,10 @@ enum elan_error_code {
 };
 
 /* ELAN error info */
-struct fp_sensor_info_t {
+typedef struct {
 	uint32_t num_defective_pixels;
 	uint16_t sensor_error_code;
-};
+} fp_sensor_info_t;
 
 /**
  * @brief Write fp command to the sensor
