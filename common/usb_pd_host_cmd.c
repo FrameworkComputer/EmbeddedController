@@ -351,13 +351,22 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 		break;
 	case 1:
 	case 2:
-		r_v2->enabled =
-			(pd_comm_is_enabled(p->port) ?
-				PD_CTRL_RESP_ENABLED_COMMS : 0) |
-			(pd_is_connected(p->port) ?
-				PD_CTRL_RESP_ENABLED_CONNECTED : 0) |
-			(pd_capable(p->port) ?
-				PD_CTRL_RESP_ENABLED_PD_CAPABLE : 0);
+		/*
+		 * Set enabled to 0 if disconnect latch flag=true, needed this
+		 * to configure Virtual mux in disconnect mode.
+		 */
+		if (IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) &&
+		    usb_mux_get_disconnect_latch_flag(p->port)) {
+			r_v2->enabled = 0;
+		} else {
+			r_v2->enabled =
+				(pd_comm_is_enabled(p->port) ?
+					PD_CTRL_RESP_ENABLED_COMMS : 0) |
+				(pd_is_connected(p->port) ?
+					PD_CTRL_RESP_ENABLED_CONNECTED : 0) |
+				(pd_capable(p->port) ?
+					PD_CTRL_RESP_ENABLED_PD_CAPABLE : 0);
+		}
 		r_v2->role = pd_get_role_flags(p->port);
 		r_v2->polarity = pd_get_polarity(p->port);
 
