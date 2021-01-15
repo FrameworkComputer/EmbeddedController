@@ -13,6 +13,7 @@
 #include "usb_pe.h"
 #include "usb_pe_sm.h"
 #include "usb_sm_checks.h"
+#include "mock/charge_manager_mock.h"
 #include "mock/usb_tc_sm_mock.h"
 #include "mock/tcpc_mock.h"
 #include "mock/usb_mux_mock.h"
@@ -138,6 +139,85 @@ test_static int finish_src_discovery(int startup_cable_probes)
 	task_wait_event(10 * MSEC);
 	rx_message(PD_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0,
 		   PD_ROLE_SINK, PD_ROLE_UFP, 0);
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Verify that the PE will ignore BIST packets when not at vSafe5V and BIST
+ * packets with unsupported BIST modes.
+ */
+test_static int test_bist_ignore(void)
+{
+	/* Bring up port as Source/DFP. Get to ready state. */
+	/* Enable PE as source, expect SOURCE_CAP. */
+	mock_tc_port[PORT0].power_role = PD_ROLE_SOURCE;
+	mock_tc_port[PORT0].pd_enable = 1;
+	mock_tc_port[PORT0].vconn_src = true;
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 0, PD_DATA_SOURCE_CAP, 10 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+	task_wait_event(10 * MSEC);
+
+	/* REQUEST 5V, expect ACCEPT, PS_RDY. */
+	rx_message(PD_MSG_SOP, 0, PD_DATA_REQUEST,
+		   PD_ROLE_SINK, PD_ROLE_UFP, RDO_FIXED(1, 500, 500, 0));
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 PD_CTRL_ACCEPT, 0, 10 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+					 PD_CTRL_PS_RDY, 0, 10 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+
+	TEST_EQ(finish_src_discovery(0), EC_SUCCESS, "%d");
+
+	task_wait_event(5 * SECOND);
+
+
+	/* Set VBUS to 1.5V; the PE should ignore the BIST message. */
+	mock_charge_manager_set_vbus_voltage(1500);
+	rx_message(PD_MSG_SOP, 0, PD_DATA_BIST, PD_ROLE_SINK, PD_ROLE_UFP,
+			BDO(BDO_MODE_TEST_DATA, 0));
+	/*
+	 * If the PE ignored the BIST message, it should respond normally to a
+	 * subsequent Get Source Caps request.
+	 */
+	rx_message(PD_MSG_SOP, PD_CTRL_GET_SINK_CAP, 0, PD_ROLE_SINK,
+			PD_ROLE_UFP, 0);
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP, 0,
+				PD_DATA_SINK_CAP, 10 * MSEC),
+			EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+
+	/* Set VBUS to 20V; the PE should still ignore the BIST message. */
+	mock_charge_manager_set_vbus_voltage(20000);
+	rx_message(PD_MSG_SOP, 0, PD_DATA_BIST, PD_ROLE_SINK, PD_ROLE_UFP,
+			BDO(BDO_MODE_TEST_DATA, 0));
+	task_wait_event(1 * SECOND);
+	rx_message(PD_MSG_SOP, PD_CTRL_GET_SINK_CAP, 0, PD_ROLE_SINK,
+			PD_ROLE_UFP, 0);
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP, 0,
+				PD_DATA_SINK_CAP, 10 * MSEC),
+			EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+
+	/*
+	 * Set VBUS to 5V but request an unsupported BIST mode; the PE should
+	 * still ignore the BIST message.
+	 */
+	mock_charge_manager_set_vbus_voltage(5000);
+	rx_message(PD_MSG_SOP, 0, PD_DATA_BIST, PD_ROLE_SINK, PD_ROLE_UFP,
+			BDO(BDO_MODE_RECV, 0));
+	task_wait_event(1 * SECOND);
+	rx_message(PD_MSG_SOP, PD_CTRL_GET_SINK_CAP, 0, PD_ROLE_SINK,
+			PD_ROLE_UFP, 0);
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP, 0,
+				PD_DATA_SINK_CAP, 10 * MSEC),
+			EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
 
 	return EC_SUCCESS;
 }
@@ -275,6 +355,7 @@ void run_test(int argc, char **argv)
 {
 	test_reset();
 
+	RUN_TEST(test_bist_ignore);
 	RUN_TEST(test_send_caps_error_before_connected);
 	RUN_TEST(test_send_caps_error_when_connected);
 

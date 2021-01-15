@@ -418,7 +418,9 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #undef CONFIG_USB_PD_HOST_CMD
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USBC_SS_MUX
-#endif
+#define I2C_PORT_HOST_TCPC 0
+#define CONFIG_CHARGE_MANAGER
+#endif /* TEST_USB_PE_DRP || TEST_USB_PE_DRP_NOEXTENDED */
 
 /* Common TypeC tests defines */
 #if defined(TEST_USB_TYPEC_VPD) || \

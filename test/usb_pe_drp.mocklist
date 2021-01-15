@@ -4,6 +4,7 @@
  */
 
  #define CONFIG_TEST_MOCK_LIST  \
+	MOCK(CHARGE_MANAGER) \
 	MOCK(USB_TC_SM) \
 	MOCK(TCPC) \
 	MOCK(USB_MUX) \

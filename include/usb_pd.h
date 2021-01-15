@@ -150,7 +150,13 @@ enum pd_rx_errors {
 				RDO_BATT_OP_POWER(op_mw) | \
 				RDO_BATT_MAX_POWER(max_mw))
 
-/* BDO : BIST Data Object */
+/* BDO : BIST Data Object
+ * 31:28 BIST Mode
+ *       In PD 3.0, all but Carrier Mode 2 (as Carrier Mode) and Test Data are
+ *       reserved.
+ * 27:16 Reserved
+ * 15:0  Returned error counters (reserved in PD 3.0)
+ */
 #define BDO_MODE_RECV       (0 << 28)
 #define BDO_MODE_TRANSMIT   BIT(28)
 #define BDO_MODE_COUNTERS   (2 << 28)
@@ -159,6 +165,7 @@ enum pd_rx_errors {
 #define BDO_MODE_CARRIER2   (5 << 28)
 #define BDO_MODE_CARRIER3   (6 << 28)
 #define BDO_MODE_EYE        (7 << 28)
+#define BDO_MODE_TEST_DATA  (8 << 28)
 
 #define BDO(mode, cnt)      ((mode) | ((cnt) & 0xFFFF))
 
