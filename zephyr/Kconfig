@@ -307,7 +307,7 @@ menuconfig PLATFORM_EC_TIMER
 
 if PLATFORM_EC_TIMER
 
-config PLATFORM_EC_TIMER_CMD_GETTIME
+config PLATFORM_EC_CONSOLE_CMD_GETTIME
 	bool "Console command: gettime"
 	default y
 	help
@@ -318,7 +318,7 @@ config PLATFORM_EC_TIMER_CMD_GETTIME
 	     Time: 0x0000000002706a62 = 40.921698 s
 
 
-config PLATFORM_EC_TIMER_CMD_TIMERINFO
+config PLATFORM_EC_CONSOLE_CMD_TIMERINFO
 	bool "Console command: timerinfo"
 	default y
 	help
@@ -337,7 +337,7 @@ config PLATFORM_EC_TIMER_CMD_TIMERINFO
 	      Tsk 13  0x00000000027133a1 ->    0.051519
 
 
-config PLATFORM_EC_TIMER_CMD_WAITMS
+config PLATFORM_EC_CONSOLE_CMD_WAITMS
 	bool "Console command: waitms"
 	default y
 	help
