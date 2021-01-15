@@ -304,6 +304,11 @@ void ln9310_init(void)
 		      LN9310_LB_MIN_FREQ_EN,
 		      LN9310_LB_MIN_FREQ_EN);
 
+	/* Set minimum switching frequency to 25 kHz */
+	field_update8(LN9310_REG_SPARE_0,
+		      LN9310_SPARE_0_LB_MIN_FREQ_SEL_MASK,
+		      LN9310_SPARE_0_LB_MIN_FREQ_SEL_ON);
+
 	usleep(LN9310_CDC_DELAY);
 	CPRINTS("LN9310 OP_MODE Update method: Self-sync");
 
