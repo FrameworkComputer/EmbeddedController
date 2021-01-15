@@ -377,7 +377,7 @@ case "${BOARD}" in
 	chocodile_bec ) MCU="usbpd" ;;
 	oak_pd|samus_pd|strago_pd ) MCU="usbpd" ;;
 	chell_pd|glados_pd ) MCU="usbpd" ;;
-	bloonchipper|dartmonkey|hatch_fp|nami_fp|nocturne_fp ) MCU="usbpd" ;;
+	bloonchipper|dartmonkey|hatch_fp|nami_fp|nocturne_fp ) MCU="fpmcu" ;;
 	dingdong|hoho|twinkie ) DUT_CONTROL_CMD=( "true" ); MCU="ec" ;;
 	*) MCU="ec" ;;
 esac
@@ -461,6 +461,10 @@ servo_usbpd_hard_reset() {
 	dut_control usbpd_reset:on sleep:0.5 usbpd_reset:off
 }
 
+servo_fpmcu_hard_reset() {
+	dut_control fpmcu_reset:on sleep:0.5 fpmcu_reset:off
+}
+
 servo_sh_hard_reset() {
 	dut_control sh_reset:on
 	dut_control sh_reset:off
@@ -519,6 +523,14 @@ c2d2_ec_boot0() {
 
 servo_usbpd_boot0() {
 	dut_control usbpd_boot_mode:$1
+}
+
+servo_fpmcu_boot0() {
+	dut_control fpmcu_boot_mode:"$1"
+}
+
+servo_micro_fpmcu_boot0() {
+	servo_fpmcu_boot0 "$@"
 }
 
 servo_micro_usbpd_boot0() {
@@ -704,11 +716,27 @@ function ec_image() {
 	die "no EC image found : build one or specify one."
 }
 
+# Get the correct UART for flashing. The resulting string is concatenated with
+# the various UART control suffixes, such as "_pty", "_en", "_parity", etc.
+function servo_ec_uart_prefix() {
+	if [[ "${MCU}" == "fpmcu" ]]; then
+		# The FPMCU has multiple UARTs. Use the platform UART since it's a
+		# bootloader capable UART on all devices. See
+		# http://go/cros-fingerprint-reference-designs#uart-console.
+		echo "fpmcu_platform_uart"
+		return
+	fi
+
+	echo "${MCU}_uart"
+}
+
 # Find the EC UART provided by servo.
 function servo_ec_uart() {
 	SERVOD_FAIL="Cannot communicate with servod. Is servod running?"
-	PTY=$(dut_control_get raw_${MCU}_uart_pty ||
-	      dut_control_get ${MCU}_uart_pty)
+	local EC_UART_PREFIX
+	EC_UART_PREFIX="$(servo_ec_uart_prefix)"
+	PTY=$(dut_control_get "raw_${EC_UART_PREFIX}_pty" ||
+	      dut_control_get "${EC_UART_PREFIX}_pty")
 	if [[ -z "${PTY}" ]]; then
 	    die "${SERVOD_FAIL}"
 	fi
@@ -1058,6 +1086,7 @@ function flash_stm32() {
 	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:$PATH"
 	STM32MON=$(PATH="${TOOL_PATH}" which stm32mon)
 	EC_UART="$(servo_ec_uart)"
+	EC_UART_PREFIX="$(servo_ec_uart_prefix)"
 	if [ ! -x "$STM32MON" ]; then
 		die "no stm32mon util found."
 	fi
@@ -1074,14 +1103,14 @@ function flash_stm32() {
 	ec_reset
 
 	if ! on_raiden && [[ "${SERVO_TYPE}" =~ "servo" ]] ; then
-		servo_save_add "${MCU}_uart_en"
+		servo_save_add "${EC_UART_PREFIX}_en"
 
-		dut_control ${MCU}_uart_en:on
+		dut_control "${EC_UART_PREFIX}_en:on"
 	fi
 
-	servo_save_add "${MCU}_uart_parity"
+	servo_save_add "${EC_UART_PREFIX}_parity"
 
-	dut_control ${MCU}_uart_parity:even
+	dut_control "${EC_UART_PREFIX}_parity:even"
 
 	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
 		case "${FLAGS_bitbang_rate}" in
@@ -1093,15 +1122,15 @@ function flash_stm32() {
 		esac
 		info "Programming at ${FLAGS_bitbang_rate} baud"
 
-		servo_save_add "${MCU}_uart_baudrate"
-		servo_save_add "${MCU}_uart_bitbang_en"
+		servo_save_add "${EC_UART_PREFIX}_baudrate"
+		servo_save_add "${EC_UART_PREFIX}_bitbang_en"
 
-		dut_control ${MCU}_uart_baudrate:"${FLAGS_bitbang_rate}"
-		dut_control ${MCU}_uart_bitbang_en:on
+		dut_control "${EC_UART_PREFIX}_baudrate:${FLAGS_bitbang_rate}"
+		dut_control "${EC_UART_PREFIX}_bitbang_en:on"
 	else
-		servo_save_add "${MCU}_uart_baudrate"
+		servo_save_add "${EC_UART_PREFIX}_baudrate"
 
-		dut_control ${MCU}_uart_baudrate:115200
+		dut_control "${EC_UART_PREFIX}_baudrate:115200"
 	fi
 
 	# Add a delay long enough for cr50 to update the ccdstate. Cr50 updates
