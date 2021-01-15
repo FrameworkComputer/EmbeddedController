@@ -127,7 +127,7 @@ int pwm_get_enabled(enum pwm_channel ch)
  */
 void pwm_set_duty(enum pwm_channel ch, int percent)
 {
-	/* Convert 16 bit duty to percent on [0, 100] */
+	/* Convert percent on [0, 100] to 16 bit duty */
 	pwm_set_raw_duty(ch, (percent * EC_PWM_MAX_DUTY) / 100);
 }
 
