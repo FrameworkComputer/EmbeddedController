@@ -167,6 +167,13 @@ void gpio_set_level(enum gpio_signal signal, int value)
 	}
 }
 
+void gpio_set_level_verbose(enum console_channel channel,
+			    enum gpio_signal signal, int value)
+{
+	cprints(channel, "Set %s: %d", gpio_get_name(signal), value);
+	gpio_set_level(signal, value);
+}
+
 /* GPIO flags which are the same in Zephyr and this codebase */
 #define GPIO_CONVERSION_SAME_BITS                                       \
 	(GPIO_OPEN_DRAIN | GPIO_PULL_UP | GPIO_PULL_DOWN | GPIO_INPUT | \
