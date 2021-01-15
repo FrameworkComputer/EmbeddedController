@@ -11,6 +11,14 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+/*
+ * Create an EC build that requires AP-driven mode entry to facilitate debugging
+ * b/177105656.
+ */
+#ifdef BOARD_VOLTEER_APMODEENTRY
+#define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
+#endif
+
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
