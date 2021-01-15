@@ -21,6 +21,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "board.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
@@ -259,6 +260,7 @@ static void state_machine(uint64_t tnow)
 			pwrbtn_state = PWRBTN_STATE_WAS_OFF;
 			msleep(20);
 			set_pwrbtn_to_pch(0, 0);
+			power_button_enable_led(1);
 		} else {
 			if (power_button_pulse_enabled) {
 				/* Chipset is on, so send the chipset a pulse */
@@ -329,6 +331,7 @@ static void state_machine(uint64_t tnow)
 				}
 				msleep(20);
 				set_pwrbtn_to_pch(0, 1);
+				power_button_enable_led(1);
 			}
 
 			tnext_state = get_time().val + PWRBTN_INITIAL_US;
