@@ -194,4 +194,6 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC_SN5S330
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC_SYV682X
                                                 "${PLATFORM_EC}/driver/ppc/syv682x.c")
 
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_VSTORE  "${PLATFORM_EC}/common/vstore.c")
+
 zephyr_sources_ifdef(CONFIG_SHELL               "${PLATFORM_EC}/common/gpio_commands.c")

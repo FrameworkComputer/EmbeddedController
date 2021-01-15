@@ -352,4 +352,29 @@ config PLATFORM_EC_CONSOLE_CMD_WAITMS
 
 endif # PLATFORM_EC_TIMER
 
+config PLATFORM_EC_VSTORE
+	bool "Secure temporary storage for verified boot"
+	default y
+	help
+	  Enable support for storing a block of data received from the AP so it
+	  can be read back later by the AP. This is helpful since the AP may
+	  reboot or resume and want the data early in its start-up before it
+	  has access to SDRAM.
+
+	  There are a fixed number of slots and each can hold a fixed amount of
+	  data (EC_VSTORE_SLOT_SIZE bytes). Once a slot is written it is locked
+	  and cannot be written again unless explicitly unlocked.
+
+	  Stored data is preserved when the EC moved from RO to RW.
+
+config PLATFORM_EC_VSTORE_SLOT_COUNT
+	int "Number of slots"
+	depends on PLATFORM_EC_VSTORE
+	default 1
+	help
+	  Set the number of slots available in the verified-boot store. The
+	  number required depends on the AP firmware. Typically the vstore is
+	  used only for recording a hash of the read-write AP firmware for
+	  checking on resume. For this, one slot is enough.
+
 endif # PLATFORM_EC
