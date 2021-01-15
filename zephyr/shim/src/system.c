@@ -3,217 +3,62 @@
  * found in the LICENSE file.
  */
 
-#include <errno.h>
-#include <string.h>
-#include <sys/util.h>
+#include <device.h>
+#include <drivers/cros_bbram.h>
 
-#include "chipset.h"
-#include "config.h"
-#include "ec_commands.h"
-#include "panic.h"
-#include "sysjump.h"
+#include "bbram.h"
+#include "common.h"
+#include "cros_version.h"
 #include "system.h"
 
-/* Ongoing actions preventing going into deep-sleep mode. */
-uint32_t sleep_mask;
+STATIC_IF_NOT(CONFIG_ZTEST) const struct device *bbram_dev;
 
-/* Round up to a multiple of 4. */
-#define ROUNDUP4(x) (((x) + 3) & ~3)
-
-/** Data for an individual jump tag. */
-struct jump_tag {
-	/** Tag ID. */
-	uint16_t tag;
-	/** Size of the data which follows. */
-	uint8_t data_size;
-	/** Version of the data. */
-	uint8_t data_version;
-
-	/* Followed by data_size bytes of data. */
-};
-
-/** Jump data (at end of RAM, or preceding panic data). */
-static struct jump_data *jdata;
-
-static enum ec_reboot_cmd reboot_at_shutdown;
-
-STATIC_IF(CONFIG_HIBERNATE) uint32_t hibernate_seconds;
-STATIC_IF(CONFIG_HIBERNATE) uint32_t hibernate_microseconds;
-
-/**
- * The flags set by the reset cause. These will be a combination of
- * EC_RESET_FLAG_*s and will be used to control the logic of initializing the
- * system image.
- */
-static uint32_t reset_flags;
-
-/** Whether or not we've successfully loaded/jumped the current image. */
-static bool jumped_to_image;
-
-/* static void jump_to_image */
-
-void system_common_pre_init(void)
+#if DT_NODE_EXISTS(DT_NODELABEL(bbram))
+static int system_init(const struct device *unused)
 {
-	/* TODO check for watchdog reset. */
+	ARG_UNUSED(unused);
 
-	/*
-	 * In testing we will override the jdata address via
-	 * system_override_jdata.
-	 */
-	if (!IS_ENABLED(CONFIG_ZTEST)) {
-		uintptr_t addr = get_panic_data_start();
-
-		if (!addr)
-			addr = CONFIG_CROS_EC_RAM_BASE +
-			       CONFIG_CROS_EC_RAM_SIZE;
-
-		jdata = (struct jump_data *)(addr - sizeof(struct jump_data));
-	}
-
-	/* Check jump data if this is a jump between images. */
-	if (jdata->magic == JUMP_DATA_MAGIC && jdata->version >= 1) {
-		/*
-		 * Change in jump data struct size between the previous image
-		 * and this one.
-		 */
-		int delta;
-
-		/* Set the flag so others know we jumped. */
-		jumped_to_image = true;
-		/* Restore the reset_flags. */
-		reset_flags = jdata->reset_flags | EC_RESET_FLAG_SYSJUMP;
-
-		/*
-		 * If the jump data structure isn't the same size as the
-		 * current one, shift the jump tags to immediately before the
-		 * current jump data structure, to make room for initializing
-		 * the new fields below.
-		 */
-		delta = sizeof(struct jump_data) - jdata->struct_size;
-
-		if (delta && jdata->jump_tag_total) {
-			uint8_t *d = (uint8_t *)system_usable_ram_end();
-
-			memmove(d, d + delta, jdata->jump_tag_total);
-		}
-
-		jdata->jump_tag_total = 0;
-
-		jdata->reserved0 = 0;
-
-		/* Struct size is now the current struct size */
-		jdata->struct_size = sizeof(struct jump_data);
-
-		/*
-		 * Clear the jump struct's magic number.  This prevents
-		 * accidentally detecting a jump when there wasn't one, and
-		 * disallows use of system_add_jump_tag().
-		 */
-		jdata->magic = 0;
-	} else {
-		memset(jdata, 0, sizeof(struct jump_data));
-	}
-}
-
-uintptr_t system_usable_ram_end(void)
-{
-	return (uintptr_t)jdata - jdata->jump_tag_total;
-}
-
-int system_add_jump_tag(uint16_t tag, int version, int size, const void *data)
-{
-	struct jump_tag *t;
-
-	/* Only allowed during a sysjump. */
-	if (!jdata || jdata->magic != JUMP_DATA_MAGIC)
-		return -EINVAL;
-
-	/* Make room for the new tag. */
-	if (size < 0 || size > 0xff)
-		return -EINVAL;
-	jdata->jump_tag_total += ROUNDUP4(size) + sizeof(struct jump_tag);
-
-	t = (struct jump_tag *)system_usable_ram_end();
-	t->tag = tag;
-	t->data_size = size;
-	t->data_version = version;
-	if (size)
-		memcpy(t + 1, data, size);
-
+	bbram_dev = device_get_binding(DT_LABEL(DT_NODELABEL(bbram)));
 	return 0;
 }
 
-const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size)
+SYS_INIT(system_init, PRE_KERNEL_1, 50);
+#endif
+
+/* Return true if index is stored as a single byte in bbram */
+static int bbram_is_byte_access(enum bbram_data_index index)
 {
-	const struct jump_tag *t;
-	int used = 0;
-
-	if (!jdata)
-		return NULL;
-
-	/* Search through tag data for a match. */
-	while (used < jdata->jump_tag_total) {
-		/* Check the next tag. */
-		t = (const struct jump_tag *)(system_usable_ram_end() + used);
-		used += sizeof(struct jump_tag) + ROUNDUP4(t->data_size);
-		if (t->tag != tag)
-			continue;
-
-		/* Found a match. */
-		if (size)
-			*size = t->data_size;
-		if (version)
-			*version = t->data_version;
-
-		return (const uint8_t *)(t + 1);
-	}
-
-	/* If we got here, there was no match. */
-	return NULL;
+	return index == BBRM_DATA_INDEX_PD0 || index == BBRM_DATA_INDEX_PD1 ||
+	       index == BBRM_DATA_INDEX_PD2 ||
+	       index == BBRM_DATA_INDEX_PANIC_FLAGS;
 }
 
-void system_encode_save_flags(int reset_flags, uint32_t *save_flags)
+/* Map idx to a returned BBRM_DATA_INDEX_*, or return -1 on invalid idx */
+static int bbram_idx_lookup(enum system_bbram_idx idx)
 {
-	*save_flags = 0;
-
-	/* Save current reset reasons if necessary. */
-	if (reset_flags & SYSTEM_RESET_PRESERVE_FLAGS)
-		*save_flags = system_get_reset_flags() |
-			      EC_RESET_FLAG_PRESERVED;
-
-	/* Add in AP off flag into saved flags. */
-	if (reset_flags & SYSTEM_RESET_LEAVE_AP_OFF)
-		*save_flags |= EC_RESET_FLAG_AP_OFF;
-
-	/* Add in stay in RO flag into saved flags. */
-	if (reset_flags & SYSTEM_RESET_STAY_IN_RO)
-		*save_flags |= EC_RESET_FLAG_STAY_IN_RO;
-
-	/* Save reset flag. */
-	if (reset_flags & (SYSTEM_RESET_HARD | SYSTEM_RESET_WAIT_EXT))
-		*save_flags |= EC_RESET_FLAG_HARD;
-	else
-		*save_flags |= EC_RESET_FLAG_SOFT;
+	if (idx == SYSTEM_BBRAM_IDX_PD0)
+		return BBRM_DATA_INDEX_PD0;
+	if (idx == SYSTEM_BBRAM_IDX_PD1)
+		return BBRM_DATA_INDEX_PD1;
+	if (idx == SYSTEM_BBRAM_IDX_PD2)
+		return BBRM_DATA_INDEX_PD2;
+	if (idx == SYSTEM_BBRAM_IDX_TRY_SLOT)
+		return BBRM_DATA_INDEX_TRY_SLOT;
+	return -1;
 }
 
-uint32_t system_get_reset_flags(void)
+int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 {
-	return reset_flags;
-}
+	int bbram_idx = bbram_idx_lookup(idx);
+	int bytes, rc;
 
-void system_set_reset_flags(uint32_t flags)
-{
-	reset_flags |= flags;
-}
+	if (bbram_idx < 0 || bbram_dev == NULL)
+		return EC_ERROR_INVAL;
 
-void system_clear_reset_flags(uint32_t flags)
-{
-	reset_flags &= ~flags;
-}
-
-int system_jumped_to_this_image(void)
-{
-	return jumped_to_image;
+	bytes = bbram_is_byte_access(bbram_idx) ? 1 : 4;
+	rc = ((struct cros_bbram_driver_api *)bbram_dev->api)
+		     ->read(bbram_dev, bbram_idx, bytes, value);
+	return rc ? EC_ERROR_INVAL : EC_SUCCESS;
 }
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
@@ -224,57 +69,19 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	 */
 }
 
-__test_only void system_common_reset_state(void)
+const char *system_get_chip_vendor(void)
 {
-	jdata = 0;
-	reset_flags = 0;
-	jumped_to_image = false;
+	return "chromeos";
 }
 
-__test_only void system_override_jdata(void *test_jdata)
+const char *system_get_chip_name(void)
 {
-	jdata = (struct jump_data *)test_jdata;
+	return "emu";
 }
 
-void system_enter_hibernate(uint32_t seconds, uint32_t microseconds)
+const char *system_get_chip_revision(void)
 {
-	if (!IS_ENABLED(CONFIG_HIBERNATE))
-		return;
-
-	/*
-	 * If chipset is already off, then call system_hibernate directly. Else,
-	 * let chipset_task bring down the power rails and transition to proper
-	 * state before system_hibernate is called.
-	 */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		system_hibernate(seconds, microseconds);
-	} else {
-		reboot_at_shutdown = EC_REBOOT_HIBERNATE;
-		hibernate_seconds = seconds;
-		hibernate_microseconds = microseconds;
-
-		chipset_force_shutdown(CHIPSET_SHUTDOWN_CONSOLE_CMD);
-	}
+	return "";
 }
 
-int system_jumped_late(void)
-{
-	return !(reset_flags & EC_RESET_FLAG_EFS) && jumped_to_image;
-}
-
-/* TODO(b/176171847): Implement these stubs fully */
-int system_is_locked(void)
-{
-	return 0;
-}
-
-enum ec_image system_get_image_copy(void)
-{
-	return EC_IMAGE_UNKNOWN;
-}
-
-int system_is_in_rw(void)
-{
-	/* Return true for now, since that makes more things work */
-	return true;
-}
+const void *__image_size;

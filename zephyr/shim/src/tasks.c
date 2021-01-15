@@ -224,3 +224,17 @@ int init_signals(const struct device *unused)
 	return 0;
 }
 SYS_INIT(init_signals, POST_KERNEL, 50);
+
+int task_start_called(void)
+{
+	return 1;
+}
+
+void interrupt_disable(void)
+{
+	/*
+	 * TODO (b:174481378) system.c needed an implementation of this. Though
+	 * it's not yet clear where we call interrupt_enable() from. These two
+	 * calls should be replaced with irq_lock and irq_unlock.
+	 */
+}

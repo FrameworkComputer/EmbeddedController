@@ -190,9 +190,9 @@ config PLATFORM_EC_EXTPOWER_GPIO
 	  project should define a GPIO pin named GPIO_AC_PRESENT, with
 	  extpower_interrupt configured as the handler in gpio_map.h.
 
-# TODO(b/176828988): enable by default once the code can compile
 config PLATFORM_EC_FLASH
 	bool "Enable flash support"
+	default y if FLASH_SIZE > 0
 	help
 	  Enables access to the device's flash through a simple API. With
 	  this is it possible for the EC to update its flash while running,
@@ -200,6 +200,36 @@ config PLATFORM_EC_FLASH
 	  also provided.
 
 if PLATFORM_EC_FLASH
+
+config PLATFORM_EC_PROTECTED_STORAGE_OFF
+	hex "Position of the RO image in Flash memory"
+	default 0x0
+	help
+	  Sets the position in flash memory where the RO image begins. This is
+	  the address that will be used to start copying the image into RAM.
+
+config PLATFORM_EC_PROTECTED_STORAGE_SIZE
+	hex "Size of the RO image in Flash memory"
+	default 0x40000
+	help
+	  The total size of the RO image in flash memory. This will dictate the
+	  ending position of the RO image being copied into RAM when combined
+	  with PLATFORM_EC_PROTECTED_STORAGE_OFF.
+
+config PLATFORM_EC_WRITABLE_STORAGE_OFF
+	hex "Position of the RW image in Flash memory"
+	default 0x40000
+	help
+	  Sets the position in flash memory where the RW image begins. This is
+	  the address that will be used to start copying the image into RAM.
+
+config PLATFORM_EC_WRITABLE_STORAGE_SIZE
+	hex "Size of the RW image in Flash memory"
+	default 0x40000
+	help
+	  The total size of the RW image in flash memory. This will dictate the
+	  ending position of the RW image being copied into RAM when combined
+	  with PLATFORM_EC_WRITABLE_STORAGE_OFF.
 
 config PLATFORM_EC_CONSOLE_CMD_FLASH
 	bool "Console commands: flasherase, flashread, flashwp, flashwrite"

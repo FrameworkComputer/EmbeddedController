@@ -35,4 +35,9 @@ enum bbram_data_index {
 	BBRM_DATA_INDEX_LCT_TIME = 64,
 };
 
+#define BBRAM_SIZE DT_REG_SIZE(DT_NODELABEL(bbram))
+#define BBRAM_ADDR DT_REG_ADDR(DT_NODELABEL(bbram))
+#define BBRAM(offset) REG8(BBRAM_ADDR + offset)
+#define BBRAM_BKUP_STS BBRAM(CONFIG_BBRAM_BKUP_STS)
+
 #endif /* ZEPHYR_SHIM_INCLUDE_BBRAM_H_ */

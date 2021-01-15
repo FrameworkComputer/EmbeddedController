@@ -6,5 +6,5 @@ cmake_minimum_required(VERSION 3.13.1)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(system_test)
 
-FILE(GLOB app_sources *.c)
-target_sources(app PRIVATE ${app_sources})
+target_sources(app PRIVATE test_system.c
+                           ${PLATFORM_EC}/zephyr/shim/src/system.c)
