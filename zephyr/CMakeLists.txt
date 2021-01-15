@@ -48,6 +48,8 @@ if(DEFINED CONFIG_PLATFORM_EC)
   zephyr_include_directories("${CMAKE_BINARY_DIR}/ec/include/generated")
 endif()
 
+zephyr_include_directories(include)
+
 zephyr_include_directories_ifdef(
   CONFIG_PLATFORM_EC
   "${PLATFORM_EC}/zephyr/shim/include"
