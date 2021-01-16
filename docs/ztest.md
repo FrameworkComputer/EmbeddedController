@@ -7,7 +7,8 @@ Zephyr's Ztest framework. All of the work is done in `src/platform/ec`.
 
 See [Test Framework - Zephyr Project Documentation](https://docs.zephyrproject.org/1.12.0/subsystems/test/ztest.html#quick-start-unit-testing) for details about Zephyr's Ztest framework.
 
-See [chromium:2492527](https://crrev.com/c/2492527) for an example of
+See [chromium:2492527](https://crrev.com/c/2492527) and
+[chromium:2634401](https://crrev.com/c/2634401) for examples of
 porting an EC unit test to the Ztest API.
 
 ## Determine source files being tested
@@ -56,11 +57,8 @@ target_sources(app PRIVATE ${PLATFORM_EC}/test/base32.c)
 
 ### Modify test source code
 
-In the unit test, wrap `run_test` in the `#else` portion of an
-`#ifdef CONFIG_ZEPHYR`. Create `test_main` in the `#ifdef` portion.
-
-Copy the contents of `run_test` into `test_main`. You will need to keep the
-list of test cases in sync between the two functions.
+In the unit test, replace `run_test` with `TEST_MAIN()`. This will allow both
+platform/ec tests and Ztests to share the same entry point.
 
 Change `RUN_TEST` to `ztest_unit_test` and add the `ztest_test_suite` wrapper
 plus the call to `ztest_run_test_suite`.
@@ -71,8 +69,7 @@ plus the call to `ztest_run_test_suite`.
  * that Ztest uses, and again in the format the the EC test framework uses.
  * If you add a test to one of them, make sure to add it to the other.
  */
-#ifdef CONFIG_ZEPHYR
-void test_main(void)
+TEST_MAIN()
 {
 	ztest_test_suite(test_base32_lib,
 			 ztest_unit_test(test_crc5),
@@ -80,25 +77,11 @@ void test_main(void)
 			 ztest_unit_test(test_decode));
 	ztest_run_test_suite(test_base32_lib);
 }
-#else
-void run_test(int argc, char **argv)
-{
-	test_reset();
-
-	RUN_TEST(test_crc5);
-	RUN_TEST(test_encode);
-	RUN_TEST(test_decode);
-
-	test_print_result();
-}
-#endif /* CONFIG_ZEPHYR */
 ```
 
-Each function that is called by `ztest_unit_test` needs to change its
-return type to `EC_TEST_RETURN`. Keep the `return EC_SUCCESS;` at the end
-of the test function. If there are any `return` statements that return
-something other than `EC_SUCCESS`, you should use `ztest_test_fail` inside
-another `ifdef CONFIG_ZEPHYR` block.
+Each function that is called by `ztest_unit_test` needs to be declared using
+`DECLARE_EC_TEST`. Keep the `return EC_SUCCESS;` at the end
+of the test function.
 
 Change the `TEST_ASSERT` macros to `zassert` macros. There are plans to
 automate this process, but for now, it's a manual process involving some
@@ -136,15 +119,10 @@ the changes to the base32.c source code.
 
 ## Build and run
 
-Use `cmake` and `ninja` to build the test:
+Use `zmake` to build and run the test:
 ```
-(cr) $ export ZEPHYR_BASE=/mnt/host/source/src/third_party/zephyr/main/v2.4
-(cr) $ cd /mnt/host/source/src/platform/ec
-(cr) $ cmake -S zephyr/test/base32 -B build/base32 \
- -D ZEPHYR_MODULES=/mnt/host/source/src/platform/ec \
- -D ZEPHYR_TOOLCHAIN_VARIANT=host -D BOARD=native_posix -G Ninja
-(cr) $ ninja -C build/base32
-(cr) $ build/base32/zephyr/zephyr.exe
+(cr) $ zmake -l DEBUG configure --test -B build/ztest/base32 zephyr/test/base32
+...
 UART_0 connected to pseudotty: /dev/pts/1
 *** Booting Zephyr OS build zephyr-v2.4.0-1-g63b2330a85cd  ***
 Running test suite test_base32_lib

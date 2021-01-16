@@ -11,7 +11,7 @@
 #include "test_util.h"
 #include "util.h"
 
-static EC_TEST_RETURN test_crc5(void)
+DECLARE_EC_TEST(test_crc5)
 {
 	uint32_t seen;
 	int i, j, c;
@@ -71,7 +71,7 @@ static int enctest(const void *src, int srcbits, int crc_every,
 
 #define ENCTEST(a, b, c, d) zassert_equal(enctest(a, b, c, d), 0, NULL)
 
-static EC_TEST_RETURN test_encode(void)
+DECLARE_EC_TEST(test_encode)
 {
 	const uint8_t src1[5] = {0xff, 0x00, 0xff, 0x00, 0xff};
 	char enc[32];
@@ -148,7 +148,7 @@ static int dectest(const void *dec, int decbits, int crc_every, const char *enc)
 
 #define DECTEST(a, b, c, d) zassert_equal(dectest(a, b, c, d), 0, NULL)
 
-static EC_TEST_RETURN test_decode(void)
+DECLARE_EC_TEST(test_decode)
 {
 	uint8_t dec[32];
 
@@ -199,13 +199,7 @@ static EC_TEST_RETURN test_decode(void)
 	return EC_SUCCESS;
 }
 
-/*
- * Define the test cases to run. We need to do this twice, once in the format
- * that Ztest uses, and again in the format the the EC test framework uses.
- * If you add a test to one of them, make sure to add it to the other.
- */
-#ifdef CONFIG_ZEPHYR
-void test_main(void)
+TEST_MAIN()
 {
 	ztest_test_suite(test_base32_lib,
 			 ztest_unit_test(test_crc5),
@@ -213,15 +207,3 @@ void test_main(void)
 			 ztest_unit_test(test_decode));
 	ztest_run_test_suite(test_base32_lib);
 }
-#else
-void run_test(int argc, char **argv)
-{
-	test_reset();
-
-	RUN_TEST(test_crc5);
-	RUN_TEST(test_encode);
-	RUN_TEST(test_decode);
-
-	test_print_result();
-}
-#endif /* CONFIG_ZEPHYR */
