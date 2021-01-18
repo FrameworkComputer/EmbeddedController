@@ -88,11 +88,11 @@ const struct fan_conf fan_conf_0 = {
  * margin) x 30%.
  *    5900 x 1.07 x 0.30 = 1894, round up to 1900
  * reference that temperature and fan settings
- * are derived from data in b/167523658#33
+ * are derived from data in b/167523658#39
  */
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 3300,
-	.rpm_start = 3300,
+	.rpm_min = 2100,
+	.rpm_start = 2100,
 	.rpm_max = 5800,
 };
 
@@ -108,7 +108,7 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 
 /*
  * Reference that temperature and fan settings
- * are derived from data in b/167523658#33
+ * are derived from data in b/167523658#39
  */
 const static struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
@@ -119,7 +119,7 @@ const static struct ec_thermal_config thermal_cpu = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
 	},
 	.temp_fan_off = C_TO_K(25),
-	.temp_fan_max = C_TO_K(75),
+	.temp_fan_max = C_TO_K(90),
 };
 
 struct ec_thermal_config thermal_params[] = {
