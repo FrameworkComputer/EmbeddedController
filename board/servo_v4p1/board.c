@@ -207,28 +207,6 @@ void ext_hpd_detection_enable(int enable)
 		gpio_disable_interrupt(GPIO_DP_HPD);
 	}
 }
-#else
-void snk_task(void *u)
-{
-	/* DO NOTHING */
-}
-
-void pd_task(void *u)
-{
-	/* DO NOTHING */
-}
-__override uint8_t board_get_usb_pd_port_count(void)
-{
-	return CONFIG_USB_PD_PORT_MAX_COUNT;
-}
-
-void pd_set_suspend(int port, int suspend)
-{
-	/*
-	 * Do nothing. This is only here to make the linker happy for this
-	 * old board on ToT.
-	 */
-}
 #endif /* SECTION_IS_RO */
 
 #include "gpio_list.h"
