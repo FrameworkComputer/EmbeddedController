@@ -133,13 +133,6 @@ void board_config_pre_init(void)
 
 /* Power signals list. Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-#ifdef CONFIG_POWER_S0IX
-	[X86_SLP_S0_DEASSERTED] = {
-		GPIO_PCH_SLP_S0_L,
-		POWER_SIGNAL_ACTIVE_HIGH | POWER_SIGNAL_DISABLE_AT_BOOT,
-		"SLP_S0_DEASSERTED",
-	},
-#endif
 	[X86_SLP_S3_DEASSERTED] = {
 		SLP_S3_SIGNAL_L,
 		POWER_SIGNAL_ACTIVE_HIGH,
@@ -708,7 +701,7 @@ static void sci_enable(void)
 {
 	if (*host_get_customer_memmap(0x00) == 1) {
 	/* when host set EC driver ready flag, EC need to enable SCI */
-		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0x20AF92AFF);
+		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
 
 		update_soc_power_limit();
 	} else
