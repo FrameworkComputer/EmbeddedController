@@ -126,6 +126,9 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_8042
                                                 "${PLATFORM_EC}/common/keyboard_8042.c"
                                                 "${PLATFORM_EC}/common/keyboard_8042_sharedlib.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_PWM_KBLIGHT
+                                                "${PLATFORM_EC}/common/keyboard_backlight.c"
+                                                "${PLATFORM_EC}/common/pwm_kblight.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
                                                 "${PLATFORM_EC}/common/led_common.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_LED_PWM "${PLATFORM_EC}/common/led_pwm.c")
