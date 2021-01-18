@@ -17,7 +17,7 @@
 #define CONFIG_VBOOT_EFS2
 
 /* Chipset */
-#define CONFIG_CHIPSET_TIGERLAKE
+#define CONFIG_CHIPSET_ALDERLAKE
 
 /* USB PD config */
 #if defined(HAS_TASK_PD_C2) && defined(HAS_TASK_PD_C3)
