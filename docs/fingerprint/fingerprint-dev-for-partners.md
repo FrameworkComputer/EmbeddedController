@@ -304,7 +304,7 @@ Prepare a serial terminal in your chroot:
 Connect to the UART pty:
 
 ```bash
-(chroot) $ sudo screen $(dut-control raw_fpmcu_uart_pty | cut -d: -f2)
+(chroot) $ sudo screen $(dut-control raw_fpmcu_console_uart_pty | cut -d: -f2)
 ```
 
 Press enter key several times (may need to wait up to 20 seconds). Then you will
