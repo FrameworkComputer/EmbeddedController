@@ -12,6 +12,7 @@
 #include "console.h"
 #include "dacs.h"
 #include <driver/gl3590.h>
+#include "driver/ioexpander/tca64xxa.h"
 #include "ec_version.h"
 #include "fusb302b.h"
 #include "gpio.h"
@@ -425,24 +426,25 @@ static void board_init(void)
 	/* Delay DUT hub to avoid brownout. */
 	usleep(MSEC);
 
-	init_ioexpanders();
-	CPRINTS("Board ID is %d", board_id_det());
-
-	vbus_dischrg_en(0);
-
-	init_dacs();
 	init_pi3usb9201();
 
 	/* Clear BBRAM, we don't want any PD state carried over on reset. */
 	system_set_bbram(SYSTEM_BBRAM_IDX_PD0, 0);
 	system_set_bbram(SYSTEM_BBRAM_IDX_PD1, 0);
 
-	/* Bring atmel part out of reset */
-	atmel_reset_l(1);
-
 #ifdef SECTION_IS_RO
+	init_ioexpanders();
+	CPRINTS("Board ID is %d", board_id_det());
+
+	init_dacs();
+	init_uservo_port();
+	init_pathsel();
 	init_ina231s();
 	init_fusb302b(1);
+	vbus_dischrg_en(0);
+
+	/* Bring atmel part out of reset */
+	atmel_reset_l(1);
 
 	/*
 	 * Get data about available input power. Defer this check, since we need
@@ -474,6 +476,8 @@ static void board_init(void)
 
 	/* Start SuzyQ detection */
 	start_ccd_meas_sbu_cycle();
+#else /* SECTION_IS_RO */
+	CPRINTS("Board ID is %d", board_id_det());
 #endif /* SECTION_IS_RO */
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
@@ -499,4 +503,20 @@ void tick_event(void)
 	}
 }
 DECLARE_HOOK(HOOK_TICK, tick_event, HOOK_PRIO_DEFAULT);
+
+struct ioexpander_config_t ioex_config[] = {
+	[0] = {
+		.drv = &tca64xxa_ioexpander_drv,
+		.i2c_host_port = TCA6416A_PORT,
+		.i2c_slave_addr = TCA6416A_ADDR,
+		.flags = TCA64XXA_FLAG_VER_TCA6416A
+	},
+	[1] = {
+		.drv = &tca64xxa_ioexpander_drv,
+		.i2c_host_port = TCA6424A_PORT,
+		.i2c_slave_addr = TCA6424A_ADDR,
+		.flags = TCA64XXA_FLAG_VER_TCA6424A
+	}
+};
+
 #endif /* SECTION_IS_RO */

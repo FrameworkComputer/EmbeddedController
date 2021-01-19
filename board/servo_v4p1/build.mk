@@ -14,7 +14,7 @@ CHIP_VARIANT:=stm32f07x
 test-list-y=
 
 # These files are compiled into RO and RW
-board-y=board.o tca6416a.o tca6424a.o
+board-y=board.o
 board-y+=ioexpanders.o
 board-y+=dacs.o
 board-y+=pi3usb9201.o

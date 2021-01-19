@@ -6,6 +6,10 @@
 #ifndef __CROS_EC_IOEXPANDERS_H
 #define __CROS_EC_IOEXPANDERS_H
 
+#define BOARD_ID_DET_MASK 0x7
+#define BOARD_ID_DET_OFFSET 3
+#define BOARD_ID_DET_PORT 1
+
 enum uservo_fastboot_mux_sel_t {
 	MUX_SEL_USERVO = 0,
 	MUX_SEL_FASTBOOT = 1

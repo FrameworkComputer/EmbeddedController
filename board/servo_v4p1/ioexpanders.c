@@ -5,125 +5,23 @@
 
 #include "hooks.h"
 #include "i2c.h"
+#include "ioexpander.h"
 #include "ioexpanders.h"
-#include "tca6416a.h"
-#include "tca6424a.h"
 
 /******************************************************************************
  * Initialize IOExpanders.
  */
 
+static enum servo_board_id board_id_val = BOARD_ID_UNSET;
+
+#ifdef SECTION_IS_RO
+
 static int dut_chg_en_state;
 static int bc12_charger;
-
-static enum servo_board_id board_id_val = BOARD_ID_UNSET;
 
 /* Enable all ioexpander outputs. */
 int init_ioexpanders(void)
 {
-	int ret;
-
-	/*
-	 * Init TCA6416A, PORT 0
-	 * NAME                      | DIR | Initial setting
-	 * -------------------------------------------------
-	 * BIT-0 (SBU_UART_SEL)      | O   | 0
-	 * BIT-1 (ATMEL_RESET_L)     | O   | 0
-	 * BIT-2 (SBU_FLIP_SEL)      | O   | 1
-	 * BIT-3 (USB3_A0_MUX_SEL)   | O   | 0
-	 * BIT-4 (USB3_A0_MUX_EN_L)  | O   | 0
-	 * BIT-5 (USB3_A0_PWR_EN)    | O   | 0
-	 * BIT-6 (UART_18_SEL)       | O   | 0
-	 * BIT-7 (USERVO_POWER_EN)   | O   | 0
-	 */
-	ret = tca6416a_write_byte(1, TCA6416A_OUT_PORT_0, 0x04);
-	if (ret != EC_SUCCESS)
-		return ret;
-
-	ret = tca6416a_write_byte(1, TCA6416A_DIR_PORT_0, 0x00);
-	if (ret != EC_SUCCESS)
-		return ret;
-
-	/*
-	 * Init TCA6416A, PORT 1
-	 * NAME                            | DIR | Initial setting
-	 * -------------------------------------------------------
-	 * BIT-0 (USERVO_FASTBOOT_MUX_SEL) | O   | 0
-	 * BIT-1 (USB3_A1_PWR_EN)          | O   | 0
-	 * BIT-2 (USB3_A1_MUX_SEL)         | O   | 0
-	 * BIT-3 (BOARD_ID)                | I   | x
-	 * BIT-4 (BOARD ID)                | I   | x
-	 * BIT-5 (BOARD_ID)                | I   | x
-	 * BIT-6 (VBUS_DISCHRG_EN)         | O   | 0
-	 * BIT-7 (DONGLE_DET)              | I   | x
-	 */
-	ret = tca6416a_write_byte(1, TCA6416A_OUT_PORT_1, 0x0);
-	if (ret != EC_SUCCESS)
-		return ret;
-
-	ret = tca6416a_write_byte(1, TCA6416A_DIR_PORT_1, 0xb8);
-	if (ret != EC_SUCCESS)
-		return ret;
-
-	/*
-	 * Init TCA6424A, PORT 0
-	 * NAME                      | DIR | Initial setting
-	 * -------------------------------------------------
-	 * BIT-0 (EN_PP5000_ALT_3P3) | O   | 0
-	 * BIT-1 (EN_PP3300_ETH)     | O   | 1
-	 * BIT-2 (EN_PP3300_DP)      | O   | 0
-	 * BIT-3 (FAULT_CLEAR_CC)    | O   | 0
-	 * BIT-4 (EN_VOUT_BUF_CC1)   | O   | 0
-	 * BIT-5 (EN_VOUT_BUF_CC2)   | O   | 0
-	 * BIT-6 (DUT_CHG_EN)        | O   | 0
-	 * BIT-7 (HOST_OR_CHG_CTL)   | O   | 0
-	 */
-	ret = tca6424a_write_byte(1, TCA6424A_OUT_PORT_0, 0x02);
-	if (ret != EC_SUCCESS)
-		return ret;
-
-	ret = tca6424a_write_byte(1, TCA6424A_DIR_PORT_0, 0x00);
-	if (ret != EC_SUCCESS)
-		return ret;
-
-	/*
-	 * Init TCA6424A, PORT 1
-	 * NAME                           | DIR | Initial setting
-	 * ------------------------------------------------------
-	 * BIT-0 (USERVO_FAULT_L)         | I   | x
-	 * BIT-1 (USB3_A0_FAULT_L)        | I   | x
-	 * BIT-2 (USB3_A1_FAULT_L)        | I   | x
-	 * BIT-3 (USB_DUTCHG_FLT_ODL)     | I   | x
-	 * BIT-4 (PP3300_DP_FAULT_L)      | I   | x
-	 * BIT-5 (DAC_BUF1_LATCH_FAULT_L) | I   | x
-	 * BIT-6 (DAC_BUF2_LATCH_FAULT_L) | I   | x
-	 * BIT-7 (PP5000_SRC_SEL)         | I   | x
-	 */
-	ret = tca6424a_write_byte(1, TCA6424A_DIR_PORT_1, 0xff);
-	if (ret != EC_SUCCESS)
-		return ret;
-
-	/*
-	 * Init TCA6424A, PORT 2
-	 * NAME                      | DIR | Initial setting
-	 * ------------------------------------------------
-	 * BIT-0 (HOST_CHRG_DET)     | I   | x
-	 * BIT-1 (USBH_PWRDN_L)      | O   | 1
-	 * BIT-2 (UNUSED)            | I   | x
-	 * BIT-3 (UNUSED)            | I   | x
-	 * BIT-4 (UNUSED)            | I   | x
-	 * BIT-5 (UNUSED)            | I   | x
-	 * BIT-6 (SYS_PWR_IRQ_ODL)   | I   | x
-	 * BIT-7 (DBG_LED_K_ODL)     | O   | 0
-	 */
-	ret = tca6424a_write_byte(1, TCA6424A_OUT_PORT_2, 0x02);
-	if (ret != EC_SUCCESS)
-		return ret;
-
-	ret = tca6424a_write_byte(1, TCA6424A_DIR_PORT_2, 0x7d);
-	if (ret != EC_SUCCESS)
-		return ret;
-
 	/* Clear any faults and other IRQs*/
 	read_faults();
 	read_irqs();
@@ -133,7 +31,7 @@ int init_ioexpanders(void)
 	 * notifies about event on both low and high levels, while notification
 	 * should happen only when state has changed.
 	 */
-	bc12_charger = get_host_chrg_det();
+	ioex_get_level(IOEX_HOST_CHRG_DET, &bc12_charger);
 
 	return EC_SUCCESS;
 }
@@ -172,11 +70,11 @@ static void ioexpanders_irq(void)
 		ccprintf("off DAC1 to clear the fault\n");
 	}
 
-	if (((irqs & HOST_CHRG_DET) != bc12_charger) &&
+	if ((!!(irqs & HOST_CHRG_DET) != bc12_charger) &&
 	    (board_id_det() <= BOARD_ID_REV1)) {
 		ccprintf("BC1.2 charger %s\n", (irqs & HOST_CHRG_DET) ?
 			 "plugged" : "unplugged");
-		bc12_charger = irqs & HOST_CHRG_DET;
+		bc12_charger = !!(irqs & HOST_CHRG_DET);
 	}
 
 	if (!(irqs & SYS_PWR_IRQ_ODL))
@@ -192,118 +90,125 @@ int irq_ioexpanders(void)
 
 inline int sbu_uart_sel(int en)
 {
-	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_0, 0, en);
+	return ioex_set_level(IOEX_SBU_UART_SEL, en);
 }
 
 inline int atmel_reset_l(int en)
 {
-	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_0, 1, en);
+	return ioex_set_level(IOEX_ATMEL_RESET_L, en);
 }
 
 inline int sbu_flip_sel(int en)
 {
-	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_0, 2, en);
+	return ioex_set_level(IOEX_SBU_FLIP_SEL, en);
 }
 
 inline int usb3_a0_mux_sel(int en)
 {
-	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_0, 3, en);
+	return ioex_set_level(IOEX_USB3_A0_MUX_SEL, en);
 }
 
 inline int usb3_a0_mux_en_l(int en)
 {
-	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_0, 4, en);
+	return ioex_set_level(IOEX_USB3_A0_MUX_EN_L, en);
 }
 
 inline int ec_usb3_a0_pwr_en(int en)
 {
-	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_0, 5, en);
+	return ioex_set_level(IOEX_USB3_A0_PWR_EN, en);
 }
 
 inline int uart_18_sel(int en)
 {
-	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_0, 6, en);
+	return ioex_set_level(IOEX_UART_18_SEL, en);
 }
 
 inline int ec_uservo_power_en(int en)
 {
-	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_0, 7, en);
+	return ioex_set_level(IOEX_USERVO_POWER_EN, en);
 }
 
 inline int uservo_fastboot_mux_sel(enum uservo_fastboot_mux_sel_t sel)
 {
-	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_1, 0, sel);
+	return ioex_set_level(IOEX_USERVO_FASTBOOT_MUX_SEL, (int)sel);
 }
 
 inline int ec_usb3_a1_pwr_en(int en)
 {
-	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_1, 1, en);
+	return ioex_set_level(IOEX_USB3_A1_PWR_EN, en);
 }
 
 inline int usb3_a1_mux_sel(int en)
 {
-	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_1, 2, en);
+	return ioex_set_level(IOEX_USB3_A1_MUX_SEL, en);
 }
 
 inline int board_id_det(void)
 {
-	int id;
 	if (board_id_val == BOARD_ID_UNSET) {
+		int id;
+
 		/* Cache board ID at init */
-		id = tca6416a_read_byte(1, TCA6416A_IN_PORT_1);
-		if (id < 0)
+		if (ioex_get_port(IOEX_GET_INFO(IOEX_BOARD_ID_DET0)->ioex,
+		    IOEX_GET_INFO(IOEX_BOARD_ID_DET0)->port,
+		    &id))
 			return id;
-		board_id_val = id;
+
+		/* Board ID consists of bits 5, 4, and 3 */
+		board_id_val = (id >> BOARD_ID_DET_OFFSET) & BOARD_ID_DET_MASK;
 	}
 
-	/* Board ID consists of bits 5, 4, and 3 */
-	return (board_id_val >> 3) & 0x7;
+	return board_id_val;
 }
 
 inline int dongle_det(void)
 {
-	return tca6416a_read_bit(1, TCA6416A_IN_PORT_1, 7);
+	int val;
+	ioex_get_level(IOEX_DONGLE_DET, &val);
+	return val;
 }
 
 inline int get_host_chrg_det(void)
 {
-	return tca6424a_read_bit(1, TCA6424A_IN_PORT_2, 0);
+	int val;
+	ioex_get_level(IOEX_HOST_CHRG_DET, &val);
+	return val;
 }
 
 inline int en_pp5000_alt_3p3(int en)
 {
-	return tca6424a_write_bit(1, TCA6424A_OUT_PORT_0, 0, en);
+	return ioex_set_level(IOEX_EN_PP5000_ALT_3P3, en);
 }
 
 inline int en_pp3300_eth(int en)
 {
-	return tca6424a_write_bit(1, TCA6424A_OUT_PORT_0, 1, en);
+	return ioex_set_level(IOEX_EN_PP3300_ETH, en);
 }
 
 inline int en_pp3300_dp(int en)
 {
-	return tca6424a_write_bit(1, TCA6424A_OUT_PORT_0, 2, en);
+	return ioex_set_level(IOEX_EN_PP3300_DP, en);
 }
 
 inline int fault_clear_cc(int en)
 {
-	return tca6424a_write_bit(1, TCA6424A_OUT_PORT_0, 3, en);
+	return ioex_set_level(IOEX_FAULT_CLEAR_CC, en);
 }
 
 inline int en_vout_buf_cc1(int en)
 {
-	return tca6424a_write_bit(1, TCA6424A_OUT_PORT_0, 4, en);
+	return ioex_set_level(IOEX_EN_VOUT_BUF_CC1, en);
 }
 
 inline int en_vout_buf_cc2(int en)
 {
-	return tca6424a_write_bit(1, TCA6424A_OUT_PORT_0, 5, en);
+	return ioex_set_level(IOEX_EN_VOUT_BUF_CC2, en);
 }
 
 int dut_chg_en(int en)
 {
 	dut_chg_en_state = en;
-	return tca6424a_write_bit(1, TCA6424A_OUT_PORT_0, 6, en);
+	return ioex_set_level(IOEX_DUT_CHG_EN, en);
 }
 
 int get_dut_chg_en(void)
@@ -313,30 +218,74 @@ int get_dut_chg_en(void)
 
 inline int host_or_chg_ctl(int en)
 {
-	return tca6424a_write_bit(1, TCA6424A_OUT_PORT_0, 7, en);
+	return ioex_set_level(IOEX_HOST_OR_CHG_CTL, en);
 }
 
 inline int read_faults(void)
 {
-	return tca6424a_read_byte(1, TCA6424A_IN_PORT_1);
+	int val;
+
+	ioex_get_port(IOEX_GET_INFO(IOEX_USERVO_FAULT_L)->ioex,
+		      IOEX_GET_INFO(IOEX_USERVO_FAULT_L)->port,
+		      &val);
+
+	return val;
 }
 
 inline int read_irqs(void)
 {
-	return tca6424a_read_byte(1, TCA6424A_IN_PORT_2);
+	int val;
+
+	ioex_get_port(IOEX_GET_INFO(IOEX_SYS_PWR_IRQ_ODL)->ioex,
+		      IOEX_GET_INFO(IOEX_SYS_PWR_IRQ_ODL)->port,
+		      &val);
+
+	return val;
 }
 
 inline int vbus_dischrg_en(int en)
 {
-	return tca6416a_write_bit(1, TCA6416A_OUT_PORT_1, 6, en);
+	return ioex_set_level(IOEX_VBUS_DISCHRG_EN, en);
 }
 
 inline int usbh_pwrdn_l(int en)
 {
-	return tca6424a_write_bit(1, TCA6424A_OUT_PORT_2, 1, en);
+	return ioex_set_level(IOEX_USBH_PWRDN_L, en);
 }
 
 inline int tca_gpio_dbg_led_k_odl(int en)
 {
-	return tca6424a_write_bit(1, TCA6424A_OUT_PORT_2, 7, !en);
+	return ioex_set_level(IOEX_TCA_GPIO_DBG_LED_K_ODL, !en);
 }
+
+#else /* SECTION_IS_RO */
+
+/*
+ * Due to lack of flash in RW section, it is not possible to use IOEX subsystem
+ * in it. Instead, RO section uses IOEX, and RW implements only required
+ * function with raw i2c operation. This function is required by 'version'
+ * console command and should work without any special initialization.
+ */
+inline int board_id_det(void)
+{
+	if (board_id_val == BOARD_ID_UNSET) {
+		int id;
+		int res;
+
+		/* Cache board ID at init */
+		res = i2c_read8(TCA6416A_PORT,
+				TCA6416A_ADDR,
+				BOARD_ID_DET_PORT,
+				&id);
+		if (res != EC_SUCCESS)
+			return res;
+
+		/* Board ID consists of bits 5, 4, and 3 */
+		board_id_val = (id >> BOARD_ID_DET_OFFSET) & BOARD_ID_DET_MASK;
+	}
+
+	/* Board ID consists of bits 5, 4, and 3 */
+	return board_id_val;
+}
+
+#endif /* SECTION_IS_RO */

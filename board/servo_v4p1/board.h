@@ -24,6 +24,14 @@
 #define DUT 1
 
 /*
+ * IO expanders I2C addresses and ports
+ */
+#define TCA6416A_PORT 1
+#define TCA6416A_ADDR 0x21
+#define TCA6424A_PORT 1
+#define TCA6424A_ADDR 0x23
+
+/*
  * Flash layout: we redefine the sections offsets and sizes as we want to
  * include a pstate region, and will use RO/RW regions of different sizes.
  * RO has size 92K and usb_updater along with the majority of code is placed
@@ -139,6 +147,14 @@
 
 /* Enable console recasting of GPIO type. */
 #define CONFIG_CMD_GPIO_EXTENDED
+
+/* Enable I/O expander */
+#ifdef SECTION_IS_RO
+#define CONFIG_IO_EXPANDER
+#define CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+#define CONFIG_IO_EXPANDER_TCA64XXA
+#define CONFIG_IO_EXPANDER_PORT_COUNT 2
+#endif
 
 /* This is not actually an EC so disable some features. */
 #undef CONFIG_WATCHDOG_HELP

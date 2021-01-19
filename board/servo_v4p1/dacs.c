@@ -101,6 +101,7 @@ int write_dac(enum dac_t dac, uint16_t value)
 	return EC_SUCCESS;
 }
 
+#ifdef SECION_IS_RO
 static int cmd_cc_dac(int argc, char *argv[])
 {
 	uint8_t dac;
@@ -136,3 +137,4 @@ static int cmd_cc_dac(int argc, char *argv[])
 DECLARE_CONSOLE_COMMAND(cc_dac, cmd_cc_dac,
 			"dac <\"on\"|\"off\"|mv>",
 			"Set Servo v4.1 CC dacs");
+#endif
