@@ -11,9 +11,9 @@
 
 #include "accelgyro.h"
 #include "console.h"
-#include "driver/accelgyro_bmi_common.h"
-#include "driver/mag_bmm150.h"
-#include "driver/mag_lis2mdl.h"
+#include "accelgyro_bmi_common.h"
+#include "mag_bmm150.h"
+#include "mag_lis2mdl.h"
 #include "i2c.h"
 #include "math_util.h"
 #include "motion_sense_fifo.h"

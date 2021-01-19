@@ -10,9 +10,8 @@
 
 #include "accelgyro.h"
 #include "console.h"
-#include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_bmi260.h"
-#include "endian.h"
+#include "accelgyro_bmi_common.h"
+#include "accelgyro_bmi260.h"
 #include "hwtimer.h"
 #include "i2c.h"
 #include "init_rom.h"

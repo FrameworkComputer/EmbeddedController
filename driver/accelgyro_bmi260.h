@@ -10,19 +10,8 @@
 
 #include "accelgyro.h"
 #include "common.h"
-#include "driver/mag_bmm150.h"
-
-/*
- * The addr field of motion_sensor support both SPI and I2C:
- * This is defined in include/i2c.h and is no longer an 8bit
- * address. The 7/10 bit address starts at bit 0 and leaves
- * room for a 10 bit address, although we don't currently
- * have any 10 bit slaves.  I2C or SPI is indicated by a
- * more significant bit
- */
-
-/* I2C addresses */
-#define BMI260_ADDR0_FLAGS	0x68
+#include "mag_bmm150.h"
+#include "driver/accelgyro_bmi260_public.h"
 
 #define BMI260_CHIP_ID      0x00
 #define BMI260_CHIP_ID_MAJOR    0x27
@@ -331,13 +320,5 @@
 
 /* Root mean square noise of 100Hz accelerometer, units: ug */
 #define BMI260_ACCEL_RMS_NOISE_100HZ    1060
-
-extern const struct accelgyro_drv bmi260_drv;
-
-void bmi260_interrupt(enum gpio_signal signal);
-
-#ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL
-extern struct i2c_stress_test_dev bmi260_i2c_stress_test_dev;
-#endif
 
 #endif /* __CROS_EC_ACCELGYRO_BMI260_H */

@@ -8,9 +8,10 @@
 #define __CROS_EC_ACCELGYRO_BMI_COMMON_H
 
 #include "accelgyro.h"
-#include "driver/accelgyro_bmi160.h"
-#include "driver/accelgyro_bmi260.h"
+#include "accelgyro_bmi160.h"
+#include "accelgyro_bmi260.h"
 #include "mag_bmm150.h"
+#include "accelgyro_bmi_common_public.h"
 
 #define BMI_CONF_REG(_sensor)      (0x40 + 2 * (_sensor))
 #define BMI_RANGE_REG(_sensor)     (0x41 + 2 * (_sensor))
@@ -62,22 +63,6 @@ enum bmi_running_mode {
 #define BMI_FLAG_SEC_I2C_ENABLED    BIT(0)
 #define BMI_FIFO_FLAG_OFFSET        4
 #define BMI_FIFO_ALL_MASK           7
-
-struct bmi_drv_data_t {
-	struct accelgyro_saved_data_t saved_data[3];
-	uint8_t              flags;
-	uint8_t              enabled_activities;
-	uint8_t              disabled_activities;
-#ifdef CONFIG_MAG_BMI_BMM150
-	struct bmm150_private_data compass;
-#endif
-#ifdef CONFIG_BMI_ORIENTATION_SENSOR
-	uint8_t raw_orientation;
-	enum motionsensor_orientation orientation;
-	enum motionsensor_orientation last_orientation;
-#endif
-
-};
 
 #define BMI_GET_DATA(_s) \
 	((struct bmi_drv_data_t *)(_s)->drv_data)

@@ -7,7 +7,7 @@
 #include "accelgyro.h"
 #include "common.h"
 #include "console.h"
-#include "driver/als_tcs3400.h"
+#include "als_tcs3400.h"
 #include "hooks.h"
 #include "hwtimer.h"
 #include "i2c.h"

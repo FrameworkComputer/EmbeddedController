@@ -12,7 +12,7 @@
 #include "accelgyro.h"
 #include "common.h"
 #include "console.h"
-#include "driver/accel_bma2x2.h"
+#include "accel_bma2x2.h"
 #include "i2c.h"
 #include "math_util.h"
 #include "spi.h"
