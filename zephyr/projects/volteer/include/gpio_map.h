@@ -69,6 +69,9 @@
 #define GPIO_USB_C1_RT_RST_ODL \
 	NAMED_GPIO_NODELABEL(usb_c1_bb_retimer, reset_gpios)
 
+/* Fan control */
+#define GPIO_EN_PP5000_FAN         NAMED_GPIO(en_pp5000_fan)
+
 /* Don't have a load switch for retimer */
 /* TODO(b/176559881): How to do unimplemented GPIOs? */
 #define GPIO_USB_C1_LS_EN \

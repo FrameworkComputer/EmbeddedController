@@ -54,3 +54,8 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
   "${PLATFORM_EC_BOARD}/led.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC
   "${PLATFORM_EC_BOARD}/usbc_config.c")
+
+# TODO: b/177854276, b/174851465
+# Fan stub requires on PWM support.  Remove once full fan support
+# is available.
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_PWM  "src/fan.c")

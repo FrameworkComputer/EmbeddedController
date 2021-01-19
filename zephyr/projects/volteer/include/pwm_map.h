@@ -23,4 +23,6 @@
 
 #define PWM_CH_KBLIGHT		NAMED_PWM(kblight)
 
+#define PWM_CH_FAN		NAMED_PWM(fan)
+
 #endif /* __ZEPHYR_CHROME_PWM_MAP_H */

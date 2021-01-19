@@ -85,6 +85,11 @@
 			label = "KBLIGHT";
 			frequency = <2400>;
 		};
+		fan {
+			pwms = <&pwm5 0 0>;
+			label = "FAN";
+			frequency = <25000>;
+		};
 	};
 
 	named-gpios {
@@ -515,6 +520,11 @@
 
 /* Keyboard backlight */
 &pwm3 {
+	status = "okay";
+};
+
+/* Fan control */
+&pwm5 {
 	status = "okay";
 };
 
