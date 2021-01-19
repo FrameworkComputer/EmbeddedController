@@ -136,7 +136,8 @@
 			gpios = <&gpioe 4 GPIO_INPUT>;
 			label = "USB_C0_BC12_INT_ODL";
 		};
-		usb_c1_mix_int_odl {
+		gpio_usb_c1_mix_int_odl: usb_c1_mix_int_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpio0 3 GPIO_INPUT>;
 			label = "USB_C1_MIX_INT_ODL";
 		};
@@ -216,7 +217,8 @@
 			gpios = <&gpio6 6 GPIO_ODR_LOW>;
 			label = "USB_A_LOW_PWR_OD";
 		};
-		usb_c1_rt_rst_odl_boardid_0 {
+		gpio_usb_c1_rt_rst_odl_boardid_0: usb_c1_rt_rst_odl_boardid_0 {
+			#gpio-cells = <0>;
 			gpios = <&gpio3 2 GPIO_ODR_LOW>;
 			label = "USB_C1_RT_RST_ODL_BOARDID_0";
 		};
@@ -256,7 +258,8 @@
 			gpios = <&gpio7 2 (GPIO_INPUT | GPIO_PULL_UP)>;
 			label = "EC_SLP_S0IX";
 		};
-		unused_gpio41 {
+		gpio_unused_gpio41: unused_gpio41 {
+			#gpio-cells = <0>;
 			gpios = <&gpio4 1 (GPIO_INPUT | GPIO_PULL_UP)>;
 			label = "UNUSED_GPIO41";
 		};
@@ -431,7 +434,9 @@
 		compatible = "intel,jhl8040r";
 		reg = <0x40>;
 		label = "USB_C1_BB_RETIMER";
-		int-gpios = <&gpio0 3 GPIO_ACTIVE_LOW>;
+		int-gpios = <&gpio_usb_c1_mix_int_odl>;
+		reset-gpios = <&gpio_usb_c1_rt_rst_odl_boardid_0>;
+		ls-en-gpios = <&gpio_unused_gpio41>;
 	};
 };
 
