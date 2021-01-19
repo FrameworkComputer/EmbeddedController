@@ -31,6 +31,15 @@ BUILD_ASSERT(GPIO_COUNT < GPIO_LIMIT);
  */
 #define NAMED_GPIO(name) GPIO_SIGNAL(DT_PATH(named_gpios, name))
 
+/** @brief Obtain a named gpio enum from a label and property
+ *
+ * Obtains a valid enum gpio_signal that can be used with platform/ec gpio API
+ * from the property of a labeled node. The property has to point to a
+ * named_gpios node.
+ */
+#define NAMED_GPIO_NODELABEL(label, prop) \
+	GPIO_SIGNAL(DT_PHANDLE(DT_NODELABEL(label), prop))
+
 /*
  * While we don't support IO expanders at the moment, multiple
  * platform/ec headers (e.g., espi.h) require some of these constants
