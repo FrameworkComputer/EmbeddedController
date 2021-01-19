@@ -87,6 +87,12 @@ __maybe_unused static int test_mux_con_dis_as_snk(void)
 	mock_tcpc.should_print_call = false;
 	mock_usb_mux.num_set_calls = 0;
 
+	/*
+	 * we expect a PD-capable partner to be able to check below
+	 * whether it is data capable.
+	 */
+	tc_pd_connection(0, 1);
+
 	/* Update CC lines send state machine event to process */
 	mock_tcpc.cc1 = TYPEC_CC_VOLT_RP_3_0;
 	mock_tcpc.cc2 = TYPEC_CC_VOLT_OPEN;

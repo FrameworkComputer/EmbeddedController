@@ -172,6 +172,11 @@ bool pd_get_partner_dual_role_power(int port)
 	return true;
 }
 
+bool pd_capable(int port)
+{
+	return true;
+}
+
 void pd_set_suspend(int port, int suspend)
 {
 }

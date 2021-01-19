@@ -430,11 +430,12 @@ mux_state_t get_mux_mode_to_set(int port)
 		return USB_PD_MUX_NONE;
 
 	/*
-	 * If the power role is sink and the partner device is not capable
+	 * If the power role is sink and the PD partner device is not capable
 	 * of USB communication then disconnect.
 	 */
 	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
 	    pd_get_power_role(port) == PD_ROLE_SINK &&
+	    pd_capable(port) &&
 	    !pd_get_partner_usb_comm_capable(port))
 		return USB_PD_MUX_NONE;
 
