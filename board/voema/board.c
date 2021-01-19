@@ -60,6 +60,29 @@ struct keyboard_scan_config keyscan_config = {
 	},
 };
 
+static const struct ec_response_keybd_config voema_kb = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+__override const struct ec_response_keybd_config
+*board_vivaldi_keybd_config(void)
+{
+	return &voema_kb;
+}
+
 /******************************************************************************/
 /*
  * FW_CONFIG defaults for Volteer if the CBI data is not initialized.
