@@ -58,7 +58,7 @@
 	};
 
 	named-gpios {
-		compatible = "gpio-keys";
+		compatible = "named-gpios";
 
 		ec_lid_open {
 			gpios = <&gpiod 2 GPIO_INPUT>;

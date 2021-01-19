@@ -32,7 +32,7 @@
 	};
 
 	named-gpios {
-		compatible = "gpio-keys";
+		compatible = "named-gpios";
 
 		lid_open {
 			gpios = <&gpiod 2 GPIO_INPUT>;

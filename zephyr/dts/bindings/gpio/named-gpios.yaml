@@ -1,0 +1,20 @@
+description: Named GPIOs parent node
+
+compatible: "named-gpios"
+
+child-binding:
+    description: Named GPIOs child node
+    properties:
+       gpios:
+          type: phandle-array
+          required: true
+       label:
+          required: true
+          type: string
+          description: |
+            Human readable string describing the device (used as
+            device_get_binding() argument)
+       "#gpio-cells":
+          type: int
+          required: false
+          const: 0
