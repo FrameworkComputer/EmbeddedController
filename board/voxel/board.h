@@ -11,6 +11,14 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+/*
+ * Create an EC build that requires AP-driven mode entry to facilitate debugging
+ * b/177105656.
+ */
+#ifdef BOARD_VOXEL_APMODEENTRY
+#define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
+#endif
+
 /* Optional features */
 #undef NPCX7_PWM1_SEL
 #define NPCX7_PWM1_SEL    0    /* GPIO C2 is not used as PWM1. */
