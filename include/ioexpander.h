@@ -32,6 +32,9 @@ extern const struct ioex_info ioex_list[];
 extern void (* const ioex_irq_handlers[])(enum ioex_signal signal);
 extern const int ioex_ih_count;
 
+/* Get ioex_info structure for specified signal */
+#define IOEX_GET_INFO(signal) (ioex_list + (signal) - IOEX_SIGNAL_START)
+
 struct ioexpander_drv {
 	/* Initialize IO expander chip/driver */
 	int (*init)(int ioex);
@@ -45,6 +48,10 @@ struct ioexpander_drv {
 	int (*set_flags_by_mask)(int ioex, int port, int mask, int flags);
 	/* Enable/disable interrupt for the IOEX pin */
 	int (*enable_interrupt)(int ioex, int port, int mask, int enable);
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+	/* Read levels for whole IOEX port */
+	int (*get_port)(int ioex, int port, int *val);
+#endif
 };
 
 /* IO expander chip disabled. No I2C communication will be attempted. */
@@ -117,6 +124,18 @@ int ioex_get_level(enum ioex_signal signal, int *val);
  * @return			EC_SUCCESS if successful, non-zero if error.
  */
 int ioex_set_level(enum ioex_signal signal, int value);
+
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+/*
+ * Get the current levels on the IOEX port
+ *
+ * @param ioex		Number of I/O expander
+ * @param port		Number of port in ioex
+ * @param val		Pointer to variable where port will be read
+ * @return			EC_SUCCESS if successful, non-zero if error.
+ */
+int ioex_get_port(int ioex, int port, int *val);
+#endif
 
 /*
  * Initialize IO expander chip/driver

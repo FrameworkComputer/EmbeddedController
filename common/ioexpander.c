@@ -152,6 +152,16 @@ int ioex_set_level(enum ioex_signal signal, int value)
 							g->mask, value);
 }
 
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+int ioex_get_port(int ioex, int port, int *val)
+{
+	if (ioex_config[ioex].drv->get_port == NULL)
+		return EC_ERROR_UNIMPLEMENTED;
+
+	return ioex_config[ioex].drv->get_port(ioex, port, val);
+}
+#endif
+
 int ioex_init(int ioex)
 {
 	const struct ioex_info *g = ioex_list;

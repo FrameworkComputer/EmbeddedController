@@ -1468,6 +1468,13 @@
 #undef CONFIG_IO_EXPANDER
 
 /*
+ * Enable reading levels for whole IO expander port with one call.
+ * This adds 'get_port' function pointer to 'ioexpander_drv' structure.
+ * Most drivers don't implement this functionality.
+ */
+#undef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+
+/*
  * EC's supporting powering down GPIO pins.
  * Add flag GPIO_POWER_DOWN and additional API's.
  */
