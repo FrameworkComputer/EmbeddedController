@@ -9,5 +9,5 @@ set_property(GLOBAL APPEND PROPERTY extra_post_build_commands
   COMMAND ${PYTHON_EXECUTABLE} ${ZEPHYR_BASE}/boards/arm/npcx7m6fb_evb/support/ecst.py
   -i ${PROJECT_BINARY_DIR}/${CONFIG_KERNEL_BIN_NAME}.bin
   -o ${TARGET_IMAGE_FILE} -nohcrc -nofcrc
-  -chip npcx7m6 -flashsize 8 -spimaxclk 50 -spireadmode dual
+  -chip npcx7m7 -flashsize 8 -spimaxclk 50 -spireadmode dual
 )
