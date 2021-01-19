@@ -56,6 +56,9 @@
 #define CYP5525_PORT_PD_RESPONSE_REG(x) \
 	(0x1400 + (x * 0x1000))
 
+#define CYP5525_WRITE_DATA_MEMORY_REG(x) \
+	(0x1800 + (x * 0x1000))
+
 #define CYP5525_SELECT_SINK_PDO_P1_REG      0x2005
 #define CYP5525_PD_CONTROL_P1_REG           0x2006
 #define CYP5525_PD_STATUS_P1_REG            0x2008
@@ -125,6 +128,7 @@ enum cypd_pd_command {
 	CYPD_PD_CMD_TRG_VCONN_SWAP = 0x09,
 	CYPD_PD_CMD_EC_INIT_COMPLETE = 0x10,
 	CYPD_PD_CMD_PORT_DISABLE = 0x11,
+	CYPD_PD_CMD_CHANGE_PD_PORT_PARAMS = 0x14,
 };
 
 /************************************************
@@ -290,6 +294,12 @@ struct pd_port_current_state_t {
 	enum pd_power_role role;
 };
 
+enum pd_port_role {
+	PORT_SINK,
+	PORT_SOURCE,
+	PORT_DUALROLE
+};
+
 /* PD CHIP */
 void pd_chip_interrupt(enum gpio_signal signal);
 
@@ -298,5 +308,7 @@ void pd_extpower_is_present_interrupt(enum gpio_signal signal);
 int cypd_get_pps_power_budget(void);
 
 void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int len);
+
+int pd_port_configuration_change(int port, enum pd_port_role port_role);
 
 #endif	/* __CROS_EC_CYPRESS5525_H */
