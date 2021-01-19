@@ -29,7 +29,7 @@
 	};
 
 	named-i2c-ports {
-		compatible = "i2c-keys";
+		compatible = "named-i2c-ports";
 
 		sensor {
 			i2c-port = <&i2c0_0>;

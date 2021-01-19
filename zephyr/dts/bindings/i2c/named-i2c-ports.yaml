@@ -1,12 +1,12 @@
 # Copyright (c) 2020 The Chromium OS Authors
 # SPDX-License-Identifier: Apache-2.0
 
-description: I2C KEYS parent node
+description: Named I2C ports parent node
 
-compatible: "i2c-keys"
+compatible: "named-i2c-ports"
 
 child-binding:
-  description: I2C KEYS child node
+  description: Named I2C ports child node
   properties:
     i2c-port:
       type: phandle

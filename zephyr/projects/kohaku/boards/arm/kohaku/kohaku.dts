@@ -28,7 +28,7 @@
 	};
 
 	named-i2c-ports {
-		compatible = "i2c-keys";
+		compatible = "named-i2c-ports";
 	};
 
 	named-gpios {

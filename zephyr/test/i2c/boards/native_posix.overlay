@@ -5,7 +5,7 @@
 
 / {
     named-i2c-ports {
-        compatible = "i2c-keys";
+        compatible = "named-i2c-ports";
         accel-0 {
             i2c-port = <&bmi_i2c>;
             label = "ACCEL_0";
