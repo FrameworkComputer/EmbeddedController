@@ -51,6 +51,10 @@
 #define GPIO_USB_C1_INT_ODL GPIO_SUB_USB_C1_INT_ODL
 
 /* Keyboard */
+#ifdef BOARD_MAGOLOR
+#define CONFIG_KEYBOARD_BOARD_CONFIG
+#define CONFIG_KEYBOARD_KEYPAD
+#endif
 #define CONFIG_PWM_KBLIGHT
 
 /* LED defines */
