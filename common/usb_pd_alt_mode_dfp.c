@@ -676,9 +676,9 @@ void notify_sysjump_ready(void)
 		task_set_event(sysjump_task_waiting, TASK_EVENT_SYSJUMP_READY);
 }
 
-static inline bool is_rev3_vdo(int port, enum tcpm_transmit_type type)
+static inline bool is_pd_rev3(int port, enum tcpm_transmit_type type)
 {
-	return pd_get_vdo_ver(port, type) == PD_REV30;
+	return pd_get_rev(port, type) == PD_REV30;
 }
 
 /*
@@ -735,7 +735,7 @@ bool is_active_cable_element_retimer(int port)
 	/* Ref: USB PD Spec 2.0 Table 6-29 Active Cable VDO
 	 * Revision 2 Active cables do not have Active element support.
 	 */
-	return is_rev3_vdo(port, TCPC_TX_SOP_PRIME) &&
+	return is_pd_rev3(port, TCPC_TX_SOP_PRIME) &&
 		disc->identity.idh.product_type == IDH_PTYPE_ACABLE &&
 		disc->identity.product_t2.a2_rev30.active_elem ==
 							ACTIVE_RETIMER;
@@ -795,7 +795,7 @@ static bool is_tbt_cable_superspeed(int port)
 		return false;
 
 	if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
-	   is_rev3_vdo(port, TCPC_TX_SOP_PRIME))
+	   is_pd_rev3(port, TCPC_TX_SOP_PRIME))
 		return  disc->identity.product_t1.p_rev30.ss ==
 						USB_R30_SS_U32_U40_GEN1 ||
 			disc->identity.product_t1.p_rev30.ss ==
@@ -935,7 +935,7 @@ enum usb_rev30_ss get_usb4_cable_speed(int port)
 	max_usb4_speed = tbt_speed == TBT_SS_TBT_GEN3 ?
 		USB_R30_SS_U40_GEN3 : USB_R30_SS_U32_U40_GEN2;
 
-	if (is_rev3_vdo(port, TCPC_TX_SOP_PRIME)) {
+	if (is_pd_rev3(port, TCPC_TX_SOP_PRIME)) {
 		disc = pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
 
 		return max_usb4_speed <  disc->identity.product_t1.p_rev30.ss ?
@@ -965,7 +965,7 @@ uint32_t get_enter_usb_msg_payload(int port)
 	eudo.cable_speed = get_usb4_cable_speed(port);
 
 	if (disc->identity.idh.product_type == IDH_PTYPE_ACABLE) {
-		if (is_rev3_vdo(port, TCPC_TX_SOP_PRIME)) {
+		if (is_pd_rev3(port, TCPC_TX_SOP_PRIME)) {
 			enum retimer_active_element active_element =
 				disc->identity.product_t2.a2_rev30.active_elem;
 			eudo.cable_type = active_element == ACTIVE_RETIMER ?
