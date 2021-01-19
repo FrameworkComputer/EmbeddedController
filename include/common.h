@@ -132,7 +132,11 @@
  * linked into the .rodata section.
  */
 #ifndef __init_rom
+#ifndef CONFIG_ZEPHYR
 #define __init_rom __attribute__((section(".init.rom")))
+#else
+#define __init_rom
+#endif
 #endif
 
 /* gcc does not support __has_feature */

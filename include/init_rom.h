@@ -14,6 +14,7 @@
 
 #include "stdbool.h"
 
+#ifdef CONFIG_CHIP_INIT_ROM_REGION
 /**
  * Get the memory mapped address of an .init_rom data object.
  *
@@ -49,5 +50,20 @@ void init_rom_unmap(const void *addr, int size);
  * @return 0 on success.
  */
 int init_rom_copy(int offset, int size, char *data);
+#else
+static inline const void *init_rom_map(const void *addr, int size)
+{
+	return addr;
+}
+
+static inline void init_rom_unmap(const void *addr, int size)
+{
+}
+
+static inline int init_rom_copy(int offset, int size, char *data)
+{
+	return 0;
+}
+#endif
 
 #endif /* __CROS_EC_INIT_ROM_H */
