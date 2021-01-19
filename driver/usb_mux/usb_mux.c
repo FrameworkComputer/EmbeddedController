@@ -355,7 +355,6 @@ static enum ec_status hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
 	const struct ec_params_usb_pd_mux_info *p = args->params;
 	struct ec_response_usb_pd_mux_info *r = args->response;
 	int port = p->port;
-	const struct usb_mux *me = &usb_muxes[port];
 	mux_state_t mux_state;
 
 	if (port >= board_get_usb_pd_port_count())
@@ -368,8 +367,7 @@ static enum ec_status hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
 
 	/* Clear HPD IRQ event since we're about to inform host of it. */
 	if (IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) &&
-	    (r->flags & USB_PD_MUX_HPD_IRQ) &&
-	    (me->hpd_update == &virtual_hpd_update)) {
+	    (r->flags & USB_PD_MUX_HPD_IRQ)) {
 		usb_mux_hpd_update(port, r->flags & USB_PD_MUX_HPD_LVL, 0);
 	}
 
