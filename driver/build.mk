@@ -82,6 +82,7 @@ driver-$(CONFIG_IO_EXPANDER_NCT38XX)+=ioexpander/ioexpander_nct38xx.o
 driver-$(CONFIG_IO_EXPANDER_PCA9534)+=ioexpander/pca9534.o
 driver-$(CONFIG_IO_EXPANDER_PCA9675)+=ioexpander/pca9675.o
 driver-$(CONFIG_IO_EXPANDER_PCAL6408)+=ioexpander/pcal6408.o
+driver-$(CONFIG_IO_EXPANDER_TCA64XXA)+=ioexpander/tca64xxa.o
 
 driver-$(CONFIG_CTN730)+=nfc/ctn730.o
 
