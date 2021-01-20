@@ -80,10 +80,10 @@
 #define CAN_BOOT_AP_CHECK_WAIT		(200 * MSEC)
 
 /* The timeout of the check if the switchcap outputs good voltage */
-#define SWITCHCAP_PG_CHECK_TIMEOUT	(50 * MSEC)
+#define SWITCHCAP_PG_CHECK_TIMEOUT	(100 * MSEC)
 
 /* Wait for polling if the switchcap outputs good voltage */
-#define SWITCHCAP_PG_CHECK_WAIT		(5 * MSEC)
+#define SWITCHCAP_PG_CHECK_WAIT		(6 * MSEC)
 
 /*
  * Delay between power-on the system and power-on the PMIC.
