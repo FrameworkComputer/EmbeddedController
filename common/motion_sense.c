@@ -53,7 +53,7 @@ STATIC_IF(CONFIG_CMD_ACCEL_INFO) int accel_disp;
  */
 #define MOTION_SENSOR_INT_ADJUSTMENT_US 10
 
-struct mutex g_sensor_mutex;
+mutex_t g_sensor_mutex;
 
 /*
  * Current power level (S0, S3, S5, ...)
@@ -77,6 +77,18 @@ static uint32_t odr_event_required;
 
 /* Whether or not the FIFO interrupt should be enabled (set from the AP). */
 __maybe_unused static int fifo_int_enabled;
+
+#ifdef CONFIG_ZEPHYR
+static int init_sensor_mutex(const struct device *dev)
+{
+	ARG_UNUSED(dev);
+
+	k_mutex_init(&g_sensor_mutex);
+
+	return 0;
+}
+SYS_INIT(init_sensor_mutex, POST_KERNEL, 50);
+#endif /* CONFIG_ZEPHYR */
 
 static inline int motion_sensor_in_forced_mode(
 		const struct motion_sensor_t *sensor)

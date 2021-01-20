@@ -125,6 +125,23 @@ config TASK_KEYSCAN_STACK_SIZE
 
 endif # HAS_TASK_KEYSCAN
 
+config HAS_TASK_MOTIONSENSE
+	bool "Enable motionsense task"
+	help
+	  This turns on the motion sense task which collects sensor data from the
+	  sensors and reports them to AP. Using the data, it also produces other
+	  meaningful reports to AP like lid angle and tablet mode.
+
+if HAS_TASK_MOTIONSENSE
+
+config TASK_MOTIONSENSE_STACK_SIZE
+	hex "motionsense task stack size"
+	default 0x1000
+	help
+	  The size of the motion sense task stack.
+
+endif # HAS_TASK_MOTIONSENSE
+
 config HAS_TASK_POWERBTN
 	bool "Power-button task (x86)"
 	depends on PLATFORM_EC_POWER_BUTTON

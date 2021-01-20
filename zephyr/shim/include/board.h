@@ -21,4 +21,9 @@
 #include "i2c_map.h"
 #endif
 
+/* Include board specific sensor configuration if motionsense is enabled */
+#ifdef CONFIG_MOTIONSENSE
+#include "sensor_map.h"
+#endif
+
 #endif  /* __BOARD_H */
