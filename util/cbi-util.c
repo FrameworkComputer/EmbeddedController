@@ -40,6 +40,7 @@ enum {
 	OPT_FW_CONFIG,
 	OPT_PCB_SUPPLIER,
 	OPT_SSFC,
+	OPT_REWORK_ID,
 	OPT_SIZE,
 	OPT_ERASE_BYTE,
 	OPT_SHOW_ALL,
@@ -57,6 +58,7 @@ static const struct option opts_create[] = {
 	{"fw_config", 1, 0, OPT_FW_CONFIG},
 	{"pcb_supplier", 1, 0, OPT_PCB_SUPPLIER},
 	{"ssfc", 1, 0, OPT_SSFC},
+	{"rework_id", 1, 0, OPT_REWORK_ID},
 	{"size", 1, 0, OPT_SIZE},
 	{"erase_byte", 1, 0, OPT_ERASE_BYTE},
 	{NULL, 0, 0, 0}
@@ -79,6 +81,7 @@ static const char *field_name[] = {
 	"FW_CONFIG",
 	"PCB_SUPPLIER",
 	"SSFC",
+	"REWORK_ID",
 };
 BUILD_ASSERT(ARRAY_SIZE(field_name) == CBI_TAG_COUNT);
 
@@ -101,9 +104,11 @@ const char help_create[] =
 	"  --fw_config <value>        Firmware configuration bit-field\n"
 	"  --pcb_supplier <value>     PCB supplier\n"
 	"  --ssfc <value>             Second Source Factory Cache bit-field\n"
+	"  --rework_id <lvalue>       REWORK_ID\n"
 	"\n"
-	"<value> must be a positive integer <= 0XFFFFFFFF and field size can\n"
-	"    be optionally specified by <value:size> notation: e.g. 0xabcd:4.\n"
+	"<value> must be a positive integer <= 0XFFFFFFFF, <lvalue> must be a\n"
+	"  positive integer <= 0xFFFFFFFFFFFFFFFF and field size can be\n"
+	"  optionally specified by <value:size> notation: e.g. 0xabcd:4.\n"
 	"<size> must be a positive integer <= 0XFFFF.\n"
 	"<string> is a string\n"
 	"\n";
@@ -121,6 +126,11 @@ const char help_show[] =
 
 struct integer_field {
 	uint32_t val;
+	int size;
+};
+
+struct long_integer_field {
+	uint64_t val;
 	int size;
 };
 
@@ -250,6 +260,48 @@ static int parse_integer_field(const char *arg, struct integer_field *f)
 	return 0;
 }
 
+static int parse_uint64_field(const char *arg, struct long_integer_field *f)
+{
+	uint64_t val;
+	char *e;
+	char *ch;
+
+	val = strtoul(arg, &e, 0);
+	/* strtoul sets an errno for invalid input. If the value read is out of
+	 * range of representable values by an unsigned long int, the function
+	 * returns ULONG_MAX or ULONG_MIN and the errno is set to ERANGE.
+	 */
+	if (errno == ERANGE || !*arg || (e && *e && *e != ':')) {
+		fprintf(stderr, "Invalid integer value\n");
+		return -1;
+	}
+	f->val = val;
+
+	ch = strchr(arg, ':');
+	if (ch) {
+		ch++;
+		val = strtoul(ch, &e, 0);
+		if (val < 1 || 8 < val || !*ch || (e && *e)) {
+			fprintf(stderr, "Invalid size suffix\n");
+			return -1;
+		}
+		f->size = val;
+	} else {
+		if (f->val < UINT32_MAX)
+			f->size = estimate_field_size(f->val);
+		else
+			f->size = 8; /* assign default long int size */
+	}
+
+	if (f->size < 8 && (f->val > (1ull << f->size * 8))) {
+		fprintf(stderr, "Value (0x%llx) exceeds field size (%d)\n",
+			(unsigned long long)f->val, f->size);
+		return -1;
+	}
+
+	return 0;
+}
+
 static int cmd_create(int argc, char **argv)
 {
 	uint8_t *cbi;
@@ -261,6 +313,7 @@ static int cmd_create(int argc, char **argv)
 		struct integer_field fw_config;
 		struct integer_field pcb_supplier;
 		struct integer_field ssfc;
+		struct long_integer_field rework;
 		const char *dram_part_num;
 		const char *oem_name;
 	} bi;
@@ -341,6 +394,10 @@ static int cmd_create(int argc, char **argv)
 			if (parse_integer_field(optarg, &bi.ssfc))
 				return -1;
 			break;
+		case OPT_REWORK_ID:
+			if (parse_uint64_field(optarg, &bi.rework))
+				return -1;
+			break;
 		}
 	}
 
@@ -372,6 +429,7 @@ static int cmd_create(int argc, char **argv)
 	p = cbi_set_data(p, CBI_TAG_PCB_SUPPLIER, &bi.pcb_supplier.val,
 			bi.pcb_supplier.size);
 	p = cbi_set_data(p, CBI_TAG_SSFC, &bi.ssfc.val, bi.ssfc.size);
+	p = cbi_set_data(p, CBI_TAG_REWORK_ID, &bi.rework.val, bi.rework.size);
 	p = cbi_set_string(p, CBI_TAG_DRAM_PART_NUM, bi.dram_part_num);
 	p = cbi_set_string(p, CBI_TAG_OEM_NAME, bi.oem_name);
 
@@ -407,7 +465,8 @@ static void print_string(const uint8_t *buf, enum cbi_data_tag tag)
 
 static void print_integer(const uint8_t *buf, enum cbi_data_tag tag)
 {
-	uint32_t v;
+	uint64_t v;
+
 	struct cbi_data *d = cbi_find_tag(buf, tag);
 	const char *name;
 
@@ -426,12 +485,16 @@ static void print_integer(const uint8_t *buf, enum cbi_data_tag tag)
 	case 4:
 		v = *(uint32_t *)d->value;
 		break;
+	case 8:
+		v = *(uint64_t *)d->value;
+		break;
 	default:
 		printf("    %s: Integer of size %d not supported\n",
 		       name, d->size);
 		return;
 	}
-	printf("    %s: %u (0x%x, %u, %u)\n", name, v, v, d->tag, d->size);
+	printf("    %s: %llu (0x%llx, %u, %u)\n", name, (unsigned long long)v,
+		(unsigned long long)v, d->tag, d->size);
 }
 
 static int cmd_show(int argc, char **argv)
@@ -500,6 +563,7 @@ static int cmd_show(int argc, char **argv)
 	print_integer(buf, CBI_TAG_FW_CONFIG);
 	print_integer(buf, CBI_TAG_PCB_SUPPLIER);
 	print_integer(buf, CBI_TAG_SSFC);
+	print_integer(buf, CBI_TAG_REWORK_ID);
 	print_string(buf, CBI_TAG_DRAM_PART_NUM);
 	print_string(buf, CBI_TAG_OEM_NAME);
 

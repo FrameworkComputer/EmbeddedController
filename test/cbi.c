@@ -126,6 +126,7 @@ static int test_all_tags(void)
 {
 	uint8_t d8;
 	uint32_t d32;
+	uint64_t d64;
 	const char string[] = "abc";
 	uint8_t buf[32];
 	uint8_t size;
@@ -162,6 +163,9 @@ static int test_all_tags(void)
 	TEST_ASSERT(cbi_set_board_info(CBI_TAG_SSFC, &d8, sizeof(d8))
 		    == EC_SUCCESS);
 	count++;
+	TEST_ASSERT(cbi_set_board_info(CBI_TAG_REWORK_ID, &d8, sizeof(d8))
+		    == EC_SUCCESS);
+	count++;
 
 	/* Read out all */
 	TEST_ASSERT(cbi_get_board_version(&d32) == EC_SUCCESS);
@@ -188,6 +192,8 @@ static int test_all_tags(void)
 	TEST_EQ(d32, d8, "0x%x");
 	TEST_ASSERT(cbi_get_ssfc(&d32) == EC_SUCCESS);
 	TEST_EQ(d32, d8, "0x%x");
+	TEST_ASSERT(cbi_get_rework_id(&d64) == EC_SUCCESS);
+	TEST_EQ((unsigned long long)d64, (unsigned long long)d8, "0x%llx");
 
 	/* Fail if a (new) tag is missing from the unit test. */
 	TEST_EQ(count, CBI_TAG_COUNT, "%d");
