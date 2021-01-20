@@ -86,6 +86,9 @@ int chip_get_ec_int(void)
 	ec_int -= 16;
 #else /* defined(CHIP_FAMILY_IT8XXX2) RISCV core */
 	ec_int = IT83XX_INTC_AIVCT - 0x10;
+	/* Unsupported EC INT number. */
+	if (chip_get_intc_group(ec_int) >= 16)
+		return -1;
 #endif
 	return ec_int;
 }
