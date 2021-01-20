@@ -343,6 +343,12 @@ int cbi_get_pcb_supplier(uint32_t *pcb_supplier)
 			&size);
 }
 
+int cbi_get_rework_id(uint64_t *id)
+{
+	uint8_t size = sizeof(*id);
+	return cbi_get_board_info(CBI_TAG_REWORK_ID, (uint8_t *)id, &size);
+}
+
 static enum ec_status hc_cbi_get(struct host_cmd_handler_args *args)
 {
 	const struct __ec_align4 ec_params_get_cbi *p = args->params;
@@ -441,9 +447,20 @@ static void print_tag(const char * const tag, int rv, const uint32_t *val)
 		ccprintf(": (Error %d)\n", rv);
 }
 
+static void print_uint64_tag(const char * const tag, int rv, const uint64_t *lval)
+{
+	ccprintf("%s", tag);
+	if(rv == EC_SUCCESS && lval)
+		ccprintf(": %llu (0x%llx)\n", *(unsigned long long*)lval,
+			 *(unsigned long long*)lval);
+	else
+		ccprintf(": (Error %d)\n", rv);
+}
+
 static void dump_cbi(void)
 {
 	uint32_t val;
+	uint64_t lval;
 
 	/* Ensure we read the latest data from flash. */
 	cached_read_result = EC_ERROR_CBI_CACHE_INVALID;
@@ -464,6 +481,7 @@ static void dump_cbi(void)
 	print_tag("FW_CONFIG", cbi_get_fw_config(&val), &val);
 	print_tag("PCB_SUPPLIER", cbi_get_pcb_supplier(&val), &val);
 	print_tag("SSFC", cbi_get_ssfc(&val), &val);
+	print_uint64_tag("REWORK_ID", cbi_get_rework_id(&lval), &lval);
 }
 
 static int cc_cbi(int argc, char **argv)
