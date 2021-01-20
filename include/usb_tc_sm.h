@@ -332,6 +332,13 @@ void tc_start_event_loop(int port);
 void tc_pause_event_loop(int port);
 
 /**
+ * Increase the frequency of waking the event loop for high priority cases
+ *
+ * @param port USB-C port number
+ */
+void tc_high_priority_event(int port, bool high_pri);
+
+/**
  * Allow system to override the control of TrySrc
  *
  * @param en	TRY_SRC_OVERRIDE_OFF - Force TrySrc OFF

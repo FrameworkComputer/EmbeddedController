@@ -2098,6 +2098,7 @@ static void pe_src_send_capabilities_entry(int port)
 	/* Send PD Capabilities message */
 	send_source_cap(port);
 	pe_sender_response_msg_entry(port);
+	tc_high_priority_event(port, true);
 
 	/* Increment CapsCounter */
 	pe[port].caps_counter++;
@@ -2249,6 +2250,11 @@ static void pe_src_send_capabilities_run(int port)
 		set_state_pe(port, PE_SRC_HARD_RESET);
 		return;
 	}
+}
+
+static void pe_src_send_capabilities_exit(int port)
+{
+	tc_high_priority_event(port, false);
 }
 
 /**
@@ -6667,6 +6673,7 @@ static const struct usb_state pe_states[] = {
 	[PE_SRC_SEND_CAPABILITIES] = {
 		.entry = pe_src_send_capabilities_entry,
 		.run   = pe_src_send_capabilities_run,
+		.exit  = pe_src_send_capabilities_exit,
 	},
 	[PE_SRC_NEGOTIATE_CAPABILITY] = {
 		.entry = pe_src_negotiate_capability_entry,
