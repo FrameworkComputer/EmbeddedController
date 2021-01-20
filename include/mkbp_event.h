@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_MKBP_EVENT_H
 #define __CROS_EC_MKBP_EVENT_H
 
+#include "common.h"
+
 /*
  * Last time the host received an interrupt.
  *
@@ -46,10 +48,14 @@ struct mkbp_event_source {
 	int (*get_data)(uint8_t *data);
 };
 
+#ifdef CONFIG_PLATFORM_EC_MKBP_EVENT
+#include "zephyr_mkbp_event.h"
+#else
 #define DECLARE_EVENT_SOURCE(type, func)                       \
 	const struct mkbp_event_source __keep		       \
 	__no_sanitize_address _evt_src_##type		       \
 	__attribute__((section(".rodata.evtsrcs")))            \
 		 = {type, func}
+#endif
 
 #endif  /* __CROS_EC_MKBP_EVENT_H */
