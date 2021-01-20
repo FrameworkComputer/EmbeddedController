@@ -77,17 +77,10 @@ const struct fan_conf fan_conf_0 = {
 	.enable_gpio = GPIO_EN_PP5000_FAN,
 };
 
-/*
- * Fan specs from datasheet:
- * Max speed 5900 rpm (+/- 7%), minimum duty cycle 30%.
- * Minimum speed not specified by RPM. Set minimum RPM to max speed (with
- * margin) x 30%.
- *    5900 x 1.07 x 0.30 = 1894, round up to 1900
- */
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 1900,
-	.rpm_start = 1900,
-	.rpm_max = 5900,
+	.rpm_min = 2500,
+	.rpm_start = 2500,
+	.rpm_max = 6500,
 };
 
 const struct fan_t fans[FAN_CH_COUNT] = {
@@ -107,43 +100,43 @@ const struct fan_t fans[FAN_CH_COUNT] = {
  */
 const static struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(70),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(58),
 	},
-	.temp_fan_off = C_TO_K(35),
-	.temp_fan_max = C_TO_K(50),
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(60),
 };
 
-/*
- * Inductor limits - used for both charger and PP3300 regulator
- *
- * Need to use the lower of the charger IC, PP3300 regulator, and the inductors
- *
- * Charger max recommended temperature 100C, max absolute temperature 125C
- * PP3300 regulator: operating range -40 C to 145 C
- *
- * Inductors: limit of 125c
- * PCB: limit is 80c
- */
-const static struct ec_thermal_config thermal_inductor = {
+const static struct ec_thermal_config thermal_charger = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
 		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(70),
+};
+
+const static struct ec_thermal_config thermal_regulator = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(70),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(58),
 	},
 	.temp_fan_off = C_TO_K(40),
 	.temp_fan_max = C_TO_K(55),
 };
 
-
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_CHARGER]			= thermal_inductor,
-	[TEMP_SENSOR_2_PP3300_REGULATOR]	= thermal_inductor,
+	[TEMP_SENSOR_1_CHARGER]			= thermal_charger,
+	[TEMP_SENSOR_2_PP3300_REGULATOR]	= thermal_regulator,
 	[TEMP_SENSOR_3_DDR_SOC]			= thermal_cpu,
 	[TEMP_SENSOR_4_FAN]			= thermal_cpu,
 };
