@@ -23,8 +23,10 @@
  */
 #define GPIO_AC_PRESENT            NAMED_GPIO(acok_od)
 #define GPIO_CPU_PROCHOT           NAMED_GPIO(ec_prochot_odl)
+#define GPIO_EC_ALS_RGB_INT_L      NAMED_GPIO(ec_als_rgb_int_l)
 #define GPIO_EC_BATT_PRES_ODL      NAMED_GPIO(ec_batt_pres_odl)
 #define GPIO_EC_INT_L              NAMED_GPIO(ec_pch_int_odl)
+#define GPIO_EC_IMU_INT_L          NAMED_GPIO(ec_imu_int_l)
 #define GPIO_EC_PCH_SYS_PWROK      NAMED_GPIO(ec_pch_sys_pwrok)
 #define GPIO_EC_PCH_WAKE_ODL       NAMED_GPIO(ec_pch_wake_odl)
 #define GPIO_EN_PP3300_A           NAMED_GPIO(en_pp3300_a)
@@ -48,6 +50,7 @@
 #define GPIO_RSMRST_L_PGOOD        NAMED_GPIO(pg_ec_rsmrst_odl)
 #define GPIO_SLP_SUS_L             NAMED_GPIO(slp_sus_l)
 #define GPIO_SYS_RESET_L           NAMED_GPIO(sys_rst_odl)
+#define GPIO_TABLET_MODE_L         NAMED_GPIO(tablet_mode_l)
 #define GPIO_WP_L                  NAMED_GPIO(ec_wp_l)
 
 /* USB-C interrupts */
@@ -105,6 +108,26 @@
 #define BC12_INT(gpio, edge)
 #endif
 
+#ifdef CONFIG_PLATFORM_EC_ALS_TCS3400
+#define TCS3400_INT(gpio, edge) GPIO_INT(gpio, edge, tcs3400_interrupt)
+#else
+#define TCS3400_INT(gpio, edge)
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_ACCELGYRO_BMI260
+#define BMI260_INT(gpio, edge) GPIO_INT(gpio, edge, bmi260_interrupt)
+#else
+#define BMI260_INT(gpio, edge)
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_GMR_TABLET_MODE
+#define GMR_TABLET_MODE_INT(gpio, edge) GPIO_INT(gpio, edge, \
+						 gmr_tablet_switch_isr)
+#define GMR_TABLET_MODE_GPIO_L	GPIO_TABLET_MODE_L
+#else
+#define GMR_TABLET_MODE_INT(gpio, edge)
+#endif
+
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
  *
@@ -121,6 +144,8 @@
  *   GPIO_INT(NAMED_GPIO(h1_ec_pwr_btn_odl), GPIO_INT_EDGE_BOTH, button_print)
  */
 #define EC_CROS_GPIO_INTERRUPTS                                           \
+	BMI260_INT(GPIO_EC_IMU_INT_L, GPIO_INT_EDGE_FALLING)              \
+	GMR_TABLET_MODE_INT(GPIO_TABLET_MODE_L, GPIO_INT_EDGE_BOTH)       \
 	GPIO_INT(GPIO_AC_PRESENT, GPIO_INT_EDGE_BOTH, extpower_interrupt) \
 	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt)        \
 	POWER_SIGNAL_INT(GPIO_PCH_SLP_S0_L, GPIO_INT_EDGE_BOTH)           \
@@ -133,6 +158,7 @@
 	POWER_BUTTON_INT(GPIO_POWER_BUTTON_L, GPIO_INT_EDGE_BOTH)         \
 	TCPC_ALERT_INT(GPIO_USB_C0_TCPC_INT_ODL, GPIO_INT_EDGE_BOTH)      \
 	TCPC_ALERT_INT(GPIO_USB_C1_TCPC_INT_ODL, GPIO_INT_EDGE_BOTH)      \
+	TCS3400_INT(GPIO_EC_ALS_RGB_INT_L, GPIO_INT_EDGE_FALLING)         \
 	PPC_INT(GPIO_USB_C0_PPC_INT_ODL, GPIO_INT_EDGE_BOTH)              \
 	PPC_INT(GPIO_USB_C1_PPC_INT_ODL, GPIO_INT_EDGE_BOTH)              \
 	BC12_INT(GPIO_USB_C0_BC12_INT_ODL, GPIO_INT_EDGE_BOTH)            \

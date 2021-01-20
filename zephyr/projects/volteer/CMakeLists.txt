@@ -45,6 +45,8 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_BOARD_CONFIG
   "${PLATFORM_EC_BOARD}/keyboard.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
   "${PLATFORM_EC_BOARD}/led.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_MOTIONSENSE
+  "${PLATFORM_EC_BOARD}/sensors.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC
   "${PLATFORM_EC_BOARD}/usbc_config.c")
 
