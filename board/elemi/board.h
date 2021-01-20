@@ -140,15 +140,6 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
-enum sensor_id {
-	LID_ACCEL = 0,
-	BASE_ACCEL,
-	BASE_GYRO,
-	CLEAR_ALS,
-	RGB_ALS,
-	SENSOR_COUNT,
-};
-
 enum usbc_port {
 	USBC_PORT_C0 = 0,
 	USBC_PORT_C1,
