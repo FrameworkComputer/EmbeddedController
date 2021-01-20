@@ -29,4 +29,13 @@
 #define GPIO_WP_L		GPIO_FAKE_IRQ_00
 #define GPIO_ENTERING_RW	GPIO_FAKE_OUT_01
 
+#ifndef __ASSEMBLER__
+
+enum battery_type {
+	BATTERY_POWER_TECH,
+	BATTERY_TYPE_COUNT
+};
+
+#endif /* !__ASSEMBLER__ */
+
 #endif /* __CROS_EC_BOARD_H */

@@ -12,3 +12,4 @@ CHIP_VARIANT:=npcx9m3f
 BASEBOARD:=brya
 
 board-y=board.o
+board-y+=battery.o
