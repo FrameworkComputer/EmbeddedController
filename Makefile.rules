@@ -409,7 +409,7 @@ cmd_size=
 else
 cmd_size=$(Q)awk '\
   /__flash_used =/ {flash_used = strtonum($$1)} \
-  /^FLASH/ {flash_size = strtonum($$3)} \
+  /^FLASH / {flash_size = strtonum($$3)} \
   /__ram_free =/ {ram_free = strtonum($$1)} \
   END {room_free = flash_size - flash_used; \
        print ram_free > "$(out)/$(1)/space_free_ram.txt"; \
