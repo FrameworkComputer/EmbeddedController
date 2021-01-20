@@ -701,18 +701,6 @@ const static struct ec_thermal_config thermal_soc = {
 	.temp_fan_max = C_TO_K(75),
 };
 
-const static struct ec_thermal_config thermal_cpu = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(95),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
-	},
-	.temp_fan_off = 0,
-	.temp_fan_max = 0,
-};
-
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 
 struct fan_step {
@@ -741,7 +729,6 @@ static void setup_fans(void)
 {
 	thermal_params[TEMP_SENSOR_CHARGER] = thermal_thermistor;
 	thermal_params[TEMP_SENSOR_SOC] = thermal_soc;
-	thermal_params[TEMP_SENSOR_CPU] = thermal_cpu;
 }
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 
