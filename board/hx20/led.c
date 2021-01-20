@@ -31,12 +31,22 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
 				/* Red, Green, Blue */
-	[EC_LED_COLOR_RED]    = {  100,   0,   0 },
-	[EC_LED_COLOR_GREEN]  = {   0,  100,   0 },
-	[EC_LED_COLOR_BLUE]   = {   0,   0, 100 },
-	[EC_LED_COLOR_YELLOW] = {  55,  15,   0 },
-	[EC_LED_COLOR_WHITE]  = {  62, 100,  31 },
-	[EC_LED_COLOR_AMBER]  = { 100,  31,   0 },
+	[EC_LED_COLOR_RED]    = {  30,   0,   0 },
+	[EC_LED_COLOR_GREEN]  = {   0,  50,   0 },
+	[EC_LED_COLOR_BLUE]   = {   0,   0,  30 },
+	[EC_LED_COLOR_YELLOW] = {  35,  50,   0 },
+	[EC_LED_COLOR_WHITE]  = {  31,  50,  31 },
+	[EC_LED_COLOR_AMBER]  = {  41,  21,   0 },
+};
+
+struct pwm_led pwr_led_color_map[EC_LED_COLOR_COUNT] = {
+				/* Red, Green, Blue */
+	[EC_LED_COLOR_RED]    = {  30,   0,   0 },
+	[EC_LED_COLOR_GREEN]  = {   0,  50,   0 },
+	[EC_LED_COLOR_BLUE]   = {   0,   0,  30 },
+	[EC_LED_COLOR_YELLOW] = {  35,  50,   0 },
+	[EC_LED_COLOR_WHITE]  = {  16,  39,  14 },
+	[EC_LED_COLOR_AMBER]  = {  41,  21,   0 },
 };
 
 struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
@@ -66,6 +76,29 @@ struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
 	},
 };
 
+void set_pwr_led_color(enum pwm_led_id id, int color)
+{
+	struct pwm_led duty = { 0 };
+	const struct pwm_led *led = &pwm_leds[id];
+
+	if ((id >= CONFIG_LED_PWM_COUNT) || (id < 0) ||
+	    (color >= EC_LED_COLOR_COUNT) || (color < -1))
+		return;
+		
+	if (color != -1) {
+		duty.ch0 = pwr_led_color_map[color].ch0;
+		duty.ch1 = pwr_led_color_map[color].ch1;
+		duty.ch2 = pwr_led_color_map[color].ch2;
+	}
+
+	if (led->ch0 != (enum pwm_channel)PWM_LED_NO_CHANNEL)
+		led->set_duty(led->ch0, duty.ch0);
+	if (led->ch1 != (enum pwm_channel)PWM_LED_NO_CHANNEL)
+		led->set_duty(led->ch1, duty.ch1);
+	if (led->ch2 != (enum pwm_channel)PWM_LED_NO_CHANNEL)
+		led->set_duty(led->ch2, duty.ch2);
+}
+
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
 	brightness_range[EC_LED_COLOR_RED] = 100;
@@ -90,21 +123,39 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	else
 		return EC_ERROR_UNKNOWN;
 
-	if (brightness[EC_LED_COLOR_RED])
-		set_pwm_led_color(pwm_id, EC_LED_COLOR_RED);
-	else if (brightness[EC_LED_COLOR_GREEN])
-		set_pwm_led_color(pwm_id, EC_LED_COLOR_GREEN);
-	else if (brightness[EC_LED_COLOR_BLUE])
-		set_pwm_led_color(pwm_id, EC_LED_COLOR_BLUE);
-	else if (brightness[EC_LED_COLOR_YELLOW])
-		set_pwm_led_color(pwm_id, EC_LED_COLOR_YELLOW);
-	else if (brightness[EC_LED_COLOR_WHITE])
-		set_pwm_led_color(pwm_id, EC_LED_COLOR_WHITE);
-	else if (brightness[EC_LED_COLOR_AMBER])
-		set_pwm_led_color(pwm_id, EC_LED_COLOR_AMBER);
-	else
-		/* Otherwise, the "color" is "off". */
-		set_pwm_led_color(pwm_id, -1);
+	if (led_id == EC_LED_ID_POWER_LED) {
+		if (brightness[EC_LED_COLOR_RED])
+			set_pwr_led_color(pwm_id, EC_LED_COLOR_RED);
+		else if (brightness[EC_LED_COLOR_GREEN])
+			set_pwr_led_color(pwm_id, EC_LED_COLOR_GREEN);
+		else if (brightness[EC_LED_COLOR_BLUE])
+			set_pwr_led_color(pwm_id, EC_LED_COLOR_BLUE);
+		else if (brightness[EC_LED_COLOR_YELLOW])
+			set_pwr_led_color(pwm_id, EC_LED_COLOR_YELLOW);
+		else if (brightness[EC_LED_COLOR_WHITE])
+			set_pwr_led_color(pwm_id, EC_LED_COLOR_WHITE);
+		else if (brightness[EC_LED_COLOR_AMBER])
+			set_pwr_led_color(pwm_id, EC_LED_COLOR_AMBER);
+		else
+			/* Otherwise, the "color" is "off". */
+			set_pwr_led_color(pwm_id, -1);
+	} else {
+		if (brightness[EC_LED_COLOR_RED])
+			set_pwm_led_color(pwm_id, EC_LED_COLOR_RED);
+		else if (brightness[EC_LED_COLOR_GREEN])
+			set_pwm_led_color(pwm_id, EC_LED_COLOR_GREEN);
+		else if (brightness[EC_LED_COLOR_BLUE])
+			set_pwm_led_color(pwm_id, EC_LED_COLOR_BLUE);
+		else if (brightness[EC_LED_COLOR_YELLOW])
+			set_pwm_led_color(pwm_id, EC_LED_COLOR_YELLOW);
+		else if (brightness[EC_LED_COLOR_WHITE])
+			set_pwm_led_color(pwm_id, EC_LED_COLOR_WHITE);
+		else if (brightness[EC_LED_COLOR_AMBER])
+			set_pwm_led_color(pwm_id, EC_LED_COLOR_AMBER);
+		else
+			/* Otherwise, the "color" is "off". */
+			set_pwm_led_color(pwm_id, -1);
+	}
 
 	return EC_SUCCESS;
 }
@@ -174,16 +225,16 @@ static void led_set_power(void)
 
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
 		if (charge_get_percent() < 10)
-			set_pwm_led_color(PWM_LED2, EC_LED_COLOR_RED);
+			set_pwr_led_color(PWM_LED2, EC_LED_COLOR_RED);
 		else
-			set_pwm_led_color(PWM_LED2, EC_LED_COLOR_WHITE);
+			set_pwr_led_color(PWM_LED2, EC_LED_COLOR_WHITE);
 	} else if (chipset_in_state(CHIPSET_STATE_SUSPEND |
 				  CHIPSET_STATE_STANDBY))
-		set_pwm_led_color(PWM_LED2, (power_tick %
+		set_pwr_led_color(PWM_LED2, (power_tick %
 			LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
 			EC_LED_COLOR_WHITE : -1);
 	else
-		set_pwm_led_color(PWM_LED2, -1);
+		set_pwr_led_color(PWM_LED2, -1);
 }
 
 
@@ -200,8 +251,14 @@ static void led_configure(void)
 {
 	int i;
 
-	if (board_get_version() == 4)
+	/* change pwm channel
+	 * because the design change between EVT to DVT
+	 */
+	if (board_get_version() == 4) {
 		pwm_leds[PWM_LED1].ch1 = PWM_CH_DB1_LED_GREEN_EVT;
+		pwm_leds[PWM_LED2].ch0 = PWM_CH_FPR_LED_RED_EVT;
+		pwm_leds[PWM_LED2].ch1 = PWM_CH_FPR_LED_GREEN_EVT;
+	}
 		/*Initialize PWM channels*/
 	for (i = 0; i < PWM_CH_COUNT; i++) {
 		pwm_enable(i, 1);

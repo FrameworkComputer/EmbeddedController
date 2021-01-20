@@ -192,12 +192,20 @@ const struct pwm_t pwm_channels[] = {
 		.channel = 8,
 		.flags = PWM_CONFIG_DSLEEP,
 	},
-	[PWM_CH_FPR_LED_RED] = {
+	[PWM_CH_FPR_LED_RED_EVT] = {
 		.channel = (MCHP_PWM_ID_MAX+1),
 		.flags = PWM_CONFIG_DSLEEP,
 	},
-	[PWM_CH_FPR_LED_GREEN] = {
+	[PWM_CH_FPR_LED_GREEN_EVT] = {
 		.channel = (MCHP_PWM_ID_MAX+0),
+		.flags = PWM_CONFIG_DSLEEP,
+	},
+	[PWM_CH_FPR_LED_RED] = {
+		.channel = (MCHP_PWM_ID_MAX+0),
+		.flags = PWM_CONFIG_DSLEEP,
+	},
+	[PWM_CH_FPR_LED_GREEN] = {
+		.channel = (MCHP_PWM_ID_MAX+1),
 		.flags = PWM_CONFIG_DSLEEP,
 	},
 	[PWM_CH_FPR_LED_BLUE] = {
