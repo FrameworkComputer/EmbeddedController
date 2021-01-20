@@ -187,7 +187,21 @@ enum pd_rx_errors {
 #define PD_T_SINK_WAIT_CAP         (600*MSEC) /* between 310ms and 620ms */
 #define PD_T_SINK_TRANSITION        (35*MSEC) /* between 20ms and 35ms */
 #define PD_T_SOURCE_ACTIVITY        (45*MSEC) /* between 40ms and 50ms */
+/*
+ * Adjusting for TCPMv2 PD2 Compliance. In tests like TD.PD.SRC.E5 this
+ * value is the duration before the Hard Reset can be sent. Setting the
+ * timer value to the maximum will delay sending the HardReset until
+ * after the window has closed instead of when it is desired at the
+ * beginning of the window.
+ * Leaving TCPMv1 as it was as there are no current requests to adjust
+ * for compliance on the old stack and making this change  breaks the
+ * usb_pd unit test.
+ */
+#ifndef CONFIG_USB_PD_TCPMV2
 #define PD_T_SENDER_RESPONSE        (30*MSEC) /* between 24ms and 30ms */
+#else
+#define PD_T_SENDER_RESPONSE        (24*MSEC) /* between 24ms and 30ms */
+#endif
 #define PD_T_PS_TRANSITION         (500*MSEC) /* between 450ms and 550ms */
 #define PD_T_PS_SOURCE_ON          (480*MSEC) /* between 390ms and 480ms */
 #define PD_T_PS_SOURCE_OFF         (920*MSEC) /* between 750ms and 920ms */
