@@ -181,6 +181,18 @@ void cyp5525_update_charger(void)
 
 }
 
+int cypd_write_reg_block(int controller, int reg, uint8_t *data, int len)
+{
+	int rv;
+	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
+	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
+
+	rv = i2c_write_offset16_block(i2c_port, addr_flags, reg, data, len);
+	if (rv != EC_SUCCESS)
+		CPRINTS("%s failed: ctrl=0x%x, reg=0x%02x", __func__, controller, reg);
+	return rv;
+}
+
 int cypd_write_reg16(int controller, int reg, int data)
 {
 	int rv;
@@ -843,6 +855,69 @@ void pd_set_new_power_request(int port)
 	/*we probably dont need to do this since we will always request max*/
 	CPRINTS("TODO Implement %s port %d", __func__, port);
 
+}
+
+int pd_port_configuration_change(int port, enum pd_port_role port_role)
+{
+	/**
+	 * Specification 5.3.3 Port Configuration Change descripes the steps to change
+	 * port configuration.
+	 *
+	 * Step1: Disabled the port using PDPORT_ENABLE register
+	 * Step2: Writed the data memory register in the follow format
+	 *			Byte 0 : desired port role (0: Sink, 1: Source, 2: Dual Role)
+	 *			Byte 1 : Default port role in case of Dual Role (0: Sink, 1: Source)
+	 *			Byte 2 : DRP toggle enable (in case of Dual Role port)
+	 *			Byte 3 : Try.SRC enable (in case of Daul Role port)
+	 * Step3: Using the "Change PD Port Parameters" command in PD_CONTROL register
+	 * Step4: Enabled the port using PDPORT_ENABLE register
+	 */
+
+	int controller = (port & 0x02);
+	int cyp_port = (port & 0x01);
+	int rv;
+	uint8_t data[4] = {0};
+
+	CPRINTS("Change port %d role.", port);
+
+	data[0] = port_role;
+
+	if (port_role == PORT_DUALROLE) {
+		data[1] = PORT_SINK;	/* default port role = sink */
+		data[2] = 0x01;			/* enable DRP toggle */
+		data[3] = 0x01;			/* enable Try.SRC */
+	}
+
+	rv = cypd_write_reg8(controller, CYP5525_PDPORT_ENABLE_REG, (0x03 & ~BIT(cyp_port)));
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	/**
+	 * Stopping an active PD port can take a long time (~1 second) in case VBUS is
+	 * being provided and needs to be discharged.
+	 */
+	cyp5225_wait_for_ack(controller, 1 * SECOND);
+
+	rv = cypd_write_reg_block(controller, CYP5525_WRITE_DATA_MEMORY_REG(port), data, 4);
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	cyp5225_wait_for_ack(controller, 5000);
+
+
+	rv = cypd_write_reg8(controller, CYP5525_PD_CONTROL_REG(cyp_port),
+		CYPD_PD_CMD_CHANGE_PD_PORT_PARAMS);
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	cyp5225_wait_for_ack(controller, 5000);
+
+
+	rv = cypd_write_reg8(controller, CYP5525_PDPORT_ENABLE_REG, 0x03);
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	return rv;
 }
 
 /**
