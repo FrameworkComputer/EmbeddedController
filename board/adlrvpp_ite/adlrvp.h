@@ -8,6 +8,9 @@
 #ifndef __ADLRVP_BOARD_H
 #define __ADLRVP_BOARD_H
 
+/* Temperature sensor */
+#define CONFIG_TEMP_SENSOR
+
 #include "baseboard.h"
 
 /* MECC config */
