@@ -183,9 +183,19 @@ __sp_16byte_aligned:
         /* This interrupt is unhandled */
         j unhandled_interrupt
 __irq_handler:
+        /* save a0, a1, and a2 for syscall */
+        addi sp, sp, -4*3
+        sw a0, 0(sp)
+        sw a1, 1*4(sp)
+        sw a2, 2*4(sp)
         jal start_irq_handler
-        /* t0 = -1 if it cannot find the corresponding interrupt source */
-        bltz t0, unhandled_interrupt
+        /* a0 = -1 if it cannot find the corresponding interrupt source */
+        bltz a0, unhandled_interrupt
+        /* restore a0, a1, and a2 */
+        lw a0, 0(sp)
+        lw a1, 1*4(sp)
+        lw a2, 2*4(sp)
+        addi sp, sp, 4*3
         /* get EC interrupt group 0-15 or 16:ecall */
         la t0, ec_int_group
         /* get corresponding isr */
@@ -332,10 +342,11 @@ unhandled_ec_irq:
 unhandled_interrupt:
         li tp, 0xBAD0
 __unhandled_irq:
-        slli tp, tp, 8
-        csrr t0, mcause
+        slli tp, tp, 16
+        la t0, ec_int
+        lw t0, 0(t0)
         add tp, tp, t0
-        j excep_handler /* display exception with TP 80bad[0|1]<irq> */
+        j excep_handler /* display exception with TP bad[0|1]<ec_int> */
 
 .global excep_handler
 excep_handler:
