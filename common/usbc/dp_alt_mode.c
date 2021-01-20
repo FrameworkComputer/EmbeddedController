@@ -95,13 +95,24 @@ static bool dp_response_valid(int port, enum tcpm_transmit_type type,
 	return true;
 }
 
+static void dp_exit_to_usb_mode(int port)
+{
+	int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+
+	pd_dfp_exit_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT, opos);
+	set_usb_mux_with_current_data_role(port);
+
+	CPRINTS("C%d: Exited DP mode", port);
+	dp_state[port] = IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY)
+		? DP_START : DP_INACTIVE;
+}
+
 void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 		uint32_t *vdm)
 {
 	const struct svdm_amode_data *modep =
 		pd_get_amode_data(port, type, USB_SID_DISPLAYPORT);
 	const uint8_t vdm_cmd = PD_VDO_CMD(vdm[0]);
-	int opos;
 
 	if (!dp_response_valid(port, type, "ACK", vdm_cmd))
 		return;
@@ -126,18 +137,10 @@ void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 		break;
 	case DP_ACTIVE:
 		/*
-		 * Request to exit mode successful, so put it in
+		 * Request to exit mode successful, so put the module in an
 		 * inactive state.
 		 */
-		CPRINTS("C%d: Exited DP mode", port);
-		dp_state[port] = IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY)
-			? DP_START : DP_INACTIVE;
-		opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
-
-		/* Clear DisplayPort related signals */
-		pd_dfp_exit_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT,
-				     opos);
-		set_usb_mux_with_current_data_role(port);
+		dp_exit_to_usb_mode(port);
 		break;
 	case DP_ENTER_NAKED:
 		/*
@@ -185,6 +188,10 @@ void dp_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd)
 		 * Give up.
 		 */
 		dp_entry_failed(port);
+		break;
+	case DP_ACTIVE:
+		/* Treat an Exit Mode NAK the same as an Exit Mode ACK. */
+		dp_exit_to_usb_mode(port);
 		break;
 	default:
 		CPRINTS("C%d: NAK for cmd %d in state %d", port,
