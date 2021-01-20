@@ -22,9 +22,9 @@
  * - ALTERNATE
  * - UNUSED
  *
- * @note You cannot have dependencies bewteen these macros. For example,
+ * @note You cannot have dependencies between these macros. For example,
  *       you cannot define GPIO_INT in terms of GPIO. All macros must be
- *       independently evaluatable.
+ *       independently evaluable.
  *       This is due to the reorganization mechanism at the bottom of this file.
  *
  * @see include/gpio_list.h
