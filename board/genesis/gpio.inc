@@ -88,6 +88,7 @@ GPIO(USB_A3_STATUS_L,          PIN(C, 7), GPIO_INPUT)
 
 /* USB type C */
 GPIO(USB_C0_TCPC_RST,          PIN(9, 7), GPIO_OUT_LOW)
+GPIO(USB_C0_POL_L,             PIN(0, 0), GPIO_INPUT | GPIO_SEL_1P8V) /* USB-C Polarity */
 
 /* Misc. */
 GPIO(M2_SSD_PLN,               PIN(A, 0), GPIO_INPUT)
@@ -155,7 +156,6 @@ UNUSED(PIN(8, 1))						/* L6  NC */
 UNUSED(PIN(C, 6))						/* B11 NC */
 UNUSED(PIN(E, 2))						/* B8  NC */
 UNUSED(PIN(8, 5))						/* L7  NC */
-UNUSED(PIN(0, 0))						/* D11 NC */
 UNUSED(PIN(3, 2))						/* E5  NC */
 UNUSED(PIN(D, 6))						/* F6  NC */
 UNUSED(PIN(3, 5))						/* F5  NC */
