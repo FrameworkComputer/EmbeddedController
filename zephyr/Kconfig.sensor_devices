@@ -1,0 +1,27 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menu "Sensor Devices"
+
+config PLATFORM_EC_ACCEL_BMA255
+    bool "BMA2X2 Accelerometer Family Driver"
+    help
+      The driver supports Bosch's a triaxial, low-g acceleration sensor.
+      It allows measurements of acceleration in three perpendicular axes.
+      Currently the driver supports BMA253, BMA255, BMA355, BMA280, BMA282,
+      BMA223, BMA254, BMA284, BMA250E, BMA222E, BMC150 BMC056, BMC156.
+
+config PLATFORM_EC_ACCELGYRO_BMI260
+    bool "BMI260 Accelgyrometer Driver"
+    help
+      The driver supports Bosch's BMI260 which is an IMU consisting of
+      a 16-bit tri-axial gyroscope and a 16-bit tri-axial accelerometer.
+
+config PLATFORM_EC_ALS_TCS3400
+    bool "TCS3400 Ambient Light Senseor Driver"
+    help
+      The driver supports TCS3400 which provides color and
+      IR (red, green, blue, clear and IR) ambient light sensing.
+
+endmenu # Sensor devices

@@ -56,7 +56,8 @@ zephyr_include_directories_ifdef(
   "${PLATFORM_EC}/fuzz"
   "${PLATFORM_EC}/test"
   "${PLATFORM_EC}/include"
-  "${PLATFORM_EC}/include/driver")
+  "${PLATFORM_EC}/include/driver"
+  "${PLATFORM_EC}/third_party")
 
 add_subdirectory("app")
 add_subdirectory("drivers")
@@ -75,8 +76,17 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/base32.c"
 
 # Now include files that depend on or relate to other CONFIG options, sorted by
 # CONFIG
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_BMA255
+                                                "${PLATFORM_EC}/driver/accel_bma2x2.c"
+                                                "${PLATFORM_EC}/common/math_util.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_BMI260
+                                                "${PLATFORM_EC}/driver/accelgyro_bmi_common.c"
+                                                "${PLATFORM_EC}/driver/accelgyro_bmi260.c"
+                                                "${PLATFORM_EC}/common/math_util.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_FIFO
                                                 "${PLATFORM_EC}/common/motion_sense_fifo.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ALS_TCS3400
+                                                "${PLATFORM_EC}/driver/als_tcs3400.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ACPI    "${PLATFORM_EC}/common/acpi.c"
                                                 "${PLATFORM_EC}/common/ec_features.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY "${PLATFORM_EC}/common/battery.c")
