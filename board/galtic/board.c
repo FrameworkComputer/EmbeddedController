@@ -323,9 +323,9 @@ void board_hibernate(void)
 	 * Put all charger ICs present into low power mode before entering
 	 * z-state.
 	 */
-	raa489000_hibernate(CHARGER_PRIMARY);
+	raa489000_hibernate(CHARGER_PRIMARY, true);
 	if (board_get_charger_chip_count() > 1)
-		raa489000_hibernate(CHARGER_SECONDARY);
+		raa489000_hibernate(CHARGER_SECONDARY, true);
 }
 
 __override void board_ocpc_init(struct ocpc_data *ocpc)

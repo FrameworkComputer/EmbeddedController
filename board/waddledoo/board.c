@@ -230,8 +230,8 @@ void board_hibernate(void)
 	 * entering the Z-state.
 	 */
 	if (board_get_charger_chip_count() > 1)
-		raa489000_hibernate(1);
-	raa489000_hibernate(0);
+		raa489000_hibernate(1, true);
+	raa489000_hibernate(0, true);
 }
 
 void board_reset_pd_mcu(void)

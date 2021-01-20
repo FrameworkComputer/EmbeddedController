@@ -210,8 +210,8 @@ void board_hibernate(void)
 	 * Both charger ICs need to be put into their "low power mode" before
 	 * entering the Z-state.
 	 */
-	raa489000_hibernate(1);
-	raa489000_hibernate(0);
+	raa489000_hibernate(1, true);
+	raa489000_hibernate(0, false);
 }
 
 void board_reset_pd_mcu(void)

@@ -9,6 +9,7 @@
 #ifndef __CROS_EC_ISL923X_H
 #define __CROS_EC_ISL923X_H
 
+#include "stdbool.h"
 #define ISL923X_ADDR_FLAGS	(0x09)
 
 /* Registers */
@@ -378,7 +379,7 @@ int isl923x_set_comparator_inversion(int chgnum, int invert);
  *
  * @param chgnum index into chg_chips table.
  */
-void raa489000_hibernate(int chgnum);
+void raa489000_hibernate(int chgnum, bool disable_adc);
 enum ec_error_list isl9238c_hibernate(int chgnum);
 enum ec_error_list isl9238c_resume(int chgnum);
 

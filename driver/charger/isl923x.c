@@ -767,7 +767,7 @@ out:
 }
 
 #ifdef CONFIG_CHARGER_RAA489000
-void raa489000_hibernate(int chgnum)
+void raa489000_hibernate(int chgnum, bool disable_adc)
 {
 	int rv, regval;
 
@@ -813,8 +813,9 @@ void raa489000_hibernate(int chgnum)
 
 	rv = raw_read16(chgnum, ISL9238_REG_CONTROL3, &regval);
 	if (!rv) {
-		/* ADC is active only when adapter plugged in */
-		regval &= ~RAA489000_ENABLE_ADC;
+		if (disable_adc)
+			/* ADC is active only when adapter plugged in */
+			regval &= ~RAA489000_ENABLE_ADC;
 
 		rv = raw_write16(chgnum, ISL9238_REG_CONTROL3, regval);
 	}
