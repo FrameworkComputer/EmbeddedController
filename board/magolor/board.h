@@ -145,9 +145,6 @@
 #define CONFIG_TABLET_MODE_SWITCH
 #define CONFIG_GMR_TABLET_MODE
 
-#define CONFIG_MKBP_EVENT
-#define CONFIG_MKBP_USE_GPIO
-
 /* Volume Button feature */
 #define CONFIG_ADC_BUTTONS
 #define CONFIG_VOLUME_BUTTONS
