@@ -28,6 +28,7 @@ const enum ec_led_id supported_led_ids[] = {
 };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
+int power_button_enable = 0;
 
 struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
 				/* Red, Green, Blue */
@@ -223,7 +224,7 @@ static void led_set_power(void)
 
 	power_tick++;
 
-	if (chipset_in_state(CHIPSET_STATE_ON)) {
+	if (chipset_in_state(CHIPSET_STATE_ON) | power_button_enable) {
 		if (charge_get_percent() < 10)
 			set_pwr_led_color(PWM_LED2, EC_LED_COLOR_RED);
 		else
@@ -269,4 +270,9 @@ static void led_configure(void)
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 /*Run after PWM init is complete*/
 DECLARE_HOOK(HOOK_INIT, led_configure, HOOK_PRIO_DEFAULT+1);
+
+void power_button_enable_led(int enable)
+{
+	power_button_enable = enable;
+}
 

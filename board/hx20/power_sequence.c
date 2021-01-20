@@ -193,6 +193,7 @@ enum power_state power_handle_state(enum power_state state)
 		while ((power_get_signals() & IN_PCH_SLP_S4_DEASSERTED) == 0) {
 			if (task_wait_event(SECOND*9) == TASK_EVENT_TIMER) {
 				CPRINTS("timeout waiting for S5 exit");
+				power_button_enable_led(0);
 				return POWER_S5G3; /* Power up again */
 			}
 		}
@@ -279,6 +280,7 @@ enum power_state power_handle_state(enum power_state state)
 #ifdef CONFIG_EMI_REGION1
 		clear_rtcwake();
 #endif
+		power_button_enable_led(0);
         return POWER_S0;
 
 		break;
