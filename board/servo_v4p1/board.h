@@ -194,6 +194,7 @@
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
 #undef CONFIG_USB_PD_PULLUP
+/* Default pull-up should not be Rp3a0 due to Cr50 */
 #define CONFIG_USB_PD_PULLUP TYPEC_RP_USB
 #define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
 #define CONFIG_USB_PD_ALT_MODE
@@ -208,12 +209,13 @@
 #define CC_RA(port, cc, sel)  (pd_tcpc_cc_ra(port, cc, sel))
 
 /*
- * TODO(crosbug.com/p/60792): The delay values are currently just place holders
- * and the delay will need to be relative to the circuitry that allows VBUS to
- * be supplied to the DUT port from the CHG port.
+ * These power-supply timing values are now set towards maximum spec limit,
+ * to give the upstream charger the maximum time to respond.
+ *
+ * Currently tuned with the Apple 96W adapter.
  */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  50000  /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  (161*MSEC)
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY (461*MSEC)
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000

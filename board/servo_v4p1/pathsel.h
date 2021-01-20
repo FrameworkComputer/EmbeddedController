@@ -32,9 +32,9 @@ void usb3_a0_to_host(void);
 void usb3_a1_to_host(void);
 
 /**
- * Routes the HOST to the DUT. Used for fastboot
+ * Routes the DUT to the HOST. Used for fastboot
  */
-void host_to_dut(void);
+void dut_to_host(void);
 
 /**
  * Routes the Micro Servo to the Host

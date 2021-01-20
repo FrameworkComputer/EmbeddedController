@@ -15,15 +15,6 @@
 #ifndef __CROS_EC_USB_PD_CONFIG_H
 #define __CROS_EC_USB_PD_CONFIG_H
 
-/* NOTES: Servo V4 and glados equivalents:
- *	Glados		Servo V4
- *	C0		CHG
- *	C1		DUT
- *
- */
-#define CHG 0
-#define DUT 1
-
 /* Timer selection for baseband PD communication */
 #define TIM_CLOCK_PD_TX_CHG 16
 #define TIM_CLOCK_PD_RX_CHG 1
@@ -80,7 +71,7 @@
 #define SPI_REGS(p) ((p) ? STM32_SPI2_REGS : STM32_SPI1_REGS)
 static inline void spi_enable_clock(int port)
 {
-	if (port == 0)
+	if (port == CHG)
 		STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
 	else
 		STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
@@ -116,7 +107,7 @@ static inline void spi_enable_clock(int port)
 /* the pins used for communication need to be hi-speed */
 static inline void pd_set_pins_speed(int port)
 {
-	if (port == 0) {
+	if (port == CHG) {
 		/* 40 MHz pin speed on SPI PB3&4,
 		 * (USB_CHG_TX_CLKIN & USB_CHG_CC1_TX_DATA)
 		 */
@@ -138,7 +129,7 @@ static inline void pd_set_pins_speed(int port)
 /* Reset SPI peripheral used for TX */
 static inline void pd_tx_spi_reset(int port)
 {
-	if (port == 0) {
+	if (port == CHG) {
 		/* Reset SPI1 */
 		STM32_RCC_APB2RSTR |= BIT(12);
 		STM32_RCC_APB2RSTR &= ~BIT(12);
@@ -193,7 +184,7 @@ static inline void pd_select_polarity(int port, int polarity)
 	/* Use window mode so that COMP1 and COMP2 share non-inverting input */
 	val |= STM32_COMP_CMP1EN | STM32_COMP_CMP2EN | STM32_COMP_WNDWEN;
 
-	if (port == 0) {
+	if (port == CHG) {
 		/* CHG use the right comparator inverted input for COMP2 */
 		STM32_COMP_CSR = (val & ~STM32_COMP_CMP2INSEL_MASK) |
 			(polarity ? STM32_COMP_CMP2INSEL_INM4  /* PA4: C0_CC2 */
@@ -237,7 +228,7 @@ static inline void pd_set_host_mode(int port, int enable)
 	 * present as a SNK device. If port != DUT (port == 1), then nothing to
 	 * do in this function.
 	 */
-	if (!port)
+	if (port != DUT)
 		return;
 
 	if (enable) {

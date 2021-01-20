@@ -423,6 +423,10 @@ static void board_init(void)
 	usleep(MSEC);
 
 	init_ioexpanders();
+	CPRINTS("Board ID is %d", board_id_det());
+
+	vbus_dischrg_en(0);
+
 	init_dacs();
 	init_pi3usb9201();
 

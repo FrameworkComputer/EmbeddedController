@@ -8,6 +8,7 @@
 #include "ioexpanders.h"
 #include "registers.h"
 #include "timer.h"
+#include "usb_pd.h"
 
 #define CHG_P5V_POWER  0
 #define CHG_VBUS_POWER 1
@@ -20,7 +21,8 @@ void chg_reset(void)
 	/* Disconnect CHG CC1(Rd) and CC2(Rd) */
 	chg_attach_cc_rds(0);
 
-	msleep(100);
+	/* Give time for CHG to detach, use tErrorRecovery. */
+	msleep(PD_T_ERROR_RECOVERY);
 
 	/* Connect CHG CC1(Rd) and CC2(Rd) to detect charger */
 	chg_attach_cc_rds(1);

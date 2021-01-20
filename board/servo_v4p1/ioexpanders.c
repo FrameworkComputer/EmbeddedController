@@ -155,7 +155,7 @@ static void ioexpanders_irq(void)
 		ccprintf("FAULT: USB3 A1 port load switch\n");
 
 	if (!(fault & USB_DUTCHG_FLT_ODL))
-		ccprintf("FAULT: Overcurrent on Charger or DUB CC/SBU lines\n");
+		ccprintf("FAULT: Overcurrent on Charger or DUT CC/SBU lines\n");
 
 	if (!(fault & PP3300_DP_FAULT_L))
 		ccprintf("FAULT: Overcurrent on DisplayPort\n");
