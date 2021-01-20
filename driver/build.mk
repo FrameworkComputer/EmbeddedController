@@ -154,6 +154,7 @@ driver-$(CONFIG_USB_PD_TCPM_PS8805)+=tcpm/ps8xxx.o
 driver-$(CONFIG_USB_PD_TCPM_PS8815)+=tcpm/ps8xxx.o
 driver-$(CONFIG_USB_PD_TCPM_TUSB422)+=tcpm/tusb422.o
 driver-$(CONFIG_USB_PD_TCPM_RT1715)+=tcpm/rt1715.o
+driver-$(CONFIG_USB_PD_TCPM_RT1718S)+=tcpm/rt1718s.o
 driver-$(CONFIG_USB_PD_TCPM_NCT38XX)+=tcpm/nct38xx.o
 driver-$(CONFIG_USB_PD_TCPM_RAA489000)+=tcpm/raa489000.o
 driver-$(CONFIG_USB_PD_TCPM_FUSB307)+=tcpm/fusb307.o
@@ -192,6 +193,7 @@ driver-$(CONFIG_USB_HUB_GL3590)+=gl3590.o
 
 # Type-C Power Path Controllers (PPC)
 driver-$(CONFIG_USBC_PPC_AOZ1380)+=ppc/aoz1380.o
+driver-$(CONFIG_USBC_PPC_RT1718S)+=ppc/rt1718s.o
 driver-$(CONFIG_USBC_PPC_SN5S330)+=ppc/sn5s330.o
 ifeq ($(CONFIG_USBC_PPC_NX20P3481)$(CONFIG_USBC_PPC_NX20P3483),y)
 driver-y += ppc/nx20p348x.o
