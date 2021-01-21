@@ -1371,10 +1371,10 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_WRITE,
 /*
  * Make sure our image sizes are a multiple of flash block erase size so that
  * the host can erase the entire image.
+ * Note that host (flashrom/depthcharge) does not erase/program the
+ * EC_FLASH_REGION_RO region, it only queries this region.
  */
-BUILD_ASSERT(CONFIG_RO_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
-BUILD_ASSERT(CONFIG_RW_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
-BUILD_ASSERT(EC_FLASH_REGION_RO_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
+BUILD_ASSERT(CONFIG_WP_STORAGE_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
 BUILD_ASSERT(CONFIG_EC_WRITABLE_STORAGE_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
 
 #endif
