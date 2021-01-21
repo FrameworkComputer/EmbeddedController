@@ -420,7 +420,7 @@ int nct38xx_ioex_event_handler(int ioex)
 
 			if (ioex == g->ioex && i == g->port &&
 						(pending & g->mask)) {
-				ioex_irq_handlers[j](j);
+				ioex_irq_handlers[j](j + IOEX_SIGNAL_START);
 				pending &= ~g->mask;
 				if (!pending)
 					break;

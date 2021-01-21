@@ -334,7 +334,7 @@ int pcal6408_ioex_event_handler(int ioex)
 
 		if (ioex == g->ioex && 0 == g->port &&
 					(int_status & g->mask)) {
-			ioex_irq_handlers[i](i);
+			ioex_irq_handlers[i](i + IOEX_SIGNAL_START);
 			int_status &= ~g->mask;
 			if (!int_status)
 				break;
