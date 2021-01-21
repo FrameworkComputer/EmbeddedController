@@ -5356,6 +5356,10 @@
 	defined(CONFIG_CHARGER_BQ25710) || \
 	defined(CONFIG_CHARGER_ISL9241)
 #define CONFIG_USB_PD_VBUS_MEASURE_CHARGER
+
+#ifdef CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
+#error CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT defined, but charger can measure
+#endif
 #endif
 
 /*****************************************************************************/
