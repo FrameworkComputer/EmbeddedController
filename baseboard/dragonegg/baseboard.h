@@ -98,11 +98,6 @@
 #define CONFIG_USB_PD_DISCHARGE_PPC
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_PD_VBUS_DETECT_PPC
-/*
- * TODO(b/113541930): ADC measurements are available for port 0 and 1, but not
- * port 2.
- */
-#define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_MUX_VIRTUAL
 #define CONFIG_USBC_PPC_SN5S330		/* C0 PPC */
