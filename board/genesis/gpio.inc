@@ -45,6 +45,7 @@ GPIO_INT(EC_RECOVERY_BTN_ODL,  PIN(F, 1), GPIO_INT_BOTH, button_interrupt)
  * Recovery button input from H1.
  */
 GPIO_INT(H1_EC_RECOVERY_BTN_ODL, PIN(2, 4), GPIO_INT_BOTH, button_interrupt)
+GPIO(BJ_ADP_PRESENT_L,     PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP)
 
 /* Port power control interrupts */
 GPIO_INT(HDMI_CONN0_OC_ODL,    PIN(0, 7), GPIO_INT_BOTH, port_ocp_interrupt)
