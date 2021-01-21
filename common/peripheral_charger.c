@@ -225,7 +225,7 @@ static enum pchg_state pchg_state_charging(struct pchg *ctx)
 	return state;
 }
 
-static void pchg_run(struct pchg *ctx)
+static int pchg_run(struct pchg *ctx)
 {
 	enum pchg_state previous_state = ctx->state;
 	int port = PCHG_CTX_TO_PORT(ctx);
@@ -235,11 +235,11 @@ static void pchg_run(struct pchg *ctx)
 	if (!queue_remove_unit(&ctx->events, &ctx->event)) {
 		mutex_unlock(&ctx->mtx);
 		CPRINTS("P%d No event in queue", port);
-		return;
+		return 0;
 	}
 	mutex_unlock(&ctx->mtx);
 
-	CPRINTS("P%d Run in %s for EVENT_%s", port,
+	CPRINTS("P%d Run in STATE_%s for EVENT_%s", port,
 		_text_state(ctx->state), _text_event(ctx->event));
 
 	if (ctx->event == PCHG_EVENT_IRQ) {
@@ -247,9 +247,9 @@ static void pchg_run(struct pchg *ctx)
 		if (rv) {
 			CPRINTS("ERR: get_event (%d)", rv);
 			ctx->event = PCHG_EVENT_NONE;
-			return;
+			return 0;
 		}
-		CPRINTS("(IRQ:EVENT_%s)", _text_event(ctx->event));
+		CPRINTS("IRQ:EVENT_%s", _text_event(ctx->event));
 	}
 
 	switch (ctx->state) {
@@ -270,7 +270,7 @@ static void pchg_run(struct pchg *ctx)
 		break;
 	default:
 		CPRINTS("ERR: Unknown state (%d)", ctx->state);
-		break;
+		return 0;
 	}
 
 	if (previous_state != ctx->state)
@@ -278,6 +278,8 @@ static void pchg_run(struct pchg *ctx)
 
 	ctx->event = PCHG_EVENT_NONE;
 	CPRINTS("Done");
+
+	return 1;
 }
 
 void pchg_irq(enum gpio_signal signal)
@@ -299,6 +301,7 @@ void pchg_task(void *u)
 {
 	struct pchg *ctx;
 	int p;
+	int rv;
 
 	/* TODO: i2c is wedged for a while after reset. investigate. */
 	msleep(500);
@@ -313,12 +316,13 @@ void pchg_task(void *u)
 
 	while (true) {
 		/* Process pending events for all ports. */
+		rv = 0;
 		for (p = 0; p < pchg_count; p++) {
 			ctx = &pchgs[p];
 			do {
 				if (atomic_clear(&ctx->irq))
 					pchg_queue_event(ctx, PCHG_EVENT_IRQ);
-				pchg_run(ctx);
+				rv |= pchg_run(ctx);
 			} while (queue_count(&ctx->events));
 		}
 		/*
@@ -326,7 +330,8 @@ void pchg_task(void *u)
 		 * only WLC but in the future other types (e.g. WPC Qi) should
 		 * send different device events.
 		 */
-		device_set_single_event(EC_DEVICE_EVENT_WLC);
+		if (rv)
+			device_set_single_event(EC_DEVICE_EVENT_WLC);
 		task_wait_event(-1);
 	}
 }
