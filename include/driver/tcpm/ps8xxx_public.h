@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_DRIVER_TCPM_PS8XXX_PUBLIC_H
 #define __CROS_EC_DRIVER_TCPM_PS8XXX_PUBLIC_H
 
+struct usb_mux;
+
 /* I2C interface */
 #define PS8751_I2C_ADDR1_P1_FLAGS 0x09
 #define PS8751_I2C_ADDR1_P2_FLAGS 0x0A
