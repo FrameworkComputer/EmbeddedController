@@ -156,6 +156,13 @@ static void thermal_control(void)
 
 	if (cond_went_true(&cond_hot[EC_TEMP_THRESH_HALT])) {
 		CPRINTS("thermal SHUTDOWN");
+
+		/* Print temperature sensor values before shutting down AP */
+		if (IS_ENABLED(CONFIG_CMD_TEMP_SENSOR)) {
+			console_command_temps(1, NULL);
+			cflush();
+		}
+
 		chipset_force_shutdown(CHIPSET_SHUTDOWN_THERMAL);
 	} else if (cond_went_false(&cond_hot[EC_TEMP_THRESH_HALT])) {
 		/* We don't reboot automatically - the user has to push
