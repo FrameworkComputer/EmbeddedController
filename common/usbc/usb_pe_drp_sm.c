@@ -826,6 +826,27 @@ static inline void send_ctrl_msg(int port, enum tcpm_transmit_type type,
 	prl_send_ctrl_msg(port, type, msg);
 }
 
+static void set_cable_rev(int port)
+{
+	/*
+	 * If port partner runs PD 2.0, cable communication must
+	 * also be PD 2.0
+	 */
+	if (prl_get_rev(port, TCPC_TX_SOP) == PD_REV20) {
+	/*
+	 * If the cable supports PD 3.0, but the port partner supports PD 2.0,
+	 * redo the cable discover with PD 2.0
+	 */
+		if (prl_get_rev(port, TCPC_TX_SOP_PRIME) == PD_REV30 &&
+		    pd_get_identity_discovery(port, TCPC_TX_SOP_PRIME) ==
+					PD_DISC_COMPLETE) {
+			pd_set_identity_discovery(port, TCPC_TX_SOP_PRIME,
+					PD_DISC_NEEDED);
+		}
+		prl_set_rev(port, TCPC_TX_SOP_PRIME, PD_REV20);
+	}
+}
+
 /* Compile-time insurance to ensure this code does not call into prl directly */
 #define prl_send_data_msg DO_NOT_USE
 #define prl_send_ext_data_msg DO_NOT_USE
@@ -2187,12 +2208,7 @@ static void pe_src_send_capabilities_run(int port)
 			prl_set_rev(port, TCPC_TX_SOP,
 			MIN(PD_REVISION, PD_HEADER_REV(rx_emsg[port].header)));
 
-			/*
-			 * If port partner runs PD 2.0, cable communication must
-			 * also be PD 2.0
-			 */
-			if (prl_get_rev(port, TCPC_TX_SOP) == PD_REV20)
-				prl_set_rev(port, TCPC_TX_SOP_PRIME, PD_REV20);
+			set_cable_rev(port);
 
 			/* We are PD connected */
 			PE_SET_FLAG(port, PE_FLAGS_PD_CONNECTION);
@@ -2991,12 +3007,7 @@ static void pe_snk_evaluate_capability_entry(int port)
 	prl_set_rev(port, TCPC_TX_SOP,
 			MIN(PD_REVISION, PD_HEADER_REV(rx_emsg[port].header)));
 
-	/*
-	 * If port partner runs PD 2.0, cable communication must
-	 * also be PD 2.0
-	 */
-	if (prl_get_rev(port, TCPC_TX_SOP) == PD_REV20)
-		prl_set_rev(port, TCPC_TX_SOP_PRIME, PD_REV20);
+	set_cable_rev(port);
 
 	pd_set_src_caps(port, num, pdo);
 
