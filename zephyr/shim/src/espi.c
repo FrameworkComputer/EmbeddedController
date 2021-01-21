@@ -159,6 +159,23 @@ static void espi_peripheral_handler(const struct device *dev,
 	}
 }
 
+#ifdef CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK
+static void espi_chipset_reset(void)
+{
+	hook_notify(HOOK_CHIPSET_RESET);
+}
+DECLARE_DEFERRED(espi_chipset_reset);
+
+/* Callback for reset */
+static void espi_reset_handler(const struct device *dev,
+			       struct espi_callback *cb,
+			       struct espi_event event)
+{
+	hook_call_deferred(&espi_chipset_reset_data, MSEC);
+
+}
+#endif /* CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK */
+
 #define ESPI_DEV DT_LABEL(DT_NODELABEL(espi0))
 static const struct device *espi_dev;
 
@@ -177,6 +194,12 @@ int zephyr_shim_setup_espi(void)
 			.handler = espi_peripheral_handler,
 			.event_type = ESPI_BUS_PERIPHERAL_NOTIFICATION,
 		},
+#ifdef CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK
+		{
+			.handler = espi_reset_handler,
+			.event_type = ESPI_BUS_RESET,
+		},
+#endif
 	};
 
 	struct espi_cfg cfg = {

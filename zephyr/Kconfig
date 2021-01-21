@@ -90,6 +90,21 @@ config PLATFORM_EC_CBI
 
 	  https://chromium.googlesource.com/chromiumos/docs/+/master/design_docs/cros_board_info.md
 
+config PLATFORM_EC_CHIPSET_RESET_HOOK
+	bool "Provide a hook for when the AP resets"
+	default y
+	help
+	  Enables support for the HOOK_CHIPSET_RESET hook. This can be used by
+	  code that needs to run before a programmatic reset actually happens.
+	  Note that these hooks don't run with a cold reset, only when the AP
+	  decides to reset itself.
+
+	  You can declare a hook like this:
+
+	     DECLARE_HOOK(HOOK_CHIPSET_RESET, do_something, HOOK_PRIO_DEFAULT);
+
+	  Then do_something() will be called just before the reset happens.
+
 menuconfig PLATFORM_EC_ESPI
 	bool "eSPI"
 	depends on ESPI && AP

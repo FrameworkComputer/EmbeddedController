@@ -92,6 +92,11 @@ enum battery_type {
 #define CONFIG_CHARGER_INPUT_CURRENT		512
 #endif
 
+#undef CONFIG_CHIPSET_RESET_HOOK
+#ifdef CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK
+#define CONFIG_CHIPSET_RESET_HOOK
+#endif
+
 #ifdef CONFIG_PLATFORM_EC_EXTPOWER_GPIO
 /* This always needs to be defined for this option to work */
 #define CONFIG_EXTPOWER
