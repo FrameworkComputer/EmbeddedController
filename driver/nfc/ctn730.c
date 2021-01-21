@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "i2c.h"
 #include "peripheral_charger.h"
 #include "timer.h"
@@ -14,6 +15,9 @@
 /*
  * Configuration
  */
+
+/* Print additional data */
+#define CTN730_DEBUG
 
 /*
  * When ctn730 is asleep, I2C is ignored but can wake it up. I2C will be resent
@@ -220,10 +224,9 @@ static int _i2c_read(int i2c_port, uint8_t *in, int in_len)
 
 static void _print_header(const struct ctn730_msg *msg)
 {
-	CPRINTS("%s_%s LEN=%d",
+	CPRINTS("%s_%s",
 		_text_instruction(msg->instruction),
-		_text_message_type(msg->message_type),
-		msg->length);
+		_text_message_type(msg->message_type));
 }
 
 static int _send_command(struct pchg *ctx, const struct ctn730_msg *cmd)
@@ -307,6 +310,9 @@ static int _process_payload_response(struct pchg *ctx, struct ctn730_msg *res)
 	if (rv)
 		return rv;
 
+	if (IS_ENABLED(CTN730_DEBUG))
+		CPRINTS("Payload: %ph", HEX_BUF(buf, len));
+
 	switch (res->instruction) {
 	case WLC_HOST_CTRL_RESET:
 		if (len != WLC_HOST_CTRL_RESET_RSP_SIZE
@@ -350,10 +356,15 @@ static int _process_payload_event(struct pchg *ctx, struct ctn730_msg *res)
 	if (rv)
 		return rv;
 
+	if (IS_ENABLED(CTN730_DEBUG))
+		CPRINTS("Payload: %ph", HEX_BUF(buf, len));
+
 	switch (res->instruction) {
 	case WLC_HOST_CTRL_RESET:
 		if (buf[0] == WLC_HOST_CTRL_RESET_EVT_NORMAL_MODE)
 			ctx->event = PCHG_EVENT_INITIALIZED;
+		else if (buf[0] == WLC_HOST_CTRL_RESET_EVT_DOWNLOAD_MODE)
+			ctx->event = PCHG_EVENT_NONE;
 		else
 			return EC_ERROR_INVAL;
 		break;
