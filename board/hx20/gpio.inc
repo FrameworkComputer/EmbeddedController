@@ -119,7 +119,7 @@ GPIO(FAN_SPEED,         PIN(050), GPIO_INPUT)
 
 /* Miscellaneous */
 GPIO(TYPEC_G_DRV2_EN,       PIN(0101), GPIO_OUT_LOW)   /* LED drv */
-GPIO(ME_EN,                 PIN(060),  GPIO_OUT_LOW)
+GPIO(ME_EN,                 PIN(060),  GPIO_ODR_LOW)
 GPIO(EC_BKOFF_L,            PIN(0102), GPIO_OUT_LOW)    /* Panel backlight control */
 
 GPIO(CAM_EN,                PIN(0255), GPIO_OUT_LOW)    /* Open camera power  */
