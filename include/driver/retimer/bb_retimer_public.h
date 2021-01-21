@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_DRIVER_RETIMER_BB_RETIMER_PUBLIC_H
 #define __CROS_EC_DRIVER_RETIMER_BB_RETIMER_PUBLIC_H
 
+struct usb_mux;
+
 /* Supported USB retimer drivers */
 extern const struct usb_mux_driver bb_usb_retimer;
 
