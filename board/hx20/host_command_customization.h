@@ -87,4 +87,10 @@ struct ec_params_me_control {
 
 #define EC_CMD_CUSTOM_HELLO	0x3E07
 
+#define EC_CMD_DISABLE_PS2_EMULATION 0x3E08
+
+struct ec_params_ps2_emulation_control {
+	uint8_t disable;
+} __ec_align1;
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */

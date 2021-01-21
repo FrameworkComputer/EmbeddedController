@@ -21,6 +21,7 @@
 #include "util.h"
 #include "cypress5525.h"
 #include "board.h"
+#include "ps2mouse.h"
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 /*****************************************************************************/
@@ -119,3 +120,13 @@ static enum ec_status host_custom_command_hello(struct host_cmd_handler_args *ar
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CUSTOM_HELLO, host_custom_command_hello, EC_VER_MASK(0));
+
+
+static enum ec_status disable_ps2_mouse_emulation(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_ps2_emulation_control *p = args->params;
+
+	set_ps2_mouse_emulation(p->disable);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_DISABLE_PS2_EMULATION, disable_ps2_mouse_emulation, EC_VER_MASK(0));

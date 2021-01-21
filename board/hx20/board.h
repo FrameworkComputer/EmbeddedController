@@ -23,21 +23,19 @@
 /* Keyboard features */
 #define CONFIG_KEYBOARD_CUSTOMIZATION
 /* #define CONFIG_PWM_KBLIGHT */
-#define CONFIG_KEYBOARD_DEBUG
-#undef CONFIG_8042_AUX
+/* #define CONFIG_KEYBOARD_DEBUG */
 
 
 /* #define CONFIG_CUSTOMER_PORT80 */
 
 /*
  * Mouse emulation
-*/
+ */
 
 #define CONFIG_8042_AUX
 
 #define CONFIG_CUSTOMER_PORT80
 #define CONFIG_IGNORED_BTN_SCANCODE
-
 
 /*
  * Combination key
@@ -509,32 +507,12 @@
  * All other ports set to 0xff (not used)
  */
 
-#define I2C_PORT_PMIC           MCHP_I2C_PORT10
-
-#if defined(CHIP_FAMILY_MEC17XX)
-#define I2C_PORT_USB_CHARGER_1	MCHP_I2C_PORT10
-#define I2C_PORT_USB_MUX        MCHP_I2C_PORT10
-#define I2C_PORT_USB_CHARGER_2	MCHP_I2C_PORT10
-#define I2C_PORT_PD_MCU         MCHP_I2C_PORT4
-#define I2C_PORT_TCPC           MCHP_I2C_PORT10
-#define I2C_PORT_ALS            MCHP_I2C_PORT10
-#define I2C_PORT_ACCEL          MCHP_I2C_PORT10
-#define I2C_PORT_BATTERY        MCHP_I2C_PORT3
-#define I2C_PORT_CHARGER        MCHP_I2C_PORT3
-#else
-#define I2C_PORT_USB_CHARGER_1	MCHP_I2C_PORT2
-#define I2C_PORT_USB_MUX        MCHP_I2C_PORT2
-#define I2C_PORT_USB_CHARGER_2	MCHP_I2C_PORT2
+#define I2C_PORT_TOUCHPAD		MCHP_I2C_PORT2
 #define I2C_PORT_PD_MCU         MCHP_I2C_PORT6
 #define I2C_PORT_TCPC           MCHP_I2C_PORT3
-#define I2C_PORT_ALS            MCHP_I2C_PORT4
-#define I2C_PORT_ACCEL          MCHP_I2C_PORT4
 #define I2C_PORT_BATTERY        MCHP_I2C_PORT1
 #define I2C_PORT_CHARGER        MCHP_I2C_PORT1
 #define I2C_PORT_THERMAL		MCHP_I2C_PORT3
-
-#endif
-
 
 /* GPIO for power signal */
 #ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
@@ -761,6 +739,7 @@ void chassis_control_interrupt(enum gpio_signal signal);
 
 /* Touchpad process */
 void touchpad_interrupt(enum gpio_signal signal);
+void touchpad_i2c_interrupt(enum gpio_signal signal);
 
 /* Mainboard power button handler*/
 void mainboard_power_button_interrupt(enum gpio_signal signal);

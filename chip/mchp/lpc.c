@@ -408,7 +408,11 @@ void chip_8042_config(uint32_t io_base)
 	/* Mec1521 only have ESPI */
 	MCHP_8042_KB_CTRL |= BIT(5);
 	MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_8042_SIRQ0) = BIT(0);
+#ifdef CONFIG_8042_AUX
+	MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_8042_SIRQ1) = BIT(0);
 #endif
+
+#endif /*CHIP_FAMILY_MEC17XX*/
 }
 
 /*
@@ -529,6 +533,9 @@ static void setup_lpc(void)
 #ifndef CONFIG_KEYBOARD_IRQ_GPIO
 	/* Set up SERIRQ for keyboard */
 	MCHP_8042_KB_CTRL |= BIT(5);
+#ifdef CONFIG_8042_AUX
+	MCHP_8042_KB_CTRL |= BIT(7);
+#endif
 	MCHP_LPC_SIRQ(1) = 0x01;
 #endif
 	/* EMI0 at IO 0x800 */
@@ -922,6 +929,16 @@ int lpc_keyboard_input_pending(void)
 void lpc_keyboard_put_char(uint8_t chr, int send_irq)
 {
 	MCHP_8042_E2H = chr;
+	if (send_irq)
+		keyboard_irq_assert();
+}
+
+/*
+ * called from common/keyboard_8042.c
+ */
+void lpc_aux_put_char(uint8_t chr, int send_irq)
+{
+	MCHP_8042_AUX_E2H = chr;
 	if (send_irq)
 		keyboard_irq_assert();
 }
