@@ -803,4 +803,11 @@ void board_hibernate(void)
 	 */
 	ppc_vbus_source_enable(0, 0);
 	ppc_vbus_sink_enable(0, 1);
+
+	/*
+	 * If CCD not active, set port 0 SBU_EN=0 to avoid power leakage during
+	 * hibernation (b/175674973).
+	 */
+	if (gpio_get_level(GPIO_CCD_MODE_ODL))
+		ppc_set_sbu(0, 0);
 }
