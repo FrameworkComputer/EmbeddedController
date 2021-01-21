@@ -117,6 +117,9 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_FLASH   "${PLATFORM_EC}/common/flash.c"
                                                 "${PLATFORM_EC}/common/spi_flash_reg.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD "${PLATFORM_EC}/common/host_command.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD "${PLATFORM_EC}/common/host_event_commands.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_GET_UPTIME_INFO
+                                                "${PLATFORM_EC}/common/uptime.c")
+
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_I2C     "${PLATFORM_EC}/common/i2c_controller.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD
                                                 "${PLATFORM_EC}/common/keyboard_scan.c")

@@ -17,6 +17,15 @@ void main(void)
 	printk("  BOARD=%s\n", CONFIG_BOARD);
 	printk("  ACTIVE_COPY=%s\n", CONFIG_CROS_EC_ACTIVE_COPY);
 
+	/*
+	 * Initialize reset logs. This needs to be done before any updates of
+	 * reset logs because we need to verify if the values remain the same
+	 * after every EC reset.
+	 */
+	if (IS_ENABLED(CONFIG_CMD_AP_RESET_LOG)) {
+		init_reset_log();
+	}
+
 	if (IS_ENABLED(HAS_TASK_KEYSCAN)) {
 		keyboard_scan_init();
 	}

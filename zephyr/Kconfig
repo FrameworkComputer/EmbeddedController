@@ -66,6 +66,22 @@ config PLATFORM_EC_ACPI
 	  Enable shimming the ACPI handler, which will handle the Host data from
 	  the ACPI I/O port for X86 AP.
 
+config PLATFORM_EC_HOSTCMD_GET_UPTIME_INFO
+	bool "Host command: EC_CMD_GET_UPTIME_INFO"
+	default PLATFORM_EC_HOSTCMD
+	help
+	  Enable the EC_CMD_GET_UPTIME_INFO host command which reports the time
+	  the EC has been powered up, the number of AP resets, an optional log
+	  of AP-reset events and some flags.
+
+config PLATFORM_EC_AP_RESET_LOG
+	bool "Enable the Application Processor reset log"
+	depends on PLATFORM_EC_HOSTCMD_GET_UPTIME_INFO
+	default y if PLATFORM_EC_POWERSEQ
+	help
+	  Enable logging of AP reset events. This information is provided in
+	  response to the EC_CMD_GET_UPTIME_INFO host command.
+
 config PLATFORM_EC_BOARD_RESET_AFTER_POWER_ON
 	bool "Work around H1 reset issue"
 	default y

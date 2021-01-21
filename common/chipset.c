@@ -60,7 +60,7 @@ DECLARE_HOST_COMMAND(EC_CMD_AP_RESET,
 #endif
 
 #ifdef CONFIG_CMD_AP_RESET_LOG
-static struct mutex reset_log_mutex;
+static mutex_t reset_log_mutex;
 static int next_reset_log __preserved_logs(next_reset_log);
 static uint32_t ap_resets_since_ec_boot;
 /* keep reset_logs size a power of 2 */
@@ -83,6 +83,9 @@ void init_reset_log(void)
 		next_reset_log = 0;
 		memset(&reset_logs, 0, sizeof(reset_logs));
 	}
+#ifdef CONFIG_ZEPHYR
+	(void)k_mutex_init(&reset_log_mutex);
+#endif
 }
 
 void report_ap_reset(enum chipset_shutdown_reason reason)
