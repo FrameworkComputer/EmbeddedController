@@ -8,6 +8,7 @@
 #include "adc_chip.h"
 #include "button.h"
 #include "cbi_fw_config.h"
+#include "cbi_ssfc.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
@@ -15,7 +16,9 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/nb7v904m.h"
@@ -203,53 +206,6 @@ const struct adc_t adc_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
-
-void board_init(void)
-{
-	int on;
-
-	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
-	check_c0_line();
-
-	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
-		get_cbi_fw_config_db() == DB_LTE_HDMI) {
-		/* Disable i2c on HDMI pins */
-		gpio_config_pin(MODULE_I2C,
-				GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL, 0);
-		gpio_config_pin(MODULE_I2C,
-				GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 0);
-
-		/* Set HDMI and sub-rail enables to output */
-		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL,
-			       chipset_in_state(CHIPSET_STATE_ON) ?
-						GPIO_ODR_LOW : GPIO_ODR_HIGH);
-		gpio_set_flags(GPIO_SUB_C1_INT_EN_RAILS_ODL,   GPIO_ODR_HIGH);
-
-		/* Select HDMI option */
-		gpio_set_level(GPIO_HDMI_SEL_L, 0);
-
-		/* Enable interrupt for passing through HPD */
-		gpio_enable_interrupt(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL);
-	} else {
-		/* Set SDA as an input */
-		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL,
-			       GPIO_INPUT);
-
-		/* Enable C1 interrupts */
-		gpio_enable_interrupt(GPIO_SUB_C1_INT_EN_RAILS_ODL);
-		check_c1_line();
-	}
-	/* Enable gpio interrupt for base accelgyro sensor */
-	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
-
-	/* Turn on 5V if the system is on, otherwise turn it off. */
-	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
-			      CHIPSET_STATE_SOFT_OFF);
-	board_power_5v_enable(on);
-
-	gpio_enable_interrupt(GPIO_PEN_DET_ODL);
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 /* Enable HDMI any time the SoC is on */
 static void hdmi_enable(void)
@@ -469,8 +425,16 @@ static const mat33_fp_t base_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
+static const mat33_fp_t base_lsm6dsm_ref = {
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
 static struct accelgyro_saved_data_t g_bma253_data;
 static struct bmi_drv_data_t g_bmi160_data;
+static struct kionix_accel_data g_kx022_data;
+static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -542,6 +506,149 @@ struct motion_sensor_t motion_sensors[] = {
 };
 
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+struct motion_sensor_t kx022_lid_accel = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_KX022,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &kionix_accel_drv,
+	.mutex = &g_lid_mutex,
+	.drv_data = &g_kx022_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = KX022_ADDR0_FLAGS,
+	.rot_standard_ref = &lid_standard_ref,
+	.min_frequency = KX022_ACCEL_MIN_FREQ,
+	.max_frequency = KX022_ACCEL_MAX_FREQ,
+	.default_range = 2, /* g, to support tablet mode */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
+
+struct motion_sensor_t lsm6dsm_base_accel = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_LSM6DSM,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &lsm6dsm_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+			MOTIONSENSE_TYPE_ACCEL),
+	.int_signal = GPIO_BASE_SIXAXIS_INT_L,
+	.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+	.rot_standard_ref = &base_lsm6dsm_ref,
+	.default_range = 4,  /* g */
+	.min_frequency = LSM6DSM_ODR_MIN_VAL,
+	.max_frequency = LSM6DSM_ODR_MAX_VAL,
+	.config = {
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 13000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+	},
+};
+
+struct motion_sensor_t lsm6dsm_base_gyro = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_LSM6DSM,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &lsm6dsm_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+			MOTIONSENSE_TYPE_GYRO),
+	.int_signal = GPIO_BASE_SIXAXIS_INT_L,
+	.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+	.default_range = 1000 | ROUND_UP_FLAG, /* dps */
+	.rot_standard_ref = &base_lsm6dsm_ref,
+	.min_frequency = LSM6DSM_ODR_MIN_VAL,
+	.max_frequency = LSM6DSM_ODR_MAX_VAL,
+};
+
+static int base_gyro_config;
+
+void board_init(void)
+{
+	int on;
+
+	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
+	check_c0_line();
+
+	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
+		get_cbi_fw_config_db() == DB_LTE_HDMI) {
+		/* Disable i2c on HDMI pins */
+		gpio_config_pin(MODULE_I2C,
+				GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL, 0);
+		gpio_config_pin(MODULE_I2C,
+				GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 0);
+
+		/* Set HDMI and sub-rail enables to output */
+		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL,
+			       chipset_in_state(CHIPSET_STATE_ON) ?
+						GPIO_ODR_LOW : GPIO_ODR_HIGH);
+		gpio_set_flags(GPIO_SUB_C1_INT_EN_RAILS_ODL,   GPIO_ODR_HIGH);
+
+		/* Select HDMI option */
+		gpio_set_level(GPIO_HDMI_SEL_L, 0);
+
+		/* Enable interrupt for passing through HPD */
+		gpio_enable_interrupt(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL);
+	} else {
+		/* Set SDA as an input */
+		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL,
+			       GPIO_INPUT);
+
+		/* Enable C1 interrupts */
+		gpio_enable_interrupt(GPIO_SUB_C1_INT_EN_RAILS_ODL);
+		check_c1_line();
+	}
+	/* Enable gpio interrupt for base accelgyro sensor */
+	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+
+	/* Turn on 5V if the system is on, otherwise turn it off. */
+	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
+			      CHIPSET_STATE_SOFT_OFF);
+	board_power_5v_enable(on);
+
+	gpio_enable_interrupt(GPIO_PEN_DET_ODL);
+
+	/* Initialize g-sensor */
+	base_gyro_config = get_cbi_ssfc_base_sensor();
+
+	if (base_gyro_config == SSFC_SENSOR_LSM6DSM) {
+		motion_sensors[BASE_ACCEL] = lsm6dsm_base_accel;
+		motion_sensors[BASE_GYRO] = lsm6dsm_base_gyro;
+		ccprints("BASE GYRO is LSM6DSM");
+	} else
+		ccprints("BASE GYRO is BMI160");
+
+	if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_KX022) {
+		motion_sensors[LID_ACCEL] = kx022_lid_accel;
+		ccprints("LID_ACCEL is KX022");
+	} else
+		ccprints("LID_ACCEL is BMA253");
+
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 __override void ocpc_get_pid_constants(int *kp, int *kp_div,
 				       int *ki, int *ki_div,
@@ -729,4 +836,18 @@ void lid_angle_peripheral_enable(int enable)
 			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
 	}
 }
+
+void motion_interrupt(enum gpio_signal signal)
+{
+	switch (base_gyro_config) {
+	case SSFC_SENSOR_LSM6DSM:
+		lsm6dsm_interrupt(signal);
+		break;
+	case SSFC_SENSOR_BMI160:
+	default:
+		bmi160_interrupt(signal);
+		break;
+	}
+}
+
 #endif
