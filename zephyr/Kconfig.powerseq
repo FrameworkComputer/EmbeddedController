@@ -22,6 +22,16 @@ config PLATFORM_EC_POWERSEQ_HOST_SLEEP
 	  required for S0ix support on Intel platforms, and optional
 	  for boards without S0ix support.
 
+config PLATFORM_EC_POWER_SLEEP_FAILURE_DETECTION
+	bool "Detect failure to enter a sleep state (S0ix/S3)"
+	depends on PLATFORM_EC_POWERSEQ_HOST_SLEEP
+	help
+	  Enables detection of the AP failing to go to sleep, perhaps due to a
+	  bug in the internal SoC periodic housekeeping code.
+
+	  Failure information is reported via the EC_CMD_HOST_SLEEP_EVENT host
+	  command.
+
 menuconfig PLATFORM_EC_POWERSEQ_INTEL
 	bool "Enable shimming common Intel power sequencing code"
 	depends on AP_X86_INTEL
