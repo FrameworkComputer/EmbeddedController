@@ -276,7 +276,7 @@ static int woomax_ps8818_mux_set(const struct usb_mux *me,
 					PS8818_REG_PAGE1,
 					PS8818_REG1_APTX1EQ_10G_LEVEL,
 					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
+					PS8818_EQ_LEVEL_UP_18DB);
 		if (rv)
 			return rv;
 
@@ -284,7 +284,7 @@ static int woomax_ps8818_mux_set(const struct usb_mux *me,
 					PS8818_REG_PAGE1,
 					PS8818_REG1_APTX2EQ_10G_LEVEL,
 					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
+					PS8818_EQ_LEVEL_UP_18DB);
 		if (rv)
 			return rv;
 
