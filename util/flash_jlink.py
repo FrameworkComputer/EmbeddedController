@@ -7,6 +7,10 @@
 """Flashes firmware using Segger J-Link.
 
 This script requires Segger hardware attached via JTAG/SWD.
+
+See
+https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/fingerprint/fingerprint-debugging.md#flash
+for instructions.
 """
 
 import argparse
