@@ -91,24 +91,33 @@
 #endif
 
 /*
- * CONFIG_FLASH_ERASE_SIZE is set to maximum possible out of 64k, 32k and 4k
- * depending upon alignment of CONFIG_RO_SIZE. There are two assumptions here:
- * 1. CONFIG_RO_MEM_OFF is always 0 i.e. RO starts at 0.
- * 2. CONFIG_RO_SIZE and CONFIG_RW_SIZE are the same.
+ * The common flash support requires that the CONFIG_WP_STORAGE_SIZE and
+ * CONFIG_EC_WRITABLE_STORAGE_SIZE are both a multiple of
+ * CONFIG_FLASH_ERASE_SIZE.
  *
- * If above assumptions are not true, then additional checks would be required
- * to ensure that erase block size is selected based on the alignment of both
- * CONFIG_RO_SIZE and CONFIG_RW_SIZE and the offset of RO.
+ * THE NPCX supports erase sizes of 64 KiB, 32 KiB, and 4 KiB. The NPCX flash
+ * driver does not currently support CONFIG_FLASH_MULTIPLE_REGION, so set
+ * the erase size to the maximum (64 KiB) for the best performance.
+ * Using smaller erase sizes increases boot time. If write protected and
+ * writable flash regions are not a multiple of 64 KiB, then support
+ * for CONFIG_FLASH_MULTIPLE_REGION must be added.
  */
-#if ((CONFIG_RO_SIZE & (0x10000 - 1)) == 0)
-#define CONFIG_FLASH_ERASE_SIZE	0x10000
+#define CONFIG_FLASH_ERASE_SIZE		0x10000
 #define NPCX_ERASE_COMMAND		CMD_BLOCK_64K_ERASE
-#elif ((CONFIG_RO_SIZE & (0x8000 - 1)) == 0)
-#define CONFIG_FLASH_ERASE_SIZE	0x8000
-#define NPCX_ERASE_COMMAND		CMD_BLOCK_32K_ERASE
-#else
-#define CONFIG_FLASH_ERASE_SIZE	0x1000
-#define NPCX_ERASE_COMMAND		CMD_SECTOR_ERASE
+
+#if (CONFIG_WP_STORAGE_SIZE != CONFIG_EC_WRITABLE_STORAGE_SIZE)
+#error "NPCX flash support assumes CONFIG_WP_STORAGE_SIZE and " \
+	"CONFIG_EC_WRITABLE_STORAGE_SIZE are the same."
+#endif
+
+/*
+ * If the total flash size is not a multiple of 64k, this slows the boot
+ * time. CONFIG_FLASH_MULTIPLE_REGION should be enabled in this case to
+ * optimize the erase block handling.
+ */
+#if ((CONFIG_WP_STORAGE_SIZE % CONFIG_FLASH_ERASE_SIZE) != 0)
+#error "CONFIG_WP_STORAGE_SIZE is not a multiple of 64K. Correct the flash " \
+	"size or add support for CONFIG_FLASH_MULTIPLE_REGION."
 #endif
 
 #define CONFIG_FLASH_BANK_SIZE		CONFIG_FLASH_ERASE_SIZE
