@@ -133,7 +133,7 @@ static int command_cable(int argc, char **argv)
 	}
 	ccprintf("%s\n", cable_type[ptype]);
 
-	cable_rev = pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME);
+	cable_rev = pd_get_rev(port, TCPC_TX_SOP_PRIME);
 	disc = pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
 	cable_mode_resp.raw_value =
 		pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME);
