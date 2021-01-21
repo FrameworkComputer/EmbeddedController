@@ -4,6 +4,7 @@
  */
 
 #include "atomic.h"
+#include "chipset.h"
 #include "common.h"
 #include "device_event.h"
 #include "hooks.h"
@@ -69,20 +70,29 @@ static const char *_text_event(enum pchg_event event)
 	return event_names[event];
 }
 
+static enum pchg_state pchg_initialize(struct pchg *ctx, enum pchg_state state)
+{
+	int rv = ctx->cfg->drv->init(ctx);
+
+	if (rv == EC_SUCCESS) {
+		pchg_queue_event(ctx, PCHG_EVENT_ENABLE);
+		state = PCHG_STATE_INITIALIZED;
+	} else if (rv == EC_SUCCESS_IN_PROGRESS) {
+		state = PCHG_STATE_RESET;
+	} else {
+		CPRINTS("ERR: Failed to initialize");
+	}
+
+	return state;
+}
+
 static enum pchg_state pchg_state_reset(struct pchg *ctx)
 {
 	enum pchg_state state = PCHG_STATE_RESET;
-	int rv;
 
 	switch (ctx->event) {
 	case PCHG_EVENT_INITIALIZE:
-		rv = ctx->cfg->drv->init(ctx);
-		if (rv == EC_SUCCESS) {
-			pchg_queue_event(ctx, PCHG_EVENT_ENABLE);
-			state = PCHG_STATE_INITIALIZED;
-		} else if (rv != EC_SUCCESS_IN_PROGRESS) {
-			CPRINTS("ERR: Failed to initialize");
-		}
+		state = pchg_initialize(ctx, state);
 		break;
 	case PCHG_EVENT_INITIALIZED:
 		pchg_queue_event(ctx, PCHG_EVENT_ENABLE);
@@ -108,6 +118,9 @@ static enum pchg_state pchg_state_initialized(struct pchg *ctx)
 		return state;
 
 	switch (ctx->event) {
+	case PCHG_EVENT_INITIALIZE:
+		state = pchg_initialize(ctx, state);
+		break;
 	case PCHG_EVENT_ENABLE:
 		rv = ctx->cfg->drv->enable(ctx, true);
 		if (rv == EC_SUCCESS)
@@ -131,6 +144,9 @@ static enum pchg_state pchg_state_enabled(struct pchg *ctx)
 	int rv;
 
 	switch (ctx->event) {
+	case PCHG_EVENT_INITIALIZE:
+		state = pchg_initialize(ctx, state);
+		break;
 	case PCHG_EVENT_DISABLE:
 		ctx->error |= PCHG_ERROR_HOST;
 		rv = ctx->cfg->drv->enable(ctx, false);
@@ -161,6 +177,9 @@ static enum pchg_state pchg_state_detected(struct pchg *ctx)
 	int rv;
 
 	switch (ctx->event) {
+	case PCHG_EVENT_INITIALIZE:
+		state = pchg_initialize(ctx, state);
+		break;
 	case PCHG_EVENT_DISABLE:
 		ctx->error |= PCHG_ERROR_HOST;
 		rv = ctx->cfg->drv->enable(ctx, false);
@@ -194,6 +213,9 @@ static enum pchg_state pchg_state_charging(struct pchg *ctx)
 	int rv;
 
 	switch (ctx->event) {
+	case PCHG_EVENT_INITIALIZE:
+		state = pchg_initialize(ctx, state);
+		break;
 	case PCHG_EVENT_DISABLE:
 		ctx->error |= PCHG_ERROR_HOST;
 		rv = ctx->cfg->drv->enable(ctx, false);
@@ -277,7 +299,6 @@ static int pchg_run(struct pchg *ctx)
 		CPRINTS("->%s", _text_state(ctx->state));
 
 	ctx->event = PCHG_EVENT_NONE;
-	CPRINTS("Done");
 
 	return 1;
 }
@@ -297,22 +318,55 @@ void pchg_irq(enum gpio_signal signal)
 	}
 }
 
+static void pchg_startup(void)
+{
+	struct pchg *ctx;
+	int p;
+
+	CPRINTS("%s", __func__);
+
+	for (p = 0; p < pchg_count; p++) {
+		ctx = &pchgs[p];
+		pchg_queue_event(ctx, PCHG_EVENT_INITIALIZE);
+		gpio_enable_interrupt(ctx->cfg->irq_pin);
+	}
+
+	task_wake(TASK_ID_PCHG);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pchg_startup, HOOK_PRIO_DEFAULT);
+
+static void pchg_shutdown(void)
+{
+	struct pchg *ctx;
+	int p;
+
+	CPRINTS("%s", __func__);
+
+	for (p = 0; p < pchg_count; p++) {
+		ctx = &pchgs[0];
+		gpio_disable_interrupt(ctx->cfg->irq_pin);
+		mutex_lock(&ctx->mtx);
+		queue_init(&ctx->events);
+		mutex_unlock(&ctx->mtx);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pchg_shutdown, HOOK_PRIO_DEFAULT);
+
 void pchg_task(void *u)
 {
 	struct pchg *ctx;
 	int p;
 	int rv;
 
-	/* TODO: i2c is wedged for a while after reset. investigate. */
-	msleep(500);
+	/*
+	 * Without delay, after servo flash, ctn730 in RW always fails to write
+	 * ENABLE_CMD (b:176824601).
+	 */
+	msleep(50);
 
-	for (p = 0; p < pchg_count; p++) {
-		ctx = &pchgs[p];
-		ctx->state = PCHG_STATE_RESET;
-		queue_init(&ctx->events);
-		pchg_queue_event(ctx, PCHG_EVENT_INITIALIZE);
-		gpio_enable_interrupt(ctx->cfg->irq_pin);
-	}
+	/* In case we arrive here after power-on (for late sysjump) */
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		pchg_startup();
 
 	while (true) {
 		/* Process pending events for all ports. */
@@ -390,7 +444,6 @@ static int cc_pchg(int argc, char **argv)
 	}
 
 	if (!strcasecmp(argv[2], "init")) {
-		ctx->state = PCHG_STATE_RESET;
 		pchg_queue_event(ctx, PCHG_EVENT_INITIALIZE);
 	} else if (!strcasecmp(argv[2], "enable")) {
 		pchg_queue_event(ctx, PCHG_EVENT_ENABLE);
