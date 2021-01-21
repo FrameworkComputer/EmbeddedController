@@ -29,8 +29,8 @@ GPIO_INT(PS_HOLD,           PIN(A, 4), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_sig
 GPIO_INT(AP_SUSPEND,        PIN(5, 7), GPIO_INT_BOTH, power_signal_interrupt)  /* Suspend signal from PMIC */
 GPIO_INT(DEPRECATED_AP_RST_REQ, PIN(C, 2), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V, power_signal_interrupt) /* Deprecated AP initiated reset indicator */
 
-/* WLC interrupt */
-GPIO_INT(WLC_IRQ_CONN, PIN(7, 4), GPIO_INT_RISING, pchg_irq)
+/* WLC interrupt. GPIO_PULL_DOWN ensures no IRQ when WLC chip is off. */
+GPIO_INT(WLC_IRQ_CONN, PIN(7, 4), GPIO_INT_RISING | GPIO_PULL_DOWN, pchg_irq)
 
 /*
  * When switch-cap is off, the POWER_GOOD signal is floating. Need a pull-down
@@ -74,9 +74,8 @@ GPIO(EC_BL_DISABLE_L,       PIN(B, 6), GPIO_OUT_LOW)   /* Backlight disable sign
 /* TODO(waihong): Should remove it from hardware */
 GPIO(CAM_LED,               PIN(3, 0), GPIO_INPUT)
 
-/* Stylus */
-/* TODO(b/168652326): Implement the WLC controls */
-GPIO(WLC_NRST_CONN,         PIN(C, 5), GPIO_INPUT)
+/* Reset line for WLC. External pull-up is expected. */
+GPIO(WLC_NRST_CONN,         PIN(C, 5), GPIO_ODR_HIGH)
 
 /* Base detection */
 GPIO(EN_BASE,               PIN(0, 4), GPIO_OUT_LOW)   /* Enable power to detachable base */
