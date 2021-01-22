@@ -14,6 +14,7 @@
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
+#define CONFIG_LTO
 
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
