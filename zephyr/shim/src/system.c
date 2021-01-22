@@ -10,6 +10,7 @@
 #include "chipset.h"
 #include "config.h"
 #include "ec_commands.h"
+#include "panic.h"
 #include "sysjump.h"
 #include "system.h"
 
@@ -50,12 +51,6 @@ static uint32_t reset_flags;
 static bool jumped_to_image;
 
 /* static void jump_to_image */
-
-/* TODO(b/171407461) implement components/panic */
-static uintptr_t get_panic_data_start(void)
-{
-	return 0;
-}
 
 void system_common_pre_init(void)
 {
