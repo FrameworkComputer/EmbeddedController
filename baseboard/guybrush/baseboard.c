@@ -8,12 +8,14 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "battery_fuel_gauge.h"
-#include "chipset.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
 #include "charge_state.h"
 #include "charge_state_v2.h"
 #include "charger.h"
+#include "chip/npcx/ps2_chip.h"
+#include "chip/npcx/pwm_chip.h"
+#include "chipset.h"
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/tcpm/nct38xx.h"
@@ -23,9 +25,11 @@
 #include "i2c.h"
 #include "ioexpander.h"
 #include "isl9241.h"
+#include "keyboard_scan.h"
 #include "nct38xx.h"
 #include "pi3usb9201.h"
 #include "power.h"
+#include "pwm.h"
 #include "temp_sensor.h"
 #include "thermal.h"
 #include "thermistor.h"
@@ -403,6 +407,49 @@ struct ioexpander_config_t ioex_config[] = {
 BUILD_ASSERT(ARRAY_SIZE(ioex_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_IO_EXPANDER_PORT_COUNT == USBC_PORT_COUNT);
 
+/* Keyboard scan setting */
+struct keyboard_scan_config keyscan_config = {
+	/*
+	 * F3 key scan cycle completed but scan input is not
+	 * charging to logic high when EC start scan next
+	 * column for "T" key, so we set .output_settle_us
+	 * to 80us
+	 */
+	.output_settle_us = 80,
+	.debounce_down_us = 6 * MSEC,
+	.debounce_up_us = 30 * MSEC,
+	.scan_period_us = 1500,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = SECOND,
+	.actual_key_mask = {
+		0x3c, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
+	},
+};
+
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_FAN] = {
+		.channel = 0,
+		.flags = PWM_CONFIG_OPEN_DRAIN,
+		.freq = 25000,
+	},
+	[PWM_CH_KBLIGHT] = {
+		.channel = 1,
+		.flags = PWM_CONFIG_DSLEEP,
+		.freq = 100,
+	},
+	[PWM_CH_LED_CHRG] = {
+		.channel = 2,
+		.flags = PWM_CONFIG_DSLEEP,
+		.freq = 100,
+	},
+	[PWM_CH_LED_FULL] = {
+		.channel = 3,
+		.flags = PWM_CONFIG_DSLEEP,
+		.freq = 100,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 int board_set_active_charge_port(int port)
 {
