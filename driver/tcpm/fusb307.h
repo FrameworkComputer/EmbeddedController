@@ -10,7 +10,7 @@
 
 #include "usb_pd.h"
 
-#define FUSB307_I2C_SLAVE_ADDR_FLAGS 0x50
+#define FUSB307_I2C_ADDR_FLAGS 0x50
 
 #define TCPC_REG_RESET		0xA2
 #define TCPC_REG_RESET_PD_RESET	BIT(1)
