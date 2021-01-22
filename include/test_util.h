@@ -373,7 +373,9 @@ int test_attach_i2c(const int port, const uint16_t addr_flags);
 	void test_main(void);                \
 	void run_test(int argc, char **argv) \
 	{                                    \
+		test_reset();                \
 		test_main();                 \
+		test_print_result();         \
 	}                                    \
 	void test_main(void)
 #endif
@@ -484,7 +486,7 @@ void z_ztest_run_test_suite(const char *name, struct unit_test *suite);
 #define zassert_not_equal(a, b, msg, ...) TEST_NE((a), (b), "0x%x")
 #define zassert_equal_ptr(a, b, msg, ...) \
 	TEST_EQ((void *)(a), (void *)(b), "0x%x")
-#define zassert_within(a, b, d, msg, ...) TEST_NEAR((a), (b), (d), "0x%x")
+#define zassert_within(a, b, d, msg, ...) TEST_NEAR((a), (b), (d), msg)
 #define zassert_mem_equal(buf, exp, size, msg, ...) \
 	TEST_ASSERT_ARRAY_EQ(buf, exp, size)
 #endif /* CONFIG_ZEPHYR */
