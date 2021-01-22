@@ -5,7 +5,7 @@
 
 /*
  * SB-TSI: SB Temperature Sensor Interface.
- * This is an I2C slave temp sensor on the AMD Stony Ridge FT4 SOC.
+ * This is an I2C temp sensor on the AMD Stony Ridge FT4 SOC.
  */
 
 #ifndef __CROS_EC_SB_TSI_H
