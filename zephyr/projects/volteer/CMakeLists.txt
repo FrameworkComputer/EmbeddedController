@@ -31,15 +31,24 @@ zephyr_include_directories(
   ${PLATFORM_EC_BOARD})
 
 # Include selected EC source for the baseboard
-target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/battery_presence.c")
-target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/charger.c")
-target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/cbi.c")
-target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/cbi_ec_fw_config.c")
-target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/power.c")
-target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/usb_pd_policy.c")
-target_sources(app PRIVATE "${PLATFORM_EC_BASEBOARD}/usbc_config.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
+  "${PLATFORM_EC_BASEBOARD}/battery_presence.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
+  "${PLATFORM_EC_BASEBOARD}/charger.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CBI
+  "${PLATFORM_EC_BASEBOARD}/cbi.c"
+  "${PLATFORM_EC_BASEBOARD}/cbi_ec_fw_config.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
+  "${PLATFORM_EC_BASEBOARD}/power.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_POWER_DELIVERY
+  "${PLATFORM_EC_BASEBOARD}/usb_pd_policy.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC
+  "${PLATFORM_EC_BASEBOARD}/usbc_config.c")
 
 # Include selected EC source for the board
-target_sources(app PRIVATE "${PLATFORM_EC_BOARD}/battery.c")
-target_sources(app PRIVATE "${PLATFORM_EC_BOARD}/cbi.c")
-target_sources(app PRIVATE "${PLATFORM_EC_BOARD}/usbc_config.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
+  "${PLATFORM_EC_BOARD}/battery.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CBI
+  "${PLATFORM_EC_BOARD}/cbi.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC
+  "${PLATFORM_EC_BOARD}/usbc_config.c")

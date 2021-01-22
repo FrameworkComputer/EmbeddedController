@@ -75,6 +75,30 @@
 
 #define GPIO_EC_PROCHOT_IN_L       NAMED_GPIO(ec_prochot_in_l)
 
+/* Helper macros for generating CROS_EC_GPIO_INTERRUPTS */
+#ifdef CONFIG_PLATFORM_EC_POWERSEQ
+#define POWER_SIGNAL_INT(gpio, edge) \
+	GPIO_INT(gpio, edge, power_signal_interrupt)
+#define AP_PROCHOT_INT(gpio, edge) \
+	GPIO_INT(gpio, edge, throttle_ap_prochot_input_interrupt)
+#define POWER_BUTTON_INT(gpio, edge) \
+	GPIO_INT(gpio, edge, power_button_interrupt)
+#else
+#define POWER_SIGNAL_INT(gpio, edge)
+#define AP_PROCHOT_INT(gpio, edge)
+#define POWER_BUTTON_INT(gpio, edge)
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_USBC
+#define TCPC_ALERT_INT(gpio, edge) GPIO_INT(gpio, edge, tcpc_alert_event)
+#define PPC_INT(gpio, edge) GPIO_INT(gpio, edge, ppc_interrupt)
+#define BC12_INT(gpio, edge) GPIO_INT(gpio, edge, bc12_interrupt)
+#else
+#define TCPC_ALERT_INT(gpio, edge)
+#define PPC_INT(gpio, edge)
+#define BC12_INT(gpio, edge)
+#endif
+
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
  *
@@ -93,33 +117,19 @@
 #define EC_CROS_GPIO_INTERRUPTS                                           \
 	GPIO_INT(GPIO_AC_PRESENT, GPIO_INT_EDGE_BOTH, extpower_interrupt) \
 	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt)        \
-	GPIO_INT(GPIO_PCH_SLP_S0_L, GPIO_INT_EDGE_BOTH,                   \
-		 power_signal_interrupt)                                  \
-	GPIO_INT(GPIO_PCH_SLP_S3_L, GPIO_INT_EDGE_BOTH,                   \
-		 power_signal_interrupt)                                  \
-	GPIO_INT(GPIO_PCH_SLP_SUS_L, GPIO_INT_EDGE_BOTH,                  \
-		 power_signal_interrupt)                                  \
-	GPIO_INT(GPIO_PG_EC_RSMRST_ODL, GPIO_INT_EDGE_BOTH,               \
-		 power_signal_interrupt)                                  \
-	GPIO_INT(GPIO_PCH_DSW_PWROK, GPIO_INT_EDGE_BOTH,                  \
-		 power_signal_interrupt)                                  \
-	GPIO_INT(GPIO_PG_EC_ALL_SYS_PWRGD, GPIO_INT_EDGE_BOTH,            \
-		 power_signal_interrupt)                                  \
-	GPIO_INT(GPIO_POWER_BUTTON_L, GPIO_INT_EDGE_BOTH,                 \
-		 power_button_interrupt)                                  \
-	GPIO_INT(GPIO_USB_C0_TCPC_INT_ODL, GPIO_INT_EDGE_BOTH,            \
-		 tcpc_alert_event)                                        \
-	GPIO_INT(GPIO_USB_C1_TCPC_INT_ODL, GPIO_INT_EDGE_BOTH,            \
-		 tcpc_alert_event)                                        \
-	GPIO_INT(GPIO_USB_C0_PPC_INT_ODL, GPIO_INT_EDGE_BOTH,             \
-		 ppc_interrupt)                                           \
-	GPIO_INT(GPIO_USB_C1_PPC_INT_ODL, GPIO_INT_EDGE_BOTH,             \
-		 ppc_interrupt)                                           \
-	GPIO_INT(GPIO_USB_C0_BC12_INT_ODL, GPIO_INT_EDGE_BOTH,            \
-		 bc12_interrupt)                                          \
-	GPIO_INT(GPIO_USB_C1_MIX_INT_ODL, GPIO_INT_EDGE_BOTH,             \
-		 bc12_interrupt)                                          \
-	GPIO_INT(GPIO_EC_PROCHOT_IN_L, GPIO_INT_EDGE_BOTH,                \
-		 throttle_ap_prochot_input_interrupt)
+	POWER_SIGNAL_INT(GPIO_PCH_SLP_S0_L, GPIO_INT_EDGE_BOTH)           \
+	POWER_SIGNAL_INT(GPIO_PCH_SLP_S3_L, GPIO_INT_EDGE_BOTH)           \
+	POWER_SIGNAL_INT(GPIO_PCH_SLP_SUS_L, GPIO_INT_EDGE_BOTH)          \
+	POWER_SIGNAL_INT(GPIO_PG_EC_RSMRST_ODL, GPIO_INT_EDGE_BOTH)       \
+	POWER_SIGNAL_INT(GPIO_PCH_DSW_PWROK, GPIO_INT_EDGE_BOTH)          \
+	POWER_SIGNAL_INT(GPIO_PG_EC_ALL_SYS_PWRGD, GPIO_INT_EDGE_BOTH)    \
+	POWER_BUTTON_INT(GPIO_POWER_BUTTON_L, GPIO_INT_EDGE_BOTH)         \
+	TCPC_ALERT_INT(GPIO_USB_C0_TCPC_INT_ODL, GPIO_INT_EDGE_BOTH)      \
+	TCPC_ALERT_INT(GPIO_USB_C1_TCPC_INT_ODL, GPIO_INT_EDGE_BOTH)      \
+	PPC_INT(GPIO_USB_C0_PPC_INT_ODL, GPIO_INT_EDGE_BOTH)              \
+	PPC_INT(GPIO_USB_C1_PPC_INT_ODL, GPIO_INT_EDGE_BOTH)              \
+	BC12_INT(GPIO_USB_C0_BC12_INT_ODL, GPIO_INT_EDGE_BOTH)            \
+	BC12_INT(GPIO_USB_C1_MIX_INT_ODL, GPIO_INT_EDGE_BOTH)             \
+	AP_PROCHOT_INT(GPIO_EC_PROCHOT_IN_L, GPIO_INT_EDGE_BOTH)
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
