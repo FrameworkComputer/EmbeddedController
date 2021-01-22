@@ -1628,18 +1628,19 @@ static void rch_requesting_chunk_run(const int port)
 	if (PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_COMPLETE)) {
 		PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_COMPLETE);
 		set_state_rch(port, RCH_WAITING_CHUNK);
-	}
-	/*
-	 * Transmission Error from Protocol Layer or
-	 * Message Received From Protocol Layer
-	 */
-	else if (RCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED) ||
-			PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_ERROR)) {
-		/*
-		 * Leave PRL_FLAGS_MSG_RECEIVED flag set. It'll be
-		 * cleared in rch_report_error state
-		 */
+	} else if (PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_ERROR)) {
+		/* Transmission Error from Protocol Layer detetected */
 		set_state_rch(port, RCH_REPORT_ERROR);
+	} else if (RCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED)) {
+		/*
+		 * It is possible to have both message received and the chunk
+		 * request transmit complete before a full PRL SM run. But, the
+		 * PRL_RX state machine runs prior to RCH, but before PRL_TX, so
+		 * PRL_FLAGS_MSG_RECEIVED can be set without
+		 * PRL_FLAGS_TX_COMPLETE set at this point (though it will be
+		 * set as soon as PRL_TX is executed next.
+		 */
+		set_state_rch(port, RCH_WAITING_CHUNK);
 	}
 }
 
@@ -1660,6 +1661,16 @@ static void rch_waiting_chunk_entry(const int port)
 static void rch_waiting_chunk_run(const int port)
 {
 	if (RCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED)) {
+		/*
+		 * Because of the 5 msec tick time, it is possible to have both
+		 * msg_received and tx_complete flags set for a given PRL sm
+		 * run. Since prl_rx runs prior to the tx state machines, clear
+		 * the tx_complete flag as the next chunk has already been
+		 * received.
+		 */
+		if (PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_COMPLETE))
+			PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_COMPLETE);
+
 		/*
 		 * Leave PRL_FLAGS_MSG_RECEIVED flag set just in case an error
 		 * is detected. If an error is detected, PRL_FLAGS_MSG_RECEIVED
