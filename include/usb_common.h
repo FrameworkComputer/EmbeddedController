@@ -174,6 +174,17 @@ void set_usb_mux_with_current_data_role(int port);
 void usb_mux_set_safe_mode(int port);
 
 /**
+ * Configure the USB MUX in safe mode while exiting an alternate mode.
+ * Although the TCSS (virtual mux) has a distinct safe mode state, it
+ * needs to be in a disconnected state to properly exit an alternate
+ * mode. Therefore, do not treat the virtual mux as a special case, as
+ * usb_mux_set_safe_mode does.
+ *
+ * @param port The PD port number
+ */
+void usb_mux_set_safe_mode_exit(int port);
+
+/**
  * Get the PD flags stored in BB Ram
  *
  * @param port USB-C port number

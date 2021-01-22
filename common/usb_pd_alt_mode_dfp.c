@@ -1232,6 +1232,8 @@ __overridable int svdm_dp_attention(int port, uint32_t *payload)
 
 __overridable void svdm_exit_dp_mode(int port)
 {
+	dp_flags[port] = 0;
+	dp_status[port] = 0;
 #ifdef CONFIG_USB_PD_DP_HPD_GPIO
 	svdm_set_hpd_gpio(port, 0);
 #endif /* CONFIG_USB_PD_DP_HPD_GPIO */

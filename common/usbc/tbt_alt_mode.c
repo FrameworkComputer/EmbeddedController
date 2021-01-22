@@ -488,7 +488,8 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
 		if (!(modep && modep->opos))
 			return -1;
 
-		usb_mux_set_safe_mode(port);
+		usb_mux_set_safe_mode_exit(port);
+
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
 			VDO_OPOS(modep->opos) |
 			VDO_CMDT(CMDT_INIT) |
@@ -502,7 +503,8 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
 		if (!(modep && modep->opos))
 			return -1;
 
-		usb_mux_set_safe_mode(port);
+		usb_mux_set_safe_mode_exit(port);
+
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
 			VDO_OPOS(modep->opos) |
 			VDO_CMDT(CMDT_INIT) |
@@ -517,7 +519,8 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
 		if (!(modep && modep->opos))
 			return -1;
 
-		usb_mux_set_safe_mode(port);
+		usb_mux_set_safe_mode_exit(port);
+
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
 			VDO_OPOS(modep->opos) |
 			VDO_CMDT(CMDT_INIT) |
