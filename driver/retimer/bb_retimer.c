@@ -54,7 +54,7 @@ static int bb_retimer_read(const struct usb_mux *me,
 	while (1) {
 		/*
 		 * Read sequence
-		 * Slave Addr(w) - Reg offset - repeated start - Slave Addr(r)
+		 * Addr flags (w) - Reg offset - repeated start - Addr flags(r)
 		 * byte[0]   : Read size
 		 * byte[1:4] : Data [LSB -> MSB]
 		 * Stop
@@ -89,7 +89,7 @@ static int bb_retimer_write(const struct usb_mux *me,
 
 	/*
 	 * Write sequence
-	 * Slave Addr(w)
+	 * Addr flags(w)
 	 * byte[0]   : Reg offset
 	 * byte[1]   : Write Size
 	 * byte[2:5] : Data [LSB -> MSB]
