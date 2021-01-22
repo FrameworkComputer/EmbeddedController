@@ -21,12 +21,12 @@ static struct mutex measure_lock;
 
 static int tcpc_write(int reg, int val)
 {
-	return i2c_write8(port, FUSB302_I2C_SLAVE_ADDR_FLAGS, reg, val);
+	return i2c_write8(port, FUSB302_I2C_ADDR_FLAGS, reg, val);
 }
 
 static int tcpc_read(int reg, int *val)
 {
-	return i2c_read8(port, FUSB302_I2C_SLAVE_ADDR_FLAGS, reg, val);
+	return i2c_read8(port, FUSB302_I2C_ADDR_FLAGS, reg, val);
 }
 
 int init_fusb302b(int p)
