@@ -168,7 +168,7 @@ test_static int test_bist_ignore(void)
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 PD_CTRL_PS_RDY, 0, 10 * MSEC),
+					 PD_CTRL_PS_RDY, 0, 35 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 
@@ -278,7 +278,7 @@ test_static int test_send_caps_error_before_connected(void)
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 PD_CTRL_PS_RDY, 0, 10 * MSEC),
+					 PD_CTRL_PS_RDY, 0, 35 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 
@@ -313,7 +313,7 @@ test_static int test_send_caps_error_when_connected(void)
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 PD_CTRL_PS_RDY, 0, 10 * MSEC),
+					 PD_CTRL_PS_RDY, 0, 35 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 
