@@ -37,7 +37,7 @@ static bool accumulate(float x, float y, float z, float temperature)
 		| accel_cal_accumulate(&cal, 1000 * MSEC, x, y, z, temperature);
 }
 
-static int test_calibrated_correctly_with_kasa(void)
+DECLARE_EC_TEST(test_calibrated_correctly_with_kasa)
 {
 	bool has_bias;
 
@@ -50,15 +50,15 @@ static int test_calibrated_correctly_with_kasa(void)
 	accumulate(0.7171f, 0.7171f, 0.7171f, 21.0f);
 	has_bias = accumulate(-0.6971f, -0.6971f, -0.6971f, 21.0f);
 
-	TEST_EQ(has_bias, true, "%d");
-	TEST_NEAR(cal.bias[X], 0.01f, 0.0001f, "%f");
-	TEST_NEAR(cal.bias[Y], 0.01f, 0.0001f, "%f");
-	TEST_NEAR(cal.bias[Z], 0.01f, 0.0001f, "%f");
+	zassert_true(has_bias, NULL);
+	zassert_within(cal.bias[X], 0.01f, 0.0001f, "%f", cal.bias[X]);
+	zassert_within(cal.bias[Y], 0.01f, 0.0001f, "%f", cal.bias[Y]);
+	zassert_within(cal.bias[Z], 0.01f, 0.0001f, "%f", cal.bias[Z]);
 
 	return EC_SUCCESS;
 }
 
-static int test_calibrated_correctly_with_newton(void)
+DECLARE_EC_TEST(test_calibrated_correctly_with_newton)
 {
 	bool has_bias = false;
 	struct kasa_fit kasa;
@@ -78,30 +78,30 @@ static int test_calibrated_correctly_with_newton(void)
 
 	kasa_reset(&kasa);
 	for (i = 0; i < ARRAY_SIZE(data); i += 3) {
-		TEST_EQ(has_bias, false, "%d");
+		zassert_false(has_bias, NULL);
 		kasa_accumulate(&kasa,  data[i], data[i + 1], data[i + 2]);
 		has_bias = accumulate(data[i], data[i + 1], data[i + 2], 21.0f);
 	}
 
 	kasa_compute(&kasa, kasa_bias, &kasa_radius);
-	TEST_EQ(has_bias, true, "%d");
+	zassert_true(has_bias, NULL);
 	/* Check that the bias is right */
-	TEST_NEAR(cal.bias[X], 0.01f, 0.001f, "%f");
-	TEST_NEAR(cal.bias[Y], 0.01f, 0.001f, "%f");
-	TEST_NEAR(cal.bias[Z], 0.01f, 0.001f, "%f");
+	zassert_within(cal.bias[X], 0.01f, 0.001f, "%f", cal.bias[X]);
+	zassert_within(cal.bias[Y], 0.01f, 0.001f, "%f", cal.bias[Y]);
+	zassert_within(cal.bias[Z], 0.01f, 0.001f, "%f", cal.bias[Z]);
 	/* Demonstrate that we got a better bias compared to kasa */
-	TEST_LT(sqrtf(powf(cal.bias[X] - 0.01f, 2.0f) +
-		      powf(cal.bias[Y] - 0.01f, 2.0f) +
-		      powf(cal.bias[Z] - 0.01f, 2.0f)),
-		sqrtf(powf(kasa_bias[X] - 0.01f, 2.0f) +
-		      powf(kasa_bias[Y] - 0.01f, 2.0f) +
-		      powf(kasa_bias[Z] - 0.01f, 2.0f)),
-		"%f");
+	zassert_true(sqrtf(powf(cal.bias[X] - 0.01f, 2.0f) +
+			   powf(cal.bias[Y] - 0.01f, 2.0f) +
+			   powf(cal.bias[Z] - 0.01f, 2.0f)) <
+		     sqrtf(powf(kasa_bias[X] - 0.01f, 2.0f) +
+			   powf(kasa_bias[Y] - 0.01f, 2.0f) +
+			   powf(kasa_bias[Z] - 0.01f, 2.0f)),
+		     NULL);
 
 	return EC_SUCCESS;
 }
 
-static int test_temperature_gates(void)
+DECLARE_EC_TEST(test_temperature_gates)
 {
 	bool has_bias;
 
@@ -114,7 +114,7 @@ static int test_temperature_gates(void)
 	accumulate(0.7171f, 0.7171f, 0.7171f, 21.0f);
 	has_bias = accumulate(-0.6971f, -0.6971f, -0.6971f, 31.0f);
 
-	TEST_EQ(has_bias, false, "%d");
+	zassert_false(has_bias, NULL);
 
 	return EC_SUCCESS;
 }
@@ -125,13 +125,11 @@ void before_test(void)
 	accel_cal_reset(&cal);
 }
 
-void run_test(int argc, char **argv)
+TEST_MAIN()
 {
-	test_reset();
-
-	RUN_TEST(test_calibrated_correctly_with_kasa);
-	RUN_TEST(test_calibrated_correctly_with_newton);
-	RUN_TEST(test_temperature_gates);
-
-	test_print_result();
+	ztest_test_suite(test_accel_cal,
+			 ztest_unit_test(test_calibrated_correctly_with_kasa),
+			 ztest_unit_test(test_calibrated_correctly_with_newton),
+			 ztest_unit_test(test_temperature_gates));
+	ztest_run_test_suite(test_accel_cal);
 }

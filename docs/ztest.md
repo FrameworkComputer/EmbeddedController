@@ -7,9 +7,10 @@ Zephyr's Ztest framework. All of the work is done in `src/platform/ec`.
 
 See [Test Framework - Zephyr Project Documentation](https://docs.zephyrproject.org/1.12.0/subsystems/test/ztest.html#quick-start-unit-testing) for details about Zephyr's Ztest framework.
 
-See [chromium:2492527](https://crrev.com/c/2492527) and
-[chromium:2634401](https://crrev.com/c/2634401) for examples of
-porting an EC unit test to the Ztest API.
+
+For examples of porting an EC unit test to the Ztest API, see:
+* [base32](https://crrev.com/c/2492527) and [improvements](https://crrev.com/c/2634401)
+* [accel_cal](https://crrev.com/c/2645198)
 
 ## Determine source files being tested
 
@@ -55,8 +56,9 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 target_sources(app PRIVATE ${PLATFORM_EC}/test/base32.c)
 ```
 
-### Modify test source code
+## Modify test source code
 
+### Test cases
 In the unit test, replace `run_test` with `TEST_MAIN()`. This will allow both
 platform/ec tests and Ztests to share the same entry point.
 
@@ -81,8 +83,10 @@ TEST_MAIN()
 
 Each function that is called by `ztest_unit_test` needs to be declared using
 `DECLARE_EC_TEST`. Keep the `return EC_SUCCESS;` at the end
-of the test function.
+of the test function. Note that for the EC build, `TEST_MAIN` will call
+`test_reset` before running the test cases, and `test_print_result` after.
 
+### Assert macros
 Change the `TEST_ASSERT` macros to `zassert` macros. There are plans to
 automate this process, but for now, it's a manual process involving some
 intelligent find-and-replace.
@@ -99,7 +103,7 @@ intelligent find-and-replace.
 * `TEST_BITS_CLEARED(a, bits)` to `zassert_true(a & (int)bits == 0, "%u, 0", a & (int)bits)`
 * `TEST_ASSERT_ARRAY_EQ(s, d, n)` to `zassert_mem_equal(s, d, b, NULL)`
 * `TEST_CHECK(n)` to `zassert_true(n, NULL)`
-* `TEST_NEAR(a, b, epsilon, fmt)` to `zassert_true(fabs(a-b) < epsilon, "%f, %f, %f", a, b, epsilon)`
+* `TEST_NEAR(a, b, epsilon, fmt)` to `zassert_within(a, b, epsilon, fmt, a)`
   * Currently, every usage of `TEST_NEAR` involves floating point values
 * `TEST_ASSERT_ABS_LESS(n, t)` to `zassert_true(abs(n) < t, "%d, %d", n, t)`
   * Currently, every usage of `TEST_ASSERT_ANS_LESS` involves signed integers.
@@ -116,6 +120,17 @@ rewritten to use `zassert_equal`.
 Refer to
 [test: Allow EC unit test to use Ztest API](https://crrev.com/c/2492527) for
 the changes to the base32.c source code.
+
+### Tasklist
+
+For any test that has a corresponding `${TESTNAME}.tasklist`, add the file
+`shimmed_test_tasks.h` in the zephyr test directory, and in that file,
+`#include` the tasklist file. See [accel_cal](https://crrev.com/c/2645198)
+for an example.
+
+Add `CONFIG_HAS_TEST_TASKS=y` to the `prj.conf` file, as well as the appropriate
+`CONFIG_PLATFORM_EC` defines to include or exclude code that the unit under
+test uses.
 
 ## Build and run
 
