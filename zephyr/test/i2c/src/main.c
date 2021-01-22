@@ -10,9 +10,6 @@
 #include "i2c/i2c.h"
 
 /* Unused: required for shimming i2c. */
-uint32_t sleep_mask;
-
-/* Unused: required for shimming i2c. */
 void watchdog_reload(void)
 {
 }
