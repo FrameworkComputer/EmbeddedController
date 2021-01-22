@@ -1734,14 +1734,13 @@ __maybe_unused static void handle_new_power_state(int port)
 			 * boots up
 			 */
 			dpm_set_mode_exit_request(port);
-
-			/*
-			 * The following function will disconnect both USB and
-			 * DP mux, as the chipset is transitioning to OFF.
-			 */
-			set_usb_mux_with_current_data_role(port);
 		}
 	}
+	/*
+	 * Set the USB mux according to the new power state.  If the chipset
+	 * is transitioning to OFF, this disconnects USB and DP mux.
+	 */
+	set_usb_mux_with_current_data_role(port);
 }
 
 #if defined(CONFIG_USB_PD_ALT_MODE) && !defined(CONFIG_USB_PD_ALT_MODE_DFP)
@@ -3604,7 +3603,6 @@ static void pd_chipset_startup(void)
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		set_usb_mux_with_current_data_role(i);
 		pd_set_dual_role_and_event(i,
 					   pd_get_drp_state_in_suspend(),
 					   PD_EVENT_UPDATE_DUAL_ROLE
