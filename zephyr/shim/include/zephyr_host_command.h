@@ -10,6 +10,8 @@
 #endif
 #define __CROS_EC_ZEPHYR_HOST_COMMAND_H
 
+#include <init.h>
+
 /** Node in a list of host-command handlers */
 struct zshim_host_command_node {
 	struct host_command *cmd;

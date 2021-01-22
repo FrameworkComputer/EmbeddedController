@@ -9,7 +9,8 @@
 #include "rtc.h"
 
 static uint16_t days_since_year_start[12] = {
-0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+	0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
+};
 
 /* Conversion between calendar date and seconds eclapsed since 1970-01-01 */
 uint32_t date_to_sec(struct calendar_date time)
