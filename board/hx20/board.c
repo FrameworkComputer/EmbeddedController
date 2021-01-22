@@ -533,7 +533,7 @@ static void board_chipset_resume(void)
 	/*gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);*/
 	gpio_set_level(GPIO_EC_MUTE_L, 1);
 	gpio_set_level(GPIO_CAM_EN, 1);
-	gpio_set_flags(GPIO_ME_EN, GPIO_ODR_HIGH);
+	gpio_set_level(GPIO_ME_EN, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 	     MOTION_SENSE_HOOK_PRIO-1);
@@ -541,16 +541,13 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 /* Called on AP S0 -> S3 transition */
 static void board_chipset_suspend(void)
 {
-	CPRINTS("MEC1701 HOOK_CHIPSET_SUSPEND - called board_chipset_resume");
-	trace0(0, HOOK, 0, "HOOK_CHIPSET_SUSPEND - board_chipset_suspend");
+	CPRINTS("HOOK_CHIPSET_SUSPEND");
 	/*gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);*/
-	gpio_set_level(GPIO_EC_MUTE_L, 0);
-	gpio_set_level(GPIO_CAM_EN, 0);
-	gpio_set_flags(GPIO_ME_EN, GPIO_OUT_LOW);
-#if 0 /* TODO not implemented in gpio.inc */
-	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 0);
-	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 0);
-#endif
+	if (power_get_state() == POWER_S0S3) {
+		gpio_set_level(GPIO_EC_MUTE_L, 0);
+		gpio_set_level(GPIO_CAM_EN, 0);
+		gpio_set_level(GPIO_ME_EN, 0);
+	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,
 		board_chipset_suspend,

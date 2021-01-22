@@ -280,6 +280,7 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0ixS0:
 		CPRINTS("power handle state in S0ix->S0");
 		lpc_s0ix_resume_restore_masks();
+		hook_notify(HOOK_CHIPSET_RESUME);
 		power_state_clear(EC_PS_RESUME_S0ix);
 		return POWER_S0;
 
@@ -288,6 +289,7 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0S0ix:
 		CPRINTS("power handle state in S0->S0ix");
 		lpc_s0ix_suspend_clear_masks();
+		hook_notify(HOOK_CHIPSET_SUSPEND);
 		power_state_clear(EC_PS_ENTER_S0ix);
 		return POWER_S0ix;
 
@@ -401,6 +403,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_SUSP_L, 0);
 		gpio_set_level(GPIO_PCH_PWROK, 0);
 		gpio_set_level(GPIO_SYS_PWROK, 0);
+		hook_notify(HOOK_CHIPSET_SUSPEND);
 		f75303_set_enabled(0);
 		return POWER_S3;
 		break;
