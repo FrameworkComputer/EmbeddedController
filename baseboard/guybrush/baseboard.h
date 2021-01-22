@@ -44,6 +44,13 @@
 #define GPIO_PCH_SYS_PWROK	GPIO_EC_SOC_PWR_GOOD
 #define GPIO_SYS_RESET_L	GPIO_EC_SYS_RST_L
 #define GPIO_EN_PWR_A		GPIO_EN_PWR_Z1
+/*
+ * On power-on, H1 releases the EC from reset but then quickly asserts and
+ * releases the reset a second time. This means the EC sees 2 resets:
+ * (1) power-on reset, (2) reset-pin reset. This config will
+ * allow the second reset to be treated as a power-on.
+ */
+#define CONFIG_BOARD_RESET_AFTER_POWER_ON
 
 /* Thermal Config */
 #define CONFIG_ADC
