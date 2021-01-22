@@ -929,4 +929,9 @@ enum battery_type {
 #define CONFIG_BOARD_VERSION_CUSTOM
 #endif
 
+#undef CONFIG_CROS_BOARD_INFO
+#ifdef CONFIG_PLATFORM_EC_CBI
+#define CONFIG_CROS_BOARD_INFO
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

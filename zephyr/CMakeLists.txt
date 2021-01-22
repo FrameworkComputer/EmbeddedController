@@ -69,6 +69,7 @@ add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
 # supported by all boards and emulators (including unit tests) using the shim
 # layer.
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/base32.c"
+                                                "${PLATFORM_EC}/common/peripheral.c"
                                                 "${PLATFORM_EC}/common/printf.c"
                                                 "${PLATFORM_EC}/common/queue.c"
                                                 "${PLATFORM_EC}/common/shared_mem.c"
