@@ -15,10 +15,6 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
-/* Config options automatically enabled, re-enable once support added */
-#undef CONFIG_ADC
-#undef CONFIG_SWITCH
-
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
