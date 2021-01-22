@@ -22,7 +22,6 @@
 #include "elan_setting.h"
 #include "elan_sensor_pal.h"
 
-extern uint16_t raw[IMAGE_TOTAL_PIXEL];
 static uint16_t errors;
 
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
@@ -58,6 +57,7 @@ int fp_sensor_init(void)
 	CPRINTF("========%s=======\n", __func__);
 
 	errors = 0;
+	elan_execute_reset();
 	algorithm_parameter_setting();
 	if (elan_execute_calibration() < 0)
 		errors |= FP_ERROR_INIT_FAIL;
@@ -73,8 +73,7 @@ int fp_sensor_init(void)
 int fp_sensor_deinit(void)
 {
 	CPRINTF("========%s=======\n", __func__);
-	always_memset(raw, 0, sizeof(raw));
-	return EC_SUCCESS;
+	return elan_fp_deinit();
 }
 
 /**

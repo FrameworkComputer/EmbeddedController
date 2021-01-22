@@ -12,13 +12,21 @@
 #define FP_SENSOR_IMAGE_SIZE (80 * 80)
 #define FP_SENSOR_RES_X 80
 #define FP_SENSOR_RES_Y 80
+#if defined(CHIP_FAMILY_STM32F4)
+#define FP_ALGORITHM_TEMPLATE_SIZE 15000
+#elif defined(CHIP_FAMILY_STM32H7)
 #define FP_ALGORITHM_TEMPLATE_SIZE 40960
+#endif
 #define FP_MAX_FINGER_COUNT 3
 #elif defined(CONFIG_FP_SENSOR_ELAN515)
 #define FP_SENSOR_IMAGE_SIZE (52 * 150)
 #define FP_SENSOR_RES_X 52
 #define FP_SENSOR_RES_Y 150
+#if defined(CHIP_FAMILY_STM32F4)
+#define FP_ALGORITHM_TEMPLATE_SIZE 15000
+#elif defined(CHIP_FAMILY_STM32H7)
 #define FP_ALGORITHM_TEMPLATE_SIZE 67000
+#endif
 #define FP_MAX_FINGER_COUNT 3
 #endif
 #define FP_SENSOR_RES_BPP (8)
@@ -161,4 +169,11 @@ int elan_sensor_get_alg_info(struct ec_response_fp_info *resp);
  * @return EC_SUCCESS on success
  */
 int elan_fp_maintenance(uint16_t *error_state);
+
+/**
+ * Deinitialize the sensor IC.
+ *
+ * @return EC_SUCCESS on success otherwise error.
+ */
+int elan_fp_deinit(void);
 #endif

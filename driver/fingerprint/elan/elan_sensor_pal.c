@@ -221,6 +221,8 @@ int elan_fp_maintenance(uint16_t *error_state)
 	if (error_state == NULL)
 		return EC_ERROR_INVAL;
 
+	/* Initial status */
+	*error_state &= 0xFC00;
 	sensor_info.num_defective_pixels = 0;
 	sensor_info.sensor_error_code = 0;
 	rv = fp_sensor_maintenance(&sensor_info);
@@ -243,4 +245,9 @@ int elan_fp_maintenance(uint16_t *error_state)
 	LOGE_SA("sensor_error_code: %d", sensor_info.sensor_error_code);
 
 	return EC_SUCCESS;
+}
+
+void __unused elan_sensor_set_rst(bool state)
+{
+	gpio_set_level(GPIO_FP_RST_ODL, state ? 0 : 1);
 }

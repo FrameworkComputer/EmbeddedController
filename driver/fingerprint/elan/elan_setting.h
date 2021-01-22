@@ -12,7 +12,7 @@
 #define VID 0x04F3
 #define PID 0x0903
 #define MID 0x01
-#define VERSION 0x100A
+#define VERSION 0x100B
 
 /* SPI tx and rx buffer size */
 #define CONFIG_SPI_TX_BUF_SIZE 1024

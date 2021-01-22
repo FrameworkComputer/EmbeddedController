@@ -114,6 +114,11 @@ int raw_capture(uint16_t *short_raw);
 int elan_execute_calibration(void);
 
 /**
+ * Execute reset ELAN fingerprint sensor flow.
+ */
+void elan_execute_reset(void);
+
+/**
  * Runs a test for defective pixels.
  *
  * @param[out] fp_sensor_info  Structure containing output data.
@@ -123,4 +128,14 @@ int elan_execute_calibration(void);
  */
 int fp_sensor_maintenance(fp_sensor_info_t *fp_sensor_info);
 
+/**
+ * @brief Set sensor reset state.
+ *
+ * Set sensor reset state.
+ *
+ * @param[in] state Reset state.
+ *                  true  => reset sensor, i.e. low GPIO state
+ *                  false => normal operation, i.e. high GPIO state
+ */
+void __unused elan_sensor_set_rst(bool state);
 #endif
