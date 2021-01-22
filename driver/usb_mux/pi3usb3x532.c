@@ -17,7 +17,7 @@ static int pi3usb3x532_read(const struct usb_mux *me,
 	int read, res;
 
 	/*
-	 * First byte read will be slave address (ignored).
+	 * First byte read will be i2c address (ignored).
 	 * Second byte read will be vendor ID.
 	 * Third byte read will be selection control.
 	 */
