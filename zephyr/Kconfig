@@ -208,6 +208,7 @@ endif # PLATFORM_EC_FLASH
 menuconfig PLATFORM_EC_KEYBOARD
 	bool "Keyboard support"
 	select HAS_TASK_KEYSCAN
+	default n if ARCH_POSIX
 	default y
 	help
 	  Enable compilation of support for scanning a keyboard and providing
@@ -275,6 +276,7 @@ config PLATFORM_EC_HOOKS
 
 config PLATFORM_EC_I2C
 	bool "I2C shim"
+	default n if ARCH_POSIX
 	default y
 	help
 	  Enable compilation of the EC i2c module. Once enabled, it will be
@@ -285,6 +287,7 @@ config PLATFORM_EC_I2C
 
 menuconfig PLATFORM_EC_HOSTCMD
 	bool "Host commands"
+	default n if ARCH_POSIX
 	default y if AP
 	select HAS_TASK_HOSTCMD
 	help

@@ -42,51 +42,64 @@ config CROS_EC_ACTIVE_COPY
 	  When the active copy name is output to a console, this
 	  string will be displayed.
 
+# When building for the host, we still need values for the various memory
+# sizes, though they aren't actually used, so just set some reasonable-looking
+# values and then ignore them.
 config CROS_EC_RAM_SIZE
 	hex "The total available RAM size."
+	default 0x0000f800 if ARCH_POSIX
 	help
 		This value describes the total available RAM size for the chip.
 
 config CROS_EC_DATA_RAM_SIZE
 	hex "The total available RAM size for data."
+	default 0x00010000 if ARCH_POSIX
 	help
 		This value describes the total available RAM size for data on the chip.
 
 config CROS_EC_RAM_BASE
 	hex "Base address of RAM for the chip."
+	default 0x200c0000 if ARCH_POSIX
 	help
 		Base address of RAM for the chip.
 
 config CROS_EC_PROGRAM_MEMORY_BASE
 	hex "The base address of the program memory region."
+	default 0x10090000 if ARCH_POSIX
 	help
 		This will be used (among other things) to calculate the current PC's
 		offset within the program memory.
 
 config CROS_EC_RO_MEM_OFF
 	hex "The RO region's offset."
+	default 0x0 if ARCH_POSIX
 	help
 		This will be used to determine if the current PC is in the RO section.
 
 config CROS_EC_RO_SIZE
 	hex "The size of the RO region."
+	default 0xb000 if ARCH_POSIX
 	help
 		This will be used (along with SYSTEM_RO_MEM_OFF) to determine if the
 		current PC is in the RO section.
 
 config CROS_EC_RW_MEM_OFF
 	hex "The RW region's offset."
+	default 0xb000 if ARCH_POSIX
 	help
 		This will be used to determine if the current PC is in the RW section.
 
 config CROS_EC_RW_SIZE
 	hex "The size of the RW region."
+	default 0x75000 if ARCH_POSIX
 	help
 		This will be used (along with SYSTEM_RW_MEM_OFF) to determine if the
 		current PC is in the RW section.
 
+# By default, a unit test doesn't need shimmed tasks.
 config SHIMMED_TASKS
 	bool "Add support for shimming in platform/ec tasks as Zephyr threads"
+	default n if ARCH_POSIX
 	help
 	  When this option is enabled, a shimmed_tasks.h header with the
 	  CROS_EC_TASK_LIST defined needs to be included for the project to
