@@ -32,22 +32,22 @@ int power_button_enable = 0;
 
 struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
 				/* Red, Green, Blue */
-	[EC_LED_COLOR_RED]    = {  30,   0,   0 },
-	[EC_LED_COLOR_GREEN]  = {   0,  50,   0 },
-	[EC_LED_COLOR_BLUE]   = {   0,   0,  30 },
-	[EC_LED_COLOR_YELLOW] = {  35,  50,   0 },
+	[EC_LED_COLOR_RED]    = {  20,   0,   0 },
+	[EC_LED_COLOR_GREEN]  = {   0,  20,   0 },
+	[EC_LED_COLOR_BLUE]   = {   0,   0,  45 },
+	[EC_LED_COLOR_YELLOW] = {  13,  20,   0 },
 	[EC_LED_COLOR_WHITE]  = {  31,  50,  31 },
-	[EC_LED_COLOR_AMBER]  = {  41,  21,   0 },
+	[EC_LED_COLOR_AMBER]  = {  20,  9,    0 },
 };
 
 struct pwm_led pwr_led_color_map[EC_LED_COLOR_COUNT] = {
 				/* Red, Green, Blue */
-	[EC_LED_COLOR_RED]    = {  30,   0,   0 },
-	[EC_LED_COLOR_GREEN]  = {   0,  50,   0 },
-	[EC_LED_COLOR_BLUE]   = {   0,   0,  30 },
-	[EC_LED_COLOR_YELLOW] = {  35,  50,   0 },
-	[EC_LED_COLOR_WHITE]  = {  16,  39,  14 },
-	[EC_LED_COLOR_AMBER]  = {  41,  21,   0 },
+	[EC_LED_COLOR_RED]    = {  13,   0,   0 },
+	[EC_LED_COLOR_GREEN]  = {   0,  15,   0 },
+	[EC_LED_COLOR_BLUE]   = {   0,   7,  60 },
+	[EC_LED_COLOR_YELLOW] = {  10,  15,   0 },
+	[EC_LED_COLOR_WHITE]  = {  7,  15,  15 },
+	[EC_LED_COLOR_AMBER]  = {  12,  7,   0 },
 };
 
 struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
@@ -257,8 +257,6 @@ static void led_configure(void)
 	 */
 	if (board_get_version() == 4) {
 		pwm_leds[PWM_LED1].ch1 = PWM_CH_DB1_LED_GREEN_EVT;
-		pwm_leds[PWM_LED2].ch0 = PWM_CH_FPR_LED_RED_EVT;
-		pwm_leds[PWM_LED2].ch1 = PWM_CH_FPR_LED_GREEN_EVT;
 	}
 		/*Initialize PWM channels*/
 	for (i = 0; i < PWM_CH_COUNT; i++) {
