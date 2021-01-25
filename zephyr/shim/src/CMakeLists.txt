@@ -7,6 +7,8 @@ zephyr_sources(gpio.c)
 zephyr_sources(util.c)
 zephyr_sources(crc.c)
 
+zephyr_sources_ifdef(no_libgcc                  libgcc_${ARCH}.S)
+
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ESPI    espi.c)
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_FLASH   flash.c)
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOOKS   hooks.c)

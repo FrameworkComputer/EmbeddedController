@@ -29,3 +29,11 @@ set(CMAKE_OBJCOPY    "${CROSS_COMPILE}objcopy")
 set(CMAKE_OBJDUMP    "${CROSS_COMPILE}objdump")
 set(CMAKE_RANLIB     "${CROSS_COMPILE}ranlib")
 set(CMAKE_READELF    "${CROSS_COMPILE}readelf")
+
+# On ARM, we don't use libgcc: It's built against a fixed target (e.g.
+# used instruction set, ABI, ISA extensions) and doesn't adapt when
+# compiler flags change any of these assumptions. Use our own mini-libgcc
+# instead.
+if("${ARCH}" STREQUAL "arm")
+  set(no_libgcc True)
+endif()
