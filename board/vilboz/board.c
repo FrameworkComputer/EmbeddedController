@@ -413,6 +413,25 @@ static void setup_fw_config(void)
 }
 DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 
+static void lte_usb3_mux_init(void)
+{
+	/*
+	 * the USB_C1 port might be used for the LTE modem if it is not used
+	 * for type-C, we need to keep the superspeed mux in USB 3 position.
+	 */
+	if (ec_config_lte_present() == LTE_PRESENT) {
+		const struct usb_mux usb_c1 = {
+			.usb_port = 1 /* USBC_PORT_C1 */,
+			.i2c_port = I2C_PORT_USB_AP_MUX,
+			.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
+			.driver = &amd_fp5_usb_mux_driver,
+		};
+		/* steer the mux to connect the USB 3 superspeed pairs */
+		usb_c1.driver->set(&usb_c1, USB_PD_MUX_USB_ENABLED);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, lte_usb3_mux_init, HOOK_PRIO_DEFAULT);
+
 static void lte_function_resume(void)
 {
 	gpio_set_level(GPIO_LTE_FCPO, 1);
