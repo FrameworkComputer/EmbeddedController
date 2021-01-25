@@ -120,6 +120,24 @@ static int test_fpv3_norm(void)
 	return EC_SUCCESS;
 }
 
+static int test_int_sqrtf(void)
+{
+#ifndef CONFIG_FPU
+	TEST_ASSERT(int_sqrtf(0) == 0);
+	TEST_ASSERT(int_sqrtf(15) == 3);
+	TEST_ASSERT(int_sqrtf(25) == 5);
+	TEST_ASSERT(int_sqrtf(1111088889) == 33333);
+	TEST_ASSERT(int_sqrtf(123456789) == 11111);
+	TEST_ASSERT(int_sqrtf(1000000000000000005) == 1000000000);
+	/* Return zero for imaginary numbers */
+	TEST_ASSERT(int_sqrtf(-100) == 0);
+	/* Return INT32_MAX for input greater than INT32_MAX ^ 2 */
+	TEST_ASSERT(int_sqrtf(INT64_MAX) == INT32_MAX);
+#endif
+
+	return EC_SUCCESS;
+}
+
 static int test_mat33_fp_init_zero(void)
 {
 	const int N = 3;
@@ -308,6 +326,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_fpv3_dot);
 	RUN_TEST(test_fpv3_norm_squared);
 	RUN_TEST(test_fpv3_norm);
+	RUN_TEST(test_int_sqrtf);
 	RUN_TEST(test_mat33_fp_init_zero);
 	RUN_TEST(test_mat33_fp_init_diagonal);
 	RUN_TEST(test_mat33_fp_scalar_mul);

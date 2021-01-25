@@ -79,7 +79,7 @@ fp_t arc_cos(fp_t x)
  * except when the floating point representation of the square root rounds up
  * to an integer.
  */
-static inline int int_sqrtf(fp_inter_t x)
+inline int int_sqrtf(fp_inter_t x)
 {
 	return sqrtf(x);
 }
@@ -90,14 +90,17 @@ fp_t fp_sqrtf(fp_t x)
 	return sqrtf(x);
 }
 #else
-static int int_sqrtf(fp_inter_t x)
+int int_sqrtf(fp_inter_t x)
 {
 	int rmax = INT32_MAX;
 	int rmin = 0;
 
-	/* Short cut if x is 32-bit value */
-	if (x < rmax)
-		rmax = 0x7fff;
+	/*
+	 * Short cut if x is 32-bit value
+	 * sqrt(INT32_MAX) ~= 46340.95
+	 */
+	if (x < INT32_MAX)
+		rmax = 46341;
 
 	/*
 	 * Just binary-search.  There are better algorithms, but we call this
@@ -105,11 +108,11 @@ static int int_sqrtf(fp_inter_t x)
 	 */
 	if (x <= 0)
 		return 0;  /* Yeah, for imaginary numbers too */
-	else if (x > (fp_inter_t)rmax * rmax)
+	else if (x >= (fp_inter_t)rmax * rmax)
 		return rmax;
 
 	while (1) {
-		int r = (rmax + rmin) / 2;
+		int r = rmin + (rmax - rmin) / 2;
 		fp_inter_t r2 = (fp_inter_t)r * r;
 
 		if (r2 > x) {

@@ -136,6 +136,11 @@ static inline int ceil_for(int n, int m)
 }
 
 /**
+ * Integer square root
+ */
+int int_sqrtf(fp_inter_t x);
+
+/**
  * Square root
  */
 fp_t fp_sqrtf(fp_t a);
