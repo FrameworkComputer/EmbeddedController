@@ -48,3 +48,8 @@ enum fp_transport_type get_fp_transport_type(void)
 	gpio_set_level(GPIO_DIVIDER_HIGHSIDE, 0);
 	return ret;
 }
+
+enum fp_sensor_spi_select get_fp_sensor_spi_select(void)
+{
+	return FP_SENSOR_SPI_SELECT_PRODUCTION;
+}

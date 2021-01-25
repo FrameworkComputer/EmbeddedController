@@ -23,11 +23,15 @@ GPIO_INT(WP,              PIN(B, 7), GPIO_INT_BOTH, wp_event)
 GPIO(WP,                  PIN(B, 7), GPIO_INPUT)
 #endif
 
+/* TODO(b/178808871): Only enable pull up when doing detection. */
+GPIO(FP_SPI_SEL,          PIN(E, 1), GPIO_INPUT | GPIO_PULL_UP)
+
 /* Outputs */
 GPIO(EC_INT_L,            PIN(A, 1),  GPIO_OUT_HIGH)
 GPIO(FP_RST_ODL,          PIN(E, 0),  GPIO_OUT_HIGH)
 GPIO(SPI4_NSS,            PIN(E, 4),  GPIO_OUT_HIGH)
 GPIO(USER_PRES_L,         PIN(C, 5),  GPIO_ODR_HIGH)
+GPIO(DIVIDER_HIGHSIDE,    PIN(B, 8),  GPIO_OUT_LOW)
 
 UNIMPLEMENTED(ENTERING_RW)
 

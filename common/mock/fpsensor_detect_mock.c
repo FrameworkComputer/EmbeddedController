@@ -21,3 +21,8 @@ enum fp_transport_type get_fp_transport_type(void)
 {
 	return mock_ctrl_fpsensor_detect.get_fp_transport_type_return;
 }
+
+enum fp_sensor_spi_select get_fp_sensor_spi_select(void)
+{
+	return mock_ctrl_fpsensor_detect.get_fp_sensor_spi_select_return;
+}

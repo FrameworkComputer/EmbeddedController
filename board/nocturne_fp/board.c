@@ -82,6 +82,10 @@ static void spi_configure(void)
 /* Initialize board. */
 static void board_init(void)
 {
+	enum fp_sensor_spi_select spi_select = get_fp_sensor_spi_select();
+
+	ccprints("FP_SPI_SEL: %s", fp_sensor_spi_select_to_str(spi_select));
+
 	spi_configure();
 
 	ccprints("TRANSPORT_SEL: %s",
