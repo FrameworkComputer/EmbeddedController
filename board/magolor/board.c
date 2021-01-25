@@ -7,6 +7,7 @@
 
 #include "adc_chip.h"
 #include "button.h"
+#include "cbi_fw_config.h"
 #include "cbi_ssfc.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
@@ -576,7 +577,7 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 void board_init(void)
 {
@@ -589,15 +590,7 @@ void board_init(void)
 
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
-
-	/* Turn on 5V if the system is on, otherwise turn it off. */
-	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
-			      CHIPSET_STATE_SOFT_OFF);
-	board_power_5v_enable(on);
-
-	/* Initialize THERMAL */
-	setup_thermal();
-
+	if (get_cbi_fw_config_tablet_mode()) {
 	#ifdef BOARD_MAGOLOR
 		if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_ICM426XX) {
 			motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
@@ -612,6 +605,24 @@ void board_init(void)
 		} else
 			ccprints("LID_ACCEL is BMA253");
 	#endif
+		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+		/* Enable gpio interrupt for base accelgyro sensor */
+		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+	} else {
+		motion_sensor_count = 0;
+		gmr_tablet_switch_disable();
+		/* Base accel is not stuffed, don't allow line to float */
+		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
+		GPIO_INPUT | GPIO_PULL_DOWN);
+	}
+
+	/* Turn on 5V if the system is on, otherwise turn it off. */
+	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
+			      CHIPSET_STATE_SOFT_OFF);
+	board_power_5v_enable(on);
+
+	/* Initialize THERMAL */
+	setup_thermal();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
