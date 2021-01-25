@@ -216,6 +216,9 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 	else if (pressed_key == SCANCODE_FN && !pressed)
 		Fn_key &= ~FN_PRESSED;
 
+	if (pressed_key == SCANCODE_FN && !factory_status())
+		return EC_ERROR_UNIMPLEMENTED;
+
 	if (!pressed)
 		return EC_SUCCESS;
 
