@@ -5,6 +5,7 @@
 
 /* USB mux high-level driver. */
 
+#include "atomic.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
@@ -28,7 +29,7 @@ static int enable_debug_prints;
  * Flags will reset to 0 after sysjump; This works for current flags as LPM will
  * get reset in the init method which is called during PD task startup.
  */
-static uint8_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+static uint32_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define USB_MUX_FLAG_IN_LPM BIT(0) /* Device is in low power mode. */
 
@@ -143,7 +144,7 @@ static void enter_low_power_mode(int port)
 	 * want know know that we tried to put the device in low power mode
 	 * so we can re-initialize the device on the next access.
 	 */
-	flags[port] |= USB_MUX_FLAG_IN_LPM;
+	atomic_or(&flags[port], USB_MUX_FLAG_IN_LPM);
 
 	/* Apply any low power customization if present */
 	configure_mux(port, USB_MUX_LOW_POWER, NULL);
@@ -173,9 +174,9 @@ void usb_mux_init(int port)
 	 * as in LPM mode to try initialization again.
 	 */
 	if (rv == EC_ERROR_NOT_POWERED)
-		flags[port] |= USB_MUX_FLAG_IN_LPM;
+		atomic_or(&flags[port], USB_MUX_FLAG_IN_LPM);
 	else
-		flags[port] &= ~USB_MUX_FLAG_IN_LPM;
+		atomic_clear_bits(&flags[port], USB_MUX_FLAG_IN_LPM);
 }
 
 /*
