@@ -124,4 +124,29 @@ config PLATFORM_EC_CMD_CHGRAMP
 	      OC 1: s0 oc_det0 icl0
 	      OC 2: s0 oc_det0 icl0
 
+config PLATFORM_EC_BATTERY_CUT_OFF
+	bool "Host/Console command: battery cut-off"
+	help
+	  Enables support for disconnecting the battery using the "cutoff"
+	  console command and the EC_CMD_BATTERY_CUT_OFF host command.
+	  Once defined, a board specific board_cut_off_battery() function
+	  has to be provided.
+
+config PLATFORM_EC_BATTERY_HW_PRESENT_CUSTOM
+	bool "Hardware check of battery presence"
+	help
+	  Once defined, the charger will check a board specific function
+	  battery_hw_present() for battery hw presence as an additional
+	  condition to determine if power on is allowed for factory override,
+	  where allowing booting of a bare board with no battery and no power
+	  button press is required.
+
+config PLATFORM_EC_BATTERY_REVIVE_DISCONNECT
+	bool "Check battery disconnect state"
+	help
+	  Check for battery in disconnect state (similar to cut-off state).
+	  If this battery is found to be in disconnect state, take it out of
+	  this state by force-applying a charge current. Once defined,
+	  a battery_get_disconnect_state() function has to be provided.
+
 endif # PLATFORM_EC_BATTERY
