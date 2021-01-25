@@ -38,9 +38,6 @@ class ProjectConfig:
             'toolchain': {
                 'type': 'string',
             },
-            'prefer-zephyr-sdk': {
-                'type': 'boolean',
-            },
             'is-test': {
                 'type': 'boolean',
             },
@@ -68,10 +65,6 @@ class ProjectConfig:
     @property
     def toolchain(self):
         return self.config_dict['toolchain']
-
-    @property
-    def zephyr_sdk_is_preferred(self):
-        return self.config_dict.get('prefer-zephyr-sdk', False)
 
     @property
     def is_test(self):

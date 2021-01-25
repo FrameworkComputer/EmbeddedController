@@ -94,21 +94,6 @@ class Zmake:
 
         if not toolchain:
             toolchain = project.config.toolchain
-            if project.config.zephyr_sdk_is_preferred:
-                try:
-                    toolchains.find_zephyr_sdk()
-                except OSError:
-                    self.logger.warning(
-                        'Unable to find the Zephyr SDK, which is the preferred '
-                        'toolchain for this project (however, unavailable in '
-                        'the chroot by default).  Using %r instead, which '
-                        'will probably compile but may not actually work at '
-                        'all.  See go/zephyr-care for more info.', toolchain)
-                else:
-                    self.logger.info(
-                        'Zephyr SDK is available.  Using it instead of %r.',
-                        toolchain)
-                    toolchain = 'zephyr'
 
         toolchain_config = toolchains.get_toolchain(toolchain, module_paths)
         if not build_dir.exists():
