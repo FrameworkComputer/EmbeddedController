@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Waddledoo board-specific configuration */
+/* metaknight board-specific configuration */
 
 #include "adc_chip.h"
 #include "button.h"

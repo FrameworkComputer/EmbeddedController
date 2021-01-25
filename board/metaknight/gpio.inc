@@ -99,7 +99,7 @@ GPIO(EN_USB_A0_VBUS,	 PIN(4, 1), GPIO_OUT_LOW)	/* Enable A1 5V Charging */
 GPIO(EN_USB_A1_VBUS,	 PIN(F, 2), GPIO_OUT_LOW)	/* Enable A1 5V Charging */
 
 /*
- * Waddledoo doesn't have these physical pins coming to the EC but uses other
+ * metaknight doesn't have these physical pins coming to the EC but uses other
  * logic.
  */
 UNIMPLEMENTED(AC_PRESENT)
