@@ -319,7 +319,7 @@ BUILD_ASSERT(ARRAY_SIZE(gpio_lvol_table[0].lvol_gpio) == 8);
 void gpio_set_alternate_function(uint32_t port, uint32_t mask,
 				enum gpio_alternate_func func)
 {
-	/* Enable alternative pins by func*/
+	/* Enable alternative pins by func */
 	int pin;
 
 	/* check each bit from mask  */
