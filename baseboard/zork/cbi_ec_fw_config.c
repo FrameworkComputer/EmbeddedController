@@ -78,3 +78,12 @@ enum ec_cfg_lid_angle_tablet_mode_type ec_config_has_lid_angle_tablet_mode(
 	return ((get_cbi_fw_config() & EC_CFG_LID_ANGLE_TABLET_MODE_MASK)
 			>> EC_CFG_LID_ANGLE_TABLET_MODE_L);
 }
+
+/*
+ * ec_config_lte_present() will return 1 if present else 0.
+ */
+enum ec_cfg_lte_present_type ec_config_lte_present(void)
+{
+	return ((get_cbi_fw_config() & EC_CFG_LTE_PRESENT_MASK)
+			>> EC_CFG_LTE_PRESENT_L);
+}
