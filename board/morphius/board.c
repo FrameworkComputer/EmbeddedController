@@ -9,6 +9,7 @@
 #include "adc_chip.h"
 #include "battery_smart.h"
 #include "button.h"
+#include "cbi_ssfc.h"
 #include "charger.h"
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
@@ -250,26 +251,46 @@ const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
 /*****************************************************************************
  * Base Gyro Sensor dynamic configuration
  */
-static int base_gyro_config;
+static enum ec_cfg_base_gyro_sensor_type base_gyro_config;
+
+enum ec_cfg_base_gyro_sensor_type get_base_gyro_sensor(void)
+{
+	switch (get_cbi_ssfc_base_sensor()) {
+	case SSFC_BASE_GYRO_NONE:
+		return ec_config_has_base_gyro_sensor();
+	default:
+		return get_cbi_ssfc_base_sensor();
+	}
+}
+
 static void setup_base_gyro_config(void)
 {
-	base_gyro_config = ec_config_has_base_gyro_sensor();
-	if (base_gyro_config == BASE_GYRO_ICM426XX) {
+	base_gyro_config = get_base_gyro_sensor();
+
+	switch (base_gyro_config) {
+	case BASE_GYRO_BMI160:
+		ccprints("BASE GYRO is BMI160");
+		break;
+	case BASE_GYRO_ICM426XX:
 		motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
 		motion_sensors[BASE_GYRO] = icm426xx_base_gyro;
 		ccprints("BASE GYRO is ICM426XX");
-	} else if (base_gyro_config == BASE_GYRO_BMI160)
-		ccprints("BASE GYRO is BMI160");
+		break;
+	default:
+		break;
+	}
 }
+
 void motion_interrupt(enum gpio_signal signal)
 {
 	switch (base_gyro_config) {
+	case BASE_GYRO_BMI160:
+		bmi160_interrupt(signal);
+		break;
 	case BASE_GYRO_ICM426XX:
 		icm426xx_interrupt(signal);
 		break;
-	case BASE_GYRO_BMI160:
 	default:
-		bmi160_interrupt(signal);
 		break;
 	}
 }
