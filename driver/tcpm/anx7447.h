@@ -10,7 +10,7 @@
 #ifndef __CROS_EC_USB_PD_TCPM_ANX7447_H
 #define __CROS_EC_USB_PD_TCPM_ANX7447_H
 
-/* Registers: TCPC slave address used */
+/* Registers: TCPC address used */
 #define ANX7447_REG_TCPC_SWITCH_0	0xB4
 #define ANX7447_REG_TCPC_SWITCH_1	0xB5
 #define ANX7447_REG_TCPC_AUX_SWITCH	0xB6
@@ -23,7 +23,7 @@
 #define ANX7447_REG_ADC_CTRL_1		0xBF
 #define ANX7447_REG_ADCFSM_EN		0x20
 
-/* Registers: SPI slave address used */
+/* Registers: SPI address used */
 #define ANX7447_REG_INTP_SOURCE_0	0x67
 
 #define ANX7447_REG_HPD_CTRL_0		0x7E
@@ -109,8 +109,8 @@
 /* End of defines used for CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE_COMMAND */
 
 struct anx7447_i2c_addr {
-	uint16_t	tcpc_slave_addr_flags;
-	uint16_t	spi_slave_addr_flags;
+	uint16_t	tcpc_addr_flags;
+	uint16_t	spi_addr_flags;
 };
 
 #define AN7447_TCPC0_I2C_ADDR_FLAGS	0x2C

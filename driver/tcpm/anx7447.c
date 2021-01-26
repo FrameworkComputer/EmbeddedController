@@ -31,7 +31,7 @@
 		(((anx7447_get_vbus_voltage(port))) > vsafe0v_max)
 
 struct anx_state {
-	uint16_t i2c_slave_addr_flags;
+	uint16_t i2c_addr_flags;
 };
 
 struct anx_usb_mux {
@@ -44,15 +44,15 @@ static struct anx_state anx[CONFIG_USB_PD_PORT_MAX_COUNT];
 static struct anx_usb_mux mux[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /*
- * ANX7447 has two co-existence I2C slave addresses, TCPC slave address and
- * SPI slave address. The registers of TCPC slave address are partly compliant
- * with standard USB TCPC specification, and the registers in SPI slave
+ * ANX7447 has two co-existence I2C addresses, TCPC address and
+ * SPI address. The registers of TCPC address are partly compliant
+ * with standard USB TCPC specification, and the registers in SPI
  * address controls the other functions (ex, hpd_level, mux_switch, and
- * so on). It can't use tcpc_read() and tcpc_write() to access SPI slave
- * address because its slave address has been set as TCPC in the structure
+ * so on). It can't use tcpc_read() and tcpc_write() to access SPI
+ * address because its address has been set as TCPC in the structure
  * tcpc_config_t.
  * anx7447_reg_write() and anx7447_reg_read() are implemented here to access
- * ANX7447 SPI slave address.
+ * ANX7447 SPI address.
  */
 const struct anx7447_i2c_addr anx7447_i2c_addrs_flags[] = {
 	{AN7447_TCPC0_I2C_ADDR_FLAGS, AN7447_SPI0_I2C_ADDR_FLAGS},
@@ -64,7 +64,7 @@ const struct anx7447_i2c_addr anx7447_i2c_addrs_flags[] = {
 static inline int anx7447_reg_write(int port, int reg, int val)
 {
 	int rv = i2c_write8(tcpc_config[port].i2c_info.port,
-			    anx[port].i2c_slave_addr_flags,
+			    anx[port].i2c_addr_flags,
 			    reg, val);
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	pd_device_accessed(port);
@@ -75,7 +75,7 @@ static inline int anx7447_reg_write(int port, int reg, int val)
 static inline int anx7447_reg_read(int port, int reg, int *val)
 {
 	int rv = i2c_read8(tcpc_config[port].i2c_info.port,
-			   anx[port].i2c_slave_addr_flags,
+			   anx[port].i2c_addr_flags,
 			   reg, val);
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	pd_device_accessed(port);
@@ -296,20 +296,20 @@ static int anx7447_init(int port)
 	memset(&anx[port], 0, sizeof(struct anx_state));
 
 	/*
-	 * find corresponding anx7447 SPI slave address according to
-	 * specified TCPC slave address
+	 * find corresponding anx7447 SPI address according to
+	 * specified TCPC address
 	 */
 	for (i = 0; i < ARRAY_SIZE(anx7447_i2c_addrs_flags); i++) {
 		if (I2C_STRIP_FLAGS(tcpc_config[port].i2c_info.addr_flags) ==
 		    I2C_STRIP_FLAGS(
-			    anx7447_i2c_addrs_flags[i].tcpc_slave_addr_flags)) {
-			anx[port].i2c_slave_addr_flags =
-				anx7447_i2c_addrs_flags[i].spi_slave_addr_flags;
+			    anx7447_i2c_addrs_flags[i].tcpc_addr_flags)) {
+			anx[port].i2c_addr_flags =
+				anx7447_i2c_addrs_flags[i].spi_addr_flags;
 			break;
 		}
 	}
-	if (!I2C_STRIP_FLAGS(anx[port].i2c_slave_addr_flags)) {
-		ccprintf("TCPC I2C slave addr 0x%x is invalid for ANX7447\n",
+	if (!I2C_STRIP_FLAGS(anx[port].i2c_addr_flags)) {
+		ccprintf("TCPC I2C addr 0x%x is invalid for ANX7447\n",
 			 I2C_STRIP_FLAGS(tcpc_config[port]
 				      .i2c_info.addr_flags));
 		return EC_ERROR_UNKNOWN;
