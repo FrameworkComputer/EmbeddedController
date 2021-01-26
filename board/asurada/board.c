@@ -178,7 +178,7 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 /* BC12 */
 const struct mt6360_config_t mt6360_config = {
 	.i2c_port = 0,
-	.i2c_addr_flags = MT6360_PMU_SLAVE_ADDR_FLAGS,
+	.i2c_addr_flags = MT6360_PMU_I2C_ADDR_FLAGS,
 };
 
 const struct pi3usb9201_config_t
