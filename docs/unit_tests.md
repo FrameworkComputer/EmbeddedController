@@ -31,19 +31,19 @@ Build and run all unit tests:
 Unit tests live in the [`test`] subdirectory of the CrOS EC codebase.
 
 All new unit tests should be written to use the Zephyr Ztest
-[API](https://docs.zephyrproject.org/latest/guides/test/ztest.html).
-If you are making significant changes to an existing test, you should also
-look at porting the test from the EC test API to the Ztest API.
+[API](https://docs.zephyrproject.org/latest/guides/test/ztest.html). If you are
+making significant changes to an existing test, you should also look at porting
+the test from the EC test API to the Ztest API.
 
-Using the Ztest API makes the unit tests suitable for submitting upstream to
-the Zephyr project, and reduces the porting work when the EC transitions to
-the Zephyr RTOS.
+Using the Ztest API makes the unit tests suitable for submitting upstream to the
+Zephyr project, and reduces the porting work when the EC transitions to the
+Zephyr RTOS.
 
 ### File headers
 
-Include [`test_util.h`] and any other required includes. In this example,
-the function being tested is defined in the test, but a real unit test would
-include the header file for the module that defines `some_function`.
+Include [`test_util.h`] and any other required includes. In this example, the
+function being tested is defined in the test, but a real unit test would include
+the header file for the module that defines `some_function`.
 
 `test/my_test.c`:
 
@@ -57,9 +57,9 @@ static bool some_function(void)
 }
 ```
 
-[`test_util.h`] includes `ztest.h` if `CONFIG_ZEPHYR` is defined,
-or defines a mapping from the `zassert` macros to the EC
-`TEST_ASSERT` macros if `CONFIG_ZEPHYR` is not defined.
+[`test_util.h`] includes `ztest.h` if `CONFIG_ZEPHYR` is defined, or defines a
+mapping from the `zassert` macros to the EC `TEST_ASSERT` macros if
+`CONFIG_ZEPHYR` is not defined.
 
 ### Test cases
 
@@ -96,14 +96,8 @@ test_static EC_TEST_RETURN test_my_function(void)
 ```
 
 The only difference between those two versions of `test/my_test.c` is the
-assertion:
-```c
-    zassert_true(condition, NULL);
-```
-versus
-```c
-    TEST_EQ(condition, true, "%d");
-```
+assertion: `c zassert_true(condition, NULL);` versus `c TEST_EQ(condition, true,
+"%d");`
 
 ### Specify the test cases to run
 
@@ -185,22 +179,24 @@ Build and run the test as an EC unit test:
 ```
 
 For building the test as a Zephyr Ztest unit test, follow the instructions in
-[Porting EC unit tests to Ztest](./ztest.md) to build the unit test for
-Zephyr's "native_posix" host-based target.
+[Porting EC unit tests to Ztest](./ztest.md) to build the unit test for Zephyr's
+"native_posix" host-based target.
 
+<!-- mdformat off(b/139308852) -->
 *** note
 **TIP**: Unit tests should be independent from each other as much as possible.
 This keeps the test (and any system state) simple to reason about and also
 allows running unit tests in parallel. You can use the
 [`before_test` hook][`test_util.h`] to reset the state before each test is run.
 ***
+<!-- mdformat on -->
 
 ## Mocks
 
-We do not yet support mocks for Zephyr Ztest-based tests.
-[Mocks][`mock`] enable you to simulate behavior for parts of the system that
-you're not directly testing. They can also be useful for testing specific edge
-cases that are hard to exercise during normal use (e.g., error conditions).
+We do not yet support mocks for Zephyr Ztest-based tests. [Mocks][`mock`] enable
+you to simulate behavior for parts of the system that you're not directly
+testing. They can also be useful for testing specific edge cases that are hard
+to exercise during normal use (e.g., error conditions).
 
 See the [Mock README] for details.
 

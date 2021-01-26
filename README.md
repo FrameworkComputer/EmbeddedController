@@ -8,7 +8,8 @@ The Chromium OS project includes open source software for embedded controllers
 (EC) used in recent ARM and x86 based Chromebooks. This software includes a
 lightweight, multitasking OS with modules for power sequencing, keyboard
 control, thermal control, battery charging, and verified boot. The EC software
-is written in C and supports [a variety of micro-controllers](https://chromium.googlesource.com/chromiumos/platform/ec/+/master/chip/).
+is written in C and supports
+[a variety of micro-controllers](https://chromium.googlesource.com/chromiumos/platform/ec/+/master/chip/).
 
 This document is a guide to help make you familiar with the EC code, current
 features, and the process for submitting code patches.
@@ -40,8 +41,8 @@ documentation due to historical reasons. If you just see the term "EC", it
 probably refers to "the" EC (i.e. the first one that existed). Most Chrome OS
 devices have an MCU, known as "the EC" that controls lots of things (key
 presses, turning the AP on/off). The OS that was written for "the" EC is now
-running on several different MCUs on Chrome OS devices with various tweaks
-(e.g. the FPMCU, the touchpad one that can do palm rejection, etc.). It's quite
+running on several different MCUs on Chrome OS devices with various tweaks (e.g.
+the FPMCU, the touchpad one that can do palm rejection, etc.). It's quite
 confusing, so try to be specific and use terms like FPMCU to distinguish the
 fingerprint MCU from "the EC".
 
@@ -97,21 +98,18 @@ I2C/onewire LED controllers, and I2C temperature sensors.
 **util** - Host utilities and scripts for flashing the EC. Also includes
 “ectool” used to query and send commands to the EC from userspace.
 
-**test** - Unit tests for EC components. These can be run locally in
-           a mock "host" environment or compiled for a target board.
-           If building for a target board, the test must be flashed and
-           run manually on the device.
-           All unit tests and fuzzers are build/run using the local
-           host environment during a `buildall`.
-           To run all unit tests locally, run `make runhosttests -j`.
-           To build a specific unit test for a specific board, run
-           `make test-<test_name> BOARD=<board_name>`.
-           Please contribute new tests if writing new functionality.
-           Please run `make help` for more detail.
+**test** - Unit tests for EC components. These can be run locally in a mock
+"host" environment or compiled for a target board. If building for a target
+board, the test must be flashed and run manually on the device. All unit tests
+and fuzzers are build/run using the local host environment during a `buildall`.
+To run all unit tests locally, run `make runhosttests -j`. To build a specific
+unit test for a specific board, run `make test-<test_name> BOARD=<board_name>`.
+Please contribute new tests if writing new functionality. Please run `make help`
+for more detail.
 
-**fuzz** - Fuzzers for EC components. These fuzzers are expected to
-           run in the mock host environment. They follow the same rules
-           as unit tests, as thus use the same commands to build and run.
+**fuzz** - Fuzzers for EC components. These fuzzers are expected to run in the
+mock host environment. They follow the same rules as unit tests, as thus use the
+same commands to build and run.
 
 ## Firmware Branches
 

@@ -44,9 +44,9 @@ Add your name to the [list of reviewers][1].
 
 ## Reference
 
-* [Chrome OS firmware review guidelines][2]
-* [Coreboot Gerrit Guidelines][3]
-* [Google small CL guidelines][5]
+*   [Chrome OS firmware review guidelines][2]
+*   [Coreboot Gerrit Guidelines][3]
+*   [Google small CL guidelines][5]
 
 [1]: http://google3/chrome/crosinfra/gwsq/ec_reviewers
 [2]: http://chromium.googlesource.com/chromiumos/docs/+/master/firmware_code_reviews.md

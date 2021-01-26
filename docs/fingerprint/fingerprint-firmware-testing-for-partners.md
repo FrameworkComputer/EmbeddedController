@@ -2,9 +2,9 @@
 
 This document is intended to help partners (sensor vendors, MCU vendors, etc)
 run the Chrome OS fingerprint team's firmware tests, as part of the AVL process.
-The document assumes that you‘re using Linux to do the development; preferably
-a recent version of Ubuntu or Debian. It may be possible to use a virtual
-machine, but that is not a configuration we test.
+The document assumes that you‘re using Linux to do the development; preferably a
+recent version of Ubuntu or Debian. It may be possible to use a virtual machine,
+but that is not a configuration we test.
 
 [TOC]
 
@@ -39,7 +39,8 @@ This document will assume you are using Servo V4.
     fingerprint sensor.
 *   Connect the "DUT POWER" side of Servo V4 to power supply.
 *   Make sure the USB cable from the host machine to Servo V4 is in data
-    transfer mode (i.e. if there's an LED, it should be yellow instead of green).
+    transfer mode (i.e. if there's an LED, it should be yellow instead of
+    green).
 *   Make sure the you can ssh into the Chromebook from the chroot on the host
     machine.
 

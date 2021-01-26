@@ -139,8 +139,8 @@ in-depth information can be found in the [USB Type-C Specification] \(section
 and is not present in the codebase currently.
 
 ChromeOS devices currently source power to external USB devices at 5V with a
-typical current of 1.5A for each Type-C port. In certain scenarios, a
-Type-C port can source up to 3A @ 5V.
+typical current of 1.5A for each Type-C port. In certain scenarios, a Type-C
+port can source up to 3A @ 5V.
 
 ChromeOS prefers that the first PD-capable Type-C device **that requires 3A**
 should get 3A guaranteed at 5V. Once the maximum supported number of PD-capable
@@ -149,15 +149,15 @@ offered a maximum of 1.5A.
 
 If there are no PD-capable Type-C devices requiring 3A, then the first non-PD
 device will be given 3A until a PD-capable device **that requires 3A** is
-inserted.  Devices will indicate they require 3A in their sink capabilities,
-and this will be used as the trigger to let the EC know to offer that port a
-3A source contract.  This policy is laid out in the following flow chart.
+inserted. Devices will indicate they require 3A in their sink capabilities, and
+this will be used as the trigger to let the EC know to offer that port a 3A
+source contract. This policy is laid out in the following flow chart.
 
 ![Partner Attach](images/usb_power_on_attach.png "Partner Attach")
 
 When a device that is currently claiming 3A is removed, then the next oldest
-PD-capable device is offered 3A. If no PD-capable devices require 3A,
-then the oldest non-PD capable device is given 3A through a CC resistor change.
+PD-capable device is offered 3A. If no PD-capable devices require 3A, then the
+oldest non-PD capable device is given 3A through a CC resistor change.
 
 ![Partner Detach](images/usb_power_on_detach.png "Partner Detach")
 
@@ -202,7 +202,7 @@ with a board with a maximum number of 1 3A-ports supported:
     *   Since this is a PD device, query its operational current through
         requesting Sink Capabilities.
     *   Tablet would like 3A, but the board has reached its maximum number of
-        supported 3A ports.  Note this port's desired current for later.
+        supported 3A ports. Note this port's desired current for later.
     *   Current state: `keyboard @ 1.5A` and `mouse @ 1.5A` and `dock @ 1.5A`
         and `phone @ 3A` and `tablet @ 1.5A`.
 7.  The PD-capable phone is removed
@@ -217,11 +217,11 @@ with a board with a maximum number of 1 3A-ports supported:
         change.
     *   Current state: `keyboard @ 3A` and `mouse @ 1.5A` and `dock @ 1.5A`
 9.  The non-PD capable keyboard is removed
-    *   The next oldest PD-capable  device requiring 3A is offered 3A.. If there
-        are no PD-capable devices requiring 3A, then the next oldest non-PD capable
-        device is given 3A.
-    *   The dock only requires 1.5A, so mouse is given 3A via CC
-        resistor change.
+    *   The next oldest PD-capable device requiring 3A is offered 3A.. If there
+        are no PD-capable devices requiring 3A, then the next oldest non-PD
+        capable device is given 3A.
+    *   The dock only requires 1.5A, so mouse is given 3A via CC resistor
+        change.
     *   Current state: `mouse @ 3A` and `dock @ 1.5A`.
 10. The non-PD capable mouse is removed
     *   The dock does not require 3A.

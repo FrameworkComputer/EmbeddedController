@@ -67,8 +67,8 @@ exceptions should ultimately lead to a reboot.
 Each task has a *pending* events bitmap[1] implemented as a 32-bit word. Several
 events are pre-defined for all tasks, the most significant bits on the 32-bit
 bitmap are reserved for them : the timer pending event on bit 31
-([see the corresponding section](#time)), the requested task wake (bit 29),
-the event to kick the waiters on a mutex (bit 30), along with a few hardware
+([see the corresponding section](#time)), the requested task wake (bit 29), the
+event to kick the waiters on a mutex (bit 30), along with a few hardware
 specific events. The 19 least significant bits are available for task-specific
 meanings.
 

@@ -71,14 +71,17 @@ Modes in the EC codebase.
     *   Upstream Facing Port. The USB data role that is typical for a peripheral
         (e.g. HID keyboard).
 *   DFP {#dfp}
+
     *   Downstream Facing Port. The USB Data role that is typical for a host
         machine (e.g. device running ChromeOS).
 
 *   E-Mark {#emark}
+
     *   Electronically marked cable. A USB-C cable that contains an embedded
         chip in the cable, used to identify the capabilities of the cable.
 
 *   VCONN {#vconn}
+
     *   Connector Voltage. A dedicated power supply rail for [E-Mark](#emark)
         cables and other accessory functions (such as display dongles, and
         docks). VCONN re-uses one of the CC1/CC2 signals to provide 5 volt, 1
@@ -205,8 +208,8 @@ TODO(https://crbug.com/974302): mention `USB_CHG_P#` and `CHARGER`
 
 ## Upgrading FW for TCPCs
 
-TODO(https://crbug.com/974302): Mention how this works even though it is in depthcharge.
-Probing now. Need new driver in depthcharge
+TODO(https://crbug.com/974302): Mention how this works even though it is in
+depthcharge. Probing now. Need new driver in depthcharge
 
 [Case Closed Debugging (CCD)]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md
 [Introduction to USB Power Delivery]: https://www.microchip.com/wwwAppNotes/AppNotes.aspx?appnote=en575003

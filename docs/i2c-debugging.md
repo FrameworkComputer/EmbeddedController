@@ -1,13 +1,10 @@
-I²C Debugging Tips
-==================
+# I²C Debugging Tips
 
-The EC codebase has functionality to help you debug I²C errors without
-pulling out the scope. Some of the debug functionality is disabled by
-default to save space, but can be enabled with the `CONFIG_I2C_DEBUG`
-option.
+The EC codebase has functionality to help you debug I²C errors without pulling
+out the scope. Some of the debug functionality is disabled by default to save
+space, but can be enabled with the `CONFIG_I2C_DEBUG` option.
 
-Tracing
--------
+## Tracing
 
 You can use the `i2ctrace` command to monitor (ranges of) addresses:
 

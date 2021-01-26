@@ -1,5 +1,4 @@
-Case Closed Debugging Serial Consoles over USB
-==============================================
+# Case Closed Debugging Serial Consoles over USB
 
 Please see the documentation in [case_closed_debugging doc][1]
 

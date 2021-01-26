@@ -35,7 +35,7 @@
 ## Testing
 
 *   [Unit Tests](./unit_tests.md)
-  *   [Porting EC unit tests to Ztest](./ztest.md)
+    *   [Porting EC unit tests to Ztest](./ztest.md)
 *   [Code Coverage](./code_coverage.md)
 
 ## Updaters

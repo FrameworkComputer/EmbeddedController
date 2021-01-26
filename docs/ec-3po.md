@@ -5,9 +5,9 @@
 ## What is EC-3PO?
 
 EC-3PO is the console interpreter that will one day replace the EC console that
-we have today.  EC-3PO aims to migrate our rich debug console from the EC itself
-to the host.  This allows us to maintain our rich debug console without
-impacting our EC image sizes while also allowing us to add new features.
+we have today. EC-3PO aims to migrate our rich debug console from the EC itself
+to the host. This allows us to maintain our rich debug console without impacting
+our EC image sizes while also allowing us to add new features.
 
 For more information, see [the design doc](./ec-3po-design.md).
 
@@ -42,9 +42,9 @@ apparently, `cu` wants group write permissions. On Ubuntu at least, the PTY is
 created with the `tty` group. If on your machine it's not, then just replace
 `tty` with whatever group it's created with.
 
-1. Create a `tty` group if you don't have one already.
-1. Add root to the `tty` group.
-1. Rerun `cu` with `sudo` and it should work now.
+1.  Create a `tty` group if you don't have one already.
+1.  Add root to the `tty` group.
+1.  Rerun `cu` with `sudo` and it should work now.
 
 ## Why does the console seem "laggier" than before?
 
@@ -57,10 +57,10 @@ delay is unbearable.
 
 To disable the delay:
 
-1. Open the EC console.
-1. Press `%`
-1. Enter `interrogate never`
-1. Then press enter.
+1.  Open the EC console.
+1.  Press `%`
+1.  Enter `interrogate never`
+1.  Then press enter.
 
 \**For `socat` users, due to the line buffered nature, you'll have to just enter
 `%interrogate never`. Notice the lack of the space character between `%` and the

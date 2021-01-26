@@ -7,8 +7,8 @@ tests in the EC codebase.
 
 ## Availability
 
-Code coverage is only available for host-based unit tests, as opposed to
-manual tests that run on target hardware.
+Code coverage is only available for host-based unit tests, as opposed to manual
+tests that run on target hardware.
 
 ## Building for code coverage
 
@@ -26,9 +26,10 @@ The coverage report top-level page is `build/coverage/coverage_rpt/index.html`.
 ### Noise in the build output
 
 When building for code coverage, you may see multiple warnings of the form
-`geninfo: WARNING: no data found for /mnt/host/source/src/platform/ec/core/host/cpu.h`
-and
-`genhtml: WARNING: function data mismatch at /mnt/host/source/src/platform/ec/common/math_util.c:134`
+`geninfo: WARNING: no data found for
+/mnt/host/source/src/platform/ec/core/host/cpu.h` and `genhtml: WARNING:
+function data mismatch at
+/mnt/host/source/src/platform/ec/common/math_util.c:134`
 
 These warnings can be ignored. (FYI, the "function data mismatch" warnings
 appear to be caused in part by using relative paths instead of absolute paths.)

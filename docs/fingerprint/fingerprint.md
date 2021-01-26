@@ -337,7 +337,8 @@ When the MCU is idling waiting for an AP message:
 @@   pp3300_dx_mcu_mw   1285    21.26    0.08    22.36    20.99
 ```
 
-When the MCU is in **low power** mode during the AP suspend (as emulated by `dut-control slp_s3:on`):
+When the MCU is in **low power** mode during the AP suspend (as emulated by
+`dut-control slp_s3:on`):
 
 ```
 @@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
