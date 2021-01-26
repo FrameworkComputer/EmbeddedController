@@ -4715,6 +4715,9 @@
 /* Support the AMD FP5 USB/DP Mux */
 #undef CONFIG_USB_MUX_AMD_FP5
 
+/* Support the AMD FP6 USB/DP Mux */
+#undef CONFIG_USB_MUX_AMD_FP6
+
 /*
  * Support the Analogix ANX7440 USB Type-C Active mux with
  * Integrated Re-timers for USB3.1/DisplayPort.
