@@ -6,6 +6,7 @@
 /* Volteer family-specific sensor configuration */
 #include "common.h"
 #include "accelgyro.h"
+#include "cbi_ec_fw_config.h"
 #include "cbi_ssfc.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_kionix.h"
@@ -205,23 +206,30 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 static void board_sensors_init(void)
 {
-	/* Enable interrupt for the accel/gyro sensor */
-	gpio_enable_interrupt(GPIO_EC_IMU_INT_L);
+	if (ec_cfg_has_tabletmode()) {
+		if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_ICM426XX) {
+			motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
+			motion_sensors[BASE_GYRO] = icm426xx_base_gyro;
+			ccprints("BASE GYRO is ICM426XX");
+		} else
+			ccprints("BASE GYRO is BMI160");
 
-	CPRINTS("Motion Sensor Count = %d", motion_sensor_count);
+		if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_KX022) {
+			motion_sensors[LID_ACCEL] = kx022_lid_accel;
+			ccprints("LID_ACCEL is KX022");
+		} else
+			ccprints("LID_ACCEL is BMA253");
 
-	if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_ICM426XX) {
-		motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
-		motion_sensors[BASE_GYRO] = icm426xx_base_gyro;
-		ccprints("BASE GYRO is ICM426XX");
-	} else
-		ccprints("BASE GYRO is BMI160");
-
-	if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_KX022) {
-		motion_sensors[LID_ACCEL] = kx022_lid_accel;
-		ccprints("LID_ACCEL is KX022");
-	} else
-		ccprints("LID_ACCEL is BMA253");
+		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+		/* Enable interrupt for the accel/gyro sensor */
+		gpio_enable_interrupt(GPIO_EC_IMU_INT_L);
+	} else {
+		motion_sensor_count = 0;
+		gmr_tablet_switch_disable();
+		/* Base accel is not stuffed, don't allow line to float */
+		gpio_set_flags(GPIO_EC_IMU_INT_L,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_sensors_init, HOOK_PRIO_DEFAULT);
 
