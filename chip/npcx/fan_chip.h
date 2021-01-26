@@ -32,7 +32,7 @@ enum npcx_mft_module {
 enum npcx_mft_clk_src {
 	TCKC_NOCLK = 0,
 	TCKC_PRESCALE_APB1_CLK = 1,
-	TCKC_LFCLK = 5,
+	TCKC_LFCLK = 4,
 };
 
 /* Data structure to define MFT channels. */
