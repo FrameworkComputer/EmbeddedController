@@ -485,7 +485,8 @@ static int command_spi_flashinfo(int argc, char **argv)
 	uint8_t unique[8];
 	int rv;
 
-	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
+	/* TODO(tomhughes): use board function to get devices. */
+	spi_enable(SPI_FLASH_DEVICE, 1);
 
 	/* Wait for previous operation to complete */
 	rv = spi_flash_wait();
@@ -537,7 +538,7 @@ static int command_spi_flasherase(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
+	spi_enable(SPI_FLASH_DEVICE, 1);
 
 	/* Chip has protection */
 	if (spi_flash_check_protect(offset, bytes))
@@ -562,7 +563,7 @@ static int command_spi_flashwrite(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
+	spi_enable(SPI_FLASH_DEVICE, 1);
 
 	/* Chip has protection */
 	if (spi_flash_check_protect(offset, bytes))
@@ -607,7 +608,7 @@ static int command_spi_flashread(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
+	spi_enable(SPI_FLASH_DEVICE, 1);
 
 	/* Can't read past size of memory */
 	if (offset + bytes > CONFIG_FLASH_SIZE_BYTES)
@@ -655,7 +656,7 @@ DECLARE_CONSOLE_COMMAND(spi_flashread, command_spi_flashread,
 
 static int command_spi_flashread_sr(int argc, char **argv)
 {
-	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
+	spi_enable(SPI_FLASH_DEVICE, 1);
 
 	ccprintf("Status Register 1: 0x%02x\n", spi_flash_get_status1());
 	ccprintf("Status Register 2: 0x%02x\n", spi_flash_get_status2());
@@ -675,7 +676,7 @@ static int command_spi_flashwrite_sr(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
+	spi_enable(SPI_FLASH_DEVICE, 1);
 
 	ccprintf("Writing 0x%02x to status register 1, ", val1);
 	ccprintf("0x%02x to status register 2...\n", val2);
@@ -694,7 +695,7 @@ static int command_spi_flashprotect(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
+	spi_enable(SPI_FLASH_DEVICE, 1);
 
 	ccprintf("Setting protection for 0x%06x to 0x%06x\n", val1, val1+val2);
 	return spi_flash_set_protect(val1, val2);

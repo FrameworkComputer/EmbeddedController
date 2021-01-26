@@ -196,7 +196,7 @@ static void board_init(void)
 #endif
 
 #ifdef HAS_SPI_TOUCHPAD
-	spi_enable(CONFIG_SPI_TOUCHPAD_PORT, 0);
+	spi_enable(&spi_devices[SPI_ST_TP_DEVICE_ID], 0);
 
 	/* Disable SPI passthrough when the system is locked */
 	usb_spi_enable(&usb_spi, system_is_locked());
@@ -215,7 +215,7 @@ static void board_init(void)
 	clock_wait_bus_cycles(BUS_APB, 1);
 	/* Enable SPI for touchpad */
 	gpio_config_module(MODULE_SPI_MASTER, 1);
-	spi_enable(CONFIG_SPI_TOUCHPAD_PORT, 1);
+	spi_enable(&spi_devices[SPI_ST_TP_DEVICE_ID], 1);
 #endif /* HAS_SPI_TOUCHPAD */
 }
 /* This needs to happen before PWM is initialized. */

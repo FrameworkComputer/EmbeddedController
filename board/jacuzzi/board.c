@@ -278,7 +278,7 @@ static void board_spi_enable(void)
 	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI2;
 
 	/* Reinitialize spi peripheral. */
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
+	spi_enable(&spi_devices[0], 1);
 
 	/* Pin mux spi peripheral toward the sensor. */
 	gpio_config_module(MODULE_SPI_MASTER, 1);
@@ -295,7 +295,7 @@ static void board_spi_disable(void)
 	gpio_config_module(MODULE_SPI_MASTER, 0);
 
 	/* Disable spi peripheral and clocks. */
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 0);
+	spi_enable(&spi_devices[0], 0);
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,

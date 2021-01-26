@@ -76,7 +76,7 @@ static void spi_configure(void)
 	/* Enable clocks to SPI4 module (master) */
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI4;
 
-	spi_enable(CONFIG_SPI_FP_PORT, 1);
+	spi_enable(&spi_devices[0], 1);
 }
 
 /* Initialize board. */

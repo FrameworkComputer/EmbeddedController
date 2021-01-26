@@ -148,8 +148,10 @@ int spi_transaction(const struct spi_device_t *spi_device,
 	return ret;
 }
 
-int spi_enable(int port, int enable)
+int spi_enable(const struct spi_device_t *spi_device, int enable)
 {
+	int port = spi_device->port;
+
 	if (enable) {
 		gpio_config_module(MODULE_SPI, 1);
 

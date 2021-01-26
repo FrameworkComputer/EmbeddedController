@@ -239,7 +239,7 @@ static void board_spi_enable(void)
 	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI2;
 	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI2;
 
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
+	spi_enable(&spi_devices[0], 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 	     board_spi_enable,
@@ -247,7 +247,7 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 
 static void board_spi_disable(void)
 {
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 0);
+	spi_enable(&spi_devices[0], 0);
 
 	/* Disable clocks to SPI2 module */
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;

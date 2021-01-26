@@ -84,7 +84,7 @@ static void configure_fp_sensor_spi(void)
 	/* Enable clocks to SPI2 module (master) */
 	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
 
-	spi_enable(CONFIG_SPI_FP_PORT, 1);
+	spi_enable(&spi_devices[0], 1);
 }
 
 /* Initialize board. */

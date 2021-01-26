@@ -381,7 +381,7 @@ void lfw_main(void)
 	uart_init();
 	system_init();
 
-	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
+	spi_enable(SPI_FLASH_DEVICE, 1);
 
 	uart_puts("littlefw ");
 	uart_puts(current_image_data.version);

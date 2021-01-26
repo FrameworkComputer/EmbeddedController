@@ -92,7 +92,7 @@ void system_pre_init(void)
 	/* Deassert nSIO_RESET */
 	MEC1322_PCR_PWR_RST_CTL &= ~BIT(0);
 
-	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
+	spi_enable(SPI_FLASH_DEVICE, 1);
 }
 
 void chip_save_reset_flags(uint32_t flags)

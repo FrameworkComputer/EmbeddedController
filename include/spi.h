@@ -61,10 +61,10 @@ extern const unsigned int spi_devices_used;
  * Enable / disable the SPI port.  When the port is disabled, all its I/O lines
  * are high-Z so the EC won't interfere with other devices on the SPI bus.
  *
- * @param port  port id to work on.
- * @param enable  1 to enable the port, 0 to disable it.
+ * @param spi_device device
+ * @param enable  1 to enable the SPI device's port, 0 to disable it.
  */
-int spi_enable(int port, int enable);
+int spi_enable(const struct spi_device_t *spi_device, int enable);
 
 #define SPI_READBACK_ALL (-1)
 

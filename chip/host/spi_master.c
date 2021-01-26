@@ -12,7 +12,7 @@
 
 #include "spi.h"
 
-test_mockable int spi_enable(int port, int enable)
+test_mockable int spi_enable(const struct spi_device_t *spi_device, int enable)
 {
 	return EC_SUCCESS;
 }

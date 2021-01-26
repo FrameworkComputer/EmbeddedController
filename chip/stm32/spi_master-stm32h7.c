@@ -94,48 +94,36 @@ static uint8_t spi_enabled[ARRAY_SIZE(SPI_REGS)];
 
 /**
  * Initialize SPI module, registers, and clocks
- *
- * - port: which port to initialize.
+ * @param spi_device  device to initialize.
  */
-static void spi_master_config(int port)
+static void spi_master_config(const struct spi_device_t *spi_device)
 {
-	int i, div = 0;
+	int port = spi_device->port;
 
 	stm32_spi_regs_t *spi = SPI_REGS[port];
 
 	/*
 	 * Set SPI master, baud rate, and software slave control.
 	 */
-	for (i = 0; i < spi_devices_used; i++)
-		if ((spi_devices[i].port == port) &&
-		    (div < spi_devices[i].div))
-			div = spi_devices[i].div;
-
 	spi->cr1 = STM32_SPI_CR1_SSI;
-	spi->cfg2 = STM32_SPI_CFG2_MSTR | STM32_SPI_CFG2_SSM
-			| STM32_SPI_CFG2_AFCNTR;
-	spi->cfg1 = STM32_SPI_CFG1_DATASIZE(8) | STM32_SPI_CFG1_FTHLV(4)
-			| STM32_SPI_CFG1_CRCSIZE(8) | STM32_SPI_CR1_DIV(div);
+	spi->cfg2 = STM32_SPI_CFG2_MSTR | STM32_SPI_CFG2_SSM |
+		    STM32_SPI_CFG2_AFCNTR;
+	spi->cfg1 = STM32_SPI_CFG1_DATASIZE(8) | STM32_SPI_CFG1_FTHLV(4) |
+		    STM32_SPI_CFG1_CRCSIZE(8) |
+		    STM32_SPI_CR1_DIV(spi_device->div);
 
 	dma_select_channel(dma_tx_option[port].channel, dma_req_tx[port]);
 	dma_select_channel(dma_rx_option[port].channel, dma_req_rx[port]);
 }
 
-static int spi_master_initialize(int port)
+static int spi_master_initialize(const struct spi_device_t *spi_device)
 {
-	int i;
+	spi_master_config(spi_device);
 
-	spi_master_config(port);
-
-	for (i = 0; i < spi_devices_used; i++) {
-		if (spi_devices[i].port != port)
-			continue;
-		/* Drive SS high */
-		gpio_set_level(spi_devices[i].gpio_cs, 1);
-	}
+	gpio_set_level(spi_device->gpio_cs, 1);
 
 	/* Set flag */
-	spi_enabled[port] = 1;
+	spi_enabled[spi_device->port] = 1;
 
 	return EC_SUCCESS;
 }
@@ -143,9 +131,10 @@ static int spi_master_initialize(int port)
 /**
  * Shutdown SPI module
  */
-static int spi_master_shutdown(int port)
+static int spi_master_shutdown(const struct spi_device_t *spi_device)
 {
 	int rv = EC_SUCCESS;
+	int port = spi_device->port;
 	stm32_spi_regs_t *spi = SPI_REGS[port];
 
 	/* Set flag */
@@ -164,20 +153,22 @@ static int spi_master_shutdown(int port)
 	return rv;
 }
 
-int spi_enable(int port, int enable)
+int spi_enable(const struct spi_device_t *spi_device, int enable)
 {
+	int port = spi_device->port;
 	if (enable == spi_enabled[port])
 		return EC_SUCCESS;
 	if (enable)
-		return spi_master_initialize(port);
+		return spi_master_initialize(spi_device);
 	else
-		return spi_master_shutdown(port);
+		return spi_master_shutdown(spi_device);
 }
 
-static int spi_dma_start(int port, const uint8_t *txdata,
-		uint8_t *rxdata, int len)
+static int spi_dma_start(const struct spi_device_t *spi_device,
+			 const uint8_t *txdata, uint8_t *rxdata, int len)
 {
 	dma_chan_t *txdma;
+	int port = spi_device->port;
 	stm32_spi_regs_t *spi = SPI_REGS[port];
 
 	/*
@@ -189,7 +180,7 @@ static int spi_dma_start(int port, const uint8_t *txdata,
 	dma_clear_isr(dma_tx_option[port].channel);
 	dma_clear_isr(dma_rx_option[port].channel);
 	/* restore proper SPI configuration registers. */
-	spi_master_config(port);
+	spi_master_config(spi_device);
 
 	spi->cr2 = len;
 	spi->cfg1 |= STM32_SPI_CFG1_RXDMAEN;
@@ -284,7 +275,7 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 	/* Drive SS low */
 	gpio_set_level(spi_device->gpio_cs, 0);
 
-	rv = spi_dma_start(port, txdata, buf, txlen);
+	rv = spi_dma_start(spi_device, txdata, buf, txlen);
 	if (rv != EC_SUCCESS)
 		goto err_free;
 
@@ -296,7 +287,7 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 		if (rv != EC_SUCCESS)
 			goto err_free;
 
-		rv = spi_dma_start(port, buf, rxdata, rxlen);
+		rv = spi_dma_start(spi_device, buf, rxdata, rxlen);
 		if (rv != EC_SUCCESS)
 			goto err_free;
 	}

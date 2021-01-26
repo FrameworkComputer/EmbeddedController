@@ -403,7 +403,7 @@ static void board_chipset_pre_init(void)
 	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI2;
 	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI2;
 
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
+	spi_enable(&spi_devices[0], 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, board_chipset_pre_init, HOOK_PRIO_DEFAULT);
 
@@ -413,7 +413,7 @@ static void board_chipset_shutdown(void)
 	/* Disable level shift to SoC when shutting down */
 	gpio_set_level(GPIO_LEVEL_SHIFT_EN_L, 1);
 
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 0);
+	spi_enable(&spi_devices[0], 0);
 
 	/* Disable clocks to SPI2 module */
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;

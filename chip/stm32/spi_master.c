@@ -148,19 +148,15 @@ static int spi_clear_tx_fifo(stm32_spi_regs_t *spi)
  *
  * - port: which port to initialize.
  */
-static int spi_master_initialize(int port)
+static int spi_master_initialize(const struct spi_device_t *spi_device)
 {
-	int i, div = 0;
+	int port = spi_device->port;
 
 	stm32_spi_regs_t *spi = SPI_REGS[port];
 
 	/*
 	 * Set SPI master, baud rate, and software slave control.
 	 * */
-	for (i = 0; i < spi_devices_used; i++)
-		if ((spi_devices[i].port == port) &&
-		    (div < spi_devices[i].div))
-			div = spi_devices[i].div;
 
 	/*
 	 * STM32F412
@@ -204,7 +200,7 @@ static int spi_master_initialize(int port)
 	 *     level.
 	 */
 	spi->cr1 = STM32_SPI_CR1_MSTR | STM32_SPI_CR1_SSM | STM32_SPI_CR1_SSI |
-		(div << 3);
+		   (spi_device->div << 3);
 
 #ifdef CHIP_FAMILY_STM32L4
 	dma_select_channel(dma_tx_option[port].channel, dma_req[port]);
@@ -228,12 +224,8 @@ static int spi_master_initialize(int port)
 	spi->cr1 |= STM32_SPI_CR1_BIDIMODE | STM32_SPI_CR1_BIDIOE;
 #endif
 
-	/* Drive Chip Select high for all ports before turning on SPI module */
-	for (i = 0; i < spi_devices_used; i++) {
-		if (spi_devices[i].port != port)
-			continue;
-		gpio_set_level(spi_devices[i].gpio_cs, 1);
-	}
+	/* Drive Chip Select high before turning on SPI module */
+	gpio_set_level(spi_device->gpio_cs, 1);
 
 	/* Enable SPI hardware module. This will actively drive the CLK pin */
 	spi->cr1 |= STM32_SPI_CR1_SPE;
@@ -247,10 +239,10 @@ static int spi_master_initialize(int port)
 /**
  * Shutdown SPI module
  */
-static int spi_master_shutdown(int port)
+static int spi_master_shutdown(const struct spi_device_t *spi_device)
 {
 	int rv = EC_SUCCESS;
-
+	int port = spi_device->port;
 	stm32_spi_regs_t *spi = SPI_REGS[port];
 
 	/* Set flag */
@@ -271,14 +263,14 @@ static int spi_master_shutdown(int port)
 	return rv;
 }
 
-int spi_enable(int port, int enable)
+int spi_enable(const struct spi_device_t *spi_device, int enable)
 {
-	if (enable == spi_enabled[port])
+	if (enable == spi_enabled[spi_device->port])
 		return EC_SUCCESS;
 	if (enable)
-		return spi_master_initialize(port);
+		return spi_master_initialize(spi_device);
 	else
-		return spi_master_shutdown(port);
+		return spi_master_shutdown(spi_device);
 }
 
 static int spi_dma_start(int port, const uint8_t *txdata,

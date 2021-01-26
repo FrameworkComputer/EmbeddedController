@@ -999,7 +999,7 @@ static void board_spi_enable(void)
 {
 	trace0(0, BRD, 0, "HOOK_CHIPSET_STARTUP - board_spi_enable");
 
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
+	spi_enable(&spi_devices[1], 1);
 
 	/* Toggle SPI chip select to switch BMI160 from I2C mode
 	 * to SPI mode
@@ -1014,7 +1014,7 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_spi_enable,
 static void board_spi_disable(void)
 {
 	trace0(0, BRD, 0, "HOOK_CHIPSET_SHUTDOWN - board_spi_disable");
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 0);
+	spi_enable(&spi_devices[1], 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_spi_disable,
 	     MOTION_SENSE_HOOK_PRIO + 1);

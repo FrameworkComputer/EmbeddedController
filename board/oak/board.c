@@ -294,7 +294,7 @@ static void board_init(void)
 	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI2;
 	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI2;
 
-	spi_enable(CONFIG_SPI_ACCEL_PORT, 1);
+	spi_enable(&spi_devices[0], 1);
 	CPRINTS("Board using SPI sensors");
 #endif
 }

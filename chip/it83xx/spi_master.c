@@ -75,8 +75,10 @@ static void sspi_transmission_end(void)
 }
 
 /* We assume only one SPI port in the chip, one SPI device */
-int spi_enable(int port, int enable)
+int spi_enable(const struct spi_device_t *spi_device, int enable)
 {
+	int port = spi_device->port;
+
 	if (enable) {
 		/*
 		 * bit[5:4]
@@ -166,6 +168,6 @@ static void sspi_init(void)
 
 	for (i = 0; i < spi_devices_used; i++)
 		/* Disabling spi module */
-		spi_enable(spi_devices[i].port, 0);
+		spi_enable(&spi_devices[i], 0);
 }
 DECLARE_HOOK(HOOK_INIT, sspi_init, HOOK_PRIO_INIT_SPI);

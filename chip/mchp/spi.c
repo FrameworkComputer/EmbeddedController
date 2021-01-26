@@ -267,31 +267,26 @@ int spi_transaction(const struct spi_device_t *spi_device,
 /**
  * Enable SPI port and associated controller
  *
- * @param port Zero based index into spi_device an array of
- *             struct spi_device_t
+ * @param spi_device SPI device
  * @param enable
  * @return EC_SUCCESS or EC_ERROR_INVAL if port is unrecognized
  * @note called from common/spi_flash.c
  *
- * spi_devices[].port is defined as
+ * spi_device->port is defined as
  * bits[3:0] = controller instance
  * bits[7:4] = controller family 0 = QMSPI, 1 = GPSPI
  */
-int spi_enable(int port, int enable)
+int spi_enable(const struct spi_device_t *spi_device, int enable)
 {
 	int rc;
-	uint8_t hw_port;
-
+	uint8_t hw_port = spi_device->port;
 	rc = EC_ERROR_INVAL;
-	if (port < spi_devices_used) {
-		hw_port = spi_devices[port].port;
-		if ((hw_port & 0xF0) == QMSPI_CLASS)
-			rc = qmspi_enable(hw_port, enable);
-#if defined(CONFIG_MCHP_GPSPI) && !defined(LFW)
-		if ((hw_port & 0xF0) == GPSPI_CLASS)
-			rc = gpspi_enable(hw_port, enable);
-#endif
-	}
 
+	if ((hw_port & 0xF0) == QMSPI_CLASS)
+		rc = qmspi_enable(hw_port, enable);
+#if defined(CONFIG_MCHP_GPSPI) && !defined(LFW)
+	if ((hw_port & 0xF0) == GPSPI_CLASS)
+		rc = gpspi_enable(hw_port, enable);
+#endif
 	return rc;
 }

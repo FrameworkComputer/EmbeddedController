@@ -199,7 +199,7 @@ void system_pre_init(void)
 	MCHP_INT_BLK_DIS = 0xfffffffful;
 	MCHP_INT_BLK_EN = (0x1Ful << 8) + (0x07ul << 24);
 
-	spi_enable(CONFIG_SPI_FLASH_PORT, 1);
+	spi_enable(SPI_FLASH_DEVICE, 1);
 }
 
 uint32_t chip_read_reset_flags(void)
