@@ -6,8 +6,9 @@
 #include "battery_smart.h"
 #include "button.h"
 #include "cros_board_info.h"
-#include "driver/accel_lis2dw12.h"
-#include "driver/accelgyro_lsm6dsm.h"
+#include "driver/accelgyro_bmi_common.h"
+#include "driver/accel_kionix.h"
+#include "driver/accel_kx022.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
@@ -49,37 +50,44 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* sensor private data */
-static struct stprivate_data g_lis2dwl_data;
-static struct lsm6dsm_data g_lsm6dsm_data = LSM6DSM_DATA;
+static struct kionix_accel_data g_kx022_data;
+static struct bmi_drv_data_t g_bmi160_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
-static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
+static const mat33_fp_t lid_standard_ref = {
+	{ FLOAT_TO_FP(-1), 0, 0 },
+	{ 0, FLOAT_TO_FP(-1), 0 },
+	{ 0, 0, FLOAT_TO_FP(-1) },
 };
+static const mat33_fp_t base_standard_ref = {
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
 
 /* TODO(gcc >= 5.0) Remove the casts to const pointer at rot_standard_ref */
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 	 .name = "Lid Accel",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_LIS2DWL,
+	 .chip = MOTIONSENSE_CHIP_KX022,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &lis2dw12_drv,
+	 .drv = &kionix_accel_drv,
 	 .mutex = &g_lid_mutex,
-	 .drv_data = &g_lis2dwl_data,
+	 .drv_data = &g_kx022_data,
 	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = LIS2DWL_ADDR1_FLAGS,
-	 .rot_standard_ref = NULL,
+	 .i2c_spi_addr_flags = KX022_ADDR0_FLAGS,
+	 .rot_standard_ref = &lid_standard_ref,
 	 .default_range = 2, /* g, enough for laptop. */
-	 .min_frequency = LIS2DW12_ODR_MIN_VAL,
-	 .max_frequency = LIS2DW12_ODR_MAX_VAL,
+	 .min_frequency = KX022_ACCEL_MIN_FREQ,
+	 .max_frequency = KX022_ACCEL_MAX_FREQ,
 	 .config = {
 		 /* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 12500 | ROUND_UP_FLAG,
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100,
 		},
 		 /* Sensor on for lid angle detection */
 		[SENSOR_CONFIG_EC_S3] = {
@@ -91,31 +99,28 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_ACCEL] = {
 	 .name = "Base Accel",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_LSM6DSM,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &lsm6dsm_drv,
+	 .drv = &bmi160_drv,
 	 .mutex = &g_base_mutex,
-	 .drv_data = LSM6DSM_ST_DATA(g_lsm6dsm_data,
-			MOTIONSENSE_TYPE_ACCEL),
+	 .drv_data = &g_bmi160_data,
 	 .int_signal = GPIO_6AXIS_INT_L,
-	 .flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
-	 .default_range = 4, /* g, enough for laptop */
+	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
+	 .default_range = 2, /* g, enough for laptop */
 	 .rot_standard_ref = &base_standard_ref,
-	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
-	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
+	 .min_frequency = BMI_ACCEL_MIN_FREQ,
+	 .max_frequency = BMI_ACCEL_MAX_FREQ,
 	 .config = {
 		 /* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 13000 | ROUND_UP_FLAG,
+			.odr = 10000 | ROUND_UP_FLAG,
 			.ec_rate = 100 * MSEC,
 		},
 		/* Sensor on for angle detection */
 		[SENSOR_CONFIG_EC_S3] = {
 			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
 		},
 	 },
 	},
@@ -123,21 +128,18 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_GYRO] = {
 	 .name = "Base Gyro",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_LSM6DSM,
+	 .chip = MOTIONSENSE_CHIP_BMI160,
 	 .type = MOTIONSENSE_TYPE_GYRO,
 	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &lsm6dsm_drv,
+	 .drv = &bmi160_drv,
 	 .mutex = &g_base_mutex,
-	 .drv_data = LSM6DSM_ST_DATA(g_lsm6dsm_data,
-			MOTIONSENSE_TYPE_GYRO),
-	.int_signal = GPIO_6AXIS_INT_L,
-	.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+	 .drv_data = &g_bmi160_data,
 	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
-	 .default_range = 1000 | ROUND_UP_FLAG, /* dps */
+	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
+	 .default_range = 1000, /* dps */
 	 .rot_standard_ref = &base_standard_ref,
-	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
-	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
+	 .min_frequency = BMI_GYRO_MIN_FREQ,
+	 .max_frequency = BMI_GYRO_MAX_FREQ,
 	},
 };
 
