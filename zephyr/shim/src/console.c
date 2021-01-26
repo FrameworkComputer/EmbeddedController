@@ -11,6 +11,7 @@
 
 #include "console.h"
 #include "printf.h"
+#include "uart.h"
 
 int cputs(enum console_channel channel, const char *str)
 {
@@ -89,4 +90,27 @@ int zshim_run_ec_console_command(int (*handler)(int argc, char **argv),
 	}
 
 	return handler(argc, argv);
+}
+
+/*
+ * Minimal implementation of a few uart_* functions we need.
+ * TODO(b/178033156): probably need to swap this for something more
+ * robust in order to handle UART buffering.
+ */
+int uart_tx_ready(void)
+{
+	return 1;
+}
+
+void uart_write_char(char c)
+{
+	printk_putchar(NULL, c);
+}
+
+void uart_flush_output(void)
+{
+}
+
+void uart_tx_flush(void)
+{
 }
