@@ -35,11 +35,6 @@
 /* BMA253 accelerometer in base */
 #define CONFIG_ACCEL_BMA255
 
-/* BMI260 accel/gyro in base */
-#define CONFIG_ACCELGYRO_BMI260
-#define CONFIG_ACCELGYRO_BMI260_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-
 /* TCS3400 ALS */
 #define CONFIG_ALS
 #define ALS_COUNT		1
@@ -49,7 +44,7 @@
 
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK \
-	(BIT(LID_ACCEL) | BIT(CLEAR_ALS))
+	(BIT(LID_ACCEL) | BIT(CLEAR_ALS) | BIT(BASE_ACCEL))
 
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
@@ -166,7 +161,6 @@ enum pwm_channel {
 enum sensor_id {
 	LID_ACCEL = 0,
 	BASE_ACCEL,
-	BASE_GYRO,
 	CLEAR_ALS,
 	RGB_ALS,
 	SENSOR_COUNT,
