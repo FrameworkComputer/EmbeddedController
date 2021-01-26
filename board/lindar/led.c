@@ -18,9 +18,9 @@ const int led_charge_lvl_1 = 5;
 const int led_charge_lvl_2 = 97;
 
 struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
-	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
+	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_RED, LED_INDEFINITE} },
 	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
-	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
+	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_GREEN, LED_INDEFINITE} },
 	[STATE_DISCHARGE_S0]	     = {{LED_OFF,            LED_INDEFINITE} },
 	[STATE_DISCHARGE_S3]	     = {{LED_OFF,            LED_INDEFINITE} },
 	[STATE_DISCHARGE_S5]         = {{LED_OFF,            LED_INDEFINITE} },
@@ -60,14 +60,14 @@ void led_set_color_battery(enum ec_led_colors color)
 {
 	switch (color) {
 	case EC_LED_COLOR_AMBER:
-		gpio_set_level(GPIO_LED_1_L, LED_OFF_LVL);
-		gpio_set_level(GPIO_LED_2_L, LED_ON_LVL);
-		break;
-	case EC_LED_COLOR_RED:
 		gpio_set_level(GPIO_LED_1_L, LED_ON_LVL);
 		gpio_set_level(GPIO_LED_2_L, LED_ON_LVL);
 		break;
-	case EC_LED_COLOR_WHITE:
+	case EC_LED_COLOR_RED:
+		gpio_set_level(GPIO_LED_1_L, LED_OFF_LVL);
+		gpio_set_level(GPIO_LED_2_L, LED_ON_LVL);
+		break;
+	case EC_LED_COLOR_GREEN:
 		gpio_set_level(GPIO_LED_1_L, LED_ON_LVL);
 		gpio_set_level(GPIO_LED_2_L, LED_OFF_LVL);
 		break;
@@ -83,7 +83,7 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 	if (led_id == EC_LED_ID_BATTERY_LED) {
 		brightness_range[EC_LED_COLOR_RED] = 1;
 		brightness_range[EC_LED_COLOR_AMBER] = 1;
-		brightness_range[EC_LED_COLOR_WHITE] = 1;
+		brightness_range[EC_LED_COLOR_GREEN] = 1;
 	} else if (led_id == EC_LED_ID_POWER_LED) {
 		brightness_range[EC_LED_COLOR_WHITE] = 1;
 	}
