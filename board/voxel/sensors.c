@@ -44,8 +44,8 @@ static const mat33_fp_t lid_standard_ref = {
 };
 
 const mat33_fp_t base_standard_ref = {
+	{ 0, FLOAT_TO_FP(1), 0},
 	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
@@ -123,7 +123,7 @@ struct motion_sensor_t icm426xx_base_gyro = {
 	.port = I2C_PORT_ACCEL,
 	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
 	.default_range = 1000, /* dps */
-	.rot_standard_ref = &base_standard_ref,
+	.rot_standard_ref = &base_icm_ref,
 	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
 	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
 };
