@@ -461,6 +461,12 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 
 static int tune_mux(const struct usb_mux *me);
+const struct usb_mux usbc0_retimer = {
+	.usb_port = 0,
+	.i2c_port = I2C_PORT_USB_C0,
+	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
+	.driver = &nb7v904m_usb_redriver_drv,
+};
 const struct usb_mux usbc1_retimer = {
 	.usb_port = 1,
 	.i2c_port = I2C_PORT_SUB_USB_C1,
@@ -474,6 +480,7 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_port = I2C_PORT_USB_C0,
 		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
 		.driver = &pi3usb3x532_usb_mux_driver,
+		.next_mux = &usbc0_retimer,
 	},
 	{
 		.usb_port = 1,
