@@ -61,39 +61,17 @@ static void activate_chip_enable(
 }
 
 /**
- * Perform BC1.2 detection and update charge manager.
+ * Update BC1.2 detected status to charge manager.
  *
  * @param port: The Type-C port where VBUS is present.
  */
-static void bc12_detect(const int port)
+static void update_bc12_status_to_charger_manager(const int port)
 {
 	const struct max14637_config_t * const cfg = &max14637_config[port];
 	struct charge_port_info new_chg;
 
-	/*
-	 * Enable the IC to begin detection and connect switches if
-	 * necessary. This is only necessary if the port power role is a
-	 * sink. If the power role is a source then just keep the max14637
-	 * powered on so that data switches are close. Note that the gpio enable
-	 * for this chip is active by default. In order to trigger bc1.2
-	 * detection, the chip enable must be driven low, then high again so the
-	 * chip will start bc1.2 client side detection. Add a 100 msec delay to
-	 * avoid collision with a device that might be doing bc1.2 client side
-	 * detection.
-	 */
-	msleep(100);
-	activate_chip_enable(cfg, 0);
-	msleep(CONFIG_BC12_MAX14637_DELAY_FROM_OFF_TO_ON_MS);
-	activate_chip_enable(cfg, 1);
-
 	new_chg.voltage = USB_CHARGER_VOLTAGE_MV;
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
-	/*
-	 * Apple or TomTom charger detection can take as long as 600ms.  Wait a
-	 * little bit longer for margin.
-	 */
-	msleep(630);
-
 	/*
 	 * The driver assumes that CHG_AL_N and SW_OPEN are not connected,
 	 * therefore an activated CHG_DET indicates whether the source is NOT a
@@ -113,6 +91,40 @@ static void bc12_detect(const int port)
 #endif /* !defined(CONFIG_CHARGE_RAMP_SW && CONFIG_CHARGE_RAMP_HW) */
 
 	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, port, &new_chg);
+}
+
+/**
+ * Perform BC1.2 detection.
+ *
+ * @param port: The Type-C port where VBUS is present.
+ */
+static void bc12_detect(const int port)
+{
+	const struct max14637_config_t * const cfg = &max14637_config[port];
+
+	/*
+	 * Enable the IC to begin detection and connect switches if
+	 * necessary. This is only necessary if the port power role is a
+	 * sink. If the power role is a source then just keep the max14637
+	 * powered on so that data switches are close. Note that the gpio enable
+	 * for this chip is active by default. In order to trigger bc1.2
+	 * detection, the chip enable must be driven low, then high again so the
+	 * chip will start bc1.2 client side detection. Add a 100 msec delay to
+	 * avoid collision with a device that might be doing bc1.2 client side
+	 * detection.
+	 */
+	msleep(100);
+	activate_chip_enable(cfg, 0);
+	msleep(CONFIG_BC12_MAX14637_DELAY_FROM_OFF_TO_ON_MS);
+	activate_chip_enable(cfg, 1);
+
+#if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
+	/*
+	 * Apple or TomTom charger detection can take as long as 600ms.  Wait a
+	 * little bit longer for margin.
+	 */
+	msleep(630);
+#endif /* !defined(CONFIG_CHARGE_RAMP_SW && CONFIG_CHARGE_RAMP_HW) */
 }
 
 /**
@@ -139,11 +151,21 @@ static void detect_or_power_down_ic(const int port)
 		/* Turn on the 5V rail to allow the chip to be powered. */
 		power_5v_enable(task_get_current(), 1);
 #endif
-		if (pd_get_power_role(port) == PD_ROLE_SINK)
+		if (pd_get_power_role(port) == PD_ROLE_SINK) {
 			bc12_detect(port);
+			update_bc12_status_to_charger_manager(port);
+		}
 	} else {
 		/* Let charge manager know there's no more charge available. */
 		charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, port, NULL);
+		/*
+		 * If latest attached charger is PD Adapter then it would be
+		 * detected as DCP and data switch of USB2.0 would be open which
+		 * prevents USB 2.0 data path from working later. As a result,
+		 * bc12_detect() is called again here and SCP would be detected
+		 * due to D+/D- are NC (open) if nothing is attached then data
+		 * switch of USB2.0 can be kept close from now on.
+		 */
 		bc12_detect(port);
 #if defined(CONFIG_POWER_PP5000_CONTROL) && defined(HAS_TASK_CHIPSET)
 		/* Issue a request to turn off the rail. */
