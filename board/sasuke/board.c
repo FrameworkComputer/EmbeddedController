@@ -468,6 +468,8 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
+static int board_nb7v904m_mux_set(const struct usb_mux *me,
+						mux_state_t mux_state);
 const struct usb_mux usbc0_retimer = {
 	.usb_port = 0,
 	.i2c_port = I2C_PORT_USB_C0,
@@ -479,7 +481,9 @@ const struct usb_mux usbc1_retimer = {
 	.i2c_port = I2C_PORT_SUB_USB_C1,
 	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
 	.driver = &nb7v904m_usb_redriver_drv,
+	.board_set = &board_nb7v904m_mux_set,
 };
+
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 0,
@@ -496,6 +500,71 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.next_mux = &usbc1_retimer,
 	}
 };
+
+/* USB Mux */
+static int board_nb7v904m_mux_set(const struct usb_mux *me,
+						mux_state_t mux_state)
+{
+	int rv = EC_SUCCESS;
+	int flipped = !!(mux_state & USB_PD_MUX_POLARITY_INVERTED);
+
+	if (mux_state & USB_PD_MUX_USB_ENABLED) {
+		/* USB with DP */
+		if (mux_state & USB_PD_MUX_DP_ENABLED) {
+			if (flipped) {
+				rv |= nb7v904m_tune_usb_set_eq(me,
+							NB7V904M_CH_A_EQ_10_DB,
+							NB7V904M_CH_ALL_SKIP_EQ,
+							NB7V904M_CH_ALL_SKIP_EQ,
+							NB7V904M_CH_D_EQ_4_DB);
+				rv |= nb7v904m_tune_usb_flat_gain(me,
+							NB7V904M_CH_ALL_SKIP_GAIN,
+							NB7V904M_CH_B_GAIN_3P5_DB,
+							NB7V904M_CH_C_GAIN_0_DB,
+							NB7V904M_CH_ALL_SKIP_GAIN);
+			}
+			else {
+				rv |= nb7v904m_tune_usb_set_eq(me,
+							NB7V904M_CH_A_EQ_4_DB,
+							NB7V904M_CH_ALL_SKIP_EQ,
+							NB7V904M_CH_ALL_SKIP_EQ,
+							NB7V904M_CH_D_EQ_10_DB);
+				rv |= nb7v904m_tune_usb_flat_gain(me,
+							NB7V904M_CH_ALL_SKIP_GAIN,
+							NB7V904M_CH_B_GAIN_0_DB,
+							NB7V904M_CH_C_GAIN_3P5_DB,
+							NB7V904M_CH_ALL_SKIP_GAIN);
+			}
+		} else {
+			/* USB only */
+			rv |= nb7v904m_tune_usb_set_eq(me,
+						NB7V904M_CH_A_EQ_10_DB,
+						NB7V904M_CH_ALL_SKIP_EQ,
+						NB7V904M_CH_ALL_SKIP_EQ,
+						NB7V904M_CH_D_EQ_10_DB);
+			rv |= nb7v904m_tune_usb_flat_gain(me,
+						NB7V904M_CH_ALL_SKIP_GAIN,
+						NB7V904M_CH_B_GAIN_3P5_DB,
+						NB7V904M_CH_C_GAIN_3P5_DB,
+						NB7V904M_CH_ALL_SKIP_GAIN);
+		}
+
+	} else if (mux_state & USB_PD_MUX_DP_ENABLED) {
+		/* 4 lanes DP */
+		rv |= nb7v904m_tune_usb_set_eq(me,
+					NB7V904M_CH_A_EQ_4_DB,
+					NB7V904M_CH_ALL_SKIP_EQ,
+					NB7V904M_CH_ALL_SKIP_EQ,
+					NB7V904M_CH_D_EQ_4_DB);
+		rv |= nb7v904m_tune_usb_flat_gain(me,
+					NB7V904M_CH_ALL_SKIP_GAIN,
+					NB7V904M_CH_B_GAIN_0_DB,
+					NB7V904M_CH_C_GAIN_0_DB,
+					NB7V904M_CH_ALL_SKIP_GAIN);
+	}
+
+	return rv;
+}
 
 uint16_t tcpc_get_alert_status(void)
 {
