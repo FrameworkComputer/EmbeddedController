@@ -85,10 +85,47 @@ int gl3590_write(int hub, uint8_t reg, uint8_t *data, int count)
 	return rv;
 }
 
+/*
+ * Basic initialization of GL3590 I2C interface.
+ *
+ * Please note, that I2C interface is online not earlier than ~50ms after
+ * RESETJ# is deasserted. Platform should check that PGREEN_A_SMD pin is
+ * asserted. This init function shouldn't be invoked until that time.
+ */
+void gl3590_init(int hub)
+{
+	uint8_t tmp;
+	struct uhub_i2c_iface_t *uhub_p = &uhub_config[hub];
+
+	if (uhub_p->initialized)
+		return;
+
+	if (gl3590_read(hub, GL3590_HUB_MODE_REG, &tmp, 1)) {
+		CPRINTF("GL3590: Cannot read HUB_MODE register");
+		return;
+	}
+	if ((tmp & GL3590_HUB_MODE_I2C_READY) == 0)
+		CPRINTF("GL3590 interface isn't ready, consider deferring "
+			"this init\n");
+
+	/* Deassert INTR# signal */
+	tmp = GL3590_INT_CLEAR;
+	if (gl3590_write(hub, GL3590_INT_REG, &tmp, 1)) {
+		CPRINTF("GL3590: Cannot write to INT register");
+		return;
+	};
+
+	uhub_p->initialized = 1;
+}
+
 void gl3590_irq_handler(int hub)
 {
 	uint8_t buf = 0;
 	uint8_t res_reg[2];
+	struct uhub_i2c_iface_t *uhub_p = &uhub_config[hub];
+
+	if (!uhub_p->initialized)
+		return;
 
 	/* Verify that irq is pending */
 	if (gl3590_read(hub, GL3590_INT_REG, &buf, sizeof(buf))) {
@@ -167,6 +204,10 @@ enum ec_error_list gl3590_ufp_pwr(int hub, struct pwr_con_t *pwr)
 {
 	uint8_t hub_sts, hub_mode;
 	int rv = 0;
+	struct uhub_i2c_iface_t *uhub_p = &uhub_config[hub];
+
+	if (!uhub_p->initialized)
+		return EC_ERROR_HW_INTERNAL;
 
 	if (gl3590_read(hub, GL3590_HUB_STS_REG, &hub_sts, sizeof(hub_sts))) {
 		CPRINTF("Error reading HUB_STS %d\n", rv);
@@ -211,6 +252,10 @@ int gl3590_enable_ports(int hub, uint8_t port_mask, bool enable)
 	uint8_t buf[4] = {0};
 	uint8_t en_mask = 0;
 	int rv;
+	struct uhub_i2c_iface_t *uhub_p = &uhub_config[hub];
+
+	if (!uhub_p->initialized)
+		return EC_ERROR_HW_INTERNAL;
 
 	if (!enable)
 		en_mask = port_mask;
