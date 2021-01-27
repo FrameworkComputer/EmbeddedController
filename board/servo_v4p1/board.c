@@ -349,14 +349,15 @@ static struct usart_config const usart4 =
 		usart4_to_usb,
 		usb_to_usart4);
 
-USB_STREAM_CONFIG(usart4_usb,
+USB_STREAM_CONFIG_USART_IFACE(usart4_usb,
 	USB_IFACE_USART4_STREAM,
 	USB_STR_USART4_STREAM_NAME,
 	USB_EP_USART4_STREAM,
 	USB_STREAM_RX_SIZE,
 	USB_STREAM_TX_SIZE,
 	usb_to_usart4,
-	usart4_to_usb)
+	usart4_to_usb,
+	usart4)
 
 
 /******************************************************************************
