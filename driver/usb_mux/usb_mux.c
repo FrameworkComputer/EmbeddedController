@@ -348,6 +348,25 @@ void usb_mux_hpd_update(int port, int hpd_lvl, int hpd_irq)
 	}
 }
 
+int usb_mux_retimer_fw_update_port_info(void)
+{
+	int i;
+	int port_info = 0;
+	const struct usb_mux *mux_ptr;
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		mux_ptr = &usb_muxes[i];
+		while (mux_ptr) {
+			if (mux_ptr->driver &&
+				mux_ptr->driver->is_retimer_fw_update_capable &&
+				mux_ptr->driver->is_retimer_fw_update_capable())
+				port_info |= BIT(i);
+			mux_ptr = mux_ptr->next_mux;
+		}
+	}
+	return port_info;
+}
+
 static void mux_chipset_reset(void)
 {
 	int port;

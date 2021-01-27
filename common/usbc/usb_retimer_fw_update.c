@@ -52,11 +52,6 @@ static int last_op; /* Operation received from AP via ACPI_WRITE */
 /* MUX value returned to ACPI_READ */
 static int last_mux_result = USB_RETIMER_FW_UPDATE_INVALID_MUX;
 
-__overridable int usb_retimer_fw_update_query_port(void)
-{
-	return 0;
-}
-
 int usb_retimer_fw_update_get_result(void)
 {
 	int result = 0;
@@ -67,7 +62,7 @@ int usb_retimer_fw_update_get_result(void)
 		result = pd_is_port_enabled(cur_port);
 		break;
 	case USB_RETIMER_FW_UPDATE_QUERY_PORT:
-		result = usb_retimer_fw_update_query_port();
+		result = usb_mux_retimer_fw_update_port_info();
 		break;
 	case USB_RETIMER_FW_UPDATE_GET_MUX:
 	case USB_RETIMER_FW_UPDATE_SET_USB:

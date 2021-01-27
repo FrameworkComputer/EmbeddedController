@@ -202,16 +202,6 @@ void pd_update_saved_port_flags(int port, uint8_t flag, uint8_t do_set);
 int pd_build_alert_msg(uint32_t *msg, uint32_t *len, enum pd_power_role pr);
 
 /**
- * Query USB-C ports state for USB retimer firmware update.
- * Support up to 8 ports.
- *
- * @return Bits[7:0]: represent PD ports 0-7
- *         1 - This port has retimer;
- *         0 - not retimer.
- */
-__override_proto int usb_retimer_fw_update_query_port(void);
-
-/**
  * During USB retimer firmware update, process operation
  * requested by AP
  *

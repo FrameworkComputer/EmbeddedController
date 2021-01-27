@@ -241,12 +241,6 @@ struct bb_usb_control bb_controls[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(bb_controls) == USBC_PORT_COUNT);
 
-__override int usb_retimer_fw_update_query_port(void)
-{
-	/* USBC_PORT_C1 has burnside bridge retimer */
-		return BIT(1);
-}
-
 __override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
 {
 	enum ec_cfg_usb_db_type usb_db = ec_cfg_usb_db_type();
