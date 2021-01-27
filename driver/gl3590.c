@@ -33,8 +33,8 @@ int gl3590_read(int hub, uint8_t reg, uint8_t *data, int count)
 	if (rv)
 		return rv;
 
-	/* GL3590 requires at least 300us before data is ready */
-	udelay(400);
+	/* GL3590 requires at least 1ms between consecutive i2c transactions */
+	udelay(MSEC);
 
 	i2c_lock(uhub_p->i2c_host_port, 1);
 	rv = i2c_xfer_unlocked(uhub_p->i2c_host_port,
@@ -43,6 +43,12 @@ int gl3590_read(int hub, uint8_t reg, uint8_t *data, int count)
 			       data, count,
 			       I2C_XFER_SINGLE);
 	i2c_lock(uhub_p->i2c_host_port, 0);
+
+	/*
+	 * GL3590 requires at least 1ms between consecutive i2c transactions.
+	 * Make sure that we are safe across API calls.
+	 */
+	udelay(MSEC);
 
 	return rv;
 };
@@ -69,6 +75,12 @@ int gl3590_write(int hub, uint8_t reg, uint8_t *data, int count)
 			       NULL, 0,
 			       I2C_XFER_SINGLE);
 	i2c_lock(uhub_p->i2c_host_port, 0);
+
+	/*
+	 * GL3590 requires at least 1ms between consecutive i2c transactions.
+	 * Make sure that we are safe across API calls.
+	 */
+	udelay(MSEC);
 
 	return rv;
 }
@@ -207,6 +219,8 @@ int gl3590_enable_ports(int hub, uint8_t port_mask, bool enable)
 	buf[2] = port_mask;
 
 	rv = gl3590_write(hub, GL3590_PORT_DISABLED_REG, buf, sizeof(buf));
+
+	usleep(200 * MSEC);
 
 	return rv;
 }
