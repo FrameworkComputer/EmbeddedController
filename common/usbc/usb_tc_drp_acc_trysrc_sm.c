@@ -236,7 +236,7 @@ GEN_NOT_SUPPORTED(TC_CT_ATTACHED_SNK);
 
 
 /* List of human readable state names for console debugging */
-__maybe_unused static const char * const tc_state_names[] = {
+__maybe_unused static __const_data const char * const tc_state_names[] = {
 #ifdef USB_PD_DEBUG_LABELS
 	[TC_DISABLED] = "Disabled",
 	[TC_ERROR_RECOVERY] = "ErrorRecovery",
@@ -3656,7 +3656,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pd_chipset_shutdown, HOOK_PRIO_DEFAULT);
  * TC_ATTACHED_SNK    TC_ATTACHED_SRC    TC_DRP_AUTO_TOGGLE    TC_LOW_POWER_MODE
  *
  */
-static const struct usb_state tc_states[] = {
+static __const_data const struct usb_state tc_states[] = {
 	/* Super States */
 	[TC_CC_OPEN] = {
 		.entry	= tc_cc_open_entry,

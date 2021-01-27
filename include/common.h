@@ -224,6 +224,21 @@
 /* Include top-level configuration file */
 #include "config.h"
 
+/*
+ * When CONFIG_CHIP_DATA_IN_INIT_ROM is enabled the .data section is linked
+ * into an unused are of flash and excluded from the executable portion of
+ * the RO and RW images to save space.
+ *
+ * The __const_data attribute can be used to force constant data objects
+ * into the .data section instead of the .rodata section for additional
+ * savings.
+ */
+#ifdef CONFIG_CHIP_DATA_IN_INIT_ROM
+#define __const_data __attribute__((section(".data#")))
+#else
+#define __const_data
+#endif
+
 /* Canonical list of module IDs */
 #include "module_id.h"
 
