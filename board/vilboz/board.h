@@ -131,7 +131,7 @@ enum usbc_port {
 #include "cbi_ec_fw_config.h"
 
 /**
- * DALBOZ_MB_USBAC
+ * VILBOZ_MB_USBAC
  *	USB-A0  Speed: 5 Gbps
  *		Retimer: none
  *	USB-C0  Speed: 5 Gbps
@@ -141,62 +141,20 @@ enum usbc_port {
  *		IOEX: TCPC
  */
 enum ec_cfg_usb_mb_type {
-	DALBOZ_MB_USBAC = 0,
+	VILBOZ_MB_USBAC = 0,
 };
 
 /**
- * DALBOZ_DB_D_OPT1_USBAC
+ * VILBOZ_DB_D_OPT1_USBA_HDMI
  *	USB-A1  Speed: 5 Gbps
- *		Retimer: TUSB522
- *	USB-C1  Speed: 5 Gbps
- *		Retimer: PS8740
- *		TCPC: NCT3807
- *		PPC: NX20P3483
- *		IOEX: TCPC
- *	HDMI    Exists: no
- *		Retimer: none
+ *		Retimer: None
+ *	HDMI    Retimer: PS8203
  *		MST Hub: none
- *
- * DALBOZ_DB_D_OPT2_USBA_HDMI
- *	USB-A1  Speed: 5 Gbps
- *		Retimer: TUSB522
- *	USB-C1  none
- *		IOEX: PCAL6408
- *	HDMI    Exists: yes
- *		Retimer: PI3HDX1204
- *		MST Hub: none
+ *	P-Sensor SX9324
  */
 enum ec_cfg_usb_db_type {
-	DALBOZ_DB_D_OPT1_USBAC = 0,
-	DALBOZ_DB_D_OPT2_USBA_HDMI = 1,
+	VILBOZ_DB_D_OPT1_USBA_HDMI = 0,
 };
-
-#define HAS_USBC1 \
-			(BIT(DALBOZ_DB_D_OPT1_USBAC))
-
-static inline bool ec_config_has_usbc1(void)
-{
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_USBC1);
-}
-
-#define HAS_USBC1_RETIMER_PS8740 \
-			(BIT(DALBOZ_DB_D_OPT1_USBAC))
-
-static inline bool ec_config_has_usbc1_retimer_ps8740(void)
-{
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_USBC1_RETIMER_PS8740);
-}
-
-#define HAS_HDMI_RETIMER_PI3HDX1204 \
-			(BIT(DALBOZ_DB_D_OPT2_USBA_HDMI))
-
-static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
-{
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_HDMI_RETIMER_PI3HDX1204);
-}
 
 void board_reset_pd_mcu(void);
 
