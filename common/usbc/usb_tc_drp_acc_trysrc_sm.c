@@ -116,6 +116,11 @@ void print_flag(int port, int set_or_clear, int flag);
 #define TC_FLAGS_SUSPEND                BIT(17)
 /* Flag to indicate the port current limit has changed */
 #define TC_FLAGS_UPDATE_CURRENT		BIT(18)
+/* Flag to indicate USB mux should be updated */
+#define TC_FLAGS_UPDATE_USB_MUX		BIT(19)
+
+/* For checking flag_bit_names[] array */
+#define TC_FLAGS_COUNT			20
 
 /*
  * Clear all flags except TC_FLAGS_LPM_ENGAGED and TC_FLAGS_SUSPEND.
@@ -300,7 +305,9 @@ static struct bit_name flag_bit_names[] = {
 	{ TC_FLAGS_CHECK_CONNECTION, "CHECK_CONNECTION" },
 	{ TC_FLAGS_SUSPEND, "SUSPEND" },
 	{ TC_FLAGS_UPDATE_CURRENT, "UPDATE_CURRENT" },
+	{ TC_FLAGS_UPDATE_USB_MUX, "UPDATE_USB_MUX" },
 };
+BUILD_ASSERT(ARRAY_SIZE(flag_bit_names) == TC_FLAGS_COUNT);
 
 static struct bit_name event_bit_names[] = {
 	{ TASK_EVENT_SYSJUMP_READY, "SYSJUMP_READY" },
@@ -1736,11 +1743,19 @@ __maybe_unused static void handle_new_power_state(int port)
 			dpm_set_mode_exit_request(port);
 		}
 	}
+
 	/*
+	 * TC_FLAGS_UPDATE_USB_MUX is set on chipset startup and shutdown.
 	 * Set the USB mux according to the new power state.  If the chipset
 	 * is transitioning to OFF, this disconnects USB and DP mux.
+	 *
+	 * Transitions to and from suspend states do not change the USB mux
+	 * or the alternate mode configuration.
 	 */
-	set_usb_mux_with_current_data_role(port);
+	if (TC_CHK_FLAG(port, TC_FLAGS_UPDATE_USB_MUX)) {
+		TC_CLR_FLAG(port, TC_FLAGS_UPDATE_USB_MUX);
+		set_usb_mux_with_current_data_role(port);
+	}
 }
 
 #if defined(CONFIG_USB_PD_ALT_MODE) && !defined(CONFIG_USB_PD_ALT_MODE_DFP)
@@ -3603,6 +3618,7 @@ static void pd_chipset_startup(void)
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		TC_SET_FLAG(i, TC_FLAGS_UPDATE_USB_MUX);
 		pd_set_dual_role_and_event(i,
 					   pd_get_drp_state_in_suspend(),
 					   PD_EVENT_UPDATE_DUAL_ROLE
@@ -3626,6 +3642,7 @@ static void pd_chipset_shutdown(void)
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		TC_SET_FLAG(i, TC_FLAGS_UPDATE_USB_MUX);
 		pd_set_dual_role_and_event(i,
 					   PD_DRP_FORCE_SINK,
 					   PD_EVENT_UPDATE_DUAL_ROLE
