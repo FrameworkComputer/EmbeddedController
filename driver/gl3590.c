@@ -247,11 +247,14 @@ enum ec_error_list gl3590_ufp_pwr(int hub, struct pwr_con_t *pwr)
 	}
 }
 
+#define GL3590_EN_PORT_MAX_RETRY_COUNT	10
+
 int gl3590_enable_ports(int hub, uint8_t port_mask, bool enable)
 {
 	uint8_t buf[4] = {0};
 	uint8_t en_mask = 0;
-	int rv;
+	uint8_t tmp;
+	int rv, i;
 	struct uhub_i2c_iface_t *uhub_p = &uhub_config[hub];
 
 	if (!uhub_p->initialized)
@@ -263,11 +266,36 @@ int gl3590_enable_ports(int hub, uint8_t port_mask, bool enable)
 	buf[0] = en_mask;
 	buf[2] = port_mask;
 
-	rv = gl3590_write(hub, GL3590_PORT_DISABLED_REG, buf, sizeof(buf));
+	for (i = 1; i <= GL3590_EN_PORT_MAX_RETRY_COUNT; i++) {
+		rv = gl3590_write(hub, GL3590_PORT_DISABLED_REG, buf,
+				  sizeof(buf));
+		if (rv)
+			return rv;
 
-	usleep(200 * MSEC);
+		usleep(200 * MSEC);
 
-	return rv;
+		/* Verify whether port is enabled/disabled */
+		rv = gl3590_read(hub, GL3590_PORT_EN_STS_REG, &tmp, 1);
+		if (rv)
+			return rv;
+
+		if (enable && ((tmp & port_mask) == port_mask))
+			break;
+		if (!enable && ((tmp & port_mask) == 0))
+			break;
+
+		if (i > GL3590_EN_PORT_MAX_RETRY_COUNT) {
+			CPRINTF("GL3590: Failed to %s port 0x%x\n",
+				enable ? "enable" : "disable", port_mask);
+			return EC_ERROR_HW_INTERNAL;
+		}
+
+		CPRINTF("GL3590: Port %s retrying.. %d/%d\n"
+			"Port status is 0x%x\n", enable ? "enable" : "disable",
+			i, GL3590_EN_PORT_MAX_RETRY_COUNT, tmp);
+	}
+
+	return EC_SUCCESS;
 }
 
 #ifdef CONFIG_CMD_GL3590
