@@ -50,5 +50,7 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
   "${PLATFORM_EC_BOARD}/battery.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CBI
   "${PLATFORM_EC_BOARD}/cbi.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
+  "${PLATFORM_EC_BOARD}/led.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC
   "${PLATFORM_EC_BOARD}/usbc_config.c")

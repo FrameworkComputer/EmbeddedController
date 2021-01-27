@@ -102,3 +102,12 @@ static void led_set_charge_port_tick(void)
 		pwm_set_duty(PWM_CH_LED4_SIDESEL, side_select_duty);
 }
 DECLARE_HOOK(HOOK_TICK, led_set_charge_port_tick, HOOK_PRIO_DEFAULT);
+
+static void board_led_init(void)
+{
+	/* Illuminate motherboard and daughter board LEDs equally to start. */
+	pwm_enable(PWM_CH_LED4_SIDESEL, 1);
+	pwm_set_duty(PWM_CH_LED4_SIDESEL, 50);
+}
+DECLARE_HOOK(HOOK_INIT, board_led_init, HOOK_PRIO_DEFAULT);
+

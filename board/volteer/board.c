@@ -59,16 +59,6 @@ struct keyboard_scan_config keyscan_config = {
 };
 
 /******************************************************************************/
-
-static void board_init(void)
-{
-	/* Illuminate motherboard and daughter board LEDs equally to start. */
-	pwm_enable(PWM_CH_LED4_SIDESEL, 1);
-	pwm_set_duty(PWM_CH_LED4_SIDESEL, 50);
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
-/******************************************************************************/
 /* Physical fans. These are logically separate from pwm_channels. */
 
 const struct fan_conf fan_conf_0 = {
