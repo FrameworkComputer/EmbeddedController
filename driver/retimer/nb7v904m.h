@@ -18,8 +18,14 @@
 /* Registers */
 #define NB7V904M_REG_GEN_DEV_SETTINGS	0x00
 #define NB7V904M_REG_CH_A_EQ_SETTINGS	0x01
+#define NB7V904M_REG_CH_B_EQ_SETTINGS	0x03
+#define NB7V904M_REG_CH_C_EQ_SETTINGS	0x05
 #define NB7V904M_REG_CH_D_EQ_SETTINGS	0x07
 #define NB7V904M_REG_AUX_CH_CTRL        0x09
+#define NB7V904M_REG_CH_A_FLAT_GAIN		0x18
+#define NB7V904M_REG_CH_B_FLAT_GAIN		0x1a
+#define NB7V904M_REG_CH_C_FLAT_GAIN		0x1c
+#define NB7V904M_REG_CH_D_FLAT_GAIN		0x1e
 
 /* 0x00 - General Device Settings */
 #define NB7V904M_CHIP_EN        BIT(0)
@@ -42,6 +48,22 @@
 #define NB7V904M_CH_A_EQ_8_DB	0x02
 #define NB7V904M_CH_A_EQ_10_DB	0x00
 
+/* 0x03 - Channel B Equalization Settings */
+#define NB7V904M_CH_B_EQ_0_DB	0x0e
+#define NB7V904M_CH_B_EQ_2_DB	0x0c
+#define NB7V904M_CH_B_EQ_4_DB	0x0a
+#define NB7V904M_CH_B_EQ_6_DB	0x08
+#define NB7V904M_CH_B_EQ_8_DB	0x06
+#define NB7V904M_CH_B_EQ_10_DB	0x00
+
+/* 0x05 - Channel C Equalization Settings */
+#define NB7V904M_CH_C_EQ_0_DB	0x0e
+#define NB7V904M_CH_C_EQ_2_DB	0x0c
+#define NB7V904M_CH_C_EQ_4_DB	0x0a
+#define NB7V904M_CH_C_EQ_6_DB	0x08
+#define NB7V904M_CH_C_EQ_8_DB	0x06
+#define NB7V904M_CH_C_EQ_10_DB	0x00
+
 /* 0x07 - Channel D Equalization Settings */
 #define NB7V904M_CH_D_EQ_0_DB	0x0a
 #define NB7V904M_CH_D_EQ_2_DB	0x08
@@ -55,8 +77,34 @@
 #define NB7V904M_AUX_CH_FLIPPED  BIT(0)
 #define NB7V904M_AUX_CH_HI_Z     BIT(1)
 
+/* 0x18 - Channel A Flag Gain */
+#define NB7V904M_CH_A_GAIN_0_DB		0x00
+#define NB7V904M_CH_A_GAIN_1P5_DB	0x02
+#define NB7V904M_CH_A_GAIN_3P5_DB	0x03
+
+/* 0x1a - Channel B Flag Gain */
+#define NB7V904M_CH_B_GAIN_0_DB		0x03
+#define NB7V904M_CH_B_GAIN_1P5_DB	0x01
+#define NB7V904M_CH_B_GAIN_3P5_DB	0x00
+
+/* 0x1c - Channel C Flag Gain */
+#define NB7V904M_CH_C_GAIN_0_DB		0x03
+#define NB7V904M_CH_C_GAIN_1P5_DB	0x01
+#define NB7V904M_CH_C_GAIN_3P5_DB	0x00
+
+/* 0x1e - Channel D Flag Gain */
+#define NB7V904M_CH_D_GAIN_0_DB		0x00
+#define NB7V904M_CH_D_GAIN_1P5_DB	0x02
+#define NB7V904M_CH_D_GAIN_3P5_DB	0x03
+
 extern const struct usb_mux_driver nb7v904m_usb_redriver_drv;
 
-int nb7v904m_tune_usb_eq_rx(const struct usb_mux *me, uint8_t eq_a,
-			uint8_t eq_d);
+/* Use this value if tuning eq wants to be skipped  */
+#define NB7V904M_CH_ALL_SKIP_EQ	0xff
+int nb7v904m_tune_usb_set_eq(const struct usb_mux *me, uint8_t eq_a,
+			uint8_t eq_b, uint8_t eq_c, uint8_t eq_d);
+/* Use this value if tuning gain wants to be skipped  */
+#define NB7V904M_CH_ALL_SKIP_GAIN	0xff
+int nb7v904m_tune_usb_flat_gain(const struct usb_mux *me, uint8_t gain_a,
+			uint8_t gain_b, uint8_t gain_c, uint8_t gain_d);
 #endif /* __CROS_EC_USB_REDRIVER_NB7V904M_H */

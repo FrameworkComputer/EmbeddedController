@@ -468,7 +468,6 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-static int tune_mux(const struct usb_mux *me);
 const struct usb_mux usbc0_retimer = {
 	.usb_port = 0,
 	.i2c_port = I2C_PORT_USB_C0,
@@ -480,7 +479,6 @@ const struct usb_mux usbc1_retimer = {
 	.i2c_port = I2C_PORT_SUB_USB_C1,
 	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
 	.driver = &nb7v904m_usb_redriver_drv,
-	.board_init = &tune_mux,
 };
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
@@ -498,13 +496,6 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.next_mux = &usbc1_retimer,
 	}
 };
-
-static int tune_mux(const struct usb_mux *me)
-{
-	return nb7v904m_tune_usb_eq_rx(me,
-				NB7V904M_CH_A_EQ_10_DB,
-				NB7V904M_CH_D_EQ_10_DB);
-}
 
 uint16_t tcpc_get_alert_status(void)
 {

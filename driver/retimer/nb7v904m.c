@@ -58,14 +58,44 @@ static int nb7v904m_enter_low_power_mode(const struct usb_mux *me)
 	return rv;
 }
 
-/* Tune USB Eq : This must be called on board_init context */
-int nb7v904m_tune_usb_eq_rx(const struct usb_mux *me, uint8_t eq_a,
-			uint8_t eq_d)
+/* Tune USB Eq All: This must be called on board_init context */
+int nb7v904m_tune_usb_set_eq(const struct usb_mux *me, uint8_t eq_a,
+			uint8_t eq_b, uint8_t eq_c, uint8_t eq_d)
 {
-	int rv;
+	int rv = EC_SUCCESS;
 
-	rv = nb7v904m_write(me, NB7V904M_REG_CH_A_EQ_SETTINGS, eq_a);
-	rv |= nb7v904m_write(me, NB7V904M_REG_CH_D_EQ_SETTINGS, eq_d);
+	if (eq_a != NB7V904M_CH_ALL_SKIP_EQ)
+		rv = nb7v904m_write(me, NB7V904M_REG_CH_A_EQ_SETTINGS, eq_a);
+
+	if (eq_b != NB7V904M_CH_ALL_SKIP_EQ)
+		rv |= nb7v904m_write(me, NB7V904M_REG_CH_B_EQ_SETTINGS, eq_b);
+
+	if (eq_c != NB7V904M_CH_ALL_SKIP_EQ)
+		rv |= nb7v904m_write(me, NB7V904M_REG_CH_C_EQ_SETTINGS, eq_c);
+
+	if (eq_d != NB7V904M_CH_ALL_SKIP_EQ)
+		rv |= nb7v904m_write(me, NB7V904M_REG_CH_D_EQ_SETTINGS, eq_d);
+
+	return rv;
+}
+
+/* Tune USB Flat Gain: This must be called on board_init context */
+int nb7v904m_tune_usb_flat_gain(const struct usb_mux *me, uint8_t gain_a,
+			uint8_t gain_b, uint8_t gain_c, uint8_t gain_d)
+{
+	int rv = EC_SUCCESS;
+
+	if (gain_a != NB7V904M_CH_ALL_SKIP_GAIN)
+		rv = nb7v904m_write(me, NB7V904M_REG_CH_A_FLAT_GAIN, gain_a);
+
+	if (gain_b != NB7V904M_CH_ALL_SKIP_GAIN)
+		rv |= nb7v904m_write(me, NB7V904M_REG_CH_B_FLAT_GAIN, gain_b);
+
+	if (gain_c != NB7V904M_CH_ALL_SKIP_GAIN)
+		rv |= nb7v904m_write(me, NB7V904M_REG_CH_C_FLAT_GAIN, gain_c);
+
+	if (gain_d != NB7V904M_CH_ALL_SKIP_GAIN)
+		rv |= nb7v904m_write(me, NB7V904M_REG_CH_D_FLAT_GAIN, gain_d);
 
 	return rv;
 }
