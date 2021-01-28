@@ -1772,6 +1772,13 @@
 #undef CONFIG_FLASH_PROTECT_RW
 
 /*
+ * Enable Flash Write Protect by default. Some platforms like Servo_v4
+ * development tools do not use write protection. This enables the feature
+ * to be removed to save flash space
+ */
+#define CONFIG_CMD_FLASH_WP
+
+/*
  * Store persistent write protect for the flash inside the flash data itself.
  * This allows ECs with internal flash to emulate something closer to a SPI
  * flash write protect register.  If this is not defined, write protect state

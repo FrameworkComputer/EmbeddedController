@@ -1156,6 +1156,7 @@ DECLARE_CONSOLE_COMMAND(flashread, command_flash_read,
 			"Read flash");
 #endif
 
+#ifdef CONFIG_CMD_FLASH_WP
 static int command_flash_wp(int argc, char **argv)
 {
 	int val;
@@ -1204,6 +1205,7 @@ DECLARE_CONSOLE_COMMAND(flashwp, command_flash_wp,
 			" | rb | norb"
 #endif
 			, "Modify flash write protect");
+#endif /* CONFIG_CMD_FLASH_WP */
 
 /*****************************************************************************/
 /* Host commands */
