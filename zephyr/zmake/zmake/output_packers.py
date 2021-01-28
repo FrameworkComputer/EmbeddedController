@@ -35,15 +35,15 @@ def _write_dts_file(dts_file, config_header, output_bin, ro_filename, rw_filenam
         pad-byte = <0x1d>;
         section@0 {{
           read-only;
-          offset = <CONFIG_CROS_EC_RO_MEM_OFF>;
-          size = <CONFIG_CROS_EC_RO_SIZE>;
+          offset = <CONFIG_PLATFORM_EC_PROTECTED_STORAGE_OFF>;
+          size = <CONFIG_PLATFORM_EC_PROTECTED_STORAGE_SIZE>;
           blob {{
             filename = "{ro_filename}";
           }};
         }};
         section@1 {{
-          offset = <CONFIG_CROS_EC_RW_MEM_OFF>;
-          size = <CONFIG_CROS_EC_RW_SIZE>;
+          offset = <CONFIG_PLATFORM_EC_WRITABLE_STORAGE_OFF>;
+          size = <CONFIG_PLATFORM_EC_WRITABLE_STORAGE_SIZE>;
           blob {{
             filename = "{rw_filename}";
           }};
