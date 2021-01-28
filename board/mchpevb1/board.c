@@ -88,10 +88,8 @@ static int smart_batt_temp;
 static int ds1624_temp;
 static int sb_temp(int idx, int *temp_ptr);
 static int ds1624_get_val(int idx, int *temp_ptr);
-#ifdef HAS_TASK_MOTIONSENSE
 static void board_spi_enable(void);
 static void board_spi_disable(void);
-#endif
 
 #ifdef CONFIG_BOARD_PRE_INIT
 /*
@@ -561,13 +559,11 @@ static void board_init(void)
 	/* Provide AC status to the PCH */
 	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
 
-#ifdef HAS_TASK_MOTIONSENSE
 	if (system_jumped_late() &&
 	    chipset_in_state(CHIPSET_STATE_ON)) {
 		trace0(0, BRD, 0, "board_init: S0 call board_spi_enable");
 		board_spi_enable();
 	}
-#endif
 
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
@@ -906,7 +902,6 @@ static void board_one_sec(void)
 }
 DECLARE_HOOK(HOOK_SECOND, board_one_sec, HOOK_PRIO_DEFAULT);
 
-#ifdef HAS_TASK_MOTIONSENSE
 /* Motion sensors */
 
 static struct mutex g_base_mutex;
@@ -1018,7 +1013,6 @@ static void board_spi_disable(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_spi_disable,
 	     MOTION_SENSE_HOOK_PRIO + 1);
-#endif /* defined(HAS_TASK_MOTIONSENSE) */
 
 #ifdef MEC1701_EVB_TACH_TEST /* PWM/TACH test */
 void tach0_isr(void)

@@ -43,8 +43,6 @@
 
 static int board_ver;
 
-#ifdef HAS_TASK_MOTIONSENSE
-
 /* Motion sensors */
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
@@ -193,8 +191,6 @@ struct motion_sensor_t icm426xx_base_gyro = {
 	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
 	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
 };
-
-#endif /* HAS_TASK_MOTIONSENSE */
 
 const struct power_signal_info power_signal_list[] = {
 	[X86_SLP_S3_N] = {

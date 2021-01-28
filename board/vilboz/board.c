@@ -46,8 +46,6 @@ void hdmi_hpd_interrupt(enum gpio_signal signal)
 
 #include "gpio_list.h"
 
-#ifdef HAS_TASK_MOTIONSENSE
-
 /* Motion sensors */
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
@@ -152,8 +150,6 @@ struct motion_sensor_t motion_sensors[] = {
 };
 
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-
-#endif /* HAS_TASK_MOTIONSENSE */
 
 /*
  * USB C0 port SBU mux use standalone FSUSB42UMX

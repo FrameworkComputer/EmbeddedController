@@ -43,8 +43,6 @@ int I2C_PORT_BATTERY = I2C_PORT_BATTERY_V1;
 
 #include "gpio_list.h"
 
-#ifdef HAS_TASK_MOTIONSENSE
-
 /* Motion sensors */
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
@@ -144,8 +142,6 @@ struct motion_sensor_t motion_sensors[] = {
 };
 
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-
-#endif /* HAS_TASK_MOTIONSENSE */
 
 /*****************************************************************************
  * Board suspend / resume

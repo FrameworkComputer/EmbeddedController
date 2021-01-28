@@ -56,8 +56,6 @@ static void board_gmr_tablet_switch_isr(enum gpio_signal signal);
 static bool support_aoz_ppc;
 static bool ignore_c1_dp;
 
-#ifdef HAS_TASK_MOTIONSENSE
-
 /* Motion sensors */
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
@@ -204,8 +202,6 @@ struct motion_sensor_t icm426xx_base_gyro = {
 	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
 	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
 };
-
-#endif /* HAS_TASK_MOTIONSENSE */
 
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = {

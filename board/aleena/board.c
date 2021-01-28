@@ -54,7 +54,6 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
-#ifdef HAS_TASK_MOTIONSENSE
 /* Motion sensors */
 static struct mutex icm426xx_mutex;
 
@@ -176,7 +175,6 @@ void board_update_sensor_config_from_sku(void)
 			       GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 }
-#endif
 
 static void board_kblight_init(void)
 {

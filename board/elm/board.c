@@ -448,7 +448,6 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-#ifdef HAS_TASK_MOTIONSENSE
 /* Motion sensors */
 /* Mutexes */
 static struct mutex g_kx022_mutex[2];
@@ -526,7 +525,6 @@ void lid_angle_peripheral_enable(int enable)
 	/* enable/disable touchpad */
 	gpio_set_level(GPIO_EN_TP_INT_L, !enable);
 }
-#endif /* defined(HAS_TASK_MOTIONSENSE) */
 
 uint16_t tcpc_get_alert_status(void)
 {
