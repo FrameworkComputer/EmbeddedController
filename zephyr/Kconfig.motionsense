@@ -97,21 +97,32 @@ config PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT
       Enable this to allow changing motion sensor count dynamically.
 
 config PLATFORM_EC_LID_ANGLE
-    bool "Lid Angle Sensor"
+    bool "Lid Angle"
     help
       Enable this to detect lid angle with two accelerometers. The andgle
       calculation requires the information about which sensor is on the lid
-      and which one is on the base. The calculated lid angle is used to
-      decide start/stop other peripherals like stop/start keyboard scanning.
+      and which one is on the base. The measured lid angle can be used for
+      tablet mode detection(refer "Tablet Mode below") and enabling/disabling
+      peripheral devices(refer "Lid Angle Update" below).
       # TODO(b/173507858): add more detail after .dts change
 
 if PLATFORM_EC_LID_ANGLE
+
+config PLATFORM_EC_LID_ANGLE_UPDATE
+    bool "Lid Angle Update"
+    help
+      Enable this to allow using the lid angle measurement to determine if
+      peripheral devices should be enabled or disabled, like key scanning,
+      trackpad interrupt.
 
 config PLATFORM_EC_TABLET_MODE
     bool "Tablet Mode"
     help
       Enable this for a device which can be a tablet as well as a clamshell.
-      Tablet mode detection is done with current lid angle.
+      Tablet mode detection is done either by using the lid angle measurement
+      or by the dedicated GMR sensor.
+
+if PLATFORM_EC_TABLET_MODE
 
 config PLATFORM_EC_GMR_TABLET_MODE
     bool "Giant Magnetoresistance(GMR) Tablet Mode"
@@ -121,6 +132,7 @@ config PLATFORM_EC_GMR_TABLET_MODE
       the sensor and direct its mapping to gmr_tablet_switch_isr
       in common/tablet_mode.c.
 
+endif # PLATFORM_EC_TABLET_MODE
 endif # PLATFORM_EC_LID_ANGLE
 
 rsource "Kconfig.sensor_devices"
