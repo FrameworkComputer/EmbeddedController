@@ -767,7 +767,7 @@ void update_soc_power_limit(void)
 	if (!extpower_is_present() || (active_power < 55)) {
 		/* Battery only or ADP < 55W */
 		pl2_watt = POWER_LIMIT_1_W;
-		pl4_watt = 50 - pps_power_budget;
+		pl4_watt = 70 - pps_power_budget;
 		psys_watt = 52 - pps_power_budget;
 	} else if (battery_percent < 30) {
 		/* ADP > 55W and Battery percentage < 30% */
@@ -778,7 +778,8 @@ void update_soc_power_limit(void)
 		/* ADP > 55W and Battery percentage >= 30% */
 		pl2_watt = 64;
 		pl4_watt = 121;
-		psys_watt = ((active_power * 95) / 100) - pps_power_budget;
+		/* psys watt = adp watt * 0.95 + battery watt(55 W) * 0.7 - pps power budget */
+		psys_watt = ((active_power * 95) / 100) + 39 - pps_power_budget;
 	}
 	if (pl2_watt != old_pl2_watt || pl4_watt != old_pl4_watt || psys_watt != old_psys_watt) {
 		old_psys_watt = psys_watt;
