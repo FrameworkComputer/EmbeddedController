@@ -38,6 +38,21 @@ static int raa489000_enter_low_power_mode(int port)
 	return tcpci_enter_low_power_mode(port);
 }
 
+/* Configure output current in the TCPC because it is controlling Vbus */
+int raa489000_set_output_current(int port, enum tcpc_rp_value rp)
+{
+	int regval;
+	int selected_cur = rp == TYPEC_RP_3A0 ?
+				RAA489000_VBUS_CURRENT_TARGET_3A :
+				RAA489000_VBUS_CURRENT_TARGET_1_5A;
+
+	regval = AC_CURRENT_TO_REG(selected_cur) +
+				selected_cur % (DEFAULT_R_AC/R_AC);
+
+	return tcpc_write16(port, RAA489000_VBUS_CURRENT_TARGET,
+				regval);
+}
+
 int raa489000_init(int port)
 {
 	int rv;
@@ -181,16 +196,9 @@ int raa489000_init(int port)
 		board_set_active_charge_port(port);
 	}
 
-	/* Check value according to current sense by project, set ceiling
-	 * value when it has remainder to avoid insufficient current.
+	/*
+	 * Set Vbus OCP UV here, PD tasks will set target current
 	 */
-	regval = AC_CURRENT_TO_REG(RAA489000_VBUS_CURRENT_TARGET_VALUE) +
-		RAA489000_VBUS_CURRENT_TARGET_VALUE % (DEFAULT_R_AC/R_AC);
-	rv = tcpc_write16(port, RAA489000_VBUS_CURRENT_TARGET,
-				regval);
-	if (rv)
-		CPRINTS("c%d: failed to set target current", port);
-
 	rv = tcpc_write16(port, RAA489000_VBUS_OCP_UV_THRESHOLD,
 				RAA489000_OCP_THRESHOLD_VALUE);
 	if (rv)

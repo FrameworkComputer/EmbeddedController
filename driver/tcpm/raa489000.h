@@ -6,6 +6,7 @@
  */
 
 #include "compile_time_macros.h"
+#include "usb_pd_tcpm.h"
 
 #ifndef __CROS_EC_USB_PD_TCPM_RAA489000_H
 #define __CROS_EC_USB_PD_TCPM_RAA489000_H
@@ -28,7 +29,8 @@
 #define RAA489000_TCPC_PWR_CNTRL	BIT(4)
 
 /* VBUS_CURRENT_TARGET */
-#define RAA489000_VBUS_CURRENT_TARGET_VALUE 0x61 /* 3.104A */
+#define RAA489000_VBUS_CURRENT_TARGET_3A	0x61 /* 3.104A */
+#define RAA489000_VBUS_CURRENT_TARGET_1_5A	0x30 /* 1.535A */
 
 /* VBUS_OCP_UV_THRESHOLD */
 /* Detect voltage level of overcurrent protection during Sourcing VBUS */
@@ -60,6 +62,19 @@
 
 /* PD_PHYSICAL_PARMETER_1 */
 #define PD_PHY_PARAM1_NOISE_FILTER_CNT_MASK (GENMASK(4, 0))
+
+/**
+ *
+ * Set output current limit on the TCPC.  Note, this chip also offers an OTG
+ * current level register in the charger i2c page but we must use the TCPC
+ * current limit because the TCPC is controlling Vbus.
+ *
+ * @param port	USB-C port number
+ * @param rp	Rp value for current limit (either 1.5A or 3A)
+ *
+ * @return	Zero if the current limit set was successful, non-zero otherwise
+ */
+int raa489000_set_output_current(int port, enum tcpc_rp_value rp);
 
 extern const struct tcpm_drv raa489000_tcpm_drv;
 
