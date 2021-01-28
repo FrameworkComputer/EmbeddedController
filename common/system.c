@@ -1556,39 +1556,6 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_BOARD_VERSION,
 		     EC_VER_MASK(0));
 #endif
 
-#ifdef CONFIG_HOSTCMD_VBNV_CONTEXT
-enum ec_status host_command_vbnvcontext(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_vbnvcontext *p = args->params;
-	struct ec_response_vbnvcontext *r;
-	int i;
-
-	switch (p->op) {
-	case EC_VBNV_CONTEXT_OP_READ:
-		r = args->response;
-		for (i = 0; i < EC_VBNV_BLOCK_SIZE; ++i)
-			if (system_get_bbram(SYSTEM_BBRAM_IDX_VBNVBLOCK0 + i,
-					     r->block + i))
-				return EC_RES_ERROR;
-		args->response_size = sizeof(*r);
-		break;
-	case EC_VBNV_CONTEXT_OP_WRITE:
-		for (i = 0; i < EC_VBNV_BLOCK_SIZE; ++i)
-			if (system_set_bbram(SYSTEM_BBRAM_IDX_VBNVBLOCK0 + i,
-					     p->block[i]))
-				return EC_RES_ERROR;
-		break;
-	default:
-		return EC_RES_ERROR;
-	}
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_VBNV_CONTEXT,
-		     host_command_vbnvcontext,
-		     EC_VER_MASK(EC_VER_VBNV_CONTEXT));
-#endif /* CONFIG_HOSTCMD_VBNV_CONTEXT */
-
 enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
 {
 	struct ec_params_reboot_ec p;

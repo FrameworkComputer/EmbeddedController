@@ -2192,9 +2192,6 @@
 /* Board supports RTC host commands */
 #undef CONFIG_HOSTCMD_RTC
 
-/* For access to VBNV on-EC battery-backed storage */
-#undef CONFIG_HOSTCMD_VBNV_CONTEXT
-
 /* EC controls the board's SKU ID and can report that to the AP */
 #undef CONFIG_HOSTCMD_SKUID
 
