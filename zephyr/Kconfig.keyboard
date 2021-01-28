@@ -21,6 +21,11 @@ if PLATFORM_EC_KEYBOARD
 
 choice "Protocol select"
 	prompt "Select the keyboard protocol to use"
+	help
+	  Select the keyboard protocol used to communicate key presses to the
+	  AP. PLATFORM_EC_KEYBOARD_PROTOCOL_8042 is supported by x86-compatible
+	  application processors, and PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP is
+	  used for ARM application processors.
 
 config PLATFORM_EC_KEYBOARD_PROTOCOL_8042
 	bool "i8042"
