@@ -182,7 +182,7 @@ void usb_mux_init(int port)
 	rv = configure_mux(port, USB_MUX_INIT, NULL);
 
 	if (rv == EC_SUCCESS)
-		flags[port] |= USB_MUX_FLAG_INIT;
+		atomic_or(&flags[port], USB_MUX_FLAG_INIT);
 
 	/*
 	 * Mux may fail initialization if it's not powered. Mark this port
