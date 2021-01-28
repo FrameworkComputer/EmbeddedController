@@ -78,6 +78,13 @@ static uint16_t product_id[CONFIG_USB_PD_PORT_MAX_COUNT];
 static bool ps8815_role_control_delay[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /*
+ * b/178664884, on PS8815, firmware revision 0x10 and older can report an
+ * incorrect value on the the CC lines. This flag controls when to apply
+ * the workaround.
+ */
+static bool ps8815_disable_rp_detect[CONFIG_USB_PD_PORT_MAX_COUNT];
+static bool ps8815_disconnected[CONFIG_USB_PD_PORT_MAX_COUNT];
+/*
  * timestamp of the next possible toggle to ensure the 2-ms spacing
  * between IRQ_HPD.
  */
@@ -406,6 +413,12 @@ static int ps8xxx_tcpc_drp_toggle(int port)
 	 */
 	if (product_id[port] == PS8805_PRODUCT_ID ||
 	    product_id[port] == PS8815_PRODUCT_ID) {
+		if (ps8815_disable_rp_detect[port]) {
+			CPRINTS("TCPC%d: rearm Rp disable detect on connect",
+				port);
+			ps8815_disconnected[port] = true;
+		}
+
 		/* Check CC_STATUS for the current pull */
 		rv = tcpc_read(port, TCPC_REG_CC_STATUS, &status);
 		if (status & TCPC_REG_CC_STATUS_CONNECT_RESULT_MASK) {
@@ -531,14 +544,37 @@ __maybe_unused static void ps8815_transmit_buffer_workaround_check(int port)
 	}
 }
 
+__maybe_unused static void ps8815_disable_rp_detect_workaround_check(int port)
+{
+	int val;
+	int rv;
+	int reg;
+
+	ps8815_disable_rp_detect[port] = false;
+	ps8815_disconnected[port] = true;
+
+	reg = get_reg_by_product(port, REG_FW_VER);
+	rv = tcpc_read(port, reg, &val);
+	if (rv != EC_SUCCESS)
+		return;
+
+	/*
+	 * RP detect is a problem in firmware version 0x10 and older.
+	 */
+	if (val <= 0x10)
+		ps8815_disable_rp_detect[port] = true;
+}
+
 static int ps8xxx_tcpm_init(int port)
 {
 	int status;
 
 	product_id[port] = board_get_ps8xxx_product_id(port);
 
-	if (IS_ENABLED(CONFIG_USB_PD_TCPM_PS8815))
+	if (IS_ENABLED(CONFIG_USB_PD_TCPM_PS8815)) {
 		ps8815_transmit_buffer_workaround_check(port);
+		ps8815_disable_rp_detect_workaround_check(port);
+	}
 
 	status = tcpci_tcpm_init(port);
 	if (status != EC_SUCCESS)
@@ -583,6 +619,23 @@ static int ps8751_get_gcc(int port, enum tcpc_cc_voltage_status *cc1,
 static int ps8xxx_tcpm_set_cc(int port, int pull)
 {
 	int rv;
+
+	/*
+	 * b/178664884: Before presenting Rp on initial connect, disable
+	 * internal function that checks Rp value. This is a workaround
+	 * in the PS8815 firmware that reports an incorrect value on the CC
+	 * lines.
+	 *
+	 * The PS8815 self-clears these bits.
+	 */
+	if (ps8815_disable_rp_detect[port] && ps8815_disconnected[port] &&
+	    pull == TYPEC_CC_RP) {
+		CPRINTS("TCPC%d: disable chip based Rp detect on connection",
+			port);
+		tcpc_write(port, PS8XXX_REG_RP_DETECT_CONTROL,
+			   RP_DETECT_DISABLE);
+		ps8815_disconnected[port] = false;
+	}
 
 	rv = tcpci_tcpm_set_cc(port, pull);
 
