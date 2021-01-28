@@ -146,40 +146,6 @@ int cypd_get_active_charging_port(void)
 
 	return active_port;
 }
-int cypd_get_adapter_power(int *voltage, int *current)
-{
-	int active_port;
-
-	active_port = cypd_get_active_charging_port();
-	if (!voltage  || !current) {
-		return EC_ERROR_INVAL;
-	}
-	if (active_port < 0) {
-		*voltage = *current = 0;
-	}
-	*voltage = pd_port_states[active_port].voltage;
-	*current = pd_port_states[active_port].current;
-	return EC_SUCCESS;
-}
-
-void cyp5525_update_charger(void)
-{
-
-	int voltage = 0;
-	int current = 0;
-	int active_port = cypd_get_active_charging_port();
-
-	cypd_get_adapter_power(&voltage, &current);
-
-	if (active_port >= 0) {
-		CPRINTS("Updating charger to active port %d",
-			active_port);
-		isl9241_set_ac_prochot(0, current);
-	} else {
-		CPRINTS("No usb-c input active. Not charging");
-	}
-
-}
 
 int cypd_write_reg_block(int controller, int reg, uint8_t *data, int len)
 {
@@ -445,14 +411,11 @@ void cyp5525_port_int(int controller, int port)
 						    0,
 						    0);
 
-		cyp5525_update_charger();
-
 		break;
 	case CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE");
 		/*todo we can probably clean this up to remove some of this*/
 		cyp5525_get_sink_power(controller, port);
-		cyp5525_update_charger();
 		break;
 	case CYPD_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT");
@@ -762,7 +725,7 @@ void cypd_interrupt_handler_task(void *p)
 		}
 		now = get_time();
 	}
-	cyp5525_update_charger();
+
 	CPRINTS("CYPD Finished setup");
 
 
@@ -945,9 +908,17 @@ int board_set_active_charge_port(int charge_port)
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	charge_ma = charge_ma * 95 /100;
+	int prochot_ma;
+
+	/* ac prochot should bigger than input current */
+	prochot_ma = charge_ma * 100 / 95;
+	charge_ma = charge_ma * 95 / 100;
+
 	charge_set_input_current_limit(MAX(charge_ma,
 				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	/* sync-up ac prochot with current change */
+	isl9241_set_ac_prochot(0, MAX(prochot_ma,
+					CONFIG_CHARGER_INPUT_CURRENT * 100 / 95));
 }
 
 void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int len)
