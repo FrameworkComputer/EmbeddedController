@@ -9,7 +9,7 @@ CHIP:=stm32
 CHIP_FAMILY:=stm32h7
 CHIP_VARIANT:=stm32h7x3
 
-board-rw=ro_workarounds.o
+board-rw=ro_workarounds.o fpsensor_detect_rw.o board_rw.o
 board-y=board.o fpsensor_detect.o
 
 # Do not build rsa test because this board uses RSA exponent 3 and the rsa test
