@@ -59,6 +59,15 @@ config ZEPHYR
 #
 # Please keep these in alphabetical order
 
+config PLATFORM_EC_BOOT_RAM_SIZE
+	hex "The total size required for the boot loader"
+	default 0x0
+	help
+	  This is the size (in bytes) required by the boot loader. It will count
+	  against the data section of the RAM. Not all chips require this value.
+	  See the datasheet for the npcx chip family for example. If not needed,
+	  this can simple be left at 0x0.
+
 config PLATFORM_EC_ACPI
 	bool "Enable the ACPI module"
 	default y if AP_X86 && PLATFORM_EC_ESPI
