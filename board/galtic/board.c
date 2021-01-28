@@ -476,14 +476,10 @@ __override void ocpc_get_pid_constants(int *kp, int *kp_div,
 
 __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 {
-	int current;
-
-	if (port < 0 || port > CONFIG_USB_PD_PORT_MAX_COUNT)
+	if (port < 0 || port > board_get_usb_pd_port_count())
 		return;
 
-	current = (rp == TYPEC_RP_3A0) ? 3000 : 1500;
-
-	charger_set_otg_current_voltage(port, current, 5000);
+	raa489000_set_output_current(port, rp);
 }
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
