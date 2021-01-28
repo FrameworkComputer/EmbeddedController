@@ -21,4 +21,6 @@
 #define PWM_CH_LED3_RED		NAMED_PWM(led3_red)
 #define PWM_CH_LED4_SIDESEL	NAMED_PWM(led3_sidesel)
 
+#define PWM_CH_KBLIGHT		NAMED_PWM(kblight)
+
 #endif /* __ZEPHYR_CHROME_PWM_MAP_H */

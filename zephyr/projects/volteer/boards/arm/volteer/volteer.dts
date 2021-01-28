@@ -80,6 +80,11 @@
 			label = "LED4_SIDESEL";
 			frequency = <2400>;
 		};
+		kblight {
+			pwms = <&pwm3 0 0>;
+			label = "KBLIGHT";
+			frequency = <2400>;
+		};
 	};
 
 	named-gpios {
@@ -505,6 +510,11 @@
 
 /* Blue LED */
 &pwm2 {
+	status = "okay";
+};
+
+/* Keyboard backlight */
+&pwm3 {
 	status = "okay";
 };
 
