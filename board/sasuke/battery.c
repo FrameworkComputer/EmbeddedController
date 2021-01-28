@@ -8,7 +8,9 @@
 #include "battery_fuel_gauge.h"
 #include "charge_state.h"
 #include "common.h"
+#include "util.h"
 
+#define CHARGING_CURRENT_REDUCE	4000
 /*
  * Battery info for all sasuke battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
@@ -58,7 +60,7 @@ const struct board_batt_params board_battery_info[] = {
 			}
 		},
 		.batt_info = {
-			.voltage_max            = 8860,
+			.voltage_max            = 8760,
 			.voltage_normal         = 7720, /* mV */
 			.voltage_min            = 6000, /* mV */
 			.precharge_current      = 200,  /* mA */
@@ -74,3 +76,36 @@ const struct board_batt_params board_battery_info[] = {
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SDI;
+
+int charger_profile_override(struct charge_state_data *curr)
+{
+	int current;
+	int voltage;
+
+	current = curr->requested_current;
+	voltage = curr->requested_voltage;
+
+	voltage -= 100;
+	if (current > CHARGING_CURRENT_REDUCE)
+		current -= (current / 10);
+
+	curr->requested_voltage = MIN(curr->requested_voltage, voltage);
+	curr->requested_current = MIN(curr->requested_current, current);
+
+	return 0;
+}
+
+/* Customs options controllable by host command. */
+#define PARAM_FASTCHARGE (CS_PARAM_CUSTOM_PROFILE_MIN + 0)
+
+enum ec_status charger_profile_override_get_param(uint32_t param,
+						  uint32_t *value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+						  uint32_t value)
+{
+	return EC_RES_INVALID_PARAM;
+}
