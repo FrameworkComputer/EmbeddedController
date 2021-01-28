@@ -5,3 +5,4 @@
 rsource "cros_bbram/Kconfig"
 rsource "cros_flash/Kconfig"
 rsource "cros_kb_raw/Kconfig"
+rsource "cros_system/Kconfig"

@@ -2,7 +2,4 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-add_subdirectory(cros_bbram)
-add_subdirectory(cros_flash)
-add_subdirectory(cros_kb_raw)
-add_subdirectory(cros_system)
+zephyr_library_sources_ifdef(CONFIG_CROS_SYSTEM_NPCX	cros_system_npcx.c)

@@ -1,0 +1,13 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig CROS_SYSTEM_NPCX
+	bool "Nuvoton NPCX cros system driver"
+	depends on SOC_FAMILY_NPCX
+	default y
+	help
+	  This option enables the cros system driver for the NPCX family of
+	  processors. Currently, Zephyr doesn't provide the system related API.
+	  The cros system driver provides the low-level driver related to
+	  chromium ec system functionality.
