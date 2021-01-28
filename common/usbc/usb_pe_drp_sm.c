@@ -6334,6 +6334,9 @@ static void pe_vcs_send_ps_rdy_swap_run(int port)
 		pe_set_ready_state(port);
 	}
 
+	if (pe_check_outgoing_discard(port))
+		return;
+
 	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
 		/* PS_RDY didn't send, soft reset */
