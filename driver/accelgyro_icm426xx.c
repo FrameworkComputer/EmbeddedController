@@ -658,27 +658,24 @@ out_unlock:
 static int icm426xx_set_offset(const struct motion_sensor_t *s,
 			       const int16_t *offset, int16_t temp)
 {
-	struct accelgyro_saved_data_t *data = ICM_GET_SAVED_DATA(s);
 	intv3_t v = { offset[X], offset[Y], offset[Z] };
 	int div1, div2;
 	int i;
 
-	/* unscale values and rotate back to chip frame */
-	for (i = X; i <= Z; ++i)
-		v[i] = SENSOR_APPLY_DIV_SCALE(v[i], data->scale[i]);
+	/* rotate back to chip frame */
 	rotate_inv(v, *s->rot_standard_ref, v);
 
 	/* convert raw data to hardware offset units */
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
-		/* hardware offset is 1/2048g by LSB */
-		div1 = s->current_range * 2048;
-		div2 = 32768;
+		/* hardware offset is 1/2048g /LSB, EC offset 1/1024g /LSB. */
+		div1 = 2;
+		div2 = 1;
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
-		/* hardware offset is 1/32dps by LSB */
-		div1 = s->current_range * 32;
-		div2 = 32768;
+		/* hardware offset is 1/32dps /LSB, EC offset 1/1024dps /LSB. */
+		div1 = 1;
+		div2 = 32;
 		break;
 	default:
 		return EC_ERROR_INVAL;
@@ -692,7 +689,6 @@ static int icm426xx_set_offset(const struct motion_sensor_t *s,
 static int icm426xx_get_offset(const struct motion_sensor_t *s, int16_t *offset,
 			       int16_t *temp)
 {
-	struct accelgyro_saved_data_t *data = ICM_GET_SAVED_DATA(s);
 	intv3_t v;
 	int div1, div2;
 	int i, ret;
@@ -704,14 +700,14 @@ static int icm426xx_get_offset(const struct motion_sensor_t *s, int16_t *offset,
 	/* transform offset to raw data */
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
-		/* hardware offset is 1/2048g by LSB */
-		div1 = 32768;
-		div2 = 2048 * s->current_range;
+		/* hardware offset is 1/2048g /LSB, EC offset 1/1024g /LSB. */
+		div1 = 1;
+		div2 = 2;
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
-		/* hardware offset is 1/32dps by LSB */
-		div1 = 32768;
-		div2 = 32 * s->current_range;
+		/* hardware offset is 1/32dps /LSB, EC offset 1/1024dps /LSB. */
+		div1 = 32;
+		div2 = 1;
 		break;
 	default:
 		return EC_ERROR_INVAL;
@@ -720,9 +716,6 @@ static int icm426xx_get_offset(const struct motion_sensor_t *s, int16_t *offset,
 		v[i] = round_divide(v[i] * div1, div2);
 
 	rotate(v, *s->rot_standard_ref, v);
-	for (i = X; i <= Z; i++)
-		v[i] = SENSOR_APPLY_SCALE(v[i], data->scale[i]);
-
 	offset[X] = v[X];
 	offset[Y] = v[Y];
 	offset[Z] = v[Z];
