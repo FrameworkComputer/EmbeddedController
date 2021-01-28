@@ -1,6 +1,6 @@
-
-# Copyright 2020 Google LLC
-# SPDX-License-Identifier: Apache-2.0
+# Copyright 2020 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
 
 # TODO(b/176828988): enable by default once the code can compile
 menuconfig CROS_FLASH_NPCX
