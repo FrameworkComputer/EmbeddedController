@@ -21,3 +21,4 @@ cscope.*
 *.pyc
 __pycache__
 *.egg-info
+.hypothesis/
