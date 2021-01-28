@@ -206,6 +206,7 @@ void baseboard_all_sys_pgood_interrupt(enum gpio_signal signal)
 		gpio_set_level(GPIO_ALL_SYS_PWRGD, 0);
 		gpio_set_level(GPIO_EN_VCCIO_EXT, 0);
 		gpio_set_level(GPIO_EC_AP_VCCST_PWRGD_OD, 0);
+		gpio_set_level(GPIO_EC_AP_PCH_PWROK_OD, 0);
 	}
 	/* Now chain off to the normal power signal interrupt handler. */
 	power_signal_interrupt(signal);
