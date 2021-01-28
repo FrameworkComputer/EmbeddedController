@@ -62,7 +62,7 @@ if HAS_TASK_CHIPSET
 
 config TASK_CHIPSET_STACK_SIZE
 	hex "Stack size"
-	default 0x200
+	default 0x400
 	help
 	  The stack size of the power button task.
 
@@ -81,7 +81,7 @@ if HAS_TASK_HOSTCMD
 
 config TASK_HOSTCMD_STACK_SIZE
 	hex "Stack size"
-	default 0x200
+	default 0x400
 	help
 	  The size of the host-command task stack.
 
@@ -157,7 +157,7 @@ if HAS_TASK_POWERBTN
 
 config TASK_POWERBTN_STACK_SIZE
 	hex "Stack size"
-	default 0x200
+	default 0x400
 	help
 	  The stack size of the power-button task.
 
@@ -215,7 +215,7 @@ if HAS_TASK_PD_INT_C0
 
 config TASK_PD_INT_STACK_SIZE
 	hex "Stack size"
-	default 0x200
+	default 0x400
 	help
 	  The stack size of the PD_Cn_INT tasks.
 
