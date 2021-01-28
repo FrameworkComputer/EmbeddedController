@@ -266,6 +266,12 @@ static int ctn730_init(struct pchg *ctx)
 	if (rv)
 		return rv;
 
+	/*
+	 * ctn730 isn't immediately ready for i2c write after normal mode
+	 * initialization (b:178096436).
+	 */
+	msleep(5);
+
 	/* WLC-host should send EVT_HOST_CTRL_RESET_EVT shortly. */
 	return EC_SUCCESS_IN_PROGRESS;
 }

@@ -296,7 +296,7 @@ static int pchg_run(struct pchg *ctx)
 	}
 
 	if (previous_state != ctx->state)
-		CPRINTS("->%s", _text_state(ctx->state));
+		CPRINTS("->STATE_%s", _text_state(ctx->state));
 
 	ctx->event = PCHG_EVENT_NONE;
 
@@ -357,12 +357,6 @@ void pchg_task(void *u)
 	struct pchg *ctx;
 	int p;
 	int rv;
-
-	/*
-	 * Without delay, after servo flash, ctn730 in RW always fails to write
-	 * ENABLE_CMD (b:176824601).
-	 */
-	msleep(50);
 
 	/* In case we arrive here after power-on (for late sysjump) */
 	if (chipset_in_state(CHIPSET_STATE_ON))
