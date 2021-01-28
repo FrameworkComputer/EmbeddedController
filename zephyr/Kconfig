@@ -32,6 +32,7 @@ menuconfig PLATFORM_EC
 if PLATFORM_EC
 
 rsource "Kconfig.battery"
+rsource "Kconfig.keyboard"
 rsource "Kconfig.led"
 rsource "Kconfig.powerseq"
 rsource "Kconfig.motionsense"
@@ -230,64 +231,6 @@ config PLATFORM_EC_MAPPED_STORAGE
 	  flash_physical_read().
 
 endif # PLATFORM_EC_FLASH
-
-menuconfig PLATFORM_EC_KEYBOARD
-	bool "Keyboard support"
-	select HAS_TASK_KEYSCAN
-	default n if ARCH_POSIX
-	default y
-	help
-	  Enable compilation of support for scanning a keyboard and providing
-	  the resulting input to the AP over the host interface. This consists
-	  of a keyboard-scanning task which provides key scans via it calling
-	  keyboard_state_changed() (for i8042) or its client calling
-	  keyboard_scan_get_state() (for MKBP).
-
-	  Enabling this automatically enables HAS_TASK_KEYSCAN since keyboard
-	  scanning must run in its own task.
-
-if PLATFORM_EC_KEYBOARD
-
-choice "Protocol select"
-	prompt "Select the keyboard protocol to use"
-
-config PLATFORM_EC_KEYBOARD_PROTOCOL_8042
-	bool "i8042"
-	select HAS_TASK_KEYPROTO
-	help
-	  Use the i8042 protocol to communicate with the AP. This dates from the
-	  Intel 8042 keyboard controller chip released in 1976. It uses two-way
-	  communication via a few 8-bit registers, allowing key codes to be
-	  sent to the AP when keys are pressed and released.
-
-	  See here for docs: https://wiki.osdev.org/%228042%22_PS/2_Controller
-
-endchoice # PLATFORM_EC_KEYBOARD
-
-config PLATFORM_EC_KEYBOARD_COL2_INVERTED
-	bool "A mechanism for passing KSO2 to H1 which inverts the signal"
-	help
-	  This option enables a mechanism for passing the column 2
-	  to H1 which inverts the signal. The signal passing through H1
-	  adds more delay. Need a larger delay value. Otherwise, pressing
-	  Refresh key will also trigger T key, which is in the next scanning
-	  column line. See http://b/156007029.
-
-config PLATFORM_EC_CONSOLE_CMD_KEYBOARD_8042
-	bool "Console command: i8042"
-	default y if PLATFORM_EC_KEYBOARD_PROTOCOL_8042
-	help
-	  This command prints the state of the i8042 keyboard protocol and
-	  includes the following subcommands:
-
-	    codeset	- Get/set keyboard codeset
-	    ctrlram	- Get/set keyboard controller RAM
-	    internal    - Show internal information
-	    kbd		- Print or toggle keyboard info
-	    kblog	- Print or toggle keyboard event log (current disabled)
-	    typematic	- Get/set typematic delays
-
-endif # PLATFORM_EC_KEYBOARD
 
 config PLATFORM_EC_HOOKS
 	bool "Hooks and deferred compatibility shim"
