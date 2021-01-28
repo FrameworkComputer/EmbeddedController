@@ -356,7 +356,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = I2C_PORT_SENSORS,
 	 .i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
 	 .rot_standard_ref = NULL, /* Identity matrix. */
-	 .default_range = 2, /* g, to meet CDD 7.3.1/C-1-4 reqs */
+	 .default_range = 2, /* g, enough to calculate lid angle. */
 	 .config = {
 		/* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S0] = {
@@ -385,7 +385,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .port = CONFIG_SPI_ACCEL_PORT,
 	 .i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
 	 .rot_standard_ref = &base_standard_ref,
-	 .default_range = 2,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
+	 .default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
 	 .min_frequency = BMI_ACCEL_MIN_FREQ,
 	 .max_frequency = BMI_ACCEL_MAX_FREQ,
 	 .config = {
