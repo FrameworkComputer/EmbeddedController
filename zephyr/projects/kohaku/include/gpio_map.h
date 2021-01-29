@@ -15,6 +15,7 @@
 #define GPIO_EN_A_RAILS			NAMED_GPIO(en_a_rails)
 #define GPIO_EN_PP5000_A		NAMED_GPIO(en_pp5000_a)
 #define GPIO_EN_PP5000			NAMED_GPIO(en_pp5000_a)
+#define GPIO_ENTERING_RW		NAMED_GPIO(entering_rw)
 #define GPIO_LID_OPEN			NAMED_GPIO(lid_open)
 #define GPIO_PCH_PWRBTN_L		NAMED_GPIO(pch_pwrbtn_l)
 #define GPIO_PCH_RSMRST_L		NAMED_GPIO(ec_pch_rsmrst_l)
@@ -27,6 +28,7 @@
 #define GPIO_PP5000_A_PG_OD		NAMED_GPIO(pp5000_a_pg_od)
 #define GPIO_RSMRST_L_PGOOD		NAMED_GPIO(pg_ec_rsmrst_l)
 #define GPIO_SYS_RESET_L		NAMED_GPIO(sys_reset_l)
+#define GPIO_WP_L			NAMED_GPIO(wp_l)
 
 /* Cometlake power sequencing requires this definition */
 #define PP5000_PGOOD_POWER_SIGNAL_MASK POWER_SIGNAL_MASK(X86_PP5000_A_PGOOD)
