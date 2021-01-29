@@ -96,6 +96,19 @@ static int nct38xx_init(int port)
 			   reg,
 			   MASK_SET);
 
+	if (rv)
+		return rv;
+
+	/* Enable full VCONN protection (Over-Current and Short-Circuit) */
+	reg = NCT38XX_REG_VBC_FAULT_CTL_VC_OCP_EN |
+	      NCT38XX_REG_VBC_FAULT_CTL_VC_SCP_EN |
+	      NCT38XX_REG_VBC_FAULT_CTL_FAULT_VC_OFF;
+
+	rv = tcpc_update8(port,
+			  NCT38XX_REG_VBC_FAULT_CTL,
+			  reg,
+			  MASK_SET);
+
 	return rv;
 }
 
