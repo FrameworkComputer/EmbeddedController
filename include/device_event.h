@@ -19,6 +19,8 @@ uint32_t device_get_events(void);
 /**
  * Set one or more device event bits.
  *
+ * Call device_clear_events to unset event bits.
+ *
  * @param mask          Event bits to set (use EC_DEVICE_EVENT_MASK()).
  */
 void device_set_events(uint32_t mask);

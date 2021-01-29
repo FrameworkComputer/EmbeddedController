@@ -42,6 +42,16 @@ void device_set_events(uint32_t mask)
 
 	if ((device_current_events & mask) != mask)
 		CPRINTS("device event set 0x%08x", mask);
+	else
+		/*
+		 * If no-op (1->1, 0->0), we don't notify the host. Host reads
+		 * & clears device_current_events atomically (by device_get_and
+		 * _clear_events). So, no-op means host has already been
+		 * notified but hasn't read it.
+		 * This API shouldn't be called for clear. So, it's ok to return
+		 * for 1->0 as well.
+		 */
+		return;
 
 	atomic_or(&device_current_events, mask);
 
