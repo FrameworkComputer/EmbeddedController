@@ -68,7 +68,7 @@ enum base_accelgyro_type {
 
 const mat33_fp_t base_standard_ref_icm426xx = {
 	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
+	{ FLOAT_TO_FP(1), 0, 0},
 	{ 0,  0, FLOAT_TO_FP(1)}
 };
 
