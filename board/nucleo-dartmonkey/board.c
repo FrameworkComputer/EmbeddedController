@@ -60,7 +60,7 @@ void fps_event(enum gpio_signal signal)
 #include "gpio_list.h"
 
 /* SPI devices */
-const struct spi_device_t spi_devices[] = {
+struct spi_device_t spi_devices[] = {
 	/* Fingerprint sensor (SCLK at 4Mhz) */
 	{ .port = CONFIG_SPI_FP_PORT, .div = 3, .gpio_cs = GPIO_SPI4_NSS }
 };
