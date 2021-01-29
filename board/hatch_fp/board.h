@@ -124,10 +124,10 @@
  *-------------------------------------------------------------------------*/
 
 #define CONFIG_CMD_FLASH
-#define CONFIG_CMD_SPI_XFER
 #define CONFIG_CMD_IDLE_STATS
 
 #ifdef SECTION_IS_RW
+#define CONFIG_CMD_SPI_XFER
 /* TODO(b/130249462): remove for release */
 #define CONFIG_CMD_FPSENSOR_DEBUG
 #endif

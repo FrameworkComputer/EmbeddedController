@@ -167,7 +167,10 @@
 #define CONFIG_RNG
 
 #define CONFIG_CMD_FLASH
+
+#ifdef SECTION_IS_RW
 #define CONFIG_CMD_SPI_XFER
+#endif
 
 #ifdef SECTION_IS_RW
 /*
