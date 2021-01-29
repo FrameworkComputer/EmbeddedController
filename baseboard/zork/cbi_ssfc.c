@@ -12,20 +12,25 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /* Cache SSFC on init since we don't expect it to change in runtime */
-static union zork_cbi_ssfc cached_ssfc;
-BUILD_ASSERT(sizeof(cached_ssfc) == sizeof(uint32_t));
+static uint32_t cached_ssfc;
 
 static void cbi_ssfc_init(void)
 {
-	if (cbi_get_ssfc(&cached_ssfc.raw_value) != EC_SUCCESS)
+	if (cbi_get_ssfc(&cached_ssfc) != EC_SUCCESS)
 		/* Default to 0 when CBI isn't populated */
-		cached_ssfc.raw_value = 0;
+		cached_ssfc = 0;
 
-	CPRINTS("Read CBI SSFC : 0x%04X", cached_ssfc.raw_value);
+	CPRINTS("Read CBI SSFC : 0x%04X", cached_ssfc);
 }
 DECLARE_HOOK(HOOK_INIT, cbi_ssfc_init, HOOK_PRIO_FIRST);
 
 enum ec_ssfc_base_gyro_sensor get_cbi_ssfc_base_sensor(void)
 {
-	return cached_ssfc.base_sensor;
+	return (cached_ssfc & SSFC_BASE_GYRO_MASK) >> SSFC_BASE_GYRO_OFFSET;
+}
+
+enum ec_ssfc_spkr_auto_mode get_cbi_ssfc_spkr_auto_mode(void)
+{
+	return (cached_ssfc & SSFC_SPKR_AUTO_MODE_MASK) >>
+	       SSFC_SPKR_AUTO_MODE_OFFSET;
 }
