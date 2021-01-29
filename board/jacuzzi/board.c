@@ -346,7 +346,7 @@ static const mat33_fp_t base_bmi160_ref = {
 
 static const mat33_fp_t base_icm426xx_ref = {
 	{0, FLOAT_TO_FP(-1), 0},
-	{FLOAT_TO_FP(-1), 0, 0},
+	{FLOAT_TO_FP(1), 0, 0},
 	{0, 0, FLOAT_TO_FP(1)}
 };
 
