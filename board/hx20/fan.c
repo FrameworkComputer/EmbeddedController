@@ -13,6 +13,8 @@
 #include "fan.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
+#include "host_command_customization.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
@@ -231,4 +233,22 @@ void fan_channel_setup(int ch, unsigned int flags)
 	}
 }
 
+/*****************************************************************************/
+/* Host commands */
 
+static enum ec_status
+hc_pwm_get_fan_actual_rpm(struct host_cmd_handler_args *args)
+{
+	struct ec_response_pwm_get_actual_fan_rpm *r = args->response;
+
+	if (FAN_CH_COUNT == 0)
+		return EC_ERROR_INVAL;
+
+	r->rpm = fan_get_rpm_actual(FAN_CH(0));
+	args->response_size = sizeof(*r);
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_FAN_ACTUAL_RPM,
+		     hc_pwm_get_fan_actual_rpm,
+		     EC_VER_MASK(0));

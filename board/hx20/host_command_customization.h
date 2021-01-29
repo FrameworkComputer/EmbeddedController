@@ -57,5 +57,10 @@ struct ec_params_factory_notified {
 	uint8_t flags;
 } __ec_align1;
 
+#define EC_CMD_PWM_GET_FAN_ACTUAL_RPM	0x3E04
+
+struct ec_response_pwm_get_actual_fan_rpm {
+	uint32_t rpm;
+} __ec_align4;
 
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */
