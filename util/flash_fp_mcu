@@ -75,6 +75,32 @@ get_uartid() {
   exit 1
 }
 
+# Usage: gpio <unexport|export|in|out|0|1> <signal> [signal...]
+gpio() {
+  local cmd="$1"
+  shift
+
+  for signal in "$@"; do
+    case "${cmd}" in
+      unexport|export)
+        echo "${signal}" > "/sys/class/gpio/${cmd}"
+        ;;
+      in|out)
+        local direction="${cmd}"
+        echo "${direction}" > "/sys/class/gpio/gpio${signal}/direction"
+        ;;
+      0|1)
+        local value="${cmd}"
+        echo "${value}" > "/sys/class/gpio/gpio${signal}/value"
+        ;;
+      *)
+        echo "Invalid gpio command: ${cmd}" >&2
+        exit 1
+        ;;
+    esac
+  done
+}
+
 # Taken verbatim from
 # https://chromium.googlesource.com/chromiumos/docs/+/master/lsb-release.md#shell
 # This should not be used by anything except get_platform_name.
@@ -195,9 +221,9 @@ flash_fp_mcu_stm32() {
 
   # Ensure the ACPI is not cutting power when unloading cros-ec-spi
   if [[ "${gpio_pwren}" -gt 0 ]]; then
-    echo "${gpio_pwren}" > /sys/class/gpio/export
-    echo "out" > "/sys/class/gpio/gpio${gpio_pwren}/direction"
-    echo 1 > "/sys/class/gpio/gpio${gpio_pwren}/value"
+    gpio export "${gpio_pwren}"
+    gpio out    "${gpio_pwren}"
+    gpio 1      "${gpio_pwren}"
   fi
 
   # Remove cros_fp if present
@@ -208,14 +234,12 @@ flash_fp_mcu_stm32() {
   fi
 
   # Configure the MCU Boot0 and NRST GPIOs
-  echo "${gpio_boot0}" > /sys/class/gpio/export
-  echo "out" > "/sys/class/gpio/gpio${gpio_boot0}/direction"
-  echo "${gpio_nrst}" > /sys/class/gpio/export
-  echo "out" > "/sys/class/gpio/gpio${gpio_nrst}/direction"
+  gpio export "${gpio_boot0}" "${gpio_nrst}"
+  gpio out    "${gpio_boot0}" "${gpio_nrst}"
 
   # Reset sequence to enter bootloader mode
-  echo 1 > "/sys/class/gpio/gpio${gpio_boot0}/value"
-  echo 0 > "/sys/class/gpio/gpio${gpio_nrst}/value"
+  gpio 1 "${gpio_boot0}"
+  gpio 0 "${gpio_nrst}"
   sleep 0.001
 
   if [[ "${transport}" == "UART" ]]; then
@@ -237,11 +261,11 @@ flash_fp_mcu_stm32() {
 
   for attempt in $(seq ${FLAGS_retries}); do
     # Reset sequence to enter bootloader mode
-    echo 0 > "/sys/class/gpio/gpio${gpio_nrst}/value"
+    gpio 0 "${gpio_nrst}"
     sleep 0.01
 
     # Release reset as the SPI bus is now ready
-    echo 1 > "/sys/class/gpio/gpio${gpio_nrst}/value"
+    gpio 1 "${gpio_nrst}"
 
     # Print out the actual underlying command we're running and run it
     echo "# ${cmd}"
@@ -262,16 +286,13 @@ flash_fp_mcu_stm32() {
   fi
 
   # Go back to normal mode
-  echo "out" > "/sys/class/gpio/gpio${gpio_nrst}/direction"
-  echo 0 > "/sys/class/gpio/gpio${gpio_boot0}/value"
-  echo 0 > "/sys/class/gpio/gpio${gpio_nrst}/value"
-  echo 1 > "/sys/class/gpio/gpio${gpio_nrst}/value"
+  gpio out "${gpio_nrst}"
+  gpio 0   "${gpio_boot0}" "${gpio_nrst}"
+  gpio 1   "${gpio_nrst}"
 
   # Give up GPIO control
-  echo "in" > "/sys/class/gpio/gpio${gpio_boot0}/direction"
-  echo "in" > "/sys/class/gpio/gpio${gpio_nrst}/direction"
-  echo "${gpio_boot0}" > /sys/class/gpio/unexport
-  echo "${gpio_nrst}" > /sys/class/gpio/unexport
+  gpio in       "${gpio_boot0}" "${gpio_nrst}"
+  gpio unexport "${gpio_boot0}" "${gpio_nrst}"
 
   # wait for FP MCU to come back up (including RWSIG delay)
   sleep 2
@@ -282,7 +303,7 @@ flash_fp_mcu_stm32() {
 
     # Kernel driver is back, we are no longer controlling power
     if [[ "${gpio_pwren}" -gt 0 ]]; then
-      echo "${gpio_pwren}" > /sys/class/gpio/unexport
+      gpio unexport "${gpio_pwren}"
     fi
   fi
 
