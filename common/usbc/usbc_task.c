@@ -39,6 +39,16 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+/*
+ * If CONFIG_ASSERT_CCD_MODE_ON_DTS_CONNECT is not defined then
+ * _GPIO_CCD_MODE_ODL is not needed. Declare as extern so IS_ENABLED will work.
+ */
+#ifndef CONFIG_ASSERT_CCD_MODE_ON_DTS_CONNECT
+extern int _GPIO_CCD_MODE_ODL;
+#else
+#define _GPIO_CCD_MODE_ODL GPIO_CCD_MODE_ODL
+#endif /* CONFIG_ASSERT_CCD_MODE_ON_DTS_CONNECT */
+
 static uint8_t paused[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void tc_pause_event_loop(int port)
@@ -78,6 +88,14 @@ static void pd_task_init(int port)
 	 */
 	if (IS_ENABLED(CONFIG_HAS_TASK_PD_INT))
 		schedule_deferred_pd_interrupt(port);
+
+	/*
+	 * GPIO_CCD_MODE_ODL must be initialized with GPIO_ODR_HIGH
+	 * when CONFIG_ASSERT_CCD_MODE_ON_DTS_CONNECT is enabled
+	 */
+	if (IS_ENABLED(CONFIG_ASSERT_CCD_MODE_ON_DTS_CONNECT))
+		ASSERT(gpio_get_default_flags(_GPIO_CCD_MODE_ODL) &
+		       GPIO_ODR_HIGH);
 }
 
 static int pd_task_timeout(int port)

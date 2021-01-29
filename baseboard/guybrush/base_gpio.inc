@@ -7,7 +7,7 @@
 
 /* GSC Signals */
 GPIO_INT(EC_WP_L,		PIN(5, 0), GPIO_INT_BOTH,			switch_interrupt)	/* Write Protect Enabled */
-GPIO(CCD_MODE_ODL,		PIN(C, 6), GPIO_INPUT)							/* Case Closed Debug Mode */
+GPIO(CCD_MODE_ODL,		PIN(C, 6), GPIO_ODR_HIGH)						/* Case Closed Debug Mode */
 GPIO(EC_GSC_PACKET_MODE,	PIN(B, 1), GPIO_OUT_LOW)						/* GSC Packet Mode */
 ALTERNATE(			PIN_MASK(6, BIT(4) | BIT(5)), 0,		MODULE_UART, 0) 	/* UART_EC_TX_GSC_DBG_RX_R, UART_GSC_DBG_TX_EC_RX_R */
 

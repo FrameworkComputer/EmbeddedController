@@ -5261,6 +5261,19 @@
 #undef CONFIG_ZEPHYR
 #endif
 
+/*
+ * Define the following to drive CCD_MODE_ODL when a DTS accessory is
+ * connected to the CCD USBC port.
+ *
+ * GPIO_CCD_MODE_ODL should be configured with GPIO_ODR_HIGH flag
+ */
+#undef CONFIG_ASSERT_CCD_MODE_ON_DTS_CONNECT
+
+/*
+ * The USB port used for CCD. Defaults to 0/C0.
+ */
+#define CONFIG_CCD_USBC_PORT_NUMBER	0
+
 /*****************************************************************************/
 /*
  * Include board and core configs, since those hold the CONFIG_ constants for a

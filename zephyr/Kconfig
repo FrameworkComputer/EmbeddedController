@@ -627,4 +627,17 @@ menuconfig PLATFORM_EC_WATCHDOG
 	  (PLATFORM_EC_WATCHDOG_PERIOD_MS -
 	  PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS).
 
+config PLATFORM_EC_ASSERT_CCD_MODE_ON_DTS_CONNECT
+	bool "Assert CCD Mode"
+	help
+	  Assert CCD_MODE_ODL when a DTS debug accessory is connected to the
+	  CCD USBC port. GPIO_CCD_MODE_ODL should be configured with
+	  GPIO_ODR_HIGH flag.
+
+config PLATFORM_EC_CCD_USBC_PORT_NUMBER
+	int "CCD USB Port Number"
+	default 0
+	help
+	  USB port number of the CCD enabled USBC port.
+
 endif # PLATFORM_EC
