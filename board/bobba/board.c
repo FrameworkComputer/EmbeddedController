@@ -157,7 +157,7 @@ const mat33_fp_t base_standard_ref = {
 };
 
 const mat33_fp_t base_icm_ref = {
-	{ FLOAT_TO_FP(1), 0,  0},
+	{ FLOAT_TO_FP(-1), 0,  0},
 	{ 0, FLOAT_TO_FP(-1), 0},
 	{ 0, 0,  FLOAT_TO_FP(1)}
 };
