@@ -37,6 +37,22 @@ DEFAULT_BOARD = BOARD_SERVO_V4
 BOARDS = [BOARD_C2D2, BOARD_SERVO_MICRO, BOARD_SERVO_V4, BOARD_SERVO_V4P1,
           BOARD_SWEETBERRY]
 
+# Servo firmware bundles four channels of firmware. We need to make sure the
+# user does not request a non-existing channel, so keep the lists around to
+# guard on command-line usage.
+
+DEFAULT_CHANNEL = STABLE_CHANNEL = 'stable'
+
+PREV_CHANNEL = 'prev'
+
+# The ordering here matters. From left to right it's the channel that the user
+# is most likely to be running. This is used to inform and warn the user if
+# there are issues. e.g. if the all channels are the same, we want to let the
+# user know they are running the 'stable' version before letting them know they
+# are running 'dev' or even 'alpah' which (while true) might cause confusion.
+
+CHANNELS = [DEFAULT_CHANNEL, PREV_CHANNEL, 'dev', 'alpha']
+
 DEFAULT_BASE_PATH = '/usr/'
 TEST_IMAGE_BASE_PATH = '/usr/local/'
 
@@ -211,7 +227,7 @@ def do_updater_version(tinys):
   raise ServoUpdaterException(
       "Can't determine updater target from vers: [%s]" % vers)
 
-def findfiles(cname, fname):
+def findfiles(cname, fname, channel=DEFAULT_CHANNEL):
   """Select config and firmware binary files.
 
   This checks default file names and paths.
@@ -221,6 +237,7 @@ def findfiles(cname, fname):
   Args:
     cname: board name, or config name. eg. "servo_v4" or "servo_v4.json"
     fname: firmware binary name. Can be None to try default.
+    channel: the channel requested for servo firmware. See |CHANNELS| above.
   Returns:
     cname, fname: validated filenames selected from the path.
   """
@@ -255,7 +272,7 @@ def findfiles(cname, fname):
       data = json.load(data_file)
     boardname = data['board']
 
-    binary_file = boardname + ".bin"
+    binary_file = '%s.%s.bin' % (boardname, channel)
     newname = os.path.join(firmware_path, binary_file)
     if os.path.isfile(newname):
       fname = newname
@@ -300,6 +317,9 @@ def main():
   parser.add_argument('-b', '--board', type=str,
                       help="Board configuration json file",
                       default=DEFAULT_BOARD, choices=BOARDS)
+  parser.add_argument('-c', '--channel', type=str,
+                      help="Firmware channel to use",
+                      default=DEFAULT_CHANNEL, choices=CHANNELS)
   parser.add_argument('-f', '--file', type=str,
                       help="Complete ec.bin file", default=None)
   parser.add_argument('--force', action="store_true",
@@ -311,7 +331,7 @@ def main():
 
   args = parser.parse_args()
 
-  brdfile, binfile = findfiles(args.board, args.file)
+  brdfile, binfile = findfiles(args.board, args.file, args.channel)
 
   serialno = args.serialno
 
