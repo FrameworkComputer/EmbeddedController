@@ -251,8 +251,26 @@ def _extract_version(boardname, binfile):
 
   return newvers
 
+def get_firmware_channel(bname, version):
+  """Find out which channel |version| for |bname| came from.
 
-def get_files_and_version(cname, fname, channel=DEFAULT_CHANNEL):
+  Args:
+    bname: board name
+    version: current version string
+
+  Returns:
+    one of the channel names if |version| came from one of those, or None
+  """
+  for channel in CHANNELS:
+    # Pass |bname| as cname to find the board specific file, and pass None as
+    # fname to ensure the default directory is searched
+    _, _, vers = get_files_and_version(bname, None, channel=channel)
+    if version == vers:
+      return channel
+  # None of the channels matched. This firmware is currently unknown.
+  return None
+
+def get_files_and_version(cname, fname=None, channel=DEFAULT_CHANNEL):
   """Select config and firmware binary files.
 
   This checks default file names and paths.
