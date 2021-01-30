@@ -32,6 +32,11 @@ BOARD_SWEETBERRY = 'sweetberry'
 
 DEFAULT_BOARD = BOARD_SERVO_V4
 
+# These lists are to facilitate exposing choices in the command-line tool
+# below.
+BOARDS = [BOARD_C2D2, BOARD_SERVO_MICRO, BOARD_SERVO_V4, BOARD_SERVO_V4P1,
+          BOARD_SWEETBERRY]
+
 DEFAULT_BASE_PATH = '/usr/'
 TEST_IMAGE_BASE_PATH = '/usr/local/'
 
@@ -255,7 +260,8 @@ def findfiles(cname, fname):
     if os.path.isfile(newname):
       fname = newname
     else:
-      raise ServoUpdaterException("Can't find firmware binary: %s." % binary_file)
+      raise ServoUpdaterException("Can't find firmware binary: %s." %
+                                  binary_file)
   elif not os.path.isfile(fname):
     # If a name is specified but not found, try the default path.
     newname = os.path.join(firmware_path, fname)
@@ -290,17 +296,18 @@ def find_available_version(boardname, binfile):
 def main():
   parser = argparse.ArgumentParser(description="Image a servo micro device")
   parser.add_argument('-s', '--serialno', type=str,
-      help="serial number to program", default=None)
+                      help="serial number to program", default=None)
   parser.add_argument('-b', '--board', type=str,
-      help="Board configuration json file", default=DEFAULT_BOARD)
+                      help="Board configuration json file",
+                      default=DEFAULT_BOARD, choices=BOARDS)
   parser.add_argument('-f', '--file', type=str,
-      help="Complete ec.bin file", default=None)
+                      help="Complete ec.bin file", default=None)
   parser.add_argument('--force', action="store_true",
-      help="Update even if version match", default=False)
+                      help="Update even if version match", default=False)
   parser.add_argument('-v', '--verbose', action="store_true",
-      help="Chatty output")
+                      help="Chatty output")
   parser.add_argument('-r', '--reboot', action="store_true",
-      help="Always reboot, even after probe.")
+                      help="Always reboot, even after probe.")
 
   args = parser.parse_args()
 
