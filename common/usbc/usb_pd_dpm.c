@@ -474,3 +474,16 @@ __overridable int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
 	*src_pdo = pd_src_pdo;
 	return pd_src_pdo_cnt;
 }
+
+int dpm_get_source_current(const int port)
+{
+	if (pd_get_power_role(port) == PD_ROLE_SINK)
+		return 0;
+
+	if (max_current_claimed & BIT(port))
+		return 3000;
+	else if (CONFIG_USB_PD_PULLUP == TYPEC_RP_1A5)
+		return 1500;
+	else
+		return 500;
+}

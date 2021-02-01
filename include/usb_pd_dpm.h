@@ -84,4 +84,12 @@ void dpm_remove_sink(int port);
  */
 int dpm_get_source_pdo(const uint32_t **src_pdo, const int port);
 
+/*
+ * Report offered source current for this port
+ *
+ * @param port		USB-C port number
+ * @return		Current offered, in mA
+ */
+int dpm_get_source_current(const int port);
+
 #endif  /* __CROS_EC_USB_DPM_H */
