@@ -82,7 +82,8 @@ should_check() {
 main() {
 
   # Do not run the check unless an EC_[xxx]CMD change is present.
-  if [[ -z "$(git diff "${PRESUBMIT_COMMIT}~" "${PRESUBMIT_COMMIT}" -U0 |
+  if [[ -z "$(git diff --no-ext-diff "${PRESUBMIT_COMMIT}~" \
+          "${PRESUBMIT_COMMIT}" -U0 |
       egrep 'EC_[^ ]*CMD')" ]]; then
     exit 0
   fi
