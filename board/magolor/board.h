@@ -25,12 +25,6 @@
 #undef CONFIG_CHIP_INIT_ROM_REGION
 #endif
 
-/*
- * Keep the system unlocked in early development.
- * TODO(b/151264302): Make sure to remove this before production!
- */
-#define CONFIG_SYSTEM_UNLOCKED
-
 /* Remove default commands to free flash space */
 #undef CONFIG_CMD_ACCELSPOOF
 #undef CONFIG_CMD_BATTFAKE
