@@ -414,7 +414,12 @@ static enum ec_status hc_pchg(struct host_cmd_handler_args *args)
 
 	ctx = &pchgs[port];
 
-	r->state = ctx->state;
+	if (ctx->state == PCHG_STATE_DETECTED
+			&& ctx->battery_percent >= ctx->cfg->full_percent)
+		r->state = PCHG_STATE_FULL;
+	else
+		r->state = ctx->state;
+
 	r->battery_percentage = ctx->battery_percent;
 	r->error = ctx->error;
 

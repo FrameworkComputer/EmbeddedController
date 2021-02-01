@@ -109,6 +109,8 @@ struct pchg_config {
 	const int i2c_port;
 	/* GPIO pin used for IRQ */
 	const enum gpio_signal irq_pin;
+	/* Full battery percentage */
+	const uint8_t full_percent;
 };
 
 /**
