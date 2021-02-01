@@ -215,6 +215,13 @@
 #define IT83XX_USBPD_CC_PIN_CONFIG  0x86
 #define IT83XX_USBPD_CC_PIN_CONFIG2 0x06
 
+/*
+ * Before disabling cc 5v tolerant, we need to make sure cc voltage
+ * detector is enabled and Vconn is dropped below 3.3v (>500us) to avoid
+ * the potential risk of voltage fed back into Vcore.
+ */
+#define IT83XX_USBPD_T_VCONN_BELOW_3_3V       500  /* us */
+
 #ifndef CONFIG_USB_PD_TCPM_ITE_ON_CHIP
 #define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT   0
 #endif
