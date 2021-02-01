@@ -63,8 +63,5 @@ int pd_set_power_supply_ready(int port)
 
 int pd_snk_is_vbus_provided(int port)
 {
-	int regval = 0;
-
-	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
-	return regval & TCPC_REG_POWER_STATUS_VBUS_PRES ? 1 : 0;
+	return pd_check_vbus_level(port, VBUS_PRESENT);
 }
