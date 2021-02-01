@@ -44,6 +44,10 @@
 
 /* Keyboard features */
 
+/* Keyboard backliht */
+#define CONFIG_PWM
+#define CONFIG_PWM_KBLIGHT
+
 /* Sensors */
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 /* BMI160 Base accel/gyro */
