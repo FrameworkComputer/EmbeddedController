@@ -12,7 +12,7 @@
 #include "baseboard.h"
 
 /* Optional features */
-#define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
+#undef CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 #ifndef BOARD_ELDRID_NPCX796
 /*
  * The RAM and flash size combination on the the NPCX797FC does not leave
