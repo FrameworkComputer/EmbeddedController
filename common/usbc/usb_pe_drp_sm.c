@@ -1642,9 +1642,13 @@ static bool source_dpm_requests(int port)
 	 * Ignore sink-specific request:
 	 *   DPM_REQUEST_NEW_POWER_LEVEL
 	 *   DPM_REQUEST_SOURCE_CAP
+	 *   DPM_REQUEST_FRS_DET_ENABLE
+	 *   DPM_REQURST_FRS_DET_DISABLE
 	 */
 	PE_CLR_DPM_REQUEST(port, DPM_REQUEST_NEW_POWER_LEVEL |
-			   DPM_REQUEST_SOURCE_CAP);
+				 DPM_REQUEST_SOURCE_CAP |
+				 DPM_REQUEST_FRS_DET_ENABLE |
+				 DPM_REQUEST_FRS_DET_DISABLE);
 
 	if (pe[port].dpm_request) {
 		uint32_t dpm_request = pe[port].dpm_request;
@@ -1751,13 +1755,38 @@ static bool sink_dpm_requests(int port)
 						DPM_REQUEST_NEW_POWER_LEVEL);
 			set_state_pe(port, PE_SNK_SELECT_CAPABILITY);
 			return true;
+		} else if (PE_CHK_DPM_REQUEST(port,
+					      DPM_REQUEST_FRS_DET_ENABLE)) {
+			if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
+			    IS_ENABLED(CONFIG_USB_PD_FRS)) {
+				int curr_limit = *pd_get_snk_caps(port)
+					& PDO_FIXED_FRS_CURR_MASK;
+
+				typec_set_source_current_limit(port,
+						curr_limit ==
+						PDO_FIXED_FRS_CURR_3A0_AT_5V ?
+						TYPEC_RP_3A0 : TYPEC_RP_1A5);
+				pe_set_frs_enable(port, 1);
+			}
+
+			/* Requires no state change, fall through to false */
+			PE_CLR_DPM_REQUEST(port, DPM_REQUEST_FRS_DET_ENABLE);
+		} else if (PE_CHK_DPM_REQUEST(port,
+					      DPM_REQUEST_FRS_DET_DISABLE)) {
+			if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
+			    IS_ENABLED(CONFIG_USB_PD_FRS))
+				pe_set_frs_enable(port, 0);
+
+			/* Requires no state change, fall through to false */
+			PE_CLR_DPM_REQUEST(port, DPM_REQUEST_FRS_DET_DISABLE);
 		} else if (common_src_snk_dpm_requests(port)) {
 			return true;
+		} else {
+			CPRINTF("Unhandled DPM Request %x received\n",
+				dpm_request);
+			PE_CLR_DPM_REQUEST(port, dpm_request);
 		}
 
-		CPRINTF("Unhandled DPM Request %x received\n",
-			dpm_request);
-		PE_CLR_DPM_REQUEST(port, dpm_request);
 		PE_CLR_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 	}
 	return false;
