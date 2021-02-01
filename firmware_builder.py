@@ -18,6 +18,7 @@ from google.protobuf import json_format
 
 from chromite.api.gen.chromite.api import firmware_pb2
 
+
 def build(opts):
     """Builds all EC firmware targets"""
     # TODO(b/169178847): Add appropriate metric information
@@ -25,7 +26,8 @@ def build(opts):
     with open(opts.metrics, 'w') as f:
         f.write(json_format.MessageToJson(metrics))
     subprocess.run(['make', 'buildall_only', '-j{}'.format(opts.cpus)],
-                   cwd=os.path.dirname(__file__), check=True)
+                   cwd=os.path.dirname(__file__),
+                   check=True)
 
 
 def test(opts):
@@ -37,18 +39,20 @@ def test(opts):
 
     # Verify all posix-based unit tests build and pass
     subprocess.run(['make', 'runtests', '-j{}'.format(opts.cpus)],
-                   cwd=os.path.dirname(__file__), check=True)
+                   cwd=os.path.dirname(__file__),
+                   check=True)
 
     # Verify compilation of the on-device unit test binaries.
     # TODO(b/172501728) These should build  for all boards, but they've bit
     # rotted, so we only build the ones that compile.
     subprocess.run(
         ['make', 'BOARD=bloonchipper', 'tests', '-j{}'.format(opts.cpus)],
-        cwd=os.path.dirname(__file__), check=True)
+        cwd=os.path.dirname(__file__),
+        check=True)
 
 
 def main(args):
-    """Builds and tests all of the EC targets and reports build metrics"""
+    """Builds and tests all of the EC targets and reports build metrics."""
     opts = parse_args(args)
 
     if not hasattr(opts, 'func'):
