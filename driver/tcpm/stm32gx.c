@@ -141,6 +141,12 @@ static int stm32gx_tcpm_reset_bist_type_2(int port)
 	return EC_SUCCESS;
 }
 
+enum ec_error_list stm32gx_tcpm_set_bist_test_mode(const int port,
+		const bool enable)
+{
+	return stm32gx_ucpd_set_bist_test_mode(port, enable);
+}
+
 const struct tcpm_drv stm32gx_tcpm_drv = {
 	.init			= &stm32gx_tcpm_init,
 	.release		= &stm32gx_tcpm_release,
@@ -158,4 +164,5 @@ const struct tcpm_drv stm32gx_tcpm_drv = {
 	.transmit		= &stm32gx_tcpm_transmit,
 	.get_chip_info		= &stm32gx_tcpm_get_chip_info,
 	.reset_bist_type_2	= &stm32gx_tcpm_reset_bist_type_2,
+	.set_bist_test_mode	= &stm32gx_tcpm_set_bist_test_mode,
 };

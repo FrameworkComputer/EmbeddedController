@@ -216,4 +216,16 @@ int stm32gx_ucpd_get_chip_info(int port, int live,
  */
 void ucpd_cc_detect_notify_enable(int enable);
 
+/**
+ * This function is used to enable/disable rx bist test mode in the ucpd
+ * driver. This mode is controlled at the PE layer. When this mode is enabled,
+ * the ucpd receiver will not pass BIST data messages to the protocol layer and
+ * only send GoodCRC replies.
+ *
+ * @param usbc_port -> USB-C Port number
+ * @param enable -> on/off control for rx bist mode
+ */
+enum ec_error_list stm32gx_ucpd_set_bist_test_mode(const int port,
+						   const bool enable);
+
 #endif /* __CROS_EC_UCPD_STM32GX_H */
