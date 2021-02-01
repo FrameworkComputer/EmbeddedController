@@ -54,17 +54,12 @@ class Zmake:
 
         self.logger = logging.getLogger(self.__class__.__name__)
 
-    def configure(self, project_dir, build_dir,
+    def configure(self, project_dir, build_dir=None,
                   version=None, zephyr_base=None, module_paths=None,
                   toolchain=None, ignore_unsupported_zephyr_version=False,
                   build_after_configure=False, test_after_configure=False,
                   bringup=False):
         """Set up a build directory to later be built by "zmake build"."""
-        # Make sure the build directory is clean.
-        if os.path.exists(build_dir):
-            self.logger.info("Clearing old build directory %s", build_dir)
-            shutil.rmtree(build_dir)
-
         project = zmake.project.Project(project_dir)
         if version:
             # Ignore the patchset.
@@ -85,6 +80,16 @@ class Zmake:
 
         if not module_paths:
             module_paths = zmake.modules.locate_modules(self.checkout, version)
+
+        # Resolve build_dir if needed.
+        build_dir = util.resolve_build_dir(
+            platform_ec_dir=module_paths['ec-shim'],
+            project_dir=project_dir,
+            build_dir=build_dir)
+        # Make sure the build directory is clean.
+        if os.path.exists(build_dir):
+            self.logger.info("Clearing old build directory %s", build_dir)
+            shutil.rmtree(build_dir)
 
         base_config = zmake.build_config.BuildConfig(
             environ_defs={'ZEPHYR_BASE': str(zephyr_base),

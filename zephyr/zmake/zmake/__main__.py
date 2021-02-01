@@ -84,7 +84,7 @@ def main(argv=None):
                            dest='bringup',
                            help='Enable bRingup debugging features')
     configure.add_argument('-B', '--build-dir', type=pathlib.Path,
-                           required=True, help='Build directory')
+                           help='Build directory')
     configure.add_argument('-b', '--build', action='store_true',
                            dest='build_after_configure',
                            help='Run the build after configuration')
