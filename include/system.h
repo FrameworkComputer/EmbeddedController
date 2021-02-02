@@ -378,13 +378,6 @@ __override_proto int board_write_mac_addr(const char *mac_addr);
  * not implemented.
  */
 enum system_bbram_idx {
-	SYSTEM_BBRAM_IDX_VBNVBLOCK0 = 0,
-	/*
-	 * ...
-	 * 16 total bytes of VB NVRAM.
-	 * ...
-	 */
-	SYSTEM_BBRAM_IDX_VBNVBLOCK15 = 15,
 	/* PD state for CONFIG_USB_PD_DUAL_ROLE uses one byte per port */
 	SYSTEM_BBRAM_IDX_PD0,
 	SYSTEM_BBRAM_IDX_PD1,
