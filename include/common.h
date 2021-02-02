@@ -472,8 +472,19 @@ enum ec_error_list {
  * This follows the same constraints as IS_ENABLED, the config option
  * should be defined to nothing or undefined.
  */
+#ifndef CONFIG_ZEPHYR
 #define STATIC_IF(option)						\
 	__cfg_select_build_assert(#option, option, static, extern)
+#else
+/*
+ * Version of STATIC_IF for Zephyr, with similar considerations to IS_ENABLED.
+ *
+ * Note, if __cfg_select fails, then we check using Zephyr's COND_CODE_1 macro
+ * to determine if the config option is enabled by Zephyr's definition.
+ */
+#define STATIC_IF(option) \
+	__cfg_select(option, static, COND_CODE_1(option, (static), (extern)))
+#endif /* CONFIG_ZEPHYR */
 
 /**
  * STATIC_IF_NOT is just like STATIC_IF, but makes the variable static
@@ -482,7 +493,16 @@ enum ec_error_list {
  * This is to assert that a variable will go unused with a certain
  * config option.
  */
+#ifndef CONFIG_ZEPHYR
 #define STATIC_IF_NOT(option)						\
 	__cfg_select_build_assert(#option, option, extern, static)
+#else
+/*
+ * Version of STATIC_IF_NOT for Zephyr, with similar considerations to STATIC_IF
+ * and IS_ENABLED.
+ */
+#define STATIC_IF_NOT(option) \
+	__cfg_select(option, extern, COND_CODE_1(option, (extern), (static)))
+#endif /* CONFIG_ZEPHYR */
 
 #endif  /* __CROS_EC_COMMON_H */
