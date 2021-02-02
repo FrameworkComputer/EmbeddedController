@@ -151,8 +151,8 @@ branch1...branch2 as needed):
 git log --left-right --graph --cherry-pick --oneline branch1...branch2
 ```
 
-For example, to see the difference between cros/main and the HEAD of the
-current branch:
+For example, to see the difference between cros/main and the HEAD of the current
+branch:
 
 ```bash
 git log --left-right --graph --cherry-pick --oneline cros/main...HEAD
