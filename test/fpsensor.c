@@ -111,7 +111,7 @@ void run_test(int argc, char **argv)
 	/* The transport type is cached in a static variable, so the tests
 	 * cannot be run back to back (without reboot).
 	 */
-	if (strncmp(argv[1], "uart", 4) == 0)
+	if (strncmp(argv[1], "uart", 4) == 0 && IS_ENABLED(BOARD_BLOONCHIPPER))
 		RUN_TEST(test_host_command_protocol_info_uart);
 	else if (strncmp(argv[1], "spi", 3) == 0)
 		RUN_TEST(test_host_command_protocol_info_spi);
