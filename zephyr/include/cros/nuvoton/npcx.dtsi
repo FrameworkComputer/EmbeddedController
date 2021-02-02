@@ -1,0 +1,74 @@
+/*
+ * Copyright (c) 2021 The Chromium OS Authors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+/ {
+
+	named-bbram-regions {
+		compatible = "named-bbram-regions";
+
+		scratchpad {
+			offset = <0x00>;
+			size = <0x04>;
+		};
+		saved-reset-flags {
+			offset = <0x04>;
+			size = <0x04>;
+		};
+		wake {
+			offset = <0x08>;
+			size = <0x04>;
+		};
+		pd0 {
+			offset = <0x0c>;
+			size = <0x01>;
+		};
+		pd1 {
+			offset = <0x0d>;
+			size = <0x01>;
+		};
+		try_slot {
+			offset = <0x0e>;
+			size = <0x01>;
+		};
+		pd2 {
+			offset = <0x0f>;
+			size = <0x01>;
+		};
+		ramlog {
+			offset = <0x20>;
+			size = <0x01>;
+		};
+		panic_flags {
+			offset = <0x23>;
+			size = <0x01>;
+		};
+		panic_bkup {
+			offset = <0x24>;
+			size = <0x1c>;
+		};
+		lct_time {
+			offset = <0x40>;
+			size = <0x04>;
+		};
+	};
+
+	soc {
+
+		bbram: bb-ram@400af000 {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			compatible = "nuvoton,npcx-cros-bbram";
+			status = "okay";
+			reg = <0x400af000 0x80
+			       0x400af100 0x1>;
+			reg-names = "memory", "status";
+			label = "BBRAM";
+		};
+	};
+
+};

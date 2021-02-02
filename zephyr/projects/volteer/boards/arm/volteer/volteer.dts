@@ -6,6 +6,7 @@
 
 /dts-v1/;
 
+#include <cros/nuvoton/npcx.dtsi>
 #include <dt-bindings/gpio_defines.h>
 #include <nuvoton/npcx7m6fb.dtsi>
 
@@ -431,15 +432,6 @@
 			size = <0x80000>;
 			label = "FLASH_INTERFACE_UNIT0";
 			pinctrl-0 = <>;
-		};
-
-		bbram: bb-ram@400af000 {
-			compatible = "nuvoton,npcx-cros-bbram";
-			status = "okay";
-			reg = <0x400af000 0x80
-			       0x400af100 0x1>;
-			reg-names = "memory", "status";
-			label = "BBRAM";
 		};
 	};
 

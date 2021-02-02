@@ -11,6 +11,11 @@
 #include "cros_version.h"
 #include "system.h"
 
+#define BBRAM_REGION_PD0	DT_PATH(named_bbram_regions, pd0)
+#define BBRAM_REGION_PD1	DT_PATH(named_bbram_regions, pd1)
+#define BBRAM_REGION_PD2	DT_PATH(named_bbram_regions, pd2)
+#define BBRAM_REGION_TRY_SLOT	DT_PATH(named_bbram_regions, try_slot)
+
 STATIC_IF_NOT(CONFIG_ZTEST) const struct device *bbram_dev;
 
 #if DT_NODE_EXISTS(DT_NODELABEL(bbram))
@@ -25,39 +30,46 @@ static int system_init(const struct device *unused)
 SYS_INIT(system_init, PRE_KERNEL_1, 50);
 #endif
 
-/* Return true if index is stored as a single byte in bbram */
-static int bbram_is_byte_access(enum bbram_data_index index)
+/* Map idx to a bbram offset/size, or return -1 on invalid idx */
+static int bbram_lookup(enum system_bbram_idx idx, int *offset_out,
+			int *size_out)
 {
-	return index == BBRM_DATA_INDEX_PD0 || index == BBRM_DATA_INDEX_PD1 ||
-	       index == BBRM_DATA_INDEX_PD2 ||
-	       index == BBRM_DATA_INDEX_PANIC_FLAGS;
-}
-
-/* Map idx to a returned BBRM_DATA_INDEX_*, or return -1 on invalid idx */
-static int bbram_idx_lookup(enum system_bbram_idx idx)
-{
-	if (idx == SYSTEM_BBRAM_IDX_PD0)
-		return BBRM_DATA_INDEX_PD0;
-	if (idx == SYSTEM_BBRAM_IDX_PD1)
-		return BBRM_DATA_INDEX_PD1;
-	if (idx == SYSTEM_BBRAM_IDX_PD2)
-		return BBRM_DATA_INDEX_PD2;
-	if (idx == SYSTEM_BBRAM_IDX_TRY_SLOT)
-		return BBRM_DATA_INDEX_TRY_SLOT;
-	return -1;
+	switch (idx) {
+	case SYSTEM_BBRAM_IDX_PD0:
+		*offset_out = DT_PROP(BBRAM_REGION_PD0, offset);
+		*size_out = DT_PROP(BBRAM_REGION_PD0, size);
+		break;
+	case SYSTEM_BBRAM_IDX_PD1:
+		*offset_out = DT_PROP(BBRAM_REGION_PD1, offset);
+		*size_out = DT_PROP(BBRAM_REGION_PD1, size);
+		break;
+	case SYSTEM_BBRAM_IDX_PD2:
+		*offset_out = DT_PROP(BBRAM_REGION_PD2, offset);
+		*size_out = DT_PROP(BBRAM_REGION_PD2, size);
+		break;
+	case SYSTEM_BBRAM_IDX_TRY_SLOT:
+		*offset_out = DT_PROP(BBRAM_REGION_TRY_SLOT, offset);
+		*size_out = DT_PROP(BBRAM_REGION_TRY_SLOT, size);
+		break;
+	default:
+		return EC_ERROR_INVAL;
+	}
+	return EC_SUCCESS;
 }
 
 int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 {
-	int bbram_idx = bbram_idx_lookup(idx);
-	int bytes, rc;
+	int offset, size, rc;
 
-	if (bbram_idx < 0 || bbram_dev == NULL)
+	if (bbram_dev == NULL)
 		return EC_ERROR_INVAL;
 
-	bytes = bbram_is_byte_access(bbram_idx) ? 1 : 4;
+	rc = bbram_lookup(idx, &offset, &size);
+	if (rc)
+		return rc;
+
 	rc = ((struct cros_bbram_driver_api *)bbram_dev->api)
-		     ->read(bbram_dev, bbram_idx, bytes, value);
+		     ->read(bbram_dev, offset, size, value);
 	return rc ? EC_ERROR_INVAL : EC_SUCCESS;
 }
 

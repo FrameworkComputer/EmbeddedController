@@ -5,6 +5,7 @@
 
 /dts-v1/;
 
+#include <cros/nuvoton/npcx.dtsi>
 #include <dt-bindings/gpio_defines.h>
 #include <nuvoton/npcx7m6fb.dtsi>
 
