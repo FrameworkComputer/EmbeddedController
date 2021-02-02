@@ -6394,6 +6394,17 @@ static void pe_vcs_cbl_send_soft_reset_run(int port)
 	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 		cable_soft_reset_complete = true;
+
+		/*
+		 * Note: If port partner runs PD 2.0, we must use PD 2.0 to
+		 * communicate with the cable plug when in an explicit contract.
+		 *
+		 * PD Spec Table 6-2: Revision Interoperability during an
+		 * Explicit Contract
+		 */
+		if (prl_get_rev(port, TCPC_TX_SOP) != PD_REV20)
+			prl_set_rev(port, TCPC_TX_SOP_PRIME,
+					PD_HEADER_REV(rx_emsg[port].header));
 	}
 
 	/* No GoodCRC received, cable is not present */
