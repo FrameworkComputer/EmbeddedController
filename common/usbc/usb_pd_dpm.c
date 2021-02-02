@@ -192,6 +192,8 @@ static void dpm_attempt_mode_entry(int port)
 		 */
 		return;
 	}
+
+#ifdef HAS_TASK_CHIPSET
 	/*
 	 * Do not try to enter mode while CPU is off.
 	 * CPU transitions (e.g b/158634281) can occur during the discovery
@@ -201,6 +203,7 @@ static void dpm_attempt_mode_entry(int port)
 	 */
 	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
 		return;
+#endif
 	/*
 	 * If discovery has not occurred for modes, do not attempt to switch
 	 * to alt mode.
