@@ -322,8 +322,8 @@ static const mat33_fp_t lid_standard_ref_bma255 = {
 };
 
 static const mat33_fp_t lid_standard_ref_kx022 = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
@@ -414,7 +414,7 @@ struct motion_sensor_t kx022_lid_accel = {
 	.mutex = &g_lid_mutex,
 	.drv_data = &g_kx022_data,
 	.port = I2C_PORT_SENSOR,
-	.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
+	.i2c_spi_addr_flags = KX022_ADDR0_FLAGS,
 	.rot_standard_ref = &lid_standard_ref_kx022,
 	.default_range = 2, /* g, enough for laptop. */
 	.min_frequency = KX022_ACCEL_MIN_FREQ,
