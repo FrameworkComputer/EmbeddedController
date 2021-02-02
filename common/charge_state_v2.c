@@ -849,6 +849,11 @@ static void update_dynamic_battery_info(void)
 		 */
 		if (curr.batt.remaining_capacity == 0 && !curr.batt_is_charging)
 			*memmap_cap = 1;
+#ifdef CONFIG_EMI_REGION1
+		/* Avoid to show the percentage when battery fully charge */
+		else if (curr.ac && (curr.batt.status & STATUS_FULLY_CHARGED))
+			*memmap_cap = curr.batt.full_capacity;
+#endif
 		else
 			*memmap_cap = curr.batt.remaining_capacity;
 	}
