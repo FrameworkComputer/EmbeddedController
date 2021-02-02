@@ -82,14 +82,8 @@ void bkpdata_write_reset_flags(uint32_t save_flags)
 	if (!gpio_get_level(GPIO_WP))
 		save_flags |= FORGE_PORFLAG_FLAGS;
 
-#ifdef CONFIG_STM32_RESET_FLAGS_EXTENDED
 	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags & 0xffff);
 	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS_2, save_flags >> 16);
-#else
-	/* Reset flags are 32-bits, but BBRAM entry is only 16 bits. */
-	ASSERT(!(save_flags >> 16));
-	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags);
-#endif
 }
 
 /*

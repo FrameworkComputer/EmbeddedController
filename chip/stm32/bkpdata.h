@@ -15,26 +15,10 @@
 /* We use 16-bit BKP / BBRAM entries. */
 #define STM32_BKP_ENTRIES (STM32_BKP_BYTES / 2)
 
-/*
- * Use 32-bit for reset flags, if we have space for it:
- *  - 2 indexes are used unconditionally (SCRATCHPAD and SAVED_RESET_FLAGS)
- *  - VBNV_CONTEXT requires 8 indexes, so a total of 10 (which is the total
- *    number of entries on some STM32 variants).
- *  - Other config options are not a problem (they only take a few entries)
- *
- * Given this, we can only add an extra entry for the top 16-bit of reset flags
- * if VBNV_CONTEXT is not enabled, or if we have more than 10 entries.
- */
-#if !defined(CONFIG_HOSTCMD_VBNV_CONTEXT) || STM32_BKP_ENTRIES > 10
-#define CONFIG_STM32_RESET_FLAGS_EXTENDED
-#endif
-
 enum bkpdata_index {
 	BKPDATA_INDEX_SCRATCHPAD,	     /* General-purpose scratchpad */
 	BKPDATA_INDEX_SAVED_RESET_FLAGS,     /* Saved reset flags */
-#ifdef CONFIG_STM32_RESET_FLAGS_EXTENDED
 	BKPDATA_INDEX_SAVED_RESET_FLAGS_2,   /* Saved reset flags (cont) */
-#endif
 #ifdef CONFIG_SOFTWARE_PANIC
 	BKPDATA_INDEX_SAVED_PANIC_REASON,    /* Saved panic reason */
 	BKPDATA_INDEX_SAVED_PANIC_INFO,      /* Saved panic data */
