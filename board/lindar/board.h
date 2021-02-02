@@ -50,6 +50,8 @@
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
 
+#undef CONFIG_USB_PD_TCPM_TUSB422
+
 /*
  * SN5S30 PPC supports up to 24V VBUS source and sink, however passive USB-C
  * cables only support up to 60W.
