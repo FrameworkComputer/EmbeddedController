@@ -716,38 +716,48 @@ void prl_run(int port, int evt, int en)
 			break;
 		}
 
-		/* Run Protocol Layer Message Reception */
-		prl_rx_wait_for_phy_message(port, evt);
-
-		if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES)) {
-			/*
-			 * Run RX Chunked state machine after prl_rx. This is
-			 * what informs the PE of incoming message. Its input
-			 * is prl_rx
-			 */
-			run_state(port, &rch[port].ctx);
-
-			/*
-			 * Run TX Chunked state machine before prl_tx in case
-			 * we need to split an extended message and prl_tx can
-			 * send it for us
-			 */
-			run_state(port, &tch[port].ctx);
-		}
-
-		/* Run Protocol Layer Message Transmission state machine */
-		run_state(port, &prl_tx[port].ctx);
-
-		if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES))
-			/*
-			 * Run TX Chunked state machine again after prl_tx so
-			 * we can handle passing TX_COMPLETE (or failure) up
-			 * to PE in a single iteration.
-			 */
-			run_state(port, &tch[port].ctx);
-
 		/* Run Protocol Layer Hard Reset state machine */
 		run_state(port, &prl_hr[port].ctx);
+
+		/*
+		 * If the Hard Reset state machine is active, then there is no
+		 * need to execute any other PRL state machines. When the hard
+		 * reset is complete, all PRL state machines will have been
+		 * reset.
+		 */
+		if (prl_hr_get_state(port) == PRL_HR_WAIT_FOR_REQUEST) {
+
+			/* Run Protocol Layer Message Reception */
+			prl_rx_wait_for_phy_message(port, evt);
+
+
+			if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES)) {
+				/*
+				 * Run RX Chunked state machine after prl_rx.
+				 * This is what informs the PE of incoming
+				 * message. Its input is prl_rx
+				 */
+				run_state(port, &rch[port].ctx);
+
+				/*
+				 * Run TX Chunked state machine before prl_tx
+				 * in case we need to split an extended message
+				 * and prl_tx can send it for us
+				 */
+				run_state(port, &tch[port].ctx);
+			}
+
+			/* Run Protocol Layer Message Tx state machine */
+			run_state(port, &prl_tx[port].ctx);
+
+			if (IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES))
+				/*
+				 * Run TX Chunked state machine again after
+				 * prl_tx so we can handle passing TX_COMPLETE
+				 * (or failure) up to PE in a single iteration.
+				 */
+				run_state(port, &tch[port].ctx);
+		}
 		break;
 	}
 }
@@ -1231,6 +1241,25 @@ static void prl_tx_snk_pending_run(const int port)
 }
 
 /* Hard Reset Operation */
+void prl_hr_send_msg_to_phy(const int port)
+{
+	/* Header is not used for hard reset */
+	const uint32_t header = 0;
+
+	pdmsg[port].xmit_type = TCPC_TX_HARD_RESET;
+
+	/*
+	 * These flags could be set if this function is called before the
+	 * Policy Engine is informed of the previous transmission. Clear the
+	 * flags so that this message can be sent.
+	 */
+	prl_tx[port].xmit_status = TCPC_TX_UNSET;
+	PDMSG_CLR_FLAG(port, PRL_FLAGS_TX_COMPLETE);
+
+	/* Pass message to PHY Layer */
+	tcpm_transmit(port, pdmsg[port].xmit_type, header,
+		      pdmsg[port].tx_chk_buf);
+}
 
 static void prl_hr_wait_for_request_entry(const int port)
 {
@@ -1303,8 +1332,11 @@ static void prl_hr_reset_layer_run(const int port)
 	 * Hard Reset was initiated by Policy Engine
 	 */
 	if (PRL_HR_CHK_FLAG(port, PRL_FLAGS_PE_HARD_RESET)) {
-		/* Request PHY to perform a Hard Reset */
-		prl_send_ctrl_msg(port, TCPC_TX_HARD_RESET, 0);
+		/*
+		 * Request PHY to perform a Hard Reset. Note
+		 * PRL_HR_Request_Reset state is embedded here.
+		 */
+		prl_hr_send_msg_to_phy(port);
 		set_state_prl_hr(port, PRL_HR_WAIT_FOR_PHY_HARD_RESET_COMPLETE);
 	}
 	/*
