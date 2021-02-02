@@ -1,0 +1,7 @@
+# Here you can place files of interest to be included in the commit message for
+# merge commits to firmware-dedede-13606.B
+common/ocpc.c
+driver/charger/sm5803.*
+driver/charger/isl923x.*
+driver/tcpm/raa489000.*
+driver/tcpm/it83*
