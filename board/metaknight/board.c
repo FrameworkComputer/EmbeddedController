@@ -222,6 +222,40 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
+const static struct ec_thermal_config thermal_a = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+};
+
+const static struct ec_thermal_config thermal_b = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+};
+
+struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
+
+static void setup_thermal(void)
+{
+	thermal_params[TEMP_SENSOR_1] = thermal_a;
+	thermal_params[TEMP_SENSOR_2] = thermal_b;
+}
+
 /* Enable HDMI any time the SoC is on */
 static void hdmi_enable(void)
 {
@@ -669,6 +703,9 @@ void board_init(void)
 		ccprints("LID_ACCEL is KX022");
 	} else
 		ccprints("LID_ACCEL is BMA253");
+
+	/* Initial thermal */
+	setup_thermal();
 
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
