@@ -9,7 +9,7 @@ The Chromium OS project includes open source software for embedded controllers
 lightweight, multitasking OS with modules for power sequencing, keyboard
 control, thermal control, battery charging, and verified boot. The EC software
 is written in C and supports
-[a variety of micro-controllers](https://chromium.googlesource.com/chromiumos/platform/ec/+/master/chip/).
+[a variety of micro-controllers](https://chromium.googlesource.com/chromiumos/platform/ec/+/main/chip/).
 
 This document is a guide to help make you familiar with the EC code, current
 features, and the process for submitting code patches.
@@ -117,7 +117,7 @@ Each Chrome device has a firmware branch created when the read-only firmware is
 locked down prior to launch. This is done so that updates can be made to the
 read-write firmware with a minimal set of changes from the read-only. Some
 Chrome devices only have build targets on firmware branches and not on
-cros/master. Run “`git branch -a | grep firmware`” to locate the firmware branch
+cros/main. Run “`git branch -a | grep firmware`” to locate the firmware branch
 for your board. Note that for devices still under development, the board
 configuration may be on the branch for the platform reference board.
 
@@ -151,11 +151,11 @@ branch1...branch2 as needed):
 git log --left-right --graph --cherry-pick --oneline branch1...branch2
 ```
 
-For example, to see the difference between cros/master and the HEAD of the
+For example, to see the difference between cros/main and the HEAD of the
 current branch:
 
 ```bash
-git log --left-right --graph --cherry-pick --oneline cros/master...HEAD
+git log --left-right --graph --cherry-pick --oneline cros/main...HEAD
 
 # Note: Use three dots “...” or it won’t work!
 ```
@@ -205,7 +205,7 @@ The generated EC binary from emerge is found at:
 ```
 
 The ebuild file used by Chromium OS is found
-[here](https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/master/chromeos-base/chromeos-ec/chromeos-ec-9999.ebuild):
+[here](https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/main/chromeos-base/chromeos-ec/chromeos-ec-9999.ebuild):
 
 ```bash
 (chroot) $ ~/trunk/src/third_party/chromiumos-overlay/chromeos-base/chromeos-ec/chromeos-ec-9999.ebuild
@@ -288,7 +288,7 @@ This turns on the following flags:
 *   `GBB_FLAG_DISABLE_EC_SOFTWARE_SYNC`
 
 The `GBB` (Google Binary Block) flags are defined in the
-[vboot_reference source](https://chromium.googlesource.com/chromiumos/platform/vboot_reference/+/master/firmware/include/gbb_header.h).
+[vboot_reference source](https://chromium.googlesource.com/chromiumos/platform/vboot_reference/+/main/firmware/2lib/include/2struct.h).
 A varying subset of these flags are implemented and/or relevant for any
 particular board.
 
@@ -389,7 +389,7 @@ in priority order if more than one callback needs to be run. There are also
 hooks for running functions periodically: `HOOK_TICK` (fires every
 `HOOK_TICK_INVERVAL` ms which varies by EC chip) and `HOOK_SECOND`. See
 hook_type in
-[include/hooks.h](https://chromium.googlesource.com/chromiumos/platform/ec/+/master/include/hooks.h)
+[include/hooks.h](https://chromium.googlesource.com/chromiumos/platform/ec/+/main/include/hooks.h)
 for a complete list.
 
 ### Deferred Functions
@@ -430,7 +430,7 @@ void some_interrupt(enum gpio_signal signal)
 While there is no heap, there is a shared memory buffer that can be borrowed
 temporarily (ideally before a context switch). The size of the buffer depends on
 the EC chip being used. The buffer can only be used by one task at a time. See
-[common/shared_mem.c](https://chromium.googlesource.com/chromiumos/platform/ec/+/master/common/shared_mem.c)
+[common/shared_mem.c](https://chromium.googlesource.com/chromiumos/platform/ec/+/main/common/shared_mem.c)
 for more information. At present (May 2014), this buffer is only used by debug
 commands.
 
@@ -461,7 +461,7 @@ Other style notes:
     not use globals to pass information between modules without accessors. For
     module scope, accessors are not needed.
 1.  If you add a new `#define` config option to the code, please document it in
-    [include/config.h](https://chromium.googlesource.com/chromiumos/platform/ec/+/master/include/config.h)
+    [include/config.h](https://chromium.googlesource.com/chromiumos/platform/ec/+/main/include/config.h)
     with an `#undef` statement and descriptive comment.
 1.  The Chromium copyright header must be included at the top of new files in
     all contributions to the Chromium project:
@@ -606,8 +606,8 @@ If the version is: `rambi_v1.6.68-a6608c8`:
 
 The branch numbers (as of May 2014) are:
 
-*   v1.0.0 cros/master
-*   v1.1.0 cros/master
+*   v1.0.0 cros/main
+*   v1.1.0 cros/main
 *   v1.2.0 cros/firmware-link-2695.2.B
 *   v1.3.0 cros/firmware-snow-2695.90.B
 *   v1.4.0 cros/firmware-skate-3824.129.B
