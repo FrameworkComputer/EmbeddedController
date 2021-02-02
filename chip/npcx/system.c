@@ -82,13 +82,10 @@ void system_watchdog_reset(void)
 /* Return true if index is stored as a single byte in bbram */
 static int bbram_is_byte_access(enum bbram_data_index index)
 {
-	return (index >= BBRM_DATA_INDEX_VBNVCNTXT &&
-		index <  BBRM_DATA_INDEX_RAMLOG)
-		|| index == BBRM_DATA_INDEX_PD0
-		|| index == BBRM_DATA_INDEX_PD1
-		|| index == BBRM_DATA_INDEX_PD2
-		|| index == BBRM_DATA_INDEX_PANIC_FLAGS
-	;
+	return index == BBRM_DATA_INDEX_PD0 ||
+	       index == BBRM_DATA_INDEX_PD1 ||
+	       index == BBRM_DATA_INDEX_PD2 ||
+	       index == BBRM_DATA_INDEX_PANIC_FLAGS;
 }
 
 /* Check and clear BBRAM status on any reset */
@@ -183,10 +180,6 @@ static int bbram_data_write(enum bbram_data_index index, uint32_t value)
 /* Map idx to a returned BBRM_DATA_INDEX_*, or return -1 on invalid idx */
 static int bbram_idx_lookup(enum system_bbram_idx idx)
 {
-	if (idx >= SYSTEM_BBRAM_IDX_VBNVBLOCK0 &&
-	    idx <= SYSTEM_BBRAM_IDX_VBNVBLOCK15)
-		return BBRM_DATA_INDEX_VBNVCNTXT +
-		       idx - SYSTEM_BBRAM_IDX_VBNVBLOCK0;
 	if (idx == SYSTEM_BBRAM_IDX_PD0)
 		return BBRM_DATA_INDEX_PD0;
 	if (idx == SYSTEM_BBRAM_IDX_PD1)
@@ -1099,8 +1092,6 @@ const char *system_get_chip_revision(void)
 
 	return rev;
 }
-
-BUILD_ASSERT(BBRM_DATA_INDEX_VBNVCNTXT + EC_VBNV_BLOCK_SIZE <= NPCX_BBRAM_SIZE);
 
 /**
  * Set a scratchpad register to the specified value.
