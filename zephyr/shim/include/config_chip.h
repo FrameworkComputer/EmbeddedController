@@ -21,6 +21,33 @@
 #define CONFIG_ZEPHYR
 #define CHROMIUM_EC
 
+/*
+ * Obsolete configs - these are options that are not needed, either because
+ * Zephyr features directly replace the option, or because the config option
+ * will not be used with Zephyr OS.
+ */
+
+/*
+ * ROM resident support. The ROM resident capabilities in the Chromium OS
+ * code are used with EC chipsets that provide more flash space than
+ * executable RAM. These options allow storing the initialized data into
+ * an unused area of flash where it is copied directly from flash into data
+ * RAM by the early boot code.
+ *
+ * When ROM resident is disabled, the initialized data is stored in the main
+ * image, copied from flash to executable RAM by the chip boot loader, and
+ * then copied from executable RAM to data RAM by the early boot code.
+ *
+ * Supporting this under Zephyr would require linker changes to the common
+ * Zephyr linking.
+ */
+#undef CONFIG_CHIP_DATA_IN_INIT_ROM
+#undef CONFIG_CHIP_INIT_ROM_REGION
+#undef CONFIG_RO_ROM_RESIDENT_MEM_OFF
+#undef CONFIG_RO_ROM_RESIDENT_SIZE
+#undef CONFIG_RW_ROM_RESIDENT_MEM_OFF
+#undef CONFIG_RW_ROM_RESIDENT_SIZE
+
 /* EC chipset configuration */
 #define HOOK_TICK_INTERVAL	CONFIG_CROS_EC_HOOK_TICK_INTERVAL
 
