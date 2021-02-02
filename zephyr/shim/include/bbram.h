@@ -25,8 +25,6 @@ enum bbram_data_index {
 	BBRM_DATA_INDEX_TRY_SLOT = 14,
 	/** USB-PD saved port2 state */
 	BBRM_DATA_INDEX_PD2 = 15,
-	/** VbNvContext for ARM arch */
-	BBRM_DATA_INDEX_VBNVCNTXT = 16,
 	/** RAM log for Booter */
 	BBRM_DATA_INDEX_RAMLOG = 32,
 	/** Flag to indicate validity of panic data starting at index 36. */
