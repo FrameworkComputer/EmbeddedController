@@ -1775,7 +1775,15 @@ struct ec_response_flash_region_info {
 	uint32_t size;
 } __ec_align4;
 
-/* Read/write VbNvContext */
+/*
+ * Read/write VbNvContext
+ *
+ * Deprecated as of February 2021.  No current devices use VBNV in EC
+ * BBRAM anymore, so this is guaranteed to fail.
+ *
+ * TODO(b/178689388): remove from this header once no external
+ * dependencies reference these constants.
+ */
 #define EC_CMD_VBNV_CONTEXT 0x0017
 #define EC_VER_VBNV_CONTEXT 1
 #define EC_VBNV_BLOCK_SIZE 16
