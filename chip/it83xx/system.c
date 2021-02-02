@@ -388,10 +388,6 @@ const char *system_get_chip_revision(void)
 
 static int bram_idx_lookup(enum system_bbram_idx idx)
 {
-	if (idx >= SYSTEM_BBRAM_IDX_VBNVBLOCK0 &&
-	    idx <= SYSTEM_BBRAM_IDX_VBNVBLOCK15)
-		return BRAM_IDX_NVCONTEXT +
-		       idx - SYSTEM_BBRAM_IDX_VBNVBLOCK0;
 	if (idx == SYSTEM_BBRAM_IDX_PD0)
 		return BRAM_IDX_PD0;
 	if (idx == SYSTEM_BBRAM_IDX_PD1)
@@ -422,9 +418,6 @@ int system_set_bbram(enum system_bbram_idx idx, uint8_t value)
 	IT83XX_BRAM_BANK0(bram_idx) = value;
 	return EC_SUCCESS;
 }
-
-#define BRAM_NVCONTEXT_SIZE (BRAM_IDX_NVCONTEXT_END - BRAM_IDX_NVCONTEXT + 1)
-BUILD_ASSERT(EC_VBNV_BLOCK_SIZE <= BRAM_NVCONTEXT_SIZE);
 
 uintptr_t system_get_fw_reset_vector(uintptr_t base)
 {

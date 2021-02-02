@@ -1449,13 +1449,8 @@ enum bram_indices {
 	BRAM_IDX_SCRATCHPAD1  = 9,
 	BRAM_IDX_SCRATCHPAD2  = 0xa,
 	BRAM_IDX_SCRATCHPAD3  = 0xb,
-	/* index 0xc ~ 0xf are reserved */
 
-	/* NVCONTEXT uses 16 bytes */
-	BRAM_IDX_NVCONTEXT     = 0x10,
-	BRAM_IDX_NVCONTEXT_END = 0x1F,
-
-	/* offset 0x20 ~ 0x7b are reserved for future use. */
+	/* offset 0x0c ~ 0x7b are reserved for future use. */
 
 	/* This field is used to indicate BRAM is valid or not. */
 	BRAM_IDX_VALID_FLAGS0  = 0x7c,
