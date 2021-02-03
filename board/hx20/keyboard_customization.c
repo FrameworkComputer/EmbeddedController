@@ -128,14 +128,38 @@ void set_keycap_label(uint8_t row, uint8_t col, char val)
 #define SCROLL_LED BIT(0)
 #define NUM_LED BIT(1)
 #define CAPS_LED BIT(2)
+static uint8_t caps_led_status;
+
+
+int caps_status_check(void)
+{
+	return caps_led_status;
+}
 
 void hx20_8042_led_control(int data)
 {
-	if (data & CAPS_LED)
+	if (data & CAPS_LED) {
+		caps_led_status = 1;
 		gpio_set_level(GPIO_CAP_LED_L, 1);
-	else
+	} else {
+		caps_led_status = 0;
 		gpio_set_level(GPIO_CAP_LED_L, 0);
+	}
 }
+
+void caps_suspend(void)
+{
+	gpio_set_level(GPIO_CAP_LED_L, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, caps_suspend, HOOK_PRIO_DEFAULT);
+
+void caps_resume(void)
+{
+	if (caps_status_check())
+		gpio_set_level(GPIO_CAP_LED_L, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, caps_resume, HOOK_PRIO_DEFAULT);
+
 #endif
 
 #ifdef CONFIG_KEYBOARD_BACKLIGHT
