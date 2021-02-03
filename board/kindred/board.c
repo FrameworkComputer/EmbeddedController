@@ -546,7 +546,10 @@ static void determine_accel_devices(void)
 {
 	static uint8_t read_time;
 
-	if (read_time == 0) {
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return;
+
+	if (read_time == 0 && board_is_convertible()) {
 		/* Read g sensor chip id*/
 		i2c_read8(I2C_PORT_ACCEL,
 			  KX022_ADDR0_FLAGS, KX022_WHOAMI, &lid_device_id);
@@ -575,6 +578,7 @@ static void determine_accel_devices(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, determine_accel_devices, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, determine_accel_devices, HOOK_PRIO_INIT_ADC + 2);
 
 void motion_interrupt(enum gpio_signal signal)
 {
