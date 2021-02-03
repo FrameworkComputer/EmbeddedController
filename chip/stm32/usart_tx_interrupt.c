@@ -73,7 +73,7 @@ static void usart_tx_interrupt_handler_common(
 
 static size_t queue_remove(struct usart_config const *config, uint8_t *dest)
 {
-	return queue_remove_unit(config->producer.queue, (void *) dest);
+	return queue_remove_unit(config->consumer.queue, (void *) dest);
 }
 
 static void usart_tx_interrupt_handler(struct usart_config const *config)
