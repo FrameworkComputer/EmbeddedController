@@ -76,6 +76,14 @@ void dpm_evaluate_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo);
 void dpm_remove_sink(int port);
 
 /*
+ * Remove this port as a source, and reallocate reserved FRS maximum current
+ * as needed.
+ *
+ * @param port		USB-C port number
+ */
+void dpm_remove_source(int port);
+
+/*
  * Return the appropriate Source Capability PDO to offer this port
  *
  * @param src_pdo	Will point to appropriate PDO to offer

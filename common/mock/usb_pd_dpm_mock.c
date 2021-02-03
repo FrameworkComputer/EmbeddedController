@@ -56,6 +56,10 @@ void dpm_remove_sink(int port)
 {
 }
 
+void dpm_remove_source(int port)
+{
+}
+
 int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
 {
 	*src_pdo = pd_src_pdo;
