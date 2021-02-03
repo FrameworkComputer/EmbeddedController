@@ -247,8 +247,7 @@
 #define TIM_WATCHDOG 16
 
 #include "gpio_signal.h"
-
-void fps_event(enum gpio_signal signal);
+#include "board_rw.h"
 
 #endif /* !__ASSEMBLER__ */
 
