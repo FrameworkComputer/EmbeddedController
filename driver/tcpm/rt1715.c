@@ -28,14 +28,25 @@ static int rt1715_enable_ext_messages(int port, int enable)
 
 static int rt1715_tcpci_tcpm_init(int port)
 {
-	int rv;
-	/* RT1715 has a vendor-defined register reset */
-	rv = tcpc_update8(port, RT1715_REG_VENDOR_7,
-		  RT1715_REG_VENDOR_7_SOFT_RESET, MASK_SET);
+	int rv, val;
+	/*
+	 * Do not fully reinitialize the registers when leaving low-power mode.
+	 * TODO(b/179234089): Generalize this concept in the tcpm_drv API.
+	 */
+	rv = tcpc_read(port, RT1715_REG_VENDOR_5, &val);
 	if (rv)
 		return rv;
 
-	msleep(10);
+	/* Only do soft-reset in shutdown mode. */
+	if (!(val & RT1715_REG_VENDOR_5_SHUTDOWN_OFF)) {
+		/* RT1715 has a vendor-defined register reset */
+		rv = tcpc_update8(port, RT1715_REG_VENDOR_7,
+			RT1715_REG_VENDOR_7_SOFT_RESET, MASK_SET);
+		if (rv)
+			return rv;
+
+		msleep(10);
+	}
 
 	rv = tcpc_update8(port, RT1715_REG_VENDOR_5,
 		  RT1715_REG_VENDOR_5_SHUTDOWN_OFF, MASK_SET);
