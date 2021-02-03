@@ -178,16 +178,15 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 * Set different AC_PROCHOT value when using different wattage ADT.
 	 */
 	if (max_ma * charge_mv == PD_MAX_POWER_MW * 1000)
-		isl9241_set_ac_prochot(0, 3072);
+		isl9241_set_ac_prochot(0, 3840);
 	else
-		isl9241_set_ac_prochot(0, 2816);
+		isl9241_set_ac_prochot(0, 3328);
 
 	/*
 	 * Follow OEM request to limit the input current to
-	 * 90% negotiated limit when S0.
+	 * 90% negotiated limit.
 	 */
-	if (chipset_in_state(CHIPSET_STATE_ON))
-		charge_ma = charge_ma * 90 / 100;
+	charge_ma = charge_ma * 90 / 100;
 
 	charge_set_input_current_limit(MAX(charge_ma,
 					CONFIG_CHARGER_INPUT_CURRENT),
