@@ -71,6 +71,8 @@
 #define CONFIG_DRAM_BASE_LOAD 0x50000000
 #define CONFIG_DRAM_SIZE 0x01400000 /* 20 MB */
 
+#define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+
 #ifndef __ASSEMBLER__
 #include "gpio_signal.h"
 #endif /* !__ASSEMBLER__ */
