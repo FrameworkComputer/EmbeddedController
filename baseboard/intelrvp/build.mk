@@ -20,6 +20,7 @@ endif
 
 #EC specific files
 baseboard-$(VARIANT_INTELRVP_EC_IT8320)+=ite_ec.o
+baseboard-$(VARIANT_INTELRVP_EC_MCHP)+=mchp_ec.o
 
 #BC1.2 specific files
 baseboard-$(CONFIG_BC12_DETECT_MAX14637)+=bc12.o

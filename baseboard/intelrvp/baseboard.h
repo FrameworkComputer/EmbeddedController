@@ -12,7 +12,11 @@
 
 #ifdef VARIANT_INTELRVP_EC_IT8320
 	#include "ite_ec.h"
-#endif /* VARIANT_INTELRVP_EC_IT8320 */
+/* VARIANT_INTELRVP_EC_IT8320 */
+#elif defined(VARIANT_INTELRVP_EC_MCHP)
+	#include "mchp_ec.h"
+/* VARIANT_INTELRVP_EC_MCHP */
+#endif
 
 /*
  * Allow dangerous commands.
