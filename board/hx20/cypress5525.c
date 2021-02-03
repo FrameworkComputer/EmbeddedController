@@ -378,6 +378,28 @@ void cyp5525_get_sink_power(int controller, int port)
 		}
 	}
 }
+void cypd_print_version(int controller, const char *vtype, uint8_t *data)
+{
+		CPRINTS("Controller %d  %s version B:%d.%d.%d.%d AP:%d.%d.%d.%c%c",
+		controller, vtype,
+		(data[3]>>4) & 0xF, (data[3]) & 0xF, data[2], data[0] + (data[1]<<8),
+		(data[7]>>4) & 0xF, (data[7]) & 0xF, data[6], data[5], data[4]
+		);
+}
+void cyp5525_get_version(int controller)
+{
+	int rv;
+	uint8_t data[24];
+	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
+	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
+
+	rv = i2c_read_offset16_block(i2c_port, addr_flags, CYP5525_READ_ALL_VERSION_REG, data, 24);
+	if (rv != EC_SUCCESS)
+		CPRINTS("READ_ALL_VERSION_REG failed");
+	cypd_print_version(controller, "Boot", data);
+	cypd_print_version(controller, "App1", data+8);
+	cypd_print_version(controller, "App2", data+16);
+}
 
 void cyp5525_port_int(int controller, int port)
 {
@@ -684,6 +706,7 @@ void cypd_interrupt_handler_task(void *p)
 				}
 				break;
 			case CYP5525_STATE_SETUP:
+				cyp5525_get_version(i);
 				if (cyp5525_setup(i) == EC_SUCCESS) {
 					cyp5525_get_sink_power(i, 0);
 					cyp5525_get_sink_power(i, 1);
@@ -1020,12 +1043,12 @@ void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int le
 
 static int cmd_cypd_get_status(int argc, char **argv)
 {
-	int i, data;
+	int i, p, data;
 	char *e;
 
 	static const char * const mode[] = {"Boot", "FW1", "FW2", "Invald"};
 	static const char * const port_status[] = {"Nothing", "Sink", "Source", "Debug", "Audio", "Powered Acc", "Unsupported", "Invalid"};
-
+	static const char * const current_level[] = {"DefaultA", "1.5A", "3A", "InvA"};
 	CPRINTS("AC_PRESENT_PD value: %d", gpio_get_level(GPIO_AC_PRESENT_PD_L));
 	for (i = 0; i < PD_CHIP_COUNT; i++) {
 		CPRINTS("PD%d INT value: %d", i, gpio_get_level(pd_chip_config[i].gpio));
@@ -1038,66 +1061,55 @@ static int cmd_cypd_get_status(int argc, char **argv)
 			return EC_ERROR_PARAM1;
 
 		if (i < PD_CHIP_COUNT) {
+			cypd_read_reg16(i, CYP5525_SILICON_ID, &data);
+			CPRINTS("CYPD_SILICON_ID: 0x%04x", data);
+			cyp5525_get_version(i);
 			cypd_read_reg8(i, CYP5525_DEVICE_MODE, &data);
-			CPRINTS("CYP5525_DEVICE_MODE: 0x%02x %s", data, mode[data & 0x03]);
+			CPRINTS("CYPD_DEVICE_MODE: 0x%02x %s", data, mode[data & 0x03]);
 
 			cypd_read_reg8(i, CYP5525_INTR_REG, &data);
-			CPRINTS("CYP5525_INTR_REG: 0x%02x", data);
-			CPRINTS("				: %s", data & CYP5525_DEV_INTR ? "CYP5525_DEV_INTR" : "");
-			CPRINTS("				: %s", data & CYP5525_PORT0_INTR ? "CYP5525_PORT0_INTR" : "");
-			CPRINTS("				: %s", data & CYP5525_PORT1_INTR ? "CYP5525_PORT1_INTR" : "");
-			CPRINTS("				: %s", data & CYP5525_UCSI_INTR ? "CYP5525_UCSI_INTR" : "");
+			CPRINTS("CYPD_INTR_REG: 0x%02x %s %s %s %s",
+						data,
+						data & CYP5525_DEV_INTR ? "DEV" : "",
+						data & CYP5525_PORT0_INTR ? "PORT0" : "",
+						data & CYP5525_PORT1_INTR ? "PORT1" : "",
+						data & CYP5525_UCSI_INTR ? "UCSI" : "");
 
 			cypd_read_reg16(i, CYP5525_RESPONSE_REG, &data);
-			CPRINTS("CYP5525_RESPONSE_REG: 0x%02x", data);
+			CPRINTS("CYPD_RESPONSE_REG: 0x%02x", data);
 			cypd_read_reg16(i, CYP5525_PORT_PD_RESPONSE_REG(0), &data);
-			CPRINTS("CYP5525_PORT0_PD_RESPONSE_REG: 0x%02x", data);
+			CPRINTS("CYPD_PORT0_PD_RESPONSE_REG: 0x%02x", data);
 			cypd_read_reg16(i, CYP5525_PORT_PD_RESPONSE_REG(1), &data);
-			CPRINTS("CYP5525_PORT1_PD_RESPONSE_REG: 0x%02x", data);
+			CPRINTS("CYPD_PORT1_PD_RESPONSE_REG: 0x%02x", data);
 
 
 			cypd_read_reg8(i, CYP5525_BOOT_MODE_REASON, &data);
-			CPRINTS("CYP5525_BOOT_MODE_REASON: 0x%02x", data);
-
-			cypd_read_reg16(i, CYP5525_SILICON_ID, &data);
-			CPRINTS("CYP5525_SILICON_ID: 0x%04x", data);
+			CPRINTS("CYPD_BOOT_MODE_REASON: 0x%02x", data);
 
 			cypd_read_reg8(i, CYP5525_PDPORT_ENABLE_REG, &data);
-			CPRINTS("CYP5525_PDPORT_ENABLE_REG: 0x%04x", data);
+			CPRINTS("CYPD_PDPORT_ENABLE_REG: 0x%04x", data);
 
 			cypd_read_reg8(i, CYP5525_POWER_STAT, &data);
-			CPRINTS("CYP5525_POWER_STAT: 0x%02x", data);
+			CPRINTS("CYPD_POWER_STAT: 0x%02x", data);
 
 			cypd_read_reg8(i, CYP5525_SYS_PWR_STATE, &data);
-			CPRINTS("CYP5525_SYS_PWR_STATE: 0x%02x", data);
-
-			cypd_read_reg8(i, CYP5525_TYPE_C_STATUS_REG(0), &data);
-			CPRINTS("  TYPE_C_STATUS0 : %s", data & 0x1 ? "Connected" : "Not Connected");
-			CPRINTS("  TYPE_C_STATUS0 : %s", data & 0x2 ? "CC2" : "CC1");
-			CPRINTS("  TYPE_C_STATUS0 : %s", port_status[(data >> 2) & 0x3]);
-
-			cypd_read_reg16(i, CYP5525_PORT_INTR_STATUS_REG(0), &data);
-			CPRINTS("PORT0_INTR_STATUS_REG0: 0x%02x", data);
-			cypd_read_reg16(i, CYP5525_PORT_INTR_STATUS_REG(0)+2, &data);
-			CPRINTS("PORT0_INTR_STATUS_REG1: 0x%02x", data);
-
-			cypd_read_reg8(i, CYP5525_TYPE_C_VOLTAGE_REG(0), &data);
-			CPRINTS("  TYPE_C_VOLTAGE0 : %dmV", data*100);
-
-
-			cypd_read_reg8(i, CYP5525_TYPE_C_STATUS_REG(1), &data);
-			CPRINTS("  TYPE_C_STATUS1 : %s", data & 0x1 ? "Connected" : "Not Connected");
-			CPRINTS("  TYPE_C_STATUS1 : %s", data & 0x2 ? "CC2" : "CC1");
-			CPRINTS("  TYPE_C_STATUS1 : %s", port_status[(data >> 2) & 0x3]);
-
-			cypd_read_reg16(i, CYP5525_PORT_INTR_STATUS_REG(1), &data);
-			CPRINTS("PORT1_INTR_STATUS_REG0: 0x%02x", data);
-			cypd_read_reg16(i, CYP5525_PORT_INTR_STATUS_REG(1)+2, &data);
-			CPRINTS("PORT1_INTR_STATUS_REG1: 0x%02x", data);
-
-			cypd_read_reg8(i, CYP5525_TYPE_C_VOLTAGE_REG(1), &data);
-			CPRINTS("  TYPE_C_VOLTAGE1 : %dmV", data*100);
-
+			CPRINTS("CYPD_SYS_PWR_STATE: 0x%02x", data);
+			for (p = 0; p < 2; p++) {
+				CPRINTS("=====Port %d======", p);
+				cypd_read_reg8(i, CYP5525_TYPE_C_STATUS_REG(p), &data);
+				CPRINTS("   TYPE_C_STATUS : %s %s %s %s %s",
+							data & 0x1 ? "Connected" : "Not Connected",
+							data & 0x2 ? "CC2" : "CC1",
+							port_status[(data >> 2) & 0x3],
+							data & 0x20 ? "Ra" : "NoRa",
+							current_level[(data >> 6) & 0x03]);
+				cypd_read_reg8(i, CYP5525_TYPE_C_VOLTAGE_REG(p), &data);
+				CPRINTS("  TYPE_C_VOLTAGE : %dmV", data*100);
+				cypd_read_reg16(i, CYP5525_PORT_INTR_STATUS_REG(p), &data);
+				CPRINTS(" INTR_STATUS_REG0: 0x%02x", data);
+				cypd_read_reg16(i, CYP5525_PORT_INTR_STATUS_REG(p)+2, &data);
+				CPRINTS(" INTR_STATUS_REG1: 0x%02x", data);
+			}
 		}
 
 	} else { /* Otherwise print them all */
