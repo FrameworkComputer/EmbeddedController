@@ -32,6 +32,7 @@
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
+static int forcing_shutdown;  /* Forced shutdown in progress? */
 
 /*
  * define wake source for keep PCH power
@@ -46,7 +47,34 @@ static bool want_boot_ap_at_g3;
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s(%d)", __func__, reason);
-	/* TODO */
+
+	/*
+	 * Force off. Sending a reset command to the PMIC will power off
+	 * the EC, so simulate a long power button press instead. This
+	 * condition will reset once the state machine transitions to G3.
+	 * Consider reducing the latency here by changing the power off
+	 * hold time on the PMIC.
+	 */
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		report_ap_reset(reason);
+		forcing_shutdown = 1;
+		power_button_pch_press();
+	}
+}
+
+void chipset_handle_espi_reset_assert(void)
+{
+	/*
+	 * If eSPI_Reset# pin is asserted without SLP_SUS# being asserted, then
+	 * it means that there is an unexpected power loss (global reset
+	 * event). In this case, check if shutdown was being forced by pressing
+	 * power button. If yes, release power button.
+	 */
+	if ((power_get_signals() & IN_PCH_SLP_SUS_DEASSERTED) &&
+		forcing_shutdown) {
+		power_button_pch_release();
+		forcing_shutdown = 0;
+	}
 }
 
 /*
@@ -297,7 +325,10 @@ enum power_state power_handle_state(enum power_state state)
 #endif
 	case POWER_S5:
 		CPRINTS("power handle state in S5");
-
+		if (forcing_shutdown) {
+			power_button_pch_release();
+			forcing_shutdown = 0;
+		}
 		/* Wait for S5 exit for global reset */
 		while ((power_get_signals() & IN_PCH_SLP_S4_DEASSERTED) == 0) {
 			if (task_wait_event(SECOND*9) == TASK_EVENT_TIMER) {

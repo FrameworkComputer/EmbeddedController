@@ -43,7 +43,7 @@
  * Keep WDG disabled and JTAG enabled.
  * CONFIG_BOARD_PRE_INIT enables JTAG early
  */
-#define CONFIG_CHIPSET_DEBUG
+/* #define CONFIG_CHIPSET_DEBUG */
 
 #ifdef CONFIG_CHIPSET_DEBUG
 #ifndef CONFIG_BOARD_PRE_INIT
