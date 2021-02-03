@@ -17,6 +17,19 @@ struct adc_t {
 	int channel;
 };
 
+/* List of ADC channels */
+enum chip_adc_channel {
+	CHIP_ADC_CH0 = 0,
+	CHIP_ADC_CH1,
+	CHIP_ADC_CH2,
+	CHIP_ADC_CH3,
+	CHIP_ADC_CH4,
+	CHIP_ADC_CH5,
+	CHIP_ADC_CH6,
+	CHIP_ADC_CH7,
+	CHIP_ADC_COUNT,
+};
+
 /*
  * Boards must provide this list of ADC channel definitions.
  * This must match the enum adc_channel list provided by the board.
