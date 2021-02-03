@@ -726,7 +726,7 @@
  * On the second reset, the saved flag is used to detect the previous
  * power-on, and treat the second reset as a power-on instead of a reset.
  *
- * NOTE: Implemented only for npcx
+ * NOTE: Implemented only for npcx and ite
  */
 #undef CONFIG_BOARD_RESET_AFTER_POWER_ON
 
