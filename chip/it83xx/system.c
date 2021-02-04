@@ -49,8 +49,31 @@ static void clear_reset_flags(void)
 }
 DECLARE_HOOK(HOOK_INIT, clear_reset_flags, HOOK_PRIO_LAST);
 
+#if !defined(CONFIG_HOSTCMD_LPC) && !defined(CONFIG_HOSTCMD_ESPI)
+static void system_save_panic_data_to_bram(void)
+{
+	uint8_t *ptr = (uint8_t *)PANIC_DATA_PTR;
+
+	for (int i = 0; i < CONFIG_PANIC_DATA_SIZE; i++)
+		IT83XX_BRAM_BANK0(i + BRAM_PANIC_DATA_START) = ptr[i];
+}
+
+static void system_restore_panic_data_from_bram(void)
+{
+	uint8_t *ptr = (uint8_t *)PANIC_DATA_PTR;
+
+	for (int i = 0; i < CONFIG_PANIC_DATA_SIZE; i++)
+		ptr[i] = IT83XX_BRAM_BANK0(i + BRAM_PANIC_DATA_START);
+}
+BUILD_ASSERT(BRAM_PANIC_LEN >= CONFIG_PANIC_DATA_SIZE);
+#else
+static void system_save_panic_data_to_bram(void) {}
+static void system_restore_panic_data_from_bram(void) {}
+#endif
+
 static void system_reset_ec_by_gpg1(void)
 {
+	system_save_panic_data_to_bram();
 	/* Set GPG1 as output high and wait until EC reset. */
 	IT83XX_GPIO_CTRL(GPIO_G, 1) = GPCR_PORT_PIN_MODE_OUTPUT;
 	IT83XX_GPIO_DATA(GPIO_G) |= BIT(1);
@@ -143,6 +166,10 @@ static void check_reset_cause(void)
 		for (int i = 0; i < MAX_SYSTEM_BBRAM_IDX_PD_PORTS; i++)
 			system_set_bbram((SYSTEM_BBRAM_IDX_PD0 + i), 0);
 	}
+
+	if ((IS_ENABLED(CONFIG_IT83XX_HARD_RESET_BY_GPG1)) &&
+		(flags & ~(EC_RESET_FLAG_POWER_ON | EC_RESET_FLAG_RESET_PIN)))
+		system_restore_panic_data_from_bram();
 }
 
 static void system_reset_cause_is_unknown(void)
