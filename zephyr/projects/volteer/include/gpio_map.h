@@ -52,6 +52,8 @@
 #define GPIO_SLP_SUS_L             NAMED_GPIO(slp_sus_l)
 #define GPIO_SYS_RESET_L           NAMED_GPIO(sys_rst_odl)
 #define GPIO_TABLET_MODE_L         NAMED_GPIO(tablet_mode_l)
+#define GPIO_VOLUME_DOWN_L         NAMED_GPIO(ec_voldn_btn_odl)
+#define GPIO_VOLUME_UP_L           NAMED_GPIO(ec_volup_btn_odl)
 #define GPIO_WP_L                  NAMED_GPIO(ec_wp_l)
 
 /* USB-C interrupts */
