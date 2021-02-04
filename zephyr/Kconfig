@@ -585,6 +585,23 @@ config PLATFORM_EC_CONSOLE_CMD_SHMEM
 	  used and the maximum number of bytes that have been used since
 	  the EC started running.
 
+config PLATFORM_EC_SWITCH
+	bool "Memory mapped switches"
+	depends on PLATFORM_EC_HOSTCMD
+	default y
+	help
+	  Enable the reporting of the platform switches state to the AP using
+	  memory mapped storage provided by the host command interface.
+
+	  The platform switches include:
+	    LID open
+	    power button pressed
+	    write protect disabled
+	    recovery switch
+
+          This also enables the "mmapinfo" console command to report the current
+          state of all switches.
+
 config PLATFORM_EC_THROTTLE_AP
 	bool "CPU throttling"
 	default y if PLATFORM_EC_POWERSEQ
