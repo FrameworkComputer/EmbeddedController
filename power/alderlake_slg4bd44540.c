@@ -1,20 +1,39 @@
-/* Copyright 2018 The Chromium OS Authors. All rights reserved.
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-/* Icelake chipset power control module for Chrome EC */
+/*
+ * This was originally copied form power/icelake.c (also used on TGL and
+ * ADL) and adapted to support ADL designs using the Silergy SLG4BD44540
+ * power sequencer chip.
+ */
 
 #include "board_config.h"
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"
-#include "hooks.h"
 #include "power.h"
+#include "power/alderlake_slg4bd44540.h"
 #include "power/intel_x86.h"
-#include "power_button.h"
-#include "task.h"
 #include "timer.h"
+
+/*
+ * These delays are used by the brya power sequence reference design and
+ * should be suitable for variants.
+ */
+
+/* SEQ_EC_ALL_SYS_PG high to VCCST_PWRGD high delay */
+#define VCCST_PWRGD_DELAY_MS	2
+
+/* IMVP9_VRRDY high to PCH_PWROK high delay */
+#define PCH_PWROK_DELAY_MS	2
+
+/* SEQ_EC_ALL_SYS_PG high to EC_PCH_SYS_PWROK high delay */
+#define SYS_PWROK_DELAY_MS	45
+
+/* IMVP9_VRRDY high timeout */
+#define VRRDY_TIMEOUT_MS	50
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
@@ -29,8 +48,6 @@
 
 /* The wait time is ~150 msec, allow for safety margin. */
 #define IN_PCH_SLP_SUS_WAIT_TIME_USEC	(250 * MSEC)
-
-static int forcing_shutdown;  /* Forced shutdown in progress? */
 
 /* Power signals list. Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -95,27 +112,11 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	GPIO_SET_LEVEL(GPIO_PCH_RSMRST_L, 0);
 	board_after_rsmrst(0);
 
-	/* Turn off DSW_PWROK to meet tPCH14 */
-	GPIO_SET_LEVEL(GPIO_PCH_DSW_PWROK, 0);
-
-	/* Turn off DSW load switch. */
-	GPIO_SET_LEVEL(GPIO_EN_PP3300_A, 0);
+	/* Turn off S5 rails */
+	GPIO_SET_LEVEL(GPIO_EN_S5_RAILS, 0);
 
 	/*
-	 * For JSL, we need to wait 60ms before turning off PP5000_U to allow
-	 * VCCIN_AUX time to discharge.
-	 */
-	if (IS_ENABLED(CONFIG_CHIPSET_JASPERLAKE))
-		msleep(60);
-
-	/* Turn off PP5000 rail */
-	if (IS_ENABLED(CONFIG_POWER_PP5000_CONTROL))
-		power_5v_enable(task_get_current(), 0);
-	else
-		GPIO_SET_LEVEL(GPIO_EN_PP5000, 0);
-
-	/*
-	 * TODO(b/111810925): Replace this wait with
+	 * TODO(b/179519791): Replace this wait with
 	 * power_wait_signals_timeout()
 	 */
 	/* Now wait for DSW_PWROK and  RSMRST_ODL to go away. */
@@ -129,19 +130,12 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 		CPRINTS("DSW_PWROK or RSMRST_ODL didn't go low!  Assuming G3.");
 }
 
+/*
+ * TODO(b/179524867): do we need to do anything here?
+ */
+
 void chipset_handle_espi_reset_assert(void)
 {
-	/*
-	 * If eSPI_Reset# pin is asserted without SLP_SUS# being asserted, then
-	 * it means that there is an unexpected power loss (global reset
-	 * event). In this case, check if shutdown was being forced by pressing
-	 * power button. If yes, release power button.
-	 */
-	if ((power_get_signals() & IN_PCH_SLP_SUS_DEASSERTED) &&
-		forcing_shutdown) {
-		power_button_pch_release();
-		forcing_shutdown = 0;
-	}
 }
 
 enum power_state chipset_force_g3(void)
@@ -151,112 +145,104 @@ enum power_state chipset_force_g3(void)
 	return POWER_G3;
 }
 
-static void enable_pp5000_rail(void)
+static void ap_off(void)
 {
-	if (IS_ENABLED(CONFIG_POWER_PP5000_CONTROL))
-		power_5v_enable(task_get_current(), 1);
-	else
-		GPIO_SET_LEVEL(GPIO_EN_PP5000, 1);
-
-}
-
-__overridable void intel_x86_dsw_pwrok_pass_thru(void)
-{
-	int dswpwrok_in = intel_x86_get_pg_ec_dsw_pwrok();
-
-	/* Pass-through DSW_PWROK to ICL. */
-	if (dswpwrok_in != gpio_get_level(GPIO_PCH_DSW_PWROK)) {
-		if (IS_ENABLED(CONFIG_CHIPSET_SLP_S3_L_OVERRIDE)
-			&& dswpwrok_in) {
-			/*
-			 * Once DSW_PWROK is high, reconfigure SLP_S3_L back to
-			 * an input after a short delay.
-			 */
-			msleep(1);
-			CPRINTS("Release SLP_S3_L");
-			gpio_reset(SLP_S3_SIGNAL_L);
-			power_signal_enable_interrupt(SLP_S3_SIGNAL_L);
-		}
-
-		CPRINTS("Pass thru GPIO_DSW_PWROK: %d", dswpwrok_in);
-		/*
-		 * A minimum 10 msec delay is required between PP3300_A being
-		 * stable and the DSW_PWROK signal being passed to the PCH.
-		 */
-		msleep(10);
-		GPIO_SET_LEVEL(GPIO_PCH_DSW_PWROK, dswpwrok_in);
-	}
-}
-
-#ifndef CONFIG_PWRGD_PASS_THROUGH_CUSTOM
-/*
- * Return 0 if PWROK signal is deasserted, non-zero if asserted
- */
-static int pwrok_signal_get(const struct intel_x86_pwrok_signal *signal)
-{
-	int level = gpio_get_level(signal->gpio);
-
-	if (signal->active_low)
-		level = !level;
-
-	return level;
+	GPIO_SET_LEVEL(GPIO_VCCST_PWRGD_OD, 0);
+	GPIO_SET_LEVEL(GPIO_PCH_PWROK, 0);
+	GPIO_SET_LEVEL(GPIO_EC_PCH_SYS_PWROK, 0);
 }
 
 /*
- * Set the PWROK signal state
+ * We have asserted VCCST_PWRGO_OD, now wait for the IMVP9.1
+ * to assert IMVP9_VRRDY_OD.
  *
- * &param level		0 deasserts the signal, other values assert the signal
+ * Returns state of VRRDY.
  */
-static void pwrok_signal_set(const struct intel_x86_pwrok_signal *signal,
-	int level)
+
+static int wait_for_vrrdy(void)
 {
-	GPIO_SET_LEVEL(signal->gpio, signal->active_low ? !level : level);
+	int timeout_ms = VRRDY_TIMEOUT_MS;
+	int vrrdy;
+
+	for (; timeout_ms > 0; --timeout_ms) {
+		vrrdy = gpio_get_level(GPIO_IMVP9_VRRDY_OD);
+		if (vrrdy != 0)
+			return 1;
+		msleep(1);
+	}
+	return 0;
 }
 
 /*
- * Pass through the state of the ALL_SYS_PWRGD input to all the PWROK outputs
- * defined by the board.
+ * The relationship between these signals is described in
+ * Intel PDG #627205 rev. 0.81.
+ *
+ * tCPU16: >= 0
+ *	VCCST_PWRGD to PCH_PWROK
+ * tPLT05: >= 0
+ *	SYS_ALL_PWRGD to SYS_PWROK
+ *	PCH_PWROK to SYS_PWROK
  */
+
 static void all_sys_pwrgd_pass_thru(void)
 {
-	int all_sys_pwrgd_in = intel_x86_get_pg_ec_all_sys_pwrgd();
-	const struct intel_x86_pwrok_signal *pwrok_signal;
-	int signal_count;
-	int i;
+	int sys_pg;
+	int vccst_pg;
+	int pch_pok;
+	int sys_pok;
 
-	if (all_sys_pwrgd_in) {
-		pwrok_signal = pwrok_signal_assert_list;
-		signal_count = pwrok_signal_assert_count;
-	} else {
-		pwrok_signal = pwrok_signal_deassert_list;
-		signal_count = pwrok_signal_deassert_count;
+	sys_pg = gpio_get_level(GPIO_SEQ_EC_ALL_SYS_PG);
+
+	if (IS_ENABLED(CONFIG_BRINGUP))
+		CPRINTS("SEQ_EC_ALL_SYS_PG is %d", sys_pg);
+
+	if (sys_pg == 0) {
+		ap_off();
+		return;
 	}
 
-	/*
-	 * Loop through all PWROK signals defined by the board and set
-	 * to match the current ALL_SYS_PWRGD input.
-	 */
-	for (i = 0; i < signal_count; i++, pwrok_signal++) {
-		if ((!all_sys_pwrgd_in && !pwrok_signal_get(pwrok_signal))
-			|| (all_sys_pwrgd_in && pwrok_signal_get(pwrok_signal)))
-			continue;
+	/* SEQ_EC_ALL_SYS_PG is asserted, enable VCCST_PWRGD_OD. */
 
-		if (pwrok_signal->delay_ms > 0)
-			msleep(pwrok_signal->delay_ms);
+	vccst_pg = gpio_get_level(GPIO_VCCST_PWRGD_OD);
+	if (vccst_pg == 0) {
+		msleep(VCCST_PWRGD_DELAY_MS);
+		GPIO_SET_LEVEL(GPIO_VCCST_PWRGD_OD, 1);
+	}
 
-		pwrok_signal_set(pwrok_signal, all_sys_pwrgd_in);
+	/* Enable PCH_PWROK, gated by VRRDY. */
+
+	pch_pok = gpio_get_level(GPIO_PCH_PWROK);
+	if (pch_pok == 0) {
+		if (wait_for_vrrdy() == 0) {
+			CPRINTS("Timed out waiting for VRRDY, "
+				"shutting AP off!");
+			ap_off();
+			return;
+		}
+		msleep(PCH_PWROK_DELAY_MS);
+		GPIO_SET_LEVEL(GPIO_PCH_PWROK, 1);
+	}
+
+	/* Enable PCH_SYS_PWROK. */
+
+	sys_pok = gpio_get_level(GPIO_EC_PCH_SYS_PWROK);
+	if (sys_pok == 0) {
+		msleep(SYS_PWROK_DELAY_MS);
+		/* Check if we lost power while waiting. */
+		sys_pg = gpio_get_level(GPIO_SEQ_EC_ALL_SYS_PG);
+		if (sys_pg == 0) {
+			CPRINTS("SEQ_EC_ALL_SYS_PG deasserted, "
+				"shutting AP off!");
+			ap_off();
+			return;
+		}
+		GPIO_SET_LEVEL(GPIO_EC_PCH_SYS_PWROK, 1);
+		/* PCH will now release PLT_RST */
 	}
 }
-#endif /* CONFIG_PWRGD_PASS_THROUGH_CUSTOM */
 
 enum power_state power_handle_state(enum power_state state)
 {
-#ifdef CONFIG_CHIPSET_JASPERLAKE
-	int timeout_ms = 10;
-#endif /* CONFIG_CHIPSET_JASPERLAKE */
-
-	intel_x86_dsw_pwrok_pass_thru();
-
 	all_sys_pwrgd_pass_thru();
 
 	common_intel_x86_handle_rsmrst(state);
@@ -264,38 +250,10 @@ enum power_state power_handle_state(enum power_state state)
 	switch (state) {
 
 	case POWER_G3S5:
-		if (IS_ENABLED(CONFIG_CHIPSET_SLP_S3_L_OVERRIDE)) {
-			/*
-			 * Prevent glitches on the SLP_S3_L and PCH_PWROK
-			 * signals while when the PP3300_A rail is turned on.
-			 * Drive SLP_S3_L from the EC until DSW_PWROK is high.
-			 */
-			CPRINTS("Drive SLP_S3_L low during PP3300_A rampup");
-			power_signal_disable_interrupt(SLP_S3_SIGNAL_L);
-			gpio_set_flags(SLP_S3_SIGNAL_L, GPIO_ODR_LOW);
-		}
+		GPIO_SET_LEVEL(GPIO_EN_S5_RAILS, 1);
 
-		/* Default behavior - turn on PP5000 rail first */
-		if (!IS_ENABLED(CONFIG_CHIPSET_PP3300_RAIL_FIRST))
-			enable_pp5000_rail();
-
-		/*
-		 * TODO(b/111121615): Should modify this to wait until the
-		 * common power state machine indicates that it's ok to try an
-		 * boot the AP prior to turning on the 3300_A rail. This could
-		 * be done using chipset_pre_init_callback()
-		 */
-		/* Turn on the PP3300_DSW rail. */
-		GPIO_SET_LEVEL(GPIO_EN_PP3300_A, 1);
 		if (power_wait_signals(IN_PGOOD_ALL_CORE))
 			break;
-
-		/* Pass thru DSW_PWROK again since we changed it. */
-		intel_x86_dsw_pwrok_pass_thru();
-
-		/* Turn on PP5000 after PP3300 and DSW PWROK when enabled */
-		if (IS_ENABLED(CONFIG_CHIPSET_PP3300_RAIL_FIRST))
-			enable_pp5000_rail();
 
 		/*
 		 * Now wait for SLP_SUS_L to go high based on tPCH32. If this
@@ -309,32 +267,10 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S5:
-		if (forcing_shutdown) {
-			power_button_pch_release();
-			forcing_shutdown = 0;
-		}
 		/* If SLP_SUS_L is asserted, we're no longer in S5. */
 		if (!power_has_signals(IN_PCH_SLP_SUS_DEASSERTED))
 			return POWER_S5G3;
 		break;
-
-#ifdef CONFIG_CHIPSET_JASPERLAKE
-	case POWER_S3S0:
-		GPIO_SET_LEVEL(GPIO_EN_VCCIO_EXT, 1);
-		/* Now wait for ALL_SYS_PWRGD. */
-		while (!intel_x86_get_pg_ec_all_sys_pwrgd() &&
-			(timeout_ms > 0)) {
-			msleep(1);
-			timeout_ms--;
-		};
-		if (!timeout_ms)
-			CPRINTS("ALL_SYS_PWRGD not received.");
-		break;
-
-	case POWER_S0S3:
-		GPIO_SET_LEVEL(GPIO_EN_VCCIO_EXT, 0);
-		break;
-#endif /* CONFIG_CHIPSET_JASPERLAKE */
 
 	default:
 		break;

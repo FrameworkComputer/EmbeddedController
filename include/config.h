@@ -1159,6 +1159,10 @@
 
 /* AP chipset support; pick at most one */
 #undef CONFIG_CHIPSET_ALDERLAKE		/* Intel Alderlake (x86) */
+#undef CONFIG_CHIPSET_ALDERLAKE_SLG4BD44540	/* Intel Alderlake (x86)
+						 * with power sequencer
+						 * chip
+						 */
 #undef CONFIG_CHIPSET_APOLLOLAKE	/* Intel Apollolake (x86) */
 #undef CONFIG_CHIPSET_BRASWELL		/* Intel Braswell (x86) */
 #undef CONFIG_CHIPSET_CANNONLAKE	/* Intel Cannonlake (x86) */
@@ -5514,6 +5518,7 @@
 #ifndef HAS_TASK_CHIPSET
 #undef CONFIG_AP_HANG_DETECT
 #undef CONFIG_CHIPSET_ALDERLAKE
+#undef CONFIG_CHIPSET_ALDERLAKE_SLG4BD44540
 #undef CONFIG_CHIPSET_APOLLOLAKE
 #undef CONFIG_CHIPSET_BRASWELL
 #undef CONFIG_CHIPSET_CANNONLAKE
@@ -5640,7 +5645,8 @@
 #define CONFIG_CHIPSET_HAS_PRE_INIT_CALLBACK
 #endif
 
-#if defined(CONFIG_CHIPSET_APOLLOLAKE) || \
+#if defined(CONFIG_CHIPSET_ALDERLAKE_SLG4BD44540) || \
+	defined(CONFIG_CHIPSET_APOLLOLAKE) || \
 	defined(CONFIG_CHIPSET_BRASWELL) || \
 	defined(CONFIG_CHIPSET_CANNONLAKE) || \
 	defined(CONFIG_CHIPSET_COMETLAKE) || \
@@ -5651,7 +5657,8 @@
 #define CONFIG_POWER_COMMON
 #endif
 
-#if defined(CONFIG_CHIPSET_CANNONLAKE) || \
+#if defined(CONFIG_CHIPSET_ALDERLAKE_SLG4BD44540) || \
+	defined(CONFIG_CHIPSET_CANNONLAKE) || \
 	defined(CONFIG_CHIPSET_ICELAKE) || \
 	defined(CONFIG_CHIPSET_SKYLAKE)
 #define CONFIG_CHIPSET_X86_RSMRST_DELAY

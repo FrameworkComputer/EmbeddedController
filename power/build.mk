@@ -6,6 +6,8 @@
 # Power management for application processor and peripherals
 #
 
+power-$(CONFIG_CHIPSET_ALDERLAKE_SLG4BD44540)+=alderlake_slg4bd44540.o
+power-$(CONFIG_CHIPSET_ALDERLAKE_SLG4BD44540)+=intel_x86.o
 power-$(CONFIG_CHIPSET_APL_GLK)+=apollolake.o intel_x86.o
 power-$(CONFIG_CHIPSET_BRASWELL)+=braswell.o
 power-$(CONFIG_CHIPSET_CANNONLAKE)+=cannonlake.o intel_x86.o
