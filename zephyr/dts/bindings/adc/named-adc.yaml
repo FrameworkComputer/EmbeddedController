@@ -1,0 +1,21 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: ADC parent node
+
+compatible: "named-adc-channels"
+
+child-binding:
+  description: Named ADCs child node
+  properties:
+    label:
+      required: true
+      type: string
+      description:
+        Human-readable string describing the device (used as
+        device_get_binding() argument)
+    channel:
+      required: true
+      type: int
+      description: ADC channel used

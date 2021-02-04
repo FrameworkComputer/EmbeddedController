@@ -257,6 +257,16 @@ enum battery_type {
 
 #endif /* CONFIG_PLATFORM_EC_FLASH */
 
+#undef CONFIG_ADC
+#ifdef CONFIG_PLATFORM_EC_ADC
+#define CONFIG_ADC
+#endif
+
+#undef CONFIG_CMD_ADC
+#ifdef CONFIG_PLATFORM_EC_ADC_CMD
+#define CONFIG_CMD_ADC
+#endif
+
 #ifdef CONFIG_PLATFORM_EC_I2C
 /* Also see shim/include/i2c/i2c.h which defines the ports enum */
 #define CONFIG_I2C

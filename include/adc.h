@@ -13,11 +13,23 @@
 #define ADC_READ_ERROR -1  /* Value returned by adc_read_channel() on error */
 
 #ifdef CONFIG_ZEPHYR
-/* TODO(b/175881324): Add a shim for ADC */
+#ifdef CONFIG_PLATFORM_EC_ADC
+#define NODE_ID_AND_COMMA(node_id) node_id,
 enum adc_channel {
-	ADC_NONE,
+#if DT_NODE_EXISTS(DT_INST(0, named_adc_channels))
+	DT_FOREACH_CHILD(DT_INST(0, named_adc_channels), NODE_ID_AND_COMMA)
+#endif /* named_adc_channels */
+	ADC_CH_COUNT
 };
-#endif
+
+struct adc_t {
+	const char *name;
+	uint8_t input_ch;
+};
+
+extern const struct adc_t adc_channels[];
+#endif /* CONFIG_PLATFORM_EC_ADC */
+#endif /* CONFIG_ZEPHYR */
 
 /*
  * Boards which use the ADC interface must provide enum adc_channel in the
