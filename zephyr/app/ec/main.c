@@ -6,6 +6,7 @@
 #include <sys/printk.h>
 #include <zephyr.h>
 
+#include "chipset.h"
 #include "ec_tasks.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
