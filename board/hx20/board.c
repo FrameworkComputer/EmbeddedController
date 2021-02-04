@@ -486,7 +486,7 @@ static void sci_enable(void)
 	/* when host set EC driver ready flag, EC need to enable SCI */
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
 
-		update_soc_power_limit();
+		update_soc_power_limit(1);
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }
@@ -742,7 +742,7 @@ DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 
 #endif
 
-void update_soc_power_limit(void)
+void update_soc_power_limit(int force)
 {
 	/*
 	 * power limit is related to AC state, battery percentage, and power budget
@@ -781,7 +781,8 @@ void update_soc_power_limit(void)
 		/* psys watt = adp watt * 0.95 + battery watt(55 W) * 0.7 - pps power budget */
 		psys_watt = ((active_power * 95) / 100) + 39 - pps_power_budget;
 	}
-	if (pl2_watt != old_pl2_watt || pl4_watt != old_pl4_watt || psys_watt != old_psys_watt) {
+	if (pl2_watt != old_pl2_watt || pl4_watt != old_pl4_watt ||
+			psys_watt != old_psys_watt || force) {
 		old_psys_watt = psys_watt;
 		old_pl4_watt = pl4_watt;
 		old_pl2_watt = pl2_watt;
@@ -795,8 +796,14 @@ void update_soc_power_limit(void)
 
 
 }
-DECLARE_HOOK(HOOK_AC_CHANGE, update_soc_power_limit, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, update_soc_power_limit, HOOK_PRIO_DEFAULT);
+
+void update_soc_power_limit_hook(void)
+{
+	update_soc_power_limit(0);
+}
+
+DECLARE_HOOK(HOOK_AC_CHANGE, update_soc_power_limit_hook, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, update_soc_power_limit_hook, HOOK_PRIO_DEFAULT);
 
 const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_LOCAL] = {
