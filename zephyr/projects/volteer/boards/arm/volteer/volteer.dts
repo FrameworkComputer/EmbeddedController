@@ -93,6 +93,27 @@
 		};
 	};
 
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		charger {
+			label = "ADC_TEMP_SENSOR_CHARGER";
+			channel = <0>;
+		};
+		pp3300_regulator {
+			label = "ADC_TEMP_SENSOR_PP3300_REGULATOR";
+			channel = <1>;
+		};
+		ddr_soc {
+			label = "ADC_TEMP_SENSOR_DDR_SOC";
+			channel = <8>;
+		};
+		fan {
+			label = "ADC_TEMP_SENSOR_FAN";
+			channel = <3>;
+		};
+	};
+
 	named-gpios {
 		compatible = "named-gpios";
 
@@ -527,5 +548,9 @@
 
 /* Side selection LED */
 &pwm7 {
+	status = "okay";
+};
+
+&adc0 {
 	status = "okay";
 };
