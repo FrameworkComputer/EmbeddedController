@@ -717,6 +717,8 @@ static void tc_detached(int port)
 	tc_pd_connection(port, 0);
 	tcpm_debug_accessory(port, 0);
 	tc_set_modes_exit(port);
+	if (IS_ENABLED(CONFIG_USB_PRL_SM))
+		prl_set_default_pd_revision(port);
 }
 
 static inline void pd_set_dual_role_and_event(int port,
@@ -1454,6 +1456,22 @@ static void restart_tc_sm(int port, enum usb_tc_state start_state)
 		pd_set_input_current_limit(port, 0, 0);
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 	}
+
+	/*
+	 * PD r3.0 v2.0, ss6.2.1.1.5:
+	 * After a physical or logical (USB Type-C Error Recovery) Attach, a
+	 * Port discovers the common Specification Revision level between itself
+	 * and its Port Partner and/or the Cable Plug(s), and uses this
+	 * Specification Revision level until a Detach, Hard Reset or Error
+	 * Recovery happens.
+	 *
+	 * This covers the Error Recovery case, because TC_ERROR_RECOVERY
+	 * reinitializes the TC state machine. This also covers the implicit
+	 * case when PD is suspended and resumed or when the state machine is
+	 * first initialized.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PRL_SM))
+		prl_set_default_pd_revision(port);
 
 #ifdef CONFIG_USB_PE_SM
 	tc_enable_pd(port, 0);

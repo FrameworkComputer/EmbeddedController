@@ -45,11 +45,22 @@ void prl_set_debug_level(enum debug_level level);
 void prl_reset(int port);
 
 /**
- * Resets the Protocol Layer State Machine (softly)
+ * Resets the Protocol Layer state machine but does not reset the stored PD
+ * revisions of the partners.
  *
  * @param port USB-C port number
  */
 void prl_reset_soft(int port);
+
+/**
+ * resets the stored pd revisions for each sop type to their default value, the
+ * highest revision supported by this implementation. per pd r3.0 v2.0,
+ * ss6.2.1.1.5, this should only happen upon detach, hard reset, or error
+ * recovery.
+ *
+ * @param port USB-C port number
+ */
+void prl_set_default_pd_revision(int port);
 
 /**
  * Runs the Protocol Layer State Machine

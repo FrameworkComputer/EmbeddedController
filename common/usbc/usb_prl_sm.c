@@ -669,7 +669,8 @@ void prl_send_ext_data_msg(int port,
 }
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 
-static void prl_set_default_pd_revision(int port) {
+void prl_set_default_pd_revision(int port)
+{
 	/*
 	 * Initialize to highest revision supported. If the port or cable
 	 * partner doesn't support this revision, the Protocol Engine will
@@ -706,7 +707,6 @@ void prl_run(int port, int evt, int en)
 	case SM_PAUSED:
 		if (!en)
 			break;
-		prl_set_default_pd_revision(port);
 		/* fall through */
 	case SM_INIT:
 		prl_init(port);
@@ -1283,6 +1283,18 @@ static void prl_hr_reset_layer_entry(const int port)
 		vpd_rx_enable(0);
 	else
 		tcpm_set_rx_enable(port, 0);
+
+	/*
+	 * PD r3.0 v2.0, ss6.2.1.1.5:
+	 * After a physical or logical (USB Type-C Error Recovery) Attach, a
+	 * Port discovers the common Specification Revision level between itself
+	 * and its Port Partner and/or the Cable Plug(s), and uses this
+	 * Specification Revision level until a Detach, Hard Reset or Error
+	 * Recovery happens.
+	 *
+	 * This covers the Hard Reset case.
+	 */
+	prl_set_default_pd_revision(port);
 
 	/*
 	 * Protocol Layer message transmission transitions to

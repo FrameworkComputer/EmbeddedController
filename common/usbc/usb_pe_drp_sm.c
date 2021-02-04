@@ -2167,7 +2167,7 @@ static void pe_src_startup_entry(int port)
 	pe[port].caps_counter = 0;
 
 	/* Reset the protocol layer */
-	prl_reset(port);
+	prl_reset_soft(port);
 
 	/*
 	 * Protocol layer reset clears the message IDs for all SOP types.
@@ -2993,7 +2993,7 @@ static void pe_snk_startup_entry(int port)
 	print_current_state(port);
 
 	/* Reset the protocol layer */
-	prl_reset(port);
+	prl_reset_soft(port);
 
 	/*
 	 * Protocol layer reset clears the message IDs for all SOP types.
