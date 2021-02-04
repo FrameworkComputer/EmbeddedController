@@ -189,19 +189,6 @@ static void dsw_pwrok_pass_thru(void)
 }
 
 /*
- * Return 0 if PWROK signal is deasserted, non-zero if asserted
- */
-static int pwrok_signal_get(const struct intel_x86_pwrok_signal *signal)
-{
-	int level = gpio_get_level(signal->gpio);
-
-	if (signal->active_low)
-		level = !level;
-
-	return level;
-}
-
-/*
  * Set the PWROK signal state
  *
  * &param level		0 deasserts the signal, other values assert the signal
@@ -236,10 +223,6 @@ static void all_sys_pwrgd_pass_thru(void)
 	 * to match the current ALL_SYS_PWRGD input.
 	 */
 	for (i = 0; i < signal_count; i++, pwrok_signal++) {
-		if ((!all_sys_pwrgd_in && !pwrok_signal_get(pwrok_signal))
-			|| (all_sys_pwrgd_in && pwrok_signal_get(pwrok_signal)))
-			continue;
-
 		if (pwrok_signal->delay_ms > 0)
 			msleep(pwrok_signal->delay_ms);
 
