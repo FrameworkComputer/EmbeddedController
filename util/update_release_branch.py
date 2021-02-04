@@ -5,6 +5,10 @@
 """Release branch updater tool.
 
 This is a tool to merge from the main branch into a release branch.
+
+Inspired by the fingerprint release process:
+http://go/cros-fingerprint-firmware-branching-and-signing and now used by other
+boards.
 """
 from __future__ import print_function
 import argparse
