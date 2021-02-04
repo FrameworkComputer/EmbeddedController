@@ -244,6 +244,9 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC_SYV682X
 
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_VBOOT_HASH
                                                 "${PLATFORM_EC}/common/vboot_hash.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_VOLUME_BUTTONS
+                                                "${PLATFORM_EC}/common/button.c")
+
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_VSTORE  "${PLATFORM_EC}/common/vstore.c")
 
 zephyr_sources_ifdef(CONFIG_SHELL               "${PLATFORM_EC}/common/gpio_commands.c")

@@ -80,6 +80,16 @@ config PLATFORM_EC_KEYBOARD_COL2_INVERTED
 	  Refresh key will also trigger T key, which is in the next scanning
 	  column line. See http://b/156007029.
 
+config PLATFORM_EC_VOLUME_BUTTONS
+	bool "Board has volume-up and volume-down buttons"
+	help
+	  Enable this if the board has physical buttons for the volume controls.
+	  These are buttons controlled by GPIOs and are not part of the keyboard
+	  matrix.
+
+	  Your board must define GPIO_VOLUME_UP_L and GPIO_VOLUME_DOWN_L in
+	  gpio_map.h
+
 config PLATFORM_EC_CONSOLE_CMD_KEYBOARD_8042
 	bool "Console command: i8042"
 	default y if PLATFORM_EC_KEYBOARD_PROTOCOL_8042
