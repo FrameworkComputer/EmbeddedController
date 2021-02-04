@@ -89,7 +89,11 @@ class Zmake:
         base_config = zmake.build_config.BuildConfig(
             environ_defs={'ZEPHYR_BASE': str(zephyr_base),
                           'PATH': '/usr/bin'},
-            cmake_defs={'DTS_ROOT': str(module_paths['ec-shim'] / 'zephyr')})
+            cmake_defs={
+                'DTS_ROOT': str(module_paths['ec-shim'] / 'zephyr'),
+                'SYSCALL_INCLUDE_DIRS': str(
+                    module_paths['ec-shim'] / 'zephyr' / 'include' / 'drivers'),
+            })
         module_config = zmake.modules.setup_module_symlinks(
             build_dir / 'modules', module_paths)
 
