@@ -1406,13 +1406,16 @@ static bool pd_can_source_from_device(const int pdo_cnt, const uint32_t *pdos)
 void pd_resume_check_pr_swap_needed(int port)
 {
 	/*
-	 * Explicit contract, current power role of SNK and the device
-	 * indicates it should not power us then trigger a PR_Swap
+	 * Explicit contract, current power role of SNK, the device
+	 * indicates it should not power us, and device isn't selected
+	 * as the charging port (ex. through the GUI) then trigger a PR_Swap
 	 */
 	if (pe_is_explicit_contract(port) &&
 	    pd_get_power_role(port) == PD_ROLE_SINK &&
 	    !pd_can_source_from_device(pd_get_src_cap_cnt(port),
-				       pd_get_src_caps(port)))
+				       pd_get_src_caps(port)) &&
+	    (!IS_ENABLED(CONFIG_CHARGE_MANAGER) ||
+	     charge_manager_get_active_charge_port() != port))
 		pd_dpm_request(port, DPM_REQUEST_PR_SWAP);
 }
 

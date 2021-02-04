@@ -31,6 +31,11 @@ int charge_manager_get_selected_charge_port(void)
 	return 0;
 }
 
+int charge_manager_get_active_charge_port(void)
+{
+	return 0;
+}
+
 int charge_manager_get_vbus_voltage(int port)
 {
 	return mock_ctrl_charge_manager.vbus_voltage_mv;
