@@ -18,6 +18,8 @@ import subprocess
 import sys
 import textwrap
 
+BUG_NONE_PATTERN = re.compile('none', flags=re.IGNORECASE)
+
 
 def git_commit_msg(branch, head, merge_head, rel_paths):
     """Generates a merge commit message based off of relevant changes.
@@ -44,6 +46,15 @@ def git_commit_msg(branch, head, merge_head, rel_paths):
 
     _, relevant_bugs = get_relevant_commits(head, merge_head, '', rel_paths)
     relevant_bugs = set(re.findall('BUG=(.*)', relevant_bugs))
+    # Filter out "none" from set of bugs
+    filtered = []
+    for bug_line in relevant_bugs:
+        bug_line = bug_line.replace(',', ' ')
+        bugs = bug_line.split(' ')
+        for bug in bugs:
+            if bug and not BUG_NONE_PATTERN.match(bug):
+                filtered.append(bug)
+    relevant_bugs = filtered
 
     COMMIT_MSG_TEMPLATE = """
 Merge remote-tracking branch cros/main into {BRANCH}
@@ -63,7 +74,7 @@ TEST=`make -j buildall`
     # 72 cols.
     relevant_commits_cmd = textwrap.fill(relevant_commits_cmd, width=72)
     # Wrap at 68 cols to save room for 'BUG='
-    bugs = textwrap.wrap(' '.join(list(relevant_bugs)), width=68)
+    bugs = textwrap.wrap(' '.join(relevant_bugs), width=68)
     bug_field = ''
     for line in bugs:
         bug_field += 'BUG=' + line + '\n'
