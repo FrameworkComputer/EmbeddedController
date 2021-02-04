@@ -771,6 +771,20 @@
 #undef CONFIG_DEDICATED_RECOVERY_BUTTON_2
 
 /*
+ * RISC-V core specific panic data is bigger than Cortex-M core specific panic
+ * data. Including this into union in panic_data structure causes whole
+ * to grow by 28 bytes. In many boards EC RO is still obtaining pointer to
+ * beginning of panic data by subtracting its panic data structure size from
+ * the end of RAM. When EC RW saves panic data it will be corrupted by EC RO.
+ * Moreover, during next boot EC RW won't be able to find jump data (see
+ * b/165773837 for more details).
+ *
+ * This config allows boards to not include RV32I panic data if their EC RO
+ * doesn't include it to keep panic data structure in sync.
+ */
+#undef CONFIG_DO_NOT_INCLUDE_RV32I_PANIC_DATA
+
+/*
  * The board has volume up and volume down buttons.  Note, these are *buttons*
  * and not keys in the keyboard matrix.
  */

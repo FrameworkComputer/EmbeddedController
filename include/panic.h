@@ -84,7 +84,9 @@ struct panic_data {
 		struct cortex_panic_data cm;       /* Cortex-Mx registers */
 		struct nds32_n8_panic_data nds_n8; /* NDS32 N8 registers */
 		struct x86_panic_data x86;         /* Intel x86 */
+#ifndef CONFIG_DO_NOT_INCLUDE_RV32I_PANIC_DATA
 		struct rv32i_panic_data riscv;     /* RISC-V RV32I */
+#endif
 	};
 
 	/*
@@ -100,7 +102,9 @@ enum panic_arch {
 	PANIC_ARCH_CORTEX_M = 1,     /* Cortex-M architecture */
 	PANIC_ARCH_NDS32_N8 = 2,     /* NDS32 N8 architecture */
 	PANIC_ARCH_X86 = 3,          /* Intel x86 */
+#ifndef CONFIG_DO_NOT_INCLUDE_RV32I_PANIC_DATA
 	PANIC_ARCH_RISCV_RV32I = 4,  /* RISC-V RV32I */
+#endif
 };
 
 /* Use PANIC_DATA_PTR to refer to the persistent storage location */
