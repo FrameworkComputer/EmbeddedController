@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "config.h"
 #include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
