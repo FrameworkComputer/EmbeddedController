@@ -50,6 +50,13 @@ config PLATFORM_EC_KEYBOARD_BOARD_CONFIG
 	  If this is not enabled, default values in common/keyboard_scan.c are
 	  used.
 
+config PLATFORM_EC_KEYBOARD_KEYPAD
+	bool "Support a numeric keypad"
+	help
+	  Enable support for a keypad, a palm-sized keyboard section usually
+	  placed on the far right. This contains nuumber keys and also some
+	  commonly used symbols, to help speed up numeric data entry.
+
 config PLATFORM_EC_KEYBOARD_COL2_INVERTED
 	bool "A mechanism for passing KSO2 to H1 which inverts the signal"
 	help
