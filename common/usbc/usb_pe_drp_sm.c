@@ -1710,6 +1710,10 @@ static void pe_update_src_pdo_flags(int port, int pdo_cnt, uint32_t *pdos)
 
 void pd_request_power_swap(int port)
 {
+	/* Ignore requests when the board does not wish to swap */
+	if (!pd_check_power_swap(port))
+		return;
+
 	/*
 	 * Always reset the SRC to SNK PR swap counter when a PR swap is
 	 * requested by policy.
