@@ -173,12 +173,12 @@ def main(argv):
     if opts.baseboard:
         # Dereference symlinks so "git log" works as expected.
         baseboard_dir = os.path.relpath('baseboard/' + opts.baseboard)
-        baseboard_dir = os.path.realpath(baseboard_dir)
+        baseboard_dir = os.path.relpath(os.path.realpath(baseboard_dir))
 
         boards = get_relevant_boards(opts.baseboard)
     elif opts.board:
         board_dir = os.path.relpath('board/' + opts.board)
-        board_dir = os.path.realpath(board_dir)
+        board_dir = os.path.relpath(os.path.realpath(board_dir))
         boards = [opts.board]
     else:
         parser.error('You must specify a board OR a baseboard')
