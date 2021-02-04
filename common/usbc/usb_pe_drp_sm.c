@@ -6384,21 +6384,19 @@ static void pe_vcs_cbl_send_soft_reset_entry(int port)
 	}
 
 	send_ctrl_msg(port, TCPC_TX_SOP_PRIME, PD_CTRL_SOFT_RESET);
-	pe[port].sender_response_timer = TIMER_DISABLED;
+	pe_sender_response_msg_entry(port);
 }
 
 static void pe_vcs_cbl_send_soft_reset_run(int port)
 {
 	bool cable_soft_reset_complete = false;
+	enum pe_msg_check msg_check;
 
-	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
-		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
-		pe[port].sender_response_timer = get_time().val +
-						PD_T_SENDER_RESPONSE;
-	}
+	msg_check = pe_sender_response_msg_run(port);
 
 	/* Got ACCEPT or REJECT from Cable Plug */
-	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+	if ((msg_check & PE_MSG_SENT) &&
+				PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 		cable_soft_reset_complete = true;
 
@@ -6426,7 +6424,8 @@ static void pe_vcs_cbl_send_soft_reset_run(int port)
 	}
 
 	if (cable_soft_reset_complete ||
-		get_time().val > pe[port].sender_response_timer) {
+			get_time().val > pe[port].sender_response_timer ||
+			(msg_check & PE_MSG_DISCARDED)) {
 		if (pe_is_explicit_contract(port)) {
 			/* Return to PE_{SRC,SNK}_Ready state */
 			pe_set_ready_state(port);
