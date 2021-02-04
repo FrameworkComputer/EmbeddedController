@@ -193,6 +193,9 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_SS_MUX
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_MUX_VIRTUAL
                                                 "${PLATFORM_EC}/driver/usb_mux/virtual.c")
 
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_LOGGING
+                                                "${PLATFORM_EC}/common/event_log.c"
+                                                "${PLATFORM_EC}/common/pd_log.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
                                                 "${PLATFORM_EC}/common/usbc/tbt_alt_mode.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_USB4

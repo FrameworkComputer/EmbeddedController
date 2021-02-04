@@ -464,6 +464,15 @@ config PLATFORM_EC_HOSTCMD_PD_CONTROL
 	  This host command can be manually executed using the
 	  "ectool pdcontrol" command from the Chromium OS shell.
 
+config PLATFORM_EC_USB_PD_LOGGING
+	bool "Host command: EC_CMD_PD_GET_LOG_ENTRY"
+	help
+	  Enable logging of USB Power Delivery events. The AP can request the
+	  log to see what has happened recently.
+
+	  The log events are stored in a circular buffer, each one being a
+	  struct event_log_entry.
+
 config PLATFORM_EC_CMD_USB_PD_PE
 	bool "Console command: pe"
 	help
