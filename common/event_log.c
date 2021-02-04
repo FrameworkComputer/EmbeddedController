@@ -51,22 +51,23 @@ void log_add_event(uint8_t type, uint8_t size, uint16_t data,
 	size_t payload_size = EVENT_LOG_SIZE(size);
 	size_t total_size = ENTRY_SIZE(payload_size);
 	size_t current_tail, first;
+	uint32_t lock_key;
 
 	/* --- critical section : reserve queue space --- */
-	interrupt_disable();
+	lock_key = irq_lock();
 	current_tail = log_tail_next;
 	log_tail_next = current_tail + total_size;
-	interrupt_enable();
+	irq_unlock(lock_key);
 	/* --- end of critical section --- */
 
 	/* Out of space : discard the oldest entry */
 	while ((UNIT_COUNT - (current_tail - log_head)) < total_size) {
 		struct event_log_entry *oldest;
 		/* --- critical section : atomically free-up space --- */
-		interrupt_disable();
+		lock_key = irq_lock();
 		oldest = log_events + (log_head & UNIT_COUNT_MASK);
 		log_head += ENTRY_SIZE(EVENT_LOG_SIZE(oldest->size));
-		interrupt_enable();
+		irq_unlock(lock_key);
 		/* --- end of critical section --- */
 	}
 
@@ -95,6 +96,7 @@ int log_dequeue_event(struct event_log_entry *r)
 	unsigned int total_size, first;
 	struct event_log_entry *entry;
 	size_t current_head;
+	uint32_t lock_key;
 
 retry:
 	current_head = log_head;
@@ -113,13 +115,13 @@ retry:
 		memcpy(r + first, log_events, (total_size-first) * UNIT_SIZE);
 
 	/* --- critical section : remove the entry from the queue --- */
-	interrupt_disable();
+	lock_key = irq_lock();
 	if (log_head != current_head) { /* our entry was thrown away */
-		interrupt_enable();
+		irq_unlock(lock_key);
 		goto retry;
 	}
 	log_head += total_size;
-	interrupt_enable();
+	irq_unlock(lock_key);
 	/* --- end of critical section --- */
 
 	/* fixup the timestamp : number of milliseconds in the past */
