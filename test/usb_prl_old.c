@@ -806,7 +806,7 @@ static int test_prl_reset(void)
 
 	enable_prl(port, 1);
 
-	prl_reset(port);
+	prl_reset_soft(port);
 
 	TEST_EQ(prl_tx_get_state(port),
 			PRL_TX_WAIT_FOR_MESSAGE_REQUEST, "%u");

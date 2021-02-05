@@ -38,13 +38,6 @@ bool prl_is_busy(int port);
 void prl_set_debug_level(enum debug_level level);
 
 /**
- * Resets the Protocol Layer State Machine
- *
- * @param port USB-C port number
- */
-void prl_reset(int port);
-
-/**
  * Resets the Protocol Layer state machine but does not reset the stored PD
  * revisions of the partners.
  *

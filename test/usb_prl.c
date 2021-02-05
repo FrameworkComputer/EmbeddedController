@@ -145,7 +145,7 @@ void before_test(void)
 	mock_tcpm_reset();
 	mock_pe_port_reset();
 
-	prl_reset(PORT0);
+	prl_reset_soft(PORT0);
 	enable_prl(PORT0, 1);
 }
 

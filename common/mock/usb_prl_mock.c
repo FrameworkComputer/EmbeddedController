@@ -74,9 +74,6 @@ __overridable bool prl_is_busy(int port)
 	return false;
 }
 
-void prl_reset(int port)
-{}
-
 void prl_reset_soft(int port)
 {}
 
