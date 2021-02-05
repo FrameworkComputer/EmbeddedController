@@ -93,7 +93,7 @@ static void board_version_init(void)
 {
 	version = adc_value_to_numeric_id(ADC_BOARD_ID_0);
 	if (version < 0) {
-		ccprints("WARNING: failed to read ADC_BOARD_ID_0");
+		ccprints("WARN:BOARD_ID_0");
 		ccprints("Assuming board id = 0");
 
 		version = 0;
