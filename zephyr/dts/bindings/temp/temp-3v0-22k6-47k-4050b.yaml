@@ -1,0 +1,9 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Thermistor 3v0-22k6-47k-4050b
+
+compatible: "temp-3v0-22k6-47k-4050b"
+
+include: thermistor.yaml

@@ -40,6 +40,7 @@ rsource "Kconfig.led"
 rsource "Kconfig.powerseq"
 rsource "Kconfig.motionsense"
 rsource "Kconfig.tasks"
+rsource "Kconfig.temperature"
 rsource "Kconfig.usbc"
 
 # Define PLATFORM_EC_... options to enable EC features. Each Kconfig should be

@@ -254,6 +254,10 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_SPI_FLASH_REGS
 
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TABLET_MODE
                                                 "${PLATFORM_EC}/common/tablet_mode.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TEMP_SENSOR
+                                                "${PLATFORM_EC}/common/temp_sensor.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_THERMISTOR
+                                                "${PLATFORM_EC}/driver/temp_sensor/thermistor.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_THROTTLE_AP
                                                 "${PLATFORM_EC}/common/throttle_ap.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TIMER   "${PLATFORM_EC}/common/timer.c")

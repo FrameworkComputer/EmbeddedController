@@ -1,0 +1,17 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Thermistor properties
+
+properties:
+    label:
+      required: true
+      type: string
+      description:
+        Human-readable string describing the device (used as
+        device_get_binding() argument)
+    adc:
+      required: true
+      type: phandle
+      description: named-adc child node connected to the thermistor

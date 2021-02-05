@@ -1,0 +1,68 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC_TEMP_SENSOR
+	bool "Temperature sensors"
+	help
+	  Support for temperature sensors. Once enabled, "temps" console
+	  command and EC_CMD_TEMP_SENSOR_GET_INFO host command are available.
+
+if PLATFORM_EC_TEMP_SENSOR
+
+config PLATFORM_EC_THERMISTOR
+	bool "Thermistor support"
+	depends on PLATFORM_EC_ADC
+	help
+	  Enables support for thermistors (resistor whose resistance is
+	  strongly dependent on temperature) as temperature-sensor type.
+
+config PLATFORM_EC_STEINHART_HART_3V0_22K6_47K_4050B
+	bool "Steinhart-hart 3V0_22K6_47K_4050B"
+	depends on PLATFORM_EC_THERMISTOR
+	help
+	  Enables support for measuring temperature using the Steinhart-Hart
+	  equation model and the thermistor configured with the following
+	  circuit configuration:
+	  -3.0V reference voltage
+	  -22.6 kilohm fixed resistor, connected to the reference voltage
+	  -47 kilohm thermistor reference resistance at 25 C
+	  -4050 B-constant (thermistor sensitivity)
+
+config PLATFORM_EC_STEINHART_HART_3V3_13K7_47K_4050B
+	bool "Steinhart-hart 3V3_13K7_47K_4050B"
+	depends on PLATFORM_EC_THERMISTOR
+	help
+	  Enables support for measuring temperature using the Steinhart-Hart
+	  equation model and the thermistor configured with the following
+	  circuit configuration:
+	  -3.3V reference voltage
+	  -13.7 kilohm fixed resistor, connected to the reference voltage
+	  -47 kilohm thermistor reference resistance at 25 C
+	  -4050 B-constant (thermistor sensitivity)
+
+config PLATFORM_EC_STEINHART_HART_3V3_30K9_47K_4050B
+	bool "Steinhart-hart 3V3_30K9_47K_4050B"
+	depends on PLATFORM_EC_THERMISTOR
+	help
+	  Enables support for measuring temperature using the Steinhart-Hart
+	  equation model and the thermistor configured with the following
+	  circuit configuration:
+	  -3.3V reference voltage
+	  -30.9 kilohm fixed resistor, connected to the reference voltage
+	  -47 kilohm thermistor reference resistance at 25 C
+	  -4050 B-constant (thermistor sensitivity)
+
+config PLATFORM_EC_STEINHART_HART_3V3_51K1_47K_4050B
+	bool "Steinhart-hart 3V3_51K1_47K_4050B"
+	depends on PLATFORM_EC_THERMISTOR
+	default y
+	help
+	  Enables support for measuring temperature using the Steinhart-Hart
+	  equation model and the thermistor configured with the following
+	  circuit configuration:
+	  -3.3V reference voltage
+	  -51.1 kilohm fixed resistor, connected to the reference voltage
+	  -47 kilohm thermistor reference resistance at 25 C
+	  -4050 B-constant (thermistor sensitivity)
+endif # PLATFORM_EC_TEMP_SENSOR
