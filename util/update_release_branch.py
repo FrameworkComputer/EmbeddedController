@@ -56,6 +56,8 @@ def git_commit_msg(branch, head, merge_head, rel_paths):
                 filtered.append(bug)
     relevant_bugs = filtered
 
+    # TODO(b/179509333): remove Cq-Include-Trybots line when regular CQ and
+    # firmware CQ do not behave differently.
     COMMIT_MSG_TEMPLATE = """
 Merge remote-tracking branch cros/main into {BRANCH}
 
@@ -69,6 +71,7 @@ BRANCH=None
 {BUG_FIELD}
 TEST=`make -j buildall`
 
+Cq-Include-Trybots: chromeos/cq:cq-orchestrator
 """
     # Wrap the relevant commits command and bug field such that we don't exceed
     # 72 cols.
