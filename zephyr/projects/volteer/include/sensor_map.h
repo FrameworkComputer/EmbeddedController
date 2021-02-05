@@ -16,12 +16,6 @@
  */
 
 /*
- * TODO(b/173507858) : Move CONFIG_xxx below to "Kconfig.motionsense"
- * #define CONFIG_CMD_ACCELS
- * #define CONFIG_CMD_ACCEL_INFO
-*/
-
-/*
  * TODO(b/173507858) : Everything below will be moved to device tree
 */
 
