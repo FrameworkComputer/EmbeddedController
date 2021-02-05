@@ -186,6 +186,8 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_POWER_DELIVERY
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CONSOLE_CMD_PD
                                                 "${PLATFORM_EC}/common/usbc/usb_pd_console.c")
 
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_FW_UPDATE
+                                                "${PLATFORM_EC}/common/usbc/usb_retimer_fw_update.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB
                                                 "${PLATFORM_EC}/driver/retimer/bb_retimer.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_SS_MUX
