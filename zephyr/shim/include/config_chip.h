@@ -247,6 +247,7 @@ enum battery_type {
 #ifdef CONFIG_PLATFORM_EC_I2C
 /* Also see shim/include/i2c/i2c.h which defines the ports enum */
 #define CONFIG_I2C
+#define CONFIG_I2C_CONTROLLER
 #endif
 
 #undef CONFIG_KEYBOARD_PROTOCOL_8042
