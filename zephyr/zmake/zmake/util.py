@@ -158,8 +158,8 @@ def resolve_build_dir(platform_ec_dir, project_dir, build_dir):
     Returns:
         The resolved build directory (using build_dir if not None).
     """
-    if build_dir and pathlib.Path.exists(
-            build_dir / 'project' / 'zmake.yaml'):
+    if build_dir and (not pathlib.Path.exists(build_dir) or pathlib.Path.exists(
+            build_dir / 'project' / 'zmake.yaml')):
         return build_dir
 
     if not pathlib.Path.exists(project_dir / 'zmake.yaml'):
