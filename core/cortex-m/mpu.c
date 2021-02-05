@@ -121,6 +121,7 @@ static int mpu_config_region_greedy(uint8_t region, uint32_t addr,
 	uint8_t subregion_disable = 0;
 
 	if (natural_alignment >= 5) {
+		int sr_idx;
 		uint32_t subregion_base, subregion_size;
 		/*
 		 * For MPU regions larger than 256 bytes we can use subregions,
@@ -142,7 +143,7 @@ static int mpu_config_region_greedy(uint8_t region, uint32_t addr,
 		subregion_base = addr & ~((1 << natural_alignment) - 1);
 		subregion_size = 1 << (natural_alignment - 3);
 		*consumed = 0;
-		for (int sr_idx = 0; sr_idx < 8; sr_idx++) {
+		for (sr_idx = 0; sr_idx < 8; sr_idx++) {
 			if (subregion_base < addr ||
 			    (subregion_base + subregion_size) > (addr + size))
 				/* lsb of subregion mask is lowest address */
