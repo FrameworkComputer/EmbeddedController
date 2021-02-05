@@ -1000,4 +1000,9 @@ enum battery_type {
 #define CONFIG_SHA256_HW_ACCELERATE
 #endif
 
+#undef CONFIG_SYSTEM_UNLOCKED
+#ifdef CONFIG_PLATFORM_EC_SYSTEM_UNLOCKED
+#define CONFIG_SYSTEM_UNLOCKED
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

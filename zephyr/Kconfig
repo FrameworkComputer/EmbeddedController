@@ -734,4 +734,19 @@ config PLATFORM_EC_VSTORE_SLOT_COUNT
 	  used only for recording a hash of the read-write AP firmware for
 	  checking on resume. For this, one slot is enough.
 
+config PLATFORM_EC_SYSTEM_UNLOCKED
+	bool "System unlocked: allow dangerous commands while in development"
+	default y if PLATFORM_EC_BRINGUP
+	help
+	  System should remain unlocked even if write protect is enabled.
+
+	  NOTE: This should ONLY be defined during bringup, and should never be
+	  defined on a shipping / released platform.
+
+	  When defined, CBI allows ectool to reprogram all the fields.
+	  Normally, it refuses to change certain fields. (e.g. board version,
+	  OEM ID)
+
+	  Also, this enables PD in RO for TCPMv2.
+
 endif # PLATFORM_EC
