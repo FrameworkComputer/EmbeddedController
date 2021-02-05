@@ -78,7 +78,7 @@ BUILD_ASSERT(sizeof(struct gpio_alt_map) == 2);
 #endif
 
 /* Constants for GPIO alternative mapping */
-const struct gpio_alt_map gpio_alt_table[] = NPCX_ALT_TABLE;
+const __const_data struct gpio_alt_map gpio_alt_table[] = NPCX_ALT_TABLE;
 
 struct gpio_lvol_item {
 	struct npcx_gpio lvol_gpio[8];

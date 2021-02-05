@@ -38,7 +38,7 @@ struct gpio_alt_func {
 	{GPIO_##pinmask, .func = (function), .module_id = (module),            \
 	 .flags = (flagz)},
 
-static const struct gpio_alt_func gpio_alt_funcs[] = {
+static __const_data const struct gpio_alt_func gpio_alt_funcs[] = {
 #include "gpio.wrap"
 };
 

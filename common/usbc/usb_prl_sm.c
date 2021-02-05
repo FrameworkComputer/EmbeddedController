@@ -128,7 +128,7 @@ struct bit_name {
 	const char	*name;
 };
 
-static struct bit_name flag_bit_names[] = {
+static __const_data struct bit_name flag_bit_names[] = {
 	{ PRL_FLAGS_TX_COMPLETE, "PRL_FLAGS_TX_COMPLETE" },
 	{ PRL_FLAGS_SINK_NG, "PRL_FLAGS_SINK_NG" },
 	{ PRL_FLAGS_WAIT_SINK_OK, "PRL_FLAGS_WAIT_SINK_OK" },
@@ -2192,7 +2192,7 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 }
 
 /* All necessary Protocol Transmit States (Section 6.11.2.2) */
-static const struct usb_state prl_tx_states[] = {
+static __const_data const struct usb_state prl_tx_states[] = {
 	[PRL_TX_PHY_LAYER_RESET] = {
 		.entry  = prl_tx_phy_layer_reset_entry,
 	},
@@ -2233,7 +2233,7 @@ static const struct usb_state prl_tx_states[] = {
 };
 
 /* All necessary Protocol Hard Reset States (Section 6.11.2.4) */
-static const struct usb_state prl_hr_states[] = {
+static __const_data const struct usb_state prl_hr_states[] = {
 	[PRL_HR_WAIT_FOR_REQUEST] = {
 		.entry  = prl_hr_wait_for_request_entry,
 		.run    = prl_hr_wait_for_request_run,

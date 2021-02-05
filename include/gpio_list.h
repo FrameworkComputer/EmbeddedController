@@ -19,7 +19,7 @@
 #define UNIMPLEMENTED(name) {#name, UNIMPLEMENTED_GPIO_BANK, 0, GPIO_DEFAULT},
 
 /* GPIO signal list. */
-const struct gpio_info gpio_list[] = {
+__const_data const struct gpio_info gpio_list[] = {
 	#include "gpio.wrap"
 };
 
@@ -27,7 +27,7 @@ BUILD_ASSERT(ARRAY_SIZE(gpio_list) == GPIO_COUNT);
 
 #define UNUSED(pin) {GPIO_##pin},
 /* Unconnected pin list. */
-const struct unused_pin_info unused_pin_list[] = {
+__const_data const struct unused_pin_info unused_pin_list[] = {
 	#include "gpio.wrap"
 };
 
