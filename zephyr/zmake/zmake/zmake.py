@@ -102,6 +102,8 @@ class Zmake:
         module_config = zmake.modules.setup_module_symlinks(
             build_dir / 'modules', module_paths)
 
+        dts_overlay_config = project.find_dts_overlays(module_paths)
+
         if not toolchain:
             toolchain = project.config.toolchain
 
@@ -120,6 +122,7 @@ class Zmake:
             config = (base_config
                       | toolchain_config
                       | module_config
+                      | dts_overlay_config
                       | build_config)
             output_dir = build_dir / 'build-{}'.format(build_name)
             kconfig_file = build_dir / 'kconfig-{}.conf'.format(build_name)

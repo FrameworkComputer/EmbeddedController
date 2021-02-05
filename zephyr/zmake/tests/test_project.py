@@ -1,0 +1,82 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+import hypothesis
+import hypothesis.strategies as st
+import pathlib
+import string
+import tempfile
+
+import zmake.project
+
+
+board_names = st.text(alphabet=set(string.ascii_lowercase) | {'_'},
+                      min_size=1)
+sets_of_board_names = st.lists(st.lists(board_names, unique=True))
+
+
+class TemporaryProject(tempfile.TemporaryDirectory):
+    """A temporary project wrapper.
+
+    Args:
+        config: The config dictionary to be used with the project.
+    """
+    def __init__(self, config):
+        self.config = config
+        super().__init__()
+
+    def __enter__(self):
+        project_path = pathlib.Path(super().__enter__())
+        return zmake.project.Project(project_path, config_dict=self.config)
+
+
+@hypothesis.given(sets_of_board_names)
+@hypothesis.settings(deadline=1000)
+def test_find_dts_overlays(modules):
+    """Test the functionality of find_dts_overlays with multiple
+    modules, each with sets of board names."""
+
+    # Recursive function to wind up all the temporary directories and
+    # call the actual test.
+    def setup_modules_and_dispatch(modules, test_fn, module_list=()):
+        if modules:
+            boards = modules[0]
+            with tempfile.TemporaryDirectory() as modpath:
+                modpath = pathlib.Path(modpath)
+                for board in boards:
+                    dts_path = zmake.project.module_dts_overlay_name(
+                        modpath, board)
+                    dts_path.parent.mkdir(parents=True, exist_ok=True)
+                    dts_path.touch()
+                setup_modules_and_dispatch(
+                    modules[1:], test_fn, module_list=module_list + (modpath,))
+        else:
+            test_fn(module_list)
+
+    # The actual test case, once temp modules have been setup.
+    def testcase(module_paths):
+        # Maps board_name→overlay_files
+        board_file_mapping = {}
+        for modpath, board_list in zip(module_paths, modules):
+            for board in board_list:
+                file_name = zmake.project.module_dts_overlay_name(
+                    modpath, board)
+                files = board_file_mapping.get(board, set())
+                board_file_mapping[board] = files | {file_name}
+
+        for board, expected_dts_files in board_file_mapping.items():
+            with TemporaryProject(
+                {'board': board,
+                 'toolchain': 'foo',
+                 'output-type': 'elf',
+                 'supported-zephyr-versions': ['v2.4']}) as project:
+                config = project.find_dts_overlays(
+                    dict(enumerate(module_paths)))
+
+                actual_dts_files = set(
+                    config.cmake_defs.get('DTC_OVERLAY_FILE', '').split(';'))
+
+                assert actual_dts_files == set(map(str, expected_dts_files))
+
+    setup_modules_and_dispatch(modules, testcase)

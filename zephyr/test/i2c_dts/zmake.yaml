@@ -8,3 +8,5 @@ supported-zephyr-versions:
 output-type: elf
 toolchain: llvm
 is-test: true
+dts-overlays:
+  - overlay.dts
