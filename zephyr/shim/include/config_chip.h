@@ -48,6 +48,13 @@
 #undef CONFIG_RW_ROM_RESIDENT_MEM_OFF
 #undef CONFIG_RW_ROM_RESIDENT_SIZE
 
+/*
+ * This not used by the Zephyr code since we always make cros_crc8() available.
+ * Define it here to reduce the delta from the ECOS CONFIG.
+ */
+#undef CONFIG_CRC8
+#define CONFIG_CRC8
+
 /* EC chipset configuration */
 #define HOOK_TICK_INTERVAL	CONFIG_CROS_EC_HOOK_TICK_INTERVAL
 
