@@ -1018,4 +1018,9 @@ enum battery_type {
 #define CONFIG_SYSTEM_UNLOCKED
 #endif
 
+#undef CONFIG_SPI_FLASH_REGS
+#ifdef CONFIG_PLATFORM_EC_SPI_FLASH_REGS
+#define CONFIG_SPI_FLASH_REGS
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */
