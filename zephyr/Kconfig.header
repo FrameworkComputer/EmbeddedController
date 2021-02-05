@@ -1,0 +1,31 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_RO_HEADER
+	bool "RO section includes a header"
+	default y
+	help
+	  The RO image residing on flash memory has a header section. The header
+	  is used on some chips (such as the npcx) to load the image correctly
+	  from flash. The values for offset and size are used by the linker
+	  scripts to generate the header. See core/cortex-m/ec.lds.S for
+	  reference.
+
+if PLATFORM_EC_RO_HEADER
+
+config PLATFORM_EC_RO_HEADER_OFFSET
+	hex "Offset in memory for the location of the header"
+	default 0x0
+	help
+	  The offset (in bytes) of the header relative to the start address of
+	  the RO image.
+
+config PLATFORM_EC_RO_HEADER_SIZE
+	hex "Size of the RO header"
+	default 0x40
+	help
+	  The size of the RO header in bytes. This values should come from the
+	  datasheet of the chip being used.
+
+endif # PLATFORM_EC_RO_HEADER

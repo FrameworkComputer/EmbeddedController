@@ -32,6 +32,7 @@ menuconfig PLATFORM_EC
 if PLATFORM_EC
 
 rsource "Kconfig.battery"
+rsource "Kconfig.header"
 rsource "Kconfig.keyboard"
 rsource "Kconfig.led"
 rsource "Kconfig.powerseq"
@@ -245,6 +246,7 @@ config PLATFORM_EC_EXTPOWER_GPIO
 
 config PLATFORM_EC_FLASH
 	bool "Enable flash support"
+	depends on PLATFORM_EC_RO_HEADER
 	default y if FLASH_SIZE > 0
 	help
 	  Enables access to the device's flash through a simple API. With
