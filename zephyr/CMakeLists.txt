@@ -159,17 +159,16 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_INTEL
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_HOST_SLEEP
                                                 "${PLATFORM_EC}/power/host_sleep.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_PANIC   "${PLATFORM_EC}/common/panic_output.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_PWM     "${PLATFORM_EC}/common/pwm.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_SHA256_SW
                                                 "${PLATFORM_EC}/common/sha256.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_SWITCH
                                                 "${PLATFORM_EC}/common/switch.c")
 
-
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_THROTTLE_AP
-                                                "${PLATFORM_EC}/common/throttle_ap.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TABLET_MODE
                                                 "${PLATFORM_EC}/common/tablet_mode.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_PWM     "${PLATFORM_EC}/common/pwm.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_THROTTLE_AP
+                                                "${PLATFORM_EC}/common/throttle_ap.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TIMER   "${PLATFORM_EC}/common/timer.c")
 
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_CHARGER
