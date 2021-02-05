@@ -57,19 +57,34 @@ config PLATFORM_EC_KEYBOARD_KEYPAD
 	  placed on the far right. This contains nuumber keys and also some
 	  commonly used symbols, to help speed up numeric data entry.
 
+choice "Power button interference"
+	prompt "Select the impact of pressing the power button"
+	help
+	  On some boards one of the keyboard-scan inputs is affected by pressing
+	  the power button. When the power button is pressed, that input needs
+	  to be ignored in that case.
+
+config PLATFORM_EC_KEYBOARD_PWRBTN_INDEPENDENT
+	bool "No impact on keyboard-scan inputs"
+	help
+	  Select this if pressing the power button does not affect any
+	  keyboard-scan inputs.
+
 config PLATFORM_EC_KEYBOARD_PWRBTN_ASSERTS_KSI2
-	bool "Power-button press forces KSI2 to be asserted"
+	bool "Forces KSI2 to be asserted"
 	help
 	  Enable this if KSI2 is stuck 'asserted' for all scan columns if the
 	  power button is held. We must be aware of this case in order to
-	  correctly handle recovery mode key combinations.
+	  correctly handle recovery-mode key combinations.
 
 config PLATFORM_EC_KEYBOARD_PWRBTN_ASSERTS_KSI3
-	bool "Power-button press forces KSI3 to be asserted"
+	bool "Forces KSI3 to be asserted"
 	help
 	  Enable this if KSI3 is stuck 'asserted' for all scan columns if the
 	  power button is held. We must be aware of this case in order to
-	  correctly handle recovery mode key combinations.
+	  correctly handle recovery-mode key combinations.
+
+endchoice # "Power button interference"
 
 config PLATFORM_EC_KEYBOARD_COL2_INVERTED
 	bool "A mechanism for passing KSO2 to H1 which inverts the signal"
