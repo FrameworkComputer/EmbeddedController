@@ -340,7 +340,7 @@ config PLATFORM_EC_USB_PD_DISCHARGE_PPC
 
 endchoice  # Discharge method
 
-config PLATFORM_EC_CONFIG_USB_PD_REV30
+config PLATFORM_EC_USB_PD_REV30
 	bool "USB PD Rev3.0 functionality"
 	default y
 	help
@@ -553,7 +553,7 @@ config PLATFORM_EC_USB_PD_TRY_SRC
 
 config PLATFORM_EC_USB_PD_USB4
 	bool "USB4 support"
-	depends on PLATFORM_EC_CONFIG_USB_PD_REV30
+	depends on PLATFORM_EC_USB_PD_REV30
 	default y
 	help
 	  This enables support for entering into USB4 mode between two port
@@ -563,7 +563,7 @@ config PLATFORM_EC_USB_PD_USB4
 
 config PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
 	bool "Thunderbolt-compatible mode support"
-	depends on PLATFORM_EC_CONFIG_USB_PD_REV30
+	depends on PLATFORM_EC_USB_PD_REV30
 	default y
 	help
 	  Enable this to allow entering into Thunderbolt-compatible mode between
