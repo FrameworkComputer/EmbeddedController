@@ -1425,10 +1425,21 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 				VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP))
 				| cmd);
 
-	/* Copy Data after VDM Header */
-	memcpy((pe[port].vdm_data + 1), data, count);
+	/*
+	 * Copy VDOs after the VDM Header. Note that the count refers to VDO
+	 * count.
+	 */
+	memcpy((pe[port].vdm_data + 1), data, count * sizeof(uint32_t));
 
 	pe[port].vdm_cnt = count + 1;
+
+	/*
+	 * The PE transmit routine assumes that tx_type was set already. Note,
+	 * that this function is likely called from outside the PD task.
+	 * (b/180465870)
+	 */
+	pe[port].tx_type = TCPC_TX_SOP;
+	pd_dpm_request(port, DPM_REQUEST_VDM);
 
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
@@ -5049,6 +5060,27 @@ static enum vdm_response_result parse_vdm_response_common(int port)
 	uint8_t type;
 	uint8_t cnt;
 	uint8_t ext;
+	uint32_t vdm_hdr;
+
+	/*
+	 * USB-PD 3.0 Rev 1.1 - 6.4.4.2.5
+	 * Structured VDM command consists of a command request and a command
+	 * response (ACK, NAK, or BUSY). An exception is made for the Attention
+	 * command which shall have no response.
+	 *
+	 * This function is a helper function for PE states which are sending
+	 * VDM commands and are waiting for VDM responses from the port partner.
+	 * Since Attention commands do not have an expected reply, the SVDM
+	 * command is complete once the Attention command transmit is complete.
+	 */
+	vdm_hdr = pe[port].vdm_data[0];
+	if(PD_VDO_SVDM(vdm_hdr) &&
+	   (PD_VDO_CMD(vdm_hdr) == CMD_ATTENTION)) {
+		if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+			PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+			return VDM_RESULT_NO_ACTION;
+		}
+	}
 
 	if (!PE_CHK_REPLY(port))
 		return VDM_RESULT_WAITING;
@@ -5725,7 +5757,8 @@ static void pe_vdm_request_dpm_run(int port)
 		/*
 		 * If the received message doesn't change the discovery state,
 		 * there is nothing to do but return to the previous ready
-		 * state.
+		 * state. This includes Attention commands which have no
+		 * expected SVDM response.
 		 */
 		break;
 	case VDM_RESULT_ACK: {
@@ -5785,13 +5818,10 @@ static void pe_vdm_request_dpm_exit(int port)
  */
 static void pe_vdm_response_entry(int port)
 {
-	int response_size_bytes = 0;
+	int vdo_len = 0;
 	uint32_t *rx_payload;
 	uint32_t *tx_payload;
-	uint16_t vdo_vdm_svid;
 	uint8_t vdo_cmd;
-	uint8_t vdo_opos = 0;
-	int cmd_type;
 	svdm_rsp_func func = NULL;
 
 	print_current_state(port);
@@ -5802,18 +5832,48 @@ static void pe_vdm_response_entry(int port)
 	/* Get the message */
 	rx_payload = (uint32_t *)rx_emsg[port].buf;
 
-	vdo_vdm_svid = PD_VDO_VID(rx_payload[0]);
+	/* Extract VDM command from the VDM header */
 	vdo_cmd = PD_VDO_CMD(rx_payload[0]);
-	cmd_type = PD_VDO_CMDT(rx_payload[0]);
-	rx_payload[0] &= ~VDO_CMDT_MASK;
-
-	if (cmd_type != CMDT_INIT) {
-		CPRINTF("ERR:CMDT:%d:%d\n", cmd_type, vdo_cmd);
+	/* This must be a command request to proceed further */
+	if (PD_VDO_CMDT(rx_payload[0]) != CMDT_INIT) {
+		CPRINTF("ERR:CMDT:%d:%d\n", PD_VDO_CMDT(rx_payload[0]),
+			vdo_cmd);
 
 		pe_set_ready_state(port);
 		return;
 	}
 
+	tx_payload = (uint32_t *)tx_emsg[port].buf;
+	/*
+	 * Designed in TCPMv1, svdm_response functions use same
+	 * buffer to take received data and overwrite with response
+	 * data. To work with this interface, here copy rx data to
+	 * tx buffer and pass tx_payload to func.
+	 * TODO(b/166455363): change the interface to pass both rx
+	 * and tx buffer.
+	 *
+	 * The SVDM header is dependent on both VDM command request being
+	 * replied to and the result of response function. The SVDM command
+	 * message is copied into tx_payload. tx_payload[0] is the VDM header
+	 * for the response message. The SVDM response function takes the role
+	 * of the DPM layer and will indicate the response type (ACK/NAK/BUSY)
+	 * by its return value (vdo_len)
+	 *    vdo_len > 0  --> ACK
+	 *    vdo_len == 0 --> NAK
+	 *    vdo_len < 0  --> BUSY
+	 */
+	memcpy(tx_payload, rx_payload, PD_HEADER_CNT(rx_emsg[port].header) * 4);
+	/*
+	 * Clear fields in SVDM response message that will be set based on the
+	 * result of the svdm response function.
+	 */
+	tx_payload[0] &= ~VDO_CMDT_MASK;
+	tx_payload[0] &= ~VDO_SVDM_VERS(0x3);
+
+	/* Add SVDM structured version being used */
+	tx_payload[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP));
+
+	/* Use VDM command to select the response handler function */
 	switch (vdo_cmd) {
 	case CMD_DISCOVER_IDENT:
 		func = svdm_rsp.identity;
@@ -5825,7 +5885,6 @@ static void pe_vdm_response_entry(int port)
 		func = svdm_rsp.modes;
 		break;
 	case CMD_ENTER_MODE:
-		vdo_opos = PD_VDO_OPOS(rx_payload[0]);
 		func = svdm_rsp.enter_mode;
 		break;
 	case CMD_DP_STATUS:
@@ -5837,7 +5896,6 @@ static void pe_vdm_response_entry(int port)
 			func = svdm_rsp.amode->config;
 		break;
 	case CMD_EXIT_MODE:
-		vdo_opos = PD_VDO_OPOS(rx_payload[0]);
 		func = svdm_rsp.exit_mode;
 		break;
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
@@ -5854,77 +5912,58 @@ static void pe_vdm_response_entry(int port)
 		CPRINTF("VDO ERR:CMD:%d\n", vdo_cmd);
 	}
 
-	tx_payload = (uint32_t *)tx_emsg[port].buf;
-
 	if (func) {
 		/*
-		 * Designed in TCPMv1, svdm_response functions use same
-		 * buffer to take received data and overwrite with response
-		 * data. To work with this interface, here copy rx data to
-		 * tx buffer and pass tx_payload to func.
-		 * TODO(b/166455363): change the interface to pass both rx
-		 * and tx buffer
+		 * Execute SVDM response function selected above and set the
+		 * correct response type in the VDM header.
 		 */
-		memcpy(tx_payload, rx_payload, rx_emsg[port].len);
-		/*
-		 * Return value of func is the data objects count in payload.
-		 * return 1 means only VDM header, no VDO.
-		 */
-		response_size_bytes =
-				func(port, tx_payload) * sizeof(*tx_payload);
-		if (response_size_bytes > 0)
-			/* ACK */
-			tx_payload[0] = VDO(
-				vdo_vdm_svid,
-				1, /* Structured VDM */
-				VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP))
-				| VDO_CMDT(CMDT_RSP_ACK) |
-				VDO_OPOS(vdo_opos) |
-				vdo_cmd);
-		else if (response_size_bytes == 0)
-			/* NAK */
-			tx_payload[0] = VDO(
-				vdo_vdm_svid,
-				1, /* Structured VDM */
-				VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP))
-				| VDO_CMDT(CMDT_RSP_NAK) |
-				VDO_OPOS(vdo_opos) |
-				vdo_cmd);
-		else
-			/* BUSY */
-			tx_payload[0] = VDO(
-				vdo_vdm_svid,
-				1, /* Structured VDM */
-				VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP))
-				| VDO_CMDT(CMDT_RSP_BUSY) |
-				VDO_OPOS(vdo_opos) |
-				vdo_cmd);
-
-		if (response_size_bytes <= 0)
-			response_size_bytes = 4;
+		vdo_len = func(port, tx_payload);
+		if (vdo_len > 0) {
+			tx_payload[0] |= VDO_CMDT(CMDT_RSP_ACK);
+			/*
+			 * If command response is an ACK and if the command was
+			 * either enter/exit mode, then update the PE modal flag
+			 * accordingly.
+			 */
+			if (vdo_cmd == CMD_ENTER_MODE)
+				PE_SET_FLAG(port, PE_FLAGS_MODAL_OPERATION);
+			if (vdo_cmd == CMD_EXIT_MODE)
+				PE_CLR_FLAG(port, PE_FLAGS_MODAL_OPERATION);
+		} else if (!vdo_len) {
+			tx_payload[0] |= VDO_CMDT(CMDT_RSP_NAK);
+			vdo_len = 1;
+		} else {
+			tx_payload[0] |= VDO_CMDT(CMDT_RSP_BUSY);
+			vdo_len = 1;
+		}
 	} else {
-		/* not supported : NAK it */
-		tx_payload[0] = VDO(
-			vdo_vdm_svid,
-			1, /* Structured VDM */
-			VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP)) |
-			VDO_CMDT(CMDT_RSP_NAK) |
-			VDO_OPOS(vdo_opos) |
-			vdo_cmd);
-		response_size_bytes = 4;
+		/* Received at VDM command which is not supported */
+		tx_payload[0] |= VDO_CMDT(CMDT_RSP_NAK);
+		vdo_len = 1;
 	}
 
-	/* Send ACK, NAK, or BUSY */
-	tx_emsg[port].len = response_size_bytes;
+	/* Send response message. Note len is in bytes, not VDO objects */
+	tx_emsg[port].len = (vdo_len * sizeof(uint32_t));
 	send_data_msg(port, TCPC_TX_SOP, PD_DATA_VENDOR_DEF);
 }
 
 static void pe_vdm_response_run(int port)
 {
+	/*
+	 * This state waits for a VDM response message to be sent. Return to the
+	 * ready state once the message has been sent, a protocol error was
+	 * detected, or if the VDM response msg was discarded based on being
+	 * interrupted by another rx message. Since VDM sequences are AMS
+	 * interruptible, there is no need to soft reset regardless of exit
+	 * reason.
+	 */
 	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE) ||
-			PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
+	    PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR) ||
+	    PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED)) {
+
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE |
-						PE_FLAGS_PROTOCOL_ERROR);
+			    PE_FLAGS_PROTOCOL_ERROR |
+			    PE_FLAGS_MSG_DISCARDED);
 
 		pe_set_ready_state(port);
 	}
