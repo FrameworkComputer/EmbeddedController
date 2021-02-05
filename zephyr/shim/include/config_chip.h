@@ -143,6 +143,8 @@ enum battery_type {
 #endif
 
 #ifdef CONFIG_PLATFORM_EC_EXTPOWER_GPIO
+#define CONFIG_EXTPOWER_GPIO
+
 /* This always needs to be defined for this option to work */
 #define CONFIG_EXTPOWER
 #endif
