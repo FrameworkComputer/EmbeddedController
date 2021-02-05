@@ -156,7 +156,8 @@
 /* Message flags which should not persist on returning to ready state */
 #define PE_FLAGS_READY_CLR		     (PE_FLAGS_LOCALLY_INITIATED_AMS \
 					     | PE_FLAGS_MSG_DISCARDED \
-					     | PE_FLAGS_VDM_REQUEST_TIMEOUT)
+					     | PE_FLAGS_VDM_REQUEST_TIMEOUT \
+					     | PE_FLAGS_INTERRUPTIBLE_AMS)
 
 /*
  * Combination to check whether a reply to a message was received.  Our message
@@ -5083,11 +5084,12 @@ static void pe_handle_custom_vdm_request_entry(int port)
 		memcpy(tx_emsg[port].buf, (uint8_t *)rdata, tx_emsg[port].len);
 		send_data_msg(port, sop, PD_DATA_VENDOR_DEF);
 	} else {
-		if (prl_get_rev(port, TCPC_TX_SOP) > PD_REV20)
+		if (prl_get_rev(port, TCPC_TX_SOP) > PD_REV20) {
 			set_state_pe(port, PE_SEND_NOT_SUPPORTED);
-		else
+		} else {
+			PE_CLR_FLAG(port, PE_FLAGS_INTERRUPTIBLE_AMS);
 			pe_set_ready_state(port);
-		return;
+		}
 	}
 }
 
