@@ -32,6 +32,16 @@ config PLATFORM_EC_POWER_SLEEP_FAILURE_DETECTION
 	  Failure information is reported via the EC_CMD_HOST_SLEEP_EVENT host
 	  command.
 
+config PLATFORM_EC_HOSTCMD_AP_RESET
+	bool "Host command: EC_CMD_AP_RESET"
+	depends on PLATFORM_EC_HOSTCMD
+	help
+	  Enable support for EC_CMD_AP_RESET, used by the AP to request that
+	  the EC perform a reset of the AP.
+
+	  Warning: This command skips the normal reset mechanism on the AP and
+	  may leave data unsaved.
+
 menuconfig PLATFORM_EC_POWERSEQ_INTEL
 	bool "Enable shimming common Intel power sequencing code"
 	depends on AP_X86_INTEL
