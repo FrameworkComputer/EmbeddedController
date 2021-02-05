@@ -1899,11 +1899,6 @@ int pd_is_port_partner_dualrole(int port)
 	return PE_CHK_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
 }
 
-static void pe_prl_execute_hard_reset(int port)
-{
-	prl_execute_hard_reset(port);
-}
-
 /* The function returns true if there is a PE state change, false otherwise */
 static bool port_try_vconn_swap(int port)
 {
@@ -3669,7 +3664,7 @@ static void pe_snk_hard_reset_entry(int port)
 			  PE_FLAGS_VDM_REQUEST_BUSY);
 
 	/* Request the generation of Hard Reset Signaling by the PHY Layer */
-	pe_prl_execute_hard_reset(port);
+	prl_execute_hard_reset(port);
 
 	/* Increment the HardResetCounter */
 	pe[port].hard_reset_counter++;
