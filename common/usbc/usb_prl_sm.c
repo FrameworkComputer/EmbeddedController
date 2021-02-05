@@ -369,7 +369,7 @@ static struct pd_message {
 	uint8_t ext;
 	uint32_t chunk_number_to_send;
 	uint32_t send_offset;
-#endif /* CONFIG_USB_PD_REV30 */
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 } pdmsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 struct extended_msg rx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -631,7 +631,7 @@ void prl_send_ctrl_msg(int port,
 	TCH_SET_FLAG(port, PRL_FLAGS_MSG_XMIT);
 #else
 	PRL_TX_SET_FLAG(port, PRL_FLAGS_MSG_XMIT);
-#endif /* CONFIG_USB_PD_REV30 */
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
@@ -650,7 +650,7 @@ void prl_send_data_msg(int port,
 #else
 	prl_copy_msg_to_buffer(port);
 	PRL_TX_SET_FLAG(port, PRL_FLAGS_MSG_XMIT);
-#endif /* CONFIG_USB_PD_REV30 */
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
@@ -2279,7 +2279,7 @@ __maybe_unused static const struct usb_state rch_states[] = {
 		.entry  = rch_report_error_entry,
 		.run    = rch_report_error_run,
 	},
-#endif
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 };
 
 /* All necessary Chunked Tx states (Section 6.11.2.1.3) */
@@ -2315,7 +2315,7 @@ __maybe_unused static const struct usb_state tch_states[] = {
 	[TCH_REPORT_ERROR] = {
 		.entry  = tch_report_error_entry,
 	},
-#endif
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 };
 
 #ifdef TEST_BUILD
@@ -2356,4 +2356,3 @@ BUILD_ASSERT(ARRAY_SIZE(tch_states) == ARRAY_SIZE(tch_state_names));
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 const int test_prl_sm_data_size = ARRAY_SIZE(test_prl_sm_data);
 #endif
-
