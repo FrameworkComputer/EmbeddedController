@@ -61,6 +61,8 @@
 #include "config-stm32h7x3.h"
 #elif defined(CHIP_VARIANT_STM32G431XB)
 #include "config-stm32g41xb.h"
+#elif defined(CHIP_VARIANT_STM32G473XC)
+#include "config-stm32g473xc.h"
 #else
 #error "Unsupported chip variant"
 #endif

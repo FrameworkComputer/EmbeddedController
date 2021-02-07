@@ -1,23 +1,26 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /*
- * Memory mapping for STM32G431xb. The STM32G431xb is a category 2 device within
- * the STM32G4 chip family. Category 2 devices have either 32, 64, or 128 kB of
- * internal flash. The 'xB' indicates 128 kB of internal flash.
+ * Memory mapping for STM32G473xc. The STM32G473xc is a category 1 device within
+ * the STM32G4 chip family. Category 1 devices have either 128, 256, or 512 kB
+ * of internal flash. 'xc' indicates 256 kB of internal flash.
  *
- * STM32G431x is a single bank only device consisting of 64 pages of 2 kB
- * each. It supports both a mass erase or page erase feature. Note that
+ * STM32G473xc can be configured via option bytes as either a single bank or
+ * dual bank device. Dual bank is the default selection.
  * CONFIG_FLASH_BANK_SIZE is consistent with page size as defined in RM0440 TRM
- * for the STM32G4 chip family. The minimum erase size is 1 page.
+ * for the STM32G4 chip family. In dual bank mode, the flash is organized in 2
+ * kB pages, with 64 pages per bank for this variant.
  *
  * The minimum write size for STM32G4 is 8 bytes. Cros-EC does not support
  * PSTATE in single bank memories with a write size > 4 bytes.
+ *
+ * TODO(b/181874494): Verify that dual bank mode should be used, or add support
+ * for enabling single bank mode on STM32G473xc.
  */
-
-#define CONFIG_FLASH_SIZE_BYTES       (128 * 1024)
+#define CONFIG_FLASH_SIZE_BYTES (256 * 1024)
 #define CONFIG_FLASH_WRITE_SIZE 0x0004
 #define CONFIG_FLASH_BANK_SIZE (2 * 1024)
 #define CONFIG_FLASH_ERASE_SIZE CONFIG_FLASH_BANK_SIZE
@@ -30,18 +33,18 @@
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE CONFIG_FLASH_WRITE_SIZE
 
 /*
- * STM32G431x6/x8/xB devices feature 32 Kbytes of embedded SRAM. This SRAM
- * is split into three blocks:
- * • 16 Kbytes mapped at address 0x2000 0000 (SRAM1).
- * •  6 Kbytes mapped at address 0x2000 4000 (SRAM2).
- * • 10 Kbytes mapped at address 0x1000 0000 (CCM SRAM). It is also aliased
- *   at 0x2000 5800 address to be accessed by all bus controllers.
+ * STM32G473xc is a category 3 SRAM device featuring 128 Kbytes of embedded
+ * SRAM. This SRAM is split into three blocks:
+ * • 80 Kbytes mapped at address 0x2000 0000 (SRAM1).
+ * • 16 Kbytes mapped at address 0x2001 4000 (SRAM2).
+ * • 32 Kbytes mapped at address 0x1000 0000 (CCM SRAM). It is also aliased
+ *   at 0x2001 8000 address to be accessed by all bus controllers.
  */
 #define CONFIG_RAM_BASE		0x20000000
-#define CONFIG_RAM_SIZE		0x00008000
+#define CONFIG_RAM_SIZE		0x00020000
 
 #undef I2C_PORT_COUNT
-#define I2C_PORT_COUNT	3
+#define I2C_PORT_COUNT	4
 
 /* Number of DMA channels supported (6 channels each for DMA1 and DMA2) */
 #define DMAC_COUNT 12
