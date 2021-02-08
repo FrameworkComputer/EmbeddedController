@@ -90,6 +90,8 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ALS_TCS3400
                                                 "${PLATFORM_EC}/driver/als_tcs3400.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ACPI    "${PLATFORM_EC}/common/acpi.c"
                                                 "${PLATFORM_EC}/common/ec_features.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BACKLIGHT_LID
+                                                "${PLATFORM_EC}/common/backlight_lid.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY "${PLATFORM_EC}/common/battery.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_FUEL_GAUGE
                                                 "${PLATFORM_EC}/common/battery_fuel_gauge.c")

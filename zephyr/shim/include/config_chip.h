@@ -76,6 +76,11 @@
 #define CONFIG_CMD_APTHROTTLE
 #endif
 
+#undef CONFIG_BACKLIGHT_LID
+#ifdef CONFIG_PLATFORM_EC_BACKLIGHT_LID
+#define CONFIG_BACKLIGHT_LID
+#endif
+
 /* Battery configuration */
 #undef CONFIG_BATTERY
 #undef CONFIG_BATTERY_FUEL_GAUGE

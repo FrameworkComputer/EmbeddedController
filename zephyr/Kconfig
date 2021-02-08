@@ -78,6 +78,18 @@ config PLATFORM_EC_ACPI
 	  Enable shimming the ACPI handler, which will handle the Host data from
 	  the ACPI I/O port for X86 AP.
 
+config PLATFORM_EC_BACKLIGHT_LID
+	bool "Control the display backlight based on the lid switch"
+	depends on PLATFORM_EC_HOSTCMD
+	default y
+	help
+	  Support controlling the display backlight based on the state of the
+	  lid switch. The EC will disable the backlight when the lid is closed.
+
+	  This option enables the EC_CMD_SWITCH_ENABLE_BKLIGHT host command,
+	  which allows the AP to override the backlight setting until the next
+	  change in the lid state.
+
 config PLATFORM_EC_HOSTCMD_GET_UPTIME_INFO
 	bool "Host command: EC_CMD_GET_UPTIME_INFO"
 	default PLATFORM_EC_HOSTCMD
