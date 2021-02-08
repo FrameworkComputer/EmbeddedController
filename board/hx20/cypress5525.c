@@ -933,9 +933,13 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 {
 	int prochot_ma;
 
-	/* ac prochot should bigger than input current */
-	prochot_ma = charge_ma * 100 / 95;
+	/* ac prochot should bigger than input current 
+	 * And needs to be at least 128mA bigger than the adapter current*/
+	prochot_ma = (DIV_ROUND_UP(charge_ma, 128) * 128);
 	charge_ma = charge_ma * 95 / 100;
+	if ((prochot_ma - charge_ma) < 128){
+		charge_ma = prochot_ma - 128;
+	}
 
 	charge_set_input_current_limit(MAX(charge_ma,
 				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
@@ -1131,22 +1135,33 @@ static int cmd_cypd_control(int argc, char **argv)
 	int i, enable;
 	char *e;
 
-	if (argc == 3) {
-		i = strtoi(argv[1], &e, 0);
-		if (*e || i >= PD_CHIP_COUNT)
-			return EC_ERROR_PARAM1;
+	if (argc >= 2) {
+		if (!strncmp(argv[1], "int", 3)) {
+			if (argc == 4) {
+				i = strtoi(argv[2], &e, 0);
+				if (*e || i >= PD_CHIP_COUNT)
+					return EC_ERROR_PARAM1;
 
-		if (!parse_bool(argv[2], &enable))
-			return EC_ERROR_PARAM2;
+				if (!parse_bool(argv[3], &enable))
+					return EC_ERROR_PARAM2;
 
-		if (enable)
-			gpio_enable_interrupt(pd_chip_config[i].gpio);
-		else
-			gpio_disable_interrupt(pd_chip_config[i].gpio);
+				if (enable)
+					gpio_enable_interrupt(pd_chip_config[i].gpio);
+				else
+					gpio_disable_interrupt(pd_chip_config[i].gpio);
 
+			}
+		}
+
+		if (!strncmp(argv[1], "clear", 3)) {
+			if (argc == 3) {
+				i = strtoi(argv[2], &e, 0);
+				cypd_clear_int(i, CYP5525_DEV_INTR+CYP5525_PORT0_INTR+CYP5525_PORT1_INTR+CYP5525_UCSI_INTR);
+			}
+		}
 	}
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(cypdctl, cmd_cypd_control,
-			"[number] [enable/disable]",
+			"int [controller] [enable/disable]\nclear [controller]",
 			"Set if handling is active for controller");
