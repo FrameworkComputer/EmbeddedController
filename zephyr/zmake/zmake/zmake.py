@@ -235,29 +235,50 @@ class Zmake:
                         util.repr_command(proc.args), proc.returncode))
         return 0
 
-    def _run_pytest(self, directory):
+    def _run_pytest(self, executor, directory):
         """Run pytest on a given directory.
 
         This is a utility function to help parallelize running pytest on
         multiple directories.
 
         Args:
-            directory: The directory that we should run pytest on.
-        Returns:
-            The status code of pytest.
+            executor: a multiproc.Executor object.
+            directory: The directory that we should search for tests in.
         """
-        self.logger.info('Running python test %s', directory)
-        proc = self.jobserver.popen(
-            ['pytest', directory],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            encoding='utf-8',
-            errors='replace')
-        # Log stdout as DEBUG log messages.
-        zmake.multiproc.log_output(self.logger, logging.DEBUG, proc.stdout)
-        # Log stderr as ERROR log messages
-        zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
-        return proc.wait()
+        def get_log_level(line, current_log_level):
+            matches = [
+                ('PASSED', logging.INFO),
+                ('FAILED', logging.ERROR),
+                ('warnings summary', logging.WARNING),
+            ]
+
+            for text, lvl in matches:
+                if text in line:
+                    return lvl
+
+            return current_log_level
+
+        def run_test(test_file):
+            with self.jobserver.get_job():
+                proc = self.jobserver.popen(
+                    ['pytest', '--verbose', test_file],
+                    claim_job=False,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    encoding='utf-8',
+                    errors='replace')
+                zmake.multiproc.log_output(
+                    self.logger, logging.DEBUG,
+                    proc.stdout, log_level_override_func=get_log_level)
+                rv = proc.wait()
+                if rv:
+                    self.logger.error(
+                        "Execution of {} failed (return code={})!\n".format(
+                            util.repr_command(proc.args), rv))
+                return rv
+
+        for test_file in directory.glob('test_*.py'):
+            executor.append(func=lambda: run_test(test_file))
 
     def testall(self, fail_fast=False):
         """Test all the valid test targets"""
@@ -285,9 +306,9 @@ class Zmake:
                     build_after_configure=True,
                     test_after_configure=is_test))
 
-        # Run pytest on platform/ec/zephyr/zmake.
-        executor.append(func=lambda: self._run_pytest(
-            directory=modules['ec-shim'] / 'zephyr'))
+        # Run pytest on platform/ec/zephyr/zmake/tests.
+        self._run_pytest(
+            executor, modules['ec-shim'] / 'zephyr' / 'zmake' / 'tests')
 
         rv = executor.wait()
         for tmpdir in tmp_dirs:
