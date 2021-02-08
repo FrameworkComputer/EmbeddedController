@@ -325,6 +325,14 @@ static void svdm_configure_demux(int port, int enable, int mf)
 		/* 4 lane mode if MF is not preferred */
 		if (!mf)
 			demux &= ~USB_PD_MUX_USB_ENABLED;
+		/*
+		 * Make sure the MST_LANE_CONTROL gpio is set to match the DP
+		 * pin configuration selected by the host. Note that the mf
+		 * passed into this function reflects the pin configuration
+		 * selected by the host and not the user mf preference which is
+		 * stored in bit 0 of CBI fw_config.
+		 */
+		baseboard_set_mst_lane_control(mf);
 	} else {
 		demux &= ~USB_PD_MUX_DP_ENABLED;
 		demux |= USB_PD_MUX_USB_ENABLED;

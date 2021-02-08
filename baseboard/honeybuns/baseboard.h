@@ -229,7 +229,21 @@ enum adc_channel {
 extern const struct power_seq board_power_seq[];
 extern const size_t board_power_seq_count;
 
+/*
+ * Configure the host port to present Rd on both CC lines. This function is
+ * called in RO which does not otherwise have usbc/usb-pd support.
+ *
+ * @return true - initialized. false - not.
+ */
 int baseboard_usbc_init(int port);
+
+/*
+ * Set MST_LANE_CONTROL gpio to match the DP pin configuration selected
+ * by the host in the DP Configure SVDM message.
+ *
+ * @param dock_mf 1 -> 2 lanes DP, 0 -> 4 lanes DP
+ */
+void baseboard_set_mst_lane_control(int dock_mf);
 
 #endif /* !__ASSEMBLER__ */
 
