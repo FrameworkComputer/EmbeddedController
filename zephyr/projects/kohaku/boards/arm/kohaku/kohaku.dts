@@ -321,6 +321,12 @@
 		};
 	};
 
+	def_lvol_io_list {
+		compatible = "nuvoton,npcx-lvolctrl-def";
+		lvol_io_pads = <&lvol_iob4 &lvol_iob5 /* I2C_SDA0 & SCL0 */
+		                &lvol_io50>;          /* GPIO50 */
+	};
+
 	soc {
 		fiu0: cros-flash@40020000 {
 			compatible = "nuvoton,npcx-cros-flash";
