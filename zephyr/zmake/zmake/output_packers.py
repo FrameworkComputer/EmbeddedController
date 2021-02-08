@@ -139,7 +139,7 @@ class RawBinPacker(BasePacker):
                 dts_file=dts_file,
                 config_header=ro / 'zephyr' / 'include' / 'generated' / 'autoconf.h',
                 output_bin=work_dir / 'zephyr.bin',
-                ro_filename=ro / 'zephyr' / 'zephyr.bin',
+                ro_filename=ro / 'zephyr' / 'zephyr.packed.bin',
                 rw_filename=rw / 'zephyr' / 'zephyr.bin')
 
         proc = jobclient.popen(
