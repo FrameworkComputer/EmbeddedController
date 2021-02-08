@@ -32,7 +32,7 @@ class TemporaryProject(tempfile.TemporaryDirectory):
 
 
 @hypothesis.given(sets_of_board_names)
-@hypothesis.settings(deadline=1000)
+@hypothesis.settings(deadline=None)
 def test_find_dts_overlays(modules):
     """Test the functionality of find_dts_overlays with multiple
     modules, each with sets of board names."""
