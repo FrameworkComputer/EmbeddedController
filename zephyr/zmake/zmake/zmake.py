@@ -38,11 +38,7 @@ def ninja_log_level_override(line, default_log_level):
 class Zmake:
     """Wrapper class encapsulating zmake's supported operations."""
     def __init__(self, checkout=None, jobserver=None, jobs=0):
-        if checkout:
-            self.checkout = pathlib.Path(checkout)
-        else:
-            self.checkout = util.locate_cros_checkout()
-        assert self.checkout.exists()
+        self._checkout = checkout
 
         if jobserver:
             self.jobserver = jobserver
@@ -53,6 +49,12 @@ class Zmake:
                 self.jobserver = zmake.jobserver.GNUMakeJobServer(jobs=jobs)
 
         self.logger = logging.getLogger(self.__class__.__name__)
+
+    @property
+    def checkout(self):
+        if not self._checkout:
+            self._checkout = util.locate_cros_checkout()
+        return self._checkout.resolve()
 
     def configure(self, project_dir, build_dir=None,
                   version=None, zephyr_base=None, module_paths=None,
