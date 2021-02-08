@@ -124,7 +124,7 @@ void battery_customize(struct charge_state_data *emi_info)
 		{
 			old_btp = new_btp;
 			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
-			ccprintf ("trigger higher BTP: %d\n", old_btp);
+			ccprintf("trigger higher BTP: %d\n", old_btp);
 		}
 	} else if (new_btp < old_btp && !battery_is_cut_off())
 	{
@@ -132,11 +132,12 @@ void battery_customize(struct charge_state_data *emi_info)
 		{
 			old_btp = new_btp;
 			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
-			ccprintf ("trigger lower BTP: %d\n", old_btp);
+			ccprintf("trigger lower BTP: %d\n", old_btp);
 		}
 	}
 
-	battery_percentage = ((emi_info->batt.remaining_capacity * 1000) / emi_info->batt.full_capacity);
+	battery_percentage =
+		 ((emi_info->batt.remaining_capacity * 1000) / emi_info->batt.full_capacity);
 
 	if ((battery_percentage > 954) && update_battery) {
 		/**
