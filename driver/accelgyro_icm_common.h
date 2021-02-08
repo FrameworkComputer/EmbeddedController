@@ -9,6 +9,8 @@
 #define __CROS_EC_ACCELGYRO_ICM_COMMON_H
 
 #include "accelgyro.h"
+#include "hwtimer.h"
+#include "timer.h"
 
 #ifdef CONFIG_ACCEL_FIFO
 /* reserve maximum 4 samples of 16 bytes */
@@ -21,6 +23,7 @@ struct icm_drv_data_t {
 	struct accelgyro_saved_data_t saved_data[2];
 	struct motion_sensor_t *accel;
 	struct motion_sensor_t *gyro;
+	uint32_t stabilize_ts[2];
 	uint8_t bank;
 	uint8_t fifo_en;
 	uint8_t fifo_buffer[ICM_FIFO_BUFFER] __aligned(sizeof(long));
@@ -97,5 +100,36 @@ int icm_get_scale(const struct motion_sensor_t *s, uint16_t *scale,
 
 ssize_t icm_fifo_decode_packet(const void *packet, const uint8_t **accel,
 		const uint8_t **gyro);
+
+static inline void icm_set_stabilize_ts(const struct motion_sensor_t *s,
+					uint32_t delay)
+{
+	struct icm_drv_data_t *st = ICM_GET_DATA(s);
+	uint32_t stabilize_ts;
+
+	stabilize_ts = __hw_clock_source_read() + delay;
+	/* prevent 0 value used for disabling time checking */
+	st->stabilize_ts[s->type] = stabilize_ts | 1;
+}
+
+static inline void icm_reset_stabilize_ts(const struct motion_sensor_t *s)
+{
+	struct icm_drv_data_t *st = ICM_GET_DATA(s);
+
+	st->stabilize_ts[s->type] = 0;
+}
+
+static inline
+int32_t icm_get_sensor_stabilized(const struct motion_sensor_t *s,
+				  uint32_t ts)
+{
+	struct icm_drv_data_t *st = ICM_GET_DATA(s);
+	uint32_t stabilize_ts = st->stabilize_ts[s->type];
+
+	if (stabilize_ts == 0)
+		return 0;
+
+	return time_until(ts, stabilize_ts);
+}
 
 #endif	/* __CROS_EC_ACCELGYRO_ICM_COMMON_H */
