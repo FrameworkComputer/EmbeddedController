@@ -241,7 +241,7 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 			*set_retimer_con |= BB_RETIMER_TBT_ACTIVE_LINK_TRAINING;
 
 		/*
-		 * Bit 27-25: TBT Cable speed
+		 * Bit 27-25: USB4/TBT Cable speed
 		 * 000b - No functionality
 		 * 001b - USB3.1 Gen1 Cable
 		 * 010b - 10Gb/s
@@ -249,7 +249,10 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 		 * 10..11b - Reserved
 		 */
 		*set_retimer_con |= BB_RETIMER_USB4_TBT_CABLE_SPEED_SUPPORT(
-						get_tbt_cable_speed(port));
+				    mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED ?
+				    get_tbt_cable_speed(port) :
+				    get_usb4_cable_speed(port));
+
 		/*
 		 * Bits 29-28: TBT_GEN_SUPPORT
 		 * 00b - 3rd generation TBT (10.3125 and 20.625Gb/s)
@@ -270,17 +273,6 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 		 */
 		if (PD_PRODUCT_IS_TBT3(disc->identity.product_t1.raw_value))
 			*set_retimer_con |= BB_RETIMER_TBT_CONNECTION;
-
-		/*
-		 * Bit 27-25: USB4 Cable speed
-		 * 000b - No functionality
-		 * 001b - USB3.1 Gen1 Cable
-		 * 010b - 10Gb/s
-		 * 011b - 10Gb/s and 20Gb/s
-		 * 10..11b - Reserved
-		 */
-		*set_retimer_con |= BB_RETIMER_USB4_TBT_CABLE_SPEED_SUPPORT(
-					get_usb4_cable_speed(port));
 	}
 }
 
