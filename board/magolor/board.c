@@ -87,7 +87,7 @@ struct keyboard_scan_config keyscan_config = {
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
-		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0x1c, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
 		0xa4, 0xff, 0xfe, 0x55, 0xfe, 0xff, 0xff, 0xff,  /* full set */
 	},
 };
@@ -257,10 +257,6 @@ static void board_update_no_keypad_by_fwconfig(void)
 		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
 		keyscan_config.actual_key_mask[11] = 0xfa;
 		keyscan_config.actual_key_mask[12] = 0xca;
-
-		/* Search key is moved back to col=1,row=0 */
-		keyscan_config.actual_key_mask[0] = 0x14;
-		keyscan_config.actual_key_mask[1] = 0xff;
 #endif
 	}
 }
