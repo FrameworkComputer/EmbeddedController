@@ -346,3 +346,35 @@ void board_debug_gpio(int trigger, int enable, int pulse_usec)
 		break;
 	}
 }
+
+static int command_dplane(int argc, char **argv)
+{
+	char *e;
+	int lane;
+
+	if (argc < 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	lane = strtoi(argv[1], &e, 10);
+
+	if ((lane != 2) && (lane != 4))
+		return EC_ERROR_PARAM1;
+
+	/* put MST into reset */
+	gpio_set_level(GPIO_MST_RST_L, 0);
+	msleep(1);
+	/* Set lane control to requested level */
+	gpio_set_level(GPIO_MST_HUB_LANE_SWITCH, lane == 2 ? 1 : 0);
+	msleep(1);
+	/* Take MST out of reset */
+	gpio_set_level(GPIO_MST_RST_L, 1);
+
+	ccprintf("MST lane set:  %s, lane_ctrl = %d\n",
+		 lane == 2 ? "2 lane" : "4 lane",
+		 gpio_get_level(GPIO_MST_HUB_LANE_SWITCH));
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(dplane, command_dplane,
+			"<2 | 4>",
+			"MST lane control.");
