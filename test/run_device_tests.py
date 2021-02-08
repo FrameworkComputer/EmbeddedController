@@ -48,6 +48,8 @@ DATA_ACCESS_VIOLATION_80E0000_REGEX = re.compile(
     r'Data access violation, mfar = 80e0000\r\n')
 DATA_ACCESS_VIOLATION_20000000_REGEX = re.compile(
     r'Data access violation, mfar = 20000000\r\n')
+DATA_ACCESS_VIOLATION_24000000_REGEX = re.compile(
+    r'Data access violation, mfar = 24000000\r\n')
 
 BLOONCHIPPER = 'bloonchipper'
 DARTMONKEY = 'dartmonkey'
@@ -63,12 +65,13 @@ class BoardConfig:
     """Board-specific configuration."""
 
     def __init__(self, name, servo_uart_name, servo_power_enable,
-                 rollback_region0_regex, rollback_region1_regex):
+                 rollback_region0_regex, rollback_region1_regex, mpu_regex):
         self.name = name
         self.servo_uart_name = servo_uart_name
         self.servo_power_enable = servo_power_enable
         self.rollback_region0_regex = rollback_region0_regex
         self.rollback_region1_regex = rollback_region1_regex
+        self.mpu_regex = mpu_regex
 
 
 class TestConfig:
@@ -127,12 +130,10 @@ class AllTests:
             'mpu_ro':
                 TestConfig(name='mpu',
                            image_to_use=ImageType.RO,
-                           finish_regexes=[
-                               DATA_ACCESS_VIOLATION_20000000_REGEX]),
+                           finish_regexes=[board_config.mpu_regex]),
             'mpu_rw':
                 TestConfig(name='mpu',
-                           finish_regexes=[
-                               DATA_ACCESS_VIOLATION_20000000_REGEX]),
+                           finish_regexes=[board_config.mpu_regex]),
             'mutex':
                 TestConfig(name='mutex'),
             'pingpong':
@@ -169,6 +170,7 @@ BLOONCHIPPER_CONFIG = BoardConfig(
     servo_power_enable='fpmcu_pp3300',
     rollback_region0_regex=DATA_ACCESS_VIOLATION_8020000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_8040000_REGEX,
+    mpu_regex=DATA_ACCESS_VIOLATION_20000000_REGEX,
 )
 
 DARTMONKEY_CONFIG = BoardConfig(
@@ -177,6 +179,7 @@ DARTMONKEY_CONFIG = BoardConfig(
     servo_power_enable='fpmcu_pp3300',
     rollback_region0_regex=DATA_ACCESS_VIOLATION_80C0000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_80E0000_REGEX,
+    mpu_regex=DATA_ACCESS_VIOLATION_24000000_REGEX,
 )
 
 BOARD_CONFIGS = {
