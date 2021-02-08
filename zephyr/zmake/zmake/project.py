@@ -3,8 +3,15 @@
 # found in the LICENSE file.
 """Module for project config wrapper object."""
 
-import jsonschema
+import warnings
 import yaml
+
+# The version of jsonschema in the chroot has a bunch of
+# DeprecationWarnings that fire when we import it.  Suppress these
+# during the import to keep the noise down.
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    import jsonschema
 
 import zmake.build_config as build_config
 import zmake.output_packers as packers
