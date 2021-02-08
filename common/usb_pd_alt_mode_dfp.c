@@ -920,7 +920,6 @@ __overridable enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
  */
 enum usb_rev30_ss get_usb4_cable_speed(int port)
 {
-	struct pd_discovery *disc;
 	enum tbt_compat_cable_speed tbt_speed = get_tbt_cable_speed(port);
 	enum usb_rev30_ss max_usb4_speed;
 
@@ -935,11 +934,17 @@ enum usb_rev30_ss get_usb4_cable_speed(int port)
 	max_usb4_speed = tbt_speed == TBT_SS_TBT_GEN3 ?
 		USB_R30_SS_U40_GEN3 : USB_R30_SS_U32_U40_GEN2;
 
-	if (is_pd_rev3(port, TCPC_TX_SOP_PRIME)) {
-		disc = pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+	if ((get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE) &&
+	     is_pd_rev3(port, TCPC_TX_SOP_PRIME)) {
+		struct pd_discovery *disc =
+			pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+		union active_cable_vdo1_rev30 a_rev30 =
+			disc->identity.product_t1.a_rev30;
 
-		return max_usb4_speed <  disc->identity.product_t1.p_rev30.ss ?
-		       max_usb4_speed :  disc->identity.product_t1.p_rev30.ss;
+		if (a_rev30.vdo_ver >= VDO_VERSION_1_3) {
+			return max_usb4_speed < a_rev30.ss ?
+			       max_usb4_speed : a_rev30.ss;
+		}
 	}
 
 	return max_usb4_speed;
