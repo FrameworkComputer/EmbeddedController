@@ -6223,7 +6223,6 @@ static void pe_vcs_send_swap_run(int port)
 			 *   2) The Port is not presently the VCONN Source.
 			 */
 			if (type == PD_CTRL_ACCEPT) {
-				pe[port].vconn_swap_counter = 0;
 				if (tc_is_vconn_src(port)) {
 					/*
 					 * Prevent receiving any SOP' and SOP''
