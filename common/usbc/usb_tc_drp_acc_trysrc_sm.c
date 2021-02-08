@@ -818,12 +818,26 @@ int tc_is_attached_snk(int port)
 void tc_pd_connection(int port, int en)
 {
 	if (en) {
+		bool new_pd_capable = false;
+
+		if (!TC_CHK_FLAG(port, TC_FLAGS_PARTNER_PD_CAPABLE))
+			new_pd_capable = true;
+
 		TC_SET_FLAG(port, TC_FLAGS_PARTNER_PD_CAPABLE);
 		/* If a PD device is attached then disable deep sleep */
 		if (IS_ENABLED(CONFIG_LOW_POWER_IDLE) &&
 		    !IS_ENABLED(CONFIG_USB_PD_TCPC_ON_CHIP)) {
 			disable_sleep(SLEEP_MASK_USB_PD);
 		}
+
+		/*
+		 * Update the mux state, only when the PD capable flag
+		 * transitions from 0 to 1. This ensures that PD charger
+		 * devices, without data capability are not marked as having
+		 * USB.
+		 */
+		if (new_pd_capable)
+			set_usb_mux_with_current_data_role(port);
 	} else {
 		TC_CLR_FLAG(port, TC_FLAGS_PARTNER_PD_CAPABLE);
 		/* If a PD device isn't attached then enable deep sleep */
