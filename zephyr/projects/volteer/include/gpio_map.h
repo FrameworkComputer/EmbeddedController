@@ -34,6 +34,7 @@
 #define GPIO_EN_PP5000             NAMED_GPIO(en_pp5000_a)
 #define GPIO_EN_PP5000_A           NAMED_GPIO(en_pp5000_a)
 #define GPIO_EN_PPVAR_VCCIN        NAMED_GPIO(en_ppvar_vccin)
+#define GPIO_ENABLE_BACKLIGHT      NAMED_GPIO(ec_edp_bl_en)
 #define GPIO_ENTERING_RW           NAMED_GPIO(ec_entering_rw)
 #define GPIO_KBD_KSO2              NAMED_GPIO(ec_kso_02_inv)
 #define GPIO_LID_OPEN              NAMED_GPIO(ec_lid_open)
