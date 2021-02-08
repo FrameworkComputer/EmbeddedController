@@ -15,6 +15,7 @@
 #define GPIO_EN_A_RAILS			NAMED_GPIO(en_a_rails)
 #define GPIO_EN_PP5000_A		NAMED_GPIO(en_pp5000_a)
 #define GPIO_EN_PP5000			NAMED_GPIO(en_pp5000_a)
+#define GPIO_ENABLE_BACKLIGHT		NAMED_GPIO(gpio_edp_bklten_od)
 #define GPIO_ENTERING_RW		NAMED_GPIO(entering_rw)
 #define GPIO_LID_OPEN			NAMED_GPIO(lid_open)
 #define GPIO_PCH_PWRBTN_L		NAMED_GPIO(pch_pwrbtn_l)

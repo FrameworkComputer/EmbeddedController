@@ -139,6 +139,10 @@
 			gpios = <&gpioa 4 GPIO_OUT_LOW>;
 			label = "EN_PP5000_A";
 		};
+		gpio_edp_bklten_od {
+			gpios = <&gpiod 3 GPIO_ODR_HIGH>;
+			label = "EDP_BKLTEN_OD";
+		};
 		en_a_rails {
 			gpios = <&gpioa 3 GPIO_OUT_LOW>;
 			label = "EN_A_RAILS";
