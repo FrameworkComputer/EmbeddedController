@@ -11,6 +11,8 @@ CHIP_FAMILY:=npcx9
 CHIP_VARIANT:=npcx9m3f
 BASEBOARD:=brya
 
-board-y=board.o
+board-y=
 board-y+=battery.o
+board-y+=board.o
+board-y+=i2c.o
 board-y+=usbc_config.o

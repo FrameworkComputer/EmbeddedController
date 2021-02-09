@@ -22,6 +22,10 @@
  */
 #define NPCX_UART_MODULE2	1 /* 1:GPIO64/65 for UART1 */
 
+/* Enable I2C Support */
+#define CONFIG_I2C
+#define CONFIG_I2C_CONTROLLER
+
 #ifndef __ASSEMBLER__
 
 #include "baseboard_usbc_config.h"
