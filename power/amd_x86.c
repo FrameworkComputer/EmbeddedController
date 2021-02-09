@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Stoney power sequencing module for Chrome EC */
+/* AMD x86 power sequencing module for Chrome EC */
 
 #include "chipset.h"
 #include "common.h"
