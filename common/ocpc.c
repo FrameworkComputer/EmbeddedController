@@ -176,9 +176,12 @@ enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
 
 	/*
 	 * In order to actually calculate the resistance, we need to make sure
-	 * we're actually charging the battery at a significant rate.
+	 * we're actually charging the battery at a significant rate.  The LSB
+	 * of a charger IC can be as high as 96mV.  Assuming a resistance of 60
+	 * mOhms, we would need a current of 1666mA to have a voltage delta of
+	 * 100mV.
 	 */
-	if ((battery->current <= 1000) ||
+	if ((battery->current <= 1666) ||
 	    (!(ocpc->chg_flags[act_chg] & OCPC_NO_ISYS_MEAS_CAP) &&
 	     (ocpc->isys_ma <= 0)) ||
 	    (ocpc->vsys_aux_mv < ocpc->vsys_mv)) {
