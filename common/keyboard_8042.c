@@ -1308,6 +1308,7 @@ DECLARE_HOOK(HOOK_INIT, keyboard_restore_state, HOOK_PRIO_DEFAULT);
 /**
  * Handle power button changing state.
  */
+#ifndef CONFIG_IGNORED_BTN_SCANCODE
 static void keyboard_power_button(void)
 {
 	keyboard_update_button(KEYBOARD_BUTTON_POWER,
@@ -1315,3 +1316,4 @@ static void keyboard_power_button(void)
 }
 DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, keyboard_power_button,
 	     HOOK_PRIO_DEFAULT);
+#endif
