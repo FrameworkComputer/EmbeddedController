@@ -104,6 +104,16 @@
 /* Board Id */
 #define I2C_ADDR_PCA9555_BOARD_ID_GPIO	0x22
 
+/*
+ * Frequent watchdog timer resets are seen, with the
+ * increase in number of type-c ports. So increase
+ * the timer value to support more type-c ports.
+ */
+#if defined(HAS_TASK_PD_C2) && defined(HAS_TASK_PD_C3)
+#undef CONFIG_WATCHDOG_PERIOD_MS
+#define CONFIG_WATCHDOG_PERIOD_MS 4000
+#endif
+
 #ifndef __ASSEMBLER__
 
 enum adlrvp_charge_ports {
