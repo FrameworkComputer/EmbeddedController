@@ -2351,7 +2351,10 @@ enum charge_state charge_get_state(void)
 			return PWR_STATE_DISCHARGE;
 	case ST_CHARGE:
 		/* The only difference here is what the LEDs display. */
-		if (battery_near_full())
+		if (IS_ENABLED(CONFIG_CHARGE_MANAGER) &&
+		    charge_manager_get_active_charge_port() == CHARGE_PORT_NONE)
+			return PWR_STATE_DISCHARGE;
+		else if (battery_near_full())
 			return PWR_STATE_CHARGE_NEAR_FULL;
 		else
 			return PWR_STATE_CHARGE;
