@@ -22,6 +22,8 @@
  */
 #define NPCX_UART_MODULE2	1 /* 1:GPIO64/65 for UART1 */
 
+#define CONFIG_EXTPOWER_GPIO
+
 #define CONFIG_PWM
 
 /* Enable I2C Support */
@@ -31,6 +33,7 @@
 #ifndef __ASSEMBLER__
 
 #include "baseboard_usbc_config.h"
+#include "extpower.h"
 
 #endif /* !__ASSEMBLER__ */
 

@@ -22,6 +22,7 @@
 /* USB Type C and USB PD defines */
 #define CONFIG_IO_EXPANDER_PORT_COUNT		2
 
+#define GPIO_AC_PRESENT			GPIO_ACOK_EC_OD
 #define GPIO_ENTERING_RW		GPIO_EC_ENTERING_RW
 #define GPIO_LID_OPEN			GPIO_LID_OPEN_OD
 #define GPIO_WP_L			GPIO_EC_WP_ODL
@@ -104,12 +105,6 @@ void power_button_interrupt(enum gpio_signal signal);
  */
 
 void throttle_ap_prochot_input_interrupt(enum gpio_signal signal);
-
-/*
- * remove when we enable CONFIG_EXTPOWER_GPIO
- */
-
-void extpower_interrupt(enum gpio_signal signal);
 
 /*
  * remove when we enable CONFIG_VOLUME_BUTTONS

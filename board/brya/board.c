@@ -27,14 +27,6 @@ void throttle_ap_prochot_input_interrupt(enum gpio_signal signal)
 }
 
 /*
- * remove when we enable CONFIG_EXTPOWER_GPIO
- */
-
-void extpower_interrupt(enum gpio_signal signal)
-{
-}
-
-/*
  * remove when we enable CONFIG_VOLUME_BUTTONS
  */
 
