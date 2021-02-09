@@ -15,4 +15,5 @@ board-y=
 board-y+=battery.o
 board-y+=board.o
 board-y+=i2c.o
+board-y+=pwm.o
 board-y+=usbc_config.o

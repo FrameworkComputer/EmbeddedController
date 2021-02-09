@@ -26,6 +26,8 @@
 #define GPIO_LID_OPEN			GPIO_LID_OPEN_OD
 #define GPIO_WP_L			GPIO_EC_WP_ODL
 
+/* System has back-lit keyboard */
+#define CONFIG_PWM_KBLIGHT
 
 /* I2C Bus Configuration */
 
@@ -67,6 +69,16 @@ enum battery_type {
 	BATTERY_POWER_TECH,
 	BATTERY_LGC011,
 	BATTERY_TYPE_COUNT
+};
+
+enum pwm_channel {
+	PWM_CH_LED2 = 0,		/* PWM0 (white charger) */
+	PWM_CH_LED3,			/* PWM1 */
+	PWM_CH_LED1,			/* PWM2 (orange charger) */
+	PWM_CH_KBLIGHT,			/* PWM3 */
+	PWM_CH_FAN,			/* PWM5 */
+	PWM_CH_LED4,			/* PWM7 */
+	PWM_CH_COUNT
 };
 
 /*

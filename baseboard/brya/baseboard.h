@@ -22,6 +22,8 @@
  */
 #define NPCX_UART_MODULE2	1 /* 1:GPIO64/65 for UART1 */
 
+#define CONFIG_PWM
+
 /* Enable I2C Support */
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
