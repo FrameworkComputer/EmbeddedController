@@ -15,7 +15,6 @@
  * Disable features enabled by default.
  */
 #undef CONFIG_ADC
-#undef CONFIG_LID_SWITCH
 #undef CONFIG_HIBERNATE
 #undef CONFIG_SPI_FLASH
 #undef CONFIG_SWITCH
@@ -24,6 +23,7 @@
 #define CONFIG_IO_EXPANDER_PORT_COUNT		2
 
 #define GPIO_ENTERING_RW		GPIO_EC_ENTERING_RW
+#define GPIO_LID_OPEN			GPIO_LID_OPEN_OD
 #define GPIO_WP_L			GPIO_EC_WP_ODL
 
 
