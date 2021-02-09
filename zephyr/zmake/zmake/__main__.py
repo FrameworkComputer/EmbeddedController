@@ -10,7 +10,6 @@ import pathlib
 import sys
 
 import zmake.multiproc as multiproc
-import zmake.util as util
 import zmake.zmake as zm
 
 
@@ -68,6 +67,9 @@ def main(argv=None):
     parser.add_argument('-L', '--no-log-label', action='store_true',
                         default=False,
                         help='Turn off logging labels')
+    parser.add_argument('--zephyr-base', type=pathlib.Path,
+                        help='Path to Zephyr OS repository')
+
     sub = parser.add_subparsers(dest='subcommand', help='Subcommand')
     sub.required = True
 
@@ -75,11 +77,7 @@ def main(argv=None):
     configure.add_argument(
         '--ignore-unsupported-zephyr-version', action='store_true',
         help="Don't warn about using an unsupported Zephyr version")
-    configure.add_argument('-v', '--version', type=util.parse_zephyr_version,
-                           help='Zephyr RTOS version')
     configure.add_argument('-t', '--toolchain', help='Name of toolchain to use')
-    configure.add_argument('--zephyr-base', type=pathlib.Path,
-                           help='Path to Zephyr source')
     configure.add_argument('--bringup', action='store_true',
                            dest='bringup',
                            help='Enable bRingup debugging features')

@@ -49,8 +49,9 @@ class Zmake:
     command line.  Run "zmake --help" for full documentation of each
     parameter.
     """
-    def __init__(self, checkout=None, jobserver=None, jobs=0):
+    def __init__(self, checkout=None, jobserver=None, jobs=0, zephyr_base=None):
         self._checkout = checkout
+        self._zephyr_base = zephyr_base
 
         if jobserver:
             self.jobserver = jobserver
@@ -68,29 +69,42 @@ class Zmake:
             self._checkout = util.locate_cros_checkout()
         return self._checkout.resolve()
 
-    def configure(self, project_dir, build_dir=None,
-                  version=None, zephyr_base=None, module_paths=None,
+    def locate_zephyr_base(self, version):
+        """Locate the Zephyr OS repository.
+
+        Args:
+            version: If a Zephyr OS base was not supplied to Zmake,
+                which version to search for as a tuple of integers.
+                This argument is ignored if a Zephyr base was supplied
+                to Zmake.
+        Returns:
+            A pathlib.Path to the found Zephyr OS repository.
+        """
+        if self._zephyr_base:
+            return self._zephyr_base
+
+        return util.locate_zephyr_base(self.checkout, version)
+
+    def configure(self, project_dir, build_dir=None, module_paths=None,
                   toolchain=None, ignore_unsupported_zephyr_version=False,
                   build_after_configure=False, test_after_configure=False,
                   bringup=False):
         """Set up a build directory to later be built by "zmake build"."""
         project = zmake.project.Project(project_dir)
-        if version:
-            # Ignore the patchset.
-            version = version[:2]
-            if (not ignore_unsupported_zephyr_version
-                    and version not in project.config.supported_zephyr_versions):
-                raise ValueError(
-                    'Requested version (v{}.{}) is not supported by the '
-                    'project.  You may wish to either configure zmake.yaml to '
-                    'support this version, or pass '
-                    '--ignore-unsupported-zephyr-version.'.format(*version))
-        else:
-            # Assume the highest supported version by default.
-            version = max(project.config.supported_zephyr_versions)
-        if not zephyr_base:
-            zephyr_base = util.locate_zephyr_base(self.checkout, version)
-        zephyr_base = zephyr_base.resolve()
+        supported_versions = project.config.supported_zephyr_versions
+
+        zephyr_base = self.locate_zephyr_base(max(supported_versions)).resolve()
+
+        # Ignore the patchset from the Zephyr version.
+        zephyr_version = util.read_zephyr_version(zephyr_base)[:2]
+
+        if (not ignore_unsupported_zephyr_version
+                and zephyr_version not in supported_versions):
+            raise ValueError(
+                'The Zephyr OS version (v{}.{}) is not supported by the '
+                'project.  You may wish to either configure zmake.yaml to '
+                'support this version, or pass '
+                '--ignore-unsupported-zephyr-version.'.format(*zephyr_version))
 
         if not module_paths:
             module_paths = zmake.modules.locate_modules(self.checkout)
