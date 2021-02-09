@@ -107,6 +107,28 @@ def parse_zephyr_version(version_string):
     return tuple(int(x) for x in match.groups() if x is not None)
 
 
+def read_zephyr_version(zephyr_base):
+    """Read the Zephyr version from a Zephyr OS checkout.
+
+    Args:
+         zephyr_base: path to the Zephyr OS repository.
+
+    Returns:
+         A 3-tuple of the version number (major, minor, patchset).
+    """
+    version_file = pathlib.Path(zephyr_base) / 'VERSION'
+
+    file_vars = {}
+    with open(version_file) as f:
+        for line in f:
+            key, sep, value = line.partition('=')
+            file_vars[key.strip()] = value.strip()
+
+    return (int(file_vars['VERSION_MAJOR']),
+            int(file_vars['VERSION_MINOR']),
+            int(file_vars['PATCHLEVEL']))
+
+
 def repr_command(argv):
     """Represent an argument array as a string.
 

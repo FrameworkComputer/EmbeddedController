@@ -53,3 +53,19 @@ def test_resolve_build_dir_from_project(platform_ec_subdir, project_subdir):
             project_dir=project_dir,
             build_dir=None)
         assert build_dir == platform_ec_dir / 'build' / project_subdir
+
+
+version_integers = st.integers(min_value=0)
+version_tuples = st.tuples(version_integers, version_integers, version_integers)
+
+
+@hypothesis.given(version_tuples)
+def test_read_zephyr_version(version_tuple):
+    with tempfile.TemporaryDirectory() as zephyr_base:
+        with open(pathlib.Path(zephyr_base) / 'VERSION', 'w') as f:
+            for name, value in zip(('VERSION_MAJOR', 'VERSION_MINOR',
+                                    'PATCHLEVEL'),
+                                   version_tuple):
+                f.write('{} = {}\n'.format(name, value))
+
+        assert util.read_zephyr_version(zephyr_base) == version_tuple
