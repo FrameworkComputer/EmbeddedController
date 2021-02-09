@@ -7,6 +7,7 @@
 
 #include "power.h"
 #include "switch.h"
+#include "throttle_ap.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
 
@@ -15,14 +16,6 @@
  */
 
 void power_button_interrupt(enum gpio_signal signal)
-{
-}
-
-/*
- * remove when we enable CONFIG_THROTTLE_AP
- */
-
-void throttle_ap_prochot_input_interrupt(enum gpio_signal signal)
 {
 }
 

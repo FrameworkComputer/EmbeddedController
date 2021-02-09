@@ -51,6 +51,10 @@
 /* Chipset config */
 #define CONFIG_CHIPSET_ALDERLAKE_SLG4BD44540
 
+/* Thermal features */
+#define CONFIG_THROTTLE_AP
+#define CONFIG_CHIPSET_CAN_THROTTLE
+
 #define CONFIG_PWM
 
 /* Enable I2C Support */

@@ -137,12 +137,6 @@ enum mft_channel {
 void power_button_interrupt(enum gpio_signal signal);
 
 /*
- * remove when we enable CONFIG_THROTTLE_AP
- */
-
-void throttle_ap_prochot_input_interrupt(enum gpio_signal signal);
-
-/*
  * remove when we enable CONFIG_VOLUME_BUTTONS
  */
 
