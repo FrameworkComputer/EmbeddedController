@@ -26,6 +26,8 @@
 #define GPIO_LID_OPEN			GPIO_LID_OPEN_OD
 #define GPIO_WP_L			GPIO_EC_WP_ODL
 
+#define CONFIG_FANS			FAN_CH_COUNT
+
 /* System has back-lit keyboard */
 #define CONFIG_PWM_KBLIGHT
 
@@ -79,6 +81,16 @@ enum pwm_channel {
 	PWM_CH_FAN,			/* PWM5 */
 	PWM_CH_LED4,			/* PWM7 */
 	PWM_CH_COUNT
+};
+
+enum fan_channel {
+	FAN_CH_0 = 0,
+	FAN_CH_COUNT
+};
+
+enum mft_channel {
+	MFT_CH_0 = 0,
+	MFT_CH_COUNT
 };
 
 /*
