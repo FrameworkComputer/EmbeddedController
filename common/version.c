@@ -18,7 +18,7 @@ BUILD_ASSERT(CONFIG_ROLLBACK_VERSION >= 0);
 BUILD_ASSERT(CONFIG_ROLLBACK_VERSION <= INT32_MAX);
 
 const struct image_data __keep current_image_data
-	__attribute__((section(".rodata.ver"))) = {
+	FIXED_SECTION("ver") = {
 	.cookie1 = CROS_EC_IMAGE_DATA_COOKIE1,
 	.version = CROS_EC_VERSION32,
 #ifndef TEST_BUILD

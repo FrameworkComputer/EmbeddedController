@@ -115,6 +115,8 @@ if (DEFINED CONFIG_PLATFORM_EC_RO_HEADER)
             -spireadmode ${spireadmode})
 endif()
 
+add_subdirectory(linker)
+
 zephyr_include_directories(include)
 
 zephyr_include_directories_ifdef(

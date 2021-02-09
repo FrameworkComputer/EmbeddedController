@@ -22,6 +22,18 @@
 #endif /* CONFIG_ZEPHYR */
 
 /*
+ * Define a new macro (FIXED_SECTION) to abstract away the linker details
+ * between platform/ec builds and Zephyr. Each build has a slightly different
+ * way of ensuring that the given section is in the same relative location in
+ * both the RO/RW images.
+ */
+#ifdef CONFIG_ZEPHYR
+#define FIXED_SECTION(name) __attribute__((section(".fixed." name)))
+#else
+#define FIXED_SECTION(name) __attribute__((section(".rodata." name)))
+#endif
+
+/*
  * Macros to concatenate 2 - 4 tokens together to form a single token.
  * Multiple levels of nesting are required to convince the preprocessor to
  * expand currently-defined tokens before concatenation.
