@@ -283,7 +283,8 @@
 			gpios = <&gpio3 2 GPIO_ODR_LOW>;
 			label = "USB_C1_RT_RST_ODL_BOARDID_0";
 		};
-		usb_c1_rt_rst_odl {
+		gpio_usb_c1_rt_rst_odl: usb_c1_rt_rst_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpio8 3 GPIO_ODR_LOW>;
 			label = "USB_C1_RT_RST_ODL";
 		};
@@ -502,7 +503,7 @@
 		reg = <0x40>;
 		label = "USB_C1_BB_RETIMER";
 		int-gpios = <&gpio_usb_c1_mix_int_odl>;
-		reset-gpios = <&gpio_usb_c1_rt_rst_odl_boardid_0>;
+		reset-gpios = <&gpio_usb_c1_rt_rst_odl>;
 		ls-en-gpios = <&gpio_unused_gpio41>;
 	};
 };
