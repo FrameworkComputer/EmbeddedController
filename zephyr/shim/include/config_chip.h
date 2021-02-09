@@ -55,6 +55,13 @@
 #undef CONFIG_CRC8
 #define CONFIG_CRC8
 
+/*
+ * This is not used by the Zephyr code.
+ * Define it here to reduce the delta from the ECOS CONFIG.
+ */
+#undef CONFIG_CHIP_PRE_INIT
+#define CONFIG_CHIP_PRE_INIT
+
 /* EC chipset configuration */
 #define HOOK_TICK_INTERVAL	CONFIG_CROS_EC_HOOK_TICK_INTERVAL
 
