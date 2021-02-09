@@ -5,3 +5,6 @@
 #
 # Brya baseboard specific files build
 #
+
+baseboard-y=
+baseboard-y+=battery_presence.o

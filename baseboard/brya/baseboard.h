@@ -24,6 +24,14 @@
 
 #define CONFIG_EXTPOWER_GPIO
 
+/* Common battery defines */
+#define CONFIG_BATTERY_SMART
+#define CONFIG_BATTERY_FUEL_GAUGE
+#define CONFIG_BATTERY_CUT_OFF
+#define CONFIG_BATTERY_PRESENT_CUSTOM
+#define CONFIG_BATTERY_HW_PRESENT_CUSTOM
+#define CONFIG_BATTERY_REVIVE_DISCONNECT
+
 #define CONFIG_PWM
 
 /* Enable I2C Support */
@@ -32,8 +40,18 @@
 
 #ifndef __ASSEMBLER__
 
+#include <stdbool.h>
+
+#include "common.h"
 #include "baseboard_usbc_config.h"
 #include "extpower.h"
+
+/*
+ * Check battery disconnect state.
+ * This function will return if battery is initialized or not.
+ * @return true - initialized. false - not.
+ */
+__override_proto bool board_battery_is_initialized(void);
 
 #endif /* !__ASSEMBLER__ */
 
