@@ -126,16 +126,20 @@ void panic_reboot(void)
 	system_reset(0);
 }
 
-#ifdef CONFIG_DEBUG_ASSERT_REBOOTS
+/* Complete the processing of a panic, after the initial message is shown */
+static noreturn void complete_panic(int linenum)
+{
+	if (IS_ENABLED(CONFIG_SOFTWARE_PANIC))
+		software_panic(PANIC_SW_ASSERT, linenum);
+	else
+		panic_reboot();
+}
+
 #ifdef CONFIG_DEBUG_ASSERT_BRIEF
 void panic_assert_fail(const char *fname, int linenum)
 {
 	panic_printf("\nASSERTION FAILURE at %s:%d\n", fname, linenum);
-#ifdef CONFIG_SOFTWARE_PANIC
-	software_panic(PANIC_SW_ASSERT, linenum);
-#else
-	panic_reboot();
-#endif
+	complete_panic(linenum);
 }
 #else
 void panic_assert_fail(const char *msg, const char *func, const char *fname,
@@ -143,13 +147,8 @@ void panic_assert_fail(const char *msg, const char *func, const char *fname,
 {
 	panic_printf("\nASSERTION FAILURE '%s' in %s() at %s:%d\n",
 		     msg, func, fname, linenum);
-#ifdef CONFIG_SOFTWARE_PANIC
-	software_panic(PANIC_SW_ASSERT, linenum);
-#else
-	panic_reboot();
-#endif
+	complete_panic(linenum);
 }
-#endif
 #endif
 
 void panic(const char *msg)
