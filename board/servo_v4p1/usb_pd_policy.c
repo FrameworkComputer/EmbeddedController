@@ -922,28 +922,28 @@ static int svdm_response_modes(int port, uint32_t *payload)
 
 static void set_typec_mux(int pin_cfg)
 {
-	mux_state_t state = 0;
+	mux_state_t mux_mode = USB_PD_MUX_NONE;
 
 	switch (pin_cfg) {
-	case 0:
+	case 0: /* return to USB3 only */
+		mux_mode = USB_PD_MUX_USB_ENABLED;
 		CPRINTS("PinCfg:off");
 		break;
-	case MODE_DP_PIN_C:
-		state = USB_PD_MUX_DP_ENABLED;
+	case MODE_DP_PIN_C: /* DisplayPort 4 lanes */
+		mux_mode = USB_PD_MUX_DP_ENABLED;
 		CPRINTS("PinCfg:C");
 		break;
-	case MODE_DP_PIN_D:
-		state = USB_PD_MUX_USB_ENABLED;
+	case MODE_DP_PIN_D: /* DP + USB */
+		mux_mode = USB_PD_MUX_DOCK;
 		CPRINTS("PinCfg:D");
 		break;
 	default:
 		CPRINTS("PinCfg not supported: %d", pin_cfg);
 		return;
 	}
-	if (state && cc_config & CC_POLARITY)
-		state |= USB_PD_MUX_POLARITY_INVERTED;
 
-	usb_muxes[DUT].driver->set(&usb_muxes[DUT], state);
+	usb_mux_set(DUT, mux_mode, USB_SWITCH_CONNECT,
+		    !!(cc_config & CC_POLARITY));
 }
 
 static int get_hpd_level(void)
@@ -958,9 +958,8 @@ static int dp_status(int port, uint32_t *payload)
 {
 	int opos = PD_VDO_OPOS(payload[0]);
 	int hpd = get_hpd_level();
-	mux_state_t state = 0;
-	int res = usb_muxes[DUT].driver->get(&usb_muxes[DUT], &state);
-	int dp_enabled = res == EC_SUCCESS && (state & USB_PD_MUX_DP_ENABLED);
+	mux_state_t state = usb_mux_get(DUT);
+	int dp_enabled = !!(state & USB_PD_MUX_DP_ENABLED);
 
 	if (opos != OPOS)
 		return 0;  /* NAK */
