@@ -33,14 +33,18 @@ fi
 
 # print out canonical path to differentiate between /usr/local/bin and
 # /usr/bin installs
-echo "$(readlink -f "$0")"
+readlink -f "$0"
 
 readonly CROS_EC_SPI_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-spi"
 
 readonly CROS_EC_UART_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-uart"
 
 check_hardware_write_protect_disabled() {
-  local hardware_write_protect_state="$(crossystem wpsw_cur)"
+  local hardware_write_protect_state
+  if ! hardware_write_protect_state="$(crossystem wpsw_cur)"; then
+    echo "Failed to get hardware write protect status" >&2
+    exit 1
+  fi
   if [[ "${hardware_write_protect_state}" != "0" ]]; then
     echo "Please make sure hardware write protect is disabled."
     echo "See https://www.chromium.org/chromium-os/firmware-porting-guide/firmware-ec-write-protection"
@@ -59,7 +63,7 @@ get_spiid() {
 
   for dev in /sys/bus/spi/devices/*; do
     if [[ "$(cat "${dev}/modalias")" == "${CROS_EC_SPI_MODALIAS_STR}" ]]; then
-      echo "$(basename "${dev}")"
+      basename "${dev}"
       return 0
     fi
   done
@@ -72,7 +76,7 @@ get_uartid() {
   for dev in /sys/bus/serial/devices/*; do
     if [ -f "${dev}/modalias" ]; then
       if [[ "$(cat "${dev}/modalias")" == "${CROS_EC_UART_MODALIAS_STR}" ]]; then
-        echo "$(basename "${dev}")"
+        basename "${dev}"
         return 0
       fi
     fi
@@ -232,14 +236,13 @@ flash_fp_mcu_stm32() {
   check_hardware_write_protect_disabled
 
   if [[ "${transport}" == "UART" ]]; then
-    deviceid="$(get_uartid)"
-    if [[ $? -ne 0 ]]; then
+    if ! deviceid="$(get_uartid)"; then
       echo "Unable to find FP sensor UART device: ${CROS_EC_UART_MODALIAS_STR}"
       exit 1
     fi
   else
-    deviceid="$(get_spiid)"
-    if [[ $? -ne 0 ]]; then
+
+    if ! deviceid="$(get_spiid)"; then
       echo "Unable to find FP sensor SPI device: ${CROS_EC_SPI_MODALIAS_STR}"
       exit 1
     fi
@@ -303,7 +306,7 @@ flash_fp_mcu_stm32() {
   local cmd_exit_status=1
   local cmd="stm32mon ${stm32mon_flags}"
 
-  for attempt in $(seq ${FLAGS_retries}); do
+  for attempt in $(seq "${FLAGS_retries}"); do
     # Reset sequence to enter bootloader mode
     gpio 0 "${gpio_nrst}"
     sleep 0.01
@@ -515,9 +518,7 @@ if [[ "$(type -t "config_${PLATFORM_NAME}")" != "function" ]]; then
   exit 1
 fi
 
-config_${PLATFORM_NAME}
-
-if [[ $? -ne 0 ]]; then
+if ! "config_${PLATFORM_NAME}"; then
   echo "Configuration failed for platform ${PLATFORM_NAME}"
   exit 1
 fi
