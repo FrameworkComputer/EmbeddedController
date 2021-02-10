@@ -48,25 +48,28 @@ def build(opts):
 
 def bundle(opts):
     """Bundles the artifacts from each target into its own tarball."""
+    info = firmware_pb2.FirmwareArtifactInfo()
     bundle_dir = opts.output_dir if opts.output_dir else DEFAULT_BUNDLE_DIRECTORY
     if not os.path.isdir(bundle_dir):
         os.mkdir(bundle_dir)
-    for build_target in os.listdir(
-            os.path.join(os.path.dirname(__file__), 'build')):
-        subprocess.run([
-            'tar', 'cvfj',
-            os.path.join(
-                bundle_dir, ''.join([
-                    build_target, '.firmware_from_source.tar.bz2'
-                ])), '--exclude=\'*.o\'', '.'
-        ],
-                       cwd=os.path.join(os.path.dirname(__file__), 'build',
-                                        build_target),
-                       check=True)
+    ec_dir = os.path.dirname(__file__)
+    for build_target in sorted(os.listdir(os.path.join(ec_dir, 'build'))):
+        tarball_name = ''.join([build_target, '.firmware.tbz2'])
+        tarball_path = os.path.join(bundle_dir, tarball_name)
+        cmd = [
+            'tar', 'cvfj', tarball_path, '--exclude=*.o.d', '--exclude=*.o', '.'
+        ]
+        subprocess.run(
+            cmd, cwd=os.path.join(ec_dir, 'build', build_target), check=True)
+        meta = info.objects.add()
+        meta.file_name = tarball_name
+        meta.tarball_info.type = firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.EC
+        # TODO(kmshelton): Populate the rest of metadata contents as it gets defined in
+        # infra/proto/src/chromite/api/firmware.proto.
+
     bundle_metadata_file = opts.metadata if opts.metadata else DEFAULT_BUNDLE_METADATA_FILE
-    # TODO(kmshelton): Populate the metatadata contents when it is defined in
-    # infra/proto/src/chromite/api/firmware.proto.
-    os.mknod(bundle_metadata_file)
+    with open(bundle_metadata_file, 'w') as f:
+        f.write(json_format.MessageToJson(info))
 
 
 def test(opts):
