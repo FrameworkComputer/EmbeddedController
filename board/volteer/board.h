@@ -156,6 +156,12 @@
 
 #define CONFIG_DEBUG_ASSERT_BRIEF
 
+/* Disable volume button command in EC console */
+#undef  CONFIG_CMD_BUTTON
+
+/* Disable volume button in ectool */
+#undef CONFIG_HOSTCMD_BUTTON
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"

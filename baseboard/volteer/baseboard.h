@@ -231,6 +231,12 @@
 #define CONFIG_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
 #define CONFIG_USBC_RETIMER_FW_UPDATE
 
+/* Enable volume button command in EC console */
+#define CONFIG_CMD_BUTTON
+
+/* Enable volume button in ectool */
+#define CONFIG_HOSTCMD_BUTTON
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
