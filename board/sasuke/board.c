@@ -14,6 +14,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
+#include "cros_board_info.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/nb7v904m.h"
@@ -173,6 +174,9 @@ const struct temp_sensor_t temp_sensors[] = {
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 
+static int board_id = -1;
+extern const struct usb_mux usbc0_retimer;
+
 void board_init(void)
 {
 	int on;
@@ -212,6 +216,19 @@ void board_init(void)
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
 			      CHIPSET_STATE_SOFT_OFF);
 	board_power_5v_enable(on);
+
+	if (board_id == -1) {
+		uint32_t val;
+
+		if (cbi_get_board_version(&val) == EC_SUCCESS) {
+			board_id = val;
+			if (board_id == 2) {
+				nb7v904m_lpm_disable = 1;
+				nb7v904m_set_aux_ch_switch(&usbc0_retimer,
+						NB7V904M_AUX_CH_FLIPPED);
+			}
+		}
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -455,6 +472,8 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
+static int board_nb7v904m_mux_set_c0(const struct usb_mux *me,
+						mux_state_t mux_state);
 static int board_nb7v904m_mux_set(const struct usb_mux *me,
 						mux_state_t mux_state);
 const struct usb_mux usbc0_retimer = {
@@ -462,6 +481,7 @@ const struct usb_mux usbc0_retimer = {
 	.i2c_port = I2C_PORT_USB_C0,
 	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
 	.driver = &nb7v904m_usb_redriver_drv,
+	.board_set = &board_nb7v904m_mux_set_c0,
 };
 const struct usb_mux usbc1_retimer = {
 	.usb_port = 1,
@@ -487,6 +507,40 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.next_mux = &usbc1_retimer,
 	}
 };
+
+/* USB Mux C0 */
+static int board_nb7v904m_mux_set_c0(const struct usb_mux *me,
+						mux_state_t mux_state)
+{
+	int rv = EC_SUCCESS;
+
+	if (board_id == -1) {
+		uint32_t val;
+
+		if (cbi_get_board_version(&val) == EC_SUCCESS)
+			board_id = val;
+		if (board_id == 2)
+			nb7v904m_lpm_disable = 1;
+	}
+
+	if (mux_state & USB_PD_MUX_USB_ENABLED) {
+		/* USB with DP */
+		if (mux_state & USB_PD_MUX_DP_ENABLED) {
+			/* will be used on future */
+		} else {
+			/* USB only */
+			if (board_id == 2)
+				rv |= nb7v904m_set_aux_ch_switch(me,
+						NB7V904M_AUX_CH_FLIPPED);
+		}
+
+	} else if (mux_state & USB_PD_MUX_DP_ENABLED) {
+		/* 4 lanes DP */
+		/* will be used on future */
+	}
+
+	return rv;
+}
 
 /* USB Mux */
 static int board_nb7v904m_mux_set(const struct usb_mux *me,

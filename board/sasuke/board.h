@@ -125,6 +125,12 @@
 
 #define CONFIG_MATH_UTIL
 
+/*
+ * There is ccd connection issue on board id = 2.
+ * NB7V904M is needed to be active to resolve this.
+ */
+#define CONFIG_NB7V904M_LPM_OVERRIDE
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
