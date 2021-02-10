@@ -54,17 +54,17 @@ get_spiid() {
   # TODO(b/179533783): Fix modalias on strongbad and remove this bypass.
   if [[ -n "${DEVICEID}" ]]; then
     echo "${DEVICEID}"
-    exit 0
+    return 0
   fi
 
   for dev in /sys/bus/spi/devices/*; do
     if [[ "$(cat "${dev}/modalias")" == "${CROS_EC_SPI_MODALIAS_STR}" ]]; then
       echo "$(basename "${dev}")"
-      exit 0
+      return 0
     fi
   done
 
-  exit 1
+  return 1
 }
 
 # Get the uartid for the fingerprint sensor based on the modalias
@@ -73,12 +73,12 @@ get_uartid() {
     if [ -f "${dev}/modalias" ]; then
       if [[ "$(cat "${dev}/modalias")" == "${CROS_EC_UART_MODALIAS_STR}" ]]; then
         echo "$(basename "${dev}")"
-        exit 0
+        return 0
       fi
     fi
   done
 
-  exit 1
+  return 1
 }
 
 # Usage: gpio <unexport|export|in|out|0|1|get> <signal> [signal...]
@@ -153,7 +153,7 @@ get_platform_name() {
   echo "Getting platform name from /etc/lsb-release." 1>&2
   platform_name="$(lsbval "CHROMEOS_RELEASE_BOARD")"
   if [[ -z "${platform_name}" ]]; then
-    exit 1
+    return 1
   fi
 
   echo "${platform_name}"
@@ -485,7 +485,11 @@ config_guybrush() {
 # function. Doing it in this manner allows us to reduce the number of
 # configurations that we have to maintain (and reduces the amount of testing
 # if we're only updating a specific config_<platform_name>).
-readonly PLATFORM_NAME="$(get_platform_name)"
+if ! PLATFORM_NAME="$(get_platform_name)"; then
+  echo "Failed to get platform name"
+  exit 1
+fi
+readonly PLATFORM_NAME
 
 echo "Using config for ${PLATFORM_NAME}"
 
