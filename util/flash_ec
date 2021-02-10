@@ -275,7 +275,7 @@ function dut_control_get_or_die {
 	    die "command exited $? (non-zero): dut-control --value_only $*"
 }
 
-BOARD=${FLAGS_board}
+: ${BOARD:=${FLAGS_board}}
 
 in_array() {
 	local n=$#
@@ -1406,6 +1406,7 @@ function flash_npcx_uut() {
 	# the same path as the EC binary.
 	local MON=""
 	for dir in \
+		"$(dirname "$IMG")/chip/npcx/spiflashfw" \
 		"$(dirname "$IMG")" \
 		"${EC_DIR}/build/${BOARD}/chip/npcx/spiflashfw" \
 		"$(dirname "$LOCAL_BUILD")" \
