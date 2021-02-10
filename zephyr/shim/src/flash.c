@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "registers.h"
 #include "spi_flash_reg.h"
+#include "task.h"
 #include "util.h"
 
 LOG_MODULE_REGISTER(shim_flash, LOG_LEVEL_ERR);
@@ -29,6 +30,16 @@ static uint8_t saved_sr2;
 #define CMD_READ_STATUS_REG              0x05
 #define CMD_READ_STATUS_REG2             0x35
 
+static mutex_t flash_lock;
+static int init_flash_mutex(const struct device *dev)
+{
+	ARG_UNUSED(dev);
+
+	k_mutex_init(&flash_lock);
+	return 0;
+}
+SYS_INIT(init_flash_mutex, POST_KERNEL, 50);
+
 static int flash_get_status1(void)
 {
 	uint8_t reg;
@@ -36,7 +47,14 @@ static int flash_get_status1(void)
 	if (all_protected)
 		return saved_sr1;
 
+	/* Lock physical flash operations */
+	flash_lock_mapped_storage(1);
+
 	cros_flash_get_status_reg(cros_flash_dev, CMD_READ_STATUS_REG, &reg);
+
+	/* Unlock physical flash operations */
+	flash_lock_mapped_storage(0);
+
 	return reg;
 }
 
@@ -47,7 +65,14 @@ static int flash_get_status2(void)
 	if (all_protected)
 		return saved_sr1;
 
+	/* Lock physical flash operations */
+	flash_lock_mapped_storage(1);
+
 	cros_flash_get_status_reg(cros_flash_dev, CMD_READ_STATUS_REG2, &reg);
+
+	/* Unlock physical flash operations */
+	flash_lock_mapped_storage(0);
+
 	return reg;
 }
 
@@ -113,9 +138,15 @@ static int flash_set_status_for_prot(int reg1, int reg2)
 	flash_protect_int_flash(!gpio_get_level(GPIO_WP_L));
 #endif /*_CONFIG_WP_ACTIVE_HIGH_*/
 
+	/* Lock physical flash operations */
+	flash_lock_mapped_storage(1);
+
 	regs[0] = reg1;
 	regs[1] = reg2;
 	flash_write_status_reg(regs);
+
+	/* Unlock physical flash operations */
+	flash_lock_mapped_storage(0);
 
 	spi_flash_reg_to_protect(reg1, reg2, &addr_prot_start,
 				 &addr_prot_length);
@@ -196,9 +227,20 @@ static int flash_write_prot_reg(unsigned int offset, unsigned int bytes,
 }
 
 /* TODO(b/174873770): Add calls to Zephyr code here */
+#ifdef CONFIG_EXTERNAL_STORAGE
+void flash_lock_mapped_storage(int lock)
+{
+	if (lock)
+		mutex_lock(&flash_lock);
+	else
+		mutex_unlock(&flash_lock);
+}
+#endif
 
 int flash_physical_write(int offset, int size, const char *data)
 {
+	int rv;
+
 	/* Fail if offset, size, and data aren't at least word-aligned */
 	if ((offset | size | (uint32_t)(uintptr_t)data) &
 	    (CONFIG_FLASH_WRITE_SIZE - 1))
@@ -212,11 +254,21 @@ int flash_physical_write(int offset, int size, const char *data)
 	if (flash_check_prot_range(offset, size))
 		return EC_ERROR_ACCESS_DENIED;
 
-	return cros_flash_physical_write(cros_flash_dev, offset, size, data);
+	/* Lock physical flash operations */
+	flash_lock_mapped_storage(1);
+
+	rv = cros_flash_physical_write(cros_flash_dev, offset, size, data);
+
+	/* Unlock physical flash operations */
+	flash_lock_mapped_storage(0);
+
+	return rv;
 }
 
 int flash_physical_erase(int offset, int size)
 {
+	int rv;
+
 	/* check protection */
 	if (all_protected)
 		return EC_ERROR_ACCESS_DENIED;
@@ -225,7 +277,15 @@ int flash_physical_erase(int offset, int size)
 	if (flash_check_prot_range(offset, size))
 		return EC_ERROR_ACCESS_DENIED;
 
-	return cros_flash_physical_erase(cros_flash_dev, offset, size);
+	/* Lock physical flash operations */
+	flash_lock_mapped_storage(1);
+
+	rv = cros_flash_physical_erase(cros_flash_dev, offset, size);
+
+	/* Unlock physical flash operations */
+	flash_lock_mapped_storage(0);
+
+	return rv;
 }
 
 int flash_physical_get_protect(int bank)
@@ -298,7 +358,16 @@ int flash_physical_protect_now(int all)
 
 int flash_physical_read(int offset, int size, char *data)
 {
-	return cros_flash_physical_read(cros_flash_dev, offset, size, data);
+	int rv;
+
+	/* Lock physical flash operations */
+	flash_lock_mapped_storage(1);
+	rv = cros_flash_physical_read(cros_flash_dev, offset, size, data);
+
+	/* Unlock physical flash operations */
+	flash_lock_mapped_storage(0);
+
+	return rv;
 }
 
 static int flash_dev_init(const struct device *unused)
