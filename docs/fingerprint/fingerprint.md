@@ -351,28 +351,34 @@ When the MCU is in **low power** mode during the AP suspend (as emulated by
 @@   pp3300_dx_mcu_mw   1243     2.25    0.39    10.26     2.10
 ```
 
-### Dragontalon
+### Icetower v0.1
 
 <!-- mdformat off(b/139308852) -->
 *** note
-**NOTE**: The sensor doesn't work on Dragontalon, so the measurements below show
-zero for the sensor.
+**NOTE**: Icetower v0.1 has a hardware bug in the INA connections, so you cannot
+measure the 1.8V fingerprint sensor rail. See http://b/178098140.
 ***
 <!-- mdformat on -->
 
 ```bash
-(chroot) $  dut-control -t 60 pp3300_h7_mv pp3300_h7_mw pp1800_fpc_mv pp1800_fpc_mw
+(chroot) $ dut-control -t 60 pp3300_dx_mcu_mv pp3300_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw
 ```
 
-**Firmware Version**: `dartmonkey_v2.0.4017-9c45fb4b3`
+**Firmware Version**: `dartmonkey_v2.0.2887-311310808-RO_v2.0.7304-441100b93-RW.bin`
+
+#### MCU is idle
 
 ```
-@@            NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
-@@    sample_msecs   1502    39.96   13.14   379.43    22.31
-@@   pp1800_fpc_mv   1502     0.00    0.00     0.00     0.00
-@@   pp1800_fpc_mw   1502     0.00    0.00     0.00     0.00
-@@    pp3300_h7_mv   1502  3288.00    0.00  3288.00  3288.00
-@@    pp3300_h7_mw   1502     8.20    0.51    18.08     7.67
+(chroot) $ dut-control fpmcu_slp_s3:off
+```
+
+```
+@@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
+@@       sample_msecs    174   345.60   31.93   457.62   283.00
+@@    pp3300_dx_fp_mv    174  3264.00    0.00  3264.00  3264.00
+@@    pp3300_dx_fp_mw    174     0.00    0.00     0.00     0.00
+@@   pp3300_dx_mcu_mv    174  3260.69    3.94  3264.00  3256.00
+@@   pp3300_dx_mcu_mw    174     5.47    0.10     5.48     4.17
 ```
 
 ## Chrome OS Build (portage / ebuild)
