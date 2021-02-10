@@ -192,9 +192,13 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, base_enable, HOOK_PRIO_DEFAULT);
 
 static void base_disable(void)
 {
-	/* Disable base detection interrupt and disable power to base. */
+	/*
+	 * Disable base detection interrupt and disable power to base.
+	 * Set the state UNKNOWN so the next startup will initialize a
+	 * correct state and notify AP.
+	 */
 	gpio_disable_interrupt(GPIO_BASE_DET_L);
-	base_detect_change(BASE_DISCONNECTED);
+	base_detect_change(BASE_UNKNOWN);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, base_disable, HOOK_PRIO_DEFAULT);
 
