@@ -23,9 +23,13 @@
 #define NB7V904M_REG_CH_D_EQ_SETTINGS	0x07
 #define NB7V904M_REG_AUX_CH_CTRL        0x09
 #define NB7V904M_REG_CH_A_FLAT_GAIN		0x18
+#define NB7V904M_REG_CH_A_LOSS_CTRL		0x19
 #define NB7V904M_REG_CH_B_FLAT_GAIN		0x1a
+#define NB7V904M_REG_CH_B_LOSS_CTRL		0x1b
 #define NB7V904M_REG_CH_C_FLAT_GAIN		0x1c
+#define NB7V904M_REG_CH_C_LOSS_CTRL		0x1d
 #define NB7V904M_REG_CH_D_FLAT_GAIN		0x1e
+#define NB7V904M_REG_CH_D_LOSS_CTRL		0x1f
 
 /* 0x00 - General Device Settings */
 #define NB7V904M_CHIP_EN        BIT(0)
@@ -97,6 +101,15 @@
 #define NB7V904M_CH_D_GAIN_1P5_DB	0x02
 #define NB7V904M_CH_D_GAIN_3P5_DB	0x03
 
+/* 0x19 - Channel A Loss Profile Matching Control */
+/* 0x1b - Channel B Loss Profile Matching Control */
+/* 0x1d - Channel C Loss Profile Matching Control */
+/* 0x1f - Channel D Loss Profile Matching Control */
+#define NB7V904M_LOSS_PROFILE_A		0x00
+#define NB7V904M_LOSS_PROFILE_B		0x01
+#define NB7V904M_LOSS_PROFILE_C		0x02
+#define NB7V904M_LOSS_PROFILE_D		0x03
+
 extern const struct usb_mux_driver nb7v904m_usb_redriver_drv;
 #ifdef CONFIG_NB7V904M_LPM_OVERRIDE
 extern int nb7v904m_lpm_disable;
@@ -110,6 +123,11 @@ int nb7v904m_tune_usb_set_eq(const struct usb_mux *me, uint8_t eq_a,
 #define NB7V904M_CH_ALL_SKIP_GAIN	0xff
 int nb7v904m_tune_usb_flat_gain(const struct usb_mux *me, uint8_t gain_a,
 			uint8_t gain_b, uint8_t gain_c, uint8_t gain_d);
+/* Use this value if loss profile control  wants to be skipped  */
+#define NB7V904M_CH_ALL_SKIP_LOSS	0xff
+/* Control channel Loss Profile Matching */
+int nb7v904m_set_loss_profile_match(const struct usb_mux *me, uint8_t loss_a,
+			uint8_t loss_b, uint8_t loss_c, uint8_t loss_d);
 /* Control mapping between AUX and SBU */
 int nb7v904m_set_aux_ch_switch(const struct usb_mux *me, uint8_t aux_ch);
 #endif /* __CROS_EC_USB_REDRIVER_NB7V904M_H */
