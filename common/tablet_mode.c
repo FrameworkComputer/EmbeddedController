@@ -42,9 +42,14 @@ int tablet_get_mode(void)
 	return tablet_mode;
 }
 
-static void notify_tablet_mode_change(void)
+static inline void print_tablet_mode(void)
 {
 	CPRINTS("tablet mode %sabled", tablet_mode ? "en" : "dis");
+}
+
+static void notify_tablet_mode_change(void)
+{
+	print_tablet_mode();
 	hook_notify(HOOK_TABLET_MODE_CHANGE);
 
 	/*
@@ -168,6 +173,11 @@ void gmr_tablet_switch_disable(void)
 
 static int command_settabletmode(int argc, char **argv)
 {
+	if (argc == 1) {
+		print_tablet_mode();
+		return EC_SUCCESS;
+	}
+
 	if (argc != 2)
 		return EC_ERROR_PARAM_COUNT;
 
