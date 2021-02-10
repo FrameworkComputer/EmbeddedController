@@ -513,6 +513,7 @@ static int board_nb7v904m_mux_set_c0(const struct usb_mux *me,
 						mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
+	int flipped = !!(mux_state & USB_PD_MUX_POLARITY_INVERTED);
 
 	if (board_id == -1) {
 		uint32_t val;
@@ -524,19 +525,82 @@ static int board_nb7v904m_mux_set_c0(const struct usb_mux *me,
 	}
 
 	if (mux_state & USB_PD_MUX_USB_ENABLED) {
-		/* USB with DP */
 		if (mux_state & USB_PD_MUX_DP_ENABLED) {
-			/* will be used on future */
+			/* USB with DP */
+			if (flipped) {
+				rv |= nb7v904m_tune_usb_set_eq(me,
+							NB7V904M_CH_A_EQ_10_DB,
+							NB7V904M_CH_B_EQ_0_DB,
+							NB7V904M_CH_C_EQ_2_DB,
+							NB7V904M_CH_D_EQ_2_DB);
+				rv |= nb7v904m_tune_usb_flat_gain(me,
+							NB7V904M_CH_A_GAIN_0_DB,
+							NB7V904M_CH_B_GAIN_1P5_DB,
+							NB7V904M_CH_C_GAIN_0_DB,
+							NB7V904M_CH_D_GAIN_0_DB);
+				rv |= nb7v904m_set_loss_profile_match(me,
+							NB7V904M_LOSS_PROFILE_A,
+							NB7V904M_LOSS_PROFILE_A,
+							NB7V904M_LOSS_PROFILE_C,
+							NB7V904M_LOSS_PROFILE_C);
+			}
+			else {
+				rv |= nb7v904m_tune_usb_set_eq(me,
+							NB7V904M_CH_A_EQ_2_DB,
+							NB7V904M_CH_B_EQ_2_DB,
+							NB7V904M_CH_C_EQ_0_DB,
+							NB7V904M_CH_D_EQ_10_DB);
+				rv |= nb7v904m_tune_usb_flat_gain(me,
+							NB7V904M_CH_A_GAIN_0_DB,
+							NB7V904M_CH_B_GAIN_0_DB,
+							NB7V904M_CH_C_GAIN_1P5_DB,
+							NB7V904M_CH_D_GAIN_0_DB);
+				rv |= nb7v904m_set_loss_profile_match(me,
+							NB7V904M_LOSS_PROFILE_C,
+							NB7V904M_LOSS_PROFILE_C,
+							NB7V904M_LOSS_PROFILE_A,
+							NB7V904M_LOSS_PROFILE_A);
+			}
 		} else {
 			/* USB only */
 			if (board_id == 2)
 				rv |= nb7v904m_set_aux_ch_switch(me,
 						NB7V904M_AUX_CH_FLIPPED);
+
+			rv |= nb7v904m_tune_usb_set_eq(me,
+						NB7V904M_CH_A_EQ_10_DB,
+						NB7V904M_CH_B_EQ_0_DB,
+						NB7V904M_CH_C_EQ_0_DB,
+						NB7V904M_CH_D_EQ_10_DB);
+			rv |= nb7v904m_tune_usb_flat_gain(me,
+						NB7V904M_CH_A_GAIN_0_DB,
+						NB7V904M_CH_B_GAIN_1P5_DB,
+						NB7V904M_CH_C_GAIN_1P5_DB,
+						NB7V904M_CH_D_GAIN_0_DB);
+			rv |= nb7v904m_set_loss_profile_match(me,
+						NB7V904M_LOSS_PROFILE_A,
+						NB7V904M_LOSS_PROFILE_A,
+						NB7V904M_LOSS_PROFILE_A,
+						NB7V904M_LOSS_PROFILE_A);
 		}
 
 	} else if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/* 4 lanes DP */
-		/* will be used on future */
+		rv |= nb7v904m_tune_usb_set_eq(me,
+					NB7V904M_CH_A_EQ_2_DB,
+					NB7V904M_CH_B_EQ_2_DB,
+					NB7V904M_CH_C_EQ_2_DB,
+					NB7V904M_CH_D_EQ_2_DB);
+		rv |= nb7v904m_tune_usb_flat_gain(me,
+					NB7V904M_CH_A_GAIN_0_DB,
+					NB7V904M_CH_B_GAIN_0_DB,
+					NB7V904M_CH_C_GAIN_0_DB,
+					NB7V904M_CH_D_GAIN_0_DB);
+		rv |= nb7v904m_set_loss_profile_match(me,
+					NB7V904M_LOSS_PROFILE_C,
+					NB7V904M_LOSS_PROFILE_C,
+					NB7V904M_LOSS_PROFILE_C,
+					NB7V904M_LOSS_PROFILE_C);
 	}
 
 	return rv;
@@ -563,6 +627,11 @@ static int board_nb7v904m_mux_set(const struct usb_mux *me,
 							NB7V904M_CH_B_GAIN_3P5_DB,
 							NB7V904M_CH_C_GAIN_0_DB,
 							NB7V904M_CH_ALL_SKIP_GAIN);
+				rv |= nb7v904m_set_loss_profile_match(me,
+							NB7V904M_LOSS_PROFILE_A,
+							NB7V904M_LOSS_PROFILE_A,
+							NB7V904M_LOSS_PROFILE_D,
+							NB7V904M_LOSS_PROFILE_D);
 			}
 			else {
 				rv |= nb7v904m_tune_usb_set_eq(me,
@@ -575,6 +644,11 @@ static int board_nb7v904m_mux_set(const struct usb_mux *me,
 							NB7V904M_CH_B_GAIN_0_DB,
 							NB7V904M_CH_C_GAIN_3P5_DB,
 							NB7V904M_CH_ALL_SKIP_GAIN);
+				rv |= nb7v904m_set_loss_profile_match(me,
+							NB7V904M_LOSS_PROFILE_D,
+							NB7V904M_LOSS_PROFILE_D,
+							NB7V904M_LOSS_PROFILE_A,
+							NB7V904M_LOSS_PROFILE_A);
 			}
 		} else {
 			/* USB only */
@@ -588,6 +662,11 @@ static int board_nb7v904m_mux_set(const struct usb_mux *me,
 						NB7V904M_CH_B_GAIN_3P5_DB,
 						NB7V904M_CH_C_GAIN_3P5_DB,
 						NB7V904M_CH_ALL_SKIP_GAIN);
+			rv |= nb7v904m_set_loss_profile_match(me,
+						NB7V904M_LOSS_PROFILE_A,
+						NB7V904M_LOSS_PROFILE_A,
+						NB7V904M_LOSS_PROFILE_A,
+						NB7V904M_LOSS_PROFILE_A);
 		}
 
 	} else if (mux_state & USB_PD_MUX_DP_ENABLED) {
@@ -602,6 +681,11 @@ static int board_nb7v904m_mux_set(const struct usb_mux *me,
 					NB7V904M_CH_B_GAIN_0_DB,
 					NB7V904M_CH_C_GAIN_0_DB,
 					NB7V904M_CH_ALL_SKIP_GAIN);
+		rv |= nb7v904m_set_loss_profile_match(me,
+					NB7V904M_LOSS_PROFILE_D,
+					NB7V904M_LOSS_PROFILE_D,
+					NB7V904M_LOSS_PROFILE_D,
+					NB7V904M_LOSS_PROFILE_D);
 	}
 
 	return rv;
