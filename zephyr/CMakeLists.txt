@@ -192,6 +192,8 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_FLASH   "${PLATFORM_EC}/common/flash.c"
                                                 "${PLATFORM_EC}/common/spi_flash_reg.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD "${PLATFORM_EC}/common/host_command.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD "${PLATFORM_EC}/common/host_event_commands.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE
+                                                "${PLATFORM_EC}/common/uart_hostcmd.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_GET_UPTIME_INFO
                                                 "${PLATFORM_EC}/common/uptime.c")
 

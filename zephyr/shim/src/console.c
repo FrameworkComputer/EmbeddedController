@@ -65,6 +65,9 @@ int uart_tx_char_raw(void *context, int c)
 void uart_write_char(char c)
 {
 	printk("%c", c);
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE))
+		console_buf_notify_char(c);
 }
 
 void uart_flush_output(void)

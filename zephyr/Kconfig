@@ -33,6 +33,7 @@ if PLATFORM_EC
 
 rsource "Kconfig.adc"
 rsource "Kconfig.battery"
+rsource "Kconfig.console"
 rsource "Kconfig.header"
 rsource "Kconfig.keyboard"
 rsource "Kconfig.led"

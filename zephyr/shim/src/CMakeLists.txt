@@ -20,6 +20,8 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ESPI        espi.c)
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_FLASH       flash.c)
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOOKS       hooks.c)
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD     host_command.c)
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE
+                                                    console_buffer.c)
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_MKBP_EVENT  mkbp_event.c)
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_PANIC       panic.c)
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_PWM         pwm.c)

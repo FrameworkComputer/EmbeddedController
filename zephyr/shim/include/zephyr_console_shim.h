@@ -55,4 +55,12 @@ int zshim_run_ec_console_command(int (*handler)(int argc, char **argv),
 #define DECLARE_SAFE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP) \
 	_ZEPHYR_SHELL_COMMAND_SHIM(NAME, ROUTINE, ARGDESC, HELP)
 
+/**
+ * console_buf_notify_char() - Notify the console host command buffer
+ * of a new character on the console.
+ *
+ * @c:			The character that appeared on the console.
+ */
+void console_buf_notify_char(char c);
+
 #endif  /* __CROS_EC_ZEPHYR_CONSOLE_SHIM_H */
