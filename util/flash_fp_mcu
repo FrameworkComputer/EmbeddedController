@@ -75,7 +75,7 @@ get_uartid() {
   exit 1
 }
 
-# Usage: gpio <unexport|export|in|out|0|1> <signal> [signal...]
+# Usage: gpio <unexport|export|in|out|0|1|get> <signal> [signal...]
 gpio() {
   local cmd="$1"
   shift
@@ -92,6 +92,10 @@ gpio() {
       0|1)
         local value="${cmd}"
         echo "${value}" > "/sys/class/gpio/gpio${signal}/value"
+        ;;
+      get)
+        local value="${cmd}"
+        cat "/sys/class/gpio/gpio${signal}/value"
         ;;
       *)
         echo "Invalid gpio command: ${cmd}" >&2
@@ -254,6 +258,16 @@ flash_fp_mcu_stm32() {
     # poorly behaved chip select line. See b/145023809.
   fi
   sleep 0.5
+
+  # We do not expect the drivers to change the pin state when binding.
+  # If you receive this warning, the driver needs to be fixed on this board
+  # and this flash attempt will probably fail.
+  if [[ $(gpio get "${gpio_boot0}") -ne 1 ]]; then
+    echo "WARNING: One of the drivers changed BOOT0 pin state on bind attempt."
+  fi
+  if [[ $(gpio get "${gpio_nrst}") -ne 0 ]]; then
+    echo "WARNING: One of the drivers changed NRST pin state on bind attempt."
+  fi
 
   local attempt=0
   local cmd_exit_status=1
