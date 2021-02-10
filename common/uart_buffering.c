@@ -402,55 +402,6 @@ static void uart_rx_dma_init(void)
 DECLARE_HOOK(HOOK_INIT, uart_rx_dma_init, HOOK_PRIO_DEFAULT);
 #endif
 
-/*****************************************************************************/
-/* Host commands */
-
-static enum ec_status
-host_command_console_snapshot(struct host_cmd_handler_args *args)
-{
-	return uart_console_read_buffer_init();
-}
-DECLARE_HOST_COMMAND(EC_CMD_CONSOLE_SNAPSHOT,
-		     host_command_console_snapshot,
-		     EC_VER_MASK(0));
-
-static enum ec_status
-host_command_console_read(struct host_cmd_handler_args *args)
-{
-	if (args->version == 0) {
-		/*
-		 * Prior versions of this command only support reading from
-		 * an entire snapshot, not just the output since the last
-		 * snapshot.
-		 */
-		return uart_console_read_buffer(
-				CONSOLE_READ_NEXT,
-				(char *)args->response,
-				args->response_max,
-				&args->response_size);
-#ifdef CONFIG_CONSOLE_ENABLE_READ_V1
-	} else if (args->version == 1) {
-		const struct ec_params_console_read_v1 *p;
-
-		/* Check the params to figure out where to start reading. */
-		p = args->params;
-		return uart_console_read_buffer(
-				p->subcmd,
-				(char *)args->response,
-				args->response_max,
-				&args->response_size);
-#endif
-	}
-	return EC_RES_INVALID_PARAM;
-}
-DECLARE_HOST_COMMAND(EC_CMD_CONSOLE_READ,
-		     host_command_console_read,
-		     EC_VER_MASK(0)
-#ifdef CONFIG_CONSOLE_ENABLE_READ_V1
-		     | EC_VER_MASK(1)
-#endif
-		     );
-
 enum ec_status uart_console_read_buffer_init(void)
 {
 	/* Assume the whole circular buffer is full */
