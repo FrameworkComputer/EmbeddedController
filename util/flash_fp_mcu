@@ -111,6 +111,24 @@ gpio() {
   done
 }
 
+# Usage: warn_gpio <signal> <expected_value> <msg>
+warn_gpio() {
+  local signal=$1
+  local expected_value=$2
+  local msg=$3
+
+  local value
+  if ! value="$(gpio get "${signal}")"; then
+    echo "Error fetching gpio value ${signal}" >&2
+    exit 1
+  fi
+
+  if [[ "${value}" != "${expected_value}" ]]; then
+    echo "${msg}" >&2
+    return 1
+  fi
+}
+
 # Taken verbatim from
 # https://chromium.googlesource.com/chromiumos/docs/+/master/lsb-release.md#shell
 # This should not be used by anything except get_platform_name.
@@ -268,12 +286,10 @@ flash_fp_mcu_stm32() {
   # We do not expect the drivers to change the pin state when binding.
   # If you receive this warning, the driver needs to be fixed on this board
   # and this flash attempt will probably fail.
-  if [[ $(gpio get "${gpio_boot0}") -ne 1 ]]; then
-    echo "WARNING: One of the drivers changed BOOT0 pin state on bind attempt."
-  fi
-  if [[ $(gpio get "${gpio_nrst}") -ne 0 ]]; then
-    echo "WARNING: One of the drivers changed NRST pin state on bind attempt."
-  fi
+  warn_gpio "${gpio_boot0}" 1 \
+    "WARNING: One of the drivers changed BOOT0 pin state on bind attempt."
+  warn_gpio "${gpio_nrst}" 0 \
+    "WARNING: One of the drivers changed NRST pin state on bind attempt."
 
   # TODO(b/179530529): Remove this hack when the drivers on strongbad stop
   # setting the gpio states.
