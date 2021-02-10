@@ -154,6 +154,8 @@ class RawBinPacker(BasePacker):
             raise OSError('Failed to run binman')
 
         yield work_dir / 'zephyr.bin', 'zephyr.bin'
+        yield ro / 'zephyr' / 'zephyr.elf', 'zephyr.ro.elf'
+        yield rw / 'zephyr' / 'zephyr.elf', 'zephyr.rw.elf'
 
 
 # A dictionary mapping packer config names to classes.
