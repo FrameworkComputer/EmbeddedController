@@ -85,6 +85,22 @@ int uart_printf(const char *format, ...);
 int uart_vprintf(const char *format, va_list args);
 
 /**
+ * Put a single character into the transmit buffer.
+ *
+ * Does not enable the transmit interrupt; assumes that happens elsewhere.
+ *
+ * @param context	Context; ignored.
+ * @param c		Character to write.
+ * @return 0 if the character was transmitted, 1 if it was dropped.
+ *
+ * Note: This is intended to be implemented by the UART buffering
+ * module, and called only by the implementations of the uart_*
+ * functions.  You should stick to the higher level functions, such as
+ * uart_putc, outside of the UART implementation.
+ */
+int uart_tx_char_raw(void *context, int c);
+
+/**
  * Flush output.  Blocks until UART has transmitted all output.
  */
 void uart_flush_output(void);
