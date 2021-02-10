@@ -355,6 +355,7 @@ flash_fp_mcu_stm32() {
 
 config_hatch() {
   check_gpio_chip_exists "gpiochip200"
+
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev1.1"
   # See
@@ -442,7 +443,6 @@ config_zork() {
   check_gpio_chip_exists "gpiochip320"
 
   readonly TRANSPORT="UART"
-
   readonly DEVICE="/dev/ttyS1"
 
   # FPMCU RST_ODL is on AGPIO 11 = 320 + 11 = 331
