@@ -4361,6 +4361,9 @@
  */
 #undef CONFIG_USBC_RETIMER_FW_UPDATE
 
+/* Prevent enabling LPM of NB7V904M */
+#undef CONFIG_NB7V904M_LPM_OVERRIDE
+
 /* Enable retimer TUSB544 tune EQ setting by register  */
 #undef CONFIG_TUSB544_EQ_BY_REGISTER
 

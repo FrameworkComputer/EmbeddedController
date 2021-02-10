@@ -98,6 +98,9 @@
 #define NB7V904M_CH_D_GAIN_3P5_DB	0x03
 
 extern const struct usb_mux_driver nb7v904m_usb_redriver_drv;
+#ifdef CONFIG_NB7V904M_LPM_OVERRIDE
+extern int nb7v904m_lpm_disable;
+#endif
 
 /* Use this value if tuning eq wants to be skipped  */
 #define NB7V904M_CH_ALL_SKIP_EQ	0xff

@@ -15,6 +15,10 @@
 #define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
 
+#ifdef CONFIG_NB7V904M_LPM_OVERRIDE
+int nb7v904m_lpm_disable = 0;
+#endif
+
 static int nb7v904m_write(const struct usb_mux *me, int offset, int data)
 {
 	return i2c_write8(me->i2c_port,
@@ -39,6 +43,10 @@ static int set_low_power_mode(const struct usb_mux *me, bool enable)
 	rv = nb7v904m_read(me, NB7V904M_REG_GEN_DEV_SETTINGS, &regval);
 	if (rv)
 		return rv;
+#ifdef CONFIG_NB7V904M_LPM_OVERRIDE
+	if (nb7v904m_lpm_disable)
+		enable = 0;
+#endif
 
 	if (enable)
 		regval &= ~NB7V904M_CHIP_EN;
