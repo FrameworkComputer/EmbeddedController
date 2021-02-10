@@ -19,7 +19,7 @@ from zmake.build_config import BuildConfig
 filenames = st.text(
     alphabet=set(string.printable) - {'/', ';'},
     min_size=1,
-    max_size=254)
+    max_size=254).filter(lambda name: name not in ('.', '..'))
 paths = st.builds(lambda parts: pathlib.Path('/', *parts),
                   st.iterables(filenames, min_size=1))
 config_keys = st.text(alphabet=set(string.ascii_uppercase) | {'_'}, min_size=1)
