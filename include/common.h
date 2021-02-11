@@ -14,6 +14,7 @@
 #include "compile_time_macros.h"
 
 #ifdef CONFIG_ZEPHYR
+#include <fpu.h>
 #include <sys/util.h>
 #include <toolchain.h>
 #ifdef CONFIG_ZTEST
