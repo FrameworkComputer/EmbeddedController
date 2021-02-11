@@ -138,6 +138,15 @@ config PLATFORM_EC_USB_PID
 	  To reserve a new PID within Google, use go/usb and see
 	  http://google3/hardware/standards/usb
 
+config PLATFORM_EC_USB_BCD_DEV
+	hex "USB Device ID"
+	default 0
+	help
+	  This specifies the USB device version, reported by board when acting
+	  as the upstream facing port (UFP). This is a 16-bit unsigned integer
+	  and should be set to a version number relevant to the release version
+	  of the product.
+
 config PLATFORM_EC_USBC_RETIMER_INTEL_BB
 	bool "Support Intel Burnside Bridge retimer"
 	help
