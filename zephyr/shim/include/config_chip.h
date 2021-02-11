@@ -19,7 +19,6 @@
  */
 
 #define CONFIG_ZEPHYR
-#define CHROMIUM_EC
 
 /*
  * Obsolete configs - these are options that are not needed, either because

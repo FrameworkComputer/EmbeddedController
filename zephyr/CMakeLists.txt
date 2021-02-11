@@ -46,6 +46,11 @@ if(DEFINED CONFIG_PLATFORM_EC)
   # time. Also, append the include directory so we can include ec_version.h.
   zephyr_append_cmake_library(ec_version)
   zephyr_include_directories("${CMAKE_BINARY_DIR}/ec/include/generated")
+
+  # Add CHROMIUM_EC definition, which is used by ec_commands.h to
+  # determine that the header is being compiled for the EC instead of
+  # by another third-party C codebase.
+  zephyr_compile_definitions("CHROMIUM_EC")
 endif()
 
 # If a header is needed (should only be set for npcx) run the ecst.py script to
