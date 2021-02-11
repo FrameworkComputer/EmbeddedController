@@ -3100,11 +3100,15 @@ static void tc_attached_src_run(const int port)
 #endif
 
 	if (TC_CHK_FLAG(port, TC_FLAGS_UPDATE_CURRENT)) {
-		/* TODO(b/141690755): Also set new CC if needed for non-PD */
 		TC_CLR_FLAG(port, TC_FLAGS_UPDATE_CURRENT);
 		typec_set_source_current_limit(port,
 					tc[port].select_current_limit_rp);
 		pd_update_contract(port);
+
+		/* Update Rp if no contract is present */
+		if (!IS_ENABLED(CONFIG_USB_PE_SM) ||
+						!pe_is_explicit_contract(port))
+			typec_update_cc(port);
 	}
 }
 
