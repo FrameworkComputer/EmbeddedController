@@ -473,7 +473,6 @@ GEN_NOT_SUPPORTED(PE_SRC_CHUNK_RECEIVED);
 #define PE_SRC_CHUNK_RECEIVED PE_SRC_CHUNK_RECEIVED_NOT_SUPPORTED
 GEN_NOT_SUPPORTED(PE_SNK_CHUNK_RECEIVED);
 #define PE_SNK_CHUNK_RECEIVED PE_SNK_CHUNK_RECEIVED_NOT_SUPPORTED
-void pe_set_frs_enable(int port, int enable);
 #endif /* CONFIG_USB_PD_REV30 */
 
 #ifndef CONFIG_USB_PD_EXTENDED_MESSAGES
@@ -1019,6 +1018,7 @@ void pd_got_frs_signal(int port)
 	PE_SET_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_SIGNALED);
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
+#endif /* CONFIG_USB_PD_REV30 */
 
 /*
  * PE_Set_FRS_Enable
@@ -1033,26 +1033,32 @@ void pd_got_frs_signal(int port)
  */
 static void pe_set_frs_enable(int port, int enable)
 {
+	int current = PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_ENABLED);
+
 	/* This should only be called from the PD task */
 	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
 
-	if (IS_ENABLED(CONFIG_USB_PD_FRS)) {
-		int current = PE_CHK_FLAG(port,
-					  PE_FLAGS_FAST_ROLE_SWAP_ENABLED);
+	if (!IS_ENABLED(CONFIG_USB_PD_FRS) || !IS_ENABLED(CONFIG_USB_PD_REV30))
+		return;
 
-		/* Request an FRS change, only if the state has changed */
-		if (!!current != !!enable) {
-			pd_set_frs_enable(port, enable);
-			if (enable)
-				PE_SET_FLAG(port,
-					    PE_FLAGS_FAST_ROLE_SWAP_ENABLED);
-			else
-				PE_CLR_FLAG(port,
-					    PE_FLAGS_FAST_ROLE_SWAP_ENABLED);
-		}
+	/* Request an FRS change, only if the state has changed */
+	if (!!current == !!enable)
+		return;
+
+	pd_set_frs_enable(port, enable);
+	if (enable) {
+		int curr_limit = *pd_get_snk_caps(port)
+						& PDO_FIXED_FRS_CURR_MASK;
+
+		typec_set_source_current_limit(port,
+					       curr_limit ==
+					       PDO_FIXED_FRS_CURR_3A0_AT_5V ?
+					       TYPEC_RP_3A0 : TYPEC_RP_1A5);
+		PE_SET_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_ENABLED);
+	} else {
+		PE_CLR_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_ENABLED);
 	}
 }
-#endif /* CONFIG_USB_PD_REV30 */
 
 void pe_set_explicit_contract(int port)
 {
@@ -1065,8 +1071,7 @@ void pe_set_explicit_contract(int port)
 
 void pe_invalidate_explicit_contract(int port)
 {
-	if (IS_ENABLED(CONFIG_USB_PD_REV30))
-		pe_set_frs_enable(port, 0);
+	pe_set_frs_enable(port, 0);
 
 	PE_CLR_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
 
@@ -1720,25 +1725,13 @@ static bool sink_dpm_requests(int port)
 			return true;
 		} else if (PE_CHK_DPM_REQUEST(port,
 					      DPM_REQUEST_FRS_DET_ENABLE)) {
-			if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
-			    IS_ENABLED(CONFIG_USB_PD_FRS)) {
-				int curr_limit = *pd_get_snk_caps(port)
-					& PDO_FIXED_FRS_CURR_MASK;
-
-				typec_set_source_current_limit(port,
-						curr_limit ==
-						PDO_FIXED_FRS_CURR_3A0_AT_5V ?
-						TYPEC_RP_3A0 : TYPEC_RP_1A5);
-				pe_set_frs_enable(port, 1);
-			}
+			pe_set_frs_enable(port, 1);
 
 			/* Requires no state change, fall through to false */
 			PE_CLR_DPM_REQUEST(port, DPM_REQUEST_FRS_DET_ENABLE);
 		} else if (PE_CHK_DPM_REQUEST(port,
 					      DPM_REQUEST_FRS_DET_DISABLE)) {
-			if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
-			    IS_ENABLED(CONFIG_USB_PD_FRS))
-				pe_set_frs_enable(port, 0);
+			pe_set_frs_enable(port, 0);
 
 			/* Requires no state change, fall through to false */
 			PE_CLR_DPM_REQUEST(port, DPM_REQUEST_FRS_DET_DISABLE);
