@@ -110,16 +110,6 @@ test_static int finish_src_discovery(int startup_cable_probes)
 		   PDO_FIXED(5000, 500, PDO_FIXED_COMM_CAP));
 
 	/*
-	 * Cable soft reset is always issued after entry into Src/Snk_Ready
-	 * simulate no cable response.
-	 */
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
-					 PD_CTRL_SOFT_RESET, 0,
-					 60 * MSEC),
-					 EC_SUCCESS, "%d");
-	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
-
-	/*
 	 * Cable identity discovery is attempted 6 times total. 1 was done
 	 * above, so expect 5 more now.
 	 */

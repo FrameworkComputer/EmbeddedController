@@ -2168,13 +2168,6 @@ static void pe_src_startup_entry(int port)
 	/* Reset the protocol layer */
 	prl_reset_soft(port);
 
-	/*
-	 * Protocol layer reset clears the message IDs for all SOP types.
-	 * Indicate that a SOP' soft reset is required before any other
-	 * messages are sent to the cable.
-	 */
-	pd_dpm_request(port, DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND);
-
 	/* Set initial data role */
 	pe[port].data_role = pd_get_data_role(port);
 
@@ -2186,6 +2179,19 @@ static void pe_src_startup_entry(int port)
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE);
+		/*
+		 * Protocol layer reset clears the message IDs for all SOP
+		 * types. Indicate that a SOP' soft reset is required before any
+		 * other messages are sent to the cable.
+		 *
+		 * Note that other paths into this state are for the initial
+		 * connection and for a hard reset. In both cases the cable
+		 * should also automatically clear the message IDs so don't
+		 * generate an SOP' soft reset for those cases. Sending
+		 * unnecessary SOP' soft resets causes bad behavior with
+		 * some devices. See b/179325862.
+		 */
+		pd_dpm_request(port, DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND);
 
 		/* Start SwapSourceStartTimer */
 		pe[port].swap_source_start_timer = get_time().val +
@@ -2994,13 +3000,6 @@ static void pe_snk_startup_entry(int port)
 	/* Reset the protocol layer */
 	prl_reset_soft(port);
 
-	/*
-	 * Protocol layer reset clears the message IDs for all SOP types.
-	 * Indicate that a SOP' soft reset is required before any other
-	 * messages are sent to the cable.
-	 */
-	pd_dpm_request(port, DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND);
-
 	/* Set initial data role */
 	pe[port].data_role = pd_get_data_role(port);
 
@@ -3012,6 +3011,19 @@ static void pe_snk_startup_entry(int port)
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PR_SWAP_COMPLETE);
+		/*
+		 * Protocol layer reset clears the message IDs for all SOP
+		 * types. Indicate that a SOP' soft reset is required before any
+		 * other messages are sent to the cable.
+		 *
+		 * Note that other paths into this state are for the initial
+		 * connection and for a hard reset. In both cases the cable
+		 * should also automatically clear the message IDs so don't
+		 * generate an SOP' soft reset for those cases. Sending
+		 * unnecessary SOP' soft resets causes bad behavior with
+		 * some devices. See b/179325862.
+		 */
+		pd_dpm_request(port, DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND);
 
 		/*
 		 * Some port partners may violate spec and attempt to
