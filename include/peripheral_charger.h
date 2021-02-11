@@ -146,6 +146,8 @@ struct pchg_drv {
 	int (*enable)(struct pchg *ctx, bool enable);
 	/* Get event info. */
 	int (*get_event)(struct pchg *ctx);
+	/* Get battery level. */
+	int (*get_soc)(struct pchg *ctx);
 };
 
 /**

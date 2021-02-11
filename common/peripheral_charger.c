@@ -83,6 +83,9 @@ static enum pchg_state pchg_initialize(struct pchg *ctx, enum pchg_state state)
 		CPRINTS("ERR: Failed to initialize");
 	}
 
+	ctx->battery_percent = 0;
+	ctx->error = 0;
+
 	return state;
 }
 
@@ -159,6 +162,11 @@ static enum pchg_state pchg_state_enabled(struct pchg *ctx)
 		state = PCHG_STATE_INITIALIZED;
 		break;
 	case PCHG_EVENT_DEVICE_DETECTED:
+		/*
+		 * Proactively query SOC in case charging info won't be sent
+		 * because device is already charged.
+		 */
+		ctx->cfg->drv->get_soc(ctx);
 		state = PCHG_STATE_DETECTED;
 		break;
 	case PCHG_EVENT_CHARGE_STARTED:
@@ -195,6 +203,7 @@ static enum pchg_state pchg_state_detected(struct pchg *ctx)
 		state = PCHG_STATE_CHARGING;
 		break;
 	case PCHG_EVENT_DEVICE_LOST:
+		ctx->battery_percent = 0;
 		state = PCHG_STATE_ENABLED;
 		break;
 	case PCHG_EVENT_CHARGE_ERROR:
@@ -231,6 +240,7 @@ static enum pchg_state pchg_state_charging(struct pchg *ctx)
 		CPRINTS("Battery %d%%", ctx->battery_percent);
 		break;
 	case PCHG_EVENT_DEVICE_LOST:
+		ctx->battery_percent = 0;
 		state = PCHG_STATE_ENABLED;
 		break;
 	case PCHG_EVENT_CHARGE_ERROR:
@@ -444,8 +454,9 @@ static int cc_pchg(int argc, char **argv)
 	ctx = &pchgs[port];
 
 	if (argc == 2) {
-		ccprintf("P%d STATE_%s EVENT_%s\n", port,
-			 _text_state(ctx->state), _text_event(ctx->event));
+		ccprintf("P%d STATE_%s EVENT_%s SOC=%d%%\n", port,
+			 _text_state(ctx->state), _text_event(ctx->event),
+			 ctx->battery_percent);
 		return EC_SUCCESS;
 	}
 

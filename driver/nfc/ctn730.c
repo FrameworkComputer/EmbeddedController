@@ -90,6 +90,8 @@ static const int _detection_interval_ms = 100;
 #define WLC_HOST_CTRL_DUMP_STATUS_CMD_SIZE	1
 
 /* WLC_CHG_CTRL_CHARGING_INFO constants */
+#define WLC_CHG_CTRL_CHARGING_INFO_CMD_SIZE	0
+#define WLC_CHG_CTRL_CHARGING_INFO_RSP_SIZE	2
 #define WLC_CHG_CTRL_CHARGING_INFO_EVT_SIZE	5
 
 /* Status Codes */
@@ -313,12 +315,13 @@ static int _process_payload_response(struct pchg *ctx, struct ctn730_msg *res)
 	if (IS_ENABLED(CTN730_DEBUG))
 		CPRINTS("Payload: %ph", HEX_BUF(buf, len));
 
+	ctx->event = PCHG_EVENT_NONE;
+
 	switch (res->instruction) {
 	case WLC_HOST_CTRL_RESET:
 		if (len != WLC_HOST_CTRL_RESET_RSP_SIZE
 				|| buf[0] != WLC_HOST_STATUS_OK)
 			return EC_ERROR_UNKNOWN;
-		ctx->event = PCHG_EVENT_NONE;
 		break;
 	case WLC_CHG_CTRL_ENABLE:
 		if (len != WLC_CHG_CTRL_ENABLE_RSP_SIZE
@@ -330,11 +333,15 @@ static int _process_payload_response(struct pchg *ctx, struct ctn730_msg *res)
 		if (len != WLC_CHG_CTRL_DISABLE_RSP_SIZE
 				|| buf[0] != WLC_HOST_STATUS_OK)
 			return EC_ERROR_UNKNOWN;
-		ctx->event = PCHG_EVENT_NONE;
+		break;
+	case WLC_CHG_CTRL_CHARGING_INFO:
+		if (len != WLC_CHG_CTRL_CHARGING_INFO_RSP_SIZE
+				|| buf[0] != WLC_HOST_STATUS_OK)
+			return EC_ERROR_UNKNOWN;
+		ctx->battery_percent = buf[1];
 		break;
 	default:
 		CPRINTS("Received unknown response (%d)", res->instruction);
-		ctx->event = PCHG_EVENT_NONE;
 		break;
 	}
 
@@ -453,6 +460,22 @@ static int ctn730_get_event(struct pchg *ctx)
 	return EC_ERROR_UNKNOWN;
 }
 
+static int ctn730_get_soc(struct pchg *ctx)
+{
+	struct ctn730_msg cmd;
+	int rv;
+
+	cmd.message_type = CTN730_MESSAGE_TYPE_COMMAND;
+	cmd.instruction = WLC_CHG_CTRL_CHARGING_INFO;
+	cmd.length = WLC_CHG_CTRL_CHARGING_INFO_CMD_SIZE;
+
+	rv = _send_command(ctx, &cmd);
+	if (rv)
+		return rv;
+
+	return EC_SUCCESS;
+}
+
 /**
  * Send command in blocking loop
  *
@@ -519,6 +542,7 @@ const struct pchg_drv ctn730_drv = {
 	.init = ctn730_init,
 	.enable = ctn730_enable,
 	.get_event = ctn730_get_event,
+	.get_soc = ctn730_get_soc,
 };
 
 static int cc_ctn730(int argc, char **argv)
