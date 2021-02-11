@@ -369,6 +369,8 @@ static bool		dpm_mutex_initialized;
 static uint32_t sink_max_pdo_requested;
 /* Ports with FRS source needing > 1.5 A */
 static uint32_t source_frs_max_requested;
+/* Ports with non-PD sinks, so current requirements are unknown */
+static uint32_t non_pd_sink_max_requested;
 
 #define LOWEST_PORT(p) __builtin_ctz(p)  /* Undefined behavior if p == 0 */
 
@@ -416,7 +418,8 @@ static void balance_source_ports(void)
 
 	/* Remove any ports which no longer require 3.0 A */
 	removed_ports = max_current_claimed & ~(sink_max_pdo_requested |
-						source_frs_max_requested);
+						source_frs_max_requested |
+						non_pd_sink_max_requested);
 	max_current_claimed &= ~removed_ports;
 
 	/* Allocate 3.0 A to new PD sink ports that need it */
@@ -429,8 +432,21 @@ static void balance_source_ports(void)
 			max_current_claimed |= BIT(new_max_port);
 			typec_select_src_current_limit_rp(new_max_port,
 							  TYPEC_RP_3A0);
+		} else if (non_pd_sink_max_requested & max_current_claimed) {
+			/* Always downgrade non-PD ports first */
+			int rem_non_pd = LOWEST_PORT(non_pd_sink_max_requested &
+						     max_current_claimed);
+			typec_select_src_current_limit_rp(rem_non_pd,
+							  CONFIG_USB_PD_PULLUP);
+			max_current_claimed &= ~BIT(rem_non_pd);
+
+			/* Wait tSinkAdj before using current */
+			deferred_waiting = true;
+			hook_call_deferred(&balance_source_ports_data,
+					   PD_T_SINK_ADJ);
+			goto unlock;
 		} else if (source_frs_max_requested & max_current_claimed) {
-			/* Bump lowest FRS port from 3.0 A slot */
+			/* Downgrade lowest FRS port from 3.0 A slot */
 			int rem_frs = LOWEST_PORT(source_frs_max_requested &
 						 max_current_claimed);
 			pd_dpm_request(rem_frs, DPM_REQUEST_FRS_DET_DISABLE);
@@ -442,7 +458,7 @@ static void balance_source_ports(void)
 					   20 * MSEC);
 			goto unlock;
 		} else {
-			/* TODO(b/141690755): Check lower priority claims */
+			/* No lower priority ports to downgrade */
 			goto unlock;
 		}
 		new_ports &= ~BIT(new_max_port);
@@ -458,13 +474,41 @@ static void balance_source_ports(void)
 			max_current_claimed |= BIT(new_frs_port);
 			pd_dpm_request(new_frs_port,
 				       DPM_REQUEST_FRS_DET_ENABLE);
+		} else if (non_pd_sink_max_requested & max_current_claimed) {
+			int rem_non_pd = LOWEST_PORT(non_pd_sink_max_requested &
+						     max_current_claimed);
+			typec_select_src_current_limit_rp(rem_non_pd,
+							  CONFIG_USB_PD_PULLUP);
+			max_current_claimed &= ~BIT(rem_non_pd);
+
+			/* Wait tSinkAdj before using current */
+			deferred_waiting = true;
+			hook_call_deferred(&balance_source_ports_data,
+					   PD_T_SINK_ADJ);
+			goto unlock;
 		} else {
-			/* TODO(b/141690755): Check lower priority claims */
+			/* No lower priority ports to downgrade */
 			goto unlock;
 		}
 		new_ports &= ~BIT(new_frs_port);
 	}
 
+	/* Allocate 3.0 A to any non-PD ports which could need it */
+	new_ports = non_pd_sink_max_requested & ~max_current_claimed;
+	while (new_ports) {
+		int new_max_port = LOWEST_PORT(new_ports);
+
+		if (count_port_bits(max_current_claimed) <
+						CONFIG_USB_PD_3A_PORTS) {
+			max_current_claimed |= BIT(new_max_port);
+			typec_select_src_current_limit_rp(new_max_port,
+							  TYPEC_RP_3A0);
+		} else {
+			/* No lower priority ports to downgrade */
+			goto unlock;
+		}
+		new_ports &= ~BIT(new_max_port);
+	}
 unlock:
 	mutex_unlock(&max_current_claimed_lock);
 }
@@ -519,15 +563,27 @@ void dpm_evaluate_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo)
 	balance_source_ports();
 }
 
+void dpm_add_non_pd_sink(int port)
+{
+	if (CONFIG_USB_PD_3A_PORTS == 0)
+		return;
+
+	atomic_or(&non_pd_sink_max_requested, BIT(port));
+
+	balance_source_ports();
+}
+
 void dpm_remove_sink(int port)
 {
 	if (CONFIG_USB_PD_3A_PORTS == 0)
 		return;
 
-	if (!(BIT(port) & sink_max_pdo_requested))
+	if (!(BIT(port) & sink_max_pdo_requested) &&
+	    !(BIT(port) & non_pd_sink_max_requested))
 		return;
 
 	atomic_clear_bits(&sink_max_pdo_requested, BIT(port));
+	atomic_clear_bits(&non_pd_sink_max_requested, BIT(port));
 
 	balance_source_ports();
 }

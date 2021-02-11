@@ -69,6 +69,14 @@ void dpm_run(int port);
 void dpm_evaluate_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo);
 
 /*
+ * Registers port as a non-PD sink, so that can be taken into account when
+ * allocating current.
+ *
+ * @param port		USB-C port number
+ */
+void dpm_add_non_pd_sink(int port);
+
+/*
  * Remove this port as a sink, and reallocate maximum current as needed.
  *
  * @param port		USB-C port number

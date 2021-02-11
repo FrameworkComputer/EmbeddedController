@@ -2794,6 +2794,9 @@ static void pe_src_disabled_entry(int port)
 		tc_ctvpd_detected(port);
 	}
 
+	if (pd_get_power_role(port) == PD_ROLE_SOURCE)
+		dpm_add_non_pd_sink(port);
+
 	/*
 	 * Unresponsive to USB Power Delivery messaging, but not to Hard Reset
 	 * Signaling. See pe_got_hard_reset
