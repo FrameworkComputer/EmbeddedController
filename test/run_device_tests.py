@@ -200,11 +200,10 @@ BOARD_CONFIGS = {
 }
 
 
-def get_console(board_name: str, board_config: BoardConfig) -> Optional[str]:
+def get_console(board_config: BoardConfig) -> Optional[str]:
     """Get the name of the console for a given board."""
     cmd = [
         'dut-control',
-        '-n', board_name,
         board_config.servo_uart_name,
     ]
     logging.debug('Running command: "%s"', ' '.join(cmd))
@@ -219,7 +218,7 @@ def get_console(board_name: str, board_config: BoardConfig) -> Optional[str]:
     return None
 
 
-def power(board_name: str, board_config: BoardConfig, on: bool) -> None:
+def power(board_config: BoardConfig, on: bool) -> None:
     """Turn power to board on/off."""
     if on:
         state = 'pp3300'
@@ -228,14 +227,13 @@ def power(board_name: str, board_config: BoardConfig, on: bool) -> None:
 
     cmd = [
         'dut-control',
-        '-n', board_name,
         board_config.servo_power_enable + ':' + state,
     ]
     logging.debug('Running command: "%s"', ' '.join(cmd))
     subprocess.run(cmd).check_returncode()
 
 
-def hw_write_protect(board_name: str, enable: bool) -> None:
+def hw_write_protect(enable: bool) -> None:
     """Enable/disable hardware write protect."""
     if enable:
         state = 'on'
@@ -244,7 +242,6 @@ def hw_write_protect(board_name: str, enable: bool) -> None:
 
     cmd = [
         'dut-control',
-        '-n', board_name,
         'fw_wp_en' + ':' + state,
         ]
     logging.debug('Running command: "%s"', ' '.join(cmd))
@@ -450,15 +447,15 @@ def main():
             continue
 
         if test.toggle_power:
-            power(args.board, board_config, on=False)
+            power(board_config, on=False)
             time.sleep(1)
-            power(args.board, board_config, on=True)
+            power(board_config, on=True)
 
-        hw_write_protect(args.board, test.enable_hw_write_protect)
+        hw_write_protect(test.enable_hw_write_protect)
 
         # run the test
         logging.info('Running test: "%s"', test.name)
-        console = get_console(args.board, board_config)
+        console = get_console(board_config)
         test.passed = run_test(test, console, executor=e)
 
     colorama.init()
