@@ -464,14 +464,12 @@ __override void ocpc_get_pid_constants(int *kp, int *kp_div,
 				       int *ki, int *ki_div,
 				       int *kd, int *kd_div)
 {
-	*kp = 3;
-	*kp_div = 14;
-
-	*ki = 3;
-	*ki_div = 500;
-
-	*kd = 4;
-	*kd_div = 40;
+	*kp = 1;
+	*kp_div = 20;
+	*ki = 1;
+	*ki_div = 250;
+	*kd = 0;
+	*kd_div = 1;
 }
 
 __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
