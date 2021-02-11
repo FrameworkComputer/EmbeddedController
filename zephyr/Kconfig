@@ -501,6 +501,22 @@ config PLATFORM_EC_PANIC
 	  The panic information is made available to the AP via the
 	  EC_CMD_GET_PANIC_INFO host command and a 'panicinfo' console command
 
+config PLATFORM_EC_MPU
+	bool "Support Memory-Protection Unit (MPU)"
+	depends on CPU_CORTEX_M && CPU_HAS_MPU
+	default y
+	help
+	  This enables support a Memory-Protection Unit which can limit access
+	  to certain areas of memory. This can be used to protect code or data
+	  from being written to improve security or to find bugs.
+
+	  It causes any code in the iram.text section to be protected when
+	  system jump is disabled (see system_disable_jump()). It also stops
+	  execution of the image that is not currently being executed (read-only
+	  or read-write). If internal storage is used, this is achieved by not
+	  allowing code execution in that area. For external storage, it
+	  disallows loading any code into RAM.
+
 if PLATFORM_EC_PANIC
 
 config PLATFORM_EC_SOFTWARE_PANIC

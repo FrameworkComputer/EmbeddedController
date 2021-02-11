@@ -1088,4 +1088,9 @@ enum battery_type {
 #define CONFIG_DEBUG_ASSERT_REBOOTS
 #endif
 
+#undef CONFIG_MPU
+#ifdef CONFIG_PLATFORM_EC_MPU
+#define CONFIG_MPU
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */
