@@ -218,6 +218,7 @@ DECLARE_CONSOLE_COMMAND(faninfo, cc_faninfo,
 
 static int cc_fanset(int argc, char **argv)
 {
+	const char *rpm_str;
 	int rpm;
 	char *e;
 	int fan = 0;
@@ -228,21 +229,24 @@ static int cc_fanset(int argc, char **argv)
 	}
 
 	if (fan_count > 1) {
-		if (argc < 2) {
+		if (argc < 3) {
 			ccprintf("fan number is required as the first arg\n");
 			return EC_ERROR_PARAM_COUNT;
 		}
+	}
+
+	if (argc == 3) {
 		fan = strtoi(argv[1], &e, 0);
 		if (*e || fan >= fan_count)
 			return EC_ERROR_PARAM1;
-		argc--;
-		argv++;
+		rpm_str = argv[2];
+	} else if (argc == 2) {
+		rpm_str = argv[1];
+	} else {
+		return EC_ERROR_PARAM_COUNT;
 	}
 
-	if (argc < 2)
-		return EC_ERROR_PARAM_COUNT;
-
-	rpm = strtoi(argv[2], &e, 0);
+	rpm = strtoi(rpm_str, &e, 0);
 	if (*e == '%') {		/* Wait, that's a percentage */
 		ccprintf("Fan rpm given as %d%%\n", rpm);
 		if (rpm < 0)
@@ -270,7 +274,7 @@ static int cc_fanset(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(fanset, cc_fanset,
-			"{fan} (rpm | pct%)",
+			"[fan] (rpm | pct%)",
 			"Set fan speed");
 
 static int cc_fanduty(int argc, char **argv)
