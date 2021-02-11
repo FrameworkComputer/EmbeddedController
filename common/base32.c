@@ -119,7 +119,7 @@ int base32_decode(uint8_t *dest, int destlen_bits, const char *src,
 	for (; *src; src++) {
 		int sym, sbits, dbits, b;
 
-		if (isspace(*src) || *src == '-')
+		if (isspace((unsigned char)*src) || *src == '-')
 			continue;
 
 		sym = decode_sym(*src);

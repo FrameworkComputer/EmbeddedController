@@ -93,7 +93,7 @@ static int split_words(char *input, int *argc, char **argv)
 	for (c = input; in_line; c++) {
 		if (!*c)
 			in_line = 0;
-		if (isspace(*c) || !*c) {
+		if (isspace((unsigned char)*c) || !*c) {
 			if (in_word) {
 				/* Ending a word */
 				*c = '\0';
@@ -450,7 +450,7 @@ static int handle_esc(int c)
 	}
 
 	/* Check if the escape code is done */
-	if (isalpha(c) || c == '~')
+	if (isalpha((unsigned char)c) || c == '~')
 		esc_state = ESC_OUTSIDE;
 	else
 		esc_state = ESC_BAD;
@@ -610,7 +610,7 @@ static void console_handle_char(int c)
 
 	default:
 		/* Ignore non-printing characters */
-		if (!isprint(c))
+		if (!isprint((unsigned char)c))
 			break;
 
 #ifndef CONFIG_EXPERIMENTAL_CONSOLE

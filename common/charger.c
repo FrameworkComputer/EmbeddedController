@@ -196,7 +196,7 @@ static int command_charger(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 
-	idx_provided = isdigit(argv[1][0]);
+	idx_provided = isdigit((unsigned char)argv[1][0]);
 	if (idx_provided)
 		chgnum = atoi(argv[1]);
 	else
