@@ -5025,8 +5025,12 @@
 /*
  * This build is not a complete platform/ec based EC, but instead
  * using the platform/ec zephyr module.
+ *
+ * Note: this is here purely for stylistic purposes and documentation.
  */
+#ifndef CONFIG_ZEPHYR
 #undef CONFIG_ZEPHYR
+#endif
 
 /*****************************************************************************/
 /*

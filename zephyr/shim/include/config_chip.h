@@ -18,8 +18,6 @@
  * common/config.h.
  */
 
-#define CONFIG_ZEPHYR
-
 /*
  * Obsolete configs - these are options that are not needed, either because
  * Zephyr features directly replace the option, or because the config option

@@ -51,6 +51,10 @@ if(DEFINED CONFIG_PLATFORM_EC)
   # determine that the header is being compiled for the EC instead of
   # by another third-party C codebase.
   zephyr_compile_definitions("CHROMIUM_EC")
+
+  # Add CONFIG_ZEPHYR, which is commonly used to guard code for use
+  # with Zephyr builds only.
+  zephyr_compile_definitions("CONFIG_ZEPHYR")
 endif()
 
 # If a header is needed (should only be set for npcx) run the ecst.py script to
