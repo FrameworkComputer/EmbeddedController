@@ -3718,6 +3718,19 @@ static void pd_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pd_chipset_suspend, HOOK_PRIO_DEFAULT);
 
+static void pd_chipset_reset(void)
+{
+	int i;
+
+	if (IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
+		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+			/* Exit mode. PD can enter mode again after reset */
+			dpm_set_mode_exit_request(i);
+		}
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, pd_chipset_reset, HOOK_PRIO_DEFAULT);
+
 static void pd_chipset_startup(void)
 {
 	int i;
