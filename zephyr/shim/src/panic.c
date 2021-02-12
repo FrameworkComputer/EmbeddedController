@@ -9,6 +9,7 @@
 #include <logging/log_ctrl.h>
 #include <zephyr.h>
 
+#include "common.h"
 #include "panic.h"
 
 /*
@@ -35,10 +36,21 @@
 	M(basic.lr, cm.frame[5], lr)  \
 	M(basic.pc, cm.frame[6], pc)  \
 	M(basic.xpsr, cm.frame[7], xpsr)
+#define PANIC_REG_EXCEPTION(pdata) pdata->cm.regs[1]
+#define PANIC_REG_REASON(pdata) pdata->cm.regs[3]
+#define PANIC_REG_INFO(pdata) pdata->cm.regs[4]
 #else
 /* Not implemented for this arch */
 #define PANIC_ARCH 0
 #define PANIC_REG_LIST(M)
+#ifdef CONFIG_PLATFORM_EC_SOFTWARE_PANIC
+static uint8_t placeholder_exception_reg;
+static uint32_t placeholder_reason_reg;
+static uint32_t placeholder_info_reg;
+#define PANIC_REG_EXCEPTION(unused) placeholder_exception_reg
+#define PANIC_REG_REASON(unused) placeholder_reason_reg
+#define PANIC_REG_INFO(unused) placeholder_info_reg
+#endif /* CONFIG_PLATFORM_EC_SOFTWARE_PANIC */
 #endif
 
 /* Macros to be applied to PANIC_REG_LIST as M */
@@ -78,3 +90,38 @@ void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
 	k_fatal_halt(reason);
 	CODE_UNREACHABLE;
 }
+
+#ifdef CONFIG_PLATFORM_EC_SOFTWARE_PANIC
+void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
+{
+	struct panic_data * const pdata = get_panic_data_write();
+
+	/* Setup panic data structure */
+	memset(pdata, 0, CONFIG_PANIC_DATA_SIZE);
+	pdata->magic = PANIC_DATA_MAGIC;
+	pdata->struct_size = CONFIG_PANIC_DATA_SIZE;
+	pdata->struct_version = 2;
+	pdata->arch = PANIC_ARCH;
+
+	/* Log panic cause */
+	PANIC_REG_EXCEPTION(pdata) = exception;
+	PANIC_REG_REASON(pdata) = reason;
+	PANIC_REG_INFO(pdata) = info;
+
+	/* Allow architecture specific logic */
+	arch_panic_set_reason(reason, info, exception);
+}
+
+void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
+{
+	struct panic_data * const pdata = panic_get_data();
+
+	if (pdata && pdata->struct_version == 2) {
+		*exception = PANIC_REG_EXCEPTION(pdata);
+		*reason = PANIC_REG_REASON(pdata);
+		*info = PANIC_REG_INFO(pdata);
+	} else {
+		*exception = *reason = *info = 0;
+	}
+}
+#endif /* CONFIG_PLATFORM_EC_SOFTWARE_PANIC */
