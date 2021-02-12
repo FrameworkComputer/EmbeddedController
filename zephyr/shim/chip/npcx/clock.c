@@ -11,6 +11,8 @@
 #include <soc.h>
 #include <zephyr.h>
 
+#include "clock_chip.h"
+
 LOG_MODULE_REGISTER(shim_clock, LOG_LEVEL_ERR);
 
 int clock_get_freq(void)
@@ -28,4 +30,8 @@ int clock_get_freq(void)
 	}
 
 	return rate;
+}
+
+void clock_turbo(void)
+{
 }
