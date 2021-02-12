@@ -5,6 +5,9 @@
  * ITE83xx SoC in-system programming tool
  */
 
+/* remove when ftdi_usb_purge_buffers has been replaced to follow libftdi */
+#define _FTDI_DISABLE_DEPRECATED
+
 #include <errno.h>
 #include <fcntl.h>
 #include <ftdi.h>
