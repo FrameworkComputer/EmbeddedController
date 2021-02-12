@@ -11,7 +11,6 @@
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
-#include <stdio.h>
 
 static struct queue const test_queue8 = QUEUE_NULL(8, char);
 static struct queue const test_queue2 = QUEUE_NULL(2, int16_t);

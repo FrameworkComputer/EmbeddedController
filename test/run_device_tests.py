@@ -108,6 +108,8 @@ class AllTests:
         tests = {
             'aes':
                 TestConfig(name='aes'),
+            'cec':
+                TestConfig(name='cec'),
             'crc':
                 TestConfig(name='crc'),
             'flash_physical':
@@ -138,6 +140,10 @@ class AllTests:
                 TestConfig(name='mutex'),
             'pingpong':
                 TestConfig(name='pingpong'),
+            'printf':
+                TestConfig(name='printf'),
+            'queue':
+                TestConfig(name='queue'),
             'rollback_region0':
                 TestConfig(name='rollback', finish_regexes=[
                     board_config.rollback_region0_regex],
@@ -154,8 +160,14 @@ class AllTests:
                 TestConfig(name='sha256'),
             'sha256_unrolled':
                 TestConfig(name='sha256_unrolled'),
+            'static_if':
+                TestConfig(name='static_if'),
+            'timer_dos':
+                TestConfig(name='timer_dos'),
             'utils':
                 TestConfig(name='utils', timeout_secs=20),
+            'utils_str':
+                TestConfig(name='utils_str'),
         }
 
         if board_config.name == BLOONCHIPPER:
