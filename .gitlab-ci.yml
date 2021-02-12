@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-image: sjg20/bionic-20200526-28jan2021
+image: sjg20/bionic-20200526-12feb21
 
 # You can update that image using this repo:
 #   https://gitlab.com/zephyr-ec/gitlab-ci-runner/-/tree/main
@@ -22,11 +22,24 @@ cache:
     - .cache/pip
     - venv/
 
+
+# The directory structure is:
+#
+# /zephyr
+# /builds/zephyr-ec/ec       EC_DIR
 before_script:
+  - export MODULES_DIR="$HOME/modules"
+  - mkdir -p "${MODULES_DIR}"
+  - export ZEPHYR_BASE="$HOME/zephyr"
+  - git clone -b chromeos-v2.5 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_BASE}"
+  - git clone -b chromeos-v2.5 https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis "${MODULES_DIR}/cmsis"
+  - git clone -b chromeos-v2.5 https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32 "${MODULES_DIR}/hal_stm32"
+  - ln -s "$(pwd)" "${MODULES_DIR}/ec"
   - python3 -V  # Print out python version for debugging
   - python3 -m pip install zephyr/zmake --user
-  - export BUILD_DIR=/tmp/z
-  - export PATH=$PATH:~/.local/bin
+  - export BUILD_DIR=build
+  - export ZEPHYR_DIR=/zephyr
+  - export PATH="$PATH:$HOME/.local/bin"
 
 test:
   script:
@@ -34,8 +47,10 @@ test:
 
 run:
   script:
-    - zmake -l DEBUG configure -B ${BUILD_DIR}/vol zephyr/projects/volteer
-    - zmake -l DEBUG build ${BUILD_DIR}/vol
+    - zmake --zephyr-base "${ZEPHYR_BASE}" --modules-dir "${MODULES_DIR}"
+      -l DEBUG configure -b -B "${BUILD_DIR}/vol" -t zephyr zephyr/projects/volteer
+    - ls "${BUILD_DIR}/vol" "${BUILD_DIR}/vol/output"
   artifacts:
     paths:
-      - ${BUILD_DIR}/vol
+      - build/vol/output/*
+    expire_in: 1 week
