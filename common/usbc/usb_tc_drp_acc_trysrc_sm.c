@@ -1864,28 +1864,6 @@ __maybe_unused static void handle_new_power_state(int port)
 	}
 }
 
-#if defined(CONFIG_USB_PD_ALT_MODE) && !defined(CONFIG_USB_PD_ALT_MODE_DFP)
-void pd_send_hpd(int port, enum hpd_event hpd)
-{
-	uint32_t data[1];
-	int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
-
-	if (!opos)
-		return;
-
-	data[0] = VDO_DP_STATUS((hpd == hpd_irq), /* IRQ_HPD */
-				(hpd != hpd_low), /* HPD_HI|LOW */
-				0, /* request exit DP */
-				0, /* request exit USB */
-				0, /* MF pref */
-				1, /* enabled */
-				0, /* power low */
-				0x2);
-	pd_send_vdm(port, USB_SID_DISPLAYPORT, VDO_OPOS(opos) | CMD_ATTENTION,
-		    data, 1);
-}
-#endif
-
 #ifdef CONFIG_USBC_VCONN_SWAP
 void pd_request_vconn_swap_off(int port)
 {

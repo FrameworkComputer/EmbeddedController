@@ -30,8 +30,14 @@
 #define CPRINTS(format, args...)
 #endif
 
+/* Max Attention length is header + 1 VDO */
+#define DPM_ATTENION_MAX_VDO 2
+
 static struct {
 	uint32_t flags;
+	uint32_t vdm_attention[DPM_ATTENION_MAX_VDO];
+	int vdm_cnt;
+	mutex_t vdm_attention_mutex;
 } dpm[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define DPM_SET_FLAG(port, flag) atomic_or(&dpm[(port)].flags, (flag))
@@ -44,6 +50,55 @@ static struct {
 #define DPM_FLAG_ENTER_DP        BIT(2)
 #define DPM_FLAG_ENTER_TBT       BIT(3)
 #define DPM_FLAG_ENTER_USB4      BIT(4)
+#define DPM_FLAG_SEND_ATTENTION  BIT(5)
+
+#ifdef CONFIG_ZEPHYR
+static int init_vdm_attention_mutex(const struct device *dev)
+{
+	int port;
+
+	ARG_UNUSED(dev);
+
+	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++)
+		k_mutex_init(&dpm[port].vdm_attention_mutex);
+
+	return 0;
+}
+SYS_INIT(init_vdm_attention_mutex, POST_KERNEL, 50);
+#endif /* CONFIG_ZEPHYR */
+
+enum ec_status pd_request_vdm_attention(int port, const uint32_t *data,
+					int vdo_count)
+{
+	mutex_lock(&dpm[port].vdm_attention_mutex);
+
+	/* Only one Attention message may be pending */
+	if (DPM_CHK_FLAG(port, DPM_FLAG_SEND_ATTENTION)) {
+		mutex_unlock(&dpm[port].vdm_attention_mutex);
+		return EC_RES_UNAVAILABLE;
+	}
+
+	/* SVDM Attention message must be 1 or 2 VDOs in length */
+	if (!vdo_count || (vdo_count > DPM_ATTENION_MAX_VDO)) {
+		mutex_unlock(&dpm[port].vdm_attention_mutex);
+		return EC_RES_INVALID_PARAM;
+	}
+
+	/* Save contents of Attention message */
+	memcpy(dpm[port].vdm_attention, data, vdo_count * sizeof(uint32_t));
+	dpm[port].vdm_cnt = vdo_count;
+
+	/*
+	 * Indicate to DPM that an Attention message needs to be sent. This flag
+	 * will be cleared when the Attention message is sent to the policy
+	 * engine.
+	 */
+	DPM_SET_FLAG(port, DPM_FLAG_SEND_ATTENTION);
+
+	mutex_unlock(&dpm[port].vdm_attention_mutex);
+
+	return EC_RES_SUCCESS;
+}
 
 enum ec_status pd_request_enter_mode(int port, enum typec_mode mode)
 {
@@ -340,12 +395,31 @@ static void dpm_attempt_mode_exit(int port)
 	pd_dpm_request(port, DPM_REQUEST_VDM);
 }
 
+static void dpm_send_attention_vdm(int port)
+{
+	/* Set up VDM ATTEN msg that was passed in previously */
+	if (pd_setup_vdm_request(port, TCPC_TX_SOP, dpm[port].vdm_attention,
+				 dpm[port].vdm_cnt) == true)
+		/* Trigger PE to start a VDM command run */
+		pd_dpm_request(port, DPM_REQUEST_VDM);
+
+	/* Clear flag after message is sent to PE layer */
+	DPM_CLR_FLAG(port, DPM_FLAG_SEND_ATTENTION);
+}
+
 void dpm_run(int port)
 {
-	if (DPM_CHK_FLAG(port, DPM_FLAG_EXIT_REQUEST))
-		dpm_attempt_mode_exit(port);
-	else if (!DPM_CHK_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE))
-		dpm_attempt_mode_entry(port);
+	if (pd_get_data_role(port) == PD_ROLE_DFP) {
+		/* Run DFP related DPM requests */
+		if (DPM_CHK_FLAG(port, DPM_FLAG_EXIT_REQUEST))
+			dpm_attempt_mode_exit(port);
+		else if (!DPM_CHK_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE))
+			dpm_attempt_mode_entry(port);
+	} else {
+		/* Run UFP related DPM requests */
+		if (DPM_CHK_FLAG(port, DPM_FLAG_SEND_ATTENTION))
+			dpm_send_attention_vdm(port);
+	}
 }
 
 /*

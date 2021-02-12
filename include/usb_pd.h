@@ -2074,6 +2074,23 @@ struct partner_active_modes *pd_get_partner_active_modes(int port,
 		enum tcpm_transmit_type type);
 
 /*
+ * Sets the current object position for DP alt-mode
+ * Note: opos == 0 means the mode is not active
+ *
+ * @param port USB-C port number
+ * @param opos Object position for DP alternate mode
+ */
+void pd_ufp_set_dp_opos(int port, int opos);
+
+/*
+ * Gets the current object position for DP alt-mode
+ *
+ * @param port USB-C port number
+ * @return Alt-DP object position value for the given port
+ */
+int pd_ufp_get_dp_opos(int port);
+
+/*
  * Returns True if cable supports USB2 connection
  *
  * @param port  USB-C port number
@@ -2682,6 +2699,20 @@ void pd_notify_event(int port, uint32_t event_mask);
  * @param clear_mask bitmask of events to clear (PD_STATUS_EVENT_* bitmask)
  */
 void pd_clear_events(int port, uint32_t clear_mask);
+
+/*
+ * Requests a VDM Attention message be sent. Attention is the only SVDM message
+ * that does not result in a response from the port partner. In addition, if
+ * it's a DP Attention message, then it will be requested from outside of the
+ * port's PD task.
+ *
+ * @param port USB-C port number
+ * @param *data pointer to the VDM Attention message
+ * @param vdo_count number of VDOs (must be 1 or 2)
+ * @return EC_RES_SUCCESS if a VDM message is scheduled.
+ */
+enum ec_status pd_request_vdm_attention(int port, const uint32_t *data,
+				       int vdo_count);
 
 /*
  * Requests that the port enter the specified mode. A successful result just
