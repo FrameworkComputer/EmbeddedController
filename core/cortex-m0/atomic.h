@@ -28,8 +28,8 @@ typedef atomic_t atomic_val_t;
 			     #asm_op" %0, %0, %3\n"		\
 			     "   str  %0, [%2]\n"		\
 			     "   cpsie i\n"			\
-			     : "=&b"(reg0), "=&b"(reg1)		\
-			     : "b"(a), "r"(v)			\
+			     : "=&l"(reg0), "=&l"(reg1)		\
+			     : "l"(a), "r"(v)			\
 			     : "cc", "memory");			\
 	reg1;							\
 })
@@ -63,8 +63,8 @@ static inline atomic_val_t atomic_clear(atomic_t *addr)
 			     "   ldr     %0, [%1]\n"
 			     "   str     %2, [%1]\n"
 			     "   cpsie   i\n"
-			     : "=&b" (ret)
-			     : "b" (addr), "r" (0)
+			     : "=&l" (ret)
+			     : "l" (addr), "r" (0)
 			     : "cc", "memory");
 
 	return ret;
