@@ -121,14 +121,13 @@ enum usb_strings {
 
 /* RW Specific Config Options */
 #ifdef SECTION_IS_RW
+/* No AP on any honeybuns variants */
+#undef CONFIG_USB_PD_HOST_CMD
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_DRP_ACC_TRYSRC
-/* No AP on any honeybuns variants */
-#undef CONFIG_USB_PD_HOST_CMD
-#define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_CUSTOM_PDO

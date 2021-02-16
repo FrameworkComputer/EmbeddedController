@@ -14,15 +14,21 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
-#undef CONFIG_UART_TX_BUF_SIZE
-#define CONFIG_UART_TX_BUF_SIZE 4096
+#define CONFIG_WP_ACTIVE_HIGH
+
+/* Console */
+#define CONFIG_UART_CONSOLE 3
+#define CONFIG_UART_TX_DMA_CH STM32_DMAC_USART3_TX
+#define CONFIG_UART_TX_DMA_PH DMAMUX_REQ_USART3_TX
 
 /* USB Type C and USB PD defines */
 #define USB_PD_PORT_HOST   0
 #define USB_PD_PORT_DP   1
 
-#define CONFIG_USB_PD_PORT_MAX_COUNT 1
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_USB_MUX_TUSB1064
+#define CONFIG_USBC_PPC_STUB
+#define CONFIG_USB_PD_VBUS_ALERT_TCPC
 
 #define CONFIG_USB_PID 0x5049
 #define CONFIG_USB_BCD_DEV 0x0001 /* v 0.01 */

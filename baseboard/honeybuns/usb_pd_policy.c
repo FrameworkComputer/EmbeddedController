@@ -42,7 +42,10 @@ const uint32_t pd_src_host_pdo[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pd_src_host_pdo) == PDO_IDX_COUNT);
 
-/* PDOs */
+const uint32_t pd_src_display_pdo[] = {
+	[PDO_IDX_5V]  = PDO_FIXED(5000,   3000, PDO_FIXED_FLAGS),
+};
+
 const uint32_t pd_snk_pdo[] = {
 	[PDO_IDX_5V]  = PDO_FIXED(5000,   0, PDO_FIXED_FLAGS),
 };
@@ -55,6 +58,9 @@ int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
 	if (port == USB_PD_PORT_HOST) {
 		*src_pdo =  pd_src_host_pdo;
 		pdo_cnt = ARRAY_SIZE(pd_src_host_pdo);
+	} else {
+		*src_pdo =  pd_src_display_pdo;
+		pdo_cnt = ARRAY_SIZE(pd_src_display_pdo);
 	}
 
 	return pdo_cnt;
@@ -171,6 +177,8 @@ int pd_check_data_swap(int port,
 
 	if (port == 0)
 		swap = (data_role == PD_ROLE_DFP);
+	else if (port == 1)
+		swap = (data_role == PD_ROLE_UFP);
 
 	return swap;
 }
