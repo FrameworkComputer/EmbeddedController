@@ -179,7 +179,8 @@ static void ioexpanders_irq(void)
 		ccprintf("off DAC1 to clear the fault\n");
 	}
 
-	if ((irqs & HOST_CHRG_DET) != bc12_charger) {
+	if (((irqs & HOST_CHRG_DET) != bc12_charger) &&
+	    (board_id_det() <= BOARD_ID_REV1)) {
 		ccprintf("BC1.2 charger %s\n", (irqs & HOST_CHRG_DET) ?
 			 "plugged" : "unplugged");
 		bc12_charger = irqs & HOST_CHRG_DET;
