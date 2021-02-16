@@ -46,6 +46,17 @@
 #undef CONFIG_RW_ROM_RESIDENT_SIZE
 
 /*
+ * ECOS specific options, not used in Zephyr.
+ */
+#undef CONFIG_CONSOLE_UART /* Only used by the Chromium EC chip drivers */
+#undef CONFIG_I2C_MULTI_PORT_CONTROLLER /* Not required by I2C shim */
+#undef CONFIG_IRQ_COUNT /* Only used by Chromium EC core drivers */
+#undef CONFIG_LTO /* Link time optimization enabled by Zephyr build system */
+#ifndef CONFIG_FPU
+#undef CONFIG_FPU /* Used in Zephyr as well, enabled in Kconfig directly */
+#endif
+
+/*
  * This not used by the Zephyr code since we always make cros_crc8() available.
  * Define it here to reduce the delta from the ECOS CONFIG.
  */
