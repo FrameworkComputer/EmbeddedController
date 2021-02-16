@@ -232,16 +232,6 @@ const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
 	(MCHP_I2C_CTRL3 << 8) + MCHP_I2C_PORT7,
 };
 
-/*
- * Used by chip level I2C controller initialization.
- * Board level can specify two unused I2C addresses
- * for each controller. Current chip level disables
- * controller response to address 0(general call).
- */
-const uint32_t i2c_ctrl_slave_addrs[I2C_CONTROLLER_COUNT] = {
-	0, 0, 0, 0,
-};
-
 const struct charger_config_t chg_chips[] = {
 	{
 		.i2c_port = I2C_PORT_CHARGER,
@@ -249,26 +239,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &bd9995x_drv,
 	},
 };
-
-/* Return the two slave addresses the specified
- * controller will respond to when controller
- * is acting as a slave.
- * b[6:0]  = b[7:1] of I2C address 1
- * b[14:8] = b[7:1] of I2C address 2
- * When not using I2C controllers as slaves we can use
- * the same value for all controllers. The address should
- * not be 0x00 as this is the general call address.
- */
-uint16_t board_i2c_slave_addrs(int controller)
-{
-	int i;
-
-	for (i = 0; i < I2C_CONTROLLER_COUNT; i++)
-		if ((i2c_ctrl_slave_addrs[i] & 0xffff) == controller)
-			return (i2c_ctrl_slave_addrs[i] >> 16);
-
-	return 0; /* general call address */
-}
 
 /*
  * default to I2C0 because callers may not check
@@ -420,7 +390,7 @@ static int ps8751_tune_mux(const struct usb_mux *me)
 /*
  * USB_PD_PORT_ANX74XX and USB_PD_PORT_PS8751 are zero based indices into
  * tcpc_config array. The tcpc_config array contains the actual EC I2C
- * port, device slave address, and a function pointer into the driver code.
+ * port, device address, and a function pointer into the driver code.
  */
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_ANX74XX] = {

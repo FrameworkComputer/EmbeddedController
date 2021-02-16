@@ -272,40 +272,6 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 #endif
 
-const uint32_t i2c_ctrl_slave_addrs[I2C_CONTROLLER_COUNT] = {
-#ifdef CONFIG_BOARD_MCHP_I2C0_SLAVE_ADDRS
-	(MCHP_I2C_CTRL0 + (CONFIG_BOARD_MCHP_I2C0_SLAVE_ADDRS << 16)),
-#else
-	(MCHP_I2C_CTRL0 + (CONFIG_MCHP_I2C0_SLAVE_ADDRS << 16)),
-#endif
-#ifdef CONFIG_BOARD_MCHP_I2C1_SLAVE_ADDRS
-	(MCHP_I2C_CTRL1 + (CONFIG_BOARD_MCHP_I2C1_SLAVE_ADDRS << 16)),
-#else
-	(MCHP_I2C_CTRL1 + (CONFIG_MCHP_I2C1_SLAVE_ADDRS << 16)),
-#endif
-};
-
-/* Return the two slave addresses the specified
- * controller will respond to when controller
- * is acting as a slave.
- * b[6:0]  = b[7:1] of I2C address 1
- * b[14:8] = b[7:1] of I2C address 2
- * When not using I2C controllers as slaves we can use
- * the same value for all controllers. The address should
- * not be 0x00 as this is the general call address.
- */
-uint16_t board_i2c_slave_addrs(int controller)
-{
-	int i;
-
-	for (i = 0; i < I2C_CONTROLLER_COUNT; i++)
-		if ((i2c_ctrl_slave_addrs[i] & 0xffff) == controller)
-			return (i2c_ctrl_slave_addrs[i] >> 16);
-
-	return CONFIG_MCHP_I2C0_SLAVE_ADDRS;
-}
-
-
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
 	{ QMSPI0_PORT, 4, GPIO_QMSPI_CS0},

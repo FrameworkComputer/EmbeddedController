@@ -193,16 +193,6 @@ const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
 };
 
 /*
- * Used by chip level I2C controller initialization.
- * Board level can specify two unused I2C addresses
- * for each controller. Current chip level disables
- * controller response to address 0(general call).
- */
-const uint32_t i2c_ctrl_slave_addrs[I2C_CONTROLLER_COUNT] = {
-	0, 0, 0, 0
-};
-
-/*
  * default to I2C0 because callers may not check
  * return value if we returned an error code.
  */
@@ -215,26 +205,6 @@ int board_i2c_p2c(int port)
 			return (int)(i2c_port_to_ctrl[i] >> 8);
 
 	return -1;
-}
-
-/* Return the two slave addresses the specified
- * controller will respond to when controller
- * is acting as a slave.
- * b[6:0]  = b[7:1] of I2C address 1
- * b[14:8] = b[7:1] of I2C address 2
- * When not using I2C controllers as slaves we can use
- * the same value for all controllers. The address should
- * not be 0x00 as this is the general call address.
- */
-uint16_t board_i2c_slave_addrs(int controller)
-{
-	int i;
-
-	for (i = 0; i < I2C_CONTROLLER_COUNT; i++)
-		if ((i2c_ctrl_slave_addrs[i] & 0xffff) == controller)
-			return (i2c_ctrl_slave_addrs[i] >> 16);
-
-	return CONFIG_MCHP_I2C0_SLAVE_ADDRS;
 }
 
 static void sklrvp_init(void)

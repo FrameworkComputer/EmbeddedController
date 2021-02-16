@@ -105,7 +105,7 @@
 #define CONFIG_BOARD_EC_HANDLES_ALL_SYS_PWRGD
 
 /*
- * Maximum clock frequence eSPI EC slave advertises
+ * Maximum clock frequence eSPI EC advertises
  * Values in MHz are 20, 25, 33, 50, and 66
  */
 /* SKL/KBL + EVB fly-wire hook up only supports 20MHz */
@@ -113,7 +113,7 @@
 
 
 /*
- * EC eSPI slave advertises IO lanes
+ * EC eSPI advertises IO lanes
  * 0 = Single
  * 1 = Single and Dual
  * 2 = Single and Quad
@@ -281,14 +281,6 @@ enum battery_type {
 
 /* Map I2C port to controller */
 int board_i2c_p2c(int port);
-
-/* Return the two slave addresses the specified
- * controller will respond to when controller
- * is acting as a slave.
- * b[6:0]  = b[7:1] of I2C address 1
- * b[14:8] = b[7:1] of I2C address 2
- */
-uint16_t board_i2c_slave_addrs(int controller);
 
 /* Reset PD MCU */
 void board_reset_pd_mcu(void);
