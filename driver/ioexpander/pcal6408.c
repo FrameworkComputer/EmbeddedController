@@ -29,7 +29,7 @@ static int pcal6408_read(int ioex, int reg, int *data)
 	int rv;
 	struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
 
-	rv = i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_slave_addr,
+	rv = i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
 			reg, data);
 
 	return rv;
@@ -40,7 +40,7 @@ static int pcal6408_write(int ioex, int reg, int data)
 	int rv;
 	struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
 
-	rv = i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_slave_addr,
+	rv = i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
 			reg, data);
 
 	return rv;
@@ -316,7 +316,7 @@ int pcal6408_ioex_event_handler(int ioex)
 	 * Read input port register will clear the interrupt,
 	 * read status register will not.
 	 */
-	rv = i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_slave_addr,
+	rv = i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
 				PCAL6408_REG_INT_STATUS, &int_status);
 	if (rv != EC_SUCCESS)
 		return rv;

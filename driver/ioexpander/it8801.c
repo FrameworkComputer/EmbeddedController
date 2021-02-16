@@ -200,7 +200,7 @@ static int it8801_ioex_read(int ioex, int reg, int *data)
 {
 	struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
 
-	return i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_slave_addr,
+	return i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
 			 reg, data);
 }
 
@@ -208,7 +208,7 @@ static int it8801_ioex_write(int ioex, int reg, int data)
 {
 	struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
 
-	return i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_slave_addr,
+	return i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
 			  reg, data);
 }
 

@@ -622,18 +622,18 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 struct ioexpander_config_t ioex_config[] = {
 	[IOEX_C0_NCT3807] = {
 		.i2c_host_port = I2C_PORT_TCPC0,
-		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
+		.i2c_addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
 		.drv = &nct38xx_ioexpander_drv,
 	},
 	[IOEX_C1_NCT3807] = {
 		.i2c_host_port = I2C_PORT_TCPC1,
-		.i2c_slave_addr = NCT38XX_I2C_ADDR1_1_FLAGS,
+		.i2c_addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
 		.drv = &nct38xx_ioexpander_drv,
 		.flags = IOEX_FLAGS_DISABLED,
 	},
 	[IOEX_HDMI_PCAL6408] = {
 		.i2c_host_port = I2C_PORT_TCPC1,
-		.i2c_slave_addr = PCAL6408_I2C_ADDR0,
+		.i2c_addr_flags = PCAL6408_I2C_ADDR0,
 		.drv = &pcal6408_ioexpander_drv,
 		.flags = IOEX_FLAGS_DISABLED,
 	},

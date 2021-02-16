@@ -57,7 +57,7 @@ static int nct38xx_ioex_init(int ioex)
 	 *  000: NCT3807
 	 *  010: NCT3808
 	 */
-	rv = i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_slave_addr,
+	rv = i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
 			TCPC_REG_BCD_DEV, &val);
 
 	if (rv != EC_SUCCESS) {
@@ -78,7 +78,7 @@ static int nct38xx_ioex_init(int ioex)
 	 */
 	if (!IS_ENABLED(CONFIG_USB_PD_TCPM_NCT38XX)) {
 		rv = i2c_write16(ioex_p->i2c_host_port,
-				ioex_p->i2c_slave_addr, TCPC_REG_ALERT_MASK,
+				ioex_p->i2c_addr_flags, TCPC_REG_ALERT_MASK,
 				TCPC_REG_ALERT_VENDOR_DEF);
 		if (rv != EC_SUCCESS)
 			return rv;
@@ -96,7 +96,7 @@ static int nct38xx_ioex_get_level(int ioex, int port, int mask, int *val)
 
 	reg = NCT38XX_REG_GPIO_DATA_IN(port);
 	rv = i2c_read8(ioex_config[ioex].i2c_host_port,
-			ioex_config[ioex].i2c_slave_addr, reg, val);
+			ioex_config[ioex].i2c_addr_flags, reg, val);
 	if (rv != EC_SUCCESS)
 		return rv;
 
@@ -116,7 +116,7 @@ static int nct38xx_ioex_set_level(int ioex, int port, int mask, int value)
 	reg = NCT38XX_REG_GPIO_DATA_OUT(port);
 
 	rv = i2c_read8(ioex_config[ioex].i2c_host_port,
-			ioex_config[ioex].i2c_slave_addr, reg, &val);
+			ioex_config[ioex].i2c_addr_flags, reg, &val);
 	if (rv != EC_SUCCESS)
 		return rv;
 
@@ -126,7 +126,7 @@ static int nct38xx_ioex_set_level(int ioex, int port, int mask, int value)
 		val &= ~mask;
 
 	return i2c_write8(ioex_config[ioex].i2c_host_port,
-			ioex_config[ioex].i2c_slave_addr, reg, val);
+			ioex_config[ioex].i2c_addr_flags, reg, val);
 }
 
 static int nct38xx_ioex_get_flags(int ioex, int port, int mask, int *flags)
@@ -135,7 +135,7 @@ static int nct38xx_ioex_get_flags(int ioex, int port, int mask, int *flags)
 	struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
 
 	i2c_port = ioex_p->i2c_host_port;
-	i2c_addr = ioex_p->i2c_slave_addr;
+	i2c_addr = ioex_p->i2c_addr_flags;
 
 	rv = nct38xx_ioex_check_is_valid(ioex, port, mask);
 	if (rv != EC_SUCCESS)
@@ -244,7 +244,7 @@ static int nct38xx_ioex_set_flags_by_mask(int ioex, int port, int mask,
 	struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
 
 	i2c_port = ioex_p->i2c_host_port;
-	i2c_addr = ioex_p->i2c_slave_addr;
+	i2c_addr = ioex_p->i2c_addr_flags;
 
 	rv = nct38xx_ioex_check_is_valid(ioex, port, mask);
 	if (rv != EC_SUCCESS)
@@ -348,13 +348,13 @@ static int nct38xx_ioex_enable_interrupt(int ioex, int port, int mask,
 
 	/* Clear the pending bit */
 	reg = NCT38XX_REG_GPIO_ALERT_STAT(port);
-	rv = i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_slave_addr,
+	rv = i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
 					reg, &val);
 	if (rv != EC_SUCCESS)
 		return rv;
 
 	val |= mask;
-	rv = i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_slave_addr,
+	rv = i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
 					reg, val);
 	if (rv != EC_SUCCESS)
 		return rv;
@@ -370,7 +370,7 @@ static int nct38xx_ioex_enable_interrupt(int ioex, int port, int mask,
 		val = chip_data[ioex].int_mask[port];
 	}
 
-	return i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_slave_addr,
+	return i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
 					reg, val);
 }
 
@@ -389,7 +389,7 @@ int nct38xx_ioex_event_handler(int ioex)
 	 * Read ALERT_STAT_0 and ALERT_STAT_1 register in a single I2C
 	 * transaction to increase efficiency
 	 */
-	rv = i2c_read16(ioex_p->i2c_host_port, ioex_p->i2c_slave_addr,
+	rv = i2c_read16(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
 					reg, &int_status);
 	if (rv != EC_SUCCESS)
 		return rv;
@@ -399,7 +399,7 @@ int nct38xx_ioex_event_handler(int ioex)
 	 * Clear the changed status bits in ALERT_STAT_0 and ALERT_STAT_1
 	 * register in a single I2C transaction to increase efficiency
 	 */
-	rv = i2c_write16(ioex_p->i2c_host_port, ioex_p->i2c_slave_addr,
+	rv = i2c_write16(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
 					reg, int_status);
 	if (rv != EC_SUCCESS)
 		return rv;
@@ -443,14 +443,14 @@ void nct38xx_ioex_handle_alert(int ioex)
 	int rv, status;
 	struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
 
-	rv = i2c_read16(ioex_p->i2c_host_port, ioex_p->i2c_slave_addr,
+	rv = i2c_read16(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
 			TCPC_REG_ALERT, &status);
 	if (rv != EC_SUCCESS)
 		CPRINTF("fail to read ALERT register\n");
 
 	if (status & TCPC_REG_ALERT_VENDOR_DEF) {
 		rv = i2c_write16(ioex_p->i2c_host_port,
-				ioex_p->i2c_slave_addr, TCPC_REG_ALERT,
+				ioex_p->i2c_addr_flags, TCPC_REG_ALERT,
 				TCPC_REG_ALERT_VENDOR_DEF);
 		if (rv != EC_SUCCESS) {
 			CPRINTF("Fail to clear Vendor Define mask\n");

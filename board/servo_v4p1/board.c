@@ -508,13 +508,13 @@ struct ioexpander_config_t ioex_config[] = {
 	[0] = {
 		.drv = &tca64xxa_ioexpander_drv,
 		.i2c_host_port = TCA6416A_PORT,
-		.i2c_slave_addr = TCA6416A_ADDR,
+		.i2c_addr_flags = TCA6416A_ADDR,
 		.flags = TCA64XXA_FLAG_VER_TCA6416A
 	},
 	[1] = {
 		.drv = &tca64xxa_ioexpander_drv,
 		.i2c_host_port = TCA6424A_PORT,
-		.i2c_slave_addr = TCA6424A_ADDR,
+		.i2c_addr_flags = TCA6424A_ADDR,
 		.flags = TCA64XXA_FLAG_VER_TCA6424A
 	}
 };

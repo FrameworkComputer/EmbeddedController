@@ -60,8 +60,8 @@ struct ioexpander_drv {
 struct ioexpander_config_t {
 	/* Physical I2C port connects to the IO expander chip. */
 	int i2c_host_port;
-	/* I2C slave address */
-	int i2c_slave_addr;
+	/* I2C address */
+	int i2c_addr_flags;
 	/*
 	 * Pointer to the specific IO expander chip's ops defined in
 	 * the struct ioexpander_drv.

@@ -28,7 +28,7 @@ static int tca64xxa_write_byte(int ioex, int port, int reg, uint8_t val)
 	const int reg_addr = TCA64XXA_PORT_ID(port, reg, ioex_p->flags);
 
 	return i2c_write8(ioex_p->i2c_host_port,
-			  ioex_p->i2c_slave_addr,
+			  ioex_p->i2c_addr_flags,
 			  reg_addr,
 			  val);
 }
@@ -39,7 +39,7 @@ static int tca64xxa_read_byte(int ioex, int port, int reg, int *val)
 	const int reg_addr = TCA64XXA_PORT_ID(port, reg, ioex_p->flags);
 
 	return i2c_read8(ioex_p->i2c_host_port,
-			 ioex_p->i2c_slave_addr,
+			 ioex_p->i2c_addr_flags,
 			 reg_addr,
 			 val);
 }
