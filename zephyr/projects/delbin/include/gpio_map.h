@@ -9,12 +9,8 @@
 #include <devicetree.h>
 #include <gpio_signal.h>
 
-/*
- * TODO(b/180410072): system.c seems to require these to be defined,
- * but we don't have GPIO brought up yet...
- */
-#define GPIO_ENTERING_RW -1
-#define GPIO_WP_L -1
+#define GPIO_ENTERING_RW	NAMED_GPIO(ec_entering_rw)
+#define GPIO_WP_L		NAMED_GPIO(ec_wp_l)
 
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
