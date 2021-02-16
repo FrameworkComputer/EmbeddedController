@@ -87,6 +87,7 @@
 #define CONFIG_CROS_BOARD_INFO
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CMD_CBI
+#define CONFIG_CMD_CBI_SET
 
 /* USB Configuration */
 #define CONFIG_USB
@@ -127,30 +128,34 @@ enum usb_strings {
 #define CONFIG_USB_DRP_ACC_TRYSRC
 /* No AP on any honeybuns variants */
 #undef CONFIG_USB_PD_HOST_CMD
-
-/* TODO(b/167711550): Temporarily support type-c mode only */
-#undef CONFIG_USB_PRL_SM
-#undef CONFIG_USB_PE_SM
-
-#define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
+#define CONFIG_USB_PD_ALT_MODE
+#define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USB_PD_CUSTOM_PDO
+#define CONFIG_USB_PD_ALT_MODE_UFP_DP
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_REV30
 #define CONFIG_USB_PD_TCPM_MUX
+#define CONFIG_USB_PD_TCPM_PS8805
 #define CONFIG_USB_PD_TCPM_STM32GX
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_PD_DECODE_SOP
-
 #define CONFIG_USB_PD_VBUS_DETECT_PPC
 #define CONFIG_USB_PD_DISCHARGE_PPC
 #define CONFIG_USBC_PPC_SN5S330
 #define CONFIG_USBC_PPC_VCONN
 #define CONFIG_USBC_PPC_DEDICATED_INT
-#define CONFIG_CMD_PPC_DUMP
-
-#define CONFIG_STM32G4_UCPD_DEBUG
-
-/* TODO(b/167711550): Temporary, will be replaced by correct mux config */
+#define CONFIG_USBC_VCONN
+#define CONFIG_USBC_VCONN_SWAP
 #define CONFIG_USBC_SS_MUX
-#define CONFIG_USB_MUX_VIRTUAL
+#define CONFIG_USBC_SS_MUX_UFP_USB3
+
+#define CONFIG_HAS_TASK_PD_INT
+#define CONFIG_STM32G4_UCPD_DEBUG
+#define CONFIG_CMD_PPC_DUMP
+#define CONFIG_CMD_TCPC_DUMP
+
+#define CONFIG_MP4245
 
 #else /* RO Specific Config Options */
 
@@ -179,9 +184,9 @@ enum usb_strings {
 #define CONFIG_SHA256
 
 /* Define typical operating power and max power. */
-#define PD_MAX_VOLTAGE_MV     20000
+#define PD_MAX_VOLTAGE_MV     5000
 #define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_POWER_MW       45000
+#define PD_MAX_POWER_MW       15000
 #define PD_OPERATING_POWER_MW 15000
 
 /* TODO(b:147314141): Verify these timings */

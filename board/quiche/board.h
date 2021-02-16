@@ -18,6 +18,7 @@
 #define USB_PD_PORT_HOST   0
 #define USB_PD_PORT_DP   1
 
+#define CONFIG_USB_MUX_PS8822
 
 #define CONFIG_USB_PID 0x5048
 #define CONFIG_USB_BCD_DEV 0x0001 /* v 0.01 */
@@ -34,11 +35,13 @@
 /* Required symbolic I2C port names */
 #define I2C_PORT_MP4245 I2C_PORT_I2C3
 #define I2C_PORT_EEPROM I2C_PORT_I2C3
-#define MP4245_SLAVE_ADDR MP4245_I2C_ADDR_0_FLAGS
+#define MP4245_I2C_ADDR_FLAGS MP4245_I2C_ADDR_0_FLAGS
 
 #ifndef __ASSEMBLER__
 
 #include "registers.h"
+
+#define GPIO_DP_HPD GPIO_DDI_MST_IN_HPD
 
 #define GPIO_TRIGGER_1 GPIO_TP41
 #define GPIO_TRIGGER_2 GPIO_TP73

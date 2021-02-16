@@ -7,23 +7,33 @@
 
 #include "common.h"
 #include "driver/ppc/sn5s330.h"
+#include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/stm32gx.h"
 #include "driver/tcpm/tcpci.h"
+#include "driver/usb_mux/tusb1064.h"
 #include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "mp4245.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
+#include "timer.h"
 #include "uart.h"
 #include "usb_descriptor.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
+#include "usb_descriptor.h"
+#include "usb_pd_dp_ufp.h"
+#include "usb_pe_sm.h"
+#include "usb_prl_sm.h"
+#include "usb_tc_sm.h"
 #include "util.h"
-
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+
+#define QUICHE_PD_DEBUG_LVL 1
 
 #ifdef SECTION_IS_RW
 #define CROS_EC_SECTION "RW"
@@ -32,6 +42,10 @@
 #endif
 
 #ifdef SECTION_IS_RW
+static int pd_dual_role_init[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	PD_DRP_TOGGLE_ON,
+};
+
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
@@ -44,6 +58,10 @@ static void ppc_interrupt(enum gpio_signal signal)
 	}
 }
 
+void hpd_interrupt(enum gpio_signal signal)
+{
+	usb_pd_hpd_edge_event(signal);
+}
 #endif /* SECTION_IS_RW */
 
 #include "gpio_list.h" /* Must come after other header files. */
@@ -115,8 +133,9 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_HOST] = {
 		.usb_port = USB_PD_PORT_HOST,
-		.driver = &virtual_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
+		.i2c_port = I2C_PORT_I2C1,
+		.i2c_addr_flags = TUSB1064_I2C_ADDR0_FLAGS,
+		.driver = &tusb1064_usb_mux_driver,
 	},
 };
 
@@ -130,14 +149,35 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
+const struct hpd_to_pd_config_t hpd_config = {
+	.port = USB_PD_PORT_HOST,
+	.signal = GPIO_DDI_MST_IN_HPD,
+};
+
+void board_reset_pd_mcu(void)
+{
+
+}
+
+
 /* Power Delivery and charging functions */
 void board_tcpc_init(void)
 {
+	board_reset_pd_mcu();
+
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_HOST_USBC_PPC_INT_ODL);
-}
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
+	/* Enable HPD interrupt */
+	gpio_enable_interrupt(GPIO_DDI_MST_IN_HPD);
+
+}
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
+
+enum pd_dual_role_states board_tc_get_initial_drp_mode(int port)
+{
+	return pd_dual_role_init[port];
+}
 
 int ppc_get_alert_status(int port)
 {

@@ -10,6 +10,7 @@
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/stm32gx.h"
 #include "driver/tcpm/tcpci.h"
+#include "driver/usb_mux/ps8822.h"
 #include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -18,12 +19,19 @@
 #include "task.h"
 #include "uart.h"
 #include "usb_descriptor.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
+#include "usb_pd_dp_ufp.h"
+#include "usb_pe_sm.h"
+#include "usb_prl_sm.h"
+#include "usb_tc_sm.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+
+#define QUICHE_PD_DEBUG_LVL 1
 
 #ifdef SECTION_IS_RW
 #define CROS_EC_SECTION "RW"
@@ -32,6 +40,11 @@
 #endif
 
 #ifdef SECTION_IS_RW
+static int pd_dual_role_init[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	PD_DRP_TOGGLE_ON,
+};
+
+
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
@@ -42,6 +55,11 @@ static void ppc_interrupt(enum gpio_signal signal)
 	default:
 		break;
 	}
+}
+
+void hpd_interrupt(enum gpio_signal signal)
+{
+	usb_pd_hpd_edge_event(signal);
 }
 #endif /* SECTION_IS_RW */
 
@@ -114,8 +132,9 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_HOST] = {
 		.usb_port = USB_PD_PORT_HOST,
-		.driver = &virtual_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
+		.i2c_port = I2C_PORT_I2C1,
+		.i2c_addr_flags = PS8822_I2C_ADDR3_FLAG,
+		.driver = &ps8822_usb_mux_driver,
 	},
 };
 
@@ -129,7 +148,16 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
-/* Power Delivery and charging functions */
+const struct hpd_to_pd_config_t hpd_config = {
+	.port = USB_PD_PORT_HOST,
+	.signal = GPIO_DDI_MST_IN_HPD,
+};
+
+void board_reset_pd_mcu(void)
+{
+
+}
+
 void board_tcpc_init(void)
 {
 	/* Enable PPC interrupts. */
@@ -137,18 +165,11 @@ void board_tcpc_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
-static void board_select_drp_mode(void)
+enum pd_dual_role_states board_tc_get_initial_drp_mode(int port)
 {
-	/*
-	 * Host port should operate as a dual role port. If it attaches as a
-	 * sink, then it will trigger a PRS to end up as a SRC UFP. The port's
-	 * DRP state only needs to be set once, after it's initialized in TCPMv2
-	 * as the default role of sink only.
-	 */
-	pd_set_dual_role(USB_PD_PORT_HOST, PD_DRP_TOGGLE_ON);
-	CPRINTS("ucpd: set drp toggle on");
+
+	return pd_dual_role_init[port];
 }
-DECLARE_DEFERRED(board_select_drp_mode);
 
 int ppc_get_alert_status(int port)
 {
