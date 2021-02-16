@@ -46,6 +46,18 @@
 /* Round up to a multiple of 4 */
 #define ROUNDUP4(x) (((x) + 3) & ~3)
 
+#ifdef CONFIG_ZEPHYR
+#ifdef CONFIG_CPU_CORTEX_M
+/*
+ * For cortex-m we cannot use irq_lock() for disabling all the interrupts
+ * because it leaves some (NMI and faults) still enabled.
+ */
+#define interrupt_disable_all() __asm__("cpsid i")
+#endif
+#else /* !CONFIG_ZEPHYR */
+#define interrupt_disable_all() interrupt_disable()
+#endif /* CONFIG_ZEPHYR */
+
 /* Data for an individual jump tag */
 struct jump_tag {
 	uint16_t tag;		/* Tag ID */
@@ -550,7 +562,7 @@ static void jump_to_image(uintptr_t init_addr)
 	hook_notify(HOOK_SYSJUMP);
 
 	/* Disable interrupts before jump */
-	interrupt_disable();
+	interrupt_disable_all();
 
 #ifdef CONFIG_DMA
 	/* Disable all DMA channels to avoid memory corruption */
