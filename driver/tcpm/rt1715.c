@@ -18,6 +18,8 @@
 #endif
 
 static int rt1715_polarity[CONFIG_USB_PD_PORT_MAX_COUNT];
+static bool rt1715_initialized[CONFIG_USB_PD_PORT_MAX_COUNT];
+
 
 static int rt1715_enable_ext_messages(int port, int enable)
 {
@@ -28,23 +30,20 @@ static int rt1715_enable_ext_messages(int port, int enable)
 
 static int rt1715_tcpci_tcpm_init(int port)
 {
-	int rv, val;
+	int rv;
 	/*
 	 * Do not fully reinitialize the registers when leaving low-power mode.
 	 * TODO(b/179234089): Generalize this concept in the tcpm_drv API.
 	 */
-	rv = tcpc_read(port, RT1715_REG_VENDOR_5, &val);
-	if (rv)
-		return rv;
 
-	/* Only do soft-reset in shutdown mode. */
-	if (!(val & RT1715_REG_VENDOR_5_SHUTDOWN_OFF)) {
+	/* Only do soft-reset on first init. */
+	if (!(rt1715_initialized[port])) {
 		/* RT1715 has a vendor-defined register reset */
 		rv = tcpc_update8(port, RT1715_REG_VENDOR_7,
 			RT1715_REG_VENDOR_7_SOFT_RESET, MASK_SET);
 		if (rv)
 			return rv;
-
+		rt1715_initialized[port] = true;
 		msleep(10);
 	}
 
