@@ -14,6 +14,54 @@
 /* TODO Define FLASH_PSTATE_LOCKED prior to building MP FW. */
 #undef CONFIG_FLASH_PSTATE_LOCKED
 
+/* Flash Lyaout */
+/*
+ * Flash layout: we redefine the sections offsets and sizes as we will use
+ * RO/RW regions of different sizes.
+ */
+#undef _IMAGE_SIZE
+#undef CONFIG_ROLLBACK_OFF
+#undef CONFIG_ROLLBACK_SIZE
+#undef CONFIG_FLASH_PSTATE
+#undef CONFIG_FW_PSTATE_SIZE
+#undef CONFIG_FW_PSTATE_OFF
+#undef CONFIG_SHAREDLIB_SIZE
+#undef CONFIG_RO_MEM_OFF
+#undef CONFIG_RO_STORAGE_OFF
+#undef CONFIG_RO_SIZE
+#undef CONFIG_RW_MEM_OFF
+#undef CONFIG_RW_STORAGE_OFF
+#undef CONFIG_RW_SIZE
+#undef CONFIG_EC_PROTECTED_STORAGE_OFF
+#undef CONFIG_EC_PROTECTED_STORAGE_SIZE
+#undef CONFIG_EC_WRITABLE_STORAGE_OFF
+#undef CONFIG_EC_WRITABLE_STORAGE_SIZE
+#undef CONFIG_WP_STORAGE_OFF
+#undef CONFIG_WP_STORAGE_SIZE
+
+#define CONFIG_FLASH_PSTATE
+/* Do not use a dedicated PSTATE bank */
+#undef CONFIG_FLASH_PSTATE_BANK
+
+#define CONFIG_SHAREDLIB_SIZE	0
+
+#define CONFIG_RO_MEM_OFF	0
+#define CONFIG_RO_STORAGE_OFF	0
+#define CONFIG_RO_SIZE		(64*1024)
+
+#define CONFIG_RW_MEM_OFF	(CONFIG_RO_SIZE + CONFIG_RO_MEM_OFF)
+#define CONFIG_RW_STORAGE_OFF	0
+#define CONFIG_RW_SIZE		(CONFIG_FLASH_SIZE_BYTES - \
+				(CONFIG_RW_MEM_OFF - CONFIG_RO_MEM_OFF))
+
+#define CONFIG_EC_PROTECTED_STORAGE_OFF		CONFIG_RO_MEM_OFF
+#define CONFIG_EC_PROTECTED_STORAGE_SIZE	CONFIG_RO_SIZE
+#define CONFIG_EC_WRITABLE_STORAGE_OFF		CONFIG_RW_MEM_OFF
+#define CONFIG_EC_WRITABLE_STORAGE_SIZE		CONFIG_RW_SIZE
+
+#define CONFIG_WP_STORAGE_OFF		CONFIG_EC_PROTECTED_STORAGE_OFF
+#define CONFIG_WP_STORAGE_SIZE		CONFIG_EC_PROTECTED_STORAGE_SIZE
+
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 #define CONFIG_STM_HWTIMER32
@@ -40,6 +88,8 @@
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CMD_CBI
 
+/* RW Specific Config Options */
+#ifdef SECTION_IS_RW
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_POWER_DELIVERY
@@ -73,6 +123,31 @@
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USB_MUX_VIRTUAL
 
+#else /* RO Specific Config Options */
+
+/* RWSIG Config Options */
+/* Sign and switch to RW partition on boot. */
+#define CONFIG_RWSIG
+#define CONFIG_RSA
+#define CONFIG_SHA256_UNROLLED
+#undef CONFIG_RWSIG_JUMP_TIMEOUT
+#define CONFIG_RWSIG_JUMP_TIMEOUT (7000 * MSEC)
+
+/* Don't build PD console command for RO */
+#undef CONFIG_CMD_PD
+#undef CONFIG_USB_PD_CONSOLE_CMD
+#undef CONFIG_USB_PD_HOST_CMD
+/* Make sure these files aren't built in RO */
+#undef CONFIG_USB_PRL_SM
+#undef CONFIG_USB_TYPEC_SM
+#undef CONFIG_USB_PE_SM
+
+#endif /* SECTION_IS_RW */
+
+#define CONFIG_RWSIG_TYPE_RWSIG
+#define CONFIG_RSA_KEY_SIZE 3072
+#define CONFIG_RSA_EXPONENT_3
+#define CONFIG_SHA256
 
 /* Define typical operating power and max power. */
 #define PD_MAX_VOLTAGE_MV     20000
@@ -83,9 +158,6 @@
 /* TODO(b:147314141): Verify these timings */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000	/* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	250000	/* us */
-
-
-/* BC 1.2 */
 
 /* I2C Bus Configuration */
 #define CONFIG_I2C

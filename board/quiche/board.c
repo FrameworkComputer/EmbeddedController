@@ -23,6 +23,13 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
+#ifdef SECTION_IS_RW
+#define CROS_EC_SECTION "RW"
+#else
+#define CROS_EC_SECTION "RO"
+#endif
+
+#ifdef SECTION_IS_RW
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
@@ -34,6 +41,7 @@ static void ppc_interrupt(enum gpio_signal signal)
 		break;
 	}
 }
+#endif /* SECTION_IS_RW */
 
 #include "gpio_list.h" /* Must come after other header files. */
 
@@ -69,6 +77,7 @@ const struct power_seq board_power_seq[] = {
 
 const size_t board_power_seq_count = ARRAY_SIZE(board_power_seq);
 
+#ifdef SECTION_IS_RW
 /* TCPCs */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
@@ -116,12 +125,6 @@ static void board_select_drp_mode(void)
 }
 DECLARE_DEFERRED(board_select_drp_mode);
 
-static void board_init(void)
-{
-	hook_call_deferred(&board_select_drp_mode_data, 50 * MSEC);
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
 int ppc_get_alert_status(int port)
 {
 	if (port == USB_PD_PORT_HOST)
@@ -134,3 +137,12 @@ void board_overcurrent_event(int port, int is_overcurrented)
 {
 	/* TODO(b/174825406): check correct operation for honeybuns */
 }
+#endif /* SECTION_IS_RW */
+
+static void board_init(void)
+{
+#ifdef SECTION_IS_RW
+	hook_call_deferred(&board_select_drp_mode_data, 50 * MSEC);
+#endif
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

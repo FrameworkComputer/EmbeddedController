@@ -8,7 +8,9 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
+#ifdef SECTION_IS_RW
 GPIO_INT(HOST_USBC_PPC_INT_ODL,  PIN(D,  9),      GPIO_INT_FALLING | GPIO_PULL_UP, ppc_interrupt)
+#endif
 
 /* Power sequencing signals */
 GPIO(PWR_BTN,                       PIN(A,  0), GPIO_INPUT)
