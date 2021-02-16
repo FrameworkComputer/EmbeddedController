@@ -29,6 +29,12 @@
 		zephyr,flash = &flash0;
 	};
 
+	ec-console {
+		compatible = "ec-console";
+
+		disabled = "hostcmd";
+	};
+
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
