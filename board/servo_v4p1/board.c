@@ -21,7 +21,6 @@
 #include "ioexpanders.h"
 #include "pathsel.h"
 #include "pi3usb9201.h"
-#include "power_mgmt.h"
 #include "queue_policies.h"
 #include "registers.h"
 #include "spi.h"
@@ -428,8 +427,6 @@ static void evaluate_input_power_def(void)
 	gpio_enable_interrupt(GPIO_USBH_I2C_BUSY_INT);
 
 	gl3590_init(HOST_HUB);
-
-	evaluate_input_power();
 
 	init_uservo_port();
 	init_pathsel();
