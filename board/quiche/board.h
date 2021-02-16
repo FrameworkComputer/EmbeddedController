@@ -40,8 +40,8 @@
 
 #include "registers.h"
 
-#define GPIO_TRIGGER_1 GPIO_USB3_A1_CDP_EN
-#define GPIO_TRIGGER_2 GPIO_USB3_A2_CDP_EN
+#define GPIO_TRIGGER_1 GPIO_TP41
+#define GPIO_TRIGGER_2 GPIO_TP73
 
 enum  debug_gpio {
 	TRIGGER_1 = 0,

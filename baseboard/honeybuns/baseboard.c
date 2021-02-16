@@ -22,7 +22,8 @@ static void board_power_sequence(void)
 	for(i = 0; i < board_power_seq_count; i++) {
 		gpio_set_level(board_power_seq[i].signal,
 			       board_power_seq[i].level);
-		msleep(board_power_seq[i].delay_ms);
+		if (board_power_seq[i].delay_ms)
+			msleep(board_power_seq[i].delay_ms);
 	}
 }
 

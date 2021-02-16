@@ -12,7 +12,7 @@ CHIP:=stm32
 # codebase. Currently, using a variant of the F family so the project will
 # build properly.
 CHIP_FAMILY:=stm32g4
-CHIP_VARIANT:=stm32g431xb
+CHIP_VARIANT:=stm32g473xc
 BASEBOARD:=honeybuns
 
 board-y=board.o
