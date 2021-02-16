@@ -1,0 +1,14 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: EC Console node
+
+compatible: "ec-console"
+
+properties:
+    disabled:
+        required: false
+        type: string-array
+        description:
+          List of EC channel names that are disabled in the output by default.

@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <device.h>
+#include <init.h>
 #include <kernel.h>
 #include <shell/shell.h>
 #include <stdbool.h>
@@ -35,6 +37,20 @@ int zshim_run_ec_console_command(int (*handler)(int argc, char **argv),
 
 	return handler(argc, argv);
 }
+
+#if DT_NODE_EXISTS(DT_PATH(ec_console))
+#define EC_CONSOLE DT_PATH(ec_console)
+
+static const char * const disabled_channels[] = DT_PROP(EC_CONSOLE, disabled);
+static const size_t disabled_channel_count = DT_PROP_LEN(EC_CONSOLE, disabled);
+static int init_ec_console(const struct device *unused)
+{
+	for (size_t i = 0; i < disabled_channel_count; i++)
+		console_channel_disable(disabled_channels[i]);
+
+	return 0;
+} SYS_INIT(init_ec_console, PRE_KERNEL_1, 50);
+#endif
 
 /*
  * Minimal implementation of a few uart_* functions we need.

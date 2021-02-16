@@ -35,6 +35,34 @@ static const char * const channel_names[] = {
 BUILD_ASSERT(ARRAY_SIZE(channel_names) == CC_CHANNEL_COUNT);
 /* ensure that we are not silently masking additional channels */
 BUILD_ASSERT(CC_CHANNEL_COUNT <= 8*sizeof(uint32_t));
+
+static int console_channel_name_to_index(const char *name)
+{
+	int i;
+
+	for (i = 0; i < CC_CHANNEL_COUNT; i++) {
+		if (!strncasecmp(name, channel_names[i], strlen(name)))
+			return i;
+	}
+
+	/* Not found */
+	return -1;
+}
+
+void console_channel_enable(const char *name)
+{
+	int index = console_channel_name_to_index(name);
+
+	if (index >= 0 && index != CC_COMMAND)
+		channel_mask |= CC_MASK(index);
+}
+void console_channel_disable(const char *name)
+{
+	int index = console_channel_name_to_index(name);
+
+	if (index >= 0 && index != CC_COMMAND)
+		channel_mask &= ~CC_MASK(index);
+}
 #endif /* CONFIG_CONSOLE_CHANNEL */
 
 /*****************************************************************************/
