@@ -18,7 +18,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_TOUCHPAD, format, ## args)
 
-#define GT7288_SLAVE_ADDRESS 0x14
+#define GT7288_I2C_ADDR_FLAGS 0x14
 
 #define GT7288_REPORT_ID_PTP 0x04
 
@@ -47,7 +47,7 @@ static int gt7288_read_desc(uint16_t register_id, uint8_t *data,
 	uint8_t reg_bytes[] = {
 		register_id & 0xFF, (register_id & 0xFF00) >> 8
 	};
-	return i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, GT7288_SLAVE_ADDRESS,
+	return i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, GT7288_I2C_ADDR_FLAGS,
 			reg_bytes, sizeof(reg_bytes), data, max_length);
 }
 
@@ -88,7 +88,7 @@ static void gt7288_translate_contact(const uint8_t *data,
 
 static int gt7288_read(uint8_t *data, size_t max_length)
 {
-	return i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, GT7288_SLAVE_ADDRESS,
+	return i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, GT7288_I2C_ADDR_FLAGS,
 			NULL, 0, data, max_length);
 }
 
