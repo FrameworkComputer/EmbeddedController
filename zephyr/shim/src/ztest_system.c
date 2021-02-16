@@ -8,6 +8,10 @@
 /* Ongoing actions preventing going into deep-sleep mode. */
 uint32_t sleep_mask;
 
+void system_common_pre_init(void)
+{
+}
+
 int system_add_jump_tag(uint16_t tag, int version, int size, const void *data)
 {
 	return EC_SUCCESS;

@@ -10,6 +10,7 @@
 #include "ec_tasks.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
+#include "system.h"
 #include "zephyr_espi_shim.h"
 
 void main(void)
@@ -17,6 +18,8 @@ void main(void)
 	printk("Hello from a Chrome EC!\n");
 	printk("  BOARD=%s\n", CONFIG_BOARD);
 	printk("  ACTIVE_COPY=%s\n", CONFIG_CROS_EC_ACTIVE_COPY);
+
+	system_common_pre_init();
 
 	/*
 	 * Initialize reset logs. This needs to be done before any updates of
