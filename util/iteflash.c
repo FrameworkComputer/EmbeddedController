@@ -2249,7 +2249,7 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 static void sighandler(int signum)
 {
 	printf("\nCaught signal %d: %s\nExiting...\n",
-		signum, sys_siglist[signum]);
+		signum, strsignal(signum));
 	exit_requested = 1;
 }
 

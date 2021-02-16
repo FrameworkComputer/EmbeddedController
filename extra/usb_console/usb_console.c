@@ -46,7 +46,7 @@ static void request_exit(const char *format, ...)
 
 static void sighandler(int signum)
 {
-	request_exit("caught signal %d: %s\n", signum, sys_siglist[signum]);
+	request_exit("caught signal %d: %s\n", signum, strsignal(signum));
 }
 
 #if 0
