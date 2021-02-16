@@ -9,12 +9,14 @@
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/stm32gx.h"
 #include "driver/tcpm/tcpci.h"
+#include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
 #include "uart.h"
+#include "usb_descriptor.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "util.h"
@@ -79,6 +81,29 @@ const struct power_seq board_power_seq[] = {
 
 const size_t board_power_seq_count = ARRAY_SIZE(board_power_seq);
 
+/*
+ * Define the strings used in our USB descriptors.
+ */
+const void *const usb_strings[] = {
+	[USB_STR_DESC]         = usb_string_desc,
+	[USB_STR_VENDOR]       = USB_STRING_DESC("Google Inc."),
+	[USB_STR_PRODUCT]      = USB_STRING_DESC("Gingerbread"),
+	[USB_STR_SERIALNO]     = 0,
+	[USB_STR_VERSION]      =
+			USB_STRING_DESC(CROS_EC_SECTION ":" CROS_EC_VERSION32),
+	[USB_STR_UPDATE_NAME]  = USB_STRING_DESC("Firmware update"),
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
+
+#ifndef SECTION_IS_RW
+struct ppc_config_t ppc_chips[] = {
+	[USB_PD_PORT_HOST] = {
+		.i2c_port = I2C_PORT_I2C3,
+		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+	},
+};
+#endif
+
 #ifdef SECTION_IS_RW
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
@@ -130,6 +155,41 @@ void board_overcurrent_event(int port, int is_overcurrented)
 
 static void board_init(void)
 {
-	/* TODO */
+#ifdef SECTION_IS_RW
+
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+static void board_debug_gpio_1_pulse(void)
+{
+	gpio_set_level(GPIO_TRIGGER_1, 0);
+}
+DECLARE_DEFERRED(board_debug_gpio_1_pulse);
+
+static void board_debug_gpio_2_pulse(void)
+{
+	gpio_set_level(GPIO_TRIGGER_2, 0);
+}
+DECLARE_DEFERRED(board_debug_gpio_2_pulse);
+
+void board_debug_gpio(int trigger, int enable, int pulse_usec)
+{
+	switch (trigger) {
+	case TRIGGER_1:
+		gpio_set_level(GPIO_TRIGGER_1, enable);
+		if (pulse_usec)
+			hook_call_deferred(&board_debug_gpio_1_pulse_data,
+					   pulse_usec);
+		break;
+	case TRIGGER_2:
+		gpio_set_level(GPIO_TRIGGER_2, enable);
+		if (pulse_usec)
+			hook_call_deferred(&board_debug_gpio_2_pulse_data,
+					   pulse_usec);
+		break;
+	default:
+		CPRINTS("bad debug gpio selection");
+		break;
+	}
+}

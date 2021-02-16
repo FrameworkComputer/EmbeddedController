@@ -22,10 +22,19 @@
 #define USB_PD_PORT_DP   1
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 
+#define CONFIG_USB_PID 0x5049
+#define CONFIG_USB_BCD_DEV 0x0001 /* v 0.01 */
+#define CONFIG_USB_PD_IDENTITY_HW_VERS 1
+#define CONFIG_USB_PD_IDENTITY_SW_VERS 1
 
-/* USB Type A Features */
-
-/* BC 1.2 */
+/* I2C port names */
+#define I2C_PORT_I2C1	0
+#define I2C_PORT_I2C2	1
+#define I2C_PORT_I2C3	2
+/* Required symbolic I2C port names */
+#define I2C_PORT_MP4245 I2C_PORT_I2C3
+#define I2C_PORT_EEPROM I2C_PORT_I2C1
+#define MP4245_SLAVE_ADDR MP4245_I2C_ADDR_0_FLAGS
 
 /*
  * Macros for GPIO signals used in common code that don't match the
@@ -35,14 +44,21 @@
  */
 #define GPIO_ENTERING_RW	GPIO_EC_ENTERING_RW
 #define GPIO_WP_L		GPIO_EC_WP_L
-
-
+#define GPIO_WP		GPIO_EC_WP_L
 
 #ifndef __ASSEMBLER__
 
-#include "gpio_signal.h"
 #include "registers.h"
 
+#define GPIO_TRIGGER_1 GPIO_EC_HUB1_RESET_L
+#define GPIO_TRIGGER_2 GPIO_EC_HUB2_RESET_L
+
+enum  debug_gpio {
+	TRIGGER_1 = 0,
+	TRIGGER_2,
+};
+
+void board_debug_gpio(int trigger, int enable, int pulse_usec);
 
 #endif /* !__ASSEMBLER__ */
 

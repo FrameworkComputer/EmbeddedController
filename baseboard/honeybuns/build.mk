@@ -8,3 +8,4 @@
 
 baseboard-y=baseboard.o
 baseboard-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
+baseboard-y+=usbc_support.o

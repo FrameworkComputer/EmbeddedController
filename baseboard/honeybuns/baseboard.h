@@ -88,6 +88,36 @@
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CMD_CBI
 
+/* USB Configuration */
+#define CONFIG_USB
+#define CONFIG_STREAM_USB
+#define CONFIG_USB_UPDATE
+#define CONFIG_USB_SERIALNO
+#define DEFAULT_SERIALNO "Uninitialized"
+#define CONFIG_MAC_ADDR
+#define DEFAULT_MAC_ADDR "Uninitialized"
+
+/* USB endpoint indexes (use define rather than enum to expand them) */
+#define USB_EP_CONTROL		0
+#define USB_EP_UPDATE		1
+#define USB_EP_COUNT		2
+
+#define USB_IFACE_UPDATE	0
+#define USB_IFACE_COUNT		1
+
+#ifndef __ASSEMBLER__
+/* USB string indexes */
+enum usb_strings {
+	USB_STR_DESC = 0,
+	USB_STR_VENDOR,
+	USB_STR_PRODUCT,
+	USB_STR_SERIALNO,
+	USB_STR_VERSION,
+	USB_STR_UPDATE_NAME,
+	USB_STR_COUNT
+};
+#endif
+
 /* RW Specific Config Options */
 #ifdef SECTION_IS_RW
 
@@ -108,7 +138,6 @@
 #define CONFIG_USB_PD_TCPM_STM32GX
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_PD_DECODE_SOP
-#define CONFIG_USB_PID 0x5048
 
 #define CONFIG_USB_PD_VBUS_DETECT_PPC
 #define CONFIG_USB_PD_DISCHARGE_PPC
@@ -162,9 +191,6 @@
 /* I2C Bus Configuration */
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
-#define I2C_PORT_USBC		0
-#define I2C_PORT_MST		1
-#define I2C_PORT_EEPROM	2
 
 /*
  * Macros for GPIO signals used in common code that don't match the
@@ -196,6 +222,8 @@ enum adc_channel {
 
 extern const struct power_seq board_power_seq[];
 extern const size_t board_power_seq_count;
+
+int baseboard_usbc_init(int port);
 
 #endif /* !__ASSEMBLER__ */
 
