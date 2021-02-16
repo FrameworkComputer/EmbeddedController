@@ -45,6 +45,7 @@ config PLATFORM_EC_HOSTCMD_AP_RESET
 menuconfig PLATFORM_EC_POWERSEQ_INTEL
 	bool "Enable shimming common Intel power sequencing code"
 	depends on AP_X86_INTEL
+	select HAS_TASK_POWERBTN
 	default y
 	help
 	  Enable shimming platform/ec AP power sequencing code for
