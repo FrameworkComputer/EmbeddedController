@@ -9,6 +9,7 @@
 #include <devicetree.h>
 #include <gpio_signal.h>
 
+#define GPIO_EC_PCH_WAKE_ODL	NAMED_GPIO(ec_pch_wake_odl)
 #define GPIO_ENTERING_RW	NAMED_GPIO(ec_entering_rw)
 #define GPIO_WP_L		NAMED_GPIO(ec_wp_l)
 
