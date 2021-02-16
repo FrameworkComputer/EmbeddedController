@@ -14,7 +14,7 @@
 
 static int mp4245_reg16_write(int offset, int data)
 {
-	return i2c_write16(I2C_PORT_MP4245, MP4245_SLAVE_ADDR, offset,
+	return i2c_write16(I2C_PORT_MP4245, MP4245_I2C_ADDR_FLAGS, offset,
 			   data);
 }
 
@@ -49,7 +49,7 @@ int mp4245_votlage_out_enable(int enable)
 {
 	int cmd_val = enable ? MP4245_CMD_OPERATION_ON : 0;
 
-	return i2c_write8(I2C_PORT_MP4245, MP4245_SLAVE_ADDR,
+	return i2c_write8(I2C_PORT_MP4245, MP4245_I2C_ADDR_FLAGS,
 			MP4245_CMD_OPERATION, cmd_val);
 }
 
@@ -60,9 +60,9 @@ int mp3245_get_vbus(int *mv, int *ma)
 	int rv;
 
 	/* Get Vbus/Ibus raw measurements */
-	rv = i2c_read16(I2C_PORT_MP4245, MP4245_SLAVE_ADDR,
+	rv = i2c_read16(I2C_PORT_MP4245, MP4245_I2C_ADDR_FLAGS,
 		   MP4245_CMD_READ_VOUT, &vbus);
-	rv |= i2c_read16(I2C_PORT_MP4245, MP4245_SLAVE_ADDR,
+	rv |= i2c_read16(I2C_PORT_MP4245, MP4245_I2C_ADDR_FLAGS,
 		  MP4245_CMD_READ_IOUT, &ibus);
 
 	if (rv == EC_SUCCESS) {
@@ -120,10 +120,10 @@ static void mp4245_dump_reg(void)
 
 	for (i = 0; i < ARRAY_SIZE(mp4245_cmds); i++) {
 		if (mp4245_cmds[i].len == 1) {
-			rv = i2c_read8(I2C_PORT_MP4245, MP4245_SLAVE_ADDR,
+			rv = i2c_read8(I2C_PORT_MP4245, MP4245_I2C_ADDR_FLAGS,
 				       mp4245_cmds[i].cmd, &val);
 		} else {
-			rv = i2c_read16(I2C_PORT_MP4245, MP4245_SLAVE_ADDR,
+			rv = i2c_read16(I2C_PORT_MP4245, MP4245_I2C_ADDR_FLAGS,
 				       mp4245_cmds[i].cmd, &val);
 		}
 
@@ -142,32 +142,32 @@ void mp4245_get_status(void)
 	int vout;
 
 	/* Get Operation register */
-	i2c_read8(I2C_PORT_MP4245, MP4245_SLAVE_ADDR,
+	i2c_read8(I2C_PORT_MP4245, MP4245_I2C_ADDR_FLAGS,
 		  MP4245_CMD_OPERATION, &on);
 	/* Vbus on/off is bit 7 */
 	on >>= 7;
 
 	/* Get status word */
-	i2c_read16(I2C_PORT_MP4245, MP4245_SLAVE_ADDR,
+	i2c_read16(I2C_PORT_MP4245, MP4245_I2C_ADDR_FLAGS,
 		  MP4245_CMD_STATUS_WORD, &status);
 
 	/* Get Vbus measurement */
-	i2c_read16(I2C_PORT_MP4245, MP4245_SLAVE_ADDR,
+	i2c_read16(I2C_PORT_MP4245, MP4245_I2C_ADDR_FLAGS,
 		   MP4245_CMD_READ_VOUT, &vbus);
 	vbus = MP4245_VOUT_TO_MV(vbus);
 
 	/* Get Ibus measurement */
-	i2c_read16(I2C_PORT_MP4245, MP4245_SLAVE_ADDR,
+	i2c_read16(I2C_PORT_MP4245, MP4245_I2C_ADDR_FLAGS,
 		  MP4245_CMD_READ_IOUT, &ibus);
 	ibus = MP4245_IOUT_TO_MA(ibus);
 
 	/* Get Vout command (sets Vbus level) */
-	i2c_read16(I2C_PORT_MP4245, MP4245_SLAVE_ADDR,
+	i2c_read16(I2C_PORT_MP4245, MP4245_I2C_ADDR_FLAGS,
 		   MP4245_CMD_VOUT_COMMAND, &vout);
 	vout = MP4245_VOUT_TO_MV(vout);
 
 	/* Get Input current limit */
-	i2c_read8(I2C_PORT_MP4245, MP4245_SLAVE_ADDR,
+	i2c_read8(I2C_PORT_MP4245, MP4245_I2C_ADDR_FLAGS,
 		   MP4245_CMD_MFR_CURRENT_LIM, &ilim);
 	ilim *= MP4245_ILIM_STEP_MA;
 
