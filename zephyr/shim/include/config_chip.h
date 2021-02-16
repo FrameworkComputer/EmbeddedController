@@ -1134,4 +1134,9 @@ enum battery_type {
 #define CONFIG_MPU
 #endif
 
+#undef CONFIG_CMD_SYSJUMP
+#ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_SYSJUMP
+#define CONFIG_CMD_SYSJUMP
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */
