@@ -92,7 +92,8 @@ int fan_rpm_to_percent(int fan, int rpm)
 		else if (rpm > max)
 			rpm = max;
 
-		pct = (rpm - min) / ((max - min) / 100);
+		/* make formula More in line with the actual-fan speed */
+		pct = (rpm - min) / ((F75303_FAN_MAX - min) / 100);
 		/*CPRINTS(" Fan max min : %d , %d", max, min);*/
 	}
 	/*CPRINTS(" Fan PCT = %d ", pct);*/
