@@ -2,15 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-description: Thermistor properties
+# Common properties for thermistors
 
 properties:
-    label:
-      required: true
-      type: string
-      description:
-        Human-readable string describing the device (used as
-        device_get_binding() argument)
     adc:
       required: true
       type: phandle

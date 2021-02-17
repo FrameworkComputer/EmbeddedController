@@ -226,3 +226,45 @@ char *strzcpy(char *dest, const char *src, int len)
 	*d = '\0';
 	return dest;
 }
+
+/* stateful conditional stuff */
+enum cond_internal_bits {
+	COND_CURR_MASK = BIT(0), /* current value */
+	COND_RISE_MASK = BIT(1), /* set if 0->1 */
+	COND_FALL_MASK = BIT(2), /* set if 1->0 */
+};
+
+void cond_set(cond_t *c, int val)
+{
+	if (val && cond_is(c, 0))
+		*c |= COND_RISE_MASK;
+	else if (!val && cond_is(c, 1))
+		*c |= COND_FALL_MASK;
+	if (val)
+		*c |= COND_CURR_MASK;
+	else
+		*c &= ~COND_CURR_MASK;
+}
+
+int cond_went(cond_t *c, int val)
+{
+	int ret;
+
+	if (val) {
+		ret = *c & COND_RISE_MASK;
+		*c &= ~COND_RISE_MASK;
+	} else {
+		ret = *c & COND_FALL_MASK;
+		*c &= ~COND_FALL_MASK;
+	}
+
+	return ret;
+}
+
+int cond_is(cond_t *c, int val)
+{
+	if (val)
+		return *c & COND_CURR_MASK;
+	else
+		return !(*c & COND_CURR_MASK);
+}

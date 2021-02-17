@@ -117,8 +117,6 @@ int console_command_temps(int argc, char **argv)
 		case EC_SUCCESS:
 			ccprintf("%d K = %d C", t, K_TO_C(t));
 #ifdef CONFIG_THROTTLE_AP
-#ifndef CONFIG_ZEPHYR
-/* TODO(b/179886912): Add thermal support */
 			if (thermal_params[i].temp_fan_off &&
 			    thermal_params[i].temp_fan_max)
 				ccprintf("  %d%%",
@@ -126,7 +124,6 @@ int console_command_temps(int argc, char **argv)
 						 thermal_params[i].temp_fan_off,
 						 thermal_params[i].temp_fan_max,
 						 t));
-#endif /* CONFIG_ZEPHYR */
 #endif
 			ccprintf("\n");
 			break;

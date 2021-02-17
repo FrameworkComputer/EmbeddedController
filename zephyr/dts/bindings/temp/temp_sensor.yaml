@@ -1,0 +1,79 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Common properties for temperature sensors
+# Zero values in degrees K(-273 in degrees C)in thermal thresholds will
+# be ignored
+
+properties:
+    label:
+      required: true
+      type: string
+      description:
+        Human-readable string describing the device (used as
+        device_get_binding() argument)
+
+    temp_fan_off:
+      required: false
+      type: int
+      default: -273
+      description:
+        Temperature threshold in degrees C when no active cooling
+        is needed
+
+    temp_fan_max:
+      required: false
+      type: int
+      default: -273
+      description:
+        Temperature threshold in degrees C when max active cooling
+        is needed
+
+    temp_host_warn:
+      required: false
+      type: int
+      default: -273
+      description:
+        Temperature threshold in degrees C of thermal warn.
+        Temperatures above the thermal warn threshold generate a
+        request to the AP to throttle itself.
+
+    temp_host_high:
+      required: false
+      type: int
+      default: -273
+      description:
+        Temperature threshold in degrees C of thermal high.
+        Temperatures above the thermal high threshold cause the EC to
+        assert a signal (usually PROCHOT) to the AP and force the AP to
+        throttle.
+
+    temp_host_halt:
+      required: false
+      type: int
+      default: -273
+      description:
+        Temperature threshold in degrees C that forces AP to shutdown
+        due to thermal reason
+
+    temp_host_release_warn:
+      required: false
+      type: int
+      default: -273
+      description:
+        Temperature release threshold in degrees C of thermal warn
+
+    temp_host_release_high:
+      required: false
+      type: int
+      default: -273
+      description:
+        Temperature release threshold in degrees C of thermal high
+
+    temp_host_release_halt:
+      required: false
+      type: int
+      default: -273
+      description:
+        Temperature release threshold in degrees C of thermal shutdown

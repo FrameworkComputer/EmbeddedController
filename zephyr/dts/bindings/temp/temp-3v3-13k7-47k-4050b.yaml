@@ -6,4 +6,4 @@ description: Thermistor 3v3-13k7-47k-4050b
 
 compatible: "temp-3v3-13k7-47k-4050b"
 
-include: thermistor.yaml
+include: [temp_sensor.yaml, thermistor.yaml]
