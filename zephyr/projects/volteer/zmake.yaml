@@ -6,12 +6,4 @@ board: volteer
 supported-zephyr-versions:
   - v2.4
 toolchain: coreboot-sdk
-
-# Note: below output type is not correct, but good enough for
-# developing right now.  We need to run ecst to pack the RO/RW binary
-# into the special NPCX format, but don't do that now.
-#
-# So, when flashing, please flash
-# build-singleimage/zephyr/zephyr_volteer.bin instead until Zmake
-# grows a configuration option to handle ecst.
-output-type: raw
+output-type: npcx

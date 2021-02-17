@@ -6,4 +6,4 @@ board: delbin
 supported-zephyr-versions:
   - v2.4
 toolchain: coreboot-sdk
-output-type: raw
+output-type: npcx
