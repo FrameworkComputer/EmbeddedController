@@ -235,13 +235,18 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 	const uint16_t pressed_key = *make_code;
 	uint8_t bl_brightness = 0;
 
-	if (pressed_key == SCANCODE_FN && pressed)
+	if (Fn_key & FN_LOCKED)
 		Fn_key |= FN_PRESSED;
-	else if (pressed_key == SCANCODE_FN && !pressed)
-		Fn_key &= ~FN_PRESSED;
+	else {
+		if (pressed_key == SCANCODE_FN && pressed)
+			Fn_key |= FN_PRESSED;
+		else if (pressed_key == SCANCODE_FN && !pressed)
+			Fn_key &= ~FN_PRESSED;
+	}
 
 	if (pressed_key == SCANCODE_FN && !factory_status())
 		return EC_ERROR_UNIMPLEMENTED;
+
 
 	if (!pressed)
 		return EC_SUCCESS;
@@ -255,6 +260,10 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 
 	switch (pressed_key) {
 	case SCANCODE_ESC: /* TODO: FUNCTION_LOCK */
+		if (Fn_key & FN_LOCKED)
+			Fn_key &= ~FN_LOCKED;
+		else
+			Fn_key |= FN_LOCKED;
 		break;
 	case SCANCODE_F1:  /* SPEAKER_MUTE */
 		*make_code = SCANCODE_VOLUME_MUTE;
@@ -267,28 +276,28 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 		*make_code = SCANCODE_VOLUME_UP;
 
 		break;
-	case SCANCODE_F4:  /* TODO: MIC_MUTE */
+	case SCANCODE_F4:  /* NEXT_TRACK */
+		*make_code = SCANCODE_NEXT_TRACK;
 
 		break;
 	case SCANCODE_F5:  /* PLAY_PAUSE */
-		*make_code = SCANCODE_PLAY_PAUSE;
+		*make_code = 0xe034;
 
 		break;
-	case SCANCODE_F6:  /* DIM_SCREEN */
-		*make_code = SCANCODE_BRIGHTNESS_DOWN;
+	case SCANCODE_F6:  /* PREVIOUS_TRACK */
+		*make_code = SCANCODE_PREV_TRACK;
 
 		break;
-	case SCANCODE_F7:  /* BRIGHTEN_SCREEN */
-		*make_code = SCANCODE_BRIGHTNESS_UP;
+	case SCANCODE_F7:  /* TODO: DIM_SCREEN */
 
 		break;
-	case SCANCODE_F8:  /* TODO: EXTERNAL_DISPLAY */
+	case SCANCODE_F8:  /* TODO: BRIGHTEN_SCREEN */
 
 		break;
-	case SCANCODE_F9:  /* TODO: TOGGLE_WIFI */
+	case SCANCODE_F9:  /* TODO: EXTERNAL_DISPLAY */
 
 		break;
-	case SCANCODE_F10:  /* TODO: TOGGLE_BLUETOOTH */
+	case SCANCODE_F10:  /* TODO: FLIGHT_MODE */
 
 		break;
 	case SCANCODE_F11:
@@ -301,11 +310,13 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 		*make_code = 0xE07C;
 		break;
 	case SCANCODE_F12:  /* TODO: FRAMEWORK */
-		*make_code = 0xE02F;
+		/* Media Select scan code */
+		*make_code = 0xE050;
 
 		break;
 	case SCANCODE_DELETE:  /* TODO: INSERT */
 		*make_code = 0xE070;
+
 		break;
 	case SCANCODE_B:
 			/* *
