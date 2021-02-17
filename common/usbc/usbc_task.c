@@ -24,6 +24,7 @@
 #include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_timer.h"
 #include "usb_prl_sm.h"
 #include "tcpm/tcpm.h"
 #include "usb_pe_sm.h"
@@ -97,6 +98,10 @@ static bool pd_task_loop(int port)
 						? USBC_PRIORITY_EVENT_TIMEOUT
 						: USBC_EVENT_TIMEOUT);
 
+	/* Manage expired PD Timers on timeouts */
+	if (evt & TASK_EVENT_TIMER)
+		pd_timer_manage_expired(port);
+
 	/*
 	 * Re-use TASK_EVENT_RESET_DONE in tests to restart the USB task
 	 * if this code is running in a unit test.
@@ -141,6 +146,7 @@ void pd_task(void *u)
 		return;
 
 	while (1) {
+		pd_timer_init(port);
 		pd_task_init(port);
 
 		/* As long as pd_task_loop returns true, keep running the loop.
