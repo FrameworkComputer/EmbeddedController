@@ -44,7 +44,7 @@ class ProjectConfig:
                 'type': 'array',
                 'items': {
                     'type': 'string',
-                    'enum': ['v2.4'],
+                    'enum': ['v2.4', 'v2.5'],
                 },
                 'minItems': 1,
                 'uniqueItems': True,
