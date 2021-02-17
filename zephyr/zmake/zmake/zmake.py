@@ -36,7 +36,19 @@ def ninja_log_level_override(line, default_log_level):
 
 
 class Zmake:
-    """Wrapper class encapsulating zmake's supported operations."""
+    """Wrapper class encapsulating zmake's supported operations.
+
+    The invocations of the constructor and the methods actually comes
+    from the main function.  The command line arguments are translated
+    such that dashes are replaced with underscores and applied as
+    keyword arguments to the constructor and the method, and the
+    subcommand invoked becomes the method run.
+
+    As such, you won't find documentation for each method's parameters
+    here, as it would be duplicate of the help strings from the
+    command line.  Run "zmake --help" for full documentation of each
+    parameter.
+    """
     def __init__(self, checkout=None, jobserver=None, jobs=0):
         self._checkout = checkout
 
