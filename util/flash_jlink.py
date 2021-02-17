@@ -71,7 +71,7 @@ def flash(jlink_exe, ip, device, interface, cmd_file):
         jlink_exe,
     ]
 
-    if len(ip) > 0:
+    if ip:
         cmd.extend(['-ip', ip])
 
     cmd.extend([
