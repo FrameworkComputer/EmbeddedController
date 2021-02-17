@@ -276,6 +276,7 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_POWER_DELIVERY
                                                 "${PLATFORM_EC}/common/usb_common.c"
                                                 "${PLATFORM_EC}/common/usbc/usbc_task.c"
+                                                "${PLATFORM_EC}/common/usbc/usb_pd_timer.c"
                                                 "${PLATFORM_EC}/common/usbc/usb_sm.c"
                                                 "${PLATFORM_EC}/common/usbc_intr_task.c")
 

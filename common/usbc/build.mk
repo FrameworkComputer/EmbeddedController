@@ -8,6 +8,7 @@
 _usbc_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
 
 ifneq ($(CONFIG_USB_PD_TCPMV2),)
+all-obj-$(CONFIG_USB_PD_TCPMV2)+=$(_usbc_dir)usb_pd_timer.o
 all-obj-$(CONFIG_USB_PD_TCPMV2)+=$(_usbc_dir)usb_sm.o
 all-obj-$(CONFIG_USB_PD_TCPMV2)+=$(_usbc_dir)usbc_task.o
 
