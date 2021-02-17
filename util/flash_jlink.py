@@ -49,8 +49,11 @@ ICETOWER_CONFIG = BoardConfig(interface=SWD_INTERFACE, device='STM32H743ZI',
 BOARD_CONFIGS = {
     'dragonclaw': DRAGONCLAW_CONFIG,
     'bloonchipper': DRAGONCLAW_CONFIG,
+    'nucleo-f412zg': DRAGONCLAW_CONFIG,
     'dartmonkey': ICETOWER_CONFIG,
     'icetower': ICETOWER_CONFIG,
+    'nucleo-dartmonkey': ICETOWER_CONFIG,
+    'nucleo-h743zi': ICETOWER_CONFIG,
 }
 
 
