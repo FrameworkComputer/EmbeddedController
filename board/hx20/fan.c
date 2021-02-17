@@ -92,7 +92,12 @@ int fan_rpm_to_percent(int fan, int rpm)
 		else if (rpm > max)
 			rpm = max;
 
-		pct = (rpm - min) / ((max - min) / 100);
+		/* make formula More in line with the actual-fan speed - 
+		 * Note that this will limit the fan % to about 94%
+		 * if we want a performance mode we can tweak this
+		 * to get a few more % of fan speed to unlock additional
+		 * cooling TODO FRAMEWORK */
+		pct = (rpm - min) / ((FAN_HARDARE_MAX - min) / 100);
 		/*CPRINTS(" Fan max min : %d , %d", max, min);*/
 	}
 	/*CPRINTS(" Fan PCT = %d ", pct);*/
