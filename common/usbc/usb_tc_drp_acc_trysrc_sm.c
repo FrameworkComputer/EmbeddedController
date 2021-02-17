@@ -404,13 +404,6 @@ static struct type_c {
 	uint32_t flags;
 	/* Time a port shall wait before it can determine it is attached */
 	uint64_t cc_debounce;
-#ifdef CONFIG_USB_PD_TRY_SRC
-	/*
-	 * Time a port shall wait before it can determine it is
-	 * re-attached during the try-wait process.
-	 */
-	uint64_t try_wait_debounce;
-#endif
 	/* The cc state */
 	enum pd_cc_states cc_state;
 	/* Generic timer */
@@ -3279,7 +3272,7 @@ static void tc_try_src_entry(const int port)
 	print_current_state(port);
 
 	tc[port].cc_state = PD_CC_UNSET;
-	tc[port].try_wait_debounce = get_time().val + PD_T_DRP_TRY;
+	pd_timer_enable(port, TC_TIMER_TRY_WAIT_DEBOUNCE, PD_T_DRP_TRY);
 	tc[port].timeout = get_time().val + PD_T_TRY_TIMEOUT;
 
 	/*
@@ -3331,12 +3324,17 @@ static void tc_try_src_run(const int port)
 	 * or after tTryTimeout and the SRC.Rd state has not been detected.
 	 */
 	if (new_cc_state == PD_CC_NONE) {
-		if ((get_time().val > tc[port].try_wait_debounce &&
+		if ((pd_timer_is_expired(port, TC_TIMER_TRY_WAIT_DEBOUNCE) &&
 		     pd_check_vbus_level(port, VBUS_SAFE0V)) ||
 		    get_time().val > tc[port].timeout) {
 			set_state_tc(port, TC_TRY_WAIT_SNK);
 		}
 	}
+}
+
+static void tc_try_src_exit(const int port)
+{
+	pd_timer_disable(port, TC_TIMER_TRY_WAIT_DEBOUNCE);
 }
 
 /**
@@ -3353,7 +3351,7 @@ static void tc_try_wait_snk_entry(const int port)
 
 	tc_enable_pd(port, 0);
 	tc[port].cc_state = PD_CC_UNSET;
-	tc[port].try_wait_debounce = get_time().val + PD_T_CC_DEBOUNCE;
+	pd_timer_enable(port, TC_TIMER_TRY_WAIT_DEBOUNCE, PD_T_CC_DEBOUNCE);
 
 	/*
 	 * We were a SNK, tried to be a SRC and it didn't work out. Try to
@@ -3403,7 +3401,7 @@ static void tc_try_wait_snk_run(const int port)
 	 * The port shall transition to Attached.SNK after tCCDebounce if or
 	 * when VBUS is detected.
 	 */
-	if (get_time().val > tc[port].try_wait_debounce &&
+	if (pd_timer_is_expired(port, TC_TIMER_TRY_WAIT_DEBOUNCE) &&
 	    pd_is_vbus_present(port))
 		set_state_tc(port, TC_ATTACHED_SNK);
 }
@@ -3411,6 +3409,7 @@ static void tc_try_wait_snk_run(const int port)
 static void tc_try_wait_snk_exit(const int port)
 {
 	pd_timer_disable(port, TC_TIMER_PD_DEBOUNCE);
+	pd_timer_disable(port, TC_TIMER_TRY_WAIT_DEBOUNCE);
 }
 #endif
 
@@ -3870,6 +3869,7 @@ static __const_data const struct usb_state tc_states[] = {
 	[TC_TRY_SRC] = {
 		.entry	= tc_try_src_entry,
 		.run	= tc_try_src_run,
+		.exit	= tc_try_src_exit,
 		.parent = &tc_states[TC_CC_RP],
 	},
 	[TC_TRY_WAIT_SNK] = {
