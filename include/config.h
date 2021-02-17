@@ -4756,6 +4756,12 @@
  */
 #undef CONFIG_USB_MUX_ANX7440
 
+/*
+ * Support the Analogix ANX7451 10G Active Mux (4x4) with
+ * Integrated Re-timers for USB3.2/DisplayPort
+ */
+#undef CONFIG_USB_MUX_ANX7451
+
 /* Support the ITE IT5205 Type-C USB alternate mode mux. */
 #undef CONFIG_USB_MUX_IT5205
 
