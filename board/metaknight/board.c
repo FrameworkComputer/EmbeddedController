@@ -102,41 +102,6 @@ static void usb_c0_interrupt(enum gpio_signal s)
 
 }
 
-/* C1 interrupt line shared by BC 1.2, TCPC, and charger */
-static void check_c1_line(void);
-DECLARE_DEFERRED(check_c1_line);
-
-static void notify_c1_chips(void)
-{
-	schedule_deferred_pd_interrupt(1);
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
-}
-
-static void check_c1_line(void)
-{
-	/*
-	 * If line is still being held low, see if there's more to process from
-	 * one of the chips.
-	 */
-	if (!gpio_get_level(GPIO_SUB_C1_INT_EN_RAILS_ODL)) {
-		notify_c1_chips();
-		hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
-	}
-}
-
-static void sub_usb_c1_interrupt(enum gpio_signal s)
-{
-	/* Cancel any previous calls to check the interrupt line */
-	hook_call_deferred(&check_c1_line_data, -1);
-
-	/* Notify all chips using this line that an interrupt came in */
-	notify_c1_chips();
-
-	/* Check the line again in 5ms */
-	hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
-
-}
-
 static void sub_hdmi_hpd_interrupt(enum gpio_signal s)
 {
 	int hdmi_hpd_odl = gpio_get_level(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL);
@@ -346,30 +311,17 @@ __override void board_power_5v_enable(int enable)
 	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
 		get_cbi_fw_config_db() == DB_LTE_HDMI) {
 		gpio_set_level(GPIO_SUB_C1_INT_EN_RAILS_ODL, !enable);
-	} else {
-		if (isl923x_set_comparator_inversion(1, !!enable))
-			CPRINTS("Failed to %sable sub rails!", enable ?
-								"en" : "dis");
 	}
-
 }
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {
-	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
-		get_cbi_fw_config_db() == DB_LTE_HDMI)
-		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
-	else
-		return CONFIG_USB_PD_PORT_MAX_COUNT;
+	return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
 
 __override uint8_t board_get_charger_chip_count(void)
 {
-	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
-		get_cbi_fw_config_db() == DB_LTE_HDMI)
-		return CHARGER_NUM - 1;
-	else
-		return CHARGER_NUM;
+	return CHARGER_NUM;
 }
 
 int board_is_sourcing_vbus(int port)
@@ -673,10 +625,6 @@ void board_init(void)
 		/* Set SDA as an input */
 		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL,
 			       GPIO_INPUT);
-
-		/* Enable C1 interrupts */
-		gpio_enable_interrupt(GPIO_SUB_C1_INT_EN_RAILS_ODL);
-		check_c1_line();
 	}
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
@@ -709,18 +657,6 @@ void board_init(void)
 
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
-__override void ocpc_get_pid_constants(int *kp, int *kp_div,
-				       int *ki, int *ki_div,
-				       int *kd, int *kd_div)
-{
-	*kp = 1;
-	*kp_div = 20;
-	*ki = 1;
-	*ki_div = 250;
-	*kd = 0;
-	*kd_div = 1;
-}
 
 int pd_snk_is_vbus_provided(int port)
 {

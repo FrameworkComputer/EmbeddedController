@@ -65,7 +65,7 @@
 #define GPIO_USB2_ILIM_SEL GPIO_USB_A1_CHARGE_EN_L
 
 /* USB PD */
-#define CONFIG_USB_PD_PORT_MAX_COUNT 2
+#define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_TCPM_RAA489000
 
 /* USB defines specific to external TCPCs */
@@ -155,7 +155,6 @@
 
 enum chg_id {
 	CHARGER_PRIMARY,
-	CHARGER_SECONDARY,
 	CHARGER_NUM,
 };
 
