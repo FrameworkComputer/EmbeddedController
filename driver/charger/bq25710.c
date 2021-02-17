@@ -675,7 +675,9 @@ const struct charger_drv bq25710_drv = {
 	.device_id = &bq25710_device_id,
 	.get_option = &bq25710_get_option,
 	.set_option = &bq25710_set_option,
+#ifdef CONFIG_CHARGE_RAMP_HW
 	.set_hw_ramp = &bq25710_set_hw_ramp,
 	.ramp_is_stable = &bq25710_ramp_is_stable,
 	.ramp_get_current_limit = &bq25710_ramp_get_current_limit,
+#endif /* CONFIG_CHARGE_RAMP_HW */
 };
