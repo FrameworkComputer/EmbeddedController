@@ -30,3 +30,8 @@ BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 const union brya_cbi_fw_config fw_config_defaults = {
 	.usb_db = DB_USB3_PS8815,
 };
+
+__override void board_cbi_init(void)
+{
+	config_usb_db_type();
+}
