@@ -100,6 +100,13 @@
  */
 /* #define CONFIG_FANS			FAN_CH_COUNT */
 
+/* Charger defines */
+#define CONFIG_CHARGER_BQ25720
+#define CONFIG_CHARGE_RAMP_SW
+#define CONFIG_CHARGER_NARROW_VDC
+#define CONFIG_CHARGER_SENSE_RESISTOR		10
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC	10
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"	/* needed by registers.h */
