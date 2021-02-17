@@ -98,6 +98,71 @@
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
 
+/* USB Type C and USB PD defines */
+/* Enable the new USB-C PD stack */
+#define CONFIG_USB_PD_TCPMV2
+#define CONFIG_USB_DRP_ACC_TRYSRC
+#define CONFIG_USB_PD_REV30
+
+#define CONFIG_CMD_HCDEBUG
+#define CONFIG_CMD_PPC_DUMP
+#define CONFIG_CMD_TCPC_DUMP
+
+#define CONFIG_USB_POWER_DELIVERY
+#define CONFIG_USB_PD_ALT_MODE
+#define CONFIG_USB_PD_ALT_MODE_DFP
+#define CONFIG_USB_PD_ALT_MODE_UFP
+#define CONFIG_USB_PD_DISCHARGE_PPC
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+#define CONFIG_USB_PD_TCPC_LOW_POWER
+#define CONFIG_USB_PD_TCPM_TCPCI
+#define CONFIG_USB_PD_TCPM_NCT38XX
+
+#define CONFIG_USB_PD_TCPM_MUX
+#define CONFIG_HOSTCMD_PD_CONTROL		/* Needed for TCPC FW update */
+#define CONFIG_CMD_USB_PD_PE
+
+/*
+ * The PS8815 TCPC was found to require a 50ms delay to consistently work
+ * with non-PD chargers.  Override the default low-power mode exit delay.
+ */
+#undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
+#define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE	(50*MSEC)
+
+/* Enable USB3.2 DRD */
+#define CONFIG_USB_PD_USB32_DRD
+
+#define CONFIG_USB_PD_TRY_SRC
+#define CONFIG_USB_PD_VBUS_DETECT_TCPC
+
+#define CONFIG_USBC_PPC
+/* Note - SN5S330 support automatically adds
+ * CONFIG_USBC_PPC_POLARITY
+ * CONFIG_USBC_PPC_SBU
+ * CONFIG_USBC_PPC_VCONN
+ */
+#define CONFIG_USBC_PPC_DEDICATED_INT
+
+#define CONFIG_USBC_SS_MUX
+#define CONFIG_USB_MUX_VIRTUAL
+
+#define CONFIG_USBC_VCONN
+#define CONFIG_USBC_VCONN_SWAP
+
+/* Enabling SOP* communication */
+#define CONFIG_CMD_USB_PD_CABLE
+#define CONFIG_USB_PD_DECODE_SOP
+
+/*
+ * USB ID
+ * This is allocated specifically for Brya
+ * http://google3/hardware/standards/usb/
+ */
+#define CONFIG_USB_PID 0x504F
+/* Device version of product. */
+#define CONFIG_USB_BCD_DEV 0x0000
+
 #ifndef __ASSEMBLER__
 
 #include <stdbool.h>
