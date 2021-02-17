@@ -15,6 +15,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_dpm.h"
+#include "usb_pd_timer.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
 #include "usb_sm.h"
@@ -409,11 +410,6 @@ static struct type_c {
 	 * the state definitions.
 	 */
 	uint64_t pd_debounce;
-	/*
-	 * Time to ignore Vbus absence due to external IC debounce detection
-	 * logic immediately after a power role swap.
-	 */
-	uint64_t vbus_debounce_time;
 #ifdef CONFIG_USB_PD_TRY_SRC
 	/*
 	 * Time a port shall wait before it can determine it is
@@ -617,7 +613,7 @@ void tc_request_power_swap(int port)
 			TC_SET_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS);
 
 			/* Let tc_pr_swap_complete start the Vbus debounce */
-			tc[port].vbus_debounce_time = TIMER_DISABLED;
+			pd_timer_disable(port, TC_TIMER_VBUS_DEBOUNCE);
 		}
 
 		/*
@@ -893,7 +889,7 @@ void tc_pr_swap_complete(int port, bool success)
 		 * Note: Swap in progress should not be cleared until the
 		 * debounce is completed.
 		 */
-		tc[port].vbus_debounce_time = get_time().val + PD_T_DEBOUNCE;
+		pd_timer_enable(port, TC_TIMER_VBUS_DEBOUNCE, PD_T_DEBOUNCE);
 	} else {
 		/* PR Swap is no longer in progress */
 		TC_CLR_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS);
@@ -2461,7 +2457,7 @@ static void tc_attached_snk_run(const int port)
 	 * Debounce Vbus before we drop that we are doing a PR_Swap
 	 */
 	if (TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS) &&
-	    tc[port].vbus_debounce_time < get_time().val) {
+	    pd_timer_is_expired(port, TC_TIMER_VBUS_DEBOUNCE)) {
 		/* PR Swap is no longer in progress */
 		TC_CLR_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS);
 
@@ -2615,6 +2611,8 @@ static void tc_attached_snk_exit(const int port)
 
 	if (TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER))
 		tcpm_debug_detach(port);
+
+	pd_timer_disable(port, TC_TIMER_VBUS_DEBOUNCE);
 }
 
 /**
