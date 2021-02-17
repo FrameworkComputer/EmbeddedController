@@ -116,10 +116,11 @@ int system_is_reboot_warm(void)
  */
 static void chip_periph_sleep_control(void)
 {
+#ifdef CONFIG_CHIPSET_DEBUG
 	uint32_t d;
 
 	d = MCHP_PCR_SLP_EN0_SLEEP;
-#ifdef CONFIG_CHIPSET_DEBUG
+
 	d &= ~(MCHP_PCR_SLP_EN0_JTAG);
 #ifdef CONFIG_MCHP_JTAG_MODE
 	MCHP_EC_JTAG_EN = CONFIG_MCHP_JTAG_MODE;
@@ -446,7 +447,7 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	 */
 	CPU_SCB_SYSCTRL |= 0x4;
 	MCHP_PCR_SYS_SLP_CTL = MCHP_PCR_SYS_SLP_HEAVY;
-	MCHP_PCR_SYS_SLP_CTL = MCHP_PCR_SYS_SLP_ALL;
+	MCHP_PCR_SYS_SLP_CTL |= MCHP_PCR_SYS_SLP_ALL;
 
 	asm("dsb");
 	asm("wfi");

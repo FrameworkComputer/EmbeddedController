@@ -75,8 +75,6 @@
 
 #define POWER_LIMIT_1_W	28
 
-static int forcing_shutdown;  /* Forced shutdown in progress? */
-
 #ifdef CONFIG_BOARD_PRE_INIT
 /*
  * Used to enable JTAG debug during development.
@@ -200,22 +198,6 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
-void chipset_handle_espi_reset_assert(void)
-{
-	/*
-	 * If eSPI_Reset# pin is asserted without SLP_SUS# being asserted, then
-	 * it means that there is an unexpected power loss (global reset
-	 * event). In this case, check if shutdown was being forced by pressing
-	 * power button. If yes, release power button.
-	 */
-	if ((power_get_signals() & IN_PCH_SLP_SUS_DEASSERTED) &&
-		forcing_shutdown) {
-		power_button_pch_release();
-		forcing_shutdown = 0;
-	}
-}
-
-
 #ifdef HAS_TASK_PDCMD
 /* Exchange status with PD MCU. */
 static void pd_mcu_interrupt(enum gpio_signal signal)
@@ -326,13 +308,8 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_LID_OPEN,
 	GPIO_POWER_BUTTON_L,
+	GPIO_AC_PRESENT,
 	GPIO_ON_OFF_BTN_L,
-	GPIO_TYPEC0_VBUS_ON_EC,
-	GPIO_TYPEC1_VBUS_ON_EC,
-	GPIO_TYPEC2_VBUS_ON_EC,
-	GPIO_TYPEC3_VBUS_ON_EC,
-	GPIO_EC_PD_INTA_L,
-	GPIO_EC_PD_INTB_L
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
