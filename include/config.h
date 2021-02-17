@@ -3077,6 +3077,9 @@
 /* For customer desgin to show port 80 on 7-segment */
 #undef CONFIG_CUSTOMER_PORT80
 
+/* For some OS image does not support power button scan code */
+#undef CONFIG_IGNORED_BTN_SCANCODE
+
 /* For customer boot from G3 */
 #undef CONFIG_CUSTOM_BOOT_G3
 

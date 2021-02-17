@@ -262,15 +262,12 @@ static void state_machine(uint64_t tnow)
 			set_pwrbtn_to_pch(0, 0);
 			power_button_enable_led(1);
 		} else {
-			if (power_button_pulse_enabled) {
-				/* Chipset is on, so send the chipset a pulse */
-				tnext_state = tnow + PWRBTN_DELAY_T0;
-				pwrbtn_state = PWRBTN_STATE_T0;
-				set_pwrbtn_to_pch(0, 0);
-			} else {
-				tnext_state = tnow + PWRBTN_DELAY_T1;
-				pwrbtn_state = PWRBTN_STATE_T1;
-			}
+			/* 
+			 * When chipset is on, 
+			 * we will send the SCI event to trigger modern standby.
+			 */
+			tnext_state = tnow + PWRBTN_DELAY_T1;
+			pwrbtn_state = PWRBTN_STATE_T1;
 		}
 		break;
 	case PWRBTN_STATE_T0:
