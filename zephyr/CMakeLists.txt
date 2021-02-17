@@ -148,6 +148,7 @@ add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
 # layer.
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/base32.c"
                                                 "${PLATFORM_EC}/common/console_output.c"
+                                                "${PLATFORM_EC}/common/gpio_commands.c"
                                                 "${PLATFORM_EC}/common/peripheral.c"
                                                 "${PLATFORM_EC}/common/printf.c"
                                                 "${PLATFORM_EC}/common/queue.c"
@@ -341,4 +342,3 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_VOLUME_BUTTONS
 
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_VSTORE  "${PLATFORM_EC}/common/vstore.c")
 
-zephyr_sources_ifdef(CONFIG_SHELL               "${PLATFORM_EC}/common/gpio_commands.c")
