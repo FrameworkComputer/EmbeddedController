@@ -307,6 +307,18 @@ __overridable uint8_t board_get_usb_pd_port_count(void)
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
 
+__overridable bool board_is_usb_pd_port_present(int port)
+{
+	/*
+	 * Use board_get_usb_pd_port_count() instead of checking
+	 * CONFIG_USB_PD_PORT_MAX_COUNT directly here for legacy boards
+	 * that implement board_get_usb_pd_port_count() but do not
+	 * implement board_is_usb_pd_port_present().
+	 */
+
+	return (port >= 0) && (port < board_get_usb_pd_port_count());
+}
+
 int pd_get_retry_count(int port, enum tcpm_transmit_type type)
 {
 	/* PD 3.0 6.7.7: nRetryCount = 2; PD 2.0 6.6.9: nRetryCount = 3 */

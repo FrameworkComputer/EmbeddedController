@@ -2899,6 +2899,15 @@ __override_proto uint8_t get_dp_pin_mode(int port);
  */
 __override_proto uint8_t board_get_usb_pd_port_count(void);
 
+/**
+ * Return true if specified PD port is present. This is similar to
+ * checking CONFIG_USB_PD_PORT_MAX_COUNT but handles sparse numbering.
+ *
+ * @param port USB-C port number
+ *
+ * @return true if port is present.
+ */
+__override_proto bool board_is_usb_pd_port_present(int port);
 
 /**
  * Resets external PD chips including TCPCs and MCUs.
