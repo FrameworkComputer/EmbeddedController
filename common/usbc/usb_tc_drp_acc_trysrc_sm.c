@@ -423,10 +423,6 @@ static struct type_c {
 	uint64_t next_role_swap;
 	/* Generic timer */
 	uint64_t timeout;
-	/* Time to enter low power mode */
-	uint64_t low_power_time;
-	/* Time to debounce exit low power mode */
-	uint64_t low_power_exit_time;
 	/* Tasks to notify after TCPC has been reset */
 	int tasks_waiting_on_reset;
 	/* Tasks preventing TCPC from entering low power mode */
@@ -1649,7 +1645,10 @@ static void print_current_state(const int port)
 
 static void handle_device_access(int port)
 {
-	tc[port].low_power_time = get_time().val + PD_LPM_DEBOUNCE_US;
+	if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER) &&
+	    get_state_tc(port) == TC_LOW_POWER_MODE)
+		pd_timer_enable(port, TC_TIMER_LOW_POWER_TIME,
+				PD_LPM_DEBOUNCE_US);
 }
 
 void tc_event_check(int port, int evt)
@@ -3216,8 +3215,7 @@ __maybe_unused static void tc_low_power_mode_entry(const int port)
 		assert(0);
 
 	print_current_state(port);
-	tc[port].low_power_time = get_time().val + PD_LPM_DEBOUNCE_US;
-	tc[port].low_power_exit_time = 0;
+	pd_timer_enable(port, TC_TIMER_LOW_POWER_TIME, PD_LPM_DEBOUNCE_US);
 }
 
 __maybe_unused static void tc_low_power_mode_run(const int port)
@@ -3226,13 +3224,12 @@ __maybe_unused static void tc_low_power_mode_run(const int port)
 		assert(0);
 
 	if (TC_CHK_FLAG(port, TC_FLAGS_CHECK_CONNECTION)) {
-		uint64_t now = get_time().val;
-
 		tc_start_event_loop(port);
-		if (tc[port].low_power_exit_time == 0) {
-			tc[port].low_power_exit_time = now
-				+ PD_LPM_EXIT_DEBOUNCE_US;
-		} else if (now > tc[port].low_power_exit_time) {
+		if (pd_timer_is_disabled(port, TC_TIMER_LOW_POWER_EXIT_TIME)) {
+			pd_timer_enable(port, TC_TIMER_LOW_POWER_EXIT_TIME,
+					PD_LPM_EXIT_DEBOUNCE_US);
+		} else if (pd_timer_is_expired(port,
+					       TC_TIMER_LOW_POWER_EXIT_TIME)) {
 			CPRINTS("C%d: Exit Low Power Mode", port);
 			check_drp_connection(port);
 		}
@@ -3240,9 +3237,10 @@ __maybe_unused static void tc_low_power_mode_run(const int port)
 	}
 
 	if (tc[port].tasks_preventing_lpm)
-		tc[port].low_power_time = get_time().val + PD_LPM_DEBOUNCE_US;
+		pd_timer_enable(port, TC_TIMER_LOW_POWER_TIME,
+				PD_LPM_DEBOUNCE_US);
 
-	if (get_time().val > tc[port].low_power_time) {
+	if (pd_timer_is_expired(port, TC_TIMER_LOW_POWER_TIME)) {
 		CPRINTS("C%d: TCPC Enter Low Power Mode", port);
 		TC_SET_FLAG(port, TC_FLAGS_LPM_ENGAGED);
 		TC_SET_FLAG(port, TC_FLAGS_LPM_TRANSITION);
@@ -3250,10 +3248,15 @@ __maybe_unused static void tc_low_power_mode_run(const int port)
 		TC_CLR_FLAG(port, TC_FLAGS_LPM_TRANSITION);
 		tc_pause_event_loop(port);
 
-		tc[port].low_power_exit_time = 0;
+		pd_timer_disable(port, TC_TIMER_LOW_POWER_EXIT_TIME);
 	}
 }
 
+__maybe_unused static void tc_low_power_mode_exit(const int port)
+{
+	pd_timer_disable(port, TC_TIMER_LOW_POWER_TIME);
+	pd_timer_disable(port, TC_TIMER_LOW_POWER_EXIT_TIME);
+}
 
 /**
  * Try.SRC
@@ -3870,6 +3873,7 @@ static __const_data const struct usb_state tc_states[] = {
 	[TC_LOW_POWER_MODE] = {
 		.entry = tc_low_power_mode_entry,
 		.run   = tc_low_power_mode_run,
+		.exit  = tc_low_power_mode_exit,
 	},
 #endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
 #ifdef CONFIG_USB_PE_SM
