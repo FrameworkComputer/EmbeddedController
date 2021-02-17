@@ -110,4 +110,6 @@ int nb7v904m_tune_usb_set_eq(const struct usb_mux *me, uint8_t eq_a,
 #define NB7V904M_CH_ALL_SKIP_GAIN	0xff
 int nb7v904m_tune_usb_flat_gain(const struct usb_mux *me, uint8_t gain_a,
 			uint8_t gain_b, uint8_t gain_c, uint8_t gain_d);
+/* Control mapping between AUX and SBU */
+int nb7v904m_set_aux_ch_switch(const struct usb_mux *me, uint8_t aux_ch);
 #endif /* __CROS_EC_USB_REDRIVER_NB7V904M_H */

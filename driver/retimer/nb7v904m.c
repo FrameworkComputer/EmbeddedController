@@ -108,6 +108,15 @@ int nb7v904m_tune_usb_flat_gain(const struct usb_mux *me, uint8_t gain_a,
 	return rv;
 }
 
+/* Set AUX control switch */
+int nb7v904m_set_aux_ch_switch(const struct usb_mux *me, uint8_t aux_ch)
+{
+	int rv = EC_SUCCESS;
+
+	rv = nb7v904m_write(me, NB7V904M_REG_AUX_CH_CTRL, aux_ch);
+	return rv;
+}
+
 static int nb7v904m_init(const struct usb_mux *me)
 {
 	int rv = set_low_power_mode(me, 0);
