@@ -95,5 +95,3 @@ const char *system_get_chip_revision(void)
 {
 	return "";
 }
-
-const void *__image_size;
