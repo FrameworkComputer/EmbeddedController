@@ -81,7 +81,7 @@ class Zmake:
         zephyr_base = zephyr_base.resolve()
 
         if not module_paths:
-            module_paths = zmake.modules.locate_modules(self.checkout, version)
+            module_paths = zmake.modules.locate_modules(self.checkout)
 
         # Resolve build_dir if needed.
         build_dir = util.resolve_build_dir(
@@ -284,7 +284,7 @@ class Zmake:
 
     def testall(self, fail_fast=False):
         """Test all the valid test targets"""
-        modules = zmake.modules.locate_modules(self.checkout, version=None)
+        modules = zmake.modules.locate_modules(self.checkout)
         root_dirs = [modules['ec-shim'] / 'zephyr']
         project_dirs = []
         for root_dir in root_dirs:
@@ -320,5 +320,4 @@ class Zmake:
     @property
     def platform_ec_dir(self):
         return zmake.modules.locate_modules(
-            checkout_dir=self.checkout,
-            version=None)['ec-shim']
+            checkout_dir=self.checkout)['ec-shim']

@@ -10,37 +10,35 @@ import zmake.build_config as build_config
 import zmake.util as util
 
 
-def third_party_module(name, checkout, version):
+def third_party_module(name, checkout):
     """Common callback in registry for all third_party/zephyr modules.
 
     Args:
         name: The name of the module.
         checkout: The path to the chromiumos source.
-        version: The zephyr version.
 
     Return:
         The path to the module module.
     """
-    if not version or len(version) < 2:
-        return None
-    return checkout / 'src' / 'third_party' / 'zephyr' / name / 'v{}.{}'.format(
-        version[0], version[1])
+    # TODO(b/180531609): version "v2.5" below is a misnomer, as these
+    # modules are actually compatible with all kernel versions.  Drop
+    # v2.5 from the manifest checkout path and remove it from here.
+    return checkout / 'src' / 'third_party' / 'zephyr' / name / 'v2.5'
 
 
 known_modules = {
     'hal_stm32': third_party_module,
     'cmsis': third_party_module,
-    'ec-shim': lambda name, checkout, version: (
+    'ec-shim': lambda name, checkout: (
         checkout / 'src' / 'platform' / 'ec'),
 }
 
 
-def locate_modules(checkout_dir, version, modules=known_modules):
+def locate_modules(checkout_dir, modules=known_modules):
     """Resolve module locations from a known_modules dictionary.
 
     Args:
         checkout_dir: The path to the chromiumos source.
-        version: The zephyr version, as a two or three tuple of ints.
         modules: The known_modules dictionary to use for resolution.
 
     Returns:
@@ -48,7 +46,7 @@ def locate_modules(checkout_dir, version, modules=known_modules):
     """
     result = {}
     for name, locator in known_modules.items():
-        result[name] = locator(name, checkout_dir, version)
+        result[name] = locator(name, checkout_dir)
     return result
 
 
