@@ -183,6 +183,18 @@ int cypd_write_reg8(int controller, int reg, int data)
 	return rv;
 }
 
+int cypd_read_reg_block(int controller, int reg, uint8_t *data, int len)
+{
+	int rv;
+	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
+	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
+
+	rv = i2c_read_offset16_block(i2c_port, addr_flags, reg, data, len);
+	if (rv != EC_SUCCESS)
+		CPRINTS("%s failed: ctrl=0x%x, reg=0x%02x", __func__, controller, reg);
+	return rv;
+}
+
 int cypd_read_reg16(int controller, int reg, int *data)
 {
 	int rv;
@@ -352,16 +364,14 @@ void cyp5525_get_sink_power(int controller, int port)
 	uint8_t data2[4];
 	int active_current = 0;
 	int active_voltage = 0;
-	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
-	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
 	int port_idx = (controller << 1) + port;
 
-	rv = i2c_read_offset16_block(i2c_port, addr_flags, CYP5525_PD_STATUS_REG(port), data2, 4);
+	rv = cypd_read_reg_block(controller, CYP5525_PD_STATUS_REG(port), data2, 4);
 	if (rv != EC_SUCCESS)
 		CPRINTS("CYP5525_PD_STATUS_REG failed");
 
 	if ((data2[1] & CYP5525_PD_CONTRACT_STATE) == CYP5525_PD_CONTRACT_STATE) {
-		rv = i2c_read_offset16_block(i2c_port, addr_flags, CYP5525_CURRENT_PDO_REG(port), data2, 4);
+		rv = cypd_read_reg_block(controller, CYP5525_CURRENT_PDO_REG(port), data2, 4);
 		active_current = (data2[0] + ((data2[1] & 0x3) << 8)) * 10;
 		active_voltage = (((data2[1] & 0xFC) >> 2) + ((data2[2] & 0xF) << 6)) * 50;
 		CPRINTS("C%d, current:%d mA, voltage:%d mV", port_idx, active_current, active_voltage);
@@ -1048,6 +1058,7 @@ void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int le
 static int cmd_cypd_get_status(int argc, char **argv)
 {
 	int i, p, data;
+	uint8_t data4[4];
 	char *e;
 
 	static const char * const mode[] = {"Boot", "FW1", "FW2", "Invald"};
@@ -1100,6 +1111,12 @@ static int cmd_cypd_get_status(int argc, char **argv)
 			CPRINTS("CYPD_SYS_PWR_STATE: 0x%02x", data);
 			for (p = 0; p < 2; p++) {
 				CPRINTS("=====Port %d======", p);
+				cypd_read_reg_block(i, CYP5525_PD_STATUS_REG(p), data4, 4);
+				CPRINTS("PD_STATUS %s DataRole:%s PowerRole:%s Vconn:%s",
+						data4[1] & BIT(2) ? "Contract" : "NoContract",
+						data4[0] & BIT(6) ? "DFP" : "UFP",
+						data4[1] & BIT(0) ? "Source" : "Sink",
+						data4[1] & BIT(5) ? "En" : "Dis");
 				cypd_read_reg8(i, CYP5525_TYPE_C_STATUS_REG(p), &data);
 				CPRINTS("   TYPE_C_STATUS : %s %s %s %s %s",
 							data & 0x1 ? "Connected" : "Not Connected",
@@ -1135,33 +1152,48 @@ static int cmd_cypd_control(int argc, char **argv)
 	int i, enable;
 	char *e;
 
-	if (argc >= 2) {
-		if (!strncmp(argv[1], "int", 3)) {
-			if (argc == 4) {
-				i = strtoi(argv[2], &e, 0);
-				if (*e || i >= PD_CHIP_COUNT)
-					return EC_ERROR_PARAM1;
+	if (argc == 3) {
+		i = strtoi(argv[2], &e, 0);
+		if (*e || i >= PD_CHIP_COUNT)
+			return EC_ERROR_PARAM2;
 
-				if (!parse_bool(argv[3], &enable))
-					return EC_ERROR_PARAM2;
-
-				if (enable)
-					gpio_enable_interrupt(pd_chip_config[i].gpio);
-				else
-					gpio_disable_interrupt(pd_chip_config[i].gpio);
-
+		if (!strncmp(argv[1], "en", 2) || !strncmp(argv[1], "dis", 3)) {
+			if (!parse_bool(argv[1], &enable))
+				return EC_ERROR_PARAM1;
+			if (enable)
+				gpio_enable_interrupt(pd_chip_config[i].gpio);
+			else
+				gpio_disable_interrupt(pd_chip_config[i].gpio);
+		} else if (!strncmp(argv[1], "reset", 5)) {
+			cypd_write_reg8(i, CYP5525_PDPORT_ENABLE_REG, 0);
+			/*can take up to 650ms to discharge port for disable*/
+			cyp5225_wait_for_ack(i, 65000);
+			cypd_clear_int(i, CYP5525_DEV_INTR +
+							CYP5525_PORT0_INTR +
+							CYP5525_PORT1_INTR +
+							CYP5525_UCSI_INTR);
+			usleep(50);
+			CPRINTS("Full reset PD controller %d", i);
+			/*
+			 * see if we can talk to the PD chip yet - issue a reset command
+			 * Note that we cannot issue a full reset command if the PD controller
+			 * has a device attached - as it will return with an invalid command
+			 * due to needing to disable all ports first.
+			 */
+			if (cyp5525_reset(i) == EC_SUCCESS) {
+				CPRINTS("reset ok %d", i);
 			}
-		}
-
-		if (!strncmp(argv[1], "clear", 3)) {
-			if (argc == 3) {
-				i = strtoi(argv[2], &e, 0);
-				cypd_clear_int(i, CYP5525_DEV_INTR+CYP5525_PORT0_INTR+CYP5525_PORT1_INTR+CYP5525_UCSI_INTR);
-			}
+		} else if (!strncmp(argv[1], "clearint", 8)) {
+			cypd_clear_int(i, CYP5525_DEV_INTR +
+							CYP5525_PORT0_INTR +
+							CYP5525_PORT1_INTR +
+							CYP5525_UCSI_INTR);
+		} else {
+			return EC_ERROR_PARAM1;
 		}
 	}
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(cypdctl, cmd_cypd_control,
-			"int [controller] [enable/disable]\nclear [controller]",
+			"[enable/disable/reset/clearint] [controller] ",
 			"Set if handling is active for controller");
