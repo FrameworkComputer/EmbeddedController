@@ -332,6 +332,14 @@ void tc_start_event_loop(int port);
 void tc_pause_event_loop(int port);
 
 /**
+ * Determine if the state machine event loop is paused
+ *
+ * @param port USB-C port number
+ * @return true if paused, else false
+ */
+bool tc_event_loop_is_paused(int port);
+
+/**
  * Increase the frequency of waking the event loop for high priority cases
  *
  * @param port USB-C port number

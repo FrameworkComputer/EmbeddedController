@@ -9,6 +9,7 @@
 #include "limits.h"
 #include "system.h"
 #include "usb_pd_timer.h"
+#include "usb_tc_sm.h"
 
 #define MAX_PD_PORTS	CONFIG_USB_PD_PORT_MAX_COUNT
 #define MAX_PD_TIMERS	PD_TIMER_COUNT
@@ -227,8 +228,11 @@ void pd_timer_dump(int port)
 			if (now < timer_expires[port][timer])
 				delta = timer_expires[port][timer] - now;
 
-			ccprints("[%2d] Active:   %s (%d)",
-				timer, pd_timer_names[timer], (uint32_t)delta);
+			ccprints("[%2d] Active:   %s (%d%s)",
+				timer, pd_timer_names[timer], (uint32_t)delta,
+				tc_event_loop_is_paused(port)
+					? "-PAUSED"
+					: "");
 		} else {
 			ccprints("[%2d] Inactive: %s",
 				timer, pd_timer_names[timer]);

@@ -46,6 +46,11 @@ void tc_pause_event_loop(int port)
 	paused[port] = 1;
 }
 
+bool tc_event_loop_is_paused(int port)
+{
+	return paused[port];
+}
+
 /*
  * TODO(b/178029034): Change this to allow for multiple timers that can be
  * used as events to wake us up instead of having either a set 5ms loop or
