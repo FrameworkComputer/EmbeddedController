@@ -91,6 +91,8 @@ void battery_customize(struct charge_state_data *emi_info)
 	char *str = "LION";
 	int value;
 	int new_btp;
+	int battery_percentage;
+	static int update_battery = 1;
 	static int batt_state;
 
 	*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_AVER_TEMP) = 
@@ -122,7 +124,7 @@ void battery_customize(struct charge_state_data *emi_info)
 		{
 			old_btp = new_btp;
 			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
-			ccprintf ("trigger higher BTP: %d", old_btp);
+			ccprintf("trigger higher BTP: %d\n", old_btp);
 		}
 	} else if (new_btp < old_btp && !battery_is_cut_off())
 	{
@@ -130,8 +132,24 @@ void battery_customize(struct charge_state_data *emi_info)
 		{
 			old_btp = new_btp;
 			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
-			ccprintf ("trigger lower BTP: %d", old_btp);
+			ccprintf("trigger lower BTP: %d\n", old_btp);
 		}
+	}
+
+	battery_percentage =
+		 ((emi_info->batt.remaining_capacity * 1000) / emi_info->batt.full_capacity);
+
+	if ((battery_percentage > 954) && update_battery) {
+		/**
+		 * Current BTP design can't update battery percentage immediately,
+		 * we need to update the battery info when battery is near full
+		 */
+		ccprintf("Update battery percentage because near full!\n");
+		host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
+		update_battery = 0;
+	} else if (battery_percentage <= 954) {
+		/* enable the flag when battery discharge less than 95.6% */
+		update_battery = 1;
 	}
 
 	/*
