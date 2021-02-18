@@ -21,8 +21,3 @@ void software_panic(uint32_t reason, uint32_t info)
 		: : "r"(info), "r"(reason));
 	__builtin_unreachable();
 }
-
-void arch_panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
-{
-	/* No cortex-m architecture specific logic. */
-}

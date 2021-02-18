@@ -124,4 +124,10 @@ void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 		*exception = *reason = *info = 0;
 	}
 }
+
+__overridable void arch_panic_set_reason(uint32_t reason, uint32_t info,
+					 uint8_t exception)
+{
+	/* Default implementation, do nothing. */
+}
 #endif /* CONFIG_PLATFORM_EC_SOFTWARE_PANIC */

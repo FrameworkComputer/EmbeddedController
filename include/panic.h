@@ -198,7 +198,8 @@ void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception);
  * Zephyr utility for architecture specific logic to run when setting panic
  * reason.
  */
-void arch_panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception);
+__override_proto void arch_panic_set_reason(uint32_t reason, uint32_t info,
+					    uint8_t exception);
 #endif /* CONFIG_ZEPHYR */
 #endif /* CONFIG_SOFTWARE_PANIC */
 
