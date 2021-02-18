@@ -181,11 +181,6 @@ static void set_active_port_color(int color)
 static void led_set_battery(void)
 {
 	static int battery_ticks;
-	int display_battery_percentage;
-	int memmap_cap = *host_get_memmap(EC_MEMMAP_BATT_CAP) +
-		(*host_get_memmap(EC_MEMMAP_BATT_CAP + 1) << 8);
-	int memmap_lfcc = *host_get_memmap(EC_MEMMAP_BATT_LFCC) +
-		(*host_get_memmap(EC_MEMMAP_BATT_LFCC + 1) << 8);
 	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
@@ -209,11 +204,7 @@ static void led_set_battery(void)
 				EC_LED_COLOR_WHITE : -1);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
-		display_battery_percentage = (memmap_cap * 1000) / memmap_lfcc;
-		if (display_battery_percentage > 954)
-			set_active_port_color(EC_LED_COLOR_WHITE);
-		else
-			set_active_port_color(EC_LED_COLOR_AMBER);
+		set_active_port_color(EC_LED_COLOR_WHITE);
 		break;
 	case PWR_STATE_IDLE:
 		if (chflags & CHARGE_FLAG_FORCE_IDLE)
