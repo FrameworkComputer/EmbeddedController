@@ -229,6 +229,13 @@ void board_kblight_init(void)
 #define FN_LOCKED BIT(1)
 static uint8_t Fn_key;
 
+void Fnkey_shutdown(void) {
+	Fn_key &= ~FN_LOCKED;
+	Fn_key &= ~FN_PRESSED;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, Fnkey_shutdown, HOOK_PRIO_DEFAULT);
+
+
 enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 					      int8_t pressed)
 {
@@ -318,6 +325,12 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 		*make_code = 0xE050;
 
 		break;
+	}
+
+	if (Fn_key & FN_LOCKED)
+		return EC_SUCCESS;
+
+	switch (pressed_key) {
 	case SCANCODE_DELETE:  /* TODO: INSERT */
 		*make_code = 0xE070;
 
@@ -386,6 +399,7 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 		*make_code = 0xE07A;
 		break;
 	}
+
 	return EC_SUCCESS;
 }
 #endif
