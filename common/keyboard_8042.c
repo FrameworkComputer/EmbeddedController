@@ -1031,6 +1031,39 @@ test_mockable void keyboard_update_button(enum keyboard_button_type button,
 	}
 }
 
+#ifdef CONFIG_SIMULATE_KEYCODE
+void simulate_keyboard(uint16_t scancode, int is_pressed)
+{
+	uint8_t scan_code[MAX_SCAN_CODE_LEN];
+	uint32_t len;
+	enum scancode_set_list code_set;
+
+	/*
+	 * Only send the scan code if main chipset is fully awake and
+	 * keystrokes are enabled.
+	 */
+	if (!chipset_in_state(CHIPSET_STATE_ON) || !keystroke_enabled)
+		return;
+
+	code_set = acting_code_set(scancode_set);
+	if (!is_supported_code_set(code_set))
+		return;
+
+	scancode_bytes(scancode, is_pressed, code_set, scan_code,
+		       &len);
+	ASSERT(len > 0);
+
+	if (is_pressed)
+		set_typematic_key(scan_code, len);
+	else
+		clear_typematic_key();
+
+	if (keystroke_enabled) {
+		i8042_send_to_host(len, scan_code, CHAN_KBD);
+		task_wake(TASK_ID_KEYPROTO);
+	}
+}
+#endif
 /*****************************************************************************/
 /* Console commands */
 #ifdef CONFIG_CMD_KEYBOARD
