@@ -25,6 +25,7 @@
 #include "usb_pd_dpm.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usb_pd_timer.h"
 #include "usb_pe_sm.h"
 #include "usb_tbt_alt_mode.h"
 #include "usb_prl_sm.h"
@@ -603,13 +604,6 @@ static struct policy_engine {
 	 * Source_Capabilities Message.
 	 */
 	uint64_t source_cap_timer;
-
-	/*
-	 * This timer is started when a request for a new Capability has been
-	 * accepted and will timeout after PD_T_PS_TRANSITION if a PS_RDY
-	 * Message has not been received.
-	 */
-	uint64_t ps_transition_timer;
 
 	/*
 	 * This timer is used to ensure that a Message requesting a response
@@ -3282,7 +3276,7 @@ static void pe_snk_transition_sink_entry(int port)
 	print_current_state(port);
 
 	/* Initialize and run PSTransitionTimer */
-	pe[port].ps_transition_timer = get_time().val + PD_T_PS_TRANSITION;
+	pd_timer_enable(port, PE_TIMER_PS_TRANSITION, PD_T_PS_TRANSITION);
 }
 
 static void pe_snk_transition_sink_run(int port)
@@ -3329,20 +3323,20 @@ static void pe_snk_transition_sink_run(int port)
 							*pd_get_snk_caps(port));
 
 			set_state_pe(port, PE_SNK_READY);
-			return;
+		} else {
+			/*
+			 * Protocol Error
+			 */
+			set_state_pe(port, PE_SNK_HARD_RESET);
 		}
-
-		/*
-		 * Protocol Error
-		 */
-		set_state_pe(port, PE_SNK_HARD_RESET);
+		return;
 	}
 
 	/*
 	 * Timeout will lead to a Hard Reset
 	 */
-	if (get_time().val > pe[port].ps_transition_timer &&
-			pe[port].hard_reset_counter <= N_HARD_RESET_COUNT) {
+	if (pd_timer_is_expired(port, PE_TIMER_PS_TRANSITION) &&
+	    pe[port].hard_reset_counter <= N_HARD_RESET_COUNT) {
 		PE_SET_FLAG(port, PE_FLAGS_PS_TRANSITION_TIMEOUT);
 
 		set_state_pe(port, PE_SNK_HARD_RESET);
@@ -3359,6 +3353,8 @@ static void pe_snk_transition_sink_exit(int port)
 		/* Set ceiling based on what's negotiated */
 		charge_manager_set_ceil(port,
 				CEIL_REQUESTOR_PD, pe[port].curr_limit);
+
+	pd_timer_disable(port, PE_TIMER_PS_TRANSITION);
 }
 
 
