@@ -34,7 +34,7 @@
 #include "usbc_ppc.h"
 
 #define USBC_EVENT_TIMEOUT (5 * MSEC)
-#define USBC_PRIORITY_EVENT_TIMEOUT (1 * MSEC)
+#define USBC_MIN_EVENT_TIMEOUT (1 * MSEC)
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
@@ -49,18 +49,6 @@ void tc_pause_event_loop(int port)
 bool tc_event_loop_is_paused(int port)
 {
 	return paused[port];
-}
-
-/*
- * TODO(b/178029034): Change this to allow for multiple timers that can be
- * used as events to wake us up instead of having either a set 5ms loop or
- * a high priority 1ms loop. The bug has more detail on ideas on how to
- * adjust to make this more reactive
- */
-static uint8_t priority[CONFIG_USB_PD_PORT_MAX_COUNT];
-void tc_high_priority_event(int port, bool high_pri)
-{
-	priority[port] = high_pri;
 }
 
 void tc_start_event_loop(int port)
@@ -80,7 +68,6 @@ static void pd_task_init(int port)
 	if (IS_ENABLED(CONFIG_USB_TYPEC_SM))
 		tc_state_init(port);
 	paused[port] = 0;
-	priority[port] = 0;
 
 	/*
 	 * Since most boards configure the TCPC interrupt as edge
@@ -93,15 +80,26 @@ static void pd_task_init(int port)
 		schedule_deferred_pd_interrupt(port);
 }
 
+static int pd_task_timeout(int port)
+{
+	int timeout;
+
+	if (paused[port])
+		timeout = -1;
+	else {
+		timeout = pd_timer_next_expiration(port);
+		if (timeout < 0 || timeout > USBC_EVENT_TIMEOUT)
+			timeout = USBC_EVENT_TIMEOUT;
+		else if (timeout < USBC_MIN_EVENT_TIMEOUT)
+			timeout = USBC_MIN_EVENT_TIMEOUT;
+	}
+	return timeout;
+}
+
 static bool pd_task_loop(int port)
 {
 	/* wait for next event/packet or timeout expiration */
-	const uint32_t evt =
-		task_wait_event(paused[port]
-					? -1
-					: priority[port]
-						? USBC_PRIORITY_EVENT_TIMEOUT
-						: USBC_EVENT_TIMEOUT);
+	const uint32_t evt = task_wait_event(pd_task_timeout(port));
 
 	/* Manage expired PD Timers on timeouts */
 	if (evt & TASK_EVENT_TIMER)
