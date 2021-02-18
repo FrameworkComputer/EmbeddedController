@@ -612,13 +612,6 @@ static struct policy_engine {
 	uint64_t discover_identity_timer;
 
 	/*
-	 * This timer is used to ensure that the time before the next Sink
-	 * Request Message, after a Wait Message has been received from the
-	 * Source in response to a Sink Request Message.
-	 */
-	uint64_t sink_request_timer;
-
-	/*
 	 * This timer tracks the time after receiving a Wait message in response
 	 * to a PR_Swap message.
 	 */
@@ -3332,18 +3325,21 @@ static void pe_snk_ready_entry(int port)
 	pe[port].dpm_curr_request = 0;
 
 	/*
+	 * TODO(b:181343741) The PE_TIMER_SINK_REQUEST should not be disabled
+	 * and re-enabled on transition to/from SNK_READY unless this is the
+	 * initial time in.  Leaving for a message or other normal handling
+	 * should not reset the timer
+	 */
+	/*
 	 * On entry to the PE_SNK_Ready state as the result of a wait,
 	 * then do the following:
 	 *   1) Initialize and run the SinkRequestTimer
 	 */
 	if (PE_CHK_FLAG(port, PE_FLAGS_WAIT)) {
 		PE_CLR_FLAG(port, PE_FLAGS_WAIT);
-		pe[port].sink_request_timer =
-				get_time().val + PD_T_SINK_REQUEST;
-	} else {
-		pe[port].sink_request_timer = TIMER_DISABLED;
+		pd_timer_enable(port, PE_TIMER_SINK_REQUEST,
+				PD_T_SINK_REQUEST);
 	}
-
 	/*
 	 * Wait and add jitter if we are operating in PD2.0 mode and no messages
 	 * have been sent since enter this state.
@@ -3488,7 +3484,7 @@ static void pe_snk_ready_run(int port)
 		PE_CLR_FLAG(port, PE_FLAGS_FIRST_MSG);
 		pd_timer_disable(port, PE_TIMER_WAIT_AND_ADD_JITTER);
 
-		if (get_time().val > pe[port].sink_request_timer) {
+		if (pd_timer_is_expired(port, PE_TIMER_SINK_REQUEST)) {
 			set_state_pe(port, PE_SNK_SELECT_CAPABILITY);
 			return;
 		}
@@ -3514,6 +3510,7 @@ static void pe_snk_ready_run(int port)
 
 static void pe_snk_ready_exit(int port)
 {
+	pd_timer_disable(port, PE_TIMER_SINK_REQUEST);
 	pd_timer_disable(port, PE_TIMER_WAIT_AND_ADD_JITTER);
 }
 
