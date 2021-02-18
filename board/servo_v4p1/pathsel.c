@@ -26,8 +26,7 @@ void init_pathsel(void)
 	usb3_a0_mux_en_l(0);
 
 	/* Enable power */
-	if (board_id_det() <= BOARD_ID_REV1)
-		ec_usb3_a0_pwr_en(1);
+	ec_usb3_a0_pwr_en(1);
 
 	hh_usb3_a0_pwr_en(1);
 
@@ -37,8 +36,7 @@ void init_pathsel(void)
 	gpio_set_level(GPIO_USB3_A1_MUX_EN_L, 0);
 
 	/* Enable power */
-	if (board_id_det() <= BOARD_ID_REV1)
-		ec_usb3_a1_pwr_en(1);
+	ec_usb3_a1_pwr_en(1);
 
 	hh_usb3_a1_pwr_en(1);
 }
