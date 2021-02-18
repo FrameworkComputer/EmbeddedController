@@ -143,8 +143,8 @@ end
 # specified gdb server port.
 define ec-connect
 python
-    # May want to only use "target remote".
-    gdb.execute('target extended-remote :%d'%GDBPORT)
+# May want to only use "target remote".
+gdb.execute(f'target extended-remote :{GDBPORT}')
 end
 end
 alias connect = ec-connect
