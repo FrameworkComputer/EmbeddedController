@@ -624,14 +624,6 @@ static struct policy_engine {
 	 */
 	uint64_t pr_swap_wait_timer;
 
-	/*
-	 * This timer is used by the new Source, after a Power Role Swap or
-	 * Fast Role Swap, to ensure that it does not send Source_Capabilities
-	 * Message before the new Sink is ready to receive the
-	 * Source_Capabilities Message.
-	 */
-	uint64_t swap_source_start_timer;
-
 	/* Counters */
 
 	/*
@@ -2088,8 +2080,8 @@ static void pe_src_startup_entry(int port)
 		pd_dpm_request(port, DPM_REQUEST_SOP_PRIME_SOFT_RESET_SEND);
 
 		/* Start SwapSourceStartTimer */
-		pe[port].swap_source_start_timer = get_time().val +
-			PD_T_SWAP_SOURCE_START;
+		pd_timer_enable(port, PE_TIMER_SWAP_SOURCE_START,
+				PD_T_SWAP_SOURCE_START);
 
 		/*
 		 * Evaluate port's sink caps for preferred current, if
@@ -2111,7 +2103,7 @@ static void pe_src_startup_entry(int port)
 		 * We can't use set_state_pe here, since we need to ensure that
 		 * the protocol layer is running again (done in run function).
 		 */
-		pe[port].swap_source_start_timer = get_time().val;
+		pd_timer_enable(port, PE_TIMER_SWAP_SOURCE_START, 0);
 
 		/*
 		 * Set DiscoverIdentityTimer to trigger when we enter
@@ -2143,8 +2135,13 @@ static void pe_src_startup_run(int port)
 	if (!prl_is_running(port))
 		return;
 
-	if (get_time().val > pe[port].swap_source_start_timer)
+	if (pd_timer_is_expired(port, PE_TIMER_SWAP_SOURCE_START))
 		set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
+}
+
+static void pe_src_startup_exit(int port)
+{
+	pd_timer_disable(port, PE_TIMER_SWAP_SOURCE_START);
 }
 
 /**
@@ -6831,6 +6828,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_SRC_STARTUP] = {
 		.entry = pe_src_startup_entry,
 		.run   = pe_src_startup_run,
+		.exit  = pe_src_startup_exit,
 	},
 	[PE_SRC_DISCOVERY] = {
 		.entry = pe_src_discovery_entry,
