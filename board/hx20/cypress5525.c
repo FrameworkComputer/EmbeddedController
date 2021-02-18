@@ -361,7 +361,7 @@ void cypd_update_port_state(int controller, int port)
 	pd_port_states[port_idx].c_state = (typec_status_reg >> 2) & 0x7;
 	switch ((typec_status_reg >> 6) & 0x03) {
 	case 0:
-		type_c_current = 500;
+		type_c_current = 900;
 		break;
 	case 1:
 		type_c_current = 1500;
@@ -985,11 +985,9 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 		charge_ma = prochot_ma - 128;
 	}
 
-	charge_set_input_current_limit(MAX(charge_ma,
-				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 	/* sync-up ac prochot with current change */
-	isl9241_set_ac_prochot(0, MAX(prochot_ma,
-					CONFIG_CHARGER_INPUT_CURRENT * 100 / 95));
+	isl9241_set_ac_prochot(0, prochot_ma);
 }
 
 void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int len)
