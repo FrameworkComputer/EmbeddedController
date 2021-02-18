@@ -230,10 +230,10 @@ static const struct cros_kb_raw_npcx_config cros_kb_raw_cfg = {
 	.wui_maps = NPCX_DT_WUI_ITEMS_LIST(0),
 };
 
-DEVICE_AND_API_INIT(cros_kb_raw_npcx_0, DT_INST_LABEL(0), kb_raw_npcx_init,
-		    NULL, &cros_kb_raw_cfg, PRE_KERNEL_1,
-		    CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
-		    &cros_kb_raw_npcx_driver_api);
+DEVICE_DEFINE(cros_kb_raw_npcx_0, DT_INST_LABEL(0), kb_raw_npcx_init, NULL,
+	      NULL, &cros_kb_raw_cfg, PRE_KERNEL_1,
+	      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
+	      &cros_kb_raw_npcx_driver_api);
 
 /* KBS register structure check */
 NPCX_REG_SIZE_CHECK(kbs_reg, 0x010);

@@ -73,6 +73,6 @@ static const struct cros_system_driver_api cros_system_driver_npcx_api = {
  * The priority of cros_system_npcx_init() should be lower than watchdog init
  * for reset cause check.
  */
-DEVICE_AND_API_INIT(cros_system_npcx_0, "CROS_SYSTEM", cros_system_npcx_init,
-		    &cros_system_npcx_dev_data, &cros_system_dev_cfg,
-		    PRE_KERNEL_1, 30, &cros_system_driver_npcx_api);
+DEVICE_DEFINE(cros_system_npcx_0, "CROS_SYSTEM", cros_system_npcx_init, NULL,
+	      &cros_system_npcx_dev_data, &cros_system_dev_cfg, PRE_KERNEL_1,
+	      30, &cros_system_driver_npcx_api);

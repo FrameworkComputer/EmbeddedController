@@ -121,10 +121,10 @@ static int bbram_npcx_init(const struct device *dev)
 		.size = DT_INST_REG_SIZE_BY_NAME(inst, memory),              \
 		.status_reg_addr = DT_INST_REG_ADDR_BY_NAME(inst, status),   \
 	};                                                                   \
-	DEVICE_AND_API_INIT(cros_bbram_npcx_##inst, DT_INST_LABEL(inst),     \
-			    bbram_npcx_init, &cros_bbram_data_##inst,        \
-			    &cros_bbram_cfg_##inst, PRE_KERNEL_1,            \
-			    CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,             \
-			    &cros_bbram_npcx_driver_api);
+	DEVICE_DEFINE(cros_bbram_npcx_##inst, DT_INST_LABEL(inst),           \
+		      bbram_npcx_init, NULL, &cros_bbram_data_##inst,        \
+		      &cros_bbram_cfg_##inst, PRE_KERNEL_1,                  \
+		      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,                   \
+		      &cros_bbram_npcx_driver_api);
 
 DT_INST_FOREACH_STATUS_OKAY(CROS_BBRAM_INIT);
