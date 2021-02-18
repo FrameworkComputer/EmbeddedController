@@ -591,13 +591,6 @@ static struct policy_engine {
 	/* Timers */
 
 	/*
-	 * The NoResponseTimer is used by the Policy Engine in a Source
-	 * to determine that its Port Partner is not responding after a
-	 * Hard Reset.
-	 */
-	uint64_t no_response_timer;
-
-	/*
 	 * Prior to a successful negotiation, a Source Shall use the
 	 * SourceCapabilityTimer to periodically send out a
 	 * Source_Capabilities Message.
@@ -768,7 +761,7 @@ static void pe_init(int port)
 	pe[port].dpm_request = 0;
 	pe[port].dpm_curr_request = 0;
 	pe[port].source_cap_timer = TIMER_DISABLED;
-	pe[port].no_response_timer = TIMER_DISABLED;
+	pd_timer_disable(port, PE_TIMER_NO_RESPONSE);
 	pe[port].data_role = pd_get_data_role(port);
 	pe[port].tx_type = TCPC_TX_INVALID;
 	pe[port].events = 0;
@@ -2207,8 +2200,8 @@ static void pe_src_discovery_run(int port)
 	 *   3) And the HardResetCounter > nHardResetCount.
 	 */
 	if (!PE_CHK_FLAG(port, PE_FLAGS_PD_CONNECTION) &&
-			get_time().val > pe[port].no_response_timer &&
-			pe[port].hard_reset_counter > N_HARD_RESET_COUNT) {
+	    pd_timer_is_expired(port, PE_TIMER_NO_RESPONSE) &&
+	    pe[port].hard_reset_counter > N_HARD_RESET_COUNT) {
 		set_state_pe(port, PE_SRC_DISABLED);
 		return;
 	}
@@ -2263,7 +2256,7 @@ static void pe_src_send_capabilities_run(int port)
 		 *  3) Initialize and run the SenderResponseTimer.
 		 */
 		/* Stop the NoResponseTimer */
-		pe[port].no_response_timer = TIMER_DISABLED;
+		pd_timer_disable(port, PE_TIMER_NO_RESPONSE);
 
 		/* Reset the HardResetCounter to zero */
 		pe[port].hard_reset_counter = 0;
@@ -2352,7 +2345,7 @@ static void pe_src_send_capabilities_run(int port)
 	 *  2) The NoResponseTimer times out
 	 *  3) And the HardResetCounter > nHardResetCount.
 	 */
-	if (get_time().val > pe[port].no_response_timer) {
+	if (pd_timer_is_expired(port, PE_TIMER_NO_RESPONSE)) {
 		if (pe[port].hard_reset_counter <= N_HARD_RESET_COUNT)
 			set_state_pe(port, PE_SRC_HARD_RESET);
 		else if (PE_CHK_FLAG(port, PE_FLAGS_PD_CONNECTION))
@@ -2807,7 +2800,7 @@ static void pe_src_hard_reset_entry(int port)
 	pe[port].hard_reset_counter++;
 
 	/* Start NoResponseTimer */
-	pe[port].no_response_timer = get_time().val + PD_T_NO_RESPONSE;
+	pd_timer_enable(port, PE_TIMER_NO_RESPONSE, PD_T_NO_RESPONSE);
 
 	/* Start PSHardResetTimer */
 	pd_timer_enable(port, PE_TIMER_PS_HARD_RESET, PD_T_PS_HARD_RESET);
@@ -2841,7 +2834,7 @@ static void pe_src_hard_reset_received_entry(int port)
 	print_current_state(port);
 
 	/* Start NoResponseTimer */
-	pe[port].no_response_timer = get_time().val + PD_T_NO_RESPONSE;
+	pd_timer_enable(port, PE_TIMER_NO_RESPONSE, PD_T_NO_RESPONSE);
 
 	/* Start PSHardResetTimer */
 	pd_timer_enable(port, PE_TIMER_PS_HARD_RESET, PD_T_PS_HARD_RESET);
