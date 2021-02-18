@@ -19,7 +19,7 @@
 #include "charger.h"
 #include "charge_state.h"
 #include "charge_manager.h"
-
+#include "usb_tc_sm.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
@@ -71,7 +71,7 @@ static struct pd_port_current_state_t pd_port_states[] = {
 
 
 int state = CYP5525_STATE_RESET;
-
+bool verbose_msg_logging;
 
 int pd_extpower_is_present(void)
 {
@@ -284,31 +284,6 @@ int cyp5225_set_power_state(int power_state)
 	return rv;
 }
 
-void cypd_update_port_state(int controller, int port)
-{
-	int data;
-	int state_idx = (controller << 1) + port;
-
-	cypd_read_reg8(controller, CYP5525_TYPE_C_STATUS_REG(port), &data);
-
-	pd_port_states[state_idx].enabled = data & 0x1;
-	pd_port_states[state_idx].cc = (data & 0x2) ? 2 : 1;
-
-	switch ((data >> 2) & 0x3) {
-	case CYPD_STATUS_NOTHING:
-		pd_port_states[state_idx].role = PD_ROLE_SOURCE;
-		break;
-	case CYPD_STATUS_SINK:
-		pd_port_states[state_idx].role = PD_ROLE_SOURCE;
-		break;
-	case CYPD_STATUS_SOURCE:
-		pd_port_states[state_idx].role = PD_ROLE_SINK;
-		break;
-	default:
-		break;
-	}
-}
-
 int cyp5525_setup(int controller)
 {
 	/* 1. CCG notifies EC with "RESET Complete event after Reset/Power up/JUMP_TO_BOOT
@@ -358,34 +333,82 @@ int cyp5525_setup(int controller)
 	return EC_SUCCESS;
 }
 
-void cyp5525_get_sink_power(int controller, int port)
+void cypd_update_port_state(int controller, int port)
 {
 	int rv;
-	uint8_t data2[4];
-	int active_current = 0;
-	int active_voltage = 0;
+	uint8_t pd_status_reg[4];
+	uint8_t pdo_reg[4];
+
+	int typec_status_reg;
+	int pd_current = 0;
+	int pd_voltage = 0;
+	int type_c_current = 0;
 	int port_idx = (controller << 1) + port;
 
-	rv = cypd_read_reg_block(controller, CYP5525_PD_STATUS_REG(port), data2, 4);
+	rv = cypd_read_reg_block(controller, CYP5525_PD_STATUS_REG(port), pd_status_reg, 4);
 	if (rv != EC_SUCCESS)
 		CPRINTS("CYP5525_PD_STATUS_REG failed");
+	pd_port_states[port_idx].pd_state = pd_status_reg[1] & BIT(2) ? 1 : 0; /*do we have a valid PD contract*/
+	pd_port_states[port_idx].power_role = pd_status_reg[1] & BIT(0) ? PD_ROLE_SOURCE : PD_ROLE_SINK;
+	pd_port_states[port_idx].data_role = pd_status_reg[0] & BIT(6) ? PD_ROLE_DFP : PD_ROLE_UFP;
+	pd_port_states[port_idx].vconn =  pd_status_reg[1] & BIT(5) ? PD_ROLE_VCONN_SRC : PD_ROLE_VCONN_OFF;
 
-	if ((data2[1] & CYP5525_PD_CONTRACT_STATE) == CYP5525_PD_CONTRACT_STATE) {
-		rv = cypd_read_reg_block(controller, CYP5525_CURRENT_PDO_REG(port), data2, 4);
-		active_current = (data2[0] + ((data2[1] & 0x3) << 8)) * 10;
-		active_voltage = (((data2[1] & 0xFC) >> 2) + ((data2[2] & 0xF) << 6)) * 50;
-		CPRINTS("C%d, current:%d mA, voltage:%d mV", port_idx, active_current, active_voltage);
-		pd_port_states[port_idx].current = active_current;
-		pd_port_states[port_idx].voltage = active_voltage;
-		if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
-			/* Set ceiling based on what's negotiated */
-			pd_set_input_current_limit(port_idx, active_current,
-						   active_voltage);
-			charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
-							active_current);
-			charge_manager_update_dualrole(port_idx, CAP_DEDICATED);
+	rv = cypd_read_reg8(controller, CYP5525_TYPE_C_STATUS_REG(port), &typec_status_reg);
+	if (rv != EC_SUCCESS)
+		CPRINTS("CYP5525_TYPE_C_STATUS_REG failed");
 
-		}
+	pd_port_states[port_idx].cc = typec_status_reg & BIT(1) ? POLARITY_CC2 : POLARITY_CC1;
+	pd_port_states[port_idx].c_state = (typec_status_reg >> 2) & 0x7;
+	switch ((typec_status_reg >> 6) & 0x03) {
+	case 0:
+		type_c_current = 500;
+		break;
+	case 1:
+		type_c_current = 1500;
+		break;
+	case 2:
+		type_c_current = 3000;
+		break;
+	}
+
+	rv = cypd_read_reg_block(controller, CYP5525_CURRENT_PDO_REG(port), pdo_reg, 4);
+	pd_current = (pdo_reg[0] + ((pdo_reg[1] & 0x3) << 8)) * 10;
+	pd_voltage = (((pdo_reg[1] & 0xFC) >> 2) + ((pdo_reg[2] & 0xF) << 6)) * 50;
+
+	/*
+	 * The port can have several states active:
+	 * 1. Type C active (with no PD contract) CC resistor negociation only
+	 * 2. Type C active with PD contract
+	 * 3. Not active
+	 * Each of 1 and 2 can be either source or sink
+	 * */
+
+	if (pd_port_states[port_idx].c_state == CYPD_STATUS_SOURCE) {
+		typec_set_input_current_limit(port_idx, type_c_current, TYPE_C_VOLTAGE);
+		charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
+							type_c_current);
+	} else {
+		typec_set_input_current_limit(port_idx, 0, 0);
+		charge_manager_set_ceil(port,
+			CEIL_REQUESTOR_PD,
+			CHARGE_CEIL_NONE);
+	}
+
+	if (pd_port_states[port_idx].pd_state && pd_port_states[port_idx].power_role == PD_ROLE_SINK) {
+		pd_set_input_current_limit(port_idx, pd_current, pd_voltage);
+		charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
+							pd_current);
+		pd_port_states[port_idx].current = pd_current;
+		pd_port_states[port_idx].voltage = pd_voltage;
+	} else {
+		pd_set_input_current_limit(port_idx, 0, 0);
+		pd_port_states[port_idx].voltage = 0;
+		pd_port_states[port_idx].current = 0;
+	}
+
+
+	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
+		charge_manager_update_dualrole(port_idx, CAP_DEDICATED);
 	}
 }
 void cypd_print_version(int controller, const char *vtype, uint8_t *data)
@@ -433,21 +456,15 @@ void cyp5525_port_int(int controller, int port)
 		pd_port_states[port_idx].current = 0;
 		pd_port_states[port_idx].voltage = 0;
 		pd_set_input_current_limit(port, 0, 0);
-		charge_manager_set_ceil((controller << 1) + port,
-				CEIL_REQUESTOR_PD, CHARGE_CEIL_NONE);
-		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
-			charge_manager_update_dualrole(port_idx, CAP_UNKNOWN);
 		cypd_update_port_state(controller, port);
 
-		typec_set_input_current_limit(port_idx,
-						    0,
-						    0);
-
+		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
+			charge_manager_update_dualrole(port_idx, CAP_UNKNOWN);
 		break;
 	case CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE");
 		/*todo we can probably clean this up to remove some of this*/
-		cyp5525_get_sink_power(controller, port);
+		cypd_update_port_state(controller, port);
 		break;
 	case CYPD_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT");
@@ -718,8 +735,8 @@ void cypd_interrupt_handler_task(void *p)
 			case CYP5525_STATE_SETUP:
 				cyp5525_get_version(i);
 				if (cyp5525_setup(i) == EC_SUCCESS) {
-					cyp5525_get_sink_power(i, 0);
-					cyp5525_get_sink_power(i, 1);
+					cypd_update_port_state(i, 0);
+					cypd_update_port_state(i, 1);
 					gpio_enable_interrupt(pd_chip_config[i].gpio);
 					CPRINTS("CYPD %d Ready!", i);
 					pd_chip_config[i].state = CYP5525_STATE_READY;
@@ -834,13 +851,14 @@ __override uint8_t board_get_usb_pd_port_count(void)
 
 enum pd_power_role pd_get_power_role(int port)
 {
-	return pd_port_states[port].port_state;
+	return pd_port_states[port].power_role;
 }
 
 int pd_is_connected(int port)
 {
-	return pd_port_states[port].enabled;
+	return pd_port_states[port].c_state != CYPD_STATUS_NOTHING;
 }
+
 void pd_request_power_swap(int port)
 {
 	CPRINTS("TODO Implement %s port %d", __func__, port);
@@ -850,7 +868,6 @@ void pd_set_new_power_request(int port)
 {
 	/*we probably dont need to do this since we will always request max*/
 	CPRINTS("TODO Implement %s port %d", __func__, port);
-
 }
 
 int pd_port_configuration_change(int port, enum pd_port_role port_role)
@@ -926,7 +943,24 @@ int pd_port_configuration_change(int port, enum pd_port_role port_role)
  */
 int board_set_active_charge_port(int charge_port)
 {
-	CPRINTS("TODO Implement %s port %d", __func__, charge_port);
+	/*
+	int mask;
+
+	if (charge_port >=0){
+		mask = 1 << charge_port;
+		gpio_set_level(GPIO_TYPEC0_VBUS_ON_EC, mask & BIT(0) ? 1: 0);
+		gpio_set_level(GPIO_TYPEC1_VBUS_ON_EC, mask & BIT(1) ? 1: 0);
+		gpio_set_level(GPIO_TYPEC2_VBUS_ON_EC, mask & BIT(2) ? 1: 0);
+		gpio_set_level(GPIO_TYPEC3_VBUS_ON_EC, mask & BIT(3) ? 1: 0);
+	} else {
+		gpio_set_level(GPIO_TYPEC0_VBUS_ON_EC, 1);
+		gpio_set_level(GPIO_TYPEC1_VBUS_ON_EC, 1);
+		gpio_set_level(GPIO_TYPEC2_VBUS_ON_EC, 1);
+		gpio_set_level(GPIO_TYPEC3_VBUS_ON_EC, 1);
+	}
+	*/
+	CPRINTS("Updating %s port %d", __func__, charge_port);
+
 	return EC_SUCCESS;
 }
 
@@ -1045,14 +1079,15 @@ void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int le
 #else /*PD_VERBOSE_LOGGING*/
 	code = "";
 #endif /*PD_VERBOSE_LOGGING*/
-
-	CPRINTS("PD Controller %d Port %d  Code 0x%02x %s %s Len: 0x%02x",
-	controller,
-	port,
-	id,
-	code,
-	id & 0x80 ? "Response" : "Event",
-	len);
+	if (verbose_msg_logging) {
+		CPRINTS("PD Controller %d Port %d  Code 0x%02x %s %s Len: 0x%02x",
+		controller,
+		port,
+		id,
+		code,
+		id & 0x80 ? "Response" : "Event",
+		len);
+	}
 }
 
 static int cmd_cypd_get_status(int argc, char **argv)
@@ -1121,7 +1156,7 @@ static int cmd_cypd_get_status(int argc, char **argv)
 				CPRINTS("   TYPE_C_STATUS : %s %s %s %s %s",
 							data & 0x1 ? "Connected" : "Not Connected",
 							data & 0x2 ? "CC2" : "CC1",
-							port_status[(data >> 2) & 0x3],
+							port_status[(data >> 2) & 0x7],
 							data & 0x20 ? "Ra" : "NoRa",
 							current_level[(data >> 6) & 0x03]);
 				cypd_read_reg8(i, CYP5525_TYPE_C_VOLTAGE_REG(p), &data);
@@ -1188,6 +1223,11 @@ static int cmd_cypd_control(int argc, char **argv)
 							CYP5525_PORT0_INTR +
 							CYP5525_PORT1_INTR +
 							CYP5525_UCSI_INTR);
+		} else if (!strncmp(argv[1], "verbose", 7)) {
+			if (!parse_bool(argv[1], &enable))
+				return EC_ERROR_PARAM1;
+
+			verbose_msg_logging = enable;
 		} else {
 			return EC_ERROR_PARAM1;
 		}
@@ -1195,5 +1235,5 @@ static int cmd_cypd_control(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(cypdctl, cmd_cypd_control,
-			"[enable/disable/reset/clearint] [controller] ",
+			"[enable/disable/reset/clearint/verbose] [controller] ",
 			"Set if handling is active for controller");
