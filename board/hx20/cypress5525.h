@@ -267,7 +267,7 @@ enum cyp5525_port_state {
 };
 
 /*TYPE_C_STATUS_DEVICE*/
-enum cyp5525_port_status {
+enum cypd_c_state {
 	CYPD_STATUS_NOTHING,
 	CYPD_STATUS_SINK,
 	CYPD_STATUS_SOURCE,
@@ -289,9 +289,14 @@ struct pd_port_current_state_t {
 	enum cyp5525_port_state port_state;
 	int voltage;
 	int current;
-	int enabled;
-	int cc;
-	enum pd_power_role role;
+	enum cypd_c_state c_state; /* What device is attached on the other side */
+	uint8_t pd_state;
+	uint8_t cc;
+
+	enum pd_power_role power_role;
+	enum pd_data_role data_role;
+	enum pd_vconn_role vconn;
+
 };
 
 enum pd_port_role {
