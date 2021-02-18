@@ -532,6 +532,7 @@ enum pe_msg_check {
 };
 static void pe_sender_response_msg_entry(const int port);
 static enum pe_msg_check pe_sender_response_msg_run(const int port);
+static void pe_sender_response_msg_exit(const int port);
 
 /* Debug log level - higher number == more log */
 #ifdef CONFIG_USB_PD_DEBUG_LEVEL
@@ -604,14 +605,6 @@ static struct policy_engine {
 	 * Source_Capabilities Message.
 	 */
 	uint64_t source_cap_timer;
-
-	/*
-	 * This timer is used to ensure that a Message requesting a response
-	 * (e.g. Get_Source_Cap Message) is responded to within a bounded time
-	 * of PD_T_SENDER_RESPONSE.
-	 */
-	uint64_t sender_response_timer;
-
 	/*
 	 * This timer is used during an Explicit Contract when discovering
 	 * whether a Port Partner is PD Capable using SOP'.
@@ -2051,14 +2044,14 @@ static void pe_update_wait_and_add_jitter_timer(int port)
  */
 /*
  * pe_sender_response_msg_entry
- * Initiallization for handling sender response messages.
+ * Initialization for handling sender response messages.
  *
  * @param port USB-C Port number
  */
 static void pe_sender_response_msg_entry(const int port)
 {
 	/* Stop sender response timer */
-	pe[port].sender_response_timer = TIMER_DISABLED;
+	pd_timer_disable(port, PE_TIMER_SENDER_RESPONSE);
 }
 
 /*
@@ -2081,7 +2074,7 @@ static void pe_sender_response_msg_entry(const int port)
  */
 static enum pe_msg_check pe_sender_response_msg_run(const int port)
 {
-	if (pe[port].sender_response_timer == TIMER_DISABLED) {
+	if (pd_timer_is_disabled(port, PE_TIMER_SENDER_RESPONSE)) {
 		/* Check for Discard */
 		if (PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED)) {
 			int dpm_request = pe[port].dpm_curr_request;
@@ -2100,13 +2093,24 @@ static enum pe_msg_check pe_sender_response_msg_run(const int port)
 			PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 
 			/* Initialize and run the SenderResponseTimer */
-			pe[port].sender_response_timer = get_time().val +
-							PD_T_SENDER_RESPONSE;
+			pd_timer_enable(port, PE_TIMER_SENDER_RESPONSE,
+					PD_T_SENDER_RESPONSE);
 			return PE_MSG_SEND_COMPLETED;
 		}
 		return PE_MSG_SEND_PENDING;
 	}
 	return PE_MSG_SENT;
+}
+
+/*
+ * pe_sender_response_msg_exit
+ * Exit cleanup for handling sender response messages.
+ *
+ * @param port USB-C Port number
+ */
+static void pe_sender_response_msg_exit(int port)
+{
+	pd_timer_disable(port, PE_TIMER_SENDER_RESPONSE);
 }
 
 /**
@@ -2438,7 +2442,7 @@ static void pe_src_send_capabilities_run(int port)
 	 * Transition to the PE_SRC_Hard_Reset state when:
 	 *  1) The SenderResponseTimer times out.
 	 */
-	if (get_time().val > pe[port].sender_response_timer) {
+	if (pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE)) {
 		set_state_pe(port, PE_SRC_HARD_RESET);
 		return;
 	}
@@ -2446,6 +2450,7 @@ static void pe_src_send_capabilities_run(int port)
 
 static void pe_src_send_capabilities_exit(int port)
 {
+	pe_sender_response_msg_exit(port);
 	tc_high_priority_event(port, false);
 }
 
@@ -3264,8 +3269,13 @@ static void pe_snk_select_capability_run(int port)
 	}
 
 	/* SenderResponsetimer timeout */
-	if (get_time().val > pe[port].sender_response_timer)
+	if (pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE))
 		set_state_pe(port, PE_SNK_HARD_RESET);
+}
+
+void pe_snk_select_capability_exit(int port)
+{
+	pe_sender_response_msg_exit(port);
 }
 
 /**
@@ -3718,7 +3728,7 @@ static void pe_send_soft_reset_entry(int port)
 	/* Reset Protocol Layer (softly) */
 	prl_reset_soft(port);
 
-	pe[port].sender_response_timer = TIMER_DISABLED;
+	pe_sender_response_msg_entry(port);
 }
 
 static void pe_send_soft_reset_run(int port)
@@ -3731,7 +3741,13 @@ static void pe_send_soft_reset_run(int port)
 	if (!prl_is_running(port))
 		return;
 
-	if (pe[port].sender_response_timer == TIMER_DISABLED) {
+	/*
+	 * TODO(b:181337870) This should be using pe_sender_response_msg_run
+	 * to make sure PE_TIMER_SENDER_RESPONSE does not start until the
+	 * message is actually sent and probably a good idea to not get lost
+	 * if we hit a discard
+	 */
+	if (pd_timer_is_disabled(port, PE_TIMER_SENDER_RESPONSE)) {
 		/*
 		 * TODO(b/150614211): Soft reset type should match
 		 * unexpected incoming message type
@@ -3741,8 +3757,8 @@ static void pe_send_soft_reset_run(int port)
 			pe[port].soft_reset_sop, PD_CTRL_SOFT_RESET);
 
 		/* Initialize and run SenderResponseTimer */
-		pe[port].sender_response_timer =
-					get_time().val + PD_T_SENDER_RESPONSE;
+		pd_timer_enable(port, PE_TIMER_SENDER_RESPONSE,
+				PD_T_SENDER_RESPONSE);
 	}
 
 	/*
@@ -3772,7 +3788,7 @@ static void pe_send_soft_reset_run(int port)
 	 * Transition to PE_SNK_Hard_Reset or PE_SRC_Hard_Reset on Sender
 	 * Response Timer Timeout or Protocol Layer or Protocol Error
 	 */
-	if (get_time().val > pe[port].sender_response_timer ||
+	if (pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE) ||
 			PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
 
@@ -3785,14 +3801,17 @@ static void pe_send_soft_reset_run(int port)
 
 }
 
+static void pe_send_soft_reset_exit(int port)
+{
+	pe_sender_response_msg_exit(port);
+}
+
 /**
  * PE_SNK_Soft_Reset and PE_SNK_Soft_Reset
  */
 static void pe_soft_reset_entry(int port)
 {
 	print_current_state(port);
-
-	pe[port].sender_response_timer = TIMER_DISABLED;
 
 	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
 }
@@ -4291,8 +4310,13 @@ static void pe_drs_send_swap_run(int port)
 	 *   2) Message was discarded.
 	 */
 	if ((msg_check & PE_MSG_DISCARDED) ||
-	    get_time().val > pe[port].sender_response_timer)
+	    pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE))
 		pe_set_ready_state(port);
+}
+
+static void pe_drs_send_swap_exit(int port)
+{
+	pe_sender_response_msg_exit(port);
 }
 
 /**
@@ -4517,8 +4541,13 @@ static void pe_prs_src_snk_send_swap_run(int port)
 	 *   2) Message was discarded.
 	 */
 	if ((msg_check & PE_MSG_DISCARDED) ||
-	    get_time().val > pe[port].sender_response_timer)
+	    pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE))
 		set_state_pe(port, PE_SRC_READY);
+}
+
+static void pe_prs_src_snk_send_swap_exit(int port)
+{
+	pe_sender_response_msg_exit(port);
 }
 
 /**
@@ -4811,7 +4840,7 @@ static void pe_prs_snk_src_send_swap_run(int port)
 	 * FRS: Transition to ErrorRecovery state when:
 	 *   1) The SenderResponseTimer times out.
 	 */
-	if (get_time().val > pe[port].sender_response_timer) {
+	if (pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE)) {
 		if (IS_ENABLED(CONFIG_USB_PD_REV30))
 			set_state_pe(port,
 				pe_in_frs_mode(port)
@@ -4833,6 +4862,11 @@ static void pe_prs_snk_src_send_swap_run(int port)
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
 		set_state_pe(port, PE_WAIT_FOR_ERROR_RECOVERY);
 	}
+}
+
+static void pe_prs_snk_src_send_swap_exit(int port)
+{
+	pe_sender_response_msg_exit(port);
 }
 
 /**
@@ -6026,7 +6060,7 @@ static void pe_enter_usb_run(int port)
 		return;
 	}
 
-	if (get_time().val > pe[port].sender_response_timer) {
+	if (pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE)) {
 		pe_set_ready_state(port);
 		enter_usb_failed(port);
 		return;
@@ -6061,6 +6095,11 @@ static void pe_enter_usb_run(int port)
 		}
 		pe_set_ready_state(port);
 	}
+}
+
+static void pe_enter_usb_exit(int port)
+{
+	pe_sender_response_msg_exit(port);
 }
 
 #ifdef CONFIG_USBC_VCONN
@@ -6236,8 +6275,13 @@ static void pe_vcs_send_swap_run(int port)
 	 *   2) Message was discarded.
 	 */
 	if ((msg_check & PE_MSG_DISCARDED) ||
-	    get_time().val > pe[port].sender_response_timer)
+	    pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE))
 		pe_set_ready_state(port);
+}
+
+static void pe_vcs_send_swap_exit(int port)
+{
+	pe_sender_response_msg_exit(port);
 }
 
 /*
@@ -6460,8 +6504,8 @@ static void pe_vcs_cbl_send_soft_reset_run(int port)
 	}
 
 	if (cable_soft_reset_complete ||
-			get_time().val > pe[port].sender_response_timer ||
-			(msg_check & PE_MSG_DISCARDED)) {
+	    pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE) ||
+	    (msg_check & PE_MSG_DISCARDED)) {
 		if (pe_is_explicit_contract(port)) {
 			/* Return to PE_{SRC,SNK}_Ready state */
 			pe_set_ready_state(port);
@@ -6473,6 +6517,11 @@ static void pe_vcs_cbl_send_soft_reset_run(int port)
 			set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
 		}
 	}
+}
+
+static void pe_vcs_cbl_send_soft_reset_exit(int port)
+{
+	pe_sender_response_msg_exit(port);
 }
 
 #endif /* CONFIG_USBC_VCONN */
@@ -6550,8 +6599,13 @@ static void pe_dr_get_sink_cap_run(int port)
 	 *   2) Message was discarded.
 	 */
 	if ((msg_check & PE_MSG_DISCARDED) ||
-	    get_time().val > pe[port].sender_response_timer)
+	    pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE))
 		pe_set_ready_state(port);
+}
+
+static void pe_dr_get_sink_cap_exit(int port)
+{
+	pe_sender_response_msg_exit(port);
 }
 
 /*
@@ -6657,8 +6711,13 @@ static void pe_dr_src_get_source_cap_run(int port)
 	 *   2) Message was discarded.
 	 */
 	if ((msg_check & PE_MSG_DISCARDED) ||
-	    get_time().val > pe[port].sender_response_timer)
+	    pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE))
 		set_state_pe(port, PE_SRC_READY);
+}
+
+static void pe_dr_src_get_source_cap_exit(int port)
+{
+	pe_sender_response_msg_exit(port);
 }
 
 const uint32_t * const pd_get_src_caps(int port)
@@ -6849,6 +6908,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_SNK_SELECT_CAPABILITY] = {
 		.entry = pe_snk_select_capability_entry,
 		.run = pe_snk_select_capability_run,
+		.exit = pe_snk_select_capability_exit,
 	},
 	[PE_SNK_READY] = {
 		.entry = pe_snk_ready_entry,
@@ -6878,6 +6938,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_SEND_SOFT_RESET] = {
 		.entry = pe_send_soft_reset_entry,
 		.run = pe_send_soft_reset_run,
+		.exit = pe_send_soft_reset_exit,
 	},
 	[PE_SOFT_RESET] = {
 		.entry = pe_soft_reset_entry,
@@ -6902,6 +6963,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_DRS_SEND_SWAP] = {
 		.entry = pe_drs_send_swap_entry,
 		.run   = pe_drs_send_swap_run,
+		.exit  = pe_drs_send_swap_exit,
 	},
 	[PE_PRS_SRC_SNK_EVALUATE_SWAP] = {
 		.entry = pe_prs_src_snk_evaluate_swap_entry,
@@ -6923,6 +6985,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_PRS_SRC_SNK_SEND_SWAP] = {
 		.entry = pe_prs_src_snk_send_swap_entry,
 		.run   = pe_prs_src_snk_send_swap_run,
+		.exit  = pe_prs_src_snk_send_swap_exit,
 	},
 	[PE_PRS_SNK_SRC_EVALUATE_SWAP] = {
 		.entry = pe_prs_snk_src_evaluate_swap_entry,
@@ -6961,6 +7024,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_PRS_SNK_SRC_SEND_SWAP] = {
 		.entry = pe_prs_snk_src_send_swap_entry,
 		.run   = pe_prs_snk_src_send_swap_run,
+		.exit  = pe_prs_snk_src_send_swap_exit,
 #ifdef CONFIG_USB_PD_REV30
 		.parent = &pe_states[PE_PRS_FRS_SHARED],
 #endif /* CONFIG_USB_PD_REV30 */
@@ -6973,6 +7037,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_VCS_SEND_SWAP] = {
 		.entry = pe_vcs_send_swap_entry,
 		.run   = pe_vcs_send_swap_run,
+		.exit  = pe_vcs_send_swap_exit,
 	},
 	[PE_VCS_WAIT_FOR_VCONN_SWAP] = {
 		.entry = pe_vcs_wait_for_vconn_swap_entry,
@@ -6993,6 +7058,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_VCS_CBL_SEND_SOFT_RESET] = {
 		.entry  = pe_vcs_cbl_send_soft_reset_entry,
 		.run    = pe_vcs_cbl_send_soft_reset_run,
+		.exit   = pe_vcs_cbl_send_soft_reset_exit,
 	},
 #endif /* CONFIG_USBC_VCONN */
 	[PE_VDM_IDENTITY_REQUEST_CBL] = {
@@ -7038,6 +7104,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_DEU_SEND_ENTER_USB] = {
 		.entry = pe_enter_usb_entry,
 		.run = pe_enter_usb_run,
+		.exit = pe_enter_usb_exit,
 	},
 	[PE_WAIT_FOR_ERROR_RECOVERY] = {
 		.entry = pe_wait_for_error_recovery_entry,
@@ -7050,6 +7117,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_DR_GET_SINK_CAP] = {
 		.entry = pe_dr_get_sink_cap_entry,
 		.run   = pe_dr_get_sink_cap_run,
+		.exit  = pe_dr_get_sink_cap_exit,
 	},
 	[PE_DR_SNK_GIVE_SOURCE_CAP] = {
 		.entry = pe_dr_snk_give_source_cap_entry,
@@ -7058,6 +7126,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_DR_SRC_GET_SOURCE_CAP] = {
 		.entry = pe_dr_src_get_source_cap_entry,
 		.run   = pe_dr_src_get_source_cap_run,
+		.exit  = pe_dr_src_get_source_cap_exit,
 	},
 #ifdef CONFIG_USB_PD_REV30
 	[PE_FRS_SNK_SRC_START_AMS] = {
