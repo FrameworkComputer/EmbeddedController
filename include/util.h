@@ -54,7 +54,9 @@ extern "C" {
  * @return `v` if it is already between `min`/`max`, `min` if `v` was smaller
  * than `min`, `max` if `v` was bigger than `max`.
  */
+#ifndef CONFIG_ZEPHYR
 #define CLAMP(v, min, max) MIN(max, MAX(v, min))
+#endif
 
 /*
  * Convert a pointer to a base struct into a pointer to the struct that
