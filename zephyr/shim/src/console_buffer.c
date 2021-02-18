@@ -57,6 +57,8 @@ enum ec_status uart_console_read_buffer_init(void)
 
 	previous_snapshot_idx = current_snapshot_idx;
 	current_snapshot_idx = tail_idx;
+
+	return EC_RES_SUCCESS;
 }
 
 int uart_console_read_buffer(uint8_t type, char *dest, uint16_t dest_size,
