@@ -612,13 +612,6 @@ static struct policy_engine {
 	uint64_t discover_identity_timer;
 
 	/*
-	 * This timer is used in a Source to ensure that the Sink has had
-	 * sufficient time to process Hard Reset Signaling before turning
-	 * off its power supply to VBUS.
-	 */
-	uint64_t ps_hard_reset_timer;
-
-	/*
 	 * This timer is used to ensure that the time before the next Sink
 	 * Request Message, after a Wait Message has been received from the
 	 * Source in response to a Sink Request Message.
@@ -2830,7 +2823,7 @@ static void pe_src_hard_reset_entry(int port)
 	pe[port].no_response_timer = get_time().val + PD_T_NO_RESPONSE;
 
 	/* Start PSHardResetTimer */
-	pe[port].ps_hard_reset_timer = get_time().val + PD_T_PS_HARD_RESET;
+	pd_timer_enable(port, PE_TIMER_PS_HARD_RESET, PD_T_PS_HARD_RESET);
 
 	/* Clear error flags */
 	PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED |
@@ -2844,8 +2837,13 @@ static void pe_src_hard_reset_run(int port)
 	 * Transition to the PE_SRC_Transition_to_default state when:
 	 *  1) The PSHardResetTimer times out.
 	 */
-	if (get_time().val > pe[port].ps_hard_reset_timer)
+	if (pd_timer_is_expired(port, PE_TIMER_PS_HARD_RESET))
 		set_state_pe(port, PE_SRC_TRANSITION_TO_DEFAULT);
+}
+
+static void pe_src_hard_reset_exit(int port)
+{
+	pd_timer_disable(port, PE_TIMER_PS_HARD_RESET);
 }
 
 /**
@@ -2859,7 +2857,7 @@ static void pe_src_hard_reset_received_entry(int port)
 	pe[port].no_response_timer = get_time().val + PD_T_NO_RESPONSE;
 
 	/* Start PSHardResetTimer */
-	pe[port].ps_hard_reset_timer = get_time().val + PD_T_PS_HARD_RESET;
+	pd_timer_enable(port, PE_TIMER_PS_HARD_RESET, PD_T_PS_HARD_RESET);
 }
 
 static void pe_src_hard_reset_received_run(int port)
@@ -2868,8 +2866,13 @@ static void pe_src_hard_reset_received_run(int port)
 	 * Transition to the PE_SRC_Transition_to_default state when:
 	 *  1) The PSHardResetTimer times out.
 	 */
-	if (get_time().val > pe[port].ps_hard_reset_timer)
+	if (pd_timer_is_expired(port, PE_TIMER_PS_HARD_RESET))
 		set_state_pe(port, PE_SRC_TRANSITION_TO_DEFAULT);
+}
+
+static void pe_src_hard_reset_received_exit(int port)
+{
+	pd_timer_disable(port, PE_TIMER_PS_HARD_RESET);
 }
 
 /**
@@ -6861,10 +6864,12 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_SRC_HARD_RESET] = {
 		.entry = pe_src_hard_reset_entry,
 		.run   = pe_src_hard_reset_run,
+		.exit  = pe_src_hard_reset_exit,
 	},
 	[PE_SRC_HARD_RESET_RECEIVED] = {
 		.entry = pe_src_hard_reset_received_entry,
 		.run = pe_src_hard_reset_received_run,
+		.exit = pe_src_hard_reset_received_exit,
 	},
 	[PE_SRC_TRANSITION_TO_DEFAULT] = {
 		.entry = pe_src_transition_to_default_entry,
