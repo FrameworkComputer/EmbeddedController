@@ -673,17 +673,6 @@ static struct policy_engine {
 	uint64_t wait_and_add_jitter_timer;
 
 	/*
-	 * PD 3.0, version 2.0, section 6.6.18.1: The ChunkingNotSupportedTimer
-	 * is used by a Source or Sink which does not support multi-chunk
-	 * Chunking but has received a Message Chunk. The
-	 * ChunkingNotSupportedTimer Shall be started when the last bit of the
-	 * EOP of a Message Chunk of a multi-chunk Message is received. The
-	 * Policy Engine Shall Not send its Not_Supported Message before the
-	 * ChunkingNotSupportedTimer expires.
-	 */
-	uint64_t chunking_not_supported_timer;
-
-	/*
 	 * Used to wait for tSrcTransition between sending an Accept for a
 	 * Request or receiving a GoToMin and transitioning the power supply.
 	 * See PD 3.0, table 7-11 and table 7-22 This is not a named timer in
@@ -3876,8 +3865,8 @@ __maybe_unused static void pe_chunk_received_entry(int port)
 		assert(0);
 
 	print_current_state(port);
-	pe[port].chunking_not_supported_timer =
-		get_time().val + PD_T_CHUNKING_NOT_SUPPORTED;
+	pd_timer_enable(port, PE_TIMER_CHUNKING_NOT_SUPPORTED,
+			PD_T_CHUNKING_NOT_SUPPORTED);
 }
 
 __maybe_unused static void pe_chunk_received_run(int port)
@@ -3886,8 +3875,13 @@ __maybe_unused static void pe_chunk_received_run(int port)
 	    IS_ENABLED(CONFIG_USB_PD_EXTENDED_MESSAGES))
 		assert(0);
 
-	if (get_time().val > pe[port].chunking_not_supported_timer)
+	if (pd_timer_is_expired(port, PE_TIMER_CHUNKING_NOT_SUPPORTED))
 		set_state_pe(port, PE_SEND_NOT_SUPPORTED);
+}
+
+__maybe_unused static void pe_chunk_received_exit(int port)
+{
+	pd_timer_disable(port, PE_TIMER_CHUNKING_NOT_SUPPORTED);
 }
 
 /**
@@ -7146,10 +7140,12 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_SRC_CHUNK_RECEIVED] = {
 		.entry = pe_chunk_received_entry,
 		.run   = pe_chunk_received_run,
+		.exit  = pe_chunk_received_exit,
 	},
 	[PE_SNK_CHUNK_RECEIVED] = {
 		.entry = pe_chunk_received_entry,
 		.run   = pe_chunk_received_run,
+		.exit  = pe_chunk_received_exit,
 	},
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 #endif /* CONFIG_USB_PD_REV30 */
