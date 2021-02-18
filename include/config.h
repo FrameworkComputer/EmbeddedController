@@ -3416,12 +3416,6 @@
 /* Storage  offset of sharedobjects library. */
 #undef CONFIG_SHAREDLIB_STORAGE_OFF
 
-/*
- * If defined, the hash module will save its last computed hash when jumping
- * between EC images.
- */
-#undef CONFIG_SAVE_VBOOT_HASH
-
 /* Allow the board to use a GPIO for the SCI# signal. */
 #undef CONFIG_SCI_GPIO
 

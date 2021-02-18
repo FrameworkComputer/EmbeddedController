@@ -283,21 +283,6 @@ static uint32_t get_rw_size(void)
 
 static void vboot_hash_init(void)
 {
-#ifdef CONFIG_SAVE_VBOOT_HASH
-	const struct vboot_hash_tag *tag;
-	int version, size;
-
-	tag = (const struct vboot_hash_tag *)system_get_jump_tag(
-		VBOOT_HASH_SYSJUMP_TAG, &version, &size);
-	if (tag && version == VBOOT_HASH_SYSJUMP_VERSION &&
-	    size == sizeof(*tag)) {
-		/* Already computed a hash, so don't recompute */
-		CPRINTS("hash precomputed");
-		hash = tag->hash;
-		data_offset = tag->offset;
-		data_size = tag->size;
-	} else
-#endif
 #ifdef CONFIG_HOSTCMD_EVENTS
 	/*
 	 * Don't auto-start hash computation if we've asked the host to enter
@@ -324,28 +309,6 @@ int vboot_get_rw_hash(const uint8_t **dst)
 	*dst = hash;
 	return rv;
 }
-
-#ifdef CONFIG_SAVE_VBOOT_HASH
-
-static int vboot_hash_preserve_state(void)
-{
-	struct vboot_hash_tag tag;
-
-	/* If we haven't finished our hash, nothing to save */
-	if (!hash)
-		return EC_SUCCESS;
-
-	memcpy(tag.hash, hash, sizeof(tag.hash));
-	tag.offset = data_offset;
-	tag.size = data_size;
-	system_add_jump_tag(VBOOT_HASH_SYSJUMP_TAG,
-			    VBOOT_HASH_SYSJUMP_VERSION,
-			    sizeof(tag), &tag);
-	return EC_SUCCESS;
-}
-DECLARE_HOOK(HOOK_SYSJUMP, vboot_hash_preserve_state, HOOK_PRIO_DEFAULT);
-
-#endif
 
 /**
  * Returns the offset of RO or RW image if the either region is specifically
