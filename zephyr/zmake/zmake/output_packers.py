@@ -96,6 +96,12 @@ class ElfPacker(BasePacker):
         yield singleimage / 'zephyr' / 'zephyr.elf', 'zephyr.elf'
 
 
+class RawBinPacker(BasePacker):
+    """Raw proxy for zephyr.bin output of a single build."""
+    def pack_firmware(self, work_dir, jobclient, singleimage):
+        yield singleimage / 'zephyr' / 'zephyr.bin', 'zephyr.bin'
+
+
 class NpcxPacker(BasePacker):
     """Packer for RO/RW image to generate a .bin build using FMAP.
 
@@ -167,4 +173,5 @@ class NpcxPacker(BasePacker):
 packer_registry = {
     'elf': ElfPacker,
     'npcx': NpcxPacker,
+    'raw': RawBinPacker,
 }
