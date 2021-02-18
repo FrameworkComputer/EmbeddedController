@@ -67,6 +67,12 @@ def main(argv=None):
     parser.add_argument('-L', '--no-log-label', action='store_true',
                         default=False,
                         help='Turn off logging labels')
+    parser.add_argument('--modules-dir',
+                        type=pathlib.Path,
+                        help='The path to a directory containing all modules '
+                        'needed.  If unspecified, zmake will assume you have '
+                        'a Chrome OS checkout and try locating them in the '
+                        'checkout.')
     parser.add_argument('--zephyr-base', type=pathlib.Path,
                         help='Path to Zephyr OS repository')
 

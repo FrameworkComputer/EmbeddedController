@@ -33,12 +33,16 @@ known_modules = {
 }
 
 
-def locate_modules(checkout_dir, modules=known_modules):
-    """Resolve module locations from a known_modules dictionary.
+def locate_from_checkout(checkout_dir):
+    """Find modules from a Chrome OS checkout.
+
+    Important: this function should only conditionally be called if a
+    checkout exists.  Zmake *can* be used without a Chrome OS source
+    tree.  You should call locate_from_directory if outside of a
+    Chrome OS source tree.
 
     Args:
         checkout_dir: The path to the chromiumos source.
-        modules: The known_modules dictionary to use for resolution.
 
     Returns:
         A dictionary mapping module names to paths.
@@ -46,6 +50,28 @@ def locate_modules(checkout_dir, modules=known_modules):
     result = {}
     for name, locator in known_modules.items():
         result[name] = locator(name, checkout_dir)
+    return result
+
+
+def locate_from_directory(directory):
+    """Create a modules dictionary from a directory.
+
+    This takes a directory, and searches for the known module names
+    located in it.
+
+    Args:
+        directory: the directory to search in.
+
+    Returns:
+        A dictionary mapping module names to paths.
+    """
+    result = {}
+
+    for name in known_modules:
+        modpath = (directory / name).resolve()
+        if (modpath / 'zephyr' / 'module.yml').is_file():
+            result[name] = modpath
+
     return result
 
 
