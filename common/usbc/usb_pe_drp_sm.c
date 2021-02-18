@@ -653,11 +653,6 @@ static struct policy_engine {
 	uint64_t swap_source_start_timer;
 
 	/*
-	 * This timer is used during a VCONN Swap.
-	 */
-	uint64_t vconn_on_timer;
-
-	/*
 	 * Used to wait for tSrcTransition between sending an Accept for a
 	 * Request or receiving a GoToMin and transitioning the power supply.
 	 * See PD 3.0, table 7-11 and table 7-22 This is not a named timer in
@@ -6280,7 +6275,7 @@ static void pe_vcs_wait_for_vconn_swap_entry(int port)
 	print_current_state(port);
 
 	/* Start the VCONNOnTimer */
-	pe[port].vconn_on_timer = get_time().val + PD_T_VCONN_SOURCE_ON;
+	pd_timer_enable(port, PE_TIMER_VCONN_ON, PD_T_VCONN_SOURCE_ON);
 }
 
 static void pe_vcs_wait_for_vconn_swap_run(int port)
@@ -6307,12 +6302,17 @@ static void pe_vcs_wait_for_vconn_swap_run(int port)
 	 * PE_SNK_Hard_Reset state when:
 	 *   1) The VCONNOnTimer times out.
 	 */
-	if (get_time().val > pe[port].vconn_on_timer) {
+	if (pd_timer_is_expired(port, PE_TIMER_VCONN_ON)) {
 		if (pe[port].power_role == PD_ROLE_SOURCE)
 			set_state_pe(port, PE_SRC_HARD_RESET);
 		else
 			set_state_pe(port, PE_SNK_HARD_RESET);
 	}
+}
+
+static void pe_vcs_wait_for_vconn_swap_exit(int port)
+{
+	pd_timer_disable(port, PE_TIMER_VCONN_ON);
 }
 
 /*
@@ -7032,6 +7032,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_VCS_WAIT_FOR_VCONN_SWAP] = {
 		.entry = pe_vcs_wait_for_vconn_swap_entry,
 		.run   = pe_vcs_wait_for_vconn_swap_run,
+		.exit  = pe_vcs_wait_for_vconn_swap_exit,
 	},
 	[PE_VCS_TURN_ON_VCONN_SWAP] = {
 		.entry = pe_vcs_turn_on_vconn_swap_entry,
