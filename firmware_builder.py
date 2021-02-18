@@ -90,13 +90,14 @@ def test(opts):
                    cwd=os.path.dirname(__file__),
                    check=True)
 
-    # Verify compilation of the on-device unit test binaries.
-    # TODO(b/172501728) These should build  for all boards, but they've bit
-    # rotted, so we only build the ones that compile.
-    subprocess.run(
-        ['make', 'BOARD=bloonchipper', 'tests', '-j{}'.format(opts.cpus)],
-        cwd=os.path.dirname(__file__),
-        check=True)
+    if not opts.code_coverage:
+        # Verify compilation of the on-device unit test binaries.
+        # TODO(b/172501728) These should build  for all boards, but they've bit
+        # rotted, so we only build the ones that compile.
+        subprocess.run(
+            ['make', 'BOARD=bloonchipper', 'tests', '-j{}'.format(opts.cpus)],
+            cwd=os.path.dirname(__file__),
+            check=True)
 
 
 def main(args):
