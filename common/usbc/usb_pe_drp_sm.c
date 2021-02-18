@@ -645,15 +645,6 @@ static struct policy_engine {
 	uint64_t ps_source_timer;
 
 	/*
-	 * In BIST_TX mode, this timer is used by a UUT to ensure that a
-	 * Continuous BIST Mode (i.e. BIST Carrier Mode) is exited in a timely
-	 * fashion.
-	 *
-	 * In BIST_RX mode, this timer is used to give the port partner time
-	 * to respond.
-	 */
-	uint64_t bist_cont_mode_timer;
-	/*
 	 * This timer is used by the new Source, after a Power Role Swap or
 	 * Fast Role Swap, to ensure that it does not send Source_Capabilities
 	 * Message before the new Sink is ready to receive the
@@ -4941,8 +4932,8 @@ static void pe_bist_tx_entry(int port)
 		 * tBISTContMode of this Continuous BIST Mode being enabled.
 		 */
 		send_ctrl_msg(port, TCPC_TX_BIST_MODE_2, 0);
-		pe[port].bist_cont_mode_timer =
-					get_time().val + PD_T_BIST_CONT_MODE;
+		pd_timer_enable(port, PE_TIMER_BIST_CONT_MODE,
+				PD_T_BIST_CONT_MODE);
 	} else if (mode == BIST_TEST_DATA) {
 		/*
 		 * See PD 3.0 section 6.4.3.2 BIST Test Data:
@@ -4954,7 +4945,6 @@ static void pe_bist_tx_entry(int port)
 		 */
 		if (tcpc_set_bist_test_mode(port, true) != EC_SUCCESS)
 			CPRINTS("C%d: Failed to enter BIST Test Mode", port);
-		pe[port].bist_cont_mode_timer = TIMER_DISABLED;
 	} else {
 		/* Ignore unsupported BIST messages. */
 		pe_set_ready_state(port);
@@ -4964,7 +4954,7 @@ static void pe_bist_tx_entry(int port)
 
 static void pe_bist_tx_run(int port)
 {
-	if (get_time().val > pe[port].bist_cont_mode_timer) {
+	if (pd_timer_is_expired(port, PE_TIMER_BIST_CONT_MODE)) {
 
 		if (pe[port].power_role == PD_ROLE_SOURCE)
 			set_state_pe(port, PE_SRC_TRANSITION_TO_DEFAULT);
@@ -4979,6 +4969,11 @@ static void pe_bist_tx_run(int port)
 		if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
 			PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 	}
+}
+
+static void pe_bist_tx_exit(int port)
+{
+	pd_timer_disable(port, PE_TIMER_BIST_CONT_MODE);
 }
 
 /**
@@ -7113,6 +7108,7 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_BIST_TX] = {
 		.entry = pe_bist_tx_entry,
 		.run   = pe_bist_tx_run,
+		.exit  = pe_bist_tx_exit,
 	},
 	[PE_DR_GET_SINK_CAP] = {
 		.entry = pe_dr_get_sink_cap_entry,
