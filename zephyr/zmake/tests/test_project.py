@@ -5,9 +5,11 @@
 import hypothesis
 import hypothesis.strategies as st
 import pathlib
+import pytest
 import string
 import tempfile
 
+import zmake.modules
 import zmake.project
 
 
@@ -80,3 +82,45 @@ def test_find_dts_overlays(modules):
                 assert actual_dts_files == set(map(str, expected_dts_files))
 
     setup_modules_and_dispatch(modules, testcase)
+
+
+module_lists = st.lists(st.one_of(*map(st.just, zmake.modules.known_modules)),
+                        unique=True)
+
+
+@hypothesis.given(module_lists)
+@hypothesis.settings(deadline=None)
+def test_prune_modules(modules):
+    """Test the Project.prune_modules method in the usual case (all
+    modules available)."""
+    module_paths = {
+        name: pathlib.Path('/fake/module/path', name)
+        for name in zmake.modules.known_modules
+    }
+
+    with TemporaryProject(
+        {'board': 'native_posix',
+         'toolchain': 'coreboot-sdk',
+         'output-type': 'elf',
+         'supported-zephyr-versions': ['v2.5'],
+         'modules': modules}) as project:
+        assert set(project.prune_modules(module_paths)) == set(modules)
+
+
+def test_prune_modules_unavailable():
+    """The Project.prune_modules method should raise a KeyError when
+    not all modules are available."""
+
+    # Missing 'cmsis'
+    module_paths = {
+        'hal_stm32': pathlib.Path('/mod/halstm'),
+    }
+
+    with TemporaryProject(
+        {'board': 'native_posix',
+         'toolchain': 'coreboot-sdk',
+         'output-type': 'elf',
+         'supported-zephyr-versions': ['v2.5'],
+         'modules': ['hal_stm32', 'cmsis']}) as project:
+        with pytest.raises(KeyError):
+            project.prune_modules(module_paths)

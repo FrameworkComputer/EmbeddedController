@@ -132,6 +132,9 @@ class Zmake:
                     self.module_paths['ec'] / 'zephyr' / 'include' / 'drivers'),
             })
 
+        # Prune the module paths to just those required by the project.
+        module_paths = project.prune_modules(self.module_paths)
+
         module_config = zmake.modules.setup_module_symlinks(
             build_dir / 'modules', module_paths)
 

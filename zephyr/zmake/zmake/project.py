@@ -14,6 +14,7 @@ with warnings.catch_warnings():
     import jsonschema
 
 import zmake.build_config as build_config
+import zmake.modules as modules
 import zmake.output_packers as packers
 import zmake.util as util
 
@@ -52,6 +53,13 @@ class ProjectConfig:
             'board': {
                 'type': 'string',
             },
+            'modules': {
+                'type': 'array',
+                'items': {
+                    'type': 'string',
+                    'enum': list(modules.known_modules),
+                },
+            },
             'output-type': {
                 'type': 'string',
                 'enum': list(packers.packer_registry),
@@ -84,6 +92,10 @@ class ProjectConfig:
     @property
     def board(self):
         return self.config_dict['board']
+
+    @property
+    def modules(self):
+        return self.config_dict.get('modules', list(modules.known_modules))
 
     @property
     def output_packer(self):
@@ -151,3 +163,33 @@ class Project:
                 cmake_defs={'DTC_OVERLAY_FILE': ';'.join(map(str, overlays))})
         else:
             return build_config.BuildConfig()
+
+    def prune_modules(self, module_paths):
+        """Reduce a modules dict to the ones required by this project.
+
+        If this project does not define a modules list in the
+        configuration, it is assumed that all known modules to Zmake
+        are required.  This is typically inconsequential as Zephyr
+        module design conventions require a Kconfig option to actually
+        enable most modules.
+
+        Args:
+            module_paths: A dictionary mapping module names to their
+                paths.  This dictionary is not modified.
+
+        Returns:
+            A new module_paths dictionary with only the modules
+            required by this project.
+
+        Raises:
+            A KeyError, if a required module is unavailable.
+        """
+        result = {}
+        for module in self.config.modules:
+            try:
+                result[module] = module_paths[module]
+            except KeyError as e:
+                raise KeyError(
+                    'The {!r} module is required by the {} project, but is not '
+                    'available.'.format(module, self.project_dir)) from e
+        return result
