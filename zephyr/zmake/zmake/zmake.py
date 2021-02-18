@@ -336,8 +336,3 @@ class Zmake:
         for tmpdir in tmp_dirs:
             shutil.rmtree(tmpdir)
         return rv
-
-    @property
-    def platform_ec_dir(self):
-        return zmake.modules.locate_modules(
-            checkout_dir=self.checkout)['ec-shim']
