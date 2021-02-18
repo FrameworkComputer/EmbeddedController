@@ -653,14 +653,6 @@ static struct policy_engine {
 	uint64_t swap_source_start_timer;
 
 	/*
-	 * This timer is used by the Initiator’s Policy Engine to ensure that
-	 * a Structured VDM Command request needing a response (e.g. Discover
-	 * Identity Command request) is responded to within a bounded time of
-	 * tVDMSenderResponse.
-	 */
-	uint64_t vdm_response_timer;
-
-	/*
 	 * This timer is used during a VCONN Swap.
 	 */
 	uint64_t vconn_on_timer;
@@ -5182,21 +5174,19 @@ static void pe_vdm_send_request_entry(int port)
 	/* All VDM sequences are Interruptible */
 	PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS |
 			PE_FLAGS_INTERRUPTIBLE_AMS);
-
-	pe[port].vdm_response_timer = TIMER_DISABLED;
 }
 
 static void pe_vdm_send_request_run(int port)
 {
-	if (pe[port].vdm_response_timer == TIMER_DISABLED &&
-			PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE) &&
+	    pd_timer_is_disabled(port, PE_TIMER_VDM_RESPONSE)) {
 		/* Message was sent */
 		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 
 		/* Start no response timer */
 		/* TODO(b/155890173): Support DPM-supplied timeout */
-		pe[port].vdm_response_timer =
-			get_time().val + PD_T_VDM_SNDR_RSP;
+		pd_timer_enable(port, PE_TIMER_VDM_RESPONSE,
+				PD_T_VDM_SNDR_RSP);
 	}
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED)) {
@@ -5212,7 +5202,7 @@ static void pe_vdm_send_request_run(int port)
 	 * Check the VDM timer, child will be responsible for processing
 	 * messages and reacting appropriately to unexpected messages.
 	 */
-	if (get_time().val > pe[port].vdm_response_timer) {
+	if (pd_timer_is_expired(port, PE_TIMER_VDM_RESPONSE)) {
 		CPRINTF("VDM %s Response Timeout\n",
 				pe[port].tx_type == TCPC_TX_SOP ?
 				"Port" : "Cable");
@@ -5236,6 +5226,8 @@ static void pe_vdm_send_request_exit(int port)
 
 	/* Invalidate TX type so it must be set before next call */
 	pe[port].tx_type = TCPC_TX_INVALID;
+
+	pd_timer_disable(port, PE_TIMER_VDM_RESPONSE);
 }
 
 /**
