@@ -29,8 +29,7 @@ def third_party_module(name, checkout):
 known_modules = {
     'hal_stm32': third_party_module,
     'cmsis': third_party_module,
-    'ec-shim': lambda name, checkout: (
-        checkout / 'src' / 'platform' / 'ec'),
+    'ec': lambda name, checkout: (checkout / 'src' / 'platform' / 'ec'),
 }
 
 

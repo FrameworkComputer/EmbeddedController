@@ -111,7 +111,7 @@ class Zmake:
 
         # Resolve build_dir if needed.
         build_dir = util.resolve_build_dir(
-            platform_ec_dir=module_paths['ec-shim'],
+            platform_ec_dir=module_paths['ec'],
             project_dir=project_dir,
             build_dir=build_dir)
         # Make sure the build directory is clean.
@@ -123,9 +123,9 @@ class Zmake:
             environ_defs={'ZEPHYR_BASE': str(zephyr_base),
                           'PATH': '/usr/bin'},
             cmake_defs={
-                'DTS_ROOT': str(module_paths['ec-shim'] / 'zephyr'),
+                'DTS_ROOT': str(module_paths['ec'] / 'zephyr'),
                 'SYSCALL_INCLUDE_DIRS': str(
-                    module_paths['ec-shim'] / 'zephyr' / 'include' / 'drivers'),
+                    module_paths['ec'] / 'zephyr' / 'include' / 'drivers'),
             })
         module_config = zmake.modules.setup_module_symlinks(
             build_dir / 'modules', module_paths)
@@ -305,7 +305,7 @@ class Zmake:
     def testall(self, fail_fast=False):
         """Test all the valid test targets"""
         modules = zmake.modules.locate_modules(self.checkout)
-        root_dirs = [modules['ec-shim'] / 'zephyr']
+        root_dirs = [modules['ec'] / 'zephyr']
         project_dirs = []
         for root_dir in root_dirs:
             self.logger.info('Finding zmake target under \'%s\'.', root_dir)
@@ -330,7 +330,7 @@ class Zmake:
 
         # Run pytest on platform/ec/zephyr/zmake/tests.
         self._run_pytest(
-            executor, modules['ec-shim'] / 'zephyr' / 'zmake' / 'tests')
+            executor, modules['ec'] / 'zephyr' / 'zmake' / 'tests')
 
         rv = executor.wait()
         for tmpdir in tmp_dirs:
