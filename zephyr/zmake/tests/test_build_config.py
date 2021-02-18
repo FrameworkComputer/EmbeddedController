@@ -153,6 +153,7 @@ def test_popen_cmake_kconfig_but_no_file(conf, project_dir, build_dir):
 
 
 @hypothesis.given(build_configs, paths, paths)
+@hypothesis.settings(deadline=None)
 def test_popen_cmake_kconfig(conf, project_dir, build_dir):
     job_client = FakeJobClient()
 
