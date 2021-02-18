@@ -189,5 +189,7 @@ enum scancode_values {
 #endif
 
 };
-
+#ifdef CONFIG_SIMULATE_KEYCODE
+void simulate_keyboard(uint16_t scancode, int is_pressed);
+#endif
 #endif /* __CROS_EC_KEYBOARD_8042_SHAREDLIB_H */

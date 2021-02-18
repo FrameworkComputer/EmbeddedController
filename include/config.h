@@ -2664,6 +2664,11 @@
  */
 #undef CONFIG_8042_AUX
 
+/*
+ * Support simulate scan code function
+ */
+#undef CONFIG_SIMULATE_KEYCODE
+
 /*****************************************************************************/
 
 /*

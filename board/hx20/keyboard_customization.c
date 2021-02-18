@@ -229,6 +229,13 @@ void board_kblight_init(void)
 #define FN_LOCKED BIT(1)
 static uint8_t Fn_key;
 
+void Fnkey_shutdown(void) {
+	Fn_key &= ~FN_LOCKED;
+	Fn_key &= ~FN_PRESSED;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, Fnkey_shutdown, HOOK_PRIO_DEFAULT);
+
+
 enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 					      int8_t pressed)
 {
@@ -295,18 +302,22 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 
 		break;
 	case SCANCODE_F9:  /* TODO: EXTERNAL_DISPLAY */
-
+		simulate_keyboard(SCANCODE_LEFT_WIN, 1);
+		simulate_keyboard(SCANCODE_P, 1);
+		simulate_keyboard(SCANCODE_P, 0);
+		simulate_keyboard(SCANCODE_LEFT_WIN, 0);
+		return EC_ERROR_UNIMPLEMENTED;
 		break;
 	case SCANCODE_F10:  /* TODO: FLIGHT_MODE */
 
 		break;
 	case SCANCODE_F11:
-			/* *
-			* TODO this might need an
-			* extra key combo of:
-			* 0xE012 0xE07C to simulate
-			* PRINT_SCREEN
-			*/
+			/*
+			 * TODO this might need an
+			 * extra key combo of:
+			 * 0xE012 0xE07C to simulate
+			 * PRINT_SCREEN
+			 */
 		*make_code = 0xE07C;
 		break;
 	case SCANCODE_F12:  /* TODO: FRAMEWORK */
@@ -314,21 +325,42 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 		*make_code = 0xE050;
 
 		break;
+	}
+
+	if (Fn_key & FN_LOCKED)
+		return EC_SUCCESS;
+
+	switch (pressed_key) {
 	case SCANCODE_DELETE:  /* TODO: INSERT */
 		*make_code = 0xE070;
 
 		break;
 	case SCANCODE_B:
-			/* *
-			* TODO this might need an
-			* extra key combo of: E1 14 77 E1 F0 14 F0 77
-			* TODO: BREAK_KEY
-			*/
+			/*
+			 * TODO this might need an
+			 * extra key combo of: E0 7E E0 F0 7E
+			 * TODO: BREAK_KEY
+			 */
+		simulate_keyboard(0xe07e, 1);
+		simulate_keyboard(0xe0, 1);
+		simulate_keyboard(0x7e, 0);
+		return EC_ERROR_UNIMPLEMENTED;
 		break;
 	case SCANCODE_K:  /* TODO: SCROLL_LOCK */
-		*make_code = 0x7E;
+		*make_code = SCANCODE_SCROLL_LOCK;
 		break;
 	case SCANCODE_P:  /* TODO: PAUSE */
+			/*
+			 * TODO this might need an
+			 * extra key combo of: E1 14 77 E1 F0 14 F0 77
+			 * TODO: PAUSE_KEY
+			 */
+		simulate_keyboard(0xe114, 1);
+		simulate_keyboard(0x77, 1);
+		simulate_keyboard(0xe1, 1);
+		simulate_keyboard(0x14, 0);
+		simulate_keyboard(0x77, 0);
+		return EC_ERROR_UNIMPLEMENTED;
 		break;
 	case SCANCODE_S:  /* TODO: SYSRQ */
 
@@ -367,6 +399,7 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 		*make_code = 0xE07A;
 		break;
 	}
+
 	return EC_SUCCESS;
 }
 #endif
