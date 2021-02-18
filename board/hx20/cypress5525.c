@@ -338,10 +338,12 @@ void cypd_update_port_state(int controller, int port)
 	int rv;
 	uint8_t pd_status_reg[4];
 	uint8_t pdo_reg[4];
+	uint8_t rdo_reg[4];
 
 	int typec_status_reg;
 	int pd_current = 0;
 	int pd_voltage = 0;
+	int rdo_max_current = 0;
 	int type_c_current = 0;
 	int port_idx = (controller << 1) + port;
 
@@ -375,6 +377,10 @@ void cypd_update_port_state(int controller, int port)
 	pd_current = (pdo_reg[0] + ((pdo_reg[1] & 0x3) << 8)) * 10;
 	pd_voltage = (((pdo_reg[1] & 0xFC) >> 2) + ((pdo_reg[2] & 0xF) << 6)) * 50;
 
+	cypd_read_reg_block(controller, CYP5525_CURRENT_RDO_REG(port), rdo_reg, 4);
+	/*rdo_current = ((rdo_reg[0] + (rdo_reg[1]<<8)) & 0x3FF)*10,*/
+	rdo_max_current = (((rdo_reg[1]>>2) + (rdo_reg[2]<<6)) & 0x3FF)*10;
+
 	/*
 	 * The port can have several states active:
 	 * 1. Type C active (with no PD contract) CC resistor negociation only
@@ -393,17 +399,27 @@ void cypd_update_port_state(int controller, int port)
 			CEIL_REQUESTOR_PD,
 			CHARGE_CEIL_NONE);
 	}
+	if (pd_port_states[port_idx].c_state == CYPD_STATUS_SINK) {
+		pd_port_states[port_idx].current = type_c_current;
+		pd_port_states[port_idx].voltage = TYPE_C_VOLTAGE;
+	}
 
-	if (pd_port_states[port_idx].pd_state && pd_port_states[port_idx].power_role == PD_ROLE_SINK) {
-		pd_set_input_current_limit(port_idx, pd_current, pd_voltage);
-		charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
-							pd_current);
-		pd_port_states[port_idx].current = pd_current;
-		pd_port_states[port_idx].voltage = pd_voltage;
+	if (pd_port_states[port_idx].pd_state) {
+		if (pd_port_states[port_idx].power_role == PD_ROLE_SINK) {
+			pd_set_input_current_limit(port_idx, pd_current, pd_voltage);
+			charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
+								pd_current);
+			pd_port_states[port_idx].current = pd_current;
+			pd_port_states[port_idx].voltage = pd_voltage;
+		} else {
+			pd_set_input_current_limit(port_idx, 0, 0);
+			/*Source*/
+			pd_port_states[port_idx].current = rdo_max_current;
+			pd_port_states[port_idx].voltage = TYPE_C_VOLTAGE;
+
+		}
 	} else {
 		pd_set_input_current_limit(port_idx, 0, 0);
-		pd_port_states[port_idx].voltage = 0;
-		pd_port_states[port_idx].current = 0;
 	}
 
 
@@ -1161,6 +1177,10 @@ static int cmd_cypd_get_status(int argc, char **argv)
 							port_status[(data >> 2) & 0x7],
 							data & 0x20 ? "Ra" : "NoRa",
 							current_level[(data >> 6) & 0x03]);
+				cypd_read_reg_block(i, CYP5525_CURRENT_RDO_REG(p), data4, 4);
+				CPRINTS("             RDO : Current:%dmA MaxCurrent%dmA",
+						((data4[0] + (data4[1]<<8)) & 0x3FF)*10,
+						(((data4[1]>>2) + (data4[2]<<6)) & 0x3FF)*10);
 				cypd_read_reg8(i, CYP5525_TYPE_C_VOLTAGE_REG(p), &data);
 				CPRINTS("  TYPE_C_VOLTAGE : %dmV", data*100);
 				cypd_read_reg16(i, CYP5525_PORT_INTR_STATUS_REG(p), &data);
