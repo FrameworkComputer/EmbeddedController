@@ -165,6 +165,10 @@ __irq_isr:
         bltu sp, t0, __sp_16byte_aligned
         mv sp, t0
 __sp_16byte_aligned:
+	/* in_interrupt = 1 */
+	li t0, 1
+	la t1, in_interrupt
+        sb t0, 0(t1)
         /*
          * This ensures sp is 16-byte aligned. This only applies to when there
          * is an interrupt before tasks start. Otherwise stack_end is already
@@ -212,6 +216,9 @@ __irq_handler:
 .global __irq_exit
 __irq_exit:
         jal end_irq_handler
+	/* in_interrupt = 0 */
+	la t0, in_interrupt
+	sb zero, 0(t0)
         /* restore sp from scratch register */
         csrr sp, mscratch
 #ifdef CONFIG_FPU

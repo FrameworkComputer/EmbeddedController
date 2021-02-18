@@ -165,7 +165,7 @@ static uint32_t tasks_enabled = BIT(TASK_ID_HOOKS) | BIT(TASK_ID_IDLE);
 int start_called;  /* Has task swapping started */
 
 /* in interrupt context */
-static volatile int in_interrupt;
+volatile bool in_interrupt;
 /* Interrupt number of EC modules */
 volatile int ec_int;
 /* Interrupt group of EC INTC modules */
@@ -319,8 +319,6 @@ void __ram_code update_exc_start_time(void)
  */
 int __ram_code start_irq_handler(void)
 {
-	in_interrupt = 1;
-
 	/* If this is a SW interrupt */
 	if (get_mcause() == 11) {
 		ec_int = sw_int_num;
@@ -369,7 +367,6 @@ void __ram_code end_irq_handler(void)
 		task_switches++;
 	}
 #endif
-	in_interrupt = 0;
 }
 
 static uint32_t __ram_code __wait_evt(int timeout_us, task_id_t resched)
