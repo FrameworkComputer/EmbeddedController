@@ -125,9 +125,9 @@ end
 # Helper Functions                                                  #
 #####################################################################
 
-# Usage: reg32 <address> [offset]
+# Usage: ec-reg32 <address> [offset]
 # Read a 32 bit register
-define reg32
+define ec-reg32
     set $a = $arg0
     if $argc > 1
         set $a += $arg1
@@ -137,6 +137,7 @@ define reg32
     print /x $v
     print /t $v
 end
+alias reg32 = ec-reg32
 
 # Usage: ec-connect
 # Issue the overly long target connect command using the
