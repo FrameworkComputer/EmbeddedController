@@ -390,6 +390,16 @@ config PLATFORM_EC_WRITABLE_STORAGE_SIZE
 	  ending position of the RW image being copied into RAM when combined
 	  with PLATFORM_EC_WRITABLE_STORAGE_OFF.
 
+config PLATFORM_EC_CONSOLE_CMD_CHARGEN
+	bool "Console command: chargen"
+	depends on UART_INTERRUPT_DRIVEN
+	help
+	  Enables the "chargen" console command, which sends a continuous
+	  stream of characters to the EC console.
+
+	  This allows to create tests which validate console output by
+	  verifying that no characters in the received sequence were lost.
+
 config PLATFORM_EC_CONSOLE_CMD_FLASH
 	bool "Console commands: flasherase, flashread, flashwp, flashwrite"
 	default y

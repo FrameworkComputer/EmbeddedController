@@ -68,6 +68,8 @@ static int command_chargen(int argc, char **argv)
 	}
 #endif
 
+	uart_shell_stop();
+
 	c = '0';
 	prev_watchdog_time = get_time();
 	while (uart_getc() != 'x' && usb_getc() != 'x') {
@@ -90,6 +92,9 @@ static int command_chargen(int argc, char **argv)
 			prev_watchdog_time.val = current_time.val;
 		}
 
+		if (IS_ENABLED(CONFIG_ZEPHYR) && c == '0')
+			watchdog_reload();
+
 		putc_(c++);
 
 		if (seq_number && (++seq_counter == seq_number))
@@ -110,6 +115,9 @@ static int command_chargen(int argc, char **argv)
 	}
 
 	putc_('\n');
+
+	uart_shell_start();
+
 	return EC_SUCCESS;
 }
 DECLARE_SAFE_CONSOLE_COMMAND(chargen, command_chargen,

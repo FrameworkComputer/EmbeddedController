@@ -280,6 +280,9 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_POWER_DELIVERY
                                                 "${PLATFORM_EC}/common/usbc/usb_sm.c"
                                                 "${PLATFORM_EC}/common/usbc_intr_task.c")
 
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CONSOLE_CMD_CHARGEN
+                                                "${PLATFORM_EC}/common/chargen.c")
+
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CONSOLE_CMD_PD
                                                 "${PLATFORM_EC}/common/usbc/usb_pd_console.c")
 
