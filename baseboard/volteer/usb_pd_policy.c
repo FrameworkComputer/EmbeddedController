@@ -89,14 +89,14 @@ static const union tbt_mode_resp_device vdo_tbt_modes[1] = {
 
 static const uint32_t vdo_idh = VDO_IDH(
 				1, /* Data caps as USB host     */
-				1, /* Data caps as USB device   */
+				0, /* Not a USB device   */
 				IDH_PTYPE_PERIPH,
 				1, /* Supports alt modes */
 				USB_VID_GOOGLE);
 
 static const uint32_t vdo_idh_rev30 = VDO_IDH_REV30(
 				 1, /* Data caps as USB host     */
-				 1, /* Data caps as USB device   */
+				 0, /* Not a USB device   */
 				 IDH_PTYPE_PERIPH,
 				 1, /* Supports alt modes */
 				 IDH_PTYPE_DFP_HOST,
