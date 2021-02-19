@@ -22,6 +22,11 @@
  */
 #define NPCX_UART_MODULE2	1 /* 1:GPIO64/65 for UART1 */
 
+/* EC Defines */
+#define CONFIG_CROS_BOARD_INFO
+#define CONFIG_BOARD_VERSION_CBI
+#define CONFIG_CRC8
+
 #define CONFIG_EXTPOWER_GPIO
 
 /* Common Keyboard Defines */
@@ -69,12 +74,25 @@
 #include "baseboard_usbc_config.h"
 #include "extpower.h"
 
+/**
+ * Configure run-time data structures and operation based on CBI data. This
+ * typically includes customization for changes in the BOARD_VERSION and
+ * FW_CONFIG fields in CBI. This routine is called from the baseboard after
+ * the CBI data has been initialized.
+ */
+__override_proto void board_cbi_init(void);
+
 /*
  * Check battery disconnect state.
  * This function will return if battery is initialized or not.
  * @return true - initialized. false - not.
  */
 __override_proto bool board_battery_is_initialized(void);
+
+/*
+ * Return the board revision number.
+ */
+uint8_t get_board_id(void);
 
 #endif /* !__ASSEMBLER__ */
 

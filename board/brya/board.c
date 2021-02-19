@@ -5,6 +5,7 @@
 
 #include "common.h"
 
+#include "cbi_ec_fw_config.h"
 #include "power.h"
 #include "switch.h"
 #include "throttle_ap.h"
@@ -20,6 +21,14 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 
 /******************************************************************************/
+
+/*
+ * FW_CONFIG defaults for brya if the CBI.FW_CONFIG data is not
+ * initialized.
+ */
+const union brya_cbi_fw_config fw_config_defaults = {
+	.usb_db = DB_USB3_PS8815,
+};
 
 /*
  * remove when we enable CONFIG_POWER_BUTTON
