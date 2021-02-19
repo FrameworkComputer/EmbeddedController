@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "chipset.h"
 #include "keyboard_customization.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_config.h"
@@ -375,10 +376,12 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 			bl_brightness = KEYBOARD_BL_BRIGHTNESS_HIGH;
 			break;
 		case KEYBOARD_BL_BRIGHTNESS_HIGH:
+			hx20_kblight_enable(0);
 			bl_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
 			break;
 		default:
 		case KEYBOARD_BL_BRIGHTNESS_OFF:
+			hx20_kblight_enable(1);
 			bl_brightness = KEYBOARD_BL_BRIGHTNESS_LOW;
 			break;
 		}
