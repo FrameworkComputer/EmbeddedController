@@ -14,7 +14,6 @@
 /*
  * Disable features enabled by default.
  */
-#undef CONFIG_ADC
 #undef CONFIG_HIBERNATE
 #undef CONFIG_SPI_FLASH
 #undef CONFIG_SWITCH
@@ -71,10 +70,28 @@
 #define I2C_PORT_CHARGER	NPCX_I2C_PORT7_0
 #define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
 
+/* Thermal features */
+#define CONFIG_THERMISTOR
+#define CONFIG_TEMP_SENSOR
+#define CONFIG_TEMP_SENSOR_POWER_GPIO	GPIO_SEQ_EC_DSW_PWROK
+#define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"	/* needed by registers.h */
 #include "registers.h"
+
+enum adc_channel {
+	ADC_TEMP_SENSOR_1_DDR_SOC,
+	ADC_TEMP_SENSOR_2_CHARGER,
+	ADC_CH_COUNT
+};
+
+enum temp_sensor_id {
+	TEMP_SENSOR_1_DDR_SOC,
+	TEMP_SENSOR_2_CHARGER,
+	TEMP_SENSOR_COUNT
+};
 
 enum ioex_port {
 	IOEX_C0_NCT38XX = 0,
