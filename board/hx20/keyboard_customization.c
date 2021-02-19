@@ -242,14 +242,10 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 	const uint16_t pressed_key = *make_code;
 	uint8_t bl_brightness = 0;
 
-	if (Fn_key & FN_LOCKED)
+	if (pressed_key == SCANCODE_FN && pressed)
 		Fn_key |= FN_PRESSED;
-	else {
-		if (pressed_key == SCANCODE_FN && pressed)
-			Fn_key |= FN_PRESSED;
-		else if (pressed_key == SCANCODE_FN && !pressed)
-			Fn_key &= ~FN_PRESSED;
-	}
+	else if (pressed_key == SCANCODE_FN && !pressed)
+		Fn_key &= ~FN_PRESSED;
 
 	if (pressed_key == SCANCODE_FN && !factory_status())
 		return EC_ERROR_UNIMPLEMENTED;
@@ -259,7 +255,7 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 		return EC_SUCCESS;
 
 	/*
-	*If the function key is not held, then
+	* If the function key is not held, then
 	* we pass through all events without modifying them
 	*/
 	if (Fn_key == 0)
@@ -327,7 +323,7 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 		break;
 	}
 
-	if (Fn_key & FN_LOCKED)
+	if (Fn_key & FN_LOCKED && !(Fn_key & FN_PRESSED))
 		return EC_SUCCESS;
 
 	switch (pressed_key) {
