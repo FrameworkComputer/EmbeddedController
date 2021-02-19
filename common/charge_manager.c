@@ -17,6 +17,7 @@
 #include "system.h"
 #include "tcpm/tcpm.h"
 #include "timer.h"
+#include "usb_common.h"
 #include "usb_pd.h"
 #include "usb_pd_dpm.h"
 #include "usb_pd_tcpm.h"
@@ -885,6 +886,9 @@ static void charge_manager_refresh(void)
 		    IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE)) ||
 		    (IS_ENABLED(CONFIG_USB_PD_TCPMV2) &&
 		    IS_ENABLED(CONFIG_USB_PE_SM))) {
+			uint32_t pdo;
+			uint32_t max_voltage;
+			uint32_t max_current;
 			/*
 			 * Check if new voltage/current is different
 			 * than requested. If yes, send new power request
@@ -893,6 +897,18 @@ static void charge_manager_refresh(void)
 			    charge_voltage ||
 			    pd_get_requested_current(updated_new_port) !=
 			    charge_current_uncapped)
+				pd_set_new_power_request(updated_new_port);
+
+			/*
+			 * Check if we can get more power from this port.
+			 * If yes, send new power request
+			 */
+			pd_find_pdo_index(pd_get_src_cap_cnt(updated_new_port),
+					  pd_get_src_caps(updated_new_port),
+					  pd_get_max_voltage(), &pdo);
+			pd_extract_pdo_power(pdo, &max_current, &max_voltage);
+			if (charge_voltage != max_voltage ||
+			    charge_current_uncapped != max_current)
 				pd_set_new_power_request(updated_new_port);
 		} else {
 			/*
