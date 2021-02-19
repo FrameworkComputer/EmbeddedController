@@ -63,4 +63,10 @@ struct ec_response_pwm_get_actual_fan_rpm {
 	uint32_t rpm;
 } __ec_align4;
 
+#define EC_CMD_SET_AP_REBOOT_DELAY	0x3E05
+
+struct ec_response_ap_reboot_delay {
+	uint8_t delay;
+} __ec_align1;
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */
