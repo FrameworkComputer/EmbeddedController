@@ -1,1 +1,0 @@
-../adlrvpp_ite/battery.c

@@ -11,5 +11,4 @@ CHIP_FAMILY:=it8320
 CHIP_VARIANT:=it8320dx
 BASEBOARD:=intelrvp
 
-board-y=board.o adlrvp.o
-board-$(CONFIG_BATTERY_SMART)+=battery.o
+board-y=board.o
