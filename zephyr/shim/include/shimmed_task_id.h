@@ -19,6 +19,9 @@ typedef uint8_t task_id_t;
  */
 #ifndef CONFIG_ZTEST
 #define CROS_EC_TASK_LIST                                                 \
+	COND_CODE_1(HAS_TASK_HOOKS,                                       \
+		     (CROS_EC_TASK(HOOKS, hook_task, 0,                   \
+				   CONFIG_TASK_HOOKS_STACK_SIZE)), ())    \
 	COND_CODE_1(HAS_TASK_CHG_RAMP,                                    \
 		     (CROS_EC_TASK(CHG_RAMP, chg_ramp_task, 0,            \
 				   CONFIG_TASK_CHG_RAMP_STACK_SIZE)), ()) \
@@ -40,9 +43,6 @@ typedef uint8_t task_id_t;
 	COND_CODE_1(HAS_TASK_MOTIONSENSE,                                     \
 		     (CROS_EC_TASK(MOTIONSENSE, motion_sense_task, 0,         \
 				   CONFIG_TASK_MOTIONSENSE_STACK_SIZE)), ())  \
-	COND_CODE_1(HAS_TASK_HOOKS,                                       \
-			(CROS_EC_TASK(HOOKS, hook_task, 0,                \
-				CONFIG_TASK_HOOKS_STACK_SIZE)), ())       \
 	COND_CODE_1(HAS_TASK_HOSTCMD,                                     \
 		     (CROS_EC_TASK(HOSTCMD, host_command_task, 0,         \
 				   CONFIG_TASK_HOSTCMD_STACK_SIZE)), ())  \
