@@ -8,6 +8,7 @@
 #include "atomic.h"
 #include "common.h"
 #include "console.h"
+#include "chipset.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "task.h"
@@ -65,8 +66,9 @@ static int configure_mux(int port,
 			*mux_state = USB_PD_MUX_NONE;
 	}
 
-	if ((config == USB_MUX_SET_MODE && *mux_state == USB_PD_MUX_NONE) ||
-	      config == USB_MUX_INIT) {
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
+	   ((config == USB_MUX_SET_MODE && *mux_state == USB_PD_MUX_NONE) ||
+	      config == USB_MUX_INIT)) {
 		usb_mux_set_disconnect_latch_flag(port, true);
 	}
 
