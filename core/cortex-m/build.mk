@@ -24,7 +24,7 @@ CFLAGS_CPU+=-flto
 LDFLAGS_EXTRA+=-flto
 endif
 
-core-y=cpu.o init.o ldivmod.o llsr.o uldivmod.o vecttable.o
+core-y=cpu.o debug.o init.o ldivmod.o llsr.o uldivmod.o vecttable.o
 core-$(CONFIG_AES)+=aes.o
 core-$(CONFIG_AES_GCM)+=ghash.o
 core-$(CONFIG_ARMV7M_CACHE)+=cache.o
