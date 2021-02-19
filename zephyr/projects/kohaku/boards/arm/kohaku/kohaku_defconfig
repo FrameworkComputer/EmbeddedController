@@ -26,6 +26,12 @@ CONFIG_GPIO=y
 # Clock configuration
 CONFIG_CLOCK_CONTROL=y
 
+# WATCHDOG configuration
+CONFIG_WATCHDOG=y
+# Set the delay time for printing panic data.
+# 1 cycle is about 32ms. 500ms is about 16 cycles.
+CONFIG_WDT_NPCX_DELAY_CYCLES=16
+
 # PLL configuration
 CONFIG_CLOCK_NPCX_OSC_CYCLES_PER_SEC=90000000
 CONFIG_CLOCK_NPCX_APB1_PRESCALER=6
