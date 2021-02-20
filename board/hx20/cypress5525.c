@@ -284,6 +284,46 @@ int cyp5225_set_power_state(int power_state)
 	return rv;
 }
 
+int ucsi_write_tunnel(int controller)
+{
+	uint8_t *message_out = host_get_customer_memmap(EC_MEMMAP_UCSI_MESSAGE_OUT);
+	uint8_t *command = host_get_customer_memmap(EC_MEMMAP_UCSI_COMMAND);
+	int rv;
+
+	/**
+	 * Note that CONTROL data has always to be written after MESSAGE_OUT data is written
+	 * A write to CONTROL (in CCGX) triggers processing of that command.
+	 * Hence MESSAGE_OUT must be available before CONTROL is written to CCGX.
+	 */
+
+	rv = cypd_write_reg_block(controller, CYP5525_MESSAGE_OUT_REG, message_out, 16);
+	if (rv != EC_SUCCESS)
+		CPRINTS("CYP5525_MESSAGE_OUT_REG failed");;
+
+	rv = cypd_write_reg_block(controller, CYP5525_CONTROL_REG, command, 8);
+	if (rv != EC_SUCCESS)
+		CPRINTS("CYP5525_CONTROL_REG failed");;
+
+	return rv;
+}
+
+int ucsi_read_tunnel(int controller, uint8_t *mes_in, uint8_t *cci)
+{
+	int rv;
+
+	rv = cypd_read_reg_block(controller, CYP5525_CCI_REG, cci, 4);
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("CYP5525_CCI_REG failed");
+
+	rv = cypd_read_reg_block(controller, CYP5525_MESSAGE_IN_REG, mes_in, 16);
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("CYP5525_MESSAGE_IN_REG failed");
+
+	return EC_SUCCESS;
+}
+
 int cyp5525_setup(int controller)
 {
 	/* 1. CCG notifies EC with "RESET Complete event after Reset/Power up/JUMP_TO_BOOT
@@ -595,6 +635,18 @@ void cyp5525_interrupt(int controller)
 	}
 
 	cypd_clear_int(controller, clear_mask);
+
+	if (pd_chip_config[controller].state == CYP5525_STATE_READY &&
+			(data & CYP5525_UCSI_INTR)) {
+
+		/* clear the UCSI command flags */
+		*host_get_customer_memmap(0x00) &= ~0x04;
+
+		/* TODO: need to wait two controller response than raise an SCI */
+
+		/* after clear the CCGX UCSI interrupt, raise an SCI to the BIOS */
+		host_set_single_event(EC_HOST_EVENT_UCSI);
+	}
 
 }
 

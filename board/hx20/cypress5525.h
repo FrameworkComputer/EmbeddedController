@@ -235,6 +235,17 @@ enum cypd_response {
 #define CYP5525_PD_CONTRACT_STATE       0x04 /* bit 10 */
 
 
+/************************************************/
+/*  UCSI MEMORY OFFSET DEFINITION               */
+/************************************************/
+#define EC_MEMMAP_UCSI_VERSION			0x12
+#define EC_MEMMAP_UCSI_CCI			0x14
+#define EC_MEMMAP_UCSI_COMMAND			0x18
+#define EC_MEMMAP_UCSI_CONTROL_DATA_LEN	0x19
+#define EC_MEMMAP_UCSI_CONTROL_SPECIFIC	0x1A
+#define EC_MEMMAP_UCSI_MESSAGE_IN		0x20
+#define EC_MEMMAP_UCSI_MESSAGE_OUT		0x30
+
 #define CYP5525_PD_SET_3A_PROF          0x02
 
 /* 7 bit address  */
@@ -303,6 +314,39 @@ enum pd_port_role {
 	PORT_SINK,
 	PORT_SOURCE,
 	PORT_DUALROLE
+};
+
+/************************************************/
+/*	UCSI CONTROL DEFINITION                     */
+/************************************************/
+enum ucsi_control {
+	CYPD_UCSI_START   = 0x01,
+	CYPD_UCSI_STOP    = 0x02,
+	CYPD_UCSI_SILENCE = 0x03,
+	CYPD_UCSI_SIGNAL_CONNECT_EVENT_TO_OS = 0x04
+};
+
+enum ucsi_command {
+	UCSI_CMD_RESERVE,
+	UCSI_CMD_PPM_RESET,
+	UCSI_CMD_CANCEL,
+	UCSI_CMD_CONNECTOR_RESET,
+	UCSI_CMD_ACK_CC_CI,
+	UCSI_CMD_SET_NOTIFICATION_ENABLE,
+	UCSI_CMD_GET_CAPABILITY,
+	UCSI_CMD_GET_CONNECTOR_CAPABILITY,
+	UCSI_CMD_SET_UOM,
+	UCSI_CMD_SET_UOR,
+	UCSI_CMD_SET_PDM,
+	UCSI_CMD_SET_PDR,
+	UCSI_CMD_GET_ALTERNATE_MODES,
+	UCSI_CMD_GET_CAM_SUPPORTED,
+	UCSI_CMD_GET_CURRENT_CAM,
+	UCSI_CMD_SET_NEW_CAM,
+	UCSI_CMD_GET_PDOS,
+	UCSI_CMD_GET_CABLE_PROPERTY,
+	UCSI_CMD_GET_CONNECTOR_STATUS,
+	UCSI_CMD_GET_ERROR_STATUS,
 };
 
 /* PD CHIP */
