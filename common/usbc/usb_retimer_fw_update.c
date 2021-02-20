@@ -46,6 +46,9 @@
  *
  */
 
+#define SUSPEND 1
+#define RESUME  0
+
 /* Track current port AP requested to update retimer firmware */
 static int cur_port;
 static int last_op; /* Operation received from AP via ACPI_WRITE */
@@ -78,14 +81,27 @@ int usb_retimer_fw_update_get_result(void)
 	return result;
 }
 
+static void deferred_pd_suspend(void)
+{
+	pd_set_suspend(cur_port, SUSPEND);
+}
+DECLARE_DEFERRED(deferred_pd_suspend);
+
 void usb_retimer_fw_update_process_op_cb(int port)
 {
 	switch (last_op) {
 	case USB_RETIMER_FW_UPDATE_SUSPEND_PD:
-		pd_set_suspend(port, 1);
+		/*
+		 * If the port has entered low power mode, the PD task
+		 * is paused and will not complete processing of
+		 * pd_set_suspend(). Move pd_set_suspend() into a deferred
+		 * call so that it runs from the HOOKS task and can generate
+		 * a wake event to the PD task and enter suspended mode.
+		 */
+		hook_call_deferred(&deferred_pd_suspend_data, 0);
 		break;
 	case USB_RETIMER_FW_UPDATE_RESUME_PD:
-		pd_set_suspend(port, 0);
+		pd_set_suspend(port, RESUME);
 		break;
 	case USB_RETIMER_FW_UPDATE_GET_MUX:
 		last_mux_result = usb_mux_get(port);
