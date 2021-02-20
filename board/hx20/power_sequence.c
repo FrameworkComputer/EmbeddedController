@@ -17,6 +17,7 @@
 #include "lpc.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command_customization.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -43,6 +44,7 @@ static int forcing_shutdown;  /* Forced shutdown in progress? */
 #define USBWAKE  BIT(1)
 
 static bool want_boot_ap_at_g3;
+static int ap_boot_delay = 9;  /* set 9 second for global reset wait time  */
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
@@ -331,9 +333,10 @@ enum power_state power_handle_state(enum power_state state)
 		}
 		/* Wait for S5 exit for global reset */
 		while ((power_get_signals() & IN_PCH_SLP_S4_DEASSERTED) == 0) {
-			if (task_wait_event(SECOND*9) == TASK_EVENT_TIMER) {
+			if (task_wait_event(SECOND*ap_boot_delay) == TASK_EVENT_TIMER) {
 				CPRINTS("timeout waiting for S5 exit");
 				power_button_enable_led(0);
+				ap_boot_delay = 9;
 				return POWER_S5G3; /* Power up again */
 			}
 		}
@@ -464,3 +467,17 @@ void boot_ap_on_g3(void)
 	CPRINTS("Need to boot ap on g3");
 	want_boot_ap_at_g3 = 1;
 }
+
+static enum ec_status set_ap_reboot_delay(struct host_cmd_handler_args *args)
+{
+	const struct ec_response_ap_reboot_delay *p = args->params;
+
+	if (p->delay < 181)
+		ap_boot_delay = p->delay;
+	else
+		return EC_ERROR_INVAL;
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_SET_AP_REBOOT_DELAY, set_ap_reboot_delay,
+			EC_VER_MASK(0));
