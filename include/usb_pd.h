@@ -2668,6 +2668,14 @@ enum tcpc_cc_polarity pd_get_polarity(int port);
 uint32_t pd_get_events(int port);
 
 /**
+ * Notify the AP of an event on the given port number
+ *
+ * @param port USB-C port number
+ * @param event_mask bitmask of events to set (PD_STATUS_EVENT_* bitmask)
+ */
+void pd_notify_event(int port, uint32_t event_mask);
+
+/**
  * Clear selected port events
  *
  * @param port USB-C port number

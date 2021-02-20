@@ -175,13 +175,5 @@ const char *pe_get_current_state(int port);
  */
 uint32_t pe_get_flags(int port);
 
-/**
- * Sets event for PE layer to report and triggers a notification up to the AP.
- *
- * @param port USB-C port number
- * @param event_mask of bits to set (PD_STATUS_EVENT_* events in ec_commands.h)
- */
-void pe_notify_event(int port, uint32_t event_mask);
-
 #endif /* __CROS_EC_USB_PE_H */
 
