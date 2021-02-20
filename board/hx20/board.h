@@ -45,12 +45,7 @@
  * CONFIG_BOARD_PRE_INIT enables JTAG early
  */
 /* #define CONFIG_CHIPSET_DEBUG */
-
-#ifdef CONFIG_CHIPSET_DEBUG
-#ifndef CONFIG_BOARD_PRE_INIT
 #define CONFIG_BOARD_PRE_INIT
-#endif
-#endif
 
 /* Add commands to read/write ec serial data structure */
 #ifdef CONFIG_CHIPSET_DEBUG
