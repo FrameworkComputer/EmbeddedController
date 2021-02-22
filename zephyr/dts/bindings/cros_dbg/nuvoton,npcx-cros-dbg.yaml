@@ -1,0 +1,17 @@
+# Copyright (c) 2021 Google Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+description: Nuvoton, NPCX Debug Interface
+
+compatible: "nuvoton,npcx-cros-dbg"
+
+include: base.yaml
+
+properties:
+    reg:
+        required: true
+
+    pinctrl-0:
+        type: phandles
+        required: true
+        description: configurations of pinmux controllers
