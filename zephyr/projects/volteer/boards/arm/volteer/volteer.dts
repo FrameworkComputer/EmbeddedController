@@ -124,21 +124,41 @@
 		charger {
 			compatible = "temp-3v3-30k9-47k-4050b";
 			label = "TEMP_SENSOR_CHARGER";
+			temp_fan_off = <40>;
+			temp_fan_max = <55>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
 			adc = <&adc_charger>;
 		};
 		pp3300_regulator {
 			compatible = "temp-3v3-30k9-47k-4050b";
 			label = "TEMP_SENSOR_PP3300_REGULATOR";
+			temp_fan_off = <40>;
+			temp_fan_max = <55>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
 			adc = <&adc_pp3300_regulator>;
 		};
 		ddr_soc {
 			compatible = "temp-3v3-30k9-47k-4050b";
 			label = "TEMP_SENSOR_DDR_SOC";
+			temp_fan_off = <35>;
+			temp_fan_max = <50>;
+			temp_host_high = <70>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
 			adc = <&adc_ddr_soc>;
 		};
 		fan {
 			compatible = "temp-3v3-30k9-47k-4050b";
 			label = "TEMP_SENSOR_FAN";
+			temp_fan_off = <35>;
+			temp_fan_max = <50>;
+			temp_host_high = <70>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
 			adc = <&adc_fan>;
 		};
 	};
