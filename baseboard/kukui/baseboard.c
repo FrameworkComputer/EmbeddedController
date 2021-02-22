@@ -43,6 +43,7 @@ void board_reset_pd_mcu(void)
 
 void board_config_pre_init(void)
 {
+#ifdef VARIANT_KUKUI_EC_STM32F098
 	STM32_RCC_AHBENR |= STM32_RCC_HB_DMA1;
 	/*
 	 * Remap USART1 and SPI2 DMA:
@@ -52,6 +53,7 @@ void board_config_pre_init(void)
 	 */
 	STM32_DMA_CSELR(STM32_DMAC_CH4) = (8 << 12) | (8 << 16) |
 					  (3 << 20) | (3 << 24);
+#endif
 }
 
 enum kukui_board_version {
@@ -124,6 +126,7 @@ int board_get_version(void)
 		}
 	}
 
+#ifdef VARIANT_KUKUI_EC_STM32F098
 	/*
 	 * For devices without pogo, Disable ADC module after we detect the
 	 * board version, since this is the only thing ADC module needs to do
@@ -132,15 +135,18 @@ int board_get_version(void)
 	if (CONFIG_DEDICATED_CHARGE_PORT_COUNT == 0 &&
 			version != BOARD_VERSION_UNKNOWN)
 		adc_disable();
+#endif
 
 	return version;
 }
 
 static void baseboard_spi_init(void)
 {
+#ifdef VARIANT_KUKUI_EC_STM32F098
 	/* Set SPI PA15,PB3/4/5/13/14/15 pins to high speed */
 	STM32_GPIO_OSPEEDR(GPIO_A) |= 0xc0000000;
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xfc000fc0;
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_spi_init, HOOK_PRIO_INIT_SPI + 1);
 

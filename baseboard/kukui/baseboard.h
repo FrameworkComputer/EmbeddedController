@@ -298,6 +298,19 @@
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
 
+/*
+ * Variant EC defines. Pick one:
+ * VARIANT_KUKUI_EC_STM32F098
+ * VARIANT_KUKUI_EC_IT81202
+ */
+#if defined(VARIANT_KUKUI_EC_STM32F098)
+/* TODO: Pull stm32 chip-specific config options to here. */
+#elif defined(VARIANT_KUKUI_EC_IT81202)
+/* TODO: Put it83xx chip-specific config options here. */
+#else
+#error "Must define a VARIANT_KUKUI_EC_XXX!"
+#endif
+
 #ifndef __ASSEMBLER__
 #ifdef VARIANT_KUKUI_DP_MUX_GPIO
 void board_set_dp_mux_control(int output_enable, int polarity);
