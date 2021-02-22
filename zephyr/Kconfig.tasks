@@ -40,7 +40,7 @@ if HAS_TASK_CHG_RAMP
 
 config TASK_CHG_RAMP_STACK_SIZE
 	hex "Stack size"
-	default 0x200	# EC uses TASK_STACK_SIZE which is 512 for npcx
+	default 0x300	# EC uses TASK_STACK_SIZE which is 512 for npcx
 	help
 	  The stack size of the charger task.
 
@@ -120,7 +120,7 @@ if HAS_TASK_KEYPROTO
 
 config TASK_KEYPROTO_STACK_SIZE
 	hex "Stack size"
-	default 0x200
+	default 0x300
 	help
 	  The stack size of the keyproto task.
 
@@ -139,7 +139,7 @@ if HAS_TASK_KEYSCAN
 
 config TASK_KEYSCAN_STACK_SIZE
 	hex "Stack size"
-	default 0x200
+	default 0x300
 	help
 	  The stack size of the keyscan task.
 
@@ -235,7 +235,7 @@ if HAS_TASK_PD_INT_C0
 
 config TASK_PD_INT_STACK_SIZE
 	hex "Stack size"
-	default 0x400
+	default 0x500
 	help
 	  The stack size of the PD_Cn_INT tasks.
 
@@ -273,7 +273,7 @@ if HAS_TASK_USB_CHG_P0
 
 config TASK_USB_CHG_STACK_SIZE
 	hex "(all ports) task stack size"
-	default 0x400	# EC uses VENTI_TASK_STACK_SIZE which is 896
+	default 0x500	# EC uses VENTI_TASK_STACK_SIZE which is 896
 	help
 	  The stack size of the USB charger task. If there are multiple tasks,
 	  each one gets the same stack size.
