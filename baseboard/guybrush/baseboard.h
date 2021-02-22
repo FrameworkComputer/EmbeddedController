@@ -14,7 +14,10 @@
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
-#define CONFIG_LTO
+#define CONFIG_LTO /* Link-Time Optimizations to reduce code size */
+#define CONFIG_BRINGUP /* EC will not automatically power on the AP */
+#define CONFIG_I2C_DEBUG /* Print i2c traces */
+#define CONFIG_KEYBOARD_DEBUG /* Print keyboard debug messages */
 
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
