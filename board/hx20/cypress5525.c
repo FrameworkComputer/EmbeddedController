@@ -337,6 +337,41 @@ int ucsi_read_tunnel(int controller)
 	return EC_SUCCESS;
 }
 
+int cyp5525_ucsi_startup(int controller)
+{
+	int rv = EC_SUCCESS;
+	int data;
+
+	rv = cypd_write_reg8(controller, CYP5525_UCSI_CONTROL_REG ,CYPD_UCSI_START);
+	if (rv != EC_SUCCESS)
+		CPRINTS("UCSI start command fail!");
+
+	if (cyp5225_wait_for_ack(controller, 100000) != EC_SUCCESS) {
+			CPRINTS("%s timeout on interrupt", __func__);
+			return EC_ERROR_INVAL;
+	}
+
+	rv = cypd_get_int(controller, &data);
+
+	if (data & CYP5525_DEV_INTR) {
+		rv = cypd_read_reg_block(controller, CYP5525_VERSION_REG,
+			pd_chip_ucsi_info[controller].version, 2);
+
+		CPRINTS("UCSI version is 0x%04x",
+			pd_chip_ucsi_info[controller].version[0] +
+			(pd_chip_ucsi_info[controller].version[1] << 8));
+
+		if (rv != EC_SUCCESS)
+			CPRINTS("UCSI start command fail!");
+
+		memcpy(host_get_customer_memmap(EC_MEMMAP_UCSI_VERSION),
+			pd_chip_ucsi_info[controller].version, 2);
+
+		cypd_clear_int(controller, CYP5525_DEV_INTR);
+	}
+	return rv;
+}
+
 int cyp5525_setup(int controller)
 {
 	/* 1. CCG notifies EC with "RESET Complete event after Reset/Power up/JUMP_TO_BOOT
@@ -649,19 +684,6 @@ void cyp5525_interrupt(int controller)
 	}
 
 	cypd_clear_int(controller, clear_mask);
-
-	if (pd_chip_config[controller].state == CYP5525_STATE_READY &&
-			(data & CYP5525_UCSI_INTR)) {
-
-		/* clear the UCSI command flags */
-		*host_get_customer_memmap(0x00) &= ~0x04;
-
-		/* TODO: need to wait two controller response than raise an SCI */
-
-		/* after clear the CCGX UCSI interrupt, raise an SCI to the BIOS */
-		host_set_single_event(EC_HOST_EVENT_UCSI);
-	}
-
 }
 
 #define CYPD_PROCESS_CONTROLLER_AC_PRESENT BIT(31)
@@ -820,6 +842,7 @@ void cypd_interrupt_handler_task(void *p)
 				if (cyp5525_setup(i) == EC_SUCCESS) {
 					cypd_update_port_state(i, 0);
 					cypd_update_port_state(i, 1);
+					cyp5525_ucsi_startup(i);
 					gpio_enable_interrupt(pd_chip_config[i].gpio);
 					CPRINTS("CYPD %d Ready!", i);
 					pd_chip_config[i].state = CYP5525_STATE_READY;
