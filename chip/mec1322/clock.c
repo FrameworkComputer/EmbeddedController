@@ -362,7 +362,7 @@ void __idle(void)
 			}
 
 			/* Wait for interrupt: goes into deep sleep. */
-			asm("wfi");
+			cpu_enter_suspend_mode();
 
 			if (uart_ready_for_deepsleep) {
 				resume_from_deep_sleep();
@@ -397,10 +397,8 @@ void __idle(void)
 			}
 
 		} else { /* CPU 'Sleep' mode */
-
 			idle_sleep_cnt++;
-
-			asm("wfi");
+			cpu_enter_suspend_mode();
 		}
 
 		interrupt_enable();

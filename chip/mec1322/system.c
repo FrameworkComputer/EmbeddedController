@@ -353,7 +353,7 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 		}
 	}
 
-	asm("wfi");
+	cpu_enter_suspend_mode();
 
 	/* Use 48MHz clock to speed through wake-up */
 	MEC1322_PCR_PROC_CLK_CTL = 1;

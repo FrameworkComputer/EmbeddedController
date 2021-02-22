@@ -1063,7 +1063,7 @@ void __idle(void)
 			/* ensure outstanding memory transactions complete */
 			asm volatile("dsb");
 
-			asm("wfi");
+			cpu_enter_suspend_mode();
 
 			CPU_SCB_SYSCTRL &= ~0x4;
 
@@ -1101,7 +1101,7 @@ void __idle(void)
 			idle_sleep_cnt++;
 
 			/* Normal idle : only CPU clock stopped */
-			asm("wfi");
+			cpu_enter_suspend_mode();
 		}
 		interrupt_enable();
 	}

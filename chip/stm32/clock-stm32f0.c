@@ -267,7 +267,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	STM32_PWR_CR |= 0xe;
 	CPU_SCB_SYSCTRL |= 0x4;
 	/* go to Standby mode */
-	asm("wfi");
+	cpu_enter_suspend_mode();
 
 	/* we should never reach that point */
 	while (1)
@@ -332,7 +332,7 @@ void __idle(void)
 
 			set_rtc_alarm(0, next_delay - STOP_MODE_LATENCY, &rtc0,
 				      0);
-			asm("wfi");
+			cpu_enter_suspend_mode();
 
 			CPU_SCB_SYSCTRL &= ~0x4;
 
@@ -370,7 +370,7 @@ void __idle(void)
 			idle_sleep_cnt++;
 
 			/* Normal idle : only CPU clock stopped */
-			asm("wfi");
+			cpu_enter_suspend_mode();
 		}
 #ifdef CONFIG_LOW_POWER_IDLE_LIMITED
 	en_int:

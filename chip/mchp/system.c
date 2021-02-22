@@ -549,7 +549,7 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 	MCHP_PCR_SYS_SLP_CTL = MCHP_PCR_SYS_SLP_ALL;
 
 	asm("dsb");
-	asm("wfi");
+	cpu_enter_suspend_mode();
 	asm("isb");
 	asm("nop");
 

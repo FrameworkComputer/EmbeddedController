@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include "compile_time_macros.h"
+#include "debug.h"
 
 /* Macro to access 32-bit registers */
 #define CPUREG(addr) (*(volatile uint32_t *)(addr))
@@ -59,6 +60,14 @@ static inline void cpu_set_interrupt_priority(uint8_t irq, uint8_t priority)
 
 	CPU_NVIC_PRI(irq / 4) = (CPU_NVIC_PRI(irq / 4) & ~(3 << prio_shift)) |
 				(priority << prio_shift);
+}
+
+static inline void cpu_enter_suspend_mode(void)
+{
+	/* Preserve debug sessions by not suspending when connected */
+	if (!debugger_is_connected()) {
+		asm("wfi");
+	}
 }
 
 #endif /* __CROS_EC_CPU_H */

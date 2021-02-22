@@ -72,7 +72,7 @@ void __idle(void)
 		 * Wait for the next irq event.  This stops the CPU clock
 		 * (sleep / deep sleep, depending on chip config).
 		 */
-		asm("wfi");
+		cpu_enter_suspend_mode();
 	}
 }
 #endif /* !CONFIG_LOW_POWER_IDLE */
