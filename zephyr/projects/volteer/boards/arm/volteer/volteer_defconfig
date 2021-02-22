@@ -38,9 +38,6 @@ CONFIG_CLOCK_NPCX_APB1_PRESCALER=6
 CONFIG_CLOCK_NPCX_APB2_PRESCALER=6
 CONFIG_CLOCK_NPCX_APB3_PRESCALER=6
 
-# Ideally, we would use HSI48, but this is not supported in
-# Zephyr. Use "basic" HSI (8 MHz).
-CONFIG_CORTEX_M_SYSTICK=y
 CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC=15000000
 
 # The following are valid for all:
