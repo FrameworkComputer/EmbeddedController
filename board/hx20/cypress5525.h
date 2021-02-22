@@ -310,6 +310,12 @@ struct pd_port_current_state_t {
 
 };
 
+struct pd_chip_ucsi_info_t {
+	uint8_t version[2];
+	uint8_t message_in[16];
+	uint8_t cci[8];
+};
+
 enum pd_port_role {
 	PORT_SINK,
 	PORT_SOURCE,

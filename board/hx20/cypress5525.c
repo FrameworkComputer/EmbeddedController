@@ -54,6 +54,15 @@ enum pd_port {
 	PD_PORT_COUNT
 };
 
+static struct pd_chip_ucsi_info_t pd_chip_ucsi_info[] = {
+	[PD_CHIP_0] = {
+
+	},
+	[PD_CHIP_1] = {
+
+	}
+};
+
 static struct pd_port_current_state_t pd_port_states[] = {
 	[PD_PORT_0] = {
 
@@ -309,16 +318,18 @@ int ucsi_write_tunnel(void)
 	return rv;
 }
 
-int ucsi_read_tunnel(int controller, uint8_t *mes_in, uint8_t *cci)
+int ucsi_read_tunnel(int controller)
 {
 	int rv;
 
-	rv = cypd_read_reg_block(controller, CYP5525_CCI_REG, cci, 4);
+	rv = cypd_read_reg_block(controller, CYP5525_CCI_REG,
+		pd_chip_ucsi_info[controller].cci, 4);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("CYP5525_CCI_REG failed");
 
-	rv = cypd_read_reg_block(controller, CYP5525_MESSAGE_IN_REG, mes_in, 16);
+	rv = cypd_read_reg_block(controller, CYP5525_MESSAGE_IN_REG,
+		pd_chip_ucsi_info[controller].message_in, 16);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("CYP5525_MESSAGE_IN_REG failed");
@@ -580,6 +591,7 @@ void cyp5525_interrupt(int controller)
 		if (data & CYP5525_UCSI_INTR) {
 			/* */
 			CPRINTS("INTR_REG TODO Handle UCSI");
+			ucsi_read_tunnel(controller);
 			clear_mask |= CYP5525_UCSI_INTR;
 		}
 		break;
