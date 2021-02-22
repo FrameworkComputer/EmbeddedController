@@ -2032,11 +2032,13 @@ static void tc_disabled_entry(const int port)
 
 static void tc_disabled_run(const int port)
 {
-	/* If pd_set_suspend clears the request, go to TC_UNATTACHED_SNK. */
-	if (!TC_CHK_FLAG(port, TC_FLAGS_REQUEST_SUSPEND))
-		set_state_tc(port, TC_UNATTACHED_SNK);
-	else
+	/* If pd_set_suspend clears the request, go to TC_UNATTACHED_SNK/SRC. */
+	if (!TC_CHK_FLAG(port, TC_FLAGS_REQUEST_SUSPEND)) {
+		set_state_tc(port, drp_state[port] == PD_DRP_FORCE_SOURCE ?
+			     TC_UNATTACHED_SRC : TC_UNATTACHED_SNK);
+	} else {
 		tc_pause_event_loop(port);
+	}
 }
 
 static void tc_disabled_exit(const int port)
