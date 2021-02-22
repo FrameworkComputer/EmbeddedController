@@ -284,11 +284,12 @@ int cyp5225_set_power_state(int power_state)
 	return rv;
 }
 
-int ucsi_write_tunnel(int controller)
+int ucsi_write_tunnel(void)
 {
 	uint8_t *message_out = host_get_customer_memmap(EC_MEMMAP_UCSI_MESSAGE_OUT);
 	uint8_t *command = host_get_customer_memmap(EC_MEMMAP_UCSI_COMMAND);
-	int rv;
+	int i;
+	int rv = EC_SUCCESS;
 
 	/**
 	 * Note that CONTROL data has always to be written after MESSAGE_OUT data is written
@@ -296,14 +297,15 @@ int ucsi_write_tunnel(int controller)
 	 * Hence MESSAGE_OUT must be available before CONTROL is written to CCGX.
 	 */
 
-	rv = cypd_write_reg_block(controller, CYP5525_MESSAGE_OUT_REG, message_out, 16);
-	if (rv != EC_SUCCESS)
-		CPRINTS("CYP5525_MESSAGE_OUT_REG failed");;
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		rv = cypd_write_reg_block(i, CYP5525_MESSAGE_OUT_REG, message_out, 16);
+		if (rv != EC_SUCCESS)
+			break;
 
-	rv = cypd_write_reg_block(controller, CYP5525_CONTROL_REG, command, 8);
-	if (rv != EC_SUCCESS)
-		CPRINTS("CYP5525_CONTROL_REG failed");;
-
+		rv = cypd_write_reg_block(i, CYP5525_CONTROL_REG, command, 8);
+		if (rv != EC_SUCCESS)
+			break;
+	}
 	return rv;
 }
 
@@ -655,6 +657,7 @@ void cyp5525_interrupt(int controller)
 #define CYPD_PROCESS_CONTROLLER_S3 BIT(29)
 #define CYPD_PROCESS_CONTROLLER_S4 BIT(28)
 #define CYPD_PROCESS_CONTROLLER_S5 BIT(27)
+#define CYPD_PROCESS_CONTROLLER_UCSI BIT(26)
 
 
 static uint8_t cypd_int_task_id;
@@ -867,6 +870,9 @@ void cypd_interrupt_handler_task(void *p)
 			}
 			if (evt & CYPD_PROCESS_CONTROLLER_S5) {
 				cyp5225_set_power_state(CYP5525_POWERSTATE_S5);
+			}
+			if (evt & CYPD_PROCESS_CONTROLLER_UCSI) {
+				ucsi_write_tunnel();
 			}
 			gpio_asserted = 0;
 			for (i = 0; i < PD_CHIP_COUNT; i++) {
