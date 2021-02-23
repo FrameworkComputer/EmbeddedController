@@ -72,7 +72,7 @@ def test_find_dts_overlays(modules):
                 {'board': board,
                  'toolchain': 'foo',
                  'output-type': 'elf',
-                 'supported-zephyr-versions': ['v2.4']}) as project:
+                 'supported-zephyr-versions': ['v2.5']}) as project:
                 config = project.find_dts_overlays(
                     dict(enumerate(module_paths)))
 
