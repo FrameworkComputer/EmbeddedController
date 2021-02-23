@@ -5068,27 +5068,6 @@ static enum vdm_response_result parse_vdm_response_common(int port)
 	uint8_t type;
 	uint8_t cnt;
 	uint8_t ext;
-	uint32_t vdm_hdr;
-
-	/*
-	 * USB-PD 3.0 Rev 1.1 - 6.4.4.2.5
-	 * Structured VDM command consists of a command request and a command
-	 * response (ACK, NAK, or BUSY). An exception is made for the Attention
-	 * command which shall have no response.
-	 *
-	 * This function is a helper function for PE states which are sending
-	 * VDM commands and are waiting for VDM responses from the port partner.
-	 * Since Attention commands do not have an expected reply, the SVDM
-	 * command is complete once the Attention command transmit is complete.
-	 */
-	vdm_hdr = pe[port].vdm_data[0];
-	if(PD_VDO_SVDM(vdm_hdr) &&
-	   (PD_VDO_CMD(vdm_hdr) == CMD_ATTENTION)) {
-		if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
-			PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
-			return VDM_RESULT_NO_ACTION;
-		}
-	}
 
 	if (!PE_CHK_REPLY(port))
 		return VDM_RESULT_WAITING;
@@ -5753,9 +5732,33 @@ static void pe_vdm_request_dpm_entry(int port)
 
 static void pe_vdm_request_dpm_run(int port)
 {
+	uint32_t vdm_hdr;
+
 	switch (parse_vdm_response_common(port)) {
 	case VDM_RESULT_WAITING:
-		/* If common code didn't parse a message, continue waiting. */
+		/*
+		 * USB-PD 3.0 Rev 1.1 - 6.4.4.2.5
+		 * Structured VDM command consists of a command request and a
+		 * command response (ACK, NAK, or BUSY). An exception is made
+		 * for the Attention command which shall have no response.
+		 *
+		 * Since Attention commands do not have an expected reply,
+		 * the SVDM command is complete once the Attention command
+		 * transmit is complete.
+		 */
+		vdm_hdr = pe[port].vdm_data[0];
+		if(PD_VDO_SVDM(vdm_hdr) &&
+		   (PD_VDO_CMD(vdm_hdr) == CMD_ATTENTION)) {
+			if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+				PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+				break;
+			}
+		}
+		/*
+		 * If common code didn't parse a message, and the VDM
+		 * just sent was not an Attention message, then continue
+		 * waiting.
+		 */
 		return;
 	case VDM_RESULT_NO_ACTION:
 		/*
