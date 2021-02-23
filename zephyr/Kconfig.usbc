@@ -524,8 +524,17 @@ config PLATFORM_EC_USB_PD_LOGGING
 	  The log events are stored in a circular buffer, each one being a
 	  struct event_log_entry.
 
+menuconfig PLATFORM_EC_USB_PD_CONSOLE_CMD
+	bool "Enable USB PD console commands"
+	default y if PLATFORM_EC_USB_PD_ALT_MODE_DFP
+	help
+	  Enables various USB-C PD related console commands.
+
+if PLATFORM_EC_USB_PD_CONSOLE_CMD
+
 config PLATFORM_EC_CMD_USB_PD_PE
 	bool "Console command: pe"
+	default y
 	help
 	  This command dumps information about the USB PD alternate mode options
 	  discovered from the partner device. It can be useful for debugging.
@@ -545,6 +554,7 @@ config PLATFORM_EC_CMD_USB_PD_PE
 
 config PLATFORM_EC_CMD_USB_PD_CABLE
 	bool "Console command: pdcable"
+	default y
 	help
 	  This commands shows the USB cable charactistics as detected from the
 	  device. It can be useful for debugging problems with cables and the
@@ -561,6 +571,8 @@ config PLATFORM_EC_CMD_USB_PD_CABLE
 	     Retimer support: No
 	     Link training: Bi-directional
 	     Thunderbolt cable type: Passive
+
+endif  # PLATFORM_EC_USB_PD_CONSOLE_CMD
 
 choice "USB-C device type"
 	prompt "Select the USB-C device type"
