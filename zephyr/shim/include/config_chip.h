@@ -59,6 +59,7 @@
 #undef CONFIG_I2C_MULTI_PORT_CONTROLLER /* Not required by I2C shim */
 #undef CONFIG_IRQ_COUNT /* Only used by Chromium EC core drivers */
 #undef CONFIG_LTO /* Link time optimization enabled by Zephyr build system */
+#undef CONFIG_STACK_SIZE /* Only used in Chromium EC core init code */
 #ifndef CONFIG_FPU
 #undef CONFIG_FPU /* Used in Zephyr as well, enabled in Kconfig directly */
 #endif
