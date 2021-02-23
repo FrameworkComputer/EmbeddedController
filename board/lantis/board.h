@@ -15,9 +15,6 @@
 #undef GPIO_VOLUME_UP_L
 #define GPIO_VOLUME_UP_L GPIO_VOLUP_BTN_ODL_HDMI_HPD
 
-/* System unlocked in early development */
-#define CONFIG_SYSTEM_UNLOCKED
-
 /* Battery */
 #define CONFIG_BATTERY_FUEL_GAUGE
 
