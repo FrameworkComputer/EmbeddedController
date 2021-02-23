@@ -1055,6 +1055,21 @@ enum battery_type {
 #define CONFIG_CMD_STACKOVERFLOW
 #endif
 
+#undef CONFIG_CMD_MEM
+#ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_MEM
+#define CONFIG_CMD_MEM
+#endif
+
+#undef CONFIG_CMD_MD
+#ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_MD
+#define CONFIG_CMD_MD
+#endif
+
+#undef CONFIG_CMD_RW
+#ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_RW
+#define CONFIG_CMD_RW
+#endif
+
 #undef CONFIG_RTC
 #ifdef CONFIG_PLATFORM_EC_RTC
 #define CONFIG_RTC
