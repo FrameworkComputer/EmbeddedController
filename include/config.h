@@ -863,6 +863,7 @@
 #undef CONFIG_CHARGER_BQ24770
 #undef CONFIG_CHARGER_BQ24773
 #undef CONFIG_CHARGER_BQ25710
+#undef CONFIG_CHARGER_BQ25720
 #undef CONFIG_CHARGER_ISL9237
 #undef CONFIG_CHARGER_ISL9238 /* For ISL9238 A/B */
 #undef CONFIG_CHARGER_ISL9238C
@@ -5453,6 +5454,11 @@
 #endif
 
 /*****************************************************************************/
+/* The BQ25720 is supported by the BQ25710 driver */
+#if defined(CONFIG_CHARGER_BQ25720)
+#define CONFIG_CHARGER_BQ25710
+#endif
+
 /*
  * Define CONFIG_USB_PD_VBUS_MEASURE_CHARGER if the charger on the board
  * supports VBUS measurement.
