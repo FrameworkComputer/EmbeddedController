@@ -597,12 +597,6 @@ static struct policy_engine {
 	 */
 	uint64_t source_cap_timer;
 
-	/*
-	 * This timer is used during an Explicit Contract when discovering
-	 * whether a Port Partner is PD Capable using SOP'.
-	 */
-	uint64_t discover_identity_timer;
-
 	/* Counters */
 
 	/*
@@ -1463,8 +1457,8 @@ static bool common_src_snk_dpm_requests(int port)
 			pd_dfp_discovery_init(port);
 			pe[port].dr_swap_attempt_counter = 0;
 			pe[port].discover_identity_counter = 0;
-			pe[port].discover_identity_timer = get_time().val +
-						PD_T_DISCOVER_IDENTITY;
+			pd_timer_enable(port, PE_TIMER_DISCOVER_IDENTITY,
+					PD_T_DISCOVER_IDENTITY);
 		}
 		return true;
 	} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_VDM)) {
@@ -1811,7 +1805,7 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 
 	/* If mode entry was successful, disable the timer */
 	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_SETUP_DONE)) {
-		pe[port].discover_identity_timer = TIMER_DISABLED;
+		pd_timer_disable(port, PE_TIMER_DISCOVER_IDENTITY);
 		return false;
 	}
 
@@ -1819,7 +1813,7 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 	 * Run discovery functions when the timer indicating either cable
 	 * discovery spacing or BUSY spacing runs out.
 	 */
-	if (get_time().val > pe[port].discover_identity_timer) {
+	if (pd_timer_is_expired(port, PE_TIMER_DISCOVER_IDENTITY)) {
 		if (pd_get_identity_discovery(port, TCPC_TX_SOP_PRIME) ==
 				PD_DISC_NEEDED) {
 			pe[port].tx_type = TCPC_TX_SOP_PRIME;
@@ -2089,7 +2083,7 @@ static void pe_src_startup_entry(int port)
 		 * src_discovery for the first time.  After initial startup
 		 * set, vdm_identity_request_cbl will handle the timer updates.
 		 */
-		pe[port].discover_identity_timer = get_time().val;
+		pd_timer_enable(port, PE_TIMER_DISCOVER_IDENTITY, 0);
 
 		/* Clear port discovery flags */
 		pd_dfp_discovery_init(port);
@@ -2178,7 +2172,7 @@ static void pe_src_discovery_run(int port)
 	 * requests properly.
 	 */
 	if (pd_get_identity_discovery(port, TCPC_TX_SOP_PRIME) == PD_DISC_NEEDED
-			&& get_time().val > pe[port].discover_identity_timer
+			&& pd_timer_is_expired(port, PE_TIMER_DISCOVER_IDENTITY)
 			&& pe_can_send_sop_prime(port)
 			&& (pe[port].discover_identity_counter <
 				N_DISCOVER_IDENTITY_PRECONTRACT_LIMIT)) {
@@ -2937,7 +2931,7 @@ static void pe_snk_startup_entry(int port)
 		 * Set DiscoverIdentityTimer to trigger when we enter
 		 * snk_ready for the first time.
 		 */
-		pe[port].discover_identity_timer = get_time().val;
+		pd_timer_enable(port, PE_TIMER_DISCOVER_IDENTITY, 0);
 
 		/* Clear port discovery flags */
 		pd_dfp_discovery_init(port);
@@ -5088,8 +5082,8 @@ static enum vdm_response_result parse_vdm_response_common(int port)
 			 */
 			CPRINTS("C%d: Partner BUSY, request will be retried",
 					port);
-			pe[port].discover_identity_timer =
-					get_time().val + PD_T_VDM_BUSY;
+			pd_timer_enable(port, PE_TIMER_DISCOVER_IDENTITY,
+					PD_T_VDM_BUSY);
 
 			return VDM_RESULT_NO_ACTION;
 		} else if (PD_VDO_CMDT(payload[0]) == CMDT_INIT) {
@@ -5359,9 +5353,7 @@ static void pe_vdm_identity_request_cbl_exit(int port)
 	 * Set discover identity timer unless BUSY case already did so.
 	 */
 	if (pd_get_identity_discovery(port, pe[port].tx_type) == PD_DISC_NEEDED
-	    && pe[port].discover_identity_timer < get_time().val) {
-		uint64_t timer;
-
+	    && pd_timer_is_expired(port, PE_TIMER_DISCOVER_IDENTITY)) {
 		/*
 		 * The tDiscoverIdentity timer is used during an explicit
 		 * contract when discovering whether a cable is PD capable.
@@ -5370,12 +5362,10 @@ static void pe_vdm_identity_request_cbl_exit(int port)
 		 * sent. This permits operation with captive cable devices that
 		 * power the SOP' responder from VBUS instead of VCONN.
 		 */
-		if (pe_is_explicit_contract(port))
-			timer = PD_T_DISCOVER_IDENTITY;
-		else
-			timer = PE_T_DISCOVER_IDENTITY_NO_CONTRACT;
-
-		pe[port].discover_identity_timer = get_time().val + timer;
+		pd_timer_enable(port, PE_TIMER_DISCOVER_IDENTITY,
+				pe_is_explicit_contract(port)
+					? PD_T_DISCOVER_IDENTITY
+					: PE_T_DISCOVER_IDENTITY_NO_CONTRACT);
 	}
 
 	/* Do not attempt further discovery if identity discovery failed. */
