@@ -36,14 +36,14 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_ITE_0] = {
 		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		/* TCPC is embedded within EC so needn't i2c config */
-		.drv = &it83xx_tcpm_drv,
+		.drv = &it8xxx2_tcpm_drv,
 		/* Alert is active-low, push-pull */
 		.flags = 0,
 	},
 	[USB_PD_PORT_ITE_1] = {
 		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		/* TCPC is embedded within EC so needn't i2c config */
-		.drv = &it83xx_tcpm_drv,
+		.drv = &it8xxx2_tcpm_drv,
 		/* Alert is active-low, push-pull */
 		.flags = 0,
 	},

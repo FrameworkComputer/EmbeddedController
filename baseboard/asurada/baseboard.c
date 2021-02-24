@@ -401,14 +401,14 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		/* TCPC is embedded within EC so no i2c config needed */
-		.drv = &it83xx_tcpm_drv,
+		.drv = &it8xxx2_tcpm_drv,
 		/* Alert is active-low, push-pull */
 		.flags = 0,
 	},
 	{
 		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		/* TCPC is embedded within EC so no i2c config needed */
-		.drv = &it83xx_tcpm_drv,
+		.drv = &it8xxx2_tcpm_drv,
 		/* Alert is active-low, push-pull */
 		.flags = 0,
 	},
