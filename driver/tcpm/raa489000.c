@@ -79,6 +79,27 @@ int raa489000_init(int port)
 	CPRINTS("%s(%d): DEVICE_ID=%d", __func__, port, device_id);
 	dev_id[port] = device_id;
 
+	/* Enable the ADC */
+	/*
+	 * TODO(b:147316511) Since this register can be accessed by multiple
+	 * tasks, we should add a mutex when modifying this register.
+	 */
+	i2c_port = tcpc_config[port].i2c_info.port;
+	rv = i2c_read16(i2c_port, ISL923X_ADDR_FLAGS, ISL9238_REG_CONTROL3,
+			&regval);
+	regval |= RAA489000_ENABLE_ADC;
+	rv |= i2c_write16(i2c_port, ISL923X_ADDR_FLAGS, ISL9238_REG_CONTROL3,
+			  regval);
+	if (rv)
+		CPRINTS("c%d: failed to enable ADCs", port);
+
+	/* Enable Vbus detection */
+	rv = tcpc_write(port, TCPC_REG_COMMAND,
+			TCPC_REG_COMMAND_ENABLE_VBUS_DETECT);
+	if (rv)
+		CPRINTS("c%d: failed to enable vbus detect cmd", port);
+
+
 	if (device_id > 1) {
 		/*
 		 * A1 silicon has a DEVICE_ID of 1.  For B0 and newer, we need
@@ -92,6 +113,22 @@ int raa489000_init(int port)
 		rv = tcpc_write16(port, RAA489000_TCPC_SETTING1, regval);
 		if (rv)
 			CPRINTS("C%d: failed to set TCPC power control", port);
+	}
+
+	/*
+	 * If VBUS is present, start sinking from it if we haven't already
+	 * chosen a charge port and no battery is connected.  This is
+	 * *kinda hacky* doing it here, but we must start sinking VBUS now,
+	 * otherwise the board may die (See b/150702984, b/178728138)
+	 */
+	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
+	if ((regval & TCPC_REG_POWER_STATUS_VBUS_PRES) &&
+	    charge_manager_get_active_charge_port() == CHARGE_PORT_NONE &&
+	    !pd_is_battery_capable()) {
+		chg.current = 500;
+		chg.voltage = 5000;
+		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, port, &chg);
+		board_set_active_charge_port(port);
 	}
 
 	/* Note: registers may not be ready until TCPCI init succeeds */
@@ -117,27 +154,6 @@ int raa489000_init(int port)
 		if (rv)
 			CPRINTS("c%d: failed to enable CC comparators", port);
 	}
-
-	/* Enable the ADC */
-	/*
-	 * TODO(b:147316511) Since this register can be accessed by multiple
-	 * tasks, we should add a mutex when modifying this register.
-	 */
-	i2c_port = tcpc_config[port].i2c_info.port;
-	rv = i2c_read16(i2c_port, ISL923X_ADDR_FLAGS, ISL9238_REG_CONTROL3,
-			&regval);
-	regval |= RAA489000_ENABLE_ADC;
-	rv |= i2c_write16(i2c_port, ISL923X_ADDR_FLAGS, ISL9238_REG_CONTROL3,
-			  regval);
-	if (rv)
-		CPRINTS("c%d: failed to enable ADCs", port);
-
-	/* Enable Vbus detection */
-	rv = tcpc_write(port, TCPC_REG_COMMAND,
-			TCPC_REG_COMMAND_ENABLE_VBUS_DETECT);
-	if (rv)
-		CPRINTS("c%d: failed to enable vbus detect cmd", port);
-
 
 	/* Set Rx enable for receiver comparator */
 	rv = tcpc_read16(port, RAA489000_PD_PHYSICAL_SETTING1, &regval);
@@ -181,20 +197,6 @@ int raa489000_init(int port)
 	rv = tcpc_write16(port, RAA489000_TCPC_SETTING1, regval);
 	if (rv)
 		CPRINTS("c%d: failed to set TCPCIv1.0 mode", port);
-
-	/*
-	 * If VBUS is present, start sinking from it if we haven't already
-	 * chosen a charge port.  This is *kinda hacky* doing it here, but we
-	 * must start sinking VBUS now, otherwise the board may die if there is
-	 * no battery connected. (See b/150702984)
-	 */
-	if (pd_snk_is_vbus_provided(port) &&
-	    charge_manager_get_active_charge_port() == CHARGE_PORT_NONE) {
-		chg.current = 500;
-		chg.voltage = 5000;
-		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, port, &chg);
-		board_set_active_charge_port(port);
-	}
 
 	/*
 	 * Set Vbus OCP UV here, PD tasks will set target current
