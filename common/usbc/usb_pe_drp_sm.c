@@ -603,12 +603,6 @@ static struct policy_engine {
 	 */
 	uint64_t discover_identity_timer;
 
-	/*
-	 * This timer tracks the time after receiving a Wait message in response
-	 * to a PR_Swap message.
-	 */
-	uint64_t pr_swap_wait_timer;
-
 	/* Counters */
 
 	/*
@@ -2675,7 +2669,7 @@ static void pe_src_ready_run(int port)
 	}
 
 	if (PE_CHK_FLAG(port, PE_FLAGS_WAITING_PR_SWAP) &&
-		get_time().val > pe[port].pr_swap_wait_timer) {
+	    pd_timer_is_expired(port, PE_TIMER_PR_SWAP_WAIT)) {
 		PE_CLR_FLAG(port, PE_FLAGS_WAITING_PR_SWAP);
 		PE_SET_DPM_REQUEST(port, DPM_REQUEST_PR_SWAP);
 	}
@@ -4432,6 +4426,9 @@ static void pe_prs_src_snk_send_swap_entry(int port)
 {
 	print_current_state(port);
 
+	/* Making an attempt to PR_Swap, clear we were possibly waiting */
+	pd_timer_disable(port, PE_TIMER_PR_SWAP_WAIT);
+
 	/* Request the Protocol Layer to send a PR_Swap Message. */
 	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PR_SWAP);
 	pe_sender_response_msg_entry(port);
@@ -4479,9 +4476,9 @@ static void pe_prs_src_snk_send_swap_run(int port)
 				    N_SNK_SRC_PR_SWAP_COUNT) {
 					PE_SET_FLAG(port,
 						PE_FLAGS_WAITING_PR_SWAP);
-					pe[port].pr_swap_wait_timer =
-						get_time().val +
-						PD_T_PR_SWAP_WAIT;
+					pd_timer_enable(port,
+							PE_TIMER_PR_SWAP_WAIT,
+							PD_T_PR_SWAP_WAIT);
 				}
 				pe[port].src_snk_pr_swap_counter++;
 				set_state_pe(port, PE_SRC_READY);
