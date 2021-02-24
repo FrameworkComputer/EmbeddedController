@@ -95,11 +95,17 @@
 /* define this if the board is jacuzzi family */
 #ifdef VARIANT_KUKUI_JACUZZI
 #define CONFIG_HOSTCMD_AP_SET_SKUID
+/*
+ * IT81202 based boards are variant of jacuzzi and I/O expander isn't required
+ * on them.
+ */
+#ifdef VARIANT_KUKUI_EC_STM32F098
 #define CONFIG_IO_EXPANDER
 #define CONFIG_IO_EXPANDER_IT8801
 #define CONFIG_IO_EXPANDER_PORT_COUNT 1
 #define CONFIG_KEYBOARD_NOT_RAW
 #define CONFIG_KEYBOARD_BOARD_CONFIG
+#endif
 #define CONFIG_KEYBOARD_COL2_INVERTED
 
 #define CONFIG_GMR_TABLET_MODE
@@ -135,27 +141,13 @@
 #define CONFIG_LOW_POWER_IDLE
 #define CONFIG_POWER_COMMON
 #define CONFIG_SPI
-#define CONFIG_SPI_MASTER
-#define CONFIG_STM_HWTIMER32
 #define CONFIG_SWITCH
-#define CONFIG_WATCHDOG_HELP
 
 #ifdef SECTION_IS_RO
 #undef CONFIG_SYSTEM_UNLOCKED /* Disabled in RO to save space */
 #else
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
 #endif
-
-/* free flash space */
-#ifdef SECTION_IS_RO
-#undef CONFIG_USB_PD_DEBUG_LEVEL
-#define CONFIG_USB_PD_DEBUG_LEVEL 0
-#define CONFIG_COMMON_GPIO_SHORTNAMES
-#endif
-
-#undef  CONFIG_UART_CONSOLE
-#define CONFIG_UART_CONSOLE 1
-#define CONFIG_UART_RX_DMA
 
 /* Bootblock */
 #ifdef SECTION_IS_RO
@@ -221,17 +213,12 @@
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_TCPMV1
-/* Exclude PD state names from RO image to save space */
-#ifdef SECTION_IS_RO
-#undef CONFIG_USB_PD_TCPMV1_DEBUG
-#endif
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_LOGGING
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_TCPM_TCPCI
-#define CONFIG_USB_PD_VBUS_DETECT_TCPC
 #define CONFIG_USB_PD_5V_EN_CUSTOM
 #define CONFIG_USBC_SS_MUX
 #define CONFIG_USBC_VCONN
@@ -250,6 +237,21 @@
 #define PD_MAX_CURRENT_MA     3000
 #endif
 
+/* Optional for testing */
+#undef CONFIG_PECI
+#undef CONFIG_PSTORE
+
+#define CONFIG_TASK_PROFILING
+#define CONFIG_KEYBOARD_PROTOCOL_MKBP
+#define CONFIG_MKBP_EVENT
+#define CONFIG_MKBP_USE_GPIO
+
+/*
+ * Variant EC defines. Pick one:
+ * VARIANT_KUKUI_EC_STM32F098
+ * VARIANT_KUKUI_EC_IT81202
+ */
+#if defined(VARIANT_KUKUI_EC_STM32F098)
 /* Timer selection */
 #define TIM_CLOCK32  2
 #define TIM_WATCHDOG 7
@@ -257,9 +259,14 @@
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 
-/* Optional for testing */
-#undef CONFIG_PECI
-#undef CONFIG_PSTORE
+#define CONFIG_SPI_MASTER
+#define CONFIG_STM_HWTIMER32
+#define CONFIG_WATCHDOG_HELP
+#undef  CONFIG_UART_CONSOLE
+#define CONFIG_UART_CONSOLE 1
+#define CONFIG_UART_RX_DMA
+
+#define CONFIG_USB_PD_VBUS_DETECT_TCPC
 
 /* Modules we want to exclude */
 #undef CONFIG_CMD_BATTFAKE
@@ -269,6 +276,7 @@
 #undef CONFIG_CMD_POWERINDEBUG
 #undef CONFIG_CMD_TIMERINFO
 
+/* save space at RO image */
 #ifdef SECTION_IS_RO
 #undef CONFIG_CMD_APTHROTTLE
 #undef CONFIG_CMD_CRASH
@@ -290,23 +298,18 @@
 #undef CONFIG_CMD_AP_RESET_LOG
 #undef CONFIG_CMD_I2C_SCAN
 #undef CONFIG_CMD_I2C_XFER
+
+/* free flash space */
+#undef CONFIG_USB_PD_DEBUG_LEVEL
+#define CONFIG_USB_PD_DEBUG_LEVEL 0
+#define CONFIG_COMMON_GPIO_SHORTNAMES
+/* Exclude PD state names from RO image to save space */
+#undef CONFIG_USB_PD_TCPMV1_DEBUG
 #endif
-
-#define CONFIG_TASK_PROFILING
-
-#define CONFIG_KEYBOARD_PROTOCOL_MKBP
-#define CONFIG_MKBP_EVENT
-#define CONFIG_MKBP_USE_GPIO
-
-/*
- * Variant EC defines. Pick one:
- * VARIANT_KUKUI_EC_STM32F098
- * VARIANT_KUKUI_EC_IT81202
- */
-#if defined(VARIANT_KUKUI_EC_STM32F098)
-/* TODO: Pull stm32 chip-specific config options to here. */
 #elif defined(VARIANT_KUKUI_EC_IT81202)
-/* TODO: Put it83xx chip-specific config options here. */
+#define CONFIG_IT83XX_HARD_RESET_BY_GPG1
+#define CONFIG_IT83XX_VCC_1P8V
+#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 1
 #else
 #error "Must define a VARIANT_KUKUI_EC_XXX!"
 #endif
