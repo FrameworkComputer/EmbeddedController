@@ -11,6 +11,16 @@
 
 #include "gpio_list.h" /* Must come after other header files. */
 
+/******************************************************************************/
+/* USB-A charging control */
+
+const int usb_port_enable[USB_PORT_COUNT] = {
+	GPIO_EN_PP5000_USBA_R,
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
+
+/******************************************************************************/
+
 /*
  * remove when we enable CONFIG_POWER_BUTTON
  */

@@ -23,6 +23,10 @@
 #undef CONFIG_SPI_FLASH
 #undef CONFIG_SWITCH
 
+/* USB Type A Features */
+#define USB_PORT_COUNT			1
+#define CONFIG_USB_PORT_POWER_DUMB
+
 /* USB Type C and USB PD defines */
 #define CONFIG_IO_EXPANDER_PORT_COUNT		2
 
