@@ -158,7 +158,6 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 		.raw_value = pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME) };
 	union tbt_mode_resp_device dev_resp;
 	enum idh_ptype cable_type = get_usb_pd_cable_type(port);
-	struct pd_discovery *disc;
 
 	/*
 	 * Bit 2: RE_TIMER_DRIVER
@@ -262,17 +261,6 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 		 */
 		*set_retimer_con |= BB_RETIMER_TBT_CABLE_GENERATION(
 				       cable_resp.tbt_rounded);
-	}
-	if (mux_state & USB_PD_MUX_USB4_ENABLED) {
-		disc = pd_get_am_discovery(port, TCPC_TX_SOP);
-
-		/*
-		 * Bit 16: TBT_CONNECTION
-		 * 0 - Port partner doesn't support TBT3
-		 * 1 - Port partner supports TBT3
-		 */
-		if (PD_PRODUCT_IS_TBT3(disc->identity.product_t1.raw_value))
-			*set_retimer_con |= BB_RETIMER_TBT_CONNECTION;
 	}
 }
 
