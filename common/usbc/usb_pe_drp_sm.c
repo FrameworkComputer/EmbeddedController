@@ -3031,10 +3031,16 @@ static void pe_snk_startup_entry(int port)
 		 */
 		PE_SET_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
 		PE_SET_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON);
-
-		/* Opportunistically request sink caps for FRS evaluation. */
-		pd_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
 	}
+
+	/* Request sink caps for FRS and PRS evaluation.
+	 *
+	 * On entry to the PE_SNK_Ready state if the Sink supports Fast Role
+	 * Swap, then the Policy Engine Shall do the following:
+	 * - Send a Get_Sink_Cap Message
+	 */
+	pd_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
+
 }
 
 static void pe_snk_startup_run(int port)
