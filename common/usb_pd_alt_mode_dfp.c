@@ -173,10 +173,6 @@ void pd_prepare_sysjump(void)
  * possible pin config depending on whether its a converter DP->(VGA|HDMI) or DP
  * output.  If UFP is a USB-C receptacle it may assert C/D/E/F.  The DFP USB-C
  * receptacle must always choose C/D in those cases.
- *
- * TODO(b/178635286): We should add the necessary plumbing to let the AP change
- * our selected pin mode after selecting our default here.  But for now, let's
- * default to not preferring multi-function pin modes.
  */
 int pd_dfp_dp_get_pin_mode(int port, uint32_t status)
 {
@@ -193,8 +189,9 @@ int pd_dfp_dp_get_pin_mode(int port, uint32_t status)
 	/* TODO(crosbug.com/p/39656) revisit with DFP that can be a sink */
 	pin_caps = PD_DP_PIN_CAPS(mode_caps);
 
-	/* We do not prefer multi-function pin modes. */
-	pin_caps &= ~MODE_DP_PIN_MF_MASK;
+	/* if don't want multi-function then ignore those pin configs */
+	if (!PD_VDO_DPSTS_MF_PREF(status))
+		pin_caps &= ~MODE_DP_PIN_MF_MASK;
 
 	/* TODO(crosbug.com/p/39656) revisit if DFP drives USB Gen 2 signals */
 	pin_caps &= ~MODE_DP_PIN_BR2_MASK;
@@ -1087,20 +1084,31 @@ __overridable uint8_t get_dp_pin_mode(int port)
 	return pd_dfp_dp_get_pin_mode(port, dp_status[port]);
 }
 
+static mux_state_t svdm_dp_get_mux_mode(int port)
+{
+	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
+	int pin_mode = get_dp_pin_mode(port);
+	/*
+	 * Multi-function operation is only allowed if that pin config is
+	 * supported.
+	 */
+	if ((pin_mode & MODE_DP_PIN_MF_MASK) && mf_pref)
+		return USB_PD_MUX_DOCK;
+	else
+		return USB_PD_MUX_DP_ENABLED;
+}
+
 __overridable int svdm_dp_config(int port, uint32_t *payload)
 {
 	int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
 	uint8_t pin_mode = get_dp_pin_mode(port);
+	mux_state_t mux_mode = svdm_dp_get_mux_mode(port);
 
 	if (!pin_mode)
 		return 0;
 
-	/*
-	 * TODO(b/178635286): We should add the necessary plumbing to let the AP
-	 * change this after our default.  But for now, let's default to 4-lanes
-	 * of DP.
-	 */
-	CPRINTS("DP PinCfg: 0x%x", pin_mode);
+	CPRINTS("pin_mode: %x, mf: %d, mux: %d", pin_mode, mf_pref, mux_mode);
 
 	/*
 	 * Place the USB Type-C pins that are to be re-configured to DisplayPort
@@ -1108,9 +1116,10 @@ __overridable int svdm_dp_config(int port, uint32_t *payload)
 	 * superspeed signals can remain connected. For USB_PD_MUX_DP_ENABLED,
 	 * disconnect the superspeed signals here, before the pins are
 	 * re-configured to DisplayPort (in svdm_dp_post_config, when we receive
-	 * the config ack).  We are always selecting USB_PD_MUX_DP_ENABLED.
+	 * the config ack).
 	 */
-	usb_mux_set_safe_mode(port);
+	if (mux_mode == USB_PD_MUX_DP_ENABLED)
+		usb_mux_set_safe_mode(port);
 
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_CONFIG | VDO_OPOS(opos));
@@ -1135,17 +1144,12 @@ int svdm_get_hpd_gpio(int port)
 
 __overridable void svdm_dp_post_config(int port)
 {
-	/*
-	 * TODO(b/178635286): We should add the necessary plumbing to let the AP
-	 * change this after our default.  But for now, let's default to 4-lanes
-	 * of DP.
-	 */
-
+	mux_state_t mux_mode = svdm_dp_get_mux_mode(port);
 	/* Connect the SBU and USB lines to the connector. */
 	if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
 		ppc_set_sbu(port, 1);
-	usb_mux_set(port, USB_PD_MUX_DP_ENABLED, USB_SWITCH_CONNECT,
-		    polarity_rm_dts(pd_get_polarity(port)));
+	usb_mux_set(port, mux_mode, USB_SWITCH_CONNECT,
+		polarity_rm_dts(pd_get_polarity(port)));
 
 	dp_flags[port] |= DP_FLAGS_DP_ON;
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
