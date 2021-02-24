@@ -124,6 +124,8 @@ void print_flag(int port, int set_or_clear, int flag);
 /* Flag for retimer firmware update */
 #define TC_FLAGS_USB_RETIMER_FW_UPDATE_RUN     BIT(21)
 #define TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN BIT(22)
+/* Flag for asynchronous call to request Error Recovery */
+#define TC_FLAGS_REQUEST_ERROR_RECOVERY	BIT(23)
 
 /* For checking flag_bit_names[] array */
 #define TC_FLAGS_COUNT			23
@@ -320,6 +322,7 @@ static struct bit_name flag_bit_names[] = {
 			"USB_RETIMER_FW_UPDATE_RUN" },
 	{ TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN,
 			"USB_RETIMER_FW_UPDATE_LTD_RUN" },
+	{ TC_FLAGS_REQUEST_ERROR_RECOVERY, "REQUEST_ERROR_RECOCVERY"},
 };
 BUILD_ASSERT(ARRAY_SIZE(flag_bit_names) == TC_FLAGS_COUNT);
 
@@ -1064,6 +1067,11 @@ void pd_set_suspend(int port, int suspend)
 		TC_CLR_FLAG(port, TC_FLAGS_REQUEST_SUSPEND);
 		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
+}
+
+void pd_set_error_recovery(int port)
+{
+	TC_SET_FLAG(port, TC_FLAGS_REQUEST_ERROR_RECOVERY);
 }
 
 int pd_is_port_enabled(int port)
@@ -2065,6 +2073,8 @@ static void tc_error_recovery_entry(const int port)
 	print_current_state(port);
 
 	pd_timer_enable(port, TC_TIMER_TIMEOUT, PD_T_ERROR_RECOVERY);
+
+	TC_CLR_FLAG(port, TC_FLAGS_REQUEST_ERROR_RECOVERY);
 }
 
 static void tc_error_recovery_run(const int port)
@@ -3697,6 +3707,13 @@ void tc_run(const int port)
 			pe_invalidate_explicit_contract(port);
 
 		set_state_tc(port, TC_DISABLED);
+	}
+
+	/* If error recovery has been requested, transition now */
+	if (TC_CHK_FLAG(port, TC_FLAGS_REQUEST_ERROR_RECOVERY)) {
+		if (IS_ENABLED(CONFIG_USB_PE_SM))
+			pe_invalidate_explicit_contract(port);
+		set_state_tc(port, TC_ERROR_RECOVERY);
 	}
 
 	if (IS_ENABLED(CONFIG_USBC_RETIMER_FW_UPDATE)) {

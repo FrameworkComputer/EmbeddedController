@@ -181,6 +181,10 @@ void pd_set_suspend(int port, int suspend)
 {
 }
 
+void pd_set_error_recovery(int port)
+{
+}
+
 enum tcpc_cc_polarity pd_get_polarity(int port)
 {
 	return POLARITY_CC1;

@@ -2567,6 +2567,16 @@ int pd_rx_started(int port);
 void pd_set_suspend(int port, int suspend);
 
 /**
+ * Request Error Recovery
+ *
+ * Note that Error Recovery will happen on the next cycle of the port's PD task
+ * and may not have started yet at the time of the function return.
+ *
+ * @param port USB-C port number
+ */
+void pd_set_error_recovery(int port);
+
+/**
  * Resume the PD task for a port after a period of time has elapsed.
  * @param port USB-C port number
  */

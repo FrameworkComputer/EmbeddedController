@@ -74,6 +74,11 @@ void pd_set_suspend(int port, int suspend)
 
 }
 
+void pd_set_error_recovery(int port)
+{
+
+}
+
 test_static void setup_source(void)
 {
 	/* Start PE. */
