@@ -262,12 +262,22 @@ static void state_machine(uint64_t tnow)
 			set_pwrbtn_to_pch(0, 0);
 			power_button_enable_led(1);
 		} else {
-			/* 
-			 * When chipset is on, 
-			 * we will send the SCI event to trigger modern standby.
+			/*
+			 * when in preOS still need send power button signal
+			 * until ACPI driver ready
 			 */
-			tnext_state = tnow + PWRBTN_DELAY_T1;
-			pwrbtn_state = PWRBTN_STATE_T1;
+			if (*host_get_customer_memmap(0x00) & BIT(0)) {
+				/*
+				 * When chipset is on and ACPI driver ready,
+				 * we will send the SCI event to trigger modern standby.
+				 */
+				tnext_state = tnow + PWRBTN_DELAY_T1;
+				pwrbtn_state = PWRBTN_STATE_T1;
+			} else {
+				tnext_state = tnow + PWRBTN_DELAY_T0;
+				pwrbtn_state = PWRBTN_STATE_T0;
+				set_pwrbtn_to_pch(0, 0);
+			}
 		}
 		break;
 	case PWRBTN_STATE_T0:
