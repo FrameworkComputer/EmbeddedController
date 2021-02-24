@@ -588,15 +588,6 @@ static struct policy_engine {
 	uint32_t vdm_data[VDO_HDR_SIZE + VDO_MAX_SIZE];
 	uint8_t vdm_ack_min_data_objects;
 
-	/* Timers */
-
-	/*
-	 * Prior to a successful negotiation, a Source Shall use the
-	 * SourceCapabilityTimer to periodically send out a
-	 * Source_Capabilities Message.
-	 */
-	uint64_t source_cap_timer;
-
 	/* Counters */
 
 	/*
@@ -748,8 +739,8 @@ static void pe_init(int port)
 	pe[port].flags = 0;
 	pe[port].dpm_request = 0;
 	pe[port].dpm_curr_request = 0;
-	pe[port].source_cap_timer = TIMER_DISABLED;
 	pd_timer_disable(port, PE_TIMER_NO_RESPONSE);
+	pd_timer_disable(port, PE_TIMER_SOURCE_CAP);
 	pe[port].data_role = pd_get_data_role(port);
 	pe[port].tx_type = TCPC_TX_INVALID;
 	pe[port].events = 0;
@@ -2136,8 +2127,8 @@ static void pe_src_discovery_entry(int port)
 	 * is in place.  All other probing must happen from ready states.
 	 */
 	if (get_last_state_pe(port) != PE_VDM_IDENTITY_REQUEST_CBL)
-		pe[port].source_cap_timer =
-				get_time().val + PD_T_SEND_SOURCE_CAP;
+		pd_timer_enable(port, PE_TIMER_SOURCE_CAP,
+				PD_T_SEND_SOURCE_CAP);
 }
 
 static void pe_src_discovery_run(int port)
@@ -2156,7 +2147,7 @@ static void pe_src_discovery_run(int port)
 	 *   1) DPM requests the identity of the cable plug and
 	 *   2) DiscoverIdentityCounter < nDiscoverIdentityCount
 	 */
-	if (get_time().val > pe[port].source_cap_timer) {
+	if (pd_timer_is_expired(port, PE_TIMER_SOURCE_CAP)) {
 		if (pe[port].caps_counter <= N_CAPS_COUNT) {
 			set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
 			return;
