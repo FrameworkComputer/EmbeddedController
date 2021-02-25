@@ -107,7 +107,7 @@ struct usb_mux usbc3_tcss_usb_mux = {
 #endif
 
 /* USB muxes Configuration */
-const struct usb_mux usb_muxes[] = {
+struct usb_mux usb_muxes[] = {
 	[TYPE_C_PORT_0] = {
 		.usb_port = TYPE_C_PORT_0,
 		.next_mux = &usbc0_tcss_usb_mux,
@@ -258,9 +258,32 @@ static void enable_h1_irq(void)
 }
 DECLARE_HOOK(HOOK_INIT, enable_h1_irq, HOOK_PRIO_LAST);
 
+static void configure_retimer_usbmux(void)
+{
+	switch (board_get_version() & 0x3F) {
+	case ADLP_LP5_T4_RVP_SKU_BOARD_ID:
+		/* No retimer on Port-2 */
+#if defined(HAS_TASK_PD_C2)
+		usb_muxes[TYPE_C_PORT_2].driver = NULL;
+#endif
+		break;
+
+	/* Add additional board SKUs */
+
+	default:
+		break;
+	}
+}
+
 static void tcpc_aic_init(void)
 {
 	int i;
+
+	/*
+	 * Change the default retimer usb mux config at runtime based on the
+	 * board SKU.
+	 */
+	configure_retimer_usbmux();
 
 	/* Initialize the IOEXPANDER on TCPC-AIC */
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)

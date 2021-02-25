@@ -13,6 +13,9 @@
 
 #include "baseboard.h"
 
+/* RVP Board ids */
+#define ADLP_LP5_T4_RVP_SKU_BOARD_ID	0x13
+
 /* MECC config */
 #define CONFIG_INTEL_RVP_MECC_VERSION_1_0
 
@@ -63,6 +66,9 @@
 #if defined(HAS_TASK_PD_C3)
 #define I2C_PORT3_BB_RETIMER_ADDR	0x59
 #endif
+
+/* Configure mux at runtime */
+#define CONFIG_USB_MUX_RUNTIME_CONFIG
 
 /* Enable VCONN */
 #define CONFIG_USBC_VCONN
