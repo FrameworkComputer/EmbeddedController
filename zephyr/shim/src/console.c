@@ -4,6 +4,7 @@
  */
 
 #include <device.h>
+#include <drivers/uart.h>
 #include <init.h>
 #include <kernel.h>
 #include <shell/shell.h>
@@ -15,6 +16,17 @@
 #include "console.h"
 #include "printf.h"
 #include "uart.h"
+
+static const struct device *uart_dev;
+#ifdef CONFIG_UART_CONSOLE_ON_DEV_NAME
+static int init_uart_dev(const struct device *unused)
+{
+	ARG_UNUSED(unused);
+	uart_dev = device_get_binding(CONFIG_UART_CONSOLE_ON_DEV_NAME);
+	return 0;
+}
+SYS_INIT(init_uart_dev, POST_KERNEL, 50);
+#endif
 
 int zshim_run_ec_console_command(int (*handler)(int argc, char **argv),
 				 const struct shell *shell, size_t argc,
@@ -92,4 +104,18 @@ void uart_flush_output(void)
 
 void uart_tx_flush(void)
 {
+}
+
+int uart_getc(void)
+{
+	uint8_t c;
+
+	if (uart_dev && !uart_poll_in(uart_dev, &c))
+		return c;
+	return -1;
+}
+
+void uart_clear_input(void)
+{
+	/* Not needed since we're not stopping the shell. */
 }
