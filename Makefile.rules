@@ -231,6 +231,9 @@ ifeq ($(TEST_BUILD),)
 	@echo "directory!  Otherwise, you won't be able to enter any commands."
 endif # not a TEST_BUILD
 endif # CONFIG_EXPERIMENTAL_CONSOLE=y
+	@if [ -z "${ALLOW_CONFIG}" ]; then \
+		./util/check_allowed.sh ${config} util/config_allowed.txt .; \
+	fi
 
 proj-%: | $(FAILED_BOARDS_DIR)
 	@touch $(FAILED_BOARDS_DIR)/$*
