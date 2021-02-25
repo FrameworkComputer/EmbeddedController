@@ -61,6 +61,8 @@
 #define PD_MAX_CURRENT_MA	3000
 #define PD_MAX_VOLTAGE_MV	20000
 
+#define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
+
 /* Enabling Thunderbolt-compatible mode */
 #define CONFIG_USB_PD_TBT_COMPAT_MODE
 
