@@ -38,6 +38,7 @@
 #define GPIO_ENTERING_RW           NAMED_GPIO(ec_entering_rw)
 #define GPIO_KBD_KSO2              NAMED_GPIO(ec_kso_02_inv)
 #define GPIO_LID_OPEN              NAMED_GPIO(ec_lid_open)
+#define GPIO_PACKET_MODE_EN        NAMED_GPIO(ec_h1_packet_mode)
 #define GPIO_PCH_DSW_PWROK         NAMED_GPIO(ec_pch_dsw_pwrok)
 #define GPIO_PCH_PWRBTN_L          NAMED_GPIO(ec_pch_pwr_btn_odl)
 #define GPIO_PCH_RSMRST_L          NAMED_GPIO(ec_pch_rsmrst_odl)
