@@ -26,7 +26,7 @@
 
 #define VIF_APP_VENDOR_VALUE	"Google"
 #define VIF_APP_NAME_VALUE	"EC GENVIF"
-#define VIF_APP_VERSION_VALUE	"3.0.0.9"
+#define VIF_APP_VERSION_VALUE	"3.0.0.10"
 #define VENDOR_NAME_VALUE	"Google"
 
 #define DEFAULT_MISSING_TID	0xFFFF
@@ -3363,7 +3363,7 @@ static int init_vif_component_pd_source_fields(
 			src_pdo_cnt, NULL);
 
 	if (type == DRP || type == SRC) {
-		if (IS_ENABLED(CONFIG_USBC_PPC)) {
+		if (IS_ENABLED(CONFIG_USBC_OCP)) {
 			int resp = 0;
 
 			set_vif_field_b(&vif_fields[PD_OC_Protection],
