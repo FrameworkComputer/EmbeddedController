@@ -20,7 +20,7 @@ static char mock_data[64] =
 	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@";
 
 static int mock_bbram_read(const struct device *unused, int offset, int size,
-			   char *data)
+			   uint8_t *data)
 {
 	if (offset < 0 || offset + size >= ARRAY_SIZE(mock_data))
 		return -1;

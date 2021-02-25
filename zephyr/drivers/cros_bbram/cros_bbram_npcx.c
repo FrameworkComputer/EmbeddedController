@@ -64,7 +64,7 @@ static int cros_bbram_npcx_reset_vcc1(const struct device *dev)
 }
 
 static int cros_bbram_npcx_read(const struct device *dev, int offset, int size,
-				char *data)
+				uint8_t *data)
 {
 	const struct cros_bbram_npcx_config *config = DRV_CONFIG(dev);
 
@@ -75,13 +75,13 @@ static int cros_bbram_npcx_read(const struct device *dev, int offset, int size,
 
 	for (size_t i = 0; i < size; ++i) {
 		*(data + i) =
-			*((volatile char *)config->base_addr + offset + i);
+			*((volatile uint8_t *)config->base_addr + offset + i);
 	}
 	return 0;
 }
 
 static int cros_bbram_npcx_write(const struct device *dev, int offset, int size,
-				 char *data)
+				 uint8_t *data)
 {
 	const struct cros_bbram_npcx_config *config = DRV_CONFIG(dev);
 
@@ -91,7 +91,7 @@ static int cros_bbram_npcx_write(const struct device *dev, int offset, int size,
 	}
 
 	for (size_t i = 0; i < size; ++i) {
-		*((volatile char *)config->base_addr + offset + i) =
+		*((volatile uint8_t *)config->base_addr + offset + i) =
 			*(data + i);
 	}
 	return 0;

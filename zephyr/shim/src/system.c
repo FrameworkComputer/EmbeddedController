@@ -68,8 +68,8 @@ int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 	if (rc)
 		return rc;
 
-	rc = ((struct cros_bbram_driver_api *)bbram_dev->api)
-		     ->read(bbram_dev, offset, size, value);
+	rc = cros_bbram_read(bbram_dev, offset, size, value);
+
 	return rc ? EC_ERROR_INVAL : EC_SUCCESS;
 }
 
