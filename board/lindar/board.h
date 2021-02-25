@@ -13,6 +13,7 @@
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
+#define CONFIG_BYPASS_CBI_EEPROM_WP_CHECK /* bypass cbi wp check in dev. */
 
 #define CONFIG_VBOOT_EFS2
 
