@@ -109,10 +109,11 @@ void battery_customize(struct charge_state_data *emi_info)
 		*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_STATUS) &= ~EC_BATT_TYPE;
 
 	battery_get_mode(&value);
+	/* in framework use smart.c it will force in mAh mode*/
 	if (value & MODE_CAPACITY)
-		*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_STATUS) |= EC_BATT_MODE;
-	else
 		*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_STATUS) &= ~EC_BATT_MODE;
+	else
+		*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_STATUS) |= EC_BATT_MODE;
 	
 	/* BTP: Notify AP update battery */
 	new_btp = *host_get_customer_memmap(0x08) + (*host_get_customer_memmap(0x09) << 8);
