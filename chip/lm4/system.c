@@ -25,7 +25,8 @@ enum hibdata_index {
 #ifdef CONFIG_SOFTWARE_PANIC
 	HIBDATA_INDEX_SAVED_PANIC_REASON,   /* Saved panic reason */
 	HIBDATA_INDEX_SAVED_PANIC_INFO,     /* Saved panic data */
-	HIBDATA_INDEX_SAVED_PANIC_EXCEPTION /* Saved panic exception code */
+	HIBDATA_INDEX_SAVED_PANIC_EXCEPTION,/* Saved panic exception code */
+	HIBDATA_INDEX_SAVED_PANIC_FLAGS,    /* Saved panic flags */
 #endif
 };
 
@@ -439,7 +440,7 @@ void system_pre_init(void)
 	uint32_t hibctl;
 #ifdef CONFIG_SOFTWARE_PANIC
 	uint32_t reason, info;
-	uint8_t exception;
+	uint8_t exception, panic_flags;
 #endif
 
 	/*
@@ -502,11 +503,15 @@ void system_pre_init(void)
 	reason = hibdata_read(HIBDATA_INDEX_SAVED_PANIC_REASON);
 	info = hibdata_read(HIBDATA_INDEX_SAVED_PANIC_INFO);
 	exception = hibdata_read(HIBDATA_INDEX_SAVED_PANIC_EXCEPTION);
+	panic_flags = hibdata_read(HIBDATA_INDEX_SAVED_PANIC_FLAGS);
+
 	if (reason || info || exception) {
 		panic_set_reason(reason, info, exception);
+		panic_get_data()->flags = panic_flags;
 		hibdata_write(HIBDATA_INDEX_SAVED_PANIC_REASON, 0);
 		hibdata_write(HIBDATA_INDEX_SAVED_PANIC_INFO, 0);
 		hibdata_write(HIBDATA_INDEX_SAVED_PANIC_EXCEPTION, 0);
+		hibdata_write(HIBDATA_INDEX_SAVED_PANIC_FLAGS, 0);
 	}
 #endif
 
@@ -544,13 +549,16 @@ void system_reset(int flags)
 	if (flags & SYSTEM_RESET_HARD) {
 #ifdef CONFIG_SOFTWARE_PANIC
 		uint32_t reason, info;
-		uint8_t exception;
+		uint8_t exception, panic_flags;
+
+		panic_flags = panic_get_data()->flags;
 
 		/* Panic data will be wiped by hard reset, so save it */
 		panic_get_reason(&reason, &info, &exception);
 		hibdata_write(HIBDATA_INDEX_SAVED_PANIC_REASON, reason);
 		hibdata_write(HIBDATA_INDEX_SAVED_PANIC_INFO, info);
 		hibdata_write(HIBDATA_INDEX_SAVED_PANIC_EXCEPTION, exception);
+		hibdata_write(HIBDATA_INDEX_SAVED_PANIC_FLAGS, panic_flags);
 #endif
 
 		/*

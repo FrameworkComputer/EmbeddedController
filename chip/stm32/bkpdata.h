@@ -29,6 +29,13 @@ enum bkpdata_index {
 	BKPDATA_INDEX_PD1,		     /* USB-PD saved port1 state */
 	BKPDATA_INDEX_PD2,		     /* USB-PD saved port2 state */
 #endif
+#ifdef CONFIG_SOFTWARE_PANIC
+	/**
+	 * Saving the panic flags in case that AP thinks the panic is new
+	 * after a hard reset.
+	 */
+	BKPDATA_INDEX_SAVED_PANIC_FLAGS,     /* Saved panic flags */
+#endif
 	BKPDATA_COUNT
 };
 BUILD_ASSERT(STM32_BKP_ENTRIES >= BKPDATA_COUNT);
