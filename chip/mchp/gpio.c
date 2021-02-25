@@ -45,6 +45,55 @@ static const struct gpio_int_mapping int_map[] = {
 BUILD_ASSERT(ARRAY_SIZE(int_map) == MCHP_GPIO_MAX_PORT);
 
 /*
+ * These pins default to BGPO functionality. BGPO overrides GPIO Control
+ * register programming. If the pin is in the GPIO list the user wants to
+ * use the pin as GPIO and we must disable BGPIO functionality for this pin.
+ */
+struct bgpo_pin {
+	uint16_t pin;
+	uint8_t bgpo_pos;
+};
+
+static const struct bgpo_pin bgpo_list[] = {
+	{ 0101, 1 }, /* GPIO 0101 */
+	{ 0102, 2 }, /* GPIO 0102 */
+#if defined(CHIP_FAMILY_MEC152X)
+	{ 0253, 0 }, /* GPIO 0253 */
+#elif defined(CHIP_FAMILY_MEC170X)
+	{ 0172, 3 }, /* GPIO 0172 */
+#endif
+};
+
+static const uint32_t bgpo_map[] = {
+#if defined(CHIP_FAMILY_MEC152X)
+	0, 0, (BIT(1) | BIT(2)), 0, 0, BIT(11)
+#elif defined(CHIP_FAMILY_MEC170X)
+	0, 0, (BIT(1) | BIT(2)), BIT(26), 0, 0
+#else
+	0, 0, 0, 0, 0, 0
+#endif
+};
+BUILD_ASSERT(ARRAY_SIZE(bgpo_map) == MCHP_GPIO_MAX_PORT);
+
+/* Check for BGPO capable pins on this port and disable BGPO feature */
+static void disable_bgpo(uint32_t port, uint32_t mask)
+{
+	int i, n;
+	uint32_t gpnum;
+	uint32_t m = bgpo_map[port] & mask;
+
+	while (m) {
+		i = __builtin_ffs(m) - 1;
+		gpnum = (port * 32U) + i;
+		for (n = 0; n < ARRAY_SIZE(bgpo_list); n++)
+			if (gpnum == bgpo_list[n].pin)
+				MCHP_WKTIMER_BGPO_POWER &=
+					~BIT(bgpo_list[n].bgpo_pos);
+		m &= ~BIT(i);
+	}
+}
+
+/*
  * NOTE: GCC __builtin_ffs(val) returns (index + 1) of least significant
  * 1-bit of val or if val == 0 returns 0
  */
@@ -333,6 +382,8 @@ void gpio_pre_init(void)
 		 */
 		if (is_warm)
 			flags &= ~(GPIO_LOW | GPIO_HIGH);
+
+		disable_bgpo(g->port, g->mask);
 
 		gpio_set_flags_by_mask(g->port, g->mask, flags);
 
