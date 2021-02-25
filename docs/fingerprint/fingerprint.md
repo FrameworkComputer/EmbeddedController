@@ -481,7 +481,16 @@ that should be built as part of the build.
 
 See the [`model.yaml` for the Hatch board][hatch model.yaml] as an example.
 
-You can test your changes by
+Instead of crafting the `model.yaml` by hand, newer boards are moving to the
+[Chrome OS Project Configuration] model, where the config is generated using
+[Starlark]. The common [`create_fingerprint`] function can be used across models
+to configure the fingerprint settings. See the [Morphius `config.star`] for an
+example of how to call `create_fingerprint`. After you modify a `config.star`
+file you will need to [regenerate the config]. If you need to change many
+projects (e.g., modifying [`create_fingerprint`]), you can use the [`CLFactory`]
+tool.
+
+Once you have updated the config, you can test your changes by
 [running `cros_config`](#chromeos-config-fingerprint). The Chrome OS Config
 documentation has a [section on testing properties] that describes this in more
 detail.
@@ -552,3 +561,9 @@ a given device can be found by viewing `chrome://system/#platform_identity_sku`.
 [Nucleo H743ZI2]: https://www.digikey.com/en/products/detail/stmicroelectronics/NUCLEO-H743ZI2/10130892
 [CBI Info]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md
 [Chrome OS Config SKU]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md#identity
+[Chrome OS Project Configuration]: https://chromium.googlesource.com/chromiumos/config/+/HEAD/README.md
+[Starlark]: https://docs.bazel.build/versions/master/skylark/language.html
+[`create_fingerprint`]: https://chromium.googlesource.com/chromiumos/config/+/e1fa0d7f56eb3dd6e9378e4326de086ada46b7d3/util/hw_topology.star#444
+[Morphius `config.star`]: https://chrome-internal.googlesource.com/chromeos/project/zork/morphius/+/593b657a776ed6b320c826916adc9cd845faf709/config.star#85
+[regenerate the config]: https://chromium.googlesource.com/chromiumos/config/+/HEAD/README.md#making-configuration-changes-for-your-project
+[`CLFactory`]: https://chromium.googlesource.com/chromiumos/config/+/HEAD/README.md#making-bulk-changes-across-repos
