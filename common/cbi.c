@@ -251,11 +251,13 @@ int cbi_set_board_info(enum cbi_data_tag tag, const uint8_t *buf, uint8_t size)
 
 static int eeprom_is_write_protected(void)
 {
-#ifdef CONFIG_WP_ACTIVE_HIGH
+#ifdef CONFIG_BYPASS_CBI_EEPROM_WP_CHECK
+	return 0;
+#elif defined(CONFIG_WP_ACTIVE_HIGH)
 	return gpio_get_level(GPIO_WP);
 #else
 	return !gpio_get_level(GPIO_WP_L);
-#endif /* CONFIG_WP_ACTIVE_HIGH */
+#endif /* CONFIG_BYPASS_CBI_EEPROM_WP_CHECK */
 }
 
 static int write_board_info(void)

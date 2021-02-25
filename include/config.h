@@ -3582,6 +3582,12 @@
  * Also, this will enable PD in RO for TCPMv2.
  */
 #undef CONFIG_SYSTEM_UNLOCKED
+/*
+ * Some systems decouple the CBI eeprom write protection from the
+ * H1_FLASH_WP_ODL via the hardware change. Adds this config to
+ * bypass the cbi eeprom write protection check.
+ */
+#undef CONFIG_BYPASS_CBI_EEPROM_WP_CHECK
 
 /*
  * Device can be a tablet as well as a clamshell.
@@ -6148,5 +6154,11 @@
 #ifndef CONFIG_ALS
 #define ALS_COUNT 0
 #endif /* CONFIG_ALS */
+
+#if defined(CONFIG_BYPASS_CBI_EEPROM_WP_CHECK) && \
+	!defined(CONFIG_SYSTEM_UNLOCKED)
+#error "CONFIG_BYPASS_CBI_EEPROM_WP_CHECK is only permitted " \
+	"when CONFIG_SYSTEM_UNLOCK is also enabled."
+#endif /* CONFIG_BYPASS_CBI_EEPROM_WP_CHECK && !CONFIG_SYSTEM_UNLOCK */
 
 #endif  /* __CROS_EC_CONFIG_H */
