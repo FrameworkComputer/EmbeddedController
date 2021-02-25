@@ -43,14 +43,20 @@ static void ioexpanders_irq(void)
 	fault = read_faults();
 	irqs = read_irqs();
 
-	if (!(fault & USERVO_FAULT_L))
+	if (!(fault & USERVO_FAULT_L)) {
+		ec_uservo_power_en(0);
 		ccprintf("FAULT: Microservo USB A port load switch\n");
+	}
 
-	if (!(fault & USB3_A0_FAULT_L))
+	if (!(fault & USB3_A0_FAULT_L)) {
+		ec_usb3_a0_pwr_en(0);
 		ccprintf("FAULT: USB3 A0 port load switch\n");
+	}
 
-	if (!(fault & USB3_A1_FAULT_L))
+	if (!(fault & USB3_A1_FAULT_L)) {
+		ec_usb3_a1_pwr_en(0);
 		ccprintf("FAULT: USB3 A1 port load switch\n");
+	}
 
 	if (!(fault & USB_DUTCHG_FLT_ODL))
 		ccprintf("FAULT: Overcurrent on Charger or DUT CC/SBU lines\n");
