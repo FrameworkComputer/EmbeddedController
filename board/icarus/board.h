@@ -11,20 +11,17 @@
 #define VARIANT_KUKUI_JACUZZI
 #define VARIANT_KUKUI_BATTERY_SMART
 #define VARIANT_KUKUI_CHARGER_ISL9238
-#define VARIANT_KUKUI_EC_STM32F098
-
-#ifndef SECTION_IS_RW
-#define VARIANT_KUKUI_NO_SENSORS
-#endif /* SECTION_IS_RW */
+#define VARIANT_KUKUI_EC_IT81202
 
 #include "baseboard.h"
 
-#ifdef BOARD_JUNIPER
+/* TODO: remove me once we fix IT83XX_ILM_BLOCK_SIZE out of space issue */
+#undef CONFIG_LTO
+
 #undef CONFIG_CHIPSET_POWER_SEQ_VERSION
 #define CONFIG_CHIPSET_POWER_SEQ_VERSION 1
 
-#undef CONFIG_SYSTEM_UNLOCKED
-#endif
+#define CONFIG_SYSTEM_UNLOCKED
 
 #define CONFIG_BATTERY_HW_PRESENT_CUSTOM
 
@@ -38,20 +35,17 @@
 #undef CONFIG_EXTPOWER_DEBOUNCE_MS
 #define CONFIG_EXTPOWER_DEBOUNCE_MS 200
 
-#define CONFIG_I2C_BITBANG
-#define I2C_BITBANG_PORT_COUNT 1
 #undef CONFIG_I2C_NACK_RETRY_COUNT
 #define CONFIG_I2C_NACK_RETRY_COUNT 10
 #define CONFIG_SMBUS_PEC
 
-#define CONFIG_USB_PD_TCPM_FUSB302
+#define CONFIG_USB_PD_TCPM_ITE_ON_CHIP
 #define CONFIG_USB_PD_DISCHARGE_GPIO
 #define CONFIG_USB_PD_TCPC_LOW_POWER
 
 #define CONFIG_USB_MUX_IT5205
 
 /* Motion Sensors */
-#ifndef VARIANT_KUKUI_NO_SENSORS
 #define CONFIG_ACCEL_KX022	/* Lid accel */
 #define CONFIG_ACCELGYRO_BMI160 /* Base accel */
 #define CONFIG_ACCEL_INTERRUPTS
@@ -72,24 +66,15 @@
 
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
 
-#endif /* VARIANT_KUKUI_NO_SENSORS */
-
 /* I2C ports */
-#define I2C_PORT_BC12               0
-#define I2C_PORT_TCPC0              0
-#define I2C_PORT_USB_MUX            0
-#define I2C_PORT_CHARGER            board_get_charger_i2c()
-#define I2C_PORT_SENSORS            1
-#define I2C_PORT_IO_EXPANDER_IT8801 1
+#define I2C_PORT_BC12               IT83XX_I2C_CH_C
+#define I2C_PORT_TCPC0              IT83XX_I2C_CH_C
+#define I2C_PORT_USB_MUX            IT83XX_I2C_CH_C
+#define I2C_PORT_CHARGER            IT83XX_I2C_CH_A
+#define I2C_PORT_SENSORS            IT83XX_I2C_CH_B
+#define I2C_PORT_ACCEL              I2C_PORT_SENSORS
+#define I2C_PORT_BATTERY            IT83XX_I2C_CH_A
 #define I2C_PORT_VIRTUAL_BATTERY    I2C_PORT_BATTERY
-#ifdef BOARD_JACUZZI
-#define I2C_PORT_BATTERY            1
-#else /* Juniper */
-#define I2C_PORT_BATTERY            2
-#endif
-
-/* Enable Accel over SPI */
-#define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI master port (SPI2) */
 
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_EVENT
@@ -107,6 +92,7 @@ enum adc_channel {
 	/* Real ADC channels begin here */
 	ADC_BOARD_ID = 0,
 	ADC_EC_SKU_ID,
+	ADC_VBUS,
 	ADC_CH_COUNT
 };
 
@@ -132,10 +118,8 @@ enum charge_port {
 };
 
 enum battery_type {
-	BATTERY_PANASONIC_AC15A3J,
-	BATTERY_PANASONIC_AC16L5J,
-	BATTERY_LGC_AC16L8J,
-	BATTERY_PANASONIC_AC16L5J_KT00205009,
+	BATTERY_LGC_AP18C8K,
+	BATTERY_MURATA_AP18C4K,
 	BATTERY_TYPE_COUNT,
 };
 
@@ -143,8 +127,8 @@ enum battery_type {
 #include "registers.h"
 
 #ifdef SECTION_IS_RO
-/* Interrupt handler for emmc task */
-void emmc_cmd_interrupt(enum gpio_signal signal);
+/* Interrupt handler for AP jump to BL */
+void emmc_ap_jump_to_bl(enum gpio_signal signal);
 #endif
 
 void bc12_interrupt(enum gpio_signal signal);

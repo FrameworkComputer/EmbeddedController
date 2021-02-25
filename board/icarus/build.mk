@@ -6,10 +6,10 @@
 # Board specific files build
 #
 #
-# STmicro STM32F098VC
-CHIP:=stm32
-CHIP_FAMILY:=stm32f0
-CHIP_VARIANT:=stm32f09x
+# IC is ITE IT81202
+CHIP:=it83xx
+CHIP_FAMILY:=it8xxx2
+CHIP_VARIANT:=it81202bx_1024
 BASEBOARD:=kukui
 
 board-y=battery.o board.o led.o

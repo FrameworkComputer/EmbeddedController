@@ -5,9 +5,8 @@
  * Power and battery LED control for Jacuzzi
  */
 #include "common.h"
-#include "ioexpander.h"
-#include "driver/ioexpander/it8801.h"
 #include "ec_commands.h"
+#include "gpio.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
 #define LED_ON_LVL 0
@@ -35,24 +34,24 @@ void led_set_color_battery(enum ec_led_colors color)
 {
 	switch (color) {
 	case EC_LED_COLOR_AMBER:
-		ioex_set_level(IOEX_LED_ORANGE, LED_ON_LVL);
-		ioex_set_level(IOEX_LED_BLUE, LED_OFF_LVL);
-		ioex_set_level(IOEX_LED_GREEN, LED_OFF_LVL);
+		gpio_set_level(GPIO_LED_ORANGE, LED_ON_LVL);
+		gpio_set_level(GPIO_LED_BLUE, LED_OFF_LVL);
+		gpio_set_level(GPIO_LED_GREEN, LED_OFF_LVL);
 		break;
 	case EC_LED_COLOR_BLUE:
-		ioex_set_level(IOEX_LED_BLUE, LED_ON_LVL);
-		ioex_set_level(IOEX_LED_ORANGE, LED_OFF_LVL);
-		ioex_set_level(IOEX_LED_GREEN, LED_OFF_LVL);
+		gpio_set_level(GPIO_LED_BLUE, LED_ON_LVL);
+		gpio_set_level(GPIO_LED_ORANGE, LED_OFF_LVL);
+		gpio_set_level(GPIO_LED_GREEN, LED_OFF_LVL);
 		break;
 	case EC_LED_COLOR_GREEN:
-		ioex_set_level(IOEX_LED_GREEN, LED_ON_LVL);
-		ioex_set_level(IOEX_LED_BLUE, LED_OFF_LVL);
-		ioex_set_level(IOEX_LED_ORANGE, LED_OFF_LVL);
+		gpio_set_level(GPIO_LED_GREEN, LED_ON_LVL);
+		gpio_set_level(GPIO_LED_BLUE, LED_OFF_LVL);
+		gpio_set_level(GPIO_LED_ORANGE, LED_OFF_LVL);
 		break;
 	default: /* LED_OFF and other unsupported colors */
-		ioex_set_level(IOEX_LED_GREEN, LED_OFF_LVL);
-		ioex_set_level(IOEX_LED_BLUE, LED_OFF_LVL);
-		ioex_set_level(IOEX_LED_ORANGE, LED_OFF_LVL);
+		gpio_set_level(GPIO_LED_GREEN, LED_OFF_LVL);
+		gpio_set_level(GPIO_LED_BLUE, LED_OFF_LVL);
+		gpio_set_level(GPIO_LED_ORANGE, LED_OFF_LVL);
 		break;
 	}
 }

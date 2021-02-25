@@ -21,7 +21,7 @@
 #include "driver/battery/max17055.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
-#include "driver/tcpm/fusb302.h"
+#include "driver/tcpm/it83xx_pd.h"
 #include "driver/usb_mux/it5205.h"
 #include "ec_commands.h"
 #include "extpower.h"
@@ -29,8 +29,6 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
-#include "i2c_bitbang.h"
-#include "it8801.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -42,6 +40,7 @@
 #include "task.h"
 #include "tcpm/tcpm.h"
 #include "timer.h"
+#include "uart.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
@@ -50,37 +49,36 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-static void tcpc_alert_event(enum gpio_signal signal)
-{
-	schedule_deferred_pd_interrupt(0 /* port */);
-}
-
 #include "gpio_list.h"
+
+/* Wake-up pins for hibernate */
+const enum gpio_signal hibernate_wake_pins[] = {
+	GPIO_AC_PRESENT,
+	GPIO_LID_OPEN,
+	GPIO_POWER_BUTTON_L,
+};
+const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /******************************************************************************/
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
-	[ADC_BOARD_ID] =  {"BOARD_ID",  3300, 4096, 0, STM32_AIN(10)},
-	[ADC_EC_SKU_ID] = {"EC_SKU_ID", 3300, 4096, 0, STM32_AIN(8)},
+	[ADC_BOARD_ID] = {"BOARD_ID", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0,
+				CHIP_ADC_CH1},
+	[ADC_EC_SKU_ID] = {"EC_SKU_ID", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0,
+				CHIP_ADC_CH2},
+	[ADC_VBUS] = {"VBUS", ADC_MAX_MVOLT * 10, ADC_READ_MAX + 1, 0,
+				CHIP_ADC_CH0},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************/
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"typec", 0, 400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-#ifdef BOARD_JACUZZI
-	{"other", 1, 100, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
-#else /* Juniper */
-	{"other", 1, 400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
-#endif
+	{"typec",   IT83XX_I2C_CH_C, 400, GPIO_I2C_C_SCL, GPIO_I2C_C_SDA},
+	{"other",   IT83XX_I2C_CH_B, 100, GPIO_I2C_B_SCL, GPIO_I2C_B_SDA},
+	{"battery", IT83XX_I2C_CH_A, 100, GPIO_I2C_A_SCL, GPIO_I2C_A_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
-const struct i2c_port_t i2c_bitbang_ports[] = {
-	{"battery", 2, 100, GPIO_I2C3_SCL, GPIO_I2C3_SDA, .drv = &bitbang_drv},
-};
-const unsigned int i2c_bitbang_ports_used = ARRAY_SIZE(i2c_bitbang_ports);
 
 #define BC12_I2C_ADDR PI3USB9201_I2C_ADDR_3
 
@@ -91,39 +89,7 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
-/* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
-	/*
-	 * TODO(b/133200075): Tune this once we have the final performance
-	 * out of the driver and the i2c bus.
-	 */
-	.output_settle_us = 35,
-	.debounce_down_us = 5 * MSEC,
-	.debounce_up_us = 40 * MSEC,
-	.scan_period_us = 10 * MSEC,
-	.min_post_scan_delay_us = 10 * MSEC,
-	.poll_timeout_us = 100 * MSEC,
-	.actual_key_mask = {
-		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
-	},
-};
-
-struct ioexpander_config_t ioex_config[CONFIG_IO_EXPANDER_PORT_COUNT] = {
-	[0] = {
-		.i2c_host_port = I2C_PORT_IO_EXPANDER_IT8801,
-		.i2c_slave_addr = IT8801_I2C_ADDR,
-		.drv = &it8801_ioexpander_drv,
-	},
-};
-
 /******************************************************************************/
-/* SPI devices */
-const struct spi_device_t spi_devices[] = {
-	{ CONFIG_SPI_ACCEL_PORT, 2, GPIO_EC_SENSOR_SPI_NSS },
-};
-const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
-
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	{
 		.i2c_port = I2C_PORT_BC12,
@@ -134,12 +100,11 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 /******************************************************************************/
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_TCPC0,
-			.addr_flags = FUSB302_I2C_ADDR_FLAGS,
-		},
-		.drv = &fusb302_tcpm_drv,
+		.bus_type = EC_BUS_TYPE_EMBEDDED,
+		/* TCPC is embedded within EC so no i2c config needed */
+		.drv = &it8xxx2_tcpm_drv,
+		/* Alert is active-low, push-pull */
+		.flags = 0,
 	},
 };
 
@@ -166,28 +131,11 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 /* Charger config.  Start i2c address at 1, update during runtime */
 struct charger_config_t chg_chips[] = {
 	{
-		.i2c_port = 1,
+		.i2c_port = I2C_PORT_CHARGER,
 		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
 		.drv = &isl923x_drv,
 	},
 };
-
-/* Board version depends on ADCs, so init i2c port after ADC */
-static void charger_config_complete(void)
-{
-	chg_chips[0].i2c_port = board_get_charger_i2c();
-}
-DECLARE_HOOK(HOOK_INIT, charger_config_complete, HOOK_PRIO_INIT_ADC + 1);
-
-uint16_t tcpc_get_alert_status(void)
-{
-	uint16_t status = 0;
-
-	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL))
-		status |= PD_STATUS_TCPC_ALERT_0;
-
-	return status;
-}
 
 static int force_discharge;
 
@@ -250,58 +198,20 @@ int board_discharge_on_ac(int enable)
 	return board_set_active_charge_port(port);
 }
 
+#define VBUS_THRESHOLD_MV 4200
 int pd_snk_is_vbus_provided(int port)
 {
-	/* TODO(b:138352732): read IT8801 GPIO EN_USBC_CHARGE_L */
-	return EC_ERROR_UNIMPLEMENTED;
+	/* This board has only one port. */
+	if (!port)
+		return adc_read_channel(ADC_VBUS) > VBUS_THRESHOLD_MV ? 1 : 0;
+	else
+		return 0;
 }
 
 void bc12_interrupt(enum gpio_signal signal)
 {
 	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
 }
-
-#ifndef VARIANT_KUKUI_NO_SENSORS
-static void board_spi_enable(void)
-{
-	/*
-	 * Pin mux spi peripheral away from emmc, since RO might have
-	 * left them there.
-	 */
-	gpio_config_module(MODULE_SPI_FLASH, 0);
-
-	/* Enable clocks to SPI2 module. */
-	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
-
-	/* Reset SPI2 to clear state left over from the emmc slave. */
-	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI2;
-	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI2;
-
-	/* Reinitialize spi peripheral. */
-	spi_enable(&spi_devices[0], 1);
-
-	/* Pin mux spi peripheral toward the sensor. */
-	gpio_config_module(MODULE_SPI_MASTER, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
-	     board_spi_enable,
-	     MOTION_SENSE_HOOK_PRIO - 1);
-
-static void board_spi_disable(void)
-{
-	/* Set pins to a state calming the sensor down. */
-	gpio_set_flags(GPIO_EC_SENSOR_SPI_CK, GPIO_OUT_LOW);
-	gpio_set_level(GPIO_EC_SENSOR_SPI_CK, 0);
-	gpio_config_module(MODULE_SPI_MASTER, 0);
-
-	/* Disable spi peripheral and clocks. */
-	spi_enable(&spi_devices[0], 0);
-	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
-	     board_spi_disable,
-	     MOTION_SENSE_HOOK_PRIO + 1);
-#endif /* !VARIANT_KUKUI_NO_SENSORS */
 
 static void board_init(void)
 {
@@ -312,16 +222,8 @@ static void board_init(void)
 		gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 1);
 	}
 
-	/* Enable TCPC alert interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
-
-#ifndef VARIANT_KUKUI_NO_SENSORS
 	/* Enable interrupts from BMI160 sensor. */
 	gpio_enable_interrupt(GPIO_ACCEL_INT_ODL);
-
-	/* For some reason we have to do this again in case of sysjump */
-	board_spi_enable();
-#endif /* !VARIANT_KUKUI_NO_SENSORS */
 
 	/* Enable interrupt from PMIC. */
 	gpio_enable_interrupt(GPIO_PMIC_EC_RESETB);
@@ -331,7 +233,6 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-#ifndef VARIANT_KUKUI_NO_SENSORS
 /* Motion sensors */
 /* Mutexes */
 static struct mutex g_lid_mutex;
@@ -400,8 +301,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &bmi160_drv,
 	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
-	 .port = CONFIG_SPI_ACCEL_PORT,
-	 .i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
+	 .port = I2C_PORT_SENSORS,
+	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	 .rot_standard_ref = &base_bmi160_ref,
 	 .default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
 	 .min_frequency = BMI_ACCEL_MIN_FREQ,
@@ -428,8 +329,8 @@ struct motion_sensor_t motion_sensors[] = {
 	 .drv = &bmi160_drv,
 	 .mutex = &g_base_mutex,
 	 .drv_data = &g_bmi160_data,
-	 .port = CONFIG_SPI_ACCEL_PORT,
-	 .i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
+	 .port = I2C_PORT_SENSORS,
+	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	 .default_range = 1000, /* dps */
 	 .rot_standard_ref = &base_bmi160_ref,
 	 .min_frequency = BMI_GYRO_MIN_FREQ,
@@ -447,8 +348,8 @@ struct motion_sensor_t icm426xx_base_accel = {
 	.drv = &icm426xx_drv,
 	.mutex = &g_base_mutex,
 	.drv_data = &g_icm426xx_data,
-	.port = CONFIG_SPI_ACCEL_PORT,
-	.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
+	.port = I2C_PORT_SENSORS,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
 	.default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
 	.rot_standard_ref = &base_icm426xx_ref,
 	.min_frequency = ICM426XX_ACCEL_MIN_FREQ,
@@ -474,8 +375,8 @@ struct motion_sensor_t icm426xx_base_gyro = {
 	.drv = &icm426xx_drv,
 	.mutex = &g_base_mutex,
 	.drv_data = &g_icm426xx_data,
-	.port = CONFIG_SPI_ACCEL_PORT,
-	.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
+	.port = I2C_PORT_SENSORS,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
 	.default_range = 1000, /* dps */
 	.rot_standard_ref = &base_icm426xx_ref,
 	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
@@ -515,7 +416,19 @@ static void board_detect_motionsensor(void)
 		 ? "ICM40608" : "BMI160");
 }
 DECLARE_HOOK(HOOK_INIT, board_detect_motionsensor, HOOK_PRIO_DEFAULT);
-#endif /* !VARIANT_KUKUI_NO_SENSORS */
+
+/* Vconn control for integrated ITE TCPC */
+void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
+{
+	/* Vconn control is only for port 0 */
+	if (port)
+		return;
+
+	if (cc_pin == USBPD_CC_PIN_1)
+		gpio_set_level(GPIO_EN_USB_C0_CC1_VCONN, !!enabled);
+	else
+		gpio_set_level(GPIO_EN_USB_C0_CC2_VCONN, !!enabled);
+}
 
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
@@ -530,14 +443,3 @@ static void board_chipset_shutdown(void)
 	gpio_set_level(GPIO_EN_USBA_5V, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
-
-int board_get_charger_i2c(void)
-{
-	/* TODO(b:138415463): confirm the bus allocation for future builds */
-	return board_get_version() == 1 ? 2 : 1;
-}
-
-int board_get_battery_i2c(void)
-{
-	return board_get_version() >= 1 ? 2 : 1;
-}
