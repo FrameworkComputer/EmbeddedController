@@ -17,6 +17,18 @@
 #include "ec_commands.h"
 #include "timer.h"
 
+#ifdef CONFIG_ZEPHYR
+#ifdef CONFIG_CPU_CORTEX_M
+/*
+ * For cortex-m we cannot use irq_lock() for disabling all the interrupts
+ * because it leaves some (NMI and faults) still enabled.
+ */
+#define interrupt_disable_all() __asm__("cpsid i")
+#endif
+#else /* !CONFIG_ZEPHYR */
+#define interrupt_disable_all() interrupt_disable()
+#endif /* CONFIG_ZEPHYR */
+
 /* Per chip implementation to save/read raw EC_RESET_FLAG_ flags. */
 void chip_save_reset_flags(uint32_t flags);
 uint32_t chip_read_reset_flags(void);
