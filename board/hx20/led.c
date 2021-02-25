@@ -231,7 +231,7 @@ static void led_set_power(void)
 	power_tick++;
 
 	if (chipset_in_state(CHIPSET_STATE_ON) | power_button_enable) {
-		if (charge_get_percent() <= CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON)
+		if (charge_prevent_power_on(0))
 			set_pwr_led_color(PWM_LED2, (power_tick %
 				LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
 				EC_LED_COLOR_RED : -1);
