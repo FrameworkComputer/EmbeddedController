@@ -2427,6 +2427,46 @@ static void tc_attached_snk_entry(const int port)
 		tcpm_debug_accessory(port, 1);
 }
 
+/*
+ * Check whether Vbus has been removed on this port, accounting for some Vbus
+ * debounce if FRS is enabled.
+ *
+ * Returns true if a new state was set and the calling run should exit.
+ */
+static bool tc_snk_check_vbus_removed(const int port)
+{
+	if (IS_ENABLED(CONFIG_USB_PD_FRS)) {
+		/*
+		 * Debounce Vbus presence when FRS is enabled. Note that we may
+		 * lose Vbus before the FRS signal comes in to let us know
+		 * we're PR swapping, but we must still transition to unattached
+		 * within tSinkDisconnect.
+		 *
+		 * We may safely re-use the Vbus debounce timer here
+		 * since a PR swap would no longer be in progress when Vbus
+		 * removal is checked.
+		 */
+		if (pd_check_vbus_level(port, VBUS_REMOVED)) {
+			if (pd_timer_is_disabled(port,
+						 TC_TIMER_VBUS_DEBOUNCE)) {
+				pd_timer_enable(port, TC_TIMER_VBUS_DEBOUNCE,
+						PD_T_FRS_VBUS_DEBOUNCE);
+			} else if (pd_timer_is_expired(port,
+						TC_TIMER_VBUS_DEBOUNCE)) {
+				set_state_tc(port, TC_UNATTACHED_SNK);
+				return true;
+			}
+		} else {
+			pd_timer_disable(port, TC_TIMER_VBUS_DEBOUNCE);
+		}
+	} else if (pd_check_vbus_level(port, VBUS_REMOVED)) {
+		set_state_tc(port, TC_UNATTACHED_SNK);
+		return true;
+	}
+
+	return false;
+}
+
 static void tc_attached_snk_run(const int port)
 {
 #ifdef CONFIG_USB_PE_SM
@@ -2465,6 +2505,7 @@ static void tc_attached_snk_run(const int port)
 	    pd_timer_is_expired(port, TC_TIMER_VBUS_DEBOUNCE)) {
 		/* PR Swap is no longer in progress */
 		TC_CLR_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS);
+		pd_timer_disable(port, TC_TIMER_VBUS_DEBOUNCE);
 
 		/*
 		 * AutoDischargeDisconnect was turned off when we
@@ -2485,10 +2526,8 @@ static void tc_attached_snk_run(const int port)
 		/*
 		 * Detach detection
 		 */
-		if (pd_check_vbus_level(port, VBUS_REMOVED)) {
-			set_state_tc(port, TC_UNATTACHED_SNK);
+		if (tc_snk_check_vbus_removed(port))
 			return;
-		}
 
 		if (!pe_is_explicit_contract(port))
 			sink_power_sub_states(port);
@@ -2577,10 +2616,8 @@ static void tc_attached_snk_run(const int port)
 #else /* CONFIG_USB_PE_SM */
 
 	/* Detach detection */
-	if (pd_check_vbus_level(port, VBUS_REMOVED)) {
-		set_state_tc(port, TC_UNATTACHED_SNK);
+	if (tc_snk_check_vbus_removed(port))
 		return;
-	}
 
 	/* Run Sink Power Sub-State */
 	sink_power_sub_states(port);

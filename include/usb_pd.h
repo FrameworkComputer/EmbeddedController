@@ -246,6 +246,13 @@ enum pd_rx_errors {
 #define PD_T_SYSJUMP              (1000*MSEC) /* 1s */
 #define PD_T_PR_SWAP_WAIT          (100*MSEC) /* tPRSwapWait 100ms */
 
+/*
+ * Non-spec timer to prevent going Unattached if Vbus drops before a partner FRS
+ * signal comes through.  This timer should be shorter than tSinkDisconnect
+ * (40ms) to ensure we still transition out of Attached.SNK in time.
+ */
+#define PD_T_FRS_VBUS_DEBOUNCE	     (5*MSEC)
+
 /* number of edges and time window to detect CC line is not idle */
 #define PD_RX_TRANSITION_COUNT  3
 #define PD_RX_TRANSITION_WINDOW 20 /* between 12us and 20us */
