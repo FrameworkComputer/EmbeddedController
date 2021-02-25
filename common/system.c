@@ -505,9 +505,9 @@ const char *ec_image_to_string(enum ec_image copy)
 
 __overridable void board_pulse_entering_rw(void)
 {
-	gpio_set_level(GPIO_EC_ENTERING_RW, 1);
+	gpio_set_level(GPIO_ENTERING_RW, 1);
 	usleep(MSEC);
-	gpio_set_level(GPIO_EC_ENTERING_RW, 0);
+	gpio_set_level(GPIO_ENTERING_RW, 0);
 }
 
 /**
