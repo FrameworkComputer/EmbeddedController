@@ -4203,6 +4203,9 @@
 /* Define EC and TCPC modules are in one integrated chip */
 #undef CONFIG_USB_PD_TCPC_ON_CHIP
 
+/* If VCONN is enabled, the TCPC will provide VCONN */
+#define CONFIG_USB_PD_TCPC_VCONN
+
 /* Enable the encoding of msg SOP* in bits 31-28 of 32-bit msg header type */
 #undef CONFIG_USB_PD_DECODE_SOP
 
@@ -5416,10 +5419,21 @@
 #define CONFIG_USBC_PPC_VCONN
 #endif
 
-/* The SYV682X supports VCONN and needs to be informed of CC polarity */
+/*
+ * The SYV682X supports VCONN and needs to be informed of CC polarity.
+ * There is a 3.6V limit on the HOST_CC signals, so the TCPC should not source
+ * 5V VCONN.
+ *
+ * For the ITE integrated TCPC, it wants to be notified of VCONN but won't
+ * source VCONN itself, so is safe to keep enabled.
+ */
 #if defined(CONFIG_USBC_PPC_SYV682X)
 #define CONFIG_USBC_PPC_POLARITY
 #define CONFIG_USBC_PPC_VCONN
+#if !defined(CONFIG_USB_PD_TCPM_DRIVER_IT83XX) && \
+	!defined(CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2)
+#undef CONFIG_USB_PD_TCPC_VCONN
+#endif
 #endif
 
 /*****************************************************************************/
