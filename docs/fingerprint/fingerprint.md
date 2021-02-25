@@ -486,6 +486,16 @@ You can test your changes by
 documentation has a [section on testing properties] that describes this in more
 detail.
 
+### SKUs
+
+The fingerprint sensor may only be included on certain SKUs for a given device.
+The fingerprint code uses [Chrome OS Config] to determine whether a device has a
+fingerprint sensor or not. For each SKU, there is an associated
+[fingerprint config][Chrome OS Config fingerprint]. [Chrome OS Config]
+determines the [SKU information][Chrome OS Config SKU] (and thus the
+[fingerprint config][Chrome OS Config fingerprint]) from [CBI Info]. The SKU for
+a given device can be found by viewing `chrome://system/#platform_identity_sku`.
+
 [`common/fpsensor`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/common/fpsensor/
 [`driver/fingerprint`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/driver/fingerprint
 [`nocturne_fp`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/board/nocturne_fp/
@@ -540,3 +550,5 @@ detail.
 [Icetower v0.2]: ./fingerprint-dev-for-partners.md#fpmcu-dev-board
 [Nucleo F412ZG]: https://www.digikey.com/en/products/detail/stmicroelectronics/NUCLEO-F412ZG/6137573
 [Nucleo H743ZI2]: https://www.digikey.com/en/products/detail/stmicroelectronics/NUCLEO-H743ZI2/10130892
+[CBI Info]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md
+[Chrome OS Config SKU]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md#identity
