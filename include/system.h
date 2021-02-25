@@ -348,6 +348,15 @@ const char *system_get_chip_revision(void);
 int system_get_chip_unique_id(uint8_t **id);
 
 /**
+ * Optional board-level function to pulse EC_ENTERING_RW.
+ *
+ * This should ONLY be overridden in very rare circumstances! AKA there better
+ * be a good reason why you're overriding this!
+ * The function ***MUST*** assert EC_ENTERING_RW for 1ms and then deassert it.
+ */
+__override_proto void board_pulse_entering_rw(void);
+
+/**
  * Optional board-level callback functions to read a unique serial number per
  * chip. Default implementation reads from flash/otp (flash/otp_read_serial).
  */
