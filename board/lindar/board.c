@@ -16,6 +16,7 @@
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/rt1715.h"
+#include "driver/tcpm/tusb422.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -487,7 +488,7 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
 
 /******************************************************************************/
 /* USBC TCPC configuration */
-const struct tcpc_config_t tcpc_config[] = {
+struct tcpc_config_t tcpc_config[] = {
 	[USBC_PORT_C0] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
@@ -552,6 +553,13 @@ static void board_tcpc_init(void)
 	/* Enable BC1.2 interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
+
+	if (get_board_id() <= 1) {
+		tcpc_config[USBC_PORT_C0].i2c_info.addr_flags =
+			TUSB422_I2C_ADDR_FLAGS;
+		tcpc_config[USBC_PORT_C0].drv = &tusb422_tcpm_drv;
+		tcpc_config[USBC_PORT_C0].flags = 0;
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
 
