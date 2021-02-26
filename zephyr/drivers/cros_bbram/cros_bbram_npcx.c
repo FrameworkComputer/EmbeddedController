@@ -6,6 +6,7 @@
 #define DT_DRV_COMPAT nuvoton_npcx_cros_bbram
 
 #include <drivers/cros_bbram.h>
+#include <drivers/cros_system.h>
 #include <errno.h>
 #include <logging/log.h>
 #include <sys/util.h>
@@ -110,9 +111,21 @@ static const struct cros_bbram_driver_api cros_bbram_npcx_driver_api = {
 
 static int bbram_npcx_init(const struct device *dev)
 {
+	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
+	int reset = cros_system_get_reset_cause(sys_dev);
+
+	if (reset == POWERUP) {
+		/* clear the status register when EC power-up*/
+		DRV_STATUS(dev) = NPCX_STATUS_IBBR | NPCX_STATUS_VSBY |
+				  NPCX_STATUS_VCC1;
+	}
+
 	return 0;
 }
 
+/*
+ * The priority of bbram_npcx_init() should lower than cros_system_npcx_init().
+ */
 #define CROS_BBRAM_INIT(inst)                                                \
 	static struct {                                                      \
 	} cros_bbram_data_##inst;                                            \
