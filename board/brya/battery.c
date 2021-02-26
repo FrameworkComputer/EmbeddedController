@@ -35,9 +35,9 @@ const struct board_batt_params board_battery_info[] = {
 	/* POW-TECH GQA05 Battery Information */
 	[BATTERY_POWER_TECH] = {
 		/* BQ40Z50 Fuel Gauge */
+		/* "BATGQA05L22" Device Name */
 		.fuel_gauge = {
 			.manuf_name = "POW-TECH",
-			.device_name = "GQA05",
 			.ship_mode = {
 				.reg_addr = 0x00,
 				.reg_data = { 0x0010, 0x0010 },
