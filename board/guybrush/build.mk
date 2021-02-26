@@ -9,3 +9,4 @@
 BASEBOARD:=guybrush
 
 board-y=board.o
+board-y+=board_fw_config.o
