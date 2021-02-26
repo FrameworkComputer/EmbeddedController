@@ -4516,6 +4516,9 @@
  */
 #define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_3_30
 
+/* SYV682 does not pass through CC, instead it bypasses to the TCPC */
+#undef CONFIG_SYV682X_NO_CC
+
 /* PPC is capable of gating the SBU lines. */
 #undef CONFIG_USBC_PPC_SBU
 
@@ -5432,7 +5435,8 @@
 #define CONFIG_USBC_PPC_POLARITY
 #define CONFIG_USBC_PPC_VCONN
 #if !defined(CONFIG_USB_PD_TCPM_DRIVER_IT83XX) && \
-	!defined(CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2)
+	!defined(CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2) && \
+	!defined(CONFIG_SYV682X_NO_CC)
 #undef CONFIG_USB_PD_TCPC_VCONN
 #endif
 #endif
