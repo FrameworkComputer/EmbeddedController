@@ -8,3 +8,17 @@ menuconfig CROS_BBRAM_NPCX
 	default y
 	help
 		This options enables stuff.
+
+if CROS_BBRAM_NPCX
+
+config CROS_BBRAM_NPCX_INIT_PRIORITY
+	int "cros_bbram npcx initialization priority"
+	default 11
+	range 10 19
+	help
+	  This sets the npcx cros_bbram driver initialization priority. NPCX
+	  chip uses BBRAM to save some system information that persists across
+	  chip resets. The priority should be higher than
+	  SYSTEM_PRE_INIT_PRIORITY & lower than CROS_SYSTEM_NPCX_INIT_PRIORITY.
+
+endif # CROS_BBRAM_NPCX

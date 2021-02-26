@@ -128,12 +128,13 @@ static const struct cros_system_driver_api cros_system_driver_npcx_api = {
 };
 
 /*
- * The priority of cros_system_npcx_init() should be lower than watchdog init
+ * The priority of cros_system_npcx_init() should be higher than watchdog init
  * for reset cause check.
  */
 DEVICE_DEFINE(cros_system_npcx_0, "CROS_SYSTEM", cros_system_npcx_init, NULL,
 	      &cros_system_npcx_dev_data, &cros_system_dev_cfg, PRE_KERNEL_1,
-	      30, &cros_system_driver_npcx_api);
+	      CONFIG_CROS_SYSTEM_NPCX_INIT_PRIORITY,
+	      &cros_system_driver_npcx_api);
 
 #define HAL_DBG_REG_BASE_ADDR \
 	((struct dbg_reg *)DT_REG_ADDR(DT_INST(0, nuvoton_npcx_cros_dbg)))

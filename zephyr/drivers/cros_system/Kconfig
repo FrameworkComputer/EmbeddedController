@@ -11,3 +11,16 @@ menuconfig CROS_SYSTEM_NPCX
 	  processors. Currently, Zephyr doesn't provide the system related API.
 	  The cros system driver provides the low-level driver related to
 	  chromium ec system functionality.
+
+if CROS_SYSTEM_NPCX
+
+config CROS_SYSTEM_NPCX_INIT_PRIORITY
+	int "cros_system npcx initialization priority"
+	default 10
+	range 10 19
+	help
+	  This sets the npcx cros_system driver initialization priority. The
+	  cros_system driver provides access to the NPCX reset cause and must be
+	  higher priority than CONFIG_SYSTEM_PRE_INIT_PRIORITY.
+
+endif # CROS_SYSTEM_NPCX

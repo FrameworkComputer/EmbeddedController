@@ -31,6 +31,7 @@ menuconfig PLATFORM_EC
 
 if PLATFORM_EC
 
+rsource "shim/chip/npcx/Kconfig.npcx"
 rsource "Kconfig.adc"
 rsource "Kconfig.battery"
 rsource "Kconfig.console"
@@ -39,6 +40,7 @@ rsource "Kconfig.keyboard"
 rsource "Kconfig.led"
 rsource "Kconfig.powerseq"
 rsource "Kconfig.motionsense"
+rsource "Kconfig.system"
 rsource "Kconfig.tasks"
 rsource "Kconfig.temperature"
 rsource "Kconfig.usbc"

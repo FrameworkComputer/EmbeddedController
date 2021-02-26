@@ -1,0 +1,18 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC
+
+config PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY
+	int "System pre-initialization priority"
+	default 20
+	range 0 99
+	help
+	  This defines the initialization priority for the CROS
+	  system_pre_init() function. system_pre_init() reads chip level reset
+	  cause and stores it into the system reset flags. All drivers, except
+	  those critical to determining the reset type, should be initialized at
+	  lower priority so that the system reset flags are valid.
+
+endif # PLATFORM_EC

@@ -4,10 +4,8 @@
  */
 
 #include <drivers/cros_bbram.h>
-#include <drivers/cros_system.h>
 #include <logging/log.h>
 
-#include "watchdog.h"
 #include "system.h"
 
 #define GET_BBRAM_OFFSET(node) \
@@ -16,7 +14,7 @@
 
 LOG_MODULE_REGISTER(shim_npcx_system, LOG_LEVEL_ERR);
 
-const struct device *bbram_dev;
+const static struct device *bbram_dev;
 
 void chip_save_reset_flags(uint32_t flags)
 {
@@ -44,51 +42,53 @@ uint32_t chip_read_reset_flags(void)
 	return flags;
 }
 
-void system_reset(int flags)
+void chip_bbram_status_check(void)
 {
-	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
-	int err;
-	uint32_t save_flags;
-
-	if (!sys_dev)
-		LOG_ERR("sys_dev get binding failed");
-
-	/* Disable interrupts to avoid task swaps during reboot */
-	interrupt_disable_all();
-
-	/*  Get flags to be saved in BBRAM */
-	system_encode_save_flags(flags, &save_flags);
-
-	/* Store flags to battery backed RAM. */
-	chip_save_reset_flags(save_flags);
-
-	/* If WAIT_EXT is set, then allow 10 seconds for external reset */
-	if (flags & SYSTEM_RESET_WAIT_EXT) {
-		int i;
-
-		/* Wait 10 seconds for external reset */
-		for (i = 0; i < 1000; i++) {
-			watchdog_reload();
-			udelay(10000);
-		}
+	if (!bbram_dev) {
+		LOG_DBG("bbram_dev doesn't binding");
+		return;
 	}
 
-	err = cros_system_soc_reset(sys_dev);
-
-	if (err < 0)
-		LOG_ERR("soc reset failed");
-
-	/* should never return */
-	while (1)
-		;
+	if (cros_bbram_get_ibbr(bbram_dev)) {
+		LOG_ERR("VBAT power drop!");
+		cros_bbram_reset_ibbr(bbram_dev);
+	}
+	if (cros_bbram_get_vsby(bbram_dev)) {
+		LOG_ERR("VSBY power drop!");
+		cros_bbram_reset_vsby(bbram_dev);
+	}
+	if (cros_bbram_get_vcc1(bbram_dev)) {
+		LOG_ERR("VCC1 power drop!");
+		cros_bbram_reset_vcc1(bbram_dev);
+	}
 }
 
 static int chip_system_init(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 
+	/*
+	 * NPCX chip uses BBRAM to save the reset flag. Binding & check BBRAM
+	 * here.
+	 */
 	bbram_dev = device_get_binding(DT_LABEL(DT_NODELABEL(bbram)));
+	if (!bbram_dev) {
+		LOG_ERR("bbram_dev gets binding failed");
+		return -1;
+	}
+
+	/* check the BBRAM status */
+	chip_bbram_status_check();
+
 	return 0;
 }
-
-SYS_INIT(chip_system_init, PRE_KERNEL_1, 50);
+/*
+ * The priority should be lower than CROS_BBRAM_NPCX_INIT_PRIORITY.
+ */
+#if (CONFIG_CROS_SYSTEM_NPCX_PRE_INIT_PRIORITY <= \
+     CONFIG_CROS_BBRAM_NPCX_INIT_PRIORITY)
+#error CONFIG_CROS_SYSTEM_NPCX_PRE_INIT_PRIORITY must greater than \
+	CONFIG_CROS_BBRAM_NPCX_INIT_PRIORITY
+#endif
+SYS_INIT(chip_system_init, PRE_KERNEL_1,
+	 CONFIG_CROS_SYSTEM_NPCX_PRE_INIT_PRIORITY);

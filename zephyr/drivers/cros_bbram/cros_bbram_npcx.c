@@ -126,6 +126,12 @@ static int bbram_npcx_init(const struct device *dev)
 /*
  * The priority of bbram_npcx_init() should lower than cros_system_npcx_init().
  */
+#if (CONFIG_CROS_BBRAM_NPCX_INIT_PRIORITY <= \
+     CONFIG_CROS_SYSTEM_NPCX_INIT_PRIORITY)
+#error CONFIG_CROS_BBRAM_NPCX_INIT_PRIORITY must greater than \
+	CONFIG_CROS_SYSTEM_NPCX_INIT_PRIORITY
+#endif
+
 #define CROS_BBRAM_INIT(inst)                                                \
 	static struct {                                                      \
 	} cros_bbram_data_##inst;                                            \
@@ -137,7 +143,7 @@ static int bbram_npcx_init(const struct device *dev)
 	DEVICE_DEFINE(cros_bbram_npcx_##inst, DT_INST_LABEL(inst),           \
 		      bbram_npcx_init, NULL, &cros_bbram_data_##inst,        \
 		      &cros_bbram_cfg_##inst, PRE_KERNEL_1,                  \
-		      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,                   \
+		      CONFIG_CROS_BBRAM_NPCX_INIT_PRIORITY,                  \
 		      &cros_bbram_npcx_driver_api);
 
 DT_INST_FOREACH_STATUS_OKAY(CROS_BBRAM_INIT);
