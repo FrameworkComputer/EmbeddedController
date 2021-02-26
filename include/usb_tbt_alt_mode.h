@@ -30,6 +30,16 @@ void tbt_init(int port);
 void tbt_exit_mode_request(int port);
 
 /*
+ * Checks whether Thunderbolt cable mode entry is required prior to entering
+ * USB4.
+ *
+ * @param port      USB-C port number
+ * @return          True if Thunderbolt cable mode entry is required
+ *		    False otherwise
+ */
+bool tbt_cable_entry_required_for_usb4(int port);
+
+/*
  * Checks whether the mode entry sequence for Thunderbolt alternate mode is
  * done for a port.
  *
