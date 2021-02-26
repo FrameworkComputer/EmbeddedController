@@ -322,7 +322,8 @@ fingerprint development boards.
 (chroot) $ dut-control -t 60 pp3300_dx_mcu_mv pp3300_dx_fp_mv pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
 ```
 
-**Firmware Version**: `bloonchipper_v2.0.4277-9f652bb3-RO_v2.0.7314-3dfc5ff6-RW.bin`
+**Firmware Version**:
+`bloonchipper_v2.0.4277-9f652bb3-RO_v2.0.7314-3dfc5ff6-RW.bin`
 
 #### MCU is idle
 
@@ -364,6 +365,10 @@ fingerprint development boards.
 *** note
 **NOTE**: Icetower v0.1 has a hardware bug in the INA connections, so you cannot
 measure the 1.8V fingerprint sensor rail. See http://b/178098140.
+
+Additionally, before https://crrev.com/c/2689101, the sleep GPIOs were not
+configured correctly, so the change needs to be cherry-picked in order to
+measure releases before that point.
 ***
 <!-- mdformat on -->
 
@@ -371,12 +376,28 @@ measure the 1.8V fingerprint sensor rail. See http://b/178098140.
 (chroot) $ dut-control -t 60 pp3300_dx_mcu_mv pp3300_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw
 ```
 
-**Firmware Version**: `dartmonkey_v2.0.2887-311310808-RO_v2.0.7304-441100b93-RW.bin`
+**Firmware Version**:
+`dartmonkey_v2.0.2887-311310808-RO_v2.0.7304-441100b93-RW.bin`
 
 #### MCU is idle
 
 ```
 (chroot) $ dut-control fpmcu_slp_s3:off
+```
+
+```
+@@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
+@@       sample_msecs    178   337.13   20.91   404.32   289.82
+@@    pp3300_dx_fp_mv    178  3256.00    0.00  3256.00  3256.00
+@@    pp3300_dx_fp_mw    178     0.00    0.00     0.00     0.00
+@@   pp3300_dx_mcu_mv    178  3248.00    0.00  3248.00  3248.00
+@@   pp3300_dx_mcu_mw    178    45.17    0.09    45.21    44.95
+```
+
+#### MCU in low power mode (suspend)
+
+```
+(chroot) $ dut-control fpmcu_slp_s3:on
 ```
 
 ```
