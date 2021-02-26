@@ -16,6 +16,25 @@
 #endif
 
 /*
+ * Define uart_shell_stop() and uart_shell_start() functions to start/stop the
+ * running shell. To avoid having a guard on the build type, non-Zephyr builds
+ * will have a stubbed function for these which is safe to call. These functions
+ * will stop/start the Zephyr shell from processing, they should be used for
+ * briefly taking control of the uart.
+ */
+#ifdef CONFIG_ZEPHYR
+void uart_shell_stop(void);
+void uart_shell_start(void);
+#else
+static inline void uart_shell_stop(void)
+{
+}
+static inline void uart_shell_start(void)
+{
+}
+#endif
+
+/*
  * The EC code base has been using %h to print a hex buffer. Encode the
  * parameters to do that in a pointer to a structure that's passed as the
  * printf argument. This is done rather than something like %.123ph because

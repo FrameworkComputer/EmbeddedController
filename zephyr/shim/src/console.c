@@ -28,6 +28,31 @@ static int init_uart_dev(const struct device *unused)
 SYS_INIT(init_uart_dev, POST_KERNEL, 50);
 #endif
 
+void uart_shell_stop(void)
+{
+	/* Disable interrupts for the uart. */
+	if (uart_dev) {
+		uart_irq_tx_disable(uart_dev);
+		uart_irq_rx_disable(uart_dev);
+	}
+
+	/* Stop the shell and process all pending operations. */
+	shell_stop(shell_backend_uart_get_ptr());
+	shell_process(shell_backend_uart_get_ptr());
+}
+
+void uart_shell_start(void)
+{
+	/* Restart the shell. */
+	shell_start(shell_backend_uart_get_ptr());
+
+	/* Re-enable interrupts for the uart. */
+	if (uart_dev) {
+		uart_irq_rx_enable(uart_dev);
+		uart_irq_tx_enable(uart_dev);
+	}
+}
+
 int zshim_run_ec_console_command(int (*handler)(int argc, char **argv),
 				 const struct shell *shell, size_t argc,
 				 char **argv, const char *help_str,
