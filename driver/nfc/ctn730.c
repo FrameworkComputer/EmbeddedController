@@ -26,7 +26,7 @@
 static const int _wake_up_delay_ms = 10;
 
 /* Device detection interval */
-static const int _detection_interval_ms = 100;
+static const int _detection_interval_ms = 500;
 
 /* Buffer size for i2c read & write */
 #define CTN730_MESSAGE_BUFFER_SIZE	0x20
