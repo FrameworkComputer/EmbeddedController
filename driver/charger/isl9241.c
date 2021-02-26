@@ -372,6 +372,10 @@ int isl9241_set_dc_prochot(int chgnum, int ma)
 /* ISL-9241 initialization */
 static void isl9241_init(int chgnum)
 {
+#ifdef CONFIG_ISL9241_SWITCHING_FREQ
+	int ctl_val;
+#endif
+
 	const struct battery_info *bi = battery_get_info();
 
 	/* Init the mutex for ZephyrOS (nop for non-Zephyr builds) */
@@ -427,6 +431,16 @@ static void isl9241_init(int chgnum)
 	if (isl9241_update(chgnum, ISL9241_REG_CONTROL0,
 			   ISL9241_CONTROL0_INPUT_VTG_REGULATION,
 			   MASK_SET))
+		goto init_fail;
+#endif
+
+#ifdef CONFIG_ISL9241_SWITCHING_FREQ
+	if (isl9241_read(chgnum, ISL9241_REG_CONTROL1, &ctl_val))
+		goto init_fail;
+	ctl_val &= ~ISL9241_CONTROL1_SWITCHING_FREQ_MASK;
+	ctl_val |= ((CONFIG_ISL9241_SWITCHING_FREQ << 7) &
+		     ISL9241_CONTROL1_SWITCHING_FREQ_MASK);
+	if (isl9241_write(chgnum, ISL9241_REG_CONTROL1, ctl_val))
 		goto init_fail;
 #endif
 
