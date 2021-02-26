@@ -117,6 +117,13 @@ bool enter_usb_entry_is_done(int port)
 		usb4_state[port] == USB4_INACTIVE;
 }
 
+void usb4_exit_mode_request(int port)
+{
+	usb4_state[port] = USB4_START;
+	usb_mux_set_safe_mode_exit(port);
+	set_usb_mux_with_current_data_role(port);
+}
+
 void enter_usb_init(int port)
 {
 	usb4_state[port] = USB4_START;

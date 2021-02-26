@@ -33,6 +33,14 @@ void enter_usb_init(int port);
 bool enter_usb_entry_is_done(int port);
 
 /*
+ * Requests the retimer and mux to exit USB4 mode and re-initalizes the USB4
+ * state machine.
+ *
+ * @param port USB-C port number
+ */
+void usb4_exit_mode_request(int port);
+
+/*
  * Resets USB4 state and mux state.
  *
  * @param port USB-C port number
