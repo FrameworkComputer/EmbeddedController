@@ -472,10 +472,12 @@ static enum ec_status set_ap_reboot_delay(struct host_cmd_handler_args *args)
 {
 	const struct ec_response_ap_reboot_delay *p = args->params;
 
-	if (p->delay < 181)
+	/* don't let AP send zero it will stuck power sequence at S5 */
+	if (p->delay < 181 && p->delay)
 		ap_boot_delay = p->delay;
 	else
 		return EC_ERROR_INVAL;
+
 
 	return EC_SUCCESS;
 }
