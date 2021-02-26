@@ -32,17 +32,19 @@ def build(opts):
     need this step. It builds EC **firmware** targets, but unit tests with
     code coverage are all host-based. So if the --code-coverage flag is set,
     we don't need to build the firmware targets and we can return without
-    doing anything but giving an informational message.
+    doing anything but creating the metrics file and giving an informational
+    message.
     """
+    # TODO(b/169178847): Add appropriate metric information
+    metrics = firmware_pb2.FwBuildMetricList()
+    with open(opts.metrics, 'w') as f:
+        f.write(json_format.MessageToJson(metrics))
+
     if opts.code_coverage:
         print("When --code-coverage is selected, 'build' is a no-op. "
             "Run 'test' with --code-coverage instead.")
         return
 
-    # TODO(b/169178847): Add appropriate metric information
-    metrics = firmware_pb2.FwBuildMetricList()
-    with open(opts.metrics, 'w') as f:
-        f.write(json_format.MessageToJson(metrics))
     subprocess.run(['make', 'buildall_only', '-j{}'.format(opts.cpus)],
                    cwd=os.path.dirname(__file__),
                    check=True)
