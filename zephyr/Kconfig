@@ -118,6 +118,17 @@ config PLATFORM_EC_BRINGUP
 	  - And more!  You can search the codebase for CONFIG_BRINGUP
             to see all of the features this flag will toggle.
 
+config PLATFORM_EC_VBOOT
+	bool "Enable Chromium OS verified boot"
+	default y if !SOC_POSIX
+	help
+	  Enables Early Firmware Selection v2 (EFS2) verified boot. When booting
+	  a Chromium OS image we're actually packing both an RO image and an RW
+	  image into flash. The RO image is loaded first. EFS2 runs at boot and
+	  verifies the integrity of the RW image by sending a hash of the image
+	  to the Google Security Chip (GSC). Once the GSC verifies the hash,
+	  EFS2 calls sysjump and reboot the EC using the RW image.
+
 config PLATFORM_EC_BOARD_VERSION
 	bool "Support the notion of board version"
 	default y

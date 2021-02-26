@@ -62,6 +62,7 @@ static enum cr50_comm_err send_to_cr50(const uint8_t *data, size_t size)
 {
 	timestamp_t until;
 	int i, timeout = 0;
+	uint32_t lock_key;
 	struct cr50_comm_response res = {};
 
 	/* This will wake up (if it's sleeping) and interrupt Cr50. */
@@ -69,6 +70,8 @@ static enum cr50_comm_err send_to_cr50(const uint8_t *data, size_t size)
 
 	uart_flush_output();
 	uart_clear_input();
+
+	uart_shell_stop();
 
 	/*
 	 * Send packet. No traffic control, assuming Cr50 consumes stream much
@@ -78,9 +81,9 @@ static enum cr50_comm_err send_to_cr50(const uint8_t *data, size_t size)
 	 * Disable interrupts so that the data frame will be stored in the Tx
 	 * buffer in one piece.
 	 */
-	interrupt_disable();
+	lock_key = irq_lock();
 	uart_put_raw(data, size);
-	interrupt_enable();
+	irq_unlock(lock_key);
 
 	uart_flush_output();
 
@@ -90,8 +93,10 @@ static enum cr50_comm_err send_to_cr50(const uint8_t *data, size_t size)
 	 * Make sure console task won't steal the response in case we exchange
 	 * packets after tasks start.
 	 */
+#ifndef CONFIG_ZEPHYR
 	if (task_start_called())
 		task_disable_task(TASK_ID_CONSOLE);
+#endif /* !CONFIG_ZEPHYR */
 
 	/* Wait for response from Cr50 */
 	for (i = 0; i < sizeof(res); i++) {
@@ -101,23 +106,37 @@ static enum cr50_comm_err send_to_cr50(const uint8_t *data, size_t size)
 				res.error = res.error | c << (i*8);
 				break;
 			}
-			msleep(1);
+			/*
+			 * TODO(b:181352041) Implement proper RX buffering.
+			 * Zephyr's shell (even when "stopped") can steal some
+			 * bytes from the uart RX. Skipping the sleep here
+			 * appears to always let us capture the response. Once
+			 * we're able to fork the shell RX, we'll be able to
+			 * buffer the response and add the sleep back into the
+			 * Zephyr builds here (or alternatively use event
+			 * signals).
+			 */
+			if (!IS_ENABLED(CONFIG_ZEPHYR))
+				msleep(1);
 			timeout = timestamp_expired(until, NULL);
 		}
 	}
 
+	uart_shell_start();
+#ifndef CONFIG_ZEPHYR
 	if (task_start_called())
 		task_enable_task(TASK_ID_CONSOLE);
+#endif /* CONFIG_ZEPHYR */
 
 	/* Exit packet mode */
 	enable_packet_mode(false);
+
+	CPRINTS("Received 0x%04x", res.error);
 
 	if (timeout) {
 		CPRINTS("Timeout");
 		return CR50_COMM_ERR_TIMEOUT;
 	}
-
-	CPRINTS("Received 0x%04x", res.error);
 
 	return res.error;
 }

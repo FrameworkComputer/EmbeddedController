@@ -31,10 +31,6 @@ void main(void)
 		init_reset_log();
 	}
 
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG)) {
-		watchdog_init();
-	}
-
 	if (IS_ENABLED(HAS_TASK_KEYSCAN)) {
 		keyboard_scan_init();
 	}
@@ -43,6 +39,20 @@ void main(void)
 		if (zephyr_shim_setup_espi() < 0) {
 			printk("Failed to init eSPI!\n");
 		}
+	}
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_VBOOT)) {
+		/*
+		 * For RO, it behaves as follows:
+		 *   In recovery, it enables PD communication and returns.
+		 *   In normal boot, it verifies and jumps to RW.
+		 * For RW, it returns immediately.
+		 */
+		vboot_main();
+	}
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG)) {
+		watchdog_init();
 	}
 
 	/* Call init hooks before main tasks start */

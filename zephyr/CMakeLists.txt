@@ -347,5 +347,7 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_VBOOT_HASH
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_VOLUME_BUTTONS
                                                 "${PLATFORM_EC}/common/button.c")
 
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_VBOOT   "${PLATFORM_EC}/common/vboot/efs2.c")
+
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_VSTORE  "${PLATFORM_EC}/common/vstore.c")
 
