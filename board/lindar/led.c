@@ -96,8 +96,8 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 			led_set_color_battery(EC_LED_COLOR_RED);
 		else if (brightness[EC_LED_COLOR_AMBER] != 0)
 			led_set_color_battery(EC_LED_COLOR_AMBER);
-		else if (brightness[EC_LED_COLOR_WHITE] != 0)
-			led_set_color_battery(EC_LED_COLOR_WHITE);
+		else if (brightness[EC_LED_COLOR_GREEN] != 0)
+			led_set_color_battery(EC_LED_COLOR_GREEN);
 		else
 			led_set_color_battery(LED_OFF);
 	} else if (led_id == EC_LED_ID_POWER_LED) {
