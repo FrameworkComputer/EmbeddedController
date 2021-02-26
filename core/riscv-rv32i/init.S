@@ -29,6 +29,26 @@ __startup:
 __irq:
         j __irq_isr     /* interrupts / exceptions */
 
+.align 2
+__ec_intc:
+        vector irq_0    /* INT GROUP  0 */
+        vector irq_1    /* INT GROUP  1 */
+        vector irq_2    /* INT GROUP  2 */
+        vector irq_3    /* INT GROUP  3 */
+        vector irq_4    /* INT GROUP  4 */
+        vector irq_5    /* INT GROUP  5 */
+        vector irq_6    /* INT GROUP  6 */
+        vector irq_7    /* INT GROUP  7 */
+        vector irq_8    /* INT GROUP  8 */
+        vector irq_9    /* INT GROUP  9 */
+        vector irq_10   /* INT GROUP 10 */
+        vector irq_11   /* INT GROUP 11 */
+        vector irq_12   /* INT GROUP 12 */
+        vector irq_13   /* INT GROUP 13 */
+        vector irq_14   /* INT GROUP 14 */
+        vector irq_15   /* INT GROUP 15 */
+        vector syscall  /* system call (emulate INT GROUP 16) */
+
 #ifdef CHIP_FAMILY_IT8XXX2
 /*
  * E-flash signature used to enable specific function after power-on reset.
@@ -65,27 +85,9 @@ eflash_sig:
 /* flags: internal oscillator + implicit location */
 #endif /* CHIP_FAMILY_IT8XXX2 */
 
-.align 2
-__ec_intc:
-        vector irq_0    /* INT GROUP  0 */
-        vector irq_1    /* INT GROUP  1 */
-        vector irq_2    /* INT GROUP  2 */
-        vector irq_3    /* INT GROUP  3 */
-        vector irq_4    /* INT GROUP  4 */
-        vector irq_5    /* INT GROUP  5 */
-        vector irq_6    /* INT GROUP  6 */
-        vector irq_7    /* INT GROUP  7 */
-        vector irq_8    /* INT GROUP  8 */
-        vector irq_9    /* INT GROUP  9 */
-        vector irq_10   /* INT GROUP 10 */
-        vector irq_11   /* INT GROUP 11 */
-        vector irq_12   /* INT GROUP 12 */
-        vector irq_13   /* INT GROUP 13 */
-        vector irq_14   /* INT GROUP 14 */
-        vector irq_15   /* INT GROUP 15 */
-        vector syscall  /* system call (emulate INT GROUP 16) */
 
 .align 2
+.section .text.vectirq
 __irq_isr:
         /* save t2 to scratch register */
         csrw mscratch, t2
