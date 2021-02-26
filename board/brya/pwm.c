@@ -66,8 +66,5 @@ static void board_pwm_init(void)
 
 	pwm_enable(PWM_CH_KBLIGHT, 1);
 	pwm_set_duty(PWM_CH_KBLIGHT, 50);
-
-	pwm_enable(PWM_CH_FAN, 1);
-	pwm_set_duty(PWM_CH_FAN, 100);
 }
 DECLARE_HOOK(HOOK_INIT, board_pwm_init, HOOK_PRIO_DEFAULT);
