@@ -550,6 +550,104 @@ class ArmAnalyzer(object):
 
     return (stack_frame, callsites)
 
+class RiscvAnalyzer(object):
+  """Disassembly analyzer for RISC-V architecture.
+
+  Public Methods:
+    AnalyzeFunction: Analyze stack frame and callsites of the function.
+  """
+
+  # Possible condition code suffixes.
+  CONDITION_CODES = [ 'eqz', 'nez', 'lez', 'gez', 'ltz', 'gtz', 'gt', 'le',
+                      'gtu', 'leu', 'eq', 'ne', 'ge', 'lt', 'ltu', 'geu']
+  CONDITION_CODES_RE = '({})'.format('|'.join(CONDITION_CODES))
+  # Branch instructions.
+  JUMP_OPCODE_RE = re.compile(r'^(b{0}|j|jr)$'.format(CONDITION_CODES_RE))
+  # Call instructions.
+  CALL_OPCODE_RE = re.compile(r'^(jal|jalr)$')
+  # Example: "j		8009b318 <set_state_prl_hr>" or
+  #          "jal	ra,800a4394 <power_get_signals>" or
+  #          "bltu	t0,t1,80080300 <data_loop>"
+  JUMP_ADDRESS_RE = r'((\w(\w|\d\d),){0,2})([0-9A-Fa-f]+)\s+<([^>]+)>'
+  CALL_OPERAND_RE = re.compile(r'^{}$'.format(JUMP_ADDRESS_RE))
+  # Capture address, Example:  800a4394
+  CAPTURE_ADDRESS = re.compile(r'[0-9A-Fa-f]{8}')
+  # Indirect jump, Example: jalr	a5
+  INDIRECT_CALL_OPERAND_RE = re.compile(r'^t\d+|s\d+|a\d+$')
+  # Example:  addi
+  ADDI_OPCODE_RE = re.compile(r'^addi$')
+  # Allocate stack instructions.
+  ADDI_OPERAND_RE = re.compile(r'^(sp,sp,-\d+)$')
+  # Example: "800804b6:	1101                	addi	sp,sp,-32"
+  DISASM_REGEX_RE = re.compile(r'^(?P<address>[0-9A-Fa-f]+):\s+[0-9A-Fa-f ]+'
+                               r'\t\s*(?P<opcode>\S+)(\s+(?P<operand>[^;]*))?')
+
+  def ParseInstruction(self, line, function_end):
+    """Parse the line of instruction.
+
+    Args:
+      line: Text of disassembly.
+      function_end: End address of the current function. None if unknown.
+
+    Returns:
+      (address, opcode, operand_text):  The instruction address, opcode,
+                                        and the text of operands. None if it
+                                        isn't an instruction line.
+    """
+    result = self.DISASM_REGEX_RE.match(line)
+    if result is None:
+      return None
+
+    address = int(result.group('address'), 16)
+    # Check if it's out of bound.
+    if function_end is not None and address >= function_end:
+      return None
+
+    opcode = result.group('opcode').strip()
+    operand_text = result.group('operand')
+    if operand_text is None:
+      operand_text = ''
+    else:
+      operand_text = operand_text.strip()
+
+    return (address, opcode, operand_text)
+
+  def AnalyzeFunction(self, function_symbol, instructions):
+
+    stack_frame = 0
+    callsites = []
+    for address, opcode, operand_text in instructions:
+      is_jump_opcode = self.JUMP_OPCODE_RE.match(opcode) is not None
+      is_call_opcode = self.CALL_OPCODE_RE.match(opcode) is not None
+
+      if is_jump_opcode or is_call_opcode:
+        is_tail = is_jump_opcode
+
+        result = self.CALL_OPERAND_RE.match(operand_text)
+        if result is None:
+          if (self.INDIRECT_CALL_OPERAND_RE.match(operand_text) is not None):
+            # Found an indirect call.
+            callsites.append(Callsite(address, None, is_tail))
+
+        else:
+          # Capture address form operand_text and then convert to string
+          address_str = "".join(self.CAPTURE_ADDRESS.findall(operand_text))
+          # String to integer
+          target_address = int(address_str, 16)
+          # Filter out the in-function target (branches and in-function calls,
+          # which are actually branches).
+          if not (function_symbol.size > 0 and
+                  function_symbol.address < target_address <
+                  (function_symbol.address + function_symbol.size)):
+            # Maybe it is a callsite.
+            callsites.append(Callsite(address, target_address, is_tail))
+
+      elif self.ADDI_OPCODE_RE.match(opcode) is not None:
+      	# Example: sp,sp,-32
+        if self.ADDI_OPERAND_RE.match(operand_text) is not None:
+            stack_frame += abs(int(operand_text.split(",")[2]))
+
+    return (stack_frame, callsites)
 
 class StackAnalyzer(object):
   """Class to analyze stack usage.
@@ -663,6 +761,8 @@ class StackAnalyzer(object):
       analyzer = AndesAnalyzer()
     elif 'arm' in disasm_lines[1]:
       analyzer = ArmAnalyzer()
+    elif 'riscv' in disasm_lines[1]:
+      analyzer = RiscvAnalyzer()
     else:
       raise StackAnalyzerError('Unsupported architecture.')
 
