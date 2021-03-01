@@ -30,7 +30,6 @@
 
 /* Sensor */
 #define CONFIG_ACCEL_INTERRUPTS
-#define CONFIG_ALS_TCS3400_EMULATED_IRQ_EVENT
 #define CONFIG_CMD_ACCEL_INFO
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
