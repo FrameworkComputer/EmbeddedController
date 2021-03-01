@@ -30,6 +30,12 @@
 
 /* Sensor */
 #define CONFIG_ACCEL_INTERRUPTS
+/*
+ * Reduce maximal sensor speed: lid accelerometer is not interrupt driven,
+ * so EC does not timestamp sensor events as accurately as interrupt
+ * driven ones.
+ */
+#define CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ 125000
 #define CONFIG_CMD_ACCEL_INFO
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
