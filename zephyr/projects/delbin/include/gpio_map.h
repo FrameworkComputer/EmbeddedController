@@ -14,6 +14,7 @@
 #define GPIO_EC_PCH_SYS_PWROK	NAMED_GPIO(ec_pch_sys_pwrok)
 #define GPIO_EC_PCH_WAKE_ODL	NAMED_GPIO(ec_pch_wake_odl)
 #define GPIO_EC_PROCHOT_IN_L	NAMED_GPIO(ec_prochot_in_l)
+#define GPIO_ENABLE_BACKLIGHT	NAMED_GPIO(ec_edp_bl_en)
 #define GPIO_ENTERING_RW	NAMED_GPIO(ec_entering_rw)
 #define GPIO_EN_PP3300_A	NAMED_GPIO(en_pp3300_a)
 #define GPIO_EN_PP5000		NAMED_GPIO(en_pp5000_a)
