@@ -7,7 +7,6 @@
 
 #include "adc.h"
 #include "adc_chip.h"
-#include "battery_fuel_gauge.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
 #include "charge_state_v2.h"
@@ -26,7 +25,6 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "ioexpander.h"
-#include "isl9241.h"
 #include "keyboard_scan.h"
 #include "nct38xx.h"
 #include "pi3usb9201.h"
@@ -41,14 +39,6 @@
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
-
-/* Wake Sources */
-const enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_LID_OPEN,
-	GPIO_AC_PRESENT,
-	GPIO_POWER_BUTTON_L,
-};
-const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
 
 /* Power Signal Input List */
 const struct power_signal_info power_signal_list[] = {
@@ -85,22 +75,22 @@ const struct i2c_port_t i2c_ports[] = {
 		.name = "tcpc0",
 		.port = I2C_PORT_TCPC0,
 		.kbps = 400,
-		.scl = GPIO_EC_I2C_USB_A0_C0_SCL,
-		.sda = GPIO_EC_I2C_USB_A0_C0_SDA,
+		.scl = GPIO_EC_I2C_USB_C0_SCL,
+		.sda = GPIO_EC_I2C_USB_C0_SDA,
 	},
 	{
 		.name = "tcpc1",
 		.port = I2C_PORT_TCPC1,
 		.kbps = 400,
-		.scl = GPIO_EC_I2C_USB_A1_C1_SCL,
-		.sda = GPIO_EC_I2C_USB_A1_C1_SDA,
+		.scl = GPIO_EC_I2C_USB_C1_SCL,
+		.sda = GPIO_EC_I2C_USB_C1_SDA,
 	},
 	{
-		.name = "battery",
-		.port = I2C_PORT_BATTERY,
+		.name = "usb_hub",
+		.port = I2C_PORT_USB_HUB,
 		.kbps = 100,
-		.scl = GPIO_EC_I2C_BATT_SCL,
-		.sda = GPIO_EC_I2C_BATT_SDA,
+		.scl = GPIO_EC_I2C_USBC_MUX_SCL,
+		.sda = GPIO_EC_I2C_USBC_MUX_SDA,
 	},
 	{
 		.name = "usb_mux",
@@ -108,13 +98,6 @@ const struct i2c_port_t i2c_ports[] = {
 		.kbps = 400,
 		.scl = GPIO_EC_I2C_USBC_MUX_SCL,
 		.sda = GPIO_EC_I2C_USBC_MUX_SDA,
-	},
-	{
-		.name = "charger",
-		.port = I2C_PORT_CHARGER,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C_POWER_SCL,
-		.sda = GPIO_EC_I2C_POWER_SDA,
 	},
 	{
 		.name = "eeprom",
@@ -149,8 +132,8 @@ const struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		.name = "CHARGER",
+	[ANALOG_PPVAR_PWR_IN_IMON] = {
+		.name = "POWER_I",
 		.input_ch = NPCX_ADC_CH1,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
@@ -159,6 +142,13 @@ const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_MEMORY] = {
 		.name = "MEMORY",
 		.input_ch = NPCX_ADC_CH2,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[SNS_PPVAR_PWR_IN] = {
+		.name = "POWER_V",
+		.input_ch = NPCX_ADC_CH5,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
@@ -176,12 +166,6 @@ const struct temp_sensor_t temp_sensors[] = {
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = board_get_soc_temp,
 		.idx = TEMP_SENSOR_SOC,
-	},
-	[TEMP_SENSOR_CHARGER] = {
-		.name = "Charger",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = TEMP_SENSOR_CHARGER,
 	},
 	[TEMP_SENSOR_MEMORY] = {
 		.name = "Memory",
@@ -210,17 +194,6 @@ struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT] = {
 		.temp_fan_off = C_TO_K(32),
 		.temp_fan_max = C_TO_K(75),
 	},
-	[TEMP_SENSOR_CHARGER] = {
-		.temp_host = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
-			[EC_TEMP_THRESH_HALT] = C_TO_K(92),
-		},
-		.temp_host_release = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
-		},
-		.temp_fan_off = 0,
-		.temp_fan_max = 0,
-	},
 	[TEMP_SENSOR_MEMORY] = {
 		.temp_host = {
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
@@ -246,68 +219,6 @@ struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
-/*
- * Battery info for all Mancomb battery types. Note that the fields
- * start_charging_min/max and charging_min/max are not used for the charger.
- * The effective temperature limits are given by discharging_min/max_c.
- *
- * Fuel Gauge (FG) parameters which are used for determining if the battery
- * is connected, the appropriate ship mode (battery cutoff) command, and the
- * charge/discharge FETs status.
- *
- * Ship mode (battery cutoff) requires 2 writes to the appropriate smart battery
- * register. For some batteries, the charge/discharge FET bits are set when
- * charging/discharging is active, in other types, these bits set mean that
- * charging/discharging is disabled. Therefore, in addition to the mask for
- * these bits, a disconnect value must be specified. Note that for TI fuel
- * gauge, the charge/discharge FET status is found in Operation Status (0x54),
- * but a read of Manufacturer Access (0x00) will return the lower 16 bits of
- * Operation status which contains the FET status bits.
- *
- * The assumption for battery types supported is that the charge/discharge FET
- * status can be read with a sb_read() command and therefore, only the register
- * address, mask, and disconnect value need to be provided.
- */
-const struct board_batt_params board_battery_info[] = {
-	/* AP18F4M / LIS4163ACPC */
-	[BATTERY_AP18F4M] = {
-		.fuel_gauge = {
-			.manuf_name = "Murata KT00404001",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
-			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
-			}
-		},
-		.batt_info = {
-			.voltage_max          = 8700,
-			.voltage_normal       = 7600,
-			.voltage_min          = 5500,
-			.precharge_current    = 256,
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 50,
-			.charging_min_c       = 0,
-			.charging_max_c       = 60,
-			.discharging_min_c    = -20,
-			.discharging_max_c    = 75,
-		},
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_AP18F4M;
-
-const struct charger_config_t chg_chips[] = {
-	{
-		.i2c_port = I2C_PORT_CHARGER,
-		.i2c_addr_flags = ISL9241_ADDR_FLAGS,
-		.drv = &isl9241_drv,
-	},
-};
-
 const struct tcpc_config_t tcpc_config[] = {
 	[USBC_PORT_C0] = {
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -331,9 +242,9 @@ const struct tcpc_config_t tcpc_config[] = {
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 
-const int usb_port_enable[USBA_PORT_COUNT] = {
+/* A1-A4 are controlled by USB MUX */
+const int usb_port_enable[] = {
 	IOEX_EN_PP5000_USB_A0_VBUS,
-	IOEX_EN_PP5000_USB_A1_VBUS_DB,
 };
 
 static void baseboard_interrupt_init(void)
@@ -391,7 +302,7 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
  * properly.
  */
 static int fsusb42umx_set_mux(const struct usb_mux*, mux_state_t);
-const struct usb_mux_driver usbc0_sbu_mux_driver = {
+const struct usb_mux_driver usbc_sbu_mux_driver = {
 	.set = fsusb42umx_set_mux,
 };
 
@@ -401,19 +312,15 @@ const struct usb_mux_driver usbc0_sbu_mux_driver = {
  */
 const struct usb_mux usbc0_sbu_mux = {
 	.usb_port = USBC_PORT_C0,
-	.driver = &usbc0_sbu_mux_driver,
+	.driver = &usbc_sbu_mux_driver,
 };
 
-static int board_ps8818_mux_set(const struct usb_mux*, mux_state_t);
-const struct usb_mux usbc1_ps8818 = {
+const struct usb_mux usbc1_sbu_mux = {
 	.usb_port = USBC_PORT_C1,
-	.i2c_port = I2C_PORT_TCPC1,
-	.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
-	.driver = &ps8818_usb_retimer_driver,
-	.board_set = &board_ps8818_mux_set,
+	.driver = &usbc_sbu_mux_driver,
 };
 
-struct usb_mux usb_muxes[] = {
+const struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.usb_port = USBC_PORT_C0,
 		.i2c_port = I2C_PORT_USB_MUX,
@@ -426,7 +333,7 @@ struct usb_mux usb_muxes[] = {
 		.i2c_port = I2C_PORT_USB_MUX,
 		.i2c_addr_flags = AMD_FP6_C4_MUX_I2C_ADDR,
 		.driver = &amd_fp6_usb_mux_driver,
-		.next_mux = &usbc1_ps8818,
+		.next_mux = &usbc1_sbu_mux,
 	}
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
@@ -446,36 +353,11 @@ struct ioexpander_config_t ioex_config[] = {
 BUILD_ASSERT(ARRAY_SIZE(ioex_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_IO_EXPANDER_PORT_COUNT == USBC_PORT_COUNT);
 
-/* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
-	/*
-	 * F3 key scan cycle completed but scan input is not
-	 * charging to logic high when EC start scan next
-	 * column for "T" key, so we set .output_settle_us
-	 * to 80us
-	 */
-	.output_settle_us = 80,
-	.debounce_down_us = 6 * MSEC,
-	.debounce_up_us = 30 * MSEC,
-	.scan_period_us = 1500,
-	.min_post_scan_delay_us = 1000,
-	.poll_timeout_us = SECOND,
-	.actual_key_mask = {
-		0x3c, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
-	},
-};
-
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_FAN] = {
 		.channel = 0,
 		.flags = PWM_CONFIG_OPEN_DRAIN,
 		.freq = 25000,
-	},
-	[PWM_CH_KBLIGHT] = {
-		.channel = 1,
-		.flags = PWM_CONFIG_DSLEEP,
-		.freq = 100,
 	},
 	[PWM_CH_LED_CHRG] = {
 		.channel = 2,
@@ -491,145 +373,80 @@ const struct pwm_t pwm_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /*
- * USB C0 port SBU mux use standalone FSUSB42UMX
+ * USB C0/C1 port SBU mux use standalone FSUSB42UMX
  * chip and it needs a board specific driver.
  * Overall, it will use chained mux framework.
  */
 static int fsusb42umx_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 {
-	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-		ioex_set_level(IOEX_USB_C0_SBU_FLIP, 1);
-	else
-		ioex_set_level(IOEX_USB_C0_SBU_FLIP, 0);
+	bool inverted = mux_state & USB_PD_MUX_POLARITY_INVERTED;
+
+	if (me->usb_port == USBC_PORT_C0)
+		RETURN_ERROR(ioex_set_level(IOEX_USB_C0_SBU_FLIP, inverted));
+	else if (me->usb_port == USBC_PORT_C1)
+		RETURN_ERROR(ioex_set_level(IOEX_USB_C1_SBU_FLIP, inverted));
 
 	return EC_SUCCESS;
 }
 
-/*
- * PS8818 set mux board tuning.
- * Adds in board specific gain and DP lane count configuration
- * TODO(b/179036200): Adjust PS8818 tuning for mancomb and variants
- */
-static int board_ps8818_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
-{
-	int rv = EC_SUCCESS;
-
-	/* USB specific config */
-	if (mux_state & USB_PD_MUX_USB_ENABLED) {
-		/* Boost the USB gain */
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX1EQ_10G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
-		if (rv)
-			return rv;
-
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX2EQ_10G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
-		if (rv)
-			return rv;
-
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX1EQ_5G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
-		if (rv)
-			return rv;
-
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX2EQ_5G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
-		if (rv)
-			return rv;
-
-		/* Set the RX input termination */
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_RX_PHY,
-					PS8818_RX_INPUT_TERM_MASK,
-					PS8818_RX_INPUT_TERM_112_OHM);
-		if (rv)
-			return rv;
-	}
-
-	/* DP specific config */
-	if (mux_state & USB_PD_MUX_DP_ENABLED) {
-		/* Boost the DP gain */
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_DPEQ_LEVEL,
-					PS8818_DPEQ_LEVEL_UP_MASK,
-					PS8818_DPEQ_LEVEL_UP_19DB);
-		if (rv)
-			return rv;
-
-		/* Enable HPD on the DB */
-		gpio_set_level(GPIO_USB_C1_HPD, 1);
-	} else {
-		/* Disable HPD on the DB */
-		gpio_set_level(GPIO_USB_C1_HPD, 0);
-	}
-
-	return rv;
-}
-
 int board_set_active_charge_port(int port)
 {
-	int is_valid_port = (port >= 0 &&
-			     port < CONFIG_USB_PD_PORT_MAX_COUNT);
-	int i;
-
-	if (port == CHARGE_PORT_NONE) {
-		CPRINTSUSB("Disabling all charger ports");
-
-		/* Disable all ports. */
-		for (i = 0; i < ppc_cnt; i++) {
-			/*
-			 * Do not return early if one fails otherwise we can
-			 * get into a boot loop assertion failure.
-			 */
-			if (ppc_vbus_sink_enable(i, 0))
-				CPRINTSUSB("Disabling C%d as sink failed.", i);
-		}
-
-		return EC_SUCCESS;
-	} else if (!is_valid_port) {
-		return EC_ERROR_INVAL;
-	}
-
-
-	/* Check if the port is sourcing VBUS. */
-	if (ppc_is_sourcing_vbus(port)) {
-		CPRINTFUSB("Skip enable C%d", port);
-		return EC_ERROR_INVAL;
-	}
-
-	CPRINTSUSB("New charge port: C%d", port);
+	CPRINTSUSB("Requested charge port change to %d", port);
 
 	/*
-	 * Turn off the other ports' sink path FETs, before enabling the
-	 * requested charge port.
+	 * The charge manager may ask us to switch to no charger if we're
+	 * running off USB-C only but upstream doesn't support PD. It requires
+	 * that we accept this switch otherwise it triggers an assert and EC
+	 * reset; it's not possible to boot the AP anyway, but we want to avoid
+	 * resetting the EC so we can continue to do the "low power" LED blink.
 	 */
-	for (i = 0; i < ppc_cnt; i++) {
-		if (i == port)
-			continue;
+	if (port == CHARGE_PORT_NONE)
+		return EC_SUCCESS;
 
-		if (ppc_vbus_sink_enable(i, 0))
-			CPRINTSUSB("C%d: sink path disable failed.", i);
+	if (port < 0 || CHARGE_PORT_COUNT <= port)
+		return EC_ERROR_INVAL;
+
+	if (port == charge_manager_get_active_charge_port())
+		return EC_SUCCESS;
+
+	/* Don't charge from a source port */
+	if (board_vbus_source_enabled(port))
+		return EC_ERROR_INVAL;
+
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		int bj_active, bj_requested;
+
+		if (charge_manager_get_active_charge_port() != CHARGE_PORT_NONE)
+			/* Change is only permitted while the system is off */
+			return EC_ERROR_INVAL;
+
+		/*
+		 * Current setting is no charge port but the AP is on, so the
+		 * charge manager is out of sync (probably because we're
+		 * reinitializing after sysjump). Reject requests that aren't
+		 * in sync with our outputs.
+		 */
+		bj_active = !gpio_get_level(GPIO_EN_PPVAR_BJ_ADP_L);
+		bj_requested = port == CHARGE_PORT_BARRELJACK;
+		if (bj_active != bj_requested)
+			return EC_ERROR_INVAL;
 	}
 
-	/* Enable requested charge port. */
-	if (ppc_vbus_sink_enable(port, 1)) {
-		CPRINTSUSB("C%d: sink path enable failed.", port);
-		return EC_ERROR_UNKNOWN;
+	CPRINTSUSB("New charger p%d", port);
+
+	switch (port) {
+	case CHARGE_PORT_TYPEC0:
+	case CHARGE_PORT_TYPEC1:
+		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 1);
+		break;
+	case CHARGE_PORT_BARRELJACK:
+		/* Make sure BJ adapter is sourcing power */
+		if (gpio_get_level(GPIO_BJ_ADP_PRESENT_L))
+			return EC_ERROR_INVAL;
+		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 0);
+		break;
+	default:
+		return EC_ERROR_INVAL;
 	}
 
 	return EC_SUCCESS;
@@ -637,18 +454,12 @@ int board_set_active_charge_port(int port)
 
 int board_is_i2c_port_powered(int port)
 {
-	switch (port) {
-	case I2C_PORT_USB_MUX:
-	case I2C_PORT_SENSOR:
-		/* USB mux and sensor i2c bus is unpowered in Z1 */
-		return chipset_in_state(CHIPSET_STATE_HARD_OFF) ? 0 : 1;
-	case I2C_PORT_THERMAL_AP:
+	if (port == I2C_PORT_THERMAL_AP)
 		/* SOC thermal i2c bus is unpowered in S0i3/S3/S5/Z1 */
 		return chipset_in_state(CHIPSET_STATE_ANY_OFF |
 					CHIPSET_STATE_ANY_SUSPEND) ? 0 : 1;
-	default:
-		return 1;
-	}
+	/* All other i2c ports are always powered when EC is powered */
+	return 1;
 }
 
 /*
@@ -668,12 +479,16 @@ int board_aoz1380_set_vbus_source_current_limit(int port,
 	return rv;
 }
 
+/* Called when the charge manager has switched to a new port. */
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
-	charge_set_input_current_limit(MAX(charge_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       charge_mv);
+	/* TODO: blink led if power insufficient */
+}
+
+int extpower_is_present(void)
+{
+	return 1;
 }
 
 void sbu_fault_interrupt(enum ioex_signal signal)
@@ -683,11 +498,20 @@ void sbu_fault_interrupt(enum ioex_signal signal)
 	pd_handle_overcurrent(port);
 }
 
-static void set_ac_prochot(void)
+void hdmi_fault_interrupt(enum gpio_signal signal)
 {
-	isl9241_set_ac_prochot(CHARGER_SOLO, MANCOMB_AC_PROCHOT_CURRENT_MA);
+	/* TODO: Report HDMI fault */
 }
-DECLARE_HOOK(HOOK_INIT, set_ac_prochot, HOOK_PRIO_DEFAULT);
+
+void dp_fault_interrupt(enum gpio_signal signal)
+{
+	/* TODO: Report DP fault */
+}
+
+void ext_charger_interrupt(enum gpio_signal signal)
+{
+	/* TODO: Handle ext charger interrupt */
+}
 
 void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -799,38 +623,6 @@ static int board_get_soc_temp(int idx, int *temp_k)
 }
 
 /**
- * Return if VBUS is sagging too low
- */
-int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
-{
-	int voltage = 0;
-	int rv;
-
-	rv = charger_get_vbus_voltage(port, &voltage);
-
-	if (rv) {
-		CPRINTSUSB("%s rv=%d", __func__, rv);
-		return 0;
-	}
-
-	/*
-	 * b/168569046: The ISL9241 sometimes incorrectly reports 0 for unknown
-	 * reason, causing ramp to stop at 0.5A. Workaround this by ignoring 0.
-	 * This partly defeats the point of ramping, but will still catch
-	 * VBUS below 4.5V and above 0V.
-	 */
-	if (voltage == 0) {
-		CPRINTSUSB("%s vbus=0", __func__);
-		return 0;
-	}
-
-	if (voltage < BC12_MIN_VOLTAGE)
-		CPRINTSUSB("%s vbus=%d", __func__, voltage);
-
-	return voltage < BC12_MIN_VOLTAGE;
-}
-
-/**
  * b/175324615: On G3->S5, wait for RSMRST_L to be deasserted before asserting
  * PCH_PWRBTN_L.
  */
@@ -850,39 +642,16 @@ void board_pwrbtn_to_pch(int level)
 	gpio_set_level(GPIO_PCH_PWRBTN_L, level);
 }
 
-void board_hibernate(void)
-{
-	int port;
-
-	/*
-	 * If we are charging, then drop the Vbus level down to 5V to ensure
-	 * that we don't get locked out of the 6.8V OVLO for our PPCs in
-	 * dead-battery mode. This is needed when the TCPC/PPC rails go away.
-	 * (b/79218851, b/143778351, b/147007265)
-	 */
-	port = charge_manager_get_active_charge_port();
-	if (port != CHARGE_PORT_NONE) {
-		pd_request_source_voltage(port, SAFE_RESET_VBUS_MV);
-
-		/* Give PD task and PPC chip time to get to 5V */
-		msleep(SAFE_RESET_VBUS_DELAY_MS);
-	}
-}
-
 static void baseboard_chipset_suspend(void)
 {
-	/* Disable display and keyboard backlights. */
-	gpio_set_level(GPIO_EC_DISABLE_DISP_BL, 1);
-	ioex_set_level(GPIO_EN_KB_BL, 0);
+	/* TODO: Handle baseboard chipset suspend */
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, baseboard_chipset_suspend,
 	     HOOK_PRIO_DEFAULT);
 
 static void baseboard_chipset_resume(void)
 {
-	/* Enable display and keyboard backlights. */
-	gpio_set_level(GPIO_EC_DISABLE_DISP_BL, 0);
-	ioex_set_level(GPIO_EN_KB_BL, 1);
+	/* TODO: Handle baseboard chipset resume */
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);
 
@@ -904,7 +673,7 @@ void baseboard_en_pwr_pcore_s0(enum gpio_signal signal)
 
 	/* EC must AND signals PG_LPDDR4X_S3_OD and PG_GROUPC_S0_OD */
 	gpio_set_level(GPIO_EN_PWR_PCORE_S0_R,
-					gpio_get_level(GPIO_PG_LPDDR4X_S3_OD) &&
+					gpio_get_level(GPIO_PG_DDR4_S3_OD) &&
 					gpio_get_level(GPIO_PG_GROUPC_S0_OD));
 }
 
