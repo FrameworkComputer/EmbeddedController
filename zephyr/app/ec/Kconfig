@@ -5,6 +5,7 @@
 menuconfig CROS_EC
 	bool "Chromium OS EC app"
 	imply SHELL
+	imply SHELL_MINIMAL
 	imply PRINTK
 	help
 	  Enable the common Chromium OS EC application. This prints a message,
@@ -16,6 +17,11 @@ menuconfig CROS_EC
 if CROS_EC
 
 rsource "soc/Kconfig"
+
+choice CBPRINTF_IMPLEMENTATION
+	default CBPRINTF_NANO
+
+endchoice
 
 choice
 	prompt "Chromium OS EC firmware section"
