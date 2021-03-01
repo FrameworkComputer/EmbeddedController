@@ -8,6 +8,9 @@
 #include "ioexpander.h"
 #include "ioexpanders.h"
 
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+
 /******************************************************************************
  * Initialize IOExpanders.
  */
@@ -45,46 +48,63 @@ static void ioexpanders_irq(void)
 
 	if (!(fault & USERVO_FAULT_L)) {
 		ec_uservo_power_en(0);
-		ccprintf("FAULT: Microservo USB A port load switch\n");
+		CPRINTF("FAULT: Microservo USB A port load switch\n");
 	}
 
 	if (!(fault & USB3_A0_FAULT_L)) {
 		ec_usb3_a0_pwr_en(0);
-		ccprintf("FAULT: USB3 A0 port load switch\n");
+		CPRINTF("FAULT: USB3 A0 port load switch\n");
 	}
 
 	if (!(fault & USB3_A1_FAULT_L)) {
 		ec_usb3_a1_pwr_en(0);
-		ccprintf("FAULT: USB3 A1 port load switch\n");
+		CPRINTF("FAULT: USB3 A1 port load switch\n");
 	}
 
-	if (!(fault & USB_DUTCHG_FLT_ODL))
-		ccprintf("FAULT: Overcurrent on Charger or DUT CC/SBU lines\n");
+	if (!(fault & USB_DUTCHG_FLT_ODL)) {
+		CPRINTF("FAULT: Overcurrent on Charger or DUT CC/SBU lines\n");
+	}
 
-	if (!(fault & PP3300_DP_FAULT_L))
-		ccprintf("FAULT: Overcurrent on DisplayPort\n");
-
-	if (!(fault & DAC_BUF1_LATCH_FAULT_L)) {
-		ccprintf("FAULT: CC1 drive circuitry has exceeded thermal ");
-		ccprintf("limits or exceeded current limits. Power ");
-		ccprintf("off DAC0 to clear the fault\n");
+	if (!(fault & PP3300_DP_FAULT_L)) {
+		CPRINTF("FAULT: Overcurrent on DisplayPort\n");
 	}
 
 	if (!(fault & DAC_BUF1_LATCH_FAULT_L)) {
-		ccprintf("FAULT: CC2 drive circuitry has exceeded thermal ");
-		ccprintf("limits or exceeded current limits. Power ");
-		ccprintf("off DAC1 to clear the fault\n");
+		CPRINTF("FAULT: CC1 drive circuitry has exceeded thermal "
+			"or current limits. The CC1 DAC has been disabled "
+			"and disconnected.\n");
+
+		en_vout_buf_cc1(0);
+	}
+
+	if (!(fault & DAC_BUF2_LATCH_FAULT_L)) {
+		CPRINTF("FAULT: CC2 drive circuitry has exceeded thermal "
+			"or current limits. The CC2 DAC has been disabled "
+			"and disconnected.\n");
+
+		en_vout_buf_cc2(0);
+	}
+
+	/*
+	 * In case of both DACs' faults, we should clear them only after
+	 * disabling both DACs.
+	 */
+	if ((fault & (DAC_BUF1_LATCH_FAULT_L | DAC_BUF2_LATCH_FAULT_L)) !=
+	    (DAC_BUF1_LATCH_FAULT_L | DAC_BUF2_LATCH_FAULT_L)) {
+		fault_clear_cc(1);
+		fault_clear_cc(0);
 	}
 
 	if ((!!(irqs & HOST_CHRG_DET) != bc12_charger) &&
 	    (board_id_det() <= BOARD_ID_REV1)) {
-		ccprintf("BC1.2 charger %s\n", (irqs & HOST_CHRG_DET) ?
-			 "plugged" : "unplugged");
+		CPRINTF("BC1.2 charger %s\n",
+			(irqs & HOST_CHRG_DET) ? "plugged" : "unplugged");
 		bc12_charger = !!(irqs & HOST_CHRG_DET);
 	}
 
-	if (!(irqs & SYS_PWR_IRQ_ODL))
-		ccprintf("System full power threshold exceeded\n");
+	if (!(irqs & SYS_PWR_IRQ_ODL)) {
+		CPRINTF("System full power threshold exceeded\n");
+	}
 }
 DECLARE_DEFERRED(ioexpanders_irq);
 
