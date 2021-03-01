@@ -1144,6 +1144,7 @@ void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 	if ((get_state_pe(port) == PE_SRC_SEND_CAPABILITIES ||
 			get_state_pe(port) == PE_SRC_TRANSITION_SUPPLY ||
 			get_state_pe(port) == PE_PRS_SNK_SRC_EVALUATE_SWAP ||
+			get_state_pe(port) == PE_PRS_SNK_SRC_SOURCE_ON ||
 			get_state_pe(port) == PE_PRS_SRC_SNK_WAIT_SOURCE_ON ||
 			get_state_pe(port) == PE_SRC_DISABLED ||
 			get_state_pe(port) == PE_SRC_DISCOVERY ||
