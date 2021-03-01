@@ -1246,10 +1246,7 @@ static int cmd_cypd_control(int argc, char **argv)
 							CYP5525_PORT1_INTR +
 							CYP5525_UCSI_INTR);
 		} else if (!strncmp(argv[1], "verbose", 7)) {
-			if (!parse_bool(argv[1], &enable))
-				return EC_ERROR_PARAM1;
-
-			verbose_msg_logging = enable;
+			verbose_msg_logging = (i != 0);
 		} else {
 			return EC_ERROR_PARAM1;
 		}
