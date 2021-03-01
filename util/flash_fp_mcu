@@ -440,16 +440,16 @@ config_volteer() {
 }
 
 config_zork() {
-  check_gpio_chip_exists "gpiochip320"
+  check_gpio_chip_exists "gpiochip256"
 
   readonly TRANSPORT="UART"
   readonly DEVICE="/dev/ttyS1"
 
-  # FPMCU RST_ODL is on AGPIO 11 = 320 + 11 = 331
-  readonly GPIO_NRST=331
-  # FPMCU BOOT0 is on AGPIO 69 = 320 + 69 = 389
-  readonly GPIO_BOOT0=389
-  # FPMCU PWR_EN is on AGPIO 32 = 320 + 32 = 352, but should not be
+  # FPMCU RST_ODL is on AGPIO 11 = 256 + 11 = 267
+  readonly GPIO_NRST=267
+  # FPMCU BOOT0 is on AGPIO 69 = 256 + 69 = 325
+  readonly GPIO_BOOT0=325
+  # FPMCU PWR_EN is on AGPIO 32 = 256 + 32 = 288, but should not be
   # necessary for flashing. Set invalid value.
   readonly GPIO_PWREN=-1
 }
