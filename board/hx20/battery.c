@@ -91,7 +91,7 @@ void battery_customize(struct charge_state_data *emi_info)
 	char *str = "LION";
 	int value;
 	int new_btp;
-	static int batt_state;
+	static int batt_state, prev_charge;
 
 	*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_AVER_TEMP) = 
 							(emi_info->batt.temperature - 2731)/10;
@@ -133,6 +133,18 @@ void battery_customize(struct charge_state_data *emi_info)
 			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
 			ccprintf ("trigger lower BTP: %d", old_btp);
 		}
+	}
+
+	/*
+	 * Sometimes the battery will respond unusual remaining capacity
+	 * it will make OS battery percentage stuck when EC get wrong new_btp
+	 * so need to send BTP event, let BIOS update BTP
+	 * when state of charge have change
+	 */
+	if (!(emi_info->batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
+		emi_info->batt.state_of_charge != prev_charge) {
+		prev_charge = emi_info->batt.state_of_charge;
+		host_set_single_event(EC_HOST_EVENT_BATT_BTP);
 	}
 
 	/*
