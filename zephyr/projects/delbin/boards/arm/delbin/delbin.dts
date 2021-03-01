@@ -30,6 +30,31 @@
 
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
+
+		sensor {
+			i2c-port = <&i2c0_0>;
+			label = "SENSOR";
+		};
+		usb-c0 {
+			i2c-port = <&i2c1_0>;
+			label = "USB_C0";
+		};
+		usb-c1 {
+			i2c-port = <&i2c2_0>;
+			label = "USB_C1";
+		};
+		usb1-mix {
+			i2c-port = <&i2c3_0>;
+			label = "USB_1_MIX";
+		};
+		power {
+			i2c-port = <&i2c5_0>;
+			label = "POWER";
+		};
+		eeprom {
+			i2c-port = <&i2c7_0>;
+			label = "EEPROM";
+		};
 	};
 
 	named-gpios {
