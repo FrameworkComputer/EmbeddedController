@@ -314,6 +314,9 @@ struct pd_chip_ucsi_info_t {
 	uint8_t version[2];
 	uint8_t message_in[16];
 	uint8_t cci[8];
+	int read_tunnel_complete;
+	int write_tunnel_complete;
+	int wait_ack;
 };
 
 enum pd_port_role {
@@ -322,38 +325,12 @@ enum pd_port_role {
 	PORT_DUALROLE
 };
 
-/************************************************/
-/*	UCSI CONTROL DEFINITION                     */
-/************************************************/
-enum ucsi_control {
-	CYPD_UCSI_START   = 0x01,
-	CYPD_UCSI_STOP    = 0x02,
-	CYPD_UCSI_SILENCE = 0x03,
-	CYPD_UCSI_SIGNAL_CONNECT_EVENT_TO_OS = 0x04
+enum pd_chip {
+	PD_CHIP_0,
+	PD_CHIP_1,
+	PD_CHIP_COUNT
 };
 
-enum ucsi_command {
-	UCSI_CMD_RESERVE,
-	UCSI_CMD_PPM_RESET,
-	UCSI_CMD_CANCEL,
-	UCSI_CMD_CONNECTOR_RESET,
-	UCSI_CMD_ACK_CC_CI,
-	UCSI_CMD_SET_NOTIFICATION_ENABLE,
-	UCSI_CMD_GET_CAPABILITY,
-	UCSI_CMD_GET_CONNECTOR_CAPABILITY,
-	UCSI_CMD_SET_UOM,
-	UCSI_CMD_SET_UOR,
-	UCSI_CMD_SET_PDM,
-	UCSI_CMD_SET_PDR,
-	UCSI_CMD_GET_ALTERNATE_MODES,
-	UCSI_CMD_GET_CAM_SUPPORTED,
-	UCSI_CMD_GET_CURRENT_CAM,
-	UCSI_CMD_SET_NEW_CAM,
-	UCSI_CMD_GET_PDOS,
-	UCSI_CMD_GET_CABLE_PROPERTY,
-	UCSI_CMD_GET_CONNECTOR_STATUS,
-	UCSI_CMD_GET_ERROR_STATUS,
-};
 
 /* PD CHIP */
 void pd_chip_interrupt(enum gpio_signal signal);
@@ -364,6 +341,18 @@ int cypd_get_pps_power_budget(void);
 
 void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int len);
 
+int cyp5225_wait_for_ack(int controller, int timeout_us);
+
+int cypd_get_int(int controller, int *intreg);
+
+int cypd_clear_int(int controller, int mask);
+
 int pd_port_configuration_change(int port, enum pd_port_role port_role);
+
+int cypd_write_reg8(int controller, int reg, int data);
+
+int cypd_write_reg_block(int controller, int reg, uint8_t *data, int len);
+
+int cypd_read_reg_block(int controller, int reg, uint8_t *data, int len);
 
 #endif	/* __CROS_EC_CYPRESS5525_H */

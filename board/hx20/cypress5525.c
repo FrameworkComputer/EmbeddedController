@@ -13,6 +13,7 @@
 #include "i2c.h"
 #include "timer.h"
 #include "uart.h"
+#include "ucsi.h"
 #include "util.h"
 #include "chipset.h"
 #include "driver/charger/isl9241.h"
@@ -22,12 +23,6 @@
 #include "usb_tc_sm.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-
-enum pd_chip {
-	PD_CHIP_0,
-	PD_CHIP_1,
-	PD_CHIP_COUNT
-};
 
 static struct pd_chip_config_t pd_chip_config[] = {
 	[PD_CHIP_0] = {
@@ -52,15 +47,6 @@ enum pd_port {
 	PD_PORT_2,
 	PD_PORT_3,
 	PD_PORT_COUNT
-};
-
-static struct pd_chip_ucsi_info_t pd_chip_ucsi_info[] = {
-	[PD_CHIP_0] = {
-
-	},
-	[PD_CHIP_1] = {
-
-	}
 };
 
 static struct pd_port_current_state_t pd_port_states[] = {
@@ -289,85 +275,6 @@ int cyp5225_set_power_state(int power_state)
 		rv = cypd_write_reg8(i, CYP5525_SYS_PWR_STATE, power_state);
 		if (rv != EC_SUCCESS)
 			break;
-	}
-	return rv;
-}
-
-int ucsi_write_tunnel(void)
-{
-	uint8_t *message_out = host_get_customer_memmap(EC_MEMMAP_UCSI_MESSAGE_OUT);
-	uint8_t *command = host_get_customer_memmap(EC_MEMMAP_UCSI_COMMAND);
-	int i;
-	int rv = EC_SUCCESS;
-
-	/**
-	 * Note that CONTROL data has always to be written after MESSAGE_OUT data is written
-	 * A write to CONTROL (in CCGX) triggers processing of that command.
-	 * Hence MESSAGE_OUT must be available before CONTROL is written to CCGX.
-	 */
-
-	for (i = 0; i < PD_CHIP_COUNT; i++) {
-		rv = cypd_write_reg_block(i, CYP5525_MESSAGE_OUT_REG, message_out, 16);
-		if (rv != EC_SUCCESS)
-			break;
-
-		rv = cypd_write_reg_block(i, CYP5525_CONTROL_REG, command, 8);
-		if (rv != EC_SUCCESS)
-			break;
-	}
-	return rv;
-}
-
-int ucsi_read_tunnel(int controller)
-{
-	int rv;
-
-	rv = cypd_read_reg_block(controller, CYP5525_CCI_REG,
-		pd_chip_ucsi_info[controller].cci, 4);
-
-	if (rv != EC_SUCCESS)
-		CPRINTS("CYP5525_CCI_REG failed");
-
-	rv = cypd_read_reg_block(controller, CYP5525_MESSAGE_IN_REG,
-		pd_chip_ucsi_info[controller].message_in, 16);
-
-	if (rv != EC_SUCCESS)
-		CPRINTS("CYP5525_MESSAGE_IN_REG failed");
-
-	return EC_SUCCESS;
-}
-
-int cyp5525_ucsi_startup(int controller)
-{
-	int rv = EC_SUCCESS;
-	int data;
-
-	rv = cypd_write_reg8(controller, CYP5525_UCSI_CONTROL_REG ,CYPD_UCSI_START);
-	if (rv != EC_SUCCESS)
-		CPRINTS("UCSI start command fail!");
-
-	if (cyp5225_wait_for_ack(controller, 100000) != EC_SUCCESS) {
-			CPRINTS("%s timeout on interrupt", __func__);
-			return EC_ERROR_INVAL;
-	}
-
-	rv = cypd_get_int(controller, &data);
-
-	if (data & CYP5525_DEV_INTR) {
-		rv = cypd_read_reg_block(controller, CYP5525_VERSION_REG,
-			pd_chip_ucsi_info[controller].version, 2);
-
-		CPRINTS("UCSI version is 0x%04x",
-			pd_chip_ucsi_info[controller].version[0] +
-			(pd_chip_ucsi_info[controller].version[1] << 8));
-
-		if (rv != EC_SUCCESS)
-			CPRINTS("UCSI start command fail!");
-
-		memcpy(host_get_customer_memmap(EC_MEMMAP_UCSI_VERSION),
-			pd_chip_ucsi_info[controller].version, 2);
-
-		cypd_clear_int(controller, CYP5525_DEV_INTR);
 	}
 	return rv;
 }
@@ -625,7 +532,7 @@ void cyp5525_interrupt(int controller)
 		}
 		if (data & CYP5525_UCSI_INTR) {
 			/* */
-			CPRINTS("INTR_REG TODO Handle UCSI");
+			//CPRINTS("P%d read ucsi data!", controller);
 			ucsi_read_tunnel(controller);
 			clear_mask |= CYP5525_UCSI_INTR;
 		}
@@ -691,7 +598,6 @@ void cyp5525_interrupt(int controller)
 #define CYPD_PROCESS_CONTROLLER_S3 BIT(29)
 #define CYPD_PROCESS_CONTROLLER_S4 BIT(28)
 #define CYPD_PROCESS_CONTROLLER_S5 BIT(27)
-#define CYPD_PROCESS_CONTROLLER_UCSI BIT(26)
 
 
 static uint8_t cypd_int_task_id;
@@ -905,9 +811,6 @@ void cypd_interrupt_handler_task(void *p)
 			}
 			if (evt & CYPD_PROCESS_CONTROLLER_S5) {
 				cyp5225_set_power_state(CYP5525_POWERSTATE_S5);
-			}
-			if (evt & CYPD_PROCESS_CONTROLLER_UCSI) {
-				ucsi_write_tunnel();
 			}
 			gpio_asserted = 0;
 			for (i = 0; i < PD_CHIP_COUNT; i++) {
