@@ -169,6 +169,7 @@ driver-$(CONFIG_USBC_SS_MUX)+=usb_mux/usb_mux.o
 # USB muxes
 driver-$(CONFIG_USB_MUX_AMD_FP5)+=usb_mux/amd_fp5.o
 driver-$(CONFIG_USB_MUX_AMD_FP6)+=usb_mux/amd_fp6.o
+driver-$(CONFIG_USB_MUX_ANX3443)+=usb_mux/anx3443.o
 driver-$(CONFIG_USB_MUX_ANX7440)+=usb_mux/anx7440.o
 driver-$(CONFIG_USB_MUX_ANX7451)+=usb_mux/anx7451.o
 driver-$(CONFIG_USB_MUX_IT5205)+=usb_mux/it5205.o

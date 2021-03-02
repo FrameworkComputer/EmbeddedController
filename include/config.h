@@ -4872,6 +4872,12 @@
 #undef CONFIG_USB_MUX_AMD_FP6
 
 /*
+ * Support the Analogix ANX3443 USB Type-C Active mux (6x4) with
+ * Integrated Re-timers for USB3.2/DisplayPort.
+ */
+#undef CONFIG_USB_MUX_ANX3443
+
+/*
  * Support the Analogix ANX7440 USB Type-C Active mux with
  * Integrated Re-timers for USB3.1/DisplayPort.
  */
