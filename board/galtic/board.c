@@ -212,11 +212,114 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 
 /* USB Retimer */
+enum tusb544_conf {
+	USB_DP = 0,
+	USB_DP_INV,
+	USB,
+	USB_INV,
+	DP,
+	DP_INV
+};
+
+static int board_tusb544_set(const struct usb_mux *me,
+		mux_state_t mux_state)
+{
+	int  rv = EC_SUCCESS;
+	enum tusb544_conf usb_mode = 0;
+	/* USB */
+	if (mux_state & USB_PD_MUX_USB_ENABLED) {
+		/* USB with DP */
+		if (mux_state & USB_PD_MUX_DP_ENABLED) {
+			usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
+					? USB_DP_INV
+					: USB_DP;
+		}
+		/* USB without DP */
+		else {
+			usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
+					? USB_INV
+					: USB;
+		}
+	}
+	/* DP without USB */
+	else if (mux_state & USB_PD_MUX_DP_ENABLED) {
+		usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
+				? DP_INV
+				: DP;
+	}
+	/* Nothing enabled */
+	else
+		return EC_SUCCESS;
+	/* Write the retimer config byte */
+	if (usb_mode == USB_INV) {
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_GENERAL4, 0x15);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_DISPLAYPORT_1, 0x33);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_DISPLAYPORT_2, 0x33);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_USB3_1_1, 0x22);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_USB3_1_2, 0x22);
+	} else if (usb_mode == USB) {
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_GENERAL4, 0x11);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_DISPLAYPORT_1, 0x33);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_DISPLAYPORT_2, 0x33);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_USB3_1_1, 0x22);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_USB3_1_2, 0x22);
+	} else if (usb_mode == USB_DP_INV) {
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_GENERAL4, 0x1F);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_DISPLAYPORT_1, 0x33);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_DISPLAYPORT_2, 0x99);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_USB3_1_1, 0x22);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_USB3_1_2, 0x22);
+	} else if (usb_mode == USB_DP) {
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_GENERAL4, 0x1B);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_DISPLAYPORT_1, 0x99);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_DISPLAYPORT_2, 0x33);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_USB3_1_1, 0x22);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_USB3_1_2, 0x22);
+	} else if (usb_mode == DP_INV) {
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_GENERAL4, 0x1E);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_DISPLAYPORT_1, 0x99);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_DISPLAYPORT_2, 0x99);
+	} else if (usb_mode == DP) {
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_GENERAL4, 0x1A);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_DISPLAYPORT_1, 0x99);
+		rv = i2c_write8(me->i2c_port, me->i2c_addr_flags,
+				TUSB544_REG_DISPLAYPORT_2, 0x99);
+	}
+
+	return rv;
+}
+
 const struct usb_mux usbc1_retimer = {
 	.usb_port = 1,
 	.i2c_port = I2C_PORT_SUB_USB_C1,
 	.i2c_addr_flags = TUSB544_I2C_ADDR_FLAGS0,
 	.driver = &tusb544_drv,
+	.board_set = &board_tusb544_set,
 };
 
 /* USB Muxes */
