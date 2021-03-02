@@ -151,6 +151,32 @@ void pd_timer_disable(int port, enum pd_task_timer timer)
 	PD_SET_DISABLED(port, mask);
 }
 
+void pd_timer_disable_range(int port, enum pd_timer_range range)
+{
+	int start, end;
+	enum pd_task_timer timer;
+
+	switch (range) {
+	case PE_TIMER_RANGE:
+		start	= PE_TIMER_START;
+		end	= PE_TIMER_END;
+		break;
+	case PR_TIMER_RANGE:
+		start	= PR_TIMER_START;
+		end	= PR_TIMER_END;
+		break;
+	case TC_TIMER_RANGE:
+		start	= TC_TIMER_START;
+		end	= TC_TIMER_END;
+		break;
+	default:
+		return;
+	}
+
+	for (timer = start; timer <= end; ++timer)
+		pd_timer_disable(port, timer);
+}
+
 bool pd_timer_is_disabled(int port, enum pd_task_timer timer)
 {
 	uint32_t mask = 1 << timer;

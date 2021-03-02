@@ -196,6 +196,20 @@ enum pd_task_timer {
 };
 BUILD_ASSERT(PD_TIMER_COUNT <= 32);
 
+enum pd_timer_range {
+	PE_TIMER_RANGE,
+	PR_TIMER_RANGE,
+	TC_TIMER_RANGE,
+};
+#define PE_TIMER_START		PE_TIMER_BIST_CONT_MODE
+#define PE_TIMER_END		PE_TIMER_WAIT_AND_ADD_JITTER
+
+#define PR_TIMER_START		PR_TIMER_CHUNK_SENDER_RESPONSE
+#define PR_TIMER_END		PR_TIMER_TCPC_TX_TIMEOUT
+
+#define TC_TIMER_START		TC_TIMER_CC_DEBOUNCE
+#define TC_TIMER_END		TC_TIMER_VBUS_DEBOUNCE
+
 /*
  * pd_timer_init
  * Initialize Power Delivery Timer module
@@ -223,6 +237,14 @@ void pd_timer_enable(int port, enum pd_task_timer timer, uint32_t expires_us);
  */
 void pd_timer_disable(int port, enum pd_task_timer timer);
 
+/*
+ * pd_timer_disable_range
+ * Disable all of the timers in a group range
+ *
+ * @param port USB-C port number
+ * @param range Group range to disable
+ */
+void pd_timer_disable_range(int port, enum pd_timer_range range);
 
 /*
  * pd_timer_is_disabled

@@ -739,10 +739,7 @@ static void pe_init(int port)
 	pe[port].flags = 0;
 	pe[port].dpm_request = 0;
 	pe[port].dpm_curr_request = 0;
-	pd_timer_disable(port, PE_TIMER_NO_RESPONSE);
-	pd_timer_disable(port, PE_TIMER_SINK_REQUEST);
-	pd_timer_disable(port, PE_TIMER_SOURCE_CAP);
-	pd_timer_disable(port, PE_TIMER_WAIT_AND_ADD_JITTER);
+	pd_timer_disable_range(port, PE_TIMER_RANGE);
 	pe[port].data_role = pd_get_data_role(port);
 	pe[port].tx_type = TCPC_TX_INVALID;
 	pe[port].events = 0;

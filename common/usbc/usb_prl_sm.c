@@ -566,6 +566,8 @@ static void prl_init(int port)
 		prl_tx[port].msg_id_counter[i] = 0;
 	}
 
+	pd_timer_disable_range(port, PR_TIMER_RANGE);
+
 	/* Clear state machines and set initial states */
 	prl_tx[port].ctx = cleared;
 	set_state_prl_tx(port, PRL_TX_PHY_LAYER_RESET);
