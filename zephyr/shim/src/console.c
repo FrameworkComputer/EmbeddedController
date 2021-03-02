@@ -8,6 +8,7 @@
 #include <init.h>
 #include <kernel.h>
 #include <shell/shell.h>
+#include <shell/shell_uart.h>
 #include <stdbool.h>
 #include <string.h>
 #include <sys/printk.h>
