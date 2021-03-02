@@ -37,6 +37,8 @@
 #define CONFIG_CHARGE_RAMP_HW
 #undef  CONFIG_CHARGER_SINGLE_CHIP
 
+#define CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
+
 /*
  * GPIO for C1 interrupts, for baseboard use
  *
