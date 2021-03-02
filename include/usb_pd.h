@@ -191,7 +191,7 @@ enum pd_rx_errors {
 #define PD_T_HARD_RESET_COMPLETE     (5*MSEC) /* between 4ms and 5ms*/
 #define PD_T_HARD_RESET_RETRY        (1*MSEC) /* 1ms */
 #define PD_T_SEND_SOURCE_CAP       (100*MSEC) /* between 100ms and 200ms */
-#define PD_T_SINK_WAIT_CAP         (600*MSEC) /* between 310ms and 620ms */
+#define PD_T_SINK_WAIT_CAP         (575*MSEC) /* between 310ms and 620ms */
 #define PD_T_SINK_TRANSITION        (35*MSEC) /* between 20ms and 35ms */
 #define PD_T_SOURCE_ACTIVITY        (45*MSEC) /* between 40ms and 50ms */
 /*
