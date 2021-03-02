@@ -1,0 +1,63 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Fan parent node
+
+compatible: "named-fans"
+
+child-binding:
+  description: Named fan's child node
+  properties:
+    label:
+      required: true
+      type: string
+      description:
+        Human-readable string describing the device (used as
+        device_get_binding() argument)
+    rpm_min:
+      required: true
+      type: int
+      description:
+        Minimum fan speed (in RPM) to keep turning
+    rpm_start:
+      required: true
+      type: int
+      description:
+        Fan speed (in RPM) to begin turning
+    rpm_max:
+      required: true
+      type: int
+      description:
+        Maximum fan speed (in RPM)
+    pwm:
+      type: phandle
+      required: true
+      description:
+        PWM channel to control the fan
+    tach:
+      type: phandle
+      required: false
+      description:
+        Tachometer to measure the fan speed
+    not_use_rpm_mode:
+      required: false
+      type: boolean
+      description:
+        Disable automatic RPM control using tachometer input
+    use_fast_start:
+      required: false
+      type: boolean
+      description:
+        Fan requires a higher duty cycle to start up than to keep
+        running
+    pgood_gpio:
+      required: false
+      type: phandle
+      description:
+        Active high input GPIO which signals the power is good
+    enable_gpio:
+      required: false
+      type: phandle
+      description:
+        Active high output GPIO to enable the power

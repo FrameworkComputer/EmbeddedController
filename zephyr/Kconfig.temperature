@@ -66,3 +66,15 @@ config PLATFORM_EC_STEINHART_HART_3V3_51K1_47K_4050B
 	  -47 kilohm thermistor reference resistance at 25 C
 	  -4050 B-constant (thermistor sensitivity)
 endif # PLATFORM_EC_TEMP_SENSOR
+
+config PLATFORM_EC_FAN
+	bool "Fan support"
+	depends on PLATFORM_EC_PWM
+	help
+	  Enables support for fans. Allows periodic thermal task to
+	  automatically set the fan speed (control temperature).
+	  Once enabled fanduty, fanset, faninfo, fanauto consol command and
+	  EC_CMD_PWM_GET_FAN_TARGET_RPM, EC_CMD_PWM_SET_FAN_TARGET_RPM,
+	  EC_CMD_PWM_SET_FAN_DUTY, EC_CMD_THERMAL_AUTO_FAN_CTRL are
+	  available. Also enables a periodic task (1s) to verify fan is
+	  running (is not stalled).

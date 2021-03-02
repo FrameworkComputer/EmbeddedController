@@ -8,6 +8,23 @@
 #ifndef __CROS_EC_FAN_H
 #define __CROS_EC_FAN_H
 
+#ifdef CONFIG_ZEPHYR
+#ifdef CONFIG_PLATFORM_EC_FAN
+
+#include <devicetree.h>
+#define NODE_ID_AND_COMMA(node_id) node_id,
+enum fan_channel {
+#if DT_NODE_EXISTS(DT_INST(0, named_fans))
+	DT_FOREACH_CHILD(DT_INST(0, named_fans), NODE_ID_AND_COMMA)
+#endif /* named_fans */
+	FAN_CH_COUNT
+};
+
+#define CONFIG_FANS FAN_CH_COUNT
+
+#endif /* CONFIG_PLATFORM_EC_FAN */
+#endif /* CONFIG_ZEPHYR */
+
 struct fan_conf {
 	unsigned int flags;
 	/* Hardware channel number (the meaning is chip-specific) */
