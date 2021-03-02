@@ -35,6 +35,8 @@
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
 
+#define CONFIG_HIBERNATE_PSL
+
 /* Work around double CR50 reset by waiting in initial power on. */
 #define CONFIG_BOARD_RESET_AFTER_POWER_ON
 

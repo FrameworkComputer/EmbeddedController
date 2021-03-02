@@ -17,9 +17,10 @@
 #include "baseboard.h"
 
 /*
- * Disable features enabled by default.
+ * This will happen automatically on NPCX9 ES2 and later. Do not remove
+ * until we can confirm all earlier chips are out of service.
  */
-#undef CONFIG_HIBERNATE
+#define CONFIG_HIBERNATE_PSL_VCC1_RST_WAKEUP
 
 /* LED */
 #define CONFIG_LED_PWM
