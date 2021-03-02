@@ -48,9 +48,14 @@
 /* Motion Sensors */
 #ifndef VARIANT_KUKUI_NO_SENSORS
 #define CONFIG_ACCEL_BMA255		/* Lid accel */
+#define CONFIG_ACCEL_KX022
 #define CONFIG_ACCELGYRO_BMI160		/* Base accel */
 #define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+/* ICM426XX Base accel/gyro */
+#define CONFIG_ACCELGYRO_ICM426XX
+#define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 #define CONFIG_ALS
 #define CONFIG_CMD_ACCEL_INFO
@@ -143,6 +148,9 @@ int board_is_sourcing_vbus(int port);
 int board_get_charger_i2c(void);
 
 int board_is_convertible(void);
+
+/* Motion sensor interrupt */
+void sensor_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

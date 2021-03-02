@@ -15,7 +15,10 @@
 #include "common.h"
 #include "console.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm_common.h"
+#include "driver/accelgyro_icm426xx.h"
 #include "driver/battery/max17055.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
@@ -308,15 +311,90 @@ static const mat33_fp_t lid_standard_ref = {
 	{0, 0, FLOAT_TO_FP(-1)}
 };
 
-static const mat33_fp_t base_standard_ref = {
+static const mat33_fp_t base_bmi160_ref = {
 	{FLOAT_TO_FP(-1), 0, 0},
 	{0, FLOAT_TO_FP(1), 0},
 	{0, 0, FLOAT_TO_FP(-1)}
 };
 
+static const mat33_fp_t base_icm426xx_ref = {
+	{0, FLOAT_TO_FP(-1), 0},
+	{FLOAT_TO_FP(-1), 0, 0},
+	{0, 0, FLOAT_TO_FP(-1)}
+};
+
 /* sensor private data */
 static struct accelgyro_saved_data_t g_bma253_data;
+static struct kionix_accel_data g_kx022_data;
 static struct bmi_drv_data_t g_bmi160_data;
+static struct icm_drv_data_t g_icm426xx_data;
+
+struct motion_sensor_t lid_accel_kx022 = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_KX022,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &kionix_accel_drv,
+	.mutex = &g_lid_mutex,
+	.drv_data = &g_kx022_data,
+	.port = I2C_PORT_SENSORS,
+	.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
+	.rot_standard_ref = &lid_standard_ref,
+	.default_range = 2,
+	.config = {
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
+
+struct motion_sensor_t base_accel_icm426xx = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = CONFIG_SPI_ACCEL_PORT,
+	.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
+	.default_range = 4,
+	.rot_standard_ref = &base_icm426xx_ref,
+	.min_frequency = ICM426XX_ACCEL_MIN_FREQ,
+	.max_frequency = ICM426XX_ACCEL_MAX_FREQ,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
+
+struct motion_sensor_t base_gyro_icm426xx = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = CONFIG_SPI_ACCEL_PORT,
+	.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = &base_icm426xx_ref,
+	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
+	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
+};
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -359,7 +437,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &g_bmi160_data,
 		.port = CONFIG_SPI_ACCEL_PORT,
 		.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
-		.rot_standard_ref = &base_standard_ref,
+		.rot_standard_ref = &base_bmi160_ref,
 		.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
 		.min_frequency = BMI_ACCEL_MIN_FREQ,
 		.max_frequency = BMI_ACCEL_MAX_FREQ,
@@ -388,12 +466,50 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = CONFIG_SPI_ACCEL_PORT,
 		.i2c_spi_addr_flags = SLAVE_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
 		.default_range = 1000, /* dps */
-		.rot_standard_ref = &base_standard_ref,
+		.rot_standard_ref = &base_bmi160_ref,
 		.min_frequency = BMI_GYRO_MIN_FREQ,
 		.max_frequency = BMI_GYRO_MAX_FREQ,
 	},
 };
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+void sensor_interrupt(enum gpio_signal signal)
+{
+	switch (motion_sensors[BASE_ACCEL].chip) {
+	case MOTIONSENSE_CHIP_ICM426XX:
+		icm426xx_interrupt(signal);
+		break;
+	case MOTIONSENSE_CHIP_BMI160:
+	default:
+		bmi160_interrupt(signal);
+		break;
+	}
+}
+
+static void board_update_config(void)
+{
+	int val;
+	enum ec_error_list rv;
+
+	/* Ping for ack */
+	rv = i2c_read8(I2C_PORT_SENSORS,
+		       KX022_ADDR1_FLAGS, KX022_WHOAMI, &val);
+
+	if (rv == EC_SUCCESS)
+		motion_sensors[LID_ACCEL] = lid_accel_kx022;
+
+	/* Ping for ack */
+	rv = icm_read8(&base_accel_icm426xx,
+			ICM426XX_REG_WHO_AM_I, &val);
+
+	if (rv == EC_SUCCESS) {
+		motion_sensors[BASE_ACCEL] = base_accel_icm426xx;
+		motion_sensors[BASE_GYRO] = base_gyro_icm426xx;
+	}
+
+	CPRINTS("Lid Accel Chip: %d", motion_sensors[LID_ACCEL].chip);
+	CPRINTS("Base Accel Chip: %d", motion_sensors[BASE_ACCEL].chip);
+}
 
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
 
@@ -416,6 +532,7 @@ static void board_init(void)
 		gpio_enable_interrupt(GPIO_ACCEL_INT_ODL);
 		/* For some reason we have to do this again in case of sysjump */
 		board_spi_enable();
+		board_update_config();
 	} else {
 		motion_sensor_count = 0;
 		/* Device is clamshell only */
