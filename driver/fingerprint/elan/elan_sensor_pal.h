@@ -126,7 +126,7 @@ void elan_execute_reset(void);
  * @return 0 on success.
  *         negative value on error.
  */
-int fp_sensor_maintenance(fp_sensor_info_t *fp_sensor_info);
+int elan_fp_sensor_maintenance(fp_sensor_info_t *fp_sensor_info);
 
 /**
  * @brief Set sensor reset state.
