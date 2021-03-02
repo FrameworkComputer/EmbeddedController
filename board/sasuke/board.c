@@ -255,7 +255,7 @@ void board_hibernate(void)
 	 */
 	if (board_get_charger_chip_count() > 1)
 		raa489000_hibernate(1, true);
-	raa489000_hibernate(0, true);
+	raa489000_hibernate(0, false);
 }
 
 /* USB-A charging control */
