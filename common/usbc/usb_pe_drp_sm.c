@@ -3655,6 +3655,12 @@ static void pe_send_soft_reset_entry(int port)
 	prl_reset_soft(port);
 
 	pe_sender_response_msg_entry(port);
+
+	/*
+	 * Mark the temporary timer PE_TIMER_TIMEOUT as expired to limit
+	 * to sending a single SoftReset message.
+	 */
+	pd_timer_enable(port, PE_TIMER_TIMEOUT, 0);
 }
 
 static void pe_send_soft_reset_run(int port)
@@ -3662,18 +3668,20 @@ static void pe_send_soft_reset_run(int port)
 	int type;
 	int cnt;
 	int ext;
+	enum pe_msg_check msg_check;
 
 	/* Wait until protocol layer is running */
 	if (!prl_is_running(port))
 		return;
 
 	/*
-	 * TODO(b:181337870) This should be using pe_sender_response_msg_run
-	 * to make sure PE_TIMER_SENDER_RESPONSE does not start until the
-	 * message is actually sent and probably a good idea to not get lost
-	 * if we hit a discard
+	 * Protocol layer is running, so need to send a single SoftReset.
+	 * Use temporary timer to act as a flag to keep this as a single
+	 * message send.
 	 */
-	if (pd_timer_is_disabled(port, PE_TIMER_SENDER_RESPONSE)) {
+	if (!pd_timer_is_disabled(port, PE_TIMER_TIMEOUT)) {
+		pd_timer_disable(port, PE_TIMER_TIMEOUT);
+
 		/*
 		 * TODO(b/150614211): Soft reset type should match
 		 * unexpected incoming message type
@@ -3682,9 +3690,20 @@ static void pe_send_soft_reset_run(int port)
 		send_ctrl_msg(port,
 			pe[port].soft_reset_sop, PD_CTRL_SOFT_RESET);
 
-		/* Initialize and run SenderResponseTimer */
-		pd_timer_enable(port, PE_TIMER_SENDER_RESPONSE,
-				PD_T_SENDER_RESPONSE);
+		return;
+	}
+
+	/*
+	 * Check the state of the message sent
+	 */
+	msg_check = pe_sender_response_msg_run(port);
+
+	/*
+	 * Handle discarded message
+	 */
+	if (msg_check == PE_MSG_DISCARDED) {
+		pe_set_ready_state(port);
+		return;
 	}
 
 	/*
@@ -3692,7 +3711,8 @@ static void pe_send_soft_reset_run(int port)
 	 * PE_SRC_Send_Capabilities state when:
 	 *   1) An Accept Message has been received.
 	 */
-	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+	if (msg_check == PE_MSG_SENT &&
+	    PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
 		type = PD_HEADER_TYPE(rx_emsg[port].header);
@@ -3724,12 +3744,12 @@ static void pe_send_soft_reset_run(int port)
 			set_state_pe(port, PE_SRC_HARD_RESET);
 		return;
 	}
-
 }
 
 static void pe_send_soft_reset_exit(int port)
 {
 	pe_sender_response_msg_exit(port);
+	pd_timer_disable(port, PE_TIMER_TIMEOUT);
 }
 
 /**
