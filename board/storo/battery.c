@@ -45,11 +45,13 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x99,
 				.reg_mask = 0x000C,
 				.disconnect_val = 0x000C,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0004
 			}
 		},
 		.batt_info = {
-			.voltage_max		= 8900,
-			.voltage_normal		= 7700, /* mV */
+			.voltage_max		= 8800,
+			.voltage_normal		= 7890, /* mV */
 			.voltage_min		= 6000, /* mV */
 			.precharge_current	= 256,	/* mA */
 			.start_charging_min_c	= 0,
