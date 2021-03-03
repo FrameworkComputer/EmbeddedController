@@ -161,4 +161,23 @@ config PLATFORM_EC_CMD_ACCEL_INFO
 
 endif # PLATFORM_EC_CMD_ACCELS
 
+config PLATFORM_EC_ACCEL_SPOOF_MODE
+	bool "Sensor spoof mode"
+	help
+	  Enable this to allow sensors values spoofed to any arbitrary value.
+	  This is useful for testing the motion sense framework if the hardware
+	  sensor or the sensor driver code is not ready.
+
+if PLATFORM_EC_ACCEL_SPOOF_MODE
+
+config PLATFORM_EC_CMD_ACCEL_SPOOF
+	bool "Console Command: accelspoof"
+	help
+	  Enable console command:
+
+	    accelspoof id [on/off] [X] [Y] [Z] - Enable/Disable spoofing of
+	    sensor readings.
+
+endif # PLATFORM_EC_ACCEL_SPOOF_MODE
+
 rsource "Kconfig.sensor_devices"
