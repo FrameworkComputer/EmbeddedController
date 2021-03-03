@@ -14,7 +14,7 @@ if PLATFORM_EC_HOSTCMD_CONSOLE
 
 config PLATFORM_EC_HOSTCMD_CONSOLE_BUF_SIZE
 	int "Console buffer size"
-	default 8192
+	default 4096
 	help
 	  The EC will use a circular buffer to store bytes outputted
 	  to the console for the AP to read.  This changes the maximal
