@@ -401,15 +401,30 @@ config PLATFORM_EC_CONSOLE_CMD_CHARGEN
 	  verifying that no characters in the received sequence were lost.
 
 config PLATFORM_EC_CONSOLE_CMD_FLASH
-	bool "Console commands: flasherase, flashread, flashwp, flashwrite"
+	bool "Console commands: flasherase, flashread, flashwrite"
 	default y
 	help
 	  Enables various console commands:
 
 	     flasherase - erase flash region
 	     flashread - read from flash to memory
-	     flashwp - change write-protection settings
 	     flashwrite - write memory to flash
+
+config PLATFORM_EC_CONSOLE_CMD_FLASHINFO
+	bool "Console commands: flashinfo"
+	default y
+	help
+	  Enables various console commands:
+
+	     flashinfo - displays information about the flash storage
+
+config PLATFORM_EC_CONSOLE_CMD_FLASH_WP
+	bool "Console commands: flashwp"
+	default y
+	help
+	  Enables various console commands:
+
+	     flashwp - change write-protection settings
 
 config PLATFORM_EC_CONSOLE_CMD_SYSJUMP
 	bool "Console command: sysjump"
