@@ -92,7 +92,7 @@
 			label = "KBLIGHT";
 			frequency = <2400>;
 		};
-		fan {
+		pwm_fan: fan {
 			pwms = <&pwm5 0 0>;
 			label = "FAN";
 			frequency = <25000>;
@@ -160,6 +160,20 @@
 			temp_host_halt = <80>;
 			temp_host_release_high = <65>;
 			adc = <&adc_fan>;
+		};
+	};
+
+	named-fans {
+		compatible = "named-fans";
+
+		fan_0 {
+			label = "FAN_0";
+			pwm = <&pwm_fan>;
+			rpm_min = <1900>;
+			rpm_start = <1900>;
+			rpm_max = <5900>;
+			tach = <&tach1>;
+			enable_gpio = <&gpio_en_pp5000_fan>;
 		};
 	};
 
@@ -450,7 +464,7 @@
 			gpios = <&gpioe 1 GPIO_INPUT>;
 			label = "EC_BATT_PRES_ODL";
 		};
-		en_pp5000_fan {
+		gpio_en_pp5000_fan: en_pp5000_fan {
 			gpios = <&gpio6 1 GPIO_OUT_LOW>;
 			label = "EN_PP5000_FAN";
 		};
@@ -603,4 +617,13 @@
 
 &adc0 {
 	status = "okay";
+};
+
+/* Tachemeter for fan speed measurement */
+&tach1 {
+	status = "okay";
+	pinctrl-0 = <&alt3_ta1_sl1>; /* Use TA1 as input pin */
+	port = <NPCX_TACH_PORT_A>; /* port-A is selected */
+	sample_clk = <NPCX_TACH_FREQ_LFCLK>; /* Use LFCLK as sampling clock */
+	pulses_per_round = <2>; /* number of pulses per round of encoder */
 };
