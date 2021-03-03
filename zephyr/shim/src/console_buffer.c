@@ -105,3 +105,9 @@ int uart_console_read_buffer(uint8_t type, char *dest, uint16_t dest_size,
 
 	return EC_RES_SUCCESS;
 }
+
+/* ECOS uart buffer, putc is blocking instead. */
+int uart_buffer_full(void)
+{
+	return false;
+}
