@@ -204,7 +204,15 @@ static inline int tcpm_sop_prime_enable(int port, bool enable)
 
 static inline int tcpm_set_vconn(int port, int enable)
 {
-	return tcpc_config[port].drv->set_vconn(port, enable);
+#ifdef CONFIG_USB_PD_TCPC_VCONN
+	int rv;
+
+	rv = tcpc_config[port].drv->set_vconn(port, enable);
+	if (rv)
+		return rv;
+#endif
+
+	return tcpm_sop_prime_enable(port, enable);
 }
 
 static inline int tcpm_set_msg_header(int port, int power_role, int data_role)
@@ -443,6 +451,16 @@ int tcpm_set_cc(int port, int pull);
  * @return EC_SUCCESS or error
  */
 int tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity);
+
+/**
+ * Enable SOP' message transmit/receive.
+ *
+ * @param port Type-C port number
+ * @param enable Enable/Disable SOP' and SOP'' messages
+ *
+ * @return EC_SUCCESS or error
+ */
+int tcpm_sop_prime_enable(int port, int enable);
 
 /**
  * Set Vconn.

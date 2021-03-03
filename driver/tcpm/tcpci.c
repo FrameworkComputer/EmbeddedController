@@ -645,12 +645,6 @@ int tcpci_tcpm_set_vconn(int port, int enable)
 	if (rv)
 		return rv;
 
-	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP)) {
-		rv = tcpci_tcpm_sop_prime_enable(port, enable);
-		if (rv)
-			return rv;
-	}
-
 	reg &= ~TCPC_REG_POWER_CTRL_VCONN(1);
 	reg |= TCPC_REG_POWER_CTRL_VCONN(enable);
 	return tcpc_write(port, TCPC_REG_POWER_CTRL, reg);

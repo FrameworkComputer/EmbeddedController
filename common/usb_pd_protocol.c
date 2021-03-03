@@ -438,8 +438,7 @@ static void set_vconn(int port, int enable)
 	 *
 	 * See b/72961003 and b/180973460
 	 */
-	if (IS_ENABLED(CONFIG_USB_PD_TCPC_VCONN))
-		tcpm_set_vconn(port, enable);
+	tcpm_set_vconn(port, enable);
 
 	if (IS_ENABLED(CONFIG_USBC_PPC_VCONN) && enable)
 		ppc_set_vconn(port, 1);

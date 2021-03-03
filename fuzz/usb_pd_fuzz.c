@@ -36,6 +36,11 @@ static int mock_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 	return EC_SUCCESS;
 }
 
+static __maybe_unused int mock_tcpm_sop_prime_enable(int port, bool enable)
+{
+	return EC_SUCCESS;
+}
+
 static int mock_tcpm_set_vconn(int port, int enable) { return EC_SUCCESS; }
 static int mock_tcpm_set_msg_header(int port,
 			int power_role, int data_role) { return EC_SUCCESS; }
@@ -131,6 +136,9 @@ static const struct tcpm_drv mock_tcpm_drv = {
 	.select_rp_value        = &mock_tcpm_select_rp_value,
 	.set_cc                 = &mock_tcpm_set_cc,
 	.set_polarity           = &mock_tcpm_set_polarity,
+#ifdef CONFIG_USB_PD_DECODE_SOP
+	.sop_prime_enable		= &mock_tcpm_sop_prime_enable,
+#endif
 	.set_vconn              = &mock_tcpm_set_vconn,
 	.set_msg_header         = &mock_tcpm_set_msg_header,
 	.set_rx_enable          = &mock_tcpm_set_rx_enable,
