@@ -60,6 +60,7 @@ int raa489000_init(int port)
 	int device_id;
 	int i2c_port;
 	struct charge_port_info chg = { 0 };
+	static bool first_init_done[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 	/* Perform unlock sequence */
 	rv = tcpc_write16(port, 0xAA, 0xDAA0);
@@ -211,6 +212,20 @@ int raa489000_init(int port)
 				RAA489000_VBUS_VOLTAGE_TARGET_5220MV);
 	if (rv)
 		CPRINTS("c%d: failed to set Vbus Target Voltage", port);
+
+	if (!first_init_done[port]) {
+		first_init_done[port] = true;
+
+		/*
+		 * Ensure we detach from any previous debug connections if we
+		 * have enough battery to survive Vbus loss.  The PD task will
+		 * often start with open CC lines, however this is not the case
+		 * for ITE ECs when they are reset by the security chip since
+		 * they cannot distinguish power on from a reset.
+		 */
+		if (pd_is_battery_capable())
+			tcpm_debug_detach(port);
+	}
 
 	return rv;
 }
