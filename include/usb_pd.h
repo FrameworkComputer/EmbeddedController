@@ -211,7 +211,7 @@ enum pd_rx_errors {
 #endif
 #define PD_T_PS_TRANSITION         (500*MSEC) /* between 450ms and 550ms */
 #define PD_T_PS_SOURCE_ON          (480*MSEC) /* between 390ms and 480ms */
-#define PD_T_PS_SOURCE_OFF         (920*MSEC) /* between 750ms and 920ms */
+#define PD_T_PS_SOURCE_OFF         (835*MSEC) /* between 750ms and 920ms */
 #define PD_T_PS_HARD_RESET          (25*MSEC) /* between 25ms and 35ms */
 #define PD_T_ERROR_RECOVERY        (240*MSEC) /* min 240ms if sourcing VConn */
 #define PD_T_CC_DEBOUNCE           (100*MSEC) /* between 100ms and 200ms */
