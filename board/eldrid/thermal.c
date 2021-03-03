@@ -135,6 +135,9 @@ int fan_table_to_rpm(int fan, int *temp)
 {
 	/* current fan level */
 	static int current_level;
+	/* previous fan level */
+	static int prev_current_level;
+
 	/* previous sensor temperature */
 	static int prev_temp[TEMP_SENSOR_COUNT];
 	const int num_fan_levels = ARRAY_SIZE(fan_table);
@@ -149,8 +152,6 @@ int fan_table_to_rpm(int fan, int *temp)
 	 *  3. invariant path. (return the current RPM)
 	 */
 
-	CPRINTS("temp: %d, prev_temp: %d", temp[TEMP_SENSOR_3_DDR_SOC],
-		prev_temp[TEMP_SENSOR_3_DDR_SOC]);
 	if (temp[TEMP_SENSOR_3_DDR_SOC] < prev_temp[TEMP_SENSOR_3_DDR_SOC]) {
 		for (i = current_level; i > 0; i--) {
 			if (temp[TEMP_SENSOR_3_DDR_SOC] <
@@ -173,10 +174,16 @@ int fan_table_to_rpm(int fan, int *temp)
 	if (current_level < 0)
 		current_level = 0;
 
+	if (current_level != prev_current_level) {
+		CPRINTS("temp: %d, prev_temp: %d", temp[TEMP_SENSOR_3_DDR_SOC],
+			prev_temp[TEMP_SENSOR_3_DDR_SOC]);
+		CPRINTS("current_level: %d", current_level);
+	}
+
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i)
 		prev_temp[i] = temp[i];
 
-	CPRINTS("current_level: %d", current_level);
+	prev_current_level = current_level;
 
 	switch (fan) {
 	case FAN_CH_0:
