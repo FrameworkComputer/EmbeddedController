@@ -809,10 +809,25 @@ static bool is_tbt_cable_superspeed(int port)
 						USB_R20_SS_U31_GEN1_GEN2;
 }
 
+static enum tbt_compat_cable_speed usb_rev30_to_tbt_speed(enum usb_rev30_ss ss)
+{
+	switch (ss) {
+	case USB_R30_SS_U32_U40_GEN1:
+		return TBT_SS_U31_GEN1;
+	case USB_R30_SS_U32_U40_GEN2:
+		return TBT_SS_U32_GEN1_GEN2;
+	case USB_R30_SS_U40_GEN3:
+		return TBT_SS_TBT_GEN3;
+	default:
+		return TBT_SS_U32_GEN1_GEN2;
+	}
+}
+
 enum tbt_compat_cable_speed get_tbt_cable_speed(int port)
 {
 	union tbt_mode_resp_cable cable_mode_resp;
 	enum tbt_compat_cable_speed max_tbt_speed;
+	enum tbt_compat_cable_speed cable_tbt_speed;
 
 	if (!is_tbt_cable_superspeed(port))
 		return TBT_SS_RES_0;
@@ -822,17 +837,28 @@ enum tbt_compat_cable_speed get_tbt_cable_speed(int port)
 	max_tbt_speed = board_get_max_tbt_speed(port);
 
 	/*
-	 * Ref: USB Type-C Cable and Connector Specification,
-	 * figure F-1 TBT3 Discovery Flow.
-	 * If cable doesn't have Intel SVID, limit Thunderbolt cable speed to
-	 * Passive Gen 2 cable speed.
+	 * Ref: TBT4 PD Discovery Flow Application Notes Revision 0.9, Figure 2
+	 * For passive cable, if cable doesn't support USB_VID_INTEL, enter
+	 * Thunderbolt alternate mode with speed from USB Highest Speed field of
+	 * the Passive Cable VDO
+	 * For active cable, if the cable doesn't support USB_VID_INTEL, do not
+	 * enter Thunderbolt alternate mode.
 	 */
-	if (!cable_mode_resp.raw_value)
-		return max_tbt_speed < TBT_SS_U32_GEN1_GEN2 ?
-			max_tbt_speed : TBT_SS_U32_GEN1_GEN2;
+	if (!cable_mode_resp.raw_value) {
+		struct pd_discovery *disc;
 
-	return max_tbt_speed < cable_mode_resp.tbt_cable_speed ?
-		max_tbt_speed : cable_mode_resp.tbt_cable_speed;
+		if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE)
+			return TBT_SS_RES_0;
+
+		disc = pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+		cable_tbt_speed =
+		   usb_rev30_to_tbt_speed(disc->identity.product_t1.p_rev30.ss);
+	} else {
+		cable_tbt_speed = cable_mode_resp.tbt_cable_speed;
+	}
+
+	return max_tbt_speed < cable_tbt_speed ?
+		max_tbt_speed : cable_tbt_speed;
 }
 
 int enter_tbt_compat_mode(int port, enum tcpm_transmit_type sop,
