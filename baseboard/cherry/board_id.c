@@ -91,7 +91,7 @@ static int version = -1;
 /* b/163963220: Cache ADC value before board_hibernate_late() reads it */
 static void board_version_init(void)
 {
-	version = adc_value_to_numeric_id(ADC_BOARD_ID_0);
+	version = adc_value_to_numeric_id(ADC_BOARD_ID);
 	if (version < 0) {
 		ccprints("WARN:BOARD_ID_0");
 		ccprints("Assuming board id = 0");

@@ -176,14 +176,6 @@
 	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_MODE_CHANGE) | \
 	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON))
 
-/* GPIO name remapping */
-#define GPIO_EN_HDMI_PWR        GPIO_EC_X_GPIO1
-#define GPIO_USB_C1_FRS_EN      GPIO_EC_X_GPIO1
-#define GPIO_USB_C1_PPC_INT_ODL GPIO_X_EC_GPIO2
-#define GPIO_PS185_EC_DP_HPD    GPIO_X_EC_GPIO2
-#define GPIO_USB_C1_DP_IN_HPD   GPIO_EC_X_GPIO3
-#define GPIO_PS185_PWRDN_ODL    GPIO_EC_X_GPIO3
-
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -191,8 +183,8 @@
 
 enum adc_channel {
 	ADC_VBUS,                /* ADC 0 */
-	ADC_BOARD_ID_0,          /* ADC 1 */
-	ADC_BOARD_ID_1,          /* ADC 2 */
+	ADC_BOARD_ID,            /* ADC 1 */
+	ADC_SKU_ID,              /* ADC 2 */
 	ADC_CHARGER_AMON_R,      /* ADC 3 */
 	ADC_CHARGER_PMON,        /* ADC 6 */
 
