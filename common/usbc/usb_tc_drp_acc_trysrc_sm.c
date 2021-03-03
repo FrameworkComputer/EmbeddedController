@@ -3649,9 +3649,15 @@ static void tc_cc_open_entry(const int port)
 	if (battery_is_present())
 		tcpm_enable_auto_discharge_disconnect(port, 0);
 
-	/* We may brown out after applying CC open, so flush console first. */
+	/*
+	 * We may brown out after applying CC open, so flush console first.
+	 * Console flush can take a long time, so if we aren't in danger of
+	 * browning out, don't do it so we can meet certain compliance timing
+	 * requirements.
+	 */
 	CPRINTS("C%d: Applying CC Open!", port);
-	cflush();
+	if (!battery_is_present())
+		cflush();
 
 	/* Remove terminations from CC */
 	typec_select_pull(port, TYPEC_CC_OPEN);
