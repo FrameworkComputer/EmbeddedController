@@ -527,7 +527,7 @@ static int console_command_bb_retimer(int argc, char **argv)
 
 	/* Get port number */
 	port = strtoi(argv[1], &e, 0);
-	if (*e || port < 0 || port > board_get_usb_pd_port_count())
+	if (*e || !board_is_usb_pd_port_present(port))
 		return EC_ERROR_PARAM1;
 
 	mux = &usb_muxes[port];
