@@ -809,10 +809,17 @@ static void update_dynamic_battery_info(void)
 	int send_batt_status_event = 0;
 	int send_batt_info_event = 0;
 	static int __bss_slow batt_present;
+	static int batt_os_percentage;
 
 	tmp = 0;
+#ifdef CONFIG_EXTPOWER_GPIO
+	/* sync AC present flag to avoid OS ac flag flicker */
+	if (extpower_is_present())
+		tmp |= EC_BATT_FLAG_AC_PRESENT;
+#else
 	if (curr.ac)
 		tmp |= EC_BATT_FLAG_AC_PRESENT;
+#endif
 
 	if (curr.batt.is_present == BP_YES) {
 		tmp |= EC_BATT_FLAG_BATT_PRESENT;
@@ -838,9 +845,14 @@ static void update_dynamic_battery_info(void)
 	if (!(curr.batt.flags & BATT_FLAG_BAD_VOLTAGE))
 		*memmap_volt = curr.batt.voltage;
 
+#ifdef CONFIG_EMI_REGION1
+	/* let the OS battery remaining time both empty and full time more smooth */
 	if (!(curr.batt.flags & BATT_FLAG_BAD_CURRENT))
+		*memmap_rate = ABS(battery_get_avg_current());
+#else
+	if (!(curr.batt.flags & BATT_FLAG_BAD_CURRENT))	
 		*memmap_rate = ABS(curr.batt.current);
-
+#endif
 	if (!(curr.batt.flags & BATT_FLAG_BAD_REMAINING_CAPACITY)) {
 		/*
 		 * If we're running off the battery, it must have some charge.
@@ -871,8 +883,18 @@ static void update_dynamic_battery_info(void)
 	    curr.batt.state_of_charge <= BATTERY_LEVEL_CRITICAL)
 		tmp |= EC_BATT_FLAG_LEVEL_CRITICAL;
 
-	tmp |= curr.batt_is_charging ? EC_BATT_FLAG_CHARGING :
-				       EC_BATT_FLAG_DISCHARGING;
+#ifdef CONFIG_EMI_REGION1
+	batt_os_percentage = (curr.batt.remaining_capacity * 1000) / (curr.batt.full_capacity + 1);
+	/*
+	 * sync with OS battery percentage to avoid battery show charging icon at 100%
+	 * os battery display formula: rounding (remainig / full capacity)*100
+	 */
+	if (curr.ac && batt_os_percentage > 994)
+		tmp |= EC_BATT_FLAG_DISCHARGING;
+	else
+#endif
+		tmp |= curr.batt_is_charging ? EC_BATT_FLAG_CHARGING :
+						EC_BATT_FLAG_DISCHARGING;
 
 	/* Tell the AP to re-read battery status if charge state changes */
 	if (*memmap_flags != tmp)
