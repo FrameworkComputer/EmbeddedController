@@ -92,7 +92,6 @@
 #include "common.h"
 
 /* No GPIO abstraction layer */
-enum gpio_signal;
 
 enum adc_channel {
 	ADC_CH_CC1_PD = 1,
