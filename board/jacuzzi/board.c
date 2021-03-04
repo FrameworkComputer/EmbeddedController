@@ -305,6 +305,8 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 
 static void board_init(void)
 {
+	int board_version;
+
 	/* If the reset cause is external, pulse PMIC force reset. */
 	if (system_get_reset_flags() == EC_RESET_FLAG_RESET_PIN) {
 		gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 0);
@@ -328,6 +330,22 @@ static void board_init(void)
 
 	/* Enable BC12 interrupt */
 	gpio_enable_interrupt(GPIO_BC12_EC_INT_ODL);
+
+	board_version = board_get_version();
+	if (board_version == 8 || board_version == 9) {
+		/* Disable motion sense. */
+#ifndef VARIANT_KUKUI_NO_SENSORS
+		motion_sensor_count = 0;
+		gpio_disable_interrupt(GPIO_ACCEL_INT_ODL);
+		gpio_set_flags(GPIO_ACCEL_INT_ODL,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
+#endif /* !VARIANT_KUKUI_NO_SENSORS */
+		/* Disable tablet mode. */
+		tablet_set_mode(0);
+		gmr_tablet_switch_disable();
+		gpio_set_flags(GPIO_TABLET_MODE_L,
+			       GPIO_INPUT | GPIO_PULL_UP);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -436,7 +454,7 @@ struct motion_sensor_t motion_sensors[] = {
 	 .max_frequency = BMI_GYRO_MAX_FREQ,
 	},
 };
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 struct motion_sensor_t icm426xx_base_accel = {
 	.name = "Base Accel",
