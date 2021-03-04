@@ -13,6 +13,7 @@
 #include "power_button.h"
 #include "power.h"
 #include "switch.h"
+#include "tablet_mode.h"
 #include "throttle_ap.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
