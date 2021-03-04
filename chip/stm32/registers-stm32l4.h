@@ -831,27 +831,6 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 #define STM32_CRC_CR_REV_IN_WORD    (3 << 5)
 #define STM32_CRC_CR_REV_OUT        BIT(7)
 
-/* --- PMSE --- */
-#define STM32_PMSE_ARCR             REG32(STM32_PMSE_BASE + 0x0)
-#define STM32_PMSE_ACCR             REG32(STM32_PMSE_BASE + 0x4)
-#define STM32_PMSE_CR               REG32(STM32_PMSE_BASE + 0x8)
-#define STM32_PMSE_CRTDR            REG32(STM32_PMSE_BASE + 0x14)
-#define STM32_PMSE_IER              REG32(STM32_PMSE_BASE + 0x18)
-#define STM32_PMSE_SR               REG32(STM32_PMSE_BASE + 0x1c)
-#define STM32_PMSE_IFCR             REG32(STM32_PMSE_BASE + 0x20)
-#define STM32_PMSE_PxPMR(x)         REG32(STM32_PMSE_BASE + 0x2c + (x) * 4)
-#define STM32_PMSE_PAPMR            REG32(STM32_PMSE_BASE + 0x2c)
-#define STM32_PMSE_PBPMR            REG32(STM32_PMSE_BASE + 0x30)
-#define STM32_PMSE_PCPMR            REG32(STM32_PMSE_BASE + 0x34)
-#define STM32_PMSE_PDPMR            REG32(STM32_PMSE_BASE + 0x38)
-#define STM32_PMSE_PEPMR            REG32(STM32_PMSE_BASE + 0x3c)
-#define STM32_PMSE_PFPMR            REG32(STM32_PMSE_BASE + 0x40)
-#define STM32_PMSE_PGPMR            REG32(STM32_PMSE_BASE + 0x44)
-#define STM32_PMSE_PHPMR            REG32(STM32_PMSE_BASE + 0x48)
-#define STM32_PMSE_PIPMR            REG32(STM32_PMSE_BASE + 0x4c)
-#define STM32_PMSE_MRCR             REG32(STM32_PMSE_BASE + 0x100)
-#define STM32_PMSE_MCCR             REG32(STM32_PMSE_BASE + 0x104)
-
 /* --- USB --- */
 #define STM32_USB_EP(n)            REG16(STM32_USB_FS_BASE + (n) * 4)
 
