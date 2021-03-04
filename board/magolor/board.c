@@ -514,8 +514,8 @@ static struct bmi_drv_data_t g_bmi160_data;
 
 #ifdef BOARD_MAGOLOR
 static const mat33_fp_t base_icm_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(1), 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
