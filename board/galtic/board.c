@@ -533,7 +533,7 @@ int board_set_active_charge_port(int port)
 	 * requested charge port.
 	 */
 	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
-		if (port == 0)
+		if (port == i)
 			continue;
 
 		if (tcpc_write(i, TCPC_REG_COMMAND,
