@@ -129,7 +129,6 @@ enum usbc_port {
 /*****************************************************************************
  * CBI EC FW Configuration
  */
-#include "cbi_ec_fw_config.h"
 
 /**
  * DALBOZ_MB_USBAC
@@ -161,6 +160,8 @@ enum ec_cfg_usb_mb_type {
 enum ec_cfg_usb_db_type {
 	DIRINBOZ_DB_OPT1_USBC = 0,
 };
+
+#include "cbi_ec_fw_config.h"
 
 static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
 {

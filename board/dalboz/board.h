@@ -126,7 +126,6 @@ enum usbc_port {
 /*****************************************************************************
  * CBI EC FW Configuration
  */
-#include "cbi_ec_fw_config.h"
 
 /**
  * DALBOZ_MB_USBAC
@@ -168,6 +167,8 @@ enum ec_cfg_usb_db_type {
 	DALBOZ_DB_D_OPT1_USBAC = 0,
 	DALBOZ_DB_D_OPT2_USBA_HDMI = 1,
 };
+
+#include "cbi_ec_fw_config.h"
 
 #define HAS_USBC1 \
 			(BIT(DALBOZ_DB_D_OPT1_USBAC))

@@ -103,7 +103,6 @@ enum usba_port {
 /*****************************************************************************
  * CBI EC FW Configuration
  */
-#include "cbi_ec_fw_config.h"
 
 /**
  * EZKINIL_MB_USBAC
@@ -148,6 +147,7 @@ enum ec_cfg_usb_db_type {
 	EZKINIL_DB_T_OPT2_USBAC = 1,
 };
 
+#include "cbi_ec_fw_config.h"
 
 #define HAS_USBA1_RETIMER_TUSB522 \
 			(BIT(EZKINIL_DB_T_OPT2_USBAC))

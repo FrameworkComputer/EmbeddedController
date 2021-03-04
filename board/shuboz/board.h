@@ -128,8 +128,6 @@ enum usbc_port {
 /*****************************************************************************
  * CBI EC FW Configuration
  */
-#include "cbi_ec_fw_config.h"
-
 /**
  * SHUBOZ_MB_USBAC
  *	USB-A0  Speed: 5 Gbps
@@ -160,6 +158,8 @@ enum ec_cfg_usb_mb_type {
 enum ec_cfg_usb_db_type {
 	SHUBOZ_DB_D_OPT1_USBAC = 0,
 };
+
+#include "cbi_ec_fw_config.h"
 
 void board_reset_pd_mcu(void);
 

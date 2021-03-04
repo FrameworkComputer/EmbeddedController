@@ -94,7 +94,6 @@ enum usba_port {
 /*****************************************************************************
  * CBI EC FW Configuration
  */
-#include "cbi_ec_fw_config.h"
 
 /**
  * TREMBYLE_MB_USBAC
@@ -153,6 +152,7 @@ enum ec_cfg_usb_db_type {
 	TREMBYLE_DB_T_OPT3_USBAC_HDMI_MSTHUB = 2,
 };
 
+#include "cbi_ec_fw_config.h"
 
 #define HAS_USBC1_RETIMER_PS8802 \
 			(BIT(TREMBYLE_DB_T_OPT2_USBAC) | \

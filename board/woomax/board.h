@@ -114,7 +114,6 @@ enum usba_port {
 /*****************************************************************************
  * CBI EC FW Configuration
  */
-#include "cbi_ec_fw_config.h"
 
 /**
  * WOOMAX_MB_USBAC
@@ -155,6 +154,8 @@ enum ec_cfg_usb_db_type {
 	WOOMAX_DB_T_OPT1_USBAC_HMDI = 0,
 	WOOMAX_DB_T_OPT3_USBAC_HDMI_MSTHUB = 1,
 };
+
+#include "cbi_ec_fw_config.h"
 
 #define HAS_USBC1_RETIMER_PS8802 \
 			 (BIT(WOOMAX_DB_T_OPT3_USBAC_HDMI_MSTHUB))
