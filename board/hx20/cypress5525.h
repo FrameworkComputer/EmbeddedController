@@ -235,6 +235,17 @@ enum cypd_response {
 #define CYP5525_PD_CONTRACT_STATE       0x04 /* bit 10 */
 
 
+/************************************************/
+/*  UCSI MEMORY OFFSET DEFINITION               */
+/************************************************/
+#define EC_MEMMAP_UCSI_VERSION			0x12
+#define EC_MEMMAP_UCSI_CCI			0x14
+#define EC_MEMMAP_UCSI_COMMAND			0x18
+#define EC_MEMMAP_UCSI_CONTROL_DATA_LEN	0x19
+#define EC_MEMMAP_UCSI_CONTROL_SPECIFIC	0x1A
+#define EC_MEMMAP_UCSI_MESSAGE_IN		0x20
+#define EC_MEMMAP_UCSI_MESSAGE_OUT		0x30
+
 #define CYP5525_PD_SET_3A_PROF          0x02
 
 /* 7 bit address  */
@@ -299,11 +310,27 @@ struct pd_port_current_state_t {
 
 };
 
+struct pd_chip_ucsi_info_t {
+	uint8_t version[2];
+	uint8_t message_in[16];
+	uint8_t cci[8];
+	int read_tunnel_complete;
+	int write_tunnel_complete;
+	int wait_ack;
+};
+
 enum pd_port_role {
 	PORT_SINK,
 	PORT_SOURCE,
 	PORT_DUALROLE
 };
+
+enum pd_chip {
+	PD_CHIP_0,
+	PD_CHIP_1,
+	PD_CHIP_COUNT
+};
+
 
 /* PD CHIP */
 void pd_chip_interrupt(enum gpio_signal signal);
@@ -314,6 +341,18 @@ int cypd_get_pps_power_budget(void);
 
 void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int len);
 
+int cyp5225_wait_for_ack(int controller, int timeout_us);
+
+int cypd_get_int(int controller, int *intreg);
+
+int cypd_clear_int(int controller, int mask);
+
 int pd_port_configuration_change(int port, enum pd_port_role port_role);
+
+int cypd_write_reg8(int controller, int reg, int data);
+
+int cypd_write_reg_block(int controller, int reg, uint8_t *data, int len);
+
+int cypd_read_reg_block(int controller, int reg, uint8_t *data, int len);
 
 #endif	/* __CROS_EC_CYPRESS5525_H */

@@ -13,6 +13,7 @@
 #include "i2c.h"
 #include "timer.h"
 #include "uart.h"
+#include "ucsi.h"
 #include "util.h"
 #include "chipset.h"
 #include "driver/charger/isl9241.h"
@@ -22,12 +23,6 @@
 #include "usb_tc_sm.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-
-enum pd_chip {
-	PD_CHIP_0,
-	PD_CHIP_1,
-	PD_CHIP_COUNT
-};
 
 static struct pd_chip_config_t pd_chip_config[] = {
 	[PD_CHIP_0] = {
@@ -537,7 +532,8 @@ void cyp5525_interrupt(int controller)
 		}
 		if (data & CYP5525_UCSI_INTR) {
 			/* */
-			CPRINTS("INTR_REG TODO Handle UCSI");
+			//CPRINTS("P%d read ucsi data!", controller);
+			ucsi_read_tunnel(controller);
 			clear_mask |= CYP5525_UCSI_INTR;
 		}
 		break;
@@ -595,7 +591,6 @@ void cyp5525_interrupt(int controller)
 	}
 
 	cypd_clear_int(controller, clear_mask);
-
 }
 
 #define CYPD_PROCESS_CONTROLLER_AC_PRESENT BIT(31)
@@ -753,6 +748,7 @@ void cypd_interrupt_handler_task(void *p)
 				if (cyp5525_setup(i) == EC_SUCCESS) {
 					cypd_update_port_state(i, 0);
 					cypd_update_port_state(i, 1);
+					cyp5525_ucsi_startup(i);
 					gpio_enable_interrupt(pd_chip_config[i].gpio);
 					CPRINTS("CYPD %d Ready!", i);
 					pd_chip_config[i].state = CYP5525_STATE_READY;
