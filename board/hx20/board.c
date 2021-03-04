@@ -542,12 +542,21 @@ void board_hibernate_late(void)
 	*/
 }
 
+/* according to Panel team suggest, delay 60ms to meet spec */
+static void bkoff_on_deferred(void)
+{
+	gpio_set_level(GPIO_EC_BKOFF_L, 1);
+}
+DECLARE_DEFERRED(bkoff_on_deferred);
+
 
 void soc_signal_interrupt(enum gpio_signal signal)
 {
 	/* TODO: EC BKOFF signal is related soc enable panel siganl */
-	gpio_set_level(GPIO_EC_BKOFF_L,
-		gpio_get_level(GPIO_SOC_ENBKL) ? 1 : 0);
+	if (gpio_get_level(GPIO_SOC_ENBKL))
+		hook_call_deferred(&bkoff_on_deferred_data, 60 * MSEC);
+	else
+		gpio_set_level(GPIO_EC_BKOFF_L, 0);
 }
 
 void chassis_control_interrupt(enum gpio_signal signal)
