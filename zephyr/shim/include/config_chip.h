@@ -68,6 +68,13 @@
 #endif
 
 /*
+ * The Zephyr I2C shell command provides the same functionality as the Chromium
+ * EC i2cscan and i2cxfer commands, so they are always disabled.
+ */
+#undef CONFIG_CMD_I2C_SCAN
+#undef CONFIG_CMD_I2C_XFER
+
+/*
  * This not used by the Zephyr code since we always make cros_crc8() available.
  * Define it here to reduce the delta from the ECOS CONFIG.
  */
