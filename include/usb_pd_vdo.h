@@ -555,8 +555,8 @@ enum vpd_vbus {
 };
 
 enum vpd_cts_support {
-	VPD_CTS_SUPPORTED,
 	VPD_CTS_NOT_SUPPORTED,
+	VPD_CTS_SUPPORTED,
 };
 
 #define VPD_VDO_MAX_VBUS(vdo) (((vdo) >> 15) & 0x3)
