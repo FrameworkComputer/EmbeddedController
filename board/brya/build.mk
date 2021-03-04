@@ -16,6 +16,7 @@ board-y+=battery.o
 board-y+=board.o
 board-y+=fans.o
 board-y+=i2c.o
+board-y+=keyboard.o
 board-y+=pwm.o
 board-y+=sensors.o
 board-y+=usbc_config.o
