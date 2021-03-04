@@ -10,6 +10,7 @@
 
 #include <stdbool.h>
 #include "common.h"
+#include "compiler.h"
 #include "ec_commands.h"
 #include "i2c.h"
 
@@ -41,7 +42,7 @@ enum tcpc_cc_pull {
 };
 
 /* Pull-up values we apply as a SRC to advertise different current limits */
-enum tcpc_rp_value {
+FORWARD_DECLARE_ENUM(tcpc_rp_value) {
 	TYPEC_RP_USB = 0,
 	TYPEC_RP_1A5 = 1,
 	TYPEC_RP_3A0 = 2,

@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
 
+#include "compiler.h"
 #include "stdbool.h"
 
 /*
@@ -210,6 +211,8 @@ unsigned char get_board_id(void);
 void board_reset_pd_mcu(void);
 void baseboard_mst_enable_control(enum mst_source, int level);
 bool board_is_convertible(void);
+
+FORWARD_DECLARE_ENUM(battery_present);
 
 /* Check with variant about battery presence. */
 enum battery_present variant_battery_present(void);

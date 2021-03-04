@@ -9,10 +9,11 @@
 #define __CROS_EC_POWER_H
 
 #include "common.h"
+#include "compiler.h"
 #include "gpio.h"
 #include "task_id.h"
 
-enum power_state {
+FORWARD_DECLARE_ENUM(power_state) {
 	/* Steady states */
 	POWER_G3 = 0,	/*
 			 * System is off (not technically all the way into G3,

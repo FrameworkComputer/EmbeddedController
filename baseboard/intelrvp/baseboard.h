@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
 
+#include "compiler.h"
 #include "stdbool.h"
 
 #ifdef VARIANT_INTELRVP_EC_IT8320
@@ -178,7 +179,7 @@
 #include "module_id.h"
 #include "registers.h"
 
-enum tcpc_rp_value;
+FORWARD_DECLARE_ENUM(tcpc_rp_value);
 
 /* PWM channels */
 enum pwm_channel {
