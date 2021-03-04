@@ -166,3 +166,169 @@ Disregarding the infeasible amount of work required to complete this option, the
 platform/ec repository has a far faster development pace as there are many more
 contributors, and the Zephyr features would quickly lose parity during the time
 frame that we are launching both Zephyr-based and platform/ec-based devices.
+
+# How to shim features
+
+Before you get started shimming a feature, it's important to
+understand the general philosophies behind Zephyr OS and shimming:
+
+* Our current EC's OS isn't going away any time soon. Even after we
+  ship our first device with a Zephyr-based EC, we may still be working on
+  other projects using the old OS.  It's important to consider how
+  your feature will apply to both the Zephyr world and CrOS EC OS
+  world.
+
+* We won't be converting old devices to use Zephyr-based firmware.
+  This means that our existing OS and its code will need maintained
+  for bug and security fixes for years to come.  **Do not allow the
+  code you write for the CrOS EC OS to lack in quality or be "throw
+  away code" as it will need to be maintained for a long time.**
+
+* Shimming, by the very nature of the design, will lead to some ugly
+  hacks.  We try and avoid this when we can, but some of them may be
+  completely unavoidable.  This means we need to actively work against
+  nature to keep the code clean.  If we do things right, there's even
+  a possibility that we leave things cleaner than we found them.
+
+* Shimming occasionally digs up landmines.  Be prepared to step on
+  them. 💣
+
+## What code can be shimmed?
+
+Code in the `common/` directory (and other common code directories,
+like `power/`) is the ideal target for shimming, with the exception of
+core OS features which have Zephyr OS equivalents.
+
+Code in the following directories should **never be shimmed**:
+
+- `core/`: this directory contains architecture-specific code which
+  should have a Zephyr OS equivalent feature.
+
+- `chip/`: this directory contains chip-specific code, and similarly
+  should have a Zephyr OS equivalent feature.
+
+In both cases, you should instead determine (or, in rare cases,
+implement upstream) the equivalent Zephyr OS feature, and *implement
+an architecture and chip agnostic* "shim layer" in the `zephyr/shim/`
+directory which translates the APIs as necessary.
+
+As of the time of this document, the shim layer is nearing 100%
+complete, and it should be rare that you encounter an API which needs
+translation.
+
+Finally, code in the following directories should **avoid being
+shimmed, if possible**:
+
+- `board/`: this directory contains variant-specific code.
+
+- `baseboard/`: this directory contains baseboard-specific code.
+
+In both cases, the only value in shimming in code from one of those
+directories would be to enable a Zephyr OS build for a device which
+already has CrOS EC OS support, as *Zephyr-only projects will not have
+these directories*.  You should be thinking about how this would be
+implemented for a Zephyr-only project, and filing bugs to create the
+appropriate device-tree and Kconfig equivalents before shimming this
+code.
+
+## Configuration
+
+CrOS EC OS uses a special header `config.h`, which sets configuration
+defaults, and includes board and chip specific configurations by
+expecting the headers `board.h` and `config_chip.h` to be present.
+Most of these configuration options start with `CONFIG_`, however the
+rules were loosely defined over the years.
+
+Zephyr OS, on the other hand, uses two different configuration
+systems:
+
+* Kconfig, the configuration system from the Linux Kernel, which
+  fits well within the domain of preprocessor definitions in C.  The
+  schema for our Kconfig files can be found under `zephyr/Kconfig`,
+  and project-specific configurations are made in `prj.conf` files.
+
+  Kconfig is generally used to select which EC software features are
+  enabled, and should be avoided for hardware configurations, such as
+  chip configuration registers and their default settings.
+
+* Open Firmware Device Tree, which you may also be familiar with from
+  the Linux kernel.  This configuration can be found in `*.dts` files.
+
+  Device-tree is generally used for hardware configurations, and
+  should be avoided for EC software feature configuration.
+
+For code which is shimmed, we need to play nicely with both the CrOS
+EC OS configuration system, and Zephyr's configuration systems.  Thus,
+we follow the following pattern:
+
+* EC software features are configured using `Kconfig` and
+  `zephyr/shim/include/config_chip.h` translates them into the
+  appropriate CrOS EC OS configurations using patterns such as below:
+
+  ```c
+  #undef CONFIG_CMD_GETTIME
+  #ifdef CONFIG_PLATFORM_EC_TIMER_CMD_GETTIME
+  #define CONFIG_CMD_GETTIME
+  #endif
+  ```
+
+  The preprocessor code should follow that template exactly, and not
+  use any nesting (Kconfig handles dependencies, there is no reason to
+  do it again in the preprocessor code).
+
+* **The domain of Kconfig options and CrOS EC configuration names
+  should be completely distinct.**  This is because the Kconfig options
+  are included automatically, and including `config.h` may undefine
+  them.  To mitigate this, we follow a convention of using
+  `CONFIG_PLATFORM_EC_` as the prefix for EC software features in
+  Kconfig.
+
+One special configuration option exists, `CONFIG_ZEPHYR`, which you
+can use to detect whether the OS is Zephyr OS.  This is the
+conventional way to add Zephyr-specific (or excluded) code in CrOS EC
+code.
+
+The typical EC macros for reducing `#ifdef` messes (e.g.,
+`IS_ENABLED`, `STATIC_IF`, etc.) work with both CrOS EC OS and Kconfig
+options, and should be used when possible.
+
+## Header Files
+
+Besides the include paths provided by Zephyr OS, the following paths
+are additionally added for shimmed code:
+
+* `include/`
+* `zephyr/include/`
+* `zephyr/shim/include/`
+
+The names of headers in these directories should be completely
+distinct.  C compilers have no mechanism for "include ordering", and
+there is no way to "override a header".
+
+If you feel the need to "override" a header, say `foo.h` in
+`include/`, the best way to do this is to give it a different name
+under `zephyr/shim/include` (e.g., `zephyr_foo_shim.h`), and include
+that in the `foo.h` header with a `#ifdef CONFIG_ZEPHYR` guard.
+
+The typical styling convention for includes (following existing
+conventions in `platform/ec` and other C codebases we have) is:
+
+* Zephyr OS headers in pointy brackets, in alphabetical order.
+
+* One blank line
+
+* CrOS EC OS headers (either from `include/`, `zephyr/shim/include/`,
+  or the current directory), in quotes (not pointy brackets).
+
+## Adding files to Cmake
+
+Zephyr's build system (including shimmed code) uses CMake instead of
+`Makefiles`, and your code will not be compiled for Zephyr unless you
+list the files in `zephyr/CMakeLists.txt`.
+
+## Unit Tests
+
+Unit tests, implemented using the Ztest framework, can be found in
+`zephyr/test`.
+
+To run all unit tests, you use `zmake testall`.
