@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-/* Asurada board configuration */
+/* Cherry board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -23,15 +23,11 @@
 #define CONFIG_IT83XX_RESET_PD_CONTRACT_IN_BRAM
 
 /* BC12 */
-/* TODO(b/159583342): remove after rev0 deprecated */
-#define CONFIG_MT6360_BC12_GPIO
 
 /* LED */
-#ifdef BOARD_HAYATO
 #define CONFIG_LED_POWER_LED
 #define CONFIG_LED_ONOFF_STATES
 #define CONFIG_LED_ONOFF_STATES_BAT_LOW 10
-#endif
 
 /* PD / USB-C / PPC */
 #define CONFIG_USB_PD_DEBUG_LEVEL 3

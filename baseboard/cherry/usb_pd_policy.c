@@ -11,7 +11,7 @@
 #include "usbc_ppc.h"
 
 #if CONFIG_USB_PD_3A_PORTS != 1
-#error Asurada reference must have at least one 3.0 A port
+#error Cherry reference must have at least one 3.0 A port
 #endif
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
@@ -118,7 +118,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	}
 
 	/*
-	 * Asurada can only output to 1 display port at a time.
+	 * Cherry can only output to 1 display port at a time.
 	 * This implements FCFS policy by changing the aux channel. If a
 	 * display is connected to the either port (says A), and the port A
 	 * will be served until the display is disconnected from port A.

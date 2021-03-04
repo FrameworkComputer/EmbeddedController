@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Asurada board configuration */
+/* Cherry board configuration */
 
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H

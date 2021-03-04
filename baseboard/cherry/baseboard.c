@@ -3,13 +3,12 @@
  * found in the LICENSE file.
  */
 
-/* Asurada baseboard-specific configuration */
+/* Cherry baseboard-specific configuration */
 
 #include "adc.h"
 #include "adc_chip.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charger.h"
 #include "charger.h"
 #include "charge_state.h"
 #include "charge_state_v2.h"
@@ -22,7 +21,6 @@
 #include "driver/bc12/mt6360.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
-#include "driver/charger/isl923x.h"
 #include "driver/ppc/syv682x.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/temp_sensor/thermistor.h"
@@ -32,13 +30,10 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "i2c.h"
-#include "it5205_sbu.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
 #include "power_button.h"
-#include "power.h"
 #include "power.h"
 #include "pwm_chip.h"
 #include "pwm.h"
@@ -393,7 +388,7 @@ int board_allow_i2c_passthru(int port)
 
 void board_overcurrent_event(int port, int is_overcurrented)
 {
-	/* TODO: check correct operation for Asurada */
+	/* TODO: check correct operation for Cherry */
 }
 
 /* TCPC */
