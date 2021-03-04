@@ -137,7 +137,7 @@ struct timer_ctlr {
 	unsigned dcr;
 	unsigned dmar;
 
-	unsigned or;
+	unsigned option_register;
 };
 /* Must be volatile, or compiler optimizes out repeated accesses */
 typedef volatile struct timer_ctlr timer_ctlr_t;
