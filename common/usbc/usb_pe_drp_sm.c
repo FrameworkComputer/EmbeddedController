@@ -1126,6 +1126,13 @@ void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
 	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
 
 	/*
+	 * If there is a timeout error while waiting for a chunk of a chunked
+	 * message, there is no requirement to trigger a soft reset.
+	 */
+	if (e == ERR_RCH_CHUNK_WAIT_TIMEOUT)
+		return;
+
+	/*
 	 * Generate Hard Reset if Protocol Error occurred
 	 * while in PE_Send_Soft_Reset state.
 	 */

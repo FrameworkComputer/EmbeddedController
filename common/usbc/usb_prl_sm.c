@@ -296,6 +296,8 @@ static struct rx_chunked {
 	struct sm_ctx ctx;
 	/* PRL_FLAGS */
 	uint32_t flags;
+	/* error to report when moving to rch_report_error state */
+	enum pe_error error;
 } rch[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Chunked Tx State Machine Object */
@@ -1494,6 +1496,7 @@ static void rch_wait_for_message_from_protocol_layer_run(const int port)
 			 * Chunked != Chunking
 			 */
 			else {
+				rch[port].error = ERR_RCH_CHUNKED;
 				set_state_rch(port, RCH_REPORT_ERROR);
 			}
 		}
@@ -1510,6 +1513,7 @@ static void rch_wait_for_message_from_protocol_layer_run(const int port)
 		 * revision lower than PD3.0
 		 */
 		else {
+			rch[port].error = ERR_RCH_CHUNKED;
 			set_state_rch(port, RCH_REPORT_ERROR);
 		}
 	}
@@ -1563,6 +1567,7 @@ static void rch_processing_extended_message_run(const int port)
 		/* Make sure extended message buffer does not overflow */
 		if (pdmsg[port].num_bytes_received +
 					byte_num > EXTENDED_BUFFER_SIZE) {
+			rch[port].error = ERR_RCH_CHUNKED;
 			set_state_rch(port, RCH_REPORT_ERROR);
 			return;
 		}
@@ -1593,8 +1598,10 @@ static void rch_processing_extended_message_run(const int port)
 	/*
 	 * Unexpected Chunk Number
 	 */
-	else
+	else {
+		rch[port].error = ERR_RCH_CHUNKED;
 		set_state_rch(port, RCH_REPORT_ERROR);
+	}
 }
 
 /*
@@ -1630,6 +1637,7 @@ static void rch_requesting_chunk_run(const int port)
 		set_state_rch(port, RCH_WAITING_CHUNK);
 	} else if (PDMSG_CHK_FLAG(port, PRL_FLAGS_TX_ERROR)) {
 		/* Transmission Error from Protocol Layer detetected */
+		rch[port].error = ERR_RCH_CHUNKED;
 		set_state_rch(port, RCH_REPORT_ERROR);
 	} else if (RCH_CHK_FLAG(port, PRL_FLAGS_MSG_RECEIVED)) {
 		/*
@@ -1685,6 +1693,7 @@ static void rch_waiting_chunk_run(const int port)
 			 */
 			if (PD_EXT_HEADER_REQ_CHUNK(exhdr) ||
 			    !PD_EXT_HEADER_CHUNKED(exhdr)) {
+				rch[port].error = ERR_RCH_CHUNKED;
 				set_state_rch(port, RCH_REPORT_ERROR);
 			}
 			/*
@@ -1704,8 +1713,10 @@ static void rch_waiting_chunk_run(const int port)
 	/*
 	 * ChunkSenderResponseTimer Timeout
 	 */
-	else if (pd_timer_is_expired(port, PR_TIMER_CHUNK_SENDER_RESPONSE))
+	else if (pd_timer_is_expired(port, PR_TIMER_CHUNK_SENDER_RESPONSE)) {
+		rch[port].error = ERR_RCH_CHUNK_WAIT_TIMEOUT;
 		set_state_rch(port, RCH_REPORT_ERROR);
+	}
 }
 
 static void rch_waiting_chunk_exit(int port)
@@ -1734,8 +1745,7 @@ static void rch_report_error_entry(const int port)
 		/* Report error */
 		pe_report_error(port, ERR_RCH_MSG_REC, prl_rx[port].sop);
 	} else {
-		/* Report error */
-		pe_report_error(port, ERR_RCH_CHUNKED, prl_rx[port].sop);
+		pe_report_error(port, rch[port].error, prl_rx[port].sop);
 	}
 }
 
