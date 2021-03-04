@@ -280,16 +280,16 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 		*make_code = SCANCODE_VOLUME_UP;
 
 		break;
-	case SCANCODE_F4:  /* NEXT_TRACK */
-		*make_code = SCANCODE_NEXT_TRACK;
+	case SCANCODE_F4:  /* PREVIOUS_TRACK */
+		*make_code = SCANCODE_PREV_TRACK;
 
 		break;
 	case SCANCODE_F5:  /* PLAY_PAUSE */
 		*make_code = 0xe034;
 
 		break;
-	case SCANCODE_F6:  /* PREVIOUS_TRACK */
-		*make_code = SCANCODE_PREV_TRACK;
+	case SCANCODE_F6:  /* NEXT_TRACK */
+		*make_code = SCANCODE_NEXT_TRACK;
 
 		break;
 	case SCANCODE_F7:  /* TODO: DIM_SCREEN */
