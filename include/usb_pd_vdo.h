@@ -526,7 +526,7 @@ union active_cable_vdo2_rev30 {
  *           0b - 3A capable;
  *           1b - 5A capable
  *           Charge Through Support bit = 0b: Reserved, Shall be set to zero
- * <14:13> : Reserved Shall be set to zero.
+ * <13>    : Reserved Shall be set to zero.
  * <12:7>  : VBUS Impedance
  *           Charge Through Support bit = 1b:
  *           Vbus impedance through the VPD in 2 mΩ increments.
@@ -541,11 +541,17 @@ union active_cable_vdo2_rev30 {
  *           1b – the VPD supports Charge Through
  *           0b – the VPD does not support Charge Through
  */
-#define VDO_VPD(hw, fw, vbus, vbusz, gndz, cts)  \
+#define VDO_VPD(hw, fw, vbus, ctc, vbusz, gndz, cts)  \
 	(((hw) & 0xf) << 28 | ((fw) & 0xf) << 24 \
 	 | ((vbus) & 0x3) << 15                  \
+	 | ((ctc) & 0x1) << 14			 \
 	 | ((vbusz) & 0x3f) << 7                 \
 	 | ((gndz) & 0x3f) << 1 | (cts))
+
+enum vpd_ctc_support {
+	VPD_CT_CURRENT_3A,
+	VPD_CT_CURRENT_5A
+};
 
 enum vpd_vbus {
 	VPD_MAX_VBUS_20V,
@@ -560,6 +566,7 @@ enum vpd_cts_support {
 };
 
 #define VPD_VDO_MAX_VBUS(vdo) (((vdo) >> 15) & 0x3)
+#define VPD_VDO_CURRENT(vdo)  (((vdo) >> 14) & 1)
 #define VPD_VDO_VBUS_IMP(vdo) (((vdo) >> 7) & 0x3f)
 #define VPD_VDO_GND_IMP(vdo)  (((vdo) >> 1) & 0x3f)
 #define VPD_VDO_CTS(vdo)      ((vdo) & 1)

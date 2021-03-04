@@ -427,7 +427,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define VPD_HW_VERSION 0x0001
 #define VPD_FW_VERSION 0x0001
 #define USB_BCD_DEVICE 0
-
+#define VPD_CT_CURRENT VPD_CT_CURRENT_3A
 /* Vbus impedance in milliohms */
 #define VPD_VBUS_IMPEDANCE 65
 

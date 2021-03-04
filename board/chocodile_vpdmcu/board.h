@@ -83,6 +83,9 @@
 /* USB bcdDevice */
 #define USB_BCD_DEVICE 0
 
+/* Charge Through Current */
+#define VPD_CT_CURRENT VPD_CT_CURRENT_3A
+
 /* Vbus impedance in milliohms */
 #define VPD_VBUS_IMPEDANCE 65
 
