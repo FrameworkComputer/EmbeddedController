@@ -167,13 +167,6 @@
 /* LN9310 Timing definition */
 #define LN9310_CDC_DELAY 120	/* 120us */
 
-/* Battery cell type */
-enum battery_cell_type {
-	BATTERY_CELL_TYPE_UNKNOWN = 0,
-	BATTERY_CELL_TYPE_2S = 2,
-	BATTERY_CELL_TYPE_3S = 3
-};
-
 /* Define configuration of LN9310 part */
 struct ln9310_config_t {
 	const int i2c_port;

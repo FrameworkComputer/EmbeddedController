@@ -114,6 +114,13 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
+/* Battery cell type */
+enum battery_cell_type {
+	BATTERY_CELL_TYPE_UNKNOWN = 0,
+	BATTERY_CELL_TYPE_2S = 2,
+	BATTERY_CELL_TYPE_3S = 3
+};
+
 /* Swithcap functions */
 void board_set_switchcap_power(int enable);
 int board_is_switchcap_enabled(void);
