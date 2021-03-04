@@ -75,6 +75,7 @@ BOARDS_STM32=(
 	chocodile_bec
 	chocodile_vpdmcu
 	dartmonkey
+	don
 	glados_pd
 	hatch_fp
 	jerry
