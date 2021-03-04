@@ -90,6 +90,11 @@
 
 #define CONFIG_LED_ONOFF_STATES
 
+#undef CONFIG_GMR_TABLET_MODE
+#undef GMR_TABLET_MODE_GPIO_L
+#undef CONFIG_TABLET_MODE
+#undef CONFIG_TABLET_MODE_SWITCH
+
 #ifndef __ASSEMBLER__
 
 enum adc_channel {
