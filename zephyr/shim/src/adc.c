@@ -30,7 +30,7 @@ SYS_INIT(init_device_bindings, POST_KERNEL, 51);
 
 int adc_read_channel(enum adc_channel ch)
 {
-	int ret = 0;
+	int ret = 0, rv;
 	struct adc_sequence seq = {
 		.options = NULL,
 		.channels = BIT(adc_channels[ch].input_ch),
@@ -41,7 +41,10 @@ int adc_read_channel(enum adc_channel ch)
 		.calibrate = false,
 	};
 
-	adc_read(adc_dev, &seq);
+	rv = adc_read(adc_dev, &seq);
+	if (rv)
+		return rv;
+
 	adc_raw_to_millivolts(adc_ref_internal(adc_dev), ADC_GAIN_1,
 			      CONFIG_PLATFORM_EC_ADC_RESOLUTION, &ret);
 	return ret;
