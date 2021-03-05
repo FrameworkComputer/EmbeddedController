@@ -8,7 +8,7 @@
 
 CHIP:=npcx
 CHIP_FAMILY:=npcx7
-CHIP_VARIANT:=npcx7m7wb
+CHIP_VARIANT:=npcx7m6fc
 BASEBOARD:=trogdor
 
 board-y=battery.o board.o led.o
