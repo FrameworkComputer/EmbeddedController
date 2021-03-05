@@ -53,11 +53,6 @@
 
 #define CONFIG_BOARD_HAS_RTC_RESET
 
-/* Thermal features */
-
-#define CONFIG_THROTTLE_AP
-#define CONFIG_CHIPSET_CAN_THROTTLE
-
 /* Physical Volume Buttons */
 #define CONFIG_VOLUME_BUTTONS
 
