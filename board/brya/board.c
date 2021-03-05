@@ -6,6 +6,7 @@
 #include "common.h"
 
 #include "cbi_ec_fw_config.h"
+#include "power_button.h"
 #include "power.h"
 #include "switch.h"
 #include "throttle_ap.h"
@@ -29,14 +30,6 @@ BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 const union brya_cbi_fw_config fw_config_defaults = {
 	.usb_db = DB_USB3_PS8815,
 };
-
-/*
- * remove when we enable CONFIG_POWER_BUTTON
- */
-
-void power_button_interrupt(enum gpio_signal signal)
-{
-}
 
 /*
  * remove when we enable CONFIG_VOLUME_BUTTONS
