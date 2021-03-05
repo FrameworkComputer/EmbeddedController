@@ -57,6 +57,7 @@
 #define GPIO_VOLUME_DOWN_L         NAMED_GPIO(ec_voldn_btn_odl)
 #define GPIO_VOLUME_UP_L           NAMED_GPIO(ec_volup_btn_odl)
 #define GPIO_WP_L                  NAMED_GPIO(ec_wp_l)
+#define CONFIG_TEMP_SENSOR_POWER_GPIO NAMED_GPIO(pg_ec_dsw_pwrok)
 
 /* USB-C interrupts */
 #define GPIO_USB_C0_TCPC_INT_ODL   NAMED_GPIO(usb_c0_tcpc_int_odl)
