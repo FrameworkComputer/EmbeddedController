@@ -3809,6 +3809,15 @@
  */
 #undef CONFIG_DPTF_MULTI_PROFILE
 
+/*
+ * Sometime EC was already driver thermal sensor power pin to high, but sensor
+ * power is still not ready. That cause the system will thermal shutdown when
+ * first boot EC.
+ *
+ * This config can be used to delay thermal sensor read in the first time.
+ */
+#undef CONFIG_TEMP_SENSOR_FIRST_READ_DELAY_MS
+
 /*****************************************************************************/
 /* Touchpad config */
 
