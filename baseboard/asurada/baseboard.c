@@ -40,8 +40,6 @@
 #include "power_button.h"
 #include "power.h"
 #include "power.h"
-#include "pwm_chip.h"
-#include "pwm.h"
 #include "regulator.h"
 #include "spi.h"
 #include "switch.h"
@@ -203,37 +201,6 @@ static void ppc_interrupt(enum gpio_signal signal)
 		/* C0: PPC interrupt */
 		syv682x_interrupt(0);
 }
-
-/* PWM */
-
-/*
- * PWM channels. Must be in the exactly same order as in enum pwm_channel.
- * There total three 16 bits clock prescaler registers for all pwm channels,
- * so use the same frequency and prescaler register setting is required if
- * number of pwm channel greater than three.
- */
-const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED1] = {
-		.channel = 0,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 324, /* maximum supported frequency */
-		.pcfsr_sel = PWM_PRESCALER_C4
-	},
-	[PWM_CH_LED2] = {
-		.channel = 1,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 324, /* maximum supported frequency */
-		.pcfsr_sel = PWM_PRESCALER_C4
-	},
-	[PWM_CH_LED3] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 324, /* maximum supported frequency */
-		.pcfsr_sel = PWM_PRESCALER_C4
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
 
 /* Sub-board */
 

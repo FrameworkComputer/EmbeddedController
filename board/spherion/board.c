@@ -166,3 +166,34 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+/* PWM */
+
+/*
+ * PWM channels. Must be in the exactly same order as in enum pwm_channel.
+ * There total three 16 bits clock prescaler registers for all pwm channels,
+ * so use the same frequency and prescaler register setting is required if
+ * number of pwm channel greater than three.
+ */
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_KBLIGHT] = {
+		.channel = 2,
+		.flags = 0,
+		.freq_hz = 10000,
+		.pcfsr_sel = PWM_PRESCALER_C4
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+
+static void kb_backlight_enable(void)
+{
+	gpio_set_level(GPIO_EC_KB_BL_EN, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, kb_backlight_enable, HOOK_PRIO_DEFAULT);
+
+static void kb_backlight_disable(void)
+{
+	gpio_set_level(GPIO_EC_KB_BL_EN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kb_backlight_disable, HOOK_PRIO_DEFAULT);

@@ -25,6 +25,10 @@
 /* LED */
 #define CONFIG_LED_ONOFF_STATES
 
+/* Keyboard features */
+/* Keyboard backliht */
+#define CONFIG_PWM_KBLIGHT
+
 /* PD / USB-C / PPC */
 #define CONFIG_USB_PD_DEBUG_LEVEL 3
 
@@ -75,6 +79,11 @@ enum sensor_id {
 	BASE_GYRO,
 	LID_ACCEL,
 	SENSOR_COUNT,
+};
+
+enum pwm_channel {
+	PWM_CH_KBLIGHT,
+	PWM_CH_COUNT,
 };
 
 #endif /* !__ASSEMBLER__ */

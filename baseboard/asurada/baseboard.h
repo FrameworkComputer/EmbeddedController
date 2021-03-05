@@ -201,13 +201,6 @@ enum adc_channel {
 	ADC_CH_COUNT,
 };
 
-enum pwm_channel {
-	PWM_CH_LED1,
-	PWM_CH_LED2,
-	PWM_CH_LED3,
-	PWM_CH_COUNT,
-};
-
 enum power_signal {
 	PMIC_PWR_GOOD,
 	AP_IN_S3_L,
@@ -219,7 +212,6 @@ enum board_sub_board {
 	SUB_BOARD_NONE = -1,
 	SUB_BOARD_TYPEC,
 	SUB_BOARD_HDMI,
-
 	SUB_BOARD_COUNT,
 };
 
