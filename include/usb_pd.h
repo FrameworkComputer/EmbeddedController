@@ -275,6 +275,7 @@ enum pd_rx_errors {
 /* Voltage thresholds in mV (Table 7-24, PD 3.0 Version 2.0 Spec) */
 #define PD_V_SAFE0V_MAX		800
 #define PD_V_SAFE5V_MIN		4750
+#define PD_V_SAFE5V_NOM		5000
 #define PD_V_SAFE5V_MAX		5500
 
 /* USB Type-C voltages in mV (Table 4-3, USB Type-C Release 2.0 Spec) */

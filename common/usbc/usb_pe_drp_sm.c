@@ -4908,8 +4908,27 @@ static void pe_bist_tx_entry(int port)
 {
 	uint32_t *payload = (uint32_t *)rx_emsg[port].buf;
 	uint8_t mode = BIST_MODE(payload[0]);
+	int vbus_mv;
+	int ibus_ma;
 
 	print_current_state(port);
+
+	/* Get the current nominal VBUS value */
+	if (pe[port].power_role == PD_ROLE_SOURCE) {
+		const uint32_t *src_pdo;
+
+		dpm_get_source_pdo(&src_pdo, port);
+		pd_extract_pdo_power(src_pdo[pe[port].requested_idx - 1],
+				     &ibus_ma, &vbus_mv);
+	} else {
+		vbus_mv = pe[port].supply_voltage;
+	}
+
+	/* If VBUS is not at vSafe5V, then don't enter BIST test mode */
+	if (vbus_mv != PD_V_SAFE5V_NOM) {
+		pe_set_ready_state(port);
+		return;
+	}
 
 	if (mode == BIST_CARRIER_MODE_2) {
 		/*
