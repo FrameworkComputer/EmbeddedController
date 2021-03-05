@@ -30,11 +30,3 @@ BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 const union brya_cbi_fw_config fw_config_defaults = {
 	.usb_db = DB_USB3_PS8815,
 };
-
-/*
- * remove when we enable CONFIG_VOLUME_BUTTONS
- */
-
-void button_interrupt(enum gpio_signal signal)
-{
-}

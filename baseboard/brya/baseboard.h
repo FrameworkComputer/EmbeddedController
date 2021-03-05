@@ -58,6 +58,9 @@
 #define CONFIG_THROTTLE_AP
 #define CONFIG_CHIPSET_CAN_THROTTLE
 
+/* Physical Volume Buttons */
+#define CONFIG_VOLUME_BUTTONS
+
 /* Common Keyboard Defines */
 #define CONFIG_CMD_KEYBOARD
 #define CONFIG_KEYBOARD_BOARD_CONFIG
