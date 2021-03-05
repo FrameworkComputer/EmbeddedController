@@ -120,18 +120,29 @@ const struct board_batt_params board_battery_info[] = {
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_C214;
+static int saved_input_voltage = -1;
 
 /* Lower our input voltage to 5V in S5/G3 when battery is full. */
 static void reduce_input_voltage_when_full(void)
 {
-	int max_pd_voltage_mv;
+	int max_pd_voltage_mv = pd_get_max_voltage();
 	int port;
 
 	if (charge_get_percent() == 100 &&
-	    chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
+	    chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF) &&
+	    max_pd_voltage_mv != 5000) {
+		saved_input_voltage = max_pd_voltage_mv;
 		max_pd_voltage_mv = 5000;
-	else
-		max_pd_voltage_mv = PD_MAX_VOLTAGE_MV;
+	}
+	else if (saved_input_voltage != -1) {
+		/*
+		 * Chipset is not in S5/G3 or battery is not full and input
+		 * voltage is reduced
+		 */
+		max_pd_voltage_mv = saved_input_voltage;
+		saved_input_voltage = -1;
+	}
+
 	if (pd_get_max_voltage() != max_pd_voltage_mv) {
 		for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++)
 			pd_set_external_voltage_limit(port, max_pd_voltage_mv);
