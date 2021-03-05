@@ -92,6 +92,11 @@
 #define     UART_CK_SW_STATUS_26M	BIT(0)
 #define     UART_CK_SW_STATUS_32K	BIT(1)
 #define     UART_CK_SW_STATUS_ULPOS	BIT(2)
+/* BCLK clock select */
+#define SCP_BCLK_CK_SEL			REG32(SCP_CLK_CTRL_BASE + 0x0048)
+#define   BCLK_CK_SEL_SYS_DIV8		0
+#define   BCLK_CK_SEL_32K		1
+#define   BCLK_CK_SEL_ULPOSC_DIV8	2
 /* VREQ control */
 #define SCP_CPU_VREQ_CTRL		REG32(SCP_CLK_CTRL_BASE + 0x0054)
 #define   VREQ_SEL			BIT(0)

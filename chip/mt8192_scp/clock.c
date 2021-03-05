@@ -321,6 +321,9 @@ void clock_init(void)
 	/* select ULPOSC2 high speed CPU clock */
 	clock_select_clock(SCP_CLK_ULPOSC2);
 
+	/* select BCLK to use ULPOSC1 / 8 = 260MHz / 8 = 32.5MHz */
+	SCP_BCLK_CK_SEL = BCLK_CK_SEL_ULPOSC_DIV8;
+
 	/* enable default clock gate */
 	SCP_SET_CLK_CG |= CG_DMA_CH3 | CG_DMA_CH2 | CG_DMA_CH1 | CG_DMA_CH0 |
 		CG_I2C_MCLK | CG_MAD_MCLK | CG_AP2P_MCLK;
