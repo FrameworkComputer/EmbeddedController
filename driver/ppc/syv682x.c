@@ -82,15 +82,28 @@ static int read_reg(uint8_t port, int reg, int *regval)
 			 regval);
 }
 
+#ifdef CONFIG_USBC_PPC_SYV682C
+__overridable int syv682x_board_is_syv682c(int port)
+{
+	return true;
+}
+#endif
+
 /*
- * During channel transition or discharge, the SYV682A silently ignores I2C
+ * During channel transition or discharge, the SYV682X silently ignores I2C
  * writes. Poll the BUSY bit until the SYV682A is ready.
  */
-static int syv682x_wait_for_ready(int port)
+static int syv682x_wait_for_ready(int port, int reg)
 {
 	int regval;
 	int rv;
 	timestamp_t deadline;
+
+#ifdef CONFIG_USBC_PPC_SYV682C
+	/* On SYV682C, busy bit is not applied to CONTROL_4 */
+	if (syv682x_board_is_syv682c(port) && reg == SYV682X_CONTROL_4_REG)
+		return EC_SUCCESS;
+#endif
 
 	deadline.val = get_time().val
 			+ (SYV682X_MAX_VBUS_DISCHARGE_TIME_MS * MSEC);
@@ -118,7 +131,7 @@ static int write_reg(uint8_t port, int reg, int regval)
 {
 	int rv;
 
-	rv = syv682x_wait_for_ready(port);
+	rv = syv682x_wait_for_ready(port, reg);
 	if (rv)
 		return rv;
 
@@ -135,6 +148,7 @@ static int syv682x_is_sourcing_vbus(int port)
 
 static int syv682x_discharge_vbus(int port, int enable)
 {
+#ifndef CONFIG_USBC_PPC_SYV682X_SMART_DISCHARGE
 	int regval;
 	int rv;
 
@@ -148,7 +162,12 @@ static int syv682x_discharge_vbus(int port, int enable)
 		regval &= ~SYV682X_CONTROL_2_FDSG;
 
 	return write_reg(port, SYV682X_CONTROL_2_REG, regval);
-
+#else
+	/*
+	 * Smart discharge mode is enabled, nothing to do
+	 */
+	return EC_SUCCESS;
+#endif
 }
 
 static int syv682x_vbus_source_enable(int port, int enable)
@@ -654,6 +673,7 @@ static int syv682x_set_frs_enable(int port, int enable)
 }
 #endif /*CONFIG_USB_PD_FRS_PPC*/
 
+#ifndef CONFIG_USBC_PPC_SYV682X_SMART_DISCHARGE
 static int syv682x_dev_is_connected(int port, enum ppc_device_role dev)
 {
 	/*
@@ -667,6 +687,7 @@ static int syv682x_dev_is_connected(int port, enum ppc_device_role dev)
 
 	return EC_SUCCESS;
 }
+#endif
 
 static bool syv682x_is_sink(uint8_t control_1)
 {
@@ -745,15 +766,19 @@ static int syv682x_init(int port)
 		return rv;
 
 	/*
-	 * Set Control Reg 2 to defaults.
-	 * Note: do not enable smart discharge since it would block
-	 * i2c transactions for 50ms (discharge time) and this prevents
-	 * us from disabling Vconn when stop sourcing Vbus and has tVconnOff
-	 * (35ms) timeout.
+	 * Set Control Reg 2 to defaults except 50ms smart discharge time.
+	 * Note: On SYV682A/B, enable smart discharge would block i2c
+	 * transactions for 50ms (discharge time) and this
+	 * prevents us from disabling Vconn when stop sourcing Vbus and has
+	 * tVconnOff (35ms) timeout.
+	 * On SYV682C, we are allowed to access CONTROL4 while the i2c busy.
 	 */
 	regval = (SYV682X_OC_DELAY_10MS << SYV682X_OC_DELAY_SHIFT)
-		| (SYV682X_DSG_TIME_200MS << SYV682X_DSG_TIME_SHIFT)
-		| (SYV682X_DSG_RON_200_OHM << SYV682X_DSG_RON_SHIFT);
+		| (SYV682X_DSG_RON_200_OHM << SYV682X_DSG_RON_SHIFT)
+		| (SYV682X_DSG_TIME_50MS << SYV682X_DSG_TIME_SHIFT);
+
+	if (IS_ENABLED(CONFIG_USBC_PPC_SYV682X_SMART_DISCHARGE))
+		regval |= SYV682X_CONTROL_2_SDSG;
 
 	rv = write_reg(port, SYV682X_CONTROL_2_REG, regval);
 	if (rv)
@@ -800,7 +825,9 @@ const struct ppc_drv syv682x_drv = {
 #endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
 	.set_vbus_source_current_limit = &syv682x_set_vbus_source_current_limit,
 	.discharge_vbus = &syv682x_discharge_vbus,
+#ifndef CONFIG_USBC_PPC_SYV682X_SMART_DISCHARGE
 	.dev_is_connected = &syv682x_dev_is_connected,
+#endif /* defined(CONFIG_USBC_PPC_SYV682X_SMART_DISCHARGE) */
 #ifdef CONFIG_USBC_PPC_POLARITY
 	.set_polarity = &syv682x_set_polarity,
 #endif

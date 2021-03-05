@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_SYV682X_H
 #define __CROS_EC_SYV682X_H
 
+#include "common.h"
 #include "driver/ppc/syv682x_public.h"
 
 /* Source OC deglitch implemented in HW for SYV682B */
@@ -96,5 +97,16 @@
 #define SYV682X_CONTROL_4_VCONN_OCP	BIT(2)
 #define SYV682X_CONTROL_4_CC_FRS	BIT(1)
 #define SYV682X_CONTROL_4_INT_MASK	0x0c
+
+/*
+ * syv682x_board_is_syv682c
+ *
+ * b:160548079 This is a function to workaround that some board revisions
+ * might have different SYV682 sub-version.
+ *
+ * @param port the query port
+ * @return 1 if the PPC is SYV682C else 0
+ */
+__override_proto int syv682x_board_is_syv682c(int port);
 
 #endif /* defined(__CROS_EC_SYV682X_H) */
