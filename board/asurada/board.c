@@ -330,3 +330,9 @@ static void board_resume(void)
 		gpio_set_level(GPIO_EN_5V_USM, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_resume, HOOK_PRIO_DEFAULT);
+
+__override int syv682x_board_is_syv682c(int port)
+{
+	return board_get_version() > 2;
+}
+
