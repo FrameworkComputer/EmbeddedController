@@ -91,6 +91,18 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+int board_is_i2c_port_powered(int port)
+{
+	if (port != I2C_PORT_LIGHTBAR)
+		return 1;
+
+	/*
+	 * Lightbar rails are off in S5/G3
+	 * Refer CL-2739008.
+	 */
+	return chipset_in_state(CHIPSET_STATE_ANY_OFF) ? 0 : 1;
+}
+
 int board_is_lid_angle_tablet_mode(void)
 {
 	return ec_cfg_has_tabletmode();
