@@ -252,6 +252,14 @@ static int _send_command(struct pchg *ctx, const struct ctn730_msg *cmd)
 	return rv;
 }
 
+static int ctn730_reset(struct pchg *ctx)
+{
+	gpio_set_level(GPIO_WLC_NRST_CONN, 0);
+	msleep(1);
+	gpio_set_level(GPIO_WLC_NRST_CONN, 1);
+	return EC_SUCCESS_IN_PROGRESS;
+}
+
 static int ctn730_init(struct pchg *ctx)
 {
 	uint8_t buf[CTN730_MESSAGE_BUFFER_SIZE];
@@ -376,7 +384,7 @@ static int _process_payload_event(struct pchg *ctx, struct ctn730_msg *res)
 			 */
 			msleep(5);
 		} else if (buf[0] == WLC_HOST_CTRL_RESET_EVT_DOWNLOAD_MODE) {
-			ctx->event = PCHG_EVENT_NONE;
+			ctx->event = PCHG_EVENT_RESET;
 		} else {
 			return EC_ERROR_INVAL;
 		}
@@ -539,6 +547,7 @@ exit:
 }
 
 const struct pchg_drv ctn730_drv = {
+	.reset = ctn730_reset,
 	.init = ctn730_init,
 	.enable = ctn730_enable,
 	.get_event = ctn730_get_event,

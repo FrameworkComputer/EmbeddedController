@@ -73,6 +73,7 @@ enum pchg_event {
 	PCHG_EVENT_IRQ,
 
 	/* External Events */
+	PCHG_EVENT_RESET,
 	PCHG_EVENT_INITIALIZED,
 	PCHG_EVENT_ENABLED,
 	PCHG_EVENT_DISABLED,
@@ -140,6 +141,8 @@ struct pchg {
  * Peripheral charger driver
  */
 struct pchg_drv {
+	/* Reset charger chip. */
+	int (*reset)(struct pchg *ctx);
 	/* Initialize the charger. */
 	int (*init)(struct pchg *ctx);
 	/* Enable/disable the charger. */
