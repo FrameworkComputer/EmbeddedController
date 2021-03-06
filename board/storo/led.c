@@ -76,3 +76,23 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	}
 	return EC_SUCCESS;
 }
+
+__override enum led_states board_led_get_state(enum led_states desired_state)
+{
+	/*
+	 * Battery error LED behavior as below:
+	 * S0: Blinking Amber LED, 1s on/ 1s off
+	 * S3/S5: following S3/S5 behavior
+	 * Add function to let battery error LED follow S3/S5 behavior in S3/S5.
+	 */
+
+	if (desired_state == STATE_BATTERY_ERROR) {
+		if (chipset_in_state(CHIPSET_STATE_ON))
+			return desired_state;
+		else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+			return STATE_DISCHARGE_S3;
+		else
+			return STATE_DISCHARGE_S5;
+	}
+	return desired_state;
+}
