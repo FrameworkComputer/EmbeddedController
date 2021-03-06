@@ -379,7 +379,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	if (batt.desired_voltage) {
 		if (((batt.voltage < batt_info->voltage_min) ||
 		    ((batt.voltage < batt_info->voltage_normal) &&
-		    (batt.desired_current <= batt_info->precharge_current))) &&
+		    (current_ma <= batt_info->precharge_current))) &&
 		    (ph != PHASE_PRECHARGE)) {
 			/*
 			 * If the charger IC doesn't support the linear charge
@@ -391,11 +391,11 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 			} else if (result == EC_SUCCESS) {
 				CPRINTS("OCPC: Enabling linear precharge");
 				ph = PHASE_PRECHARGE;
-				i_ma = batt.desired_current;
+				i_ma = current_ma;
 			}
 		} else if (batt.voltage < batt.desired_voltage) {
 			if ((ph == PHASE_PRECHARGE) &&
-			    (batt.desired_current >
+			    (current_ma >
 			     batt_info->precharge_current)) {
 				/*
 				 * Precharge phase is complete.  Now set the
@@ -425,7 +425,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 
 			if ((ph != PHASE_PRECHARGE) && (ph < PHASE_CV_TRIP))
 				ph = PHASE_CC;
-			i_ma = batt.desired_current;
+			i_ma = current_ma;
 		} else {
 			/*
 			 * Once the battery voltage reaches the desired voltage,
@@ -587,7 +587,7 @@ set_vsys:
 				CPRINT_VIZ(i == loc ? "o" : "-");
 		}
 		CPRINT_VIZ("] (actual)%dmA (desired)%dmA\n", batt.current,
-			   batt.desired_current);
+			   i_ma);
 	}
 
 	return rv;
