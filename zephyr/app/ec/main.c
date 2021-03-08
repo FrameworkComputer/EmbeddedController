@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "keyboard_scan.h"
 #include "system.h"
+#include "vboot.h"
 #include "watchdog.h"
 #include "zephyr_espi_shim.h"
 
