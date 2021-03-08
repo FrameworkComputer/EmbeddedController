@@ -25,19 +25,18 @@ static uint8_t init_done, tx_started;
 void uart_init(void)
 {
 	const uint32_t baud_rate = CONFIG_UART_BAUD_RATE;
-	/* TODO: use ULPOSC1 for S3 */
 	const uint32_t uart_clock = 26000000;
 	const uint32_t div = DIV_ROUND_NEAREST(uart_clock, baud_rate * 16);
 
 #if UARTN == 0
-	SCP_UART_CK_SEL |= UART0_CK_SEL_VAL(UART_CK_SEL_26M);
+	SCP_UART_CK_SEL |= UART0_CK_SEL_VAL(UART_CK_SEL_ULPOSC);
 	SCP_SET_CLK_CG |= CG_UART0_MCLK | CG_UART0_BCLK | CG_UART0_RST;
 
 	/* set AP GPIO164 and GPIO165 to alt func 3 */
 	AP_GPIO_MODE20_CLR = 0x00770000;
 	AP_GPIO_MODE20_SET = 0x00330000;
 #elif UARTN == 1
-	SCP_UART_CK_SEL |= UART1_CK_SEL_VAL(UART_CK_SEL_26M);
+	SCP_UART_CK_SEL |= UART1_CK_SEL_VAL(UART_CK_SEL_ULPOSC);
 	SCP_SET_CLK_CG |= CG_UART1_MCLK | CG_UART1_BCLK | CG_UART1_RST;
 #endif
 
