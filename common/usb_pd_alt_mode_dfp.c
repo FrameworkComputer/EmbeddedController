@@ -684,6 +684,85 @@ static inline bool is_pd_rev3(int port, enum tcpm_transmit_type type)
 /*
  * ############################################################################
  *
+ * (Charge Through) Vconn Powered Device functions
+ *
+ * ############################################################################
+ */
+bool is_vpd_ct_supported(int port)
+{
+	struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+	union vpd_vdo vpd = disc->identity.product_t1.vpd;
+
+	return vpd.ct_support;
+}
+
+uint8_t get_vpd_ct_gnd_impedance(int port)
+{
+	struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+	union vpd_vdo vpd = disc->identity.product_t1.vpd;
+
+	return vpd.gnd_impedance;
+}
+
+uint8_t get_vpd_ct_vbus_impedance(int port)
+{
+	struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+	union vpd_vdo vpd = disc->identity.product_t1.vpd;
+
+	return vpd.vbus_impedance;
+}
+
+uint8_t get_vpd_ct_current_support(int port)
+{
+	struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+	union vpd_vdo vpd = disc->identity.product_t1.vpd;
+
+	return vpd.ct_current_support;
+}
+
+uint8_t get_vpd_ct_max_vbus_voltage(int port)
+{
+	struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+	union vpd_vdo vpd = disc->identity.product_t1.vpd;
+
+	return vpd.max_vbus_voltage;
+}
+
+uint8_t get_vpd_ct_vdo_version(int port)
+{
+	struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+	union vpd_vdo vpd = disc->identity.product_t1.vpd;
+
+	return vpd.vdo_version;
+}
+
+uint8_t get_vpd_ct_firmware_verion(int port)
+{
+	struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+	union vpd_vdo vpd = disc->identity.product_t1.vpd;
+
+	return vpd.firmware_version;
+}
+
+uint8_t get_vpd_ct_hw_version(int port)
+{
+	struct pd_discovery *disc =
+		pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+	union vpd_vdo vpd = disc->identity.product_t1.vpd;
+
+	return vpd.hw_version;
+}
+
+/*
+ * ############################################################################
+ *
  * Cable communication functions
  *
  * ############################################################################

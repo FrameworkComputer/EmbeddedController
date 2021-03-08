@@ -1683,12 +1683,26 @@ static void send_source_cap(int port)
  */
 static void pe_send_request_msg(int port)
 {
+	uint32_t vpd_vdo = 0;
 	uint32_t rdo;
 	uint32_t curr_limit;
 	uint32_t supply_voltage;
 
+	/*
+	 * If we are charging through a VPD, the requested voltage and current
+	 * might need adjusting.
+	 */
+	if ((get_usb_pd_cable_type(port) == IDH_PTYPE_VPD) &&
+						is_vpd_ct_supported(port)) {
+		union vpd_vdo vpd = pd_get_am_discovery(port,
+				TCPC_TX_SOP_PRIME)->identity.product_t1.vpd;
+
+		/* The raw vpd_vdo is passed to pd_build_request */
+		vpd_vdo = vpd.raw_value;
+	}
+
 	/* Build and send request RDO */
-	pd_build_request(pe[port].vpd_vdo, &rdo, &curr_limit,
+	pd_build_request(vpd_vdo, &rdo, &curr_limit,
 			&supply_voltage, port);
 
 	CPRINTF("C%d: Req [%d] %dmV %dmA", port, RDO_POS(rdo),
@@ -2704,7 +2718,8 @@ static void pe_src_disabled_entry(int port)
 {
 	print_current_state(port);
 
-	if ((pe[port].vpd_vdo >= 0) && VPD_VDO_CTS(pe[port].vpd_vdo)) {
+	if ((get_usb_pd_cable_type(port) == IDH_PTYPE_VPD) &&
+						is_vpd_ct_supported(port)) {
 		/*
 		 * Inform the Device Policy Manager that a Charge-Through VCONN
 		 * Powered Device was detected.

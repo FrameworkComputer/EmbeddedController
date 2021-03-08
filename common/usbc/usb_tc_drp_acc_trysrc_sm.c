@@ -1136,7 +1136,8 @@ int pd_is_connected(int port)
 {
 	return (IS_ATTACHED_SRC(port) ||
 		(IS_ENABLED(CONFIG_USB_PE_SM) &&
-		 (get_state_tc(port) == TC_CT_ATTACHED_SNK)) ||
+		((get_state_tc(port) == TC_CT_UNATTACHED_SNK) ||
+		(get_state_tc(port) == TC_CT_ATTACHED_SNK))) ||
 		IS_ATTACHED_SNK(port));
 }
 
@@ -3134,7 +3135,6 @@ static void tc_attached_src_run(const int port)
 		 */
 		if (!TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER) &&
 			TC_CHK_FLAG(port, TC_FLAGS_CTVPD_DETECTED)) {
-			TC_CLR_FLAG(port, TC_FLAGS_CTVPD_DETECTED);
 
 			/* Clear TC_FLAGS_DISC_IDENT_IN_PROGRESS */
 			TC_CLR_FLAG(port, TC_FLAGS_DISC_IDENT_IN_PROGRESS);
@@ -3169,10 +3169,17 @@ static void tc_attached_src_exit(const int port)
 		/* Attached.SRC exit - disable AutoDischargeDisconnect */
 		tcpm_enable_auto_discharge_disconnect(port, 0);
 
-		/* Disable VCONN if not power role swapping */
-		if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON))
+		/*
+		 * Disable VCONN if not power role swapping and
+		 * a CTVPD was not detected
+		 */
+		if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON) &&
+				!TC_CHK_FLAG(port, TC_FLAGS_CTVPD_DETECTED))
 			set_vconn(port, 0);
 	}
+
+	/* Clear CTVPD detected after checking for Vconn */
+	TC_CLR_FLAG(port, TC_FLAGS_CTVPD_DETECTED);
 
 	/* Clear PR swap flag after checking for Vconn */
 	TC_CLR_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP);
@@ -3501,7 +3508,6 @@ __maybe_unused static void tc_ct_unattached_snk_entry(int port)
 	 * ground through Rd.
 	 */
 	typec_select_pull(port, TYPEC_CC_RD);
-	typec_select_src_current_limit_rp(port, CONFIG_USB_PD_PULLUP);
 	typec_update_cc(port);
 
 	tc[port].cc_state = PD_CC_UNSET;

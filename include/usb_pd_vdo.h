@@ -965,6 +965,22 @@ union enter_usb_data_obj {
 	uint32_t raw_value;
 };
 
+union vpd_vdo {
+	struct {
+		uint32_t ct_support : 1;
+		uint32_t gnd_impedance : 6;
+		uint32_t vbus_impedance : 6;
+		uint32_t reserved0 : 1;
+		uint32_t ct_current_support : 1;
+		uint32_t max_vbus_voltage : 2;
+		uint32_t reserved1 : 4;
+		uint32_t vdo_version : 3;
+		uint32_t firmware_version : 4;
+		uint32_t hw_version : 4;
+	};
+	uint32_t raw_value;
+};
+
 /*
  * ############################################################################
  *
@@ -981,6 +997,9 @@ union product_type_vdo1 {
 	/* Active cable VDO */
 	union active_cable_vdo_rev20 a_rev20;
 	union active_cable_vdo1_rev30 a_rev30;
+
+	/* Vconn Power USB Device VDO */
+	union vpd_vdo vpd;
 
 	uint32_t raw_value;
 };
