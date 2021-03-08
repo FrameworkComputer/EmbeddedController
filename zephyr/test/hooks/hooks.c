@@ -120,6 +120,27 @@ static void test_deferred_func_push_out(void)
 		"The deferred function was not called, but should have been");
 }
 
+static bool deferred_func_3_called;
+
+static void deferred_func_3(void)
+{
+	deferred_func_3_called = true;
+}
+DECLARE_DEFERRED(deferred_func_3);
+
+static void test_deferred_func_cancel(void)
+{
+	zassert_false(
+		deferred_func_3_called,
+		"The deferred function was called, but should not have been");
+	hook_call_deferred(&deferred_func_3_data, DEFERRED_DELAY_US);
+	hook_call_deferred(&deferred_func_3_data, -1);
+	k_usleep(DEFERRED_DELAY_US * 2);
+	zassert_false(
+		deferred_func_3_called,
+		"The deferred function was called, but should not have been");
+}
+
 void test_main(void)
 {
 	ztest_test_suite(
@@ -128,7 +149,8 @@ void test_main(void)
 		ztest_unit_test(test_hook_list_single),
 		ztest_unit_test(test_hook_list_empty),
 		ztest_unit_test(test_deferred_func),
-		ztest_unit_test(test_deferred_func_push_out));
+		ztest_unit_test(test_deferred_func_push_out),
+		ztest_unit_test(test_deferred_func_cancel));
 
 	ztest_run_test_suite(hooks_tests);
 }

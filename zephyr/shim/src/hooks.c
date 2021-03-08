@@ -55,13 +55,21 @@ void zephyr_shim_setup_deferred(const struct deferred_data *data)
 int hook_call_deferred(const struct deferred_data *data, int us)
 {
 	struct deferred_data *non_const = (struct deferred_data *)data;
-	int rv;
+	int rv = 0;
 
-	rv = k_delayed_work_submit_to_queue(&deferred_work_queue,
-					    &non_const->delayed_work,
-					    K_USEC(us));
-	if (rv < 0)
-		cprints(CC_HOOK, "Warning: deferred call not submitted.");
+	if (us == -1) {
+		k_delayed_work_cancel(&non_const->delayed_work);
+	} else if (us >= 0) {
+		rv = k_delayed_work_submit_to_queue(&deferred_work_queue,
+						    &non_const->delayed_work,
+						    K_USEC(us));
+		if (rv < 0)
+			cprints(CC_HOOK,
+				"Warning: deferred call not submitted.");
+	} else {
+		return EC_ERROR_PARAM2;
+	}
+
 	return rv;
 }
 
@@ -126,4 +134,3 @@ void hook_task(void *u)
 			task_wait_event(next);
 	}
 }
-
