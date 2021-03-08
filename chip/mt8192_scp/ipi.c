@@ -4,14 +4,11 @@
  */
 
 #include "atomic.h"
-#include "clock.h"
-#include "clock_chip.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
 #include "hostcmd.h"
 #include "ipi_chip.h"
-#include "power.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -55,19 +52,6 @@ static void ipi_wake_ap(int32_t id)
 
 	if (*ipi_wakeup_table[id])
 		SCP_SCP2SPM_IPC_SET = IPC_SCP2HOST;
-}
-
-__override void
-power_chipset_handle_host_sleep_event(enum host_sleep_event state,
-				      struct host_sleep_event_context *ctx)
-{
-	if (state == HOST_SLEEP_EVENT_S3_SUSPEND) {
-		ccprints("AP suspend");
-		clock_select_clock(SCP_CLK_ULPOSC1);
-	} else if (state == HOST_SLEEP_EVENT_S3_RESUME) {
-		ccprints("AP resume");
-		clock_select_clock(SCP_CLK_ULPOSC2);
-	}
 }
 
 int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)

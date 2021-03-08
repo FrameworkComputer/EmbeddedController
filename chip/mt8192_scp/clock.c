@@ -10,12 +10,16 @@
 
 #include "clock_chip.h"
 #include "clock.h"
+#include "common.h"
 #include "console.h"
 #include "csr.h"
+#include "ec_commands.h"
+#include "power.h"
 #include "registers.h"
 #include "timer.h"
 
 #define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
 
 static struct opp_ulposc_cfg {
 	uint32_t osc;
@@ -286,6 +290,19 @@ void clock_select_clock(enum scp_clock_source src)
 
 	if (src != SCP_CLK_ULPOSC1)
 		SCP_CLK_DIV_SEL = CLK_DIV_SEL1;
+}
+
+__override void
+power_chipset_handle_host_sleep_event(enum host_sleep_event state,
+				      struct host_sleep_event_context *ctx)
+{
+	if (state == HOST_SLEEP_EVENT_S3_SUSPEND) {
+		CPRINTS("AP suspend");
+		clock_select_clock(SCP_CLK_ULPOSC1);
+	} else if (state == HOST_SLEEP_EVENT_S3_RESUME) {
+		CPRINTS("AP resume");
+		clock_select_clock(SCP_CLK_ULPOSC2);
+	}
 }
 
 void clock_init(void)
