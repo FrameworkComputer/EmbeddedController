@@ -200,13 +200,13 @@ void vpd_host_set_pull(int pull, int rp_value)
 		break;
 	case TYPEC_CC_RA_RD:
 		vpd_cc_rpusb_odh(GPO_HZ);
-		vpd_config_cc_rp3a0_rd_l(PIN_GPO, 0);
+		vpd_config_cc_rp3a0_rd_l(PIN_CMP, 0);
 
 		/*
 		 * RA is connected to VCONN
 		 * RD is connected to CC
 		 */
-		vpd_cc_db_en_od(GPO_HZ);
+		vpd_cc_db_en_od(GPO_HIGH);
 		break;
 	case TYPEC_CC_OPEN:
 		vpd_cc_rpusb_odh(GPO_HZ);
