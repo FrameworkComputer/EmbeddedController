@@ -14,6 +14,6 @@
  * @param pdata  Panic information to print
  * @return 0 if success or non-zero error code if error.
  */
-int parse_panic_info(const struct panic_data *pdata);
+int parse_panic_info(const char *data, size_t size);
 
 #endif /* EC_PANICINFO_H */

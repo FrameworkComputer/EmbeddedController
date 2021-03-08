@@ -5,7 +5,9 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include "compile_time_macros.h"
+
 #include "ec_panicinfo.h"
 
 static void print_panic_reg(int regnum, const uint32_t *regs, int index)
@@ -123,34 +125,67 @@ static int parse_panic_info_rv32i(const struct panic_data *pdata)
 	return 0;
 }
 
-int parse_panic_info(const struct panic_data *pdata)
+int parse_panic_info(const char *data, size_t size)
 {
+	/* Size of the panic information "header". */
+	const size_t header_size = 4;
+	/* Size of the panic information "trailer" (struct_size and magic). */
+	const size_t trailer_size = sizeof(struct panic_data) -
+				 offsetof(struct panic_data, struct_size);
+
+	struct panic_data pdata = { 0 };
+	size_t copy_size;
+
+	if (size < (header_size + trailer_size)) {
+		fprintf(stderr, "ERROR: Panic data too short (%zd).\n", size);
+		return -1;
+	}
+
+	if (size > sizeof(pdata)) {
+		fprintf(stderr, "WARNING: Panic data too large (%zd > %zd). "
+			"Following data may be incorrect!\n",
+			size, sizeof(pdata));
+		copy_size = sizeof(pdata);
+	} else {
+		copy_size = size;
+	}
+	/* Copy the data into pdata, as the struct size may have changed. */
+	memcpy(&pdata, data, copy_size);
+	/* Then copy the trailer in position. */
+	memcpy((char *)&pdata + (sizeof(struct panic_data) - trailer_size),
+		data + (size - trailer_size), trailer_size);
+
 	/*
 	 * We only understand panic data with version <= 2. Warn the user
 	 * of higher versions.
 	 */
-	if (pdata->struct_version > 2)
-		fprintf(stderr,
-			"Unknown panic data version (%d). "
+	if (pdata.struct_version > 2)
+		fprintf(stderr, "WARNING: Unknown panic data version (%d). "
 			"Following data may be incorrect!\n",
-			pdata->struct_version);
+			pdata.struct_version);
 
 	/* Validate magic number */
-	if (pdata->magic != PANIC_DATA_MAGIC)
-		fprintf(stderr,
-			"Incorrect panic magic (%d). "
+	if (pdata.magic != PANIC_DATA_MAGIC)
+		fprintf(stderr, "WARNING: Incorrect panic magic (%d). "
 			"Following data may be incorrect!\n",
-			pdata->magic);
+			pdata.magic);
 
-	switch (pdata->arch) {
+	if (pdata.struct_size != size)
+		fprintf(stderr,
+			"WARNING: Panic struct size inconsistent (%u vs %zd). "
+			"Following data may be incorrect!\n",
+			pdata.struct_size, size);
+
+	switch (pdata.arch) {
 	case PANIC_ARCH_CORTEX_M:
-		return parse_panic_info_cm(pdata);
+		return parse_panic_info_cm(&pdata);
 	case PANIC_ARCH_NDS32_N8:
-		return parse_panic_info_nds32(pdata);
+		return parse_panic_info_nds32(&pdata);
 	case PANIC_ARCH_RISCV_RV32I:
-		return parse_panic_info_rv32i(pdata);
+		return parse_panic_info_rv32i(&pdata);
 	default:
-		fprintf(stderr, "Unknown architecture (%d).\n", pdata->arch);
+		fprintf(stderr, "ERROR: Unknown architecture (%d).\n",
+			pdata.arch);
 		break;
 	}
 	return -1;

@@ -6448,7 +6448,6 @@ int cmd_keyboard_factory_test(int argc, char *argv[])
 int cmd_panic_info(int argc, char *argv[])
 {
 	int rv;
-	struct panic_data *pdata = (struct panic_data *)ec_inbuf;
 
 	rv = ec_command(EC_CMD_GET_PANIC_INFO, 0, NULL, 0,
 			ec_inbuf, ec_max_insize);
@@ -6460,7 +6459,7 @@ int cmd_panic_info(int argc, char *argv[])
 		return 0;
 	}
 
-	return parse_panic_info(pdata);
+	return parse_panic_info(ec_inbuf, rv);
 }
 
 

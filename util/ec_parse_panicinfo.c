@@ -7,16 +7,36 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include "compile_time_macros.h"
 #include "ec_panicinfo.h"
 
 int main(int argc, char *argv[])
 {
-	struct panic_data pdata;
+	/*
+	 * panic_data size could change with time, as new architecture are
+	 * added (or, less likely, removed).
+	 */
+	char pdata[4096];
+	size_t size = 0;
+	size_t read;
 
-	if (fread(&pdata, sizeof(pdata), 1, stdin) != 1) {
-		fprintf(stderr, "Error reading panicinfo from stdin.\n");
-		return 1;
+	BUILD_ASSERT(sizeof(pdata) > sizeof(struct panic_data)*2);
+
+	while (1) {
+		read = fread(&pdata[size], 1, sizeof(pdata)-size, stdin);
+		if (read < 0) {
+			fprintf(stderr, "Cannot read panicinfo from stdin.\n");
+			return 1;
+		}
+		if (read == 0)
+			break;
+
+		size += read;
+		if (size == sizeof(pdata)) {
+			fprintf(stderr, "Too much panicinfo data in stdin.\n");
+			return 1;
+		}
 	}
 
-	return parse_panic_info(&pdata) ? 1 : 0;
+	return parse_panic_info(pdata, size) ? 1 : 0;
 }
