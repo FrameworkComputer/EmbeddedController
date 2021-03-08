@@ -343,18 +343,32 @@ static int board_ps8743_mux_set(const struct usb_mux *me,
 	return ps8743_write(me, PS8743_REG_MODE, reg);
 }
 
+const struct usb_mux usbc0_virtual_mux = {
+	.usb_port = 0,
+	.driver = &virtual_usb_mux_driver,
+	.hpd_update = &virtual_hpd_update,
+};
+
+const struct usb_mux usbc1_virtual_mux = {
+	.usb_port = 1,
+	.driver = &virtual_usb_mux_driver,
+	.hpd_update = &virtual_hpd_update,
+};
+
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 0,
 		.i2c_port = I2C_PORT_USB_MUX0,
 		.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
 		.driver = &it5205_usb_mux_driver,
+		.next_mux = &usbc0_virtual_mux,
 	},
 	{
 		.usb_port = 1,
 		.i2c_port = I2C_PORT_USB_MUX1,
 		.i2c_addr_flags = PS8743_I2C_ADDR0_FLAG,
 		.driver = &ps8743_usb_mux_driver,
+		.next_mux = &usbc1_virtual_mux,
 		.board_set = &board_ps8743_mux_set,
 	},
 };
