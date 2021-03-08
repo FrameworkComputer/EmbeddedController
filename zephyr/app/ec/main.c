@@ -42,6 +42,10 @@ void main(void)
 		}
 	}
 
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG)) {
+		watchdog_init();
+	}
+
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_VBOOT)) {
 		/*
 		 * For RO, it behaves as follows:
@@ -50,10 +54,6 @@ void main(void)
 		 * For RW, it returns immediately.
 		 */
 		vboot_main();
-	}
-
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG)) {
-		watchdog_init();
 	}
 
 	/* Call init hooks before main tasks start */
