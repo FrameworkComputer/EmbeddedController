@@ -84,9 +84,9 @@ static void tcs3400_read_deferred(void)
 DECLARE_DEFERRED(tcs3400_read_deferred);
 
 /* convert ATIME register to integration time, in microseconds */
-static int tcs3400_get_integration_time(int atime)
+int tcs3400_get_integration_time(int atime)
 {
-	return 2780 * (256 - atime);
+	return TCS_MAX_INTEGRATION_TIME * (TCS_ATIME_GRANULARITY - atime);
 }
 
 static int tcs3400_read(const struct motion_sensor_t *s, intv3_t v)
@@ -260,13 +260,17 @@ static uint32_t normalize_channel_data(struct motion_sensor_t *s,
 }
 
 
-static void tcs3400_translate_to_xyz(struct motion_sensor_t *s,
+__overridable void tcs3400_translate_to_xyz(struct motion_sensor_t *s,
 				     int32_t *crgb_data, int32_t *xyz_data)
 {
 	struct tcs3400_rgb_drv_data_t *rgb_drv_data = TCS3400_RGB_DRV_DATA(s+1);
 	int32_t crgb_prime[CRGB_COUNT];
 	int32_t ir;
 	int i;
+
+	/* normalize the data for atime and again changes */
+	for (i = 0; i < CRGB_COUNT; i++)
+		crgb_data[i] = normalize_channel_data(s, crgb_data[i]);
 
 	/* IR removal */
 	ir = FP_TO_INT(fp_mul(INT_TO_FP(crgb_data[1] + crgb_data[2] +
@@ -343,15 +347,16 @@ static void tcs3400_process_raw_data(struct motion_sensor_t *s,
 
 		/* compensate for the light cover */
 		crgb_data[i] = SENSOR_APPLY_SCALE(crgb_data[i], cover_scale);
-
-		/* normalize the data for atime and again changes */
-		crgb_data[i] = normalize_channel_data(s, crgb_data[i]);
 	}
 
 	if (!calibration_mode) {
 		/* we're not in calibration mode & we want xyz translation */
 		tcs3400_translate_to_xyz(s, crgb_data, xyz_data);
 	} else {
+		/* normalize the data for atime and again changes */
+		for (i = 0; i < CRGB_COUNT; i++)
+			crgb_data[i] = normalize_channel_data(s, crgb_data[i]);
+
 		/* calibration mode returns raw data */
 		for (i = 0; i < 3; i++)
 			xyz_data[i] = crgb_data[i+1];
