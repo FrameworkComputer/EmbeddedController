@@ -151,6 +151,8 @@ struct pchg {
 	uint32_t dropped_event_count;
 	/* enum pchg_mode */
 	uint8_t mode;
+	/* FW version */
+	uint32_t fw_version;
 };
 
 /**

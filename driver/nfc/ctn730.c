@@ -418,6 +418,7 @@ static int _process_payload_event(struct pchg *ctx, struct ctn730_msg *res)
 			if (len != WLC_HOST_CTRL_RESET_EVT_NORMAL_MODE_SIZE)
 				return EC_ERROR_INVAL;
 			ctx->event = PCHG_EVENT_IN_NORMAL;
+			ctx->fw_version = (uint16_t)buf[1] << 8 | buf[2];
 			CPRINTS("Normal Mode (FW=0x%02x.%02x)", buf[1], buf[2]);
 			/*
 			 * ctn730 isn't immediately ready for i2c write after

@@ -442,12 +442,14 @@ static enum ec_status hc_pchg(struct host_cmd_handler_args *args)
 
 	r->battery_percentage = ctx->battery_percent;
 	r->error = ctx->error;
+	r->fw_version = ctx->fw_version;
+	r->dropped_event_count = ctx->dropped_event_count;
 
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PCHG, hc_pchg, EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_PCHG, hc_pchg, EC_VER_MASK(1));
 
 static int cc_pchg(int argc, char **argv)
 {
@@ -464,11 +466,11 @@ static int cc_pchg(int argc, char **argv)
 	ctx = &pchgs[port];
 
 	if (argc == 2) {
-		ccprintf("P%d STATE_%s EVENT_%s SOC=%d%%\n", port,
-			 _text_state(ctx->state), _text_event(ctx->event),
+		ccprintf("P%d STATE_%s EVENT_%s SOC=%d%%\n",
+			 port, _text_state(ctx->state), _text_event(ctx->event),
 			 ctx->battery_percent);
-		ccprintf("error=0x%x dropped=%u\n",
-			 ctx->error, ctx->dropped_event_count);
+		ccprintf("error=0x%x dropped=%u fw_version=0x%x\n",
+			 ctx->error, ctx->dropped_event_count, ctx->fw_version);
 		return EC_SUCCESS;
 	}
 
