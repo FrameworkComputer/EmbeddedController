@@ -153,7 +153,7 @@ const struct pwm_t pwm_channels[] = {
 	},
 	[PWM_CH_KBL] = {
 		.channel = 4,
-		.flags = PWM_CONFIG_DSLEEP,
+		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ALT_CLOCK,
 	},
 	[PWM_CH_DB0_LED_RED] = {
 		.channel = 5,
@@ -169,10 +169,6 @@ const struct pwm_t pwm_channels[] = {
 	},
 	[PWM_CH_DB1_LED_RED] = {
 		.channel = 1,
-		.flags = PWM_CONFIG_DSLEEP,
-	},
-	[PWM_CH_DB1_LED_GREEN_EVT] = {
-		.channel = 4,
 		.flags = PWM_CONFIG_DSLEEP,
 	},
 	[PWM_CH_DB1_LED_GREEN] = {
