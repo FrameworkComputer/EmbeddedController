@@ -14,6 +14,7 @@
 #include "baseboard.h"
 
 /* RVP Board ids */
+#define ADLP_DDR5_RVP_SKU_BOARD_ID	0x12
 #define ADLP_LP5_T4_RVP_SKU_BOARD_ID	0x13
 #define ADL_RVP_BOARD_ID(id)		((id) & 0x3F)
 
@@ -63,6 +64,8 @@
 
 /* Config BB retimer */
 #define CONFIG_USBC_RETIMER_INTEL_BB
+
+/* Connector side BB retimers */
 #define I2C_PORT0_BB_RETIMER_ADDR	0x56
 #if defined(HAS_TASK_PD_C1)
 #define I2C_PORT1_BB_RETIMER_ADDR	0x57
@@ -72,6 +75,12 @@
 #endif
 #if defined(HAS_TASK_PD_C3)
 #define I2C_PORT3_BB_RETIMER_ADDR	0x59
+#endif
+
+/* SOC side BB retimers (dual retimer config) */
+#define I2C_PORT0_BB_RETIMER_SOC_ADDR	0x54
+#if defined(HAS_TASK_PD_C1)
+#define I2C_PORT1_BB_RETIMER_SOC_ADDR	0x55
 #endif
 
 /* Configure mux at runtime */

@@ -152,6 +152,25 @@ struct usb_mux usb_muxes[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
+/* USB Mux Configuration for Soc side BB-Retimers for Dual retimer config */
+struct usb_mux soc_side_bb_retimer0_usb_mux = {
+	.usb_port = TYPE_C_PORT_0,
+	.next_mux = &usbc0_tcss_usb_mux,
+	.driver = &bb_usb_retimer,
+	.i2c_port = I2C_PORT_TYPEC_0,
+	.i2c_addr_flags = I2C_PORT0_BB_RETIMER_SOC_ADDR,
+};
+
+#if defined(HAS_TASK_PD_C1)
+struct usb_mux soc_side_bb_retimer1_usb_mux = {
+	.usb_port = TYPE_C_PORT_1,
+	.next_mux = &usbc1_tcss_usb_mux,
+	.driver = &bb_usb_retimer,
+	.i2c_port = I2C_PORT_TYPEC_1,
+	.i2c_addr_flags = I2C_PORT1_BB_RETIMER_SOC_ADDR,
+};
+#endif
+
 const struct bb_usb_control bb_controls[] = {
 	[TYPE_C_PORT_0] = {
 		.retimer_rst_gpio = IOEX_USB_C0_BB_RETIMER_RST,
@@ -292,6 +311,20 @@ static void configure_retimer_usbmux(void)
 		/* No retimer on Port-2 */
 #if defined(HAS_TASK_PD_C2)
 		usb_muxes[TYPE_C_PORT_2].driver = NULL;
+#endif
+		break;
+
+	case ADLP_DDR5_RVP_SKU_BOARD_ID:
+		/*
+		 * ADL-P-DDR5 RVP has dual BB-retimers for port0 & port1.
+		 * Change the default usb mux config on runtime to support
+		 * dual retimer topology.
+		 */
+		usb_muxes[TYPE_C_PORT_0].next_mux
+			= &soc_side_bb_retimer0_usb_mux;
+#if defined(HAS_TASK_PD_C1)
+		usb_muxes[TYPE_C_PORT_1].next_mux
+			= &soc_side_bb_retimer1_usb_mux;
 #endif
 		break;
 
