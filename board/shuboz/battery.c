@@ -6,7 +6,12 @@
  */
 
 #include "battery_fuel_gauge.h"
+#include "battery_smart.h"
+#include "charge_state.h"
 #include "common.h"
+#include "hooks.h"
+#include "temp_sensor.h"
+#include "thermal.h"
 #include "util.h"
 
 /*
@@ -64,3 +69,86 @@ const struct board_batt_params board_battery_info[] = {
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_CM1500;
+
+static uint16_t current_table[] = {
+	2200,
+	1800,
+	1700,
+	1600,
+};
+#define NUM_CURRENT_LEVELS ARRAY_SIZE(current_table)
+
+#define TEMP_THRESHOLD 54
+static int current_level;
+
+/* Called by hook task every hook second (1 sec) */
+static void current_update(void)
+{
+	int t, temp;
+	int rv;
+	static int Uptime;
+	static int Dntime;
+
+	rv = temp_sensor_read(TEMP_SENSOR_CHARGER, &t);
+	if (rv != EC_SUCCESS)
+		return;
+
+	temp = K_TO_C(t);
+
+	if (temp > TEMP_THRESHOLD) {
+		Dntime = 0;
+		if (Uptime < 5)
+			Uptime++;
+		else {
+			Uptime = 0;
+			current_level++;
+		}
+	} else if (current_level != 0 && temp < TEMP_THRESHOLD) {
+		Uptime = 0;
+		if (Dntime < 5)
+			Dntime++;
+		else {
+			Dntime = 0;
+			current_level--;
+		}
+	} else {
+		Uptime = 0;
+		Dntime = 0;
+	}
+
+	if (current_level < 0)
+		current_level = 0;
+	else if (current_level > NUM_CURRENT_LEVELS)
+		current_level = NUM_CURRENT_LEVELS;
+}
+DECLARE_HOOK(HOOK_SECOND, current_update, HOOK_PRIO_DEFAULT);
+
+int charger_profile_override(struct charge_state_data *curr)
+{
+	/*
+	 * Precharge must be executed when communication is failed on
+	 * dead battery.
+	 */
+	if (!(curr->batt.flags & BATT_FLAG_RESPONSIVE))
+		return 0;
+
+	if (current_level != 0) {
+		if (curr->requested_current > current_table[current_level-1])
+			curr->requested_current =
+				current_table[current_level - 1];
+	}
+
+	return 0;
+}
+
+enum ec_status charger_profile_override_get_param(uint32_t param,
+						  uint32_t *value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+						  uint32_t value)
+{
+	return EC_RES_INVALID_PARAM;
+}
