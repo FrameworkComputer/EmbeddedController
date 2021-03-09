@@ -250,10 +250,12 @@ uint32_t pd_dfp_enter_mode(int port, enum tcpm_transmit_type type,
 	/*
 	 * Strictly speaking, this should only happen when the request
 	 * has been ACKed.
-	 * TODO(b/159854667): Redo setting the enter mode flag to incorporate
-	 * it into the DP state machine.
+	 * For TCPMV1, still set modal flag pre-emptively. For TCPMv2, the modal
+	 * flag is set when the ENTER command is ACK'd for each alt mode that is
+	 * supported.
 	 */
-	pd_set_dfp_enter_mode_flag(port, true);
+	if (IS_ENABLED(CONFIG_USB_PD_TCPMV1))
+		pd_set_dfp_enter_mode_flag(port, true);
 
 	/* SVDM to send to UFP for mode entry */
 	return VDO(modep->fx->svid, 1, CMD_ENTER_MODE | VDO_OPOS(modep->opos));

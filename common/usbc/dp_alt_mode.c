@@ -123,6 +123,8 @@ void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 	case DP_START:
 	case DP_ENTER_RETRY:
 		dp_state[port] = DP_ENTER_ACKED;
+		/* Inform PE layer that alt mode is now active */
+		pd_set_dfp_enter_mode_flag(port, true);
 		break;
 	case DP_ENTER_ACKED:
 		/* DP status response & UFP's DP attention have same payload. */

@@ -290,6 +290,8 @@ void intel_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 		tbt_state[port] = TBT_ACTIVE;
 		tbt_prints("enter mode SOP", port);
 		TBT_SET_FLAG(port, TBT_FLAG_RETRY_DONE);
+		/* Indicate to PE layer that alt mode is active */
+		pd_set_dfp_enter_mode_flag(port, true);
 		break;
 	case TBT_ACTIVE:
 		tbt_prints("exit mode SOP", port);
