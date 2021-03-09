@@ -45,6 +45,7 @@ static int forcing_shutdown;  /* Forced shutdown in progress? */
 
 static bool want_boot_ap_at_g3;
 static int ap_boot_delay = 9;  /* set 9 second for global reset wait time  */
+static int me_change;
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
@@ -339,6 +340,12 @@ enum power_state power_handle_state(enum power_state state)
 				ap_boot_delay = 9;
 				return POWER_S5G3; /* Power up again */
 			}
+
+			if (me_change){
+				CPRINTS("Turn off RSMRST for reset ME mode");
+				gpio_set_level(GPIO_PCH_RSMRST_L, 0);
+				me_change = 0;
+			}
 		}
 
 		return POWER_S5S3; /* Power up to next state */
@@ -482,4 +489,24 @@ static enum ec_status set_ap_reboot_delay(struct host_cmd_handler_args *args)
 	return EC_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_SET_AP_REBOOT_DELAY, set_ap_reboot_delay,
+			EC_VER_MASK(0));
+
+static enum ec_status me_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_me_control *p = args->params;
+	me_change = 1;
+
+	/* CPU change ME mode based on ME_EN while RSMRST rising.
+	 * So, when we received ME control command, we need to turn off RSMRST.
+	 * ME_EN low = lock.
+	 */
+	if (p->me_mode & ME_UNLOCK)
+		gpio_set_level(GPIO_ME_EN, 1);
+	else
+		gpio_set_level(GPIO_ME_EN, 0);
+
+	CPRINTS("Receive ME %s\n", (p->me_mode & ME_UNLOCK) == ME_UNLOCK ? "unlock" : "lock");
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_ME_CONTROL, me_control,
 			EC_VER_MASK(0));

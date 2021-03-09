@@ -11,7 +11,6 @@
 /*****************************************************************************/
 /* Configure the behavior of the flash notify */
 #define EC_CMD_FLASH_NOTIFIED 0x3E01
-#define EC_CMD_FACTORY_MODE	0x3E02
 
 enum ec_flash_notified_flags {
 	/* Enable/Disable power button pulses for x86 devices */
@@ -22,6 +21,16 @@ enum ec_flash_notified_flags {
 
 struct ec_params_flash_notified {
 	/* See enum ec_flash_notified_flags */
+	uint8_t flags;
+} __ec_align1;
+
+/* Factory will need change Fnkey and power button
+ * key scancode to test keyboard.
+ */
+#define EC_CMD_FACTORY_MODE	0x3E02
+
+struct ec_params_factory_notified {
+	/* factory mode enable */
 	uint8_t flags;
 } __ec_align1;
 
@@ -52,11 +61,6 @@ struct ec_response_chg_limit_control {
 	uint8_t min_percentage;
 } __ec_align1;
 
-struct ec_params_factory_notified {
-	/* factory mode enable */
-	uint8_t flags;
-} __ec_align1;
-
 #define EC_CMD_PWM_GET_FAN_ACTUAL_RPM	0x3E04
 
 struct ec_response_pwm_get_actual_fan_rpm {
@@ -67,6 +71,16 @@ struct ec_response_pwm_get_actual_fan_rpm {
 
 struct ec_response_ap_reboot_delay {
 	uint8_t delay;
+} __ec_align1;
+
+#define EC_CMD_ME_CONTROL	0x3E06
+
+enum ec_mecontrol_modes {
+	ME_UNLOCK	= BIT(0),
+};
+
+struct ec_params_me_control {
+	uint8_t me_mode;
 } __ec_align1;
 
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */

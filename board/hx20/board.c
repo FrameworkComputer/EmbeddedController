@@ -502,7 +502,6 @@ static void board_chipset_resume(void)
 	/*gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);*/
 	gpio_set_level(GPIO_EC_MUTE_L, 1);
 	gpio_set_level(GPIO_CAM_EN, 1);
-	gpio_set_level(GPIO_ME_EN, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 	     MOTION_SENSE_HOOK_PRIO-1);
@@ -515,7 +514,6 @@ static void board_chipset_suspend(void)
 	if (power_get_state() == POWER_S0S3) {
 		gpio_set_level(GPIO_EC_MUTE_L, 0);
 		gpio_set_level(GPIO_CAM_EN, 0);
-		gpio_set_level(GPIO_ME_EN, 0);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,
