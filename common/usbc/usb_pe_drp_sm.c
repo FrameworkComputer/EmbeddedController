@@ -5938,7 +5938,13 @@ static void pe_vdm_response_entry(int port)
 		CPRINTF("VDO ERR:CMD:%d\n", vdo_cmd);
 	}
 
-	if (func) {
+	/*
+	 * If the port partner is PD_REV20 and our data role is DFP, we must
+	 * reply to any SVDM command with a NAK. If the SVDM was an Attention
+	 * command, it does not have a response, and exits the function above.
+	 */
+	if (func && (prl_get_rev(port, TCPC_TX_SOP) != PD_REV20 ||
+		     pe[port].data_role == PD_ROLE_UFP)) {
 		/*
 		 * Execute SVDM response function selected above and set the
 		 * correct response type in the VDM header.
