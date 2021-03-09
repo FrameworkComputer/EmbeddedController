@@ -15,6 +15,8 @@
 #include "registers-mec152x.h"
 #elif defined(CHIP_FAMILY_MEC170X)
 #include "registers-mec1701.h"
+#elif defined(CHIP_FAMILY_MEC172X)
+#include "registers-mec172x.h"
 #else
 #error "Unsupported chip family"
 #endif
@@ -855,6 +857,31 @@
 #define MCHP_DMA_STS_DONE		BIT(2)
 #define MCHP_DMA_STS_HWFL_ERR		BIT(1)
 #define MCHP_DMA_STS_BUS_ERR		BIT(0)
+
+/*
+ * Required structure typedef for common/dma.h interface
+ * !!! checkpatch.pl will not like this !!!
+ * structure moved to chip level dma.c
+ * We can't remove dma_chan_t as its used in DMA API header.
+ */
+struct MCHP_dma_chan {
+	uint32_t act;		/* Activate */
+	uint32_t mem_start;	/* Memory start address */
+	uint32_t mem_end;	/* Memory end address */
+	uint32_t dev;		/* Device address */
+	uint32_t ctrl;		/* Control */
+	uint32_t int_status;	/* Interrupt status */
+	uint32_t int_enabled;	/* Interrupt enabled */
+	uint32_t chfsm;		/* channel fsm read-only */
+	uint32_t alu_en;	/* channels 0 & 1 only */
+	uint32_t alu_data;	/* channels 0 & 1 only */
+	uint32_t alu_sts;	/* channel 0 only */
+	uint32_t alu_ro;	/* channel 0 only */
+	uint32_t rsvd[4];	/* 0x30 - 0x3F */
+};
+
+/* Common code and header file must use this */
+typedef struct MCHP_dma_chan dma_chan_t;
 
 /* Wake pin definitions, defined at board-level */
 extern const enum gpio_signal hibernate_wake_pins[];
