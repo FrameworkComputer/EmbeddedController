@@ -53,8 +53,15 @@
 #define PD_MAX_CURRENT_MA	3000
 #define PD_MAX_VOLTAGE_MV	20000
 
+/*
+ * Macros for GPIO signals used in common code that don't match the
+ * schematic names. Signal names in gpio.inc match the schematic and are
+ * then redefined here to so it's more clear which signal is being used for
+ * which purpose.
+ */
 #define GPIO_AC_PRESENT			GPIO_ACOK_EC_OD
 #define GPIO_CPU_PROCHOT		GPIO_EC_PROCHOT_ODL
+#define GPIO_ENABLE_BACKLIGHT		GPIO_EC_EN_EDP_BL
 #define GPIO_ENTERING_RW		GPIO_EC_ENTERING_RW
 #define GPIO_KBD_KSO2			GPIO_EC_KSO_02_INV
 #define GPIO_LID_OPEN			GPIO_LID_OPEN_OD

@@ -108,6 +108,9 @@
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
 
+/* EDP back-light control defines */
+#define CONFIG_BACKLIGHT_LID
+
 /* USB Type C and USB PD defines */
 /* Enable the new USB-C PD stack */
 #define CONFIG_USB_PD_TCPMV2
