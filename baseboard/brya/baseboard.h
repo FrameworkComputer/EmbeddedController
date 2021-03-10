@@ -73,8 +73,9 @@
 
 #define CONFIG_BOARD_HAS_RTC_RESET
 
-/* Physical Volume Buttons */
+/* Buttons / Switches */
 #define CONFIG_VOLUME_BUTTONS
+#define CONFIG_SWITCH
 
 /* Common Keyboard Defines */
 #define CONFIG_CMD_KEYBOARD
