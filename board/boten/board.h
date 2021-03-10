@@ -136,6 +136,7 @@ enum battery_type {
 };
 
 int board_is_sourcing_vbus(int port);
+void pen_detect_interrupt(enum gpio_signal s);
 
 #endif /* !__ASSEMBLER__ */
 
