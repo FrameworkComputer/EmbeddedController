@@ -64,8 +64,8 @@
 #define CTRL_PIN		BIT(7) /* Pending interrupt not */
 /* Completion */
 #define COMP_DTEN		BIT(2) /* enable device timeouts */
-#define COMP_MCEN		BIT(3) /* enable master cumulative timeouts */
-#define COMP_SCEN		BIT(4) /* enable slave cumulative timeouts */
+#define COMP_MCEN		BIT(3) /* enable ctrl. cumulative timeouts */
+#define COMP_SCEN		BIT(4) /* enable periph. cumulative timeouts */
 #define COMP_BIDEN		BIT(5) /* enable Bus idle timeouts */
 #define COMP_IDLE		BIT(29) /* i2c bus is idle */
 #define COMP_RW_BITS_MASK	0x3C /* R/W bits mask */
@@ -77,11 +77,11 @@
 #define CFG_ENABLE		BIT(10) /* enable controller */
 #define CFG_GC_DIS		BIT(14) /* disable general call address */
 #define CFG_ENIDI		BIT(29) /* Enable I2C idle interrupt */
-/* Enable network layer master done interrupt */
+/* Enable network layer controller done interrupt */
 #define CFG_ENMI		BIT(30)
-/* Enable network layer slave done interrupt */
+/* Enable network layer peripheral done interrupt */
 #define CFG_ENSI		BIT(31)
-/* Master Command */
+/* Controller Command */
 #define MCMD_MRUN		BIT(0)
 #define MCMD_MPROCEED		BIT(1)
 #define MCMD_START0		BIT(8)
@@ -136,7 +136,7 @@ static struct {
 	uint32_t i2c_complete; /* ISR write */
 	uint32_t flags;
 	uint8_t port;
-	uint8_t slv_addr_8bit;
+	uint8_t periph_addr_8bit;
 	uint8_t ctrl;
 	uint8_t hwsts;
 	uint8_t hwsts2;
@@ -147,7 +147,9 @@ static struct {
 
 static const uint16_t i2c_ctrl_nvic_id[] = {
 	MCHP_IRQ_I2C_0, MCHP_IRQ_I2C_1, MCHP_IRQ_I2C_2, MCHP_IRQ_I2C_3,
-#if defined(CHIP_FAMILY_MEC152X)
+#if defined(CHIP_FAMILY_MEC172X)
+	MCHP_IRQ_I2C_4
+#elif defined(CHIP_FAMILY_MEC152X)
 	MCHP_IRQ_I2C_4, MCHP_IRQ_I2C_5, MCHP_IRQ_I2C_6, MCHP_IRQ_I2C_7
 #endif
 };
@@ -155,7 +157,9 @@ BUILD_ASSERT(ARRAY_SIZE(i2c_ctrl_nvic_id) == MCHP_I2C_CTRL_MAX);
 
 static const uint16_t i2c_controller_pcr[] = {
 	MCHP_PCR_I2C0, MCHP_PCR_I2C1, MCHP_PCR_I2C2, MCHP_PCR_I2C3,
-#if defined(CHIP_FAMILY_MEC152X)
+#if defined(CHIP_FAMILY_MEC172X)
+	MCHP_PCR_I2C4
+#elif defined(CHIP_FAMILY_MEC152X)
 	MCHP_PCR_I2C4, MCHP_PCR_I2C5, MCHP_PCR_I2C6, MCHP_PCR_I2C7,
 #endif
 };
@@ -163,7 +167,9 @@ BUILD_ASSERT(ARRAY_SIZE(i2c_controller_pcr) == MCHP_I2C_CTRL_MAX);
 
 static uintptr_t i2c_ctrl_base_addr[] = {
 	MCHP_I2C0_BASE, MCHP_I2C1_BASE, MCHP_I2C2_BASE, MCHP_I2C3_BASE,
-#if defined(CHIP_FAMILY_MEC152X)
+#if defined(CHIP_FAMILY_MEC172X)
+	MCHP_I2C4_BASE
+#elif defined(CHIP_FAMILY_MEC152X)
 	MCHP_I2C4_BASE,
 	/* NOTE: 5-7 do not implement network layer hardware */
 	MCHP_I2C5_BASE, MCHP_I2C6_BASE, MCHP_I2C7_BASE
@@ -343,7 +349,8 @@ static void disable_controller_irq(int controller)
 
 /*
  * Do NOT enable controller's IDLE interrupt in the configuration
- * register. IDLE is meant for mult-master and controller as slave.
+ * register. IDLE is meant for multi-controller and controller acting
+ * as a peripheral.
  */
 static void configure_controller(int controller, int port, int kbps)
 {
@@ -359,7 +366,7 @@ static void configure_controller(int controller, int port, int kbps)
 	MCHP_I2C_CONFIG(raddr) = (uint32_t)(port & 0xf);
 	MCHP_I2C_CTRL(raddr) = CTRL_PIN;
 
-	/* Set both controller slave addresses to 0 the
+	/* Set both controller peripheral addresses to 0 the
 	 * general call address. We disable general call
 	 * below.
 	 */
@@ -453,18 +460,18 @@ static int wait_idle(int controller)
  * Return EC_SUCCESS on ACK of byte else EC_ERROR_UNKNOWN.
  * Record I2C.Status in cdata[controller] structure.
  * Byte transmit finished with no I2C bus error or lost arbitration.
- *	PIN -> 0. LRB bit contains slave ACK/NACK bit.
- *	Slave ACK:  I2C.Status == 0x00
- *	Slave NACK: I2C.Status == 0x08
+ *	PIN -> 0. LRB bit contains peripheral ACK/NACK bit.
+ *	Peripheral ACK:  I2C.Status == 0x00
+ *	Peripheral NACK: I2C.Status == 0x08
  * Byte transmit finished with I2C bus errors or lost arbitration.
  *	PIN -> 0 and BER and/or LAB set.
  *
  * Byte receive finished with no I2C bus errors or lost arbitration.
  *	PIN -> 0. LRB=0/1 based on ACK bit in I2C.Control.
- *	Master receiver must NACK last byte it wants to receive.
+ *	Controller receiver must NACK last byte it wants to receive.
  *	How do we handle this if we don't know direction of transfer?
- *	I2C.Control is write-only so we can't see Master's ACK control bit.
- *
+ *	I2C.Control is write-only so we can't see Controller's ACK control
+ *	bit.
  */
 static int wait_byte_done(int controller, uint8_t mask, uint8_t expected)
 {
@@ -501,7 +508,7 @@ static int wait_byte_done(int controller, uint8_t mask, uint8_t expected)
  * Select port on controller. If controller configured
  * for port do nothing.
  * Switch port by reset and reconfigure to handle cases where
- * the slave on current port is driving line(s) low.
+ * the peripheral on current port is driving line(s) low.
  * NOTE: I2C hardware reset only requires one AHB clock, back to back
  * writes is OK but we added an extra write as insurance.
  */
@@ -540,7 +547,7 @@ static uint32_t get_line_level(int port)
 
 /*
  * Check if I2C port connected to controller has bus error or
- * other signalling issues such as stuck clock/data lines.
+ * other issues such as stuck clock/data lines.
  */
 static int i2c_check_recover(int port, int controller)
 {
@@ -566,8 +573,9 @@ static int i2c_check_recover(int port, int controller)
 		reset_controller(controller);
 		select_port(port, controller);
 		/*
-		 * We don't know what edges the slave saw, so sleep long enough
-		 * that the slave will see the new start condition below.
+		 * We don't know what edges the peripheral saw, so sleep long
+		 * enough that the peripheral will see the new start condition
+		 * below.
 		 */
 		usleep(1000);
 		reg = MCHP_I2C_STATUS(raddr);
@@ -588,7 +596,7 @@ static inline void push_in_buf(uint8_t **in, uint8_t val, int skip)
 }
 
 /*
- * I2C Master transmit
+ * I2C Controller transmit
  * Caller has filled in cdata[ctrl] parameters
  */
 static int i2c_mtx(int ctrl)
@@ -601,8 +609,8 @@ static int i2c_mtx(int ctrl)
 	cdata[ctrl].flags |= (1ul << 1);
 	if (cdata[ctrl].xflags & I2C_XFER_START) {
 		cdata[ctrl].flags |= (1ul << 2);
-		MCHP_I2C_DATA(raddr) = cdata[ctrl].slv_addr_8bit;
-		/* Clock out the slave address, sending START bit */
+		MCHP_I2C_DATA(raddr) = cdata[ctrl].periph_addr_8bit;
+		/* Clock out the peripheral address, sending START bit */
 		MCHP_I2C_CTRL(raddr) = CTRL_PIN | CTRL_ESO | CTRL_ENI |
 				       CTRL_ACK | CTRL_STA;
 		cdata[ctrl].transaction_state = I2C_TRANSACTION_OPEN;
@@ -643,7 +651,7 @@ static int i2c_mtx(int ctrl)
 }
 
 /*
- * I2C Master-Receive helper routine for sending START or
+ * I2C Controller-Receive helper routine for sending START or
  * Repeated-START.
  * This routine should only be called if a (Repeated-)START
  * is required.
@@ -658,10 +666,9 @@ static int i2c_mtx(int ctrl)
  *	will generate START but not transmit data.
  *	Write read address to I2C.Data. Controller will transmit
  *	8-bits of data
- * Endif
  * NOTE: Controller clocks in address on SDA as its transmitting.
  * Therefore 1-byte RX-FIFO will contain address plus R/nW bit.
- * Controller will wait for slave to release SCL before transmitting
+ * Controller will wait for peripheral to release SCL before transmitting
  * 9th clock and latching (N)ACK on SDA.
  * Spin on I2C.Status PIN -> 0. Enable I2C interrupt if spin time
  * exceeds threshold. If a timeout occurs generate STOP and return
@@ -671,7 +678,7 @@ static int i2c_mtx(int ctrl)
  * register we must prepare control logic.
  * If the caller requests STOP and read length is 1 then set
  * clear ACK bit in I2C.Ctrl. Set ESO=ENI=1, PIN=STA=STO=ACK=0
- * in I2C.Ctrl. Master must NACK last byte.
+ * in I2C.Ctrl. Controller must NACK last byte.
  */
 static int i2c_mrx_start(int ctrl)
 {
@@ -688,7 +695,7 @@ static int i2c_mrx_start(int ctrl)
 		/* Repeated-START then address */
 		MCHP_I2C_CTRL(raddr) = u8;
 	}
-	MCHP_I2C_DATA(raddr) = cdata[ctrl].slv_addr_8bit | 0x01;
+	MCHP_I2C_DATA(raddr) = cdata[ctrl].periph_addr_8bit | 0x01;
 	if (cdata[ctrl].transaction_state == I2C_TRANSACTION_STOPPED) {
 		cdata[ctrl].flags |= (1ul << 6);
 		/* address then START */
@@ -698,7 +705,7 @@ static int i2c_mrx_start(int ctrl)
 	/* Controller generates START, transmits data(address) capturing
 	 * 9-bits from SDA (8-bit address + (N)Ack bit).
 	 * We leave captured address in I2C.Data register.
-	 * Master Receive data read routine assumes data is pending
+	 * Controller receive data read routine assumes data is pending
 	 * in I2C.Data
 	 */
 	cdata[ctrl].flags |= (1ul << 7);
@@ -719,7 +726,7 @@ static int i2c_mrx_start(int ctrl)
 		MCHP_I2C_CTRL(raddr) = CTRL_ESO | CTRL_ENI;
 	}
 	/*
-	 * Read & discard slave address.
+	 * Read & discard peripheral address.
 	 * Generates clocks for next data
 	 */
 	cdata[ctrl].flags |= (1ul << 10);
@@ -727,15 +734,15 @@ static int i2c_mrx_start(int ctrl)
 	return rv;
 }
 /*
- * I2C Master-Receive data read helper.
+ * I2C Controller-Receive data read helper.
  * Assumes I2C is in use, (Rpt-)START was previously sent.
  * Reading I2C.Data generates clocks for the next byte. If caller
  * requests STOP then we must clear I2C.Ctrl ACK before reading
  * second to last byte from RX-FIFO data register. Before reading
  * the last byte we must set I2C.Ctrl to generate a stop after
  * the read from RX-FIFO register.
- * NOTE: I2C.Status.LRB only records the (N)ACK bit in master
- * transmit mode, not in master receive mode.
+ * NOTE: I2C.Status.LRB only records the (N)ACK bit in controller
+ * transmit mode, not in controller receive mode.
  * NOTE2: Do not set ENI bit in I2C.Ctrl for STOP generation.
  */
 static int i2c_mrx_data(int ctrl)
@@ -775,9 +782,9 @@ static int i2c_mrx_data(int ctrl)
 }
 
 /*
- * Called from common/i2c_master
+ * Called from common I2C
  */
-int chip_i2c_xfer(int port, uint16_t slave_addr_flags, const uint8_t *out,
+int chip_i2c_xfer(int port, uint16_t periph_addr_flags, const uint8_t *out,
 		  int out_size, uint8_t *in, int in_size, int flags)
 {
 	int ctrl;
@@ -806,7 +813,7 @@ int chip_i2c_xfer(int port, uint16_t slave_addr_flags, const uint8_t *out,
 	cdata[ctrl].hwsts3 = 0;
 	cdata[ctrl].hwsts4 = 0;
 	cdata[ctrl].port = port & 0xff;
-	cdata[ctrl].slv_addr_8bit = I2C_STRIP_FLAGS(slave_addr_flags) << 1;
+	cdata[ctrl].periph_addr_8bit = I2C_STRIP_FLAGS(periph_addr_flags) << 1;
 	cdata[ctrl].out_size = out_size;
 	cdata[ctrl].outp = out;
 	cdata[ctrl].in_size = in_size;
@@ -932,7 +939,7 @@ int i2c_port_to_controller(int port)
 
 void i2c_set_timeout(int port, uint32_t timeout)
 {
-	/* Param is port, but timeout is stored by-controller. */
+	/* Parameter is port, but timeout is stored by-controller. */
 	cdata[i2c_port_to_controller(port)].timeout_us =
 		timeout ? timeout : I2C_TIMEOUT_DEFAULT_US;
 }
@@ -1033,7 +1040,12 @@ void i2c3_interrupt(void)
 {
 	handle_interrupt(3);
 }
-#if defined(CHIP_FAMILY_MEC152X)
+#if defined(CHIP_FAMILY_MEC172X)
+void i2c4_interrupt(void)
+{
+	handle_interrupt(4);
+}
+#elif defined(CHIP_FAMILY_MEC152X)
 void i2c4_interrupt(void)
 {
 	handle_interrupt(4);
@@ -1056,7 +1068,9 @@ DECLARE_IRQ(MCHP_IRQ_I2C_0, i2c0_interrupt, 2);
 DECLARE_IRQ(MCHP_IRQ_I2C_1, i2c1_interrupt, 2);
 DECLARE_IRQ(MCHP_IRQ_I2C_2, i2c2_interrupt, 2);
 DECLARE_IRQ(MCHP_IRQ_I2C_3, i2c3_interrupt, 2);
-#if defined(CHIP_FAMILY_MEC152X)
+#if defined(CHIP_FAMILY_MEC172X)
+DECLARE_IRQ(MCHP_IRQ_I2C_4, i2c4_interrupt, 2);
+#elif defined(CHIP_FAMILY_MEC152X)
 DECLARE_IRQ(MCHP_IRQ_I2C_4, i2c4_interrupt, 2);
 DECLARE_IRQ(MCHP_IRQ_I2C_5, i2c5_interrupt, 2);
 DECLARE_IRQ(MCHP_IRQ_I2C_6, i2c6_interrupt, 2);
