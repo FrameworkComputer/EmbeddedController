@@ -148,6 +148,7 @@ add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
 # layer.
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/base32.c"
                                                 "${PLATFORM_EC}/common/console_output.c"
+                                                "${PLATFORM_EC}/common/ec_features.c"
                                                 "${PLATFORM_EC}/common/gpio_commands.c"
                                                 "${PLATFORM_EC}/common/peripheral.c"
                                                 "${PLATFORM_EC}/common/printf.c"
@@ -170,8 +171,7 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_FIFO
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ADC_CMD "${PLATFORM_EC}/common/adc.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ALS_TCS3400
                                                 "${PLATFORM_EC}/driver/als_tcs3400.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ACPI    "${PLATFORM_EC}/common/acpi.c"
-                                                "${PLATFORM_EC}/common/ec_features.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ACPI    "${PLATFORM_EC}/common/acpi.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BACKLIGHT_LID
                                                 "${PLATFORM_EC}/common/backlight_lid.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY "${PLATFORM_EC}/common/battery.c")
