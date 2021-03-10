@@ -111,6 +111,9 @@
 /* EDP back-light control defines */
 #define CONFIG_BACKLIGHT_LID
 
+/* UART COMMAND */
+#define CONFIG_CMD_CHARGEN
+
 /* USB Type C and USB PD defines */
 /* Enable the new USB-C PD stack */
 #define CONFIG_USB_PD_TCPMV2
