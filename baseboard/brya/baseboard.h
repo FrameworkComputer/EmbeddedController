@@ -33,6 +33,9 @@
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
 
+/* Work around double CR50 reset by waiting in initial power on. */
+#define CONFIG_BOARD_RESET_AFTER_POWER_ON
+
 /* Host communication */
 #define CONFIG_HOSTCMD_ESPI
 #define CONFIG_HOSTCMD_ESPI_VW_SLP_S4
