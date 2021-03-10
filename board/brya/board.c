@@ -5,6 +5,7 @@
 
 #include "common.h"
 
+#include "button.h"
 #include "cbi_ec_fw_config.h"
 #include "charge_ramp.h"
 #include "charger.h"

@@ -176,12 +176,6 @@ enum mft_channel {
 	MFT_CH_COUNT
 };
 
-/*
- * remove when we enable CONFIG_VOLUME_BUTTONS
- */
-
-void button_interrupt(enum gpio_signal signal);
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */
