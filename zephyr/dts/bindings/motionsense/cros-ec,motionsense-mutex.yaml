@@ -1,0 +1,34 @@
+# Copyright (c) 2021 The Chromium OS Authors
+# SPDX-License-Identifier: Apache-2.0
+
+description: Motion sense mutex parent node
+
+compatible: "cros-ec,motionsense-mutex"
+
+child-binding:
+  description: A mutex node is used to create an instance of mutex_t.
+               A mutex node is referenced by one or more sensor nodes in
+               "/motionsense-sensors" node.
+  properties:
+    label:
+      required: true
+      type: string
+      description: Human readable string describing the mutex.
+                   This is a brief explanation about the mutex.
+                   The property is not actually used in code.
+
+
+#
+# examples:
+#
+# motionsense-mutex {
+#         compatible = "cros-ec,motionsense-mutex";
+#         mutex_bma255: bma255-mutex {
+#                 label = "BMA255_MUTEX";
+#         };
+#
+#         mutex_bmi260: bmi260-mutex {
+#                 label = "BMI260_MUTEX";
+#         };
+# };
+#
