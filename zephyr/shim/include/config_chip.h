@@ -183,6 +183,18 @@ enum battery_type {
 #define CONFIG_CHARGER_INPUT_CURRENT		512
 #endif
 
+/*
+ * Note - ISL9241 chargers for all channels are configured with the same
+ * switching frequency. Use the first ISL9241 instance found in the device tree.
+ */
+#undef CONFIG_ISL9241_SWITCHING_FREQ
+#define ISL9241_NODE	DT_INST(0, intersil_isl9241)
+#if DT_NODE_EXISTS(ISL9241_NODE) && \
+	DT_NODE_HAS_PROP(ISL9241_NODE, switching_frequency)
+#define CONFIG_ISL9241_SWITCHING_FREQ \
+	DT_PROP(ISL9241_NODE, switching_frequency)
+#endif
+
 #undef CONFIG_CHIPSET_RESET_HOOK
 #ifdef CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK
 #define CONFIG_CHIPSET_RESET_HOOK
