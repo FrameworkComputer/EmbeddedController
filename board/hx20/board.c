@@ -1025,7 +1025,39 @@ DECLARE_CONSOLE_COMMAND(spimux, cmd_spimux,
 			"[enable/disable]",
 			"Set if spi CLK is in SPI mode (true) or PWM mode");
 
+#define FP_LOCKOUT_TIMEOUT (8 * SECOND)
+static void fingerprint_ctrl_detection_deferred(void);
+DECLARE_DEFERRED(fingerprint_ctrl_detection_deferred);
+static timestamp_t fp_start_time;
 int fingerprint_power_button_first_state;
+
+static void fingerprint_ctrl_detection_deferred(void)
+{
+	if (!fp_start_time.val)
+		fp_start_time = get_time();
+
+	/*
+	 * when FP in Enrollment or Unlock should block PB event in 8sec
+	 * if keep hold 8sec should send hard shutdown.
+	 */
+	if (gpio_get_level(GPIO_FP_CTRL)) {
+		if (get_time().val < fp_start_time.val + FP_LOCKOUT_TIMEOUT
+			&& !fingerprint_power_button_first_state) {
+				hook_call_deferred(&fingerprint_ctrl_detection_deferred_data,
+						100 * MSEC);
+				return;
+			} else if (get_time().val > fp_start_time.val + FP_LOCKOUT_TIMEOUT
+			&& !fingerprint_power_button_first_state)
+				system_reset(SYSTEM_RESET_HARD);
+			else if (fingerprint_power_button_first_state)
+				fp_start_time.val = 0;
+	}
+
+	fp_start_time.val = 0;
+
+	power_button_interrupt(fingerprint_power_button_first_state);
+}
+
 static void fingerprint_power_button_change_deferred(void)
 {
 	if (fingerprint_power_button_first_state == gpio_get_level(GPIO_ON_OFF_FP_L))
@@ -1035,11 +1067,12 @@ DECLARE_DEFERRED(fingerprint_power_button_change_deferred);
 
 void fingerprint_power_button_interrupt(enum gpio_signal signal)
 {
+	fingerprint_power_button_first_state = gpio_get_level(GPIO_ON_OFF_FP_L);
+
 	if (!factory_status())
-		power_button_interrupt(signal);
-	else {
-		fingerprint_power_button_first_state = gpio_get_level(GPIO_ON_OFF_FP_L);
+		hook_call_deferred(&fingerprint_ctrl_detection_deferred_data,
+				50);
+	else
 		hook_call_deferred(&fingerprint_power_button_change_deferred_data,
 				50);
-	}
 }
