@@ -40,6 +40,9 @@
 #define CONFIG_HOSTCMD_ESPI
 #define CONFIG_HOSTCMD_ESPI_VW_SLP_S4
 
+#define CONFIG_MKBP_EVENT
+#define CONFIG_MKBP_USE_GPIO
+
 /* Common charger defines */
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER
