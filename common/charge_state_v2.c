@@ -1455,8 +1455,10 @@ static int shutdown_on_critical_battery(void)
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		switch (board_critical_shutdown_check(&curr)) {
 		case CRITICAL_SHUTDOWN_HIBERNATE:
-			CPRINTS("Hibernate due to critical battery");
-			system_hibernate(0, 0);
+			if (IS_ENABLED(CONFIG_HIBERNATE)) {
+				CPRINTS("Hibernate due to critical battery");
+				system_hibernate(0, 0);
+			}
 			break;
 		case CRITICAL_SHUTDOWN_CUTOFF:
 			CPRINTS("Cutoff due to critical battery");
