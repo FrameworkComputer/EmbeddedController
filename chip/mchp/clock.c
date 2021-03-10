@@ -70,6 +70,53 @@ int clock_get_freq(void)
 	return freq;
 }
 
+/*
+ * MEC170x and MEC152x have the same 32 KHz clock enable hardware.
+ * MEC172x 32 KHz clock configuration is different and includes
+ * hardware to check the crystal before switching and to monitor
+ * the 32 KHz input if desired.
+ */
+#ifdef CHIP_FAMILY_MEC172X
+/* 32 KHz crystal connected in parallel */
+static inline void config_32k_src_crystal(void)
+{
+	MCHP_VBAT_CSS = MCHP_VBAT_CSS_XTAL_EN
+			| MCHP_VBAT_CSS_SRC_XTAL;
+}
+
+/* 32 KHz source is 32KHZ_IN pin which must be configured */
+static inline void config_32k_src_se_input(void)
+{
+	MCHP_VBAT_CSS = MCHP_VBAT_CSS_SIL32K_EN
+				| MCHP_VBAT_CSS_SRC_SWPS;
+}
+
+static inline void config_32k_src_sil_osc(void)
+{
+	MCHP_VBAT_CSS = MCHP_VBAT_CSS_SIL32K_EN;
+}
+
+#else
+static void config_32k_src_crystal(void)
+{
+	MCHP_VBAT_CE = MCHP_VBAT_CE_XOSEL_PAR
+			| MCHP_VBAT_CE_ALWAYS_ON_32K_SRC_CRYSTAL;
+}
+
+/* 32 KHz source is 32KHZ_IN pin which must be configured */
+static inline void config_32k_src_se_input(void)
+{
+	MCHP_VBAT_CE = MCHP_VBAT_CE_32K_DOMAIN_32KHZ_IN_PIN
+			| MCHP_VBAT_CE_ALWAYS_ON_32K_SRC_INT;
+}
+
+static inline void config_32k_src_sil_osc(void)
+{
+	MCHP_VBAT_CE = ~(MCHP_VBAT_CE_32K_DOMAIN_32KHZ_IN_PIN
+			| MCHP_VBAT_CE_ALWAYS_ON_32K_SRC_CRYSTAL);
+}
+#endif
+
 /** clock_init
  * @note
  * MCHP MEC implements 4 control bits in the VBAT Clock Enable register.
@@ -96,16 +143,13 @@ void clock_init(void)
 {
 	if (IS_ENABLED(CONFIG_CLOCK_SRC_EXTERNAL))
 		if (IS_ENABLED(CONFIG_CLOCK_CRYSTAL))
-			MCHP_VBAT_CE = MCHP_VBAT_CE_XOSEL_PAR
-				| MCHP_VBAT_CE_ALWAYS_ON_32K_SRC_CRYSTAL;
+			config_32k_src_crystal();
 		else
 			/* 32KHz 50% duty waveform on 32KHZ_IN pin */
-			MCHP_VBAT_CE = MCHP_VBAT_CE_32K_DOMAIN_32KHZ_IN_PIN
-				| MCHP_VBAT_CE_ALWAYS_ON_32K_SRC_INT;
+			config_32k_src_se_input();
 	else
 		/* Use internal silicon 32KHz OSC */
-		MCHP_VBAT_CE = ~(MCHP_VBAT_CE_32K_DOMAIN_32KHZ_IN_PIN
-			| MCHP_VBAT_CE_ALWAYS_ON_32K_SRC_CRYSTAL);
+		config_32k_src_sil_osc();
 
 	/* Wait for PLL to lock onto 32KHz source (OSC_LOCK == 1) */
 	while (!(MCHP_PCR_CHIP_OSC_ID & 0x100))
@@ -127,7 +171,7 @@ static void clock_turbo_disable(void)
 	else
 #endif
 		/* Use 12 MHz processor clock for power savings */
-		MCHP_PCR_PROC_CLK_CTL = 4;
+		MCHP_PCR_PROC_CLK_CTL = MCHP_PCR_CLK_CTL_12MHZ;
 }
 DECLARE_HOOK(HOOK_INIT,
 		clock_turbo_disable,
@@ -369,7 +413,9 @@ static void prepare_for_deep_sleep(void)
 #endif
 
 	/* stop Port80 capture timer */
+#ifndef CHIP_FAMILY_MEC172X
 	MCHP_P80_ACTIVATE(0) = 0;
+#endif
 
 	/*
 	 * Clear SLP_EN bit(s) for wake sources.
@@ -446,7 +492,9 @@ static void resume_from_deep_sleep(void)
 #endif
 
 	/* re-enable Port 80 capture */
+#ifndef CHIP_FAMILY_MEC172X
 	MCHP_P80_ACTIVATE(0) = 1;
+#endif
 
 #ifdef CONFIG_ADC
 	MCHP_ADC_CTRL |= 1;
