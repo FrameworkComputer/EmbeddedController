@@ -1,0 +1,55 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/dts-v1/;
+
+#include <cros/nuvoton/npcx.dtsi>
+#include <dt-bindings/gpio_defines.h>
+#include <nuvoton/npcx7m6fc.dtsi>
+
+/ {
+	model = "Google Trogdor Baseboard";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,console = &uart1;
+		zephyr,shell-uart = &uart1;
+		zephyr,flash = &flash0;
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+	};
+
+	def_lvol_io_list {
+		compatible = "nuvoton,npcx-lvolctrl-def";
+
+		/* I2C_SDA0 & SCL0 */
+		lvol_io_pads = <&lvol_iob4 &lvol_iob5>;
+	};
+
+	soc {
+		fiu0: cros-flash@40020000 {
+			compatible = "nuvoton,npcx-cros-flash";
+			reg = <0x40020000 0x2000>;
+			clocks = <&pcc NPCX_CLOCK_BUS_APB3 NPCX_PWDWN_CTL1 2>;
+			size = <0x80000>;
+			label = "FLASH_INTERFACE_UNIT0";
+			pinctrl-0 = <>;
+		};
+	};
+
+	/* Update flash size to 512KB from 196KB since we are using C variant */
+	/delete-node/ flash@10090000;
+	flash0: flash@10070000 {
+		reg = <0x10070000 0x40000>;
+	};
+};
+
+&uart1 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&altc_uart1_sl2>; /* Use UART1_SL2 ie. PIN64.65 */
+};
