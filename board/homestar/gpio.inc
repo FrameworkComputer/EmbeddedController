@@ -44,6 +44,9 @@ GPIO_INT(BASE_DET_L,        PIN(3, 7), GPIO_INT_BOTH, base_detect_interrupt)  /*
 /* Sensor interrupts */
 GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 0), GPIO_INT_FALLING, bmi160_interrupt)  /* Accelerometer/gyro interrupt */
 
+/* Switchcap, for LN9310, it is the interrupt line of LN9310. */
+GPIO_INT(LN9310_INT,      PIN(E, 2), GPIO_INT_FALLING, switchcap_interrupt)
+
 /*
  * EC_RST_ODL acts as a wake source from hibernate mode. However, it does not
  * need to be an interrupt for normal EC operations. Simply set it an INPUT.
@@ -60,7 +63,7 @@ GPIO(QSIP_ON,               PIN(5, 0), GPIO_OUT_LOW)   /* Not used, for non-swit
 
 /* Power enables */
 GPIO(HIBERNATE_L,           PIN(5, 2), GPIO_OUT_HIGH)  /* EC hibernate */
-GPIO(SWITCHCAP_ON,          PIN(D, 5), GPIO_OUT_LOW)   /* Enable switch cap; will be configured in the board init */
+GPIO(SWITCHCAP_ON_L,        PIN(D, 5), GPIO_ODR_HIGH)   /* Enable switch cap */
 GPIO(EN_PP3300_A,           PIN(A, 6), GPIO_OUT_LOW)   /* Enable PP3300 */
 GPIO(EN_PP5000_A,           PIN(6, 7), GPIO_OUT_LOW)   /* Enable PP5000 */
 GPIO(EC_BL_DISABLE_L,       PIN(B, 6), GPIO_OUT_LOW)   /* Backlight disable signal from EC */
@@ -120,13 +123,6 @@ GPIO(BRD_ID2,               PIN(6, 3), GPIO_INPUT)
 GPIO(SKU_ID0,               PIN(F, 0), GPIO_INPUT)
 GPIO(SKU_ID1,               PIN(4, 1), GPIO_INPUT)
 GPIO(SKU_ID2,               PIN(D, 4), GPIO_INPUT)
-
-/* Switchcap */
-/*
- * GPIO0 is configured as PVC_PG. When the chip in power down mode, it outputs
- * high-Z. Set pull-down to avoid floating.
- */
-GPIO(DA9313_GPIO0,          PIN(E, 2), GPIO_INPUT | GPIO_PULL_DOWN) /* Switchcap GPIO0 */
 
 /* Special straps */
 GPIO(ARM_X86,               PIN(6, 6), GPIO_OUT_LOW)  /* NC, low for power saving */
