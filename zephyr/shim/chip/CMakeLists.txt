@@ -16,7 +16,7 @@ endif()
 zephyr_compile_definitions("CHIP_FAMILY_${CHIP_FAMILY}")
 zephyr_compile_definitions("CHIP_VARIANT_${CHIP_VARIANT}")
 
-if ("${CHIP_FAMILY}" MATCHES "^NPCX[0-9]$")
+if (DEFINED CONFIG_SOC_FAMILY_NPCX)
 	add_subdirectory(npcx)
 endif()
 
