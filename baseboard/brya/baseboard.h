@@ -27,6 +27,11 @@
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CRC8
 
+/* Verified boot configs */
+#define CONFIG_VBOOT_HASH
+#define CONFIG_VSTORE
+#define CONFIG_VSTORE_SLOT_COUNT 1
+
 /* Host communication */
 #define CONFIG_HOSTCMD_ESPI
 #define CONFIG_HOSTCMD_ESPI_VW_SLP_S4
