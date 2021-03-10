@@ -326,6 +326,48 @@ Zephyr's build system (including shimmed code) uses CMake instead of
 `Makefiles`, and your code will not be compiled for Zephyr unless you
 list the files in `zephyr/CMakeLists.txt`.
 
+## Step-by-step guide to adding a Kconfig
+
+Follow these steps:
+
+1. Make sure you have read the above Configuration section
+
+2. Add your config to one of zephyr/Kconfig* files. Note the PLATFORM_EC_ prefix
+   and try to put it near related things:
+
+  ```kconfig
+   config PLATFORM_EC_CHARGER_BQ25720
+     bool "TI BQ25720 charger"
+     help
+       The TI BQ25720 is a blah blah (describe summary from datasheet,
+       at least 3 lines so take 10 minutes to write something truly useful)
+  ```
+
+   Consider a `depends on PLATFORM_EC_...` line if it depends on an existing
+   feature.
+
+3. Add to zephyr/shim/include/config_chip.h (put it at the bottom):
+
+  ```kconfig
+   #undef CONFIG_CHARGER_BQ25720
+   #ifdef CONFIG_PLATFORM_EC_CHARGER_BQ25720
+   #define CONFIG_CHARGER_BQ25720
+   #endif
+  ```
+
+4. Add the source file to zephyr/CMakeLists.txt if it is not already there. For
+   ordering check the comments in that file:
+
+   `zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_BQ25720
+                                     "${PLATFORM_EC}/driver/charger/bq25720.c")`
+
+5. Run a build on a board that enables the new CONFIG (in config.h) to make sure
+   there are no problems.
+
+6. If it doesn't work, please email zephyr-task-force@ or file a bug and assign
+   it to sjg@, cc zephyr-task-force@ (please include CL link and the error
+   output).
+
 ## Unit Tests
 
 Unit tests, implemented using the Ztest framework, can be found in
