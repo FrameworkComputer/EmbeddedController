@@ -15,14 +15,38 @@ void watchdog_reload(void)
 {
 	MCHP_WDG_KICK = 1;
 
-#ifdef CONFIG_WATCHDOG_HELP
-	/* Reload the auxiliary timer */
-	MCHP_TMR16_CTL(0) &= ~BIT(5);
-	MCHP_TMR16_CNT(0) = CONFIG_AUX_TIMER_PERIOD_MS;
-	MCHP_TMR16_CTL(0) |= BIT(5);
-#endif
+	if (IS_ENABLED(CONFIG_WATCHDOG_HELP)) {
+		/* Reload the auxiliary timer */
+		MCHP_TMR16_CTL(0) &= ~BIT(5);
+		MCHP_TMR16_CNT(0) = CONFIG_AUX_TIMER_PERIOD_MS;
+		MCHP_TMR16_CTL(0) |= BIT(5);
+	}
 }
 DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
+
+#if defined(CHIP_FAMILY_MEC152X) || defined(CHIP_FAMILY_MEC172X)
+static void wdg_intr_enable(int enable)
+{
+	if (enable) {
+		MCHP_WDG_STATUS = MCHP_WDG_STS_IRQ;
+		MCHP_WDG_IEN = MCHP_WDG_IEN_IRQ_EN;
+		MCHP_WDG_CTL |= MCHP_WDG_RESET_IRQ_EN;
+		MCHP_INT_ENABLE(MCHP_WDG_GIRQ) = MCHP_WDG_GIRQ_BIT;
+		task_enable_irq(MCHP_IRQ_WDG);
+	} else {
+		MCHP_WDG_IEN = 0U;
+		MCHP_WDG_CTL &= ~(MCHP_WDG_RESET_IRQ_EN);
+		MCHP_INT_DISABLE(MCHP_WDG_GIRQ) = MCHP_WDG_GIRQ_BIT;
+		task_disable_irq(MCHP_IRQ_WDG);
+	}
+}
+#else
+static void wdg_intr_enable(int enable)
+{
+	(void) enable;
+}
+#endif
+
 
 /*
  * MEC1701 WDG asserts chip reset on LOAD count expiration.
@@ -41,74 +65,67 @@ DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
  */
 int watchdog_init(void)
 {
-#ifdef CONFIG_WATCHDOG_HELP
-	uint32_t val;
+	if (IS_ENABLED(CONFIG_WATCHDOG_HELP)) {
+		/*
+		 * MEC170x Watchdog does not warn us before expiring.
+		 * Let's use a 16-bit timer as an auxiliary timer.
+		 */
 
-	/*
-	 * Watchdog does not warn us before expiring. Let's use a 16-bit
-	 * timer as an auxiliary timer.
-	 */
+		/* Clear 16-bit basic timer 0 PCR sleep enable */
+		MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_BTMR16_0);
 
-	/* Clear 16-bit basic timer 0 PCR sleep enable */
-	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_BTMR16_0);
+		/* Stop the auxiliary timer if it's running */
+		MCHP_TMR16_CTL(0) &= ~BIT(5);
 
-	/* Stop the auxiliary timer if it's running */
-	MCHP_TMR16_CTL(0) &= ~BIT(5);
+		/* Enable auxiliary timer */
+		MCHP_TMR16_CTL(0) |= BIT(0);
 
-	/* Enable auxiliary timer */
-	MCHP_TMR16_CTL(0) |= BIT(0);
+		/* Prescaler = 48000 -> 1kHz -> Period = 1 ms */
+		MCHP_TMR16_CTL(0) = (MCHP_TMR16_CTL(0) & 0xffffU)
+					| (47999 << 16);
 
-	val = MCHP_TMR16_CTL(0);
+		/* No auto restart */
+		MCHP_TMR16_CTL(0) &= ~BIT(3);
 
-	/* Pre-scale = 48000 -> 1kHz -> Period = 1ms */
-	val = (val & 0xffff) | (47999 << 16);
+		/* Count down */
+		MCHP_TMR16_CTL(0) &= ~BIT(2);
 
-	/* No auto restart */
-	val &= ~BIT(3);
+		/* Enable interrupt from auxiliary timer */
+		MCHP_TMR16_IEN(0) |= BIT(0);
+		task_enable_irq(MCHP_IRQ_TIMER16_0);
+		MCHP_INT_ENABLE(MCHP_TMR16_GIRQ) = MCHP_TMR16_GIRQ_BIT(0);
 
-	/* Count down */
-	val &= ~BIT(2);
+		/* Load and start the auxiliary timer */
+		MCHP_TMR16_CNT(0) = CONFIG_AUX_TIMER_PERIOD_MS;
+		MCHP_TMR16_CNT(0) |= BIT(5);
+	}
 
-	MCHP_TMR16_CTL(0) = val;
-
-	/* Enable interrupt from auxiliary timer */
-	MCHP_TMR16_IEN(0) |= 1;
-	task_enable_irq(MCHP_IRQ_TIMER16_0);
-	MCHP_INT_ENABLE(MCHP_TMR16_GIRQ) = MCHP_TMR16_GIRQ_BIT(0);
-
-	/* Load and start the auxiliary timer */
-	MCHP_TMR16_CNT(0) = CONFIG_AUX_TIMER_PERIOD_MS;
-	MCHP_TMR16_CNT(0) |= BIT(5);
-#endif
 	MCHP_WDG_CTL = 0;
 
 	/* Clear WDT PCR sleep enable */
 	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_WDT);
 
-	/* Set timeout. It takes 1007us to decrement WDG_CNT by 1. */
+	/* Set timeout. It takes 1007 us to decrement WDG_CNT by 1. */
 	MCHP_WDG_LOAD = CONFIG_WATCHDOG_PERIOD_MS * 1000 / 1007;
 
-#if defined(CHIP_FAMILY_MEC152X)
-	MCHP_WDG_STATUS = MCHP_WDG_STS_IRQ;
-	MCHP_WDG_IEN = MCHP_WDG_IEN_IRQ_EN;
-	MCHP_WDG_CTL |= MCHP_WDG_RESET_IRQ_EN;
-	MCHP_INT_ENABLE(MCHP_WDG_GIRQ) = MCHP_WDG_GIRQ_BIT;
-	task_enable_irq(MCHP_IRQ_WDG);
-#endif
+	wdg_intr_enable(1);
 
-	/* Start watchdog */
-#ifdef CONFIG_CHIPSET_DEBUG
-	/* WDT will not count if JTAG TRST# is pulled high by JTAG cable */
-	MCHP_WDG_CTL = MCHP_WDT_CTL_ENABLE | MCHP_WDT_CTL_JTAG_STALL_EN;
-#else
-	MCHP_WDG_CTL |= MCHP_WDT_CTL_ENABLE;
-#endif
+	/*
+	 * Start watchdog
+	 * If chipset debug build enable feature to prevent watchdog from
+	 * counting if a debug cable is attached to JTAG_RST#.
+	 */
+	if (IS_ENABLED(CONFIG_CHIPSET_DEBUG))
+		MCHP_WDG_CTL |= (MCHP_WDT_CTL_ENABLE
+			| MCHP_WDT_CTL_JTAG_STALL_EN);
+	else
+		MCHP_WDG_CTL |= MCHP_WDT_CTL_ENABLE;
 
 	return EC_SUCCESS;
 }
 
 /* MEC152x Watchdog can fire an interrupt to CPU before system reset */
-#if defined(CHIP_FAMILY_MEC152X)
+#if defined(CHIP_FAMILY_MEC152X) || defined(CHIP_FAMILY_MEC172X)
 
 void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {
@@ -138,7 +155,7 @@ void IRQ_HANDLER(MCHP_IRQ_WDG)(void)
 			"mov r1, sp\n"
 			/*
 			 * Must push registers in pairs to keep 64-bit aligned
-			 * stack for ARM EABI.  This also conveninently saves
+			 * stack for ARM EABI.  This also conveniently saves
 			 * R0=LR so we can pass it to task_resched_if_needed.
 			 */
 			"push {r0, lr}\n"
@@ -177,7 +194,7 @@ void IRQ_HANDLER(MCHP_IRQ_TIMER16_0)(void)
 		     "mov r1, sp\n"
 		     /*
 		      * Must push registers in pairs to keep 64-bit aligned
-		      * stack for ARM EABI.  This also conveninently saves
+		      * stack for ARM EABI.  This also conveniently saves
 		      * R0=LR so we can pass it to task_resched_if_needed.
 		      */
 		     "push {r0, lr}\n"
@@ -192,4 +209,4 @@ const struct irq_priority __keep IRQ_PRIORITY(MCHP_IRQ_TIMER16_0)
 		= {MCHP_IRQ_TIMER16_0, 0};
 
 #endif /* #ifdef CONFIG_WATCHDOG_HELP */
-#endif /* #if defined(CHIP_FAMILY_MEC152X) */
+#endif /* #if defined(CHIP_FAMILY_MEC152X) || defined(CHIP_FAMILY_MEC172X) */
