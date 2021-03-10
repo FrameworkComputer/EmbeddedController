@@ -58,7 +58,7 @@ static void keyboard_irq_assert(void)
 #ifdef CONFIG_KEYBOARD_IRQ_GPIO
 	/*
 	 * Enforce signal-high for long enough for the signal to be
-	 * pulled high by the external pullup resistor. This ensures the
+	 * pulled high by the external pull up resistor. This ensures the
 	 * host will see the following falling edge, regardless of the
 	 * line state before this function call.
 	 */
@@ -81,9 +81,9 @@ static void keyboard_irq_assert(void)
  * Generate SMI pulse to the host chipset via GPIO.
  *
  * If the x86 is in S0, SMI# is sampled at 33MHz, so minimum pulse length
- * is 60ns. If the x86 is in S3, SMI# is sampled at 32.768KHz, so we need
+ * is 60 ns. If the x86 is in S3, SMI# is sampled at 32.768KHz, so we need
  * pulse length >61us. Both are short enough and events are infrequent,
- * so just delay for 65us.
+ * so just delay for 65 us.
  */
 static void lpc_generate_smi(void)
 {
@@ -231,7 +231,7 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 
 	lpc_host_args->checksum = (uint8_t)csum;
 
-	/* Fail if response doesn't fit in the param buffer */
+	/* Fail if response doesn't fit in the parameter buffer */
 	if (size > EC_PROTO2_MAX_PARAM_SIZE)
 		args->result = EC_RES_INVALID_RESPONSE;
 
@@ -276,7 +276,7 @@ uint8_t *lpc_get_memmap_range(void)
 
 void lpc_mem_mapped_init(void)
 {
-	/* We support LPC args and version 3 protocol */
+	/* We support LPC arguments and version 3 protocol */
 	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
 		EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED |
 		EC_HOST_CMD_FLAG_VERSION_3;
@@ -287,7 +287,7 @@ const int acpi_ec_pcr_slp[] = {
 	MCHP_PCR_ACPI_EC1,
 	MCHP_PCR_ACPI_EC2,
 	MCHP_PCR_ACPI_EC3,
-#ifdef CHIP_FAMILY_MEC170X
+#ifndef CHIP_FAMILY_MEC152X
 	MCHP_PCR_ACPI_EC4,
 #endif
 };
@@ -298,7 +298,7 @@ const int acpi_ec_nvic_ibf[] = {
 	MCHP_IRQ_ACPIEC1_IBF,
 	MCHP_IRQ_ACPIEC2_IBF,
 	MCHP_IRQ_ACPIEC3_IBF,
-#ifdef CHIP_FAMILY_MEC170X
+#ifndef CHIP_FAMILY_MEC152X
 	MCHP_IRQ_ACPIEC4_IBF,
 #endif
 };
@@ -310,7 +310,7 @@ const int acpi_ec_espi_bar_id[] = {
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC1,
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC2,
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC3,
-#ifdef CHIP_FAMILY_MEC170X
+#ifndef CHIP_FAMILY_MEC152X
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC4,
 #endif
 };
@@ -358,7 +358,7 @@ void chip_8042_config(uint32_t io_base)
 	/* Set up 8042 interface at 0x60/0x64 */
 	MCHP_LPC_8042_BAR = (io_base << 16) + (1ul << 15);
 #endif
-	/* Set up indication of Auxiliary sts */
+	/* Set up indication of Auxiliary status */
 	MCHP_8042_KB_CTRL |= BIT(7);
 
 	MCHP_8042_ACT |= 1;
@@ -414,6 +414,27 @@ void chip_emi0_config(uint32_t io_base)
  * Clear FIFO's and time stamp.
  * Set FIFO interrupt threshold to maximum of 14 bytes.
  */
+#if defined(CHIP_FAMILY_MEC172X)
+void chip_port80_config(uint32_t io_base)
+{
+	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_BDP0);
+
+	/* reset, configure, and enable */
+	MCHP_BDP0_CONFIG = MCHP_BDP_CFG_SRST;
+	MCHP_BDP0_CONFIG = MCHP_BDP_CFG_FIFO_THRH_28;
+	MCHP_BDP0_INTR_EN = MCHP_BDP_IEN_THRH;
+	MCHP_BDP0_ACTV = 1;
+
+	MCHP_INT_SOURCE(15) = MCHP_INT15_BDP0;
+	MCHP_INT_ENABLE(15) = MCHP_INT15_BDP0;
+	task_enable_irq(MCHP_IRQ_BDP0);
+
+	/* Last: Enable Host access via eSPI IO BAR */
+	MCHP_ESPI_IO_BAR_CTL_MASK(MCHP_ESPI_IO_BAR_BDP0) = 0x00;
+	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_BDP0) =
+			(io_base << 16) + 0x01ul;
+}
+#else
 void chip_port80_config(uint32_t io_base)
 {
 	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_P80CAP0);
@@ -438,6 +459,7 @@ void chip_port80_config(uint32_t io_base)
 	MCHP_INT_ENABLE(15) = MCHP_P80_GIRQ_BIT(0);
 	task_enable_irq(MCHP_IRQ_PORT80DBG0);
 }
+#endif
 
 #ifdef CONFIG_MCHP_DEBUG_LPC
 static void chip_lpc_iobar_debug(void)
@@ -454,8 +476,8 @@ static void chip_lpc_iobar_debug(void)
  * Most registers in LPC module are reset when the host is off.
  * We need to set up LPC again when the host is starting up.
  * MCHP LRESET# can be one of two pins
- *	GPIO_0052 Func 2
- *	GPIO_0064 Func 1
+ *	GPIO_0052 Function 2
+ *	GPIO_0064 Function 1
  * Use GPIO interrupt to detect LRESET# changes.
  * Use GPIO_0064 for LRESET#. Must update board/board_name/gpio.inc
  *
@@ -515,16 +537,13 @@ static void lpc_init(void)
 	/*
 	 * Clear PCR sleep enables for peripherals we are using for
 	 * both LPC and eSPI.
-	 * Global Config, ACPI EC0/1, 8042 Keyboard controller,
-	 * Port80 Capture0, and EMI.
+	 * Global Configuration, ACPI EC0/1, 8042 Keyboard controller.
 	 * NOTE: EMI doesn't have a sleep enable.
 	 */
 	MCHP_PCR_SLP_DIS_DEV_MASK(2, MCHP_PCR_SLP_EN2_GCFG +
 		MCHP_PCR_SLP_EN2_ACPI_EC0 +
 		MCHP_PCR_SLP_EN2_ACPI_EC0 +
 		MCHP_PCR_SLP_EN2_MIF8042);
-
-	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_P80CAP0);
 
 #ifdef CONFIG_HOSTCMD_ESPI
 
@@ -603,7 +622,7 @@ void lpc_set_init_done(int val)
 void lpcrst_interrupt(enum gpio_signal signal)
 {
 #ifndef CONFIG_HOSTCMD_ESPI
-	/* Initialize LPC module when LRESET# is deasserted */
+	/* Initialize LPC module when LRESET# is de-asserted */
 	if (!lpc_get_pltrst_asserted()) {
 		setup_lpc();
 	} else {
@@ -641,14 +660,24 @@ DECLARE_IRQ(MCHP_IRQ_EMI0, emi0_interrupt, 1);
  * ISR empties BIOS Debug 0 FIFO and
  * writes data to circular buffer. How can we be
  * sure this routine can read the last Port 80h byte?
+ * MEC172x BDP capture data is different. It returns a
+ * 16-bit value where bits [7:0] are the data and bits [15:7]
+ * are flags indicating if the data is part of a multi-byte
+ * write sequence by the host and read-only FIFO status bits.
+ * The capture HW in previous chips included an optional time
+ * stamp in bits[31:8] of the data register.
  */
 int port_80_read(void)
 {
-	int data;
+	int data = PORT_80_IGNORE;
 
-	data = PORT_80_IGNORE;
+#if defined(CHIP_FAMILY_MEC172X)
+	if (MCHP_BDP0_STATUS & MCHP_BDP_STATUS_NOT_EMPTY)
+		data = MCHP_BDP0_DATTR & 0xFFU;
+#else
 	if (MCHP_P80_STS(0) & MCHP_P80_STS_NOT_EMPTY)
 		data = MCHP_P80_CAP(0) & 0xFF;
+#endif
 
 	return data;
 }
@@ -656,7 +685,7 @@ int port_80_read(void)
 #ifdef CONFIG_BOARD_ID_CMD_ACPI_EC1
 /*
  * Handle custom ACPI EC0 commands.
- * Some chipset's CoreBoot will send read board ID command expecting
+ * Some chipset CoreBoot will send read board ID command expecting
  * a two byte response.
  */
 static int acpi_ec0_custom(int is_cmd, uint8_t value,
