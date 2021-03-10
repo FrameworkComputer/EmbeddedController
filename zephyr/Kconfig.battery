@@ -100,7 +100,7 @@ config PLATFORM_EC_CHARGE_RAMP_SW
 	  current needs of the device. It handles the user plugging chargers in
 	  and removing them.
 
-config PLATFORM_EC_CMD_CHGRAMP
+config PLATFORM_EC_CONSOLE_CMD_CHGRAMP
 	bool "Console command: chgramp"
 	depends on PLATFORM_EC_CHARGE_RAMP_SW
 	default y

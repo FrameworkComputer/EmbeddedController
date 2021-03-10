@@ -532,7 +532,7 @@ menuconfig PLATFORM_EC_USB_PD_CONSOLE_CMD
 
 if PLATFORM_EC_USB_PD_CONSOLE_CMD
 
-config PLATFORM_EC_CMD_USB_PD_PE
+config PLATFORM_EC_CONSOLE_CMD_USB_PD_PE
 	bool "Console command: pe"
 	default y
 	help
@@ -552,7 +552,7 @@ config PLATFORM_EC_CMD_USB_PD_PE
 	     SVID[0]: ff01 MODES: [1] 000c0045
 	     MODE[1]: svid:ff01 caps:000c0045
 
-config PLATFORM_EC_CMD_USB_PD_CABLE
+config PLATFORM_EC_CONSOLE_CMD_USB_PD_CABLE
 	bool "Console command: pdcable"
 	default y
 	help
@@ -909,7 +909,7 @@ config PLATFORM_EC_USB_MUX_RUNTIME_CONFIG
 	  factory. Without this, multiple EC images would need to be installed
 	  depending on the board.
 
-config PLATFORM_EC_CMD_TCPC_DUMP
+config PLATFORM_EC_CONSOLE_CMD_TCPC_DUMP
 	bool "Console command: tcpc_dump"
 	# anx7447 also supports this command, but is not yet enabled
 	default y

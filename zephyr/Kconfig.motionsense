@@ -135,7 +135,7 @@ config PLATFORM_EC_GMR_TABLET_MODE
 endif # PLATFORM_EC_TABLET_MODE
 endif # PLATFORM_EC_LID_ANGLE
 
-config PLATFORM_EC_CMD_ACCELS
+config PLATFORM_EC_CONSOLE_CMD_ACCELS
     bool "Console commands: accels, accelrate, accelinit, accelinfo, etc."
     help
       Enables console commands:
@@ -149,9 +149,9 @@ config PLATFORM_EC_CMD_ACCELS
         accelread <sensor id> [n(iteration)] - Read sensor x/y/z
         accelinit <sensor id> - Init sensor
 
-if PLATFORM_EC_CMD_ACCELS
+if PLATFORM_EC_CONSOLE_CMD_ACCELS
 
-config PLATFORM_EC_CMD_ACCEL_INFO
+config PLATFORM_EC_CONSOLE_CMD_ACCEL_INFO
     bool "Console Command: accelinfo"
     help
       Enable console command:
@@ -159,7 +159,7 @@ config PLATFORM_EC_CMD_ACCEL_INFO
         accelinfo on/off [interval] - Print motion sensor info, lid angle
         calculations and set calculation frequency.
 
-endif # PLATFORM_EC_CMD_ACCELS
+endif # PLATFORM_EC_CONSOLE_CMD_ACCELS
 
 config PLATFORM_EC_ACCEL_SPOOF_MODE
 	bool "Sensor spoof mode"
@@ -170,7 +170,7 @@ config PLATFORM_EC_ACCEL_SPOOF_MODE
 
 if PLATFORM_EC_ACCEL_SPOOF_MODE
 
-config PLATFORM_EC_CMD_ACCEL_SPOOF
+config PLATFORM_EC_CONSOLE_CMD_ACCEL_SPOOF
 	bool "Console Command: accelspoof"
 	help
 	  Enable console command:
