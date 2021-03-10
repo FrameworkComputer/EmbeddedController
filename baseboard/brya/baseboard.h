@@ -23,6 +23,7 @@
 #define NPCX_UART_MODULE2	1 /* 1:GPIO64/65 for UART1 */
 
 /* EC Defines */
+#define CONFIG_LTO
 #define CONFIG_CROS_BOARD_INFO
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CRC8
