@@ -656,6 +656,16 @@ __attribute__((weak)) int get_battery_manufacturer_name(char *dest, int size)
 	return EC_SUCCESS;
 }
 
+__overridable int battery_get_avg_voltage(void)
+{
+	return -EC_ERROR_UNIMPLEMENTED;
+}
+
+__overridable int battery_get_avg_current(void)
+{
+	return -EC_ERROR_UNIMPLEMENTED;
+}
+
 int battery_manufacturer_name(char *dest, int size)
 {
 	return get_battery_manufacturer_name(dest, size);
