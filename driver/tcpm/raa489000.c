@@ -84,15 +84,16 @@ int raa489000_init(int port)
 	 * TODO(b:147316511) Since this register can be accessed by multiple
 	 * tasks, we should add a mutex when modifying this register.
 	 */
-	i2c_port = tcpc_config[port].i2c_info.port;
-	rv = i2c_read16(i2c_port, ISL923X_ADDR_FLAGS, ISL9238_REG_CONTROL3,
-			&regval);
-	regval |= RAA489000_ENABLE_ADC;
-	rv |= i2c_write16(i2c_port, ISL923X_ADDR_FLAGS, ISL9238_REG_CONTROL3,
-			  regval);
-	if (rv)
-		CPRINTS("c%d: failed to enable ADCs", port);
-
+	if (IS_ENABLED(CONFIG_OCPC) && port == 0) {
+		i2c_port = tcpc_config[port].i2c_info.port;
+		rv = i2c_read16(i2c_port, ISL923X_ADDR_FLAGS,
+				ISL9238_REG_CONTROL3, &regval);
+		regval |= RAA489000_ENABLE_ADC;
+		rv |= i2c_write16(i2c_port, ISL923X_ADDR_FLAGS,
+				ISL9238_REG_CONTROL3, regval);
+		if (rv)
+			CPRINTS("c%d: failed to enable ADCs", port);
+	}
 	/* Enable Vbus detection */
 	rv = tcpc_write(port, TCPC_REG_COMMAND,
 			TCPC_REG_COMMAND_ENABLE_VBUS_DETECT);
