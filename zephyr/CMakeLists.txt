@@ -73,28 +73,37 @@ if (DEFINED CONFIG_PLATFORM_EC_RO_HEADER)
         set(flash_size 16)
     endif()
 
-    if (DEFINED PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_20)
+    if (DEFINED CONFIG_PLATFORM_EC_RO_HEADER_CORE_CLOCK_SPI_CLOCK_RATIO_1)
+        set(spiclkratio 1)
+    elseif (DEFINED CONFIG_PLATFORM_EC_RO_HEADER_CORE_CLOCK_SPI_CLOCK_RATIO_2)
+        set(spiclkratio 2)
+    else()
+        # Defaults to 1 if none are set.
+        set(spiclkratio 1)
+    endif()
+
+    if (DEFINED CONFIG_PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_20)
         set(spimaxclk 20)
-    elseif (DEFINED PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_25)
+    elseif (DEFINED CONFIG_PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_25)
         set(spimaxclk 25)
-    elseif (DEFINED PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_33)
+    elseif (DEFINED CONFIG_PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_33)
         set(spimaxclk 33)
-    elseif (DEFINED PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_40)
+    elseif (DEFINED CONFIG_PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_40)
         set(spimaxclk 40)
-    elseif (DEFINED PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_50)
+    elseif (DEFINED CONFIG_PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_50)
         set(spimaxclk 50)
     else()
         # Defaults to 20 if none are set.
         set(spimaxclk 20)
     endif()
 
-    if (DEFINED PLATFORM_EC_HEADER_SPI_READ_MODE_NORMAL)
+    if (DEFINED CONFIG_PLATFORM_EC_RO_HEADER_SPI_READ_MODE_NORMAL)
         set(spireadmode "normal")
-    elseif (DEFINED PLATFORM_EC_HEADER_SPI_READ_MODE_FAST)
+    elseif (DEFINED CONFIG_PLATFORM_EC_RO_HEADER_SPI_READ_MODE_FAST)
         set(spireadmode "fast")
-    elseif (DEFINED PLATFORM_EC_HEADER_SPI_READ_MODE_DUAL)
+    elseif (DEFINED CONFIG_PLATFORM_EC_RO_HEADER_SPI_READ_MODE_DUAL)
         set(spireadmode "dual")
-    elseif (DEFINED PLATFORM_EC_HEADER_SPI_READ_MODE_QUAD)
+    elseif (DEFINED CONFIG_PLATFORM_EC_RO_HEADER_SPI_READ_MODE_QUAD)
         set(spireadmode "quad")
     else()
         # Defaults to "dual" if none are set.
@@ -120,7 +129,7 @@ if (DEFINED CONFIG_PLATFORM_EC_RO_HEADER)
             -i ${PROJECT_BINARY_DIR}/${CONFIG_KERNEL_BIN_NAME}.bin
             -o ${PROJECT_BINARY_DIR}/zephyr.packed.bin ${hcrc} ${fcrc}
             -chip ${ECST_CHIP_ARG} -flashsize ${flash_size}
-            -spimaxclk ${spimaxclk}
+            -spiclkratio ${spiclkratio} -spimaxclk ${spimaxclk}
             -spireadmode ${spireadmode})
 endif()
 

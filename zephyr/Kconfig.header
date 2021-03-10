@@ -40,6 +40,24 @@ config PLATFORM_EC_RO_HEADER_ENABLE_FIRMWARE_CRC
 	  When enabled, the firmware image will be verified at boot using a
 	  crc checksum.
 
+choice "core clock to SPI flash clock ratio"
+	prompt "The clock ratio between the core clock and the SPI clock"
+	default PLATFORM_EC_RO_HEADER_CORE_CLOCK_SPI_CLOCK_RATIO_1
+	help
+	  This sets the clock ratio (core clock / SPI clock)
+
+config PLATFORM_EC_RO_HEADER_CORE_CLOCK_SPI_CLOCK_RATIO_1
+	bool "SPI flash will operate with normal reading mode"
+	help
+	  The SPI flash clock has the same frequency as the core clock.
+
+config PLATFORM_EC_RO_HEADER_CORE_CLOCK_SPI_CLOCK_RATIO_2
+	bool "SPI flash will operate with fast reading mode"
+	help
+	  The core clock frequency is twice the flash clock frequency.
+
+endchoice # core clock to SPI flash clock ratio
+
 choice "SPI flash max clock rate"
 	prompt "Clock rate to use for SPI flash"
 	help
