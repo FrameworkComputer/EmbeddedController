@@ -1092,8 +1092,8 @@
 /* BDP Interrupt enable */
 #define MCHP_BDP_IEN_THRH		BIT(0)
 
-/* PWM SZ package has 8, LJ(176) has 12 */
-#define MCHP_PWM_INSTANCES		12
+/* PWM SZ 144 pin package has 9 PWM's */
+#define MCHP_PWM_INSTANCES		9
 #define MCHP_PWM_ID_MAX			(MCHP_PWM_INSTANCES)
 #define MCHP_PWM_SPACING		16
 #define MCHP_PWM_BASE(x) (MCHP_PWM_0_BASE + ((x) * MCHP_PWM_SPACING))

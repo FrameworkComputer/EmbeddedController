@@ -977,8 +977,8 @@
 #define MCHP_P80_CNT_MASK0		0xfffffful
 #define MCHP_P80_CNT_MASK ((MCHP_P80_CNT_MASK0) << (MCHP_P80_CNT_BITPOS))
 
-/* PWM */
-#define MCHP_PWM_INSTANCES		12
+/* PWM SZ 144 pin package has 9 PWM's */
+#define MCHP_PWM_INSTANCES		9
 #define MCHP_PWM_ID_MAX			(MCHP_PWM_INSTANCES)
 #define MCHP_PWM_SPACING		16
 #define MCHP_PWM_BASE(x) (MCHP_PWM_0_BASE + ((x) * MCHP_PWM_SPACING))
