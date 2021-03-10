@@ -9,6 +9,7 @@
 #include <devicetree.h>
 #include <gpio_signal.h>
 
+#define GPIO_AC_PRESENT			NAMED_GPIO(acok_od)
 #define GPIO_ENTERING_RW		NAMED_GPIO(ec_entering_rw)
 #define GPIO_LID_OPEN			NAMED_GPIO(lid_open_ec)
 #define GPIO_POWER_BUTTON_L		NAMED_GPIO(ec_pwr_btn_odl)
@@ -29,9 +30,10 @@
  * #define EC_CROS_GPIO_INTERRUPTS \
  *   GPIO_INT(NAMED_GPIO(h1_ec_pwr_btn_odl), GPIO_INT_EDGE_BOTH, button_print)
  */
-#define EC_CROS_GPIO_INTERRUPTS                                    \
-	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt) \
-	GPIO_INT(GPIO_POWER_BUTTON_L, GPIO_INT_EDGE_BOTH,          \
+#define EC_CROS_GPIO_INTERRUPTS                                           \
+	GPIO_INT(GPIO_AC_PRESENT, GPIO_INT_EDGE_BOTH, extpower_interrupt) \
+	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt)        \
+	GPIO_INT(GPIO_POWER_BUTTON_L, GPIO_INT_EDGE_BOTH,                 \
 		 power_button_interrupt)
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
