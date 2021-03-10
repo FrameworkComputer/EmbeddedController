@@ -14,7 +14,7 @@
  * - Loader + (RO | RW) loaded into program memory.
  */
 
-/* Non-memmapped, external SPI */
+/* Non-memmory mapped, external SPI */
 #define CONFIG_EXTERNAL_STORAGE
 #undef  CONFIG_MAPPED_STORAGE
 #undef  CONFIG_FLASH_PSTATE
@@ -68,11 +68,19 @@
  * defined by CONFIG_FLASH_ERASE_SIZE in chip/config_chip.h
  * and must be located on a erase block boundary. !!!
  */
+#if (CONFIG_MEC_SRAM_SIZE > CONFIG_EC_PROTECTED_STORAGE_SIZE)
+#define CONFIG_RO_SIZE			(CONFIG_EC_PROTECTED_STORAGE_SIZE - \
+					CONFIG_LOADER_SIZE - 0x2000)
+#else
 #define CONFIG_RO_SIZE			(CONFIG_MEC_SRAM_SIZE - \
 					CONFIG_RAM_SIZE - CONFIG_LOADER_SIZE)
+#endif
+
 #define CONFIG_RW_MEM_OFF		CONFIG_RO_MEM_OFF
 /*
- * NOTE: CONFIG_RW_SIZE is passed to chip/mchp/util/pack_ec.py
+ * NOTE: CONFIG_RW_SIZE is passed to the SPI image generation script by
+ * chip build.mk
+ * LFW requires CONFIG_RW_SIZE is equal to CONFIG_RO_SIZE !!!
  */
 #define CONFIG_RW_SIZE			CONFIG_RO_SIZE
 
@@ -97,7 +105,9 @@
  */
 #define CONFIG_BOOT_HEADER_STORAGE_OFF		0x1000
 #define CONFIG_RW_BOOT_HEADER_STORAGE_OFF	0
-#if defined(CHIP_FAMILY_MEC152X)
+#if defined(CHIP_FAMILY_MEC172X)
+#define CONFIG_BOOT_HEADER_STORAGE_SIZE		0xc0
+#elif defined(CHIP_FAMILY_MEC152X)
 #define CONFIG_BOOT_HEADER_STORAGE_SIZE		0x140
 #elif defined(CHIP_FAMILY_MEC170X)
 #define CONFIG_BOOT_HEADER_STORAGE_SIZE		0x80

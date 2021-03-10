@@ -11,9 +11,11 @@
 
 /* Number of IRQ vectors on the NVIC */
 #ifdef CHIP_FAMILY_MEC152X
-#define CONFIG_IRQ_COUNT	174
+#define CONFIG_IRQ_COUNT 174
 #elif defined(CHIP_FAMILY_MEC170X)
-#define CONFIG_IRQ_COUNT	157
+#define CONFIG_IRQ_COUNT 157
+#elif defined(CHIP_FAMILY_MEC172X)
+#define CONFIG_IRQ_COUNT 181
 #endif
 
 /* Use a bigger console output buffer */
@@ -32,35 +34,28 @@
 #define CONFIG_CHIP_PRE_INIT
 
 /*
- * MCHP EC's have I2C master/slave
- * controllers and multiple I2C ports. Any
- * port may be mapped to any controller.
- * Enable multi-port controller feature.
- * Board level configuration determines
- * how many controllers/ports are used and
- * the mapping of port(s) to controller(s).
- * NOTE: Some MCHP reduced pin packages
- * may not implement all 11 I2C ports.
+ * MCHP EC's have I2C controllers and multiple I2C ports. Any port may be
+ * mapped to any controller at run time. Enable multi-port controller feature.
+ * Board level configuration determines how many controllers/ports are used
+ * and the mapping of port(s) to controller(s). NOTE: Some MCHP packages
+ * may not implement all I2C ports.
  */
 #define CONFIG_I2C_MULTI_PORT_CONTROLLER
 
 /*
- * MCHP I2C controller is master-slave capable and requires
- * a slave address be programmed even if used as master only.
- * Each I2C controller can respond to two slave address.
- * Define fake slave addresses that aren't used on the I2C port(s)
- * connected to each controller.
+ * MCHP I2C controllers also act as I2C peripherals listening for their
+ * peripheral address. Each controller has two programmable peripheral
+ * addresses. Define fake peripheral addresses that aren't used by
+ * peripherals on the board.
  */
 #define CONFIG_MCHP_I2C0_SLAVE_ADDRS	0xE3E1
 #define CONFIG_MCHP_I2C1_SLAVE_ADDRS	0xE3E1
 #define CONFIG_MCHP_I2C2_SLAVE_ADDRS	0xE3E1
 #define CONFIG_MCHP_I2C3_SLAVE_ADDRS	0xE3E1
-#ifdef CHIP_FAMILY_MEC152X
 #define CONFIG_MCHP_I2C4_SLAVE_ADDRS	0xE3E1
 #define CONFIG_MCHP_I2C5_SLAVE_ADDRS	0xE3E1
 #define CONFIG_MCHP_I2C6_SLAVE_ADDRS	0xE3E1
 #define CONFIG_MCHP_I2C7_SLAVE_ADDRS	0xE3E1
-#endif
 
 /************************************************************************/
 /* Memory mapping */
@@ -68,17 +63,26 @@
 /*
  * MEC170x-H and MEC152x-H have a total of 256KB SRAM.
  *   CODE at 0xE0000 - 0x117FFF, DATA at 0x118000 - 0x11FFFF
- *   MCHP MEC can fetch code from data or data from code.
+ * MEC172x-N has a total of 416KB SRAM: 352KB CODE 64KB DATA
+ *   CODE at 0xC0000 - 0x117FFF, DATA at 0x118000 - 0x127FFF
+ *   Customer data preserved across reset is 1KB at 0x12_7400.
+ *   Set top of SRAM to 0x12_7800.  We lose the top 2KB.
+ * MCHP MEC can fetch code from data or data from code.
  */
 
 /************************************************************************/
 /* Define our RAM layout. */
 
+#if defined(CHIP_FAMILY_MEC172X)
+#define CONFIG_MEC_SRAM_BASE_START	0x000C0000
+#define CONFIG_MEC_SRAM_BASE_END	(0x00128000 - (2 * 1024))
+#else
 #define CONFIG_MEC_SRAM_BASE_START	0x000E0000
 #define CONFIG_MEC_SRAM_BASE_END	0x00120000
+#endif
+
 #define CONFIG_MEC_SRAM_SIZE		(CONFIG_MEC_SRAM_BASE_END - \
 					CONFIG_MEC_SRAM_BASE_START)
-
 /* 64k Data RAM for RO / RW / loader */
 #define CONFIG_RAM_SIZE			0x00010000
 #define CONFIG_RAM_BASE			(CONFIG_MEC_SRAM_BASE_END - \
@@ -123,7 +127,11 @@
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE	256
 
 /* Program memory base address */
+#if defined(CHIP_FAMILY_MEC172X)
+#define CONFIG_PROGRAM_MEMORY_BASE	0x000C0000
+#else
 #define CONFIG_PROGRAM_MEMORY_BASE	0x000E0000
+#endif
 
 #include "config_flash_layout.h"
 
@@ -168,7 +176,7 @@
  * Use DMA when transmitting commands & data
  * with GPSPI controllers.
  */
-#ifdef CHIP_FAMILY_MEC170X
+#if defined(CHIP_FAMILY_MEC170X) || defined(CHIP_FAMILY_MEC172X)
 #define CONFIG_MCHP_GPSPI_TX_DMA
 #endif
 
