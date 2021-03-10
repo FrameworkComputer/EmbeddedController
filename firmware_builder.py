@@ -51,11 +51,51 @@ def build(opts):
 
 
 def bundle(opts):
-    """Bundles the artifacts from each target into its own tarball."""
-    info = firmware_pb2.FirmwareArtifactInfo()
+    if opts.code_coverage:
+        bundle_coverage(opts)
+    else:
+        bundle_firmware(opts)
+
+
+def get_bundle_dir(opts):
+    """Get the directory for the bundle from opts or use the default.
+
+    Also create the directory if it doesn't exist."""
     bundle_dir = opts.output_dir if opts.output_dir else DEFAULT_BUNDLE_DIRECTORY
     if not os.path.isdir(bundle_dir):
         os.mkdir(bundle_dir)
+    return bundle_dir
+
+
+def write_metadata(opts, info):
+    """Write the metadata about the bundle."""
+    bundle_metadata_file = opts.metadata if opts.metadata else DEFAULT_BUNDLE_METADATA_FILE
+    with open(bundle_metadata_file, 'w') as f:
+        f.write(json_format.MessageToJson(info))
+
+
+def bundle_coverage(opts):
+    """Bundles the artifacts from code coverage into its own tarball."""
+    info = firmware_pb2.FirmwareArtifactInfo()
+    info.bcs_version_info.version_string = opts.bcs_version
+    bundle_dir = get_bundle_dir(opts)
+    ec_dir = os.path.dirname(__file__)
+    tarball_name = 'coverage.tbz2'
+    tarball_path = os.path.join(bundle_dir, tarball_name)
+    cmd = ['tar', 'cvfj', tarball_path, 'lcov.info']
+    subprocess.run(cmd, cwd=os.path.join(ec_dir, 'build/coverage'), check=True)
+    meta = info.objects.add()
+    meta.file_name = tarball_name
+    meta.lcov_info.type = firmware_pb2.FirmwareArtifactInfo.LcovTarballInfo.LcovType.LCOV
+
+    write_metadata(opts, info)
+
+
+def bundle_firmware(opts):
+    """Bundles the artifacts from each target into its own tarball."""
+    info = firmware_pb2.FirmwareArtifactInfo()
+    info.bcs_version_info.version_string = opts.bcs_version
+    bundle_dir = get_bundle_dir(opts)
     ec_dir = os.path.dirname(__file__)
     for build_target in sorted(os.listdir(os.path.join(ec_dir, 'build'))):
         tarball_name = ''.join([build_target, '.firmware.tbz2'])
@@ -71,9 +111,7 @@ def bundle(opts):
         # TODO(kmshelton): Populate the rest of metadata contents as it gets defined in
         # infra/proto/src/chromite/api/firmware.proto.
 
-    bundle_metadata_file = opts.metadata if opts.metadata else DEFAULT_BUNDLE_METADATA_FILE
-    with open(bundle_metadata_file, 'w') as f:
-        f.write(json_format.MessageToJson(info))
+    write_metadata(opts, info)
 
 
 def test(opts):
@@ -156,6 +194,15 @@ def parse_args(args):
         required=False,
         action='store_true',
         help='Build host-based unit tests for code coverage.',
+    )
+
+    parser.add_argument(
+        '--bcs-version',
+        dest='bcs_version',
+        default='',
+        required=False,
+        # TODO(b/180008931): make this required=True.
+        help='BCS version to include in metadata.',
     )
 
     # Would make this required=True, but not available until 3.7
