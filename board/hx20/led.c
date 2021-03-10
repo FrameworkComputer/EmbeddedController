@@ -32,12 +32,12 @@ int power_button_enable = 0;
 
 struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
 				/* Red, Green, Blue */
-	[EC_LED_COLOR_RED]    = {  20,   0,   0 },
-	[EC_LED_COLOR_GREEN]  = {   0,  20,   0 },
-	[EC_LED_COLOR_BLUE]   = {   0,   0,  45 },
-	[EC_LED_COLOR_YELLOW] = {  13,  20,   0 },
-	[EC_LED_COLOR_WHITE]  = {  31,  50,  31 },
-	[EC_LED_COLOR_AMBER]  = {  20,  9,    0 },
+	[EC_LED_COLOR_RED]    = {   8,   0,   0 },
+	[EC_LED_COLOR_GREEN]  = {   0,   8,   0 },
+	[EC_LED_COLOR_BLUE]   = {   0,   0,   8 },
+	[EC_LED_COLOR_YELLOW] = {   4,   5,   0 },
+	[EC_LED_COLOR_WHITE]  = {   4,  10,   5 },
+	[EC_LED_COLOR_AMBER]  = {   9,   1,   0 },
 };
 
 struct pwm_led pwr_led_color_map[EC_LED_COLOR_COUNT] = {
