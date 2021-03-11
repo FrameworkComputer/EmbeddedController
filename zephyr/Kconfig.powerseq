@@ -42,6 +42,13 @@ config PLATFORM_EC_HOSTCMD_AP_RESET
 	  Warning: This command skips the normal reset mechanism on the AP and
 	  may leave data unsaved.
 
+config PLATFORM_EC_POWERSEQ_PP5000_CONTROL
+	bool "Enable a task-safe way to control the PP5000 rail"
+	default y
+	help
+	  Guard access to the PP5000 GPIO using mutex locks, allowing
+	  the rail to be changed in a task-safe manner.
+
 menuconfig PLATFORM_EC_POWERSEQ_INTEL
 	bool "Enable shimming common Intel power sequencing code"
 	depends on AP_X86_INTEL
@@ -59,13 +66,6 @@ config PLATFORM_EC_POWERSEQ_CPU_PROCHOT_ACTIVE_LOW
 	help
 	  If CPU_PROCHOT should be treated as active-low, enable this
 	  configuration option.
-
-config PLATFORM_EC_POWERSEQ_PP5000_CONTROL
-	bool "Enable a task-safe way to control the PP5000 rail"
-	default y
-	help
-	  Guard access to the PP5000 GPIO using mutex locks, allowing
-	  the rail to be changed in a task-safe manner.
 
 config PLATFORM_EC_POWERSEQ_RSMRST_DELAY
 	bool "Wait at least 10ms before deasserting RSMRST to PCH"
