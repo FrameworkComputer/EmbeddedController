@@ -231,6 +231,9 @@ implemented for a Zephyr-only project, and filing bugs to create the
 appropriate device-tree and Kconfig equivalents before shimming this
 code.
 
+See [Zephyr PoC device bringup](zephyr_poc_device_bringup.md) for more
+information about bringing up proof-of-concept devices.
+
 ## Configuration
 
 CrOS EC OS uses a special header `config.h`, which sets configuration
