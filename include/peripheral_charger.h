@@ -60,6 +60,22 @@
  *   +--------------+   CHARGING    +---------------+
  *     DEVICE_LOST  +---------------+  ERROR
  *
+ *
+ * In download (update firmware) mode, the state machine transitions as follows:
+ *
+ *                  +---------------+
+ *                  |   DOWNLOAD    |
+ *                  +------+--------+
+ *                         | ^
+ *             UPDATE_OPEN | |
+ *                         | | UPDATE_CLOSE
+ *                         v |
+ *                  +--------+------+
+ *              +-->|  DOWNLOADING  |
+ *              |   +------+--------+
+ *              |          |
+ *              +----------+
+ *              UPDATE_WRITE
  */
 
 /* Size of event queue. Use it to initialize struct pchg.events. */
@@ -83,29 +99,42 @@ enum pchg_event {
 	PCHG_EVENT_CHARGE_UPDATE,
 	PCHG_EVENT_CHARGE_ENDED,
 	PCHG_EVENT_CHARGE_STOPPED,
+	PCHG_EVENT_UPDATE_OPENED,
+	PCHG_EVENT_UPDATE_CLOSED,
+	PCHG_EVENT_UPDATE_WRITTEN,
 	PCHG_EVENT_IN_NORMAL,
 
 	/* Errors */
 	PCHG_EVENT_CHARGE_ERROR,
+	PCHG_EVENT_UPDATE_ERROR,
 	PCHG_EVENT_OTHER_ERROR,
 
 	/* Internal (a.k.a. Host) Events */
-	PCHG_EVENT_INITIALIZE,
 	PCHG_EVENT_ENABLE,
 	PCHG_EVENT_DISABLE,
+	PCHG_EVENT_UPDATE_OPEN,
+	PCHG_EVENT_UPDATE_WRITE,
+	PCHG_EVENT_UPDATE_CLOSE,
 
 	/* Counter. Add new entry above. */
 	PCHG_EVENT_COUNT,
 };
 
 enum pchg_error {
-	PCHG_ERROR_NONE = 0,
-	/* Error initiated by host. */
-	PCHG_ERROR_HOST = BIT(0),
-	PCHG_ERROR_OVER_TEMPERATURE = BIT(1),
-	PCHG_ERROR_OVER_CURRENT = BIT(2),
-	PCHG_ERROR_FOREIGN_OBJECT = BIT(3),
+	/* Errors reported by host. */
+	PCHG_ERROR_HOST,
+	PCHG_ERROR_OVER_TEMPERATURE,
+	PCHG_ERROR_OVER_CURRENT,
+	PCHG_ERROR_FOREIGN_OBJECT,
+	/* Errors reported by chip. */
+	PCHG_ERROR_FW_VERSION,
+	PCHG_ERROR_INVALID_FW,
+	PCHG_ERROR_WRITE_FLASH,
+	/* All other errors */
+	PCHG_ERROR_OTHER,
 };
+
+#define PCHG_ERROR_MASK(e)	BIT(e)
 
 enum pchg_mode {
 	PCHG_MODE_NORMAL = 0,
@@ -124,6 +153,23 @@ struct pchg_config {
 	const enum gpio_signal irq_pin;
 	/* Full battery percentage */
 	const uint8_t full_percent;
+	/* Update block size */
+	const uint32_t block_size;
+};
+
+struct pchg_update {
+	/* Version of new firmware. Usually used by EC_PCHG_UPDATE_CMD_OPEN. */
+	uint32_t version;
+	/* CRC32 of new firmware. Usually used by EC_PCHG_UPDATE_CMD_CLOSE. */
+	uint32_t crc32;
+	/* Address which <data> will be written to. */
+	uint32_t addr;
+	/* Size of <data> */
+	uint32_t size;
+	/* 0: No data. 1: Data is ready for write. */
+	uint8_t data_ready;
+	/* Partial data of new firmware */
+	uint8_t data[128];
 };
 
 /**
@@ -153,6 +199,8 @@ struct pchg {
 	uint8_t mode;
 	/* FW version */
 	uint32_t fw_version;
+	/* Context related to FW update */
+	struct pchg_update update;
 };
 
 /**
@@ -169,6 +217,12 @@ struct pchg_drv {
 	int (*get_event)(struct pchg *ctx);
 	/* Get battery level. */
 	int (*get_soc)(struct pchg *ctx);
+	/* open update session */
+	int (*update_open)(struct pchg *ctx);
+	/* write update image */
+	int (*update_write)(struct pchg *ctx);
+	/* close update session */
+	int (*update_close)(struct pchg *ctx);
 };
 
 /**

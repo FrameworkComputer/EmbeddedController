@@ -9,6 +9,7 @@
 #include "device_event.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "mkbp_event.h"
 #include "peripheral_charger.h"
 #include "queue.h"
 #include "stdbool.h"
@@ -20,6 +21,9 @@
 
 #define CPRINTS(fmt, args...) cprints(CC_PCHG, "PCHG: " fmt, ##args)
 
+/* Currently only used for FW update. */
+static uint32_t pchg_host_events;
+
 static void pchg_queue_event(struct pchg *ctx, enum pchg_event event)
 {
 	mutex_lock(&ctx->mtx);
@@ -28,6 +32,14 @@ static void pchg_queue_event(struct pchg *ctx, enum pchg_event event)
 		CPRINTS("ERR: Queue is full");
 	}
 	mutex_unlock(&ctx->mtx);
+}
+
+static void _send_host_event(const struct pchg *ctx, uint32_t event)
+{
+	int port = PCHG_CTX_TO_PORT(ctx);
+
+	atomic_or(&pchg_host_events, event | port << EC_MKBP_PCHG_PORT_SHIFT);
+	mkbp_send_event(EC_MKBP_EVENT_PCHG);
 }
 
 static const char *_text_state(enum pchg_state state)
@@ -58,11 +70,18 @@ static const char *_text_event(enum pchg_event event)
 		[PCHG_EVENT_CHARGE_UPDATE] = "CHARGE_UPDATE",
 		[PCHG_EVENT_CHARGE_ENDED] = "CHARGE_ENDED",
 		[PCHG_EVENT_CHARGE_STOPPED] = "CHARGE_STOPPED",
+		[PCHG_EVENT_UPDATE_OPENED] = "UPDATE_OPENED",
+		[PCHG_EVENT_UPDATE_CLOSED] = "UPDATE_CLOSED",
+		[PCHG_EVENT_UPDATE_WRITTEN] = "UPDATE_WRITTEN",
 		[PCHG_EVENT_IN_NORMAL] = "IN_NORMAL",
 		[PCHG_EVENT_CHARGE_ERROR] = "CHARGE_ERROR",
-		[PCHG_EVENT_INITIALIZE] = "INITIALIZE",
+		[PCHG_EVENT_UPDATE_ERROR] = "UPDATE_ERROR",
+		[PCHG_EVENT_OTHER_ERROR] = "OTHER_ERROR",
 		[PCHG_EVENT_ENABLE] = "ENABLE",
 		[PCHG_EVENT_DISABLE] = "DISABLE",
+		[PCHG_EVENT_UPDATE_OPEN] = "UPDATE_OPEN",
+		[PCHG_EVENT_UPDATE_WRITE] = "UPDATE_WRITE",
+		[PCHG_EVENT_UPDATE_CLOSE] = "UPDATE_CLOSE",
 	};
 	BUILD_ASSERT(ARRAY_SIZE(event_names) == PCHG_EVENT_COUNT);
 
@@ -80,6 +99,7 @@ static void _clear_port(struct pchg *ctx)
 	atomic_clear(&ctx->irq);
 	ctx->battery_percent = 0;
 	ctx->error = 0;
+	ctx->update.data_ready = 0;
 }
 
 static enum pchg_state pchg_reset(struct pchg *ctx)
@@ -101,6 +121,9 @@ static enum pchg_state pchg_reset(struct pchg *ctx)
 		} else if (rv != EC_SUCCESS_IN_PROGRESS) {
 			CPRINTS("ERR: Failed to reset to normal mode");
 		}
+	} else {
+		state = PCHG_STATE_DOWNLOAD;
+		pchg_queue_event(ctx, PCHG_EVENT_UPDATE_OPEN);
 	}
 
 	return state;
@@ -257,6 +280,78 @@ static void pchg_state_charging(struct pchg *ctx)
 	}
 }
 
+static void pchg_state_download(struct pchg *ctx)
+{
+	int rv;
+
+	switch (ctx->event) {
+	case PCHG_EVENT_RESET:
+		ctx->state = pchg_reset(ctx);
+		break;
+	case PCHG_EVENT_UPDATE_OPEN:
+		rv = ctx->cfg->drv->update_open(ctx);
+		if (rv == EC_SUCCESS) {
+			ctx->state = PCHG_STATE_DOWNLOADING;
+		} else if (rv != EC_SUCCESS_IN_PROGRESS) {
+			_send_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
+			CPRINTS("ERR: Failed to open");
+		}
+		break;
+	case PCHG_EVENT_UPDATE_OPENED:
+		ctx->state = PCHG_STATE_DOWNLOADING;
+		_send_host_event(ctx, EC_MKBP_PCHG_UPDATE_OPENED);
+		break;
+	case PCHG_EVENT_UPDATE_ERROR:
+		_send_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
+		break;
+	default:
+		break;
+	}
+}
+
+static void pchg_state_downloading(struct pchg *ctx)
+{
+	int rv;
+
+	switch (ctx->event) {
+	case PCHG_EVENT_RESET:
+		ctx->state = pchg_reset(ctx);
+		break;
+	case PCHG_EVENT_UPDATE_WRITE:
+		if (ctx->update.data_ready == 0)
+			break;
+		rv = ctx->cfg->drv->update_write(ctx);
+		if (rv != EC_SUCCESS && rv != EC_SUCCESS_IN_PROGRESS) {
+			_send_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
+			CPRINTS("ERR: Failed to write");
+		}
+		break;
+	case PCHG_EVENT_UPDATE_WRITTEN:
+		ctx->update.data_ready = 0;
+		_send_host_event(ctx, EC_MKBP_PCHG_WRITE_COMPLETE);
+		break;
+	case PCHG_EVENT_UPDATE_CLOSE:
+		rv = ctx->cfg->drv->update_close(ctx);
+		if (rv == EC_SUCCESS) {
+			ctx->state = PCHG_STATE_DOWNLOAD;
+		} else if (rv != EC_SUCCESS_IN_PROGRESS) {
+			_send_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
+			CPRINTS("ERR: Failed to close");
+		}
+		break;
+	case PCHG_EVENT_UPDATE_CLOSED:
+		ctx->state = PCHG_STATE_DOWNLOAD;
+		_send_host_event(ctx, EC_MKBP_PCHG_UPDATE_CLOSED);
+		break;
+	case PCHG_EVENT_UPDATE_ERROR:
+		CPRINTS("ERR: Failed to update");
+		_send_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
+		break;
+	default:
+		break;
+	}
+}
+
 static int pchg_run(struct pchg *ctx)
 {
 	enum pchg_state previous_state = ctx->state;
@@ -302,6 +397,12 @@ static int pchg_run(struct pchg *ctx)
 		break;
 	case PCHG_STATE_CHARGING:
 		pchg_state_charging(ctx);
+		break;
+	case PCHG_STATE_DOWNLOAD:
+		pchg_state_download(ctx);
+		break;
+	case PCHG_STATE_DOWNLOADING:
+		pchg_state_downloading(ctx);
 		break;
 	default:
 		CPRINTS("ERR: Unknown state (%d)", ctx->state);
@@ -422,6 +523,8 @@ static enum ec_status hc_pchg_count(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_PCHG_COUNT, hc_pchg_count, EC_VER_MASK(0));
 
+#define HCPRINTS(fmt, args...) cprints(CC_PCHG, "HC:PCHG: " fmt, ##args)
+
 static enum ec_status hc_pchg(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pchg *p = args->params;
@@ -451,13 +554,96 @@ static enum ec_status hc_pchg(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_PCHG, hc_pchg, EC_VER_MASK(1));
 
+int pchg_get_next_event(uint8_t *out)
+{
+	uint32_t events = atomic_clear(&pchg_host_events);
+
+	memcpy(out, &events, sizeof(events));
+
+	return sizeof(events);
+}
+DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_PCHG, pchg_get_next_event);
+
+static enum ec_status hc_pchg_update(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_pchg_update *p = args->params;
+	struct ec_response_pchg_update *r = args->response;
+	int port = p->port;
+	struct pchg *ctx;
+
+	if (port >= pchg_count)
+		return EC_RES_INVALID_PARAM;
+
+	ctx = &pchgs[port];
+
+	switch (p->cmd) {
+	case EC_PCHG_UPDATE_CMD_RESET_TO_NORMAL:
+		HCPRINTS("Resetting to normal mode");
+
+		gpio_disable_interrupt(ctx->cfg->irq_pin);
+		_clear_port(ctx);
+		ctx->mode = PCHG_MODE_NORMAL;
+		ctx->cfg->drv->reset(ctx);
+		gpio_enable_interrupt(ctx->cfg->irq_pin);
+		break;
+
+	case EC_PCHG_UPDATE_CMD_OPEN:
+		HCPRINTS("Resetting to download mode");
+
+		gpio_disable_interrupt(ctx->cfg->irq_pin);
+		_clear_port(ctx);
+		ctx->mode = PCHG_MODE_DOWNLOAD;
+		ctx->cfg->drv->reset(ctx);
+		gpio_enable_interrupt(ctx->cfg->irq_pin);
+
+		ctx->update.version = p->version;
+		r->block_size = ctx->cfg->block_size;
+		args->response_size = sizeof(*r);
+		break;
+
+	case EC_PCHG_UPDATE_CMD_WRITE:
+		if (ctx->state != PCHG_STATE_DOWNLOADING)
+			return EC_RES_ERROR;
+		if (p->size > sizeof(ctx->update.data))
+			return EC_RES_OVERFLOW;
+		if (ctx->update.data_ready)
+			return EC_RES_BUSY;
+
+		HCPRINTS("Writing %u bytes to 0x%x", p->size, p->addr);
+		ctx->update.addr = p->addr;
+		ctx->update.size = p->size;
+		memcpy(ctx->update.data, p->data, p->size);
+		pchg_queue_event(ctx, PCHG_EVENT_UPDATE_WRITE);
+		ctx->update.data_ready = 1;
+		break;
+
+	case EC_PCHG_UPDATE_CMD_CLOSE:
+		if (ctx->state != PCHG_STATE_DOWNLOADING)
+			return EC_RES_ERROR;
+		if (ctx->update.data_ready)
+			return EC_RES_BUSY;
+
+		HCPRINTS("Closing update session (crc=0x%x)", p->crc32);
+		ctx->update.crc32 = p->crc32;
+		pchg_queue_event(ctx, PCHG_EVENT_UPDATE_CLOSE);
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+
+	task_wake(TASK_ID_PCHG);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PCHG_UPDATE, hc_pchg_update, EC_VER_MASK(0));
+
 static int cc_pchg(int argc, char **argv)
 {
 	int port;
 	char *end;
 	struct pchg *ctx;
 
-	if (argc < 2 || 3 < argc)
+	if (argc < 2 || 4 < argc)
 		return EC_ERROR_PARAM_COUNT;
 
 	port = strtoi(argv[1], &end, 0);
@@ -477,6 +663,8 @@ static int cc_pchg(int argc, char **argv)
 	if (!strcasecmp(argv[2], "reset")) {
 		if (argc == 3)
 			ctx->mode = PCHG_MODE_NORMAL;
+		else if (!strcasecmp(argv[3], "download"))
+			ctx->mode = PCHG_MODE_DOWNLOAD;
 		else
 			return EC_ERROR_PARAM3;
 		gpio_disable_interrupt(ctx->cfg->irq_pin);
@@ -497,7 +685,7 @@ static int cc_pchg(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(pchg, cc_pchg,
 			"\n\t<port>"
-			"\n\t<port> reset"
+			"\n\t<port> reset [download]"
 			"\n\t<port> enable"
 			"\n\t<port> disable",
 			"Control peripheral chargers");

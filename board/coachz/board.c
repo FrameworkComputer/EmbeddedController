@@ -60,6 +60,7 @@ struct pchg pchgs[] = {
 			.i2c_port = I2C_PORT_WLC,
 			.irq_pin = GPIO_WLC_IRQ_CONN,
 			.full_percent = 96,
+			.block_size = 128,
 		},
 		.events = QUEUE_NULL(PCHG_EVENT_QUEUE_SIZE, enum pchg_event),
 	},
