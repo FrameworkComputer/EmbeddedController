@@ -735,6 +735,15 @@ config PLATFORM_EC_USB_PD_TCPC_LPM_EXIT_DEBOUNCE_US
 	  is the delay in microseconds to allow before checking the CC line
 	  status in the EC.
 
+config PLATFORM_EC_USB_PD_TCPC_VCONN
+	bool "If VCONN is enabled, the TCPC will provide VCONN"
+	default y if !PLATFORM_EC_USBC_PPC_SYV682X
+	help
+	  Source USB Type-C connector voltage (VCONN) from the Type-C Port
+	  Controller (TCPC), and also the Power Path Controller (PPC) if
+	  present. Some TCPC/PPC can't handle 5V on its host-side CC pins, so
+          disable this config in those cases.
+
 choice "Type-C Port Manager (TCPM)"
 	prompt "Choose a Type-C Port Manager (TCPM) to manage TCPC"
 
