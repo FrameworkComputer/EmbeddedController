@@ -9433,7 +9433,9 @@ static int cmd_pchg_info(const struct ec_response_pchg *res)
 {
 	static const char * const pchg_state_text[] = EC_PCHG_STATE_TEXT;
 
-	printf("State: %s (%d)\n", res->state < sizeof(pchg_state_text)
+	BUILD_ASSERT(ARRAY_SIZE(pchg_state_text) == PCHG_STATE_COUNT);
+
+	printf("State: %s (%d)\n", res->state < PCHG_STATE_COUNT
 	       ? pchg_state_text[res->state] : "UNDEF", res->state);
 	printf("Battery: %u%%\n", res->battery_percentage);
 	printf("Errors: 0x%x\n", res->error);
