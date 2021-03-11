@@ -24,6 +24,18 @@
  */
 #undef CONFIG_HIBERNATE
 
+/* LED */
+#define CONFIG_LED_PWM
+#define CONFIG_LED_PWM_COUNT 2
+#undef CONFIG_LED_PWM_NEAR_FULL_COLOR
+#undef CONFIG_LED_PWM_SOC_ON_COLOR
+#undef CONFIG_LED_PWM_SOC_SUSPEND_COLOR
+#undef CONFIG_LED_PWM_LOW_BATT_COLOR
+#define CONFIG_LED_PWM_NEAR_FULL_COLOR EC_LED_COLOR_WHITE
+#define CONFIG_LED_PWM_SOC_ON_COLOR EC_LED_COLOR_WHITE
+#define CONFIG_LED_PWM_SOC_SUSPEND_COLOR EC_LED_COLOR_WHITE
+#define CONFIG_LED_PWM_LOW_BATT_COLOR EC_LED_COLOR_AMBER
+
 /* USB Type A Features */
 #define USB_PORT_COUNT			1
 #define CONFIG_USB_PORT_POWER_DUMB
@@ -167,11 +179,11 @@ enum battery_type {
 
 enum pwm_channel {
 	PWM_CH_LED2 = 0,		/* PWM0 (white charger) */
-	PWM_CH_LED3,			/* PWM1 */
+	PWM_CH_LED3,			/* PWM1 (orange on DB) */
 	PWM_CH_LED1,			/* PWM2 (orange charger) */
 	PWM_CH_KBLIGHT,			/* PWM3 */
 	PWM_CH_FAN,			/* PWM5 */
-	PWM_CH_LED4,			/* PWM7 */
+	PWM_CH_LED4,			/* PWM7 (white on DB) */
 	PWM_CH_COUNT
 };
 

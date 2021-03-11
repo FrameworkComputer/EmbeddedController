@@ -43,6 +43,9 @@
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
 
+/* LED */
+#define CONFIG_LED_COMMON
+
 /* Common charger defines */
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER
