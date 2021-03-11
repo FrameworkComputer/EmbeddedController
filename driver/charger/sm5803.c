@@ -1212,7 +1212,7 @@ static enum ec_error_list sm5803_set_mode(int chgnum, int mode)
 	return rv;
 }
 
-static enum ec_error_list sm5803_get_current(int chgnum, int *current)
+static enum ec_error_list sm5803_get_actual_current(int chgnum, int *current)
 {
 	enum ec_error_list rv;
 	int reg;
@@ -1233,6 +1233,21 @@ static enum ec_error_list sm5803_get_current(int chgnum, int *current)
 	return EC_SUCCESS;
 }
 
+static enum ec_error_list sm5803_get_current(int chgnum, int *current)
+{
+	enum ec_error_list rv;
+	int reg;
+
+	rv = chg_read8(chgnum, SM5803_REG_FAST_CONF4, &reg);
+	if (rv)
+		return rv;
+
+	reg &= SM5803_CONF4_ICHG_FAST;
+	*current = SM5803_REG_TO_CURRENT(reg);
+
+	return EC_SUCCESS;
+}
+
 static enum ec_error_list sm5803_set_current(int chgnum, int current)
 {
 	enum ec_error_list rv;
@@ -1249,7 +1264,7 @@ static enum ec_error_list sm5803_set_current(int chgnum, int current)
 	return rv;
 }
 
-static enum ec_error_list sm5803_get_voltage(int chgnum, int *voltage)
+static enum ec_error_list sm5803_get_actual_voltage(int chgnum, int *voltage)
 {
 	enum ec_error_list rv;
 	int reg;
@@ -1267,6 +1282,25 @@ static enum ec_error_list sm5803_get_voltage(int chgnum, int *voltage)
 
 	/* The LSB is 23.4mV */
 	*voltage = volt_bits * 234 / 10;
+
+	return EC_SUCCESS;
+}
+
+static enum ec_error_list sm5803_get_voltage(int chgnum, int *voltage)
+{
+	enum ec_error_list rv;
+	int regval;
+	int v;
+
+	rv = chg_read8(chgnum, SM5803_REG_VBAT_FAST_MSB, &regval);
+	v = regval << 3;
+	rv |= chg_read8(chgnum, SM5803_REG_VBAT_FAST_LSB, &regval);
+	v |= (regval & 0x3);
+
+	*voltage = SM5803_REG_TO_VOLTAGE(v);
+
+	if (rv)
+		return EC_ERROR_UNKNOWN;
 
 	return EC_SUCCESS;
 }
@@ -1716,8 +1750,10 @@ const struct charger_drv sm5803_drv = {
 	.get_info = &sm5803_get_info,
 	.get_status = &sm5803_get_status,
 	.set_mode = &sm5803_set_mode,
+	.get_actual_current = &sm5803_get_actual_current,
 	.get_current = &sm5803_get_current,
 	.set_current = &sm5803_set_current,
+	.get_actual_voltage = &sm5803_get_actual_voltage,
 	.get_voltage = &sm5803_get_voltage,
 	.set_voltage = &sm5803_set_voltage,
 	.discharge_on_ac = &sm5803_discharge_on_ac,

@@ -409,19 +409,28 @@ static enum ec_error_list isl923x_set_mode(int chgnum, int mode)
 	return rv;
 }
 
+#ifdef CONFIG_CHARGER_RAA489000
+static enum ec_error_list raa489000_get_actual_current(int chgnum, int *current)
+{
+	int rv;
+	int reg;
+
+	rv = raw_read16(chgnum, RAA489000_REG_ADC_CHARGE_CURRENT, &reg);
+	/* The value is in 22.2mA increments. */
+	reg *= 222;
+	reg /= 10;
+
+	*current = REG_TO_CURRENT(reg);
+	return rv;
+}
+#endif /* CONFIG_CHARGER_RAA489000 */
+
 static enum ec_error_list isl923x_get_current(int chgnum, int *current)
 {
 	int rv;
 	int reg;
 
-	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
-		rv = raw_read16(chgnum, RAA489000_REG_ADC_CHARGE_CURRENT, &reg);
-		/* The value is in 22.2mA increments. */
-		reg *= 222;
-		reg /= 10;
-	} else {
-		rv = raw_read16(chgnum, ISL923X_REG_CHG_CURRENT, &reg);
-	}
+	rv = raw_read16(chgnum, ISL923X_REG_CHG_CURRENT, &reg);
 	if (rv)
 		return rv;
 
@@ -434,24 +443,28 @@ static enum ec_error_list isl923x_set_current(int chgnum, int current)
 	return isl9237_set_current(chgnum, current);
 }
 
-static enum ec_error_list isl923x_get_voltage(int chgnum, int *voltage)
+#ifdef CONFIG_CHARGER_RAA489000
+static enum ec_error_list raa489000_get_actual_voltage(int chgnum, int *voltage)
 {
 	int rv;
 	int reg;
 
-	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
-		rv = raw_read16(chgnum, RAA489000_REG_ADC_VSYS, &reg);
-		if (rv)
-			return rv;
+	rv = raw_read16(chgnum, RAA489000_REG_ADC_VSYS, &reg);
+	if (rv)
+		return rv;
 
-		/* The voltage is returned in bits 13:6. LSB is 96mV. */
-		reg &= GENMASK(13, 6);
-		reg >>= 6;
-		reg *= 96;
+	/* The voltage is returned in bits 13:6. LSB is 96mV. */
+	reg &= GENMASK(13, 6);
+	reg >>= 6;
+	reg *= 96;
 
-		*voltage = reg;
-		return EC_SUCCESS;
-	}
+	*voltage = reg;
+	return EC_SUCCESS;
+}
+#endif /* CONFIG_CHARGER_RAA489000 */
+
+static enum ec_error_list isl923x_get_voltage(int chgnum, int *voltage)
+{
 	return raw_read16(chgnum, ISL923X_REG_SYS_VOLTAGE_MAX, voltage);
 }
 
@@ -1376,8 +1389,14 @@ const struct charger_drv isl923x_drv = {
 	.enable_otg_power = &isl923x_enable_otg_power,
 	.set_otg_current_voltage = &isl923x_set_otg_current_voltage,
 #endif
+#ifdef CONFIG_CHARGER_RAA489000
+	.get_actual_current = &raa489000_get_actual_current,
+#endif
 	.get_current = &isl923x_get_current,
 	.set_current = &isl923x_set_current,
+#ifdef CONFIG_CHARGER_RAA489000
+	.get_actual_voltage = &raa489000_get_actual_voltage,
+#endif
 	.get_voltage = &isl923x_get_voltage,
 	.set_voltage = &isl923x_set_voltage,
 	.discharge_on_ac = &isl923x_discharge_on_ac,

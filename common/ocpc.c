@@ -606,7 +606,7 @@ void ocpc_get_adcs(struct ocpc_data *ocpc)
 		ocpc->primary_ibus_ma = val;
 
 	val = 0;
-	if (!charger_get_voltage(CHARGER_PRIMARY, &val))
+	if (!charger_get_actual_voltage(CHARGER_PRIMARY, &val))
 		ocpc->vsys_mv = val;
 
 	if (board_get_charger_chip_count() <= CHARGER_SECONDARY) {
@@ -626,11 +626,11 @@ void ocpc_get_adcs(struct ocpc_data *ocpc)
 		ocpc->secondary_ibus_ma = val;
 
 	val = 0;
-	if (!charger_get_voltage(CHARGER_SECONDARY, &val))
+	if (!charger_get_actual_voltage(CHARGER_SECONDARY, &val))
 		ocpc->vsys_aux_mv = val;
 
 	val = 0;
-	if (!charger_get_current(CHARGER_SECONDARY, &val))
+	if (!charger_get_actual_current(CHARGER_SECONDARY, &val))
 		ocpc->isys_ma = val;
 }
 

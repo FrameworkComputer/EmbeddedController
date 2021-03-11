@@ -85,6 +85,12 @@ struct charger_drv {
 	enum ec_error_list (*get_voltage)(int chgnum, int *voltage);
 	enum ec_error_list (*set_voltage)(int chgnum, int voltage);
 
+
+	/* Get the measured charge current and voltage in mA/mV */
+	enum ec_error_list (*get_actual_current)(int chgnum, int *current);
+	enum ec_error_list (*get_actual_voltage)(int chgnum, int *voltage);
+
+
 	/* Discharge battery when on AC power. */
 	enum ec_error_list (*discharge_on_ac)(int chgnum, int enable);
 
@@ -249,6 +255,10 @@ enum ec_error_list charger_set_current(int chgnum, int current);
 /* Get/set charge voltage limit in mV */
 enum ec_error_list charger_get_voltage(int chgnum, int *voltage);
 enum ec_error_list charger_set_voltage(int chgnum, int voltage);
+
+/* Get the measured charge current and voltage in mA/mV */
+enum ec_error_list charger_get_actual_current(int chgnum, int *current);
+enum ec_error_list charger_get_actual_voltage(int chgnum, int *voltage);
 
 /* Discharge battery when on AC power. */
 enum ec_error_list charger_discharge_on_ac(int enable);
