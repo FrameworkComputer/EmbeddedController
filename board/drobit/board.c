@@ -271,11 +271,13 @@ struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
 		.i2c_port = I2C_PORT_USB_C0,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.frs_en = GPIO_USB_C0_FRS_EN,
 		.drv = &syv682x_drv,
 	},
 	[USBC_PORT_C1] = {
 		.i2c_port = I2C_PORT_USB_C1,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.frs_en = GPIO_USB_C1_FRS_EN,
 		.drv = &syv682x_drv,
 	},
 };
@@ -295,6 +297,22 @@ void ppc_interrupt(enum gpio_signal signal)
 	default:
 		break;
 	}
+}
+
+/* Disable FRS on boards with the SYV682A. FRS only works on the SYV682B. */
+void setup_board_ppc(void)
+{
+	uint8_t board_id = get_board_id();
+
+	if (board_id < 2) {
+		ppc_chips[USBC_PORT_C0].frs_en = 0;
+		ppc_chips[USBC_PORT_C1].frs_en = 0;
+	}
+}
+
+__override void board_cbi_init(void)
+{
+	setup_board_ppc();
 }
 
 /******************************************************************************/

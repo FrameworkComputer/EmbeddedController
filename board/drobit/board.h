@@ -81,6 +81,7 @@
 
 /* USBC PPC*/
 #define CONFIG_USBC_PPC_SYV682X
+#define CONFIG_USB_PD_FRS_PPC
 
 /* BC 1.2 */
 
