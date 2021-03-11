@@ -10,6 +10,9 @@
 #include <gpio_signal.h>
 
 #define GPIO_AC_PRESENT			NAMED_GPIO(acok_od)
+#define GPIO_BOARD_VERSION1		NAMED_GPIO(brd_id0)
+#define GPIO_BOARD_VERSION2		NAMED_GPIO(brd_id1)
+#define GPIO_BOARD_VERSION3		NAMED_GPIO(brd_id2)
 #define GPIO_ENTERING_RW		NAMED_GPIO(ec_entering_rw)
 #define GPIO_LID_OPEN			NAMED_GPIO(lid_open_ec)
 #define GPIO_POWER_BUTTON_L		NAMED_GPIO(ec_pwr_btn_odl)
