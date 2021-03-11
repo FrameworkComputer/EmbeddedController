@@ -316,7 +316,7 @@ static int pchg_run(struct pchg *ctx)
 
 	/*
 	 * Notify the host of
-	 * - [S0] All events except charge update and a new soc.
+	 * - [S0] Charge update with SoC change and all other events.
 	 * - [S3/S0IX] Device attach or detach (for wake-up)
 	 * - [S5/G3] No events.
 	 */
@@ -327,10 +327,10 @@ static int pchg_run(struct pchg *ctx)
 		return (ctx->event == PCHG_EVENT_DEVICE_DETECTED)
 			|| (ctx->event == PCHG_EVENT_DEVICE_LOST);
 
-	if (ctx->event == PCHG_EVENT_CHARGE_ERROR)
-		return 1;
+	if (ctx->event == PCHG_EVENT_CHARGE_UPDATE)
+		return ctx->battery_percent != previous_battery;
 
-	return ctx->battery_percent != previous_battery;
+	return ctx->event != PCHG_EVENT_NONE;
 }
 
 void pchg_irq(enum gpio_signal signal)
