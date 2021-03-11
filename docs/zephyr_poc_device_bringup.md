@@ -20,6 +20,11 @@ An example CL to do this for Lazor can be found
 After you have UART functioning, GPIOs can be an easy target to start
 unblocking further features.
 
+We have a very ugly program to auto-generate the GPIO DTS based on
+gpio.inc for the existing board.  You can find it at
+`util/gpios_to_zephyr_dts.c`, and instructions are in the file on how
+to compile and use it.  You may have to hand-modify the output.
+
 The resultant CL for Lazor can be found [here](https://crrev.com/c/2749768).
 
 ## Bring up Host Commands
