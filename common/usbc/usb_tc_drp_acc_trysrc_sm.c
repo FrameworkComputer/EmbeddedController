@@ -3673,6 +3673,7 @@ static void tc_cc_open_entry(const int port)
 	typec_update_cc(port);
 
 	tc_set_partner_role(port, PPC_DEV_DISCONNECTED);
+	tc_detached(port);
 }
 
 void tc_set_debug_level(enum debug_level debug_level)
