@@ -163,8 +163,8 @@ enum adc_channel {
 };
 
 enum temp_sensor_id {
-	TEMP_SENSOR_1,
-	TEMP_SENSOR_2,
+	TEMP_SENSOR_MEMORY,
+	TEMP_SENSOR_CPU,
 	TEMP_SENSOR_COUNT
 };
 

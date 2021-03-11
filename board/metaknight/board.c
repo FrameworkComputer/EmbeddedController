@@ -176,18 +176,21 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = {.name = "Memory",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "Ambient",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_2},
+
+	[TEMP_SENSOR_MEMORY] = {
+		.name = "Memory",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_51k1_47k_4050b,
+		.idx  = ADC_TEMP_SENSOR_1},
+	[TEMP_SENSOR_CPU] = {
+		.name = "CPU",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_51k1_47k_4050b,
+		.idx  = ADC_TEMP_SENSOR_2},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-const static struct ec_thermal_config thermal_a = {
+const static struct ec_thermal_config thermal_memory = {
 	.temp_host = {
 		[EC_TEMP_THRESH_WARN] = 0,
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
@@ -200,7 +203,7 @@ const static struct ec_thermal_config thermal_a = {
 	},
 };
 
-const static struct ec_thermal_config thermal_b = {
+const static struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
 		[EC_TEMP_THRESH_WARN] = 0,
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
@@ -217,8 +220,8 @@ struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 
 static void setup_thermal(void)
 {
-	thermal_params[TEMP_SENSOR_1] = thermal_a;
-	thermal_params[TEMP_SENSOR_2] = thermal_b;
+	thermal_params[TEMP_SENSOR_MEMORY] = thermal_memory;
+	thermal_params[TEMP_SENSOR_CPU]    = thermal_cpu;
 }
 
 /* Enable HDMI any time the SoC is on */
