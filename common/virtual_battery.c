@@ -246,9 +246,9 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 		break;
 	case SB_AVERAGE_CURRENT:
 		/* This may cause an i2c transaction */
-		val = battery_get_avg_voltage();
-		if (val < 0)
-			return val;
+		if (curr_batt->flags & BATT_FLAG_BAD_AVERAGE_CURRENT)
+			return EC_ERROR_BUSY;
+		val = battery_get_avg_current();
 		memcpy(dest, &val, bounded_read_len);
 		break;
 	case SB_MAX_ERROR:

@@ -120,8 +120,9 @@ int battery_get_avg_voltage(void); /* in mV */
 #define BATT_FLAG_BAD_FULL_CAPACITY		0x00000200
 #define BATT_FLAG_BAD_STATUS			0x00000400
 #define BATT_FLAG_IMBALANCED_CELL		0x00000800
+#define BATT_FLAG_BAD_AVERAGE_CURRENT		0x00001000
 /* All of the above BATT_FLAG_BAD_* bits */
-#define BATT_FLAG_BAD_ANY			0x000007fc
+#define BATT_FLAG_BAD_ANY			0x000017fc
 
 /* Battery constants */
 struct battery_info {

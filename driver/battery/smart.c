@@ -318,7 +318,6 @@ test_mockable int battery_device_chemistry(char *dest, int size)
 	return sb_read_string(SB_DEVICE_CHEMISTRY, dest, size);
 }
 
-#ifdef CONFIG_CMD_PWR_AVG
 int battery_get_avg_current(void)
 {
 	int current;
@@ -328,6 +327,7 @@ int battery_get_avg_current(void)
 	return (int16_t)current;
 }
 
+#ifdef CONFIG_CMD_PWR_AVG
 /*
  * Technically returns only the instantaneous reading, but tests showed that
  * for the majority of charge states above 3% this varies by less than 40mV
@@ -386,6 +386,8 @@ void battery_get_params(struct batt_params *batt)
 	else
 		batt_new.current = (int16_t)v;
 
+	if (sb_read(SB_AVERAGE_CURRENT, &v))
+		batt_new.flags |= BATT_FLAG_BAD_AVERAGE_CURRENT;
 	if (sb_read(SB_CHARGING_VOLTAGE, &batt_new.desired_voltage))
 		batt_new.flags |= BATT_FLAG_BAD_DESIRED_VOLTAGE;
 
