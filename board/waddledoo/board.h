@@ -35,6 +35,8 @@
 #define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr */
 #define CONFIG_OCPC
 #undef  CONFIG_CHARGER_SINGLE_CHIP
+#undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
+#define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE (100 * MSEC)
 
 /*
  * GPIO for C1 interrupts, for baseboard use
