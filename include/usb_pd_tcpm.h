@@ -465,6 +465,8 @@ struct tcpm_drv {
 	 */
 	 void (*dump_registers)(int port);
 #endif /* defined(CONFIG_CMD_TCPC_DUMP) */
+
+	int (*reset_bist_type_2)(int port);
 };
 
 /*

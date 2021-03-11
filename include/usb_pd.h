@@ -228,7 +228,7 @@ enum pd_rx_errors {
 #define PD_T_NO_RESPONSE          (5500*MSEC) /* between 4.5s and 5.5s */
 #define PD_T_BIST_TRANSMIT          (50*MSEC) /* 50ms (for task_wait arg) */
 #define PD_T_BIST_RECEIVE           (60*MSEC) /* 60ms (time to process bist) */
-#define PD_T_BIST_CONT_MODE         (60*MSEC) /* 30ms to 60ms */
+#define PD_T_BIST_CONT_MODE         (55*MSEC) /* 30ms to 60ms */
 #define PD_T_VCONN_SOURCE_ON       (100*MSEC) /* 100ms */
 #define PD_T_DRP_TRY               (125*MSEC) /* between 75ms and 150ms */
 #define PD_T_TRY_TIMEOUT           (550*MSEC) /* between 550ms and 1100ms */
