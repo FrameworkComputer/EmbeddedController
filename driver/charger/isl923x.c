@@ -243,8 +243,9 @@ static enum ec_error_list raa489000_get_input_current(int chgnum,
 	if (rv)
 		return rv;
 
-	/* LSB is 22.2mA */
-	regval *= 22;
+	/* The value is in 22.2mA increments. */
+	regval *= 222;
+	regval /= 10;
 
 	*input_current = AC_REG_TO_CURRENT(regval);
 	return EC_SUCCESS;
