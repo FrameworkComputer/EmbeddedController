@@ -9657,7 +9657,7 @@ static int cmd_pchg(int argc, char *argv[])
 		 * ...
 		 */
 		uint32_t address, version;
-		uint32_t block_size;
+		uint32_t block_size = 0;
 		uint32_t crc;
 		int i;
 
@@ -9674,7 +9674,7 @@ static int cmd_pchg(int argc, char *argv[])
 		}
 
 		rv = cmd_pchg_update_open(port, version, &block_size, &crc);
-		if (rv < 0) {
+		if (rv < 0 || block_size == 0) {
 			fprintf(stderr, "\nFailed to open update session: %d\n",
 				rv);
 			return -1;
