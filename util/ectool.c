@@ -9424,7 +9424,7 @@ static void cmd_pchg_help(char *cmd)
 	"  Usage3: %s <port> reset\n"
 	"          Reset <port>.\n"
 	"\n"
-	"  Usage4: %s <port> update <address> <version> <file>\n"
+	"  Usage4: %s <port> update <version> <addr1> <file1> <addr2> <file2> ...\n"
 	"          Update firmware of <port>.\n",
 	cmd, cmd, cmd, cmd);
 }
@@ -9467,13 +9467,50 @@ static int cmd_pchg_wait_event(int port, uint32_t expected)
 	return -1;
 }
 
-static int cmd_pchg_update(int port, uint32_t address, uint32_t version,
-			   const char *filename)
+static int cmd_pchg_update_open(int port, uint32_t version,
+				uint32_t *block_size, uint32_t *crc)
 {
 	struct ec_params_pchg_update *p =
 		(struct ec_params_pchg_update *)(ec_outbuf);
 	struct ec_response_pchg_update *r =
 		(struct ec_response_pchg_update *)(ec_inbuf);
+	int rv;
+
+	/* Open session. */
+	p->port = port;
+	p->cmd = EC_PCHG_UPDATE_CMD_OPEN;
+	p->version = version;
+	rv = ec_command(EC_CMD_PCHG_UPDATE, 0, p, sizeof(*p), r, sizeof(*r));
+	if (rv < 0) {
+		fprintf(stderr, "\nFailed to open update session: %d\n", rv);
+		return rv;
+	}
+
+	if (r->block_size + sizeof(*p) > ec_max_outsize) {
+		fprintf(stderr, "\nBlock size (%d) is too large.\n",
+			r->block_size);
+		return -1;
+	}
+
+	rv = cmd_pchg_wait_event(port, EC_MKBP_PCHG_UPDATE_OPENED);
+	if (rv)
+		return rv;
+
+	printf("Opened update session (port=%d ver=0x%x bsize=%d):\n",
+	       port, version, r->block_size);
+
+	*block_size = r->block_size;
+	crc32_ctx_init(crc);
+
+	return 0;
+}
+
+static int cmd_pchg_update_write(int port, uint32_t address,
+				 const char *filename, uint32_t block_size,
+				 uint32_t *crc)
+{
+	struct ec_params_pchg_update *p =
+		(struct ec_params_pchg_update *)(ec_outbuf);
 	FILE *fp;
 	size_t len, total;
 	int progress = 0;
@@ -9489,44 +9526,18 @@ static int cmd_pchg_update(int port, uint32_t address, uint32_t version,
 	fseek(fp, 0L, SEEK_END);
 	total = ftell(fp);
 	rewind(fp);
-	printf("Update file %s (%zu bytes) is opened.\n", filename, total);
-
-	/* Open session. */
-	p->port = port;
-	p->cmd = EC_PCHG_UPDATE_CMD_OPEN;
-	p->version = version;
-	rv = ec_command(EC_CMD_PCHG_UPDATE, 0, p, sizeof(*p), r, sizeof(*r));
-	if (rv < 0) {
-		fprintf(stderr, "\nFailed to open update session: %d\n", rv);
-		fclose(fp);
-		return rv;
-	}
-
-	if (r->block_size + sizeof(*p) > ec_max_outsize) {
-		fprintf(stderr, "\nBlock size (%d) is too large.\n",
-			r->block_size);
-		fclose(fp);
-		return -1;
-	}
-
-	rv = cmd_pchg_wait_event(port, EC_MKBP_PCHG_UPDATE_OPENED);
-	if (rv)
-		return rv;
-
-	printf("Writing firmware (port=%d ver=0x%x addr=0x%x bsize=%d):\n",
-	       port, version, address, r->block_size);
+	printf("Writing %s (%zu bytes).\n", filename, total);
 
 	p->cmd = EC_PCHG_UPDATE_CMD_WRITE;
 	p->addr = address;
-	crc32_init();
 
 	/* Write firmware in blocks. */
-	len = fread(p->data, 1, r->block_size, fp);
+	len = fread(p->data, 1, block_size, fp);
 	while (len > 0) {
 		int previous_progress = progress;
 		int i;
 
-		crc32_hash(p->data, len);
+		crc32_ctx_hash(crc, p->data, len);
 		p->size = len;
 		rv = ec_command(EC_CMD_PCHG_UPDATE, 0, p,
 				sizeof(*p) + len, NULL, 0);
@@ -9547,15 +9558,23 @@ static int cmd_pchg_update(int port, uint32_t address, uint32_t version,
 			fflush(stdout);
 		}
 
-		len = fread(p->data, 1, r->block_size, fp);
+		len = fread(p->data, 1, block_size, fp);
 	}
 
 	printf("\n");
 	fclose(fp);
 
-	/* Close session. */
+	return 0;
+}
+
+static int cmd_pchg_update_close(int port, uint32_t *crc)
+{
+	struct ec_params_pchg_update *p =
+		(struct ec_params_pchg_update *)(ec_outbuf);
+	int rv;
+
 	p->cmd = EC_PCHG_UPDATE_CMD_CLOSE;
-	p->crc32 = crc32_result();
+	p->crc32 = crc32_ctx_result(crc);
 	rv = ec_command(EC_CMD_PCHG_UPDATE, 0, p, sizeof(*p), NULL, 0);
 
 	if (rv < 0) {
@@ -9567,18 +9586,18 @@ static int cmd_pchg_update(int port, uint32_t address, uint32_t version,
 	if (rv)
 		return rv;
 
-	printf("FW update session closed (CRC32=0x%x).\n", p->crc32);
+	printf("Firmware was updated successfully (CRC32=0x%x).\n", p->crc32);
 
 	return 0;
 }
 
 static int cmd_pchg(int argc, char *argv[])
 {
+	const size_t max_input_files = 8;
 	int port, port_count;
 	struct ec_response_pchg_count rcnt;
 	struct ec_params_pchg p;
 	struct ec_response_pchg r;
-	uint32_t address, version;
 	char *e;
 	int rv;
 
@@ -9627,21 +9646,66 @@ static int cmd_pchg(int argc, char *argv[])
 		}
 		printf("Reset port %d complete.\n", port);
 		return 0;
-	} else if (argc == 6 && !strcmp(argv[2], "update")) {
-		/* Usage.4 */
-		address = strtol(argv[3], &e, 0);
+	} else if (argc >= 6 && !strcmp(argv[2], "update")) {
+		/*
+		 * Usage.4:
+		 * argv[3]: <version>
+		 * argv[4]: <addr1>
+		 * argv[5]: <file1>
+		 * argv[6]: <addr2>
+		 * argv[7]: <file2>
+		 * ...
+		 */
+		uint32_t address, version;
+		uint32_t block_size;
+		uint32_t crc;
+		int i;
+
+		if (argc > 4 + max_input_files * 2) {
+			fprintf(stderr, "\nToo many input files.\n");
+			return -1;
+		}
+
+		version = strtol(argv[3], &e, 0);
 		if (e && *e) {
-			fprintf(stderr, "\nBad address: %s.\n", argv[3]);
+			fprintf(stderr, "\nBad version: %s.\n", argv[3]);
 			cmd_pchg_help(argv[0]);
 			return -1;
 		}
-		version = strtol(argv[4], &e, 0);
-		if (e && *e) {
-			fprintf(stderr, "\nBad version: %s.\n", argv[4]);
-			cmd_pchg_help(argv[0]);
+
+		rv = cmd_pchg_update_open(port, version, &block_size, &crc);
+		if (rv < 0) {
+			fprintf(stderr, "\nFailed to open update session: %d\n",
+				rv);
 			return -1;
 		}
-		return cmd_pchg_update(port, address, version, argv[5]);
+
+		/* Write files one by one. */
+		for (i = 4; i + 1 < argc; i += 2) {
+			address = strtol(argv[i], &e, 0);
+			if (e && *e) {
+				fprintf(stderr, "\nBad address: %s\n", argv[i]);
+				cmd_pchg_help(argv[0]);
+				return -1;
+			}
+			rv = cmd_pchg_update_write(port, address, argv[i+1],
+						   block_size, &crc);
+			if (rv < 0) {
+				fprintf(stderr,
+					"\nFailed to write file '%s': %d",
+					argv[i+i], rv);
+				return -1;
+			}
+		}
+
+		rv = cmd_pchg_update_close(port, &crc);
+		if (rv < 0) {
+			fprintf(stderr, "\nFailed to close update session: %d",
+				rv);
+			return -1;
+		}
+
+		return 0;
 	}
 
 	fprintf(stderr, "Invalid parameter\n\n");
