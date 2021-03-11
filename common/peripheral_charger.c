@@ -58,6 +58,7 @@ static const char *_text_event(enum pchg_event event)
 		[PCHG_EVENT_CHARGE_UPDATE] = "CHARGE_UPDATE",
 		[PCHG_EVENT_CHARGE_ENDED] = "CHARGE_ENDED",
 		[PCHG_EVENT_CHARGE_STOPPED] = "CHARGE_STOPPED",
+		[PCHG_EVENT_IN_NORMAL] = "IN_NORMAL",
 		[PCHG_EVENT_CHARGE_ERROR] = "CHARGE_ERROR",
 		[PCHG_EVENT_INITIALIZE] = "INITIALIZE",
 		[PCHG_EVENT_ENABLE] = "ENABLE",
@@ -71,62 +72,57 @@ static const char *_text_event(enum pchg_event event)
 	return event_names[event];
 }
 
-static enum pchg_state pchg_reset(struct pchg *ctx)
+static void _clear_port(struct pchg *ctx)
 {
 	mutex_lock(&ctx->mtx);
 	queue_init(&ctx->events);
 	mutex_unlock(&ctx->mtx);
 	atomic_clear(&ctx->irq);
-
-	/* When fw update is implemented, this will be the branch point. */
-	pchg_queue_event(ctx, PCHG_EVENT_INITIALIZE);
-	return PCHG_STATE_RESET;
-}
-
-static enum pchg_state pchg_initialize(struct pchg *ctx, enum pchg_state state)
-{
-	int rv = ctx->cfg->drv->init(ctx);
-
-	if (rv == EC_SUCCESS) {
-		pchg_queue_event(ctx, PCHG_EVENT_ENABLE);
-		state = PCHG_STATE_INITIALIZED;
-	} else if (rv == EC_SUCCESS_IN_PROGRESS) {
-		state = PCHG_STATE_RESET;
-	} else {
-		CPRINTS("ERR: Failed to initialize");
-	}
-
 	ctx->battery_percent = 0;
 	ctx->error = 0;
+}
+
+static enum pchg_state pchg_reset(struct pchg *ctx)
+{
+	enum pchg_state state = PCHG_STATE_RESET;
+	int rv;
+
+	/*
+	 * In case we get asynchronous reset, clear port though it's redundant
+	 * for a synchronous reset.
+	 */
+	_clear_port(ctx);
+
+	if (ctx->mode == PCHG_MODE_NORMAL) {
+		rv = ctx->cfg->drv->init(ctx);
+		if (rv == EC_SUCCESS) {
+			state = PCHG_STATE_INITIALIZED;
+			pchg_queue_event(ctx, PCHG_EVENT_ENABLE);
+		} else if (rv != EC_SUCCESS_IN_PROGRESS) {
+			CPRINTS("ERR: Failed to reset to normal mode");
+		}
+	}
 
 	return state;
 }
 
-static enum pchg_state pchg_state_reset(struct pchg *ctx)
+static void pchg_state_reset(struct pchg *ctx)
 {
-	enum pchg_state state = PCHG_STATE_RESET;
-
 	switch (ctx->event) {
 	case PCHG_EVENT_RESET:
-		state = pchg_reset(ctx);
+		ctx->state = pchg_reset(ctx);
 		break;
-	case PCHG_EVENT_INITIALIZE:
-		state = pchg_initialize(ctx, state);
-		break;
-	case PCHG_EVENT_INITIALIZED:
+	case PCHG_EVENT_IN_NORMAL:
+		ctx->state = PCHG_STATE_INITIALIZED;
 		pchg_queue_event(ctx, PCHG_EVENT_ENABLE);
-		state = PCHG_STATE_INITIALIZED;
 		break;
 	default:
 		break;
 	}
-
-	return state;
 }
 
-static enum pchg_state pchg_state_initialized(struct pchg *ctx)
+static void pchg_state_initialized(struct pchg *ctx)
 {
-	enum pchg_state state = PCHG_STATE_INITIALIZED;
 	int rv;
 
 	if (ctx->event == PCHG_EVENT_ENABLE)
@@ -134,54 +130,45 @@ static enum pchg_state pchg_state_initialized(struct pchg *ctx)
 
 	/* Spin in INITIALIZED until error condition is cleared. */
 	if (ctx->error)
-		return state;
+		return;
 
 	switch (ctx->event) {
 	case PCHG_EVENT_RESET:
-		state = pchg_reset(ctx);
-		break;
-	case PCHG_EVENT_INITIALIZE:
-		state = pchg_initialize(ctx, state);
+		ctx->state = pchg_reset(ctx);
 		break;
 	case PCHG_EVENT_ENABLE:
 		rv = ctx->cfg->drv->enable(ctx, true);
 		if (rv == EC_SUCCESS)
-			state = PCHG_STATE_ENABLED;
+			ctx->state = PCHG_STATE_ENABLED;
 		else if (rv != EC_SUCCESS_IN_PROGRESS)
 			CPRINTS("ERR: Failed to enable");
 		break;
 	case PCHG_EVENT_ENABLED:
-		state = PCHG_STATE_ENABLED;
+		ctx->state = PCHG_STATE_ENABLED;
 		break;
 	default:
 		break;
 	}
-
-	return state;
 }
 
-static enum pchg_state pchg_state_enabled(struct pchg *ctx)
+static void pchg_state_enabled(struct pchg *ctx)
 {
-	enum pchg_state state = PCHG_STATE_ENABLED;
 	int rv;
 
 	switch (ctx->event) {
 	case PCHG_EVENT_RESET:
-		state = pchg_reset(ctx);
-		break;
-	case PCHG_EVENT_INITIALIZE:
-		state = pchg_initialize(ctx, state);
+		ctx->state = pchg_reset(ctx);
 		break;
 	case PCHG_EVENT_DISABLE:
 		ctx->error |= PCHG_ERROR_HOST;
 		rv = ctx->cfg->drv->enable(ctx, false);
 		if (rv == EC_SUCCESS)
-			state = PCHG_STATE_INITIALIZED;
+			ctx->state = PCHG_STATE_INITIALIZED;
 		else if (rv != EC_SUCCESS_IN_PROGRESS)
 			CPRINTS("ERR: Failed to disable");
 		break;
 	case PCHG_EVENT_DISABLED:
-		state = PCHG_STATE_INITIALIZED;
+		ctx->state = PCHG_STATE_INITIALIZED;
 		break;
 	case PCHG_EVENT_DEVICE_DETECTED:
 		/*
@@ -189,100 +176,86 @@ static enum pchg_state pchg_state_enabled(struct pchg *ctx)
 		 * because device is already charged.
 		 */
 		ctx->cfg->drv->get_soc(ctx);
-		state = PCHG_STATE_DETECTED;
+		ctx->state = PCHG_STATE_DETECTED;
 		break;
 	case PCHG_EVENT_CHARGE_STARTED:
-		state = PCHG_STATE_CHARGING;
+		ctx->state = PCHG_STATE_CHARGING;
 		break;
 	default:
 		break;
 	}
-
-	return state;
 }
 
-static enum pchg_state pchg_state_detected(struct pchg *ctx)
+static void pchg_state_detected(struct pchg *ctx)
 {
-	enum pchg_state state = PCHG_STATE_DETECTED;
 	int rv;
 
 	switch (ctx->event) {
 	case PCHG_EVENT_RESET:
-		state = pchg_reset(ctx);
-		break;
-	case PCHG_EVENT_INITIALIZE:
-		state = pchg_initialize(ctx, state);
+		ctx->state = pchg_reset(ctx);
 		break;
 	case PCHG_EVENT_DISABLE:
 		ctx->error |= PCHG_ERROR_HOST;
 		rv = ctx->cfg->drv->enable(ctx, false);
 		if (rv == EC_SUCCESS)
-			state = PCHG_STATE_INITIALIZED;
+			ctx->state = PCHG_STATE_INITIALIZED;
 		else if (rv != EC_SUCCESS_IN_PROGRESS)
 			CPRINTS("ERR: Failed to disable");
 		break;
 	case PCHG_EVENT_DISABLED:
-		state = PCHG_STATE_INITIALIZED;
+		ctx->state = PCHG_STATE_INITIALIZED;
 		break;
 	case PCHG_EVENT_CHARGE_STARTED:
-		state = PCHG_STATE_CHARGING;
+		ctx->state = PCHG_STATE_CHARGING;
 		break;
 	case PCHG_EVENT_DEVICE_LOST:
 		ctx->battery_percent = 0;
-		state = PCHG_STATE_ENABLED;
+		ctx->state = PCHG_STATE_ENABLED;
 		break;
 	case PCHG_EVENT_CHARGE_ERROR:
-		state = PCHG_STATE_INITIALIZED;
+		ctx->state = PCHG_STATE_INITIALIZED;
 		break;
 	default:
 		break;
 	}
-
-	return state;
 }
 
-static enum pchg_state pchg_state_charging(struct pchg *ctx)
+static void pchg_state_charging(struct pchg *ctx)
 {
-	enum pchg_state state = PCHG_STATE_CHARGING;
 	int rv;
 
 	switch (ctx->event) {
 	case PCHG_EVENT_RESET:
-		pchg_reset(ctx);
-		break;
-	case PCHG_EVENT_INITIALIZE:
-		state = pchg_initialize(ctx, state);
+		ctx->state = pchg_reset(ctx);
 		break;
 	case PCHG_EVENT_DISABLE:
 		ctx->error |= PCHG_ERROR_HOST;
 		rv = ctx->cfg->drv->enable(ctx, false);
 		if (rv == EC_SUCCESS)
-			state = PCHG_STATE_INITIALIZED;
+			ctx->state = PCHG_STATE_INITIALIZED;
 		else if (rv != EC_SUCCESS_IN_PROGRESS)
 			CPRINTS("ERR: Failed to disable");
 		break;
 	case PCHG_EVENT_DISABLED:
-		state = PCHG_STATE_INITIALIZED;
+		ctx->state = PCHG_STATE_INITIALIZED;
 		break;
 	case PCHG_EVENT_CHARGE_UPDATE:
 		CPRINTS("Battery %d%%", ctx->battery_percent);
 		break;
 	case PCHG_EVENT_DEVICE_LOST:
 		ctx->battery_percent = 0;
-		state = PCHG_STATE_ENABLED;
+		ctx->state = PCHG_STATE_ENABLED;
 		break;
 	case PCHG_EVENT_CHARGE_ERROR:
-		state = PCHG_STATE_INITIALIZED;
+		ctx->state = PCHG_STATE_INITIALIZED;
 		break;
 	case PCHG_EVENT_CHARGE_ENDED:
 	case PCHG_EVENT_CHARGE_STOPPED:
-		state = PCHG_STATE_DETECTED;
+		ctx->state = PCHG_STATE_DETECTED;
 		break;
 	default:
 		break;
 	}
-
-	return state;
 }
 
 static int pchg_run(struct pchg *ctx)
@@ -311,21 +284,24 @@ static int pchg_run(struct pchg *ctx)
 		CPRINTS("IRQ:EVENT_%s", _text_event(ctx->event));
 	}
 
+	if (ctx->event == PCHG_EVENT_NONE)
+		return 0;
+
 	switch (ctx->state) {
 	case PCHG_STATE_RESET:
-		ctx->state = pchg_state_reset(ctx);
+		pchg_state_reset(ctx);
 		break;
 	case PCHG_STATE_INITIALIZED:
-		ctx->state = pchg_state_initialized(ctx);
+		pchg_state_initialized(ctx);
 		break;
 	case PCHG_STATE_ENABLED:
-		ctx->state = pchg_state_enabled(ctx);
+		pchg_state_enabled(ctx);
 		break;
 	case PCHG_STATE_DETECTED:
-		ctx->state = pchg_state_detected(ctx);
+		pchg_state_detected(ctx);
 		break;
 	case PCHG_STATE_CHARGING:
-		ctx->state = pchg_state_charging(ctx);
+		pchg_state_charging(ctx);
 		break;
 	default:
 		CPRINTS("ERR: Unknown state (%d)", ctx->state);
@@ -374,6 +350,8 @@ static void pchg_startup(void)
 
 	for (p = 0; p < pchg_count; p++) {
 		ctx = &pchgs[p];
+		_clear_port(ctx);
+		ctx->mode = PCHG_MODE_NORMAL;
 		ctx->cfg->drv->reset(ctx);
 		gpio_enable_interrupt(ctx->cfg->irq_pin);
 	}
@@ -392,9 +370,6 @@ static void pchg_shutdown(void)
 	for (p = 0; p < pchg_count; p++) {
 		ctx = &pchgs[0];
 		gpio_disable_interrupt(ctx->cfg->irq_pin);
-		mutex_lock(&ctx->mtx);
-		queue_init(&ctx->events);
-		mutex_unlock(&ctx->mtx);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pchg_shutdown, HOOK_PRIO_DEFAULT);
@@ -490,26 +465,30 @@ static int cc_pchg(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 
-	if (!strcasecmp(argv[2], "reset"))
-		pchg_queue_event(ctx, PCHG_EVENT_RESET);
-	else if (!strcasecmp(argv[2], "init"))
-		pchg_queue_event(ctx, PCHG_EVENT_INITIALIZE);
-	else if (!strcasecmp(argv[2], "enable"))
+	if (!strcasecmp(argv[2], "reset")) {
+		if (argc == 3)
+			ctx->mode = PCHG_MODE_NORMAL;
+		else
+			return EC_ERROR_PARAM3;
+		gpio_disable_interrupt(ctx->cfg->irq_pin);
+		_clear_port(ctx);
+		ctx->cfg->drv->reset(ctx);
+		gpio_enable_interrupt(ctx->cfg->irq_pin);
+	} else if (!strcasecmp(argv[2], "enable")) {
 		pchg_queue_event(ctx, PCHG_EVENT_ENABLE);
-	else if (!strcasecmp(argv[2], "disable"))
+	} else if (!strcasecmp(argv[2], "disable")) {
 		pchg_queue_event(ctx, PCHG_EVENT_DISABLE);
-	else
+	} else {
 		return EC_ERROR_PARAM2;
+	}
 
 	task_wake(TASK_ID_PCHG);
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(pchg, cc_pchg,
-			"<port> [init/enable/disable]"
 			"\n\t<port>"
 			"\n\t<port> reset"
-			"\n\t<port> init"
 			"\n\t<port> enable"
 			"\n\t<port> disable",
 			"Control peripheral chargers");

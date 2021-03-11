@@ -56,12 +56,17 @@ static const int _detection_interval_ms = 100;
 #define WLC_CHG_CTRL_CHARGING_INFO		0b010101
 
 /* WLC_HOST_CTRL_RESET constants */
-#define WLC_HOST_CTRL_RESET_CMD_SIZE		1
-#define WLC_HOST_CTRL_RESET_RSP_SIZE		1
-#define WLC_HOST_CTRL_RESET_EVT_NORMAL_MODE	0x00
-#define WLC_HOST_CTRL_RESET_EVT_DOWNLOAD_MODE	0x01
-#define WLC_HOST_CTRL_RESET_CMD_MODE_NORMAL	0x00
-#define WLC_HOST_CTRL_RESET_CMD_MODE_DOWNLOAD	0x01
+#define WLC_HOST_CTRL_RESET_CMD_SIZE			1
+#define WLC_HOST_CTRL_RESET_RSP_SIZE			1
+#define WLC_HOST_CTRL_RESET_EVT_NORMAL_MODE		0x00
+#define WLC_HOST_CTRL_RESET_EVT_NORMAL_MODE_SIZE	3
+#define WLC_HOST_CTRL_RESET_EVT_DOWNLOAD_MODE		0x01
+#define WLC_HOST_CTRL_RESET_EVT_DOWNLOAD_MODE_SIZE	2
+#define WLC_HOST_CTRL_RESET_REASON_INTENDED		0x00
+#define WLC_HOST_CTRL_RESET_REASON_CORRUPTED		0x01
+#define WLC_HOST_CTRL_RESET_REASON_UNRECOVERABLE	0x02
+#define WLC_HOST_CTRL_RESET_CMD_MODE_NORMAL		0x00
+#define WLC_HOST_CTRL_RESET_CMD_MODE_DOWNLOAD		0x01
 
 /* WLC_CHG_CTRL_ENABLE constants */
 #define WLC_CHG_CTRL_ENABLE_CMD_SIZE		2
@@ -207,6 +212,20 @@ static const char *_text_status_code(uint8_t code)
 	}
 }
 
+static const char *_text_reset_reason(uint8_t code)
+{
+	switch (code) {
+	case WLC_HOST_CTRL_RESET_REASON_INTENDED:
+		return "intended";
+	case WLC_HOST_CTRL_RESET_REASON_CORRUPTED:
+		return "corrupted";
+	case WLC_HOST_CTRL_RESET_REASON_UNRECOVERABLE:
+		return "unrecoverable";
+	default:
+		return "unknown";
+	}
+}
+
 static int _i2c_read(int i2c_port, uint8_t *in, int in_len)
 {
 	int rv;
@@ -269,7 +288,9 @@ static int ctn730_init(struct pchg *ctx)
 	cmd->message_type = CTN730_MESSAGE_TYPE_COMMAND;
 	cmd->instruction = WLC_HOST_CTRL_RESET;
 	cmd->length = WLC_HOST_CTRL_RESET_CMD_SIZE;
-	cmd->payload[0] = WLC_HOST_CTRL_RESET_CMD_MODE_NORMAL;
+	cmd->payload[0] = ctx->mode == PCHG_MODE_NORMAL
+			? WLC_HOST_CTRL_RESET_CMD_MODE_NORMAL
+			: WLC_HOST_CTRL_RESET_CMD_MODE_DOWNLOAD;
 
 	/* TODO: Run 1 sec timeout timer. */
 	rv = _send_command(ctx, cmd);
@@ -327,26 +348,36 @@ static int _process_payload_response(struct pchg *ctx, struct ctn730_msg *res)
 
 	switch (res->instruction) {
 	case WLC_HOST_CTRL_RESET:
-		if (len != WLC_HOST_CTRL_RESET_RSP_SIZE
-				|| buf[0] != WLC_HOST_STATUS_OK)
+		if (len != WLC_HOST_CTRL_RESET_RSP_SIZE)
 			return EC_ERROR_UNKNOWN;
+		if (buf[0] != WLC_HOST_STATUS_OK)
+			ctx->event = PCHG_EVENT_OTHER_ERROR;
 		break;
 	case WLC_CHG_CTRL_ENABLE:
-		if (len != WLC_CHG_CTRL_ENABLE_RSP_SIZE
-				|| buf[0] != WLC_HOST_STATUS_OK)
+		if (len != WLC_CHG_CTRL_ENABLE_RSP_SIZE)
 			return EC_ERROR_UNKNOWN;
-		ctx->event = PCHG_EVENT_ENABLED;
+		if (buf[0] != WLC_HOST_STATUS_OK)
+			ctx->event = PCHG_EVENT_OTHER_ERROR;
+		else
+			ctx->event = PCHG_EVENT_ENABLED;
 		break;
 	case WLC_CHG_CTRL_DISABLE:
-		if (len != WLC_CHG_CTRL_DISABLE_RSP_SIZE
-				|| buf[0] != WLC_HOST_STATUS_OK)
+		if (len != WLC_CHG_CTRL_DISABLE_RSP_SIZE)
 			return EC_ERROR_UNKNOWN;
+		if (buf[0] != WLC_HOST_STATUS_OK)
+			ctx->event = PCHG_EVENT_OTHER_ERROR;
+		else
+			ctx->event = PCHG_EVENT_DISABLED;
 		break;
 	case WLC_CHG_CTRL_CHARGING_INFO:
-		if (len != WLC_CHG_CTRL_CHARGING_INFO_RSP_SIZE
-				|| buf[0] != WLC_HOST_STATUS_OK)
+		if (len != WLC_CHG_CTRL_CHARGING_INFO_RSP_SIZE)
 			return EC_ERROR_UNKNOWN;
-		ctx->battery_percent = buf[1];
+		if (buf[0] != WLC_HOST_STATUS_OK) {
+			ctx->event = PCHG_EVENT_OTHER_ERROR;
+		} else {
+			ctx->battery_percent = buf[1];
+			ctx->event = PCHG_EVENT_CHARGE_UPDATE;
+		}
 		break;
 	default:
 		CPRINTS("Received unknown response (%d)", res->instruction);
@@ -374,16 +405,25 @@ static int _process_payload_event(struct pchg *ctx, struct ctn730_msg *res)
 	if (IS_ENABLED(CTN730_DEBUG))
 		CPRINTS("Payload: %ph", HEX_BUF(buf, len));
 
+	ctx->event = PCHG_EVENT_NONE;
+
 	switch (res->instruction) {
 	case WLC_HOST_CTRL_RESET:
 		if (buf[0] == WLC_HOST_CTRL_RESET_EVT_NORMAL_MODE) {
-			ctx->event = PCHG_EVENT_INITIALIZED;
+			if (len != WLC_HOST_CTRL_RESET_EVT_NORMAL_MODE_SIZE)
+				return EC_ERROR_INVAL;
+			ctx->event = PCHG_EVENT_IN_NORMAL;
+			CPRINTS("Normal Mode (FW=0x%02x.%02x)", buf[1], buf[2]);
 			/*
 			 * ctn730 isn't immediately ready for i2c write after
 			 * normal mode initialization (b:178096436).
 			 */
 			msleep(5);
 		} else if (buf[0] == WLC_HOST_CTRL_RESET_EVT_DOWNLOAD_MODE) {
+			if (len != WLC_HOST_CTRL_RESET_EVT_DOWNLOAD_MODE_SIZE)
+				return EC_ERROR_INVAL;
+			CPRINTS("Download Mode (%s)",
+				_text_reset_reason(buf[1]));
 			ctx->event = PCHG_EVENT_RESET;
 		} else {
 			return EC_ERROR_INVAL;
@@ -481,7 +521,7 @@ static int ctn730_get_soc(struct pchg *ctx)
 	if (rv)
 		return rv;
 
-	return EC_SUCCESS;
+	return EC_SUCCESS_IN_PROGRESS;
 }
 
 /**

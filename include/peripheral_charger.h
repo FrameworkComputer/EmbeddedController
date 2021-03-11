@@ -83,7 +83,11 @@ enum pchg_event {
 	PCHG_EVENT_CHARGE_UPDATE,
 	PCHG_EVENT_CHARGE_ENDED,
 	PCHG_EVENT_CHARGE_STOPPED,
+	PCHG_EVENT_IN_NORMAL,
+
+	/* Errors */
 	PCHG_EVENT_CHARGE_ERROR,
+	PCHG_EVENT_OTHER_ERROR,
 
 	/* Internal (a.k.a. Host) Events */
 	PCHG_EVENT_INITIALIZE,
@@ -101,6 +105,11 @@ enum pchg_error {
 	PCHG_ERROR_OVER_TEMPERATURE = BIT(1),
 	PCHG_ERROR_OVER_CURRENT = BIT(2),
 	PCHG_ERROR_FOREIGN_OBJECT = BIT(3),
+};
+
+enum pchg_mode {
+	PCHG_MODE_NORMAL = 0,
+	PCHG_MODE_DOWNLOAD,
 };
 
 /**
@@ -140,6 +149,8 @@ struct pchg {
 	uint8_t battery_percent;
 	/* Number of dropped events (due to queue overflow) */
 	uint32_t dropped_event_count;
+	/* enum pchg_mode */
+	uint8_t mode;
 };
 
 /**
