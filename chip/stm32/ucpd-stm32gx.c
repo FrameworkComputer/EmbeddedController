@@ -388,10 +388,22 @@ static void ucpd_rx_enque_error(void)
 }
 DECLARE_DEFERRED(ucpd_rx_enque_error);
 
+static void stm32gx_ucpd_state_init(int port)
+{
+	/* Init variables used to manage tx process */
+	ucpd_tx_request = 0;
+	tx_retry_count = 0;
+	ucpd_tx_state = STATE_IDLE;
+	ucpd_timeout_us = -1;
+}
+
 int stm32gx_ucpd_init(int port)
 {
 	uint32_t cfgr1_reg;
 	uint32_t moder_reg;
+
+	/* Disable UCPD interrupts */
+	task_disable_irq(STM32_IRQ_UCPD1);
 
 	/*
 	* After exiting reset, stm32gx will have dead battery mode enabled by
@@ -438,6 +450,8 @@ int stm32gx_ucpd_init(int port)
 
 	/* SOP'/SOP'' must be enabled via TCPCI call */
 	ucpd_rx_sop_prime_enabled = false;
+
+	stm32gx_ucpd_state_init(port);
 
 	/* Enable UCPD interrupts */
 	task_enable_irq(STM32_IRQ_UCPD1);
@@ -904,10 +918,7 @@ void ucpd_task(void *p)
 	const int port = (int) ((intptr_t) p);
 
 	/* Init variables used to manage tx process */
-	ucpd_tx_request = 0;
-	tx_retry_count = 0;
-	ucpd_tx_state = STATE_IDLE;
-	ucpd_timeout_us = -1;
+	stm32gx_ucpd_state_init(port);
 
 	while (1) {
 		/*
@@ -1344,11 +1355,16 @@ static int command_ucpd(int argc, char **argv)
 	if (!strcasecmp(argv[1], "rst")) {
 		/* Force reset of ucpd peripheral */
 		stm32gx_ucpd_init(port);
+		pd_execute_hard_reset(port);
+		task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE);
 	} else if (!strcasecmp(argv[1], "info")) {
 		ucpd_info(port);
 	} else if (!strcasecmp(argv[1], "bist")) {
-		stm32gx_ucpd_transmit(port, TCPC_TX_BIST_MODE_2, 0,
-				      &tx_data);
+		/* Need to initiate via DPM to have a timer */
+		/* TODO(b/182861002): uncomment when Gingerbread has
+		 * full PD support landed.
+		 * pd_dpm_request(port, DPM_REQUEST_BIST_TX);
+		 */
 	} else if (!strcasecmp(argv[1], "hard")) {
 		stm32gx_ucpd_transmit(port, TCPC_TX_HARD_RESET, 0,
 				      &tx_data);

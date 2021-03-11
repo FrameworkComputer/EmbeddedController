@@ -127,6 +127,20 @@ static void stm32gx_tcpm_sw_reset(void)
 }
 DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, stm32gx_tcpm_sw_reset, HOOK_PRIO_DEFAULT);
 
+static int stm32gx_tcpm_reset_bist_type_2(int port)
+{
+	/*
+	 * The UCPD peripheral must be disabled, then enabled, to recover from
+	 * starting BIST type-2 mode. Call the init method to accomplish
+	 * this. Then, need to send a hard reset to port partner.
+	 */
+	stm32gx_ucpd_init(port);
+	pd_execute_hard_reset(port);
+	task_set_event(PD_PORT_TO_TASK_ID(port), TASK_EVENT_WAKE);
+
+	return EC_SUCCESS;
+}
+
 const struct tcpm_drv stm32gx_tcpm_drv = {
 	.init			= &stm32gx_tcpm_init,
 	.release		= &stm32gx_tcpm_release,
@@ -143,4 +157,5 @@ const struct tcpm_drv stm32gx_tcpm_drv = {
 	.get_message_raw	= &stm32gx_tcpm_get_message_raw,
 	.transmit		= &stm32gx_tcpm_transmit,
 	.get_chip_info		= &stm32gx_tcpm_get_chip_info,
+	.reset_bist_type_2	= &stm32gx_tcpm_reset_bist_type_2,
 };
