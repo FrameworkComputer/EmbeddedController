@@ -8,6 +8,7 @@
 
 #include <cros/nuvoton/npcx.dtsi>
 #include <dt-bindings/gpio_defines.h>
+#include <dt-bindings/charger/intersil_isl9241.h>
 #include <nuvoton/npcx7m6fb.dtsi>
 
 / {
@@ -579,6 +580,13 @@
 &i2c7_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+
+	isl9241: isl9241@9 {
+		compatible = "intersil,isl9241";
+		reg = <0x09>;
+		label = "ISL9241_CHARGER";
+		switching-frequency = <SWITCHING_FREQ_724KHZ>;
+	};
 };
 
 &cros_kb_raw {
