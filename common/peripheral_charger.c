@@ -240,7 +240,6 @@ static void pchg_state_charging(struct pchg *ctx)
 		ctx->state = PCHG_STATE_INITIALIZED;
 		break;
 	case PCHG_EVENT_CHARGE_UPDATE:
-		CPRINTS("Battery %d%%", ctx->battery_percent);
 		break;
 	case PCHG_EVENT_DEVICE_LOST:
 		ctx->battery_percent = 0;
@@ -261,6 +260,7 @@ static void pchg_state_charging(struct pchg *ctx)
 static int pchg_run(struct pchg *ctx)
 {
 	enum pchg_state previous_state = ctx->state;
+	uint8_t previous_battery = ctx->battery_percent;
 	int port = PCHG_CTX_TO_PORT(ctx);
 	int rv;
 
@@ -278,10 +278,10 @@ static int pchg_run(struct pchg *ctx)
 	if (ctx->event == PCHG_EVENT_IRQ) {
 		rv = ctx->cfg->drv->get_event(ctx);
 		if (rv) {
-			CPRINTS("ERR: get_event (%d)", rv);
+			CPRINTS("ERR: Failed to get event (%d)", rv);
 			return 0;
 		}
-		CPRINTS("IRQ:EVENT_%s", _text_event(ctx->event));
+		CPRINTS("  EVENT_%s", _text_event(ctx->event));
 	}
 
 	if (ctx->event == PCHG_EVENT_NONE)
@@ -311,19 +311,26 @@ static int pchg_run(struct pchg *ctx)
 	if (previous_state != ctx->state)
 		CPRINTS("->STATE_%s", _text_state(ctx->state));
 
+	if (ctx->battery_percent != previous_battery)
+		CPRINTS("Battery %u%%", ctx->battery_percent);
+
 	/*
 	 * Notify the host of
-	 * - [S0] any event
-	 * - [S3/S0IX] device attach or detach (for wake-up)
-	 * - [S5/G3] no events.
+	 * - [S0] All events except charge update and a new soc.
+	 * - [S3/S0IX] Device attach or detach (for wake-up)
+	 * - [S5/G3] No events.
 	 */
-	if (chipset_in_state(CHIPSET_STATE_ON))
-		return ctx->event != PCHG_EVENT_NONE;
-	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return 0;
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
 		return (ctx->event == PCHG_EVENT_DEVICE_DETECTED)
 			|| (ctx->event == PCHG_EVENT_DEVICE_LOST);
 
-	return 0;
+	if (ctx->event == PCHG_EVENT_CHARGE_ERROR)
+		return 1;
+
+	return ctx->battery_percent != previous_battery;
 }
 
 void pchg_irq(enum gpio_signal signal)
