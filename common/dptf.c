@@ -13,6 +13,10 @@
 #include "temp_sensor.h"
 #include "util.h"
 
+#ifdef CONFIG_ZEPHYR
+#include "temp_sensor/temp_sensor.h"
+#endif
+
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_DPTF, outstr)
 #define CPRINTS(format, args...) cprints(CC_DPTF, format, ## args)

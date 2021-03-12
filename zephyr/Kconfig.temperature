@@ -10,6 +10,20 @@ menuconfig PLATFORM_EC_TEMP_SENSOR
 
 if PLATFORM_EC_TEMP_SENSOR
 
+config PLATFORM_EC_DPTF
+	bool "Dynamic Platform and Thermal Framework"
+	default y if PLATFORM_EC_ACPI
+	help
+	  Enables the Dynamic Platform and Thermal Framework (DPTF). DPTF
+	  exposes the temperature sensors and the fan controls to the
+	  Applicaiton Processor (AP) using Advanced Configuration and Power
+	  Interface (ACPI). This permits the AP to control thermal management
+	  independent of the EC.
+
+	  Even when DPTF is enabled, the EC still monitors temperature sensors
+	  and will take corrective actions for high temperatures such as turning
+	  on the fans or powering down the AP.
+
 config PLATFORM_EC_THERMISTOR
 	bool "Thermistor support"
 	depends on PLATFORM_EC_ADC

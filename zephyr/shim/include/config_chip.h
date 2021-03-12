@@ -1236,4 +1236,9 @@ enum battery_type {
 #define CONFIG_USB_PD_TCPC_VCONN
 #endif
 
+#undef CONFIG_DPTF
+#ifdef CONFIG_PLATFORM_EC_DPTF
+#define CONFIG_DPTF
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

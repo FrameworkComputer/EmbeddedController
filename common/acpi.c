@@ -9,6 +9,7 @@
 #include "console.h"
 #include "dptf.h"
 #include "ec_commands.h"
+#include "fan.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"

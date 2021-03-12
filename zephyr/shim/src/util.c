@@ -234,6 +234,14 @@ enum cond_internal_bits {
 	COND_FALL_MASK = BIT(2), /* set if 1->0 */
 };
 
+void cond_init(cond_t *c, int val)
+{
+	if (val)
+		*c = COND_CURR_MASK;
+	else
+		*c = 0;
+}
+
 void cond_set(cond_t *c, int val)
 {
 	if (val && cond_is(c, 0))
