@@ -87,3 +87,12 @@ enum ec_cfg_lte_present_type ec_config_lte_present(void)
 	return ((get_cbi_fw_config() & EC_CFG_LTE_PRESENT_MASK)
 			>> EC_CFG_LTE_PRESENT_L);
 }
+
+/*
+ * ec_config_keyboard_layout() will return keyboard layout type.
+ */
+enum ec_cfg_keyboard_layout_type ec_config_keyboard_layout(void)
+{
+	return ((get_cbi_fw_config() & EC_CFG_KEYBOARD_LAYOUT_MASK)
+			>> EC_CFG_KEYBOARD_LAYOUT_L);
+}
