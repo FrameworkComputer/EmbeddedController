@@ -25,7 +25,6 @@ GPIO_INT(PG_GROUPC_S0_OD,	PIN(A, 3), GPIO_INT_BOTH, 			baseboard_en_pwr_pcore_s0
 GPIO_INT(PG_LPDDR4X_S3_OD,	PIN(9, 5), GPIO_INT_BOTH, 			baseboard_en_pwr_pcore_s0)	/* Power Group LPDDR4 S3 */
 GPIO(EN_PWR_S5,			PIN(B, 7), GPIO_OUT_LOW)						/* Enable S5 Power */
 GPIO(EN_PWR_S0_R,		PIN(F, 1), GPIO_OUT_LOW)
-GPIO(EN_PWR_Z1,			PIN(8, 5), GPIO_OUT_LOW)						/* Enable Z1 Power */
 GPIO(EN_PWR_PCORE_S0_R,		PIN(E, 1), GPIO_OUT_LOW)
 ALTERNATE(/*MECH_PWR_BTN_ODL*/	PIN_MASK(D, BIT(2)), 0,				MODULE_PMU, 0)		/* PSL - Mechanical Power Button */
 ALTERNATE(/*LID_OPEN*/		PIN_MASK(0, BIT(2)), 0, 			MODULE_PMU, 0)		/* PSL - Lid Open */
