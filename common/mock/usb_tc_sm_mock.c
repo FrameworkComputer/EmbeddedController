@@ -56,6 +56,10 @@ void typec_select_src_collision_rp(int port, enum tcpc_rp_value rp)
 	mock_tc_port[port].lcl_rp = rp;
 }
 
+void typec_select_src_current_limit_rp(int port, enum tcpc_rp_value rp)
+{
+}
+
 int tc_is_attached_src(int port)
 {
 	return mock_tc_port[port].attached_src;

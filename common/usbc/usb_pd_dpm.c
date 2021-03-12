@@ -655,6 +655,9 @@ void dpm_remove_sink(int port)
 	atomic_clear_bits(&sink_max_pdo_requested, BIT(port));
 	atomic_clear_bits(&non_pd_sink_max_requested, BIT(port));
 
+	/* Restore selected default Rp on the port */
+	typec_select_src_current_limit_rp(port, CONFIG_USB_PD_PULLUP);
+
 	balance_source_ports();
 }
 

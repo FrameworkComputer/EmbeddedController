@@ -931,10 +931,10 @@ static void pe_set_frs_enable(int port, int enable)
 		int curr_limit = *pd_get_snk_caps(port)
 						& PDO_FIXED_FRS_CURR_MASK;
 
-		typec_set_source_current_limit(port,
-					       curr_limit ==
-					       PDO_FIXED_FRS_CURR_3A0_AT_5V ?
-					       TYPEC_RP_3A0 : TYPEC_RP_1A5);
+		typec_select_src_current_limit_rp(port,
+						  curr_limit ==
+						  PDO_FIXED_FRS_CURR_3A0_AT_5V ?
+						  TYPEC_RP_3A0 : TYPEC_RP_1A5);
 		PE_SET_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_ENABLED);
 	} else {
 		PE_CLR_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_ENABLED);
@@ -1622,6 +1622,9 @@ static bool sink_dpm_requests(int port)
 		} else if (PE_CHK_DPM_REQUEST(port,
 					      DPM_REQUEST_FRS_DET_DISABLE)) {
 			pe_set_frs_enable(port, 0);
+			/* Restore a default port current limit */
+			typec_select_src_current_limit_rp(port,
+							  CONFIG_USB_PD_PULLUP);
 
 			/* Requires no state change, fall through to false */
 			PE_CLR_DPM_REQUEST(port, DPM_REQUEST_FRS_DET_DISABLE);
