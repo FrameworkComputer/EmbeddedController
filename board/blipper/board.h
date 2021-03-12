@@ -66,6 +66,9 @@
 /* USB Mux */
 #define CONFIG_USB_MUX_IT5205
 
+/* KeyBoard */
+#define CONFIG_KEYBOARD_KEYPAD
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
