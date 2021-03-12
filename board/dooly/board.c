@@ -1074,6 +1074,10 @@ static void power_monitor(void)
 		ppc_set_vbus_source_current_limit(0, rp);
 		tcpm_select_rp_value(0, rp);
 		pd_update_contract(0);
+
+		ppc_set_vbus_source_current_limit(1, rp);
+		tcpm_select_rp_value(1, rp);
+		pd_update_contract(1);
 	}
 	if (diff & THROT_TYPE_A) {
 		int typea_bc = (new_state & THROT_TYPE_A) ? 1 : 0;
