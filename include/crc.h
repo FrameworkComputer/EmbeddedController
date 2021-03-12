@@ -18,6 +18,14 @@
 
 void crc32_init(void);
 
+/**
+ * Calculate CRC32 of data in arbitrary length.
+ *
+ * @param buf   Data for CRC32 to be calculated for.
+ * @param size  Size of <buf> in bytes.
+ */
+void crc32_hash(const void *buf, int size);
+
 void crc32_hash32(uint32_t val);
 
 void crc32_hash16(uint16_t val);
@@ -27,6 +35,15 @@ uint32_t crc32_result(void);
 /* Provided context variant */
 
 void crc32_ctx_init(uint32_t *ctx);
+
+/**
+ * Calculate CRC32 of data in arbitrary length using given context.
+ *
+ * @param crc   CRC32 context.
+ * @param buf   Data for CRC32 to be calculated for.
+ * @param size  Size of <buf> in bytes.
+ */
+void crc32_ctx_hash(uint32_t *crc, const void *buf, int size);
 
 void crc32_ctx_hash32(uint32_t *ctx, uint32_t val);
 

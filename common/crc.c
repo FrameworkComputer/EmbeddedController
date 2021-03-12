@@ -56,7 +56,7 @@ static const uint32_t crc32_tab[] = {
 	0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
-static uint32_t crc32_hash(uint32_t crc, const void *buf, int size)
+static uint32_t _crc32_hash(uint32_t crc, const void *buf, int size)
 {
 	const uint8_t *p;
 
@@ -75,19 +75,24 @@ void crc32_ctx_init(uint32_t *crc)
 	*crc = CRC32_INITIAL;
 }
 
+void crc32_ctx_hash(uint32_t *crc, const void *buf, int size)
+{
+	*crc = _crc32_hash(*crc, buf, size);
+}
+
 void crc32_ctx_hash32(uint32_t *crc, uint32_t val)
 {
-	*crc = crc32_hash(*crc, &val, sizeof(val));
+	*crc = _crc32_hash(*crc, &val, sizeof(val));
 }
 
 void crc32_ctx_hash16(uint32_t *crc, uint16_t val)
 {
-	*crc = crc32_hash(*crc, &val, sizeof(val));
+	*crc = _crc32_hash(*crc, &val, sizeof(val));
 }
 
 void crc32_ctx_hash8(uint32_t *crc, uint8_t val)
 {
-	*crc = crc32_hash(*crc, &val, sizeof(val));
+	*crc = _crc32_hash(*crc, &val, sizeof(val));
 }
 
 uint32_t crc32_ctx_result(uint32_t *crc)
@@ -101,6 +106,11 @@ static uint32_t crc_;
 void crc32_init(void)
 {
 	crc32_ctx_init(&crc_);
+}
+
+void crc32_hash(const void *buf, int size)
+{
+	crc32_ctx_hash(&crc_, buf, size);
 }
 
 void crc32_hash32(uint32_t val)
