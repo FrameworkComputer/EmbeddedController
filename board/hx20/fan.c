@@ -45,6 +45,7 @@
 #define FAN_PID_I_INV	100
 #define FAN_PID_I_MAX	(10*FAN_PID_I_INV)
 
+#define STABLE_RPM 2200
 
 static int rpm_setting[FAN_CH_COUNT];
 static int duty_setting[FAN_CH_COUNT];
@@ -91,6 +92,14 @@ int fan_rpm_to_percent(int fan, int rpm)
 			rpm = min;
 		else if (rpm > max)
 			rpm = max;
+
+		if (rpm <= STABLE_RPM) {
+			pct = rpm / 100;
+			return pct;
+		} else if (rpm <= 4000)
+			min = 1040 + (28 * ((rpm - STABLE_RPM) / 100));
+		else if (rpm <= 5200)
+			min = 1040 + (20 * ((rpm - STABLE_RPM) / 100));
 
 		/* make formula More in line with the actual-fan speed - 
 		 * Note that this will limit the fan % to about 94%
