@@ -77,6 +77,7 @@
 #define CONFIG_THERMISTOR
 #define CONFIG_CPU_PROCHOT_ACTIVE_LOW
 #define GPIO_CPU_PROCHOT	GPIO_PROCHOT_ODL
+#define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_EN_PWR_S5
 
 /* Flash Config */
 /* See config_chip-npcx9.h for SPI flash configuration */
@@ -255,6 +256,7 @@ enum adc_channel {
 	ANALOG_PPVAR_PWR_IN_IMON,
 	ADC_TEMP_SENSOR_MEMORY,
 	SNS_PPVAR_PWR_IN,
+	ADC_TEMP_SENSOR_AMBIENT,
 	ADC_CH_COUNT
 };
 
@@ -262,6 +264,7 @@ enum adc_channel {
 enum temp_sensor_id {
 	TEMP_SENSOR_SOC = 0,
 	TEMP_SENSOR_MEMORY,
+	TEMP_SENSOR_AMBIENT,
 	TEMP_SENSOR_CPU,
 	TEMP_SENSOR_COUNT
 };
