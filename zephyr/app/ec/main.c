@@ -10,6 +10,7 @@
 #include "ec_tasks.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
+#include "lpc.h"
 #include "system.h"
 #include "vboot.h"
 #include "watchdog.h"
@@ -30,6 +31,16 @@ void main(void)
 	 */
 	if (IS_ENABLED(CONFIG_CMD_AP_RESET_LOG)) {
 		init_reset_log();
+	}
+
+	/*
+	 * Keyboard scan init/Button init can set recovery events to
+	 * indicate to host entry into recovery mode. Before this is
+	 * done, LPC_HOST_EVENT_ALWAYS_REPORT mask needs to be initialized
+	 * correctly.
+	 */
+	if (IS_ENABLED(CONFIG_HOSTCMD_X86)) {
+		lpc_init_mask();
 	}
 
 	if (IS_ENABLED(HAS_TASK_KEYSCAN)) {

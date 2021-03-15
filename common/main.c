@@ -185,7 +185,7 @@ test_mockable __keep int main(void)
 	/*
 	 * Keyboard scan init/Button init can set recovery events to
 	 * indicate to host entry into recovery mode. Before this is
-	 * done, lpc always report mask needs to be initialized
+	 * done, LPC_HOST_EVENT_ALWAYS_REPORT mask needs to be initialized
 	 * correctly.
 	 */
 #ifdef CONFIG_HOSTCMD_X86
