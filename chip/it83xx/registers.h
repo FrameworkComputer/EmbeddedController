@@ -1057,6 +1057,7 @@ enum clock_gate_offsets {
 #define IT83XX_ADC_ADCCFG       REG8(IT83XX_ADC_BASE+0x01)
 #define IT83XX_ADC_ADCCTL       REG8(IT83XX_ADC_BASE+0x02)
 #define IT83XX_ADC_ADCGCR       REG8(IT83XX_ADC_BASE+0x03)
+#define IT83XX_ADC_DBKEN            BIT(7) /* ADC data buffer keep enable. */
 #define IT83XX_ADC_VCH0CTL      REG8(IT83XX_ADC_BASE+0x04)
 #define IT83XX_ADC_KDCTL        REG8(IT83XX_ADC_BASE+0x05)
 #define IT83XX_ADC_AHCE             BIT(7)
