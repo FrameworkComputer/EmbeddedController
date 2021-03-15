@@ -115,6 +115,28 @@ config PLATFORM_EC_CHARGER_ISL9241
 	  control. It supports an input voltage range of 3.9-23.4V and output
 	  of 3.9-18.3V. It provides an I2C interface for configuration.
 
+config PLATFORM_EC_CHARGER_BQ25710
+	bool "Use the BQ25710 charger"
+	depends on PLATFORM_EC_I2C
+	select PLATFORM_EC_CHARGER_NARROW_VDC
+	help
+	  Enables the driver for the TI BQ25710 battery charger
+	  controller. This is a synchronous narrow voltage DC buck-boost
+	  battery charger for one to four battery cell applications. A
+	  wide range of input power sources are supported such as high
+	  voltage USB-C power delivery.
+
+config PLATFORM_EC_CHARGER_BQ25720
+	bool "Use the BQ25720 charger"
+	depends on PLATFORM_EC_I2C
+	select PLATFORM_EC_CHARGER_NARROW_VDC
+	help
+	  Enables the driver for the TI BQ25720 battery charger
+	  controller. This is a synchronous narrow voltage DC buck-boost
+	  battery charger for one to four battery cell applications. A
+	  wide range of input power sources are supported such as high
+	  voltage USB-C power delivery.
+
 endchoice  # "Charger select"
 
 config PLATFORM_EC_CHARGER_NARROW_VDC
