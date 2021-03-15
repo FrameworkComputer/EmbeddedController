@@ -17,6 +17,12 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+/* Reset PD MCU */
+void board_reset_pd_mcu(void)
+{
+	/* Add code if TCPC chips need a reset */
+}
+
 static void baseboard_tcpc_init(void)
 {
 	int i;
