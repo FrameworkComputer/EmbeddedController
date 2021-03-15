@@ -533,6 +533,17 @@ static void board_detect_motionsensor(void)
 		 ? "ICM40608" : "BMI160");
 }
 DECLARE_HOOK(HOOK_INIT, board_detect_motionsensor, HOOK_PRIO_DEFAULT);
+
+int board_sensor_at_360(void)
+{
+	int board_version;
+
+	board_version = board_get_version();
+	if (board_version == 8 || board_version == 9)
+		return 0;
+	else
+		return !gpio_get_level(GMR_TABLET_MODE_GPIO_L);
+}
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
 
 /* Called on AP S5 -> S3 transition */
