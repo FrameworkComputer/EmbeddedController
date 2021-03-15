@@ -11,8 +11,12 @@
 
 static int __tx_char(void *context, int c)
 {
-	/* Translate '\n' to '\r\n' */
-	if (c == '\n' && uart_tx_char_raw(context, '\r'))
+	/*
+	 * Translate '\n' to '\r\n', bypass on Zephyr because printk also
+	 * does this translation.
+	 */
+	if (!IS_ENABLED(CONFIG_ZEPHYR) && c == '\n' &&
+	    uart_tx_char_raw(context, '\r'))
 		return 1;
 	return uart_tx_char_raw(context, c);
 }
