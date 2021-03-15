@@ -93,13 +93,13 @@ int keep_pch_power(void)
 	int version = board_get_version();
 	int wake_source = *host_get_customer_memmap(0x02);
 
-	if (version & BIT(0))
+	if (version & BIT(0) && extpower_is_present())
 		return true;
 #ifdef CONFIG_EMI_REGION1
 	else if (wake_source & RTCWAKE)
 		return true;
 	/* when BIT1 setup, need check AC is exist*/
-	else if (wake_source & USBWAKE && gpio_get_level(GPIO_AC_PRESENT) == 1)
+	else if (wake_source & USBWAKE && extpower_is_present())
 		return true;
 #endif
 	else
