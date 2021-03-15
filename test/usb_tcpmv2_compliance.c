@@ -49,6 +49,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_td_pd_src3_e8);
 	RUN_TEST(test_td_pd_src3_e9);
 	RUN_TEST(test_td_pd_src3_e26);
+	RUN_TEST(test_td_pd_src3_e32);
 	RUN_TEST(test_td_pd_snk3_e12);
 
 	RUN_TEST(test_connect_as_nonpd_sink);
