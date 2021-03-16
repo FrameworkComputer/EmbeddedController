@@ -65,7 +65,7 @@ GPIO_INT(LID_OPEN,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	lid_interrupt
 GPIO_INT(TABLET_MODE,		PIN(C, 1), GPIO_INT_BOTH,			gmr_tablet_switch_isr)	/* 360 Tablet Mode */
 GPIO_INT(VOLDN_BTN_ODL,		PIN(A, 7), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)	/* Volume Down */
 GPIO_INT(VOLUP_BTN_ODL,		PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, 	button_interrupt)	/* Volume Up */
-GPIO(EC_BATT_PRES_ODL,		PIN(9, 4), GPIO_INPUT | GPIO_PULL_UP)					/* Battery Present */
+GPIO(EC_BATT_PRES_ODL,		PIN(9, 4), GPIO_INPUT)					/* Battery Present */
 ALTERNATE(/*TEMP_SOC|CHRG|MEM*/	PIN_MASK(4, BIT(3) | BIT(4) | BIT(5)), 0, 	MODULE_PWM, 0)		/* SOC, Charger and Memory Temperature */
 ALTERNATE(			PIN_MASK(4, BIT(1) | BIT(2)), 0,		MODULE_PWM, 0)		/* EC_ADC_CORE_IMON1, EC_ADC_SOC_IMON2 */
 
