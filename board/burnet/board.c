@@ -498,11 +498,10 @@ static void board_update_config(void)
 	if (rv == EC_SUCCESS)
 		motion_sensors[LID_ACCEL] = lid_accel_kx022;
 
-	/* Ping for ack */
-	rv = icm_read8(&base_accel_icm426xx,
-			ICM426XX_REG_WHO_AM_I, &val);
+	/* Read icm-40608 chip content */
+	icm_read8(&base_accel_icm426xx, ICM426XX_REG_WHO_AM_I, &val);
 
-	if (rv == EC_SUCCESS) {
+	if (rv == EC_SUCCESS && val == ICM426XX_CHIP_ICM40608) {
 		motion_sensors[BASE_ACCEL] = base_accel_icm426xx;
 		motion_sensors[BASE_GYRO] = base_gyro_icm426xx;
 	}
