@@ -6,6 +6,7 @@
 /* Quiche board-specific configuration */
 
 #include "common.h"
+#include "cros_board_info.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/stm32gx.h"
@@ -347,6 +348,25 @@ void board_overcurrent_event(int port, int is_overcurrented)
 {
 	/* TODO(b/174825406): check correct operation for honeybuns */
 }
+
+int dock_get_mf_preference(void)
+{
+	int rv;
+	uint32_t fw_config;
+	int mf = MF_OFF;
+
+	/*
+	 * MF (multi function) preferece is indicated by bit 0 of the fw_config
+	 * data field. If this data field does not exist, then default to 4 lane
+	 * mode.
+	 */
+	rv = cbi_get_fw_config(&fw_config);
+	if (!rv)
+		mf = CBI_FW_MF_PREFERENCE(fw_config);
+
+	return mf;
+}
+
 #endif /* SECTION_IS_RW */
 
 static void board_init(void)
