@@ -95,6 +95,7 @@ UNIMPLEMENTED(USB_C1_LS_EN)
 
 /* Misc Signals */
 GPIO(EC_H1_PACKET_MODE,		PIN(7, 5), GPIO_OUT_LOW)	/* H1 Packet Mode */
+GPIO(CCD_MODE_ODL,		PIN(E, 5), GPIO_INPUT)		/* Case Closed Debug Mode */
 
 /*
  * Determine the polarity of these SSD signals and whether
