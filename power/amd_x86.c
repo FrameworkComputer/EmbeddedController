@@ -157,6 +157,10 @@ static void handle_pass_through(enum gpio_signal pin_in,
 	if ((pin_in == GPIO_S0_PGOOD) && in_level)
 		msleep(1);
 
+	if (IS_ENABLED(CONFIG_CHIPSET_X86_RSMRST_DELAY) &&
+	    (pin_out == GPIO_PCH_RSMRST_L) && in_level)
+		msleep(10);
+
 	gpio_set_level(pin_out, in_level);
 
 	CPRINTS("Pass through %s: %d", gpio_get_name(pin_in), in_level);
