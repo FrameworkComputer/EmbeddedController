@@ -4,3 +4,5 @@
 
 # Include definitions for bfd as a base.
 include("${ZEPHYR_BASE}/cmake/linker/ld/linker_flags.cmake")
+
+set_property(TARGET linker PROPERTY coverage --coverage)
