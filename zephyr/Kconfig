@@ -950,6 +950,16 @@ config PLATFORM_EC_SYSTEM_UNLOCKED
 
 	  Also, this enables PD in RO for TCPMv2.
 
+config PLATFORM_EC_BYPASS_CBI_EEPROM_WP_CHECK
+	bool "Bypass CBI EEPROM Write Protect"
+	help
+	  Bypass the CBI EEPROM write protect checks. This should ONLY be
+	  defined during bringup, and should never be defined on a shipping or
+	  release platform.
+
+	  When defined, ectool can be used to reprogram all CBI fields,
+	  regardless of the state of the hardware write protect.
+
 menuconfig PLATFORM_EC_WATCHDOG
 	bool "watchdog"
 	depends on WATCHDOG
