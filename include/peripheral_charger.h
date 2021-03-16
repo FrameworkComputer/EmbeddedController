@@ -138,6 +138,8 @@ struct pchg {
 	uint32_t error;
 	/* Battery percentage (0% ~ 100%) of the connected peripheral device */
 	uint8_t battery_percent;
+	/* Number of dropped events (due to queue overflow) */
+	uint32_t dropped_event_count;
 };
 
 /**
