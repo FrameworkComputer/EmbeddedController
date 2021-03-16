@@ -6,6 +6,7 @@
 #include "battery_smart.h"
 #include "button.h"
 #include "cros_board_info.h"
+#include "charge_state.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
@@ -29,6 +30,8 @@
 #include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
+#include "temp_sensor.h"
+#include "thermal.h"
 #include "usb_charge.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
@@ -538,3 +541,100 @@ const int keyboard_factory_scan_pins[][2] = {
 const int keyboard_factory_scan_pins_used =
 			ARRAY_SIZE(keyboard_factory_scan_pins);
 #endif
+
+#define CHARGING_CURRENT_500MA 500
+
+int charger_profile_override(struct charge_state_data *curr)
+{
+	int rv;
+	static int thermal_sensor_temp;
+	static int prev_thermal_sensor_temp;
+	static int limit_charge;
+	static int limit_usbc_power;
+	static int limit_usbc_power_backup;
+	enum tcpc_rp_value rp;
+
+	rv = temp_sensor_read(TEMP_SENSOR_CHARGER, &thermal_sensor_temp);
+
+	if (rv != EC_SUCCESS)
+		return 0;
+
+	if (thermal_sensor_temp > prev_thermal_sensor_temp) {
+		if (thermal_sensor_temp > C_TO_K(63))
+			limit_usbc_power = 1;
+
+		else if (thermal_sensor_temp > C_TO_K(58)) {
+			if (curr->state == ST_CHARGE)
+				limit_charge = 1;
+		}
+	} else if (thermal_sensor_temp < prev_thermal_sensor_temp) {
+		if (thermal_sensor_temp < C_TO_K(57)) {
+			if (curr->state == ST_CHARGE)
+				limit_charge = 0;
+
+		} else if (thermal_sensor_temp < C_TO_K(62))
+			limit_usbc_power = 0;
+	}
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return 0;
+
+	curr->requested_current = (limit_charge) ? CHARGING_CURRENT_500MA
+						 : curr->batt.desired_current;
+
+	if (limit_usbc_power != limit_usbc_power_backup) {
+		rp = (limit_usbc_power) ? TYPEC_RP_1A5
+					: TYPEC_RP_3A0;
+
+		ppc_set_vbus_source_current_limit(0, rp);
+		tcpm_select_rp_value(0, rp);
+		pd_update_contract(0);
+		limit_usbc_power_backup = limit_usbc_power;
+	}
+
+	prev_thermal_sensor_temp = thermal_sensor_temp;
+
+	return 0;
+}
+
+enum ec_status charger_profile_override_get_param(uint32_t param,
+							uint32_t *value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+							uint32_t value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+__override struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT] = {
+	[TEMP_SENSOR_CHARGER] = {
+		.temp_host = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(63),
+			[EC_TEMP_THRESH_HALT] = C_TO_K(92),
+		},
+		.temp_host_release = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(62),
+		}
+	},
+	[TEMP_SENSOR_SOC] = {
+		.temp_host = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+			[EC_TEMP_THRESH_HALT] = C_TO_K(85),
+		},
+		.temp_host_release = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(77),
+		}
+	},
+	[TEMP_SENSOR_CPU] = {
+		.temp_host = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
+			[EC_TEMP_THRESH_HALT] = C_TO_K(90),
+		},
+		.temp_host_release = {
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(83),
+		}
+	},
+};
