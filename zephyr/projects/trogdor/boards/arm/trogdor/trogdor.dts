@@ -12,6 +12,15 @@
 / {
 	model = "Google Trogdor Baseboard";
 
+	aliases {
+		i2c-0 = &i2c0_0;
+		i2c-1 = &i2c1_0;
+		i2c-2 = &i2c2_0;
+		i2c-3 = &i2c3_0;
+		i2c-5 = &i2c5_0;
+		i2c-7 = &i2c7_0;
+	};
+
 	chosen {
 		zephyr,sram = &sram0;
 		zephyr,console = &uart1;
@@ -21,6 +30,31 @@
 
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
+
+		power {
+			i2c-port = <&i2c0_0>;
+			label = "POWER";
+		};
+		tcpc0 {
+			i2c-port = <&i2c1_0>;
+			label = "TCPC0";
+		};
+		tcpc1 {
+			i2c-port = <&i2c2_0>;
+			label = "TCPC1";
+		};
+		wlc {
+			i2c-port = <&i2c3_0>;
+			label = "WLC";
+		};
+		eeprom {
+			i2c-port = <&i2c5_0>;
+			label = "EEPROM";
+		};
+		sensor {
+			i2c-port = <&i2c7_0>;
+			label = "SENSOR";
+		};
 	};
 
 	def_lvol_io_list {
@@ -52,4 +86,34 @@
 	status = "okay";
 	current-speed = <115200>;
 	pinctrl-0 = <&altc_uart1_sl2>; /* Use UART1_SL2 ie. PIN64.65 */
+};
+
+&i2c0_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c1_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+};
+
+&i2c2_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+};
+
+&i2c3_0 {
+	/* Not used as no WLC connected */
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c5_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c7_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
 };
