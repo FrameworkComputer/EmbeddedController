@@ -181,22 +181,6 @@ void tc_request_power_swap(int port);
 void tc_pr_swap_complete(int port, bool success);
 
 /**
- * Informs the Type-C State Machine that a Discover Identity is in progress.
- * This function is called from the Policy Engine.
- *
- * @param port USB_C port number
- */
-void tc_disc_ident_in_progress(int port);
-
-/**
- * Informs the Type-C State Machine that a Discover Identity is complete.
- * This function is called from the Policy Engine.
- *
- * @param port USB_C port number
- */
-void tc_disc_ident_complete(int port);
-
-/**
  * Instructs the Attached.SNK to stop drawing power. This function is called
  * from the Policy Engine and only has effect if the current Type-C state
  * Attached.SNK.

@@ -109,26 +109,24 @@ void print_flag(int port, int set_or_clear, int flag);
 #define TC_FLAGS_HARD_RESET_REQUESTED   BIT(13)
 /* Flag to note we are currently performing PR Swap */
 #define TC_FLAGS_PR_SWAP_IN_PROGRESS    BIT(14)
-/* Flag to note we are performing Discover Identity */
-#define TC_FLAGS_DISC_IDENT_IN_PROGRESS BIT(15)
 /* Flag to note we should check for connection */
-#define TC_FLAGS_CHECK_CONNECTION       BIT(16)
+#define TC_FLAGS_CHECK_CONNECTION       BIT(15)
 /* Flag to note request from pd_set_suspend to enter TC_DISABLED state */
-#define TC_FLAGS_REQUEST_SUSPEND        BIT(17)
+#define TC_FLAGS_REQUEST_SUSPEND        BIT(16)
 /* Flag to note we are in TC_DISABLED state */
-#define TC_FLAGS_SUSPENDED              BIT(18)
+#define TC_FLAGS_SUSPENDED              BIT(17)
 /* Flag to indicate the port current limit has changed */
-#define TC_FLAGS_UPDATE_CURRENT		BIT(19)
+#define TC_FLAGS_UPDATE_CURRENT		BIT(18)
 /* Flag to indicate USB mux should be updated */
-#define TC_FLAGS_UPDATE_USB_MUX		BIT(20)
+#define TC_FLAGS_UPDATE_USB_MUX		BIT(19)
 /* Flag for retimer firmware update */
-#define TC_FLAGS_USB_RETIMER_FW_UPDATE_RUN     BIT(21)
-#define TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN BIT(22)
+#define TC_FLAGS_USB_RETIMER_FW_UPDATE_RUN     BIT(20)
+#define TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN BIT(21)
 /* Flag for asynchronous call to request Error Recovery */
-#define TC_FLAGS_REQUEST_ERROR_RECOVERY	BIT(23)
+#define TC_FLAGS_REQUEST_ERROR_RECOVERY	BIT(22)
 
 /* For checking flag_bit_names[] array */
-#define TC_FLAGS_COUNT			23
+#define TC_FLAGS_COUNT			22
 
 /* On disconnect, clear most of the flags. */
 #define CLR_FLAGS_ON_DISCONNECT(port) TC_CLR_FLAG(port, \
@@ -934,16 +932,6 @@ void tc_hard_reset_request(int port)
 {
 	TC_SET_FLAG(port, TC_FLAGS_HARD_RESET_REQUESTED);
 	task_wake(PD_PORT_TO_TASK_ID(port));
-}
-
-void tc_disc_ident_in_progress(int port)
-{
-	TC_SET_FLAG(port, TC_FLAGS_DISC_IDENT_IN_PROGRESS);
-}
-
-void tc_disc_ident_complete(int port)
-{
-	TC_CLR_FLAG(port, TC_FLAGS_DISC_IDENT_IN_PROGRESS);
 }
 
 void tc_try_src_override(enum try_src_override_t ov)
@@ -3023,8 +3011,7 @@ static void tc_attached_src_run(const int port)
 	 * Attached.SRC.
 	 */
 	if (tc[port].cc_state == PD_CC_NONE &&
-			!TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS) &&
-			!TC_CHK_FLAG(port, TC_FLAGS_DISC_IDENT_IN_PROGRESS)) {
+			!TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
 		bool tryWait;
 		enum usb_tc_state new_tc_state = TC_UNATTACHED_SNK;
 
@@ -3135,9 +3122,6 @@ static void tc_attached_src_run(const int port)
 		 */
 		if (!TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER) &&
 			TC_CHK_FLAG(port, TC_FLAGS_CTVPD_DETECTED)) {
-
-			/* Clear TC_FLAGS_DISC_IDENT_IN_PROGRESS */
-			TC_CLR_FLAG(port, TC_FLAGS_DISC_IDENT_IN_PROGRESS);
 
 			set_state_tc(port, TC_CT_UNATTACHED_SNK);
 		}
