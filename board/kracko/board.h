@@ -34,6 +34,9 @@
 /* PWM */
 #define CONFIG_PWM
 
+/* LED defines */
+#define CONFIG_LED_ONOFF_STATES
+
 /* Sensors */
 #define CONFIG_ACCEL_BMA255		/* Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */

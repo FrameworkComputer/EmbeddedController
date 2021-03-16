@@ -3,201 +3,70 @@
  * found in the LICENSE file.
  */
 
-/* Kracko specific LED settings. */
+/* Power and battery LED control for Kracko. */
 
-#include "cbi_fw_config.h"
-#include "charge_state.h"
-#include "extpower.h"
-#include "hooks.h"
+#include "ec_commands.h"
+#include "gpio.h"
 #include "led_common.h"
+#include "led_onoff_states.h"
 
-#define BAT_LED_ON 0
-#define BAT_LED_OFF 1
+#define LED_OFF_LVL	1
+#define LED_ON_LVL	0
 
-#define POWER_LED_ON 0
-#define POWER_LED_OFF 1
+const int led_charge_lvl_1;
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED,
-	EC_LED_ID_POWER_LED
+const int led_charge_lvl_2 = 100;
+
+/* Kracko: Note there is only LED for charge / power */
+struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
+	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
+	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_BLUE,  LED_INDEFINITE} },
+	[STATE_DISCHARGE_S0]	     = {{EC_LED_COLOR_BLUE,  LED_INDEFINITE} },
+	[STATE_DISCHARGE_S3]	     = {{EC_LED_COLOR_AMBER, 1 * LED_ONE_SEC},
+					{LED_OFF,            3 * LED_ONE_SEC} },
+	[STATE_DISCHARGE_S5]         = {{LED_OFF,            LED_INDEFINITE} },
+	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_AMBER, 1 * LED_ONE_SEC},
+					{LED_OFF,            1 * LED_ONE_SEC} },
+	[STATE_FACTORY_TEST]         = {{EC_LED_COLOR_BLUE,  2 * LED_ONE_SEC},
+					{EC_LED_COLOR_AMBER, 2 * LED_ONE_SEC} },
 };
+
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-enum led_color {
-	LED_OFF = 0,
-	LED_AMBER,
-	LED_WHITE,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
-};
-
-static int led_set_color_battery(enum led_color color)
+void led_set_color_battery(enum ec_led_colors color)
 {
 	switch (color) {
-	case LED_OFF:
-		gpio_set_level(GPIO_BAT_LED_WHITE_L, BAT_LED_OFF);
-		gpio_set_level(GPIO_BAT_LED_AMBER_L, BAT_LED_OFF);
+	case EC_LED_COLOR_BLUE:
+		gpio_set_level(GPIO_BAT_LED_BLUE_L, LED_ON_LVL);
+		gpio_set_level(GPIO_BAT_LED_ORANGE_L, LED_OFF_LVL);
 		break;
-	case LED_WHITE:
-		gpio_set_level(GPIO_BAT_LED_WHITE_L, BAT_LED_ON);
-		gpio_set_level(GPIO_BAT_LED_AMBER_L, BAT_LED_OFF);
+	case EC_LED_COLOR_AMBER:
+		gpio_set_level(GPIO_BAT_LED_BLUE_L, LED_OFF_LVL);
+		gpio_set_level(GPIO_BAT_LED_ORANGE_L, LED_ON_LVL);
 		break;
-	case LED_AMBER:
-		gpio_set_level(GPIO_BAT_LED_WHITE_L, BAT_LED_OFF);
-		gpio_set_level(GPIO_BAT_LED_AMBER_L, BAT_LED_ON);
+	default: /* LED_OFF and other unsupported colors */
+		gpio_set_level(GPIO_BAT_LED_BLUE_L, LED_OFF_LVL);
+		gpio_set_level(GPIO_BAT_LED_ORANGE_L, LED_OFF_LVL);
 		break;
-	default:
-		return EC_ERROR_UNKNOWN;
 	}
-	return EC_SUCCESS;
-}
-
-static int led_set_color_power(enum ec_led_colors color)
-{
-	switch (color) {
-	case LED_OFF:
-		gpio_set_level(GPIO_PWR_LED_WHITE_L, POWER_LED_OFF);
-		break;
-	case LED_WHITE:
-		gpio_set_level(GPIO_PWR_LED_WHITE_L, POWER_LED_ON);
-		break;
-	default:
-		return EC_ERROR_UNKNOWN;
-	}
-	return EC_SUCCESS;
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	switch (led_id) {
-	case EC_LED_ID_BATTERY_LED:
-		brightness_range[EC_LED_COLOR_WHITE] = 1;
-		brightness_range[EC_LED_COLOR_AMBER] = 1;
-		break;
-	case EC_LED_ID_POWER_LED:
-		brightness_range[EC_LED_COLOR_WHITE] = 1;
-		break;
-	default:
-		break;
-	}
-}
-
-static int led_set_color(enum ec_led_id led_id, enum led_color color)
-{
-	int rv;
-
-	switch (led_id) {
-	case EC_LED_ID_BATTERY_LED:
-		rv = led_set_color_battery(color);
-		break;
-	case EC_LED_ID_POWER_LED:
-		rv = led_set_color_power(color);
-		break;
-	default:
-		return EC_ERROR_UNKNOWN;
-	}
-	return rv;
+	brightness_range[EC_LED_COLOR_BLUE] = 1;
+	brightness_range[EC_LED_COLOR_AMBER] = 1;
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	if (brightness[EC_LED_COLOR_WHITE] != 0)
-		led_set_color(led_id, LED_WHITE);
+	if (brightness[EC_LED_COLOR_BLUE] != 0)
+		led_set_color_battery(EC_LED_COLOR_BLUE);
 	else if (brightness[EC_LED_COLOR_AMBER] != 0)
-		led_set_color(led_id, LED_AMBER);
+		led_set_color_battery(EC_LED_COLOR_AMBER);
 	else
-		led_set_color(led_id, LED_OFF);
+		led_set_color_battery(LED_OFF);
 
 	return EC_SUCCESS;
 }
-
-static void led_set_battery(void)
-{
-	static int battery_ticks;
-	static int power_ticks;
-	uint32_t chflags = charge_get_flags();
-
-	battery_ticks++;
-
-	/*
-	 * Override battery LED for Drawlet/Drawman, Drawlet/Drawman
-	 * don't have power LED, blinking battery white LED to indicate
-	 * system suspend without charging.
-	 */
-	if (get_cbi_fw_config_tablet_mode() == TABLET_MODE_ABSENT) {
-		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
-			charge_get_state() != PWR_STATE_CHARGE) {
-			led_set_color_battery(power_ticks++ & 0x2 ?
-						  LED_WHITE : LED_OFF);
-			return;
-		}
-	}
-
-	power_ticks = 0;
-
-	switch (charge_get_state()) {
-	case PWR_STATE_CHARGE:
-		led_set_color_battery(LED_AMBER);
-		break;
-	case PWR_STATE_DISCHARGE_FULL:
-		if (extpower_is_present()) {
-			led_set_color_battery(LED_WHITE);
-			break;
-		}
-		/* Intentional fall-through */
-	case PWR_STATE_DISCHARGE:
-		/*
-		 * Blink white light (1 sec on, 1 sec off)
-		 * when battery capacity is less than 10%
-		 */
-		if (charge_get_percent() < 10)
-			led_set_color_battery(
-				(battery_ticks & 0x2) ? LED_WHITE : LED_OFF);
-		else
-			led_set_color_battery(LED_OFF);
-		break;
-	case PWR_STATE_ERROR:
-		led_set_color_battery(
-			(battery_ticks % 0x2) ? LED_WHITE : LED_OFF);
-		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
-		led_set_color_battery(LED_WHITE);
-		break;
-	case PWR_STATE_IDLE: /* External power connected in IDLE */
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			led_set_color_battery(
-				(battery_ticks & 0x2) ? LED_AMBER : LED_OFF);
-		else
-			led_set_color_battery(LED_WHITE);
-		break;
-	default:
-		/* Other states don't alter LED behavior */
-		break;
-	}
-}
-
-static void led_set_power(void)
-{
-	static int power_tick;
-
-	power_tick++;
-
-	if (chipset_in_state(CHIPSET_STATE_ON))
-		led_set_color_power(LED_WHITE);
-	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
-		led_set_color_power(
-			(power_tick & 0x2) ? LED_WHITE : LED_OFF);
-	else
-		led_set_color_power(LED_OFF);
-}
-
-/* Called by hook task every TICK */
-static void led_tick(void)
-{
-	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-		led_set_power();
-
-	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
-		led_set_battery();
-}
-DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
