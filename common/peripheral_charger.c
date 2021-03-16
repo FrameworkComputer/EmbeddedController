@@ -36,6 +36,7 @@ static const char *_text_state(enum pchg_state state)
 {
 	/* TODO: Use "S%d" for normal build. */
 	static const char * const state_names[] = EC_PCHG_STATE_TEXT;
+	BUILD_ASSERT(ARRAY_SIZE(state_names) == PCHG_STATE_COUNT);
 
 	if (state >= sizeof(state_names))
 		return "UNDEF";
@@ -64,6 +65,7 @@ static const char *_text_event(enum pchg_event event)
 		[PCHG_EVENT_ENABLE] = "ENABLE",
 		[PCHG_EVENT_DISABLE] = "DISABLE",
 	};
+	BUILD_ASSERT(ARRAY_SIZE(event_names) == PCHG_EVENT_COUNT);
 
 	if (event >= sizeof(event_names))
 		return "UNDEF";

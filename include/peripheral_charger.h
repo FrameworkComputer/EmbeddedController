@@ -89,6 +89,9 @@ enum pchg_event {
 	PCHG_EVENT_INITIALIZE,
 	PCHG_EVENT_ENABLE,
 	PCHG_EVENT_DISABLE,
+
+	/* Counter. Add new entry above. */
+	PCHG_EVENT_COUNT,
 };
 
 enum pchg_error {
