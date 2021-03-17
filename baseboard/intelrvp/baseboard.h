@@ -12,10 +12,12 @@
 
 #ifdef VARIANT_INTELRVP_EC_IT8320
 	#include "ite_ec.h"
-/* VARIANT_INTELRVP_EC_IT8320 */
 #elif defined(VARIANT_INTELRVP_EC_MCHP)
 	#include "mchp_ec.h"
-/* VARIANT_INTELRVP_EC_MCHP */
+#elif defined(VARIANT_INTELRVP_EC_NPCX)
+	#include "npcx_ec.h"
+#else
+	#error "Define EC chip variant"
 #endif
 
 /*
