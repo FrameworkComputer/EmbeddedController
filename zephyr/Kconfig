@@ -708,7 +708,6 @@ config PLATFORM_EC_PWM_DISPLIGHT
 
 config PLATFORM_EC_RTC
 	bool "Real-time clock (RTC)"
-	default y
 	help
 	  Enable support for a real-time clock. Typically this is available
 	  on-chip in the EC. It provides a way to track the passage of time
@@ -724,7 +723,6 @@ if PLATFORM_EC_RTC
 
 config PLATFORM_EC_CONSOLE_CMD_RTC
 	bool "Console command: rtc"
-	default y
 	help
 	  This command allows getting and setting the current RTC value. The
 	  value is in seconds since the Epoch (midnight on 1/1/70). You can
@@ -736,7 +734,6 @@ config PLATFORM_EC_CONSOLE_CMD_RTC
 config PLATFORM_EC_CONSOLE_CMD_RTC_ALARM
 	bool "Console command: rtc_alarm"
 	depends on PLATFORM_EC_CONSOLE_CMD_RTC
-	default y
 	help
 	  This command supports setting a real-time-clock (RTC) alarm that
 	  causes an interrupt when the timer reaches that point. To set the
@@ -751,7 +748,6 @@ config PLATFORM_EC_CONSOLE_CMD_RTC_ALARM
 config PLATFORM_EC_HOSTCMD_RTC
 	bool "Host command: EC_CMD_RTC_GET_VALUE etc."
 	depends on PLATFORM_EC_HOSTCMD
-	default y
 	help
 	  Enables support for EC_CMD_RTC_GET_VALUE, EC_CMD_RTC_SET_VALUE,
 	  EC_CMD_RTC_GET_ALARM and EC_CMD_RTC_SET_ALARM which colectively allow
