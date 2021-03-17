@@ -2953,6 +2953,37 @@
  */
 #undef CONFIG_HOSTCMD_ESPI_EC_CHAN_BITMAP
 
+/*
+ * Background information (from Intel eSPI Compatibility Specification):
+ * eSPI_Reset# may be asserted as part of:
+ * (1) a normal Deep-Sx entry:
+ *    A normal eSPI_Reset# assertion is preceded by {Host,OOB}_Reset_Warn/Ack
+ *    handshakes (using tunneled VWs) between the PCH/SoC and the EC/BMC.
+ *    The eSPI Specification states that the SLP_* signals are reset based on
+ *    eSPI_Reset#. However, for platforms that support Deep Sleep Well (DSW),
+ *    the SLP_{S3,S4,S5,LAN,WLAN}# signals reside in the DSW power well and are
+ *    reset by DSW_PWROK.
+ *    In PCH/SoC, the states of these pins will be communicated to the EC/BMC
+ *    as Virtual Wires over the eSPI interface. As a result, the EC/BMC needs
+ *    to handle/maintain these pins' states during Deep-Sx.
+ *
+ * (2) a Global Reset event:
+ *    It could happen in the middle of an on-going eSPI transaction, which is
+ *    immediately truncated. All tunneled VWs, including
+ *    SLP_{S3,S4,S5,LAN,WLAN}#, are returned to their default reset default
+ *    state upon entry into Global Reset. Note that in the case of a Global
+ *    Reset event, eSPI Virtual Wire messages deasserting the states of these
+ *    wires will not be issued by the eSPI-MC. The eSPI Slave device is
+ *    responsible for resetting the states of all its VWs at the appropriate
+ *    platform reset events.
+ *
+ * Enable this config to reset SLP* VW when eSPI_RST is asserted for the Global
+ * Reset event case.
+ * Don't enable this config if the platform implements the Deep-Sx entry as EC
+ * needs to maintain these pins' states per request.
+ */
+#undef CONFIG_HOSTCMD_ESPI_RESET_SLP_SX_VW_ON_ESPI_RST
+
 /* Base address of low power RAM. */
 #undef CONFIG_LPRAM_BASE
 
