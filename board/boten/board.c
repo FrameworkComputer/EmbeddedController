@@ -167,13 +167,6 @@ const struct adc_t adc_channels[] = {
 		.shift = 0,
 		.channel = CHIP_ADC_CH3
 	},
-	[ADC_SUB_ANALOG] = {
-		.name = "SUB_ANALOG",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH13
-	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -227,8 +220,6 @@ void board_init(void)
 	gpio_enable_interrupt(GPIO_HDMI_HPD_SUB_ODL);
 	/* Enable gpio interrupt for pen detect */
 	gpio_enable_interrupt(GPIO_PEN_DET_ODL);
-
-	gpio_set_level(GPIO_HDMI_EN_SUB_ODL, 0);
 
 	/* Set LEDs luminance */
 	pwm_set_duty(PWM_CH_LED_RED, 70);
