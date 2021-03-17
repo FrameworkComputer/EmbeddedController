@@ -6,6 +6,7 @@
  */
 
 #include "battery.h"
+#include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
 #include "console.h"
@@ -15,6 +16,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "timer.h"
+#include "usb_pd.h"
 #include "util.h"
 #include "watchdog.h"
 
@@ -670,3 +672,83 @@ int battery_manufacturer_name(char *dest, int size)
 {
 	return get_battery_manufacturer_name(dest, size);
 }
+
+#ifdef CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV
+
+#if CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV < 5000 || \
+    CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV >= PD_MAX_VOLTAGE_MV
+	#error "Voltage limit must be between 5000 and PD_MAX_VOLTAGE_MV"
+#endif
+
+#if !((defined(CONFIG_USB_PD_TCPMV1) && defined(CONFIG_USB_PD_DUAL_ROLE)) || \
+    (defined(CONFIG_USB_PD_TCPMV2) && defined(CONFIG_USB_PE_SM)))
+	#error "Voltage reducing requires TCPM with Policy Engine"
+#endif
+
+/*
+ * Returns true if input voltage should be reduced (chipset is in S5/G3) and
+ * battery is full, otherwise returns false
+ */
+static bool board_wants_reduced_input_voltage(void) {
+	struct batt_params batt;
+
+	/* Chipset not in S5/G3, so we don't want to reduce voltage */
+	if (!chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
+		return false;
+
+	battery_get_params(&batt);
+
+	/* Battery needs charge, so we don't want to reduce voltage */
+	if (batt.flags & BATT_FLAG_WANT_CHARGE)
+		return false;
+
+	return true;
+}
+
+static void reduce_input_voltage_when_full(void)
+{
+	static int saved_input_voltage = -1;
+	int max_pd_voltage_mv = pd_get_max_voltage();
+	int port;
+
+	port = charge_manager_get_active_charge_port();
+	if (port < 0 || port >= board_get_usb_pd_port_count())
+		return;
+
+	if (board_wants_reduced_input_voltage()) {
+		/*
+		 * Board wants voltage to be reduced. Apply limit if current
+		 * voltage is different. Save current voltage, it will be
+		 * restored when board wants to stop reducing input voltage.
+		 */
+		if (max_pd_voltage_mv !=
+		    CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV) {
+			saved_input_voltage = max_pd_voltage_mv;
+			max_pd_voltage_mv =
+			    CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV;
+		}
+	} else if (saved_input_voltage != -1) {
+		/*
+		 * Board doesn't want to reduce input voltage. If current
+		 * voltage is reduced we will restore previously saved voltage.
+		 * If current voltage is different we will respect newer value.
+		 */
+		if (max_pd_voltage_mv ==
+		    CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV)
+			max_pd_voltage_mv = saved_input_voltage;
+
+		saved_input_voltage = -1;
+	}
+
+	if (pd_get_max_voltage() != max_pd_voltage_mv)
+		pd_set_external_voltage_limit(port, max_pd_voltage_mv);
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, reduce_input_voltage_when_full,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, reduce_input_voltage_when_full,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, reduce_input_voltage_when_full,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, reduce_input_voltage_when_full,
+	     HOOK_PRIO_DEFAULT);
+#endif
