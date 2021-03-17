@@ -228,6 +228,18 @@ int pd_check_power_swap(int port)
 	return 0;
 }
 
+__override bool pd_can_source_from_device(int port, const int pdo_cnt,
+				      const uint32_t *pdos)
+{
+	/*
+	 * This function is called to determine if this port can be charged by
+	 * the port partner. We always want to be a power role source, so always
+	 * return false.
+	 */
+
+	return false;
+}
+
 static int vdm_is_dp_enabled(int port)
 {
 	mux_state_t mux_state = usb_mux_get(port);
