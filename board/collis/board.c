@@ -13,8 +13,8 @@
 #include "driver/accelgyro_bmi160.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/syv682x.h"
+#include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
-#include "driver/tcpm/rt1715.h"
 #include "driver/retimer/bb_retimer.h"
 #include "driver/sync.h"
 #include "extpower.h"
@@ -89,7 +89,7 @@ __override const struct ec_response_keybd_config
  * FW_CONFIG defaults for Terrador if the CBI data is not initialized.
  */
 union volteer_cbi_fw_config fw_config_defaults = {
-	.usb_db = DB_USB3_PASSIVE,
+	.usb_db = DB_USB3_ACTIVE,
 };
 
 static void board_init(void)
@@ -236,41 +236,7 @@ static void kb_backlight_disable(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kb_backlight_disable, HOOK_PRIO_DEFAULT);
 
-void board_reset_pd_mcu(void)
-{
-	/* TODO(b/159025015): Terrador: check USB PD reset operation */
-}
-
-/* USBC mux configuration - Tiger Lake includes internal mux */
-struct usb_mux usbc0_usb4_mb_retimer = {
-	.usb_port = USBC_PORT_C0,
-	.driver = &bb_usb_retimer,
-	.i2c_port = I2C_PORT_USB_0_MIX,
-	.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
-};
-/*****************************************************************************
- * USB-C MUX/Retimer dynamic configuration.
- */
-static void setup_mux(void)
-{
-	CPRINTS("C0 supports bb-retimer");
-	/* USB-C port 0 have a retimer */
-	usb_muxes[USBC_PORT_C0].next_mux = &usbc0_usb4_mb_retimer;
-}
-
-__override void board_cbi_init(void)
-{
-	/*
-	 * TODO(b/159025015): Terrador: check FW_CONFIG fields for USB DB type
-	 */
-	setup_mux();
-	/* Reassign USB_C0_RT_RST_ODL */
-	bb_controls[USBC_PORT_C0].usb_ls_en_gpio = GPIO_USB_C0_LS_EN;
-	bb_controls[USBC_PORT_C0].retimer_rst_gpio = GPIO_USB_C0_RT_RST_ODL;
-
-}
-
-/******************************************************************************/
+/*****************************************************************************/
 /* USBC PPC configuration */
 struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
@@ -323,17 +289,21 @@ const struct tcpc_config_t tcpc_config[] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_USB_C0,
-			.addr_flags = RT1715_I2C_ADDR_FLAGS,
+			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		},
-		.drv = &rt1715_tcpm_drv,
+		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
+		.drv = &ps8xxx_tcpm_drv,
 	},
 	[USBC_PORT_C1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_USB_C1,
-			.addr_flags = RT1715_I2C_ADDR_FLAGS,
+			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		},
-		.drv = &rt1715_tcpm_drv,
+		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
+		.drv = &ps8xxx_tcpm_drv,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
@@ -341,23 +311,32 @@ BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 
 /******************************************************************************/
 /* USBC mux configuration - Tiger Lake includes internal mux */
-struct usb_mux usbc1_tcss_usb_mux = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
+static const struct usb_mux usbc0_usb3_mb_retimer = {
+	.usb_port = USBC_PORT_C0,
+	.driver = &tcpci_tcpm_usb_mux_driver,
+	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	.next_mux = NULL,
 };
-struct usb_mux usb_muxes[] = {
+
+static const struct usb_mux usbc1_usb3_db_retimer = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &tcpci_tcpm_usb_mux_driver,
+	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	.next_mux = NULL,
+};
+
+const struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.usb_port = USBC_PORT_C0,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
+		.next_mux = &usbc0_usb3_mb_retimer,
 	},
 	[USBC_PORT_C1] = {
 		.usb_port = USBC_PORT_C1,
-		.next_mux = &usbc1_tcss_usb_mux,
-		.driver = &bb_usb_retimer,
-		.i2c_port = I2C_PORT_USB_1_MIX,
-		.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
+		.driver = &virtual_usb_mux_driver,
+		.hpd_update = &virtual_hpd_update,
+		.next_mux = &usbc1_usb3_db_retimer,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
@@ -423,4 +402,49 @@ int ppc_get_alert_status(int port)
 const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_PP5000_USBA,
 };
+
+static void ps8815_reset(int port)
+{
+	int val;
+	int i2c_port;
+	enum gpio_signal ps8xxx_rst_odl;
+
+	if (port == USBC_PORT_C0) {
+		ps8xxx_rst_odl = GPIO_USB_C0_RT_RST_ODL;
+		i2c_port = I2C_PORT_USB_C0;
+	} else if (port == USBC_PORT_C1) {
+		ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_ODL;
+		i2c_port = I2C_PORT_USB_C1;
+	} else {
+		return;
+	}
+
+	gpio_set_level(ps8xxx_rst_odl, 0);
+	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
+			   PS8815_PWR_H_RST_H_DELAY_MS));
+	gpio_set_level(ps8xxx_rst_odl, 1);
+	msleep(PS8815_FW_INIT_DELAY_MS);
+
+	CPRINTS("[C%d] %s: patching ps8815 registers", port, __func__);
+
+	if (i2c_read8(i2c_port,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f was %02x", val);
+
+	if (i2c_write8(i2c_port,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f set to 0x31");
+
+	if (i2c_read8(i2c_port,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f now %02x", val);
+}
+
+void board_reset_pd_mcu(void)
+{
+	ps8815_reset(USBC_PORT_C0);
+	usb_mux_hpd_update(USBC_PORT_C0, 0, 0);
+	ps8815_reset(USBC_PORT_C1);
+	usb_mux_hpd_update(USBC_PORT_C1, 0, 0);
+}
 
