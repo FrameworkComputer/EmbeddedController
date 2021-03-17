@@ -97,6 +97,9 @@ def main(argv=None):
                            help='Test the .elf file after configuration')
     configure.add_argument('project_dir', type=pathlib.Path,
                            help='Path to the project to build')
+    configure.add_argument('-c', '--coverage', action='store_true',
+                           dest='coverage',
+                           help='Enable CONFIG_COVERAGE Kconfig.')
 
     build = sub.add_parser('build')
     build.add_argument('build_dir', type=pathlib.Path,
