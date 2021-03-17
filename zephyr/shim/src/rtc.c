@@ -3,26 +3,101 @@
  * found in the LICENSE file.
  */
 
+#include <logging/log.h>
 #include <kernel.h>
 #include <zephyr.h>
 
 #include "console.h"
+#include "drivers/cros_rtc.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "util.h"
 
-/*
- * Microseconds will be ignored.  The WTC register only
- * stores wakeup time in seconds.
- * Set seconds = 0 to disable the alarm
- */
-void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
+LOG_MODULE_REGISTER(shim_cros_rtc, LOG_LEVEL_ERR);
+
+#define CROS_RTC_DEV DT_LABEL(DT_CHOSEN(cros_rtc))
+static const struct device *cros_rtc_dev;
+
+#ifdef CONFIG_HOSTCMD_EVENTS
+static void set_rtc_host_event(void)
 {
-	/* TODO(b/178230662): Implement this */
+	host_set_single_event(EC_HOST_EVENT_RTC);
+}
+DECLARE_DEFERRED(set_rtc_host_event);
+#endif
+
+void rtc_callback(const struct device *dev)
+{
+	ARG_UNUSED(dev);
+
+	if (IS_ENABLED(CONFIG_HOSTCMD_EVENTS)) {
+		hook_call_deferred(&set_rtc_host_event_data, 0);
+	}
+}
+
+/** Initialize the rtc. */
+static int system_init_rtc(const struct device *unused)
+{
+	ARG_UNUSED(unused);
+
+	cros_rtc_dev = device_get_binding(CROS_RTC_DEV);
+	if (!cros_rtc_dev) {
+		LOG_ERR("Fail to find %s", CROS_RTC_DEV);
+		return -ENODEV;
+	}
+
+	/* set the RTC callback */
+	cros_rtc_configure(cros_rtc_dev, rtc_callback);
+
+	return 0;
+}
+SYS_INIT(system_init_rtc, APPLICATION, 1);
+
+uint32_t system_get_rtc_sec(void)
+{
+	uint32_t seconds;
+
+	cros_rtc_get_value(cros_rtc_dev, &seconds);
+
+	return seconds;
+}
+
+void system_set_rtc(uint32_t seconds)
+{
+	cros_rtc_set_value(cros_rtc_dev, seconds);
 }
 
 void system_reset_rtc_alarm(void)
 {
-	/* TODO(b/178230662): Implement this */
+	if (!cros_rtc_dev) {
+		/* TODO(b/183115086): check the error handler for NULL device */
+		LOG_ERR("rtc_dev hasn't initialized.");
+		return;
+	}
+
+	cros_rtc_reset_alarm(cros_rtc_dev);
+}
+
+/*
+ * For NPCX series, The alarm counter only stores wakeup time in seconds.
+ * Microseconds will be ignored.
+ */
+void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds)
+{
+	if (!cros_rtc_dev) {
+		LOG_ERR("rtc_dev hasn't initialized.");
+		return;
+	}
+
+	/* If time = 0, clear the current alarm */
+	if (seconds == EC_RTC_ALARM_CLEAR && microseconds == 0) {
+		system_reset_rtc_alarm();
+		return;
+	}
+
+	seconds += system_get_rtc_sec();
+
+	cros_rtc_set_alarm(cros_rtc_dev, seconds, microseconds);
 }
 
 /*
@@ -31,26 +106,20 @@ void system_reset_rtc_alarm(void)
  */
 uint32_t system_get_rtc_alarm(void)
 {
+	uint32_t seconds, microseconds;
+
+	cros_rtc_get_alarm(cros_rtc_dev, &seconds, &microseconds);
+
 	/*
 	 * Return 0:
 	 * 1. If alarm is not set to go off, OR
 	 * 2. If alarm is set and has already gone off
 	 */
+	if (seconds == 0) {
+		return 0;
+	}
 
-	/* TODO(b/178230662): Implement this */
-	return 0;
-}
-
-/* MTC functions */
-uint32_t system_get_rtc_sec(void)
-{
-	/* TODO(b/178230662): Implement this */
-	return 0;
-}
-
-void system_set_rtc(uint32_t seconds)
-{
-	/* TODO(b/178230662): Implement this */
+	return seconds - system_get_rtc_sec();
 }
 
 /* Console commands */
@@ -96,9 +165,6 @@ static int command_rtc_alarm_test(int argc, char **argv)
 	int s = 1, us = 0;
 	char *e;
 
-	ccprintf("Setting RTC alarm\n");
-	/* TODO(b/178230662): Implement enabling RTC interrupt */
-
 	if (argc > 1) {
 		s = strtoi(argv[1], &e, 10);
 		if (*e)
@@ -109,6 +175,8 @@ static int command_rtc_alarm_test(int argc, char **argv)
 		if (*e)
 			return EC_ERROR_PARAM2;
 	}
+
+	ccprintf("Setting RTC alarm\n");
 
 	system_set_rtc_alarm(s, us);
 
