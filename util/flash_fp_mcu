@@ -253,9 +253,9 @@ flash_fp_mcu_stm32() {
   sleep 0.001
 
   if [[ "${transport}" == "UART" ]]; then
-    # load AMD0020:01 ttyS1
-    echo AMD0020:01 > /sys/bus/platform/drivers/dw-apb-uart/unbind;
-    echo AMD0020:01 > /sys/bus/platform/drivers/dw-apb-uart/bind;
+    # load AMDI0020:01 ttyS1
+    echo AMDI0020:01 > /sys/bus/platform/drivers/dw-apb-uart/unbind;
+    echo AMDI0020:01 > /sys/bus/platform/drivers/dw-apb-uart/bind;
   else
     # load spidev (fail on cros-ec-spi first to change modalias)
     echo "${deviceid}" > /sys/bus/spi/drivers/cros-ec-spi/bind 2>/dev/null
