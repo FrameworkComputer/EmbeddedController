@@ -251,11 +251,6 @@ static void board_init(void)
 	/* Enable TCPC alert interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
 
-#ifdef SECTION_IS_RW
-	/* Enable interrupts from BMI160 sensor. */
-	gpio_enable_interrupt(GPIO_ACCEL_INT_ODL);
-#endif /* SECTION_IS_RW */
-
 	/* Enable interrupt from PMIC. */
 	gpio_enable_interrupt(GPIO_PMIC_EC_RESETB);
 
@@ -263,16 +258,6 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_BC12_EC_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
-/* Motion sensors */
-/* Mutexes */
-#ifdef SECTION_IS_RW
-/* TODO: to be added once sensors land via CL:1714436 */
-struct motion_sensor_t motion_sensors[] = {
-};
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-
-#endif /* SECTION_IS_RW */
 
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
