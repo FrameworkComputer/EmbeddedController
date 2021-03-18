@@ -259,6 +259,8 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_INTEL
                                                 "${PLATFORM_EC}/power/intel_x86.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_HOST_SLEEP
                                                 "${PLATFORM_EC}/power/host_sleep.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_SC7180
+                                                "${PLATFORM_EC}/power/sc7180.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_PANIC   "${PLATFORM_EC}/common/panic_output.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_PWM     "${PLATFORM_EC}/common/pwm.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_SHA256_SW

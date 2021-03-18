@@ -125,4 +125,12 @@ endif # PLATFORM_EC_POWERSEQ_ICELAKE
 
 endif # PLATFORM_EC_POWERSEQ_INTEL
 
+config PLATFORM_EC_POWERSEQ_SC7180
+	bool "SC7180 power sequencing"
+	depends on AP_ARM_QUALCOMM_SC7180
+	default y
+	help
+	  Enable power sequencing for the Qualcomm Snapdragon SC7180
+	  chipset.
+
 endif # PLATFORM_EC_POWERSEQ
