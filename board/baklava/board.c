@@ -42,7 +42,6 @@
 #ifdef SECTION_IS_RW
 static int pd_dual_role_init[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	PD_DRP_TOGGLE_ON,
-	PD_DRP_FORCE_SOURCE,
 };
 
 static void ppc_interrupt(enum gpio_signal signal)
@@ -51,27 +50,9 @@ static void ppc_interrupt(enum gpio_signal signal)
 	case GPIO_HOST_USBC_PPC_INT_ODL:
 		sn5s330_interrupt(USB_PD_PORT_HOST);
 		break;
-	case GPIO_USBC_DP_PPC_INT_ODL:
-		sn5s330_interrupt(USB_PD_PORT_DP);
-		break;
-
 	default:
 		break;
 	}
-}
-
-static void tcpc_alert_event(enum gpio_signal s)
-{
-	int port = -1;
-
-	switch (s) {
-	case GPIO_USBC_DP_MUX_ALERT_ODL:
-		port = USB_PD_PORT_DP;
-		break;
-	default:
-		return;
-	}
-	schedule_deferred_pd_interrupt(port);
 }
 
 void hpd_interrupt(enum gpio_signal signal)
@@ -85,11 +66,11 @@ void board_uf_manage_vbus(void)
 
 	/*
 	 * GPIO_USBC_UF_MUX_VBUS_EN is an output from the PS8803 which tracks if
-	 * C2 is attached. When it's attached, this signal will be high. Use
+	 * C1 is attached. When it's attached, this signal will be high. Use
 	 * this level to control PPC VBUS on/off.
 	 */
 	ppc_vbus_source_enable(USB_PD_PORT_USB3, level);
-	CPRINTS("C2: State = %s", level ? "Attached.SRC " : "Unattached.SRC");
+	CPRINTS("C1: State = %s", level ? "Attached.SRC " : "Unattached.SRC");
 }
 DECLARE_DEFERRED(board_uf_manage_vbus);
 
@@ -127,12 +108,8 @@ const struct power_seq board_power_seq[] = {
 	{GPIO_EC_HUB2_RESET_L,          1, 41},
 	{GPIO_EC_HUB3_RESET_L,          1, 33},
 	{GPIO_DP_SINK_RESET,            1, 100},
-	{GPIO_USBC_DP_PD_RST_L,         1, 100},
 	{GPIO_USBC_UF_RESET_L,          1, 33},
-	{GPIO_DEMUX_DUAL_DP_PD_N,       1, 100},
-	{GPIO_DEMUX_DUAL_DP_RESET_N,    1, 100},
 	{GPIO_DEMUX_DP_HDMI_PD_N,       1, 10},
-	{GPIO_DEMUX_DUAL_DP_MODE,       1, 10},
 	{GPIO_DEMUX_DP_HDMI_MODE,       1, 5},
 };
 const size_t board_power_seq_count = ARRAY_SIZE(board_power_seq);
@@ -184,14 +161,6 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		.drv = &stm32gx_tcpm_drv,
 	},
-	[USB_PD_PORT_DP] = {
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_I2C1,
-			.addr_flags = PS8751_I2C_ADDR2_FLAGS,
-		},
-		.drv = &ps8xxx_tcpm_drv,
-	},
 };
 
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
@@ -202,13 +171,6 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.driver = &ps8822_usb_mux_driver,
 		.board_set = &board_ps8822_mux_set,
 	},
-	[USB_PD_PORT_DP] = {
-		.usb_port = USB_PD_PORT_DP,
-		.i2c_port = I2C_PORT_I2C1,
-		.i2c_addr_flags = PS8751_I2C_ADDR2_FLAGS,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-	},
 };
 
 /* USB-C PPC Configuration */
@@ -216,11 +178,6 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_HOST] = {
 		.i2c_port = I2C_PORT_I2C1,
 		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
-	[USB_PD_PORT_DP] = {
-		.i2c_port = I2C_PORT_I2C1,
-		.i2c_addr_flags = SN5S330_ADDR2_FLAGS,
 		.drv = &sn5s330_drv
 	},
 	[USB_PD_PORT_USB3] = {
@@ -240,10 +197,9 @@ void board_reset_pd_mcu(void)
 {
 	cprints(CC_SYSTEM, "Resetting TCPCs...");
 	cflush();
-	gpio_set_level(GPIO_USBC_DP_PD_RST_L, 0);
+
 	gpio_set_level(GPIO_USBC_UF_RESET_L, 0);
 	msleep(PS8805_FW_INIT_DELAY_MS);
-	gpio_set_level(GPIO_USBC_DP_PD_RST_L, 1);
 	gpio_set_level(GPIO_USBC_UF_RESET_L, 1);
 	msleep(PS8805_FW_INIT_DELAY_MS);
 }
@@ -252,23 +208,19 @@ void board_enable_usbc_interrupts(void)
 {
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_HOST_USBC_PPC_INT_ODL);
-	gpio_enable_interrupt(GPIO_USBC_DP_PPC_INT_ODL);
 	/* Enable HPD interrupt */
 	gpio_enable_interrupt(GPIO_DDI_MST_IN_HPD);
-	/* Enable TCPC interrupts. */
-	gpio_enable_interrupt(GPIO_USBC_DP_MUX_ALERT_ODL);
+	/* Enable VBUS control interrupt for C1 */
+	gpio_enable_interrupt(GPIO_USBC_UF_MUX_VBUS_EN);
 }
 
 void board_disable_usbc_interrupts(void)
 {
 	/* Disable PPC interrupts. */
 	gpio_disable_interrupt(GPIO_HOST_USBC_PPC_INT_ODL);
-	gpio_disable_interrupt(GPIO_USBC_DP_PPC_INT_ODL);
 	/* Disable HPD interrupt */
 	gpio_disable_interrupt(GPIO_DDI_MST_IN_HPD);
-	/* Disable TCPC interrupts. */
-	gpio_disable_interrupt(GPIO_USBC_DP_MUX_ALERT_ODL);
-	/* Disable VBUS control interrupt for C2 */
+	/* Disable VBUS control interrupt for C1 */
 	gpio_disable_interrupt(GPIO_USBC_UF_MUX_VBUS_EN);
 }
 
@@ -306,15 +258,15 @@ static void board_config_usbc_uf_ppc(void)
 	 */
 	ppc_vbus_source_enable(USB_PD_PORT_USB3, vbus_level);
 
-	/* Enable VBUS control interrupt for C2 */
+	/* Enable VBUS control interrupt for C1 */
 	gpio_enable_interrupt(GPIO_USBC_UF_MUX_VBUS_EN);
 }
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {
 	/*
-	 * CONFIG_USB_PD_PORT_MAX_COUNT must be defined to account for C0, C1,
-	 * and C2, but TCPMv2 only knows about C0 and C1, as C2 is a type-c only
+	 * CONFIG_USB_PD_PORT_MAX_COUNT must be defined to account for C0
+	 * and C1, but TCPMv2 only knows about C0, as C1 is a type-c only
 	 * port that is managed directly by the PS8803 TCPC.
 	 */
 	return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
@@ -324,21 +276,13 @@ int ppc_get_alert_status(int port)
 {
 	if (port == USB_PD_PORT_HOST)
 		return gpio_get_level(GPIO_HOST_USBC_PPC_INT_ODL) == 0;
-	else if (port == USB_PD_PORT_DP)
-		return gpio_get_level(GPIO_USBC_DP_PPC_INT_ODL) == 0;
 
 	return 0;
 }
 
 uint16_t tcpc_get_alert_status(void)
 {
-	uint16_t status = 0;
-
-	if (!gpio_get_level(GPIO_USBC_DP_MUX_ALERT_ODL) &&
-	    gpio_get_level(GPIO_USBC_DP_PD_RST_L))
-		status |= PD_STATUS_TCPC_ALERT_1;
-
-	return status;
+	return 0;
 }
 
 void board_overcurrent_event(int port, int is_overcurrented)
@@ -350,6 +294,7 @@ void board_overcurrent_event(int port, int is_overcurrented)
 static void board_init(void)
 {
 #ifdef SECTION_IS_RW
+	/* Initialize PPC and check usbc state */
 	board_config_usbc_uf_ppc();
 #endif
 }

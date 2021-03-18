@@ -10,8 +10,6 @@
 
 #ifdef SECTION_IS_RW
 GPIO_INT(HOST_USBC_PPC_INT_ODL,  PIN(D,  9),      GPIO_INT_FALLING | GPIO_PULL_UP, ppc_interrupt)
-GPIO_INT(USBC_DP_MUX_ALERT_ODL,  PIN(B,  1),      GPIO_INT_FALLING | GPIO_PULL_UP, tcpc_alert_event)
-GPIO_INT(USBC_DP_PPC_INT_ODL,    PIN(E,  7),      GPIO_INT_FALLING | GPIO_PULL_UP, ppc_interrupt)
 GPIO_INT(DDI_MST_IN_HPD,         PIN(C,  14),     GPIO_INT_BOTH, hpd_interrupt)
 GPIO_INT(USBC_UF_MUX_VBUS_EN,    PIN(C,  12),     GPIO_INT_BOTH, board_uf_manage_vbus_interrupt)
 GPIO_INT(PWR_BTN,                PIN(A,  0),      GPIO_INT_BOTH, board_pwr_btn_interrupt)
@@ -34,16 +32,12 @@ GPIO(MST_RST_L,                     PIN(E, 14), GPIO_ODR_LOW)
 GPIO(MST_HUB_LANE_SWITCH,           PIN(C, 15), GPIO_OUT_HIGH)
 
 /* Display Demux signals */
-GPIO(DEMUX_DUAL_DP_MODE,            PIN(B,  0), GPIO_OUT_LOW)
 GPIO(DEMUX_DP_HDMI_MODE,            PIN(E, 15), GPIO_OUT_LOW)
-GPIO(DEMUX_DUAL_DP_RESET_N,         PIN(E, 13), GPIO_ODR_LOW)
-GPIO(DEMUX_DUAL_DP_PD_N,            PIN(E, 12), GPIO_ODR_LOW)
 GPIO(DEMUX_DP_HDMI_PD_N,            PIN(B, 13), GPIO_ODR_LOW)
 
 /* USBC Mux and Demux Signals */
 GPIO(EN_DP_SINK,                    PIN(B, 14), GPIO_OUT_LOW)
 GPIO(DP_SINK_RESET,                 PIN(B, 15), GPIO_OUT_LOW)
-GPIO(USBC_DP_PD_RST_L,              PIN(E,  9), GPIO_ODR_LOW)
 GPIO(USBC_UF_RESET_L,               PIN(D,  2), GPIO_ODR_LOW)
 
 /* USB Hubs signals */

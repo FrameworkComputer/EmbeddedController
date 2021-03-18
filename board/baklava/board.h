@@ -16,19 +16,17 @@
 
 /* USB Type C and USB PD defines */
 #define USB_PD_PORT_HOST   0
-#define USB_PD_PORT_DP     1
-#define USB_PD_PORT_USB3   2
+#define USB_PD_PORT_USB3   1
 
 /*
- * The host (C0) and display (C1) usbc ports are usb-pd capable. There is
- * also a type-c only port (C2). C2 must be accounted for in PORT_MAX_COUNT so
- * the PPC config table is correctly sized and the PPC driver can be used to
- * control VBUS on/off.
+ * Only the host and display usbc ports are usb-pd capable. There is a 2nd usbc
+ * port, but this is type-c capable only. Only the PPC for this port needs to be
+ * controlled by FW.
  */
-#define CONFIG_USB_PD_PORT_MAX_COUNT 3
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_USB_MUX_PS8822
 
-#define CONFIG_USB_PID 0x5048
+#define CONFIG_USB_PID 0x1195
 #define CONFIG_USB_BCD_DEV 0x0001 /* v 0.01 */
 #define CONFIG_USB_PD_IDENTITY_HW_VERS 1
 #define CONFIG_USB_PD_IDENTITY_SW_VERS 1
