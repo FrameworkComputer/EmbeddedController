@@ -5516,11 +5516,6 @@
 #endif
 
 /*****************************************************************************/
-/* The BQ25720 is supported by the BQ25710 driver */
-#if defined(CONFIG_CHARGER_BQ25720)
-#define CONFIG_CHARGER_BQ25710
-#endif
-
 /*
  * Define CONFIG_USB_PD_VBUS_MEASURE_CHARGER if the charger on the board
  * supports VBUS measurement.
@@ -5530,6 +5525,7 @@
 	defined(CONFIG_CHARGER_RT9467) || \
 	defined(CONFIG_CHARGER_MT6370) || \
 	defined(CONFIG_CHARGER_BQ25710) || \
+	defined(CONFIG_CHARGER_BQ25720) || \
 	defined(CONFIG_CHARGER_ISL9241)
 #define CONFIG_USB_PD_VBUS_MEASURE_CHARGER
 
