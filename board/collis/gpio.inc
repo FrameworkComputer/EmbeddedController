@@ -9,7 +9,7 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 /* Wake Source interrupts */
-GPIO_INT(EC_LID_OPEN,          PIN(9, 5), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)
+GPIO_INT(EC_LID_OPEN,          PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)
 GPIO_INT(EC_WP_L,              PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
 GPIO_INT(H1_EC_PWR_BTN_ODL,    PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)
 GPIO_INT(ACOK_OD,              PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
@@ -26,7 +26,7 @@ GPIO_INT(PG_EC_ALL_SYS_PWRGD,  PIN(F, 4),  GPIO_INT_BOTH, power_signal_interrupt
 
 /* Sensor Interrupts */
 GPIO_INT(EC_IMU_INT_L,         PIN(5, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi160_interrupt)
-GPIO_INT(TABLET_MODE_L,        PIN(D, 2), GPIO_INT_BOTH, gmr_tablet_switch_isr)
+GPIO_INT(TABLET_MODE_L,        PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 
 /* USB-C interrupts */
 GPIO_INT(USB_C0_TCPC_INT_ODL,	PIN(E, 0), GPIO_INT_BOTH, tcpc_alert_event)
