@@ -23,6 +23,7 @@
 #include "usb_dp_alt_mode.h"
 #include "usb_mode.h"
 #include "usb_pd_dpm.h"
+#include "usb_pd_policy.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pd_timer.h"
@@ -1806,29 +1807,23 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_SETUP_DONE))
 		return false;
 
-	/*
-	 * TODO: POLICY decision: move policy functionality out to a separate
-	 * file.  For now, try once to become DFP/Vconn source
-	 */
-	if (PE_CHK_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP)) {
+	/* Apply Port Discovery DR Swap Policy */
+	if (port_discovery_dr_swap_policy(port, pe[port].data_role,
+			PE_CHK_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP))) {
+		PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 		PE_CLR_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
-
-		if (pe[port].data_role == PD_ROLE_UFP) {
-			PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
-			set_state_pe(port, PE_DRS_SEND_SWAP);
-			return true;
-		}
+		set_state_pe(port, PE_DRS_SEND_SWAP);
+		return true;
 	}
 
+	/* Apply Port Discovery VCONN Swap Policy */
 	if (IS_ENABLED(CONFIG_USBC_VCONN) &&
-			PE_CHK_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON)) {
+			port_discovery_vconn_swap_policy(port,
+			PE_CHK_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON))) {
+		PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 		PE_CLR_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON);
-
-		if (!tc_is_vconn_src(port)) {
-			PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
-			set_state_pe(port, PE_VCS_SEND_SWAP);
-			return true;
-		}
+		set_state_pe(port, PE_VCS_SEND_SWAP);
+		return true;
 	}
 
 	/* If mode entry was successful, disable the timer */
