@@ -52,8 +52,6 @@ static void board_connect_c0_sbu(enum gpio_signal s);
 
 #include "gpio_list.h"
 
-static uint8_t sku_id;
-
 /* GPIO Interrupt Handlers */
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -484,21 +482,6 @@ void lid_angle_peripheral_enable(int enable)
 }
 #endif
 
-static int board_is_clamshell(void)
-{
-	/* SKU ID of Limozeen: 4, 5, 6 */
-	return sku_id == 4 || sku_id == 5 || sku_id == 6;
-}
-
-enum battery_cell_type board_get_battery_cell_type(void)
-{
-	/* SKU ID of Limozeen: 4, 5, 6 -> 3S battery */
-	if (sku_id == 4 || sku_id == 5 || sku_id == 6)
-		return BATTERY_CELL_TYPE_3S;
-
-	return BATTERY_CELL_TYPE_UNKNOWN;
-}
-
 __override int board_get_default_battery_type(void)
 {
 	/*
@@ -571,25 +554,8 @@ static void board_update_sensor_config_from_sku(void)
 		gpio_enable_interrupt(GPIO_ACCEL_GYRO_INT_L);
 	}
 }
-
-/* Read SKU ID from GPIO and initialize variables for board variants */
-static void sku_init(void)
-{
-	uint8_t val = 0;
-
-	if (gpio_get_level(GPIO_SKU_ID0))
-		val |= 0x01;
-	if (gpio_get_level(GPIO_SKU_ID1))
-		val |= 0x02;
-	if (gpio_get_level(GPIO_SKU_ID2))
-		val |= 0x04;
-
-	sku_id = val;
-	CPRINTS("SKU: %u", sku_id);
-
-	board_update_sensor_config_from_sku();
-}
-DECLARE_HOOK(HOOK_INIT, sku_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, board_update_sensor_config_from_sku,
+	     HOOK_PRIO_INIT_I2C + 2);
 
 /* Initialize board. */
 static void board_init(void)
@@ -642,21 +608,6 @@ void board_hibernate(void)
 	 */
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
 		ppc_vbus_sink_enable(i, 1);
-}
-
-__override uint16_t board_get_ps8xxx_product_id(int port)
-{
-	/*
-	 * Lazor (SKU_ID: 0, 1, 2, 3) rev 3+ changes TCPC from PS8751 to
-	 * PS8805.
-	 *
-	 * Limozeen (SKU_ID: 4, 5, 6) all-rev uses PS8805.
-	 */
-	if ((sku_id == 0 || sku_id == 1 || sku_id == 2 || sku_id == 3) &&
-	    system_get_board_version() < 3)
-		return PS8751_PRODUCT_ID;
-
-	return PS8805_PRODUCT_ID;
 }
 
 void board_tcpc_init(void)

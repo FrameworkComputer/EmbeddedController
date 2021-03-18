@@ -114,6 +114,8 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
+int board_is_clamshell(void);
+
 /* Custom function to indicate if sourcing VBUS */
 int board_is_sourcing_vbus(int port);
 /* Enable VBUS sink for a given port */
