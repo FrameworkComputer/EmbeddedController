@@ -265,6 +265,8 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC_SHA256_SW
                                                 "${PLATFORM_EC}/common/sha256.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_SWITCH
                                                 "${PLATFORM_EC}/common/switch.c")
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_SWITCHCAP_LN9310
+                                                "${PLATFORM_EC}/driver/ln9310.c")
 zephyr_sources_ifdef(CONFIG_PLATFORM_EC_SPI_FLASH_REGS
                                                 "${PLATFORM_EC}/common/spi_flash_reg.c")
 
