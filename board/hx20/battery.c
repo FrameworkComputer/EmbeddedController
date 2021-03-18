@@ -68,6 +68,18 @@ int board_cut_off_battery(void)
 	return rv;
 }
 
+__override void battery_charger_notify(uint8_t flag)
+{
+	static uint8_t batt_charger, new_state;
+	
+	batt_charger = flag & EC_BATT_FLAG_CHARGING;
+
+	if (new_state != batt_charger) {
+		new_state = batt_charger;
+		host_set_single_event(EC_HOST_EVENT_BATTERY);
+	}
+}
+
 enum battery_present battery_is_present(void)
 {
 	enum battery_present bp;
@@ -151,7 +163,7 @@ void battery_customize(struct charge_state_data *emi_info)
 	 * When the battery present have change notify AP
 	 */
 	if (batt_state != emi_info->batt.is_present) {
-		host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
+		host_set_single_event(EC_HOST_EVENT_BATTERY);
 		batt_state = emi_info->batt.is_present;
 	}
 }
