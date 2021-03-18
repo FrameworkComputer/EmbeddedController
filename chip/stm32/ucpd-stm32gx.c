@@ -24,32 +24,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
 #define USB_VID_STM32 0x0483
-/*
- * UCPD is fed directly from HSI which is @ 16MHz. The ucpd_clk goes to
- * a prescaler who's output feeds the 'half-bit' divider which is used
- * to generate clock for delay counters and BMC Rx/Tx blocks. The rx is
- * designed to work in freq ranges of 6 <--> 18 MHz, however recommended
- * range is 9 <--> 18 MHz.
- *
- *          ------- @ 16 MHz ---------   @ ~600 kHz   -------------
- * HSI ---->| /psc |-------->| /hbit |--------------->| trans_cnt |
- *          -------          ---------    |           -------------
- *                                        |           -------------
- *                                        |---------->| ifrgap_cnt|
- *                                                    -------------
- * Requirements:
- *   1. hbit_clk ~= 600 kHz: 16 MHz / 600 kHz = 26.67
- *   2. tTransitionWindow - 12 to 20 uSec
- *   3. tInterframGap - uSec
- *
- * hbit_clk = HSI_clk / 26 = 615,385 kHz = 1.625 uSec period
- * tTransitionWindow = 1.625 uS * 8 = 13 uS
- * tInterFrameGap = 1.625 uS * 17 = 27.625 uS
- */
-#define UCPD_PSC_DIV 1
-#define UCPD_HBIT_DIV 27
-#define UCPD_TRANSWIN_CNT 8
-#define UCPD_IFRGAP_CNT 17
 
 /*
  * USB PD message buffer length. Absent extended messages, the longest PD

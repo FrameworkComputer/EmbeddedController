@@ -10,6 +10,35 @@
 #include "usb_pd_tcpm.h"
 
 /*
+ * UCPD is fed directly from HSI which is @ 16MHz. The ucpd_clk goes to
+ * a prescaler who's output feeds the 'half-bit' divider which is used
+ * to generate clock for delay counters and BMC Rx/Tx blocks. The rx is
+ * designed to work in freq ranges of 6 <--> 18 MHz, however recommended
+ * range is 9 <--> 18 MHz.
+ *
+ *          ------- @ 16 MHz ---------   @ ~600 kHz   -------------
+ * HSI ---->| /psc |-------->| /hbit |--------------->| trans_cnt |
+ *          -------          ---------    |           -------------
+ *                                        |           -------------
+ *                                        |---------->| ifrgap_cnt|
+ *                                                    -------------
+ * Requirements:
+ *   1. hbit_clk ~= 600 kHz: 16 MHz / 600 kHz = 26.67
+ *   2. tTransitionWindow - 12 to 20 uSec
+ *   3. tInterframGap - uSec
+ *
+ * hbit_clk = HSI_clk / 27 = 592.6 kHz = 1.687 uSec period
+ * tTransitionWindow = 1.687 uS * 8 = 13.5 uS
+ * tInterFrameGap = 1.687 uS * 17 = 28.68 uS
+ */
+
+#define UCPD_PSC_DIV 1
+#define UCPD_HBIT_DIV 27
+#define UCPD_TRANSWIN_CNT 8
+#define UCPD_IFRGAP_CNT 17
+
+
+/*
  * K-codes and ordered set defines. These codes and sets are used to encode
  * which type of USB-PD message is being sent. This information can be found in
  * the USB-PD spec section 5.4 - 5.6. This info is also included in the STM32G4
