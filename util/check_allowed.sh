@@ -39,10 +39,10 @@ srctree="$3"
 tmp=$(mktemp -d)
 
 # Temporary files
-new_configs="${tmp}.configs"
-suspects="${tmp}.suspects"
-ok="${tmp}.ok"
-new_adhoc="${tmp}.adhoc"
+new_configs="${tmp}/configs"
+suspects="${tmp}/suspects"
+ok="${tmp}/ok"
+new_adhoc="${tmp}/adhoc"
 
 export LC_ALL=C LC_COLLATE=C
 
