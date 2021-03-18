@@ -98,7 +98,6 @@ config PLATFORM_EC_AP_RESET_LOG
 
 config PLATFORM_EC_BOARD_RESET_AFTER_POWER_ON
 	bool "Work around H1 reset issue"
-	default y
 	help
 	  Enable this if H1 resets the EC after power-on. This is needed so the EC
 	  can delay its start-up until the reset happens. Without this option
