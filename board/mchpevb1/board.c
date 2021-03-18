@@ -609,11 +609,6 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
  * TODO HACK providing functions from common/charge_state_v2.c
  * which is not compiled in when no charger
  */
-int charge_want_shutdown(void)
-{
-	return 0;
-}
-
 int charge_prevent_power_on(int power_button_pressed)
 {
 	return 0;

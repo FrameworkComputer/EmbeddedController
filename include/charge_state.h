@@ -119,7 +119,14 @@ __override_proto int charge_is_consuming_full_input_current(void);
 /**
  * Return non-zero if discharging and battery so low we should shut down.
  */
+#ifdef CONFIG_CHARGER
 int charge_want_shutdown(void);
+#else
+static inline int charge_want_shutdown(void)
+{
+	return 0;
+}
+#endif
 
 /**
  * Return non-zero if the battery level is too low to allow power on, even if

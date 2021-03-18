@@ -439,15 +439,6 @@ int board_allow_i2c_passthru(int port)
 	return 0;
 }
 
-int charge_want_shutdown(void)
-{
-	/*
-	 * power/rk3399.c assumes there is internal power. Therefore this stub
-	 * returns false to prevent arbitrary shutdown.
-	 */
-	return 0;
-}
-
 int charge_prevent_power_on(int power_button_pressed)
 {
 	/* Assume there is always sufficient power from charger to power on. */
