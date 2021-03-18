@@ -10,3 +10,10 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(lazor)
 
 zephyr_include_directories(include)
+
+set(PLATFORM_EC_BOARD "${PLATFORM_EC}/board/lazor" CACHE PATH
+  "Path to the platform/ec board directory")
+
+zephyr_sources(
+  "${PLATFORM_EC_BOARD}/sku.c"
+  "${PLATFORM_EC_BOARD}/switchcap.c")
