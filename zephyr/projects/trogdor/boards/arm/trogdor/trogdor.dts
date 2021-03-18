@@ -57,6 +57,23 @@
 		};
 	};
 
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		vbus {
+			label = "ADC_VBUS";
+			channel = <1>;
+		};
+		amon_bmon {
+			label = "ADC_AMON_BMON";
+			channel = <2>;
+		};
+		psys {
+			label = "ADC_PSYS";
+			channel = <3>;
+		};
+	};
+
 	def_lvol_io_list {
 		compatible = "nuvoton,npcx-lvolctrl-def";
 
@@ -116,4 +133,8 @@
 &i2c7_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&adc0 {
+	status = "okay";
 };
