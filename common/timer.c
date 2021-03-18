@@ -122,6 +122,8 @@ void udelay(unsigned us)
 }
 #endif
 
+/* Zephyr provides its own implementation in task shim */
+#ifndef CONFIG_ZEPHYR
 int timer_arm(timestamp_t event, task_id_t tskid)
 {
 	timestamp_t now = get_time();
@@ -152,6 +154,7 @@ void timer_cancel(task_id_t tskid)
 	 * timer-related housekeeping when the next timer interrupt fires.
 	 */
 }
+#endif
 
 /*
  * For us < (2^31 - task scheduling latency)(~ 2147 sec), this function will

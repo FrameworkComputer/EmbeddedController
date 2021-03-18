@@ -8,6 +8,7 @@
 #include <sys/atomic.h>
 
 #include "common.h"
+#include "timer.h"
 #include "task.h"
 
 /* We need to ensure that is one lower priority for the deferred task */
@@ -49,6 +50,11 @@ struct task_ctx {
 	struct k_poll_signal new_event;
 	/** The current platform/ec events set for this task/thread */
 	uint32_t event_mask;
+	/**
+	 * The timer associated with this task, which can be set using
+	 * timer_arm().
+	 */
+	struct k_timer timer;
 };
 
 #define CROS_EC_TASK(_name, _entry, _parameter, _size) \
@@ -188,10 +194,51 @@ static void task_entry(void *task_contex, void *unused1, void *unused2)
 	ctx->entry((void *)ctx->parameter);
 }
 
+/*
+ * Callback function to use with k_timer_start to set the
+ * TASK_EVENT_TIMER event on a task.
+ */
+static void timer_expire(struct k_timer *timer_id)
+{
+	struct task_ctx *const ctx =
+		CONTAINER_OF(timer_id, struct task_ctx, timer);
+	task_id_t cros_ec_task_id = ctx - shimmed_tasks;
+
+	task_set_event(cros_ec_task_id, TASK_EVENT_TIMER);
+}
+
+int timer_arm(timestamp_t event, task_id_t cros_ec_task_id)
+{
+	timestamp_t now = get_time();
+	struct task_ctx *const ctx = &shimmed_tasks[cros_ec_task_id];
+
+	if (event.val <= now.val) {
+		/* Timer requested for now or in the past, fire right away */
+		task_set_event(cros_ec_task_id, TASK_EVENT_TIMER);
+		return EC_SUCCESS;
+	}
+
+	/* Check for a running timer */
+	if (k_timer_remaining_get(&ctx->timer))
+		return EC_ERROR_BUSY;
+
+	k_timer_start(&ctx->timer, K_USEC(event.val - now.val), K_NO_WAIT);
+	return EC_SUCCESS;
+}
+
+void timer_cancel(task_id_t cros_ec_task_id)
+{
+	struct task_ctx *const ctx = &shimmed_tasks[cros_ec_task_id];
+
+	k_timer_stop(&ctx->timer);
+}
+
 void start_ec_tasks(void)
 {
 	for (size_t i = 0; i < ARRAY_SIZE(shimmed_tasks); ++i) {
 		struct task_ctx *const ctx = &shimmed_tasks[i];
+
+		k_timer_init(&ctx->timer, timer_expire, NULL);
 
 		/*
 		 * TODO(b/172361873): Add K_FP_REGS for FPU tasks. See

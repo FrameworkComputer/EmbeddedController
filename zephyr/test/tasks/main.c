@@ -4,10 +4,12 @@
  */
 
 #include <kernel.h>
+#include <stdbool.h>
 #include <ztest.h>
 
 #include "ec_tasks.h"
 #include "task.h"
+#include "timer.h"
 
 /* Second for platform/ec task API (in microseconds). */
 #define TASK_SEC(s) (s * 1000 * 1000)
@@ -45,6 +47,26 @@ void task2_entry(void *p)
 		k_sem_take(&test_ready2, K_FOREVER);
 		task2();
 		k_sem_give(&task_done2);
+	}
+}
+
+/*
+ * Unlike Tasks 1 & 2, it is allowed to run Task 3 more than once per
+ * call to run_test().  It will call task3_entry_func if set, and wait
+ * for the next event.  This is useful to test things like timers,
+ * which you are expecting the event to fire at some point in the
+ * future, and you want to test that it happens.
+ */
+static void (*task3_entry_func)(uint32_t event_mask);
+
+void task3_entry(void *p)
+{
+	uint32_t events = 0;
+
+	for (;;) {
+		if (task3_entry_func)
+			task3_entry_func(events);
+		events = task_wait_event(-1);
 	}
 }
 
@@ -106,6 +128,56 @@ static void test_timeout(void)
 	run_test(&timeout1, &timeout2);
 }
 
+/*
+ * Timer test:
+ *   1. Task 1 arms a timer for Task 3 in expiring 2 seconds.
+ *   2. Task 2 does nothing.
+ *   3. Task 3 validates that the it receives a TASK_EVENT_TIMER event
+ *      2 seconds after Task 1 armed the timer (within 100ms
+ *      tolerance).
+ */
+static timestamp_t timer_armed_at;
+K_SEM_DEFINE(check_timer_finished, 0, 1);
+
+static void check_timer(uint32_t event_mask)
+{
+	timestamp_t now = get_time();
+
+	zassert_equal(event_mask & TASK_EVENT_TIMER, TASK_EVENT_TIMER,
+		      "Timer event mask should be set");
+	zassert_within(now.val - timer_armed_at.val, TASK_SEC(2),
+		       TASK_SEC(1) / 10,
+		       "Timer should expire at 2 seconds from arm time");
+	k_sem_give(&check_timer_finished);
+}
+
+static void timer_task_1(void)
+{
+	timestamp_t timer_timeout;
+
+	timer_armed_at = get_time();
+
+	timer_timeout.val = timer_armed_at.val + TASK_SEC(2);
+
+	task3_entry_func = check_timer;
+	zassert_equal(timer_arm(timer_timeout, TASK_ID_TASK_3), EC_SUCCESS,
+		      "Setting timer should succeed");
+}
+
+static void timer_task_2(void)
+{
+	/* Do nothing */
+}
+
+static void test_timer(void)
+{
+	run_test(timer_task_1, timer_task_2);
+	zassert_equal(k_sem_take(&check_timer_finished, K_SECONDS(4 * 1000)), 0,
+		      "Task 3 did not finish within timeout");
+	zassert_equal(task3_entry_func, check_timer,
+		      "check_timer should have been enabled");
+	task3_entry_func = NULL;
+}
 
 static void event_delivered1(void)
 {
@@ -217,6 +289,7 @@ void test_main(void)
 			 ztest_unit_test(test_set_event_before_task_start),
 			 ztest_unit_test(test_task_get_current),
 			 ztest_unit_test(test_timeout),
+			 ztest_unit_test(test_timer),
 			 ztest_unit_test(test_event_delivered),
 			 ztest_unit_test(test_event_mask_not_delivered),
 			 ztest_unit_test(test_event_mask_extra),

@@ -11,10 +11,12 @@
  * to at least verify we have the minimum set defined correctly. */
 #define HAS_TASK_TASK_1 1
 #define HAS_TASK_TASK_2 1
+#define HAS_TASK_TASK_3 1
 
 /* Highest priority on bottom same as in platform/ec */
 #define CROS_EC_TASK_LIST \
 	CROS_EC_TASK(TASK_1, task1_entry, 0, 512) \
-	CROS_EC_TASK(TASK_2, task2_entry, 0, 512)
+	CROS_EC_TASK(TASK_2, task2_entry, 0, 512) \
+	CROS_EC_TASK(TASK_3, task3_entry, 0, 512)
 
 #endif /* __CROS_EC_SHIMMED_TEST_TASKS_H */
