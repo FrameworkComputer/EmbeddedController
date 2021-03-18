@@ -11,6 +11,7 @@
 #include "ec_commands.h"
 #include "led_common.h"
 #include "led_pwm.h"
+#include "lid_switch.h"
 #include "pwm.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -229,6 +230,12 @@ static void led_set_power(void)
 	static int power_tick;
 
 	power_tick++;
+
+	/* don't light up when at lid close */
+	if (!lid_is_open()) {
+		set_pwr_led_color(PWM_LED2, -1);
+		return;
+	}
 
 	if (chipset_in_state(CHIPSET_STATE_ON) | power_button_enable) {
 		if (charge_prevent_power_on(0))
