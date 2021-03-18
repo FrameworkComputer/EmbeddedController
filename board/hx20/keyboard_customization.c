@@ -236,60 +236,35 @@ void Fnkey_shutdown(void) {
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, Fnkey_shutdown, HOOK_PRIO_DEFAULT);
 
-
-enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
-					      int8_t pressed)
+int hotkey_F1_F12(uint16_t *key_code, uint16_t lock, int8_t pressed)
 {
-	const uint16_t pressed_key = *make_code;
-	uint8_t bl_brightness = 0;
+	const uint16_t prss_key = *key_code;
 
-	if (pressed_key == SCANCODE_FN && pressed)
-		Fn_key |= FN_PRESSED;
-	else if (pressed_key == SCANCODE_FN && !pressed)
-		Fn_key &= ~FN_PRESSED;
-
-	if (pressed_key == SCANCODE_FN && !factory_status())
-		return EC_ERROR_UNIMPLEMENTED;
-
-
-	if (!pressed)
+	if (lock & FN_LOCKED && lock & FN_PRESSED)
 		return EC_SUCCESS;
 
-	/*
-	* If the function key is not held, then
-	* we pass through all events without modifying them
-	*/
-	if (Fn_key == 0)
-		return EC_SUCCESS;
-
-	switch (pressed_key) {
-	case SCANCODE_ESC: /* TODO: FUNCTION_LOCK */
-		if (Fn_key & FN_LOCKED)
-			Fn_key &= ~FN_LOCKED;
-		else
-			Fn_key |= FN_LOCKED;
-		break;
+	switch (prss_key) {
 	case SCANCODE_F1:  /* SPEAKER_MUTE */
-		*make_code = SCANCODE_VOLUME_MUTE;
+		*key_code = SCANCODE_VOLUME_MUTE;
 		break;
 	case SCANCODE_F2:  /* VOLUME_DOWN */
-		*make_code = SCANCODE_VOLUME_DOWN;
+		*key_code = SCANCODE_VOLUME_DOWN;
 
 		break;
 	case SCANCODE_F3:  /* VOLUME_UP */
-		*make_code = SCANCODE_VOLUME_UP;
+		*key_code = SCANCODE_VOLUME_UP;
 
 		break;
 	case SCANCODE_F4:  /* PREVIOUS_TRACK */
-		*make_code = SCANCODE_PREV_TRACK;
+		*key_code = SCANCODE_PREV_TRACK;
 
 		break;
 	case SCANCODE_F5:  /* PLAY_PAUSE */
-		*make_code = 0xe034;
+		*key_code = 0xe034;
 
 		break;
 	case SCANCODE_F6:  /* NEXT_TRACK */
-		*make_code = SCANCODE_NEXT_TRACK;
+		*key_code = SCANCODE_NEXT_TRACK;
 
 		break;
 	case SCANCODE_F7:  /* TODO: DIM_SCREEN */
@@ -298,11 +273,14 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 	case SCANCODE_F8:  /* TODO: BRIGHTEN_SCREEN */
 
 		break;
-	case SCANCODE_F9:  /* TODO: EXTERNAL_DISPLAY */
-		simulate_keyboard(SCANCODE_LEFT_WIN, 1);
-		simulate_keyboard(SCANCODE_P, 1);
-		simulate_keyboard(SCANCODE_P, 0);
-		simulate_keyboard(SCANCODE_LEFT_WIN, 0);
+	case SCANCODE_F9:  /* EXTERNAL_DISPLAY */
+		if (pressed) {
+			simulate_keyboard(SCANCODE_LEFT_WIN, 1);
+			simulate_keyboard(SCANCODE_P, 1);
+		} else {
+			simulate_keyboard(SCANCODE_P, 0);
+			simulate_keyboard(SCANCODE_LEFT_WIN, 0);
+		}
 		return EC_ERROR_UNIMPLEMENTED;
 		break;
 	case SCANCODE_F10:  /* TODO: FLIGHT_MODE */
@@ -315,52 +293,45 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 			 * 0xE012 0xE07C to simulate
 			 * PRINT_SCREEN
 			 */
-		*make_code = 0xE07C;
+		*key_code = 0xE07C;
 		break;
 	case SCANCODE_F12:  /* TODO: FRAMEWORK */
 		/* Media Select scan code */
-		*make_code = 0xE050;
+		*key_code = 0xE050;
 
 		break;
 	}
+	return EC_SUCCESS;
+}
 
-	if (Fn_key & FN_LOCKED && !(Fn_key & FN_PRESSED))
-		return EC_SUCCESS;
+int functional_hotkey(uint16_t *key_code, uint16_t pressed)
+{
+	const uint16_t prss_key = *key_code;
+	uint8_t bl_brightness = 0;
 
-	switch (pressed_key) {
-	case SCANCODE_DELETE:  /* TODO: INSERT */
-		*make_code = 0xE070;
-
+	switch (prss_key) {
+	case SCANCODE_ESC: /* TODO: FUNCTION_LOCK */
+		if (Fn_key & FN_LOCKED)
+			Fn_key &= ~FN_LOCKED;
+		else
+			Fn_key |= FN_LOCKED;
+		return EC_ERROR_UNIMPLEMENTED;
 		break;
 	case SCANCODE_B:
-			/*
-			 * TODO this might need an
-			 * extra key combo of: E0 7E E0 F0 7E
-			 * TODO: BREAK_KEY
-			 */
+		/* BREAK_KEY */
 		simulate_keyboard(0xe07e, 1);
 		simulate_keyboard(0xe0, 1);
 		simulate_keyboard(0x7e, 0);
 		return EC_ERROR_UNIMPLEMENTED;
 		break;
-	case SCANCODE_K:  /* TODO: SCROLL_LOCK */
-		*make_code = SCANCODE_SCROLL_LOCK;
-		break;
-	case SCANCODE_P:  /* TODO: PAUSE */
-			/*
-			 * TODO this might need an
-			 * extra key combo of: E1 14 77 E1 F0 14 F0 77
-			 * TODO: PAUSE_KEY
-			 */
+	case SCANCODE_P:
+		/* PAUSE_KEY */
 		simulate_keyboard(0xe114, 1);
 		simulate_keyboard(0x77, 1);
 		simulate_keyboard(0xe1, 1);
 		simulate_keyboard(0x14, 0);
 		simulate_keyboard(0x77, 0);
 		return EC_ERROR_UNIMPLEMENTED;
-		break;
-	case SCANCODE_S:  /* TODO: SYSRQ */
-
 		break;
 	case SCANCODE_SPACE:	/* TODO: TOGGLE_KEYBOARD_BACKLIGHT */
 		bl_brightness = kblight_get();
@@ -385,6 +356,48 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 		/* we dont want to pass the space key event to the OS */
 		return EC_ERROR_UNKNOWN;
 		break;
+	}
+	return EC_SUCCESS;
+}
+
+enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
+					      int8_t pressed)
+{
+	const uint16_t pressed_key = *make_code;
+	int r = 0;
+
+	if (pressed_key == SCANCODE_FN && pressed)
+		Fn_key |= FN_PRESSED;
+	else if (pressed_key == SCANCODE_FN && !pressed)
+		Fn_key &= ~FN_PRESSED;
+
+	if (pressed_key == SCANCODE_FN && !factory_status())
+		return EC_ERROR_UNIMPLEMENTED;
+
+	/*
+	 * If the function key is not held, then
+	 * we pass through all events without modifying them
+	 */
+	if (Fn_key == 0)
+		return EC_SUCCESS;
+
+	r = hotkey_F1_F12(make_code, Fn_key, pressed);
+	if (r != EC_SUCCESS)
+		return r;
+
+	if (Fn_key & FN_LOCKED && !(Fn_key & FN_PRESSED))
+		return EC_SUCCESS;
+
+	switch (pressed_key) {
+	case SCANCODE_DELETE:  /* TODO: INSERT */
+		*make_code = 0xE070;
+		break;
+	case SCANCODE_K:  /* TODO: SCROLL_LOCK */
+		*make_code = SCANCODE_SCROLL_LOCK;
+		break;
+	case SCANCODE_S:  /* TODO: SYSRQ */
+
+		break;
 	case SCANCODE_LEFT:  /* HOME */
 		*make_code = 0xE06C;
 		break;
@@ -398,6 +411,13 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 		*make_code = 0xE07A;
 		break;
 	}
+
+	if (!pressed || pressed_key != *make_code)
+		return EC_SUCCESS;
+
+	r = functional_hotkey(make_code, pressed);
+	if (r != EC_SUCCESS)
+		return r;
 
 	return EC_SUCCESS;
 }
