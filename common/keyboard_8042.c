@@ -695,6 +695,7 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 			reset_rate_and_delay();
 			keyboard_clear_buffer();
 			output[out_len++] = I8042_RET_ACK;
+			output[out_len++] = 0xaa; /* keyboard BAT test success */
 			break;
 
 		case I8042_CMD_RESEND:
