@@ -216,19 +216,4 @@
 		 BIT(EC_MKBP_EVENT_SENSOR_FIFO))
 #endif
 
-#ifndef __ASSEMBLER__
-
-enum power_signal {
-	SC7180_AP_RST_ASSERTED = 0,
-	SC7180_PS_HOLD,
-	SC7180_POWER_GOOD,
-	SC7180_WARM_RESET,
-	SC7180_AP_SUSPEND,
-	SC7180_DEPRECATED_AP_RST_REQ,
-	/* Number of power signals */
-	POWER_SIGNAL_COUNT
-};
-
-#endif /* !defined(__ASSEMBLER__) */
-
 #endif /* __CROS_EC_BASEBOARD_H */

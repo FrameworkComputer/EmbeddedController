@@ -29,12 +29,48 @@
 #include "hooks.h"
 #include "lid_switch.h"
 #include "power.h"
+#include "power/sc7180.h"
 #include "power_button.h"
 #include "system.h"
 #include "task.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+
+/* Power signal list. Must match order of enum power_signal. */
+const struct power_signal_info power_signal_list[] = {
+	[SC7180_AP_RST_ASSERTED] = {
+		GPIO_AP_RST_L,
+		POWER_SIGNAL_ACTIVE_LOW | POWER_SIGNAL_DISABLE_AT_BOOT,
+		"AP_RST_ASSERTED",
+	},
+	[SC7180_PS_HOLD] = {
+		GPIO_PS_HOLD,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"PS_HOLD",
+	},
+	[SC7180_POWER_GOOD] = {
+		GPIO_POWER_GOOD,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"POWER_GOOD",
+	},
+	[SC7180_WARM_RESET] = {
+		GPIO_WARM_RESET_L,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"WARM_RESET_L",
+	},
+	[SC7180_AP_SUSPEND] = {
+		GPIO_AP_SUSPEND,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"AP_SUSPEND",
+	},
+	[SC7180_DEPRECATED_AP_RST_REQ] = {
+		GPIO_DEPRECATED_AP_RST_REQ,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"DEPRECATED_AP_RST_REQ",
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /* Masks for power signals */
 #define IN_POWER_GOOD		POWER_SIGNAL_MASK(SC7180_POWER_GOOD)
