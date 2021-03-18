@@ -891,11 +891,9 @@ static void update_dynamic_battery_info(void)
 	 */
 	if (curr.ac && batt_os_percentage > 994) {
 		tmp |= EC_BATT_FLAG_DISCHARGING;
-		send_batt_info_event++;
 	} else {
 		tmp |= curr.batt_is_charging ? EC_BATT_FLAG_CHARGING :
 						EC_BATT_FLAG_DISCHARGING;
-		send_batt_info_event++;
 	}
 #else
 	tmp |= curr.batt_is_charging ? EC_BATT_FLAG_CHARGING :
@@ -907,6 +905,8 @@ static void update_dynamic_battery_info(void)
 
 	/* Update flags before sending host events. */
 	*memmap_flags = tmp;
+
+	battery_charger_notify(tmp);
 
 	if (send_batt_info_event)
 		host_set_single_event(EC_HOST_EVENT_BATTERY);

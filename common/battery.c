@@ -630,3 +630,7 @@ int battery_manufacturer_name(char *dest, int size)
 {
 	return get_battery_manufacturer_name(dest, size);
 }
+
+__overridable void battery_charger_notify(uint8_t flag)
+{
+}

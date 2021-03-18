@@ -471,4 +471,9 @@ void battery_compensate_params(struct batt_params *batt);
  */
 __override_proto void board_battery_compensate_params(struct batt_params *batt);
 
+/*
+ * custom notify function
+ */
+__override_proto void battery_charger_notify(uint8_t flag);
+
 #endif /* __CROS_EC_BATTERY_H */
