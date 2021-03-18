@@ -18,4 +18,9 @@ enum power_signal {
 };
 #endif
 
+/* Swithcap functions */
+void board_set_switchcap_power(int enable);
+int board_is_switchcap_enabled(void);
+int board_is_switchcap_power_good(void);
+
 #endif /* __CROS_EC_POWER_SC7180_H_ */

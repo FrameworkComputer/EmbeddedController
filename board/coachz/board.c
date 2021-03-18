@@ -24,6 +24,7 @@
 #include "peripheral_charger.h"
 #include "pi3usb9201.h"
 #include "power.h"
+#include "power/sc7180.h"
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"

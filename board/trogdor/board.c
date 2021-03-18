@@ -24,6 +24,7 @@
 #include "pi3usb9281.h"
 #endif /* BOARD_REV */
 #include "power.h"
+#include "power/sc7180.h"
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
