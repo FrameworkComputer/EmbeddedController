@@ -637,7 +637,7 @@ struct keyboard_scan_config keyscan_config = {
 	 * to 80us from 50us.
 	 */
 	.output_settle_us = 80,
-	.debounce_down_us = 9 * MSEC,
+	.debounce_down_us = 20 * MSEC,
 	.debounce_up_us = 30 * MSEC,
 	.scan_period_us = 3 * MSEC,
 	.min_post_scan_delay_us = 1000,
