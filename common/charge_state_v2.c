@@ -889,13 +889,18 @@ static void update_dynamic_battery_info(void)
 	 * sync with OS battery percentage to avoid battery show charging icon at 100%
 	 * os battery display formula: rounding (remainig / full capacity)*100
 	 */
-	if (curr.ac && batt_os_percentage > 994)
+	if (curr.ac && batt_os_percentage > 994) {
 		tmp |= EC_BATT_FLAG_DISCHARGING;
-	else
-#endif
+		send_batt_info_event++;
+	} else {
 		tmp |= curr.batt_is_charging ? EC_BATT_FLAG_CHARGING :
 						EC_BATT_FLAG_DISCHARGING;
-
+		send_batt_info_event++;
+	}
+#else
+	tmp |= curr.batt_is_charging ? EC_BATT_FLAG_CHARGING :
+					EC_BATT_FLAG_DISCHARGING;
+#endif
 	/* Tell the AP to re-read battery status if charge state changes */
 	if (*memmap_flags != tmp)
 		send_batt_status_event++;
