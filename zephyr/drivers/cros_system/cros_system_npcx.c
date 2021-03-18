@@ -118,7 +118,7 @@ static int cros_system_npcx_soc_reset(const struct device *dev)
 static struct cros_system_npcx_data cros_system_npcx_dev_data;
 
 static const struct cros_system_npcx_config cros_system_dev_cfg = {
-	.base_scfg = DT_REG_ADDR(DT_INST(0, nuvoton_npcx_pinctrl)),
+	.base_scfg = DT_REG_ADDR(DT_INST(0, nuvoton_npcx_scfg)),
 	.base_twd = DT_REG_ADDR(DT_INST(0, nuvoton_npcx_watchdog)),
 };
 
