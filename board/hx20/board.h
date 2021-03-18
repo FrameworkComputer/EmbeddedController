@@ -403,6 +403,7 @@
 #define CONFIG_PECI
 #define CONFIG_PECI_COMMON
 #define CONFIG_PECI_TJMAX 100
+#define CONFIG_PECI_MS_RULE
 
 /* SPI Accelerometer
  * CONFIG_SPI_FLASH_PORT is the index into
