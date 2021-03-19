@@ -13,13 +13,11 @@ set(PLATFORM_EC_BASEBOARD "${PLATFORM_EC}/baseboard/volteer" CACHE PATH
   "Path to the platform/ec baseboard directory")
 
 # Include board specific header files
-zephyr_include_directories(
+zephyr_library_include_directories(
   include
   "${PLATFORM_EC_BASEBOARD}"
   "${PLATFORM_EC_BOARD}")
 
 # Include selected EC source for the baseboard
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
   "${PLATFORM_EC_BASEBOARD}/power.c")
-
-zephyr_include_directories(include)
