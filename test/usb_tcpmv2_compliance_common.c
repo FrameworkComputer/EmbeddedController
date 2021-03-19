@@ -364,60 +364,131 @@ int proc_pd_e3(void)
  */
 int handle_attach_expected_msgs(enum pd_data_role data_role)
 {
+	int rv;
+	int found_index;
+	struct possible_tx possible[4];
+
 	if (data_role == PD_ROLE_DFP) {
-		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
-				PD_CTRL_GET_SOURCE_CAP, 0),
-			EC_SUCCESS, "%d");
-		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-		task_wait_event(10 * MSEC);
-		partner_send_msg(PD_MSG_SOP, PD_DATA_SOURCE_CAP, 1, 0, &pdo);
+		possible[0].tx_type = TCPC_TX_SOP;
+		possible[0].ctrl_msg = PD_CTRL_GET_SOURCE_CAP;
+		possible[0].data_msg = 0;
 
-		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
-				PD_CTRL_GET_SINK_CAP, 0),
-			EC_SUCCESS, "%d");
-		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-		task_wait_event(10 * MSEC);
-		partner_send_msg(PD_MSG_SOP, PD_DATA_SINK_CAP, 1, 0, &pdo);
+		possible[1].tx_type = TCPC_TX_SOP;
+		possible[1].ctrl_msg = PD_CTRL_GET_SINK_CAP;
+		possible[1].data_msg = 0;
 
-		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP_PRIME, 0,
-				PD_DATA_VENDOR_DEF),
-			EC_SUCCESS, "%d");
-		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-		task_wait_event(10 * MSEC);
-		partner_send_msg(PD_MSG_SOP_PRIME, PD_CTRL_NOT_SUPPORTED, 0, 0,
-			NULL);
+		possible[2].tx_type = TCPC_TX_SOP_PRIME;
+		possible[2].ctrl_msg = 0;
+		possible[2].data_msg = PD_DATA_VENDOR_DEF;
 
-		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0,
-				PD_DATA_VENDOR_DEF),
-			EC_SUCCESS, "%d");
-		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-		task_wait_event(10 * MSEC);
-		partner_send_msg(PD_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0, 0, NULL);
-	} else if (data_role == PD_ROLE_UFP) {
-		int vcs;
+		possible[3].tx_type = TCPC_TX_SOP;
+		possible[3].ctrl_msg = 0;
+		possible[3].data_msg = PD_DATA_VENDOR_DEF;
 
-		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
-				PD_CTRL_GET_SINK_CAP, 0),
-			EC_SUCCESS, "%d");
-		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-		task_wait_event(10 * MSEC);
-		partner_send_msg(PD_MSG_SOP, PD_DATA_SINK_CAP, 1, 0, &pdo);
+		do {
+			rv = verify_tcpci_possible_tx(possible,
+						 4,
+						 &found_index,
+						 NULL,
+						 0,
+						 NULL,
+						 -1);
 
-		TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_DR_SWAP, 0),
-			EC_SUCCESS, "%d");
-		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
-		task_wait_event(10 * MSEC);
-		partner_send_msg(PD_MSG_SOP, PD_CTRL_REJECT, 0, 0, NULL);
+			TEST_NE(rv, EC_ERROR_UNKNOWN, "%d");
+			if (rv == EC_ERROR_TIMEOUT)
+				break;
 
-		for (vcs = 0; vcs < 4; vcs++) {
-			TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
-					PD_CTRL_VCONN_SWAP, 0),
-				EC_SUCCESS, "%d");
 			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 			task_wait_event(10 * MSEC);
-			partner_send_msg(PD_MSG_SOP, PD_CTRL_REJECT, 0, 0,
-				NULL);
-		}
+
+			switch (found_index) {
+			case 0:	/* PD_MSG_SOP PD_CTRL_GET_SOURCE_CAP */
+				partner_send_msg(PD_MSG_SOP,
+						 PD_DATA_SOURCE_CAP,
+						 1, 0, &pdo);
+				break;
+			case 1: /* PD_MSG_SOP PD_CTRL_GET_SINK_CAP */
+				partner_send_msg(PD_MSG_SOP,
+						 PD_DATA_SINK_CAP,
+						 1, 0, &pdo);
+				break;
+			case 2: /* TCPC_TX_SOP_PRIME PD_DATA_VENDOR_DEF */
+				partner_send_msg(PD_MSG_SOP_PRIME,
+						 PD_CTRL_NOT_SUPPORTED,
+						 0, 0, NULL);
+				break;
+			case 3: /* TCPC_TX_SOP PD_DATA_VENDOR_DEF */
+				partner_send_msg(PD_MSG_SOP,
+						 PD_CTRL_NOT_SUPPORTED,
+						 0, 0, NULL);
+				break;
+			default:
+				TEST_ASSERT(0);
+				break;
+			}
+		} while (rv != EC_ERROR_TIMEOUT);
+	} else if (data_role == PD_ROLE_UFP) {
+		int vcs = 0;
+
+		possible[0].tx_type = TCPC_TX_SOP;
+		possible[0].ctrl_msg = PD_CTRL_GET_SINK_CAP;
+		possible[0].data_msg = 0;
+
+		possible[1].tx_type = TCPC_TX_SOP;
+		possible[1].ctrl_msg = PD_CTRL_DR_SWAP;
+		possible[1].data_msg = 0;
+
+		possible[2].tx_type = TCPC_TX_SOP;
+		possible[2].ctrl_msg = PD_CTRL_PR_SWAP;
+		possible[2].data_msg = 0;
+
+		possible[3].tx_type = TCPC_TX_SOP;
+		possible[3].ctrl_msg = PD_CTRL_VCONN_SWAP;
+		possible[3].data_msg = 0;
+
+		do {
+			rv = verify_tcpci_possible_tx(possible,
+						 4,
+						 &found_index,
+						 NULL,
+						 0,
+						 NULL,
+						 -1);
+
+			TEST_NE(rv, EC_ERROR_UNKNOWN, "%d");
+			if (rv == EC_ERROR_TIMEOUT)
+				break;
+
+			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
+			task_wait_event(10 * MSEC);
+
+			switch (found_index) {
+			case 0: /* PD_MSG_SOP PD_CTRL_GET_SINK_CAP */
+				partner_send_msg(PD_MSG_SOP,
+						 PD_DATA_SINK_CAP,
+						 1, 0, &pdo);
+				break;
+			case 1: /* TCPC_TX_SOP PD_CTRL_DR_SWAP */
+				partner_send_msg(PD_MSG_SOP,
+						 PD_CTRL_REJECT,
+						 0, 0, NULL);
+				break;
+			case 2:	/* PD_MSG_SOP PD_CTRL_PR_SWAP */
+				partner_send_msg(PD_MSG_SOP,
+						 PD_CTRL_REJECT,
+						 0, 0, NULL);
+				break;
+			case 3: /* TCPC_TX_SOP PD_CTRL_VCONN_SWAP */
+				TEST_LT(vcs++, 4, "%d");
+				partner_send_msg(PD_MSG_SOP,
+						 PD_CTRL_REJECT,
+						 0, 0, NULL);
+				break;
+			default:
+				TEST_ASSERT(0);
+				break;
+			}
+		} while (rv != EC_ERROR_TIMEOUT);
 	}
 	task_wait_event(1 * SECOND);
 	return EC_SUCCESS;

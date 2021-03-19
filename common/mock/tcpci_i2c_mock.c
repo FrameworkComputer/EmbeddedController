@@ -291,12 +291,15 @@ int verify_tcpci_possible_tx(struct possible_tx possible[],
 			     int *msg_len,
 			     int timeout)
 {
+	bool assert_on_timeout = true;
 	uint64_t end_time;
 
 	*found_index = -1;
 
-	if (timeout <= 0)
+	if (timeout <= 0) {
 		timeout = VERIFY_TIMEOUT;
+		assert_on_timeout = false;
+	}
 	end_time = get_time().val + timeout;
 
 	/*
@@ -348,12 +351,14 @@ int verify_tcpci_possible_tx(struct possible_tx possible[],
 				tcpci_regs[TCPC_REG_TRANSMIT].value = 0;
 				return EC_SUCCESS;
 			}
-			break;
+			return EC_ERROR_UNKNOWN;
 		}
 		task_wait_event(5 * MSEC);
 	}
-	TEST_ASSERT(0);
-	return EC_ERROR_UNKNOWN;
+	if (assert_on_timeout)
+		TEST_ASSERT(0);
+
+	return EC_ERROR_TIMEOUT;
 }
 
 void mock_tcpci_receive(enum pd_msg_type sop, uint16_t header,
