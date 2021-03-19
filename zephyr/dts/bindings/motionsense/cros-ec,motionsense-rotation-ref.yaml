@@ -1,0 +1,55 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: rotation reference parent node
+
+compatible: "cros-ec,motionsense-rotation-ref"
+
+child-binding:
+  description: |
+    A rotation matrix node is used to create
+    an instance of mat33_fp_t which is used by
+    sensor drivers.
+  properties:
+    mat33:
+      required: true
+      type: array
+      description: |
+        3x3 matrix to rotate x, y, and z axes.
+        Applications with the sensor API expects sansor data
+        based on the same defined coordinate system.
+        * X-axis is horizontal and positive toward the right
+        * Y-axis is vertical and positive toward the top
+        * Z-axis points toward the user
+
+        Depending on how the sensor is mounted on board(PCB), we
+        may need to change the direction of a axis and swap X and
+        Y-axis. Using the 3x3 matrix, it generates the correct
+        X,Y, and Z on the defined coordinate system.
+
+        +-        -+   +-        -+   +- -+
+        | v1 v2 v3 |   | sensor_X |   | X |
+        | v4 v5 v6 | * | sensor_Y | = | Y |
+        | v7 v8 v9 |   | sensor_Z |   | Z |
+        +-        -+   +-        -+   +- -+
+
+#
+# examples:
+#
+# motionsense-rotation-ref {
+#        compatible = "cros-ec,motionsense-rotation-ref";
+#        /* change the direction of Y and Z-axis */
+#        lid_rot_ref: lid-rotation-ref {
+#                mat33 = <1 0 0
+#                         0 (-1) 0
+#                         0 0 (-1)>;
+#        };
+#        /* swap X and Y-axis, and then change the direction of Y-axis */
+#        base_rot_ref: base-rotation-ref {
+#                mat33 = <0 1 0
+#                         (-1) 0 0
+#                         0 0 1>;
+#        };
+# };
+#
