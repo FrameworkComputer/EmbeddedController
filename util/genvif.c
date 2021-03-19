@@ -1040,13 +1040,13 @@ static void vif_output_vif_product_usb4router(FILE *vif_file,
 					USB4_Router_Indexes))
 			break;
 
-		vif_out_str(vif_file, level++, "<USB4Router>");
+		vif_out_str(vif_file, level++, "<Usb4Router>");
 		vif_out_fields(vif_file, level,
 			       router->vif_field, USB4_Router_Indexes);
 		vif_output_vif_product_usb4router_endpoint(vif_file,
 							   router,
 							   level);
-		vif_out_str(vif_file, --level, "</USB4Router>");
+		vif_out_str(vif_file, --level, "</Usb4Router>");
 	}
 	vif_out_str(vif_file, --level, "</USB4RouterList>");
 }
@@ -1399,7 +1399,7 @@ static void override_vif_product_pcie_endpoint_field(
 				str_value);
 		else
 			fprintf(stderr,
-				"VIF/Component/USB4Router/PCIeEndpoint:"
+				"VIF/Component/Usb4Router/PCIeEndpoint:"
 				" Unknown tag '%s'\n", name);
 	}
 }
@@ -1420,7 +1420,7 @@ static void override_vif_product_pcie_endpoint_list_field(
 					&endpoint_list[endpoint_index++]);
 		else
 			fprintf(stderr,
-				"VIF/Product/USB4Router/PCIeEndpointList:"
+				"VIF/Product/Usb4Router/PCIeEndpointList:"
 				" Unknown tag '%s'\n", name);
 	}
 }
@@ -1434,7 +1434,7 @@ static void override_vif_product_usb4router_fields(
 	int endpoint_index = 0;
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/USB4Router"))
+		if (streq(name, "/Usb4Router"))
 			break;
 
 		if (streq(name, "PCIeEndpointList"))
@@ -1455,7 +1455,7 @@ static void override_vif_product_usb4router_fields(
 					str_value);
 			else
 				fprintf(stderr,
-					"VIF/Component/USB4Router:"
+					"VIF/Component/Usb4Router:"
 					" Unknown tag '%s'\n", name);
 		}
 	}
@@ -1472,7 +1472,7 @@ static void override_vif_product_usb4routerlist_fields(
 		if (streq(name, "/USB4RouterList"))
 			break;
 
-		if (streq(name, "USB4Router"))
+		if (streq(name, "Usb4Router"))
 			override_vif_product_usb4router_fields(
 				&router_list[router_index++]);
 		else
