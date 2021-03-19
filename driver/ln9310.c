@@ -13,9 +13,9 @@
 #include "util.h"
 #include "timer.h"
 
-#define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPUTS(outstr) cputs(CC_I2C, outstr)
+#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 
 static int power_good;
 
