@@ -103,7 +103,31 @@ void battery_customize(struct charge_state_data *emi_info)
 	char *str = "LION";
 	int value;
 	int new_btp;
+	int rv;
 	static int batt_state, prev_charge;
+	static int read_manuf_date;
+	int day = 0;
+	int month = 0;
+	int year = 0;
+
+	/* manufacture date is static data */
+	if (!read_manuf_date && battery_is_present()) {
+		rv = battery_manufacture_date(&year, &month, &day);
+		if (rv == EC_SUCCESS) {
+			ccprintf("Batt manufacturer date: %d.%d.%d\n", year, month, day);
+			*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_MANUF_DAY) = day;
+			*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_MANUF_MONTH) = month;
+			*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_MANUF_YEAR) = year & 0xff;
+			*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_MANUF_YEAR+1) = year >> 8;
+			read_manuf_date = 1;
+		}
+	} else if (!battery_is_present()) {
+		/**
+		 * if battery isn't present, we need to read manufacture
+		 * date after battery is connect
+		 */
+		read_manuf_date = 0;
+	}
 
 	*host_get_customer_memmap(EC_MEMMAP_ER1_BATT_AVER_TEMP) = 
 							(emi_info->batt.temperature - 2731)/10;
