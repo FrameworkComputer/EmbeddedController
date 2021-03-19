@@ -57,6 +57,21 @@
 		};
 	};
 
+	named-pwms {
+		compatible = "named-pwms";
+
+		kblight {
+			pwms = <&pwm3 0 0>;
+			label = "KBLIGHT";
+			frequency = <10000>;
+		};
+		displight {
+			pwms = <&pwm5 0 0>;
+			label = "DISPLIGHT";
+			frequency = <4800>;
+		};
+	};
+
 	named-adc-channels {
 		compatible = "named-adc-channels";
 
@@ -133,6 +148,16 @@
 &i2c7_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+/* Keyboard backlight */
+&pwm3 {
+	status = "okay";
+};
+
+/* Display backlight */
+&pwm5 {
+	status = "okay";
 };
 
 &adc0 {
