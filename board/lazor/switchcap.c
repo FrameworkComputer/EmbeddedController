@@ -6,10 +6,10 @@
 #include "common.h"
 #include "config.h"
 #include "console.h"
+#include "driver/ln9310.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "ln9310.h"
 #include "power/sc7180.h"
 #include "system.h"
 

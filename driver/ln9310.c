@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "console.h"
-#include "ln9310.h"
+#include "driver/ln9310.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "util.h"
