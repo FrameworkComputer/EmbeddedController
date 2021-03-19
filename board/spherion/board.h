@@ -71,6 +71,7 @@
 
 enum battery_type {
 	BATTERY_C235,
+	BATTERY_PANASONIC_AP15O5L,
 	BATTERY_TYPE_COUNT,
 };
 
