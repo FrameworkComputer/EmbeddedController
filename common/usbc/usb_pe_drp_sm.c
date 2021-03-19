@@ -1780,7 +1780,6 @@ int pd_is_port_partner_dualrole(int port)
 static bool port_try_vconn_swap(int port)
 {
 	if (pe[port].vconn_swap_counter < N_VCONN_SWAP_COUNT) {
-		pe[port].vconn_swap_counter++;
 		PE_SET_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON);
 		set_state_pe(port, get_last_state_pe(port));
 		return true;
@@ -6247,6 +6246,9 @@ static void pe_vcs_send_swap_run(int port)
 	if ((msg_check & PE_MSG_SENT) &&
 	    PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+		/* Increment once message has successfully sent */
+		pe[port].vconn_swap_counter++;
 
 		type = PD_HEADER_TYPE(rx_emsg[port].header);
 		cnt = PD_HEADER_CNT(rx_emsg[port].header);
