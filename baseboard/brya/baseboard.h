@@ -30,6 +30,7 @@
 #define CONFIG_FPU
 
 /* Verified boot configs */
+#define CONFIG_VBOOT_EFS2
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
