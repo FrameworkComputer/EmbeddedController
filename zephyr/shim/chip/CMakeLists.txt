@@ -13,8 +13,8 @@ endif()
 # which are still being used. It is possible that eventually (when we also no
 # longer require the platform/ec/chip/... headers) that we'll be able to get
 # rid of this.
-zephyr_compile_definitions("CHIP_FAMILY_${CHIP_FAMILY}")
-zephyr_compile_definitions("CHIP_VARIANT_${CHIP_VARIANT}")
+zephyr_library_compile_definitions("CHIP_FAMILY_${CHIP_FAMILY}")
+zephyr_library_compile_definitions("CHIP_VARIANT_${CHIP_VARIANT}")
 
 if (DEFINED CONFIG_SOC_FAMILY_NPCX)
 	add_subdirectory(npcx)

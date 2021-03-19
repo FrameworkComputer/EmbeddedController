@@ -55,6 +55,14 @@ if(DEFINED CONFIG_PLATFORM_EC)
   # Add CONFIG_ZEPHYR, which is commonly used to guard code for use
   # with Zephyr builds only.
   zephyr_compile_definitions("CONFIG_ZEPHYR")
+
+  # When LTO is enabled, enable only for the "app" library, which compiles
+  # and links all Chromium OS sources.
+  # TODO: Enable LTO for all sources when Zephyr supports it.
+  # See https://github.com/zephyrproject-rtos/zephyr/issues/2112
+  if (DEFINED CONFIG_LTO)
+    set_property(TARGET app PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
+  endif()
 endif()
 
 # If a header is needed (should only be set for npcx) run the ecst.py script to
@@ -133,18 +141,23 @@ if (DEFINED CONFIG_PLATFORM_EC_RO_HEADER)
             -spireadmode ${spireadmode})
 endif()
 
+# Switch from the "zephyr" library to the "app" library for all Chromium OS
+# sources.
+set(ZEPHYR_CURRENT_LIBRARY app)
+
 add_subdirectory(linker)
 
-zephyr_include_directories(include)
+zephyr_library_include_directories(include)
 
-zephyr_include_directories_ifdef(
-  CONFIG_PLATFORM_EC
-  "${PLATFORM_EC}/zephyr/shim/include"
-  "${PLATFORM_EC}/fuzz"
-  "${PLATFORM_EC}/test"
-  "${PLATFORM_EC}/include"
-  "${PLATFORM_EC}/include/driver"
-  "${PLATFORM_EC}/third_party")
+if (DEFINED CONFIG_PLATFORM_EC)
+  zephyr_library_include_directories(
+    "${PLATFORM_EC}/zephyr/shim/include"
+    "${PLATFORM_EC}/fuzz"
+    "${PLATFORM_EC}/test"
+    "${PLATFORM_EC}/include"
+    "${PLATFORM_EC}/include/driver"
+    "${PLATFORM_EC}/third_party")
+endif()
 
 add_subdirectory("app")
 add_subdirectory("drivers")
@@ -155,7 +168,7 @@ add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
 # included here, sorted by filename. This is common functionality which is
 # supported by all boards and emulators (including unit tests) using the shim
 # layer.
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/base32.c"
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC "${PLATFORM_EC}/common/base32.c"
                                                 "${PLATFORM_EC}/common/console_output.c"
                                                 "${PLATFORM_EC}/common/ec_features.c"
                                                 "${PLATFORM_EC}/common/gpio_commands.c"
@@ -168,221 +181,239 @@ zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/base32.c"
 
 # Now include files that depend on or relate to other CONFIG options, sorted by
 # CONFIG
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_BMA255
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_BMA255
                                                 "${PLATFORM_EC}/driver/accel_bma2x2.c"
                                                 "${PLATFORM_EC}/common/math_util.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_BMI260
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_BMI260
                                                 "${PLATFORM_EC}/driver/accelgyro_bmi_common.c"
                                                 "${PLATFORM_EC}/driver/accelgyro_bmi260.c"
                                                 "${PLATFORM_EC}/common/math_util.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_FIFO
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_FIFO
                                                 "${PLATFORM_EC}/common/motion_sense_fifo.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ADC_CMD "${PLATFORM_EC}/common/adc.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ALS_TCS3400
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ADC_CMD
+                                                "${PLATFORM_EC}/common/adc.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ALS_TCS3400
                                                 "${PLATFORM_EC}/driver/als_tcs3400.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ACPI    "${PLATFORM_EC}/common/acpi.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BACKLIGHT_LID
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACPI
+                                                "${PLATFORM_EC}/common/acpi.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BACKLIGHT_LID
                                                 "${PLATFORM_EC}/common/backlight_lid.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY "${PLATFORM_EC}/common/battery.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_FUEL_GAUGE
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
+                                                "${PLATFORM_EC}/common/battery.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_FUEL_GAUGE
                                                 "${PLATFORM_EC}/common/battery_fuel_gauge.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_SMART
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_SMART
                                                 "${PLATFORM_EC}/driver/battery/smart.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_BC12_DETECT_PI3USB9201
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BC12_DETECT_PI3USB9201
                                                 "${PLATFORM_EC}/driver/bc12/pi3usb9201.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_ISL9237
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_ISL9237
                                                 "${PLATFORM_EC}/driver/charger/isl923x.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_ISL9238
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_ISL9238
                                                 "${PLATFORM_EC}/driver/charger/isl923x.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_ISL9241
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_ISL9241
                                                 "${PLATFORM_EC}/driver/charger/isl9241.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_BQ25710
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_BQ25710
                                                 "${PLATFORM_EC}/driver/charger/bq25710.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_BQ25720
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_BQ25720
                                                 "${PLATFORM_EC}/driver/charger/bq25710.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
                                                 "${PLATFORM_EC}/common/charger.c"
                                                 "${PLATFORM_EC}/common/charge_manager.c"
                                                 "${PLATFORM_EC}/common/charge_state_v2.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_RAMP_HW
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_RAMP_HW
                                                 "${PLATFORM_EC}/common/charge_ramp.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_RAMP_SW
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_RAMP_SW
                                                 "${PLATFORM_EC}/common/charge_ramp.c"
                                                 "${PLATFORM_EC}/common/charge_ramp_sw.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CBI     "${PLATFORM_EC}/common/cbi.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CONSOLE_CMD_MEM
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI
+                                                "${PLATFORM_EC}/common/cbi.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CONSOLE_CMD_MEM
                                                 "${PLATFORM_EC}/common/memory_commands.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_DPTF    "${PLATFORM_EC}/common/dptf.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DPTF
+                                                "${PLATFORM_EC}/common/dptf.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
                                                 "${PLATFORM_EC}/common/chipset.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_ESPI    "${PLATFORM_EC}/common/espi.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC         "${PLATFORM_EC}/common/extpower_common.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_EXTPOWER_GPIO
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ESPI
+                                                "${PLATFORM_EC}/common/espi.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC "${PLATFORM_EC}/common/extpower_common.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_EXTPOWER_GPIO
                                                 "${PLATFORM_EC}/common/extpower_gpio.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_FAN     "${PLATFORM_EC}/common/fan.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_FLASH   "${PLATFORM_EC}/common/flash.c"
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN
+                                                "${PLATFORM_EC}/common/fan.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FLASH
+                                                "${PLATFORM_EC}/common/flash.c"
                                                 "${PLATFORM_EC}/common/spi_flash_reg.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD "${PLATFORM_EC}/common/host_command.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD "${PLATFORM_EC}/common/host_event_commands.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD
+                                                "${PLATFORM_EC}/common/host_command.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD
+                                                "${PLATFORM_EC}/common/host_event_commands.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE
                                                 "${PLATFORM_EC}/common/uart_hostcmd.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_GET_UPTIME_INFO
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_GET_UPTIME_INFO
                                                 "${PLATFORM_EC}/common/uptime.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_I2C     "${PLATFORM_EC}/common/i2c_controller.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C
+                                                "${PLATFORM_EC}/common/i2c_controller.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD
                                                 "${PLATFORM_EC}/common/keyboard_scan.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_8042
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_8042
                                                 "${PLATFORM_EC}/common/keyboard_8042.c"
                                                 "${PLATFORM_EC}/common/keyboard_8042_sharedlib.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP
                                                 "${PLATFORM_EC}/common/keyboard_mkbp.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_VIVALDI
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_VIVALDI
                                                 "${PLATFORM_EC}/common/keyboard_vivaldi.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_PWM_KBLIGHT
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PWM_KBLIGHT
                                                 "${PLATFORM_EC}/common/keyboard_backlight.c"
                                                 "${PLATFORM_EC}/common/pwm_kblight.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
                                                 "${PLATFORM_EC}/common/led_common.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_LED_PWM "${PLATFORM_EC}/common/led_pwm.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_LID_ANGLE
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_PWM
+                                                "${PLATFORM_EC}/common/led_pwm.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LID_ANGLE
                                                 "${PLATFORM_EC}/common/motion_lid.c"
                                                 "${PLATFORM_EC}/common/math_util.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE
                                                 "${PLATFORM_EC}/common/lid_angle.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_LID_SWITCH
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LID_SWITCH
                                                 "${PLATFORM_EC}/common/lid_switch.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_MOTIONSENSE
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MOTIONSENSE
                                                 "${PLATFORM_EC}/common/motion_sense.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_MKBP_EVENT
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MKBP_EVENT
                                                 "${PLATFORM_EC}/common/mkbp_event.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_PORT80  "${PLATFORM_EC}/common/port80.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWER_BUTTON
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PORT80
+                                                "${PLATFORM_EC}/common/port80.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWER_BUTTON
                                                 "${PLATFORM_EC}/common/power_button.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
                                                 "${PLATFORM_EC}/power/common.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_COMETLAKE
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_COMETLAKE
                                                 "${PLATFORM_EC}/power/cometlake.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_ICELAKE
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_ICELAKE
                                                 "${PLATFORM_EC}/power/icelake.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_INTEL
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_INTEL
                                                 "${PLATFORM_EC}/common/power_button_x86.c"
                                                 "${PLATFORM_EC}/power/intel_x86.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_HOST_SLEEP
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_HOST_SLEEP
                                                 "${PLATFORM_EC}/power/host_sleep.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_SC7180
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ_SC7180
                                                 "${PLATFORM_EC}/power/sc7180.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_PANIC   "${PLATFORM_EC}/common/panic_output.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_PWM     "${PLATFORM_EC}/common/pwm.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_SHA256_SW
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PANIC
+                                                "${PLATFORM_EC}/common/panic_output.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PWM
+                                                "${PLATFORM_EC}/common/pwm.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SHA256_SW
                                                 "${PLATFORM_EC}/common/sha256.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_SWITCH
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SWITCH
                                                 "${PLATFORM_EC}/common/switch.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_SWITCHCAP_LN9310
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SWITCHCAP_LN9310
                                                 "${PLATFORM_EC}/driver/ln9310.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_SPI_FLASH_REGS
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SPI_FLASH_REGS
                                                 "${PLATFORM_EC}/common/spi_flash_reg.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TABLET_MODE
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TABLET_MODE
                                                 "${PLATFORM_EC}/common/tablet_mode.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TEMP_SENSOR
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TEMP_SENSOR
                                                 "${PLATFORM_EC}/common/thermal.c"
                                                 "${PLATFORM_EC}/common/temp_sensor.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_THERMISTOR
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_THERMISTOR
                                                 "${PLATFORM_EC}/driver/temp_sensor/thermistor.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_THROTTLE_AP
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_THROTTLE_AP
                                                 "${PLATFORM_EC}/common/throttle_ap.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_TIMER   "${PLATFORM_EC}/common/timer.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TIMER
+                                                "${PLATFORM_EC}/common/timer.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_CHARGER
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_CHARGER
                                                 "${PLATFORM_EC}/common/usb_charger.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB
                                                 "${PLATFORM_EC}/common/usb_port_power_dumb.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_POWER_DELIVERY
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_POWER_DELIVERY
                                                 "${PLATFORM_EC}/common/usb_common.c"
                                                 "${PLATFORM_EC}/common/usbc/usbc_task.c"
                                                 "${PLATFORM_EC}/common/usbc/usb_pd_timer.c"
                                                 "${PLATFORM_EC}/common/usbc/usb_sm.c"
                                                 "${PLATFORM_EC}/common/usbc_intr_task.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CONSOLE_CMD_CHARGEN
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CONSOLE_CMD_CHARGEN
                                                 "${PLATFORM_EC}/common/chargen.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_CONSOLE_CMD_PD
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CONSOLE_CMD_PD
                                                 "${PLATFORM_EC}/common/usbc/usb_pd_console.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_FW_UPDATE
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_FW_UPDATE
                                                 "${PLATFORM_EC}/common/usbc/usb_retimer_fw_update.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB
                                                 "${PLATFORM_EC}/driver/retimer/bb_retimer.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_SS_MUX
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_SS_MUX
                                                 "${PLATFORM_EC}/driver/usb_mux/usb_mux.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_MUX_VIRTUAL
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_MUX_VIRTUAL
                                                 "${PLATFORM_EC}/driver/usb_mux/virtual.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_LOGGING
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_LOGGING
                                                 "${PLATFORM_EC}/common/event_log.c"
                                                 "${PLATFORM_EC}/common/pd_log.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
                                                 "${PLATFORM_EC}/common/usbc/tbt_alt_mode.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_USB4
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_USB4
                                                 "${PLATFORM_EC}/common/usbc/usb_mode.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_OCP
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_OCP
                                                 "${PLATFORM_EC}/common/usbc_ocp.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_ALT_MODE_DFP
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_ALT_MODE_DFP
                                                 "${PLATFORM_EC}/common/usb_pd_alt_mode_dfp.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_ALT_MODE_UFP
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_ALT_MODE_UFP
                                                 "${PLATFORM_EC}/common/usb_pd_alt_mode_ufp.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DUAL_ROLE
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DUAL_ROLE
                                                 "${PLATFORM_EC}/common/usb_pd_dual_role.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_CONSOLE_CMD
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_CONSOLE_CMD
                                                 "${PLATFORM_EC}/common/usb_pd_console_cmd.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_HOST_CMD
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_HOST_CMD
                                                 "${PLATFORM_EC}/common/usb_pd_host_cmd.c"
                                                 "${PLATFORM_EC}/common/usbc/usb_pd_host.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_VPD "${PLATFORM_EC}/common/usbc/usb_tc_vpd_sm.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_CTVPD
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_VPD
+                                                "${PLATFORM_EC}/common/usbc/usb_tc_vpd_sm.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_CTVPD
                                                 "${PLATFORM_EC}/common/usbc/usb_tc_ctvpd_sm.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_DRP_ACC_TRYSRC
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_DRP_ACC_TRYSRC
                                                 "${PLATFORM_EC}/common/usbc/usb_tc_drp_acc_trysrc_sm.c"
                                                 "${PLATFORM_EC}/common/usbc/usb_pe_drp_sm.c"
                                                 "${PLATFORM_EC}/common/usbc/usb_pd_dpm.c"
                                                 "${PLATFORM_EC}/common/usbc/dp_alt_mode.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PRL_SM
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PRL_SM
                                                 "${PLATFORM_EC}/common/usbc/usb_prl_sm.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_PS8751
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_PS8751
                                                 "${PLATFORM_EC}/driver/tcpm/ps8xxx.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_PS8805
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_PS8805
                                                 "${PLATFORM_EC}/driver/tcpm/ps8xxx.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_PS8815
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_PS8815
                                                 "${PLATFORM_EC}/driver/tcpm/ps8xxx.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_RT1715
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_RT1715
                                                 "${PLATFORM_EC}/driver/tcpm/rt1715.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_TUSB422
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_TUSB422
                                                 "${PLATFORM_EC}/driver/tcpm/tusb422.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_TCPCI
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_TCPCI
                                                 "${PLATFORM_EC}/driver/tcpm/tcpci.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC
                                                 "${PLATFORM_EC}/common/usbc_ppc.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC_SN5S330
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC_SN5S330
                                                 "${PLATFORM_EC}/driver/ppc/sn5s330.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC_SYV682X
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC_SYV682X
                                                 "${PLATFORM_EC}/driver/ppc/syv682x.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_VBOOT_HASH
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VBOOT_HASH
                                                 "${PLATFORM_EC}/common/vboot_hash.c")
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_VOLUME_BUTTONS
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VOLUME_BUTTONS
                                                 "${PLATFORM_EC}/common/button.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_VBOOT   "${PLATFORM_EC}/common/vboot/efs2.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VBOOT
+                                                "${PLATFORM_EC}/common/vboot/efs2.c")
 
-zephyr_sources_ifdef(CONFIG_PLATFORM_EC_VSTORE  "${PLATFORM_EC}/common/vstore.c")
-
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VSTORE
+                                                "${PLATFORM_EC}/common/vstore.c")

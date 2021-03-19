@@ -18,6 +18,18 @@ if CROS_EC
 
 rsource "soc/Kconfig"
 
+config LTO
+	bool "Link Time Optimization (LTO)"
+	default y if !SOC_POSIX
+	help
+	  Enable the Link Time Optimization (LTO) feature for the toolchain.
+	  LTO expands the scope of optimizations to encompass the whole program,
+	  reducing the image size.
+
+	  At this time, LTO is only enabled for Chromium OS source files and
+	  is not enabled for the Zephyr kernel or drivers due.
+	  https://github.com/zephyrproject-rtos/zephyr/issues/2112
+
 choice CBPRINTF_IMPLEMENTATION
 	default CBPRINTF_NANO
 

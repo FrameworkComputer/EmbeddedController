@@ -3,5 +3,5 @@
 # found in the LICENSE file.
 
 if(NOT DEFINED CONFIG_ZTEST)
-    target_sources(app PRIVATE main.c)
+    zephyr_library_sources(main.c)
 endif()
