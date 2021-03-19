@@ -19,3 +19,13 @@ child-binding:
       required: true
       type: int
       description: ADC channel used
+    mul:
+      required: false
+      type: int
+      default: 1
+      description: Multiplication factor of ADC measurement
+    div:
+      required: false
+      type: int
+      default: 1
+      description: Division factor of ADC measurement

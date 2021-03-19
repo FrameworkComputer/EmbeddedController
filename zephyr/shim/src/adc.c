@@ -14,6 +14,8 @@ const struct device *adc_dev;
 	[node_id] = {                                  \
 		.name = DT_LABEL(node_id),             \
 		.input_ch = DT_PROP(node_id, channel), \
+		.factor_mul = DT_PROP(node_id, mul),   \
+		.factor_div = DT_PROP(node_id, div),   \
 	},
 const struct adc_t adc_channels[] = {
 	DT_FOREACH_CHILD(DT_INST(0, named_adc_channels), ADC_CHANNEL_COMMA)
@@ -47,5 +49,6 @@ int adc_read_channel(enum adc_channel ch)
 
 	adc_raw_to_millivolts(adc_ref_internal(adc_dev), ADC_GAIN_1,
 			      CONFIG_PLATFORM_EC_ADC_RESOLUTION, &ret);
+	ret = (ret * adc_channels[ch].factor_mul) / adc_channels[ch].factor_div;
 	return ret;
 }
