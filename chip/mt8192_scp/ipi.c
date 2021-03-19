@@ -4,6 +4,7 @@
  */
 
 #include "atomic.h"
+#include "cache.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
@@ -96,6 +97,10 @@ int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
 	ipi_send_buf->id = id;
 	ipi_send_buf->len = len;
 	memcpy(ipi_send_buf->buffer, buf, len);
+
+	/* flush memory cache (if any) */
+	cache_flush_dcache_range((uintptr_t)ipi_send_buf,
+				 sizeof(*ipi_send_buf));
 
 	/* interrupt AP to handle the message */
 	ipi_wake_ap(id);
