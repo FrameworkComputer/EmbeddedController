@@ -185,4 +185,13 @@ void ln9310_interrupt(enum gpio_signal signal);
 /* Return the POWER_GOOD status */
 int ln9310_power_good(void);
 
+/* Battery cell type */
+enum battery_cell_type {
+	BATTERY_CELL_TYPE_UNKNOWN = 0,
+	BATTERY_CELL_TYPE_2S = 2,
+	BATTERY_CELL_TYPE_3S = 3
+};
+
+enum battery_cell_type board_get_battery_cell_type(void);
+
 #endif /* __CROS_EC_LN9310_H */

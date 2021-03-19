@@ -114,14 +114,6 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
-/* Battery cell type */
-enum battery_cell_type {
-	BATTERY_CELL_TYPE_UNKNOWN = 0,
-	BATTERY_CELL_TYPE_2S = 2,
-	BATTERY_CELL_TYPE_3S = 3
-};
-
-enum battery_cell_type board_get_battery_cell_type(void);
 /* Custom function to indicate if sourcing VBUS */
 int board_is_sourcing_vbus(int port);
 /* Enable VBUS sink for a given port */
