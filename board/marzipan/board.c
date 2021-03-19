@@ -17,7 +17,6 @@
 #include "driver/accelgyro_icm426xx.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
-#include "driver/ln9310.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -53,19 +52,6 @@ void usb0_evt(enum gpio_signal signal)
 void usb1_evt(enum gpio_signal signal)
 {
 	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
-}
-
-static void usba_oc_deferred(void)
-{
-	/* Use next number after all USB-C ports to indicate the USB-A port */
-	board_overcurrent_event(CONFIG_USB_PD_PORT_MAX_COUNT,
-				!gpio_get_level(GPIO_USB_A0_OC_ODL));
-}
-DECLARE_DEFERRED(usba_oc_deferred);
-
-void usba_oc_interrupt(enum gpio_signal signal)
-{
-	hook_call_deferred(&usba_oc_deferred_data, 0);
 }
 
 void ppc_interrupt(enum gpio_signal signal)
@@ -232,10 +218,6 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	}
 };
 
-const int usb_port_enable[USB_PORT_COUNT] = {
-	GPIO_EN_USB_A_5V,
-};
-
 /* BC1.2 */
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	{
@@ -290,30 +272,30 @@ static const mat33_fp_t lid_standard_ref_kx022 = {
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
-	 .name = "Lid Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
-	 .chip = MOTIONSENSE_CHIP_BMA255,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &bma2x2_accel_drv,
-	 .mutex = &g_lid_mutex,
-	 .drv_data = &g_bma255_data,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
-	 .rot_standard_ref = &lid_standard_ref_bma255,
-	 .default_range = 2, /* g, to support lid angle calculation. */
-	 .min_frequency = BMA255_ACCEL_MIN_FREQ,
-	 .max_frequency = BMA255_ACCEL_MAX_FREQ,
-	 .config = {
-		/* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 10000 | ROUND_UP_FLAG,
+		.name = "Lid Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3_S5,
+		.chip = MOTIONSENSE_CHIP_BMA255,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &bma2x2_accel_drv,
+		.mutex = &g_lid_mutex,
+		.drv_data = &g_bma255_data,
+		.port = I2C_PORT_SENSOR,
+		.i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
+		.rot_standard_ref = &lid_standard_ref_bma255,
+		.default_range = 2, /* g, to support lid angle calculation. */
+		.min_frequency = BMA255_ACCEL_MIN_FREQ,
+		.max_frequency = BMA255_ACCEL_MAX_FREQ,
+		.config = {
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+			/* Sensor on for lid angle detection */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
 		},
-		/* Sensor on for lid angle detection */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-		},
-	 },
 	},
 	/*
 	 * Note: bmi160: supports accelerometer and gyro sensor
@@ -321,46 +303,46 @@ struct motion_sensor_t motion_sensors[] = {
 	 * DO NOT change the order of the following table.
 	 */
 	[BASE_ACCEL] = {
-	 .name = "Base Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &bmi160_drv,
-	 .mutex = &g_base_mutex,
-	 .drv_data = &g_bmi160_data,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-	 .rot_standard_ref = &base_standard_ref_bmi160,
-	 .default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
-	 .min_frequency = BMI_ACCEL_MIN_FREQ,
-	 .max_frequency = BMI_ACCEL_MAX_FREQ,
-	 .config = {
-		/* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 10000 | ROUND_UP_FLAG,
+		.name = "Base Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3_S5,
+		.chip = MOTIONSENSE_CHIP_BMI160,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_BASE,
+		.drv = &bmi160_drv,
+		.mutex = &g_base_mutex,
+		.drv_data = &g_bmi160_data,
+		.port = I2C_PORT_SENSOR,
+		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
+		.rot_standard_ref = &base_standard_ref_bmi160,
+		.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
+		.min_frequency = BMI_ACCEL_MIN_FREQ,
+		.max_frequency = BMI_ACCEL_MAX_FREQ,
+		.config = {
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+			/* Sensor on for lid angle detection */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
 		},
-		/* Sensor on for lid angle detection */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-		},
-	 },
 	},
 	[BASE_GYRO] = {
-	 .name = "Gyro",
-	 .active_mask = SENSOR_ACTIVE_S0_S3_S5,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
-	 .type = MOTIONSENSE_TYPE_GYRO,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &bmi160_drv,
-	 .mutex = &g_base_mutex,
-	 .drv_data = &g_bmi160_data,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = &base_standard_ref_bmi160,
-	 .min_frequency = BMI_GYRO_MIN_FREQ,
-	 .max_frequency = BMI_GYRO_MAX_FREQ,
+		.name = "Gyro",
+		.active_mask = SENSOR_ACTIVE_S0_S3_S5,
+		.chip = MOTIONSENSE_CHIP_BMI160,
+		.type = MOTIONSENSE_TYPE_GYRO,
+		.location = MOTIONSENSE_LOC_BASE,
+		.drv = &bmi160_drv,
+		.mutex = &g_base_mutex,
+		.drv_data = &g_bmi160_data,
+		.port = I2C_PORT_SENSOR,
+		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
+		.default_range = 1000, /* dps */
+		.rot_standard_ref = &base_standard_ref_bmi160,
+		.min_frequency = BMI_GYRO_MIN_FREQ,
+		.max_frequency = BMI_GYRO_MAX_FREQ,
 	},
 };
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
@@ -381,10 +363,10 @@ struct motion_sensor_t kx022_lid_accel = {
 	.min_frequency = KX022_ACCEL_MIN_FREQ,
 	.max_frequency = KX022_ACCEL_MAX_FREQ,
 	.config = {
-		 /* EC use accel for angle detection */
-		 [SENSOR_CONFIG_EC_S0] = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
 			.odr = 10000 | ROUND_UP_FLAG,
-		 },
+		},
 		/* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S3] = {
 			.odr = 10000 | ROUND_UP_FLAG,
@@ -456,20 +438,6 @@ void lid_angle_peripheral_enable(int enable)
 }
 #endif
 
-__override int board_get_default_battery_type(void)
-{
-	/*
-	 * A 2S battery is set as default. If the board is configured to use
-	 * a 3S battery, according to its SKU_ID, return a 3S battery as
-	 * default. It helps to configure the charger to output a correct
-	 * voltage in case the battery is not attached.
-	 */
-	if (board_get_battery_cell_type() == BATTERY_CELL_TYPE_3S)
-		return BATTERY_LGC_AP18C8K;
-
-	return DEFAULT_BATTERY_TYPE;
-}
-
 static int base_accelgyro_config;
 
 void motion_interrupt(enum gpio_signal signal)
@@ -511,35 +479,12 @@ static void board_detect_motionsensor(void)
 		 ? "ICM40608" : "BMI160");
 }
 
-static void board_update_sensor_config_from_sku(void)
-{
-	if (board_is_clamshell()) {
-		motion_sensor_count = 0;
-		gmr_tablet_switch_disable();
-		/* The sensors are not stuffed; don't allow lines to float */
-		gpio_set_flags(GPIO_ACCEL_GYRO_INT_L,
-			       GPIO_INPUT | GPIO_PULL_DOWN);
-		gpio_set_flags(GPIO_LID_ACCEL_INT_L,
-			       GPIO_INPUT | GPIO_PULL_DOWN);
-	} else {
-		board_detect_motionsensor();
-		motion_sensor_count = ARRAY_SIZE(motion_sensors);
-		/* Enable interrupt for the base accel sensor */
-		gpio_enable_interrupt(GPIO_ACCEL_GYRO_INT_L);
-	}
-}
-DECLARE_HOOK(HOOK_INIT, board_update_sensor_config_from_sku,
-	     HOOK_PRIO_INIT_I2C + 2);
-
 /* Initialize board. */
 static void board_init(void)
 {
 	/* Enable BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
-
-	/* Enable USB-A overcurrent interrupt */
-	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
 
 	/*
 	 * The H1 SBU line for CCD are behind PPC chip. The PPC internal FETs
@@ -550,30 +495,14 @@ static void board_init(void)
 
 	/* Set the backlight duty cycle to 0. AP will override it later. */
 	pwm_set_duty(PWM_CH_DISPLIGHT, 0);
+
+	board_detect_motionsensor();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 void board_hibernate(void)
 {
 	int i;
-
-	if (!board_is_clamshell()) {
-		/*
-		 * Sensors are unpowered in hibernate. Apply PD to the
-		 * interrupt lines such that they don't float.
-		 */
-		gpio_set_flags(GPIO_ACCEL_GYRO_INT_L,
-			       GPIO_INPUT | GPIO_PULL_DOWN);
-		gpio_set_flags(GPIO_LID_ACCEL_INT_L,
-			       GPIO_INPUT | GPIO_PULL_DOWN);
-	}
-
-	/*
-	 * Board rev 5+ has the hardware fix. Don't need the following
-	 * workaround.
-	 */
-	if (system_get_board_version() >= 5)
-		return;
 
 	/*
 	 * Enable the PPC power sink path before EC enters hibernate;

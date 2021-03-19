@@ -13,7 +13,6 @@
 void tcpc_alert_event(enum gpio_signal signal);
 void usb0_evt(enum gpio_signal signal);
 void usb1_evt(enum gpio_signal signal);
-void usba_oc_interrupt(enum gpio_signal signal);
 void ppc_interrupt(enum gpio_signal signal);
 void board_connect_c0_sbu(enum gpio_signal s);
 

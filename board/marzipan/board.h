@@ -13,9 +13,6 @@
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_FLASH_SIZE_BYTES (512 * 1024)  /* 512KB internal spi flash */
 
-/* Switchcap */
-#define CONFIG_LN9310
-
 /* Keyboard */
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_PWM_KBLIGHT
@@ -29,15 +26,9 @@
 #define CONFIG_BC12_DETECT_PI3USB9201
 
 /* USB */
-#define CONFIG_USB_PD_TCPM_MULTI_PS8XXX
-#define CONFIG_USB_PD_TCPM_PS8751
-#define CONFIG_USB_PD_TCPM_PS8805
+#define CONFIG_USB_PD_TCPM_PS8755
 #define CONFIG_USBC_PPC_SN5S330
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
-
-/* USB-A */
-#define USB_PORT_COUNT 1
-#define CONFIG_USB_PORT_POWER_DUMB
 
 /* Sensors */
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
@@ -75,8 +66,6 @@
 #define GPIO_AC_PRESENT GPIO_ACOK_OD
 #define GPIO_WP_L GPIO_EC_WP_ODL
 #define GPIO_PMIC_RESIN_L GPIO_PM845_RESIN_L
-#define GPIO_SWITCHCAP_PG_INT_L GPIO_DA9313_GPIO0
-#define GPIO_SWITCHCAP_ON_L GPIO_SWITCHCAP_ON
 
 #ifndef __ASSEMBLER__
 
@@ -113,8 +102,6 @@ enum battery_type {
 	BATTERY_MURATA_AP18C4K,
 	BATTERY_TYPE_COUNT,
 };
-
-int board_is_clamshell(void);
 
 /* Custom function to indicate if sourcing VBUS */
 int board_is_sourcing_vbus(int port);
