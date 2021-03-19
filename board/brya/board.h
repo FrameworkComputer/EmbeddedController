@@ -16,8 +16,6 @@
 /* Baseboard features */
 #include "baseboard.h"
 
-#define CONFIG_SYSTEM_UNLOCKED
-
 /*
  * Disable features enabled by default.
  */
