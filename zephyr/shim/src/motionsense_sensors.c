@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "accelgyro.h"
+#include "hooks.h"
 
 #define SENSOR_MUTEX_NODE		DT_PATH(motionsense_mutex)
 #define SENSOR_MUTEX_NAME(id)		DT_CAT(MUTEX_, id)
@@ -319,4 +320,28 @@ const struct motion_sensor_t *motion_als_sensors[] = {
 		     ALS_SENSOR_ENTRY_WITH_COMMA, SENSOR_INFO_NODE)
 };
 BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
+#endif
+
+/*
+ * Enable interrupts for motion sensors
+ *
+ * e.g) list of named-gpio nodes
+ * motionsense-sensor-info {
+ *        compatible = "cros-ec,motionsense-sensor-info";
+ *
+ *         // list of GPIO interrupts that have to
+ *         // be enabled at initial stage
+ *        sensor-irqs = <&gpio_ec_imu_int_l &gpio_ec_als_rgb_int_l>;
+ * };
+ */
+#if DT_NODE_HAS_PROP(SENSOR_INFO_NODE, sensor_irqs)
+#define SENSOR_GPIO_ENABLE_INTERRUPT(i, id)		\
+	gpio_enable_interrupt(				\
+		GPIO_SIGNAL(DT_PHANDLE_BY_IDX(id, sensor_irqs, i)));
+static void sensor_enable_irqs(void)
+{
+	UTIL_LISTIFY(DT_PROP_LEN(SENSOR_INFO_NODE, sensor_irqs),
+		     SENSOR_GPIO_ENABLE_INTERRUPT, SENSOR_INFO_NODE)
+}
+DECLARE_HOOK(HOOK_INIT, sensor_enable_irqs, HOOK_PRIO_DEFAULT);
 #endif
