@@ -1,0 +1,66 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+    There are 4 configuration parameters to deal with different
+    configuration
+    Power   |         S0        |            S3     |      S5
+    --------+-------------------+-------------------+-----------------
+    From AP | <------- SENSOR_CONFIG_AP ----------> |
+            | Use for normal    | While sleeping    | Always disabled
+            | operation (game,  | For Activity      |
+            | screen rotation)  | Recognition       |
+    --------+-------------------+-------------------+------------------
+    From EC |SENSOR_CONFIG_EC_S0|SENSOR_CONFIG_EC_S3|SENSOR_CONFIG_EC_S5
+            | Background        | Gesture  Recognition (Double tap, ...)
+            | Activity (compass,|
+            | ambient light)    |
+
+compatible: "cros-ec,motionsense-sensor-config"
+
+child-binding:
+  description: |
+    A config node is used to create a motion_data_t instance.
+    Node name can only be either ap, ec-s0, ec-s3, or ec-s5,
+    and it is used to indicate one of the 4 configurations.
+    For example, node name ec-s0 is for SENSOR_CONFIG_EC_S0.
+    ec-s0 {
+       label = "SENSOR_CONFIG_EC_S0";
+       odr = <1000>;
+       ec_rate = <1000>;
+    };
+  properties:
+    label:
+      type: string
+      required: false
+      description: |
+        Human-readable string describing the config.
+        see the example the above.
+    odr:
+      type: int
+      required: false
+      description: |
+        Sensor output data rate in mHz.
+        MSB is used to know if we are rounding up.
+    ec-rate:
+      type: int
+      required: false
+      description: Delay between collection by EC, in us.
+
+#
+# examples:
+#
+# configs {
+#         compatible =
+#                 "cros-ec,motionsense-sensor-config";
+#         ec-s0 {
+#                 label = "SENSOR_CONFIG_EC_S0";
+#                 odr = <(10000 | ROUND_UP_FLAG)>;
+#         };
+#         ec-s3 {
+#                 label = "SENSOR_CONFIG_EC_S3";
+#                 odr = <(10000 | ROUND_UP_FLAG)>;
+#         };
+# };
+#

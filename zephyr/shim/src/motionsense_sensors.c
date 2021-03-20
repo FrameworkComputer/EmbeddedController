@@ -105,10 +105,183 @@ DT_FOREACH_CHILD(SENSOR_ROT_REF_NODE, DECLARE_SENSOR_ROT_REF)
 		compat, create_data_macro)
 
 /*
+ * sensor_drv_list.inc is included two times in this file. This is the first
+ * time and it is for creating sensor driver-specific data. So we ignore
+ * CREATE_MOTION_SENSOR() that creates motion sensor at this time.
+ */
+#define CREATE_MOTION_SENSOR(s_compat, s_chip, s_type, s_drv,		\
+		s_min_freq, s_max_freq)
+
+/*
  * Here, we declare all sensor driver data. How to create the data is
  * defined in <chip>-drvinfo.inc file and ,in turn, the file is included
  * in sensor_drv_list.inc.
  */
 #if DT_NODE_EXISTS(SENSOR_DATA_NODE)
 #include "motionsense_driver/sensor_drv_list.inc"
+#endif
+
+/*
+ * Get the address of the mutex which is referred by phandle.
+ * See motionsense-sensor-base.yaml and cros-ec,motionsense-mutex.yaml
+ * for DT example and details.
+ */
+#define SENSOR_MUTEX(id)						\
+	IF_ENABLED(DT_NODE_HAS_PROP(id, mutex),				\
+		(.mutex = &SENSOR_MUTEX_NAME(DT_PHANDLE(id, mutex)),))
+
+/*
+ * Get I2C port number which is referred by phandle.
+ * See motionsense-sensor-base.yaml for DT example and details.
+ */
+#define SENSOR_I2C_PORT(id)						\
+	IF_ENABLED(DT_NODE_HAS_PROP(id, port),				\
+		(.port = I2C_PORT(DT_PHANDLE(id, port)),))
+
+/*
+ * Get I2C or SPI address.
+ * See motionsense-sensor-base.yaml for DT example and details.
+ */
+#define SENSOR_I2C_SPI_ADDR_FLAGS(id)					\
+	IF_ENABLED(DT_NODE_HAS_PROP(id, i2c_spi_addr_flags),		\
+		(.i2c_spi_addr_flags = DT_ENUM_TOKEN(id, i2c_spi_addr_flags),))
+
+/*
+ * Get the address of rotation matrix which is referred by phandle.
+ * See motionsense-sensor-base.yaml and cros-ec,motionsense-rotation-ref.yaml
+ * for DT example and details.
+ */
+#define SENSOR_ROT_STD_REF(id)						\
+	IF_ENABLED(DT_NODE_HAS_PROP(id, rot_standard_ref),		\
+		(.rot_standard_ref =					\
+		 &SENSOR_ROT_STD_REF_NAME(DT_PHANDLE(id, rot_standard_ref)),))
+
+/*
+ * Get the address of driver-specific data which is referred by phandle.
+ * See motionsense-sensor-base.yaml for DT example and details.
+ */
+#define SENSOR_DRV_DATA(id)						\
+	IF_ENABLED(DT_NODE_HAS_PROP(id, drv_data),			\
+		   (.drv_data = &SENSOR_DATA_NAME(DT_PHANDLE(id, drv_data)),))
+
+/*
+ * Get odr and ec_rate for the motion sensor.
+ * See motionsense-sensor-base.yaml and cros-ec,motionsense-sensor-config.yaml
+ * for DT example and details.
+ */
+#define SET_CONFIG_EC(cfg_id, cfg_suffix)				\
+	[SENSOR_CONFIG_##cfg_suffix] = {				\
+		IF_ENABLED(DT_NODE_HAS_PROP(cfg_id, odr),		\
+		   (.odr = DT_PROP(cfg_id, odr),))			\
+		IF_ENABLED(DT_NODE_HAS_PROP(cfg_id, ec_rate),		\
+		   (.ec_rate = DT_PROP(cfg_id, ec_rate),))		\
+	}
+
+/* Get configs */
+#define CREATE_SENSOR_CONFIG(cfgs_id)					      \
+	.config = {							      \
+		IF_ENABLED(DT_NODE_EXISTS(DT_CHILD(cfgs_id, ap)),	      \
+			   (SET_CONFIG_EC(DT_CHILD(cfgs_id, ap), AP),))       \
+		IF_ENABLED(DT_NODE_EXISTS(DT_CHILD(cfgs_id, ec_s0)),	      \
+			   (SET_CONFIG_EC(DT_CHILD(cfgs_id, ec_s0), EC_S0),)) \
+		IF_ENABLED(DT_NODE_EXISTS(DT_CHILD(cfgs_id, ec_s3)),	      \
+			   (SET_CONFIG_EC(DT_CHILD(cfgs_id, ec_s3), EC_S3),)) \
+		IF_ENABLED(DT_NODE_EXISTS(DT_CHILD(cfgs_id, ec_s5)),	      \
+			   (SET_CONFIG_EC(DT_CHILD(cfgs_id, ec_s5), EC_S5),)) \
+	}
+
+#define SENSOR_CONFIG(id)						\
+	IF_ENABLED(DT_NODE_EXISTS(DT_CHILD(id, configs)),		\
+		   (CREATE_SENSOR_CONFIG(DT_CHILD(id, configs)),))
+
+/* Get and assign the basic information for a motion sensor */
+#define SENSOR_BASIC_INFO(id)						\
+	.name = DT_LABEL(id),						\
+	.active_mask = DT_ENUM_TOKEN(id, active_mask),			\
+	.location = DT_ENUM_TOKEN(id, location),			\
+	.default_range = DT_PROP(id, default_range),			\
+	SENSOR_I2C_SPI_ADDR_FLAGS(id)					\
+	SENSOR_MUTEX(id)						\
+	SENSOR_I2C_PORT(id)						\
+	SENSOR_ROT_STD_REF(id)						\
+	SENSOR_DRV_DATA(id)						\
+	SENSOR_CONFIG(id)
+
+
+/* Create motion sensor node with node ID */
+#define DO_MK_SENSOR_ENTRY(						\
+		id, s_chip, s_type, s_drv, s_min_freq, s_max_freq)	\
+	[SENSOR_ID(id)] = {						\
+		SENSOR_BASIC_INFO(id)					\
+		.chip = s_chip,						\
+		.type = s_type,						\
+		.drv = &s_drv,						\
+		.min_frequency = s_min_freq,				\
+		.max_frequency = s_max_freq				\
+	},
+
+#define MK_SENSOR_ENTRY(inst, s_compat, s_chip, s_type, s_drv,		\
+		s_min_freq, s_max_freq)					\
+	DO_MK_SENSOR_ENTRY(DT_INST(inst, s_compat),			\
+		s_chip, s_type, s_drv, s_min_freq, s_max_freq)
+
+#undef CREATE_SENSOR_DATA
+/*
+ * Sensor driver-specific data creation stage is already done. So this
+ * time we ignore CREATE_SENSOR_DATA().
+ */
+#define CREATE_SENSOR_DATA(compat, create_data_macro)
+#undef CREATE_MOTION_SENSOR
+
+/*
+ * CREATE_MOTION_SENSOR is a help macro that read the sensor information from
+ * device tree and creates an entry in motion_sensors array which is used
+ * by motion sense task. The help macro gets compatible value of the
+ * sensor node and several driver specific information like CHIP_ID,
+ * SENSOR_TYPE, driver instance name, and min/max frequency.
+ *
+ * <chip>-drvinfo.inc file which is provided by sensor driver should use
+ * CREATE_MOTION_SENSOR to provide driver specific information.
+ *
+ * e.g) The below is contents of tcs3400-drvinfo.inc file. The file has
+ * CREATE_MOTION_SENSOR like below to create the sensor entry. The file uses
+ * the help macro two times since the chip supports two functions
+ * ALS clear and ALS RGB.
+
+ * ------------- tcs3400-drvinfo.inc -------------
+ * // Here, we call CREATE_MOTION_SENSOR to create a motion_sensor_t entry
+ * // for each TCS3400 clear instance (compatible = "cros-ec,tcs3400-clear")
+ * // in device tree.
+ * CREATE_MOTION_SENSOR(cros_ec_tcs3400_clear, MOTIONSENSE_CHIP_TCS3400,   \
+ *       MOTIONSENSE_TYPE_LIGHT, tcs3400_drv,            \
+ *       TCS3400_LIGHT_MIN_FREQ, TCS3400_LIGHT_MAX_FREQ)
+
+ *
+ * // Here, we call CREATE_MOTION_SENSOR to create a motion_sensor_t entry
+ * // for each TCS3400 RGB instance (compatible = "cros-ec,tcs3400-rgb")
+ * // in device tree.
+ *
+ * CREATE_MOTION_SENSOR(cros_ec_tcs3400_rgb, MOTIONSENSE_CHIP_TCS3400, \
+ *       MOTIONSENSE_TYPE_LIGHT_RGB, tcs3400_rgb_drv, 0, 0)
+ * -----------------------------------------------
+ */
+#define CREATE_MOTION_SENSOR(s_compat, s_chip, s_type, s_drv,		\
+		s_min_freq, s_max_freq)					\
+	UTIL_LISTIFY(DT_NUM_INST_STATUS_OKAY(s_compat), MK_SENSOR_ENTRY,\
+		s_compat, s_chip, s_type, s_drv, s_min_freq, s_max_freq)
+
+/*
+ * Here, we include sensor_drv_list.inc AGAIN but this time it only
+ * uses CREATE_MOTION_SENSOR to create the motion sensor entries.
+ */
+struct motion_sensor_t motion_sensors[] = {
+#if DT_NODE_EXISTS(SENSOR_NODE)
+#include "motionsense_driver/sensor_drv_list.inc"
+#endif
+};
+
+#ifdef CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+#else
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 #endif
