@@ -57,4 +57,25 @@ enum sensor_id {
 #define CONFIG_LID_ANGLE_SENSOR_BASE	SENSOR_ID(DT_NODELABEL(base_accel))
 #endif
 
+/*
+ * Get the sensors running in force mode from DT and create a bit mask for it.
+ *
+ * e.g) lid accel and als_clear are in accel_force_mode. The macro below finds
+ *      the corresponding bit for each sensor in bit mask and set it.
+ * motionsense-sensor-info {
+ *        compatible = "cros-ec,motionsense-sensor-info";
+ *
+ *        // list of sensors in force mode
+ *        accel-force-mode-sensors = <&lid_accel &als_clear>;
+ * };
+ */
+#if DT_NODE_HAS_PROP(SENSOR_INFO_NODE, accel_force_mode_sensors)
+#define SENSOR_IN_FORCE_MODE(i, id)					\
+	| BIT(SENSOR_ID(DT_PHANDLE_BY_IDX(id, accel_force_mode_sensors, i)))
+#define CONFIG_ACCEL_FORCE_MODE_MASK					\
+	(0 UTIL_LISTIFY(DT_PROP_LEN(SENSOR_INFO_NODE,			\
+		accel_force_mode_sensors), SENSOR_IN_FORCE_MODE,	\
+		SENSOR_INFO_NODE))
+#endif
+
 #endif /* __CROS_EC_MOTIONSENSE_SENSORS_H */
