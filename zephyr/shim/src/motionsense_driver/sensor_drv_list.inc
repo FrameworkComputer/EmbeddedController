@@ -17,3 +17,8 @@
  * #include "bma255-drvinfo.inc"
  * #endif
  */
+
+/* supported sensor driver list */
+#ifdef CONFIG_ACCEL_BMA255
+#include "bma255-drvinfo.inc"
+#endif

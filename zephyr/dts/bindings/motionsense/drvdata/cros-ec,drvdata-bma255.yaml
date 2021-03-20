@@ -1,0 +1,18 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: BMA255 driver data node
+
+compatible: "cros-ec,drvdata-bma255"
+
+include: drvdata-base.yaml
+
+#
+# examples:
+#
+# bma255_data: bma255-drv-data {
+#       compatible = "cros-ec,drvdata-bma255";
+#       status = "okay";
+# };
+#
