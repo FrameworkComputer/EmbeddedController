@@ -285,3 +285,38 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 #else
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 #endif
+
+/*
+ * Create a list of ALS sensors needed by motion sense
+ *
+ * The following example adds tcs3400 als sensor to motion_als_sensors array
+ *
+ * motionsense-sensors {
+ *         lid_accel: bma255 {
+ *             :
+ *         };
+ *             :
+ *             :
+ *         als_clear: tcs3400 {
+ *             :
+ *         };
+ * };
+ *
+ * motionsense-sensor-info {
+ *       compatible = "cros-ec,motionsense-sensor-info";
+ *
+ *       // list of entries for motion_als_sensors
+ *       als-sensors = <&als_clear>;
+ *                  :
+ *                  :
+ * };
+ */
+#if DT_NODE_HAS_PROP(SENSOR_INFO_NODE, als_sensors)
+#define ALS_SENSOR_ENTRY_WITH_COMMA(i, id)		\
+	&motion_sensors[SENSOR_ID(DT_PHANDLE_BY_IDX(id, als_sensors, i))],
+const struct motion_sensor_t *motion_als_sensors[] = {
+	UTIL_LISTIFY(DT_PROP_LEN(SENSOR_INFO_NODE, als_sensors),
+		     ALS_SENSOR_ENTRY_WITH_COMMA, SENSOR_INFO_NODE)
+};
+BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
+#endif
