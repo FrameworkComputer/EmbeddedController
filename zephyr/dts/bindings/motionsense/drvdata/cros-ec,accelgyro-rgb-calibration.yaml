@@ -1,0 +1,63 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: bindings for rgb_calibration_t in accelgyro.h
+
+compatible: "cros-ec,accelgyro-rgb-calibration"
+
+properties:
+  irt:
+    type: int
+    required: true
+    description: incandecent scaling factor
+
+child-binding:
+  description: RGB ALS Calibration Data
+  properties:
+    offset:
+      type: int
+      required: true
+      description: Any offset to add to raw channel data
+    coeff:
+      type: array
+      required: true
+      description: Clear, R, G, and B coefficients for this channel
+
+#
+# examples:
+#
+# rgb_calibration {
+#        compatible = "cros-ec,accelgyro-rgb-calibration";
+#
+#        irt = <1>;
+#
+#        rgb-cal-x {
+#                offset = <0>;
+#                coeff = <0 0 0 0>;
+#                als-channel-scale {
+#                compatible = "cros-ec,accelgyro-als-channel-scale";
+#                        k-channel-scale = <1>;
+#                        cover-scale = <1>;
+#                };
+#        };
+#        rgb-cal-y {
+#                offset = <0>;
+#                coeff = <0 0 0 0>;
+#                als-channel-scale {
+#                compatible = "cros-ec,accelgyro-als-channel-scale";
+#                        k-channel-scale = <1>;
+#                        cover-scale = <1>;
+#                };
+#        };
+#        rgb-cal-z {
+#                offset = <0>;
+#                coeff = <0 0 0 0>;
+#                als-channel-scale {
+#                compatible = "cros-ec,accelgyro-als-channel-scale";
+#                        k-channel-scale = <1>;
+#                        cover-scale = <1>;
+#                };
+#        };
+# };
+#

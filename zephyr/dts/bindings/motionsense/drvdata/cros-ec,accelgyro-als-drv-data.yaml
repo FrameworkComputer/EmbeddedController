@@ -1,0 +1,44 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: ALS driver data
+
+compatible: "cros-ec,accelgyro-als-drv-data"
+
+child-binding:
+  description: ALS calibration data
+  properties:
+    scale:
+      type: int
+      required: true
+      description: |
+        Scale, uscale, and offset are used to correct the raw 16 bit ALS data
+        and then to convert it to 32 bit using the following equations
+        raw_value += offset;\n
+        adjusted_value = raw_value * scale + raw_value * uscale / 10000;
+    uscale:
+      type: int
+      required: true
+      description: uscale
+    offset:
+      type: int
+      required: true
+      description: offset
+
+#
+# examples:
+# als-drv-data {
+#        compatible = "cros-ec,accelgyro-als-drv-data";
+#        als-cal {
+#                scale = <1>;
+#                uscale = <0>;
+#                offset = <0>;
+#                als-channel-scale {
+#                compatible = "cros-ec,accelgyro-als-channel-scale";
+#                        k-channel-scale = <1>;
+#                        cover-scale = <1>;
+#                };
+#        };
+# };
+#
