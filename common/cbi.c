@@ -596,4 +596,30 @@ DECLARE_CONSOLE_COMMAND(cbi, cc_cbi, "[set <tag> <value> <size> | "
 			"Print or change Cros Board Info from flash");
 #endif /* CONFIG_CMD_CBI */
 
+#ifndef HAS_TASK_CHIPSET
+int cbi_set_fw_config(uint32_t fw_config)
+{
+	/* Check write protect status */
+	if (eeprom_is_write_protected())
+		return EC_ERROR_ACCESS_DENIED;
+
+	/* Ensure that CBI has been configured */
+	if (do_read_board_info())
+		cbi_create();
+
+	/* Update the FW_CONFIG field */
+	cbi_set_board_info(CBI_TAG_FW_CONFIG, (uint8_t *)&fw_config,
+			   sizeof(int));
+
+	/* Update CRC calculation and write to serial EEPROM */
+	head->crc = cbi_crc8(head);
+	if (write_board_info())
+		return EC_ERROR_UNKNOWN;
+
+	dump_cbi();
+
+	return EC_SUCCESS;
+}
+#endif
+
 #endif /* !HOST_TOOLS_BUILD */
