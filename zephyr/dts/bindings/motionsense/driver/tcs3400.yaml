@@ -1,0 +1,16 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# common fields for both TCS3400 clear and TCS3400 rgb
+
+# every motionsense sensor node should include motionsense-sensor-base.yaml
+include: motionsense-sensor-base.yaml
+
+properties:
+  i2c-spi-addr-flags:
+    type: string
+    required: false
+    description: i2c address or SPI slave logic GPIO
+    enum:
+      - "TCS3400_I2C_ADDR_FLAGS"

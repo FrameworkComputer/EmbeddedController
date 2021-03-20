@@ -18,6 +18,26 @@
 
 #define CPRINTS(fmt, args...) cprints(CC_ACCEL, "%s "fmt, __func__, ## args)
 
+#if defined(CONFIG_ZEPHYR) && defined(CONFIG_ACCEL_INTERRUPTS)
+/*
+ * Get the mostion sensor ID of the TCS3400 sensor that
+ * generates the interrupt.
+ * The interrupt is converted to the event and transferred to motion
+ * sense task that actually handles the interrupt.
+ *
+ * Here, we use alias to get the motion sensor ID
+ *
+ * e.g) als_clear below is the label of a child node in /motionsense-sensors
+ * aliases {
+ *     tcs3400-int = &als_clear;
+ * };
+ */
+#if DT_NODE_EXISTS(DT_ALIAS(tcs3400_int))
+#define CONFIG_ALS_TCS3400_INT_EVENT	\
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(tcs3400_int)))
+#endif
+#endif
+
 STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
 
 #ifdef CONFIG_TCS_USE_LUX_TABLE

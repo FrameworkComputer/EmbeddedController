@@ -25,3 +25,6 @@
 #ifdef CONFIG_ACCELGYRO_BMI260
 #include "bmi260-drvinfo.inc"
 #endif
+#ifdef CONFIG_ALS_TCS3400
+#include "tcs3400-drvinfo.inc"
+#endif

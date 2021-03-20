@@ -1,0 +1,32 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: TCS3400 CLEAR driver data
+
+compatible: "cros-ec,drvdata-tcs3400-clear"
+
+include: drvdata-base.yaml
+
+#
+# examples:
+#
+# tcs_clear_data: tcs3400-clear-drv-data {
+#        compatible = "cros-ec,drvdata-tcs3400-clear";
+#        status = "okay";
+#
+#        als-drv-data {
+#                compatible = "cros-ec,accelgyro-als-drv-data";
+#                als-cal {
+#                        scale = <1>;
+#                        uscale = <0>;
+#                        offset = <0>;
+#                        als-channel-scale {
+#                        compatible = "cros-ec,accelgyro-als-channel-scale";
+#                                k-channel-scale = <1>;
+#                                cover-scale = <1>;
+#                        };
+#                };
+#        };
+# };
+#

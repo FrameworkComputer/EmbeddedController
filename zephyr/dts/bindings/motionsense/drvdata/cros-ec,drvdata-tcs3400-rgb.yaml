@@ -1,0 +1,21 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: TCS3400 RGB driver data
+
+compatible: "cros-ec,drvdata-tcs3400-rgb"
+
+include: drvdata-base.yaml
+
+child-binding:
+  description: saturation auto-adjustment
+  properties:
+    again:
+      type: int
+      required: false
+      description: Gain Scaling; must be value between 0 and 3
+    atime:
+      type: int
+      required: false
+      description: Acquisition Time, controlled by the ATIME register
