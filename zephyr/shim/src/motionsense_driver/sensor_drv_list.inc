@@ -22,3 +22,6 @@
 #ifdef CONFIG_ACCEL_BMA255
 #include "bma255-drvinfo.inc"
 #endif
+#ifdef CONFIG_ACCELGYRO_BMI260
+#include "bmi260-drvinfo.inc"
+#endif
