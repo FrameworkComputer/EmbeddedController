@@ -9,6 +9,16 @@
 #include <devicetree.h>
 
 /*
+ * The battery enum is used in various drivers and these assume that it is
+ * always available (defined in board.h). With Zephyr we don't include board.h
+ * so we have a battery_enum.h header in the shim which defines
+ * enum battery_type based on settings in the device tree. Include that here.
+ */
+#ifdef CONFIG_PLATFORM_EC_BATTERY
+#include "battery_enum.h"
+#endif
+
+/*
  * This file translates Kconfig options to platform/ec options.
  *
  * Options which are from Zephyr platform/ec module (Kconfig) start
@@ -133,11 +143,6 @@
 #define CONFIG_BATTERY
 #define CONFIG_BATTERY_FUEL_GAUGE
 
-/* TODO(b/176121284): hard-coded for volteer */
-enum battery_type {
-	BATTERY_LGC011,
-	BATTERY_TYPE_COUNT,
-};
 #endif /* CONFIG_PLATFORM_EC_BATTERY_FUEL_GAUGE */
 
 #undef CONFIG_BATTERY_SMART

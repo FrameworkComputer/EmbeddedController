@@ -36,6 +36,14 @@
 		disabled = "hostcmd";
 	};
 
+	named-batteries {
+		compatible = "named-batteries";
+
+		lgc011 {
+			enum-name = "lgc011";
+		};
+	};
+
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
