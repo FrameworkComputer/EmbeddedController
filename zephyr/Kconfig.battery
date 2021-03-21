@@ -55,11 +55,21 @@ config PLATFORM_EC_BATTERY_PRESENT_GPIO
 	bool "Check a GPIO"
 	help
 	  Use this method if a GPIO signals whether the battery is present. The
-	  GPIO should read low if the battery is present, high if absent,
+	  GPIO should read low if the battery is present, high if absent.
 
-	  TODO:
-	  The actual GPIO to use is not defined by this option. Perhaps this
-	  needs to be placed in the devicetree.
+	  The GPIO is hard-coded to GPIO_BATT_PRES_ODL so you should define this
+	  in the device tree and GPIO map. The convention is to use the signal
+	  name from schematic as both the node name and label for the GPIO. For
+	  example:
+
+	    /* gpio.dts */
+	    ec_batt_pres_odl {
+	    	gpios = <&gpioe 5 GPIO_INPUT>;
+	    	label = "EC_BATT_PRES_ODL";
+	    };
+
+	    /* gpio_map.h */
+	    #define GPIO_BATT_PRES_ODL		NAMED_GPIO(ec_batt_pres_odl)
 
 endchoice  # battery presence
 
