@@ -11,9 +11,17 @@ project(lazor)
 
 zephyr_include_directories(include)
 
+set(PLATFORM_EC_BASEBOARD "${PLATFORM_EC}/baseboard/trogdor" CACHE PATH
+    "Path to the platform/ec baseboard directory")
 set(PLATFORM_EC_BOARD "${PLATFORM_EC}/board/lazor" CACHE PATH
   "Path to the platform/ec board directory")
 
+zephyr_sources_ifdef(CONFIG_PLATFORM_EC_USBC
+  "${PLATFORM_EC_BASEBOARD}/usbc_config.c"
+  "${PLATFORM_EC_BASEBOARD}/usb_pd_policy.c")
+
 zephyr_sources(
+  "${PLATFORM_EC_BOARD}/battery.c"
   "${PLATFORM_EC_BOARD}/sku.c"
-  "${PLATFORM_EC_BOARD}/switchcap.c")
+  "${PLATFORM_EC_BOARD}/switchcap.c"
+  "${PLATFORM_EC_BOARD}/usbc_config.c")
