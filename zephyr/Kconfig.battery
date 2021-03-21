@@ -69,6 +69,29 @@ choice "Charger select"
 	  Select the battery charger IC used on the board. Only one charger may
 	  be selected.
 
+config PLATFORM_EC_CHARGER_ISL9237
+	bool "Use the ISL9237 charger"
+	depends on PLATFORM_EC_I2C
+	select PLATFORM_EC_CHARGER_NARROW_VDC
+	help
+	  Enables a driver for the ISL9237 VCD Battery Charger. This is a
+	  digitally-configurable, buck-boost battery charger that supporting
+	  Narrow Voltage Direct Charging (NVDC). It supports an input voltage
+	  ange of 3.2-23.4V and output of 2.4-13.8V. It provides an I2C
+	  interface for configuration an provides a USB On-The-Go (OTG)
+	  function for 2- and 3-cell battery applications.
+
+config PLATFORM_EC_CHARGER_ISL9238
+	bool "Use the ISL9238 charger"
+	depends on PLATFORM_EC_I2C
+	select PLATFORM_EC_CHARGER_NARROW_VDC
+	help
+	  Enables a driver for the ISL9238 VCD Battery Charger. This is a
+	  digitally-configurable, buck-boost battery charger that supporting
+	  Narrow Voltage Direct Charging (NVDC). It supports an input voltage
+	  ange of 3.2-23.4V and output of 2.4-18.3V. It provides an I2C
+	  interface for configuration.
+
 config PLATFORM_EC_CHARGER_ISL9241
 	bool "Use the ISL9241 charger"
 	depends on PLATFORM_EC_I2C
@@ -78,9 +101,23 @@ config PLATFORM_EC_CHARGER_ISL9241
 	  both Narrow Voltage Direct Charging (NVDC) and Hybrid Power Buck Boost
 	  (HPBB/Bypass) charging and switch between the modes under firmware
 	  control. It supports an input voltage range of 3.9-23.4V and output
-	  of 3.9-18.3V. It provides an I2C interace for configuration.
+	  of 3.9-18.3V. It provides an I2C interface for configuration.
 
-endchoice
+endchoice  # "Charger select"
+
+config PLATFORM_EC_CHARGER_NARROW_VDC
+	bool
+	help
+	  Select this if the charger uses a Narrow Voltage Direct Charging.
+	  Narrow VDC (NVDC) reduces power loss by reducing the voltage range of
+	  the VDC node. This reduction is accomplished by replacing the
+	  battery-charger circuit with a system-charger voltage regulator, thus
+	  narrowing the VDC range. This in turn enables DC/DC converter
+	  optimisations in the system and allows the removal of the power-path
+	  switch, saving additional power, board area, and cost.
+
+	  This should be enabled by charger drivers which need it. It cannot
+	  be set otherwise, even in prj.conf
 
 config PLATFORM_EC_BATTERY_FUEL_GAUGE
 	bool "Board supplies battery info"
