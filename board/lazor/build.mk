@@ -11,4 +11,9 @@ CHIP_FAMILY:=npcx7
 CHIP_VARIANT:=npcx7m6fc
 BASEBOARD:=trogdor
 
-board-y=battery.o board.o led.o sku.o switchcap.o
+board-y+=battery.o
+board-y+=board.o
+board-y+=led.o
+board-y+=sku.o
+board-y+=switchcap.o
+board-y+=usbc_config.o

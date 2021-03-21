@@ -45,25 +45,6 @@
 
 #include "gpio_list.h"
 
-/* GPIO Interrupt Handlers */
-void tcpc_alert_event(enum gpio_signal signal)
-{
-	int port = -1;
-
-	switch (signal) {
-	case GPIO_USB_C0_PD_INT_ODL:
-		port = 0;
-		break;
-	case GPIO_USB_C1_PD_INT_ODL:
-		port = 1;
-		break;
-	default:
-		return;
-	}
-
-	schedule_deferred_pd_interrupt(port);
-}
-
 void usb0_evt(enum gpio_signal signal)
 {
 	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
