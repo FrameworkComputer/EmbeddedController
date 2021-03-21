@@ -257,6 +257,17 @@ config PLATFORM_EC_USB_PD_DEBUG_LEVEL
 	  The meaning of each level depends on the module in question, but
 	  the maximum available level is 3.
 
+config PLATFORM_EC_USB_PD_5V_EN_CUSTOM
+	bool "Custom method of detecting VBUS"
+	help
+	  Enable this if your board needs a custom method to determine if VBUS
+	  is enabled on a source port. You must provide an implementation of:
+
+	     int board_is_sourcing_vbus(int port)
+
+	  It should return 0 if not sourcing VBUS on that port and non-zero
+	  if sourcing.
+
 choice "Measuring VBUS voltage"
 	prompt "Select how VBUS voltage is measured"
 
