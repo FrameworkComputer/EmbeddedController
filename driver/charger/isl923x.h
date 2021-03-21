@@ -9,8 +9,7 @@
 #ifndef __CROS_EC_ISL923X_H
 #define __CROS_EC_ISL923X_H
 
-#include "stdbool.h"
-#define ISL923X_ADDR_FLAGS	(0x09)
+#include "driver/charger/isl923x_public.h"
 
 /* Registers */
 #define ISL923X_REG_CHG_CURRENT            0x14
@@ -345,43 +344,7 @@ enum isl9237_fsm_state {
 
 #define I2C_ADDR_CHARGER_FLAGS ISL923X_ADDR_FLAGS
 
-extern const struct charger_drv isl923x_drv;
-
-#endif /* __CROS_EC_ISL923X_H */
-
-/**
- * Initialize AC & DC prochot threshold
- *
- * @param	chgnum: Index into charger chips
- * @param	AC Prochot threshold current in mA:
- *			multiple of 128 up to 6400 mA
- *			DC Prochot threshold current in mA:
- *			multiple of 128 up to 12800 mA
- * 		Bits below 128mA are truncated (ignored).
- * @return enum ec_error_list
- */
-int isl923x_set_ac_prochot(int chgnum, uint16_t ma);
-int isl923x_set_dc_prochot(int chgnum, uint16_t ma);
-
-/**
- * Set the general comparator output polarity when asserted.
- *
- * @param chgnum: Index into charger chips
- * @param invert: Non-zero to invert polarity, zero to non-invert.
- * @return EC_SUCCESS, error otherwise.
- */
-int isl923x_set_comparator_inversion(int chgnum, int invert);
-
-/**
- * Prepare the charger IC for battery ship mode.  Battery ship mode sets the
- * lowest power state for the IC. Battery ship mode can only be entered from
- * battery only mode.
- *
- * @param chgnum index into chg_chips table.
- */
-void raa489000_hibernate(int chgnum, bool disable_adc);
-enum ec_error_list isl9238c_hibernate(int chgnum);
-enum ec_error_list isl9238c_resume(int chgnum);
-
 #define ISL923X_AC_PROCHOT_CURRENT_MAX	6400	/* mA */
 #define ISL923X_DC_PROCHOT_CURRENT_MAX	12800	/* mA */
+
+#endif /* __CROS_EC_ISL923X_H */
