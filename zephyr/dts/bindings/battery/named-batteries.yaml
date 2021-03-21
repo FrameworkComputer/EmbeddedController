@@ -1,0 +1,14 @@
+description: Named Batteries parent node
+
+compatible: "named-batteries"
+
+# TODO(b/183544739): Move this to use compatible strings
+
+child-binding:
+    description: Named batteries child node
+    properties:
+       enum-name:
+          type: string
+          required: true
+          enum:
+            - "lgc011"
