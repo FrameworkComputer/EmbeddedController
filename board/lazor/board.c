@@ -36,24 +36,17 @@
 #include "switch.h"
 #include "tablet_mode.h"
 #include "task.h"
+#include "usbc_config.h"
 #include "usbc_ocp.h"
 #include "usbc_ppc.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-/* Forward declaration */
-static void tcpc_alert_event(enum gpio_signal signal);
-static void usb0_evt(enum gpio_signal signal);
-static void usb1_evt(enum gpio_signal signal);
-static void usba_oc_interrupt(enum gpio_signal signal);
-static void ppc_interrupt(enum gpio_signal signal);
-static void board_connect_c0_sbu(enum gpio_signal s);
-
 #include "gpio_list.h"
 
 /* GPIO Interrupt Handlers */
-static void tcpc_alert_event(enum gpio_signal signal)
+void tcpc_alert_event(enum gpio_signal signal)
 {
 	int port = -1;
 
@@ -71,12 +64,12 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(port);
 }
 
-static void usb0_evt(enum gpio_signal signal)
+void usb0_evt(enum gpio_signal signal)
 {
 	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
 }
 
-static void usb1_evt(enum gpio_signal signal)
+void usb1_evt(enum gpio_signal signal)
 {
 	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
 }
@@ -89,12 +82,12 @@ static void usba_oc_deferred(void)
 }
 DECLARE_DEFERRED(usba_oc_deferred);
 
-static void usba_oc_interrupt(enum gpio_signal signal)
+void usba_oc_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&usba_oc_deferred_data, 0);
 }
 
-static void ppc_interrupt(enum gpio_signal signal)
+void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_C0_SWCTL_INT_ODL:
@@ -118,7 +111,7 @@ static void board_connect_c0_sbu_deferred(void)
 }
 DECLARE_DEFERRED(board_connect_c0_sbu_deferred);
 
-static void board_connect_c0_sbu(enum gpio_signal s)
+void board_connect_c0_sbu(enum gpio_signal s)
 {
 	hook_call_deferred(&board_connect_c0_sbu_deferred_data, 0);
 }
