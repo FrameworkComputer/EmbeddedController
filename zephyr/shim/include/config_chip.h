@@ -176,8 +176,6 @@ enum battery_type {
 #undef CONFIG_CHARGER_ISL9241
 #ifdef CONFIG_PLATFORM_EC_CHARGER_ISL9241
 #define CONFIG_CHARGER_ISL9241
-/* Hardware based charge ramp is broken in the ISL9241 (b/169350714) */
-#define CONFIG_CHARGE_RAMP_SW
 
 /* TODO(b/175881762): Move to devicetree? */
 #define CONFIG_CHARGER_SENSE_RESISTOR		10
@@ -616,6 +614,11 @@ enum battery_type {
 #undef CONFIG_CHARGE_RAMP_SW
 #ifdef CONFIG_PLATFORM_EC_CHARGE_RAMP_SW
 #define CONFIG_CHARGE_RAMP_SW
+#endif
+
+#undef CONFIG_CHARGE_RAMP_HW
+#ifdef CONFIG_PLATFORM_EC_CHARGE_RAMP_HW
+#define CONFIG_CHARGE_RAMP_HW
 #endif
 
 #undef CONFIG_CMD_CHGRAMP

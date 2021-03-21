@@ -95,6 +95,8 @@ config PLATFORM_EC_CHARGER_ISL9238
 config PLATFORM_EC_CHARGER_ISL9241
 	bool "Use the ISL9241 charger"
 	depends on PLATFORM_EC_I2C
+	# Hardware based charge ramp is broken in the ISL9241 (b/169350714)
+	select PLATFORM_EC_CHARGER_CHGRAMP_BROKEN
 	help
 	  Enables a driver for the ISL9241 VCD Battery Charger. This is a
 	  digitally-configurable, buck-boost battery charger that can support
@@ -127,15 +129,43 @@ config PLATFORM_EC_BATTERY_FUEL_GAUGE
 	  information is used to set voltage, current and temperature operating
 	  limits for the battery.
 
+config PLATFORM_EC_CHARGER_CHGRAMP_BROKEN
+	bool
+	help
+	  This is selected if the charger's support for hardware-controlled
+	  charge ramping is broken. In some cases the charger has problems
+	  which make it unusable and we must fall back to software-controlled
+	  charge ramping.
+
+	  This should be enabled by charger drivers which need it. It cannot
+	  be set otherwise, even in prj.conf
+
+choice "Charge-ramp method"
+	prompt "Select the charge-ramp method"
+	help
+	  Select the method used for ramping up charging of a battery. It is
+	  preferred to use the hardware method if the charger chip can support
+	  it. If not, software-controlled charging can be used, with a slight
+	  increase in code size.
+
+config PLATFORM_EC_CHARGE_RAMP_HW
+	bool "Hardware-controlled charging"
+	depends on !PLATFORM_EC_CHARGER_CHGRAMP_BROKEN
+	help
+	   Disables software control of ramping up charging. This is used when
+	   the hardware has a a mechanism for ramping input current and
+	   backing-off as needed.
+
 config PLATFORM_EC_CHARGE_RAMP_SW
 	bool "Software-controlled charging"
-	default y
 	select HAS_TASK_CHG_RAMP
 	help
 	  Enables ramping up charging from an external source to the maximum
 	  available within the source's limits and taking into account the
 	  current needs of the device. It handles the user plugging chargers in
 	  and removing them.
+
+endchoice  # "Charge-ramp method"
 
 config PLATFORM_EC_CONSOLE_CMD_CHGRAMP
 	bool "Console command: chgramp"
