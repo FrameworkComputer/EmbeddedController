@@ -6,8 +6,6 @@
 /* Trogdor baseboard-specific configuration */
 
 #include "charge_state.h"
-#include "charger.h"
-#include "driver/charger/isl923x.h"
 #include "i2c.h"
 #include "power.h"
 #include "usb_pd.h"
@@ -29,14 +27,6 @@ void board_hibernate_late(void)
 	/* Set the hibernate GPIO to turn off the rails */
 	gpio_set_level(GPIO_HIBERNATE_L, 0);
 }
-
-const struct charger_config_t chg_chips[] = {
-	{
-		.i2c_port = I2C_PORT_CHARGER,
-		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
-		.drv = &isl923x_drv,
-	},
-};
 
 int board_allow_i2c_passthru(int port)
 {
