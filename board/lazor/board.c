@@ -6,7 +6,6 @@
 /* Lazor board-specific configuration */
 
 #include "adc_chip.h"
-#include "battery_fuel_gauge.h"
 #include "button.h"
 #include "extpower.h"
 #include "driver/accel_bma2x2.h"
@@ -30,7 +29,6 @@
 #include "tablet_mode.h"
 #include "task.h"
 #include "usbc_config.h"
-#include "usb_mux.h"
 #include "usbc_ppc.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -325,20 +323,6 @@ void lid_angle_peripheral_enable(int enable)
 	}
 }
 #endif
-
-__override int board_get_default_battery_type(void)
-{
-	/*
-	 * A 2S battery is set as default. If the board is configured to use
-	 * a 3S battery, according to its SKU_ID, return a 3S battery as
-	 * default. It helps to configure the charger to output a correct
-	 * voltage in case the battery is not attached.
-	 */
-	if (board_get_battery_cell_type() == BATTERY_CELL_TYPE_3S)
-		return BATTERY_LGC_AP18C8K;
-
-	return DEFAULT_BATTERY_TYPE;
-}
 
 static int base_accelgyro_config;
 

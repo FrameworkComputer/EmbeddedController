@@ -5,11 +5,13 @@
 
 /* Lazor board-specific USB-C configuration */
 
+#include "battery_fuel_gauge.h"
 #include "bc12/pi3usb9201_public.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
 #include "config.h"
+#include "driver/ln9310.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "ppc/sn5s330_public.h"
@@ -167,6 +169,20 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
 	},
 };
+
+__override int board_get_default_battery_type(void)
+{
+	/*
+	 * A 2S battery is set as default. If the board is configured to use
+	 * a 3S battery, according to its SKU_ID, return a 3S battery as
+	 * default. It helps to configure the charger to output a correct
+	 * voltage in case the battery is not attached.
+	 */
+	if (board_get_battery_cell_type() == BATTERY_CELL_TYPE_3S)
+		return BATTERY_LGC_AP18C8K;
+
+	return DEFAULT_BATTERY_TYPE;
+}
 
 void board_tcpc_init(void)
 {
