@@ -82,6 +82,11 @@
 	GPIO_INT(GPIO_WARM_RESET_L, GPIO_INT_EDGE_BOTH,                       \
 		 power_signal_interrupt)                                      \
 	GPIO_INT(GPIO_USB_C0_PD_INT_ODL, GPIO_INT_FALLING, tcpc_alert_event)  \
-	GPIO_INT(GPIO_USB_C1_PD_INT_ODL, GPIO_INT_FALLING, tcpc_alert_event)
+	GPIO_INT(GPIO_USB_C1_PD_INT_ODL, GPIO_INT_FALLING, tcpc_alert_event)  \
+	GPIO_INT(GPIO_USB_C0_SWCTL_INT_ODL, GPIO_INT_FALLING, ppc_interrupt)  \
+	GPIO_INT(GPIO_USB_C1_SWCTL_INT_ODL, GPIO_INT_FALLING, ppc_interrupt)  \
+	GPIO_INT(GPIO_USB_C0_BC12_INT_L, GPIO_INT_FALLING, usb0_evt)          \
+	GPIO_INT(GPIO_USB_C1_BC12_INT_L, GPIO_INT_FALLING, usb1_evt)          \
+	GPIO_INT(GPIO_USB_A0_OC_ODL, GPIO_INT_BOTH, usba_oc_interrupt)
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
