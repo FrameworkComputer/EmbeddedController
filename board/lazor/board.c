@@ -17,13 +17,10 @@
 #include "driver/accel_kx022.h"
 #include "driver/ln9310.h"
 #include "driver/ppc/sn5s330.h"
-#include "driver/tcpm/ps8xxx.h"
-#include "driver/tcpm/tcpci.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
-#include "pi3usb9201.h"
 #include "power.h"
 #include "power/sc7180.h"
 #include "power_button.h"
@@ -34,8 +31,10 @@
 #include "switch.h"
 #include "tablet_mode.h"
 #include "task.h"
+#include "usb_charge.h"
 #include "usbc_config.h"
 #include "usbc_ocp.h"
+#include "usb_mux.h"
 #include "usbc_ppc.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -174,77 +173,6 @@ const struct pwm_t pwm_channels[] = {
 	[PWM_CH_DISPLIGHT] = { .channel = 5, .flags = 0, .freq = 4800 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
-/* Power Path Controller */
-struct ppc_config_t ppc_chips[] = {
-	{
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
-	{
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
-};
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
-
-/* TCPC mux configuration */
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_TCPC0,
-			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
-		},
-		.drv = &ps8xxx_tcpm_drv,
-	},
-	{
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_TCPC1,
-			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
-		},
-		.drv = &ps8xxx_tcpm_drv,
-	},
-};
-
-/*
- * Port-0/1 USB mux driver.
- *
- * The USB mux is handled by TCPC chip and the HPD update is through a GPIO
- * to AP. But the TCPC chip is also needed to know the HPD status; otherwise,
- * the mux misbehaves.
- */
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.usb_port = 0,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-	},
-	{
-		.usb_port = 1,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-	}
-};
-
-const int usb_port_enable[USB_PORT_COUNT] = {
-	GPIO_EN_USB_A_5V,
-};
-
-/* BC1.2 */
-const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
-	{
-		.i2c_port = I2C_PORT_POWER,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-	{
-		.i2c_port = I2C_PORT_EEPROM,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-};
 
 /* Mutexes */
 static struct mutex g_base_mutex;

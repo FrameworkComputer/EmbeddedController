@@ -6,6 +6,7 @@
 /* Lazor board-specific USB-C configuration */
 
 #include "bc12/pi3usb9201_public.h"
+#include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
 #include "config.h"
@@ -40,6 +41,77 @@ void tcpc_alert_event(enum gpio_signal signal)
 
 	schedule_deferred_pd_interrupt(port);
 }
+
+/* Power Path Controller */
+struct ppc_config_t ppc_chips[] = {
+	{
+		.i2c_port = I2C_PORT_TCPC0,
+		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+		.drv = &sn5s330_drv
+	},
+	{
+		.i2c_port = I2C_PORT_TCPC1,
+		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+		.drv = &sn5s330_drv
+	},
+};
+unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
+
+/* TCPC mux configuration */
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	{
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_TCPC0,
+			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+		},
+		.drv = &ps8xxx_tcpm_drv,
+	},
+	{
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_TCPC1,
+			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+		},
+		.drv = &ps8xxx_tcpm_drv,
+	},
+};
+
+/*
+ * Port-0/1 USB mux driver.
+ *
+ * The USB mux is handled by TCPC chip and the HPD update is through a GPIO
+ * to AP. But the TCPC chip is also needed to know the HPD status; otherwise,
+ * the mux misbehaves.
+ */
+const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	{
+		.usb_port = 0,
+		.driver = &tcpci_tcpm_usb_mux_driver,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	},
+	{
+		.usb_port = 1,
+		.driver = &tcpci_tcpm_usb_mux_driver,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	}
+};
+
+const int usb_port_enable[USB_PORT_COUNT] = {
+	GPIO_EN_USB_A_5V,
+};
+
+/* BC1.2 */
+const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
+	{
+		.i2c_port = I2C_PORT_POWER,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+	{
+		.i2c_port = I2C_PORT_EEPROM,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+};
 
 void board_reset_pd_mcu(void)
 {
