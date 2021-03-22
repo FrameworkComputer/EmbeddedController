@@ -168,6 +168,30 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	},
 };
 
+void board_tcpc_init(void)
+{
+	/* Only reset TCPC if not sysjump */
+	if (!system_jumped_late()) {
+		/* TODO(crosbug.com/p/61098): How long do we need to wait? */
+		board_reset_pd_mcu();
+	}
+
+	/* Enable PPC interrupts */
+	gpio_enable_interrupt(GPIO_USB_C0_SWCTL_INT_ODL);
+
+	/* Enable TCPC interrupts */
+	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
+
+	/*
+	 * Initialize HPD to low; after sysjump SOC needs to see
+	 * HPD pulse to enable video path
+	 */
+	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
+		usb_mux_hpd_update(port, 0, 0);
+}
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
+
 void board_reset_pd_mcu(void)
 {
 	cprints(CC_USB, "Resetting TCPCs...");
