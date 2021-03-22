@@ -1,3 +1,14 @@
 # Copyright 2021 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
+menuconfig CROS_RTC_NPCX
+	bool "Nuvoton NPCX Real-Time Clock (RTC) driver for the Zephyr shim"
+	depends on SOC_FAMILY_NPCX
+	default y
+	help
+	  This option enables a driver for providing the support of Real-Time
+	  Clock (RTC) on the chip. Currently, Zephyr doesn't provide setting RTC
+	  value functionality in the counter driver api interface. Hence, a cros
+	  RTC api provides the low-level driver interface related to it and the
+	  others used in cros ec.

@@ -150,4 +150,19 @@ struct fiu_reg {
 #define UMA_CODE_CMD_ADR_WR_BYTE(n) (UMA_FLD_EXEC | UMA_FLD_WRITE | \
 					UMA_FLD_ADDR | UMA_FIELD_DATA_##n | \
 					UMA_FLD_SHD_SL)
+
+/*
+ * Monotonic Counter (MTC) device registers
+ */
+struct mtc_reg {
+	/* 0x000: Timing Ticks Count Register */
+	volatile uint32_t TTC;
+	/* 0x004: Wake-Up Ticks Count Register */
+	volatile uint32_t WTC;
+};
+
+/* MTC register fields */
+#define NPCX_WTC_PTO                     30
+#define NPCX_WTC_WIE                     31
+
 #endif /* _NUVOTON_NPCX_REG_DEF_CROS_H */
