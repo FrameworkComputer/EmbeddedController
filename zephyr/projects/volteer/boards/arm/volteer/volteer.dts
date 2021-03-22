@@ -39,7 +39,7 @@
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
-		sensor {
+		i2c_sensor: sensor {
 			i2c-port = <&i2c0_0>;
 			label = "SENSOR";
 		};
@@ -221,11 +221,11 @@
 			gpios = <&gpiof 4 GPIO_INPUT>;
 			label = "PG_EC_ALL_SYS_PWRGD";
 		};
-		ec_imu_int_l {
+		gpio_ec_imu_int_l: ec_imu_int_l {
 			gpios = <&gpio5 6 GPIO_INPUT>;
 			label = "EC_IMU_INT_L";
 		};
-		ec_als_rgb_int_l {
+		gpio_ec_als_rgb_int_l: ec_als_rgb_int_l {
 			gpios = <&gpiod 4 GPIO_INPUT>;
 			label = "EC_ALS_RGB_INT_L";
 		};
@@ -536,6 +536,8 @@
 		reg = <0x10070000 0x40000>;
 	};
 };
+
+#include "volteer_motionsense.dtsi"
 
 &uart1 {
 	status = "okay";
