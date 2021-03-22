@@ -866,6 +866,24 @@ config PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG
 	  factory. Without this, multiple EC images would need to be installed
 	  depending on the board.
 
+config PLATFORM_EC_USB_PD_TCPM_PS8751
+	bool "Parade PS8751 USB-C Gen 2 Type-C Port Controller"
+	select PLATFORM_EC_USB_PD_TCPM_MUX
+	help
+	  The Parade Technologies PS8751 is a USB Type-C Port Controller (TCPC)
+	  for USB Type-C Host and DisplayPort applications. It supports
+	  Power Delivery Rev. 2.0 and the DisplayPort Alt Mode version 1.0a.
+
+config PLATFORM_EC_USB_PD_TCPM_PS8805
+	bool "Parade PS8805 USB-C Gen 2 Type-C Port Controller"
+	select PLATFORM_EC_USB_PD_TCPM_MUX
+	help
+	  The Parade Technologies PS8805 is an active retiming/redriving
+	  (respectively for USB 3.1 Gen 2 / DisplayPort 1.4a HBR3) integrated
+	  with a USB Type-C Port Controller (TCPC) for USB Type-C Host and
+	  DisplayPort applications. It supports Power Delivery and the
+	  DisplayPort Alt Mode.
+
 config PLATFORM_EC_USB_PD_TCPM_PS8815
 	bool "Parade PS8815 USB-C Gen 2 Type-C Port Controller"
 	select PLATFORM_EC_USB_PD_TCPM_MUX
