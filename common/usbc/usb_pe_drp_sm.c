@@ -6814,6 +6814,9 @@ void pd_dfp_discovery_init(int port)
 
 	if (IS_ENABLED(CONFIG_USB_PD_USB4))
 		enter_usb_init(port);
+
+	if (IS_ENABLED(CONFIG_USB_PD_ALT_MODE_UFP_DP))
+		pd_ufp_set_dp_opos(port, 0);
 }
 
 __maybe_unused void pd_discovery_access_clear(int port,
