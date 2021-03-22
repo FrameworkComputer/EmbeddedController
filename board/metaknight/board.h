@@ -31,8 +31,6 @@
  */
 #define GPIO_USB_C1_INT_ODL GPIO_SUB_C1_INT_EN_RAILS_ODL
 
-/* Keyboard */
-#define CONFIG_PWM_KBLIGHT
 
 /* LED defines */
 #define CONFIG_LED_ONOFF_STATES
@@ -178,7 +176,6 @@ enum sensor_id {
 };
 
 enum pwm_channel {
-	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT,
 };
 
