@@ -184,6 +184,18 @@ __override int board_get_default_battery_type(void)
 	return DEFAULT_BATTERY_TYPE;
 }
 
+/* Initialize board USC-C things */
+static void board_init_usbc(void)
+{
+	/* Enable BC1.2 interrupts */
+	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
+	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
+
+	/* Enable USB-A overcurrent interrupt */
+	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
+}
+DECLARE_HOOK(HOOK_INIT, board_init_usbc, HOOK_PRIO_DEFAULT);
+
 void board_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */

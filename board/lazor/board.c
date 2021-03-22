@@ -388,13 +388,6 @@ DECLARE_HOOK(HOOK_INIT, board_update_sensor_config_from_sku,
 /* Initialize board. */
 static void board_init(void)
 {
-	/* Enable BC1.2 interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
-	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
-
-	/* Enable USB-A overcurrent interrupt */
-	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
-
 	/*
 	 * The H1 SBU line for CCD are behind PPC chip. The PPC internal FETs
 	 * for SBU may be disconnected after DP alt mode is off. Should enable
