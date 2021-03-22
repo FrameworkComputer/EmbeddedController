@@ -16,13 +16,11 @@
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/ln9310.h"
-#include "driver/ppc/sn5s330.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
-#include "power/sc7180.h"
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
@@ -31,9 +29,7 @@
 #include "switch.h"
 #include "tablet_mode.h"
 #include "task.h"
-#include "usb_charge.h"
 #include "usbc_config.h"
-#include "usbc_ocp.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"
 
@@ -41,58 +37,6 @@
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 #include "gpio_list.h"
-
-void usb0_evt(enum gpio_signal signal)
-{
-	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
-}
-
-void usb1_evt(enum gpio_signal signal)
-{
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
-}
-
-static void usba_oc_deferred(void)
-{
-	/* Use next number after all USB-C ports to indicate the USB-A port */
-	board_overcurrent_event(CONFIG_USB_PD_PORT_MAX_COUNT,
-				!gpio_get_level(GPIO_USB_A0_OC_ODL));
-}
-DECLARE_DEFERRED(usba_oc_deferred);
-
-void usba_oc_interrupt(enum gpio_signal signal)
-{
-	hook_call_deferred(&usba_oc_deferred_data, 0);
-}
-
-void ppc_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_SWCTL_INT_ODL:
-		sn5s330_interrupt(0);
-		break;
-	case GPIO_USB_C1_SWCTL_INT_ODL:
-		sn5s330_interrupt(1);
-		break;
-	default:
-		break;
-	}
-}
-
-static void board_connect_c0_sbu_deferred(void)
-{
-	/*
-	 * If CCD_MODE_ODL asserts, it means there's a debug accessory connected
-	 * and we should enable the SBU FETs.
-	 */
-	ppc_set_sbu(0, 1);
-}
-DECLARE_DEFERRED(board_connect_c0_sbu_deferred);
-
-void board_connect_c0_sbu(enum gpio_signal s)
-{
-	hook_call_deferred(&board_connect_c0_sbu_deferred_data, 0);
-}
 
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
