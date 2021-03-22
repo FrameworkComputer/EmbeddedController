@@ -62,8 +62,6 @@ BOARDS_IT83XX=(
 )
 
 BOARDS_IT83XX_SPI_PROGRAMMING=(
-	TODO: remove me once we have icarus overlay
-	icarus
 	it8xxx2_evb
 	it8xxx2_pdevb
 )
