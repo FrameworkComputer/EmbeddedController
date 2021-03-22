@@ -1,0 +1,12 @@
+# Copyright 2021 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+# Common fields for Chrome OS RTC devices
+
+include: base.yaml
+
+bus: crosrtc
+
+properties:
+    label:
+      required: true
