@@ -1,0 +1,30 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-batteries {
+		compatible = "named-batteries";
+
+		ap16l5j {
+			enum-name = "ap16l5j";
+		};
+
+		ap16l5j_009 {
+			enum-name = "ap16l5j_009";
+		};
+
+		ap16l8j {
+			enum-name = "ap16l8j";
+		};
+
+		lgc_ap18c8k {
+			enum-name = "lgc_ap18c8k";
+		};
+
+		murata_ap18c4k {
+			enum-name = "murata_ap18c4k";
+		};
+	};
+};

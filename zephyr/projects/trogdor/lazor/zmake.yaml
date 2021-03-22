@@ -5,6 +5,7 @@
 board: trogdor
 dts-overlays:
   - gpio.dts
+  - battery.dts
 supported-zephyr-versions:
   - v2.5
 toolchain: coreboot-sdk

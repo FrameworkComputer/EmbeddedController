@@ -11,4 +11,9 @@ child-binding:
           type: string
           required: true
           enum:
+            - "ap16l5j"
+            - "ap16l5j_009"
+            - "ap16l8j"
             - "lgc011"
+            - "lgc_ap18c8k"
+            - "murata_ap18c4k"
