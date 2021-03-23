@@ -81,10 +81,28 @@ int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
-	/*
-	 * TODO(b:173787365): implement this.  For now, doing nothing
-	 * won't break anything, just will eat power.
-	 */
+	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
+	int err;
+
+	/* Flush console before hibernating */
+	cflush();
+
+	if (board_hibernate)
+		board_hibernate();
+
+	/* Save 'wake-up from hibernate' reset flag */
+	chip_save_reset_flags(chip_read_reset_flags() |
+			      EC_RESET_FLAG_HIBERNATE);
+
+	err = cros_system_hibernate(sys_dev, seconds, microseconds);
+	if (err < 0) {
+		LOG_ERR("hibernate failed %d", err);
+		return;
+	}
+
+	/* should never reach this point */
+	while (1)
+		continue;
 }
 
 const char *system_get_chip_vendor(void)
@@ -159,12 +177,14 @@ static int check_reset_cause(void)
 	switch (chip_reset_cause) {
 	case POWERUP:
 		system_flags |= EC_RESET_FLAG_POWER_ON;
-		if (IS_ENABLED(CONFIG_BOARD_RESET_AFTER_POWER_ON)) {
-			/*
-			 * Power-on restart, so set a flag and save it for the
-			 * next imminent reset. Later code will check for this
-			 * flag and wait for the second reset.
-			 */
+		/*
+		 * Power-on restart, so set a flag and save it for the next
+		 * imminent reset. Later code will check for this flag and wait
+		 * for the second reset. Waking from PSL hibernate is power-on
+		 * for EC but not for H1, so do not wait for the second reset.
+		 */
+		if (IS_ENABLED(CONFIG_BOARD_RESET_AFTER_POWER_ON) &&
+		    ((system_flags & EC_RESET_FLAG_HIBERNATE) == 0)) {
 			system_flags |= EC_RESET_FLAG_INITIAL_PWR;
 			chip_flags |= EC_RESET_FLAG_INITIAL_PWR;
 		}
