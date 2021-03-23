@@ -21,6 +21,12 @@
 #define VDEC_CAP_VP8_FRAME BIT(9)
 #define VDEC_CAP_VP9_FRAME BIT(10)
 
+/*
+ * Video encoder supported capability:
+ * BIT(0): enable 4K
+ */
+#define VENC_CAP_4K BIT(0)
+
 #ifndef SCP_IPI_INIT
 #error If CONFIG_IPI is enabled, SCP_IPI_INIT must be defined.
 #endif
