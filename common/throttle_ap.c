@@ -24,8 +24,7 @@
 
 /*****************************************************************************/
 /* This enforces the virtual OR of all throttling sources. */
-static mutex_t throttle_mutex;
-STATIC_IF(CONFIG_ZEPHYR) bool throttle_mutex_inited;
+K_MUTEX_DEFINE(throttle_mutex);
 static uint32_t throttle_request[NUM_THROTTLE_TYPES];
 static int debounced_prochot_in;
 static enum gpio_signal gpio_prochot_in = GPIO_COUNT;
@@ -36,10 +35,6 @@ void throttle_ap(enum throttle_level level,
 {
 	uint32_t tmpval, bitmask;
 
-	if (IS_ENABLED(CONFIG_ZEPHYR) && !throttle_mutex_inited) {
-		(void)k_mutex_init(&throttle_mutex);
-		throttle_mutex_inited = true;
-	}
 	mutex_lock(&throttle_mutex);
 
 	bitmask = BIT(source);
