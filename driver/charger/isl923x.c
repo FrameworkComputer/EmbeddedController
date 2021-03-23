@@ -95,7 +95,7 @@ enum isl923x_mon_dir { MON_CHARGE = 0, MON_DISCHARGE = 1 };
 static int learn_mode;
 
 /* Mutex for CONTROL1 register, that can be updated from multiple tasks. */
-static mutex_t control1_mutex;
+K_MUTEX_DEFINE(control1_mutex);
 
 static enum ec_error_list isl923x_discharge_on_ac(int chgnum, int enable);
 
@@ -559,7 +559,6 @@ static void isl923x_init(int chgnum)
 	int precharge_voltage = bi->precharge_voltage ?
 		bi->precharge_voltage : bi->voltage_min;
 
-	(void)k_mutex_init(&control1_mutex);
 	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
 		if (CONFIG_CHARGER_SENSE_RESISTOR ==
 		    CONFIG_CHARGER_SENSE_RESISTOR_AC) {
