@@ -68,7 +68,7 @@
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
-#define GPIO_AC_PRESENT			GPIO_ACOK_EC_OD
+#define GPIO_AC_PRESENT			GPIO_ACOK_OD
 #define GPIO_CPU_PROCHOT		GPIO_EC_PROCHOT_ODL
 #define GPIO_EC_INT_L			GPIO_EC_PCH_INT_ODL
 #define GPIO_ENABLE_BACKLIGHT		GPIO_EC_EN_EDP_BL
