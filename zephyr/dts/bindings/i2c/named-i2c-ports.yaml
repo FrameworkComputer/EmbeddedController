@@ -7,11 +7,4 @@ compatible: "named-i2c-ports"
 
 child-binding:
   description: Named I2C ports child node
-  properties:
-    i2c-port:
-      type: phandle
-      required: true
-    label:
-      required: true
-      type: string
-      description: Human readable string describing the device (used as device_get_binding() argument)
+  include: [cros-ec-i2c-port-base.yaml]

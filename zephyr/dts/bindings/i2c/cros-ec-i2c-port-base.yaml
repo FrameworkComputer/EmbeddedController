@@ -1,0 +1,34 @@
+# Copyright (c) 2021 The Chromium OS Authors
+# SPDX-License-Identifier: Apache-2.0
+
+description: I2C port base properties
+
+properties:
+  i2c-port:
+    type: phandle
+    required: true
+  enum-name:
+    type: string
+    required: true
+    description:
+      Enum values used in the source code to refer to the i2c port
+    enum:
+    - I2C_PORT_ACCEL
+    - I2C_PORT_BATTERY
+    - I2C_PORT_CHARGER
+    - I2C_PORT_EEPROM
+    - I2C_PORT_POWER
+    - I2C_PORT_SENSOR
+    - I2C_PORT_TCPC0
+    - I2C_PORT_TCPC1
+    - I2C_PORT_USB_1_MIX
+    - I2C_PORT_USB_C0
+    - I2C_PORT_USB_C1
+    - I2C_PORT_VIRTUAL
+    - I2C_PORT_WLC
+  label:
+    required: true
+    type: string
+    description:
+      Human readable string describing the device (used as device_get_binding()
+      argument).

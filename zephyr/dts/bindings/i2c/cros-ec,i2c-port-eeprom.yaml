@@ -1,0 +1,14 @@
+# Copyright (c) 2021 The Chromium OS Authors
+# SPDX-License-Identifier: Apache-2.0
+
+description: I2C port properties for the EEPROM node
+
+compatible: "cros-ec,i2c-port-eeprom"
+
+include: [cros-ec-i2c-port-base.yaml]
+
+properties:
+  addr-flags:
+    type: int
+    description:
+      EEPROM flags.
