@@ -35,6 +35,7 @@
 #define GPIO_SWITCHCAP_PG_INT_L		NAMED_GPIO(da9313_gpio0)
 #define GPIO_WARM_RESET_L		NAMED_GPIO(warm_reset_l)
 #define GPIO_WP_L			NAMED_GPIO(ec_wp_odl)
+#define GPIO_EC_INT_L			NAMED_GPIO(ec_int_l)
 
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
