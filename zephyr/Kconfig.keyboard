@@ -126,11 +126,17 @@ config PLATFORM_EC_VOLUME_BUTTONS
 	  Your board must define GPIO_VOLUME_UP_L and GPIO_VOLUME_DOWN_L in
 	  gpio_map.h
 
-config PLATFORM_EC_CONSOLE_CMD_KEYBOARD_8042
-	bool "Console command: i8042"
-	default y if PLATFORM_EC_KEYBOARD_PROTOCOL_8042
+config PLATFORM_EC_CONSOLE_CMD_KEYBOARD
+	bool "Console command: ksstate, kbpress, 8042"
+	default y if PLATFORM_EC_KEYBOARD
 	help
-	  This command prints the state of the i8042 keyboard protocol and
+	  Enable keyboard related console commands.
+
+	    ksstate     - Show or toggle printing keyboard scan state
+	    kbpress     - Simulate keypress
+
+	  If PLATFORM_EC_KEYBOARD_PROTOCOL_8042 is enabled, it includes 8042
+	  command which prints the state of the i8042 keyboard protocol and
 	  includes the following subcommands:
 
 	    codeset	- Get/set keyboard codeset
