@@ -104,9 +104,11 @@ static void usb_c0_interrupt(enum gpio_signal s)
 
 static void sub_hdmi_hpd_interrupt(enum gpio_signal s)
 {
-	int hdmi_hpd_odl = gpio_get_level(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL);
+	int hdmi_hpd_odl = gpio_get_level(GPIO_HDMI_HPD_SUB_ODL);
 
 	gpio_set_level(GPIO_EC_AP_USB_C1_HDMI_HPD, !hdmi_hpd_odl);
+
+	cprints(CC_SYSTEM, "HDMI plug-%s", !hdmi_hpd_odl ? "in" : "out");
 }
 
 /**
@@ -114,7 +116,7 @@ static void sub_hdmi_hpd_interrupt(enum gpio_signal s)
  */
 static void pen_input_deferred(void)
 {
-	int pen_charge_enable = !gpio_get_level(GPIO_PEN_DET_ODL) && 
+	int pen_charge_enable = !gpio_get_level(GPIO_PEN_DET_ODL) &&
 			!chipset_in_state(CHIPSET_STATE_ANY_OFF);
 
 	if (pen_charge_enable)
@@ -181,12 +183,14 @@ const struct temp_sensor_t temp_sensors[] = {
 		.name = "Memory",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_51k1_47k_4050b,
-		.idx  = ADC_TEMP_SENSOR_1},
+		.idx  = ADC_TEMP_SENSOR_1
+	},
 	[TEMP_SENSOR_CPU] = {
 		.name = "CPU",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_51k1_47k_4050b,
-		.idx  = ADC_TEMP_SENSOR_2},
+		.idx  = ADC_TEMP_SENSOR_2
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -223,23 +227,6 @@ static void setup_thermal(void)
 	thermal_params[TEMP_SENSOR_MEMORY] = thermal_memory;
 	thermal_params[TEMP_SENSOR_CPU]    = thermal_cpu;
 }
-
-/* Enable HDMI any time the SoC is on */
-static void hdmi_enable(void)
-{
-	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
-		get_cbi_fw_config_db() == DB_LTE_HDMI)
-		gpio_set_level(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, hdmi_enable, HOOK_PRIO_DEFAULT);
-
-static void hdmi_disable(void)
-{
-	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
-		get_cbi_fw_config_db() == DB_LTE_HDMI)
-		gpio_set_level(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, hdmi_disable, HOOK_PRIO_DEFAULT);
 
 void board_hibernate(void)
 {
@@ -608,36 +595,31 @@ void board_init(void)
 	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
 		get_cbi_fw_config_db() == DB_LTE_HDMI) {
 		/* Disable i2c on HDMI pins */
-		gpio_config_pin(MODULE_I2C,
-				GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL, 0);
-		gpio_config_pin(MODULE_I2C,
-				GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 0);
+		gpio_config_pin(MODULE_I2C, GPIO_HDMI_HPD_SUB_ODL, 0);
+		gpio_config_pin(MODULE_I2C, GPIO_GPIO92_NC, 0);
 
-		/* Set HDMI and sub-rail enables to output */
-		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL,
-			       chipset_in_state(CHIPSET_STATE_ON) ?
-						GPIO_ODR_LOW : GPIO_ODR_HIGH);
 		gpio_set_flags(GPIO_SUB_C1_INT_EN_RAILS_ODL,   GPIO_ODR_HIGH);
 
 		/* Select HDMI option */
 		gpio_set_level(GPIO_HDMI_SEL_L, 0);
 
 		/* Enable interrupt for passing through HPD */
-		gpio_enable_interrupt(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL);
+		gpio_enable_interrupt(GPIO_HDMI_HPD_SUB_ODL);
 	} else {
 		/* Set SDA as an input */
-		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL,
+		gpio_set_flags(GPIO_HDMI_HPD_SUB_ODL,
 			       GPIO_INPUT);
 	}
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 
+	/* Enable gpio interrupt for pen detect */
+	gpio_enable_interrupt(GPIO_PEN_DET_ODL);
+
 	/* Turn on 5V if the system is on, otherwise turn it off. */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
 			      CHIPSET_STATE_SOFT_OFF);
 	board_power_5v_enable(on);
-
-	gpio_enable_interrupt(GPIO_PEN_DET_ODL);
 
 	/* Initialize g-sensor */
 	base_gyro_config = get_cbi_ssfc_base_sensor();
@@ -645,15 +627,15 @@ void board_init(void)
 	if (base_gyro_config == SSFC_SENSOR_LSM6DSM) {
 		motion_sensors[BASE_ACCEL] = lsm6dsm_base_accel;
 		motion_sensors[BASE_GYRO] = lsm6dsm_base_gyro;
-		ccprints("BASE GYRO is LSM6DSM");
+		cprints(CC_SYSTEM, "SSFC: BASE GYRO is LSM6DSM");
 	} else
-		ccprints("BASE GYRO is BMI160");
+		cprints(CC_SYSTEM, "SSFC: BASE GYRO is BMI160");
 
 	if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_KX022) {
 		motion_sensors[LID_ACCEL] = kx022_lid_accel;
-		ccprints("LID_ACCEL is KX022");
+		cprints(CC_SYSTEM, "SSFC: LID ACCEL is KX022");
 	} else
-		ccprints("LID_ACCEL is BMA253");
+		cprints(CC_SYSTEM, "SSFC: LID ACCEL is BMA253");
 
 	/* Initial thermal */
 	setup_thermal();

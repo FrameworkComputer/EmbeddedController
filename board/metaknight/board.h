@@ -93,8 +93,8 @@
  * Note: these lines will be set as i2c on start-up, but this should be
  * okay since they're ODL.
  */
-#define GPIO_EC_I2C_SUB_USB_C1_SCL GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL
-#define GPIO_EC_I2C_SUB_USB_C1_SDA GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL
+#define GPIO_EC_I2C_SUB_USB_C1_SCL GPIO_GPIO92_NC
+#define GPIO_EC_I2C_SUB_USB_C1_SDA GPIO_HDMI_HPD_SUB_ODL
 
 /* Sensors */
 #define CONFIG_CMD_ACCELS
