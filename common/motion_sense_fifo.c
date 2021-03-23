@@ -64,6 +64,9 @@ static struct timestamp_state next_timestamp[MAX_MOTION_SENSORS];
  */
 static uint32_t next_timestamp_initialized;
 
+/** Need to bypass the FIFO for an important message. */
+static int bypass_needed;
+
 /** Need to wake up the AP. */
 static int wake_up_needed;
 
@@ -358,6 +361,16 @@ void motion_sense_fifo_init(void)
 		online_calibration_init();
 }
 
+int motion_sense_fifo_bypass_needed(void)
+{
+	int res;
+
+	mutex_lock(&g_sensor_mutex);
+	res = bypass_needed;
+	mutex_unlock(&g_sensor_mutex);
+	return res;
+}
+
 int motion_sense_fifo_wake_up_needed(void)
 {
 	int res;
@@ -368,10 +381,11 @@ int motion_sense_fifo_wake_up_needed(void)
 	return res;
 }
 
-void motion_sense_fifo_reset_wake_up_needed(void)
+void motion_sense_fifo_reset_needed_flags(void)
 {
 	mutex_lock(&g_sensor_mutex);
 	wake_up_needed = 0;
+	bypass_needed = 0;
 	mutex_unlock(&g_sensor_mutex);
 }
 
@@ -478,6 +492,8 @@ commit_data_end:
 	 */
 	for (i = 0; i < fifo_staged.count; i++) {
 		data = peek_fifo_staged(i);
+		if (data->flags & MOTIONSENSE_SENSOR_FLAG_BYPASS_FIFO)
+			bypass_needed = 1;
 		if (data->flags & MOTIONSENSE_SENSOR_FLAG_WAKEUP)
 			wake_up_needed = 1;
 

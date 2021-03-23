@@ -22,16 +22,25 @@ enum motion_sense_async_event {
 void motion_sense_fifo_init(void);
 
 /**
+ * Whether or not we need to bypass the FIFO to send an important message.
+ *
+ * @return Non zero when a bypass is needed.
+ */
+int motion_sense_fifo_bypass_needed(void);
+
+/**
  * Whether or not we need to wake up the AP.
+ *
+ * When the wakeup flag is set, the bypass flag must be set to.
  *
  * @return Non zero when a wake-up is needed.
  */
 int motion_sense_fifo_wake_up_needed(void);
 
 /**
- * Resets the flag for wake up needed.
+ * Resets the flag for wake up and bypass needed.
  */
-void motion_sense_fifo_reset_wake_up_needed(void);
+void motion_sense_fifo_reset_needed_flags(void);
 
 /**
  * Insert an async event into the fifo.

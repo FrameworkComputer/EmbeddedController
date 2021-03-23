@@ -348,7 +348,7 @@ void before_test(void)
 	motion_sense_fifo_commit_data();
 	motion_sense_fifo_read(sizeof(data), CONFIG_ACCEL_FIFO_SIZE, &data,
 			       &data_bytes_read);
-	motion_sense_fifo_reset_wake_up_needed();
+	motion_sense_fifo_reset_needed_flags();
 	memset(data, 0, sizeof(data));
 	motion_sense_fifo_reset();
 }

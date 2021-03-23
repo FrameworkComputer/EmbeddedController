@@ -37,8 +37,11 @@ static struct queue const sync_event_queue =
 	QUEUE_NULL(CONFIG_SYNC_QUEUE_SIZE, struct sync_event_t);
 
 struct sync_event_t next_event;
-struct ec_response_motion_sensor_data vector =
-	{.flags = MOTIONSENSE_SENSOR_FLAG_WAKEUP, .data = {0, 0, 0} };
+struct ec_response_motion_sensor_data vector = {
+	.flags = MOTIONSENSE_SENSOR_FLAG_BYPASS_FIFO,
+	.data = {0, 0, 0}
+};
+
 int sync_enabled;
 
 static int sync_read(const struct motion_sensor_t *s, intv3_t v)
