@@ -45,7 +45,7 @@
 static int learn_mode;
 
 /* Mutex for CONTROL1 register, that can be updated from multiple tasks. */
-static mutex_t control1_mutex;
+K_MUTEX_DEFINE(control1_mutex);
 
 /* Charger parameters */
 static const struct charger_info isl9241_charger_info = {
@@ -377,9 +377,6 @@ static void isl9241_init(int chgnum)
 #endif
 
 	const struct battery_info *bi = battery_get_info();
-
-	/* Init the mutex for ZephyrOS (nop for non-Zephyr builds) */
-	(void)k_mutex_init(&control1_mutex);
 
 	/*
 	 * Set the MaxSystemVoltage to battery maximum,
