@@ -33,150 +33,65 @@
  */
 
 const struct board_batt_params board_battery_info[] = {
-	/* AP16L5J */
-	[BATTERY_AP16L5J] = {
+	/* COSMX DM02032XL 333-AC-13-A */
+	[BATTERY_COSMX] = {
 		.fuel_gauge = {
-			.manuf_name = "PANASONIC",
-			.device_name = "AP16L5J",
+			.manuf_name = "333-AC-13-A",
+			.device_name = "DM02032XL",
 			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
-			},
-			.fet = {
-				.mfgacc_support = 0,
-				.reg_addr = 0x0,
-				.reg_mask = 0x4000,
-				.disconnect_val = 0x0,
-			}
-		},
-		.batt_info = {
-			.voltage_max            = 8800,
-			.voltage_normal         = 7700, /* mV */
-			.voltage_min            = 6000, /* mV */
-			.precharge_current      = 256,  /* mA */
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 75,
-		},
-	},
-	/* AP16L5J with PN version */
-	[BATTERY_AP16L5J_009] = {
-		.fuel_gauge = {
-			.manuf_name = "PANASONIC KT00205009",
-			.device_name = "AP16L5J",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
-			},
-			.fet = {
-				.mfgacc_support = 0,
-				.reg_addr = 0x0,
-				.reg_mask = 0x4000,
-				.disconnect_val = 0x0,
-			}
-		},
-		.batt_info = {
-			.voltage_max            = 8800,
-			.voltage_normal         = 7700, /* mV */
-			.voltage_min            = 6000, /* mV */
-			.precharge_current      = 256,  /* mA */
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 75,
-		},
-	},
-	/* AP16L8J */
-	[BATTERY_AP16L8J] = {
-		.fuel_gauge = {
-			.manuf_name = "LGC KT0020G010",
-			.device_name = "AP16L8J",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
 				.mfgacc_support = 1,
 				.reg_addr = 0x0,
-				.reg_mask = 0x0002,
+				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
 			}
 		},
 		.batt_info = {
-			.voltage_max            = 8700,
-			.voltage_normal         = 7500, /* mV */
+			.voltage_max            = 8800, /* mV */
+			.voltage_normal         = 7700, /* mV */
 			.voltage_min            = 6000, /* mV */
 			.precharge_current      = 256,  /* mA */
 			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
+			.start_charging_max_c   = 45,
 			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 75,
+			.charging_max_c         = 45,
+			.discharging_min_c      = -10,
+			.discharging_max_c      = 60,
 		},
 	},
-	/* LGC AP18C8K Battery Information */
-	 [BATTERY_LGC_AP18C8K] = {
+	/* Simplo DM02032XL 333-AC-13-A */
+	[BATTERY_SIMPLO] = {
 		.fuel_gauge = {
-			.manuf_name = "LGC KT0030G020",
-			.device_name = "AP18C8K",
+			.manuf_name = "333-1D-13-A",
+			.device_name = "DM02032XL",
 			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.reg_addr = 0x43,
-				.reg_mask = 0x0001,
-				.disconnect_val = 0x0,
-			},
-		},
-		.batt_info = {
-			.voltage_max            = 13050,
-			.voltage_normal         = 11250,
-			.voltage_min            = 9000,
-			.precharge_current      = 256,
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 75,
-		},
-	},
-	/* Murata AP18C4K Battery Information */
-	[BATTERY_MURATA_AP18C4K] = {
-		.fuel_gauge = {
-			.manuf_name = "Murata KT00304012",
-			.device_name = "AP18C4K",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
-			},
-			.fet = {
+				.mfgacc_support = 1,
 				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
-			},
+				.reg_mask = 0x0006,
+				.disconnect_val = 0x0,
+			}
 		},
 		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11400,
-			.voltage_min		= 9000,
-			.precharge_current	= 256,
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 75,
+			.voltage_max            = 8800, /* mV */
+			.voltage_normal         = 7700, /* mV */
+			.voltage_min            = 6000, /* mV */
+			.precharge_current      = 256,  /* mA */
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 45,
+			.charging_min_c         = 0,
+			.charging_max_c         = 45,
+			.discharging_min_c      = -10,
+			.discharging_max_c      = 60,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_AP16L5J;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_COSMX;
