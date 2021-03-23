@@ -60,12 +60,12 @@ static struct ec_response_get_next_event fifo[FIFO_DEPTH];
  * Mutex for critical sections of mkbp_fifo_add(), which is called
  * from various tasks.
  */
-static struct mutex fifo_add_mutex;
+K_MUTEX_DEFINE(fifo_add_mutex);
 /*
  * Mutex for critical sections of fifo_remove(), which is called from the
  * hostcmd task and from keyboard_clear_buffer().
  */
-static struct mutex fifo_remove_mutex;
+K_MUTEX_DEFINE(fifo_remove_mutex);
 
 /* Button and switch state. */
 static uint32_t mkbp_button_state;
