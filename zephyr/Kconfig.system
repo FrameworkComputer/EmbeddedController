@@ -4,6 +4,14 @@
 
 if PLATFORM_EC
 
+config PLATFORM_EC_HIBERNATE_PSL
+	bool "System hibernating with PSL (Power Switch Logic) mechanism"
+	depends on SOC_FAMILY_NPCX
+	help
+	  Use PSL (Power Switch Logic) for hibernating. It turns off VCC power
+	  rail for ultra-low power consumption and uses PSL inputs rely on VSBY
+	  power rail to wake up ec and the whole system.
+
 config PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY
 	int "System pre-initialization priority"
 	default 20
