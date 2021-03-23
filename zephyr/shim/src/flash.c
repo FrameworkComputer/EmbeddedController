@@ -30,15 +30,7 @@ static uint8_t saved_sr2;
 #define CMD_READ_STATUS_REG              0x05
 #define CMD_READ_STATUS_REG2             0x35
 
-static mutex_t flash_lock;
-static int init_flash_mutex(const struct device *dev)
-{
-	ARG_UNUSED(dev);
-
-	k_mutex_init(&flash_lock);
-	return 0;
-}
-SYS_INIT(init_flash_mutex, POST_KERNEL, 50);
+K_MUTEX_DEFINE(flash_lock);
 
 static int flash_get_status1(void)
 {
