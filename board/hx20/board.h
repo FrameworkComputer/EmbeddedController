@@ -333,6 +333,9 @@
 #define EC_MEMMAP_ER1_BATT_AVER_TEMP		0x03 /* Battery Temp */
 #define EC_MEMMAP_ER1_BATT_PERCENTAGE		0x06 /* Battery Percentage */
 #define EC_MEMMAP_ER1_BATT_STATUS			0x07 /* Battery information */
+#define EC_MEMMAP_ER1_BATT_MANUF_DAY		0x44 /* Manufacturer date - day */
+#define EC_MEMMAP_ER1_BATT_MANUF_MONTH		0x45 /* Manufacturer date - month */
+#define EC_MEMMAP_ER1_BATT_MANUF_YEAR		0x46 /* Manufacturer date - year */
 
 #define EC_BATT_FLAG_FULL		BIT(0) /* Full Charged */
 #define EC_BATT_TYPE			BIT(1) /* (0: NiMh,1: LION) */
