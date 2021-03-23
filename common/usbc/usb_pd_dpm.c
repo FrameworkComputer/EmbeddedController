@@ -429,11 +429,7 @@ void dpm_run(int port)
  * them
  */
 static uint32_t		max_current_claimed;
-static mutex_t		max_current_claimed_lock;
-
-#ifdef CONFIG_ZEPHYR
-static bool		dpm_mutex_initialized;
-#endif
+K_MUTEX_DEFINE(max_current_claimed_lock);
 
 /* Ports with PD sink needing > 1.5 A */
 static uint32_t sink_max_pdo_requested;
@@ -476,13 +472,6 @@ static void balance_source_ports(void)
 	 */
 	if (deferred_waiting)
 		return;
-
-#ifdef CONFIG_ZEPHYR
-	if (!dpm_mutex_initialized) {
-		(void)k_mutex_init(&max_current_claimed_lock);
-		dpm_mutex_initialized = true;
-	}
-#endif
 
 	mutex_lock(&max_current_claimed_lock);
 
