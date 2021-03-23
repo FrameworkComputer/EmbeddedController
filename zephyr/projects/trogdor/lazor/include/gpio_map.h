@@ -36,6 +36,7 @@
 #define GPIO_WARM_RESET_L		NAMED_GPIO(warm_reset_l)
 #define GPIO_WP_L			NAMED_GPIO(ec_wp_odl)
 #define GPIO_EC_INT_L			NAMED_GPIO(ec_int_l)
+#define GPIO_KBD_KSO2			NAMED_GPIO(ec_kso_02_inv)
 
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
