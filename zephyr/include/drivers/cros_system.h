@@ -52,10 +52,20 @@ typedef int (*cros_system_get_reset_cause_api)(const struct device *dev);
  */
 typedef int (*cros_system_soc_reset_api)(const struct device *dev);
 
+/**
+ * @typedef cros_system_hibernate_api
+ * @brief Callback API for entering hibernate state (lowest EC power state).
+ * See cros_system_hibernate() for argument descriptions
+ */
+typedef int (*cros_system_hibernate_api)(const struct device *dev,
+					 uint32_t seconds,
+					 uint32_t microseconds);
+
 /** @brief Driver API structure. */
 __subsystem struct cros_system_driver_api {
 	cros_system_get_reset_cause_api get_reset_cause;
 	cros_system_soc_reset_api soc_reset;
+	cros_system_hibernate_api hibernate;
 };
 
 /**
@@ -100,6 +110,33 @@ static inline int z_impl_cros_system_soc_reset(const struct device *dev)
 	}
 
 	return api->soc_reset(dev);
+}
+
+/**
+ * @brief put the EC in hibernate (lowest EC power state).
+ *
+ * @param dev Pointer to the device structure for the driver instance.
+ * @param seconds Number of seconds before EC enters hibernate state.
+ * @param microseconds Number of micro-secs before EC enters hibernate state.
+
+ * @retval no return if successful.
+ * @retval Negative errno code if failure.
+ */
+__syscall int cros_system_hibernate(const struct device *dev, uint32_t seconds,
+				    uint32_t microseconds);
+
+static inline int z_impl_cros_system_hibernate(const struct device *dev,
+					       uint32_t seconds,
+					       uint32_t microseconds)
+{
+	const struct cros_system_driver_api *api =
+		(const struct cros_system_driver_api *)dev->api;
+
+	if (!api->hibernate) {
+		return -ENOTSUP;
+	}
+
+	return api->hibernate(dev, seconds, microseconds);
 }
 
 /**
