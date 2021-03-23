@@ -367,6 +367,14 @@ struct mutex {
 typedef struct mutex mutex_t;
 
 /**
+ * K_MUTEX_DEFINE is a macro normally provided by the Zephyr kernel,
+ * and allows creation of a static mutex without the need to
+ * initialize it.  We provide the same macro for CrOS EC OS so that we
+ * can use it in shared code.
+ */
+#define K_MUTEX_DEFINE(name) static mutex_t name = { }
+
+/**
  * Lock a mutex.
  *
  * This tries to lock the mutex mtx.  If the mutex is already locked by another
