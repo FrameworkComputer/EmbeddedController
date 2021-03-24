@@ -93,7 +93,7 @@ __override void board_hibernate_late(void)
 	 * GPIO_EN_SLP_Z not implemented in rev0/1,
 	 * fallback to usual hibernate process.
 	 */
-	if (board_get_version() <= 1)
+	if (IS_ENABLED(BOARD_ASURADA) && board_get_version() <= 1)
 		return;
 
 	isl9238c_hibernate(CHARGER_SOLO);

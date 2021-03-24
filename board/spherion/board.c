@@ -185,7 +185,6 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
-
 static void kb_backlight_enable(void)
 {
 	gpio_set_level(GPIO_EC_KB_BL_EN, 1);
