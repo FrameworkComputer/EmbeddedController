@@ -1815,7 +1815,12 @@ static void pd_update_dual_role_config(int port)
 		 * Change to sink if port is currently a source AND (new DRP
 		 * state is force sink OR new DRP state is toggle off and we are
 		 * in the source disconnected state).
+		 *
+		 * Force a debug detach in case there was an incomplete debug
+		 * connection in progress.
 		 */
+		if (get_state_tc(port) != TC_ATTACHED_SRC)
+			tcpm_debug_detach(port);
 		set_state_tc(port, TC_UNATTACHED_SNK);
 	} else if (tc[port].power_role == PD_ROLE_SINK &&
 			drp_state[port] == PD_DRP_FORCE_SOURCE) {
@@ -1823,6 +1828,8 @@ static void pd_update_dual_role_config(int port)
 		 * Change to source if port is currently a sink and the
 		 * new DRP state is force source.
 		 */
+		if (get_state_tc(port) != TC_ATTACHED_SNK)
+			tcpm_debug_detach(port);
 		set_state_tc(port, TC_UNATTACHED_SRC);
 	}
 }
