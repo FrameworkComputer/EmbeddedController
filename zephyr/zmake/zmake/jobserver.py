@@ -3,12 +3,13 @@
 # found in the LICENSE file.
 """Module for job counters, limiting the amount of concurrent executions."""
 
+import logging
 import multiprocessing
 import os
 import re
 import select
 import subprocess
-
+import zmake
 
 class JobHandle:
     """Small object to handle claim of a job."""
@@ -52,6 +53,8 @@ class JobClient:
         kwargs.setdefault('env', os.environ)
         kwargs['env'].update(self.env())
 
+        logger = logging.getLogger(self.__class__.__name__)
+        logger.debug("Running %s", zmake.util.repr_command(*args))
         return subprocess.Popen(*args, **kwargs)
 
     def run(self, *args, claim_job=True, **kwargs):
