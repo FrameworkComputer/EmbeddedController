@@ -212,7 +212,7 @@ static void bq25710_init(int chgnum)
 	 * may not be powered if AC is not connected. Note, this reset is only
 	 * required when running out of RO and not following sysjump to RW.
 	 */
-	if (!system_is_in_rw()) {
+	if (!system_jumped_late()) {
 		rv = bq25710_set_low_power_mode(chgnum, 0);
 		/* Allow enough time for VDDA to be powered */
 		msleep(BQ25710_VDDA_STARTUP_DELAY_MSEC);
