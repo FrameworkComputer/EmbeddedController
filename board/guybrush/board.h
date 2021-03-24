@@ -16,6 +16,16 @@
 /* Keyboard features */
 
 /* Sensors */
+#define CONFIG_ACCELGYRO_BMI160
+#define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+#define CONFIG_ACCEL_INTERRUPTS
+#define I2C_PORT_ACCEL      I2C_PORT_SENSOR
+
+/* EC console commands */
+#define CONFIG_CMD_ACCELS
+#define CONFIG_CMD_ACCEL_INFO
+#define CONFIG_CMD_BUTTON
 
 /* USB Type C and USB PD defines */
 
@@ -31,6 +41,9 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
+
+/* Motion sensor interrupt */
+void motion_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

@@ -111,6 +111,8 @@
 #define CONFIG_TABLET_MODE
 #define CONFIG_GMR_TABLET_MODE
 #define GMR_TABLET_MODE_GPIO_L		GPIO_TABLET_MODE
+#define CONFIG_SUPPRESSED_HOST_COMMANDS \
+	EC_CMD_MOTION_SENSE_CMD
 
 /* Battery Config */
 #define CONFIG_BATTERY_PRESENT_GPIO	GPIO_EC_BATT_PRES_ODL
@@ -308,6 +310,12 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
+enum sensor_id {
+	BASE_ACCEL = 0,
+	BASE_GYRO,
+	SENSOR_COUNT,
+};
+
 /* Battery Types */
 enum battery_type {
 	BATTERY_AP18F4M,
@@ -334,7 +342,6 @@ enum mft_channel {
 	/* Number of MFT channels */
 	MFT_CH_COUNT,
 };
-
 
 /* Common definition for the USB PD interrupt handlers. */
 void tcpc_alert_event(enum gpio_signal signal);
