@@ -20,6 +20,8 @@
 #include "registers.h"
 #include "ucpd-stm32gx.h"
 
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
 static void baseboard_ucpd_apply_rd(int port)
 {
@@ -134,4 +136,49 @@ int baseboard_usbc_init(int port)
 
 	return rv;
 }
+
+#if defined(GPIO_USBC_UF_ATTACHED_SRC) && defined(SECTION_IS_RW)
+static void baseboard_usb3_manage_vbus(void)
+{
+	int level = gpio_get_level(GPIO_USBC_UF_ATTACHED_SRC);
+
+	/*
+	 * GPIO_USBC_UF_MUX_VBUS_EN is an output from the PS8803 which tracks if
+	 * C2 is attached. When it's attached, this signal will be high. Use
+	 * this level to control PPC VBUS on/off.
+	 */
+	ppc_vbus_source_enable(USB_PD_PORT_USB3, level);
+	CPRINTS("C2: State = %s", level ? "Attached.SRC " : "Unattached.SRC");
+}
+DECLARE_DEFERRED(baseboard_usb3_manage_vbus);
+
+void baseboard_usb3_check_state(void)
+{
+	hook_call_deferred(&baseboard_usb3_manage_vbus_data, 0);
+}
+
+int baseboard_config_usbc_usb3_ppc(void)
+{
+	int rv;
+
+	/*
+	 * This port is not usb-pd capable, but there is a ppc which must be
+	 * initialized, and keep the VBUS switch enabled.
+	 */
+	rv = ppc_init(USB_PD_PORT_USB3);
+	if (rv)
+		return rv;
+
+	/* Need to set current limit to 3A to match advertised value */
+	ppc_set_vbus_source_current_limit(USB_PD_PORT_USB3, TYPEC_RP_3A0);
+
+	/* Check state at init time */
+	baseboard_usb3_manage_vbus();
+
+	/* Enable VBUS control interrupt for C2 */
+	gpio_enable_interrupt(GPIO_USBC_UF_ATTACHED_SRC);
+
+	return EC_SUCCESS;
+}
+#endif
 

@@ -200,6 +200,11 @@ static void baseboard_init(void)
 		baseboard_set_mst_lane_control(dock_mf);
 	}
 
+#ifdef GPIO_USBC_UF_ATTACHED_SRC
+	/* Configure UF usbc ppc and check usbc state */
+	baseboard_config_usbc_usb3_ppc();
+#endif /* GPIO_USBC_UF_ATTACHED_SRC */
+
 	/* Enable power button interrupt */
 	gpio_enable_interrupt(GPIO_PWR_BTN);
 	/* Set dock mf preference LED */
@@ -248,6 +253,10 @@ static void baseboard_power_on(void)
 	}
 	/* Enable usbc interrupts */
 	board_enable_usbc_interrupts();
+
+#ifdef GPIO_USBC_UF_ATTACHED_SRC
+	baseboard_config_usbc_usb3_ppc();
+#endif
 }
 
 static void baseboard_power_off(void)

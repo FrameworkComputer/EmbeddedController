@@ -60,23 +60,9 @@ void hpd_interrupt(enum gpio_signal signal)
 	usb_pd_hpd_edge_event(signal);
 }
 
-void board_uf_manage_vbus(void)
-{
-	int level = gpio_get_level(GPIO_USBC_UF_MUX_VBUS_EN);
-
-	/*
-	 * GPIO_USBC_UF_MUX_VBUS_EN is an output from the PS8803 which tracks if
-	 * C1 is attached. When it's attached, this signal will be high. Use
-	 * this level to control PPC VBUS on/off.
-	 */
-	ppc_vbus_source_enable(USB_PD_PORT_USB3, level);
-	CPRINTS("C1: State = %s", level ? "Attached.SRC " : "Unattached.SRC");
-}
-DECLARE_DEFERRED(board_uf_manage_vbus);
-
 static void board_uf_manage_vbus_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(&board_uf_manage_vbus_data, 0);
+	baseboard_usb3_check_state();
 }
 
 static void board_pwr_btn_interrupt(enum gpio_signal signal)
@@ -238,30 +224,6 @@ enum pd_dual_role_states board_tc_get_initial_drp_mode(int port)
 	return pd_dual_role_init[port];
 }
 
-static void board_config_usbc_uf_ppc(void)
-{
-	int vbus_level;
-
-	/*
-	 * This port is not usb-pd capable, but there is a ppc which must be
-	 * initialized, and keep the VBUS switch enabled.
-	 */
-	ppc_init(USB_PD_PORT_USB3);
-	vbus_level = gpio_get_level(GPIO_USBC_UF_MUX_VBUS_EN);
-
-	CPRINTS("usbc: UF PPC configured. VBUS = %s",
-		vbus_level ? "on" : "off");
-
-	/*
-	 * Check initial state as there there may not be an edge event after
-	 * interrupts are enabled if the port is attached at EC reboot time.
-	 */
-	ppc_vbus_source_enable(USB_PD_PORT_USB3, vbus_level);
-
-	/* Enable VBUS control interrupt for C1 */
-	gpio_enable_interrupt(GPIO_USBC_UF_MUX_VBUS_EN);
-}
-
 __override uint8_t board_get_usb_pd_port_count(void)
 {
 	/*
@@ -298,10 +260,7 @@ int dock_get_mf_preference(void)
 
 static void board_init(void)
 {
-#ifdef SECTION_IS_RW
-	/* Initialize PPC and check usbc state */
-	board_config_usbc_uf_ppc();
-#endif
+
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

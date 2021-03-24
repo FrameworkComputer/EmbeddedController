@@ -234,6 +234,7 @@ enum adc_channel {
 
 extern const struct power_seq board_power_seq[];
 extern const size_t board_power_seq_count;
+
 void baseboard_power_button_evt(int level);
 
 /*
@@ -251,6 +252,22 @@ int baseboard_usbc_init(int port);
  * @return 1 if multi function (DP + USB3) is preferred, 0 otherwise
  */
 int dock_get_mf_preference(void);
+
+/*
+ * Initialize and configure PPC used for USB3 only port
+ *
+ * @return EC success if PPC initialization is successful
+ */
+int baseboard_config_usbc_usb3_ppc(void);
+
+/*
+ * Called from interrupt handler for PS8803 attached.src gpio. This gpio signal
+ * will be set high by the PS8803 when it's in the attached.src state and low
+ * otherwise. For boards wich have a PPC on this port, this signal is used to
+ * enable/disable VBUS in the PPC.
+ */
+void baseboard_usb3_check_state(void);
+
 
 /*
  * Set MST_LANE_CONTROL gpio to match the DP pin configuration selected
