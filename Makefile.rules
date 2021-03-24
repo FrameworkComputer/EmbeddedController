@@ -114,7 +114,8 @@ cmd_run_coverage_test = ./util/run_host_test --coverage $* $(silent)
 # generate new version.h, compare if it changed and replace if so
 cmd_version = ./util/getversion.sh > $@.tmp && \
 	cmp -s $@.tmp $@ && rm -f $@.tmp || mv $@.tmp $@
-cmd_vif = $(out)/util/genvif -b $(BOARD) -o $(out)
+cmd_vif = $(out)/util/genvif -b $(BOARD) -o $(out) \
+	  -v board/$(BOARD)/vif_override.xml
 cmd_mv_from_tmp = mv $(out)/$*.bin.tmp $(out)/$*.bin
 cmd_extractrw-y = dd if=$(out)/$(PROJECT).bin.tmp of=$(out)/$(PROJECT).RW.bin \
 	       bs=1 count=$(_rw_size) skip=$(_rw_off) $(silent_err)
@@ -459,7 +460,7 @@ $(out)/%.bin: $(out)/%.obj
 			$(call quiet,copyrw-y,COPY_RW))
 	$(call quiet,mv_from_tmp,MV     )
 
-$(out)/$(BOARD)_vif.xml: $(out)/util/genvif
+$(out)/$(BOARD)_vif.xml: $(out)/util/genvif board/$(BOARD)/vif_override.xml
 	$(call quiet,vif,VIF    )
 
 flat-y := $(out)/RW/$(PROJECT).RW.flat
