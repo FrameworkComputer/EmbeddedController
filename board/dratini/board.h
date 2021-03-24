@@ -180,6 +180,8 @@ extern const int keyboard_factory_scan_pins_used;
 
 bool board_is_convertible(void);
 
+void ccd_mode_isr(enum gpio_signal signal);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */
