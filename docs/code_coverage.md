@@ -39,10 +39,29 @@ appear to be caused in part by using relative paths instead of absolute paths.)
 This needs some work, but you can generate coverage reports with these commands:
 
 ```
+# Get initial (0 lines executed) coverage for as many boards as possible
+for project in $(cd zephyr/projects; find -name zmake.yaml -print)
+do
+        project="$(dirname ${project#./})"
+        echo "Building initial coverage for ${project}"
+        builddir="build/ztest-coverage/projects/$project"
+        infopath="build/ztest-coverage/projects/${project/\//_}.info"
+        zmake configure --coverage -B ${builddir} zephyr/projects/$project
+        for buildsubdir in ${builddir}/build-* ; do ninja -C ${buildsubdir} all.libraries ; done
+        lcov --gcov-tool $HOME/trunk/src/platform/ec/util/llvm-gcov.sh -q -o - -c -d ${builddir} -t "${project/\//_}" \
+          --exclude "*/build-*/zephyr/*/generated/*" --exclude '*/test/*' --exclude '*/testsuite/*' \
+          -i | util/normalize_symlinks.py >${infopath}
+done
+
+# Get unit test coverage
 for i in zephyr/test/* ; do
         builddir="build/ztest-coverage/$(basename $i)"
         zmake configure --coverage --test -B ${builddir} $i
-        lcov --gcov-tool $HOME/trunk/src/platform/ec/util/llvm-gcov.sh -q -o - -c -d ${builddir} -t "$(basename $i)" --exclude '*/build-singleimage/zephyr/*/generated/*' | util/normalize_symlinks.py >${builddir}.info
+        lcov --gcov-tool $HOME/trunk/src/platform/ec/util/llvm-gcov.sh -q -o - -c -d ${builddir} -t "$(basename $i)" \
+          --exclude '*/build-singleimage/zephyr/*/generated/*' --exclude '*/test/*' --exclude '*/testsuite/*' \
+          | util/normalize_symlinks.py >${builddir}.info
 done
-genhtml -q -o build/ztest-coverage/coverage_rpt -t "Zephyr EC Unittest" -p /mnt/host/source/src -s build/ztest-coverage/*.info
+
+# Merge into a nice html report
+genhtml -q -o build/ztest-coverage/coverage_rpt -t "Zephyr EC Unittest" -p /mnt/host/source/src -s build/ztest-coverage/*.info build/ztest-coverage/projects/*.info
 ```

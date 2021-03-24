@@ -10,3 +10,6 @@
 config BOARD_TROGDOR
 	bool "Google Trogdor Baseboard"
 	depends on SOC_NPCX7M6FC
+	# NPCX doesn't actually have enough ram for coverage, but this will
+	# allow generating initial 0 line coverage.
+	select HAS_COVERAGE_SUPPORT

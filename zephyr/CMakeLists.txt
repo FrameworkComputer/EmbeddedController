@@ -163,6 +163,16 @@ add_subdirectory("app")
 add_subdirectory("drivers")
 
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
+# Creates a phony target all.libraries in case you only want to build the
+# libraries and not the binaries. For example for creating the initial zero
+# coverage files.
+get_property(ZEPHYR_LIBS_PROPERTY GLOBAL PROPERTY ZEPHYR_LIBS)
+add_custom_target(
+  all.libraries
+  DEPENDS
+  ${ZEPHYR_LIBS_PROPERTY}
+  kernel
+  )
 
 # CONFIG_PLATFORM_EC files that don't relate to something below should be
 # included here, sorted by filename. This is common functionality which is
