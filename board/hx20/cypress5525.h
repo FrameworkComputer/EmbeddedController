@@ -261,10 +261,7 @@ enum cypd_response {
 enum cyp5525_state {
 	CYP5525_STATE_ERROR,
 	CYP5525_STATE_POWER_ON,
-	CYP5525_STATE_BOOTING,
-	CYP5525_STATE_I2C_RESET,
-	CYP5525_STATE_RESET,
-	CYP5525_STATE_SETUP,
+	CYP5525_STATE_APP_SETUP,
 	CYP5525_STATE_READY,
 	CYP5525_STATE_BOOTLOADER,
 	CYP5525_STATE_COUNT,
@@ -354,5 +351,9 @@ int cypd_write_reg8(int controller, int reg, int data);
 int cypd_write_reg_block(int controller, int reg, uint8_t *data, int len);
 
 int cypd_read_reg_block(int controller, int reg, uint8_t *data, int len);
+
+void cypd_reinitialize(void);
+
+void cypd_enque_evt(int evt);
 
 #endif	/* __CROS_EC_CYPRESS5525_H */
