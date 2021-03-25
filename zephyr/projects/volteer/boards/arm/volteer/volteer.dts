@@ -138,20 +138,6 @@
 		};
 	};
 
-	named-fans {
-		compatible = "named-fans";
-
-		fan_0 {
-			label = "FAN_0";
-			pwm = <&pwm_fan>;
-			rpm_min = <1900>;
-			rpm_start = <1900>;
-			rpm_max = <5900>;
-			tach = <&tach1>;
-			enable_gpio = <&gpio_en_pp5000_fan>;
-		};
-	};
-
 	soc {
 		cros_kb_raw: cros-kb-raw@400a3000 {
 			compatible = "nuvoton,npcx-cros-kb-raw";
@@ -269,13 +255,4 @@
 
 &adc0 {
 	status = "okay";
-};
-
-/* Tachemeter for fan speed measurement */
-&tach1 {
-	status = "okay";
-	pinctrl-0 = <&alt3_ta1_sl1>; /* Use TA1 as input pin */
-	port = <NPCX_TACH_PORT_A>; /* port-A is selected */
-	sample_clk = <NPCX_TACH_FREQ_LFCLK>; /* Use LFCLK as sampling clock */
-	pulses_per_round = <2>; /* number of pulses per round of encoder */
 };
