@@ -5,6 +5,7 @@
 board: volteer
 dts-overlays:
   - gpio.dts
+  - pwm.dts
 supported-zephyr-versions:
   - v2.5
 toolchain: coreboot-sdk
