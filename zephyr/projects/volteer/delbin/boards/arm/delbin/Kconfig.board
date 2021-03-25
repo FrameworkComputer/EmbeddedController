@@ -1,7 +1,0 @@
-# Copyright 2021 The Chromium OS Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
-
-config BOARD_DELBIN
-	bool "Google Delbin EC"
-	depends on SOC_NPCX7M6FB # Actually NPCX7M6FC; C has 512K Flash
