@@ -4,9 +4,9 @@
 
 # Zephyr Kernel Configuration
 CONFIG_SOC_SERIES_NPCX7=y
+CONFIG_SOC_NPCX7M6FC=y
 
 # Platform Configuration
-CONFIG_SOC_NPCX7M6FB=y # Actually NPCX7M6FC; C just has 512K Flash
 CONFIG_BOARD_VOLTEER=y
 
 # NPCX BootLoader Table Configuration
