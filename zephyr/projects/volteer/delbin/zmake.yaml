@@ -3,6 +3,8 @@
 # found in the LICENSE file.
 
 board: delbin
+dts-overlays:
+  - gpio.dts
 supported-zephyr-versions:
   - v2.5
 toolchain: coreboot-sdk
