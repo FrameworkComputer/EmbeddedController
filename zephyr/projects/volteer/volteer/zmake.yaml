@@ -4,6 +4,7 @@
 
 board: volteer
 dts-overlays:
+  - bb_retimer.dts
   - gpio.dts
   - fan.dts
   - motionsense.dts
