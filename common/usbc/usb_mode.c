@@ -269,14 +269,20 @@ uint32_t enter_usb_setup_next_msg(int port, enum tcpm_transmit_type *type)
 	switch (usb4_state[port]) {
 	case USB4_START:
 		disc_sop_prime = pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+		/*
+		 * Ref: Tiger Lake Platform PD Controller Interface Requirements
+		 * for Integrated USBC, section A.2.2: USB4 as DFP.
+		 * Enter safe mode before sending Enter USB SOP/SOP'/SOP''
+		 * TODO (b/156749387): Remove once data reset feature is in
+		 * place.
+		 */
+		usb_mux_set_safe_mode(port);
 
 		if (pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME) < VDM_VER20 ||
 		    disc_sop_prime->identity.product_t1.a_rev30.vdo_ver <
 							VDO_VERSION_1_3 ||
 		    get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE) {
 			usb4_state[port] = USB4_ENTER_SOP;
-			/* Ref: TBT4 PD Discover Flow */
-			usb_mux_set_safe_mode(port);
 		} else {
 			usb4_state[port] = USB4_ENTER_SOP_PRIME;
 			*type = TCPC_TX_SOP_PRIME;
@@ -290,11 +296,6 @@ uint32_t enter_usb_setup_next_msg(int port, enum tcpm_transmit_type *type)
 		break;
 	case USB4_ENTER_SOP:
 		*type = TCPC_TX_SOP;
-		/*
-		 * Set the USB mux to safe state to avoid damaging the mux pins,
-		 * since they are being re-purposed for USB4.
-		 */
-		usb_mux_set_safe_mode(port);
 		break;
 	case USB4_ACTIVE:
 		return -1;
