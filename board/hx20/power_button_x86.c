@@ -266,7 +266,7 @@ static void state_machine(uint64_t tnow)
 			 * when in preOS still need send power button signal
 			 * until ACPI driver ready
 			 */
-			if (*host_get_customer_memmap(0x00) & BIT(0)) {
+			if (pos_get_state()) {
 				/*
 				 * When chipset is on and ACPI driver ready,
 				 * we will send the SCI event to trigger modern standby.
