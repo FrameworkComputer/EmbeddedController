@@ -33,11 +33,10 @@ GPIO_INT(BC12_EC_INT_ODL,   PIN(J, 6), GPIO_INT_FALLING,
          bc12_interrupt)
 GPIO_INT(AP_EC_WATCHDOG_L,  PIN(C, 7), GPIO_INT_FALLING | GPIO_SEL_1P8V,
          chipset_watchdog_interrupt)
-GPIO_INT(TABLET_MODE_L,     PIN(J, 7), GPIO_INT_BOTH,
-         gmr_tablet_switch_isr)
 GPIO_INT(UART1_RX,          PIN(B, 0), GPIO_INT_FALLING,
          uart_deepsleep_interrupt) /* UART_DEBUG_TX_EC_RX */
 /* Unimplemented interrupts */
+GPIO(TABLET_MODE_L,         PIN(J, 7), GPIO_INPUT)
 GPIO(VOLUME_DOWN_L,         PIN(D, 5), GPIO_INPUT)
 GPIO(VOLUME_UP_L,           PIN(D, 6), GPIO_INPUT)
 GPIO(ALS_RGB_INT_ODL,       PIN(F, 0), GPIO_INPUT)
