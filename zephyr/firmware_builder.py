@@ -33,7 +33,7 @@ def build(opts):
     targets = [
         'projects/kohaku',
         'projects/posix-ec',
-        'projects/volteer',
+        'projects/volteer/volteer',
     ]
     for target in targets:
         if os.path.exists(temp_build_dir):
