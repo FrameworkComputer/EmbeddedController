@@ -46,6 +46,9 @@ static int forcing_shutdown;  /* Forced shutdown in progress? */
 static bool want_boot_ap_at_g3;
 static int ap_boot_delay = 9;  /* set 9 second for global reset wait time  */
 static int me_change;
+static int power_s5_up;
+static int s5_exit_tries;
+static int stress_test_enable;
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
@@ -112,6 +115,13 @@ static void clear_rtcwake(void)
 	*host_get_customer_memmap(0x02) &= ~BIT(0);
 }
 #endif
+
+void clear_power_s5_up(void)
+{
+	/* APCI driver ready, clear power s5 up flag to shutdown state */
+	CPRINTS("cleaer power s5 up!");
+	power_s5_up = 0;
+}
 
 static void chipset_force_g3(void)
 {
@@ -328,27 +338,44 @@ enum power_state power_handle_state(enum power_state state)
 #endif
 	case POWER_S5:
 		CPRINTS("power handle state in S5");
+
 		if (forcing_shutdown) {
 			power_button_pch_release();
 			forcing_shutdown = 0;
 		}
-		/* Wait for S5 exit for global reset */
-		while ((power_get_signals() & IN_PCH_SLP_S4_DEASSERTED) == 0) {
-			if (task_wait_event(SECOND*ap_boot_delay) == TASK_EVENT_TIMER) {
-				CPRINTS("timeout waiting for S5 exit");
-				power_button_enable_led(0);
-				ap_boot_delay = 9;
-				return POWER_S5G3; /* Power up again */
+
+		if (power_s5_up || stress_test_enable) {
+			/* Wait S5 signal when power up from S5 */
+
+			while ((power_get_signals() & IN_PCH_SLP_S4_DEASSERTED) == 0) {
+
+				if (me_change) {
+					CPRINTS("Turn off RSMRST for reset ME mode");
+					gpio_set_level(GPIO_PCH_RSMRST_L, 0);
+					me_change = 0;
+				}
+
+				if (task_wait_event(SECOND) == TASK_EVENT_TIMER) {
+
+					if (++s5_exit_tries > ap_boot_delay) {
+						CPRINTS("timeout waiting for S5");
+						power_button_enable_led(0);
+						s5_exit_tries = 0;
+						stress_test_enable = 0;
+						ap_boot_delay = 9;
+						return POWER_S5G3;
+					}
+
+					/* power up again */
+					return POWER_G3S5;
+				}
 			}
 
-			if (me_change){
-				CPRINTS("Turn off RSMRST for reset ME mode");
-				gpio_set_level(GPIO_PCH_RSMRST_L, 0);
-				me_change = 0;
-			}
+			return POWER_S5S3; /* Power up to next state */
 		}
 
-		return POWER_S5S3; /* Power up to next state */
+		s5_exit_tries = 0;
+		return POWER_S5G3;
 
 		break;
 
@@ -380,7 +407,14 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_G3S5:
+
+		/* wait S5 signal, so return POWER S5 state */
+		if (s5_exit_tries != 0)
+			return POWER_S5;
+
 		CPRINTS("power handle state in G3S5");
+
+		power_s5_up = 1;
 
 		if (board_chipset_power_on()) {
 			cancel_board_power_off();
@@ -479,6 +513,7 @@ static enum ec_status set_ap_reboot_delay(struct host_cmd_handler_args *args)
 {
 	const struct ec_response_ap_reboot_delay *p = args->params;
 
+	stress_test_enable = 1;
 	/* don't let AP send zero it will stuck power sequence at S5 */
 	if (p->delay < 181 && p->delay)
 		ap_boot_delay = p->delay;
@@ -495,6 +530,7 @@ static enum ec_status me_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_me_control *p = args->params;
 	me_change = 1;
+	power_s5_up = 1; /* Need to wait S5 signal to auto power up */
 
 	/* CPU change ME mode based on ME_EN while RSMRST rising.
 	 * So, when we received ME control command, we need to turn off RSMRST.
