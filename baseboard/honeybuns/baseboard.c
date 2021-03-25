@@ -108,6 +108,9 @@ static void baseboard_set_led(enum led_color color)
 	 * associated with a power button press.
 	 */
 	CPRINTS("led: color = %d", color);
+
+	/* Not all boards may have LEDs under EC control */
+#if defined(GPIO_EC_STATUS_LED1) && defined(GPIO_EC_STATUS_LED2)
 	if (color == OFF) {
 		gpio_set_level(GPIO_EC_STATUS_LED1, 1);
 		gpio_set_level(GPIO_EC_STATUS_LED2, 1);
@@ -118,6 +121,7 @@ static void baseboard_set_led(enum led_color color)
 		gpio_set_level(GPIO_EC_STATUS_LED1, 0);
 		gpio_set_level(GPIO_EC_STATUS_LED2, 0);
 	}
+#endif
 }
 
 static void baseboard_led_callback(void);
@@ -225,6 +229,8 @@ static void baseboard_init(void)
 	/* Set up host port usbc to present Rd on CC lines */
 	if(baseboard_usbc_init(USB_PD_PORT_HOST))
 		CPRINTS("usbc: Failed to set up sink path");
+	else
+		CPRINTS("usbc: sink path configure success!");
 #endif /* SECTION_IS_RW */
 }
 /*
@@ -285,6 +291,11 @@ static void baseboard_power_off(void)
 	tcpm_release(USB_PD_PORT_HOST);
 	/* Disable PPC/TCPC interrupts */
 	board_disable_usbc_interrupts();
+
+#ifdef GPIO_USBC_UF_ATTACHED_SRC
+	/* Disable PPC interrupts for PS8803 managed port */
+	baseboard_usbc_usb3_enable_interrupts(0);
+#endif
 	/* Go into power off state */
 	board_power_sequence(0);
 }

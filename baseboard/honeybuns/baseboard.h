@@ -158,6 +158,7 @@ enum usb_strings {
 #define CONFIG_CMD_TCPC_DUMP
 
 #define CONFIG_MP4245
+#define USB_HUB_OCP_RESET_MSEC (10 * MSEC)
 
 #else /* RO Specific Config Options */
 
@@ -276,6 +277,19 @@ void baseboard_usb3_check_state(void);
  * @param dock_mf 1 -> 2 lanes DP, 0 -> 4 lanes DP
  */
 void baseboard_set_mst_lane_control(int dock_mf);
+
+/*
+ * Control enable/disable for interrupts used for usb3 only usbc port.
+ *
+ * @param enable -> 1 for enable, 0 for disable
+ */
+void baseboard_usbc_usb3_enable_interrupts(int enable);
+
+/*
+ * Called from interrupt handler for PPC used on usb3 only port.
+ *
+ */
+void baseboard_usbc_usb3_irq(void);
 
 #endif /* !__ASSEMBLER__ */
 

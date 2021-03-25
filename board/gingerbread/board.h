@@ -59,6 +59,7 @@
 #include "registers.h"
 
 #define GPIO_DP_HPD GPIO_DDI_MST_IN_HPD
+#define GPIO_BPWR_DET GPIO_TP71
 
 #define GPIO_TRIGGER_1 GPIO_EC_HUB1_RESET_L
 #define GPIO_TRIGGER_2 GPIO_EC_HUB2_RESET_L

@@ -89,6 +89,11 @@ static void board_pwr_btn_interrupt(enum gpio_signal signal)
 {
 	baseboard_power_button_evt(gpio_get_level(signal));
 }
+
+static void board_usbc_usb3_interrupt(enum gpio_signal signal)
+{
+	baseboard_usbc_usb3_irq();
+}
 #endif /* SECTION_IS_RW */
 
 #include "gpio_list.h" /* Must come after other header files. */
@@ -100,6 +105,7 @@ static void board_pwr_btn_interrupt(enum gpio_signal signal)
  */
 const struct power_seq board_power_seq[] = {
 	{GPIO_EN_AC_JACK,               1, 20},
+	{GPIO_EC_DFU_MUX_CTRL,          0, 0},
 	{GPIO_EN_PP5000_A,              1, 31},
 	{GPIO_MST_LP_CTL_L,             1, 0},
 	{GPIO_EN_PP3300_B,              1, 1},
@@ -306,9 +312,19 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
+static void board_usb_pd_dp_ocp_reset(void)
+{
+	gpio_set_level(GPIO_USBC_ALTMODE_OCP_NOTIFY, 1);
+}
+DECLARE_DEFERRED(board_usb_pd_dp_ocp_reset);
+
 void board_overcurrent_event(int port, int is_overcurrented)
 {
-	/* TODO(b/174825406): check correct operation for honeybuns */
+	if (port == USB_PD_PORT_DP) {
+		gpio_set_level(GPIO_USBC_ALTMODE_OCP_NOTIFY, !is_overcurrented);
+		hook_call_deferred(&board_usb_pd_dp_ocp_reset_data,
+				   USB_HUB_OCP_RESET_MSEC);
+	}
 }
 
 int dock_get_mf_preference(void)

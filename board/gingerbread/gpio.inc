@@ -73,6 +73,7 @@ GPIO(FLASH_SPI1_MOSI,               PIN(A, 7),       GPIO_INT_BOTH)
 
 /* misc signals */
 GPIO(EC_DFU_MUX_CTRL,               PIN(A, 8),       GPIO_OUT_HIGH)
+GPIO(TP71,               PIN(B, 0),       GPIO_OUT_LOW)
 
 /*
  * I2C SCL/SDA pins. These will normally be under control of the peripheral from

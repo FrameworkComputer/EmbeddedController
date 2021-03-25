@@ -10,6 +10,7 @@
 #include "driver/mp4245.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/mp4245.h"
+#include "hooks.h"
 #include "task.h"
 #include "timer.h"
 #include "usb_common.h"
@@ -282,6 +283,34 @@ int pd_check_power_swap(int port)
 
 	return 0;
 }
+
+static void usb_tc_connect(void)
+{
+	/*
+	 * The EC needs to indicate to the USB hub when the host port is
+	 * attached so that the USB-EP can be properly enumerated. GPIO_BPWR_DET
+	 * is used for this purpose.
+	 */
+	if (pd_is_connected(USB_PD_PORT_HOST)) {
+		gpio_set_level(GPIO_BPWR_DET, 1);
+#ifdef GPIO_UFP_PLUG_DET
+		gpio_set_level(GPIO_UFP_PLUG_DET, 1);
+#endif
+	}
+}
+DECLARE_HOOK(HOOK_USB_PD_CONNECT, usb_tc_connect, HOOK_PRIO_DEFAULT);
+
+static void usb_tc_disconnect(void)
+{
+	/* Only the host port disconnect is relevant */
+	if (!pd_is_connected(USB_PD_PORT_HOST)) {
+		gpio_set_level(GPIO_BPWR_DET, 0);
+#ifdef GPIO_UFP_PLUG_DET
+		gpio_set_level(GPIO_UFP_PLUG_DET, 0);
+#endif
+	}
+}
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, usb_tc_disconnect, HOOK_PRIO_DEFAULT);
 
 __override bool pd_can_source_from_device(int port, const int pdo_cnt,
 				      const uint32_t *pdos)

@@ -15,6 +15,7 @@ GPIO_INT(USBC_DP_PPC_INT_ODL,    PIN(E,  7),      GPIO_INT_FALLING | GPIO_PULL_U
 GPIO_INT(DDI_MST_IN_HPD,         PIN(C,  14),     GPIO_INT_BOTH, hpd_interrupt)
 GPIO_INT(USBC_UF_MUX_VBUS_EN,    PIN(C,  12),     GPIO_INT_BOTH, board_uf_manage_vbus_interrupt)
 GPIO_INT(PWR_BTN,                PIN(A,  0),      GPIO_INT_BOTH, board_pwr_btn_interrupt)
+GPIO_INT(USBC_UF_PPC_INT_ODL,    PIN(B,  5),      GPIO_INT_FALLING | GPIO_PULL_UP, board_usbc_usb3_interrupt)
 #endif
 
 /* Power sequencing signals */
@@ -32,6 +33,7 @@ GPIO(EN_PP5000_HSPORT,              PIN(D,  0), GPIO_OUT_LOW)
 GPIO(MST_LP_CTL_L,                  PIN(D, 10), GPIO_ODR_LOW)
 GPIO(MST_RST_L,                     PIN(E, 14), GPIO_ODR_LOW)
 GPIO(MST_HUB_LANE_SWITCH,           PIN(C, 15), GPIO_OUT_HIGH)
+GPIO(MST_UFP_PLUG_DET,              PIN(B, 12), GPIO_OUT_LOW)
 
 /* Display Demux signals */
 GPIO(DEMUX_DUAL_DP_MODE,            PIN(B,  0), GPIO_OUT_LOW)
@@ -49,6 +51,8 @@ GPIO(USBC_UF_RESET_L,               PIN(D,  2), GPIO_ODR_LOW)
 /* USB Hubs signals */
 GPIO(EC_HUB2_RESET_L,               PIN(C,  5), GPIO_ODR_LOW)
 GPIO(EC_HUB3_RESET_L,               PIN(B, 10), GPIO_ODR_LOW)
+GPIO(USBC_ALTMODE_OCP_NOTIFY,       PIN(F,  0), GPIO_OUT_HIGH)
+GPIO(USBC_DATA_OCP_NOTIFY,          PIN(F,  1), GPIO_OUT_HIGH)
 
 /* USB-A Current limit switches, set default to 1.5A */
 GPIO(TP73,                          PIN(C,  0), GPIO_OUT_LOW)
@@ -57,7 +61,6 @@ GPIO(EC_STATUS_LED1,                PIN(C,  1), GPIO_OUT_HIGH)
 GPIO(EC_STATUS_LED2,                PIN(C,  2), GPIO_OUT_HIGH)
 GPIO(USB3_A5_CDP_EN,                PIN(B,  9), GPIO_OUT_LOW)
 GPIO(USB3_A6_CDP_EN,                PIN(C, 13), GPIO_OUT_LOW)
-GPIO(TP41,                          PIN(B, 12), GPIO_OUT_LOW)
 
 /* Write protect */
 GPIO(EC_FLASH_WP_ODL,               PIN(A,  3), GPIO_ODR_HIGH)
