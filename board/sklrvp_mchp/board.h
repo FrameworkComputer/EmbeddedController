@@ -109,7 +109,7 @@
  * Values in MHz are 20, 25, 33, 50, and 66
  */
 /* SKL/KBL + EVB fly-wire hook up only supports 20MHz */
-#define CONFIG_HOSTCMD_ESPI_EC_MAX_FREQ 20
+#define CONFIG_HOSTCMD_ESPI_EC_MAX_FREQ	MCHP_ESPI_CAP1_MAX_FREQ_20M
 
 
 /*
@@ -120,7 +120,7 @@
  * 3 = Single, Dual, and Quad
  */
 /* KBL + EVB fly-wire hook up only support Single mode */
-#define CONFIG_HOSTCMD_ESPI_EC_MODE		0
+#define CONFIG_HOSTCMD_ESPI_EC_MODE	MCHP_ESPI_CAP1_SINGLE_MODE
 
 /*
  * Bit map of eSPI channels EC advertises
@@ -129,7 +129,7 @@
  * bit[2] = 1 OOB channel
  * bit[3] = 1 Flash channel
  */
-#define CONFIG_HOSTCMD_ESPI_EC_CHAN_BITMAP	0x0F
+#define CONFIG_HOSTCMD_ESPI_EC_CHAN_BITMAP	MCHP_ESPI_CAP0_ALL_CHAN_SUPP
 
 /* MCHP EC variant */
 #define VARIANT_INTELRVP_EC_MCHP
