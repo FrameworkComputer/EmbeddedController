@@ -180,19 +180,25 @@ const struct pwm_t pwm_channels[] = {
 		.channel = 0,
 		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
 		.freq_hz = 324, /* maximum supported frequency */
-		.pcfsr_sel = PWM_PRESCALER_C4
+		.pcfsr_sel = PWM_PRESCALER_C4,
 	},
 	[PWM_CH_LED2] = {
 		.channel = 1,
 		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
 		.freq_hz = 324, /* maximum supported frequency */
-		.pcfsr_sel = PWM_PRESCALER_C4
+		.pcfsr_sel = PWM_PRESCALER_C4,
 	},
 	[PWM_CH_LED3] = {
 		.channel = 2,
 		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
 		.freq_hz = 324, /* maximum supported frequency */
-		.pcfsr_sel = PWM_PRESCALER_C4
+		.pcfsr_sel = PWM_PRESCALER_C4,
+	},
+	[PWM_CH_KBLIGHT] = {
+		.channel = 4,
+		.flags = 0,
+		.freq_hz = 10000, /* SYV226 supports 10~100kHz */
+		.pcfsr_sel = PWM_PRESCALER_C6,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
@@ -202,6 +208,9 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 static void board_chipset_resume(void)
 {
 	gpio_set_level(GPIO_EC_BL_EN_OD, 1);
+	if (IS_ENABLED(CONFIG_PWM_KBLIGHT))
+		gpio_set_level(GPIO_EN_KB_BL, 1);
+
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
@@ -209,6 +218,8 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 static void board_chipset_suspend(void)
 {
 	gpio_set_level(GPIO_EC_BL_EN_OD, 0);
+	if (IS_ENABLED(CONFIG_PWM_KBLIGHT))
+		gpio_set_level(GPIO_EN_KB_BL, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 

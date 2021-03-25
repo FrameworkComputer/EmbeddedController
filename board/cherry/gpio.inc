@@ -86,7 +86,7 @@ GPIO(EN_PP900_NVME_X,        PIN(J, 5), GPIO_OUTPUT | GPIO_PULL_DOWN)
 GPIO(PG_NVME_OD,             PIN(H, 3), GPIO_INPUT)
 
 /* Misc Signals */
-GPIO(EN_KB_BL,               PIN(A, 5), GPIO_OUTPUT)
+GPIO(EN_KB_BL,               PIN(A, 5), GPIO_OUT_LOW)
 GPIO(EC_BATT_PRES_ODL,       PIN(C, 0), GPIO_INPUT)
 GPIO(EN_EC_ID_ODL,           PIN(H, 5), GPIO_ODR_LOW)
 GPIO(ENTERING_RW,            PIN(C, 5), GPIO_OUT_LOW) /* EC_ENTERING_RW */
