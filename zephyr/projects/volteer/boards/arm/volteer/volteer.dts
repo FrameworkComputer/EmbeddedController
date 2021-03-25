@@ -195,8 +195,6 @@
 	};
 };
 
-#include "volteer_motionsense.dtsi"
-
 &uart1 {
 	status = "okay";
 	current-speed = <115200>;

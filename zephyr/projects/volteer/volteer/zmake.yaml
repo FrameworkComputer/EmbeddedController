@@ -6,6 +6,7 @@ board: volteer
 dts-overlays:
   - gpio.dts
   - fan.dts
+  - motionsense.dts
   - pwm.dts
 supported-zephyr-versions:
   - v2.5
