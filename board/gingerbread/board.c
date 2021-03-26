@@ -78,6 +78,11 @@ void hpd_interrupt(enum gpio_signal signal)
 {
 	usb_pd_hpd_edge_event(signal);
 }
+
+static void board_pwr_btn_interrupt(enum gpio_signal signal)
+{
+	baseboard_power_button_evt(gpio_get_level(signal));
+}
 #endif /* SECTION_IS_RW */
 
 #include "gpio_list.h" /* Must come after other header files. */
@@ -91,7 +96,7 @@ const struct power_seq board_power_seq[] = {
 	{GPIO_EN_AC_JACK,               1, 20},
 	{GPIO_EN_PP5000_A,              1, 31},
 	{GPIO_EN_PP3300_A,              1, 35},
-	{GPIO_STATUS_LED1,              0, 100},
+	{GPIO_EC_STATUS_LED1,           0, 100},
 	{GPIO_EN_BB,                    1, 30},
 	{GPIO_EN_PP1100_A,              1, 30},
 	{GPIO_EN_PP1000_A,              1, 20},
@@ -110,7 +115,7 @@ const struct power_seq board_power_seq[] = {
 	{GPIO_DEMUX_DP_HDMI_PD_N,       1, 10},
 	{GPIO_DEMUX_DUAL_DP_MODE,       1, 10},
 	{GPIO_DEMUX_DP_HDMI_MODE,       1, 1},
-	{GPIO_STATUS_LED2,              0, 100},
+	{GPIO_EC_STATUS_LED2,           0, 100},
 };
 
 const size_t board_power_seq_count = ARRAY_SIZE(board_power_seq);
@@ -130,6 +135,7 @@ const void *const usb_strings[] = {
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 #ifndef SECTION_IS_RW
+/* USB-C PPC Configuration */
 struct ppc_config_t ppc_chips[] = {
 	[USB_PD_PORT_HOST] = {
 		.i2c_port = I2C_PORT_I2C3,
@@ -218,7 +224,7 @@ void board_reset_pd_mcu(void)
 
 
 /* Power Delivery and charging functions */
-void board_tcpc_init(void)
+void board_enable_usbc_interrupts(void)
 {
 	board_reset_pd_mcu();
 
@@ -231,6 +237,28 @@ void board_tcpc_init(void)
 	/* Enable HPD interrupt */
 	gpio_enable_interrupt(GPIO_DDI_MST_IN_HPD);
 
+}
+
+/* Power Delivery and charging functions */
+void board_disable_usbc_interrupts(void)
+{
+	/* Disable PPC interrupts. */
+	gpio_disable_interrupt(GPIO_HOST_USBC_PPC_INT_ODL);
+
+	/* Disable TCPC interrupts. */
+	gpio_disable_interrupt(GPIO_USBC_DP_MUX_ALERT_ODL);
+
+	/* Disable HPD interrupt */
+	gpio_disable_interrupt(GPIO_DDI_MST_IN_HPD);
+
+}
+
+void board_tcpc_init(void)
+{
+	board_reset_pd_mcu();
+
+	/* Enable board usbc interrupts */
+	board_enable_usbc_interrupts();
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
 
@@ -284,17 +312,17 @@ static void board_debug_gpio_2_pulse(void)
 }
 DECLARE_DEFERRED(board_debug_gpio_2_pulse);
 
-void board_debug_gpio(int trigger, int enable, int pulse_usec)
+void board_debug_gpio(enum debug_gpio trigger, int level, int pulse_usec)
 {
 	switch (trigger) {
 	case TRIGGER_1:
-		gpio_set_level(GPIO_TRIGGER_1, enable);
+		gpio_set_level(GPIO_TRIGGER_1, level);
 		if (pulse_usec)
 			hook_call_deferred(&board_debug_gpio_1_pulse_data,
 					   pulse_usec);
 		break;
 	case TRIGGER_2:
-		gpio_set_level(GPIO_TRIGGER_2, enable);
+		gpio_set_level(GPIO_TRIGGER_2, level);
 		if (pulse_usec)
 			hook_call_deferred(&board_debug_gpio_2_pulse_data,
 					   pulse_usec);

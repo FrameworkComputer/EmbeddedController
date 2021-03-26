@@ -68,7 +68,25 @@ enum  debug_gpio {
 	TRIGGER_2,
 };
 
-void board_debug_gpio(int trigger, int enable, int pulse_usec);
+/*
+ * Function used to control GPIO signals as a timing marker. This is intended to
+ * be used for development/debugging purposes.
+ *
+ * @param trigger GPIO debug signal selection
+ * @param level desired level of the debug gpio signal
+ * @param pulse_usec pulse width if non-zero
+ */
+void board_debug_gpio(enum debug_gpio trigger, int level, int pulse_usec);
+
+/*
+ * Function called in power on case to enable usbc related interrupts
+ */
+void board_enable_usbc_interrupts(void);
+
+/*
+ * Function called in power off case to disable usbc related interrupts
+ */
+void board_disable_usbc_interrupts(void);
 
 #endif /* !__ASSEMBLER__ */
 

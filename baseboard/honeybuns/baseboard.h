@@ -87,7 +87,8 @@
 #define CONFIG_CROS_BOARD_INFO
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CMD_CBI
-#define CONFIG_CMD_CBI_SET
+#define CBI_FW_MF_MASK BIT(0)
+#define CBI_FW_MF_PREFERENCE(val) (val & (CBI_FW_MF_MASK))
 
 /* USB Configuration */
 #define CONFIG_USB
@@ -228,6 +229,7 @@ enum adc_channel {
 
 extern const struct power_seq board_power_seq[];
 extern const size_t board_power_seq_count;
+void baseboard_power_button_evt(int level);
 
 /*
  * Configure the host port to present Rd on both CC lines. This function is

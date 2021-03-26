@@ -12,10 +12,10 @@
 GPIO_INT(HOST_USBC_PPC_INT_ODL,  PIN(C, 1),       GPIO_INT_FALLING | GPIO_PULL_UP,  ppc_interrupt)
 GPIO_INT(USBC_DP_MUX_ALERT_ODL,  PIN(C, 12),       GPIO_INT_FALLING | GPIO_PULL_UP,   tcpc_alert_event)
 GPIO_INT(DDI_MST_IN_HPD,         PIN(C, 14),      GPIO_INT_BOTH, hpd_interrupt)
+GPIO_INT(PWR_BTN,                PIN(A,  0),      GPIO_INT_BOTH, board_pwr_btn_interrupt)
 #endif
 
 /* Power sequencing signals */
-GPIO(PWR_BTN,                       PIN(A, 0),  GPIO_INPUT)
 GPIO(EN_AC_JACK,                    PIN(A, 1),  GPIO_OUT_LOW)
 GPIO(EN_BB,                         PIN(C, 0),  GPIO_OUT_LOW)
 GPIO(EN_PP3300_A,                   PIN(C, 10), GPIO_OUT_LOW)
@@ -25,8 +25,8 @@ GPIO(EN_PP1100_A,                   PIN(C, 4),  GPIO_OUT_LOW)
 GPIO(EN_PP1000_A,                   PIN(C, 5),  GPIO_OUT_LOW)
 GPIO(EN_PP1050_A,                   PIN(C, 6),  GPIO_OUT_LOW)
 GPIO(EN_PP5000_HSPORT,              PIN(C, 7),  GPIO_OUT_LOW)
-GPIO(STATUS_LED1,                   PIN(A, 2),  GPIO_OUT_HIGH)
-GPIO(STATUS_LED2,                   PIN(B, 12), GPIO_OUT_HIGH)
+GPIO(EC_STATUS_LED1,                PIN(A, 2),  GPIO_OUT_HIGH)
+GPIO(EC_STATUS_LED2,                PIN(B, 12), GPIO_OUT_HIGH)
 
 /* MST Hub signals */
 GPIO(MST_LP_CTL_L,                  PIN(B, 9),  GPIO_OUT_LOW)

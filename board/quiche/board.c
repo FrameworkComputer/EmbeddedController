@@ -97,6 +97,11 @@ static void board_uf_manage_vbus_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&board_uf_manage_vbus_data, 0);
 }
+
+static void board_pwr_btn_interrupt(enum gpio_signal signal)
+{
+	baseboard_power_button_evt(gpio_get_level(signal));
+}
 #endif /* SECTION_IS_RW */
 
 #include "gpio_list.h" /* Must come after other header files. */
@@ -243,17 +248,38 @@ void board_reset_pd_mcu(void)
 	msleep(PS8805_FW_INIT_DELAY_MS);
 }
 
+void board_enable_usbc_interrupts(void)
+{
+	/* Enable C0 PPC interrupt */
+	gpio_enable_interrupt(GPIO_HOST_USBC_PPC_INT_ODL);
+	/* Enable C1 PPC interrupt */
+	gpio_enable_interrupt(GPIO_USBC_DP_PPC_INT_ODL);
+	/* Enable C0 HPD interrupt */
+	gpio_enable_interrupt(GPIO_DDI_MST_IN_HPD);
+	/* Enable C1 TCPC interrupt */
+	gpio_enable_interrupt(GPIO_USBC_DP_MUX_ALERT_ODL);
+}
+
+void board_disable_usbc_interrupts(void)
+{
+	/* Disable C0 PPC interrupt */
+	gpio_disable_interrupt(GPIO_HOST_USBC_PPC_INT_ODL);
+	/* Disable C1 PPC interrupt */
+	gpio_disable_interrupt(GPIO_USBC_DP_PPC_INT_ODL);
+	/* Disable C0 HPD interrupt */
+	gpio_disable_interrupt(GPIO_DDI_MST_IN_HPD);
+	/* Disable C1 TCPC interrupt */
+	gpio_disable_interrupt(GPIO_USBC_DP_MUX_ALERT_ODL);
+	/* Disable VBUS control interrupt for C2 */
+	gpio_disable_interrupt(GPIO_USBC_UF_MUX_VBUS_EN);
+}
+
 void board_tcpc_init(void)
 {
 	board_reset_pd_mcu();
 
-	/* Enable PPC interrupts. */
-	gpio_enable_interrupt(GPIO_HOST_USBC_PPC_INT_ODL);
-	gpio_enable_interrupt(GPIO_USBC_DP_PPC_INT_ODL);
-	/* Enable HPD interrupt */
-	gpio_enable_interrupt(GPIO_DDI_MST_IN_HPD);
-	/* Enable TCPC interrupts. */
-	gpio_enable_interrupt(GPIO_USBC_DP_MUX_ALERT_ODL);
+	/* Enable board usbc interrupts */
+	board_enable_usbc_interrupts();
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
 
@@ -343,17 +369,17 @@ static void board_debug_gpio_2_pulse(void)
 }
 DECLARE_DEFERRED(board_debug_gpio_2_pulse);
 
-void board_debug_gpio(int trigger, int enable, int pulse_usec)
+void board_debug_gpio(enum debug_gpio trigger, int level, int pulse_usec)
 {
 	switch (trigger) {
 	case TRIGGER_1:
-		gpio_set_level(GPIO_TRIGGER_1, enable);
+		gpio_set_level(GPIO_TRIGGER_1, level);
 		if (pulse_usec)
 			hook_call_deferred(&board_debug_gpio_1_pulse_data,
 					   pulse_usec);
 		break;
 	case TRIGGER_2:
-		gpio_set_level(GPIO_TRIGGER_2, enable);
+		gpio_set_level(GPIO_TRIGGER_2, level);
 		if (pulse_usec)
 			hook_call_deferred(&board_debug_gpio_2_pulse_data,
 					   pulse_usec);
