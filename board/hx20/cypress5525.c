@@ -65,8 +65,8 @@ static struct pd_port_current_state_t pd_port_states[] = {
 };
 
 
-int state = CYP5525_STATE_RESET;
 bool verbose_msg_logging;
+
 
 int pd_extpower_is_present(void)
 {
@@ -278,6 +278,35 @@ int cyp5225_set_power_state(int power_state)
 	}
 	return rv;
 }
+int cypd_write_reg8_wait_ack(int controller, int reg, int data)
+{
+	int rv = EC_SUCCESS;
+	int intr_status;
+	rv = cypd_write_reg8(controller, reg, data);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write Reg8 0x%x fail!", reg);
+
+	if (cyp5225_wait_for_ack(controller, 100000) != EC_SUCCESS) {
+		CPRINTS("%s timeout on interrupt", __func__);
+		return EC_ERROR_INVAL;
+	}
+	rv = cypd_get_int(controller, &intr_status);
+	if (intr_status & CYP5525_DEV_INTR) {
+		cypd_clear_int(controller, CYP5525_DEV_INTR);
+	}
+	return rv;
+
+}
+/*
+int cypd_configure_bb_retimer_power_state(int controller, int power)
+{
+	int rv = EC_SUCCESS;
+	rv = cypd_write_reg8(controller, CYP5225_USER_BB_POWER_EVT ,power);
+	if (rv != EC_SUCCESS)
+		CPRINTS("BB power command fail!");
+	return rv;
+}
+*/
 
 int cyp5525_setup(int controller)
 {
@@ -290,16 +319,15 @@ int cyp5525_setup(int controller)
 	 */
 
 	int rv, data, i;
-	#define CYPD_SETUP_CMDS_LEN  4
+	#define CYPD_SETUP_CMDS_LEN  3
 	struct {
 		int reg;
 		int value;
 		int status_reg;
 	} const cypd_setup_cmds[] = {
-		{ CYP5525_EVENT_MASK_REG(0), 0xffff, CYP5525_PORT0_INTR},	/* Set the port 0 event mask */
-		{ CYP5525_EVENT_MASK_REG(1), 0xffff, CYP5525_PORT1_INTR },	/* Set the port 1 event mask */
+		{ CYP5525_EVENT_MASK_REG(0), 0x7ffff, CYP5525_PORT0_INTR},	/* Set the port 0 event mask */
+		{ CYP5525_EVENT_MASK_REG(1), 0x7ffff, CYP5525_PORT1_INTR },	/* Set the port 1 event mask */
 		{ CYP5525_PD_CONTROL_REG(0), CYPD_PD_CMD_EC_INIT_COMPLETE, CYP5525_PORT0_INTR },	/* EC INIT Complete */
-		{ CYP5525_PD_CONTROL_REG(1), CYPD_PD_CMD_EC_INIT_COMPLETE, CYP5525_PORT1_INTR },	/* EC INIT Complete */
 	};
 	BUILD_ASSERT(ARRAY_SIZE(cypd_setup_cmds) == CYPD_SETUP_CMDS_LEN);
 
@@ -310,8 +338,8 @@ int cyp5525_setup(int controller)
 		cypd_clear_int(controller, CYP5525_DEV_INTR+CYP5525_PORT0_INTR+CYP5525_PORT1_INTR+CYP5525_UCSI_INTR);
 	}
 	for (i = 0; i < CYPD_SETUP_CMDS_LEN; i++) {
-		rv = cypd_write_reg16(controller, cypd_setup_cmds[i].reg,
-		cypd_setup_cmds[i].value);
+		rv = cypd_write_reg_block(controller, cypd_setup_cmds[i].reg,
+		(void *)&cypd_setup_cmds[i].value, 4);
 		if (rv != EC_SUCCESS) {
 			CPRINTS("%s command: 0x%04x failed", __func__, cypd_setup_cmds[i].reg);
 			return EC_ERROR_INVAL;
@@ -488,16 +516,70 @@ int cyp5525_device_int(int controller)
 {
 	int data;
 
-	CPRINTS("INTR_REG TODO Handle Device");
 	if (cypd_read_reg16(controller, CYP5525_RESPONSE_REG, &data) == EC_SUCCESS) {
 		print_pd_response_code(controller,
 		-1,
 		data & 0xff,
 		data>>8);
+		switch (data & 0xFF) {
+		case CYPD_RESPONSE_RESET_COMPLETE:
+					CPRINTS("RESET COMPLETE FROM CONTROLLER %d", controller);
+
+			pd_chip_config[controller].state = CYP5525_STATE_POWER_ON;
+			/* Run state handler to set up controller */
+			cypd_enque_evt(4<<controller, 0);
+			break;
+		default:
+			CPRINTS("INTR_REG CTRL:%d TODO Device 0x%x", controller, data & 0xFF);
+		}
 	} else {
 		return EC_ERROR_INVAL;
 	}
 	return EC_SUCCESS;
+}
+
+void cypd_handle_state(int controller)
+{
+	int data;
+	int delay = 0;
+	switch (pd_chip_config[controller].state) {
+	case CYP5525_STATE_POWER_ON:
+		/*poll to see if the controller has booted yet*/
+		if (cypd_read_reg8(controller, CYP5525_DEVICE_MODE, &data) == EC_SUCCESS) {
+			if ((data & 0x03) == 0x00) {
+				/*pd_chip_config[controller].state = CYP5525_STATE_BOOTLOADER;*/
+				CPRINTS("CYPD %d is in bootloader 0x%04x", controller, data);
+				delay = 25*MSEC;
+				if (cypd_read_reg16(controller, CYP5525_BOOT_MODE_REASON, &data)
+						== EC_SUCCESS) {
+					CPRINTS("CYPD bootloader reason 0x%02x", data);
+				}
+
+			} else {
+				pd_chip_config[controller].state = CYP5525_STATE_APP_SETUP;
+			}
+		}
+		/*try again in a while*/
+		cypd_enque_evt(4<<controller, delay);
+		break;
+
+	case CYP5525_STATE_APP_SETUP:
+			gpio_disable_interrupt(pd_chip_config[controller].gpio);
+			cyp5525_get_version(controller);
+			cypd_write_reg8_wait_ack(controller, CYP5225_USER_MAINBOARD_VERSION, board_get_version());
+			cyp5525_setup(controller);
+			cypd_update_port_state(controller, 0);
+			cypd_update_port_state(controller, 1);
+			cyp5525_ucsi_startup(controller);
+			gpio_enable_interrupt(pd_chip_config[controller].gpio);
+
+			CPRINTS("CYPD %d Ready!", controller);
+			pd_chip_config[controller].state = CYP5525_STATE_READY;
+		break;
+	default:
+		CPRINTS("PD handle_state but in 0x%02x state!", pd_chip_config[controller].state);
+		break;
+	}
 
 }
 void cyp5525_interrupt(int controller)
@@ -505,92 +587,35 @@ void cyp5525_interrupt(int controller)
 	int data;
 	int rv;
 	int clear_mask = 0;
+
 	rv = cypd_get_int(controller, &data);
 	if (rv != EC_SUCCESS) {
 		return;
 	}
-	switch (pd_chip_config[controller].state) {
-	case CYP5525_STATE_READY:
-
-		/*CPRINTS("INTR_REG read value: 0x%02x", data);*/
-
-		/* Process device interrupt*/
-		if (data & CYP5525_DEV_INTR) {
-			cyp5525_device_int(controller);
-			clear_mask |= CYP5525_DEV_INTR;
-		}
-		if (data & CYP5525_PORT0_INTR) {
-			/* */
-			cyp5525_port_int(controller, 0);
-			clear_mask |= CYP5525_PORT0_INTR;
-		}
-
-		if (data & CYP5525_PORT1_INTR) {
-			/* */
-			cyp5525_port_int(controller, 1);
-			clear_mask |= CYP5525_PORT1_INTR;
-		}
-		if (data & CYP5525_UCSI_INTR) {
-			/* */
-			//CPRINTS("P%d read ucsi data!", controller);
-			ucsi_read_tunnel(controller);
-			clear_mask |= CYP5525_UCSI_INTR;
-		}
-		break;
-
-	case CYP5525_STATE_POWER_ON:
-		if (data & CYP5525_DEV_INTR && 
-				cypd_read_reg16(controller, CYP5525_RESPONSE_REG, &data) == EC_SUCCESS) {
-
-			CPRINTS("RESPONSE: Code: 0x%02x", data);
-			if ((data & 0xFF) == CYPD_RESPONSE_RESET_COMPLETE) {
-				CPRINTS("CYPD %d boot ok", controller);
-				pd_chip_config[controller].state = CYP5525_STATE_RESET;
-			}
-			clear_mask = CYP5525_DEV_INTR;
-		} else {
-			/* There may be port interrupts pending from previous boot so clear them here */
-			clear_mask = data;
-		}
-
-		break;
-	case CYP5525_STATE_BOOTING:
-		if (data & CYP5525_DEV_INTR &&
-				cypd_read_reg16(controller, CYP5525_RESPONSE_REG, &data) == EC_SUCCESS) {
-
-			if ((data & 0xFF) == CYPD_RESPONSE_RESET_COMPLETE) {
-				CPRINTS("CYPD %d boot ok", controller);
-				pd_chip_config[controller].state = CYP5525_STATE_RESET;
-			} else {
-				CPRINTS("CYPD %d boot error 0x%02x", controller, data);
-				/* Try again */
-				pd_chip_config[controller].state = CYP5525_STATE_POWER_ON;
-			}
-			clear_mask = CYP5525_DEV_INTR;
-		}
-		break;
-
-	case CYP5525_STATE_I2C_RESET:
-		if (data & CYP5525_DEV_INTR &&
-				cypd_read_reg16(controller, CYP5525_RESPONSE_REG, &data) == EC_SUCCESS) {
-
-			if ((data & 0xFF) == CYPD_RESPONSE_SUCCESS) {
-				CPRINTS("CYPD %d i2c reset ok", controller);
-				pd_chip_config[controller].state = CYP5525_STATE_RESET;
-			} else {
-				CPRINTS("CYPD %d boot error 0x%02x", controller, data);
-			}
-			clear_mask = CYP5525_DEV_INTR;
-		}
-
-		break;
-	default:
-		CPRINTS("Got interrupt from PD but in 0x%02x state!", pd_chip_config[controller].state);
-		clear_mask = data;
-		break;
+	/* Process device interrupt*/
+	if (data & CYP5525_DEV_INTR) {
+		cyp5525_device_int(controller);
+		clear_mask |= CYP5525_DEV_INTR;
+	}
+	/*CPRINTS("INTR_REG read value: 0x%02x", data);*/
+	if (data & CYP5525_PORT0_INTR) {
+		/* */
+		cyp5525_port_int(controller, 0);
+		clear_mask |= CYP5525_PORT0_INTR;
 	}
 
-	cypd_clear_int(controller, clear_mask);
+	if (data & CYP5525_PORT1_INTR) {
+		/* */
+		cyp5525_port_int(controller, 1);
+		clear_mask |= CYP5525_PORT1_INTR;
+	}
+	if (data & CYP5525_UCSI_INTR) {
+		/* CPRINTS("P%d read ucsi data!", controller); */
+		ucsi_read_tunnel(controller);
+		clear_mask |= CYP5525_UCSI_INTR;
+	}
+	if (clear_mask)
+		cypd_clear_int(controller, clear_mask);
 }
 
 #define CYPD_PROCESS_CONTROLLER_AC_PRESENT BIT(31)
@@ -598,47 +623,66 @@ void cyp5525_interrupt(int controller)
 #define CYPD_PROCESS_CONTROLLER_S3 BIT(29)
 #define CYPD_PROCESS_CONTROLLER_S4 BIT(28)
 #define CYPD_PROCESS_CONTROLLER_S5 BIT(27)
+#define CYPD_PROCESS_PLT_RESET     BIT(26)
 
 
 static uint8_t cypd_int_task_id;
 
-void schedule_deferred_cypd_interrupt(const int controller)
+static struct mutex cypd_event_mutex;
+static int cypd_events;
+
+void cypd_enque_evt(int evt, int delay)
 {
-	task_set_event(cypd_int_task_id, controller, 0);
+	mutex_lock(&cypd_event_mutex);
+	cypd_events |= evt;
+	mutex_unlock(&cypd_event_mutex);
+	task_set_event(TASK_ID_CYPD, TASK_EVENT_WAKE, delay);
 }
+void pd_chip_interrupt_deferred(void)
+{
+	int i;
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		if (gpio_get_level(pd_chip_config[i].gpio) == 0) {
+			cypd_enque_evt(1<<i, 0);
+		}
+	}
+}
+DECLARE_DEFERRED(pd_chip_interrupt_deferred);
+
 
 void pd_chip_interrupt(enum gpio_signal signal)
 {
-	int i;
-
-	for (i = 0; i < PD_CHIP_COUNT; i++) {
-		if (signal == pd_chip_config[i].gpio) {
-			schedule_deferred_cypd_interrupt(1<<i);
-		}
-	}
-	if (signal == GPIO_AC_PRESENT_PD_L) {
-		schedule_deferred_cypd_interrupt(CYPD_PROCESS_CONTROLLER_AC_PRESENT);
-	}
+	hook_call_deferred(&pd_chip_interrupt_deferred_data, 0);
 }
-
+/*
+void soc_plt_reset_interrupt_deferred(void)
+{
+	CPRINTS("PLT_RESET IS NOW %d", gpio_get_level(GPIO_PLT_RST_L));
+	if (gpio_get_level(GPIO_PLT_RST_L) == 1)
+		cypd_enque_evt(CYPD_PROCESS_PLT_RESET, 0);
+}
+DECLARE_DEFERRED(soc_plt_reset_interrupt_deferred);
+*/
+void soc_plt_reset_interrupt(enum gpio_signal signal)
+{
+	/*Delay is to allow BB retimer to boot before configuration*/
+	/*hook_call_deferred(&soc_plt_reset_interrupt_deferred_data, 25 * MSEC);*/
+}
 
 /* Called on AP S5 -> S3 transition */
 static void pd_enter_s3(void)
 {
-	task_set_event(cypd_int_task_id, CYPD_PROCESS_CONTROLLER_S3, 0);
+	cypd_enque_evt(CYPD_PROCESS_CONTROLLER_S3, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 		pd_enter_s3,
 		HOOK_PRIO_DEFAULT);
 
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,
-		pd_enter_s3,
-		HOOK_PRIO_DEFAULT);
 
 /* Called on AP S3 -> S5 transition */
 static void pd_enter_s5(void)
 {
-	task_set_event(cypd_int_task_id, CYPD_PROCESS_CONTROLLER_S5, 0);
+	cypd_enque_evt(CYPD_PROCESS_CONTROLLER_S5, 0);
 
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
@@ -648,23 +692,26 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 /* Called on AP S3 -> S0 transition */
 static void pd_enter_s0(void)
 {
-	task_set_event(cypd_int_task_id, CYPD_PROCESS_CONTROLLER_S0, 0);
+	cypd_enque_evt(CYPD_PROCESS_CONTROLLER_S0, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pd_enter_s0,
 	     HOOK_PRIO_DEFAULT);
 
 
+void cypd_reinitialize(void)
+{
+	int i;
 
-
-
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		pd_chip_config[i].state = CYP5525_STATE_POWER_ON;
+		/* Run state handler to set up controller */
+		cypd_enque_evt(4<<i, 0);
+	}
+}
 
 void cypd_interrupt_handler_task(void *p)
 {
-	int loop_count = 0;
-	int i, j, data, setup_pending;
-	int gpio_asserted = 0;
-	timestamp_t now;
-	timestamp_t expire_time;
+	int i, j, evt;
 	cypd_int_task_id = task_get_current();
 
 	/* Initialize all charge suppliers to 0 */
@@ -672,134 +719,21 @@ void cypd_interrupt_handler_task(void *p)
 		for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
 			charge_manager_update_charge(j, i, NULL);
 	}
-	/* wait for pd controller to init*/
-	msleep(25);
-	now = get_time();
-	expire_time.val = now.val + 1000*MSEC;
-	while (!timestamp_expired(expire_time, &now)) {
-		setup_pending = 0;
-		cflush();
-		for (i = 0; i < PD_CHIP_COUNT; i++) {
-			switch (pd_chip_config[i].state) {
-			case CYP5525_STATE_POWER_ON:
-				if (gpio_get_level(pd_chip_config[i].gpio) == 0) {
-					cyp5525_interrupt(i);
-				} else {
-					if (charge_get_state() != PWR_STATE_ERROR){
-						/*
-						* Disable all ports - otherwise reset command is not guaranteed to work
-						* Try to coast on bulk capacitance on EC power supply while PD controller resets
-						* if there is no battery attached.
-						* TODO FIXME
-						*/
-						if (cypd_write_reg8(i, CYP5525_PDPORT_ENABLE_REG, 0) == EC_SUCCESS) {
-							/*can take up to 650ms to discharge port for disable*/
-							cyp5225_wait_for_ack(i, 65000);
-							cypd_clear_int(i, CYP5525_DEV_INTR+CYP5525_PORT0_INTR+CYP5525_PORT1_INTR+CYP5525_UCSI_INTR);
-							usleep(50);
-							CPRINTS("Full reset PD controller %d", i);
-							/*
-							* see if we can talk to the PD chip yet - issue a reset command
-							* Note that we cannot issue a full reset command if the PD controller
-							* has a device attached - as it will return with an invalid command
-							* due to needing to disable all ports first.
-							*/
-							if (cyp5525_reset(i) == EC_SUCCESS) {
-								pd_chip_config[i].state = CYP5525_STATE_BOOTING;
-							} else {
-								CPRINTS("PD Failed to issue reset command %d", i);
-							}
-						}
-					} else {
-						CPRINTS("No battery - partial PD reset");
-						if (cypd_write_reg16(i, CYP5525_RESET_REG, CYP5225_RESET_CMD_I2C) == EC_SUCCESS) {
-							pd_chip_config[i].state = CYP5525_STATE_I2C_RESET;
-						}
-					}
-				}
-				break;
-
-			case CYP5525_STATE_I2C_RESET:
-			case CYP5525_STATE_BOOTING:
-				/* The PD controller is resetting, wait for it to boot */
-				if (gpio_get_level(pd_chip_config[i].gpio) == 0) {
-					cyp5525_interrupt(i);
-				}
-				break;
-
-			case CYP5525_STATE_RESET:
-				/* check what mode we are in */
-				if (cypd_read_reg8(i, CYP5525_DEVICE_MODE, &data) == EC_SUCCESS) {
-					if ((data & 0x03) == 0x00) {
-						pd_chip_config[i].state = CYP5525_STATE_BOOTLOADER;
-						CPRINTS("CYPD %d is in bootloader 0x%04x", i, data);
-						if (cypd_read_reg16(i, CYP5525_BOOT_MODE_REASON, &data) == EC_SUCCESS) {
-							CPRINTS("CYPD bootloader reason 0x%02x", data);
-
-						}
-
-					} else {
-						pd_chip_config[i].state = CYP5525_STATE_SETUP;
-					}
-				}
-				break;
-			case CYP5525_STATE_SETUP:
-				cyp5525_get_version(i);
-				if (cyp5525_setup(i) == EC_SUCCESS) {
-					cypd_update_port_state(i, 0);
-					cypd_update_port_state(i, 1);
-					cyp5525_ucsi_startup(i);
-					gpio_enable_interrupt(pd_chip_config[i].gpio);
-					CPRINTS("CYPD %d Ready!", i);
-					pd_chip_config[i].state = CYP5525_STATE_READY;
-				}
-				break;
-			case CYP5525_STATE_BOOTLOADER:
-				if (cypd_read_reg8(i, CYP5525_DEVICE_MODE, &data) == EC_SUCCESS) {
-					if ((data & 0x03) != 0x00) {
-						CPRINTS("CYPD %d is in FW %d", i, data & 0x03);
-						pd_chip_config[i].state = CYP5525_STATE_SETUP;
-					}
-				}
-				break;
-			case CYP5525_STATE_READY:
-
-				break;
-			default:
-				break;
-			}
-			/* if we are done with the setup state machine */
-			if (pd_chip_config[i].state != CYP5525_STATE_BOOTLOADER &&
-				pd_chip_config[i].state != CYP5525_STATE_READY) {
-					setup_pending = 1;
-				}
-		}
-		if (setup_pending == 0) {
-			break;
-		}
-		msleep(1);
-		/*
-		 * If we issued a reset command, then the PD controller needs to get through bootloader wait time
-		 * before we issue additional commands 
-		 */
-		if (pd_chip_config[0].state == CYP5525_STATE_BOOTING || pd_chip_config[1].state == CYP5525_STATE_BOOTING) {
-			msleep(60);
-		}
-		now = get_time();
-	}
-
-	CPRINTS("CYPD Finished setup");
-
+	/* trigger the handle_state to start setup in task */
+	cypd_enque_evt(0xC, 0);
 
 	for (i = 0; i < PD_CHIP_COUNT; i++) {
 		if (gpio_get_level(pd_chip_config[i].gpio) == 0) {
-		   schedule_deferred_cypd_interrupt(1<<i);
+		   cypd_enque_evt(1<<i, 0);
 		}
 	}
 	while (1) {
-		const int evt = task_wait_event(-1);
-		loop_count = 0;
-		if (evt) {
+		task_wait_event(-1);
+		mutex_lock(&cypd_event_mutex);
+		evt = cypd_events;
+		cypd_events = 0;
+		mutex_unlock(&cypd_event_mutex);
+		while (evt) {
 			if (evt & CYPD_PROCESS_CONTROLLER_AC_PRESENT) {
 				CPRINTS("GPIO_AC_PRESENT_PD_L changed: value: 0x%02x", gpio_get_level(GPIO_AC_PRESENT_PD_L));
 			}
@@ -812,32 +746,42 @@ void cypd_interrupt_handler_task(void *p)
 			if (evt & CYPD_PROCESS_CONTROLLER_S5) {
 				cyp5225_set_power_state(CYP5525_POWERSTATE_S5);
 			}
-			gpio_asserted = 0;
+			if (evt & CYPD_PROCESS_PLT_RESET) {
+				CPRINTS("PD Event Platform Reset!");
+				/* initialize BB retimers after a reset */
+				/*
+				cypd_configure_bb_retimer_power_state(0, 1);
+				cypd_configure_bb_retimer_power_state(1, 1);
+				*/
+			}
+			if (evt & BIT(0)) {
+				cyp5525_interrupt(0);
+			}
+			if (evt & BIT(1)) {
+				cyp5525_interrupt(1);
+			}
+			if (evt & BIT(2)) {
+				cypd_handle_state(0);
+			}
+			if (evt & BIT(3)) {
+				cypd_handle_state(1);
+			}
+			if (evt & (BIT(0) | BIT(1) | BIT(2) | BIT(3))) {
+				/*If we just processed an event or sent some commands
+				 * wait a bit for the pd controller to clear any pending
+				 * interrupt requests*/
+				usleep(50);
+			}
+
 			for (i = 0; i < PD_CHIP_COUNT; i++) {
 				if (gpio_get_level(pd_chip_config[i].gpio) == 0) {
-					gpio_asserted = 1;
+					cypd_enque_evt(1<<i, 0);
 				}
 			}
-			while (gpio_asserted) {
-				gpio_asserted = 0;
-				for (i = 0; i < PD_CHIP_COUNT; i++) {
-					if (gpio_get_level(pd_chip_config[i].gpio) == 0) {
-						gpio_asserted = 1;
-						cyp5525_interrupt(i);
-					}
-				}
-				/* wait for PD controller to deassert the interrupt line */
-				usleep(50);
-				cflush(); /*TODO REMOVE ME*/
-				loop_count++;
-				if (loop_count > 100) {
-					CPRINTS("WARNING: cypd_interrupt_handler_task has exceeded loop count!");
-					for (i = 0; i < PD_CHIP_COUNT; i++) {
-						CPRINTS("Controller %d State: %d, Interrupt %d", i, pd_chip_config[i].state, gpio_get_level(pd_chip_config[i].gpio));
-					}
-					break;
-				}
-			}
+			mutex_lock(&cypd_event_mutex);
+			evt = cypd_events;
+			cypd_events = 0;
+			mutex_unlock(&cypd_event_mutex);
 		}
 	}
 }
@@ -955,22 +899,28 @@ int pd_port_configuration_change(int port, enum pd_port_role port_role)
  */
 int board_set_active_charge_port(int charge_port)
 {
-	/*
+
 	int mask;
+	int i;
+	int disable_lockout;
 
 	if (charge_port >=0){
+		disable_lockout = 1;
 		mask = 1 << charge_port;
 		gpio_set_level(GPIO_TYPEC0_VBUS_ON_EC, mask & BIT(0) ? 1: 0);
 		gpio_set_level(GPIO_TYPEC1_VBUS_ON_EC, mask & BIT(1) ? 1: 0);
 		gpio_set_level(GPIO_TYPEC2_VBUS_ON_EC, mask & BIT(2) ? 1: 0);
 		gpio_set_level(GPIO_TYPEC3_VBUS_ON_EC, mask & BIT(3) ? 1: 0);
 	} else {
+		disable_lockout = 0;
 		gpio_set_level(GPIO_TYPEC0_VBUS_ON_EC, 1);
 		gpio_set_level(GPIO_TYPEC1_VBUS_ON_EC, 1);
 		gpio_set_level(GPIO_TYPEC2_VBUS_ON_EC, 1);
 		gpio_set_level(GPIO_TYPEC3_VBUS_ON_EC, 1);
 	}
-	*/
+	for (i = 0; i < PD_CHIP_COUNT; i++)
+		cypd_write_reg8(i, CYP5225_USER_DISABLE_LOCKOUT, disable_lockout);
+
 	CPRINTS("Updating %s port %d", __func__, charge_port);
 
 	return EC_SUCCESS;
@@ -1113,6 +1063,7 @@ static int cmd_cypd_get_status(int argc, char **argv)
 	static const char * const mode[] = {"Boot", "FW1", "FW2", "Invald"};
 	static const char * const port_status[] = {"Nothing", "Sink", "Source", "Debug", "Audio", "Powered Acc", "Unsupported", "Invalid"};
 	static const char * const current_level[] = {"DefaultA", "1.5A", "3A", "InvA"};
+	static const char * const state[] = {"ERR", "POWER_ON", "APP_SETUP", "READY", "BOOTLOADER"};
 	CPRINTS("AC_PRESENT_PD value: %d", gpio_get_level(GPIO_AC_PRESENT_PD_L));
 	for (i = 0; i < PD_CHIP_COUNT; i++) {
 		CPRINTS("PD%d INT value: %d", i, gpio_get_level(pd_chip_config[i].gpio));
@@ -1125,6 +1076,7 @@ static int cmd_cypd_get_status(int argc, char **argv)
 			return EC_ERROR_PARAM1;
 
 		if (i < PD_CHIP_COUNT) {
+			CPRINTS("State: %s", state[pd_chip_config[i].state]);
 			cypd_read_reg16(i, CYP5525_SILICON_ID, &data);
 			CPRINTS("CYPD_SILICON_ID: 0x%04x", data);
 			cyp5525_get_version(i);

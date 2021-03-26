@@ -715,9 +715,9 @@ enum als_id {
 #define PD_MAX_VOLTAGE_MV     20000
 
 
-/*#define PD_VERBOSE_LOGGING*/
+/* #define PD_VERBOSE_LOGGING */
 #undef CONFIG_UART_TX_BUF_SIZE
-#define CONFIG_UART_TX_BUF_SIZE	1024
+#define CONFIG_UART_TX_BUF_SIZE	2048
 
 
 /*

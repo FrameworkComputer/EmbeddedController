@@ -18,7 +18,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-
+#include "cypress5525.h"
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 /*****************************************************************************/
@@ -38,17 +38,19 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 		gpio_disable_interrupt(GPIO_ON_OFF_FP_L);
 		gpio_disable_interrupt(GPIO_LID_SW_L);
 
-		/* Disable LED drv */
-		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 0);
-		/* Set GPIO56 as SPI for access SPI ROM */
-		gpio_set_alternate_function(1, 0x4000, 2);
+
 
 		if ((p->flags & FLASH_FLAG_PD) == FLASH_FLAG_PD) {
 			gpio_disable_interrupt(GPIO_EC_PD_INTA_L);
 			gpio_disable_interrupt(GPIO_EC_PD_INTB_L);
 		}
-
+	case FLASH_ACCESS_SPI:
+		/* Disable LED drv */
+		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 0);
+		/* Set GPIO56 as SPI for access SPI ROM */
+		gpio_set_alternate_function(1, 0x4000, 2);
 		break;
+
 	case FLASH_FIRMWARE_DONE:
 		CPRINTS("Flash done, recover the power button, lid");
 		gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);
@@ -57,11 +59,14 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 		gpio_enable_interrupt(GPIO_EC_PD_INTA_L);
 		gpio_enable_interrupt(GPIO_EC_PD_INTB_L);
 
+		/* resetup PD controllers */
+		cypd_reinitialize();
+
+	case FLASH_ACCESS_SPI_DONE:
+		/* Set GPIO56 as PWM */
+		gpio_set_alternate_function(1, 0x4000, 1);
 		/* Enable LED drv */
 		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 1);
-		/* Set GPIO56 as SPI for access SPI ROM */
-		gpio_set_alternate_function(1, 0x4000, 1);
-
 		break;
 	default:
 		return EC_ERROR_INVAL;

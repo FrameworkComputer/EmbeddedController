@@ -24,6 +24,12 @@
 #define CYP5525_UCSI_STATUS_REG         0x0038
 #define CYP5525_UCSI_CONTROL_REG        0x0039
 #define CYP5525_SYS_PWR_STATE           0x003B
+
+/*User registers from 0x40 to 0x48 are used for BB retimer */
+#define CYP5225_USER_MAINBOARD_VERSION	0x004F
+#define CYP5225_USER_BB_POWER_EVT		0x004E
+#define CYP5225_USER_DISABLE_LOCKOUT	0x004D
+
 #define CYP5525_RESPONSE_REG            0x007E
 #define CYP5525_DATA_MEM_REG            0x1404
 #define CYP5525_VERSION_REG             0xF000
@@ -261,10 +267,7 @@ enum cypd_response {
 enum cyp5525_state {
 	CYP5525_STATE_ERROR,
 	CYP5525_STATE_POWER_ON,
-	CYP5525_STATE_BOOTING,
-	CYP5525_STATE_I2C_RESET,
-	CYP5525_STATE_RESET,
-	CYP5525_STATE_SETUP,
+	CYP5525_STATE_APP_SETUP,
 	CYP5525_STATE_READY,
 	CYP5525_STATE_BOOTLOADER,
 	CYP5525_STATE_COUNT,
@@ -336,7 +339,7 @@ enum pd_chip {
 void pd_chip_interrupt(enum gpio_signal signal);
 
 void pd_extpower_is_present_interrupt(enum gpio_signal signal);
-
+void soc_plt_reset_interrupt(enum gpio_signal signal);
 int cypd_get_pps_power_budget(void);
 
 void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int len);
@@ -354,5 +357,9 @@ int cypd_write_reg8(int controller, int reg, int data);
 int cypd_write_reg_block(int controller, int reg, uint8_t *data, int len);
 
 int cypd_read_reg_block(int controller, int reg, uint8_t *data, int len);
+
+void cypd_reinitialize(void);
+
+void cypd_enque_evt(int evt, int delay);
 
 #endif	/* __CROS_EC_CYPRESS5525_H */
