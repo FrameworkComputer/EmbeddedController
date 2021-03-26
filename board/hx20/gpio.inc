@@ -56,7 +56,7 @@ GPIO(CAM_SW,              PIN(067),  GPIO_INPUT)    /* Monitor to close CAM PWR 
 /* Reserve Pin Defination */
 GPIO(EC_SMB_SDA0,         PIN(03),   GPIO_INPUT)    /* Reserved for HID */
 GPIO(EC_SMB_CLK0,         PIN(04),   GPIO_INPUT)    /* Reserved for HID */
-GPIO(PLT_RST_L,           PIN(024),  GPIO_INPUT)    /* Not implement on reference board */
+GPIO_INT(PLT_RST_L,       PIN(024),  GPIO_INT_BOTH, soc_plt_reset_interrupt)    /* CPU triggered Platform reset */
 GPIO(SX_EXIT_HOLDOFF_L,   PIN(025),  GPIO_INPUT)    /* Reserved for S0ix state */
 GPIO(EN_INVPWR,           PIN(062),  GPIO_INPUT)  /* DVT2 LCD 19V power enable */
 GPIO(MIC_SW,              PIN(0171), GPIO_INPUT)    /* Reserved for DMIC function */
