@@ -10,6 +10,9 @@
 
 #include "driver/ppc/syv682x_public.h"
 
+/* Source OC deglitch implemented in HW for SYV682B */
+#define SYV682X_HW_OC_DEGLITCH_MS	10
+
 /* SYV682x register addresses */
 #define SYV682X_STATUS_REG		0x00
 #define SYV682X_CONTROL_1_REG		0x01

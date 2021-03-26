@@ -39,14 +39,21 @@ static timestamp_t vconn_oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define SYV682X_VBUS_DET_THRESH_MV		4000
 /* Longest time that can be programmed in DSG_TIME field */
-#define SYV682X_MAX_VBUS_DISCHARGE_TIME_MS	400
-/* Delay between checks when polling the interrupt registers */
-#define INTERRUPT_DELAY_MS 10
+#define SYV682X_MAX_VBUS_DISCHARGE_TIME_MS 400
+/*
+ * Delay between checks when polling the interrupt registers. Must be longer
+ * than the HW deglitch on OC (10ms)
+ */
+#define INTERRUPT_DELAY_MS 15
 /* Deglitch in ms of sourcing overcurrent detection */
 #define SOURCE_OC_DEGLITCH_MS 100
 #define VCONN_OC_DEGLITCH_MS 100
 /* Max. number of OC events allowed before disabling port */
 #define OCP_COUNT_LIMIT 3
+
+#if INTERRUPT_DELAY_MS <= SYV682X_HW_OC_DEGLITCH_MS
+#error "INTERRUPT_DELAY_MS should be greater than SYV682X_HW_OC_DEGLITCH_MS"
+#endif
 
 #if SOURCE_OC_DEGLITCH_MS < INTERRUPT_DELAY_MS
 #error "SOURCE_OC_DEGLITCH_MS should be at least INTERRUPT_DELAY_MS"
@@ -563,20 +570,15 @@ static void syv682x_handle_interrupt(int port)
 
 	/*
 	 * Since ALERT_L is level-triggered, check the alert status and repeat
-	 * until all interrupts are cleared. This will not spam indefinitely on
-	 * OCP, but may on OVP, RVS, or TSD
+	 * until all interrupts are cleared. The SYV682B and later have a 10ms
+	 * deglitch on OC, so make sure not to check the status register again
+	 * for at least 10ms to give it time to re-trigger. This will not spam
+	 * indefinitely on OCP, but may on OVP, RVS, or TSD.
 	 */
 
-	if (IS_ENABLED(CONFIG_USBC_PPC_DEDICATED_INT) &&
-	    ppc_get_alert_status(port)) {
+	if (status & SYV682X_STATUS_INT_MASK ||
+	    control4 & SYV682X_CONTROL_4_INT_MASK) {
 		syv682x_interrupt_delayed(port, INTERRUPT_DELAY_MS);
-	} else {
-		read_reg(port, SYV682X_CONTROL_4_REG, &control4);
-		read_reg(port, SYV682X_STATUS_REG, &status);
-		if (status & SYV682X_STATUS_INT_MASK ||
-		    control4 & SYV682X_CONTROL_4_INT_MASK) {
-			syv682x_interrupt_delayed(port, INTERRUPT_DELAY_MS);
-		}
 	}
 }
 
