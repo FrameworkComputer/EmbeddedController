@@ -50,6 +50,7 @@ static void ks_interrupt(enum gpio_signal s);
 
 #include "gpio_list.h"
 
+#ifdef SECTION_IS_RW
 extern struct pchg_drv ctn730_drv;
 
 struct pchg pchgs[] = {
@@ -65,6 +66,7 @@ struct pchg pchgs[] = {
 	},
 };
 const int pchg_count = ARRAY_SIZE(pchgs);
+#endif
 
 /* GPIO Interrupt Handlers */
 static void tcpc_alert_event(enum gpio_signal signal)
