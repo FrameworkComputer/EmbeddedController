@@ -1,0 +1,35 @@
+# Copyright (c) 2021 Google Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+description: Nuvoton, NPCX Serial Host Interface (SHI) node
+
+compatible: "nuvoton,npcx-cros-shi"
+
+include: base.yaml
+
+properties:
+    reg:
+      description: mmio register space
+      required: true
+
+    clocks:
+        required: true
+        description: configurations of device source clock controller
+
+    pinctrl-0:
+        type: phandles
+        required: true
+        description: configurations of pinmux controllers
+
+    ver-ctrl:
+        type: phandle
+        required: true
+        description: configurations of SHI module version
+    shi-cs-wui:
+        type: phandle
+        required: true
+        description: |
+            Mapping table between Wake-Up Input (WUI) and SHI_CS signal.
+
+            For example the WUI mapping on NPCX7 would be
+               shi-cs-wui = <&wui_io53>;

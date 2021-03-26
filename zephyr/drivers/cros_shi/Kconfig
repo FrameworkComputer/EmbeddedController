@@ -1,0 +1,37 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig CROS_SHI_NPCX
+	bool "Nuvoton NPCX Serial Host Interface driver for the Zephyr shim"
+	depends on SOC_FAMILY_NPCX
+	default n
+	help
+	  This option enables Serial Host Interface driver for the NPCX family
+	  of processors. This is used for host-command communication on the
+	  platform which AP is ARM-based SoC.
+
+if CROS_SHI_NPCX
+config CROS_SHI_MAX_REQUEST
+	hex "Max data size for the version 3 request packet"
+	default 0x220
+	help
+	  This option indicates maximum data size for a version 3 request
+	  packet. This must be big enough to handle a request header of host
+	  command, flash write offset/size, and 512 bytes of flash data.
+
+config CROS_SHI_MAX_RESPONSE
+	hex "Max data size for the version 3 response packet"
+	default 0x220
+	help
+	  This option indicates maximum data size for a version 3 response
+	  packet. This must be big enough to handle a response header of host
+	  command, flash read offset/size, and 512 bytes of flash data.
+
+config CROS_SHI_NPCX_DEBUG
+	bool "Enable SHI debug"
+	default n
+	help
+	  print the debug messages for SHI module
+
+endif # CROS_SHI_NPCX
