@@ -128,6 +128,12 @@ static void sub_hdmi_hpd_interrupt(enum gpio_signal s)
 	gpio_set_level(GPIO_EC_AP_USB_C1_HDMI_HPD, !hdmi_hpd_odl);
 }
 
+static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
+{
+	cprints(CC_USBPD, "C0: CC OVP, SBU OVP, or thermal event");
+	pd_handle_cc_overvoltage(0);
+}
+
 #include "gpio_list.h"
 
 /* ADC channels */
@@ -184,9 +190,6 @@ void board_init(void)
 						GPIO_ODR_LOW : GPIO_ODR_HIGH);
 		gpio_set_flags(GPIO_SUB_C1_INT_EN_RAILS_ODL,   GPIO_ODR_HIGH);
 
-		/* Select HDMI option */
-		gpio_set_level(GPIO_HDMI_SEL_L, 0);
-
 		/* Enable interrupt for passing through HPD */
 		gpio_enable_interrupt(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL);
 	} else {
@@ -198,9 +201,6 @@ void board_init(void)
 		gpio_enable_interrupt(GPIO_SUB_C1_INT_EN_RAILS_ODL);
 		check_c1_line();
 	}
-	/* Enable gpio interrupt for base accelgyro sensor */
-	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
-
 	/* Turn on 5V if the system is on, otherwise turn it off. */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
 			      CHIPSET_STATE_SOFT_OFF);
@@ -261,26 +261,8 @@ DECLARE_HOOK(HOOK_INIT, reconfigure_5v_gpio, HOOK_PRIO_INIT_I2C+1);
 
 static void set_5v_gpio(int level)
 {
-	int version;
-	enum gpio_signal gpio = GPIO_EN_PP5000;
-
-	/*
-	 * b/147257497: On early waddledoo boards, GPIO_EN_PP5000 was swapped
-	 * with GPIO_VOLUP_BTN_ODL. Therefore, we'll actually need to set that
-	 * GPIO instead for those boards.  Note that this breaks the volume up
-	 * button functionality.
-	 */
-	if (IS_ENABLED(BOARD_WADDLEDOO)) {
-		version = system_get_board_version();
-
-		/*
-		 * If the CBI EEPROM wasn't formatted, assume it's a very early
-		 * board.
-		 */
-		gpio = version < 0 ? GPIO_VOLUP_BTN_ODL : GPIO_EN_PP5000;
-	}
-
-	gpio_set_level(gpio, level);
+	gpio_set_level(GPIO_EN_PP5000, level);
+	gpio_set_level(GPIO_EN_USB_A0_VBUS, level);
 }
 
 __override void board_power_5v_enable(int enable)

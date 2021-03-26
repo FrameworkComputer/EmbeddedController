@@ -46,9 +46,6 @@
  */
 #define GPIO_USB_C1_INT_ODL GPIO_SUB_C1_INT_EN_RAILS_ODL
 
-/* Keyboard */
-#define CONFIG_PWM_KBLIGHT
-
 /* LED */
 #define CONFIG_LED_PWM
 #define CONFIG_LED_PWM_COUNT 1
