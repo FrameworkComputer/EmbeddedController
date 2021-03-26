@@ -240,7 +240,9 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t lock, int8_t pressed)
 {
 	const uint16_t prss_key = *key_code;
 
-	if (lock & FN_LOCKED && lock & FN_PRESSED)
+	if (!(Fn_key & FN_LOCKED) && lock & FN_PRESSED)
+		return EC_SUCCESS;
+	else if (Fn_key & FN_LOCKED && !(Fn_key & FN_PRESSED))
 		return EC_SUCCESS;
 
 	switch (prss_key) {
@@ -304,7 +306,38 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t lock, int8_t pressed)
 	return EC_SUCCESS;
 }
 
-int functional_hotkey(uint16_t *key_code, uint16_t pressed)
+
+int hotkey_special_key(uint16_t *key_code)
+{
+	const uint16_t prss_key = *key_code;
+
+	switch (prss_key) {
+	case SCANCODE_DELETE:  /* TODO: INSERT */
+		*key_code = 0xe070;
+		break;
+	case SCANCODE_K:  /* TODO: SCROLL_LOCK */
+		*key_code = SCANCODE_SCROLL_LOCK;
+		break;
+	case SCANCODE_S:  /* TODO: SYSRQ */
+
+		break;
+	case SCANCODE_LEFT:  /* HOME */
+		*key_code = 0xe06c;
+		break;
+	case SCANCODE_RIGHT:  /* END */
+		*key_code = 0xe069;
+		break;
+	case SCANCODE_UP:  /* PAGE_UP */
+		*key_code = 0xe07d;
+		break;
+	case SCANCODE_DOWN:  /* PAGE_DOWN */
+		*key_code = 0xe07a;
+		break;
+	}
+	return EC_SUCCESS;
+}
+
+int functional_hotkey(uint16_t *key_code)
 {
 	const uint16_t prss_key = *key_code;
 	uint8_t bl_brightness = 0;
@@ -366,56 +399,45 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 	const uint16_t pressed_key = *make_code;
 	int r = 0;
 
-	if (pressed_key == SCANCODE_FN && pressed)
-		Fn_key |= FN_PRESSED;
-	else if (pressed_key == SCANCODE_FN && !pressed)
-		Fn_key &= ~FN_PRESSED;
+	if (factory_status())
+		return EC_SUCCESS;
 
-	if (pressed_key == SCANCODE_FN && !factory_status())
+	if (pressed_key == SCANCODE_FN && pressed) {
+		Fn_key |= FN_PRESSED;
 		return EC_ERROR_UNIMPLEMENTED;
+	} else if (pressed_key == SCANCODE_FN && !pressed) {
+		Fn_key &= ~FN_PRESSED;
+		return EC_ERROR_UNIMPLEMENTED;
+	}
 
 	/*
-	 * If the function key is not held, then
-	 * we pass through all events without modifying them
+	 * If the system still in preOS
+	 * then we pass through all events without modifying them
 	 */
-	if (Fn_key == 0)
+	if (!pos_get_state())
 		return EC_SUCCESS;
 
 	r = hotkey_F1_F12(make_code, Fn_key, pressed);
 	if (r != EC_SUCCESS)
 		return r;
+	/*
+	 * If the function key is not held then
+	 * we pass through all events without modifying them
+	 */
+	if (!Fn_key)
+		return EC_SUCCESS;
 
 	if (Fn_key & FN_LOCKED && !(Fn_key & FN_PRESSED))
 		return EC_SUCCESS;
 
-	switch (pressed_key) {
-	case SCANCODE_DELETE:  /* TODO: INSERT */
-		*make_code = 0xE070;
-		break;
-	case SCANCODE_K:  /* TODO: SCROLL_LOCK */
-		*make_code = SCANCODE_SCROLL_LOCK;
-		break;
-	case SCANCODE_S:  /* TODO: SYSRQ */
-
-		break;
-	case SCANCODE_LEFT:  /* HOME */
-		*make_code = 0xE06C;
-		break;
-	case SCANCODE_RIGHT:  /* END */
-		*make_code = 0xE069;
-		break;
-	case SCANCODE_UP:  /* PAGE_UP */
-		*make_code = 0xE07D;
-		break;
-	case SCANCODE_DOWN:  /* PAGE_DOWN */
-		*make_code = 0xE07A;
-		break;
-	}
+	r = hotkey_special_key(make_code);
+	if (r != EC_SUCCESS)
+		return r;
 
 	if (!pressed || pressed_key != *make_code)
 		return EC_SUCCESS;
 
-	r = functional_hotkey(make_code, pressed);
+	r = functional_hotkey(make_code);
 	if (r != EC_SUCCESS)
 		return r;
 

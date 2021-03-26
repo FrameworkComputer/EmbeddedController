@@ -459,6 +459,14 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 static void sci_enable(void);
 DECLARE_DEFERRED(sci_enable);
 
+int pos_get_state(void)
+{
+	if (*host_get_customer_memmap(0x00) & BIT(0))
+		return true;
+	else
+		return false;
+}
+
 static void sci_enable(void)
 {
 	if (*host_get_customer_memmap(0x00) & BIT(0)) {
