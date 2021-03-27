@@ -231,6 +231,27 @@ config PLATFORM_EC_CHARGER_PROFILE_OVERRIDE
 
 	  It may modify the parameters as needed.
 
+config PLATFORM_EC_CHARGER_PSYS
+	bool "Support system power-monitor (PSYS) function"
+	help
+	  Enable this to support monitoring of system power using the charger's
+	  PSYS function. The charger provides an output which can be read
+	  using an ADC channel on the EC.
+
+config PLATFORM_EC_CHARGER_PSYS_READ
+	bool "Allow reading PSYS (system power) value"
+	depends on PLATFORM_EC_CHARGER_PSYS
+	help
+	  Enable support for reading the system-power value (PSYS). This
+	  calls the function charger_get_system_power() which is provided
+	  by the charger.
+
+	  It also enables the "psys" console command.
+
+	  Sample output:
+
+	    PSYS from chg_adc: 456 mW
+
 config PLATFORM_EC_CHARGER_SENSE_RESISTOR
 	int "Value of the charge sense-resistor, in mOhms"
 	help
