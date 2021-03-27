@@ -73,6 +73,23 @@ config PLATFORM_EC_BATTERY_PRESENT_GPIO
 
 endchoice  # battery presence
 
+config PLATFORM_EC_USE_BATTERY_DEVICE_CHEMISTRY
+	bool "Provide information about battery chemistry"
+	help
+	  Enable this to specify the chemistry of the battery device. It is
+	  only used for stress testing of reading the battery information over
+	  I2C.
+
+config PLATFORM_EC_BATTERY_DEVICE_CHEMISTRY
+	string "Battery-device chemistry"
+	depends on PLATFORM_EC_USE_BATTERY_DEVICE_CHEMISTRY
+	help
+	  Specify the battery chemistry for use with the I2C stress test.
+	  The value provided here must match what is read from the real
+	  battery. This is used in sb_i2c_test_read() to check that the battery
+	  is returning the right information. If it is not, there might be
+	  something wrong with the I2C implementation.
+
 choice "Charger select"
 	prompt "Select the charger to use"
 	help
