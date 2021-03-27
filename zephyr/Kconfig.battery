@@ -163,6 +163,47 @@ config PLATFORM_EC_CHARGER_BQ25720
 
 endchoice  # "Charger select"
 
+config PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
+	bool "Board supports discharge mode"
+	help
+	  Enable this if the board supports discharging the battery even when
+	  AC power is present. This is used for testing. The function is
+	  provided either by the charger or by custom code in the board.
+
+if PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
+
+choice "Discharge control method"
+	prompt "Select the method of controlling discharge"
+	help
+	  Select which method is provided to enable and disable the discharge
+	  mode.
+
+config PLATFORM_EC_CHARGER_DISCHARGE_ON_AC_CHARGER
+	bool "Charger controls discharge mode"
+	help
+	  Enable this if the charger controls selection of discharge mode.
+	  In this case the charger must provide a function:
+
+	     int charger_discharge_on_ac(int enabled)
+
+	  It should enable this feature if enabled is true, else disable it.
+	  The function should return EC_SUCCESS
+
+config PLATFORM_EC_CHARGER_DISCHARGE_ON_AC_CUSTOM
+	bool "Custom control of discharge mode"
+	help
+	  Enable this if the discharge mode is controlled by a custom function.
+	  This function is typically provided by the board implementation:
+
+	     int board_discharge_on_ac(int enabled)
+
+	  It should enable this feature if enabled is true, else disable it.
+	  The function should return EC_SUCCESS
+
+endchoice  # "Discharge control method"
+
+endif  # PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
+
 config PLATFORM_EC_CHARGER_NARROW_VDC
 	bool
 	help
