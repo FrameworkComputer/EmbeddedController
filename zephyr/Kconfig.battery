@@ -90,6 +90,13 @@ config PLATFORM_EC_BATTERY_DEVICE_CHEMISTRY
 	  is returning the right information. If it is not, there might be
 	  something wrong with the I2C implementation.
 
+config PLATFORM_EC_BATTERY_REVIVE_DISCONNECT
+	bool "Check for a battery in disconnect state"
+	help
+	  Check for battery in disconnect state (similar to cut-off state). If
+	  so, take it out of that state by force-applying a charge current.
+	  This option requires battery_get_disconnect_state() to be defined.
+
 choice "Charger select"
 	prompt "Select the charger to use"
 	help
