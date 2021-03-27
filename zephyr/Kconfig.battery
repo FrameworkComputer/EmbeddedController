@@ -218,6 +218,19 @@ config PLATFORM_EC_CHARGER_NARROW_VDC
 	  This should be enabled by charger drivers which need it. It cannot
 	  be set otherwise, even in prj.conf
 
+config PLATFORM_EC_CHARGER_PROFILE_OVERRIDE
+	bool "Override the charger profile"
+	help
+	  Select this if the charger should call battery_override_params() to
+	  limit/correct the voltage and current requested by the battery pack
+	  before acting on the request.
+
+	  The board must provide this function:
+
+	    void battery_override_params(struct batt_params *batt);
+
+	  It may modify the parameters as needed.
+
 config PLATFORM_EC_CHARGER_SENSE_RESISTOR
 	int "Value of the charge sense-resistor, in mOhms"
 	help
