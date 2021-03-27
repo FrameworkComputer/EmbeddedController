@@ -12,7 +12,7 @@
 	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {                    \
 		.name = DT_LABEL(node_id),                     \
 		.read = DT_ENUM_TOKEN(node_id, get_temp_func), \
-		.idx = DT_PHANDLE(node_id, adc),               \
+		.idx = ZSHIM_ADC_ID(DT_PHANDLE(node_id, adc)), \
 		.type = TEMP_SENSOR_TYPE_BOARD,                \
 	},
 

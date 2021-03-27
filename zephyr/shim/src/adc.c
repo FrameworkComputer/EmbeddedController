@@ -11,7 +11,7 @@ const struct device *adc_dev;
 
 #if DT_NODE_EXISTS(DT_INST(0, named_adc_channels))
 #define ADC_CHANNEL_COMMA(node_id)                     \
-	[node_id] = {                                  \
+	[ZSHIM_ADC_ID(node_id)] = {                    \
 		.name = DT_LABEL(node_id),             \
 		.input_ch = DT_PROP(node_id, channel), \
 		.factor_mul = DT_PROP(node_id, mul),   \
