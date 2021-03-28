@@ -257,12 +257,37 @@ class Zmake:
         elif build_after_configure:
             return self.build(build_dir=build_dir)
 
-    def build(self, build_dir, output_files_out=None):
+    def build(self, build_dir, output_files_out=None, fail_on_warnings=False):
         """Build a pre-configured build directory."""
-        project = zmake.project.Project(build_dir / 'project')
+        def wait_and_check_success(procs, writers):
+            """Wait for processes to complete and check for errors
+
+            Args:
+                procs: List of subprocess.Popen objects to check
+                writers: List of LogWriter objects to check
+
+            Returns:
+                True if all if OK
+                False if an error was found (so that zmake should exit)
+            """
+            for proc in procs:
+                if proc.wait():
+                    raise OSError(get_process_failure_msg(proc))
+
+            if (fail_on_warnings and
+                any(w.has_written(logging.WARNING) or
+                    w.has_written(logging.ERROR) for w in writers)):
+                self.logger.warning(
+                    "zmake: Warnings detected in build: aborting")
+                return False
+            return True
 
         procs = []
+        log_writers = []
         dirs = {}
+
+        project = zmake.project.Project(build_dir / 'project')
+
         for build_name, build_config in project.iter_builds():
             dirs[build_name] = build_dir / 'build-{}'.format(build_name)
             cmd = ['/usr/bin/ninja', '-C', dirs[build_name].as_posix()]
@@ -277,21 +302,21 @@ class Zmake:
                 stderr=subprocess.PIPE,
                 encoding='utf-8',
                 errors='replace')
-            zmake.multiproc.log_output(
+            out = zmake.multiproc.log_output(
                 logger=self.logger,
                 log_level=logging.INFO,
                 file_descriptor=proc.stdout,
                 log_level_override_func=ninja_log_level_override)
-            zmake.multiproc.log_output(
+            err = zmake.multiproc.log_output(
                 self.logger,
                 logging.ERROR,
                 proc.stderr,
                 log_level_override_func=cmake_log_level_override)
             procs.append(proc)
+            log_writers += [out, err]
 
-        for proc in procs:
-            if proc.wait():
-                raise OSError(get_process_failure_msg(proc))
+        if not wait_and_check_success(procs, log_writers):
+            return 2
 
         # Run the packer.
         packer_work_dir = build_dir / 'packer'
