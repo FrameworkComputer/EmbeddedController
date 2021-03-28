@@ -193,4 +193,15 @@ void usb_charger_reset_charge(int port);
  */
 int board_is_sourcing_vbus(int port);
 
+/**
+ * Enable VBUS sink for a given port
+ *
+ * This function is typically defined in the board file
+ *
+ * @param port port number
+ * @param enable 0 to disable, 1 to enable
+ * @return EC_SUCCESS if OK, EC_ERROR_INVAL if @port is invalid
+ */
+int board_vbus_sink_enable(int port, int enable);
+
 #endif  /* __CROS_EC_USB_CHARGE_H */

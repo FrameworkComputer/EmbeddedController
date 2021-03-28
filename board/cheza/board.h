@@ -211,8 +211,6 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
-/* Enable VBUS sink for a given port */
-int board_vbus_sink_enable(int port, int enable);
 /* Reset all TCPCs. */
 void board_reset_pd_mcu(void);
 /* Base detection interrupt handler */
