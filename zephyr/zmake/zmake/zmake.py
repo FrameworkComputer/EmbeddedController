@@ -53,6 +53,9 @@ def ninja_log_level_override(line, default_log_level):
     # we don't care about entering directories since it happens every time
     elif line.startswith("ninja: Entering directory"):
         return logging.DEBUG
+    # we know the build stops from the compiler messages and ninja return code
+    elif line.startswith("ninja: build stopped"):
+        return logging.DEBUG
     # someone prints a *** SUCCESS *** message which we don't need
     elif line.startswith("***"):
         return logging.DEBUG
@@ -62,6 +65,13 @@ def ninja_log_level_override(line, default_log_level):
     # Try to drop output about the device tree
     elif any(line.startswith(x) for x in cmake_suppress):
         return logging.INFO
+    # this message is a bit like make failing. We already got the error output.
+    elif line.startswith("FAILED: CMakeFiles"):
+        return logging.INFO
+    # if a particular file fails it shows the build line used, but that is not
+    # useful except for debugging.
+    elif line.startswith("ccache"):
+        return logging.DEBUG
     elif line.split()[0] in ["Memory", "FLASH:", "SRAM:", "IDT_LIST:"]:
         pass
     else:
