@@ -219,7 +219,7 @@ class Zmake:
                 errors='replace')
             zmake.multiproc.log_output(
                 logger=self.logger,
-                log_level=logging.DEBUG,
+                log_level=logging.INFO,
                 file_descriptor=proc.stdout,
                 log_level_override_func=ninja_log_level_override)
             zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
