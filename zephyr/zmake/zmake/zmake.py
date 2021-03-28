@@ -42,6 +42,16 @@ def ninja_log_level_override(line, default_log_level):
     # we don't care about entering directories since it happens every time
     elif line.startswith("ninja: Entering directory"):
         return logging.DEBUG
+    # someone prints a *** SUCCESS *** message which we don't need
+    elif line.startswith("***"):
+        return logging.DEBUG
+    # dopey ninja puts errors on stdout, so fix that. It does not look
+    # likely that it will be fixed upstream:
+    # https://github.com/ninja-build/ninja/issues/1537
+    elif line.split()[0] in ["Memory", "FLASH:", "SRAM:", "IDT_LIST:"]:
+        pass
+    else:
+        return logging.ERROR
     return default_log_level
 
 
