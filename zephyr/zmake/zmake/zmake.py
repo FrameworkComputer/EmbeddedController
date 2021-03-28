@@ -30,6 +30,17 @@ def ninja_log_level_override(line, default_log_level):
         default_log_level: The default logging level that will be used for the
           line.
     """
+    # Output lines from Zephyr that are not normally useful
+    # Send any lines that start with these strings to INFO
+    cmake_suppress = [
+        '-- ',    # device tree messages
+        'Loaded configuration',
+        'Including boilerplate',
+        'Parsing ',
+        'No change to configuration',
+        'No change to Kconfig header',
+    ]
+
     if line.startswith("FAILED: "):
         return logging.CRITICAL
 
@@ -48,6 +59,9 @@ def ninja_log_level_override(line, default_log_level):
     # dopey ninja puts errors on stdout, so fix that. It does not look
     # likely that it will be fixed upstream:
     # https://github.com/ninja-build/ninja/issues/1537
+    # Try to drop output about the device tree
+    elif any(line.startswith(x) for x in cmake_suppress):
+        return logging.INFO
     elif line.split()[0] in ["Memory", "FLASH:", "SRAM:", "IDT_LIST:"]:
         pass
     else:
