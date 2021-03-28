@@ -312,6 +312,14 @@ config PLATFORM_EC_CHARGE_RAMP_SW
 
 endchoice  # "Charge-ramp method"
 
+config PLATFORM_EC_CONSOLE_CMD_CHARGER_ADC_AMON_BMON
+	bool "Console command: amonbmon"
+	help
+	  Enable the 'amonbmon' command. This shows the charger adapter-current
+	  monitor (AMON) and battery-charging current monitor (BMON).
+
+	     amonbmon a | b
+
 config PLATFORM_EC_CONSOLE_CMD_CHGRAMP
 	bool "Console command: chgramp"
 	depends on PLATFORM_EC_CHARGE_RAMP_SW
