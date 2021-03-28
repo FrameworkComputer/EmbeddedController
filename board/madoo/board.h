@@ -163,7 +163,5 @@ enum fw_config_keyboard_type {
 	CUST_UK2_KB = 1,
 };
 
-int board_is_sourcing_vbus(int port);
-
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

@@ -185,8 +185,6 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
-int board_is_sourcing_vbus(int port);
-
 void motion_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */

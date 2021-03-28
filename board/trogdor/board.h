@@ -81,8 +81,6 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
-/* Custom function to indicate if sourcing VBUS */
-int board_is_sourcing_vbus(int port);
 /* Enable VBUS sink for a given port */
 int board_vbus_sink_enable(int port, int enable);
 /* Reset all TCPCs. */

@@ -183,4 +183,14 @@ static inline int usb_charger_ramp_max(int port, int supplier, int sup_curr)
  */
 void usb_charger_reset_charge(int port);
 
+/**
+ * Check if a particular port is sourcing VBUS
+ *
+ * This function is typically defined in the board file
+ *
+ * @param port port number
+ * @return 0 if not source, non-zero if sourcing
+ */
+int board_is_sourcing_vbus(int port);
+
 #endif  /* __CROS_EC_USB_CHARGE_H */

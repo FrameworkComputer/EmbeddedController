@@ -93,8 +93,6 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
-int board_is_sourcing_vbus(int port);
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */
