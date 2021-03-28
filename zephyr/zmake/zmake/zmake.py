@@ -119,6 +119,10 @@ class Zmake:
     here, as it would be duplicate of the help strings from the
     command line.  Run "zmake --help" for full documentation of each
     parameter.
+
+    Properties:
+        _sequential: True to check the results of each build job sequentially,
+            before launching more, False to just do this after all jobs complete
     """
     def __init__(self, checkout=None, jobserver=None, jobs=0, modules_dir=None,
                  zephyr_base=None):
@@ -140,6 +144,7 @@ class Zmake:
                 self.jobserver = zmake.jobserver.GNUMakeJobServer(jobs=jobs)
 
         self.logger = logging.getLogger(self.__class__.__name__)
+        self._sequential = jobs == 1
 
     @property
     def checkout(self):
@@ -289,31 +294,34 @@ class Zmake:
         project = zmake.project.Project(build_dir / 'project')
 
         for build_name, build_config in project.iter_builds():
-            dirs[build_name] = build_dir / 'build-{}'.format(build_name)
-            cmd = ['/usr/bin/ninja', '-C', dirs[build_name].as_posix()]
-            self.logger.info('Building %s:%s: %s', build_dir, build_name,
-                             zmake.util.repr_command(cmd))
-            proc = self.jobserver.popen(
-                cmd,
-                # Ninja will connect as a job client instead and claim
-                # many jobs.
-                claim_job=False,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                encoding='utf-8',
-                errors='replace')
-            out = zmake.multiproc.log_output(
-                logger=self.logger,
-                log_level=logging.INFO,
-                file_descriptor=proc.stdout,
-                log_level_override_func=ninja_log_level_override)
-            err = zmake.multiproc.log_output(
-                self.logger,
-                logging.ERROR,
-                proc.stderr,
-                log_level_override_func=cmake_log_level_override)
-            procs.append(proc)
-            log_writers += [out, err]
+            with self.jobserver.get_job():
+                dirs[build_name] = build_dir / 'build-{}'.format(build_name)
+                cmd = ['/usr/bin/ninja', '-C', dirs[build_name].as_posix()]
+                self.logger.info('Building %s:%s: %s', build_dir, build_name,
+                                 zmake.util.repr_command(cmd))
+                proc = self.jobserver.popen(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    encoding='utf-8',
+                    errors='replace')
+                out = zmake.multiproc.log_output(
+                    logger=self.logger,
+                    log_level=logging.INFO,
+                    file_descriptor=proc.stdout,
+                    log_level_override_func=ninja_log_level_override)
+                err = zmake.multiproc.log_output(
+                    self.logger,
+                    logging.ERROR,
+                    proc.stderr,
+                    log_level_override_func=cmake_log_level_override)
+
+                if self._sequential:
+                    if not wait_and_check_success([proc], [out, err]):
+                        return 2
+                else:
+                    procs.append(proc)
+                    log_writers += [out, err]
 
         if not wait_and_check_success(procs, log_writers):
             return 2
@@ -348,16 +356,18 @@ class Zmake:
 
         for output_file in output_files:
             self.logger.info('Running tests in %s.', output_file)
-            proc = self.jobserver.popen(
-                [output_file],
-                claim_job=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                encoding='utf-8',
-                errors='replace')
-            zmake.multiproc.log_output(self.logger, logging.DEBUG, proc.stdout)
-            zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
-            procs.append(proc)
+            with self.jobserver.get_job():
+                proc = self.jobserver.popen(
+                    [output_file],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    encoding='utf-8',
+                    errors='replace')
+                zmake.multiproc.log_output(self.logger, logging.DEBUG,
+                                           proc.stdout)
+                zmake.multiproc.log_output(self.logger, logging.ERROR,
+                                           proc.stderr)
+                procs.append(proc)
 
         for idx, proc in enumerate(procs):
             if proc.wait():
@@ -391,7 +401,6 @@ class Zmake:
             with self.jobserver.get_job():
                 proc = self.jobserver.popen(
                     ['pytest', '--verbose', test_file],
-                    claim_job=False,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     encoding='utf-8',

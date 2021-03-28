@@ -35,21 +35,14 @@ class JobClient:
         """Get the environment variables necessary to share the job server."""
         return {}
 
-    def popen(self, *args, claim_job=True, **kwargs):
-        """Start a process using subprocess.Popen, optionally claiming a job.
-
-        Args:
-            claim_job: True if a job should be claimed.
+    def popen(self, *args, **kwargs):
+        """Start a process using subprocess.Popen
 
         All other arguments are passed to subprocess.Popen.
 
         Returns:
             A Popen object.
         """
-        if claim_job:
-            with self.get_job():
-                return self.popen(*args, claim_job=False, **kwargs)
-
         kwargs.setdefault('env', os.environ)
         kwargs['env'].update(self.env())
 
