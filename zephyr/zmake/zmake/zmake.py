@@ -206,10 +206,12 @@ class Zmake:
         procs = []
         dirs = {}
         for build_name, build_config in project.iter_builds():
-            self.logger.info('Building %s:%s.', build_dir, build_name)
             dirs[build_name] = build_dir / 'build-{}'.format(build_name)
+            cmd = ['/usr/bin/ninja', '-C', dirs[build_name].as_posix()]
+            self.logger.info('Building %s:%s: %s', build_dir, build_name,
+                             zmake.util.repr_command(cmd))
             proc = self.jobserver.popen(
-                ['/usr/bin/ninja', '-C', dirs[build_name]],
+                cmd,
                 # Ninja will connect as a job client instead and claim
                 # many jobs.
                 claim_job=False,
