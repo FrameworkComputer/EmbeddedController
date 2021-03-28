@@ -35,6 +35,19 @@ def ninja_log_level_override(line, default_log_level):
     return default_log_level
 
 
+def get_process_failure_msg(proc):
+    """Creates a suitable failure message if something exits badly
+
+    Args:
+        proc: subprocess.Popen object containing the thing that failed
+
+    Returns:
+        Failure message as a string:
+    """
+    return "Execution failed (return code={}): {}\n".format(
+        proc.returncode, util.repr_command(proc.args))
+
+
 class Zmake:
     """Wrapper class encapsulating zmake's supported operations.
 
@@ -176,9 +189,7 @@ class Zmake:
             processes.append(proc)
         for proc in processes:
             if proc.wait():
-                raise OSError(
-                    "Execution of {} failed (return code={})!\n".format(
-                        util.repr_command(proc.args), proc.returncode))
+                raise OSError(get_process_failure_msg(proc))
 
         # Create symlink to project
         util.update_symlink(project_dir, build_dir / 'project')
@@ -216,9 +227,7 @@ class Zmake:
 
         for proc in procs:
             if proc.wait():
-                raise OSError(
-                    "Execution of {} failed (return code={})!\n".format(
-                        util.repr_command(proc.args), proc.returncode))
+                raise OSError(get_process_failure_msg(proc))
 
         # Run the packer.
         packer_work_dir = build_dir / 'packer'
@@ -263,9 +272,7 @@ class Zmake:
 
         for idx, proc in enumerate(procs):
             if proc.wait():
-                raise OSError(
-                    "Execution of {} failed (return code={})!\n".format(
-                        util.repr_command(proc.args), proc.returncode))
+                raise OSError(get_process_failure_msg(proc))
         return 0
 
     def _run_pytest(self, executor, directory):
@@ -305,9 +312,7 @@ class Zmake:
                     proc.stdout, log_level_override_func=get_log_level)
                 rv = proc.wait()
                 if rv:
-                    self.logger.error(
-                        "Execution of {} failed (return code={})!\n".format(
-                            util.repr_command(proc.args), rv))
+                    self.logger.error(get_process_failure_msg(proc))
                 return rv
 
         for test_file in directory.glob('test_*.py'):
