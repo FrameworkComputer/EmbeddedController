@@ -79,6 +79,22 @@ def ninja_log_level_override(line, default_log_level):
     return default_log_level
 
 
+def cmake_log_level_override(line, default_log_level):
+    """Update the log level for cmake builds if we hit an error.
+
+    Cmake prints some messages that are less than useful during development.
+
+    Args:
+        line: The line that is about to be logged.
+        default_log_level: The default logging level that will be used for the
+          line.
+    """
+    # Strange output from Zephyr that we normally ignore
+    if line.startswith("Including boilerplate"):
+        return logging.DEBUG
+    return default_log_level
+
+
 def get_process_failure_msg(proc):
     """Creates a suitable failure message if something exits badly
 
@@ -268,7 +284,11 @@ class Zmake:
                 log_level=logging.INFO,
                 file_descriptor=proc.stdout,
                 log_level_override_func=ninja_log_level_override)
-            zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
+            zmake.multiproc.log_output(
+                self.logger,
+                logging.ERROR,
+                proc.stderr,
+                log_level_override_func=cmake_log_level_override)
             procs.append(proc)
 
         for proc in procs:
