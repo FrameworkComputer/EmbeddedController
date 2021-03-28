@@ -41,9 +41,6 @@ def ninja_log_level_override(line, default_log_level):
         'No change to Kconfig header',
     ]
 
-    if line.startswith("FAILED: "):
-        return logging.CRITICAL
-
     # Herewith a long list of things which are really for debugging, not
     # development. Return logging.DEBUG for each of these.
 
