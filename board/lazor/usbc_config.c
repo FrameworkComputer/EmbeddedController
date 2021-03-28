@@ -193,6 +193,12 @@ static void board_init_usbc(void)
 
 	/* Enable USB-A overcurrent interrupt */
 	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
+	/*
+	 * The H1 SBU line for CCD are behind PPC chip. The PPC internal FETs
+	 * for SBU may be disconnected after DP alt mode is off. Should enable
+	 * the CCD_MODE_ODL interrupt to make sure the SBU FETs are connected.
+	 */
+	gpio_enable_interrupt(GPIO_CCD_MODE_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_init_usbc, HOOK_PRIO_DEFAULT);
 
