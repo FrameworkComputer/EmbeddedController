@@ -32,6 +32,16 @@ def ninja_log_level_override(line, default_log_level):
     """
     if line.startswith("FAILED: "):
         return logging.CRITICAL
+
+    # Herewith a long list of things which are really for debugging, not
+    # development. Return logging.DEBUG for each of these.
+
+    # ninja puts progress information on stdout
+    if line.startswith("["):
+        return logging.DEBUG
+    # we don't care about entering directories since it happens every time
+    elif line.startswith("ninja: Entering directory"):
+        return logging.DEBUG
     return default_log_level
 
 
