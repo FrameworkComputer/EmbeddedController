@@ -16,6 +16,7 @@
 #define GPIO_BOARD_VERSION1		NAMED_GPIO(brd_id0)
 #define GPIO_BOARD_VERSION2		NAMED_GPIO(brd_id1)
 #define GPIO_BOARD_VERSION3		NAMED_GPIO(brd_id2)
+#define GPIO_CCD_MODE_ODL		NAMED_GPIO(ccd_mode_odl)
 #define GPIO_DA9313_GPIO0		NAMED_GPIO(da9313_gpio0)
 #define GPIO_DP_HOT_PLUG_DET		NAMED_GPIO(dp_hot_plug_det)
 #define GPIO_DP_MUX_SEL			NAMED_GPIO(dp_mux_sel)
@@ -92,6 +93,8 @@
 	GPIO_INT(GPIO_USB_C1_SWCTL_INT_ODL, GPIO_INT_FALLING, ppc_interrupt)  \
 	GPIO_INT(GPIO_USB_C0_BC12_INT_L, GPIO_INT_FALLING, usb0_evt)          \
 	GPIO_INT(GPIO_USB_C1_BC12_INT_L, GPIO_INT_FALLING, usb1_evt)          \
-	GPIO_INT(GPIO_USB_A0_OC_ODL, GPIO_INT_BOTH, usba_oc_interrupt)
+	GPIO_INT(GPIO_USB_A0_OC_ODL, GPIO_INT_BOTH, usba_oc_interrupt)        \
+	GPIO_INT(GPIO_CCD_MODE_ODL, GPIO_INT_FALLING, board_connect_c0_sbu)
+
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
