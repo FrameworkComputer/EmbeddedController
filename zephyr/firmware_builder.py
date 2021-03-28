@@ -41,7 +41,7 @@ def build(opts):
 
         print('Building {}'.format(target))
         rv = subprocess.run(
-            ['zmake', 'configure', '-b', '-B', temp_build_dir, target],
+            ['zmake', '-D', 'configure', '-b', '-B', temp_build_dir, target],
             cwd=os.path.dirname(__file__)).returncode
         if rv != 0:
             return rv
@@ -55,7 +55,7 @@ def test(opts):
     with open(opts.metrics, 'w') as f:
         f.write(json_format.MessageToJson(metrics))
 
-    return subprocess.run(['zmake', 'testall', '--fail-fast']).returncode
+    return subprocess.run(['zmake', '-D', 'testall', '--fail-fast']).returncode
 
 
 def main(args):
