@@ -255,7 +255,12 @@ int raa489000_debug_detach(int port)
 	 * 1. Set POWER_CONTROL. AutoDischargeDisconnect=1
 	 * 2. Set ROLE_CONTROL=0x0F(OPEN,OPEN)
 	 * 3. Set POWER_CONTROL. AutoDischargeDisconnect=0
+	 *
+	 * Only if we have sufficient battery.  Otherwise, we would risk
+	 * brown-out during the CC open set.
 	 */
+	if (!pd_is_battery_capable())
+		return EC_SUCCESS;
 
 	tcpci_tcpc_enable_auto_discharge_disconnect(port, 1);
 
