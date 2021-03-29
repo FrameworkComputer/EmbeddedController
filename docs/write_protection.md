@@ -57,7 +57,7 @@ Another way of disabling hardware write protection is to remove the battery;
 this method is mainly used during bringup.
 
 Additional reference:
-https://www.google.com/chromeos/partner/fe/docs/cpfe/firmwaretestmanual.html#hardware-write-protect
+https://chromium.googlesource.com/chromiumos/docs/+/HEAD/write_protection.md
 
 ## Changing Hardware Write Protection
 
