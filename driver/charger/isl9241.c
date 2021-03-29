@@ -12,6 +12,7 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "charger.h"
+#include "charge_state.h"
 #include "console.h"
 #include "common.h"
 #include "hooks.h"
@@ -497,6 +498,30 @@ static int isl9241_ramp_get_current_limit(int chgnum)
 	return (reg * 222) / 10;
 }
 #endif /* CONFIG_CHARGE_RAMP_HW */
+
+/*
+ * When fully charged in a low-power state, the ISL9241 may get stuck
+ * in CCM. Toggle learning mode for 50 ms to enter DCM and save power.
+ * This is a workaround provided by Renesas. See b/183771327.
+ */
+static void isl9241_restart_charge_voltage_when_full(void)
+{
+	if (!chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
+	    && charge_get_state() == PWR_STATE_CHARGE_NEAR_FULL) {
+		charger_discharge_on_ac(1);
+		msleep(50);
+		charger_discharge_on_ac(0);
+	}
+}
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE,
+	     isl9241_restart_charge_voltage_when_full,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,
+	     isl9241_restart_charge_voltage_when_full,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
+	     isl9241_restart_charge_voltage_when_full,
+	     HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 #ifdef CONFIG_CMD_CHARGER_DUMP
