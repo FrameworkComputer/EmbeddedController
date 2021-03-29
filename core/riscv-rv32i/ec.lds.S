@@ -271,6 +271,25 @@ SECTIONS
 
 	__data_lma_start = .;
 
+#ifdef CONFIG_PRESERVE_LOGS
+	.preserve_logs(NOLOAD) : {
+		/*
+		 * The address of the preserved logs is fixed at the beginning
+		 * of memory.
+		 */
+		. = ALIGN(8);
+		__preserved_logs_start = .;
+		*(SORT(.preserved_logs.*))
+		. = ALIGN(8);
+		__preserved_logs_end = .;
+	} > IRAM
+	__preserved_logs_size = __preserved_logs_end - __preserved_logs_start;
+#ifdef CONFIG_IT83XX_HARD_RESET_BY_GPG1
+	ASSERT(__preserved_logs_size <= CHIP_FLASH_PRESERVE_LOGS_SIZE,
+	       "Not enough flash space to save EC logs.")
+#endif
+#endif /* CONFIG_PRESERVE_LOGS */
+
 	.data : {
 		. = ALIGN(4);
 		__data_start = .;

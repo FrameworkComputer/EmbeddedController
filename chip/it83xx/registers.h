@@ -1451,7 +1451,10 @@ enum bram_indices {
 	BRAM_IDX_SCRATCHPAD2  = 0xa,
 	BRAM_IDX_SCRATCHPAD3  = 0xb,
 
-	/* offset 0x0c ~ 0x1f are reserved for future use. */
+	/* EC logs status */
+	BRAM_IDX_EC_LOG_STATUS = 0xc,
+
+	/* offset 0x0d ~ 0x1f are reserved for future use. */
 #if defined(CONFIG_HOSTCMD_LPC) || defined(CONFIG_HOSTCMD_ESPI)
 	/*
 	 * offset 0x20 ~ 0x7b are reserved for future use.
@@ -1487,6 +1490,12 @@ enum bram_indices {
 #define BRAM_SCRATCHPAD1        IT83XX_BRAM_BANK0(BRAM_IDX_SCRATCHPAD1)
 #define BRAM_SCRATCHPAD2        IT83XX_BRAM_BANK0(BRAM_IDX_SCRATCHPAD2)
 #define BRAM_SCRATCHPAD3        IT83XX_BRAM_BANK0(BRAM_IDX_SCRATCHPAD3)
+
+#define BRAM_EC_LOG_STATUS      IT83XX_BRAM_BANK0(BRAM_IDX_EC_LOG_STATUS)
+enum bram_ec_logs_status {
+	EC_LOG_SAVED_IN_FLASH = 1,
+	EC_LOG_SAVED_IN_MEMORY
+};
 
 #define BRAM_VALID_FLAGS0       IT83XX_BRAM_BANK0(BRAM_IDX_VALID_FLAGS0)
 #define BRAM_VALID_FLAGS1       IT83XX_BRAM_BANK0(BRAM_IDX_VALID_FLAGS1)

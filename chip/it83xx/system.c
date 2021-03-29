@@ -13,6 +13,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "intc.h"
+#include "link_defs.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -260,6 +261,16 @@ void chip_bram_valid(void)
 		BRAM_VALID_FLAGS2 = BRAM_VALID_MAGIC_FIELD2;
 		BRAM_VALID_FLAGS3 = BRAM_VALID_MAGIC_FIELD3;
 	}
+
+#if defined(CONFIG_PRESERVE_LOGS) && defined(CONFIG_IT83XX_HARD_RESET_BY_GPG1)
+	if (BRAM_EC_LOG_STATUS == EC_LOG_SAVED_IN_FLASH) {
+		/* Restore EC logs from flash. */
+		memcpy((void *)__preserved_logs_start,
+			(const void *)CHIP_FLASH_PRESERVE_LOGS_BASE,
+			(uintptr_t)__preserved_logs_size);
+	}
+	BRAM_EC_LOG_STATUS = 0;
+#endif
 }
 
 void system_pre_init(void)
@@ -295,6 +306,15 @@ void system_reset(int flags)
 		ccprintf("!Reset will be failed due to EC is in debug mode!\n");
 		cflush();
 	}
+
+#if defined(CONFIG_PRESERVE_LOGS) && defined(CONFIG_IT83XX_HARD_RESET_BY_GPG1)
+	/* Saving EC logs into flash before reset. */
+	flash_physical_erase(CHIP_FLASH_PRESERVE_LOGS_BASE,
+		CHIP_FLASH_PRESERVE_LOGS_SIZE);
+	flash_physical_write(CHIP_FLASH_PRESERVE_LOGS_BASE,
+		(uintptr_t)__preserved_logs_size, __preserved_logs_start);
+	BRAM_EC_LOG_STATUS = EC_LOG_SAVED_IN_FLASH;
+#endif
 
 	/* Disable interrupts to avoid task swaps during reboot. */
 	interrupt_disable();

@@ -148,6 +148,9 @@ extern void *__dram_bss_end;
 #ifdef CONFIG_PRESERVE_LOGS
 #define __preserved_logs(name)                                                 \
 	__attribute__((section(".preserved_logs." STRINGIFY(name))))
+/* preserved_logs section. */
+extern const char __preserved_logs_start[];
+extern const char __preserved_logs_size[];
 #else
 #define __preserved_logs(name)
 #endif
