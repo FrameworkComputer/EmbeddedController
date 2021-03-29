@@ -52,6 +52,8 @@
 #define GPIO_EC_INT_L			NAMED_GPIO(ec_int_l)
 #define GPIO_KBD_KSO2			NAMED_GPIO(ec_kso_02_inv)
 #define GPIO_ENABLE_BACKLIGHT		NAMED_GPIO(ec_bl_disable_l)
+#define GPIO_VOLUME_DOWN_L		NAMED_GPIO(ec_voldn_btn_odl)
+#define GPIO_VOLUME_UP_L		NAMED_GPIO(ec_volup_btn_odl)
 
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
@@ -73,6 +75,8 @@
 	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt)            \
 	GPIO_INT(GPIO_POWER_BUTTON_L, GPIO_INT_EDGE_BOTH,                     \
 		 power_button_interrupt)                                      \
+	GPIO_INT(GPIO_VOLUME_DOWN_L, GPIO_INT_EDGE_BOTH, button_interrupt)    \
+	GPIO_INT(GPIO_VOLUME_UP_L, GPIO_INT_EDGE_BOTH, button_interrupt)      \
 	GPIO_INT(GPIO_SWITCHCAP_PG_INT_L, GPIO_INT_FALLING, ln9310_interrupt) \
 	GPIO_INT(GPIO_AP_RST_L, GPIO_INT_EDGE_BOTH, power_signal_interrupt)   \
 	GPIO_INT(GPIO_AP_SUSPEND, GPIO_INT_EDGE_BOTH, power_signal_interrupt) \
