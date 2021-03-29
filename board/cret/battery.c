@@ -32,35 +32,192 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* POW-TECH Battery Information */
-	[BATTERY_POWER_TECH] = {
+	/* BYD Battery Information */
+	[BATTERY_BYD] = {
 		.fuel_gauge = {
-			.manuf_name = "POW-TECH",
+			.manuf_name = "BYD",
 			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x10, 0x10 },
+				.wb_support = 1,
+				.reg_addr = 0x44,
+				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.reg_addr       = 0x00,
+				.reg_addr       = 0x0,
 				.reg_mask       = 0x2000,
 				.disconnect_val = 0x2000,
+				.cfet_mask = 0x4000,
+				.cfet_off_val = 0x4000,
 			}
 		},
 		.batt_info = {
-			.voltage_max          = 8800,    /* mV */
-			.voltage_normal       = 7700,
-			.voltage_min          = 6000,
-			.precharge_current    = 160,       /* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c       = 0,
-			.charging_max_c       = 45,
-			.discharging_min_c    = -20,
-			.discharging_max_c    = 60,
+			.voltage_max          = 13200,    /* mV */
+			.voltage_normal       = 11400,
+			.voltage_min          = 9000,
+			.precharge_current    = 256,       /* mA */
+			.start_charging_min_c = -3,
+			.start_charging_max_c = 50,
+			.charging_min_c       = -3,
+			.charging_max_c       = 60,
+			.discharging_min_c    = -5,
+			.discharging_max_c    = 70,
 		},
+	},
 
+	/* LGC Battery Information */
+	[BATTERY_LGC] = {
+		.fuel_gauge = {
+			.manuf_name = "LGC-LGC3.685",
+			.ship_mode = {
+				.wb_support = 1,
+				.reg_addr = 0x44,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr       = 0x0,
+				.reg_mask       = 0x2000,
+				.disconnect_val = 0x2000,
+				.cfet_mask = 0x4000,
+				.cfet_off_val = 0x4000,
+			}
+		},
+		.batt_info = {
+			.voltage_max          = 13200,    /* mV */
+			.voltage_normal       = 11460,
+			.voltage_min          = 9000,
+			.precharge_current    = 256,       /* mA */
+			.start_charging_min_c = -3,
+			.start_charging_max_c = 50,
+			.charging_min_c       = -3,
+			.charging_max_c       = 60,
+			.discharging_min_c    = -5,
+			.discharging_max_c    = 70,
+		},
+	},
+
+	/* SWD-ATL Battery Information */
+	[BATTERY_SWD_ATL] = {
+		.fuel_gauge = {
+			.manuf_name = "SWD-ATL3.618",
+			.ship_mode = {
+				.wb_support = 1,
+				.reg_addr = 0x44,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr       = 0x0,
+				.reg_mask       = 0x2000,
+				.disconnect_val = 0x2000,
+				.cfet_mask = 0x4000,
+				.cfet_off_val = 0x4000,
+			}
+		},
+		.batt_info = {
+			.voltage_max          = 13200,    /* mV */
+			.voltage_normal       = 11400,
+			.voltage_min          = 9000,
+			.precharge_current    = 256,       /* mA */
+			.start_charging_min_c = -3,
+			.start_charging_max_c = 50,
+			.charging_min_c       = -3,
+			.charging_max_c       = 60,
+			.discharging_min_c    = -5,
+			.discharging_max_c    = 70,
+		},
+	},
+
+	/* SWD-COS Battery Information */
+	[BATTERY_SWD_COS] = {
+		.fuel_gauge = {
+			.manuf_name = "SWD-COS3.634",
+			.ship_mode = {
+				.wb_support = 1,
+				.reg_addr = 0x44,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr       = 0x0,
+				.reg_mask       = 0x2000,
+				.disconnect_val = 0x2000,
+				.cfet_mask = 0x4000,
+				.cfet_off_val = 0x4000,
+			}
+		},
+		.batt_info = {
+			.voltage_max          = 13200,    /* mV */
+			.voltage_normal       = 11400,
+			.voltage_min          = 9000,
+			.precharge_current    = 256,       /* mA */
+			.start_charging_min_c = -3,
+			.start_charging_max_c = 50,
+			.charging_min_c       = -3,
+			.charging_max_c       = 60,
+			.discharging_min_c    = -5,
+			.discharging_max_c    = 70,
+		},
+	},
+
+	/* SMP-ATL Battery Information */
+	[BATTERY_SMP_ATL] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP-ATL-3.61",
+			.ship_mode = {
+				.wb_support = 1,
+				.reg_addr = 0x44,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr       = 0x0,
+				.reg_mask       = 0x2000,
+				.disconnect_val = 0x2000,
+				.cfet_mask = 0x4000,
+				.cfet_off_val = 0x4000,
+			}
+		},
+		.batt_info = {
+			.voltage_max          = 13200,    /* mV */
+			.voltage_normal       = 11400,
+			.voltage_min          = 9000,
+			.precharge_current    = 256,       /* mA */
+			.start_charging_min_c = -3,
+			.start_charging_max_c = 50,
+			.charging_min_c       = -3,
+			.charging_max_c       = 60,
+			.discharging_min_c    = -5,
+			.discharging_max_c    = 70,
+		},
+	},
+
+	/* SMP-COS Battery Information */
+	[BATTERY_SMP_COS] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP-COS3.63",
+			.ship_mode = {
+				.wb_support = 1,
+				.reg_addr = 0x44,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr       = 0x0,
+				.reg_mask       = 0x2000,
+				.disconnect_val = 0x2000,
+				.cfet_mask = 0x4000,
+				.cfet_off_val = 0x4000,
+			}
+		},
+		.batt_info = {
+			.voltage_max          = 13200,    /* mV */
+			.voltage_normal       = 11400,
+			.voltage_min          = 9000,
+			.precharge_current    = 256,       /* mA */
+			.start_charging_min_c = -3,
+			.start_charging_max_c = 50,
+			.charging_min_c       = -3,
+			.charging_max_c       = 60,
+			.discharging_min_c    = -5,
+			.discharging_max_c    = 70,
+		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_POWER_TECH;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_BYD;
