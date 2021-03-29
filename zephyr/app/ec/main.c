@@ -6,6 +6,7 @@
 #include <sys/printk.h>
 #include <zephyr.h>
 
+#include "button.h"
 #include "chipset.h"
 #include "ec_tasks.h"
 #include "hooks.h"
@@ -45,6 +46,11 @@ void main(void)
 
 	if (IS_ENABLED(HAS_TASK_KEYSCAN)) {
 		keyboard_scan_init();
+	}
+
+	if (IS_ENABLED(CONFIG_DEDICATED_RECOVERY_BUTTON) ||
+	    IS_ENABLED(CONFIG_VOLUME_BUTTONS)) {
+		button_init();
 	}
 
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_ESPI)) {
