@@ -15,6 +15,7 @@
 
 /* RVP Board ids */
 #define ADLP_LP5_T4_RVP_SKU_BOARD_ID	0x13
+#define ADL_RVP_BOARD_ID(id)		((id) & 0x3F)
 
 /* MECC config */
 #define CONFIG_INTEL_RVP_MECC_VERSION_1_0

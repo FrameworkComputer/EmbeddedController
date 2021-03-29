@@ -287,7 +287,7 @@ DECLARE_HOOK(HOOK_INIT, enable_h1_irq, HOOK_PRIO_LAST);
 
 static void configure_retimer_usbmux(void)
 {
-	switch (board_get_version() & 0x3F) {
+	switch (ADL_RVP_BOARD_ID(board_get_version())) {
 	case ADLP_LP5_T4_RVP_SKU_BOARD_ID:
 		/* No retimer on Port-2 */
 #if defined(HAS_TASK_PD_C2)
@@ -330,8 +330,15 @@ const int pwrok_signal_deassert_count = ARRAY_SIZE(pwrok_signal_assert_list);
  */
 int board_get_version(void)
 {
+	/* Cache the ADLRVP board ID */
+	static int adlrvp_board_id;
+
 	int port0, port1;
 	int fab_id, board_id, bom_id;
+
+	/* Board ID is already read */
+	if (adlrvp_board_id)
+		return adlrvp_board_id;
 
 	if (ioexpander_read_intelrvp_version(&port0, &port1))
 		return -1;
@@ -347,5 +354,27 @@ int board_get_version(void)
 
 	CPRINTS("BID:0x%x, FID:0x%x, BOM:0x%x", board_id, fab_id, bom_id);
 
-	return board_id | (fab_id << 8);
+	adlrvp_board_id = board_id | (fab_id << 8);
+	return adlrvp_board_id;
+}
+
+__override bool board_is_tbt_usb4_port(int port)
+{
+	bool tbt_usb4 = true;
+
+	switch (ADL_RVP_BOARD_ID(board_get_version())) {
+	case ADLP_LP5_T4_RVP_SKU_BOARD_ID:
+		/* No retimer on Port-2 hence no platform level AUX & LSx mux */
+#if defined(HAS_TASK_PD_C2)
+		if (port == TYPE_C_PORT_2)
+			tbt_usb4 = false;
+#endif
+		break;
+
+	/* Add additional board SKUs */
+	default:
+		break;
+	}
+
+	return tbt_usb4;
 }
