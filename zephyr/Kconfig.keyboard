@@ -126,6 +126,12 @@ config PLATFORM_EC_VOLUME_BUTTONS
 	  Your board must define GPIO_VOLUME_UP_L and GPIO_VOLUME_DOWN_L in
 	  gpio_map.h
 
+config PLATFORM_EC_CMD_BUTTON
+	bool "Console command: button"
+	help
+	  This command simulates button press. The buttons are like volume-up,
+	  volume-down, and recovery buttons.
+
 config PLATFORM_EC_CONSOLE_CMD_KEYBOARD
 	bool "Console command: ksstate, kbpress, 8042"
 	default y if PLATFORM_EC_KEYBOARD
