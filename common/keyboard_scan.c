@@ -600,7 +600,7 @@ static int check_keys_changed(uint8_t *state)
 #endif
 
 #ifdef CONFIG_KEYBOARD_PROTOCOL_MKBP
-		keyboard_fifo_add(state);
+		mkbp_keyboard_add(state);
 #endif
 	}
 

@@ -65,7 +65,7 @@ int press_key(int c, int r, int pressed)
 {
 	ccprintf("Input %s (%d, %d)\n", action[pressed], c, r);
 	set_state(c, r, pressed);
-	return keyboard_fifo_add(state);
+	return mkbp_keyboard_add(state);
 }
 
 int verify_key(int c, int r, int pressed)

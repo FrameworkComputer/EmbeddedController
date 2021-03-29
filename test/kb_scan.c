@@ -77,7 +77,7 @@ int keyboard_raw_read_rows(void)
 	}
 }
 
-int keyboard_fifo_add(const uint8_t *buffp)
+int mkbp_keyboard_add(const uint8_t *buffp)
 {
 	fifo_add_count++;
 	return EC_SUCCESS;

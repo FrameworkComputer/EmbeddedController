@@ -16,21 +16,7 @@
  *
  * @return EC_SUCCESS if entry added, EC_ERROR_OVERFLOW if FIFO is full
  */
-int keyboard_fifo_add(const uint8_t *buffp);
-
-/**
- * Add an element to the common MKBP FIFO.
- *
- * @param event_type	The MKBP event type.
- * @param buffp		Pointer to the event data to enqueue.
- * @return EC_SUCCESS if entry added, EC_ERROR_OVERFLOW if FIFO is full.
- */
-int mkbp_fifo_add(uint8_t event_type, const uint8_t *buffp);
-
-/**
- * Clear the MKBP common FIFO.
- */
-void mkbp_clear_fifo(void);
+int mkbp_keyboard_add(const uint8_t *buffp);
 
 /**
  * Send KEY_BATTERY keystroke.
