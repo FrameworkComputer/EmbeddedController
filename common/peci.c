@@ -49,16 +49,23 @@ static int peci_get_cpu_temp(int *cpu_temp)
 	return EC_SUCCESS;
 }
 
+__overridable int stop_read_peci_temp(void)
+{
+	if (!chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_STANDBY))
+		return EC_ERROR_NOT_POWERED;
+	else
+		return EC_SUCCESS;
+}
+
 int peci_temp_sensor_get_val(int idx, int *temp_ptr)
 {
 	int i, rv;
-#ifndef CONFIG_PECI_MS_RULE
-	if (!chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_STANDBY))
-		return EC_ERROR_NOT_POWERED;
-#else
-	if (!chipset_in_state(CHIPSET_STATE_ON))
-		return EC_ERROR_NOT_POWERED;
-#endif
+
+	rv = stop_read_peci_temp();
+
+	if (rv != EC_SUCCESS)
+		return rv;
+
 	/*
 	 * Retry reading PECI CPU temperature if the first sample is
 	 * invalid or failed to obtain.

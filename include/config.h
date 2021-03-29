@@ -3043,11 +3043,6 @@
  */
 #undef CONFIG_PECI_TJMAX
 
-/* at modern standby(S0ix) should not read anything for PECI
- * it will let OS can't into hibernate cause by C10 active too long
- */
-#undef CONFIG_PECI_MS_RULE
-
 /*****************************************************************************/
 /* PMU config */
 

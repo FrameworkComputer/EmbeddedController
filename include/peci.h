@@ -62,4 +62,10 @@ int peci_temp_sensor_get_val(int idx, int *temp_ptr);
  */
 int peci_transaction(struct peci_data *peci);
 
+/**
+ * Stop to read PECI temp
+ *
+ */
+__override_proto int stop_read_peci_temp(void);
+
 #endif  /* __CROS_EC_PECI_H */
