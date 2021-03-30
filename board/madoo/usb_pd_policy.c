@@ -7,6 +7,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "driver/charger/isl923x_public.h"
 #include "driver/tcpm/tcpci.h"
 #include "usb_pd.h"
 
@@ -46,6 +47,10 @@ int pd_set_power_supply_ready(int port)
 
 	/* Provide Vbus. */
 	rv = tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SRC_CTRL_HIGH);
+	if (rv)
+		return rv;
+
+	rv = raa489000_enable_asgate(port, true);
 	if (rv)
 		return rv;
 
