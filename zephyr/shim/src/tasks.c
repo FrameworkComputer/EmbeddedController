@@ -68,6 +68,7 @@ struct task_ctx {
 #define TASK_TEST(_name, _entry, _parameter, _size) \
 	CROS_EC_TASK(_name, _entry, _parameter, _size)
 static struct task_ctx shimmed_tasks[] = { CROS_EC_TASK_LIST };
+static int tasks_started;
 #undef CROS_EC_TASK
 #undef TASK_TEST
 
@@ -250,6 +251,7 @@ void start_ec_tasks(void)
 			task_entry, ctx, NULL, NULL,
 			K_PRIO_PREEMPT(TASK_ID_COUNT - i - 1), 0, K_NO_WAIT);
 	}
+	tasks_started = 1;
 }
 
 /*
@@ -274,5 +276,5 @@ SYS_INIT(init_signals, POST_KERNEL, 50);
 
 int task_start_called(void)
 {
-	return 1;
+	return tasks_started;
 }
