@@ -12,6 +12,7 @@
 #include "keyboard_config.h"
 #include "keyboard_mkbp.h"
 #include "keyboard_scan.h"
+#include "mkbp_input_devices.h"
 #include "util.h"
 
 static uint32_t get_supported_buttons(void)
@@ -116,6 +117,7 @@ static enum ec_status mkbp_get_info(struct host_cmd_handler_args *args)
 				break;
 #endif
 
+#ifdef CONFIG_MKBP_INPUT_DEVICES
 			case EC_MKBP_EVENT_BUTTON:
 				r->buttons = mkbp_get_button_state();
 				args->response_size = sizeof(r->buttons);
@@ -125,6 +127,7 @@ static enum ec_status mkbp_get_info(struct host_cmd_handler_args *args)
 				r->switches = mkbp_get_switch_state();
 				args->response_size = sizeof(r->switches);
 				break;
+#endif /* CONFIG_MKBP_INPUT_DEVICES */
 
 			default:
 				/* Doesn't make sense for other event types. */
