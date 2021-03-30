@@ -17,13 +17,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 
-/* The port that the aux channel is on. */
-static enum {
-	AUX_PORT_NONE = -1,
-	AUX_PORT_C0 = 0,
-	AUX_PORT_C1HDMI = 1,
-} aux_port = AUX_PORT_NONE;
-
 int svdm_get_hpd_gpio(int port)
 {
 	/* HPD is low active, inverse the result */
@@ -39,27 +32,26 @@ void svdm_set_hpd_gpio(int port, int en)
 	gpio_set_level(GPIO_EC_DPBRDG_HPD_ODL, !en);
 }
 
-static void aux_switch_port(int port)
+/**
+ * Is the port fine to be muxed its DisplayPort lines?
+ *
+ * Only one port can be muxed to DisplayPort at a time.
+ *
+ * @param port	Port number of TCPC.
+ * @return	1 is fine; 0 is bad as other port is already muxed;
+ */
+static int is_dp_muxable(int port)
 {
-	if (port != AUX_PORT_NONE)
-		gpio_set_level_verbose(CC_USBPD, GPIO_DP_AUX_PATH_SEL, port);
-	aux_port = port;
-}
+	int i;
 
-static void aux_display_disconnected(int port)
-{
-	/* Gets the other port. C0 -> C1, C1 -> C0. */
-	int other_port = !port;
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
+		if (i != port) {
+			if (usb_mux_get(i) & USB_PD_MUX_DP_ENABLED)
+				return 0;
+		}
+	}
 
-	/* If the current port is not the aux port, nothing needs to be done. */
-	if (aux_port != port)
-		return;
-
-	/* If the other port is connected to a external display, switch aux. */
-	if (dp_status[other_port] & DP_FLAGS_DP_ON)
-		aux_switch_port(other_port);
-	else
-		aux_switch_port(AUX_PORT_NONE);
+	return 1;
 }
 
 __override int svdm_dp_attention(int port, uint32_t *payload)
@@ -71,6 +63,15 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 #endif /* CONFIG_USB_PD_DP_HPD_GPIO */
 
 	dp_status[port] = payload[1];
+
+	if (!is_dp_muxable(port)) {
+		/* TODO(waihong): Info user? */
+		CPRINTS("p%d: The other port is already muxed.", port);
+		return 0; /* nak */
+	}
+
+	if (lvl)
+		gpio_set_level_verbose(CC_USBPD, GPIO_DP_AUX_PATH_SEL, port);
 
 	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
 	    (irq || lvl))
@@ -117,23 +118,6 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		svdm_set_hpd_gpio(port, lvl);
 	}
 
-	/*
-	 * Asurada can only output to 1 display port at a time.
-	 * This implements FCFS policy by changing the aux channel. If a
-	 * display is connected to the either port (says A), and the port A
-	 * will be served until the display is disconnected from port A.
-	 * It won't output to the other display which connects to port B.
-	 */
-	if (lvl && aux_port == AUX_PORT_NONE)
-		/*
-		 * A display is connected, and no display was plugged on either
-		 * port.
-		 */
-		aux_switch_port(port);
-	else if (!lvl)
-		aux_display_disconnected(port);
-
-
 	/* set the minimum time delay (2ms) for the next HPD IRQ */
 	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 #endif /* CONFIG_USB_PD_DP_HPD_GPIO */
@@ -155,8 +139,6 @@ __override void svdm_exit_dp_mode(int port)
 	svdm_set_hpd_gpio(port, 0);
 #endif /* CONFIG_USB_PD_DP_HPD_GPIO */
 	usb_mux_hpd_update(port, 0, 0);
-
-	aux_display_disconnected(port);
 
 #ifdef USB_PD_PORT_TCPC_MST
 	if (port == USB_PD_PORT_TCPC_MST)
