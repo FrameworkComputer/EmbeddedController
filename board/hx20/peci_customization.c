@@ -7,6 +7,7 @@
 #include "console.h"
 #include "peci.h"
 #include "peci_customization.h"
+#include "timer.h"
 #include "util.h"
 
 /* Console output macros */
@@ -154,5 +155,37 @@ int peci_update_PsysPL2(int watt)
 	if (rv)
 		return rv;
 
+	return EC_SUCCESS;
+}
+
+__override int stop_read_peci_temp(void)
+{
+	static uint64_t t;
+	static int read_count;
+	uint64_t tnow;
+
+	tnow = get_time().val;
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return EC_ERROR_NOT_POWERED;
+	else if (chipset_in_state(CHIPSET_STATE_STANDBY)) {
+		if (tnow - t < (7 * SECOND))
+			return EC_ERROR_NOT_POWERED;
+		else {
+			/**
+			 * PECI read tempurature three times per second
+			 * dptf.c thermal.c temp_sensor.c
+			 */
+			if (++read_count > 3) {
+				read_count = 0;
+				t = tnow;
+				return EC_ERROR_NOT_POWERED;
+			}
+		}
+	} else {
+		read_count = 0;
+		t = tnow;
+	}
+	
 	return EC_SUCCESS;
 }
