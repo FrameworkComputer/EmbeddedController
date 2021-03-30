@@ -53,3 +53,9 @@ CONFIG_CROS_EC_RW_MEM_OFF=0x0
 # (CONFIG_CROS_EC_FLASH_SIZE - CONFIG_CROS_EC_RW_MEM_OFF -
 #  CONFIG_CROS_EC_RO_MEM_OFF)
 CONFIG_CROS_EC_RW_SIZE=0x40000
+
+# WATCHDOG configuration
+CONFIG_WATCHDOG=y
+# Set the delay time for printing panic data.
+# 1 cycle is about 32ms. 500ms is about 16 cycles.
+CONFIG_WDT_NPCX_DELAY_CYCLES=16
