@@ -35,4 +35,14 @@ static inline void keyboard_send_battery_key(void) { }
  */
 void mkbp_update_switches(uint32_t sw, int state);
 
+/**
+ * Retrieve state of buttons [Power, Volume up/down, etc]
+ */
+uint32_t mkbp_get_button_state(void);
+
+/**
+ * Retrieve state of switches [Lid open/closed, tablet mode switch, etc]
+ */
+uint32_t mkbp_get_switch_state(void);
+
 #endif  /* __CROS_EC_KEYBOARD_MKBP_H */
