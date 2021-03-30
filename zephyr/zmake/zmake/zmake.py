@@ -6,13 +6,14 @@
 import logging
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import tempfile
 
 import zmake.build_config
-import zmake.modules
 import zmake.jobserver
+import zmake.modules
 import zmake.multiproc
 import zmake.project
 import zmake.toolchains as toolchains
@@ -409,3 +410,164 @@ class Zmake:
         for tmpdir in tmp_dirs:
             shutil.rmtree(tmpdir)
         return rv
+
+    def _run_lcov(self, build_dir, lcov_file, initial=False):
+        with self.jobserver.get_job():
+            if initial:
+                self.logger.info('Running (initial) lcov on %s.', build_dir)
+            else:
+                self.logger.info('Running lcov on %s.', build_dir)
+            cmd = ['/usr/bin/lcov', '--gcov-tool',
+                   self.module_paths['ec'] /
+                   'util/llvm-gcov.sh', '-q', '-o', '-',
+                   '-c', '-d', build_dir, '-t', lcov_file.stem, '--exclude',
+                   '*/build-*/zephyr/*/generated/*', '--exclude', '*/test/*',
+                   '--exclude', '*/testsuite/*']
+            if initial:
+                cmd += ['-i']
+            proc = self.jobserver.popen(cmd,
+                                        claim_job=False,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        encoding='utf-8',
+                                        errors='replace')
+            zmake.multiproc.log_output(
+                self.logger, logging.WARNING, proc.stderr)
+
+            with open(lcov_file, 'w') as outfile:
+                for line in proc.stdout:
+                    if line.startswith('SF:'):
+                        path = line[3:].rstrip()
+                        outfile.write('SF:%s\n' % os.path.realpath(path))
+                    else:
+                        outfile.write(line)
+            if proc.wait():
+                raise OSError(get_process_failure_msg(proc))
+
+            return 0
+
+    def _coverage_compile_only(self, project, build_dir, lcov_file):
+        self.logger.info("Building %s in %s",
+                         project.project_dir, build_dir)
+        rv = self.configure(
+            project_dir=project.project_dir,
+            build_dir=build_dir,
+            build_after_configure=False,
+            test_after_configure=False,
+            coverage=True)
+        if rv:
+            return rv
+
+        # Use ninja to compile the all.libraries target.
+        build_project = zmake.project.Project(build_dir / 'project')
+
+        procs = []
+        dirs = {}
+        for build_name, build_config in build_project.iter_builds():
+            self.logger.info('Building %s:%s all.libraries.',
+                             build_dir, build_name)
+            dirs[build_name] = build_dir / 'build-{}'.format(build_name)
+            proc = self.jobserver.popen(
+                ['/usr/bin/ninja', '-C', dirs[build_name], 'all.libraries'],
+                # Ninja will connect as a job client instead and claim
+                # many jobs.
+                claim_job=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding='utf-8',
+                errors='replace')
+            zmake.multiproc.log_output(
+                logger=self.logger,
+                log_level=logging.DEBUG,
+                file_descriptor=proc.stdout,
+                log_level_override_func=ninja_log_level_override)
+            zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
+            procs.append(proc)
+
+        for proc in procs:
+            if proc.wait():
+                raise OSError(get_process_failure_msg(proc))
+
+        return self._run_lcov(build_dir, lcov_file, initial=True)
+
+    def _coverage_run_test(self, project, build_dir, lcov_file):
+        self.logger.info("Running test %s in %s",
+                         project.project_dir, build_dir)
+        rv = self.configure(
+            project_dir=project.project_dir,
+            build_dir=build_dir,
+            build_after_configure=True,
+            test_after_configure=True,
+            coverage=True)
+        if rv:
+            return rv
+        return self._run_lcov(build_dir, lcov_file, initial=False)
+
+    def coverage(self, build_dir, fail_fast=False):
+        """Builds all targets with coverage enabled, and then runs the tests."""
+        executor = zmake.multiproc.Executor(fail_fast=fail_fast)
+        all_lcov_files = []
+        root_dir = self.module_paths['ec'] / 'zephyr'
+        for project in zmake.project.find_projects(root_dir):
+            is_test = project.config.is_test
+            rel_path = project.project_dir.relative_to(root_dir)
+            project_build_dir = pathlib.Path(build_dir).joinpath(rel_path)
+            lcov_file = pathlib.Path(build_dir).joinpath(
+                str(rel_path).replace('/', '_') + '.info')
+            all_lcov_files.append(lcov_file)
+            if is_test:
+                # Configure and run the test.
+                executor.append(
+                    func=lambda: self._coverage_run_test(
+                        project,
+                        project_build_dir,
+                        lcov_file))
+            else:
+                # Configure and compile the non-test project.
+                executor.append(
+                    func=lambda: self._coverage_compile_only(
+                        project,
+                        project_build_dir,
+                        lcov_file))
+
+        rv = executor.wait()
+        if rv:
+            return rv
+
+        with self.jobserver.get_job():
+            # Get the build version
+            proc = self.jobserver.popen(
+                [self.module_paths['ec'] /
+                 'util/getversion.sh'],
+                claim_job=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding='utf-8',
+                errors='replace')
+            zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
+            version = ''
+            for line in proc.stdout:
+                match = re.search(r'#define VERSION "(.*)"', line)
+                if match:
+                    version = match.group(1)
+            if proc.wait():
+                raise OSError(get_process_failure_msg(proc))
+
+            # Merge into a nice html report
+            self.logger.info("Creating coverage report %s.",
+                             build_dir / 'coverage_rpt')
+            proc = self.jobserver.popen(
+                ['/usr/bin/genhtml', '-q', '-o',
+                 build_dir / 'coverage_rpt', '-t',
+                 "Zephyr EC Unittest {}".format(version), '-p',
+                 self.checkout / 'src', '-s'] + all_lcov_files,
+                claim_job=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding='utf-8',
+                errors='replace')
+            zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
+            zmake.multiproc.log_output(self.logger, logging.DEBUG, proc.stdout)
+            if proc.wait():
+                raise OSError(get_process_failure_msg(proc))
+            return 0

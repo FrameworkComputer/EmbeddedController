@@ -115,6 +115,12 @@ def main(argv=None):
     testall.add_argument('--fail-fast', action='store_true',
                          help='stop testing after the first error')
 
+    coverage = sub.add_parser('coverage')
+    coverage.add_argument('--fail-fast', action='store_true',
+                         help='stop testing after the first error')
+    coverage.add_argument('build_dir', type=pathlib.Path,
+                      help='The build directory used during configuration')
+
     opts = parser.parse_args(argv)
 
     if opts.no_log_label:
