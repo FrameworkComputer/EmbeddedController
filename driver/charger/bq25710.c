@@ -51,6 +51,9 @@
 	((CONFIG_CHARGER_SENSE_RESISTOR) / DEFAULT_SENSE_RESISTOR)
 #define REG_TO_CHARGING_CURRENT(REG) ((REG) / CHARGING_RESISTOR_RATIO)
 #define CHARGING_CURRENT_TO_REG(CUR) ((CUR) * CHARGING_RESISTOR_RATIO)
+#ifdef CONFIG_CHARGER_BQ25720
+#define VMIN_AP_VSYS_TH2_TO_REG(DV) ((DV) - 32)
+#endif
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
@@ -256,6 +259,22 @@ static void bq25710_init(int chgnum)
 		reg |= BQ25710_PROCHOT_PROFILE_IDCHG;
 #endif
 		raw_write16(chgnum, BQ25710_REG_PROCHOT_OPTION_1, reg);
+#ifdef CONFIG_CHARGER_BQ25720_VSYS_TH2_DV
+		/*
+		 * The default VSYS_TH2 is 5.9v for a 2S config. Boards
+		 * may need to increase this for stability. PROCHOT is
+		 * asserted when the threshold is reached.
+		 */
+		if (!raw_read16(chgnum, BQ25720_REG_VMIN_ACTIVE_PROTECTION,
+				&reg)) {
+			reg &= ~BQ25720_VMIN_AP_VSYS_TH2_MASK;
+			reg |= VMIN_AP_VSYS_TH2_TO_REG(
+				CONFIG_CHARGER_BQ25720_VSYS_TH2_DV) <<
+				BQ25720_VMIN_AP_VSYS_TH2_SHIFT;
+			raw_write16(chgnum, BQ25720_REG_VMIN_ACTIVE_PROTECTION,
+				    reg);
+		}
+#endif
 	}
 
 	/* Reduce ILIM from default of 150% to 105% */

@@ -983,6 +983,16 @@
 #undef CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA
 
 /*
+ * This config option is used to set the charger's VSYS voltage
+ * threshold. When the voltage drops to this level, PROCHOT is asserted
+ * by the charger to request reduced system power demand and hopefully
+ * avoid a voltage droop leading to system instability. The voltage is
+ * specified in deci-volts, so a value of 80 would set the threshold to
+ * 8.0v.
+ */
+#undef CONFIG_CHARGER_BQ25720_VSYS_TH2_DV
+
+/*
  * Board specific maximum input current limit, in mA.
  */
 #undef CONFIG_CHARGER_MAX_INPUT_CURRENT
