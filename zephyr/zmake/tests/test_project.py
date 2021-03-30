@@ -124,3 +124,41 @@ def test_prune_modules_unavailable():
          'modules': ['hal_stm32', 'cmsis']}) as project:
         with pytest.raises(KeyError):
             project.prune_modules(module_paths)
+
+
+def test_find_projects_empty(tmp_path):
+    """Test the find_projects method when there are no projects."""
+    projects = list(zmake.project.find_projects(tmp_path))
+    assert len(projects) == 0
+
+
+YAML_FILE = """
+supported-zephyr-versions:
+  - v2.5
+toolchain: coreboot-sdk
+output-type: npcx
+"""
+
+
+def test_find_projects(tmp_path):
+    """Test the find_projects method when there are projects."""
+    dir = tmp_path.joinpath('one')
+    dir.mkdir()
+    dir.joinpath('zmake.yaml').write_text("board: one\n" + YAML_FILE)
+    tmp_path.joinpath('two').mkdir()
+    dir = tmp_path.joinpath('two/a')
+    dir.mkdir()
+    dir.joinpath('zmake.yaml').write_text(
+        "board: twoa\nis-test: true\n" + YAML_FILE)
+    dir = tmp_path.joinpath('two/b')
+    dir.mkdir()
+    dir.joinpath('zmake.yaml').write_text("board: twob\n" + YAML_FILE)
+    projects = list(zmake.project.find_projects(tmp_path))
+    projects.sort(key=lambda x: x.project_dir)
+    assert len(projects) == 3
+    assert projects[0].project_dir == tmp_path.joinpath('one')
+    assert projects[1].project_dir == tmp_path.joinpath('two/a')
+    assert projects[2].project_dir == tmp_path.joinpath('two/b')
+    assert not projects[0].config.is_test
+    assert projects[1].config.is_test
+    assert not projects[2].config.is_test

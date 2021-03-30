@@ -3,7 +3,10 @@
 # found in the LICENSE file.
 """Module for project config wrapper object."""
 
+import logging
+import pathlib
 import warnings
+
 import yaml
 
 # The version of jsonschema in the chroot has a bunch of
@@ -31,6 +34,20 @@ def module_dts_overlay_name(modpath, board_name):
     """
     return modpath / 'zephyr' / 'dts' / 'board-overlays' / '{}.dts'.format(
         board_name)
+
+
+def find_projects(root_dir):
+    """Finds all zmake projects in root_dir.
+
+    Args:
+        root_dir: the root dir as a pathlib.Path object
+
+    Yields:
+        Project: The next project found.
+    """
+    logging.info('Finding zmake targets under \'%s\'.', root_dir)
+    for path in pathlib.Path(root_dir).rglob('zmake.yaml'):
+        yield Project(path.parent)
 
 
 class ProjectConfig:

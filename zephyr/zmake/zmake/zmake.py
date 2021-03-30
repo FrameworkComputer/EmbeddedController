@@ -383,25 +383,20 @@ class Zmake:
 
     def testall(self, fail_fast=False):
         """Test all the valid test targets"""
-        root_dirs = [self.module_paths['ec'] / 'zephyr']
-        project_dirs = []
-        for root_dir in root_dirs:
-            self.logger.info('Finding zmake target under \'%s\'.', root_dir)
-            for path in pathlib.Path(root_dir).rglob('zmake.yaml'):
-                project_dirs.append(path.parent)
-
         executor = zmake.multiproc.Executor(fail_fast=fail_fast)
         tmp_dirs = []
-        for project_dir in project_dirs:
-            is_test = zmake.project.Project(project_dir).config.is_test
+        for project in zmake.project.find_projects(
+                self.module_paths['ec'] / 'zephyr'):
+            is_test = project.config.is_test
             temp_build_dir = tempfile.mkdtemp(
-                    suffix='-{}'.format(os.path.basename(project_dir.as_posix())),
-                    prefix='zbuild-')
+                suffix='-{}'.format(os.path.basename(
+                    project.project_dir.as_posix())),
+                prefix='zbuild-')
             tmp_dirs.append(temp_build_dir)
             # Configure and run the test.
             executor.append(
                 func=lambda: self.configure(
-                    project_dir=pathlib.Path(project_dir),
+                    project_dir=project.project_dir,
                     build_dir=pathlib.Path(temp_build_dir),
                     build_after_configure=True,
                     test_after_configure=is_test))
