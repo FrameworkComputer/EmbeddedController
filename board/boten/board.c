@@ -308,7 +308,7 @@ int board_set_active_charge_port(int port)
 	if (port == CHARGE_PORT_NONE) {
 		tcpc_write(0, TCPC_REG_COMMAND,
 				TCPC_REG_COMMAND_SNK_CTRL_LOW);
-
+		raa489000_enable_asgate(0, false);
 		return EC_SUCCESS;
 	}
 
@@ -319,7 +319,8 @@ int board_set_active_charge_port(int port)
 	}
 
 	/* Enable requested charge port. */
-	if (tcpc_write(0, TCPC_REG_COMMAND,
+	if (raa489000_enable_asgate(port, true) ||
+	    tcpc_write(0, TCPC_REG_COMMAND,
 		       TCPC_REG_COMMAND_SNK_CTRL_HIGH)) {
 		CPRINTUSB("p%d: sink path enable failed.", port);
 		return EC_ERROR_UNKNOWN;
