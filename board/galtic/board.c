@@ -516,13 +516,16 @@ int board_set_active_charge_port(int port)
 
 	/* Disable all ports. */
 	if (port == CHARGE_PORT_NONE) {
-		for (i = 0; i < board_get_usb_pd_port_count(); i++)
+		for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 			tcpc_write(i, TCPC_REG_COMMAND,
 				   TCPC_REG_COMMAND_SNK_CTRL_LOW);
+			raa489000_enable_asgate(i, false);
+		}
+
 		return EC_SUCCESS;
 	}
 
-	/* Check is port is sourcing VBUS. */
+	/* Check if port is sourcing VBUS. */
 	if (board_is_sourcing_vbus(port)) {
 		CPRINTS("Skip enable p%d", port);
 		return EC_ERROR_INVAL;
@@ -539,18 +542,20 @@ int board_set_active_charge_port(int port)
 		if (tcpc_write(i, TCPC_REG_COMMAND,
 			       TCPC_REG_COMMAND_SNK_CTRL_LOW))
 			CPRINTS("p%d: sink path disable failed.", i);
+		raa489000_enable_asgate(i, false);
 	}
 
 	/*
-	 * Stop the charger IC from switching while charging ports. Otherwise,
-	 * we can overcurrent the adapter we's switching to. (crbug.com/926056)
+	 * Stop the charger IC from switching while changing ports.  Otherwise,
+	 * we can overcurrent the adapter we're switching to. (crbug.com/926056)
 	 */
 	if (old_port != CHARGE_PORT_NONE)
 		charger_discharge_on_ac(1);
 
-	 /* Enable requested charge port. */
-	if (tcpc_write(port, TCPC_REG_COMMAND,
-			TCPC_REG_COMMAND_SNK_CTRL_HIGH)) {
+	/* Enable requested charge port. */
+	if (raa489000_enable_asgate(port, true) ||
+	    tcpc_write(port, TCPC_REG_COMMAND,
+		       TCPC_REG_COMMAND_SNK_CTRL_HIGH)) {
 		CPRINTS("p%d: sink path enable failed.", port);
 		charger_discharge_on_ac(0);
 		return EC_ERROR_UNKNOWN;
