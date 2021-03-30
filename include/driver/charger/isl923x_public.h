@@ -45,6 +45,15 @@ int isl923x_set_comparator_inversion(int chgnum, int invert);
  * @param chgnum index into chg_chips table.
  */
 void raa489000_hibernate(int chgnum, bool disable_adc);
+
+/**
+ * Enable or Disable the ASGATE in the READY state.
+ *
+ * @param chgnum: Index into charger chips
+ * @param enable: whether to enable ASGATE
+ */
+int raa489000_enable_asgate(int chgnum, bool enable);
+
 enum ec_error_list isl9238c_hibernate(int chgnum);
 enum ec_error_list isl9238c_resume(int chgnum);
 

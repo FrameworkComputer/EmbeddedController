@@ -270,6 +270,7 @@
 
 /* Control8: MCU_LDO - BAT state disable */
 #define RAA489000_C8_MCU_LDO_BAT_STATE_DISABLE BIT(14)
+#define RAA489000_C8_ASGATE_ON_READY BIT(13)
 
 /* OTG voltage limit in mV, current limit in mA */
 #define ISL9237_OTG_VOLTAGE_MIN 4864

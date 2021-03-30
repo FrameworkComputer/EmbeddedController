@@ -786,6 +786,14 @@ out:
 }
 
 #ifdef CONFIG_CHARGER_RAA489000
+int raa489000_enable_asgate(int chgnum, bool enable)
+{
+	enum mask_update_action action = enable ? MASK_SET : MASK_CLR;
+
+	return raw_update16(chgnum, RAA489000_REG_CONTROL8,
+			    RAA489000_C8_ASGATE_ON_READY, action);
+}
+
 void raa489000_hibernate(int chgnum, bool disable_adc)
 {
 	int rv, regval;
