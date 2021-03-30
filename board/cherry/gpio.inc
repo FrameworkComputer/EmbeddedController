@@ -38,8 +38,7 @@ GPIO_INT(USB_C0_BC12_INT_ODL,PIN(J, 4), GPIO_INT_FALLING, bc12_interrupt)
 #else /* TOMATO */
 GPIO_INT(USB_C0_BC12_INT_ODL,PIN(I, 5), GPIO_INT_FALLING, bc12_interrupt)
 #endif
-/* TODO: rt1718s interrupt, not implemented */
-GPIO(USB_C1_INT_ODL,         PIN(B, 2), GPIO_INPUT | GPIO_INT_FALLING)
+GPIO_INT(USB_C1_INT_ODL,     PIN(B, 2), GPIO_INT_FALLING, rt1718s_tcpc_interrupt)
 /* TODO: not used in other devices? */
 GPIO(LID_ACCEL_INT_L,        PIN(M, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V)
 
@@ -78,7 +77,8 @@ GPIO(EC_INT_L,               PIN(E, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V) /* EC_AP_
 
 /* USB and USBC Signals */
 GPIO(DP_PATH_SEL,            PIN(G, 0), GPIO_OUT_HIGH)
-GPIO(DP_DEMUX_EN,            PIN(G, 1), GPIO_OUT_LOW)
+/* TODO: Turn off in S3 */
+GPIO(DP_DEMUX_EN,            PIN(G, 1), GPIO_OUT_HIGH)
 GPIO(EC_AP_DP_HPD_ODL,       PIN(J, 0), GPIO_ODR_HIGH)
 GPIO(EN_PP5000_USB_A0_VBUS_X,PIN(B, 7), GPIO_OUT_LOW)
 GPIO(USB_C0_DP_IN_HPD,       PIN(H, 4), GPIO_OUT_LOW)
