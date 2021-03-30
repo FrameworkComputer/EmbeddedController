@@ -9,19 +9,8 @@
 #define __CROS_EC_ACCELGYRO_BMI160_H
 
 #include "accelgyro.h"
+#include "driver/accelgyro_bmi160_public.h"
 #include "mag_bmm150.h"
-
-/*
- * The addr field of motion_sensor support both SPI and I2C:
- * This is defined in include/i2c.h and is no longer an 8bit
- * address. The 7/10 bit address starts at bit 0 and leaves
- * room for a 10 bit address, although we don't currently
- * have any 10 bit slaves.  I2C or SPI is indicated by a
- * more significant bit
- */
-
-/* I2C addresses */
-#define BMI160_ADDR0_FLAGS	0x68
 
 #define BMI160_CHIP_ID           0x00
 #define BMI160_CHIP_ID_MAJOR     0xd1
@@ -382,10 +371,6 @@
 /* Root mean square noise of 100 Hz accelerometer, units: ug */
 #define BMI160_ACCEL_RMS_NOISE_100HZ    1300
 
-extern const struct accelgyro_drv bmi160_drv;
-
-void bmi160_interrupt(enum gpio_signal signal);
-
 #ifdef CONFIG_BMI_SEC_I2C
 /* Functions to access the secondary device through the accel/gyro. */
 int bmi160_sec_raw_read8(const int port, const uint16_t addr_flags,
@@ -394,9 +379,4 @@ int bmi160_sec_raw_write8(const int port, const uint16_t addr_flags,
 			  const uint8_t reg, int data);
 #endif
 
-#ifdef CONFIG_CMD_I2C_STRESS_TEST_ACCEL
-extern struct i2c_stress_test_dev bmi160_i2c_stress_test_dev;
-#endif
-
-int bmi160_get_sensor_temp(int idx, int *temp_ptr);
 #endif /* __CROS_EC_ACCELGYRO_BMI160_H */
