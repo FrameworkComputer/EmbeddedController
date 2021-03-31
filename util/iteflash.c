@@ -15,7 +15,6 @@
 #include <linux/i2c-dev.h>
 #include <linux/i2c.h>
 #include <signal.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1211,16 +1210,6 @@ failed_read:
 	return res;
 }
 
-static bool is_empty_page(uint8_t *buffer, int size)
-{
-	for (int i = 0; i < size; i++) {
-		if (buffer[i] != 0xFF)
-			return false;
-	}
-
-	return true;
-}
-
 static int command_write_pages(struct common_hnd *chnd, uint32_t address,
 			       uint32_t size, uint8_t *buffer)
 {
@@ -1804,10 +1793,7 @@ static int write_flash3(struct common_hnd *chnd, const char *filename,
 
 	while (res) {
 		cnt = (res > block_write_size) ? block_write_size : res;
-		if (chnd->conf.erase && is_empty_page(&buf[offset], cnt)) {
-			/* do nothing */
-		} else if (command_write_pages3(chnd, offset, cnt, &buf[offset])
-				< 0) {
+		if (command_write_pages3(chnd, offset, cnt, &buf[offset]) < 0) {
 			ret = -EIO;
 			goto failed_write;
 		}
