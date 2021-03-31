@@ -128,7 +128,7 @@ ALTERNATE(PIN_MASK(B, 0x03), 1, MODULE_UART, 0) /* EC to Servo */
 ALTERNATE(PIN_MASK(A, 0x07), 1, MODULE_PWM, 0) /* PWM 0~2 */
 
 /* ADC */
-ALTERNATE(PIN_MASK(I, 0x4F), 0, MODULE_ADC, 0) /* ADC 0,1,2,3,6 */
+ALTERNATE(PIN_MASK(I, 0x6F), 0, MODULE_ADC, 0) /* ADC 0,1,2,3,5,6 */
 
 /* SPI */
 ALTERNATE(PIN_MASK(M, 0x33), 0, MODULE_SPI, 0) /* SPI */
@@ -149,7 +149,6 @@ GPIO(CCD_MODE_ODL,           PIN(C, 4), GPIO_INPUT)
  * ADC pins don't have internal pull-down capability,
  * so we set them as output low.
  */
-GPIO(NC_GPI5,                PIN(I, 5), GPIO_OUT_LOW)
 GPIO(NC_GPI7,                PIN(I, 7), GPIO_OUT_LOW)
 /* NC pins, enable internal pull-up/down to avoid floating state. */
 #ifdef BOARD_ASURADA_REV0

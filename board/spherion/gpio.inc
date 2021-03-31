@@ -108,7 +108,7 @@ ALTERNATE(PIN_MASK(E, 0x81), 1, MODULE_I2C, 0) /* I2C E */
 ALTERNATE(PIN_MASK(B, 0x03), 1, MODULE_UART, 0) /* EC to Servo */
 
 /* ADC */
-ALTERNATE(PIN_MASK(I, 0x4F), 0, MODULE_ADC, 0) /* ADC 0,1,2,3,6 */
+ALTERNATE(PIN_MASK(I, 0x6F), 0, MODULE_ADC, 0) /* ADC 0,1,2,3,5,6 */
 
 /* SPI */
 ALTERNATE(PIN_MASK(M, 0x33), 0, MODULE_SPI, 0) /* SPI */
@@ -133,11 +133,7 @@ GPIO(PG_MT6315_GPU_ODL,      PIN(H, 6), GPIO_INPUT)
 GPIO(EN_PP3000_SD_U,         PIN(G, 1), GPIO_INPUT | GPIO_PULL_DOWN | GPIO_SEL_1P8V)
 /* reserved for future use */
 GPIO(CCD_MODE_ODL,           PIN(C, 4), GPIO_INPUT)
-/*
- * ADC pins don't have internal pull-down capability,
- * so we set them as output low.
- */
-GPIO(NC_GPI5,                PIN(I, 5), GPIO_OUT_LOW)
+
 /* NC pins, enable internal pull-up/down to avoid floating state. */
 GPIO(NC_GPM2,                PIN(M, 2), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(NC_GPM3,                PIN(M, 3), GPIO_INPUT | GPIO_PULL_DOWN)

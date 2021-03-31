@@ -55,6 +55,7 @@
 /* Charger */
 #define ADC_AMON_BMON ADC_CHARGER_AMON_R /* ADC name remap */
 #define ADC_PSYS ADC_CHARGER_PMON /* ADC name remap */
+#define ADC_VBUS ADC_VBUS_C0 /* ADC name remap */
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER
 #define CONFIG_CHARGE_RAMP_HW
@@ -129,6 +130,7 @@
 #define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_PD_VBUS_DETECT_PPC
+#define CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
 #define CONFIG_USB_PID 0x5566  /* TODO: update PID */
 #define CONFIG_USB_POWER_DELIVERY
 
@@ -199,6 +201,7 @@ enum adc_channel {
 	ADC_BOARD_ID_0,          /* ADC 1 */
 	ADC_BOARD_ID_1,          /* ADC 2 */
 	ADC_CHARGER_AMON_R,      /* ADC 3 */
+	ADC_VBUS_C1,             /* ADC 5 */
 	ADC_CHARGER_PMON,        /* ADC 6 */
 
 	/* Number of ADC channels */

@@ -148,7 +148,16 @@ __override void svdm_exit_dp_mode(int port)
 
 int pd_snk_is_vbus_provided(int port)
 {
-	return ppc_is_vbus_present(port);
+	if ((IS_ENABLED(BOARD_HAYATO) && board_get_version() < 4) ||
+	    (IS_ENABLED(BOARD_SPHERION) && board_get_version() < 1))
+		return ppc_is_vbus_present(port);
+
+	/*
+	 * (b:181203590#comment20) TODO(yllin): use
+	 *  PD_VSINK_DISCONNECT_PD for non-5V case.
+	 */
+	return charge_manager_get_vbus_voltage(port) >=
+	       PD_V_SINK_DISCONNECT_MAX;
 }
 
 void pd_power_supply_reset(int port)
@@ -200,4 +209,3 @@ int board_vbus_source_enabled(int port)
 {
 	return ppc_is_sourcing_vbus(port);
 }
-
