@@ -257,14 +257,33 @@ static void power_state_clear(int state)
 }
 #endif
 
+static int enter_ms_flag;
+static int resume_ms_flag;
+
 static int check_s0ix_statsus(void)
 {
 	int power_status;
+	int clear_flag;
 #ifdef CONFIG_EMI_REGION1
 	/* check power state S0ix flags */
 	if (chipset_in_state(CHIPSET_STATE_ON) || chipset_in_state(CHIPSET_STATE_STANDBY)) {
 		power_status = *host_get_customer_memmap(EC_EMEMAP_ER1_POWER_STATE);
-		if (power_status & EC_PS_ENTER_S0ix || power_status & EC_PS_RESUME_S0ix)
+
+		/**
+		 * Sometimes PCH will set the enter and resume flag continuously
+		 * so clear the EMI when we read the flag.
+		 */
+		if (power_status & EC_PS_ENTER_S0ix)
+			enter_ms_flag++;
+
+		if (power_status & EC_PS_RESUME_S0ix)
+			resume_ms_flag++;
+
+		clear_flag = power_status & (EC_PS_ENTER_S0ix | EC_PS_RESUME_S0ix);
+
+		power_state_clear(clear_flag);
+
+		if (enter_ms_flag || resume_ms_flag)
 			return 1;
 	}
 #endif
@@ -273,12 +292,16 @@ static int check_s0ix_statsus(void)
 
 void s0ix_status_handle(void)
 {
-	if (check_s0ix_statsus() && chipset_in_state(CHIPSET_STATE_ON))
+	int s0ix_state_change;
+
+	s0ix_state_change = check_s0ix_statsus();
+
+	if (s0ix_state_change && chipset_in_state(CHIPSET_STATE_ON))
 		task_wake(TASK_ID_CHIPSET);
-	else if (check_s0ix_statsus() && chipset_in_state(CHIPSET_STATE_STANDBY))
+	else if (s0ix_state_change && chipset_in_state(CHIPSET_STATE_STANDBY))
 		task_wake(TASK_ID_CHIPSET);
 }
-DECLARE_HOOK(HOOK_SECOND, s0ix_status_handle, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_TICK, s0ix_status_handle, HOOK_PRIO_DEFAULT);
 
 #endif /* CONFIG_POWER_S0IX */
 
@@ -300,7 +323,7 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0ix:
 		CPRINTS("power handle state in S0ix");
 		if ((power_get_signals() & IN_PCH_SLP_S3_DEASSERTED) == 0) {
-			power_state_clear(EC_PS_RESUME_S0ix);
+			resume_ms_flag--;
 			return POWER_S0;
 		}		
 		if (check_s0ix_statsus())
@@ -312,7 +335,7 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("power handle state in S0ix->S0");
 		lpc_s0ix_resume_restore_masks();
 		hook_notify(HOOK_CHIPSET_RESUME);
-		power_state_clear(EC_PS_RESUME_S0ix);
+		resume_ms_flag--;
 		return POWER_S0;
 
 		break;
@@ -321,7 +344,7 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("power handle state in S0->S0ix");
 		lpc_s0ix_suspend_clear_masks();
 		hook_notify(HOOK_CHIPSET_SUSPEND);
-		power_state_clear(EC_PS_ENTER_S0ix);
+		enter_ms_flag--;
 		return POWER_S0ix;
 
 		break;
