@@ -70,8 +70,7 @@ bool dp_entry_is_done(int port)
 static void dp_entry_failed(int port)
 {
 	CPRINTS("C%d: DP alt mode protocol failed!", port);
-	dp_state[port] = IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY)
-		? DP_START : DP_INACTIVE;
+	dp_state[port] = DP_INACTIVE;
 }
 
 static bool dp_response_valid(int port, enum tcpm_transmit_type type,
@@ -103,6 +102,11 @@ static void dp_exit_to_usb_mode(int port)
 	set_usb_mux_with_current_data_role(port);
 
 	CPRINTS("C%d: Exited DP mode", port);
+    /*
+     * If the EC exits an alt mode autonomously, don't try to enter it again. If
+     * the AP commands the EC to exit DP mode, it might command the EC to enter
+     * again later, so leave the state machine ready for that possibility.
+     */
 	dp_state[port] = IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY)
 		? DP_START : DP_INACTIVE;
 }
