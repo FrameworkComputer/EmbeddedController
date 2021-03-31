@@ -22,7 +22,8 @@
  * Variant EC defines. Pick one:
  * VARIANT_DEDEDE_EC_NPCX796FC
  */
-#if defined(VARIANT_DEDEDE_EC_NPCX796FC)
+#if defined(VARIANT_DEDEDE_EC_NPCX796FC) || \
+	defined(VARIANT_KEEBY_EC_NPCX797FC)
 	/* NPCX7 config */
 	#define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
 	#define NPCX_TACH_SEL2    0  /* No tach. */
@@ -31,7 +32,8 @@
 	#define CONFIG_FLASH_SIZE_BYTES (512 * 1024)
 	#define CONFIG_SPI_FLASH_REGS
 	#define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
-#elif defined(VARIANT_DEDEDE_EC_IT8320)
+#elif defined(VARIANT_DEDEDE_EC_IT8320) || \
+	defined(VARIANT_KEEBY_EC_IT8320)
 	/* IT83XX config */
 	#define CONFIG_IT83XX_VCC_1P8V
 	/* I2C Bus Configuration */
@@ -48,8 +50,15 @@
 	#undef CONFIG_UART_TX_BUF_SIZE		/* UART */
 	#define CONFIG_UART_TX_BUF_SIZE 4096
 #else
-#error "Must define a VARIANT_DEDEDE_EC!"
+#error "Must define a VARIANT_[DEDEDE|KEEBY]_EC!"
 #endif
+
+/*
+ * The key difference between Keeby and Dedede is that Keeby variants don't have
+ * a connection to H1 and therefore do not use EFS2.
+ */
+#define KEEBY_VARIANT (defined(VARIANT_KEEBY_EC_NPCX797FC) || \
+		       defined(VARIANT_KEEBY_EC_IT8320))
 
 /*
  * Remapping of schematic GPIO names to common GPIO names expected (hardcoded)
@@ -60,7 +69,9 @@
 #define GPIO_EN_PP5000		GPIO_EN_PP5000_U
 #define GPIO_ENTERING_RW	GPIO_EC_ENTERING_RW
 #define GPIO_KBD_KSO2		GPIO_EC_KSO_02_INV
+#if !KEEBY_VARIANT
 #define GPIO_PACKET_MODE_EN	GPIO_ECH1_PACKET_MODE
+#endif
 #define GPIO_PCH_DSW_PWROK	GPIO_EC_AP_DPWROK
 #define GPIO_PCH_PWRBTN_L	GPIO_EC_AP_PWR_BTN_ODL
 #define GPIO_PCH_RSMRST_L	GPIO_EC_AP_RSMRST_L
@@ -70,7 +81,11 @@
 #define GPIO_PCH_SLP_S4_L	GPIO_SLP_S4_L
 #define GPIO_PCH_WAKE_L		GPIO_EC_AP_WAKE_ODL
 #define GPIO_PG_EC_RSMRST_ODL	GPIO_RSMRST_PWRGD_L
+#if KEEBY_VARIANT
+#define GPIO_POWER_BUTTON_L	GPIO_EC_PWR_BTN_ODL
+#else
 #define GPIO_POWER_BUTTON_L	GPIO_H1_EC_PWR_BTN_ODL
+#endif
 #define GPIO_RSMRST_L_PGOOD	GPIO_RSMRST_PWRGD_L
 #define GPIO_SYS_RESET_L	GPIO_SYS_RST_ODL
 #define GPIO_USB_C0_DP_HPD	GPIO_EC_AP_USB_C0_HPD
@@ -83,7 +98,9 @@
 /* Common EC defines */
 
 /* Work around double CR50 reset by waiting in initial power on. */
+#if !KEEBY_VARIANT
 #define CONFIG_BOARD_RESET_AFTER_POWER_ON
+#endif
 
 /* Optional console commands */
 #define CONFIG_CMD_CHARGER_DUMP
@@ -108,7 +125,9 @@
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
+#if !KEEBY_VARIANT
 #define CONFIG_VBOOT_EFS2
+#endif
 
 /* Battery */
 #define CONFIG_BATTERY_CUT_OFF
@@ -182,14 +201,20 @@
 /* #define CONFIG_USB_PD_VBUS_DETECT_CHARGER */
 #define CONFIG_USB_PD_VBUS_MEASURE_CHARGER
 #define CONFIG_USB_PD_DECODE_SOP
+#if KEEBY_VARIANT
+#define CONFIG_USB_PID 0x5052
+#else
 #define CONFIG_USB_PID 0x5042
+#endif
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_DRP_ACC_TRYSRC
 #define CONFIG_HOSTCMD_PD_CONTROL
 
+#if !KEEBY_VARIANT
 /* UART COMMAND */
 #define CONFIG_CMD_CHARGEN
+#endif
 
 /* Define typical operating power and max power. */
 #define PD_MAX_VOLTAGE_MV     20000
@@ -208,14 +233,13 @@
 
 /* Common enums */
 #if defined(VARIANT_DEDEDE_EC_NPCX796FC)
-#elif defined(VARIANT_DEDEDE_EC_IT8320)
+#elif defined(VARIANT_DEDEDE_EC_IT8320) || \
+	defined(VARIANT_KEEBY_EC_IT8320)
 	enum board_vcmp {
 		VCMP_SNS_PP3300_LOW,
 		VCMP_SNS_PP3300_HIGH,
 		VCMP_COUNT
 	};
-#else
-#error "Must define a VARIANT_DEDEDE_EC!"
 #endif
 
 /* Interrupt handler for signals that are used to generate ALL_SYS_PGOOD. */

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Common code for VARIANT_DEDEDE_IT8320 configuration */
+/* Common code for VARIANT_[DEDEDE|KEEBY]_IT8320 configuration */
 
 #include "adc_chip.h"
 #include "atomic.h"

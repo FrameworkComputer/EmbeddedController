@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Common code for VARIANT_DEDEDE_NPCX796FC configuration */
+/* Common code for VARIANT_[DEDEDE|KEEBY]_NPCX79[6/7]FC configuration */
 
 #include "adc_chip.h"
 #include "atomic.h"
