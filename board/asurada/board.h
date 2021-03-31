@@ -31,6 +31,13 @@
 #endif
 
 /* PD / USB-C / PPC */
+#define CONFIG_USB_PD_DEBUG_LEVEL 3
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_VOLTAGE_MV 20000
+#define PD_OPERATING_POWER_MW 15000
+#define PD_MAX_POWER_MW 60000
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
 /* Optional console commands */
 #define CONFIG_CMD_FLASH
