@@ -4315,6 +4315,12 @@ static void pe_prs_src_snk_evaluate_swap_run(int port)
 			PE_CLR_FLAG(port, PE_FLAGS_ACCEPT);
 
 			/*
+			 * Clear any pending DPM power role swap request so we
+			 * don't trigger a power role swap request back to src
+			 * power role.
+			 */
+			PE_CLR_DPM_REQUEST(port, DPM_REQUEST_PR_SWAP);
+			/*
 			 * Power Role Swap OK, transition to
 			 * PE_PRS_SRC_SNK_Transition_to_off
 			 */
@@ -4557,6 +4563,12 @@ static void pe_prs_snk_src_evaluate_swap_run(int port)
 		if (PE_CHK_FLAG(port, PE_FLAGS_ACCEPT)) {
 			PE_CLR_FLAG(port, PE_FLAGS_ACCEPT);
 
+			/*
+			 * Clear any pending DPM power role swap request so we
+			 * don't trigger a power role swap request back to sink
+			 * power role.
+			 */
+			PE_CLR_DPM_REQUEST(port, DPM_REQUEST_PR_SWAP);
 			/*
 			 * Accept message sent, transition to
 			 * PE_PRS_SNK_SRC_Transition_to_off
