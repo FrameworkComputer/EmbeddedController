@@ -323,7 +323,9 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0ix:
 		CPRINTS("power handle state in S0ix");
 		if ((power_get_signals() & IN_PCH_SLP_S3_DEASSERTED) == 0) {
-			resume_ms_flag--;
+			/* If power signal lose, we need to resume to S0 and clear the resume ms flag */
+			if (resume_ms_flag > 0)
+				resume_ms_flag--;
 			return POWER_S0;
 		}		
 		if (check_s0ix_statsus())
@@ -335,7 +337,8 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("power handle state in S0ix->S0");
 		lpc_s0ix_resume_restore_masks();
 		hook_notify(HOOK_CHIPSET_RESUME);
-		resume_ms_flag--;
+		if (resume_ms_flag > 0)
+			resume_ms_flag--;
 		return POWER_S0;
 
 		break;
@@ -344,7 +347,8 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("power handle state in S0->S0ix");
 		lpc_s0ix_suspend_clear_masks();
 		hook_notify(HOOK_CHIPSET_SUSPEND);
-		enter_ms_flag--;
+		if (enter_ms_flag > 0)
+			enter_ms_flag--;
 		return POWER_S0ix;
 
 		break;
