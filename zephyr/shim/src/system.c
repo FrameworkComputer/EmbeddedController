@@ -176,8 +176,7 @@ static int check_reset_cause(void)
 
 	/*
 	 * TODO(b/182876692): Implement CONFIG_POWER_BUTTON_INIT_IDLE &
-	 * CONFIG_BOARD_FORCE_RESET_PIN. Also, check the hibernate flow if PSL
-	 * merge into tot.
+	 * CONFIG_BOARD_FORCE_RESET_PIN.
 	 */
 
 	switch (chip_reset_cause) {
@@ -234,10 +233,11 @@ static int check_reset_cause(void)
 	case WATCHDOG_RST:
 		/*
 		 * Don't set EC_RESET_FLAG_WATCHDOG flag if watchdog is issued
-		 * by system_reset in order to distinguish reset cause is panic
-		 * reason or not.
+		 * by system_reset or hibernate in order to distinguish reset
+		 * cause is panic reason or not.
 		 */
-		if (!(system_flags & (EC_RESET_FLAG_SOFT | EC_RESET_FLAG_HARD)))
+		if (!(system_flags & (EC_RESET_FLAG_SOFT | EC_RESET_FLAG_HARD |
+				      EC_RESET_FLAG_HIBERNATE)))
 			system_flags |= EC_RESET_FLAG_WATCHDOG;
 		break;
 	}

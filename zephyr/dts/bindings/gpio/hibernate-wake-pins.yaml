@@ -1,0 +1,13 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Hibernate Wake-up Pins Configurations
+
+compatible: "cros-ec,hibernate-wake-pins"
+
+properties:
+  wakeup-pins:
+    type: phandles
+    required: true
+    description: GPIO list for hibernate wake-up

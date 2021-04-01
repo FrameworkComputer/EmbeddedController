@@ -40,6 +40,7 @@ properties:
       - GPIO_EC_PCH_SYS_PWROK
       - GPIO_EC_PCH_WAKE_ODL
       - GPIO_EC_PROCHOT_IN_L
+      - GPIO_EC_RST_ODL
       - GPIO_EC_WP_L
       - GPIO_EN_A_RAILS
       - GPIO_EN_PP3300_A
