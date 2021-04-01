@@ -61,7 +61,14 @@ if(DEFINED CONFIG_PLATFORM_EC)
   # TODO: Enable LTO for all sources when Zephyr supports it.
   # See https://github.com/zephyrproject-rtos/zephyr/issues/2112
   if (DEFINED CONFIG_LTO)
-    set_property(TARGET app PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
+    # The Zephyr toolchain generates linker errors if both CONFIG_LTO and
+    # CONFIG_FPU are used. See b/184302085.
+    if(("${ZEPHYR_TOOLCHAIN_VARIANT}" STREQUAL "zephyr") AND
+     (DEFINED CONFIG_FPU))
+      message(STATUS "Zephyr toolchain and CONFIG_FPU detected: disabling LTO")
+    else()
+      set_property(TARGET app PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
+    endif()
   endif()
 endif()
 
