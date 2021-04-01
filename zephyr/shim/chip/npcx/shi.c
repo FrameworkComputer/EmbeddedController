@@ -40,8 +40,8 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, shi_enable, HOOK_PRIO_DEFAULT);
 
 static void shi_reenable_on_sysjump(void)
 {
-	if (IS_ENABLED(CONFIG_CROS_SHI_NPCX_DEBUG) && system_jumped_late() &&
-	    chipset_in_state(CHIPSET_STATE_ON)) {
+	if (IS_ENABLED(CONFIG_CROS_SHI_NPCX_DEBUG) ||
+	    (system_jumped_late() && chipset_in_state(CHIPSET_STATE_ON))) {
 		shi_enable();
 	}
 }
