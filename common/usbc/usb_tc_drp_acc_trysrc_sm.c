@@ -3851,6 +3851,9 @@ static void pd_chipset_reset(void)
 	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		enum tcpm_transmit_type tx;
 
+		/* Do not notify the AP of irrelevant past Hard Resets. */
+		pd_clear_events(i, PD_STATUS_EVENT_HARD_RESET);
+
 		/*
 		 * Re-set events for SOP and SOP' discovery complete so the
 		 * kernel knows to consume discovery information for them.

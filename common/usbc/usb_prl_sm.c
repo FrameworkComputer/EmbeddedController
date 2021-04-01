@@ -1327,6 +1327,10 @@ static void prl_hr_reset_layer_entry(const int port)
 	 */
 	prl_set_default_pd_revision(port);
 
+	/* Inform the AP of Hard Reset */
+	if (IS_ENABLED(CONFIG_USB_PD_HOST_CMD))
+		pd_notify_event(port, PD_STATUS_EVENT_HARD_RESET);
+
 	/*
 	 * Protocol Layer message transmission transitions to
 	 * PRL_Tx_Wait_For_Message_Request state.
