@@ -12,8 +12,6 @@
 #include "task.h"
 #include "timer.h"
 
-#define DEFERRED_STACK_SIZE 1024
-
 /*
  * Deferred thread is always the lowest priority, and preemptive if
  * available.
@@ -24,7 +22,7 @@
 #define DEFERRED_THREAD_PRIORITY -1
 #endif
 
-static K_THREAD_STACK_DEFINE(deferred_thread, DEFERRED_STACK_SIZE);
+static K_THREAD_STACK_DEFINE(deferred_thread, CONFIG_DEFERRED_STACK_SIZE);
 static struct k_work_q deferred_work_queue;
 
 static void deferred_work_queue_handler(struct k_work *work)
@@ -39,7 +37,7 @@ static int init_deferred_work_queue(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 	k_work_q_start(&deferred_work_queue, deferred_thread,
-		       DEFERRED_STACK_SIZE, DEFERRED_THREAD_PRIORITY);
+		       CONFIG_DEFERRED_STACK_SIZE, DEFERRED_THREAD_PRIORITY);
 	return 0;
 }
 SYS_INIT(init_deferred_work_queue, APPLICATION, 0);

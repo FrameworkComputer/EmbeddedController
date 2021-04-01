@@ -23,4 +23,11 @@ config PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY
 	  those critical to determining the reset type, should be initialized at
 	  lower priority so that the system reset flags are valid.
 
+config DEFERRED_STACK_SIZE
+	int "Stack size for deferred calls queue"
+	default 1024
+	help
+	  This defines the stack size for the Zephyr implementation of the EC
+	  hooks API.
+
 endif # PLATFORM_EC
