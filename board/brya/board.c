@@ -10,6 +10,8 @@
 #include "charge_ramp.h"
 #include "charger.h"
 #include "console.h"
+#include "driver/accel_lis2dw12.h"
+#include "driver/accelgyro_lsm6dso.h"
 #include "power_button.h"
 #include "power.h"
 #include "switch.h"
