@@ -48,9 +48,9 @@ LOG_MODULE_REGISTER(cros_shi, LOG_LEVEL_DBG);
 /*
  * Timeout to wait for SHI request packet
  *
- * This affects the slowest SPI clock we can support.  A delay of 8192 us
- * permits a 512-byte request at 500 KHz, assuming the master starts sending
- * bytes as soon as it asserts chip select.  That's as slow as we would
+ * This affects the slowest SPI clock we can support. A delay of 8192 us
+ * permits a 512-byte request at 500 KHz, assuming the SPI controller starts
+ * sending bytes as soon as it asserts chip select. That's as slow as we would
  * practically want to run the SHI interface, since running it slower
  * significantly impacts firmware update times.
  */
