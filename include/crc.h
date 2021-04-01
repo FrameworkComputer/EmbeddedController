@@ -8,7 +8,7 @@
 /* CRC-32 implementation with USB constants */
 /* Note: it's a stateful CRC-32 to match the hardware block interface */
 
-#ifdef CONFIG_HW_CRC
+#if defined(CONFIG_HW_CRC) && !defined(HOST_TOOLS_BUILD)
 #include "crc_hw.h"
 #else
 
@@ -53,6 +53,6 @@ void crc32_ctx_hash8(uint32_t *ctx, uint8_t val);
 
 uint32_t crc32_ctx_result(uint32_t *ctx);
 
-#endif /* CONFIG_HW_CRC */
+#endif /* CONFIG_HW_CRC && !HOST_TOOLS_BUILD */
 
 #endif /* __CROS_EC_CRC_H */
