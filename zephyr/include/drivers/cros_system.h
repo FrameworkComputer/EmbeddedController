@@ -61,11 +61,35 @@ typedef int (*cros_system_hibernate_api)(const struct device *dev,
 					 uint32_t seconds,
 					 uint32_t microseconds);
 
+/**
+ * @typedef cros_system_chip_vendor_api
+ * @brief Callback API for getting the chip vendor.
+ * See cros_system_chip_vendor() for argument descriptions
+ */
+typedef const char *(*cros_system_chip_vendor_api)(const struct device *dev);
+
+/**
+ * @typedef cros_system_chip_name_api
+ * @brief Callback API for getting the chip name.
+ * See cros_system_chip_name() for argument descriptions
+ */
+typedef const char *(*cros_system_chip_name_api)(const struct device *dev);
+
+/**
+ * @typedef cros_system_chip_revision_api
+ * @brief Callback API for getting the chip revision.
+ * See cros_system_chip_revision() for argument descriptions
+ */
+typedef const char *(*cros_system_chip_revision_api)(const struct device *dev);
+
 /** @brief Driver API structure. */
 __subsystem struct cros_system_driver_api {
 	cros_system_get_reset_cause_api get_reset_cause;
 	cros_system_soc_reset_api soc_reset;
 	cros_system_hibernate_api hibernate;
+	cros_system_chip_vendor_api chip_vendor;
+	cros_system_chip_name_api chip_name;
+	cros_system_chip_revision_api chip_revision;
 };
 
 /**
@@ -137,6 +161,71 @@ static inline int z_impl_cros_system_hibernate(const struct device *dev,
 	}
 
 	return api->hibernate(dev, seconds, microseconds);
+}
+
+/**
+ * @brief Get the chip vendor.
+ *
+ * @param dev Pointer to the device structure for the driver instance.
+ * @retval Chip vendor string if successful.
+ * @retval Null string if failure.
+ */
+__syscall const char *cros_system_chip_vendor(const struct device *dev);
+
+static inline const char *
+z_impl_cros_system_chip_vendor(const struct device *dev)
+{
+	const struct cros_system_driver_api *api =
+		(const struct cros_system_driver_api *)dev->api;
+
+	if (!api->chip_vendor) {
+		return "";
+	}
+
+	return api->chip_vendor(dev);
+}
+
+/**
+ * @brief Get the chip name.
+ *
+ * @param dev Pointer to the device structure for the driver instance.
+ * @retval Chip name string if successful.
+ * @retval Null string if failure.
+ */
+__syscall const char *cros_system_chip_name(const struct device *dev);
+
+static inline const char *z_impl_cros_system_chip_name(const struct device *dev)
+{
+	const struct cros_system_driver_api *api =
+		(const struct cros_system_driver_api *)dev->api;
+
+	if (!api->chip_name) {
+		return "";
+	}
+
+	return api->chip_name(dev);
+}
+
+/**
+ * @brief Get the chip revision.
+ *
+ * @param dev Pointer to the device structure for the driver instance.
+ * @retval Chip revision string if successful.
+ * @retval Null string if failure.
+ */
+__syscall const char *cros_system_chip_revision(const struct device *dev);
+
+static inline const char *
+z_impl_cros_system_chip_revision(const struct device *dev)
+{
+	const struct cros_system_driver_api *api =
+		(const struct cros_system_driver_api *)dev->api;
+
+	if (!api->chip_revision) {
+		return "";
+	}
+
+	return api->chip_revision(dev);
 }
 
 /**
