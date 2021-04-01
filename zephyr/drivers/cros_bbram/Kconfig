@@ -22,3 +22,10 @@ config CROS_BBRAM_NPCX_INIT_PRIORITY
 	  SYSTEM_PRE_INIT_PRIORITY & lower than CROS_SYSTEM_NPCX_INIT_PRIORITY.
 
 endif # CROS_BBRAM_NPCX
+
+config CROS_BBRAM_IT8XXX2
+	bool "ITE IT81202 battery backed RAM driver for Zephyr"
+	depends on SOC_FAMILY_RISCV_ITE
+	default y
+	help
+	  This module provides 192 bytes of battery-backed memory area.
