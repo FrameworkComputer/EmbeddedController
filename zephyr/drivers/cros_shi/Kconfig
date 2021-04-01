@@ -5,7 +5,6 @@
 menuconfig CROS_SHI_NPCX
 	bool "Nuvoton NPCX Serial Host Interface driver for the Zephyr shim"
 	depends on SOC_FAMILY_NPCX
-	default n
 	help
 	  This option enables Serial Host Interface driver for the NPCX family
 	  of processors. This is used for host-command communication on the
@@ -30,7 +29,6 @@ config CROS_SHI_MAX_RESPONSE
 
 config CROS_SHI_NPCX_DEBUG
 	bool "Enable SHI debug"
-	default n
 	help
 	  print the debug messages for SHI module
 
