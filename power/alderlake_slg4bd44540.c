@@ -130,12 +130,9 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 		CPRINTS("DSW_PWROK or RSMRST_ODL didn't go low!  Assuming G3.");
 }
 
-/*
- * TODO(b/179524867): do we need to do anything here?
- */
-
 void chipset_handle_espi_reset_assert(void)
 {
+	/* No special handling needed. */
 }
 
 enum power_state chipset_force_g3(void)
