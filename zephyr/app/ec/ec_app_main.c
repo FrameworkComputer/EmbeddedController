@@ -16,8 +16,12 @@
 #include "vboot.h"
 #include "watchdog.h"
 #include "zephyr_espi_shim.h"
+#include "ec_app_main.h"
 
-void main(void)
+/* For testing purposes this is not named main. See main_shim.c for the real
+ * main() function.
+ */
+void ec_app_main(void)
 {
 	printk("Hello from a Chrome EC!\n");
 	printk("  BOARD=%s\n", CONFIG_BOARD);
