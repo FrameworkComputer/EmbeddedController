@@ -7,6 +7,7 @@
 #include <drivers/watchdog.h>
 #include <logging/log.h>
 #include <soc.h>
+#include "rom_chip.h"
 
 LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 
@@ -15,6 +16,7 @@ struct cros_system_npcx_config {
 	/* hardware module base address */
 	uintptr_t base_scfg;
 	uintptr_t base_twd;
+	uintptr_t base_mswc;
 };
 
 /* Driver data */
@@ -27,8 +29,21 @@ struct cros_system_npcx_data {
 
 #define HAL_SCFG_INST(dev) (struct scfg_reg *)(DRV_CONFIG(dev)->base_scfg)
 #define HAL_TWD_INST(dev) (struct twd_reg *)(DRV_CONFIG(dev)->base_twd)
+#define HAL_MSWC_INST(dev) (struct mswc_reg *)(DRV_CONFIG(dev)->base_mswc)
 
 #define DRV_DATA(dev) ((struct cros_system_npcx_data *)(dev)->data)
+
+#define FAMILY_ID_NPCX 0x20
+#define CHIP_ID_NPCX79NXB_C 0x07
+
+/* device ID for all variants in npcx family */
+enum npcx_chip_id {
+	DEVICE_ID_NPCX796F_B = 0x21,
+	DEVICE_ID_NPCX796F_C = 0x29,
+	DEVICE_ID_NPCX797F_C = 0x20,
+	DEVICE_ID_NPCX797W_B = 0x24,
+	DEVICE_ID_NPCX797W_C = 0x2C,
+};
 
 /*
  * For cortex-m we cannot use irq_lock() for disabling all the interrupts
@@ -38,6 +53,73 @@ struct cros_system_npcx_data {
 static inline void interrupt_disable_all(void)
 {
 	__asm__("cpsid i");
+}
+
+static const char *cros_system_npcx_get_chip_vendor(const struct device *dev)
+{
+	struct mswc_reg *const inst_mswc = HAL_MSWC_INST(dev);
+	static char str[11] = "Unknown-XX";
+	char *p = str + 8;
+	uint8_t fam_id = inst_mswc->SID_CR;
+
+	if (fam_id == FAMILY_ID_NPCX) {
+		return "Nuvoton";
+	}
+
+	hex2char(fam_id >> 4, p++);
+	hex2char(fam_id & 0xf, p);
+	return str;
+}
+
+static const char *cros_system_npcx_get_chip_name(const struct device *dev)
+{
+	struct mswc_reg *const inst_mswc = HAL_MSWC_INST(dev);
+	static char str[13] = "Unknown-XXXX";
+	char *p = str + 8;
+	uint8_t chip_id = inst_mswc->SRID_CR;
+	uint8_t device_id = inst_mswc->DEVICE_ID_CR;
+
+	if (chip_id == CHIP_ID_NPCX79NXB_C) {
+		switch (device_id) {
+		case DEVICE_ID_NPCX796F_B:
+			return "NPCX796FB";
+		case DEVICE_ID_NPCX796F_C:
+			return "NPCX796FC";
+		case DEVICE_ID_NPCX797F_C:
+			return "NPCX797FC";
+		case DEVICE_ID_NPCX797W_B:
+			return "NPCX797WB";
+		case DEVICE_ID_NPCX797W_C:
+			return "NPCX797WC";
+		}
+	}
+
+	hex2char(chip_id >> 4, p++);
+	hex2char(chip_id & 0xf, p++);
+	hex2char(device_id >> 4, p++);
+	hex2char(device_id & 0xf, p);
+	return str;
+}
+
+static const char *cros_system_npcx_get_chip_revision(const struct device *dev)
+{
+	ARG_UNUSED(dev);
+	static char rev[NPCX_CHIP_REV_STR_SIZE];
+	char *p = rev;
+	uint8_t rev_num = *((volatile uint8_t *)NPCX_CHIP_REV_ADDR);
+
+	/*
+	 * For NPCX7, the revision number is 1 byte.
+	 * For NPCX9 and later chips, the revision number is 4 bytes.
+	 */
+	for (int s = sizeof(rev_num) - 1; s >= 0; s--) {
+		uint8_t r = rev_num >> (s * 8);
+		hex2char(r >> 4, p++);
+		hex2char(r & 0xf, p++);
+	}
+	*p = '\0';
+
+	return rev;
 }
 
 static int cros_system_npcx_get_reset_cause(const struct device *dev)
@@ -152,12 +234,17 @@ static struct cros_system_npcx_data cros_system_npcx_dev_data;
 static const struct cros_system_npcx_config cros_system_dev_cfg = {
 	.base_scfg = DT_REG_ADDR(DT_INST(0, nuvoton_npcx_scfg)),
 	.base_twd = DT_REG_ADDR(DT_INST(0, nuvoton_npcx_watchdog)),
+	.base_mswc =
+		DT_REG_ADDR_BY_NAME(DT_INST(0, nuvoton_npcx_host_sub), mswc),
 };
 
 static const struct cros_system_driver_api cros_system_driver_npcx_api = {
 	.get_reset_cause = cros_system_npcx_get_reset_cause,
 	.soc_reset = cros_system_npcx_soc_reset,
 	.hibernate = cros_system_npcx_hibernate,
+	.chip_vendor = cros_system_npcx_get_chip_vendor,
+	.chip_name = cros_system_npcx_get_chip_name,
+	.chip_revision = cros_system_npcx_get_chip_revision,
 };
 
 /*
