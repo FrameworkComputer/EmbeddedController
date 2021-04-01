@@ -323,7 +323,10 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0ix:
 		CPRINTS("power handle state in S0ix");
 		if ((power_get_signals() & IN_PCH_SLP_S3_DEASSERTED) == 0) {
-			/* If power signal lose, we need to resume to S0 and clear the resume ms flag */
+			/* 
+			 * If power signal lose, we need to resume to S0 and
+			 * clear the resume ms flag 
+			 */
 			if (resume_ms_flag > 0)
 				resume_ms_flag--;
 			return POWER_S0;
@@ -486,6 +489,9 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S5G3:
 		CPRINTS("power handle state in S5G3");
 		chipset_force_g3();
+		/* clear suspend flag when system shutdown */
+		power_state_clear(EC_PS_ENTER_S0ix |
+			EC_PS_RESUME_S0ix | EC_PS_RESUME_S3 | EC_PS_ENTER_S3);
 		if (!extpower_is_present()) {
 			board_power_off();
 		}
