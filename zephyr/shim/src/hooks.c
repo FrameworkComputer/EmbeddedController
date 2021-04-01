@@ -38,6 +38,7 @@ static int init_deferred_work_queue(const struct device *unused)
 	ARG_UNUSED(unused);
 	k_work_q_start(&deferred_work_queue, deferred_thread,
 		       CONFIG_DEFERRED_STACK_SIZE, DEFERRED_THREAD_PRIORITY);
+	k_thread_name_set(&deferred_work_queue.thread, "ec_hooks");
 	return 0;
 }
 SYS_INIT(init_deferred_work_queue, APPLICATION, 0);
