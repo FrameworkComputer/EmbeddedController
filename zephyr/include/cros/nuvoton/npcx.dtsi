@@ -93,7 +93,6 @@
 			interrupts = <18 2>;
 			clocks = <&pcc NPCX_CLOCK_BUS_APB3 NPCX_PWDWN_CTL5 1>;
 			pinctrl-0 = <&altc_shi_sl>;
-			ver-ctrl = <&altf_shi_new>;
 			shi-cs-wui =<&wui_io53>;
 			label = "SHI";
 		};

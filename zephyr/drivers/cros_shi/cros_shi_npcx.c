@@ -803,14 +803,6 @@ static int shi_npcx_init(const struct device *dev)
 	struct shi_reg *const inst = HAL_INSTANCE(dev);
 	const struct device *const clk_dev =
 		device_get_binding(NPCX_CLK_CTRL_NAME);
-	const struct npcx_alt shi_ver_ctrl[] = {
-		{ .group = SHI_VER_CTRL_ALT_FILED(group),
-		  .bit = SHI_VER_CTRL_ALT_FILED(bit),
-		  .inverted = SHI_VER_CTRL_ALT_FILED(inv) }
-	};
-
-	/* Enable the new version of SHI hardware module. */
-	npcx_pinctrl_mux_configure(shi_ver_ctrl, 1, 1);
 
 	/* Turn on shi device clock first */
 	ret = clock_control_on(clk_dev,

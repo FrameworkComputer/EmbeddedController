@@ -21,10 +21,6 @@ properties:
         required: true
         description: configurations of pinmux controllers
 
-    ver-ctrl:
-        type: phandle
-        required: true
-        description: configurations of SHI module version
     shi-cs-wui:
         type: phandle
         required: true
