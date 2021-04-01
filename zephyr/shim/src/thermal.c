@@ -8,7 +8,7 @@
 #include "ec_commands.h"
 
 #define THERMAL_CONFIG(node_id) \
-	[node_id] = { \
+	[ZSHIM_TEMP_SENSOR_ID(node_id)] = { \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = \
 				C_TO_K(DT_PROP(node_id, temp_host_warn)), \

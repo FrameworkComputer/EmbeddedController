@@ -14,6 +14,17 @@ properties:
         Human-readable string describing the device (used as
         device_get_binding() argument)
 
+    enum-name:
+      type: string
+      required: true
+      description:
+        Enum values used in the source code to refer to the temperature sensors
+      enum:
+      - TEMP_SENSOR_CHARGER
+      - TEMP_SENSOR_DDR_SOC
+      - TEMP_SENSOR_FAN
+      - TEMP_SENSOR_PP3300_REGULATOR
+
     temp_fan_off:
       required: false
       type: int
