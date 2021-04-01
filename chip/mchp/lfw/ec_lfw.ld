@@ -67,6 +67,9 @@ SECTIONS
 
     .text :
     {
+		. = ALIGN(4);
+		__image_data_offset = .;
+		KEEP(*(.rodata.ver))
         *(.text .text.*)                        /* all remaining code */
         *(.rodata .rodata.*)            /* read-only data (constants) */
     } >SRAM
