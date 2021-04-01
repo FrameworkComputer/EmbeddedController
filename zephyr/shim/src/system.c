@@ -107,17 +107,23 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 const char *system_get_chip_vendor(void)
 {
-	return "chromeos";
+	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
+
+	return cros_system_chip_vendor(sys_dev);
 }
 
 const char *system_get_chip_name(void)
 {
-	return "emu";
+	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
+
+	return cros_system_chip_name(sys_dev);
 }
 
 const char *system_get_chip_revision(void)
 {
-	return "";
+	const struct device *sys_dev = device_get_binding("CROS_SYSTEM");
+
+	return cros_system_chip_revision(sys_dev);
 }
 
 void system_reset(int flags)
