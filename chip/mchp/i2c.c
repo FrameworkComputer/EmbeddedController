@@ -10,6 +10,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "i2c_chip.h"
 #include "registers.h"
 #include "task.h"
 #include "tfdp_chip.h"
@@ -924,6 +925,17 @@ int i2c_get_line_levels(int port)
 	select_port(port, controller);
 	rv = get_line_level(port);
 	return rv;
+}
+
+/*
+ * this function returns the controller for I2C
+ * return mod of MCHP_I2C_CTRL_MAX
+ */
+__overridable int board_i2c_p2c(int port)
+{
+	if (port < 0 || port >= I2C_PORT_COUNT)
+		return -1;
+	return port % MCHP_I2C_CTRL_MAX;
 }
 
 /*
