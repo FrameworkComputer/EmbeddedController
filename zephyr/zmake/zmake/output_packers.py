@@ -33,19 +33,38 @@ def _write_dts_file(dts_file, config_header, output_bin, ro_filename, rw_filenam
       binman {{
         filename = "{output_bin}";
         pad-byte = <0x1d>;
-        section@0 {{
+        WP_RO {{
+          type = "section";
           read-only;
           offset = <CONFIG_PLATFORM_EC_PROTECTED_STORAGE_OFF>;
           size = <CONFIG_PLATFORM_EC_PROTECTED_STORAGE_SIZE>;
-          blob {{
-            filename = "{ro_filename}";
+          EC_RO {{
+            type = "section";
+            RO_FW {{
+              type = "blob";
+              filename = "{ro_filename}";
+            }};
+            fmap {{
+            }};
+            RO_FRID {{
+              type = "text";
+              size = <32>;
+              text = "RO_FRID (not implemented)";
+            }};
           }};
         }};
-        section@1 {{
+        EC_RW {{
+          type = "section";
           offset = <CONFIG_PLATFORM_EC_WRITABLE_STORAGE_OFF>;
           size = <CONFIG_PLATFORM_EC_WRITABLE_STORAGE_SIZE>;
-          blob {{
+          RW_FW {{
+            type = "blob";
             filename = "{rw_filename}";
+          }};
+          RW_FWID {{
+            type = "text";
+            size = <32>;
+            text = "RW_FWID (not implemented)";
           }};
         }};
       }};
