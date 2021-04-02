@@ -195,4 +195,7 @@ static int jtag_init(const struct device *dev)
 
 	return 0;
 }
-SYS_INIT(jtag_init, PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT + 1);
+#if CONFIG_KERNEL_INIT_PRIORITY_DEFAULT >= 41
+#error "jtag_init must be called after default kernel init"
+#endif
+SYS_INIT(jtag_init, PRE_KERNEL_1, 41);
