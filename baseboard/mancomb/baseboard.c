@@ -417,6 +417,8 @@ static int fsusb42umx_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 
 int board_set_active_charge_port(int port)
 {
+	int rv, i;
+
 	CPRINTSUSB("Requested charge port change to %d", port);
 
 	/*
@@ -458,17 +460,43 @@ int board_set_active_charge_port(int port)
 			return EC_ERROR_INVAL;
 	}
 
+	/* Make sure BJ adapter is sourcing power */
+	if (port == CHARGE_PORT_BARRELJACK &&
+					gpio_get_level(GPIO_BJ_ADP_PRESENT_L)) {
+		CPRINTSUSB("BJ port selected, but not present!");
+		return EC_ERROR_INVAL;
+	}
+
 	CPRINTSUSB("New charger p%d", port);
+
+	/*
+	 * Disable PPCs on all ports which aren't enabled.
+	 *
+	 * Note: this assumes that the CHARGE_PORT_ enum is ordered with the
+	 * type-c ports first always.
+	 */
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
+		if (i == port)
+			continue;
+
+		rv = ppc_vbus_sink_enable(port, 0);
+		if (rv) {
+			CPRINTSUSB("Failed to disable C%d sink path", i);
+			return rv;
+		}
+	}
 
 	switch (port) {
 	case CHARGE_PORT_TYPEC0:
 	case CHARGE_PORT_TYPEC1:
 		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 1);
+		rv = ppc_vbus_sink_enable(port, 1);
+		if (rv) {
+			CPRINTSUSB("Failed to enable sink path");
+			return rv;
+		}
 		break;
 	case CHARGE_PORT_BARRELJACK:
-		/* Make sure BJ adapter is sourcing power */
-		if (gpio_get_level(GPIO_BJ_ADP_PRESENT_L))
-			return EC_ERROR_INVAL;
 		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 0);
 		break;
 	default:
