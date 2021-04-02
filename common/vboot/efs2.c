@@ -71,7 +71,11 @@ static enum cr50_comm_err send_to_cr50(const uint8_t *data, size_t size)
 	uart_flush_output();
 	uart_clear_input();
 
-	uart_shell_stop();
+	if (uart_shell_stop()) {
+		/* Failed to stop the shell. */
+		enable_packet_mode(false);
+		return CR50_COMM_ERR_UNKNOWN;
+	}
 
 	/*
 	 * Send packet. No traffic control, assuming Cr50 consumes stream much
@@ -106,18 +110,7 @@ static enum cr50_comm_err send_to_cr50(const uint8_t *data, size_t size)
 				res.error = res.error | c << (i*8);
 				break;
 			}
-			/*
-			 * TODO(b:181352041) Implement proper RX buffering.
-			 * Zephyr's shell (even when "stopped") can steal some
-			 * bytes from the uart RX. Skipping the sleep here
-			 * appears to always let us capture the response. Once
-			 * we're able to fork the shell RX, we'll be able to
-			 * buffer the response and add the sleep back into the
-			 * Zephyr builds here (or alternatively use event
-			 * signals).
-			 */
-			if (!IS_ENABLED(CONFIG_ZEPHYR))
-				msleep(1);
+			msleep(1);
 			timeout = timestamp_expired(until, NULL);
 		}
 	}

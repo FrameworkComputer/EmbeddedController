@@ -9,7 +9,7 @@ config ISR_STACK_SIZE
 	default 1024
 
 config SHELL_STACK_SIZE
-	default 960
+	default 1536
 
 # Chromium EC stack sizes
 

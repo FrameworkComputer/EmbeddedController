@@ -23,11 +23,12 @@
  * briefly taking control of the uart.
  */
 #ifdef CONFIG_ZEPHYR
-void uart_shell_stop(void);
+int uart_shell_stop(void);
 void uart_shell_start(void);
 #else
-static inline void uart_shell_stop(void)
+static inline int uart_shell_stop(void)
 {
+	return 0;
 }
 static inline void uart_shell_start(void)
 {
