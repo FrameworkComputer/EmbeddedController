@@ -78,5 +78,6 @@
 int ps8743_tune_usb_eq(const struct usb_mux *me, uint8_t tx, uint8_t rx);
 int ps8743_write(const struct usb_mux *me, uint8_t reg, uint8_t val);
 int ps8743_read(const struct usb_mux *me, uint8_t reg, int *val);
+int ps8743_check_chip_id(const struct usb_mux *me, int *val);
 
 #endif /* __CROS_EC_PS8743_H */
