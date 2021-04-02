@@ -8,6 +8,7 @@
 #include "adc_chip.h"
 #include "button.h"
 #include "cbi_fw_config.h"
+#include "cbi_ssfc.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
@@ -22,6 +23,7 @@
 #include "driver/tcpm/tcpci.h"
 #include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/pi3usb3x532.h"
+#include "driver/usb_mux/ps8743.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -175,7 +177,10 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 
 static int board_id = -1;
+static int mux_c1 = SSFC_USB_SS_MUX_DEFAULT;
+
 extern const struct usb_mux usbc0_retimer;
+extern const struct usb_mux usbmux_ps8743;
 
 void board_init(void)
 {
@@ -229,6 +234,13 @@ void board_init(void)
 			}
 		}
 	}
+
+	mux_c1 = get_cbi_ssfc_usb_ss_mux();
+
+	if (mux_c1 == SSFC_USB_SS_MUX_PS8743)
+		memcpy(&usb_muxes[1],
+				&usbmux_ps8743,
+				sizeof(struct usb_mux));
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -480,6 +492,8 @@ static int board_nb7v904m_mux_set_c0(const struct usb_mux *me,
 						mux_state_t mux_state);
 static int board_nb7v904m_mux_set(const struct usb_mux *me,
 						mux_state_t mux_state);
+static int ps8743_tune_mux(const struct usb_mux *me);
+
 const struct usb_mux usbc0_retimer = {
 	.usb_port = 0,
 	.i2c_port = I2C_PORT_USB_C0,
@@ -495,7 +509,15 @@ const struct usb_mux usbc1_retimer = {
 	.board_set = &board_nb7v904m_mux_set,
 };
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux usbmux_ps8743 = {
+	.usb_port = 1,
+	.i2c_port = I2C_PORT_SUB_USB_C1,
+	.i2c_addr_flags = PS8743_I2C_ADDR0_FLAG,
+	.driver = &ps8743_usb_mux_driver,
+	.board_init = &ps8743_tune_mux,
+};
+
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 0,
 		.i2c_port = I2C_PORT_USB_C0,
@@ -511,6 +533,15 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.next_mux = &usbc1_retimer,
 	}
 };
+/* USB Mux C1 : board_init of PS8743 */
+static int ps8743_tune_mux(const struct usb_mux *me)
+{
+	ps8743_tune_usb_eq(me,
+			PS8743_USB_EQ_TX_3_6_DB,
+			PS8743_USB_EQ_RX_16_0_DB);
+
+	return EC_SUCCESS;
+}
 
 /* USB Mux C0 */
 static int board_nb7v904m_mux_set_c0(const struct usb_mux *me,
