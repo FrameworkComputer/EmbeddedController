@@ -70,8 +70,14 @@ static void service_one_port(int port)
 	}
 }
 
+__overridable void board_process_pd_alert(int port)
+{
+}
+
 /*
- * Main task entry point that handles PD interrupts for a single port
+ * Main task entry point that handles PD interrupts for a single port.  These
+ * interrupts usually come from a TCPC, but may also come from PD-related chips
+ * sharing the TCPC interrupt line.
  *
  * @param p The PD port number for which to handle interrupts (pointer is
  * reinterpreted as an integer directly).
@@ -112,6 +118,8 @@ void pd_interrupt_handler_task(void *p)
 
 			service_one_port(port);
 		}
+
+		board_process_pd_alert(port);
 	}
 }
 

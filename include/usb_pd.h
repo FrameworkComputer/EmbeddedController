@@ -3048,6 +3048,13 @@ __override_proto uint8_t board_get_usb_pd_port_count(void);
 __override_proto bool board_is_usb_pd_port_present(int port);
 
 /**
+ * Process PD-related alerts for a chip which is sharing the TCPC interrupt line
+ *
+ * @param port USB-C port number
+ */
+__override_proto void board_process_pd_alert(int port);
+
+/**
  * Resets external PD chips including TCPCs and MCUs.
  *
  * Boards must provide this when PDCMD (PD MCUs case) or PD INT (TCPC case)
