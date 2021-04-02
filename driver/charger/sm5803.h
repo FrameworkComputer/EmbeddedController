@@ -385,4 +385,7 @@ void sm5803_enable_low_power_mode(int chgnum);
 
 extern const struct charger_drv sm5803_drv;
 
+/* Expose interrupt handler for processing in PD_INT task when needed */
+void sm5803_handle_interrupt(int chgnum);
+
 #endif
