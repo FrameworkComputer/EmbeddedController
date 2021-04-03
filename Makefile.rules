@@ -39,7 +39,10 @@ else ifeq ($(V),)
 # V=
 Q := @
 echo = echo $(1);
-quiet = @echo '  $(2)' $(patsubst $(out)/%,%,$@) ; $(cmd_$(1))
+echo-cmd = $(if $(quiet_cmd_$(1)), \
+		$(quiet_cmd_$(1)), \
+		$(2) $(patsubst $(out)/%,%,$@))
+quiet = @echo ' $(echo-cmd)' ; $(cmd_$(1))
 silent = 1>/dev/null
 silent_err = 2>/dev/null
 MAKEFLAGS += --no-print-directory
