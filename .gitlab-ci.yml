@@ -41,17 +41,24 @@ before_script:
   - export ZEPHYR_DIR=/zephyr
   - export PATH="$PATH:$HOME/.local/bin"
 
-test:
-  script:
-    echo "It works"
-
-run:
+volteer:
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}" --modules-dir "${MODULES_DIR}"
-      -l DEBUG configure -b -B "${BUILD_DIR}/vol" -t zephyr
+      -l DEBUG configure -b -B "${BUILD_DIR}/volteer" -t zephyr
       zephyr/projects/volteer/volteer
-    - ls "${BUILD_DIR}/vol" "${BUILD_DIR}/vol/output"
+    - ls "${BUILD_DIR}/volteer" "${BUILD_DIR}/volteer/output"
   artifacts:
     paths:
-      - build/vol/output/*
+      - build/volteer/output/*
+    expire_in: 1 week
+
+lazor:
+  script:
+    - zmake --zephyr-base "${ZEPHYR_BASE}" --modules-dir "${MODULES_DIR}"
+      -l DEBUG configure -b -B "${BUILD_DIR}/lazor" -t zephyr
+      zephyr/projects/trogdor/lazor
+    - ls "${BUILD_DIR}/lazor" "${BUILD_DIR}/lazor/output"
+  artifacts:
+    paths:
+      - build/lazor/output/*
     expire_in: 1 week
