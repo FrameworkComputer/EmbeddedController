@@ -48,7 +48,8 @@ test:
 run:
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}" --modules-dir "${MODULES_DIR}"
-      -l DEBUG configure -b -B "${BUILD_DIR}/vol" -t zephyr zephyr/projects/volteer
+      -l DEBUG configure -b -B "${BUILD_DIR}/vol" -t zephyr
+      zephyr/projects/volteer/volteer
     - ls "${BUILD_DIR}/vol" "${BUILD_DIR}/vol/output"
   artifacts:
     paths:
