@@ -286,8 +286,10 @@ static void tcpc_aic_init(void)
 	configure_retimer_usbmux();
 
 	/* Initialize the IOEXPANDER on TCPC-AIC */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		pca9675_init(i);
+		board_overcurrent_event(i, 0);
+	}
 
 	/* Default set the SBU lines to AUX mode on both the TCPC-AIC */
 	board_connect_c0_sbu_deferred();
