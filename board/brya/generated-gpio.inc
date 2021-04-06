@@ -32,7 +32,7 @@ GPIO_INT(USB_C2_RT_INT_ODL,              PIN(4, 1), GPIO_INT_BOTH, retimer_inter
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
 GPIO(CHARGER_VAP_OTG_EN,             PIN(7, 3), GPIO_OUT_LOW)
 GPIO(CPU_C10_GATE_L,                 PIN(6, 7), GPIO_INPUT)
-GPIO(EC_ACCEL_INT_R_L,               PIN(8, 1), GPIO_INPUT)
+GPIO(EC_ACCEL_INT_R_L,               PIN(8, 1), GPIO_INPUT | GPIO_SEL_1P8V)
 GPIO(EC_ALS_RGB_INT_R_L,             PIN(D, 4), GPIO_INPUT)
 GPIO(EC_BATT_PRES_ODL,               PIN(E, 1), GPIO_INPUT)
 GPIO(EC_ENTERING_RW,                 PIN(0, 3), GPIO_OUT_LOW)
