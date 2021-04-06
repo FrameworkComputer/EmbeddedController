@@ -1,0 +1,16 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_WATCHDOG
+
+config PLATFORM_EC_WATCHDOG_PERIOD_MS
+	int "Watchdog timeout in ms"
+	default 1600
+	help
+	  Set the timeout of the watchdog timer. The watchdog timer reboots
+	  the system if no one reloads the watchdog timer before the timeout.
+	  The interval between reloads of the watchdog timer should be less than
+	  half of the watchdog period.
+
+endif # PLATFORM_EC_WATCHDOG

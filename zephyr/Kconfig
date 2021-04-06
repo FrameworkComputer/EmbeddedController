@@ -55,6 +55,7 @@ rsource "Kconfig.temperature"
 rsource "Kconfig.timer"
 rsource "Kconfig.throttle_ap"
 rsource "Kconfig.usbc"
+rsource "Kconfig.watchdog"
 
 # Define PLATFORM_EC_... options to enable EC features. Each Kconfig should be
 # matched by a line in zephyr/shim/include/config_chip.h which #defines the
@@ -560,18 +561,5 @@ menuconfig PLATFORM_EC_WATCHDOG
 	  system if the hook task (which is the lowest-priority task on the
 	  system) gets starved for CPU time and isn't able to fire its
 	  HOOK_TICK event.
-
-if PLATFORM_EC_WATCHDOG
-
-config PLATFORM_EC_WATCHDOG_PERIOD_MS
-	int "Watchdog timeout in ms"
-	default 1600
-	help
-	  Set the timeout of the watchdog timer. The watchdog timer reboots
-	  the system if no one reloads the watchdog timer before the timeout.
-	  The interval between reloads of the watchdog timer should be less than
-	  half of the watchdog period.
-
-endif # PLATFORM_EC_WATCHDOG
 
 endif # PLATFORM_EC
