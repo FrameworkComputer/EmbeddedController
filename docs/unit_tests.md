@@ -26,6 +26,23 @@ Build and run all unit tests:
 (chroot) ~/trunk/src/platform/ec $ make runhosttests -j
 ```
 
+## Debugging Unit Tests
+
+You need the host version of gdb:
+
+```bash
+(chroot) sudo emerge -j sys-devel/gdb
+```
+
+Then run gdb on the specific test you want to debug (the `host_command` test in this example):
+
+```
+(chroot) gdb build/host/host_command/host_command.exe
+handle SIGUSR1 noprint nostop
+break test_hostcmd_ok
+run
+```
+
 ## Writing Unit Tests
 
 Unit tests live in the [`test`] subdirectory of the CrOS EC codebase.
