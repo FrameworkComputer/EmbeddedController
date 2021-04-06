@@ -1,0 +1,40 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_RTC
+
+config PLATFORM_EC_CONSOLE_CMD_RTC
+	bool "Console command: rtc"
+	help
+	  This command allows getting and setting the current RTC value. The
+	  value is in seconds since the Epoch (midnight on 1/1/70). You can
+	  convert this to a human date on the command line with 'date -u -d @n'
+	  where n is the numeric value. To convert a time to seconds, use:
+
+	     date -d '1970-01-01 UTC + n seconds'
+
+config PLATFORM_EC_CONSOLE_CMD_RTC_ALARM
+	bool "Console command: rtc_alarm"
+	depends on PLATFORM_EC_CONSOLE_CMD_RTC
+	help
+	  This command supports setting a real-time-clock (RTC) alarm that
+	  causes an interrupt when the timer reaches that point. To set the
+	  alarm:
+
+	     rtc <sec> [<usec>]
+
+	  where:
+	    <sec> is the number of seconds since the epoch
+	    <usec> is the optional number of microseconds (fractional seconds)
+
+config PLATFORM_EC_HOSTCMD_RTC
+	bool "Host command: EC_CMD_RTC_GET_VALUE etc."
+	depends on PLATFORM_EC_HOSTCMD
+	help
+	  Enables support for EC_CMD_RTC_GET_VALUE, EC_CMD_RTC_SET_VALUE,
+	  EC_CMD_RTC_GET_ALARM and EC_CMD_RTC_SET_ALARM which colectively allow
+	  the AP to control the EC's real-time-clock. The AP typically makes
+	  use of the EC's RTC to avoid needing a discrete RTC chip on the board.
+
+endif # PLATFORM_EC_RTC
