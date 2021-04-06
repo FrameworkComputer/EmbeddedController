@@ -61,6 +61,9 @@ int pd_find_pdo_index(uint32_t src_cap_cnt, const uint32_t * const src_caps,
 
 	/* Get max power that is under our max voltage input */
 	for (i = 0; i < src_cap_cnt; i++) {
+		if (IS_ENABLED(CONFIG_USB_PD_ONLY_FIXED_PDOS) &&
+		    (src_caps[i] & PDO_TYPE_MASK) != PDO_TYPE_FIXED)
+			continue;
 		/* its an unsupported Augmented PDO (PD3.0) */
 		if ((src_caps[i] & PDO_TYPE_MASK) == PDO_TYPE_AUGMENTED)
 			continue;

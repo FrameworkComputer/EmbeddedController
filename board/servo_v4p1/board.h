@@ -213,6 +213,7 @@
 /* Default pull-up should not be Rp3a0 due to Cr50 */
 #define CONFIG_USB_PD_PULLUP TYPEC_RP_USB
 #define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
+#define CONFIG_USB_PD_ONLY_FIXED_PDOS
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USBC_SS_MUX
 

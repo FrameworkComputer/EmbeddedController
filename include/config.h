@@ -4821,6 +4821,12 @@
 #undef CONFIG_USB_PD_MAX_SINGLE_SOURCE_CURRENT
 
 /*
+ * Ignore all non-fixed PDOs received from a src_caps message. Enable this for
+ * boards (like servo_v4) which only support FIXED PDO types.
+ */
+#undef CONFIG_USB_PD_ONLY_FIXED_PDOS
+
+/*
  * Total current in mA the board can supply to external devices through
  * USB-C ports
  *

@@ -980,6 +980,13 @@ endif  # PLATFORM_EC_USB_PD_TCPM_TCPCI
 
 endif  # PLATFORM_EC_USBC_PPC
 
+config PLATFORM_EC_USB_PD_ONLY_FIXED_PDOS
+	bool "Only support FIXED type PDOs"
+	default n
+	help
+	  Ignore all non-fixed PDOs received from a src_caps message. Enable
+	  this for boards (like servo_v4) which only support FIXED PDO types.
+
 config PLATFORM_EC_USB_CHARGER
 	bool "Support charging from a USB-C port"
 	default y
