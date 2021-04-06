@@ -418,4 +418,8 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
  * The priority flash_dev_init should be lower than GPIO initialization because
  * it calls gpio_get_level function.
  */
-SYS_INIT(flash_dev_init, PRE_KERNEL_1, 51);
+#if CONFIG_PLATFORM_EC_FLASH_INIT_PRIORITY <= \
+	CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY
+#error "Flash must be initialized after GPIOs"
+#endif
+SYS_INIT(flash_dev_init, POST_KERNEL, CONFIG_PLATFORM_EC_FLASH_INIT_PRIORITY);

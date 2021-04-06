@@ -258,7 +258,10 @@ static int init_gpios(const struct device *unused)
 
 	return 0;
 }
-SYS_INIT(init_gpios, PRE_KERNEL_1, 50);
+#if CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY <= CONFIG_KERNEL_INIT_PRIORITY_DEFAULT
+#error "GPIOs must initialize after the kernel default initialization"
+#endif
+SYS_INIT(init_gpios, POST_KERNEL, CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY);
 
 int gpio_enable_interrupt(enum gpio_signal signal)
 {
