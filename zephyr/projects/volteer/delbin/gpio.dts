@@ -9,42 +9,57 @@
 
 		ec_lid_open {
 			gpios = <&gpiod 2 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
 			label = "EC_LID_OPEN";
 		};
 		ec_wp_l {
 			gpios = <&gpioa 1 GPIO_INPUT>;
+			enum-name = "GPIO_WP_L";
 			label = "EC_WP_L";
 		};
 		h1_ec_pwr_btn_odl {
 			gpios = <&gpio0 1 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
 			label = "H1_EC_PWR_BTN_ODL";
 		};
 		acok_od {
 			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
 			label = "ACOK_OD";
 		};
 		slp_s0_l {
 			gpios = <&gpiod 5 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S0_L";
 			label = "SLP_S0_L";
 		};
 		slp_s3_l {
 			gpios = <&gpioa 5 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S3_L";
 			label = "SLP_S3_L";
 		};
 		slp_sus_l {
 			gpios = <&gpiod 7 GPIO_INPUT>;
+			enum-name = "GPIO_SLP_SUS_L";
 			label = "SLP_SUS_L";
 		};
 		pg_ec_rsmrst_odl {
 			gpios = <&gpioe 2 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_RSMRST_ODL";
 			label = "PG_EC_RSMRST_ODL";
+		};
+		rsmrst_l_pgood {
+			gpios = <&gpioe 2 GPIO_INPUT>;
+			enum-name = "GPIO_RSMRST_L_PGOOD";
+			label = "RSMRST_L_PGOOD";
 		};
 		dsw_pwrok {
 			gpios = <&gpioc 7 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_DSW_PWROK";
 			label = "DSW_PWROK";
 		};
 		pg_ec_all_sys_pwrgd {
 			gpios = <&gpiof 4 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_ALL_SYS_PWRGD";
 			label = "PG_EC_ALL_SYS_PWRGD";
 		};
 		ec_imu_int_l {
@@ -93,14 +108,17 @@
 		};
 		en_pp3300_a {
 			gpios = <&gpioa 3 GPIO_OUT_LOW>;
+			enum-name = "GPIO_EN_PP3300_A";
 			label = "EN_PP3300_A";
 		};
 		en_pp5000_a {
 			gpios = <&gpioa 4 GPIO_OUT_LOW>;
+			enum-name = "GPIO_EN_PP5000";
 			label = "EN_PP5000_A";
 		};
 		en_ppvar_vccin {
 			gpios = <&gpio4 3 GPIO_OUT_LOW>;
+			enum-name = "GPIO_EN_PPVAR_VCCIN";
 			label = "EN_PPVAR_VCCIN";
 		};
 		ec_rst_odl {
@@ -109,38 +127,47 @@
 		};
 		ec_pch_sys_pwrok {
 			gpios = <&gpio3 7 GPIO_OUT_LOW>;
+			enum-name = "GPIO_EC_PCH_SYS_PWROK";
 			label = "EC_PCH_SYS_PWROK";
 		};
 		ec_pch_rsmrst_odl {
 			gpios = <&gpioa 6 GPIO_ODR_LOW>;
+			enum-name = "GPIO_PCH_RSMRST_L";
 			label = "EC_PCH_RSMRST_ODL";
 		};
 		ec_pch_pwr_btn_odl {
 			gpios = <&gpioc 1 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
 			label = "EC_PCH_PWR_BTN_ODL";
 		};
 		ec_pch_rtcrst {
 			gpios = <&gpio7 6 GPIO_OUT_LOW>;
+			enum-name = "GPIO_PCH_RTCRST";
 			label = "EC_PCH_RTCRST";
 		};
 		ec_pch_wake_odl {
 			gpios = <&gpio7 4 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_EC_PCH_WAKE_ODL";
 			label = "EC_PCH_WAKE_ODL";
 		};
 		ec_entering_rw {
 			gpios = <&gpioe 3 GPIO_OUT_LOW>;
+			enum-name = "GPIO_ENTERING_RW";
 			label = "EC_ENTERING_RW";
 		};
 		ec_prochot_odl {
 			gpios = <&gpio6 3 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_CPU_PROCHOT";
 			label = "EC_PROCHOT_ODL";
 		};
 		ec_prochot_in_l {
 			gpios = <&gpiof 0 GPIO_INPUT>;
+			enum-name = "GPIO_EC_PROCHOT_IN_L";
 			label = "EC_PROCHOT_IN_L";
 		};
 		sys_rst_odl {
 			gpios = <&gpioc 5 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_SYS_RESET_L";
 			label = "SYS_RST_ODL";
 		};
 		ec_pch_int_odl {
@@ -225,6 +252,7 @@
 		};
 		ec_edp_bl_en {
 			gpios = <&gpiod 3 GPIO_OUT_HIGH>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT";
 			label = "EC_EDP_BL_EN";
 		};
 		ec_i2c0_sensor_scl {
@@ -293,6 +321,7 @@
 		};
 		ec_kso_02_inv {
 			gpios = <&gpio1 7 GPIO_OUT_LOW>;
+			enum-name = "GPIO_KBD_KSO2";
 			label = "EC_KSO_02_INV";
 		};
 	};

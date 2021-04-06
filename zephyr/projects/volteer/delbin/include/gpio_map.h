@@ -9,32 +9,7 @@
 #include <devicetree.h>
 #include <gpio_signal.h>
 
-#define GPIO_AC_PRESENT		NAMED_GPIO(acok_od)
-#define GPIO_CPU_PROCHOT	NAMED_GPIO(ec_prochot_odl)
-#define GPIO_EC_PCH_SYS_PWROK	NAMED_GPIO(ec_pch_sys_pwrok)
-#define GPIO_EC_PCH_WAKE_ODL	NAMED_GPIO(ec_pch_wake_odl)
-#define GPIO_EC_PROCHOT_IN_L	NAMED_GPIO(ec_prochot_in_l)
-#define GPIO_ENABLE_BACKLIGHT	NAMED_GPIO(ec_edp_bl_en)
-#define GPIO_ENTERING_RW	NAMED_GPIO(ec_entering_rw)
-#define GPIO_EN_PP3300_A	NAMED_GPIO(en_pp3300_a)
-#define GPIO_EN_PP5000		NAMED_GPIO(en_pp5000_a)
-#define GPIO_EN_PPVAR_VCCIN	NAMED_GPIO(en_ppvar_vccin)
-#define GPIO_KBD_KSO2		NAMED_GPIO(ec_kso_02_inv)
-#define GPIO_LID_OPEN		NAMED_GPIO(ec_lid_open)
-#define GPIO_PCH_PWRBTN_L	NAMED_GPIO(ec_pch_pwr_btn_odl)
-#define GPIO_PCH_RSMRST_L	NAMED_GPIO(ec_pch_rsmrst_odl)
-#define GPIO_PCH_RTCRST		NAMED_GPIO(ec_pch_rtcrst)
-#define GPIO_PCH_SLP_S0_L	NAMED_GPIO(slp_s0_l)
-#define GPIO_PCH_SLP_S3_L	NAMED_GPIO(slp_s3_l)
 #define GPIO_PCH_DSW_PWROK	GPIO_UNIMPLEMENTED
-#define GPIO_PG_EC_ALL_SYS_PWRGD NAMED_GPIO(pg_ec_all_sys_pwrgd)
-#define GPIO_PG_EC_DSW_PWROK	NAMED_GPIO(dsw_pwrok)
-#define GPIO_PG_EC_RSMRST_ODL	NAMED_GPIO(pg_ec_rsmrst_odl)
-#define GPIO_POWER_BUTTON_L	NAMED_GPIO(h1_ec_pwr_btn_odl)
-#define GPIO_RSMRST_L_PGOOD	NAMED_GPIO(pg_ec_rsmrst_odl)
-#define GPIO_SLP_SUS_L		NAMED_GPIO(slp_sus_l)
-#define GPIO_SYS_RESET_L	NAMED_GPIO(sys_rst_odl)
-#define GPIO_WP_L		NAMED_GPIO(ec_wp_l)
 
 #ifdef CONFIG_PLATFORM_EC_POWERSEQ
 #define POWER_SIGNAL_INT(gpio, edge) \

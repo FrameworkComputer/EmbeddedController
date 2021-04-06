@@ -4,6 +4,7 @@ compatible: "named-gpios"
 
 child-binding:
     description: Named GPIOs child node
+    include: gpio-enum-name.yaml
     properties:
        gpios:
           type: phandle-array
