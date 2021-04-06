@@ -20,6 +20,8 @@
 #include "chipset.h"
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
+#include "driver/retimer/anx7491.h"
+#include "driver/retimer/ps8811.h"
 #include "driver/retimer/ps8818.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/temp_sensor/sb_tsi.h"
@@ -907,11 +909,77 @@ void board_hibernate(void)
 	}
 }
 
+__overridable void board_a1_ps8811_retimer_setup(void)
+{
+	CPRINTSUSB("A1: PS8811 retimer using default tuning");
+}
+
+static void baseboard_a1_ps8811_retimer_setup(void)
+{
+	int rv;
+	int tries = 2;
+
+	do {
+		int val;
+
+		rv = i2c_read8(I2C_PORT_TCPC1,
+				PS8811_I2C_ADDR_FLAGS3 + PS8811_REG_PAGE1,
+				PS8811_REG1_USB_BEQ_LEVEL, &val);
+	} while (rv && --tries);
+
+	if (rv) {
+		CPRINTSUSB("A1: PS8811 retimer not detected!");
+		return;
+	}
+	CPRINTSUSB("A1: PS8811 retimer detected");
+	board_a1_ps8811_retimer_setup();
+}
+
+__overridable void board_a1_anx7491_retimer_setup(void)
+{
+	CPRINTSUSB("A1: ANX7491 retimer using default tuning");
+}
+
+static void baseboard_a1_anx7491_retimer_setup(void)
+{
+	int rv;
+	int tries = 2;
+
+	do {
+		int val;
+
+		rv = i2c_read8(I2C_PORT_TCPC1, ANX7491_I2C_ADDR0_FLAGS, 0,
+			       &val);
+	} while (rv && --tries);
+	if (rv) {
+		CPRINTSUSB("A1: ANX7491 retimer not detected!");
+		return;
+	}
+	CPRINTSUSB("A1: ANX7451 retimer detected");
+	board_a1_anx7491_retimer_setup();
+}
+
+void baseboard_a1_retimer_setup(void)
+{
+	switch (board_get_usb_a1_retimer()) {
+	case USB_A1_RETIMER_ANX7491:
+		baseboard_a1_anx7491_retimer_setup();
+		break;
+	case USB_A1_RETIMER_PS8811:
+		baseboard_a1_ps8811_retimer_setup();
+		break;
+	default:
+		CPRINTSUSB("A1: Unknown retimer!");
+	}
+}
+DECLARE_DEFERRED(baseboard_a1_retimer_setup);
+
 static void baseboard_chipset_suspend(void)
 {
 	/* Disable display and keyboard backlights. */
 	gpio_set_level(GPIO_EC_DISABLE_DISP_BL, 1);
 	gpio_set_level(GPIO_EN_KB_BL, 0);
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, baseboard_chipset_suspend,
 	     HOOK_PRIO_DEFAULT);
@@ -921,6 +989,9 @@ static void baseboard_chipset_resume(void)
 	/* Enable display and keyboard backlights. */
 	gpio_set_level(GPIO_EC_DISABLE_DISP_BL, 0);
 	gpio_set_level(GPIO_EN_KB_BL, 1);
+	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
+	/* Some retimers take several ms to be ready, so defer setup call */
+	hook_call_deferred(&baseboard_a1_retimer_setup_data, 20 * MSEC);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);
 
