@@ -38,6 +38,7 @@ rsource "Kconfig.board_version"
 rsource "Kconfig.console"
 rsource "Kconfig.console_cmd_mem"
 rsource "Kconfig.debug_assert"
+rsource "Kconfig.espi"
 rsource "Kconfig.header"
 rsource "Kconfig.keyboard"
 rsource "Kconfig.led"
@@ -219,31 +220,6 @@ menuconfig PLATFORM_EC_ESPI
 	  See here for information about eSPI:
 
 	  https://www.intel.com/content/dam/support/us/en/documents/software/chipset-software/327432-004_espi_base_specification_rev1.0_cb.pdf
-
-if PLATFORM_EC_ESPI
-
-config PLATFORM_EC_ESPI_VW_SLP_S3
-	bool "SLP_S3 is an eSPI virtual wire instead of a GPIO"
-	help
-	  For power sequencing, use an eSPI virtual wire instead of
-	  defining GPIO_PCH_SLP_S3 in gpio_map.h.
-
-config PLATFORM_EC_ESPI_VW_SLP_S4
-	bool "SLP_S4 is an eSPI virtual wire instead of a GPIO"
-	help
-	  For power sequencing, use an eSPI virtual wire instead of
-	  defining GPIO_PCH_SLP_S4 in gpio_map.h.
-
-config PLATFORM_EC_ESPI_RESET_SLP_SX_VW_ON_ESPI_RST
-	bool "Reset SLP VW signals on eSPI reset"
-	help
-	  Enable this config to reset SLP* VW when eSPI_RST is asserted
-	  for the Global Reset event case.  Don't enable this config if
-	  the platform implements the Deep-Sx entry as EC needs to
-	  maintain these pins' states per request. Note that this is
-	  currently unimplemented for Zephyr. Please see b/183148073.
-
-endif # PLATFORM_EC_ESPI
 
 config PLATFORM_EC_EXTPOWER_GPIO
 	bool "GPIO-based external power detection"

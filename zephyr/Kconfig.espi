@@ -1,0 +1,28 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_ESPI
+
+config PLATFORM_EC_ESPI_VW_SLP_S3
+	bool "SLP_S3 is an eSPI virtual wire instead of a GPIO"
+	help
+	  For power sequencing, use an eSPI virtual wire instead of
+	  defining GPIO_PCH_SLP_S3 in gpio_map.h.
+
+config PLATFORM_EC_ESPI_VW_SLP_S4
+	bool "SLP_S4 is an eSPI virtual wire instead of a GPIO"
+	help
+	  For power sequencing, use an eSPI virtual wire instead of
+	  defining GPIO_PCH_SLP_S4 in gpio_map.h.
+
+config PLATFORM_EC_ESPI_RESET_SLP_SX_VW_ON_ESPI_RST
+	bool "Reset SLP VW signals on eSPI reset"
+	help
+	  Enable this config to reset SLP* VW when eSPI_RST is asserted
+	  for the Global Reset event case.  Don't enable this config if
+	  the platform implements the Deep-Sx entry as EC needs to
+	  maintain these pins' states per request. Note that this is
+	  currently unimplemented for Zephyr. Please see b/183148073.
+
+endif # PLATFORM_EC_ESPI
