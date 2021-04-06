@@ -43,6 +43,7 @@ rsource "Kconfig.flash"
 rsource "Kconfig.header"
 rsource "Kconfig.keyboard"
 rsource "Kconfig.led"
+rsource "Kconfig.panic"
 rsource "Kconfig.powerseq"
 rsource "Kconfig.mkbp_event"
 rsource "Kconfig.motionsense"
@@ -352,45 +353,6 @@ config PLATFORM_EC_MPU
 	  allowing code execution in that area. For external storage, it
 	  disallows loading any code into RAM.
 
-if PLATFORM_EC_PANIC
-
-config PLATFORM_EC_SOFTWARE_PANIC
-	bool "Software panic"
-	default y
-	help
-	  Sometimes the EC has bugs that are provoked by unexpected events.
-	  This enables storing a panic log and halt the system for
-	  software-related reasons, such as stack overflow or assertion
-	  failure.
-
-config PLATFORM_EC_CONSOLE_CMD_CRASH
-	bool "Console command: crash"
-	default y
-	help
-	  For testing purposes it is useful to be able to generation exceptions
-	  to check that the panic reporting is working correctly. The enables
-	  the 'crash' command which supports generating various exceptions,
-	  selected by its parameter:
-
-	     assert              - assertion failure (ASSERT() macro)
-	     divzero             - division by zero
-	     udivzero            - division of unsigned value by zero
-	     stack (if enabled)  - stack overflow
-	     unaligned           - unaligned access (e.g. word load from 0x123)
-	     watchdog            - watchdog timer fired
-	     hang                - infinite loop in the EC code
-
-config PLATFORM_EC_STACKOVERFLOW
-	bool "Console command: crash stack"
-	depends on PLATFORM_EC_CONSOLE_CMD_CRASH
-	default y
-	help
-	  This enables the 'stack' parameter for the 'crash' command. This
-	  causes a stack overflow by recursing repeatedly while task switching.
-	  This can be used to check that stack-overflow detection is working
-	  as expected.
-
-endif # PLATFORM_EC_PANIC
 
 config PLATFORM_EC_PORT80
 	bool "Port 80 support"
