@@ -66,7 +66,6 @@ static const struct hook_ptrs hook_list[] = {
 };
 
 /* Times for deferrable functions */
-static int defer_new_call;
 static int hook_task_started;
 
 #ifdef CONFIG_HOOK_DEBUG
@@ -158,12 +157,6 @@ int hook_call_deferred(const struct deferred_data *data, int us)
 	} else {
 		/* Set alarm */
 		__deferred_until[i] = get_time().val + us;
-		/*
-		 * Flag that hook_call_deferred() has been called.  If the hook
-		 * task is already active, this will allow it to go through the
-		 * loop one more time before sleeping.
-		 */
-		defer_new_call = 1;
 
 		/* Wake task so it can re-sleep for the proper time */
 		if (hook_task_started)
@@ -192,20 +185,24 @@ void hook_task(void *u)
 		int next = 0;
 		int i;
 
+		interrupt_disable();
 		/* Handle deferred routines */
 		for (i = 0; i < DEFERRED_FUNCS_COUNT; i++) {
 			if (__deferred_until[i] && __deferred_until[i] < t) {
-				CPRINTS("hook call deferred 0x%pP",
-					__deferred_funcs[i].routine);
 				/*
 				 * Call deferred function.  Clear timer first,
 				 * so it can request itself be called later.
 				 */
 				__deferred_until[i] = 0;
+				interrupt_enable();
+				CPRINTS("hook call deferred 0x%pP",
+					__deferred_funcs[i].routine);
 				__deferred_funcs[i].routine();
+				interrupt_disable();
 			}
 		}
 
+		interrupt_enable();
 		if (t - last_tick >= HOOK_TICK_INTERVAL) {
 #ifdef CONFIG_HOOK_DEBUG
 			record_hook_delay(t, last_tick, HOOK_TICK_INTERVAL,
@@ -231,9 +228,7 @@ void hook_task(void *u)
 		if (last_tick + HOOK_TICK_INTERVAL > t)
 			next = last_tick + HOOK_TICK_INTERVAL - t;
 
-		/* Wake earlier if needed by a deferred routine */
-		defer_new_call = 0;
-
+		interrupt_disable();
 		for (i = 0; i < DEFERRED_FUNCS_COUNT && next > 0; i++) {
 			if (!__deferred_until[i])
 				continue;
@@ -244,12 +239,13 @@ void hook_task(void *u)
 				next = __deferred_until[i] - t;
 		}
 
+		interrupt_enable();
+
 		/*
-		 * If nothing is immediately pending, and hook_call_deferred()
-		 * hasn't been called since we started calculating next, sleep
-		 * until the next event.
+		 * If nothing is immediately pending, sleep until the next
+		 * event.
 		 */
-		if (next > 0 && !defer_new_call)
+		if (next > 0)
 			task_wait_event(next);
 	}
 }
