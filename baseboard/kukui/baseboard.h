@@ -304,6 +304,7 @@
 /* free flash space */
 #undef CONFIG_USB_PD_DEBUG_LEVEL
 #define CONFIG_USB_PD_DEBUG_LEVEL 0
+#undef CONFIG_USB_PD_LOGGING
 #define CONFIG_COMMON_GPIO_SHORTNAMES
 /* Exclude PD state names from RO image to save space */
 #undef CONFIG_USB_PD_TCPMV1_DEBUG
