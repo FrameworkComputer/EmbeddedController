@@ -1,12 +1,14 @@
 [TOC]
 
-# Objective
+# Zephyr Shimming How-To
+
+## Objective
 
 Allow a subset of the platform/ec code to be built as part of the Zephyr-based
 EC without needing to land code into upstream zephyr, or our zephyr-chrome
 repository.
 
-# Background
+## Background
 
 Now that Google has joined [Zephyr OS](https://www.zephyrproject.org/), the EC
 team is moving toward it instead of platform/ec code on embedded controllers for
@@ -28,7 +30,7 @@ diverge from the active development happening on platform/ec code. We
 potentially want to ship a product using Zephyr before the migration is
 complete.
 
-# Design ideas
+## Design ideas
 
 In order to reuse `platform/ec` development , we shim "active" `platform/ec`
 code as a
@@ -44,9 +46,9 @@ and ultimately [upstream](https://github.com/zephyrproject-rtos/zephyr).
 For platform/ec code that is stable and not under active development, the Zephyr
 team may port that code to Zephyr, thus skipping the shimming process.
 
-## Subsystems of interest
+### Subsystems of interest
 
-### With Shim
+#### With Shim
 
 We shim the following subsystems (non-exhaustive).
 
@@ -56,7 +58,7 @@ We shim the following subsystems (non-exhaustive).
 *   Sensors, if Intel’s HID-based solution is delayed in getting to Zephyr
     upstream
 
-### Little-to-No Shim
+#### Little-to-No Shim
 
 We adopt upstream Zephyr or skip the shimming process (non-exhaustive).
 
@@ -78,7 +80,7 @@ We adopt upstream Zephyr or skip the shimming process (non-exhaustive).
         subsystem.
 *   I2C
 
-## New content in platform/ec
+### New content in platform/ec
 
 Add the `src/platform/ec/zephyr` folder with:
 
@@ -100,7 +102,7 @@ Add the `src/platform/ec/zephyr` folder with:
         macro. This allows us to compile select platform/ec files in the Zephyr
         build.
 
-## Namespace Collisions
+### Namespace Collisions
 
 One significant issue of mixing Zephyr headers with our existing EC code is that
 we currently have many names colliding with the Zephyr code. For example,
@@ -122,7 +124,7 @@ codebase, for example `crec_`. We can begin at the critical areas of namespace
 collision (e.g., atomics) and continue to improve the naming convention with
 time.
 
-## New CQ check
+### New CQ check
 
 As long as code from platform/ec is part of the zephyr
 [ebuild](http://cs/chromeos_public/src/third_party/chromiumos-overlay/chromeos-base/chromeos-zephyr-2_3/chromeos-zephyr-2_3-9999.ebuild),
@@ -136,38 +138,7 @@ utility to check that an EC CL has not broken anything on the Zephyr side.
 
 We will work with the CI team to enable this.
 
-# Alternatives Considered
-
-## Translate code and mirror into the zephyr-chrome repository
-
-We could potentially write a script which, via a series of find/replace
-operations, translates a platform/ec module to use Zephyr functions, macros, and
-paradigms. On a frequent basis, we would translate all modules of interest in
-the platform/ec repository and land an "uprev" change in the zephyr-chrome
-repository.
-
-The main disadvantage of this technique is that we can't get any CQ coverage
-when platform/ec CLs land that the modules will continue to work in Zephyr.
-Additionally, the translator script would be delicate and probably require
-frequent maintenance.
-
-However, this technique does have some benefits. With modules directly
-translated to code in the Zephyr paradigm, the process of upstreaming a shimmed
-module to ZephyrOS would be significantly easier. Additionally, it would require
-no shim code in platform/ec.
-
-## Don't do any code sharing
-
-One option is to avoid shimming in any platform/ec code and allow the Zephyr
-team to re-implement features in upstream zephyr, or our local zephyr-chrome
-repository.
-
-Disregarding the infeasible amount of work required to complete this option, the
-platform/ec repository has a far faster development pace as there are many more
-contributors, and the Zephyr features would quickly lose parity during the time
-frame that we are launching both Zephyr-based and platform/ec-based devices.
-
-# How to shim features
+## How to shim features
 
 Before you get started shimming a feature, it's important to
 understand the general philosophies behind Zephyr OS and shimming:
@@ -193,7 +164,7 @@ understand the general philosophies behind Zephyr OS and shimming:
 * Shimming occasionally digs up landmines.  Be prepared to step on
   them. 💣
 
-## What code can be shimmed?
+### What code can be shimmed?
 
 Code in the `common/` directory (and other common code directories,
 like `power/`) is the ideal target for shimming, with the exception of
@@ -234,7 +205,7 @@ code.
 See [Zephyr PoC device bringup](zephyr_poc_device_bringup.md) for more
 information about bringing up proof-of-concept devices.
 
-## Configuration
+### Configuration
 
 CrOS EC OS uses a special header `config.h`, which sets configuration
 defaults, and includes board and chip specific configurations by
@@ -295,7 +266,7 @@ The typical EC macros for reducing `#ifdef` messes (e.g.,
 `IS_ENABLED`, `STATIC_IF`, etc.) work with both CrOS EC OS and Kconfig
 options, and should be used when possible.
 
-## Header Files
+### Header Files
 
 Besides the include paths provided by Zephyr OS, the following paths
 are additionally added for shimmed code:
@@ -323,13 +294,13 @@ conventions in `platform/ec` and other C codebases we have) is:
 * CrOS EC OS headers (either from `include/`, `zephyr/shim/include/`,
   or the current directory), in quotes (not pointy brackets).
 
-## Adding files to Cmake
+### Adding files to Cmake
 
 Zephyr's build system (including shimmed code) uses CMake instead of
 `Makefiles`, and your code will not be compiled for Zephyr unless you
 list the files in `zephyr/CMakeLists.txt`.
 
-## Step-by-step guide to adding a Kconfig
+### Step-by-step guide to adding a Kconfig
 
 Follow these steps:
 
@@ -371,9 +342,40 @@ Follow these steps:
    it to sjg@, cc zephyr-task-force@ (please include CL link and the error
    output).
 
-## Unit Tests
+### Unit Tests
 
 Unit tests, implemented using the Ztest framework, can be found in
 `zephyr/test`.
 
 To run all unit tests, you use `zmake testall`.
+
+## Alternatives Considered
+
+### Translate code and mirror into the zephyr-chrome repository
+
+We could potentially write a script which, via a series of find/replace
+operations, translates a platform/ec module to use Zephyr functions, macros, and
+paradigms. On a frequent basis, we would translate all modules of interest in
+the platform/ec repository and land an "uprev" change in the zephyr-chrome
+repository.
+
+The main disadvantage of this technique is that we can't get any CQ coverage
+when platform/ec CLs land that the modules will continue to work in Zephyr.
+Additionally, the translator script would be delicate and probably require
+frequent maintenance.
+
+However, this technique does have some benefits. With modules directly
+translated to code in the Zephyr paradigm, the process of upstreaming a shimmed
+module to ZephyrOS would be significantly easier. Additionally, it would require
+no shim code in platform/ec.
+
+### Don't do any code sharing
+
+One option is to avoid shimming in any platform/ec code and allow the Zephyr
+team to re-implement features in upstream zephyr, or our local zephyr-chrome
+repository.
+
+Disregarding the infeasible amount of work required to complete this option, the
+platform/ec repository has a far faster development pace as there are many more
+contributors, and the Zephyr features would quickly lose parity during the time
+frame that we are launching both Zephyr-based and platform/ec-based devices.
