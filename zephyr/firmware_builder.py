@@ -74,7 +74,22 @@ def write_metadata(opts, info):
 
 def bundle_coverage(opts):
     """Bundles the artifacts from code coverage into its own tarball."""
-    raise NotImplementedError
+    info = firmware_pb2.FirmwareArtifactInfo()
+    info.bcs_version_info.version_string = opts.bcs_version
+    bundle_dir = get_bundle_dir(opts)
+    zephyr_dir = pathlib.Path(__file__).parent
+    platform_ec = zephyr_dir.resolve().parent
+    build_dir = platform_ec / 'build/zephyr-coverage'
+    tarball_name = 'coverage.tbz2'
+    tarball_path = bundle_dir / tarball_name
+    cmd = ['tar', 'cvfj', tarball_path, 'lcov.info']
+    subprocess.run(cmd, cwd=build_dir, check=True)
+    meta = info.objects.add()
+    meta.file_name = tarball_name
+    meta.lcov_info.type = firmware_pb2.FirmwareArtifactInfo.LcovTarballInfo.LcovType.LCOV
+
+    write_metadata(opts, info)
+
 
 
 def bundle_firmware(opts):
@@ -115,6 +130,13 @@ def test(opts):
     metrics = firmware_pb2.FwTestMetricList()
     with open(opts.metrics, 'w') as f:
         f.write(json_format.MessageToJson(metrics))
+
+    if opts.code_coverage:
+        zephyr_dir = pathlib.Path(__file__).parent
+        platform_ec = zephyr_dir.resolve().parent
+        build_dir = platform_ec / 'build/zephyr-coverage'
+        return subprocess.run(
+            ['zmake', '-D', 'coverage', build_dir], cwd=platform_ec).returncode
 
     return subprocess.run(['zmake', '-D', 'testall', '--fail-fast']).returncode
 
