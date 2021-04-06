@@ -1,0 +1,50 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_TIMER
+
+config PLATFORM_EC_CONSOLE_CMD_GETTIME
+	bool "Console command: gettime"
+	default y
+	help
+	  Enable the "gettime" command. This shows the current time (in
+	  microseconds since boot) in both hex and in decimal converted to
+	  seconds. For example:
+
+	     Time: 0x0000000002706a62 = 40.921698 s
+
+
+config PLATFORM_EC_CONSOLE_CMD_TIMERINFO
+	bool "Console command: timerinfo"
+	default y
+	help
+	  Enable the "timerinfo" command which shows the current time (in
+	  microseconds and seconds since boot), the deadline (next time the EC
+	  needs to wake up) and a list of active timers along with when they
+	  will next fire.
+
+	  Example:
+
+	    Time:     0x0000000002706a62 us,   40.921698 s
+	    Deadline: 0x000000000270774d ->    0.003307 s from now
+	    Active timers:
+	      Tsk  1  0x000000000271db8f ->    0.094509
+	      Tsk  4  0x00000000027396b3 ->    0.207953
+	      Tsk 13  0x00000000027133a1 ->    0.051519
+
+
+config PLATFORM_EC_CONSOLE_CMD_WAITMS
+	bool "Console command: waitms"
+	default y
+	help
+	  Enable the "waitms" command. This waits for a given number of
+	  milliseconds. For example:
+
+	    waitms 100
+
+	  waits for 100ms. Note that long waits can introduce problems since
+	  it stops the EC from executing its normal tasks. For example, a
+	  two-second wait can cause the EC to reset.
+
+endif # PLATFORM_EC_TIMER
