@@ -173,7 +173,11 @@ static int cros_rtc_npcx_get_alarm(const struct device *dev, uint32_t *seconds,
 static int cros_rtc_npcx_set_alarm(const struct device *dev, uint32_t seconds,
 				   uint32_t microseconds)
 {
+	const struct cros_rtc_npcx_config *config = DRV_CONFIG(dev);
 	ARG_UNUSED(microseconds);
+
+	/* Enable interrupt of the MTC alarm wake-up input source */
+	npcx_miwu_irq_enable(&config->mtc_alarm);
 
 	/* Make sure alarm restore to default state */
 	counter_npcx_reset_alarm(dev);
@@ -184,6 +188,11 @@ static int cros_rtc_npcx_set_alarm(const struct device *dev, uint32_t seconds,
 
 static int cros_rtc_npcx_reset_alarm(const struct device *dev)
 {
+	const struct cros_rtc_npcx_config *config = DRV_CONFIG(dev);
+
+	/* Disable interrupt of the MTC alarm wake-up input source */
+	npcx_miwu_irq_disable(&config->mtc_alarm);
+
 	counter_npcx_reset_alarm(dev);
 
 	return 0;
@@ -215,9 +224,6 @@ static int cros_rtc_npcx_init(const struct device *dev)
 	 */
 	npcx_miwu_interrupt_configure(&config->mtc_alarm, NPCX_MIWU_MODE_EDGE,
 				      NPCX_MIWU_TRIG_HIGH);
-
-	/* Enable interrupt of the wake-up input source */
-	npcx_miwu_irq_enable(&config->mtc_alarm);
 
 	return 0;
 }
