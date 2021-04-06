@@ -1,0 +1,49 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_MKBP_EVENT
+
+choice
+    prompt "MKBP delivery method"
+    default PLATFORM_EC_MKBP_USE_GPIO
+    help
+      Select MKBP delivery method
+
+config PLATFORM_EC_MKBP_USE_GPIO
+    bool "Use GPIO"
+    help
+      Select to send MKBP events via GPIO. You should define GPIO_EC_INT_L
+      in gpio_map.h as output from the EC. The GPIO is used to indicate an
+      event is ready for serving by the AP.
+
+config PLATFORM_EC_MKBP_USE_HOST_EVENT
+    bool "Use host event"
+    help
+      Select to send MKBP events via host event.
+
+config PLATFORM_EC_MKBP_USE_GPIO_AND_HOST_EVENT
+    bool "Use GPIO and host event"
+    help
+      MKBP events are notified by using both a GPIO and a host event.
+
+      You should use this if you are using a GPIO to notify the AP of an MKBP
+      event, and you need an MKBP event to wake the AP in suspend and the
+      AP cannot wake from the GPIO.  Since you are using both a GPIO and
+      a hostevent for the notification, make sure that the S0 hostevent mask
+      does NOT include MKBP events.  Otherwise, you will have multiple
+      consumers for a single event. However, make sure to configure the
+      host event *sleep* mask in coreboot to include MKBP events. In order to
+      prevent all MKBP events from waking the AP, use
+      CONFIG_MKBP_EVENT_WAKEUP_MASK to filter the events.
+
+config PLATFORM_EC_MKBP_USE_CUSTOM
+    bool "Use custom method"
+    help
+      Select to send MKBP events using custom method. You need to define
+      mkbp_set_host_active_via_custom() which is called when there's a MKBP event
+      to be sent. for more about the function, refer to mkbp_event.h.
+
+endchoice
+
+endif # PLATFORM_EC_MKBP_EVENT
