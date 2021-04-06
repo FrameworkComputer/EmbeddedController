@@ -1,0 +1,32 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_CONSOLE_CMD_MEM
+config PLATFORM_EC_CONSOLE_CMD_MD
+	bool "Console command: md"
+	default y
+	help
+	  Enable the "md" command. This dumps memory value from a specified
+	  address, optionally specifying the format.
+
+	  Example:
+	     md 0x64000000 10
+
+	     64000000: 2a3b4d5e 030054e1 07000000 09297110
+	     64000010: 00000010 03db4f00 03db5000 00000100
+	     64000020: 00000000 00000000
+
+config PLATFORM_EC_CONSOLE_CMD_RW
+	bool "Console command: rw"
+	default y
+	help
+	  Enable the "rw" command. This Read or write in memory optionally
+	  specifying the size.
+
+	  Example:
+	     rw 0x64000000
+
+	     read 0x64000000 = 0x2a3b4d5e
+
+endif # PLATFORM_EC_CONSOLE_CMD_MEM
