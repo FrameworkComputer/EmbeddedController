@@ -34,6 +34,7 @@ if PLATFORM_EC
 rsource "shim/chip/npcx/Kconfig.npcx"
 rsource "Kconfig.adc"
 rsource "Kconfig.battery"
+rsource "Kconfig.board_version"
 rsource "Kconfig.console"
 rsource "Kconfig.header"
 rsource "Kconfig.keyboard"
@@ -144,48 +145,6 @@ config PLATFORM_EC_BOARD_VERSION
 	  have different quirks and this version number can provide a way for
 	  the EC to handle several board versions, avoiding the problem of
 	  having to flash different images to different board versions.
-
-if PLATFORM_EC_BOARD_VERSION
-
-choice "Version source"
-	prompt "Select the source of the version number"
-	help
-	  This allow selection of the source of the board version number
-	  information. Several options are available, but BOARD_VERSION_CBI is
-	  preferred for new boards, so long as the hardware supports it (i.e.
-	  has an EEPROM).
-
-config PLATFORM_EC_BOARD_VERSION_CBI
-	bool "Chromium OS Board Info (CBI)"
-	depends on PLATFORM_EC_CBI
-	help
-	  Choose this if the board version comes from Chromium Board Info
-	  within the EEPROM. This is the recommended approach and is used on
-	  newer boards. The version information is written into the EEPROM as
-	  part of the factory process.
-
-config PLATFORM_EC_BOARD_VERSION_GPIO
-	bool "Strapping GPIOs"
-	help
-	  Choose this if the board version is encoded with three GPIO signals
-	  (GPIO_BOARD_VERSION1, GPIO_BOARD_VERSION2 and GPIO_BOARD_VERSION3)
-	  forming the 3-digit binary number. GPIO_BOARD_VERSION1 is the LSB.
-	  This provides 8 possible combinations.
-
-	  The GPIOs should have external pull-up/pull-down resistors installed
-	  at the factory to select the correct value.
-
-config PLATFORM_EC_BOARD_VERSION_CUSTOM
-	bool "Custom board-specific algortihm"
-	help
-	  Choose this if none of the standard methods is available and you must
-	  perform special logic to find the board version. If this is chosen,
-	  then the system code will call board_get_version() to find out the
-	  version, so you should implement this function in your board code.
-
-endchoice
-
-endif # PLATFORM_EC_BOARD_VERSION
 
 config PLATFORM_EC_CBI
 	bool "CBI EEPROM support"
