@@ -73,14 +73,10 @@ BOARDS_STM32=(
 	chocodile_bec
 	chocodile_vpdmcu
 	dartmonkey
-	don
 	glados_pd
 	hatch_fp
 	jerry
-	magnemite
-	masterball
 	minimuffin
-	moonball
 	nami_fp
 	nocturne_fp
 	oak_pd
@@ -88,11 +84,7 @@ BOARDS_STM32=(
 	plankton
 	rainier
 	samus_pd
-	staff
 	strago_pd
-	wand
-	whiskers
-	zed
 	zinger
 )
 BOARDS_STM32_PROG_EN=(
