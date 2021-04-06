@@ -1,0 +1,32 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_THROTTLE_AP
+
+# TODO(b/177676794): Add the CONFIG_THROTTLE_AP_ON_... options
+
+config PLATFORM_EC_CHIPSET_CAN_THROTTLE
+	bool "CPU can support throttling"
+	default y
+	help
+	  Indicates that the SoC supports throttling. This means that a
+	  chipset_throttle_cpu() function is provided by the chipset, to be
+	  called to set the throttle state. The typical implementation asserts
+	  GPIO_CPU_PROCHOT, to make the CPU slow down.
+
+config PLATFORM_EC_CONSOLE_CMD_APTHROTTLE
+	bool "Console command: apthrottle"
+	default y
+	help
+	  This command shows the current status of AP throttling. Both soft
+	  (type 0) and hard (type 1) throttling are supported. Soft throttling
+	  is typically controlled by the AP via a host event. Hard throttling
+	  typically uses the PROCHOT (Processor Hot) signal on x86 CPUs.
+
+	  Example output:
+
+	     AP throttling type 0 is off (0x00000000)
+	     AP throttling type 1 is off (0x00000000)
+
+endif # PLATFORM_EC_THROTTLE_AP
