@@ -37,6 +37,7 @@ rsource "Kconfig.battery"
 rsource "Kconfig.board_version"
 rsource "Kconfig.console"
 rsource "Kconfig.console_cmd_mem"
+rsource "Kconfig.debug_assert"
 rsource "Kconfig.header"
 rsource "Kconfig.keyboard"
 rsource "Kconfig.led"
@@ -201,45 +202,6 @@ config PLATFORM_EC_DEBUG_ASSERT
 
 	  Note: There is also ASSERT() which is an alias of assert(), used in
 	  host code where cstdlib is used.
-
-choice "Behaviour on assertion failure"
-	prompt "Select behaviour on assertion failure"
-	help
-	  This selects the action taken when the board hits an assertion
-	  failure in the code. This should not happen in normal operation,
-	  but can appear during development when the code is not yet fully
-	  tested.
-
-config PLATFORM_EC_DEBUG_ASSERT_REBOOTS
-	bool "Reboot"
-	help
-	  Prints a message and reboot if an assert() macro fails at runtime.
-	  If PLATFORM_EC_SOFTWARE_PANIC is enabled then the information is
-	  written to the panic log before rebooting.
-
-config PLATFORM_EC_DEBUG_ASSERT_BREAKPOINT
-	bool "Generate a breakpoint"
-	help
-	  Immediately hits a breakpoint instruction (without printing a message)
-	  so that a connected JTAG debugger can be used to debug the problem
-	  from there. If there is no debugger connected then the breakpoint
-	  instruction will cause the board to reboot immediately.
-
-endchoice # "Behaviour on assertion failure"
-
-config PLATFORM_EC_DEBUG_ASSERT_BRIEF
-	bool "Use brief assertion-failure messages"
-	depends on PLATFORM_EC_DEBUG_ASSERT_REBOOTS
-	help
-	  Normally the assertion-failure messages include the expression that
-	  failed and the function name where the failure occurred. These are
-	  both stored as strings and can add a lot to the size of the image,
-	  since they are generated for every call to assert(). Use this option
-	  to drop them so that only the file and line number are shown.
-
-	  This option is of course not available with
-	  PLATFORM_EC_DEBUG_ASSERT_BREAKPOINT, since that does not print a
-	  message at all.
 
 menuconfig PLATFORM_EC_ESPI
 	bool "eSPI"
