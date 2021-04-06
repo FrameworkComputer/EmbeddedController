@@ -57,6 +57,13 @@
 *   [EC-3PO overview](./ec-3po.md)
 *   [EC-3PO design doc](./ec-3po-design.md)
 
+## Zephyr
+
+*   [Initialization Order](./zephyr_init.md)
+*   [Proof-of-Concept-Device Bringup](./zephyr_poc_device_bringup.md)
+*   [Shimming](./zephyr_shim.md)
+*   [Porting EC unit tests to Ztest](./ztest.md)
+
 ## Miscellaneous
 
 *   [Low Battery Startup](./low_battery_startup.md)
