@@ -12,7 +12,6 @@
 #include "console.h"
 #include "host_command.h"
 #include "host_test.h"
-#include "mock/fp_sensor_mock.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
@@ -135,8 +134,6 @@ static pthread_mutex_t lock;
 void run_test(int argc, char **argv)
 {
 	ccprints("Fuzzing task started");
-	/* Set the fingerprint driver to the mock to test fp_task. */
-	fp_driver = &fp_driver_mock;
 	wait_for_task_started();
 
 	while (1) {

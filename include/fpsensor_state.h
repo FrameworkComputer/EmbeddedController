@@ -14,7 +14,6 @@
 #include "ec_commands.h"
 #include "link_defs.h"
 #include "timer.h"
-#include "util.h"
 
 #include "driver/fingerprint/fpsensor.h"
 
@@ -27,6 +26,10 @@
 #endif
 
 #define SBP_ENC_KEY_LEN 16
+#define FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE \
+	(FP_ALGORITHM_TEMPLATE_SIZE + \
+		FP_POSITIVE_MATCH_SALT_BYTES + \
+		sizeof(struct ec_fp_template_encryption_metadata))
 
 /* Events for the FPSENSOR task */
 #define TASK_EVENT_SENSOR_IRQ     TASK_EVENT_CUSTOM_BIT(0)
@@ -37,44 +40,16 @@
 /* --- Global variables defined in fpsensor_state.c --- */
 
 /* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
-#ifndef FP_SENSOR_IMAGE_SIZE_FPC
-#define FP_SENSOR_IMAGE_SIZE_FPC 0
-#endif
-#ifndef FP_SENSOR_IMAGE_SIZE_ELAN
-#define FP_SENSOR_IMAGE_SIZE_ELAN 0
-#endif
-
-#define FP_SENSOR_IMAGE_MAX_SIZE \
-	GENERIC_MAX(FP_SENSOR_IMAGE_SIZE_FPC, FP_SENSOR_IMAGE_SIZE_ELAN)
-
-extern uint8_t fp_buffer[FP_SENSOR_IMAGE_MAX_SIZE];
-
+extern uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE];
 /* Fingers templates for the current user */
-#ifndef FP_ALGORITHM_TEMPLATE_SIZE_FPC
-#define FP_ALGORITHM_TEMPLATE_SIZE_FPC 0
-#endif
-#ifndef FP_ALGORITHM_TEMPLATE_SIZE_ELAN
-#define FP_ALGORITHM_TEMPLATE_SIZE_ELAN 0
-#endif
-
-#define FP_ALGORITHM_TEMPLATE_MAX_SIZE              \
-	GENERIC_MAX(FP_ALGORITHM_TEMPLATE_SIZE_FPC, \
-		    FP_ALGORITHM_TEMPLATE_SIZE_ELAN)
-extern uint8_t fp_template[FP_ALGORITHM_TEMPLATE_MAX_SIZE *
-			   FP_MAX_FINGER_COUNT] FP_TEMPLATE_SECTION;
-
+extern uint8_t fp_template[FP_MAX_FINGER_COUNT][FP_ALGORITHM_TEMPLATE_SIZE];
 /* Encryption/decryption buffer */
 /* TODO: On-the-fly encryption/decryption without a dedicated buffer */
 /*
  * Store the encryption metadata at the beginning of the buffer containing the
  * ciphered data.
  */
-#define FP_ALGORITHM_ENCRYPTED_TEMPLATE_MAX_SIZE                         \
-	(FP_ALGORITHM_TEMPLATE_MAX_SIZE + FP_POSITIVE_MATCH_SALT_BYTES + \
-	 sizeof(struct ec_fp_template_encryption_metadata))
-
-extern uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_MAX_SIZE];
-
+extern uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE];
 /* Salt used in derivation of positive match secret. */
 extern uint8_t fp_positive_match_salt
 	[FP_MAX_FINGER_COUNT][FP_POSITIVE_MATCH_SALT_BYTES];

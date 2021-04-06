@@ -45,6 +45,4 @@ struct mock_ctrl_fp_sensor {
 
 extern struct mock_ctrl_fp_sensor mock_ctrl_fp_sensor;
 
-extern struct fp_sensor_interface fp_driver_mock;
-
 #endif /* __MOCK_FP_SENSOR_MOCK_H */

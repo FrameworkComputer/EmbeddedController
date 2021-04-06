@@ -5,9 +5,7 @@
 
 #include "common.h"
 #include "console.h"
-#include "fpsensor.h"
 #include "fpsensor_detect.h"
-#include "fpsensor_fpc.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
@@ -100,6 +98,4 @@ void board_init_rw(void)
 	gpio_enable_interrupt(GPIO_PCH_SLP_S0_L);
 	/* enable the SPI slave interface if the PCH is up */
 	hook_call_deferred(&ap_deferred_data, 0);
-
-	fp_driver = &fp_driver_fpc;
 }

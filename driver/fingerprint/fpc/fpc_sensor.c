@@ -33,7 +33,7 @@ int fpc_fp_maintenance(uint16_t *error_state)
 	if (error_state == NULL)
 		return EC_ERROR_INVAL;
 
-	rv = fp_sensor_maintenance((uint8_t *)&fp_buffer, &sensor_info);
+	rv = fp_sensor_maintenance(fp_buffer, &sensor_info);
 	CPRINTS("Maintenance took %d ms", time_since32(start) / MSEC);
 
 	if (rv != 0) {

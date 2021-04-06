@@ -10,7 +10,6 @@
 #include "fpc_bio_algorithm.h"
 #include "fpc_private.h"
 #include "fpsensor.h"
-#include "fpsensor_fpc.h"
 #include "gpio.h"
 #include "link_defs.h"
 #include "spi.h"
@@ -56,10 +55,10 @@ static struct ec_response_fp_info fpc1145_info = {
 	.model_id = 1,
 	.version = 1,
 	/* Image frame characteristics */
-	.frame_size = FP_SENSOR_IMAGE_SIZE_FPC,
+	.frame_size = FP_SENSOR_IMAGE_SIZE,
 	.pixel_format = V4L2_PIX_FMT_GREY,
-	.width = FP_SENSOR_RES_X_FPC,
-	.height = FP_SENSOR_RES_Y_FPC,
+	.width = FP_SENSOR_RES_X,
+	.height = FP_SENSOR_RES_Y,
 	.bpp = FP_SENSOR_RES_BPP,
 };
 
@@ -88,7 +87,7 @@ static int fpc_send_cmd(const uint8_t cmd)
 			       SPI_READBACK_ALL);
 }
 
-void fp_sensor_low_power_fpc(void)
+void fp_sensor_low_power(void)
 {
 	/*
 	 * TODO(b/117620462): verify that sleep mode is WAI (no increased
@@ -176,7 +175,7 @@ static int fpc_pulse_hw_reset(void)
 }
 
 /* Reset and initialize the sensor IC */
-int fp_sensor_init_fpc(void)
+int fp_sensor_init(void)
 {
 	int res;
 	int attempt;
@@ -246,13 +245,13 @@ int fp_sensor_init_fpc(void)
 		errors |= FP_ERROR_INIT_FAIL;
 
 	/* Go back to low power */
-	fp_sensor_low_power_fpc();
+	fp_sensor_low_power();
 
 	return EC_SUCCESS;
 }
 
 /* Deinitialize the sensor IC */
-int fp_sensor_deinit_fpc(void)
+int fp_sensor_deinit(void)
 {
 	/*
 	 * TODO(tomhughes): libfp doesn't have fp_sensor_close like BEP does.
@@ -263,7 +262,7 @@ int fp_sensor_deinit_fpc(void)
 	return EC_SUCCESS;
 }
 
-int fp_sensor_get_info_fpc(struct ec_response_fp_info *resp)
+int fp_sensor_get_info(struct ec_response_fp_info *resp)
 {
 	int rc;
 
@@ -280,14 +279,14 @@ int fp_sensor_get_info_fpc(struct ec_response_fp_info *resp)
 	return EC_SUCCESS;
 }
 
-int fp_finger_match_fpc(void *templ, uint32_t templ_count, uint8_t *image,
+int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
 		    int32_t *match_index, uint32_t *update_bitmap)
 {
 	return bio_template_image_match_list(templ, templ_count, image,
 					     match_index, update_bitmap);
 }
 
-int fp_enrollment_begin_fpc(void)
+int fp_enrollment_begin(void)
 {
 	int rc;
 	bio_enrollment_t p = enroll_ctx;
@@ -298,14 +297,14 @@ int fp_enrollment_begin_fpc(void)
 	return rc;
 }
 
-int fp_enrollment_finish_fpc(void *templ)
+int fp_enrollment_finish(void *templ)
 {
 	bio_template_t pt = templ;
 
 	return bio_enrollment_finish(enroll_ctx, templ ? &pt : NULL);
 }
 
-int fp_finger_enroll_fpc(uint8_t *image, int *completion)
+int fp_finger_enroll(uint8_t *image, int *completion)
 {
 	int rc = bio_enrollment_add_image(enroll_ctx, image);
 
@@ -315,30 +314,7 @@ int fp_finger_enroll_fpc(uint8_t *image, int *completion)
 	return rc;
 }
 
-int fp_maintenance_fpc(void)
+int fp_maintenance(void)
 {
 	return fpc_fp_maintenance(&errors);
 }
-
-struct fp_sensor_interface fp_driver_fpc = {
-	.sensor_type = FP_SENSOR_TYPE_FPC,
-	.fp_sensor_init = &fp_sensor_init_fpc,
-	.fp_sensor_deinit = &fp_sensor_deinit_fpc,
-	.fp_sensor_get_info = &fp_sensor_get_info_fpc,
-	.fp_sensor_low_power = &fp_sensor_low_power_fpc,
-	.fp_sensor_configure_detect_ = &fp_sensor_configure_detect,
-	.fp_sensor_finger_status_ = &fp_sensor_finger_status,
-	.fp_sensor_acquire_image_with_mode_ =
-		&fp_sensor_acquire_image_with_mode,
-	.fp_finger_enroll = &fp_finger_enroll_fpc,
-	.fp_finger_match = &fp_finger_match_fpc,
-	.fp_enrollment_begin = &fp_enrollment_begin_fpc,
-	.fp_enrollment_finish = &fp_enrollment_finish_fpc,
-	.fp_maintenance = &fp_maintenance_fpc,
-	.algorithm_template_size = FP_ALGORITHM_TEMPLATE_SIZE_FPC,
-	.encrypted_template_size =
-		FP_ALGORITHM_TEMPLATE_SIZE_FPC + FP_POSITIVE_MATCH_SALT_BYTES +
-		sizeof(struct ec_fp_template_encryption_metadata),
-	.res_x = FP_SENSOR_RES_X_FPC,
-	.res_y = FP_SENSOR_RES_Y_FPC
-};

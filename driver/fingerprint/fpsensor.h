@@ -10,15 +10,15 @@
 #define HAVE_FP_PRIVATE_DRIVER
 #if defined(CONFIG_FP_SENSOR_ELAN80) || defined(CONFIG_FP_SENSOR_ELAN515)
 #include "elan/elan_sensor.h"
-#endif
-#if defined(CONFIG_FP_SENSOR_FPC1025) || defined(CONFIG_FP_SENSOR_FPC1035) || \
-	defined(CONFIG_FP_SENSOR_FPC1145)
+#else
 #include "fpc/fpc_sensor.h"
 #endif
 #else
 /* These values are used by the host (emulator) tests. */
+#define FP_SENSOR_IMAGE_SIZE 0
 #define FP_SENSOR_RES_X 0
 #define FP_SENSOR_RES_Y 0
+#define FP_ALGORITHM_TEMPLATE_SIZE 0
 #define FP_MAX_FINGER_COUNT 5
 #endif
 

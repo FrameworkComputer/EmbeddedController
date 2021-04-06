@@ -8,7 +8,6 @@
 
 #include "fpc_bio_algorithm.h"
 #include "fpsensor.h"
-#include "fpsensor_fpc.h"
 #include "gpio.h"
 #include "spi.h"
 #include "system.h"
@@ -43,10 +42,10 @@ static struct ec_response_fp_info ec_fp_sensor_info = {
 	.model_id = 1,
 	.version = 1,
 	/* Image frame characteristics */
-	.frame_size = FP_SENSOR_IMAGE_SIZE_FPC,
+	.frame_size = FP_SENSOR_IMAGE_SIZE,
 	.pixel_format = V4L2_PIX_FMT_GREY,
-	.width = FP_SENSOR_RES_X_FPC,
-	.height = FP_SENSOR_RES_Y_FPC,
+	.width = FP_SENSOR_RES_X,
+	.height = FP_SENSOR_RES_Y,
 	.bpp = FP_SENSOR_RES_BPP,
 };
 
@@ -64,12 +63,12 @@ extern const fpc_bep_algorithm_t fpc_bep_algorithm_pfe_1025;
 
 const fpc_sensor_info_t fpc_sensor_info = {
 	.sensor = &fpc_bep_sensor_1025,
-	.image_buffer_size = FP_SENSOR_IMAGE_SIZE_FPC,
+	.image_buffer_size = FP_SENSOR_IMAGE_SIZE,
 };
 
 const fpc_bio_info_t fpc_bio_info = {
 	.algorithm = &fpc_bep_algorithm_pfe_1025,
-	.template_size = FP_ALGORITHM_TEMPLATE_SIZE_FPC,
+	.template_size = FP_ALGORITHM_TEMPLATE_SIZE,
 };
 
 #elif defined(CONFIG_FP_SENSOR_FPC1035)
@@ -110,7 +109,7 @@ static int fpc_send_cmd(const uint8_t cmd)
 			       SPI_READBACK_ALL);
 }
 
-void fp_sensor_low_power_fpc(void)
+void fp_sensor_low_power(void)
 {
 	fpc_send_cmd(FPC_CMD_DEEPSLEEP);
 }
@@ -140,7 +139,7 @@ static int fpc_check_hwid(void)
 }
 
 /* Reset and initialize the sensor IC */
-int fp_sensor_init_fpc(void)
+int fp_sensor_init(void)
 {
 	int rc;
 
@@ -173,13 +172,13 @@ int fp_sensor_init_fpc(void)
 	}
 
 	/* Go back to low power */
-	fp_sensor_low_power_fpc();
+	fp_sensor_low_power();
 
 	return EC_SUCCESS;
 }
 
 /* Deinitialize the sensor IC */
-int fp_sensor_deinit_fpc(void)
+int fp_sensor_deinit(void)
 {
 	int rc;
 
@@ -194,7 +193,7 @@ int fp_sensor_deinit_fpc(void)
 	return rc;
 }
 
-int fp_sensor_get_info_fpc(struct ec_response_fp_info *resp)
+int fp_sensor_get_info(struct ec_response_fp_info *resp)
 {
 	int rc;
 
@@ -213,8 +212,8 @@ int fp_sensor_get_info_fpc(struct ec_response_fp_info *resp)
 	return EC_SUCCESS;
 }
 
-int fp_finger_match_fpc(void *templ, uint32_t templ_count, uint8_t *image,
-			int32_t *match_index, uint32_t *update_bitmap)
+int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
+		    int32_t *match_index, uint32_t *update_bitmap)
 {
 	int rc;
 
@@ -227,7 +226,7 @@ int fp_finger_match_fpc(void *templ, uint32_t templ_count, uint8_t *image,
 	return rc;
 }
 
-int fp_enrollment_begin_fpc(void)
+int fp_enrollment_begin(void)
 {
 	int rc;
 	bio_enrollment_t bio_enroll = enroll_ctx;
@@ -239,7 +238,7 @@ int fp_enrollment_begin_fpc(void)
 	return rc;
 }
 
-int fp_enrollment_finish_fpc(void *templ)
+int fp_enrollment_finish(void *templ)
 {
 	int rc;
 	bio_enrollment_t bio_enroll = enroll_ctx;
@@ -252,7 +251,7 @@ int fp_enrollment_finish_fpc(void *templ)
 	return rc;
 }
 
-int fp_finger_enroll_fpc(uint8_t *image, int *completion)
+int fp_finger_enroll(uint8_t *image, int *completion)
 {
 	int rc;
 	bio_enrollment_t bio_enroll = enroll_ctx;
@@ -269,30 +268,7 @@ int fp_finger_enroll_fpc(uint8_t *image, int *completion)
 	return rc;
 }
 
-int fp_maintenance_fpc(void)
+int fp_maintenance(void)
 {
 	return fpc_fp_maintenance(&errors);
 }
-
-struct fp_sensor_interface fp_driver_fpc = {
-	.sensor_type = FP_SENSOR_TYPE_FPC,
-	.fp_sensor_init = &fp_sensor_init_fpc,
-	.fp_sensor_deinit = &fp_sensor_deinit_fpc,
-	.fp_sensor_get_info = &fp_sensor_get_info_fpc,
-	.fp_sensor_low_power = &fp_sensor_low_power_fpc,
-	.fp_sensor_configure_detect_ = &fp_sensor_configure_detect,
-	.fp_sensor_finger_status_ = &fp_sensor_finger_status,
-	.fp_sensor_acquire_image_with_mode_ =
-		&fp_sensor_acquire_image_with_mode,
-	.fp_finger_enroll = &fp_finger_enroll_fpc,
-	.fp_finger_match = &fp_finger_match_fpc,
-	.fp_enrollment_begin = &fp_enrollment_begin_fpc,
-	.fp_enrollment_finish = &fp_enrollment_finish_fpc,
-	.fp_maintenance = &fp_maintenance_fpc,
-	.algorithm_template_size = FP_ALGORITHM_TEMPLATE_SIZE_FPC,
-	.encrypted_template_size =
-		FP_ALGORITHM_TEMPLATE_SIZE_FPC + FP_POSITIVE_MATCH_SALT_BYTES +
-		sizeof(struct ec_fp_template_encryption_metadata),
-	.res_x = FP_SENSOR_RES_X_FPC,
-	.res_y = FP_SENSOR_RES_Y_FPC
-};

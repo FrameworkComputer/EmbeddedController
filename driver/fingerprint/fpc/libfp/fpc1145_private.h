@@ -21,9 +21,9 @@
 #define FP_SENSOR_NAME "FPC1145"
 
 /* Sensor pixel resolution */
-#define FP_SENSOR_RES_Y_FPC 192
-#define FP_SENSOR_RES_X_FPC 56
-#define FP_SENSOR_RES_BPP   8
+#define FP_SENSOR_RES_Y        192
+#define FP_SENSOR_RES_X        56
+#define FP_SENSOR_RES_BPP      8
 
 /* Acquired finger frame definitions */
 #define FP_SENSOR_IMAGE_SIZE_MODE_VENDOR (35460)
@@ -35,7 +35,7 @@
  */
 #define FP_SENSOR_IMAGE_SIZE_MODE_QUAL   (24408)
 
-#define FP_SENSOR_IMAGE_SIZE_FPC   FP_SENSOR_IMAGE_SIZE_MODE_VENDOR
+#define FP_SENSOR_IMAGE_SIZE   FP_SENSOR_IMAGE_SIZE_MODE_VENDOR
 #define FP_SENSOR_IMAGE_OFFSET 2340
 
 /* Opaque FPC context */
@@ -43,7 +43,7 @@
 
 /* Algorithm buffer sizes */
 #define FP_ALGORITHM_ENROLLMENT_SIZE    28
-#define FP_ALGORITHM_TEMPLATE_SIZE_FPC   47552
+#define FP_ALGORITHM_TEMPLATE_SIZE   47552
 
 /* Max number of templates stored / matched against */
 #define FP_MAX_FINGER_COUNT 5
