@@ -1633,6 +1633,7 @@ static void rch_requesting_chunk_entry(const int port)
 
 	pdmsg[port].data_objs = 1;
 	pdmsg[port].ext = 1;
+	pdmsg[port].xmit_type = prl_rx[port].sop;
 	PRL_TX_SET_FLAG(port, PRL_FLAGS_MSG_XMIT);
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TX);
 }
