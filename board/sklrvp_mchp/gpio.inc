@@ -41,6 +41,9 @@
  * MEC1521H-SZ: 0213, 0211, 0212
  */
 
+/* include common gpio.inc under chip/mchp/lfw/... */
+#include "chip/mchp/lfw/gpio.inc"
+
 #define GPIO_BOTH_EDGES_PU (GPIO_INT_BOTH | GPIO_PULL_UP)
 #define GPIO_KB_OUTPUT_COL2 (GPIO_OUT_LOW)
 
@@ -197,26 +200,7 @@ GPIO(BOARD_VERSION1,        PIN(0114),  GPIO_INPUT)
 GPIO(BOARD_VERSION2,        PIN(0207),  GPIO_INPUT)
 GPIO(BOARD_VERSION3,        PIN(0011),  GPIO_INPUT)
 
-
-/* SPI
- * Chip select must be open drain and driven high before SPI controller
- * configuration.
- */
-/*
- * MEC1521H-SZ
- * GPIO_0055/PWM2/SHD_CS0#/RSMRST#
- * GPIO_0056/PWM3/SHD_CLK
- * GPIO_0223/SHD_IO0
- * GPIO_0224/GPTP_IN0/SHD_IO1
- * GPIO_0227/SHD_IO2[PWRGD_STRAP]
- * GPIO_0016/GPTP_IN1/SHD_IO3/ICT3(DSW_PWROK)
- *
- * QMSPI controller drives chip select, must be
- * configured to alternative function. See below.
- * Always use the name QMSPI_CS0 for chip select.
- */
-GPIO(QMSPI_CS0,		PIN(055),  GPIO_ODR_HIGH)
-
+/* For LEDs */
 GPIO(BAT_LED_GREEN_L,	PIN(0156), GPIO_OUT_HIGH)
 GPIO(AC_LED_GREEN_L,	PIN(0157), GPIO_OUT_HIGH)
 
@@ -234,14 +218,6 @@ GPIO(EC_SPI_OE_N, PIN(0253), GPIO_OUT_LOW)
 /* 32KHZ_IN = GPIO_0165(Bank=3, bit=21) Func1 */
 ALTERNATE(PIN_MASK(3, 0x200000), 1, MODULE_PMU, 0)
 #endif
-
-/*
- * UART0
- * GPIO_0105 Func 1 = UART_RX
- * GPIO_0104 Func 1 = UART_TX
- * Bank 2 bits[5:4]
- */
-ALTERNATE(PIN_MASK(2, 0x30), 1, MODULE_UART, 0)
 
 /* KB pins */
 /*
@@ -304,35 +280,6 @@ ALTERNATE(PIN_MASK(0, 0x07C38000), 1, MODULE_KEYBOARD_SCAN, GPIO_KB_INPUT)
  * ESPI_IO3    - GPIO_0073 Func 1, Bank 1 bit[27]
  */
 ALTERNATE(PIN_MASK(1, 0x0F6A0000), 1, MODULE_LPC, 0)
-
-/* MECC card SPI flash is connected to QMSPI Shared Port
- * Also, MEC1521H-SZ Private SPI Port (Port 1) has pins multiplexed
- * with KSO pins used in key scan!
- * QMSPI Shared SPI Port (Port 0)
- * NOTE: QMSPI Shared SPI Port pins are on VTR2
- */
-/*
- * MEC1521H-SZ MECC board SPI flash is connected to MEC1521H-SZ shared
- * SPI port. SHD_nCS is the chip select signal connected to
- * GPIO_0055(SHD_CS0#) pin. MECC board has 10K pulls to +3.3V on all
- * the board SPI flash signals. MEC152x SHD SPI signals are on the chip's
- * VTR2 rail. If VTR2 is connected to 1.8V there could be back drive issues.
- * We must set the respective GPIO's to their shared SPI alternate functions.
- * Only enable CS0#, CLK, IO0, and IO1 as EC code does not use quad mode.
- * NOTE 1: SHD_IO2 is also used a Boot-ROM PWRGD_STRAP.
- * NOTE 2: Be very careful re-using SHD_IO2 and SHD_IO3 for other functions.
- * SHD_CS0# will be set to open drain drive high.
- * SHD_CS0# = GPIO_0055(Bank 1, bit[13]) Func2
- * SHD_CLK  = GPIO_0056(Bank 1, bit[14]) Func2
- * SHD_IO0  = GPIO_0223(Bank 4, bit[19]) Func1
- * SHD_IO1  = GPIO_0224(Bank 4, bit[20]) Func2
- * SHD_IO2  = GPIO_0227(Bank 4, bit[23]) Func1
- * SHD_IO3  = GPIO_0016(Bank 0, bit[14]) Func2
- */
-ALTERNATE(PIN_MASK(1, 0x2000), 2, MODULE_SPI_FLASH, GPIO_ODR_HIGH)
-ALTERNATE(PIN_MASK(1, 0x4000), 2, MODULE_SPI_FLASH, 0)
-ALTERNATE(PIN_MASK(4, 0x00080000), 1, MODULE_SPI_FLASH, 0)
-ALTERNATE(PIN_MASK(4, 0x00100000), 2, MODULE_SPI_FLASH, 0)
 
 /* I2C pins */
 /* MEC1521H-SZ does not implement I2C08 pins

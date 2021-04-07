@@ -8,6 +8,9 @@
 /* Declare symbolic names for all the GPIOs that we care about.
  * Note: Those with interrupt handlers must be declared first. */
 
+/* include common gpio.inc under chip/mchp/lfw/... */
+#include "chip/mchp/lfw/gpio.inc"
+
 /* MEC1701H GPIO_0105/UART0_RX OK */
 GPIO_INT(UART0_RX, PIN(0105), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, \
 	 uart_deepsleep_interrupt)
@@ -168,33 +171,8 @@ GPIO(BAT_LED_BLUE,		PIN(0153), GPIO_OUT_HIGH)
 GPIO(BAT_LED_AMBER,		PIN(0226), GPIO_OUT_HIGH)
 
 /*
- * MEC1701H
- * GPIO_0055/PWM2/SHD_CS0#/RSMRST#
- * GPIO_0124/GPTP-OUT6/PVT_CS#/KSO11
- * QMSPI controller drives chip select, must be
- * configured to alternative function. See below.
- * Always use the name QMSPI_CS0 for chip select.
- * Actual GPIO could be GPIO_0055 QMSPI shared chip select or
- * GPIO_0124 private chip select.
- */
-GPIO(QMSPI_CS0,	PIN(055),  GPIO_ODR_HIGH)
-
-/*
  * Alternate function pins
  */
-
-/*
- * MEC1701H SHD SPI is connected to QMSPI controller.
- * QMSPI drives chip select. SHD_CS0#(GPIO_0055) must be set
- * to alternate function 2 and GPIO_ODR_HIGH.
- * GPIO_0055 Function 2, Bank 1 bit[13]
- */
-ALTERNATE(PIN_MASK(1, 0x2000), 2, MODULE_SPI_FLASH, GPIO_ODR_HIGH)
-/* SHD_CLK - GPIO_0056 Function 2, Bank 1 bit[14] */
-ALTERNATE(PIN_MASK(1, 0x4000), 2, MODULE_SPI_FLASH, 0)
-/* MOSI(SHD_IO0) - GPIO_0223 Function 2, Bank 4 bit[19] */
-/* MISO(SHD_IO1) - GPIO_0224 Function 2, Bank 4 bit[20] */
-ALTERNATE(PIN_MASK(4, 0x180000), 2, MODULE_SPI_FLASH, 0)
 
 /* MEC1701H LPC all alternate function 1
  *			bank	bit
@@ -289,13 +267,6 @@ ALTERNATE(PIN_MASK(3, 0x00003001), 1, MODULE_I2C, 0)
  */
 /* reefmchp board note: not PWM in reef or reedmchp boards design?? */
 //ALTERNATE(PIN_MASK(0, 0x00000006), 1, MODULE_PWM, 0)
-
-/*
- * GPIO_0104(UART0_TX) Func1
- * GPIO_0105(UART0_RX) Func1
- * Bank 2 bits[4:5]
- */
-ALTERNATE(PIN_MASK(2, 0x30), 1, MODULE_UART, 0)
 
 /*
  * MCHP TFDP alternate function configuration
