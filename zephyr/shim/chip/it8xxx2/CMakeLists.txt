@@ -4,6 +4,7 @@
 
 zephyr_library_include_directories(include)
 
+zephyr_library_sources(clock.c)
 zephyr_library_sources_ifdef(CONFIG_CROS_EC           system.c)
 zephyr_library_sources_ifdef(CONFIG_CROS_EC           pinmux.c)
 zephyr_library_sources_ifdef(CONFIG_CROS_KB_RAW_ITE   keyboard_raw.c)
