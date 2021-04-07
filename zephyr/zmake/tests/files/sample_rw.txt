@@ -1,0 +1,315 @@
+ninja: Entering directory `/tmp/z/vol/build-rw'
+[1/310] Preparing syscall dependency handling
+[2/310] Generating misc/generated/syscalls_subdirs.trigger
+[3/310] Generating ../../ec/include/generated/ec_version.h
+[4/310] Generating misc/generated/syscalls.json, misc/generated/struct_tags.json
+[5/310] Generating include/generated/syscall_dispatch.c, include/generated/syscall_list.h
+[6/310] Generating include/generated/driver-validation.h
+[7/310] Generating include/generated/kobj-types-enum.h, include/generated/otype-to-str.h
+[8/310] Building C object zephyr/CMakeFiles/offsets.dir/arch/arm/core/offsets/offsets.c.obj
+[9/310] Generating include/generated/offsets.h
+[10/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/app/ec/main_shim.c.obj
+[11/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/drivers/cros_bbram/cros_bbram_npcx.c.obj
+[12/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/drivers/cros_system/cros_system_npcx.c.obj
+[13/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/drivers/cros_flash/cros_flash_npcx.c.obj
+[14/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/drivers/cros_kb_raw/cros_kb_raw_npcx.c.obj
+[15/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/drivers/cros_rtc/cros_rtc_npcx.c.obj
+[16/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/app/ec/ec_app_main.c.obj
+[17/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/chip/npcx/clock.c.obj
+[18/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/chip/npcx/keyboard_raw.c.obj
+[19/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/crc.c.obj
+[20/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/chip/npcx/system.c.obj
+[21/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/chip/npcx/system_external_storage.c.obj
+[22/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/core/cortex-m/software_panic.c.obj
+[23/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/gpio.c.obj
+[24/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/console.c.obj
+[25/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/util.c.obj
+[26/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/system.c.obj
+[27/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/system.c.obj
+[28/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/adc.c.obj
+[29/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/espi.c.obj
+[30/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/fan.c.obj
+[31/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/flash.c.obj
+[32/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/hooks.c.obj
+[33/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/host_command.c.obj
+[34/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/console_buffer.c.obj
+[35/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/mkbp_event.c.obj
+[36/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/motionsense_sensors.c.obj
+[37/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/mpu.c.obj
+[38/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/panic.c.obj
+[39/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/pwm.c.obj
+[40/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/rtc.c.obj
+[41/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/temp_sensors.c.obj
+[42/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/thermal.c.obj
+[43/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/hwtimer.c.obj
+[44/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/i2c.c.obj
+[45/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/tasks.c.obj
+[46/310] Building C object CMakeFiles/app.dir/home/sjg/c/src/platform/ec/zephyr/shim/src/watchdog.c.obj
+[47/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/base32.c.obj
+[48/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/console_output.c.obj
+[49/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/ec_features.c.obj
+[50/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/gpio_commands.c.obj
+[51/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/peripheral.c.obj
+[52/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/printf.c.obj
+[53/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/queue.c.obj
+[54/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/shared_mem.c.obj
+[55/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/uart_printf.c.obj
+[56/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/accel_bma2x2.c.obj
+[57/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/math_util.c.obj
+[58/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/accelgyro_bmi_common.c.obj
+[59/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/accelgyro_bmi260.c.obj
+[60/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/motion_sense_fifo.c.obj
+[61/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/adc.c.obj
+[62/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/als_tcs3400.c.obj
+[63/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/acpi.c.obj
+[64/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/backlight_lid.c.obj
+[65/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/battery.c.obj
+[66/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/battery_fuel_gauge.c.obj
+[67/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/battery/smart.c.obj
+[68/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/bc12/pi3usb9201.c.obj
+[69/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/charger/isl9241.c.obj
+[70/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/charger.c.obj
+[71/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/charge_manager.c.obj
+[72/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usb_pd_alt_mode_ufp.c.obj
+[73/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/charge_state_v2.c.obj
+[74/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/charge_ramp.c.obj
+[75/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/charge_ramp_sw.c.obj
+[76/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/cbi.c.obj
+[77/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/memory_commands.c.obj
+[78/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/dptf.c.obj
+[79/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/chipset.c.obj
+[80/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/espi.c.obj
+[81/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/extpower_gpio.c.obj
+[82/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/extpower_common.c.obj
+[83/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/fan.c.obj
+[84/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/spi_flash_reg.c.obj
+[85/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/flash.c.obj
+[86/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/host_command.c.obj
+[87/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/host_event_commands.c.obj
+[88/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/uart_hostcmd.c.obj
+[89/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/uptime.c.obj
+[90/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/i2c_controller.c.obj
+[91/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/keyboard_scan.c.obj
+[92/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/keyboard_8042.c.obj
+[93/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/keyboard_8042_sharedlib.c.obj
+[94/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/keyboard_vivaldi.c.obj
+[95/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/keyboard_backlight.c.obj
+[96/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/pwm_kblight.c.obj
+[97/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/led_common.c.obj
+[98/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/led_pwm.c.obj
+[99/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/motion_lid.c.obj
+[100/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/lid_angle.c.obj
+[101/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/lid_switch.c.obj
+[102/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/motion_sense.c.obj
+[103/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/mkbp_event.c.obj
+[104/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/port80.c.obj
+[105/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/power_button.c.obj
+[106/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/power/common.c.obj
+[107/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/power/icelake.c.obj
+[108/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/power_button_x86.c.obj
+[109/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/power/intel_x86.c.obj
+[110/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/power/host_sleep.c.obj
+[111/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/sha256.c.obj
+[112/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/panic_output.c.obj
+[113/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/pwm.c.obj
+[114/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/switch.c.obj
+[115/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/tablet_mode.c.obj
+[116/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/thermal.c.obj
+[117/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/temp_sensor.c.obj
+[118/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/temp_sensor/thermistor.c.obj
+[119/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/throttle_ap.c.obj
+[120/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/timer.c.obj
+[121/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usb_charger.c.obj
+[122/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usb_port_power_dumb.c.obj
+[123/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usb_common.c.obj
+[124/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc/usbc_task.c.obj
+[125/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc/usb_pd_timer.c.obj
+[126/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc/usb_sm.c.obj
+[127/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc_intr_task.c.obj
+[128/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc/usb_pd_console.c.obj
+[129/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc/usb_retimer_fw_update.c.obj
+[130/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/retimer/bb_retimer.c.obj
+[131/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/usb_mux/usb_mux.c.obj
+[132/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/usb_mux/virtual.c.obj
+[133/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc/tbt_alt_mode.c.obj
+[134/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc/usb_mode.c.obj
+[135/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc_ocp.c.obj
+[136/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usb_pd_alt_mode_dfp.c.obj
+[137/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usb_pd_console_cmd.c.obj
+[138/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usb_pd_dual_role.c.obj
+[139/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usb_pd_host_cmd.c.obj
+[140/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc/usb_pd_host.c.obj
+[141/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc/usb_tc_drp_acc_trysrc_sm.c.obj
+[142/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc/usb_pe_drp_sm.c.obj
+[143/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc/dp_alt_mode.c.obj
+[144/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc/usb_pd_dpm.c.obj
+[145/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/tcpm/ps8xxx.c.obj
+[146/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc/usb_prl_sm.c.obj
+[147/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/tcpm/rt1715.c.obj
+[148/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/tcpm/tusb422.c.obj
+[149/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/tcpm/tcpci.c.obj
+[150/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/usbc_ppc.c.obj
+[151/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/ppc/sn5s330.c.obj
+[152/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/driver/ppc/syv682x.c.obj
+[153/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/vboot_hash.c.obj
+[154/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/button.c.obj
+[155/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/vboot/efs2.c.obj
+[156/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/vstore.c.obj
+[157/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/baseboard/volteer/battery_presence.c.obj
+[158/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/baseboard/volteer/charger.c.obj
+[159/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/baseboard/volteer/cbi_ec_fw_config.c.obj
+[160/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/baseboard/volteer/cbi.c.obj
+[161/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/baseboard/volteer/power.c.obj
+[162/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/baseboard/volteer/usb_pd_policy.c.obj
+[163/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/baseboard/volteer/usbc_config.c.obj
+[164/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/board/volteer/battery.c.obj
+[165/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/crc32_sw.c.obj
+[166/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/board/volteer/cbi.c.obj
+[167/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/board/volteer/keyboard.c.obj
+[168/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/board/volteer/led.c.obj
+[169/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/cbprintf.c.obj
+[170/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/board/volteer/usbc_config.c.obj
+[171/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/crc16_sw.c.obj
+[172/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/crc8_sw.c.obj
+[173/310] Building C object CMakeFiles/app.dir/src/sensors.c.obj
+[174/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/crc7_sw.c.obj
+[175/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/dec.c.obj
+[176/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/fdtable.c.obj
+[177/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/hex.c.obj
+[178/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/notify.c.obj
+[179/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/printk.c.obj
+[180/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/onoff.c.obj
+[181/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/rb.c.obj
+[182/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/sem.c.obj
+[183/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/thread_entry.c.obj
+[184/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/timeutil.c.obj
+[185/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/heap.c.obj
+[186/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/heap-validate.c.obj
+[187/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/work_q.c.obj
+[188/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/cbprintf_nano.c.obj
+[189/310] Building C object zephyr/CMakeFiles/zephyr.dir/misc/generated/configs.c.obj
+[190/310] Building C object zephyr/CMakeFiles/zephyr.dir/lib/os/ring_buffer.c.obj
+[191/310] Building C object zephyr/CMakeFiles/zephyr.dir/soc/arm/nuvoton_npcx/common/scfg.c.obj
+[192/310] Building C object zephyr/CMakeFiles/zephyr.dir/soc/arm/nuvoton_npcx/npcx7/soc.c.obj
+[193/310] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/shell/shell.c.obj
+[194/310] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/shell/shell_fprintf.c.obj
+[195/310] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/shell/shell_utils.c.obj
+[196/310] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/shell/shell_ops.c.obj
+[197/310] Building C object zephyr/CMakeFiles/zephyr.dir/subsys/shell/shell_uart.c.obj
+[198/310] Building C object zephyr/CMakeFiles/zephyr.dir/drivers/console/uart_console.c.obj
+[199/310] Building C object zephyr/CMakeFiles/zephyr.dir/drivers/interrupt_controller/intc_miwu.c.obj
+[200/310] Building C object zephyr/CMakeFiles/zephyr.dir/drivers/clock_control/clock_control_npcx.c.obj
+[201/310] Building C object zephyr/CMakeFiles/zephyr.dir/drivers/watchdog/wdt_npcx.c.obj
+[202/310] Building C object zephyr/CMakeFiles/zephyr.dir/drivers/timer/sys_clock_init.c.obj
+[203/310] Building C object zephyr/CMakeFiles/zephyr.dir/drivers/timer/npcx_itim_timer.c.obj
+[204/310] Building C object zephyr/arch/common/CMakeFiles/arch__common.dir/sw_isr_common.c.obj
+[205/310] Building C object zephyr/arch/common/CMakeFiles/isr_tables.dir/isr_tables.c.obj
+[206/310] Building C object zephyr/arch/arch/arm/core/aarch32/CMakeFiles/arch__arm__core__aarch32.dir/swap.c.obj
+[207/310] Building ASM object zephyr/arch/arch/arm/core/aarch32/CMakeFiles/arch__arm__core__aarch32.dir/swap_helper.S.obj
+[208/310] Building C object zephyr/arch/arch/arm/core/aarch32/CMakeFiles/arch__arm__core__aarch32.dir/irq_manage.c.obj
+[209/310] Building C object zephyr/arch/arch/arm/core/aarch32/CMakeFiles/arch__arm__core__aarch32.dir/thread.c.obj
+[210/310] Building ASM object zephyr/arch/arch/arm/core/aarch32/CMakeFiles/arch__arm__core__aarch32.dir/cpu_idle.S.obj
+[211/310] Building ASM object zephyr/arch/arch/arm/core/aarch32/CMakeFiles/arch__arm__core__aarch32.dir/nmi_on_reset.S.obj
+[212/310] Building C object zephyr/arch/arch/arm/core/aarch32/CMakeFiles/arch__arm__core__aarch32.dir/fatal.c.obj
+[213/310] Building C object zephyr/arch/arch/arm/core/aarch32/CMakeFiles/arch__arm__core__aarch32.dir/nmi.c.obj
+[214/310] Building C object zephyr/arch/arch/arm/core/aarch32/CMakeFiles/arch__arm__core__aarch32.dir/prep_c.c.obj
+[215/310] Building ASM object zephyr/arch/arch/arm/core/aarch32/cortex_m/CMakeFiles/arch__arm__core__aarch32__cortex_m.dir/vector_table.S.obj
+[216/310] Building ASM object zephyr/arch/arch/arm/core/aarch32/CMakeFiles/arch__arm__core__aarch32.dir/isr_wrapper.S.obj
+[217/310] Building ASM object zephyr/arch/arch/arm/core/aarch32/cortex_m/CMakeFiles/arch__arm__core__aarch32__cortex_m.dir/reset.S.obj
+[218/310] Building ASM object zephyr/arch/arch/arm/core/aarch32/cortex_m/CMakeFiles/arch__arm__core__aarch32__cortex_m.dir/fault_s.S.obj
+[219/310] Generating linker.cmd
+[220/310] Linking C static library zephyr/arch/common/libisr_tables.a
+[221/310] Building C object zephyr/arch/arch/arm/core/aarch32/cortex_m/CMakeFiles/arch__arm__core__aarch32__cortex_m.dir/fault.c.obj
+[222/310] Building ASM object zephyr/arch/arch/arm/core/aarch32/cortex_m/CMakeFiles/arch__arm__core__aarch32__cortex_m.dir/exc_exit.S.obj
+[223/310] Building C object CMakeFiles/app.dir/tmp/z/vol/modules/ec/common/version.c.obj
+[224/310] Building C object zephyr/arch/arch/arm/core/aarch32/cortex_m/CMakeFiles/arch__arm__core__aarch32__cortex_m.dir/scb.c.obj
+[225/310] Building C object zephyr/arch/arch/arm/core/aarch32/cortex_m/CMakeFiles/arch__arm__core__aarch32__cortex_m.dir/irq_init.c.obj
+[226/310] Building C object zephyr/CMakeFiles/zephyr_prebuilt.dir/misc/empty_file.c.obj
+[227/310] Linking C static library zephyr/libzephyr.a
+[228/310] Building C object zephyr/arch/arch/arm/core/aarch32/cortex_m/CMakeFiles/arch__arm__core__aarch32__cortex_m.dir/thread_abort.c.obj
+[229/310] Building C object zephyr/arch/arch/arm/core/aarch32/cortex_m/mpu/CMakeFiles/arch__arm__core__aarch32__cortex_m__mpu.dir/arm_core_mpu.c.obj
+[230/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/stdlib/abort.c.obj
+[231/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/stdlib/atoi.c.obj
+[232/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/stdlib/strtol.c.obj
+[233/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/stdlib/strtoul.c.obj
+[234/310] Linking C static library zephyr/arch/arch/arm/core/aarch32/libarch__arm__core__aarch32.a
+[235/310] Building C object zephyr/arch/arch/arm/core/aarch32/cortex_m/mpu/CMakeFiles/arch__arm__core__aarch32__cortex_m__mpu.dir/arm_mpu.c.obj
+[236/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/stdlib/bsearch.c.obj
+[237/310] Linking C static library zephyr/arch/common/libarch__common.a
+[238/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/stdlib/malloc.c.obj
+[239/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/stdlib/exit.c.obj
+[240/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/string/strncasecmp.c.obj
+[241/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/string/strstr.c.obj
+[242/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/string/string.c.obj
+[243/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/string/strspn.c.obj
+[244/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/stdout/stdout_console.c.obj
+[245/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/stdout/sprintf.c.obj
+[246/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/stdout/fprintf.c.obj
+[247/310] Building C object zephyr/lib/libc/minimal/CMakeFiles/lib__libc__minimal.dir/source/time/gmtime.c.obj
+[248/310] Building C object zephyr/soc/arm/common/cortex_m/CMakeFiles/soc__arm__common__cortex_m.dir/arm_mpu_regions.c.obj
+[249/310] Linking C static library zephyr/arch/arch/arm/core/aarch32/cortex_m/libarch__arm__core__aarch32__cortex_m.a
+[250/310] Building C object zephyr/lib/posix/CMakeFiles/lib__posix.dir/pthread_common.c.obj
+[251/310] Building C object zephyr/lib/posix/CMakeFiles/lib__posix.dir/nanosleep.c.obj
+[252/310] Building C object zephyr/drivers/adc/CMakeFiles/drivers__adc.dir/adc_common.c.obj
+[253/310] Building C object zephyr/drivers/adc/CMakeFiles/drivers__adc.dir/adc_npcx.c.obj
+[254/310] Building C object zephyr/drivers/gpio/CMakeFiles/drivers__gpio.dir/gpio_npcx.c.obj
+[255/310] Building C object zephyr/drivers/i2c/CMakeFiles/drivers__i2c.dir/i2c_common.c.obj
+[256/310] Building C object zephyr/drivers/i2c/CMakeFiles/drivers__i2c.dir/i2c_shell.c.obj
+[257/310] Linking C static library zephyr/arch/arch/arm/core/aarch32/cortex_m/mpu/libarch__arm__core__aarch32__cortex_m__mpu.a
+[258/310] Linking C static library zephyr/soc/arm/common/cortex_m/libsoc__arm__common__cortex_m.a
+[259/310] Building C object zephyr/drivers/i2c/CMakeFiles/drivers__i2c.dir/i2c_npcx_controller.c.obj
+[260/310] Linking C static library zephyr/lib/libc/minimal/liblib__libc__minimal.a
+[261/310] Linking C static library zephyr/lib/posix/liblib__posix.a
+[262/310] Linking C static library zephyr/drivers/gpio/libdrivers__gpio.a
+[263/310] Building C object zephyr/drivers/i2c/CMakeFiles/drivers__i2c.dir/i2c_npcx_port.c.obj
+[264/310] Building C object zephyr/drivers/pwm/CMakeFiles/drivers__pwm.dir/pwm_npcx.c.obj
+[265/310] Building C object zephyr/drivers/sensor/nuvoton_tach_npcx/CMakeFiles/drivers__sensor__nuvoton_tach_npcx.dir/tach_nuvoton_npcx.c.obj
+[266/310] Linking C static library zephyr/drivers/adc/libdrivers__adc.a
+[267/310] Building C object zephyr/drivers/espi/CMakeFiles/drivers__espi.dir/espi_npcx.c.obj
+[268/310] Building C object zephyr/drivers/espi/CMakeFiles/drivers__espi.dir/host_subs_npcx.c.obj
+[269/310] Building C object zephyr/drivers/serial/CMakeFiles/drivers__serial.dir/uart_npcx.c.obj
+[270/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/device.c.obj
+[271/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/errno.c.obj
+[272/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/fatal.c.obj
+[273/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/idle.c.obj
+[274/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/init.c.obj
+[275/310] Linking C static library zephyr/drivers/i2c/libdrivers__i2c.a
+[276/310] Linking C static library zephyr/drivers/pwm/libdrivers__pwm.a
+[277/310] Linking C static library zephyr/drivers/sensor/nuvoton_tach_npcx/libdrivers__sensor__nuvoton_tach_npcx.a
+[278/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/kheap.c.obj
+[279/310] Linking C static library app/libapp.a
+[280/310] Linking C static library zephyr/drivers/serial/libdrivers__serial.a
+[281/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/mailbox.c.obj
+[282/310] Linking C static library zephyr/drivers/espi/libdrivers__espi.a
+[283/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/mem_slab.c.obj
+[284/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/mutex.c.obj
+[285/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/msg_q.c.obj
+[286/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/pipes.c.obj
+[287/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/queue.c.obj
+[288/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/sched.c.obj
+[289/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/stack.c.obj
+[290/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/sem.c.obj
+[291/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/system_work_q.c.obj
+[292/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/version.c.obj
+[293/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/thread.c.obj
+[294/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/thread_abort.c.obj
+[295/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/work_q.c.obj
+[296/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/condvar.c.obj
+[297/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/smp.c.obj
+[298/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/banner.c.obj
+[299/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/xip.c.obj
+[300/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/poll.c.obj
+[301/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/timer.c.obj
+[302/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/timeout.c.obj
+[303/310] Building C object zephyr/kernel/CMakeFiles/kernel.dir/mempool.c.obj
+[304/310] Linking C static library zephyr/kernel/libkernel.a
+[305/310] Linking C executable zephyr/zephyr_prebuilt.elf
+[306/310] Generating linker_pass_final.cmd
+[307/310] Generating isr_tables.c
+[308/310] Building C object zephyr/CMakeFiles/zephyr_final.dir/misc/empty_file.c.obj
+[309/310] Building C object zephyr/CMakeFiles/zephyr_final.dir/isr_tables.c.obj
+[310/310] Linking C executable zephyr/zephyr.elf
+Memory region         Used Size  Region Size  %age Used
+FLASH:      241868 B       512 KB     46.13%
+SRAM:       48632 B        62 KB     76.60%
+IDT_LIST:          0 GB         2 KB      0.00%
