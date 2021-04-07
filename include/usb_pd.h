@@ -186,8 +186,6 @@ enum pd_rx_errors {
 /* Timers */
 #define PD_T_SINK_TX                (18*MSEC) /* between 16ms and 20 */
 #define PD_T_CHUNKING_NOT_SUPPORTED (45*MSEC) /* between 40ms and 50ms */
-#define PD_T_CHUNK_SENDER_RSP       (24*MSEC) /* between 24ms and 30ms */
-#define PD_T_CHUNK_SENDER_REQ       (24*MSEC) /* between 24ms and 30ms */
 #define PD_T_HARD_RESET_COMPLETE     (5*MSEC) /* between 4ms and 5ms*/
 #define PD_T_HARD_RESET_RETRY        (1*MSEC) /* 1ms */
 #define PD_T_SEND_SOURCE_CAP       (100*MSEC) /* between 100ms and 200ms */
