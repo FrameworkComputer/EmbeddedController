@@ -24,6 +24,13 @@ _logging_cv = threading.Condition()
 _logging_map = {}
 
 
+def reset():
+    """Reset this module to its starting state (useful for tests)"""
+    global _logging_map
+
+    _logging_map = {}
+
+
 class LogWriter:
     """Contains information about a file descriptor that is producing output
 

@@ -126,6 +126,7 @@ class Zmake:
     """
     def __init__(self, checkout=None, jobserver=None, jobs=0, modules_dir=None,
                  zephyr_base=None):
+        zmake.multiproc.reset()
         self._checkout = checkout
         self._zephyr_base = zephyr_base
 
