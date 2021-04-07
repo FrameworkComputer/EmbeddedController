@@ -60,14 +60,8 @@
 #define NPCX_PSL_CFG_PSL_OUT_OD		BIT(1)
 #define CONFIG_HIBERNATE_PSL_OUT_FLAGS	0
 
-
-#define CONFIG_WORKAROUND_FLASH_DOWNLOAD_API
 /*****************************************************************************/
 /* Memory mapping */
-#ifdef CONFIG_WORKAROUND_FLASH_DOWNLOAD_API
-#define CONFIG_LPRAM_BASE	0x40001400 /* memory address of lpwr ram */
-#define CONFIG_LPRAM_SIZE	0x00000620 /* 1568B low power ram */
-#endif
 
 #define NPCX_RAM_SIZE (CONFIG_DATA_RAM_SIZE + NPCX_PROGRAM_MEMORY_SIZE)
 
