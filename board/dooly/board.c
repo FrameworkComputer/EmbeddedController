@@ -961,11 +961,17 @@ unsigned int ec_config_get_thermal_solution(void)
 #define POWER_DELAY_MS		2
 #define POWER_READINGS		(10/POWER_DELAY_MS)
 
+/* PROCHOT_DEFER_OFF is to extend CPU prochot long enough
+ * to pass safety requirement 30 * 2ms = 60 ms
+ */
+#define PROCHOT_DEFER_OFF		30
+
 static void power_monitor(void)
 {
 	static uint32_t current_state;
 	static uint32_t history[POWER_READINGS];
 	static uint8_t index;
+	static uint8_t prochot_linger;
 	int32_t delay;
 	uint32_t new_state = 0, diff;
 	int32_t headroom_5v = PWR_MAX - base_5v_power;
@@ -1066,8 +1072,16 @@ static void power_monitor(void)
 			 * As a last resort, turn on PROCHOT to
 			 * throttle the CPU.
 			 */
-			if (gap <= 0)
+			if (gap <= 0) {
+				prochot_linger = 0;
 				new_state |= THROT_PROCHOT;
+			} else if (prochot_linger < PROCHOT_DEFER_OFF) {
+				/*
+				 * Do not turn off PROCHOT immediately.
+				 */
+				prochot_linger++;
+				new_state |= THROT_PROCHOT;
+			}
 		}
 	}
 	/*
