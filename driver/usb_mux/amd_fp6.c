@@ -47,7 +47,8 @@ static int amd_fp6_mux_port0_read(const struct usb_mux *me, uint8_t *val)
 	 * payload[1]: Port 0 Control/Status
 	 * payload[2]: Port 1 Control/Status (unused on FP6)
 	 */
-	mux_ready = !!(payload[0] & AMD_FP6_MUX_PD_STATUS_READY);
+	mux_ready = !!((payload[0] >> AMD_FP6_MUX_PD_STATUS_OFFSET)
+						& AMD_FP6_MUX_PD_STATUS_READY);
 	if (!mux_ready)
 		return EC_ERROR_BUSY;
 	*val = payload[1];
