@@ -277,9 +277,18 @@ class Zmake:
                 True if all if OK
                 False if an error was found (so that zmake should exit)
             """
+            # Let all output be produced before exiting
+            bad = None
             for proc in procs:
-                if proc.wait():
-                    raise OSError(get_process_failure_msg(proc))
+                if proc.wait() and not bad:
+                    bad = proc
+            if bad:
+                # Just show the first bad process for now. Both builds likely
+                # produce the same error anyway. If they don't, the user can
+                # still take action on the errors/warnings provided. Showing
+                # multiple 'Execution failed' messages is not very friendly
+                # since it exposes the fragmented nature of the build.
+                raise OSError(get_process_failure_msg(bad))
 
             if (fail_on_warnings and
                 any(w.has_written(logging.WARNING) or
