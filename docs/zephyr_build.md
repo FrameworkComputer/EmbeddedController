@@ -70,9 +70,8 @@ Ensure that ~/.local/bin in on your PATH
 You may also need to install these items:
 
 ```bash
-sudo apt-get install cmake ninja-build python3-pyelftools gcc-multilib
-pip3 install pykwalify
-pip3 install colorama
+sudo apt-get install cmake ninja-build python3-pyelftools gcc-multilib \
+    python3-pykwalify python3-colorama
 ```
 
 You must reinstall zmake after any `repo sync` since new features may have been
