@@ -42,6 +42,20 @@ static int pi3usb3x532_write(const struct usb_mux *me,
 	return i2c_write8(me->i2c_port, me->i2c_addr_flags, 0, val);
 }
 
+int pi3usb3x532_check_vendor(const struct usb_mux *me, int *val)
+{
+	int res;
+	uint8_t read;
+
+	res = pi3usb3x532_read(me, PI3USB3X532_REG_VENDOR, &read);
+	if (res)
+		return res;
+
+	*val = read;
+
+	return EC_SUCCESS;
+}
+
 static int pi3usb3x532_reset(const struct usb_mux *me)
 {
 	return pi3usb3x532_write(

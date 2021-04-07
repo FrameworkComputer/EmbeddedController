@@ -13,6 +13,7 @@
 #define __CROS_EC_PI3USB3X532_H
 
 #include "usb_pd.h"
+#include "usb_mux.h"
 
 /* I2C Addresses */
 #define PI3USB3X532_I2C_ADDR0 0x54
@@ -72,4 +73,6 @@
 #define PI3USB3X532_MODE_DP_USB_SWAP (PI3USB3X532_MODE_DP_USB | \
 				      PI3USB3X532_BIT_SWAP)
 
+/* Get Vendor ID */
+int pi3usb3x532_check_vendor(const struct usb_mux *me, int *val);
 #endif /* __CROS_EC_PI3USB3X532_H */
