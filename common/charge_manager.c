@@ -889,6 +889,7 @@ static void charge_manager_refresh(void)
 			uint32_t pdo;
 			uint32_t max_voltage;
 			uint32_t max_current;
+			uint32_t unused;
 			/*
 			 * Check if new voltage/current is different
 			 * than requested. If yes, send new power request
@@ -906,7 +907,8 @@ static void charge_manager_refresh(void)
 			pd_find_pdo_index(pd_get_src_cap_cnt(updated_new_port),
 					  pd_get_src_caps(updated_new_port),
 					  pd_get_max_voltage(), &pdo);
-			pd_extract_pdo_power(pdo, &max_current, &max_voltage);
+			pd_extract_pdo_power(pdo, &max_current, &max_voltage,
+					     &unused);
 			if (charge_voltage != max_voltage ||
 			    charge_current_uncapped != max_current)
 				pd_set_new_power_request(updated_new_port);

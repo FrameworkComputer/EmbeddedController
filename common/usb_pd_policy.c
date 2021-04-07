@@ -29,8 +29,8 @@
 #include "usbc_ppc.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #else
 #define CPRINTS(format, args...)
 #define CPRINTF(format, args...)
@@ -46,8 +46,8 @@
 
 static int rw_flash_changed = 1;
 
-__overridable void pd_check_pr_role(int port,
-	enum pd_power_role pr_role, int flags)
+__overridable void pd_check_pr_role(int port, enum pd_power_role pr_role,
+				    int flags)
 {
 	/*
 	 * If partner is dual-role power and dualrole toggling is on, consider
@@ -63,13 +63,13 @@ __overridable void pd_check_pr_role(int port,
 		int partner_unconstrained = flags & PD_FLAGS_PARTNER_UNCONSTR;
 
 		if ((!partner_unconstrained && pr_role == PD_ROLE_SINK) ||
-		     (partner_unconstrained && pr_role == PD_ROLE_SOURCE))
+		    (partner_unconstrained && pr_role == PD_ROLE_SOURCE))
 			pd_request_power_swap(port);
 	}
 }
 
-__overridable void pd_check_dr_role(int port,
-	enum pd_data_role dr_role, int flags)
+__overridable void pd_check_dr_role(int port, enum pd_data_role dr_role,
+				    int flags)
 {
 	/* If UFP, try to switch to DFP */
 	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_UFP)
@@ -118,7 +118,6 @@ enum pd_rev_type get_usb_pd_cable_revision(int port)
 
 bool consume_sop_prime_repeat_msg(int port, uint8_t msg_id)
 {
-
 	if (cable[port].last_sop_p_msg_id != msg_id) {
 		cable[port].last_sop_p_msg_id = msg_id;
 		return false;
@@ -129,7 +128,6 @@ bool consume_sop_prime_repeat_msg(int port, uint8_t msg_id)
 
 bool consume_sop_prime_prime_repeat_msg(int port, uint8_t msg_id)
 {
-
 	if (cable[port].last_sop_p_p_msg_id != msg_id) {
 		cable[port].last_sop_p_p_msg_id = msg_id;
 		return false;
@@ -151,8 +149,9 @@ __maybe_unused static uint8_t is_sop_prime_ready(int port)
 	 * Sec 3.6.11 : Before communicating with a Cable Plug a Port Should
 	 * ensure that it is the Vconn Source
 	 */
-	return (pd_get_vconn_state(port) && (IS_ENABLED(CONFIG_USB_PD_REV30)
-		|| (pd_get_data_role(port) == PD_ROLE_DFP)));
+	return (pd_get_vconn_state(port) &&
+		(IS_ENABLED(CONFIG_USB_PD_REV30) ||
+		 (pd_get_data_role(port) == PD_ROLE_DFP)));
 }
 
 void reset_pd_cable(int port)
@@ -165,7 +164,7 @@ void reset_pd_cable(int port)
 bool should_enter_usb4_mode(int port)
 {
 	return IS_ENABLED(CONFIG_USB_PD_USB4) &&
-		cable[port].flags & CABLE_FLAGS_ENTER_USB_MODE;
+	       cable[port].flags & CABLE_FLAGS_ENTER_USB_MODE;
 }
 
 void enable_enter_usb4_mode(int port)
@@ -184,10 +183,10 @@ void disable_enter_usb4_mode(int port)
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 
-static struct pd_discovery
-	discovery[CONFIG_USB_PD_PORT_MAX_COUNT][DISCOVERY_TYPE_COUNT];
-static struct partner_active_modes
-	partner_amodes[CONFIG_USB_PD_PORT_MAX_COUNT][AMODE_TYPE_COUNT];
+static struct pd_discovery discovery[CONFIG_USB_PD_PORT_MAX_COUNT]
+				    [DISCOVERY_TYPE_COUNT];
+static struct partner_active_modes partner_amodes[CONFIG_USB_PD_PORT_MAX_COUNT]
+						 [AMODE_TYPE_COUNT];
 
 static bool is_vdo_present(int cnt, int index)
 {
@@ -197,7 +196,7 @@ static bool is_vdo_present(int cnt, int index)
 static bool is_modal(int port, int cnt, const uint32_t *payload)
 {
 	return is_vdo_present(cnt, VDO_INDEX_IDH) &&
-		PD_IDH_IS_MODAL(payload[VDO_INDEX_IDH]);
+	       PD_IDH_IS_MODAL(payload[VDO_INDEX_IDH]);
 }
 
 static bool is_tbt_compat_mode(int port, int cnt, const uint32_t *payload)
@@ -207,13 +206,12 @@ static bool is_tbt_compat_mode(int port, int cnt, const uint32_t *payload)
 	 * F.2.5 TBT3 Device Discover Mode Responses
 	 */
 	return is_vdo_present(cnt, VDO_INDEX_IDH) &&
-		PD_VDO_RESP_MODE_INTEL_TBT(payload[VDO_INDEX_IDH]);
+	       PD_VDO_RESP_MODE_INTEL_TBT(payload[VDO_INDEX_IDH]);
 }
 
 static bool cable_supports_tbt_speed(int port)
 {
-	enum tbt_compat_cable_speed tbt_cable_speed =
-				get_tbt_cable_speed(port);
+	enum tbt_compat_cable_speed tbt_cable_speed = get_tbt_cable_speed(port);
 
 	return (tbt_cable_speed == TBT_SS_TBT_GEN3 ||
 		tbt_cable_speed == TBT_SS_U32_GEN1_GEN2);
@@ -222,7 +220,7 @@ static bool cable_supports_tbt_speed(int port)
 static bool is_tbt_compat_enabled(int port)
 {
 	return (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
-	       (cable[port].flags & CABLE_FLAGS_TBT_COMPAT_ENABLE));
+		(cable[port].flags & CABLE_FLAGS_TBT_COMPAT_ENABLE));
 }
 
 static void enable_tbt_compat_mode(int port)
@@ -263,7 +261,7 @@ static bool is_intel_svid(int port, enum tcpm_transmit_type type)
 static inline bool is_usb4_mode_enabled(int port)
 {
 	return (IS_ENABLED(CONFIG_USB_PD_USB4) &&
-	       (cable[port].flags & CABLE_FLAGS_USB4_CAPABLE));
+		(cable[port].flags & CABLE_FLAGS_USB4_CAPABLE));
 }
 
 static inline void enable_usb4_mode(int port)
@@ -317,7 +315,7 @@ static bool is_cable_ready_to_enter_usb4(int port, int cnt)
 	/* TODO: USB4 enter mode for Active cables */
 	struct pd_discovery *disc = &discovery[port][TCPC_TX_SOP_PRIME];
 	if (IS_ENABLED(CONFIG_USB_PD_USB4) &&
-	   (get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE) &&
+	    (get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE) &&
 	    is_vdo_present(cnt, VDO_INDEX_PTYPE_CABLE1)) {
 		switch (cable[port].rev) {
 		case PD_REV30:
@@ -344,7 +342,7 @@ static bool is_cable_ready_to_enter_usb4(int port, int cnt)
 			default:
 				disable_usb4_mode(port);
 				return false;
-		}
+			}
 		default:
 			disable_usb4_mode(port);
 		}
@@ -375,8 +373,8 @@ struct pd_discovery *pd_get_am_discovery(int port, enum tcpm_transmit_type type)
 	return &discovery[port][type];
 }
 
-struct partner_active_modes *pd_get_partner_active_modes(int port,
-		enum tcpm_transmit_type type)
+struct partner_active_modes *
+pd_get_partner_active_modes(int port, enum tcpm_transmit_type type)
 {
 	assert(type < AMODE_TYPE_COUNT);
 	return &partner_amodes[port][type];
@@ -418,22 +416,21 @@ static bool is_usb4_vdo(int port, int cnt, uint32_t *payload)
 		 * Device USB4 VDO detection.
 		 */
 		return IS_ENABLED(CONFIG_USB_PD_USB4) &&
-			is_vdo_present(cnt, VDO_INDEX_PTYPE_UFP1_VDO) &&
-			PD_PRODUCT_IS_USB4(payload[VDO_INDEX_PTYPE_UFP1_VDO]);
+		       is_vdo_present(cnt, VDO_INDEX_PTYPE_UFP1_VDO) &&
+		       PD_PRODUCT_IS_USB4(payload[VDO_INDEX_PTYPE_UFP1_VDO]);
 	}
 	return false;
 }
 
-static int process_am_discover_ident_sop(int port, int cnt,
-					uint32_t head, uint32_t *payload,
-					enum tcpm_transmit_type *rtype)
+static int process_am_discover_ident_sop(int port, int cnt, uint32_t head,
+					 uint32_t *payload,
+					 enum tcpm_transmit_type *rtype)
 {
 	pd_dfp_discovery_init(port);
 	dfp_consume_identity(port, TCPC_TX_SOP, cnt, payload);
 
 	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP) && is_sop_prime_ready(port) &&
 	    board_is_tbt_usb4_port(port)) {
-
 		/* Enable USB4 mode if USB4 VDO present and port partner
 		 * supports USB Rev 3.0.
 		 */
@@ -458,8 +455,8 @@ static int process_am_discover_ident_sop(int port, int cnt,
 	return dfp_discover_svids(payload);
 }
 
-static int process_am_discover_ident_sop_prime(int port, int cnt,
-					uint32_t head, uint32_t *payload)
+static int process_am_discover_ident_sop_prime(int port, int cnt, uint32_t head,
+					       uint32_t *payload)
 {
 	dfp_consume_identity(port, TCPC_TX_SOP_PRIME, cnt, payload);
 	cable[port].rev = PD_HEADER_REV(head);
@@ -493,8 +490,8 @@ static int process_am_discover_ident_sop_prime(int port, int cnt,
 }
 
 static int process_am_discover_svids(int port, int cnt, uint32_t *payload,
-				enum tcpm_transmit_type sop,
-				enum tcpm_transmit_type *rtype)
+				     enum tcpm_transmit_type sop,
+				     enum tcpm_transmit_type *rtype)
 {
 	/*
 	 * The pd_discovery structure stores SOP and SOP' discovery results
@@ -543,8 +540,9 @@ static int process_am_discover_svids(int port, int cnt, uint32_t *payload,
 }
 
 static int process_tbt_compat_discover_modes(int port,
-				enum tcpm_transmit_type sop, uint32_t *payload,
-				enum tcpm_transmit_type *rtype)
+					     enum tcpm_transmit_type sop,
+					     uint32_t *payload,
+					     enum tcpm_transmit_type *rtype)
 {
 	int rsize;
 
@@ -606,9 +604,9 @@ static int process_tbt_compat_discover_modes(int port,
 	return rsize;
 }
 
-static int obj_cnt_enter_tbt_compat_mode(int port,
-		enum tcpm_transmit_type sop, uint32_t *payload,
-		enum tcpm_transmit_type *rtype)
+static int obj_cnt_enter_tbt_compat_mode(int port, enum tcpm_transmit_type sop,
+					 uint32_t *payload,
+					 enum tcpm_transmit_type *rtype)
 {
 	struct pd_discovery *disc = &discovery[port][TCPC_TX_SOP_PRIME];
 
@@ -632,7 +630,7 @@ static int obj_cnt_enter_tbt_compat_mode(int port,
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 
 int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
-		uint32_t head, enum tcpm_transmit_type *rtype)
+	    uint32_t head, enum tcpm_transmit_type *rtype)
 {
 	int cmd = PD_VDO_CMD(payload[0]);
 	int cmd_type = PD_VDO_CMDT(payload[0]);
@@ -707,7 +705,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 		struct svdm_amode_data *modep;
 
 		modep = pd_get_amode_data(port, TCPC_TX_SOP,
-				PD_VDO_VID(payload[0]));
+					  PD_VDO_VID(payload[0]));
 #endif
 		switch (cmd) {
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
@@ -715,11 +713,11 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 			/* Received a SOP' Discover Ident msg */
 			if (sop == TCPC_TX_SOP_PRIME) {
 				rsize = process_am_discover_ident_sop_prime(
-						port, cnt, head, payload);
-			/* Received a SOP Discover Ident Message */
+					port, cnt, head, payload);
+				/* Received a SOP Discover Ident Message */
 			} else {
-				rsize = process_am_discover_ident_sop(port,
-						cnt, head, payload, rtype);
+				rsize = process_am_discover_ident_sop(
+					port, cnt, head, payload, rtype);
 			}
 			break;
 		case CMD_DISCOVER_SVID:
@@ -729,9 +727,9 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 		case CMD_DISCOVER_MODES:
 			dfp_consume_modes(port, sop, cnt, payload);
 			if (is_tbt_compat_enabled(port) &&
-				is_tbt_compat_mode(port, cnt, payload)) {
+			    is_tbt_compat_mode(port, cnt, payload)) {
 				rsize = process_tbt_compat_discover_modes(
-					      port, sop, payload, rtype);
+					port, sop, payload, rtype);
 				break;
 			}
 
@@ -744,26 +742,26 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 				 * SVID.
 				 */
 				disable_tbt_compat_mode(port);
-				payload[0] = pd_dfp_enter_mode(port,
-						TCPC_TX_SOP, 0, 0);
+				payload[0] = pd_dfp_enter_mode(
+					port, TCPC_TX_SOP, 0, 0);
 				if (payload[0])
 					rsize = 1;
 			}
 			break;
 		case CMD_ENTER_MODE:
 			if (is_tbt_compat_enabled(port)) {
-				rsize = obj_cnt_enter_tbt_compat_mode(port,
-							sop, payload, rtype);
-			/*
-			 * Continue with PD flow if Thunderbolt-compatible mode
-			 * is disabled.
-			 */
+				rsize = obj_cnt_enter_tbt_compat_mode(
+					port, sop, payload, rtype);
+				/*
+				 * Continue with PD flow if
+				 * Thunderbolt-compatible mode is disabled.
+				 */
 			} else if (!modep) {
 				rsize = 0;
 			} else {
 				if (!modep->opos)
 					pd_dfp_enter_mode(port, TCPC_TX_SOP, 0,
-							0);
+							  0);
 
 				if (modep->opos) {
 					rsize = modep->fx->status(port,
@@ -845,15 +843,16 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 #else
 
 int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
-		uint32_t head, enum tcpm_transmit_type *rtype)
+	    uint32_t head, enum tcpm_transmit_type *rtype)
 {
 	return 0;
 }
 
 #endif /* CONFIG_USB_PD_ALT_MODE */
 
-#define FW_RW_END (CONFIG_EC_WRITABLE_STORAGE_OFF + \
-		   CONFIG_RW_STORAGE_OFF + CONFIG_RW_SIZE)
+#define FW_RW_END                                                 \
+	(CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF + \
+	 CONFIG_RW_SIZE)
 
 uint8_t *flash_hash_rw(void)
 {
@@ -863,8 +862,9 @@ uint8_t *flash_hash_rw(void)
 	if (rw_flash_changed) {
 		rw_flash_changed = 0;
 		SHA256_init(&ctx);
-		SHA256_update(&ctx, (void *)CONFIG_PROGRAM_MEMORY_BASE +
-			      CONFIG_RW_MEM_OFF,
+		SHA256_update(&ctx,
+			      (void *)CONFIG_PROGRAM_MEMORY_BASE +
+				      CONFIG_RW_MEM_OFF,
 			      CONFIG_RW_SIZE - RSANUMBYTES);
 		return SHA256_final(&ctx);
 	} else {
@@ -915,21 +915,22 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 		if (system_get_image_copy() != EC_IMAGE_RO)
 			break;
 		pd_log_event(PD_EVENT_ACC_RW_ERASE, 0, 0, NULL);
-		flash_offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
-			       CONFIG_RW_STORAGE_OFF;
+		flash_offset =
+			CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF;
 		flash_physical_erase(CONFIG_EC_WRITABLE_STORAGE_OFF +
-				     CONFIG_RW_STORAGE_OFF, CONFIG_RW_SIZE);
+					     CONFIG_RW_STORAGE_OFF,
+				     CONFIG_RW_SIZE);
 		rw_flash_changed = 1;
 		break;
 	case VDO_CMD_FLASH_WRITE:
 		/* do not kill the code under our feet */
 		if ((system_get_image_copy() != EC_IMAGE_RO) ||
-		    (flash_offset < CONFIG_EC_WRITABLE_STORAGE_OFF +
-				    CONFIG_RW_STORAGE_OFF))
+		    (flash_offset <
+		     CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF))
 			break;
-		flash_physical_write(flash_offset, 4*(cnt - 1),
-				     (const char *)(payload+1));
-		flash_offset += 4*(cnt - 1);
+		flash_physical_write(flash_offset, 4 * (cnt - 1),
+				     (const char *)(payload + 1));
+		flash_offset += 4 * (cnt - 1);
 		rw_flash_changed = 1;
 		break;
 	case VDO_CMD_ERASE_SIG:

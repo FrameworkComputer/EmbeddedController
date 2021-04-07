@@ -273,7 +273,7 @@ static void board_manage_dut_port(void)
 static void update_ports(void)
 {
 	int pdo_index, src_index, snk_index, i;
-	uint32_t pdo, max_ma, max_mv;
+	uint32_t pdo, max_ma, max_mv, unused;
 
 	/*
 	 * CHG Vbus has changed states, update PDO that reflects CHG port
@@ -307,7 +307,8 @@ static void update_ports(void)
 					continue;
 
 				snk_index = pdo_index;
-				pd_extract_pdo_power(pdo, &max_ma, &max_mv);
+				pd_extract_pdo_power(pdo, &max_ma, &max_mv,
+						     &unused);
 				pd_src_chg_pdo[src_index++] =
 					PDO_FIXED_VOLT(max_mv) |
 					PDO_FIXED_CURR(max_ma) |
@@ -624,9 +625,9 @@ int charge_manager_get_source_pdo(const uint32_t **src_pdo, const int port)
 __override void pd_transition_voltage(int idx)
 {
 	timestamp_t deadline;
-	uint32_t ma, mv;
+	uint32_t ma, mv, unused;
 
-	pd_extract_pdo_power(pd_src_chg_pdo[idx - 1], &ma, &mv);
+	pd_extract_pdo_power(pd_src_chg_pdo[idx - 1], &ma, &mv, &unused);
 	/* Is this a transition to a new voltage? */
 	if (charge_port_is_active() && vbus[CHG].mv != mv) {
 		/*
@@ -1211,13 +1212,13 @@ static int cmd_ada_srccaps(int argc, char *argv[])
 	const uint32_t * const ada_srccaps = pd_get_src_caps(CHG);
 
 	for (i = 0; i < pd_get_src_cap_cnt(CHG); ++i) {
-		uint32_t max_ma, max_mv;
+		uint32_t max_ma, max_mv, unused;
 
 		/* It's an supported Augmented PDO (PD3.0) */
 		if ((ada_srccaps[i] & PDO_TYPE_MASK) == PDO_TYPE_AUGMENTED)
 			continue;
 
-		pd_extract_pdo_power(ada_srccaps[i], &max_ma, &max_mv);
+		pd_extract_pdo_power(ada_srccaps[i], &max_ma, &max_mv, &unused);
 		ccprintf("%d: %dmV/%dmA\n", i, max_mv, max_ma);
 	}
 

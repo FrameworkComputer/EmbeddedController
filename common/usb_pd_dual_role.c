@@ -154,26 +154,35 @@ int pd_find_pdo_index(uint32_t src_cap_cnt, const uint32_t * const src_caps,
 	return ret;
 }
 
-void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *mv)
+void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *max_mv,
+			  uint32_t *min_mv)
 {
-	int max_ma, uw;
+	uint32_t max_ma, uw;
 
-	*mv = ((pdo >> 10) & 0x3FF) * 50;
-
-	if (*mv == 0) {
-		*ma = 0;
+	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_AUGMENTED) {
+		max_ma = 50 * (pdo & GENMASK(6, 0));
+		*min_mv = 100 * ((pdo & GENMASK(15, 8)) >> 8);
+		*max_mv = 100 * ((pdo & GENMASK(24, 17)) >> 17);
+		max_ma = MIN(max_ma, PD_MAX_POWER_MW * 1000 / *min_mv);
+		*ma = MIN(max_ma, PD_MAX_CURRENT_MA);
 		return;
 	}
 
+	*max_mv = ((pdo >> 10) & 0x3FF) * 50;
+	if (*max_mv == 0) {
+		*ma = 0;
+		*min_mv = 0;
+		return;
+	}
 	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
 		uw = 250000 * (pdo & 0x3FF);
-		max_ma = 1000 * MIN(1000 * uw, PD_MAX_POWER_MW) / *mv;
+		max_ma = 1000 * MIN(1000 * uw, PD_MAX_POWER_MW) / *max_mv;
 	} else {
 		max_ma = 10 * (pdo & 0x3FF);
-		max_ma = MIN(max_ma, PD_MAX_POWER_MW * 1000 / *mv);
+		max_ma = MIN(max_ma, PD_MAX_POWER_MW * 1000 / *max_mv);
 	}
-
 	*ma = MIN(max_ma, PD_MAX_CURRENT_MA);
+	*min_mv = *max_mv;
 }
 
 void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
@@ -192,6 +201,7 @@ void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
 	int charging_allowed;
 	int max_request_allowed;
 	uint32_t max_request_mv = pd_get_max_voltage();
+	uint32_t unused;
 
 	/*
 	 * If this port is the current charge port, or if there isn't an active
@@ -229,7 +239,7 @@ void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
 		pdo = src_caps[0];
 	}
 
-	pd_extract_pdo_power(pdo, ma, mv);
+	pd_extract_pdo_power(pdo, ma, mv, &unused);
 
 	/*
 	 * Adjust VBUS current if CTVPD device was detected.
@@ -320,13 +330,13 @@ void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
 	pd_set_src_caps(port, cnt, src_caps);
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
-		uint32_t ma, mv, pdo;
+		uint32_t ma, mv, pdo, unused;
 
 		/* Get max power info that we could request */
 		pd_find_pdo_index(pd_get_src_cap_cnt(port),
 					pd_get_src_caps(port),
 					pd_get_max_voltage(), &pdo);
-		pd_extract_pdo_power(pdo, &ma, &mv);
+		pd_extract_pdo_power(pdo, &ma, &mv, &unused);
 
 		/* Set max. limit, but apply 500mA ceiling */
 		charge_manager_set_ceil(port, CEIL_REQUESTOR_PD, PD_MIN_MA);

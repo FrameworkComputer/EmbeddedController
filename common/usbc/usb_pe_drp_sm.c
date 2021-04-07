@@ -1238,7 +1238,7 @@ __overridable bool pd_can_source_from_device(int port, const int pdo_cnt,
 
 	/* [virtual] allow_list */
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
-		uint32_t max_ma, max_mv, max_pdo, max_mw;
+		uint32_t max_ma, max_mv, max_pdo, max_mw, unused;
 
 		/*
 		 * Get max power that the partner offers (not necessarily what
@@ -1247,7 +1247,7 @@ __overridable bool pd_can_source_from_device(int port, const int pdo_cnt,
 		pd_find_pdo_index(pdo_cnt, pdos,
 				  PD_REV3_MAX_VOLTAGE,
 				  &max_pdo);
-		pd_extract_pdo_power(max_pdo, &max_ma, &max_mv);
+		pd_extract_pdo_power(max_pdo, &max_ma, &max_mv, &unused);
 		max_mw = max_ma * max_mv / 1000;
 
 		if (max_mw >= PD_DRP_CHARGE_POWER_MIN)
@@ -4932,10 +4932,11 @@ static void pe_bist_tx_entry(int port)
 	/* Get the current nominal VBUS value */
 	if (pe[port].power_role == PD_ROLE_SOURCE) {
 		const uint32_t *src_pdo;
+		uint32_t unused;
 
 		dpm_get_source_pdo(&src_pdo, port);
 		pd_extract_pdo_power(src_pdo[pe[port].requested_idx - 1],
-				     &ibus_ma, &vbus_mv);
+				     &ibus_ma, &vbus_mv, &unused);
 	} else {
 		vbus_mv = pe[port].supply_voltage;
 	}

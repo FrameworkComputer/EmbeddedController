@@ -40,12 +40,13 @@ static int count;
 
 static void button_enter_event_deferred(void)
 {
-	uint32_t ma, mv;
+	uint32_t ma, mv, unused;
 
 	CPRINTS("Button enter event");
 
 	if (count >= 0 && count < pd_get_src_cap_cnt(0)) {
-		pd_extract_pdo_power(pd_get_src_caps(0)[count], &ma, &mv);
+		pd_extract_pdo_power(pd_get_src_caps(0)[count], &ma, &mv,
+				     &unused);
 		pd_request_source_voltage(0, mv);
 	} else {
 		CPRINTS("ERROR: button counter weird value.");
@@ -62,7 +63,7 @@ void button_enter_event(enum gpio_signal signal)
 static void button_refresh_event_deferred(void)
 {
 	int i;
-	uint32_t ma, mv;
+	uint32_t ma, mv, unused;
 	char c[20];
 
 	CPRINTS("Button refresh event");
@@ -71,7 +72,7 @@ static void button_refresh_event_deferred(void)
 	/* Display supply voltage on first page. */
 	lcd_clear();
 	for (i = 0; i < MIN(pd_get_src_cap_cnt(0), 4); i++) {
-		pd_extract_pdo_power(pd_get_src_caps(0)[i], &ma, &mv);
+		pd_extract_pdo_power(pd_get_src_caps(0)[i], &ma, &mv, &unused);
 		snprintf(c, ARRAY_SIZE(c), "[%d] %dmV %dmA", i, mv, ma);
 		lcd_set_cursor(0, i);
 		lcd_print_string(c);
@@ -91,7 +92,7 @@ void button_refresh_event(enum gpio_signal signal)
 static void button_down_event_deferred(void)
 {
 	int i;
-	uint32_t ma, mv;
+	uint32_t ma, mv, unused;
 	char c[20];
 
 	CPRINTS("Button down event");
@@ -106,7 +107,8 @@ static void button_down_event_deferred(void)
 	if (count == 0) {
 		lcd_clear();
 		for (i = 0; i < MIN(pd_get_src_cap_cnt(0), 4); i++) {
-			pd_extract_pdo_power(pd_get_src_caps(0)[i], &ma, &mv);
+			pd_extract_pdo_power(pd_get_src_caps(0)[i], &ma, &mv,
+					     &unused);
 			snprintf(c, ARRAY_SIZE(c), "[%d] %dmV %dmA", i, mv, ma);
 			lcd_set_cursor(0, i);
 			lcd_print_string(c);
@@ -115,7 +117,8 @@ static void button_down_event_deferred(void)
 	if (count == 4) {
 		lcd_clear();
 		for (i = 4; i < pd_get_src_cap_cnt(0); i++) {
-			pd_extract_pdo_power(pd_get_src_caps(0)[i], &ma, &mv);
+			pd_extract_pdo_power(pd_get_src_caps(0)[i], &ma, &mv,
+					     &unused);
 			snprintf(c, ARRAY_SIZE(c), "[%d] %dmV %dmA", i, mv, ma);
 			lcd_set_cursor(0, i - 4);
 			lcd_print_string(c);

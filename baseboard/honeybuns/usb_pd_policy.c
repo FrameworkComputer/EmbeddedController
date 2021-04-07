@@ -122,7 +122,7 @@ void pd_transition_voltage(int idx)
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
 
 	if (port == USB_PD_PORT_HOST) {
-		int mv;
+		int mv, unused_mv;
 		int ma;
 		int vbus_hi;
 		int vbus_lo;
@@ -133,7 +133,8 @@ void pd_transition_voltage(int idx)
 	 * by the PDO requested by sink. Note that USB PD uses idx = 1 for 1st
 	 * PDO of SRC_CAP which must always be 5V fixed supply.
 	 */
-		pd_extract_pdo_power(pd_src_host_pdo[idx - 1], &ma, &mv);
+		pd_extract_pdo_power(pd_src_host_pdo[idx - 1], &ma, &mv,
+				     &unused_mv);
 
 		/* Set VBUS level to value specified in the requested PDO */
 		mp4245_set_voltage_out(mv);

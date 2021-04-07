@@ -1529,7 +1529,7 @@ static void pd_update_pdo_flags(int port, int pdo_cnt, uint32_t *pdos)
 	 *   - it presents at least 27 W of available power
 	 */
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
-		uint32_t max_ma, max_mv, max_pdo, max_mw;
+		uint32_t max_ma, max_mv, max_pdo, max_mw, unused;
 
 		/*
 		 * Get max power that the partner offers (not necessarily what
@@ -1537,7 +1537,7 @@ static void pd_update_pdo_flags(int port, int pdo_cnt, uint32_t *pdos)
 		 */
 		pd_find_pdo_index(pdo_cnt, pdos, PD_REV3_MAX_VOLTAGE,
 				  &max_pdo);
-		pd_extract_pdo_power(max_pdo, &max_ma, &max_mv);
+		pd_extract_pdo_power(max_pdo, &max_ma, &max_mv, &unused);
 		max_mw = max_ma * max_mv / 1000;
 
 		if (!(pdos[0] & PDO_FIXED_DUAL_ROLE) ||
