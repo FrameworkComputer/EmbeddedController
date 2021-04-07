@@ -5200,6 +5200,8 @@ static int command_pd(int argc, char **argv)
 #endif
 		else
 			return EC_ERROR_PARAM3;
+	} else if (!strncasecmp(argv[2], "srccaps", 7)) {
+		pd_srccaps_dump(port);
 	} else if (!strncasecmp(argv[2], "ping", 4)) {
 		int enable;
 
@@ -5317,7 +5319,7 @@ DECLARE_CONSOLE_COMMAND(pd, command_pd,
 			"\n\t<port> flash [erase|reboot|signature|info|version]"
 #endif /* CONFIG_CMD_PD_FLASH */
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
-			,
+			"\n\t<port> srccaps",
 			"USB PD");
 
 #ifdef HAS_TASK_HOSTCMD

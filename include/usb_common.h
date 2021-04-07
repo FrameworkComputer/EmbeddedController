@@ -254,4 +254,11 @@ int usb_retimer_fw_update_get_result(void);
  * @param port USB-C port number
  */
 void usb_retimer_fw_update_process_op_cb(int port);
+
+/**
+ * Dump SourceCap information.
+ *
+ * @param port USB-C port number
+ */
+void pd_srccaps_dump(int port);
 #endif /* __CROS_EC_USB_COMMON_H */

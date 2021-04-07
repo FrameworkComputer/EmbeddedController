@@ -175,6 +175,8 @@ test_export_static int command_pd(int argc, char **argv)
 				pe_get_flags(port));
 		else
 			ccprintf("\n");
+	} else if (!strcasecmp(argv[2], "srccaps")) {
+		pd_srccaps_dump(port);
 	}
 
 	if (IS_ENABLED(CONFIG_CMD_PD_TIMER) &&
@@ -191,6 +193,7 @@ DECLARE_CONSOLE_COMMAND(pd, command_pd,
 	"\ntrysrc [0|1|2]"
 #endif
 	"\n\t<port> state"
+	"\n\t<port> srccaps"
 #ifdef CONFIG_CMD_PD_TIMER
 	"\n\t<port> timer"
 #endif /* CONFIG_CMD_PD_TIMER */

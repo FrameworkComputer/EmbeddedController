@@ -904,6 +904,26 @@ DECLARE_CONSOLE_COMMAND(tcpci_dump, command_tcpc_dump, "<Type-C port>",
 			"dump the TCPC regs");
 #endif /* defined(CONFIG_CMD_TCPC_DUMP) */
 
+void pd_srccaps_dump(int port)
+{
+	int i;
+	const uint32_t *const srccaps = pd_get_src_caps(port);
+
+	for (i = 0; i < pd_get_src_cap_cnt(port); ++i) {
+		uint32_t max_ma, max_mv, min_mv;
+
+		pd_extract_pdo_power(srccaps[i], &max_ma, &max_mv, &min_mv);
+
+		if ((srccaps[i] & PDO_TYPE_MASK) == PDO_TYPE_AUGMENTED) {
+			if (IS_ENABLED(CONFIG_USB_PD_REV30))
+				ccprintf("%d: %dmV-%dmV/%dmA\n", i, min_mv,
+					 max_mv, max_ma);
+		} else {
+			ccprintf("%d: %dmV/%dmA\n", i, max_mv, max_ma);
+		}
+	}
+}
+
 int pd_build_alert_msg(uint32_t *msg, uint32_t *len, enum pd_power_role pr)
 {
 	if (msg == NULL || len == NULL)
