@@ -14,8 +14,8 @@
 #include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
-#include "driver/accel_bma2x2.h"
-#include "driver/accelgyro_bmi_common.h"
+#include "driver/accel_lis2dh.h"
+#include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/nb7v904m.h"
@@ -202,6 +202,9 @@ void board_init(void)
 		gpio_enable_interrupt(GPIO_SUB_C1_INT_EN_RAILS_ODL);
 		check_c1_line();
 	}
+	/* Enable gpio interrupt for base accelgyro sensor */
+	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+
 	/* Turn on 5V if the system is on, otherwise turn it off. */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
 			      CHIPSET_STATE_SOFT_OFF);
@@ -412,25 +415,25 @@ static const mat33_fp_t base_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
-static struct accelgyro_saved_data_t g_bma253_data;
-static struct bmi_drv_data_t g_bmi160_data;
+static struct stprivate_data g_lis2dh_data;
+static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 		.name = "Lid Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMA255,
+		.chip = MOTIONSENSE_CHIP_LIS2DE,
 		.type = MOTIONSENSE_TYPE_ACCEL,
 		.location = MOTIONSENSE_LOC_LID,
-		.drv = &bma2x2_accel_drv,
+		.drv = &lis2dh_drv,
 		.mutex = &g_lid_mutex,
-		.drv_data = &g_bma253_data,
+		.drv_data = &g_lis2dh_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
+		.i2c_spi_addr_flags = LIS2DH_ADDR1_FLAGS,
 		.rot_standard_ref = &lid_standard_ref,
 		.default_range = 2,
-		.min_frequency = BMA255_ACCEL_MIN_FREQ,
-		.max_frequency = BMA255_ACCEL_MAX_FREQ,
+		.min_frequency = LIS2DH_ODR_MIN_VAL,
+		.max_frequency = LIS2DH_ODR_MAX_VAL,
 		.config = {
 			[SENSOR_CONFIG_EC_S0] = {
 				.odr = 10000 | ROUND_UP_FLAG,
@@ -443,18 +446,21 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_ACCEL] = {
 		.name = "Base Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMI160,
+		.chip = MOTIONSENSE_CHIP_LSM6DSM,
 		.type = MOTIONSENSE_TYPE_ACCEL,
 		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi160_drv,
+		.drv = &lsm6dsm_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi160_data,
+		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+				MOTIONSENSE_TYPE_ACCEL),
+		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
+		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
+		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 		.rot_standard_ref = &base_standard_ref,
 		.default_range = 4,
-		.min_frequency = BMI_ACCEL_MIN_FREQ,
-		.max_frequency = BMI_ACCEL_MAX_FREQ,
+		.min_frequency = LSM6DSM_ODR_MIN_VAL,
+		.max_frequency = LSM6DSM_ODR_MAX_VAL,
 		.config = {
 			[SENSOR_CONFIG_EC_S0] = {
 				.odr = 13000 | ROUND_UP_FLAG,
@@ -469,18 +475,21 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_GYRO] = {
 		.name = "Base Gyro",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMI160,
+		.chip = MOTIONSENSE_CHIP_LSM6DSM,
 		.type = MOTIONSENSE_TYPE_GYRO,
 		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi160_drv,
+		.drv = &lsm6dsm_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi160_data,
+		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+				MOTIONSENSE_TYPE_GYRO),
+		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
+		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-		.default_range = 1000, /* dps */
+		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
 		.rot_standard_ref = &base_standard_ref,
-		.min_frequency = BMI_GYRO_MIN_FREQ,
-		.max_frequency = BMI_GYRO_MAX_FREQ,
+		.min_frequency = LSM6DSM_ODR_MIN_VAL,
+		.max_frequency = LSM6DSM_ODR_MAX_VAL,
 	},
 };
 
