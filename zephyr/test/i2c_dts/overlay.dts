@@ -4,19 +4,19 @@
  */
 
 / {
-    named-i2c-ports {
-        compatible = "named-i2c-ports";
-        accel-0 {
-            i2c-port = <&bmi_i2c>;
-            label = "ACCEL_0";
-        };
-    };
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+		accel-0 {
+			i2c-port = <&bmi_i2c>;
+			label = "ACCEL_0";
+		};
+	};
 };
 
 &i2c0 {
-    bmi_i2c: bmi@68 {
-        compatible = "bosch,bmi160";
-        reg = <0x68>;
-        label = "accel-i2c";
-    };
+	bmi_i2c: bmi@68 {
+		compatible = "bosch,bmi160";
+		reg = <0x68>;
+		label = "accel-i2c";
+	};
 };
