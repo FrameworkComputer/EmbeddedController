@@ -56,7 +56,7 @@ GPIO(EC_I2C_USB_C1_MIX_SCL,          PIN(E, 4), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_MIX_SDA,          PIN(E, 3), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_TCPC_SCL,         PIN(F, 3), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_TCPC_SDA,         PIN(F, 2), GPIO_INPUT)
-GPIO(EC_KB_BL_EN,                    PIN(8, 5), GPIO_OUT_LOW)
+GPIO(EC_KB_BL_EN,                    PIN(A, 3), GPIO_OUT_LOW)
 GPIO(EC_PCHHOT_ODL,                  PIN(7, 4), GPIO_ODR_HIGH)
 GPIO(EC_PCH_INT_ODL,                 PIN(B, 0), GPIO_ODR_HIGH)
 GPIO(EC_PCH_PWR_BTN_ODL,             PIN(C, 1), GPIO_ODR_HIGH)
@@ -65,11 +65,9 @@ GPIO(EC_PCH_RTCRST,                  PIN(7, 6), GPIO_OUT_LOW)
 GPIO(EC_PCH_SYS_PWROK,               PIN(3, 7), GPIO_OUT_LOW)
 GPIO(EC_PCH_WAKE_R_ODL,              PIN(C, 0), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(EC_PROCHOT_ODL,                 PIN(6, 3), GPIO_ODR_HIGH)
-GPIO(EC_RST_ODL,                     PIN(7, 7), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(EN_PP5000_FAN,                  PIN(6, 1), GPIO_OUT_HIGH)
 GPIO(EN_PP5000_USBA_R,               PIN(D, 7), GPIO_OUT_LOW)
 GPIO(EN_S5_RAILS,                    PIN(B, 6), GPIO_OUT_LOW)
-GPIO(EN_SLP_Z,                       PIN(A, 3), GPIO_OUT_LOW)
 GPIO(IMVP9_VRRDY_OD,                 PIN(4, 3), GPIO_INPUT)
 GPIO(LID_OPEN,                       PIN(D, 2), GPIO_INPUT)
 GPIO(PCH_PWROK,                      PIN(7, 2), GPIO_OUT_LOW)
@@ -79,8 +77,6 @@ GPIO(USB_C1_FRS_EN,                  PIN(9, 4), GPIO_OUT_LOW)
 GPIO(USB_C1_RST_ODL,                 PIN(9, 6), GPIO_ODR_LOW)
 GPIO(USB_C1_RT_RST_R_ODL,            PIN(0, 2), GPIO_ODR_LOW)
 GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
-
-/* Alternate Functions: */
 
 /* UART alternate functions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)              /* GPIO64/CR_SIN1, GPO65/CR_SOUT1/FLPRG1_L */
@@ -113,7 +109,9 @@ ALTERNATE(PIN_MASK(2, 0x03), 0, MODULE_KB, GPIO_ODR_HIGH)    /* KSO00/GPIO21/JTA
 ALTERNATE(PIN_MASK(3, 0x03), 0, MODULE_KB, GPIO_INPUT | GPIO_PULL_UP) /* KSI0/GPIO31/TRACEDATA3/GP_MOSI, KSI1/GPIO30/TRACEDATA2/GP_CS_L */
 ALTERNATE(PIN_MASK(8, 0x04), 0, MODULE_KB, GPIO_ODR_HIGH)    /* KSO14/GPIO82 */
 
-/* GPIO alternate functions */
+/* PMU alternate functions */
+ALTERNATE(PIN_MASK(0, 0x03), 0, MODULE_PMU, GPIO_INT_BOTH)   /* PSL_IN2_L&GPI00/GPIO00, GPIO01/PSL_IN3_L&GPI01 */
+ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, 0)               /* PSL_IN1_L&GPID2/GPIOD2 */
 
 /* Unused Pins */
 UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
@@ -121,3 +119,5 @@ UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(6, 6))       /* GPO66/ARM_L_x86 */
 UNUSED(PIN(8, 6))       /* GPO86/TXD/CR_SOUT2/FLPRG2_L */
+
+/* Pre-configured PSL balls:  J8  K6 */
