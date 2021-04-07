@@ -1065,7 +1065,7 @@ def StartLoop(console, command_active, shutdown_pipe=None):
                 data_tm = data
 
               # timestamp required on next input
-              if data[end] == b'\n':
+              if data[end] == b'\n'[0]:
                 tm_req = True
               os.write(console.master_pty, data_tm)
             if command_active.value:
