@@ -1712,7 +1712,7 @@ static void rch_waiting_chunk_run(const int port)
 			 */
 			else {
 				/*
-				 * No error wad detected, so clear
+				 * No error was detected, so clear
 				 * PRL_FLAGS_MSG_RECEIVED flag.
 				 */
 				RCH_CLR_FLAG(port, PRL_FLAGS_MSG_RECEIVED);
