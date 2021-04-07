@@ -16,6 +16,21 @@
 	i2c_devices[I2C_PORT(id)] = device_get_binding( \
 		DT_PROP_BY_PHANDLE(id, i2c_port, label));
 
+#define I2C_CONFIG_GPIO(id, type) \
+	DT_ENUM_UPPER_TOKEN(DT_CHILD(DT_CHILD(id, config), type), enum_name)
+
+#define I2C_PORT_INIT(id)                                                 \
+	COND_CODE_1(DT_NODE_EXISTS(DT_CHILD(id, config)),                 \
+		    (                                                     \
+			    {                                             \
+				    .name = DT_LABEL(id),                 \
+				    .port = I2C_PORT(id),                 \
+				    .kbps = DT_PROP(DT_CHILD(id, config), \
+						    frequency),           \
+				    .scl = I2C_CONFIG_GPIO(id, scl),      \
+				    .sda = I2C_CONFIG_GPIO(id, sda),      \
+			    }, ),                                         \
+		    ())
 /*
  * Long term we will not need these, for now they're needed to get things to
  * build since these extern symbols are usually defined in
@@ -24,7 +39,11 @@
  * Since all the ports will eventually be handled by device tree. This will
  * be removed at that point.
  */
-const struct i2c_port_t i2c_ports[] = {};
+const struct i2c_port_t i2c_ports[] = {
+#if DT_NODE_EXISTS(DT_PATH(named_i2c_ports))
+	DT_FOREACH_CHILD(DT_PATH(named_i2c_ports), I2C_PORT_INIT)
+#endif
+};
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 int i2c_get_line_levels(int port)

@@ -32,3 +32,14 @@ properties:
     description:
       Human readable string describing the device (used as device_get_binding()
       argument).
+
+child-binding:
+  description: Optional configuration bindings
+  properties:
+    frequency:
+      type: int
+      required: true
+      description: Transfer data rate in kHz
+  child-binding:
+    description: SCL and SDA configurations
+    include: gpio-enum-name.yaml
