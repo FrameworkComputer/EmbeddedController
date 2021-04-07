@@ -3212,7 +3212,7 @@ void pd_task(void *u)
 			break;
 		case PD_STATE_SRC_DISCONNECTED:
 			timeout = 10*MSEC;
-
+			pd_set_src_caps(port, 0, NULL);
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 			/*
 			 * If SW decided we should be in a low power state and
@@ -3900,7 +3900,7 @@ void pd_task(void *u)
 #else
 			timeout = 10*MSEC;
 #endif
-
+			pd_set_src_caps(port, 0, NULL);
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 			/*
 			 * If SW decided we should be in a low power state and

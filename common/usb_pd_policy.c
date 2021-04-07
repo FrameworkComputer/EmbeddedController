@@ -85,7 +85,6 @@ DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED,
 		     dp_alt_mode_entry_get_next_event);
 #endif /* CONFIG_MKBP_EVENT */
 
-#ifdef CONFIG_USB_PD_DUAL_ROLE
 /* Last received source cap */
 static uint32_t pd_src_caps[CONFIG_USB_PD_PORT_MAX_COUNT][PDO_MAX_OBJECTS];
 static uint8_t pd_src_cap_cnt[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -109,7 +108,6 @@ uint8_t pd_get_src_cap_cnt(int port)
 {
 	return pd_src_cap_cnt[port];
 }
-#endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 static struct pd_cable cable[CONFIG_USB_PD_PORT_MAX_COUNT];
 
