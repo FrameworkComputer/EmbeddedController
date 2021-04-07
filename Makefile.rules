@@ -389,15 +389,22 @@ $(foreach b, $(cts_boards), \
 	) \
 )
 
+cov-boards=lazor volteer
 cov-test-targets=$(foreach t,$(cov-test-list-host),build/coverage/$(t).info)
+cov-test-targets+=$(foreach t,$(cov-boards),build/coverage/initial-$(t).info)
 bldversion=$(shell (./util/getversion.sh ; echo VERSION) | $(CPP) -P -)
 
 # lcov fails when multiple instances run at the same time.
 # We need to run them sequentially by using flock
-cmd_lcov=flock /tmp/ec-lcov-lock -c "lcov -q -o $@ -c -d build/coverage/$*"
+cmd_lcov=flock /tmp/ec-lcov-lock -c "lcov --gcov-tool \
+	$(CURDIR)/util/llvm-gcov.sh -q -o $@ -c -d build/coverage/$* -t $* \
+	--exclude '*/ec/test/*' --exclude '*/ec/include/tests/*'"
+cmd_lcov-initial=flock /tmp/ec-lcov-lock -c "lcov --gcov-tool \
+	$(CURDIR)/util/llvm-gcov.sh -q -o $@ -c -d build/coverage/initial-$* \
+	-i -t $* --exclude '*/ec/test/*' --exclude '*/ec/include/tests/*'"
 cmd_merge_cov=lcov -o build/coverage/lcov.info $(foreach info,$^,-a ${info})
 cmd_report_cov=genhtml -q -o build/coverage/coverage_rpt -t \
-	       "EC Unittest "$(bldversion) $^
+	       "EC Unittest "$(bldversion) -s $^
 
 # Unless V is set to 0 we always want the 'size:' target to report its output,
 # there is no point in generating a short form command trace when calculating
@@ -433,6 +440,10 @@ cmd_stats= \
 	printf "%-10s: %6d\n" $$board $$size; \
   done
 
+.DELETE_ON_ERROR: build/coverage/initial-%.info build/coverage/%.info
+build/coverage/initial-%.info:
+	$(MAKE) TEST_COVERAGE=y BOARD=$* compile-only
+	$(call quiet,lcov-initial,COV    )
 build/coverage/%.info: run-coverage-%
 	$(call quiet,lcov,COV    )
 

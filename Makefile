@@ -50,6 +50,8 @@ EMPTY=
 ifdef CTS_MODULE
 # CTS builds need different directories per board per suite.
 out?=build/$(BOARD)/cts_$(CTS_MODULE)
+else ifdef TEST_COVERAGE
+out?=build/coverage/initial-$(BOARD)
 else
 out?=build/$(BOARD)
 endif
@@ -377,6 +379,7 @@ def_all_deps+=ro
 endif
 all_deps?=$(def_all_deps)
 all: $(all_deps)
+compile-only: $(ro-objs) $(rw-objs)
 
 ro: override BLD:=RO
 ro: $(libsharedobjs_elf-y) $(out)/RO/$(PROJECT).RO.flat
