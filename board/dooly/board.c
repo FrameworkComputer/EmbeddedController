@@ -1156,14 +1156,14 @@ __override void oz554_board_init(void)
 	case 0x00:
 		CPRINTS("PANEL_HAN01.10A");
 		oz554_set_config(0, 0xF3);
-		oz554_set_config(2, 0x55);
-		oz554_set_config(5, 0x87);
+		oz554_set_config(2, 0x4C);
+		oz554_set_config(5, 0xB7);
 		break;
 	case 0x02:
 		CPRINTS("PANEL_WF9_SSA2");
 		oz554_set_config(0, 0xF3);
-		oz554_set_config(2, 0x4C);
-		oz554_set_config(5, 0xB7);
+		oz554_set_config(2, 0x55);
+		oz554_set_config(5, 0x87);
 		break;
 	default:
 		CPRINTS("PANEL UNKNOWN");
