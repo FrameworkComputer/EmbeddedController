@@ -210,6 +210,9 @@ int system_is_reboot_warm(void)
 
 void chip_pre_init(void)
 {
+	/* bit1=0: disable pre-defined command */
+	IT83XX_SMB_SFFCTL &= ~IT83XX_SMB_HSAPE;
+
 	/* bit0, EC received the special waveform from iteflash */
 	if (IT83XX_GCTRL_DBGROS & IT83XX_SMB_DBGR) {
 		/*
