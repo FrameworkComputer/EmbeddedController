@@ -23,10 +23,6 @@
  */
 void ec_app_main(void)
 {
-	printk("Hello from a Chrome EC!\n");
-	printk("  BOARD=%s\n", CONFIG_BOARD);
-	printk("  ACTIVE_COPY=%s\n", CONFIG_CROS_EC_ACTIVE_COPY);
-
 	system_common_pre_init();
 
 	/*
@@ -37,6 +33,8 @@ void ec_app_main(void)
 	if (IS_ENABLED(CONFIG_CMD_AP_RESET_LOG)) {
 		init_reset_log();
 	}
+
+	system_print_banner();
 
 	/*
 	 * Keyboard scan init/Button init can set recovery events to

@@ -4,6 +4,7 @@
  */
 
 #include "system.h"
+#include "cros_version.h"
 
 /* Ongoing actions preventing going into deep-sleep mode. */
 uint32_t sleep_mask;
@@ -45,4 +46,9 @@ int system_is_in_rw(void)
 uint32_t system_get_reset_flags(void)
 {
 	return 0;
+}
+
+void system_print_banner(void)
+{
+	printk("Image: %s\n", build_info);
 }

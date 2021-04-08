@@ -31,7 +31,8 @@ if(DEFINED CONFIG_PLATFORM_EC)
   # Create the command used to generate the ec_version.h file.
   add_custom_command(
           OUTPUT ${ec_version_file}
-          COMMAND ${PLATFORM_EC}/util/getversion.sh BOARD=${BOARD} > ${ec_version_file}
+          # TODO(b/185249526): zephyr: add project name to the version output
+          COMMAND BOARD=${BOARD}_zephyr ${PLATFORM_EC}/util/getversion.sh > ${ec_version_file}
           WORKING_DIRECTORY ${PLATFORM_EC}
   )
   # Create a custom target that will depend on the file.

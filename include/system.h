@@ -121,6 +121,11 @@ void system_clear_reset_flags(uint32_t flags);
 void system_print_reset_flags(void);
 
 /**
+ * Print a banner at boot, including image type, version, and reset type
+ */
+void system_print_banner(void);
+
+/**
  * Check if system is locked down for normal consumer use.
  *
  * @return non-zero if the system is locked down for normal consumer use.
