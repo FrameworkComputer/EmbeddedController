@@ -134,11 +134,13 @@ def main(argv=None):
     if not opts.debug:
         sys.tracebacklimit = 0
 
-    zmake = call_with_namespace(zm.Zmake, opts)
-    subcommand_method = getattr(zmake, opts.subcommand.replace('-', '_'))
-    result = call_with_namespace(subcommand_method, opts)
-    multiproc.wait_for_log_end()
-    return result
+    try:
+        zmake = call_with_namespace(zm.Zmake, opts)
+        subcommand_method = getattr(zmake, opts.subcommand.replace('-', '_'))
+        result = call_with_namespace(subcommand_method, opts)
+        return result
+    finally:
+        multiproc.wait_for_log_end()
 
 
 if __name__ == '__main__':
