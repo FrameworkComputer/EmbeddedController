@@ -16,11 +16,11 @@
  * | ROM vectortable, .text, .rodata, .data LMA
  * +-------------------- 0x58000
  * | RAM .bss, .data
- * +-------------------- 0x0ffc00
+ * +-------------------- 0xbfc00
  * | Reserved (padding for 1k-alignment)
- * +-------------------- 0x0ffdb0
+ * +-------------------- 0xbfdb0
  * | IPI shared buffer with AP (288 + 8) * 2
- * +-------------------- 0x100000
+ * +-------------------- 0xc0000
  */
 #define CONFIG_ROM_BASE 0x0
 #define CONFIG_RAM_BASE 0x58000
@@ -28,6 +28,6 @@
 #define CONFIG_RAM_SIZE ((CONFIG_IPC_SHARED_OBJ_ADDR & (~(0x400 - 1))) - \
 			 CONFIG_RAM_BASE)
 
-#define SCP_FW_END 0x100000
+#define SCP_FW_END 0xc0000
 
 #endif /* __CROS_EC_BOARD_H */
