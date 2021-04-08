@@ -33,7 +33,7 @@ config PLATFORM_EC_CONSOLE_CMD_CRASH
 config PLATFORM_EC_STACKOVERFLOW
 	bool "Console command: crash stack"
 	depends on PLATFORM_EC_CONSOLE_CMD_CRASH
-	default y
+	default y if !ZTEST && !SOC_POSIX
 	help
 	  This enables the 'stack' parameter for the 'crash' command. This
 	  causes a stack overflow by recursing repeatedly while task switching.
