@@ -9,5 +9,3 @@
 CHIP:=mt8192_scp
 CHIP_VARIANT:=mt8192
 BASEBOARD:=mtscp-rv32i
-
-board-y=board.o
