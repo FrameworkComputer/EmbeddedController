@@ -24,6 +24,8 @@
  * because it leaves some (NMI and faults) still enabled.
  */
 #define interrupt_disable_all() __asm__("cpsid i")
+#elif CONFIG_ZTEST
+#define interrupt_disable_all()
 #endif
 #else /* !CONFIG_ZEPHYR */
 #define interrupt_disable_all() interrupt_disable()
