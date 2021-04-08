@@ -19,9 +19,8 @@
 #include "watchdog.h"
 
 /* WDCNT value for watchdog period */
-#define WDCNT_VALUE   ((CONFIG_WATCHDOG_PERIOD_MS*INT_32K_CLOCK) / (1024*1000))
-/* Delay time for warning timer to print watchdog info through UART */
-#define WDCNT_DELAY   WDCNT_VALUE
+#define WDCNT_VALUE \
+	((CONFIG_WATCHDOG_PERIOD_MS * INT_32K_CLOCK) / (1024 * 1000))
 
 void watchdog_init_warning_timer(void)
 {
@@ -34,28 +33,17 @@ void watchdog_init_warning_timer(void)
 	 * PRE_8 = (Ttick_unit/T32K) - 1
 	 * Unit: 1 msec
 	 */
-	NPCX_ITPRE(ITIM_WDG_NO)  = DIV_ROUND_NEAREST(1000*INT_32K_CLOCK,
-							 SECOND) - 1;
+	NPCX_ITPRE(ITIM_WDG_NO) =
+		DIV_ROUND_NEAREST(1000 * INT_32K_CLOCK, SECOND) - 1;
 
 	/* Event module disable */
 	CLEAR_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_ITEN);
-	/* ITIM count down : event expired*/
-	NPCX_ITCNT(ITIM_WDG_NO) = CONFIG_AUX_TIMER_PERIOD_MS - 1;
+	/* ITIM count down : event expired */
+	NPCX_ITCNT(ITIM_WDG_NO) = CONFIG_AUX_TIMER_PERIOD_MS;
 	/* Event module enable */
 	SET_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_ITEN);
 	/* Enable interrupt of ITIM */
 	task_enable_irq(ITIM_INT(ITIM_WDG_NO));
-}
-
-static uint8_t watchdog_count(void)
-{
-	uint8_t cnt;
-	/* Wait for two consecutive equal values are read */
-	do {
-		cnt = NPCX_TWMWD;
-	} while (cnt != NPCX_TWMWD);
-
-	return cnt;
 }
 
 static timestamp_t last_watchdog_touch;
@@ -79,10 +67,26 @@ static void touch_watchdog_count(void)
 	last_watchdog_touch = get_time();
 }
 
+static void watchdog_reload_warning_timer(void)
+{
+	/* Disable warning timer module  */
+	CLEAR_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_ITEN);
+	/* Wait for module disable to take effect before updating count */
+	while (IS_BIT_SET(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_ITEN))
+		;
+
+	/* Reload the warning timer count */
+	NPCX_ITCNT(ITIM_WDG_NO) = CONFIG_AUX_TIMER_PERIOD_MS;
+
+	/* enable warning timer module  */
+	SET_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_ITEN);
+	/* Wait for module enable */
+	while (!IS_BIT_SET(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_ITEN))
+		;
+}
+
 void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 {
-	int  wd_cnt;
-
 #ifdef CONFIG_TASK_PROFILING
 	/*
 	 * Perform IRQ profiling accounting. This is normally done by
@@ -94,25 +98,8 @@ void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 	/* Clear timeout status for event */
 	SET_BIT(NPCX_ITCTS(ITIM_WDG_NO), NPCX_ITCTS_TO_STS);
 
-	/* Read watchdog counter from TWMWD */
-	wd_cnt = watchdog_count();
-#if DEBUG_WDG
-	panic_printf("WD (%d)\r\n", wd_cnt);
-#endif
-	if (wd_cnt <= WDCNT_DELAY) {
-		/*
-		 * Touch watchdog to let UART have enough time
-		 * to print panic info
-		 */
-		touch_watchdog_count();
-
-		/* Print panic info */
-		watchdog_trace(excep_lr, excep_sp);
-		cflush();
-
-		/* Trigger watchdog immediately */
-		system_watchdog_reset();
-	}
+	/* Print panic info */
+	watchdog_trace(excep_lr, excep_sp);
 }
 
 /* ISR for watchdog warning naked will keep SP & LR */
@@ -139,6 +126,8 @@ void watchdog_reload(void)
 {
 	/* Disable watchdog interrupt */
 	task_disable_irq(ITIM_INT(ITIM_WDG_NO));
+
+	watchdog_reload_warning_timer();
 
 #if 1 /* mark this for testing watchdog */
 	/* Touch watchdog & reset software counter */
@@ -176,12 +165,9 @@ int watchdog_init(void)
 
 	/*
 	 * Set WDCNT initial reload value and T0OUT timeout period
-	 * 1. Watchdog clock source is 32768/1024 Hz and disable T0OUT.
-	 * 2. ITIM16 will be issued to check WDCNT is under WDCNT_DELAY or not
-	 * 3. Set RST to upload TWDT0 & WDCNT
+	 * WDCNT = 0 will generate watchdog reset
 	 */
-	/* Set WDCNT --> WDCNT=0 will generate watchdog reset */
-	NPCX_WDCNT = WDCNT_VALUE + WDCNT_DELAY;
+	NPCX_WDCNT = WDCNT_VALUE;
 
 	/* Disable interrupt */
 	interrupt_disable();
