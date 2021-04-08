@@ -238,8 +238,13 @@ int i2c_xfer_unlocked(const int port,
 			num_msgs++;
 		}
 
+
+		if (no_pec_af & ~I2C_ADDR_MASK)
+			ccprintf("Ignoring flags from i2c addr_flags: %04x",
+					no_pec_af);
+
 		return i2c_transfer(i2c_get_device_for_port(port), msg,
-				    num_msgs, no_pec_af);
+				    num_msgs, I2C_STRIP_FLAGS(no_pec_af));
 #elif defined(CONFIG_I2C_XFER_LARGE_TRANSFER)
 		ret = i2c_xfer_no_retry(port, no_pec_af,
 					    out, out_size, in,
