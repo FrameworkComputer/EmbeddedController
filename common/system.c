@@ -226,6 +226,10 @@ void system_encode_save_flags(int reset_flags, uint32_t *save_flags)
 	if (reset_flags & SYSTEM_RESET_STAY_IN_RO)
 		*save_flags |= EC_RESET_FLAG_STAY_IN_RO;
 
+	/* Add in watchdog flag into saved flags. */
+	if (reset_flags & SYSTEM_RESET_AP_WATCHDOG)
+		*save_flags |= EC_RESET_FLAG_AP_WATCHDOG;
+
 	/* Save reset flag */
 	if (reset_flags & (SYSTEM_RESET_HARD | SYSTEM_RESET_WAIT_EXT))
 		*save_flags |= EC_RESET_FLAG_HARD;
