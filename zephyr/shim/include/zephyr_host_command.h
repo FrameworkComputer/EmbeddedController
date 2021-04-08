@@ -12,6 +12,8 @@
 
 #include <init.h>
 
+#ifdef CONFIG_PLATFORM_EC_HOSTCMD
+
 /** Node in a list of host-command handlers */
 struct zshim_host_command_node {
 	struct host_command *cmd;
@@ -50,3 +52,7 @@ void zshim_setup_host_command(
 		return 0;                                                  \
 	}                                                                  \
 	SYS_INIT(_setup_host_command_##line, APPLICATION, 1)
+#else /* !CONFIG_PLATFORM_EC_HOSTCMD */
+#define DECLARE_HOST_COMMAND(command, routine, version_mask)    \
+	enum ec_status (routine)(struct host_cmd_handler_args *args)
+#endif /* CONFIG_PLATFORM_EC_HOSTCMD */
