@@ -502,7 +502,6 @@ static enum ec_status lpc_get_protocol_info(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, lpc_get_protocol_info,
 		     EC_VER_MASK(0));
 
-#if defined(CONFIG_ESPI_PERIPHERAL_8042_KBC)
 /*
  * This function is needed only for the obsolete platform which uses the GPIO
  * for KBC's IRQ.
@@ -542,9 +541,9 @@ void lpc_aux_put_char(uint8_t chr, int send_irq)
 	LOG_INF("AUX put %02x", kb_char);
 }
 
-#ifdef HAS_TASK_KEYPROTO
 static void kbc_ibf_obe_handler(uint32_t data)
 {
+#ifdef HAS_TASK_KEYPROTO
 	uint8_t is_ibf = (data >> NPCX_8042_EVT_POS) & NPCX_8042_EVT_IBF;
 	uint32_t status = I8042_AUX_DATA;
 
@@ -555,8 +554,8 @@ static void kbc_ibf_obe_handler(uint32_t data)
 		espi_write_lpc_request(espi_dev, E8042_CLEAR_FLAG, &status);
 	}
 	task_wake(TASK_ID_KEYPROTO);
-}
 #endif
+}
 
 int lpc_keyboard_input_pending(void)
 {
@@ -566,5 +565,3 @@ int lpc_keyboard_input_pending(void)
 	espi_read_lpc_request(espi_dev, E8042_IBF_HAS_CHAR, &status);
 	return status;
 }
-
-#endif
