@@ -159,6 +159,7 @@ enum adc_channel {
 /* List of possible batteries */
 enum battery_type {
 	BATTERY_SDI,
+	BATTERY_SWD,
 	BATTERY_TYPE_COUNT,
 };
 
