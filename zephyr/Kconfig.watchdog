@@ -10,7 +10,18 @@ config PLATFORM_EC_WATCHDOG_PERIOD_MS
 	help
 	  Set the timeout of the watchdog timer. The watchdog timer reboots
 	  the system if no one reloads the watchdog timer before the timeout.
-	  The interval between reloads of the watchdog timer should be less than
-	  half of the watchdog period.
+
+config PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS
+	int "Leading time of the watchdog warning timer in ms"
+	default 500
+	depends on !WDT_NPCX
+	help
+	  Set the leading time of the watchdog warning timer. Chromium EC system
+	  uses an auxiliary timer to handle the system warning event. The
+	  auxiliary timer period (CONFIG_AUX_TIMER_PERIOD_MS) is set to
+	  PLATFORM_EC_WATCHDOG_PERIOD_MS -
+	  PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS.
+
+	  For the NPCX chip, use WDT_NPCX_DELAY_CYCLES instead of this config.
 
 endif # PLATFORM_EC_WATCHDOG

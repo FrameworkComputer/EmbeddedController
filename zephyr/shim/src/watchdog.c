@@ -17,7 +17,7 @@ LOG_MODULE_REGISTER(watchdog_shim, LOG_LEVEL_ERR);
 static void wdt_warning_handler(const struct device *wdt_dev, int channel_id)
 {
 	/* TODO(b/176523207): watchdog warning message */
-	LOG_INF("Watchdog is expired");
+	printk("Watchdog deadline is close!\n");
 }
 
 int watchdog_init(void)
@@ -36,12 +36,11 @@ int watchdog_init(void)
 	wdt_config.flags = WDT_FLAG_RESET_SOC;
 
 	/*
-	 * The Warning timer = CONFIG_WATCHDOG_PERIOD_MS.
-	 * The watchdog reset time
-	 * = CONFIG_WATCHDOG_PERIOD_MS + time of CONFIG_WDT_NPCX_DELAY_CYCLES
+	 * Set the Warning timer as CONFIG_AUX_TIMER_PERIOD_MS.
+	 * Then the watchdog reset time = CONFIG_WATCHDOG_PERIOD_MS.
 	 */
 	wdt_config.window.min = 0U;
-	wdt_config.window.max = CONFIG_WATCHDOG_PERIOD_MS;
+	wdt_config.window.max = CONFIG_AUX_TIMER_PERIOD_MS;
 	wdt_config.callback = wdt_warning_handler;
 
 	err = wdt_install_timeout(wdt, &wdt_config);

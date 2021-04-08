@@ -5963,7 +5963,7 @@
  * reloads of the watchdog timer should be less than half of the watchdog
  * period.
  */
-#if !defined(CONFIG_ZEPHYR) && defined(CONFIG_WATCHDOG)
+#ifdef CONFIG_WATCHDOG
 #if (CONFIG_AUX_TIMER_PERIOD_MS) < ((HOOK_TICK_INTERVAL_MS) * 2)
 #error "CONFIG_AUX_TIMER_PERIOD_MS must be at least 2x HOOK_TICK_INTERVAL_MS"
 #endif

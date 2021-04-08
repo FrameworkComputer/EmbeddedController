@@ -58,13 +58,6 @@
 /*
  * ECOS specific options, not used in Zephyr.
  */
-
- /*
-  * The Zephyr npcx watchdog driver provider a delay set by
-  * CONFIG_WDT_NPCX_DELAY_CYCLES for displaying the warning message.
-  * CONFIG_AUX_TIMER_PERIOD_MS isn't used by the Zephyr code.
-  */
-#undef CONFIG_AUX_TIMER_PERIOD_MS
 #undef CONFIG_CONSOLE_UART /* Only used by the Chromium EC chip drivers */
 #undef CONFIG_I2C_MULTI_PORT_CONTROLLER /* Not required by I2C shim */
 #undef CONFIG_IRQ_COUNT /* Only used by Chromium EC core drivers */
@@ -1326,14 +1319,23 @@
 #undef CONFIG_WATCHDOG_PERIOD_MS
 #ifdef CONFIG_PLATFORM_EC_WATCHDOG_PERIOD_MS
 #define CONFIG_WATCHDOG_PERIOD_MS CONFIG_PLATFORM_EC_WATCHDOG_PERIOD_MS
-/*
- * Chromium ec uses hook tick to reload the watchdog. Interval between reloads
- * of the watchdog timer should be less than half of the watchdog period.
- */
-#if (CONFIG_WATCHDOG_PERIOD_MS) < ((HOOK_TICK_INTERVAL_MS) * 2)
-#error "CONFIG_WATCHDOG_PERIOD_MS must be at least 2x HOOK_TICK_INTERVAL_MS"
 #endif
-#endif /* CONFIG_PLATFORM_EC_WATCHDOG_PERIOD_MS */
+
+#undef CONFIG_WATCHDOG_WARNING_LEADING_TIME_MS
+#if defined(CONFIG_PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS) || \
+	defined(CONFIG_WDT_NPCX_DELAY_CYCLES)
+/*
+ * Note: NPCX wdt driver uses CONFIG_WDT_NPCX_DELAY_CYCLES to set the leading
+ * time of the watchdog warning timer.
+ */
+#ifdef CONFIG_WDT_NPCX_DELAY_CYCLES
+#define CONFIG_WATCHDOG_WARNING_LEADING_TIME_MS \
+	(CONFIG_WDT_NPCX_DELAY_CYCLES * 31)
+#else
+#define CONFIG_WATCHDOG_WARNING_LEADING_TIME_MS \
+	CONFIG_PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS
+#endif
+#endif
 
 #undef CONFIG_VBOOT_EFS
 #undef CONFIG_VBOOT_EFS2
