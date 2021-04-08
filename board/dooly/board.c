@@ -187,65 +187,55 @@ DECLARE_DEFERRED(power_monitor);
 __override void tcs3400_translate_to_xyz(struct motion_sensor_t *s,
 				     int32_t *crgb_data, int32_t *xyz_data)
 {
-	int n, cur_gain, dgf;
+	int n, cur_gain;
 	fp_t n_interval;
-	fp_t integration_time_us;
+	int integration_time_us;
 	struct tcs_saturation_t *sat_p =
 				&(TCS3400_RGB_DRV_DATA(s+1)->saturation);
 
 	cur_gain = (1 << (2 * sat_p->again));
 
 	integration_time_us =
-		(tcs3400_get_integration_time(sat_p->atime));
+		tcs3400_get_integration_time(sat_p->atime);
 
 	/* n_interval = (G+B)/C, to use different coefficient*/
-	n_interval = INT_TO_FP(crgb_data[2]+crgb_data[3])/crgb_data[0];
-
-	dgf = 993; /* Device and Glass Factor */
-
-	if (n_interval < FLOAT_TO_FP(0.514))
-		n = 1;
-	else if (n_interval >= FLOAT_TO_FP(0.514) &&
-			 n_interval < FLOAT_TO_FP(0.66))
-		n = 2;
-	else if (n_interval >= FLOAT_TO_FP(0.66) &&
-			 n_interval < FLOAT_TO_FP(1.012))
-		n = 3;
+	if (crgb_data[0] != 0)
+		n_interval = INT_TO_FP(crgb_data[2]+crgb_data[3])/crgb_data[0];
 	else
-		n = 4;
+		n_interval = FLOAT_TO_FP(0.692); /* set default n = 2 */
+
+	if (n_interval < FLOAT_TO_FP(0.692))
+		n = 1;
+	else if (n_interval >= FLOAT_TO_FP(0.692) &&
+			n_interval < FLOAT_TO_FP(1.012))
+		n = 2;
+	else
+		n = 3;
 
 	switch (n) {
 	case 1:
-		xyz_data[1] = (fp_inter_t)(FP_TO_INT(dgf *
-		(crgb_data[0]*(fp_inter_t)FLOAT_TO_FP(3.8) +
-		 crgb_data[1]*(fp_inter_t)FLOAT_TO_FP(3.956) +
-		 crgb_data[2]*(fp_inter_t)FLOAT_TO_FP(-20.915) +
-		 crgb_data[3]*(fp_inter_t)FLOAT_TO_FP(3.281))))*1000 /
-		 (integration_time_us*cur_gain);
+		xyz_data[1] = FP_TO_INT(fp_mul(FLOAT_TO_FP(799.797),
+		(fp_mul(INT_TO_FP(crgb_data[0]), FLOAT_TO_FP(0.009)) +
+		fp_mul(INT_TO_FP(crgb_data[1]), FLOAT_TO_FP(0.056)) +
+		fp_mul(INT_TO_FP(crgb_data[2]), FLOAT_TO_FP(2.735)) +
+		fp_mul(INT_TO_FP(crgb_data[3]), FLOAT_TO_FP(-1.903))) /
+		(integration_time_us * cur_gain / 1000ULL)));
 	break;
 	case 2:
-		xyz_data[1] = (fp_inter_t)(FP_TO_INT(dgf *
-		(crgb_data[0]*(fp_inter_t)FLOAT_TO_FP(-17.436) +
-		 crgb_data[1]*(fp_inter_t)FLOAT_TO_FP(14.535) +
-		 crgb_data[2]*(fp_inter_t)FLOAT_TO_FP(32.07) +
-		 crgb_data[3]*(fp_inter_t)FLOAT_TO_FP(2.43))))*1000 /
-		 (integration_time_us*cur_gain);
+		xyz_data[1] = FP_TO_INT(fp_mul(FLOAT_TO_FP(801.347),
+		(fp_mul(INT_TO_FP(crgb_data[0]), FLOAT_TO_FP(0.202)) +
+		fp_mul(INT_TO_FP(crgb_data[1]), FLOAT_TO_FP(-1.1)) +
+		fp_mul(INT_TO_FP(crgb_data[2]), FLOAT_TO_FP(8.692)) +
+		fp_mul(INT_TO_FP(crgb_data[3]), FLOAT_TO_FP(-7.068))) /
+		(integration_time_us * cur_gain / 1000ULL)));
 	break;
 	case 3:
-		xyz_data[1] = (fp_inter_t)(FP_TO_INT(dgf *
-		(crgb_data[0]*(fp_inter_t)FLOAT_TO_FP(0.08) +
-		 crgb_data[1]*(fp_inter_t)FLOAT_TO_FP(-0.89) +
-		 crgb_data[2]*(fp_inter_t)FLOAT_TO_FP(7.096) +
-		 crgb_data[3]*(fp_inter_t)FLOAT_TO_FP(-5.603))))*1000 /
-		 (integration_time_us*cur_gain);
-	break;
-	case 4:
-		xyz_data[1] = (fp_inter_t)(FP_TO_INT(dgf *
-		(crgb_data[0]*(fp_inter_t)FLOAT_TO_FP(-0.686) +
-		 crgb_data[1]*(fp_inter_t)FLOAT_TO_FP(1.224) +
-		 crgb_data[2]*(fp_inter_t)FLOAT_TO_FP(4.043) +
-		 crgb_data[3]*(fp_inter_t)FLOAT_TO_FP(-4.584))))*1000 /
-		 (integration_time_us*cur_gain);
+		xyz_data[1] = FP_TO_INT(fp_mul(FLOAT_TO_FP(795.574),
+		(fp_mul(INT_TO_FP(crgb_data[0]), FLOAT_TO_FP(-0.661)) +
+		fp_mul(INT_TO_FP(crgb_data[1]), FLOAT_TO_FP(1.334)) +
+		fp_mul(INT_TO_FP(crgb_data[2]), FLOAT_TO_FP(1.095)) +
+		fp_mul(INT_TO_FP(crgb_data[3]), FLOAT_TO_FP(-1.821))) /
+		(integration_time_us * cur_gain / 1000ULL)));
 	break;
 	default:
 	break;
