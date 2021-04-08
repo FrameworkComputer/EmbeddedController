@@ -1,0 +1,11 @@
+description: Unused GPIOs node
+
+compatible: "unused-gpios"
+
+properties:
+  unused-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      A list contains unused GPIOs. The chip vendor needs to configure them for
+      better power consumption in the lowest power state.

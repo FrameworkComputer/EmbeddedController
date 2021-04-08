@@ -9,6 +9,7 @@
 #include <logging/log.h>
 
 #include "gpio.h"
+#include "gpio/gpio.h"
 
 LOG_MODULE_REGISTER(gpio_shim, LOG_LEVEL_ERR);
 
@@ -280,6 +281,16 @@ static int init_gpios(const struct device *unused)
 			LOG_ERR("Callback reg failed %s (%d)",
 				configs[signal].name, rv);
 			continue;
+		}
+	}
+
+	/* Configure unused pins in chip driver for better power consumption */
+	if (gpio_config_unused_pins) {
+		int rv;
+
+		rv = gpio_config_unused_pins();
+		if (rv < 0) {
+			return rv;
 		}
 	}
 
