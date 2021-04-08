@@ -12,11 +12,6 @@
 #ifdef CONFIG_PLATFORM_EC_I2C
 #if DT_NODE_EXISTS(DT_PATH(named_i2c_ports))
 
-/* EEPROM flags */
-#if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_i2c_port_eeprom)
-#define I2C_ADDR_EEPROM_FLAGS \
-	DT_PROP(DT_INST(0, cros_ec_i2c_port_eeprom), addr_flags)
-#endif
 #define I2C_PORT(id) DT_ENUM_UPPER_TOKEN(id, enum_name)
 #define I2C_PORT_WITH_COMMA(id) I2C_PORT(id),
 
