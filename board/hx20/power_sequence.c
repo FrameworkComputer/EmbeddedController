@@ -370,12 +370,6 @@ enum power_state power_handle_state(enum power_state state)
 				ap_boot_delay = 9;
 				return POWER_S5G3; /* Power up again */
 			}
-
-			if (me_change){
-				CPRINTS("Turn off RSMRST for reset ME mode");
-				gpio_set_level(GPIO_PCH_RSMRST_L, 0);
-				me_change = 0;
-			}
 		}
 
 		return POWER_S5S3; /* Power up to next state */
@@ -524,19 +518,36 @@ static enum ec_status set_ap_reboot_delay(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_SET_AP_REBOOT_DELAY, set_ap_reboot_delay,
 			EC_VER_MASK(0));
 
+void me_gpio_change(uint32_t flags)
+{
+	switch (flags) {
+	case GPIO_OPEN_DRAIN:
+		if (me_change & ME_UNLOCK)
+			gpio_set_flags(GPIO_ME_EN, GPIO_PULL_UP | GPIO_ODR_HIGH);
+		else
+			gpio_set_flags(GPIO_ME_EN, GPIO_PULL_DOWN | GPIO_ODR_HIGH);
+		break;
+	case GPIO_ODR_HIGH:
+		gpio_set_flags(GPIO_ME_EN, GPIO_ODR_HIGH);
+		break;
+	case GPIO_ODR_LOW:
+		gpio_set_flags(GPIO_ME_EN, GPIO_ODR_LOW);
+		break;
+	}
+}
+
 static enum ec_status me_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_me_control *p = args->params;
-	me_change = 1;
 
 	/* CPU change ME mode based on ME_EN while RSMRST rising.
-	 * So, when we received ME control command, we need to turn off RSMRST.
+	 * So, when we received ME control command, we need to change ME_EN when power on.
 	 * ME_EN low = lock.
 	 */
 	if (p->me_mode & ME_UNLOCK)
-		gpio_set_level(GPIO_ME_EN, 1);
+		me_change = ME_UNLOCK;
 	else
-		gpio_set_level(GPIO_ME_EN, 0);
+		me_change = ME_LOCK;
 
 	CPRINTS("Receive ME %s\n", (p->me_mode & ME_UNLOCK) == ME_UNLOCK ? "unlock" : "lock");
 	return EC_SUCCESS;
