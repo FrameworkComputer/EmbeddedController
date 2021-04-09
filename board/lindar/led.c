@@ -12,6 +12,7 @@
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "ktd20xx.h"
 #include "led_common.h"
@@ -20,6 +21,7 @@
 #include "stdbool.h"
 #include "task.h"
 #include "timer.h"
+#include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
@@ -272,6 +274,59 @@ static bool lightbar_is_supported(void)
  */
 static bool lightbar_enter_s0ix_s3;
 
+/*
+ * lightbar_auto_control:
+ * We need some command for testing lightbar in factory.
+ * So, create this flag to stop regular action in lightbar_update().
+ *
+ * lightbar_demo_state:
+ * It's used for testing lightbar via executing command under
+ * console.
+ */
+static bool lightbar_auto_control;
+static enum lightbar_states lightbar_demo_state;
+
+static void lightbar_set_auto_control(bool state)
+{
+	lightbar_auto_control = state;
+}
+
+static bool lightbar_is_auto_control(void)
+{
+	return lightbar_auto_control;
+}
+
+static void lightbar_set_demo_state(enum lightbar_states tmp_state)
+{
+	if (tmp_state >= LB_NUM_STATES || tmp_state < LB_STATE_OFF) {
+		lightbar_demo_state = LB_NUM_STATES;
+		lightbar_resume_tick = 0;
+	} else {
+		lightbar_demo_state = tmp_state;
+
+		if (lightbar_demo_state >= LB_STATE_S0_AC_ONLY)
+			lightbar_resume_tick =
+				LIGHTBAR_COUNT_FOR_RESUME_FROM_SLEEP;
+	}
+	ccprintf("lightbar_demo_state = %d; lightbar_resume_tick %d.\n",
+			lightbar_demo_state,
+			lightbar_resume_tick);
+}
+
+static enum lightbar_states lightbar_get_demo_state(void)
+{
+	/*
+	 * Once tick count to zero, it needs to return LB_STATE_OFF to
+	 * simulate lightbar off.
+	 */
+	if ((lightbar_demo_state != LB_NUM_STATES) &&
+		(lightbar_demo_state >= LB_STATE_S0_AC_ONLY) &&
+		(lightbar_resume_tick == 0))
+		return LB_STATE_OFF;
+
+	return lightbar_demo_state;
+}
+
 static bool lightbar_is_enabled(void)
 {
 	if (!lightbar_is_supported())
@@ -435,6 +490,7 @@ static void lightbar_sleep_entry(void)
 	if (!lightbar_is_enabled())
 		return;
 
+	lightbar_set_auto_control(true);
 	/*
 	 * Set this flag, then EC'll base on it to set resume tick after
 	 * S0ix/S3 exit.
@@ -452,6 +508,7 @@ static void lightbar_sleep_exit(void)
 	if (!lightbar_is_enabled())
 		return;
 
+	lightbar_set_auto_control(true);
 	if (lightbar_enter_s0ix_s3)
 		lightbar_resume_tick = LIGHTBAR_COUNT_FOR_RESUME_FROM_SLEEP;
 	else
@@ -534,7 +591,17 @@ static void lightbar_update(void)
 	if (!lightbar_is_enabled())
 		return;
 
-	desired_state = lightbar_get_state();
+	if (lightbar_is_auto_control())
+		desired_state = lightbar_get_state();
+	else {
+		desired_state = lightbar_get_demo_state();
+		/*
+		 * Stop to update lb_cur_state if desired_state is equal to
+		 * LB_NUM_STATES.
+		 */
+		if (desired_state == LB_NUM_STATES)
+			return;
+	}
 
 	if (lightbar_resume_tick)
 		lightbar_resume_tick--;
@@ -585,3 +652,141 @@ static void lightbar_update(void)
 }
 
 DECLARE_HOOK(HOOK_TICK, lightbar_update, HOOK_PRIO_DEFAULT);
+
+/****************************************************************************/
+/* EC console commands for lightbar */
+/****************************************************************************/
+static void lightbar_dump_status(void)
+{
+	uint32_t cbi_bid, cbi_skuid;
+	int cbi_ssfc_lightbar;
+
+	ccprintf("lightbar is %ssupported, %sabled, auto_control: %sabled\n",
+			lightbar_is_supported()?"":"un-",
+			lightbar_is_enabled()?"en":"dis",
+			lightbar_is_auto_control()?"en":"dis");
+
+	cbi_bid = get_board_id();
+	cbi_get_sku_id(&cbi_skuid);
+	cbi_ssfc_lightbar = get_cbi_ssfc_lightbar();
+	ccprintf("board id = %d, skuid = %d, ssfc_lightbar = %d\n",
+			cbi_bid,
+			cbi_skuid,
+			cbi_ssfc_lightbar);
+}
+
+#ifdef CONFIG_CONSOLE_CMDHELP
+static int help(const char *cmd)
+{
+	ccprintf("Usage:\n");
+	ccprintf("  %s                       - dump lightbar status\n", cmd);
+	ccprintf("  %s on                    - set on lightbar auto control\n",
+				cmd);
+	ccprintf("  %s off                   - set off lightbar auto control\n",
+				cmd);
+	ccprintf("  %s demo [%x - %x]          - demo lightbar state\n",
+				cmd, LB_STATE_OFF, (LB_NUM_STATES - 1));
+	return EC_SUCCESS;
+}
+#endif
+
+static int command_lightbar(int argc, char **argv)
+{
+	/* no args = dump lightbar status */
+	if (argc == 1) {
+		lightbar_dump_status();
+		return EC_SUCCESS;
+	}
+
+	if (!strcasecmp(argv[1], "help")) {
+	#ifdef CONFIG_CONSOLE_CMDHELP
+		help(argv[0]);
+	#endif
+		return EC_SUCCESS;
+	}
+
+	if (!lightbar_is_enabled()) {
+		lightbar_dump_status();
+		return EC_ERROR_UNIMPLEMENTED;
+	}
+
+	if (!strcasecmp(argv[1], "on")) {
+		lightbar_set_auto_control(true);
+		return EC_SUCCESS;
+	}
+
+	if (!strcasecmp(argv[1], "off")) {
+		lightbar_set_auto_control(false);
+		lightbar_set_demo_state(LB_NUM_STATES);
+		return EC_SUCCESS;
+	}
+
+	if (!strcasecmp(argv[1], "demo")) {
+		int lb_demo_state;
+		char *e;
+
+		/* Need to disable auto_control before demo */
+		if (lightbar_is_auto_control()) {
+			ccprintf("Please set off auto control before demo.\n");
+			return EC_ERROR_ACCESS_DENIED;
+		}
+
+		lb_demo_state = 0xff & strtoi(argv[2], &e, 16);
+		lightbar_set_demo_state(lb_demo_state);
+		return EC_SUCCESS;
+	}
+
+#ifdef CONFIG_CONSOLE_CMDHELP
+	help(argv[0]);
+#endif
+
+	return EC_ERROR_INVAL;
+}
+
+DECLARE_CONSOLE_COMMAND(lightbar, command_lightbar,
+			"[help | on | off | demo]",
+			"get/set lightbar status");
+
+/****************************************************************************/
+/* EC host commands (ectool) for lightbar */
+/****************************************************************************/
+static enum ec_status lpc_cmd_lightbar(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_lightbar *in = args->params;
+	int lb_demo_state;
+
+	/*
+	 * HOST_CMD is binded with ectool. From ectool.c, it already define
+	 * command format.
+	 * We only base on "off", "on", and "seq" to do what we can do
+	 * now.
+	 * Originally, I expect to use "demo", but it limit "in->demo.num"
+	 * within 0~1. So, adopt "seq" command for basic testing.
+	 */
+	switch (in->cmd) {
+	case LIGHTBAR_CMD_OFF:
+		lightbar_set_auto_control(false);
+		lightbar_set_demo_state(LB_NUM_STATES);
+		break;
+	case LIGHTBAR_CMD_ON:
+		lightbar_set_auto_control(true);
+		break;
+	case LIGHTBAR_CMD_SEQ:
+		lb_demo_state = in->seq.num;
+		if (lightbar_is_auto_control()) {
+			CPRINTS("Please set off auto control before demo.");
+			return EC_RES_ACCESS_DENIED;
+		}
+		lightbar_set_demo_state(lb_demo_state);
+		break;
+	default:
+		CPRINTS("LB bad cmd 0x%x", in->cmd);
+		return EC_RES_INVALID_PARAM;
+	}
+
+	return EC_RES_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_LIGHTBAR_CMD,
+		     lpc_cmd_lightbar,
+		     EC_VER_MASK(0));
