@@ -41,24 +41,29 @@ before_script:
   - export ZEPHYR_DIR=/zephyr
   - export PATH="$PATH:$HOME/.local/bin"
 
-volteer:
+# Users of this template must set:
+# $PROJECT to the project to build in zephyr/projects. E.g. "lazor")
+# $PROJECT_SUBDIR if it is in a subdirectory. E.g. "trogdor/"
+.build_template: &build_template
+  stage: build
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}" --modules-dir "${MODULES_DIR}"
-      -l DEBUG configure -b -B "${BUILD_DIR}/volteer" -t zephyr
-      zephyr/projects/volteer/volteer
-    - ls "${BUILD_DIR}/volteer" "${BUILD_DIR}/volteer/output"
+      -l DEBUG configure -b -B "${BUILD_DIR}/${PROJECT}" -t zephyr
+      zephyr/projects/${PROJECT_SUBDIR}${PROJECT}
+    - ls "${BUILD_DIR}/${PROJECT}" "${BUILD_DIR}/${PROJECT}/output"
   artifacts:
     paths:
-      - build/volteer/output/*
+      - build/${PROJECT}/output/*
     expire_in: 1 week
 
 lazor:
-  script:
-    - zmake --zephyr-base "${ZEPHYR_BASE}" --modules-dir "${MODULES_DIR}"
-      -l DEBUG configure -b -B "${BUILD_DIR}/lazor" -t zephyr
-      zephyr/projects/trogdor/lazor
-    - ls "${BUILD_DIR}/lazor" "${BUILD_DIR}/lazor/output"
-  artifacts:
-    paths:
-      - build/lazor/output/*
-    expire_in: 1 week
+  variables:
+    PROJECT: "lazor"
+    PROJECT_SUBDIR: "trogdor/"
+  <<: *build_template
+
+volteer:
+  variables:
+    PROJECT: "volteer"
+    PROJECT_SUBDIR: "volteer/"
+  <<: *build_template
