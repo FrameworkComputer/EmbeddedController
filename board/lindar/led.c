@@ -38,7 +38,7 @@ struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 	[STATE_DISCHARGE_S3]	     = {{LED_OFF,            LED_INDEFINITE} },
 	[STATE_DISCHARGE_S5]         = {{LED_OFF,            LED_INDEFINITE} },
 	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_RED,   1 * LED_ONE_SEC},
-					{LED_OFF,	     1 * LED_ONE_SEC} },
+					{LED_OFF,            1 * LED_ONE_SEC} },
 	[STATE_FACTORY_TEST]         = {{EC_LED_COLOR_RED,   2 * LED_ONE_SEC},
 					{EC_LED_COLOR_GREEN, 2 * LED_ONE_SEC} },
 };
@@ -123,7 +123,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	return EC_SUCCESS;
 }
 
-static const uint16_t lightbar_i2c_addr = 0x68;
+static const uint16_t ktd2061_i2c_addr = 0x68;
 static void controller_write(uint8_t reg, uint8_t val)
 {
 	uint8_t buf[2];
@@ -131,7 +131,7 @@ static void controller_write(uint8_t reg, uint8_t val)
 	buf[0] = reg;
 	buf[1] = val;
 
-	i2c_xfer_unlocked(I2C_PORT_LIGHTBAR, lightbar_i2c_addr,
+	i2c_xfer_unlocked(I2C_PORT_LIGHTBAR, ktd2061_i2c_addr,
 			buf, 2, 0, 0,
 			I2C_XFER_SINGLE);
 }
@@ -139,15 +139,20 @@ static void controller_write(uint8_t reg, uint8_t val)
 enum lightbar_states {
 	LB_STATE_OFF,
 	LB_STATE_LID_CLOSE,
-	LB_STATE_AC_ONLY,
-	LB_STATE_AC_BAT_LOW,
-	LB_STATE_AC_BAT_20,
-	LB_STATE_AC_BAT_40,
-	LB_STATE_AC_BAT_60,
-	LB_STATE_AC_BAT_80,
-	LB_STATE_AC_BAT_100,
-	LB_STATE_BAT_LOW,
-	LB_STATE_BAT_ONLY,
+	LB_STATE_SLEEP_AC_ONLY,
+	LB_STATE_SLEEP_AC_BAT_LOW,
+	LB_STATE_SLEEP_AC_BAT_LV1,
+	LB_STATE_SLEEP_AC_BAT_LV2,
+	LB_STATE_SLEEP_AC_BAT_LV3,
+	LB_STATE_SLEEP_AC_BAT_LV4,
+	LB_STATE_SLEEP_BAT_LOW,
+	LB_STATE_SLEEP_BAT_ONLY,
+	LB_STATE_S0_AC_ONLY,
+	LB_STATE_S0_BAT_LOW,
+	LB_STATE_S0_BAT_LV1,
+	LB_STATE_S0_BAT_LV2,
+	LB_STATE_S0_BAT_LV3,
+	LB_STATE_S0_BAT_LV4,
 	LB_NUM_STATES
 };
 
@@ -162,14 +167,14 @@ enum lightbar_phase {
 };
 
 enum ec_lightbar_colors {
-	BAR_RESET                    = 0x00,
-	BAR_OFF                      = 0x01,
-	BAR_COLOR_ORG_20_PERCENT     = 0x02,
-	BAR_COLOR_ORG_40_PERCENT     = 0x03,
-	BAR_COLOR_ORG_60_PERCENT     = 0x04,
-	BAR_COLOR_ORG_80_PERCENT     = 0x05,
-	BAR_COLOR_ORG_FULL           = 0x06,
-	BAR_COLOR_GRN_FULL           = 0x07,
+	BAR_RESET,
+	BAR_OFF,
+	BAR_COLOR_ORG_20_PERCENT,
+	BAR_COLOR_GRN_40_PERCENT,
+	BAR_COLOR_GRN_60_PERCENT,
+	BAR_COLOR_GRN_80_PERCENT,
+	BAR_COLOR_GRN_FULL,
+	BAR_COLOR_ORG_FULL,
 	LIGHTBAR_COLOR_TOTAL
 };
 
@@ -180,39 +185,49 @@ struct lightbar_descriptor {
 
 #define BAR_INFINITE      UINT8_MAX
 #define LIGHTBAR_ONE_SEC  (1000 / HOOK_TICK_INTERVAL_MS)
+#define LIGHTBAR_COUNT_FOR_RESUME_FROM_SLEEP (3 * LIGHTBAR_ONE_SEC)
+int lightbar_resume_tick;
+
 const struct lightbar_descriptor
 	lb_table[LB_NUM_STATES][LIGHTBAR_NUM_PHASES] = {
-	[LB_STATE_OFF]         = {{BAR_OFF, BAR_INFINITE} },
-	[LB_STATE_LID_CLOSE]   = {{BAR_OFF, BAR_INFINITE} },
-	[LB_STATE_AC_ONLY]     = {{BAR_OFF, BAR_INFINITE} },
-	[LB_STATE_AC_BAT_LOW]  = {{BAR_COLOR_ORG_20_PERCENT, BAR_INFINITE} },
-	[LB_STATE_AC_BAT_20]   = {{BAR_COLOR_ORG_40_PERCENT, BAR_INFINITE} },
-	[LB_STATE_AC_BAT_40]   = {{BAR_COLOR_ORG_60_PERCENT, BAR_INFINITE} },
-	[LB_STATE_AC_BAT_60]   = {{BAR_COLOR_ORG_80_PERCENT, BAR_INFINITE} },
-	[LB_STATE_AC_BAT_80]   = {{BAR_COLOR_ORG_FULL, BAR_INFINITE} },
-	[LB_STATE_AC_BAT_100]  = {{BAR_COLOR_GRN_FULL, BAR_INFINITE} },
-	[LB_STATE_BAT_LOW]     = {{BAR_OFF, 5*LIGHTBAR_ONE_SEC},
+	[LB_STATE_OFF]              = {{BAR_OFF, BAR_INFINITE} },
+	[LB_STATE_LID_CLOSE]        = {{BAR_OFF, BAR_INFINITE} },
+	[LB_STATE_SLEEP_AC_ONLY]    = {{BAR_OFF, BAR_INFINITE} },
+	[LB_STATE_SLEEP_AC_BAT_LOW] = {{BAR_COLOR_ORG_20_PERCENT,
+				BAR_INFINITE} },
+	[LB_STATE_SLEEP_AC_BAT_LV1] = {{BAR_COLOR_GRN_40_PERCENT,
+				BAR_INFINITE} },
+	[LB_STATE_SLEEP_AC_BAT_LV2] = {{BAR_COLOR_GRN_60_PERCENT,
+				BAR_INFINITE} },
+	[LB_STATE_SLEEP_AC_BAT_LV3] = {{BAR_COLOR_GRN_80_PERCENT,
+				BAR_INFINITE} },
+	[LB_STATE_SLEEP_AC_BAT_LV4] = {{BAR_COLOR_GRN_FULL, BAR_INFINITE} },
+	[LB_STATE_SLEEP_BAT_LOW]    = {{BAR_OFF, 5 * LIGHTBAR_ONE_SEC},
 				{BAR_COLOR_ORG_FULL, LIGHTBAR_ONE_SEC} },
-	[LB_STATE_BAT_ONLY]    = {{BAR_OFF, BAR_INFINITE} },
+	[LB_STATE_SLEEP_BAT_ONLY]   = {{BAR_OFF, BAR_INFINITE} },
+	[LB_STATE_S0_AC_ONLY]       = {{BAR_OFF, BAR_INFINITE} },
+	[LB_STATE_S0_BAT_LOW]       = {{BAR_COLOR_ORG_20_PERCENT,
+				BAR_INFINITE} },
+	[LB_STATE_S0_BAT_LV1]       = {{BAR_COLOR_GRN_40_PERCENT,
+				BAR_INFINITE} },
+	[LB_STATE_S0_BAT_LV2]       = {{BAR_COLOR_GRN_60_PERCENT,
+				BAR_INFINITE} },
+	[LB_STATE_S0_BAT_LV3]       = {{BAR_COLOR_GRN_80_PERCENT,
+				BAR_INFINITE} },
+	[LB_STATE_S0_BAT_LV4]       = {{BAR_COLOR_GRN_FULL, BAR_INFINITE} },
 };
 
-/*
- * From EE's information, lindar only support two colors lightbar,
- * Orange (Amber) and Green. And they connect KTD20xx's red color
- * channel to orange color led, and green color
- * channel to green color led.
- * Blue color channel is unused.
- */
-#define DISABLE_LIGHTBAR	0x00
-#define ENABLE_LIGHTBAR		0x80
-#define I_OFF				0x00
-#define I_ON				0x02
-#define SEL_OFF				0x00
-#define SEL_1ST_LED			BIT(7)
-#define SEL_2ND_LED			BIT(3)
-#define SEL_BOTH			(SEL_1ST_LED | SEL_2ND_LED)
-#define SKU_ID_NONE			0x00
-#define SKU_ID_INVALID		0x01
+#define DISABLE_LIGHTBAR         0x00
+#define ENABLE_LIGHTBAR          0x80
+#define I_OFF                    0x00
+#define GRN_I_ON                 0x1E
+#define ORG_I_ON                 0x28
+#define SEL_OFF                  0x00
+#define SEL_1ST_LED              BIT(7)
+#define SEL_2ND_LED              BIT(3)
+#define SEL_BOTH                 (SEL_1ST_LED | SEL_2ND_LED)
+#define SKU_ID_NONE              0x00
+#define SKU_ID_INVALID           0x01
 #define LB_SUPPORTED_SKUID_LOWER 458700
 #define LB_SUPPORTED_SKUID_UPPER 458800
 
@@ -221,30 +236,31 @@ static bool lightbar_is_supported(void)
 	static uint32_t skuid = SKU_ID_NONE;
 	bool result;
 
-	/*
-	 * TODO(b/183826778):
-	 * [Lillipup/Lindar] Move to SSFC/FW_CONFIG for lightbar supporting
-	 * check
-	 */
 	if (skuid == SKU_ID_NONE) {
 		if (cbi_get_sku_id(&skuid)) {
 			CPRINTS("Cannot get skuid for lightbar supported");
 			skuid = SKU_ID_INVALID;
 		}
 	}
+
+	/* Check sku_id to know if system support lightbar or not. */
 	if (skuid >= LB_SUPPORTED_SKUID_LOWER &&
 		skuid <= LB_SUPPORTED_SKUID_UPPER)
 		result = true;
 	else
 		result = false;
+
 	return result;
 }
 
 /*
- * Todo.
- * Maybe, we need to provide some command to tool kit to test lightbar
- * in factory. So, it may need a way to stop lightbar_update().
+ * lightbar_enter_s0ix_s3:
+ * This flag is used to know if system ever enter S0ix/S3.
+ * Lightbar V9 SPEC define lightbar resuming behavior, "S0ix/S3 -> S0",
+ * but not include "G3/S5/S4 -> S0". "G3/S5/S4 -> S0" need to keep off.
  */
+static bool lightbar_enter_s0ix_s3;
+
 static bool lightbar_is_enabled(void)
 {
 	if (!lightbar_is_supported())
@@ -261,7 +277,18 @@ static bool lightbar_is_enabled(void)
 	return true;
 }
 
-const uint8_t lightbar_ctrl[LIGHTBAR_COLOR_TOTAL][KTD20XX_TOTOAL_REG] = {
+/*
+ * From "board_id = 3", HW change lightbar circuit, and it only support
+ * two colors, orange (amber) and green. It connects KTD20xx's red-channel
+ * green color led, and green-channel to orange color led.
+ * Blue-channel is unused.
+ *
+ * lightbar_ctrl setting format is as below.
+ * ID_DAT, STATUS_REG, CTRL_CFG
+ * IRED_SET0, IGRN_SET0, IBLU_SET0, IRED_SET1, IGRN_SET1, IBLU_SET1
+ * ISEL_A12, ISEL_A34, ISEL_B12, ISEL_B34, ISEL_C12, ISEL_C34
+ */
+const uint8_t lightbar_10_led_cfg[LIGHTBAR_COLOR_TOTAL][KTD20XX_TOTOAL_REG] = {
 	[BAR_RESET] = {
 		0x00, 0x00, DISABLE_LIGHTBAR,
 		I_OFF, I_OFF, I_OFF, I_OFF, I_OFF, I_OFF,
@@ -274,39 +301,42 @@ const uint8_t lightbar_ctrl[LIGHTBAR_COLOR_TOTAL][KTD20XX_TOTOAL_REG] = {
 	},
 	[BAR_COLOR_ORG_20_PERCENT] = {
 		0x00, 0x00, ENABLE_LIGHTBAR,
-		I_ON, I_OFF, I_OFF, I_OFF, I_OFF, I_OFF,
-		SEL_BOTH, SEL_OFF, SEL_OFF, SEL_OFF, SEL_OFF, SEL_OFF
+		I_OFF, ORG_I_ON, I_OFF, I_OFF, I_OFF, I_OFF,
+		SEL_OFF, SEL_BOTH, SEL_OFF, SEL_OFF, SEL_OFF, SEL_OFF
 	},
-	[BAR_COLOR_ORG_40_PERCENT] = {
+	[BAR_COLOR_GRN_40_PERCENT] = {
 		0x00, 0x00, ENABLE_LIGHTBAR,
-		I_ON, I_OFF, I_OFF, I_OFF, I_OFF, I_OFF,
+		GRN_I_ON, I_OFF, I_OFF, I_OFF, I_OFF, I_OFF,
 		SEL_BOTH, SEL_BOTH, SEL_OFF, SEL_OFF, SEL_OFF, SEL_OFF
 	},
-	[BAR_COLOR_ORG_60_PERCENT] = {
+	[BAR_COLOR_GRN_60_PERCENT] = {
 		0x00, 0x00, ENABLE_LIGHTBAR,
-		I_ON, I_OFF, I_OFF, I_OFF, I_OFF, I_OFF,
-		SEL_BOTH, SEL_BOTH, SEL_BOTH, SEL_OFF, SEL_OFF, SEL_OFF
+		GRN_I_ON, I_OFF, I_OFF, I_OFF, I_OFF, I_OFF,
+		SEL_BOTH, SEL_BOTH, SEL_OFF, SEL_BOTH, SEL_OFF, SEL_OFF
 	},
-	[BAR_COLOR_ORG_80_PERCENT] = {
+	[BAR_COLOR_GRN_80_PERCENT] = {
 		0x00, 0x00, ENABLE_LIGHTBAR,
-		I_ON, I_OFF, I_OFF, I_OFF, I_OFF, I_OFF,
+		GRN_I_ON, I_OFF, I_OFF, I_OFF, I_OFF, I_OFF,
 		SEL_BOTH, SEL_BOTH, SEL_BOTH, SEL_BOTH, SEL_OFF, SEL_OFF
-	},
-	[BAR_COLOR_ORG_FULL] = {
-		0x00, 0x00, ENABLE_LIGHTBAR,
-		I_ON, I_OFF, I_OFF, I_OFF, I_OFF, I_OFF,
-		SEL_BOTH, SEL_BOTH, SEL_BOTH, SEL_BOTH, SEL_BOTH, SEL_OFF
 	},
 	[BAR_COLOR_GRN_FULL] = {
 		0x00, 0x00, ENABLE_LIGHTBAR,
-		I_OFF, I_ON, I_OFF, I_OFF, I_OFF, I_OFF,
-		SEL_BOTH, SEL_BOTH, SEL_BOTH, SEL_BOTH, SEL_BOTH, SEL_OFF
+		GRN_I_ON, I_OFF, I_OFF, I_OFF, I_OFF, I_OFF,
+		SEL_BOTH, SEL_BOTH, SEL_BOTH, SEL_BOTH, SEL_OFF, SEL_BOTH
+	},
+	[BAR_COLOR_ORG_FULL] = {
+		0x00, 0x00, ENABLE_LIGHTBAR,
+		I_OFF, ORG_I_ON, I_OFF, I_OFF, I_OFF, I_OFF,
+		SEL_BOTH, SEL_BOTH, SEL_BOTH, SEL_BOTH, SEL_OFF, SEL_BOTH
 	}
 };
 
 static void lightbar_set_color(enum ec_lightbar_colors color)
 {
 	enum ktd20xx_register i;
+	const uint8_t (*lightbar_ctrl)[KTD20XX_TOTOAL_REG];
+
+	lightbar_ctrl = lightbar_10_led_cfg;
 
 	if (color >= LIGHTBAR_COLOR_TOTAL) {
 		CPRINTS("Lightbar Error! Incorrect lightbard color %d", color);
@@ -328,13 +358,51 @@ static void lightbar_init(void)
 	if (!lightbar_is_enabled())
 		return;
 
+	/* Clear this flag if system doesn't enter S0ix/S3 */
+	lightbar_enter_s0ix_s3 = false;
+	lightbar_resume_tick = 0;
+
 	lightbar_set_color(BAR_RESET);
 }
 
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, lightbar_init, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, lightbar_init, HOOK_PRIO_DEFAULT);
 
-const int lightbar_bat_low = 15;
+static void lightbar_sleep_entry(void)
+{
+	if (!lightbar_is_enabled())
+		return;
+
+	/*
+	 * Set this flag, then EC'll base on it to set resume tick after
+	 * S0ix/S3 exit.
+	 */
+	lightbar_enter_s0ix_s3 = true;
+	lightbar_resume_tick = 0;
+
+	lightbar_set_color(BAR_RESET);
+}
+
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, lightbar_sleep_entry, HOOK_PRIO_DEFAULT);
+
+static void lightbar_sleep_exit(void)
+{
+	if (!lightbar_is_enabled())
+		return;
+
+	if (lightbar_enter_s0ix_s3)
+		lightbar_resume_tick = LIGHTBAR_COUNT_FOR_RESUME_FROM_SLEEP;
+	else
+		lightbar_resume_tick = 0;
+	lightbar_enter_s0ix_s3 = false;
+}
+
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, lightbar_sleep_exit, HOOK_PRIO_DEFAULT);
+
+#define LB_BAT_THRESHOLD_1	16
+#define LB_BAT_THRESHOLD_2	40
+#define LB_BAT_THRESHOLD_3	60
+#define LB_BAT_THRESHOLD_4	80
+
 static enum lightbar_states lightbar_get_state(void)
 {
 	enum lightbar_states new_state = LB_NUM_STATES;
@@ -342,33 +410,50 @@ static enum lightbar_states lightbar_get_state(void)
 
 	cur_bat_percent = charge_get_percent();
 
-	if (!chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
-		return LB_STATE_OFF;
-
 	if (!lid_is_open())
 		return LB_STATE_LID_CLOSE;
 
-	if (extpower_is_present()) {
-		if (charge_get_display_charge()) {
-			if (cur_bat_percent < 20)
-				new_state = LB_STATE_AC_BAT_LOW;
-			else if (cur_bat_percent < 40)
-				new_state = LB_STATE_AC_BAT_20;
-			else if (cur_bat_percent < 60)
-				new_state = LB_STATE_AC_BAT_40;
-			else if (cur_bat_percent < 80)
-				new_state = LB_STATE_AC_BAT_60;
-			else if (cur_bat_percent < 97)
-				new_state = LB_STATE_AC_BAT_80;
+	if (lightbar_resume_tick) {
+		if ((battery_is_present() == BP_YES) &&
+			charge_get_display_charge()) {
+			if (cur_bat_percent < LB_BAT_THRESHOLD_1)
+				new_state = LB_STATE_S0_BAT_LOW;
+			else if (cur_bat_percent < LB_BAT_THRESHOLD_2)
+				new_state = LB_STATE_S0_BAT_LV1;
+			else if (cur_bat_percent < LB_BAT_THRESHOLD_3)
+				new_state = LB_STATE_S0_BAT_LV2;
+			else if (cur_bat_percent < LB_BAT_THRESHOLD_4)
+				new_state = LB_STATE_S0_BAT_LV3;
 			else
-				new_state = LB_STATE_AC_BAT_100;
+				new_state = LB_STATE_S0_BAT_LV4;
 		} else
-			new_state = LB_STATE_AC_ONLY;
+			new_state = LB_STATE_S0_AC_ONLY;
+		return new_state;
+	}
+
+	if (!chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		return LB_STATE_OFF;
+
+	if (extpower_is_present()) {
+		if ((battery_is_present() == BP_YES) &&
+			charge_get_display_charge()) {
+			if (cur_bat_percent < LB_BAT_THRESHOLD_1)
+				new_state = LB_STATE_SLEEP_AC_BAT_LOW;
+			else if (cur_bat_percent < LB_BAT_THRESHOLD_2)
+				new_state = LB_STATE_SLEEP_AC_BAT_LV1;
+			else if (cur_bat_percent < LB_BAT_THRESHOLD_3)
+				new_state = LB_STATE_SLEEP_AC_BAT_LV2;
+			else if (cur_bat_percent < LB_BAT_THRESHOLD_4)
+				new_state = LB_STATE_SLEEP_AC_BAT_LV3;
+			else
+				new_state = LB_STATE_SLEEP_AC_BAT_LV4;
+		} else
+			new_state = LB_STATE_SLEEP_AC_ONLY;
 	} else {
-		if (cur_bat_percent < lightbar_bat_low)
-			new_state = LB_STATE_BAT_LOW;
+		if (cur_bat_percent < LB_BAT_THRESHOLD_1)
+			new_state = LB_STATE_SLEEP_BAT_LOW;
 		else
-			new_state = LB_STATE_BAT_ONLY;
+			new_state = LB_STATE_SLEEP_BAT_ONLY;
 	}
 
 	return new_state;
@@ -387,6 +472,10 @@ static void lightbar_update(void)
 		return;
 
 	desired_state = lightbar_get_state();
+
+	if (lightbar_resume_tick)
+		lightbar_resume_tick--;
+
 	if (desired_state != lb_cur_state &&
 		desired_state < LB_NUM_STATES) {
 		/* State is changing */
