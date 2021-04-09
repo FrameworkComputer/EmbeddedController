@@ -17,7 +17,7 @@ uint32_t get_feature_flags0(void)
 #ifdef CONFIG_FW_LIMITED_IMAGE
 		| EC_FEATURE_MASK_0(EC_FEATURE_LIMITED)
 #endif
-#ifdef CONFIG_FLASH
+#ifdef CONFIG_FLASH_CROS
 		| EC_FEATURE_MASK_0(EC_FEATURE_FLASH)
 #endif
 #ifdef CONFIG_FANS

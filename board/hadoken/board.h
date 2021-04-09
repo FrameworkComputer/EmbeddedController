@@ -10,7 +10,7 @@
 
 #ifndef __ASSEMBLER__
 
-#undef CONFIG_FLASH /* TODO: implement me */
+#undef CONFIG_FLASH_CROS /* TODO: implement me */
 #undef CONFIG_FLASH_PHYSICAL /* TODO: implement me */
 #undef CONFIG_FMAP /* TODO: implement me */
 #undef CONFIG_WATCHDOG

@@ -74,7 +74,7 @@
 /* Undefined features */
 #undef CONFIG_EXTPOWER
 #undef CONFIG_KEYBOARD_KSO_BASE
-#undef CONFIG_FLASH
+#undef CONFIG_FLASH_CROS
 #undef CONFIG_FMAP
 #undef CONFIG_SWITCH
 

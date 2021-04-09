@@ -265,7 +265,7 @@ config PLATFORM_EC_EXTPOWER_GPIO
 	  project should define a GPIO pin named GPIO_AC_PRESENT, with
 	  extpower_interrupt configured as the handler in gpio_map.h.
 
-config PLATFORM_EC_FLASH
+config PLATFORM_EC_FLASH_CROS
 	bool "Enable flash support"
 	default y if FLASH_SIZE > 0
 	help

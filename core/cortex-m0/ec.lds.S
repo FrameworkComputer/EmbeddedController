@@ -220,7 +220,7 @@ SECTIONS
 		*(.init.rom)
 		__init_rom_end = .;
 
-#if defined(SECTION_IS_RO) && defined(CONFIG_FLASH)
+#if defined(SECTION_IS_RO) && defined(CONFIG_FLASH_CROS)
 		. = ALIGN(64);
 		KEEP(*(.google))
 #endif
@@ -315,7 +315,7 @@ SECTIONS
 	__flash_used = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(FLASH);
 	__image_size = __flash_used;
 
-#ifdef CONFIG_FLASH
+#ifdef CONFIG_FLASH_CROS
         /*
          * These linker labels are just for analysis and not used in the code.
          */
@@ -353,7 +353,7 @@ SECTIONS
 #undef REGION
 #endif /* CONFIG_CHIP_MEMORY_REGIONS */
 
-#if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH))
+#if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH_CROS))
     /DISCARD/ : { *(.google) }
 #endif
     /DISCARD/ : { *(.ARM.*) }

@@ -254,7 +254,7 @@ SECTIONS
 
 		. = ALIGN(4);
 		*(.srodata*)
-#if defined(SECTION_IS_RO) && defined(CONFIG_FLASH)
+#if defined(SECTION_IS_RO) && defined(CONFIG_FLASH_CROS)
 		. = ALIGN(64);
 		KEEP(*(.google))
 #endif
@@ -360,7 +360,7 @@ SECTIONS
 #endif
 	__image_size = __flash_used;
 
-#ifdef CONFIG_FLASH
+#ifdef CONFIG_FLASH_CROS
         /*
          * These linker labels are just for analysis and not used in the code.
          */
@@ -450,7 +450,7 @@ SECTIONS
 	} > DRAM
 #endif /* CONFIG_DRAM_BASE */
 
-#if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH))
+#if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH_CROS))
 	/DISCARD/ : { *(.google) }
 #endif
 
