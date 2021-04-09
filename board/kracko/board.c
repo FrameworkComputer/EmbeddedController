@@ -52,6 +52,21 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_USB_A_5V,
 };
 
+__override void board_process_pd_alert(int port)
+{
+	/*
+	 * PD_INT task will process this alert, and that task is only needed on
+	 * C1.
+	 */
+	if (port != 1)
+		return;
+
+	if (gpio_get_level(GPIO_USB_C1_INT_ODL))
+		return;
+
+	sm5803_handle_interrupt(port);
+}
+
 /* C0 interrupt line shared by BC 1.2 and charger */
 static void check_c0_line(void);
 DECLARE_DEFERRED(check_c0_line);
@@ -94,7 +109,6 @@ static void notify_c1_chips(void)
 {
 	schedule_deferred_pd_interrupt(1);
 	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
-	sm5803_interrupt(1);
 }
 
 static void check_c1_line(void)
