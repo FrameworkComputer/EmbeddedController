@@ -448,7 +448,7 @@ __overridable int board_c1_anx7451_mux_set(const struct usb_mux *me,
 struct usb_mux usbc1_anx7451 = {
 	.usb_port = USBC_PORT_C1,
 	.i2c_port = I2C_PORT_TCPC1,
-	.i2c_addr_flags = ANX7491_I2C_ADDR0_FLAGS,
+	.i2c_addr_flags = ANX7491_I2C_ADDR3_FLAGS,
 	.driver = &anx7451_usb_mux_driver,
 	.board_set = &board_c1_anx7451_mux_set,
 };
@@ -921,7 +921,7 @@ static void baseboard_a1_anx7491_retimer_setup(void)
 		CPRINTSUSB("A1: ANX7491 retimer not detected!");
 		return;
 	}
-	CPRINTSUSB("A1: ANX7451 retimer detected");
+	CPRINTSUSB("A1: ANX7491 retimer detected");
 	board_a1_anx7491_retimer_setup();
 }
 

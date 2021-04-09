@@ -7,6 +7,7 @@
  */
 
 #include "anx7451.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "i2c.h"
@@ -33,6 +34,23 @@ static int anx7451_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int reg;
 
+	/* Mux is not powered in Z1 */
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		return (mux_state == USB_PD_MUX_NONE) ? EC_SUCCESS
+						      : EC_ERROR_NOT_POWERED;
+
+	/* ULTRA_LOW_POWER must always be disabled (Fig 2-2) */
+	RETURN_ERROR(anx7451_write(me, ANX7451_REG_ULTRA_LOW_POWER,
+				   ANX7451_ULTRA_LOW_POWER_DIS));
+
+
+	/* b/184907521: If both DP and USB disabled, mux will fail */
+	if (!(mux_state & (USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED))) {
+		CPRINTS("ANX7451 requires USB or DP to be set, "
+			"forcing USB enabled");
+		mux_state |= USB_PD_MUX_USB_ENABLED;
+	}
+
 	/* ULP_CFG_MODE_EN overrides pin control. Always set it */
 	reg = ANX7451_ULP_CFG_MODE_EN;
 	if (mux_state & USB_PD_MUX_USB_ENABLED)
@@ -49,6 +67,10 @@ static int anx7451_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 {
 	int reg;
 
+	/* Mux is not powered in Z1 */
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		return USB_PD_MUX_NONE;
+
 	*mux_state = 0;
 	RETURN_ERROR(anx7451_read(me, ANX7451_REG_ULP_CFG_MODE, &reg));
 
@@ -62,31 +84,8 @@ static int anx7451_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 	return EC_SUCCESS;
 }
 
-static int anx7451_init(const struct usb_mux *me)
-{
-	uint64_t now;
-
-	/*
-	 * ANX7451 requires 30ms to power on. EC and ANX7451 are on the same
-	 * power rail, so just wait 30ms since EC boot.
-	 */
-	now = get_time().val;
-	if (now < ANX7451_I2C_READY_DELAY_MS*MSEC)
-		usleep(ANX7451_I2C_READY_DELAY_MS*MSEC - now);
-
-	/* ULTRA_LOW_POWER must always be disabled (Fig 2-2) */
-	RETURN_ERROR(anx7451_write(me, ANX7451_REG_ULTRA_LOW_POWER,
-				   ANX7451_ULTRA_LOW_POWER_DIS));
-
-	/* Start mux in safe mode */
-	RETURN_ERROR(anx7451_set_mux(me, USB_PD_MUX_NONE));
-
-	return EC_SUCCESS;
-}
-
 const struct usb_mux_driver anx7451_usb_mux_driver = {
-	.init = anx7451_init,
 	.set = anx7451_set_mux,
-	.get = anx7451_get_mux
+	.get = anx7451_get_mux,
 	/* Low power mode is not supported on ANX7451 */
 };
