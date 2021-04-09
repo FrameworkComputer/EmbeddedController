@@ -1,0 +1,54 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+
+		ec_batt_pres_odl {
+			gpios = <&gpio0 1 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+			label = "EC_BATT_PRES_ODL";
+		};
+	};
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		usb-c0 {
+			i2c-port = <&i2c0>;
+			enum-name = "I2C_PORT_USB_C0";
+			label = "USB_C0";
+		};
+		usb-c1 {
+			i2c-port = <&i2c0>;
+			enum-name = "I2C_PORT_USB_C1";
+			label = "USB_C1";
+		};
+		battery {
+			i2c-port = <&i2c0>;
+			enum-name = "I2C_PORT_BATTERY";
+			label = "BATTERY";
+		};
+		charger {
+			i2c-port = <&i2c0>;
+			enum-name = "I2C_PORT_CHARGER";
+			label = "CHARGER";
+		};
+	};
+
+	named-batteries {
+		compatible = "named-batteries";
+
+		lgc011 {
+			enum-name = "lgc011";
+		};
+	};
+};
+
+&gpio0 {
+	ngpios = <2>;
+};

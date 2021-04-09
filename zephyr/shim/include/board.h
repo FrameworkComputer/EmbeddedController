@@ -17,7 +17,7 @@
 #endif
 
 /* Include board specific i2c mapping if I2C is enabled. */
-#if defined(CONFIG_I2C) && !defined(CONFIG_ZTEST)
+#if defined(CONFIG_I2C)
 #include "i2c/i2c.h"
 #endif
 
