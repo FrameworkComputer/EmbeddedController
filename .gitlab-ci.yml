@@ -56,6 +56,17 @@ before_script:
       - build/${PROJECT}/output/*
     expire_in: 1 week
 
+delbin:
+  variables:
+    PROJECT: "delbin"
+    PROJECT_SUBDIR: "volteer/"
+  <<: *build_template
+
+kohaku:
+  variables:
+    PROJECT: "kohaku"
+  <<: *build_template
+
 lazor:
   variables:
     PROJECT: "lazor"
