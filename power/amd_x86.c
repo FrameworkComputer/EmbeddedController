@@ -97,9 +97,6 @@ enum power_state power_chipset_init(void)
 {
 	CPRINTS("%s: power_signal=0x%x", __func__, power_get_signals());
 
-	/* Pause in S5 when shutting down. */
-	power_set_pause_in_s5(1);
-
 	if (!system_jumped_to_this_image())
 		return POWER_G3;
 	/*
