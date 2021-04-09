@@ -240,10 +240,12 @@
 		};
 		ec_chg_led_y_c1 {
 			gpios = <&gpioc 3 GPIO_OUT_LOW>;
+			enum-name = "GPIO_EC_CHG_LED_Y_C1";
 			label = "EC_CHG_LED_Y_C1";
 		};
 		ec_chg_led_b_c1 {
 			gpios = <&gpioc 4 GPIO_OUT_LOW>;
+			enum-name = "GPIO_EC_CHG_LED_B_C1";
 			label = "EC_CHG_LED_B_C1";
 		};
 		ap_ec_spi_mosi {
