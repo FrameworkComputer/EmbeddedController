@@ -22,6 +22,11 @@
  */
 #define CONFIG_IT83XX_RESET_PD_CONTRACT_IN_BRAM
 
+/* Temperature sensor */
+#define CONFIG_TEMP_SENSOR
+#define CONFIG_THERMISTOR
+#define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
+
 /* LED */
 #define CONFIG_LED_ONOFF_STATES
 
@@ -55,6 +60,23 @@ enum battery_type {
 	BATTERY_C235,
 	BATTERY_PANASONIC_AP15O5L,
 	BATTERY_TYPE_COUNT,
+};
+
+enum temp_sensor_id {
+	TEMP_SENSOR_CHARGER,
+	TEMP_SENSOR_COUNT
+};
+
+enum adc_channel {
+	ADC_VBUS_C0,             /* ADC 0 */
+	ADC_BOARD_ID_0,          /* ADC 1 */
+	ADC_BOARD_ID_1,          /* ADC 2 */
+	ADC_CHARGER_AMON_R,      /* ADC 3 */
+	ADC_VBUS_C1,             /* ADC 5 */
+	ADC_CHARGER_PMON,        /* ADC 6 */
+	ADC_TEMP_SENSOR_CHARGER, /* ADC 7 */
+	/* Number of ADC channels */
+	ADC_CH_COUNT,
 };
 
 enum pwm_channel {

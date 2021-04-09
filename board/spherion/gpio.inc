@@ -76,7 +76,7 @@ GPIO(BC12_DET_EN,            PIN(J, 5), GPIO_OUT_LOW) /* EN_USB_C0_BC12_DET */
 GPIO(EN_EC_ID_ODL,           PIN(H, 5), GPIO_ODR_LOW)
 GPIO(ENTERING_RW,            PIN(C, 5), GPIO_OUT_LOW) /* EC_ENTERING_RW */
 GPIO(EC_USB_C0_MUX_RESET_L,  PIN(D, 7), GPIO_OUT_HIGH)
-GPIO(EC_KB_BL_EN,            PIN(I, 7), GPIO_OUT_LOW) /* Keyboard backlight enable */
+GPIO(EC_KB_BL_EN,            PIN(G, 3), GPIO_OUT_LOW) /* Keyboard backlight enable */
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C_A_SCL,              PIN(B, 3), GPIO_INPUT) /* I2C_CHG_BATT_SCL */
@@ -108,7 +108,7 @@ ALTERNATE(PIN_MASK(E, 0x81), 1, MODULE_I2C, 0) /* I2C E */
 ALTERNATE(PIN_MASK(B, 0x03), 1, MODULE_UART, 0) /* EC to Servo */
 
 /* ADC */
-ALTERNATE(PIN_MASK(I, 0x6F), 0, MODULE_ADC, 0) /* ADC 0,1,2,3,5,6 */
+ALTERNATE(PIN_MASK(I, 0xEF), 0, MODULE_ADC, 0) /* ADC 0,1,2,3,5,6,7 */
 
 /* SPI */
 ALTERNATE(PIN_MASK(M, 0x33), 0, MODULE_SPI, 0) /* SPI */
@@ -140,10 +140,9 @@ GPIO(NC_GPM3,                PIN(M, 3), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(NC_GPM6,                PIN(M, 6), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(SPI_CLK_GPG6,           PIN(G, 6), GPIO_INPUT | GPIO_PULL_UP)
 /*
- * These 4 pins don't have internal pull-down capability,
+ * These 3 pins don't have internal pull-down capability,
  * so we set them as output low.
  */
-GPIO(NC_GPG3,                PIN(G, 3), GPIO_OUT_LOW)
 GPIO(SPI_MOSI_GPG4,          PIN(G, 4), GPIO_OUT_LOW)
 GPIO(SPI_MISO_GPG5,          PIN(G, 5), GPIO_OUT_LOW)
 GPIO(SPI_CS_GPG7,            PIN(G, 7), GPIO_OUT_LOW)
