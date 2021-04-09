@@ -37,6 +37,10 @@
 
 /* Fan features */
 
+/* LED features */
+#define CONFIG_LED_COMMON
+#define CONFIG_LED_ONOFF_STATES
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
