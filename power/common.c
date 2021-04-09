@@ -36,8 +36,12 @@
  */
 #define DEFAULT_TIMEOUT SECOND
 
-/* Timeout for dropping back from S5 to G3 */
-#define S5_INACTIVITY_TIMEOUT (10 * SECOND)
+/* Timeout for dropping back from S5 to G3 in seconds */
+#ifdef CONFIG_CMD_S5_TIMEOUT
+static int s5_inactivity_timeout = 10;
+#else
+static const int s5_inactivity_timeout = 10;
+#endif
 
 static const char * const state_names[] = {
 	"G3",
@@ -503,10 +507,15 @@ static enum power_state power_common_state(enum power_state state)
 		 */
 		want_g3_exit = 0;
 
-		/* Wait for inactivity timeout */
 		power_wait_signals(0);
-		if (task_wait_event(S5_INACTIVITY_TIMEOUT) ==
-		    TASK_EVENT_TIMER) {
+
+		/* Wait for inactivity timeout, if desired */
+		if (s5_inactivity_timeout == 0) {
+			return POWER_S5G3;
+		} else if (s5_inactivity_timeout < 0) {
+			task_wait_event(-1);
+		} else if (task_wait_event(s5_inactivity_timeout * SECOND) ==
+			   TASK_EVENT_TIMER) {
 			/* Prepare to drop to G3; wake not requested yet */
 			return POWER_S5G3;
 		}
@@ -928,6 +937,31 @@ static int command_powerindebug(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(powerindebug, command_powerindebug,
 			"[mask]",
 			"Get/set power input debug mask");
+#endif
+
+#ifdef CONFIG_CMD_S5_TIMEOUT
+/* Allow command-line access to configure our S5 delay for power testing */
+static int command_s5_timeout(int argc, char **argv)
+{
+	char *e;
+
+	if (argc >= 2) {
+		uint32_t s = strtoi(argv[1], &e, 0);
+
+		if (*e)
+			return EC_ERROR_PARAM1;
+
+		s5_inactivity_timeout = s;
+	}
+
+	/* Print the current setting */
+	ccprintf("S5 inactivity timeout: %d s\n", s5_inactivity_timeout);
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(s5_timeout, command_s5_timeout,
+			"[sec]",
+			"Set the timeout from S5 to G3 transition, "
+			"-1 to indicate no transition");
 #endif
 
 #ifdef CONFIG_HIBERNATE

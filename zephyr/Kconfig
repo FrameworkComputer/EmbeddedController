@@ -206,6 +206,13 @@ config PLATFORM_EC_CONSOLE_CMD_MEM
 	     md - dump memory values
 	     rw - read or write in memory
 
+config PLATFORM_EC_CONSOLE_CMD_S5_TIMEOUT
+	bool "Console command: s5_timeout"
+	default n
+	help
+	  This command allows the user to specify a time to remain in S5 before
+	  dropping to G3, in order to help power testing.
+
 config PLATFORM_EC_CONSOLE_CMD_SHMEM
 	bool "Console command: shmem"
 	default y
