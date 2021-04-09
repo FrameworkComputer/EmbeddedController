@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-image: sjg20/bionic-20200526-12feb21
+image: sjg20/bionic-20200526-7may21a
 
 # You can update that image using this repo:
 #   https://gitlab.com/zephyr-ec/gitlab-ci-runner/-/tree/main
@@ -48,7 +48,7 @@ before_script:
   stage: build
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}" --modules-dir "${MODULES_DIR}"
-      -l DEBUG configure -b -B "${BUILD_DIR}/${PROJECT}" -t zephyr
+      -l DEBUG configure -b -B "${BUILD_DIR}/${PROJECT}" -t ${TOOLCHAIN:-zephyr}
       zephyr/projects/${PROJECT_SUBDIR}${PROJECT}
     - ls "${BUILD_DIR}/${PROJECT}" "${BUILD_DIR}/${PROJECT}/output"
   artifacts:
@@ -71,6 +71,12 @@ lazor:
   variables:
     PROJECT: "lazor"
     PROJECT_SUBDIR: "trogdor/"
+  <<: *build_template
+
+native_posix:
+  variables:
+    PROJECT: "posix-ec"
+    TOOLCHAIN: "host"
   <<: *build_template
 
 volteer:
