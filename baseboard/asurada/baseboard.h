@@ -55,7 +55,6 @@
 /* Charger */
 #define ADC_AMON_BMON ADC_CHARGER_AMON_R /* ADC name remap */
 #define ADC_PSYS ADC_CHARGER_PMON /* ADC name remap */
-#define ADC_VBUS ADC_VBUS_C0 /* ADC name remap */
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER
 #define CONFIG_CHARGE_RAMP_HW
