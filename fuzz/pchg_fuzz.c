@@ -40,8 +40,9 @@ static pthread_cond_t done_cond;
 static pthread_mutex_t lock;
 
 #define MAX_MESSAGES 8
-static uint8_t input[
-		MAX_MESSAGES * 256 * member_size(struct ctn730_msg, length)];
+#define MAX_MESSAGE_SIZE (sizeof(struct ctn730_msg) \
+			  + member_size(struct ctn730_msg, length) * 256)
+static uint8_t input[MAX_MESSAGE_SIZE * MAX_MESSAGES];
 static uint8_t *head, *tail;
 static bool data_available;
 
@@ -102,7 +103,8 @@ void run_test(int argc, char **argv)
 
 int test_fuzz_one_input(const uint8_t *data, unsigned int size)
 {
-	if (size < sizeof(struct ctn730_msg))
+	/* We're not interested in too small or too large input. */
+	if (size < sizeof(struct ctn730_msg) || sizeof(input) < size)
 		return 0;
 
 	pthread_mutex_init(&lock, NULL);
