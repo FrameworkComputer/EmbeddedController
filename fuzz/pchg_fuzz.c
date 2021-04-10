@@ -87,7 +87,9 @@ void irq_task(int argc, char **argv)
 
 		test_chipset_off();
 
+		pthread_mutex_lock(&lock);
 		pthread_cond_signal(&done_cond);
+		pthread_mutex_unlock(&lock);
 	}
 
 }
@@ -103,13 +105,19 @@ int test_fuzz_one_input(const uint8_t *data, unsigned int size)
 	if (size < sizeof(struct ctn730_msg))
 		return 0;
 
+	pthread_mutex_init(&lock, NULL);
+	pthread_cond_init(&done_cond, NULL);
+
 	head = input;
 	tail = input + size;
 	memcpy(input, data, size);
 	data_available = true;
 
 	task_set_event(TASK_ID_IRQ, TASK_EVENT_FUZZ);
+
+	pthread_mutex_lock(&lock);
 	pthread_cond_wait(&done_cond, &lock);
+	pthread_mutex_unlock(&lock);
 
 	return 0;
 }
