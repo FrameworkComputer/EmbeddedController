@@ -7,6 +7,7 @@
 #define __CROS_EC_PERIPHERAL_CHARGER_H
 
 #include "common.h"
+#include "ec_commands.h"
 #include "gpio.h"
 #include "queue.h"
 #include "stdbool.h"
@@ -146,6 +147,8 @@ enum pchg_error {
 enum pchg_mode {
 	PCHG_MODE_NORMAL = 0,
 	PCHG_MODE_DOWNLOAD,
+	/* Add no more entries below here. */
+	PCHG_MODE_COUNT,
 };
 
 /**

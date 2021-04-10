@@ -69,6 +69,8 @@ const struct i2c_port_t i2c_ports[] = {
 	{"tcpc", I2C_PORT_HOST_TCPC, 100,  0, 0},
 #elif defined I2C_PORT_EEPROM
 	{"eeprom", I2C_PORT_EEPROM, 100, 0, 0},
+#elif defined I2C_PORT_WLC
+	{"wlc", I2C_PORT_WLC, 100, 0, 0},
 #endif
 };
 
