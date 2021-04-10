@@ -248,22 +248,26 @@ static int _process_payload_response(struct pchg *ctx, struct ctn730_msg *res)
 {
 	uint8_t len = res->length;
 	uint8_t buf[CTN730_MESSAGE_BUFFER_SIZE];
-	int rv;
 
 	if (sizeof(buf) < len) {
 		CPRINTS("Response size (%d) exceeds buffer", len);
 		return EC_ERROR_OVERFLOW;
 	}
 
-	rv = _i2c_read(ctx->cfg->i2c_port, buf, len);
-	if (rv)
-		return rv;
-
-	if (IS_ENABLED(CTN730_DEBUG))
-		CPRINTS("Payload: %ph", HEX_BUF(buf, len));
+	if (len > 0) {
+		int rv = _i2c_read(ctx->cfg->i2c_port, buf, len);
+		if (rv)
+			return rv;
+		if (IS_ENABLED(CTN730_DEBUG))
+			CPRINTS("Payload: %ph", HEX_BUF(buf, len));
+	}
 
 	ctx->event = PCHG_EVENT_NONE;
 
+	/*
+	 * Messages with no payload (<len> == 0) is allowed in the spec. So,
+	 * make sure <len> is checked before reading buf[0].
+	 */
 	switch (res->instruction) {
 	case WLC_HOST_CTRL_RESET:
 		if (len != WLC_HOST_CTRL_RESET_RSP_SIZE)
@@ -345,24 +349,30 @@ static int _process_payload_event(struct pchg *ctx, struct ctn730_msg *res)
 {
 	uint8_t len = res->length;
 	uint8_t buf[CTN730_MESSAGE_BUFFER_SIZE];
-	int rv;
 
 	if (sizeof(buf) < len) {
 		CPRINTS("Response size (%d) exceeds buffer", len);
 		return EC_ERROR_OVERFLOW;
 	}
 
-	rv = _i2c_read(ctx->cfg->i2c_port, buf, len);
-	if (rv)
-		return rv;
-
-	if (IS_ENABLED(CTN730_DEBUG))
-		CPRINTS("Payload: %ph", HEX_BUF(buf, len));
+	if (len > 0) {
+		int rv = _i2c_read(ctx->cfg->i2c_port, buf, len);
+		if (rv)
+			return rv;
+		if (IS_ENABLED(CTN730_DEBUG))
+			CPRINTS("Payload: %ph", HEX_BUF(buf, len));
+	}
 
 	ctx->event = PCHG_EVENT_NONE;
 
+	/*
+	 * Messages with no payload (<len> == 0) is allowed in the spec. So,
+	 * make sure <len> is checked before reading buf[0].
+	 */
 	switch (res->instruction) {
 	case WLC_HOST_CTRL_RESET:
+		if (len < WLC_HOST_CTRL_RESET_EVT_MIN_SIZE)
+			return EC_ERROR_INVAL;
 		if (buf[0] == WLC_HOST_CTRL_RESET_EVT_NORMAL_MODE) {
 			if (len != WLC_HOST_CTRL_RESET_EVT_NORMAL_MODE_SIZE)
 				return EC_ERROR_INVAL;
@@ -392,6 +402,8 @@ static int _process_payload_event(struct pchg *ctx, struct ctn730_msg *res)
 		ctx->event = PCHG_EVENT_DISABLED;
 		break;
 	case WLC_CHG_CTRL_DEVICE_STATE:
+		if (len < WLC_CHG_CTRL_DEVICE_STATE_EVT_SIZE)
+			return EC_ERROR_INVAL;
 		switch (buf[0]) {
 		case WLC_CHG_CTRL_DEVICE_STATE_DEVICE_DOCKED:
 			if (len != WLC_CHG_CTRL_DEVICE_STATE_EVT_SIZE)
