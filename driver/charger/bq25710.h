@@ -72,6 +72,15 @@
 #define BQ25710_ADC_OPTION_EN_ADC_IIN		BIT(4)
 #define BQ25710_ADC_OPTION_EN_ADC_ALL		0xFF
 
+/* ADC conversion time ins ms */
+#if defined(CONFIG_CHARGER_BQ25720)
+#define BQ25710_ADC_OPTION_ADC_CONV_MS		25
+#elif defined(CONFIG_CHARGER_BQ25710)
+#define BQ25710_ADC_OPTION_ADC_CONV_MS		10
+#else
+#error Only the BQ25720 and BQ25710 are supported by bq25710 driver.
+#endif
+
 /* ADCVBUS/PSYS Register */
 #if defined(CONFIG_CHARGER_BQ25720)
 #define BQ25720_ADC_VBUS_STEP_MV		96
