@@ -58,6 +58,8 @@ enum ec_status uart_console_read_buffer_init(void)
 	previous_snapshot_idx = current_snapshot_idx;
 	current_snapshot_idx = tail_idx;
 
+	k_mutex_unlock(&console_write_lock);
+
 	return EC_RES_SUCCESS;
 }
 
