@@ -41,6 +41,15 @@ struct usb_mux;
  */
 #define PS8815_FW_INIT_DELAY_MS 40
 
+/* NOTE: The Product ID will read as 0x8803 if the firmware has malfunctioned in
+ * 8705, 8755 and 8805.
+ */
+#define PS8705_PRODUCT_ID 0x8705
+#define PS8751_PRODUCT_ID 0x8751
+#define PS8755_PRODUCT_ID 0x8755
+#define PS8805_PRODUCT_ID 0x8805
+#define PS8815_PRODUCT_ID 0x8815
+
 extern const struct tcpm_drv ps8xxx_tcpm_drv;
 
 /**

@@ -44,15 +44,6 @@
 
 #define PS8XXX_P1_REG_MUX_USB_DCI_CFG           0x4B
 
-/* NOTE: The Product ID will read as 0x8803 if the firmware has malfunctioned in
- * 8705, 8755 and 8805.
- */
-#define PS8705_PRODUCT_ID 0x8705
-#define PS8751_PRODUCT_ID 0x8751
-#define PS8755_PRODUCT_ID 0x8755
-#define PS8805_PRODUCT_ID 0x8805
-#define PS8815_PRODUCT_ID 0x8815
-
 #if defined(CONFIG_USB_PD_TCPM_PS8751)
 /* Vendor defined registers */
 #define PS8XXX_REG_VENDOR_ID_L                  0x00
