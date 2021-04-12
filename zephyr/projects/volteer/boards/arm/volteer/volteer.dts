@@ -231,7 +231,7 @@
 			compatible = "nuvoton,npcx-cros-kb-raw";
 			reg = <0x400a3000 0x2000>;
 			label = "CROS_KB_RAW_0";
-			interrupts = <49 0>;
+			interrupts = <49 4>;
 			clocks = <&pcc NPCX_CLOCK_BUS_APB1 NPCX_PWDWN_CTL1 0>;
 			/* No KSO2 (it's inverted and implemented by GPIO.) */
 			pinctrl-0 = <&alt7_no_ksi0_sl /* KSI0 PIN31 */
