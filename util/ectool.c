@@ -5291,6 +5291,9 @@ static int cmd_motionsense(int argc, char **argv)
 		case MOTIONSENSE_CHIP_ICM426XX:
 			printf("icm426xx\n");
 			break;
+		case MOTIONSENSE_CHIP_ICM42607:
+			printf("icm42607\n");
+			break;
 		default:
 			printf("unknown\n");
 		}
