@@ -35,3 +35,7 @@ enum ec_ssfc_lid_sensor get_cbi_ssfc_lid_sensor(void)
 	return cached_ssfc.lid_sensor;
 }
 
+enum ec_ssfc_usb_ss_mux get_cbi_ssfc_usb_ss_mux(void)
+{
+	return cached_ssfc.usb_ss_mux;
+}

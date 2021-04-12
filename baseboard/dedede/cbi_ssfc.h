@@ -31,11 +31,21 @@ enum ec_ssfc_lid_sensor {
 	SSFC_SENSOR_KX022 = 2
 };
 
+/*
+ * USB SuperSpeed Mux (Bits 6-8)
+ */
+enum ec_ssfc_usb_ss_mux {
+	SSFC_USB_SS_MUX_DEFAULT = 0,
+	SSFC_USB_SS_MUX_PS8743 = 1,
+	SSFC_USB_SS_MUX_PI3USBX532 = 2,
+};
+
 union dedede_cbi_ssfc {
 	struct {
 		enum ec_ssfc_base_sensor	base_sensor : 3;
 		enum ec_ssfc_lid_sensor		lid_sensor : 3;
-		uint32_t					reserved_2 : 26;
+		enum ec_ssfc_usb_ss_mux		usb_ss_mux : 3;
+		uint32_t					reserved_2 : 20;
 	};
 	uint32_t raw_value;
 };
@@ -53,5 +63,13 @@ enum ec_ssfc_base_sensor get_cbi_ssfc_base_sensor(void);
  * @return the Lid sensor board type.
  */
 enum ec_ssfc_lid_sensor get_cbi_ssfc_lid_sensor(void);
+
+/**
+ * Get the USB SuperSpeed Mux type from SSFC_CONFIG
+ *
+ * @return the USB SuperSpeed Mux type
+ */
+enum ec_ssfc_usb_ss_mux get_cbi_ssfc_usb_ss_mux(void);
+
 
 #endif /* _DEDEDE_CBI_SSFC__H_ */
