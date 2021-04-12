@@ -153,13 +153,6 @@ const struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_SUB_ANALOG] = {
-		.name = "SUB_ANALOG",
-		.input_ch = NPCX_ADC_CH2,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-	},
 	[ADC_VSNS_PP3300_A] = {
 		.name = "PP3300_A_PGOOD",
 		.input_ch = NPCX_ADC_CH9,
