@@ -1749,13 +1749,6 @@ static void pe_update_src_pdo_flags(int port, int pdo_cnt, uint32_t *pdos)
 			charge_manager_update_dualrole(port, CAP_DUALROLE);
 		}
 	}
-
-	/*
-	 * If port policy preference is to be a power role source, then request
-	 * a power role swap.
-	 */
-	if (!pd_can_source_from_device(port, pdo_cnt, pdos))
-		pd_request_power_swap(port);
 }
 
 void pd_request_power_swap(int port)
@@ -3082,8 +3075,14 @@ static void pe_snk_evaluate_capability_entry(int port)
 	/* Parse source caps if they have changed */
 	if (pe[port].src_cap_cnt != num ||
 	    memcmp(pdo, pe[port].src_caps, num << 2))
-		pe_update_src_pdo_flags(port, num, pdo);
+		/*
+		 * If port policy preference is to be a power role source,
+		 * then request a power role swap.
+		 */
+		if (!pd_can_source_from_device(port, num, pdo))
+			pd_request_power_swap(port);
 
+	pe_update_src_pdo_flags(port, num, pdo);
 	pd_set_src_caps(port, num, pdo);
 
 	/* Evaluate the options based on supplied capabilities */
@@ -6723,6 +6722,11 @@ static void pe_dr_src_get_source_cap_run(int port)
 					(uint32_t *)rx_emsg[port].buf;
 
 				pd_set_src_caps(port, cnt, payload);
+
+				/*
+				 * If we'd prefer to charge from this partner,
+				 * then propose a PR swap.
+				 */
 				if (pd_can_source_from_device(port, cnt,
 							      payload))
 					pd_request_power_swap(port);
