@@ -7,6 +7,7 @@
 #include "config.h"
 #include "console.h"
 #include "driver/ln9310.h"
+#include "tcpm/ps8xxx_public.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "system.h"
@@ -69,9 +70,6 @@ int board_is_clamshell(void)
 	return get_model() == LIMOZEEN;
 }
 
-/* TODO(b:183118990): enable PS8xxx driver for zephyr */
-#ifndef CONFIG_ZEPHYR
-#include "driver/tcpm/ps8xxx.h"
 __override uint16_t board_get_ps8xxx_product_id(int port)
 {
 	/*
@@ -85,4 +83,3 @@ __override uint16_t board_get_ps8xxx_product_id(int port)
 
 	return PS8805_PRODUCT_ID;
 }
-#endif
