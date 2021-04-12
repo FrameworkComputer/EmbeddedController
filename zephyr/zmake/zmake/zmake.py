@@ -417,9 +417,9 @@ class Zmake:
         for test_file in directory.glob('test_*.py'):
             executor.append(func=lambda: run_test(test_file))
 
-    def testall(self, fail_fast=False):
+    def testall(self):
         """Test all the valid test targets"""
-        executor = zmake.multiproc.Executor(fail_fast=fail_fast)
+        executor = zmake.multiproc.Executor()
         tmp_dirs = []
         for project in zmake.project.find_projects(
                 self.module_paths['ec'] / 'zephyr'):
@@ -536,9 +536,9 @@ class Zmake:
             return rv
         return self._run_lcov(build_dir, lcov_file, initial=False)
 
-    def coverage(self, build_dir, fail_fast=False):
+    def coverage(self, build_dir):
         """Builds all targets with coverage enabled, and then runs the tests."""
-        executor = zmake.multiproc.Executor(fail_fast=fail_fast)
+        executor = zmake.multiproc.Executor()
         all_lcov_files = []
         root_dir = self.module_paths['ec'] / 'zephyr'
         for project in zmake.project.find_projects(root_dir):

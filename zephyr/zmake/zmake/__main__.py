@@ -114,12 +114,8 @@ def main(argv=None):
                       help='The build directory used during configuration')
 
     testall = sub.add_parser('testall')
-    testall.add_argument('--fail-fast', action='store_true',
-                         help='stop testing after the first error')
 
     coverage = sub.add_parser('coverage')
-    coverage.add_argument('--fail-fast', action='store_true',
-                         help='stop testing after the first error')
     coverage.add_argument('build_dir', type=pathlib.Path,
                       help='The build directory used during configuration')
 

@@ -203,22 +203,16 @@ class Executor:
 
     This class is used to run multiple functions in parallel. The functions MUST
     return an integer result code (or throw an exception). This class will start
-    a thread per operation and wait() for all the threads to resolve. If
-    fail_fast is set to True, then not all threads must return before wait()
-    returns. Instead either ALL threads must return 0 OR any thread must return
-    a non zero result (or throw an exception).
+    a thread per operation and wait() for all the threads to resolve.
 
     Attributes:
-        fail_fast: Whether or not the first function's error code should
-         terminate the executor.
         lock: The condition variable used to synchronize across threads.
         threads: A list of threading.Thread objects currently under this
          Executor.
         results: A list of result codes returned by each of the functions called
          by this Executor.
     """
-    def __init__(self, fail_fast):
-        self.fail_fast = fail_fast
+    def __init__(self):
         self.lock = threading.Condition()
         self.threads = []
         self.results = []
@@ -247,13 +241,8 @@ class Executor:
     def wait(self):
         """Wait for a result to be available.
 
-        This function waits for the executor to resolve. Being resolved depends on
-        the initial fail_fast setting.
-        - If fail_fast is True then the executor is resolved as soon as any thread
-          throws an exception or returns a non-zero result. Or, all the threads
-          returned a zero result code.
-        - If fail_fast is False, then all the threads must have returned a result
-          code or have thrown.
+        This function waits for the executor to resolve (i.e., all
+        threads have finished).
 
         Returns:
             An integer result code of either the first failed function or 0 if
@@ -292,7 +281,7 @@ class Executor:
         """
         if len(self.threads) == len(self.results):
             return True
-        return self.fail_fast and any([result for result in self.results])
+        return False
 
     @property
     def _result(self):
