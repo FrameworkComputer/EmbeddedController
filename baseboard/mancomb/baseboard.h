@@ -307,6 +307,7 @@ enum mft_channel {
 /* Baseboard Interrupt handlers. */
 void baseboard_en_pwr_pcore_s0(enum gpio_signal signal);
 void baseboard_en_pwr_s0(enum gpio_signal signal);
+void baseboard_usb_fault_alert(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
 void ext_charger_interrupt(enum gpio_signal signal);
 void dp_fault_interrupt(enum gpio_signal signal);

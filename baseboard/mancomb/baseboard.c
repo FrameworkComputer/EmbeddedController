@@ -283,6 +283,13 @@ static void baseboard_interrupt_init(void)
 	/* Enable SBU fault interrupts */
 	ioex_enable_interrupt(IOEX_USB_C0_SBU_FAULT_ODL);
 	ioex_enable_interrupt(IOEX_USB_C1_SBU_FAULT_ODL);
+
+	/* Enable USB-A fault interrupts */
+	gpio_enable_interrupt(GPIO_USB_A4_FAULT_R_ODL);
+	gpio_enable_interrupt(GPIO_USB_A3_FAULT_R_ODL);
+	gpio_enable_interrupt(GPIO_USB_A2_FAULT_R_ODL);
+	gpio_enable_interrupt(GPIO_USB_A1_FAULT_R_ODL);
+	gpio_enable_interrupt(GPIO_USB_A0_FAULT_R_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_interrupt_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -718,17 +725,48 @@ static void baseboard_chipset_resume(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);
 
+static bool ocp_tracker[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+static void set_usb_fault_output(void)
+{
+	bool fault_present = false;
+	int i;
+
+	/*
+	 * EC must OR all fault alerts and pass them to USB_FAULT_ODL, including
+	 * overcurrents.
+	 */
+	for (i = 0; i < board_get_usb_pd_port_count(); i++)
+		if (ocp_tracker[i])
+			fault_present = true;
+
+	fault_present = fault_present ||
+			!gpio_get_level(GPIO_USB_A4_FAULT_R_ODL) ||
+			!gpio_get_level(GPIO_USB_A3_FAULT_R_ODL) ||
+			!gpio_get_level(GPIO_USB_A2_FAULT_R_ODL) ||
+			!gpio_get_level(GPIO_USB_A1_FAULT_R_ODL) ||
+			!gpio_get_level(GPIO_USB_A0_FAULT_R_ODL);
+
+	gpio_set_level(GPIO_USB_FAULT_ODL, !fault_present);
+}
+
 void board_overcurrent_event(int port, int is_overcurrented)
 {
 	switch (port) {
 	case USBC_PORT_C0:
 	case USBC_PORT_C1:
-		gpio_set_level(GPIO_USB_C0_C1_FAULT_ODL, !is_overcurrented);
+		ocp_tracker[port] = is_overcurrented;
+		set_usb_fault_output();
 		break;
 
 	default:
 		break;
 	}
+}
+
+void baseboard_usb_fault_alert(enum gpio_signal signal)
+{
+	set_usb_fault_output();
 }
 
 void baseboard_en_pwr_pcore_s0(enum gpio_signal signal)
