@@ -64,6 +64,7 @@ int ucsi_write_tunnel(void)
 	case UCSI_CMD_GET_CABLE_PROPERTY:
 	case UCSI_CMD_GET_CONNECTOR_STATUS:
 	case UCSI_CMD_GET_ALTERNATE_MODES:
+	case UCSI_CMD_GET_CURRENT_CAM:
 
 		if (*command == UCSI_CMD_GET_ALTERNATE_MODES)
 			offset = 1;
