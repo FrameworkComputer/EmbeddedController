@@ -130,7 +130,7 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
-#ifdef CONFIG_USBC_VCONN
+#if defined(CONFIG_USBC_VCONN) && defined(CONFIG_USB_PD_TCPM_ITE_ON_CHIP)
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 {
 #ifndef CONFIG_USBC_PPC_VCONN

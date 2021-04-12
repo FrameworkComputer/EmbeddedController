@@ -26,10 +26,14 @@
 #define CONFIG_CHIPSET_ALDERLAKE
 
 /* USB PD config */
-#if defined(HAS_TASK_PD_C2) && defined(HAS_TASK_PD_C3)
+#if defined(HAS_TASK_PD_C3)
 #define CONFIG_USB_PD_PORT_MAX_COUNT 4
-#else
+#elif defined(HAS_TASK_PD_C2)
+#define CONFIG_USB_PD_PORT_MAX_COUNT 3
+#elif defined(HAS_TASK_PD_C1)
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
+#else
+#define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #endif
 #define CONFIG_USB_MUX_VIRTUAL
 #define PD_MAX_POWER_MW              100000
@@ -59,7 +63,9 @@
 /* Config BB retimer */
 #define CONFIG_USBC_RETIMER_INTEL_BB
 #define I2C_PORT0_BB_RETIMER_ADDR	0x56
+#if defined(HAS_TASK_PD_C1)
 #define I2C_PORT1_BB_RETIMER_ADDR	0x57
+#endif
 #if defined(HAS_TASK_PD_C2)
 #define I2C_PORT2_BB_RETIMER_ADDR	0x58
 #endif
@@ -110,7 +116,9 @@
 
 enum adlrvp_charge_ports {
 	TYPE_C_PORT_0,
+#if defined(HAS_TASK_PD_C1)
 	TYPE_C_PORT_1,
+#endif
 #if defined(HAS_TASK_PD_C2)
 	TYPE_C_PORT_2,
 #endif

@@ -69,8 +69,6 @@
 #define I2C_PORT_TYPEC_1		IT83XX_I2C_CH_F
 #if defined(HAS_TASK_PD_C2)
 #define I2C_PORT_TYPEC_2		IT83XX_I2C_CH_E
-#endif
-#if defined(HAS_TASK_PD_C3)
 #define I2C_PORT_TYPEC_3		IT83XX_I2C_CH_D
 #endif
 
