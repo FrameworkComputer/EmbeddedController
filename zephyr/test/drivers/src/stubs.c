@@ -179,3 +179,8 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
 {
 }
+
+uint16_t tcpc_get_alert_status(void)
+{
+	return 0;
+}

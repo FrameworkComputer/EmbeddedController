@@ -14,10 +14,10 @@ typedef uint8_t task_id_t;
 /*
  * Highest priority on bottom -- same as in platform/ec. List of CROS_EC_TASK
  * items. See CONFIG_TASK_LIST in platform/ec's config.h for more information.
- * This will only automatically get generated if CONFIG_ZTEST is not defined.
- * Unit tests must define their own tasks.
+ * For tests that want their own custom tasks, use CONFIG_HAS_TEST_TASKS and not
+ * CONFIG_SHIMMED_TASKS.
  */
-#ifndef CONFIG_ZTEST
+#ifdef CONFIG_SHIMMED_TASKS
 #define CROS_EC_TASK_LIST                                                 \
 	COND_CODE_1(HAS_TASK_HOOKS,                                       \
 		     (CROS_EC_TASK(HOOKS, hook_task, 0,                   \
