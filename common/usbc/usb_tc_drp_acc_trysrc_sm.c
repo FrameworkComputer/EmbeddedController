@@ -2424,9 +2424,12 @@ static void tc_attached_snk_entry(const int port)
 								cc1, cc2);
 			typec_set_input_current_limit(port,
 					tc[port].typec_curr, TYPE_C_VOLTAGE);
-			charge_manager_update_dualrole(port,
-				pd_is_port_partner_dualrole(port) ?
-				CAP_DUALROLE : CAP_DEDICATED);
+			/*
+			 * Start new connections as dedicated until source caps
+			 * are received, at which point the PE will update the
+			 * flag.
+			 */
+			charge_manager_update_dualrole(port, CAP_DEDICATED);
 		}
 
 		/* Apply Rd */

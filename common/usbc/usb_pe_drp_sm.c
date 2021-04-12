@@ -138,22 +138,20 @@
  * Flag to trigger a message resend after receiving a WAIT from port partner
  */
 #define PE_FLAGS_WAITING_PR_SWAP             BIT(23)
-/* FLAG to track if port partner is dualrole capable */
-#define PE_FLAGS_PORT_PARTNER_IS_DUALROLE    BIT(24)
 /* FLAG is set when an AMS is initiated locally. ie. AP requested a PR_SWAP */
-#define PE_FLAGS_LOCALLY_INITIATED_AMS       BIT(25)
+#define PE_FLAGS_LOCALLY_INITIATED_AMS       BIT(24)
 /* Flag to note the first message sent in PE_SRC_READY and PE_SNK_READY */
-#define PE_FLAGS_FIRST_MSG                   BIT(26)
+#define PE_FLAGS_FIRST_MSG                   BIT(25)
 /* Flag to continue a VDM request if it was interrupted */
-#define PE_FLAGS_VDM_REQUEST_CONTINUE        BIT(27)
+#define PE_FLAGS_VDM_REQUEST_CONTINUE        BIT(26)
 /* TODO: POLICY decision: Triggers a Vconn SWAP attempt to on */
-#define PE_FLAGS_VCONN_SWAP_TO_ON	     BIT(28)
+#define PE_FLAGS_VCONN_SWAP_TO_ON	     BIT(27)
 /* FLAG to track that VDM request to port partner timed out */
-#define PE_FLAGS_VDM_REQUEST_TIMEOUT	     BIT(29)
+#define PE_FLAGS_VDM_REQUEST_TIMEOUT	     BIT(28)
 /* FLAG to note message was discarded due to incoming message */
-#define PE_FLAGS_MSG_DISCARDED		     BIT(30)
+#define PE_FLAGS_MSG_DISCARDED		     BIT(29)
 /* FLAG to note that hard reset can't be performed due to battery low */
-#define PE_FLAGS_SNK_WAITING_BATT	     BIT(31)
+#define PE_FLAGS_SNK_WAITING_BATT	     BIT(30)
 
 /* Message flags which should not persist on returning to ready state */
 #define PE_FLAGS_READY_CLR		     (PE_FLAGS_LOCALLY_INITIATED_AMS \
@@ -1742,10 +1740,8 @@ static void pe_update_src_pdo_flags(int port, int pdo_cnt, uint32_t *pdos)
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
 		if (pd_can_source_from_device(port, pdo_cnt, pdos)) {
-			PE_CLR_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
 			charge_manager_update_dualrole(port, CAP_DEDICATED);
 		} else {
-			PE_SET_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
 			charge_manager_update_dualrole(port, CAP_DUALROLE);
 		}
 	}
@@ -1763,11 +1759,6 @@ void pd_request_power_swap(int port)
 	 */
 	pe[port].src_snk_pr_swap_counter = 0;
 	pd_dpm_request(port, DPM_REQUEST_PR_SWAP);
-}
-
-int pd_is_port_partner_dualrole(int port)
-{
-	return PE_CHK_FLAG(port, PE_FLAGS_PORT_PARTNER_IS_DUALROLE);
 }
 
 /* The function returns true if there is a PE state change, false otherwise */
