@@ -42,7 +42,7 @@
 			enum-name = "GPIO_USB_A0_OC_ODL";
 			label = "USB_A0_OC_ODL";
 		};
-		acok_od {
+		gpio_acok_od: acok_od {
 			gpios = <&gpio0 0 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 			label = "ACOK_OD";
@@ -52,7 +52,7 @@
 			enum-name = "GPIO_CCD_MODE_ODL";
 			label = "CCD_MODE_ODL";
 		};
-		ec_pwr_btn_odl {
+		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
 			gpios = <&gpio0 1 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 			label = "EC_PWR_BTN_ODL";
@@ -72,7 +72,7 @@
 			enum-name = "GPIO_WP_L";
 			label = "EC_WP_ODL";
 		};
-		lid_open_ec {
+		gpio_lid_open_ec: lid_open_ec {
 			gpios = <&gpiod 2 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
 			label = "LID_OPEN_EC";
@@ -129,7 +129,7 @@
 			enum-name = "GPIO_SWITCHCAP_PG_INT_L";
 			label = "SWITCHCAP_PG_INT_L";
 		};
-		ec_rst_odl {
+		gpio_ec_rst_odl: ec_rst_odl {
 			gpios = <&gpio0 2 GPIO_INPUT>;
 			enum-name = "GPIO_EC_RST_ODL";
 			label = "EC_RST_ODL";
@@ -370,6 +370,16 @@
 			&lvol_iof4 /* WARM_RESET_L */
 			&lvol_iob3 /* EC_I2C_SENSOR_SCL */
 			&lvol_iob2 /* EC_I2C_SENSOR_SDA */
+		>;
+	};
+
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-pins = <
+			&gpio_acok_od
+			&gpio_ec_pwr_btn_odl
+			&gpio_lid_open_ec
+			&gpio_ec_rst_odl
 		>;
 	};
 };
