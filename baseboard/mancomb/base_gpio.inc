@@ -108,7 +108,12 @@ GPIO(HDMI_1_CEC, 		PIN(1, 7), GPIO_OUT_LOW)
 GPIO_INT(FAULT_HDMI_1_L,	PIN(2, 5), GPIO_INT_FALLING, 			hdmi_fault_interrupt)
 GPIO_INT(FAULT_DP_L,		PIN(2, 6), GPIO_INT_FALLING,			dp_fault_interrupt)
 
-/* SOC eSPI Bus */
+#if 0
+/*
+ * SOC eSPI Bus
+ * These signals do not need to be explicitly configured.
+ * Leaving here so all signals are documented.
+ */
 GPIO(ESPI_SOC_CLK,		PIN(5, 5), GPIO_DEFAULT)
 GPIO(ESPI_SOC_CS_EC_L,		PIN(5, 3), GPIO_DEFAULT)
 GPIO(ESPI_SOC_D0_EC,		PIN(4, 6), GPIO_DEFAULT)
@@ -117,6 +122,7 @@ GPIO(ESPI_SOC_D2_EC,		PIN(5, 1), GPIO_DEFAULT)
 GPIO(ESPI_SOC_D3_EC,		PIN(5, 2), GPIO_DEFAULT)
 GPIO(EC_ESPI_RST_L,		PIN(5, 4), GPIO_DEFAULT)
 GPIO(ESPI_EC_ALERT_SOC_L,	PIN(5, 7), GPIO_DEFAULT)
+#endif
 
 /* TCPC C0 */
 IOEX(EN_PP5000_USB_A0_VBUS,	EXPIN(USBC_PORT_C0, 1, 5), GPIO_OUT_LOW)
