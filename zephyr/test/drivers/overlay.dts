@@ -14,6 +14,11 @@
 			enum-name = "GPIO_BATT_PRES_ODL";
 			label = "EC_BATT_PRES_ODL";
 		};
+		acok_od {
+			gpios = <&gpio0 2 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+			label = "ACOK_OD";
+		};
 	};
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
@@ -50,5 +55,5 @@
 };
 
 &gpio0 {
-	ngpios = <2>;
+	ngpios = <3>;
 };

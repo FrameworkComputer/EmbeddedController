@@ -9,4 +9,7 @@
 #include <devicetree.h>
 #include <gpio_signal.h>
 
+#define EC_CROS_GPIO_INTERRUPTS                                           \
+	GPIO_INT(GPIO_AC_PRESENT, GPIO_INT_EDGE_BOTH, extpower_interrupt)
+
 #endif /* __ZEPHYR_GPIO_MAP_H */

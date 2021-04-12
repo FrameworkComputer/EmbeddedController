@@ -91,11 +91,6 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-int extpower_is_present(void)
-{
-	return 0;
-}
-
 int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 {
 	return 0;
