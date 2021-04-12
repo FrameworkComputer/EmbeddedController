@@ -217,6 +217,126 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c    = 70,
 		},
 	},
+
+	/* BYD 16DPHYMD Battery Information */
+	[BATTERY_BYD16] = {
+		.fuel_gauge = {
+			.manuf_name = "BYD-BYD3.685",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr = 0x043,
+				.reg_mask = 0x0001,
+				.disconnect_val = 0x000,
+				.cfet_mask = 0x0002,
+				.cfet_off_val = 0x0000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 70,
+		},
+	},
+
+	/* LGC Battery Information */
+	[BATTERY_LGC3] = {
+		.fuel_gauge = {
+			.manuf_name = "LGC-LGC3.553",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x2000,
+				.disconnect_val = 0x2000,
+				.cfet_mask = 0x4000,
+				.cfet_off_val = 0x4000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
+		},
+	},
+
+	/* SIMPLO Battery Information */
+	[BATTERY_SIMPLO] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP-SDI3.72",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr = 0x043,
+				.reg_mask = 0x0001,
+				.disconnect_val = 0x000,
+				.cfet_mask = 0x0002,
+				.cfet_off_val = 0x0000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
+		},
+	},
+
+	/* SIMPLO-LISHEN 7T0D3YMD Battery Information */
+	[BATTERY_SIMPLO_LS] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP-LS3.66",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr = 0x043,
+				.reg_mask = 0x0001,
+				.disconnect_val = 0x000,
+				.cfet_mask = 0x0002,
+				.cfet_off_val = 0x0000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11400, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
+			.discharging_max_c	= 70,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
