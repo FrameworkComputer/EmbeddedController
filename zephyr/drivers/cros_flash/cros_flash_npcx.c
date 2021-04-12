@@ -380,7 +380,7 @@ static int cros_flash_npcx_erase(const struct device *dev, int offset, int size)
 		/* Set erase address */
 		cros_flash_npcx_set_address(dev, offset);
 		/* Start erasing */
-		cros_flash_npcx_exec_cmd(dev, SPI_NOR_CMD_SE, UMA_CODE_CMD_ADR);
+		cros_flash_npcx_exec_cmd(dev, SPI_NOR_CMD_BE, UMA_CODE_CMD_ADR);
 
 		/* Wait erase completed */
 		ret = cros_flash_npcx_wait_ready(dev);
