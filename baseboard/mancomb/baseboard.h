@@ -213,7 +213,9 @@
 #define I2C_PORT_THERMAL_AP	NPCX_I2C_PORT7_0
 #define I2C_ADDR_EEPROM_FLAGS	0x50
 
-/* Fan features */
+/* Fan Config */
+#define CONFIG_FANS FAN_CH_COUNT
+/* TODO: Set CONFIG_FAN_INIT_SPEED, defaults to 100 */
 
 /* LED Config */
 #define CONFIG_PWM
@@ -288,6 +290,19 @@ enum pwm_channel {
 	PWM_CH_LED_CHRG,
 	PWM_CH_LED_FULL,
 	PWM_CH_COUNT
+};
+
+/* Fan Channels */
+enum fan_channel {
+	FAN_CH_0 = 0,
+	/* Number of FAN channels */
+	FAN_CH_COUNT,
+};
+
+enum mft_channel {
+	MFT_CH_0 = 0,
+	/* Number of MFT channels */
+	MFT_CH_COUNT,
 };
 
 /* Baseboard Interrupt handlers. */
