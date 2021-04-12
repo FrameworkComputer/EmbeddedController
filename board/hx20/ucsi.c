@@ -31,6 +31,7 @@ int ucsi_write_tunnel(void)
 {
 	uint8_t *message_out = host_get_customer_memmap(EC_MEMMAP_UCSI_MESSAGE_OUT);
 	uint8_t *command = host_get_customer_memmap(EC_MEMMAP_UCSI_COMMAND);
+	uint8_t change_connector_indicator;
 	int i;
 	int offset = 0;
 	int rv = EC_SUCCESS;
@@ -71,8 +72,13 @@ int ucsi_write_tunnel(void)
 		* those command will control specific pd port,
 		* so we need to check the command connector number.
 		*/
-		if (*host_get_customer_memmap(EC_MEMMAP_UCSI_CONTROL_SPECIFIC + offset) > 0x02) {
-			*host_get_customer_memmap(EC_MEMMAP_UCSI_CONTROL_SPECIFIC + offset) >>= 1;
+		change_connector_indicator =
+			*host_get_customer_memmap(EC_MEMMAP_UCSI_CONTROL_SPECIFIC + offset) & 0x7f;
+
+		if (change_connector_indicator > 0x02) {
+			*host_get_customer_memmap(EC_MEMMAP_UCSI_CONTROL_SPECIFIC + offset) =
+				((*host_get_customer_memmap(EC_MEMMAP_UCSI_CONTROL_SPECIFIC + offset)
+				& 0x80) | (change_connector_indicator >> 1));
 			i = 1;
 		} else
 			i = 0;
