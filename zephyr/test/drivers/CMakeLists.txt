@@ -11,3 +11,5 @@ zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
 FILE(GLOB test_sources src/*.c)
 target_sources(app PRIVATE ${test_sources})
+
+target_sources(app PRIVATE "${PLATFORM_EC}/test/cbi.c")

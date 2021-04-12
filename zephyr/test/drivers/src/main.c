@@ -8,6 +8,7 @@
 #include "ec_app_main.h"
 
 extern void test_suite_battery(void);
+extern void test_suite_cbi(void);
 
 void test_main(void)
 {
@@ -17,4 +18,5 @@ void test_main(void)
 
 	/* Test suites to run after ec_app_main.*/
 	test_suite_battery();
+	test_suite_cbi();
 }
