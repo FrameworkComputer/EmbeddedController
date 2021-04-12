@@ -417,7 +417,7 @@ class Zmake:
                 return rv
 
         for test_file in directory.glob('test_*.py'):
-            self.executor.append(func=lambda: run_test(test_file))
+            self.executor.append(func=lambda f=test_file: run_test(f))
 
     def testall(self):
         """Test all the valid test targets"""
