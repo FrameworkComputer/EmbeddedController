@@ -338,10 +338,10 @@
 		};
 	};
 
-	def_lvol_io_list {
+	def-lvol-io-list {
 		compatible = "nuvoton,npcx-lvolctrl-def";
 
 		/* I2C_SDA0 & SCL0 */
-		lvol_io_pads = <&lvol_iob4 &lvol_iob5>;
+		lvol-io-pads = <&lvol_iob4 &lvol_iob5>;
 	};
 };

@@ -83,7 +83,7 @@
 		mtc: mtc@400b7000 {
 			compatible = "nuvoton,npcx-cros-mtc";
 			reg = <0x400b7000 0x2000>;
-			mtc_alarm = <&wui_mtc>;
+			mtc-alarm = <&wui_mtc>;
 			label = "MTC";
 		};
 
