@@ -70,9 +70,8 @@ def ninja_log_level_override(line, default_log_level):
     # useful except for debugging.
     elif line.startswith("ccache"):
         return logging.DEBUG
-    elif line.split()[0] in ["Memory", "FLASH:", "SRAM:", "IDT_LIST:",
-                             'Running', 'Building']:
-        return logging.INFO
+    elif line.split()[0] in ["Memory", "FLASH:", "SRAM:", "IDT_LIST:"]:
+        pass
     else:
         return logging.ERROR
     return default_log_level
