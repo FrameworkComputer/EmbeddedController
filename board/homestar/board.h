@@ -71,6 +71,8 @@
 #define GMR_TABLET_MODE_GPIO_L GPIO_LID_OPEN_EC
 #define GPIO_SWITCHCAP_PG_INT_L GPIO_LN9310_INT
 
+#define CONFIG_MKBP_INPUT_DEVICES
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"

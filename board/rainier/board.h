@@ -131,7 +131,7 @@
 /* Enable Accel over SPI */
 #define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI master port (SPI2) */
 
-#define CONFIG_KEYBOARD_PROTOCOL_MKBP
+#define CONFIG_MKBP_INPUT_DEVICES
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
 /* Define the host events which are allowed to wakeup AP in S3. */
