@@ -5086,8 +5086,8 @@
 #undef CONFIG_EXTENDED_VERSION_INFO
 
 /*
- * Define this to enable Cros Board Info support. I2C_EEPROM_PORT and
- * I2C_EEPROM_ADDR must be defined as well.
+ * Define this to enable Cros Board Info support. I2C_PORT_EEPROM and
+ * I2C_ADDR_EEPROM_FLAGS must be defined as well.
  */
 #undef CONFIG_CROS_BOARD_INFO
 
