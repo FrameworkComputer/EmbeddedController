@@ -105,12 +105,3 @@ def test_filter_info():
         'Running /usr/bin/ninja -C /tmp/z/vol/build-rw',
         'SRAM:       48632 B        62 KB     76.60%',
         }
-
-
-def test_filter_debug():
-    """Test what appears on the DEBUG level"""
-    recs, _ = do_test_with_log_level(logging.DEBUG)
-    # The RO version has three extra lines: the SUCCESS asterisks
-    # Both versions add the first 'Building' line above, with the temp dir
-    expect = 321 + 318 + 2
-    assert len(recs) == expect
