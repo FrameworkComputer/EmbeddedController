@@ -13,6 +13,7 @@
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dso.h"
 #include "driver/als_tcs3400.h"
+#include "hooks.h"
 #include "power_button.h"
 #include "power.h"
 #include "switch.h"
@@ -47,6 +48,22 @@ __override void board_cbi_init(void)
 {
 	config_usb_db_type();
 }
+
+/* Called on AP S3 -> S0 transition */
+static void board_chipset_resume(void)
+{
+	/* Allow keyboard backlight to be enabled */
+	gpio_set_level(GPIO_EC_KB_BL_EN, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S0 -> S3 transition */
+static void board_chipset_suspend(void)
+{
+	/* Turn off the keyboard backlight if it's on. */
+	gpio_set_level(GPIO_EC_KB_BL_EN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CHARGE_RAMP_SW
 
