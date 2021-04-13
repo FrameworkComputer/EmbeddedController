@@ -26,6 +26,8 @@
 #define interrupt_disable_all() __asm__("cpsid i")
 #elif CONFIG_ZTEST
 #define interrupt_disable_all()
+#else /* !CONFIG_CPU_CORTEX_M */
+#define interrupt_disable_all() irq_lock()
 #endif
 #else /* !CONFIG_ZEPHYR */
 #define interrupt_disable_all() interrupt_disable()
