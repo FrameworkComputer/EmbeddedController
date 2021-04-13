@@ -15,6 +15,7 @@
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "switch.h"
+#include "thermal.h"
 
 #include "gpio_list.h"
 
@@ -45,6 +46,22 @@ const struct pwm_t pwm_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT] = {
+	[TEMP_SENSOR_SOC] = {
+		.temp_host = {
+			[EC_TEMP_THRESH_WARN] = 0,
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(74),
+			[EC_TEMP_THRESH_HALT] = C_TO_K(79),
+		},
+		.temp_host_release = {
+			[EC_TEMP_THRESH_WARN] = 0,
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(71),
+			[EC_TEMP_THRESH_HALT] = 0,
+		},
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 #ifdef CONFIG_KEYBOARD_FACTORY_TEST
 /*
