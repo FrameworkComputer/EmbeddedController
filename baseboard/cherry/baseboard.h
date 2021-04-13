@@ -22,7 +22,6 @@
  * allow the second reset to be treated as a power-on.
  */
 #define CONFIG_BOARD_RESET_AFTER_POWER_ON
-#define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_CHIPSET_MT8192
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_HIBERNATE_WAKE_PINS_DYNAMIC
@@ -52,6 +51,13 @@
 #define CONFIG_BC12_DETECT_PI3USB9201
 #undef CONFIG_BC12_SINGLE_DRIVER
 #define CONFIG_USB_CHARGER
+
+/* CBI */
+#define CONFIG_BOARD_VERSION_CBI
+#define CONFIG_CROS_BOARD_INFO
+#define CONFIG_CMD_CBI
+#define I2C_PORT_EEPROM IT83XX_I2C_CH_A
+#define I2C_ADDR_EEPROM_FLAGS 0x50
 
 /* Charger */
 #define ADC_AMON_BMON ADC_CHARGER_AMON_R /* ADC name remap */
@@ -208,15 +214,6 @@ enum power_signal {
 	POWER_SIGNAL_COUNT,
 };
 
-enum board_sub_board {
-	SUB_BOARD_NONE = -1,
-	SUB_BOARD_TYPEC,
-	SUB_BOARD_HDMI,
-
-	SUB_BOARD_COUNT,
-};
-
-int board_get_version(void);
 void board_reset_pd_mcu(void);
 
 #endif /* !__ASSEMBLER__ */
