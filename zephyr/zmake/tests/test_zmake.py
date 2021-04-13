@@ -57,13 +57,11 @@ class FakeJobserver(zmake.jobserver.GNUMakeJobServer):
         return self.jobserver.popen(new_cmd, *args, **kwargs)
 
 
-def do_test_with_log_level(log_level, samples=None):
+def do_test_with_log_level(log_level):
     """Test filtering using a particular log level
 
     Args:
         log_level: Level to use
-        samples: List of sample files to use (in the 'files' subdir), None to
-            use the standard ones
 
     Returns:
         tuple:
@@ -71,7 +69,7 @@ def do_test_with_log_level(log_level, samples=None):
             - Temporary directory used for build
     """
     fnames = [os.path.join(OUR_PATH, 'files', f)
-              for f in samples or ['sample_ro.txt', 'sample_rw.txt']]
+              for f in ['sample_ro.txt', 'sample_rw.txt']]
     zmk = zm.Zmake(jobserver=FakeJobserver(fnames))
 
     with LogCapture(level=log_level) as cap:
@@ -116,12 +114,3 @@ def test_filter_debug():
     # Both versions add the first 'Building' line above, with the temp dir
     expect = 321 + 318 + 2
     assert len(recs) == expect
-
-
-def test_filter_error():
-    """Test that devicetree errors appear"""
-    recs, tmpname = do_test_with_log_level(logging.ERROR,
-                                           ['sample_err.txt'] * 2)
-    uniq = set(recs)
-    assert len(uniq) == 1
-    assert "devicetree error: 'adc' is marked as required" in list(uniq)[0]

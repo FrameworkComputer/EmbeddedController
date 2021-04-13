@@ -91,8 +91,6 @@ def cmake_log_level_override(line, default_log_level):
     # Strange output from Zephyr that we normally ignore
     if line.startswith("Including boilerplate"):
         return logging.DEBUG
-    elif line.startswith("devicetree error:"):
-        return logging.ERROR
     return default_log_level
 
 
