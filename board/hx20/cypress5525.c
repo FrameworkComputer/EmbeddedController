@@ -366,6 +366,88 @@ int cyp5525_setup(int controller)
 	return EC_SUCCESS;
 }
 
+int cypd_response_get_battery_status(int controller, int port, int invalid_battery)
+{
+	uint8_t data_memory[8] = {0};
+	int remaining_capacity_WH;
+	int *remaining_capacity_mAH = (int *)host_get_memmap(EC_MEMMAP_BATT_CAP);
+	int *design_voltage = (int *)host_get_memmap(EC_MEMMAP_BATT_DVLT);
+	int dm_control_data = 0;
+	int data_len = 8;
+	int rv;
+
+	/**
+	 * Response get battery status command,
+	 * Step 1: write data memroy should be updated with the message data in the following format
+	 *		Byte 0 : Message type [4:0]
+	 * 		Byte 3 - 1 : Reserved
+	 * 		Byte 4 : BSDO - reserved
+	 * 		Byte 5 : BSDO - Battery Info
+	 * 		Byte 7 - 6 : BSDO - Battery Present Capacity (0.1 Wh)
+	 */
+	data_memory[0] = PD_DATA_BATTERY_STATUS;
+
+
+
+	if (!(battery_is_present() == BP_YES)) {
+
+		data_memory[5] = 0x00;
+		remaining_capacity_WH = 0xFFFF;
+
+	} else {
+
+		data_memory[5] |= BIT(1);
+
+		switch (charge_get_state()) {
+		case ST_IDLE:
+			data_memory[5] = BATT_IDLE << 2;
+			break;
+		case ST_DISCHARGE:
+			data_memory[5] = BATT_DISCHARGING << 2;
+			break;
+		case ST_CHARGE:
+		case ST_PRECHARGE:
+		default:
+			data_memory[5] = BATT_CHARGING << 2;
+			break;
+		}
+
+		remaining_capacity_WH = 10 * (*remaining_capacity_mAH) * (*design_voltage) / 1000000;
+	}
+
+	/**
+	 * The Invalid Battery Reference bit Shall be set when the Get_Battery_Status Message
+	 * contains a reference to a Battery or Battery Slot that does not exist.
+	 */
+	if (invalid_battery)
+		data_memory[5] |= BIT(0);
+
+	data_memory[6] = remaining_capacity_WH & 0xFF;
+	data_memory[7] = remaining_capacity_WH >> 8;
+
+	rv = cypd_write_reg_block(controller, CYP5525_WRITE_DATA_MEMORY_REG(port), data_memory, 8);
+
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	 /**
+	 * Step 2: write the DM_Control to response the battery status
+	 *		Byte 0
+	 *			- BIT 1 - 0 : Packet type should be set to 0 (SOP).
+	 *			- BIT 2 : PD 3.0 Message bit (Bit 2) should be set.
+	 *			- BIT 3 : Extended message bit (Bit 3) should be cleared.
+	 *			- BIT 4 : Respoonse timer disable bit should be set as desired.
+	 *		Byte 1 : Data length actual size of data written to the data memory (N+1).
+	 */
+
+	dm_control_data = CYP5525_DM_CTRL_PD3_DATA_REQUEST
+		| CYP5525_DM_CTRL_SENDER_RESPONSE_TIMER_DISABLE | (data_len << 8);
+
+	rv = cypd_write_reg16(controller, CYP5525_DM_CONTROL_REG(port), dm_control_data);
+
+	return rv;
+}
+
 void cypd_enable_extend_msg_control(int controller)
 {
 	/**
@@ -395,6 +477,7 @@ int cypd_handle_extend_msg(int controller, int port)
 	uint8_t data[5] = {0};
 	int type;
 	int rv;
+	int invalid_battery = 0;
 
 	/* Read the extended message packet */
 	rv = cypd_read_reg_block(controller,
@@ -410,6 +493,9 @@ int cypd_handle_extend_msg(int controller, int port)
 	case PD_EXT_GET_BATTERY_CAP:
 		break;
 	case PD_EXT_GET_BATTERY_STATUS:
+		if (data[4] != BATT_STATUS_REF)
+			invalid_battery = 1;
+		rv = cypd_response_get_battery_status(controller, port, invalid_battery);
 		break;
 	default:
 		CPRINTS("Unknow data type: 0x%02x", type);
