@@ -385,6 +385,41 @@ void cypd_enable_extend_msg_control(int controller)
 	}
 }
 
+int cypd_handle_extend_msg(int controller, int port)
+{
+	/**
+	 * Extended Message Received Events
+	 * Event Code = 0xAC(SOP), 0xB4(SOP'), 0xB5(SOP'')
+	 * Event length = 4 + Extended message length
+	 */
+	uint8_t data[5] = {0};
+	int type;
+	int rv;
+
+	/* Read the extended message packet */
+	rv = cypd_read_reg_block(controller,
+		CYP5525_READ_DATA_MEMORY_REG(port, 0), data, 5);
+
+	/* Extended field shall be set to 1*/
+	if (!(data[1] & BIT(7)))
+		return EC_ERROR_INVAL;
+
+	type = data[0] & 0x1f; /* bit4 - bit0 */
+
+	switch (type) {
+	case PD_EXT_GET_BATTERY_CAP:
+		break;
+	case PD_EXT_GET_BATTERY_STATUS:
+		break;
+	default:
+		CPRINTS("Unknow data type: 0x%02x", type);
+		rv = EC_ERROR_INVAL;
+		break;
+	}
+
+	return rv;
+}
+
 void cypd_update_port_state(int controller, int port)
 {
 	int rv;
@@ -537,6 +572,10 @@ void cyp5525_port_int(int controller, int port)
 	case CYPD_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT");
 		cypd_update_port_state(controller, port);
+		break;
+	case CYPD_RESPONSE_EXT_MSG_SOP_RX:
+		cypd_handle_extend_msg(controller, port);
+		CPRINTS("CYP_RESPONSE_RX_EXT_MSG");
 		break;
 	}
 }

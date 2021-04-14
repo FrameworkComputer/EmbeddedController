@@ -65,8 +65,8 @@
 
 #define CYP5525_PORT_PD_RESPONSE_REG(x) \
 	(0x1400 + (x * 0x1000))
-#define CYP5525_READ_DATA_MEMORY_REG(x) \
-	(0x1404 + (x * 0x1000))
+#define CYP5525_READ_DATA_MEMORY_REG(x, offset) \
+	((0x1404 + offset) + (x * 0x1000))
 #define CYP5525_WRITE_DATA_MEMORY_REG(x) \
 	(0x1800 + (x * 0x1000))
 
