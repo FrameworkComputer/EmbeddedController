@@ -366,6 +366,102 @@ int cyp5525_setup(int controller)
 	return EC_SUCCESS;
 }
 
+void cypd_send_extended_msg(int controller, int port, int sop,
+	int msg_type, int ext_header, uint8_t *data, int data_size, int chunked)
+{
+	uint8_t data_memory[16] = {0};
+	int dm_control_data = 0;
+	int data_len = 4;
+
+	/**
+	 * The extended message data should be written to the write data memory
+	 * in the following format:
+	 * Byte 0 : Message type [4:0]
+	 * Byte 1 : Reserved
+	 * Byte 3 - 2 : Extended message header
+	 * Byte N - 4 : data
+	 */
+
+	data_memory[0] = msg_type;
+	data_memory[2] = ext_header;
+	memcpy(data_memory + 4, data, data_size);
+
+	cypd_write_reg_block(controller, CYP5525_WRITE_DATA_MEMORY_REG(port),
+		data_memory, (4 + data_size));
+
+
+	if (!chunked)
+		data_len += data_size;
+	else
+		CPRINTS("TODO: handle chunked message");
+
+	/**
+	 * The DM_CONTROL register should then be written to in the following format:
+	 * Byte 0
+	 *	- BIT 1 - 0 : Packet type should be set to SOP(0), SOP'(1), or SOP''(2).
+	 *	- BIT 2 : PD 3.0 Message bit (Bit 2) should be clear.
+	 *	- BIT 3 : Extended message bit (Bit 3) should be set.
+	 *	- BIT 4 : Respoonse timer disable bit should be set as desired.
+	 * Byte 1 : The data length specified here will be the actual length of data
+	 *			written into the write data memory, inclusive of the 4 byte header
+	 *
+	 * TODO: Need to process chunk extended message [4:32]
+	 */
+	dm_control_data = sop | CYP5525_DM_CTRL_EXTENDED_DATA_REQUEST
+		| CYP5525_DM_CTRL_SENDER_RESPONSE_TIMER_DISABLE | (data_len << 8);
+
+	cypd_write_reg16(controller, CYP5525_DM_CONTROL_REG(port), dm_control_data);
+}
+
+void cypd_response_get_battery_capability(int controller, int port,
+	int invalid_battery, int chunked)
+{
+	uint8_t data[9] = {0};
+	int ext_header = 0;
+	int *design_capacity_mAH = (int *)host_get_memmap(EC_MEMMAP_BATT_DCAP);
+	int *last_full_capacity_mAH = (int *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
+	int *design_voltage = (int *)host_get_memmap(EC_MEMMAP_BATT_DVLT);
+
+	int design_capacity_WH = 10 * (*design_capacity_mAH) * (*design_voltage) / 1000000;
+	int last_full_capacity_WH = 10 * (*last_full_capacity_mAH) * (*design_voltage) / 1000000;
+	int pid = PRODUCT_ID;
+	int vid = VENDOR_ID;
+
+	/**
+	 * TODO: Not sure message is chunk or unchunk.
+	 * Default use unchuck format:
+	 * bit 15 : Chunked
+	 * bit 14 - 11 : Chunk Number
+	 * bit 10 : Request Chunk
+	 * bit 9  : reserved
+	 * bit 8 - 0 : data size
+	 */
+	if (chunked)
+		ext_header = (IS_CHUNKED << 8) | 0x09;
+	else
+		ext_header = 0x09;
+
+	/**
+	 * TODO: compare battery cap reference is valid
+	 */
+	data[0] = vid & 0xFF;
+	data[1] = vid >> 8;
+	data[2] = pid & 0xFF;
+	data[3] = pid >> 8;
+	if (battery_is_present() == BP_YES) {
+		data[4] = design_capacity_WH & 0xFF;
+		data[5] = design_capacity_WH >> 8;
+		data[6] = last_full_capacity_WH & 0xFF;
+		data[7] = last_full_capacity_WH >> 8;
+	}
+
+	if (invalid_battery)
+		data[8] |= invalid_battery;
+
+	cypd_send_extended_msg(controller, port, CYP5525_DM_CTRL_SOP, PD_EXT_BATTERY_CAP,
+		ext_header, data, 9, chunked);
+}
+
 int cypd_response_get_battery_status(int controller, int port, int invalid_battery)
 {
 	uint8_t data_memory[8] = {0};
@@ -378,12 +474,12 @@ int cypd_response_get_battery_status(int controller, int port, int invalid_batte
 
 	/**
 	 * Response get battery status command,
-	 * Step 1: write data memroy should be updated with the message data in the following format
+	 * Step 1: write data memory should be updated with the message data in the following format
 	 *		Byte 0 : Message type [4:0]
-	 * 		Byte 3 - 1 : Reserved
-	 * 		Byte 4 : BSDO - reserved
-	 * 		Byte 5 : BSDO - Battery Info
-	 * 		Byte 7 - 6 : BSDO - Battery Present Capacity (0.1 Wh)
+	 *		Byte 3 - 1 : Reserved
+	 *		Byte 4 : BSDO - reserved
+	 *		Byte 5 : BSDO - Battery Info
+	 *		Byte 7 - 6 : BSDO - Battery Present Capacity (0.1 Wh)
 	 */
 	data_memory[0] = PD_DATA_BATTERY_STATUS;
 
@@ -412,7 +508,8 @@ int cypd_response_get_battery_status(int controller, int port, int invalid_batte
 			break;
 		}
 
-		remaining_capacity_WH = 10 * (*remaining_capacity_mAH) * (*design_voltage) / 1000000;
+		remaining_capacity_WH = 10 * (*remaining_capacity_mAH)
+			* (*design_voltage) / 1000000;
 	}
 
 	/**
@@ -430,7 +527,7 @@ int cypd_response_get_battery_status(int controller, int port, int invalid_batte
 	if (rv != EC_SUCCESS)
 		return rv;
 
-	 /**
+	/**
 	 * Step 2: write the DM_Control to response the battery status
 	 *		Byte 0
 	 *			- BIT 1 - 0 : Packet type should be set to 0 (SOP).
@@ -478,6 +575,7 @@ int cypd_handle_extend_msg(int controller, int port)
 	int type;
 	int rv;
 	int invalid_battery = 0;
+	int msg_is_chunked;
 
 	/* Read the extended message packet */
 	rv = cypd_read_reg_block(controller,
@@ -487,10 +585,17 @@ int cypd_handle_extend_msg(int controller, int port)
 	if (!(data[1] & BIT(7)))
 		return EC_ERROR_INVAL;
 
+	if (data[3] == IS_CHUNKED)
+		msg_is_chunked = 1;
+
 	type = data[0] & 0x1f; /* bit4 - bit0 */
 
 	switch (type) {
 	case PD_EXT_GET_BATTERY_CAP:
+		if (data[4] != BATT_STATUS_REF)
+			invalid_battery = 1;
+		cypd_response_get_battery_capability(controller, port,
+			invalid_battery, msg_is_chunked);
 		break;
 	case PD_EXT_GET_BATTERY_STATUS:
 		if (data[4] != BATT_STATUS_REF)
@@ -498,7 +603,7 @@ int cypd_handle_extend_msg(int controller, int port)
 		rv = cypd_response_get_battery_status(controller, port, invalid_battery);
 		break;
 	default:
-		CPRINTS("Unknow data type: 0x%02x", type);
+		CPRINTS("Unknown data type: 0x%02x", type);
 		rv = EC_ERROR_INVAL;
 		break;
 	}
