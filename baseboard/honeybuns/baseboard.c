@@ -6,6 +6,7 @@
 /* Honeybuns family-specific configuration */
 #include "console.h"
 #include "cros_board_info.h"
+#include "driver/mp4245.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -172,6 +173,14 @@ void baseboard_set_mst_lane_control(int mf)
 		gpio_set_level(GPIO_MST_RST_L, 1);
 	}
 }
+
+static void baseboard_enable_mp4245(void)
+{
+	mp4245_set_voltage_out(5000);
+	mp4245_votlage_out_enable(1);
+	msleep(MP4245_VOUT_5V_DELAY_MS);
+}
+
 #endif /* SECTION_IS_RW */
 
 static void baseboard_init(void)
@@ -209,6 +218,8 @@ static void baseboard_init(void)
 	gpio_enable_interrupt(GPIO_PWR_BTN);
 	/* Set dock mf preference LED */
 	baseboard_set_led(dock_mf);
+	/* Setup VBUS to default value */
+	baseboard_enable_mp4245();
 
 #else
 	/* Set up host port usbc to present Rd on CC lines */
@@ -251,6 +262,8 @@ static void baseboard_power_on(void)
 		/* Inform TC state machine that it can resume */
 		pd_set_suspend(port, 0);
 	}
+	/* Set VBUS to 5V and enable output from mp4245 */
+	baseboard_enable_mp4245();
 	/* Enable usbc interrupts */
 	board_enable_usbc_interrupts();
 

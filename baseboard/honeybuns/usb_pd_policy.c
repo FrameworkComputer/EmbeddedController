@@ -22,6 +22,9 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+#define MP4245_VOLTAGE_WINDOW BIT(2)
+#define MP4245_VOLTAGE_WINDOW_MASK (MP4245_VOLTAGE_WINDOW - 1)
+
 #define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
 			 PDO_FIXED_COMM_CAP | PDO_FIXED_UNCONSTRAINED)
 
@@ -123,7 +126,7 @@ void pd_power_supply_reset(int port)
 
 	prev_en = ppc_is_sourcing_vbus(port);
 
-	/* Disable VBUS. */
+	/* Disable VBUS via PPC. */
 	ppc_vbus_source_enable(port, 0);
 
 	/* Enable discharge if we were previously sourcing 5V */
@@ -131,9 +134,21 @@ void pd_power_supply_reset(int port)
 		pd_set_vbus_discharge(port, 1);
 
 	if (port == USB_PD_PORT_HOST) {
-		/* Turn off voltage output from buck-boost */
-		mp4245_votlage_out_enable(0);
-		/* Reset VBUS voltage to default value (fixed 5V SRC_CAP) */
+		int mv;
+		int ma;
+		int unused_mv;
+
+		/*
+		 * Because VBUS on C0 is turned on/off via the PPC, the
+		 * voltage from the mp4245 does not need to be turned off, or
+		 * set to 0V. Instead, reset VBUS voltage to default value
+		 * (fixed 5V SRC_CAP) so VBUS is ready to be applied at the next
+		 * attached.src condition.
+		 */
+		pd_extract_pdo_power(pd_src_host_pdo[0], &ma, &mv,
+				     &unused_mv);
+		mp4245_set_voltage_out(mv);
+		/* Ensure voltage is back to 5V */
 		pd_transition_voltage(1);
 	}
 }
@@ -142,15 +157,11 @@ int pd_set_power_supply_ready(int port)
 {
 	int rv;
 
-	if (port == USB_PD_PORT_HOST) {
-		/* Ensure buck-boost is enabled and Vout is on */
-		mp4245_votlage_out_enable(1);
-		msleep(MP4245_VOUT_5V_DELAY_MS);
-	}
-
 	/*
-	 * Default operation of buck-boost is 5v/3.6A.
-	 * Turn on the PPC Provide Vbus.
+	 * Note: For host port, the mp4245 output voltage is set for 5V by
+	 * default and each time VBUS is turned off. VOUT from the mp4245 is
+	 * left enabled as there is a switch (either PPC or discrete) to turn
+	 * VBUS on/off on the wire.
 	 */
 	rv = ppc_vbus_source_enable(port, 1);
 	if (rv)
@@ -162,39 +173,76 @@ int pd_set_power_supply_ready(int port)
 void pd_transition_voltage(int idx)
 {
 	int port = TASK_ID_TO_PD_PORT(task_get_current());
+	int mv;
+	int target_mv;
+	int mv_average = 0;
+	int ma;
+	int vbus_hi;
+	int vbus_lo;
+	int i;
+	int mv_buffer[MP4245_VOLTAGE_WINDOW];
 
-	if (port == USB_PD_PORT_HOST) {
-		int mv, unused_mv;
-		int ma;
-		int vbus_hi;
-		int vbus_lo;
-		int i;
+	/* Only C0 can provide more than 5V */
+	if (port != USB_PD_PORT_HOST)
+		return;
 
 	/*
 	 * Set the VBUS output voltage and current limit to the values specified
 	 * by the PDO requested by sink. Note that USB PD uses idx = 1 for 1st
 	 * PDO of SRC_CAP which must always be 5V fixed supply.
 	 */
-		pd_extract_pdo_power(pd_src_host_pdo[idx - 1], &ma, &mv,
-				     &unused_mv);
+	pd_extract_pdo_power(pd_src_host_pdo[idx - 1], &ma, &target_mv,
+			     &mv);
 
-		/* Set VBUS level to value specified in the requested PDO */
-		mp4245_set_voltage_out(mv);
-		/* Wait for vbus to be within ~5% of its target value */
-		vbus_hi = mv + (mv >> 4);
-		vbus_lo = mv - (mv >> 4);
+	/* Initialize sample delay buffer */
+	for (i = 0; i < MP4245_VOLTAGE_WINDOW; i++)
+		mv_buffer[i] = 0;
 
-		for (i = 0; i < 20; i++) {
-			int rv;
+	/* Set VBUS level to value specified in the requested PDO */
+	mp4245_set_voltage_out(target_mv);
+	/* Wait for vbus to be within ~5% of its target value */
+	vbus_hi = target_mv + (target_mv >> 4);
+	vbus_lo = target_mv - (target_mv >> 4);
 
-			rv =  mp3245_get_vbus(&mv, &ma);
-			if ((rv == EC_SUCCESS) && (mv >= vbus_lo) &&
-			    (mv <= vbus_hi))
+	for (i = 0; i < 20; i++) {
+		/* Read current sample */
+		mv = 0;
+		mp3245_get_vbus(&mv, &ma);
+		/* Add new sample to cicrcular delay buffer */
+		mv_buffer[i & MP4245_VOLTAGE_WINDOW_MASK] = mv;
+		/*
+		 * Don't compute average until sample delay buffer is
+		 * full.
+		 */
+		if (i >= (MP4245_VOLTAGE_WINDOW_MASK)) {
+			int sum = 0;
+			int j;
+
+			/* Sum the voltage samples */
+			for (j = 0; j < MP4245_VOLTAGE_WINDOW; j++)
+				sum += mv_buffer[j];
+			/* Add rounding */
+			sum += MP4245_VOLTAGE_WINDOW / 2;
+			mv_average = sum / MP4245_VOLTAGE_WINDOW;
+			/*
+			 * Check if average is within the target
+			 * voltage range.
+			 */
+			if ((mv_average >= vbus_lo) &&
+			    (mv_average <= vbus_hi))
 				return;
-
-			msleep(2);
 		}
+
+		/*
+		 * The voltage ramp from 5V to 20V requires ~30
+		 * msec. The max loop count and this sleep time gives plenty
+		 * of time for this change.
+		 */
+		msleep(2);
 	}
+
+	CPRINTS("usbc[%d]: Vbus transition timeout: target = %d, measure = %d",
+		port, target_mv, mv_average);
 }
 
 int pd_snk_is_vbus_provided(int port)
