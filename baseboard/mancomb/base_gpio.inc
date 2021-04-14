@@ -29,7 +29,7 @@ GPIO(EC_RECOVERY_BTN_ODL,	PIN(3, 1), GPIO_INT_BOTH)
 GPIO(EN_PWR_S5,			PIN(B, 7), GPIO_OUT_LOW)						/* Enable S5 Power */
 GPIO(EN_PWR_S0_R,		PIN(F, 1), GPIO_OUT_LOW)
 GPIO(EN_PWR_PCORE_S0_R,		PIN(E, 1), GPIO_OUT_LOW)
-GPIO(EN_PPVAR_BJ_ADP_L,		PIN(2, 1), GPIO_OUT_HIGH)						/* Enable Barrel Jack Adapter Power */
+GPIO(EN_PPVAR_BJ_ADP_L,		PIN(2, 1), GPIO_OUT_LOW)						/* Enable Barrel Jack Adapter Power */
 GPIO(EN_USM_ODL,		PIN(1, 2), GPIO_ODR_HIGH)						/* Enable ultrasonic mode */
 ALTERNATE(/*MECH_PWR_BTN_ODL*/	PIN_MASK(D, BIT(2)), 0,				MODULE_PMU, 0)		/* PSL - Mechanical Power Button */
 
