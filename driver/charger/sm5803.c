@@ -636,11 +636,16 @@ static void sm5803_init(int chgnum)
 						      SM5803_INT4_CHG_DONE |
 						      SM5803_INT4_OTG_FAIL);
 
-	/* Set TINT interrupts for 360 K and 330 K */
+	/* Set TINT interrupts for higher threshold 360 K */
 	rv |= meas_write8(chgnum, SM5803_REG_TINT_HIGH_TH,
 						SM5803_TINT_HIGH_LEVEL);
+	/*
+	 * Set TINT interrupts for lower threshold to 0 when not
+	 * throttled to prevent trigger interrupts continually
+	 */
 	rv |= meas_write8(chgnum, SM5803_REG_TINT_LOW_TH,
-						SM5803_TINT_LOW_LEVEL);
+						SM5803_TINT_MIN_LEVEL);
+
 
 	/* Configure TINT interrupts to fire after thresholds are set */
 	rv |= main_write8(chgnum, SM5803_REG_INT2_EN, SM5803_INT2_TINT);
@@ -1032,20 +1037,31 @@ void sm5803_handle_interrupt(int chgnum)
 	}
 
 	if (int_reg & SM5803_INT2_TINT) {
-		/*
-		 * Ignore any interrupts from the low threshold when not
-		 * throttled in order to prevent console spam when the
-		 * temperature is holding near the threshold.
-		 */
 		rv = meas_read8(chgnum, SM5803_REG_TINT_MEAS_MSB, &meas_reg);
 		if ((meas_reg <= SM5803_TINT_LOW_LEVEL) && throttled) {
 			throttled = false;
 			throttle_ap(THROTTLE_OFF, THROTTLE_HARD,
 							THROTTLE_SRC_THERMAL);
+			/*
+			 * Set back higher threshold to 360 K and set lower
+			 * threshold to 0.
+			 */
+			rv |= meas_write8(chgnum, SM5803_REG_TINT_LOW_TH,
+							SM5803_TINT_MIN_LEVEL);
+			rv |= meas_write8(chgnum, SM5803_REG_TINT_HIGH_TH,
+							SM5803_TINT_HIGH_LEVEL);
 		} else if (meas_reg >= SM5803_TINT_HIGH_LEVEL) {
 			throttled = true;
 			throttle_ap(THROTTLE_ON, THROTTLE_HARD,
 							THROTTLE_SRC_THERMAL);
+			/*
+			 * Set back lower threshold to 330 K and set higher
+			 * threshold to maximum.
+			 */
+			rv |= meas_write8(chgnum, SM5803_REG_TINT_HIGH_TH,
+							SM5803_TINT_MAX_LEVEL);
+			rv |= meas_write8(chgnum, SM5803_REG_TINT_LOW_TH,
+							SM5803_TINT_LOW_LEVEL);
 		}
 		/*
 		 * If the interrupt came in and we're not currently throttling

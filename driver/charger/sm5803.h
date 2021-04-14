@@ -149,6 +149,9 @@ enum sm5803_gpio0_modes {
 #define SM5803_TINT_LOW_LEVEL		0xBF
 #define SM5803_TINT_HIGH_LEVEL		0xD1
 
+#define SM5803_TINT_MAX_LEVEL		0xFF
+#define SM5803_TINT_MIN_LEVEL		0x00
+
 /* IBAT levels - The IBAT levels increment in 7.32mA */
 #define SM5803_REG_IBAT_CHG_MEAS_MSB		0x44
 #define SM5803_REG_IBAT_CHG_MEAS_LSB		0x45
