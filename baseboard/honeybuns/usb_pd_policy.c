@@ -16,6 +16,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_dp_ufp.h"
+#include "usb_tc_sm.h"
 #include "usbc_ppc.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
@@ -82,7 +83,11 @@ __override bool port_discovery_dr_swap_policy(int port,
 	enum pd_data_role role_test =
 		(port == USB_PD_PORT_HOST) ? PD_ROLE_DFP : PD_ROLE_UFP;
 
-	if (dr == role_test)
+	/*
+	 * Request data role swap if not in the port's desired data role and if
+	 * flag to check for data role in PE is set.
+	 */
+	if (dr == role_test && dr_swap_flag)
 		return true;
 
 	/* Do not perform a DR swap */
@@ -92,13 +97,15 @@ __override bool port_discovery_dr_swap_policy(int port,
 /*
  * Default Port Discovery VCONN Swap Policy.
  *
- * 1) Never perform VCONN swap
+ * 1) VCONN swap if requested by PE and currently not vconn source.
  */
 __override bool port_discovery_vconn_swap_policy(int port,
 			bool vconn_swap_flag)
 {
-	/* Do not perform a VCONN swap */
-	return false;
+	if (vconn_swap_flag && !tc_is_vconn_src(port))
+		return true;
+	else
+		return false;
 }
 
 int pd_check_vconn_swap(int port)
