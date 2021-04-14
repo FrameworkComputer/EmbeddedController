@@ -443,11 +443,12 @@ static int init(struct motion_sensor_t *s)
 
 		/*
 		 * Output data not updated until have been read.
-		 * Prefer interrupt to be active low.
+		 * Require interrupt to be active low.
 		 */
 		ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
 				    LSM6DSO_CTRL3_ADDR,
-				    LSM6DSO_BDU | LSM6DSO_IF_INC);
+				    LSM6DSO_BDU | LSM6DSO_IF_INC
+					| LSM6DSO_H_L_ACTIVE);
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
 
