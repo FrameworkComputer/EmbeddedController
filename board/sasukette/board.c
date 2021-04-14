@@ -185,6 +185,10 @@ void board_init(void)
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
 			      CHIPSET_STATE_SOFT_OFF);
 	board_power_5v_enable(on);
+
+	/* modify AC DC prochot value */
+	isl923x_set_ac_prochot(CHARGER_SOLO, 4096);
+	isl923x_set_dc_prochot(CHARGER_SOLO, 6000);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
