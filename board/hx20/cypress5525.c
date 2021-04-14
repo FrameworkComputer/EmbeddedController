@@ -24,6 +24,16 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
+#define BATT_CHARGING	0x00
+#define BATT_DISCHARGING	0x01
+#define BATT_IDLE	0x10
+
+#define BATT_STATUS_REF	1
+#define IS_CHUNKED	0x80
+
+#define PRODUCT_ID	0x0001
+#define VENDOR_ID	0x32ac
+
 static struct pd_chip_config_t pd_chip_config[] = {
 	[PD_CHIP_0] = {
 		.i2c_port = I2C_PORT_PD_MCU,
@@ -356,6 +366,25 @@ int cyp5525_setup(int controller)
 	return EC_SUCCESS;
 }
 
+void cypd_enable_extend_msg_control(int controller)
+{
+	/**
+	 * If the EC_EXTD_MSG_CTRL_EN bit in the VDM_EC_CONTROL register id not set,
+	 * CCG firmware will automatically send a NOT_SUPPORTED message in response
+	 * to incoming extended data messages. If this bit is set, the messages are
+	 * forwarded to the EC for handling.
+	 */
+	int i;
+	int rv;
+
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		rv = cypd_write_reg8(controller,
+			CYP5525_VDM_EC_CONTROL_REG(i), CYP5525_EXTEND_MSG_CTRL_EN);
+		if (rv != EC_SUCCESS)
+			break;
+	}
+}
+
 void cypd_update_port_state(int controller, int port)
 {
 	int rv;
@@ -568,6 +597,7 @@ void cypd_handle_state(int controller)
 			cyp5525_get_version(controller);
 			cypd_write_reg8_wait_ack(controller, CYP5225_USER_MAINBOARD_VERSION, board_get_version());
 			cyp5525_setup(controller);
+			cypd_enable_extend_msg_control(controller);
 			cypd_update_port_state(controller, 0);
 			cypd_update_port_state(controller, 1);
 			cyp5525_ucsi_startup(controller);

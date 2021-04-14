@@ -38,6 +38,8 @@
 #define CYP5525_MESSAGE_IN_REG          0xF010
 #define CYP5525_MESSAGE_OUT_REG         0xF020
 
+#define CYP5525_DM_CONTROL_REG(x) \
+	(0x1000 + (x * 0x1000))
 #define CYP5525_SELECT_SINK_PDO_REG(x) \
 	(0x1005 + (x * 0x1000))
 #define CYP5525_PD_CONTROL_REG(x) \
@@ -54,6 +56,8 @@
 	(0x1014 + (x * 0x1000))
 #define CYP5525_EVENT_MASK_REG(x) \
 	(0x1024 + (x * 0x1000))
+#define CYP5525_VDM_EC_CONTROL_REG(x) \
+	(0x102A + (x * 0x1000))
 #define CYP5525_DP_ALT_MODE_CONFIG_REG(x) \
 	(0x102B + (x * 0x1000))
 #define CYP5525_PORT_INTR_STATUS_REG(x) \
@@ -61,7 +65,8 @@
 
 #define CYP5525_PORT_PD_RESPONSE_REG(x) \
 	(0x1400 + (x * 0x1000))
-
+#define CYP5525_READ_DATA_MEMORY_REG(x) \
+	(0x1404 + (x * 0x1000))
 #define CYP5525_WRITE_DATA_MEMORY_REG(x) \
 	(0x1800 + (x * 0x1000))
 
@@ -253,6 +258,19 @@ enum cypd_response {
 #define EC_MEMMAP_UCSI_MESSAGE_OUT		0x30
 
 #define CYP5525_PD_SET_3A_PROF          0x02
+
+/************************************************/
+/*  DM CONTROL DEFINATION                       */
+/************************************************/
+#define CYP5525_DM_CTRL_SOP				0x00
+#define CYP5525_DM_CTRL_SPO_PRIM		0x01
+#define CYP5525_DM_CTRL_SPO_PRIM_PRIM	0x02
+
+#define CYP5525_DM_CTRL_PD3_DATA_REQUEST	BIT(2)
+#define CYP5525_DM_CTRL_EXTENDED_DATA_REQUEST	BIT(3)
+#define CYP5525_DM_CTRL_SENDER_RESPONSE_TIMER_DISABLE	BIT(4)
+
+#define CYP5525_EXTEND_MSG_CTRL_EN	BIT(1)
 
 /* 7 bit address  */
 #define CYP5525_I2C_CHIP0              0x08
