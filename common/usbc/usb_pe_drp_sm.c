@@ -5180,7 +5180,8 @@ static void pe_vdm_send_request_entry(int port)
 
 	if ((pe[port].tx_type == TCPC_TX_SOP_PRIME ||
 	     pe[port].tx_type == TCPC_TX_SOP_PRIME_PRIME) &&
-	     !tc_is_vconn_src(port)) {
+	    !tc_is_vconn_src(port) && port_discovery_vconn_swap_policy(port,
+		PE_FLAGS_VCONN_SWAP_TO_ON)) {
 		if (port_try_vconn_swap(port))
 			return;
 	}
