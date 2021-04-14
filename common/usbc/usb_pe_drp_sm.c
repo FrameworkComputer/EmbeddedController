@@ -6433,6 +6433,18 @@ static void pe_vcs_send_ps_rdy_swap_entry(int port)
 {
 	print_current_state(port);
 
+	/* Check for any interruptions to this non-interruptible AMS */
+	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		enum tcpm_transmit_type sop =
+				PD_HEADER_GET_SOP(rx_emsg[port].header);
+
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+		/* Soft reset with the SOP* of the incoming message */
+		pe_send_soft_reset(port, sop);
+		return;
+	}
+
 	/* Send a PS_RDY Message */
 	send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_PS_RDY);
 }
