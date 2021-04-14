@@ -268,7 +268,7 @@ DECLARE_EC_TEST(test_bad_crc)
 	return EC_SUCCESS;
 }
 
-TEST_MAIN()
+TEST_SUITE(test_suite_cbi)
 {
 	ztest_test_suite(test_cbi,
 			 ztest_unit_test_setup_teardown(test_uint8, test_setup,
