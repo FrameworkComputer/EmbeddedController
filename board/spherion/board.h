@@ -30,6 +30,8 @@
 #define CONFIG_LED_ONOFF_STATES
 
 /* Keyboard features */
+#define CONFIG_KEYBOARD_REFRESH_ROW3
+
 /* Keyboard backliht */
 #define CONFIG_PWM_KBLIGHT
 
