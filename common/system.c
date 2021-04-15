@@ -950,6 +950,13 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 		if (!IS_ENABLED(CONFIG_HIBERNATE))
 			return EC_ERROR_INVAL;
 
+		/*
+		 * Allow some time for the system to quiesce before entering EC
+		 * hibernate.  Otherwise, some stray signals may cause an
+		 * immediate wake up.
+		 */
+		CPRINTS("Waiting 1s before hibernating...");
+		msleep(1000);
 		CPRINTS("system hibernating");
 		system_hibernate(hibernate_seconds, hibernate_microseconds);
 		/* That shouldn't return... */
