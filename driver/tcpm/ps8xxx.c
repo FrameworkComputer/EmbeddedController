@@ -728,6 +728,27 @@ static int ps8xxx_enter_low_power_mode(int port)
 }
 #endif
 
+__maybe_unused static int ps8815_tcpc_fast_role_swap_enable(int port,
+							    int enable)
+{
+	int status;
+
+	if (!tcpm_tcpc_has_frs_control(port))
+		return EC_SUCCESS;
+
+	/*
+	 * TODO(b/183127346): Confirm register write order
+	 */
+	status = tcpc_update8(port,
+			      PS8815_P1_REG_RESERVED_F4,
+			      PS8815_P1_REG_RESERVED_F4_FRS_EN,
+			      enable ? MASK_SET : MASK_CLR);
+	if (status != EC_SUCCESS)
+		return status;
+
+	return tcpci_tcpc_fast_role_swap_enable(port, enable);
+}
+
 static int ps8xxx_dci_disable(int port)
 {
 	int i;
@@ -819,6 +840,24 @@ static int ps8xxx_tcpm_init(int port)
 		status = ps8815_disable_rp_detect_workaround_check(port);
 		if (status != EC_SUCCESS)
 			return status;
+
+		/*
+		 * NOTE(b/183127346): Enable FRS sequence:
+		 *
+		 *  one-time chip config:
+		 *    set reg 0xd1.FRS_EN: enable FRS without waiting for CC
+		 *  on FRS device detect:
+		 *    set reg POWER_CTRL.FRS_ENABLE
+		 *    set reg 0xf4.FRS_EN (drive FRS GPIO to PPC)
+		 */
+		if (tcpm_tcpc_has_frs_control(port)) {
+			status = tcpc_update8(port,
+					      PS8815_P1_REG_RESERVED_D1,
+					      PS8815_P1_REG_RESERVED_D1_FRS_EN,
+					      MASK_SET);
+			if (status != EC_SUCCESS)
+				return status;
+		}
 	}
 
 	board_ps8xxx_tcpc_init(port);
@@ -954,6 +993,9 @@ const struct tcpm_drv ps8xxx_tcpm_drv = {
 	.enter_low_power_mode	= ps8xxx_enter_low_power_mode,
 #endif
 	.set_bist_test_mode	= tcpci_set_bist_test_mode,
+#if defined(CONFIG_USB_PD_FRS) && defined(CONFIG_USB_PD_TCPM_PS8815)
+	.set_frs_enable         = ps8815_tcpc_fast_role_swap_enable,
+#endif
 };
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC

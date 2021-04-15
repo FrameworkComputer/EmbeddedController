@@ -68,6 +68,11 @@
 #define PS8815_REG_APTX_EQ_AT_5G		0x24
 #define PS8815_REG_RX_EQ_AT_5G			0x26
 
+#define PS8815_P1_REG_RESERVED_D1		0xD1
+#define PS8815_P1_REG_RESERVED_D1_FRS_EN	BIT(7)
+#define PS8815_P1_REG_RESERVED_F4		0xF4
+#define PS8815_P1_REG_RESERVED_F4_FRS_EN	BIT(6)
+
 /*
  * Below register is defined from Parade PS8815 Register Table,
  * See b:189587527 for more detail.
