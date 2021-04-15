@@ -172,6 +172,7 @@ static int nct38xx_tcpm_set_cc(int port, int pull)
 	return tcpci_tcpm_set_cc(port, pull);
 }
 
+#ifdef CONFIG_USB_PD_PPC
 static int nct38xx_tcpm_set_snk_ctrl(int port, int enable)
 {
 	int rv;
@@ -191,6 +192,7 @@ static int nct38xx_tcpm_set_snk_ctrl(int port, int enable)
 
 	return tcpci_tcpm_set_snk_ctrl(port, enable);
 }
+#endif
 
 static void nct38xx_tcpc_alert(int port)
 {
@@ -271,7 +273,7 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	.drp_toggle		= &tcpci_tcpc_drp_toggle,
 #endif
-#ifdef CONFIG_USBC_PPC
+#ifdef CONFIG_USB_PD_PPC
 	.get_snk_ctrl		= &tcpci_tcpm_get_snk_ctrl,
 	.set_snk_ctrl		= &nct38xx_tcpm_set_snk_ctrl,
 	.get_src_ctrl		= &tcpci_tcpm_get_src_ctrl,

@@ -860,6 +860,14 @@ config PLATFORM_EC_CONSOLE_CMD_PPC_DUMP
 
 if PLATFORM_EC_USB_PD_TCPM_TCPCI
 
+config PLATFORM_EC_USB_PD_PPC
+	bool "Enable Power Path Control from PD"
+	default n
+	help
+	  Some PD chips have integrated SRC FET and control the SRC/SINK FET
+	  from internal GPIOs. Enable this if the Power Path Control is
+	  controlled by the PD chip without EC GPIOs.
+
 config PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG
 	bool "Type-C Port Controller runtime config"
 	default y

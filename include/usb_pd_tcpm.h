@@ -367,7 +367,7 @@ struct tcpm_drv {
 	int (*get_chip_info)(int port, int live,
 			struct ec_response_pd_chip_info_v1 *info);
 
-#ifdef CONFIG_USBC_PPC
+#ifdef CONFIG_USB_PD_PPC
 	/**
 	 * Request current sinking state of the TCPC
 	 * NOTE: this is most useful for PPCs that can not tell on their own

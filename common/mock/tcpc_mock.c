@@ -214,7 +214,7 @@ const struct tcpm_drv mock_tcpc_driver = {
 	.drp_toggle = &mock_drp_toggle,
 #endif
 	.get_chip_info = &mock_get_chip_info,
-#ifdef CONFIG_USBC_PPC
+#ifdef CONFIG_USB_PD_PPC
 	.set_snk_ctrl = &mock_set_snk_ctrl,
 	.set_src_ctrl = &mock_set_src_ctrl,
 #endif

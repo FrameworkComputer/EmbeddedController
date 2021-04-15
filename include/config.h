@@ -4322,6 +4322,9 @@
 /* Enable PCIE tunneling if Thunderbolt-Compatible mode is enabled*/
 #undef CONFIG_USB_PD_PCIE_TUNNELING
 
+/* Enable Power Path Control from PD */
+#undef CONFIG_USB_PD_PPC
+
 /*
  * The following two macros are ASCII text strings that matches what appears
  * in the USB-IF Product Registration form for this device. These macros are
@@ -5534,6 +5537,13 @@
 	defined(CONFIG_USBC_PPC_SN5S330)
 #define CONFIG_USBC_PPC
 #endif /* "has a PPC" */
+
+/* Following chips use Power Path Control information from TCPC chip */
+#if defined(CONFIG_USBC_PPC_AOZ1380) || \
+	defined(CONFIG_USBC_PPC_NX20P3481) || \
+	defined(CONFIG_USBC_PPC_NX20P3483)
+#define CONFIG_USB_PD_PPC
+#endif
 
 /* The TI SN5S330 supports VCONN and needs to be informed of CC polarity */
 #if defined(CONFIG_USBC_PPC_SN5S330)

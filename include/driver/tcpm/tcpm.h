@@ -254,7 +254,7 @@ static inline int tcpm_transmit(int port, enum tcpm_transmit_type type,
 	return tcpc_config[port].drv->transmit(port, type, header, data);
 }
 
-#ifdef CONFIG_USBC_PPC
+#ifdef CONFIG_USB_PD_PPC
 static inline int tcpm_get_snk_ctrl(int port, bool *sinking)
 {
 	int rv = EC_ERROR_UNIMPLEMENTED;
