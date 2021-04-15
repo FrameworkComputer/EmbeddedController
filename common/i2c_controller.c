@@ -1218,7 +1218,8 @@ static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 		if (resp->num_msgs == params->num_msgs - 1)
 			xferflags |= I2C_XFER_STOP;
 
-#if defined(VIRTUAL_BATTERY_ADDR_FLAGS) && defined(I2C_PORT_VIRTUAL_BATTERY)
+#if defined(VIRTUAL_BATTERY_ADDR_FLAGS) && \
+	(defined(CONFIG_ZEPHYR) || defined(I2C_PORT_VIRTUAL_BATTERY))
 		if (params->port == I2C_PORT_VIRTUAL_BATTERY &&
 		    addr_flags == VIRTUAL_BATTERY_ADDR_FLAGS) {
 			if (virtual_battery_handler(resp, in_len, &rv,
