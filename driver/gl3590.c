@@ -4,6 +4,7 @@
  */
 
 #include "console.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "system.h"
 #include "util.h"
@@ -11,6 +12,7 @@
 
 #include "gl3590.h"
 
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
 /* GL3590 is unique in terms of i2c_read, since it doesn't support repeated
@@ -117,6 +119,19 @@ void gl3590_init(int hub)
 
 	uhub_p->initialized = 1;
 }
+
+/*
+ * GL3590 chip may drive I2C_SDA and I2C_SCL lines for 200ms (max) after it is
+ * released from reset (through gpio de-assertion in main()). In order to avoid
+ * broken I2C transactions, we need to add an extra delay before any activity on
+ * the I2C bus in the system.
+ */
+static void gl3590_delay_on_init(void)
+{
+	CPRINTS("Applying 200ms delay for GL3590 to release I2C lines");
+	udelay(200 * MSEC);
+}
+DECLARE_HOOK(HOOK_INIT, gl3590_delay_on_init, HOOK_PRIO_INIT_I2C - 1);
 
 void gl3590_irq_handler(int hub)
 {
