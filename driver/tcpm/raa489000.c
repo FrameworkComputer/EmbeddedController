@@ -101,21 +101,6 @@ int raa489000_init(int port)
 		CPRINTS("c%d: failed to enable vbus detect cmd", port);
 
 
-	if (device_id > 1) {
-		/*
-		 * A1 silicon has a DEVICE_ID of 1.  For B0 and newer, we need
-		 * allow the TCPC to control VBUS in order to start VBUS ADC
-		 * sampling.  This is a requirement to clear the TCPC
-		 * initialization status but in POWER_STATUS.  Otherwise, the
-		 * common TCPCI init will fail. (See b/154191301)
-		 */
-		rv = tcpc_read16(port, RAA489000_TCPC_SETTING1, &regval);
-		regval |= RAA489000_TCPC_PWR_CNTRL;
-		rv = tcpc_write16(port, RAA489000_TCPC_SETTING1, regval);
-		if (rv)
-			CPRINTS("C%d: failed to set TCPC power control", port);
-	}
-
 	/*
 	 * If VBUS is present, start sinking from it if we haven't already
 	 * chosen a charge port and no battery is connected.  This is
@@ -130,6 +115,21 @@ int raa489000_init(int port)
 		chg.voltage = 5000;
 		charge_manager_update_charge(CHARGE_SUPPLIER_VBUS, port, &chg);
 		board_set_active_charge_port(port);
+	}
+
+	if (device_id > 1) {
+		/*
+		 * A1 silicon has a DEVICE_ID of 1.  For B0 and newer, we need
+		 * allow the TCPC to control VBUS in order to start VBUS ADC
+		 * sampling.  This is a requirement to clear the TCPC
+		 * initialization status but in POWER_STATUS.  Otherwise, the
+		 * common TCPCI init will fail. (See b/154191301)
+		 */
+		rv = tcpc_read16(port, RAA489000_TCPC_SETTING1, &regval);
+		regval |= RAA489000_TCPC_PWR_CNTRL;
+		rv = tcpc_write16(port, RAA489000_TCPC_SETTING1, regval);
+		if (rv)
+			CPRINTS("C%d: failed to set TCPC power control", port);
 	}
 
 	/* Note: registers may not be ready until TCPCI init succeeds */
