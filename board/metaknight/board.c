@@ -18,6 +18,8 @@
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm_common.h"
+#include "driver/accelgyro_icm426xx.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/temp_sensor/thermistor.h"
 #include "temp_sensor.h"
@@ -434,10 +436,17 @@ static const mat33_fp_t base_lsm6dsm_ref = {
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
+static const mat33_fp_t base_icm_ref = {
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
 static struct accelgyro_saved_data_t g_bma253_data;
 static struct bmi_drv_data_t g_bmi160_data;
 static struct kionix_accel_data g_kx022_data;
 static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
+static struct icm_drv_data_t g_icm426xx_data;
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -587,6 +596,53 @@ struct motion_sensor_t lsm6dsm_base_gyro = {
 	.max_frequency = LSM6DSM_ODR_MAX_VAL,
 };
 
+
+struct motion_sensor_t icm426xx_base_accel = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+	.default_range = 4, /* g, enough for laptop */
+	.rot_standard_ref = &base_icm_ref,
+	.min_frequency = ICM426XX_ACCEL_MIN_FREQ,
+	.max_frequency = ICM426XX_ACCEL_MAX_FREQ,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 13000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+	},
+};
+
+struct motion_sensor_t icm426xx_base_gyro = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = &base_standard_ref,
+	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
+	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
+};
+
 static int base_gyro_config;
 
 void board_init(void)
@@ -630,8 +686,12 @@ void board_init(void)
 
 	if (base_gyro_config == SSFC_SENSOR_LSM6DSM) {
 		motion_sensors[BASE_ACCEL] = lsm6dsm_base_accel;
-		motion_sensors[BASE_GYRO] = lsm6dsm_base_gyro;
+		motion_sensors[BASE_GYRO]  = lsm6dsm_base_gyro;
 		cprints(CC_SYSTEM, "SSFC: BASE GYRO is LSM6DSM");
+	} else if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_ICM426XX) {
+		motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
+		motion_sensors[BASE_GYRO]  = icm426xx_base_gyro;
+		cprints(CC_SYSTEM, "SSFC: BASE GYRO is ICM426XX");
 	} else
 		cprints(CC_SYSTEM, "SSFC: BASE GYRO is BMI160");
 
@@ -804,6 +864,9 @@ void motion_interrupt(enum gpio_signal signal)
 	switch (base_gyro_config) {
 	case SSFC_SENSOR_LSM6DSM:
 		lsm6dsm_interrupt(signal);
+		break;
+	case SSFC_SENSOR_ICM426XX:
+		icm426xx_interrupt(signal);
 		break;
 	case SSFC_SENSOR_BMI160:
 	default:
