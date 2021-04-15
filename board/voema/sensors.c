@@ -6,7 +6,9 @@
 /* Volteer family-specific sensor configuration */
 #include "common.h"
 #include "accelgyro.h"
+#include "cbi_ssfc.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accel_kionix.h"
 #include "driver/als_tcs3400.h"
 #include "driver/sync.h"
 #include "keyboard_scan.h"
@@ -24,6 +26,9 @@ static struct mutex g_base_mutex;
 /* BMA253 private data */
 static struct accelgyro_saved_data_t g_bma253_base_data;
 static struct accelgyro_saved_data_t g_bma253_lid_data;
+
+static struct kionix_accel_data g_kx022_base_data;
+static struct kionix_accel_data g_kx022_lid_data;
 
 /* TCS3400 private data */
 static struct als_drv_data_t g_tcs3400_data = {
@@ -90,6 +95,60 @@ const mat33_fp_t base_standard_ref = {
 	{ 0, FLOAT_TO_FP(-1), 0},
 	{ FLOAT_TO_FP(-1), 0, 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+struct motion_sensor_t kx022_lid_accel = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_KX022,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &kionix_accel_drv,
+	.mutex = &g_lid_accel_mutex,
+	.drv_data = &g_kx022_lid_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = KX022_ADDR0_FLAGS,
+	.rot_standard_ref = &lid_standard_ref,
+	.min_frequency = KX022_ACCEL_MIN_FREQ,
+	.max_frequency = KX022_ACCEL_MAX_FREQ,
+	.default_range = 2, /* g, to support tablet mode */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
+
+struct motion_sensor_t kx022_basse_accel = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_KX022,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &kionix_accel_drv,
+	.mutex = &g_lid_accel_mutex,
+	.drv_data = &g_kx022_base_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
+	.rot_standard_ref = &base_standard_ref,
+	.min_frequency = KX022_ACCEL_MIN_FREQ,
+	.max_frequency = KX022_ACCEL_MAX_FREQ,
+	.default_range = 2, /* g, to support tablet mode */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
 };
 
 struct motion_sensor_t motion_sensors[] = {
@@ -193,10 +252,20 @@ BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 
 static void baseboard_sensors_init(void)
 {
-	/* Note - BMA253 interrupt unused by EC */
-
 	/* Enable interrupt for the TCS3400 color light sensor */
 	gpio_enable_interrupt(GPIO_EC_ALS_RGB_INT_L);
+
+	if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_BASE_KX022) {
+		motion_sensors[BASE_ACCEL] = kx022_basse_accel;
+		ccprints("BASE_ACCEL is KX022");
+	} else
+		ccprints("BASE_ACCEL is BMA253");
+
+	if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_LID_KX022) {
+		motion_sensors[LID_ACCEL] = kx022_lid_accel;
+		ccprints("LID_ACCEL is KX022");
+	} else
+		ccprints("LID_ACCEL is BMA253");
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_DEFAULT);
 

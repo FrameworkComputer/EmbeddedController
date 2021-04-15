@@ -35,6 +35,7 @@
 /* Sensors */
 /* BMA253 accelerometer in base */
 #define CONFIG_ACCEL_BMA255
+#define CONFIG_ACCEL_KX022
 
 /* TCS3400 ALS */
 #define CONFIG_ALS
