@@ -1,0 +1,33 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+
+if PLATFORM_EC_ACCELGYRO_ICM
+menu "ICM Sensor Common"
+
+choice PLATFORM_EC_ACCELGYRO_ICM_COMM
+	prompt "Accelgyro ICM's communication mode"
+	help
+	  When using the ICM drivers, there's the option to communicate with the
+	  chip via several methods. This choice helps improve code size by only
+	  compiling the needed communication channels.
+
+config PLATFORM_EC_ACCELGYRO_ICM_COMM_SPI
+	bool "Use SPI communication"
+	help
+	  The ICM chip is using SPI communication. This config value is used to
+	  save on code size as only the SPI communication code will be included
+	  for the ICM chip.
+
+config PLATFORM_EC_ACCELGYRO_ICM_COMM_I2C
+	bool "Use I2C communication"
+	help
+	  The ICM chip is using I2C communication. This config value is used to
+	  save on code size as only the I2C communication code will be included
+	  for the ICM chip.
+
+endchoice
+
+endmenu # ICM Sensor
+endif # PLATFORM_EC_ACCELGYRO_ICM

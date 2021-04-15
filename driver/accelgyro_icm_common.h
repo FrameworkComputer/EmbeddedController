@@ -12,6 +12,11 @@
 #include "hwtimer.h"
 #include "timer.h"
 
+#if !defined(CONFIG_ACCELGYRO_ICM_COMM_SPI) && \
+	!defined(CONFIG_ACCELGYRO_ICM_COMM_I2C)
+#error "ICM must use either SPI or I2C communication"
+#endif
+
 #ifdef CONFIG_ACCEL_FIFO
 /* reserve maximum 4 samples of 16 bytes */
 #define ICM_FIFO_BUFFER	64
