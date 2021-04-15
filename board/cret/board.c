@@ -171,30 +171,21 @@ void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
 	check_c0_line();
 
-	if (get_cbi_fw_config_db() == DB_1A_HDMI) {
-		/* Disable i2c on HDMI pins */
-		gpio_config_pin(MODULE_I2C,
-				GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL, 0);
-		gpio_config_pin(MODULE_I2C,
-				GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 0);
+	/* Disable i2c on HDMI pins */
+	gpio_config_pin(MODULE_I2C,
+			GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL, 0);
+	gpio_config_pin(MODULE_I2C,
+			GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 0);
 
-		/* Set HDMI and sub-rail enables to output */
-		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL,
-			       chipset_in_state(CHIPSET_STATE_ON) ?
-						GPIO_ODR_LOW : GPIO_ODR_HIGH);
-		gpio_set_flags(GPIO_SUB_C1_INT_EN_RAILS_ODL,   GPIO_ODR_HIGH);
+	/* Set HDMI and sub-rail enables to output */
+	gpio_set_flags(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL,
+			    chipset_in_state(CHIPSET_STATE_ON) ?
+					GPIO_ODR_LOW : GPIO_ODR_HIGH);
+	gpio_set_flags(GPIO_SUB_C1_INT_EN_RAILS_ODL,   GPIO_ODR_HIGH);
 
-		/* Enable interrupt for passing through HPD */
-		gpio_enable_interrupt(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL);
-	} else {
-		/* Set SDA as an input */
-		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL,
-			       GPIO_INPUT);
+	/* Enable interrupt for passing through HPD */
+	gpio_enable_interrupt(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL);
 
-		/* Enable C1 interrupt and check if it needs processing */
-		gpio_enable_interrupt(GPIO_SUB_C1_INT_EN_RAILS_ODL);
-		check_c1_line();
-	}
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 
@@ -208,15 +199,13 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 /* Enable HDMI any time the SoC is on */
 static void hdmi_enable(void)
 {
-	if (get_cbi_fw_config_db() == DB_1A_HDMI)
-		gpio_set_level(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 0);
+	gpio_set_level(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, hdmi_enable, HOOK_PRIO_DEFAULT);
 
 static void hdmi_disable(void)
 {
-	if (get_cbi_fw_config_db() == DB_1A_HDMI)
-		gpio_set_level(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 1);
+	gpio_set_level(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, hdmi_disable, HOOK_PRIO_DEFAULT);
 
