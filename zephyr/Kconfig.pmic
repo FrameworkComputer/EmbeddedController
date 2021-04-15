@@ -1,0 +1,27 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC_PMIC
+	bool "Power Management IC support"
+	help
+	  Enables support for controlling PMICs (Power Management ICs).
+	  A system may have one or more PMICs to control various power
+	  rails. These devices operate autonomously, but can sometimes
+	  be accessed to tune operational parameters or read fault
+	  codes.
+
+if PLATFORM_EC_PMIC
+
+config PLATFORM_EC_MP2964
+	bool "Enable MP2964 PMIC support"
+	depends on AP_X86_INTEL
+	depends on PLATFORM_EC_I2C
+	help
+	  Enables support for the MPS MP2964 PMIC (Power Management IC).
+	  This is a dual rail IMVP8 - IMVP9.1 compatible Digital
+	  Multi-Phase Controller with an I2C interface.  This driver
+	  enables reprogramming configuration registers when initial the
+	  factory settings need to be tuned in prototype devices.
+
+endif # PLATFORM_EC_PMIC

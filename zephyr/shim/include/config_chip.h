@@ -1432,4 +1432,9 @@
 #define CONFIG_USB_PD_ONLY_FIXED_PDOS
 #endif
 
+#undef CONFIG_MP2964
+#ifdef CONFIG_PLATFORM_EC_MP2964
+#define CONFIG_MP2964
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

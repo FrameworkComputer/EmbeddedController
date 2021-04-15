@@ -295,10 +295,12 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE
                                                 "${PLATFORM_EC}/common/lid_angle.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LID_SWITCH
                                                 "${PLATFORM_EC}/common/lid_switch.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MOTIONSENSE
-                                                "${PLATFORM_EC}/common/motion_sense.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MKBP_EVENT
                                                 "${PLATFORM_EC}/common/mkbp_event.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MOTIONSENSE
+                                                "${PLATFORM_EC}/common/motion_sense.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MP2964
+                                                "${PLATFORM_EC}/driver/mp2964.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PORT80
                                                 "${PLATFORM_EC}/common/port80.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWER_BUTTON

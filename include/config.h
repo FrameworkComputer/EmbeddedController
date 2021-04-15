@@ -4006,6 +4006,9 @@
 /* Use this to include support for MP4245 buck boost converter */
 #undef CONFIG_MP4245
 
+/* Use this to include support for MP2964 IMVP9.1 PMIC */
+#undef CONFIG_MP2964
+
 /*****************************************************************************/
 /* USB PD config */
 
