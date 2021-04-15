@@ -533,10 +533,6 @@ static const struct cros_system_driver_api cros_system_driver_npcx_api = {
 	.chip_revision = cros_system_npcx_get_chip_revision,
 };
 
-/*
- * The priority of cros_system_npcx_init() should be higher than watchdog init
- * for reset cause check.
- */
 DEVICE_DEFINE(cros_system_npcx_0, "CROS_SYSTEM", cros_system_npcx_init, NULL,
 	      &cros_system_npcx_dev_data, &cros_system_dev_cfg, PRE_KERNEL_1,
 	      CONFIG_CROS_SYSTEM_NPCX_INIT_PRIORITY,
