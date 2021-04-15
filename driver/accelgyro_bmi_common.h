@@ -13,6 +13,11 @@
 #include "mag_bmm150.h"
 #include "accelgyro_bmi_common_public.h"
 
+#if !defined(CONFIG_ACCELGYRO_BMI_COMM_SPI) && \
+	!defined(CONFIG_ACCELGYRO_BMI_COMM_I2C)
+#error "BMI must use either SPI or I2C communication"
+#endif
+
 #define BMI_CONF_REG(_sensor)      (0x40 + 2 * (_sensor))
 #define BMI_RANGE_REG(_sensor)     (0x41 + 2 * (_sensor))
 

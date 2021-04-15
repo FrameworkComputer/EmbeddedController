@@ -4,6 +4,13 @@
 
 menu "Sensor Devices"
 
+config PLATFORM_EC_ACCELGYRO_BMI
+	bool "Config used to include common accelgyro BMI features"
+	help
+	  Do not set this directly in a .conf file. This value should be set
+	  using an `select` statement in other BMI family of drivers such as
+	  BMI260.
+
 config PLATFORM_EC_ACCELGYRO_ICM
 	bool "Config used to include common accelgyro ICM features"
 	help
@@ -21,6 +28,7 @@ config PLATFORM_EC_ACCEL_BMA255
 
 config PLATFORM_EC_ACCELGYRO_BMI260
 	bool "BMI260 Accelgyrometer Driver"
+	select PLATFORM_EC_ACCELGYRO_BMI
 	help
 	  The driver supports Bosch's BMI260 which is an IMU consisting of
 	  a 16-bit tri-axial gyroscope and a 16-bit tri-axial accelerometer.
@@ -38,6 +46,7 @@ config PLATFORM_EC_ACCELGYRO_ICM426XX
 	  The driver supports ICM425XX which provides both accelerometer and
 	  gyroscope readings.
 
+rsource "Kconfig.accelgyro_bmi"
 rsource "Kconfig.accelgyro_icm"
 
 endmenu # Sensor devices

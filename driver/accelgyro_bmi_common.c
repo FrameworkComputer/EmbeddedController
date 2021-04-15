@@ -142,7 +142,7 @@ int bmi_get_engineering_val(const int reg_val,
 	return pairs[i].val;
 }
 
-#ifdef CONFIG_SPI_ACCEL_PORT
+#ifdef CONFIG_ACCELGYRO_BMI_COMM_SPI
 static int bmi_spi_raw_read(const int addr, const uint8_t reg,
 		     uint8_t *data, const int len)
 {
@@ -158,23 +158,20 @@ static int bmi_spi_raw_read(const int addr, const uint8_t reg,
 int bmi_read8(const int port, const uint16_t i2c_spi_addr_flags,
 	      const int reg, int *data_ptr)
 {
-	int rv = -EC_ERROR_PARAM1;
+	int rv;
 
-	if (SLAVE_IS_SPI(i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
+#ifdef CONFIG_ACCELGYRO_BMI_COMM_SPI
+	{
 		uint8_t val;
 
 		rv = bmi_spi_raw_read(SLAVE_GET_SPI_ADDR(i2c_spi_addr_flags),
-				  reg, &val, 1);
+				      reg, &val, 1);
 		if (rv == EC_SUCCESS)
 			*data_ptr = val;
-#endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		rv = i2c_read8(port, i2c_spi_addr_flags,
-			       reg, data_ptr);
-#endif
 	}
+#else
+	rv = i2c_read8(port, i2c_spi_addr_flags, reg, data_ptr);
+#endif
 	return rv;
 }
 
@@ -184,22 +181,19 @@ int bmi_read8(const int port, const uint16_t i2c_spi_addr_flags,
 int bmi_write8(const int port, const uint16_t i2c_spi_addr_flags,
 	       const int reg, int data)
 {
-	int rv = -EC_ERROR_PARAM1;
+	int rv;
 
-	if (SLAVE_IS_SPI(i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
+#ifdef CONFIG_ACCELGYRO_BMI_COMM_SPI
+	{
 		uint8_t cmd[2] = { reg, data };
 
 		rv = spi_transaction(
 			&spi_devices[SLAVE_GET_SPI_ADDR(i2c_spi_addr_flags)],
 			cmd, 2, NULL, 0);
-#endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		rv = i2c_write8(port, i2c_spi_addr_flags,
-				reg, data);
-#endif
 	}
+#else
+	rv = i2c_write8(port, i2c_spi_addr_flags, reg, data);
+#endif
 	/*
 	 * From Bosch:  BMI needs a delay of 450us after each write if it
 	 * is in suspend mode, otherwise the operation may be ignored by
@@ -217,20 +211,12 @@ int bmi_write8(const int port, const uint16_t i2c_spi_addr_flags,
 int bmi_read16(const int port, const uint16_t i2c_spi_addr_flags,
 	       const uint8_t reg, int *data_ptr)
 {
-	int rv = -EC_ERROR_PARAM1;
-
-	if (SLAVE_IS_SPI(i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
-		rv = bmi_spi_raw_read(SLAVE_GET_SPI_ADDR(i2c_spi_addr_flags),
-				      reg, (uint8_t *)data_ptr, 2);
+#ifdef CONFIG_ACCELGYRO_BMI_COMM_SPI
+	return bmi_spi_raw_read(SLAVE_GET_SPI_ADDR(i2c_spi_addr_flags), reg,
+				(uint8_t *)data_ptr, 2);
+#else
+	return i2c_read16(port, i2c_spi_addr_flags, reg, data_ptr);
 #endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		rv = i2c_read16(port, i2c_spi_addr_flags,
-				reg, data_ptr);
-#endif
-	}
-	return rv;
 }
 
 /**
@@ -241,16 +227,11 @@ int bmi_write16(const int port, const uint16_t i2c_spi_addr_flags,
 {
 	int rv = -EC_ERROR_PARAM1;
 
-	if (SLAVE_IS_SPI(i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
-		CPRINTS("%s() spi part is not implemented", __func__);
+#ifdef CONFIG_ACCELGYRO_BMI_COMM_SPI
+	CPRINTS("%s() spi part is not implemented", __func__);
+#else
+	rv = i2c_write16(port, i2c_spi_addr_flags, reg, data);
 #endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		rv = i2c_write16(port, i2c_spi_addr_flags,
-				 reg, data);
-#endif
-	}
 	/*
 	 * From Bosch:  BMI needs a delay of 450us after each write if it
 	 * is in suspend mode, otherwise the operation may be ignored by
@@ -267,20 +248,12 @@ int bmi_write16(const int port, const uint16_t i2c_spi_addr_flags,
 int bmi_read32(const int port, const uint16_t i2c_spi_addr_flags,
 	       const uint8_t reg, int *data_ptr)
 {
-	int rv = -EC_ERROR_PARAM1;
-
-	if (SLAVE_IS_SPI(i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
-		rv = bmi_spi_raw_read(SLAVE_GET_SPI_ADDR(i2c_spi_addr_flags),
-				  reg, (uint8_t *)data_ptr, 4);
+#ifdef CONFIG_ACCELGYRO_BMI_COMM_SPI
+	return bmi_spi_raw_read(SLAVE_GET_SPI_ADDR(i2c_spi_addr_flags), reg,
+				(uint8_t *)data_ptr, 4);
+#else
+	return i2c_read32(port, i2c_spi_addr_flags, reg, data_ptr);
 #endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		rv = i2c_read32(port, i2c_spi_addr_flags,
-				reg, data_ptr);
-#endif
-	}
-	return rv;
 }
 
 /**
@@ -289,20 +262,12 @@ int bmi_read32(const int port, const uint16_t i2c_spi_addr_flags,
 int bmi_read_n(const int port, const uint16_t i2c_spi_addr_flags,
 	       const uint8_t reg, uint8_t *data_ptr, const int len)
 {
-	int rv = -EC_ERROR_PARAM1;
-
-	if (SLAVE_IS_SPI(i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
-		rv = bmi_spi_raw_read(SLAVE_GET_SPI_ADDR(i2c_spi_addr_flags),
-				  reg, data_ptr, len);
+#ifdef CONFIG_ACCELGYRO_BMI_COMM_SPI
+	return bmi_spi_raw_read(SLAVE_GET_SPI_ADDR(i2c_spi_addr_flags), reg,
+				data_ptr, len);
+#else
+	return i2c_read_block(port, i2c_spi_addr_flags, reg, data_ptr, len);
 #endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		rv = i2c_read_block(port, i2c_spi_addr_flags,
-				    reg, data_ptr, len);
-#endif
-	}
-	return rv;
 }
 
 /**
@@ -313,16 +278,11 @@ int bmi_write_n(const int port, const uint16_t i2c_spi_addr_flags,
 {
 	int rv = -EC_ERROR_PARAM1;
 
-	if (SLAVE_IS_SPI(i2c_spi_addr_flags)) {
-#ifdef CONFIG_SPI_ACCEL_PORT
-		CPRINTS("%s() spi part is not implemented", __func__);
+#ifdef CONFIG_ACCELGYRO_BMI_COMM_SPI
+	CPRINTS("%s() spi part is not implemented", __func__);
+#else
+	rv = i2c_write_block(port, i2c_spi_addr_flags, reg, data_ptr, len);
 #endif
-	} else {
-#ifdef I2C_PORT_ACCEL
-		rv = i2c_write_block(port, i2c_spi_addr_flags,
-				     reg, data_ptr, len);
-#endif
-	}
 	/*
 	 * From Bosch:  BMI needs a delay of 450us after each write if it
 	 * is in suspend mode, otherwise the operation may be ignored by
@@ -336,8 +296,8 @@ int bmi_write_n(const int port, const uint16_t i2c_spi_addr_flags,
 /*
  * Enable/Disable specific bit set of a 8-bit reg.
  */
-int bmi_enable_reg8(const struct motion_sensor_t *s,
-		    int reg, uint8_t bits, int enable)
+int bmi_enable_reg8(const struct motion_sensor_t *s, int reg, uint8_t bits,
+		    int enable)
 {
 	if (enable)
 		return bmi_set_reg8(s, reg, bits, 0);
@@ -347,8 +307,8 @@ int bmi_enable_reg8(const struct motion_sensor_t *s,
 /*
  * Set specific bit set to certain value of a 8-bit reg.
  */
-int bmi_set_reg8(const struct motion_sensor_t *s,
-		 int reg, uint8_t bits, int mask)
+int bmi_set_reg8(const struct motion_sensor_t *s, int reg, uint8_t bits,
+		 int mask)
 {
 	int ret, val;
 
@@ -381,12 +341,11 @@ void bmi_normalize(const struct motion_sensor_t *s, intv3_t v, uint8_t *input)
 		v[i] = SENSOR_APPLY_SCALE(v[i], data->scale[i]);
 }
 
-int bmi_decode_header(struct motion_sensor_t *accel,
-		enum fifo_header hdr, uint32_t last_ts,
-		uint8_t **bp, uint8_t *ep)
+int bmi_decode_header(struct motion_sensor_t *accel, enum fifo_header hdr,
+		      uint32_t last_ts, uint8_t **bp, uint8_t *ep)
 {
 	if ((hdr & BMI_FH_MODE_MASK) == BMI_FH_EMPTY &&
-			(hdr & BMI_FH_PARM_MASK) != 0) {
+	    (hdr & BMI_FH_PARM_MASK) != 0) {
 		int i, size = 0;
 		/* Check if there is enough space for the data frame */
 		for (i = MOTIONSENSE_TYPE_MAG; i >= MOTIONSENSE_TYPE_ACCEL;
@@ -410,15 +369,14 @@ int bmi_decode_header(struct motion_sensor_t *accel,
 				vector.flags = 0;
 				bmi_normalize(s, v, *bp);
 				if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) &&
-					s->flags &
-					MOTIONSENSE_FLAG_IN_SPOOF_MODE)
+				    s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE)
 					v = s->spoof_xyz;
 				vector.data[X] = v[X];
 				vector.data[Y] = v[Y];
 				vector.data[Z] = v[Z];
 				vector.sensor_num = s - motion_sensors;
 				motion_sense_fifo_stage_data(&vector, s, 3,
-						last_ts);
+							     last_ts);
 				*bp += (i == MOTIONSENSE_TYPE_MAG ? 8 : 6);
 			}
 		}
@@ -448,25 +406,22 @@ int bmi_load_fifo(struct motion_sensor_t *s, uint32_t last_ts)
 	uint8_t *ep;
 	uint32_t beginning;
 
-
 	if (s->type != MOTIONSENSE_TYPE_ACCEL)
 		return EC_SUCCESS;
 
-	if (!(data->flags &
-	     (BMI_FIFO_ALL_MASK << BMI_FIFO_FLAG_OFFSET))) {
+	if (!(data->flags & (BMI_FIFO_ALL_MASK << BMI_FIFO_FLAG_OFFSET))) {
 		/*
 		 * The FIFO was disabled while we were processing it.
 		 *
 		 * Flush potential left over:
 		 * When sensor is resumed, we won't read old data.
 		 */
-		bmi_write8(s->port, s->i2c_spi_addr_flags,
-			   BMI_CMD_REG(V(s)), BMI_CMD_FIFO_FLUSH);
+		bmi_write8(s->port, s->i2c_spi_addr_flags, BMI_CMD_REG(V(s)),
+			   BMI_CMD_FIFO_FLUSH);
 		return EC_SUCCESS;
 	}
 
-	bmi_read_n(s->port, s->i2c_spi_addr_flags,
-		   BMI_FIFO_LENGTH_0(V(s)),
+	bmi_read_n(s->port, s->i2c_spi_addr_flags, BMI_FIFO_LENGTH_0(V(s)),
 		   (uint8_t *)&length, sizeof(length));
 	length &= BMI_FIFO_LENGTH_MASK(V(s));
 
@@ -492,8 +447,8 @@ int bmi_load_fifo(struct motion_sensor_t *s, uint32_t last_ts)
 		CPRINTS("unexpected large FIFO: %d", length);
 	length = MIN(length, sizeof(bmi_buffer));
 
-	bmi_read_n(s->port, s->i2c_spi_addr_flags,
-		   BMI_FIFO_DATA(V(s)), bmi_buffer, length);
+	bmi_read_n(s->port, s->i2c_spi_addr_flags, BMI_FIFO_DATA(V(s)),
+		   bmi_buffer, length);
 	beginning = *(uint32_t *)bmi_buffer;
 	ep = bmi_buffer + length;
 	/*
@@ -504,15 +459,12 @@ int bmi_load_fifo(struct motion_sensor_t *s, uint32_t last_ts)
 	 * If we see those, assume the sensors have been disabled
 	 * while this thread was running.
 	 */
-	if (beginning == 0x84848484 ||
-			(beginning & 0xdcdcdcdc) == 0x40404040) {
+	if (beginning == 0x84848484 || (beginning & 0xdcdcdcdc) == 0x40404040) {
 		CPRINTS("Suspended FIFO: accel ODR/rate: %d/%d: 0x%08x",
-				BASE_ODR(s->config[SENSOR_CONFIG_AP].odr),
-				BMI_GET_SAVED_DATA(s)->odr,
-				beginning);
+			BASE_ODR(s->config[SENSOR_CONFIG_AP].odr),
+			BMI_GET_SAVED_DATA(s)->odr, beginning);
 		return EC_SUCCESS;
 	}
-
 
 	while (bp < ep) {
 		switch (state) {
@@ -536,24 +488,24 @@ int bmi_load_fifo(struct motion_sensor_t *s, uint32_t last_ts)
 				state = FIFO_DATA_CONFIG;
 				break;
 			default:
-				CPRINTS("Unknown header: 0x%02x @ %zd",
-						hdr, bp - bmi_buffer);
+				CPRINTS("Unknown header: 0x%02x @ %zd", hdr,
+					bp - bmi_buffer);
 				bmi_write8(s->port, s->i2c_spi_addr_flags,
-						BMI_CMD_REG(V(s)),
-						BMI_CMD_FIFO_FLUSH);
+					   BMI_CMD_REG(V(s)),
+					   BMI_CMD_FIFO_FLUSH);
 				return EC_ERROR_NOT_HANDLED;
 			}
 			break;
 		}
 		case FIFO_DATA_SKIP:
 			CPRINTS("@ %zd - %d, skipped %d frames",
-					bp - bmi_buffer, length, *bp);
+				bp - bmi_buffer, length, *bp);
 			bp++;
 			state = FIFO_HEADER;
 			break;
 		case FIFO_DATA_CONFIG:
 			CPRINTS("@ %zd - %d, config change: 0x%02x",
-					bp - bmi_buffer, length, *bp);
+				bp - bmi_buffer, length, *bp);
 			bp++;
 			if (V(s))
 				state = FIFO_DATA_TIME;
@@ -566,8 +518,8 @@ int bmi_load_fifo(struct motion_sensor_t *s, uint32_t last_ts)
 				continue;
 			}
 			/* We are not requesting timestamp */
-			CPRINTS("timestamp %d", (bp[2] << 16) |
-					(bp[1] << 8) | bp[0]);
+			CPRINTS("timestamp %d",
+				(bp[2] << 16) | (bp[1] << 8) | bp[0]);
 			state = FIFO_HEADER;
 			bp += 3;
 			break;
@@ -595,8 +547,7 @@ int bmi_set_range(struct motion_sensor_t *s, int range, int rnd)
 	ranges = bmi_get_range_table(s, &range_tbl_size);
 	reg_val = bmi_get_reg_val(range, rnd, ranges, range_tbl_size);
 
-	ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-			 ctrl_reg, reg_val);
+	ret = bmi_write8(s->port, s->i2c_spi_addr_flags, ctrl_reg, reg_val);
 	/* Now that we have set the range, update the driver's value. */
 	if (ret == EC_SUCCESS)
 		s->current_range = bmi_get_engineering_val(reg_val, ranges,
@@ -611,8 +562,8 @@ int bmi_get_data_rate(const struct motion_sensor_t *s)
 	return data->odr;
 }
 
-int bmi_get_offset(const struct motion_sensor_t *s,
-		   int16_t *offset, int16_t *temp)
+int bmi_get_offset(const struct motion_sensor_t *s, int16_t *offset,
+		   int16_t *temp)
 {
 	int i;
 	intv3_t v;
@@ -669,8 +620,8 @@ int bmi_get_rms_noise(const struct motion_sensor_t *s)
 		 * of ODR to 100Hz) to get current noise.
 		 */
 		noise_100hz = INT_TO_FP(BMI_ACCEL_RMS_NOISE_100HZ(V(s)));
-		sqrt_rate_ratio = fp_sqrtf(fp_div(rate,
-						  INT_TO_FP(BMI_ACCEL_100HZ)));
+		sqrt_rate_ratio =
+			fp_sqrtf(fp_div(rate, INT_TO_FP(BMI_ACCEL_100HZ)));
 		ret = FP_TO_INT(fp_mul(noise_100hz, sqrt_rate_ratio));
 		break;
 	default:
@@ -686,8 +637,8 @@ int bmi_get_resolution(const struct motion_sensor_t *s)
 	return BMI_RESOLUTION;
 }
 
-int bmi_set_scale(const struct motion_sensor_t *s,
-	      const uint16_t *scale, int16_t temp)
+int bmi_set_scale(const struct motion_sensor_t *s, const uint16_t *scale,
+		  int16_t temp)
 {
 	struct accelgyro_saved_data_t *data = BMI_GET_SAVED_DATA(s);
 
@@ -697,8 +648,8 @@ int bmi_set_scale(const struct motion_sensor_t *s,
 	return EC_SUCCESS;
 }
 
-int bmi_get_scale(const struct motion_sensor_t *s,
-	      uint16_t *scale, int16_t *temp)
+int bmi_get_scale(const struct motion_sensor_t *s, uint16_t *scale,
+		  int16_t *temp)
 {
 	struct accelgyro_saved_data_t *data = BMI_GET_SAVED_DATA(s);
 
@@ -733,8 +684,8 @@ int bmi_read(const struct motion_sensor_t *s, intv3_t v)
 	uint8_t data[6];
 	int ret, status = 0;
 
-	ret = bmi_read8(s->port, s->i2c_spi_addr_flags,
-			BMI_STATUS(V(s)), &status);
+	ret = bmi_read8(s->port, s->i2c_spi_addr_flags, BMI_STATUS(V(s)),
+			&status);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -750,8 +701,8 @@ int bmi_read(const struct motion_sensor_t *s, intv3_t v)
 	}
 
 	/* Read 6 bytes starting at xyz_reg */
-	ret = bmi_read_n(s->port, s->i2c_spi_addr_flags,
-			 bmi_get_xyz_reg(s), data, 6);
+	ret = bmi_read_n(s->port, s->i2c_spi_addr_flags, bmi_get_xyz_reg(s),
+			 data, 6);
 
 	if (ret != EC_SUCCESS) {
 		CPRINTS("%s: type:0x%X RD XYZ Error %d", s->name, s->type, ret);
@@ -773,8 +724,8 @@ int bmi_get_sensor_temp(int idx, int *temp_ptr)
 	int ret;
 
 	ret = bmi_read_n(s->port, s->i2c_spi_addr_flags,
-			 BMI_TEMPERATURE_0(V(s)),
-			 (uint8_t *)&temp, sizeof(temp));
+			 BMI_TEMPERATURE_0(V(s)), (uint8_t *)&temp,
+			 sizeof(temp));
 
 	if (ret || temp == BMI_INVALID_TEMP)
 		return EC_ERROR_NOT_POWERED;
@@ -828,10 +779,8 @@ void bmi_accel_get_offset(const struct motion_sensor_t *accel, intv3_t v)
 			  BMI_OFFSET_ACC70(V(accel)) + i, &val);
 		if (val > 0x7f)
 			val = -256 + val;
-		v[i] = round_divide(
-			(int64_t)val * BMI_OFFSET_ACC_MULTI_MG,
-			BMI_OFFSET_ACC_DIV_MG);
-
+		v[i] = round_divide((int64_t)val * BMI_OFFSET_ACC_MULTI_MG,
+				    BMI_OFFSET_ACC_DIV_MG);
 	}
 }
 
@@ -848,9 +797,8 @@ void bmi_gyro_get_offset(const struct motion_sensor_t *gyro, intv3_t v)
 		val |= ((val98 >> (2 * i)) & 0x3) << 8;
 		if (val > 0x1ff)
 			val = -1024 + val;
-		v[i] = round_divide(
-			(int64_t)val * BMI_OFFSET_GYRO_MULTI_MDS,
-			BMI_OFFSET_GYRO_DIV_MDS);
+		v[i] = round_divide((int64_t)val * BMI_OFFSET_GYRO_MULTI_MDS,
+				    BMI_OFFSET_GYRO_DIV_MDS);
 	}
 }
 
@@ -859,9 +807,8 @@ void bmi_set_accel_offset(const struct motion_sensor_t *accel, intv3_t v)
 	int i, val;
 
 	for (i = X; i <= Z; ++i) {
-		val = round_divide(
-			(int64_t)v[i] * BMI_OFFSET_ACC_DIV_MG,
-			BMI_OFFSET_ACC_MULTI_MG);
+		val = round_divide((int64_t)v[i] * BMI_OFFSET_ACC_DIV_MG,
+				   BMI_OFFSET_ACC_MULTI_MG);
 		if (val > 127)
 			val = 127;
 		if (val < -128)
@@ -879,9 +826,8 @@ void bmi_set_gyro_offset(const struct motion_sensor_t *gyro, intv3_t v,
 	int i, val;
 
 	for (i = X; i <= Z; i++) {
-		val = round_divide(
-			(int64_t)v[i] * BMI_OFFSET_GYRO_DIV_MDS,
-			BMI_OFFSET_GYRO_MULTI_MDS);
+		val = round_divide((int64_t)v[i] * BMI_OFFSET_GYRO_DIV_MDS,
+				   BMI_OFFSET_GYRO_MULTI_MDS);
 		if (val > 511)
 			val = 511;
 		if (val < -512)
@@ -899,11 +845,11 @@ void bmi_set_gyro_offset(const struct motion_sensor_t *gyro, intv3_t v,
 bool motion_orientation_changed(const struct motion_sensor_t *s)
 {
 	return BMI_GET_DATA(s)->orientation !=
-		BMI_GET_DATA(s)->last_orientation;
+	       BMI_GET_DATA(s)->last_orientation;
 }
 
-enum motionsensor_orientation *motion_orientation_ptr(
-		const struct motion_sensor_t *s)
+enum motionsensor_orientation *
+motion_orientation_ptr(const struct motion_sensor_t *s)
 {
 	return &BMI_GET_DATA(s)->orientation;
 }

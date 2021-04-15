@@ -132,6 +132,14 @@
 #undef CONFIG_ACCELGYRO_ICM_COMM_SPI
 #undef CONFIG_ACCELGYRO_ICM_COMM_I2C
 
+/* Select the communication mode for the accelgyro BMI. Only one of these should
+ * be set. To set the value manually, simply define one or the other. If neither
+ * is defined, but I2C_PORT_ACCEL is defined, then CONFIG_ACCELGYRO_BMI_I2C will
+ * automatically be set.
+ */
+#undef CONFIG_ACCELGYRO_BMI_COMM_SPI
+#undef CONFIG_ACCELGYRO_BMI_COMM_I2C
+
 /*
  * Some chips have a portion of memory which will remain powered even
  * during a reset.  This is called Always-On, or AON memory, and
@@ -6294,6 +6302,17 @@
 #endif
 #endif	/* !CONFIG_ZEPHYR && !CONFIG_ACCELGYRO_ICM_COMM_SPI &&
 	 * !CONFIG_ACCELGYRO_ICM_COMM_I2C
+	 */
+
+#if !defined(CONFIG_ZEPHYR) && !defined(CONFIG_ACCELGYRO_BMI_COMM_SPI) && \
+	!defined(CONFIG_ACCELGYRO_BMI_COMM_I2C)
+#ifdef I2C_PORT_ACCEL
+#define CONFIG_ACCELGYRO_BMI_COMM_I2C
+#else
+#define CONFIG_ACCELGYRO_BMI_COMM_SPI
+#endif
+#endif	/* !CONFIG_ZEPHYR && !CONFIG_ACCELGYRO_BMI_SPI && \
+	 * !CONFIG_ACCELGYRO_BMI_I2C
 	 */
 
 #endif  /* __CROS_EC_CONFIG_H */
