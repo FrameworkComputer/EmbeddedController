@@ -81,6 +81,29 @@ static void gpio_handler_shim(const struct device *port,
 }
 
 /*
+ * Validate interrupt flags are valid for the Zephyr GPIO driver.
+ */
+#define IS_GPIO_INTERRUPT_FLAG(flag, mask) ((flag & mask) == mask)
+#define VALID_GPIO_INTERRUPT_FLAG(flag)                             \
+	(IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_EDGE_RISING) ||      \
+	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_EDGE_FALLING) ||     \
+	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_EDGE_BOTH) ||        \
+	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_LEVEL_LOW) ||        \
+	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_LEVEL_HIGH) ||       \
+	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_EDGE_TO_INACTIVE) || \
+	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_EDGE_TO_ACTIVE) ||   \
+	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_LEVEL_INACTIVE) ||   \
+	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_LEVEL_ACTIVE))
+
+#define GPIO_INT(sig, f, cb)                       \
+	BUILD_ASSERT(VALID_GPIO_INTERRUPT_FLAG(f), \
+		     STRINGIFY(sig) " is not using Zephyr interrupt flags");
+#ifdef EC_CROS_GPIO_INTERRUPTS
+EC_CROS_GPIO_INTERRUPTS
+#endif
+#undef GPIO_INT
+
+/*
  * Each zephyr project should define EC_CROS_GPIO_INTERRUPTS in their gpio_map.h
  * file if there are any interrupts that should be registered.  The
  * corresponding handler will be declared here, which will prevent
