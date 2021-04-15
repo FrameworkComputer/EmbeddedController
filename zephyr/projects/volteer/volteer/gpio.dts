@@ -284,18 +284,6 @@
 			enum-name = "GPIO_USB_C1_LS_EN";
 			label = "UNUSED_GPIO41";
 		};
-		unused_gpiof2 {
-			gpios = <&gpiof 2 (GPIO_INPUT | GPIO_PULL_UP)>;
-			label = "UNUSED_GPIOF2";
-		};
-		unused_gpio96 {
-			gpios = <&gpio9 6 (GPIO_INPUT | GPIO_PULL_UP)>;
-			label = "UNUSED_GPIO96";
-		};
-		unused_gpio34 {
-			gpios = <&gpio3 4 (GPIO_INPUT | GPIO_PULL_UP)>;
-			label = "UNUSED_GPIO34";
-		};
 		ec_kb_bl_en {
 			gpios = <&gpio8 6 (GPIO_INPUT | GPIO_PULL_UP)>;
 			label = "EC_KB_BL_EN";
@@ -389,5 +377,12 @@
 	def-lvol-io-list {
 		compatible = "nuvoton,npcx-lvolctrl-def";
 		lvol-io-pads = <&lvol_iob4 &lvol_iob5>; /* I2C_SDA0 & SCL0 */
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios = <&gpiof 2 0>,
+			       <&gpio9 6 0>,
+			       <&gpio3 4 0>;
 	};
 };
