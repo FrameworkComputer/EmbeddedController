@@ -416,6 +416,11 @@ if [[ "${SERVO_TYPE}" =~ ^servo_v4_with_.*_and_.*$ ]]; then
 	fi
 fi
 
+servo_is_ccd() {
+	[[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] || \
+	[[ "${SERVO_TYPE}" =~ "ccd_ti50" ]]
+}
+
 servo_has_warm_reset() {
 	dut_control -i warm_reset >/dev/null 2>&1
 }
@@ -463,14 +468,13 @@ servo_sh_hard_reset() {
 	dut_control sh_reset:off
 }
 
-ccd_cr50_ec_hard_reset() {
-	servo_ec_hard_reset
-}
-
 ec_reset() {
-	stype=${SERVO_TYPE}
-	if [[ "${SERVO_TYPE}" =~ "servo" ]] ; then
-		stype=servo
+	local stype
+
+	if [[ "${SERVO_TYPE}" =~ "servo" ]] || servo_is_ccd; then
+		stype="servo"
+	else
+		stype=${SERVO_TYPE}
 	fi
 
 	if [[ -n "${stype}" ]]; then
@@ -479,8 +483,18 @@ ec_reset() {
 }
 
 ccd_ec_boot0() {
-	info "Using CCD $2."
-	dut_control ccd_ec_boot_mode_$2:$1
+	local on_value="${1}"
+	local boot_mode="${2}"
+
+	info "Using CCD ${boot_mode}."
+
+	if [[ "${on_value}" == "on" ]] && [[ "${boot_mode}" == "uut" ]] ; then
+		# Ti50 requires EC reset to be asserted before UUT mode can be
+		# enabled, Cr50 should not mind.
+		dut_control cold_reset:on
+	fi
+
+	dut_control "ccd_ec_boot_mode_${boot_mode}":"${on_value}"
 }
 
 servo_micro_ec_boot0() {
@@ -535,14 +549,14 @@ servo_sh_boot0() {
 }
 
 ec_switch_boot0() {
-	on_value=$1
+	local on_value=$1
 	# Enable programming GPIOs
 	if $(in_array "${BOARDS_STM32_PROG_EN[@]}" "${BOARD}"); then
 		servo_save_add "prog_en"
 
 		dut_control prog_en:yes
 	fi
-	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
+	if servo_is_ccd ; then
 		stype=ccd
 	elif [[ "${SERVO_TYPE}" =~ "servo_micro" ]] ; then
 		stype=servo_micro
@@ -571,7 +585,7 @@ on_servov3() {
 error_reported=  # Avoid double printing the error message.
 on_raiden() {
 	if [[ "${SERVO_TYPE}" =~ "servo_v4" ]] || \
-	   [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] || \
+	   servo_is_ccd || \
 	   [[ "${SERVO_TYPE}" =~ "servo_micro" ]]; then
 		return 0
 	fi
@@ -633,7 +647,7 @@ cleanup() {
 		dut_control "${MCU}"_boot_mode:off
 	fi
 
-	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
+	if servo_is_ccd; then
 		dut_control ccd_ec_boot_mode_uut:off
 		dut_control ccd_ec_boot_mode_bitbang:off
 	fi
@@ -1105,7 +1119,7 @@ function flash_stm32() {
 
 	dut_control "${EC_UART_PREFIX}_parity:even"
 
-	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
+	if servo_is_ccd ; then
 		case "${FLAGS_bitbang_rate}" in
 			(9600|19200|38400|57600) : ;;
 			(*)
@@ -1128,7 +1142,7 @@ function flash_stm32() {
 
 	# Add a delay long enough for cr50 to update the ccdstate. Cr50 updates
 	# ccdstate once a second, so a 2 second delay should be safe.
-	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
+	if servo_is_ccd ; then
 		sleep 2
 		STM32MON_OPT+=" -c"
 	fi
@@ -1279,7 +1293,7 @@ function flash_it83xx() {
 	      "${SERVO_TYPE}" =~ "c2d2" ]] ; then
 		info "Asking servo to send the dbgr special waveform to ${CHIP}"
 		dut_control_or_die enable_ite_dfu
-	elif [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
+	elif servo_is_ccd; then
 		local CCD_I2C_CAP="$(dut_control_get ccd_i2c_en)"
 		if [[ "${CCD_I2C_CAP,,}" != "always" ]]; then
 			die "CCD I2C capability is not set as 'Always'" \
@@ -1306,7 +1320,7 @@ function flash_it83xx() {
 		ITEFLASH_ARGS=( "sudo" "--" "${ITEFLASH_ARGS[@]}" \
 			"--send-waveform=0" "--i2c-interface=linux" \
 			"--i2c-dev-path=$(dut_i2c_dev)" )
-		if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]]; then
+		if servo_is_ccd; then
 			ITEFLASH_ARGS+=( "--block-write-size=256" )
 		fi
 	fi
@@ -1428,6 +1442,9 @@ function flash_npcx_uut() {
 	claim_pty ${EC_UART}
 
 	if [[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] ; then
+		# Ti50 does not yet support ccd_keepalive option which
+		# requires ccdstate command on the GSC console.
+		# TODO(b/161483597) remove the check when Ti50 CCD is on par.
 		servo_save_add ccd_keepalive_en
 		dut_control ccd_keepalive_en:on
 	fi
