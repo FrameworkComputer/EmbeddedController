@@ -14,6 +14,7 @@
 #include "hooks.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
+#include "system.h"
 
 #define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
 
@@ -180,7 +181,10 @@ static enum pwr_led_states pwr_led_get_state(void)
 		else
 			return PWR_LED_STATE_SUSPEND_NO_AC;
 	} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		return PWR_LED_STATE_OFF;
+		if (system_can_boot_ap())
+			return PWR_LED_STATE_OFF;
+		else
+			return PWR_LED_STATE_OFF_LOW_POWER;
 	} else if (chipset_in_state(CHIPSET_STATE_ON)) {
 		return PWR_LED_STATE_ON;
 	}
@@ -200,6 +204,14 @@ static void led_update_power(void)
 	 * Otherwise, continue to use old state
 	 */
 	if (desired_state != led_state && desired_state < PWR_LED_NUM_STATES) {
+		/*
+		 * Allow optional OFF_LOW_POWER state to fall back to
+		 * OFF not defined, as indicated by no specified phase 0 time.
+		 */
+		if (desired_state == PWR_LED_STATE_OFF_LOW_POWER &&
+		    led_bat_state_table[desired_state][LED_PHASE_0].time == 0)
+			desired_state = PWR_LED_STATE_OFF;
+
 		/* State is changing */
 		led_state = desired_state;
 		/* Reset ticks and period when state changes */

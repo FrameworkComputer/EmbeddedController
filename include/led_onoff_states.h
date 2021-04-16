@@ -58,6 +58,7 @@ enum pwr_led_states {
 	PWR_LED_STATE_SUSPEND_AC,
 	PWR_LED_STATE_SUSPEND_NO_AC,
 	PWR_LED_STATE_OFF,
+	PWR_LED_STATE_OFF_LOW_POWER, /* Falls back to OFF if not defined */
 	PWR_LED_NUM_STATES
 };
 
