@@ -85,7 +85,7 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  */
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = {
-		.channel = 2,
+		.channel = PWM_HW_CH_DCR2,
 		.flags = 0,
 		.freq_hz = 10000,
 		.pcfsr_sel = PWM_PRESCALER_C4
