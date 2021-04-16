@@ -14,11 +14,12 @@
 #define LED_ON_LVL 0
 #define LED_OFF_LVL 1
 
-const int led_charge_lvl_1;
+__override const int led_charge_lvl_1;
 
-const int led_charge_lvl_2 = 100;
+__override const int led_charge_lvl_2 = 100;
 
-struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
+__override struct led_descriptor
+			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
 	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
 	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
@@ -38,7 +39,7 @@ const enum ec_led_id supported_led_ids[] = {
 };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-void led_set_color_battery(enum ec_led_colors color)
+__override void led_set_color_battery(enum ec_led_colors color)
 {
 	switch (color) {
 	case EC_LED_COLOR_WHITE:

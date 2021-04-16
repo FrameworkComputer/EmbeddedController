@@ -20,10 +20,11 @@
 #define LED_MASK_GREEN	MT6370_MASK_RGB_ISNK2DIM_EN
 #define LED_MASK_WHITE	MT6370_MASK_RGB_ISNK3DIM_EN
 
-const int led_charge_lvl_1 = 5;
-const int led_charge_lvl_2 = 97;
+__override const int led_charge_lvl_1 = 5;
+__override const int led_charge_lvl_2 = 97;
 
-struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
+__override struct led_descriptor
+			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_RED, LED_INDEFINITE} },
 	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
 	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_GREEN,  LED_INDEFINITE} },
@@ -75,7 +76,7 @@ __override void led_set_color_power(enum ec_led_colors color)
 	led_set_color(led_mask);
 }
 
-void led_set_color_battery(enum ec_led_colors color)
+__override void led_set_color_battery(enum ec_led_colors color)
 {
 	switch (color) {
 	case EC_LED_COLOR_RED:

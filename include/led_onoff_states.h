@@ -53,17 +53,6 @@ struct led_descriptor {
 	uint8_t time;
 };
 
-
-/* Charging LED state table - defined in board's led.c */
-extern struct led_descriptor
-			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES];
-
-/* Charging LED state level 1 - defined in board's led.c */
-extern const int led_charge_lvl_1;
-
-/* Charging LED state level 2 - defined in board's led.c */
-extern const int led_charge_lvl_2;
-
 enum pwr_led_states {
 	PWR_LED_STATE_ON,
 	PWR_LED_STATE_SUSPEND_AC,
@@ -73,15 +62,19 @@ enum pwr_led_states {
 };
 
 /**
- * Set battery LED color - defined in board's led.c
+ * Set battery LED color - defined in board's led.c if supported, along with:
+ *	- led_bat_state_table
+ *	- led_charge_lvl_1
+ *	- led_charge_lvl_2
  *
  * @param color		Color to set on battery LED
  *
  */
-void led_set_color_battery(enum ec_led_colors color);
+__override_proto void led_set_color_battery(enum ec_led_colors color);
 
 /**
- * Set power LED color - defined in board's led.c if supported
+ * Set power LED color - defined in board's led.c if supported, along with:
+ *	- led_pwr_state_table
  */
 __override_proto void led_set_color_power(enum ec_led_colors color);
 

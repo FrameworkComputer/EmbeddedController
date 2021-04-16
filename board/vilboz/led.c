@@ -11,10 +11,11 @@
 #define LED_OFF_LVL	1
 #define LED_ON_LVL	0
 
-const int led_charge_lvl_1 = 5;
-const int led_charge_lvl_2 = 97;
+__override const int led_charge_lvl_1 = 5;
+__override const int led_charge_lvl_2 = 97;
 
-struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
+__override struct led_descriptor
+			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 	[STATE_CHARGING_LVL_1]       = {{EC_LED_COLOR_RED, LED_INDEFINITE} },
 	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
 	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_GREEN,  LED_INDEFINITE} },
@@ -57,7 +58,7 @@ __override void led_set_color_power(enum ec_led_colors color)
 		gpio_set_level(GPIO_LED3_PWM, LED_OFF_LVL);
 }
 
-void led_set_color_battery(enum ec_led_colors color)
+__override void led_set_color_battery(enum ec_led_colors color)
 {
 	switch (color) {
 	case EC_LED_COLOR_GREEN:

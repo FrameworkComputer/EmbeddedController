@@ -17,6 +17,18 @@
 
 #define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
 
+/*
+ * In order to support the battery LED being optional (ex. for Chromeboxes),
+ * set up default battery table, setter, and variables.
+ */
+__overridable struct led_descriptor
+			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES];
+__overridable const int led_charge_lvl_1;
+__overridable const int led_charge_lvl_2;
+__overridable void led_set_color_battery(enum ec_led_colors color)
+{
+}
+
 static enum led_states led_get_state(void)
 {
 	int  charge_lvl;

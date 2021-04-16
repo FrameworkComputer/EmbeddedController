@@ -12,10 +12,11 @@
 #include "chipset.h"
 #include "driver/bc12/mt6360.h"
 
-const int led_charge_lvl_1 = 5;
-const int led_charge_lvl_2 = 95;
+__override const int led_charge_lvl_1 = 5;
+__override const int led_charge_lvl_2 = 95;
 
-struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
+__override struct led_descriptor
+			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
 	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
 	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_BLUE,  LED_INDEFINITE} },
@@ -35,7 +36,7 @@ const enum ec_led_id supported_led_ids[] = {
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-void led_set_color_battery(enum ec_led_colors color)
+__override void led_set_color_battery(enum ec_led_colors color)
 {
 	mt6360_led_set_brightness(MT6360_LED_RGB1, 50);
 	mt6360_led_set_brightness(MT6360_LED_RGB3, 50);
