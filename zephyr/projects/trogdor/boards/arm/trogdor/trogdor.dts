@@ -72,10 +72,19 @@
 			enum-name = "I2C_PORT_EEPROM";
 			label = "EEPROM";
 		};
-		sensor {
+		i2c_sensor: sensor {
 			i2c-port = <&i2c7_0>;
 			enum-name = "I2C_PORT_SENSOR";
 			label = "SENSOR";
+			config {
+				frequency = <400>;
+				scl {
+					enum-name = "GPIO_EC_I2C_SENSOR_SCL";
+				};
+				sda {
+					enum-name = "GPIO_EC_I2C_SENSOR_SDA";
+				};
+			};
 		};
 		accel {
 			i2c-port = <&i2c7_0>;

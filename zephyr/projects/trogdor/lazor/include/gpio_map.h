@@ -9,6 +9,10 @@
 #include <devicetree.h>
 #include <gpio_signal.h>
 
+#ifdef CONFIG_PLATFORM_EC_GMR_TABLET_MODE
+#define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
+#endif
+
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
  *
@@ -54,6 +58,8 @@
 	GPIO_INT(GPIO_USB_C1_BC12_INT_L, GPIO_INT_EDGE_FALLING, usb1_evt)     \
 	GPIO_INT(GPIO_USB_A0_OC_ODL, GPIO_INT_EDGE_BOTH, usba_oc_interrupt)   \
 	GPIO_INT(GPIO_CCD_MODE_ODL, GPIO_INT_EDGE_FALLING,                    \
-		 board_connect_c0_sbu)
+		 board_connect_c0_sbu)                                        \
+	GPIO_INT(GPIO_EC_IMU_INT_L, GPIO_INT_EDGE_FALLING, bmi160_interrupt)  \
+	GPIO_INT(GPIO_TABLET_MODE_L, GPIO_INT_EDGE_BOTH, gmr_tablet_switch_isr)
 
 #endif /* __ZEPHYR_GPIO_MAP_H */

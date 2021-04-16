@@ -6,6 +6,7 @@ board: trogdor
 dts-overlays:
   - gpio.dts
   - battery.dts
+  - motionsense.dts
 supported-zephyr-versions:
   - v2.5
 toolchain: coreboot-sdk

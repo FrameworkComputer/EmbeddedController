@@ -113,10 +113,12 @@
 		};
 		tablet_mode_l {
 			gpios = <&gpioc 6 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
 			label = "TABLET_MODE_L";
 		};
-		accel_gyro_int_l {
+		gpio_accel_gyro_int_l: accel_gyro_int_l {
 			gpios = <&gpioa 0 GPIO_INPUT>;
+			enum-name = "GPIO_EC_IMU_INT_L";
 			label = "ACCEL_GYRO_INT_L";
 		};
 		da9313_gpio0 {
@@ -315,10 +317,12 @@
 		};
 		ec_i2c_sensor_scl {
 			gpios = <&gpiob 3 GPIO_INPUT>;
+			enum-name = "GPIO_EC_I2C_SENSOR_SCL";
 			label = "EC_I2C_SENSOR_SCL";
 		};
 		ec_i2c_sensor_sda {
 			gpios = <&gpiob 2 GPIO_INPUT>;
+			enum-name = "GPIO_EC_I2C_SENSOR_SDA";
 			label = "EC_I2C_SENSOR_SDA";
 		};
 		brd_id0 {
