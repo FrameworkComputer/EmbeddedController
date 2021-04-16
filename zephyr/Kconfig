@@ -208,6 +208,30 @@ config PLATFORM_EC_CONSOLE_CMD_MEM
 	     md - dump memory values
 	     rw - read or write in memory
 
+config PLATFORM_EC_CONSOLE_CMD_SLEEPMASK
+	bool "Console command: sleepmask read"
+	default y if PM
+	help
+	  Enable the 'sleepmask' console command. This command is used to
+	  display the state of the sleep mask, which controls whether the EC
+	  chip is allowed to enter deep sleep states to save power.
+
+config PLATFORM_EC_CONSOLE_CMD_SLEEPMASK_SET
+	bool "Console command: sleepmask set"
+	depends on PLATFORM_EC_CONSOLE_CMD_SLEEPMASK
+	default y
+	help
+	  Enable changing the state of the current sleep mask.
+
+	    sleepmask on     -  Sets the SLEEP_MASK_FORCE_NO_DSLEEP bit in the
+	                        sleep mask, preventing the system from entering
+	                        sleep.
+	    sleepmask off    -  Clears the SLEEP_MASK_FORCE_NO_DSLEEP bit in the
+	                        sleep mask. The system may enter deep sleep
+	                        depending on the state of other mask bits.
+	    sleepmask <value> - Sets the sleepmask to <value>, overriding all
+	                        bits with the specified value.
+
 config PLATFORM_EC_CONSOLE_CMD_S5_TIMEOUT
 	bool "Console command: s5_timeout"
 	default n
@@ -337,6 +361,14 @@ config PLATFORM_EC_LID_SWITCH
 	  automatically power on.
 
 	  This requires a GPIO named GPIO_LID_OPEN to be defined in gpio_map.h.
+
+config PLATFORM_EC_LOW_POWER_IDLE
+	bool
+	default y if PM
+	help
+	  Enable low power idle modes in the EC chipset. This is automatically
+	  enabled when the Zephyr power management options are enabled with the
+	  PM option.
 
 config PLATFORM_EC_MKBP_EVENT
     bool "MKBP event"
