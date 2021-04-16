@@ -16,6 +16,7 @@ relative_path = st.from_regex(regex=r"\A\w+[\w/]*\Z")
 
 
 @hypothesis.given(relative_path, relative_path, relative_path)
+@hypothesis.settings(deadline=60000)
 def test_resolve_build_dir_with_build_dir(platform_ec_subdir, project_subdir, build_subdir):
     with tempfile.TemporaryDirectory() as temp_dir_name:
         platform_ec_dir = pathlib.Path(temp_dir_name) / platform_ec_subdir
@@ -28,6 +29,7 @@ def test_resolve_build_dir_with_build_dir(platform_ec_subdir, project_subdir, bu
 
 
 @hypothesis.given(relative_path, relative_path)
+@hypothesis.settings(deadline=60000)
 def test_resolve_build_dir_invalid_project(platform_ec_subdir, project_subdir):
     try:
         with tempfile.TemporaryDirectory() as temp_dir_name:
@@ -42,6 +44,7 @@ def test_resolve_build_dir_invalid_project(platform_ec_subdir, project_subdir):
 
 
 @hypothesis.given(relative_path, relative_path)
+@hypothesis.settings(deadline=60000)
 def test_resolve_build_dir_from_project(platform_ec_subdir, project_subdir):
     with tempfile.TemporaryDirectory() as temp_dir_name:
         platform_ec_dir = pathlib.Path(temp_dir_name) / platform_ec_subdir
@@ -60,6 +63,7 @@ version_tuples = st.tuples(version_integers, version_integers, version_integers)
 
 
 @hypothesis.given(version_tuples)
+@hypothesis.settings(deadline=60000)
 def test_read_zephyr_version(version_tuple):
     with tempfile.TemporaryDirectory() as zephyr_base:
         with open(pathlib.Path(zephyr_base) / 'VERSION', 'w') as f:
