@@ -34,7 +34,7 @@ struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 					{LED_OFF, 1 * LED_ONE_SEC} },
 };
 
-const struct led_descriptor
+__override const struct led_descriptor
 		led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
 	[PWR_LED_STATE_ON]           = {{EC_LED_COLOR_BLUE, LED_INDEFINITE} },
 	[PWR_LED_STATE_SUSPEND_AC]   = {{LED_OFF, LED_INDEFINITE} },
@@ -49,7 +49,7 @@ const enum ec_led_id supported_led_ids[] = {
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-void led_set_color_power(enum ec_led_colors color)
+__override void led_set_color_power(enum ec_led_colors color)
 {
 	/* Don't set led if led_auto_control is disabled. */
 	if (!led_auto_control_is_enabled(EC_LED_ID_POWER_LED) ||

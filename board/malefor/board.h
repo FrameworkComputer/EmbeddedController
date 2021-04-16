@@ -22,7 +22,6 @@
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
 /* LED defines */
-#define CONFIG_LED_POWER_LED
 #define CONFIG_LED_ONOFF_STATES
 
 /* Keyboard features */

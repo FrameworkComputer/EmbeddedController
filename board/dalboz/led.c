@@ -30,7 +30,7 @@ struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 
 BUILD_ASSERT(ARRAY_SIZE(led_bat_state_table) == LED_NUM_STATES);
 
-const struct led_descriptor
+__override const struct led_descriptor
 			led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
 	[PWR_LED_STATE_ON]           = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
 	[PWR_LED_STATE_SUSPEND_AC]   = {{EC_LED_COLOR_WHITE, 3 * LED_ONE_SEC},
@@ -48,7 +48,7 @@ const enum ec_led_id supported_led_ids[] = {
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-void led_set_color_power(enum ec_led_colors color)
+__override void led_set_color_power(enum ec_led_colors color)
 {
 	if (color == EC_LED_COLOR_WHITE)
 		gpio_set_level(GPIO_LED3_PWM, LED_ON_LVL);

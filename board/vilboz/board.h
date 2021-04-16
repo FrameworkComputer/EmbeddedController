@@ -21,9 +21,6 @@
 
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
 
-/* Power  LEDs */
-#define CONFIG_LED_POWER_LED
-
 /* Motion sensing drivers */
 #define CONFIG_ACCELGYRO_LSM6DSM
 #define CONFIG_ACCEL_LSM6DSM_INT_EVENT \

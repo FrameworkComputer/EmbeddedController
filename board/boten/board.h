@@ -34,7 +34,6 @@
 #define CONFIG_DAC
 
 /* LED */
-#define CONFIG_LED_POWER_LED
 #define CONFIG_LED_ONOFF_STATES
 
 /* PWM */

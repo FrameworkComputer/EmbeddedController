@@ -142,7 +142,16 @@ static void led_update_battery(void)
 	led_set_color_battery(led_bat_state_table[led_state][phase].color);
 }
 
-#ifdef CONFIG_LED_POWER_LED
+/*
+ * In order to support the power LED being optional, set up default power LED
+ * table and setter
+ */
+__overridable const struct led_descriptor
+			led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES];
+__overridable void led_set_color_power(enum ec_led_colors color)
+{
+}
+
 static enum pwr_led_states pwr_led_get_state(void)
 {
 	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
@@ -201,7 +210,6 @@ static void led_update_power(void)
 	led_set_color_power(led_pwr_state_table[led_state][phase].color);
 
 }
-#endif
 
 static void led_init(void)
 {
@@ -210,10 +218,8 @@ static void led_init(void)
 		led_set_color_battery(LED_OFF);
 
 	/* If power LED is enabled, set it to "off" to start with */
-#ifdef CONFIG_LED_POWER_LED
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 		led_set_color_power(LED_OFF);
-#endif /* CONFIG_LED_POWER_LED */
 
 }
 DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_DEFAULT);
@@ -227,9 +233,7 @@ static void led_update(void)
 	 */
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		led_update_battery();
-#ifdef CONFIG_LED_POWER_LED
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 		led_update_power();
-#endif
 }
 DECLARE_HOOK(HOOK_TICK, led_update, HOOK_PRIO_DEFAULT);

@@ -16,7 +16,6 @@
 #include "baseboard.h"
 
 #define CONFIG_LED_COMMON
-#define CONFIG_LED_POWER_LED
 
 /* USB PD */
 #undef CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT

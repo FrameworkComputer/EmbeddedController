@@ -49,7 +49,6 @@
 #define CONFIG_USB_MUX_IT5205
 
 #define CONFIG_LED_ONOFF_STATES
-#define CONFIG_LED_POWER_LED
 
 /* Motion Sensors */
 #ifndef VARIANT_KUKUI_NO_SENSORS

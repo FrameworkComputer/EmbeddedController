@@ -36,7 +36,7 @@ struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 					{EC_LED_COLOR_GREEN, 2 * LED_ONE_SEC} },
 };
 
-const struct led_descriptor
+__override const struct led_descriptor
 		led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
 	[PWR_LED_STATE_ON]           = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
 	[PWR_LED_STATE_SUSPEND_AC]   = {{EC_LED_COLOR_WHITE, 3 * LED_ONE_SEC},
@@ -66,7 +66,7 @@ static void led_set_color(int mask)
 	mt6370_led_set_color(led_mask);
 }
 
-void led_set_color_power(enum ec_led_colors color)
+__override void led_set_color_power(enum ec_led_colors color)
 {
 	if (color == EC_LED_COLOR_WHITE)
 		led_mask |= LED_MASK_WHITE;

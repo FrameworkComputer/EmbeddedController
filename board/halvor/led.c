@@ -34,7 +34,7 @@ struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 					{LED_OFF,	     2 * LED_ONE_SEC} },
 };
 
-const struct led_descriptor
+__override const struct led_descriptor
 		led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
 	[PWR_LED_STATE_ON]           = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
 	[PWR_LED_STATE_SUSPEND_AC]   = {{EC_LED_COLOR_WHITE, 1 * LED_ONE_SEC},
@@ -56,7 +56,7 @@ void led_set_color_battery(enum ec_led_colors color)
 		(color == EC_LED_COLOR_AMBER) ? LED_ON_LVL : LED_OFF_LVL);
 }
 
-void led_set_color_power(enum ec_led_colors color)
+__override void led_set_color_power(enum ec_led_colors color)
 {
 	gpio_set_level(GPIO_LED_1_L,
 		(color == EC_LED_COLOR_WHITE) ? LED_ON_LVL : LED_OFF_LVL);

@@ -64,7 +64,6 @@ extern const int led_charge_lvl_1;
 /* Charging LED state level 2 - defined in board's led.c */
 extern const int led_charge_lvl_2;
 
-#ifdef CONFIG_LED_POWER_LED
 enum pwr_led_states {
 	PWR_LED_STATE_ON,
 	PWR_LED_STATE_SUSPEND_AC,
@@ -72,12 +71,6 @@ enum pwr_led_states {
 	PWR_LED_STATE_OFF,
 	PWR_LED_NUM_STATES
 };
-
-/* Power LED state table - defined in board's led.c */
-extern const struct led_descriptor
-			led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES];
-
-#endif
 
 /**
  * Set battery LED color - defined in board's led.c
@@ -87,12 +80,10 @@ extern const struct led_descriptor
  */
 void led_set_color_battery(enum ec_led_colors color);
 
-#ifdef CONFIG_LED_POWER_LED
 /**
- * Set power LED color - defined in board's led.c
+ * Set power LED color - defined in board's led.c if supported
  */
-void led_set_color_power(enum ec_led_colors color);
-#endif
+__override_proto void led_set_color_power(enum ec_led_colors color);
 
 __override_proto enum led_states
 board_get_led_state(enum led_states desired_state);
