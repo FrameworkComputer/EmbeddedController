@@ -741,14 +741,25 @@ static void isl923x_init(int chgnum)
 		/*
 		 * Ignore BATGONE on auxiliary charger ICs as it's not connected
 		 * there.
+		 * Clear DISABLE_GP_CMP & MCU_LDO_BAT_STATE_DISABLE to
+		 * enable ALERT_B with control the power of sub-board
 		 */
 		if (chgnum != CHARGER_PRIMARY) {
 			if (raw_read16(chgnum, ISL9238_REG_CONTROL4, &reg))
 				goto init_fail;
 
 			reg |= RAA489000_C4_BATGONE_DISABLE;
+			reg &= ~RAA489000_C4_DISABLE_GP_CMP;
 
 			if (raw_write16(chgnum, ISL9238_REG_CONTROL4, reg))
+				goto init_fail;
+
+			if (raw_read16(chgnum, RAA489000_REG_CONTROL8, &reg))
+				goto init_fail;
+
+			reg &= ~RAA489000_C8_MCU_LDO_BAT_STATE_DISABLE;
+
+			if (raw_write16(chgnum, RAA489000_REG_CONTROL8, reg))
 				goto init_fail;
 		}
 	}
