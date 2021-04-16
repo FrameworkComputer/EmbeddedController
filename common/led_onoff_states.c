@@ -29,10 +29,18 @@ __overridable void led_set_color_battery(enum ec_led_colors color)
 {
 }
 
+#ifndef CONFIG_CHARGER
+/* Include for the sake of compilation */
+int charge_get_percent(void);
+#endif
+
 static enum led_states led_get_state(void)
 {
 	int  charge_lvl;
 	enum led_states new_state = LED_NUM_STATES;
+
+	if (!IS_ENABLED(CONFIG_CHARGER))
+		return new_state;
 
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
