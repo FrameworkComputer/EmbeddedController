@@ -286,8 +286,8 @@ enum temp_sensor_id {
 /* PWM Channels */
 enum pwm_channel {
 	PWM_CH_FAN = 0,
-	PWM_CH_LED_CHRG,
-	PWM_CH_LED_FULL,
+	PWM_CH_LED1,
+	PWM_CH_LED2,
 	PWM_CH_COUNT
 };
 

@@ -8,4 +8,4 @@
 
 BASEBOARD:=mancomb
 
-board-y=board.o
+board-y=board.o led.o

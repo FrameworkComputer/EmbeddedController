@@ -11,11 +11,9 @@
 /* Baseboard features */
 #include "baseboard.h"
 
-/* Motion sensing drivers */
-
-/* Keyboard features */
-
-/* Sensors */
+/* LED */
+#define CONFIG_LED_COMMON
+#define CONFIG_LED_ONOFF_STATES
 
 /* USB Type C and USB PD defines */
 

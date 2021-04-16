@@ -385,12 +385,12 @@ const struct pwm_t pwm_channels[] = {
 		.flags = PWM_CONFIG_OPEN_DRAIN,
 		.freq = 25000,
 	},
-	[PWM_CH_LED_CHRG] = {
+	[PWM_CH_LED1] = {
 		.channel = 2,
 		.flags = PWM_CONFIG_DSLEEP,
 		.freq = 100,
 	},
-	[PWM_CH_LED_FULL] = {
+	[PWM_CH_LED2] = {
 		.channel = 3,
 		.flags = PWM_CONFIG_DSLEEP,
 		.freq = 100,

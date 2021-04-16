@@ -74,8 +74,8 @@ ALTERNATE(			PIN_MASK(3, BIT(4)), 0,				MODULE_ADC, 0)		/* TEMP_AMBIENT_VR */
 
 /* LED Signals */
 GPIO(EC_DISABLE_DISP_BL,	PIN(A, 6), GPIO_OUT_HIGH)						/* Disable Display Backlight */
-ALTERNATE(/*EC_PWM_LED_CHRG_L*/	PIN_MASK(C, BIT(4)), 0, 			MODULE_PWM, 0)		/* Charging LED */
-ALTERNATE(/*EC_PWM_LED_FULL_L*/	PIN_MASK(8, BIT(0)), 0, 			MODULE_PWM, 0)		/* Full LED */
+ALTERNATE(			PIN_MASK(C, BIT(4)), 0,				MODULE_PWM, 0)		/* EC_PWM_LED1_L */
+ALTERNATE(			PIN_MASK(8, BIT(0)), 0,				MODULE_PWM, 0)		/* EC_PWM_LED2_L */
 
 /* Fan Signals */
 ALTERNATE(			PIN_MASK(C, BIT(3)), 0, 			MODULE_PWM, 0)		/* EC_FAN_PWM - Fan PWM */
