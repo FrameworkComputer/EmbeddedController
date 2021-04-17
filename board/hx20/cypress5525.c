@@ -587,7 +587,7 @@ int cypd_handle_extend_msg(int controller, int port)
 		rv = cypd_response_get_battery_status(controller, port, invalid_battery);
 		break;
 	default:
-		CPRINTS("Unknown data type: 0x%02x", type);
+		CPRINTS("C:%d P:%d Unknown data type: 0x%02x", controller, port, type);
 		rv = EC_ERROR_INVAL;
 		break;
 	}
