@@ -24,7 +24,7 @@
 #define CYP5525_UCSI_STATUS_REG         0x0038
 #define CYP5525_UCSI_CONTROL_REG        0x0039
 #define CYP5525_SYS_PWR_STATE           0x003B
-
+#define CYP5525_HPI_VERSION				0x003C
 /*User registers from 0x40 to 0x48 are used for BB retimer */
 #define CYP5225_USER_MAINBOARD_VERSION	0x004F
 #define CYP5225_USER_BB_POWER_EVT		0x004E

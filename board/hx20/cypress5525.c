@@ -329,14 +329,17 @@ int cyp5525_setup(int controller)
 	 */
 
 	int rv, data, i;
-	#define CYPD_SETUP_CMDS_LEN  3
+	#define CYPD_SETUP_CMDS_LEN  5
 	struct {
 		int reg;
 		int value;
+		int length;
 		int status_reg;
 	} const cypd_setup_cmds[] = {
-		{ CYP5525_EVENT_MASK_REG(0), 0x7ffff, CYP5525_PORT0_INTR},	/* Set the port 0 event mask */
-		{ CYP5525_EVENT_MASK_REG(1), 0x7ffff, CYP5525_PORT1_INTR },	/* Set the port 1 event mask */
+		{ CYP5525_EVENT_MASK_REG(0), 0x7ffff, 4, CYP5525_PORT0_INTR},	/* Set the port 0 event mask */
+		{ CYP5525_EVENT_MASK_REG(1), 0x7ffff, 4, CYP5525_PORT1_INTR },	/* Set the port 1 event mask */
+		{ CYP5525_VDM_EC_CONTROL_REG(0), CYP5525_EXTEND_MSG_CTRL_EN, 1, CYP5525_PORT0_INTR},	/* Set the port 0 event mask */
+		{ CYP5525_VDM_EC_CONTROL_REG(1), CYP5525_EXTEND_MSG_CTRL_EN, 1, CYP5525_PORT1_INTR },	/* Set the port 1 event mask */
 		{ CYP5525_PD_CONTROL_REG(0), CYPD_PD_CMD_EC_INIT_COMPLETE, CYP5525_PORT0_INTR },	/* EC INIT Complete */
 	};
 	BUILD_ASSERT(ARRAY_SIZE(cypd_setup_cmds) == CYPD_SETUP_CMDS_LEN);
@@ -349,7 +352,7 @@ int cyp5525_setup(int controller)
 	}
 	for (i = 0; i < CYPD_SETUP_CMDS_LEN; i++) {
 		rv = cypd_write_reg_block(controller, cypd_setup_cmds[i].reg,
-		(void *)&cypd_setup_cmds[i].value, 4);
+		(void *)&cypd_setup_cmds[i].value, cypd_setup_cmds[i].length);
 		if (rv != EC_SUCCESS) {
 			CPRINTS("%s command: 0x%04x failed", __func__, cypd_setup_cmds[i].reg);
 			return EC_ERROR_INVAL;
@@ -543,25 +546,6 @@ int cypd_response_get_battery_status(int controller, int port, int invalid_batte
 	rv = cypd_write_reg16(controller, CYP5525_DM_CONTROL_REG(port), dm_control_data);
 
 	return rv;
-}
-
-void cypd_enable_extend_msg_control(int controller)
-{
-	/**
-	 * If the EC_EXTD_MSG_CTRL_EN bit in the VDM_EC_CONTROL register id not set,
-	 * CCG firmware will automatically send a NOT_SUPPORTED message in response
-	 * to incoming extended data messages. If this bit is set, the messages are
-	 * forwarded to the EC for handling.
-	 */
-	int i;
-	int rv;
-
-	for (i = 0; i < PD_CHIP_COUNT; i++) {
-		rv = cypd_write_reg8(controller,
-			CYP5525_VDM_EC_CONTROL_REG(i), CYP5525_EXTEND_MSG_CTRL_EN);
-		if (rv != EC_SUCCESS)
-			break;
-	}
 }
 
 int cypd_handle_extend_msg(int controller, int port)
@@ -827,7 +811,6 @@ void cypd_handle_state(int controller)
 			cyp5525_get_version(controller);
 			cypd_write_reg8_wait_ack(controller, CYP5225_USER_MAINBOARD_VERSION, board_get_version());
 			cyp5525_setup(controller);
-			cypd_enable_extend_msg_control(controller);
 			cypd_update_port_state(controller, 0);
 			cypd_update_port_state(controller, 1);
 			cyp5525_ucsi_startup(controller);
@@ -1342,7 +1325,8 @@ static int cmd_cypd_get_status(int argc, char **argv)
 			cyp5525_get_version(i);
 			cypd_read_reg8(i, CYP5525_DEVICE_MODE, &data);
 			CPRINTS("CYPD_DEVICE_MODE: 0x%02x %s", data, mode[data & 0x03]);
-
+			cypd_read_reg_block(i, CYP5525_HPI_VERSION, data4, 4);
+			CPRINTS("HPI_VERSION: 0x%02x%02x%02x%02x", data4[3],data4[2],data4[1],data4[0]);
 			cypd_read_reg8(i, CYP5525_INTR_REG, &data);
 			CPRINTS("CYPD_INTR_REG: 0x%02x %s %s %s %s",
 						data,
@@ -1455,6 +1439,7 @@ static int cmd_cypd_control(int argc, char **argv)
 							CYP5525_UCSI_INTR);
 		} else if (!strncmp(argv[1], "verbose", 7)) {
 			verbose_msg_logging = (i != 0);
+			CPRINTS("verbose=%d", verbose_msg_logging);
 		} else {
 			return EC_ERROR_PARAM1;
 		}
@@ -1489,3 +1474,46 @@ static int cmd_cypd_bb(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(cypdbb, cmd_cypd_bb,
 			"controller 0x0000 0xdata ",
 			"Write to the bb control register");
+
+
+static int cmd_cypd_msg(int argc, char **argv)
+{
+	uint32_t sys_port, port, ctrl, cmd, data_len;
+	uint8_t data[5];
+	char *e;
+	if (argc >=2) {
+	sys_port = strtoi(argv[1], &e, 0);
+	if (*e || sys_port >= PD_PORT_COUNT)
+		return EC_ERROR_PARAM1;
+	}
+	port = sys_port % 2;
+	ctrl = sys_port / 2;
+	if (argc >= 3) {
+		if (!strncmp(argv[2], "batterycap", 10)) {
+			data[0] = PD_EXT_GET_BATTERY_CAP;//ext msg type
+
+		}
+		else if (!strncmp(argv[2], "batterystatus", 13)) {
+			data[0] = PD_EXT_GET_BATTERY_STATUS;//ext msg type
+		}
+		data[1] = 0;
+		// ext msg header
+		data[2] = 0x01; //data size
+		data[3] = 0x00;
+		//ext msg data
+		data[4] = 0; //internal battery 0
+		data_len = 5;
+		cypd_write_reg_block(ctrl, CYP5525_WRITE_DATA_MEMORY_REG(port),
+			data, 5);
+		/*the request has 1 byte which should be set to 0 for battery idx 0*/
+		cmd = CYP5525_DM_CTRL_SOP + CYP5525_DM_CTRL_EXTENDED_DATA_REQUEST + (data_len<<8);
+		cypd_write_reg16(ctrl, CYP5525_DM_CONTROL_REG(port), cmd);
+		CPRINTS("sent extended message");
+
+	}
+	return EC_SUCCESS;
+
+}
+DECLARE_CONSOLE_COMMAND(cypdmsg, cmd_cypd_msg,
+			"port",
+			"Trigger extended message ams");
