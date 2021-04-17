@@ -1464,3 +1464,28 @@ static int cmd_cypd_control(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(cypdctl, cmd_cypd_control,
 			"[enable/disable/reset/clearint/verbose] [controller] ",
 			"Set if handling is active for controller");
+
+static int cmd_cypd_bb(int argc, char **argv)
+{
+	uint32_t ctrl, cmd, data;
+	char *e;
+	if (argc == 4) {
+		ctrl = strtoi(argv[1], &e, 0);
+		if (*e || ctrl >= PD_CHIP_COUNT)
+			return EC_ERROR_PARAM1;
+		cmd = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+		data = strtoi(argv[3], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM3;
+
+		cypd_write_reg_block(ctrl, 0x48, (void*)&data, 4);
+		cypd_write_reg16(ctrl, 0x46, cmd);
+	}
+	return EC_SUCCESS;
+
+}
+DECLARE_CONSOLE_COMMAND(cypdbb, cmd_cypd_bb,
+			"controller 0x0000 0xdata ",
+			"Write to the bb control register");
