@@ -38,12 +38,20 @@ void zephyr_shim_setup_deferred(const struct deferred_data *data);
  * See include/hooks.h for documentation.
  *
  * Typically Zephyr would put const data in the rodata section but that is
- * write-protected with native_posix. So force it into .data instead.
+ * write-protected with native_posix. So force it into .data when building for
+ * ARCH_POSIX and put it in .rodata in all other cases so that it does not take
+ * extra RAM space.
  */
+#ifdef CONFIG_ARCH_POSIX
+#define DEFERRED_DATA_SECTION ".data.hooks"
+#else
+#define DEFERRED_DATA_SECTION ".rodata.hooks"
+#endif
+
 #define DECLARE_DEFERRED(routine) _DECLARE_DEFERRED(routine)
 #define _DECLARE_DEFERRED(_routine)                                        \
 	__maybe_unused const struct deferred_data _routine##_data          \
-		__attribute__((section(".data.hooks"))) = {                \
+		__attribute__((section(DEFERRED_DATA_SECTION))) = {        \
 		.routine = _routine,                                       \
 	};                                                                 \
 	static int _setup_deferred_##_routine(const struct device *unused) \
