@@ -90,6 +90,7 @@
 		};
 		ec_accel_int {
 			gpios = <&gpio8 1 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_EC_ACCEL_INT";
 			label = "EC_ACCEL_INT";
 		};
 		usb_c0_tcpc_int_odl {
@@ -230,6 +231,7 @@
 		};
 		usb_a_low_pwr_od {
 			gpios = <&gpio6 6 GPIO_ODR_LOW>;
+			enum-name = "GPIO_USB_A_LOW_PWR_OD";
 			label = "USB_A_LOW_PWR_OD";
 		};
 		gpio_usb_c1_rt_rst_odl_boardid_0: usb_c1_rt_rst_odl_boardid_0 {
@@ -264,6 +266,7 @@
 		};
 		m2_ssd_pln {
 			gpios = <&gpioa 0 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_M2_SSD_PLN";
 			label = "M2_SSD_PLN";
 		};
 		m2_ssd_pla {
@@ -381,8 +384,20 @@
 
 	unused-pins {
 		compatible = "unused-gpios";
-		unused-gpios = <&gpiof 2 0>,
-			       <&gpio9 6 0>,
-			       <&gpio3 4 0>;
+		unused-gpios =
+			<&gpio3 4 0>,
+			<&gpio4 1 0>,
+			<&gpio5 7 0>, /* EC_ESPI_ALERT_L not stuffed */
+			<&gpio9 6 0>,
+			<&gpio7 2 0>, /* EC_SLP_S0IX not stuffed */
+			<&gpio8 6 0>, /* EC_KB_BL_EN not stuffed */
+			<&gpioa 7 0>, /* EN_PP5000_USB_AG not stuffed */
+			<&gpiof 2 0>,
+			/*
+			 * GPIOB6 cannot be configured as an input.
+			 * Drive output low so signal level doesn't
+			 * depend on default setting of PxDOUT register.
+			 */
+			 <&gpiob 6 GPIO_OUTPUT_LOW>;
 	};
 };

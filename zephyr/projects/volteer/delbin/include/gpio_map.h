@@ -10,6 +10,7 @@
 #include <gpio_signal.h>
 
 #define GPIO_PCH_DSW_PWROK	GPIO_UNIMPLEMENTED
+#define GPIO_USB_C1_LS_EN	GPIO_UNIMPLEMENTED
 
 #ifdef CONFIG_PLATFORM_EC_POWERSEQ
 #define POWER_SIGNAL_INT(gpio, edge) \
