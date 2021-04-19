@@ -295,6 +295,14 @@ flash_fp_mcu_stm32() {
     # Release reset as the SPI bus is now ready
     gpio 1 "${gpio_nrst}"
 
+    # As per section '68: Bootloader timings' from application note below:
+    # https://www.st.com/resource/en/application_note/cd00167594-stm32-microcontroller-system-memory-boot-mode-stmicroelectronics.pdf
+    # bootloader startup time is 16.63 ms for STM32F74xxx/75xxx and 53.975 ms
+    # for STM32H74xxx/75xxx. SPI needs 1 us delay for one SPI byte sending.
+    # Keeping some margin, add delay of 100 ms to consider minimum bootloader
+    # startup time after the reset for stm32 devices.
+    sleep 0.1
+
     # Print out the actual underlying command we're running and run it
     echo "# ${cmd}"
     ${cmd}
