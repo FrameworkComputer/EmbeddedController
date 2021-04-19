@@ -254,10 +254,14 @@ static void shi_fill_out_status(struct shi_reg *const inst, uint8_t status)
 	volatile uint8_t *fill_ptr;
 	volatile uint8_t *fill_end;
 	volatile uint8_t *obuf_end;
-	int key;
 
-	/* Disable interrupts in case the interfere by the other interrupts */
-	key = irq_lock();
+	/*
+	 * Disable interrupts in case the interfere by the other interrupts.
+	 * Use __disable_irq/__enable_irq instead of using irq_lock/irq_unlock
+	 * here because irq_lock/irq_unlock leave some system exceptions (like
+	 * SVC, NMI, and faults) still enabled.
+	 */
+	__disable_irq();
 
 	/*
 	 * Fill out output buffer with status byte and leave a gap for PREAMBLE.
@@ -278,7 +282,7 @@ static void shi_fill_out_status(struct shi_reg *const inst, uint8_t status)
 	}
 
 	/* End of critical section */
-	irq_unlock(key);
+	__enable_irq();
 }
 
 /* This routine handles shi received unexpected data */
@@ -354,7 +358,6 @@ static void shi_write_first_pkg_outbuf(struct shi_reg *const inst,
 static void shi_send_response_packet(struct host_packet *pkt)
 {
 	struct shi_reg *const inst = (struct shi_reg *)(cros_shi_cfg.base);
-	int key;
 
 	/*
 	 * Disable interrupts. This routine is not called from interrupt
@@ -363,7 +366,7 @@ static void shi_send_response_packet(struct host_packet *pkt)
 	 * sure our state doesn't unexpectedly change, in case we're expected
 	 * to take RESP_NOT_RDY actions.
 	 */
-	key = irq_lock();
+	__disable_irq();
 
 	if (state == SHI_STATE_PROCESSING) {
 		/* Append our past-end byte, which we reserved space for. */
@@ -390,7 +393,7 @@ static void shi_send_response_packet(struct host_packet *pkt)
 	} else
 		DEBUG_CPRINTS("Unexpected state %d in response handler", state);
 
-	irq_unlock(key);
+	__enable_irq();
 }
 
 void shi_handle_host_package(struct shi_reg *const inst)
