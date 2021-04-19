@@ -15,7 +15,7 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "driver/accel_lis2dh.h"
-#include "driver/accelgyro_lsm6dsm.h"
+#include "driver/accelgyro_lsm6dso.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/tcpm/raa489000.h"
@@ -338,7 +338,7 @@ static const mat33_fp_t base_standard_ref = {
 };
 
 static struct stprivate_data g_lis2dh_data;
-static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
+static struct lsm6dso_data lsm6dso_data;
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -368,21 +368,20 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_ACCEL] = {
 		.name = "Base Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_LSM6DSM,
+		.chip = MOTIONSENSE_CHIP_LSM6DSO,
 		.type = MOTIONSENSE_TYPE_ACCEL,
 		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &lsm6dsm_drv,
+		.drv = &lsm6dso_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
-				MOTIONSENSE_TYPE_ACCEL),
+		.drv_data = &lsm6dso_data,
 		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
 		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+		.i2c_spi_addr_flags = LSM6DSO_ADDR0_FLAGS,
 		.rot_standard_ref = &base_standard_ref,
 		.default_range = 4,
-		.min_frequency = LSM6DSM_ODR_MIN_VAL,
-		.max_frequency = LSM6DSM_ODR_MAX_VAL,
+		.min_frequency = LSM6DSO_ODR_MIN_VAL,
+		.max_frequency = LSM6DSO_ODR_MAX_VAL,
 		.config = {
 			[SENSOR_CONFIG_EC_S0] = {
 				.odr = 13000 | ROUND_UP_FLAG,
@@ -397,21 +396,20 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_GYRO] = {
 		.name = "Base Gyro",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_LSM6DSM,
+		.chip = MOTIONSENSE_CHIP_LSM6DSO,
 		.type = MOTIONSENSE_TYPE_GYRO,
 		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &lsm6dsm_drv,
+		.drv = &lsm6dso_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
-				MOTIONSENSE_TYPE_GYRO),
+		.drv_data = &lsm6dso_data,
 		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
 		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+		.i2c_spi_addr_flags = LSM6DSO_ADDR0_FLAGS,
 		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
 		.rot_standard_ref = &base_standard_ref,
-		.min_frequency = LSM6DSM_ODR_MIN_VAL,
-		.max_frequency = LSM6DSM_ODR_MAX_VAL,
+		.min_frequency = LSM6DSO_ODR_MIN_VAL,
+		.max_frequency = LSM6DSO_ODR_MAX_VAL,
 	},
 };
 
