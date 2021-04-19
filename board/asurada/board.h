@@ -10,7 +10,6 @@
 #include "baseboard.h"
 
 /* Chipset config */
-#define CONFIG_BRINGUP
 
 /* Optional features */
 #define CONFIG_LTO
