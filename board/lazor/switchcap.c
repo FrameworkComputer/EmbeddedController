@@ -105,10 +105,12 @@ DECLARE_HOOK(HOOK_INIT, switchcap_init, HOOK_PRIO_DEFAULT);
 
 void board_set_switchcap_power(int enable)
 {
-	if (board_has_ln9310())
+	if (board_has_ln9310()) {
 		gpio_set_level(GPIO_SWITCHCAP_ON_L, !enable);
-	else
+		ln9310_software_enable(enable);
+	} else {
 		gpio_set_level(GPIO_SWITCHCAP_ON, enable);
+	}
 }
 
 int board_is_switchcap_enabled(void)

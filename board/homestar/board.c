@@ -439,6 +439,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 void board_set_switchcap_power(int enable)
 {
 	gpio_set_level(GPIO_SWITCHCAP_ON_L, !enable);
+	ln9310_software_enable(enable);
 }
 
 int board_is_switchcap_enabled(void)
