@@ -62,12 +62,14 @@
 			enum-name = "GPIO_PG_EC_ALL_SYS_PWRGD";
 			label = "PG_EC_ALL_SYS_PWRGD";
 		};
-		ec_imu_int_l {
+		gpio_ec_imu_int_l: ec_imu_int_l {
 			gpios = <&gpio5 6 GPIO_INPUT>;
+			enum-name = "GPIO_EC_IMU_INT_L";
 			label = "EC_IMU_INT_L";
 		};
 		tablet_mode_l {
 			gpios = <&gpio9 5 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
 			label = "TABLET_MODE_L";
 		};
 		ec_accel_int {

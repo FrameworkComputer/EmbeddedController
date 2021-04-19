@@ -21,6 +21,20 @@
 #define AP_PROCHOT_INT(gpio, edge)
 #endif
 
+#ifdef CONFIG_PLATFORM_EC_ACCELGYRO_BMI260
+#define BMI260_INT(gpio, edge) GPIO_INT(gpio, edge, bmi260_interrupt)
+#else
+#define BMI260_INT(gpio, edge)
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_GMR_TABLET_MODE
+#define GMR_TABLET_MODE_INT(gpio, edge) GPIO_INT(gpio, edge, \
+						 gmr_tablet_switch_isr)
+#define GMR_TABLET_MODE_GPIO_L	GPIO_TABLET_MODE_L
+#else
+#define GMR_TABLET_MODE_INT(gpio, edge)
+#endif
+
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
  *
@@ -37,6 +51,8 @@
  *   GPIO_INT(NAMED_GPIO(h1_ec_pwr_btn_odl), GPIO_INT_EDGE_BOTH, button_print)
  */
 #define EC_CROS_GPIO_INTERRUPTS                                           \
+	BMI260_INT(GPIO_EC_IMU_INT_L, GPIO_INT_EDGE_FALLING)              \
+	GMR_TABLET_MODE_INT(GPIO_TABLET_MODE_L, GPIO_INT_EDGE_BOTH)       \
 	GPIO_INT(GPIO_AC_PRESENT, GPIO_INT_EDGE_BOTH, extpower_interrupt) \
 	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt)        \
 	GPIO_INT(GPIO_POWER_BUTTON_L, GPIO_INT_EDGE_BOTH,                 \
