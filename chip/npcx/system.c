@@ -45,6 +45,11 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
+#if defined(NPCX_LCT_SUPPORT)
+/* A flag for waking up from hibernate mode by RTC overflow event */
+static int is_rtc_overflow_event;
+#endif
+
 /*****************************************************************************/
 /* Internal functions */
 
@@ -328,6 +333,15 @@ static void chip_set_hib_flag(uint32_t *flags, uint32_t hib_wake_flags)
 		if (npcx_lct_is_event_set()) {
 			*flags |= EC_RESET_FLAG_RTC_ALARM |
 					  EC_RESET_FLAG_HIBERNATE;
+			/* Is RTC overflow event? */
+			if (bbram_data_read(BBRM_DATA_INDEX_LCT_TIME) ==
+				NPCX_LCT_MAX) {
+				/*
+				 * Mark it as RTC overflow event and handle it
+				 * in hook init function later for logging info.
+				 */
+				is_rtc_overflow_event = 1;
+			}
 			npcx_lct_clear_event();
 			return;
 		}
@@ -1133,6 +1147,23 @@ int system_is_reboot_warm(void)
 	else
 		return 1;
 }
+
+#if defined(CONFIG_HIBERNATE_PSL) && defined(NPCX_LCT_SUPPORT)
+static void system_init_check_rtc_wakeup_event(void)
+{
+	/*
+	 * If platform uses PSL (Power Switch Logic) for hibernating and RTC is
+	 * also supported, determine whether ec is woken up by RTC with overflow
+	 * event (16 weeks). If so, let it go to hibernate mode immediately.
+	 */
+	if (is_rtc_overflow_event){
+		CPRINTS("Hibernate due to RTC overflow event");
+		system_hibernate(0, 0);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, system_init_check_rtc_wakeup_event,
+	     HOOK_PRIO_DEFAULT - 1);
+#endif
 
 /*****************************************************************************/
 /* Console commands */
