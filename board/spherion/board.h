@@ -13,7 +13,6 @@
 #define CONFIG_BRINGUP
 
 /* Optional features */
-#define CONFIG_SYSTEM_UNLOCKED
 #define CONFIG_LTO
 
 /*
