@@ -15,6 +15,10 @@
 #define ANX7451_I2C_ADDR2_FLAGS		0x16
 #define ANX7451_I2C_ADDR3_FLAGS		0x11
 
+/* This register is not documented in datasheet. */
+#define ANX7451_REG_POWER_CNTRL		0x2B
+#define ANX7451_POWER_CNTRL_OFF		0xFF
+
 /*
  * Ultra low power control register.
  * On ANX7451, this register should always be 0 (disabled).
