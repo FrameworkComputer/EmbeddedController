@@ -440,12 +440,10 @@ void cypd_response_get_battery_capability(int controller, int port,
 	bool chunked = PD_EXT_HEADER_CHUNKED(rx_emsg[port_idx].header);
 	uint16_t msg[5] = {0,0,0,0,0};
 	uint32_t header = PD_EXT_BATTERY_CAP + PD_HEADER_SOP(sop_type);
-
+	ext_header = 9;
 	/* Set extended header */
 	if (chunked) {
-		ext_header = BIT(15) + ((9+3)>>2);
-	} else {
-		ext_header = 9;
+		ext_header |= BIT(15);
 	}
 	/* Set VID */
 	msg[0] = VENDOR_ID;
@@ -507,7 +505,7 @@ void cypd_response_get_battery_capability(int controller, int port,
 			}
 		}
 	}
-	cypd_send_msg(controller, port, header, ext_header,  false, false, (void*)msg, ARRAY_SIZE(msg));
+	cypd_send_msg(controller, port, header, ext_header,  false, false, (void*)msg, ARRAY_SIZE(msg)*sizeof(uint16_t));
 
 }
 
@@ -1529,8 +1527,9 @@ DECLARE_CONSOLE_COMMAND(cypdbb, cmd_cypd_bb,
 static int cmd_cypd_msg(int argc, char **argv)
 {
 	uint32_t sys_port, port, ctrl, cmd, data_len;
-	uint8_t data[5];
+	uint16_t data[5];
 	char *e;
+	int chunked = 0;
 	if (argc >=2) {
 	sys_port = strtoi(argv[1], &e, 0);
 	if (*e || sys_port >= PD_PORT_COUNT)
@@ -1539,6 +1538,9 @@ static int cmd_cypd_msg(int argc, char **argv)
 	port = sys_port % 2;
 	ctrl = sys_port / 2;
 	if (argc >= 3) {
+		if (argc >= 4) {
+			chunked = strtoi(argv[3], &e, 0);
+		}
 		if (!strncmp(argv[2], "batterycap", 10)) {
 			data[0] = PD_EXT_GET_BATTERY_CAP;//ext msg type
 
@@ -1546,15 +1548,17 @@ static int cmd_cypd_msg(int argc, char **argv)
 		else if (!strncmp(argv[2], "batterystatus", 13)) {
 			data[0] = PD_EXT_GET_BATTERY_STATUS;//ext msg type
 		}
-		data[1] = 0;
 		// ext msg header
-		data[2] = 0x01; //data size
-		data[3] = 0x00;
+		data[1] = 0x01; //data size
+		/*note when in chunked mode the first chunk does not set request_chunk=1 
+		 * see example 6.2.1.2.5.2 in usb pd rev 3.0 
+		 */
+		data[1] |= chunked ? BIT(15) : 0x00;
 		//ext msg data
-		data[4] = 0; //internal battery 0
+		data[2] = 0; //internal battery 0
 		data_len = 5;
 		cypd_write_reg_block(ctrl, CYP5525_WRITE_DATA_MEMORY_REG(port, 0),
-			data, 5);
+			(void*)data, 5);
 		/*the request has 1 byte which should be set to 0 for battery idx 0*/
 		cmd = CYP5525_DM_CTRL_SOP + CYP5525_DM_CTRL_EXTENDED_DATA_REQUEST + (data_len<<8);
 		cypd_write_reg16(ctrl, CYP5525_DM_CONTROL_REG(port), cmd);
@@ -1565,5 +1569,5 @@ static int cmd_cypd_msg(int argc, char **argv)
 
 }
 DECLARE_CONSOLE_COMMAND(cypdmsg, cmd_cypd_msg,
-			"port",
+			"port [batterycap|batterystatus] chunked=1,0",
 			"Trigger extended message ams");
