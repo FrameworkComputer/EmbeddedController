@@ -9,7 +9,7 @@
 #ifndef __CROS_EC_IO_EXPANDER_IT8801_H
 #define __CROS_EC_IO_EXPANDER_IT8801_H
 
-/* I2C slave address(7-bit without R/W) */
+/* I2C address flags (7-bit without R/W) */
 #define IT8801_I2C_ADDR 0x38
 
 /* Keyboard Matrix Scan control (KBS) */
