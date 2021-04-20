@@ -255,16 +255,10 @@ static inline int tcpm_transmit(int port, enum tcpm_transmit_type type,
 }
 
 #ifdef CONFIG_USB_PD_PPC
-static inline int tcpm_get_snk_ctrl(int port, bool *sinking)
+static inline bool tcpm_get_snk_ctrl(int port)
 {
-	int rv = EC_ERROR_UNIMPLEMENTED;
-
-	if (tcpc_config[port].drv->get_snk_ctrl != NULL)
-		rv = tcpc_config[port].drv->get_snk_ctrl(port, sinking);
-	else
-		*sinking = false;
-
-	return rv;
+	return tcpc_config[port].drv->get_snk_ctrl ?
+		tcpc_config[port].drv->get_snk_ctrl(port) : false;
 }
 static inline int tcpm_set_snk_ctrl(int port, int enable)
 {
@@ -274,16 +268,11 @@ static inline int tcpm_set_snk_ctrl(int port, int enable)
 		return EC_ERROR_UNIMPLEMENTED;
 }
 
-static inline int tcpm_get_src_ctrl(int port, bool *sourcing)
+static inline bool tcpm_get_src_ctrl(int port)
 {
-	int rv = EC_ERROR_UNIMPLEMENTED;
 
-	if (tcpc_config[port].drv->get_src_ctrl != NULL)
-		rv = tcpc_config[port].drv->get_src_ctrl(port, sourcing);
-	else
-		*sourcing = false;
-
-	return rv;
+	return tcpc_config[port].drv->get_src_ctrl ?
+		tcpc_config[port].drv->get_src_ctrl(port) : false;
 }
 static inline int tcpm_set_src_ctrl(int port, int enable)
 {

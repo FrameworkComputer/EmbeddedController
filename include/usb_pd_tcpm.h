@@ -373,11 +373,10 @@ struct tcpm_drv {
 	 * NOTE: this is most useful for PPCs that can not tell on their own
 	 *
 	 * @param port Type-C port number
-	 * @param is_sinking true for sinking, false for not
 	 *
-	 * @return EC_SUCCESS, EC_ERROR_UNIMPLEMENTED or error
+	 * @return true if sinking else false
 	 */
-	int (*get_snk_ctrl)(int port, bool *sinking);
+	bool (*get_snk_ctrl)(int port);
 
 	/**
 	 * Send SinkVBUS or DisableSinkVBUS command
@@ -394,11 +393,10 @@ struct tcpm_drv {
 	 * NOTE: this is most useful for PPCs that can not tell on their own
 	 *
 	 * @param port Type-C port number
-	 * @param is_sourcing true for sourcing, false for not
 	 *
-	 * @return EC_SUCCESS, EC_ERROR_UNIMPLEMENTED or error
+	 * @return true if sourcing else false
 	 */
-	int (*get_src_ctrl)(int port, bool *sourcing);
+	bool (*get_src_ctrl)(int port);
 
 	/**
 	 * Send SourceVBUS or DisableSourceVBUS command

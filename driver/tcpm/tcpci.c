@@ -575,17 +575,15 @@ int tcpci_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 }
 
 #ifdef CONFIG_USB_PD_PPC
-int tcpci_tcpm_get_snk_ctrl(int port, bool *sinking)
+bool tcpci_tcpm_get_snk_ctrl(int port)
 {
 	int rv;
 	int pwr_sts;
 
 	rv = tcpci_tcpm_get_power_status(port, &pwr_sts);
-	*sinking = (rv != EC_SUCCESS)
-			? 0
-			: pwr_sts & TCPC_REG_POWER_STATUS_SINKING_VBUS;
 
-	return rv;
+	return rv == EC_SUCCESS &&
+		pwr_sts & TCPC_REG_POWER_STATUS_SINKING_VBUS;
 }
 
 int tcpci_tcpm_set_snk_ctrl(int port, int enable)
@@ -596,17 +594,15 @@ int tcpci_tcpm_set_snk_ctrl(int port, int enable)
 	return tcpc_write(port, TCPC_REG_COMMAND, cmd);
 }
 
-int tcpci_tcpm_get_src_ctrl(int port, bool *sourcing)
+bool tcpci_tcpm_get_src_ctrl(int port)
 {
 	int rv;
 	int pwr_sts;
 
 	rv = tcpci_tcpm_get_power_status(port, &pwr_sts);
-	*sourcing = (rv != EC_SUCCESS)
-			? 0
-			: pwr_sts & TCPC_REG_POWER_STATUS_SOURCING_VBUS;
 
-	return rv;
+	return rv == EC_SUCCESS &&
+		pwr_sts & TCPC_REG_POWER_STATUS_SOURCING_VBUS;
 }
 
 int tcpci_tcpm_set_src_ctrl(int port, int enable)

@@ -282,9 +282,9 @@ int tcpci_tcpm_mux_enter_low_power(const struct usb_mux *me);
 int tcpci_get_chip_info(int port, int live,
 			struct ec_response_pd_chip_info_v1 *chip_info);
 #ifdef CONFIG_USBC_PPC
-int tcpci_tcpm_get_snk_ctrl(int port, bool *sinking);
+bool tcpci_tcpm_get_snk_ctrl(int port);
 int tcpci_tcpm_set_snk_ctrl(int port, int enable);
-int tcpci_tcpm_get_src_ctrl(int port, bool *sourcing);
+bool tcpci_tcpm_get_src_ctrl(int port);
 int tcpci_tcpm_set_src_ctrl(int port, int enable);
 #endif
 

@@ -148,19 +148,10 @@ static int nct38xx_tcpm_set_cc(int port, int pull)
 	 * SNKEN will be re-enabled in nct38xx_init above (from tcpm_init), or
 	 * when CC lines are set again, or when sinking is disabled.
 	 */
-	enum mask_update_action action = MASK_SET;
 	int rv;
-
-	if (pull == TYPEC_CC_OPEN) {
-		bool is_sinking;
-
-		rv = tcpm_get_snk_ctrl(port, &is_sinking);
-		if (rv)
-			return rv;
-
-		if (is_sinking)
-			action = MASK_CLR;
-	}
+	enum mask_update_action action =
+			pull == TYPEC_CC_OPEN && tcpm_get_snk_ctrl(port) ?
+				MASK_CLR : MASK_SET;
 
 	rv = tcpc_update8(port,
 			  NCT38XX_REG_CTRL_OUT_EN,
