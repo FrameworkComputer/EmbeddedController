@@ -8,7 +8,7 @@
 #include "adc.h"
 #include "common.h"
 #include "gpio.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "util.h"
 
 int thermistor_linear_interpolate(uint16_t mv,

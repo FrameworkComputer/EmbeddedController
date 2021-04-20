@@ -17,7 +17,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "temp_sensor.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "timer.h"
 #include "util.h"
 

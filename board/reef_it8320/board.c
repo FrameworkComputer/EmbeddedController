@@ -40,7 +40,7 @@
 #include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_charge.h"

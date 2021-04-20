@@ -14,7 +14,7 @@
 #include "peci.h"
 #include "power.h"
 #include "temp_sensor.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "timer.h"
 
 /* Wake-up pins for hibernate */

@@ -31,7 +31,7 @@
 #include "switch.h"
 #include "system.h"
 #include "task.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "temp_sensor.h"
 #include "usb_charge.h"
 #include "usb_mux.h"

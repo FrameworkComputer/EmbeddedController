@@ -9,7 +9,7 @@
 #include "common.h"
 #include "console.h"
 #include "ec_adc.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "util.h"
 
 /* Get temperature from requested sensor */

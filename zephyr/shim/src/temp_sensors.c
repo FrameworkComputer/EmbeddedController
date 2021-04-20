@@ -6,7 +6,7 @@
 #include "temp_sensor.h"
 #include "temp_sensor/temp_sensor.h"
 #include "adc.h"
-#include "../driver/temp_sensor/thermistor.h"
+#include "temp_sensor/thermistor.h"
 
 #define TEMP_THERMISTOR(node_id)                               \
 	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {                    \

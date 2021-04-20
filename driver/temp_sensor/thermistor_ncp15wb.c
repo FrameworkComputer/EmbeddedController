@@ -6,7 +6,7 @@
 /* NCP15WB thermistor module for Chrome EC */
 
 #include "common.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "util.h"
 
 /*

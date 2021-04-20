@@ -15,7 +15,7 @@
 #include "i2c.h"
 #include "power.h"
 #include "temp_sensor.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 
 const struct power_signal_info power_signal_list[] = {
 	[X86_SLP_S3_N] = {

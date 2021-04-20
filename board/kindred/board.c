@@ -40,7 +40,7 @@
 #include "task.h"
 #include "temp_sensor.h"
 #include "thermal.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "uart.h"
 #include "usb_charge.h"
 #include "usb_pd.h"

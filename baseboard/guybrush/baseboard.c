@@ -41,7 +41,7 @@
 #include "pwm.h"
 #include "temp_sensor.h"
 #include "thermal.h"
-#include "thermistor.h"
+#include "temp_sensor/thermistor.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
