@@ -28,6 +28,11 @@ struct adc_t {
 };
 
 extern const struct adc_t adc_channels[];
+#else
+/* Empty declaration to avoid warnings if adc.h is included */
+enum adc_channel {
+	ADC_CH_COUNT
+};
 #endif /* CONFIG_PLATFORM_EC_ADC */
 
 #endif /* __CROS_EC_ZEPHYR_ADC_H */
