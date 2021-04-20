@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include "cbi_ec_fw_config.h"
 #include "common.h"
 #include "cros_board_info.h"
 #include "hooks.h"
@@ -23,6 +22,10 @@ __overridable void board_cbi_init(void)
 {
 }
 
+__overridable void board_init_fw_config(void)
+{
+}
+
 /*
  * Read CBI from I2C EEPROM and initialize variables for board variants.
  */
@@ -39,7 +42,7 @@ static void cbi_init(void)
 
 	CPRINTS("Board ID: %d", board_id);
 
-	init_fw_config();
+	board_init_fw_config();
 
 	/* Allow the board project to make runtime changes based on CBI data */
 	board_cbi_init();

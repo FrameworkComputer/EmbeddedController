@@ -217,6 +217,12 @@
  */
 __override_proto void board_cbi_init(void);
 
+/**
+ * Initialize the FW_CONFIG from CBI data. If the CBI data is not valid, set the
+ * FW_CONFIG to the board specific defaults.
+ */
+__override_proto void board_init_fw_config(void);
+
 /*
  * Check battery disconnect state.
  * This function will return if battery is initialized or not.

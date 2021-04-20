@@ -5,7 +5,6 @@
 
 #include "common.h"
 
-#include "cbi_ec_fw_config.h"
 #include "driver/bc12/pi3usb9201_public.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/ppc/syv682x_public.h"
@@ -13,6 +12,7 @@
 #include "driver/tcpm/nct38xx.h"
 #include "driver/tcpm/ps8xxx_public.h"
 #include "driver/tcpm/tcpci.h"
+#include "fw_config.h"
 #include "hooks.h"
 #include "ioexpander.h"
 #include "system.h"
