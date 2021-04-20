@@ -225,7 +225,7 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 	/* If battery type is not known, can't check CHG/DCHG FETs */
 	if (type == BATTERY_TYPE_COUNT) {
 		/* Still don't know, so return here */
-		return EC_ERROR_BUSY;
+		return BATTERY_DISCONNECT_ERROR;
 	}
 
 	if (battery_get_fet_status_regval(&reg))
