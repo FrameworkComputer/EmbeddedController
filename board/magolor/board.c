@@ -193,7 +193,7 @@ static void check_c1_line(void)
 	 * If line is still being held low, see if there's more to process from
 	 * one of the chips.
 	 */
-	if (!gpio_get_level(GPIO_SUB_USB_C1_INT_ODL)) {
+	if (!gpio_get_level(GPIO_SUB_C1_INT_EN_RAILS_ODL)) {
 		notify_c1_chips();
 		hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
 	}
@@ -209,6 +209,13 @@ static void sub_usb_c1_interrupt(enum gpio_signal s)
 
 	/* Check the line again in 5ms */
 	hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
+}
+
+static void sub_hdmi_hpd_interrupt(enum gpio_signal s)
+{
+	int hdmi_hpd_odl = gpio_get_level(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL);
+
+	gpio_set_level(GPIO_EC_AP_USB_C1_HDMI_HPD, !hdmi_hpd_odl);
 }
 
 #include "gpio_list.h"
@@ -307,13 +314,29 @@ static void board_update_no_keypad_by_fwconfig(void)
 }
 #endif
 
+/* Enable HDMI any time the SoC is on */
+static void hdmi_enable(void)
+{
+	if (get_cbi_fw_config_db() == DB_1A_HDMI)
+		gpio_set_level(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, hdmi_enable, HOOK_PRIO_DEFAULT);
+
+static void hdmi_disable(void)
+{
+	if (get_cbi_fw_config_db() == DB_1A_HDMI)
+		gpio_set_level(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, hdmi_disable, HOOK_PRIO_DEFAULT);
+
 void board_hibernate(void)
 {
 	/*
 	 * Both charger ICs need to be put into their "low power mode" before
 	 * entering the Z-state.
 	 */
-	raa489000_hibernate(1, true);
+	if (board_get_charger_chip_count() > 1)
+		raa489000_hibernate(1, true);
 	raa489000_hibernate(0, true);
 }
 
@@ -383,16 +406,38 @@ __override void board_power_5v_enable(int enable)
 	 * polarity on the sub board charger IC.
 	 */
 	set_5v_gpio(!!enable);
-	if (isl923x_set_comparator_inversion(1, !!enable))
-		CPRINTS("Failed to %sable sub rails!", enable ? "en" : "dis");
 
-	if (!enable)
-		return;
-	/*
-	 * Port C1 the PP3300_USB_C1  assert, delay 15ms
-	 * colud be accessed PS8762 by I2C.
-	 */
-	hook_call_deferred(&ps8762_chaddr_deferred_data, 15 * MSEC);
+	if (get_cbi_fw_config_db() == DB_1A_HDMI) {
+		gpio_set_level(GPIO_SUB_C1_INT_EN_RAILS_ODL, !enable);
+	} else {
+		if (isl923x_set_comparator_inversion(1, !!enable))
+			CPRINTS("Failed to %sable sub rails!", enable ?
+								  "en" : "dis");
+
+		if (!enable)
+			return;
+		/*
+		 * Port C1 the PP3300_USB_C1  assert, delay 15ms
+		 * colud be accessed PS8762 by I2C.
+		 */
+		hook_call_deferred(&ps8762_chaddr_deferred_data, 15 * MSEC);
+	}
+}
+
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	if (get_cbi_fw_config_db() == DB_1A_HDMI)
+		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
+	else
+		return CONFIG_USB_PD_PORT_MAX_COUNT;
+}
+
+__override uint8_t board_get_charger_chip_count(void)
+{
+	if (get_cbi_fw_config_db() == DB_1A_HDMI)
+		return CHARGER_NUM - 1;
+	else
+		return CHARGER_NUM;
 }
 
 int board_is_sourcing_vbus(int port)
@@ -407,7 +452,7 @@ int board_is_sourcing_vbus(int port)
 int board_set_active_charge_port(int port)
 {
 	int is_real_port = (port >= 0 &&
-			    port < CONFIG_USB_PD_PORT_MAX_COUNT);
+			    port < board_get_usb_pd_port_count());
 	int i;
 	int old_port;
 
@@ -420,7 +465,7 @@ int board_set_active_charge_port(int port)
 
 	/* Disable all ports. */
 	if (port == CHARGE_PORT_NONE) {
-		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 			tcpc_write(i, TCPC_REG_COMMAND,
 				   TCPC_REG_COMMAND_SNK_CTRL_LOW);
 			raa489000_enable_asgate(i, false);
@@ -439,7 +484,7 @@ int board_set_active_charge_port(int port)
 	 * Turn off the other ports' sink path FETs, before enabling the
 	 * requested charge port.
 	 */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		if (i == port)
 			continue;
 
@@ -678,9 +723,36 @@ void board_init(void)
 	int on;
 
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
-	gpio_enable_interrupt(GPIO_SUB_USB_C1_INT_ODL);
 	check_c0_line();
-	check_c1_line();
+
+	if (get_cbi_fw_config_db() == DB_1A_HDMI) {
+		/* Disable i2c on HDMI pins */
+		gpio_config_pin(MODULE_I2C,
+				GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL, 0);
+		gpio_config_pin(MODULE_I2C,
+				GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 0);
+
+		/* Set HDMI and sub-rail enables to output */
+		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL,
+			       chipset_in_state(CHIPSET_STATE_ON) ?
+						GPIO_ODR_LOW : GPIO_ODR_HIGH);
+		gpio_set_flags(GPIO_SUB_C1_INT_EN_RAILS_ODL,   GPIO_ODR_HIGH);
+
+		/* Select HDMI option */
+		gpio_set_level(GPIO_HDMI_SEL_L, 0);
+
+		/* Enable interrupt for passing through HPD */
+		gpio_enable_interrupt(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL);
+
+	} else {
+		/* Set SDA as an input */
+		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL,
+			       GPIO_INPUT);
+
+		/* Enable C1 interrupt and check if it needs processing */
+		gpio_enable_interrupt(GPIO_SUB_C1_INT_EN_RAILS_ODL);
+		check_c1_line();
+	}
 
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
@@ -857,7 +929,8 @@ uint16_t tcpc_get_alert_status(void)
 		}
 	}
 
-	if (!gpio_get_level(GPIO_SUB_USB_C1_INT_ODL)) {
+	if (board_get_usb_pd_port_count() > 1 &&
+				!gpio_get_level(GPIO_SUB_C1_INT_EN_RAILS_ODL)) {
 		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
 			/* TCPCI spec Rev 1.0 says to ignore bits 14:12. */
 			if (!(tcpc_config[1].flags & TCPC_FLAGS_TCPCI_REV2_0))
