@@ -86,8 +86,8 @@ def ninja_stdout_log_level_override(line, current_log_level):
     return logging.ERROR
 
 
-def cmake_stderr_log_level_override(line, default_log_level):
-    """Update the log level for cmake stderr output if we hit an error.
+def cmake_log_level_override(line, default_log_level):
+    """Update the log level for cmake output if we hit an error.
 
     Cmake prints some messages that are less than useful during
     development.
@@ -100,6 +100,8 @@ def cmake_stderr_log_level_override(line, default_log_level):
     # Strange output from Zephyr that we normally ignore
     if line.startswith("Including boilerplate"):
         return logging.DEBUG
+    elif line.startswith("devicetree error:"):
+        return logging.ERROR
     return default_log_level
 
 
@@ -268,10 +270,11 @@ class Zmake:
             job_id = "{}:{}".format(project_dir, build_name)
             zmake.multiproc.log_output(
                 self.logger, logging.DEBUG, proc.stdout,
+                log_level_override_func=cmake_log_level_override,
                 job_id=job_id,)
             zmake.multiproc.log_output(
                 self.logger, logging.ERROR, proc.stderr,
-                log_level_override_func=cmake_stderr_log_level_override,
+                log_level_override_func=cmake_log_level_override,
                 job_id=job_id,)
             processes.append(proc)
         for proc in processes:
