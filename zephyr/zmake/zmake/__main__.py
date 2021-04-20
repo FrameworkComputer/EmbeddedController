@@ -59,11 +59,11 @@ def main(argv=None):
     parser.add_argument('--checkout', type=pathlib.Path,
                         help='Path to ChromiumOS checkout')
     parser.add_argument('-D', '--debug', action='store_true', default=False,
-                        help='Turn on zmake debugging (e.g. stack trace)')
+                        help=('Turn on debug features (e.g., stack trace, '
+                              'verbose logging)'))
     parser.add_argument('-j', '--jobs', type=int,
                         help='Degree of multiprogramming to use')
     parser.add_argument('-l', '--log-level', choices=list(log_level_map.keys()),
-                        default='WARNING',
                         dest='log_level',
                         help='Set the logging level (default=WARNING)')
     parser.add_argument('-L', '--no-log-label', action='store_true',
@@ -125,7 +125,13 @@ def main(argv=None):
         log_format = '%(message)s'
     else:
         log_format = '%(asctime)s - %(name)s/%(levelname)s: %(message)s'
-    logging.basicConfig(format=log_format, level=log_level_map.get(opts.log_level))
+
+    log_level = logging.WARNING
+    if opts.log_level:
+        log_level = log_level_map[opts.log_level]
+    elif opts.debug:
+        log_level = logging.DEBUG
+    logging.basicConfig(format=log_format, level=log_level)
 
     if not opts.debug:
         sys.tracebacklimit = 0
