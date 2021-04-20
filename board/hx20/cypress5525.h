@@ -67,8 +67,8 @@
 	(0x1400 + (x * 0x1000))
 #define CYP5525_READ_DATA_MEMORY_REG(x, offset) \
 	((0x1404 + offset) + (x * 0x1000))
-#define CYP5525_WRITE_DATA_MEMORY_REG(x) \
-	(0x1800 + (x * 0x1000))
+#define CYP5525_WRITE_DATA_MEMORY_REG(x, offset) \
+	((0x1800 + offset) + (x * 0x1000))
 
 #define CYP5525_SELECT_SINK_PDO_P1_REG      0x2005
 #define CYP5525_PD_CONTROL_P1_REG           0x2006
@@ -328,7 +328,6 @@ struct pd_port_current_state_t {
 	enum pd_power_role power_role;
 	enum pd_data_role data_role;
 	enum pd_vconn_role vconn;
-
 };
 
 struct pd_chip_ucsi_info_t {
