@@ -84,17 +84,14 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 	if (charger_get_vbus_voltage(port, &voltage))
 		voltage = 0;
 
-	CPRINTS("%s: charger reports VBUS %d on port %d", __func__,
-		voltage, port);
-
 	if (voltage == 0) {
 		CPRINTS("%s: must be disconnected", __func__);
 		return 1;
 	}
 
 	if (voltage < BC12_MIN_VOLTAGE) {
-		CPRINTS("%s: lower than %d", __func__,
-			BC12_MIN_VOLTAGE);
+		CPRINTS("%s: port %d: vbus %d lower than %d", __func__,
+			port, voltage, BC12_MIN_VOLTAGE);
 		return 1;
 	}
 
