@@ -35,9 +35,9 @@ const struct board_batt_params board_battery_info[] = {
 	/* POW-TECH GQA05 Battery Information */
 	[BATTERY_POWER_TECH] = {
 		/* BQ40Z50 Fuel Gauge */
-		/* "BATGQA05L22" Device Name */
 		.fuel_gauge = {
 			.manuf_name = "POW-TECH",
+			.device_name = "BATGQA05L22",
 			.ship_mode = {
 				.reg_addr = 0x00,
 				.reg_data = { 0x0010, 0x0010 },
@@ -53,12 +53,12 @@ const struct board_batt_params board_battery_info[] = {
 			.voltage_max		= TARGET_WITH_MARGIN(13050, 5),
 			.voltage_normal		= 11400, /* mV */
 			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
+			.precharge_current	= 280,	/* mA */
 			.start_charging_min_c	= 0,
 			.start_charging_max_c	= 45,
 			.charging_min_c		= 0,
 			.charging_max_c		= 45,
-			.discharging_min_c	= -20,
+			.discharging_min_c	= -10,
 			.discharging_max_c	= 60,
 		},
 	},
