@@ -201,6 +201,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC "${PLATFORM_EC}/common/base32.c"
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_BMA255
                                                 "${PLATFORM_EC}/driver/accel_bma2x2.c"
                                                 "${PLATFORM_EC}/common/math_util.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_KX022
+                                                "${PLATFORM_EC}/driver/accel_kionix.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_BMI
                                                 "${PLATFORM_EC}/driver/accelgyro_bmi_common.c"
                                                 "${PLATFORM_EC}/common/math_util.c")
