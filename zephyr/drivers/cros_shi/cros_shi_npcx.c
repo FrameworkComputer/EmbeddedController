@@ -787,13 +787,13 @@ static int cros_shi_npcx_disable(const struct device *dev)
 	/* Configure pin-mux from SHI to GPIO. */
 	npcx_pinctrl_mux_configure(config->alts_list, config->alts_size, 0);
 
-	return 0;
-
 	/*
 	 * Allow deep sleep again in case CS dropped before ec was
 	 * informed in hook function and turn off SHI's interrupt in time.
 	 */
 	enable_sleep(SLEEP_MASK_SPI);
+
+	return 0;
 }
 
 static int shi_npcx_init(const struct device *dev)
