@@ -1,0 +1,31 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/dts-v1/;
+
+#include <cros/ite/it8xxx2.dtsi>
+#include <dt-bindings/gpio_defines.h>
+#include <it8xxx2.dtsi>
+
+/ {
+	model = "Google Asurada Baseboard";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,console = &uart1;
+		zephyr,shell-uart = &uart1;
+		zephyr,flash = &flash0;
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+	};
+};
+
+&uart1 {
+	status = "okay";
+	current-speed = <115200>;
+	clock-frequency = <1804800>;
+};
