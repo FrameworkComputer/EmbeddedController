@@ -216,8 +216,14 @@ static void amd_fp6_chipset_resume(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, amd_fp6_chipset_resume, HOOK_PRIO_DEFAULT);
 
+static int amd_fp6_chipset_reset(const struct usb_mux *me)
+{
+	amd_fp6_chipset_resume();
+	return EC_SUCCESS;
+}
+
 const struct usb_mux_driver amd_fp6_usb_mux_driver = {
 	.set = &amd_fp6_set_mux,
 	.get = &amd_fp6_get_mux,
-	/* .chipset_reset is handled by amd_fp6_chipset_resume hook */
+	.chipset_reset = &amd_fp6_chipset_reset
 };
