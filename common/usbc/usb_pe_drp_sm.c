@@ -955,8 +955,8 @@ void pe_invalidate_explicit_contract(int port)
 
 	PE_CLR_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
 
-	/* Set Rp for current limit */
-	if (IS_ENABLED(CONFIG_USB_PD_REV30))
+	/* Set Rp for current limit if still attached */
+	if (IS_ENABLED(CONFIG_USB_PD_REV30) && pd_is_connected(port))
 		typec_update_cc(port);
 }
 
