@@ -4,6 +4,13 @@
 
 if PLATFORM_EC
 
+config PLATFORM_EC_CONSOLE_CMD_SYSINFO
+	bool "Console Command: sysinfo"
+	default y
+	help
+	  Enable the sysinfo console command, which shows statistics
+	  about the current image copy running, reset flags, etc.
+
 config PLATFORM_EC_HIBERNATE_PSL
 	bool "System hibernating with PSL (Power Switch Logic) mechanism"
 	depends on SOC_FAMILY_NPCX
