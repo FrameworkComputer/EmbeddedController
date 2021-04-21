@@ -36,9 +36,9 @@
 
 /* TCPC AIC config */
 /* Support NXP PCA9675 I/O expander. */
+#define CONFIG_IO_EXPANDER
 #define CONFIG_IO_EXPANDER_PCA9675
 #define I2C_ADDR_PCA9675_TCPC_AIC_IOEX	0x21
-#define CONFIG_IO_EXPANDER_PORT_COUNT CONFIG_USB_PD_PORT_MAX_COUNT
 
 /* DC Jack charge ports */
 #undef  CONFIG_DEDICATED_CHARGE_PORT_COUNT
@@ -85,22 +85,6 @@
 #define BOARD_FAN_MIN_RPM	3000
 #define BOARD_FAN_MAX_RPM	10000
 
-/*
- * TCPC AIC used on all the ports are identical expect the I2C lines which
- * are on the respective TCPC port's EC I2C line. Hence, I2C address and
- * the GPIOs to control the retimers are also same for all the ports.
- */
-#define TCPC_AIC_IOE_BB_RETIMER_RST	PCA9675_IO_P00
-#define TCPC_AIC_IOE_BB_RETIMER_LS_EN	PCA9675_IO_P01
-#define TCPC_AIC_IOE_USB_MUX_CNTRL_1	PCA9675_IO_P04
-#define TCPC_AIC_IOE_USB_MUX_CNTRL_0	PCA9675_IO_P05
-#define TCPC_AIC_IOE_OC			PCA9675_IO_P10
-
-#define TCPC_AIC_IOE_DIRECTION (PCA9675_DEFAULT_IO_DIRECTION & \
-	~(TCPC_AIC_IOE_BB_RETIMER_RST | TCPC_AIC_IOE_BB_RETIMER_LS_EN | \
-	TCPC_AIC_IOE_USB_MUX_CNTRL_1 | TCPC_AIC_IOE_USB_MUX_CNTRL_0 | \
-	TCPC_AIC_IOE_OC))
-
 /* Charger */
 #define CONFIG_CHARGER_ISL9241
 
@@ -134,6 +118,21 @@ enum adlrvp_charge_ports {
 	TYPE_C_PORT_3,
 #endif
 };
+
+/*
+ * Each Type-C add in card has two I/O expanders hence even if one Type-C port
+ * is enabled other I/O expander is available for usage.
+ */
+enum ioex_port {
+	IOEX_C0_PCA9675,
+	IOEX_C1_PCA9675,
+#if defined(HAS_TASK_PD_C2)
+	IOEX_C2_PCA9675,
+	IOEX_C3_PCA9675,
+#endif
+	IOEX_PORT_COUNT
+};
+#define CONFIG_IO_EXPANDER_PORT_COUNT IOEX_PORT_COUNT
 
 enum battery_type {
 	BATTERY_GETAC_SMP_HHP_408,

@@ -7,6 +7,7 @@
 #include "button.h"
 #include "fusb302.h"
 #include "lid_switch.h"
+#include "pca9675.h"
 #include "power.h"
 #include "power_button.h"
 #include "switch.h"

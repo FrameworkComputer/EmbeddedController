@@ -9,6 +9,7 @@
 #include "charger.h"
 #include "common.h"
 #include "hooks.h"
+#include "ioexpander.h"
 #include "isl9241.h"
 #include "pca9675.h"
 #include "power/icelake.h"
@@ -143,34 +144,58 @@ struct usb_mux usb_muxes[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
-/* Each TCPC have corresponding IO expander */
-const struct pca9675_ioexpander pca9675_iox[] = {
+const struct bb_usb_control bb_controls[] = {
 	[TYPE_C_PORT_0] = {
-		.i2c_host_port = I2C_PORT_TYPEC_0,
-		.i2c_addr_flags = I2C_ADDR_PCA9675_TCPC_AIC_IOEX,
-		.io_direction = TCPC_AIC_IOE_DIRECTION,
+		.retimer_rst_gpio = IOEX_USB_C0_BB_RETIMER_RST,
+		.usb_ls_en_gpio = IOEX_USB_C0_BB_RETIMER_LS_EN,
 	},
+#if defined(HAS_TASK_PD_C1)
 	[TYPE_C_PORT_1] = {
-		.i2c_host_port = I2C_PORT_TYPEC_1,
-		.i2c_addr_flags = I2C_ADDR_PCA9675_TCPC_AIC_IOEX,
-		.io_direction = TCPC_AIC_IOE_DIRECTION,
+		.retimer_rst_gpio = IOEX_USB_C1_BB_RETIMER_RST,
+		.usb_ls_en_gpio = IOEX_USB_C1_BB_RETIMER_LS_EN,
 	},
+#endif
 #if defined(HAS_TASK_PD_C2)
 	[TYPE_C_PORT_2] = {
-		.i2c_host_port = I2C_PORT_TYPEC_2,
-		.i2c_addr_flags = I2C_ADDR_PCA9675_TCPC_AIC_IOEX,
-		.io_direction = TCPC_AIC_IOE_DIRECTION,
+		.retimer_rst_gpio = IOEX_USB_C2_BB_RETIMER_RST,
+		.usb_ls_en_gpio = IOEX_USB_C2_BB_RETIMER_LS_EN,
 	},
 #endif
 #if defined(HAS_TASK_PD_C3)
 	[TYPE_C_PORT_3] = {
-		.i2c_host_port = I2C_PORT_TYPEC_3,
-		.i2c_addr_flags = I2C_ADDR_PCA9675_TCPC_AIC_IOEX,
-		.io_direction = TCPC_AIC_IOE_DIRECTION,
+		.retimer_rst_gpio = IOEX_USB_C3_BB_RETIMER_RST,
+		.usb_ls_en_gpio = IOEX_USB_C3_BB_RETIMER_LS_EN,
 	},
 #endif
 };
-BUILD_ASSERT(ARRAY_SIZE(pca9675_iox) == CONFIG_USB_PD_PORT_MAX_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(bb_controls) == CONFIG_USB_PD_PORT_MAX_COUNT);
+
+/* Each TCPC have corresponding IO expander and are available in pair */
+struct ioexpander_config_t ioex_config[] = {
+	[IOEX_C0_PCA9675] = {
+		.i2c_host_port = I2C_PORT_TYPEC_0,
+		.i2c_addr_flags = I2C_ADDR_PCA9675_TCPC_AIC_IOEX,
+		.drv = &pca9675_ioexpander_drv,
+	},
+	[IOEX_C1_PCA9675] = {
+		.i2c_host_port = I2C_PORT_TYPEC_1,
+		.i2c_addr_flags = I2C_ADDR_PCA9675_TCPC_AIC_IOEX,
+		.drv = &pca9675_ioexpander_drv,
+	},
+#if defined(HAS_TASK_PD_C2)
+	[IOEX_C2_PCA9675] = {
+		.i2c_host_port = I2C_PORT_TYPEC_2,
+		.i2c_addr_flags = I2C_ADDR_PCA9675_TCPC_AIC_IOEX,
+		.drv = &pca9675_ioexpander_drv,
+	},
+	[IOEX_C3_PCA9675] = {
+		.i2c_host_port = I2C_PORT_TYPEC_3,
+		.i2c_addr_flags = I2C_ADDR_PCA9675_TCPC_AIC_IOEX,
+		.drv = &pca9675_ioexpander_drv,
+	},
+#endif
+};
+BUILD_ASSERT(ARRAY_SIZE(ioex_config) == CONFIG_IO_EXPANDER_PORT_COUNT);
 
 /* Charger Chips */
 const struct charger_config_t chg_chips[] = {
@@ -184,48 +209,42 @@ const struct charger_config_t chg_chips[] = {
 void board_overcurrent_event(int port, int is_overcurrented)
 {
 	/* Port 0 & 1 and 2 & 3 share same line for over current indication */
-	/* If PD_C2 task is defined, PD_C3 task is assumed to be defined. */
 #if defined(HAS_TASK_PD_C2)
-	int ioex = port < TYPE_C_PORT_2 ?
-			TYPE_C_PORT_1 : TYPE_C_PORT_3;
+	enum ioex_signal oc_signal = port < TYPE_C_PORT_2 ?
+				IOEX_USB_C0_C1_OC : IOEX_USB_C2_C3_OC;
 #else
-	int ioex = TYPE_C_PORT_1;
+	enum ioex_signal oc_signal = IOEX_USB_C0_C1_OC;
 #endif
 
-	if (is_overcurrented)
-		pca9675_update_pins(ioex, TCPC_AIC_IOE_OC, 0);
-	else
-		pca9675_update_pins(ioex, 0, TCPC_AIC_IOE_OC);
+	/* Overcurrent indication is active low signal */
+	ioex_set_level(oc_signal, is_overcurrented ? 0 : 1);
 }
 
 __override void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 {
 	/* Handle retimer's power domain.*/
 	if (on_off) {
-		pca9675_update_pins(me->usb_port,
-				TCPC_AIC_IOE_BB_RETIMER_LS_EN, 0);
+		ioex_set_level(bb_controls[me->usb_port].usb_ls_en_gpio, 1);
 
 		/*
-		 * Tpw, minimum time from VCC to RESET_N de-assertion is 100us
+		 * minimum time from VCC to RESET_N de-assertion is 100us
 		 * For boards that don't provide a load switch control, the
 		 * retimer_init() function ensures power is up before calling
 		 * this function.
 		 */
 		msleep(1);
-		pca9675_update_pins(me->usb_port,
-				TCPC_AIC_IOE_BB_RETIMER_RST, 0);
+		ioex_set_level(bb_controls[me->usb_port].retimer_rst_gpio, 1);
 
-		/* Allow 1ms time for the retimer to power up lc_domain
+		/*
+		 * Allow 1ms time for the retimer to power up lc_domain
 		 * which powers I2C controller within retimer
 		 */
 		msleep(1);
 
 	} else {
-		pca9675_update_pins(me->usb_port,
-				0, TCPC_AIC_IOE_BB_RETIMER_RST);
+		ioex_set_level(bb_controls[me->usb_port].retimer_rst_gpio, 0);
 		msleep(1);
-		pca9675_update_pins(me->usb_port,
-				0, TCPC_AIC_IOE_BB_RETIMER_LS_EN);
+		ioex_set_level(bb_controls[me->usb_port].usb_ls_en_gpio, 0);
 	}
 }
 
@@ -235,17 +254,17 @@ static void board_connect_c0_sbu_deferred(void)
 
 	if (ccd_intr_level) {
 		/* Default set the SBU lines to AUX mode on TCPC-AIC */
-		pca9675_update_pins(TYPE_C_PORT_0, 0,
-			TCPC_AIC_IOE_USB_MUX_CNTRL_1 |
-			TCPC_AIC_IOE_USB_MUX_CNTRL_0);
+		ioex_set_level(IOEX_USB_C0_USB_MUX_CNTRL_1, 0);
+		ioex_set_level(IOEX_USB_C0_USB_MUX_CNTRL_0, 0);
 	} else {
 		/* Set the SBU lines to CCD mode on TCPC-AIC */
-		pca9675_update_pins(TYPE_C_PORT_0,
-			TCPC_AIC_IOE_USB_MUX_CNTRL_1,
-			TCPC_AIC_IOE_USB_MUX_CNTRL_0);
+		ioex_set_level(IOEX_USB_C0_USB_MUX_CNTRL_1, 1);
+		ioex_set_level(IOEX_USB_C0_USB_MUX_CNTRL_0, 0);
 	}
 }
 DECLARE_DEFERRED(board_connect_c0_sbu_deferred);
+/* Make sure SBU are routed to CCD or AUX based on CCD status at init */
+DECLARE_HOOK(HOOK_INIT, board_connect_c0_sbu_deferred, HOOK_PRIO_INIT_I2C + 2);
 
 void board_connect_c0_sbu(enum gpio_signal s)
 {
@@ -274,33 +293,7 @@ static void configure_retimer_usbmux(void)
 		break;
 	}
 }
-
-static void tcpc_aic_init(void)
-{
-	int i;
-
-	/*
-	 * Change the default retimer usb mux config at runtime based on the
-	 * board SKU.
-	 */
-	configure_retimer_usbmux();
-
-	/* Initialize the IOEXPANDER on TCPC-AIC */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		pca9675_init(i);
-		board_overcurrent_event(i, 0);
-	}
-
-	/* Default set the SBU lines to AUX mode on both the TCPC-AIC */
-	board_connect_c0_sbu_deferred();
-
-#if defined(HAS_TASK_PD_C2)
-	 /* Only TCPC-0 can do CCD or BSSB, Default set SBU lines to AUX */
-	pca9675_update_pins(TYPE_C_PORT_2, 0,
-		TCPC_AIC_IOE_USB_MUX_CNTRL_1 | TCPC_AIC_IOE_USB_MUX_CNTRL_0);
-#endif
-}
-DECLARE_HOOK(HOOK_INIT, tcpc_aic_init, HOOK_PRIO_INIT_PCA9675);
+DECLARE_HOOK(HOOK_INIT, configure_retimer_usbmux, HOOK_PRIO_INIT_I2C + 1);
 
 /******************************************************************************/
 /* PWROK signal configuration */

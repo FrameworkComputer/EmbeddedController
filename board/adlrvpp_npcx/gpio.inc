@@ -7,6 +7,8 @@
 
 /* Intel ADL-P-RVP-NPCX board-specific configuration */
 
+#include "baseboard/intelrvp/adlrvp_ioex_gpio.inc"
+
 /* Power sequencing interrupts */
 GPIO_INT(ALL_SYS_PWRGD,		PIN(7, 0), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(RSMRST_PWRGD,		PIN(3, 7), GPIO_INT_BOTH, power_signal_interrupt)

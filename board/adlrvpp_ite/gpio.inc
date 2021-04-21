@@ -12,6 +12,8 @@
  * Note: Those with interrupt handlers must be declared first.
  */
 
+#include "baseboard/intelrvp/adlrvp_ioex_gpio.inc"
+
 /* Power sequencing interrupts */
 GPIO_INT(ALL_SYS_PWRGD_EC,	PIN(F, 0), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(RSMRST_PWRGD_EC,	PIN(F, 1), GPIO_INT_BOTH, power_signal_interrupt)
