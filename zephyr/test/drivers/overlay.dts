@@ -29,6 +29,11 @@
 			enum-name = "GPIO_WP_L";
 			label = "WP_L";
 		};
+		pg_ec_dsw_pwrok {
+			gpios = <&gpio0 4 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_DSW_PWROK";
+			label = "PG_EC_DSW_PWROK";
+		};
 	};
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
@@ -67,10 +72,91 @@
 			enum-name = "lgc011";
 		};
 	};
+
+	adc0: adc {
+		compatible = "zephyr,adc-emul";
+		nchannels = <4>;
+		ref-internal-mv = <3300>;
+		#io-channel-cells = <1>;
+		label = "ADC_0";
+		status = "okay";
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_charger: charger {
+			label = "ADC_TEMP_SENSOR_CHARGER";
+			enum-name = "ADC_TEMP_SENSOR_CHARGER";
+			channel = <0>;
+		};
+		adc_pp3300_regulator: pp3300-regulator {
+			label = "ADC_TEMP_SENSOR_PP3300_REGULATOR";
+			enum-name = "ADC_TEMP_SENSOR_PP3300_REGULATOR";
+			channel = <1>;
+		};
+		adc_ddr_soc: ddr-soc {
+			label = "ADC_TEMP_SENSOR_DDR_SOC";
+			enum-name = "ADC_TEMP_SENSOR_DDR_SOC";
+			channel = <2>;
+		};
+		adc_fan: fan {
+			label = "ADC_TEMP_SENSOR_FAN";
+			enum-name = "ADC_TEMP_SENSOR_FAN";
+			channel = <3>;
+		};
+	};
+
+	named-temp-sensors {
+		charger {
+			compatible = "temp-3v3-13k7-47k-4050b";
+			label = "TEMP_SENSOR_CHARGER";
+			enum-name = "TEMP_SENSOR_CHARGER";
+			temp_fan_off = <40>;
+			temp_fan_max = <55>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
+			adc = <&adc_charger>;
+		};
+		pp3300-regulator {
+			compatible = "temp-3v3-30k9-47k-4050b";
+			label = "TEMP_SENSOR_PP3300_REGULATOR";
+			enum-name = "TEMP_SENSOR_PP3300_REGULATOR";
+			temp_fan_off = <40>;
+			temp_fan_max = <55>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
+			adc = <&adc_pp3300_regulator>;
+		};
+		ddr-soc {
+			compatible = "temp-3v3-51k1-47k-4050b";
+			label = "TEMP_SENSOR_DDR_SOC";
+			enum-name = "TEMP_SENSOR_DDR_SOC";
+			temp_fan_off = <35>;
+			temp_fan_max = <50>;
+			temp_host_high = <70>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
+			adc = <&adc_ddr_soc>;
+		};
+		fan {
+			compatible = "temp-3v0-22k6-47k-4050b";
+			label = "TEMP_SENSOR_FAN";
+			enum-name = "TEMP_SENSOR_FAN";
+			temp_fan_off = <35>;
+			temp_fan_max = <50>;
+			temp_host_high = <70>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
+			adc = <&adc_fan>;
+		};
+	};
 };
 
 &gpio0 {
-	ngpios = <4>;
+	ngpios = <5>;
 };
 
 &i2c0 {
