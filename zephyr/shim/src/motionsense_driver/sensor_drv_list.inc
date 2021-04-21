@@ -22,6 +22,9 @@
 #ifdef CONFIG_PLATFORM_EC_ACCEL_BMA255
 #include "bma255-drvinfo.inc"
 #endif
+#ifdef CONFIG_PLATFORM_EC_ACCELGYRO_BMI160
+#include "bmi160-drvinfo.inc"
+#endif
 #ifdef CONFIG_PLATFORM_EC_ACCELGYRO_BMI260
 #include "bmi260-drvinfo.inc"
 #endif
