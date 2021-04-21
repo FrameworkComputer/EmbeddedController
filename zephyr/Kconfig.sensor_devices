@@ -26,12 +26,21 @@ config PLATFORM_EC_ACCEL_BMA255
 	  Currently the driver supports BMA253, BMA255, BMA355, BMA280, BMA282,
 	  BMA223, BMA254, BMA284, BMA250E, BMA222E, BMC150 BMC056, BMC156.
 
+config PLATFORM_EC_ACCELGYRO_BMI160
+	bool "BMI160 Accelgyrometer Driver"
+	select PLATFORM_EC_ACCELGYRO_BMI
+	help
+	  The driver supports Bosch's BMI160 which is an Inertial Measurement
+	  Unit (IMU) consisting of a 16-bit tri-axial gyroscope and a 16-bit
+	  tri-axial accelerometer.
+
 config PLATFORM_EC_ACCELGYRO_BMI260
 	bool "BMI260 Accelgyrometer Driver"
 	select PLATFORM_EC_ACCELGYRO_BMI
 	help
-	  The driver supports Bosch's BMI260 which is an IMU consisting of
-	  a 16-bit tri-axial gyroscope and a 16-bit tri-axial accelerometer.
+	  The driver supports Bosch's BMI260 which is an Inertial Measurement
+	  Unit (IMU) consisting of a 16-bit tri-axial gyroscope and a 16-bit
+	  tri-axial accelerometer.
 
 config PLATFORM_EC_ALS_TCS3400
 	bool "TCS3400 Ambient Light Senseor Driver"

@@ -204,6 +204,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_BMA255
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_BMI
                                                 "${PLATFORM_EC}/driver/accelgyro_bmi_common.c"
                                                 "${PLATFORM_EC}/common/math_util.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_BMI160
+                                                "${PLATFORM_EC}/driver/accelgyro_bmi160.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_BMI260
                                                 "${PLATFORM_EC}/driver/accelgyro_bmi260.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_ICM
