@@ -54,7 +54,7 @@ LOG_MODULE_REGISTER(cros_shi, LOG_LEVEL_DBG);
  * practically want to run the SHI interface, since running it slower
  * significantly impacts firmware update times.
  */
-#define SHI_CMD_RX_TIMEOUT_US 8192
+#define SHI_CMD_RX_TIMEOUT_MS 9
 
 /*
  * The AP blindly clocks back bytes over the SPI interface looking for a
@@ -442,7 +442,7 @@ static void shi_parse_header(struct shi_reg *const inst)
 	DEBUG_CPRINTF("RV-");
 
 	/* Setup deadline time for receiving */
-	shi_params.rx_deadline = k_uptime_get() + SHI_CMD_RX_TIMEOUT_US;
+	shi_params.rx_deadline = k_uptime_get() + SHI_CMD_RX_TIMEOUT_MS;
 
 	/* Wait for version, command, length bytes */
 	if (!shi_read_inbuf_wait(inst, 3))
