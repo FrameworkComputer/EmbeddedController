@@ -1,0 +1,16 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# common fields for both BMI160 accel and BMI160 gyro
+
+# every motionsense sensor node should include motionsense-sensor-base.yaml
+include: motionsense-sensor-base.yaml
+
+properties:
+  i2c-spi-addr-flags:
+    type: string
+    description: i2c address or SPI slave logic GPIO
+    enum:
+      - "BMI160_ADDR0_FLAGS"
+    default: "BMI160_ADDR0_FLAGS"

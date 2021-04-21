@@ -18,7 +18,6 @@ properties:
         e.g) label = "Lid Accel";
   active-mask:
     type: string
-    required: true
     description: indicates system power state for sensor to be active
     enum:
       - "SENSOR_ACTIVE_S5"
@@ -26,6 +25,7 @@ properties:
       - "SENSOR_ACTIVE_S0"
       - "SENSOR_ACTIVE_S0_S3"
       - "SENSOR_ACTIVE_S0_S3_S5"
+    default: "SENSOR_ACTIVE_S0_S3"
   location:
     type: string
     required: true
