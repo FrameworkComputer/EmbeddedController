@@ -92,6 +92,7 @@ GPIO(EN_EC_ID_ODL,           PIN(H, 5), GPIO_ODR_LOW)
 GPIO(ENTERING_RW,            PIN(C, 5), GPIO_OUT_LOW) /* EC_ENTERING_RW */
 GPIO(EN_5V_USM,              PIN(G, 3), GPIO_OUT_LOW)
 GPIO(USB_A0_FAULT_ODL,       PIN(J, 6), GPIO_INPUT)
+GPIO(PACKET_MODE_EN,         PIN(D, 4), GPIO_OUT_LOW) /* EC_GSC_PACKET_MODE */
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C_A_SCL,              PIN(B, 3), GPIO_INPUT) /* I2C_CHG_BATT_SCL */
@@ -127,7 +128,6 @@ ALTERNATE(PIN_MASK(M, 0x33), 0, MODULE_SPI, 0) /* SPI */
 
 /* Unimplemented Pins  */
 GPIO(PG_PP5000_S5_OD,        PIN(D, 2), GPIO_INPUT)
-GPIO(EC_GSC_PACKET_MODE,     PIN(D, 4), GPIO_INPUT | GPIO_PULL_DOWN)
 /* *_ODL pin has external pullup so don't pull it down. */
 GPIO(PG_MT6315_GPU_ODL,      PIN(H, 6), GPIO_INPUT)
 /* reserved for future use */

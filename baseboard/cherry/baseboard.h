@@ -189,6 +189,13 @@
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_USE_GPIO
 
+/* Vboot Config */
+#define CONFIG_CRC8
+#define CONFIG_VBOOT_EFS2
+#define CONFIG_VBOOT_HASH
+#define CONFIG_VSTORE
+#define CONFIG_VSTORE_SLOT_COUNT 1
+
 /* Voltage regulator control */
 #define CONFIG_HOSTCMD_REGULATOR
 
