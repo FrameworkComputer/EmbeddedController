@@ -25,8 +25,8 @@
 	 */
 	motionsense-mutex {
 		compatible = "cros-ec,motionsense-mutex";
-		mutex_bma255: bma255-mutex {
-			label = "BMA255_MUTEX";
+		lid_mutex: lid-mutex {
+			label = "LID_MUTEX";
 		};
 
 		mutex_bmi160: bmi160-mutex {
@@ -69,6 +69,11 @@
 			compatible = "cros-ec,drvdata-bmi160";
 			status = "okay";
 		};
+
+		kx022_data: kx022-drv-data {
+			compatible = "cros-ec,drvdata-kionix";
+			status = "okay";
+		};
 	};
 
 	/*
@@ -84,12 +89,37 @@
 			label = "Lid Accel";
 			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
 			location = "MOTIONSENSE_LOC_LID";
-			mutex = <&mutex_bma255>;
+			mutex = <&lid_mutex>;
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&lid_rot_ref>;
 			default-range = <2>;
 			drv-data = <&bma255_data>;
 			i2c-spi-addr-flags = "BMA2x2_I2C_ADDR1_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					label = "SENSOR_CONFIG_EC_S0";
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					label = "SENSOR_CONFIG_EC_S3";
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		alt_lid_accel {
+			compatible = "cros-ec,kx022";
+			status = "okay";
+			label = "Lid Accel";
+			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref>;
+			drv-data = <&kx022_data>;
+			alternate-for = <&lid_accel>;
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
