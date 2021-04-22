@@ -147,6 +147,16 @@ config PLATFORM_EC_USB_BCD_DEV
 	  and should be set to a version number relevant to the release version
 	  of the product.
 
+config PLATFORM_EC_USB_VID
+	hex "USB Vendor ID"
+	default 0x18d1
+	help
+	  This specifies the USB vendor ID used for boards which expose a
+	  USB endpont when the port is in UFP mode. The default value is
+	  set to Google's assigned VID and typically would not need to be
+	  changed. But, in certain cases this may need to be changed to
+	  match an OEM's vendor ID.
+
 config PLATFORM_EC_USBC_RETIMER_INTEL_BB
 	bool "Support Intel Burnside Bridge retimer"
 	help

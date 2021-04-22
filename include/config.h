@@ -4620,6 +4620,11 @@
 #undef CONFIG_USB_PID
 
 /*
+ * USB Vendor ID used for USB endpoints.
+ */
+#define CONFIG_USB_VID USB_VID_GOOGLE
+
+/*
  * Track overcurrent events for sinking partners coming from some component on
  * the board.  Auto-enabled for drivers which contain support for this feature.
  */
