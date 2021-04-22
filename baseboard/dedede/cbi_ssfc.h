@@ -42,10 +42,10 @@ enum ec_ssfc_usb_ss_mux {
 
 union dedede_cbi_ssfc {
 	struct {
-		enum ec_ssfc_base_sensor	base_sensor : 3;
-		enum ec_ssfc_lid_sensor		lid_sensor : 3;
-		enum ec_ssfc_usb_ss_mux		usb_ss_mux : 3;
-		uint32_t					reserved_2 : 20;
+		uint32_t base_sensor : 3;
+		uint32_t lid_sensor : 3;
+		uint32_t usb_ss_mux : 3;
+		uint32_t reserved_2 : 23;
 	};
 	uint32_t raw_value;
 };
