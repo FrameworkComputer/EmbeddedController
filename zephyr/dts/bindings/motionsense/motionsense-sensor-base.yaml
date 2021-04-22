@@ -54,6 +54,10 @@ properties:
     type: phandle
     required: false
     description: phandle to driver data to be used for the motion sensor
+  alternate-for:
+    type: phandle
+    description: phandle to another sensor that can be swapped with this one
+      at runtime.
 
 #
 # examples:

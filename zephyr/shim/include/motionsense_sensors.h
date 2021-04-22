@@ -10,16 +10,38 @@
 
 #define SENSOR_NODE			DT_PATH(motionsense_sensor)
 #define SENSOR_INFO_NODE		DT_PATH(motionsense_sensor_info)
+#define SENSOR_ALT_NODE			DT_PATH(motionsesne_sensor_alt)
 
 #define SENSOR_ID(id)			DT_CAT(SENSOR_, id)
-#define SENSOR_ID_WITH_COMMA(id)					\
-	IF_ENABLED(DT_NODE_HAS_STATUS(id, okay), (SENSOR_ID(id),))
+
+/* Define the SENSOR_ID if:
+ * DT_NODE_HAS_STATUS(id, okay) && !DT_NODE_HAS_PROP(id, alternate_for)
+ */
+#define SENSOR_ID_WITH_COMMA(id)                                     \
+	IF_ENABLED(DT_NODE_HAS_STATUS(id, okay),                     \
+		   (COND_CODE_0(DT_NODE_HAS_PROP(id, alternate_for), \
+				(SENSOR_ID(id), ), ())))
 
 enum sensor_id {
 #if DT_NODE_EXISTS(SENSOR_NODE)
 	DT_FOREACH_CHILD(SENSOR_NODE, SENSOR_ID_WITH_COMMA)
 #endif
 	SENSOR_COUNT,
+};
+
+#undef SENSOR_ID_WITH_COMMA
+/* Define the SENSOR_ID if:
+ * DT_NODE_HAS_STATUS(id, okay) && DT_NODE_HAS_PROP(id, alternate_for)
+ */
+#define SENSOR_ID_WITH_COMMA(id)                                     \
+	IF_ENABLED(DT_NODE_HAS_STATUS(id, okay),                     \
+		   (COND_CODE_1(DT_NODE_HAS_PROP(id, alternate_for), \
+				(SENSOR_ID(id), ), ())))
+enum sensor_alt_id {
+#if DT_NODE_EXISTS(SENSOR_ALT_NODE)
+	DT_FOREACH_CHILD(SENSOR_ALT_NODE, SENSOR_ID_WITH_COMMA)
+#endif
+	SENSOR_ALT_COUNT,
 };
 
 /*

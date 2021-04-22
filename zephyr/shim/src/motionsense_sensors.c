@@ -94,7 +94,7 @@ DT_FOREACH_CHILD(SENSOR_ROT_REF_NODE, DECLARE_SENSOR_ROT_REF)
 		compat, create_data_macro)
 
 /*
- * sensor_drv_list.inc is included two times in this file. This is the first
+ * sensor_drv_list.inc is included three times in this file. This is the first
  * time and it is for creating sensor driver-specific data. So we ignore
  * CREATE_MOTION_SENSOR() that creates motion sensor at this time.
  */
@@ -209,10 +209,23 @@ DT_FOREACH_CHILD(SENSOR_ROT_REF_NODE, DECLARE_SENSOR_ROT_REF)
 		.max_frequency = s_max_freq				\
 	},
 
-#define MK_SENSOR_ENTRY(inst, s_compat, s_chip, s_type, s_drv,		\
-		s_min_freq, s_max_freq)					\
-	DO_MK_SENSOR_ENTRY(DT_INST(inst, s_compat),			\
-		s_chip, s_type, s_drv, s_min_freq, s_max_freq)
+/* Construct an entry iff the alternate_for property is missing. */
+#define MK_SENSOR_ENTRY(inst, s_compat, s_chip, s_type, s_drv, s_min_freq,    \
+			s_max_freq)                                           \
+	COND_CODE_0(DT_NODE_HAS_PROP(DT_INST(inst, s_compat), alternate_for), \
+		    (DO_MK_SENSOR_ENTRY(DT_INST(inst, s_compat), s_chip,      \
+					s_type, s_drv, s_min_freq,            \
+					s_max_freq)),                         \
+		    ())
+
+/* Construct an entry iff the alternate_for property exists. */
+#define MK_SENSOR_ALT_ENTRY(inst, s_compat, s_chip, s_type, s_drv, s_min_freq, \
+			    s_max_freq)                                        \
+	COND_CODE_1(DT_NODE_HAS_PROP(DT_INST(inst, s_compat), alternate_for),  \
+		    (DO_MK_SENSOR_ENTRY(DT_INST(inst, s_compat), s_chip,       \
+					s_type, s_drv, s_min_freq,             \
+					s_max_freq)),                          \
+		    ())
 
 #undef CREATE_SENSOR_DATA
 /*
@@ -265,6 +278,26 @@ DT_FOREACH_CHILD(SENSOR_ROT_REF_NODE, DECLARE_SENSOR_ROT_REF)
  */
 struct motion_sensor_t motion_sensors[] = {
 #if DT_NODE_EXISTS(SENSOR_NODE)
+#include "motionsense_driver/sensor_drv_list.inc"
+#endif
+};
+
+/*
+ * Remap the CREATE_MOTION_SENSOR to call MK_SENSOR_ALT_ENTRY to create a list
+ * of alternate sensors that will be used at runtime.
+ */
+#undef CREATE_MOTION_SENSOR
+#define CREATE_MOTION_SENSOR(s_compat, s_chip, s_type, s_drv, s_min_freq,    \
+			     s_max_freq)                                     \
+	UTIL_LISTIFY(DT_NUM_INST_STATUS_OKAY(s_compat), MK_SENSOR_ALT_ENTRY, \
+		     s_compat, s_chip, s_type, s_drv, s_min_freq, s_max_freq)
+
+/*
+ * The list of alternate motion sensors that may be used at runtime to replace
+ * an entry in the motion_sensors array.
+ */
+__maybe_unused static struct motion_sensor_t motion_sensors_alt[] = {
+#if DT_NODE_EXISTS(SENSOR_ALT_NODE)
 #include "motionsense_driver/sensor_drv_list.inc"
 #endif
 };
