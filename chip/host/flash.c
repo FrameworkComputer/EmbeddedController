@@ -52,6 +52,7 @@ static void flash_set_persistent(void)
 static void flash_get_persistent(void)
 {
 	FILE *f = get_persistent_storage("flash", "rb");
+	int sz;
 
 	if (f == NULL) {
 		fprintf(stderr,
@@ -60,7 +61,8 @@ static void flash_get_persistent(void)
 		return;
 	}
 
-	fread(__host_flash, sizeof(__host_flash), 1, f);
+	sz = fread(__host_flash, sizeof(__host_flash), 1, f);
+	ASSERT(sz == 1);
 
 	release_persistent_storage(f);
 }
