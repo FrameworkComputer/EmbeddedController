@@ -275,8 +275,9 @@ static void dpm_attempt_mode_entry(int port)
 		return;
 	}
 
-	/* Check if the device and cable support USB4. */
+	/* Check if port, port partner and cable support USB4. */
 	if (IS_ENABLED(CONFIG_USB_PD_USB4) &&
+	    board_is_tbt_usb4_port(port) &&
 	    enter_usb_port_partner_is_capable(port) &&
 	    enter_usb_cable_is_capable(port) &&
 	    dpm_mode_entry_requested(port, TYPEC_MODE_USB4)) {
@@ -295,6 +296,7 @@ static void dpm_attempt_mode_entry(int port)
 
 	/* If not, check if they support Thunderbolt alt mode. */
 	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
+	    board_is_tbt_usb4_port(port) &&
 	    pd_is_mode_discovered_for_svid(port, TCPC_TX_SOP, USB_VID_INTEL) &&
 			dpm_mode_entry_requested(port, TYPEC_MODE_TBT)) {
 		enter_mode_requested = true;
