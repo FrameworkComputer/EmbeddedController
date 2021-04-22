@@ -29,6 +29,59 @@ child-binding:
       type: int
       default: 1
       description: Division factor of ADC measurement
+    gain:
+      required: false
+      type: string
+      description:
+        Gain selection for the ADC channel. Source of valid gain settings is
+        "enum adc_gain" found in <zephyr-base>/include/drivers/adc.h
+      enum:
+        - ADC_GAIN_1_6
+        - ADC_GAIN_1_5
+        - ADC_GAIN_1_4
+        - ADC_GAIN_1_3
+        - ADC_GAIN_1_2
+        - ADC_GAIN_2_3
+        - ADC_GAIN_1
+        - ADC_GAIN_2
+        - ADC_GAIN_3
+        - ADC_GAIN_4
+        - ADC_GAIN_8
+        - ADC_GAIN_16
+        - ADC_GAIN_32
+        - ADC_GAIN_64
+        - ADC_GAIN_128
+      default: ADC_GAIN_1
+    reference:
+      required: false
+      type: string
+      description:
+        Sets the reference voltage for the ADC channel. Source of valid
+        reference voltages is "enum adc_reference" found in
+        <zephyr-base>/include/drivers/adc.
+      enum:
+        - ADC_REF_VDD_1
+        - ADC_REF_VDD_1_2
+        - ADC_REF_VDD_1_3
+        - ADC_REF_VDD_1_4
+        - ADC_REF_INTERNAL
+        - ADC_REF_EXTERNAL0
+        - ADC_REF_EXTERNAL1
+      default: ADC_REF_INTERNAL
+    acquisition-time:
+      required: false
+      type: int
+      description:
+        Set the acquisition time for ADC conversion. Use the ADC_ACQ_TIME macro
+        to compose this value. If the hardware doesn't support a configurable
+        acquisition time, use ADC_ACQ_TIME_DEFAULT (0).
+      default: 0
+    differential:
+      required: false
+      type: boolean
+      description:
+        Set the ADC acquisition mode to differential. Default mode is
+        single-ended acquisition.
     enum-name:
       type: string
       required: true

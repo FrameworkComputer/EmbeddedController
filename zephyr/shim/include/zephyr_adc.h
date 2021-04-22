@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_ZEPHYR_ADC_H
 #define __CROS_EC_ZEPHYR_ADC_H
 
+#include <drivers/adc.h>
+
 #ifdef CONFIG_PLATFORM_EC_ADC
 
 #define ZSHIM_ADC_ID(node_id)         DT_ENUM_UPPER_TOKEN(node_id, enum_name)
@@ -25,6 +27,7 @@ struct adc_t {
 	uint8_t input_ch;
 	int factor_mul;
 	int factor_div;
+	struct adc_channel_cfg channel_cfg;
 };
 
 extern const struct adc_t adc_channels[];

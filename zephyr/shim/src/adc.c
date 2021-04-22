@@ -3,29 +3,45 @@
  * found in the LICENSE file.
  */
 
-#include "adc.h"
 #include <drivers/adc.h>
+#include "adc.h"
+#include "zephyr_adc.h"
 
 #define ADC_DEV DT_LABEL(DT_NODELABEL(adc0))
 const struct device *adc_dev;
 
-#if DT_NODE_EXISTS(DT_INST(0, named_adc_channels))
-#define ADC_CHANNEL_COMMA(node_id)                     \
-	[ZSHIM_ADC_ID(node_id)] = {                    \
-		.name = DT_LABEL(node_id),             \
-		.input_ch = DT_PROP(node_id, channel), \
-		.factor_mul = DT_PROP(node_id, mul),   \
-		.factor_div = DT_PROP(node_id, div),   \
+#define HAS_NAMED_ADC_CHANNELS DT_NODE_EXISTS(DT_INST(0, named_adc_channels))
+
+#if HAS_NAMED_ADC_CHANNELS
+#define ADC_CHANNEL_COMMA(node_id)                                      \
+	[ZSHIM_ADC_ID(node_id)] = {                                     \
+		.name = DT_LABEL(node_id),                              \
+		.input_ch = DT_PROP(node_id, channel),                  \
+		.factor_mul = DT_PROP(node_id, mul),                    \
+		.factor_div = DT_PROP(node_id, div),                    \
+		.channel_cfg = {                                        \
+			.channel_id = DT_PROP(node_id, channel),        \
+			.gain = DT_ENUM_TOKEN(node_id, gain),           \
+			.reference = DT_ENUM_TOKEN(node_id, reference), \
+			.acquisition_time =                             \
+				DT_PROP(node_id, acquisition_time),     \
+			.differential = DT_PROP(node_id, differential), \
+		},                                                      \
 	},
-const struct adc_t adc_channels[] = {
-	DT_FOREACH_CHILD(DT_INST(0, named_adc_channels), ADC_CHANNEL_COMMA)
-	};
+const struct adc_t adc_channels[] = { DT_FOREACH_CHILD(
+	DT_INST(0, named_adc_channels), ADC_CHANNEL_COMMA) };
 #endif /* named_adc_channels */
 
 static int init_device_bindings(const struct device *device)
 {
 	ARG_UNUSED(device);
 	adc_dev = device_get_binding(ADC_DEV);
+
+#if HAS_NAMED_ADC_CHANNELS
+	for (int i = 0; i < ARRAY_SIZE(adc_channels); i++)
+		adc_channel_setup(adc_dev, &adc_channels[i].channel_cfg);
+#endif
+
 	return 0;
 }
 SYS_INIT(init_device_bindings, POST_KERNEL, 51);
