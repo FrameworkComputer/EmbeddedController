@@ -103,3 +103,12 @@ static void kb_backlight_disable(void)
 	gpio_set_level(GPIO_EC_KB_BL_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kb_backlight_disable, HOOK_PRIO_DEFAULT);
+
+void board_usb_mux_init(void)
+{
+	if (board_get_sub_board() == SUB_BOARD_TYPEC)
+		ps8743_tune_usb_eq(&usb_muxes[1],
+				   PS8743_USB_EQ_TX_12_8_DB,
+				   PS8743_USB_EQ_RX_12_8_DB);
+}
+DECLARE_HOOK(HOOK_INIT, board_usb_mux_init, HOOK_PRIO_INIT_I2C + 1);

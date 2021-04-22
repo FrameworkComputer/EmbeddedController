@@ -211,5 +211,6 @@ enum board_sub_board {
 
 int board_get_version(void);
 void board_reset_pd_mcu(void);
+enum board_sub_board board_get_sub_board(void);
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BASEBOARD_H */

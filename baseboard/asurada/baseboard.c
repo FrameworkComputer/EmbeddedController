@@ -64,8 +64,6 @@ static void x_ec_interrupt(enum gpio_signal signal);
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
-static enum board_sub_board board_get_sub_board(void);
-
 /* Wake-up pins for hibernate */
 enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_AC_PRESENT,
@@ -192,7 +190,7 @@ static void ppc_interrupt(enum gpio_signal signal)
 
 /* Sub-board */
 
-static enum board_sub_board board_get_sub_board(void)
+enum board_sub_board board_get_sub_board(void)
 {
 	static enum board_sub_board sub = SUB_BOARD_NONE;
 
@@ -258,17 +256,6 @@ const int usb_port_enable[] = {
 	GPIO_EN_PP5000_USB_A0_VBUS,
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
-
-/* USB Mux */
-
-void board_usb_mux_init(void)
-{
-	if (board_get_sub_board() == SUB_BOARD_TYPEC)
-		ps8743_tune_usb_eq(&usb_muxes[1],
-				   PS8743_USB_EQ_TX_12_8_DB,
-				   PS8743_USB_EQ_RX_12_8_DB);
-}
-DECLARE_HOOK(HOOK_INIT, board_usb_mux_init, HOOK_PRIO_INIT_I2C + 1);
 
 static int board_ps8743_mux_set(const struct usb_mux *me,
 				mux_state_t mux_state)

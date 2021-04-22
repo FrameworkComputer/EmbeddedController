@@ -75,6 +75,17 @@
 #define PS8743_USB_EQ_RX_21_3_DB 0xd0
 #define PS8743_USB_EQ_RX_22_2_DB 0xe0
 
+/* USB High Speed Signal Detector thershold adjustment */
+#define PS8743_REG_HS_DET_THRESHOLD  0x3c
+#define PS8743_USB_HS_THRESH_DEFAULT 0x00
+#define PS8743_USB_HS_THRESH_POS_10  0x20
+#define PS8743_USB_HS_THRESH_POS_33  0x40
+#define PS8743_USB_HS_THRESH_NEG_10  0x60
+#define PS8743_USB_HS_THRESH_NEG_25  0x80
+#define PS8743_USB_HS_THRESH_POS_25  0xa0
+#define PS8743_USB_HS_THRESH_NEG_45  0xc0
+#define PS8743_USB_HS_THRESH_NEG_35  0xe0
+
 int ps8743_tune_usb_eq(const struct usb_mux *me, uint8_t tx, uint8_t rx);
 int ps8743_write(const struct usb_mux *me, uint8_t reg, uint8_t val);
 int ps8743_read(const struct usb_mux *me, uint8_t reg, int *val);
