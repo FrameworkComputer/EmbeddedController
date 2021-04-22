@@ -1,0 +1,18 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Kionix driver data node
+
+compatible: "cros-ec,drvdata-kionix"
+
+include: drvdata-base.yaml
+
+#
+# examples:
+#
+# kx022_data: kx022-drv-data {
+#       compatible = "cros-ec,drvdata-kionix";
+#       status = "okay";
+# };
+#
