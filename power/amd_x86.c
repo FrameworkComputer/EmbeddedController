@@ -413,9 +413,6 @@ enum power_state power_handle_state(enum power_state state)
 		if (!power_has_signals(IN_S5_PGOOD)) {
 			/* Required rail went away */
 			return POWER_S5G3;
-		} else if (gpio_get_level(GPIO_PCH_SLP_S3_L) == 0) {
-			/* Power down to next state */
-			return POWER_S0S3;
 		}
 #ifdef CONFIG_POWER_S0IX
 		/*
@@ -430,6 +427,12 @@ enum power_state power_handle_state(enum power_state state)
 				gpio_get_level(GPIO_PCH_SLP_S0_L) == 0) {
 			return POWER_S0S0ix;
 		}
+#endif
+		else if (gpio_get_level(GPIO_PCH_SLP_S3_L) == 0) {
+			/* Power down to next state */
+			return POWER_S0S3;
+		}
+#ifdef CONFIG_POWER_S0IX
 		/*
 		 * Call hooks only if we haven't notified listeners of S0ix
 		 * resume.
