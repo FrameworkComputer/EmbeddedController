@@ -6,6 +6,7 @@
  */
 
 #include "charge_manager.h"
+#include "charger.h"
 #include "common.h"
 #include "console.h"
 #include "driver/charger/isl923x.h"
@@ -60,6 +61,7 @@ int raa489000_init(int port)
 	int device_id;
 	int i2c_port;
 	struct charge_port_info chg = { 0 };
+	int vbus_mv = 0;
 
 	/* Perform unlock sequence */
 	rv = tcpc_write16(port, 0xAA, 0xDAA0);
@@ -105,10 +107,11 @@ int raa489000_init(int port)
 	 * If VBUS is present, start sinking from it if we haven't already
 	 * chosen a charge port and no battery is connected.  This is
 	 * *kinda hacky* doing it here, but we must start sinking VBUS now,
-	 * otherwise the board may die (See b/150702984, b/178728138)
+	 * otherwise the board may die (See b/150702984, b/178728138).  This
+	 * works as this part is a combined charger IC and TCPC.
 	 */
-	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
-	if ((regval & TCPC_REG_POWER_STATUS_UNINIT) &&
+	charger_get_vbus_voltage(port, &vbus_mv);
+	if (vbus_mv &&
 	    charge_manager_get_active_charge_port() == CHARGE_PORT_NONE &&
 	    !pd_is_battery_capable()) {
 		chg.current = 500;
