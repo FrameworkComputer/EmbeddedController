@@ -3,3 +3,4 @@
 # found in the LICENSE file.
 
 zephyr_library_sources_ifdef(CONFIG_CROS_EC           system.c)
+zephyr_library_sources_ifdef(CONFIG_CROS_EC           pinmux.c)
