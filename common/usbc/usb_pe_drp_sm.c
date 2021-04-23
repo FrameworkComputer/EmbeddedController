@@ -3529,17 +3529,21 @@ static void pe_snk_hard_reset_entry(int port)
 	}
 
 	/*
-	 * If we're about to kill our active charge port and have no battery
-	 * to supply power, disable the PE layer instead.
+	 * If we're about to kill our active charge port and have no battery to
+	 * supply power, disable the PE layer instead.  If we have no battery,
+	 * but we haven't determined our active charge port yet, also avoid
+	 * performing the HardReset.  It might be that this port was our active
+	 * charge port.
 	 *
 	 * Note: On systems without batteries (ex. chromeboxes), it's preferable
 	 * to brown out rather than leave the port only semi-functional for a
-	 * customer.  For systems which should have a battery, this condition
-	 * is not expected to be encountered by a customer.
+	 * customer.  For systems which should have a battery, this condition is
+	 * not expected to be encountered by a customer.
 	 */
 	if (IS_ENABLED(CONFIG_BATTERY) && (battery_is_present() == BP_NO) &&
 	    IS_ENABLED(CONFIG_CHARGE_MANAGER) &&
-	    (port == charge_manager_get_active_charge_port()) &&
+	    ((port == charge_manager_get_active_charge_port() ||
+	     (charge_manager_get_active_charge_port() == CHARGE_PORT_NONE))) &&
 	    system_get_reset_flags() & EC_RESET_FLAG_SYSJUMP) {
 		CPRINTS("C%d: Disabling port to avoid brown out, "
 			"please reboot EC to enable port again", port);
