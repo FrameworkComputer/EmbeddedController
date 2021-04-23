@@ -29,3 +29,13 @@ config CROS_BBRAM_IT8XXX2
 	default y
 	help
 	  This module provides 192 bytes of battery-backed memory area.
+
+if CROS_BBRAM_IT8XXX2
+
+config CROS_BBRAM_IT8XXX2_INIT_PRIORITY
+	int "cros_bbram it8xxx2 initialization priority"
+	default 11
+	help
+	  This sets the it8xxx2 cros_bbram driver initialization priority.
+
+endif # CROS_BBRAM_IT8XXX2
