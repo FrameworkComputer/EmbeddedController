@@ -43,14 +43,12 @@ static void ramdata_get_persistent(void)
 {
 	FILE *f = get_persistent_storage("ramdata", "rb");
 
-	if (f == NULL) {
+	if ((f == NULL) || (fread(__ram_data, RAM_DATA_SIZE, 1, f) != 1)) {
 		fprintf(stderr,
 			"No RAM data found. Initializing to 0x00.\n");
 		memset(__ram_data, 0, RAM_DATA_SIZE);
 		return;
 	}
-
-	fread(__ram_data, RAM_DATA_SIZE, 1, f);
 
 	release_persistent_storage(f);
 
@@ -76,9 +74,8 @@ static uint32_t get_image_copy(void)
 	FILE *f = get_persistent_storage("image_copy", "rb");
 	uint32_t ret;
 
-	if (f == NULL)
+	if ((f == NULL) || (fread(&ret, sizeof(ret), 1, f) != 1))
 		return EC_IMAGE_UNKNOWN;
-	fread(&ret, sizeof(ret), 1, f);
 	release_persistent_storage(f);
 	remove_persistent_storage("image_copy");
 
@@ -100,9 +97,8 @@ static uint32_t load_reset_flags(void)
 	FILE *f = get_persistent_storage("reset_flags", "rb");
 	uint32_t ret;
 
-	if (f == NULL)
+	if ((f == NULL) || (fread(&ret, sizeof(ret), 1, f) != 1))
 		return EC_RESET_FLAG_POWER_ON;
-	fread(&ret, sizeof(ret), 1, f);
 	release_persistent_storage(f);
 	remove_persistent_storage("reset_flags");
 
@@ -123,9 +119,8 @@ static int load_time(timestamp_t *t)
 {
 	FILE *f = get_persistent_storage("time", "rb");
 
-	if (f == NULL)
+	if ((f == NULL) || (fread(t, sizeof(*t), 1, f) != 1))
 		return 0;
-	fread(t, sizeof(*t), 1, f);
 	release_persistent_storage(f);
 	remove_persistent_storage("time");
 
