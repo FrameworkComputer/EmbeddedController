@@ -13,6 +13,7 @@
 #include "led_pwm.h"
 #include "lid_switch.h"
 #include "pwm.h"
+#include "power_button.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "util.h"
@@ -185,6 +186,14 @@ static void led_set_battery(void)
 	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
+
+	if (power_button_batt_cutoff() && !gpio_get_level(GPIO_ON_OFF_BTN_L)) {
+		set_pwm_led_color(PWM_LED0,
+		(battery_ticks & 0x2) ? EC_LED_COLOR_RED : EC_LED_COLOR_BLUE);
+		set_pwm_led_color(PWM_LED1,
+		(battery_ticks & 0x2) ? EC_LED_COLOR_RED : EC_LED_COLOR_BLUE);
+		return;
+	}
 	/* Blink both mainboard LEDS as a warning if the chasssis is open and power is on */
 	if (!gpio_get_level(GPIO_CHASSIS_OPEN)) {
 		set_pwm_led_color(PWM_LED0, (battery_ticks & 0x2) ? EC_LED_COLOR_RED : -1);

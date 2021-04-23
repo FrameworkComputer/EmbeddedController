@@ -59,6 +59,7 @@
 #define PWRBTN_DELAY_T0    (32 * MSEC)  /* 32ms (PCH requires >16ms) */
 #define PWRBTN_DELAY_T1    (4 * SECOND - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
 #define PWRBTN_DELAY_T2    (20 * SECOND - PWRBTN_DELAY_T1)  /* 20 secs - t1 */
+#define PWRBTN_DELAY_T3    (10 * SECOND - PWRBTN_DELAY_T1)  /* 10 secs - t1 */
 /*
  * Length of time to stretch initial power button press to give chipset a
  * chance to wake up (~100ms) and react to the press (~16ms).  Also used as
@@ -68,6 +69,7 @@
 #define PWRBTN_WAIT_RSMRST (20 * MSEC)
 #define PWRBTN_DELAY_INITIAL	(100 * MSEC)
 #define PWRBTN_RETRY_COUNT  200				 /* base on PWRBTN_WAIT_RSMRST 1 count = 20ms */
+#define PWRBTN_WAIT_RELEASE (100 * MSEC)
 #define PWRBTN_STATE_DELAY  (1 * MSEC)       /* debounce for the state change */
 
 enum power_button_state {
@@ -98,6 +100,8 @@ enum power_button_state {
 	PWRBTN_STATE_WAS_OFF,
 	/* Power button pressed keep long time; reset EC */
 	PWRBTN_STATE_NEED_RESET,
+	/* Power button pressed keep long time; battery disconnect */
+	PWRBTN_STATE_NEED_BATT_CUTOFF,
 };
 static enum power_button_state pwrbtn_state = PWRBTN_STATE_IDLE;
 
@@ -114,6 +118,7 @@ static const char * const state_names[] = {
 	"recovery",
 	"was-off",
 	"need-reset",
+	"batt-cutoff",
 };
 
 /*
@@ -141,6 +146,9 @@ static uint64_t tpb_task_start;
  * Determines whether to execute power button pulse (t0 stage)
  */
 static int power_button_pulse_enabled = 1;
+
+
+static int power_button_battery_cutoff;
 
 static void set_pwrbtn_to_pch(int high, int init)
 {
@@ -230,6 +238,11 @@ static void set_initial_pwrbtn_state(void)
 	CPRINTS("PB init-on");
 }
 
+int power_button_batt_cutoff(void)
+{
+	return power_button_battery_cutoff;
+}
+
 /**
  * Power button state machine.
  *
@@ -239,6 +252,7 @@ static void state_machine(uint64_t tnow)
 {
 	static int initial_delay = 7; /* 700 ms */
 	static int retry_wait = 0;
+
 	/* Not the time to move onto next state */
 	if (tnow < tnext_state)
 		return;
@@ -395,14 +409,32 @@ static void state_machine(uint64_t tnow)
 		}
 		break;
 	case PWRBTN_STATE_IDLE:
+		/* Do nothing */
+		break;
 	case PWRBTN_STATE_HELD:
 		if (!gpio_get_level(GPIO_ON_OFF_FP_L)) {
 			tnext_state = tnow + PWRBTN_DELAY_T2;
 			pwrbtn_state = PWRBTN_STATE_NEED_RESET;
+		} else if (!gpio_get_level(GPIO_ON_OFF_BTN_L)) {
+			tnext_state = tnow + PWRBTN_DELAY_T3;
+			pwrbtn_state = PWRBTN_STATE_NEED_BATT_CUTOFF;
 		}
 		break;
 	case PWRBTN_STATE_EAT_RELEASE:
 		/* Do nothing */
+		break;
+	case PWRBTN_STATE_NEED_BATT_CUTOFF:
+		if (power_button_is_pressed()) {
+			power_button_battery_cutoff = 1;
+			/* User is still holding the power button */
+			tnext_state = tnow + PWRBTN_WAIT_RELEASE;
+			pwrbtn_state = PWRBTN_STATE_NEED_BATT_CUTOFF;
+			CPRINTS("wait release PB");
+		} else {
+			power_button_battery_cutoff = 0;
+			board_cut_off_battery();
+			CPRINTS("PB held press 10s execute battery disconnect");
+		}
 		break;
 	case PWRBTN_STATE_NEED_RESET:
 		CPRINTS("PB held press 20s execute chip reset");
@@ -484,7 +516,8 @@ static void powerbtn_x86_changed(void)
 	if (pwrbtn_state == PWRBTN_STATE_BOOT_KB_RESET ||
 	    pwrbtn_state == PWRBTN_STATE_INIT_ON ||
 	    pwrbtn_state == PWRBTN_STATE_LID_OPEN ||
-	    pwrbtn_state == PWRBTN_STATE_WAS_OFF) {
+	    pwrbtn_state == PWRBTN_STATE_WAS_OFF ||
+		pwrbtn_state == PWRBTN_STATE_NEED_BATT_CUTOFF) {
 		/* Ignore all power button changes during an initial pulse */
 		CPRINTS("PB ignoring change");
 		return;
