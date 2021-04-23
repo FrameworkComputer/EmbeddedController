@@ -108,7 +108,7 @@ int raa489000_init(int port)
 	 * otherwise the board may die (See b/150702984, b/178728138)
 	 */
 	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
-	if ((regval & TCPC_REG_POWER_STATUS_VBUS_PRES) &&
+	if ((regval & TCPC_REG_POWER_STATUS_UNINIT) &&
 	    charge_manager_get_active_charge_port() == CHARGE_PORT_NONE &&
 	    !pd_is_battery_capable()) {
 		chg.current = 500;
