@@ -58,6 +58,7 @@
  */
 #define PWRBTN_DELAY_T0    (32 * MSEC)  /* 32ms (PCH requires >16ms) */
 #define PWRBTN_DELAY_T1    (4 * SECOND - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
+#define PWRBTN_DELAY_T2    (20 * SECOND - PWRBTN_DELAY_T1)  /* 20 secs - t1 */
 /*
  * Length of time to stretch initial power button press to give chipset a
  * chance to wake up (~100ms) and react to the press (~16ms).  Also used as
@@ -66,6 +67,8 @@
 #define PWRBTN_INITIAL_US  (200 * MSEC)
 #define PWRBTN_WAIT_RSMRST (20 * MSEC)
 #define PWRBTN_DELAY_INITIAL	(100 * MSEC)
+#define PWRBTN_RETRY_COUNT  200				 /* base on PWRBTN_WAIT_RSMRST 1 count = 20ms */
+#define PWRBTN_STATE_DELAY  (1 * MSEC)       /* debounce for the state change */
 
 enum power_button_state {
 	/* Button up; state machine idle */
@@ -93,6 +96,8 @@ enum power_button_state {
 	PWRBTN_STATE_BOOT_KB_RESET,
 	/* Power button pressed when chipset was off; stretching pulse */
 	PWRBTN_STATE_WAS_OFF,
+	/* Power button pressed keep long time; reset EC */
+	PWRBTN_STATE_NEED_RESET,
 };
 static enum power_button_state pwrbtn_state = PWRBTN_STATE_IDLE;
 
@@ -108,6 +113,7 @@ static const char * const state_names[] = {
 	"init-on",
 	"recovery",
 	"was-off",
+	"need-reset",
 };
 
 /*
@@ -115,6 +121,9 @@ static const char * const state_names[] = {
  * state doesn't have a timeout.
  */
 static uint64_t tnext_state;
+
+/* retry for the PWRBTN_WAIT_RSMRST */
+static int rsmrst_retry = 0;
 
 /*
  * Record the time when power button task starts. It can be used by any code
@@ -229,7 +238,7 @@ static void set_initial_pwrbtn_state(void)
 static void state_machine(uint64_t tnow)
 {
 	static int initial_delay = 7; /* 700 ms */
-
+	static int retry_wait = 0;
 	/* Not the time to move onto next state */
 	if (tnow < tnext_state)
 		return;
@@ -253,8 +262,17 @@ static void state_machine(uint64_t tnow)
 			if (!gpio_get_level(GPIO_PCH_RSMRST_L)) {
 				tnext_state = tnow + PWRBTN_WAIT_RSMRST;
 				CPRINTS("BTN wait RSMRST to asserted");
-				break;
+
+				/* if RSMRST keep low 4s jump state to T1 */
+				if (++rsmrst_retry < PWRBTN_RETRY_COUNT)
+					break;
+
+				tnext_state = tnow + PWRBTN_STATE_DELAY;
+				pwrbtn_state = PWRBTN_STATE_T1;
 			}
+
+			retry_wait = PWRBTN_DELAY_T1 - (rsmrst_retry * PWRBTN_WAIT_RSMRST);
+			rsmrst_retry = 0;
 
 			tnext_state = tnow + PWRBTN_INITIAL_US;
 			pwrbtn_state = PWRBTN_STATE_WAS_OFF;
@@ -295,6 +313,8 @@ static void state_machine(uint64_t tnow)
 			CPRINTS("PB chipset already off");
 		else
 			set_pwrbtn_to_pch(0, 0);
+
+		tnext_state = tnow + PWRBTN_STATE_DELAY;
 		pwrbtn_state = PWRBTN_STATE_HELD;
 		break;
 	case PWRBTN_STATE_RELEASED:
@@ -367,6 +387,7 @@ static void state_machine(uint64_t tnow)
 		 * true power button state to the PCH. */
 		if (power_button_is_pressed()) {
 			/* User is still holding the power button */
+			tnext_state = tnow + retry_wait;
 			pwrbtn_state = PWRBTN_STATE_HELD;
 		} else {
 			/* Stop stretching the power button press */
@@ -375,8 +396,17 @@ static void state_machine(uint64_t tnow)
 		break;
 	case PWRBTN_STATE_IDLE:
 	case PWRBTN_STATE_HELD:
+		if (!gpio_get_level(GPIO_ON_OFF_FP_L)) {
+			tnext_state = tnow + PWRBTN_DELAY_T2;
+			pwrbtn_state = PWRBTN_STATE_NEED_RESET;
+		}
+		break;
 	case PWRBTN_STATE_EAT_RELEASE:
 		/* Do nothing */
+		break;
+	case PWRBTN_STATE_NEED_RESET:
+		CPRINTS("PB held press 20s execute chip reset");
+		system_reset(SYSTEM_RESET_HARD);
 		break;
 	}
 }
