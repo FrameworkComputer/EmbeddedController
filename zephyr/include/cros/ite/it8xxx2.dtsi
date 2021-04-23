@@ -1,0 +1,65 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-bbram-regions {
+		compatible = "named-bbram-regions";
+
+		scratchpad {
+			offset = <0x08>;
+			size = <0x04>;
+		};
+		saved-reset-flags {
+			offset = <0x00>;
+			size = <0x04>;
+		};
+		wake {
+			offset = <0x08>;
+			size = <0x04>;
+		};
+		pd0 {
+			offset = <0x04>;
+			size = <0x01>;
+		};
+		pd1 {
+			offset = <0x05>;
+			size = <0x01>;
+		};
+		try_slot {
+			offset = <0x0e>;
+			size = <0x01>;
+		};
+		pd2 {
+			offset = <0x06>;
+			size = <0x01>;
+		};
+	};
+
+	soc {
+		bbram: bb-ram@f02200 {
+			#address-cells = <1>;
+			#size-cells = <1>;
+			compatible = "ite,it8xxx2-cros-bbram";
+			status = "okay";
+			reg = <0x00f02200 0xbf>;
+			reg-names = "memory";
+			label = "BBRAM";
+		};
+
+		shi: shi@f03a00 {
+			compatible = "ite,it8xxx2-cros-shi";
+			reg = <0x00f03a00 0x30>;
+			label = "SHI";
+			interrupts = <171 0>;
+			interrupt-parent = <&intc>;
+		};
+
+		fiu0: flash-controller@80000000 {
+			compatible = "ite,it8xxx2-cros-flash";
+			reg = <0x80000000 0x80000>;
+			label = "FLASH";
+		};
+	};
+};
