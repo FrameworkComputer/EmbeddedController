@@ -11,6 +11,7 @@ extern void test_suite_battery(void);
 extern void test_suite_cbi(void);
 extern void test_suite_smart_battery(void);
 extern void test_suite_thermistor(void);
+extern void test_suite_temp_sensor(void);
 
 void test_main(void)
 {
@@ -23,4 +24,5 @@ void test_main(void)
 	test_suite_cbi();
 	test_suite_smart_battery();
 	test_suite_thermistor();
+	test_suite_temp_sensor();
 }
