@@ -571,9 +571,9 @@ defined(CONFIG_HOSTCMD_ESPI)
 
 	if (IT83XX_ECPM_PLLCTRL == EC_PLL_DEEP_DOZE) {
 		clock_ec_pll_ctrl(EC_PLL_DOZE);
-
 		/* update free running timer */
-		c = 0xffffffff - IT83XX_ETWD_ETXCNTOR(LOW_POWER_EXT_TIMER);
+		c = LOW_POWER_TIMER_MASK -
+			IT83XX_ETWD_ETXCNTOR(LOW_POWER_EXT_TIMER);
 		st_us = TIMER_32P768K_CNT_TO_US(c);
 		sleep_mode_t1.val = sleep_mode_t0.val + st_us;
 		__hw_clock_source_set(sleep_mode_t1.le.lo);

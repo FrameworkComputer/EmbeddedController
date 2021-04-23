@@ -19,8 +19,20 @@
 #define FREE_EXT_TIMER_H     EXT_TIMER_4
 #define FAN_CTRL_EXT_TIMER   EXT_TIMER_5
 #define EVENT_EXT_TIMER      EXT_TIMER_6
-#define WDT_EXT_TIMER        EXT_TIMER_7
-#define LOW_POWER_EXT_TIMER  EXT_TIMER_8
+/*
+ * The low power timer is used to continue system time when EC goes into low
+ * power in idle task. Timer 7 is 24bit timer and configured at 32.768khz.
+ * The configuration is enough for continuing system time, because periodic
+ * tick event (interval is 500ms on it8xxx2) will wake EC up.
+ *
+ * IMPORTANT:
+ * If you change low power timer to a non-24bit timer, you also have to change
+ * mask of observation register in clock_sleep_mode_wakeup_isr() or EC will get
+ * wrong system time after resume.
+ */
+#define LOW_POWER_EXT_TIMER  EXT_TIMER_7
+#define LOW_POWER_TIMER_MASK (BIT(24) - 1)
+#define WDT_EXT_TIMER        EXT_TIMER_8
 
 enum ext_timer_clock_source {
 	EXT_PSR_32P768K_HZ = 0,
