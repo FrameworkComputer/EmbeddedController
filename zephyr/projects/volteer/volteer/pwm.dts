@@ -66,6 +66,7 @@
 /* Fan control */
 &pwm5 {
 	status = "okay";
+	drive-open-drain;
 };
 
 /* Side selection LED */
