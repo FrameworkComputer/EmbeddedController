@@ -92,6 +92,7 @@
 
 #define TCPC_REG_FAULT_CTRL        0x1b
 #define TCPC_REG_FAULT_CTRL_VBUS_OVP_FAULT_DIS         BIT(1)
+#define TCPC_REG_FAULT_CTRL_VBUS_OCP_FAULT_DIS         BIT(0)
 
 #define TCPC_REG_POWER_CTRL        0x1c
 #define TCPC_REG_POWER_CTRL_FRS_ENABLE                 BIT(7)
