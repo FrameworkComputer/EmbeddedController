@@ -7,7 +7,7 @@ if SOC_SERIES_NPCX7
 # Zephyr internal stack sizes
 
 config IDLE_STACK_SIZE
-	default 128
+	default 192
 
 config ISR_STACK_SIZE
 	default 1024

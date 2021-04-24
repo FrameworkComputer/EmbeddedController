@@ -12,3 +12,4 @@ zephyr_library_sources_ifdef(CONFIG_CROS_EC           system.c)
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_EXTERNAL_STORAGE
         system_external_storage.c)
+zephyr_library_sources_ifdef(CONFIG_PM_POLICY_APP     power_policy.c)
