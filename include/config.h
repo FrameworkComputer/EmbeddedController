@@ -1784,7 +1784,7 @@
 /* Flash configuration */
 
 /* This enables console commands and higher-level features */
-#define CONFIG_FLASH_CROS
+#define CONFIG_FLASH
 /* This enables chip-specific access functions */
 #define CONFIG_FLASH_PHYSICAL
 #undef CONFIG_FLASH_BANK_SIZE
@@ -5940,8 +5940,8 @@
  */
 #ifdef CONFIG_CHIP_INIT_ROM_REGION
 
-#ifndef CONFIG_FLASH_CROS
-#error CONFIG_CHIP_INIT_ROM_REGION requires CONFIG_FLASH_CROS
+#ifndef CONFIG_FLASH
+#error CONFIG_CHIP_INIT_ROM_REGION requires CONFIG_FLASH
 #endif
 
 #ifndef CONFIG_RO_ROM_RESIDENT_SIZE

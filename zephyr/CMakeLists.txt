@@ -268,7 +268,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_EXTPOWER_GPIO
                                                 "${PLATFORM_EC}/common/extpower_gpio.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN
                                                 "${PLATFORM_EC}/common/fan.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FLASH_CROS
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FLASH
                                                 "${PLATFORM_EC}/common/flash.c"
                                                 "${PLATFORM_EC}/common/spi_flash_reg.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD

@@ -58,7 +58,7 @@
 /* Optional features */
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_DMA_HELP
-#define CONFIG_FLASH_CROS
+#define CONFIG_FLASH
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect

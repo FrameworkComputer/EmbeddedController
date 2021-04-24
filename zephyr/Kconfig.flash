@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_FLASH_CROS
+if PLATFORM_EC_FLASH
 
 config PLATFORM_EC_SPI_FLASH_REGS
 	bool "Enable SPI flash registers"
@@ -110,4 +110,4 @@ config PLATFORM_EC_MAPPED_STORAGE
 	  If this is not defined, the flash driver must implement
 	  flash_physical_read().
 
-endif # PLATFORM_EC_FLASH_CROS
+endif # PLATFORM_EC_FLASH

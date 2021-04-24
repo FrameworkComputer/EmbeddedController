@@ -205,7 +205,7 @@ SECTIONS
 		*(.init.rom)
 		__init_rom_end = .;
 
-#if defined(SECTION_IS_RO) && defined(CONFIG_FLASH_CROS)
+#if defined(SECTION_IS_RO) && defined(CONFIG_FLASH)
 		. = ALIGN(64);
 		KEEP(*(.google))
 #endif
@@ -285,7 +285,7 @@ SECTIONS
 	__flash_used = LOADADDR(.data) + SIZEOF(.data) - FW_OFF(SECTION);
 	__image_size = __flash_used;
 
-#ifdef CONFIG_FLASH_CROS
+#ifdef CONFIG_FLASH
         /*
          * These linker labels are just for analysis and not used in the code.
          */
@@ -313,7 +313,7 @@ SECTIONS
 	       "Not enough space for h2ram section.")
 #endif
 
-#if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH_CROS))
+#if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH))
 	/DISCARD/ : { *(.google) }
 #endif
 

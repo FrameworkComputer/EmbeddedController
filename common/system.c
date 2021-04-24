@@ -176,7 +176,7 @@ int system_is_locked(void)
 	is_locked = 0;
 	return 0;
 
-#elif defined(CONFIG_FLASH_CROS)
+#elif defined(CONFIG_FLASH)
 	/*
 	 * Unlocked if write protect pin deasserted or read-only firmware
 	 * is not protected.
