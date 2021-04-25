@@ -23,18 +23,24 @@
  * Some platforms have a broken SLP_S0_L signal (stuck to 0 in S0)
  * if set, ignore it and only uses SLP_S3_L for the AP state.
  */
-static bool broken_slp_s0;
+static bool broken_slp;
 
 static void ap_deferred(void)
 {
 	/*
-	 * in S3:   SLP_S3_L is 0 and SLP_S0_L is X.
-	 * in S0ix: SLP_S3_L is 1 and SLP_S0_L is 0.
-	 * in S0:   SLP_S3_L is 1 and SLP_S0_L is 1.
+	 * Behavior:
+	 * AP Active  (ex. Intel S0):   SLP_L is 1
+	 * AP Suspend (ex. Intel S0ix): SLP_L is 0
+	 * The alternative SLP_ALT_L should be pulled high at all the times.
+	 *
+	 * Legacy Intel behavior:
+	 * in S3:   SLP_ALT_L is 0 and SLP_L is X.
+	 * in S0ix: SLP_ALT_L is 1 and SLP_L is 0.
+	 * in S0:   SLP_ALT_L is 1 and SLP_L is 1.
 	 * in S5/G3, the FP MCU should not be running.
 	 */
-	int running = gpio_get_level(GPIO_PCH_SLP_S3_L) &&
-		      (gpio_get_level(GPIO_PCH_SLP_S0_L) || broken_slp_s0);
+	int running = gpio_get_level(GPIO_SLP_ALT_L) &&
+		      (gpio_get_level(GPIO_SLP_L) || broken_slp);
 
 	if (running) { /* S0 */
 		disable_sleep(SLEEP_MASK_AP_RUN);
@@ -85,15 +91,15 @@ void board_init_rw(void)
 		 * TODO(b/174695987) once the RW AP firmware has been updated
 		 * on all those machines, remove this workaround.
 		 */
-		broken_slp_s0 = true;
+		broken_slp = true;
 	}
 
 	/* Configure and enable SPI as master for FP sensor */
 	configure_fp_sensor_spi();
 
 	/* Enable interrupt on PCH power signals */
-	gpio_enable_interrupt(GPIO_PCH_SLP_S3_L);
-	gpio_enable_interrupt(GPIO_PCH_SLP_S0_L);
+	gpio_enable_interrupt(GPIO_SLP_ALT_L);
+	gpio_enable_interrupt(GPIO_SLP_L);
 
 	/* enable the SPI slave interface if the PCH is up */
 	hook_call_deferred(&ap_deferred_data, 0);

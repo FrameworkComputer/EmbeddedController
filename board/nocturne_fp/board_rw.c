@@ -26,26 +26,32 @@ struct spi_device_t spi_devices[] = {
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
-/* Allow changing the signal used for S3 sleep depending on the board being
+/* Allow changing the signal used for alt sleep depending on the board being
  * used: http://b/179946521.
  */
-static int gpio_slp_s3_l = GPIO_PCH_SLP_S3_L;
+static int gpio_slp_alt_l = GPIO_SLP_ALT_L;
 
 static void ap_deferred(void)
 {
 	/*
-	 * in S3:   SLP_S3_L is 0 and SLP_S0_L is X.
-	 * in S0ix: SLP_S3_L is X and SLP_S0_L is 0.
-	 * in S0:   SLP_S3_L is 1 and SLP_S0_L is 1.
+	 * Behavior:
+	 * AP Active  (ex. Intel S0):   SLP_L is 1
+	 * AP Suspend (ex. Intel S0ix): SLP_L is 0
+	 * The alternative SLP_ALT_L should be pulled high at all the times.
+	 *
+	 * Legacy Intel behavior:
+	 * in S3:   SLP_ALT_L is 0 and SLP_L is X.
+	 * in S0ix: SLP_ALT_L is X and SLP_L is 0.
+	 * in S0:   SLP_ALT_L is 1 and SLP_L is 1.
 	 * in S5/G3, the FP MCU should not be running.
 	 */
-	int running = gpio_get_level(gpio_slp_s3_l) &&
-		      gpio_get_level(GPIO_PCH_SLP_S0_L);
+	int running = gpio_get_level(gpio_slp_alt_l) &&
+		      gpio_get_level(GPIO_SLP_L);
 
-	if (running) { /* S0 */
+	if (running) { /* AP is S0 */
 		disable_sleep(SLEEP_MASK_AP_RUN);
 		hook_notify(HOOK_CHIPSET_RESUME);
-	} else { /* S0ix/S3 */
+	} else { /* AP is suspend/S0ix/S3 */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 		enable_sleep(SLEEP_MASK_AP_RUN);
 	}
@@ -91,11 +97,11 @@ void board_init_rw(void)
 
 	/* Use SPI select as a proxy for running on the icetower dev board. */
 	if (spi_select == FP_SENSOR_SPI_SELECT_DEVELOPMENT)
-		gpio_slp_s3_l = GPIO_PCH_SLP_S3_L_ALT;
+		gpio_slp_alt_l = GPIO_SLP_ALT_DEV_L;
 
 	/* Enable interrupt on PCH power signals */
-	gpio_enable_interrupt(gpio_slp_s3_l);
-	gpio_enable_interrupt(GPIO_PCH_SLP_S0_L);
+	gpio_enable_interrupt(gpio_slp_alt_l);
+	gpio_enable_interrupt(GPIO_SLP_L);
 	/* enable the SPI slave interface if the PCH is up */
 	hook_call_deferred(&ap_deferred_data, 0);
 }
