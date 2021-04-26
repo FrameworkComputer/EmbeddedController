@@ -2325,8 +2325,15 @@
 /* Command to get the EC uptime (and optionally AP reset stats) */
 #define CONFIG_HOSTCMD_GET_UPTIME_INFO
 
-/* List of host commands whose debug output will be suppressed */
-#undef CONFIG_SUPPRESSED_HOST_COMMANDS
+/*
+ * List of host commands whose debug output will be suppressed
+ * By default remove periodic commands and commands called often (SENSE).
+ */
+#define CONFIG_SUPPRESSED_HOST_COMMANDS \
+	EC_CMD_CONSOLE_SNAPSHOT, EC_CMD_CONSOLE_READ, EC_CMD_USB_PD_DISCOVERY, \
+	EC_CMD_USB_PD_POWER_INFO, EC_CMD_PD_GET_LOG_ENTRY, \
+	EC_CMD_MOTION_SENSE_CMD, EC_CMD_GET_NEXT_EVENT, EC_CMD_GET_UPTIME_INFO
+
 
 /*****************************************************************************/
 

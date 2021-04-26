@@ -49,9 +49,6 @@
 #define CONFIG_VSTORE_SLOT_COUNT 1
 #define CONFIG_SHA256
 
-#define CONFIG_SUPPRESSED_HOST_COMMANDS \
-	EC_CMD_CONSOLE_SNAPSHOT, EC_CMD_CONSOLE_READ, EC_CMD_PD_GET_LOG_ENTRY
-
 /* EC Commands */
 #define CONFIG_CMD_BUTTON
 /* Include CLI command needed to support CCD testing. */

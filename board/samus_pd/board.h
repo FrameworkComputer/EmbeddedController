@@ -15,6 +15,9 @@
 #undef  CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
 
+/* To save space */
+#undef CONFIG_SUPPRESSED_HOST_COMMANDS
+
 /* Optional features */
 #define CONFIG_ADC
 #undef  CONFIG_ADC_WATCHDOG
