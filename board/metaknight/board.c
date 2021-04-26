@@ -638,7 +638,7 @@ struct motion_sensor_t icm426xx_base_gyro = {
 	.port = I2C_PORT_ACCEL,
 	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
 	.default_range = 1000, /* dps */
-	.rot_standard_ref = &base_standard_ref,
+	.rot_standard_ref = &base_icm_ref,
 	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
 	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
 };
