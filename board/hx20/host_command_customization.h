@@ -78,7 +78,8 @@ struct ec_response_ap_reboot_delay {
 #define EC_CMD_ME_CONTROL	0x3E06
 
 enum ec_mecontrol_modes {
-	ME_UNLOCK	= BIT(0),
+	ME_LOCK		= BIT(0),
+	ME_UNLOCK	= BIT(1),
 };
 
 struct ec_params_me_control {

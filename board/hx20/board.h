@@ -765,6 +765,8 @@ void clear_power_s5_up(void);
 
 int pos_get_state(void);
 
+void me_gpio_change(uint32_t flags);
+
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);
 void board_resume_from_deep_sleep(void);

@@ -489,6 +489,8 @@ static void board_chipset_startup(void)
 #ifdef CONFIG_EMI_REGION1
 	hook_call_deferred(&sci_enable_data, 250 * MSEC);
 #endif
+
+
 	if (version > 6)
 		gpio_set_level(GPIO_EN_INVPWR, 1);
 }
@@ -520,7 +522,6 @@ static void board_chipset_resume(void)
 	/*gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);*/
 	gpio_set_level(GPIO_EC_MUTE_L, 1);
 	gpio_set_level(GPIO_CAM_EN, 1);
-	gpio_set_level(GPIO_ME_EN, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 	     MOTION_SENSE_HOOK_PRIO-1);
@@ -533,7 +534,6 @@ static void board_chipset_suspend(void)
 	if (power_get_state() == POWER_S0S3) {
 		gpio_set_level(GPIO_EC_MUTE_L, 0);
 		gpio_set_level(GPIO_CAM_EN, 0);
-		gpio_set_level(GPIO_ME_EN, 0);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,

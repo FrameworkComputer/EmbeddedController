@@ -186,6 +186,8 @@ int board_chipset_power_on(void)
 		return false;
 	}
 
+	me_gpio_change(GPIO_OPEN_DRAIN);
+
 	/* Add 10ms delay between SUSP_VR and RSMRST */
 	msleep(20);
 
@@ -379,12 +381,6 @@ enum power_state power_handle_state(enum power_state state)
 
 			while ((power_get_signals() & IN_PCH_SLP_S4_DEASSERTED) == 0) {
 
-				if (me_change) {
-					CPRINTS("Turn off RSMRST for reset ME mode");
-					gpio_set_level(GPIO_PCH_RSMRST_L, 0);
-					me_change = 0;
-				}
-
 				if (task_wait_event(SECOND) == TASK_EVENT_TIMER) {
 
 					if (++s5_exit_tries > ap_boot_delay) {
@@ -499,6 +495,9 @@ enum power_state power_handle_state(enum power_state state)
 		clear_rtcwake();
 #endif
 		power_button_enable_led(0);
+
+		me_gpio_change(GPIO_ODR_HIGH);
+
         return POWER_S0;
 
 		break;
@@ -509,6 +508,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_PCH_PWROK, 0);
 		gpio_set_level(GPIO_SYS_PWROK, 0);
 		hook_notify(HOOK_CHIPSET_SUSPEND);
+		me_gpio_change(GPIO_ODR_LOW);
 		f75303_set_enabled(0);
 		return POWER_S3;
 		break;
@@ -559,6 +559,24 @@ static enum ec_status set_ap_reboot_delay(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_SET_AP_REBOOT_DELAY, set_ap_reboot_delay,
 			EC_VER_MASK(0));
 
+void me_gpio_change(uint32_t flags)
+{
+	switch (flags) {
+	case GPIO_OPEN_DRAIN:
+		if (me_change & ME_UNLOCK)
+			gpio_set_flags(GPIO_ME_EN, GPIO_PULL_UP | GPIO_ODR_HIGH);
+		else
+			gpio_set_flags(GPIO_ME_EN, GPIO_PULL_DOWN | GPIO_ODR_HIGH);
+		break;
+	case GPIO_ODR_HIGH:
+		gpio_set_flags(GPIO_ME_EN, GPIO_ODR_HIGH);
+		break;
+	case GPIO_ODR_LOW:
+		gpio_set_flags(GPIO_ME_EN, GPIO_ODR_LOW);
+		break;
+	}
+}
+
 static enum ec_status me_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_me_control *p = args->params;
@@ -566,13 +584,13 @@ static enum ec_status me_control(struct host_cmd_handler_args *args)
 	power_s5_up = 1; /* Need to wait S5 signal to auto power up */
 
 	/* CPU change ME mode based on ME_EN while RSMRST rising.
-	 * So, when we received ME control command, we need to turn off RSMRST.
+	 * So, when we received ME control command, we need to change ME_EN when power on.
 	 * ME_EN low = lock.
 	 */
 	if (p->me_mode & ME_UNLOCK)
-		gpio_set_level(GPIO_ME_EN, 1);
+		me_change = ME_UNLOCK;
 	else
-		gpio_set_level(GPIO_ME_EN, 0);
+		me_change = ME_LOCK;
 
 	CPRINTS("Receive ME %s\n", (p->me_mode & ME_UNLOCK) == ME_UNLOCK ? "unlock" : "lock");
 	return EC_SUCCESS;
