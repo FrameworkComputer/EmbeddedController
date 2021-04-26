@@ -483,6 +483,9 @@ static void aux_enable(int enable)
 		CPRINTS("AUX disabled");
 
 	aux_chan_enabled = enable;
+	if (IS_ENABLED(CONFIG_8042_AUX)) {
+		aux_port_state_change(enable);
+	}
 }
 
 static uint8_t read_ctl_ram(uint8_t addr)
@@ -675,12 +678,18 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 		case I8042_CMD_ENABLE:
 			output[out_len++] = I8042_RET_ACK;
 			keystroke_enable(1);
+#ifdef CONFIG_8042_AUX
+			aux_enable(1);
+#endif
 			keyboard_clear_buffer();
 			break;
 
 		case I8042_CMD_RESET_DIS:
 			output[out_len++] = I8042_RET_ACK;
 			keystroke_enable(0);
+#ifdef CONFIG_8042_AUX
+			aux_enable(0);
+#endif
 			reset_rate_and_delay();
 			keyboard_clear_buffer();
 			break;
@@ -797,10 +806,12 @@ static int handle_keyboard_command(uint8_t command, uint8_t *output)
 
 	case I8042_DIS_MOUSE:
 		update_ctl_ram(0, read_ctl_ram(0) | I8042_AUX_DIS);
+		aux_enable(0);
 		break;
 
 	case I8042_ENA_MOUSE:
 		update_ctl_ram(0, read_ctl_ram(0) & ~I8042_AUX_DIS);
+		aux_enable(1);
 		break;
 
 	case I8042_TEST_MOUSE:

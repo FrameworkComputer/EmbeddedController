@@ -584,13 +584,6 @@ void chassis_control_interrupt(enum gpio_signal signal)
 	 */
 }
 
-void touchpad_interrupt(enum gpio_signal signal)
-{
-	/* TODO: implement touchpad process
-	 *
-	 */
-}
-
 struct {
 	enum hx20_board_version version;
 	int thresh_mv;

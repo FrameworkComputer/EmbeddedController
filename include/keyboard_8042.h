@@ -59,6 +59,14 @@ void send_aux_data_to_host_interrupt(uint8_t data);
  */
 void send_aux_data_to_device(uint8_t data);
 
+/**
+ * Called when the PS2 port changes states between
+ * enabled and disabled
+ *
+ * @param enabled	If the port is now enabled or not
+ */
+void aux_port_state_change(uint8_t enabled);
+
 /*
  * This function can help change the keyboard top row layout as presented to the
  * AP. If changing the position of the "Refresh" key from T3, you may also need
