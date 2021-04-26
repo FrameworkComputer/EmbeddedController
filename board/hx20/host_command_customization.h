@@ -86,4 +86,6 @@ struct ec_params_me_control {
 	uint8_t me_mode;
 } __ec_align1;
 
+#define EC_CMD_CUSTOM_HELLO	0x3E07
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */

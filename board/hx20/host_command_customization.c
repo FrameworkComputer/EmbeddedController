@@ -5,6 +5,7 @@
  */
 
 #include "console.h"
+#include "chipset.h"
 #include "gpio.h"
 #include "ec_commands.h"
 #include "host_command.h"
@@ -19,6 +20,7 @@
 #include "timer.h"
 #include "util.h"
 #include "cypress5525.h"
+#include "board.h"
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 /*****************************************************************************/
@@ -96,3 +98,24 @@ static enum ec_status factory_mode(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_FACTORY_MODE, factory_mode,
 			EC_VER_MASK(0));
 #endif
+
+static enum ec_status host_custom_command_hello(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_hello *p = args->params;
+	struct ec_response_hello *r = args->response;
+	uint32_t d = p->in_data;
+
+	/**
+	 * When system boot into OS, host will call this command to verify,
+	 * It means system should in S0 state, and we need to set the resume
+	 * S0ix flag to avoid the wrong state when unknown reason warm boot.
+	 */
+	if (chipset_in_state(CHIPSET_STATE_STANDBY))
+		*host_get_customer_memmap(EC_EMEMAP_ER1_POWER_STATE) |= EC_PS_RESUME_S0ix;
+
+	r->out_data = d + 0x01020304;
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CUSTOM_HELLO, host_custom_command_hello, EC_VER_MASK(0));
