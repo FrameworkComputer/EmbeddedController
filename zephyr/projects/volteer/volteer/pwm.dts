@@ -43,19 +43,19 @@
 /* Green LED */
 &pwm0 {
 	status = "okay";
-	clocks = <&pcc NPCX_CLOCK_BUS_LFCLK NPCX_PWDWN_CTL2 0>;
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 };
 
 /* Red LED */
 &pwm1 {
 	status = "okay";
-	clocks = <&pcc NPCX_CLOCK_BUS_LFCLK NPCX_PWDWN_CTL2 1>;
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 };
 
 /* Blue LED */
 &pwm2 {
 	status = "okay";
-	clocks = <&pcc NPCX_CLOCK_BUS_LFCLK NPCX_PWDWN_CTL2 2>;
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 };
 
 /* Keyboard backlight */
@@ -72,5 +72,5 @@
 /* Side selection LED */
 &pwm7 {
 	status = "okay";
-	clocks = <&pcc NPCX_CLOCK_BUS_LFCLK NPCX_PWDWN_CTL2 7>;
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 };
