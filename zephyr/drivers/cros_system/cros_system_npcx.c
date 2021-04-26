@@ -505,7 +505,7 @@ static int cros_system_npcx_hibernate(const struct device *dev,
 	system_npcx_watchdog_stop();
 
 	/* Enter hibernate mode */
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_SYSTEM_HIBERNATE_PSL)) {
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_HIBERNATE_PSL)) {
 		system_npcx_hibernate_by_psl(dev, seconds, microseconds);
 	} else {
 		system_npcx_hibernate_by_disable_ram(dev, seconds,
