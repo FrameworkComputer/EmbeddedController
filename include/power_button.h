@@ -33,6 +33,12 @@ int power_button_wait_for_release(int timeout_us);
 int power_button_signal_asserted(void);
 
 /**
+ * if true mean PB want to battery cutoff
+ *
+ */
+int power_button_batt_cutoff(void);
+
+/**
  * Interrupt handler for power button.
  *
  * @param signal	Signal which triggered the interrupt.
