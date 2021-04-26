@@ -10,7 +10,7 @@
 
 #define SENSOR_NODE			DT_PATH(motionsense_sensor)
 #define SENSOR_INFO_NODE		DT_PATH(motionsense_sensor_info)
-#define SENSOR_ALT_NODE			DT_PATH(motionsesne_sensor_alt)
+#define SENSOR_ALT_NODE			DT_PATH(motionsense_sensor_alt)
 
 #define SENSOR_ID(id)			DT_CAT(SENSOR_, id)
 
