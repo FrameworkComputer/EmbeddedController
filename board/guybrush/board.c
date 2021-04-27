@@ -165,6 +165,17 @@ __override int board_c1_ps8818_mux_set(const struct usb_mux *me,
 	return rv;
 }
 
+/*
+ * ANX7491(A1) and ANX7451(C1) are on the same i2c bus. Both default
+ * to 0x29 for the USB i2c address. This moves ANX7451(C1) USB i2c
+ * address to 0x2A. ANX7491(A1) will stay at the default 0x29.
+ */
+uint16_t board_anx7451_get_usb_i2c_addr(const struct usb_mux *me)
+{
+	ASSERT(me->usb_port == USBC_PORT_C1);
+	return 0x2a;
+}
+
 void motion_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {

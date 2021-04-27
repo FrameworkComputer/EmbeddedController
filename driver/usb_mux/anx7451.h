@@ -9,6 +9,8 @@
 #ifndef __CROS_EC_USB_MUX_ANX7451_H
 #define __CROS_EC_USB_MUX_ANX7451_H
 
+#include "usb_mux.h"
+
 /* I2C interface addresses */
 #define ANX7451_I2C_ADDR0_FLAGS		0x10
 #define ANX7451_I2C_ADDR1_FLAGS		0x14
@@ -36,6 +38,21 @@
 #define ANX7451_ULP_CFG_MODE_DP_EN	BIT(1)
 #define ANX7451_ULP_CFG_MODE_USB_EN	BIT(0)
 
+/* Register to set USB I2C address, defaults to 0x29 (7-bit) */
+#define ANX7451_REG_USB_I2C_ADDR	0x38
+
+/* ANX7451 AUX FLIP control */
+#define ANX7451_REG_USB_AUX_FLIP_CTRL	0xA4
+#define ANX7451_USB_AUX_FLIP_EN		0x20
+
 extern const struct usb_mux_driver anx7451_usb_mux_driver;
+
+/*
+ * ANX7451 uses a separate i2c address for USB configuration registers.
+ * This address is not controlled by address straps and defaults to 0x29.
+ * This address may conflict with other ANX74* parts. Implement
+ * board_anx7451_get_usb_i2c_addr to set a non-conflicting 7-bit address.
+ */
+uint16_t board_anx7451_get_usb_i2c_addr(const struct usb_mux *me);
 
 #endif /* __CROS_EC_USB_MUX_ANX7451_H */

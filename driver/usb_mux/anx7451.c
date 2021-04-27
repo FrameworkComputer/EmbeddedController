@@ -52,6 +52,7 @@ static int anx7451_wake_up(const struct usb_mux *me)
 	timestamp_t start;
 	int rv;
 	int val;
+	uint16_t usb_i2c_addr = board_anx7451_get_usb_i2c_addr(me);
 
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 		return EC_ERROR_NOT_POWERED;
@@ -72,6 +73,18 @@ static int anx7451_wake_up(const struct usb_mux *me)
 	/* ULTRA_LOW_POWER must always be disabled (Fig 2-2) */
 	RETURN_ERROR(anx7451_write(me, ANX7451_REG_ULTRA_LOW_POWER,
 				   ANX7451_ULTRA_LOW_POWER_DIS));
+
+	/*
+	 * Configure ANX7451 USB I2C address.
+	 * Shift 1 bit to make 7 bit address an 8 bit address.
+	 */
+	RETURN_ERROR(
+		anx7451_write(me, ANX7451_REG_USB_I2C_ADDR, usb_i2c_addr << 1));
+
+	/* b/185276137: Fix ANX7451 upstream AUX FLIP */
+	RETURN_ERROR(i2c_write8(me->i2c_port, usb_i2c_addr,
+				ANX7451_REG_USB_AUX_FLIP_CTRL,
+				ANX7451_USB_AUX_FLIP_EN));
 
 	return EC_SUCCESS;
 }
