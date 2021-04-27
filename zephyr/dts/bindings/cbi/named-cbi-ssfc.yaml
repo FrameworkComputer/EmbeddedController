@@ -1,0 +1,55 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: CBI Second Source Factory Cache (SSFC)
+
+compatible: "named-cbi-ssfc"
+
+child-binding:
+    description:
+        CBI SSFC fields definition.
+        The order of the children in this node define the order
+        of the SSFC bit fields from least significant bit to most
+        significant bit. The total size of all SSFC bit fields
+        must not exceed 32 bits.
+    properties:
+        enum-name:
+            type: string
+            required: true
+            description:
+              Enum values used only for description purposes
+            enum:
+            - BASE_SENSOR
+            - LID_SENSOR
+            - LIGHTBAR
+            - USB_SS_MUX
+        size:
+            type: int
+            required: true
+            description: The size of the field in bits.
+
+# Example:
+#
+# cbi-ssfc {
+#     compatible = "named-cbi-ssfc";
+#
+#     base_sensor {
+#         enum-name = "BASE_SENSOR";
+#         size = <3>;
+#         bmi160 {
+#             compatible = "named-cbi-ssfc-value";
+#             status = "okay";
+#
+#             value = <1>;
+#             devices = <&alt_base_accel &alt_base_gyro>;
+#         };
+#         kx022 {
+#             compatible = "named-cbi-ssfc-value";
+#             status = "okay";
+#
+#             value = <3>;
+#             devices = <&base_accel_kx022>;
+#         };
+#     };
+# };

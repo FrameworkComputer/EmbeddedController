@@ -296,7 +296,7 @@ struct motion_sensor_t motion_sensors[] = {
  * The list of alternate motion sensors that may be used at runtime to replace
  * an entry in the motion_sensors array.
  */
-__maybe_unused static struct motion_sensor_t motion_sensors_alt[] = {
+__maybe_unused struct motion_sensor_t motion_sensors_alt[] = {
 #if DT_NODE_EXISTS(SENSOR_ALT_NODE)
 #include "motionsense_driver/sensor_drv_list.inc"
 #endif

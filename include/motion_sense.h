@@ -262,6 +262,11 @@ extern mutex_t g_sensor_mutex;
 /* Defined at board level. */
 extern struct motion_sensor_t motion_sensors[];
 
+#ifdef CONFIG_ZEPHYR
+/* Defined for alternative drivers (depends on CBI SSFC) */
+extern struct motion_sensor_t motion_sensors_alt[];
+#endif /* CONFIG_ZEPHYR */
+
 #ifdef CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 extern unsigned motion_sensor_count;
 #else
