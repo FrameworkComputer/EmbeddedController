@@ -2570,6 +2570,9 @@
 
 /******************************************************************************/
 
+/* Support CCGXXF I/O expander built inside PD chip */
+#undef CONFIG_IO_EXPANDER_CCGXXF
+
 /* Support IT8801 I/O expander. */
 #undef CONFIG_IO_EXPANDER_IT8801
 

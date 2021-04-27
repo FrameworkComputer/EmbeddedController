@@ -78,6 +78,7 @@ driver-$(CONFIG_CHARGER_SM5803)+=charger/sm5803.o
 include $(_driver_cur_dir)fingerprint/build.mk
 
 # I/O expander
+driver-$(CONFIG_IO_EXPANDER_CCGXXF)+=ioexpander/ccgxxf.o
 driver-$(CONFIG_IO_EXPANDER_IT8801)+=ioexpander/it8801.o
 driver-$(CONFIG_IO_EXPANDER_NCT38XX)+=ioexpander/ioexpander_nct38xx.o
 driver-$(CONFIG_IO_EXPANDER_PCA9534)+=ioexpander/pca9534.o
