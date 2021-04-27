@@ -36,7 +36,6 @@
 #define CONFIG_PWM_KBLIGHT
 
 /* PD / USB-C / PPC */
-#define CONFIG_USB_PD_DEBUG_LEVEL 3
 
 /* Optional console commands */
 #define CONFIG_CMD_FLASH
