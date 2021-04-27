@@ -1016,8 +1016,7 @@ function flash_flashrom() {
 
 		[[ -z "${FLAGS_read}" ]] && dump_fmap -F "${IMG}" > "${L}"
 
-		FLASHROM_OPTIONS="-i EC_RW -i WP_RO -l "${L}" --ignore-fmap"
-		FLASHROM_OPTIONS+=" --fast-verify"
+		FLASHROM_OPTIONS="-i EC_RW -i WP_RO -l "${L}" --noverify-all"
 	fi
 
 	# Generate the correct flashrom command base.
