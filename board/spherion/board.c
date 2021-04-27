@@ -47,7 +47,6 @@
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
@@ -104,15 +103,3 @@ static void kb_backlight_disable(void)
 	gpio_set_level(GPIO_EC_KB_BL_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kb_backlight_disable, HOOK_PRIO_DEFAULT);
-
-#ifdef CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
-enum adc_channel board_get_vbus_adc(int port)
-{
-	if (port == 0)
-		return  ADC_VBUS_C0;
-	if (port == 1)
-		return  ADC_VBUS_C1;
-	CPRINTSUSB("Unknown vbus adc port id: %d", port);
-	return ADC_VBUS_C0;
-}
-#endif /* CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT */

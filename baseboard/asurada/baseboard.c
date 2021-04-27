@@ -60,6 +60,7 @@ static void x_ec_interrupt(enum gpio_signal signal);
 
 #include "gpio_list.h"
 
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
@@ -601,3 +602,15 @@ static void baseboard_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT-1);
+
+#ifdef CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
+enum adc_channel board_get_vbus_adc(int port)
+{
+	if (port == 0)
+		return  ADC_VBUS_C0;
+	if (port == 1)
+		return  ADC_VBUS_C1;
+	CPRINTSUSB("Unknown vbus adc port id: %d", port);
+	return ADC_VBUS_C0;
+}
+#endif /* CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT */
