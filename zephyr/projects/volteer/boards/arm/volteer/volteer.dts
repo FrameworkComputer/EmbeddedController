@@ -282,6 +282,27 @@
 	flash0: flash@10070000 {
 		reg = <0x10070000 0x40000>;
 	};
+
+	/*
+	 * The CBI Second Source Factory Cache (SSFC) layout definition.
+	 * Specific fields values are defined per board.
+	 */
+	cbi-ssfc {
+		compatible = "named-cbi-ssfc";
+
+		cbi_ssfc_base_sensor: base_sensor {
+			enum-name = "BASE_SENSOR";
+			size = <3>;
+		};
+		cbi_ssfc_lid_sensor: lid_sensor {
+			enum-name = "LID_SENSOR";
+			size = <3>;
+		};
+		cbi_ssfc_lightbar: lightbar {
+			enum-name = "LIGHTBAR";
+			size = <2>;
+		};
+	};
 };
 
 &uart1 {

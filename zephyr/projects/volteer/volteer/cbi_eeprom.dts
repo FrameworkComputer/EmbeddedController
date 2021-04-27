@@ -15,3 +15,61 @@
 		wp-gpios = <&gpio_ec_wp_l>;
 	};
 };
+
+&cbi_ssfc_base_sensor {
+	bmi160 {
+		compatible = "named-cbi-ssfc-value";
+		status = "okay";
+
+		value = <1>;
+		devices = <>;
+	};
+	icm426xx {
+		compatible = "named-cbi-ssfc-value";
+		status = "okay";
+
+		value = <2>;
+		devices = <>;
+	};
+	kx022 {
+		compatible = "named-cbi-ssfc-value";
+		status = "okay";
+
+		value = <3>;
+		devices = <>;
+	};
+};
+
+&cbi_ssfc_lid_sensor {
+	bma255 {
+		compatible = "named-cbi-ssfc-value";
+		status = "okay";
+
+		value = <1>;
+		devices = <&lid_accel>;
+	};
+	kx022 {
+		compatible = "named-cbi-ssfc-value";
+		status = "okay";
+
+		value = <2>;
+		devices = <>;
+	};
+};
+
+&cbi_ssfc_lightbar {
+	10_led {
+		compatible = "named-cbi-ssfc-value";
+		status = "okay";
+
+		value = <1>;
+		devices = <>;
+	};
+	12_led {
+		compatible = "named-cbi-ssfc-value";
+		status = "okay";
+
+		value = <2>;
+		devices = <>;
+	};
+};
