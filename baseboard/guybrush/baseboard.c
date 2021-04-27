@@ -845,13 +845,22 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
  */
 void board_pwrbtn_to_pch(int level)
 {
+	timestamp_t start;
+	const uint32_t timeout_rsmrst_rise_us = 30 * MSEC;
+
 	/* Add delay for G3 exit if asserting PWRBTN_L and RSMRST_L is low. */
 	if (!level && !gpio_get_level(GPIO_PCH_RSMRST_L)) {
-		/* Wait G3_TO_PWRBTN_DELAY_MS ms for RSMRST_L to rise */
-		msleep(G3_TO_PWRBTN_DELAY_MS);
+		start = get_time();
+		do {
+			usleep(200);
+			if (gpio_get_level(GPIO_PCH_RSMRST_L))
+				break;
+		} while (time_since32(start) < timeout_rsmrst_rise_us);
 
 		if (!gpio_get_level(GPIO_PCH_RSMRST_L))
 			ccprints("Error pwrbtn: RSMRST_L still low");
+
+		msleep(G3_TO_PWRBTN_DELAY_MS);
 	}
 	gpio_set_level(GPIO_PCH_PWRBTN_L, level);
 }
