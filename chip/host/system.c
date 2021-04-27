@@ -219,7 +219,7 @@ int system_set_scratchpad(uint32_t value)
 {
 	FILE *f = get_persistent_storage("scratchpad", "w");
 
-	fprintf(f, "%lu", value);
+	fprintf(f, "%u", value);
 	release_persistent_storage(f);
 
 	return EC_SUCCESS;
