@@ -9430,7 +9430,7 @@ static int cmd_pchg_update(int port, uint32_t address, uint32_t version,
 	struct ec_response_pchg_update *r = ec_inbuf;
 	FILE *fp;
 	size_t len, total;
-	int progress;
+	int progress = 0;
 	int rv;
 
 	fp = fopen(filename, "rb");
