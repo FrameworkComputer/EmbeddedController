@@ -198,7 +198,7 @@ void board_hibernate(void)
 	 * Put all charger ICs present into low power mode before entering
 	 * z-state.
 	 */
-	raa489000_hibernate(0, true);
+	raa489000_hibernate(0, false);
 }
 
 __override void board_pulse_entering_rw(void)
