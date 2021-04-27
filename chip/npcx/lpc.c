@@ -39,6 +39,9 @@
 #define PMC_ACPI     PM_CHAN_1
 #define PMC_HOST_CMD PM_CHAN_2
 
+#define PORT80_MAX_BUF_SIZE    16
+static uint16_t port80_buf[PORT80_MAX_BUF_SIZE];
+
 static struct	host_packet lpc_packet;
 static struct	host_cmd_handler_args host_cmd_args;
 static uint8_t	host_cmd_flags;         /* Flags from host command */
@@ -576,18 +579,49 @@ DECLARE_IRQ(NPCX_IRQ_PM_CHAN_OBE, lpc_pmc_obe_interrupt, 4);
 
 void lpc_port80_interrupt(void)
 {
-	/* Send port 80 data to UART continuously if FIFO is not empty */
-	while (IS_BIT_SET(NPCX_DP80STS, 6))
-		port_80_write(NPCX_DP80BUF);
+	uint8_t i;
+	uint8_t count = 0;
+	uint32_t code = 0;
+
+	/* buffer Port80 data to the local buffer if FIFO is not empty */
+	while (IS_BIT_SET(NPCX_DP80STS, NPCX_DP80STS_FNE))
+		port80_buf[count++] = NPCX_DP80BUF;
+
+	for (i = 0; i < count; i++) {
+		uint8_t offset;
+		uint32_t buf_data;
+
+		buf_data = port80_buf[i];
+		offset = GET_FIELD(buf_data, NPCX_DP80BUF_OFFS_FIELD);
+		code |= (buf_data & 0xFF) << (8 * offset);
+
+		if (i == count - 1) {
+			port_80_write(code);
+			break;
+		}
+
+		/* peek the offset of the next byte */
+		buf_data = port80_buf[i + 1];
+		offset = GET_FIELD(buf_data, NPCX_DP80BUF_OFFS_FIELD);
+		/*
+		 * If the peeked next byte's offset is 0 means it is the start
+		 * of the new code. Pass the current code to Port80
+		 * common layer.
+		 */
+		if (offset == 0) {
+			port_80_write(code);
+			code = 0;
+		}
+	}
 
 	/* If FIFO is overflow */
-	if (IS_BIT_SET(NPCX_DP80STS, 7)) {
-		SET_BIT(NPCX_DP80STS, 7);
+	if (IS_BIT_SET(NPCX_DP80STS, NPCX_DP80STS_FOR)) {
+		SET_BIT(NPCX_DP80STS, NPCX_DP80STS_FOR);
 		CPRINTS("DP80 FIFO Overflow!");
 	}
 
 	/* Clear pending bit of host writing */
-	SET_BIT(NPCX_DP80STS, 5);
+	SET_BIT(NPCX_DP80STS, NPCX_DP80STS_FWR);
 }
 DECLARE_IRQ(NPCX_IRQ_PORT80, lpc_port80_interrupt, 4);
 
@@ -657,6 +691,15 @@ void host_register_init(void)
 	/* WIN2 as MEMMAP on the IO:0x900 */
 	sib_write_reg(SIO_OFFSET, 0xF9, 0x09);
 	sib_write_reg(SIO_OFFSET, 0xF8, 0x00);
+
+	/*
+	 * eSPI allows sending 4 bytes of Port80 code in a single PUT_IOWR_SHORT
+	 * transaction. When setting OFS0_SEL~OFS3_SEL in DPAR1 register to 1,
+	 * EC hardware will put those 4 bytes of Port80 code to DP80BUF FIFO.
+	 * This is only supported when CHIP_FAMILY >= NPCX9.
+	 */
+	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI))
+		sib_write_reg(SIO_OFFSET, 0xFD, 0x0F);
 	/* enable SHM */
 	sib_write_reg(SIO_OFFSET, 0x30, 0x01);
 

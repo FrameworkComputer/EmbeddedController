@@ -794,6 +794,7 @@ enum {
 #define NPCX_PWIN_SIZEI_WPROT            14
 #define NPCX_CSEM2                       6
 #define NPCX_CSEM3                       7
+#define NPCX_DP80BUF_OFFS_FIELD          FIELD(8, 3)
 #define NPCX_DP80STS_FWR                 5
 #define NPCX_DP80STS_FNE                 6
 #define NPCX_DP80STS_FOR                 7
