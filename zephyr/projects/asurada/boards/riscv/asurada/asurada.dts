@@ -21,6 +21,83 @@
 
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
+
+		power {
+			i2c-port = <&i2c0>;
+			enum-name = "I2C_PORT_POWER";
+			label = "POWER";
+			config {
+				frequency = <100>;
+				scl {
+					enum-name = "GPIO_I2C_B_SCL";
+				};
+				sda {
+					enum-name = "GPIO_I2C_B_SDA";
+				};
+			};
+		};
+		battery {
+			i2c-port = <&i2c0>;
+			enum-name = "I2C_PORT_BATTERY";
+			label = "BATTERY";
+		};
+		eeprom {
+			i2c-port = <&i2c0>;
+			enum-name = "I2C_PORT_EEPROM";
+			label = "EEPROM";
+		};
+		charger {
+			i2c-port = <&i2c0>;
+			enum-name = "I2C_PORT_CHARGER";
+			label = "CHARGER";
+		};
+		i2c_sensor: sensor {
+			i2c-port = <&i2c1>;
+			enum-name = "I2C_PORT_SENSOR";
+			label = "SENSOR";
+			config {
+				frequency = <400>;
+				scl {
+					enum-name = "GPIO_I2C_C_SCL";
+				};
+				sda {
+					enum-name = "GPIO_I2C_C_SDA";
+				};
+			};
+		};
+		i2c-accel {
+			i2c-port = <&i2c1>;
+			enum-name = "I2C_PORT_ACCEL";
+			label = "ACCEL";
+		};
+		usb-c0 {
+			i2c-port = <&i2c2>;
+			enum-name = "I2C_PORT_USB_C0";
+			label = "USB_C0";
+			config {
+				frequency = <400>;
+				scl {
+					enum-name = "GPIO_I2C_F_SCL";
+				};
+				sda {
+					enum-name = "GPIO_I2C_F_SDA";
+				};
+			};
+		};
+		usb-c1 {
+			i2c-port = <&i2c4>;
+			enum-name = "I2C_PORT_USB_C1";
+			label = "USB_C1";
+			config {
+				frequency = <400>;
+				scl {
+					enum-name = "GPIO_I2C_E_SCL";
+				};
+				sda {
+					enum-name = "GPIO_I2C_E_SDA";
+				};
+			};
+		};
 	};
 };
 
@@ -28,4 +105,28 @@
 	status = "okay";
 	current-speed = <115200>;
 	clock-frequency = <1804800>;
+};
+
+&i2c0 {
+	/* EC_I2C_PWR_CBI */
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c1 {
+	/* EC_I2C_SENSOR */
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c2 {
+	/* EC_I2C_USB_C0 */
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c4{
+	/* EC_I2C_USB_C1 */
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
 };

@@ -77,14 +77,14 @@ properties:
       - GPIO_ENABLE_BACKLIGHT
       - GPIO_ENTERING_RW
       - GPIO_HIBERNATE_L
-      - GPIO_I2C_A_SCL
-      - GPIO_I2C_A_SDA
       - GPIO_I2C_B_SCL
       - GPIO_I2C_B_SDA
       - GPIO_I2C_C_SCL
       - GPIO_I2C_C_SDA
       - GPIO_I2C_E_SCL
       - GPIO_I2C_E_SDA
+      - GPIO_I2C_F_SCL
+      - GPIO_I2C_F_SDA
       - GPIO_KBD_KSO2
       - GPIO_LID_ACCEL_INT_L
       - GPIO_LID_OPEN

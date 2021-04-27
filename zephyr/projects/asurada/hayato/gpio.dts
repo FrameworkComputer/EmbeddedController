@@ -197,33 +197,23 @@
 			enum-name = "GPIO_EN_5V_USM";
 			label = "EN_5V_USM";
 		};
-		i2c_a_scl {
-			gpios = <&gpiob 3 GPIO_INPUT>;
-			enum-name = "GPIO_I2C_A_SCL";
-			label = "I2C_A_SCL";
-		};
-		i2c_a_sda {
-			gpios = <&gpiob 4 GPIO_INPUT>;
-			enum-name = "GPIO_I2C_A_SDA";
-			label = "I2C_A_SDA";
-		};
 		i2c_b_scl {
-			gpios = <&gpioc 1 GPIO_INPUT>;
+			gpios = <&gpiob 3 GPIO_INPUT>;
 			enum-name = "GPIO_I2C_B_SCL";
 			label = "I2C_B_SCL";
 		};
 		i2c_b_sda {
-			gpios = <&gpioc 2 GPIO_INPUT>;
+			gpios = <&gpiob 4 GPIO_INPUT>;
 			enum-name = "GPIO_I2C_B_SDA";
 			label = "I2C_B_SDA";
 		};
 		i2c_c_scl {
-			gpios = <&gpiof 6 GPIO_INPUT>;
+			gpios = <&gpioc 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_I2C_C_SCL";
 			label = "I2C_C_SCL";
 		};
 		i2c_c_sda {
-			gpios = <&gpiof 7 GPIO_INPUT>;
+			gpios = <&gpioc 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_I2C_C_SDA";
 			label = "I2C_C_SDA";
 		};
@@ -236,6 +226,16 @@
 			gpios = <&gpioe 7 GPIO_INPUT>;
 			enum-name = "GPIO_I2C_E_SDA";
 			label = "I2C_E_SDA";
+		};
+		i2c_f_scl {
+			gpios = <&gpiof 6 GPIO_INPUT>;
+			enum-name = "GPIO_I2C_F_SCL";
+			label = "I2C_F_SCL";
+		};
+		i2c_f_sda {
+			gpios = <&gpiof 7 GPIO_INPUT>;
+			enum-name = "GPIO_I2C_F_SDA";
+			label = "I2C_F_SDA";
 		};
 		ec_x_gpio1 {
 			gpios = <&gpioh 4 GPIO_OUT_LOW>;

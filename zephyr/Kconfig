@@ -346,6 +346,7 @@ config PLATFORM_EC_I2C
 	bool "I2C shim"
 	default n if ARCH_POSIX
 	default y
+	imply I2C
 	help
 	  Enable compilation of the EC i2c module. Once enabled, it will be
 	  possible to make calls using the old platform/ec i2c APIs defined
