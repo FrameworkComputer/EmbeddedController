@@ -2,6 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include "adc.h"
 #include "charge_manager.h"
 #include "chipset.h"
 #include "timer.h"
@@ -156,7 +157,7 @@ int pd_snk_is_vbus_provided(int port)
 	 * (b:181203590#comment20) TODO(yllin): use
 	 *  PD_VSINK_DISCONNECT_PD for non-5V case.
 	 */
-	return charge_manager_get_vbus_voltage(port) >=
+	return adc_read_channel(board_get_vbus_adc(port)) >=
 	       PD_V_SINK_DISCONNECT_MAX;
 }
 
