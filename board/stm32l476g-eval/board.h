@@ -50,7 +50,7 @@
 
 #ifndef __ASSEMBLER__
 
-#undef CONFIG_FLASH
+#undef CONFIG_FLASH_CROS
 #undef CONFIG_FLASH_PHYSICAL
 
 /* Timer selection */
