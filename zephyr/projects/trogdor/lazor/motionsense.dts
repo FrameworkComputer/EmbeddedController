@@ -109,31 +109,6 @@
 			};
 		};
 
-		alt_lid_accel {
-			compatible = "cros-ec,kx022";
-			status = "okay";
-			label = "Lid Accel";
-			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
-			location = "MOTIONSENSE_LOC_LID";
-			mutex = <&lid_mutex>;
-			port = <&i2c_sensor>;
-			rot-standard-ref = <&lid_rot_ref>;
-			drv-data = <&kx022_data>;
-			alternate-for = <&lid_accel>;
-			configs {
-				compatible =
-					"cros-ec,motionsense-sensor-config";
-				ec-s0 {
-					label = "SENSOR_CONFIG_EC_S0";
-					odr = <(10000 | ROUND_UP_FLAG)>;
-				};
-				ec-s3 {
-					label = "SENSOR_CONFIG_EC_S3";
-					odr = <(10000 | ROUND_UP_FLAG)>;
-				};
-			};
-		};
-
 		base_accel: base-accel {
 			compatible = "cros-ec,bmi160-accel";
 			status = "okay";
@@ -170,6 +145,37 @@
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
 			drv-data = <&bmi160_data>;
+		};
+	};
+
+	/*
+	 * List of alternative motion sensors that creates
+	 * motion_sensors_alt array.
+	 */
+	motionsense-sensor-alt {
+		alt_lid_accel {
+			compatible = "cros-ec,kx022";
+			status = "okay";
+			label = "Lid Accel";
+			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref>;
+			drv-data = <&kx022_data>;
+			alternate-for = <&lid_accel>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					label = "SENSOR_CONFIG_EC_S0";
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					label = "SENSOR_CONFIG_EC_S3";
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
 		};
 	};
 
