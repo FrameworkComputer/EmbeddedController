@@ -490,8 +490,16 @@ static int ps8xxx_get_chip_info(int port, int live,
 	if (rv != EC_SUCCESS)
 		return rv;
 
+	if (chip_info == NULL)
+		return EC_SUCCESS;
+
 	if (!live) {
-		product_id[port] = board_get_ps8xxx_product_id(port);
+		uint16_t pid;
+
+		pid = board_get_ps8xxx_product_id(port);
+		if (pid == 0)
+			return EC_ERROR_UNKNOWN;
+		product_id[port] = pid;
 		chip_info->vendor_id = PS8XXX_VENDOR_ID;
 		chip_info->product_id = product_id[port];
 	}
