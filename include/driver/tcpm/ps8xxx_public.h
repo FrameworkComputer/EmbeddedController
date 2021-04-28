@@ -35,7 +35,7 @@ struct usb_mux;
  * This may be a PS8XXX firmware issue, Parade is still trying.
  * https://partnerissuetracker.corp.google.com/issues/185202064
  */
-#define PS8XXX_VCONN_TURN_OFF_DELAY_US 5
+#define PS8XXX_VCONN_TURN_OFF_DELAY_US 10
 
 /*
  * Delay between releasing reset and the first I2C read
