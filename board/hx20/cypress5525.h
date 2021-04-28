@@ -40,6 +40,8 @@
 
 #define CYP5525_DM_CONTROL_REG(x) \
 	(0x1000 + (x * 0x1000))
+#define CYP5525_SELECT_SOURCE_PDO_REG(x) \
+	(0x1004 + (x * 0x1000))
 #define CYP5525_SELECT_SINK_PDO_REG(x) \
 	(0x1005 + (x * 0x1000))
 #define CYP5525_PD_CONTROL_REG(x) \

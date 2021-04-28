@@ -376,6 +376,31 @@ int cyp5525_setup(int controller)
 }
 
 /*
+ * This enables setting up to 6 source PDOs
+ * we only use 1 source PDO 5V3A.
+ */
+void cypd_set_source_pdo(int controller, int port, uint32_t * pdos, int num_pdos, bool unconstrained_power)
+{
+	uint32_t data[7] = {0};
+	int i;
+	int enabled_mask = 0;
+	if (unconstrained_power) {
+		enabled_mask |= BIT(7);
+	}
+
+	data[0] = 0x53524350; /* signature = SRCP */
+
+	for(i = 0; i < MIN(6, num_pdos); i++) {
+		data[i+1] = pdos[i];
+		enabled_mask |= 1<<i;
+	}
+
+	cypd_write_reg_block(controller,CYP5525_WRITE_DATA_MEMORY_REG(port, 0),
+								(void *)data, ARRAY_SIZE(data) * sizeof(uint32_t));
+	cypd_write_reg8(controller, CYP5525_SELECT_SOURCE_PDO_REG(port), enabled_mask);
+
+}
+/*
  * send a message using DM_CONTROL to port partner
  * pd_header is using chromium PD header with upper bits defining SOP type
  * pd30 is set for batttery status messages
@@ -1418,24 +1443,28 @@ static int cmd_cypd_get_status(int argc, char **argv)
 							data & 0x20 ? "Ra" : "NoRa",
 							current_level[(data >> 6) & 0x03]);
 				cypd_read_reg_block(i, CYP5525_CURRENT_RDO_REG(p), data4, 4);
-				CPRINTS("             RDO : Current:%dmA MaxCurrent%dmA",
+				CPRINTS("             RDO : Current:%dmA MaxCurrent%dmA 0x%08x",
 						((data4[0] + (data4[1]<<8)) & 0x3FF)*10,
-						(((data4[1]>>2) + (data4[2]<<6)) & 0x3FF)*10);
+						(((data4[1]>>2) + (data4[2]<<6)) & 0x3FF)*10,
+						*(uint32_t *)data4);
+
+				cypd_read_reg_block(i, CYP5525_CURRENT_PDO_REG(p), data4, 4);
+				CPRINTS("             PDO : MaxCurrent:%dmA Voltage%dmA 0x%08x",
+						((data4[0] + (data4[1]<<8)) & 0x3FF)*10,
+						(((data4[1]>>2) + (data4[2]<<6)) & 0x3FF)*50,
+						*(uint32_t *)data4);
 				cypd_read_reg8(i, CYP5525_TYPE_C_VOLTAGE_REG(p), &data);
 				CPRINTS("  TYPE_C_VOLTAGE : %dmV", data*100);
 				cypd_read_reg16(i, CYP5525_PORT_INTR_STATUS_REG(p), &data);
 				CPRINTS(" INTR_STATUS_REG0: 0x%02x", data);
 				cypd_read_reg16(i, CYP5525_PORT_INTR_STATUS_REG(p)+2, &data);
 				CPRINTS(" INTR_STATUS_REG1: 0x%02x", data);
+				/* Flush console to avoid truncating output */
+				cflush();
 			}
 		}
 
-	} else { /* Otherwise print them all */
-
 	}
-
-	/* Flush console to avoid truncating output */
-	cflush();
 
 	return EC_SUCCESS;
 }
@@ -1449,7 +1478,7 @@ static int cmd_cypd_control(int argc, char **argv)
 	int i, enable;
 	char *e;
 
-	if (argc == 3) {
+	if (argc >= 3) {
 		i = strtoi(argv[2], &e, 0);
 		if (*e || i >= PD_CHIP_COUNT)
 			return EC_ERROR_PARAM2;
@@ -1488,9 +1517,21 @@ static int cmd_cypd_control(int argc, char **argv)
 		} else if (!strncmp(argv[1], "verbose", 7)) {
 			verbose_msg_logging = (i != 0);
 			CPRINTS("verbose=%d", verbose_msg_logging);
+		} else if (!strncmp(argv[1], "setpdo", 6)) {
+			uint32_t pdo;
+			if (argc < 4) {
+				return EC_ERROR_PARAM3;
+			}
+			pdo = strtoul(argv[3], &e, 0);
+			if (*e)
+				return EC_ERROR_PARAM2;
+			cypd_set_source_pdo(i, 0, &pdo, 1, 0);
+			cypd_set_source_pdo(i, 1, &pdo, 1, 0);
 		} else {
 			return EC_ERROR_PARAM1;
 		}
+	} else {
+		return EC_ERROR_PARAM_COUNT;
 	}
 	return EC_SUCCESS;
 }
