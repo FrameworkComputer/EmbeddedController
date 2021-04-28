@@ -100,7 +100,7 @@ static void hpd_to_dp_attention(void)
 				(evt != hpd_low), /* HPD_HI|LOW */
 				0, /* request exit DP */
 				0, /* request exit USB */
-				0, /* MF pref */
+				dock_get_mf_preference(), /* MF pref */
 				1, /* enabled */
 				0, /* power low */
 				0x2);
