@@ -400,9 +400,9 @@ static int svdm_response_svids(int port, uint32_t *payload)
 
 const uint32_t vdo_dp_modes[1] =  {
 	VDO_MODE_DP(/* Must support C and E. D is required for 2 lanes */
-		    MODE_DP_PIN_C | MODE_DP_PIN_D | MODE_DP_PIN_D,
+		    MODE_DP_PIN_C | MODE_DP_PIN_D | MODE_DP_PIN_E,
 		    0, /* DFP pin cfg supported */
-		    1,		   /* no usb2.0	signalling in AMode */
+		    0,		   /* usb2.0 signalling in AMode may be req */
 		    CABLE_RECEPTACLE,	   /* its a receptacle */
 		    MODE_DP_V13,   /* DPv1.3 Support, no Gen2 */
 		    MODE_DP_SNK)   /* Its a sink only */
