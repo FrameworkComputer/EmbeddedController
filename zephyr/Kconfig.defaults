@@ -1,0 +1,10 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Zephyr Kconfig overrides that applies to all platforms.
+
+# Disable timeslicing, it's compiled in by default and can be enabled at
+# runtime but not used in Zephyr EC.
+config TIMESLICING
+	default n
