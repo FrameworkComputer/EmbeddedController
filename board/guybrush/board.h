@@ -49,6 +49,12 @@
 /* Motion sensor interrupt */
 void motion_interrupt(enum gpio_signal signal);
 
+/* Battery Types */
+enum battery_type {
+	BATTERY_AP18F4M,
+	BATTERY_TYPE_COUNT,
+};
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */
