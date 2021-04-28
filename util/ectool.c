@@ -153,7 +153,7 @@ const char help_str[] =
 	"      Retrieve the finger image as a PGM image\n"
 	"  fpinfo\n"
 	"      Prints information about the Fingerprint sensor\n"
-	"  fpmode [capture|deepsleep|fingerdown|fingerup]\n"
+	"  fpmode [capture|deepsleep|fingerdown|fingerup|maintenance]\n"
 	"      Configure/Read the fingerprint sensor current mode\n"
 	"  fpseed\n"
 	"      Sets the value of the TPM seed.\n"
@@ -2035,6 +2035,8 @@ int cmd_fp_mode(int argc, char *argv[])
 			mode = FP_MODE_RESET_SENSOR;
 		else if (!strncmp(argv[i], "reset", 5))
 			mode = 0;
+		else if (!strncmp(argv[i], "maintenance", 11))
+			mode |= FP_MODE_SENSOR_MAINTENANCE;
 		else if (!strncmp(argv[i], "capture", 7))
 			mode |= FP_MODE_CAPTURE;
 		/* capture types */
