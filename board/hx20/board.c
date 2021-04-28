@@ -444,6 +444,7 @@ DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 static void board_init(void)
 {
 	int version = board_get_version();
+
 	CPRINTS("MEC1701 HOOK_INIT - called board_init");
 
 	if (version > 6)
@@ -1086,3 +1087,20 @@ void fingerprint_power_button_interrupt(enum gpio_signal signal)
 		hook_call_deferred(&fingerprint_power_button_change_deferred_data,
 				50);
 }
+
+static int cmd_bbram(int argc, char **argv)
+{
+	uint8_t bbram;
+	uint8_t ram_addr;
+	char *e;
+
+	if (argc > 1) {
+		ram_addr = strtoi(argv[1], &e, 0);
+		system_get_bbram(ram_addr, &bbram);
+		CPRINTF("BBram%d: %d", ram_addr, bbram);
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(bbram, cmd_bbram,
+			"[bbram address]",
+			" get bbram data with hibdata_index ");
