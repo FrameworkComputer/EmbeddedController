@@ -12,19 +12,6 @@
 #include "task.h"
 #include "timer.h"
 
-/*
- * Deferred thread is always the lowest priority, and preemptive if
- * available.
- */
-#ifdef CONFIG_PREEMPT_ENABLED
-#define DEFERRED_THREAD_PRIORITY (CONFIG_NUM_PREEMPT_PRIORITIES - 1)
-#else
-#define DEFERRED_THREAD_PRIORITY -1
-#endif
-
-static K_THREAD_STACK_DEFINE(deferred_thread, CONFIG_DEFERRED_STACK_SIZE);
-static struct k_work_q deferred_work_queue;
-
 static void deferred_work_queue_handler(struct k_work *work)
 {
 	struct deferred_data *data =
@@ -32,16 +19,6 @@ static void deferred_work_queue_handler(struct k_work *work)
 
 	data->routine();
 }
-
-static int init_deferred_work_queue(const struct device *unused)
-{
-	ARG_UNUSED(unused);
-	k_work_q_start(&deferred_work_queue, deferred_thread,
-		       CONFIG_DEFERRED_STACK_SIZE, DEFERRED_THREAD_PRIORITY);
-	k_thread_name_set(&deferred_work_queue.thread, "ec_hooks");
-	return 0;
-}
-SYS_INIT(init_deferred_work_queue, APPLICATION, 0);
 
 void zephyr_shim_setup_deferred(const struct deferred_data *data)
 {
@@ -59,12 +36,13 @@ int hook_call_deferred(const struct deferred_data *data, int us)
 	if (us == -1) {
 		k_delayed_work_cancel(&non_const->delayed_work);
 	} else if (us >= 0) {
-		rv = k_delayed_work_submit_to_queue(&deferred_work_queue,
-						    &non_const->delayed_work,
-						    K_USEC(us));
+		rv = k_delayed_work_submit(&non_const->delayed_work,
+					   K_USEC(us));
 		if (rv < 0)
-			cprints(CC_HOOK,
-				"Warning: deferred call not submitted.");
+			cprintf(CC_HOOK,
+				"Warning: deferred call not submitted, "
+				"routine=0x%08x, err=%d",
+				non_const->routine, rv);
 	} else {
 		return EC_ERROR_PARAM2;
 	}

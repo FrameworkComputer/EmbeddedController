@@ -16,12 +16,9 @@ config SHELL_STACK_SIZE
 	default 1536
 
 config SYSTEM_WORKQUEUE_STACK_SIZE
-	default 288
+	default 704
 
 # Chromium EC stack sizes
-
-config DEFERRED_STACK_SIZE
-	default 704
 
 config TASK_CHARGER_STACK_SIZE
 	default 704
