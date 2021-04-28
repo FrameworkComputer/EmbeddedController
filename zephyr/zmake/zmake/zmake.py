@@ -18,6 +18,7 @@ import zmake.multiproc
 import zmake.project
 import zmake.toolchains as toolchains
 import zmake.util as util
+import zmake.version
 
 
 def ninja_log_level_override(line, default_log_level):
@@ -218,6 +219,10 @@ class Zmake:
         module_config = zmake.modules.setup_module_symlinks(
             build_dir / 'modules', module_paths)
 
+        # Symlink the Zephyr base into the build directory so it can
+        # be used in the build phase.
+        util.update_symlink(zephyr_base, build_dir / 'zephyr_base')
+
         dts_overlay_config = project.find_dts_overlays(module_paths)
 
         if not toolchain:
@@ -297,6 +302,11 @@ class Zmake:
 
         project = zmake.project.Project(build_dir / 'project')
 
+        # Compute the version string.
+        version_string = zmake.version.get_version_string(
+            project, build_dir / 'zephyr_base',
+            zmake.modules.locate_from_directory(build_dir / 'modules'))
+
         for build_name, build_config in project.iter_builds():
             with self.jobserver.get_job():
                 dirs[build_name] = build_dir / 'build-{}'.format(build_name)
@@ -340,7 +350,8 @@ class Zmake:
         if output_files_out is None:
             output_files_out = []
         for output_file, output_name in project.packer.pack_firmware(
-                packer_work_dir, self.jobserver, **dirs):
+                packer_work_dir, self.jobserver, version_string=version_string,
+                **dirs):
             shutil.copy2(output_file, output_dir / output_name)
             self.logger.info('Output file \'%r\' created.', output_file)
             output_files_out.append(output_file)

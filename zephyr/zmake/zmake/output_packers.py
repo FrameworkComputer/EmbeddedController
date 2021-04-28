@@ -49,7 +49,7 @@ def _write_dts_file(dts_file, config_header, output_bin, ro_filename, rw_filenam
             RO_FRID {{
               type = "text";
               size = <32>;
-              text = "RO_FRID (not implemented)";
+              text-label = "version";
             }};
           }};
         }};
@@ -64,7 +64,7 @@ def _write_dts_file(dts_file, config_header, output_bin, ro_filename, rw_filenam
           RW_FWID {{
             type = "text";
             size = <32>;
-            text = "RW_FWID (not implemented)";
+            text-label = "version";
           }};
         }};
       }};
@@ -89,7 +89,7 @@ class BasePacker:
         """
         yield 'singleimage', build_config.BuildConfig()
 
-    def pack_firmware(self, work_dir, jobclient):
+    def pack_firmware(self, work_dir, jobclient, version_string=""):
         """Pack a firmware image.
 
         Config names from the configs generator are passed as keyword
@@ -100,6 +100,8 @@ class BasePacker:
             work_dir: A directory to write outputs and temporary files
             into.
             jobclient: A JobClient object to use.
+            version_string: The version string, which may end up in
+               certain parts of the outputs.
 
         Yields:
             2-tuples of the path of each file in the work_dir (or any
@@ -111,13 +113,15 @@ class BasePacker:
 
 class ElfPacker(BasePacker):
     """Raw proxy for ELF output of a single build."""
-    def pack_firmware(self, work_dir, jobclient, singleimage):
+    def pack_firmware(self, work_dir, jobclient, singleimage,
+                      version_string=""):
         yield singleimage / 'zephyr' / 'zephyr.elf', 'zephyr.elf'
 
 
 class RawBinPacker(BasePacker):
     """Raw proxy for zephyr.bin output of a single build."""
-    def pack_firmware(self, work_dir, jobclient, singleimage):
+    def pack_firmware(self, work_dir, jobclient, singleimage,
+                      version_string=""):
         yield singleimage / 'zephyr' / 'zephyr.bin', 'zephyr.bin'
 
 
@@ -136,7 +140,7 @@ class NpcxPacker(BasePacker):
         yield 'ro', build_config.BuildConfig(kconfig_defs={'CONFIG_CROS_EC_RO': 'y'})
         yield 'rw', build_config.BuildConfig(kconfig_defs={'CONFIG_CROS_EC_RW': 'y'})
 
-    def pack_firmware(self, work_dir, jobclient, ro, rw):
+    def pack_firmware(self, work_dir, jobclient, ro, rw, version_string=""):
         """Pack the 'raw' binary.
 
         This combines the RO and RW images as specified in the Kconfig file for
@@ -156,6 +160,7 @@ class NpcxPacker(BasePacker):
             jobclient: The client used to run subprocesses.
             ro: Directory containing the RO image build.
             rw: Directory containing the RW image build.
+            version_string: The version string to use in FRID/FWID.
 
         Returns:
             Tuple mapping the resulting .bin file to the output filename.
@@ -172,8 +177,15 @@ class NpcxPacker(BasePacker):
                 ro_filename=ro / 'zephyr' / 'zephyr.packed.bin',
                 rw_filename=rw / 'zephyr' / 'zephyr.bin')
 
+        # Version in FRID/FWID can be at most 31 bytes long (32, minus
+        # one for null character).
+        if len(version_string) > 31:
+            version_string = version_string[:31]
+
         proc = jobclient.popen(
-            ['binman', '-v', '5', 'build', '-d', dts_file_path, '-m'],
+            ['binman', '-v', '5', 'build',
+             '-a', 'version={}'.format(version_string),
+             '-d', dts_file_path, '-m'],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             encoding='utf-8')
