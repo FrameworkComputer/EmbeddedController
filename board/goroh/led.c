@@ -8,7 +8,6 @@
 #include "led_common.h"
 #include "led_onoff_states.h"
 #include "chipset.h"
-#include "driver/bc12/mt6360.h"
 
 const int led_charge_lvl_1 = 5;
 const int led_charge_lvl_2 = 95;
@@ -48,72 +47,17 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 void led_set_color_battery(enum ec_led_colors color)
 {
-	mt6360_led_set_brightness(MT6360_LED_RGB2, 50);
-	mt6360_led_set_brightness(MT6360_LED_RGB3, 50);
-
-	switch (color) {
-	case EC_LED_COLOR_AMBER:
-		mt6360_led_enable(MT6360_LED_RGB2, 0);
-		mt6360_led_enable(MT6360_LED_RGB3, 1);
-		break;
-	case EC_LED_COLOR_WHITE:
-		mt6360_led_enable(MT6360_LED_RGB2, 1);
-		mt6360_led_enable(MT6360_LED_RGB3, 0);
-		break;
-	default: /* LED_OFF and other unsupported colors */
-		mt6360_led_enable(MT6360_LED_RGB2, 0);
-		mt6360_led_enable(MT6360_LED_RGB3, 0);
-		break;
-	}
 }
 
 void led_set_color_power(enum ec_led_colors color)
 {
-	mt6360_led_set_brightness(MT6360_LED_RGB1, 1);
-	mt6360_led_enable(MT6360_LED_RGB1, color == EC_LED_COLOR_WHITE);
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
-	if (led_id == EC_LED_ID_BATTERY_LED) {
-		brightness_range[EC_LED_COLOR_AMBER] =
-				MT6360_LED_BRIGHTNESS_MAX;
-		brightness_range[EC_LED_COLOR_WHITE] =
-				MT6360_LED_BRIGHTNESS_MAX;
-	} else if (led_id == EC_LED_ID_POWER_LED) {
-		brightness_range[EC_LED_COLOR_WHITE] =
-				MT6360_LED_BRIGHTNESS_MAX;
-	}
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	if (led_id == EC_LED_ID_BATTERY_LED) {
-		if (brightness[EC_LED_COLOR_AMBER] != 0)
-			led_set_color_battery(EC_LED_COLOR_AMBER);
-		else if (brightness[EC_LED_COLOR_WHITE] != 0)
-			led_set_color_battery(EC_LED_COLOR_WHITE);
-		else
-			led_set_color_battery(LED_OFF);
-	} else if (led_id == EC_LED_ID_POWER_LED) {
-		if (brightness[EC_LED_COLOR_WHITE] != 0)
-			led_set_color_power(EC_LED_COLOR_WHITE);
-		else
-			led_set_color_power(LED_OFF);
-	}
-
 	return EC_SUCCESS;
-}
-
-__override enum led_states board_led_get_state(enum led_states desired_state)
-{
-	if (desired_state == STATE_BATTERY_ERROR) {
-		if (chipset_in_state(CHIPSET_STATE_ON))
-			return desired_state;
-		else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
-			return STATE_DISCHARGE_S3;
-		else
-			return STATE_DISCHARGE_S5;
-	}
-	return desired_state;
 }

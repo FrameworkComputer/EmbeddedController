@@ -21,10 +21,6 @@
  */
 #define CONFIG_IT83XX_RESET_PD_CONTRACT_IN_BRAM
 
-/* BC12 */
-/* TODO(b/159583342): remove after rev0 deprecated */
-#define CONFIG_MT6360_BC12_GPIO
-
 /* LED */
 #define CONFIG_LED_POWER_LED
 #define CONFIG_LED_ONOFF_STATES
@@ -89,12 +85,10 @@ enum sensor_id {
 };
 
 enum adc_channel {
-	ADC_VBUS,                /* ADC 0 */
-	ADC_BOARD_ID_0,          /* ADC 1 */
-	ADC_BOARD_ID_1,          /* ADC 2 */
-	ADC_CHARGER_AMON_R,      /* ADC 3 */
-	ADC_VBUS_C1,             /* ADC 5 */
-	ADC_CHARGER_PMON,        /* ADC 6 */
+	ADC_BOARD_ID_0,     /* ADC 1 */
+	ADC_TEMP_VDD_CPU,   /* ADC 2 */
+	ADC_TEMP_VDD_GPU,   /* ADC 3 */
+	ADC_TEMP_CHARGER,   /* ADC 5 */
 
 	/* Number of ADC channels */
 	ADC_CH_COUNT,
@@ -103,7 +97,8 @@ enum adc_channel {
 enum pwm_channel {
 	PWM_CH_LED1,
 	PWM_CH_LED2,
-	PWM_CH_LED3,
+	PWM_CH_FAN,
+	PWM_CH_KB_BL,
 	PWM_CH_COUNT,
 };
 
