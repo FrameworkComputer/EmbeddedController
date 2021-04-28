@@ -503,11 +503,15 @@ static int isl9241_ramp_get_current_limit(int chgnum)
  * When fully charged in a low-power state, the ISL9241 may get stuck
  * in CCM. Toggle learning mode for 50 ms to enter DCM and save power.
  * This is a workaround provided by Renesas. See b/183771327.
+ * Note: the charger_get_state() returns the last known charge value,
+ * so need to check the battery is not disconnected when the system
+ * comes from the battery cutoff.
  */
 static void isl9241_restart_charge_voltage_when_full(void)
 {
 	if (!chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
-	    && charge_get_state() == PWR_STATE_CHARGE_NEAR_FULL) {
+	    && charge_get_state() == PWR_STATE_CHARGE_NEAR_FULL
+	    && battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED) {
 		charger_discharge_on_ac(1);
 		msleep(50);
 		charger_discharge_on_ac(0);
