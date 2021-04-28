@@ -25,16 +25,6 @@ FLAGS_HELP="Usage: ${0} [flags] ec.bin"
 FLAGS "${@}" || exit 1
 eval set -- "${FLAGS_ARGV}"
 
-if [[ "$#" -eq 0 ]] && [[ "${FLAGS_hello}" -eq "${FLAGS_FALSE}" ]]; then
-  echo "Missing filename"
-  flags_help
-  exit 1
-fi
-
-# print out canonical path to differentiate between /usr/local/bin and
-# /usr/bin installs
-readlink -f "$0"
-
 readonly CROS_EC_SPI_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-spi"
 
 readonly CROS_EC_UART_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-uart"
@@ -219,14 +209,14 @@ flash_fp_mcu_stm32() {
       # Read from FPMCU to file
       if [[ -e "${file}" ]]; then
         echo "Output file already exists: ${file}"
-        exit 1
+        return 1
       fi
       stm32mon_flags+=" -r ${file}"
     else
       # Write to FPMCU from file
       if [[ ! -f "${file}" ]]; then
         echo "Invalid image file: ${file}"
-        exit 1
+        return 1
       fi
       stm32mon_flags+=" -e -w ${file}"
     fi
@@ -238,13 +228,13 @@ flash_fp_mcu_stm32() {
   if [[ "${transport}" == "UART" ]]; then
     if ! deviceid="$(get_uartid)"; then
       echo "Unable to find FP sensor UART device: ${CROS_EC_UART_MODALIAS_STR}"
-      exit 1
+      return 1
     fi
   else
 
     if ! deviceid="$(get_spiid)"; then
       echo "Unable to find FP sensor SPI device: ${CROS_EC_SPI_MODALIAS_STR}"
-      exit 1
+      return 1
     fi
   fi
 
@@ -367,7 +357,7 @@ flash_fp_mcu_stm32() {
   fi
 
   if [[ "${cmd_exit_status}" -ne 0 ]]; then
-    exit 1
+    return 1
   fi
 
   # Inform user to reboot if transport is UART.
@@ -497,36 +487,51 @@ config_guybrush() {
   readonly GPIO_PWREN=-1
 }
 
-# The "platform name" corresponds to the underlying board (reference design)
-# that we're running on (not the FPMCU or sensor). At the moment all of the
-# reference designs use the same GPIOs. If for some reason a design differs in
-# the future, we will want to add a nested check in the config_<platform_name>
-# function. Doing it in this manner allows us to reduce the number of
-# configurations that we have to maintain (and reduces the amount of testing
-# if we're only updating a specific config_<platform_name>).
-if ! PLATFORM_NAME="$(get_platform_name)"; then
-  echo "Failed to get platform name"
-  exit 1
-fi
-readonly PLATFORM_NAME
+main() {
+  if [[ "$#" -eq 0 ]] && [[ "${FLAGS_hello}" -eq "${FLAGS_FALSE}" ]]; then
+    echo "Missing filename"
+    flags_help
+    exit 1
+  fi
 
-echo "Using config for ${PLATFORM_NAME}"
+  # print out canonical path to differentiate between /usr/local/bin and
+  # /usr/bin installs
+  readlink -f "$0"
 
-# Check that the config function exists
-if [[ "$(type -t "config_${PLATFORM_NAME}")" != "function" ]]; then
-  echo "No config for platform ${PLATFORM_NAME}"
-  exit 1
-fi
+  # The "platform name" corresponds to the underlying board (reference design)
+  # that we're running on (not the FPMCU or sensor). At the moment all of the
+  # reference designs use the same GPIOs. If for some reason a design differs in
+  # the future, we will want to add a nested check in the config_<platform_name>
+  # function. Doing it in this manner allows us to reduce the number of
+  # configurations that we have to maintain (and reduces the amount of testing
+  # if we're only updating a specific config_<platform_name>).
+  if ! PLATFORM_NAME="$(get_platform_name)"; then
+    echo "Failed to get platform name"
+    exit 1
+  fi
+  readonly PLATFORM_NAME
 
-if ! "config_${PLATFORM_NAME}"; then
-  echo "Configuration failed for platform ${PLATFORM_NAME}"
-  exit 1
-fi
+  echo "Using config for ${PLATFORM_NAME}"
 
-flash_fp_mcu_stm32 \
-  "${TRANSPORT}"   \
-  "${DEVICE}"      \
-  "${GPIO_NRST}"   \
-  "${GPIO_BOOT0}"  \
-  "${GPIO_PWREN}"  \
-  "${1}"
+  # Check that the config function exists
+  if [[ "$(type -t "config_${PLATFORM_NAME}")" != "function" ]]; then
+    echo "No config for platform ${PLATFORM_NAME}"
+    exit 1
+  fi
+
+  if ! "config_${PLATFORM_NAME}"; then
+    echo "Configuration failed for platform ${PLATFORM_NAME}"
+    exit 1
+  fi
+
+  flash_fp_mcu_stm32 \
+    "${TRANSPORT}"   \
+    "${DEVICE}"      \
+    "${GPIO_NRST}"   \
+    "${GPIO_BOOT0}"  \
+    "${GPIO_PWREN}"  \
+    "${1}"
+  exit $?
+}
+
+main "$@"
