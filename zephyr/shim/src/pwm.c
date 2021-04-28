@@ -85,7 +85,10 @@ static int init_pwms(const struct device *unused)
 
 	return rv;
 }
-SYS_INIT(init_pwms, PRE_KERNEL_1, 50);
+#if CONFIG_PLATFORM_EC_PWM_INIT_PRIORITY <= CONFIG_KERNEL_INIT_PRIORITY_DEVICE
+#error "PWM init priority must be > KERNEL_INIT_PRIORITY_DEVICE"
+#endif
+SYS_INIT(init_pwms, PRE_KERNEL_1, CONFIG_PLATFORM_EC_PWM_INIT_PRIORITY);
 
 static struct pwm_config* pwm_lookup(enum pwm_channel ch)
 {

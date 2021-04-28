@@ -15,3 +15,12 @@ config PLATFORM_EC_GPIO_INIT_PRIORITY
   help
     The initialization priority of the GPIO module. This should always happen
     after the gpio drivers are initialized.
+
+config PLATFORM_EC_PWM_INIT_PRIORITY
+	int "Initialization priority of the PWM module"
+	depends on PLATFORM_EC_PWM
+	default 51
+	help
+	  Sets the initialization priority of the PWM module. This MUST be a
+	  value greater than the PWM driver's initialization priority which
+	  currently defaults to KERNEL_INIT_PRIORITY_DEVICE.
