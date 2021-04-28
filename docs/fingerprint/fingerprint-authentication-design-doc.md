@@ -208,7 +208,7 @@ every time the TPM is cleared, for example if someone attempts to do a
 "[ccd open]" to disable the hardware WP.
 
 The following is a summary of the mechanism, see the specific design doc
-[“TPM-seed for Fingerprint MCU”] for details.
+[TPM Seed for Fingerprint MCU] for details.
 
 The TPM already holds a "[system key]" `Cros_Sys_Key` in NVRAM space that is
 used to derive the encryption key of the stateful partition. That "system key"
@@ -752,7 +752,7 @@ The log file is `/var/log/cros_fp.log`.
 [UMA]: http://go/uma
 [Windows]: https://www.microsoft.com/en-us/windows/windows-hello
 [wrappers functions]: https://chrome-internal.googlesource.com/chromeos/platform/ec-private/+/9ebb3f10c611afff695f679aaeed1a35551a116b/fpc_sensor_pal.c#52
-[“TPM-seed for Fingerprint MCU”]: http://go/bio_tpm_seed
+[TPM Seed for Fingerprint MCU]: ../fingerprint/fingerprint-tpm-seed.md
 
 <!-- Images -->
 
