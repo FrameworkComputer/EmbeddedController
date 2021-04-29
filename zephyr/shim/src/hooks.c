@@ -39,9 +39,9 @@ int hook_call_deferred(const struct deferred_data *data, int us)
 		rv = k_delayed_work_submit(&non_const->delayed_work,
 					   K_USEC(us));
 		if (rv < 0)
-			cprintf(CC_HOOK,
+			cprints(CC_HOOK,
 				"Warning: deferred call not submitted, "
-				"routine=0x%08x, err=%d",
+				"routine=0x%pP, err=%d",
 				non_const->routine, rv);
 	} else {
 		return EC_ERROR_PARAM2;
