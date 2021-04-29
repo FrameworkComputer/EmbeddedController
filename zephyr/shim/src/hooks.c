@@ -12,37 +12,20 @@
 #include "task.h"
 #include "timer.h"
 
-static void deferred_work_queue_handler(struct k_work *work)
-{
-	struct deferred_data *data =
-		CONTAINER_OF(work, struct deferred_data, delayed_work.work);
-
-	data->routine();
-}
-
-void zephyr_shim_setup_deferred(const struct deferred_data *data)
-{
-	struct deferred_data *non_const = (struct deferred_data *)data;
-
-	k_delayed_work_init(&non_const->delayed_work,
-			    deferred_work_queue_handler);
-}
-
 int hook_call_deferred(const struct deferred_data *data, int us)
 {
-	struct deferred_data *non_const = (struct deferred_data *)data;
+	struct k_delayed_work *work = data->delayed_work;
 	int rv = 0;
 
 	if (us == -1) {
-		k_delayed_work_cancel(&non_const->delayed_work);
+		k_delayed_work_cancel(work);
 	} else if (us >= 0) {
-		rv = k_delayed_work_submit(&non_const->delayed_work,
-					   K_USEC(us));
+		rv = k_delayed_work_submit(work, K_USEC(us));
 		if (rv < 0)
 			cprints(CC_HOOK,
 				"Warning: deferred call not submitted, "
-				"routine=0x%pP, err=%d",
-				non_const->routine, rv);
+				"deferred_data=0x%pP, err=%d",
+				data, rv);
 	} else {
 		return EC_ERROR_PARAM2;
 	}
