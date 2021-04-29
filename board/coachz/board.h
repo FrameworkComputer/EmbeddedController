@@ -18,15 +18,6 @@
 #define CONFIG_GESTURE_DETECTION_MASK BIT(CONFIG_BODY_DETECTION_SENSOR)
 #define CONFIG_GESTURE_HOST_DETECTION
 
-/* TODO(waihong): Remove the following bringup features */
-#define CONFIG_BRINGUP
-#define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands. */
-#define CONFIG_USB_PD_DEBUG_LEVEL 3
-#define CONFIG_CMD_GPIO_EXTENDED
-#define CONFIG_CMD_POWERINDEBUG
-#define CONFIG_I2C_DEBUG
-#define CONFIG_DEVICE_EVENT
-
 #define CONFIG_BUTTON_TRIGGERED_RECOVERY
 
 /* Internal SPI flash on NPCX7 */
@@ -71,6 +62,7 @@
 /* WLC pins */
 #define GPIO_PCHG_P0 GPIO_WLC_IRQ_CONN
 #define CONFIG_PERIPHERAL_CHARGER
+#define CONFIG_DEVICE_EVENT
 #define CONFIG_CTN730
 
 #ifndef __ASSEMBLER__
