@@ -168,6 +168,12 @@ get_platform_name() {
     return 1
   fi
 
+  # Tests are also run on modified images, like hatch-arc-r or hatch-borealis.
+  # These devices still have fingerprint and are expected to pass tests.
+  # See b/186697064.
+  # We remove any suffix starting at the first '-'.
+  platform_name="${platform_name%%-*}"
+
   echo "${platform_name}"
 }
 
