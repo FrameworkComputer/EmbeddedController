@@ -127,19 +127,19 @@ static void hash_next_chunk(size_t size)
 
 static void vboot_hash_all_chunks(void)
 {
-	uint64_t prev_watchdog;
+#ifdef CONFIG_VBOOT_HASH_RELOAD_WATCHDOG
+	uint64_t prev_watchdog = get_time().val;
 
-	if (IS_ENABLED(CONFIG_VBOOT_HASH_RELOAD_WATCHDOG)) {
-		prev_watchdog = get_time().val;
-		watchdog_reload();
-	}
+	watchdog_reload();
+#endif
 
 	do {
 		size_t size = MIN(CHUNK_SIZE, data_size - curr_pos);
 		hash_next_chunk(size);
 		curr_pos += size;
 
-		if (IS_ENABLED(CONFIG_VBOOT_HASH_RELOAD_WATCHDOG)) {
+#ifdef CONFIG_VBOOT_HASH_RELOAD_WATCHDOG
+		{
 			uint64_t cur_time = get_time().val;
 
 			if ((cur_time - prev_watchdog) >
@@ -148,6 +148,7 @@ static void vboot_hash_all_chunks(void)
 				prev_watchdog = cur_time;
 			}
 		}
+#endif
 	} while (curr_pos < data_size);
 
 	hash = SHA256_final(&ctx);
