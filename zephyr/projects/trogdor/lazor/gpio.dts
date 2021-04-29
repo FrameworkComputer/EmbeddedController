@@ -118,7 +118,7 @@
 		};
 		gpio_accel_gyro_int_l: accel_gyro_int_l {
 			gpios = <&gpioa 0 GPIO_INPUT>;
-			enum-name = "GPIO_EC_IMU_INT_L";
+			enum-name = "GPIO_ACCEL_GYRO_INT_L";
 			label = "ACCEL_GYRO_INT_L";
 		};
 		da9313_gpio0 {
@@ -168,6 +168,7 @@
 		};
 		hibernate_l {
 			gpios = <&gpio5 2 GPIO_OUT_HIGH>;
+			enum-name = "GPIO_HIBERNATE_L";
 			label = "HIBERNATE_L";
 		};
 		switchcap_on {
@@ -201,6 +202,7 @@
 		};
 		lid_accel_int_l {
 			gpios = <&gpio5 6 GPIO_INPUT>;
+			enum-name = "GPIO_LID_ACCEL_INT_L";
 			label = "LID_ACCEL_INT_L";
 		};
 		trackpad_int_gate {

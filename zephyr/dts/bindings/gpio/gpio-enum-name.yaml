@@ -5,6 +5,7 @@ properties:
     description:
       Enum used in code.
     enum:
+      - GPIO_ACCEL_GYRO_INT_L
       - GPIO_AC_PRESENT
       - GPIO_ALS_RGB_INT_ODL
       - GPIO_AP_EC_WARM_RST_REQ
@@ -75,6 +76,7 @@ properties:
       - GPIO_EN_USB_A_5V
       - GPIO_ENABLE_BACKLIGHT
       - GPIO_ENTERING_RW
+      - GPIO_HIBERNATE_L
       - GPIO_I2C_A_SCL
       - GPIO_I2C_A_SDA
       - GPIO_I2C_B_SCL
