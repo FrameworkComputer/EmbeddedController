@@ -96,7 +96,7 @@ void board_hibernate(void)
 	 * Charger IC need to be put into their "low power mode" before
 	 * entering the Z-state.
 	 */
-	raa489000_hibernate(0, true);
+	raa489000_hibernate(0, false);
 }
 
 /* Must come after other header files and interrupt handler declarations */
