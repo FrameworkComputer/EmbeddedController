@@ -16,12 +16,6 @@ const enum gpio_signal hibernate_wake_pins[] = {
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
-void board_hibernate_late(void)
-{
-	/* Set the hibernate GPIO to turn off the rails */
-	gpio_set_level(GPIO_HIBERNATE_L, 0);
-}
-
 int board_allow_i2c_passthru(int port)
 {
 	return (port == I2C_PORT_VIRTUAL_BATTERY);
