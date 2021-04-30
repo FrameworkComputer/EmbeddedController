@@ -78,6 +78,11 @@ static void device_set_enabled_events(uint32_t mask)
 	device_enabled_events = mask;
 }
 
+void device_enable_event(enum ec_device_event event)
+{
+	atomic_or(&device_enabled_events, EC_DEVICE_EVENT_MASK(event));
+}
+
 /*****************************************************************************/
 /* Console commands */
 

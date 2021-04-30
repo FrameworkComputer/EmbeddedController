@@ -43,4 +43,11 @@ static inline void device_set_single_event(int event)
 	device_set_events(EC_DEVICE_EVENT_MASK(event));
 }
 
+/**
+ * Enable device event.
+ *
+ * @param event         Event to enable (EC_DEVICE_EVENT_*)
+ */
+void device_enable_event(enum ec_device_event event);
+
 #endif  /* __CROS_EC_DEVICE_EVENT_H */
