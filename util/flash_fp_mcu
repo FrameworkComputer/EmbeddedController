@@ -177,14 +177,6 @@ get_platform_name() {
   echo "${platform_name}"
 }
 
-check_gpio_chip_exists() {
-  local gpiochip="$1"
-  if [[ ! -e "/sys/class/gpio/${gpiochip}" ]]; then
-    echo "Cannot find GPIO chip: ${gpiochip}"
-    exit 1
-  fi
-}
-
 flash_fp_mcu_stm32() {
   local transport="${1}"
   local device="${2}"
@@ -377,8 +369,6 @@ flash_fp_mcu_stm32() {
 }
 
 config_hatch() {
-  check_gpio_chip_exists "gpiochip200"
-
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev1.1"
   # See
@@ -386,6 +376,7 @@ config_hatch() {
   # for pin name to number mapping.
   # Examine `cat /sys/kernel/debug/pinctrl/INT34BB:00/gpio-ranges` on a hatch
   # device to determine gpio number from pin number.
+  readonly GPIO_CHIP="gpiochip200"
   # FPMCU RST_ODL is on GPP_A12 = 200 + 12 = 212
   readonly GPIO_NRST=212
   # FPMCU BOOT0 is on GPP_A22 = 200 + 22 = 222
@@ -396,11 +387,10 @@ config_hatch() {
 
 
 config_nami() {
-  check_gpio_chip_exists "gpiochip360"
-
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev32765.0"
 
+  readonly GPIO_CHIP="gpiochip360"
   # FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
   readonly GPIO_NRST=417
   # FPMCU BOOT0 is on GPP_D5 = 360 + 77 = 437
@@ -410,11 +400,10 @@ config_nami() {
 }
 
 config_nocturne() {
-  check_gpio_chip_exists "gpiochip360"
-
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev32765.0"
 
+  readonly GPIO_CHIP="gpiochip360"
   # FPMCU RST_ODL is on GPP_C10 = 360 + 58 = 418
   readonly GPIO_NRST=418
   # FPMCU BOOT0 is on GPP_C8 = 360 + 56 = 416
@@ -424,13 +413,12 @@ config_nocturne() {
 }
 
 config_strongbad() {
-  check_gpio_chip_exists "gpiochip392"
-
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev10.0"
   # TODO(b/179533783): Fix modalias on strongbad and remove this bypass.
   readonly DEVICEID="spi10.0"
 
+  readonly GPIO_CHIP="gpiochip392"
   # FPMCU RST_ODL is $(gpiofind FP_RST_L) is gpiochip0 22
   readonly GPIO_NRST=$((392 + $(gpiofind FP_RST_L|cut -f2 -d" ")))
   # FPMCU BOOT0 is $(gpiofind FPMCU_BOOT0) is gpiochip0 10
@@ -441,8 +429,6 @@ config_strongbad() {
 }
 
 config_volteer() {
-  check_gpio_chip_exists "gpiochip152"
-
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev1.0"
 
@@ -454,6 +440,7 @@ config_volteer() {
   # the pin number is 194. From the gpio-ranges, the gpio value is
   # 408 + (194-171) = 431
 
+  readonly GPIO_CHIP="gpiochip152"
   # FPMCU RST_ODL is on GPP_C23 = 408 + (194 - 171) = 431
   readonly GPIO_NRST=431
   # FPMCU BOOT0 is on GPP_C22 = 408 + (193 - 171) = 430
@@ -463,11 +450,10 @@ config_volteer() {
 }
 
 config_zork() {
-  check_gpio_chip_exists "gpiochip256"
-
   readonly TRANSPORT="UART"
   readonly DEVICE="/dev/ttyS1"
 
+  readonly GPIO_CHIP="gpiochip256"
   # FPMCU RST_ODL is on AGPIO 11 = 256 + 11 = 267
   readonly GPIO_NRST=267
   # FPMCU BOOT0 is on AGPIO 69 = 256 + 69 = 325
@@ -478,12 +464,11 @@ config_zork() {
 }
 
 config_guybrush() {
-  check_gpio_chip_exists "gpiochip256"
-
   readonly TRANSPORT="UART"
 
   readonly DEVICE="/dev/ttyS1"
 
+  readonly GPIO_CHIP="gpiochip256"
   # FPMCU RST_ODL is on AGPIO 11 = 256 + 11 = 267
   readonly GPIO_NRST=267
   # FPMCU BOOT0 is on AGPIO 144 = 256 + 144 = 400
@@ -527,6 +512,12 @@ main() {
 
   if ! "config_${PLATFORM_NAME}"; then
     echo "Configuration failed for platform ${PLATFORM_NAME}"
+    exit 1
+  fi
+
+  # Check that the gpiochip exists
+  if [[ ! -e "/sys/class/gpio/${GPIO_CHIP}" ]]; then
+    echo "Cannot find GPIO chip: ${GPIO_CHIP}"
     exit 1
   fi
 
