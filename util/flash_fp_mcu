@@ -21,8 +21,16 @@ DEFINE_integer 'baudrate' "${STM32MON_SERIAL_BAUDRATE}" 'Specify UART baudrate' 
 DEFINE_boolean 'hello' "${FLAGS_FALSE}" 'Only ping the bootloader' 'H'
 FLAGS_HELP="Usage: ${0} [flags] ec.bin"
 
+#        EXIT_SUCCESS=0
+#        EXIT_FAILURE=1
+#        EXIT_BASHBUILTIN=2
+readonly EXIT_ARGUMENT=3
+readonly EXIT_CONFIG=4
+readonly EXIT_PRECONDITION=5
+readonly EXIT_RUNTIME=6
+
 # Process commandline flags
-FLAGS "${@}" || exit 1
+FLAGS "${@}" || exit "${EXIT_ARGUMENT}"
 eval set -- "${FLAGS_ARGV}"
 
 readonly CROS_EC_SPI_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-spi"
@@ -33,12 +41,12 @@ check_hardware_write_protect_disabled() {
   local hardware_write_protect_state
   if ! hardware_write_protect_state="$(crossystem wpsw_cur)"; then
     echo "Failed to get hardware write protect status" >&2
-    exit 1
+    exit "${EXIT_PRECONDITION}"
   fi
   if [[ "${hardware_write_protect_state}" != "0" ]]; then
     echo "Please make sure hardware write protect is disabled."
     echo "See https://www.chromium.org/chromium-os/firmware-porting-guide/firmware-ec-write-protection"
-    exit 1
+    exit "${EXIT_PRECONDITION}"
   fi
 }
 
@@ -99,7 +107,7 @@ gpio() {
         ;;
       *)
         echo "Invalid gpio command: ${cmd}" >&2
-        exit 1
+        exit "${EXIT_RUNTIME}"
         ;;
     esac
   done
@@ -114,7 +122,7 @@ warn_gpio() {
   local value
   if ! value="$(gpio get "${signal}")"; then
     echo "Error fetching gpio value ${signal}" >&2
-    exit 1
+    exit "${EXIT_RUNTIME}"
   fi
 
   if [[ "${value}" != "${expected_value}" ]]; then
@@ -207,14 +215,14 @@ flash_fp_mcu_stm32() {
       # Read from FPMCU to file
       if [[ -e "${file}" ]]; then
         echo "Output file already exists: ${file}"
-        return 1
+        return "${EXIT_PRECONDITION}"
       fi
       stm32mon_flags+=" -r ${file}"
     else
       # Write to FPMCU from file
       if [[ ! -f "${file}" ]]; then
         echo "Invalid image file: ${file}"
-        return 1
+        return "${EXIT_PRECONDITION}"
       fi
       stm32mon_flags+=" -e -w ${file}"
     fi
@@ -226,13 +234,13 @@ flash_fp_mcu_stm32() {
   if [[ "${transport}" == "UART" ]]; then
     if ! deviceid="$(get_uartid)"; then
       echo "Unable to find FP sensor UART device: ${CROS_EC_UART_MODALIAS_STR}"
-      return 1
+      return "${EXIT_PRECONDITION}"
     fi
   else
 
     if ! deviceid="$(get_spiid)"; then
       echo "Unable to find FP sensor SPI device: ${CROS_EC_SPI_MODALIAS_STR}"
-      return 1
+      return "${EXIT_PRECONDITION}"
     fi
   fi
 
@@ -355,7 +363,7 @@ flash_fp_mcu_stm32() {
   fi
 
   if [[ "${cmd_exit_status}" -ne 0 ]]; then
-    return 1
+    return "${EXIT_RUNTIME}"
   fi
 
   # Inform user to reboot if transport is UART.
@@ -482,7 +490,7 @@ main() {
   if [[ "$#" -eq 0 ]] && [[ "${FLAGS_hello}" -eq "${FLAGS_FALSE}" ]]; then
     echo "Missing filename"
     flags_help
-    exit 1
+    exit "${EXIT_ARGUMENT}"
   fi
 
   # print out canonical path to differentiate between /usr/local/bin and
@@ -498,7 +506,7 @@ main() {
   # if we're only updating a specific config_<platform_name>).
   if ! PLATFORM_NAME="$(get_platform_name)"; then
     echo "Failed to get platform name"
-    exit 1
+    exit "${EXIT_CONFIG}"
   fi
   readonly PLATFORM_NAME
 
@@ -507,18 +515,18 @@ main() {
   # Check that the config function exists
   if [[ "$(type -t "config_${PLATFORM_NAME}")" != "function" ]]; then
     echo "No config for platform ${PLATFORM_NAME}"
-    exit 1
+    exit "${EXIT_CONFIG}"
   fi
 
   if ! "config_${PLATFORM_NAME}"; then
     echo "Configuration failed for platform ${PLATFORM_NAME}"
-    exit 1
+    exit "${EXIT_CONFIG}"
   fi
 
   # Check that the gpiochip exists
   if [[ ! -e "/sys/class/gpio/${GPIO_CHIP}" ]]; then
     echo "Cannot find GPIO chip: ${GPIO_CHIP}"
-    exit 1
+    exit "${EXIT_CONFIG}"
   fi
 
   flash_fp_mcu_stm32 \
