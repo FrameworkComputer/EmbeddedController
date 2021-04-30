@@ -1830,6 +1830,7 @@ int cmd_rwsig(int argc, char **argv)
 }
 
 enum sysinfo_fields {
+	SYSINFO_FIELD_NONE = 0,
 	SYSINFO_FIELD_RESET_FLAGS = BIT(0),
 	SYSINFO_FIELD_CURRENT_IMAGE = BIT(1),
 	SYSINFO_FIELD_FLAGS = BIT(2),
@@ -1854,7 +1855,7 @@ static int sysinfo(struct ec_response_sysinfo *info)
 int cmd_sysinfo(int argc, char **argv)
 {
 	struct ec_response_sysinfo r;
-	enum sysinfo_fields fields = 0;
+	enum sysinfo_fields fields = SYSINFO_FIELD_NONE;
 	bool print_prefix = false;
 
 	if (argc != 1 && argc != 2)
