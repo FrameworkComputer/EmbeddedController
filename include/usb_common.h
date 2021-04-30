@@ -81,6 +81,17 @@ int hex8tou32(char *str, uint32_t *val);
  */
 int remote_flashing(int argc, char **argv);
 
+/*
+ * When AP requests to suspend PD traffic on the EC so it can do
+ * firmware upgrade (retimer firmware, or TCPC chips firmware),
+ * it calls this function to check if power is ready for performing
+ * the upgrade.
+ * @param port USB-C port number
+ * @dreturn true  - power is ready
+ *          false - power is not ready
+ */
+bool pd_firmware_upgrade_check_power_readiness(int port);
+
 /* Returns the battery percentage [0-100] of the system. */
 int usb_get_battery_soc(void);
 
