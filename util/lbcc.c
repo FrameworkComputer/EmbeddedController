@@ -279,7 +279,8 @@ struct parse_s {
 
 /* Fills in struct, returns number of words found. Note that pointers are only
  * copied. The strings they point to are not duplicated.  */
-static int split_line(char *buf, char *delim, struct parse_s *elt, int max)
+static int split_line(char *buf, const char *delim, struct parse_s *elt,
+		      int max)
 {
 	char *w, *ptr, *buf_savetok;
 	int i;
@@ -594,7 +595,7 @@ int main(int argc, char *argv[])
 	int opt_decode = 0;
 	int c;
 	int errorcnt = 0;
-	char *infile, *outfile;
+	const char *infile, *outfile;
 	FILE *ifp, *ofp;
 
 	char *progname = strrchr(argv[0], '/');

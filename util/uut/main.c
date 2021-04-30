@@ -522,7 +522,7 @@ static const struct option long_opts[] = {
 	{NULL,       0, 0, 0}
 };
 
-static char *short_opts = "vhqcArb:o:p:f:a:s:O:?";
+static const char *short_opts = "vhqcArb:o:p:f:a:s:O:?";
 
 static void param_parse_cmd_line(int argc, char *argv[])
 {
@@ -760,7 +760,7 @@ static void exit_uart_app(int32_t exit_status)
  *		black background.
  *---------------------------------------------------------------------------
  */
-void display_color_msg(bool success, char *fmt, ...)
+void display_color_msg(bool success, const char *fmt, ...)
 {
 	va_list argptr;
 

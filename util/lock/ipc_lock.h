@@ -33,7 +33,7 @@
 
 struct ipc_lock {
 	int is_held;	/* internal */
-	char *filename;	/* provided by the developer */
+	const char *filename;	/* provided by the developer */
 	int fd;		/* internal */
 };
 

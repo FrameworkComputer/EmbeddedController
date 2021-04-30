@@ -65,7 +65,7 @@ extern bool console;
  *		black background.
  *--------------------------------------------------------------------------
  */
-void display_color_msg(bool success, char *fmt, ...);
+void display_color_msg(bool success, const char *fmt, ...);
 
 #ifdef __cplusplus
 }
