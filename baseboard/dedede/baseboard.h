@@ -57,8 +57,11 @@
  * The key difference between Keeby and Dedede is that Keeby variants don't have
  * a connection to H1 and therefore do not use EFS2.
  */
-#define KEEBY_VARIANT (defined(VARIANT_KEEBY_EC_NPCX797FC) || \
-		       defined(VARIANT_KEEBY_EC_IT8320))
+#if defined(VARIANT_KEEBY_EC_NPCX797FC) || defined(VARIANT_KEEBY_EC_IT8320)
+#define KEEBY_VARIANT 1
+#else
+#define KEEBY_VARIANT 0
+#endif
 
 /*
  * Remapping of schematic GPIO names to common GPIO names expected (hardcoded)
