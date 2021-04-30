@@ -13,9 +13,15 @@
 #include <sys/util.h>
 #endif
 
+#ifdef __cplusplus
+#define _STATIC_ASSERT static_assert
+#else
+#define _STATIC_ASSERT _Static_assert
+#endif
+
 /* Test an important condition at compile time, not run time */
 #define _BA1_(cond, file, line, msg) \
-	_Static_assert(cond, file ":" #line ": " msg)
+	_STATIC_ASSERT(cond, file ":" #line ": " msg)
 #define _BA0_(c, f, l, msg) _BA1_(c, f, l, msg)
 /* Pass in an option message to display after condition */
 
