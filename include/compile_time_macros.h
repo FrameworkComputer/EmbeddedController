@@ -8,6 +8,10 @@
 #ifndef __CROS_EC_COMPILE_TIME_MACROS_H
 #define __CROS_EC_COMPILE_TIME_MACROS_H
 
+#ifdef __cplusplus
+#include <type_traits>
+#endif
+
 /* sys/util.h in zephyr provides equivalents to most of these macros */
 #ifdef CONFIG_ZEPHYR
 #include <sys/util.h>
@@ -36,8 +40,12 @@
 #define BUILD_CHECK_INLINE(value, cond_true) ((value) / (!!(cond_true)))
 
 /* Check that the value is an array (not a pointer) */
+#ifdef __cplusplus
+#define _IS_ARRAY(arr) (std::is_array<decltype(arr)>::value)
+#else
 #define _IS_ARRAY(arr) \
 	!__builtin_types_compatible_p(typeof(arr), typeof(&(arr)[0]))
+#endif
 
 /**
  * ARRAY_SIZE - Number of elements in an array.

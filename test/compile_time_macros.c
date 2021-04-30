@@ -5,6 +5,7 @@
  * Test compile_time_macros.h
  */
 
+#include "stdbool.h"
 #include "common.h"
 #include "test_util.h"
 
@@ -55,6 +56,17 @@ static int test_GENMASK_ULL(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_IS_ARRAY(void)
+{
+	int array[5];
+	int *pointer = array;
+
+	TEST_EQ(_IS_ARRAY(array), true, "%d");
+	TEST_EQ(_IS_ARRAY(pointer), false, "%d");
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, char **argv)
 {
 	test_reset();
@@ -63,6 +75,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_BIT_ULL);
 	RUN_TEST(test_GENMASK);
 	RUN_TEST(test_GENMASK_ULL);
+	RUN_TEST(test_IS_ARRAY);
 
 	test_print_result();
 }
