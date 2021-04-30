@@ -71,5 +71,5 @@ def get_version_string(project, zephyr_base, modules, static=False):
             '{}:{}'.format(name, _get_revision(repo)[:6])
             for name, repo in sorted(repos.items()))
 
-    return '{}_v{}.{}.{}_{}'.format(
+    return '{}_v{}.{}.{}-{}'.format(
         project_id, major_version, minor_version, num_commits, vcs_hashes)
