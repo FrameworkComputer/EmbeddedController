@@ -20,16 +20,18 @@ import zmake.toolchains as toolchains
 import zmake.util as util
 import zmake.version
 
+ninja_warnings = re.compile(r'\S*: warning:.*')
 
-def ninja_log_level_override(line, default_log_level):
+
+def ninja_stdout_log_level_override(line, current_log_level):
     """Update the log level for ninja builds if we hit an error.
 
-    Ninja builds print everything to stdout, but really we want to start
+    Ninja builds prints everything to stdout, but really we want to start
     logging things to CRITICAL
 
     Args:
         line: The line that is about to be logged.
-        default_log_level: The default logging level that will be used for the
+        current_log_level: The active logging level that would be used for the
           line.
     """
     # Output lines from Zephyr that are not normally useful
@@ -50,38 +52,45 @@ def ninja_log_level_override(line, default_log_level):
     if line.startswith("["):
         return logging.DEBUG
     # we don't care about entering directories since it happens every time
-    elif line.startswith("ninja: Entering directory"):
+    if line.startswith("ninja: Entering directory"):
         return logging.DEBUG
     # we know the build stops from the compiler messages and ninja return code
-    elif line.startswith("ninja: build stopped"):
+    if line.startswith("ninja: build stopped"):
         return logging.DEBUG
     # someone prints a *** SUCCESS *** message which we don't need
-    elif line.startswith("***"):
+    if line.startswith("***"):
         return logging.DEBUG
     # dopey ninja puts errors on stdout, so fix that. It does not look
     # likely that it will be fixed upstream:
     # https://github.com/ninja-build/ninja/issues/1537
     # Try to drop output about the device tree
-    elif any(line.startswith(x) for x in cmake_suppress):
+    if any(line.startswith(x) for x in cmake_suppress):
         return logging.INFO
     # this message is a bit like make failing. We already got the error output.
-    elif line.startswith("FAILED: CMakeFiles"):
+    if line.startswith("FAILED: CMakeFiles"):
         return logging.INFO
     # if a particular file fails it shows the build line used, but that is not
     # useful except for debugging.
-    elif line.startswith("ccache"):
+    if line.startswith("ccache"):
         return logging.DEBUG
-    elif line.split()[0] in ["Memory", "FLASH:", "SRAM:", "IDT_LIST:"]:
-        pass
-    else:
-        return logging.ERROR
-    return default_log_level
+    if ninja_warnings.match(line):
+        return logging.WARNING
+    # When we see "Memory region" go into INFO, and stay there as long as the
+    # line starts with \S+:
+    if line.startswith("Memory region"):
+        return logging.INFO
+    if current_log_level == logging.INFO and line.split()[0].endswith(":"):
+        return current_log_level
+    if current_log_level == logging.WARNING:
+        return current_log_level
+    return logging.ERROR
 
 
-def cmake_log_level_override(line, default_log_level):
-    """Update the log level for cmake builds if we hit an error.
+def cmake_stderr_log_level_override(line, default_log_level):
+    """Update the log level for cmake stderr output if we hit an error.
 
-    Cmake prints some messages that are less than useful during development.
+    Cmake prints some messages that are less than useful during
+    development.
 
     Args:
         line: The line that is about to be logged.
@@ -262,6 +271,7 @@ class Zmake:
                 job_id=job_id,)
             zmake.multiproc.log_output(
                 self.logger, logging.ERROR, proc.stderr,
+                log_level_override_func=cmake_stderr_log_level_override,
                 job_id=job_id,)
             processes.append(proc)
         for proc in processes:
@@ -330,13 +340,12 @@ class Zmake:
                     logger=self.logger,
                     log_level=logging.INFO,
                     file_descriptor=proc.stdout,
-                    log_level_override_func=ninja_log_level_override,
+                    log_level_override_func=ninja_stdout_log_level_override,
                     job_id=job_id,)
                 err = zmake.multiproc.log_output(
                     self.logger,
                     logging.ERROR,
                     proc.stderr,
-                    log_level_override_func=cmake_log_level_override,
                     job_id=job_id,)
 
                 if self._sequential:
@@ -540,7 +549,7 @@ class Zmake:
                 logger=self.logger,
                 log_level=logging.DEBUG,
                 file_descriptor=proc.stdout,
-                log_level_override_func=ninja_log_level_override,
+                log_level_override_func=ninja_stdout_log_level_override,
                 job_id=job_id,)
             zmake.multiproc.log_output(
                 self.logger, logging.ERROR, proc.stderr,
