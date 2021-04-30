@@ -6,6 +6,7 @@
 import contextlib
 import io
 import os
+import pathlib
 import re
 import sys
 import tempfile
@@ -56,19 +57,28 @@ class KconfigCheck(unittest.TestCase):
                 kconfigs=['IN_KCONFIG'],
                 allowed=['OLD_ONE']))
 
-    def test_read_configs(self):
-        """Test KconfigCheck.read_configs()"""
+    def check_read_configs(self, use_defines):
         checker = kconfig_check.KconfigCheck()
         with tempfile.NamedTemporaryFile() as configs:
             with open(configs.name, 'w') as out:
-                out.write("""CONFIG_OLD_ONE=y
-NOT_A_CONFIG
-CONFIG_STRING="something"
-CONFIG_INT=123
-CONFIG_HEX=45ab
-""")
+                prefix = '#define ' if use_defines else ''
+                suffix = ' ' if use_defines else '='
+                out.write(f'''{prefix}CONFIG_OLD_ONE{suffix}y
+{prefix}NOT_A_CONFIG{suffix}
+{prefix}CONFIG_STRING{suffix}"something"
+{prefix}CONFIG_INT{suffix}123
+{prefix}CONFIG_HEX{suffix}45ab
+''')
             self.assertEqual(['OLD_ONE', 'STRING', 'INT', 'HEX'],
-                             checker.read_configs(configs.name))
+                             checker.read_configs(configs.name, use_defines))
+
+    def test_read_configs(self):
+        """Test KconfigCheck.read_configs()"""
+        self.check_read_configs(False)
+
+    def test_read_configs_defines(self):
+        """Test KconfigCheck.read_configs() containing #defines"""
+        self.check_read_configs(True)
 
     @classmethod
     def setup_srctree(cls, srctree):
@@ -78,17 +88,21 @@ CONFIG_HEX=45ab
             srctree: Directory to write to
         """
         with open(os.path.join(srctree, 'Kconfig'), 'w') as out:
-            out.write('config PLATFORM_EC_MY_KCONFIG\n')
+            out.write(f'''config {PREFIX}MY_KCONFIG
+\tbool "my kconfig"
+
+rsource "subdir/Kconfig.wibble"
+''')
         subdir = os.path.join(srctree, 'subdir')
         os.mkdir(subdir)
         with open(os.path.join(subdir, 'Kconfig.wibble'), 'w') as out:
-            out.write('menuconfig PLATFORM_EC_MENU_KCONFIG\n')
+            out.write('menuconfig %sMENU_KCONFIG\n' % PREFIX)
 
         # Add a directory which should be ignored
         bad_subdir = os.path.join(subdir, 'Kconfig')
         os.mkdir(bad_subdir)
         with open(os.path.join(bad_subdir, 'Kconfig.bad'), 'w') as out:
-            out.write('menuconfig PLATFORM_EC_BAD_KCONFIG')
+            out.write('menuconfig %sBAD_KCONFIG' % PREFIX)
 
     def test_find_kconfigs(self):
         """Test KconfigCheck.find_kconfigs()"""
@@ -104,7 +118,7 @@ CONFIG_HEX=45ab
         checker = kconfig_check.KconfigCheck()
         with tempfile.TemporaryDirectory() as srctree:
             self.setup_srctree(srctree)
-            self.assertEqual(['MY_KCONFIG', 'MENU_KCONFIG'],
+            self.assertEqual(['MENU_KCONFIG', 'MY_KCONFIG'],
                              checker.scan_kconfigs(srctree, PREFIX))
 
     @classmethod
@@ -149,6 +163,35 @@ CONFIG_HEX=45ab
         found = re.findall('(CONFIG_.*)', stderr.getvalue())
         self.assertEqual(['CONFIG_NEW_ONE'], found)
 
+    def test_real_kconfig(self):
+        """Same Kconfig should be returned for kconfiglib / adhoc"""
+        if not kconfig_check.USE_KCONFIGLIB:
+            self.skipTest('No kconfiglib available')
+        zephyr_path = pathlib.Path('../../third_party/zephyr/main').resolve()
+        if not zephyr_path.exists():
+            self.skipTest('No zephyr tree available')
+
+        checker = kconfig_check.KconfigCheck()
+        srcdir = 'zephyr'
+        search_paths = [zephyr_path]
+        kc_version = checker.scan_kconfigs(
+            srcdir, search_paths=search_paths, try_kconfiglib=True)
+        adhoc_version = checker.scan_kconfigs(srcdir, try_kconfiglib=False)
+
+        # List of things missing from the Kconfig
+        missing = sorted(list(set(adhoc_version) - set(kc_version)))
+
+        # The Kconfig is disjoint in some places, e.g. the boards have their
+        # own Kconfig files which are not included from the main Kconfig
+        missing = [item for item in missing
+                   if not item.startswith('BOARD') and
+                   not item.startswith('VARIANT')]
+
+        # Similarly, some other items are defined in files that are not included
+        # in all cases, only for particular values of $(ARCH)
+        self.assertEqual(
+            ['FLASH_LOAD_OFFSET', 'NPCX_HEADER', 'SYS_CLOCK_HW_CYCLES_PER_SEC'],
+            missing)
 
 if __name__ == '__main__':
     unittest.main()
