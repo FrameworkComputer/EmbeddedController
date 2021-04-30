@@ -1,0 +1,39 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Describes the size and offset of the RO and RW regions
+
+compatible: "cros-ec,flash-layout"
+
+include: base.yaml
+
+properties:
+  type:
+    type: string
+    required: true
+    description: >-
+      A property required by the binman utility, defined here only to
+      prevent Zephyr's binding generator from erroring about
+      additional properties.
+
+      The property should be set to the value "section" (done by
+      binman.dtsi) and should not be used anywhere in C code.
+
+      See README.entries in binman for a description of what binman
+      uses this for.
+  offset:
+    type: int
+    required: true
+    description: >-
+      The offset of the flash region from the base of the flash.
+  size:
+    type: int
+    required: true
+    description: >-
+      The size of the flash region, in bytes.
+  read-only:
+    type: boolean
+    required: false
+    description: >-
+      Set if the section should be read-only.

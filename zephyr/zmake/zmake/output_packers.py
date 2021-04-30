@@ -3,77 +3,12 @@
 # found in the LICENSE file.
 """Types which provide many builds and composite them into a single binary."""
 import logging
-import pathlib
+import shutil
 import subprocess
 
 import zmake.build_config as build_config
 import zmake.multiproc
 import zmake.util as util
-
-
-def _write_dts_file(dts_file, config_header, output_bin, ro_filename, rw_filename):
-    """Generate the .dts file used for binman.
-
-    Args:
-        dts_file: The dts file to write to.
-        config_header: The full path to the generated autoconf.h header.
-        output_bin: The full path to the binary that binman should output.
-        ro_filename: The RO image file name.
-        rw_filename: The RW image file name.
-
-    Returns:
-        The path to the .dts file that was generated.
-    """
-    dts_file.write("""
-    /dts-v1/;
-    #include "{config_header}"
-    / {{
-      #address-cells = <1>;
-      #size-cells = <1>;
-      binman {{
-        filename = "{output_bin}";
-        pad-byte = <0x1d>;
-        WP_RO {{
-          type = "section";
-          read-only;
-          offset = <CONFIG_PLATFORM_EC_PROTECTED_STORAGE_OFF>;
-          size = <CONFIG_PLATFORM_EC_PROTECTED_STORAGE_SIZE>;
-          EC_RO {{
-            type = "section";
-            RO_FW {{
-              type = "blob";
-              filename = "{ro_filename}";
-            }};
-            fmap {{
-            }};
-            RO_FRID {{
-              type = "text";
-              size = <32>;
-              text-label = "version";
-            }};
-          }};
-        }};
-        EC_RW {{
-          type = "section";
-          offset = <CONFIG_PLATFORM_EC_WRITABLE_STORAGE_OFF>;
-          size = <CONFIG_PLATFORM_EC_WRITABLE_STORAGE_SIZE>;
-          RW_FW {{
-            type = "blob";
-            filename = "{rw_filename}";
-          }};
-          RW_FWID {{
-            type = "text";
-            size = <32>;
-            text-label = "version";
-          }};
-        }};
-      }};
-    }};""".format(
-        output_bin=output_bin,
-        config_header=config_header,
-        ro_filename=ro_filename,
-        rw_filename=rw_filename
-    ))
 
 
 class BasePacker:
@@ -141,19 +76,10 @@ class NpcxPacker(BasePacker):
         yield 'rw', build_config.BuildConfig(kconfig_defs={'CONFIG_CROS_EC_RW': 'y'})
 
     def pack_firmware(self, work_dir, jobclient, ro, rw, version_string=""):
-        """Pack the 'raw' binary.
+        """Pack RO and RW sections using Binman.
 
-        This combines the RO and RW images as specified in the Kconfig file for
-        the project. For this function to work, the following config values must
-        be defined:
-        * CONFIG_CROS_EC_RO_MEM_OFF - The offset in bytes of the RO image from
-          the start of the resulting binary.
-        * CONFIG_CROS_EC_RO_SIZE - The maximum allowed size (in bytes) of the RO
-          image.
-        * CONFIG_CROS_EC_RW_MEM_OFF - The offset in bytes of the RW image from
-          the start of the resulting binary (must be >= RO_MEM_OFF + RO_SIZE).
-        * CONFIG_CROS_EC_RW_SIZE - The maximum allowed size (in bytes) of the RW
-           image.
+        Binman configuration is expected to be found in the RO build
+        device-tree configuration.
 
         Args:
             work_dir: The directory used for packing.
@@ -162,20 +88,18 @@ class NpcxPacker(BasePacker):
             rw: Directory containing the RW image build.
             version_string: The version string to use in FRID/FWID.
 
-        Returns:
-            Tuple mapping the resulting .bin file to the output filename.
+        Yields:
+            2-tuples of the path of each file in the work_dir that
+            should be copied into the output directory, and the output
+            filename.
         """
-        work_dir = pathlib.Path(work_dir).resolve()
-        ro = pathlib.Path(ro).resolve()
-        rw = pathlib.Path(rw).resolve()
-        dts_file_path = work_dir / 'project.dts'
-        with open(dts_file_path, 'w+') as dts_file:
-            _write_dts_file(
-                dts_file=dts_file,
-                config_header=ro / 'zephyr' / 'include' / 'generated' / 'autoconf.h',
-                output_bin=work_dir / 'zephyr.bin',
-                ro_filename=ro / 'zephyr' / 'zephyr.packed.bin',
-                rw_filename=rw / 'zephyr' / 'zephyr.bin')
+        dts_file_path = ro / 'zephyr' / 'zephyr.dts'
+
+        # Copy the inputs into the work directory so that Binman can
+        # find them under a hard-coded name.
+        shutil.copy2(ro / 'zephyr' / 'zephyr.packed.bin',
+                     work_dir / 'zephyr_ro.bin')
+        shutil.copy2(rw / 'zephyr' / 'zephyr.bin', work_dir / 'zephyr_rw.bin')
 
         # Version in FRID/FWID can be at most 31 bytes long (32, minus
         # one for null character).
@@ -185,7 +109,8 @@ class NpcxPacker(BasePacker):
         proc = jobclient.popen(
             ['binman', '-v', '5', 'build',
              '-a', 'version={}'.format(version_string),
-             '-d', dts_file_path, '-m'],
+             '-d', dts_file_path, '-m', '-O', work_dir],
+            cwd=work_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             encoding='utf-8')

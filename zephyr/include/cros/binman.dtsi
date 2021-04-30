@@ -1,0 +1,51 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/dts-v1/;
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+	binman {
+		filename = "zephyr.bin";
+		pad-byte = <0x1d>;
+		wp-ro {
+			compatible = "cros-ec,flash-layout";
+			type = "section";
+			offset = <0x0>;
+			size = <0x40000>;
+			read-only;
+			ec-ro {
+				type = "section";
+				ro-fw {
+					type = "blob";
+					filename = "zephyr_ro.bin";
+				};
+				fmap {
+				};
+				ro-frid {
+					type = "text";
+					size = <32>;
+					text-label = "version";
+				};
+			};
+		};
+		ec-rw {
+			compatible = "cros-ec,flash-layout";
+			type = "section";
+			offset = <0x40000>;
+			size = <0x40000>;
+			rw-fw {
+				type = "blob";
+				filename = "zephyr_rw.bin";
+			};
+			rw-fwid {
+				type = "text";
+				size = <32>;
+				text-label = "version";
+			};
+		};
+	};
+};

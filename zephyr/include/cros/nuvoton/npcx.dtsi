@@ -6,6 +6,7 @@
 
 /dts-v1/;
 
+#include <cros/binman.dtsi>
 #include <nuvoton/npcx7m6fb.dtsi>
 
 / {

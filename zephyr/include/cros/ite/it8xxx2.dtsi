@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <cros/binman.dtsi>
+
 / {
 	named-bbram-regions {
 		compatible = "named-bbram-regions";
