@@ -124,7 +124,7 @@ def main(argv=None):
     if opts.no_log_label:
         log_format = '%(message)s'
     else:
-        log_format = '%(asctime)s - %(name)s/%(levelname)s: %(message)s'
+        log_format = '%(levelname)s: %(message)s'
 
     log_level = logging.WARNING
     if opts.log_level:
