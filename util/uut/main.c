@@ -308,7 +308,7 @@ static uint8_t *read_input_file(uint32_t size, const char *file_name)
 	uint8_t *buffer;
 	FILE *input_fp;
 
-	buffer = malloc(size);
+	buffer = (uint8_t *)(malloc(size));
 	if (!buffer) {
 		fprintf(stderr, "Cannot allocate %d bytes\n", size);
 		return NULL;
@@ -454,7 +454,7 @@ int main(int argc, char *argv[])
 			/* Ensure non-zero size */
 			if (size == 0)
 				exit_uart_app(EC_FILE_ERR);
-			opr_write_mem(aux_buf, addr, size);
+			opr_write_mem((uint8_t *)(aux_buf), addr, size);
 		} else {
 			size = param_get_file_size(file_name);
 			if (size == 0)

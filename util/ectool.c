@@ -1353,7 +1353,7 @@ int cmd_rand(int argc, char *argv[])
 		return -1;
 	}
 
-	r = ec_inbuf;
+	r = (struct ec_response_rand_num *)(ec_inbuf);
 
 	for (i = 0; i < num_bytes; i += ec_max_insize) {
 		p.num_rand_bytes = ec_max_insize;
@@ -1411,7 +1411,7 @@ int cmd_flash_read(int argc, char *argv[])
 	int offset, size;
 	int rv;
 	char *e;
-	char *buf;
+	uint8_t *buf;
 
 	if (argc < 4) {
 		fprintf(stderr,
@@ -1430,7 +1430,7 @@ int cmd_flash_read(int argc, char *argv[])
 	}
 	printf("Reading %d bytes at offset %d...\n", size, offset);
 
-	buf = (char *)malloc(size);
+	buf = (uint8_t *)malloc(size);
 	if (!buf) {
 		fprintf(stderr, "Unable to allocate buffer.\n");
 		return -1;
@@ -1443,7 +1443,7 @@ int cmd_flash_read(int argc, char *argv[])
 		return rv;
 	}
 
-	rv = write_file(argv[3], buf, size);
+	rv = write_file(argv[3], (const char *)(buf), size);
 	free(buf);
 	if (rv)
 		return rv;
@@ -1478,7 +1478,8 @@ int cmd_flash_write(int argc, char *argv[])
 	printf("Writing to offset %d...\n", offset);
 
 	/* Write data in chunks */
-	rv = ec_flash_write(buf, offset, size);
+	rv = ec_flash_write((const uint8_t *)(buf), offset,
+			    size);
 
 	free(buf);
 
@@ -1987,7 +1988,7 @@ static void *fp_download_frame(struct ec_response_fp_info *info, int index)
 		return NULL;
 	}
 
-	ptr = buffer;
+	ptr = (uint8_t *)(buffer);
 	p.offset = index << FP_FRAME_INDEX_SHIFT;
 	while (size) {
 		stride = MIN(ec_max_insize, size);
@@ -2259,7 +2260,7 @@ int cmd_fp_frame(int argc, char *argv[])
 	struct ec_response_fp_info r;
 	int idx = (argc == 2 && !strcasecmp(argv[1], "raw")) ?
 		FP_FRAME_INDEX_RAW_IMAGE : FP_FRAME_INDEX_SIMPLE_IMAGE;
-	void *buffer = fp_download_frame(&r, idx);
+	uint8_t *buffer = (uint8_t *)(fp_download_frame(&r, idx));
 	uint8_t *ptr = buffer;
 	int x, y;
 
@@ -2290,14 +2291,15 @@ frame_done:
 int cmd_fp_template(int argc, char *argv[])
 {
 	struct ec_response_fp_info r;
-	struct ec_params_fp_template *p = ec_outbuf;
+	struct ec_params_fp_template *p =
+		(struct ec_params_fp_template *)(ec_outbuf);
 	/* TODO(b/78544921): removing 32 bits is a workaround for the MCU bug */
 	int max_chunk = ec_max_outsize
 			- offsetof(struct ec_params_fp_template, data) - 4;
 	int idx = -1;
 	char *e;
 	int size;
-	void *buffer = NULL;
+	char *buffer = NULL;
 	uint32_t offset = 0;
 	int rv = 0;
 
@@ -2308,7 +2310,7 @@ int cmd_fp_template(int argc, char *argv[])
 
 	idx = strtol(argv[1], &e, 0);
 	if (!(e && *e)) {
-		buffer = fp_download_frame(&r, idx + 1);
+		buffer = (char *)(fp_download_frame(&r, idx + 1));
 		if (!buffer) {
 			fprintf(stderr, "Failed to get FP template %d\n", idx);
 			return -1;
@@ -2753,8 +2755,10 @@ static void cmd_smart_discharge_usage(const char *command)
 
 int cmd_smart_discharge(int argc, char *argv[])
 {
-	struct ec_params_smart_discharge *p = ec_outbuf;
-	struct ec_response_smart_discharge *r = ec_inbuf;
+	struct ec_params_smart_discharge *p =
+		(struct ec_params_smart_discharge *)(ec_outbuf);
+	struct ec_response_smart_discharge *r =
+		(struct ec_response_smart_discharge *)(ec_inbuf);
 	uint32_t cap;
 	char *e;
 	int rv;
@@ -6486,7 +6490,7 @@ int cmd_panic_info(int argc, char *argv[])
 		return 0;
 	}
 
-	return parse_panic_info(ec_inbuf, rv);
+	return parse_panic_info((char *)(ec_inbuf), rv);
 }
 
 
@@ -7288,7 +7292,7 @@ int cmd_i2c_xfer(int argc, char *argv[])
 	write_len = argc;
 
 	if (write_len) {
-		write_buf = malloc(write_len);
+		write_buf = (uint8_t *)(malloc(write_len));
 		if (write_buf == NULL)
 			return -1;
 		for (i = 0; i < write_len; i++) {
@@ -8166,7 +8170,7 @@ static int cmd_cbi(int argc, char *argv[])
 	}
 
 	/* Tag */
-	tag = strtol(argv[2], &e, 0);
+	tag = (enum cbi_data_tag)(strtol(argv[2], &e, 0));
 	if (e && *e) {
 		fprintf(stderr, "Bad tag\n");
 		return -1;
@@ -8197,7 +8201,8 @@ static int cmd_cbi(int argc, char *argv[])
 		if (cmd_cbi_is_string_field(tag)) {
 			printf("%.*s", rv, (const char *)ec_inbuf);
 		} else {
-			const uint8_t * const buffer = ec_inbuf;
+			const uint8_t * const buffer =
+				(const uint8_t *const)(ec_inbuf);
 			uint64_t int_value = 0;
                         for(i = 0; i < rv; i++)
 				int_value |= (uint64_t)buffer[i] << (i * 8);
@@ -8231,7 +8236,7 @@ static int cmd_cbi(int argc, char *argv[])
 
 		if (cmd_cbi_is_string_field(tag)) {
 			val_ptr = argv[3];
-			size = strlen(val_ptr) + 1;
+			size = strlen((char *)(val_ptr)) + 1;
 		} else {
 			val = strtoul(argv[3], &e, 0);
 			/* strtoul sets an errno for invalid input. If the value
@@ -9044,8 +9049,10 @@ static int cmd_tmp006cal_v0(int idx, int argc, char *argv[])
 static int cmd_tmp006cal_v1(int idx, int argc, char *argv[])
 {
 	struct ec_params_tmp006_get_calibration pg;
-	struct ec_response_tmp006_get_calibration_v1 *rg = ec_inbuf;
-	struct ec_params_tmp006_set_calibration_v1 *ps = ec_outbuf;
+	struct ec_response_tmp006_get_calibration_v1 *rg =
+		(struct ec_response_tmp006_get_calibration_v1 *)(ec_inbuf);
+	struct ec_params_tmp006_set_calibration_v1 *ps =
+		(struct ec_params_tmp006_set_calibration_v1 *)(ec_outbuf);
 	float val;
 	char *e;
 	int i, rv, cmdsize;
@@ -9255,7 +9262,8 @@ int cmd_port80_read(int argc, char *argv[])
 	writes = rsp.get_info.writes;
 	history_size = rsp.get_info.history_size;
 
-	history = malloc(history_size*sizeof(uint16_t));
+	history = (uint16_t *)(
+		malloc(history_size * sizeof(uint16_t)));
 	if (!history) {
 		fprintf(stderr, "Unable to allocate buffer.\n");
 		return -1;
@@ -9429,8 +9437,10 @@ static int cmd_pchg_wait_event(int port, uint32_t expected)
 static int cmd_pchg_update(int port, uint32_t address, uint32_t version,
 			   const char *filename)
 {
-	struct ec_params_pchg_update *p = ec_outbuf;
-	struct ec_response_pchg_update *r = ec_inbuf;
+	struct ec_params_pchg_update *p =
+		(struct ec_params_pchg_update *)(ec_outbuf);
+	struct ec_response_pchg_update *r =
+		(struct ec_response_pchg_update *)(ec_inbuf);
 	FILE *fp;
 	size_t len, total;
 	int progress = 0;
@@ -9571,7 +9581,8 @@ static int cmd_pchg(int argc, char *argv[])
 		return cmd_pchg_info(&r);
 	} else if (argc == 3 && !strcmp(argv[2], "reset")) {
 		/* Usage.3 */
-		struct ec_params_pchg_update *u = ec_outbuf;
+		struct ec_params_pchg_update *u =
+			(struct ec_params_pchg_update *)(ec_outbuf);
 
 		u->cmd = EC_PCHG_UPDATE_CMD_RESET_TO_NORMAL;
 		rv = ec_command(EC_CMD_PCHG_UPDATE, 0, u, sizeof(*u), NULL, 0);
@@ -10184,8 +10195,8 @@ int cmd_tp_frame_get(int argc, char* argv[])
 	struct ec_response_tp_frame_info* r;
 	struct ec_params_tp_frame_get p;
 
-	data = malloc(ec_max_insize);
-	r = malloc(ec_max_insize);
+	data = (uint8_t *)(malloc(ec_max_insize));
+	r = (struct ec_response_tp_frame_info *)(malloc(ec_max_insize));
 
 	if (data == NULL || r == NULL) {
 		fprintf(stderr, "Couldn't allocate memory.\n");

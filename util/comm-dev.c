@@ -73,7 +73,7 @@ static int ec_command_dev(int command, int version,
 	s_cmd.outsize = outsize;
 	s_cmd.outdata = (uint8_t *)outdata;
 	s_cmd.insize = insize;
-	s_cmd.indata = indata;
+	s_cmd.indata = (uint8_t *)(indata);
 
 	r = ioctl(fd, CROS_EC_DEV_IOCXCMD, &s_cmd);
 	if (r < 0) {
@@ -107,7 +107,7 @@ static int ec_readmem_dev(int offset, int bytes, void *dest)
 	if (!fake_it) {
 		s_mem.offset = offset;
 		s_mem.bytes = bytes;
-		s_mem.buffer = dest;
+		s_mem.buffer = (char *)(dest);
 		r = ioctl(fd, CROS_EC_DEV_IOCRDMEM, &s_mem);
 		if (r < 0 && errno == ENOTTY)
 			fake_it = 1;
@@ -134,8 +134,8 @@ static int ec_command_dev_v2(int command, int version,
 	assert(outsize == 0 || outdata != NULL);
 	assert(insize == 0 || indata != NULL);
 
-	s_cmd = malloc(sizeof(struct cros_ec_command_v2) +
-		       MAX(outsize, insize));
+	s_cmd = (struct cros_ec_command_v2 *)(malloc(
+		sizeof(struct cros_ec_command_v2) + MAX(outsize, insize)));
 	if (s_cmd == NULL)
 		return -EC_RES_ERROR;
 

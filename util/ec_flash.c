@@ -41,7 +41,7 @@ int ec_flash_read(uint8_t *buf, int offset, int size)
 
 int ec_flash_verify(const uint8_t *buf, int offset, int size)
 {
-	uint8_t *rbuf = malloc(size);
+	uint8_t *rbuf = (uint8_t *)(malloc(size));
 	int rv;
 	int i;
 

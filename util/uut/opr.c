@@ -228,7 +228,7 @@ void opr_write_mem(uint8_t *buffer, uint32_t addr, uint32_t size)
 
 	/* Read first token from string */
 	if (console)
-		token = strtok(buffer, seps);
+		token = strtok((char *)(buffer), seps);
 
 	size_remain = size;
 	/* Main write loop */

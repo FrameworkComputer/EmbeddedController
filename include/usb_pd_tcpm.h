@@ -61,7 +61,7 @@ static inline enum tcpc_cc_polarity polarity_rm_dts(
 	enum tcpc_cc_polarity polarity)
 {
 	BUILD_ASSERT(POLARITY_COUNT == 4);
-	return polarity & BIT(0);
+	return (enum tcpc_cc_polarity)(polarity & BIT(0));
 }
 
 enum tcpm_transmit_type {

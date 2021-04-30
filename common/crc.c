@@ -60,7 +60,7 @@ static uint32_t _crc32_hash(uint32_t crc, const void *buf, int size)
 {
 	const uint8_t *p;
 
-	p = buf;
+	p = (const uint8_t *)buf;
 
 	while (size--) {
 		crc ^= *p++;

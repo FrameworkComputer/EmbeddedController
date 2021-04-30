@@ -87,7 +87,7 @@ static int ec_command_i2c_3(int command, int version,
 	}
 	req_len = I2C_REQUEST_HEADER_SIZE + sizeof(struct ec_host_request)
 		+ outsize;
-	req_buf = calloc(1, req_len);
+	req_buf = (uint8_t *)(calloc(1, req_len));
 	if (!req_buf)
 		goto done;
 
@@ -115,7 +115,7 @@ static int ec_command_i2c_3(int command, int version,
 
 	resp_len = I2C_RESPONSE_HEADER_SIZE + sizeof(struct ec_host_response)
 		+ insize;
-	resp_buf = calloc(1, resp_len);
+	resp_buf = (uint8_t *)(calloc(1, resp_len));
 	if (!resp_buf)
 		goto done;
 	memset(resp_buf, 0, resp_len);

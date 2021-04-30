@@ -225,7 +225,7 @@ static int ec_command_lpc_3(int command, int version,
 static int ec_readmem_lpc(int offset, int bytes, void *dest)
 {
 	int i = offset;
-	char *s = dest;
+	char *s = (char *)(dest);
 	int cnt = 0;
 
 	if (offset >= EC_MEMMAP_SIZE - bytes)

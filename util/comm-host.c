@@ -58,7 +58,7 @@ static int fake_readmem(int offset, int bytes, void *dest)
 	if (c < 0)
 		return c;
 
-	buf = dest;
+	buf = (char *)(dest);
 	for (c = 0; c < EC_MEMMAP_TEXT_MAX; c++) {
 		if (buf[c] == 0)
 			return c;

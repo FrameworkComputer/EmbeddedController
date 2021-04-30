@@ -114,7 +114,7 @@ static int send_request(int cmd, int version,
 	size_t block_size = sizeof(struct ec_host_request) + outsize;
 	size_t total_len = MPSSE_CMD_SIZE + block_size;
 
-	txbuf = calloc(1, total_len);
+	txbuf = (uint8_t *)(calloc(1, total_len));
 	if (!txbuf)
 		return -ENOMEM;
 
@@ -168,7 +168,7 @@ free_request:
 	return ret;
 }
 
-static int spi_read(void *buf, size_t size)
+static int spi_read(uint8_t *buf, size_t size)
 {
 	uint8_t cmd[MPSSE_CMD_SIZE];
 
@@ -206,7 +206,7 @@ static int get_response(uint8_t *bodydest, size_t bodylen)
 	}
 
 	/* Now read the response header */
-	if (spi_read(&hdr, sizeof(hdr)))
+	if (spi_read((uint8_t *)(&hdr), sizeof(hdr)))
 		goto read_error;
 
 	/* Check the header */
@@ -256,8 +256,9 @@ static int ec_command_servo_spi(int cmd, int version,
 		return -EC_RES_ERROR;
 	}
 
-	if (send_request(cmd, version, outdata, outsize) == 0)
-		ret = get_response(indata, insize);
+	if (send_request(cmd, version, (const uint8_t *)(outdata), outsize) ==
+	    0)
+		ret = get_response((uint8_t *)(indata), insize);
 
 	if (mpsse_set_pins(CS_L) != 0) {
 		fprintf(stderr, "Stop failed: %s\n",

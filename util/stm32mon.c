@@ -68,7 +68,7 @@
 
 #define CMD_LOOKUP_ENTRY(COMMAND) {CMD_##COMMAND, #COMMAND}
 const struct {
-	const char cmd;
+	const uint8_t cmd;
 	const char *name;
 } cmd_lookup_table[] = {
 	CMD_LOOKUP_ENTRY(INIT),
@@ -658,7 +658,10 @@ int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
 	int res, i, c;
 	payload_t *p;
 	int readcnt = 0;
-	uint8_t cmd_frame[] = { SOF, cmd, 0xff ^ cmd }; /* XOR checksum */
+
+	uint8_t cmd_frame[] = { SOF, cmd,
+				/* XOR checksum */
+				(uint8_t)(0xff ^ cmd) };
 	/* only the SPI mode needs the Start Of Frame byte */
 	int cmd_off = mode == MODE_SPI ? 0 : 1;
 	int count_damaged_ack = 0;
@@ -688,7 +691,7 @@ int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
 	for (p = loads, c = 0; c < cnt; c++, p++) {
 		uint8_t crc = 0;
 		int size = p->size;
-		uint8_t *data = malloc(size + 1), *data_ptr;
+		uint8_t *data = (uint8_t *)(malloc(size + 1)), *data_ptr;
 
 		if (data == NULL) {
 			fprintf(stderr,
@@ -1017,7 +1020,7 @@ int command_ext_erase(int fd, uint16_t count, uint16_t start)
 		int i;
 		/* not a special value : build a list of pages */
 		load.size = 2 * (count + 1);
-		pages = malloc(load.size);
+		pages = (uint16_t *)(malloc(load.size));
 		if (!pages)
 			return STM32_ENOMEM;
 		load.data = (uint8_t *)pages;
@@ -1058,7 +1061,7 @@ int command_erase_i2c(int fd, uint16_t count, uint16_t start)
 		 */
 		load_cnt = 2;
 		load[1].size = 2 * count;
-		pages = malloc(load[1].size);
+		pages = (uint16_t *)(malloc(load[1].size));
 		if (!pages)
 			return STM32_ENOMEM;
 		load[1].data = (uint8_t *)pages;
@@ -1092,7 +1095,7 @@ int command_erase(int fd, uint16_t count, uint16_t start)
 		int i;
 		/* not a special value : build a list of pages */
 		load.size = count + 1;
-		pages = malloc(load.size);
+		pages = (uint8_t *)(malloc(load.size));
 		if (!pages)
 			return STM32_ENOMEM;
 		load.data = (uint8_t *)pages;
@@ -1258,7 +1261,7 @@ int read_device_signature_register(int fd, const struct stm32_def *chip,
 		return STM32_EINVAL;
 	}
 
-	buffer = malloc(read_size_bytes);
+	buffer = (uint8_t *)(malloc(read_size_bytes));
 	if (!buffer) {
 		fprintf(stderr, "Cannot allocate %" PRIu32 " bytes\n",
 			read_size_bytes);
@@ -1365,7 +1368,7 @@ int read_flash(int fd, struct stm32_def *chip, const char *filename,
 
 	if (!size)
 		size = chip->flash_size;
-	buffer = malloc(size);
+	buffer = (uint8_t *)(malloc(size));
 	if (!buffer) {
 		fprintf(stderr, "Cannot allocate %d bytes\n", size);
 		return STM32_ENOMEM;
@@ -1398,7 +1401,7 @@ int write_flash(int fd, struct stm32_def *chip, const char *filename,
 	int res, written;
 	FILE *hnd;
 	int size = chip->flash_size;
-	uint8_t *buffer = malloc(size);
+	uint8_t *buffer = (uint8_t *)(malloc(size));
 
 	if (!buffer) {
 		fprintf(stderr, "Cannot allocate %d bytes\n", size);
