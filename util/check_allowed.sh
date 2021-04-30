@@ -41,6 +41,7 @@ tmp=$(mktemp -d)
 # Temporary files
 new_configs="${tmp}/configs"
 suspects="${tmp}/suspects"
+kconfigs="${tmp}/kconfigs"
 ok="${tmp}/ok"
 new_adhoc="${tmp}/adhoc"
 
@@ -54,9 +55,13 @@ sed -n 's/^\(CONFIG_[A-Za-z0-9_]*\).*/\1/p' "${config}" | sort | uniq \
 comm -23 "${new_configs}" "${allow}" > "${suspects}"
 
 # Find all the Kconfig options so far defined
-find "${srctree}" -name "Kconfig*" -exec cat {} \; | sed -n -e \
-	's/^\s*\(config\|menuconfig\) PLATFORM_EC_\([A-Za-z0-9_]*\)$/CONFIG_\2/p' \
-	| sort | uniq > "${ok}"
+find "${srctree}" -type f -name "Kconfig*" -exec cat {} \; | sed -n -e \
+	's/^\s*\(config\|menuconfig\) *\([A-Za-z0-9_]*\)$/CONFIG_\2/p' \
+	| sort | uniq > "${kconfigs}"
+
+# Most Kconfigs follow the pattern of CONFIG_PLATFORM_EC_*.  Strip PLATFORM_EC_
+# from the config name to match the cros-ec namespace.
+sed -e 's/^CONFIG_PLATFORM_EC_/CONFIG_/p' "${kconfigs}" | sort | uniq > "${ok}"
 
 # Complain about any new ad-hoc CONFIGs
 comm -23 "${suspects}" "${ok}" >"${new_adhoc}"

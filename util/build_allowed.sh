@@ -24,6 +24,7 @@ allowed=util/config_allowed.txt
 [ "$1" == "-u" ] && update=1
 
 tmp=$(mktemp -d)
+kconfigs="${tmp}/kconfigs"
 
 #
 # Look for the CONFIG options, excluding those in Kconfig and defconfig files.
@@ -36,10 +37,14 @@ git grep CONFIG_ | \
 
 # We need a list of the valid Kconfig options to exclude these from the allowed
 # list.
-find . -name "Kconfig*" -exec cat {} \; | sed -n \
-	-e 's/^\s*config *\([A-Za-z0-9_]*\).*$/CONFIG_\1/p' \
-	-e 's/^\s*menuconfig *\([A-Za-z0-9_]*\).*$/CONFIG_\1/p' \
-	| sort | uniq >"${tmp}/allowed.tmp2"
+find . -type f -name "Kconfig*" -exec cat {} \; | sed -n -e \
+	's/^\s*\(config\|menuconfig\) *\([A-Za-z0-9_]*\)$/CONFIG_\2/p' \
+	| sort | uniq > "${kconfigs}"
+
+# Most Kconfigs follow the pattern of CONFIG_PLATFORM_EC_*.  Strip PLATFORM_EC_
+# from the config name to match the cros-ec namespace.
+sed -e 's/^CONFIG_PLATFORM_EC_/CONFIG_/p' "${kconfigs}" | sort | uniq \
+	> "${tmp}/allowed.tmp2"
 
 # Use only the options that are present in the first file but not the second.
 # These comprise new ad-hoc CONFIG options.
