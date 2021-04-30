@@ -37,26 +37,32 @@
  *                          |
  *                          | INITIALIZED
  *                          v
- *                  +-------+-------+
+ *                  +---------------+
  *                  |  INITIALIZED  |<--------------+
- *                  +------+-+------+               |
+ *                  +------+--------+               |
  *                         | ^                      |
  *                 ENABLED | | DISABLED             |
  *                         v |                      |
- *                  +------+--------+               |
- *   +------------->+    ENABLED    |               |
+ *                  +--------+------+               |
+ *   +------------->|    ENABLED    |               |
+ *   |              +-----+-+-------+               |
+ *   |                    | |                       |
+ *   |   DEVICE_CONNECTED | | DEVICE_DOCKED         |
+ *   |                    | v                       |
+ *   | DEVICE_LOST  +---------------+               |
+ *   +--------------+     DOCKED    +---------------+
  *   |              +-------+-------+               |
- *   |                      |                       |
- *   |                      | DEVICE_DETECTED       |
- *   |                      v                       |
- *   |              +-------+-------+               |
- *   +--------------+   DETECTED    +---------------+
- *   | DEVICE_LOST  +------+-+------+  ERROR        |
+ *   |                    | |                       |
+ *   |                    | | DEVICE_CONNECTED      |
+ *   |                    v v                       |
+ *   |              +---------------+               |
+ *   +--------------+   CONNECTED   +---------------+
+ *   | DEVICE_LOST  +------+--------+  ERROR        |
  *   |                     | ^                      |
  *   |      CHARGE_STARTED | | CHARGE_ENDED         |
  *   |                     | | CHARGE_STOPPED       |
  *   |                     v |                      |
- *   |              +------+-+------+               |
+ *   |              +--------+------+               |
  *   +--------------+   CHARGING    +---------------+
  *     DEVICE_LOST  +---------------+  ERROR
  *
@@ -94,6 +100,7 @@ enum pchg_event {
 	PCHG_EVENT_ENABLED,
 	PCHG_EVENT_DISABLED,
 	PCHG_EVENT_DEVICE_DETECTED,
+	PCHG_EVENT_DEVICE_CONNECTED,
 	PCHG_EVENT_DEVICE_LOST,
 	PCHG_EVENT_CHARGE_STARTED,
 	PCHG_EVENT_CHARGE_UPDATE,

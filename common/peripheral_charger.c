@@ -65,6 +65,7 @@ static const char *_text_event(enum pchg_event event)
 		[PCHG_EVENT_ENABLED] = "ENABLED",
 		[PCHG_EVENT_DISABLED] = "DISABLED",
 		[PCHG_EVENT_DEVICE_DETECTED] = "DEVICE_DETECTED",
+		[PCHG_EVENT_DEVICE_CONNECTED] = "DEVICE_CONNECTED",
 		[PCHG_EVENT_DEVICE_LOST] = "DEVICE_LOST",
 		[PCHG_EVENT_CHARGE_STARTED] = "CHARGE_STARTED",
 		[PCHG_EVENT_CHARGE_UPDATE] = "CHARGE_UPDATE",
@@ -194,15 +195,15 @@ static void pchg_state_enabled(struct pchg *ctx)
 		ctx->state = PCHG_STATE_INITIALIZED;
 		break;
 	case PCHG_EVENT_DEVICE_DETECTED:
+		ctx->state = PCHG_STATE_DETECTED;
+		break;
+	case PCHG_EVENT_DEVICE_CONNECTED:
 		/*
 		 * Proactively query SOC in case charging info won't be sent
 		 * because device is already charged.
 		 */
 		ctx->cfg->drv->get_soc(ctx);
-		ctx->state = PCHG_STATE_DETECTED;
-		break;
-	case PCHG_EVENT_CHARGE_STARTED:
-		ctx->state = PCHG_STATE_CHARGING;
+		ctx->state = PCHG_STATE_CONNECTED;
 		break;
 	default:
 		break;
@@ -210,6 +211,42 @@ static void pchg_state_enabled(struct pchg *ctx)
 }
 
 static void pchg_state_detected(struct pchg *ctx)
+{
+	int rv;
+
+	switch (ctx->event) {
+	case PCHG_EVENT_RESET:
+		ctx->state = pchg_reset(ctx);
+		break;
+	case PCHG_EVENT_DISABLE:
+		ctx->error |= PCHG_ERROR_HOST;
+		rv = ctx->cfg->drv->enable(ctx, false);
+		if (rv == EC_SUCCESS)
+			ctx->state = PCHG_STATE_INITIALIZED;
+		else if (rv != EC_SUCCESS_IN_PROGRESS)
+			CPRINTS("ERR: Failed to disable");
+		break;
+	case PCHG_EVENT_DISABLED:
+		ctx->state = PCHG_STATE_INITIALIZED;
+		break;
+	case PCHG_EVENT_DEVICE_CONNECTED:
+		/*
+		 * Proactively query SOC in case charging info won't be sent
+		 * because device is already charged.
+		 */
+		ctx->cfg->drv->get_soc(ctx);
+		ctx->state = PCHG_STATE_CONNECTED;
+		break;
+	case PCHG_EVENT_DEVICE_LOST:
+		ctx->battery_percent = 0;
+		ctx->state = PCHG_STATE_ENABLED;
+		break;
+	default:
+		break;
+	}
+}
+
+static void pchg_state_connected(struct pchg *ctx)
 {
 	int rv;
 
@@ -273,7 +310,7 @@ static void pchg_state_charging(struct pchg *ctx)
 		break;
 	case PCHG_EVENT_CHARGE_ENDED:
 	case PCHG_EVENT_CHARGE_STOPPED:
-		ctx->state = PCHG_STATE_DETECTED;
+		ctx->state = PCHG_STATE_CONNECTED;
 		break;
 	default:
 		break;
@@ -394,6 +431,9 @@ static int pchg_run(struct pchg *ctx)
 		break;
 	case PCHG_STATE_DETECTED:
 		pchg_state_detected(ctx);
+		break;
+	case PCHG_STATE_CONNECTED:
+		pchg_state_connected(ctx);
 		break;
 	case PCHG_STATE_CHARGING:
 		pchg_state_charging(ctx);
@@ -546,7 +586,7 @@ static enum ec_status hc_pchg(struct host_cmd_handler_args *args)
 
 	ctx = &pchgs[port];
 
-	if (ctx->state == PCHG_STATE_DETECTED
+	if (ctx->state == PCHG_STATE_CONNECTED
 			&& ctx->battery_percent >= ctx->cfg->full_percent)
 		r->state = PCHG_STATE_FULL;
 	else
