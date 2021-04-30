@@ -46,13 +46,15 @@ class LogWriter:
         _written_at_level: dict:
             key: log_level
             value: True if output was written at that level
+        _job_id: The name to prepend to logged lines
     """
-    def __init__(self, logger, log_level, log_level_override_func):
+    def __init__(self, logger, log_level, log_level_override_func, job_id):
         self._logger = logger
         self._log_level = log_level
         self._override_func = log_level_override_func
         # A map whether output was printed at each logging level
         self._written_at_level = collections.defaultdict(lambda: False)
+        self._job_id = job_id
 
     def log_line(self, line):
         """Log a line of output
@@ -70,7 +72,10 @@ class LogWriter:
             # greatly simplifies the logic that is needed to update the log
             # level.
             self._log_level = self._override_func(line, self._log_level)
-        self._logger.log(self._log_level, line)
+        if self._job_id:
+            self._logger.log(self._log_level, "[%s]%s", self._job_id, line)
+        else:
+            self._logger.log(self._log_level, line)
         self._written_at_level[self._log_level] = True
 
     def has_written(self, log_level):
@@ -162,7 +167,7 @@ _logging_thread = threading.Thread(target=_logging_loop, daemon=True)
 
 
 def log_output(logger, log_level, file_descriptor,
-               log_level_override_func=None):
+               log_level_override_func=None, job_id=None):
     """Log the output from the given file descriptor.
 
     Args:
@@ -179,7 +184,11 @@ def log_output(logger, log_level, file_descriptor,
     with _logging_cv:
         if not _logging_thread.is_alive():
             _logging_thread.start()
-        writer = LogWriter(logger, log_level, log_level_override_func)
+        writer = LogWriter(
+            logger,
+            log_level,
+            log_level_override_func,
+            job_id)
         _logging_map[file_descriptor] = writer
         # Write a dummy byte to the pipe to break the select so we can add the
         # new fd.

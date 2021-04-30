@@ -256,8 +256,13 @@ class Zmake:
                                       stderr=subprocess.PIPE,
                                       encoding='utf-8',
                                       errors='replace')
-            zmake.multiproc.log_output(self.logger, logging.DEBUG, proc.stdout)
-            zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
+            job_id = "{}:{}".format(project_dir, build_name)
+            zmake.multiproc.log_output(
+                self.logger, logging.DEBUG, proc.stdout,
+                job_id=job_id,)
+            zmake.multiproc.log_output(
+                self.logger, logging.ERROR, proc.stderr,
+                job_id=job_id,)
             processes.append(proc)
         for proc in processes:
             if proc.wait():
@@ -320,16 +325,19 @@ class Zmake:
                     stderr=subprocess.PIPE,
                     encoding='utf-8',
                     errors='replace')
+                job_id = "{}:{}".format(build_dir, build_name)
                 out = zmake.multiproc.log_output(
                     logger=self.logger,
                     log_level=logging.INFO,
                     file_descriptor=proc.stdout,
-                    log_level_override_func=ninja_log_level_override)
+                    log_level_override_func=ninja_log_level_override,
+                    job_id=job_id,)
                 err = zmake.multiproc.log_output(
                     self.logger,
                     logging.ERROR,
                     proc.stderr,
-                    log_level_override_func=cmake_log_level_override)
+                    log_level_override_func=cmake_log_level_override,
+                    job_id=job_id,)
 
                 if self._sequential:
                     if not wait_and_check_success([proc], [out, err]):
@@ -379,10 +387,13 @@ class Zmake:
                     stderr=subprocess.PIPE,
                     encoding='utf-8',
                     errors='replace')
-                zmake.multiproc.log_output(self.logger, logging.DEBUG,
-                                           proc.stdout)
-                zmake.multiproc.log_output(self.logger, logging.ERROR,
-                                           proc.stderr)
+                job_id = "test {}".format(output_file)
+                zmake.multiproc.log_output(
+                    self.logger, logging.DEBUG,
+                    proc.stdout, job_id=job_id,)
+                zmake.multiproc.log_output(
+                    self.logger, logging.ERROR,
+                    proc.stderr, job_id=job_id,)
                 procs.append(proc)
 
         for idx, proc in enumerate(procs):
@@ -422,7 +433,8 @@ class Zmake:
                     errors='replace')
                 zmake.multiproc.log_output(
                     self.logger, logging.DEBUG,
-                    proc.stdout, log_level_override_func=get_log_level)
+                    proc.stdout, log_level_override_func=get_log_level,
+                    job_id=os.path.basename(test_file),)
                 rv = proc.wait()
                 if rv:
                     self.logger.error(get_process_failure_msg(proc))
@@ -479,7 +491,8 @@ class Zmake:
                                         encoding='utf-8',
                                         errors='replace')
             zmake.multiproc.log_output(
-                self.logger, logging.WARNING, proc.stderr)
+                self.logger, logging.WARNING, proc.stderr,
+                job_id="{}-lcov".format(build_dir),)
 
             with open(lcov_file, 'w') as outfile:
                 for line in proc.stdout:
@@ -522,12 +535,16 @@ class Zmake:
                 stderr=subprocess.PIPE,
                 encoding='utf-8',
                 errors='replace')
+            job_id = "{}:{}".format(build_dir, build_name)
             zmake.multiproc.log_output(
                 logger=self.logger,
                 log_level=logging.DEBUG,
                 file_descriptor=proc.stdout,
-                log_level_override_func=ninja_log_level_override)
-            zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
+                log_level_override_func=ninja_log_level_override,
+                job_id=job_id,)
+            zmake.multiproc.log_output(
+                self.logger, logging.ERROR, proc.stderr,
+                job_id=job_id,)
             procs.append(proc)
 
         for proc in procs:
@@ -588,7 +605,11 @@ class Zmake:
                 stderr=subprocess.PIPE,
                 encoding='utf-8',
                 errors='replace')
-            zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
+            zmake.multiproc.log_output(
+                self.logger,
+                logging.ERROR,
+                proc.stderr,
+                job_id="getversion.sh")
             version = ''
             for line in proc.stdout:
                 match = re.search(r'#define VERSION "(.*)"', line)
@@ -609,8 +630,10 @@ class Zmake:
                 stderr=subprocess.PIPE,
                 encoding='utf-8',
                 errors='replace')
-            zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
-            zmake.multiproc.log_output(self.logger, logging.DEBUG, proc.stdout)
+            zmake.multiproc.log_output(
+                self.logger, logging.ERROR, proc.stderr, job_id="lcov")
+            zmake.multiproc.log_output(
+                self.logger, logging.DEBUG, proc.stdout, job_id="lcov")
             if proc.wait():
                 raise OSError(get_process_failure_msg(proc))
 
@@ -626,8 +649,16 @@ class Zmake:
                 stderr=subprocess.PIPE,
                 encoding='utf-8',
                 errors='replace')
-            zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
-            zmake.multiproc.log_output(self.logger, logging.DEBUG, proc.stdout)
+            zmake.multiproc.log_output(
+                self.logger,
+                logging.ERROR,
+                proc.stderr,
+                job_id="genhtml")
+            zmake.multiproc.log_output(
+                self.logger,
+                logging.DEBUG,
+                proc.stdout,
+                job_id="genhtml")
             if proc.wait():
                 raise OSError(get_process_failure_msg(proc))
             return 0
