@@ -300,6 +300,7 @@ class Zmake:
         log_writers = []
         dirs = {}
 
+        build_dir = build_dir.resolve()
         project = zmake.project.Project(build_dir / 'project')
 
         # Compute the version string.
