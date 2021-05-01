@@ -289,14 +289,6 @@ flash_fp_mcu_stm32() {
   warn_gpio "${gpio_nrst}" 0 \
     "WARNING: One of the drivers changed NRST pin state on bind attempt."
 
-  # TODO(b/179530529): Remove this hack when the drivers on strongbad stop
-  # setting the gpio states.
-  if [[ "${PLATFORM_NAME}" == "strongbad" ]]; then
-    echo "# Fixing GPIOs"
-    gpio 1 "${gpio_boot0}"
-    gpio 0 "${gpio_nrst}"
-  fi
-
   local attempt=0
   local cmd_exit_status=1
   local cmd="stm32mon ${stm32mon_flags}"
