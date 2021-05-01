@@ -111,7 +111,7 @@ static int ec_command_i2c_3(int command, int version,
 	i2c_msg.addr = EC_I2C_ADDR;
 	i2c_msg.flags = 0;
 	i2c_msg.len = req_len;
-	i2c_msg.buf = (char *)req_buf;
+	i2c_msg.buf = req_buf;
 
 	resp_len = I2C_RESPONSE_HEADER_SIZE + sizeof(struct ec_host_response)
 		+ insize;
@@ -141,7 +141,7 @@ static int ec_command_i2c_3(int command, int version,
 	i2c_msg.addr = EC_I2C_ADDR;
 	i2c_msg.flags = I2C_M_RD;
 	i2c_msg.len = resp_len;
-	i2c_msg.buf = (char *)resp_buf;
+	i2c_msg.buf = resp_buf;
 	error = ioctl(i2c_fd, I2C_RDWR, &data);
 	if (error < 0) {
 		fprintf(stderr, "I2C read failed: %d (err: %d, %s)\n",
