@@ -56,6 +56,29 @@ const uint32_t pd_snk_pdo[] = {
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
+static int src_host_pdo_cnt_override;
+
+static int command_hostpdo(int argc, char **argv)
+{
+	char *e;
+	int limit;
+
+	if (argc >= 2) {
+
+		limit = strtoi(argv[1], &e, 10);
+		if ((limit < 0) || (limit > PDO_IDX_COUNT))
+			return EC_ERROR_PARAM1;
+
+		src_host_pdo_cnt_override = limit;
+	}
+	ccprintf("src host pdo override = %d\n", src_host_pdo_cnt_override);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(hostpdo, command_hostpdo,
+			"<0|1|2|3|4>",
+			"Limit number of PDOs for C0");
+
 int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
 {
 	int pdo_cnt = 0;
@@ -63,6 +86,14 @@ int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
 	if (port == USB_PD_PORT_HOST) {
 		*src_pdo =  pd_src_host_pdo;
 		pdo_cnt = ARRAY_SIZE(pd_src_host_pdo);
+		/*
+		 * This override is only active via a console command. Only used
+		 * for debug to limit the level of VBUS offered to port partner
+		 * if desired. The console command only allows 0 ->
+		 * PDO_IDX_COUNT for this value.
+		 */
+		if (src_host_pdo_cnt_override)
+			pdo_cnt = src_host_pdo_cnt_override;
 	} else {
 		*src_pdo =  pd_src_display_pdo;
 		pdo_cnt = ARRAY_SIZE(pd_src_display_pdo);
@@ -230,8 +261,11 @@ void pd_transition_voltage(int idx)
 			 * voltage range.
 			 */
 			if ((mv_average >= vbus_lo) &&
-			    (mv_average <= vbus_hi))
+			    (mv_average <= vbus_hi)) {
+				CPRINTS("usbc[%d]: VBUS to %d mV in %d steps",
+					port, target_mv, i);
 				return;
+			}
 		}
 
 		/*
@@ -455,6 +489,8 @@ static void svdm_configure_demux(int port, int enable, int mf)
 		 * stored in bit 0 of CBI fw_config.
 		 */
 		baseboard_set_mst_lane_control(mf);
+		CPRINTS("DP[%d]: DFP-D selected pin config %s",
+			port, mf ? "D" : "C");
 	} else {
 		demux &= ~USB_PD_MUX_DP_ENABLED;
 		demux |= USB_PD_MUX_USB_ENABLED;
