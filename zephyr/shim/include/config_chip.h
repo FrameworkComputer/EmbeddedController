@@ -1496,4 +1496,9 @@
 #define CONFIG_LOW_POWER_IDLE
 #endif
 
+#undef CONFIG_PORT80_4_BYTE
+#ifdef CONFIG_PLATFORM_EC_PORT80_4_BYTE
+#define CONFIG_PORT80_4_BYTE
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */
