@@ -1,3 +1,3 @@
 # SPDX-License-Identifier: Apache-2.0
 
-set(ECST_CHIP_ARG npcx7m7)
+set(NPCX_IMAGE_FILE ${PROJECT_BINARY_DIR}/zephyr.packed.bin)

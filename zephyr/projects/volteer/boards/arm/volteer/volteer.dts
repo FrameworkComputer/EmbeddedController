@@ -10,7 +10,7 @@
 #include <dt-bindings/adc/adc.h>
 #include <dt-bindings/charger/intersil_isl9241.h>
 #include <dt-bindings/gpio_defines.h>
-#include <nuvoton/npcx7m6fb.dtsi>
+#include <nuvoton/npcx7m7fc.dtsi>
 
 / {
 	model = "Google Volteer EC";
@@ -217,16 +217,6 @@
 			label = "FLASH_INTERFACE_UNIT0";
 			pinctrl-0 = <>;
 		};
-	};
-
-	/*
-	 * The NPCX loader copies our image from ROM to code RAM, so the flash
-	 * node actually represents the code RAM location and size.
-	 * Override the code RAM for the NPCX797FC.
-	 */
-	/delete-node/ flash@10090000;
-	flash0: flash@10070000 {
-		reg = <0x10070000 0x40000>;
 	};
 
 	/*

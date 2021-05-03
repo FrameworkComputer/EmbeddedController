@@ -4,7 +4,7 @@
 
 config BOARD_KOHAKU
 	bool "Google Kohaku EC"
-	depends on SOC_NPCX7M6FB # Actually NPCX7M6FC; C has 512K Flash
+	depends on SOC_NPCX7M6FC
 	# NPCX doesn't actually have enough ram for coverage, but this will
 	# allow generating initial 0 line coverage.
 	select HAS_COVERAGE_SUPPORT

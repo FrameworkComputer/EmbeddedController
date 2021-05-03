@@ -17,86 +17,15 @@ config PLATFORM_EC_RO_HEADER
 config PLATFORM_EC_RO_HEADER_OFFSET
 	hex "Offset in memory for the location of the header"
 	default 0x0
+	depends on PLATFORM_EC_RO_HEADER
 	help
 	  The offset (in bytes) of the header relative to the start address of
 	  the RO image.
 
 config PLATFORM_EC_RO_HEADER_SIZE
 	hex "Size of the RO header"
-	default 0x40
+	default 0x40 if SOC_FAMILY_NPCX
+	depends on PLATFORM_EC_RO_HEADER
 	help
 	  The size of the RO header in bytes. This values should come from the
 	  datasheet of the chip being used.
-
-config PLATFORM_EC_RO_HEADER_ENABLE_HEADER_CRC
-	bool "Enable header crc check"
-	help
-	  When enabled, the header will be verified at boot using a crc
-	  checksum.
-
-config PLATFORM_EC_RO_HEADER_ENABLE_FIRMWARE_CRC
-	bool "Enable firmware image crc check"
-	help
-	  When enabled, the firmware image will be verified at boot using a
-	  crc checksum.
-
-choice "core clock to SPI flash clock ratio"
-	prompt "The clock ratio between the core clock and the SPI clock"
-	default PLATFORM_EC_RO_HEADER_CORE_CLOCK_SPI_CLOCK_RATIO_1
-	help
-	  This sets the clock ratio (core clock / SPI clock)
-
-config PLATFORM_EC_RO_HEADER_CORE_CLOCK_SPI_CLOCK_RATIO_1
-	bool "SPI flash will operate with normal reading mode"
-	help
-	  The SPI flash clock has the same frequency as the core clock.
-
-config PLATFORM_EC_RO_HEADER_CORE_CLOCK_SPI_CLOCK_RATIO_2
-	bool "SPI flash will operate with fast reading mode"
-	help
-	  The core clock frequency is twice the flash clock frequency.
-
-endchoice # core clock to SPI flash clock ratio
-
-choice "SPI flash max clock rate"
-	prompt "Clock rate to use for SPI flash"
-	help
-	  This selects the max clock rate (one of 20, 25, 33, 40, or 50 MHz)
-	  that will be used for the SPI flash.
-
-config PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_20
-	bool "SPI flash max clock rate of 20 MHz"
-
-config PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_25
-	bool "SPI flash max clock rate of 25 MHz"
-
-config PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_33
-	bool "SPI flash max clock rate of 33 MHz"
-
-config PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_40
-	bool "SPI flash max clock rate of 40 MHz"
-
-config PLATFORM_EC_RO_HEADER_SPI_MAX_CLOCK_50
-	bool "SPI flash max clock rate of 50 MHz"
-
-endchoice # SPI flash max clock rate
-
-choice "SPI flash reading mode"
-	prompt "Reading mode used by the SPI flash"
-	help
-	  This will set the reading mode that can be used by the SPI flash.
-	  Reading modes supported are normal, fast, dual, and quad.
-
-config PLATFORM_EC_RO_HEADER_SPI_READ_MODE_NORMAL
-	bool "SPI flash will operate with normal reading mode"
-
-config PLATFORM_EC_RO_HEADER_SPI_READ_MODE_FAST
-	bool "SPI flash will operate with fast reading mode"
-
-config PLATFORM_EC_RO_HEADER_SPI_READ_MODE_DUAL
-	bool "SPI flash will operate with dual reading mode"
-
-config PLATFORM_EC_RO_HEADER_SPI_READ_MODE_QUAD
-	bool "SPI flash will operate with quad reading mode"
-
-endchoice # SPI flash reading mode
