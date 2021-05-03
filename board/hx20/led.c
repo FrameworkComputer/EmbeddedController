@@ -23,7 +23,7 @@
 
 /* at 8-bit mode one cycle = 8ms */
 #define BREATH_ON_LENGTH	62
-#define BREATH_OFF_LENGTH	10
+#define BREATH_OFF_LENGTH	200
 
 
 const enum ec_led_id supported_led_ids[] = {
