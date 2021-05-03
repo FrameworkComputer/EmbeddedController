@@ -884,7 +884,7 @@ static void update_dynamic_battery_info(void)
 		tmp |= EC_BATT_FLAG_LEVEL_CRITICAL;
 
 #ifdef CONFIG_EMI_REGION1
-	batt_os_percentage = (curr.batt.remaining_capacity * 1000) / (curr.batt.full_capacity + 1);
+	batt_os_percentage = (*memmap_cap * 1000) / (curr.batt.full_capacity + 1);
 	/*
 	 * sync with OS battery percentage to avoid battery show charging icon at 100%
 	 * os battery display formula: rounding (remainig / full capacity)*100
