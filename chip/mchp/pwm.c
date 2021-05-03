@@ -45,6 +45,48 @@ const uint8_t pwm_slp_bitpos[MCHP_PWM_ID_MAX + MCHP_BBLEN_INSTANCES] = {
 
 };
 
+void bbled_set_limit(enum pwm_channel ch, uint8_t max, uint8_t min)
+{
+	MCHP_BBLED_LIMITS(ch) = (max << 8) + min;
+}
+
+/*
+ * In 8-bit mode 1 cycle = 8ms.
+ * high byte for light on, low byte for light off
+ */
+void bbled_set_delay(enum pwm_channel ch, int high_delay, int low_delay)
+{
+	MCHP_BBLED_DELAY(ch) = (high_delay << MCHP_BBLED_DLY_HI_BITPOS) + low_delay;
+}
+
+void bbled_enable(enum pwm_channel ch, int percent, int on_length, int off_length, uint8_t enable)
+{
+	int id = pwm_channels[ch].channel;
+	int duty = (percent * 0xFF) / 100;
+
+	if (id < (MCHP_PWM_ID_MAX + MCHP_BBLEN_INSTANCES)) {
+		id = id - MCHP_PWM_ID_MAX;
+		if (enable) {
+			if (!(MCHP_BBLED_CONFIG(id) & MCHP_BBLED_CTRL_BREATHE)) {
+				MCHP_BBLED_CONFIG(id) &= ~MCHP_BBLED_CTRL_MASK;
+				MCHP_BBLED_CONFIG(id) &= ~MCHP_BBLED_ASYMMETRIC;
+				MCHP_BBLED_CONFIG(id) |= MCHP_BBLED_CTRL_BREATHE;
+				MCHP_BBLED_CONFIG(id) |= MCHP_BBLED_SYNC;
+				bbled_set_limit(id, duty, 0x00);
+				bbled_set_delay(id, on_length, off_length);
+				MCHP_BBLED_CONFIG(id) &= ~MCHP_BBLED_SYNC;
+				MCHP_BBLED_CONFIG(id) |= MCHP_BBLED_EN_UPDATE;
+			}
+		} else {
+			if (!(MCHP_BBLED_CONFIG(id) & MCHP_BBLED_CTRL_BLINK)) {
+				MCHP_BBLED_CONFIG(id) &= ~MCHP_BBLED_CTRL_MASK;
+				MCHP_BBLED_CONFIG(id) |= MCHP_BBLED_CTRL_BLINK;
+				bbled_set_delay(id, 0x00, 0x0f);
+			}
+		}
+	}
+}
+
 static uint32_t pwm_get_sleep_mask(int id)
 {
 	uint32_t bitpos = 32;
