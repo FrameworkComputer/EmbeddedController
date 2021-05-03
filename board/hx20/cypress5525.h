@@ -24,7 +24,7 @@
 #define CYP5525_UCSI_STATUS_REG         0x0038
 #define CYP5525_UCSI_CONTROL_REG        0x0039
 #define CYP5525_SYS_PWR_STATE           0x003B
-
+#define CYP5525_HPI_VERSION				0x003C
 /*User registers from 0x40 to 0x48 are used for BB retimer */
 #define CYP5225_USER_MAINBOARD_VERSION	0x004F
 #define CYP5225_USER_BB_POWER_EVT		0x004E
@@ -40,6 +40,8 @@
 
 #define CYP5525_DM_CONTROL_REG(x) \
 	(0x1000 + (x * 0x1000))
+#define CYP5525_SELECT_SOURCE_PDO_REG(x) \
+	(0x1004 + (x * 0x1000))
 #define CYP5525_SELECT_SINK_PDO_REG(x) \
 	(0x1005 + (x * 0x1000))
 #define CYP5525_PD_CONTROL_REG(x) \
@@ -67,8 +69,8 @@
 	(0x1400 + (x * 0x1000))
 #define CYP5525_READ_DATA_MEMORY_REG(x, offset) \
 	((0x1404 + offset) + (x * 0x1000))
-#define CYP5525_WRITE_DATA_MEMORY_REG(x) \
-	(0x1800 + (x * 0x1000))
+#define CYP5525_WRITE_DATA_MEMORY_REG(x, offset) \
+	((0x1800 + offset) + (x * 0x1000))
 
 #define CYP5525_SELECT_SINK_PDO_P1_REG      0x2005
 #define CYP5525_PD_CONTROL_P1_REG           0x2006
@@ -328,7 +330,6 @@ struct pd_port_current_state_t {
 	enum pd_power_role power_role;
 	enum pd_data_role data_role;
 	enum pd_vconn_role vconn;
-
 };
 
 struct pd_chip_ucsi_info_t {
