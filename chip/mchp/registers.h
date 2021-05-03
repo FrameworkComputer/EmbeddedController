@@ -755,11 +755,16 @@
 #define MCHP_VBAT_SHDN_DIS           REG32(MCHP_VBAT_BASE + 0xC)
 #define MCHP_VBAT_MONOTONIC_CTR_LO   REG32(MCHP_VBAT_BASE + 0x20)
 #define MCHP_VBAT_MONOTONIC_CTR_HI   REG32(MCHP_VBAT_BASE + 0x24)
+
+#define MCHP_VBAT_RAM_BASE			 0x4000a800
 /* read 32-bit word at 32-bit offset x where 0 <= x <= 31 */
-#define MCHP_VBAT_RAM(x)   REG32(MCHP_VBAT_BASE + 0x400 + ((x) * 4))
+#define MCHP_VBAT_RAM(x)		REG32(MCHP_VBAT_RAM_BASE + ((x) * 4))
+#define MCHP_VBAT_RAM8(x)		REG8(MCHP_VBAT_RAM_BASE + (x))
+
 #if defined(CHIP_FAMILY_MEC152X)
 #define MCHP_VBAT_VWIRE_BACKUP       14
-#else 
+#else
+
 #define MCHP_VBAT_VWIRE_BACKUP       30
 #endif 
 

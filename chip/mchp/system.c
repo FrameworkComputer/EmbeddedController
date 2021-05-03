@@ -30,16 +30,26 @@
 #define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
 
 
-/* Indices for hibernate data registers (RAM backed by VBAT) */
+/* Indices for hibernate data registers (RAM backed by VBAT) total 64byte */
 enum hibdata_index {
+	/* use for word */
 	HIBDATA_INDEX_SCRATCHPAD = 0,    /* General-purpose scratchpad */
-	HIBDATA_INDEX_SAVED_RESET_FLAGS, /* Saved reset flags */
-	HIBDATA_INDEX_PD0,		/* USB-PD0 saved port state */
-	HIBDATA_INDEX_PD1,		/* USB-PD1 saved port state */
-	HIBDATA_INDEX_PD2,		/* USB-PD2 saved port state */
-	HIBDATA_INDEX_PD3,		/* USB-PD3 saved port state */
-	// TODO bbram
-	// HIBDATA_INDEX_CHG_MAX,
+	HIBDATA_INDEX_SAVED_RESET_FLAGS = 4, /* Saved reset flags */
+	/* use for byte */
+#ifdef CONFIG_HOSTCMD_VBNV_CONTEXT
+	HIBDATA_INDEX_VBNVCNTXT = 8, /* total 16 byte 8 ~ 23 */
+#endif
+	HIBDATA_INDEX_PD0 = 24,		/* USB-PD0 saved port state */
+	HIBDATA_INDEX_PD1 = 25,		/* USB-PD1 saved port state */
+	HIBDATA_INDEX_PD2 = 26,		/* USB-PD2 saved port state */
+	HIBDATA_INDEX_PD3 = 27,		/* USB-PD3 saved port state */
+	HIBDATA_INDEX_CHG_MAX = 28,
+	HIBDATA_INDEX_AC_BOOT = 29,
+	HIBDATA_INDEX_TRY_SLOT = 30,
+	/*
+	 * .. 56 ~ 59 byte for ESPI VW use ..
+	 * .. 60 ~ 63 byte for IMAGETYPE use ..
+	 */
 };
 
 static void check_reset_cause(void)
@@ -304,6 +314,13 @@ const char *system_get_chip_revision(void)
 
 static int bbram_idx_lookup(enum system_bbram_idx idx)
 {
+
+#ifdef CONFIG_HOSTCMD_VBNV_CONTEXT
+	if (idx >= SYSTEM_BBRAM_IDX_VBNVBLOCK0 &&
+	    idx <= SYSTEM_BBRAM_IDX_VBNVBLOCK15)
+		return idx + HIBDATA_INDEX_VBNVCNTXT;
+#endif
+
 	switch (idx) {
 	case SYSTEM_BBRAM_IDX_PD0:
 		return HIBDATA_INDEX_PD0;
@@ -313,12 +330,14 @@ static int bbram_idx_lookup(enum system_bbram_idx idx)
 		return HIBDATA_INDEX_PD2;
 	case SYSTEM_BBRAM_IDX_PD3:
 		return HIBDATA_INDEX_PD3;
-	/* TODO: bbram
 	case SYSTEM_BBRAM_IDX_CHG_MAX:
 		return HIBDATA_INDEX_CHG_MAX;
-	*/
+	case SYSTEM_BBRAM_IDX_AC_BOOT:
+		return HIBDATA_INDEX_AC_BOOT;
+	case SYSTEM_BBRAM_IDX_TRY_SLOT:
+		return HIBDATA_INDEX_TRY_SLOT;
 	default:
-		return 1;
+		return -1;
 	}
 }
 
@@ -329,7 +348,11 @@ int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 	if (hibdata < 0)
 		return EC_ERROR_UNIMPLEMENTED;
 
-	*value = MCHP_VBAT_RAM(hibdata);
+	if (idx != hibdata)
+		*value = MCHP_VBAT_RAM8(hibdata);
+	else
+		*value = MCHP_VBAT_RAM(hibdata);
+
 	return EC_SUCCESS;
 }
 
@@ -340,7 +363,11 @@ int system_set_bbram(enum system_bbram_idx idx, uint8_t value)
 	if (hibdata < 0)
 		return EC_ERROR_UNIMPLEMENTED;
 
-	MCHP_VBAT_RAM(hibdata) = value;
+	if (idx != hibdata)
+		MCHP_VBAT_RAM8(hibdata) = value;
+	else
+		MCHP_VBAT_RAM(hibdata) = value;
+
 	return EC_SUCCESS;
 }
 
