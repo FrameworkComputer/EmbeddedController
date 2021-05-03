@@ -368,6 +368,9 @@ static void dump_data(uint8_t *data, int offset, int size)
 {
 	int i = 0;
 
+	if (data == NULL)
+		return;
+
 	printf("Offset:0x%X\n", offset);
 	for (i = 0; i < size; i++) {
 		if ((i%16) == 0)
