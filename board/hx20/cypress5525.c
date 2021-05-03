@@ -379,7 +379,7 @@ int cyp5525_setup(int controller)
  * This enables setting up to 6 source PDOs
  * we only use 1 source PDO 5V3A.
  */
-void cypd_set_source_pdo(int controller, int port, uint32_t * pdos, int num_pdos, bool unconstrained_power)
+void cypd_set_source_pdo(int controller, int port, uint32_t *pdos, int num_pdos, bool unconstrained_power)
 {
 	uint32_t data[7] = {0};
 	int i;
@@ -390,12 +390,12 @@ void cypd_set_source_pdo(int controller, int port, uint32_t * pdos, int num_pdos
 
 	data[0] = 0x53524350; /* signature = SRCP */
 
-	for(i = 0; i < MIN(6, num_pdos); i++) {
+	for (i = 0; i < MIN(6, num_pdos); i++) {
 		data[i+1] = pdos[i];
 		enabled_mask |= 1<<i;
 	}
 
-	cypd_write_reg_block(controller,CYP5525_WRITE_DATA_MEMORY_REG(port, 0),
+	cypd_write_reg_block(controller, CYP5525_WRITE_DATA_MEMORY_REG(port, 0),
 								(void *)data, ARRAY_SIZE(data) * sizeof(uint32_t));
 	cypd_write_reg8(controller, CYP5525_SELECT_SOURCE_PDO_REG(port), enabled_mask);
 
@@ -410,7 +410,7 @@ void cypd_set_source_pdo(int controller, int port, uint32_t * pdos, int num_pdos
  * message, or extmessage header - then data
  * length should include length of all data after pd header
  */
-void cypd_send_msg(int controller, int port, uint32_t pd_header, uint16_t ext_hdr, bool pd30, bool response_timer, void * data, uint32_t data_size)
+void cypd_send_msg(int controller, int port, uint32_t pd_header, uint16_t ext_hdr, bool pd30, bool response_timer, void *data, uint32_t data_size)
 {
 	uint16_t header[2] = {0};
 	uint16_t dm_control_data;
@@ -428,7 +428,7 @@ void cypd_send_msg(int controller, int port, uint32_t pd_header, uint16_t ext_hd
 	header[1] = ext_hdr;
 
 	cypd_write_reg_block(controller, CYP5525_WRITE_DATA_MEMORY_REG(port, 0),
-		(void*)header, 4);
+		(void *)header, 4);
 
 	cypd_write_reg_block(controller, CYP5525_WRITE_DATA_MEMORY_REG(port, 4),
 		data, data_size);
@@ -463,8 +463,9 @@ void cypd_response_get_battery_capability(int controller, int port,
 	int port_idx = (controller << 1) + port;
 	int ext_header = 0;
 	bool chunked = PD_EXT_HEADER_CHUNKED(rx_emsg[port_idx].header);
-	uint16_t msg[5] = {0,0,0,0,0};
+	uint16_t msg[5] = {0, 0, 0, 0, 0};
 	uint32_t header = PD_EXT_BATTERY_CAP + PD_HEADER_SOP(sop_type);
+
 	ext_header = 9;
 	/* Set extended header */
 	if (chunked) {
@@ -530,7 +531,7 @@ void cypd_response_get_battery_capability(int controller, int port,
 			}
 		}
 	}
-	cypd_send_msg(controller, port, header, ext_header,  false, false, (void*)msg, ARRAY_SIZE(msg)*sizeof(uint16_t));
+	cypd_send_msg(controller, port, header, ext_header,  false, false, (void *)msg, ARRAY_SIZE(msg)*sizeof(uint16_t));
 
 }
 
@@ -608,7 +609,7 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum pd_msg_type s
 	int i;
 	int port_idx = (controller << 1) + port;
 	int pd_header;
-	if (len > 260){
+	if (len > 260) {
 		CPRINTS("ExtMsg Too Long");
 		return EC_ERROR_INVAL;
 	}
@@ -636,9 +637,9 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum pd_msg_type s
 		rv = cypd_response_get_battery_status(controller, port, pd_header, sop_type);
 		break;
 	default:
-		CPRINTF("Port:%d Unknown data type: 0x%02x Hdr:0x%04x ExtHdr:0x%04x Data:0x", 
+		CPRINTF("Port:%d Unknown data type: 0x%02x Hdr:0x%04x ExtHdr:0x%04x Data:0x",
 				port_idx, type, pd_header, rx_emsg[port_idx].header);
-		for(i=0; i < rx_emsg[port_idx].len; i++){
+		for (i = 0; i < rx_emsg[port_idx].len; i++) {
 			CPRINTF("%02x", rx_emsg[port_idx].buf[i]);
 		}
 		CPRINTF("\n");
@@ -816,10 +817,10 @@ void cyp5525_port_int(int controller, int port)
 		CPRINTS("CYP_RESPONSE_RX_EXT_MSG");
 		break;
 	default:
-		if (response_len && verbose_msg_logging){
+		if (response_len && verbose_msg_logging) {
 			CPRINTF("Port:%d Data:0x", port_idx);
-			i2c_read_offset16_block(i2c_port, addr_flags, CYP5525_READ_DATA_MEMORY_REG(port,0), data2, MIN(response_len,32));
-			for(i=0; i < response_len; i++){
+			i2c_read_offset16_block(i2c_port, addr_flags, CYP5525_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));
+			for (i = 0; i < response_len; i++) {
 				CPRINTF("%02x", data2[i]);
 			}
 			CPRINTF("\n");
@@ -1399,7 +1400,7 @@ static int cmd_cypd_get_status(int argc, char **argv)
 			cypd_read_reg8(i, CYP5525_DEVICE_MODE, &data);
 			CPRINTS("CYPD_DEVICE_MODE: 0x%02x %s", data, mode[data & 0x03]);
 			cypd_read_reg_block(i, CYP5525_HPI_VERSION, data4, 4);
-			CPRINTS("HPI_VERSION: 0x%02x%02x%02x%02x", data4[3],data4[2],data4[1],data4[0]);
+			CPRINTS("HPI_VERSION: 0x%02x%02x%02x%02x", data4[3], data4[2], data4[1], data4[0]);
 			cypd_read_reg8(i, CYP5525_INTR_REG, &data);
 			CPRINTS("CYPD_INTR_REG: 0x%02x %s %s %s %s",
 						data,
@@ -1554,7 +1555,7 @@ static int cmd_cypd_bb(int argc, char **argv)
 		if (*e)
 			return EC_ERROR_PARAM3;
 
-		cypd_write_reg_block(ctrl, 0x48, (void*)&data, 4);
+		cypd_write_reg_block(ctrl, 0x48, (void *)&data, 4);
 		cypd_write_reg16(ctrl, 0x46, cmd);
 	}
 	return EC_SUCCESS;
@@ -1571,7 +1572,8 @@ static int cmd_cypd_msg(int argc, char **argv)
 	uint16_t data[5];
 	char *e;
 	int chunked = 0;
-	if (argc >=2) {
+
+	if (argc >= 2) {
 	sys_port = strtoi(argv[1], &e, 0);
 	if (*e || sys_port >= PD_PORT_COUNT)
 		return EC_ERROR_PARAM1;
@@ -1582,24 +1584,24 @@ static int cmd_cypd_msg(int argc, char **argv)
 		if (argc >= 4) {
 			chunked = strtoi(argv[3], &e, 0);
 		}
-		if (!strncmp(argv[2], "batterycap", 10)) {
-			data[0] = PD_EXT_GET_BATTERY_CAP;//ext msg type
 
+		if (!strncmp(argv[2], "batterycap", 10)) {
+			data[0] = PD_EXT_GET_BATTERY_CAP;/*ext msg type*/
+
+		} else if (!strncmp(argv[2], "batterystatus", 13)) {
+			data[0] = PD_EXT_GET_BATTERY_STATUS; /*ext msg type*/
 		}
-		else if (!strncmp(argv[2], "batterystatus", 13)) {
-			data[0] = PD_EXT_GET_BATTERY_STATUS;//ext msg type
-		}
-		// ext msg header
-		data[1] = 0x01; //data size
-		/*note when in chunked mode the first chunk does not set request_chunk=1 
-		 * see example 6.2.1.2.5.2 in usb pd rev 3.0 
+		/* ext msg header*/
+		data[1] = 0x01; /*data size*/
+		/*note when in chunked mode the first chunk does not set request_chunk=1
+		 * see example 6.2.1.2.5.2 in usb pd rev 3.0
 		 */
 		data[1] |= chunked ? BIT(15) : 0x00;
-		//ext msg data
-		data[2] = 0; //internal battery 0
+		/*ext msg data*/
+		data[2] = 0; /*internal battery 0*/
 		data_len = 5;
 		cypd_write_reg_block(ctrl, CYP5525_WRITE_DATA_MEMORY_REG(port, 0),
-			(void*)data, 5);
+			(void *)data, 5);
 		/*the request has 1 byte which should be set to 0 for battery idx 0*/
 		cmd = CYP5525_DM_CTRL_SOP + CYP5525_DM_CTRL_EXTENDED_DATA_REQUEST + (data_len<<8);
 		cypd_write_reg16(ctrl, CYP5525_DM_CONTROL_REG(port), cmd);
