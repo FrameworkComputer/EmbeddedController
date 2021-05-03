@@ -40,6 +40,9 @@
 #define CHIP_REV_STR_SIZE    6
 #endif
 
+/*  Legacy SuperI/O Configuration D register offset */
+#define SIOCFD_REG_OFFSET    0x2D
+
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
@@ -781,6 +784,22 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 #endif
 }
 
+#ifndef CONFIG_ENABLE_JTAG_SELECTION
+static void system_disable_host_sel_jtag(void)
+{
+	int data;
+
+	/* Enable Core-to-Host Modules Access */
+	SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
+	/* Clear SIOCFD.JEN0_HSL to disable JTAG0 */
+	data = sib_read_reg(SIO_OFFSET, SIOCFD_REG_OFFSET);
+	data &= ~0x80;
+	sib_write_reg(SIO_OFFSET, SIOCFD_REG_OFFSET, data);
+	/* Disable Core-to-Host Modules Access */
+	CLEAR_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
+}
+#endif
+
 void chip_pre_init(void)
 {
 	/* Setting for fixing JTAG issue */
@@ -807,21 +826,21 @@ void chip_pre_init(void)
 	 * This is the workaround to disable the JTAG0 which is enabled
 	 * accidentally by a special key combination.
 	 */
+#if NPCX_FAMILY_VERSION < NPCX_FAMILY_NPCX9
 	if (!IS_BIT_SET(NPCX_DEVALT(5), NPCX_DEVALT5_NJEN0_EN)) {
-		int data;
 		/* Set DEVALT5.nJEN0_EN to disable JTAG0 */
 		SET_BIT(NPCX_DEVALT(5), NPCX_DEVALT5_NJEN0_EN);
-		/* Enable Core-to-Host Modules Access */
-		SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
-		/* Clear SIOCFD.JEN0_HSL to disable JTAG0 */
-		data = sib_read_reg(SIO_OFFSET, 0x2D);
-		data &= ~0x80;
-		sib_write_reg(SIO_OFFSET, 0x2D, data);
-		/* Disable Core-to-Host Modules Access */
-		CLEAR_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSAE);
+		system_disable_host_sel_jtag();
+	}
+#else
+	if (GET_FIELD(NPCX_JEN_CTL1, NPCX_JEN_CTL1_JEN_EN_FIELD) ==
+		      NPCX_JEN_CTL1_JEN_EN_ENA) {
+		SET_FIELD(NPCX_JEN_CTL1, NPCX_JEN_CTL1_JEN_EN_FIELD,
+			  NPCX_JEN_CTL1_JEN_EN_DIS);
+		system_disable_host_sel_jtag();
 	}
 #endif
-
+#endif
 }
 
 void system_pre_init(void)

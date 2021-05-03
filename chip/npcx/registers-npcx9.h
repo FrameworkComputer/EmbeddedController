@@ -256,6 +256,12 @@ enum {
 #define NPCX_SMBSEL_SMB5SEL		5
 #define NPCX_SMBSEL_SMB6SEL		6
 
+/* pin-mux for JTAG */
+#define NPCX_JEN_CTL1			REG8(NPCX_SCFG_BASE_ADDR + 0x120)
+#define NPCX_JEN_CTL1_JEN_EN_FIELD	FIELD(0, 4)
+#define NPCX_JEN_CTL1_JEN_EN_DIS	0x06
+#define NPCX_JEN_CTL1_JEN_EN_ENA	0x09
+
 /* SMB enumeration: I2C port definitions. */
 enum {
 	NPCX_I2C_PORT0_0 = 0,	/* I2C port 0, bus 0 */

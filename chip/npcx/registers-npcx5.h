@@ -125,6 +125,10 @@ enum {
 
 #define NPCX_LV_GPIO_CTL(n)		REG8(NPCX_SCFG_BASE_ADDR + 0x02A + (n))
 
+/* pin-mux for JTAG */
+#define NPCX_DEVALT5_NJEN1_EN		1
+#define NPCX_DEVALT5_NJEN0_EN		2
+
 /* pin-mux for I2C */
 #define NPCX_DEVALT2_I2C0_0_SL		0
 #define NPCX_DEVALT2_I2C0_1_SL		1

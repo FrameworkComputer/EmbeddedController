@@ -456,8 +456,6 @@ enum {
 
 /* pin-mux for JTAG */
 #define NPCX_DEVALT5_TRACE_EN            0
-#define NPCX_DEVALT5_NJEN1_EN            1
-#define NPCX_DEVALT5_NJEN0_EN            2
 
 /* pin-mux for ADC */
 #define NPCX_DEVALT6_ADC0_SL             0

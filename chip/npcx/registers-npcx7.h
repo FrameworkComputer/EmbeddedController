@@ -209,6 +209,10 @@ enum {
 #define NPCX_DEVALT6_I2C5_1_SL		6
 #define NPCX_DEVALT6_I2C4_1_SL		7
 
+/* pin-mux for JTAG */
+#define NPCX_DEVALT5_NJEN1_EN		1
+#define NPCX_DEVALT5_NJEN0_EN		2
+
 /* pin-mux for ADC */
 #define NPCX_DEVALTF_ADC5_SL		0
 #define NPCX_DEVALTF_ADC6_SL		1
