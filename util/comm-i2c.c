@@ -3,7 +3,9 @@
  * found in the LICENSE file.
  */
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE /* for asprintf */
+#endif
 
 #include <errno.h>
 #include <fcntl.h>

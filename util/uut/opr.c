@@ -5,7 +5,11 @@
  */
 
 /* This file implements the UART console application operations. */
-#define _GNU_SOURCE
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE /* for asprintf */
+#endif
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
