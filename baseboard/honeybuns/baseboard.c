@@ -25,9 +25,6 @@
 #define POWER_BUTTON_LONG_USEC (5000 * MSEC)
 #define POWER_BUTTON_DEBOUNCE_USEC (30)
 
-#define BUTTON_PRESSED_LEVEL 1
-#define BUTTON_RELEASED_LEVEL 0
-
 #define BUTTON_EVT_CHANGE   BIT(0)
 #define BUTTON_EVT_INFO     BIT(1)
 
@@ -110,16 +107,16 @@ static void baseboard_set_led(enum led_color color)
 	CPRINTS("led: color = %d", color);
 
 	/* Not all boards may have LEDs under EC control */
-#if defined(GPIO_EC_STATUS_LED1) && defined(GPIO_EC_STATUS_LED2)
+#if defined(GPIO_PWR_BUTTON_RED) && defined(GPIO_PWR_BUTTON_GREEN)
 	if (color == OFF) {
-		gpio_set_level(GPIO_EC_STATUS_LED1, 1);
-		gpio_set_level(GPIO_EC_STATUS_LED2, 1);
+		gpio_set_level(GPIO_PWR_BUTTON_RED, 1);
+		gpio_set_level(GPIO_PWR_BUTTON_GREEN, 1);
 	} else if (color == GREEN) {
-		gpio_set_level(GPIO_EC_STATUS_LED1, 1);
-		gpio_set_level(GPIO_EC_STATUS_LED2, 0);
+		gpio_set_level(GPIO_PWR_BUTTON_RED, 1);
+		gpio_set_level(GPIO_PWR_BUTTON_GREEN, 0);
 	} else if (color == YELLOW) {
-		gpio_set_level(GPIO_EC_STATUS_LED1, 0);
-		gpio_set_level(GPIO_EC_STATUS_LED2, 0);
+		gpio_set_level(GPIO_PWR_BUTTON_RED, 0);
+		gpio_set_level(GPIO_PWR_BUTTON_GREEN, 0);
 	}
 #endif
 }
@@ -180,9 +177,14 @@ void baseboard_set_mst_lane_control(int mf)
 
 static void baseboard_enable_mp4245(void)
 {
+	int mv;
+	int ma;
+
 	mp4245_set_voltage_out(5000);
 	mp4245_votlage_out_enable(1);
 	msleep(MP4245_VOUT_5V_DELAY_MS);
+	mp3245_get_vbus(&mv, &ma);
+	CPRINTS("mp4245: vout @ %d mV enabled", mv);
 }
 
 #endif /* SECTION_IS_RW */
@@ -245,11 +247,16 @@ static void baseboard_power_on(void)
 	int port_max = board_get_usb_pd_port_count();
 	int port;
 
+	CPRINTS("pwrbtn: power on: mf = %d", dock_mf);
 	/* Adjust system flags to full PPC init occurs */
 	system_clear_reset_flags(EC_RESET_FLAG_POWER_ON);
 	system_set_reset_flags(EC_RESET_FLAG_EFS);
 	/* Enable power rails and release reset signals */
 	board_power_sequence(1);
+	/* Set VBUS to 5V and enable output from mp4245 */
+	baseboard_enable_mp4245();
+	/* Set dock mf preference LED */
+	baseboard_set_led(dock_mf);
 	/*
 	 * Lane control (realtek MST) must be set prior to releasing MST
 	 * reset.
@@ -268,8 +275,6 @@ static void baseboard_power_on(void)
 		/* Inform TC state machine that it can resume */
 		pd_set_suspend(port, 0);
 	}
-	/* Set VBUS to 5V and enable output from mp4245 */
-	baseboard_enable_mp4245();
 	/* Enable usbc interrupts */
 	board_enable_usbc_interrupts();
 
@@ -283,6 +288,7 @@ static void baseboard_power_off(void)
 	int port_max = board_get_usb_pd_port_count();
 	int port;
 
+	CPRINTS("pwrbtn: power off");
 	/* Put ports in TC suspend state */
 	for (port = 0; port < port_max; port++)
 		pd_set_suspend(port, 1);
@@ -296,6 +302,8 @@ static void baseboard_power_off(void)
 	/* Disable PPC interrupts for PS8803 managed port */
 	baseboard_usbc_usb3_enable_interrupts(0);
 #endif
+	/* Set dock power button/MF preference LED */
+	baseboard_set_led(OFF);
 	/* Go into power off state */
 	board_power_sequence(0);
 }
@@ -312,9 +320,14 @@ static void baseboard_toggle_mf(void)
 		dock_mf = CBI_FW_MF_PREFERENCE(fw_config);
 		/* Flash led for visual indication of user MF change */
 		baseboard_change_mf_led();
-		/* Power the dock off, then on, to apply user preference */
-		baseboard_power_off();
-		baseboard_power_on();
+
+		/*
+		 * Suspend, then release host port to force new MF setting to
+		 * take effect.
+		 */
+		pd_set_suspend(USB_PD_PORT_HOST, 1);
+		msleep(250);
+		pd_set_suspend(USB_PD_PORT_HOST, 0);
 	}
 }
 
