@@ -12,10 +12,6 @@
 #include <stdint.h>
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifdef CHROMIUM_EC
 /*
  * CHROMIUM_EC is defined by the Makefile system of Chromium EC repository.
@@ -72,6 +68,10 @@ extern "C" {
 #endif
 
 #endif  /* __KERNEL__ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * Current version of this protocol
