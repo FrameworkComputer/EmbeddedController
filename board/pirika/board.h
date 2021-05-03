@@ -37,8 +37,8 @@
 #define GPIO_USB_C1_INT_ODL GPIO_SUB_USB_C1_INT_ODL
 
 /* LED */
-#define CONFIG_LED_PWM
-#define CONFIG_LED_PWM_COUNT 1
+#define CONFIG_LED_ONOFF_STATES
+#define CONFIG_LED_ONOFF_STATES_BAT_LOW	10
 
 /* PWM */
 #define CONFIG_PWM
@@ -79,12 +79,18 @@
 #define CONFIG_THERMISTOR
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 #define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_EN_PP3300_A
+#define CONFIG_THROTTLE_AP
 
 /* USB Mux and Retimer */
 #define CONFIG_USB_MUX_IT5205			/* C1: ITE Mux */
 #define I2C_PORT_USB_MUX I2C_PORT_USB_C0	/* Required for ITE Mux */
 
 #define CONFIG_USBC_RETIMER_TUSB544		/* C1 Redriver: TUSB544 */
+
+/* Keyboard */
+#define CONFIG_KEYBOARD_VIVALDI
+#define CONFIG_KEYBOARD_REFRESH_ROW3
+#define CONFIG_KEYBOARD_KEYPAD
 
 #ifndef __ASSEMBLER__
 
@@ -99,9 +105,6 @@ enum chg_id {
 
 enum pwm_channel {
 	PWM_CH_KBLIGHT,
-	PWM_CH_LED_RED,
-	PWM_CH_LED_GREEN,
-	PWM_CH_LED_BLUE,
 	PWM_CH_COUNT,
 };
 
@@ -118,13 +121,14 @@ enum adc_channel {
 	ADC_VSNS_PP3300_A,     /* ADC0 */
 	ADC_TEMP_SENSOR_1,     /* ADC2 */
 	ADC_TEMP_SENSOR_2,     /* ADC3 */
-	ADC_SUB_ANALOG,        /* ADC13 */
+	ADC_TEMP_SENSOR_3,     /* ADC15 */
 	ADC_CH_COUNT
 };
 
 enum temp_sensor_id {
 	TEMP_SENSOR_1,
 	TEMP_SENSOR_2,
+	TEMP_SENSOR_3,
 	TEMP_SENSOR_COUNT
 };
 

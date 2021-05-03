@@ -144,12 +144,12 @@ const struct adc_t adc_channels[] = {
 		.shift = 0,
 		.channel = CHIP_ADC_CH3
 	},
-	[ADC_SUB_ANALOG] = {
-		.name = "SUB_ANALOG",
+	[ADC_TEMP_SENSOR_3] = {
+		.name = "TEMP_SENSOR3",
 		.factor_mul = ADC_MAX_MVOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
-		.channel = CHIP_ADC_CH13
+		.channel = CHIP_ADC_CH15
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
@@ -539,25 +539,6 @@ const struct pwm_t pwm_channels[] = {
 		.flags = PWM_CONFIG_DSLEEP,
 		.freq_hz = 10000,
 	},
-
-	[PWM_CH_LED_RED] = {
-		.channel = 1,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 2400,
-	},
-
-	[PWM_CH_LED_GREEN] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 2400,
-	},
-
-	[PWM_CH_LED_BLUE] = {
-		.channel = 3,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 2400,
-	}
-
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -650,16 +631,54 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = {.name = "Memory",
+	[TEMP_SENSOR_1] = {.name = "Charger",
 			   .type = TEMP_SENSOR_TYPE_BOARD,
 			   .read = get_temp_3v3_51k1_47k_4050b,
 			   .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "Ambient",
+	[TEMP_SENSOR_2] = {.name = "Vcore",
 			   .type = TEMP_SENSOR_TYPE_BOARD,
 			   .read = get_temp_3v3_51k1_47k_4050b,
 			   .idx = ADC_TEMP_SENSOR_2},
+	[TEMP_SENSOR_3] = {.name = "Ambient",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_3},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+const static struct ec_thermal_config thermal_charger = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(98),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+};
+const static struct ec_thermal_config thermal_vcore = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(50),
+	},
+};
+const static struct ec_thermal_config thermal_ambient = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(50),
+	},
+};
+struct ec_thermal_config thermal_params[] = {
+	[TEMP_SENSOR_1] = thermal_charger,
+	[TEMP_SENSOR_2] = thermal_vcore,
+	[TEMP_SENSOR_3] = thermal_ambient,
+};
+BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 #ifndef TEST_BUILD
 /* This callback disables keyboard when convertibles are fully open */
@@ -688,3 +707,18 @@ void lid_angle_peripheral_enable(int enable)
 	}
 }
 #endif
+
+__override void board_pulse_entering_rw(void)
+{
+	/*
+	 * On the ITE variants, the EC_ENTERING_RW signal was connected to a pin
+	 * which is active high by default. This cause Cr50 to think that the
+	 * EC has jumped to its RW image even though this may not be the case.
+	 * The pin is changed to GPIO_EC_ENTERING_RW2.
+	 */
+	gpio_set_level(GPIO_EC_ENTERING_RW, 1);
+	gpio_set_level(GPIO_EC_ENTERING_RW2, 1);
+	usleep(MSEC);
+	gpio_set_level(GPIO_EC_ENTERING_RW, 0);
+	gpio_set_level(GPIO_EC_ENTERING_RW2, 0);
+}
