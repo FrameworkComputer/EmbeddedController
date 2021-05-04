@@ -35,10 +35,18 @@ static int anx3443_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 
 	/* ULP_CFG_MODE_EN overrides pin control. Always set it */
 	reg = ANX3443_ULP_CFG_MODE_EN;
-	if (mux_state & USB_PD_MUX_USB_ENABLED)
-		reg |= ANX3443_ULP_CFG_MODE_USB_EN;
-	if (mux_state & USB_PD_MUX_DP_ENABLED)
+
+	/*
+	 * NOTE: This mux does not have a "none" state, so USB_PD_MUX_NONE
+	 * is mapped to ANX3443_ULP_CFG_MODE_USB_EN here.
+	 */
+	if ((mux_state & USB_PD_MUX_DOCK) == USB_PD_MUX_DOCK)
+		reg |= ANX3443_ULP_CFG_MODE_USB_EN | ANX3443_ULP_CFG_MODE_DP_EN;
+	else if (mux_state & USB_PD_MUX_DP_ENABLED)
 		reg |= ANX3443_ULP_CFG_MODE_DP_EN;
+	else
+		reg |= ANX3443_ULP_CFG_MODE_USB_EN;
+
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		reg |= ANX3443_ULP_CFG_MODE_FLIP;
 
@@ -78,8 +86,8 @@ static int anx3443_init(const struct usb_mux *me)
 	RETURN_ERROR(anx3443_write(me, ANX3443_REG_ULTRA_LOW_POWER,
 				   ANX3443_ULTRA_LOW_POWER_DIS));
 
-	/* Start mux in safe mode */
-	RETURN_ERROR(anx3443_set_mux(me, USB_PD_MUX_NONE));
+	/* Default to USB mode */
+	RETURN_ERROR(anx3443_set_mux(me, USB_PD_MUX_USB_ENABLED));
 
 	return EC_SUCCESS;
 }
