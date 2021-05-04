@@ -68,6 +68,7 @@
 #include "keyboard_scan.h"
 #include "keyboard_8042.h"
 #include "keyboard_8042_sharedlib.h"
+#include "host_command_customization.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
@@ -355,10 +356,9 @@ static void vci_init(void)
 	MCHP_VCI_REGISTER |= MCHP_VCI_REGISTER_FW_EXT;
 	/**
 	 * only enable input for fp, powerbutton for now
+	 * enable BIT 2 for chassis open
 	 */
-	MCHP_VCI_INPUT_ENABLE = BIT(0) |  BIT(1);
-	/* todo implement chassis open  detection*/
-	/*MCHP_VCI_LATCH_ENABLE = BIT(0) | BIT(1) | BIT(2);*/
+	MCHP_VCI_INPUT_ENABLE = BIT(0) |  BIT(1) | BIT(2);
 }
 DECLARE_HOOK(HOOK_INIT, vci_init, HOOK_PRIO_FIRST);
 
@@ -413,17 +413,49 @@ static void board_extpower(void)
 		else
 			cancel_board_power_off();
 	}
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
+		extpower_is_present() && ac_boot_status())
+		power_button_simulate_press();
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
+int ac_boot_status(void)
+{
+	return (*host_get_customer_memmap(0x48) & BIT(0)) ? true : false;
+}
+
+static uint8_t chassis_edge_status;
+static uint8_t chassis_vtr_open_count;
 
 /* Initialize board. */
 static void board_init(void)
 {
 	int version = board_get_version();
+	uint8_t memcap;
 
 	if (version > 6)
 		gpio_set_flags(GPIO_EN_INVPWR, GPIO_OUT_LOW);
+
+	system_get_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, &memcap);
+
+	if (memcap && !ac_boot_status())
+		*host_get_customer_memmap(0x48) = (memcap & BIT(0));
+
+	system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_TRACK_FLAG, &memcap);
+	/*
+	 * if battery remove and have someone open the chassis
+	 * need to save count to bbram
+	 */
+	if ((MCHP_VCI_POSEDGE_DETECT & BIT(2) ||
+		MCHP_VCI_NEGEDGE_DETECT & BIT(2)) &&
+		!(memcap & BBRAM_VTR_CHASSIS) &&
+		chassis_vtr_open_count < CHASSIS_TOTAL_COUNT_MAX) {
+		memcap |= BBRAM_VTR_CHASSIS;
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_TRACK_FLAG, memcap);
+		system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, &chassis_vtr_open_count);
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, ++chassis_vtr_open_count);
+	}
 
 	gpio_enable_interrupt(GPIO_SOC_ENBKL);
 	gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);
@@ -439,6 +471,11 @@ static void board_chipset_startup(void)
 
 	if (version > 6)
 		gpio_set_level(GPIO_EN_INVPWR, 1);
+
+	/* when start up will check the chassis ever open or not */
+	if (MCHP_VCI_POSEDGE_DETECT & BIT(2) ||
+		MCHP_VCI_NEGEDGE_DETECT & BIT(2))
+		chassis_edge_status = 1;	
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 		board_chipset_startup,
@@ -916,6 +953,9 @@ DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 #endif
 
 static int prochot_low_time;
+static int chassis_detect_flag;
+static uint8_t chassis_open_count;
+
 void prochot_monitor(void)
 {
 	int val_l;
@@ -931,6 +971,15 @@ void prochot_monitor(void)
 		if ((prochot_low_time & 0xF) == 0xF && chipset_in_state(CHIPSET_STATE_ON))
 			CPRINTF("PROCHOT has been low for too long - investigate");
 	}
+
+	if (!gpio_get_level(GPIO_CHASSIS_OPEN)) {
+		if (chassis_open_count < CHASSIS_TOTAL_COUNT_MAX && chassis_detect_flag) {
+			chassis_detect_flag = 0;
+			system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, &chassis_open_count);
+			system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, ++chassis_open_count);
+		}
+	} else
+		chassis_detect_flag = 1;
 }
 DECLARE_HOOK(HOOK_SECOND, prochot_monitor, HOOK_PRIO_DEFAULT);
 
@@ -1044,8 +1093,49 @@ static int cmd_bbram(int argc, char **argv)
 		system_get_bbram(ram_addr, &bbram);
 		CPRINTF("BBram%d: %d", ram_addr, bbram);
 	}
+
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(bbram, cmd_bbram,
 			"[bbram address]",
 			" get bbram data with hibdata_index ");
+
+static enum ec_status host_chassis_intrusion_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_chassis_intrusion_control *p = args->params;
+	struct ec_response_chassis_intrusion_control *r = args->response;
+	uint8_t memcap;
+
+	if (p->clear_magic == EC_PARAM_CHASSIS_INTRUSION_MAGIC) {
+		chassis_open_count = 0;
+		chassis_vtr_open_count = 0;
+		system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, 0);
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, 0);
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_MAGIC, EC_PARAM_CHASSIS_BBRAM_MAGIC);
+		return EC_SUCCESS;
+	}
+
+	if (p->clear_chassis_status) {
+		chassis_edge_status = 0;
+		system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_TRACK_FLAG, &memcap);
+		memcap &= ~BBRAM_VTR_CHASSIS;
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_TRACK_FLAG, memcap);
+		MCHP_VCI_POSEDGE_DETECT = BIT(2);
+		MCHP_VCI_NEGEDGE_DETECT = BIT(2);
+		return EC_SUCCESS;
+	}
+
+	r->chassis_ever_opened = chassis_edge_status;
+	system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_MAGIC, &r->coin_batt_ever_remove);
+	system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, &r->total_open_count);
+	system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, &r->vtr_open_count);
+
+
+
+	args->response_size = sizeof(*r);
+
+	return EC_SUCCESS;
+
+}
+DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_INTRUSION, host_chassis_intrusion_control,
+			EC_VER_MASK(0));

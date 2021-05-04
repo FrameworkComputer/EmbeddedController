@@ -94,6 +94,22 @@ struct ec_params_ps2_emulation_control {
 	uint8_t disable;
 } __ec_align1;
 
+#define EC_CMD_CHASSIS_INTRUSION 0x3E09
+#define EC_PARAM_CHASSIS_INTRUSION_MAGIC 0xCE
+#define EC_PARAM_CHASSIS_BBRAM_MAGIC 0xEC
+
+struct ec_params_chassis_intrusion_control {
+	uint8_t clear_magic;
+	uint8_t clear_chassis_status;
+} __ec_align1;
+
+struct ec_response_chassis_intrusion_control {
+	uint8_t chassis_ever_opened;			/* have rtc(VBAT) no battery(VTR) */
+	uint8_t coin_batt_ever_remove;
+	uint8_t total_open_count;
+	uint8_t vtr_open_count;
+} __ec_align1;
+
 /* Debug LED for BIOS boot check */
 #define EC_CMD_DIAGNOSIS 0x3E0B
 

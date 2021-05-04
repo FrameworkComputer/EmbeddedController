@@ -705,6 +705,13 @@ enum als_id {
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE	2048
 
+/* setting chassis open total max count */
+#define CHASSIS_TOTAL_COUNT_MAX 100
+
+/* bbram state */
+#define BBRAM_KBBL				BIT(0)
+#define BBRAM_FNLOCK			BIT(1)
+#define BBRAM_VTR_CHASSIS		BIT(2)
 
 /*
  * include TFDP macros from mchp chip level
@@ -765,6 +772,8 @@ void s5_power_up_control(int control);
 int pos_get_state(void);
 
 void me_gpio_change(uint32_t flags);
+
+int ac_boot_status(void);
 
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);

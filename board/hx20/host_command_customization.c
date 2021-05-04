@@ -46,6 +46,7 @@ static void sci_enable(void)
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
 		s5_power_up_control(0);
 		update_soc_power_limit(1);
+		system_set_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, ac_boot_status());
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }

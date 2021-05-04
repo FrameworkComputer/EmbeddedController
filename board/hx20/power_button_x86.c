@@ -209,6 +209,16 @@ void power_button_pch_pulse(void)
 	task_wake(TASK_ID_POWERBTN);
 }
 
+__override void power_button_simulate_press(void)
+{
+	CPRINTS("Simulation PB press");
+
+	chipset_exit_hard_off();
+	pwrbtn_state = PWRBTN_STATE_PRESSED;
+	tnext_state = get_time().val + PWRBTN_INITIAL_US;
+	task_wake(TASK_ID_POWERBTN);
+}
+
 /**
  * Handle debounced power button down.
  */
