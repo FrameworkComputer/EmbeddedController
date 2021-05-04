@@ -5525,7 +5525,7 @@ static int cmd_motionsense(int argc, char **argv)
 			uint32_t number_data;
 			struct ec_response_motion_sensor_data data[512];
 		} fifo_read_buffer = {
-			.number_data = -1,
+			.number_data = UINT32_MAX,
 		};
 		int print_data = 0,  max_data = strtol(argv[2], &e, 0);
 
