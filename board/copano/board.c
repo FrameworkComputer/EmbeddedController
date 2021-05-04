@@ -165,7 +165,7 @@ const struct pwm_t pwm_channels[] = {
 		 * lower PWM frequencies, but higher frequencies record a much
 		 * lower maximum power.
 		 */
-		.freq = 2400,
+		.freq = 10000,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
