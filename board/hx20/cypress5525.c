@@ -482,7 +482,7 @@ void cypd_response_get_battery_capability(int controller, int port,
 		 * We only have one fixed battery,
 		 * so make sure batt cap ref is 0.
 		 */
-		if (BATT_CAP_REF(rx_emsg[port_idx].buf[0]) != 0) {
+		if (rx_emsg[port_idx].buf[0] != 0) {
 			/* Invalid battery reference */
 			msg[4] = 1;
 		} else {
@@ -547,7 +547,7 @@ int cypd_response_get_battery_status(int controller, int port, uint32_t pd_heade
 		 * We only have one fixed battery,
 		 * so make sure batt cap ref is 0.
 		 */
-		if (BATT_CAP_REF(rx_emsg[port_idx].buf[0]) != 0) {
+		if (rx_emsg[port_idx].buf[0] != 0) {
 			/* Invalid battery reference */
 			msg |= BSDO_INVALID;
 		} else {
