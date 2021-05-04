@@ -36,6 +36,15 @@ enum pd_task_timer {
 	PE_TIMER_CHUNKING_NOT_SUPPORTED,
 
 	/*
+	 * PD 3.0, rev. 3.1, v. 1.2, section 6.6.10.3: The DataResetFailTimer
+	 * Shall be used by the DFP’s Policy Engine to ensure the Data Reset
+	 * process completes within tDataResetFail of the last bit of the
+	 * GoodCRC acknowledging the Accept Message in response to the
+	 * Data_Reset Message.
+	 */
+	PE_TIMER_DATA_RESET_FAIL,
+
+	/*
 	 * This timer is used during an Explicit Contract when discovering
 	 * whether a Port Partner is PD Capable using SOP'.
 	 */
@@ -122,9 +131,23 @@ enum pd_task_timer {
 	PE_TIMER_TIMEOUT,
 
 	/*
+	 * The amount of timer that the DFP shall wait for the UFP to discharge
+	 * VCONN (and send PS_RDY) during Data Reset. See PD 3.0, rev. 3.1, v.
+	 * 1.2, section 6.6.10.1 VCONNDischargeTimer.
+	 */
+	PE_TIMER_VCONN_DISCHARGE,
+
+	/*
 	 * This timer is used during a VCONN Swap.
 	 */
 	PE_TIMER_VCONN_ON,
+
+	/*
+	 * The amount of time that VCONN shall remain off during the cable reset
+	 * portion of a Data Reset. See PD 3.0, rev. 3.1, v. 1.2, section 7.1.15
+	 * VCONN Power Cycle.
+	 */
+	PE_TIMER_VCONN_REAPPLIED,
 
 	/*
 	 * This timer is used by the Initiator’s Policy Engine to ensure that

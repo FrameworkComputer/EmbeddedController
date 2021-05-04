@@ -585,6 +585,14 @@ config PLATFORM_EC_USB_PD_DP_HPD_GPIO_CUSTOM
 
 	    int svdm_get_hpd_gpio(int port);
 
+config PLATFORM_EC_USB_PD_DATA_RESET_MSG
+	bool "Enable the PD Data Reset Message."
+	depends on PLATFORM_EC_USB_PD_REV30
+	help
+	  Enable this to support the Data Reset PD message flows. This is
+	  mandatory for products supporting USB4 but optional for other PD 3.0
+	  products.
+
 choice "VBUS detection method"
 	prompt "Select the method to detect VBUS"
 

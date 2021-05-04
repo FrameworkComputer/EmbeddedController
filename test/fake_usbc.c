@@ -259,6 +259,10 @@ void dpm_init(int port)
 {
 }
 
+void dpm_mode_exit_complete(int port)
+{
+}
+
 void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		uint32_t *vdm)
 {

@@ -22,11 +22,25 @@
 void dpm_init(int port);
 
 /*
+ * Informs the DPM that a mode exit is complete.
+ *
+ * @param port USB-C port number
+ */
+void dpm_mode_exit_complete(int port);
+
+/*
  * Informs the DPM that Exit Mode request is received
  *
  * @param port USB-C port number
  */
 void dpm_set_mode_exit_request(int port);
+
+/* Informs the DPM that the PE has performed a Data Reset (or at least
+ * determined that the port partner doesn't support one).
+ *
+ * @param port USB-C port number
+ */
+void dpm_data_reset_complete(int port);
 
 /*
  * Informs the DPM that a VDM ACK was received.
