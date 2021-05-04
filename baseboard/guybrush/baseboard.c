@@ -195,19 +195,19 @@ const struct temp_sensor_t temp_sensors[] = {
 		.name = "SOC",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = board_get_soc_temp,
-		.idx = TEMP_SENSOR_SOC,
+		.idx = ADC_TEMP_SENSOR_SOC,
 	},
 	[TEMP_SENSOR_CHARGER] = {
 		.name = "Charger",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = TEMP_SENSOR_CHARGER,
+		.idx = ADC_TEMP_SENSOR_CHARGER,
 	},
 	[TEMP_SENSOR_MEMORY] = {
 		.name = "Memory",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = board_get_memory_temp,
-		.idx = TEMP_SENSOR_MEMORY,
+		.idx = ADC_TEMP_SENSOR_MEMORY,
 	},
 	[TEMP_SENSOR_CPU] = {
 		.name = "CPU",
