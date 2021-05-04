@@ -549,6 +549,12 @@ commit_data_end:
 	/* Reset metadata for next staging cycle. */
 	memset(&fifo_staged, 0, sizeof(fifo_staged));
 
+	/*
+	 * Reset the initialized bits. This will allow new timestamps to be
+	 * considered as the new "source of truth".
+	 */
+	next_timestamp_initialized = 0;
+
 	mutex_unlock(&g_sensor_mutex);
 }
 

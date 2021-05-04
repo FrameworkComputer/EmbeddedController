@@ -295,6 +295,12 @@ static int test_spread_double_commit_same_timestamp(void)
 	const uint32_t now = __hw_clock_source_read();
 	int read_count;
 
+	/*
+	 * Stage and commit the same sample. This is not expected to happen
+	 * since batches of sensor samples should be staged together and only
+	 * commit once. We assume that the driver did this on purpose and will
+	 * allow the same timestamp to be sent.
+	 */
 	motion_sensors[0].oversampling_ratio = 1;
 	motion_sensors[0].collection_rate = 20000; /* ns */
 	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 20500);
@@ -308,8 +314,7 @@ static int test_spread_double_commit_same_timestamp(void)
 	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
 	TEST_EQ(data[0].timestamp, now - 20500, "%u");
 	TEST_BITS_SET(data[2].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
-	TEST_GT(time_until(now - 20500, data[2].timestamp), 10000, "%u");
-	TEST_LE(time_until(now - 20500, data[2].timestamp), 20000, "%u");
+	TEST_EQ(data[2].timestamp, now - 20500, "%u");
 
 	return EC_SUCCESS;
 }
