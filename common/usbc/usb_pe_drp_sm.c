@@ -264,6 +264,7 @@ enum usb_pe_state {
 	/* PD3.0 only states below here*/
 	/* DFP Data Reset States */
 	PE_DDR_SEND_DATA_RESET,
+	PE_DDR_DATA_RESET_RECEIVED,
 	PE_DDR_WAIT_FOR_VCONN_OFF,
 	PE_DDR_PERFORM_DATA_RESET,
 	PE_FRS_SNK_SRC_START_AMS,
@@ -403,6 +404,7 @@ __maybe_unused static __const_data const char * const pe_state_names[] = {
 #endif
 #ifdef CONFIG_USB_PD_DATA_RESET_MSG
 	[PE_DDR_SEND_DATA_RESET] = "PE_DDR_Send_Data_Reset",
+	[PE_DDR_DATA_RESET_RECEIVED] = "PE_DDR_Data_Reset_Received",
 	[PE_DDR_WAIT_FOR_VCONN_OFF] = "PE_DDR_Wait_For_VCONN_Off",
 	[PE_DDR_PERFORM_DATA_RESET] = "PE_DDR_Perform_Data_Reset",
 #endif /* CONFIG_USB_PD_DATA_RESET_MSG */
@@ -461,6 +463,8 @@ GEN_NOT_SUPPORTED(PE_SNK_CHUNK_RECEIVED);
 #ifndef CONFIG_USB_PD_DATA_RESET_MSG
 GEN_NOT_SUPPORTED(PE_DDR_SEND_DATA_RESET);
 #define PE_DDR_SEND_DATA_RESET PE_DDR_SEND_DATA_RESET_NOT_SUPPORTED
+GEN_NOT_SUPPORTED(PE_DDR_DATA_RESET_RECEIVED);
+#define PE_DDR_DATA_RESET_RECEIVED PE_DDR_DATA_RESET_RECEIVED_NOT_SUPPORTED
 GEN_NOT_SUPPORTED(PE_DDR_WAIT_FOR_VCONN_OFF);
 #define PE_DDR_WAIT_FOR_VCONN_OFF PE_DDR_WAIT_FOR_VCONN_OFF_NOT_SUPPORTED
 GEN_NOT_SUPPORTED(PE_DDR_PERFORM_DATA_RESET);
@@ -1145,6 +1149,7 @@ void pe_report_error(int port, enum pe_error e, enum tcpci_msg_type type)
 			get_state_pe(port) == PE_VDM_IDENTITY_REQUEST_CBL) ||
 			(IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG) &&
 			 (get_state_pe(port) == PE_DDR_SEND_DATA_RESET ||
+			  get_state_pe(port) == PE_DDR_DATA_RESET_RECEIVED ||
 			  get_state_pe(port) == PE_DDR_WAIT_FOR_VCONN_OFF ||
 			  get_state_pe(port) == PE_DDR_PERFORM_DATA_RESET)) ||
 			(pe_in_frs_mode(port) &&
@@ -2735,6 +2740,19 @@ static void pe_src_ready_run(int port)
 				pe_send_soft_reset(port,
 				  PD_HEADER_GET_SOP(rx_emsg[port].header));
 				return;
+#ifdef CONFIG_USB_PD_DATA_RESET_MSG
+			case PD_CTRL_DATA_RESET:
+				if (pe[port].data_role == PD_ROLE_DFP)
+					set_state_pe(port,
+						PE_DDR_DATA_RESET_RECEIVED);
+				/*
+				 * TODO(b/209628496): Support Data Reset as UFP
+				 */
+				else
+					set_state_pe(port,
+						PE_SEND_NOT_SUPPORTED);
+				return;
+#endif /* CONFIG_USB_PD_DATA_RESET_MSG */
 			/*
 			 * Receiving an unknown or unsupported message
 			 * shall be responded to with a not supported message.
@@ -3552,6 +3570,19 @@ static void pe_snk_ready_run(int port)
 					set_state_pe(port,
 							PE_SEND_NOT_SUPPORTED);
 				return;
+#ifdef CONFIG_USB_PD_DATA_RESET_MSG
+			case PD_CTRL_DATA_RESET:
+				if (pe[port].data_role == PD_ROLE_DFP)
+					set_state_pe(port,
+						PE_DDR_DATA_RESET_RECEIVED);
+				/*
+				 * TODO(b/209628496): Support Data Reset as UFP
+				 */
+				else
+					set_state_pe(port,
+						PE_SEND_NOT_SUPPORTED);
+				return;
+#endif /* CONFIG_USB_PD_DATA_RESET_MSG */
 			case PD_CTRL_NOT_SUPPORTED:
 				/* Do nothing */
 				break;
@@ -7121,6 +7152,40 @@ static void pe_ddr_send_data_reset_exit(int port)
 }
 
 /*
+ * PE_DDR_Data_Reset_Received
+ */
+static void pe_ddr_data_reset_received_entry(int port)
+{
+	print_current_state(port);
+	/* Send Data Reset message */
+	send_ctrl_msg(port, TCPCI_MSG_SOP, PD_CTRL_ACCEPT);
+}
+
+static void pe_ddr_data_reset_received_run(int port)
+{
+	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+		if (tc_is_vconn_src(port))
+			set_state_pe(port, PE_DDR_PERFORM_DATA_RESET);
+		else
+			set_state_pe(port, PE_DDR_WAIT_FOR_VCONN_OFF);
+	} else if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
+		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
+		set_state_pe(port, PE_WAIT_FOR_ERROR_RECOVERY);
+	}
+}
+
+static void pe_ddr_data_reset_received_exit(int port)
+{
+	/*
+	 * Start DataResetFailTimer
+	 * NOTE: This timer continues to run in every state until it is stopped
+	 *	or it times out.
+	 */
+	pd_timer_enable(port, PE_TIMER_DATA_RESET_FAIL, PD_T_DATA_RESET_FAIL);
+}
+
+/*
  * PE_DDR_Wait_For_VCONN_Off
  */
 static void pe_ddr_wait_for_vconn_off_entry(int port)
@@ -7773,6 +7838,11 @@ static __const_data const struct usb_state pe_states[] = {
 		.entry = pe_ddr_send_data_reset_entry,
 		.run   = pe_ddr_send_data_reset_run,
 		.exit  = pe_ddr_send_data_reset_exit,
+	},
+	[PE_DDR_DATA_RESET_RECEIVED] = {
+		.entry = pe_ddr_data_reset_received_entry,
+		.run   = pe_ddr_data_reset_received_run,
+		.exit  = pe_ddr_data_reset_received_exit,
 	},
 	[PE_DDR_WAIT_FOR_VCONN_OFF] = {
 		.entry = pe_ddr_wait_for_vconn_off_entry,
