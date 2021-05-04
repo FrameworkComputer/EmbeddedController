@@ -9995,7 +9995,7 @@ int cmd_typec_status(int argc, char *argv[])
 				(struct ec_response_typec_status *)ec_inbuf;
 	char *endptr;
 	int rv, i;
-	char *desc;
+	const char *desc;
 
 	if (argc != 2) {
 		fprintf(stderr,
