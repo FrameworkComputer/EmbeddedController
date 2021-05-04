@@ -315,36 +315,19 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	return rv;
 
 }
-void enable_compliece_mode(int controller)
+void enable_compliance_mode(int controller)
 {
 	int rv;
-	uint8_t data1[4] = {0x00, 0x00, 0x00, 0x0D};
-	uint8_t data2[2] = {0x00, 0x01};
+	uint32_t debug_register = 0xD000000;
+	int debug_ctl = 0x0100;
 
 	/* Write 0x0D000000 to address 0x0048 */
-	rv = cypd_write_reg_block(controller, CYP5525_ICL_BB_RETIMER_DAT_REG, data1, 4);
+	rv = cypd_write_reg_block(controller, CYP5525_ICL_BB_RETIMER_DAT_REG, (void *) &debug_register, 4);
 	if (rv != EC_SUCCESS)
 		CPRINTS("Write CYP5525_ICL_BB_RETIMER_DAT_REG fail");
 
 	/* Write 0x0100 to address 0x0046 */
-	rv = cypd_write_reg_block(controller, CYP5525_ICL_BB_RETIMER_CMD_REG, data2, 2);
-	if (rv != EC_SUCCESS)
-		CPRINTS("Write CYP5525_ICL_BB_RETIMER_CMD_REG fail");
-}
-
-void disable_compliece_mode(int controller)
-{
-	int rv;
-	uint8_t data1[4] = {0x00, 0x00, 0x00, 0x00};
-	uint8_t data2[2] = {0x00, 0x00};
-
-	/* Write 0x0D000000 to address 0x0048 */
-	rv = cypd_write_reg_block(controller, CYP5525_ICL_BB_RETIMER_DAT_REG, data1, 4);
-	if (rv != EC_SUCCESS)
-		CPRINTS("Write CYP5525_ICL_BB_RETIMER_DAT_REG fail");
-
-	/* Write 0x0100 to address 0x0046 */
-	rv = cypd_write_reg_block(controller, CYP5525_ICL_BB_RETIMER_CMD_REG, data2, 2);
+	rv = cypd_write_reg16(controller, CYP5525_ICL_BB_RETIMER_CMD_REG, debug_ctl);
 	if (rv != EC_SUCCESS)
 		CPRINTS("Write CYP5525_ICL_BB_RETIMER_CMD_REG fail");
 }
@@ -1417,7 +1400,7 @@ void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int le
 #else /*PD_VERBOSE_LOGGING*/
 	code = "";
 #endif /*PD_VERBOSE_LOGGING*/
-	if (1) {
+	if (verbose_msg_logging) {
 		CPRINTS("PD Controller %d Port %d  Code 0x%02x %s %s Len: 0x%02x",
 		controller,
 		port,
@@ -1611,22 +1594,11 @@ DECLARE_CONSOLE_COMMAND(cypdctl, cmd_cypd_control,
 
 static int cmd_cypd_bb(int argc, char **argv)
 {
-	uint32_t ctrl, cmd, data, enabled;
+	uint32_t ctrl, cmd, data;
 	char *e;
-	if (argc == 3) {
-		ctrl = strtoi(argv[1], &e, 0);
-		if (*e || ctrl >= PD_CHIP_COUNT)
-			return EC_ERROR_PARAM1;
-		
-		enabled = strtoi(argv[2], &e, 0);
-		if (*e)
-			return EC_ERROR_PARAM2;
-
-		if (enabled == 1)
-			enable_compliece_mode(ctrl);
-		else
-			disable_compliece_mode(ctrl);
-
+	if (argc == 2 && !strncmp(argv[1], "compliance", 10)) {
+			enable_compliance_mode(0);
+			enable_compliance_mode(1);
 	} else if (argc == 4) {
 		ctrl = strtoi(argv[1], &e, 0);
 		if (*e || ctrl >= PD_CHIP_COUNT)
