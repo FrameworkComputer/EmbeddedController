@@ -9,5 +9,8 @@
 #define __CROS_EC_SKU_H
 
 int board_is_clamshell(void);
+int board_has_da9313(void);
+int board_has_ln9310(void);
+int board_has_buck_ic(void);
 
 #endif /* __CROS_EC_SKU_H */
