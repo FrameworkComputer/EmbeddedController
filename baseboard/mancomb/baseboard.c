@@ -172,19 +172,19 @@ const struct temp_sensor_t temp_sensors[] = {
 		.name = "SOC",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = TEMP_SENSOR_SOC,
+		.idx = ADC_TEMP_SENSOR_SOC,
 	},
 	[TEMP_SENSOR_MEMORY] = {
 		.name = "Memory",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = TEMP_SENSOR_MEMORY,
+		.idx = ADC_TEMP_SENSOR_MEMORY,
 	},
 	[TEMP_SENSOR_AMBIENT] = {
 		.name = "Ambient",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = TEMP_SENSOR_AMBIENT,
+		.idx = ADC_TEMP_SENSOR_AMBIENT,
 	},
 	[TEMP_SENSOR_CPU] = {
 		.name = "CPU",
