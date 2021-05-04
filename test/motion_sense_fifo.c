@@ -249,17 +249,17 @@ static int test_spread_data_in_window(void)
 	int read_count;
 
 	motion_sensors[0].oversampling_ratio = 1;
-	motion_sensors[0].collection_rate = 20000; /* ns */
+	motion_sensors[0].collection_rate = 20; /* us */
 	now = __hw_clock_source_read();
 
-	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 18000);
-	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 18000);
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 18);
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 18);
 	motion_sense_fifo_commit_data();
 	read_count = motion_sense_fifo_read(
 		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 	TEST_EQ(read_count, 4, "%d");
 	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
-	TEST_EQ(data[0].timestamp, now - 18000, "%u");
+	TEST_EQ(data[0].timestamp, now - 18, "%u");
 	TEST_BITS_SET(data[2].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
 	/* TODO(b/142892004): mock __hw_clock_source_read so we can check for
 	 * exact TS.
@@ -275,17 +275,17 @@ static int test_spread_data_by_collection_rate(void)
 	int read_count;
 
 	motion_sensors[0].oversampling_ratio = 1;
-	motion_sensors[0].collection_rate = 20000; /* ns */
-	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 20500);
-	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 20500);
+	motion_sensors[0].collection_rate = 20; /* us */
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 25);
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 25);
 	motion_sense_fifo_commit_data();
 	read_count = motion_sense_fifo_read(
 		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 	TEST_EQ(read_count, 4, "%d");
 	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
-	TEST_EQ(data[0].timestamp, now - 20500, "%u");
+	TEST_EQ(data[0].timestamp, now - 25, "%u");
 	TEST_BITS_SET(data[2].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
-	TEST_EQ(data[2].timestamp, now - 500, "%u");
+	TEST_EQ(data[2].timestamp, now - 5, "%u");
 
 	return EC_SUCCESS;
 }
@@ -302,19 +302,19 @@ static int test_spread_double_commit_same_timestamp(void)
 	 * allow the same timestamp to be sent.
 	 */
 	motion_sensors[0].oversampling_ratio = 1;
-	motion_sensors[0].collection_rate = 20000; /* ns */
-	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 20500);
+	motion_sensors[0].collection_rate = 20; /* us */
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 25);
 	motion_sense_fifo_commit_data();
-	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 20500);
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 25);
 	motion_sense_fifo_commit_data();
 
 	read_count = motion_sense_fifo_read(
 		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 	TEST_EQ(read_count, 4, "%d");
 	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
-	TEST_EQ(data[0].timestamp, now - 20500, "%u");
+	TEST_EQ(data[0].timestamp, now - 25, "%u");
 	TEST_BITS_SET(data[2].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
-	TEST_EQ(data[2].timestamp, now - 20500, "%u");
+	TEST_EQ(data[2].timestamp, now - 25, "%u");
 
 	return EC_SUCCESS;
 }
@@ -325,25 +325,25 @@ static int test_commit_non_data_or_timestamp_entries(void)
 	int read_count;
 
 	motion_sensors[0].oversampling_ratio = 1;
-	motion_sensors[0].collection_rate = 20000; /* ns */
+	motion_sensors[0].collection_rate = 20; /* us */
 
 	/* Insert non-data entry */
 	data[0].flags = MOTIONSENSE_SENSOR_FLAG_ODR;
-	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 20500);
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 25);
 
 	/* Insert data entry */
 	data[0].flags = 0;
-	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 20500);
+	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 25);
 
 	motion_sense_fifo_commit_data();
 	read_count = motion_sense_fifo_read(
 		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 	TEST_EQ(read_count, 4, "%d");
 	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
-	TEST_EQ(data[0].timestamp, now - 20500, "%u");
+	TEST_EQ(data[0].timestamp, now - 25, "%u");
 	TEST_BITS_SET(data[1].flags, MOTIONSENSE_SENSOR_FLAG_ODR);
 	TEST_BITS_SET(data[2].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
-	TEST_EQ(data[2].timestamp, now - 20500, "%u");
+	TEST_EQ(data[2].timestamp, now - 25, "%u");
 
 	return EC_SUCCESS;
 }
