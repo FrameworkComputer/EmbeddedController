@@ -264,6 +264,7 @@ enum usb_pe_state {
 	/* PD3.0 only states below here*/
 	/* UFP Data Reset States */
 	PE_UDR_SEND_DATA_RESET,
+	PE_UDR_DATA_RESET_RECEIVED,
 	PE_UDR_TURN_OFF_VCONN,
 	PE_UDR_SEND_PS_RDY,
 	PE_UDR_WAIT_FOR_DATA_RESET_COMPLETE,
@@ -411,6 +412,7 @@ __maybe_unused static __const_data const char * const pe_state_names[] = {
 #endif
 #ifdef CONFIG_USB_PD_DATA_RESET_MSG
 	[PE_UDR_SEND_DATA_RESET] = "PE_UDR_Send_Data_Reset",
+	[PE_UDR_DATA_RESET_RECEIVED] = "PE_UDR_Data_Reset_Received",
 	[PE_UDR_TURN_OFF_VCONN] = "PE_UDR_Turn_Off_VCONN",
 	[PE_UDR_SEND_PS_RDY] = "PE_UDR_Send_Ps_Rdy",
 	[PE_UDR_WAIT_FOR_DATA_RESET_COMPLETE] =
@@ -477,6 +479,8 @@ GEN_NOT_SUPPORTED(PE_SNK_CHUNK_RECEIVED);
 #ifndef CONFIG_USB_PD_DATA_RESET_MSG
 GEN_NOT_SUPPORTED(PE_UDR_SEND_DATA_RESET);
 #define PE_UDR_SEND_DATA_RESET PE_UDR_SEND_DATA_RESET_NOT_SUPPORTED
+GEN_NOT_SUPPORTED(PE_UDR_DATA_RESET_RECEIVED);
+#define PE_UDR_DATA_RESET_RECEIVED PE_UDR_DATA_RESET_RECEIVED_NOT_SUPPORTED
 GEN_NOT_SUPPORTED(PE_UDR_TURN_OFF_VCONN);
 #define PE_UDR_TURN_OFF_VCONN PE_UDR_TURN_OFF_VCONN_NOT_SUPPORTED
 GEN_NOT_SUPPORTED(PE_UDR_SEND_PS_RDY);
@@ -1175,6 +1179,7 @@ void pe_report_error(int port, enum pe_error e, enum tcpci_msg_type type)
 			get_state_pe(port) == PE_VDM_IDENTITY_REQUEST_CBL) ||
 			(IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG) &&
 			 (get_state_pe(port) == PE_UDR_SEND_DATA_RESET ||
+			  get_state_pe(port) == PE_UDR_DATA_RESET_RECEIVED ||
 			  get_state_pe(port) == PE_UDR_TURN_OFF_VCONN ||
 			  get_state_pe(port) == PE_UDR_SEND_PS_RDY ||
 			  get_state_pe(port) ==
@@ -2794,12 +2799,9 @@ static void pe_src_ready_run(int port)
 				if (pe[port].data_role == PD_ROLE_DFP)
 					set_state_pe(port,
 						PE_DDR_DATA_RESET_RECEIVED);
-				/*
-				 * TODO(b/209628496): Support Data Reset as UFP
-				 */
 				else
 					set_state_pe(port,
-						PE_SEND_NOT_SUPPORTED);
+						PE_UDR_DATA_RESET_RECEIVED);
 				return;
 #endif /* CONFIG_USB_PD_DATA_RESET_MSG */
 #ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
@@ -2811,6 +2813,7 @@ static void pe_src_ready_run(int port)
 			 * Receiving an unknown or unsupported message
 			 * shall be responded to with a not supported message.
 			 */
+
 			default:
 				set_state_pe(port, PE_SEND_NOT_SUPPORTED);
 				return;
@@ -3631,12 +3634,9 @@ static void pe_snk_ready_run(int port)
 				if (pe[port].data_role == PD_ROLE_DFP)
 					set_state_pe(port,
 						PE_DDR_DATA_RESET_RECEIVED);
-				/*
-				 * TODO(b/209628496): Support Data Reset as UFP
-				 */
 				else
 					set_state_pe(port,
-						PE_SEND_NOT_SUPPORTED);
+						PE_UDR_DATA_RESET_RECEIVED);
 				return;
 #endif /* CONFIG_USB_PD_DATA_RESET_MSG */
 #ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
@@ -7288,6 +7288,31 @@ static void pe_udr_send_data_reset_exit(int port)
 	pe_sender_response_msg_exit(port);
 }
 
+/* PE_UDR_Data_Reset_Received */
+static void pe_udr_data_reset_received_entry(int port)
+{
+	print_current_state(port);
+	/* send accept message */
+	send_ctrl_msg(port, TCPCI_MSG_SOP, PD_CTRL_ACCEPT);
+}
+
+static void pe_udr_data_reset_received_run(int port)
+{
+	if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
+		if (tc_is_vconn_src(port))
+			set_state_pe(port, PE_UDR_TURN_OFF_VCONN);
+		else
+			set_state_pe(port,
+					PE_UDR_WAIT_FOR_DATA_RESET_COMPLETE);
+	} else if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR) ||
+			PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED)) {
+		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_DISCARDED);
+		set_state_pe(port, PE_WAIT_FOR_ERROR_RECOVERY);
+	}
+}
+
 /* PE_UDR_Turn_Off_VCONN */
 static void pe_udr_turn_off_vconn_entry(int port)
 {
@@ -8139,6 +8164,10 @@ static __const_data const struct usb_state pe_states[] = {
 		.entry = pe_udr_send_data_reset_entry,
 		.run   = pe_udr_send_data_reset_run,
 		.exit  = pe_udr_send_data_reset_exit,
+	},
+	[PE_UDR_DATA_RESET_RECEIVED] = {
+		.entry = pe_udr_data_reset_received_entry,
+		.run   = pe_udr_data_reset_received_run,
 	},
 	[PE_UDR_TURN_OFF_VCONN] = {
 		.entry = pe_udr_turn_off_vconn_entry,
