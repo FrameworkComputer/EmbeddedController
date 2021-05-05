@@ -763,7 +763,7 @@ void boot_ap_on_g3(void);
 void update_soc_power_limit(int force);
 
 void power_button_enable_led(int enable);
-void clear_power_s5_up(void);
+void s5_power_up_control(int control);
 
 int pos_get_state(void);
 

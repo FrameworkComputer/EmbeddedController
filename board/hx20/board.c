@@ -455,42 +455,12 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT + 1);
 
-#ifdef CONFIG_EMI_REGION1
-
-static void sci_enable(void);
-DECLARE_DEFERRED(sci_enable);
-
-int pos_get_state(void)
-{
-	if (*host_get_customer_memmap(0x00) & BIT(0))
-		return true;
-	else
-		return false;
-}
-
-static void sci_enable(void)
-{
-	if (*host_get_customer_memmap(0x00) & BIT(0)) {
-	/* when host set EC driver ready flag, EC need to enable SCI */
-		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
-		clear_power_s5_up();
-		update_soc_power_limit(1);
-	} else
-		hook_call_deferred(&sci_enable_data, 250 * MSEC);
-}
-#endif
-
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {
 	int version = board_get_version();
 
 	CPRINTS("HOOK_CHIPSET_STARTUP - called board_chipset_startup");
-
-#ifdef CONFIG_EMI_REGION1
-	hook_call_deferred(&sci_enable_data, 250 * MSEC);
-#endif
-
 
 	if (version > 6)
 		gpio_set_level(GPIO_EN_INVPWR, 1);
