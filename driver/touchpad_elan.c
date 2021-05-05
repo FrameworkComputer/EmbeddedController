@@ -292,6 +292,7 @@ static int elan_get_fwinfo(void)
 	case 0x00:
 	case 0x10:
 	case 0x14:
+	case 0x15:
 		elan_tp_params.page_count = 1024;
 		break;
 	default:
@@ -299,7 +300,7 @@ static int elan_get_fwinfo(void)
 		return EC_ERROR_UNKNOWN;
 	}
 
-	if (ic_type == 0x14 && iap_version >= 2) {
+	if ((ic_type == 0x14 || ic_type == 0x15) && iap_version >= 2) {
 		elan_tp_params.page_count /= 8;
 		elan_tp_params.page_size = 512;
 	} else if (ic_type >= 0x0D && iap_version >= 1) {
