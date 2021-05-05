@@ -10,6 +10,7 @@
 #include "tcpm/ps8xxx_public.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "sku.h"
 #include "system.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)

@@ -25,6 +25,7 @@
 #include "pwm_chip.h"
 #include "system.h"
 #include "shi_chip.h"
+#include "sku.h"
 #include "switch.h"
 #include "tablet_mode.h"
 #include "task.h"

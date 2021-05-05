@@ -114,8 +114,6 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
-int board_is_clamshell(void);
-
 /* Reset all TCPCs. */
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
