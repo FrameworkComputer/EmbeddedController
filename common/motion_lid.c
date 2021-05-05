@@ -78,7 +78,7 @@ static intv3_t smoothed_base, smoothed_lid;
  * is less than 1<<31, so magnitude is less sqrt(2)*(1<<15), less than ~40% over
  * 1g. This is way above any usable noise. Assume noise is less than 10%.
  */
-#define MOTION_SCALING_AXIS_MAX (MOTION_SCALING_FACTOR * 110)
+#define MOTION_SCALING_AXIS_MAX ((MOTION_SCALING_FACTOR * 110) / 100)
 
 #define MOTION_SCALING_FACTOR2 (MOTION_SCALING_FACTOR * MOTION_SCALING_FACTOR)
 
