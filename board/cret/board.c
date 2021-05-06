@@ -47,6 +47,7 @@
 
 #define INT_RECHECK_US 5000
 
+static void fw_config_tablet_mode(void);
 /* C0 interrupt line shared by BC 1.2 and charger */
 static void check_c0_line(void);
 DECLARE_DEFERRED(check_c0_line);
@@ -138,8 +139,7 @@ void board_init(void)
 	/* Enable interrupt for passing through HPD */
 	gpio_enable_interrupt(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL);
 
-	/* Enable gpio interrupt for base accelgyro sensor */
-	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+	fw_config_tablet_mode();
 
 	/* Turn on 5V if the system is on, otherwise turn it off. */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
@@ -413,7 +413,7 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 __override void ocpc_get_pid_constants(int *kp, int *kp_div,
 				       int *ki, int *ki_div,
@@ -566,4 +566,19 @@ __override const struct ec_response_keybd_config
 *board_vivaldi_keybd_config(void)
 {
 	return &cret_keybd;
+}
+
+static void fw_config_tablet_mode(void)
+{
+	if (get_cbi_fw_config_tablet_mode() == TABLET_MODE_PRESENT) {
+		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+		/* Enable Base Accel interrupt */
+		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+	} else {
+		motion_sensor_count = 0;
+		gmr_tablet_switch_disable();
+		/* Base accel is not stuffed, don't allow line to float */
+		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
+	}
 }
