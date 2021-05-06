@@ -353,6 +353,11 @@ static void state_machine(uint64_t tnow)
 			}
 		}
 		*/
+		/* if trigger by power button don't need wait initial.*/
+		if (power_button_is_pressed()) {
+			initial_delay = 0;
+		}
+
 		if (initial_delay != 0) {
 			tnext_state = tnow + PWRBTN_DELAY_INITIAL;
 			initial_delay--;
