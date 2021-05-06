@@ -23,7 +23,7 @@
 LOG_MODULE_REGISTER(shim_system, LOG_LEVEL_ERR);
 
 STATIC_IF_NOT(CONFIG_ZTEST) const struct device *bbram_dev;
-STATIC_IF_NOT(CONFIG_ZTEST) const struct device *sys_dev;
+static const struct device *sys_dev;
 
 #if DT_NODE_EXISTS(DT_NODELABEL(bbram))
 static int system_init(const struct device *unused)
@@ -312,7 +312,6 @@ static int system_preinitialize(const struct device *unused)
 
 	return 0;
 }
-#if (!defined(CONFIG_ZTEST))
+
 SYS_INIT(system_preinitialize, PRE_KERNEL_1,
 	 CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY);
-#endif
