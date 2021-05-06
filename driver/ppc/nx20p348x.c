@@ -162,7 +162,7 @@ static int nx20p348x_vbus_sink_enable(int port, int enable)
 	if (rv)
 		return rv;
 
-	return (status & NX20P348X_SWITCH_STATUS_MASK) == control ?
+	return (status & NX20P348X_SWITCH_CONTROL_HVSNK) == control ?
 		EC_SUCCESS : EC_ERROR_UNKNOWN;
 }
 
