@@ -32,35 +32,35 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	[BATTERY_C433] = {
+	[BATTERY_C490] = {
 		.fuel_gauge = {
-			.manuf_name = "AS1GVPc3KB",
-			.device_name = "C433-41",
+			.manuf_name = "AS3GWQd3jB",
 			.ship_mode = {
 				.reg_addr = 0x00,
 				.reg_data = { 0x10, 0x10 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x44,
-				.reg_mask = 0x6000,
-				.disconnect_val = 0x6000,
+				.reg_addr = 0x99,
+				.reg_mask = 0x000c,
+				.disconnect_val = 0x000c,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0004,
 			}
 		},
 		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11550, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
+			.voltage_max            = 13200, /* mV */
+			.voltage_normal         = 11550, /* mV */
+			.voltage_min            = 9000, /* mV */
+			.precharge_current      = 256,  /* mA */
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 45,
+			.charging_min_c         = 0,
+			.charging_max_c         = 60,
+			.discharging_min_c      = -20,
+			.discharging_max_c      = 60,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_C433;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_C490;
