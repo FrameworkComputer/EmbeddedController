@@ -134,7 +134,11 @@
 #define LN9310_LION_CTRL_MASK				0xFF
 #define LN9310_LION_CTRL_UNLOCK_AND_EN_TM	0xAA
 #define LN9310_LION_CTRL_UNLOCK				0x5B
-#define LN9310_LION_CTRL_LOCK				0x00
+/*
+ * value changed to 0x22 to distinguish from reset value of 0x00
+ * 0x22 and 0x00 are functionally equivalent within LN9310
+ */
+#define LN9310_LION_CTRL_LOCK				0x22
 
 #define LN9310_REG_CFG_0	0x3C
 #define LN9310_CFG_0_LS_HELPER_IDLE_MSK_MASK	0x20

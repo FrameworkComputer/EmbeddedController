@@ -116,6 +116,29 @@ static int is_battery_gt_10v(void)
 	return gt_10v;
 }
 
+static int ln9310_reset_detected(void)
+{
+	/*
+	 * Check LN9310_REG_LION_CTRL to see if it has been reset to 0x0.
+	 * ln9310_init() and all other functions will set this register
+	 * to a non-zero value so it should only become 0 again if LN9310
+	 * is reset.
+	 */
+	int val, status, reset_detected;
+
+	status = raw_read8(LN9310_REG_LION_CTRL, &val);
+	if (status) {
+		CPRINTS("LN9310 reading LN9310_REG_LION_CTRL failed");
+		/* If read fails, safest to assume reset has occurred */
+		return 1;
+	}
+	reset_detected = (val == 0x0);
+	if (reset_detected) {
+		CPRINTS("LN9310 was reset (possibly in error)");
+	}
+	return reset_detected;
+}
+
 static int ln9310_update_startup_seq(void)
 {
 	CPRINTS("LN9310 update startup sequence");
@@ -467,6 +490,9 @@ void ln9310_software_enable(int enable)
 	 * ln9310_software_enable(0) - reset LN9310 register to state necessary
 	 *                             for subsequent startups
 	 */
+	if (ln9310_reset_detected())
+		ln9310_init();
+
 	/* Dummy clear all interrupts */
 	status = raw_read8(LN9310_REG_INT1, &val);
 	if (status) {
