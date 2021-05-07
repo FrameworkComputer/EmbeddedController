@@ -4355,6 +4355,17 @@ static void pe_prs_src_snk_transition_to_off_entry(int port)
 
 static void pe_prs_src_snk_transition_to_off_run(int port)
 {
+	/*
+	 * This is a non-interruptible AMS and power is transitioning - hard
+	 * reset on interruption.
+	 */
+	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+		tc_pr_swap_complete(port, 0);
+		set_state_pe(port, PE_SRC_HARD_RESET);
+	}
+
 	/* Give time for supply to power off */
 	if (pd_timer_is_expired(port, PE_TIMER_PS_SOURCE) &&
 	    pd_check_vbus_level(port, VBUS_SAFE0V))
