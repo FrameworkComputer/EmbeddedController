@@ -6199,23 +6199,6 @@ static void pe_vcs_evaluate_swap_entry(int port)
 		/* NOTE: PE_VCS_Accept_Swap State embedded here */
 		PE_SET_FLAG(port, PE_FLAGS_ACCEPT);
 		send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
-
-		/*
-		 * The USB PD 3.0 spec indicates that the initial VCONN source
-		 * shall cease sourcing VCONN within tVCONNSourceOff (25ms)
-		 * after receiving the PS_RDY message. However, some partners
-		 * begin sending SOP' messages only 1 ms after sending PS_RDY
-		 * during VCONN swap.
-		 *
-		 * Preemptively disable receipt of SOP' and SOP'' messages while
-		 * we wait for PS_RDY so we don't attempt to process messages
-		 * directed at the cable. If the partner fails to send PS_RDY we
-		 * perform a hard reset so no need to re-enable SOP' messages.
-		 *
-		 * We continue to source VCONN while we wait as required by the
-		 * spec.
-		 */
-		tcpm_sop_prime_enable(port, false);
 	}
 }
 
@@ -6295,11 +6278,6 @@ static void pe_vcs_send_swap_run(int port)
 			 */
 			if (type == PD_CTRL_ACCEPT) {
 				if (tc_is_vconn_src(port)) {
-					/*
-					 * Prevent receiving any SOP' and SOP''
-					 * messages while a swap is in progress.
-					 */
-					tcpm_sop_prime_enable(port, false);
 					set_state_pe(port,
 						PE_VCS_WAIT_FOR_VCONN_SWAP);
 				} else {
@@ -6354,6 +6332,22 @@ static void pe_vcs_wait_for_vconn_swap_entry(int port)
 
 	/* Start the VCONNOnTimer */
 	pd_timer_enable(port, PE_TIMER_VCONN_ON, PD_T_VCONN_SOURCE_ON);
+
+	/*
+	 * The USB PD 3.0 spec indicates that the initial VCONN source
+	 * shall cease sourcing VCONN within tVCONNSourceOff (25ms)
+	 * after receiving the PS_RDY message. However, some partners
+	 * begin sending SOP' messages only 1 ms after sending PS_RDY
+	 * during VCONN swap.
+	 *
+	 * Preemptively disable receipt of SOP' and SOP'' messages while
+	 * we wait for PS_RDY so we don't attempt to process messages
+	 * directed at the cable.
+	 *
+	 * We continue to source VCONN while we wait as required by the
+	 * spec.
+	 */
+	tcpm_sop_prime_enable(port, false);
 }
 
 static void pe_vcs_wait_for_vconn_swap_run(int port)
@@ -6363,14 +6357,25 @@ static void pe_vcs_wait_for_vconn_swap_run(int port)
 	 *  1) A PS_RDY Message is received.
 	 */
 	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
-		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 		/*
 		 * PS_RDY message received
+		 *
+		 * Note: intentionally leave the receive flag set to indicate
+		 * our route on exit when PS_RDY is received.
 		 */
 		if ((PD_HEADER_CNT(rx_emsg[port].header) == 0) &&
-				(PD_HEADER_TYPE(rx_emsg[port].header) ==
-						PD_CTRL_PS_RDY)) {
+		    (PD_HEADER_EXT(rx_emsg[port].header) == 0) &&
+		    (PD_HEADER_TYPE(rx_emsg[port].header) == PD_CTRL_PS_RDY)) {
 			set_state_pe(port, PE_VCS_TURN_OFF_VCONN_SWAP);
+			return;
+		} else {
+			/*
+			 * Unexpected message received - reset with the SOP* of
+			 * the incoming message.
+			 */
+			PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+			pe_send_soft_reset(port,
+				PD_HEADER_GET_SOP(rx_emsg[port].header));
 			return;
 		}
 	}
@@ -6390,6 +6395,15 @@ static void pe_vcs_wait_for_vconn_swap_run(int port)
 
 static void pe_vcs_wait_for_vconn_swap_exit(int port)
 {
+	/*
+	 * If we exited without getting PS_RDY, re-enable SOP' messaging since
+	 * we are still the Vconn source.
+	 */
+	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED))
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+	else
+		tcpm_sop_prime_enable(port, true);
+
 	pd_timer_disable(port, PE_TIMER_VCONN_ON);
 }
 
