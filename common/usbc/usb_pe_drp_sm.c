@@ -5988,7 +5988,17 @@ static void pe_vdm_response_entry(int port)
 			vdo_len = 1;
 		}
 	} else {
-		/* Received at VDM command which is not supported */
+		/*
+		 * Received at VDM command which is not supported.  PD 2.0 may
+		 * NAK or ignore the message (see TD.PD.VNDI.E1. VDM Identity
+		 * steps), but PD 3.0 must send Not_Supported (PD 3.0 Ver 2.0 +
+		 * ECNs 2020-12-10 Table 6-64 Response to an incoming
+		 * VDM or TD.PD.VNDI3.E3 VDM Identity steps)
+		 */
+		if (prl_get_rev(port, TCPC_TX_SOP) == PD_REV30) {
+			set_state_pe(port, PE_SEND_NOT_SUPPORTED);
+			return;
+		}
 		tx_payload[0] |= VDO_CMDT(CMDT_RSP_NAK);
 		vdo_len = 1;
 	}
