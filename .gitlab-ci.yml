@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-image: sjg20/bionic-20200526-7may21a
+image: sjg20/bionic-20200526-7may21b
 
 # You can update that image using this repo:
 #   https://gitlab.com/zephyr-ec/gitlab-ci-runner/-/tree/main
@@ -60,6 +60,17 @@ delbin:
   variables:
     PROJECT: "delbin"
     PROJECT_SUBDIR: "volteer/"
+  <<: *build_template
+
+hayato:
+  variables:
+    PROJECT: "hayato"
+    PROJECT_SUBDIR: "asurada/"
+  <<: *build_template
+
+it8xxx2_evb:
+  variables:
+    PROJECT: "it8xxx2_evb"
   <<: *build_template
 
 kohaku:
