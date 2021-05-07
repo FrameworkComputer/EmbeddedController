@@ -67,6 +67,18 @@ class FakeJobserver(zmake.jobserver.GNUMakeJobServer):
         return self.jobserver.popen(new_cmd, *args, **kwargs)
 
 
+def get_test_filepath(suffix):
+    """Get the filepath for a particular test file
+
+    Args:
+        suffix: Suffix of the file to read, e.g. 'ro' or 'ro_INFO'
+
+    Returns:
+        Full path to the test file
+    """
+    return os.path.join(OUR_PATH, 'files', 'sample_{}.txt'.format(suffix))
+
+
 def do_test_with_log_level(log_level):
     """Test filtering using a particular log level
 
@@ -79,10 +91,8 @@ def do_test_with_log_level(log_level):
             - Temporary directory used for build
     """
     fnames = {
-        re.compile(r".*build-ro"): os.path.join(
-            OUR_PATH, 'files', 'sample_ro.txt'),
-        re.compile(r".*build-rw"): os.path.join(
-            OUR_PATH, 'files', 'sample_rw.txt'),
+        re.compile(r".*build-ro"): get_test_filepath('ro'),
+        re.compile(r".*build-rw"): get_test_filepath('rw'),
     }
     zmk = zm.Zmake(jobserver=FakeJobserver(fnames))
 
@@ -116,12 +126,7 @@ def test_filter_info():
             tmpname, tmpname),
     }
     for suffix in ['ro', 'rw']:
-        with open(
-            os.path.join(
-                OUR_PATH,
-                'files',
-                'sample_{}_INFO.txt'.format(suffix)),
-                'r') as f:
+        with open(get_test_filepath('%s_INFO' % suffix)) as f:
             for line in f:
                 expected.add(
                     "[{}:build-{}]{}".format(tmpname, suffix, line.strip()))
@@ -143,12 +148,7 @@ def test_filter_debug():
         'Running cat {}/files/sample_rw.txt'.format(OUR_PATH),
     }
     for suffix in ['ro', 'rw']:
-        with open(
-            os.path.join(
-                OUR_PATH,
-                'files',
-                'sample_{}.txt'.format(suffix)),
-                'r') as f:
+        with open(get_test_filepath(suffix)) as f:
             for line in f:
                 expected.add(
                     "[{}:build-{}]{}".format(tmpname, suffix, line.strip()))
