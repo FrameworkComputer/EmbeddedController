@@ -23,7 +23,7 @@
 #include "usb_tc_sm.h"
 #include "usb_pd.h"
 #include "usb_emsg.h"
-
+#include "power.h"
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
@@ -884,9 +884,12 @@ void cypd_handle_state(int controller)
 			gpio_disable_interrupt(pd_chip_config[controller].gpio);
 			cyp5525_get_version(controller);
 			cypd_write_reg8_wait_ack(controller, CYP5225_USER_MAINBOARD_VERSION, board_get_version());
+
 			cyp5525_setup(controller);
 			cypd_update_port_state(controller, 0);
 			cypd_update_port_state(controller, 1);
+			cypd_write_reg8_wait_ack(controller, CYP5525_SYS_PWR_STATE,
+									power_get_state() == POWER_S0 ? CYP5525_POWERSTATE_S0 : CYP5525_POWERSTATE_S5);
 			cyp5525_ucsi_startup(controller);
 			gpio_enable_interrupt(pd_chip_config[controller].gpio);
 
@@ -1054,15 +1057,16 @@ void cypd_interrupt_handler_task(void *p)
 			if (evt & CYPD_PROCESS_CONTROLLER_AC_PRESENT) {
 				CPRINTS("GPIO_AC_PRESENT_PD_L changed: value: 0x%02x", gpio_get_level(GPIO_AC_PRESENT_PD_L));
 			}
-			if (evt & CYPD_PROCESS_CONTROLLER_S0) {
-				cyp5225_set_power_state(CYP5525_POWERSTATE_S0);
+			if (evt & CYPD_PROCESS_CONTROLLER_S5) {
+				cyp5225_set_power_state(CYP5525_POWERSTATE_S5);
 			}
 			if (evt & CYPD_PROCESS_CONTROLLER_S3) {
 				cyp5225_set_power_state(CYP5525_POWERSTATE_S3);
 			}
-			if (evt & CYPD_PROCESS_CONTROLLER_S5) {
-				cyp5225_set_power_state(CYP5525_POWERSTATE_S5);
+			if (evt & CYPD_PROCESS_CONTROLLER_S0) {
+				cyp5225_set_power_state(CYP5525_POWERSTATE_S0);
 			}
+
 			if (evt & CYPD_PROCESS_PLT_RESET) {
 				CPRINTS("PD Event Platform Reset!");
 				/* initialize BB retimers after a reset */
@@ -1525,9 +1529,18 @@ static int cmd_cypd_control(int argc, char **argv)
 			}
 			pdo = strtoul(argv[3], &e, 0);
 			if (*e)
-				return EC_ERROR_PARAM2;
+				return EC_ERROR_PARAM3;
 			cypd_set_source_pdo(i, 0, &pdo, 1, 0);
 			cypd_set_source_pdo(i, 1, &pdo, 1, 0);
+		} else if (!strncmp(argv[1], "powerstate", 10)) {
+			int pwrstate;
+			if (argc < 4) {
+				return EC_ERROR_PARAM3;
+			}
+			pwrstate = strtoul(argv[3], &e, 0);
+			if (*e)
+				return EC_ERROR_PARAM3;
+			cyp5225_set_power_state(pwrstate);
 		} else {
 			return EC_ERROR_PARAM1;
 		}
