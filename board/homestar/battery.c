@@ -149,11 +149,40 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c      = 60,
 		},
 	},
-	/* SMP L21D4PG0 */
+	/* Sunwoda L21D4PG0 */
 	[BATTERY_L21D4PG0] = {
 		.fuel_gauge = {
+			.manuf_name = "Sunwoda",
+			.device_name = "L21D4PG",
+			.ship_mode = {
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x0100 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x34,
+				.reg_mask = 0x0100,
+				.disconnect_val = 0x0,
+			}
+		},
+		.batt_info = {
+			.voltage_max            = 8900, /* mV */
+			.voltage_normal         = 7720, /* mV */
+			.voltage_min            = 6000, /* mV */
+			.precharge_current      = 274,  /* mA */
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 50,
+			.charging_min_c         = 0,
+			.charging_max_c         = 60,
+			.discharging_min_c      = -20,
+			.discharging_max_c      = 60,
+		},
+	},
+	/* SMP L21M4PG0 */
+	[BATTERY_L21M4PG0] = {
+		.fuel_gauge = {
 			.manuf_name = "SMP",
-			.device_name = "Lenovo",
+			.device_name = "L21M4PG",
 			.ship_mode = {
 				.reg_addr = 0x34,
 				.reg_data = { 0x0000, 0x0100 },
