@@ -9,6 +9,7 @@
 #define __CROS_EC_BASEBOARD_H
 
 /* NPCX9 config */
+#define CONFIG_PORT80_4_BYTE
 #define NPCX9_PWM1_SEL    1  /* GPIO C2 is used as PWM1. */
 #define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
 
