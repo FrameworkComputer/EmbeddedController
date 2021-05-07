@@ -7,7 +7,8 @@ menuconfig CROS_BBRAM_NPCX
 	depends on SOC_FAMILY_NPCX
 	default y
 	help
-		This options enables stuff.
+	  This enables the NPCX cros_bbram driver. The NPCX BBRAM module
+	  provides 128 bytes of battery-backed memory area.
 
 if CROS_BBRAM_NPCX
 
