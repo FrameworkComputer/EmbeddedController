@@ -8,6 +8,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "ec_tasks.h"
 #include "hooks.h"
 #include "task.h"
 #include "timer.h"
@@ -61,11 +62,26 @@ void hook_notify(enum hook_type type)
 		p->routine();
 }
 
+static void check_hook_task_priority(k_tid_t thread)
+{
+	if (k_thread_priority_get(thread) != LOWEST_THREAD_PRIORITY)
+		cprintf(CC_HOOK,
+			"ERROR: %s has priority %d but must be priority %d\n",
+			k_thread_name_get(thread),
+			k_thread_priority_get(thread), LOWEST_THREAD_PRIORITY);
+}
+
 void hook_task(void *u)
 {
 	/* Periodic hooks will be called first time through the loop */
 	static uint64_t last_second = -SECOND;
 	static uint64_t last_tick = -HOOK_TICK_INTERVAL;
+
+	/*
+	 * Verify deferred routines are run at the lowest priority.
+	 */
+	check_hook_task_priority(&k_sys_work_q.thread);
+	check_hook_task_priority(k_current_get());
 
 	while (1) {
 		uint64_t t = get_time().val;
