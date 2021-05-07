@@ -28,7 +28,8 @@ baseboard-$(CONFIG_BC12_DETECT_MAX14637)+=bc12.o
 
 #Common board specific files
 ifneq ($(filter y,$(BOARD_ADLRVPP_ITE) $(BOARD_ADLRVPM_ITE) \
-		$(BOARD_ADLRVPP_MCHP1521) $(BOARD_ADLRVPP_NPCX)),)
+		$(BOARD_ADLRVPP_MCHP1521) $(BOARD_ADLRVPP_NPCX) \
+		$(BOARD_ADLRVPP_MCHP1727)),)
 baseboard-y+=adlrvp.o
 ifneq ($(BOARD_ADLRVPM_ITE),)
 baseboard-$(CONFIG_BATTERY_SMART)+=adlrvp_battery2s.o
