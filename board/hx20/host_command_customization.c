@@ -63,7 +63,9 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 		gpio_enable_interrupt(GPIO_EC_PD_INTB_L);
 
 		/* resetup PD controllers */
-		cypd_reinitialize();
+		if ((p->flags & FLASH_FLAG_PD) == FLASH_FLAG_PD) {
+			cypd_reinitialize();
+		}
 
 	case FLASH_ACCESS_SPI_DONE:
 		/* Set GPIO56 as PWM */
