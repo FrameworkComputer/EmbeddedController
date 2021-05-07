@@ -59,3 +59,9 @@ CONFIG_WATCHDOG=y
 # Set the delay time for printing panic data.
 # 1 cycle is about 32ms. 500ms is about 16 cycles.
 CONFIG_WDT_NPCX_DELAY_CYCLES=16
+
+# Power Management
+CONFIG_SOC_POWER_MANAGEMENT=y
+CONFIG_PM_POLICY_APP=y
+CONFIG_UART_CONSOLE_INPUT_EXPIRED=y
+CONFIG_SOC_POWER_MANAGEMENT_TRACE=y
