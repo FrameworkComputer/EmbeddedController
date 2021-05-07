@@ -116,11 +116,10 @@ static void clear_rtcwake(void)
 }
 #endif
 
-void clear_power_s5_up(void)
+void s5_power_up_control(int control)
 {
-	/* APCI driver ready, clear power s5 up flag to shutdown state */
-	CPRINTS("cleaer power s5 up!");
-	power_s5_up = 0;
+	CPRINTS("%s s5 power up!", control ? "setup" : "clear");
+	power_s5_up = control;
 }
 
 static void chipset_force_g3(void)
@@ -397,6 +396,7 @@ enum power_state power_handle_state(enum power_state state)
 				}
 			}
 
+			s5_exit_tries = 0;
 			return POWER_S5S3; /* Power up to next state */
 		}
 

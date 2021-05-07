@@ -13,6 +13,7 @@
 #include "hooks.h"
 #include "keyboard_customization.h"
 #include "lid_switch.h"
+#include "lpc.h"
 #include "power_button.h"
 #include "switch.h"
 #include "system.h"
@@ -23,6 +24,31 @@
 #include "board.h"
 #include "ps2mouse.h"
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
+
+#ifdef CONFIG_EMI_REGION1
+
+static void sci_enable(void);
+DECLARE_DEFERRED(sci_enable);
+
+int pos_get_state(void)
+{
+	if (*host_get_customer_memmap(0x00) & BIT(0))
+		return true;
+	else
+		return false;
+}
+
+static void sci_enable(void)
+{
+	if (*host_get_customer_memmap(0x00) & BIT(0)) {
+	/* when host set EC driver ready flag, EC need to enable SCI */
+		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
+		s5_power_up_control(0);
+		update_soc_power_limit(1);
+	} else
+		hook_call_deferred(&sci_enable_data, 250 * MSEC);
+}
+#endif
 
 /*****************************************************************************/
 /* Hooks */
@@ -115,6 +141,22 @@ static enum ec_status host_custom_command_hello(struct host_cmd_handler_args *ar
 	 */
 	if (chipset_in_state(CHIPSET_STATE_STANDBY))
 		*host_get_customer_memmap(EC_EMEMAP_ER1_POWER_STATE) |= EC_PS_RESUME_S0ix;
+
+	/**
+	 * When system reboot and go into setup menu, we need to set the power_s5_up flag
+	 * to wait SLP_S5 and SLP_S3 signal to boot into OS.
+	 */
+	s5_power_up_control(1);
+
+	/**
+	 * Moved sci enable on this host command, we need to check acpi_driver ready flag
+	 * every boot up (both cold boot and warn boot)
+	 */
+
+#ifdef CONFIG_EMI_REGION1
+	hook_call_deferred(&sci_enable_data, 250 * MSEC);
+#endif
+
 
 	r->out_data = d + 0x01020304;
 	args->response_size = sizeof(*r);
