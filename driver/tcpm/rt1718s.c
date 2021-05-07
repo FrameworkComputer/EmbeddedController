@@ -73,6 +73,88 @@ static int rt1718s_sw_reset(int port)
 	return rv;
 }
 
+/* enable bc 1.2 sink function  */
+static int rt1718s_enable_bc12_sink(int port, bool en)
+{
+	return rt1718s_update_bits8(port, RT1718S_RT2_BC12_SNK_FUNC,
+			RT1718S_RT2_BC12_SNK_FUNC_BC12_SNK_EN,
+			en ? 0xFF : 0);
+}
+
+static int rt1718s_set_bc12_sink_spec_ta(int port, bool en)
+{
+	return rt1718s_update_bits8(port,
+			RT1718S_RT2_BC12_SNK_FUNC,
+			RT1718S_RT2_BC12_SNK_FUNC_SPEC_TA_EN, en ? 0xFF : 0);
+}
+
+static int rt1718s_set_bc12_sink_dcdt_sel(int port, uint8_t dcdt_sel)
+{
+	return rt1718s_update_bits8(port,
+			RT1718S_RT2_BC12_SNK_FUNC,
+			RT1718S_RT2_BC12_SNK_FUNC_DCDT_SEL_MASK, dcdt_sel);
+}
+
+static int rt1718s_set_bc12_sink_vlgc_option(int port, bool en)
+{
+	return rt1718s_update_bits8(port,
+			RT1718S_RT2_BC12_SNK_FUNC,
+			RT1718S_RT2_BC12_SNK_FUNC_VLGC_OPT, en ? 0xFF : 0);
+}
+
+static int rt1718s_set_bc12_sink_vport_sel(int port, uint8_t sel)
+{
+	return rt1718s_update_bits8(port,
+			RT1718S_RT2_DPDM_CTR1_DPDM_SET,
+			RT1718S_RT2_DPDM_CTR1_DPDM_SET_DPDM_VSRC_SEL_MASK, sel);
+}
+
+static int rt1718s_set_bc12_sink_wait_vbus(int port, bool en)
+{
+	return rt1718s_update_bits8(port,
+			RT1718S_RT2_BC12_SNK_FUNC,
+			RT1718S_RT2_BC12_SNK_FUNC_BC12_WAIT_VBUS,
+			en ? 0xFF : 0);
+}
+
+/*
+ * rt1718s BC12 function initial
+ */
+static int rt1718s_bc12_init(int port)
+{
+	/* Enable vendor defined BC12 function */
+	RETURN_ERROR(rt1718s_write8(port, RT1718S_RT_MASK6,
+			RT1718S_RT_MASK6_M_BC12_SNK_DONE |
+			RT1718S_RT_MASK6_M_BC12_TA_CHG));
+
+	RETURN_ERROR(rt1718s_write8(port, RT1718S_RT2_SBU_CTRL_01,
+			RT1718S_RT2_SBU_CTRL_01_DPDM_VIEN |
+			RT1718S_RT2_SBU_CTRL_01_DM_SWEN |
+			RT1718S_RT2_SBU_CTRL_01_DP_SWEN));
+
+	/* Disable 2.7v mode */
+	RETURN_ERROR(rt1718s_set_bc12_sink_spec_ta(port, false));
+
+	/* DCDT select 600ms timeout */
+	RETURN_ERROR(rt1718s_set_bc12_sink_dcdt_sel(port,
+			RT1718S_RT2_BC12_SNK_FUNC_DCDT_SEL_600MS));
+
+	/* Disable vlgc option */
+	RETURN_ERROR(rt1718s_set_bc12_sink_vlgc_option(port, false));
+
+	/* DPDM voltage selection */
+	RETURN_ERROR(rt1718s_set_bc12_sink_vport_sel(port,
+			RT1718S_RT2_DPDM_CTR1_DPDM_SET_DPDM_VSRC_SEL_0_65V));
+
+	/* Disable sink wait vbus */
+	RETURN_ERROR(rt1718s_set_bc12_sink_wait_vbus(port, false));
+
+	/* Disable bc 1.2 sink function */
+	RETURN_ERROR(rt1718s_enable_bc12_sink(port, false));
+
+	return EC_SUCCESS;
+}
+
 static int rt1718s_init(int port)
 {
 	static bool need_sw_reset = true;
@@ -90,6 +172,8 @@ static int rt1718s_init(int port)
 					0xFF));
 
 
+	RETURN_ERROR(rt1718s_bc12_init(port));
+
 	/* Disable FOD function */
 	RETURN_ERROR(rt1718s_update_bits8(port, 0xCF, 0x40, 0x00));
 
@@ -105,6 +189,14 @@ static int rt1718s_init(int port)
 
 	RETURN_ERROR(tcpci_tcpm_init(port));
 
+	/*
+	 * Set vendor defined alert unmasked, this must be done after
+	 * tcpci_tcpm_init.
+	 */
+	RETURN_ERROR(tcpc_update16(port, TCPC_REG_ALERT_MASK,
+				TCPC_REG_ALERT_MASK_VENDOR_DEF,
+				MASK_SET));
+
 	RETURN_ERROR(board_rt1718s_init(port));
 
 	return EC_SUCCESS;
@@ -113,6 +205,115 @@ static int rt1718s_init(int port)
 __overridable int board_rt1718s_init(int port)
 {
 	return EC_SUCCESS;
+}
+
+static enum charge_supplier rt1718s_get_bc12_type(int port)
+{
+	int data;
+
+	if (rt1718s_read8(port, RT1718S_RT2_BC12_STAT, &data))
+		return CHARGE_SUPPLIER_OTHER;
+
+	switch (data & RT1718S_RT2_BC12_STAT_PORT_STATUS_MASK) {
+	case RT1718S_RT2_BC12_STAT_PORT_STATUS_NONE:
+		return CHARGE_SUPPLIER_NONE;
+	case RT1718S_RT2_BC12_STAT_PORT_STATUS_SDP:
+		return CHARGE_SUPPLIER_BC12_SDP;
+	case RT1718S_RT2_BC12_STAT_PORT_STATUS_CDP:
+		return CHARGE_SUPPLIER_BC12_CDP;
+	case RT1718S_RT2_BC12_STAT_PORT_STATUS_DCP:
+		return CHARGE_SUPPLIER_BC12_DCP;
+	}
+
+	return CHARGE_SUPPLIER_OTHER;
+}
+
+static int rt1718s_get_bc12_ilim(enum charge_supplier supplier)
+{
+	switch (supplier) {
+	case CHARGE_SUPPLIER_BC12_DCP:
+	case CHARGE_SUPPLIER_BC12_CDP:
+		return USB_CHARGER_MAX_CURR_MA;
+	case CHARGE_SUPPLIER_BC12_SDP:
+	default:
+		return USB_CHARGER_MIN_CURR_MA;
+	}
+}
+
+static void rt1718s_update_charge_manager(int port,
+					  enum charge_supplier new_bc12_type)
+{
+	static enum charge_supplier current_bc12_type = CHARGE_SUPPLIER_NONE;
+
+	if (new_bc12_type != current_bc12_type) {
+		charge_manager_update_charge(current_bc12_type, port, NULL);
+
+		if (new_bc12_type != CHARGE_SUPPLIER_NONE) {
+			struct charge_port_info chg = {
+				.current = rt1718s_get_bc12_ilim(new_bc12_type),
+				.voltage = USB_CHARGER_VOLTAGE_MV,
+			};
+
+			charge_manager_update_charge(new_bc12_type, port, &chg);
+		}
+
+		current_bc12_type = new_bc12_type;
+	}
+}
+
+static void rt1718s_bc12_usb_charger_task(const int port)
+{
+	rt1718s_enable_bc12_sink(port, false);
+
+	while (1) {
+		uint32_t evt = task_wait_event(-1);
+
+		if (evt & USB_CHG_EVENT_DR_UFP)
+			rt1718s_enable_bc12_sink(port, true);
+
+		if ((evt & USB_CHG_EVENT_DR_DFP) ||
+		    (evt & USB_CHG_EVENT_CC_OPEN)) {
+			rt1718s_update_charge_manager(
+					port, CHARGE_SUPPLIER_NONE);
+		}
+
+		/* detection done, update charge_manager and stop detection */
+		if (evt & USB_CHG_EVENT_BC12) {
+			rt1718s_update_charge_manager(
+					port, rt1718s_get_bc12_type(port));
+			rt1718s_enable_bc12_sink(port, false);
+		}
+	}
+}
+
+void rt1718s_vendor_defined_alert(int port)
+{
+	int rv, value;
+
+	/* Process BC12 alert */
+	rv = rt1718s_read8(port, RT1718S_RT_INT6, &value);
+	if (rv)
+		return;
+
+	/* clear BC12 alert */
+	rv = rt1718s_write8(port, RT1718S_RT_INT6, value);
+	if (rv)
+		return;
+
+	/* check snk done */
+	if (value & RT1718S_RT_INT6_INT_BC12_SNK_DONE)
+		task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
+			       USB_CHG_EVENT_BC12);
+}
+
+static void rt1718s_alert(int port)
+{
+	int alert;
+
+	tcpc_read16(port, TCPC_REG_ALERT, &alert);
+	if (alert & TCPC_REG_ALERT_VENDOR_DEF)
+		rt1718s_vendor_defined_alert(port);
+	tcpci_tcpc_alert(port);
 }
 
 /* RT1718S is a TCPCI compatible port controller */
@@ -149,4 +350,8 @@ const struct tcpm_drv rt1718s_tcpm_drv = {
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
 #endif
+};
+
+const struct bc12_drv rt1718s_bc12_drv = {
+	.usb_charger_task = rt1718s_bc12_usb_charger_task,
 };
