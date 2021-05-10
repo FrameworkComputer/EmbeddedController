@@ -201,22 +201,23 @@ static void bettery_percentage_control(void)
 	int rv;
 
 
-	if(charging_maximum_level == NEED_RESTORE)
-		charging_maximum_level = 0;
-		// TODO
-		// system_get_bbram(SYSTEM_BBRAM_IDX_CHG_MAX, &charging_maximum_level);
+	if (charging_maximum_level == NEED_RESTORE)
+		system_get_bbram(SYSTEM_BBRAM_IDX_CHG_MAX, &charging_maximum_level);
 
-	if( charging_maximum_level < 20 )
+	if (charging_maximum_level & CHG_LIMIT_OVERRIDE) {
 		new_mode = CHARGE_CONTROL_NORMAL;
-	else if( charge_get_percent() > charging_maximum_level){
+		if (charge_get_percent() == 100)
+			charging_maximum_level = charging_maximum_level | 0x64;
+	} else if (charging_maximum_level < 20)
+		new_mode = CHARGE_CONTROL_NORMAL;
+	else if (charge_get_percent() > charging_maximum_level)
 		new_mode = CHARGE_CONTROL_DISCHARGE;
-	}
-	else if( charge_get_percent() == charging_maximum_level)
+	else if (charge_get_percent() == charging_maximum_level)
 		new_mode = CHARGE_CONTROL_IDLE;
 	else
 		new_mode = CHARGE_CONTROL_NORMAL;
 
-	if( before_mode != new_mode ){
+	if (before_mode != new_mode) {
 		before_mode = new_mode;
 		set_chg_ctrl_mode(before_mode);
 #ifdef CONFIG_CHARGER_DISCHARGE_ON_AC
@@ -239,35 +240,27 @@ static enum ec_status cmd_charging_limit_control(struct host_cmd_handler_args *a
 {
 
 	const struct ec_params_ec_chg_limit_control *p = args->params;
-	// TDDO: read limit
-	// struct ec_response_chg_limit_control *r = args->response;
-	// TODO: bbram
-	// system_get_bbram(SYSTEM_BBRAM_IDX_CHG_MAX, &charging_maximum_level);
+	struct ec_response_chg_limit_control *r = args->response;
 
-	if (p->modes & CHG_LIMIT_DISABLE){
+	if (p->modes & CHG_LIMIT_DISABLE) {
 		charging_maximum_level = 0;
 	}
 
-	if (p->modes & CHG_LIMIT_SET_LIMIT){
+	if (p->modes & CHG_LIMIT_SET_LIMIT) {
 		if( p->max_percentage < 20 )
 			return EC_RES_ERROR;
 
 		charging_maximum_level = p->max_percentage;
+		system_set_bbram(SYSTEM_BBRAM_IDX_CHG_MAX, charging_maximum_level);
 	}
 
 	if (p->modes & CHG_LIMIT_OVERRIDE)
 		charging_maximum_level = charging_maximum_level | CHG_LIMIT_OVERRIDE;
 
-	// TODO: bbran
-	// system_set_bbram(SYSTEM_BBRAM_IDX_CHG_MAX, charging_maximum_level);
-
-	if (p->modes & CHG_LIMIT_GET_LIMIT){
-		// TODO: read limit
-		/*
+	if (p->modes & CHG_LIMIT_GET_LIMIT) {
 		system_get_bbram(SYSTEM_BBRAM_IDX_CHG_MAX, &charging_maximum_level);
 		r->max_percentage = charging_maximum_level;
 		args->response_size = sizeof(*r);
-		*/
 	}
 
 	bettery_percentage_control();
