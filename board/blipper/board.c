@@ -199,6 +199,11 @@ __override const struct ec_response_keybd_config
 		return &blipper_keybd;
 }
 
+/* USB-A charging control */
+const int usb_port_enable[USB_PORT_COUNT] = {
+	GPIO_EN_USB_A0_VBUS
+};
+
 void board_init(void)
 {
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);

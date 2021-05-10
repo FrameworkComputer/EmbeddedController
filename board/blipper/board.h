@@ -70,6 +70,10 @@
 #define CONFIG_KEYBOARD_REFRESH_ROW3
 #define CONFIG_KEYBOARD_KEYPAD
 
+/* USB Type A Features */
+#define USB_PORT_COUNT 1
+#define CONFIG_USB_PORT_POWER_DUMB
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
