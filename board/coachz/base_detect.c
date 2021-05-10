@@ -8,6 +8,7 @@
 #include "adc.h"
 #include "adc_chip.h"
 #include "board.h"
+#include "base_state.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -81,9 +82,9 @@ static void base_detect_change(enum base_status status)
 	if (current_base_status == status)
 		return;
 
-	CPRINTS("Base %sconnected", connected ? "" : "not ");
 	gpio_set_level(GPIO_EN_BASE, connected);
 	tablet_set_mode(!connected);
+	base_set_state(connected);
 	current_base_status = status;
 }
 
