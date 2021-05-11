@@ -6,6 +6,7 @@
 #include "common.h"
 #include "accelgyro.h"
 #include "hooks.h"
+#include "drivers/cros_cbi.h"
 
 #define SENSOR_MUTEX_NODE		DT_PATH(motionsense_mutex)
 #define SENSOR_MUTEX_NAME(id)		DT_CAT(MUTEX_, id)
@@ -366,3 +367,37 @@ static void sensor_enable_irqs(void)
 }
 DECLARE_HOOK(HOOK_INIT, sensor_enable_irqs, HOOK_PRIO_DEFAULT);
 #endif
+
+/* Handle the alternative motion sensors */
+#define REPLACE_ALT_MOTION_SENSOR(new_id, old_id) \
+	motion_sensors[SENSOR_ID(old_id)] =       \
+		motion_sensors_alt[SENSOR_ID(new_id)];
+
+#define CHECK_AND_REPLACE_ALT_MOTION_SENSOR(id)                        \
+	do {                                                           \
+		if (cros_cbi_ssfc_check_match(                         \
+			    dev, CBI_SSFC_VALUE_ID(DT_PHANDLE(         \
+					 id, alternate_indicator)))) { \
+			REPLACE_ALT_MOTION_SENSOR(                     \
+				id, DT_PHANDLE(id, alternate_for))     \
+		}                                                      \
+	} while (0);
+
+#define ALT_MOTION_SENSOR_INIT_ID(id)                                    \
+	COND_CODE_1(UTIL_AND(DT_NODE_HAS_PROP(id, alternate_for),        \
+			     DT_NODE_HAS_PROP(id, alternate_indicator)), \
+		    (CHECK_AND_REPLACE_ALT_MOTION_SENSOR(id)), ())
+
+void motion_sensors_init_alt(void)
+{
+	const struct device *dev = device_get_binding("cros_cbi");
+
+	if (dev == NULL)
+		return;
+
+#if DT_NODE_EXISTS(SENSOR_ALT_NODE)
+	DT_FOREACH_CHILD(SENSOR_ALT_NODE, ALT_MOTION_SENSOR_INIT_ID)
+#endif
+}
+
+DECLARE_HOOK(HOOK_INIT, motion_sensors_init_alt, HOOK_PRIO_INIT_I2C + 1);

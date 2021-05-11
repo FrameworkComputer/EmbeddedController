@@ -14,12 +14,6 @@ properties:
         required: true
         description:
           Unique value of CBI SSFC field
-    devices:
-        type: phandles
-        required: true
-        description:
-          Pointers to alternative devices which has to be used if
-          CBI SSFC matches the defined value
     default:
         type: boolean
         description:

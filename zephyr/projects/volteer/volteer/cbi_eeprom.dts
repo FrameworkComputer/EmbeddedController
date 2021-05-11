@@ -17,59 +17,52 @@
 };
 
 &cbi_ssfc_base_sensor {
-	bmi160 {
+	base_sensor_bmi160: bmi160 {
 		compatible = "named-cbi-ssfc-value";
 		status = "okay";
 
 		value = <1>;
-		devices = <>;
 	};
-	icm426xx {
+	base_sensor_icm426xx: icm426xx {
 		compatible = "named-cbi-ssfc-value";
 		status = "okay";
 
 		value = <2>;
-		devices = <>;
 	};
-	kx022 {
+	base_sensor_kx022: kx022 {
 		compatible = "named-cbi-ssfc-value";
 		status = "okay";
 
 		value = <3>;
-		devices = <>;
 	};
 };
 
 &cbi_ssfc_lid_sensor {
-	bma255 {
+	lid_sensor_bma255: bma255 {
 		compatible = "named-cbi-ssfc-value";
 		status = "okay";
 
 		value = <1>;
-		devices = <&lid_accel>;
 	};
-	kx022 {
+	lid_sensor_kx022: kx022 {
 		compatible = "named-cbi-ssfc-value";
 		status = "okay";
 
 		value = <2>;
-		devices = <>;
 	};
 };
 
 &cbi_ssfc_lightbar {
-	10_led {
+	lightbar_10_led: 10_led {
 		compatible = "named-cbi-ssfc-value";
 		status = "okay";
 
 		value = <1>;
-		devices = <>;
 	};
-	12_led {
+	lightbar_12_led: 12_led {
 		compatible = "named-cbi-ssfc-value";
 		status = "okay";
 
 		value = <2>;
-		devices = <>;
 	};
 };
