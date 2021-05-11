@@ -5,6 +5,7 @@
 
 #include "console.h"
 #include "ec_commands.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "keyboard_backlight.h"
@@ -56,6 +57,9 @@ int kblight_get(void)
 
 int kblight_enable(int enable)
 {
+#ifdef GPIO_EN_KEYBOARD_BACKLIGHT
+	gpio_set_level(GPIO_EN_KEYBOARD_BACKLIGHT, enable);
+#endif
 	if (!kblight.drv || !kblight.drv->enable)
 		return -1;
 	return kblight.drv->enable(enable);

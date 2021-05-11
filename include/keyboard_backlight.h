@@ -6,6 +6,13 @@
 #ifndef __CROS_EC_KEYBOARD_BACKLIGHT_H
 #define __CROS_EC_KEYBOARD_BACKLIGHT_H
 
+/**
+ * If GPIO_EN_KEYBOARD_BACKLIGHT is defined, this GPIO will be set when
+ * the the keyboard backlight is enabled or disabled. This GPIO is used
+ * to enable or disable the power to the keyboard backlight circuitry.
+ * GPIO_EN_KEYBOARD_BACKLIGHT must be active high.
+ */
+
 struct kblight_conf {
 	const struct kblight_drv *drv;
 };
