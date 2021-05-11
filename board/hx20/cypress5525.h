@@ -26,6 +26,7 @@
 #define CYP5525_SYS_PWR_STATE           0x003B
 #define CYP5525_HPI_VERSION				0x003C
 /*User registers from 0x40 to 0x48 are used for BB retimer */
+#define CYP5525_ICL_CTRL_REG			0x0040
 #define CYP5525_ICL_STS_REG				0x0042
 #define CYP5525_ICL_BB_RETIMER_CMD_REG	0x0046
 #define CYP5525_ICL_BB_RETIMER_DAT_REG	0x0048
@@ -383,5 +384,14 @@ int cypd_read_reg_block(int controller, int reg, uint8_t *data, int len);
 void cypd_reinitialize(void);
 
 void cypd_enque_evt(int evt, int delay);
+
+/* compliance mode and fw update mode control */
+void enable_compliance_mode(int controller);
+
+void entry_tbt_mode(int controller);
+
+void exit_tbt_mode(int controller);
+
+int check_tbt_mode(int controller);
 
 #endif	/* __CROS_EC_CYPRESS5525_H */

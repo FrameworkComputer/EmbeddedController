@@ -322,7 +322,8 @@ void enable_compliance_mode(int controller)
 	int debug_ctl = 0x0100;
 
 	/* Write 0x0D000000 to address 0x0048 */
-	rv = cypd_write_reg_block(controller, CYP5525_ICL_BB_RETIMER_DAT_REG, (void *) &debug_register, 4);
+	rv = cypd_write_reg_block(controller, CYP5525_ICL_BB_RETIMER_DAT_REG,
+			(void *) &debug_register, 4);
 	if (rv != EC_SUCCESS)
 		CPRINTS("Write CYP5525_ICL_BB_RETIMER_DAT_REG fail");
 
@@ -330,6 +331,38 @@ void enable_compliance_mode(int controller)
 	rv = cypd_write_reg16(controller, CYP5525_ICL_BB_RETIMER_CMD_REG, debug_ctl);
 	if (rv != EC_SUCCESS)
 		CPRINTS("Write CYP5525_ICL_BB_RETIMER_CMD_REG fail");
+}
+
+void entry_tbt_mode(int controller)
+{
+	int rv;
+	uint8_t force_tbt_mode = 0x01;
+
+	rv = cypd_write_reg8(controller, CYP5525_ICL_CTRL_REG, force_tbt_mode);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_CTRL_REG fail");
+}
+
+void exit_tbt_mode(int controller)
+{
+	int rv;
+	uint8_t force_tbt_mode = 0x00;
+
+	rv = cypd_write_reg8(controller, CYP5525_ICL_CTRL_REG, force_tbt_mode);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_CTRL_REG fail");
+}
+
+int check_tbt_mode(int controller)
+{
+	int rv;
+	int data;
+
+	rv = cypd_read_reg8(controller, CYP5525_ICL_STS_REG, &data);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Read CYP5525_ICL_STS_REG fail");
+
+	return data;
 }
 
 /*
