@@ -12,12 +12,10 @@
 #include "baseboard.h"
 
 /*
- * Create an EC build that requires AP-driven mode entry to facilitate debugging
- * b/177105656.
+ * The RAM and flash size combination on the NPCX797FC dose not leave
+ * any unused flash space that can be used to store the .init_rom section.
  */
-#ifdef BOARD_VOLTEER_APMODEENTRY
-#define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
-#endif
+#undef CONFIG_CHIP_INIT_ROM_REGION
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
