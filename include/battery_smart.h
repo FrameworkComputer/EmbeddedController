@@ -92,11 +92,23 @@
 #define STATUS_OVERCHARGED_ALARM        BIT(15)
 
 /* Battery Spec Info */
-#define BATTERY_SPEC_VERSION(INFO)      ((INFO >> 4) & 0xF)
+#define BATTERY_SPEC_REVISION_MASK	0x000F
+#define BATTERY_SPEC_REVISION_SHIFT	0
+#define BATTERY_SPEC_VERSION_MASK	0x00F0
+#define BATTERY_SPEC_VERSION_SHIFT	4
+#define BATTERY_SPEC_VSCALE_MASK	0x0F00
+#define BATTERY_SPEC_VSCALE_SHIFT	8
+#define BATTERY_SPEC_IPSCALE_MASK	0xF000
+#define BATTERY_SPEC_IPSCALE_SHIFT	12
+
+#define BATTERY_SPEC_VERSION(INFO)      ((INFO & BATTERY_SPEC_VERSION_MASK) >> \
+					 BATTERY_SPEC_VERSION_SHIFT)
 /* Smart battery version info */
 #define BATTERY_SPEC_VER_1_0            1
 #define BATTERY_SPEC_VER_1_1            2
 #define BATTERY_SPEC_VER_1_1_WITH_PEC   3
+/* Smart battery revision info */
+#define BATTERY_SPEC_REVISION_1		1
 
 /* Charger alarm warning */
 #define ALARM_OVER_CHARGED              0x8000
@@ -144,6 +156,15 @@
 /* reply[3] */
 #define BATTERY_DISCHARGING_DISABLED    0x20
 #define BATTERY_CHARGING_DISABLED       0x40
+
+/* Battery manufacture date */
+#define MANUFACTURE_DATE_DAY_MASK	0x001F
+#define MANUFACTURE_DATE_DAY_SHIFT	0
+#define MANUFACTURE_DATE_MONTH_MASK	0x01E0
+#define MANUFACTURE_DATE_MONTH_SHIFT	5
+#define MANUFACTURE_DATE_YEAR_MASK	0xFE00
+#define MANUFACTURE_DATE_YEAR_SHIFT	9
+#define MANUFACTURE_DATE_YEAR_OFFSET	1980
 
 /* Read from battery */
 int sb_read(int cmd, int *param);

@@ -1,0 +1,155 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Zephyr Smart Battery Emulator
+
+compatible: "zephyr,smart-battery"
+
+include: base.yaml
+
+properties:
+    mf-access:
+        type: int
+        required: false
+        default: 0
+        description: Word returned on manufacturer access command.
+
+    at-rate-full-mw-support:
+        type: boolean
+        description:
+          Flag indicating if AT_RATE_TIME_TO_FULL command supports mW capacity
+          mode.
+
+    version:
+        type: string
+        required: false
+        enum:
+          - BATTERY_SPEC_VER_1_0
+          - BATTERY_SPEC_VER_1_1
+          - BATTERY_SPEC_VER_1_1_WITH_PEC
+        default: BATTERY_SPEC_VER_1_1_WITH_PEC
+        description: Version of Smart Battery.
+
+    vscale:
+        type: int
+        required: false
+        default: 0
+        description: Scaling of voltage.
+
+    ipscale:
+        type: int
+        required: false
+        default: 0
+        description: Scaling of current.
+
+    int-charge-controller:
+        type: boolean
+        description: Flag indicating if internal charge controller is supported.
+
+    primary-battery:
+        type: boolean
+        description:
+          Flag indicating if primary battery role selection is supported.
+
+    design-mv:
+        type: int
+        required: false
+        default: 5000
+        description: Design battery voltage in mV.
+
+    design-cap:
+        type: int
+        required: false
+        default: 5000
+        description: Design battery capacity in mAh.
+
+    temperature:
+        type: int
+        required: false
+        default: 2930
+        description: Battery temperature in 0.1 Kelvins.
+
+    volt:
+        type: int
+        required: false
+        default: 5000
+        description: Battery voltage in mV.
+
+    cur:
+        type: int
+        required: false
+        default: 1000
+        description: Current charging (> 0) or discharging (< 0) battery in mA.
+
+    avg-cur:
+        type: int
+        required: false
+        default: 1000
+        description: Average current from 1 minute.
+
+    max-error:
+        type: int
+        required: false
+        default: 0
+        description: Maximum error of commands return value in percent.
+
+    cap:
+        type: int
+        required: false
+        default: 2000
+        description: Capacity of the battery in mAh.
+
+    full-cap:
+        type: int
+        required: false
+        default: 4000
+        description: Full capacity of the battery in mAh.
+
+    desired-charg-cur:
+        type: int
+        required: false
+        default: 2000
+        description: Charging current requested by battery.
+
+    desired-charg-volt:
+        type: int
+        required: false
+        default: 7000
+        description: Charging voltage requested by battery.
+
+    cycle-count:
+        type: int
+        required: false
+        default: 125
+        description: Number of cycles.
+
+    serial-number:
+        type: int
+        required: false
+        default: 7
+        description: Serial number of battery.
+
+    mf-name:
+        type: string
+        required: false
+        default: "zephyr"
+        description: Manufacturer name. Length has to be smaller than 32 bytes.
+
+    dev-name:
+        type: string
+        required: false
+        default: "smartbat"
+        description: Device name. Length has to be smaller than 32 bytes.
+
+    dev-chem:
+        type: string
+        required: false
+        default: "LION"
+        description: Device chemistry. Length has to be smaller than 32 bytes.
+
+    mf-data:
+        type: string
+        required: false
+        default: "LION"
+        description: Manufacturer data. Length has to be smaller than 32 bytes.

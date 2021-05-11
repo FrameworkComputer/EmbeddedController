@@ -294,9 +294,12 @@ test_mockable int battery_manufacture_date(int *year, int *month, int *day)
 	/* battery date format:
 	 * ymd = day + month * 32 + (year - 1980) * 512
 	 */
-	*year  = (ymd >> 9) + 1980;
-	*month = (ymd >> 5) & 0xf;
-	*day   = ymd & 0x1f;
+	*year  = ((ymd & MANUFACTURE_DATE_YEAR_MASK) >>
+		  MANUFACTURE_DATE_YEAR_SHIFT) + MANUFACTURE_DATE_YEAR_OFFSET;
+	*month = (ymd & MANUFACTURE_DATE_MONTH_MASK) >>
+		 MANUFACTURE_DATE_MONTH_SHIFT;
+	*day   = (ymd & MANUFACTURE_DATE_DAY_MASK) >>
+		 MANUFACTURE_DATE_DAY_SHIFT;
 
 	return EC_SUCCESS;
 }
