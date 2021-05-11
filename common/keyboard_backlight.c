@@ -84,6 +84,8 @@ static void keyboard_backlight_init(void)
 	board_kblight_init();
 	if (kblight_init())
 		CPRINTS("kblight init failed");
+	/* Don't leave kblight enable state undetermined */
+	kblight_enable(0);
 }
 DECLARE_HOOK(HOOK_INIT, keyboard_backlight_init, HOOK_PRIO_DEFAULT);
 
