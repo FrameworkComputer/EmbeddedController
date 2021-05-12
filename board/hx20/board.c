@@ -33,6 +33,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
+#include "i2c_slave.h"
 #include "espi.h"
 #include "lpc_chip.h"
 #include "lpc.h"
@@ -228,7 +229,9 @@ const struct i2c_port_t i2c_ports[]  = {
 	{"batt",     MCHP_I2C_PORT1, 100,  GPIO_I2C_1_SDA, GPIO_I2C_1_SCL},
 	{"touchpd",  MCHP_I2C_PORT2, 100,  GPIO_I2C_2_SDA, GPIO_I2C_2_SCL},
 	{"sensors",  MCHP_I2C_PORT3, 100,  GPIO_I2C_3_SDA, GPIO_I2C_3_SCL},
-	{"pd",       MCHP_I2C_PORT6, 100,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL}
+	{"pd",       MCHP_I2C_PORT6, 100,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL},
+	{"pch",      MCHP_I2C_PORT0, 400,  GPIO_I2C_0_SDA, GPIO_I2C_0_SCL},
+
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -241,6 +244,7 @@ const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT1,
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT3,
 	(MCHP_I2C_CTRL2 << 8) + MCHP_I2C_PORT2,
+	(MCHP_I2C_CTRL3 << 8) + MCHP_I2C_PORT0,
 };
 
 /*
@@ -257,40 +261,13 @@ int board_i2c_p2c(int port)
 
 	return -1;
 }
-#ifdef I2C_SLAVE
-const uint32_t i2c_ctrl_slave_addrs[I2C_CONTROLLER_COUNT] = {
-#ifdef CONFIG_BOARD_MCHP_I2C0_SLAVE_ADDRS
-	(MCHP_I2C_CTRL0 + (CONFIG_BOARD_MCHP_I2C0_SLAVE_ADDRS << 16)),
-#else
-	(MCHP_I2C_CTRL0 + (CONFIG_MCHP_I2C0_SLAVE_ADDRS << 16)),
-#endif
-#ifdef CONFIG_BOARD_MCHP_I2C1_SLAVE_ADDRS
-	(MCHP_I2C_CTRL1 + (CONFIG_BOARD_MCHP_I2C1_SLAVE_ADDRS << 16)),
-#else
-	(MCHP_I2C_CTRL1 + (CONFIG_MCHP_I2C1_SLAVE_ADDRS << 16)),
-#endif
+
+
+const struct i2c_slv_port_t i2c_slv_ports[] = {
+	{"pch", MCHP_I2C_PORT0, 0x50}
 };
+const unsigned int i2c_slvs_used = ARRAY_SIZE(i2c_slv_ports);
 
-/* Return the two slave addresses the specified
- * controller will respond to when controller
- * is acting as a slave.
- * b[6:0]  = b[7:1] of I2C address 1
- * b[14:8] = b[7:1] of I2C address 2
- * When not using I2C controllers as slaves we can use
- * the same value for all controllers. The address should
- * not be 0x00 as this is the general call address.
- */
-uint16_t board_i2c_slave_addrs(int controller)
-{
-	int i;
-
-	for (i = 0; i < I2C_CONTROLLER_COUNT; i++)
-		if ((i2c_ctrl_slave_addrs[i] & 0xffff) == controller)
-			return (i2c_ctrl_slave_addrs[i] >> 16);
-
-	return CONFIG_MCHP_I2C0_SLAVE_ADDRS;
-}
-#endif
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
@@ -444,8 +421,6 @@ DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 static void board_init(void)
 {
 	int version = board_get_version();
-
-	CPRINTS("MEC1701 HOOK_INIT - called board_init");
 
 	if (version > 6)
 		gpio_set_flags(GPIO_EN_INVPWR, GPIO_OUT_LOW);

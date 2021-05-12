@@ -15,6 +15,7 @@
 #include "pwm.h"
 #include "hooks.h"
 
+#include "i2c_hid_mediakeys.h"
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYBOARD, outstr)
 #define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
@@ -270,9 +271,11 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t lock, int8_t pressed)
 
 		break;
 	case SCANCODE_F7:  /* TODO: DIM_SCREEN */
+		update_hid_key(HID_KEY_DISPLAY_BRIGHTNESS_DN, pressed);
 
 		break;
 	case SCANCODE_F8:  /* TODO: BRIGHTEN_SCREEN */
+		update_hid_key(HID_KEY_DISPLAY_BRIGHTNESS_UP, pressed);
 
 		break;
 	case SCANCODE_F9:  /* EXTERNAL_DISPLAY */
@@ -285,7 +288,8 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t lock, int8_t pressed)
 		}
 		return EC_ERROR_UNIMPLEMENTED;
 		break;
-	case SCANCODE_F10:  /* TODO: FLIGHT_MODE */
+	case SCANCODE_F10:  /* FLIGHT_MODE */
+		update_hid_key(HID_KEY_AIRPLANE_MODE, pressed);
 
 		break;
 	case SCANCODE_F11:

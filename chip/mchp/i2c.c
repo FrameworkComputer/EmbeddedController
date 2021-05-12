@@ -17,6 +17,7 @@
 #include "timer.h"
 #include "util.h"
 #include "tfdp_chip.h"
+#include "i2c_slave.h"
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
@@ -48,8 +49,11 @@
 /* Status */
 #define STS_NBB BIT(0) /* Bus busy */
 #define STS_LAB BIT(1) /* Arbitration lost */
+#define STS_AAS BIT(2) /* Addressed as Slave */
 #define STS_LRB BIT(3) /* Last received bit */
 #define STS_BER BIT(4) /* Bus error */
+#define STS_STS BIT(5) /* Slave stop condition*/
+#define STS_SAD BIT(6) /* Slave address decoded */
 #define STS_PIN BIT(7) /* Pending interrupt */
 /* Control */
 #define CTRL_ACK BIT(0) /* Acknowledge */
@@ -63,7 +67,10 @@
 #define COMP_MCEN	BIT(3) /* enable master cumulative timeouts */
 #define COMP_SCEN	BIT(4) /* enable slave cumulative timeouts */
 #define COMP_BIDEN	BIT(5) /* enable Bus idle timeouts */
+#define COMP_R_WR   BIT(21) /* completed repeat start write */
+#define COMP_R_RE   BIT(20) /* completed repeat start read */
 #define COMP_IDLE	BIT(29)  /* i2c bus is idle */
+#define COMP_SLAVE  BIT(31)
 #define COMP_RW_BITS_MASK 0x3C /* R/W bits mask */
 /* Configuration */
 #define CFG_PORT_MASK	(0x0F)	/* port selection field */
@@ -72,6 +79,7 @@
 #define CFG_RESET	BIT(9) /* reset controller */
 #define CFG_ENABLE	BIT(10) /* enable controller */
 #define CFG_GC_DIS	BIT(14) /* disable general call address */
+#define CFG_PROM_EN BIT(15) /* enable Promiscuous mode */
 #define CFG_ENIDI	BIT(29) /* Enable I2C idle interrupt */
 /* Enable network layer master done interrupt */
 #define CFG_ENMI	BIT(30)
@@ -139,13 +147,22 @@ static struct {
 	uint8_t hwsts3; /* ISR write */
 	uint8_t hwsts4;
 	uint8_t lines;
+	uint8_t slave_mode;
 } cdata[I2C_CONTROLLER_COUNT];
+
+static struct {
+	int count;
+	int length;
+	uint8_t addr;
+	uint8_t buffer[I2C_MAX_HOST_PACKET_SIZE];
+} slavedata[I2C_SLAVE_CONTROLLER_COUNT];
 
 static const uint16_t i2c_controller_pcr[MCHP_I2C_CTRL_MAX] = {
 	MCHP_PCR_I2C0,
 	MCHP_PCR_I2C1,
 	MCHP_PCR_I2C2,
-	MCHP_PCR_I2C3
+	MCHP_PCR_I2C3,
+	MCHP_PCR_I2C4
 };
 
 static int chip_i2c_is_controller_valid(int controller)
@@ -153,6 +170,31 @@ static int chip_i2c_is_controller_valid(int controller)
 	if ((controller < 0) || (controller >= MCHP_I2C_CTRL_MAX))
 		return 0;
 	return 1;
+}
+
+static int chip_i2c_get_slave_addresses(int port)
+{
+#ifdef CONFIG_I2C_SLAVE
+	int i;
+	for (i = 0; i < i2c_slvs_used; i++) {
+		if (i2c_slv_ports[i].port == port)
+			/*return two addresses, one for read, one for write*/
+			return i2c_slv_ports[i].slave_adr;
+	}
+#endif
+	return 0;
+}
+static int chip_i2c_get_slave_data_idx(int port)
+{
+#ifdef CONFIG_I2C_SLAVE
+	int i;
+	for (i = 0; i < i2c_slvs_used; i++) {
+		if (i2c_slv_ports[i].port == port)
+			/*return two addresses, one for read, one for write*/
+			return i;
+	}
+#endif
+	return -1;
 }
 
 static void i2c_ctrl_slp_en(int controller, int sleep_en)
@@ -286,27 +328,44 @@ static void configure_controller_speed(int controller, int kbps)
  */
 static void enable_controller_irq(int controller)
 {
+	uint32_t irq = MCHP_IRQ_I2C_0 + controller;
+	if (controller == 4) {
+		irq = MCHP_IRQ_I2C_4;
+	}
 	MCHP_INT_ENABLE(MCHP_I2C_GIRQ) =
 			MCHP_I2C_GIRQ_BIT(controller);
-	task_enable_irq(MCHP_IRQ_I2C_0 + controller);
+	task_enable_irq(irq);
 }
 
 static void disable_controller_irq(int controller)
 {
+	uint32_t irq = MCHP_IRQ_I2C_0 + controller;
+	if (controller == 4) {
+		irq = MCHP_IRQ_I2C_4;
+	}
 	MCHP_INT_DISABLE(MCHP_I2C_GIRQ) =
 			MCHP_I2C_GIRQ_BIT(controller);
 	/* read back into read-only reg. to insure disable takes effect */
 	MCHP_INT_BLK_IRQ = MCHP_INT_DISABLE(MCHP_I2C_GIRQ);
-	task_disable_irq(MCHP_IRQ_I2C_0 + controller);
-	task_clear_pending_irq(MCHP_IRQ_I2C_0 + controller);
+	task_disable_irq(irq);
+	task_clear_pending_irq(irq);
 }
 
+static void restart_slave(int controller)
+{
+	MCHP_I2C_CTRL(controller) = CTRL_PIN |
+								CTRL_ESO |
+								CTRL_ENI |
+								CTRL_ACK;
+
+}
 /*
  * Do NOT enable controller's IDLE interrupt in the configuration
  * register. IDLE is meant for mult-master and controller as slave.
  */
 static void configure_controller(int controller, int port, int kbps)
 {
+	uint32_t slave = chip_i2c_get_slave_addresses(port);
 	if (!chip_i2c_is_controller_valid(controller))
 		return;
 
@@ -322,7 +381,8 @@ static void configure_controller(int controller, int port, int kbps)
 	 * general call address. We disable general call
 	 * below.
 	 */
-	MCHP_I2C_OWN_ADDR(controller) = 0;
+	MCHP_I2C_OWN_ADDR(controller) = slave;
+	cdata[controller].slave_mode = slave ? 1 : 0;
 
 	configure_controller_speed(controller, kbps);
 
@@ -335,6 +395,11 @@ static void configure_controller(int controller, int port, int kbps)
 	MCHP_I2C_CONFIG(controller) |= CFG_FEN + CFG_GC_DIS;
 	/* enable controller */
 	MCHP_I2C_CONFIG(controller) |= CFG_ENABLE;
+
+	if (slave) {
+		CPRINTS("I2C Slave init ctrl:%d", controller);
+		enable_controller_irq(controller);
+	}
 }
 
 static void reset_controller(int controller)
@@ -933,8 +998,60 @@ void i2c_init(void)
 static void handle_interrupt(int controller)
 {
 	uint32_t r;
+	int slave_idx;
 	int id = cdata[controller].task_waiting;
+#ifdef CONFIG_I2C_SLAVE
+	if (cdata[controller].slave_mode) {
+		slave_idx = chip_i2c_get_slave_data_idx(controller);
+		r = MCHP_I2C_STATUS(controller);
+		if (r & STS_BER) {
+			/*stop and restart*/
+			restart_slave(controller);
+		}
+		if (r & STS_STS) {
+			/* External stop */
+			i2c_data_received(controller, slavedata[slave_idx].buffer, slavedata[slave_idx].count);
+			slavedata[slave_idx].buffer[0] = MCHP_I2C_DATA(controller);
+			slavedata[slave_idx].count = 0;
+			slavedata[slave_idx].addr = 0;
+			slavedata[slave_idx].length = 0;
+			restart_slave(controller);
+		}
+		if (r & STS_AAS) {
+			slavedata[slave_idx].addr = MCHP_I2C_DATA(controller);
+			if (slavedata[slave_idx].addr & 0x01) {
+				/* Slave TX */
+				slavedata[slave_idx].length = i2c_set_response(controller, slavedata[slave_idx].buffer, slavedata[slave_idx].count);
+				slavedata[slave_idx].count = 0;
+				MCHP_I2C_DATA(controller) = slavedata[slave_idx].buffer[slavedata[slave_idx].count++];
+			} else {
+				/* Slave RX */
+				slavedata[slave_idx].count = 0;
+			}
+		}
+		if (r & (STS_BER | STS_STS | STS_AAS)) {
+			MCHP_INT_SOURCE(MCHP_I2C_GIRQ) = MCHP_I2C_GIRQ_BIT(controller);
+			return;
+		}
 
+		if (slavedata[slave_idx].addr & 0x01) {
+			if (MCHP_I2C_STATUS(controller) & STS_LRB) {
+				MCHP_I2C_DATA(controller) = 0;
+				slavedata[slave_idx].count = 0;
+			} else {
+				MCHP_I2C_DATA(controller) =
+						slavedata[slave_idx].buffer[slavedata[slave_idx].count++];
+			}
+		} else {
+			slavedata[slave_idx].buffer[slavedata[slave_idx].count++] = MCHP_I2C_DATA(controller);
+		}
+		if (slavedata[slave_idx].count >= I2C_MAX_HOST_PACKET_SIZE) {
+			slavedata[slave_idx].count = I2C_MAX_HOST_PACKET_SIZE - 1;
+		}
+		MCHP_INT_SOURCE(MCHP_I2C_GIRQ) = MCHP_I2C_GIRQ_BIT(controller);
+		return;
+	}
+#endif /* CONFIG_I2C_SLAVE */
 	/*
 	 * Write to control register interferes with I2C transaction.
 	 * Instead, let's disable IRQ from the core until the next time
@@ -962,3 +1079,8 @@ DECLARE_IRQ(MCHP_IRQ_I2C_0, i2c0_interrupt, 2);
 DECLARE_IRQ(MCHP_IRQ_I2C_1, i2c1_interrupt, 2);
 DECLARE_IRQ(MCHP_IRQ_I2C_2, i2c2_interrupt, 2);
 DECLARE_IRQ(MCHP_IRQ_I2C_3, i2c3_interrupt, 2);
+
+#if MCHP_I2C_CTRL_MAX > 4 && I2C_CONTROLLER_COUNT > 4
+void i2c4_interrupt(void) { handle_interrupt(4); }
+DECLARE_IRQ(MCHP_IRQ_I2C_4, i2c4_interrupt, 2);
+#endif
