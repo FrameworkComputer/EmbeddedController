@@ -427,6 +427,34 @@ int ac_boot_status(void)
 
 static uint8_t chassis_edge_status;
 static uint8_t chassis_vtr_open_count;
+static uint8_t chassis_open_count;
+
+static void check_chassis_open(int init)
+{
+	if (MCHP_VCI_POSEDGE_DETECT & BIT(2) ||
+		MCHP_VCI_NEGEDGE_DETECT & BIT(2)) {
+		MCHP_VCI_POSEDGE_DETECT = BIT(2);
+		MCHP_VCI_NEGEDGE_DETECT = BIT(2);
+		chassis_edge_status = 1;
+
+		if (init) {
+			system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN,
+							&chassis_vtr_open_count);
+			if (chassis_vtr_open_count < 0xFF)
+				system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN,
+								++chassis_vtr_open_count);
+		} else {
+			system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, 
+							&chassis_open_count);
+			if (chassis_open_count < 0xFF)
+				system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL,
+								++chassis_open_count);
+		}
+		
+
+		CPRINTF("Chassis was open");
+	}
+}
 
 /* Initialize board. */
 static void board_init(void)
@@ -442,20 +470,7 @@ static void board_init(void)
 	if (memcap && !ac_boot_status())
 		*host_get_customer_memmap(0x48) = (memcap & BIT(0));
 
-	system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_TRACK_FLAG, &memcap);
-	/*
-	 * if battery remove and have someone open the chassis
-	 * need to save count to bbram
-	 */
-	if ((MCHP_VCI_POSEDGE_DETECT & BIT(2) ||
-		MCHP_VCI_NEGEDGE_DETECT & BIT(2)) &&
-		!(memcap & BBRAM_VTR_CHASSIS) &&
-		chassis_vtr_open_count < CHASSIS_TOTAL_COUNT_MAX) {
-		memcap |= BBRAM_VTR_CHASSIS;
-		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_TRACK_FLAG, memcap);
-		system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, &chassis_vtr_open_count);
-		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, ++chassis_vtr_open_count);
-	}
+	check_chassis_open(1);
 
 	gpio_enable_interrupt(GPIO_SOC_ENBKL);
 	gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);
@@ -472,10 +487,6 @@ static void board_chipset_startup(void)
 	if (version > 6)
 		gpio_set_level(GPIO_EN_INVPWR, 1);
 
-	/* when start up will check the chassis ever open or not */
-	if (MCHP_VCI_POSEDGE_DETECT & BIT(2) ||
-		MCHP_VCI_NEGEDGE_DETECT & BIT(2))
-		chassis_edge_status = 1;	
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 		board_chipset_startup,
@@ -953,8 +964,6 @@ DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 #endif
 
 static int prochot_low_time;
-static int chassis_detect_flag;
-static uint8_t chassis_open_count;
 
 void prochot_monitor(void)
 {
@@ -972,14 +981,8 @@ void prochot_monitor(void)
 			CPRINTF("PROCHOT has been low for too long - investigate");
 	}
 
-	if (!gpio_get_level(GPIO_CHASSIS_OPEN)) {
-		if (chassis_open_count < CHASSIS_TOTAL_COUNT_MAX && chassis_detect_flag) {
-			chassis_detect_flag = 0;
-			system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, &chassis_open_count);
-			system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, ++chassis_open_count);
-		}
-	} else
-		chassis_detect_flag = 1;
+	check_chassis_open(0);
+
 }
 DECLARE_HOOK(HOOK_SECOND, prochot_monitor, HOOK_PRIO_DEFAULT);
 
@@ -1104,7 +1107,6 @@ static enum ec_status host_chassis_intrusion_control(struct host_cmd_handler_arg
 {
 	const struct ec_params_chassis_intrusion_control *p = args->params;
 	struct ec_response_chassis_intrusion_control *r = args->response;
-	uint8_t memcap;
 
 	if (p->clear_magic == EC_PARAM_CHASSIS_INTRUSION_MAGIC) {
 		chassis_open_count = 0;
@@ -1117,11 +1119,6 @@ static enum ec_status host_chassis_intrusion_control(struct host_cmd_handler_arg
 
 	if (p->clear_chassis_status) {
 		chassis_edge_status = 0;
-		system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_TRACK_FLAG, &memcap);
-		memcap &= ~BBRAM_VTR_CHASSIS;
-		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_TRACK_FLAG, memcap);
-		MCHP_VCI_POSEDGE_DETECT = BIT(2);
-		MCHP_VCI_NEGEDGE_DETECT = BIT(2);
 		return EC_SUCCESS;
 	}
 

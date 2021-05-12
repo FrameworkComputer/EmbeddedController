@@ -382,7 +382,6 @@ enum system_bbram_idx {
 	SYSTEM_BBRAM_IDX_CHASSIS_TOTAL,
 	STSTEM_BBRAM_IDX_CHASSIS_MAGIC,
 	STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN,
-	STSTEM_BBRAM_IDX_CHASSIS_TRACK_FLAG,
 };
 
 /* Maximum number of bbram indexes allotted for PD port state data */

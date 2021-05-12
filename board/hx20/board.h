@@ -705,14 +705,6 @@ enum als_id {
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE	2048
 
-/* setting chassis open total max count */
-#define CHASSIS_TOTAL_COUNT_MAX 100
-
-/* bbram state */
-#define BBRAM_KBBL				BIT(0)
-#define BBRAM_FNLOCK			BIT(1)
-#define BBRAM_VTR_CHASSIS		BIT(2)
-
 /*
  * include TFDP macros from mchp chip level
  */
