@@ -94,4 +94,17 @@ struct ec_params_ps2_emulation_control {
 	uint8_t disable;
 } __ec_align1;
 
+
+#define EC_CMD_UPDATE_KEYBOARD_MATRIX 0x3E0C
+struct keyboard_matrix_map {
+	uint8_t row;
+	uint8_t col;
+	uint16_t scanset;
+} __ec_align1;
+struct ec_params_update_keyboard_matrix {
+	uint32_t num_items;
+	uint32_t write;
+	struct keyboard_matrix_map scan_update[32];
+} __ec_align1;
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */
