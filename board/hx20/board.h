@@ -209,6 +209,10 @@
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_SIMULATE_KEYCODE
 
+/* i2c hid interface for HID mediakeys (brightness, airplane mode) */
+#define CONFIG_I2C_SLAVE
+#define CONFIG_I2C_HID_MEDIAKEYS
+
 /* Leds configuration */
 #define CONFIG_LED_COMMON
 #define CONFIG_CMD_LEDTEST
@@ -403,16 +407,6 @@
 #define CONFIG_FACTORY_SUPPORT
 
 
-/* Enable GPSPI0 controller and port for
- * SPI Accelerometer.
- * bit[0] == 1 GPSPI0
- * bit[1] == 0 board does not use GPSPI1
- * Make sure to not include GPSPI in little-firmware(LFW)
- */
-#ifndef LFW
-#define CONFIG_MCHP_GPSPI	0x01
-#endif
-
 #define CONFIG_PECI
 #define CONFIG_PECI_COMMON
 #define CONFIG_PECI_TJMAX 100
@@ -477,6 +471,8 @@
 #define GPIO_ENABLE_BACKLIGHT   GPIO_EC_BKOFF_L
 
 /* SMBus signals */
+#define GPIO_I2C_0_SDA      GPIO_EC_SMB_SDA0
+#define GPIO_I2C_0_SCL      GPIO_EC_SMB_CLK0
 #define GPIO_I2C_1_SDA      GPIO_EC_SMB_SDA1
 #define GPIO_I2C_1_SCL      GPIO_EC_SMB_CLK1
 #define GPIO_I2C_2_SDA      GPIO_EC_I2C_3_SDA
@@ -492,8 +488,9 @@
 
 
 /* I2C ports */
-#define I2C_CONTROLLER_COUNT	4
-#define I2C_PORT_COUNT		4
+#define I2C_CONTROLLER_COUNT	5
+#define I2C_SLAVE_CONTROLLER_COUNT	1
+#define I2C_PORT_COUNT		5
 
 
 /*

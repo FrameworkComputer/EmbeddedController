@@ -23,6 +23,7 @@
 #include "cypress5525.h"
 #include "board.h"
 #include "ps2mouse.h"
+#include "keyboard_8042_sharedlib.h"
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 #ifdef CONFIG_EMI_REGION1
@@ -205,3 +206,23 @@ static enum ec_status cmd_diagnosis(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_DIAGNOSIS, cmd_diagnosis,
 			EC_VER_MASK(0));
+
+static enum ec_status update_keyboard_matrix(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_update_keyboard_matrix *p = args->params;
+	struct ec_params_update_keyboard_matrix *r = args->response;
+
+	int i;
+	if (p->write) {
+		for (i = 0; i < p->num_items; i++) {
+			set_scancode_set2(p->scan_update[i].row,p->scan_update[i].col,p->scan_update[i].scanset);
+		}
+	}
+	r->num_items = p->num_items;
+	for (i = 0; i < p->num_items; i++) {
+		r->scan_update[i].scanset = get_scancode_set2(p->scan_update[i].row,p->scan_update[i].col);
+	}
+	args->response_size = sizeof(struct ec_params_update_keyboard_matrix);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_UPDATE_KEYBOARD_MATRIX, update_keyboard_matrix, EC_VER_MASK(0));
