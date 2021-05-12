@@ -191,9 +191,15 @@ enum adc_channel {
 	ADC_SKU_ID,              /* ADC 2 */
 	ADC_CHARGER_AMON_R,      /* ADC 3 */
 	ADC_CHARGER_PMON,        /* ADC 6 */
+	ADC_TEMP_SENSOR_CHARGER, /* ADC 7 */
 
 	/* Number of ADC channels */
 	ADC_CH_COUNT,
+};
+
+enum temp_sensor_id {
+	TEMP_SENSOR_CHARGER,
+	TEMP_SENSOR_COUNT,
 };
 
 enum pwm_channel {

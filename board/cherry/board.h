@@ -66,6 +66,11 @@
 /* USB-A */
 #define USBA_PORT_COUNT 1
 
+/* Temperature */
+#define CONFIG_TEMP_SENSOR
+#define CONFIG_THERMISTOR
+#define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
