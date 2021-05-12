@@ -95,19 +95,18 @@ struct ec_params_ps2_emulation_control {
 } __ec_align1;
 
 /* Debug LED for BIOS boot check */
-#define EC_CMD_DEBUG_DIAGNOSIS 0x3E0B
+#define EC_CMD_DIAGNOSIS 0x3E0B
 
 /* bit7 as trigger LED behavior or not, bit6-bit0 as error_type */
-#define EC_CMD_DEBUG_DIAGNOSIS_LED 0x80
-#define EC_CMD_DEBUG_DIAGNOSIS_LED_TYPE 0x7F
+#define EC_CMD_DIAGNOSIS_LED 0x80
+#define EC_CMD_DIAGNOSIS_LED_TYPE 0x7F
 
-enum ec_params_debug_led_bios_type {
-	/* type: DDR */
+enum ec_params_diagnosis_type {
 	TYPE_DDR	= 1,
 	TYPE_COUNT
 };
 
-enum ec_params_debug_led_bios_sub_ddr {
+enum ec_params_diagnosis_subtype_ddr {
 	/* type: DDR */
 	TYPE_DDR_TRAINING_START	= 1,
 	TYPE_DDR_TRAINING_FINISH,
@@ -115,10 +114,10 @@ enum ec_params_debug_led_bios_sub_ddr {
 	TYPE_DDR_COUNT
 };
 
-struct ec_params_debug_diagnosis {
-	/* See enum ec_params_debug_led_bios_type */
+struct ec_params_diagnosis {
+	/* See enum ec_params_diagnosis_type_ */
 	uint8_t error_type;
-	/* See enum ec_params_debug_led_bios_sub_ */
+	/* See enum ec_params_diagnosis_subtype_ */
 	uint8_t error_subtype;
 } __ec_align1;
 
