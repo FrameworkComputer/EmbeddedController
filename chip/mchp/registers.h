@@ -212,7 +212,11 @@
 #define MCHP_PCR_BTMR32_0	((3 << 8) + 23)
 #define MCHP_PCR_BTMR16_3	((3 << 8) + 22)
 #define MCHP_PCR_BTMR16_2	((3 << 8) + 21)
+#if defined(CHIP_FAMILY_MEC17XX)
 #define MCHP_PCR_GPSPI1		((3 << 8) + 20)
+#elif defined(CHIP_FAMILY_MEC152X)
+#define MCHP_PCR_I2C4		((3 << 8) + 20)
+#endif
 #define MCHP_PCR_BCM0		((3 << 8) + 19)
 #define MCHP_PCR_LED2		((3 << 8) + 18)
 #define MCHP_PCR_LED1		((3 << 8) + 17)
@@ -228,7 +232,9 @@
 #define MCHP_PCR_PS2_1		((3 << 8) + 6)
 #define MCHP_PCR_PS2_0		((3 << 8) + 5)
 #define MCHP_PCR_ADC		((3 << 8) + 3)
-
+#if defined(CHIP_FAMILY_MEC152X)
+#define MCHP_PCR_HDMI_CEC	((3 << 8) + 1)
+#endif
 /* Command all blocks to sleep */
 #if defined(CHIP_FAMILY_MEC17xx)
 #define MCHP_PCR_SLP_EN3_PWM9		BIT(31)
@@ -243,7 +249,11 @@
 #define MCHP_PCR_SLP_EN3_BTMR32_0	BIT(23)
 #define MCHP_PCR_SLP_EN3_BTMR16_3	BIT(22)
 #define MCHP_PCR_SLP_EN3_BTMR16_2	BIT(21)
+#if defined(CHIP_FAMILY_MEC152X)
+#define MCHP_PCR_SLP_EN3_I2C4		BIT(20)
+#elif defined(CHIP_FAMILY_MEC17xx)
 #define MCHP_PCR_SLP_EN3_GPSPI1		BIT(20)
+#endif
 #define MCHP_PCR_SLP_EN3_BCM0		BIT(19)
 #define MCHP_PCR_SLP_EN3_LED2		BIT(18)
 #define MCHP_PCR_SLP_EN3_LED1		BIT(17)
@@ -277,9 +287,15 @@
 #define MCHP_PCR_RCID0		((4 << 8) + 10)
 #define MCHP_PCR_BCM1		((4 << 8) + 9)
 #define MCHP_PCR_QMSPI		((4 << 8) + 8)
+#if defined(CHIP_FAMILY_MEC17XX)
 #define MCHP_PCR_RPMPWM1	((4 << 8) + 7)
 #define MCHP_PCR_RTMR		((4 << 8) + 6)
 #define MCHP_PCR_CNT16_3	((4 << 8) + 5)
+#elif defined(CHIP_FAMILY_MEC152X)
+#define MCHP_PCR_I2C_S_2	((4 << 8) + 7)
+#define MCHP_PCR_I2C_S_1	((4 << 8) + 6)
+#define MCHP_PCR_I2C_S_0	((4 << 8) + 5)
+#endif
 #define MCHP_PCR_CNT16_2	((4 << 8) + 4)
 #define MCHP_PCR_CNT16_1	((4 << 8) + 3)
 #define MCHP_PCR_CNT16_0	((4 << 8) + 2)
@@ -1188,7 +1204,12 @@
 #define MCHP_I2C_CTRL1		(1)
 #define MCHP_I2C_CTRL2		(2)
 #define MCHP_I2C_CTRL3		(3)
+#ifdef CHIP_FAMILY_MEC152X
+#define MCHP_I2C_CTRL4		(4)
+#define MCHP_I2C_CTRL_MAX	(5)
+#else
 #define MCHP_I2C_CTRL_MAX	(4)
+#endif
 
 #define MCHP_I2C_BASE(x)	(0x40004000 + ((x) << 10))
 #define MCHP_I2C0_BASE		0x40004000
@@ -1247,12 +1268,22 @@ enum MCHP_i2c_port {
 #define MCHP_I2C_BB_CTRL(ctrl)       REG8(MCHP_I2C_ADDR(ctrl, 0x38))
 #define MCHP_I2C_DATA_TIM(ctrl)      REG32(MCHP_I2C_ADDR(ctrl, 0x40))
 #define MCHP_I2C_TOUT_SCALE(ctrl)    REG32(MCHP_I2C_ADDR(ctrl, 0x44))
+#ifdef CHIP_FAMILY_MEC17XX
 #define MCHP_I2C_SLAVE_TX_BUF(ctrl)  REG8(MCHP_I2C_ADDR(ctrl, 0x48))
 #define MCHP_I2C_SLAVE_RX_BUF(ctrl)  REG8(MCHP_I2C_ADDR(ctrl, 0x4c))
 #define MCHP_I2C_MASTER_TX_BUF(ctrl) REG8(MCHP_I2C_ADDR(ctrl, 0x50))
 #define MCHP_I2C_MASTER_RX_BUF(ctrl) REG8(MCHP_I2C_ADDR(ctrl, 0x54))
+#endif
 #define MCHP_I2C_WAKE_STS(ctrl)      REG8(MCHP_I2C_ADDR(ctrl, 0x60))
 #define MCHP_I2C_WAKE_EN(ctrl)       REG8(MCHP_I2C_ADDR(ctrl, 0x64))
+#ifdef CHIP_FAMILY_MEC152X
+#define MCHP_I2C_SLAVE_ADDR(ctrl)    REG32(MCHP_I2C_ADDR(ctrl, 0x6C))
+#define MCHP_I2C_PROM_INT(ctrl)      REG32(MCHP_I2C_ADDR(ctrl, 0x70))
+#define MCHP_I2C_PROM_INT_EN(ctrl)   REG32(MCHP_I2C_ADDR(ctrl, 0x74))
+#define MCHP_I2C_PROM_CTRL(ctrl)     REG32(MCHP_I2C_ADDR(ctrl, 0x78))
+
+
+#endif
 /* All I2C controller connected to GIRQ13 */
 #define MCHP_I2C_GIRQ			13
 /* I2C[0:3] -> GIRQ13 bits[0:3] */
@@ -2496,9 +2527,9 @@ typedef struct MCHP_dma_chan dma_chan_t;
 
 #ifdef CHIP_FAMILY_MEC152X
 /* I2C_4 is SMBUS */
-#define MCHP_IRQ_I2C_4		157
-#define MCHP_IRQ_TACH_3		158
-#define MCHP_IRQ_CEC_0		159
+#define MCHP_IRQ_I2C_4		158
+#define MCHP_IRQ_TACH_3		159
+#define MCHP_IRQ_CEC_0		160
 #define MCHP_IRQ_SAF_DONE	166
 #define MCHP_IRQ_SAF_ERROR	167
 #define MCHP_IRQ_I2CONLY_0		168

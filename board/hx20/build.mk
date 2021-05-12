@@ -26,5 +26,7 @@ board-$(CONFIG_PECI) += peci_customization.o
 board-$(HAS_TASK_HOSTCMD) += host_command_customization.o
 board-$(CONFIG_SYSTEMSERIAL_DEBUG) += system_serial.o
 board-$(CONFIG_8042_AUX) += ps2mouse.o
+board-$(CONFIG_I2C_HID_MEDIAKEYS) += i2c_hid_mediakeys.o
+
 
 

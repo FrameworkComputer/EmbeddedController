@@ -10,7 +10,11 @@
 #include "core/cortex-m/config_core.h"
 
 /* Number of IRQ vectors on the NVIC */
+#ifdef CHIP_FAMILY_MEC17XX
 #define CONFIG_IRQ_COUNT	157
+#elif defined(CHIP_FAMILY_MEC152X)
+#define CONFIG_IRQ_COUNT	172
+#endif
 
 /* Use a bigger console output buffer */
 #undef CONFIG_UART_TX_BUF_SIZE
