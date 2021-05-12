@@ -43,6 +43,8 @@ enum ccgxxf_io_pins {
 #define CCGXXF_REG_GPIO_MODE		0x88
 #define CCGXXF_GPIO_PIN_MASK_SHIFT	8
 #define CCGXXF_GPIO_PIN_MODE_SHIFT	2
+#define CCGXXF_GPIO_1P8V_SEL		BIT(7)
+
 enum ccgxxf_gpio_mode {
 	CCGXXF_GPIO_MODE_HIZ_ANALOG,
 	CCGXXF_GPIO_MODE_HIZ_DIGITAL,

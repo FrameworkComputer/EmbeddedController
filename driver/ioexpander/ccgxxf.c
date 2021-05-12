@@ -5,11 +5,14 @@
  * Cypress CCGXXF I/O Port expander (built inside PD chip) driver source
  */
 
+#include "console.h"
 #include "i2c.h"
 #include "ioexpander.h"
 
 /* Add after all include files */
 #include "ccgxxf.h"
+
+#define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
 
 static inline int ccgxxf_read8(int ioex, int reg, int *data)
 {
@@ -51,14 +54,22 @@ static int ccgxxf_set_level(int ioex, int port, int mask, int val)
  * - Output pins are supported with open-drain & pull-up
  * - Input pins are supported with pull-up & pull-down
  * - Analog pins
- *
- * TODO: Add support for 1.8V level GPIOs, after implementing it in the
- * CCGXXF firmware.
+ * - 1.8V level GPIOs are supported per port and outputs can only be
+ *   open-drain pins
  */
 static int ccgxxf_set_flags_by_mask(int ioex, int port, int mask, int flags)
 {
 	uint16_t pin_mode;
 	int rv;
+
+	/* Push-pull output can't be configured for 1.8V level */
+	if ((flags & GPIO_OUTPUT) && (flags & GPIO_SEL_1P8V) &&
+		!(flags & GPIO_OPEN_DRAIN)) {
+		CPRINTS("Invalid flags: ioex=%d, port=%d, mask=%d, flags=0x%x",
+				ioex, port, mask, flags);
+
+		return EC_ERROR_INVAL;
+	}
 
 	if (flags & GPIO_OUTPUT) {
 		if (flags & GPIO_OPEN_DRAIN) {
@@ -87,6 +98,10 @@ static int ccgxxf_set_flags_by_mask(int ioex, int port, int mask, int flags)
 
 	pin_mode = port | (pin_mode << CCGXXF_GPIO_PIN_MODE_SHIFT) |
 			(mask << CCGXXF_GPIO_PIN_MASK_SHIFT);
+
+	/* Note: once set the 1.8V level affect whole GPIO port */
+	if (flags & GPIO_SEL_1P8V)
+		pin_mode |= CCGXXF_GPIO_1P8V_SEL;
 
 	/*
 	 * Before setting the GPIO mode, initilaize the pins to default value
