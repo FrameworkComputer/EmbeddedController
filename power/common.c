@@ -19,7 +19,7 @@
 #include "lpc.h"
 #include "power.h"
 #include "power/intel_x86.h"
-#include "power/sc7180.h"
+#include "power/qcom.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"

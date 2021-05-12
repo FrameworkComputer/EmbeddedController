@@ -29,7 +29,7 @@
 #include "hooks.h"
 #include "lid_switch.h"
 #include "power.h"
-#include "power/sc7180.h"
+#include "power/qcom.h"
 #include "power_button.h"
 #include "system.h"
 #include "task.h"

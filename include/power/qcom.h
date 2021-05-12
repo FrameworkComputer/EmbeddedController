@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __CROS_EC_POWER_SC7180_H_
-#define __CROS_EC_POWER_SC7180_H_
+#ifndef __CROS_EC_POWER_QCOM_H_
+#define __CROS_EC_POWER_QCOM_H_
 
 #ifdef CONFIG_CHIPSET_SC7180
 enum power_signal {
@@ -23,4 +23,4 @@ void board_set_switchcap_power(int enable);
 int board_is_switchcap_enabled(void);
 int board_is_switchcap_power_good(void);
 
-#endif /* __CROS_EC_POWER_SC7180_H_ */
+#endif /* __CROS_EC_POWER_QCOM_H_ */
