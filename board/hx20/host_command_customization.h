@@ -103,6 +103,7 @@ struct ec_params_ps2_emulation_control {
 
 enum ec_params_diagnosis_type {
 	TYPE_DDR	= 1,
+	TYPE_PORT80,
 	TYPE_COUNT
 };
 
@@ -112,6 +113,12 @@ enum ec_params_diagnosis_subtype_ddr {
 	TYPE_DDR_TRAINING_FINISH,
 	TYPE_DDR_FAIL,
 	TYPE_DDR_COUNT
+};
+
+enum ec_params_diagnosis_subtype_port80 {
+	/* type: PORT80 */
+	TYPE_PORT80_COMPLETE	= 1,
+	TYPE_PORT80_COUNT
 };
 
 struct ec_params_diagnosis {
