@@ -102,6 +102,10 @@ void board_init_rw(void)
 	/* Enable interrupt on PCH power signals */
 	gpio_enable_interrupt(gpio_slp_alt_l);
 	gpio_enable_interrupt(GPIO_SLP_L);
-	/* enable the SPI slave interface if the PCH is up */
-	hook_call_deferred(&ap_deferred_data, 0);
+	/*
+	 * Enable the SPI slave interface if the PCH is up.
+	 * Do not use hook_call_deferred(), because ap_deferred() will be
+	 * called after tasks with priority higher than HOOK task (very late).
+	 */
+	ap_deferred();
 }
