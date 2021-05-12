@@ -174,3 +174,29 @@ static enum ec_status disable_ps2_mouse_emulation(struct host_cmd_handler_args *
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_DISABLE_PS2_EMULATION, disable_ps2_mouse_emulation, EC_VER_MASK(0));
+
+static enum ec_status cmd_debug_led(struct host_cmd_handler_args *args)
+{
+
+	const struct ec_params_debug_led_bios *p = args->params;
+
+	switch (p->error_type) {
+	case TYPE_DDR:
+		// TODO: set module;
+		break;
+	default:
+		break;
+	}
+
+	switch (p->error_type) {
+	case TYPE_DDR_TRAINING:
+		// TODO: set pattern;
+		break;
+	default:
+		break;
+	}
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_DEBUG_LED, cmd_debug_led,
+			EC_VER_MASK(0));

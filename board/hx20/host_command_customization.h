@@ -94,4 +94,24 @@ struct ec_params_ps2_emulation_control {
 	uint8_t disable;
 } __ec_align1;
 
+/* Debug LED for BIOS boot check */
+#define EC_CMD_DEBUG_LED 0x3E0B
+
+enum ec_params_debug_led_bios_type {
+	/* type: DDR */
+	TYPE_DDR	= 1,
+};
+
+enum ec_params_debug_led_bios_sub_ddr {
+	/* type: DDR */
+	TYPE_DDR_TRAINING	= 1,
+};
+
+struct ec_params_debug_led_bios {
+	/* See enum ec_params_debug_led_bios_type */
+	uint8_t error_type;
+	/* See enum ec_params_debug_led_bios_sub_ */
+	uint8_t error_subtype;
+} __ec_align1;
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */
