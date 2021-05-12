@@ -194,7 +194,7 @@ void battery_customize(struct charge_state_data *emi_info)
 
 #endif
 
-static void bettery_percentage_control(void)
+static void battery_percentage_control(void)
 {
 	static enum ec_charge_control_mode before_mode;
 	enum ec_charge_control_mode new_mode;
@@ -227,8 +227,8 @@ static void bettery_percentage_control(void)
 			ccprintf("fail to discharge.");
 	}
 }
-DECLARE_HOOK(HOOK_AC_CHANGE, bettery_percentage_control, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, bettery_percentage_control, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_AC_CHANGE, battery_percentage_control, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, battery_percentage_control, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Customize host command */
@@ -263,7 +263,7 @@ static enum ec_status cmd_charging_limit_control(struct host_cmd_handler_args *a
 		args->response_size = sizeof(*r);
 	}
 
-	bettery_percentage_control();
+	battery_percentage_control();
 
 	return EC_RES_SUCCESS;
 }
