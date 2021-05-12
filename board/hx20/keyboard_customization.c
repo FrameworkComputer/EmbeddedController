@@ -14,6 +14,7 @@
 #include "keyboard_backlight.h"
 #include "pwm.h"
 #include "hooks.h"
+#include "system.h"
 
 #include "i2c_hid_mediakeys.h"
 /* Console output macros */
@@ -222,7 +223,11 @@ const struct kblight_drv kblight_hx20 = {
 
 void board_kblight_init(void)
 {
+	uint8_t current_kblight = 0;
+	if (system_get_bbram(SYSTEM_BBRAM_IDX_KBSTATE, &current_kblight) == EC_SUCCESS)
+		kblight_set(current_kblight & 0x7F);
 	kblight_register(&kblight_hx20);
+	kblight_enable(current_kblight);
 }
 #endif
 
@@ -231,11 +236,32 @@ void board_kblight_init(void)
 #define FN_LOCKED BIT(1)
 static uint8_t Fn_key;
 
-void Fnkey_shutdown(void) {
+void fnkey_shutdown(void) {
+	uint8_t current_kb = 0;
+
+	current_kb |= kblight_get() & 0x7F;
+
+	if (Fn_key & FN_LOCKED) {
+		current_kb |= 0x80;
+	}
+	system_set_bbram(SYSTEM_BBRAM_IDX_KBSTATE, current_kb);
+
 	Fn_key &= ~FN_LOCKED;
 	Fn_key &= ~FN_PRESSED;
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, Fnkey_shutdown, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, fnkey_shutdown, HOOK_PRIO_DEFAULT);
+
+
+void fnkey_startup(void) {
+	uint8_t current_kb = 0;
+
+	if (system_get_bbram(SYSTEM_BBRAM_IDX_KBSTATE, &current_kb) == EC_SUCCESS) {
+		if (current_kb & 0x80) {
+			Fn_key |= FN_LOCKED;
+		}
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, fnkey_startup, HOOK_PRIO_DEFAULT);
 
 int hotkey_F1_F12(uint16_t *key_code, uint16_t lock, int8_t pressed)
 {
