@@ -334,7 +334,7 @@ static const mat33_fp_t lid_standard_ref = {
 static const mat33_fp_t base_standard_ref = {
 	{ 0, FLOAT_TO_FP(1), 0},
 	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
+	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
 static struct stprivate_data g_lis2dh_data;
