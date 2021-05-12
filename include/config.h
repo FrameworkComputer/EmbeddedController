@@ -5038,15 +5038,6 @@
 /* Support computing hash of code for verified boot */
 #undef CONFIG_VBOOT_HASH
 
-/*
- * Reload the watchdog at 1/2 the watchdog period during hash
- * calculation.  When CONFIG_SHA256_HW_ACCELERATE and
- * CONFIG_SHA256_UNROLLED are disabled, the hash calculation may trip
- * the watchdog.  This option becomes enabled by default when both
- * those options are disabled.
- */
-#undef CONFIG_VBOOT_HASH_RELOAD_WATCHDOG
-
 /* Support for secure temporary storage for verified boot */
 #undef CONFIG_VSTORE
 
@@ -6358,22 +6349,6 @@
 #error "CONFIG_BYPASS_CBI_EEPROM_WP_CHECK is only permitted " \
 	"when CONFIG_SYSTEM_UNLOCK is also enabled."
 #endif /* CONFIG_BYPASS_CBI_EEPROM_WP_CHECK && !CONFIG_SYSTEM_UNLOCK */
-
-/*
- * Enable CONFIG_VBOOT_HASH_RELOAD_WATCHDOG by default when these
- * conditions are met:
- * - Watchdog enabled
- * - No hardware acceleration for SHA256 calculation
- * - Loops for SHA256 calculation are not unrolled
- *
- * See the CONFIG_VBOOT_HASH_RELOAD_WATCHDOG entry in this file for an
- * explanation as to why this is necessary.
- */
-#if defined(CONFIG_WATCHDOG) && !defined(CONFIG_SHA256_HW_ACCELERATE) && \
-	!defined(CONFIG_SHA256_UNROLLED) &&                              \
-	!defined(CONFIG_VBOOT_HASH_RELOAD_WATCHDOG)
-#define CONFIG_VBOOT_HASH_RELOAD_WATCHDOG
-#endif
 
 #if !defined(CONFIG_ZEPHYR) && !defined(CONFIG_ACCELGYRO_ICM_COMM_SPI) && \
 	!defined(CONFIG_ACCELGYRO_ICM_COMM_I2C)

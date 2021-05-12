@@ -62,10 +62,6 @@ void ec_app_main(void)
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG)) {
-		watchdog_init();
-	}
-
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_VBOOT)) {
 		/*
 		 * For RO, it behaves as follows:
@@ -83,6 +79,10 @@ void ec_app_main(void)
 	 * the deferred work is completed.
 	 */
 	k_thread_priority_set(&k_sys_work_q.thread, LOWEST_THREAD_PRIORITY);
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG)) {
+		watchdog_init();
+	}
 
 	/* Call init hooks before main tasks start */
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOOKS)) {
