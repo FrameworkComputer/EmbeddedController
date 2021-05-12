@@ -52,6 +52,9 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_td_pd_src3_e32);
 	RUN_TEST(test_td_pd_snk3_e12);
 
+	RUN_TEST(test_td_pd_vndi3_e3_dfp);
+	RUN_TEST(test_td_pd_vndi3_e3_ufp);
+
 	RUN_TEST(test_connect_as_nonpd_sink);
 	RUN_TEST(test_retry_count_sop);
 	RUN_TEST(test_retry_count_hard_reset);
