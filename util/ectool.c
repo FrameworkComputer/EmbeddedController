@@ -1071,9 +1071,17 @@ int cmd_version(int argc, char *argv[])
 {
 	struct ec_response_get_version r;
 	char *build_string = (char *)ec_inbuf;
+	int cmdver = 1;
 	int rv;
 
-	rv = ec_command(EC_CMD_GET_VERSION, 0, NULL, 0, &r, sizeof(r));
+	if (!ec_cmd_version_supported(EC_CMD_GET_VERSION, 1)) {
+		cmdver = 0;
+		/* CrOS FWID is not supported. Set it to empty string. */
+		r.cros_fwid_ro[0] = '\0';
+		r.cros_fwid_rw[0] = '\0';
+	}
+
+	rv = ec_command(EC_CMD_GET_VERSION, cmdver, NULL, 0, &r, sizeof(r));
 	if (rv < 0) {
 		fprintf(stderr, "ERROR: EC_CMD_GET_VERSION failed: %d\n", rv);
 		goto exit;
@@ -1085,16 +1093,22 @@ int cmd_version(int argc, char *argv[])
 				rv);
 		goto exit;
 	}
+
 	rv = 0;
 
 	/* Ensure versions are null-terminated before we print them */
 	r.version_string_ro[sizeof(r.version_string_ro) - 1] = '\0';
 	r.version_string_rw[sizeof(r.version_string_rw) - 1] = '\0';
 	build_string[ec_max_insize - 1] = '\0';
-
+	r.cros_fwid_ro[sizeof(r.cros_fwid_ro) - 1] = '\0';
+	r.cros_fwid_rw[sizeof(r.cros_fwid_rw) - 1] = '\0';
 	/* Print versions */
 	printf("RO version:    %s\n", r.version_string_ro);
+	if (cmdver > 0 && strlen(r.cros_fwid_ro))
+		printf("RO cros fwid:  %s\n", r.cros_fwid_ro);
 	printf("RW version:    %s\n", r.version_string_rw);
+	if (cmdver > 0 && strlen(r.cros_fwid_rw))
+		printf("RW cros fwid:  %s\n", r.cros_fwid_rw);
 	printf("Firmware copy: %s\n",
 	       (r.current_image < ARRAY_SIZE(image_names) ?
 		image_names[r.current_image] : "?"));

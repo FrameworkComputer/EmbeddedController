@@ -124,6 +124,8 @@ EXPECTED_HEADER = (
     '#define CROS_EC_VERSION32 "trogdor_v2.6.1004-cmsis:0dead0,"\n'
     '#define BUILDER "toukmond@pokey"\n'
     '#define DATE "2021-06-28 03:18:53"\n'
+    '#define CROS_FWID_MISSING_STR "CROS_FWID_MISSING"\n'
+    "#define CROS_FWID32 CROS_FWID_MISSING_STR\n"
 )
 HEADER_VERSION_STR_STATIC = "trogdor_v2.6.0-STATIC"
 EXPECTED_HEADER_STATIC = (
@@ -132,6 +134,8 @@ EXPECTED_HEADER_STATIC = (
     '#define CROS_EC_VERSION32 "trogdor_v2.6.0-STATIC"\n'
     '#define BUILDER "reproducible@build"\n'
     '#define DATE "STATIC_VERSION_DATE"\n'
+    '#define CROS_FWID_MISSING_STR "CROS_FWID_MISSING"\n'
+    "#define CROS_FWID32 CROS_FWID_MISSING_STR\n"
 )
 
 

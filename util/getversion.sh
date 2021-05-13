@@ -21,6 +21,11 @@ dc=$'\001'
 # Default marker to indicate 'dirty' repositories
 dirty_marker='+'
 
+# Derive path to chromeos_version.sh script
+CHROOT_SOURCE_ROOT="/mnt/host/source"
+CHROMIUMOS_OVERLAY="${CHROOT_SOURCE_ROOT}/src/third_party/chromiumos-overlay"
+CROS_VERSION_SCRIPT="${CHROMIUMOS_OVERLAY}/chromeos/config/chromeos_version.sh"
+
 # This function examines the state of the current directory and attempts to
 # extract its version information: the latest tag, if any, how many patches
 # are there since the latest tag, the top sha1, and if there are local
@@ -195,6 +200,32 @@ main() {
         git -C "${git_dir}" log -1 --format='%ct %ci' HEAD 2>/dev/null
       done | sort | tail -1 | cut -d ' ' -f '2 3')"
     echo "#define DATE \"${gitdate}\""
+  fi
+
+  # Use the chromeos_version_string when available.
+  # This will not work if run from a standalone CrOS EC checkout.
+  echo "#define CROS_FWID_MISSING_STR \"CROS_FWID_MISSING\""
+  if [[ -f "${CROS_VERSION_SCRIPT}" ]]; then
+    cros_version_output=$("${CROS_VERSION_SCRIPT}")
+    CHROMEOS_BUILD=$(echo "${cros_version_output}" | \
+                     grep "^ *CHROMEOS_BUILD=" | cut -d= -f2)
+    CHROMEOS_BRANCH=$(echo "${cros_version_output}" | \
+                      grep "^ *CHROMEOS_BRANCH=" | cut -d= -f2)
+    CHROMEOS_PATCH=$(echo "${cros_version_output}" | \
+                     grep "^ *CHROMEOS_PATCH=" | cut -d= -f2)
+    # Official builds must set CHROMEOS_OFFICIAL=1.
+    if [ "${CHROMEOS_OFFICIAL:-0}" -ne 1 ]; then
+      # For developer builds, overwrite CHROMEOS_PATCH with the date.
+      # This date is abbreviated compared to chromeos_version.sh so
+      # fwid_version will more likely fit in 32 bytes.
+      CHROMEOS_PATCH=$(date +%y_%m_%d)
+    fi
+    fwid="${BOARD}_${CHROMEOS_BUILD}.${CHROMEOS_BRANCH}.${CHROMEOS_PATCH}"
+    echo "/* CrOS FWID of this build */"
+    echo "#define CROS_FWID32 \"${fwid:0:31}\""
+  else
+    echo "/* CrOS FWID is not available for this build */"
+    echo "#define CROS_FWID32 CROS_FWID_MISSING_STR"
   fi
 }
 

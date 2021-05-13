@@ -286,6 +286,15 @@ const struct image_data *system_get_image_data(enum ec_image copy);
 const char *system_get_version(enum ec_image copy);
 
 /**
+ * Get the CrOS fwid string for an image
+ *
+ * @param copy		Image copy to get version from, or SYSTEM_IMAGE_UNKNOWN
+ *			to get the version for the currently running image.
+ * @return The fwid string for the image copy, or an empty string if error.
+ */
+const char *system_get_cros_fwid(enum ec_image copy);
+
+/**
  * Get the SKU ID for a device
  *
  * @return A value that identifies the SKU variant of a model. Its meaning and

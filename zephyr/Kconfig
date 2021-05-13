@@ -281,6 +281,13 @@ config PLATFORM_EC_CONSOLE_CMD_SHMEM
 	  used and the maximum number of bytes that have been used since
 	  the EC started running.
 
+config PLATFORM_EC_CROS_FWID_VERSION
+	bool "Include CrOS FWID version"
+	default y
+	help
+	  Include Chrome OS FWID in version output. The CrOS FWID will be common
+	  across OS, AP firmware and EC firmware when built together.
+
 config PLATFORM_EC_DEBUG_ASSERT
 	bool "Enable assertion failures"
 	default y

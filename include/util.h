@@ -45,6 +45,9 @@ extern "C" {
 #define NULL ((void *)0)
 #endif
 
+/* Returns true if string is not null and not empty */
+#define IS_NONEMPTY_STRING(s) ((s) && (s)[0])
+
 /**
  * Ensure that value `v` is between `min` and `max`.
  *
