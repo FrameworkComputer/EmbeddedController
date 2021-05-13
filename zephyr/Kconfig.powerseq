@@ -133,4 +133,12 @@ config PLATFORM_EC_POWERSEQ_SC7180
 	  Enable power sequencing for the Qualcomm Snapdragon SC7180
 	  chipset.
 
+config PLATFORM_EC_POWERSEQ_SC7280
+	bool "SC7280 power sequencing"
+	depends on AP_ARM_QUALCOMM_SC7280
+	default y
+	help
+	  Enable power sequencing for the Qualcomm Snapdragon SC7280
+	  chipset.
+
 endif # PLATFORM_EC_POWERSEQ

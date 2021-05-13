@@ -22,6 +22,7 @@ power-$(CONFIG_CHIPSET_CEZANNE)+=amd_x86.o
 power-$(CONFIG_CHIPSET_RK3288)+=rk3288.o
 power-$(CONFIG_CHIPSET_RK3399)+=rk3399.o
 power-$(CONFIG_CHIPSET_SC7180)+=qcom.o
+power-$(CONFIG_CHIPSET_SC7280)+=qcom.o
 power-$(CONFIG_CHIPSET_SDM845)+=sdm845.o
 power-$(CONFIG_CHIPSET_SKYLAKE)+=skylake.o intel_x86.o
 power-$(CONFIG_CHIPSET_STONEY)+=amd_x86.o

@@ -1267,6 +1267,7 @@
 #undef CONFIG_CHIPSET_RK3399		/* Rockchip rk3399 */
 #undef CONFIG_CHIPSET_SKYLAKE		/* Intel Skylake (x86) */
 #undef CONFIG_CHIPSET_SC7180            /* Qualcomm SC7180 */
+#undef CONFIG_CHIPSET_SC7280            /* Qualcomm SC7280 */
 #undef CONFIG_CHIPSET_SDM845            /* Qualcomm SDM845 */
 #undef CONFIG_CHIPSET_STONEY		/* AMD Stoney (x86)*/
 #undef CONFIG_CHIPSET_TIGERLAKE		/* Intel Tigerlake (x86) */
@@ -5937,7 +5938,7 @@
 #error "Must enable CONFIG_POWER_TRACK_HOST_SLEEP_STATE for S0ix"
 #endif
 
-#if defined(CONFIG_CHIPSET_SC7180)
+#if defined(CONFIG_CHIPSET_SC7180) || defined(CONFIG_CHIPSET_SC7280)
 #if defined(CONFIG_POWER_SLEEP_FAILURE_DETECTION) && \
 	!defined(CONFIG_CHIPSET_RESUME_INIT_HOOK)
 #error "Require resume init hook to enable sleep failure detection"
