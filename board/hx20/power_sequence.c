@@ -131,7 +131,7 @@ static void chipset_force_g3(void)
 	gpio_set_level(GPIO_SYS_PWROK, 0);
 	gpio_set_level(GPIO_SYSON, 0);
 	/* keep pch power for wake source or vpro type */
-	if (!keep_pch_power()) {
+	if (!keep_pch_power() || me_change) {
 		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 		gpio_set_level(GPIO_PCH_PWR_EN, 0);
 		gpio_set_level(GPIO_PCH_DPWROK, 0);
@@ -440,7 +440,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		CPRINTS("power handle state in G3S5");
 
-		power_s5_up = 1;
+		s5_power_up_control(1);
 
 		if (board_chipset_power_on()) {
 			cancel_board_power_off();
@@ -577,20 +577,25 @@ void me_gpio_change(uint32_t flags)
 	}
 }
 
+void update_me_change(int change)
+{
+	me_change = change;
+}
+
 static enum ec_status me_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_me_control *p = args->params;
-	me_change = 1;
-	power_s5_up = 1; /* Need to wait S5 signal to auto power up */
+
+	s5_power_up_control(0); /* power down pch to process ME change */
 
 	/* CPU change ME mode based on ME_EN while RSMRST rising.
 	 * So, when we received ME control command, we need to change ME_EN when power on.
 	 * ME_EN low = lock.
 	 */
 	if (p->me_mode & ME_UNLOCK)
-		me_change = ME_UNLOCK;
+		update_me_change(ME_UNLOCK);
 	else
-		me_change = ME_LOCK;
+		update_me_change(ME_LOCK);
 
 	CPRINTS("Receive ME %s\n", (p->me_mode & ME_UNLOCK) == ME_UNLOCK ? "unlock" : "lock");
 	return EC_SUCCESS;
