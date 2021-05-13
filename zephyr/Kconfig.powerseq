@@ -125,6 +125,24 @@ endif # PLATFORM_EC_POWERSEQ_ICELAKE
 
 endif # PLATFORM_EC_POWERSEQ_INTEL
 
+menuconfig PLATFORM_EC_POWERSEQ_IT8XXX2
+	bool "Enable shimming common ITE8xxx2 power sequencing code"
+	depends on AP_ARM_MTK_MT8192
+	default y
+	help
+	  Enable shimming platform/ec AP power sequencing code for
+	  IT8xxx2.
+
+if PLATFORM_EC_POWERSEQ_IT8XXX2
+
+config PLATFORM_EC_POWERSEQ_MT8192
+	bool "Use common MT8192 code for power sequencing"
+	default y
+	help
+	  Use the Comet Lake code for power sequencing.
+
+endif # PLATFORM_EC_POWERSEQ_ITE8XXX2
+
 config PLATFORM_EC_POWERSEQ_SC7180
 	bool "SC7180 power sequencing"
 	depends on AP_ARM_QUALCOMM_SC7180

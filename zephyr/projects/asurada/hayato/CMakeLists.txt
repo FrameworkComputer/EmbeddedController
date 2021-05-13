@@ -9,4 +9,7 @@ set(BOARD_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(hayato)
 
+set(PLATFORM_EC_BASEBOARD "${PLATFORM_EC}/baseboard/asurada" CACHE PATH
+    "Path to the platform/ec baseboard directory")
+
 zephyr_include_directories(include)

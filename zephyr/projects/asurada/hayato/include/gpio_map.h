@@ -27,7 +27,24 @@
  * #define EC_CROS_GPIO_INTERRUPTS \
  *   GPIO_INT(NAMED_GPIO(h1_ec_pwr_btn_odl), GPIO_INT_EDGE_BOTH, button_print)
  */
-#define EC_CROS_GPIO_INTERRUPTS					\
-	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt)
+#define EC_CROS_GPIO_INTERRUPTS						\
+	GPIO_INT(GPIO_LID_OPEN,						\
+		 GPIO_INT_EDGE_BOTH, lid_interrupt)			\
+	GPIO_INT(GPIO_POWER_BUTTON_L,					\
+		 GPIO_INT_EDGE_BOTH, power_button_interrupt)
+
+
+
+#define GPIO_EN_PP5000 GPIO_EN_PP5000_A
+
+/*
+ * TODO(b:188674805) create a driver to pull this information from DeviceTree
+ */
+enum power_signal {
+	PMIC_PWR_GOOD,
+	AP_IN_S3_L,
+	AP_WDT_ASSERTED,
+	POWER_SIGNAL_COUNT,
+};
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
