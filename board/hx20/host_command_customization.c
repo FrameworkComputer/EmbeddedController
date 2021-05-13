@@ -213,6 +213,10 @@ static enum ec_status update_keyboard_matrix(struct host_cmd_handler_args *args)
 	struct ec_params_update_keyboard_matrix *r = args->response;
 
 	int i;
+
+	if (p->num_items > 32) {
+		return EC_ERROR_INVAL;
+	}
 	if (p->write) {
 		for (i = 0; i < p->num_items; i++) {
 			set_scancode_set2(p->scan_update[i].row,p->scan_update[i].col,p->scan_update[i].scanset);
@@ -220,6 +224,8 @@ static enum ec_status update_keyboard_matrix(struct host_cmd_handler_args *args)
 	}
 	r->num_items = p->num_items;
 	for (i = 0; i < p->num_items; i++) {
+		r->scan_update[i].row = p->scan_update[i].row;
+		r->scan_update[i].col = p->scan_update[i].col;
 		r->scan_update[i].scanset = get_scancode_set2(p->scan_update[i].row,p->scan_update[i].col);
 	}
 	args->response_size = sizeof(struct ec_params_update_keyboard_matrix);
