@@ -17,6 +17,7 @@
 #include "keyboard_8042.h"
 #include "ps2mouse.h"
 #include "power.h"
+#include "diagnostics.h"
 #define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
 
 enum ps2_mouse_state mouse_state = PS2MSTATE_RESET;
@@ -264,6 +265,7 @@ void setup_touchpad(void)
 	if (rv != EC_SUCCESS) {
 		ec_mode_disabled = true;
 		CPRINTS("Error: Touchpad not detected!  %d", rv);
+		set_hw_diagnostic(DIAGNOSTICS_TOUCHPAD, true);
 	} else {
 		CPRINTS("Touchpad detected!");
 	}

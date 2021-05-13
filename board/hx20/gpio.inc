@@ -155,6 +155,13 @@ GPIO(QMSPI_CS0,		PIN(055),  GPIO_ODR_HIGH)
 
 GPIO(CAP_LED_L,     PIN(0114), GPIO_OUT_LOW)
 
+/*
+ * Analog pins
+ */
+GPIO(TP_BOARD_ID, PIN(0203),  GPIO_FLAG_NONE)
+GPIO(AD_BOARD_ID, PIN(0205),  GPIO_FLAG_NONE)
+
+
 
 /* Alternate functions GPIO definitions */
 

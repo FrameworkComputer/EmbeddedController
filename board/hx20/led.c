@@ -22,7 +22,7 @@
 #include "diagnostics.h"
 #include "fan.h"
 #include "host_command_customization.h"
-
+#include "power.h"
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
@@ -311,11 +311,10 @@ uint8_t bios_code;
 
 uint8_t bios_complete;
 uint8_t fan_seen;
+uint8_t s0_seen;
 uint8_t run_diagnostics;
 void reset_diagnostics(void)
 {
-	CPRINTS("Reset Diagnosis");
-
 	hw_diagnostics =0;
 	hw_diagnostics_ctr = 0;
 	bios_complete = 0;
@@ -323,14 +322,16 @@ void reset_diagnostics(void)
 	bios_section = 0;
 	hw_diagnostic_tick = 0;
 	fan_seen = 0;
+	s0_seen = 0;
 	run_diagnostics = 1;
 }
 
-static void set_diagnostic_leds(enum ec_led_colors color)
+static void set_diagnostic_leds(int color)
 {
 	set_pwm_led_color(PWM_LED0, color);
 	set_pwm_led_color(PWM_LED1, color);
 }
+#define TICK_PER_SEC	4
 static bool diagnostics_tick(void)
 {
 	if (hw_diagnostics_ctr >= DIAGNOSTICS_MAX) {
@@ -342,7 +343,10 @@ static bool diagnostics_tick(void)
 	}
 
 	if (bios_complete && ((bios_section & 0x80) == 0) && hw_diagnostics == 0) {
-		/*exit boot condition - everything is ok*/
+		/*exit boot condition - everything is ok after minimum 4 seconds of checking*/
+		if (fan_seen){
+			run_diagnostics = 0;
+		}
 		return false;
 	}
 
@@ -351,19 +355,26 @@ static bool diagnostics_tick(void)
 		return true;
 	}
 
-	hw_diagnostic_tick++;
-
-	if (fan_get_rpm_actual(0) > 0) {
+	if (fan_get_rpm_actual(0) > 100) {
 		fan_seen = true;
 	}
 
-	if (hw_diagnostic_tick < 15*4) {
+	if (power_get_state() == POWER_S0) {
+		s0_seen = true;
+	}
+
+	hw_diagnostic_tick++;
+
+	if (hw_diagnostic_tick < 15*TICK_PER_SEC) {
 		/*give us more time for checks to complete*/
 		return false;
 	}
 
 	if (fan_seen == false) {
 		set_hw_diagnostic(DIAGNOSTICS_NOFAN, true);
+	}
+	if (s0_seen == false) {
+		set_hw_diagnostic(DIAGNOSTICS_NO_S0, true);
 	}
 
 	if (hw_diagnostic_tick & 0x01) {
@@ -385,6 +396,8 @@ static bool diagnostics_tick(void)
 								? EC_LED_COLOR_BLUE : EC_LED_COLOR_GREEN);
 	}
 
+
+
 	hw_diagnostics_ctr++;
 	return true;
 
@@ -403,12 +416,19 @@ DECLARE_DEFERRED(diagnostic_check_tempsensor_deferred);
 static void diagnostics_check_devices(void)
 {
 	int device_id;
+
+	gpio_set_flags(GPIO_TP_BOARD_ID, GPIO_PULL_DOWN);
+	gpio_set_flags(GPIO_AD_BOARD_ID, GPIO_PULL_DOWN);
+	usleep(10);
+	gpio_set_flags(GPIO_TP_BOARD_ID, GPIO_FLAG_NONE);
+	gpio_set_flags(GPIO_AD_BOARD_ID, GPIO_FLAG_NONE);
+	usleep(2);
 	device_id = get_hardware_id(ADC_TP_BOARD_ID);
-	if (device_id <= BOARD_VERSION_0 ||  device_id >= BOARD_VERSION_15) {
+	if (device_id <= BOARD_VERSION_3 ||  device_id >= BOARD_VERSION_14) {
 		set_hw_diagnostic(DIAGNOSTICS_TOUCHPAD, true);
 	}
 	device_id = get_hardware_id(ADC_AUDIO_BOARD_ID);
-	if (device_id <= BOARD_VERSION_0 ||  device_id >= BOARD_VERSION_15) {
+	if (device_id <= BOARD_VERSION_3 ||  device_id >= BOARD_VERSION_14) {
 		set_hw_diagnostic(DIAGNOSTICS_AUDIO_DAUGHTERBOARD, true);
 	}
 
@@ -421,7 +441,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME,
 void set_hw_diagnostic(enum diagnostics_device_idx idx, bool error)
 {
 	if (error)
-	hw_diagnostics |= 1 < idx;
+		hw_diagnostics |= 1 << idx;
 }
 
 void set_bios_diagnostic(uint8_t section, uint8_t code)
