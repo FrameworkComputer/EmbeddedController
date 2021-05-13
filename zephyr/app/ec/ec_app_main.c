@@ -37,6 +37,10 @@ void ec_app_main(void)
 
 	system_print_banner();
 
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG)) {
+		watchdog_init();
+	}
+
 	/*
 	 * Keyboard scan init/Button init can set recovery events to
 	 * indicate to host entry into recovery mode. Before this is
@@ -79,10 +83,6 @@ void ec_app_main(void)
 	 * the deferred work is completed.
 	 */
 	k_thread_priority_set(&k_sys_work_q.thread, LOWEST_THREAD_PRIORITY);
-
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG)) {
-		watchdog_init();
-	}
 
 	/* Call init hooks before main tasks start */
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOOKS)) {
