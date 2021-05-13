@@ -49,7 +49,6 @@ static int me_change;
 static int power_s5_up;
 static int s5_exit_tries;
 static int stress_test_enable;
-static int vpro_change;
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
@@ -96,6 +95,9 @@ int keep_pch_power(void)
 {
 	int version = board_get_version();
 	int wake_source = *host_get_customer_memmap(0x02);
+	uint8_t vpro_change;
+
+	system_get_bbram(SYSTEM_BBRAM_IDX_VPRO_STATUS, &vpro_change);
 
 	if (version & BIT(0) && extpower_is_present() && vpro_change)
 		return true;
@@ -602,12 +604,14 @@ DECLARE_HOST_COMMAND(EC_CMD_ME_CONTROL, me_control,
 static enum ec_status vpro_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_vpro_control *p = args->params;
+	uint8_t vpro_status;
 
 	if (p->vpro_mode & VPRO_ON)
-		vpro_change = VPRO_ON;
+		vpro_status = VPRO_ON;
 	else
-		vpro_change = VPRO_OFF;
+		vpro_status = VPRO_OFF;
 
+	system_set_bbram(SYSTEM_BBRAM_IDX_VPRO_STATUS, vpro_status);
 	CPRINTS("Receive Vpro %s\n", (p->vpro_mode & VPRO_ON) == VPRO_ON ? "on" : "off");
 	return EC_SUCCESS;
 }
