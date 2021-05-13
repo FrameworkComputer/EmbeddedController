@@ -290,6 +290,9 @@ static void baseboard_interrupt_init(void)
 	gpio_enable_interrupt(GPIO_USB_A2_FAULT_R_ODL);
 	gpio_enable_interrupt(GPIO_USB_A1_FAULT_R_ODL);
 	gpio_enable_interrupt(GPIO_USB_A0_FAULT_R_ODL);
+
+	/* Enable BJ insertion interrupt */
+	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_L);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_interrupt_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -445,6 +448,50 @@ static int fsusb42umx_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 	return EC_SUCCESS;
 }
 
+#define BJ_DEBOUNCE_MS		1000  /* Debounce time for BJ plug/unplug */
+
+static int8_t bj_connected = -1;
+
+static void bj_connect_deferred(void)
+{
+	struct charge_port_info pi = { 0 };
+	int connected = !gpio_get_level(GPIO_BJ_ADP_PRESENT_L);
+
+	/* Debounce */
+	if (connected == bj_connected)
+		return;
+
+	if (connected)
+		board_get_bj_power(&pi.voltage, &pi.current);
+
+	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
+				     DEDICATED_CHARGE_PORT, &pi);
+	bj_connected = connected;
+}
+DECLARE_DEFERRED(bj_connect_deferred);
+
+/* IRQ for BJ plug/unplug. It shouldn't be called if BJ is the power source. */
+void baseboard_bj_connect_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&bj_connect_deferred_data, BJ_DEBOUNCE_MS * MSEC);
+}
+
+static void charge_port_init(void)
+{
+	/*
+	 * Initialize all charge suppliers to 0. The charge manager waits until
+	 * all ports have reported in before doing anything.
+	 */
+	for (int i = 0; i < CHARGE_PORT_COUNT; i++) {
+		for (int j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
+			charge_manager_update_charge(j, i, NULL);
+	}
+
+	/* Report charge state from the barrel jack. */
+	bj_connect_deferred();
+}
+DECLARE_HOOK(HOOK_INIT, charge_port_init, HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
+
 int board_set_active_charge_port(int port)
 {
 	int rv, i;
@@ -509,7 +556,7 @@ int board_set_active_charge_port(int port)
 		if (i == port)
 			continue;
 
-		rv = ppc_vbus_sink_enable(port, 0);
+		rv = ppc_vbus_sink_enable(i, 0);
 		if (rv) {
 			CPRINTSUSB("Failed to disable C%d sink path", i);
 			return rv;

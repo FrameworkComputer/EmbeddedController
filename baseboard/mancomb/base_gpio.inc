@@ -24,7 +24,7 @@ GPIO_INT(PG_PCORE_S0_R_OD,	PIN(B, 6), GPIO_INT_BOTH, 			power_signal_interrupt) 
 GPIO_INT(EC_PCORE_INT_ODL,	PIN(F, 0), GPIO_INT_BOTH | GPIO_PULL_UP,	power_signal_interrupt)	/* Power Core Interrupt */
 GPIO_INT(PG_GROUPC_S0_OD,	PIN(A, 3), GPIO_INT_BOTH, 			baseboard_en_pwr_pcore_s0)	/* Power Group C S0 */
 GPIO_INT(PG_DDR4_S3_OD,		PIN(9, 5), GPIO_INT_BOTH, 			baseboard_en_pwr_pcore_s0)	/* Power Group LPDDR4 S3 */
-GPIO(BJ_ADP_PRESENT_L,		PIN(3, 0), GPIO_INPUT)							/* Barrel Jack Adapter Present */
+GPIO_INT(BJ_ADP_PRESENT_L,	PIN(3, 0), GPIO_INT_BOTH | GPIO_PULL_UP,	baseboard_bj_connect_interrupt)	/* Barrel Jack Adapter Present */
 GPIO(EC_RECOVERY_BTN_ODL,	PIN(3, 1), GPIO_INT_BOTH)
 GPIO(EN_PWR_S5,			PIN(B, 7), GPIO_OUT_LOW)						/* Enable S5 Power */
 GPIO(EN_PWR_S0_R,		PIN(F, 1), GPIO_OUT_LOW)

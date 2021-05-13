@@ -308,6 +308,7 @@ enum mft_channel {
 };
 
 /* Baseboard Interrupt handlers. */
+void baseboard_bj_connect_interrupt(enum gpio_signal signal);
 void baseboard_en_pwr_pcore_s0(enum gpio_signal signal);
 void baseboard_en_pwr_s0(enum gpio_signal signal);
 void baseboard_usb_fault_alert(enum gpio_signal signal);
@@ -318,6 +319,9 @@ void hdmi_fault_interrupt(enum gpio_signal signal);
 void ppc_interrupt(enum gpio_signal signal);
 void sbu_fault_interrupt(enum ioex_signal signal);
 void tcpc_alert_event(enum gpio_signal signal);
+
+/* Required board functions */
+void board_get_bj_power(int *voltage, int *current);
 
 #endif /* !__ASSEMBLER__ */
 

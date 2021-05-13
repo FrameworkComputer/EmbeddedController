@@ -18,6 +18,12 @@
 
 #include "gpio_list.h" /* Must come after other header files. */
 
+void board_get_bj_power(int *voltage, int *current)
+{
+	*voltage = 20000;
+	*current = 6000;
+}
+
 static void board_init(void)
 {
 	/* TODO */
