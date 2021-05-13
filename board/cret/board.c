@@ -20,6 +20,7 @@
 #include "driver/charger/isl923x.h"
 #include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/pi3usb3x532.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -38,6 +39,7 @@
 #include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
+#include "temp_sensor.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
@@ -414,6 +416,19 @@ struct motion_sensor_t motion_sensors[] = {
 };
 
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+/* Thermistors */
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_1] = {.name = "Memory",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_1},
+	[TEMP_SENSOR_2] = {.name = "Charger",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_2},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 __override void ocpc_get_pid_constants(int *kp, int *kp_div,
 				       int *ki, int *ki_div,
