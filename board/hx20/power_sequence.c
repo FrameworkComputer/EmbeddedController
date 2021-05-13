@@ -49,6 +49,7 @@ static int me_change;
 static int power_s5_up;
 static int s5_exit_tries;
 static int stress_test_enable;
+static int vpro_change;
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
@@ -96,7 +97,7 @@ int keep_pch_power(void)
 	int version = board_get_version();
 	int wake_source = *host_get_customer_memmap(0x02);
 
-	if (version & BIT(0) && extpower_is_present())
+	if (version & BIT(0) && extpower_is_present() && vpro_change)
 		return true;
 #ifdef CONFIG_EMI_REGION1
 	else if (wake_source & RTCWAKE)
@@ -596,4 +597,19 @@ static enum ec_status me_control(struct host_cmd_handler_args *args)
 	return EC_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_ME_CONTROL, me_control,
+			EC_VER_MASK(0));
+
+static enum ec_status vpro_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_vpro_control *p = args->params;
+
+	if (p->vpro_mode & VPRO_ON)
+		vpro_change = VPRO_ON;
+	else
+		vpro_change = VPRO_OFF;
+
+	CPRINTS("Receive Vpro %s\n", (p->vpro_mode & VPRO_ON) == VPRO_ON ? "on" : "off");
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_VPRO_CONTROL, vpro_control,
 			EC_VER_MASK(0));
