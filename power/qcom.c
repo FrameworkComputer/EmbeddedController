@@ -54,17 +54,17 @@ const struct power_signal_info power_signal_list[] = {
 		POWER_SIGNAL_ACTIVE_HIGH,
 		"POWER_GOOD",
 	},
-	[SC7X80_WARM_RESET] = {
-		GPIO_WARM_RESET_L,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"WARM_RESET_L",
-	},
 	[SC7X80_AP_SUSPEND] = {
 		GPIO_AP_SUSPEND,
 		POWER_SIGNAL_ACTIVE_HIGH,
 		"AP_SUSPEND",
 	},
 #ifdef CONFIG_CHIPSET_SC7180
+	[SC7X80_WARM_RESET] = {
+		GPIO_WARM_RESET_L,
+		POWER_SIGNAL_ACTIVE_HIGH,
+		"WARM_RESET_L",
+	},
 	[SC7X80_DEPRECATED_AP_RST_REQ] = {
 		GPIO_DEPRECATED_AP_RST_REQ,
 		POWER_SIGNAL_ACTIVE_HIGH,
@@ -157,9 +157,6 @@ static char power_button_was_pressed;
 
 /* 1 if lid-open event has been detected */
 static char lid_opened;
-
-/* 1 if AP_RST_L and PS_HOLD is overdriven by EC */
-static char ap_rst_overdriven;
 
 /* Time where we will power off, if power button still held down */
 static timestamp_t power_off_deadline;
@@ -260,6 +257,11 @@ static void request_cold_reset(void)
 	task_wake(TASK_ID_CHIPSET);
 }
 
+#ifdef CONFIG_CHIPSET_SC7180
+
+/* 1 if AP_RST_L and PS_HOLD is overdriven by EC */
+static char ap_rst_overdriven;
+
 void chipset_warm_reset_interrupt(enum gpio_signal signal)
 {
 	/*
@@ -320,6 +322,7 @@ void chipset_power_good_interrupt(enum gpio_signal signal)
 	}
 	power_signal_interrupt(signal);
 }
+#endif /* defined(CONFIG_CHIPSET_SC7180) */
 
 static void sc7x80_lid_event(void)
 {
@@ -541,8 +544,10 @@ enum power_state power_chipset_init(void)
 	uint32_t reset_flags = system_get_reset_flags();
 
 	/* Enable interrupts */
-	gpio_enable_interrupt(GPIO_WARM_RESET_L);
-	gpio_enable_interrupt(GPIO_POWER_GOOD);
+	if (IS_ENABLED(CONFIG_CHIPSET_SC7180)) {
+		gpio_enable_interrupt(GPIO_WARM_RESET_L);
+		gpio_enable_interrupt(GPIO_POWER_GOOD);
+	}
 
 	/*
 	 * Force the AP shutdown unless we are doing SYSJUMP. Otherwise,
