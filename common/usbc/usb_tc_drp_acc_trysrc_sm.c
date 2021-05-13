@@ -126,7 +126,7 @@ void print_flag(int port, int set_or_clear, int flag);
 #define TC_FLAGS_REQUEST_ERROR_RECOVERY	BIT(22)
 
 /* For checking flag_bit_names[] array */
-#define TC_FLAGS_COUNT			22
+#define TC_FLAGS_COUNT			23
 
 /* On disconnect, clear most of the flags. */
 #define CLR_FLAGS_ON_DISCONNECT(port) TC_CLR_FLAG(port, \
@@ -320,7 +320,6 @@ static struct bit_name flag_bit_names[] = {
 	{ TC_FLAGS_PARTNER_PD_CAPABLE, "PARTNER_PD_CAPABLE" },
 	{ TC_FLAGS_HARD_RESET_REQUESTED, "HARD_RESET_REQUESTED" },
 	{ TC_FLAGS_PR_SWAP_IN_PROGRESS, "PR_SWAP_IN_PROGRESS" },
-	{ TC_FLAGS_DISC_IDENT_IN_PROGRESS, "DISC_IDENT_IN_PROGRESS" },
 	{ TC_FLAGS_CHECK_CONNECTION, "CHECK_CONNECTION" },
 	{ TC_FLAGS_REQUEST_SUSPEND, "REQUEST_SUSPEND" },
 	{ TC_FLAGS_SUSPENDED, "SUSPENDED" },
@@ -340,7 +339,9 @@ static struct bit_name event_bit_names[] = {
 	{ TASK_EVENT_PD_AWAKE, "PD_AWAKE" },
 	{ TASK_EVENT_PECI_DONE, "PECI_DONE" },
 	{ TASK_EVENT_I2C_IDLE, "I2C_IDLE" },
+#ifdef TASK_EVENT_PS2_DONE
 	{ TASK_EVENT_PS2_DONE, "PS2_DONE" },
+#endif
 	{ TASK_EVENT_DMA_TC, "DMA_TC" },
 	{ TASK_EVENT_ADC_DONE, "ADC_DONE" },
 	{ TASK_EVENT_RESET_DONE, "RESET_DONE" },
