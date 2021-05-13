@@ -1765,7 +1765,7 @@ void pd_request_power_swap(int port)
 static bool port_try_vconn_swap(int port)
 {
 	if (pe[port].vconn_swap_counter < N_VCONN_SWAP_COUNT) {
-		PE_SET_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON);
+		pd_dpm_request(port, DPM_REQUEST_VCONN_SWAP);
 		set_state_pe(port, get_last_state_pe(port));
 		return true;
 	}
