@@ -24,6 +24,7 @@
 #include "board.h"
 #include "ps2mouse.h"
 #include "keyboard_8042_sharedlib.h"
+#include "diagnostics.h"
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 #ifdef CONFIG_EMI_REGION1
@@ -180,28 +181,8 @@ static enum ec_status cmd_diagnosis(struct host_cmd_handler_args *args)
 {
 
 	const struct ec_params_diagnosis *p = args->params;
-	uint8_t led_type;
 
-	if (p->error_type & EC_CMD_DIAGNOSIS_LED){
-
-		led_type = p->error_type & EC_CMD_DIAGNOSIS_LED_TYPE;
-		switch (led_type) {
-		case TYPE_DDR:
-			// TODO: set module;
-			break;
-		default:
-			break;
-		}
-
-		switch (p->error_subtype) {
-		case TYPE_DDR_FAIL:
-			// TODO: set pattern;
-			break;
-		default:
-			break;
-		}
-	}
-
+	set_bios_diagnostic(p->error_type, p->error_subtype);
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_DIAGNOSIS, cmd_diagnosis,

@@ -28,6 +28,7 @@
 #include "util.h"
 #include "wireless.h"
 #include "driver/temp_sensor/f75303.h"
+#include "diagnostics.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
@@ -163,6 +164,7 @@ int board_chipset_power_on(void)
 
 	if (power_wait_signals(IN_PGOOD_PWR_3V5V)) {
 		CPRINTS("timeout waiting for PWR_3V5V_PG");
+		set_hw_diagnostic(DIAGNOSTICS_HW_PGOOD_3V5V, 1);
 		chipset_force_g3();
 		return false;
 	}
@@ -181,6 +183,7 @@ int board_chipset_power_on(void)
 
 	if (power_wait_signals(IN_PGOOD_VCCIN_AUX_VR)) {
 		CPRINTS("timeout waiting for VCCIN_AUX_VR_PG");
+		set_hw_diagnostic(DIAGNOSTICS_VCCIN_AUX_VR, 1);
 		chipset_force_g3();
 		return false;
 	}
@@ -388,6 +391,8 @@ enum power_state power_handle_state(enum power_state state)
 						s5_exit_tries = 0;
 						stress_test_enable = 0;
 						ap_boot_delay = 9;
+						set_hw_diagnostic(DIAGNOSTICS_SLP_S4, 1);
+
 						return POWER_S5G3;
 					}
 
@@ -479,6 +484,8 @@ enum power_state power_handle_state(enum power_state state)
 		hook_notify(HOOK_CHIPSET_RESUME);
 
         if (power_wait_signals(IN_PGOOD_PWR_VR)) {
+			set_hw_diagnostic(DIAGNOSTICS_HW_PGOOD_VR, true);
+
 			gpio_set_level(GPIO_SUSP_L, 0);
 			gpio_set_level(GPIO_EC_VCCST_PG, 0);
 			gpio_set_level(GPIO_VR_ON, 0);

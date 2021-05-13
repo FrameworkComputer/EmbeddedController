@@ -18,6 +18,13 @@
 #include "host_command.h"
 #include "util.h"
 #include "gpio.h"
+#include "driver/temp_sensor/f75303.h"
+#include "diagnostics.h"
+#include "fan.h"
+#include "host_command_customization.h"
+
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
 #define LED_TICKS_PER_CYCLE 10
 #define LED_ON_TICKS 5
@@ -295,12 +302,151 @@ static void led_set_power(void)
 		set_pwr_led_color(PWM_LED2, -1);
 }
 
+
+uint32_t hw_diagnostics;
+uint32_t hw_diagnostic_tick;
+uint32_t hw_diagnostics_ctr;
+uint8_t bios_section;
+uint8_t bios_code;
+
+uint8_t bios_complete;
+uint8_t fan_seen;
+uint8_t run_diagnostics;
+void reset_diagnostics(void)
+{
+	CPRINTS("Reset Diagnosis");
+
+	hw_diagnostics =0;
+	hw_diagnostics_ctr = 0;
+	bios_complete = 0;
+	bios_code = 0;
+	bios_section = 0;
+	hw_diagnostic_tick = 0;
+	fan_seen = 0;
+	run_diagnostics = 1;
+}
+
+static void set_diagnostic_leds(enum ec_led_colors color)
+{
+	set_pwm_led_color(PWM_LED0, color);
+	set_pwm_led_color(PWM_LED1, color);
+}
+static bool diagnostics_tick(void)
+{
+	if (hw_diagnostics_ctr >= DIAGNOSTICS_MAX) {
+		run_diagnostics = 0;
+		return false;
+	}
+	if (run_diagnostics == 0) {
+		return false;
+	}
+
+	if (bios_complete && ((bios_section & 0x80) == 0) && hw_diagnostics == 0) {
+		/*exit boot condition - everything is ok*/
+		return false;
+	}
+
+	if (bios_section == TYPE_DDR && bios_code == TYPE_DDR_TRAINING_START) {
+		set_diagnostic_leds(EC_LED_COLOR_GREEN);
+		return true;
+	}
+
+	hw_diagnostic_tick++;
+
+	if (fan_get_rpm_actual(0) > 0) {
+		fan_seen = true;
+	}
+
+	if (hw_diagnostic_tick < 15*4) {
+		/*give us more time for checks to complete*/
+		return false;
+	}
+
+	if (fan_seen == false) {
+		set_hw_diagnostic(DIAGNOSTICS_NOFAN, true);
+	}
+
+	if (hw_diagnostic_tick & 0x01) {
+		/*off*/
+
+		set_diagnostic_leds(-1);
+		return true;
+	}
+
+	if (hw_diagnostics_ctr == DIAGNOSTICS_START) {
+		set_diagnostic_leds(EC_LED_COLOR_WHITE);
+		CPRINTS("Boot issue: HW 0x%08x BIOS: 0x%04x", hw_diagnostics, bios_code);
+	} else if (hw_diagnostics_ctr  < DIAGNOSTICS_HW_FINISH) {
+		set_diagnostic_leds((hw_diagnostics & (1<<hw_diagnostics_ctr)) ? EC_LED_COLOR_RED : EC_LED_COLOR_GREEN);
+	} else if (hw_diagnostics_ctr == DIAGNOSTICS_HW_FINISH) {
+		set_diagnostic_leds(EC_LED_COLOR_AMBER);
+	} else if (hw_diagnostics_ctr < DIAGNOSTICS_MAX) {
+		set_diagnostic_leds((bios_code & (1<<(hw_diagnostics_ctr-DIAGNOSTICS_BIOS_BIT0)))
+								? EC_LED_COLOR_BLUE : EC_LED_COLOR_GREEN);
+	}
+
+	hw_diagnostics_ctr++;
+	return true;
+
+}
+
+static void diagnostic_check_tempsensor_deferred(void)
+{
+	int temps = 0;
+
+	f75303_get_val(F75303_IDX_LOCAL, &temps);
+	if (temps == 0)
+			set_hw_diagnostic(DIAGNOSTICS_THERMAL_SENSOR, true);
+}
+DECLARE_DEFERRED(diagnostic_check_tempsensor_deferred);
+
+static void diagnostics_check_devices(void)
+{
+	int device_id;
+	device_id = get_hardware_id(ADC_TP_BOARD_ID);
+	if (device_id <= BOARD_VERSION_0 ||  device_id >= BOARD_VERSION_15) {
+		set_hw_diagnostic(DIAGNOSTICS_TOUCHPAD, true);
+	}
+	device_id = get_hardware_id(ADC_AUDIO_BOARD_ID);
+	if (device_id <= BOARD_VERSION_0 ||  device_id >= BOARD_VERSION_15) {
+		set_hw_diagnostic(DIAGNOSTICS_AUDIO_DAUGHTERBOARD, true);
+	}
+
+	hook_call_deferred(&diagnostic_check_tempsensor_deferred_data, 2000*MSEC);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME,
+		diagnostics_check_devices,
+		HOOK_PRIO_DEFAULT);
+
+void set_hw_diagnostic(enum diagnostics_device_idx idx, bool error)
+{
+	if (error)
+	hw_diagnostics |= 1 < idx;
+}
+
+void set_bios_diagnostic(uint8_t section, uint8_t code)
+{
+	bios_section = section;
+	bios_code = code;
+
+	if (section ==  TYPE_PORT80 && code == TYPE_PORT80_COMPLETE)
+		bios_complete = true;
+
+	if (section == TYPE_DDR && bios_code == TYPE_DDR_FAIL)
+		set_hw_diagnostic(DIAGNOSTICS_NO_DDR, true);
+}
+
 /* Called by hook task every TICK */
 static void led_tick(void)
 {
+
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 		led_set_power();
 
+	if (diagnostics_tick()) {
+		/* we have an error, override LED control*/
+		return;
+	}
 	led_set_battery();
 }
 
