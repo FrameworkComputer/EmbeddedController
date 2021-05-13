@@ -2910,6 +2910,16 @@ void pd_set_new_power_request(int port);
 bool pd_capable(int port);
 
 /**
+ * Return true if we transition through Unattached.SNK, but we're still waiting
+ * to receive source caps from the partner. This indicates that the PD
+ * capabilities are not yet known.
+ *
+ * @param port USB-C port number
+ * @return true if partner is SRC, but PD capability not known
+ */
+bool pd_waiting_on_partner_src_caps(int port);
+
+/**
  * Returns the source caps list
  *
  * @param port USB-C port number
