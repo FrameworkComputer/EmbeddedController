@@ -28,6 +28,12 @@ uint8_t resolution;
 /*in 5 button mode deltaz is changed by +-1 for vertical scroll, and +-2 for horizontal scroll*/
 uint8_t five_button_mode;
 uint8_t mouse_scale;
+
+static uint8_t ec_mode_disabled;
+static uint8_t detected_host_packet;
+static uint8_t emumouse_task_id;
+
+
 void send_movement_packet(void)
 {
 	int i;
@@ -43,6 +49,9 @@ void send_movement_packet(void)
 }
 void aux_port_state_change(uint8_t enabled)
 {
+	if (ec_mode_disabled) {
+		return;
+	}
 	if (enabled) {
 		mouse_state = PS2MSTATE_RESET;
 		send_aux_data_to_device(0);
@@ -51,6 +60,10 @@ void aux_port_state_change(uint8_t enabled)
 void send_aux_data_to_device(uint8_t data)
 {
 	uint8_t response;
+
+	if (ec_mode_disabled) {
+		return;
+	}
 
 	switch (mouse_state) {
 	case PS2MSTATE_RESET:
@@ -144,16 +157,14 @@ void send_aux_data_to_device(uint8_t data)
 SENDACK:
 	send_aux_data_to_host_interrupt(PS2MOUSE_ACKNOWLEDGE);
 }
-static uint8_t mouse_int_task_id;
-static uint8_t ec_mode_disabled;
-static uint8_t detected_host_packet;
+
 /*this interrupt is used to monitor if the main SOC is directly communicating with the
  * touchpad outside of the EC. If we detect this condition - then we disable the ec 8042
  * mouse emulation mode
  * */
 void touchpad_i2c_interrupt(enum gpio_signal signal)
 {
-	task_set_event(mouse_int_task_id, PS2MOUSE_EVT_I2C_INTERRUPT, 0);
+	task_set_event(emumouse_task_id, PS2MOUSE_EVT_I2C_INTERRUPT, 0);
 	if (power_get_state() == POWER_S0 || power_get_state() == POWER_S0ix)
 		detected_host_packet = true;
 }
@@ -171,14 +182,14 @@ void touchpad_interrupt(enum gpio_signal signal)
 		return;
 	}
 	if (!detected_host_packet) {
-		task_set_event(mouse_int_task_id, PS2MOUSE_EVT_INTERRUPT, 0);
+		task_set_event(emumouse_task_id, PS2MOUSE_EVT_INTERRUPT, 0);
 		unprocessed_tp_int_count = 0;
 	} else {
 		if (timestamp_expired(last_int_time, &now)) {
 			if (unprocessed_tp_int_count++ > 4) {
 				detected_host_packet = false;
 				unprocessed_tp_int_count = 0;
-				task_set_event(mouse_int_task_id, PS2MOUSE_EVT_REENABLE, 0);
+				task_set_event(emumouse_task_id, PS2MOUSE_EVT_REENABLE, 0);
 			}
 		} else {
 			unprocessed_tp_int_count = 0;
@@ -189,7 +200,7 @@ void touchpad_interrupt(enum gpio_signal signal)
 
 static void ps2mouse_powerstate_change(void)
 {
-	task_set_event(mouse_int_task_id, PS2MOUSE_EVT_POWERSTATE, 0);
+	task_set_event(emumouse_task_id, PS2MOUSE_EVT_POWERSTATE, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME,
 		ps2mouse_powerstate_change,
@@ -260,7 +271,7 @@ void setup_touchpad(void)
 }
 void read_touchpad_in_report(void)
 {
-	int rv;
+	int rv = EC_SUCCESS;
 	uint8_t data[128];
 	int xfer_len;
 	int16_t x, y;
@@ -272,12 +283,15 @@ void read_touchpad_in_report(void)
 							TOUCHPAD_I2C_HID_EP | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
 							NULL, 0, data, 2, I2C_XFER_START);
 	if (rv != EC_SUCCESS)
-		CPRINTS("TP Read failed! %d", rv);
+		goto read_failed;
 	xfer_len = (data[1]<<8) + data[0];
 	xfer_len = MIN(126, xfer_len-2);
 	rv = i2c_xfer_unlocked(I2C_PORT_TOUCHPAD,
 							TOUCHPAD_I2C_HID_EP | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
 							NULL, 0, data+2, xfer_len, I2C_XFER_STOP);
+	if (rv != EC_SUCCESS)
+		goto read_failed;
+read_failed:
 	if (rv != EC_SUCCESS)
 		CPRINTS("TP Read failed! %d", rv);
 	i2c_lock(I2C_PORT_TOUCHPAD, 0);
@@ -320,19 +334,19 @@ void read_touchpad_in_report(void)
 void mouse_interrupt_handler_task(void *p)
 {
 	int power_state = 0;
+	int evt;
 
-	mouse_int_task_id = task_get_current();
-
+	emumouse_task_id = task_get_current();
 	while (1) {
-		const int evt = task_wait_event(-1);
+		evt = task_wait_event(-1);
 		/*host disabled this*/
 		if (ec_mode_disabled) {
 			CPRINTS("EMUMouse Disabling due to HC");
 			gpio_disable_interrupt(GPIO_SOC_TP_INT_L);
 			gpio_disable_interrupt(GPIO_EC_I2C_3_SDA);
 		}
-		switch (evt) {
-		case PS2MOUSE_EVT_INTERRUPT:
+
+		if  (evt & PS2MOUSE_EVT_INTERRUPT) {
 			usleep(4*MSEC);
 			/* at the expensive of a slight additional latency
 			 * check to see if the soc has grabbed this out from under us
@@ -340,20 +354,17 @@ void mouse_interrupt_handler_task(void *p)
 			if (gpio_get_level(GPIO_SOC_TP_INT_L) == 1) {
 				CPRINTS("EMUMouse Detected host packet during interrupt handling");
 				detected_host_packet = true;
-				break;
-			}
-			/* todo read i2c hid report from TP */
-			if (mouse_state == PS2MSTATE_STREAM) {
+			} else if (mouse_state == PS2MSTATE_STREAM) {
 				read_touchpad_in_report();
 			}
-			break;
-		case PS2MOUSE_EVT_I2C_INTERRUPT:
+		}
+		if  (evt & PS2MOUSE_EVT_I2C_INTERRUPT) {
 			if (detected_host_packet) {
 				CPRINTS("EMUMouse detected host packet from i2c");
 				gpio_disable_interrupt(GPIO_EC_I2C_3_SDA);
 			}
-			break;
-		case PS2MOUSE_EVT_POWERSTATE:
+		}
+		if (evt & PS2MOUSE_EVT_POWERSTATE) {
 			power_state = power_get_state();
 			CPRINTS("EMUMouse Got S0 Event %d", power_state);
 			if (!detected_host_packet && (power_state == POWER_S3S0)) {
@@ -368,18 +379,13 @@ void mouse_interrupt_handler_task(void *p)
 			if ((power_state == POWER_S3S0) && gpio_get_level(GPIO_SOC_TP_INT_L) == 0) {
 				read_touchpad_in_report();
 			}
-			break;
-		case PS2MOUSE_EVT_REENABLE:
-			CPRINTS("EMUMouse reneabling");
+		}
+		if (evt & PS2MOUSE_EVT_REENABLE) {
+			CPRINTS("EMUMouse renabling");
 			gpio_enable_interrupt(GPIO_SOC_TP_INT_L);
 			gpio_enable_interrupt(GPIO_EC_I2C_3_SDA);
-			break;
-		default:
-			break;
 		}
-
 	}
-
 }
 
 static int command_emumouse(int argc, char **argv)
@@ -389,7 +395,14 @@ static int command_emumouse(int argc, char **argv)
 
 	if (argc == 2 && !strncmp(argv[1], "int", 3)) {
 		CPRINTS("Triggering interrupt");
-		task_set_event(mouse_int_task_id, PS2MOUSE_EVT_INTERRUPT, 0);
+		task_set_event(emumouse_task_id, PS2MOUSE_EVT_INTERRUPT, 0);
+	}
+	if (argc == 2 && !strncmp(argv[1], "res", 3)) {
+		CPRINTS("Resetting to auto");
+		ec_mode_disabled = 0;
+		data_report_en = 1;
+		detected_host_packet = 0;
+		task_set_event(emumouse_task_id, PS2MOUSE_EVT_REENABLE, 0);
 	}
 	if (argc < 4) {
 		CPRINTS("mouse state 0x%x data_report: 0x%x btn:0x%x", mouse_state, data_report_en, button_state);
@@ -401,7 +414,7 @@ static int command_emumouse(int argc, char **argv)
 
 	btn_state = strtoi(argv[1], &e, 0);
 	if (*e)
-		return EC_ERROR_PARAM2;
+		return EC_ERROR_PARAM1;
 	posx = strtoi(argv[2], &e, 0);
 	if (*e)
 		return EC_ERROR_PARAM2;
@@ -414,7 +427,7 @@ static int command_emumouse(int argc, char **argv)
 	button_state = btn_state;
 	if (mouse_state == PS2MSTATE_STREAM)
 		send_movement_packet();
-	return 0;
+	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(emumouse, command_emumouse,
 		"emumouse buttons posx posy",
