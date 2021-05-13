@@ -30,6 +30,7 @@ struct ec_params_flash_notified {
  * key scancode to test keyboard.
  */
 #define EC_CMD_FACTORY_MODE	0x3E02
+#define RESET_FOR_SHIP 0x5A
 
 struct ec_params_factory_notified {
 	/* factory mode enable */
