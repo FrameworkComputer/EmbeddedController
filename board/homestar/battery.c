@@ -153,10 +153,10 @@ const struct board_batt_params board_battery_info[] = {
 	[BATTERY_L21D4PG0] = {
 		.fuel_gauge = {
 			.manuf_name = "Sunwoda",
-			.device_name = "L21D4PG",
+			.device_name = "L21D4PG0",
 			.ship_mode = {
 				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x0100 },
+				.reg_data = { 0x0000, 0x1000 },
 			},
 			.fet = {
 				.mfgacc_support = 1,
@@ -182,10 +182,10 @@ const struct board_batt_params board_battery_info[] = {
 	[BATTERY_L21M4PG0] = {
 		.fuel_gauge = {
 			.manuf_name = "SMP",
-			.device_name = "L21M4PG",
+			.device_name = "L21M4PG0",
 			.ship_mode = {
 				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x0100 },
+				.reg_data = { 0x0000, 0x1000 },
 			},
 			.fet = {
 				.mfgacc_support = 1,
