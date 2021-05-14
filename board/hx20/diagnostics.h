@@ -10,7 +10,7 @@
 enum diagnostics_device_idx {
     DIAGNOSTICS_START= 0,
 
-    DIAGNOSTICS_HW_PGOOD_3V5V = 0,
+    DIAGNOSTICS_HW_PGOOD_3V5V = 1,
     DIAGNOSTICS_VCCIN_AUX_VR,
     DIAGNOSTICS_SLP_S4,
     DIAGNOSTICS_HW_PGOOD_VR,
@@ -40,7 +40,7 @@ enum diagnostics_device_idx {
  * this is used as a bitmask to flash out any error codes
  */
 void set_hw_diagnostic(enum diagnostics_device_idx idx, bool error);
-void set_bios_diagnostic(uint8_t section, uint8_t code);
+void set_bios_diagnostic(uint8_t code);
 
 void reset_diagnostics(void);
 

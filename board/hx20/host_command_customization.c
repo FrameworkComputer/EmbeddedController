@@ -182,7 +182,7 @@ static enum ec_status cmd_diagnosis(struct host_cmd_handler_args *args)
 
 	const struct ec_params_diagnosis *p = args->params;
 
-	set_bios_diagnostic(p->error_type, p->error_subtype);
+	set_bios_diagnostic(p->diagnosis_code);
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_DIAGNOSIS, cmd_diagnosis,

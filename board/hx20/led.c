@@ -306,7 +306,6 @@ static void led_set_power(void)
 uint32_t hw_diagnostics;
 uint32_t hw_diagnostic_tick;
 uint32_t hw_diagnostics_ctr;
-uint8_t bios_section;
 uint8_t bios_code;
 
 uint8_t bios_complete;
@@ -319,7 +318,6 @@ void reset_diagnostics(void)
 	hw_diagnostics_ctr = 0;
 	bios_complete = 0;
 	bios_code = 0;
-	bios_section = 0;
 	hw_diagnostic_tick = 0;
 	fan_seen = 0;
 	s0_seen = 0;
@@ -342,7 +340,7 @@ static bool diagnostics_tick(void)
 		return false;
 	}
 
-	if (bios_complete && ((bios_section & 0x80) == 0) && hw_diagnostics == 0) {
+	if (bios_complete && hw_diagnostics == 0) {
 		/*exit boot condition - everything is ok after minimum 4 seconds of checking*/
 		if (fan_seen){
 			run_diagnostics = 0;
@@ -350,7 +348,7 @@ static bool diagnostics_tick(void)
 		return false;
 	}
 
-	if (bios_section == TYPE_DDR && bios_code == TYPE_DDR_TRAINING_START) {
+	if (bios_code == CODE_DDR_TRAINING_START) {
 		set_diagnostic_leds(EC_LED_COLOR_GREEN);
 		return true;
 	}
@@ -444,15 +442,14 @@ void set_hw_diagnostic(enum diagnostics_device_idx idx, bool error)
 		hw_diagnostics |= 1 << idx;
 }
 
-void set_bios_diagnostic(uint8_t section, uint8_t code)
+void set_bios_diagnostic(uint8_t code)
 {
-	bios_section = section;
 	bios_code = code;
 
-	if (section ==  TYPE_PORT80 && code == TYPE_PORT80_COMPLETE)
+	if (code == CODE_PORT80_COMPLETE)
 		bios_complete = true;
 
-	if (section == TYPE_DDR && bios_code == TYPE_DDR_FAIL)
+	if (bios_code == CODE_DDR_FAIL)
 		set_hw_diagnostic(DIAGNOSTICS_NO_DDR, true);
 }
 
