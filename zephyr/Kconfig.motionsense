@@ -124,6 +124,13 @@ config PLATFORM_EC_TABLET_MODE
 
 if PLATFORM_EC_TABLET_MODE
 
+config PLATFORM_EC_TABLET_MODE_SWITCH
+    bool "Tablet Mode Switch"
+    depends on PLATFORM_EC_MKBP_INPUT_DEVICES
+    help
+      Enable a virtual switch to indicate when we are in tablet mode. The tablet
+      mode state is sent to AP via MKBP protocol(switch event).
+
 config PLATFORM_EC_GMR_TABLET_MODE
     bool "Giant Magnetoresistance(GMR) Tablet Mode"
     help
