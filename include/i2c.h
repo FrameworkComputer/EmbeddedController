@@ -110,9 +110,9 @@ struct i2c_port_t {
 	int port;             /* Port */
 #ifndef CONFIG_ZEPHYR
 	int kbps;             /* Speed in kbps */
-#endif /* CONFIG_ZEPHYR */
 	enum gpio_signal scl; /* Port SCL GPIO line */
 	enum gpio_signal sda; /* Port SDA GPIO line */
+#endif /* CONFIG_ZEPHYR */
 	/* When bus is protected, returns true if passthru allowed for address.
 	 * If the function is not defined, the default value is true. */
 	int (*passthru_allowed)(const struct i2c_port_t *port,

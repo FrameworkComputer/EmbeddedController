@@ -19,16 +19,11 @@
 #define I2C_CONFIG_GPIO(id, type) \
 	DT_ENUM_UPPER_TOKEN(DT_CHILD(DT_CHILD(id, config), type), enum_name)
 
-#define I2C_PORT_INIT(id)                                            \
-	COND_CODE_1(DT_NODE_EXISTS(DT_CHILD(id, config)),            \
-		    (                                                \
-			    {                                        \
-				    .name = DT_LABEL(id),            \
-				    .port = I2C_PORT(id),            \
-				    .scl = I2C_CONFIG_GPIO(id, scl), \
-				    .sda = I2C_CONFIG_GPIO(id, sda), \
-			    }, ),                                    \
-		    ())
+#define I2C_PORT_INIT(id)             \
+	{                             \
+		.name = DT_LABEL(id), \
+		.port = I2C_PORT(id), \
+	},
 /*
  * Long term we will not need these, for now they're needed to get things to
  * build since these extern symbols are usually defined in

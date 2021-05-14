@@ -17,7 +17,7 @@
 
 enum i2c_ports {
 	DT_FOREACH_CHILD(DT_PATH(named_i2c_ports), I2C_PORT_WITH_COMMA)
-		I2C_PORT_COUNT
+	I2C_PORT_COUNT
 };
 #define NAMED_I2C(name) I2C_PORT(DT_PATH(named_i2c_ports, name))
 #endif /* named_i2c_ports */

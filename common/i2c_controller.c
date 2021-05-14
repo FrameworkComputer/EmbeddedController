@@ -860,6 +860,7 @@ int i2c_write_block(const int port,
 	return rv;
 }
 
+#ifndef CONFIG_ZEPHYR
 int get_sda_from_i2c_port(int port, enum gpio_signal *sda)
 {
 	const struct i2c_port_t *i2c_port = get_i2c_port(port);
@@ -1068,6 +1069,7 @@ unwedge_done:
 
 	return ret;
 }
+#endif /* !CONFIG_ZEPHYR */
 
 int i2c_set_freq(int port, enum i2c_freq freq)
 {

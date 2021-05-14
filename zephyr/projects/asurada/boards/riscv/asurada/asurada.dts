@@ -26,14 +26,6 @@
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_POWER";
 			label = "POWER";
-			config {
-				scl {
-					enum-name = "GPIO_I2C_B_SCL";
-				};
-				sda {
-					enum-name = "GPIO_I2C_B_SDA";
-				};
-			};
 		};
 		battery {
 			i2c-port = <&i2c0>;
@@ -54,14 +46,6 @@
 			i2c-port = <&i2c1>;
 			enum-name = "I2C_PORT_SENSOR";
 			label = "SENSOR";
-			config {
-				scl {
-					enum-name = "GPIO_I2C_C_SCL";
-				};
-				sda {
-					enum-name = "GPIO_I2C_C_SDA";
-				};
-			};
 		};
 		i2c-accel {
 			i2c-port = <&i2c1>;
@@ -72,27 +56,11 @@
 			i2c-port = <&i2c2>;
 			enum-name = "I2C_PORT_USB_C0";
 			label = "USB_C0";
-			config {
-				scl {
-					enum-name = "GPIO_I2C_F_SCL";
-				};
-				sda {
-					enum-name = "GPIO_I2C_F_SDA";
-				};
-			};
 		};
 		usb-c1 {
 			i2c-port = <&i2c4>;
 			enum-name = "I2C_PORT_USB_C1";
 			label = "USB_C1";
-			config {
-				scl {
-					enum-name = "GPIO_I2C_E_SCL";
-				};
-				sda {
-					enum-name = "GPIO_I2C_E_SDA";
-				};
-			};
 		};
 	};
 };

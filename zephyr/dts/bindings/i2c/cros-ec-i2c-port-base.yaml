@@ -32,9 +32,3 @@ properties:
     description:
       Human readable string describing the device (used as device_get_binding()
       argument).
-
-child-binding:
-  description: Optional configuration bindings
-  child-binding:
-    description: SCL and SDA configurations
-    include: gpio-enum-name.yaml
