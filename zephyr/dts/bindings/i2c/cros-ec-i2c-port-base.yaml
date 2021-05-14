@@ -35,11 +35,6 @@ properties:
 
 child-binding:
   description: Optional configuration bindings
-  properties:
-    frequency:
-      type: int
-      required: true
-      description: Transfer data rate in kHz
   child-binding:
     description: SCL and SDA configurations
     include: gpio-enum-name.yaml

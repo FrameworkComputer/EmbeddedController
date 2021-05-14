@@ -78,7 +78,6 @@
 			enum-name = "I2C_PORT_SENSOR";
 			label = "SENSOR";
 			config {
-				frequency = <400>;
 				scl {
 					enum-name = "GPIO_EC_I2C_SENSOR_SCL";
 				};

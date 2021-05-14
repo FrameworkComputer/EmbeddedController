@@ -108,7 +108,9 @@ struct i2c_drv {
 struct i2c_port_t {
 	const char *name;     /* Port name */
 	int port;             /* Port */
+#ifndef CONFIG_ZEPHYR
 	int kbps;             /* Speed in kbps */
+#endif /* CONFIG_ZEPHYR */
 	enum gpio_signal scl; /* Port SCL GPIO line */
 	enum gpio_signal sda; /* Port SDA GPIO line */
 	/* When bus is protected, returns true if passthru allowed for address.
