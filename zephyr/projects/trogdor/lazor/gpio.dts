@@ -207,6 +207,7 @@
 		};
 		trackpad_int_gate {
 			gpios = <&gpio7 4 GPIO_OUT_LOW>;
+			enum-name = "GPIO_TRACKPAD_INT_GATE";
 			label = "TRACKPAD_INT_GATE";
 		};
 		usb_c0_pd_rst_l {
