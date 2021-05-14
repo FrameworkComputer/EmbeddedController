@@ -43,6 +43,10 @@ if(DEFINED CONFIG_PLATFORM_EC)
   add_library(ec_version INTERFACE)
   add_dependencies(ec_version generate_ec_version)
 
+  # Ensure the EC version file is generated before trying to build the app
+  # library, which includes compiling version.c
+  add_dependencies(app ec_version)
+
   # Register the library with zephyr so that it generates the file at build
   # time. Also, append the include directory so we can include ec_version.h.
   zephyr_append_cmake_library(ec_version)
