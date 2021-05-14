@@ -765,7 +765,10 @@ int pos_get_state(void);
 
 void me_gpio_change(uint32_t flags);
 
+
 int ac_boot_status(void);
+
+void update_me_change(int change);
 
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);

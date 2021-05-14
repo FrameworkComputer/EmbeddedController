@@ -202,6 +202,8 @@ static void check_ucsi_event_from_host(void)
 		*host_get_customer_memmap(0x00) &= ~BIT(2);
 	}
 
+	udelay(10 * MSEC);
+
 	switch (*host_get_customer_memmap(EC_MEMMAP_UCSI_COMMAND)) {
 	case UCSI_CMD_PPM_RESET:
 	case UCSI_CMD_CANCEL:

@@ -95,8 +95,11 @@ int keep_pch_power(void)
 {
 	int version = board_get_version();
 	int wake_source = *host_get_customer_memmap(0x02);
+	uint8_t vpro_change;
 
-	if (version & BIT(0) && extpower_is_present())
+	system_get_bbram(SYSTEM_BBRAM_IDX_VPRO_STATUS, &vpro_change);
+
+	if (version & BIT(0) && extpower_is_present() && vpro_change)
 		return true;
 #ifdef CONFIG_EMI_REGION1
 	else if (wake_source & RTCWAKE)
@@ -131,7 +134,7 @@ static void chipset_force_g3(void)
 	gpio_set_level(GPIO_SYS_PWROK, 0);
 	gpio_set_level(GPIO_SYSON, 0);
 	/* keep pch power for wake source or vpro type */
-	if (!keep_pch_power()) {
+	if (!keep_pch_power() || me_change) {
 		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 		gpio_set_level(GPIO_PCH_PWR_EN, 0);
 		gpio_set_level(GPIO_PCH_DPWROK, 0);
@@ -440,7 +443,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		CPRINTS("power handle state in G3S5");
 
-		power_s5_up = 1;
+		s5_power_up_control(1);
 
 		if (board_chipset_power_on()) {
 			cancel_board_power_off();
@@ -561,39 +564,66 @@ DECLARE_HOST_COMMAND(EC_CMD_SET_AP_REBOOT_DELAY, set_ap_reboot_delay,
 
 void me_gpio_change(uint32_t flags)
 {
+	enum gpio_signal gpio = GPIO_ME_EN;
+	int version = board_get_version();
+
+	gpio = version > 7 ? GPIO_ME_EN_PVT : GPIO_ME_EN;
+
 	switch (flags) {
 	case GPIO_OPEN_DRAIN:
 		if (me_change & ME_UNLOCK)
-			gpio_set_flags(GPIO_ME_EN, GPIO_PULL_UP | GPIO_ODR_HIGH);
+			gpio_set_flags(gpio, GPIO_PULL_UP | GPIO_ODR_HIGH);
 		else
-			gpio_set_flags(GPIO_ME_EN, GPIO_PULL_DOWN | GPIO_ODR_HIGH);
+			gpio_set_flags(gpio, GPIO_PULL_DOWN | GPIO_ODR_HIGH);
 		break;
 	case GPIO_ODR_HIGH:
-		gpio_set_flags(GPIO_ME_EN, GPIO_ODR_HIGH);
+		gpio_set_flags(gpio, GPIO_ODR_HIGH);
 		break;
 	case GPIO_ODR_LOW:
-		gpio_set_flags(GPIO_ME_EN, GPIO_ODR_LOW);
+		gpio_set_flags(gpio, GPIO_ODR_LOW);
 		break;
 	}
+}
+
+void update_me_change(int change)
+{
+	me_change = change;
 }
 
 static enum ec_status me_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_me_control *p = args->params;
-	me_change = 1;
-	power_s5_up = 1; /* Need to wait S5 signal to auto power up */
+
+	s5_power_up_control(0); /* power down pch to process ME change */
 
 	/* CPU change ME mode based on ME_EN while RSMRST rising.
 	 * So, when we received ME control command, we need to change ME_EN when power on.
 	 * ME_EN low = lock.
 	 */
 	if (p->me_mode & ME_UNLOCK)
-		me_change = ME_UNLOCK;
+		update_me_change(ME_UNLOCK);
 	else
-		me_change = ME_LOCK;
+		update_me_change(ME_LOCK);
 
 	CPRINTS("Receive ME %s\n", (p->me_mode & ME_UNLOCK) == ME_UNLOCK ? "unlock" : "lock");
 	return EC_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_ME_CONTROL, me_control,
+			EC_VER_MASK(0));
+
+static enum ec_status vpro_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_vpro_control *p = args->params;
+	uint8_t vpro_status;
+
+	if (p->vpro_mode & VPRO_ON)
+		vpro_status = VPRO_ON;
+	else
+		vpro_status = VPRO_OFF;
+
+	system_set_bbram(SYSTEM_BBRAM_IDX_VPRO_STATUS, vpro_status);
+	CPRINTS("Receive Vpro %s\n", (p->vpro_mode & VPRO_ON) == VPRO_ON ? "on" : "off");
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_VPRO_CONTROL, vpro_control,
 			EC_VER_MASK(0));
