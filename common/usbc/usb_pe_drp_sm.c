@@ -10,6 +10,7 @@
 #include "charge_state.h"
 #include "common.h"
 #include "console.h"
+#include "dps.h"
 #include "driver/tcpm/tcpm.h"
 #include "ec_commands.h"
 #include "hooks.h"
@@ -3159,6 +3160,11 @@ static void pe_snk_evaluate_capability_entry(int port)
 
 	/* Device Policy Response Received */
 	set_state_pe(port, PE_SNK_SELECT_CAPABILITY);
+
+#ifdef HAS_TASK_DPS
+	/* Wake DPS task to evaluate the SrcCaps */
+	task_wake(TASK_ID_DPS);
+#endif
 }
 
 /**
@@ -3388,6 +3394,10 @@ static void pe_snk_transition_sink_exit(int port)
 				CEIL_REQUESTOR_PD, pe[port].curr_limit);
 
 	pd_timer_disable(port, PE_TIMER_PS_TRANSITION);
+
+	if (IS_ENABLED(CONFIG_USB_PD_DPS))
+		if (charge_manager_get_active_charge_port() == port)
+			dps_update_stabilized_time(port);
 }
 
 

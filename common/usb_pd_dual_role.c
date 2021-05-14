@@ -7,6 +7,7 @@
 
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "dps.h"
 #include "system.h"
 #include "usb_common.h"
 #include "usb_pd.h"
@@ -21,6 +22,7 @@
  */
 static unsigned int max_request_mv = PD_MAX_VOLTAGE_MV;
 
+/* TODO(b:169532537): deprecate CONFIG_USB_PD_PREFER_MV */
 STATIC_IF_NOT(CONFIG_USB_PD_PREFER_MV)
 struct pd_pref_config_t __maybe_unused pd_pref_config;
 
@@ -236,6 +238,10 @@ void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
 	else
 		max_request_allowed = 1;
 
+	if (IS_ENABLED(CONFIG_USB_PD_DPS) && dps_is_enabled())
+		max_request_mv =
+			MIN(max_request_mv, dps_get_dynamic_voltage());
+
 	/*
 	 * If currently charging on a different port, or we are not allowed to
 	 * request the max voltage, then select vSafe5V
@@ -342,11 +348,15 @@ void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
 		uint32_t ma, mv, pdo, unused;
+		uint32_t max_mv = pd_get_max_voltage();
+
+		if (IS_ENABLED(CONFIG_USB_PD_DPS) && dps_is_enabled())
+			max_mv = MIN(max_mv, dps_get_dynamic_voltage());
 
 		/* Get max power info that we could request */
 		pd_find_pdo_index(pd_get_src_cap_cnt(port),
 					pd_get_src_caps(port),
-					pd_get_max_voltage(), &pdo);
+					max_mv, &pdo);
 		pd_extract_pdo_power(pdo, &ma, &mv, &unused);
 
 		/* Set max. limit, but apply 500mA ceiling */

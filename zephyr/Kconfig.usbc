@@ -421,6 +421,17 @@ endchoice # Trigger implementation
 
 endif # PLATFORM_EC_USB_PD_FRS
 
+config PLATFORM_EC_USB_PD_DPS
+	bool "Board can support Dynamic PDO Selection"
+	depends on PLATFORM_EC_BATTERY
+	default n
+	help
+	  Enable this if the board needs dynamic PDO selection.
+	  DPS picks a power efficient PDO regarding to the underlying battery
+	  configuration and the system loading.
+	  Default configuration can be overrided by `dps_config` to adapt
+	  to each board's need.
+
 config PLATFORM_EC_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	bool "Board can use TCPC-controlled DRP toggle"
 	depends on PLATFORM_EC_USB_PD_DUAL_ROLE

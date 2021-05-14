@@ -11,6 +11,7 @@
 #include "charge_state_v2.h"
 #include "charger.h"
 #include "console.h"
+#include "dps.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -624,11 +625,13 @@ static void charge_manager_get_best_charge_port(int *new_port,
 
 	/* Skip port selection on OVERRIDE_DONT_CHARGE. */
 	if (override_port != OVERRIDE_DONT_CHARGE) {
+
 		/*
 		 * Charge supplier selection logic:
-		 * 1. Prefer higher priority supply.
-		 * 2. Prefer higher power over lower in case priority is tied.
-		 * 3. Prefer current charge port over new port in case (1)
+		 * 1. Prefer DPS charge port.
+		 * 2. Prefer higher priority supply.
+		 * 3. Prefer higher power over lower in case priority is tied.
+		 * 4. Prefer current charge port over new port in case (1)
 		 *    and (2) are tied.
 		 * available_charge can be changed at any time by other tasks,
 		 * so make no assumptions about its consistency.
@@ -670,8 +673,16 @@ static void charge_manager_get_best_charge_port(int *new_port,
 				candidate_port_power =
 					POWER(available_charge[i][j]);
 
+				/* Select DPS port if provided. */
+				if (IS_ENABLED(CONFIG_USB_PD_DPS) &&
+				    override_port == OVERRIDE_OFF &&
+				    i == CHARGE_SUPPLIER_PD &&
+				    j == dps_get_charge_port()) {
+					supplier = i;
+					port = j;
+					break;
 				/* Select if no supplier chosen yet. */
-				if (supplier == CHARGE_SUPPLIER_NONE ||
+				} else if (supplier == CHARGE_SUPPLIER_NONE ||
 				/* ..or if supplier priority is higher. */
 				    supplier_priority[i] <
 				    supplier_priority[supplier] ||
