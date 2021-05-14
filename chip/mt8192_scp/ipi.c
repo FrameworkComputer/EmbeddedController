@@ -128,7 +128,7 @@ static void ipi_enable_deferred(void)
 	scp_run.signaled = 1;
 	strncpy(scp_run.fw_ver, system_get_version(EC_IMAGE_RW),
 		SCP_FW_VERSION_LEN);
-	scp_run.dec_capability = VDEC_CAP_MT21C | VDEC_CAP_H264_SLICE |
+	scp_run.dec_capability = VDEC_CAP_MM21 | VDEC_CAP_H264_SLICE |
 				 VDEC_CAP_VP8_FRAME | VDEC_CAP_VP9_FRAME;
 	scp_run.enc_capability = VENC_CAP_4K;
 
