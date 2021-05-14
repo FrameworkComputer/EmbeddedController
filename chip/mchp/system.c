@@ -47,6 +47,7 @@ enum hibdata_index {
 	HIBDATA_INDEX_AC_BOOT = 29,
 	HIBDATA_INDEX_TRY_SLOT = 30,
 	HIBDATA_INDEX_KBSTATE = 31,
+	HIBDATA_INDEX_VPRO_STATUS = 35,
 	/*
 	 * .. 56 ~ 59 byte for ESPI VW use ..
 	 * .. 60 ~ 63 byte for IMAGETYPE use ..
@@ -339,6 +340,8 @@ static int bbram_idx_lookup(enum system_bbram_idx idx)
 		return HIBDATA_INDEX_TRY_SLOT;
 	case SYSTEM_BBRAM_IDX_KBSTATE:
 		return HIBDATA_INDEX_KBSTATE;
+	case SYSTEM_BBRAM_IDX_VPRO_STATUS:
+		return HIBDATA_INDEX_VPRO_STATUS;
 	default:
 		return -1;
 	}

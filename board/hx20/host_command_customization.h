@@ -140,4 +140,15 @@ struct ec_params_update_keyboard_matrix {
 	struct keyboard_matrix_map scan_update[32];
 } __ec_align1;
 
+#define EC_CMD_VPRO_CONTROL	0x3E0D
+
+enum ec_vrpo_control_modes {
+	VPRO_OFF	= 0,
+	VPRO_ON		= BIT(0),
+};
+
+struct ec_params_vpro_control {
+	uint8_t vpro_mode;
+} __ec_align1;
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */

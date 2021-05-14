@@ -95,8 +95,11 @@ int keep_pch_power(void)
 {
 	int version = board_get_version();
 	int wake_source = *host_get_customer_memmap(0x02);
+	uint8_t vpro_change;
 
-	if (version & BIT(0) && extpower_is_present())
+	system_get_bbram(SYSTEM_BBRAM_IDX_VPRO_STATUS, &vpro_change);
+
+	if (version & BIT(0) && extpower_is_present() && vpro_change)
 		return true;
 #ifdef CONFIG_EMI_REGION1
 	else if (wake_source & RTCWAKE)
@@ -601,4 +604,21 @@ static enum ec_status me_control(struct host_cmd_handler_args *args)
 	return EC_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_ME_CONTROL, me_control,
+			EC_VER_MASK(0));
+
+static enum ec_status vpro_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_vpro_control *p = args->params;
+	uint8_t vpro_status;
+
+	if (p->vpro_mode & VPRO_ON)
+		vpro_status = VPRO_ON;
+	else
+		vpro_status = VPRO_OFF;
+
+	system_set_bbram(SYSTEM_BBRAM_IDX_VPRO_STATUS, vpro_status);
+	CPRINTS("Receive Vpro %s\n", (p->vpro_mode & VPRO_ON) == VPRO_ON ? "on" : "off");
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_VPRO_CONTROL, vpro_control,
 			EC_VER_MASK(0));
