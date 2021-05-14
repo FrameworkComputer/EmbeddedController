@@ -379,6 +379,7 @@ enum system_bbram_idx {
 	SYSTEM_BBRAM_IDX_TRY_SLOT,
 	SYSTEM_BBRAM_IDX_AC_BOOT,
 	SYSTEM_BBRAM_IDX_KBSTATE,
+	SYSTEM_BBRAM_IDX_VPRO_STATUS,
 };
 
 /* Maximum number of bbram indexes allotted for PD port state data */

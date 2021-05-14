@@ -768,6 +768,8 @@ void me_gpio_change(uint32_t flags);
 
 int get_hardware_id(enum adc_channel channel);
 
+void update_me_change(int change);
+
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);
 void board_resume_from_deep_sleep(void);

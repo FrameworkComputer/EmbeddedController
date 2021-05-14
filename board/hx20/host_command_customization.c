@@ -149,6 +149,7 @@ static enum ec_status host_custom_command_hello(struct host_cmd_handler_args *ar
 	 * to wait SLP_S5 and SLP_S3 signal to boot into OS.
 	 */
 	s5_power_up_control(1);
+	update_me_change(0);
 
 	/**
 	 * Moved sci enable on this host command, we need to check acpi_driver ready flag
