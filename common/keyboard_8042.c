@@ -1002,6 +1002,13 @@ void send_aux_data_to_host_interrupt(uint8_t data)
 	hook_call_deferred(&send_aux_data_to_host_deferred_data, 0);
 }
 
+
+int aux_buffer_avaliable(void)
+{
+	return queue_space(&aux_to_host_queue);
+}
+
+
 /**
  * Handle button changing state.
  *

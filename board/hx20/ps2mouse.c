@@ -47,9 +47,20 @@ void send_movement_packet(void)
 {
 	int i;
 	int max = 3;
+	int timeout = 0;
+
 
 	if (five_button_mode)
 		max = 4;
+	/* sometimes the host will get behind */
+	while(aux_buffer_avaliable() < max && timeout++ < 25)
+		usleep(10*MSEC);
+
+	if (timeout == 10) {
+		/*drop mouse packet - host is too far behind */
+		return;
+	}
+
 	for (i = 0; i < max; i++) {
 		send_data_byte(current_pos[i]);
 	}
