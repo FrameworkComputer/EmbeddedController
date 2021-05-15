@@ -705,7 +705,6 @@ enum als_id {
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE	2048
 
-
 /*
  * include TFDP macros from mchp chip level
  */
@@ -765,6 +764,9 @@ void s5_power_up_control(int control);
 int pos_get_state(void);
 
 void me_gpio_change(uint32_t flags);
+
+
+int ac_boot_status(void);
 
 void update_me_change(int change);
 

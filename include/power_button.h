@@ -58,7 +58,12 @@ void power_button_pch_release(void);
 /**
  * For x86 systems, force a pulse of the power button signal to the PCH.
  */
-void power_button_pch_pulse(void);
+__override_proto void power_button_pch_pulse(void);
+
+/**
+ * For x86 systems, simulate a power button press.
+ */
+void power_button_simulate_press(void);
 
 /**
  * Returns the time when DSW_PWROK was asserted. It should be customized

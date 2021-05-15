@@ -46,6 +46,7 @@ static void sci_enable(void)
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
 		s5_power_up_control(0);
 		update_soc_power_limit(1);
+		system_set_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, ac_boot_status());
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }
@@ -122,6 +123,17 @@ static enum ec_status factory_mode(struct host_cmd_handler_args *args)
 		factory_setting(enable);
 	else
 		factory_setting(!enable);
+
+	if (p->flags == RESET_FOR_SHIP)
+	{
+		// clear bbram for shipping
+		system_set_bbram(SYSTEM_BBRAM_IDX_CHG_MAX, 0);
+		system_set_bbram(SYSTEM_BBRAM_IDX_KBSTATE, 0);
+		system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, 0);
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_MAGIC, EC_PARAM_CHASSIS_BBRAM_MAGIC);
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, 0);
+		system_set_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, 0);
+	}
 
 	return EC_SUCCESS;
 }
