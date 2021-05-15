@@ -47,9 +47,20 @@ void send_movement_packet(void)
 {
 	int i;
 	int max = 3;
+	int timeout = 0;
+
 
 	if (five_button_mode)
 		max = 4;
+	/* sometimes the host will get behind */
+	while (aux_buffer_available() < max && timeout++ < 25)
+		usleep(10*MSEC);
+
+	if (timeout == 25) {
+		/*drop mouse packet - host is too far behind */
+		return;
+	}
+
 	for (i = 0; i < max; i++) {
 		send_data_byte(current_pos[i]);
 	}
@@ -295,8 +306,14 @@ void read_touchpad_in_report(void)
 	if (rv != EC_SUCCESS)
 		goto read_failed;
 read_failed:
-	if (rv != EC_SUCCESS)
+	if (rv != EC_SUCCESS) {
 		CPRINTS("TP Read failed! %d", rv);
+		/* sometimes we get a read failed for unknown reason to try again in a while
+		 * to recover
+		 */
+		task_set_event(emumouse_task_id, PS2MOUSE_EVT_INTERRUPT, 10*MSEC);
+
+	}
 	i2c_lock(I2C_PORT_TOUCHPAD, 0);
 	gpio_enable_interrupt(GPIO_EC_I2C_3_SDA);
 
