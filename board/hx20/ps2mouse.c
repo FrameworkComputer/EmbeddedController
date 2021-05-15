@@ -4,6 +4,10 @@
  * found in the LICENSE file.
  *
  * i2c to PS2 compat mouse emulation using hid-i2c to ps2 conversion
+ * This is designed to function with a pixart hid-i2c touchpad
+ * and there are a few settings that configure this touchpad
+ * mouse mode based on fixed assumptions from the hid descriptor
+ * specifically the mode switch command.
  */
 #include "system.h"
 #include "task.h"
@@ -33,7 +37,12 @@ static uint8_t ec_mode_disabled;
 static uint8_t detected_host_packet;
 static uint8_t emumouse_task_id;
 
-
+uint8_t aux_data;
+void send_data_byte(uint8_t data) {
+	send_aux_data_to_host_interrupt(data);
+	/*we want the host to process mouse packets slowly*/
+	usleep(750);
+}
 void send_movement_packet(void)
 {
 	int i;
@@ -42,22 +51,16 @@ void send_movement_packet(void)
 	if (five_button_mode)
 		max = 4;
 	for (i = 0; i < max; i++) {
-		send_aux_data_to_host_interrupt(current_pos[i]);
-		/*we want the host to process mouse packets slowly*/
-		usleep(250);
+		send_data_byte(current_pos[i]);
 	}
 }
-void aux_port_state_change(uint8_t enabled)
-{
-	if (ec_mode_disabled) {
-		return;
-	}
-	if (enabled) {
-		mouse_state = PS2MSTATE_RESET;
-		send_aux_data_to_device(0);
-	}
-}
+
 void send_aux_data_to_device(uint8_t data)
+{
+	aux_data = data;
+	task_set_event(emumouse_task_id, PS2MOUSE_EVT_AUX_DATA, 0);
+}
+void process_request(uint8_t data)
 {
 	uint8_t response;
 
@@ -67,8 +70,8 @@ void send_aux_data_to_device(uint8_t data)
 
 	switch (mouse_state) {
 	case PS2MSTATE_RESET:
-		send_aux_data_to_host_interrupt(PS2MOUSE_BAT_SUCCESS);
-		send_aux_data_to_host_interrupt(PS2MOUSE_ID_PS2);
+		send_data_byte(PS2MOUSE_BAT_SUCCESS);
+		send_data_byte(PS2MOUSE_ID_PS2);
 		mouse_state = PS2MSTATE_STREAM;
 		mouse_scale = 1;
 		break;
@@ -82,13 +85,13 @@ void send_aux_data_to_device(uint8_t data)
 	case PS2MSTATE_REMOTE:
 		switch (data) {
 		case PS2MOUSE_RESET:
-			mouse_state = PS2MSTATE_RESET;
-			send_aux_data_to_host_interrupt(PS2MOUSE_ACKNOWLEDGE);
-			send_aux_data_to_host_interrupt(PS2MOUSE_BAT_SUCCESS);
-			send_aux_data_to_host_interrupt(PS2MOUSE_ID_PS2);
+			mouse_state = PS2MSTATE_STREAM;
+			send_data_byte(PS2MOUSE_ACKNOWLEDGE);
+			send_data_byte(PS2MOUSE_BAT_SUCCESS);
+			send_data_byte(PS2MOUSE_ID_PS2);
 			break;
 		case PS2MOUSE_READ_DATA:
-			send_aux_data_to_host_interrupt(PS2MOUSE_ACKNOWLEDGE);
+			send_data_byte(PS2MOUSE_ACKNOWLEDGE);
 		case PS2MOUSE_RESEND:
 			CPRINTS("PS2 Got resend");
 			send_movement_packet();
@@ -109,19 +112,19 @@ void send_aux_data_to_device(uint8_t data)
 			mouse_state = PS2MSTATE_CONSUME_1_BYTE_ACK;
 			goto SENDACK;
 		case PS2MOUSE_GET_DEVICE_ID:
-			send_aux_data_to_host_interrupt(PS2MOUSE_ACKNOWLEDGE);
-			send_aux_data_to_host_interrupt(PS2MOUSE_ID_PS2);
+			send_data_byte(PS2MOUSE_ACKNOWLEDGE);
+			send_data_byte(PS2MOUSE_ID_PS2);
 			break;
 		case PS2MOUSE_SET_WRAP_MODE:
 			mouse_state = PS2MSTATE_WRAP;
 			goto SENDACK;
 		case PS2MOUSE_STATUS_REQUEST:
-			send_aux_data_to_host_interrupt(PS2MOUSE_ACKNOWLEDGE);
+			send_data_byte(PS2MOUSE_ACKNOWLEDGE);
 			response = mouse_state == PS2MSTATE_REMOTE ? BIT(6) : 0;
 			response |= data_report_en ? STATUS_DATA_ENABLED : 0;
-			send_aux_data_to_host_interrupt(response);
-			send_aux_data_to_host_interrupt(0x02); /*resolution*/
-			send_aux_data_to_host_interrupt(0x64); /*sample rate*/
+			send_data_byte(response);
+			send_data_byte(0x02); /*resolution*/
+			send_data_byte(0x64); /*sample rate*/
 			break;
 		case PS2MOUSE_SET_SCALE_2:
 			mouse_scale = 2;
@@ -147,7 +150,7 @@ void send_aux_data_to_device(uint8_t data)
 			mouse_state = PS2MSTATE_RESET;
 			goto SENDACK;
 		} else
-			send_aux_data_to_host_interrupt(data);
+			send_data_byte(data);
 		break;
 	default:
 		CPRINTS("PS2 Invalid state 0x%x", mouse_state);
@@ -155,7 +158,7 @@ void send_aux_data_to_device(uint8_t data)
 	return;
 
 SENDACK:
-	send_aux_data_to_host_interrupt(PS2MOUSE_ACKNOWLEDGE);
+	send_data_byte(PS2MOUSE_ACKNOWLEDGE);
 }
 
 /*this interrupt is used to monitor if the main SOC is directly communicating with the
@@ -297,6 +300,10 @@ read_failed:
 	i2c_lock(I2C_PORT_TOUCHPAD, 0);
 	gpio_enable_interrupt(GPIO_EC_I2C_3_SDA);
 
+
+	 if (mouse_state == PS2MSTATE_RESET) {
+		 return;
+	 }
 	/* Packet structure:
 	 * first two bytes are length (LSB MSB) including length field?
 	 * 3rd byte is report ID
@@ -346,7 +353,12 @@ void mouse_interrupt_handler_task(void *p)
 			gpio_disable_interrupt(GPIO_EC_I2C_3_SDA);
 		}
 
+		if (evt & PS2MOUSE_EVT_AUX_DATA) {
+			process_request(aux_data);
+		}
+
 		if  (evt & PS2MOUSE_EVT_INTERRUPT) {
+			CPRINTS("EMUMouse INT");
 			usleep(4*MSEC);
 			/* at the expensive of a slight additional latency
 			 * check to see if the soc has grabbed this out from under us
@@ -354,10 +366,11 @@ void mouse_interrupt_handler_task(void *p)
 			if (gpio_get_level(GPIO_SOC_TP_INT_L) == 1) {
 				CPRINTS("EMUMouse Detected host packet during interrupt handling");
 				detected_host_packet = true;
-			} else if (mouse_state == PS2MSTATE_STREAM) {
+			} else {
 				read_touchpad_in_report();
 			}
 		}
+
 		if  (evt & PS2MOUSE_EVT_I2C_INTERRUPT) {
 			if (detected_host_packet) {
 				CPRINTS("EMUMouse detected host packet from i2c");

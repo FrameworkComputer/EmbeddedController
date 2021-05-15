@@ -10,7 +10,6 @@
 
 #include "common.h"
 #include "button.h"
-
 /**
  * Called by power button handler and button interrupt handler.
  *
@@ -27,6 +26,14 @@ void button_state_changed(enum keyboard_button_type button, int is_pressed);
  * @param is_cmd        Is byte command (!=0) or data (0)
  */
 void keyboard_host_write(int data, int is_cmd);
+
+/**
+ * Get the amount of free 8042 buffer slots
+ * this is used to put backpressure on the host
+ * if the keyboard task gets too slow
+ * @return bytes_avaliable
+ */
+int keyboard_host_write_avaliable(void);
 
 /*
  * Board specific callback function when a key state is changed.
@@ -58,14 +65,6 @@ void send_aux_data_to_host_interrupt(uint8_t data);
  * @param data	Aux data to send to device.
  */
 void send_aux_data_to_device(uint8_t data);
-
-/**
- * Called when the PS2 port changes states between
- * enabled and disabled
- *
- * @param enabled	If the port is now enabled or not
- */
-void aux_port_state_change(uint8_t enabled);
 
 /*
  * This function can help change the keyboard top row layout as presented to the
