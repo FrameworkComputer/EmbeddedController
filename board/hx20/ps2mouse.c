@@ -358,7 +358,6 @@ void mouse_interrupt_handler_task(void *p)
 		}
 
 		if  (evt & PS2MOUSE_EVT_INTERRUPT) {
-			CPRINTS("EMUMouse INT");
 			usleep(4*MSEC);
 			/* at the expensive of a slight additional latency
 			 * check to see if the soc has grabbed this out from under us
