@@ -60,9 +60,9 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 void send_aux_data_to_host_interrupt(uint8_t data);
 
 /**
- * Returns how many bytes of aux data are avaliable in the queue
- * */
-int aux_buffer_avaliable(void);
+ * Returns how many bytes of aux data are available in the queue
+ */
+int aux_buffer_available(void);
 
 /**
  * Send aux data to device.

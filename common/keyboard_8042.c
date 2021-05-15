@@ -1003,7 +1003,7 @@ void send_aux_data_to_host_interrupt(uint8_t data)
 }
 
 
-int aux_buffer_avaliable(void)
+int aux_buffer_available(void)
 {
 	return queue_space(&aux_to_host_queue);
 }
