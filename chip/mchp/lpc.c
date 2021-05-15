@@ -530,6 +530,7 @@ static void setup_lpc(void)
 	/* Set up 8042 interface at 0x60/0x64 */
 	chip_8042_config(0x60);
 
+	MCHP_8042_STS |= 0x10;
 #ifndef CONFIG_KEYBOARD_IRQ_GPIO
 	/* Set up SERIRQ for keyboard */
 	MCHP_8042_KB_CTRL |= BIT(5);
@@ -878,18 +879,51 @@ void acpi_1_interrupt(void)
 DECLARE_IRQ(MCHP_IRQ_ACPIEC1_IBF, acpi_1_interrupt, 1);
 
 #ifdef HAS_TASK_KEYPROTO
+
+/* Note if we never process this then
+ * we will continue to trigger this
+ * until the keyboard task gets unblocked
+ * */
+static void handle_keyboard_ibf_deferred(void)
+{
+	/* *
+	 * reenable the interrupt so we can try again
+	 * since we never cleared the source bit
+	 * this will immediately trigger
+	 * kb_ibf_interrupt */
+	MCHP_INT_ENABLE(MCHP_8042_GIRQ) = MCHP_8042_IBF_GIRQ_BIT;
+}
+DECLARE_DEFERRED(handle_keyboard_ibf_deferred);
+
 /*
  * Reading data out of input buffer clears read-only status
  * in 8042EM. Next, we must clear aggregator status.
  */
 void kb_ibf_interrupt(void)
 {
-	if (lpc_keyboard_input_pending())
-		keyboard_host_write(MCHP_8042_H2E,
-				    MCHP_8042_STS & BIT(3));
-
+	if (lpc_keyboard_input_pending()) {
+		if (keyboard_host_write_avaliable() == 0) {
+			/* if the keyboard task is not processing
+			 * keyboard data fast enough we will wait to
+			 * process the interrupt
+			 * this provides backpressure to the host
+			 * which has to wait for us to read H2E
+			 * register before writing again
+			 * Otherwise some OS, esp windows
+			 * will fill up the queue and the 8042 will
+			 * get out of sync due data being
+			 * silently dropped from the keyboard
+			 * queue
+			 * */
+			MCHP_INT_DISABLE(MCHP_8042_GIRQ) = MCHP_8042_IBF_GIRQ_BIT;
+			hook_call_deferred(&handle_keyboard_ibf_deferred_data, MSEC);
+			return;
+		} else {
+			keyboard_host_write(MCHP_8042_H2E,
+						MCHP_8042_STS & BIT(3));
+		}
+	}
 	MCHP_INT_SOURCE(MCHP_8042_GIRQ) = MCHP_8042_IBF_GIRQ_BIT;
-	task_wake(TASK_ID_KEYPROTO);
 }
 DECLARE_IRQ(MCHP_IRQ_8042EM_IBF, kb_ibf_interrupt, 1);
 
@@ -916,6 +950,11 @@ DECLARE_IRQ(MCHP_IRQ_8042EM_OBE, kb_obe_interrupt, 1);
 int lpc_keyboard_has_char(void)
 {
 	return (MCHP_8042_STS & BIT(0)) ? 1 : 0;
+}
+
+int lpc_aux_has_char(void)
+{
+		return (MCHP_8042_STS & BIT(5)) ? 1 : 0;
 }
 
 int lpc_keyboard_input_pending(void)
@@ -954,8 +993,18 @@ void lpc_keyboard_clear_buffer(void)
 
 void lpc_keyboard_resume_irq(void)
 {
-	if (lpc_keyboard_has_char())
+	if (lpc_keyboard_has_char()) {
 		keyboard_irq_assert();
+#ifdef CONFIG_HOSTCMD_ESPI
+		/* clear any pending data
+		 * we notice sometimes windows
+		 * does not process data on IRQ12
+		 * maybe due to bios misconfiguration
+		 * so if we timeout sending some data to
+		 * the host, then just drop it */
+		MCHP_PCR_CHIP_OSC_ID = MCHP_8042_OBF_CLR;
+#endif
+	}
 }
 
 void lpc_set_acpi_status_mask(uint8_t mask)
