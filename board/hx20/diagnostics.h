@@ -10,17 +10,18 @@
 enum diagnostics_device_idx {
     DIAGNOSTICS_START= 0,
 
-    DIAGNOSTICS_HW_PGOOD_3V5V = 1,
+    DIAGNOSTICS_HW_PGOOD_3V5V,
     DIAGNOSTICS_VCCIN_AUX_VR,
-    DIAGNOSTICS_SLP_S4,
+    DIAGNOSTICS_SLP_S4,             /*0x008*/
     DIAGNOSTICS_HW_PGOOD_VR,
 
     DIAGNOSTICS_TOUCHPAD,
     DIAGNOSTICS_AUDIO_DAUGHTERBOARD,
-    DIAGNOSTICS_THERMAL_SENSOR,
+    DIAGNOSTICS_THERMAL_SENSOR,     /*0x080*/
     DIAGNOSTICS_NOFAN,
     DIAGNOSTICS_NO_S0,
     DIAGNOSTICS_NO_DDR,
+    DIAGNOSTICS_NO_EDP,             /*0x800*/
 
     /*Preboot max*/
     DIAGNOSTICS_HW_FINISH,
@@ -32,6 +33,7 @@ enum diagnostics_device_idx {
     DIAGNOSTICS_BIOS_BIT4,
     DIAGNOSTICS_BIOS_BIT5,
     DIAGNOSTICS_BIOS_BIT6,
+    DIAGNOSTICS_BIOS_BIT7,
     DIAGNOSTICS_MAX
 };
 
@@ -43,5 +45,7 @@ void set_hw_diagnostic(enum diagnostics_device_idx idx, bool error);
 void set_bios_diagnostic(uint8_t code);
 
 void reset_diagnostics(void);
+
+bool diagnostics_tick(void);
 
 #endif	/* __CROS_EC_DIAGNOSTICS_H */

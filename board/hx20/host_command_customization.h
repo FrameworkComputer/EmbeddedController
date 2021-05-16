@@ -102,6 +102,7 @@ enum ec_params_diagnosis_code {
 	CODE_DDR_TRAINING_START	= 1,
 	CODE_DDR_TRAINING_FINISH = 2,
 	CODE_DDR_FAIL = 3,
+	CODE_NO_EDP = 4,
 	CODE_PORT80_COMPLETE = 0xFF,
 };
 

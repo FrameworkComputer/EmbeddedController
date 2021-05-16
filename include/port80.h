@@ -31,4 +31,11 @@ void port_80_write(int data);
  */
 int port_80_read(void);
 
+/**
+ * Get last boot code
+ *
+ * @return Last port 80 code from boot
+ */
+int port_80_last(void);
+
 #endif  /* __CROS_EC_PORT80_H */
