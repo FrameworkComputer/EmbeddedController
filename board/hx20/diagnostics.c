@@ -69,7 +69,7 @@ bool diagnostics_tick(void)
 	}
 
 	if (bios_hc == CODE_DDR_TRAINING_START) {
-		set_diagnostic_leds(hw_diagnostic_tick % 3);
+		set_diagnostic_leds(EC_LED_COLOR_GREEN);
 		return true;
 	}
 
