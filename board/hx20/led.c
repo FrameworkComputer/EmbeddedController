@@ -251,9 +251,6 @@ static void led_set_battery(void)
 		}
 		break;
 	case PWR_STATE_ERROR:
-		set_active_port_color((battery_ticks & 0x2) ?
-				EC_LED_COLOR_WHITE : -1);
-		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		set_active_port_color(EC_LED_COLOR_WHITE);
 		break;

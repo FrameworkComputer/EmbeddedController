@@ -15,6 +15,9 @@
 #include "timer.h"
 #include "led_pwm.h"
 
+#include "battery.h"
+#include "charge_state.h"
+
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
@@ -92,6 +95,10 @@ bool diagnostics_tick(void)
 		set_hw_diagnostic(DIAGNOSTICS_NO_S0, true);
 	}
 
+    if (charge_get_state() == PWR_STATE_ERROR){
+        set_hw_diagnostic(DIAGNOSTICS_HW_NO_BATTERY, true);
+    }
+
 	if (hw_diagnostic_tick & 0x01) {
 		/*off*/
 
@@ -118,23 +125,21 @@ bool diagnostics_tick(void)
 	return true;
 
 }
+#define ADC_NC_DELTA 2000
 
 static void diagnostic_check_tempsensor_deferred(void)
 {
 	int temps = 0;
 
-	f75303_get_val(F75303_IDX_LOCAL, &temps);
-	if (temps == 0)
-			set_hw_diagnostic(DIAGNOSTICS_THERMAL_SENSOR, true);
-}
-DECLARE_DEFERRED(diagnostic_check_tempsensor_deferred);
-
-#define ADC_NC_DELTA 1800
-static void diagnostics_check_devices(void)
-{
 	int low_adc[2];
 	int high_adc[2];
 	int device_id[2];
+
+	f75303_get_val(F75303_IDX_LOCAL, &temps);
+	if (temps == 0)
+			set_hw_diagnostic(DIAGNOSTICS_THERMAL_SENSOR, true);
+
+
 
 	gpio_set_flags(GPIO_TP_BOARD_ID, GPIO_PULL_UP);
 	gpio_set_flags(GPIO_AD_BOARD_ID, GPIO_PULL_UP);
@@ -162,7 +167,14 @@ static void diagnostics_check_devices(void)
 		(high_adc[1] - low_adc[1]) > ADC_NC_DELTA) {
 		set_hw_diagnostic(DIAGNOSTICS_AUDIO_DAUGHTERBOARD, true);
 	}
+    CPRINTS("TP  Ver %d, delta %d", device_id[0], high_adc[0] - low_adc[0]);
+    CPRINTS("Aud Ver %d, delta %d", device_id[1], high_adc[1] - low_adc[1]);
 
+}
+DECLARE_DEFERRED(diagnostic_check_tempsensor_deferred);
+
+static void diagnostics_check_devices(void)
+{
 	hook_call_deferred(&diagnostic_check_tempsensor_deferred_data, 2000*MSEC);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME,
