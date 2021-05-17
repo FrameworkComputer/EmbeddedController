@@ -9,6 +9,7 @@
 
 extern void test_suite_battery(void);
 extern void test_suite_cbi(void);
+extern void test_suite_smart_battery(void);
 
 void test_main(void)
 {
@@ -19,4 +20,5 @@ void test_main(void)
 	/* Test suites to run after ec_app_main.*/
 	test_suite_battery();
 	test_suite_cbi();
+	test_suite_smart_battery();
 }

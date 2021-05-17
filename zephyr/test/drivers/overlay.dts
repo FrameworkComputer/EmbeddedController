@@ -84,4 +84,12 @@
 		timeout = <5>;
 		wp-gpios = <&gpio_wp_l>;
 	};
+
+	battery: sb@b {
+		compatible = "zephyr,smart-battery";
+		reg = <0xb>;
+		label = "BATTERY";
+		cycle-count = <99>;
+		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+	};
 };
