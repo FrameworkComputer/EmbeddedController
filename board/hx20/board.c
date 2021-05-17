@@ -535,19 +535,19 @@ struct {
 	int thresh_mv;
 } const hx20_board_versions[] = {
 	/* Vin = 3.3V, Ideal voltage */
-	{ BOARD_VERSION_0, 203 },  /* 100 mV, 0 Kohm */
-	{ BOARD_VERSION_1, 409 },  /* 310 mV, Kohm */
-	{ BOARD_VERSION_2, 615 },  /* 520 mV, Kohm */
-	{ BOARD_VERSION_3, 821 },  /* 720 mV, Kohm */
-	{ BOARD_VERSION_4, 1028},   /* 930 mV, Kohm */
-	{ BOARD_VERSION_5, 1234 }, /* 1130 mV, Kohm */
-	{ BOARD_VERSION_6, 1440 }, /* 1340 mV, Kohm */
-	{ BOARD_VERSION_7, 1646 }, /* 1550 mV, Kohm */
-	{ BOARD_VERSION_8, 1853 }, /* 1750 mV, Kohm */
-	{ BOARD_VERSION_9, 2059 }, /* 1960 mV, Kohm */
-	{ BOARD_VERSION_10, 2265 }, /* 2170 mV, Kohm */
-	{ BOARD_VERSION_11, 2471 }, /* 2370 mV, Kohm */
-	{ BOARD_VERSION_12, 2678 }, /* 2580 mV, Kohm */
+	{ BOARD_VERSION_0, 203 },  /* 100 mV, 0 Kohm - Unused */
+	{ BOARD_VERSION_1, 409 },  /* 310 mV, Kohm - Unused */
+	{ BOARD_VERSION_2, 615 },  /* 520 mV, Kohm - Unused */
+	{ BOARD_VERSION_3, 821 },  /* 720 mV, Kohm - Unused */
+	{ BOARD_VERSION_4, 1028},   /* 930 mV, Kohm - EVT1 */
+	{ BOARD_VERSION_5, 1234 }, /* 1130 mV, Kohm - DVT1 Vpro */
+	{ BOARD_VERSION_6, 1440 }, /* 1340 mV, Kohm - DVT1 Non Vpro */
+	{ BOARD_VERSION_7, 1646 }, /* 1550 mV, Kohm - DVT2 Vpro */
+	{ BOARD_VERSION_8, 1853 }, /* 1750 mV, Kohm - DVT2 Non Vpro */
+	{ BOARD_VERSION_9, 2059 }, /* 1960 mV, Kohm - PVT Vpro */
+	{ BOARD_VERSION_10, 2265 }, /* 2170 mV, Kohm - PVT Non Vpro */
+	{ BOARD_VERSION_11, 2471 }, /* 2370 mV, Kohm - MP Vpro */
+	{ BOARD_VERSION_12, 2678 }, /* 2580 mV, Kohm - MP Non Vpro */
 	{ BOARD_VERSION_13, 2884 }, /* 2780 mV, Kohm */
 	{ BOARD_VERSION_14, 3090 }, /* 2990 mV, Kohm */
 	{ BOARD_VERSION_15, 3300 }, /* 3300 mV, Kohm */
