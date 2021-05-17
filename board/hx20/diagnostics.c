@@ -192,8 +192,10 @@ void set_hw_diagnostic(enum diagnostics_device_idx idx, bool error)
 void set_bios_diagnostic(uint8_t code)
 {
 	bios_hc = code;
-	if (code == CODE_PORT80_COMPLETE)
+	if (code == CODE_PORT80_COMPLETE) {
 		bios_complete = true;
+		CPRINTS("BIOS COMPLETE");
+	}
 
 	if (code == CODE_DDR_FAIL)
 		set_hw_diagnostic(DIAGNOSTICS_NO_DDR, true);
