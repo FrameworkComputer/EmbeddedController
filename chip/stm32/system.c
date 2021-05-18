@@ -168,11 +168,20 @@ void chip_pre_init(void)
 		STM32_RCC_PB2_TIM1  | STM32_RCC_PB2_TIM8  | STM32_RCC_PB2_TIM9 |
 		STM32_RCC_PB2_TIM10 | STM32_RCC_PB2_TIM11;
 #elif defined(CHIP_FAMILY_STM32L4)
+
+#ifdef	CHIP_VARIANT_STM32L431X
+	apb1fz_reg =
+		STM32_RCC_PB1_TIM2 | STM32_RCC_PB1_TIM7 | STM32_RCC_PB1_TIM6 |
+		STM32_RCC_PB1_WWDG | STM32_RCC_PB1_IWDG;
+	apb2fz_reg =
+		STM32_RCC_PB2_TIM1 | STM32_RCC_PB2_TIM15 | STM32_RCC_PB2_TIM16;
+#else
 	apb1fz_reg =
 		STM32_RCC_PB1_TIM2 | STM32_RCC_PB1_TIM3 | STM32_RCC_PB1_TIM4 |
 		STM32_RCC_PB1_TIM5 | STM32_RCC_PB1_TIM6 | STM32_RCC_PB1_TIM7 |
 		STM32_RCC_PB1_WWDG | STM32_RCC_PB1_IWDG;
 	apb2fz_reg = STM32_RCC_PB2_TIM1 | STM32_RCC_PB2_TIM8;
+#endif
 #elif defined(CHIP_FAMILY_STM32L)
 	apb1fz_reg =
 		STM32_RCC_PB1_TIM2 | STM32_RCC_PB1_TIM3 | STM32_RCC_PB1_TIM4 |
@@ -254,7 +263,11 @@ void system_pre_init(void)
 
 	/* enable clock on Power module */
 #ifndef CHIP_FAMILY_STM32H7
+#ifdef	CHIP_FAMILY_STM32L4
+	STM32_RCC_APB1ENR1 |= STM32_RCC_PWREN;
+#else
 	STM32_RCC_APB1ENR |= STM32_RCC_PWREN;
+#endif
 #endif
 #if defined(CHIP_FAMILY_STM32F4)
 	/* enable backup registers */
@@ -262,6 +275,9 @@ void system_pre_init(void)
 #elif defined(CHIP_FAMILY_STM32H7)
 	/* enable backup registers */
 	STM32_RCC_AHB4ENR |= BIT(28);
+#elif defined(CHIP_FAMILY_STM32L4)
+	/* enable RTC APB clock */
+	STM32_RCC_APB1ENR1 |= STM32_RCC_APB1ENR1_RTCAPBEN;
 #else
 	/* enable backup registers */
 	STM32_RCC_APB1ENR |= BIT(27);

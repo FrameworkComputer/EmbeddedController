@@ -16,6 +16,13 @@
 #else
 /* CPU core BFD configuration */
 #include "core/cortex-m/config_core.h"
+#define STM32_IRQ_EXTI0_PRIORITY	1
+#define STM32_IRQ_EXTI1_PRIORITY	1
+#define STM32_IRQ_EXTI2_PRIORITY	1
+#define STM32_IRQ_EXTI3_PRIORITY	1
+#define STM32_IRQ_EXTI4_PRIORITY	1
+#define STM32_IRQ_EXTI9_5_PRIORITY	1
+#define STM32_IRQ_EXTI15_10_PRIORITY	1
 #endif
 
 /* Default to UART 1 for EC console */
@@ -63,6 +70,8 @@
 #include "config-stm32g41xb.h"
 #elif defined(CHIP_VARIANT_STM32G473XC)
 #include "config-stm32g473xc.h"
+#elif defined(CHIP_VARIANT_STM32L431X)
+#include "config-stm32l431.h"
 #else
 #error "Unsupported chip variant"
 #endif

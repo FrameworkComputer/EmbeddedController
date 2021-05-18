@@ -127,10 +127,22 @@ defined(CHIP_FAMILY_STM32H7)
 	else if (n >= 15 && n <= 17)
 		mask = STM32_RCC_APB2ENR_TIM15 << (n - 15);
 #endif
+#if defined(CHIP_FAMILY_STM32L4)
+	if (n >= 2 && n <= 7) {
+		reg = &STM32_RCC_APB1ENR1;
+		mask = STM32_RCC_PB1_TIM2 << (n - 2);
+	} else if (n == 1 || n == 15 || n == 16) {
+		reg = &STM32_RCC_APB2ENR;
+		mask = (n == 1)	 ? STM32_RCC_APB2ENR_TIM1EN :
+		       (n == 15) ? STM32_RCC_APB2ENR_TIM15EN :
+					 STM32_RCC_APB2ENR_TIM16EN;
+	}
+#else
 	if (n >= 2 && n <= 7) {
 		reg = &STM32_RCC_APB1ENR;
 		mask = STM32_RCC_PB1_TIM2 << (n - 2);
 	}
+#endif
 
 	if (!mask)
 		return;
@@ -258,6 +270,8 @@ const struct irq_priority __keep IRQ_PRIORITY(IRQ_WD)
 
 void hwtimer_setup_watchdog(void)
 {
+	int freq;
+
 	/* Enable clock */
 	__hw_timer_enable_clock(TIM_WATCHDOG, 1);
 	/* Delay 1 APB clock cycle after the clock is enabled */
@@ -272,13 +286,31 @@ void hwtimer_setup_watchdog(void)
 	STM32_TIM_CR2(TIM_WATCHDOG) = 0x0000;
 	STM32_TIM_SMCR(TIM_WATCHDOG) = 0x0000;
 
-	/* AUto-reload value */
-	STM32_TIM_ARR(TIM_WATCHDOG) = CONFIG_AUX_TIMER_PERIOD_MS;
+	/*
+	 * all timers has 16-bit prescale.
+	 * For clock freq > 64MHz, 16bit prescale cannot meet 1KHz.
+	 * set prescale as 10KHz and 10 times arr value instead.
+	 * For clock freq < 64MHz, timer runs at 1KHz.
+	 */
+	freq = clock_get_timer_freq();
 
-	/* Update prescaler: watchdog timer runs at 1KHz */
-	STM32_TIM_PSC(TIM_WATCHDOG) =
-		(clock_get_timer_freq() / SECOND * MSEC) - 1;
+	if (freq <= 64000000 || !IS_ENABLED(CHIP_FAMILY_STM32L4)) {
+		/* AUto-reload value */
+		STM32_TIM_ARR(TIM_WATCHDOG) = CONFIG_AUX_TIMER_PERIOD_MS;
 
+		/* Update prescaler: watchdog timer runs at 1KHz */
+		STM32_TIM_PSC(TIM_WATCHDOG) =
+			(freq / SECOND * MSEC) - 1;
+	}
+#ifdef CHIP_FAMILY_STM32L4
+	else {
+		/* 10 times ARR value with 10KHz timer */
+		STM32_TIM_ARR(TIM_WATCHDOG) = CONFIG_AUX_TIMER_PERIOD_MS * 10;
+
+		/* Update prescaler: watchdog timer runs at 10KHz */
+		STM32_TIM_PSC(TIM_WATCHDOG) = (freq / SECOND / 10 * MSEC) - 1;
+	}
+#endif
 	/* Reload the pre-scaler */
 	STM32_TIM_EGR(TIM_WATCHDOG) = 0x0001;
 
