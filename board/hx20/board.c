@@ -75,8 +75,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define POWER_LIMIT_1_W	28
-
 #ifdef CONFIG_BOARD_PRE_INIT
 /*
  * Used to enable JTAG debug during development.
@@ -750,68 +748,8 @@ DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 
 #endif
 
-void update_soc_power_limit(int force)
-{
-	/*
-	 * power limit is related to AC state, battery percentage, and power budget
-	 */
-
-	int active_power;
-	int pps_power_budget;
-	int battery_percent;
-	int pl2_watt = 0;
-	int pl4_watt = 0;
-	int psys_watt = 0;
-
-	static int old_pl2_watt = -1;
-	static int old_pl4_watt = -1;
-	static int old_psys_watt = -1;
-
-	/* TODO: get the power and pps_power_budget */
-	battery_percent = charge_get_percent();
-	active_power = charge_manager_get_power_limit_uw()/1000000;
-	pps_power_budget = cypd_get_pps_power_budget();
-
-	if (!extpower_is_present() || (active_power < 55)) {
-		/* Battery only or ADP < 55W */
-		pl2_watt = POWER_LIMIT_1_W;
-		pl4_watt = 70 - pps_power_budget;
-		psys_watt = 52 - pps_power_budget;
-	} else if (battery_percent < 30) {
-		/* ADP > 55W and Battery percentage < 30% */
-		pl4_watt = active_power - 15 - pps_power_budget;
-		pl2_watt = MIN((pl4_watt * 90) / 100, 64);
-		psys_watt = ((active_power * 95) / 100) - pps_power_budget;
-	} else {
-		/* ADP > 55W and Battery percentage >= 30% */
-		pl2_watt = 64;
-		pl4_watt = 121;
-		/* psys watt = adp watt * 0.95 + battery watt(55 W) * 0.7 - pps power budget */
-		psys_watt = ((active_power * 95) / 100) + 39 - pps_power_budget;
-	}
-	if (pl2_watt != old_pl2_watt || pl4_watt != old_pl4_watt ||
-			psys_watt != old_psys_watt || force) {
-		old_psys_watt = psys_watt;
-		old_pl4_watt = pl4_watt;
-		old_pl2_watt = pl2_watt;
-		CPRINTS("Updating SOC Power Limits: PL2 %d, PL4 %d, Psys %d, Adapter %d", 
-				pl2_watt, pl4_watt, psys_watt, active_power);
-		peci_update_PL1(POWER_LIMIT_1_W);
-		peci_update_PL2(pl2_watt);
-		peci_update_PL4(pl4_watt);
-		peci_update_PsysPL2(psys_watt);
-	}
 
 
-}
-
-void update_soc_power_limit_hook(void)
-{
-	update_soc_power_limit(0);
-}
-
-DECLARE_HOOK(HOOK_AC_CHANGE, update_soc_power_limit_hook, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, update_soc_power_limit_hook, HOOK_PRIO_DEFAULT);
 
 const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_LOCAL] = {
