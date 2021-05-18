@@ -1080,7 +1080,7 @@ void sm5803_handle_interrupt(int chgnum)
 
 	/* Update extpower if VCHGPWR changes. */
 	if (int_reg & SM5803_INT2_VCHGPWR)
-		board_vbus_present_change();
+		board_check_extpower();
 
 	/* TODO(b/159376384): Take action on fatal BFET power alert. */
 	rv = main_read8(chgnum, SM5803_REG_INT3_REQ, &int_reg);

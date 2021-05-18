@@ -8,7 +8,15 @@
 #ifndef __CROS_EC_EXTPOWER_H
 #define __CROS_EC_EXTPOWER_H
 
+#include "common.h"
+
 enum gpio_signal;	/* from gpio_signal.h */
+
+/**
+ * Run board specific code to update extpower status.  The default
+ * implementation does nothing, but a board may override it.
+ */
+__override_proto void board_check_extpower(void);
 
 /**
  * Return non-zero if external power is present.

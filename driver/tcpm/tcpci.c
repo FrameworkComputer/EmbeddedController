@@ -1135,9 +1135,6 @@ static void tcpci_check_vbus_changed(int port, int alert, uint32_t *pd_event)
 			if (pd_event)
 				*pd_event |= TASK_EVENT_WAKE;
 		}
-
-		if (pwr_status & TCPC_REG_POWER_STATUS_VBUS_DET)
-			board_vbus_present_change();
 	}
 }
 
