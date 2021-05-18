@@ -138,9 +138,10 @@ static void usb_c1_interrupt(enum gpio_signal s)
 
 static void button_sub_hdmi_hpd_interrupt(enum gpio_signal s)
 {
+	enum fw_config_db db = get_cbi_fw_config_db();
 	int hdmi_hpd = gpio_get_level(GPIO_VOLUP_BTN_ODL_HDMI_HPD);
 
-	if (get_cbi_fw_config_db() == DB_1A_HDMI)
+	if (db == DB_1A_HDMI || db == DB_LTE_HDMI || db == DB_1A_HDMI_LTE)
 		gpio_set_level(GPIO_EC_AP_USB_C1_HDMI_HPD, hdmi_hpd);
 	else
 		button_interrupt(s);
@@ -395,8 +396,9 @@ __override const struct ec_response_keybd_config
 void board_init(void)
 {
 	int on;
+	enum fw_config_db db = get_cbi_fw_config_db();
 
-	if (get_cbi_fw_config_db() == DB_1A_HDMI) {
+	if (db == DB_1A_HDMI || db == DB_LTE_HDMI || db == DB_1A_HDMI_LTE) {
 		/* Select HDMI option */
 		gpio_set_level(GPIO_HDMI_SEL_L, 0);
 	} else {
@@ -526,9 +528,11 @@ __override uint8_t board_get_usb_pd_port_count(void)
 {
 	enum fw_config_db db = get_cbi_fw_config_db();
 
-	if (db == DB_1A_HDMI || db == DB_NONE)
+	if (db == DB_1A_HDMI || db == DB_NONE || db == DB_LTE_HDMI
+			|| db == DB_1A_HDMI_LTE)
 		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
-	else if (db == DB_1C || db == DB_1C_LTE)
+	else if (db == DB_1C || db == DB_1C_LTE || db == DB_1C_1A
+			|| db == DB_1C_1A_LTE)
 		return CONFIG_USB_PD_PORT_MAX_COUNT;
 
 	ccprints("Unhandled DB configuration: %d", db);
@@ -539,9 +543,11 @@ __override uint8_t board_get_charger_chip_count(void)
 {
 	enum fw_config_db db = get_cbi_fw_config_db();
 
-	if (db == DB_1A_HDMI || db == DB_NONE)
+	if (db == DB_1A_HDMI || db == DB_NONE || db == DB_LTE_HDMI
+			|| db == DB_1A_HDMI_LTE)
 		return CHARGER_NUM - 1;
-	else if (db == DB_1C || db == DB_1C_LTE)
+	else if (db == DB_1C || db == DB_1C_LTE || db == DB_1C_1A
+			|| db == DB_1C_1A_LTE)
 		return CHARGER_NUM;
 
 	ccprints("Unhandled DB configuration: %d", db);
