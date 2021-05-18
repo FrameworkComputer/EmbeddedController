@@ -191,7 +191,7 @@ int board_chipset_power_on(void)
 		return false;
 	}
 
-	me_gpio_change(GPIO_OPEN_DRAIN);
+	me_gpio_change(me_change & ME_UNLOCK ? GPIO_PULL_UP : GPIO_PULL_DOWN);
 
 	/* Add 10ms delay between SUSP_VR and RSMRST */
 	msleep(20);
@@ -508,7 +508,7 @@ enum power_state power_handle_state(enum power_state state)
 #endif
 		power_button_enable_led(0);
 
-		me_gpio_change(GPIO_ODR_HIGH);
+		me_gpio_change(GPIO_FLAG_NONE);
 		CPRINTS("PH S3S0->S0");
         return POWER_S0;
 
@@ -520,7 +520,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_PCH_PWROK, 0);
 		gpio_set_level(GPIO_SYS_PWROK, 0);
 		hook_notify(HOOK_CHIPSET_SUSPEND);
-		me_gpio_change(GPIO_ODR_LOW);
+		me_gpio_change(GPIO_PULL_DOWN);
 		f75303_set_enabled(0);
 		return POWER_S3;
 		break;
@@ -578,20 +578,7 @@ void me_gpio_change(uint32_t flags)
 
 	gpio = version > 8 ? GPIO_ME_EN_PVT : GPIO_ME_EN;
 
-	switch (flags) {
-	case GPIO_OPEN_DRAIN:
-		if (me_change & ME_UNLOCK)
-			gpio_set_flags(gpio, GPIO_PULL_UP | GPIO_ODR_HIGH);
-		else
-			gpio_set_flags(gpio, GPIO_PULL_DOWN | GPIO_ODR_HIGH);
-		break;
-	case GPIO_ODR_HIGH:
-		gpio_set_flags(gpio, GPIO_ODR_HIGH);
-		break;
-	case GPIO_ODR_LOW:
-		gpio_set_flags(gpio, GPIO_ODR_LOW);
-		break;
-	}
+	gpio_set_flags(gpio, flags);
 }
 
 void update_me_change(int change)
