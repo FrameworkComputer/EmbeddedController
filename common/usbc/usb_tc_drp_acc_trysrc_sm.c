@@ -3011,6 +3011,10 @@ static void tc_attached_src_entry(const int port)
 	/* Inform PPC and OCP module that a sink is connected. */
 	tc_set_partner_role(port, PPC_DEV_SNK);
 
+	/* Initialize type-C supplier to seed the charge manger */
+	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
+		typec_set_input_current_limit(port, 0, 0);
+
 	/*
 	 * Only notify if we're not performing a power role swap.  During a
 	 * power role swap, the port partner is not disconnecting/connecting.
