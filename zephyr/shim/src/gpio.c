@@ -10,6 +10,7 @@
 
 #include "gpio.h"
 #include "gpio/gpio.h"
+#include "sysjump.h"
 
 LOG_MODULE_REGISTER(gpio_shim, LOG_LEVEL_ERR);
 
@@ -246,7 +247,18 @@ int gpio_get_default_flags(enum gpio_signal signal)
 
 static int init_gpios(const struct device *unused)
 {
+	gpio_flags_t flags;
+	struct jump_data *jdata;
+	bool is_sys_jumped;
+
 	ARG_UNUSED(unused);
+
+	jdata = get_jump_data();
+
+	if (jdata && jdata->magic == JUMP_DATA_MAGIC)
+		is_sys_jumped = true;
+	else
+		is_sys_jumped = false;
 
 	/* Loop through all GPIOs in device tree to set initial configuration */
 	for (size_t i = 0; i < ARRAY_SIZE(configs); ++i) {
@@ -257,9 +269,19 @@ static int init_gpios(const struct device *unused)
 			LOG_ERR("Not found (%s)", configs[i].name);
 		}
 
-		rv = gpio_pin_configure(data[i].dev, configs[i].pin,
-					configs[i].init_flags);
+		/*
+		 * The configs[i].init_flags variable is read-only, so the
+		 * following assignment is needed because the flags need
+		 * adjusting on a warm reboot.
+		 */
+		flags = configs[i].init_flags;
 
+		if (is_sys_jumped) {
+			flags &=
+				~(GPIO_OUTPUT_INIT_LOW | GPIO_OUTPUT_INIT_HIGH);
+		}
+
+		rv = gpio_config(data[i].dev, configs[i].pin, flags);
 		if (rv < 0) {
 			LOG_ERR("Config failed %s (%d)", configs[i].name, rv);
 		}

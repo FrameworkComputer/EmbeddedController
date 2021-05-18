@@ -44,4 +44,9 @@ struct jump_data {
 			       */
 };
 
+/**
+ * Returns a pointer to the jump data structure.
+ */
+struct jump_data *get_jump_data(void);
+
 #endif  /* __CROS_EC_SYSJUMP_IMPL_H */

@@ -305,6 +305,21 @@ void system_print_banner(void)
 	}
 }
 
+struct jump_data *get_jump_data(void)
+{
+	uintptr_t addr;
+
+	/*
+	 * Put the jump data before the panic data, or at the end of RAM if
+	 * panic data is not present.
+	 */
+	addr = get_panic_data_start();
+	if (!addr)
+		addr = CONFIG_RAM_BASE + CONFIG_RAM_SIZE;
+
+	return (struct jump_data *)(addr - sizeof(struct jump_data));
+}
+
 int system_jumped_to_this_image(void)
 {
 	return jumped_to_image;
@@ -816,8 +831,6 @@ const char *system_get_build_info(void)
 
 void system_common_pre_init(void)
 {
-	uintptr_t addr;
-
 #ifdef CONFIG_SOFTWARE_PANIC
 	/*
 	 * Log panic cause if watchdog caused reset and panic cause
@@ -835,15 +848,7 @@ void system_common_pre_init(void)
 	}
 #endif
 
-	/*
-	 * Put the jump data before the panic data, or at the end of RAM if
-	 * panic data is not present.
-	 */
-	addr = get_panic_data_start();
-	if (!addr)
-		addr = CONFIG_RAM_BASE + CONFIG_RAM_SIZE;
-
-	jdata = (struct jump_data *)(addr - sizeof(struct jump_data));
+	jdata = get_jump_data();
 
 	/*
 	 * Check jump data if this is a jump between images.

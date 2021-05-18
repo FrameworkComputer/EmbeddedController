@@ -65,3 +65,8 @@ void chip_save_reset_flags(uint32_t flags)
 void system_set_reset_flags(uint32_t flags)
 {
 }
+
+struct jump_data *get_jump_data(void)
+{
+	return NULL;
+}
