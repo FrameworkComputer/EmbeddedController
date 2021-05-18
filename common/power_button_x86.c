@@ -188,6 +188,11 @@ void power_button_pch_pulse(void)
 	task_wake(TASK_ID_POWERBTN);
 }
 
+__override void power_button_simulate_press(void)
+{
+	CPRINTS("Simulation PB press");
+}
+
 /**
  * Handle debounced power button down.
  */

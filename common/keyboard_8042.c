@@ -149,7 +149,6 @@ static int typematic_inter_delay;
 static int typematic_len;  /* length of typematic_scan_code */
 static uint8_t typematic_scan_code[MAX_SCAN_CODE_LEN];
 static timestamp_t typematic_deadline;
-
 #define KB_SYSJUMP_TAG 0x4b42  /* "KB" */
 #define KB_HOOK_VERSION 2
 /* the previous keyboard state before reboot_ec. */
@@ -217,6 +216,12 @@ void keyboard_host_write(int data, int is_cmd)
 	queue_add_unit(&from_host, &h);
 	task_wake(TASK_ID_KEYPROTO);
 }
+
+int keyboard_host_write_avaliable(void)
+{
+	return queue_space(&from_host);
+}
+
 
 /**
  * Enable keyboard IRQ generation.
@@ -483,9 +488,6 @@ static void aux_enable(int enable)
 		CPRINTS("AUX disabled");
 
 	aux_chan_enabled = enable;
-	if (IS_ENABLED(CONFIG_8042_AUX)) {
-		aux_port_state_change(enable);
-	}
 }
 
 static uint8_t read_ctl_ram(uint8_t addr)
@@ -999,6 +1001,13 @@ void send_aux_data_to_host_interrupt(uint8_t data)
 	queue_add_unit(&aux_to_host_queue, &data);
 	hook_call_deferred(&send_aux_data_to_host_deferred_data, 0);
 }
+
+
+int aux_buffer_available(void)
+{
+	return queue_space(&aux_to_host_queue);
+}
+
 
 /**
  * Handle button changing state.
