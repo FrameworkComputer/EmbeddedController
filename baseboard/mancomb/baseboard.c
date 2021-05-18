@@ -148,11 +148,12 @@ const struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
+	/*  100K/(680K+100K) = 5/39 voltage divider */
 	[SNS_PPVAR_PWR_IN] = {
 		.name = "POWER_V",
 		.input_ch = NPCX_ADC_CH5,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
+		.factor_mul = (ADC_MAX_VOLT) * 39,
+		.factor_div = (ADC_READ_MAX + 1) * 5,
 		.shift = 0,
 	},
 	[ADC_TEMP_SENSOR_AMBIENT] = {
