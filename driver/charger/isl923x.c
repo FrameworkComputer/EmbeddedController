@@ -797,6 +797,23 @@ out:
 }
 
 #ifdef CONFIG_CHARGER_RAA489000
+enum ec_error_list raa489000_is_acok(int chgnum, bool *acok)
+{
+	int regval, rv;
+
+	if ((chgnum < 0) || (chgnum > board_get_charger_chip_count())) {
+		CPRINTS("%s: Invalid chgnum! (%d)", __func__, chgnum);
+		return EC_ERROR_INVAL;
+	}
+
+	rv = raw_read16(chgnum, ISL9238_REG_INFO2, &regval);
+	if (rv != EC_SUCCESS)
+		return rv;
+	*acok = (regval & RAA489000_INFO2_ACOK);
+
+	return EC_SUCCESS;
+}
+
 int raa489000_enable_asgate(int chgnum, bool enable)
 {
 	enum mask_update_action action = enable ? MASK_SET : MASK_CLR;

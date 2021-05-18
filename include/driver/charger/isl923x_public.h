@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_DRIVER_CHARGER_ISL923X_PUBLIC_H
 #define __CROS_EC_DRIVER_CHARGER_ISL923X_PUBLIC_H
 
+#include "common.h"
 #include "stdbool.h"
 
 #define ISL923X_ADDR_FLAGS	(0x09)
@@ -36,6 +37,15 @@ int isl923x_set_dc_prochot(int chgnum, uint16_t ma);
  * @return EC_SUCCESS, error otherwise.
  */
 int isl923x_set_comparator_inversion(int chgnum, int invert);
+
+/**
+ * Return whether ACOK is high or low.
+ *
+ * @param chgnum index into chg_chips table.
+ * @param acok will be set to true if ACOK is asserted, otherwise false.
+ * @return EC_SUCCESS, error otherwise.
+ */
+enum ec_error_list raa489000_is_acok(int chgnum, bool *acok);
 
 /**
  * Prepare the charger IC for battery ship mode.  Battery ship mode sets the
