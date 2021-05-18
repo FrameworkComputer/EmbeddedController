@@ -756,7 +756,6 @@ int board_get_version(void);
 void board_power_off(void);
 
 void boot_ap_on_g3(void);
-void update_soc_power_limit(int force);
 
 void power_button_enable_led(int enable);
 void s5_power_up_control(int control);

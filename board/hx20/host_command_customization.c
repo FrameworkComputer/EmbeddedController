@@ -25,6 +25,7 @@
 #include "ps2mouse.h"
 #include "keyboard_8042_sharedlib.h"
 #include "diagnostics.h"
+#include "cpu_power.h"
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
 #ifdef CONFIG_EMI_REGION1
@@ -46,7 +47,7 @@ static void sci_enable(void)
 	/* when host set EC driver ready flag, EC need to enable SCI */
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
 		s5_power_up_control(0);
-		update_soc_power_limit(1);
+		update_soc_power_limit(true, false);
 		system_set_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, ac_boot_status());
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);

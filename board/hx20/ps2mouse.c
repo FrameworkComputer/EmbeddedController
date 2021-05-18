@@ -398,7 +398,8 @@ void mouse_interrupt_handler_task(void *p)
 		if (evt & PS2MOUSE_EVT_POWERSTATE) {
 			power_state = power_get_state();
 			CPRINTS("EMUMouse Got S0 Event %d", power_state);
-			if (!detected_host_packet && (power_state == POWER_S3S0)) {
+			if (!ec_mode_disabled && !detected_host_packet &&
+				(power_state == POWER_S3S0)) {
 				CPRINTS("EMUMouse Configuring for ps2 emulation mode");
 				/*tp takes about 80 ms to come up, wait a bit*/
 				usleep(200*MSEC);
@@ -409,6 +410,11 @@ void mouse_interrupt_handler_task(void *p)
 			}
 			if ((power_state == POWER_S3S0) && gpio_get_level(GPIO_SOC_TP_INT_L) == 0) {
 				read_touchpad_in_report();
+			}
+			if (power_state == POWER_S0S3) {
+				/* Power Down */
+				gpio_disable_interrupt(GPIO_SOC_TP_INT_L);
+				gpio_disable_interrupt(GPIO_EC_I2C_3_SDA);
 			}
 		}
 		if (evt & PS2MOUSE_EVT_REENABLE) {

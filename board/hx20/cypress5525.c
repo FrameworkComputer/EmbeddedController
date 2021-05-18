@@ -24,6 +24,8 @@
 #include "usb_pd.h"
 #include "usb_emsg.h"
 #include "power.h"
+#include "cpu_power.h"
+
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
@@ -789,7 +791,7 @@ void cyp5525_port_int(int controller, int port)
 		CPRINTS("CYPD_RESPONSE_PORT_DISCONNECT");
 		pd_port_states[port_idx].current = 0;
 		pd_port_states[port_idx].voltage = 0;
-		pd_set_input_current_limit(port, 0, 0);
+		pd_set_input_current_limit(port_idx, 0, 0);
 		cypd_update_port_state(controller, port);
 
 		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
@@ -1210,6 +1212,12 @@ int pd_port_configuration_change(int port, enum pd_port_role port_role)
 	return rv;
 }
 
+static void update_power_limit_deferred(void)
+{
+	update_soc_power_limit(false, false);
+}
+DECLARE_DEFERRED(update_power_limit_deferred);
+
 /**
  * Set active charge port -- only one port can be active at a time.
  *
@@ -1218,6 +1226,7 @@ int pd_port_configuration_change(int port, enum pd_port_role port_role)
  * Returns EC_SUCCESS if charge port is accepted and made active,
  * EC_ERROR_* otherwise.
  */
+static int prev_charge_port = -1;
 int board_set_active_charge_port(int charge_port)
 {
 
@@ -1225,6 +1234,15 @@ int board_set_active_charge_port(int charge_port)
 	int i;
 	int disable_lockout;
 
+	if (prev_charge_port != -1 && prev_charge_port != charge_port) {
+		update_soc_power_limit(false, true);
+		gpio_set_level(GPIO_TYPEC0_VBUS_ON_EC, 0);
+		gpio_set_level(GPIO_TYPEC1_VBUS_ON_EC, 0);
+		gpio_set_level(GPIO_TYPEC2_VBUS_ON_EC, 0);
+		gpio_set_level(GPIO_TYPEC3_VBUS_ON_EC, 0);
+		usleep(10*MSEC);
+	}
+	prev_charge_port = charge_port;
 	if (charge_port >=0){
 		disable_lockout = 1;
 		mask = 1 << charge_port;
@@ -1242,6 +1260,7 @@ int board_set_active_charge_port(int charge_port)
 	for (i = 0; i < PD_CHIP_COUNT; i++)
 		cypd_write_reg8(i, CYP5225_USER_DISABLE_LOCKOUT, disable_lockout);
 
+	hook_call_deferred(&update_power_limit_deferred_data, 100 * MSEC);
 	CPRINTS("Updating %s port %d", __func__, charge_port);
 
 	return EC_SUCCESS;
