@@ -11,6 +11,7 @@
 #include "charge_state_v2.h"
 #include "charger.h"
 #include "console.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -752,8 +753,11 @@ static void charge_manager_refresh(void)
 			trigger_ocpc_reset();
 		}
 
-		if (board_set_active_charge_port(new_port) == EC_SUCCESS)
+		if (board_set_active_charge_port(new_port) == EC_SUCCESS) {
+			if (IS_ENABLED(CONFIG_EXTPOWER))
+				board_check_extpower();
 			break;
+		}
 
 		/* 'Dont charge' request must be accepted. */
 		ASSERT(new_port != CHARGE_PORT_NONE);
