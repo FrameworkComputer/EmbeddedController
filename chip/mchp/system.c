@@ -245,6 +245,13 @@ noreturn void _system_reset(int flags, int wake_from_hibernate)
 		"_system_reset: flags=0x%08X  wake_from_hibernate=%d",
 		flags, wake_from_hibernate);
 
+	/* According to the spec chassis pin(BIT 2) will affect
+	 * VCI_OUT pin, so when do chipset reset need to set it back
+	 * at boot also will set up at VCI init
+	 */
+	if (MCHP_VCI_INPUT_ENABLE & BIT(2))
+		MCHP_VCI_INPUT_ENABLE &= ~BIT(2);
+
 	/* Save current reset reasons if necessary */
 	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
 		save_flags = system_get_reset_flags() | EC_RESET_FLAG_PRESERVED;
