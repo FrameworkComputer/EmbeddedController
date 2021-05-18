@@ -602,14 +602,12 @@ struct {
 };
 BUILD_ASSERT(ARRAY_SIZE(hx20_board_versions) == BOARD_VERSION_COUNT);
 
-int board_get_version(void)
+
+int get_hardware_id(enum adc_channel channel)
 {
-	static int version = BOARD_VERSION_UNKNOWN;
+	int version = BOARD_VERSION_UNKNOWN;
 	int mv;
 	int i;
-
-	if (version != BOARD_VERSION_UNKNOWN)
-		return version;
 
 	mv = adc_read_channel(ADC_AD_BID);
 
@@ -624,6 +622,20 @@ int board_get_version(void)
 
 	return version;
 }
+
+int board_get_version(void)
+{
+	static int version = BOARD_VERSION_UNKNOWN;
+
+	if (version != BOARD_VERSION_UNKNOWN)
+		return version;
+
+	version = get_hardware_id(ADC_AD_BID);
+
+	return version;
+}
+
+
 
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {

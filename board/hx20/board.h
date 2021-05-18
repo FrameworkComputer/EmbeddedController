@@ -393,7 +393,7 @@
 /* Support FAN */
 #define CONFIG_FANS 1
 #undef CONFIG_FAN_INIT_SPEED
-#define CONFIG_FAN_INIT_SPEED 0
+#define CONFIG_FAN_INIT_SPEED 15
 #define FAN_HARDARE_MAX 7100
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_DPTF
@@ -765,6 +765,7 @@ int pos_get_state(void);
 
 void me_gpio_change(uint32_t flags);
 
+int get_hardware_id(enum adc_channel channel);
 
 int ac_boot_status(void);
 

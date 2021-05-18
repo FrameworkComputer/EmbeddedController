@@ -17,7 +17,10 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "util.h"
-#include "gpio.h"
+#include "diagnostics.h"
+
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
 #define LED_TICKS_PER_CYCLE 10
 #define LED_ON_TICKS 5
@@ -248,9 +251,6 @@ static void led_set_battery(void)
 		}
 		break;
 	case PWR_STATE_ERROR:
-		set_active_port_color((battery_ticks & 0x2) ?
-				EC_LED_COLOR_WHITE : -1);
-		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		set_active_port_color(EC_LED_COLOR_WHITE);
 		break;
@@ -295,12 +295,19 @@ static void led_set_power(void)
 		set_pwr_led_color(PWM_LED2, -1);
 }
 
+
+
 /* Called by hook task every TICK */
 static void led_tick(void)
 {
+
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 		led_set_power();
 
+	if (diagnostics_tick()) {
+		/* we have an error, override LED control*/
+		return;
+	}
 	led_set_battery();
 }
 

@@ -22,7 +22,7 @@
 #include "timer.h"
 #include "util.h"
 #include "board.h"
-
+#include "diagnostics.h"
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
@@ -281,6 +281,7 @@ static void state_machine(uint64_t tnow)
 			 * power button before the chipset finishes waking from
 			 * hard off state.
 			 */
+			reset_diagnostics();
 			chipset_exit_hard_off();
 
 			if (!gpio_get_level(GPIO_PCH_RSMRST_L)) {
@@ -303,6 +304,7 @@ static void state_machine(uint64_t tnow)
 			msleep(20);
 			set_pwrbtn_to_pch(0, 0);
 			power_button_enable_led(1);
+
 		} else {
 			/*
 			 * when in preOS still need send power button signal
@@ -375,6 +377,8 @@ static void state_machine(uint64_t tnow)
 			if (!extpower_is_present() ||
 				(system_get_reset_flags() & EC_RESET_FLAG_HARD) ==
 				EC_RESET_FLAG_HARD) {
+				reset_diagnostics();
+
 				if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 					chipset_exit_hard_off();
 

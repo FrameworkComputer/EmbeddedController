@@ -28,6 +28,7 @@
 #include "util.h"
 #include "wireless.h"
 #include "driver/temp_sensor/f75303.h"
+#include "diagnostics.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
@@ -165,7 +166,8 @@ int board_chipset_power_on(void)
 	msleep(5);
 
 	if (power_wait_signals(IN_PGOOD_PWR_3V5V)) {
-		CPRINTS("timeout waiting for PWR_3V5V_PG");
+		CPRINTS("PH Timeout PWR_3V5V_PG");
+		set_hw_diagnostic(DIAGNOSTICS_HW_PGOOD_3V5V, 1);
 		chipset_force_g3();
 		return false;
 	}
@@ -183,7 +185,8 @@ int board_chipset_power_on(void)
 	msleep(5);
 
 	if (power_wait_signals(IN_PGOOD_VCCIN_AUX_VR)) {
-		CPRINTS("timeout waiting for VCCIN_AUX_VR_PG");
+		CPRINTS("PH Timeout VCCIN_AUX_VR_PG");
+		set_hw_diagnostic(DIAGNOSTICS_VCCIN_AUX_VR, 1);
 		chipset_force_g3();
 		return false;
 	}
@@ -335,7 +338,7 @@ enum power_state power_handle_state(enum power_state state)
 
 #ifdef CONFIG_POWER_S0IX
 	case POWER_S0ix:
-		CPRINTS("power handle state in S0ix");
+		CPRINTS("PH S0ix");
 		if ((power_get_signals() & IN_PCH_SLP_S3_DEASSERTED) == 0) {
 			/* 
 			 * If power signal lose, we need to resume to S0 and
@@ -351,27 +354,29 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S0ixS0:
-		CPRINTS("power handle state in S0ix->S0");
+		CPRINTS("PH S0ixS0");
 		lpc_s0ix_resume_restore_masks();
 		hook_notify(HOOK_CHIPSET_RESUME);
 		if (resume_ms_flag > 0)
 			resume_ms_flag--;
+		CPRINTS("PH S0ixS0->S0");
 		return POWER_S0;
 
 		break;
 
 	case POWER_S0S0ix:
-		CPRINTS("power handle state in S0->S0ix");
+		CPRINTS("PH S0->S0ix");
 		lpc_s0ix_suspend_clear_masks();
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 		if (enter_ms_flag > 0)
 			enter_ms_flag--;
+		CPRINTS("PH S0S0ix->S0ix");
 		return POWER_S0ix;
 
 		break;
 #endif
 	case POWER_S5:
-		CPRINTS("power handle state in S5");
+		CPRINTS("PH S5");
 
 		if (forcing_shutdown) {
 			power_button_pch_release();
@@ -391,6 +396,8 @@ enum power_state power_handle_state(enum power_state state)
 						s5_exit_tries = 0;
 						stress_test_enable = 0;
 						ap_boot_delay = 9;
+						set_hw_diagnostic(DIAGNOSTICS_SLP_S4, 1);
+
 						return POWER_S5G3;
 					}
 
@@ -409,7 +416,7 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S3:
-		CPRINTS("power handle state in S3");
+		CPRINTS("PH S3");
 
         if (power_get_signals() & IN_PCH_SLP_S3_DEASSERTED) {
 			/* Power up to next state */
@@ -422,7 +429,7 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S0:
-		CPRINTS("power handle state in S0");
+		CPRINTS("PH S0");
 		if ((power_get_signals() & IN_PCH_SLP_S3_DEASSERTED) == 0) {
 			/* Power down to next state */
 			gpio_set_level(GPIO_EC_VCCST_PG, 0);
@@ -441,12 +448,11 @@ enum power_state power_handle_state(enum power_state state)
 		if (s5_exit_tries != 0)
 			return POWER_S5;
 
-		CPRINTS("power handle state in G3S5");
-
 		s5_power_up_control(1);
 
 		if (board_chipset_power_on()) {
 			cancel_board_power_off();
+			CPRINTS("PH G3S5->S5");
 			return POWER_S5;
 		} else {
 			return POWER_G3;
@@ -454,18 +460,19 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S5S3:
-		CPRINTS("power handle state in S5S3");
+		CPRINTS("PH S5S3");
 
         gpio_set_level(GPIO_SYSON, 1);
 
         /* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
+		CPRINTS("PH S5S3->S3");
 		return POWER_S3;
 
 		break;
 
 	case POWER_S3S0:
-		CPRINTS("power handle state in S3S0");
+		CPRINTS("PH S3S0");
 
         gpio_set_level(GPIO_SUSP_L, 1);
 
@@ -482,6 +489,8 @@ enum power_state power_handle_state(enum power_state state)
 		hook_notify(HOOK_CHIPSET_RESUME);
 
         if (power_wait_signals(IN_PGOOD_PWR_VR)) {
+			set_hw_diagnostic(DIAGNOSTICS_HW_PGOOD_VR, true);
+
 			gpio_set_level(GPIO_SUSP_L, 0);
 			gpio_set_level(GPIO_EC_VCCST_PG, 0);
 			gpio_set_level(GPIO_VR_ON, 0);
@@ -500,13 +509,13 @@ enum power_state power_handle_state(enum power_state state)
 		power_button_enable_led(0);
 
 		me_gpio_change(GPIO_ODR_HIGH);
-
+		CPRINTS("PH S3S0->S0");
         return POWER_S0;
 
 		break;
 
 	case POWER_S0S3:
-		CPRINTS("power handle state in S0S3");
+		CPRINTS("PH S0S3");
 		gpio_set_level(GPIO_SUSP_L, 0);
 		gpio_set_level(GPIO_PCH_PWROK, 0);
 		gpio_set_level(GPIO_SYS_PWROK, 0);
@@ -517,14 +526,14 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S3S5:
-		CPRINTS("power handle state in S3S5");
+		CPRINTS("PH S3S5");
 		gpio_set_level(GPIO_SYSON, 0);
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 		return POWER_S5;
 		break;
 
 	case POWER_S5G3:
-		CPRINTS("power handle state in S5G3");
+		CPRINTS("PH S5G3");
 		chipset_force_g3();
 		/* clear suspend flag when system shutdown */
 		power_state_clear(EC_PS_ENTER_S0ix |
