@@ -497,7 +497,7 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
 	.ch = MFT_CH_0,	/* Use MFT id to control fan */
-	.pgood_gpio = -1,
+	.pgood_gpio = GPIO_S0_PGOOD,
 	.enable_gpio = -1,
 };
 const struct fan_rpm fan_rpm_0 = {
