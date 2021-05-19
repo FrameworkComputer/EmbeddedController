@@ -33,9 +33,10 @@
  */
 const struct board_batt_params board_battery_info[] = {
 	/* BYD Battery Information */
-	[BATTERY_BYD] = {
+	[BATTERY_BYD_1VX1HYMD] = {
 		.fuel_gauge = {
 			.manuf_name = "BYD",
+			.device_name = "1VX1HYMD",
 			.ship_mode = {
 				.wb_support = 1,
 				.reg_addr = 0x44,
@@ -63,10 +64,42 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 
+	/* BYD Battery Information */
+	[BATTERY_BYD_X0Y5MYMD] = {
+		.fuel_gauge = {
+			.manuf_name = "BYD",
+			.device_name = "X0Y5MYMD",
+			.ship_mode = {
+				.wb_support = 1,
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr       = 0x043,
+				.reg_mask       = 0x0001,
+				.disconnect_val = 0x0000,
+				.cfet_mask = 0x0002,
+				.cfet_off_val = 0x0000,
+			}
+		},
+		.batt_info = {
+			.voltage_max          = 13200,    /* mV */
+			.voltage_normal       = 11400,
+			.voltage_min          = 9000,
+			.precharge_current    = 256,       /* mA */
+			.start_charging_min_c = -3,
+			.start_charging_max_c = 50,
+			.charging_min_c       = -3,
+			.charging_max_c       = 60,
+			.discharging_min_c    = -5,
+			.discharging_max_c    = 70,
+		},
+	},
+
 	/* LGC Battery Information */
 	[BATTERY_LGC] = {
 		.fuel_gauge = {
-			.manuf_name = "LGC-LGC3.685",
+			.manuf_name = "LGC-LGC3.65",
 			.ship_mode = {
 				.wb_support = 1,
 				.reg_addr = 0x44,
@@ -157,9 +190,74 @@ const struct board_batt_params board_battery_info[] = {
 	},
 
 	/* SMP-ATL Battery Information */
-	[BATTERY_SMP_ATL] = {
+	[BATTERY_SMP_ATL_VM73297U] = {
 		.fuel_gauge = {
 			.manuf_name = "SMP-ATL-3.61",
+			.device_name = "VM73297U",
+			.ship_mode = {
+				.wb_support = 1,
+				.reg_addr = 0x44,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr       = 0x0,
+				.reg_mask       = 0x2000,
+				.disconnect_val = 0x2000,
+				.cfet_mask = 0x4000,
+				.cfet_off_val = 0x4000,
+			}
+		},
+		.batt_info = {
+			.voltage_max          = 13200,    /* mV */
+			.voltage_normal       = 11400,
+			.voltage_min          = 9000,
+			.precharge_current    = 256,       /* mA */
+			.start_charging_min_c = -3,
+			.start_charging_max_c = 50,
+			.charging_min_c       = -3,
+			.charging_max_c       = 60,
+			.discharging_min_c    = -5,
+			.discharging_max_c    = 70,
+		},
+	},
+
+	/* SMP-ATL Battery Information */
+	[BATTERY_SMP_ATL_RF9H3YMD] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP-ATL-3.61",
+			.device_name = "RF9H3YMD",
+			.ship_mode = {
+				.wb_support = 1,
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr       = 0x41,
+				.reg_mask       = 0x0001,
+				.disconnect_val = 0x0000,
+				.cfet_mask = 0x0002,
+				.cfet_off_val = 0x0000,
+			}
+		},
+		.batt_info = {
+			.voltage_max          = 13200,    /* mV */
+			.voltage_normal       = 11400,
+			.voltage_min          = 9000,
+			.precharge_current    = 256,       /* mA */
+			.start_charging_min_c = -3,
+			.start_charging_max_c = 50,
+			.charging_min_c       = -3,
+			.charging_max_c       = 60,
+			.discharging_min_c    = -5,
+			.discharging_max_c    = 70,
+		},
+	},
+
+	/* SMP-COS Battery Information */
+	[BATTERY_SMP_COS_VM732835] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP-COS3.63",
+			.device_name = "VM732835",
 			.ship_mode = {
 				.wb_support = 1,
 				.reg_addr = 0x44,
@@ -188,20 +286,21 @@ const struct board_batt_params board_battery_info[] = {
 	},
 
 	/* SMP-COS Battery Information */
-	[BATTERY_SMP_COS] = {
+	[BATTERY_SMP_COS_RF9H3YMD] = {
 		.fuel_gauge = {
 			.manuf_name = "SMP-COS3.63",
+			.device_name = "RF9H3YMD",
 			.ship_mode = {
 				.wb_support = 1,
-				.reg_addr = 0x44,
+				.reg_addr = 0x00,
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.reg_addr       = 0x0,
-				.reg_mask       = 0x2000,
-				.disconnect_val = 0x2000,
-				.cfet_mask = 0x4000,
-				.cfet_off_val = 0x4000,
+				.reg_addr       = 0x41,
+				.reg_mask       = 0x0001,
+				.disconnect_val = 0x0000,
+				.cfet_mask = 0x0002,
+				.cfet_off_val = 0x0000,
 			}
 		},
 		.batt_info = {
@@ -340,4 +439,4 @@ const struct board_batt_params board_battery_info[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_BYD;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_BYD_1VX1HYMD;
