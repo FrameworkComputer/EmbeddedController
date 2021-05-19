@@ -252,6 +252,9 @@ noreturn void _system_reset(int flags, int wake_from_hibernate)
 	if (MCHP_VCI_INPUT_ENABLE & BIT(2))
 		MCHP_VCI_INPUT_ENABLE &= ~BIT(2);
 
+	if (MCHP_VCI_BUFFER_EN & BIT(2))
+		MCHP_VCI_BUFFER_EN &= ~BIT(2);
+
 	/* Save current reset reasons if necessary */
 	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
 		save_flags = system_get_reset_flags() | EC_RESET_FLAG_PRESERVED;
