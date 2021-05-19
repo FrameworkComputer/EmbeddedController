@@ -23,32 +23,34 @@
 			label = "TABLET_MODE_L";
 		};
 		ap_ec_warm_rst_req {
-			gpios = <&gpiod 3 GPIO_INPUT>;
+			gpios = <&gpiod 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_AP_EC_WARM_RST_REQ";
 			label = "AP_EC_WARM_RST_REQ";
 		};
 		ap_ec_watchdog_l {
-			gpios = <&gpioc 7 GPIO_INPUT>;
+			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_AP_EC_WATCHDOG_L";
 			label = "AP_EC_WATCHDOG_L";
 		};
 		ap_in_sleep_l {
-			gpios = <&gpiof 2 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpiof 2 (GPIO_INPUT | GPIO_PULL_DOWN |
+					GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_AP_IN_SLEEP_L";
 			label = "AP_IN_SLEEP_L";
 		};
 		pmic_ec_pwrgd {
-			gpios = <&gpiof 3 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpiof 3 (GPIO_INPUT | GPIO_PULL_DOWN |
+					GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_PMIC_EC_PWRGD";
 			label = "PMIC_EC_PWRGD";
 		};
 		base_imu_int_l {
-			gpios = <&gpioj 2 GPIO_INPUT>;
+			gpios = <&gpioj 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_BASE_IMU_INT_L";
 			label = "BASE_IMU_INT_L";
 		};
 		lid_accel_int_l {
-			gpios = <&gpioj 3 GPIO_INPUT>;
+			gpios = <&gpioj 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_LID_ACCEL_INT_L";
 			label = "LID_ACCEL_INT_L";
 		};
@@ -88,12 +90,12 @@
 			label = "AC_PRESENT";
 		};
 		wp {
-			gpios = <&gpioi 4 GPIO_INPUT>;
+			gpios = <&gpioi 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_WP";
 			label = "WP";
 		};
 		spi0_cs {
-			gpios = <&gpiom 5 GPIO_INPUT>;
+			gpios = <&gpiom 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_SPI0_CS";
 			label = "SPI0_CS";
 		};
@@ -103,12 +105,12 @@
 			label = "X_EC_GPIO2";
 		};
 		ec_pmic_en_odl {
-			gpios = <&gpiod 0 GPIO_ODR_HIGH>;
+			gpios = <&gpiod 0 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_EC_PMIC_EN_ODL";
 			label = "EC_PMIC_EN_ODL";
 		};
 		ec_pmic_watchdog_l {
-			gpios = <&gpioh 0 GPIO_ODR_LOW>;
+			gpios = <&gpioh 0 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_EC_PMIC_WATCHDOG_L";
 			label = "EC_PMIC_WATCHDOG_L";
 		};
@@ -143,12 +145,12 @@
 			label = "SYS_RST_ODL";
 		};
 		ec_bl_en_od {
-			gpios = <&gpiob 5 GPIO_ODR_LOW>;
+			gpios = <&gpiob 5 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_EC_BL_EN_OD";
 			label = "EC_BL_EN_OD";
 		};
 		ec_int_l {
-			gpios = <&gpioe 6 GPIO_ODR_HIGH>;
+			gpios = <&gpioe 6 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_EC_INT_L";
 			label = "EC_INT_L";
 		};
@@ -158,7 +160,7 @@
 			label = "DP_AUX_PATH_SEL";
 		};
 		ec_dpbrdg_hpd_odl {
-			gpios = <&gpioj 0 GPIO_ODR_HIGH>;
+			gpios = <&gpioj 0 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_EC_DPBRDG_HPD_ODL";
 			label = "EC_DPBRDG_HPD_ODL";
 		};
@@ -248,12 +250,14 @@
 			label = "EC_X_GPIO3";
 		};
 		set_vmc_volt_at_1v8 {
-			gpios = <&gpiod 4 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpiod 4 (GPIO_INPUT | GPIO_PULL_DOWN |
+					GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_SET_VMC_VOLT_AT_1V8";
 			label = "SET_VMC_VOLT_AT_1V8";
 		};
 		en_pp3000_vmc_pmu {
-			gpios = <&gpiod 2 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpiod 2 (GPIO_INPUT | GPIO_PULL_DOWN |
+					GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_EN_PP3000_VMC_PMU";
 			label = "EN_PP3000_VMC_PMU";
 		};
@@ -278,7 +282,8 @@
 			label = "PG_MT6315_GPU_ODL";
 		};
 		en_pp3000_sd_u {
-			gpios = <&gpiog 1 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpiog 1 (GPIO_INPUT | GPIO_PULL_DOWN |
+					GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_EN_PP3000_SD_U";
 			label = "EN_PP3000_SD_U";
 		};
