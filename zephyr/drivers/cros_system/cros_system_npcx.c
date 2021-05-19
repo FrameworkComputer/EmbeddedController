@@ -95,7 +95,16 @@ enum npcx_chip_id {
 /* RAM block size in npcx family (Unit: bytes) */
 #define NPCX_RAM_BLOCK_SIZE (32 * 1024)
 /* RAM block number in npcx7 series */
-#define NPCX7_RAM_BLOCK_NUM 12
+
+/* Calculate the number of RAM blocks:
+ * total RAM size = code ram + data ram + extra 2K for ROM functions
+ * divided by the block size 32k.
+ */
+#define DATA_RAM_SIZE DT_REG_SIZE(DT_NODELABEL(sram0))
+#define CODE_RAM_SIZE DT_REG_SIZE(DT_NODELABEL(flash0))
+#define NPCX7_RAM_BLOCK_COUNT \
+	((DATA_RAM_SIZE + CODE_RAM_SIZE + KB(2)) / NPCX_RAM_BLOCK_SIZE)
+
 /* RAM block mask for power down in npcx7 series */
 #define NPCX7_RAM_BLOCK_PD_MASK (BIT(12) - 1)
 /* Get saved reset flag address in battery-backed ram */
@@ -264,7 +273,7 @@ system_npcx_hibernate_by_lfw_in_last_ram(const struct device *dev,
 
 static inline int system_npcx_get_ram_blk_by_lfw_addr(char *address)
 {
-	return NPCX7_RAM_BLOCK_NUM -
+	return NPCX7_RAM_BLOCK_COUNT -
 	       ceiling_fraction((uint32_t)address -
 					CONFIG_CROS_EC_PROGRAM_MEMORY_BASE,
 				NPCX_RAM_BLOCK_SIZE);
