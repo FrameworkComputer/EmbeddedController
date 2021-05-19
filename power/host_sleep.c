@@ -4,6 +4,7 @@
  */
 
 #include "config.h"
+#include "console.h"
 #include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -108,6 +109,7 @@ void sleep_notify_transition(int check_state, int hook_id)
 #ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
 
 static uint16_t sleep_signal_timeout;
+static uint16_t host_sleep_timeout_default = CONFIG_SLEEP_TIMEOUT_MS;
 static uint32_t sleep_signal_transitions;
 static void (*sleep_timeout_callback)(void);
 
@@ -164,7 +166,7 @@ void sleep_start_suspend(struct host_sleep_event_context *ctx,
 
 	/* Use zero internally to indicate no timeout. */
 	if (timeout == EC_HOST_SLEEP_TIMEOUT_DEFAULT) {
-		timeout = CONFIG_SLEEP_TIMEOUT_MS;
+		timeout = host_sleep_timeout_default;
 
 	} else if (timeout == EC_HOST_SLEEP_TIMEOUT_INFINITE) {
 		sleep_signal_timeout = 0;
@@ -194,6 +196,49 @@ void sleep_reset_tracking(void)
 	sleep_signal_timeout = 0;
 	sleep_timeout_callback = NULL;
 }
+
+static int command_sleep_fail_timeout(int argc, char **argv)
+{
+	if (argc < 2) {
+		/* no arguments - just print the current timeout */
+	} else if (!strcasecmp(argv[1], "default")) {
+		host_sleep_timeout_default = CONFIG_SLEEP_TIMEOUT_MS;
+	} else if (!strcasecmp(argv[1], "infinite")) {
+		host_sleep_timeout_default = EC_HOST_SLEEP_TIMEOUT_INFINITE;
+	} else {
+		char *e;
+		int val;
+
+		val = strtoi(argv[1], &e, 10);
+		if (*e)
+			return EC_ERROR_PARAM1;
+
+		if (val <= 0 || val >= EC_HOST_SLEEP_TIMEOUT_INFINITE) {
+			ccprintf("Error: timeout range is 1..%d [msec]\n",
+				EC_HOST_SLEEP_TIMEOUT_INFINITE - 1);
+			return EC_ERROR_PARAM1;
+		}
+
+		host_sleep_timeout_default = val;
+	}
+
+	if (host_sleep_timeout_default == EC_HOST_SLEEP_TIMEOUT_INFINITE)
+		ccprintf("Sleep failure detection timeout is disabled\n");
+	else
+		ccprintf("Sleep failure detection timeout is %d [msec]\n",
+			host_sleep_timeout_default);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(sleeptimeout, command_sleep_fail_timeout,
+		"[default | infinite | <msec>]",
+		"Display or set host sleep failure detection timeout.\n"
+		"Valid arguments are:\n"
+		" default\n"
+		" infinite - disables the timeout\n"
+		" <msec> - custom length in milliseconds\n"
+		" <none> - prints the current setting");
+
 
 #else /* !CONFIG_POWER_SLEEP_FAILURE_DETECTION */
 
