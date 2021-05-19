@@ -188,7 +188,7 @@ __override void tcs3400_translate_to_xyz(struct motion_sensor_t *s,
 				     int32_t *crgb_data, int32_t *xyz_data)
 {
 	int n, cur_gain;
-	fp_t n_interval;
+	fp_t n_interval, rgbc_sum;
 	int integration_time_us;
 	struct tcs_saturation_t *sat_p =
 				&(TCS3400_RGB_DRV_DATA(s+1)->saturation);
@@ -214,28 +214,34 @@ __override void tcs3400_translate_to_xyz(struct motion_sensor_t *s,
 
 	switch (n) {
 	case 1:
-		xyz_data[1] = FP_TO_INT(fp_mul(FLOAT_TO_FP(799.797),
-		(fp_mul(INT_TO_FP(crgb_data[0]), FLOAT_TO_FP(0.009)) +
-		fp_mul(INT_TO_FP(crgb_data[1]), FLOAT_TO_FP(0.056)) +
-		fp_mul(INT_TO_FP(crgb_data[2]), FLOAT_TO_FP(2.735)) +
-		fp_mul(INT_TO_FP(crgb_data[3]), FLOAT_TO_FP(-1.903))) /
-		(integration_time_us * cur_gain / 1000ULL)));
+		rgbc_sum =
+			fp_mul(INT_TO_FP(crgb_data[0]), FLOAT_TO_FP(0.009)) +
+			fp_mul(INT_TO_FP(crgb_data[1]), FLOAT_TO_FP(0.056)) +
+			fp_mul(INT_TO_FP(crgb_data[2]), FLOAT_TO_FP(2.735)) +
+			fp_mul(INT_TO_FP(crgb_data[3]), FLOAT_TO_FP(-1.903));
+
+		xyz_data[1] = FP_TO_INT(fp_mul(FLOAT_TO_FP(799.797), rgbc_sum
+			/ (int)(integration_time_us * cur_gain / 1000ULL)));
 	break;
 	case 2:
-		xyz_data[1] = FP_TO_INT(fp_mul(FLOAT_TO_FP(801.347),
-		(fp_mul(INT_TO_FP(crgb_data[0]), FLOAT_TO_FP(0.202)) +
-		fp_mul(INT_TO_FP(crgb_data[1]), FLOAT_TO_FP(-1.1)) +
-		fp_mul(INT_TO_FP(crgb_data[2]), FLOAT_TO_FP(8.692)) +
-		fp_mul(INT_TO_FP(crgb_data[3]), FLOAT_TO_FP(-7.068))) /
-		(integration_time_us * cur_gain / 1000ULL)));
+		rgbc_sum =
+			fp_mul(INT_TO_FP(crgb_data[0]), FLOAT_TO_FP(0.202)) +
+			fp_mul(INT_TO_FP(crgb_data[1]), FLOAT_TO_FP(-1.1)) +
+			fp_mul(INT_TO_FP(crgb_data[2]), FLOAT_TO_FP(8.692)) +
+			fp_mul(INT_TO_FP(crgb_data[3]), FLOAT_TO_FP(-7.068));
+
+		xyz_data[1] = FP_TO_INT(fp_mul(FLOAT_TO_FP(801.347), rgbc_sum
+			/ (int)(integration_time_us * cur_gain / 1000ULL)));
 	break;
 	case 3:
-		xyz_data[1] = FP_TO_INT(fp_mul(FLOAT_TO_FP(795.574),
-		(fp_mul(INT_TO_FP(crgb_data[0]), FLOAT_TO_FP(-0.661)) +
-		fp_mul(INT_TO_FP(crgb_data[1]), FLOAT_TO_FP(1.334)) +
-		fp_mul(INT_TO_FP(crgb_data[2]), FLOAT_TO_FP(1.095)) +
-		fp_mul(INT_TO_FP(crgb_data[3]), FLOAT_TO_FP(-1.821))) /
-		(integration_time_us * cur_gain / 1000ULL)));
+		rgbc_sum =
+			fp_mul(INT_TO_FP(crgb_data[0]), FLOAT_TO_FP(-0.661)) +
+			fp_mul(INT_TO_FP(crgb_data[1]), FLOAT_TO_FP(1.334)) +
+			fp_mul(INT_TO_FP(crgb_data[2]), FLOAT_TO_FP(1.095)) +
+			fp_mul(INT_TO_FP(crgb_data[3]), FLOAT_TO_FP(-1.821));
+
+		xyz_data[1] = FP_TO_INT(fp_mul(FLOAT_TO_FP(795.574), rgbc_sum
+			/ (int)(integration_time_us * cur_gain / 1000ULL)));
 	break;
 	default:
 	break;
