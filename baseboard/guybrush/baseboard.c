@@ -956,17 +956,3 @@ void baseboard_en_pwr_s0(enum gpio_signal signal)
 	/* Now chain off to the normal power signal interrupt handler. */
 	power_signal_interrupt(signal);
 }
-
-int get_fw_config_field(uint8_t offset, uint8_t width)
-{
-	static uint32_t cached_fw_config = UNINITIALIZED_FW_CONFIG;
-
-	if (cached_fw_config == UNINITIALIZED_FW_CONFIG) {
-		uint32_t val;
-
-		if (cbi_get_fw_config(&val) != EC_SUCCESS)
-			return -1;
-		cached_fw_config = val;
-	}
-	return (cached_fw_config >> offset) & ((1 << width) - 1);
-}
