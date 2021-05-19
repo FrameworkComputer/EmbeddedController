@@ -189,7 +189,7 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Temp Sensors */
 static int board_get_memory_temp(int, int *);
-static int board_get_soc_temp(int, int *);
+
 const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_SOC] = {
 		.name = "SOC",
@@ -749,13 +749,6 @@ void bc12_interrupt(enum gpio_signal signal)
 }
 
 static int board_get_memory_temp(int idx, int *temp_k)
-{
-	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-		return EC_ERROR_NOT_POWERED;
-	return get_temp_3v3_30k9_47k_4050b(idx, temp_k);
-}
-
-static int board_get_soc_temp(int idx, int *temp_k)
 {
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 		return EC_ERROR_NOT_POWERED;

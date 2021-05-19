@@ -18,6 +18,7 @@
 #include "power_button.h"
 #include "switch.h"
 #include "tablet_mode.h"
+#include "temp_sensor/thermistor.h"
 #include "usb_mux.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
@@ -187,4 +188,22 @@ void motion_interrupt(enum gpio_signal signal)
 		bmi160_interrupt(signal);
 		break;
 	}
+}
+
+int board_get_soc_temp(int idx, int *temp_k)
+{
+	uint32_t board_version = get_board_version();
+
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		return EC_ERROR_NOT_POWERED;
+
+	if (board_version == 1)
+		return get_temp_3v3_30k9_47k_4050b(idx, temp_k);
+	/*
+	 * b/188539950: Read SOC temp from i2c temp sensor.
+	 *
+	 * For now just return 0 so no thermal events are triggered.
+	 */
+	*temp_k = 0;
+	return EC_SUCCESS;
 }
