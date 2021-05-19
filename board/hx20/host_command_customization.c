@@ -46,7 +46,6 @@ static void sci_enable(void)
 	if (*host_get_customer_memmap(0x00) & BIT(0)) {
 	/* when host set EC driver ready flag, EC need to enable SCI */
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
-		s5_power_up_control(0);
 		update_soc_power_limit(true, false);
 		system_set_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, ac_boot_status());
 	} else
