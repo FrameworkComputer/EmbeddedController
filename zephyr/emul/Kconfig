@@ -6,3 +6,10 @@ config EMUL_SMART_BATTERY
 	bool "Smart Battery emulator"
 	help
 	  Enable the Smart Battery emulator. This driver use emulated I2C bus.
+
+config EMUL_BMA255
+	bool "BMA255 emulator"
+	help
+	  Enable the BMA255 emulator. This driver use emulated I2C bus.
+	  It is used to test bma2x2 driver. Emulators API is available in
+	  zephyr/include/emul/emul_bma255.h

@@ -1,0 +1,83 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Zephyr BMA255 Emulator
+
+compatible: "zephyr,bma255"
+
+include: base.yaml
+
+properties:
+    nvm-off-x:
+        type: int
+        required: false
+        default: 0
+        description: Accelerometer offset of x axis stored in NVM.
+
+    nvm-off-y:
+        type: int
+        required: false
+        default: 0
+        description: Accelerometer offset of y axis stored in NVM.
+
+    nvm-off-z:
+        type: int
+        required: false
+        default: 0
+        description: Accelerometer offset of z axis stored in NVM.
+
+    nvm-gp0:
+        type: int
+        required: false
+        default: 0
+        description: GP0 value stored in NVM.
+
+    nvm-gp1:
+        type: int
+        required: false
+        default: 0
+        description: GP1 value stored in NVM.
+
+    nvm-acc-x:
+        type: int
+        required: false
+        default: 0
+        description: Accelerometer value of x axis used until new value is set.
+
+    nvm-acc-y:
+        type: int
+        required: false
+        default: 0
+        description: Accelerometer value of y axis used until new value is set.
+
+    nvm-acc-z:
+        type: int
+        required: false
+        default: 0
+        description: Accelerometer value of z axis used until new value is set.
+
+    error-on-compensation-not-ready:
+        type: boolean
+        description:
+          Flag indicating if error should be generated when fast compensation
+          is started when not ready bit is set.
+
+    error-on-ro-write:
+        type: boolean
+        description:
+          Flag indicating if error should be generated when read only register
+          is being written.
+
+    error-on-reserved-bit-write:
+        type: boolean
+        description:
+          Flag indicating if error should be generated when reserved bit
+          is being written.
+
+    error-on-msb-first-access:
+        type: boolean
+        description:
+          Flag indicating if error should be generated when MSB register of
+          accelerometer value is accessed before LSB and shadowing is enabled
+          at the same time.
