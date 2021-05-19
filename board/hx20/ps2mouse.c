@@ -24,8 +24,8 @@
 #include "diagnostics.h"
 #define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
 
-enum ps2_mouse_state mouse_state = PS2MSTATE_RESET;
-enum ps2_mouse_state prev_mouse_state = PS2MSTATE_RESET;
+enum ps2_mouse_state mouse_state = PS2MSTATE_STREAM;
+enum ps2_mouse_state prev_mouse_state = PS2MSTATE_STREAM;
 uint8_t data_report_en = true;
 int32_t current_pos[4];
 uint8_t button_state;
