@@ -6,7 +6,7 @@
 
 /dts-v1/;
 
-#include <cros/nuvoton/npcx.dtsi>
+#include <cros/nuvoton/npcx7.dtsi>
 #include <dt-bindings/adc/adc.h>
 #include <dt-bindings/charger/intersil_isl9241.h>
 #include <dt-bindings/gpio_defines.h>

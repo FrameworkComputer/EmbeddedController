@@ -1,0 +1,53 @@
+/*
+ * Copyright (c) 2021 The Chromium OS Authors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+#include <cros/nuvoton/npcx.dtsi>
+
+/ {
+
+	soc {
+
+		dbg: dbg@400c3074 {
+			compatible = "nuvoton,npcx-cros-dbg";
+			reg = <0x400c3074 0x0C>;
+			pinctrl-0 = <&alt5_njen0_en>;
+			label = "DBG";
+			status = "disabled";
+		};
+
+		shi: shi@4000f000 {
+			compatible = "nuvoton,npcx-cros-shi";
+			reg = <0x4000f000 0x120>;
+			interrupts = <18 1>;
+			clocks = <&pcc NPCX_CLOCK_BUS_APB3 NPCX_PWDWN_CTL5 1>;
+			pinctrl-0 = <&altc_shi_sl>;
+			shi-cs-wui =<&wui_io53>;
+			label = "SHI";
+		};
+	};
+
+	power-states {
+		suspend_to_idle_instant: suspend_to_idle_instant {
+			compatible = "zephyr,power-state";
+			power-state-name = "suspend-to-idle";
+			substate-id = <0>;
+			min-residency-us = <500>;
+		};
+
+		suspend_to_idle_normal: suspend_to_idle_normal {
+			compatible = "zephyr,power-state";
+			power-state-name = "suspend-to-idle";
+			substate-id = <1>;
+			min-residency-us = <200100>;
+		};
+	};
+};
+
+&cpu0 {
+	cpu-power-states = <&suspend_to_idle_instant &suspend_to_idle_normal>;
+};
