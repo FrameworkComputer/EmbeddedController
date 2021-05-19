@@ -189,6 +189,13 @@ static void led_init(void)
 {
 	pwm_enable(PWM_CH_LED_RED, 1);
 	pwm_enable(PWM_CH_LED_WHITE, 1);
+
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		led_resume();
+	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		led_suspend();
+	else if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		led_shutdown();
 }
 DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_INIT_PWM + 1);
 
