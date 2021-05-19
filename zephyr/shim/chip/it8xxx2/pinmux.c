@@ -5,6 +5,7 @@
 
 #include <init.h>
 #include <drivers/pinmux.h>
+#include <dt-bindings/pinctrl/it8xxx2-pinctrl.h>
 #include <soc.h>
 
 static int it8xxx2_pinmux_init(const struct device *dev)
