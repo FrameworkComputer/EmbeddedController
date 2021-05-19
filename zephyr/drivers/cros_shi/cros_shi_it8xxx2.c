@@ -11,6 +11,8 @@
 #include <kernel.h>
 #include <logging/log.h>
 #include <soc.h>
+#include <drivers/pinmux.h>
+#include <dt-bindings/pinctrl/it8xxx2-pinctrl.h>
 
 #include "console.h"
 #include "host_command.h"
@@ -258,6 +260,10 @@ static void shi_ite_int_handler(const void *arg)
 
 }
 
+/*
+ * SHI init priority is behind CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY to
+ * overwrite GPIO_INPUT setting of spi chip select pin.
+ */
 static int cros_shi_ite_init(const struct device *dev)
 {
 	/* Set FIFO data target count */
@@ -314,13 +320,20 @@ static int cros_shi_ite_init(const struct device *dev)
 	/* SPI slave controller enable (after settings are ready) */
 	IT83XX_SPI_SPISGCR = IT83XX_SPI_SPISCEN;
 
+#if DT_NODE_HAS_STATUS(DT_NODELABEL(pinmuxm), okay)
+	const struct device *portm = DEVICE_DT_GET(DT_NODELABEL(pinmuxm));
+
+	/* Ensure spi chip select alt function is enabled. */
+	pinmux_pin_set(portm, 5, IT8XXX2_PINMUX_FUNC_1);
+#endif
+
 	/* Enable SPI slave interrupt */
 	IRQ_CONNECT(DT_INST_IRQN(0), 0, shi_ite_int_handler, 0, 0);
 	irq_enable(DT_INST_IRQN(0));
 
 	return 0;
 }
-SYS_INIT(cros_shi_ite_init, PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
+SYS_INIT(cros_shi_ite_init, POST_KERNEL, 52);
 
 /* Get protocol information */
 enum ec_status spi_get_protocol_info(struct host_cmd_handler_args *args)
