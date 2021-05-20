@@ -1,0 +1,43 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/dts-v1/;
+
+#include <cros/nuvoton/npcx9.dtsi>
+#include <dt-bindings/gpio_defines.h>
+#include <nuvoton/npcx9m3f.dtsi>
+
+/ {
+	model = "Google Brya Baseboard";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,console = &uart1;
+		zephyr,shell-uart = &uart1;
+		zephyr,flash = &flash0;
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+	};
+
+	named-pwms {
+		compatible = "named-pwms";
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+	};
+
+	def-lvol-io-list {
+		compatible = "nuvoton,npcx-lvolctrl-def";
+	};
+};
+
+&uart1 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&altj_cr_sin1_sl2 &altj_cr_sout1_sl2>;
+};
