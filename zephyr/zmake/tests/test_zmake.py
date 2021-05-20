@@ -9,6 +9,7 @@ import os
 import pathlib
 import re
 import tempfile
+import unittest
 import unittest.mock as mock
 from unittest.mock import patch
 
@@ -108,49 +109,56 @@ def do_test_with_log_level(log_level):
     return recs, tmpname
 
 
-def test_filter_normal():
-    """Test filtering of a normal build (with no errors)"""
-    recs, _ = do_test_with_log_level(logging.ERROR)
-    assert not recs
+class TestFilters(unittest.TestCase):
+    """Test filtering of stdout and stderr"""
+
+    def test_filter_normal(self):
+        """Test filtering of a normal build (with no errors)"""
+        recs, _ = do_test_with_log_level(logging.ERROR)
+        self.assertFalse(recs)
 
 
-def test_filter_info():
-    """Test what appears on the INFO level"""
-    recs, tmpname = do_test_with_log_level(logging.INFO)
-    # TODO: Remove sets and figure out how to check the lines are in the
-    # right order.
-    expected = {
-        'Building {}:build-ro: /usr/bin/ninja -C {}/build-build-ro'.format(
-            tmpname, tmpname),
-        'Building {}:build-rw: /usr/bin/ninja -C {}/build-build-rw'.format(
-            tmpname, tmpname),
-    }
-    for suffix in ['ro', 'rw']:
-        with open(get_test_filepath('%s_INFO' % suffix)) as f:
-            for line in f:
-                expected.add(
-                    "[{}:build-{}]{}".format(tmpname, suffix, line.strip()))
-    # This produces an easy-to-read diff if there is a difference
-    assert set(recs) == expected
+    def test_filter_info(self):
+        """Test what appears on the INFO level"""
+        recs, tmpname = do_test_with_log_level(logging.INFO)
+        # TODO: Remove sets and figure out how to check the lines are in the
+        # right order.
+        expected = {
+            'Building {}:build-ro: /usr/bin/ninja -C {}/build-build-ro'.format(
+                tmpname, tmpname),
+            'Building {}:build-rw: /usr/bin/ninja -C {}/build-build-rw'.format(
+                tmpname, tmpname),
+        }
+        for suffix in ['ro', 'rw']:
+            with open(get_test_filepath('%s_INFO' % suffix)) as f:
+                for line in f:
+                    expected.add(
+                        "[{}:build-{}]{}".format(tmpname, suffix, line.strip()))
+        # This produces an easy-to-read diff if there is a difference
+        self.assertEqual(expected, set(recs))
 
 
-def test_filter_debug():
-    """Test what appears on the DEBUG level"""
-    recs, tmpname = do_test_with_log_level(logging.DEBUG)
-    # TODO: Remove sets and figure out how to check the lines are in the
-    # right order.
-    expected = {
-        'Building {}:build-ro: /usr/bin/ninja -C {}/build-build-ro'.format(
-            tmpname, tmpname),
-        'Building {}:build-rw: /usr/bin/ninja -C {}/build-build-rw'.format(
-            tmpname, tmpname),
-        'Running cat {}/files/sample_ro.txt'.format(OUR_PATH),
-        'Running cat {}/files/sample_rw.txt'.format(OUR_PATH),
-    }
-    for suffix in ['ro', 'rw']:
-        with open(get_test_filepath(suffix)) as f:
-            for line in f:
-                expected.add(
-                    "[{}:build-{}]{}".format(tmpname, suffix, line.strip()))
-    # This produces an easy-to-read diff if there is a difference
-    assert set(recs) == expected
+    def test_filter_debug(self):
+        """Test what appears on the DEBUG level"""
+        recs, tmpname = do_test_with_log_level(logging.DEBUG)
+        # TODO: Remove sets and figure out how to check the lines are in the
+        # right order.
+        expected = {
+            'Building {}:build-ro: /usr/bin/ninja -C {}/build-build-ro'.format(
+                tmpname, tmpname),
+            'Building {}:build-rw: /usr/bin/ninja -C {}/build-build-rw'.format(
+                tmpname, tmpname),
+            'Running cat {}/files/sample_ro.txt'.format(OUR_PATH),
+            'Running cat {}/files/sample_rw.txt'.format(OUR_PATH),
+        }
+        for suffix in ['ro', 'rw']:
+            with open(get_test_filepath(suffix)) as f:
+                for line in f:
+                    expected.add(
+                        "[{}:build-{}]{}".format(tmpname, suffix, line.strip()))
+        # This produces an easy-to-read diff if there is a difference
+        self.assertEqual(expected, set(recs))
+
+
+if __name__ == "__main__":
+    unittest.main()
