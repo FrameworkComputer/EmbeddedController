@@ -30,7 +30,7 @@ GPIO_INT(PMIC_EC_PWRGD, PIN(F, 3),
 
 /* Sensor Interrupts */
 GPIO_INT(BASE_IMU_INT_L,     PIN(M, 3), GPIO_INT_FALLING | GPIO_SEL_1P8V,
-         icm426xx_interrupt)
+         icm42607_interrupt)
 /* USB-C interrupts */
 GPIO_INT(USB_C0_PPC_INT_ODL, PIN(D, 1), GPIO_INT_BOTH, ppc_interrupt)
 GPIO_INT(USB_C0_BC12_INT_ODL,PIN(J, 4), GPIO_INT_FALLING, bc12_interrupt)

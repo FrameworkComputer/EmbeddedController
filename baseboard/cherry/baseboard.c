@@ -17,7 +17,7 @@
 #include "console.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
-#include "driver/accelgyro_icm426xx.h"
+#include "driver/accelgyro_icm42607.h"
 #include "driver/accelgyro_icm_common.h"
 #include "driver/bc12/mt6360.h"
 #include "driver/bc12/pi3usb9201.h"

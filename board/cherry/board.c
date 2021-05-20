@@ -15,7 +15,7 @@
 #include "console.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
-#include "driver/accelgyro_icm426xx.h"
+#include "driver/accelgyro_icm42607.h"
 #include "driver/accelgyro_icm_common.h"
 #include "driver/bc12/mt6360.h"
 #include "driver/bc12/pi3usb9201.h"
@@ -65,8 +65,21 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 static struct mutex g_base_mutex;
 static struct mutex g_lid_mutex;
 
-static struct icm_drv_data_t g_icm426xx_data;
+static struct icm_drv_data_t g_icm42607_data;
 static struct kionix_accel_data g_kx022_data;
+
+/* Matrix to rotate accelrator into standard reference frame */
+static const mat33_fp_t base_standard_ref = {
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+static const mat33_fp_t lid_standard_ref = {
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
+};
 
 struct motion_sensor_t motion_sensors[] = {
 	/*
@@ -77,18 +90,18 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_ACCEL] = {
 		.name = "Base Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_ICM426XX,
+		.chip = MOTIONSENSE_CHIP_ICM42607,
 		.type = MOTIONSENSE_TYPE_ACCEL,
 		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &icm426xx_drv,
+		.drv = &icm42607_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = &g_icm426xx_data,
+		.drv_data = &g_icm42607_data,
 		.port = I2C_PORT_ACCEL,
-		.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+		.i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
 		.default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
-		.rot_standard_ref = NULL,
-		.min_frequency = ICM426XX_ACCEL_MIN_FREQ,
-		.max_frequency = ICM426XX_ACCEL_MAX_FREQ,
+		.rot_standard_ref = &base_standard_ref,
+		.min_frequency = ICM42607_ACCEL_MIN_FREQ,
+		.max_frequency = ICM42607_ACCEL_MAX_FREQ,
 		.config = {
 			/* EC use accel for angle detection */
 			[SENSOR_CONFIG_EC_S0] = {
@@ -103,18 +116,18 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_GYRO] = {
 		.name = "Base Gyro",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_ICM426XX,
+		.chip = MOTIONSENSE_CHIP_ICM42607,
 		.type = MOTIONSENSE_TYPE_GYRO,
 		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &icm426xx_drv,
+		.drv = &icm42607_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = &g_icm426xx_data,
+		.drv_data = &g_icm42607_data,
 		.port = I2C_PORT_ACCEL,
-		.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+		.i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
 		.default_range = 1000, /* dps */
-		.rot_standard_ref = NULL,
-		.min_frequency = ICM426XX_GYRO_MIN_FREQ,
-		.max_frequency = ICM426XX_GYRO_MAX_FREQ,
+		.rot_standard_ref = &base_standard_ref,
+		.min_frequency = ICM42607_GYRO_MIN_FREQ,
+		.max_frequency = ICM42607_GYRO_MAX_FREQ,
 	},
 	[LID_ACCEL] = {
 		.name = "Lid Accel",
@@ -127,7 +140,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &g_kx022_data,
 		.port = I2C_PORT_ACCEL,
 		.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
-		.rot_standard_ref = NULL,
+		.rot_standard_ref = &lid_standard_ref,
 		.default_range = 2, /* g, enough for laptop. */
 		.min_frequency = KX022_ACCEL_MIN_FREQ,
 		.max_frequency = KX022_ACCEL_MAX_FREQ,
