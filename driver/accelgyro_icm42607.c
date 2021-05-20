@@ -391,7 +391,7 @@ void icm42607_interrupt(enum gpio_signal signal)
 		last_interrupt_timestamp = __hw_clock_source_read();
 
 	task_set_event(TASK_ID_MOTIONSENSE,
-		       CONFIG_ACCELGYRO_ICM42607_INT_EVENT, 0);
+		       CONFIG_ACCELGYRO_ICM42607_INT_EVENT);
 }
 
 /**
@@ -622,10 +622,9 @@ out_unlock:
 	return ret;
 }
 
-static int icm42607_set_range(const struct motion_sensor_t *s, int range,
+static int icm42607_set_range(struct motion_sensor_t *s, int range,
 			      int rnd)
 {
-	struct accelgyro_saved_data_t *data = ICM_GET_SAVED_DATA(s);
 	int reg, ret, reg_val;
 	int newrange;
 
@@ -671,7 +670,7 @@ static int icm42607_set_range(const struct motion_sensor_t *s, int range,
 	ret = icm_field_update8(s, reg, ICM42607_FS_MASK,
 				ICM42607_FS_SEL(reg_val));
 	if (ret == EC_SUCCESS)
-		data->range = newrange;
+		s->current_range = newrange;
 
 	mutex_unlock(s->mutex);
 
@@ -1043,7 +1042,7 @@ static int icm42607_init_config(const struct motion_sensor_t *s)
 	return icm_write8(s, ICM42607_REG_FIFO_CONFIG1, ICM42607_FIFO_BYPASS);
 }
 
-static int icm42607_init(const struct motion_sensor_t *s)
+static int icm42607_init(struct motion_sensor_t *s)
 {
 	struct accelgyro_saved_data_t *saved_data = ICM_GET_SAVED_DATA(s);
 	int val;
@@ -1120,7 +1119,6 @@ const struct accelgyro_drv icm42607_drv = {
 	.read = icm42607_read,
 	.read_temp = icm42607_read_temp,
 	.set_range = icm42607_set_range,
-	.get_range = icm_get_range,
 	.get_resolution = icm_get_resolution,
 	.set_data_rate = icm42607_set_data_rate,
 	.get_data_rate = icm_get_data_rate,
