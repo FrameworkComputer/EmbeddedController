@@ -99,13 +99,14 @@
  * IT81202 based boards are variant of jacuzzi and I/O expander isn't required
  * on them.
  */
-#ifdef VARIANT_KUKUI_EC_STM32F098
+#if defined(VARIANT_KUKUI_EC_STM32F098) || defined(VARIANT_KUKUI_EC_STM32L431)
 #define CONFIG_IO_EXPANDER
 #define CONFIG_IO_EXPANDER_IT8801
 #define CONFIG_IO_EXPANDER_PORT_COUNT 1
 #define CONFIG_KEYBOARD_NOT_RAW
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #endif
+
 #define CONFIG_KEYBOARD_COL2_INVERTED
 
 #define CONFIG_GMR_TABLET_MODE
@@ -258,14 +259,19 @@
  * Variant EC defines. Pick one:
  * VARIANT_KUKUI_EC_STM32F098
  * VARIANT_KUKUI_EC_IT81202
+ * VARIANT_KUKUI_EC_STM32L431
  */
-#if defined(VARIANT_KUKUI_EC_STM32F098)
+#if defined(VARIANT_KUKUI_EC_STM32F098) || defined(VARIANT_KUKUI_EC_STM32L431)
 /* Timer selection */
 #define TIM_CLOCK32  2
 #define TIM_WATCHDOG 7
 
 /* 48 MHz SYSCLK clock frequency */
+#ifdef VARIANT_KUKUI_EC_STM32L431
+#define CPU_CLOCK 80000000
+#else
 #define CPU_CLOCK 48000000
+#endif
 
 #undef  CONFIG_HIBERNATE
 #define CONFIG_SPI_CONTROLLER

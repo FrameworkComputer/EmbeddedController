@@ -7,6 +7,7 @@
 #include "adc_chip.h"
 #include "charger.h"
 #include "chipset.h"
+#include "dma.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
@@ -55,6 +56,25 @@ void board_config_pre_init(void)
 	 */
 	STM32_DMA_CSELR(STM32_DMAC_CH4) = (8 << 12) | (8 << 16) |
 					  (3 << 20) | (3 << 24);
+
+#elif defined(VARIANT_KUKUI_EC_STM32L431)
+#ifdef	CONFIG_DMA
+	dma_init();
+#endif
+	/*
+	 * Remap USART1 and SPI2 DMA:
+	 *
+	 * DMA2_CH=DMA1_CH+8
+	 *
+	 * Ch6 (DMA2): USART1_TX / Ch7: USART1_RX (0010)
+	 * Ch4 (DMA1): SPI2_RX   / Ch5: SPI2_TX (0010)
+	 *
+	 *    (*((volatile unsigned long *)(0x400200A8UL))) = 0x00011000;
+	 *    (*((volatile unsigned long *)(0x400204A8UL))) = 0x00200000;
+	 */
+
+	STM32_DMA_CSELR(STM32_DMAC_CH4) = (1 << 12) | (1 << 16);
+	STM32_DMA_CSELR(STM32_DMAC_CH14) = (2 << 20) | (2 << 24);
 #endif
 }
 
@@ -144,7 +164,7 @@ int board_get_version(void)
 
 static void baseboard_spi_init(void)
 {
-#ifdef VARIANT_KUKUI_EC_STM32F098
+#if defined(VARIANT_KUKUI_EC_STM32F098) || defined(VARIANT_KUKUI_EC_STM32L431)
 	/* Set SPI PA15,PB3/4/5/13/14/15 pins to high speed */
 	STM32_GPIO_OSPEEDR(GPIO_A) |= 0xc0000000;
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xfc000fc0;

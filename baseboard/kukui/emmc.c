@@ -198,12 +198,21 @@ static void emmc_init_spi(void)
 	/* Enable clocks to SPI module */
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI1;
 #elif EMMC_SPI_PORT == 2
+#ifdef CHIP_FAMILY_STM32L4
+	/* Reset SPI */
+	STM32_RCC_APB1RSTR1 |= STM32_RCC_PB1_SPI2;
+	STM32_RCC_APB1RSTR1 &= ~STM32_RCC_PB1_SPI2;
+
+	/* Enable clocks to SPI module */
+	STM32_RCC_APB1ENR1 |= STM32_RCC_PB1_SPI2;
+#else
 	/* Reset SPI */
 	STM32_RCC_APB1RSTR |= STM32_RCC_PB1_SPI2;
 	STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_SPI2;
 
 	/* Enable clocks to SPI module */
 	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
+#endif
 #else
 #error "Please define EMMC_SPI_PORT in board.h."
 #endif
