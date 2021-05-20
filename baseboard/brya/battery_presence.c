@@ -14,12 +14,6 @@
 
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
-enum battery_present battery_hw_present(void)
-{
-	/* The GPIO is low when the battery is physically present */
-	return gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES;
-}
-
 __overridable bool board_battery_is_initialized(void)
 {
 	int batt_status;

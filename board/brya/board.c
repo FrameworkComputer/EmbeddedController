@@ -5,6 +5,7 @@
 
 #include "common.h"
 
+#include "battery.h"
 #include "button.h"
 #include "charge_ramp.h"
 #include "charger.h"
@@ -91,3 +92,10 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 }
 
 #endif /* CONFIG_CHARGE_RAMP_SW */
+
+enum battery_present battery_hw_present(void)
+{
+	/* The GPIO is low when the battery is physically present */
+	return gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES;
+}
+
