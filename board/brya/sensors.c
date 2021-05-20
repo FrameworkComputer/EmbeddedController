@@ -24,8 +24,8 @@ const struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_2_FAN] = {
-		.name = "TEMP_FAN",
+	[ADC_TEMP_SENSOR_2_AMBIENT] = {
+		.name = "TEMP_AMBIENT",
 		.input_ch = NPCX_ADC_CH1,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
@@ -274,13 +274,25 @@ const struct temp_sensor_t temp_sensors[] = {
 		.name = "DDR and SOC",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_1_DDR_SOC
+		.idx = ADC_TEMP_SENSOR_1_DDR_SOC,
 	},
-	[TEMP_SENSOR_2_FAN] = {
-		.name = "FAN",
+	[TEMP_SENSOR_2_AMBIENT] = {
+		.name = "Ambient",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2_FAN
+		.idx = ADC_TEMP_SENSOR_2_AMBIENT,
+	},
+	[TEMP_SENSOR_3_CHARGER] = {
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_3_CHARGER,
+	},
+	[TEMP_SENSOR_4_WWAN] = {
+		.name = "WWAN",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_4_WWAN,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
@@ -317,7 +329,7 @@ static const struct ec_thermal_config thermal_cpu = {
  * Inductors: limit of 125c
  * PCB: limit is 80c
  */
-static const struct ec_thermal_config thermal_fan = {
+static const struct ec_thermal_config thermal_ambient = {
 	.temp_host = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
 		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
@@ -329,9 +341,48 @@ static const struct ec_thermal_config thermal_fan = {
 	.temp_fan_max = C_TO_K(55),
 };
 
-/* this should really be "const" */
+/*
+ * Inductor limits - used for both charger and PP3300 regulator
+ *
+ * Need to use the lower of the charger IC, PP3300 regulator, and the inductors
+ *
+ * Charger max recommended temperature 100C, max absolute temperature 125C
+ * PP3300 regulator: operating range -40 C to 145 C
+ *
+ * Inductors: limit of 125c
+ * PCB: limit is 80c
+ */
+const static struct ec_thermal_config thermal_charger = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(55),
+};
+
+/*
+ * TODO(b/180681346): update for brya WWAN module
+ */
+static const struct ec_thermal_config thermal_wwan = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(55),
+};
+
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = thermal_cpu,
-	[TEMP_SENSOR_2_FAN]	= thermal_fan,
+	[TEMP_SENSOR_2_AMBIENT]	= thermal_ambient,
+	[TEMP_SENSOR_3_CHARGER] = thermal_charger,
+	[TEMP_SENSOR_4_WWAN] = thermal_wwan,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
