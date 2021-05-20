@@ -141,6 +141,7 @@
 
 /* USB-A */
 #define CONFIG_USB_PORT_POWER_DUMB
+#define CONFIG_USB_PORT_POWER_DUMB_CUSTOM_HOOK
 #define USB_PORT_COUNT USBA_PORT_COUNT
 
 /* UART */
@@ -208,5 +209,6 @@ enum board_sub_board {
 int board_get_version(void);
 void board_reset_pd_mcu(void);
 enum board_sub_board board_get_sub_board(void);
+void usb_a0_interrupt(enum gpio_signal signal);
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BASEBOARD_H */

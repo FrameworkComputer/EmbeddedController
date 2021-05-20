@@ -53,6 +53,8 @@ GPIO_INT(VOLUME_UP_L,        PIN(D, 6), GPIO_INT_BOTH | GPIO_PULL_UP,
          button_interrupt) /* EC_VOLUP_BTN_ODL */
 
 /* Other interrupts */
+GPIO_INT(AP_XHCI_INIT_DONE,  PIN(D, 2), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V,
+         usb_a0_interrupt)
 #ifdef BOARD_ASURADA_REV0
 GPIO_INT(AC_PRESENT,         PIN(M, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,
          extpower_interrupt) /* AC_OK / AC_PRESENT in rev0 */
@@ -135,7 +137,6 @@ ALTERNATE(PIN_MASK(M, 0x33), 0, MODULE_SPI, 0) /* SPI */
 
 /* Unimplemented Pins  */
 GPIO(SET_VMC_VOLT_AT_1V8,    PIN(D, 4), GPIO_INPUT | GPIO_PULL_DOWN | GPIO_SEL_1P8V)
-GPIO(EN_PP3000_VMC_PMU,      PIN(D, 2), GPIO_INPUT | GPIO_PULL_DOWN | GPIO_SEL_1P8V)
 GPIO(PACKET_MODE_EN,         PIN(A, 3), GPIO_INPUT | GPIO_PULL_DOWN)
 /* b/160218054: behavior not defined */
 /* *_ODL pin has external pullup so don't pull it down. */
