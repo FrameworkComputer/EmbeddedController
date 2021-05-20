@@ -6914,6 +6914,18 @@ struct ec_response_display_soc {
 } __ec_align2;
 
 
+#define EC_CMD_SET_BASE_STATE 0x0138
+
+struct ec_params_set_base_state {
+	uint8_t cmd;  /* enum ec_set_base_state_cmd */
+} __ec_align1;
+
+enum ec_set_base_state_cmd {
+	EC_SET_BASE_STATE_DETACH = 0,
+	EC_SET_BASE_STATE_ATTACH,
+	EC_SET_BASE_STATE_RESET,
+};
+
 /*****************************************************************************/
 /* The command range 0x200-0x2FF is reserved for Rotor. */
 

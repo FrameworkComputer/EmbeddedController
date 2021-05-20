@@ -200,9 +200,9 @@ static void pogo_chipset_shutdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pogo_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
-void base_force_state(int state)
+void base_force_state(enum ec_set_base_state_cmd state)
 {
-	if (state != 1 && state != 0) {
+	if (state >= EC_SET_BASE_STATE_RESET) {
 		CPRINTS("BD forced reset");
 		pogo_chipset_init();
 		return;
@@ -210,9 +210,11 @@ void base_force_state(int state)
 
 	gpio_disable_interrupt(GPIO_POGO_ADC_INT_L);
 	pogo_type = (state == 1 ? DEVICE_TYPE_KEYBOARD : DEVICE_TYPE_DETACHED);
-	base_set_device_type(state == 1 ? DEVICE_TYPE_KEYBOARD :
-					  DEVICE_TYPE_DETACHED);
-	CPRINTS("BD forced %sconnected", state == 1 ? "" : "dis");
+	base_set_device_type(state == EC_SET_BASE_STATE_ATTACH
+					? DEVICE_TYPE_KEYBOARD
+					: DEVICE_TYPE_DETACHED);
+	CPRINTS("BD forced %sconnected", state == EC_SET_BASE_STATE_ATTACH ?
+						  "" : "dis");
 }
 
 #ifdef VARIANT_KUKUI_POGO_DOCK

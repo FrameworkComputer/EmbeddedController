@@ -380,11 +380,11 @@ DECLARE_CONSOLE_COMMAND(basedebug, command_basedetectdebug, "[ena|dis]",
 			"En/Disable base detection debug");
 
 
-void base_force_state(int state)
+void base_force_state(enum ec_set_base_state_cmd state)
 {
-	if (state == 1)
+	if (state == EC_SET_BASE_STATE_ATTACH)
 		forced_state = BASE_ATTACHED;
-	else if (state == 0)
+	else if (state == EC_SET_BASE_STATE_DETACH)
 		forced_state = BASE_DETACHED;
 	else
 		forced_state = BASE_NO_FORCED_STATE;

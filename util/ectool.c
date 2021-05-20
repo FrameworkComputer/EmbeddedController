@@ -73,6 +73,8 @@ const char help_str[] =
 	"      Turn on automatic fan speed control.\n"
 	"  backlight <enabled>\n"
 	"      Enable/disable LCD backlight\n"
+	"  basestate [attach | detach | reset]\n"
+	"      Manually force base state to attached, detached or reset.\n"
 	"  battery\n"
 	"      Prints battery info\n"
 	"  batterycutoff [at-shutdown]\n"
@@ -7437,6 +7439,35 @@ int cmd_lcd_backlight(int argc, char *argv[])
 	return 0;
 }
 
+static void cmd_basestate_help(void)
+{
+	fprintf(stderr,
+		"Usage: ectool basestate [attach | detach | reset]\n");
+}
+
+int cmd_basestate(int argc, char *argv[])
+{
+	struct ec_params_set_base_state p;
+
+	if (argc != 2) {
+		cmd_basestate_help();
+		return -1;
+	}
+
+	if (!strncmp(argv[1], "attach", 6)) {
+		p.cmd = EC_SET_BASE_STATE_ATTACH;
+	} else if (!strncmp(argv[1], "detach", 6)) {
+		p.cmd = EC_SET_BASE_STATE_DETACH;
+	} else if (!strncmp(argv[1], "reset", 5)) {
+		p.cmd = EC_SET_BASE_STATE_RESET;
+	} else {
+		cmd_basestate_help();
+		return -1;
+	}
+
+	return ec_command(EC_CMD_SET_BASE_STATE, 0,
+			  &p, sizeof(p), NULL, 0);
+}
 
 int cmd_ext_power_limit(int argc, char *argv[])
 {
@@ -10497,6 +10528,7 @@ const struct command commands[] = {
 	{"apreset", cmd_apreset},
 	{"autofanctrl", cmd_thermal_auto_fan_ctrl},
 	{"backlight", cmd_lcd_backlight},
+	{"basestate", cmd_basestate},
 	{"battery", cmd_battery},
 	{"batterycutoff", cmd_battery_cut_off},
 	{"batteryparam", cmd_battery_vendor_param},

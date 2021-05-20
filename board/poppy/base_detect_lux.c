@@ -219,13 +219,13 @@ static void base_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT+1);
 
-void base_force_state(int state)
+void base_force_state(enum ec_set_base_state_cmd state)
 {
-	if (state == 1) {
+	if (state == EC_SET_BASE_STATE_ATTACH) {
 		gpio_disable_interrupt(GPIO_BASE_DET_A);
 		base_detect_change(BASE_CONNECTED);
 		CPRINTS("BD forced connected");
-	} else if (state == 0) {
+	} else if (state == EC_SET_BASE_STATE_DETACH) {
 		gpio_disable_interrupt(GPIO_BASE_DET_A);
 		base_detect_change(BASE_DISCONNECTED);
 		CPRINTS("BD forced disconnected");
