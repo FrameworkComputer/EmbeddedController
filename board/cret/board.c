@@ -585,3 +585,11 @@ static void fw_config_tablet_mode(void)
 			       GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 }
+
+static void board_extpower(void)
+{
+	int extpower_present = extpower_is_present();
+
+	gpio_set_level(GPIO_EC_ACOK_OTG, extpower_present);
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
