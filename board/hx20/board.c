@@ -356,7 +356,8 @@ static void vci_init(void)
 	 * only enable input for fp, powerbutton for now
 	 * enable BIT 2 for chassis open
 	 */
-	MCHP_VCI_INPUT_ENABLE = BIT(0) |  BIT(1) | BIT(2);
+	MCHP_VCI_INPUT_ENABLE = BIT(0) |  BIT(1);
+	MCHP_VCI_BUFFER_EN = BIT(2);
 }
 DECLARE_HOOK(HOOK_INIT, vci_init, HOOK_PRIO_FIRST);
 
@@ -376,6 +377,7 @@ static void board_power_off_deferred(void)
 		task_disable_irq(i);
 		task_clear_pending_irq(i);
 	}
+
 	gpio_set_level(GPIO_VS_ON, 0);
 	MCHP_VCI_REGISTER &= ~(MCHP_VCI_REGISTER_FW_CNTRL + MCHP_VCI_REGISTER_FW_EXT);
 		/* Wait for power rails to die */
