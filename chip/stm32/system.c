@@ -435,6 +435,23 @@ void system_reset(int flags)
 		 */
 
 		/*
+		 * RM0433 Rev 7
+		 * Section 45.4.4 Page 1920
+		 * https://www.st.com/resource/en/reference_manual/dm00314099.pdf
+		 * If several reload, prescaler, or window values are used by
+		 * the application, it is mandatory to wait until RVU bit is
+		 * reset before changing the reload value, to wait until PVU bit
+		 * is reset before changing the prescaler value, and to wait
+		 * until WVU bit is reset before changing the window value.
+		 *
+		 * Here we should wait to finish previous IWDG_RLR register
+		 * update (see watchdog_init()) before starting next update,
+		 * otherwise new IWDG_RLR value will be lost.
+		 */
+		while (STM32_IWDG_SR & STM32_IWDG_SR_RVU)
+			;
+
+		/*
 		 * Enable IWDG, which shouldn't be necessary since the IWDG
 		 * only needs to be started once, but STM32F412 hangs unless
 		 * this is added.
@@ -446,9 +463,11 @@ void system_reset(int flags)
 		/* Ask the watchdog to trigger a hard reboot */
 		STM32_IWDG_KR = STM32_IWDG_KR_UNLOCK;
 		STM32_IWDG_RLR = 0x1;
-		/* Wait for value to be reloaded. */
+		/* Wait for value to be updated. */
 		while (STM32_IWDG_SR & STM32_IWDG_SR_RVU)
 			;
+
+		/* Reload IWDG counter, it also locks registers */
 		STM32_IWDG_KR = STM32_IWDG_KR_RELOAD;
 #endif
 		/* wait for the chip to reboot */

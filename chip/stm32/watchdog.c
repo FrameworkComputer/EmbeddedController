@@ -57,6 +57,30 @@ int watchdog_init(void)
 	/* Start the watchdog (and re-lock registers) */
 	STM32_IWDG_KR = STM32_IWDG_KR_START;
 
+	/*
+	 * We should really wait for IWDG_PR and IWDG_RLR value to be updated
+	 * but updating those registers can take about 48ms (found
+	 * empirically, it's 6 LSI cycles at 32kHz). Such a big delay is not
+	 * desired during system init.
+	 *
+	 * However documentation allows us to continue code execution, but
+	 * we should wait for RVU bit to be clear before updating IWDG_RLR
+	 * once again (hard reboot for STM32H7 and STM32F4).
+	 *
+	 * RM0433 Rev 7
+	 * Section 45.4.4 Page 1920
+	 * https://www.st.com/resource/en/reference_manual/dm00314099.pdf
+	 * If several reload, prescaler, or window values are used by the
+	 * application, it is mandatory to wait until RVU bit is reset before
+	 * changing the reload value, to wait until PVU bit is reset before
+	 * changing the prescaler value, and to wait until WVU bit is reset
+	 * before changing the window value. However, after updating the
+	 * prescaler and/or the reload/window value it is not necessary to wait
+	 * until RVU or PVU or WVU is reset before continuing code execution
+	 * except in case of low-power mode entry.
+	 */
+
+
 #ifdef CONFIG_WATCHDOG_HELP
 	/* Use a harder timer to warn about an impending watchdog reset */
 	hwtimer_setup_watchdog();
