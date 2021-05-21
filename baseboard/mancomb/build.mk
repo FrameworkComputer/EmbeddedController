@@ -12,3 +12,4 @@ CHIP_VARIANT:=npcx9m3f
 
 baseboard-y=baseboard.o
 baseboard-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
+baseboard-$(CONFIG_CROS_BOARD_INFO)+=cbi.o

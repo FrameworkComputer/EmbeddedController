@@ -322,6 +322,11 @@ void tcpc_alert_event(enum gpio_signal signal);
 /* Required board functions */
 void board_get_bj_power(int *voltage, int *current);
 
+/* CBI utility functions */
+uint32_t get_sku_id(void);
+uint32_t get_board_version(void);
+uint32_t get_fw_config(void);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BASEBOARD_H */
