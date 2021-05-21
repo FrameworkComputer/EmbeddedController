@@ -18,7 +18,13 @@ const static struct mp2964_reg_val rail_b[] = {
 
 static void mp2964_on_startup(void)
 {
+	static int chip_updated;
 	int status;
+
+	if (chip_updated)
+		return;
+
+	chip_updated = 1;
 
 	ccprintf("%s: attempting to tune PMIC\n", __func__);
 
