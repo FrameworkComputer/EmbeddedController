@@ -354,6 +354,10 @@ static bool is_cable_ready_to_enter_usb4(int port, int cnt)
 void pd_dfp_discovery_init(int port)
 {
 	memset(&discovery[port], 0, sizeof(struct pd_discovery));
+}
+
+void pd_dfp_mode_init(int port)
+{
 	memset(&partner_amodes[port], 0, sizeof(partner_amodes[0]));
 }
 
@@ -428,6 +432,7 @@ static int process_am_discover_ident_sop(int port, int cnt, uint32_t head,
 					 enum tcpci_msg_type *rtype)
 {
 	pd_dfp_discovery_init(port);
+	pd_dfp_mode_init(port);
 	dfp_consume_identity(port, TCPCI_MSG_SOP, cnt, payload);
 
 	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP) && is_sop_prime_ready(port) &&

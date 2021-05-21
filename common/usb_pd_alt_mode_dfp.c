@@ -298,7 +298,7 @@ int pd_dfp_exit_mode(int port, enum tcpci_msg_type type, uint16_t svid,
 			if (active->amodes[idx].fx)
 				active->amodes[idx].fx->exit(port);
 
-		pd_dfp_discovery_init(port);
+		pd_dfp_mode_init(port);
 		return 0;
 	}
 

@@ -3042,6 +3042,7 @@ void pd_task(void *u)
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 	/* Initialize PD Policy engine */
 	pd_dfp_discovery_init(port);
+	pd_dfp_mode_init(port);
 #endif
 
 #ifdef CONFIG_CHARGE_MANAGER

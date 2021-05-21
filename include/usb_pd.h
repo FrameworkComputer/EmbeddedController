@@ -1886,6 +1886,13 @@ uint8_t get_vpd_ct_hw_version(int port);
 void pd_dfp_discovery_init(int port);
 
 /**
+ * Initialize active mode info (alternate mode or USB mode) for DFP
+ *
+ * @param port USB-C port number
+ */
+void pd_dfp_mode_init(int port);
+
+/**
  * Set identity discovery state for this type and port
  *
  * @param port  USB-C port number
