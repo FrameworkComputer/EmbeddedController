@@ -404,9 +404,9 @@ bool pd_is_try_source_capable(void)
 #if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 	/*
 	 * If a dedicated supplier is present, power is not a concern and
-	 * therefore always allow Try.Src.
+	 * therefore allow Try.Src if we're toggling.
 	 */
-	new_try_src |= (charge_manager_get_supplier() ==
+	new_try_src = try_src && (charge_manager_get_supplier() ==
 			     CHARGE_SUPPLIER_DEDICATED);
 #endif /* CONFIG_DEDICATED_CHARGE_PORT_COUNT */
 
