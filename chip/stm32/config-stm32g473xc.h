@@ -25,6 +25,8 @@
 #define CONFIG_FLASH_BANK_SIZE (2 * 1024)
 #define CONFIG_FLASH_ERASE_SIZE CONFIG_FLASH_BANK_SIZE
 
+/* Dual-bank (DBANK) mode is enabled by default for this chip */
+#define STM32_FLASH_DBANK_MODE
 
 /* Erasing 128K can take up to 2s, need to defer erase. */
 #define CONFIG_FLASH_DEFERRED_ERASE

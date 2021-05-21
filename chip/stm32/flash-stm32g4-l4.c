@@ -30,17 +30,6 @@
  * used in the STM32 TRMs. Redifining macros here in terms of pages in order to
  * match STM32 documentation for write protect computations in this file.
  *
- * Two write protect (WRP) regions can be defined in the option bytes. The
- * assumption is that 1st WRP area is for RO and the 2nd WRP is for RW if RW WRP
- * config is selected. If RW is being write-protected, it is assume to be the
- * 1st page following the RO section until the last flash page. WRP areas are
- * specified in terms of page indices with a start index and an end index.
- * start == end means a single page is protected.
- *
- *     WRP1a_start = WRP1a_end  --> WRP1a_start page is protected
- *     WRP1a_start > WRP1a_end  --> No WRP area is specified
- *     WRP1a_start < WRP1a_end  --> Pages WRP1a_start to WRP1a_end protected
- *
  * These macros are from the common flash API and mean the following:
  * WP_BANK_OFFSET         -> index of first RO page
  * CONFIG_WP_STORAGE_SIZE -> size of RO region in bytes
@@ -59,13 +48,28 @@
 #define FLASH_PAGE_ROLLBACK_LAST_IDX (FLASH_PAGE_ROLLBACK_FIRST_IDX +\
 					FLASH_PAGE_ROLLBACK_COUNT -1)
 
+#ifdef STM32_FLASH_DBANK_MODE
 #define FLASH_WRP_MASK              (FLASH_PAGE_MAX_COUNT - 1)
+#else
+#define FLASH_WRP_MASK              ((FLASH_PAGE_MAX_COUNT) / 2 - 1)
+#endif /* CONFIG_FLASH_DBANK_MODE */
 #define FLASH_WRP_START(val)        ((val) & FLASH_WRP_MASK)
 #define FLASH_WRP_END(val)          (((val) >> 16) & FLASH_WRP_MASK)
 #define FLASH_WRP_RANGE(start, end) (((start) & FLASH_WRP_MASK) | \
 				       (((end) & FLASH_WRP_MASK) << 16))
 #define FLASH_WRP_RANGE_DISABLED    FLASH_WRP_RANGE(FLASH_WRP_MASK, 0x00)
 #define FLASH_WRP1X_MASK FLASH_WRP_RANGE(FLASH_WRP_MASK, FLASH_WRP_MASK)
+
+enum wrp_region {
+	WRP_RO,
+	WRP_RW,
+};
+
+struct wrp_info {
+	int enable;
+	int start;
+	int end;
+};
 
 static inline int calculate_flash_timeout(void)
 {
@@ -166,31 +170,195 @@ static int commit_optb(void)
 	return EC_SUCCESS;
 }
 
+/*
+ * There are a minimum of 2 WRP regions that can be set. The STM32G4
+ * family has both category 2, and category 3 devices. Category 2
+ * devices have only 2 WRP regions, but category 3 devices have 4 WRP
+ * regions that can be configured. Category 3 devices also support dual
+ * flash banks, and this mode is the default setting. When DB mode is enabled,
+ * then each WRP register can only protect up to 64 2kB pages. This means that
+ * one WRP register is needed per bank.
+ *
+ *   1. WRP1A -> used always for RO
+ *   2. WRP1B -> used always for RW
+ *   3. WRP2A -> may be used for RW if dual-bank (DB) mode is enabled
+ *   4. WRP2B -> currently never used
+ *
+ * WRP areas are specified in terms of page indices with a start index
+ * and an end index. start == end means a single page is protected.
+ *
+ *   WRPnx_start = WRPnx_end  --> WRPnx_start page is protected
+ *   WRPnx_start > WRPnx_end  --> No WRP area is specified
+ *   WRPnx_start < WRPnx_end  --> Pages WRPnx_start to WRPnx_end
+ */
+static void optb_get_wrp(enum wrp_region region, struct wrp_info *wrp)
+{
+#ifdef STM32_FLASH_DBANK_MODE
+	int start;
+	int end;
+#endif
+	/* Assume WRP regions are not configured */
+	wrp->start = FLASH_WRP_MASK;
+	wrp->end = 0;
+	wrp->enable = 0;
+
+	if (region == WRP_RO) {
+		/*
+		 * RO write protect is fully described by WRP1AR. Get the
+		 * start/end indices. If end >= start, then RO write protect is
+		 * enabled.
+		 */
+		wrp->start = FLASH_WRP_START(STM32_FLASH_WRP1AR);
+		wrp->end = FLASH_WRP_END(STM32_FLASH_WRP1AR);
+		wrp->enable = wrp->end >= wrp->start;
+	} else if (region == WRP_RW) {
+		/*
+		 * RW write always uses WRP1BR. If dual-bank mode is being used,
+		 * then WRP2AR must also be check to determine the full range of
+		 * flash page indices being protected.
+		 */
+		wrp->start = FLASH_WRP_START(STM32_FLASH_WRP1BR);
+		wrp->end = FLASH_WRP_END(STM32_FLASH_WRP1BR);
+		wrp->enable = wrp->end >= wrp->start;
+#ifdef STM32_FLASH_DBANK_MODE
+		start = FLASH_WRP_START(STM32_FLASH_WRP2AR);
+		end = FLASH_WRP_END(STM32_FLASH_WRP2AR);
+		/*
+		 * If WRP2AR protection is enabled, then need to adjust either
+		 * the start, end, or both indices.
+		 */
+		if (end >= start) {
+			if (wrp->enable) {
+				/* WRP1BR is active, only need to adjust end */
+				wrp->end += end;
+			} else {
+				/*
+				 * WRP1BR is not active, so RW protection, if
+				 * enabled, is fully controlled by WRP2AR.
+				 */
+				wrp->start = start;
+				wrp->end = end;
+				wrp->enable = 1;
+			}
+		}
+#endif
+	}
+}
+
+static void optb_set_wrp(enum wrp_region region, struct wrp_info *wrp)
+{
+	int start = wrp->start;
+	int end = wrp->end;
+
+	if (!wrp->enable) {
+		/*
+		 * If enable is not set, then ignore the passed in start/end
+		 * values and set start/end to the default not protected range
+		 * which satisfies start > end
+		 */
+		start = FLASH_WRP_MASK;
+		end = 0;
+	}
+
+	if (region == WRP_RO) {
+		/* For RO can always use start/end directly */
+		STM32_FLASH_WRP1AR = FLASH_WRP_RANGE(start, end);
+	} else if (region == WRP_RW) {
+#ifdef STM32_FLASH_DBANK_MODE
+		/*
+		 * In the dual-bank flash case (STM32G4 Category 3 devices with
+		 * DB bit set), RW write protect can use both WRP1BR and WRP2AR
+		 * registers in order to span the full flash memory range.
+		 */
+		if (wrp->enable) {
+			int rw_end;
+
+			/*
+			 * If the 1st RW flash page is in the 1st half of
+			 * memory, then at least one block will be protected by
+			 * WRP1BR. If the end flash page is in the 2nd half of
+			 * memory, then cap the end for WRP1BR to its max
+			 * value. Otherwise, can use end passed in directly.
+			 */
+			if (start <= FLASH_WRP_MASK) {
+				rw_end = end > FLASH_WRP_MASK ?
+					FLASH_WRP_MASK : end;
+				STM32_FLASH_WRP1BR = FLASH_WRP_RANGE(start,
+								     rw_end);
+			}
+			/*
+			 * If the last RW flash page is in the 2nd half of
+			 * memory, then at least one block will be protected by
+			 * WRP2AR. If the start flash page is in the 2nd half of
+			 * memory, can use start directly. Otherwise, start
+			 * needs to be set to 0 here.
+			 */
+			if (end > FLASH_WRP_MASK) {
+				rw_end = end & FLASH_WRP_MASK;
+				STM32_FLASH_WRP2AR = FLASH_WRP_RANGE(0, rw_end);
+			}
+		} else {
+			/*
+			 * RW write protect is being disabled. Set both WRP1BR
+			 * and WRP2AR to default start > end not protected
+			 * state.
+			 */
+			STM32_FLASH_WRP1BR = FLASH_WRP_RANGE(start, end);
+			STM32_FLASH_WRP2AR = FLASH_WRP_RANGE(start, end);
+		}
+#else
+		/* Single bank case, WRP1BR can cover the full memory range */
+		STM32_FLASH_WRP1BR = FLASH_WRP_RANGE(start, end);
+#endif
+	}
+}
+
 static void unprotect_all_blocks(void)
 {
+	struct wrp_info wrp;
+
+	/* Set info values to unprotected */
+	wrp.start = FLASH_WRP_MASK;
+	wrp.end = 0;
+	wrp.enable = 0;
+
 	unlock_optb();
-	STM32_FLASH_WRP1AR = FLASH_WRP_RANGE_DISABLED;
-	STM32_FLASH_WRP1BR = FLASH_WRP_RANGE_DISABLED;
+	/* Disable RO WRP */
+	optb_set_wrp(WRP_RO, &wrp);
+	/* Disable RW WRP */
+	optb_set_wrp(WRP_RW, &wrp);
 	commit_optb();
 }
 
 int flash_physical_protect_at_boot(uint32_t new_flags)
 {
-	uint32_t ro_range = FLASH_WRP_RANGE_DISABLED;
-	uint32_t rb_rw_range = FLASH_WRP_RANGE_DISABLED;
+	struct wrp_info wrp_ro;
+	struct wrp_info wrp_rw;
+
+	wrp_ro.start = FLASH_WRP_MASK;
+	wrp_ro.end = 0;
+	wrp_ro.enable = 0;
+
+	wrp_rw.start = FLASH_WRP_MASK;
+	wrp_rw.end = 0;
+	wrp_rw.enable = 0;
+
 	/*
-	 * WRP1AR is storing the write-protection range for the RO region.
-	 * WRP1BR is storing the write-protection range for the
-	 * rollback and RW regions.
+	 * Default operation for this function is to disable both RO and RW
+	 * write protection in the option bytes. Based on new_flags either RO or
+	 * RW or both regions write protect may be set.
 	 */
 	if (new_flags & (EC_FLASH_PROTECT_ALL_AT_BOOT |
-			 EC_FLASH_PROTECT_RO_AT_BOOT))
-		ro_range = FLASH_WRP_RANGE(FLASH_RO_FIRST_PAGE_IDX,
-					     FLASH_RO_LAST_PAGE_IDX);
+			 EC_FLASH_PROTECT_RO_AT_BOOT)) {
+		wrp_ro.start = FLASH_RO_FIRST_PAGE_IDX;
+		wrp_ro.end = FLASH_RO_LAST_PAGE_IDX;
+		wrp_ro.enable = 1;
+	}
 
 	if (new_flags & EC_FLASH_PROTECT_ALL_AT_BOOT) {
-		rb_rw_range = FLASH_WRP_RANGE(FLASH_RW_FIRST_PAGE_IDX,
-						FLASH_RW_LAST_PAGE_IDX);
+		wrp_rw.start = FLASH_RW_FIRST_PAGE_IDX;
+		wrp_rw.end = FLASH_RW_LAST_PAGE_IDX;
+		wrp_rw.enable = 1;
 	} else {
 		/*
 		 * Start index will be 1st index following RO region index. The
@@ -199,7 +367,7 @@ int flash_physical_protect_at_boot(uint32_t new_flags)
 		 * the 2nd memory protection area get written in option bytes.
 		 */
 		int start = FLASH_RW_FIRST_PAGE_IDX;
-		int end = FLASH_WRP_END(FLASH_WRP_RANGE_DISABLED);
+		int end = 0;
 #ifdef CONFIG_ROLLBACK
 		if (new_flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT) {
 			start = FLASH_PAGE_ROLLBACK_FIRST_IDX;
@@ -213,8 +381,11 @@ int flash_physical_protect_at_boot(uint32_t new_flags)
 			end = FLASH_RW_LAST_PAGE_IDX;
 #endif /* CONFIG_FLASH_PROTECT_RW */
 
-		if (end != FLASH_WRP_END(FLASH_WRP_RANGE_DISABLED))
-			rb_rw_range = FLASH_WRP_RANGE(start, end);
+		if (end) {
+			wrp_rw.start = start;
+			wrp_rw.end = end;
+			wrp_rw.enable = 1;
+		}
 	}
 
 	unlock_optb();
@@ -225,8 +396,8 @@ int flash_physical_protect_at_boot(uint32_t new_flags)
 	 */
 	STM32_FLASH_OPTR = (STM32_FLASH_OPTR & ~0xff) | 0x11;
 #endif
-	STM32_FLASH_WRP1AR = ro_range;
-	STM32_FLASH_WRP1BR = rb_rw_range;
+	optb_set_wrp(WRP_RO, &wrp_ro);
+	optb_set_wrp(WRP_RW, &wrp_rw);
 	commit_optb();
 
 	return EC_SUCCESS;
@@ -391,13 +562,14 @@ exit_er:
 
 int flash_physical_get_protect(int block)
 {
-	uint32_t wrp1ar = STM32_FLASH_WRP1AR;
-	uint32_t wrp1br = STM32_FLASH_WRP1BR;
+	struct wrp_info wrp_ro;
+	struct wrp_info wrp_rw;
 
-	return ((block >= FLASH_WRP_START(wrp1ar)) &&
-		(block <= FLASH_WRP_END(wrp1ar))) ||
-		((block >= FLASH_WRP_START(wrp1br)) &&
-		(block <= FLASH_WRP_END(wrp1br)));
+	optb_get_wrp(WRP_RO, &wrp_ro);
+	optb_get_wrp(WRP_RW, &wrp_rw);
+
+	return ((block >= wrp_ro.start) && (block <= wrp_ro.end)) ||
+		((block >= wrp_rw.start) && (block <= wrp_rw.end));
 }
 
 /*
@@ -407,29 +579,30 @@ int flash_physical_get_protect(int block)
 uint32_t flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
-	uint32_t wrp1ar = STM32_OPTB_WRP1AR;
-	uint32_t wrp1br = STM32_OPTB_WRP1BR;
+	struct wrp_info wrp_ro;
+	struct wrp_info wrp_rw;
 
-	/* RO region protection range is in WRP1AR range */
-	if (wrp1ar == FLASH_WRP_RANGE(FLASH_RO_FIRST_PAGE_IDX,
-					FLASH_RO_LAST_PAGE_IDX))
+	optb_get_wrp(WRP_RO, &wrp_ro);
+	optb_get_wrp(WRP_RW, &wrp_rw);
+
+	/* Check if RO is fully protected */
+	if (wrp_ro.start == FLASH_RO_FIRST_PAGE_IDX &&
+	    wrp_ro.end == FLASH_RO_LAST_PAGE_IDX)
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
-	/* Rollback and RW regions protection range is in WRP1BR range */
-	if (wrp1br != FLASH_WRP_RANGE_DISABLED) {
-		int end = FLASH_WRP_END(wrp1br);
-		int strt = FLASH_WRP_START(wrp1br);
+
+	if (wrp_rw.enable) {
 
 #ifdef CONFIG_ROLLBACK
-		if (strt <= FLASH_PAGE_ROLLBACK_FIRST_IDX &&
-		    end >= FLASH_PAGE_ROLLBACK_LAST_IDX)
+		if (wrp_rw.start <= FLASH_PAGE_ROLLBACK_FIRST_IDX &&
+		    wrp_rw.end >= FLASH_PAGE_ROLLBACK_LAST_IDX)
 			flags |= EC_FLASH_PROTECT_ROLLBACK_AT_BOOT;
 #endif /* CONFIG_ROLLBACK */
 #ifdef CONFIG_FLASH_PROTECT_RW
-		if (end == PHYSICAL_BANKS)
+		if (wrp_rw.end == PHYSICAL_BANKS)
 			flags |= EC_FLASH_PROTECT_RW_AT_BOOT;
 #endif /* CONFIG_FLASH_PROTECT_RW */
-		if (end == PHYSICAL_BANKS &&
-		    strt == WP_BANK_OFFSET + WP_BANK_COUNT &&
+		if (wrp_rw.end == PHYSICAL_BANKS &&
+		    wrp_rw.start == WP_BANK_OFFSET + WP_BANK_COUNT &&
 		    flags & EC_FLASH_PROTECT_RO_AT_BOOT)
 			flags |= EC_FLASH_PROTECT_ALL_AT_BOOT;
 	}

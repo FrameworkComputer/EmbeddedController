@@ -111,7 +111,8 @@
 #endif
 
 /* Embedded flash option bytes base address */
-#define STM32_OPTB_BASE             0x1FFF7800
+#define STM32_OPTB_BANK1_BASE       0x1FFF7800UL
+#define STM32_OPTB_BANK2_BASE       0x1FFF8000UL
 
 /* Peripheral base addresses */
 #define STM32_PERIPH_BASE           (0x40000000UL)
@@ -950,11 +951,27 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_FLASH_SR              STM32_FLASH_REG(0x10)
 #define STM32_FLASH_CR              STM32_FLASH_REG(0x14)
 #define STM32_FLASH_ECCR            STM32_FLASH_REG(0x18)
+/*
+ * Bank 1 Option Byte Copy Registers. These registers are loaded from the option
+ * bytes location in flash at reset, assuming that option byte loading has not
+ * been disabled.
+ */
 #define STM32_FLASH_OPTR            STM32_FLASH_REG(0x20)
 #define STM32_FLASH_PCROP1SR        STM32_FLASH_REG(0x24)
 #define STM32_FLASH_PCROP1ER        STM32_FLASH_REG(0x28)
 #define STM32_FLASH_WRP1AR          STM32_FLASH_REG(0x2C)
 #define STM32_FLASH_WRP1BR          STM32_FLASH_REG(0x30)
+/*
+ * Bank 2 Option Byte Copy Registers. These will only exist for category 3
+ * devices.
+ */
+#define STM32_FLASH_PCROP2SR        STM32_FLASH_REG(0x44)
+#define STM32_FLASH_PCROP2ER        STM32_FLASH_REG(0x48)
+#define STM32_FLASH_WRP2AR          STM32_FLASH_REG(0x4C)
+#define STM32_FLASH_WRP2BR          STM32_FLASH_REG(0x50)
+
+#define STM32_FLASH_SEC_SIZE1       STM32_FLASH_REG(0x70)
+#define STM32_FLASH_SEC_SIZE2       STM32_FLASH_REG(0x74)
 
 /* --- FLASH CR Bit Definitions --- */
 #define STM32_FLASH_ACR_LATENCY_SHIFT (0)
@@ -1005,17 +1022,27 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_FLASH_MIN_WRITE_SIZE  (CONFIG_FLASH_WRITE_SIZE * 2)
 
 /* --- FLASH Option bytes --- */
-#define STM32_OPTB_USER_RDP         REG32(STM32_OPTB_BASE + 0x00)
-#define STM32_OPTB_PCROP1_START     REG32(STM32_OPTB_BASE + 0x08)
-#define STM32_OPTB_PCROP1_END       REG32(STM32_OPTB_BASE + 0x10)
-#define STM32_OPTB_WRP1AR           REG32(STM32_OPTB_BASE + 0x18)
-#define STM32_OPTB_WRP1BR           REG32(STM32_OPTB_BASE + 0x20)
-#define STM32_OPTB_SECURE_MEM       REG32(STM32_OPTB_BASE + 0x28)
+#define STM32_OPTB_USER_RDP         REG32(STM32_OPTB_BANK1_BASE + 0x00)
+#define STM32_OPTB_PCROP1_START     REG32(STM32_OPTB_BANK1_BASE + 0x08)
+#define STM32_OPTB_PCROP1_END       REG32(STM32_OPTB_BANK1_BASE + 0x10)
+#define STM32_OPTB_WRP1AR           REG32(STM32_OPTB_BANK1_BASE + 0x18)
+#define STM32_OPTB_WRP1BR           REG32(STM32_OPTB_BANK1_BASE + 0x20)
+#define STM32_OPTB_SECURE1_MEM      REG32(STM32_OPTB_BANK1_BASE + 0x28)
 
-#define STM32_OPTB_REG_READ(n)  REG32(STM32_FLASH_REG(0x20) + (n * 4))
-#define STM32_OPTB_READ(n)      REG32(STM32_OPTB_BASE + ((n) * 8))
-#define STM32_OPTB_COMP_READ(n) REG32(STM32_OPTB_BASE + ((n) * 8) + 0x4)
+#define STM32_OPTB_UNUSED           REG32(STM32_OPTB_BANK2_BASE + 0x00)
+#define STM32_OPTB_PCROP2_START     REG32(STM32_OPTB_BANK2_BASE + 0x08)
+#define STM32_OPTB_PCROP2_END       REG32(STM32_OPTB_BANK2_BASE + 0x10)
+#define STM32_OPTB_WRP2AR           REG32(STM32_OPTB_BANK2_BASE + 0x18)
+#define STM32_OPTB_WRP2BR           REG32(STM32_OPTB_BANK2_BASE + 0x20)
+#define STM32_OPTB_SECURE2_MEM      REG32(STM32_OPTB_BANK2_BASE + 0x28)
 
+/* Read option bytes from flash memory for Bank 1 */
+#define STM32_OPTB_BANK1_READ(n)      REG32(STM32_OPTB_BANK1_BASE + ((n) * 8))
+#define STM32_OPTB_BANK1_COMP_READ(n) REG32(STM32_OPTB_BANK1_BASE + ((n) * 8) + 0x4)
+#define STM32_OPTB_BANK2_READ(n)      REG32(STM32_OPTB_BANK2_BASE + ((n) * 8))
+#define STM32_OPTB_BANK2_COMP_READ(n) REG32(STM32_OPTB_BANK2_BASE + ((n) * 8) + 0x4)
+
+#define STM32_OPTB_USER_DBANK       BIT(22)
 #define STM32_OPTB_USER_nBOOT1      BIT(23)
 #define STM32_OPTB_USER_nSWBOOT0    BIT(26)
 #define STM32_OPTB_USER_nBOOT0      BIT(27)
