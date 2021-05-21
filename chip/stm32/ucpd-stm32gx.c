@@ -45,6 +45,11 @@
 			      STM32_UCPD_IMR_TXMSGABTIE |      \
 			      STM32_UCPD_IMR_TXUNDIE)
 
+#define UCPD_ICR_TX_INT_MASK (STM32_UCPD_ICR_TXMSGDISCCF | \
+			      STM32_UCPD_ICR_TXMSGSENTCF |     \
+			      STM32_UCPD_ICR_TXMSGABTCF |     \
+			      STM32_UCPD_ICR_TXUNDCF)
+
 #define UCPD_ANASUB_TO_RP(r) ((r - 1) & 0x3)
 #define UCPD_RP_TO_ANASUB(r) ((r + 1) & 0x3)
 
@@ -105,6 +110,9 @@ struct ucpd_tx_desc {
 	int msg_index;
 	union buffer data;
 };
+
+/* Track VCONN on/off state */
+static int ucpd_vconn_enable;
 
 /* Tx message variables */
 struct ucpd_tx_desc ucpd_tx_buffers[TX_MSG_TOTAL];
@@ -377,10 +385,12 @@ static void ucpd_rx_data_byte(int port)
 
 static void ucpd_tx_interrupts_enable(int port, int enable)
 {
-	if (enable)
+	if (enable) {
+		STM32_UCPD_ICR(port) = UCPD_ICR_TX_INT_MASK;
 		STM32_UCPD_IMR(port) |= UCPD_IMR_TX_INT_MASK;
-	else
+	} else {
 		STM32_UCPD_IMR(port) &= ~UCPD_IMR_TX_INT_MASK;
+	}
 }
 
 static void ucpd_rx_enque_error(void)
@@ -401,6 +411,9 @@ static void stm32gx_ucpd_state_init(int port)
 	ucpd_rx_sop_prime_enabled = 0;
 	ucpd_rx_msg_active = 0;
 	ucpd_rx_bist_mode = 0;
+
+	/* Vconn tracking variable */
+	ucpd_vconn_enable = 0;
 }
 
 int stm32gx_ucpd_init(int port)
@@ -572,28 +585,31 @@ int stm32gx_ucpd_get_role_control(int port)
 	return role_control;
 }
 
+static uint32_t ucpd_get_cc_enable_mask(int port)
+{
+	uint32_t mask = STM32_UCPD_CR_CCENABLE_MASK;
+
+	if (ucpd_vconn_enable) {
+		uint32_t cr = STM32_UCPD_CR(port);
+		int pol = !!(cr & STM32_UCPD_CR_PHYCCSEL);
+
+		mask &= ~(1 << (STM32_UCPD_CR_CCENABLE_SHIFT + !pol));
+	}
+
+	return mask;
+}
+
 int stm32gx_ucpd_vconn_disc_rp(int port, int enable)
 {
-	int cr = STM32_UCPD_CR(port);
-	int pol;
-	int cc_disable_mask;
+	int cr;
 
-	/*
-	 * This function is called when tcpm_set_vconn() method is called to
-	 * enable VCONN. ucpd does not provide vconn, but Rp must be
-	 * disconnected from the CCx line prior to enabling vconn.
-	 */
-	if (enable) {
-		/* Get CC polarity */
-		pol = !!(cr & STM32_UCPD_CR_PHYCCSEL);
-		/* Disconnect cc line that is not being used for PD messaging */
-		cc_disable_mask = 1 << (STM32_UCPD_CR_CCENABLE_SHIFT + !pol);
-		cr &= ~cc_disable_mask;
-		CPRINTS("ucpd: vconn disable Rp, pol = %d, cr = %x", pol, cr);
-	} else {
-		/* make sure Rp/Rd is connected */
-		cr |= STM32_UCPD_CR_CCENABLE_MASK;
-	}
+	/* Update VCONN on/off status. Do this before getting cc enable mask */
+	ucpd_vconn_enable = enable;
+
+	cr = STM32_UCPD_CR(port);
+	cr &= ~STM32_UCPD_CR_CCENABLE_MASK;
+	cr |= ucpd_get_cc_enable_mask(port);
+
 	/* Apply cc pull resistor change */
 	STM32_UCPD_CR(port) = cr;
 
@@ -612,7 +628,7 @@ int stm32gx_ucpd_set_cc(int port, int cc_pull, int rp)
 	cr &= ~STM32_UCPD_CR_ANASUBMODE_MASK;
 	cr |= STM32_UCPD_CR_ANASUBMODE_VAL(UCPD_RP_TO_ANASUB(rp));
 
-	/* Disconnect both pull from both CC lines by default */
+	/* Disconnect both pull from both CC lines for R_open case */
 	cr &= ~STM32_UCPD_CR_CCENABLE_MASK;
 	/* Set ANAMODE if cc_pull is Rd */
 	if (cc_pull == TYPEC_CC_RD) {
@@ -620,7 +636,7 @@ int stm32gx_ucpd_set_cc(int port, int cc_pull, int rp)
 	/* Clear ANAMODE if cc_pull is Rp */
 	} else if (cc_pull == TYPEC_CC_RP) {
 		cr &= ~(STM32_UCPD_CR_ANAMODE);
-		cr |= STM32_UCPD_CR_CCENABLE_MASK;
+		cr |= ucpd_get_cc_enable_mask(port);
 	}
 
 #ifdef CONFIG_STM32G4_UCPD_DEBUG
@@ -663,9 +679,9 @@ int stm32gx_ucpd_set_rx_enable(int port, int enable)
 	 * UCPD_CR. Enable Rx interrupts when RX PD decoder is active.
 	 */
 	if (enable) {
-		STM32_UCPD_CR(port) |= STM32_UCPD_CR_PHYRXEN;
-		STM32_UCPD_ICR(port) |= UCPD_IMR_RX_INT_MASK;
+		STM32_UCPD_ICR(port) = UCPD_IMR_RX_INT_MASK;
 		STM32_UCPD_IMR(port) |= UCPD_IMR_RX_INT_MASK;
+		STM32_UCPD_CR(port) |= STM32_UCPD_CR_PHYRXEN;
 	} else {
 		STM32_UCPD_CR(port) &= ~STM32_UCPD_CR_PHYRXEN;
 		STM32_UCPD_IMR(port) &= ~UCPD_IMR_RX_INT_MASK;
@@ -687,7 +703,6 @@ int stm32gx_ucpd_sop_prime_enable(int port, bool enable)
 	/* Update static varialbe used to filter SOP//SOP'' messages */
 	ucpd_rx_sop_prime_enabled = enable;
 
-	CPRINTS("ucpd: sop_prime_enable = %d", enable);
 	return EC_SUCCESS;
 }
 
@@ -729,6 +744,8 @@ static int stm32gx_ucpd_start_transmit(int port, enum ucpd_tx_msg msg_type)
 		 * register to initiate.
 		 */
 		/* Enable interrupt for Hard Reset sent/discarded */
+		STM32_UCPD_ICR(port) = STM32_UCPD_ICR_HRSTDISCCF |
+			STM32_UCPD_ICR_HRSTSENTCF;
 		STM32_UCPD_IMR(port) |= STM32_UCPD_IMR_HRSTDISCIE |
 			STM32_UCPD_IMR_HRSTSENTIE;
 		/* Initiate Hard Reset */
