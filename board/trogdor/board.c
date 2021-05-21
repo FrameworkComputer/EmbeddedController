@@ -390,7 +390,7 @@ int board_is_switchcap_enabled(void)
 
 int board_is_switchcap_power_good(void)
 {
-	return gpio_get_level(GPIO_DA9313_GPIO0);
+	return gpio_get_level(GPIO_SWITCHCAP_PG);
 }
 
 void board_reset_pd_mcu(void)
@@ -399,10 +399,10 @@ void board_reset_pd_mcu(void)
 	cflush();
 
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 0);
+	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
 	msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
-	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
+	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
 	msleep(PS8805_FW_INIT_DELAY_MS);
 }
 
@@ -515,7 +515,7 @@ uint16_t tcpc_get_alert_status(void)
 		if (gpio_get_level(GPIO_USB_C0_PD_RST_L))
 			status |= PD_STATUS_TCPC_ALERT_0;
 	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL))
-		if (gpio_get_level(GPIO_USB_C1_PD_RST_ODL))
+		if (gpio_get_level(GPIO_USB_C1_PD_RST_L))
 			status |= PD_STATUS_TCPC_ALERT_1;
 
 	return status;

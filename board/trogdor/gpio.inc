@@ -23,7 +23,7 @@ GPIO_INT(USB_C1_BC12_INT_L,    PIN(8, 2), GPIO_INT_FALLING, usb1_evt)  /* Interr
 GPIO_INT(USB_A0_OC_ODL,        PIN(D, 1), GPIO_INT_BOTH | GPIO_PULL_UP, usba_oc_interrupt)
 
 /* System interrupts */
-GPIO_INT(ACOK_OD,           PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)  /* ACOK */
+GPIO_INT(CHG_ACOK_OD,       PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)  /* ACOK */
 GPIO_INT(CCD_MODE_ODL,      PIN(E, 3), GPIO_INT_FALLING, board_connect_c0_sbu)  /* Case Closed Debug Mode */
 GPIO_INT(EC_PWR_BTN_ODL,    PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)  /* Power button */
 GPIO_INT(EC_VOLDN_BTN_ODL,  PIN(7, 0), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* Volume Up button */
@@ -60,14 +60,10 @@ GPIO(EC_BATT_PRES_ODL,      PIN(E, 5), GPIO_INPUT)     /* Battery Present */
 GPIO(PMIC_RESIN_L,          PIN(3, 2), GPIO_ODR_HIGH)  /* PMIC reset trigger */
 GPIO(PMIC_KPD_PWR_ODL,      PIN(D, 6), GPIO_ODR_HIGH)  /* PMIC power button */
 GPIO(EC_INT_L,              PIN(A, 2), GPIO_ODR_HIGH)  /* Interrupt line between AP and EC */
-GPIO(QSIP_ON,               PIN(5, 0), GPIO_OUT_LOW)   /* Not used, for non-switchcap testing */
-GPIO(PMIC_FAULT_L,          PIN(A, 3), GPIO_INPUT)     /* Any PMIC fault? Deprecated since rev-1 */
 
 /* Power enables */
 GPIO(HIBERNATE_L,           PIN(5, 2), GPIO_OUT_HIGH)  /* EC hibernate */
 GPIO(SWITCHCAP_ON,          PIN(D, 5), GPIO_OUT_LOW)   /* Enable switch cap */
-/* TODO(waihong): Remove it. The VBOB switch is for backup. */
-GPIO(VBOB_EN,               PIN(D, 3), GPIO_OUT_LOW)   /* Enable VBOB */
 GPIO(EN_PP3300_A,           PIN(A, 6), GPIO_OUT_LOW)   /* Enable PP3300 */
 GPIO(EN_PP5000_A,           PIN(6, 7), GPIO_OUT_LOW)   /* Enable PP5000 */
 GPIO(EC_BL_DISABLE_L,       PIN(B, 6), GPIO_OUT_LOW)   /* Backlight disable signal from EC */
@@ -80,25 +76,20 @@ GPIO(TRACKPAD_INT_GATE,     PIN(7, 4), GPIO_OUT_LOW)
 
 /* USB-C */
 GPIO(USB_C0_PD_RST_L,       PIN(F, 1), GPIO_OUT_HIGH)  /* Port-0 TCPC chip reset */
-GPIO(USB_C1_PD_RST_ODL,     PIN(E, 4), GPIO_ODR_HIGH)  /* Port-1 TCPC chip reset */
+GPIO(USB_C1_PD_RST_L,       PIN(E, 4), GPIO_OUT_HIGH)  /* Port-1 TCPC chip reset */
 GPIO(DP_MUX_OE_L,           PIN(9, 6), GPIO_ODR_HIGH)  /* DP mux enable, actually Open-Drain */
 GPIO(DP_MUX_SEL,            PIN(4, 5), GPIO_OUT_LOW)   /* DP mux selection: L:C0, H:C1 */
 GPIO(DP_HOT_PLUG_DET,       PIN(9, 5), GPIO_OUT_LOW)   /* DP HPD to AP */
-/* TODO(waihong): Remove it from schematic. No use. */
-GPIO(USBC_MUX_CONF0,        PIN(5, 1), GPIO_INPUT)
-GPIO(USB_C0_VBUS_DET_L,     PIN(6, 2), GPIO_INPUT)     /* Deprecated BC1.2 VBUS detection on port-0 */
-GPIO(USB_C1_VBUS_DET_L,     PIN(8, 3), GPIO_INPUT)     /* Deprecated BC1.2 VBUS detection on port-1 */
 
 /* USB-A */
 GPIO(EN_USB_A_5V,           PIN(8, 6), GPIO_OUT_LOW)
 GPIO(USB_A_CDP_ILIM_EN_L,   PIN(7, 5), GPIO_OUT_HIGH)  /* H:CDP, L:SDP. Only one USB-A port, always CDP */
 
 /* LEDs */
-GPIO(EC_CHG_LED_Y_C0,       PIN(C, 3), GPIO_OUT_LOW)
-GPIO(EC_CHG_LED_W_C0,       PIN(C, 4), GPIO_OUT_LOW)
-/* TODO(waihong): NC in the schematic. The C1 subboard doesn't have any LED. */
-GPIO(EC_CHG_LED_Y_C1,       PIN(6, 0), GPIO_OUT_LOW)
-GPIO(EC_CHG_LED_W_C1,       PIN(C, 0), GPIO_OUT_LOW)
+GPIO(EC_CHG_LED_Y_C0,       PIN(6, 0), GPIO_OUT_LOW)
+GPIO(EC_CHG_LED_W_C0,       PIN(C, 0), GPIO_OUT_LOW)
+GPIO(EC_CHG_LED_Y_C1,       PIN(C, 3), GPIO_OUT_LOW)
+GPIO(EC_CHG_LED_W_C1,       PIN(C, 4), GPIO_OUT_LOW)
 
 /*
  * SPI host interface - enable PDs by default. These will be made functional
@@ -143,10 +134,36 @@ GPIO(SKU_ID2,               PIN(D, 4), GPIO_INPUT)
  * GPIO0 is configured as PVC_PG. When the chip in power down mode, it outputs
  * high-Z. Set pull-down to avoid floating.
  */
-GPIO(DA9313_GPIO0,          PIN(E, 2), GPIO_INPUT | GPIO_PULL_DOWN) /* Switchcap GPIO0 */
+GPIO(SWITCHCAP_GPIO_1,      PIN(E, 2), GPIO_INPUT | GPIO_PULL_DOWN) /* Switchcap GPIO0 */
 
 /* Special straps */
 GPIO(ARM_X86,               PIN(6, 6), GPIO_OUT_LOW)  /* NC, low for power saving */
+
+/* Unused GPIOs, NC. */
+UNUSED(PIN(5, 1))
+UNUSED(PIN(D, 0))
+UNUSED(PIN(F, 3))
+UNUSED(PIN(9, 4))
+UNUSED(PIN(9, 7))
+UNUSED(PIN(A, 7))
+UNUSED(PIN(B, 0))
+UNUSED(PIN(A, 5))
+UNUSED(PIN(3, 5))
+UNUSED(PIN(7, 2))
+UNUSED(PIN(8, 1))
+UNUSED(PIN(3, 7))
+UNUSED(PIN(7, 6))
+UNUSED(PIN(3, 4))
+UNUSED(PIN(C, 5))
+UNUSED(PIN(7, 3))
+UNUSED(PIN(D, 7))
+UNUSED(PIN(A, 3))
+UNUSED(PIN(6, 2))
+UNUSED(PIN(0, 4))
+UNUSED(PIN(8, 3))
+UNUSED(PIN(B, 1))
+UNUSED(PIN(5, 0))
+UNUSED(PIN(D, 3))
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)            /* UART (GPIO64/65) */
