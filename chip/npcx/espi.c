@@ -415,11 +415,11 @@ void espi_vw_evt_pltrst(void)
 		/* Disable eSPI peripheral channel support first */
 		CLEAR_BIT(NPCX_ESPICFG, NPCX_ESPICFG_PCCHN_SUPP);
 
-		/* Enable eSPI peripheral channel */
-		SET_BIT(NPCX_ESPICFG, NPCX_ESPICFG_PCHANEN);
-
 		/* Initialize host settings */
 		host_register_init();
+
+		/* Enable eSPI peripheral channel */
+		SET_BIT(NPCX_ESPICFG, NPCX_ESPICFG_PCHANEN);
 
 		/* Re-enable eSPI peripheral channel support */
 		SET_BIT(NPCX_ESPICFG, NPCX_ESPICFG_PCCHN_SUPP);
