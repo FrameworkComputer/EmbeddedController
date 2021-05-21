@@ -1456,13 +1456,15 @@ static bool common_src_snk_dpm_requests(int port)
 		if (!PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION)) {
 			/*
 			 * Clear counters and reset timer to trigger a
-			 * port discovery.
+			 * port discovery, and also clear any pending VDM send
+			 * requests.
 			 */
 			pd_dfp_discovery_init(port);
 			pe[port].dr_swap_attempt_counter = 0;
 			pe[port].discover_identity_counter = 0;
 			pd_timer_enable(port, PE_TIMER_DISCOVER_IDENTITY,
 					PD_T_DISCOVER_IDENTITY);
+			PE_CLR_DPM_REQUEST(port, DPM_REQUEST_VDM);
 		}
 		return true;
 	} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_VDM)) {
