@@ -191,12 +191,16 @@ __override void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 {
 	enum ioex_signal rst_signal;
 
-	if (me->usb_port == USBC_PORT_C0)
-		rst_signal = IOEX_USB_C0_RT_RST_ODL;
-	else if (me->usb_port == USBC_PORT_C2)
+	if (me->usb_port == USBC_PORT_C0) {
+		if (get_board_id() == 1)
+			rst_signal = IOEX_ID_1_USB_C0_RT_RST_ODL;
+		else
+			rst_signal = IOEX_USB_C0_RT_RST_ODL;
+	} else if (me->usb_port == USBC_PORT_C2) {
 		rst_signal = IOEX_USB_C2_RT_RST_ODL;
-	else
+	} else {
 		return;
+	}
 
 	/*
 	 * We do not have a load switch for the burnside bridge chips,
