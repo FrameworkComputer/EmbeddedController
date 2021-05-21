@@ -12,7 +12,14 @@
 #include "baseboard.h"
 
 /* Optional features */
+/*
+ * For MP release, CONFIG_SYSTEM_UNLOCKED must be undefined, and
+ * CONFIG_FLASH_PSTATE_LOCKED must be defined in order to enable write protect
+ * using option bytes WRP registers.
+ */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
+#undef CONFIG_FLASH_PSTATE_LOCKED
+
 
 #define CONFIG_WP_ACTIVE_HIGH
 

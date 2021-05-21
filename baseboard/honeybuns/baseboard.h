@@ -11,9 +11,6 @@
 /* EC Defines */
 #define CONFIG_CRC8
 
-/* TODO Define FLASH_PSTATE_LOCKED prior to building MP FW. */
-#undef CONFIG_FLASH_PSTATE_LOCKED
-
 /* Flash Lyaout */
 /*
  * Flash layout: we redefine the sections offsets and sizes as we will use
