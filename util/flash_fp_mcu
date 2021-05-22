@@ -19,7 +19,7 @@ DEFINE_boolean 'remove_flash_write_protect' "${FLAGS_TRUE}" \
 DEFINE_integer 'retries' "${DEFAULT_RETRIES}" 'Specify number of retries' 'R'
 DEFINE_integer 'baudrate' "${STM32MON_SERIAL_BAUDRATE}" 'Specify UART baudrate' 'B'
 DEFINE_boolean 'hello' "${FLAGS_FALSE}" 'Only ping the bootloader' 'H'
-FLAGS_HELP="Usage: ${0} [flags] ec.bin"
+FLAGS_HELP="Usage: ${0} [flags] [ec.bin]"
 
 #        EXIT_SUCCESS=0
 #        EXIT_FAILURE=1
@@ -185,6 +185,23 @@ get_platform_name() {
   echo "${platform_name}"
 }
 
+get_default_fw() {
+  local board
+  board="$(cros_config /fingerprint board)"
+
+  # If cros_config returns "", that is okay assuming there is only
+  # one firmware file on disk.
+
+  local -a fws
+  mapfile -t fws < <(find /opt/google/biod/fw -name "${board}*.bin")
+
+  if [[ "${#fws[@]}" -ne 1 ]]; then
+    return 1
+  fi
+
+  echo "${fws[0]}"
+}
+
 flash_fp_mcu_stm32() {
   local transport="${1}"
   local device="${2}"
@@ -217,6 +234,7 @@ flash_fp_mcu_stm32() {
         echo "Output file already exists: ${file}"
         return "${EXIT_PRECONDITION}"
       fi
+      echo "# Reading to '${file}' over ${transport}"
       stm32mon_flags+=" -r ${file}"
     else
       # Write to FPMCU from file
@@ -224,8 +242,11 @@ flash_fp_mcu_stm32() {
         echo "Invalid image file: ${file}"
         return "${EXIT_PRECONDITION}"
       fi
+      echo "# Flashing '${file}' over ${transport}"
       stm32mon_flags+=" -e -w ${file}"
     fi
+  else
+    echo "# Saying hello over ${transport}"
   fi
 
 
@@ -479,11 +500,7 @@ config_guybrush() {
 }
 
 main() {
-  if [[ "$#" -eq 0 ]] && [[ "${FLAGS_hello}" -eq "${FLAGS_FALSE}" ]]; then
-    echo "Missing filename"
-    flags_help
-    exit "${EXIT_ARGUMENT}"
-  fi
+  local filename="$1"
 
   # print out canonical path to differentiate between /usr/local/bin and
   # /usr/bin installs
@@ -515,6 +532,20 @@ main() {
     exit "${EXIT_CONFIG}"
   fi
 
+  # Help the user out with defaults, if no *file* was given.
+  if [[ "$#" -eq 0 ]]; then
+    # If we are actually reading, set to a timestamped temp file.
+    if [[ "${FLAGS_read}" -eq "${FLAGS_TRUE}" ]]; then
+      filename="/tmp/fpmcu-fw-$(date --iso-8601=seconds).bin"
+    else
+      # Assume we are "writing" the default firmware to the FPMCU.
+      if ! filename="$(get_default_fw)"; then
+        echo "Failed to identify a default firmware file" >&2
+        exit "${EXIT_CONFIG}"
+      fi
+    fi
+  fi
+
   # Check that the gpiochip exists
   if [[ ! -e "/sys/class/gpio/${GPIO_CHIP}" ]]; then
     echo "Cannot find GPIO chip: ${GPIO_CHIP}"
@@ -527,7 +558,7 @@ main() {
     "${GPIO_NRST}"   \
     "${GPIO_BOOT0}"  \
     "${GPIO_PWREN}"  \
-    "${1}"
+    "${filename}"
   exit $?
 }
 
