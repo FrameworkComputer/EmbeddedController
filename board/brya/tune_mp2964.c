@@ -21,6 +21,9 @@ static void mp2964_on_startup(void)
 	static int chip_updated;
 	int status;
 
+	if (get_board_id() != 1)
+		return;
+
 	if (chip_updated)
 		return;
 
