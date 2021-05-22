@@ -29,6 +29,13 @@
 GPIO(EC_KSO_02_INV,               PIN(1, 7), GPIO_OUT_LOW)
 
 /*
+ * GPIOE1 is an ALT function ADC INPUT on board ID 2 and a GPIO INPUT on
+ * board ID 1. This declaration gives us a signal name to use on board
+ * ID 1.
+ */
+GPIO(ID_1_EC_BATT_PRES_ODL,       PIN(E, 1), GPIO_INPUT)
+
+/*
  * GPIO34 is an INPUT on board ID 2 and ODR_LOW on board ID 1.
  *
  * Since this pin is pulled up to 3.3V through a 30.9K ohm resistor on

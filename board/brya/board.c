@@ -103,8 +103,15 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 
 enum battery_present battery_hw_present(void)
 {
+	enum gpio_signal batt_pres;
+
+	if (get_board_id() == 1)
+		batt_pres = GPIO_ID_1_EC_BATT_PRES_ODL;
+	else
+		batt_pres = GPIO_EC_BATT_PRES_ODL;
+
 	/* The GPIO is low when the battery is physically present */
-	return gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES;
+	return gpio_get_level(batt_pres) ? BP_NO : BP_YES;
 }
 
 /*
@@ -122,11 +129,12 @@ static void set_board_id_1_gpios(void)
 DECLARE_HOOK(HOOK_INIT, set_board_id_1_gpios, HOOK_PRIO_FIRST);
 
 /*
- * ALT function group MODULE_ADC are set in HOOK_PRIO_INIT_ADC.
- * Reclaim these as GPIO as needed for board ID 1.
+ * Reclaim GPIO pins on board ID 1 that are used as ADC inputs on
+ * current boards. ALT function group MODULE_ADC pins are set in
+ * HOOK_PRIO_INIT_ADC and can be reclaimed right after the hook runs.
  */
 
-static void id_1_reclaim_adc(void)
+static void board_id_1_reclaim_adc(void)
 {
 	if (get_board_id() != 1)
 		return;
@@ -141,6 +149,12 @@ static void id_1_reclaim_adc(void)
 	 */
 	gpio_set_flags(GPIO_ID_1_USB_C0_C2_TCPC_RST_ODL, GPIO_ODR_HIGH);
 	gpio_set_alternate_function(GPIO_PORT_3, BIT(4), GPIO_ALT_FUNC_NONE);
-}
 
-DECLARE_HOOK(HOOK_INIT, id_1_reclaim_adc, HOOK_PRIO_INIT_ADC + 1);
+	/*
+	 * The pin gets set to ADC7 in HOOK_PRIO_INIT_ADC, so we simply
+	 * need to set it back to GPIOE1.
+	 */
+	gpio_set_flags(GPIO_ID_1_EC_BATT_PRES_ODL, GPIO_INPUT);
+	gpio_set_alternate_function(GPIO_PORT_E, BIT(1), GPIO_ALT_FUNC_NONE);
+}
+DECLARE_HOOK(HOOK_INIT, board_id_1_reclaim_adc, HOOK_PRIO_INIT_ADC + 1);
