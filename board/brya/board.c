@@ -47,7 +47,11 @@ __override void board_cbi_init(void)
 static void board_chipset_resume(void)
 {
 	/* Allow keyboard backlight to be enabled */
-	gpio_set_level(GPIO_EC_KB_BL_EN, 1);
+
+	if (get_board_id() == 1)
+		gpio_set_level(GPIO_ID_1_EC_KB_BL_EN, 1);
+	else
+		gpio_set_level(GPIO_EC_KB_BL_EN_L, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
@@ -55,7 +59,11 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 static void board_chipset_suspend(void)
 {
 	/* Turn off the keyboard backlight if it's on. */
-	gpio_set_level(GPIO_EC_KB_BL_EN, 0);
+
+	if (get_board_id() == 1)
+		gpio_set_level(GPIO_ID_1_EC_KB_BL_EN, 0);
+	else
+		gpio_set_level(GPIO_EC_KB_BL_EN_L, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
@@ -98,4 +106,18 @@ enum battery_present battery_hw_present(void)
 	/* The GPIO is low when the battery is physically present */
 	return gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES;
 }
+
+/*
+ * Explicitly apply the board ID 1 *gpio.inc settings to pins that
+ * were reassigned on current boards.
+ */
+
+static void set_board_id_1_gpios(void)
+{
+	if (get_board_id() != 1)
+		return;
+
+	gpio_set_flags(GPIO_ID_1_EC_KB_BL_EN, GPIO_OUT_LOW);
+}
+DECLARE_HOOK(HOOK_INIT, set_board_id_1_gpios, HOOK_PRIO_FIRST);
 
