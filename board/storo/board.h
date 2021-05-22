@@ -48,7 +48,9 @@
 #define CONFIG_CMD_ACCEL_INFO
 
 #define CONFIG_ACCEL_BMA255		/* Lid accel */
+#define CONFIG_ACCEL_LIS2DWL
 #define CONFIG_ACCELGYRO_BMI160	/* Base accel */
+#define CONFIG_ACCELGYRO_ICM42607
 
 /* Lid operates in forced mode, base in FIFO */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
@@ -58,6 +60,9 @@
 
 #define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+
+#define CONFIG_ACCELGYRO_ICM42607_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
 #define CONFIG_LID_ANGLE
@@ -136,6 +141,8 @@ enum battery_type {
 	BATTERY_C21N2018,
 	BATTERY_TYPE_COUNT,
 };
+
+void motion_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

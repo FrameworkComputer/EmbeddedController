@@ -8,11 +8,15 @@
 #include "adc_chip.h"
 #include "button.h"
 #include "cbi_fw_config.h"
+#include "cbi_ssfc.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
+#include "driver/accel_lis2dw12.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm_common.h"
+#include "driver/accelgyro_icm42607.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/tusb544.h"
@@ -241,38 +245,6 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.next_mux = &usbc1_retimer,
 	},
 };
-
-void board_init(void)
-{
-	int on;
-
-	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_INT_ODL);
-
-	/*
-	 * If interrupt lines are already low, schedule them to be processed
-	 * after inits are completed.
-	 */
-	if (!gpio_get_level(GPIO_USB_C0_INT_ODL))
-		hook_call_deferred(&check_c0_line_data, 0);
-	if (!gpio_get_level(GPIO_USB_C1_INT_ODL))
-		hook_call_deferred(&check_c1_line_data, 0);
-
-	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
-	/* Enable Base Accel interrupt */
-	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
-	/* Enable gpio interrupt for pen detect */
-	gpio_enable_interrupt(GPIO_PEN_DET_ODL);
-
-	/* Turn on 5V if the system is on, otherwise turn it off */
-	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
-			      CHIPSET_STATE_SOFT_OFF);
-	board_power_5v_enable(on);
-
-	if (!gpio_get_level(GPIO_PEN_DET_ODL))
-		gpio_set_level(GPIO_EN_PP3300_PEN, 1);
-}
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 void board_hibernate(void)
 {
@@ -554,6 +526,149 @@ struct motion_sensor_t motion_sensors[] = {
 };
 
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+static const mat33_fp_t lid_lis2dwl_ref = {
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+/* Lid accel private data */
+static struct stprivate_data g_lis2dwl_data;
+struct motion_sensor_t lis2dwl_lid_accel = {
+
+		.name = "Lid Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_LIS2DWL,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &lis2dw12_drv,
+		.mutex = &g_lid_mutex,
+		.drv_data = &g_lis2dwl_data,
+		.port = I2C_PORT_SENSOR,
+		.i2c_spi_addr_flags = LIS2DWL_ADDR1_FLAGS,
+		.rot_standard_ref = &lid_lis2dwl_ref,
+		.default_range = 2, /* g */
+		.min_frequency = LIS2DW12_ODR_MIN_VAL,
+		.max_frequency = LIS2DW12_ODR_MAX_VAL,
+		.config = {
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 12500 | ROUND_UP_FLAG,
+			},
+			/* Sensor on for lid angle detection */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+		},
+};
+
+static struct icm_drv_data_t g_icm42607_data;
+const mat33_fp_t based_ref_icm42607 = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
+};
+struct motion_sensor_t icm42607_lid_accel = {
+	 .name = "Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_ICM42607,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &icm42607_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_icm42607_data,
+	 .port = I2C_PORT_ACCEL,
+	 .i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
+	 .default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
+	 .rot_standard_ref = &based_ref_icm42607,
+	 .min_frequency = ICM42607_ACCEL_MIN_FREQ,
+	 .max_frequency = ICM42607_ACCEL_MAX_FREQ,
+	 .config = {
+		 /* Enable accel in S0 */
+		 [SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		 },
+	 },
+};
+
+struct motion_sensor_t icm42607_lid_gyro = {
+	 .name = "Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_ICM42607,
+	 .type = MOTIONSENSE_TYPE_GYRO,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &icm42607_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_icm42607_data,
+	 .port = I2C_PORT_ACCEL,
+	 .i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
+	 .default_range = 1000, /* dps */
+	 .rot_standard_ref = &based_ref_icm42607,
+	 .min_frequency = ICM42607_GYRO_MIN_FREQ,
+	 .max_frequency = ICM42607_GYRO_MAX_FREQ,
+};
+
+void board_init(void)
+{
+	int on;
+
+	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_INT_ODL);
+
+	/*
+	 * If interrupt lines are already low, schedule them to be processed
+	 * after inits are completed.
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_INT_ODL))
+		hook_call_deferred(&check_c0_line_data, 0);
+	if (!gpio_get_level(GPIO_USB_C1_INT_ODL))
+		hook_call_deferred(&check_c1_line_data, 0);
+
+	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
+	/* Enable Base Accel interrupt */
+	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
+	/* Enable gpio interrupt for pen detect */
+	gpio_enable_interrupt(GPIO_PEN_DET_ODL);
+
+	/* Turn on 5V if the system is on, otherwise turn it off */
+	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
+			      CHIPSET_STATE_SOFT_OFF);
+	board_power_5v_enable(on);
+
+	if (!gpio_get_level(GPIO_PEN_DET_ODL))
+		gpio_set_level(GPIO_EN_PP3300_PEN, 1);
+
+	if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_ICM42607) {
+		motion_sensors[BASE_ACCEL] = icm42607_lid_accel;
+		motion_sensors[BASE_GYRO] = icm42607_lid_gyro;
+		ccprints("BASE GYRO is ICM42607");
+	} else {
+		ccprints("BASE GYRO is BMI160");
+	}
+
+	if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_LIS2DWL) {
+		motion_sensors[LID_ACCEL] = lis2dwl_lid_accel;
+		ccprints("LID_ACCEL is LIS2DWL");
+	} else {
+		ccprints("LID_ACCEL is BMA253");
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+void motion_interrupt(enum gpio_signal signal)
+{
+		switch (get_cbi_ssfc_base_sensor()) {
+		case SSFC_SENSOR_ICM42607:
+			icm42607_interrupt(signal);
+			break;
+		case SSFC_SENSOR_BMI160:
+		default:
+			bmi160_interrupt(signal);
+			break;
+		}
+}
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
