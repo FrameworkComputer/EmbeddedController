@@ -202,6 +202,28 @@ get_default_fw() {
   echo "${fws[0]}"
 }
 
+# Find processes that have the named file, active or deleted, open.
+#
+# Deleted files are important because unbinding/rebinding cros-ec
+# with biod/timberslide running will result in the processes holding open
+# a deleted version of the files. Issues can arise if the process continue
+# to interact with the deleted files (ex kernel panic) while the raw driver
+# is being used in flash_fp_mcu. The lsof and fuser tools can't seem to
+# identify usages of the deleted named file directly, without listing all
+# files. This takes a large amount out time on Chromebooks, thus we need this
+# custom search routine.
+#
+# Usage: proc_open_file [file_pattern]
+proc_open_file() {
+  local file_pattern="$1"
+
+  # Avoid overloading kernel max arguments with the number of file names.
+  local -a FDS=( /proc/*/fd/* )
+  xargs ls -l <<<"${FDS[*]}" 2>/dev/null | grep "${file_pattern}" | \
+    awk '{split($9,p,"/"); print "PID", p[3], "->", $11, $12}'
+  return "${PIPESTATUS[1]}"
+}
+
 flash_fp_mcu_stm32() {
   local transport="${1}"
   local device="${2}"
@@ -550,6 +572,35 @@ main() {
   if [[ ! -e "/sys/class/gpio/${GPIO_CHIP}" ]]; then
     echo "Cannot find GPIO chip: ${GPIO_CHIP}"
     exit "${EXIT_CONFIG}"
+  fi
+
+  # If cros-ec driver isn't bound on startup, this means the final rebinding
+  # may fail.
+  if [[ ! -c "/dev/cros_fp" ]]; then
+    echo "WARNING: The cros-ec driver was not bound on startup." >&2
+  fi
+  if [[ -c "${DEVICE}" ]]; then
+    echo "WARNING: The raw driver was bound on startup." >&2
+  fi
+  local files_open
+  # Ensure no processes have cros_fp device or debug device open.
+  # This might be biod and/or timberslide.
+  if files_open=$(proc_open_file "/dev/cros_fp\|/sys/kernel/debug/cros_fp/*")
+  then
+    echo "WARNING: Another process has a cros_fp device file open." >&2
+    echo "${files_open}" >&2
+    echo "Try 'stop biod' and" >&2
+    echo "'stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log'" >&2
+    echo "before running this script." >&2
+    echo "See b/188985272." >&2
+  fi
+  # Ensure no processes are using the raw driver. This might be a wedged
+  # stm32mon process spawned by this script.
+  if files_open=$(proc_open_file "${DEVICE}"); then
+    echo "WARNING: Another process has ${DEVICE} open." >&2
+    echo "${files_open}" >&2
+    echo "Try 'fuser -k ${DEVICE}' before running this script." >&2
+    echo "See b/188985272." >&2
   fi
 
   flash_fp_mcu_stm32 \
