@@ -26,7 +26,17 @@
  * keyboard scan pins, so we do not list them in *gpio.inc. However, when
  * KEYBOARD_COL2_INVERTED is defined, this name is required.
  */
-GPIO(EC_KSO_02_INV,                  PIN(1, 7), GPIO_OUT_LOW)
+GPIO(EC_KSO_02_INV,               PIN(1, 7), GPIO_OUT_LOW)
+
+/*
+ * GPIO34 is an INPUT on board ID 2 and ODR_LOW on board ID 1.
+ *
+ * Since this pin is pulled up to 3.3V through a 30.9K ohm resistor on
+ * board ID 2, we will leak about 0.3mW until the pin is put in ALT mode
+ * when MODULE_ADC configuration runs. Initializing the pin to ODR_LOW
+ * gives us full control on both boards.
+ */
+GPIO(ID_1_USB_C0_C2_TCPC_RST_ODL, PIN(3, 4), GPIO_ODR_LOW)
 
 IOEX(ID_1_USB_C0_RT_RST_ODL, EXPIN(IOEX_C0_NCT38XX, 0, 2), GPIO_ODR_LOW)
 IOEX(USB_C0_FRS_EN,          EXPIN(IOEX_C0_NCT38XX, 0, 4), GPIO_LOW)
