@@ -24,6 +24,12 @@ uint8_t *lpc_get_memmap_range(void);
  */
 int lpc_keyboard_has_char(void);
 
+/**
+ * Return true if aux data is waiting for the host to read (TOH is still
+ * set).
+ */
+int lpc_aux_has_char(void);
+
 /* Return true if the FRMH is still set */
 int lpc_keyboard_input_pending(void);
 

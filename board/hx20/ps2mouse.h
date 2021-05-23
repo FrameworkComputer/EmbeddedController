@@ -18,8 +18,10 @@ enum ps2_mouse_state {
 };
 /*TYPE_C_STATUS_DEVICE*/
 enum ps2_mouse_command {
-	PS2MOUSE_ID_PS2 = 0x00, /*3 byte packet format*/
+	PS2MOUSE_ID_PS2 = 0x00, /* 3 byte packet format */
 	PS2MOUSE_ID_INTELLIMOUSE = 0x03, /*4 byte packet format*/
+	PS2MOUSE_ID_INTELLIMOUSE_5BTN = 0x04, /*4 byte packet format*/
+
 	PS2MOUSE_BAT_SUCCESS = 0xAA,
 	PS2MOUSE_SET_SCALE_1 = 0xE6,
 	PS2MOUSE_SET_SCALE_2 = 0xE7,
@@ -46,6 +48,10 @@ enum ps2_mouse_task_evt {
 	PS2MOUSE_EVT_POWERSTATE = BIT(2),
 	PS2MOUSE_EVT_REENABLE = BIT(3),
 	PS2MOUSE_EVT_AUX_DATA = BIT(4),
+	PS2MOUSE_EVT_HC_DISABLE = BIT(5),
+	PS2MOUSE_EVT_HC_ENABLE = BIT(6),
+
+
 };
 
 #define LEFT_BTN BIT(0)
