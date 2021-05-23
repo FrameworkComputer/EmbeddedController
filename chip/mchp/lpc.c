@@ -407,9 +407,11 @@ void chip_8042_config(uint32_t io_base)
 #else
 	/* Mec1521 only have ESPI */
 	MCHP_8042_KB_CTRL |= BIT(5);
-	MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_8042_SIRQ0) = BIT(0);
+	/* Map 8042 keyboard interrupt to IRQ1 */
+	MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_8042_SIRQ0) = 1;
 #ifdef CONFIG_8042_AUX
-	MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_8042_SIRQ1) = BIT(0);
+	/* Map 8042 mouse interrupt to IRQ12 */
+	MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_8042_SIRQ1) = 12;
 #endif
 
 #endif /*CHIP_FAMILY_MEC17XX*/
@@ -920,7 +922,7 @@ void kb_ibf_interrupt(void)
 			return;
 		} else {
 			keyboard_host_write(MCHP_8042_H2E,
-						MCHP_8042_STS & BIT(3));
+								MCHP_8042_STS & BIT(3));
 		}
 	}
 	MCHP_INT_SOURCE(MCHP_8042_GIRQ) = MCHP_8042_IBF_GIRQ_BIT;
@@ -954,7 +956,7 @@ int lpc_keyboard_has_char(void)
 
 int lpc_aux_has_char(void)
 {
-		return (MCHP_8042_STS & BIT(5)) ? 1 : 0;
+		return ((MCHP_8042_STS & (BIT(5) & BIT(0))) == (BIT(5) & BIT(0))) ? 1 : 0;
 }
 
 int lpc_keyboard_input_pending(void)
@@ -988,22 +990,14 @@ void lpc_aux_put_char(uint8_t chr, int send_irq)
  */
 void lpc_keyboard_clear_buffer(void)
 {
-	MCHP_PCR_CHIP_OSC_ID = MCHP_8042_OBF_CLR;
+	volatile char unused __attribute__((unused));
+	unused = MCHP_8042_OBF_CLR;
 }
 
 void lpc_keyboard_resume_irq(void)
 {
 	if (lpc_keyboard_has_char()) {
 		keyboard_irq_assert();
-#ifdef CONFIG_HOSTCMD_ESPI
-		/* clear any pending data
-		 * we notice sometimes windows
-		 * does not process data on IRQ12
-		 * maybe due to bios misconfiguration
-		 * so if we timeout sending some data to
-		 * the host, then just drop it */
-		MCHP_PCR_CHIP_OSC_ID = MCHP_8042_OBF_CLR;
-#endif
 	}
 }
 

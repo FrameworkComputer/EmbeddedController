@@ -61,14 +61,17 @@ enum scancode_set_list {
 
 #define MAX_SCAN_CODE_LEN 4
 
-/* Number of bytes host can get behind before we start generating extra IRQs */
-#define KB_TO_HOST_RETRIES 3
+/* Number of bytes host can get behind before we start generating extra IRQs
+ * Switch from 3 to 5 to handle 5 byte PS2 Mouse packets without spamming
+ */
+#define KB_TO_HOST_RETRIES 5
 
 /*
  * Mutex to control write access to the to-host buffer head.  Don't need to
  * mutex the tail because reads are only done in one place.
  */
 static struct mutex to_host_mutex;
+
 
 /* Queue command/data to the host */
 enum {
@@ -230,7 +233,7 @@ int keyboard_host_write_avaliable(void)
  */
 static void keyboard_enable_irq(int enable)
 {
-	CPRINTS("KB IRQ %s", enable ? "enable" : "disable");
+	CPRINTS5("KB IRQ %s", enable ? "enable" : "disable");
 
 	i8042_keyboard_irq_enabled = enable;
 	if (enable)
@@ -244,7 +247,7 @@ static void keyboard_enable_irq(int enable)
  */
 static void aux_enable_irq(int enable)
 {
-	CPRINTS("AUX IRQ %s", enable ? "enable" : "disable");
+	CPRINTS5("AUX IRQ %s", enable ? "enable" : "disable");
 
 	i8042_aux_irq_enabled = enable;
 }
@@ -473,9 +476,9 @@ static void keystroke_enable(int enable)
 static void keyboard_enable(int enable)
 {
 	if (!keyboard_enabled && enable)
-		CPRINTS("KB enable");
+		CPRINTS5("KB enable");
 	else if (keyboard_enabled && !enable)
-		CPRINTS("KB disable");
+		CPRINTS5("KB disable");
 
 	keyboard_enabled = enable;
 }
@@ -483,9 +486,9 @@ static void keyboard_enable(int enable)
 static void aux_enable(int enable)
 {
 	if (!aux_chan_enabled && enable)
-		CPRINTS("AUX enabled");
+		CPRINTS5("AUX enabled");
 	else if (aux_chan_enabled && !enable)
-		CPRINTS("AUX disabled");
+		CPRINTS5("AUX disabled");
 
 	aux_chan_enabled = enable;
 }
@@ -788,7 +791,7 @@ static int handle_keyboard_command(uint8_t command, uint8_t *output)
 
 	case I8042_READ_OUTPUT_PORT:
 		output[out_len++] =
-			(lpc_keyboard_input_pending() ? BIT(5) : 0) |
+			(lpc_aux_has_char() ? BIT(5) : 0) |
 			(lpc_keyboard_has_char() ? BIT(4) : 0) |
 			(A20_status ? BIT(1) : 0) |
 			1;  /* Main processor in normal mode */
@@ -903,7 +906,9 @@ void keyboard_protocol_task(void *u)
 		while (1) {
 			timestamp_t t = get_time();
 			struct data_byte entry;
-
+#ifdef CONFIG_KEYBOARD_DEBUG
+			cflush();
+#endif
 			/* Handle typematic */
 			if (!typematic_len) {
 				/* Typematic disabled; wait for enable */
@@ -954,7 +959,7 @@ void keyboard_protocol_task(void *u)
 			}
 
 			/* Get a char from buffer. */
-			kblog_put('k', to_host.state->head);
+			kblog_put('n', to_host.state->head);
 			queue_remove_unit(&to_host, &entry);
 
 			/* Write to host. */
