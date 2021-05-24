@@ -786,10 +786,14 @@ config PLATFORM_EC_USB_PD_TCPM_TCPCI
 
 	  Note: most of the TCPC will depend on PLATFORM_EC_USB_PD_TCPM_TCPCI.
 
+config PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP
+	bool "Use on-chip ITE"
+	help
+	  Use ITE series TCPM driver on the board
+
 # TODO: Add other choices:
 #  CONFIG_USB_PD_TCPM_STUB
 #  CONFIG_USB_PD_TCPM_FUSB302
-#  CONFIG_USB_PD_TCPM_ITE_ON_CHIP
 #  CONFIG_USB_PD_TCPM_ANX3429
 #  CONFIG_USB_PD_TCPM_ANX740X
 #  CONFIG_USB_PD_TCPM_ANX741X
@@ -991,6 +995,16 @@ config PLATFORM_EC_CONSOLE_CMD_TCPC_DUMP
 	  this can help you figure out what is going on.
 
 endif  # PLATFORM_EC_USB_PD_TCPM_TCPCI
+
+config PLATFORM_EC_USB_PD_TCPM_DRIVER_IT83XX
+	bool "Enable IT83XX driver"
+	depends on PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP
+	default n
+
+config PLATFORM_EC_USB_PD_TCPM_DRIVER_IT8XXX2
+	bool "Enable IT8XXX2 driver"
+	depends on PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP
+	default n
 
 endif  # PLATFORM_EC_USBC_PPC
 
