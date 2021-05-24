@@ -5655,9 +5655,7 @@
 #if defined(CONFIG_USBC_PPC_SYV682X)
 #define CONFIG_USBC_PPC_POLARITY
 #define CONFIG_USBC_PPC_VCONN
-#if !defined(CONFIG_USB_PD_TCPM_DRIVER_IT83XX) && \
-	!defined(CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2) && \
-	!defined(CONFIG_SYV682X_NO_CC)
+#if !defined(CONFIG_USB_PD_TCPM_ITE_ON_CHIP) && !defined(CONFIG_SYV682X_NO_CC)
 #undef CONFIG_USB_PD_TCPC_VCONN
 #endif
 #endif
@@ -5718,6 +5716,10 @@
  */
 #ifdef CONFIG_USB_PD_TCPM_ITE_ON_CHIP
 #define CONFIG_USB_PD_TCPC_ON_CHIP
+#if !defined(CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2) && \
+	!defined(CONFIG_USB_PD_TCPM_DRIVER_IT83XX)
+#error "No drivers for ITE ON CHIP"
+#endif
 #endif
 
 /*****************************************************************************/
