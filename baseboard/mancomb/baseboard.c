@@ -17,7 +17,7 @@
 #include "chipset.h"
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
-#include "driver/retimer/ps8818.h"
+#include "driver/retimer/tdp142.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/temp_sensor/sb_tsi.h"
 #include "driver/usb_mux/amd_fp6.h"
@@ -785,7 +785,8 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, baseboard_chipset_suspend,
 
 static void baseboard_chipset_resume(void)
 {
-	/* TODO: Handle baseboard chipset resume */
+	/* Enable the DP redriver, which powers on in S0 */
+	tdp142_set_ctlsel(TDP142_CTLSEL_ENABLED);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);
 
