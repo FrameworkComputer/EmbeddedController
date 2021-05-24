@@ -266,6 +266,13 @@ config PLATFORM_EC_DEBUG_ASSERT
 	  Note: There is also ASSERT() which is an alias of assert(), used in
 	  host code where cstdlib is used.
 
+config PLATFORM_EC_DP_REDRIVER_TDP142
+	bool "Include TDP142 DisplayPort redriver driver"
+	default n
+	help
+	  Include a driver for the Texas Instruments TDP142 DisplayPort linear
+	  redriver chip.
+
 menuconfig PLATFORM_EC_ESPI
 	bool "eSPI"
 	depends on ESPI && AP

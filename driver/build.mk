@@ -75,6 +75,9 @@ driver-$(CONFIG_CHARGER_RT9467)+=charger/rt946x.o
 driver-$(CONFIG_CHARGER_SY21612)+=charger/sy21612.o
 driver-$(CONFIG_CHARGER_SM5803)+=charger/sm5803.o
 
+# DP Redrivers
+driver-$(CONFIG_DP_REDRIVER_TDP142)+=retimer/tdp142.o
+
 # Fingerprint Sensors
 include $(_driver_cur_dir)fingerprint/build.mk
 
