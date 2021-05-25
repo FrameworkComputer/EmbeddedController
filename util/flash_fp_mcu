@@ -19,6 +19,8 @@ DEFINE_boolean 'remove_flash_write_protect' "${FLAGS_TRUE}" \
 DEFINE_integer 'retries' "${DEFAULT_RETRIES}" 'Specify number of retries' 'R'
 DEFINE_integer 'baudrate' "${STM32MON_SERIAL_BAUDRATE}" 'Specify UART baudrate' 'B'
 DEFINE_boolean 'hello' "${FLAGS_FALSE}" 'Only ping the bootloader' 'H'
+DEFINE_boolean 'services' "${FLAGS_TRUE}" \
+  'Stop and restart conflicting fingerprint services' 's'
 FLAGS_HELP="Usage: ${0} [flags] [ec.bin]"
 
 #        EXIT_SUCCESS=0
@@ -574,6 +576,12 @@ main() {
     exit "${EXIT_CONFIG}"
   fi
 
+  if [[ "${FLAGS_services}" -eq "${FLAGS_TRUE}" ]]; then
+    echo "# Stopping biod and timberslide"
+    stop biod
+    stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
+  fi
+
   # If cros-ec driver isn't bound on startup, this means the final rebinding
   # may fail.
   if [[ ! -c "/dev/cros_fp" ]]; then
@@ -603,6 +611,7 @@ main() {
     echo "See b/188985272." >&2
   fi
 
+  local ret
   flash_fp_mcu_stm32 \
     "${TRANSPORT}"   \
     "${DEVICE}"      \
@@ -610,7 +619,15 @@ main() {
     "${GPIO_BOOT0}"  \
     "${GPIO_PWREN}"  \
     "${filename}"
-  exit $?
+  ret=$?
+
+  if [[ "${FLAGS_services}" -eq "${FLAGS_TRUE}" ]]; then
+    echo "# Restarting biod and timberslide"
+    start timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
+    start biod
+  fi
+
+  exit "${ret}"
 }
 
 main "$@"
