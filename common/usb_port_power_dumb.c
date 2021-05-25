@@ -26,7 +26,7 @@ static void usb_port_set_enabled(int port_id, int en)
 	charge_mode[port_id] = en;
 }
 
-static void usb_port_all_ports_on(void)
+__maybe_unused static void usb_port_all_ports_on(void)
 {
 	int i;
 	for (i = 0; i < USB_PORT_COUNT; i++)
@@ -143,6 +143,7 @@ static void usb_port_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, usb_port_init, HOOK_PRIO_DEFAULT);
 
+#ifndef CONFIG_USB_PORT_POWER_DUMB_CUSTOM_HOOK
 static void usb_port_startup(void)
 {
 	/* Turn on USB ports on as we go into S0 from S5. */
@@ -156,3 +157,4 @@ static void usb_port_shutdown(void)
 	usb_port_all_ports_off();
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usb_port_shutdown, HOOK_PRIO_DEFAULT);
+#endif  /* CONFIG_USB_PORT_POWER_DUMB_CUSTOM_HOOK */

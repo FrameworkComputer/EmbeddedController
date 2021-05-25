@@ -23,6 +23,14 @@ config PLATFORM_EC_USB_PORT_POWER_DUMB
 	  implements the EC_CMD_USB_CHARGE_SET_MODE host command and provides
 	  a 'usbchargemode' console command.
 
+config PLATFORM_EC_USB_PORT_POWER_DUMB_CUSTOM_HOOK
+	bool "Simple control of power to USB-A ports"
+  depends on PLATFORM_EC_USB_PORT_POWER_DUMB
+	default n
+	help
+    Enable this if your board does not want to use the default S3 hooks
+    from USB_PORT_POWER_DUMB.
+
 menuconfig PLATFORM_EC_USBC
 	bool "USB Type-C"
 	default y if PLATFORM_EC_BATTERY

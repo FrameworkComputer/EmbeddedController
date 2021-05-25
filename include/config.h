@@ -4835,6 +4835,12 @@
 #undef CONFIG_USB_PORT_POWER_DUMB
 
 /*
+ * Let board customize the timing to enable/disable usb port, instead
+ * of using the default S3 hook.
+ */
+#undef CONFIG_USB_PORT_POWER_DUMB_CUSTOM_HOOK
+
+/*
  * Support smart power control to the device's USB ports, using
  * dedicated power control chips.  This potentially enables automatic
  * negotiation of supplying more power to peripherals.
