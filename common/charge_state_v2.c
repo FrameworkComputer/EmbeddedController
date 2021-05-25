@@ -853,7 +853,12 @@ static void update_dynamic_battery_info(void)
 	if (!(curr.batt.flags & BATT_FLAG_BAD_CURRENT))	
 		*memmap_rate = ABS(curr.batt.current);
 #endif
-	if (!(curr.batt.flags & BATT_FLAG_BAD_REMAINING_CAPACITY)) {
+
+	if (!(curr.batt.flags & BATT_FLAG_BAD_REMAINING_CAPACITY)
+#ifdef CONFIG_EMI_REGION1
+		&& !(curr.batt.flags & BATT_FLAG_BAD_FULL_CAPACITY)
+#endif
+	) {
 		/*
 		 * If we're running off the battery, it must have some charge.
 		 * Don't report zero charge, as that has special meaning
