@@ -15,6 +15,8 @@
 #include "common.h"
 #include "console.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm_common.h"
+#include "driver/accelgyro_icm42607.h"
 #include "driver/charger/rt946x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/mt6370.h"
@@ -306,12 +308,67 @@ void sensor_board_proc_double_tap(void)
 static struct mutex g_lid_mutex;
 
 static struct bmi_drv_data_t g_bmi160_data;
+static struct icm_drv_data_t g_icm42607_data;
+
+enum lid_accelgyro_type {
+	LID_GYRO_NONE = 0,
+	LID_GYRO_BMI160 = 1,
+	LID_GYRO_ICM426XX = 2,
+};
+
+static enum lid_accelgyro_type lid_accelgyro_config;
 
 /* Matrix to rotate accelerometer into standard reference frame */
 static const mat33_fp_t lid_standard_ref = {
 	{FLOAT_TO_FP(-1), 0, 0},
 	{0, FLOAT_TO_FP(-1), 0},
 	{0, 0, FLOAT_TO_FP(1)}
+};
+
+const mat33_fp_t lid_standard_ref_icm42607 = {
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0,  0, FLOAT_TO_FP(1)}
+};
+struct motion_sensor_t icm42607_lid_accel = {
+	 .name = "Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_ICM42607,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &icm42607_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_icm42607_data,
+	 .port = I2C_PORT_ACCEL,
+	 .i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
+	 .default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
+	 .rot_standard_ref = &lid_standard_ref_icm42607,
+	 .min_frequency = ICM42607_ACCEL_MIN_FREQ,
+	 .max_frequency = ICM42607_ACCEL_MAX_FREQ,
+	 .config = {
+		 /* Enable accel in S0 */
+		 [SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		 },
+	 },
+};
+
+struct motion_sensor_t icm42607_lid_gyro = {
+	 .name = "Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_ICM42607,
+	 .type = MOTIONSENSE_TYPE_GYRO,
+	 .location = MOTIONSENSE_LOC_LID,
+	 .drv = &icm42607_drv,
+	 .mutex = &g_lid_mutex,
+	 .drv_data = &g_icm42607_data,
+	 .port = I2C_PORT_ACCEL,
+	 .i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
+	 .default_range = 1000, /* dps */
+	 .rot_standard_ref = &lid_standard_ref_icm42607,
+	 .min_frequency = ICM42607_GYRO_MIN_FREQ,
+	 .max_frequency = ICM42607_GYRO_MAX_FREQ,
 };
 
 struct motion_sensor_t motion_sensors[] = {
@@ -377,6 +434,47 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+static void board_detect_motionsensor(void)
+{
+	int ret;
+	int val;
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return;
+	if (lid_accelgyro_config != LID_GYRO_NONE)
+		return;
+	/* Check base accelgyro chip */
+	ret = icm_read8(&icm42607_lid_accel,
+				ICM42607_REG_WHO_AM_I, &val);
+	if (ret)
+		ccprints("Get ICM fail.");
+	if (val == ICM42607_CHIP_ICM42607P) {
+		motion_sensors[LID_ACCEL] = icm42607_lid_accel;
+		motion_sensors[LID_GYRO] = icm42607_lid_gyro;
+	}
+	lid_accelgyro_config = (val == ICM42607_CHIP_ICM42607P)
+			? LID_GYRO_ICM426XX : LID_GYRO_BMI160;
+	ccprints("LID Accelgyro: %s", (val == ICM42607_CHIP_ICM42607P)
+			? "ICM42607" : "BMI160");
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_detect_motionsensor,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_detect_motionsensor, HOOK_PRIO_INIT_ADC + 2);
+
+void motion_interrupt(enum gpio_signal signal)
+{
+	switch (lid_accelgyro_config) {
+	case LID_GYRO_ICM426XX:
+		icm42607_interrupt(signal);
+		break;
+	case LID_GYRO_BMI160:
+	default:
+		bmi160_interrupt(signal);
+		break;
+	}
+}
+
 #endif /* VARIANT_KUKUI_NO_SENSORS */
 
 /*
