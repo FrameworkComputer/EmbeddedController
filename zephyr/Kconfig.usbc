@@ -775,6 +775,8 @@ config PLATFORM_EC_USB_PD_TCPC_LPM_EXIT_DEBOUNCE_US
 config PLATFORM_EC_USB_PD_TCPC_VCONN
 	bool "If VCONN is enabled, the TCPC will provide VCONN"
 	default y if !PLATFORM_EC_USBC_PPC_SYV682X
+	default y if PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP
+	default y if PLATFORM_EC_USBC_PPC_SYV682X_NO_CC
 	help
 	  Source USB Type-C connector voltage (VCONN) from the Type-C Port
 	  Controller (TCPC), and also the Power Path Controller (PPC) if
