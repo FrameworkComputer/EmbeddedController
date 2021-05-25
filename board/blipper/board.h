@@ -87,7 +87,6 @@ enum adc_channel {
 	ADC_VSNS_PP3300_A,     /* ADC0 */
 	ADC_TEMP_SENSOR_1,     /* ADC2 */
 	ADC_TEMP_SENSOR_2,     /* ADC3 */
-	ADC_SUB_ANALOG,        /* ADC13 */
 	ADC_TEMP_SENSOR_3,     /* ADC15 */
 	ADC_CH_COUNT
 };
