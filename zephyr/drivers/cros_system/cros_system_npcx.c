@@ -556,6 +556,7 @@ DEVICE_DEFINE(cros_system_npcx_0, "CROS_SYSTEM", cros_system_npcx_init, NULL,
 	      CONFIG_CROS_SYSTEM_NPCX_INIT_PRIORITY,
 	      &cros_system_driver_npcx_api);
 
+#if DT_NODE_EXISTS(DT_NODELABEL(dbg))
 #define HAL_DBG_REG_BASE_ADDR \
 	((struct dbg_reg *)DT_REG_ADDR(DT_INST(0, nuvoton_npcx_cros_dbg)))
 
@@ -586,3 +587,4 @@ static int jtag_init(const struct device *dev)
 #error "jtag_init must be called after default kernel init"
 #endif
 SYS_INIT(jtag_init, PRE_KERNEL_1, 41);
+#endif /* DT_NODE_EXISTS(DT_NODELABEL(dbg)) */
