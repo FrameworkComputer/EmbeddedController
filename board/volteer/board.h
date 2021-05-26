@@ -170,6 +170,9 @@
 /* Disable volume button in ectool */
 #undef CONFIG_HOSTCMD_BUTTON
 
+/* Disable console command help to save space */
+#undef CONFIG_CONSOLE_CMDHELP
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
