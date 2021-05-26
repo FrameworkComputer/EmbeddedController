@@ -26,13 +26,13 @@ const uint32_t pd_snk_pdo[] = {
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
-int pd_set_power_supply_ready(int port)
+test_mockable int pd_set_power_supply_ready(int port)
 {
 	/* Not implemented */
 	return EC_SUCCESS;
 }
 
-void pd_power_supply_reset(int port)
+test_mockable void pd_power_supply_reset(int port)
 {
 	/* Not implemented */
 }
