@@ -90,6 +90,10 @@ GPIO(EC_BATTERY_PRES_ODL,    PIN(E, 1), GPIO_INPUT)
 GPIO(USB_A0_CHARGE_EN_L,	PIN(6, 3), GPIO_OUT_HIGH)  /* Reverse: Enable A0 1.5A Charging */
 GPIO(EN_USB_A0_VBUS,         PIN(4, 1), GPIO_OUT_LOW)  /* Enable A0 5V Charging */
 
+/*LEDs*/
+GPIO(LED_1_PWR_WHITE_L,	 PIN(C, 3), GPIO_OUT_HIGH)
+GPIO(LED_2_CHG_AMBER_L,	 PIN(C, 4), GPIO_OUT_HIGH)
+
 /*
  * Waddledoo doesn't have these physical pins coming to the EC but uses other
  * logic.
@@ -113,7 +117,7 @@ ALTERNATE(PIN_MASK(8, 0x04), 0, MODULE_KEYBOARD_SCAN, GPIO_ODR_HIGH)		 /* KSO14 
 GPIO(EC_KSO_02_INV, PIN(1, 7), GPIO_OUT_LOW)	/* KSO2 inverted */
 
 /* PWM */
-ALTERNATE(PIN_MASK(C, 0x1C), 0, MODULE_PWM, 0)   /* PWM0-2 */
+ALTERNATE(PIN_MASK(C, 0x04), 0, MODULE_PWM, 0)   /* PWM1 */
 
 /* UART */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)  /* UART1 */
