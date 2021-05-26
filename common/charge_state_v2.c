@@ -1966,25 +1966,7 @@ void charger_task(void *u)
 			hook_notify(HOOK_BATTERY_SOC_CHANGE);
 		}
 
-		/*
-		 * TODO(crosbug.com/p/27527). Sometimes the battery thinks its
-		 * temperature is 6280C, which seems a bit high. Let's ignore
-		 * anything above the boiling point of tungsten until this bug
-		 * is fixed. If the battery is really that warm, we probably
-		 * have more urgent problems.
-		 */
-		if (curr.batt.temperature > CELSIUS_TO_DECI_KELVIN(5660)) {
-			CPRINTS("ignoring ridiculous batt.temp of %dC",
-				 DECI_KELVIN_TO_CELSIUS(curr.batt.temperature));
-			curr.batt.flags |= BATT_FLAG_BAD_TEMPERATURE;
-		}
-
-		/* If the battery thinks it's above 100%, don't believe it */
-		if (curr.batt.state_of_charge > 100) {
-			CPRINTS("ignoring ridiculous batt.soc of %d%%",
-				curr.batt.state_of_charge);
-			curr.batt.flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
-		}
+		battery_validate_params(&curr.batt);
 
 		notify_host_of_over_current(&curr.batt);
 

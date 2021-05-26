@@ -474,4 +474,6 @@ void battery_compensate_params(struct batt_params *batt);
  */
 __override_proto void board_battery_compensate_params(struct batt_params *batt);
 
+void battery_validate_params(struct batt_params *batt);
+
 #endif /* __CROS_EC_BATTERY_H */
