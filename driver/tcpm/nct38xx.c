@@ -28,6 +28,14 @@ static int nct38xx_init(int port)
 	int reg;
 
 	/*
+	 * Set TCPC_CONTROL.DebugAccessoryControl = 1 to control by TCPM,
+	 * not TCPC.
+	 */
+	RETURN_ERROR(tcpc_update8(port, TCPC_REG_TCPC_CTRL,
+				  TCPC_REG_TCPC_CTRL_DEBUG_ACC_CONTROL,
+				  MASK_SET));
+
+	/*
 	 * Write to the CONTROL_OUT_EN register to enable:
 	 * [6] - CONNDIREN : Connector direction indication output enable
 	 * [2] - SNKEN     : VBUS sink enable output enable
