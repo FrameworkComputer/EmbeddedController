@@ -33,10 +33,10 @@
  */
 const struct board_batt_params board_battery_info[] = {
 	/* BYD Battery Information */
-	[BATTERY_BYD_1VX1HYMD] = {
+	[BATTERY_BYD_1VX1H] = {
 		.fuel_gauge = {
 			.manuf_name = "BYD",
-			.device_name = "1VX1HYMD",
+			.device_name = "DELL 1VX1H",
 			.ship_mode = {
 				.wb_support = 1,
 				.reg_addr = 0x44,
@@ -65,12 +65,11 @@ const struct board_batt_params board_battery_info[] = {
 	},
 
 	/* BYD Battery Information */
-	[BATTERY_BYD_X0Y5MYMD] = {
+	[BATTERY_BYD_X0Y5M] = {
 		.fuel_gauge = {
 			.manuf_name = "BYD",
-			.device_name = "X0Y5MYMD",
+			.device_name = "DELL X0Y5M",
 			.ship_mode = {
-				.wb_support = 1,
 				.reg_addr = 0x00,
 				.reg_data = { 0x0010, 0x0010 },
 			},
@@ -190,10 +189,10 @@ const struct board_batt_params board_battery_info[] = {
 	},
 
 	/* SMP-ATL Battery Information */
-	[BATTERY_SMP_ATL_VM73297U] = {
+	[BATTERY_SMP_ATL_VM732] = {
 		.fuel_gauge = {
 			.manuf_name = "SMP-ATL-3.61",
-			.device_name = "VM73297U",
+			.device_name = "DELL VM732",
 			.ship_mode = {
 				.wb_support = 1,
 				.reg_addr = 0x44,
@@ -222,17 +221,16 @@ const struct board_batt_params board_battery_info[] = {
 	},
 
 	/* SMP-ATL Battery Information */
-	[BATTERY_SMP_ATL_RF9H3YMD] = {
+	[BATTERY_SMP_ATL_RF9H3] = {
 		.fuel_gauge = {
 			.manuf_name = "SMP-ATL-3.61",
-			.device_name = "RF9H3YMD",
+			.device_name = "DELL RF9H3",
 			.ship_mode = {
-				.wb_support = 1,
 				.reg_addr = 0x00,
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.reg_addr       = 0x41,
+				.reg_addr       = 0x43,
 				.reg_mask       = 0x0001,
 				.disconnect_val = 0x0000,
 				.cfet_mask = 0x0002,
@@ -254,10 +252,10 @@ const struct board_batt_params board_battery_info[] = {
 	},
 
 	/* SMP-COS Battery Information */
-	[BATTERY_SMP_COS_VM732835] = {
+	[BATTERY_SMP_COS_VM732] = {
 		.fuel_gauge = {
 			.manuf_name = "SMP-COS3.63",
-			.device_name = "VM732835",
+			.device_name = "DELL VM732",
 			.ship_mode = {
 				.wb_support = 1,
 				.reg_addr = 0x44,
@@ -286,17 +284,16 @@ const struct board_batt_params board_battery_info[] = {
 	},
 
 	/* SMP-COS Battery Information */
-	[BATTERY_SMP_COS_RF9H3YMD] = {
+	[BATTERY_SMP_COS_RF9H3] = {
 		.fuel_gauge = {
 			.manuf_name = "SMP-COS3.63",
-			.device_name = "RF9H3YMD",
+			.device_name = "DELL RF9H3",
 			.ship_mode = {
-				.wb_support = 1,
 				.reg_addr = 0x00,
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.reg_addr       = 0x41,
+				.reg_addr       = 0x43,
 				.reg_mask       = 0x0001,
 				.disconnect_val = 0x0000,
 				.cfet_mask = 0x0002,
@@ -439,4 +436,4 @@ const struct board_batt_params board_battery_info[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_BYD_1VX1HYMD;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_BYD_1VX1H;
