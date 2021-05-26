@@ -50,6 +50,38 @@ void pd_resume_check_pr_swap_needed(int port)
 	/* Do Nothing, but needed for linking */
 }
 
+/* Vbus is turned on at the board level, so mock it here for our purposes */
+static bool board_vbus_enabled[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+static bool mock_get_vbus_enabled(int port)
+{
+	return board_vbus_enabled[port];
+}
+
+static void mock_set_vbus_enabled(int port, bool enabled)
+{
+	board_vbus_enabled[port] = enabled;
+}
+
+static void mock_reset_vbus_enabled(void)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+		mock_set_vbus_enabled(i, false);
+}
+
+int pd_set_power_supply_ready(int port)
+{
+	mock_set_vbus_enabled(port, true);
+	return EC_SUCCESS;
+}
+
+void pd_power_supply_reset(int port)
+{
+	mock_set_vbus_enabled(port, false);
+}
+
 __maybe_unused static int test_mux_con_dis_as_src(void)
 {
 	mock_tcpc.should_print_call = false;
@@ -711,13 +743,51 @@ __maybe_unused static int test_auto_toggle_delay_early_connect(void)
 }
 
 /* TODO(b/153071799): test as SNK monitor for Vbus disconnect (not CC line) */
-/* TODO(b/153071799): test as SRC monitor for CC line state change */
+__maybe_unused static int test_typec_dis_as_src(void)
+{
+	mock_tcpc.should_print_call = false;
+
+	/* Update CC lines send state machine event to process */
+	mock_tcpc.cc1 = TYPEC_CC_VOLT_RD;
+	mock_tcpc.cc2 = TYPEC_CC_VOLT_OPEN;
+	task_set_event(TASK_ID_PD_C0, PD_EVENT_CC);
+	pd_set_dual_role(0, PD_DRP_TOGGLE_ON);
+
+	/* This wait trainsitions through AttachWait.SRC then Attached.SRC */
+	task_wait_event(SECOND);
+
+	/*
+	 * We are in Attached.SRC now, verify:
+	 * - Vbus was turned on
+	 * - Rp is set
+	 * - polarity is detected as CC1
+	 * - Rp was set to default configured level
+	 */
+	TEST_EQ(mock_tcpc.last.cc, TYPEC_CC_RP, "%d");
+	TEST_EQ(mock_tcpc.last.polarity, POLARITY_CC1, "%d");
+	TEST_EQ(mock_tcpc.last.rp, CONFIG_USB_PD_PULLUP, "%d");
+	TEST_EQ(mock_get_vbus_enabled(0), true, "%d");
+
+	/* Force a detach through CC open */
+	mock_tcpc.cc1 = TYPEC_CC_VOLT_OPEN;
+	mock_tcpc.cc2 = TYPEC_CC_VOLT_OPEN;
+	task_set_event(TASK_ID_PD_C0, PD_EVENT_CC);
+
+	/* This wait will go through TryWait.SNK then to Unattached.SNK */
+	task_wait_event(10 * SECOND);
+
+	/* We are in Unattached.SNK. Verify Vbus has been removed */
+	TEST_EQ(mock_get_vbus_enabled(0), false, "%d");
+
+	return EC_SUCCESS;
+}
 
 /* Reset the mocks before each test */
 void before_test(void)
 {
 	mock_usb_mux_reset();
 	mock_tcpc_reset();
+	mock_reset_vbus_enabled();
 
 	/* Restart the PD task and let it settle */
 	task_set_event(TASK_ID_PD_C0, TASK_EVENT_RESET_DONE);
@@ -750,6 +820,8 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_mux_con_dis_as_src);
 	RUN_TEST(test_mux_con_dis_as_snk);
 	RUN_TEST(test_power_role_set);
+
+	RUN_TEST(test_typec_dis_as_src);
 
 	RUN_TEST(test_try_src_disabled);
 	RUN_TEST(test_try_src_partner_switches);
