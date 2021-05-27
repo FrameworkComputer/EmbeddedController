@@ -3,7 +3,7 @@
  */
 
 /* INTERRUPT GPIOs: */
-GPIO_INT(ACOK_OD,                        PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)
+GPIO_INT(ACOK_OD,                        PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
 GPIO_INT(EC_ACCEL_INT_R_L,               PIN(8, 1), GPIO_SEL_1P8V | GPIO_INT_FALLING, lis2dw12_interrupt)
 GPIO_INT(EC_ALS_RGB_INT_R_L,             PIN(D, 4), GPIO_INT_FALLING, tcs3400_interrupt)
 GPIO_INT(EC_IMU_INT_R_L,                 PIN(5, 6), GPIO_SEL_1P8V | GPIO_INT_FALLING, lsm6dso_interrupt)
@@ -11,8 +11,8 @@ GPIO_INT(EC_PROCHOT_IN_L,                PIN(F, 0), GPIO_INT_BOTH, throttle_ap_p
 GPIO_INT(EC_VOLDN_BTN_ODL,               PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_VOLUP_BTN_ODL,               PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_WP_ODL,                      PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
-GPIO_INT(GSC_EC_PWR_BTN_ODL,             PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)
-GPIO_INT(LID_OPEN,                       PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)
+GPIO_INT(GSC_EC_PWR_BTN_ODL,             PIN(0, 1), GPIO_INT_BOTH | GPIO_HIB_WAKE_LOW, power_button_interrupt)
+GPIO_INT(LID_OPEN,                       PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)
 GPIO_INT(SEQ_EC_ALL_SYS_PG,              PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SEQ_EC_DSW_PWROK,               PIN(C, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SEQ_EC_RSMRST_ODL,              PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
@@ -111,8 +111,9 @@ ALTERNATE(PIN_MASK(3, 0x03), 0, MODULE_KB, GPIO_INPUT | GPIO_PULL_UP) /* KSI0/GP
 ALTERNATE(PIN_MASK(8, 0x04), 0, MODULE_KB, GPIO_ODR_HIGH)    /* KSO14/GPIO82 */
 
 /* PMU alternate functions */
-ALTERNATE(PIN_MASK(0, 0x03), 0, MODULE_PMU, GPIO_INT_BOTH)   /* PSL_IN2_L&GPI00/GPIO00, GPIO01/PSL_IN3_L&GPI01 */
-ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, GPIO_INT_BOTH)   /* PSL_IN1_L&GPID2/GPIOD2 */
+ALTERNATE(PIN_MASK(0, 0x01), 0, MODULE_PMU, GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH) /* PSL_IN2_L&GPI00/GPIO00 */
+ALTERNATE(PIN_MASK(0, 0x02), 0, MODULE_PMU, GPIO_INT_BOTH | GPIO_HIB_WAKE_LOW) /* GPIO01/PSL_IN3_L&GPI01 */
+ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH) /* PSL_IN1_L&GPID2/GPIOD2 */
 
 /* Unused Pins */
 UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
