@@ -4,7 +4,6 @@
  */
 
 /* Volteer board-specific configuration */
-#include "bb_retimer.h"
 #include "button.h"
 #include "common.h"
 #include "accelgyro.h"
@@ -14,11 +13,10 @@
 #include "driver/als_tcs3400.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/syv682x.h"
-#include "driver/tcpm/tcpci.h"
-#include "driver/tcpm/tusb422.h"
-#include "driver/tcpm/rt1715.h"
-#include "driver/retimer/bb_retimer.h"
 #include "driver/sync.h"
+#include "driver/tcpm/ps8xxx.h"
+#include "driver/tcpm/rt1715.h"
+#include "driver/tcpm/tcpci.h"
 #include "extpower.h"
 #include "fan.h"
 #include "fan_chip.h"
@@ -220,20 +218,6 @@ const struct i2c_port_t i2c_ports[] = {
 		.sda = GPIO_EC_I2C2_USB_C1_SDA,
 	},
 	{
-		.name = "usb_0_mix",
-		.port = I2C_PORT_USB_0_MIX,
-		.kbps = 100,
-		.scl = GPIO_EC_I2C3_USB_1_MIX_SCL,
-		.sda = GPIO_EC_I2C3_USB_1_MIX_SDA,
-	},
-	{
-		.name = "usb_1_mix",
-		.port = I2C_PORT_USB_1_MIX,
-		.kbps = 100,
-		.scl = GPIO_EC_I2C4_USB_1_MIX_SCL,
-		.sda = GPIO_EC_I2C4_USB_1_MIX_SDA,
-	},
-	{
 		.name = "power",
 		.port = I2C_PORT_POWER,
 		.kbps = 100,
@@ -286,21 +270,34 @@ static void kb_backlight_disable(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kb_backlight_disable, HOOK_PRIO_DEFAULT);
 
-/* Config TCPC dynamic by Board version */
-static void setup_board_tcpc(void)
+static void ps8815_reset(void)
 {
-	uint8_t board_id = get_board_id();
+	int val;
 
-	if (board_id == 0) {
-		/* config typec C0 prot TUSB422 TCPC */
-		tcpc_config[USBC_PORT_C0].i2c_info.addr_flags
-			= TUSB422_I2C_ADDR_FLAGS;
-		tcpc_config[USBC_PORT_C0].drv = &tusb422_tcpm_drv;
-		/* config typec C1 prot TUSB422 TCPC */
-		tcpc_config[USBC_PORT_C1].i2c_info.addr_flags
-			= TUSB422_I2C_ADDR_FLAGS;
-		tcpc_config[USBC_PORT_C1].drv = &tusb422_tcpm_drv;
-	}
+	gpio_set_level(GPIO_USB_C1_RT_RST_ODL, 0);
+	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
+			   PS8815_PWR_H_RST_H_DELAY_MS));
+	gpio_set_level(GPIO_USB_C1_RT_RST_ODL, 1);
+	msleep(PS8815_FW_INIT_DELAY_MS);
+
+	/*
+	 * b/144397088
+	 * ps8815 firmware 0x01 needs special configuration
+	 */
+
+	CPRINTS("%s: patching ps8815 registers", __func__);
+
+	if (i2c_read8(I2C_PORT_USB_C1,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f was %02x", val);
+
+	if (i2c_write8(I2C_PORT_USB_C1,
+		       PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f set to 0x31");
+
+	if (i2c_read8(I2C_PORT_USB_C1,
+		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		CPRINTS("ps8815: reg 0x0f now %02x", val);
 }
 
 void board_reset_pd_mcu(void)
@@ -309,6 +306,8 @@ void board_reset_pd_mcu(void)
 	 * Only the Burnside Bridge retimers provide a reset pin, but this is
 	 * already handled by the bb_retimer.c driver.
 	 */
+	ps8815_reset();
+	usb_mux_hpd_update(USBC_PORT_C1, 0, 0);
 }
 
 /******************************************************************************/
@@ -352,21 +351,9 @@ void ppc_interrupt(enum gpio_signal signal)
 	}
 }
 
-/* Disable FRS on boards with the SYV682A. FRS only works on the SYV682B. */
-void setup_board_ppc(void)
-{
-	uint8_t board_id = get_board_id();
-
-	if (board_id < 2) {
-		ppc_chips[USBC_PORT_C0].frs_en = 0;
-		ppc_chips[USBC_PORT_C1].frs_en = 0;
-	}
-}
-
 __override void board_cbi_init(void)
 {
-	setup_board_tcpc();
-	setup_board_ppc();
+
 }
 
 /******************************************************************************/
@@ -385,7 +372,7 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
 
 /******************************************************************************/
 /* USBC TCPC configuration */
-struct tcpc_config_t tcpc_config[] = {
+const struct  tcpc_config_t tcpc_config[] = {
 	[USBC_PORT_C0] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
@@ -398,56 +385,44 @@ struct tcpc_config_t tcpc_config[] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_USB_C1,
-			.addr_flags = RT1715_I2C_ADDR_FLAGS,
+			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		},
-		.drv = &rt1715_tcpm_drv,
+		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
+		.drv = &ps8xxx_tcpm_drv,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 
-/******************************************************************************/
-/* USBC mux configuration - Tiger Lake includes internal mux */
-struct usb_mux usbc0_tcss_usb_mux = {
-	.usb_port = USBC_PORT_C0,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-};
-struct usb_mux usbc1_tcss_usb_mux = {
+/*
+ * USB3 DB mux configuration - the top level mux still needs to be set to the
+ * virtual_usb_mux_driver so the AP gets notified of mux changes and updates
+ * the TCSS configuration on state changes.
+ */
+static const struct usb_mux usbc1_usb3_db_retimer = {
 	.usb_port = USBC_PORT_C1,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
+	.driver = &tcpci_tcpm_usb_mux_driver,
+	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	.next_mux = NULL,
 };
 
-struct usb_mux usb_muxes[] = {
+/******************************************************************************/
+/* USBC mux configuration - Tiger Lake includes internal mux */
+const struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.usb_port = USBC_PORT_C0,
-		.next_mux = &usbc0_tcss_usb_mux,
-		.driver = &bb_usb_retimer,
-		.i2c_port = I2C_PORT_USB_0_MIX,
-		.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
+		.driver = &virtual_usb_mux_driver,
+		.hpd_update = &virtual_hpd_update,
 	},
 	[USBC_PORT_C1] = {
 		.usb_port = USBC_PORT_C1,
-		.next_mux = &usbc1_tcss_usb_mux,
-		.driver = &bb_usb_retimer,
-		.i2c_port = I2C_PORT_USB_1_MIX,
-		.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
+		.driver = &virtual_usb_mux_driver,
+		.hpd_update = &virtual_hpd_update,
+		.next_mux = &usbc1_usb3_db_retimer,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
-
-struct bb_usb_control bb_controls[] = {
-	[USBC_PORT_C0] = {
-		.usb_ls_en_gpio = GPIO_USB_C0_LS_EN,
-		.retimer_rst_gpio = GPIO_USB_C0_RT_RST_ODL,
-	},
-	[USBC_PORT_C1] = {
-		.usb_ls_en_gpio = GPIO_USB_C1_LS_EN,
-		.retimer_rst_gpio = GPIO_USB_C1_RT_RST_ODL,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(bb_controls) == USBC_PORT_COUNT);
 
 static void board_tcpc_init(void)
 {

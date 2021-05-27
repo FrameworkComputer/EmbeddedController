@@ -85,11 +85,6 @@
 /* Enabling Thunderbolt-compatible mode */
 #define CONFIG_USB_PD_TBT_COMPAT_MODE
 
-/* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
-#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x40
-#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x41
-
 /* USB Type A Features */
 #define USB_PORT_COUNT			1
 #define CONFIG_USB_PORT_POWER_DUMB
@@ -97,6 +92,9 @@
 /* USBC PPC*/
 #define CONFIG_USBC_PPC_SYV682X		/* USBC port C0/C1 */
 #define CONFIG_USB_PD_FRS_PPC
+#undef CONFIG_USB_PD_TCPC_RUNTIME_CONFIG
+#undef CONFIG_USB_PD_TCPM_TUSB422
+#undef CONFIG_USB_MUX_RUNTIME_CONFIG
 
 /* BC 1.2 */
 
@@ -110,6 +108,10 @@
 /* charger defines */
 #define CONFIG_CHARGER_SENSE_RESISTOR		10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC	10
+
+/* Retimer */
+#undef CONFIG_USBC_RETIMER_INTEL_BB
+#undef CONFIG_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
 
 /*
  * Macros for GPIO signals used in common code that don't match the
@@ -147,8 +149,6 @@
 #define I2C_PORT_SENSOR		NPCX_I2C_PORT0_0
 #define I2C_PORT_USB_C0		NPCX_I2C_PORT1_0
 #define I2C_PORT_USB_C1		NPCX_I2C_PORT2_0
-#define I2C_PORT_USB_0_MIX	NPCX_I2C_PORT3_0
-#define I2C_PORT_USB_1_MIX	NPCX_I2C_PORT4_1
 #define I2C_PORT_POWER		NPCX_I2C_PORT5_0
 #define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
 
