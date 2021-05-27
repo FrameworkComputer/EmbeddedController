@@ -707,7 +707,7 @@ static void charger_chips_init(void)
 
 	/* according to Power team suggest, Set ACOK reference to 4.544V */
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_ACOK_REFERENCE, 0x0C00))
+		ISL9241_REG_ACOK_REFERENCE, 0x0B00))
 		goto init_fail;
 
 	return;
