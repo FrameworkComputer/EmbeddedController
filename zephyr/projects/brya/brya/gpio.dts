@@ -36,5 +36,11 @@
 			enum-name = "GPIO_EC_CHG_LED_B_C1";
 			label = "EC_CHG_LED_B_C1";
 		};
+
+		packet_mode_en {
+			gpios = <&gpio7 5 GPIO_OUT_LOW>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+			label = "EC_GSC_PACKET_MODE";
+		};
 	};
 };
