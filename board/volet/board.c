@@ -22,6 +22,7 @@
 #include "fan_chip.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -45,31 +46,14 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
-static const struct ec_response_keybd_config zbu_new_kb = {
-	.num_top_row_keys = 10,
-	.action_keys = {
-		TK_BACK,
-		TK_REFRESH,
-		TK_FULLSCREEN,
-		TK_OVERVIEW,
-		TK_SNAPSHOT,
-		TK_BRIGHTNESS_DOWN,
-		TK_BRIGHTNESS_UP,
-		TK_VOL_MUTE,
-		TK_VOL_DOWN,
-		TK_VOL_UP,
-	},
-	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
-};
-
-static const struct ec_response_keybd_config zbu_old_kb = {
+static const struct ec_response_keybd_config volet_kb = {
 	.num_top_row_keys = 10,
 	.action_keys = {
 		TK_BACK,		/* T1 */
-		TK_FORWARD,		/* T2 */
-		TK_REFRESH,		/* T3 */
-		TK_FULLSCREEN,		/* T4 */
-		TK_OVERVIEW,		/* T5 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
 		TK_BRIGHTNESS_DOWN,	/* T6 */
 		TK_BRIGHTNESS_UP,	/* T7 */
 		TK_VOL_MUTE,		/* T8 */
@@ -79,13 +63,30 @@ static const struct ec_response_keybd_config zbu_old_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
-__override
-const struct ec_response_keybd_config *board_vivaldi_keybd_config(void)
+static const struct ec_response_keybd_config volet_kb_num = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
+};
+
+__override const struct ec_response_keybd_config
+*board_vivaldi_keybd_config(void)
 {
-	if (get_board_id() > 2)
-		return &zbu_new_kb;
+	if (!ec_cfg_has_numeric_pad())
+		return &volet_kb;
 	else
-		return &zbu_old_kb;
+		return &volet_kb_num;
 }
 
 /* Keyboard scan setting */
@@ -99,8 +100,9 @@ struct keyboard_scan_config keyscan_config = {
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
-		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
+		0x1c, 0xfe, 0xff, 0xff, 0xff, 0xf5, 0xff,
+		0xa4, 0xff, 0xfe, 0x55, 0xfe, 0xff, 0xff,
+		0xff, /* full set */
 	},
 };
 
@@ -353,7 +355,14 @@ void ppc_interrupt(enum gpio_signal signal)
 
 __override void board_cbi_init(void)
 {
-
+	if ((!IS_ENABLED(TEST_BUILD) && !ec_cfg_has_numeric_pad())) {
+		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
+		/* Search key is moved back to col=1,row=0 */
+		keyscan_config.actual_key_mask[0] = 0x14;
+		keyscan_config.actual_key_mask[1] = 0xff;
+		keyscan_config.actual_key_mask[11] = 0xfa;
+		keyscan_config.actual_key_mask[12] = 0xca;
+	}
 }
 
 /******************************************************************************/
