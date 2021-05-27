@@ -122,30 +122,38 @@ rsource "subdir/Kconfig.wibble"
                              checker.scan_kconfigs(srctree, PREFIX))
 
     @classmethod
-    def setup_allowed_and_configs(cls, allowed_fname, configs_fname):
+    def setup_allowed_and_configs(cls, allowed_fname, configs_fname,
+                                  add_new_one=True):
         """Set up the 'allowed' and 'configs' files for tests
 
         Args:
             allowed_fname: Filename to write allowed CONFIGs to
             configs_fname: Filename to which CONFIGs to check should be written
+            add_new_one: True to add CONFIG_NEW_ONE to the configs_fname file
         """
         with open(allowed_fname, 'w') as out:
-            out.write('CONFIG_OLD_ONE')
+            out.write('CONFIG_OLD_ONE\n')
+            out.write('CONFIG_MENU_KCONFIG\n')
         with open(configs_fname, 'w') as out:
-            out.write('\n'.join(['CONFIG_OLD_ONE', 'CONFIG_NEW_ONE',
-                                 'CONFIG_MY_KCONFIG']))
+            to_add = ['CONFIG_OLD_ONE', 'CONFIG_MY_KCONFIG']
+            if add_new_one:
+                to_add.append('CONFIG_NEW_ONE')
+            out.write('\n'.join(to_add))
 
-    def test_find_new_adhoc_configs(self):
-        """Test KconfigCheck.find_new_adhoc_configs()"""
+    def test_check_adhoc_configs(self):
+        """Test KconfigCheck.check_adhoc_configs()"""
         checker = kconfig_check.KconfigCheck()
         with tempfile.TemporaryDirectory() as srctree:
             self.setup_srctree(srctree)
             with tempfile.NamedTemporaryFile() as allowed:
                 with tempfile.NamedTemporaryFile() as configs:
                     self.setup_allowed_and_configs(allowed.name, configs.name)
-                    result = checker.find_new_adhoc_configs(
-                        configs.name, srctree, allowed.name, PREFIX)
-                    self.assertEqual(['NEW_ONE'], result)
+                    new_adhoc, unneeded_adhoc, updated_adhoc = (
+                        checker.check_adhoc_configs(
+                            configs.name, srctree, allowed.name, PREFIX))
+                    self.assertEqual(['NEW_ONE'], new_adhoc)
+                    self.assertEqual(['MENU_KCONFIG'], unneeded_adhoc)
+                    self.assertEqual(['OLD_ONE'], updated_adhoc)
 
     def test_check(self):
         """Test running the 'check' subcommand"""
@@ -154,7 +162,8 @@ rsource "subdir/Kconfig.wibble"
                 self.setup_srctree(srctree)
                 with tempfile.NamedTemporaryFile() as allowed:
                     with tempfile.NamedTemporaryFile() as configs:
-                        self.setup_allowed_and_configs(allowed.name, configs.name)
+                        self.setup_allowed_and_configs(allowed.name,
+                                                       configs.name)
                         ret_code = kconfig_check.main(
                             ['-c', configs.name, '-s', srctree,
                              '-a', allowed.name, '-p', PREFIX, 'check'])
@@ -192,6 +201,26 @@ rsource "subdir/Kconfig.wibble"
         self.assertEqual(
             ['FLASH_LOAD_OFFSET', 'NPCX_HEADER', 'SYS_CLOCK_HW_CYCLES_PER_SEC'],
             missing)
+
+    def test_check_unneeded(self):
+        """Test running the 'check' subcommand with unneeded ad-hoc configs"""
+        with capture_sys_output() as (stdout, stderr):
+            with tempfile.TemporaryDirectory() as srctree:
+                self.setup_srctree(srctree)
+                with tempfile.NamedTemporaryFile() as allowed:
+                    with tempfile.NamedTemporaryFile() as configs:
+                        self.setup_allowed_and_configs(allowed.name,
+                                                       configs.name, False)
+                        ret_code = kconfig_check.main(
+                            ['-c', configs.name, '-s', srctree,
+                             '-a', allowed.name, '-p', PREFIX, 'check'])
+                        self.assertEqual(1, ret_code)
+        self.assertEqual('', stderr.getvalue())
+        found = re.findall('(CONFIG_.*)', stdout.getvalue())
+        self.assertEqual(['CONFIG_MENU_KCONFIG'], found)
+        allowed = kconfig_check.NEW_ALLOWED_FNAME.read_text().splitlines()
+        self.assertEqual(['CONFIG_OLD_ONE'], allowed)
+
 
 if __name__ == '__main__':
     unittest.main()
