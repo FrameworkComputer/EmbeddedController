@@ -1606,14 +1606,14 @@ void pd_vbus_low(int port);
 __override_proto int pd_check_power_swap(int port);
 
 /**
- * Check if we are allowed to automatically be charging from port partner
+ * Check if we are allowed to automatically charge from port partner
  *
  * @param port USB-C port number
  * @pdo_cnt number of source cap PDOs
  * @*pdos  pointer to source cap PDOs
  * @return True if port partner can supply power
  */
-__override_proto bool pd_can_source_from_device(int port, const int pdo_cnt,
+__override_proto bool pd_can_charge_from_device(int port, const int pdo_cnt,
 						const uint32_t *pdos);
 
 /**

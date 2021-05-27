@@ -346,7 +346,7 @@ static void usb_tc_disconnect(void)
 }
 DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, usb_tc_disconnect, HOOK_PRIO_DEFAULT);
 
-__override bool pd_can_source_from_device(int port, const int pdo_cnt,
+__override bool pd_can_charge_from_device(int port, const int pdo_cnt,
 				      const uint32_t *pdos)
 {
 	/*
