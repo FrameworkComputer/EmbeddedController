@@ -5665,7 +5665,8 @@
 	defined(CONFIG_USBC_PPC_NX20P3483) || \
 	defined(CONFIG_USBC_PPC_SN5S330) || \
 	defined(CONFIG_USBC_PPC_SYV682X)  || \
-	defined(CONFIG_CHARGER_SM5803)
+	defined(CONFIG_CHARGER_SM5803) || \
+	defined(CONFIG_USB_PD_TCPM_TCPCI)
 #define CONFIG_USBC_OCP
 #endif
 
