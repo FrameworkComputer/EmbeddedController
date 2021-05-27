@@ -70,7 +70,12 @@ a corresponding Kconfig option for Zephyr'''
     parser.add_argument('-s', '--srctree', type=str, default='zephyr/',
                         help='Path to source tree to look for Kconfigs')
 
-    subparsers = parser.add_subparsers(dest='cmd', required=True)
+    # TODO(sjg@chromium.org): The chroot uses a very old Python. Once it moves
+    # to 3.7 or later we can use this instead:
+    #    subparsers = parser.add_subparsers(dest='cmd', required=True)
+    subparsers = parser.add_subparsers(dest='cmd')
+    subparsers.required = True
+
     subparsers.add_parser('check', help='Check for new ad-hoc CONFIGs')
 
     return parser.parse_args(argv)
@@ -269,7 +274,14 @@ class KconfigCheck:
                     current state of the Kconfig options
         """
         configs = self.read_configs(configs_file, use_defines)
-        kconfigs = self.scan_kconfigs(srcdir, prefix, search_paths)
+        try:
+            kconfigs = self.scan_kconfigs(srcdir, prefix, search_paths)
+        except kconfiglib.KconfigError:
+            # If we don't actually have access to the full Kconfig then we may
+            # get an error. Fall back to using manual methods.
+            kconfigs = self.scan_kconfigs(srcdir, prefix, search_paths,
+                                          try_kconfiglib=False)
+
         allowed = self.read_allowed(allowed_file)
         new_adhoc = self.find_new_adhoc(configs, kconfigs, allowed)
         unneeded_adhoc = self.find_unneeded_adhoc(kconfigs, allowed)

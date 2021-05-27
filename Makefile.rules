@@ -230,7 +230,9 @@ print-boards:
 		$(sort $(boards)))
 
 ifeq ($(ALLOW_CONFIG),)
-cmd_check_allowed = ./util/check_allowed.sh ${config} util/config_allowed.txt .
+cmd_check_allowed = ./util/kconfig_check.py -c ${config} \
+	 -a util/config_allowed.txt -p PLATFORM_EC_ -s zephyr/ \
+	 -I $(abspath ../../../src/third_party/zephyr/main) check
 else
 cmd_check_allowed = true
 endif
