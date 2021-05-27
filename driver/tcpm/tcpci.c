@@ -116,6 +116,9 @@ static int tcpc_vbus[CONFIG_USB_PD_PORT_MAX_COUNT];
 /* Cached RP role values */
 static int cached_rp[CONFIG_USB_PD_PORT_MAX_COUNT];
 
+/* Cache our Device Capabilities at init for later reference */
+static int dev_cap_1[CONFIG_USB_PD_PORT_MAX_COUNT];
+
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 int tcpc_addr_write(int port, int i2c_addr, int reg, int val)
 {
@@ -314,7 +317,8 @@ static int init_alert_mask(int port)
 	 */
 	mask = TCPC_REG_ALERT_TX_SUCCESS | TCPC_REG_ALERT_TX_FAILED |
 		TCPC_REG_ALERT_TX_DISCARDED | TCPC_REG_ALERT_RX_STATUS |
-		TCPC_REG_ALERT_RX_HARD_RST | TCPC_REG_ALERT_CC_STATUS
+		TCPC_REG_ALERT_RX_HARD_RST | TCPC_REG_ALERT_CC_STATUS |
+		TCPC_REG_ALERT_FAULT
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 		| TCPC_REG_ALERT_POWER_STATUS
 #endif
@@ -1058,6 +1062,12 @@ static int tcpci_handle_fault(int port, int fault)
 				last_write_op[port].mask & 0xFFFF);
 	}
 
+	/* Report overcurrent to the OCP module if enabled */
+	if ((dev_cap_1[port] & TCPC_REG_DEV_CAP_1_VBUS_OCP_REPORTING) &&
+			IS_ENABLED(CONFIG_USBC_OCP) &&
+			(fault & TCPC_REG_FAULT_STATUS_VBUS_OVER_CURRENT))
+		pd_handle_overcurrent(port);
+
 	if (tcpc_config[port].drv->handle_fault)
 		rv = tcpc_config[port].drv->handle_fault(port, fault);
 
@@ -1446,6 +1456,9 @@ int tcpci_tcpm_init(int port)
 
 	/* Read chip info here when we know the chip is awake. */
 	tcpm_get_chip_info(port, 1, NULL);
+
+	/* Cache our device capabilities for future reference */
+	tcpc_read16(port, TCPC_REG_DEV_CAP_1, &dev_cap_1[port]);
 
 	return EC_SUCCESS;
 }
