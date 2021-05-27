@@ -373,6 +373,15 @@ void system_reset(int flags)
 
 	chip_save_reset_flags(save_flags);
 
+#ifdef CONFIG_ARMV7M_CACHE
+	/*
+	 * Disable caches (D-cache is also flushed and invalidated)
+	 * so changes that lives in cache are saved in memory now.
+	 * Any subsequent writes will be done immediately.
+	 */
+	cpu_disable_caches();
+#endif
+
 	if (flags & SYSTEM_RESET_HARD) {
 #ifdef CONFIG_SOFTWARE_PANIC
 		uint32_t reason, info;

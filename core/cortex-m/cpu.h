@@ -74,6 +74,8 @@ enum {
 void cpu_init(void);
 /* Enable the CPU I-cache and D-cache if they are not already enabled */
 void cpu_enable_caches(void);
+/* Disable the CPU I-cache and D-cache */
+void cpu_disable_caches(void);
 /* Invalidate the D-cache */
 void cpu_invalidate_dcache(void);
 /* Clean and Invalidate the D-cache to the Point of Coherency */

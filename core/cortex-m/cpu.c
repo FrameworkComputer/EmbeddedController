@@ -50,16 +50,16 @@ void cpu_enable_caches(void)
 	}
 }
 
-static void cpu_sysjump_cache(void)
+void cpu_disable_caches(void)
 {
 	/*
 	 * Disable the I-cache and the D-cache
-	 * The I-cache will be invalidated after the sysjump if needed
+	 * The I-cache will be invalidated after the reboot/sysjump if needed
 	 * (e.g after a flash update).
 	 */
 	cpu_clean_invalidate_dcache();
 	CPU_NVIC_CCR &= ~(CPU_NVIC_CCR_ICACHE | CPU_NVIC_CCR_DCACHE);
 	asm volatile("dsb; isb");
 }
-DECLARE_HOOK(HOOK_SYSJUMP, cpu_sysjump_cache, HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_SYSJUMP, cpu_disable_caches, HOOK_PRIO_LAST);
 #endif /* CONFIG_ARMV7M_CACHE */
