@@ -1852,6 +1852,41 @@ static void wakeup_battery(int *need_static)
 	}
 }
 
+static void revive_battery(int *need_static)
+{
+	if (IS_ENABLED(CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD)
+			&& curr.requested_voltage == 0
+			&& curr.requested_current == 0
+			&& curr.batt.state_of_charge == 0) {
+		/*
+		 * Battery is dead, give precharge current
+		 * TODO (crosbug.com/p/29467): remove this workaround
+		 * for dead battery that requests no voltage/current
+		 */
+		curr.requested_voltage = batt_info->voltage_max;
+		curr.requested_current = batt_info->precharge_current;
+	} else if (IS_ENABLED(CONFIG_BATTERY_REVIVE_DISCONNECT)
+			&& curr.requested_voltage == 0
+			&& curr.requested_current == 0
+			&& battery_seems_disconnected) {
+		/*
+		 * Battery is in disconnect state. Apply a
+		 * current to kick it out of this state.
+		 */
+		CPRINTS("found battery in disconnect state");
+		curr.requested_voltage = batt_info->voltage_max;
+		curr.requested_current = batt_info->precharge_current;
+	} else if (curr.state == ST_PRECHARGE
+			|| battery_seems_dead || battery_was_removed) {
+		CPRINTS("battery woke up");
+		/* Update the battery-specific values */
+		batt_info = battery_get_info();
+		*need_static = 1;
+	}
+
+	battery_seems_dead = battery_was_removed = 0;
+}
+
 /* Main loop */
 void charger_task(void *u)
 {
@@ -2078,47 +2113,8 @@ void charger_task(void *u)
 		battery_seems_disconnected =
 			battery_get_disconnect_state() == BATTERY_DISCONNECTED;
 
-#ifdef CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD
-		/*
-		 * TODO (crosbug.com/p/29467): remove this workaround
-		 * for dead battery that requests no voltage/current
-		 */
-		if (curr.requested_voltage == 0 &&
-		    curr.requested_current == 0 &&
-		    curr.batt.state_of_charge == 0) {
-			/* Battery is dead, give precharge current */
-			curr.requested_voltage =
-				batt_info->voltage_max;
-			curr.requested_current =
-				batt_info->precharge_current;
-		} else
-#endif
-#ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
-		if (curr.requested_voltage == 0 &&
-		    curr.requested_current == 0 &&
-		    battery_seems_disconnected) {
-			/*
-			 * Battery is in disconnect state. Apply a
-			 * current to kick it out of this state.
-			 */
-			CPRINTS("found battery in disconnect state");
-			curr.requested_voltage =
-				batt_info->voltage_max;
-			curr.requested_current =
-				batt_info->precharge_current;
-		} else
-#endif
-		if (curr.state == ST_PRECHARGE ||
-		    battery_seems_dead ||
-		    battery_was_removed) {
-			CPRINTS("battery woke up");
+		revive_battery(&need_static);
 
-			/* Update the battery-specific values */
-			batt_info = battery_get_info();
-			need_static = 1;
-		    }
-
-		battery_seems_dead = battery_was_removed = 0;
 		set_charge_state(ST_CHARGE);
 
 wait_for_it:
