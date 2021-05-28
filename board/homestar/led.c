@@ -83,24 +83,25 @@ static void board_led_set_battery(void)
 	battery_ticks++;
 
 	switch (charge_get_state()) {
-	case PWR_STATE_DISCHARGE:
+	case PWR_STATE_CHARGE:
+	case PWR_STATE_CHARGE_NEAR_FULL:
 		if (chipset_in_state(CHIPSET_STATE_ON |
 					CHIPSET_STATE_ANY_SUSPEND |
 					CHIPSET_STATE_ANY_OFF)) {
 			if (percent <= BATTERY_LEVEL_CRITICAL) {
-				/* battery capa < 5%, Red */
+				/* battery capa <= 5%, Red */
 				color = LED_RED;
 			} else if (percent > BATTERY_LEVEL_CRITICAL &&
 					percent < BATTERY_LEVEL_NEAR_FULL) {
 				/* 5% < battery capa < 97%, Orange */
 				color = LED_ORANGE;
 			} else {
-				/* battery capa > 97%, Green */
+				/* battery capa >= 97%, Green */
 				color = LED_GREEN;
 			}
 		}
 		break;
-	case PWR_STATE_CHARGE:
+	case PWR_STATE_DISCHARGE:
 		if (chipset_in_state(CHIPSET_STATE_ON)) {
 			/* S0, Green (soild on) */
 			color = LED_GREEN;
