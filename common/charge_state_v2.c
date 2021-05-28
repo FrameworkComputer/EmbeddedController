@@ -2069,6 +2069,15 @@ void charger_task(void *u)
 		}
 
 		/* The battery is responding. Yay. Try to use it. */
+
+		/*
+		 * Always check the disconnect state.  This is because
+		 * the battery disconnect state is one of the items used
+		 * to decide whether or not to leave safe mode.
+		 */
+		battery_seems_disconnected =
+			battery_get_disconnect_state() == BATTERY_DISCONNECTED;
+
 #ifdef CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD
 		/*
 		 * TODO (crosbug.com/p/29467): remove this workaround
@@ -2085,15 +2094,6 @@ void charger_task(void *u)
 		} else
 #endif
 #ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
-		/*
-		 * Always check the disconnect state.  This is because
-		 * the battery disconnect state is one of the items used
-		 * to decide whether or not to leave safe mode.
-		 */
-		battery_seems_to_be_disconnected =
-			battery_get_disconnect_state() ==
-			BATTERY_DISCONNECTED;
-
 		if (curr.requested_voltage == 0 &&
 		    curr.requested_current == 0 &&
 		    battery_seems_disconnected) {

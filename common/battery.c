@@ -702,6 +702,11 @@ int battery_manufacturer_name(char *dest, int size)
 	return get_battery_manufacturer_name(dest, size);
 }
 
+__overridable enum battery_disconnect_state battery_get_disconnect_state(void)
+{
+	return BATTERY_NOT_DISCONNECTED;
+}
+
 #ifdef CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV
 
 #if CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV < 5000 || \
