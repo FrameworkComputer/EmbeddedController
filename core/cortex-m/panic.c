@@ -336,6 +336,11 @@ void __keep report_panic(void)
 	 * exception happened in a handler's context.
 	 */
 #endif
+
+	/* Make sure that all changes are saved into RAM */
+	if (IS_ENABLED(CONFIG_ARMV7M_CACHE))
+		cpu_clean_invalidate_dcache();
+
 	panic_reboot();
 }
 
