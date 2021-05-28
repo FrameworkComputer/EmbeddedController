@@ -1409,22 +1409,44 @@ void chgstate_set_manual_voltage(int volt_mv)
 /* Force charging off before the battery is full. */
 static int set_chg_ctrl_mode(enum ec_charge_control_mode mode)
 {
+	bool discharge_on_ac = false;
+	int current, voltage;
+	int rv;
+
+	current = manual_current;
+	voltage = manual_voltage;
+
+	if (mode >= CHARGE_CONTROL_COUNT)
+		return EC_ERROR_INVAL;
+
 	if (mode == CHARGE_CONTROL_NORMAL) {
-		chg_ctl_mode = mode;
-		manual_current = -1;
-		manual_voltage = -1;
+		current = -1;
+		voltage = -1;
 	} else {
-		/*
-		 * Changing mode is only meaningful if external power is
-		 * present. If it's not present we can't charge anyway.
-		 */
+		/* Changing mode is only meaningful if AC is present. */
 		if (!curr.ac)
 			return EC_ERROR_NOT_POWERED;
 
-		chg_ctl_mode = mode;
-		manual_current = 0;
-		manual_voltage = 0;
+		if (mode == CHARGE_CONTROL_DISCHARGE) {
+			if (!IS_ENABLED(CONFIG_CHARGER_DISCHARGE_ON_AC))
+				return EC_ERROR_UNIMPLEMENTED;
+			discharge_on_ac = true;
+		} else if (mode == CHARGE_CONTROL_IDLE) {
+			current = 0;
+			voltage = 0;
+		}
 	}
+
+	if (IS_ENABLED(CONFIG_CHARGER_DISCHARGE_ON_AC)) {
+		rv = charger_discharge_on_ac(discharge_on_ac);
+		if (rv != EC_SUCCESS)
+			return rv;
+	}
+
+	/* Commit all atomically */
+	chg_ctl_mode = mode;
+	manual_current = current;
+	manual_voltage = voltage;
 
 	return EC_SUCCESS;
 }
@@ -2704,16 +2726,6 @@ charge_command_charge_control(struct host_cmd_handler_args *args)
 	if (rv != EC_SUCCESS)
 		return EC_RES_ERROR;
 
-#ifdef CONFIG_CHARGER_DISCHARGE_ON_AC
-#ifdef CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM
-	rv = board_discharge_on_ac(p->mode == CHARGE_CONTROL_DISCHARGE);
-#else
-	rv = charger_discharge_on_ac(p->mode == CHARGE_CONTROL_DISCHARGE);
-#endif
-	if (rv != EC_SUCCESS)
-		return EC_RES_ERROR;
-#endif
-
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CHARGE_CONTROL, charge_command_charge_control,
@@ -2919,7 +2931,6 @@ static int command_chgstate(int argc, char **argv)
 						CHARGE_CONTROL_NORMAL);
 			if (rv)
 				return rv;
-#ifdef CONFIG_CHARGER_DISCHARGE_ON_AC
 		} else if (!strcasecmp(argv[1], "discharge")) {
 			if (argc <= 2)
 				return EC_ERROR_PARAM_COUNT;
@@ -2929,14 +2940,6 @@ static int command_chgstate(int argc, char **argv)
 						CHARGE_CONTROL_NORMAL);
 			if (rv)
 				return rv;
-#ifdef CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM
-			rv = board_discharge_on_ac(val);
-#else
-			rv = charger_discharge_on_ac(val);
-#endif /* CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM */
-			if (rv)
-				return rv;
-#endif /* CONFIG_CHARGER_DISCHARGE_ON_AC */
 		} else if (!strcasecmp(argv[1], "debug")) {
 			if (argc <= 2)
 				return EC_ERROR_PARAM_COUNT;

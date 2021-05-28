@@ -456,6 +456,9 @@ enum ec_error_list charger_discharge_on_ac(int enable)
 	int chgnum;
 	int rv = EC_ERROR_UNIMPLEMENTED;
 
+	if (IS_ENABLED(CONFIG_CHARGER_DISCHARGE_ON_AC_CUSTOM))
+		return board_discharge_on_ac(enable);
+
 	/*
 	 * When discharge on AC is selected, cycle through all chargers to
 	 * enable or disable this feature.
