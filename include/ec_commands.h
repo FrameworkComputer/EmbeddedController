@@ -4249,7 +4249,7 @@ struct ec_params_i2c_write {
  * discharge the battery.
  */
 #define EC_CMD_CHARGE_CONTROL 0x0096
-#define EC_VER_CHARGE_CONTROL 1
+#define EC_VER_CHARGE_CONTROL 2
 
 enum ec_charge_control_mode {
 	CHARGE_CONTROL_NORMAL = 0,
@@ -4257,8 +4257,45 @@ enum ec_charge_control_mode {
 	CHARGE_CONTROL_DISCHARGE,
 };
 
+#define EC_CHARGE_MODE_TEXT { \
+	[CHARGE_CONTROL_NORMAL] = "NORMAL", \
+	[CHARGE_CONTROL_IDLE] = "IDLE", \
+	[CHARGE_CONTROL_DISCHARGE] = "DISCHARGE", \
+	}
+
+enum ec_charge_control_cmd {
+	EC_CHARGE_CONTROL_CMD_SET = 0,
+	EC_CHARGE_CONTROL_CMD_GET,
+};
+
 struct ec_params_charge_control {
 	uint32_t mode;  /* enum charge_control_mode */
+
+	/* Below are the fields added in V2. */
+	uint8_t cmd;    /* enum ec_charge_control_cmd. */
+	uint8_t reserved;
+	/*
+	 * Lower and upper thresholds for battery sustainer. This struct isn't
+	 * named to avoid tainting foreign projects' name spaces.
+	 *
+	 * If charge mode is explicitly set (e.g. DISCHARGE), battery sustainer
+	 * will be disabled. To disable battery sustainer, set mode=NORMAL,
+	 * lower=-1, upper=-1.
+	 */
+	struct {
+		int8_t lower;	/* Display SoC in percentage. */
+		int8_t upper;	/* Display SoC in percentage. */
+	} sustain_soc;
+} __ec_align4;
+
+/* Added in v2 */
+struct ec_response_charge_control {
+	uint32_t mode;  /* enum charge_control_mode */
+	struct {        /* Battery sustainer thresholds */
+		int8_t lower;
+		int8_t upper;
+	} sustain_soc;
+	uint16_t reserved;
 } __ec_align4;
 
 /*****************************************************************************/

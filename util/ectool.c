@@ -7522,30 +7522,105 @@ int cmd_charge_current_limit(int argc, char *argv[])
 	return rv;
 }
 
+static void cmd_charge_control_help(const char *cmd, const char *msg)
+{
+	if (msg)
+		fprintf(stderr, "ERROR: %s\n", msg);
+
+	fprintf(stderr,
+	"\n"
+	"  Usage: %s\n"
+	"    Get current settings.\n"
+	"  Usage: %s normal|idle|discharge\n"
+	"    Set charge mode (and disable battery sustainer).\n"
+	"  Usage: %s normal <lower> <upper>\n"
+	"    Enable battery sustainer. <lower> and <upper> are battery SoC\n"
+	"    between which EC tries to keep the battery level.\n"
+	"\n",
+	cmd, cmd, cmd);
+}
 
 int cmd_charge_control(int argc, char *argv[])
 {
 	struct ec_params_charge_control p;
+	struct ec_response_charge_control r;
+	int version = 2;
+	const char * const charge_mode_text[] = EC_CHARGE_MODE_TEXT;
+	char *e;
 	int rv;
 
-	if (argc != 2) {
-		fprintf(stderr, "Usage: %s <normal | idle | discharge>\n",
-			argv[0]);
-		return -1;
+	if (!ec_cmd_version_supported(EC_CMD_CHARGE_CONTROL, 2))
+		version = 1;
+
+	if (argc == 1) {
+		if (version < 2) {
+			cmd_charge_control_help(argv[0],
+						"Old EC doesn't support GET.");
+			return -1;
+		}
+		p.cmd = EC_CHARGE_CONTROL_CMD_GET;
+		rv = ec_command(EC_CMD_CHARGE_CONTROL, version,
+				&p, sizeof(p), &r, sizeof(r));
+		if (rv < 0) {
+			fprintf(stderr, "Command failed.\n");
+			return rv;
+		}
+		printf("Charge mode = %s (%d)\n",
+		       r.mode < ARRAY_SIZE(charge_mode_text)
+		       		? charge_mode_text[r.mode] : "UNDEFINED",
+		       r.mode);
+		printf("Battery sustainer = %s (%d%% ~ %d%%)\n",
+		       (r.sustain_soc.lower != -1 && r.sustain_soc.upper != -1)
+				? "on" : "off",
+		       r.sustain_soc.lower, r.sustain_soc.upper);
+		return 0;
 	}
 
 	if (!strcasecmp(argv[1], "normal")) {
 		p.mode = CHARGE_CONTROL_NORMAL;
+		if (argc == 2) {
+			p.sustain_soc.lower = -1;
+			p.sustain_soc.upper = -1;
+		} else if (argc == 4) {
+			if (version < 2) {
+				cmd_charge_control_help(argv[0],
+					"Old EC doesn't support sustainer.");
+				return -1;
+			}
+			p.sustain_soc.lower = strtol(argv[2], &e, 0);
+			if (e && *e) {
+				cmd_charge_control_help(argv[0],
+						"Bad character in <lower>");
+				return -1;
+			}
+			p.sustain_soc.upper = strtol(argv[3], &e, 0);
+			if (e && *e) {
+				cmd_charge_control_help(argv[0],
+						"Bad character in <upper>");
+				return -1;
+			}
+		} else {
+			cmd_charge_control_help(argv[0], "Bad arguments");
+			return -1;
+		}
 	} else if (!strcasecmp(argv[1], "idle")) {
+		if (argc != 2) {
+			cmd_charge_control_help(argv[0], "Bad arguments");
+			return -1;
+		}
 		p.mode = CHARGE_CONTROL_IDLE;
 	} else if (!strcasecmp(argv[1], "discharge")) {
+		if (argc != 2) {
+			cmd_charge_control_help(argv[0], "Bad arguments");
+			return -1;
+		}
 		p.mode = CHARGE_CONTROL_DISCHARGE;
 	} else {
-		fprintf(stderr, "Bad value.\n");
+		cmd_charge_control_help(argv[0], "Bad sub-command");
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_CHARGE_CONTROL, 1, &p, sizeof(p), NULL, 0);
+	rv = ec_command(EC_CMD_CHARGE_CONTROL, version, &p, sizeof(p), NULL, 0);
 	if (rv < 0) {
 		fprintf(stderr, "Is AC connected?\n");
 		return rv;
@@ -7553,7 +7628,9 @@ int cmd_charge_control(int argc, char *argv[])
 
 	switch (p.mode) {
 	case CHARGE_CONTROL_NORMAL:
-		printf("Charge state machine normal mode.\n");
+		printf("Charge state machine is in normal mode%s.\n",
+		       (p.sustain_soc.lower == -1 || p.sustain_soc.upper == -1)
+		       		? "" : " with sustainer enabled");
 		break;
 	case CHARGE_CONTROL_IDLE:
 		printf("Charge state machine force idle.\n");
