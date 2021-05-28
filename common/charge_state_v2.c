@@ -1688,7 +1688,6 @@ const struct batt_params *charger_current_battery_params(void)
 	return &curr.batt;
 }
 
-#ifdef CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
 /* Determine if the battery is outside of allowable temperature range */
 static int battery_outside_charging_temperature(void)
 {
@@ -1716,7 +1715,6 @@ static int battery_outside_charging_temperature(void)
 	}
 	return 0;
 }
-#endif
 
 static void sustain_battery_soc(void)
 {
@@ -2147,15 +2145,14 @@ wait_for_it:
 		}
 #endif
 
-#ifdef CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
-		if (battery_outside_charging_temperature()) {
+		if (IS_ENABLED(CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS)
+				&& battery_outside_charging_temperature()) {
 			curr.requested_current = 0;
 			curr.requested_voltage = 0;
 			curr.batt.flags &= ~BATT_FLAG_WANT_CHARGE;
 			if (curr.state != ST_DISCHARGE)
 				curr.state = ST_IDLE;
 		}
-#endif
 
 #ifdef CONFIG_CHARGE_MANAGER
 		if (curr.batt.state_of_charge >=
