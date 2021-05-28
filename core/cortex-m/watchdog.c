@@ -6,6 +6,7 @@
 /* Watchdog common code */
 
 #include "common.h"
+#include "cpu.h"
 #include "panic.h"
 #include "task.h"
 #include "timer.h"
@@ -27,6 +28,13 @@ void __keep watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 
 	panic_set_reason(PANIC_SW_WATCHDOG, stack[6],
 			 (excep_lr & 0xf) == 1 ? 0xff : task_get_current());
+
+	/*
+	 * This is our last breath, the last opportunity to sort out all
+	 * matters. Flush and invalidate D-cache if cache enabled.
+	 */
+	if (IS_ENABLED(CONFIG_ARMV7M_CACHE))
+		cpu_clean_invalidate_dcache();
 
 	panic_printf("### WATCHDOG PC=%08x / LR=%08x / pSP=%08x ",
 		     stack[6], stack[5], psp);
