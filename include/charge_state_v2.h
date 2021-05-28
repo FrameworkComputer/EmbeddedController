@@ -77,17 +77,6 @@ int charge_set_output_current_limit(int chgnum, int ma, int mv);
  */
 int charge_set_input_current_limit(int ma, int mv);
 
-/*
- * Expose charge/battery related state
- *
- * @param param command to get corresponding data
- * @param value the corresponding data
- * @return EC_SUCCESS or error
- */
-#ifdef CONFIG_CHARGE_STATE_DEBUG
-int charge_get_charge_state_debug(int param, uint32_t *value);
-#endif /* CONFIG_CHARGE_STATE_DEBUG */
-
 /**
  * Set the desired manual charge current when in idle mode.
  *
