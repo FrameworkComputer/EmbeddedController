@@ -242,13 +242,13 @@ def power(board_config: BoardConfig, on: bool) -> None:
 def hw_write_protect(enable: bool) -> None:
     """Enable/disable hardware write protect."""
     if enable:
-        state = 'on'
+        state = 'force_on'
     else:
-        state = 'off'
+        state = 'force_off'
 
     cmd = [
         'dut-control',
-        'fw_wp_en' + ':' + state,
+        'fw_wp_state:' + state,
         ]
     logging.debug('Running command: "%s"', ' '.join(cmd))
     subprocess.run(cmd).check_returncode()
