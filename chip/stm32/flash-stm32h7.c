@@ -410,7 +410,12 @@ int crec_flash_physical_erase(int offset, int size)
 		/* Wait for erase to complete */
 		while ((STM32_FLASH_SR(bank) & FLASH_SR_BUSY) &&
 		       (get_time().val < deadline.val)) {
-			usleep(5000);
+			/*
+			 * Interrupts may not be enabled, so we are using
+			 * udelay() instead of usleep() which can trigger
+			 * Forced Hard Fault (see b/180761547).
+			 */
+			udelay(5000);
 		}
 		if (STM32_FLASH_SR(bank) & FLASH_SR_BUSY) {
 			res = EC_ERROR_TIMEOUT;
