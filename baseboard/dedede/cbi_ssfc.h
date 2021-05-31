@@ -40,6 +40,11 @@ enum ec_ssfc_usb_ss_mux {
 	SSFC_USB_SS_MUX_PI3USBX532 = 2,
 };
 
+/*
+ * Bits 9-11
+ * Only cret board use SSFC bits 9-11 in coreboot for audio codec.
+ */
+
 union dedede_cbi_ssfc {
 	struct {
 		uint32_t base_sensor : 3;
