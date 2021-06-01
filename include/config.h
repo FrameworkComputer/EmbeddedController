@@ -4493,6 +4493,7 @@
  * Type-C retimer drivers to be used.
  */
 #undef CONFIG_USBC_RETIMER_INTEL_BB
+#undef CONFIG_USBC_RETIMER_KB800X
 #undef CONFIG_USBC_RETIMER_NB7V904M
 #undef CONFIG_USBC_RETIMER_PI3DPX1207
 #undef CONFIG_USBC_RETIMER_PI3HDX1204
@@ -4527,6 +4528,9 @@
 
 /* Allow run-time configuration of the Burnside Bridge driver structure */
 #undef CONFIG_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
+
+/* Require manual configuration of the KB800x crossbar mapping. */
+#undef CONFIG_KB800X_CUSTOM_XBAR
 
 /* Enables debug console commands for the STM32 UCPD driver */
 #undef CONFIG_STM32G4_UCPD_DEBUG
