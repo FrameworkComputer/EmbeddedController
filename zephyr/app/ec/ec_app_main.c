@@ -89,6 +89,13 @@ void ec_app_main(void)
 		hook_notify(HOOK_INIT);
 	}
 
+	/*
+	 * Print the init time.  Not completely accurate because it can't take
+	 * into account the time before timer_init(), but it'll at least catch
+	 * the majority of the time.
+	 */
+	cprints(CC_SYSTEM, "Inits done");
+
 	/* Start the EC tasks after performing all main initialization */
 	if (IS_ENABLED(CONFIG_SHIMMED_TASKS)) {
 		start_ec_tasks();
