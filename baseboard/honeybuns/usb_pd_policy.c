@@ -58,6 +58,9 @@ const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
 static int src_host_pdo_cnt_override;
 
+#define PD_DR_SWAP_ATTEMPT_MAX 3
+static int pd_dr_swap_attempt_count[CONFIG_USB_PD_PORT_MAX_COUNT];
+
 static int command_hostpdo(int argc, char **argv)
 {
 	char *e;
@@ -120,9 +123,13 @@ __override bool port_discovery_dr_swap_policy(int port,
 
 	/*
 	 * Request data role swap if not in the port's desired data role and if
-	 * flag to check for data role in PE is set.
+	 * the attempt count is less than the max allowed. This function is
+	 * called for each PE run once in a PD contract. If the port partner
+	 * rejects data role swap requests (eg compliance tester), want to limit
+	 * how many DR swap requests are attempted.
 	 */
-	if (dr == role_test && dr_swap_flag)
+	if (dr == role_test && (pd_dr_swap_attempt_count[port]++ <
+				PD_DR_SWAP_ATTEMPT_MAX))
 		return true;
 
 	/* Do not perform a DR swap */
@@ -320,24 +327,31 @@ int pd_check_power_swap(int port)
 
 static void usb_tc_connect(void)
 {
+	int port = TASK_ID_TO_PD_PORT(task_get_current());
+
 	/*
 	 * The EC needs to indicate to the USB hub when the host port is
 	 * attached so that the USB-EP can be properly enumerated. GPIO_BPWR_DET
 	 * is used for this purpose.
 	 */
-	if (pd_is_connected(USB_PD_PORT_HOST)) {
+	if (port == USB_PD_PORT_HOST) {
 		gpio_set_level(GPIO_BPWR_DET, 1);
 #ifdef GPIO_UFP_PLUG_DET
 		gpio_set_level(GPIO_UFP_PLUG_DET, 1);
 #endif
 	}
+
+	/* Clear data role swap attempt counter at each usbc attach */
+	pd_dr_swap_attempt_count[port] = 0;
 }
 DECLARE_HOOK(HOOK_USB_PD_CONNECT, usb_tc_connect, HOOK_PRIO_DEFAULT);
 
 static void usb_tc_disconnect(void)
 {
+	int port = TASK_ID_TO_PD_PORT(task_get_current());
+
 	/* Only the host port disconnect is relevant */
-	if (!pd_is_connected(USB_PD_PORT_HOST)) {
+	if (port == USB_PD_PORT_HOST) {
 		gpio_set_level(GPIO_BPWR_DET, 0);
 #ifdef GPIO_UFP_PLUG_DET
 		gpio_set_level(GPIO_UFP_PLUG_DET, 0);
