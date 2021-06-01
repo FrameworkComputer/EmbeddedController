@@ -72,7 +72,7 @@
 #include "registers.h"
 
 enum battery_type {
-	BATTERY_C235,
+	BATTERY_LGC_AP18C8K,
 	BATTERY_TYPE_COUNT,
 };
 
