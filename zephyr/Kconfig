@@ -627,6 +627,14 @@ menuconfig PLATFORM_EC_WATCHDOG
 	  (PLATFORM_EC_WATCHDOG_PERIOD_MS -
 	  PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS).
 
+config PLATFORM_EC_WORKAROUND_FLASH_DOWNLOAD_API
+	bool "Workaround needed for npcx9 ES1 chip"
+	depends on SOC_SERIES_NPCX9
+	help
+	  There's a bug in the flash download API on the ES1 version of the
+	  npcx9 chips that requires some workarounds. This is needed for sysjump
+	  to work properly.
+
 config PLATFORM_EC_ASSERT_CCD_MODE_ON_DTS_CONNECT
 	bool "Assert CCD Mode"
 	help
