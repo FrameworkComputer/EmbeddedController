@@ -11,6 +11,7 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+#undef CONFIG_CHIP_INIT_ROM_REGION
 
 #define CONFIG_VBOOT_EFS2
 
