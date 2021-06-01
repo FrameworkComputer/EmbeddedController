@@ -13,6 +13,8 @@
 
 #define CONFIG_FAN_RPM_CUSTOM
 
+#define CONFIG_KEYBOARD_FACTORY_TEST
+
 /* Motion sensing drivers */
 #define CONFIG_ACCELGYRO_ICM426XX
 #define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \
@@ -201,6 +203,8 @@ static inline bool ec_config_has_hdmi_conn_hpd(void)
 		? GPIO_DP1_HPD \
 		: GPIO_DP2_HPD)
 
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
 extern const struct usb_mux usbc1_tusb544;
 extern const struct usb_mux usbc1_ps8743;
 extern struct usb_mux usbc1_amd_fp5_usb_mux;
