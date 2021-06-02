@@ -85,7 +85,11 @@ int chip_get_ec_int(void)
 	/* Determine interrupt number */
 	ec_int -= 16;
 #else /* defined(CHIP_FAMILY_IT8XXX2) RISCV core */
-	ec_int = IT83XX_INTC_AIVCT - 0x10;
+	/* wait until two equal interrupt values are read */
+	do {
+		ec_int = IT83XX_INTC_AIVCT;
+	} while (ec_int != IT83XX_INTC_AIVCT);
+	ec_int -= 0x10;
 	/* Unsupported EC INT number. */
 	if (chip_get_intc_group(ec_int) >= 16)
 		return -1;
