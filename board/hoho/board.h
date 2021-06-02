@@ -27,7 +27,6 @@
 /* TODO(tbroch) Re-enable once STM spi master can be inhibited at boot so it
    doesn't interfere with HDMI loading its f/w */
 #undef CONFIG_SPI_FLASH
-#define CONFIG_SPI_MASTER_PORT 2
 #define CONFIG_SPI_CS_GPIO GPIO_PD_MCDP_SPI_CS_L
 #define CONFIG_USB
 #define CONFIG_USB_BOS
