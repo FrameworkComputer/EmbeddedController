@@ -47,10 +47,20 @@
 			enum-name = "GPIO_AC_PRESENT";
 			label = "ACOK_OD";
 		};
+		ec_kso_02_inv {
+			gpios = <&gpio1 7 GPIO_OUT_LOW>;
+			enum-name = "GPIO_KBD_KSO2";
+			label = "EC_KSO_02_INV";
+		};
 		pch_wake_odl {
 			gpios = <&gpiob 0 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_EC_PCH_WAKE_ODL";
 			label = "EC_PCH_WAKE_R_ODL";
+		};
+		pch_int_odl {
+			gpios = <&gpiob 0 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_EC_INT_L";
+			label = "EC_PCH_INT_ODL";
 		};
 	};
 
