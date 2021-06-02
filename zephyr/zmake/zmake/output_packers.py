@@ -117,7 +117,7 @@ class NpcxPacker(BasePacker):
 
         zmake.multiproc.log_output(self.logger, logging.DEBUG, proc.stdout)
         zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
-        if proc.wait(timeout=5):
+        if proc.wait(timeout=60):
             raise OSError('Failed to run binman')
 
         yield work_dir / 'zephyr.bin', 'zephyr.bin'
