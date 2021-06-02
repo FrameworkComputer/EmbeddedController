@@ -53,7 +53,6 @@
 
 /* All casta systems are clamshells */
 #undef CONFIG_TABLET_MODE
-#undef CONFIG_TABLET_SWITCH
 
 /* TODO(b/119872005): Casta: confirm thermistor parts */
 #define CONFIG_STEINHART_HART_3V3_13K7_47K_4050B
