@@ -63,6 +63,11 @@
 			enum-name = "I2C_PORT_EEPROM";
 			label = "EEPROM";
 		};
+		accel {
+			i2c-port = <&i2c0>;
+			enum-name = "I2C_PORT_ACCEL";
+			label = "ACCEL";
+		};
 	};
 
 	named-batteries {
@@ -177,5 +182,15 @@
 		label = "BATTERY";
 		cycle-count = <99>;
 		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+	};
+
+	bma_emul: bma@18 {
+		compatible = "zephyr,bma255";
+		reg = <0x18>;
+		label = "BMA_EMUL";
+		error-on-compensation-not-ready;
+		error-on-ro-write;
+		error-on-reserved-bit-write;
+		error-on-msb-first-access;
 	};
 };
