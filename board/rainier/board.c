@@ -191,7 +191,7 @@ int pd_snk_is_vbus_provided(int port)
 
 static void board_spi_enable(void)
 {
-	gpio_config_module(MODULE_SPI_MASTER, 1);
+	gpio_config_module(MODULE_SPI_CONTROLLER, 1);
 
 	/* Enable clocks to SPI2 module */
 	STM32_RCC_APB1ENR |= STM32_RCC_PB1_SPI2;
@@ -213,7 +213,7 @@ static void board_spi_disable(void)
 	/* Disable clocks to SPI2 module */
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
 
-	gpio_config_module(MODULE_SPI_MASTER, 0);
+	gpio_config_module(MODULE_SPI_CONTROLLER, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 		 board_spi_disable,

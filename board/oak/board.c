@@ -279,7 +279,7 @@ static void board_init(void)
 	STM32_DMA_CSELR(STM32_DMAC_CH6) |= (3 << 20) | (3 << 24);
 
 	/* Enable SPI for BMI160 */
-	gpio_config_module(MODULE_SPI_MASTER, 1);
+	gpio_config_module(MODULE_SPI_CONTROLLER, 1);
 
 	/* Set all four SPI pins to high speed */
 	/* pins D0/D1/D3/D4 */

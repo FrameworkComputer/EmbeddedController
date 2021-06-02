@@ -71,7 +71,7 @@ static void spi_configure(enum fp_sensor_spi_select spi_select)
 		gpio_set_flags_by_mask(GPIO_E, 0x7000, 0);
 		gpio_set_alternate_function(GPIO_E, 0x7000, GPIO_ALT_SPI);
 	} else {
-		gpio_config_module(MODULE_SPI_MASTER, 1);
+		gpio_config_module(MODULE_SPI_CONTROLLER, 1);
 	}
 
 	/* Set all SPI master signal pins to very high speed: pins E2/4/5/6 */

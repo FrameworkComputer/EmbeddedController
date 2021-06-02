@@ -388,7 +388,7 @@ static void board_chipset_pre_init(void)
 	board_extpower_buffer_to_soc();
 
 	/* Enable SPI for KX022 */
-	gpio_config_module(MODULE_SPI_MASTER, 1);
+	gpio_config_module(MODULE_SPI_CONTROLLER, 1);
 
 	/* Set all four SPI pins to high speed */
 	/* pins D0/D1/D3/D4 */
@@ -418,7 +418,7 @@ static void board_chipset_shutdown(void)
 	/* Disable clocks to SPI2 module */
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
 
-	gpio_config_module(MODULE_SPI_MASTER, 0);
+	gpio_config_module(MODULE_SPI_CONTROLLER, 0);
 
 	/*
 	 * Calling gpio_config_module sets disabled alternate function pins to

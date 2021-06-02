@@ -68,7 +68,7 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 static void configure_fp_sensor_spi(void)
 {
 	/* Configure SPI GPIOs */
-	gpio_config_module(MODULE_SPI_MASTER, 1);
+	gpio_config_module(MODULE_SPI_CONTROLLER, 1);
 
 	/* Set all SPI master signal pins to very high speed: B12/13/14/15 */
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xff000000;

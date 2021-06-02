@@ -212,7 +212,7 @@ int gpspi_transaction_wait(const struct spi_device_t *spi_device)
 }
 
 /**
- * Enable GPSPI controller and MODULE_SPI_MASTER pins
+ * Enable GPSPI controller and MODULE_SPI_CONTROLLER pins
  *
  * @param hw_port b[7:4]=1 b[3:0]=0(GPSPI0), 1(GPSPI1)
  * @param enable
@@ -227,7 +227,7 @@ int gpspi_enable(int hw_port, int enable)
 	if ((hw_port != GPSPI0_PORT) && (hw_port != GPSPI1_PORT))
 		return EC_ERROR_INVAL;
 
-	gpio_config_module(MODULE_SPI_MASTER, (enable > 0));
+	gpio_config_module(MODULE_SPI_CONTROLLER, (enable > 0));
 
 	ctrl = (uint32_t)hw_port & 0x0f;
 

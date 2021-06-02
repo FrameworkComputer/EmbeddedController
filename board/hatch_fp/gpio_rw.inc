@@ -27,4 +27,4 @@ GPIO(USER_PRES_L,         PIN(B, 9),  GPIO_ODR_HIGH)
  * configured it as a GPIO above and the SPI_MASTER module expects to use it
  * in software NSS management mode, not hardware management mode.
  */
-ALTERNATE(PIN_MASK(B, 0xE000), GPIO_ALT_SPI, MODULE_SPI_MASTER, GPIO_PULL_DOWN)
+ALTERNATE(PIN_MASK(B, 0xE000), GPIO_ALT_SPI, MODULE_SPI_CONTROLLER, GPIO_PULL_DOWN)

@@ -69,7 +69,7 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 static void spi_configure(void)
 {
 	/* Configure SPI GPIOs */
-	gpio_config_module(MODULE_SPI_MASTER, 1);
+	gpio_config_module(MODULE_SPI_CONTROLLER, 1);
 	/* Set all SPI master signal pins to very high speed: pins E2/4/5/6 */
 	STM32_GPIO_OSPEEDR(GPIO_E) |= 0x00003f30;
 	/* Enable clocks to SPI4 module (master) */

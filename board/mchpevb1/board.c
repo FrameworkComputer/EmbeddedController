@@ -304,7 +304,7 @@ void board_prepare_for_deep_sleep(void)
 #if defined(CONFIG_GPIO_POWER_DOWN) && \
 	defined(CONFIG_MCHP_DEEP_SLP_GPIO_PWR_DOWN)
 	gpio_power_down_module(MODULE_SPI_FLASH);
-	gpio_power_down_module(MODULE_SPI_MASTER);
+	gpio_power_down_module(MODULE_SPI_CONTROLLER);
 	gpio_power_down_module(MODULE_I2C);
 	/* powering down keyscan is causing an issue with keyscan task
 	 * probably due to spurious interrupts on keyscan pins.
@@ -331,7 +331,7 @@ void board_resume_from_deep_sleep(void)
 #endif
 	/* gpio_config_module(MODULE_KEYBOARD_SCAN, 1); */
 	gpio_config_module(MODULE_SPI_FLASH, 1);
-	gpio_config_module(MODULE_SPI_MASTER, 1);
+	gpio_config_module(MODULE_SPI_CONTROLLER, 1);
 	gpio_config_module(MODULE_I2C, 1);
 #endif
 }
