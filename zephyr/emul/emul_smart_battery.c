@@ -800,7 +800,7 @@ static int sbat_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 	const struct sbat_emul_cfg *cfg;
 	struct sbat_emul_data *data;
 	unsigned int len;
-	int ret, i;
+	int ret = 0, i;
 
 	data = CONTAINER_OF(emul, struct sbat_emul_data, emul);
 	cfg = data->cfg;
