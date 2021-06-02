@@ -3,7 +3,11 @@
  * found in the LICENSE file.
  */
 
-/* Waddledoo specific PWM LED settings. */
+/* Brya specific PWM LED settings: there are 2 LEDs on each side of the board,
+ * each one can be controlled separately. The LED colors are white or amber,
+ * and the default behavior is tied to the charging process: both sides are
+ * amber while charging the battery and white when the battery is charged.
+ */
 
 #include "common.h"
 #include "ec_commands.h"
@@ -19,7 +23,7 @@ const enum ec_led_id supported_led_ids[] = {
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 /*
- * We only have a white and an amber LED, so setting any other colour results in
+ * We only have a white and an amber LED, so setting any other color results in
  * both LEDs being off.
  */
 struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
