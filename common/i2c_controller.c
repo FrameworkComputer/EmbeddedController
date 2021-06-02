@@ -1159,8 +1159,32 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
+#ifdef I2C_PORT_VIRTUAL_BATTERY
+static inline int is_i2c_port_virtual_battery(int port)
+{
+#ifdef CONFIG_ZEPHYR
+	/* For Zephyr compare the actual device, which will be used in
+	 * i2c_transfer function.
+	 */
+	return (i2c_get_device_for_port(port) ==
+		i2c_get_device_for_port(I2C_PORT_VIRTUAL_BATTERY));
+#else
+	return (port == I2C_PORT_VIRTUAL_BATTERY);
+#endif
+}
+#endif /* I2C_PORT_VIRTUAL_BATTERY */
+
 static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 {
+#ifdef CONFIG_ZEPHYR
+	/* For Zephyr, convert the received remote port number to a port number
+	 * used in EC.
+	 */
+	((struct ec_params_i2c_passthru *)(args->params))->port =
+		i2c_get_port_from_remote_port(
+			((struct ec_params_i2c_passthru *)(args->params))
+			->port);
+#endif
 	const struct ec_params_i2c_passthru *params = args->params;
 	const struct ec_params_i2c_passthru_msg *msg;
 	struct ec_response_i2c_passthru *resp = args->response;
@@ -1220,9 +1244,8 @@ static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 		if (resp->num_msgs == params->num_msgs - 1)
 			xferflags |= I2C_XFER_STOP;
 
-#if defined(VIRTUAL_BATTERY_ADDR_FLAGS) && \
-	(defined(CONFIG_ZEPHYR) || defined(I2C_PORT_VIRTUAL_BATTERY))
-		if (params->port == I2C_PORT_VIRTUAL_BATTERY &&
+#if defined(VIRTUAL_BATTERY_ADDR_FLAGS) && defined(I2C_PORT_VIRTUAL_BATTERY)
+		if (is_i2c_port_virtual_battery(params->port) &&
 		    addr_flags == VIRTUAL_BATTERY_ADDR_FLAGS) {
 			if (virtual_battery_handler(resp, in_len, &rv,
 						xferflags, read_len,
@@ -1318,6 +1341,15 @@ static void i2c_passthru_protect_tcpc_ports(void)
 static enum ec_status
 i2c_command_passthru_protect(struct host_cmd_handler_args *args)
 {
+#ifdef CONFIG_ZEPHYR
+	/* For Zephyr, convert the received remote port number to a port number
+	 * used in EC.
+	 */
+	((struct ec_params_i2c_passthru_protect *)(args->params))
+		->port = i2c_get_port_from_remote_port(
+		((struct ec_params_i2c_passthru_protect *)(args->params))
+		->port);
+#endif
 	const struct ec_params_i2c_passthru_protect *params = args->params;
 	struct ec_response_i2c_passthru_protect *resp = args->response;
 

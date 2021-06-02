@@ -39,4 +39,16 @@ enum i2c_ports {
  */
 const struct device *i2c_get_device_for_port(const int port);
 
+/**
+ * @brief Get a port number for a received remote port number.
+ *
+ * This function translate a received port number via the I2C_PASSTHRU host
+ * command to a port number used in ZephyrEC based on remote_port property in
+ * dts. The first port which matches the remote port number is returned.
+ *
+ * @param port The received remote port.
+ * @return Port number used in EC. -1 if the remote port is not defined
+ */
+int i2c_get_port_from_remote_port(int remote_port);
+
 #endif /* ZEPHYR_CHROME_I2C_I2C_H */

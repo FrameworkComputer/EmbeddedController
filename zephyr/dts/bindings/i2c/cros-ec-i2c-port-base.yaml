@@ -7,6 +7,12 @@ properties:
   i2c-port:
     type: phandle
     required: true
+  remote-port:
+    type: int
+    required: false
+    description:
+      A port number used by remote components like Kernel via the I2C_PASSTHRU
+      Host Command
   enum-name:
     type: string
     required: true
