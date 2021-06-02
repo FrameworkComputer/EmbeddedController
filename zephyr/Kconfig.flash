@@ -6,7 +6,7 @@ if PLATFORM_EC_FLASH_CROS
 
 config PLATFORM_EC_SPI_FLASH_REGS
 	bool "Enable SPI flash registers"
-	default y
+	default y if SOC_FAMILY_NPCX
 	help
 	  Enables flash registers for SPI flash (both internal and external).
 	  When enabled, two new functions will become available: (1) a function
@@ -61,22 +61,47 @@ config PLATFORM_EC_CONSOLE_CMD_SYSJUMP
 	  copying the image data from flash to ram, then jumping to the image's
 	  entry point.
 
+choice PLATFORM_EC_STORAGE_TYPE
+       prompt "Code storage type"
+       default PLATFORM_EC_EXTERNAL_STORAGE if SOC_FAMILY_NPCX
+       default PLATFORM_EC_INTERNAL_STORAGE if SOC_FAMILY_RISCV_ITE
+       help
+         Sets the EC code storage type.
+
 config PLATFORM_EC_EXTERNAL_STORAGE
 	bool "Flash is stored external to the EC"
-	default y if SOC_FAMILY_NPCX
 	help
 	  This indicates that the EC's flash is stored separately and is it
 	  not possible execute directly from it. Code must be loaded from
 	  the flash into internal SRAM before it can be executed. It is still
 	  possible to read and write the flash.
 
+config PLATFORM_EC_INTERNAL_STORAGE
+	bool "Flash is stored internal to the EC"
+	help
+	  This indicates that the EC code can reside on internal storage.
+	  This option implies XIP(eXecute-In-Place) semantics.
+	  i.e. code is being fetched directly from storage media.
+
+endchoice
+
 config PLATFORM_EC_MAPPED_STORAGE
 	bool "Flash is mapped into the EC's address space"
-	default y if SOC_FAMILY_NPCX
+	default y if SOC_FAMILY_NPCX || SOC_FAMILY_RISCV_ITE
 	help
 	  This indicates that the EC's flash is directly mapped into
 	  its address space. This makes it easier to read and write the flash.
 	  If this is not defined, the flash driver must implement
 	  flash_physical_read().
+
+config PLATFORM_EC_FLASH_PSTATE
+	bool "Store persistent write protect for the flash inside"
+	default y if SOC_FAMILY_RISCV_ITE
+	help
+	  Store persistent write protect for the flash inside the flash data
+	  itself.  This allows ECs with internal flash to emulate something
+	  closer to a SPI flash write protect register.  If this is not
+	  defined, write protect state is maintained solely by the physical
+	  flash driver.
 
 endif # PLATFORM_EC_FLASH_CROS
