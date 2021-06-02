@@ -3653,10 +3653,6 @@
 /* Support STM32 SPI1 as master. */
 #undef CONFIG_STM32_SPI1_MASTER
 
-/* Support SPI masters without GPIO-specified Chip Selects, instead rely on the
- * SPI master port's hardwired CS pin. */
-#undef CONFIG_SPI_MASTER_NO_CS_GPIOS
-
 /* Support MCHP MEC family GP-SPI master(s)
  * Define to 0x01 for GPSPI0 only.
  * Define to 0x02 for GPSPI1 only.
