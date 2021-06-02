@@ -75,7 +75,7 @@
 
 /* Enable control of SPI over USB */
 #define CONFIG_USB_SPI
-#define CONFIG_SPI_MASTER
+#define CONFIG_SPI_CONTROLLER
 #define CONFIG_SPI_FLASH_PORT    0  /* First SPI master port */
 
 /* This is not actually an EC so disable some features. */

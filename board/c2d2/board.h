@@ -72,7 +72,7 @@
 
 /* Enable control of SPI over USB */
 #define CONFIG_USB_SPI
-#define CONFIG_SPI_MASTER
+#define CONFIG_SPI_CONTROLLER
 #define CONFIG_SPI_FLASH_PORT 0  /* SPI2 is 0th in stm's SPI_REGS var */
 
 /* Enable control of I2C over USB */

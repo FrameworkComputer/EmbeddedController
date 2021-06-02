@@ -3644,8 +3644,8 @@
  */
 #undef CONFIG_SPI_NOR_SMART_ERASE
 
-/* SPI master feature */
-#undef CONFIG_SPI_MASTER
+/* SPI controller feature */
+#undef CONFIG_SPI_CONTROLLER
 
 /* SPI master halfduplex/3-wire mode */
 #undef CONFIG_SPI_HALFDUPLEX
