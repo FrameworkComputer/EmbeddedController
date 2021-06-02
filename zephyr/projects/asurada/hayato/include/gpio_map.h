@@ -12,6 +12,10 @@
 #define GPIO_ENTERING_RW		GPIO_UNIMPLEMENTED
 #define GPIO_WP_L			GPIO_UNIMPLEMENTED
 
+#ifdef CONFIG_PLATFORM_EC_GMR_TABLET_MODE
+#define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
+#endif
+
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
  *
@@ -31,7 +35,13 @@
 	GPIO_INT(GPIO_LID_OPEN,						\
 		 GPIO_INT_EDGE_BOTH, lid_interrupt)			\
 	GPIO_INT(GPIO_POWER_BUTTON_L,					\
-		 GPIO_INT_EDGE_BOTH, power_button_interrupt)
+		 GPIO_INT_EDGE_BOTH, power_button_interrupt)		\
+	GPIO_INT(GPIO_EC_IMU_INT_L,					\
+		 GPIO_INT_EDGE_FALLING, bmi160_interrupt)		\
+	GPIO_INT(GPIO_LID_ACCEL_INT_L,					\
+		 GPIO_INT_EDGE_FALLING, lis2dw12_interrupt)		\
+	GPIO_INT(GPIO_TABLET_MODE_L,					\
+		 GPIO_INT_EDGE_BOTH, gmr_tablet_switch_isr)
 
 
 

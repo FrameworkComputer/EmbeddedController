@@ -44,9 +44,9 @@
 			enum-name = "GPIO_PMIC_EC_PWRGD";
 			label = "PMIC_EC_PWRGD";
 		};
-		base_imu_int_l {
+		gpio_accel_gyro_int_l: base_imu_int_l {
 			gpios = <&gpioj 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-			enum-name = "GPIO_BASE_IMU_INT_L";
+			enum-name = "GPIO_EC_IMU_INT_L";
 			label = "BASE_IMU_INT_L";
 		};
 		lid_accel_int_l {
