@@ -7,16 +7,16 @@
 	named-gpios {
 		compatible = "named-gpios";
 
-		lid_open {
+		lid_open: lid_open {
 			gpios = <&gpiod 2 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
-			label = "GPIO_LID_OPEN";
+			label = "LID_OPEN";
 		};
 
-		power_btn: power_btn {
+		gsc_ec_pwr_btn_odl: power_btn {
 			gpios = <&gpio0 1 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
-			label = "GPIO_POWER_BUTTON";
+			label = "GSC_EC_PWR_BTN_ODL";
 		};
 
 		wp_l {
@@ -42,5 +42,19 @@
 			enum-name = "GPIO_PACKET_MODE_EN";
 			label = "EC_GSC_PACKET_MODE";
 		};
+		acok_od: acok_od {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+			label = "ACOK_OD";
+		};
+	};
+
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-pins = <
+			&acok_od
+			&gsc_ec_pwr_btn_odl
+			&lid_open
+		>;
 	};
 };
