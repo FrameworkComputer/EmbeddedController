@@ -129,6 +129,7 @@
 
 /* Optional features */
 #define CONFIG_CMD_HOSTCMD
+#undef CONFIG_CMD_MFALLOW
 
 /* Drivers */
 /* USB Mux */

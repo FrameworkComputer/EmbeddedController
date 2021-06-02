@@ -17,6 +17,7 @@
 
 /* To save space */
 #undef CONFIG_SUPPRESSED_HOST_COMMANDS
+#undef CONFIG_CMD_MFALLOW
 
 /* Optional features */
 #define CONFIG_ADC
