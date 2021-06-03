@@ -7,6 +7,7 @@
 #include "common.h"
 #include "rom_chip.h"
 #include "system.h"
+#include "system_chip.h"
 
 /* TODO (b:179900857) Make this implementation not npcx specific. */
 
@@ -14,12 +15,6 @@
 #define NPCX_FWCTRL                       REG8(NPCX_MDC_BASE_ADDR + 0x007)
 #define NPCX_FWCTRL_RO_REGION             0
 #define NPCX_FWCTRL_FW_SLOT               1
-#define SET_BIT(reg, bit)           ((reg) |= (0x1 << (bit)))
-#define CLEAR_BIT(reg, bit)         ((reg) &= (~(0x1 << (bit))))
-
-/* TODO(b:179900857) Clean this up too */
-#undef IS_BIT_SET
-#define IS_BIT_SET(reg, bit)        (((reg) >> (bit)) & (0x1))
 
 void system_jump_to_booter(void)
 {
