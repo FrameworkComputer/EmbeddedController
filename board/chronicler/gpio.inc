@@ -29,7 +29,7 @@ GPIO_INT(EC_IMU_INT_L,         PIN(5, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V, bmi2
 GPIO_INT(EC_ALS_RGB_INT_L,     PIN(D, 4), GPIO_INT_FALLING, tcs3400_interrupt)
 GPIO_INT(TABLET_MODE_L,        PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 /*
- * Lid g-sensor interrupt unused on Volteer, configure as regular input for
+ * Lid g-sensor interrupt unused on Chronicler, configure as regular input for
  * power saving.
  */
 GPIO(EC_ACCEL_INT,		PIN(8, 1), GPIO_INPUT | GPIO_PULL_UP)
@@ -106,6 +106,12 @@ GPIO(M2_SSD_PLA,		PIN(7, 0), GPIO_INPUT)		/* SSD power-loss acknowledgment */
 GPIO(CCD_MODE_ODL,		PIN(E, 5), GPIO_INPUT)		/* Case Closed Debug Mode */
 GPIO(EC_SLP_S0IX,		PIN(7, 2), GPIO_INPUT | GPIO_PULL_UP)
 
+/* LED */
+GPIO(C0_CHARGE_LED_AMBER_L,	PIN(C, 3), GPIO_OUT_HIGH)	/* Amber C0 port */
+GPIO(C0_CHARGE_LED_WHITE_L,	PIN(C, 4), GPIO_OUT_HIGH)	/* White C0 port */
+GPIO(C1_CHARGE_LED_AMBER_L,	PIN(6, 0), GPIO_OUT_HIGH)	/* Amber C1 port */
+GPIO(C1_CHARGE_LED_WHITE_L,	PIN(C, 2), GPIO_OUT_HIGH)	/* White C1 port */
+
 /* Unused signals */
 GPIO(CHARGER_INT_L,		PIN(7, 3), GPIO_INPUT)		/* Interrupt not used from ISL9241, on board pull-up */
 GPIO(EC_GP_SEL0_ODL,		PIN(B, 6), GPIO_OUT_LOW) 	/* Cannot be configured as input, drive output low, don't rely on the default setting of PxDOUT register */
@@ -150,12 +156,6 @@ ALTERNATE(PIN_MASK(8, BIT(7)), 0, MODULE_I2C, 0)                                
 ALTERNATE(PIN_MASK(D, BIT(1) | BIT(0)), 0, MODULE_I2C, 0)                            /* I2C3 */
 ALTERNATE(PIN_MASK(3, BIT(3) | BIT(6)), 0, MODULE_I2C, 0)                            /* I2C5 */
 ALTERNATE(PIN_MASK(B, BIT(3) | BIT(2)), 0, MODULE_I2C, 0)                            /* I2C7 */
-
-/* This selects between an LED module on the motherboard and one on the daughter
- * board, to be controlled by LED_{1,2,3}_L. PWM allows driving both modules at
- * the same time. */
-ALTERNATE(PIN_MASK(6, BIT(0)), 0, MODULE_PWM, 0)                                     /* LED_SIDESEL_4_L */
-ALTERNATE(PIN_MASK(C, BIT(2) | BIT(3) | BIT(4)), 0, MODULE_PWM, 0)                   /* LED_{3,2,1}_L */
 
 /* Fan signals */
 GPIO(EN_PP5000_FAN,            PIN(6, 1), GPIO_OUT_LOW)
