@@ -79,6 +79,7 @@
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
 #define CONFIG_THROTTLE_AP
 #define CONFIG_TEMP_SENSOR_SB_TSI
+#define CONFIG_TEMP_SENSOR_TMP112
 #define CONFIG_THERMISTOR
 #define CONFIG_CPU_PROCHOT_ACTIVE_LOW
 #define GPIO_CPU_PROCHOT	GPIO_PROCHOT_ODL
@@ -300,6 +301,13 @@ enum adc_channel {
 	ADC_CORE_IMON1,
 	ADC_SOC_IMON2,
 	ADC_CH_COUNT
+};
+
+/* TMP112 sensors */
+enum tmp112_sensor {
+	TMP112_SOC, /* Note: MUST match ADC SOC as they share an idx value */
+	TMP112_AMB,
+	TMP112_COUNT,
 };
 
 /* Temp Sensors */

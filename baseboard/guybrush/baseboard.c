@@ -25,6 +25,7 @@
 #include "driver/retimer/ps8818.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/temp_sensor/sb_tsi.h"
+#include "driver/temp_sensor/tmp112.h"
 #include "driver/usb_mux/anx7451.h"
 #include "driver/usb_mux/amd_fp6.h"
 #include "fan.h"
@@ -189,6 +190,12 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Temp Sensors */
 static int board_get_memory_temp(int, int *);
+
+const struct tmp112_sensor_t tmp112_sensors[] = {
+	{ I2C_PORT_SENSOR, TMP112_I2C_ADDR_FLAGS0 },
+	{ I2C_PORT_SENSOR, TMP112_I2C_ADDR_FLAGS1 },
+};
+BUILD_ASSERT(ARRAY_SIZE(tmp112_sensors) == TMP112_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_SOC] = {
