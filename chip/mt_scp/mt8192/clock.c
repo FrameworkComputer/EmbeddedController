@@ -1,4 +1,4 @@
-/* Copyright 2020 The Chromium OS Authors. All rights reserved.
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,7 +8,6 @@
 #include <assert.h>
 #include <string.h>
 
-#include "clock_chip.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -20,6 +19,13 @@
 
 #define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
+
+enum scp_clock_source {
+	SCP_CLK_26M = CLK_SW_SEL_26M,
+	SCP_CLK_32K = CLK_SW_SEL_32K,
+	SCP_CLK_ULPOSC2 = CLK_SW_SEL_ULPOSC2,
+	SCP_CLK_ULPOSC1 = CLK_SW_SEL_ULPOSC1,
+};
 
 static struct opp_ulposc_cfg {
 	uint32_t osc;
@@ -277,7 +283,7 @@ static void clock_calibrate_ulposc(struct opp_ulposc_cfg *opp)
 #endif
 }
 
-void clock_select_clock(enum scp_clock_source src)
+static void clock_select_clock(enum scp_clock_source src)
 {
 	/*
 	 * DIV2 divider takes precedence over clock selection to prevent

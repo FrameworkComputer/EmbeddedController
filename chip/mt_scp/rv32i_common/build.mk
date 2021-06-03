@@ -10,7 +10,6 @@ CORE:=riscv-rv32i
 
 # Required chip modules
 chip-y+=rv32i_common/cache.o
-chip-y+=rv32i_common/clock.o
 chip-y+=rv32i_common/gpio.o
 chip-y+=rv32i_common/intc.o
 chip-y+=rv32i_common/memmap.o
