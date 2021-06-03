@@ -26,7 +26,7 @@ const char *espi_vw_names[] = {
 	"VW_ERROR_FATAL",
 	"VW_ERROR_NON_FATAL",
 	/* Merge bit 3/0 into one signal. Need to set them simultaneously */
-	"VW_SLAVE_BTLD_STATUS_DONE",
+	"VW_PERIPHERAL_BTLD_STATUS_DONE",
 	"VW_SCI_L",
 	"VW_SMI_L",
 	"VW_RCIN_L",

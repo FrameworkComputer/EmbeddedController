@@ -109,29 +109,29 @@ static const struct host_wui_item espi_vw_int_list[] = {
 
 /* VW signals used in eSPI */
 static const struct vw_event_t vw_events_list[] = {
-	{VW_SLP_S3_L,               0x02,   0x01},	/* index 02h (In)  */
-	{VW_SLP_S4_L,               0x02,   0x02},
-	{VW_SLP_S5_L,               0x02,   0x04},
-	{VW_SUS_STAT_L,             0x03,   0x01},	/* index 03h (In)  */
-	{VW_PLTRST_L,               0x03,   0x02},
-	{VW_OOB_RST_WARN,           0x03,   0x04},
-	{VW_OOB_RST_ACK,            0x04,   0x01},	/* index 04h (Out) */
-	{VW_WAKE_L,                 0x04,   0x04},
-	{VW_PME_L,                  0x04,   0x08},
-	{VW_ERROR_FATAL,            0x05,   0x02},	/* index 05h (Out) */
-	{VW_ERROR_NON_FATAL,        0x05,   0x04},
-	{VW_SLAVE_BTLD_STATUS_DONE, 0x05,   0x09},
-	{VW_SCI_L,                  0x06,   0x01},	/* index 06h (Out) */
-	{VW_SMI_L,                  0x06,   0x02},
-	{VW_RCIN_L,                 0x06,   0x04},
-	{VW_HOST_RST_ACK,           0x06,   0x08},
-	{VW_HOST_RST_WARN,          0x07,   0x01},	/* index 07h (In)  */
-	{VW_SUS_ACK,                0x40,   0x01},	/* index 40h (Out) */
-	{VW_SUS_WARN_L,             0x41,   0x01},	/* index 41h (In)  */
-	{VW_SUS_PWRDN_ACK_L,        0x41,   0x02},
-	{VW_SLP_A_L,                0x41,   0x08},
-	{VW_SLP_LAN,                0x42,   0x01},	/* index 42h (In)  */
-	{VW_SLP_WLAN,               0x42,   0x02},
+	{VW_SLP_S3_L,                    0x02,   0x01},	/* index 02h (In)  */
+	{VW_SLP_S4_L,                    0x02,   0x02},
+	{VW_SLP_S5_L,                    0x02,   0x04},
+	{VW_SUS_STAT_L,                  0x03,   0x01},	/* index 03h (In)  */
+	{VW_PLTRST_L,                    0x03,   0x02},
+	{VW_OOB_RST_WARN,                0x03,   0x04},
+	{VW_OOB_RST_ACK,                 0x04,   0x01},	/* index 04h (Out) */
+	{VW_WAKE_L,                      0x04,   0x04},
+	{VW_PME_L,                       0x04,   0x08},
+	{VW_ERROR_FATAL,                 0x05,   0x02},	/* index 05h (Out) */
+	{VW_ERROR_NON_FATAL,             0x05,   0x04},
+	{VW_PERIPHERAL_BTLD_STATUS_DONE, 0x05,   0x09},
+	{VW_SCI_L,                       0x06,   0x01},	/* index 06h (Out) */
+	{VW_SMI_L,                       0x06,   0x02},
+	{VW_RCIN_L,                      0x06,   0x04},
+	{VW_HOST_RST_ACK,                0x06,   0x08},
+	{VW_HOST_RST_WARN,               0x07,   0x01},	/* index 07h (In)  */
+	{VW_SUS_ACK,                     0x40,   0x01},	/* index 40h (Out) */
+	{VW_SUS_WARN_L,                  0x41,   0x01},	/* index 41h (In)  */
+	{VW_SUS_PWRDN_ACK_L,             0x41,   0x02},
+	{VW_SLP_A_L,                     0x41,   0x08},
+	{VW_SLP_LAN,                     0x42,   0x01},	/* index 42h (In)  */
+	{VW_SLP_WLAN,                    0x42,   0x02},
 };
 
 /* Flag for boot load signals */
@@ -600,7 +600,8 @@ void espi_interrupt(void)
 			if (boot_load_done == 0 &&
 					IS_SLAVE_CHAN_ENABLE(NPCX_ESPI_CH_VW)) {
 
-				espi_vw_set_wire(VW_SLAVE_BTLD_STATUS_DONE, 1);
+				espi_vw_set_wire(
+					VW_PERIPHERAL_BTLD_STATUS_DONE, 1);
 				boot_load_done = 1;
 			}
 		}

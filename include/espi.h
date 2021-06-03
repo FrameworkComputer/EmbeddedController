@@ -26,7 +26,7 @@ enum espi_vw_signal {
 	VW_ERROR_FATAL,			/* index 05h (Out) */
 	VW_ERROR_NON_FATAL,
 	/* Merge bit 3/0 into one signal. Need to set them simultaneously */
-	VW_SLAVE_BTLD_STATUS_DONE,
+	VW_PERIPHERAL_BTLD_STATUS_DONE,
 	VW_SCI_L,			/* index 06h (Out) */
 	VW_SMI_L,
 	VW_RCIN_L,
