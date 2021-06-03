@@ -134,7 +134,7 @@ static const struct vw_event_t vw_events_list[] = {
 	{VW_SLP_WLAN,               0x42,   0x02},
 };
 
-/* Flag for SLAVE_BOOT_LOAD siganls */
+/* Flag for boot load signals */
 static uint8_t boot_load_done;
 
 /*****************************************************************************/
@@ -149,7 +149,7 @@ static void espi_reset_recovery(void)
 	boot_load_done = 0;
 }
 
-/* Configure Master-to-Slave virtual wire inputs */
+/* Configure Controller-to-Peripheral virtual wire inputs */
 static void espi_vw_config_in(const struct vwevms_config_t *config)
 {
 	uint32_t val;
@@ -181,7 +181,7 @@ static void espi_vw_config_in(const struct vwevms_config_t *config)
 	}
 }
 
-/* Configure Slave-to-Master virtual wire outputs */
+/* Configure Peripheral-to-Controller virtual wire outputs */
 static void espi_vw_config_out(const struct vwevsm_config_t *config)
 {
 	uint32_t val;
@@ -213,7 +213,7 @@ static void espi_vw_config_out(const struct vwevsm_config_t *config)
 	}
 }
 
-/* Config Master-to-Slave VWire interrupt edge type and enable it */
+/* Config Controller-to-Peripheral VWire interrupt edge type and enable it */
 static void espi_enable_vw_int(const struct host_wui_item *vwire_int)
 {
 	uint8_t table = vwire_int->table;
@@ -593,7 +593,7 @@ void espi_interrupt(void)
 			}
 
 			/*
-			 * Send SLAVE_BOOTLOAD_DONE and SLAVE_BOOTLOAD_STATUS
+			 * Send BOOTLOAD_DONE and BOOTLOAD_STATUS
 			 * events to host simultaneously. To indicate the
 			 * completion of EC firmware code loading.
 			 */
@@ -632,11 +632,11 @@ void espi_init(void)
 	SET_FIELD(NPCX_ESPICFG, NPCX_ESPICFG_MAXFREQ_FIELD,
 		  NPCX_ESPI_MAXFREQ_MAX);
 
-	/* Configure Master-to-Slave Virtual Wire indexes (Inputs) */
+	/* Configure Controller-to-Peripheral Virtual Wire indexes (Inputs) */
 	for (i = 0; i < ARRAY_SIZE(espi_in_list); i++)
 		espi_vw_config_in(&espi_in_list[i]);
 
-	/* Configure Slave-to-Master Virtual Wire indexes (Outputs) */
+	/* Configure Peripheral-to-Controller Virtual Wire indexes (Outputs) */
 	for (i = 0; i < ARRAY_SIZE(espi_out_list); i++)
 		espi_vw_config_out(&espi_out_list[i]);
 

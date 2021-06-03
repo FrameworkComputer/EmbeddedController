@@ -25,7 +25,7 @@
 #define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
 #endif
 
-/* SPI IP as SPI master */
+/* SPI IP as SPI controller */
 #define SPI_CLK         8000000
 /**
  * Clear SPI data buffer.
@@ -107,7 +107,7 @@ int spi_enable(const struct spi_device_t *spi_device, int enable)
 
 
 /**
- * Flush an SPI transaction and receive data from slave.
+ * Flush an SPI transaction and receive data from peripheral.
  *
  * @param   spi_device  device to talk to
  * @param   txdata  transfer data
@@ -115,7 +115,7 @@ int spi_enable(const struct spi_device_t *spi_device, int enable)
  * @param   rxdata  receive data
  * @param   rxlen   receive length
  * @return  success
- * @notes   set master transaction mode in npcx chip
+ * @notes   set controller transaction mode in npcx chip
  */
 int spi_transaction(const struct spi_device_t *spi_device,
 		const uint8_t *txdata, int txlen,
