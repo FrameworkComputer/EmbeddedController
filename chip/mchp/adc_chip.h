@@ -38,7 +38,12 @@ extern const struct adc_t adc_channels[];
 
 /* Minimum and maximum values returned by adc_read_channel(). */
 #define ADC_READ_MIN 0
+#ifdef CHIP_FAMILY_MEC172X
+/* MEC172x ADC is 12BIT resolution in default */
+#define ADC_READ_MAX 4095
+#else
 #define ADC_READ_MAX 1023
+#endif
 
 /* Just plain id mapping for code readability */
 #define MCHP_ADC_CH(x) (x)
