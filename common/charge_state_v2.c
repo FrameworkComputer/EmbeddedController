@@ -1778,6 +1778,11 @@ void charger_task(void *u)
 			board_base_reset();
 #endif
 		if (curr.ac != prev_ac) {
+			/*
+			 * We've noticed a change in AC presence, let the board
+			 * know.
+			 */
+			board_check_extpower();
 			if (curr.ac) {
 				/*
 				 * Some chargers are unpowered when the AC is
