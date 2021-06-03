@@ -548,6 +548,13 @@ static const mat33_fp_t lid_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
+/* Matrices to rotate accelerometers into the magister reference. */
+static const mat33_fp_t lid_magister_ref = {
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
+};
+
 static const mat33_fp_t base_standard_ref = {
 	{ 0, FLOAT_TO_FP(1), 0},
 	{ FLOAT_TO_FP(1), 0, 0},
@@ -768,8 +775,13 @@ void board_init(void)
 		if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_KX022) {
 			motion_sensors[LID_ACCEL] = kx022_lid_accel;
 			ccprints("LID_ACCEL is KX022");
-		} else
+		} else {
+			if (system_get_board_version() >= 5) {
+				motion_sensors[LID_ACCEL]
+				.rot_standard_ref = &lid_magister_ref;
+			}
 			ccprints("LID_ACCEL is BMA253");
+		}
 #endif
 		motion_sensor_count = ARRAY_SIZE(motion_sensors);
 		/* Enable gpio interrupt for base accelgyro sensor */
