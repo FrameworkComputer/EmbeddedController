@@ -16,10 +16,19 @@
 #define TMP112_SHIFT1 (16 - TMP112_RESOLUTION)
 #define TMP112_SHIFT2 (TMP112_RESOLUTION - 8)
 
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
+
 static int temp_val_local[TMP112_COUNT];
 
 static int raw_read16(int sensor, const int offset, int *data_ptr)
 {
+#ifdef CONFIG_I2C_BUS_MAY_BE_UNPOWERED
+	/*
+	 * Don't try to read if the port is unpowered
+	 */
+	if (!board_is_i2c_port_powered(tmp112_sensors[sensor].i2c_port))
+		return EC_ERROR_NOT_POWERED;
+#endif
 	return i2c_read16(tmp112_sensors[sensor].i2c_port,
 			  tmp112_sensors[sensor].i2c_addr_flags,
 			  offset, data_ptr);
@@ -27,6 +36,13 @@ static int raw_read16(int sensor, const int offset, int *data_ptr)
 
 static int raw_write16(int sensor, const int offset, int data)
 {
+#ifdef CONFIG_I2C_BUS_MAY_BE_UNPOWERED
+	/*
+	 * Don't try to write if the port is unpowered
+	 */
+	if (!board_is_i2c_port_powered(tmp112_sensors[sensor].i2c_port))
+		return EC_ERROR_NOT_POWERED;
+#endif
 	return i2c_write16(tmp112_sensors[sensor].i2c_port,
 			   tmp112_sensors[sensor].i2c_addr_flags,
 			   offset, data);
@@ -38,7 +54,7 @@ static int get_temp(int sensor, int *temp_ptr)
 	int temp_raw = 0;
 
 	rv = raw_read16(sensor, TMP112_REG_TEMP, &temp_raw);
-	if (rv < 0)
+	if (rv)
 		return rv;
 
 	*temp_ptr = (int)(int16_t)temp_raw;
@@ -77,7 +93,7 @@ DECLARE_HOOK(HOOK_SECOND, tmp112_poll, HOOK_PRIO_TEMP_SENSOR);
 
 static void tmp112_init(void)
 {
-	int tmp, s;
+	int tmp, s, rv;
 	int set_mask, clr_mask;
 
 	/* 12 bit mode */
@@ -87,7 +103,11 @@ static void tmp112_init(void)
 	clr_mask = BIT(7);
 
 	for (s = 0; s < TMP112_COUNT; s++) {
-		raw_read16(s, TMP112_REG_CONF, &tmp);
+		rv = raw_read16(s, TMP112_REG_CONF, &tmp);
+		if (rv != EC_SUCCESS) {
+			CPRINTS("TMP112-%d: Failed to init (rv %d)", s, rv);
+			continue;
+		}
 		raw_write16(s, TMP112_REG_CONF, (tmp & ~clr_mask) | set_mask);
 	}
 }
