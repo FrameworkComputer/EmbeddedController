@@ -501,9 +501,14 @@ class Zmake:
             cmd = ['/usr/bin/lcov', '--gcov-tool',
                    self.module_paths['ec'] /
                    'util/llvm-gcov.sh', '-q', '-o', '-',
-                   '-c', '-d', build_dir, '-t', lcov_file.stem, '--exclude',
-                   '*/build-*/zephyr/*/generated/*', '--exclude', '*/test/*',
-                   '--exclude', '*/testsuite/*']
+                   '-c', '-d', build_dir, '-t', lcov_file.stem,
+                   '--exclude', '*/build-*/zephyr/*/generated/*',
+                   '--exclude', '*/ec/test/*',
+                   '--exclude', '*/ec/zephyr/emul/*',
+                   '--exclude', '*/ec/zephyr/test/*',
+                   '--exclude', '*/testsuite/*',
+                   '--exclude', '*/subsys/emul/*',
+                   ]
             if initial:
                 cmd += ['-i']
             proc = self.jobserver.popen(cmd,
