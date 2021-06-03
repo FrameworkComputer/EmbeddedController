@@ -6455,14 +6455,9 @@ static void pe_vcs_turn_off_vconn_swap_entry(int port)
 static void pe_vcs_turn_off_vconn_swap_run(int port)
 {
 	/* Wait for VCONN to turn off */
-	if (pd_timer_is_disabled(port, PE_TIMER_TIMEOUT) &&
-	    PE_CHK_FLAG(port, PE_FLAGS_VCONN_SWAP_COMPLETE)) {
+	if (PE_CHK_FLAG(port, PE_FLAGS_VCONN_SWAP_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_VCONN_SWAP_COMPLETE);
-		pd_timer_enable(port, PE_TIMER_TIMEOUT,
-				CONFIG_USBC_VCONN_SWAP_DELAY_US);
-	}
 
-	if (pd_timer_is_expired(port, PE_TIMER_TIMEOUT)) {
 		/*
 		 * A VCONN Swap Shall reset the DiscoverIdentityCounter
 		 * to zero
@@ -6470,16 +6465,9 @@ static void pe_vcs_turn_off_vconn_swap_run(int port)
 		pe[port].discover_identity_counter = 0;
 		pe[port].dr_swap_attempt_counter = 0;
 
-		if (pe[port].power_role == PD_ROLE_SOURCE)
-			set_state_pe(port, PE_SRC_READY);
-		else
-			set_state_pe(port, PE_SNK_READY);
+		pe_set_ready_state(port);
+		return;
 	}
-}
-
-static void pe_vcs_turn_off_vconn_swap_exit(int port)
-{
-	pd_timer_disable(port, PE_TIMER_TIMEOUT);
 }
 
 /*
@@ -7167,7 +7155,6 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_VCS_TURN_OFF_VCONN_SWAP] = {
 		.entry = pe_vcs_turn_off_vconn_swap_entry,
 		.run   = pe_vcs_turn_off_vconn_swap_run,
-		.exit  = pe_vcs_turn_off_vconn_swap_exit,
 	},
 	[PE_VCS_SEND_PS_RDY_SWAP] = {
 		.entry = pe_vcs_send_ps_rdy_swap_entry,
