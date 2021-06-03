@@ -16,26 +16,28 @@
 #define TMP112_SHIFT1 (16 - TMP112_RESOLUTION)
 #define TMP112_SHIFT2 (TMP112_RESOLUTION - 8)
 
-static int temp_val_local;
+static int temp_val_local[TMP112_COUNT];
 
-static int raw_read16(const int offset, int *data_ptr)
+static int raw_read16(int sensor, const int offset, int *data_ptr)
 {
-	return i2c_read16(I2C_PORT_THERMAL, TMP112_I2C_ADDR_FLAGS0,
+	return i2c_read16(tmp112_sensors[sensor].i2c_port,
+			  tmp112_sensors[sensor].i2c_addr_flags,
 			  offset, data_ptr);
 }
 
-static int raw_write16(const int offset, int data)
+static int raw_write16(int sensor, const int offset, int data)
 {
-	return i2c_write16(I2C_PORT_THERMAL, TMP112_I2C_ADDR_FLAGS0,
+	return i2c_write16(tmp112_sensors[sensor].i2c_port,
+			   tmp112_sensors[sensor].i2c_addr_flags,
 			   offset, data);
 }
 
-static int get_temp(int *temp_ptr)
+static int get_temp(int sensor, int *temp_ptr)
 {
 	int rv;
 	int temp_raw = 0;
 
-	rv = raw_read16(TMP112_REG_TEMP, &temp_raw);
+	rv = raw_read16(sensor, TMP112_REG_TEMP, &temp_raw);
 	if (rv < 0)
 		return rv;
 
@@ -54,22 +56,28 @@ static inline int tmp112_reg_to_c(int16_t reg)
 
 int tmp112_get_val(int idx, int *temp_ptr)
 {
-	*temp_ptr = temp_val_local;
+	if (idx >= TMP112_COUNT)
+		return EC_ERROR_INVAL;
+
+	*temp_ptr = temp_val_local[idx];
 	return EC_SUCCESS;
 }
 
 static void tmp112_poll(void)
 {
+	int s;
 	int temp_c = 0;
 
-	if (get_temp(&temp_c) == EC_SUCCESS)
-		temp_val_local = C_TO_K(tmp112_reg_to_c(temp_c));
+	for (s = 0; s < TMP112_COUNT; s++) {
+		if (get_temp(s, &temp_c) == EC_SUCCESS)
+			temp_val_local[s] = C_TO_K(tmp112_reg_to_c(temp_c));
+	}
 }
 DECLARE_HOOK(HOOK_SECOND, tmp112_poll, HOOK_PRIO_TEMP_SENSOR);
 
 static void tmp112_init(void)
 {
-	int tmp;
+	int tmp, s;
 	int set_mask, clr_mask;
 
 	/* 12 bit mode */
@@ -78,7 +86,9 @@ static void tmp112_init(void)
 	/* not oneshot mode */
 	clr_mask = BIT(7);
 
-	raw_read16(TMP112_REG_CONF, &tmp);
-	raw_write16(TMP112_REG_CONF, (tmp & ~clr_mask) | set_mask);
+	for (s = 0; s < TMP112_COUNT; s++) {
+		raw_read16(s, TMP112_REG_CONF, &tmp);
+		raw_write16(s, TMP112_REG_CONF, (tmp & ~clr_mask) | set_mask);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, tmp112_init, HOOK_PRIO_DEFAULT);

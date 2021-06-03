@@ -88,6 +88,11 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
+enum tmp112_sensor {
+	TMP112_0,
+	TMP112_COUNT,
+};
+
 enum temp_sensor_id {
 	TEMP_SENSOR_SYSTHERM0,	/* TMP100 */
 	TEMP_SENSOR_COUNT

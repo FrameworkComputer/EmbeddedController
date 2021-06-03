@@ -81,9 +81,16 @@ const struct fan_t fans[] = {
 BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
 
 /******************************************************************************/
+/* TMP112 sensors. Must be in the exactly same order as in enum tmp112_sensor */
+const struct tmp112_sensor_t tmp112_sensors[] = {
+	{ I2C_PORT_THERMAL, TMP112_I2C_ADDR_FLAGS0 },
+};
+BUILD_ASSERT(ARRAY_SIZE(tmp112_sensors) == TMP112_COUNT);
+
+/******************************************************************************/
 /* Temperature sensor. */
 const struct temp_sensor_t temp_sensors[] = {
-	{ "System", TEMP_SENSOR_TYPE_BOARD, tmp112_get_val, 0 },
+	{ "System", TEMP_SENSOR_TYPE_BOARD, tmp112_get_val, TMP112_0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 

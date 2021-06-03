@@ -18,10 +18,25 @@
 #define TMP112_REG_HYST	0x02
 #define TMP112_REG_MAX	0x03
 
+/*
+ * I2C port and address information for all the board TMP112 sensors should be
+ * defined in an array of the following structures, with an enum tmp112_sensor
+ * indexing the array.  The enum tmp112_sensor shall end with a TMP112_COUNT
+ * defining the maximum number of sensors for the board.
+ */
+
+struct tmp112_sensor_t {
+	int i2c_port;
+	int i2c_addr_flags;
+};
+
+extern const struct tmp112_sensor_t tmp112_sensors[];
+
 /**
  * Get the last polled value of a sensor.
  *
- * @param idx		Index to read. (Ignored)
+ * @param idx		Index to read, from board's enum tmp112_sensor
+ *			definition
  *
  * @param temp_ptr	Destination for temperature in K.
  *
