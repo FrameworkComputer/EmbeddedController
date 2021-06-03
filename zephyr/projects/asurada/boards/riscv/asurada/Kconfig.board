@@ -10,3 +10,5 @@
 config BOARD_ASURADA
 	bool "Google Asurada Baseboard"
 	depends on SOC_IT8XXX2
+	# Allow generating initial 0 line coverage.
+	select HAS_COVERAGE_SUPPORT

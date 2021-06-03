@@ -5,3 +5,5 @@
 config BOARD_IT8XXX2_EVB
 	bool "IT8XXX2 EV-board"
 	depends on SOC_IT8XXX2
+	# Allow generating initial 0 line coverage.
+	select HAS_COVERAGE_SUPPORT
