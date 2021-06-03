@@ -22,6 +22,9 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
+/* Make sure POGO VBUS starts later then PP3300_HUB when power on  */
+#define BASE_DETECT_EN_LATER_US (600 * MSEC)
+
 /* Base detection and debouncing */
 #define BASE_DETECT_EN_DEBOUNCE_US (350 * MSEC)
 #define BASE_DETECT_DIS_DEBOUNCE_US (20 * MSEC)
@@ -185,7 +188,8 @@ static void base_enable(void)
 {
 	/* Enable base detection interrupt. */
 	base_detect_debounce_time = get_time().val;
-	hook_call_deferred(&base_detect_deferred_data, 0);
+	hook_call_deferred(&base_detect_deferred_data,
+			BASE_DETECT_EN_LATER_US);
 	gpio_enable_interrupt(GPIO_BASE_DET_L);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, base_enable, HOOK_PRIO_DEFAULT);
