@@ -1198,11 +1198,11 @@ enum PM_CHANNEL_T {
 #define NPCX_VWEVMS_VALID                FIELD(4, 4)
 
 /* Macro functions for eSPI CFG & IE */
-#define IS_SLAVE_CHAN_ENABLE(ch)         IS_BIT_SET(NPCX_ESPICFG, ch)
+#define IS_PERIPHERAL_CHAN_ENABLE(ch)    IS_BIT_SET(NPCX_ESPICFG, ch)
 #define IS_HOST_CHAN_EN(ch)              IS_BIT_SET(NPCX_ESPICFG, (ch+4))
 #define ENABLE_ESPI_CHAN(ch)             SET_BIT(NPCX_ESPICFG, ch)
 #define DISABLE_ESPI_CHAN(ch)            CLEAR_BIT(NPCX_ESPICFG, ch)
-/* ESPI Slave Channel Support Definitions */
+/* ESPI Peripheral Channel Support Definitions */
 #define ESPI_SUPP_CH_PC                  BIT(NPCX_ESPICFG_PCCHN_SUPP)
 #define ESPI_SUPP_CH_VM                  BIT(NPCX_ESPICFG_VWCHN_SUPP)
 #define ESPI_SUPP_CH_OOB                 BIT(NPCX_ESPICFG_OOBCHN_SUPP)

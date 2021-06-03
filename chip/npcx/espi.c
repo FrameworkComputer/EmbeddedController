@@ -584,10 +584,10 @@ void espi_interrupt(void)
 			 */
 			for (chan = NPCX_ESPI_CH_VW; chan < NPCX_ESPI_CH_COUNT;
 					chan++) {
-				if (!IS_SLAVE_CHAN_ENABLE(chan) &&
+				if (!IS_PERIPHERAL_CHAN_ENABLE(chan) &&
 						IS_HOST_CHAN_EN(chan))
 					ENABLE_ESPI_CHAN(chan);
-				else if (IS_SLAVE_CHAN_ENABLE(chan) &&
+				else if (IS_PERIPHERAL_CHAN_ENABLE(chan) &&
 						!IS_HOST_CHAN_EN(chan))
 					DISABLE_ESPI_CHAN(chan);
 			}
@@ -598,7 +598,7 @@ void espi_interrupt(void)
 			 * completion of EC firmware code loading.
 			 */
 			if (boot_load_done == 0 &&
-					IS_SLAVE_CHAN_ENABLE(NPCX_ESPI_CH_VW)) {
+			    IS_PERIPHERAL_CHAN_ENABLE(NPCX_ESPI_CH_VW)) {
 
 				espi_vw_set_wire(
 					VW_PERIPHERAL_BTLD_STATUS_DONE, 1);
