@@ -222,6 +222,12 @@ const struct temp_sensor_t temp_sensors[] = {
 		.read = sb_tsi_get_val,
 		.idx = 0,
 	},
+	[TEMP_SENSOR_AMBIENT] = {
+		.name = "Ambient",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = tmp112_get_val,
+		.idx = TMP112_AMB,
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -271,6 +277,10 @@ struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT] = {
 		.temp_fan_off = 0,
 		.temp_fan_max = 0,
 	},
+	/*
+	 * Note: Leave ambient entries at 0, both as it does not represent a
+	 * hotspot and as not all boards have this sensor
+	 */
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
