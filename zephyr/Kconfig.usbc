@@ -1071,6 +1071,23 @@ config PLATFORM_EC_BC12_DETECT_PI3USB9201
 	  starts BC1.2 detection to detect the attached host type. It provides
 	  an I2C interface to report detection results.
 
+config PLATFORM_EC_BC12_DETECT_MT6360
+	bool "MediaTek MT6360P PMIC"
+	help
+	  This PMIC includes a battery charger with an On-The-Go (OTG) output
+	  range of 4.85 to 5.825V. It provides integrated ADCs for system
+	  monitoring. The MT6360 also supports USB Power Delivery 3.0 with
+	  Dual-Role, with host or client mode. It supports alternate mode as
+	  well as VCONN with programmable over-current protection (OCP).
+
+config PLATFORM_EC_MT6360_BC12_GPIO
+	bool "USB-PHY connection is controlled by a GPIO"
+	depends on PLATFORM_EC_BC12_DETECT_MT6360
+	help
+	  If enabled, the MT6360 USB-PHY connection is controlled by
+	  a GPIO: GPIO_BC12_DET_EN. Assert GPIO_BC12_DET_EN to detect a BC1.2
+	  device, and deassert GPIO_BC12_DET_EN to mux the USB-PHY back.
+
 config PLATFORM_EC_BC12_SINGLE_DRIVER
 	bool "Only support a single BC12 driver"
 	default y
