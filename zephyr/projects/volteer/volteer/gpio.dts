@@ -360,6 +360,9 @@
 			enum-name = "GPIO_EC_I2C7_EEPROM_PWR_SDA_R";
 			label = "EC_I2C7_EEPROM_PWR_SDA_R";
 		};
+		/*
+		 * TODO(b:190743662) Cleanup to possibly remove the enum
+		 */
 		ec_batt_pres_odl {
 			gpios = <&gpioe 1 GPIO_INPUT>;
 			enum-name = "GPIO_EC_BATT_PRES_ODL";
