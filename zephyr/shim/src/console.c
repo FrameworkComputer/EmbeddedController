@@ -175,7 +175,7 @@ int zshim_run_ec_console_command(int (*handler)(int argc, char **argv),
 	return handler(argc, argv);
 }
 
-#if DT_NODE_EXISTS(DT_PATH(ec_console))
+#if defined(CONFIG_CONSOLE_CHANNEL) && DT_NODE_EXISTS(DT_PATH(ec_console))
 #define EC_CONSOLE DT_PATH(ec_console)
 
 static const char * const disabled_channels[] = DT_PROP(EC_CONSOLE, disabled);
@@ -187,7 +187,7 @@ static int init_ec_console(const struct device *unused)
 
 	return 0;
 } SYS_INIT(init_ec_console, PRE_KERNEL_1, 50);
-#endif
+#endif /* CONFIG_CONSOLE_CHANNEL && DT_NODE_EXISTS(DT_PATH(ec_console)) */
 
 /*
  * Minimal implementation of a few uart_* functions we need.

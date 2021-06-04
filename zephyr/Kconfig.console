@@ -2,6 +2,25 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config PLATFORM_EC_CONSOLE_CHANNEL
+	bool "Console channels"
+	depends on CONSOLE
+	default y
+	help
+	  Make it possible for console to be output to different channels that
+	  can be turned on and off. Channels are organized by functional area
+	  such as "charger", "motionsense", "usbpd" and others.
+
+	  This is useful as a developer convenience when the console is crowded
+	  with messages, to make it easier to use the interactive console.
+
+	  The `chan` console command with no arguments shows all available
+	  channels.
+
+	  FAFT and servod also use this feature.
+
+	  Boards may #undef this to reduce image size.
+
 menuconfig PLATFORM_EC_HOSTCMD_CONSOLE
 	bool "Console Host Command"
 	depends on PLATFORM_EC_HOSTCMD
