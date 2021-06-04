@@ -11,6 +11,9 @@
 #include "pwm.h"
 #include "util.h"
 
+/* TODO(b/190637023)
+ * Need to implement specific LED feature for Primus.
+ */
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_LEFT_LED,
 	EC_LED_ID_RIGHT_LED,
@@ -42,7 +45,7 @@ struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
 		.set_duty = &pwm_set_duty,
 	},
 	{
-		.ch0 = PWM_CH_LED3,
+		.ch0 = PWM_CH_TKP_A_LED_N,
 		.ch1 = PWM_CH_LED4,
 		.ch2 = PWM_LED_NO_CHANNEL,
 		.enable = &pwm_enable,
