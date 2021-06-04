@@ -111,6 +111,25 @@ static const struct ec_response_keybd_config magolor_keybd = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
+static const struct ec_response_keybd_config magister_keybd = {
+	/* Default Chromeos keyboard config */
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	/* No function keys, no numeric keypad, has screenlock key */
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
 static const struct ec_response_keybd_config magpie_keybd = {
 	.num_top_row_keys = 10,
 	.action_keys = {
@@ -128,13 +147,26 @@ static const struct ec_response_keybd_config magpie_keybd = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
 };
 
+__override
+uint8_t board_keyboard_row_refresh(void)
+{
+	if (gpio_get_level(GPIO_EC_VIVALDIKEYBOARD_ID))
+		return 3;
+	else
+		return 2;
+}
+
 __override const struct ec_response_keybd_config
 *board_vivaldi_keybd_config(void)
 {
 	if (get_cbi_fw_config_numeric_pad())
 		return &magpie_keybd;
-	else
-		return &magolor_keybd;
+	else {
+		if (system_get_board_version() >= 5)
+			return &magister_keybd;
+		else
+			return &magolor_keybd;
+	}
 }
 #endif
 
