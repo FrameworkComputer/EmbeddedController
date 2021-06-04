@@ -519,7 +519,8 @@ const struct usb_mux_driver bb_usb_retimer = {
 static int console_command_bb_retimer(int argc, char **argv)
 {
 	char rw, *e;
-	int rv, port, reg, data, val;
+	int port, reg, data, val = 0;
+	int rv = EC_SUCCESS;
 	const struct usb_mux *mux;
 
 	if (argc < 4)
@@ -550,24 +551,31 @@ static int console_command_bb_retimer(int argc, char **argv)
 	if (*e || reg < 0)
 		return EC_ERROR_PARAM3;
 
-	if (rw == 'r')
-		rv = bb_retimer_read(mux, reg, &data);
-	else {
-		/* Get value to be written */
+	/* Get value to be written */
+	if (rw == 'w') {
 		val = strtoi(argv[4], &e, 0);
 		if (*e || val < 0)
 			return EC_ERROR_PARAM4;
-
-		rv = bb_retimer_write(mux, reg, val);
-		if (rv == EC_SUCCESS) {
-			rv = bb_retimer_read(mux, reg, &data);
-			if (rv == EC_SUCCESS && data != val)
-				rv = EC_ERROR_UNKNOWN;
-		}
 	}
 
-	if (rv == EC_SUCCESS)
-		CPRINTS("register 0x%x [%d] = 0x%x [%d]", reg, reg, data, data);
+	for (; mux != NULL; mux = mux->next_mux) {
+		if (mux->driver == &bb_usb_retimer) {
+			if (rw == 'r')
+				rv = bb_retimer_read(mux, reg, &data);
+			else {
+				rv = bb_retimer_write(mux, reg, val);
+				if (rv == EC_SUCCESS) {
+					rv = bb_retimer_read(
+						mux, reg, &data);
+				if (rv == EC_SUCCESS && data != val)
+					rv = EC_ERROR_UNKNOWN;
+				}
+			}
+			if (rv == EC_SUCCESS)
+				CPRINTS("Addr 0x%x register %d = 0x%x",
+					mux->i2c_addr_flags, reg, data);
+		}
+	}
 
 	return rv;
 }
