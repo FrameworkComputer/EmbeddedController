@@ -293,3 +293,18 @@ int task_start_called(void)
 {
 	return tasks_started;
 }
+
+void task_disable_task(task_id_t tskid)
+{
+	/* TODO(b/190203712): Implement this */
+}
+
+void task_clear_pending_irq(int irq)
+{
+	/* TODO(b/190203712): Implement this */
+}
+
+void task_enable_irq(int irq)
+{
+	/* TODO(b/190203712): Implement this */
+}
