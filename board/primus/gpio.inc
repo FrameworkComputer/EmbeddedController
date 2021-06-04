@@ -9,9 +9,6 @@
 
 /* INTERRUPT GPIOs: */
 GPIO_INT(ACOK_OD,                        PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
-GPIO_INT(EC_ACCEL_INT_R_L,               PIN(8, 1), GPIO_SEL_1P8V | GPIO_INT_FALLING, lis2dw12_interrupt)
-GPIO_INT(EC_ALS_RGB_INT_R_L,             PIN(D, 4), GPIO_INT_FALLING, tcs3400_interrupt)
-GPIO_INT(EC_IMU_INT_R_L,                 PIN(5, 6), GPIO_SEL_1P8V | GPIO_INT_FALLING, lsm6dso_interrupt)
 GPIO_INT(EC_PROCHOT_IN_L,                PIN(F, 0), GPIO_INT_BOTH, throttle_ap_prochot_input_interrupt)
 GPIO_INT(EC_VOLDN_BTN_ODL,               PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_VOLUP_BTN_ODL,               PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
@@ -24,7 +21,6 @@ GPIO_INT(SEQ_EC_RSMRST_ODL,              PIN(E, 2), GPIO_INT_BOTH, power_signal_
 GPIO_INT(SLP_S3_L,                       PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_SUS_L,                      PIN(F, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SYS_SLP_S0IX_L,                 PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(TABLET_MODE_L,                  PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 GPIO_INT(USB_C0_BC12_INT_ODL,            PIN(C, 6), GPIO_INT_BOTH, bc12_interrupt)
 GPIO_INT(USB_C0_C2_TCPC_INT_ODL,         PIN(E, 0), GPIO_INT_BOTH, tcpc_alert_event)
 GPIO_INT(USB_C0_PPC_INT_ODL,             PIN(6, 2), GPIO_INT_BOTH, ppc_interrupt)
@@ -125,6 +121,11 @@ UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
 UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(6, 6))       /* GPO66/ARM_L_x86 */
+
+UNUSED(PIN(8, 1))       /* GPIO81/PECI_DATA */
+UNUSED(PIN(D, 4))       /* GPIOD4/CR_SIN3  */
+UNUSED(PIN(5, 6))       /* GPIO56/CLKRUN# */
+UNUSED(PIN(9, 5))       /* GPIO95/SPIP_MISO */
 
 /* Pre-configured PSL balls:  J8  K6 */
 
