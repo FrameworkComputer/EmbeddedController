@@ -7,5 +7,6 @@
 #
 
 baseboard-y=baseboard.o
+baseboard-y+=board_chipset.o
 baseboard-y+=board_id.o
 baseboard-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o

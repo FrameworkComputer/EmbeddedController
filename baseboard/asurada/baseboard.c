@@ -229,20 +229,6 @@ __override uint8_t board_get_usb_pd_port_count(void)
 		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
 }
 
-/* Called on AP S3 -> S0 transition */
-static void board_chipset_resume(void)
-{
-	gpio_set_level(GPIO_EC_BL_EN_OD, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
-
-/* Called on AP S0 -> S3 transition */
-static void board_chipset_suspend(void)
-{
-	gpio_set_level(GPIO_EC_BL_EN_OD, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
-
 /* USB-A */
 const int usb_port_enable[] = {
 	GPIO_EN_PP5000_USB_A0_VBUS,
