@@ -56,6 +56,7 @@ static enum {
 	ESC_BRACKET,   /* Got ESC [ */
 	ESC_BRACKET_1, /* Got ESC [ 1 */
 	ESC_BRACKET_3, /* Got ESC [ 3 */
+	ESC_BRACKET_4, /* Got ESC [ 4 */
 	ESC_O,         /* Got ESC O */
 } esc_state;
 #endif /* !defined(CONFIG_EXPERIMENTAL_CONSOLE) */
@@ -418,6 +419,9 @@ static int handle_esc(int c)
 		} else if (c == '3') {
 			esc_state = ESC_BRACKET_3;
 			return -1;
+		} else if (c == '4') {
+			esc_state = ESC_BRACKET_4;
+			return -1;
 		}
 
 		if (c == 'A')
@@ -443,6 +447,11 @@ static int handle_esc(int c)
 	case ESC_BRACKET_3:
 		if (c == '~')
 			return KEY_DEL;
+		break;
+
+	case ESC_BRACKET_4:
+		if (c == '~')
+			return KEY_END;
 		break;
 
 	default:
