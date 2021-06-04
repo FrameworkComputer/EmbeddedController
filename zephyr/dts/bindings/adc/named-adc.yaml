@@ -98,3 +98,5 @@ child-binding:
       - ADC_TEMP_SENSOR_FAN
       - ADC_TEMP_SENSOR_PP3300_REGULATOR
       - ADC_VBUS
+      - ADC_VBUS_C0
+      - ADC_VBUS_C1
