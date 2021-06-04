@@ -10,20 +10,20 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
-static union brya_cbi_fw_config fw_config;
+static union primus_cbi_fw_config fw_config;
 BUILD_ASSERT(sizeof(fw_config) == sizeof(uint32_t));
 
 /*
- * FW_CONFIG defaults for brya if the CBI.FW_CONFIG data is not
+ * FW_CONFIG defaults for primus if the CBI.FW_CONFIG data is not
  * initialized.
  */
-static const union brya_cbi_fw_config fw_config_defaults = {
+static const union primus_cbi_fw_config fw_config_defaults = {
 	.usb_db = DB_USB3_PS8815,
 	.kb_bl = KEYBOARD_BACKLIGHT_ENABLED,
 };
 
 /****************************************************************************
- * Brya FW_CONFIG access
+ * Primus FW_CONFIG access
  */
 void board_init_fw_config(void)
 {
@@ -48,7 +48,7 @@ void board_init_fw_config(void)
 	}
 }
 
-union brya_cbi_fw_config get_fw_config(void)
+union primus_cbi_fw_config get_fw_config(void)
 {
 	return fw_config;
 }

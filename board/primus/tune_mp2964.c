@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Tune the MP2964 IMVP9.1 parameters for brya */
+/* Tune the MP2964 IMVP9.1 parameters for primus */
 
 #include "console.h"
 #include "hooks.h"

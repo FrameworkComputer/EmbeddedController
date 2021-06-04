@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Waddledoo specific PWM LED settings. */
+/* Primus specific PWM LED settings. */
 
 #include "common.h"
 #include "ec_commands.h"
