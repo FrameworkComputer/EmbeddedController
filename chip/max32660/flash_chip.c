@@ -108,7 +108,7 @@ static int flash_device_page_erase(uint32_t address)
 	return EC_SUCCESS;
 }
 
-int flash_physical_write(int offset, int size, const char *data)
+int crec_flash_physical_write(int offset, int size, const char *data)
 {
 	int err;
 	uint32_t bytes_written;
@@ -232,7 +232,7 @@ int flash_physical_write(int offset, int size, const char *data)
 /*****************************************************************************/
 /* Physical layer APIs */
 
-int flash_physical_erase(int offset, int size)
+int crec_flash_physical_erase(int offset, int size)
 {
 	int i;
 	int pages;
@@ -255,38 +255,38 @@ int flash_physical_erase(int offset, int size)
 	return EC_SUCCESS;
 }
 
-int flash_physical_get_protect(int bank)
+int crec_flash_physical_get_protect(int bank)
 {
 	/* Not protected */
 	return 0;
 }
 
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	/* no flags set */
 	return 0;
 }
 
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
 	/* These are the flags we're going to pay attention to */
 	return EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	/* no flags writable */
 	return 0;
 }
 
-int flash_physical_protect_at_boot(uint32_t new_flags)
+int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	/* nothing to do here */
 	return EC_SUCCESS;
 }
 
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	/* nothing to do here */
 	return EC_SUCCESS;
@@ -295,7 +295,7 @@ int flash_physical_protect_now(int all)
 /*****************************************************************************/
 /* High-level APIs */
 
-int flash_pre_init(void)
+int crec_flash_pre_init(void)
 {
 	return EC_SUCCESS;
 }
@@ -330,10 +330,10 @@ static int command_flash_test1(int argc, char **argv)
 		/*
 		 * erase page
 		 */
-		error_status = flash_physical_erase(flash_address,
+		error_status = crec_flash_physical_erase(flash_address,
 						    CONFIG_FLASH_ERASE_SIZE);
 		if (error_status != EC_SUCCESS) {
-			CPRINTS("Error with flash_physical_erase\n");
+			CPRINTS("Error with crec_flash_physical_erase\n");
 			return EC_ERROR_UNKNOWN;
 		}
 
@@ -356,10 +356,10 @@ static int command_flash_test1(int argc, char **argv)
 		for (i = 0; i < BUFFER_SIZE; i++) {
 			buffer[i] = i + page;
 		}
-		error_status = flash_physical_write(flash_address, BUFFER_SIZE,
-						    buffer);
+		error_status = crec_flash_physical_write(flash_address,
+							 BUFFER_SIZE, buffer);
 		if (error_status != EC_SUCCESS) {
-			CPRINTS("Error with flash_physical_write\n");
+			CPRINTS("Error with crec_flash_physical_write\n");
 			return EC_ERROR_UNKNOWN;
 		}
 	}
@@ -389,10 +389,10 @@ static int command_flash_test1(int argc, char **argv)
 	 */
 	for (page = PAGE_START; page <= PAGE_END; page++) {
 		flash_address = page * CONFIG_FLASH_ERASE_SIZE;
-		error_status = flash_physical_erase(flash_address,
+		error_status = crec_flash_physical_erase(flash_address,
 						    CONFIG_FLASH_ERASE_SIZE);
 		if (error_status != EC_SUCCESS) {
-			CPRINTS("Error with flash_physical_erase\n");
+			CPRINTS("Error with crec_flash_physical_erase\n");
 			return EC_ERROR_UNKNOWN;
 		}
 	}

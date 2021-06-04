@@ -43,11 +43,11 @@ const void *init_rom_map(const void *addr, int size)
 	/*
 	 * Convert flash offset to memory mapped address
 	 */
-	if (flash_dataptr((int)offset, size, 1, &src) < 0)
+	if (crec_flash_dataptr((int)offset, size, 1, &src) < 0)
 		return NULL;
 
 	/* Once the flash offset is validated, lock the flash for the caller */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 
 	return src;
 }
@@ -59,11 +59,11 @@ const void *init_rom_map(const void *addr, int size)
 void init_rom_unmap(const void *addr, int size)
 {
 	if (IS_ENABLED(CONFIG_CHIP_INIT_ROM_REGION))
-		flash_lock_mapped_storage(0);
+		crec_flash_lock_mapped_storage(0);
 }
 
 int init_rom_copy(int offset, int size, char *data)
 {
-	return flash_read(offset, size, data);
+	return crec_flash_read(offset, size, data);
 }
 

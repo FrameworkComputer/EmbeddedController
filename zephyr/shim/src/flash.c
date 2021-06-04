@@ -40,12 +40,12 @@ static int flash_get_status1(void)
 		return saved_sr1;
 
 	/* Lock physical flash operations */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 
 	cros_flash_get_status_reg(cros_flash_dev, CMD_READ_STATUS_REG, &reg);
 
 	/* Unlock physical flash operations */
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 
 	return reg;
 }
@@ -58,12 +58,12 @@ static int flash_get_status2(void)
 		return saved_sr1;
 
 	/* Lock physical flash operations */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 
 	cros_flash_get_status_reg(cros_flash_dev, CMD_READ_STATUS_REG2, &reg);
 
 	/* Unlock physical flash operations */
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 
 	return reg;
 }
@@ -115,7 +115,7 @@ static int flash_set_status_for_prot(int reg1, int reg2)
 		if (is_int_flash_protected())
 			return EC_ERROR_ACCESS_DENIED;
 
-		if (flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED)
+		if (crec_flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED)
 			return EC_ERROR_ACCESS_DENIED;
 		flash_uma_lock(0);
 	}
@@ -131,14 +131,14 @@ static int flash_set_status_for_prot(int reg1, int reg2)
 #endif /*_CONFIG_WP_ACTIVE_HIGH_*/
 
 	/* Lock physical flash operations */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 
 	regs[0] = reg1;
 	regs[1] = reg2;
 	flash_write_status_reg(regs);
 
 	/* Unlock physical flash operations */
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 
 	spi_flash_reg_to_protect(reg1, reg2, &addr_prot_start,
 				 &addr_prot_length);
@@ -220,7 +220,7 @@ static int flash_write_prot_reg(unsigned int offset, unsigned int bytes,
 
 /* TODO(b/174873770): Add calls to Zephyr code here */
 #ifdef CONFIG_EXTERNAL_STORAGE
-void flash_lock_mapped_storage(int lock)
+void crec_flash_lock_mapped_storage(int lock)
 {
 	if (lock)
 		mutex_lock(&flash_lock);
@@ -229,7 +229,7 @@ void flash_lock_mapped_storage(int lock)
 }
 #endif
 
-int flash_physical_write(int offset, int size, const char *data)
+int crec_flash_physical_write(int offset, int size, const char *data)
 {
 	int rv;
 
@@ -247,17 +247,17 @@ int flash_physical_write(int offset, int size, const char *data)
 		return EC_ERROR_ACCESS_DENIED;
 
 	/* Lock physical flash operations */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 
 	rv = cros_flash_physical_write(cros_flash_dev, offset, size, data);
 
 	/* Unlock physical flash operations */
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 
 	return rv;
 }
 
-int flash_physical_erase(int offset, int size)
+int crec_flash_physical_erase(int offset, int size)
 {
 	int rv;
 
@@ -270,24 +270,24 @@ int flash_physical_erase(int offset, int size)
 		return EC_ERROR_ACCESS_DENIED;
 
 	/* Lock physical flash operations */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 
 	rv = cros_flash_physical_erase(cros_flash_dev, offset, size);
 
 	/* Unlock physical flash operations */
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 
 	return rv;
 }
 
-int flash_physical_get_protect(int bank)
+int crec_flash_physical_get_protect(int bank)
 {
 	uint32_t addr = bank * CONFIG_FLASH_BANK_SIZE;
 
 	return flash_check_prot_reg(addr, CONFIG_FLASH_BANK_SIZE);
 }
 
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 
@@ -310,7 +310,7 @@ uint32_t flash_physical_get_protect_flags(void)
 	return flags;
 }
 
-int flash_physical_protect_at_boot(uint32_t new_flags)
+int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	int ret;
 
@@ -333,7 +333,7 @@ int flash_physical_protect_at_boot(uint32_t new_flags)
 	return ret;
 }
 
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	if (all) {
 		/*
@@ -348,16 +348,16 @@ int flash_physical_protect_now(int all)
 	return EC_SUCCESS;
 }
 
-int flash_physical_read(int offset, int size, char *data)
+int crec_flash_physical_read(int offset, int size, char *data)
 {
 	int rv;
 
 	/* Lock physical flash operations */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 	rv = cros_flash_physical_read(cros_flash_dev, offset, size, data);
 
 	/* Unlock physical flash operations */
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 
 	return rv;
 }
@@ -389,13 +389,13 @@ static int flash_dev_init(const struct device *unused)
 	return 0;
 }
 
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
 	return EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
 

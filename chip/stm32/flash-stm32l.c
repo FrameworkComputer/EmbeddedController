@@ -158,7 +158,7 @@ void  __attribute__((section(".iram.text")))
 	STM32_FLASH_PECR &= ~(STM32_FLASH_PECR_PROG | STM32_FLASH_PECR_FPRG);
 }
 
-int flash_physical_write(int offset, int size, const char *data)
+int crec_flash_physical_write(int offset, int size, const char *data)
 {
 	uint32_t *data32 = (uint32_t *)data;
 	uint32_t *address = (uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
@@ -240,7 +240,7 @@ exit_wr:
 	return res;
 }
 
-int flash_physical_erase(int offset, int size)
+int crec_flash_physical_erase(int offset, int size)
 {
 	uint32_t *address;
 	int res = EC_SUCCESS;
@@ -261,7 +261,7 @@ int flash_physical_erase(int offset, int size)
 		timestamp_t deadline;
 
 		/* Do nothing if already erased */
-		if (flash_is_erased((uint32_t)address -
+		if (crec_flash_is_erased((uint32_t)address -
 				    CONFIG_PROGRAM_MEMORY_BASE,
 				    CONFIG_FLASH_ERASE_SIZE))
 			continue;
@@ -304,20 +304,20 @@ exit_er:
 	return res;
 }
 
-int flash_physical_get_protect(int block)
+int crec_flash_physical_get_protect(int block)
 {
 	/*
 	 * If the entire flash interface is locked, then all blocks are
 	 * protected until reboot.
 	 */
-	if (flash_physical_get_protect_flags() & EC_FLASH_PROTECT_ALL_NOW)
+	if (crec_flash_physical_get_protect_flags() & EC_FLASH_PROTECT_ALL_NOW)
 		return 1;
 
 	/* Check the active write protect status */
 	return STM32_FLASH_WRPR & BIT(block);
 }
 
-int flash_physical_protect_at_boot(uint32_t new_flags)
+int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	uint32_t prot;
 	uint32_t mask = (BIT(WP_BANK_COUNT) - 1) << WP_BANK_OFFSET;
@@ -352,7 +352,7 @@ int flash_physical_protect_at_boot(uint32_t new_flags)
 	return EC_SUCCESS;
 }
 
-int flash_physical_force_reload(void)
+int crec_flash_physical_force_reload(void)
 {
 	int rv = unlock(STM32_FLASH_PECR_OPT_LOCK);
 
@@ -367,7 +367,7 @@ int flash_physical_force_reload(void)
 	return EC_ERROR_UNKNOWN;
 }
 
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 
@@ -382,7 +382,7 @@ uint32_t flash_physical_get_protect_flags(void)
 	return flags;
 }
 
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	if (all) {
 		/* Re-lock the registers if they're unlocked */
@@ -400,14 +400,14 @@ int flash_physical_protect_now(int all)
 	}
 }
 
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
 	return EC_FLASH_PROTECT_RO_AT_BOOT |
 	       EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
 
@@ -426,10 +426,10 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 	return ret;
 }
 
-int flash_pre_init(void)
+int crec_flash_pre_init(void)
 {
 	uint32_t reset_flags = system_get_reset_flags();
-	uint32_t prot_flags = flash_get_protect();
+	uint32_t prot_flags = crec_flash_get_protect();
 	int need_reset = 0;
 
 	/*
@@ -448,7 +448,7 @@ int flash_pre_init(void)
 			 * update to the write protect register and reboot so
 			 * it takes effect.
 			 */
-			flash_protect_at_boot(EC_FLASH_PROTECT_RO_AT_BOOT);
+			crec_flash_protect_at_boot(EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
 
@@ -457,7 +457,7 @@ int flash_pre_init(void)
 			 * Write protect register was in an inconsistent state.
 			 * Set it back to a good state and reboot.
 			 */
-			flash_protect_at_boot(prot_flags &
+			crec_flash_protect_at_boot(prot_flags &
 					EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}

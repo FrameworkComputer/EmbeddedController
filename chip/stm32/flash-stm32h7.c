@@ -287,7 +287,7 @@ static int set_wp(int enabled)
 /*****************************************************************************/
 /* Physical layer APIs */
 
-int flash_physical_write(int offset, int size, const char *data)
+int crec_flash_physical_write(int offset, int size, const char *data)
 {
 	int res = EC_SUCCESS;
 	int bank = offset / HWBANK_SIZE;
@@ -365,7 +365,7 @@ exit_wr:
 	return res;
 }
 
-int flash_physical_erase(int offset, int size)
+int crec_flash_physical_erase(int offset, int size)
 {
 	int res = EC_SUCCESS;
 	int bank = offset / HWBANK_SIZE;
@@ -441,7 +441,7 @@ exit_er:
 	return res;
 }
 
-int flash_physical_get_protect(int block)
+int crec_flash_physical_get_protect(int block)
 {
 	int bank = block / BLOCKS_PER_HWBANK;
 	int index = block % BLOCKS_PER_HWBANK;
@@ -453,7 +453,7 @@ int flash_physical_get_protect(int block)
  * Note: This does not need to update _NOW flags, as flash_get_protect
  * in common code already does so.
  */
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 
@@ -473,7 +473,7 @@ uint32_t flash_physical_get_protect_flags(void)
 #define WP_RANGE(start, count) (((1 << (count)) - 1) << (start))
 #define RO_WP_RANGE WP_RANGE(WP_BANK_OFFSET, WP_BANK_COUNT)
 
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	protect_blocks(RO_WP_RANGE);
 
@@ -499,7 +499,7 @@ int flash_physical_protect_now(int all)
 	return EC_SUCCESS;
 }
 
-int flash_physical_protect_at_boot(uint32_t new_flags)
+int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	int new_wp_enable = !!(new_flags & EC_FLASH_PROTECT_RO_AT_BOOT);
 
@@ -509,14 +509,14 @@ int flash_physical_protect_at_boot(uint32_t new_flags)
 	return EC_SUCCESS;
 }
 
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
 	return EC_FLASH_PROTECT_RO_AT_BOOT |
 	       EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
 
@@ -535,7 +535,7 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 	return ret;
 }
 
-int flash_physical_restore_state(void)
+int crec_flash_physical_restore_state(void)
 {
 	uint32_t reset_flags = system_get_reset_flags();
 	int version, size;
@@ -561,14 +561,14 @@ int flash_physical_restore_state(void)
 	return 0;
 }
 
-int flash_pre_init(void)
+int crec_flash_pre_init(void)
 {
 	uint32_t reset_flags = system_get_reset_flags();
-	uint32_t prot_flags = flash_get_protect();
+	uint32_t prot_flags = crec_flash_get_protect();
 	uint32_t unwanted_prot_flags = EC_FLASH_PROTECT_ALL_NOW |
 		EC_FLASH_PROTECT_ERROR_INCONSISTENT;
 
-	if (flash_physical_restore_state())
+	if (crec_flash_physical_restore_state())
 		return EC_SUCCESS;
 
 	/*
@@ -587,13 +587,13 @@ int flash_pre_init(void)
 		    !(prot_flags & EC_FLASH_PROTECT_RO_NOW)) {
 			int rv;
 
-			rv = flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
-					       EC_FLASH_PROTECT_RO_NOW);
+			rv = crec_flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
+						    EC_FLASH_PROTECT_RO_NOW);
 			if (rv)
 				return rv;
 
 			/* Re-read flags */
-			prot_flags = flash_get_protect();
+			prot_flags = crec_flash_get_protect();
 		}
 	} else {
 		/* Don't want RO flash protected */

@@ -330,7 +330,7 @@ static void unprotect_all_blocks(void)
 	commit_optb();
 }
 
-int flash_physical_protect_at_boot(uint32_t new_flags)
+int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	struct wrp_info wrp_ro;
 	struct wrp_info wrp_rw;
@@ -411,7 +411,7 @@ int flash_physical_protect_at_boot(uint32_t new_flags)
  */
 static int registers_need_reset(void)
 {
-	uint32_t flags = flash_get_protect();
+	uint32_t flags = crec_flash_get_protect();
 	int ro_at_boot = (flags & EC_FLASH_PROTECT_RO_AT_BOOT) ? 1 : 0;
 	/* The RO region is write-protected by the WRP1AR range. */
 	uint32_t wrp1ar = STM32_OPTB_WRP1AR;
@@ -426,7 +426,7 @@ static int registers_need_reset(void)
 /*****************************************************************************/
 /* Physical layer APIs */
 
-int flash_physical_write(int offset, int size, const char *data)
+int crec_flash_physical_write(int offset, int size, const char *data)
 {
 	uint32_t *address = (void *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
 	int res = EC_SUCCESS;
@@ -501,7 +501,7 @@ exit_wr:
 	return res;
 }
 
-int flash_physical_erase(int offset, int size)
+int crec_flash_physical_erase(int offset, int size)
 {
 	int res = EC_SUCCESS;
 	int pg;
@@ -560,7 +560,7 @@ exit_er:
 	return res;
 }
 
-int flash_physical_get_protect(int block)
+int crec_flash_physical_get_protect(int block)
 {
 	struct wrp_info wrp_ro;
 	struct wrp_info wrp_rw;
@@ -576,7 +576,7 @@ int flash_physical_get_protect(int block)
  * Note: This does not need to update _NOW flags, as get_protect_flags
  * in common code already does so.
  */
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 	struct wrp_info wrp_ro;
@@ -610,12 +610,12 @@ uint32_t flash_physical_get_protect_flags(void)
 	return flags;
 }
 
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	return EC_ERROR_INVAL;
 }
 
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
 	return EC_FLASH_PROTECT_RO_AT_BOOT |
 	       EC_FLASH_PROTECT_RO_NOW |
@@ -631,7 +631,7 @@ uint32_t flash_physical_get_valid_flags(void)
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
 
@@ -662,10 +662,10 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 	return ret;
 }
 
-int flash_pre_init(void)
+int crec_flash_pre_init(void)
 {
 	uint32_t reset_flags = system_get_reset_flags();
-	uint32_t prot_flags = flash_get_protect();
+	uint32_t prot_flags = crec_flash_get_protect();
 	int need_reset = 0;
 
 	/*
@@ -684,7 +684,7 @@ int flash_pre_init(void)
 			 * update to the write protect register and reboot so
 			 * it takes effect.
 			 */
-			flash_physical_protect_at_boot(
+			crec_flash_physical_protect_at_boot(
 				EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
@@ -698,7 +698,7 @@ int flash_pre_init(void)
 			 * to the check above.  One of them should be able to
 			 * go away.
 			 */
-			flash_protect_at_boot(
+			crec_flash_protect_at_boot(
 				prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
@@ -713,7 +713,8 @@ int flash_pre_init(void)
 		}
 	}
 
-	if ((flash_physical_get_valid_flags() & EC_FLASH_PROTECT_ALL_AT_BOOT) &&
+	if ((crec_flash_physical_get_valid_flags() &
+	    EC_FLASH_PROTECT_ALL_AT_BOOT) &&
 	    (!!(prot_flags & EC_FLASH_PROTECT_ALL_AT_BOOT) !=
 	     !!(prot_flags & EC_FLASH_PROTECT_ALL_NOW))) {
 		/*
@@ -728,7 +729,8 @@ int flash_pre_init(void)
 	}
 
 #ifdef CONFIG_FLASH_PROTECT_RW
-	if ((flash_physical_get_valid_flags() & EC_FLASH_PROTECT_RW_AT_BOOT) &&
+	if ((crec_flash_physical_get_valid_flags() &
+	    EC_FLASH_PROTECT_RW_AT_BOOT) &&
 	    (!!(prot_flags & EC_FLASH_PROTECT_RW_AT_BOOT) !=
 	     !!(prot_flags & EC_FLASH_PROTECT_RW_NOW))) {
 		/* RW_AT_BOOT and RW_NOW do not match. */
@@ -737,7 +739,7 @@ int flash_pre_init(void)
 #endif
 
 #ifdef CONFIG_ROLLBACK
-	if ((flash_physical_get_valid_flags() &
+	if ((crec_flash_physical_get_valid_flags() &
 	     EC_FLASH_PROTECT_ROLLBACK_AT_BOOT) &&
 	    (!!(prot_flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT) !=
 	     !!(prot_flags & EC_FLASH_PROTECT_ROLLBACK_NOW))) {

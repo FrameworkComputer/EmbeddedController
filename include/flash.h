@@ -19,7 +19,7 @@ extern struct ec_flash_bank const flash_bank_array[
  * Return the bank the offset is in.
  * Return -1 if the offset is not at the beginning of that bank.
  */
-int flash_bank_index(int offset);
+int crec_flash_bank_index(int offset);
 
 /*
  * Number of banks between offset and offset+size.
@@ -38,25 +38,25 @@ int flash_bank_index(int offset);
  * begin = 0, end = -1....
  * The idea is to prevent erasing more than you think.
  */
-int flash_bank_count(int offset, int size);
+int crec_flash_bank_count(int offset, int size);
 
 /*
  * Return the size of the specified bank in bytes.
  * Return -1 if the bank is too large.
  */
-int flash_bank_size(int bank);
+int crec_flash_bank_size(int bank);
 
-int flash_bank_start_offset(int bank);
+int crec_flash_bank_start_offset(int bank);
 
-int flash_bank_erase_size(int bank);
+int crec_flash_bank_erase_size(int bank);
 
 /* Number of physical flash banks */
 #define PHYSICAL_BANKS  CONFIG_FLASH_MULTIPLE_REGION
 
 /* WP region offset and size in units of flash banks */
-#define WP_BANK_OFFSET	flash_bank_index(CONFIG_WP_STORAGE_OFF)
+#define WP_BANK_OFFSET	crec_flash_bank_index(CONFIG_WP_STORAGE_OFF)
 #define WP_BANK_COUNT \
-	(flash_bank_count(CONFIG_WP_STORAGE_OFF, CONFIG_WP_STORAGE_SIZE))
+	(crec_flash_bank_count(CONFIG_WP_STORAGE_OFF, CONFIG_WP_STORAGE_SIZE))
 
 #else  /* CONFIG_FLASH_MULTIPLE_REGION */
 /* Number of physical flash banks */
@@ -101,9 +101,9 @@ int flash_bank_erase_size(int bank);
  * ROLLBACK region offset and size in units of flash banks.
  */
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
-#define ROLLBACK_BANK_OFFSET	flash_bank_index(CONFIG_ROLLBACK_OFF)
+#define ROLLBACK_BANK_OFFSET	crec_flash_bank_index(CONFIG_ROLLBACK_OFF)
 #define ROLLBACK_BANK_COUNT	\
-	flash_bank_count(CONFIG_ROLLBACK_OFF, CONFIG_ROLLBACK_SIZE)
+	crec_flash_bank_count(CONFIG_ROLLBACK_OFF, CONFIG_ROLLBACK_SIZE)
 #else
 #define ROLLBACK_BANK_OFFSET	(CONFIG_ROLLBACK_OFF / CONFIG_FLASH_BANK_SIZE)
 #define ROLLBACK_BANK_COUNT	(CONFIG_ROLLBACK_SIZE / CONFIG_FLASH_BANK_SIZE)
@@ -130,7 +130,7 @@ enum flash_region {
  * @param size	        Number of bytes to write.
  * @param data          Destination buffer for data.  Must be 32-bit aligned.
  */
-int flash_physical_read(int offset, int size, char *data);
+int crec_flash_physical_read(int offset, int size, char *data);
 
 /**
  * Write to physical flash.
@@ -141,7 +141,7 @@ int flash_physical_read(int offset, int size, char *data);
  * @param size	        Number of bytes to write.
  * @param data          Data to write to flash.  Must be 32-bit aligned.
  */
-int flash_physical_write(int offset, int size, const char *data);
+int crec_flash_physical_write(int offset, int size, const char *data);
 
 /**
  * Erase physical flash.
@@ -151,7 +151,7 @@ int flash_physical_write(int offset, int size, const char *data);
  * @param offset	Flash offset to erase.
  * @param size	        Number of bytes to erase.
  */
-int flash_physical_erase(int offset, int size);
+int crec_flash_physical_erase(int offset, int size);
 
 /**
  * Read physical write protect setting for a flash bank.
@@ -159,7 +159,7 @@ int flash_physical_erase(int offset, int size);
  * @param bank	        Bank index to check.
  * @return non-zero if bank is protected until reboot.
  */
-int flash_physical_get_protect(int bank);
+int crec_flash_physical_get_protect(int bank);
 
 /**
  * Return flash protect state flags from the physical layer.
@@ -168,7 +168,7 @@ int flash_physical_get_protect(int bank);
  *
  * Uses the EC_FLASH_PROTECT_* flags from ec_commands.h
  */
-uint32_t flash_physical_get_protect_flags(void);
+uint32_t crec_flash_physical_get_protect_flags(void);
 
 /**
  * Enable/disable protecting firmware/pstate at boot.
@@ -177,7 +177,7 @@ uint32_t flash_physical_get_protect_flags(void);
  * taken care of)
  * @return non-zero if error.
  */
-int flash_physical_protect_at_boot(uint32_t new_flags);
+int crec_flash_physical_protect_at_boot(uint32_t new_flags);
 
 /**
  * Protect flash now.
@@ -185,7 +185,7 @@ int flash_physical_protect_at_boot(uint32_t new_flags);
  * @param all		Protect all (=1) or just read-only and pstate (=0).
  * @return non-zero if error.
  */
-int flash_physical_protect_now(int all);
+int crec_flash_physical_protect_now(int all);
 
 /**
  * Force reload of flash protection bits.
@@ -196,21 +196,21 @@ int flash_physical_protect_now(int all);
  *
  * Only returns (with EC_ERROR_ACCESS_DENIED) if the command is locked.
  */
-int flash_physical_force_reload(void);
+int crec_flash_physical_force_reload(void);
 
 /**
  * Restore flash physical layer state after sysjump.
  *
  * @return non-zero if restored.
  */
-int flash_physical_restore_state(void);
+int crec_flash_physical_restore_state(void);
 
 /**
  * Return the valid flash protect flags.
  *
  * @return a combination of EC_FLASH_PROTECT_* flags from ec_commands.h
  */
-uint32_t flash_physical_get_valid_flags(void);
+uint32_t crec_flash_physical_get_valid_flags(void);
 
 /**
  * Return the writable flash protect flags.
@@ -218,7 +218,7 @@ uint32_t flash_physical_get_valid_flags(void);
  * @param cur_flags The current flash protect flags.
  * @return a combination of EC_FLASH_PROTECT_* flags from ec_commands.h
  */
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags);
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags);
 
 /*****************************************************************************/
 /* Low-level common code for use by flash modules. */
@@ -232,7 +232,7 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags);
  * @param size		Number of bytes to check (word-aligned)
  * @return 1 if erased, 0 if not erased
  */
-int flash_is_erased(uint32_t offset, int size);
+int crec_flash_is_erased(uint32_t offset, int size);
 
 /**
  * Enable write protect for the specified range.
@@ -246,7 +246,7 @@ int flash_is_erased(uint32_t offset, int size);
  * taken care of)
  * @return EC_SUCCESS, or nonzero if error.
  */
-int flash_protect_at_boot(uint32_t new_flags);
+int crec_flash_protect_at_boot(uint32_t new_flags);
 
 /*****************************************************************************/
 /* High-level interface for use by other modules. */
@@ -256,13 +256,13 @@ int flash_protect_at_boot(uint32_t new_flags);
  *
  * Applies at-boot protection settings if necessary.
  */
-int flash_pre_init(void);
+int crec_flash_pre_init(void);
 
 /**
  * Return the usable size of flash in bytes.  Note that this may be smaller
  * than the physical flash size.
  */
-int flash_get_size(void);
+int crec_flash_get_size(void);
 
 /**
  * Get the physical memory address of a flash offset
@@ -283,7 +283,7 @@ int flash_get_size(void);
  *			in memory, unless function fails, iwc it is unset.
  * @return size of flash region available at *ptrp, or -1 on error
  */
-int flash_dataptr(int offset, int size_req, int align, const char **ptrp);
+int crec_flash_dataptr(int offset, int size_req, int align, const char **ptrp);
 
 /**
  * Read from flash.
@@ -296,7 +296,7 @@ int flash_dataptr(int offset, int size_req, int align, const char **ptrp);
  * @param size	        Number of bytes to write.
  * @param data          Destination buffer for data.  Must be 32-bit aligned.
  */
-int flash_read(int offset, int size, char *data);
+int crec_flash_read(int offset, int size, char *data);
 
 /**
  * Write to flash.
@@ -307,7 +307,7 @@ int flash_read(int offset, int size, char *data);
  * @param size	        Number of bytes to write.
  * @param data          Data to write to flash.  Must be 32-bit aligned.
  */
-int flash_write(int offset, int size, const char *data);
+int crec_flash_write(int offset, int size, const char *data);
 
 /**
  * Erase flash.
@@ -317,14 +317,14 @@ int flash_write(int offset, int size, const char *data);
  * @param offset	Flash offset to erase.
  * @param size	        Number of bytes to erase.
  */
-int flash_erase(int offset, int size);
+int crec_flash_erase(int offset, int size);
 
 /**
  * Return the flash protect state.
  *
  * Uses the EC_FLASH_PROTECT_* flags from ec_commands.h
  */
-uint32_t flash_get_protect(void);
+uint32_t crec_flash_get_protect(void);
 
 /**
  * Set the flash protect state.
@@ -332,7 +332,7 @@ uint32_t flash_get_protect(void);
  * @param mask		Bits in flags to apply.
  * @param flags		New values for flags.
  */
-int flash_set_protect(uint32_t mask, uint32_t flags);
+int crec_flash_set_protect(uint32_t mask, uint32_t flags);
 
 /**
  * Get the serial number from flash.
@@ -340,7 +340,7 @@ int flash_set_protect(uint32_t mask, uint32_t flags);
  * @return char * ascii serial number string.
  *     NULL if error.
  */
-const char *flash_read_pstate_serial(void);
+const char *crec_flash_read_pstate_serial(void);
 
 /**
  * Set the serial number in flash.
@@ -349,7 +349,7 @@ const char *flash_read_pstate_serial(void);
  *
  * @return success status.
  */
-int flash_write_pstate_serial(const char *serialno);
+int crec_flash_write_pstate_serial(const char *serialno);
 
 /**
  * Get the MAC address from flash.
@@ -358,7 +358,7 @@ int flash_write_pstate_serial(const char *serialno);
  *     Format: "01:23:45:67:89:AB"
  *     NULL if error.
  */
-const char *flash_read_pstate_mac_addr(void);
+const char *crec_flash_read_pstate_mac_addr(void);
 
 /**
  * Set the MAC address in flash.
@@ -368,7 +368,7 @@ const char *flash_read_pstate_mac_addr(void);
  *
  * @return success status.
  */
-int flash_write_pstate_mac_addr(const char *mac_addr);
+int crec_flash_write_pstate_mac_addr(const char *mac_addr);
 
 /**
  * Lock or unlock HW necessary for mapped storage read.
@@ -376,9 +376,9 @@ int flash_write_pstate_mac_addr(const char *mac_addr);
  * @param lock          1 to lock, 0 to unlock.
  */
 #ifdef CONFIG_EXTERNAL_STORAGE
-void flash_lock_mapped_storage(int lock);
+void crec_flash_lock_mapped_storage(int lock);
 #else
-static inline void flash_lock_mapped_storage(int lock) { };
+static inline void crec_flash_lock_mapped_storage(int lock) { };
 #endif /* CONFIG_EXTERNAL_STORAGE */
 
 /**
@@ -388,6 +388,6 @@ static inline void flash_lock_mapped_storage(int lock) { };
  * @param select   1 to select flash, 0 to deselect (disable).
  * @return EC_RES_* status code.
  */
-int board_flash_select(int select);
+int crec_board_flash_select(int select);
 
 #endif  /* __CROS_EC_FLASH_H */

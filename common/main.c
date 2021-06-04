@@ -109,7 +109,7 @@ test_mockable __keep int main(void)
 	 * Initialize flash and apply write protect if necessary.  Requires
 	 * the reset flags calculated by system initialization.
 	 */
-	flash_pre_init();
+	crec_flash_pre_init();
 #endif
 
 	/* Set the CPU clocks / PLLs.  System is now running at full speed. */

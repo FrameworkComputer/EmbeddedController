@@ -94,7 +94,7 @@ struct flash_wp_state {
 /*****************************************************************************/
 /* Physical layer APIs */
 
-int flash_physical_get_protect(int block)
+int crec_flash_physical_get_protect(int block)
 {
 	return (entire_flash_locked ||
 #if defined(CHIP_FAMILY_STM32F3)
@@ -105,7 +105,7 @@ int flash_physical_get_protect(int block)
 	       );
 }
 
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 
@@ -121,7 +121,7 @@ uint32_t flash_physical_get_protect_flags(void)
 	return flags;
 }
 
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	if (all) {
 		disable_flash_control_register();
@@ -135,14 +135,14 @@ int flash_physical_protect_now(int all)
 	return EC_SUCCESS;
 }
 
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
 	return EC_FLASH_PROTECT_RO_AT_BOOT |
 	       EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
 
@@ -161,7 +161,7 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 	return ret;
 }
 
-int flash_physical_restore_state(void)
+int crec_flash_physical_restore_state(void)
 {
 	uint32_t reset_flags = system_get_reset_flags();
 	int version, size;

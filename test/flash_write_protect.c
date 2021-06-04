@@ -42,8 +42,8 @@ test_static int test_flash_write_protect_enable(void)
 	TEST_EQ(check_image_and_hardware_write_protect(), EC_SUCCESS, "%d");
 
 	/* Equivalent of ectool --name=cros_fp flashprotect enable */
-	rv = flash_set_protect(EC_FLASH_PROTECT_RO_AT_BOOT,
-			       EC_FLASH_PROTECT_RO_AT_BOOT);
+	rv = crec_flash_set_protect(EC_FLASH_PROTECT_RO_AT_BOOT,
+				    EC_FLASH_PROTECT_RO_AT_BOOT);
 
 	return rv;
 }
@@ -55,7 +55,7 @@ test_static int test_flash_write_protect_disable(void)
 	TEST_EQ(check_image_and_hardware_write_protect(), EC_SUCCESS, "%d");
 
 	/* Equivalent of ectool --name=cros_fp flashprotect disable */
-	rv = flash_set_protect(EC_FLASH_PROTECT_RO_AT_BOOT, 0);
+	rv = crec_flash_set_protect(EC_FLASH_PROTECT_RO_AT_BOOT, 0);
 	TEST_NE(rv, EC_SUCCESS, "%d");
 
 	return EC_SUCCESS;

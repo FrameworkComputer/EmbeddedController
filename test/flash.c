@@ -253,7 +253,7 @@ static int test_read(void)
 #endif
 
 	/* The first few bytes in the flash should always contain some code */
-	TEST_ASSERT(!flash_is_erased(0, sizeof(buf)));
+	TEST_ASSERT(!crec_flash_is_erased(0, sizeof(buf)));
 
 	TEST_ASSERT(host_command_read(0, sizeof(buf), buf) == EC_RES_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(buf, (char *)CONFIG_PROGRAM_MEMORY_BASE,
@@ -268,11 +268,11 @@ static int test_is_erased(void)
 
 #ifdef EMU_BUILD
 	memset(__host_flash, 0xff, 1024);
-	TEST_ASSERT(flash_is_erased(0, 1024));
+	TEST_ASSERT(crec_flash_is_erased(0, 1024));
 
 	for (i = 0; i < 1024; ++i) {
 		__host_flash[i] = 0xec;
-		TEST_ASSERT(!flash_is_erased(0, 1024));
+		TEST_ASSERT(!crec_flash_is_erased(0, 1024));
 		__host_flash[i] = 0xff;
 	}
 #else
@@ -400,9 +400,9 @@ static int test_write_protect(void)
 	ASSERT_WP_FLAGS(EC_FLASH_PROTECT_ALL_NOW | EC_FLASH_PROTECT_RO_AT_BOOT);
 
 	/* Check we cannot erase anything */
-	TEST_ASSERT(flash_physical_erase(CONFIG_RO_STORAGE_OFF,
+	TEST_ASSERT(crec_flash_physical_erase(CONFIG_RO_STORAGE_OFF,
 			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
-	TEST_ASSERT(flash_physical_erase(CONFIG_RW_STORAGE_OFF,
+	TEST_ASSERT(crec_flash_physical_erase(CONFIG_RW_STORAGE_OFF,
 			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
 
 	/* We should not even try to write/erase */
@@ -418,7 +418,7 @@ static int test_boot_write_protect(void)
 {
 	/* Check write protect state persists through reboot */
 	ASSERT_WP_FLAGS(EC_FLASH_PROTECT_RO_NOW | EC_FLASH_PROTECT_RO_AT_BOOT);
-	TEST_ASSERT(flash_physical_erase(CONFIG_RO_STORAGE_OFF,
+	TEST_ASSERT(crec_flash_physical_erase(CONFIG_RO_STORAGE_OFF,
 			CONFIG_FLASH_ERASE_SIZE) != EC_SUCCESS);
 
 	return EC_SUCCESS;

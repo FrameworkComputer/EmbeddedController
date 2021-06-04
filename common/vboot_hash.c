@@ -94,7 +94,7 @@ static int read_and_hash_chunk(int offset, int size)
 		return rv;
 	}
 
-	rv = flash_read(offset, size, buf);
+	rv = crec_flash_read(offset, size, buf);
 	if (rv == EC_SUCCESS)
 		SHA256_update(&ctx, (const uint8_t *)buf, size);
 	else
@@ -115,10 +115,10 @@ static int read_and_hash_chunk(int offset, int size)
 static void hash_next_chunk(size_t size)
 {
 #ifdef CONFIG_MAPPED_STORAGE
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 	SHA256_update(&ctx, (const uint8_t *)(CONFIG_MAPPED_STORAGE_BASE +
 					      data_offset + curr_pos), size);
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 #else
 	if (read_and_hash_chunk(data_offset + curr_pos, size) != EC_SUCCESS)
 		return;

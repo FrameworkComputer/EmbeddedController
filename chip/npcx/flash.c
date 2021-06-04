@@ -153,7 +153,7 @@ static uint8_t flash_get_status1(void)
 		return saved_sr1;
 
 	/* Lock physical flash operations */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
@@ -165,7 +165,7 @@ static uint8_t flash_get_status1(void)
 	ret = NPCX_UMA_DB0;
 
 	/* Unlock physical flash operations */
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 
 	return ret;
 }
@@ -178,7 +178,7 @@ static uint8_t flash_get_status2(void)
 		return saved_sr2;
 
 	/* Lock physical flash operations */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
@@ -190,7 +190,7 @@ static uint8_t flash_get_status2(void)
 	ret = NPCX_UMA_DB0;
 
 	/* Unlock physical flash operations */
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 
 	return ret;
 }
@@ -217,7 +217,7 @@ static void flash_protect_int_flash(int enable)
 void flash_get_mfr_dev_id(uint8_t *dest)
 {
 	/* Lock physical flash operations */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
@@ -232,7 +232,7 @@ void flash_get_mfr_dev_id(uint8_t *dest)
 	dest[1] = NPCX_UMA_DB1;
 
 	/* Unlock physical flash operations */
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 }
 
 #endif /* CONFIG_HOSTCMD_FLASH_SPI_INFO */
@@ -240,7 +240,7 @@ void flash_get_mfr_dev_id(uint8_t *dest)
 void flash_get_jedec_id(uint8_t *dest)
 {
 	/* Lock physical flash operations */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
@@ -254,7 +254,7 @@ void flash_get_jedec_id(uint8_t *dest)
 	dest[2] = NPCX_UMA_DB2;
 
 	/* Unlock physical flash operations */
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 }
 
 static void flash_uma_lock(int enable)
@@ -284,7 +284,7 @@ static int flash_set_status_for_prot(int reg1, int reg2)
 			return EC_ERROR_ACCESS_DENIED;
 #endif
 
-		if (flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED)
+		if (crec_flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED)
 			return EC_ERROR_ACCESS_DENIED;
 		flash_uma_lock(0);
 	}
@@ -302,7 +302,7 @@ static int flash_set_status_for_prot(int reg1, int reg2)
 #endif
 
 	/* Lock physical flash operations */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
@@ -318,7 +318,7 @@ static int flash_set_status_for_prot(int reg1, int reg2)
 	TRISTATE_FLASH(1);
 
 	/* Unlock physical flash operations */
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 
 	spi_flash_reg_to_protect(reg1, reg2,
 				 &addr_prot_start, &addr_prot_length);
@@ -452,13 +452,13 @@ static int flash_program_bytes(uint32_t offset, uint32_t bytes,
 
 /*****************************************************************************/
 
-int flash_physical_read(int offset, int size, char *data)
+int crec_flash_physical_read(int offset, int size, char *data)
 {
 	int dest_addr = offset;
 	uint32_t idx;
 
 	/* Lock physical flash operations */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
@@ -487,12 +487,12 @@ int flash_physical_read(int offset, int size, char *data)
 	TRISTATE_FLASH(1);
 
 	/* Unlock physical flash operations */
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 
 	return EC_SUCCESS;
 }
 
-int flash_physical_write(int offset, int size, const char *data)
+int crec_flash_physical_write(int offset, int size, const char *data)
 {
 	int dest_addr = offset;
 	int write_len;
@@ -508,7 +508,7 @@ int flash_physical_write(int offset, int size, const char *data)
 		return EC_ERROR_ACCESS_DENIED;
 
 	/* Lock physical flash operations */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
@@ -537,12 +537,12 @@ int flash_physical_write(int offset, int size, const char *data)
 	TRISTATE_FLASH(1);
 
 	/* Unlock physical flash operations */
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 
 	return rv;
 }
 
-int flash_physical_erase(int offset, int size)
+int crec_flash_physical_erase(int offset, int size)
 {
 	int rv = EC_SUCCESS;
 	/* check protection */
@@ -550,7 +550,7 @@ int flash_physical_erase(int offset, int size)
 		return EC_ERROR_ACCESS_DENIED;
 
 	/* Lock physical flash operations */
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 
 	/* Disable tri-state */
 	TRISTATE_FLASH(0);
@@ -591,19 +591,19 @@ int flash_physical_erase(int offset, int size)
 	TRISTATE_FLASH(1);
 
 	/* Unlock physical flash operations */
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 
 	return rv;
 }
 
-int flash_physical_get_protect(int bank)
+int crec_flash_physical_get_protect(int bank)
 {
 	uint32_t addr = bank * CONFIG_FLASH_BANK_SIZE;
 
 	return flash_check_prot_reg(addr, CONFIG_FLASH_BANK_SIZE);
 }
 
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 
@@ -626,7 +626,7 @@ uint32_t flash_physical_get_protect_flags(void)
 	return flags;
 }
 
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	if (all) {
 		/*
@@ -642,7 +642,7 @@ int flash_physical_protect_now(int all)
 }
 
 
-int flash_physical_protect_at_boot(uint32_t new_flags)
+int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	int ret;
 
@@ -666,14 +666,14 @@ int flash_physical_protect_at_boot(uint32_t new_flags)
 	return ret;
 }
 
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
 	return EC_FLASH_PROTECT_RO_AT_BOOT |
 			EC_FLASH_PROTECT_RO_NOW |
 			EC_FLASH_PROTECT_ALL_NOW;
 }
 
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
 
@@ -695,7 +695,7 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 /*****************************************************************************/
 /* High-level APIs */
 
-int flash_pre_init(void)
+int crec_flash_pre_init(void)
 {
 	/*
 	 * Protect status registers of internal spi-flash if WP# is active
@@ -724,7 +724,7 @@ int flash_pre_init(void)
 	return EC_SUCCESS;
 }
 
-void flash_lock_mapped_storage(int lock)
+void crec_flash_lock_mapped_storage(int lock)
 {
 	if (lock)
 		mutex_lock(&flash_lock);

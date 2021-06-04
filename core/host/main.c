@@ -40,7 +40,7 @@ static int test_main(void)
 
 	register_test_end_hook();
 
-	flash_pre_init();
+	crec_flash_pre_init();
 	system_pre_init();
 	system_common_pre_init();
 

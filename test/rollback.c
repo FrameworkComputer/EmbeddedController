@@ -46,7 +46,8 @@ test_static int read_rollback_region(const struct rollback_info *info,
 				   info->region_1_offset;
 
 	for (i = 0; i < info->region_size_bytes; i++) {
-		if (flash_read(offset + i, sizeof(data), &data) == EC_SUCCESS)
+		if (crec_flash_read(offset + i, sizeof(data), &data) ==
+			EC_SUCCESS)
 			bytes_read++;
 	}
 

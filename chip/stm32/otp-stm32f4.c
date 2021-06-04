@@ -39,9 +39,9 @@ static int otp_write(uint8_t block, int size, const char *data)
 		return EC_ERROR_PARAM1;
 	if (size >= STM32_OTP_BLOCK_SIZE)
 		return EC_ERROR_PARAM2;
-	return flash_physical_write(STM32_OTP_BLOCK_DATA(block, 0) -
-				    CONFIG_PROGRAM_MEMORY_BASE,
-				    size * sizeof(uint32_t), data);
+	return crec_flash_physical_write(STM32_OTP_BLOCK_DATA(block, 0) -
+					 CONFIG_PROGRAM_MEMORY_BASE,
+					 size * sizeof(uint32_t), data);
 }
 
 /*
@@ -73,9 +73,9 @@ static int otp_set_protect(uint8_t block)
 
 	lock = REG32(STM32_OTP_LOCK(block));
 	lock &= ~STM32_OPT_LOCK_MASK(block);
-	rv = flash_physical_write(STM32_OTP_LOCK(block) -
-				  CONFIG_PROGRAM_MEMORY_BASE,
-				  sizeof(uint32_t), (char *)&lock);
+	rv = crec_flash_physical_write(STM32_OTP_LOCK(block) -
+				       CONFIG_PROGRAM_MEMORY_BASE,
+				       sizeof(uint32_t), (char *)&lock);
 	if (rv)
 		return rv;
 	else

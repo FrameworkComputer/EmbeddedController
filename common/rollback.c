@@ -34,9 +34,9 @@ static int get_rollback_offset(int region)
 {
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
 	int rv;
-	int rollback_start_bank = flash_bank_index(CONFIG_ROLLBACK_OFF);
+	int rollback_start_bank = crec_flash_bank_index(CONFIG_ROLLBACK_OFF);
 
-	rv = flash_bank_start_offset(rollback_start_bank + region);
+	rv = crec_flash_bank_start_offset(rollback_start_bank + region);
 	ASSERT(rv >= 0);
 	return rv;
 #else
@@ -52,9 +52,9 @@ static int get_rollback_erase_size_bytes(int region)
 #ifndef CONFIG_FLASH_MULTIPLE_REGION
 	erase_size = CONFIG_FLASH_ERASE_SIZE;
 #else
-	int rollback_start_bank = flash_bank_index(CONFIG_ROLLBACK_OFF);
+	int rollback_start_bank = crec_flash_bank_index(CONFIG_ROLLBACK_OFF);
 
-	erase_size = flash_bank_erase_size(rollback_start_bank + region);
+	erase_size = crec_flash_bank_erase_size(rollback_start_bank + region);
 #endif
 	ASSERT(erase_size > 0);
 	ASSERT(ROLLBACK_REGIONS * erase_size <= CONFIG_ROLLBACK_SIZE);
@@ -98,7 +98,7 @@ int read_rollback(int region, struct rollback_data *data)
 	offset = get_rollback_offset(region);
 
 	unlock_rollback();
-	if (flash_read(offset, sizeof(*data), (char *)data))
+	if (crec_flash_read(offset, sizeof(*data), (char *)data))
 		ret = EC_ERROR_UNKNOWN;
 	lock_rollback();
 
@@ -254,7 +254,7 @@ static int rollback_update(int32_t next_min_version,
 	BUILD_ASSERT(sizeof(block) >= sizeof(*data));
 	int erase_size, offset, region, ret;
 
-	if (flash_get_protect() & EC_FLASH_PROTECT_ROLLBACK_NOW) {
+	if (crec_flash_get_protect() & EC_FLASH_PROTECT_ROLLBACK_NOW) {
 		ret = EC_ERROR_ACCESS_DENIED;
 		goto out;
 	}
@@ -325,13 +325,13 @@ static int rollback_update(int32_t next_min_version,
 	}
 
 	unlock_rollback();
-	if (flash_erase(offset, erase_size)) {
+	if (crec_flash_erase(offset, erase_size)) {
 		ret = EC_ERROR_UNKNOWN;
 		lock_rollback();
 		goto out;
 	}
 
-	ret = flash_write(offset, sizeof(block), block);
+	ret = crec_flash_write(offset, sizeof(block), block);
 	lock_rollback();
 
 out:

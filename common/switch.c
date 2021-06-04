@@ -48,7 +48,7 @@ static void switch_update(void)
 	else
 		*memmap_switches &= ~EC_SWITCH_LID_OPEN;
 
-	if ((flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED) == 0)
+	if ((crec_flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED) == 0)
 		*memmap_switches |= EC_SWITCH_WRITE_PROTECT_DISABLED;
 	else
 		*memmap_switches &= ~EC_SWITCH_WRITE_PROTECT_DISABLED;

@@ -393,7 +393,7 @@ void system_reset(int flags)
 		 * Ask the flash module to reboot, so that we reload the
 		 * option bytes.
 		 */
-		flash_physical_force_reload();
+		crec_flash_physical_force_reload();
 
 		/* Fall through to watchdog if that fails */
 #endif

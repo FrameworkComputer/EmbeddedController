@@ -67,7 +67,7 @@ static void flash_get_persistent(void)
 	release_persistent_storage(f);
 }
 
-int flash_physical_write(int offset, int size, const char *data)
+int crec_flash_physical_write(int offset, int size, const char *data)
 {
 	ASSERT((size & (CONFIG_FLASH_WRITE_SIZE - 1)) == 0);
 
@@ -83,7 +83,7 @@ int flash_physical_write(int offset, int size, const char *data)
 	return EC_SUCCESS;
 }
 
-int flash_physical_erase(int offset, int size)
+int crec_flash_physical_erase(int offset, int size)
 {
 	ASSERT((size & (CONFIG_FLASH_ERASE_SIZE - 1)) == 0);
 
@@ -99,12 +99,12 @@ int flash_physical_erase(int offset, int size)
 	return EC_SUCCESS;
 }
 
-int flash_physical_get_protect(int bank)
+int crec_flash_physical_get_protect(int bank)
 {
 	return __host_flash_protect[bank];
 }
 
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	int i;
 	uint32_t flags = EC_FLASH_PROTECT_ALL_NOW;
@@ -116,20 +116,20 @@ uint32_t flash_physical_get_protect_flags(void)
 	return flags;
 }
 
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	memset(__host_flash_protect, 1, all ? PHYSICAL_BANKS : WP_BANK_COUNT);
 	return EC_SUCCESS;
 }
 
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
 	return EC_FLASH_PROTECT_RO_AT_BOOT |
 	       EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
 
@@ -148,13 +148,13 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 	return ret;
 }
 
-int flash_pre_init(void)
+int crec_flash_pre_init(void)
 {
 	uint32_t prot_flags;
 
 	flash_get_persistent();
 
-	prot_flags = flash_get_protect();
+	prot_flags = crec_flash_get_protect();
 
 	if (prot_flags & EC_FLASH_PROTECT_GPIO_ASSERTED) {
 		/*
@@ -163,13 +163,13 @@ int flash_pre_init(void)
 		 */
 		if ((prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT) &&
 		    !(prot_flags & EC_FLASH_PROTECT_RO_NOW)) {
-			int rv = flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
+			int rv = crec_flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
 						   EC_FLASH_PROTECT_RO_NOW);
 			if (rv)
 				return rv;
 
 			/* Re-read flags */
-			prot_flags = flash_get_protect();
+			prot_flags = crec_flash_get_protect();
 		}
 	}
 

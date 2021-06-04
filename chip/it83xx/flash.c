@@ -411,7 +411,7 @@ static void flash_protect_banks(int start_bank,
 	}
 }
 
-int FLASH_DMA_CODE flash_physical_read(int offset, int size, char *data)
+int FLASH_DMA_CODE crec_flash_physical_read(int offset, int size, char *data)
 {
 	int i;
 
@@ -432,7 +432,8 @@ int FLASH_DMA_CODE flash_physical_read(int offset, int size, char *data)
  * @param size          Number of bytes to write.
  * @param data          Data to write to flash.  Must be 32-bit aligned.
  */
-int FLASH_DMA_CODE flash_physical_write(int offset, int size, const char *data)
+int FLASH_DMA_CODE crec_flash_physical_write(int offset, int size,
+					     const char *data)
 {
 	int ret = EC_ERROR_UNKNOWN;
 
@@ -479,7 +480,7 @@ int FLASH_DMA_CODE flash_physical_write(int offset, int size, const char *data)
  * @param offset        Flash offset to erase.
  * @param size          Number of bytes to erase.
  */
-int FLASH_DMA_CODE flash_physical_erase(int offset, int size)
+int FLASH_DMA_CODE crec_flash_physical_erase(int offset, int size)
 {
 	int v_size = size, v_addr = offset, ret = EC_ERROR_UNKNOWN;
 
@@ -539,7 +540,7 @@ int FLASH_DMA_CODE flash_physical_erase(int offset, int size)
  * @param bank    Bank index to check.
  * @return        non-zero if bank is protected until reboot.
  */
-int flash_physical_get_protect(int bank)
+int crec_flash_physical_get_protect(int bank)
 {
 	return IT83XX_GCTRL_EWPR0PFEC(FWP_REG(bank)) & FWP_MASK(bank);
 }
@@ -550,7 +551,7 @@ int flash_physical_get_protect(int bank)
  * @param all      Protect all (=1) or just read-only and pstate (=0).
  * @return         non-zero if error.
  */
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	if (all) {
 		/* Protect the entire flash */
@@ -584,7 +585,7 @@ int flash_physical_protect_now(int all)
  *
  * Uses the EC_FLASH_PROTECT_* flags from ec_commands.h
  */
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 
@@ -609,7 +610,7 @@ uint32_t flash_physical_get_protect_flags(void)
  *
  * @return   A combination of EC_FLASH_PROTECT_* flags from ec_commands.h
  */
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
 	return EC_FLASH_PROTECT_RO_AT_BOOT |
 	       EC_FLASH_PROTECT_RO_NOW |
@@ -622,7 +623,7 @@ uint32_t flash_physical_get_valid_flags(void)
  * @param    cur_flags The current flash protect flags.
  * @return   A combination of EC_FLASH_PROTECT_* flags from ec_commands.h
  */
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
 
@@ -726,7 +727,7 @@ static void flash_code_static_dma(void)
  *
  * Applies at-boot protection settings if necessary.
  */
-int flash_pre_init(void)
+int crec_flash_pre_init(void)
 {
 	int32_t reset_flags, prot_flags, unwanted_prot_flags;
 
@@ -742,7 +743,7 @@ int flash_pre_init(void)
 	flash_enable_second_ilm();
 
 	reset_flags = system_get_reset_flags();
-	prot_flags = flash_get_protect();
+	prot_flags = crec_flash_get_protect();
 	unwanted_prot_flags = EC_FLASH_PROTECT_ALL_NOW |
 		EC_FLASH_PROTECT_ERROR_INCONSISTENT;
 
@@ -768,13 +769,13 @@ int flash_pre_init(void)
 		 */
 		if ((prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT) &&
 		    !(prot_flags & EC_FLASH_PROTECT_RO_NOW)) {
-			int rv = flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
+			int rv = crec_flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
 						   EC_FLASH_PROTECT_RO_NOW);
 			if (rv)
 				return rv;
 
 			/* Re-read flags */
-			prot_flags = flash_get_protect();
+			prot_flags = crec_flash_get_protect();
 		}
 	} else {
 		/* Don't want RO flash protected */

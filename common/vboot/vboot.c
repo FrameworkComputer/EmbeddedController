@@ -187,7 +187,7 @@ void vboot_main(void)
 		return;
 	}
 
-	if (!(flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED)) {
+	if (!(crec_flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED)) {
 		/*
 		 * If hardware WP is disabled, PD communication is enabled.
 		 * We can return and wait for more power.

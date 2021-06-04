@@ -182,7 +182,7 @@ int system_is_locked(void)
 	 * is not protected.
 	 */
 	if ((EC_FLASH_PROTECT_GPIO_ASSERTED | EC_FLASH_PROTECT_RO_NOW) &
-	    ~flash_get_protect()) {
+	    ~crec_flash_get_protect()) {
 		is_locked = 0;
 		return 0;
 	}
@@ -753,12 +753,12 @@ const struct image_data *system_get_image_data(enum ec_image copy)
 
 #ifdef CONFIG_MAPPED_STORAGE
 	addr += CONFIG_MAPPED_STORAGE_BASE;
-	flash_lock_mapped_storage(1);
+	crec_flash_lock_mapped_storage(1);
 	memcpy(&data, (const void *)addr, sizeof(data));
-	flash_lock_mapped_storage(0);
+	crec_flash_lock_mapped_storage(0);
 #else
 	/* Read the version struct from flash into a buffer. */
-	if (flash_read(addr, sizeof(data), (char *)&data))
+	if (crec_flash_read(addr, sizeof(data), (char *)&data))
 		return NULL;
 #endif
 
@@ -1687,7 +1687,7 @@ __overridable const char *board_read_serial(void)
 {
 	if (IS_ENABLED(CONFIG_FLASH_PSTATE) &&
 	    IS_ENABLED(CONFIG_FLASH_PSTATE_BANK))
-		return flash_read_pstate_serial();
+		return crec_flash_read_pstate_serial();
 	else if (IS_ENABLED(CONFIG_OTP))
 		return otp_read_serial();
 	else
@@ -1698,7 +1698,7 @@ __overridable int board_write_serial(const char *serialno)
 {
 	if (IS_ENABLED(CONFIG_FLASH_PSTATE) &&
 	    IS_ENABLED(CONFIG_FLASH_PSTATE_BANK))
-		return flash_write_pstate_serial(serialno);
+		return crec_flash_write_pstate_serial(serialno);
 	else if (IS_ENABLED(CONFIG_OTP))
 		return otp_write_serial(serialno);
 	else
@@ -1712,7 +1712,7 @@ __overridable const char *board_read_mac_addr(void)
 {
 	if (IS_ENABLED(CONFIG_FLASH_PSTATE) &&
 	    IS_ENABLED(CONFIG_FLASH_PSTATE_BANK))
-		return flash_read_pstate_mac_addr();
+		return crec_flash_read_pstate_mac_addr();
 	else
 		return "";
 }
@@ -1722,7 +1722,7 @@ __overridable int board_write_mac_addr(const char *mac_addr)
 {
 	if (IS_ENABLED(CONFIG_FLASH_PSTATE) &&
 	    IS_ENABLED(CONFIG_FLASH_PSTATE_BANK))
-		return flash_write_pstate_mac_addr(mac_addr);
+		return crec_flash_write_pstate_mac_addr(mac_addr);
 	else
 		return EC_ERROR_UNIMPLEMENTED;
 }

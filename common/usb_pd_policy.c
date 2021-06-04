@@ -917,9 +917,9 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 		pd_log_event(PD_EVENT_ACC_RW_ERASE, 0, 0, NULL);
 		flash_offset =
 			CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF;
-		flash_physical_erase(CONFIG_EC_WRITABLE_STORAGE_OFF +
-					     CONFIG_RW_STORAGE_OFF,
-				     CONFIG_RW_SIZE);
+		crec_flash_physical_erase(CONFIG_EC_WRITABLE_STORAGE_OFF +
+					  CONFIG_RW_STORAGE_OFF,
+					  CONFIG_RW_SIZE);
 		rw_flash_changed = 1;
 		break;
 	case VDO_CMD_FLASH_WRITE:
@@ -928,7 +928,7 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 		    (flash_offset <
 		     CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF))
 			break;
-		flash_physical_write(flash_offset, 4 * (cnt - 1),
+		crec_flash_physical_write(flash_offset, 4 * (cnt - 1),
 				     (const char *)(payload + 1));
 		flash_offset += 4 * (cnt - 1);
 		rw_flash_changed = 1;
@@ -941,7 +941,7 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 			/* zeroes the area containing the RSA signature */
 			for (offset = FW_RW_END - RSANUMBYTES;
 			     offset < FW_RW_END; offset += 4)
-				flash_physical_write(offset, 4,
+				crec_flash_physical_write(offset, 4,
 						     (const char *)&zero);
 		}
 		break;

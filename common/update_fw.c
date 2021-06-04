@@ -80,7 +80,8 @@ static uint8_t check_update_chunk(uint32_t block_offset, size_t body_size)
 		 * be erased.
 		 */
 		if (block_offset == base) {
-			if (flash_physical_erase(base, size) != EC_SUCCESS) {
+			if (crec_flash_physical_erase(base, size) !=
+				EC_SUCCESS) {
 				CPRINTF("%s:%d erase failure of 0x%x..+0x%x\n",
 					__func__, __LINE__, base, size);
 				return UPDATE_ERASE_FAILURE;
@@ -189,7 +190,7 @@ void fw_update_start(struct first_response_pdu *rpdu)
 	}
 
 	rpdu->common.maximum_pdu_size = htobe32(CONFIG_UPDATE_PDU_SIZE);
-	rpdu->common.flash_protection = htobe32(flash_get_protect());
+	rpdu->common.flash_protection = htobe32(crec_flash_get_protect());
 	rpdu->common.offset = htobe32(update_section.base_offset);
 	if (version)
 		memcpy(rpdu->common.version, version,
@@ -300,7 +301,7 @@ void fw_update_command_handler(void *body,
 #endif
 
 	CPRINTF("update: 0x%x\n", block_offset + CONFIG_PROGRAM_MEMORY_BASE);
-	if (flash_physical_write(block_offset, body_size, update_data)
+	if (crec_flash_physical_write(block_offset, body_size, update_data)
 	    != EC_SUCCESS) {
 		*error_code = UPDATE_WRITE_FAILURE;
 		CPRINTF("%s:%d update write error\n", __func__, __LINE__);

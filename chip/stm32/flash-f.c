@@ -341,7 +341,7 @@ bool is_flash_rdp_enabled(void)
 /*****************************************************************************/
 /* Physical layer APIs */
 
-int flash_physical_write(int offset, int size, const char *data)
+int crec_flash_physical_write(int offset, int size, const char *data)
 {
 #if CONFIG_FLASH_WRITE_SIZE == 1
 	uint8_t *address = (uint8_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
@@ -420,15 +420,15 @@ exit_wr:
 	return res;
 }
 
-int flash_physical_erase(int offset, int size)
+int crec_flash_physical_erase(int offset, int size)
 {
 	int res = EC_SUCCESS;
 	int sector_size;
 	int timeout_us;
 #ifdef CHIP_FAMILY_STM32F4
-	int sector = flash_bank_index(offset);
+	int sector = crec_flash_bank_index(offset);
 	/* we take advantage of sector_size == erase_size */
-	if ((sector < 0) || (flash_bank_index(offset + size) < 0))
+	if ((sector < 0) || (crec_flash_bank_index(offset + size) < 0))
 		return EC_ERROR_INVAL;  /* Invalid range */
 #endif
 
@@ -444,7 +444,7 @@ int flash_physical_erase(int offset, int size)
 	while (size > 0) {
 		timestamp_t deadline;
 #ifdef CHIP_FAMILY_STM32F4
-		sector_size = flash_bank_size(sector);
+		sector_size = crec_flash_bank_size(sector);
 		/* Timeout: from spec, proportional to the size
 		 * inversely proportional to the write size.
 		 */
@@ -454,7 +454,7 @@ int flash_physical_erase(int offset, int size)
 		timeout_us = FLASH_ERASE_TIMEOUT_US;
 #endif
 		/* Do nothing if already erased */
-		if (flash_is_erased(offset, sector_size))
+		if (crec_flash_is_erased(offset, sector_size))
 			goto next_sector;
 #ifdef CHIP_FAMILY_STM32F4
 		/* select page to erase */
@@ -533,7 +533,7 @@ static int flash_physical_protect_at_boot_update_rdp_pstate(uint32_t new_flags)
 #endif
 }
 
-int flash_physical_protect_at_boot(uint32_t new_flags)
+int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	int block;
 	int original_val, val;
@@ -580,7 +580,7 @@ static int flash_physical_get_protect_at_boot(int block)
 	return (!(val & (1 << (block % 8)))) ? 1 : 0;
 }
 
-int flash_physical_protect_at_boot(uint32_t new_flags)
+int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	int block;
 	int i;
@@ -646,7 +646,7 @@ static void unprotect_all_blocks(void)
  */
 static int registers_need_reset(void)
 {
-	uint32_t flags = flash_get_protect();
+	uint32_t flags = crec_flash_get_protect();
 	int i;
 	int ro_at_boot = (flags & EC_FLASH_PROTECT_RO_AT_BOOT) ? 1 : 0;
 	int ro_wp_region_start = WP_BANK_OFFSET;
@@ -723,10 +723,10 @@ enum flash_rdp_level flash_physical_get_rdp_level(void)
 /*****************************************************************************/
 /* High-level APIs */
 
-int flash_pre_init(void)
+int crec_flash_pre_init(void)
 {
 	uint32_t reset_flags = system_get_reset_flags();
-	uint32_t prot_flags = flash_get_protect();
+	uint32_t prot_flags = crec_flash_get_protect();
 	int need_reset = 0;
 
 
@@ -738,7 +738,7 @@ int flash_pre_init(void)
 		 STM32_FLASH_CR_PSIZE_OFFSET;
 	lock();
 #endif
-	if (flash_physical_restore_state())
+	if (crec_flash_physical_restore_state())
 		return EC_SUCCESS;
 
 	/*
@@ -751,7 +751,7 @@ int flash_pre_init(void)
 	if (prot_flags & EC_FLASH_PROTECT_GPIO_ASSERTED) {
 		if (prot_flags & EC_FLASH_PROTECT_RO_NOW) {
 			/* Enable physical protection for RO (0 means RO). */
-			flash_physical_protect_now(0);
+			crec_flash_physical_protect_now(0);
 		}
 
 		if ((prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT) &&
@@ -762,7 +762,7 @@ int flash_pre_init(void)
 			 * update to the write protect register and reboot so
 			 * it takes effect.
 			 */
-			flash_physical_protect_at_boot(
+			crec_flash_physical_protect_at_boot(
 				EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
@@ -776,7 +776,7 @@ int flash_pre_init(void)
 			 * to the check above.  One of them should be able to
 			 * go away.
 			 */
-			flash_protect_at_boot(
+			crec_flash_protect_at_boot(
 				prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
@@ -791,7 +791,8 @@ int flash_pre_init(void)
 		}
 	}
 
-	if ((flash_physical_get_valid_flags() & EC_FLASH_PROTECT_ALL_AT_BOOT) &&
+	if ((crec_flash_physical_get_valid_flags() &
+	    EC_FLASH_PROTECT_ALL_AT_BOOT) &&
 	    (!!(prot_flags & EC_FLASH_PROTECT_ALL_AT_BOOT) !=
 	     !!(prot_flags & EC_FLASH_PROTECT_ALL_NOW))) {
 		/*
@@ -806,7 +807,8 @@ int flash_pre_init(void)
 	}
 
 #ifdef CONFIG_FLASH_PROTECT_RW
-	if ((flash_physical_get_valid_flags() & EC_FLASH_PROTECT_RW_AT_BOOT) &&
+	if ((crec_flash_physical_get_valid_flags() &
+	    EC_FLASH_PROTECT_RW_AT_BOOT) &&
 	    (!!(prot_flags & EC_FLASH_PROTECT_RW_AT_BOOT) !=
 	     !!(prot_flags & EC_FLASH_PROTECT_RW_NOW))) {
 		/* RW_AT_BOOT and RW_NOW do not match. */
@@ -815,7 +817,8 @@ int flash_pre_init(void)
 #endif
 
 #ifdef CONFIG_ROLLBACK
-	if ((flash_physical_get_valid_flags() & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT) &&
+	if ((crec_flash_physical_get_valid_flags() &
+	    EC_FLASH_PROTECT_ROLLBACK_AT_BOOT) &&
 	    (!!(prot_flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT) !=
 	     !!(prot_flags & EC_FLASH_PROTECT_ROLLBACK_NOW))) {
 		/* ROLLBACK_AT_BOOT and ROLLBACK_NOW do not match. */

@@ -12,7 +12,7 @@
  *
  * Applies at-boot protection settings if necessary.
  */
-int flash_pre_init(void)
+int crec_flash_pre_init(void)
 {
 	return EC_SUCCESS;
 }

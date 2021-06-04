@@ -87,7 +87,7 @@ static int write_buffer(void)
 /*****************************************************************************/
 /* Physical layer APIs */
 
-int flash_physical_write(int offset, int size, const char *data)
+int crec_flash_physical_write(int offset, int size, const char *data)
 {
 	const uint32_t *data32 = (const uint32_t *)data;
 	int rv;
@@ -125,7 +125,7 @@ int flash_physical_write(int offset, int size, const char *data)
 	return EC_SUCCESS;
 }
 
-int flash_physical_erase(int offset, int size)
+int crec_flash_physical_erase(int offset, int size)
 {
 	if (all_protected)
 		return EC_ERROR_ACCESS_DENIED;
@@ -137,7 +137,7 @@ int flash_physical_erase(int offset, int size)
 		int t;
 
 		/* Do nothing if already erased */
-		if (flash_is_erased(offset, CONFIG_FLASH_ERASE_SIZE))
+		if (crec_flash_is_erased(offset, CONFIG_FLASH_ERASE_SIZE))
 			continue;
 
 		LM4_FLASH_FMA = offset;
@@ -168,12 +168,12 @@ int flash_physical_erase(int offset, int size)
 	return EC_SUCCESS;
 }
 
-int flash_physical_get_protect(int bank)
+int crec_flash_physical_get_protect(int bank)
 {
 	return (LM4_FLASH_FMPPE[F_BANK(bank)] & F_BIT(bank)) ? 0 : 1;
 }
 
-uint32_t flash_physical_get_protect_flags(void)
+uint32_t crec_flash_physical_get_protect_flags(void)
 {
 	uint32_t flags = 0;
 
@@ -188,7 +188,7 @@ uint32_t flash_physical_get_protect_flags(void)
 	return flags;
 }
 
-int flash_physical_protect_now(int all)
+int crec_flash_physical_protect_now(int all)
 {
 	if (all) {
 		/* Protect the entire flash */
@@ -202,14 +202,14 @@ int flash_physical_protect_now(int all)
 	return EC_SUCCESS;
 }
 
-uint32_t flash_physical_get_valid_flags(void)
+uint32_t crec_flash_physical_get_valid_flags(void)
 {
 	return EC_FLASH_PROTECT_RO_AT_BOOT |
 	       EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
-uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
+uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 {
 	uint32_t ret = 0;
 
@@ -232,10 +232,10 @@ uint32_t flash_physical_get_writable_flags(uint32_t cur_flags)
 /*****************************************************************************/
 /* High-level APIs */
 
-int flash_pre_init(void)
+int crec_flash_pre_init(void)
 {
 	uint32_t reset_flags = system_get_reset_flags();
-	uint32_t prot_flags = flash_get_protect();
+	uint32_t prot_flags = crec_flash_get_protect();
 	uint32_t unwanted_prot_flags = EC_FLASH_PROTECT_ALL_NOW |
 		EC_FLASH_PROTECT_ERROR_INCONSISTENT;
 
@@ -253,13 +253,13 @@ int flash_pre_init(void)
 		 */
 		if ((prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT) &&
 		    !(prot_flags & EC_FLASH_PROTECT_RO_NOW)) {
-			int rv = flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
+			int rv = crec_flash_set_protect(EC_FLASH_PROTECT_RO_NOW,
 						   EC_FLASH_PROTECT_RO_NOW);
 			if (rv)
 				return rv;
 
 			/* Re-read flags */
-			prot_flags = flash_get_protect();
+			prot_flags = crec_flash_get_protect();
 		}
 
 		/* Update all-now flag if all flash is protected */
