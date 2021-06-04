@@ -60,10 +60,21 @@ enum fw_config_tablet_mode_type {
 #define FW_CONFIG_KB_LAYOUT_OFFSET		12
 #define FW_CONFIG_KB_LAYOUT_MASK		GENMASK(13, 12)
 
+/*
+ * Hdmi (1 bit)
+ */
+enum fw_config_hdmi_type {
+	HDMI_ABSENT = 0,
+	HDMI_PRESENT = 1,
+};
+#define FW_CONFIG_HDMI_OFFSET			17
+#define FW_CONFIG_HDMI_MASK			GENMASK(17, 17)
+
 enum fw_config_db get_cbi_fw_config_db(void);
 enum fw_config_kblight_type get_cbi_fw_config_kblight(void);
 enum fw_config_tablet_mode_type get_cbi_fw_config_tablet_mode(void);
 enum fw_config_numeric_pad_type get_cbi_fw_config_numeric_pad(void);
+enum fw_config_hdmi_type get_cbi_fw_config_hdmi(void);
 
 int get_cbi_fw_config_keyboard(void);
 
