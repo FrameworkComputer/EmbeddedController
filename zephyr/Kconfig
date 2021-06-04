@@ -182,6 +182,15 @@ config PLATFORM_EC_CHIPSET_RESET_HOOK
 
 	  Then do_something() will be called just before the reset happens.
 
+config PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
+	bool "Enable chipset resume-init and suspend-complete hooks"
+	help
+	  Enables support for the HOOK_CHIPSET_RESUME_INIT and
+	  HOOK_CHIPSET_SUSPEND_COMPLETE hooks. These hooks are usually used to
+	  initialize/disable the SPI driver, which goes to sleep on suspend.
+	  Require to initialize it first such that it can receive a host resume
+	  event, that notifies the normal resume hook.
+
 config PLATFORM_EC_CONSOLE_CMD_HCDEBUG
 	bool "Console command: hcdebug"
 	default y
