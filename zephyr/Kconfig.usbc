@@ -853,6 +853,13 @@ config PLATFORM_EC_USB_MUX_IT5205
 	  cross-point mux for low-speed Side-Band-Use (SBU) pins. The mux can
 	  be controlled via I2C.
 
+config PLATFORM_EC_USB_MUX_PS8743
+	bool "Parade PS8743 USB-C Host Switch with redriver"
+	help
+	  This is a Parade USB 3.1 Gen 1 / DisplayPort (DP) Alt Mode
+	  High-Bit-Rate 2 (HBR2) redriver. It provides control of switching
+	  modes through either GPIO or I2C.
+
 endif
 
 config PLATFORM_EC_USBC_SS_MUX
