@@ -237,6 +237,13 @@ config PLATFORM_EC_CHARGER_BQ25720_VSYS_TH2_DV
 	  3.2v and 5.9v for 2S or higher batteries.  The valid range is
 	  3.2v - 3.9v for 1S and 3.2 - 9.5v for 2S or higher batteries.
 
+config PLATFORM_EC_CHARGER_MAINTAIN_VBAT
+	bool "Maintain VBAT voltage regardless of AC state"
+	help
+	  Leave the  charger VBAT configured to battery-requested voltage under
+	  all conditions, even when AC is not present. This may be necessary to
+	  work around quirks of certain charger chips, such as the BD9995X.
+
 config PLATFORM_EC_CHARGER_NARROW_VDC
 	bool
 	help
