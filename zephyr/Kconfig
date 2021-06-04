@@ -545,7 +545,6 @@ config PLATFORM_EC_SYSTEM_UNLOCKED
 
 config PLATFORM_EC_THROTTLE_AP
 	bool "CPU throttling"
-	default y if PLATFORM_EC_POWERSEQ
 	help
 	  Enable throttling the CPU based on the temperature sensors. When they
 	  detect that the CPU is getting too hot, the CPU is throttled to
