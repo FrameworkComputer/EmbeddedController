@@ -10,10 +10,7 @@
 
 #include "stdbool.h"
 #include "usb_mux.h"
-
-/* I2C interface */
-#define IT5205_I2C_ADDR1_FLAGS 0x48
-#define IT5205_I2C_ADDR2_FLAGS 0x58
+#include "usb_mux/it5205_public.h"
 
 /* Chip ID registers */
 #define IT5205_REG_CHIP_ID3 0x4
