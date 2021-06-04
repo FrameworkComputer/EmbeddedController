@@ -30,6 +30,12 @@
 		cros,rtc = &mtc;
 	};
 
+	ec-console {
+		compatible = "ec-console";
+
+		disabled = "hostcmd";
+	};
+
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
