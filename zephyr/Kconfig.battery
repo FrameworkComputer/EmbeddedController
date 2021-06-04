@@ -116,11 +116,12 @@ config PLATFORM_EC_CHARGER_ISL9237
 	bool "Use the ISL9237 charger"
 	depends on PLATFORM_EC_I2C
 	select PLATFORM_EC_CHARGER_NARROW_VDC
+	select PLATFORM_EC_CHARGER_OTG_SUPPORTED
 	help
 	  Enables a driver for the ISL9237 VCD Battery Charger. This is a
 	  digitally-configurable, buck-boost battery charger that supporting
 	  Narrow Voltage Direct Charging (NVDC). It supports an input voltage
-	  ange of 3.2-23.4V and output of 2.4-13.8V. It provides an I2C
+	  range of 3.2-23.4V and output of 2.4-13.8V. It provides an I2C
 	  interface for configuration an provides a USB On-The-Go (OTG)
 	  function for 2- and 3-cell battery applications.
 
@@ -128,11 +129,12 @@ config PLATFORM_EC_CHARGER_ISL9238
 	bool "Use the ISL9238 charger"
 	depends on PLATFORM_EC_I2C
 	select PLATFORM_EC_CHARGER_NARROW_VDC
+	select PLATFORM_EC_CHARGER_OTG_SUPPORTED
 	help
 	  Enables a driver for the ISL9238 VCD Battery Charger. This is a
 	  digitally-configurable, buck-boost battery charger that supporting
 	  Narrow Voltage Direct Charging (NVDC). It supports an input voltage
-	  ange of 3.2-23.4V and output of 2.4-18.3V. It provides an I2C
+	  range of 3.2-23.4V and output of 2.4-18.3V. It provides an I2C
 	  interface for configuration.
 
 config PLATFORM_EC_CHARGER_ISL9241
@@ -248,6 +250,24 @@ config PLATFORM_EC_CHARGER_NARROW_VDC
 
 	  This should be enabled by charger drivers which need it. It cannot
 	  be set otherwise, even in prj.conf
+
+config PLATFORM_EC_CHARGER_OTG_SUPPORTED
+	bool
+	help
+	  Indicates that the charger supports an OTG (On-The-Go) function,
+	  which allows supplying output power from the battery to a connected
+	  device.
+
+	  This should be enabled by charger drivers which support it. It cannot
+	  be set otherwise, even in prj.conf
+
+config PLATFORM_EC_CHARGER_OTG
+	bool "Allow supplying output power from the battery"
+	depends on PLATFORM_EC_CHARGER_OTG_SUPPORTED
+	help
+	  Enable charger's OTG functions, i.e. make it possible to supply
+	  output power from the battery. This option is available if the
+	  selected charger supports it.
 
 config PLATFORM_EC_CHARGER_PROFILE_OVERRIDE
 	bool "Override the charger profile"
