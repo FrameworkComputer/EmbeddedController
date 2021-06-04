@@ -7,6 +7,8 @@
 #ifndef __CROS_EC_DRIVER_TCPM_IT83XX_H
 #define __CROS_EC_DRIVER_TCPM_IT83XX_H
 
+#include "driver/tcpm/it8xxx2_pd_public.h"
+
 /* USBPD Controller */
 #if defined(CONFIG_USB_PD_TCPM_DRIVER_IT83XX)
 #define IT83XX_USBPD_BASE(port)   (0x00F03700 + (0x100 * (port)))
@@ -423,13 +425,8 @@ struct cc_para_t {
 };
 
 extern const struct usbpd_ctrl_t usbpd_ctrl_regs[];
-#if defined(CONFIG_USB_PD_TCPM_DRIVER_IT83XX)
-extern const struct tcpm_drv it83xx_tcpm_drv;
-#elif defined(CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2)
-extern const struct tcpm_drv it8xxx2_tcpm_drv;
 void it8xxx2_clear_tx_error_status(enum usbpd_port port);
 void it8xxx2_get_tx_error_status(enum usbpd_port port);
-#endif
 void it83xx_Rd_5_1K_only_for_hibernate(int port);
 void switch_plug_out_type(enum usbpd_port port);
 /*
