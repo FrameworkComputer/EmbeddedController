@@ -7,7 +7,7 @@
 #include "charge_manager.h"
 #include "console.h"
 #include "crc8.h"
-#include "driver/bc12/mt6360.h"
+#include "mt6360.h"
 #include "ec_commands.h"
 #include "hooks.h"
 #include "i2c.h"
