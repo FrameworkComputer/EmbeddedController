@@ -1051,6 +1051,21 @@ config PLATFORM_EC_BC12_DETECT_PI3USB9201
 	  starts BC1.2 detection to detect the attached host type. It provides
 	  an I2C interface to report detection results.
 
+config PLATFORM_EC_BC12_SINGLE_DRIVER
+	bool "Only support a single BC12 driver"
+	default y
+	help
+	  Enable this if the board only needs one BC12 driver. This includes
+	  the case that has multiple chips that use the same driver.
+
+	  If undefined, the board should define a bc12_ports[] array which
+	  associates each port to its bc12 driver:
+
+	     struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	        { .drv = &xxx_drv },
+	        { .drv = &yyy_drv },
+	     };
+
 endif  # PLATFORM_EC_USB_CHARGER
 
 endif  # PLATFORM_EC_USBC
