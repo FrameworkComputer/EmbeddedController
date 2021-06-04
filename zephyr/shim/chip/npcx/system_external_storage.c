@@ -65,7 +65,8 @@ void system_jump_to_booter(void)
  * TODO: Removing npcx9 when Rev.2 is available.
  */
 	/* Bypass for GMDA issue of ROM api utilities */
-#if defined(CHIP_FAMILY_NPCX5) || defined(CONFIG_WORKAROUND_FLASH_DOWNLOAD_API)
+#if defined(CONFIG_SOC_SERIES_NPCX5) || \
+	defined(CONFIG_PLATFORM_EC_WORKAROUND_FLASH_DOWNLOAD_API)
 	system_download_from_flash(
 		flash_offset,      /* The offset of the data in spi flash */
 		CONFIG_PROGRAM_MEMORY_BASE, /* RAM Addr of downloaded data */

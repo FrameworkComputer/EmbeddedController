@@ -58,6 +58,12 @@ void system_mpu_config(void);
 /* The utilities and variables depend on npcx chip family */
 #if defined(CONFIG_SOC_SERIES_NPCX5) || \
 	defined(CONFIG_PLATFORM_EC_WORKAROUND_FLASH_DOWNLOAD_API)
+/* Bypass for GMDA issue of ROM api utilities only on npcx5 series or if
+ * CONFIG_PLATFORM_EC_WORKAROUND_FLASH_DOWNLOAD_API is defined.
+ */
+void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
+				uint32_t size, uint32_t exeAddr);
+
 /* Begin address for hibernate utility; defined in linker script */
 extern unsigned int __flash_lpfw_start;
 
