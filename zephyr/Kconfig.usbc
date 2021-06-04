@@ -25,11 +25,10 @@ config PLATFORM_EC_USB_PORT_POWER_DUMB
 
 config PLATFORM_EC_USB_PORT_POWER_DUMB_CUSTOM_HOOK
 	bool "Simple control of power to USB-A ports"
-  depends on PLATFORM_EC_USB_PORT_POWER_DUMB
-	default n
+	depends on PLATFORM_EC_USB_PORT_POWER_DUMB
 	help
-    Enable this if your board does not want to use the default S3 hooks
-    from USB_PORT_POWER_DUMB.
+	  Enable this if your board does not want to use the default S3 hooks
+	  from USB_PORT_POWER_DUMB.
 
 menuconfig PLATFORM_EC_USBC
 	bool "USB Type-C"
