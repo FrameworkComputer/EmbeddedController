@@ -753,6 +753,14 @@ config PLATFORM_EC_USBC_PPC_SYV682X
 	  features. It provides protection against overcurrent, overvoltage,
 	  thermal shutdown, and undervoltage conditions.
 
+config PLATFORM_EC_USBC_PPC_SYV682C
+	bool "SYV682C Power Mux for USB PD (subset of SYV682X)"
+	depends on PLATFORM_EC_USBC_PPC_SYV682X
+	help
+	  The C version of this chip won't block I2C accessing to the CONTROL4
+	  rer (to on/off Vconn) when smart discahrge is enabled. This allows us
+	  to re-enable the smart discharge on boards using SYV682C.
+
 config PLATFORM_EC_USBC_PPC_SYV682X_NO_CC
 	bool "SYV682X does not pass through CC"
 	help
