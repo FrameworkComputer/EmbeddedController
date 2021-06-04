@@ -137,6 +137,21 @@ config PLATFORM_EC_CHARGER_ISL9238
 	  range of 3.2-23.4V and output of 2.4-18.3V. It provides an I2C
 	  interface for configuration.
 
+config PLATFORM_EC_CHARGER_ISL9238C
+	bool "Use the ISL9238 Rev C charger"
+	depends on PLATFORM_EC_I2C
+	select PLATFORM_EC_CHARGER_NARROW_VDC
+	select PLATFORM_EC_CHARGER_OTG_SUPPORTED
+	help
+	  Enable a driver for the ISL9238 Rev C VCD Battery Charger. This
+	  is a digitally-configurable, buck-boost battery charger that
+	  supporting Narrow Voltage Direct Charging (NVDC). It supports an input
+	  voltage range of 3.2-23.4V and output of 2.4-18.3V. It provides an I2C
+	  interface for configuration.
+
+	  This option is separate from PLATFORM_EC_CHARGER_ISL9238 since there
+	  is no way in software to distinguish between rev. A/B and rev. C.
+
 config PLATFORM_EC_CHARGER_ISL9241
 	bool "Use the ISL9241 charger"
 	depends on PLATFORM_EC_I2C
