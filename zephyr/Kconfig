@@ -669,4 +669,12 @@ config PLATFORM_EC_CCD_USBC_PORT_NUMBER
 	help
 	  USB port number of the CCD enabled USBC port.
 
+config PLATFORM_EC_I2C_PASSTHRU_RESTRICTED
+	bool "Restrict I2C PASSTHRU command"
+	depends on PLATFORM_EC_I2C
+	help
+	  Enables board-specific restrictions for the I2C PASSTHRU host command.
+	  Once enabled, board_allow_i2c_passthru function has to be implemented,
+	  which defines the allowed usage of the command.
+
 endif # PLATFORM_EC
