@@ -471,6 +471,26 @@ config PLATFORM_EC_USB_PD_USB32_DRD
 	  other end so that it can potentially take advantage of the additional
 	  features available.
 
+config PLATFORM_EC_USB_PD_DP_HPD_GPIO
+	bool "Hotplug Detect (HPD) is controlled by an EC GPIO"
+	help
+	  Enable this if the EC must send the Hotplug Detect (HPD) signal to
+	  the DisplayPort Graphics Processing Unit (GPU) via a GPIO. Otherwise
+	  this is sent by the display device.
+
+config PLATFORM_EC_USB_PD_DP_HPD_GPIO_CUSTOM
+	bool "Custom handling of HPD GPIO"
+	depends on PLATFORM_EC_USB_PD_DP_HPD_GPIO
+	help
+	  Enable this if the Hotplug Detect (HPD) GPIO level has to be handled
+	  by custom functions. In this case your board must implement a
+	  function to enable the feature for a port and another function to
+	  check the current state:
+
+	    void svdm_set_hpd_gpio(int port, int enable);
+
+	    int svdm_get_hpd_gpio(int port);
+
 choice "VBUS detection method"
 	prompt "Select the method to detect VBUS"
 
