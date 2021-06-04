@@ -843,6 +843,18 @@ menuconfig PLATFORM_EC_USB_MUX
 	help
 	  Enables support for USB muxes. These allow multiplexing
 
+if PLATFORM_EC_USB_MUX
+
+config PLATFORM_EC_USB_MUX_IT5205
+	bool "ITE IT5205 USB Type-C 3:2 Alternative mode passive mux"
+	help
+	  This is a USB Type-C 3:2 Alternative mode mux, supporting USB 3.1
+	  Gen 2 10Gbps as well as DisplayPort (DP1.4) at 8Gbps. It provides a
+	  cross-point mux for low-speed Side-Band-Use (SBU) pins. The mux can
+	  be controlled via I2C.
+
+endif
+
 config PLATFORM_EC_USBC_SS_MUX
 	bool "SuperSpeed mux"
 	default y
