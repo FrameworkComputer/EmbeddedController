@@ -19,9 +19,30 @@ const struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_2_CHARGER] = {
-		.name = "TEMP_CHARGER",
+	[ADC_TEMP_SENSOR_2_SSD] = {
+		.name = "TEMP_SSD",
 		.input_ch = NPCX_ADC_CH1,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_3_CHARGER] = {
+		.name = "TEMP_CHARGER",
+		.input_ch = NPCX_ADC_CH6,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_4_MEMORY] = {
+		.name = "TEMP_MEMORY",
+		.input_ch = NPCX_ADC_CH9,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_5_USBC] = {
+		.name = "TEMP_USBC",
+		.input_ch = NPCX_ADC_CH2,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
@@ -37,17 +58,35 @@ const struct temp_sensor_t temp_sensors[] = {
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_1_DDR_SOC
 	},
-	[TEMP_SENSOR_2_CHARGER] = {
+	[TEMP_SENSOR_2_SSD] = {
 		.name = "Charger",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2_CHARGER
+		.idx = ADC_TEMP_SENSOR_2_SSD
+	},
+	[TEMP_SENSOR_3_CHARGER] = {
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_3_CHARGER
+	},
+	[TEMP_SENSOR_4_MEMORY] = {
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_4_MEMORY
+	},
+	[TEMP_SENSOR_5_USBC] = {
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_5_USBC
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
- * TODO(b/180681346): update for Alder Lake/brya
+ * TODO(b/190459738): update for Alder Lake/primus
  *
  * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
  * 130 C.  However, sensor is located next to DDR, so we need to use the lower
@@ -66,7 +105,7 @@ static const struct ec_thermal_config thermal_cpu = {
 };
 
 /*
- * TODO(b/180681346): update for Alder Lake/brya
+ * TODO(b/190459738): update for Alder Lake/primus
  *
  * Inductor limits - used for both charger and PP3300 regulator
  *
@@ -90,9 +129,14 @@ static const struct ec_thermal_config thermal_inductor = {
 	.temp_fan_max = C_TO_K(55),
 };
 
-/* this should really be "const" */
+/*
+ * TODO(b/190459738): Thermal table need to be fine tuned.
+ */
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = thermal_cpu,
-	[TEMP_SENSOR_2_CHARGER]	= thermal_inductor,
+	[TEMP_SENSOR_2_SSD]	    = thermal_inductor,
+	[TEMP_SENSOR_3_CHARGER]	= thermal_inductor,
+	[TEMP_SENSOR_4_MEMORY]	= thermal_inductor,
+	[TEMP_SENSOR_5_USBC]	= thermal_inductor,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
