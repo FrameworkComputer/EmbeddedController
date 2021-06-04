@@ -6,6 +6,7 @@ local/
 *.swp
 tags
 TAGS
+/ctags
 cscope.*
 .tests-passed
 .failedboards/
