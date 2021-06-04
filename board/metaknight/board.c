@@ -807,16 +807,16 @@ static void adc_vol_key_press_check(void)
 	static uint8_t old_adc_key_state;
 	uint8_t adc_key_state_change;
 
-	if (volt > 2400 && volt < 2490) {
+	if (volt > 2400 && volt < 2540) {
 		/* volume-up is pressed */
 		new_adc_key_state = ADC_VOL_UP_MASK;
-	} else if (volt > 2600 && volt < 2690) {
+	} else if (volt > 2600 && volt < 2740) {
 		/* volume-down is pressed */
 		new_adc_key_state = ADC_VOL_DOWN_MASK;
-	} else if (volt < 2290) {
+	} else if (volt < 2300) {
 		/* both volumn-up and volume-down are pressed */
 		new_adc_key_state = ADC_VOL_UP_MASK | ADC_VOL_DOWN_MASK;
-	} else if (volt > 2700) {
+	} else if (volt > 2780) {
 		/* both volumn-up and volume-down are released */
 		new_adc_key_state = 0;
 	}
