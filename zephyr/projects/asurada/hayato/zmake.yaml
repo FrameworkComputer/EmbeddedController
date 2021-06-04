@@ -4,6 +4,7 @@
 
 board: asurada
 dts-overlays:
+  - battery.dts
   - gpio.dts
   - motionsense.dts
 supported-zephyr-versions:
