@@ -273,6 +273,19 @@ config PLATFORM_EC_DP_REDRIVER_TDP142
 	  Include a driver for the Texas Instruments TDP142 DisplayPort linear
 	  redriver chip.
 
+config PLATFORM_EC_EMULATED_SYSRQ
+	bool "Emulate sysrq events to AP"
+	help
+	  The magic SysRq key is a key combo which allows the user to perform
+	  various low-level commands regardless of the system's state.
+
+	  See here for the key combos:
+
+	  https://www.kernel.org/doc/html/latest/admin-guide/sysrq.html
+
+	  This option enables support for sending emulated SysRq events to AP
+	  (on designs with a keyboard, SysRq is passed as normal key presses).
+
 menuconfig PLATFORM_EC_ESPI
 	bool "eSPI"
 	depends on ESPI && AP

@@ -248,6 +248,11 @@
 #define CONFIG_BRINGUP
 #endif
 
+#undef CONFIG_EMULATED_SYSRQ
+#ifdef CONFIG_PLATFORM_EC_EMULATED_SYSRQ
+#define CONFIG_EMULATED_SYSRQ
+#endif
+
 /* eSPI configuration */
 #ifdef CONFIG_PLATFORM_EC_ESPI
 
