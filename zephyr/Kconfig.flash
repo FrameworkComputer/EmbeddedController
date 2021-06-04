@@ -26,7 +26,6 @@ config PLATFORM_EC_CONSOLE_CMD_CHARGEN
 
 config PLATFORM_EC_CONSOLE_CMD_FLASH
 	bool "Console commands: flasherase, flashread, flashwrite"
-	default y
 	help
 	  Enables various console commands:
 
