@@ -191,6 +191,14 @@ void motion_interrupt(enum gpio_signal signal)
 	}
 }
 
+static void board_chipset_startup(void)
+{
+	if (get_board_version() > 1)
+		tmp112_init();
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
+	     HOOK_PRIO_DEFAULT);
+
 int board_get_soc_temp(int idx, int *temp_k)
 {
 	uint32_t board_version = get_board_version();
