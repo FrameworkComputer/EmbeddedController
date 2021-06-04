@@ -44,4 +44,11 @@ extern const struct tmp112_sensor_t tmp112_sensors[];
  */
 int tmp112_get_val(int idx, int *temp_ptr);
 
+/**
+ * Init the sensors.  Note, this will run automatically on HOOK_INIT, but is
+ * made available for boards which may not always power the sensor in all
+ * states.
+ */
+void tmp112_init(void);
+
 #endif /* __CROS_EC_TMP112_H */

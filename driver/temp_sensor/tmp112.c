@@ -91,7 +91,7 @@ static void tmp112_poll(void)
 }
 DECLARE_HOOK(HOOK_SECOND, tmp112_poll, HOOK_PRIO_TEMP_SENSOR);
 
-static void tmp112_init(void)
+void tmp112_init(void)
 {
 	int tmp, s, rv;
 	int set_mask, clr_mask;
