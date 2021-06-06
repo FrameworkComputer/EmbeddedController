@@ -7,6 +7,8 @@
 
 #include "common.h"
 #include "console.h"
+#include "driver/tcpm/tcpci.h"
+#include "driver/tcpm/ps8xxx.h"
 #include "sn5s330.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -300,7 +302,36 @@ int baseboard_usbc_init(int port)
 	return rv;
 }
 
-#if defined(GPIO_USBC_UF_ATTACHED_SRC) && defined(SECTION_IS_RW)
+#ifdef SECTION_IS_RW
+int c1_ps8805_is_vbus_present(int port)
+{
+	int vbus;
+
+	vbus = tcpm_check_vbus_level(port, VBUS_PRESENT);
+
+	return vbus;
+}
+
+int c1_ps8805_is_sourcing_vbus(int port)
+{
+	int rv;
+	int level;
+
+	rv = ps8805_gpio_get_level(port, PS8805_GPIO_1, &level);
+	if (rv)
+		return 0;
+
+	return level;
+}
+
+
+int c1_ps8805_vbus_source_enable(int port, int enable)
+{
+
+	return ps8805_gpio_set_level(port, PS8805_GPIO_1, enable);
+}
+
+#ifdef GPIO_USBC_UF_ATTACHED_SRC
 static int ppc_ocp_count;
 
 static void baseboard_usb3_manage_vbus(void)
@@ -438,5 +469,6 @@ void baseboard_usbc_usb3_irq(void)
 	hook_call_deferred(&baseboard_usbc_usb3_handle_interrupt_data, 0);
 }
 
-#endif /* defined(GPIO_USBC_UF_ATTACHED_SRC) && defined(SECTION_IS_RW) */
+#endif /* defined(GPIO_USBC_UF_ATTACHED_SRC) */
+#endif /* defined(SECTION_IS_RW) */
 

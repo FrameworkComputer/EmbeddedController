@@ -43,6 +43,14 @@
 #endif
 
 #ifdef SECTION_IS_RW
+/*
+ * C1 port on gingerbread does not have a PPC. However, C0 port does have a PPC
+ * and therefore PPC related config options are defined. Defining a null driver
+ * here so that functions from usbc_ppc.c will correctly dereference to a NULL
+ * function pointer.
+ */
+const struct ppc_drv board_ppc_null_drv = {};
+
 static int pd_dual_role_init[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	PD_DRP_TOGGLE_ON,
 	PD_DRP_FORCE_SOURCE,
@@ -187,13 +195,8 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
 		.drv = &sn5s330_drv
 	},
-	/*
-	 * TODO(b/159330563): The stub driver has not yet landed (and may not
-	 * land) in TOT. Need to comment this out for now, until the correct
-	 * solution for asymmetrical port hardware exists.
-	 */
 	[USB_PD_PORT_DP] = {
-		/* .drv = &ppc_stub_drv */
+		.drv = &board_ppc_null_drv
 	},
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
