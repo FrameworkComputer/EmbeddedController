@@ -9,6 +9,7 @@
 #include "common.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accelgyro_bmi160.h"
+#include "driver/retimer/ps8811.h"
 #include "driver/retimer/ps8818.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -90,6 +91,31 @@ static void board_init(void)
 	/* TODO */
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+__override enum ec_error_list
+board_a1_ps8811_retimer_init(const struct usb_mux *me)
+{
+	/* Set channel A output swing */
+	RETURN_ERROR(ps8811_i2c_field_update(
+		me, PS8811_REG_PAGE1, PS8811_REG1_USB_CHAN_A_SWING,
+		PS8811_CHAN_A_SWING_MASK, 0x2 << PS8811_CHAN_A_SWING_SHIFT));
+
+	/* Set channel B output swing */
+	RETURN_ERROR(ps8811_i2c_field_update(
+		me, PS8811_REG_PAGE1, PS8811_REG1_USB_CHAN_B_SWING,
+		PS8811_CHAN_B_SWING_MASK, 0x2 << PS8811_CHAN_B_SWING_SHIFT));
+
+	/* Set channel B de-emphasis to -6dB and pre-shoot to 3 dB */
+	RETURN_ERROR(ps8811_i2c_field_update(
+		me, PS8811_REG_PAGE1, PS8811_REG1_USB_CHAN_B_DE_PS_LSB,
+		PS8811_CHAN_B_DE_PS_LSB_MASK, PS8811_CHAN_B_DE_6_PS_3_LSB));
+
+	RETURN_ERROR(ps8811_i2c_field_update(
+		me, PS8811_REG_PAGE1, PS8811_REG1_USB_CHAN_B_DE_PS_MSB,
+		PS8811_CHAN_B_DE_PS_MSB_MASK, PS8811_CHAN_B_DE_6_PS_3_MSB));
+
+	return EC_SUCCESS;
+}
 
 /*
  * PS8818 set mux board tuning.
