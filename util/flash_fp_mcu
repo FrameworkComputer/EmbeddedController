@@ -494,6 +494,27 @@ config_volteer() {
   readonly GPIO_PWREN=237
 }
 
+config_brya() {
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev0.0"
+
+  # See kernel/v5.10/drivers/pinctrl/intel/pinctrl-tigerlake.c
+  # for pin name and pin number.
+  # Examine `cat /sys/kernel/debug/pinctrl/INTC1055:00/gpio-ranges` on a
+  # brya device to determine gpio number from pin number.
+  # For example: GPP_D1 is ISH_GP_1 which can be queried from EDS
+  # the pin number is 100 from the pinctrl-tigerlake.c.
+  # From the gpio-ranges, the gpio value is 312 + (100-99) = 313
+
+  readonly GPIO_CHIP="gpiochip152"
+  # FPMCU RST_ODL is on GPP_D1 = 312 + (100 - 99) = 313
+  readonly GPIO_NRST=313
+  # FPMCU BOOT0 is on GPP_D0 = 312 + (99 - 99) = 312
+  readonly GPIO_BOOT0=312
+  # FP_PWR_EN is on GPP_D2 = 312 + (101 - 99) = 314
+  readonly GPIO_PWREN=314
+}
+
 config_zork() {
   readonly TRANSPORT="UART"
   readonly DEVICE="/dev/ttyS1"
