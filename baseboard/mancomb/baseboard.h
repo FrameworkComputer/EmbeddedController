@@ -31,7 +31,7 @@
 #define GPIO_PACKET_MODE_EN	GPIO_EC_GSC_PACKET_MODE
 
 /* CBI Config */
-#define CONFIG_CROS_BOARD_INFO
+#define CONFIG_CBI_EEPROM
 #define CONFIG_BOARD_VERSION_CBI
 
 /* Undefs because Box */

@@ -9,7 +9,7 @@ before enabling CBI.
 Add the following config options to `baseboard.h` or `board.h`.
 
 -   `CONFIG_BOARD_VERSION_CBI`
--   `CONFIG_CROS_BOARD_INFO`
+-   `CONFIG_CBI_EEPROM`
 
 ## Feature Parameters
 

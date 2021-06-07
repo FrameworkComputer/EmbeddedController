@@ -18,7 +18,7 @@ static enum ec_status hc_locate_chip(struct host_cmd_handler_args *args)
 
 	switch (params->type) {
 	case EC_CHIP_TYPE_CBI_EEPROM:
-#ifdef CONFIG_CROS_BOARD_INFO
+#ifdef CONFIG_CBI_EEPROM
 		if (params->index >= 1)
 			return EC_RES_OVERFLOW;
 		resp->bus_type = EC_BUS_TYPE_I2C;
@@ -27,7 +27,7 @@ static enum ec_status hc_locate_chip(struct host_cmd_handler_args *args)
 #else
 		/* Lookup type is supported, but not present on system. */
 		return EC_RES_UNAVAILABLE;
-#endif /* CONFIG_CROS_BOARD_INFO */
+#endif /* CONFIG_CBI_EEPROM */
 		break;
 	case EC_CHIP_TYPE_TCPC:
 #if defined(CONFIG_USB_POWER_DELIVERY) && defined(CONFIG_USB_PD_PORT_MAX_COUNT) && !defined(CONFIG_USB_PD_TCPC)

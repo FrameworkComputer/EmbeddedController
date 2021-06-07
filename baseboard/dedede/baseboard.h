@@ -141,7 +141,7 @@
 #define CONFIG_WP_ACTIVE_HIGH
 
 /* CBI */
-#define CONFIG_CROS_BOARD_INFO
+#define CONFIG_CBI_EEPROM
 #define CONFIG_BOARD_VERSION_CBI
 
 /* Charger */

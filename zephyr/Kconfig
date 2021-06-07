@@ -152,7 +152,7 @@ config PLATFORM_EC_BYPASS_CBI_EEPROM_WP_CHECK
 	  When defined, ectool can be used to reprogram all CBI fields,
 	  regardless of the state of the hardware write protect.
 
-config PLATFORM_EC_CBI
+config PLATFORM_EC_CBI_EEPROM
 	bool "CBI EEPROM support"
 	depends on PLATFORM_EC_I2C
 	help

@@ -53,7 +53,7 @@
 #define CONFIG_VOLUME_BUTTONS
 
 /* CBI EEPROM for board version and SKU ID */
-#define CONFIG_CROS_BOARD_INFO
+#define CONFIG_CBI_EEPROM
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CRC8
 

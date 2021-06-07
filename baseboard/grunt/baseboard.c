@@ -724,7 +724,7 @@ static void cbi_init(void)
 	 * Use board version and SKU ID from CBI EEPROM if the board supports
 	 * it and the SKU ID set via resistors + ADC is not valid.
 	 */
-#ifdef CONFIG_CROS_BOARD_INFO
+#ifdef CONFIG_CBI_EEPROM
 	if (sku_id == 0 || sku_id == 0xff) {
 		uint32_t val;
 

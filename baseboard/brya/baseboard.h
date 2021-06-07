@@ -24,7 +24,7 @@
 
 /* EC Defines */
 #define CONFIG_LTO
-#define CONFIG_CROS_BOARD_INFO
+#define CONFIG_CBI_EEPROM
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CRC8
 #define CONFIG_FPU
