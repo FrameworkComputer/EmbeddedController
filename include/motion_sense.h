@@ -78,22 +78,22 @@ enum sensor_config {
 #define BASE_RANGE(_range) ((_range) & ~ROUND_UP_FLAG)
 
 /*
- * I2C/SPI Slave Address encoding for motion sensors
+ * I2C/SPI Address flags encoding for motion sensors
  * - The generic defines, I2C_ADDR_MASK and I2C_IS_BIG_ENDIAN_MASK
  *   are defined in i2c.h.
  * - Motion sensors support some sensors on the SPI bus, so this
  *   overloads the I2C Address to use a single bit to indicate
  *   it is a SPI address instead of an I2C.  Since SPI does not
- *   use slave addressing, it is up to the driver to use this
+ *   use peripheral addressing, it is up to the driver to use this
  *   field as it sees fit
  */
-#define SLAVE_MK_I2C_ADDR_FLAGS(addr)	(addr)
-#define SLAVE_MK_SPI_ADDR_FLAGS(addr)	((addr) | I2C_FLAG_ADDR_IS_SPI)
+#define ACCEL_MK_I2C_ADDR_FLAGS(addr)	(addr)
+#define ACCEL_MK_SPI_ADDR_FLAGS(addr)	((addr) | I2C_FLAG_ADDR_IS_SPI)
 
-#define SLAVE_GET_I2C_ADDR(addr_flags)	(I2C_STRIP_FLAGS(addr_flags))
-#define SLAVE_GET_SPI_ADDR(addr_flags)	((addr_flags) & I2C_ADDR_MASK)
+#define ACCEL_GET_I2C_ADDR(addr_flags)	(I2C_STRIP_FLAGS(addr_flags))
+#define ACCEL_GET_SPI_ADDR(addr_flags)	((addr_flags) & I2C_ADDR_MASK)
 
-#define SLAVE_IS_SPI(addr_flags)	((addr_flags) & I2C_FLAG_ADDR_IS_SPI)
+#define ACCEL_ADDR_IS_SPI(addr_flags)	((addr_flags) & I2C_FLAG_ADDR_IS_SPI)
 
 /*
  * Define the frequency to use in max_frequency based on the maximal frequency
@@ -171,7 +171,7 @@ struct motion_sensor_t {
 
 	/* i2c port */
 	uint8_t port;
-	/* i2c address or SPI slave logic GPIO. */
+	/* i2c address or SPI port */
 	uint16_t i2c_spi_addr_flags;
 
 	/*

@@ -168,7 +168,7 @@ int bmi_read8(const int port, const uint16_t i2c_spi_addr_flags,
 	{
 		uint8_t val;
 
-		rv = bmi_spi_raw_read(SLAVE_GET_SPI_ADDR(i2c_spi_addr_flags),
+		rv = bmi_spi_raw_read(ACCEL_GET_SPI_ADDR(i2c_spi_addr_flags),
 				      reg, &val, 1);
 		if (rv == EC_SUCCESS)
 			*data_ptr = val;
@@ -192,7 +192,7 @@ int bmi_write8(const int port, const uint16_t i2c_spi_addr_flags,
 		uint8_t cmd[2] = { reg, data };
 
 		rv = spi_transaction(
-			&spi_devices[SLAVE_GET_SPI_ADDR(i2c_spi_addr_flags)],
+			&spi_devices[ACCEL_GET_SPI_ADDR(i2c_spi_addr_flags)],
 			cmd, 2, NULL, 0);
 	}
 #else
@@ -216,7 +216,7 @@ int bmi_read16(const int port, const uint16_t i2c_spi_addr_flags,
 	       const uint8_t reg, int *data_ptr)
 {
 #ifdef CONFIG_ACCELGYRO_BMI_COMM_SPI
-	return bmi_spi_raw_read(SLAVE_GET_SPI_ADDR(i2c_spi_addr_flags), reg,
+	return bmi_spi_raw_read(ACCEL_GET_SPI_ADDR(i2c_spi_addr_flags), reg,
 				(uint8_t *)data_ptr, 2);
 #else
 	return i2c_read16(port, i2c_spi_addr_flags, reg, data_ptr);
@@ -253,7 +253,7 @@ int bmi_read32(const int port, const uint16_t i2c_spi_addr_flags,
 	       const uint8_t reg, int *data_ptr)
 {
 #ifdef CONFIG_ACCELGYRO_BMI_COMM_SPI
-	return bmi_spi_raw_read(SLAVE_GET_SPI_ADDR(i2c_spi_addr_flags), reg,
+	return bmi_spi_raw_read(ACCEL_GET_SPI_ADDR(i2c_spi_addr_flags), reg,
 				(uint8_t *)data_ptr, 4);
 #else
 	return i2c_read32(port, i2c_spi_addr_flags, reg, data_ptr);
@@ -267,7 +267,7 @@ int bmi_read_n(const int port, const uint16_t i2c_spi_addr_flags,
 	       const uint8_t reg, uint8_t *data_ptr, const int len)
 {
 #ifdef CONFIG_ACCELGYRO_BMI_COMM_SPI
-	return bmi_spi_raw_read(SLAVE_GET_SPI_ADDR(i2c_spi_addr_flags), reg,
+	return bmi_spi_raw_read(ACCEL_GET_SPI_ADDR(i2c_spi_addr_flags), reg,
 				data_ptr, len);
 #else
 	return i2c_read_block(port, i2c_spi_addr_flags, reg, data_ptr, len);

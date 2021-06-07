@@ -55,7 +55,7 @@ static int icm_bank_sel(const struct motion_sensor_t *s, const int reg)
 		return EC_SUCCESS;
 
 #ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
-	ret = icm_spi_raw_write(SLAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags),
+	ret = icm_spi_raw_write(ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags),
 				ICM426XX_REG_BANK_SEL, &bank, 1);
 #else
 	ret = i2c_write8(s->port, s->i2c_spi_addr_flags, ICM426XX_REG_BANK_SEL,
@@ -85,7 +85,7 @@ int icm_read8(const struct motion_sensor_t *s, const int reg, int *data_ptr)
 		uint8_t val;
 
 		ret = icm_spi_raw_read(
-			SLAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, &val,
+			ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, &val,
 			sizeof(val));
 		if (ret == EC_SUCCESS)
 			*data_ptr = val;
@@ -114,7 +114,7 @@ int icm_write8(const struct motion_sensor_t *s, const int reg, int data)
 		uint8_t val = data;
 
 		ret = icm_spi_raw_write(
-			SLAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, &val,
+			ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, &val,
 			sizeof(val));
 	}
 #else
@@ -141,7 +141,7 @@ int icm_read16(const struct motion_sensor_t *s, const int reg, int *data_ptr)
 		uint8_t val[2];
 
 		ret = icm_spi_raw_read(
-			SLAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, val,
+			ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, val,
 			sizeof(val));
 		if (ret == EC_SUCCESS) {
 			if (I2C_IS_BIG_ENDIAN(s->i2c_spi_addr_flags))
@@ -182,7 +182,7 @@ int icm_write16(const struct motion_sensor_t *s, const int reg, int data)
 			val[1] = (data >> 8) & 0xFF;
 		}
 		ret = icm_spi_raw_write(
-			SLAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, val,
+			ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, val,
 			sizeof(val));
 	}
 #else
@@ -206,7 +206,7 @@ int icm_read_n(const struct motion_sensor_t *s, const int reg,
 		return ret;
 
 #ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
-	ret = icm_spi_raw_read(SLAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr,
+	ret = icm_spi_raw_read(ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr,
 			       data_ptr, len);
 #else
 	ret = i2c_read_block(s->port, s->i2c_spi_addr_flags, addr, data_ptr,
@@ -232,7 +232,7 @@ int icm_field_update8(const struct motion_sensor_t *s, const int reg,
 		uint8_t val;
 
 		ret = icm_spi_raw_read(
-			SLAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, &val,
+			ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, &val,
 			sizeof(val));
 		if (ret != EC_SUCCESS)
 			return ret;
@@ -240,7 +240,7 @@ int icm_field_update8(const struct motion_sensor_t *s, const int reg,
 		val = (val & (~field_mask)) | set_value;
 
 		ret = icm_spi_raw_write(
-			SLAVE_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, &val,
+			ACCEL_GET_SPI_ADDR(s->i2c_spi_addr_flags), addr, &val,
 			sizeof(val));
 	}
 #else
