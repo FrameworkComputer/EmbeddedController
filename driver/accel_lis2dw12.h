@@ -11,20 +11,8 @@
 #ifndef __CROS_EC_ACCEL_LIS2DW12_H
 #define __CROS_EC_ACCEL_LIS2DW12_H
 
-#include "driver/stm_mems_common.h"
-
-/*
- * 7-bit address is 011000Xb. Where 'X' is determined
- * by the voltage on the ADDR pin.
- */
-#define LIS2DW12_ADDR0			0x18
-#define LIS2DW12_ADDR1			0x19
-
-#define LIS2DWL_ADDR0_FLAGS		0x18
-#define LIS2DWL_ADDR1_FLAGS		0x19
-
-#define LIS2DW12_EN_BIT			0x01
-#define LIS2DW12_DIS_BIT		0x00
+#include "driver/accel_lis2dw12_public.h"
+#include "stm_mems_common.h"
 
 /* Who am I. */
 #define LIS2DW12_WHO_AM_I_REG		0x0f
@@ -174,12 +162,6 @@ enum lis2dw12_odr {
 	LIS2DW12_ODR_LIST_NUM
 };
 
-/* Absolute Acc rate. */
-#define LIS2DW12_ODR_MIN_VAL		12500
-#define LIS2DW12_ODR_MAX_VAL		\
-	MOTION_MAX_SENSOR_FREQUENCY(1600000, LIS2DW12_ODR_MIN_VAL)
-
-
 /* Full scale range registers. */
 #define LIS2DW12_FS_ADDR		LIS2DW12_CTRL6_ADDR
 #define LIS2DW12_FS_MASK		0x30
@@ -223,9 +205,5 @@ enum lis2dw12_fs {
  * TODO: Support all "LP Power Mode" (res. 12/14 bits).
  */
 #define LIS2DW12_RESOLUTION		14
-
-extern const struct accelgyro_drv lis2dw12_drv;
-
-void lis2dw12_interrupt(enum gpio_signal signal);
 
 #endif /* __CROS_EC_ACCEL_LIS2DW12_H */

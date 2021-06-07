@@ -10,7 +10,7 @@
 #include "accelgyro.h"
 #include "common.h"
 #include "console.h"
-#include "driver/accel_lis2dw12.h"
+#include "accel_lis2dw12.h"
 #include "hooks.h"
 #include "hwtimer.h"
 #include "math_util.h"
@@ -26,6 +26,23 @@
  * Enable interrupts and FIFO only when the accelerometer is the main sensor.
  */
 #define LIS2DW12_ENABLE_FIFO
+#endif
+
+#if defined(CONFIG_ZEPHYR) && defined(CONFIG_ACCEL_INTERRUPTS)
+/* Get the motion sensor ID of the LIS2DW12 sensor that generates the
+ * interrupt. The interrupt is converted to the event and transferred to
+ * motion sense task that actually handles the interrupt.
+ *
+ * Here we use an alias (lis2dw12_int) to get the motion sensor ID. This alias
+ * MUST be defined for this driver to work.
+ * aliases {
+ *   lis2dw12-int = &lid_accel;
+ * };
+ */
+#if DT_NODE_EXISTS(DT_ALIAS(lis2dw12_int))
+#define CONFIG_ACCEL_LIS2DW12_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(lis2dw12_int)))
+#endif
 #endif
 
 STATIC_IF(LIS2DW12_ENABLE_FIFO) volatile uint32_t last_interrupt_timestamp;

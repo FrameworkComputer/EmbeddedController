@@ -32,6 +32,21 @@ config PLATFORM_EC_ACCEL_KX022
 	  The driver supports Kionix's KX022 triaxial low-g acceleration sensor.
 	  It allows measurements of acceleration in three perpendicular axes.
 
+config PLATFORM_EC_ACCEL_LIS2DW12
+	bool "LIS2DW12 Accelerometer Driver"
+	imply PLATFORM_EC_STM_MEMS_COMMON
+	help
+	  The driver supports ST's LIS2DW12 3D digital accelerometer sensor.
+	  It allows measurements of acceleration in three perpendicular axes.
+
+config PLATFORM_EC_ACCEL_LIS2DW12_AS_BASE
+	bool "LIS2DW12 Interrupt force mode"
+	depends on PLATFORM_EC_ACCEL_LIS2DW12
+	help
+	  The LIS2DW driver supports fifo and interrupt, but letting lid accel
+	  sensor work at polling mode is a common selection in current usage
+	  model. This option will select interrupt (foced mode).
+
 config PLATFORM_EC_ACCELGYRO_BMI160
 	bool "BMI160 Accelgyrometer Driver"
 	select PLATFORM_EC_ACCELGYRO_BMI
@@ -60,6 +75,11 @@ config PLATFORM_EC_ACCELGYRO_ICM426XX
 	help
 	  The driver supports ICM425XX which provides both accelerometer and
 	  gyroscope readings.
+
+config PLATFORM_EC_STM_MEMS_COMMON
+	bool "STM MEMS Common Driver"
+	help
+	  The driver supports common STM MEMS devices
 
 rsource "Kconfig.accelgyro_bmi"
 rsource "Kconfig.accelgyro_icm"
