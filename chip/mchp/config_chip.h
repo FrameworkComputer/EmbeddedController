@@ -93,10 +93,11 @@
 #define CONFIG_STACK_SIZE		2048
 
 /* non-standard task stack sizes */
-/* temporarily expanded for debug */
-#define IDLE_TASK_STACK_SIZE		1024	/* 512 */
-#define LARGER_TASK_STACK_SIZE		1024	/* 640 */
-#define VENTI_TASK_STACK_SIZE		1024	/* 768 */
+#define IDLE_TASK_STACK_SIZE		672
+#define LARGER_TASK_STACK_SIZE		800
+#define VENTI_TASK_STACK_SIZE		928
+#define ULTRA_TASK_STACK_SIZE		1056
+#define TRENTA_TASK_STACK_SIZE		1184
 
 #define CHARGER_TASK_STACK_SIZE		1024	/* 640 */
 #define HOOKS_TASK_STACK_SIZE		1024	/* 640 */
@@ -111,7 +112,7 @@
 #define PD_TASK_STACK_SIZE		2048
 
 /* Default task stack size */
-#define TASK_STACK_SIZE			1024	/* 512 */
+#define TASK_STACK_SIZE			672
 
 /************************************************************************/
 /* Define our flash layout. */
