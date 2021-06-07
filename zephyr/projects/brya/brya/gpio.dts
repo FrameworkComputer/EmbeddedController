@@ -47,6 +47,11 @@
 			enum-name = "GPIO_AC_PRESENT";
 			label = "ACOK_OD";
 		};
+		pch_wake_odl {
+			gpios = <&gpiob 0 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_EC_PCH_WAKE_ODL";
+			label = "EC_PCH_WAKE_R_ODL";
+		};
 	};
 
 	hibernate-wake-pins {
