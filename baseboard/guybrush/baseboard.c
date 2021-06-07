@@ -867,9 +867,8 @@ static int baseboard_a1_ps8811_retimer_init(const struct usb_mux *me)
 	do {
 		int val;
 
-		rv = i2c_read8(me->i2c_port,
-			       me->i2c_addr_flags + PS8811_REG_PAGE1,
-			       PS8811_REG1_USB_BEQ_LEVEL, &val);
+		rv = ps8811_i2c_read(me, PS8811_REG_PAGE1,
+				     PS8811_REG1_USB_BEQ_LEVEL, &val);
 	} while (rv && --tries);
 
 	if (rv) {
