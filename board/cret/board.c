@@ -153,15 +153,19 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 /* Enable HDMI any time the SoC is on */
 static void hdmi_enable(void)
 {
-	gpio_set_level(GPIO_EC_HDMI_EN_ODL, 0);
-	gpio_set_level(GPIO_HDMI_PP3300_EN, 1);
+	if (get_cbi_fw_config_hdmi() == HDMI_PRESENT) {
+		gpio_set_level(GPIO_EC_HDMI_EN_ODL, 0);
+		gpio_set_level(GPIO_HDMI_PP3300_EN, 1);
+	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, hdmi_enable, HOOK_PRIO_DEFAULT);
 
 static void hdmi_disable(void)
 {
-	gpio_set_level(GPIO_EC_HDMI_EN_ODL, 1);
-	gpio_set_level(GPIO_HDMI_PP3300_EN, 0);
+	if (get_cbi_fw_config_hdmi() == HDMI_PRESENT) {
+		gpio_set_level(GPIO_EC_HDMI_EN_ODL, 1);
+		gpio_set_level(GPIO_HDMI_PP3300_EN, 0);
+	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, hdmi_disable, HOOK_PRIO_DEFAULT);
 
