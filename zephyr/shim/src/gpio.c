@@ -294,6 +294,9 @@ static int init_gpios(const struct device *unused)
 		const enum gpio_signal signal = gpio_interrupts[i].signal;
 		int rv;
 
+		if (signal == GPIO_UNIMPLEMENTED)
+			continue;
+
 		gpio_init_callback(&gpio_interrupts[i].callback,
 				   gpio_handler_shim, BIT(configs[signal].pin));
 		rv = gpio_add_callback(data[signal].dev,
