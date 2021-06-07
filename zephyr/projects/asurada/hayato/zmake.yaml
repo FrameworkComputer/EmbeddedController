@@ -7,6 +7,7 @@ dts-overlays:
   - battery.dts
   - gpio.dts
   - motionsense.dts
+  - pwm.dts
 supported-zephyr-versions:
   - v2.5
 toolchain: coreboot-sdk
