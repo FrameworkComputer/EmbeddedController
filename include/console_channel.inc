@@ -56,6 +56,9 @@ CONSOLE_CHANNEL(CC_KEYSCAN,      "keyscan")
 #ifdef CONFIG_LID_ANGLE_UPDATE
 CONSOLE_CHANNEL(CC_LIDANGLE,     "lidangle")
 #endif
+#ifdef HAS_TASK_LOGOLED
+CONSOLE_CHANNEL(CC_LOGOLED,      "logoled")
+#endif
 #ifdef HAS_TASK_LIGHTBAR
 CONSOLE_CHANNEL(CC_LIGHTBAR,     "lightbar")
 #endif

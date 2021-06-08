@@ -10,7 +10,7 @@
 #include "pwm_chip.h"
 
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED2] = {
+	[PWM_CH_LED2_WHITE] = {
 		.channel = 0,
 		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
 		.freq = 4800,
@@ -20,7 +20,7 @@ const struct pwm_t pwm_channels[] = {
 		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
 		.freq = 4800,
 	},
-	[PWM_CH_LED1] = {
+	[PWM_CH_LED1_AMBER] = {
 		.channel = 2,
 		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
 		.freq = 4800,
@@ -52,16 +52,16 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 static void board_pwm_init(void)
 {
 	/*
-	 * Turn on all the LED at 50%.
+	 * Turn on LOGO led and turn off battery/power led
 	 */
-	pwm_enable(PWM_CH_LED1, 1);
-	pwm_set_duty(PWM_CH_LED1, 50);
-	pwm_enable(PWM_CH_LED2, 1);
-	pwm_set_duty(PWM_CH_LED2, 50);
+	pwm_enable(PWM_CH_LED1_AMBER, 1);
+	pwm_set_duty(PWM_CH_LED1_AMBER, 0);
+	pwm_enable(PWM_CH_LED2_WHITE, 1);
+	pwm_set_duty(PWM_CH_LED2_WHITE, 0);
 	pwm_enable(PWM_CH_TKP_A_LED_N, 1);
-	pwm_set_duty(PWM_CH_TKP_A_LED_N, 50);
+	pwm_set_duty(PWM_CH_TKP_A_LED_N, 100);
 	pwm_enable(PWM_CH_LED4, 1);
-	pwm_set_duty(PWM_CH_LED4, 50);
+	pwm_set_duty(PWM_CH_LED4, 0);
 
 	pwm_enable(PWM_CH_KBLIGHT, 1);
 	/* TODO(b/190518315)

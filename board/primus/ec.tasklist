@@ -25,4 +25,5 @@
 	TASK_ALWAYS(PD_C0, pd_task, NULL, VENTI_TASK_STACK_SIZE) \
 	TASK_ALWAYS(PD_C1, pd_task, NULL, VENTI_TASK_STACK_SIZE) \
 	TASK_ALWAYS(PD_INT_C0, pd_interrupt_handler_task, 0, TASK_STACK_SIZE) \
-	TASK_ALWAYS(PD_INT_C1, pd_interrupt_handler_task, 1, TASK_STACK_SIZE)
+	TASK_ALWAYS(PD_INT_C1, pd_interrupt_handler_task, 1, TASK_STACK_SIZE) \
+	TASK_NOTEST(LOGOLED, logoled_task, NULL, LARGER_TASK_STACK_SIZE)
