@@ -79,34 +79,6 @@ static void emmc_enable_spi(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, emmc_enable_spi, HOOK_PRIO_FIRST);
 
-static void emmc_disable_spi(void)
-{
-	/* Set SPI pin mux to AP communication mode */
-	IT83XX_GCTRL_PIN_MUX0 &= ~BIT(7);
-	/* Disable eMMC Alternative Boot Mode */
-	IT83XX_SPI_EMMCBMR &= ~IT83XX_SPI_EMMCABM;
-	/* Reset TX and RX FIFO */
-	emmc_reset_spi_tx();
-	emmc_reset_spi_rx();
-	/* Restore setting of SPI slave for communication */
-	/* EC responses "ready to receive" while AP clock in bytes. */
-	IT83XX_SPI_SPISRDR = EC_SPI_OLD_READY;
-	/* FIFO won't be overwritten once it's full */
-	IT83XX_SPI_GCR2 = IT83XX_SPI_RXF2OC | IT83XX_SPI_RXF1OC
-			| IT83XX_SPI_RXFAR;
-	/* Write to clear pending interrupt bits */
-	IT83XX_SPI_ISR = 0xff;
-	IT83XX_SPI_RX_VLISR = IT83XX_SPI_RVLI;
-	/* Enable RX valid length interrupt */
-	IT83XX_SPI_IMR = 0xff;
-	IT83XX_SPI_RX_VLISMR &= ~IT83XX_SPI_RVLIM;
-	/* Disable interrupt of detection of AP's BOOTBLOCK_EN_L */
-	gpio_disable_interrupt(GPIO_BOOTBLOCK_EN_L);
-
-	enable_sleep(SLEEP_MASK_EMMC);
-	CPRINTS("eMMC emulation disabled");
-}
-
 static void emmc_init_spi(void)
 {
 	/* Enable alternate function */
@@ -207,15 +179,6 @@ static enum emmc_cmd emmc_parse_command(int index, uint32_t *cmd0)
 
 	CPRINTS("eMMC error");
 	return EMMC_ERROR;
-}
-
-/* AP has booted */
-void emmc_ap_jump_to_bl(enum gpio_signal signal)
-{
-	/* Transmission completed. Set SPI communication mode */
-	emmc_disable_spi();
-
-	CPRINTS("AP Jumped to BL");
 }
 
 void spi_emmc_cmd0_isr(uint32_t *cmd0_payload)

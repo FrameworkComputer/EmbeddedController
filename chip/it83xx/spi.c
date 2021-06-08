@@ -363,6 +363,23 @@ static void spi_reset(void)
 }
 DECLARE_HOOK(HOOK_SYSJUMP, spi_reset, HOOK_PRIO_DEFAULT);
 
+#if defined(SECTION_IS_RO) && defined(CONFIG_BOOTBLOCK)
+/* AP has booted */
+void emmc_ap_jump_to_bl(enum gpio_signal signal)
+{
+	/* Transmission completed. Set SPI pin mux to AP communication mode */
+	IT83XX_GCTRL_PIN_MUX0 &= ~BIT(7);
+	/* Reset and re-initialize SPI module to communication mode */
+	spi_reset();
+	spi_init();
+	/* Disable interrupt of detection of AP's BOOTBLOCK_EN_L */
+	gpio_disable_interrupt(GPIO_BOOTBLOCK_EN_L);
+	enable_sleep(SLEEP_MASK_EMMC);
+
+	CPRINTS("eMMC emulation disabled. AP Jumped to BL");
+}
+#endif
+
 /* Get protocol information */
 enum ec_status spi_get_protocol_info(struct host_cmd_handler_args *args)
 {
