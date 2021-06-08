@@ -37,6 +37,7 @@
 #define CONFIG_LED_ONOFF_STATES
 
 /* Keyboard features */
+#define CONFIG_KEYBOARD_FACTORY_TEST
 #define CONFIG_KEYBOARD_VIVALDI
 #define CONFIG_KEYBOARD_REFRESH_ROW3
 
@@ -184,6 +185,9 @@ enum usbc_port {
 };
 
 void board_reset_pd_mcu(void);
+
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
 
 #endif /* !__ASSEMBLER__ */
 
