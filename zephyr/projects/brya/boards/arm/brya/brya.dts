@@ -128,6 +128,7 @@
 };
 
 &cros_kb_raw {
+	status = "okay";
 	/* No KSO2 (it's inverted and implemented by GPIO) */
 	pinctrl-0 = <&alt7_no_ksi0_sl
 		     &alt7_no_ksi1_sl
