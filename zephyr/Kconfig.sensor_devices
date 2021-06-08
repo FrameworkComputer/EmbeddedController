@@ -34,7 +34,7 @@ config PLATFORM_EC_ACCEL_KX022
 
 config PLATFORM_EC_ACCEL_LIS2DW12
 	bool "LIS2DW12 Accelerometer Driver"
-	imply PLATFORM_EC_STM_MEMS_COMMON
+	select PLATFORM_EC_STM_MEMS_COMMON
 	help
 	  The driver supports ST's LIS2DW12 3D digital accelerometer sensor.
 	  It allows measurements of acceleration in three perpendicular axes.
@@ -77,9 +77,13 @@ config PLATFORM_EC_ACCELGYRO_ICM426XX
 	  gyroscope readings.
 
 config PLATFORM_EC_STM_MEMS_COMMON
-	bool "STM MEMS Common Driver"
+	bool
 	help
-	  The driver supports common STM MEMS devices
+	  The driver supports functionality that is common to
+	  STMicroelectronics(STM) micro-electromechanical system(MEMS)
+	  sensor devices.  This should be enabled by drivers that use
+	  this common framework.  It cannot be set otherwise, even in
+	  prj.conf.
 
 rsource "Kconfig.accelgyro_bmi"
 rsource "Kconfig.accelgyro_icm"
