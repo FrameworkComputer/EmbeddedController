@@ -35,6 +35,7 @@
 #define CONFIG_LED_ONOFF_STATES
 
 /* Keyboard features */
+#define CONFIG_KEYBOARD_FACTORY_TEST
 #define CONFIG_KEYBOARD_REFRESH_ROW3
 
 /* Keyboard backliht */
@@ -193,6 +194,9 @@ enum usbc_port {
 void board_reset_pd_mcu(void);
 
 void motion_interrupt(enum gpio_signal signal);
+
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
 
 #endif /* !__ASSEMBLER__ */
 
