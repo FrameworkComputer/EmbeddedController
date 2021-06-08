@@ -218,7 +218,7 @@ static void led_update_power(void)
 		 * OFF not defined, as indicated by no specified phase 0 time.
 		 */
 		if (desired_state == PWR_LED_STATE_OFF_LOW_POWER &&
-		    led_bat_state_table[desired_state][LED_PHASE_0].time == 0)
+		    led_pwr_state_table[desired_state][LED_PHASE_0].time == 0)
 			desired_state = PWR_LED_STATE_OFF;
 
 		/* State is changing */
