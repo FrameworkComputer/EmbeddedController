@@ -83,6 +83,13 @@
 #define I2C_PORT1_BB_RETIMER_SOC_ADDR	0x55
 #endif
 
+/* I2C EEPROM */
+#define I2C_ADDR_EEPROM_FLAGS   0x50
+#define I2C_PORT_EEPROM         I2C_PORT_PCA9555_BOARD_ID_GPIO
+
+/* Enable CBI */
+#define CONFIG_CROS_BOARD_INFO
+
 /* Configure mux at runtime */
 #define CONFIG_USB_MUX_RUNTIME_CONFIG
 
