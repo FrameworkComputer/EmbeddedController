@@ -3068,13 +3068,17 @@ static void pe_snk_evaluate_capability_entry(int port)
 
 	/* Parse source caps if they have changed */
 	if (pe[port].src_cap_cnt != num ||
-	    memcmp(pdo, pe[port].src_caps, num << 2))
+	    memcmp(pdo, pe[port].src_caps, num << 2)) {
 		/*
 		 * If port policy preference is to be a power role source,
-		 * then request a power role swap.
+		 * then request a power role swap.  If we'd previously queued a
+		 * PR swap but can now charge from this device, clear it.
 		 */
 		if (!pd_can_charge_from_device(port, num, pdo))
 			pd_request_power_swap(port);
+		else
+			PE_CLR_DPM_REQUEST(port, DPM_REQUEST_PR_SWAP);
+	}
 
 	pe_update_src_pdo_flags(port, num, pdo);
 	pd_set_src_caps(port, num, pdo);
