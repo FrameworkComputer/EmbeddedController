@@ -102,11 +102,15 @@ enum npcx_chip_id {
  */
 #define DATA_RAM_SIZE DT_REG_SIZE(DT_NODELABEL(sram0))
 #define CODE_RAM_SIZE DT_REG_SIZE(DT_NODELABEL(flash0))
-#define NPCX7_RAM_BLOCK_COUNT \
+#define NPCX_RAM_BLOCK_COUNT \
 	((DATA_RAM_SIZE + CODE_RAM_SIZE + KB(2)) / NPCX_RAM_BLOCK_SIZE)
 
-/* RAM block mask for power down in npcx7 series */
-#define NPCX7_RAM_BLOCK_PD_MASK (BIT(12) - 1)
+/* Valid bit-depth of RAM block Power-Down control (RAM_PD) registers. Use its
+ * mask to power down all unnecessary RAM blocks before hibernating.
+ */
+#define NPCX_RAM_PD_DEPTH DT_PROP(DT_NODELABEL(pcc), ram_pd_depth)
+#define NPCX_RAM_BLOCK_PD_MASK (BIT(NPCX_RAM_PD_DEPTH) - 1)
+
 /* Get saved reset flag address in battery-backed ram */
 #define BBRAM_SAVED_RESET_FLAG_ADDR                         \
 	(DT_REG_ADDR(DT_INST(0, nuvoton_npcx_cros_bbram)) + \
@@ -273,7 +277,7 @@ system_npcx_hibernate_by_lfw_in_last_ram(const struct device *dev,
 
 static inline int system_npcx_get_ram_blk_by_lfw_addr(char *address)
 {
-	return NPCX7_RAM_BLOCK_COUNT -
+	return NPCX_RAM_BLOCK_COUNT -
 	       ceiling_fraction((uint32_t)address -
 					CONFIG_CROS_EC_PROGRAM_MEMORY_BASE,
 				NPCX_RAM_BLOCK_SIZE);
@@ -286,7 +290,7 @@ static void system_npcx_hibernate_by_disable_ram(const struct device *dev,
 	/* Get 32kb ram block order of lfw function */
 	extern char __lfw_text_start[], __lfw_text_end[];
 	int lfw_block = system_npcx_get_ram_blk_by_lfw_addr(__lfw_text_start);
-	uint32_t pd_ram_mask = ~BIT(lfw_block) & NPCX7_RAM_BLOCK_PD_MASK;
+	uint32_t pd_ram_mask = ~BIT(lfw_block) & NPCX_RAM_BLOCK_PD_MASK;
 
 	if (lfw_block != system_npcx_get_ram_blk_by_lfw_addr(__lfw_text_end)) {
 		LOG_ERR("LFW cannot cross ram blocks!");
