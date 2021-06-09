@@ -45,6 +45,46 @@ class BasePacker:
         """
         raise NotImplementedError('Abstract method not implemented')
 
+    def _get_max_image_bytes(self):
+        """Get the maximum allowed image size (in bytes).
+
+        This value will generally be found in CONFIG_FLASH_SIZE but may vary
+        depending on the specific way things are being packed.
+
+        Returns:
+            The maximum allowed size of the image in bytes.
+        """
+        raise NotImplementedError('Abstract method not implemented')
+
+    def _is_size_bound(self, path):
+        """Check whether the given path should be constrained by size.
+
+        Generally, .elf files will be unconstrained while .bin files will be
+        constrained.
+
+        Args:
+            path: A file's path to test.
+
+        Returns:
+            True if the file size should be checked. False otherwise.
+        """
+        return path.suffix == '.bin'
+
+    def _check_packed_file_size(self, file, dirs):
+        """Check that a packed file passes size constraints.
+
+        Args:
+            file: A file to test.
+            dirs: A map of the arguments to pass to _get_max_image_bytes
+
+        Returns:
+            The file if it passes the test.
+        """
+        if not self._is_size_bound(
+            file) or file.stat().st_size <= self._get_max_image_bytes(**dirs):
+            return file
+        raise RuntimeError('Output file ({}) too large'.format(file))
+
 
 class ElfPacker(BasePacker):
     """Raw proxy for ELF output of a single build."""
@@ -120,9 +160,19 @@ class NpcxPacker(BasePacker):
         if proc.wait(timeout=60):
             raise OSError('Failed to run binman')
 
-        yield work_dir / 'zephyr.bin', 'zephyr.bin'
+        yield self._check_packed_file_size(work_dir / 'zephyr.bin',
+                                           {'ro': ro, 'rw': rw}), 'zephyr.bin'
         yield ro / 'zephyr' / 'zephyr.elf', 'zephyr.ro.elf'
         yield rw / 'zephyr' / 'zephyr.elf', 'zephyr.rw.elf'
+
+    def _get_max_image_bytes(self, ro, rw):
+        ro_size = util.read_kconfig_autoconf_value(
+            ro / 'zephyr' / 'include' / 'generated',
+            'CONFIG_FLASH_SIZE')
+        rw_size = util.read_kconfig_autoconf_value(
+            ro / 'zephyr' / 'include' / 'generated',
+            'CONFIG_FLASH_SIZE')
+        return max(int(ro_size, 0), int(rw_size, 0)) * 1024
 
 
 # A dictionary mapping packer config names to classes.
