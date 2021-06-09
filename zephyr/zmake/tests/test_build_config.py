@@ -130,6 +130,7 @@ def parse_cmake_args(argv):
 
 
 @hypothesis.given(build_configs_no_kconfig, paths, paths)
+@hypothesis.settings(deadline=60000)
 def test_popen_cmake_no_kconfig(conf, project_dir, build_dir):
     """Test popen_cmake for a config with no kconfig definitions."""
     job_client = FakeJobClient()
@@ -142,6 +143,7 @@ def test_popen_cmake_no_kconfig(conf, project_dir, build_dir):
 
 
 @hypothesis.given(build_configs_with_at_least_one_kconfig, paths, paths)
+@hypothesis.settings(deadline=60000)
 def test_popen_cmake_kconfig_but_no_file(conf, project_dir, build_dir):
     """Test that running popen_cmake with Kconfig definitions to write
     out, but no path to do so, should raise an error.
@@ -153,7 +155,7 @@ def test_popen_cmake_kconfig_but_no_file(conf, project_dir, build_dir):
 
 
 @hypothesis.given(build_configs, paths, paths)
-@hypothesis.settings(deadline=None)
+@hypothesis.settings(deadline=60000)
 def test_popen_cmake_kconfig(conf, project_dir, build_dir):
     job_client = FakeJobClient()
 
