@@ -47,8 +47,14 @@ static int set_range(struct motion_sensor_t *s, int range, int rnd)
 {
 	int ret,  range_val, reg_val, range_reg_val;
 
+	/* Range has to be between 2G-16G */
+	if (range < 2)
+		range = 2;
+	else if (range > 16)
+		range = 16;
+
 	range_val = BMA2x2_RANGE_TO_REG(range);
-	if ((BMA2x2_RANGE_TO_REG(range_val) < range) && rnd)
+	if ((BMA2x2_REG_TO_RANGE(range_val) < range) && rnd)
 		range_val = BMA2x2_RANGE_TO_REG(range * 2);
 
 	mutex_lock(s->mutex);
@@ -83,9 +89,18 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	int ret, odr_val, odr_reg_val, reg_val;
 	struct accelgyro_saved_data_t *data = s->drv_data;
 
-	odr_val = BMA2x2_BW_TO_REG(rate);
-	if ((BMA2x2_REG_TO_BW(odr_val) < rate) && rnd)
-		odr_val = BMA2x2_BW_TO_REG(rate * 2);
+	/* Rate has to be between 7.8125Hz - 1000Hz */
+	if (rate < 7813) {
+		rate = 7812;
+		odr_val = BMA2x2_BW_7_81HZ;
+	} else if (rate > 1000000) {
+		rate = 1000000;
+		odr_val = BMA2x2_BW_1000HZ;
+	} else {
+		odr_val = BMA2x2_BW_TO_REG(rate);
+		if ((BMA2x2_REG_TO_BW(odr_val) < rate) && rnd)
+			odr_val = BMA2x2_BW_TO_REG(rate * 2);
+	}
 
 	mutex_lock(s->mutex);
 

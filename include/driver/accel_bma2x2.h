@@ -61,6 +61,7 @@
 #define BMA2x2_BW_500HZ				0x0E /* LowPass 500HZ */
 #define BMA2x2_BW_1000HZ			0x0F /* LowPass 1000HZ */
 
+/* Do not use BW lower than 7813, because __fls cannot be call for 0 */
 #define BMA2x2_BW_TO_REG(_bw) \
 	((_bw) < 125000 ? \
 	 BMA2x2_BW_7_81HZ + __fls(((_bw) * 10) / 78125) : \
