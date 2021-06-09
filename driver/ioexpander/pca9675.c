@@ -46,17 +46,6 @@ static int pca9675_reset(int ioex)
 			0, &reset, 1, NULL, 0);
 }
 
-static int pca9675_set_flags_by_mask(int ioex, int port, int mask, int flags)
-{
-	/* Initialize the I/O directions */
-	if (flags & GPIO_INPUT)
-		pca9675_iox[ioex].io_direction |= mask;
-	else
-		pca9675_iox[ioex].io_direction &= ~mask;
-
-	return EC_SUCCESS;
-}
-
 static int pca9675_get_flags_by_mask(int ioex, int port, int mask, int *flags)
 {
 	*flags = mask & pca9675_iox[ioex].io_direction ?
@@ -91,6 +80,23 @@ static int pca9675_set_level(int ioex, int port, int mask, int val)
 		pca9675_iox[ioex].cache_out_pins &= ~mask;
 
 	return pca9675_write16(ioex, pca9675_iox[ioex].cache_out_pins);
+}
+
+static int pca9675_set_flags_by_mask(int ioex, int port, int mask, int flags)
+{
+	int rv = EC_SUCCESS;
+
+	/* Initialize the I/O directions */
+	if (flags & GPIO_INPUT) {
+		pca9675_iox[ioex].io_direction |= mask;
+	} else {
+		pca9675_iox[ioex].io_direction &= ~mask;
+
+		/* Initialize the pin */
+		rv = pca9675_set_level(ioex, port, mask, flags & GPIO_HIGH);
+	}
+
+	return rv;
 }
 
 static int pca9675_enable_interrupt(int ioex, int port, int mask, int enable)
