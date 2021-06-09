@@ -73,6 +73,23 @@ def read_kconfig_file(path):
                 result[name.strip()] = value.strip()
     return result
 
+def read_kconfig_autoconf_value(path, key):
+    """Parse an autoconf.h file for a resolved kconfig value
+
+    Args:
+        path: The path to the autoconf.h file.
+        key: The define key to lookup.
+
+    Returns:
+        The value associated with the key or nothing if the key wasn't found.
+    """
+    prog = re.compile(r'^#define\s{}\s(\S+)$'.format(key))
+    with open(path / 'autoconf.h') as f:
+        for line in f:
+            m = prog.match(line)
+            if m:
+                return m.group(1)
+
 
 def write_kconfig_file(path, config, only_if_changed=True):
     """Write out a dictionary to Kconfig format.

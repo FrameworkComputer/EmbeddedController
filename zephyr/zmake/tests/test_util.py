@@ -73,3 +73,13 @@ def test_read_zephyr_version(version_tuple):
                 f.write('{} = {}\n'.format(name, value))
 
         assert util.read_zephyr_version(zephyr_base) == version_tuple
+
+@hypothesis.given(st.integers())
+@hypothesis.settings(deadline=60000)
+def test_read_kconfig_autoconf_value(value):
+    with tempfile.TemporaryDirectory() as dir:
+        path = pathlib.Path(dir)
+        with open(path / 'autoconf.h', 'w') as f:
+            f.write('#define TEST {}'.format(value))
+        read_value = util.read_kconfig_autoconf_value(path, 'TEST')
+        assert int(read_value) == value
