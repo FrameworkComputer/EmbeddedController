@@ -22,11 +22,15 @@ int hook_call_deferred(const struct deferred_data *data, int us)
 		k_delayed_work_cancel(work);
 	} else if (us >= 0) {
 		rv = k_delayed_work_submit(work, K_USEC(us));
-		if (rv < 0)
+		if (rv == -EINVAL) {
+			/* Already processing or completed. */
+			return 0;
+		} else if (rv < 0) {
 			cprints(CC_HOOK,
 				"Warning: deferred call not submitted, "
 				"deferred_data=0x%pP, err=%d",
 				data, rv);
+		}
 	} else {
 		return EC_ERROR_PARAM2;
 	}
