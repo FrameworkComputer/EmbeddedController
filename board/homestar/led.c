@@ -33,29 +33,37 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 enum led_color {
 	LED_OFF = 0,
+	LED_RED,
+	LED_GREEN,
 	LED_AMBER,
-	LED_BLUE,
 	LED_COLOR_COUNT  /* Number of colors, not a color itself */
 };
 
 static void led_set_color(enum led_color color)
 {
 	gpio_set_level(GPIO_EC_CHG_LED_R_C0,
-		(color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
+		(color == LED_RED) ? BAT_LED_ON : BAT_LED_OFF);
 	gpio_set_level(GPIO_EC_CHG_LED_G_C0,
-		(color == LED_BLUE) ? BAT_LED_ON : BAT_LED_OFF);
+		(color == LED_GREEN) ? BAT_LED_ON : BAT_LED_OFF);
+	if (color == LED_AMBER) {
+		gpio_set_level(GPIO_EC_CHG_LED_R_C0, BAT_LED_ON);
+		gpio_set_level(GPIO_EC_CHG_LED_G_C0, BAT_LED_ON);
+	}
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
+	brightness_range[EC_LED_COLOR_RED] = 1;
+	brightness_range[EC_LED_COLOR_GREEN] = 1;
 	brightness_range[EC_LED_COLOR_AMBER] = 1;
-	brightness_range[EC_LED_COLOR_BLUE] = 1;
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	if (brightness[EC_LED_COLOR_BLUE] != 0)
-		led_set_color(LED_BLUE);
+	if (brightness[EC_LED_COLOR_RED] != 0)
+		led_set_color(LED_RED);
+	else if (brightness[EC_LED_COLOR_GREEN] != 0)
+		led_set_color(LED_GREEN);
 	else if (brightness[EC_LED_COLOR_AMBER] != 0)
 		led_set_color(LED_AMBER);
 	else
@@ -69,82 +77,67 @@ static void board_led_set_battery(void)
 	static int battery_ticks;
 	int color = LED_OFF;
 	int period = 0;
+	int percent = charge_get_percent();
 	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
 
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
-		/* Always indicate amber on when charging. */
-		color = LED_AMBER;
+	case PWR_STATE_CHARGE_NEAR_FULL:
+		if (chipset_in_state(CHIPSET_STATE_ON |
+					CHIPSET_STATE_ANY_SUSPEND |
+					CHIPSET_STATE_ANY_OFF)) {
+			if (percent <= BATTERY_LEVEL_CRITICAL) {
+				/* battery capa <= 5%, Red */
+				color = LED_RED;
+			} else if (percent > BATTERY_LEVEL_CRITICAL &&
+					percent < BATTERY_LEVEL_NEAR_FULL) {
+				/* 5% < battery capa < 97%, Orange */
+				color = LED_AMBER;
+			} else {
+				/* battery capa >= 97%, Green */
+				color = LED_GREEN;
+			}
+		}
 		break;
 	case PWR_STATE_DISCHARGE:
-		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
-			/* Discharging in S3: White 1 sec, off 1 sec */
-			period = (1 + 1) * LED_ONE_SEC;
+		if (chipset_in_state(CHIPSET_STATE_ON)) {
+			/* S0, Green (soild on) */
+			color = LED_GREEN;
+		} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
+			/* S3, Orange (1s on 3s off) */
+			period = (2 + 2) * LED_ONE_SEC;
 			battery_ticks = battery_ticks % period;
-			if (battery_ticks < 1 * LED_ONE_SEC) {
-				if (charge_get_percent() < 10) {
-				/* Blink amber light (1 sec on, 1 sec off) */
-					color = LED_AMBER;
-				} else {
-				/* Blink white light (1 sec on, 1 sec off) */
-					color = LED_BLUE;
-				}
-			} else {
+			if (battery_ticks < 1 * LED_ONE_SEC)
+				color = LED_AMBER;
+			else
 				color = LED_OFF;
-			}
-		} else {
-			/* Discharging in S5 and S0: off */
-			/* Blink amber light (1 sec on, 1 sec off) */
-			if (charge_get_percent() < 10) {
-				period = (1 + 1) * LED_ONE_SEC;
-				battery_ticks = battery_ticks % period;
-				if (battery_ticks < 1 * LED_ONE_SEC)
-					color = LED_AMBER;
-				else
-					color = LED_OFF;
-			} else {
-				/* G3 or S5 or S0: off */
-				color = LED_OFF;
-			}
+		} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+			/* S5, off */
+			color = LED_OFF;
 		}
 		break;
 	case PWR_STATE_ERROR:
-		/* Battery error: Amber on 0.5 sec, off 0.5 sec */
-		period = (1 + 1) * LED_HALF_ONE_SEC;
+		/* Battery error, Red on 1sec off 1sec */
+		period = (1 + 1) * LED_ONE_SEC;
 		battery_ticks = battery_ticks % period;
-		if (battery_ticks < 1 * LED_HALF_ONE_SEC)
-			color = LED_AMBER;
+		if (battery_ticks < 1 * LED_ONE_SEC)
+			color = LED_RED;
 		else
 			color = LED_OFF;
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
-		/* Full Charged: Blue on */
-		/* S3: Blink white light (1 sec on, 1 sec off) */
-		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
-			period = (1 + 1) * LED_ONE_SEC;
-			battery_ticks = battery_ticks % period;
-			if (battery_ticks < 1 * LED_ONE_SEC)
-				color = LED_BLUE;
-			else
-				color = LED_OFF;
-		} else {
-			/* Full charged: White on */
-			color = LED_BLUE;
-		}
-		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
 		if (chflags & CHARGE_FLAG_FORCE_IDLE) {
-			/* Factory mode: Blue 2 sec, Amber 2 sec */
+			/* Factory mode, Red 2 sec, green 2 sec */
 			period = (2 + 2) * LED_ONE_SEC;
 			battery_ticks = battery_ticks % period;
 			if (battery_ticks < 2 * LED_ONE_SEC)
-				color = LED_BLUE;
+				color = LED_RED;
 			else
-				color = LED_AMBER;
+				color = LED_GREEN;
 		} else
-			color = LED_BLUE;
+			color = LED_RED;
 		break;
 	default:
 		/* Other states don't alter LED behavior */
@@ -167,7 +160,7 @@ void led_control(enum ec_led_id led_id, enum ec_led_state state)
 	enum led_color color;
 
 	if ((led_id != EC_LED_ID_RECOVERY_HW_REINIT_LED) &&
-	    (led_id != EC_LED_ID_SYSRQ_DEBUG_LED))
+		(led_id != EC_LED_ID_SYSRQ_DEBUG_LED))
 		return;
 
 	if (state == LED_STATE_RESET) {
@@ -176,7 +169,7 @@ void led_control(enum ec_led_id led_id, enum ec_led_state state)
 		return;
 	}
 
-	color = state ? LED_BLUE : LED_OFF;
+	color = state ? LED_RED : LED_OFF;
 
 	led_auto_control(EC_LED_ID_BATTERY_LED, 0);
 
