@@ -304,6 +304,14 @@ int pd_snk_is_vbus_provided(int port)
 		return ppc_is_vbus_present(port);
 }
 
+__override bool pd_check_vbus_level(int port, enum vbus_level level)
+{
+	if (level == VBUS_PRESENT)
+		return pd_snk_is_vbus_provided(port);
+	else
+		return !pd_snk_is_vbus_provided(port);
+}
+
 int board_vbus_source_enabled(int port)
 {
 	if (IS_ENABLED(BOARD_C1_NO_PPC) && port)

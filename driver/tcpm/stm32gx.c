@@ -20,8 +20,13 @@
 #include "usb_pd_tcpm.h"
 #include "hooks.h"
 
-#if defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) || \
-	defined(CONFIG_USB_PD_TCPC_LOW_POWER)
+/*
+ * STM32G4 UCPD peripheral does not have the ability to detect VBUS, but
+ * CONFIG_USB_PD_VBUS_DETECT_TCPC maybe still be defined for another port on the
+ * same board which uses a TCPC that does have this feature. Therefore, this
+ * config option is not considered an error.
+ */
+#if defined(CONFIG_USB_PD_TCPC_LOW_POWER)
 #error "Unsupported config options of Stm32gx PD driver"
 #endif
 
@@ -147,10 +152,23 @@ enum ec_error_list stm32gx_tcpm_set_bist_test_mode(const int port,
 	return stm32gx_ucpd_set_bist_test_mode(port, enable);
 }
 
+bool stm32gx_tcpm_check_vbus_level(int port, enum vbus_level level)
+{
+	/*
+	 * UCPD peripheral can't detect VBUS, so always return 0. Any port which
+	 * uses the stm32g4 UCPD peripheral for its TCPC would also have a PPC
+	 * that will handle VBUS detection. However, there may be products which
+	 * don't have a PPC on some ports that will rely on a TCPC to do VBUS
+	 * detection.
+	 */
+	return 0;
+}
+
 const struct tcpm_drv stm32gx_tcpm_drv = {
 	.init			= &stm32gx_tcpm_init,
 	.release		= &stm32gx_tcpm_release,
 	.get_cc			= &stm32gx_tcpm_get_cc,
+	.check_vbus_level	= &stm32gx_tcpm_check_vbus_level,
 	.select_rp_value	= &stm32gx_tcpm_select_rp_value,
 	.set_cc			= &stm32gx_tcpm_set_cc,
 	.set_polarity		= &stm32gx_tcpm_set_polarity,
