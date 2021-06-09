@@ -388,6 +388,7 @@ void system_disable_jump(void)
 
 #ifdef CONFIG_MPU
 	if (system_is_locked()) {
+#ifndef CONFIG_ZEPHYR
 		int ret;
 		enum ec_image __attribute__((unused)) copy;
 
@@ -443,6 +444,7 @@ void system_disable_jump(void)
 			return;
 		}
 #endif /* !CONFIG_EXTERNAL_STORAGE */
+#endif /* !CONFIG_ZEPHYR */
 
 		/* All regions were configured successfully, enable MPU */
 		mpu_enable();
