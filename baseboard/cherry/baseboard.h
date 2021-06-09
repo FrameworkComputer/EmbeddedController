@@ -69,6 +69,8 @@
 #define CONFIG_CHARGER_INPUT_CURRENT 512
 #define CONFIG_CHARGER_ISL9238C
 #define CONFIG_CHARGER_MAINTAIN_VBAT
+/* Not used in boot flow, set to 0 to suppress system_can_boot_ap warning */
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 0
 #define CONFIG_CHARGER_OTG
 #define CONFIG_CHARGER_PSYS
 #define CONFIG_CHARGER_PSYS_READ
