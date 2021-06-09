@@ -415,6 +415,15 @@ static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 	uint32_t evt;
 	int ret __attribute__((unused));
 
+	/*
+	 * Scheduling task when interrupts are disabled will result in Forced
+	 * Hard Fault because:
+	 * - Disabling interrupt using 'cpsid i' also disables SVCall handler
+	 *   (because it has configurable priority)
+	 * - Escalation to Hard Fault (also known as 'priority escalation')
+	 *   occurs when handler for that fault is not enabled
+	 */
+	ASSERT(is_interrupt_enabled());
 	ASSERT(!in_interrupt_context());
 
 	if (timeout_us > 0) {
@@ -445,7 +454,7 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event)
 	atomic_or(&receiver->events, event);
 
 	/* Re-schedule if priorities have changed */
-	if (in_interrupt_context()) {
+	if (in_interrupt_context() || !is_interrupt_enabled()) {
 		/* The receiver might run again */
 		atomic_or(&tasks_ready, 1 << tskid);
 #ifndef CONFIG_TASK_PROFILING
@@ -497,7 +506,8 @@ void task_enable_all_tasks(void)
 	/* Mark all tasks as ready and able to run. */
 	tasks_ready = tasks_enabled = BIT(TASK_ID_COUNT) - 1;
 	/* Reschedule the highest priority task. */
-	__schedule(0, 0);
+	if (is_interrupt_enabled())
+		__schedule(0, 0);
 }
 
 void task_enable_task(task_id_t tskid)
@@ -509,7 +519,8 @@ void task_disable_task(task_id_t tskid)
 {
 	atomic_clear_bits(&tasks_enabled, BIT(tskid));
 
-	if (!in_interrupt_context() && tskid == task_get_current())
+	if (!in_interrupt_context() && is_interrupt_enabled() &&
+	    tskid == task_get_current())
 		__schedule(0, 0);
 }
 
