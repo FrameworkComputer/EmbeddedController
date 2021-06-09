@@ -261,7 +261,7 @@ void uart_flush_output(void)
 
 	/* Loop until buffer is empty */
 	while (tx_buf_head != tx_buf_tail) {
-		if (in_interrupt_context()) {
+		if (in_interrupt_context() || !is_interrupt_enabled()) {
 			/*
 			 * Explicitly process UART output, since the UART
 			 * interrupt may not be able to preempt the interrupt
