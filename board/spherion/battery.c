@@ -4,8 +4,13 @@
  */
 
 #include "battery.h"
+#include "battery_smart.h"
 #include "battery_fuel_gauge.h"
+#include "charge_state.h"
+#include "chipset.h"
 #include "gpio.h"
+#include "temp_sensor.h"
+#include "util.h"
 
 const struct board_batt_params board_battery_info[] = {
 	[BATTERY_C235] = {
@@ -67,3 +72,40 @@ const struct board_batt_params board_battery_info[] = {
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_PANASONIC_AP15O5L;
+
+int charger_profile_override(struct charge_state_data *curr)
+{
+	int charger_temp, charger_temp_c;
+	int on;
+
+	/* charge confrol if the system is on, otherwise turn it off */
+	on = chipset_in_state(CHIPSET_STATE_ON);
+	if (!on)
+		return 0;
+
+	/* charge control if outside of allowable temperature range */
+	if (curr->state == ST_CHARGE) {
+		temp_sensor_read(TEMP_SENSOR_CHARGER, &charger_temp);
+		charger_temp_c = K_TO_C(charger_temp);
+		if (charger_temp_c > 52)
+			curr->requested_current = MIN(curr->requested_current,
+			    2200);
+		else if (charger_temp_c > 48)
+			curr->requested_current = MIN(curr->requested_current,
+			    CONFIG_CHARGER_MAX_INPUT_CURRENT);
+	}
+
+	return 0;
+}
+
+enum ec_status charger_profile_override_get_param(uint32_t param,
+						  uint32_t *value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+						  uint32_t value)
+{
+	return EC_RES_INVALID_PARAM;
+}
