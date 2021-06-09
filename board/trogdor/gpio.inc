@@ -62,7 +62,7 @@ GPIO(PMIC_KPD_PWR_ODL,      PIN(D, 6), GPIO_ODR_HIGH)  /* PMIC power button */
 GPIO(EC_INT_L,              PIN(A, 2), GPIO_ODR_HIGH)  /* Interrupt line between AP and EC */
 
 /* Power enables */
-GPIO(HIBERNATE_L,           PIN(5, 2), GPIO_OUT_HIGH)  /* EC hibernate */
+GPIO(HIBERNATE_L,           PIN(5, 2), GPIO_ODR_HIGH)  /* EC hibernate */
 GPIO(SWITCHCAP_ON,          PIN(D, 5), GPIO_OUT_LOW)   /* Enable switch cap */
 GPIO(EN_PP3300_A,           PIN(A, 6), GPIO_OUT_LOW)   /* Enable PP3300 */
 GPIO(EN_PP5000_A,           PIN(6, 7), GPIO_OUT_LOW)   /* Enable PP5000 */

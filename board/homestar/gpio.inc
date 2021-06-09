@@ -62,8 +62,8 @@ GPIO(EC_INT_L,              PIN(A, 2), GPIO_ODR_HIGH)  /* Interrupt line between
 GPIO(QSIP_ON,               PIN(5, 0), GPIO_OUT_LOW)   /* Not used, for non-switchcap testing */
 
 /* Power enables */
-GPIO(HIBERNATE_L,           PIN(5, 2), GPIO_OUT_HIGH)  /* EC hibernate */
-GPIO(SWITCHCAP_ON_L,        PIN(D, 5), GPIO_ODR_HIGH)   /* Enable switch cap */
+GPIO(HIBERNATE_L,           PIN(5, 2), GPIO_ODR_HIGH)  /* EC hibernate */
+GPIO(SWITCHCAP_ON_L,        PIN(D, 5), GPIO_ODR_HIGH)  /* Enable switch cap */
 GPIO(EN_PP3300_A,           PIN(A, 6), GPIO_OUT_LOW)   /* Enable PP3300 */
 GPIO(EN_PP5000_A,           PIN(6, 7), GPIO_OUT_LOW)   /* Enable PP5000 */
 GPIO(EC_BL_DISABLE_L,       PIN(B, 6), GPIO_OUT_LOW)   /* Backlight disable signal from EC */
