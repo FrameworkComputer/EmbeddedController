@@ -132,7 +132,7 @@ int raa489000_init(int port)
 			CPRINTS("c%d: failed to disable ADCs", port);
 	}
 
-	if (vbus_mv &&
+	if ((vbus_mv > 3900) &&
 	    charge_manager_get_active_charge_port() == CHARGE_PORT_NONE &&
 	    !pd_is_battery_capable()) {
 		chg.current = 500;
