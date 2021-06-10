@@ -172,6 +172,58 @@ static int ps8815_dci_disable(int port)
 }
 #endif /* CONFIG_USB_PD_TCPM_PS8815 */
 
+#ifdef CONFIG_USB_PD_TCPM_PS8805
+static int ps8805_gpio_mask[] = {
+	PS8805_REG_GPIO_0,
+	PS8805_REG_GPIO_1,
+	PS8805_REG_GPIO_2,
+};
+
+int ps8805_gpio_set_level(int port, enum ps8805_gpio signal, int level)
+{
+	int rv;
+	int regval;
+	int mask;
+
+	if (signal >= PS8805_GPIO_NUM)
+		return EC_ERROR_INVAL;
+
+	rv = i2c_read8(tcpc_config[port].i2c_info.port,
+		       PS8805_VENDOR_DEFINED_I2C_ADDR,
+		       PS8805_REG_GPIO_CONTROL, &regval);
+	if (rv)
+		return rv;
+
+	mask = ps8805_gpio_mask[signal];
+	if (level)
+		regval |= mask;
+	else
+		regval &= ~mask;
+
+	return i2c_write8(tcpc_config[port].i2c_info.port,
+		       PS8805_VENDOR_DEFINED_I2C_ADDR,
+		       PS8805_REG_GPIO_CONTROL, regval);
+}
+
+int ps8805_gpio_get_level(int port, enum ps8805_gpio signal, int *level)
+{
+	int regval;
+	int rv;
+
+	if (signal >= PS8805_GPIO_NUM)
+		return EC_ERROR_INVAL;
+
+	rv = i2c_read8(tcpc_config[port].i2c_info.port,
+		       PS8805_VENDOR_DEFINED_I2C_ADDR,
+		       PS8805_REG_GPIO_CONTROL, &regval);
+	if (rv)
+		return rv;
+	*level = !!(regval & ps8805_gpio_mask[signal]);
+
+	return EC_SUCCESS;
+}
+#endif /* CONFIG_USB_PD_TCPM_PS8805 */
+
 enum ps8xxx_variant_regs {
 	REG_FIRST_INDEX = 0,
 	/* NOTE: The rev will read as 0x00 if the FW has malfunctioned. */

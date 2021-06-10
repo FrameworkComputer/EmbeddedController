@@ -58,4 +58,42 @@
 /* Vendor defined registers */
 #define PS8815_P1_REG_HW_REVISION		0xF0
 
+/*
+ * PS8805 GPIO control register. Note the device I2C address of 0x1A is
+ * independent of the ADDR pin on the chip, and not the same address being used
+ * for TCPCI functions.
+ */
+#define PS8805_VENDOR_DEFINED_I2C_ADDR		0x1A
+#define PS8805_REG_GPIO_CONTROL		0x21
+#define PS8805_REG_GPIO_0			BIT(7)
+#define PS8805_REG_GPIO_1			BIT(5)
+#define PS8805_REG_GPIO_2			BIT(6)
+
+enum ps8805_gpio {
+	PS8805_GPIO_0,
+	PS8805_GPIO_1,
+	PS8805_GPIO_2,
+	PS8805_GPIO_NUM,
+};
+
+/**
+ * Set PS8805 gpio signal to desired level
+ *
+ * @param port: The Type-C port number.
+ * @param signal PS8805 gpio number (0, 1, or 2)
+ * @param level desired level
+ * @return EC_SUCCESS if I2C accesses are successful
+ */
+int ps8805_gpio_set_level(int port, enum ps8805_gpio signal, int level);
+
+/**
+ * Get PS8805 gpio signal value
+ *
+ * @param port: The Type-C port number.
+ * @param signal PS8805 gpio number (0, 1, or 2)
+ * @param pointer location to store gpio level
+ * @return EC_SUCCESS if I2C accesses are successful
+ */
+int ps8805_gpio_get_level(int port, enum ps8805_gpio signal, int *level);
+
 #endif /* defined(__CROS_EC_USB_PD_TCPM_PS8XXX_H) */
