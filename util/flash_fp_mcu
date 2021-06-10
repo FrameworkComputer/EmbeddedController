@@ -334,6 +334,11 @@ flash_fp_mcu_stm32() {
   warn_gpio "${gpio_nrst}" 0 \
     "WARNING: One of the drivers changed NRST pin state on bind attempt."
 
+  if [[ ! -c "${device}" ]]; then
+    echo "Failed to bind raw device driver." >&2
+    return "${EXIT_RUNTIME}"
+  fi
+
   local attempt=0
   local cmd_exit_status=1
   local cmd="stm32mon ${stm32mon_flags}"
