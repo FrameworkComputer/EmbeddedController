@@ -356,6 +356,11 @@ __overridable bool board_is_usb_pd_port_present(int port)
 	return (port >= 0) && (port < board_get_usb_pd_port_count());
 }
 
+__overridable bool board_is_dts_port(int port)
+{
+	return true;
+}
+
 int pd_get_retry_count(int port, enum tcpm_transmit_type type)
 {
 	/* PD 3.0 6.7.7: nRetryCount = 2; PD 2.0 6.6.9: nRetryCount = 3 */

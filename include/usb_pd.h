@@ -3056,6 +3056,16 @@ __override_proto uint8_t board_get_usb_pd_port_count(void);
 __override_proto bool board_is_usb_pd_port_present(int port);
 
 /**
+ * Return true if specified PD port is DTS (Debug and Test System
+ * capable).
+ *
+ * @param port USB-C port number
+ *
+ * @return true if port is DTS capable.
+ */
+__override_proto bool board_is_dts_port(int port);
+
+/**
  * Process PD-related alerts for a chip which is sharing the TCPC interrupt line
  *
  * @param port USB-C port number

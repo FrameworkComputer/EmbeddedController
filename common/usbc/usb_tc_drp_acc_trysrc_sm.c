@@ -2321,7 +2321,7 @@ static void tc_attach_wait_snk_run(const int port)
 	/* Check for connection */
 	tcpm_get_cc(port, &cc1, &cc2);
 
-	if (cc_is_rp(cc1) && cc_is_rp(cc2))
+	if (cc_is_rp(cc1) && cc_is_rp(cc2) && board_is_dts_port(port))
 		new_cc_state = PD_CC_DFP_DEBUG_ACC;
 	else if (cc_is_rp(cc1) || cc_is_rp(cc2))
 		new_cc_state = PD_CC_DFP_ATTACHED;
@@ -2855,9 +2855,12 @@ static void tc_attach_wait_src_run(const int port)
 	/* Check for connection */
 	tcpm_get_cc(port, &cc1, &cc2);
 
-	/* Debug accessory */
-	if (cc_is_snk_dbg_acc(cc1, cc2)) {
-		/* Debug accessory */
+	if (cc_is_snk_dbg_acc(cc1, cc2) && board_is_dts_port(port)) {
+		/*
+		 * Debug accessory.
+		 * A debug accessory in a non-DTS port will be
+		 * recognized by at_least_one_rd as UFP attached.
+		 */
 		new_cc_state = PD_CC_UFP_DEBUG_ACC;
 	} else if (cc_is_at_least_one_rd(cc1, cc2)) {
 		/* UFP attached */
