@@ -53,6 +53,11 @@ void zshim_setup_host_command(
 	}                                                                  \
 	SYS_INIT(_setup_host_command_##line, APPLICATION, 1)
 #else /* !CONFIG_PLATFORM_EC_HOSTCMD */
-#define DECLARE_HOST_COMMAND(command, routine, version_mask)    \
-	enum ec_status (routine)(struct host_cmd_handler_args *args)
+#ifdef __clang__
+#define DECLARE_HOST_COMMAND(command, routine, version_mask)
+#else
+#define DECLARE_HOST_COMMAND(command, routine, version_mask)         \
+	enum ec_status (routine)(struct host_cmd_handler_args *args) \
+		__attribute__((unused))
+#endif /* __clang__ */
 #endif /* CONFIG_PLATFORM_EC_HOSTCMD */
