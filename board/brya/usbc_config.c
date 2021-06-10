@@ -187,7 +187,7 @@ void config_usb_db_type(void)
 	CPRINTS("Configured USB DB type number is %d", db_type);
 }
 
-__override void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
+__override int bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 {
 	enum ioex_signal rst_signal;
 
@@ -199,7 +199,7 @@ __override void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 	} else if (me->usb_port == USBC_PORT_C2) {
 		rst_signal = IOEX_USB_C2_RT_RST_ODL;
 	} else {
-		return;
+		return EC_ERROR_INVAL;
 	}
 
 	/*
@@ -224,6 +224,7 @@ __override void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 		ioex_set_level(rst_signal, 0);
 		msleep(1);
 	}
+	return EC_SUCCESS;
 }
 
 void board_reset_pd_mcu(void)

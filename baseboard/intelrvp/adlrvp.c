@@ -247,7 +247,7 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	ioex_set_level(oc_signal, is_overcurrented ? 0 : 1);
 }
 
-__override void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
+__override int bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 {
 	/* Handle retimer's power domain.*/
 	if (on_off) {
@@ -273,6 +273,7 @@ __override void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 		msleep(1);
 		ioex_set_level(bb_controls[me->usb_port].usb_ls_en_gpio, 0);
 	}
+	return EC_SUCCESS;
 }
 
 static void board_connect_c0_sbu_deferred(void)

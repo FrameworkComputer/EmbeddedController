@@ -123,7 +123,7 @@ static int bb_retimer_write(const struct usb_mux *me,
 	return rv;
 }
 
-__overridable void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
+__overridable int bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 {
 	const struct bb_usb_control *control = &bb_controls[me->usb_port];
 
@@ -149,6 +149,7 @@ __overridable void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 		msleep(1);
 		gpio_set_level(control->usb_ls_en_gpio, 0);
 	}
+	return EC_SUCCESS;
 }
 
 static void retimer_set_state_dfp(int port, mux_state_t mux_state,
@@ -490,7 +491,9 @@ static int retimer_init(const struct usb_mux *me)
 		return EC_ERROR_NOT_POWERED;
 	}
 
-	bb_retimer_power_handle(me, 1);
+	rv = bb_retimer_power_handle(me, 1);
+	if (rv != EC_SUCCESS)
+		return rv;
 
 	rv = bb_retimer_read(me, BB_RETIMER_REG_VENDOR_ID, &data);
 	if (rv)

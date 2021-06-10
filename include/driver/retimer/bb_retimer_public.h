@@ -36,8 +36,9 @@ extern struct bb_usb_control bb_controls[];
  * @param me     Pointer to USB mux
  * @param on_off BB retimer state to be changed
  *
+ * @return EC_SUCCESS, or non-zero on error.
  */
-__override_proto void bb_retimer_power_handle(const struct usb_mux *me,
-					      int on_off);
+__override_proto int bb_retimer_power_handle(const struct usb_mux *me,
+					     int on_off);
 
 #endif /* __CROS_EC_DRIVER_RETIMER_BB_RETIMER_PUBLIC_H */

@@ -223,7 +223,7 @@ int board_get_version(void)
 	return board_id | (fab_id << 8);
 }
 
-__override void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
+__override int bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 {
 	const struct bb_usb_control *control = &bb_controls[me->usb_port];
 
@@ -266,4 +266,5 @@ __override void bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 		msleep(1);
 		gpio_set_level(control->usb_ls_en_gpio, 0);
 	}
+	return EC_SUCCESS;
 }
