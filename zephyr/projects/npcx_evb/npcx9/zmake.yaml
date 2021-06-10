@@ -2,6 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-config BOARD
-	default "npcx7_evb" if BOARD_NPCX7_EVB
-	default "npcx9_evb" if BOARD_NPCX9_EVB
+board: npcx9_evb
+dts-overlays:
+  - gpio.dts
+supported-zephyr-versions:
+  - v2.6
+toolchain: coreboot-sdk
+output-type: npcx
