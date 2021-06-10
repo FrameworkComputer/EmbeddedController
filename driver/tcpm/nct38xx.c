@@ -22,13 +22,12 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-enum nct38xx_boot_type {
-	BOOT_UNKNOWN,
-	BOOT_DEAD_BATTERY,
-	BOOT_NORMAL,
-};
-
 static enum nct38xx_boot_type boot_type[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+enum nct38xx_boot_type nct38xx_get_boot_type(int port)
+{
+	return boot_type[port];
+}
 
 static int nct38xx_init(int port)
 {
@@ -39,13 +38,13 @@ static int nct38xx_init(int port)
 	 * Detect dead battery boot by the default role control value of 0x0A
 	 * once per EC run
 	 */
-	if (boot_type[port] == BOOT_UNKNOWN) {
+	if (boot_type[port] == NCT38XX_BOOT_UNKNOWN) {
 		RETURN_ERROR(tcpc_read(port, TCPC_REG_ROLE_CTRL, &reg));
 
-		if (reg == 0x0A)
-			boot_type[port] = BOOT_DEAD_BATTERY;
+		if (reg == NCT38XX_ROLE_CTRL_DEAD_BATTERY)
+			boot_type[port] = NCT38XX_BOOT_DEAD_BATTERY;
 		else
-			boot_type[port] = BOOT_NORMAL;
+			boot_type[port] = NCT38XX_BOOT_NORMAL;
 	}
 
 	RETURN_ERROR(tcpc_read(port, TCPC_REG_POWER_STATUS, &reg));
@@ -57,7 +56,7 @@ static int nct38xx_init(int port)
 	 * be delayed if we have booted from a dead battery with a debug
 	 * accessory and change this bit (see b/186799392).
 	 */
-	if ((boot_type[port] == BOOT_DEAD_BATTERY) &&
+	if ((boot_type[port] == NCT38XX_BOOT_DEAD_BATTERY) &&
 				(reg & TCPC_REG_POWER_STATUS_DEBUG_ACC_CON))
 		CPRINTS("C%d: Booted in dead battery mode, not changing debug"
 			" control", port);

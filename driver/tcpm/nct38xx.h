@@ -40,6 +40,13 @@
 
 #define NCT38XX_PRODUCT_ID                 0xC301
 
+/*
+ * Default value from the ROLE_CTRL register on first boot will depend on
+ * whether we're coming from a dead battery state.
+ */
+#define NCT38XX_ROLE_CTRL_DEAD_BATTERY	   0x0A
+#define NCT39XX_ROLE_CTRL_GOOD_BATTERY	   0x4A
+
 #define NCT38XX_REG_GPIO_DATA_IN(n)       (0xC0 + ((n) * 8))
 #define NCT38XX_REG_GPIO_DATA_OUT(n)      (0xC1 + ((n) * 8))
 #define NCT38XX_REG_GPIO_DIR(n)           (0xC2 + ((n) * 8))
@@ -87,6 +94,20 @@ void nct38xx_ioex_handle_alert(int ioex);
  * registered interrupt handler.
  */
 int nct38xx_ioex_event_handler(int ioex);
+
+enum nct38xx_boot_type {
+	NCT38XX_BOOT_UNKNOWN,
+	NCT38XX_BOOT_DEAD_BATTERY,
+	NCT38XX_BOOT_NORMAL,
+};
+
+/**
+ * Collect our boot type from the driver
+ *
+ * @param port	USB-C port number
+ * @return	Returns the boot type detected for this chip
+ */
+enum nct38xx_boot_type nct38xx_get_boot_type(int port);
 
 extern const struct ioexpander_drv nct38xx_ioexpander_drv;
 
