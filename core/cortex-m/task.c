@@ -227,6 +227,16 @@ void interrupt_enable(void)
 	asm("cpsie i");
 }
 
+inline int is_interrupt_enabled(void)
+{
+	int primask;
+
+	/* Interrupts are enabled when PRIMASK bit is 0 */
+	asm("mrs %0, primask":"=r"(primask));
+
+	return !(primask & 0x1);
+}
+
 inline int in_interrupt_context(void)
 {
 	int ret;

@@ -79,6 +79,11 @@ void interrupt_disable(void);
  */
 void interrupt_enable(void);
 
+/**
+ * Check if interrupts are enabled
+ */
+int is_interrupt_enabled(void);
+
 /*
  * Define irq_lock and irq_unlock that match the function signatures to Zephyr's
  * functions. In reality, these simply call the current implementation of

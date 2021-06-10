@@ -138,6 +138,11 @@ test_mockable void interrupt_enable(void)
 	pthread_mutex_unlock(&interrupt_lock);
 }
 
+inline int is_interrupt_enabled(void)
+{
+	return !interrupt_disabled;
+}
+
 static void _task_execute_isr(int sig)
 {
 	in_interrupt = 1;

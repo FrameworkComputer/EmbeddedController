@@ -173,6 +173,18 @@ void interrupt_enable(void)
 	__asm__ __volatile__ ("sti");
 }
 
+inline int is_interrupt_enabled(void)
+{
+	uint32_t eflags = 0;
+
+	__asm__ __volatile__ ("pushfl\n"
+			      "popl %0\n"
+			      : "=r"(eflags));
+
+	/* Check Interrupt Enable flag */
+	return !!(eflags & 0x200);
+}
+
 inline int in_interrupt_context(void)
 {
 	return !!__in_isr;
