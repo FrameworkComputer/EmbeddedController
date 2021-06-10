@@ -29,6 +29,12 @@ enum nct38xx_boot_type nct38xx_get_boot_type(int port)
 	return boot_type[port];
 }
 
+void nct38xx_reset_notify(int port)
+{
+	/* A full reset also resets the chip's dead battery boot status */
+	boot_type[port] = NCT38XX_BOOT_UNKNOWN;
+}
+
 static int nct38xx_init(int port)
 {
 	int rv;
