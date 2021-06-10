@@ -23,6 +23,14 @@ extern __error("k_usleep() should only be called from Zephyr code")
 int32_t k_usleep(int32_t);
 #endif /* CONFIG_ZEPHYR */
 
+#ifdef CONFIG_COMMON_RUNTIME
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#else
+#define CPRINTS(format, args...)
+#define CPRINTF(format, args...)
+#endif
+
 #define TIMER_SYSJUMP_TAG 0x4d54  /* "TM" */
 
 /* High 32-bits of the 64-bit timestamp counter. */
@@ -177,6 +185,13 @@ void usleep(unsigned us)
 
 	/* If task scheduling has not started, just delay */
 	if (!task_start_called()) {
+		udelay(us);
+		return;
+	}
+
+	/* If in interrupt context or interrupts are disabled, use udelay() */
+	if (!is_interrupt_enabled() || in_interrupt_context()) {
+		CPRINTS("Sleeping not allowed");
 		udelay(us);
 		return;
 	}
