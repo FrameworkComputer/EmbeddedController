@@ -7,6 +7,7 @@
 #define __CROS_EC_CONFIG_CHIP_H
 
 #include <devicetree.h>
+#include <autoconf.h>
 
 /*
  * The battery enum is used in various drivers and these assume that it is
@@ -422,7 +423,6 @@
 
 #ifdef CONFIG_PLATFORM_EC_I2C
 /* Also see shim/include/i2c/i2c.h which defines the ports enum */
-#define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
 #endif
 
