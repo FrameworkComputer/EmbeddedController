@@ -70,11 +70,6 @@
 			enum-name = "I2C_PORT_TCPC1";
 			label = "TCPC1";
 		};
-		wlc {
-			i2c-port = <&i2c3_0>;
-			enum-name = "I2C_PORT_WLC";
-			label = "WLC";
-		};
 		eeprom {
 			i2c-port = <&i2c5_0>;
 			enum-name = "I2C_PORT_EEPROM";
