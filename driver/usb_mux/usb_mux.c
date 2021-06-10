@@ -164,11 +164,23 @@ static void enter_low_power_mode(int port)
 	configure_mux(port, USB_MUX_LOW_POWER, NULL);
 }
 
-static inline void exit_low_power_mode(int port)
+static int exit_low_power_mode(int port)
 {
 	/* If we are in low power, initialize device (which clears LPM flag) */
 	if (flags[port] & USB_MUX_FLAG_IN_LPM)
 		usb_mux_init(port);
+
+	if (!(flags[port] & USB_MUX_FLAG_INIT)) {
+		CPRINTS("C%d: USB_MUX_FLAG_INIT not set", port);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	if (flags[port] & USB_MUX_FLAG_IN_LPM) {
+		CPRINTS("C%d: USB_MUX_FLAG_IN_LPM not cleared", port);
+		return EC_ERROR_NOT_POWERED;
+	}
+
+	return EC_SUCCESS;
 }
 
 void usb_mux_init(int port)
@@ -228,7 +240,8 @@ void usb_mux_set(int port, mux_state_t mux_mode,
 	if (should_enter_low_power_mode && (flags[port] & USB_MUX_FLAG_IN_LPM))
 		return;
 
-	exit_low_power_mode(port);
+	if (exit_low_power_mode(port) != EC_SUCCESS)
+		return;
 
 	/* Configure superspeed lanes */
 	mux_state = ((mux_mode != USB_PD_MUX_NONE) && polarity)
@@ -313,7 +326,8 @@ void usb_mux_flip(int port)
 	if (!(flags[port] & USB_MUX_FLAG_INIT))
 		usb_mux_init(port);
 
-	exit_low_power_mode(port);
+	if (exit_low_power_mode(port) != EC_SUCCESS)
+		return;
 
 	if (configure_mux(port, USB_MUX_GET_MODE, &mux_state))
 		return;
@@ -338,6 +352,9 @@ void usb_mux_hpd_update(int port, int hpd_lvl, int hpd_irq)
 	/* Perform initialization if not initialized yet */
 	if (!(flags[port] & USB_MUX_FLAG_INIT))
 		usb_mux_init(port);
+
+	if (exit_low_power_mode(port) != EC_SUCCESS)
+		return;
 
 	for (; mux_ptr; mux_ptr = mux_ptr->next_mux)
 		if (mux_ptr->hpd_update)
