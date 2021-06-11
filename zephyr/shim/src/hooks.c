@@ -68,11 +68,15 @@ void hook_notify(enum hook_type type)
 
 static void check_hook_task_priority(k_tid_t thread)
 {
-	if (k_thread_priority_get(thread) != LOWEST_THREAD_PRIORITY)
+	/*
+	 * Numerically lower priorities take precedence, so verify the hook
+	 * related threads cannot preempt any of the shimmed tasks.
+	 */
+	if (k_thread_priority_get(thread) < (TASK_ID_COUNT - 1))
 		cprintf(CC_HOOK,
-			"ERROR: %s has priority %d but must be priority %d\n",
+			"ERROR: %s has priority %d but must be >= %d\n",
 			k_thread_name_get(thread),
-			k_thread_priority_get(thread), LOWEST_THREAD_PRIORITY);
+			k_thread_priority_get(thread), (TASK_ID_COUNT - 1));
 }
 
 void hook_task(void *u)
