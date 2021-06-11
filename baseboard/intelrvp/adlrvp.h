@@ -64,6 +64,7 @@
 
 /* Config BB retimer */
 #define CONFIG_USBC_RETIMER_INTEL_BB
+#define CONFIG_USBC_RETIMER_FW_UPDATE
 
 /* Connector side BB retimers */
 #define I2C_PORT0_BB_RETIMER_ADDR	0x56
