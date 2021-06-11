@@ -4,6 +4,7 @@
  */
 #include "adc.h"
 #include "atomic.h"
+#include "baseboard_common.h"
 #include "charge_manager.h"
 #include "chipset.h"
 #include "timer.h"
