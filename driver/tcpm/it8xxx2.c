@@ -37,6 +37,22 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+#ifdef CONFIG_ZEPHYR
+/* Use the Zephyr names here. When upstreaming we can update this */
+#include <dt-bindings/interrupt-controller/ite-intc.h>
+
+#define IT83XX_GPIO_GPCRF4	GPCRF4
+#define IT83XX_GPIO_GPCRF5	GPCRF5
+#define IT83XX_GPIO_GPCRH1	GPCRH1
+#define IT83XX_GPIO_GPCRH2	GPCRH2
+#define IT83XX_GPIO_GPCRP0	IT8XXX2_GPIO_GPCRP0
+#define IT83XX_GPIO_GPCRP1	IT8XXX2_GPIO_GPCRP1
+#define IT83XX_IRQ_USBPD0	IT8XXX2_IRQ_USBPD0
+#define IT83XX_IRQ_USBPD1	IT8XXX2_IRQ_USBPD1
+#define IT83XX_IRQ_USBPD2	IT8XXX2_IRQ_USBPD2
+#define USB_VID_ITE		0x048d
+#endif
+
 bool rx_en[IT83XX_USBPD_PHY_PORT_COUNT];
 STATIC_IF(CONFIG_USB_PD_DECODE_SOP)
 	bool sop_prime_en[IT83XX_USBPD_PHY_PORT_COUNT];
