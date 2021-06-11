@@ -54,10 +54,6 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-static void bc12_interrupt(enum gpio_signal signal);
-static void ppc_interrupt(enum gpio_signal signal);
-static void x_ec_interrupt(enum gpio_signal signal);
-
 #include "gpio_list.h"
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -154,7 +150,7 @@ struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{ .drv = &pi3usb9201_drv },
 };
 
-static void bc12_interrupt(enum gpio_signal signal)
+void bc12_interrupt(enum gpio_signal signal)
 {
 	if (signal == GPIO_USB_C0_BC12_INT_ODL)
 		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
@@ -173,7 +169,7 @@ static void board_sub_bc12_init(void)
 /* Must be done after I2C and subboard */
 DECLARE_HOOK(HOOK_INIT, board_sub_bc12_init, HOOK_PRIO_INIT_I2C + 1);
 
-static void ppc_interrupt(enum gpio_signal signal)
+void ppc_interrupt(enum gpio_signal signal)
 {
 	if (signal == GPIO_USB_C0_PPC_INT_ODL)
 		/* C0: PPC interrupt */
@@ -489,7 +485,7 @@ static void hdmi_hpd_interrupt(enum gpio_signal signal)
 }
 
 /* HDMI/TYPE-C function shared subboard interrupt */
-static void x_ec_interrupt(enum gpio_signal signal)
+void x_ec_interrupt(enum gpio_signal signal)
 {
 	int sub = board_get_sub_board();
 
