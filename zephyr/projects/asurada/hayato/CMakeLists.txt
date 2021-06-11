@@ -17,7 +17,8 @@ set(PLATFORM_EC_BOARD "${PLATFORM_EC}/board/hayato" CACHE PATH
   "Path to the platform/ec board directory")
 
 zephyr_library_sources(
-  "${PLATFORM_EC_BASEBOARD}/board_chipset.c")
+  "${PLATFORM_EC_BASEBOARD}/board_chipset.c"
+  "${PLATFORM_EC_BASEBOARD}/board_id.c")
 
 # Board specific sensor implementation
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MOTIONSENSE
