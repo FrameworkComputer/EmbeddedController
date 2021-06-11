@@ -16,15 +16,8 @@
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/als_tcs3400.h"
-#include "driver/bc12/mt6360.h"
-#include "driver/bc12/pi3usb9201.h"
-#include "driver/charger/isl923x.h"
-#include "driver/ppc/syv682x.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/temp_sensor/thermistor.h"
-#include "driver/usb_mux/it5205.h"
-#include "driver/usb_mux/ps8743.h"
-#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -32,7 +25,6 @@
 #include "lid_switch.h"
 #include "motion_sense.h"
 #include "power.h"
-#include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "regulator.h"
@@ -43,13 +35,6 @@
 #include "temp_sensor.h"
 #include "timer.h"
 #include "uart.h"
-#include "usb_charge.h"
-#include "usb_mux.h"
-#include "usb_pd_tcpm.h"
-#include "usbc_ppc.h"
-
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 /* Initialize board. */
 static void board_init(void)
@@ -344,21 +329,3 @@ static void board_resume(void)
 		gpio_set_level(GPIO_EN_5V_USM, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_resume, HOOK_PRIO_DEFAULT);
-
-__override int syv682x_board_is_syv682c(int port)
-{
-	return board_get_version() > 2;
-}
-
-void board_usb_mux_init(void)
-{
-	if (board_get_sub_board() == SUB_BOARD_TYPEC) {
-		ps8743_tune_usb_eq(&usb_muxes[1],
-				   PS8743_USB_EQ_TX_12_8_DB,
-				   PS8743_USB_EQ_RX_12_8_DB);
-		ps8743_write(&usb_muxes[1],
-				   PS8743_REG_HS_DET_THRESHOLD,
-				   PS8743_USB_HS_THRESH_NEG_10);
-	}
-}
-DECLARE_HOOK(HOOK_INIT, board_usb_mux_init, HOOK_PRIO_INIT_I2C + 1);

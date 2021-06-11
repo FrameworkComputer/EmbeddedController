@@ -14,3 +14,4 @@ BASEBOARD:=asurada
 board-$(BOARD_HAYATO)=led_hayato.o
 board-$(BOARD_ASURADA)=led.o
 board-y+=battery.o board.o
+board-y+=usbc_config.o
