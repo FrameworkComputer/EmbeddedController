@@ -51,7 +51,9 @@
 	GPIO_INT(GPIO_AC_PRESENT,					\
 		 GPIO_INT_EDGE_BOTH, extpower_interrupt)		\
 	GPIO_INT(GPIO_X_EC_GPIO2,					\
-		 GPIO_INT_EDGE_FALLING, x_ec_interrupt)
+		 GPIO_INT_EDGE_FALLING, x_ec_interrupt)			\
+	GPIO_INT(GPIO_AP_XHCI_INIT_DONE,				\
+		 GPIO_INT_EDGE_BOTH, usb_a0_interrupt)
 
 #define GPIO_EN_PP5000 GPIO_EN_PP5000_A
 

@@ -38,6 +38,12 @@
 			enum-name = "GPIO_AP_IN_SLEEP_L";
 			label = "AP_IN_SLEEP_L";
 		};
+		ap-xhci-init-done {
+			gpios = <&gpiod 2 (GPIO_INPUT | GPIO_PULL_DOWN |
+					GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_AP_XHCI_INIT_DONE";
+			label = "AP_XHCI_INIT_DONE";
+		};
 		pmic_ec_pwrgd {
 			gpios = <&gpiof 3 (GPIO_INPUT | GPIO_PULL_DOWN |
 					GPIO_VOLTAGE_1P8)>;

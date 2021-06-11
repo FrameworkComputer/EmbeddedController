@@ -13,6 +13,7 @@ properties:
       - GPIO_AP_IN_SLEEP_L
       - GPIO_AP_RST_L
       - GPIO_AP_SUSPEND
+      - GPIO_AP_XHCI_INIT_DONE
       - GPIO_BASE_IMU_INT_L
       - GPIO_BATT_PRES_ODL
       - GPIO_BC12_DET_EN
