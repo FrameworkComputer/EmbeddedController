@@ -70,7 +70,7 @@ static int bb_retimer_read(const struct usb_mux *me,
 				me->usb_port, rv);
 			return rv;
 		}
-		msleep(20);
+		msleep(10);
 	}
 
 	if (buf[0] != BB_RETIMER_REG_SIZE)
@@ -118,7 +118,7 @@ static int bb_retimer_write(const struct usb_mux *me,
 				me->usb_port, rv);
 			break;
 		}
-		msleep(20);
+		msleep(10);
 	}
 	return rv;
 }
