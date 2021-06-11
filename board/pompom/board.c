@@ -240,6 +240,15 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 /* Initialize board. */
 static void board_init(void)
 {
+	/*
+	 * The rev-2 hardware doesn't have the external pull-up fix for the bug
+	 * b/164256614. It requires rework to stuff the resistor. For people who
+	 * has difficulty to do the rework, this is a workaround, which makes
+	 * the GPIO push-pull, instead of open-drain.
+	 */
+	if (system_get_board_version() == 2)
+		gpio_set_flags(GPIO_HIBERNATE_L, GPIO_OUTPUT);
+
 	/* Enable BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
 
