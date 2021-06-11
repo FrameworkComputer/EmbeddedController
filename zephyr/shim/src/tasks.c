@@ -32,8 +32,10 @@ CROS_EC_TASK_LIST
 
 /** Context for each CROS EC task that is run in its own zephyr thread */
 struct task_ctx {
+#ifdef CONFIG_THREAD_NAME
 	/** Name of thread (for debugging) */
 	const char *name;
+#endif
 	/** Zephyr thread structure that hosts EC tasks */
 	struct k_thread zephyr_thread;
 	/** Zephyr thread id for above thread */
@@ -57,6 +59,7 @@ struct task_ctx {
 	struct k_timer timer;
 };
 
+#ifdef CONFIG_THREAD_NAME
 #define CROS_EC_TASK(_name, _entry, _parameter, _size) \
 	{                                              \
 		.entry = _entry,                       \
@@ -65,6 +68,15 @@ struct task_ctx {
 		.stack_size = _size,                   \
 		.name = #_name,                        \
 	},
+#else
+#define CROS_EC_TASK(_name, _entry, _parameter, _size) \
+	{                                              \
+		.entry = _entry,                       \
+		.parameter = _parameter,               \
+		.stack = _name##_STACK,                \
+		.stack_size = _size,                   \
+	},
+#endif /* CONFIG_THREAD_NAME */
 #define TASK_TEST(_name, _entry, _parameter, _size) \
 	CROS_EC_TASK(_name, _entry, _parameter, _size)
 static struct task_ctx shimmed_tasks[] = { CROS_EC_TASK_LIST };
@@ -188,8 +200,11 @@ static void task_entry(void *task_contex, void *unused1, void *unused2)
 	ARG_UNUSED(unused2);
 
 	struct task_ctx *const ctx = (struct task_ctx *)task_contex;
+
+#ifdef CONFIG_THREAD_NAME
 	/* Name thread for debugging */
 	k_thread_name_set(ctx->zephyr_tid, ctx->name);
+#endif
 
 	/* Call into task entry point */
 	ctx->entry((void *)ctx->parameter);
