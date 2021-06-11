@@ -183,6 +183,7 @@
 		};
 		vbob_en {
 			gpios = <&gpiod 3 GPIO_OUT_LOW>;
+			enum-name = "GPIO_VBOB_EN";
 			label = "VBOB_EN";
 		};
 		en_pp3300_a {
