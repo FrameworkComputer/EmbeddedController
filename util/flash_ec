@@ -395,17 +395,19 @@ esac
 
 SERVO_TYPE="$(dut_control_get servo_type || :)"
 
-if [[ "${SERVO_TYPE}" =~ ^servo_v4_with_.*$ ]]; then
-	ACTIVE_DEVICE="$(dut_control_get active_v4_device)"
+if [[ "${SERVO_TYPE}" =~ ^servo_v4(p1)?_with_.*$ ]]; then
+	ACTIVE_DEVICE="$(dut_control_get active_dut_controller)"
 else
 	ACTIVE_DEVICE="${SERVO_TYPE}"
 fi
 
-if [[ "${SERVO_TYPE}" =~ ^servo_v4_with_.*_and_.*$ ]]; then
+if [[ "${SERVO_TYPE}" =~ ^servo_v4(p1)?_with_.*_and_.*$ ]]; then
 	# If there are two devices, servo v4 type will show both devices. The
 	# default device is first. The other device is second.
-	# servo_type:servo_v4_with_servo_micro_and_ccd_cr50
+	# servo_type:servo_v4{p1}_with_servo_micro_and_ccd_cr50
 	SECOND_DEVICE="${SERVO_TYPE#*_and_}"
+	# servo_v4p1 can shared the same type with servo_v4, since there's no
+	# difference handling the flash.
 	SERVO_TYPE="servo_v4_with_${ACTIVE_DEVICE}"
 	# Controls sent through the default device don't have a prefix. The
 	# second device controls do. If the default device isn't active, we
@@ -849,7 +851,7 @@ function claim_pty() {
 
 # Returns the serialnumber of the specified servo.
 function get_serial() {
-	if [[ "${SERVO_TYPE}" =~ "servo_v4_with_servo_micro" ]]; then
+	if [[ "${SERVO_TYPE}" =~ ^servo_v4(p1)?_with_servo_micro ]]; then
 		if [[ -z "${BOARD}" ]]; then
 			sn_ctl="servo_micro_"
 		elif [[ "$(dut_control_get "servo_micro_for_${BOARD}_serialname")" =~ \
