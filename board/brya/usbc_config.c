@@ -220,6 +220,20 @@ __override int bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 		 * which powers I2C controller within retimer
 		 */
 		msleep(1);
+		if (get_board_id() == 1) {
+			int val;
+
+			/*
+			 * Check if we were able to deassert
+			 * reset. Board ID 1 uses a GPIO that is
+			 * uncontrollable when a debug accessory is
+			 * connected.
+			 */
+			if (ioex_get_level(rst_signal, &val) != EC_SUCCESS)
+				return EC_ERROR_UNKNOWN;
+			if (val != 1)
+				return EC_ERROR_NOT_POWERED;
+		}
 	} else {
 		ioex_set_level(rst_signal, 0);
 		msleep(1);
