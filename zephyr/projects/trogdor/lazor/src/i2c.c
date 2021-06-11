@@ -4,7 +4,7 @@
  */
 
 #include "i2c/i2c.h"
-#include "config_chip.h"
+#include "i2c.h"
 
 /* Lazor board specific i2c implementation */
 
