@@ -164,6 +164,11 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR		10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC	10
 
+/* PS2 defines */
+#define CONFIG_8042_AUX
+#define CONFIG_PS2
+#define CONFIG_CMD_PS2
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"	/* needed by registers.h */
