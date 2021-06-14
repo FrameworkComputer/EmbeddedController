@@ -249,6 +249,7 @@ __stdlib_compat int parse_bool(const char *s, int *dest)
 	return 0;
 }
 
+__attribute__((used))
 __stdlib_compat int memcmp(const void *s1, const void *s2, size_t len)
 {
 	const char *sa = s1;
@@ -285,6 +286,7 @@ int safe_memcmp(const void *s1, const void *s2, size_t size)
 }
 
 #if !(__has_feature(address_sanitizer) || __has_feature(memory_sanitizer))
+__attribute__((used))
 __stdlib_compat void *memcpy(void *dest, const void *src, size_t len)
 {
 	char *d = (char *)dest;
@@ -331,6 +333,7 @@ __stdlib_compat void *memcpy(void *dest, const void *src, size_t len)
 
 
 #if !(__has_feature(address_sanitizer) || __has_feature(memory_sanitizer))
+__attribute__((used))
 __stdlib_compat __visible void *memset(void *dest, int c, size_t len)
 {
 	char *d = (char *)dest;
@@ -371,6 +374,7 @@ __stdlib_compat __visible void *memset(void *dest, int c, size_t len)
 
 
 #if !(__has_feature(address_sanitizer) || __has_feature(memory_sanitizer))
+__attribute__((used))
 __stdlib_compat void *memmove(void *dest, const void *src, size_t len)
 {
 	if ((uintptr_t)dest <= (uintptr_t)src ||
