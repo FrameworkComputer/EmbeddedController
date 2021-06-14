@@ -360,7 +360,7 @@ static void usb_tc_connect(void)
 	if (port == USB_PD_PORT_HOST) {
 		gpio_set_level(GPIO_BPWR_DET, 1);
 #ifdef GPIO_UFP_PLUG_DET
-		gpio_set_level(GPIO_UFP_PLUG_DET, 1);
+		gpio_set_level(GPIO_UFP_PLUG_DET, 0);
 #endif
 	}
 
@@ -377,7 +377,7 @@ static void usb_tc_disconnect(void)
 	if (port == USB_PD_PORT_HOST) {
 		gpio_set_level(GPIO_BPWR_DET, 0);
 #ifdef GPIO_UFP_PLUG_DET
-		gpio_set_level(GPIO_UFP_PLUG_DET, 0);
+		gpio_set_level(GPIO_UFP_PLUG_DET, 1);
 #endif
 	}
 }
