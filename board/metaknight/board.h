@@ -36,7 +36,6 @@
 #define CONFIG_LED_ONOFF_STATES
 
 /* PWM */
-#define CONFIG_PWM
 #define NPCX7_PWM1_SEL    1  /* GPIO C2 is used as PWM1. */
 
 /* Temp sensor */
