@@ -28,7 +28,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD    keyboard_raw.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MKBP_EVENT  mkbp_event.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MOTIONSENSE
                                                             motionsense_sensors.c)
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MPU         mpu.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PANIC       panic.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PWM         pwm.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RTC         rtc.c)
