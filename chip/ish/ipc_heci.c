@@ -280,7 +280,7 @@ static int ipc_send_reset_notify(const ipc_handle_t handle)
 
 static int ipc_send_cmpl_indication(struct ipc_if_ctx *ctx)
 {
-	struct ipc_msg msg;
+	struct ipc_msg msg = {0};
 
 	msg.drbl = IPC_BUILD_MNG_DB(MNG_RX_CMPL_INDICATION, 0);
 	ipc_write_raw(ctx, msg.drbl, msg.payload, IPC_DB_MSG_LENGTH(msg.drbl));
