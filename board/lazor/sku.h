@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_SKU_H
 #define __CROS_EC_SKU_H
 
+int board_get_version(void);
 int board_is_clamshell(void);
 int board_has_da9313(void);
 int board_has_ln9310(void);

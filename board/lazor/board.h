@@ -13,6 +13,9 @@
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_FLASH_SIZE_BYTES (512 * 1024)  /* 512KB internal spi flash */
 
+/* Custom the board version using tristate */
+#define CONFIG_BOARD_VERSION_CUSTOM
+
 /* Switchcap */
 #define CONFIG_LN9310
 
@@ -83,6 +86,7 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
+#include "sku.h"
 
 enum adc_channel {
 	ADC_VBUS,
