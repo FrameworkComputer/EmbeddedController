@@ -8,11 +8,13 @@
 #include "adc_chip.h"
 #include "button.h"
 #include "cbi_fw_config.h"
+#include "cbi_ssfc.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
 #include "cros_board_info.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accel_kionix.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/sm5803.h"
@@ -277,6 +279,7 @@ static struct mutex g_base_mutex;
 /* Sensor Data */
 static struct accelgyro_saved_data_t g_bma253_data;
 static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
+static struct kionix_accel_data g_kx022_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
 static const mat33_fp_t base_standard_ref = {
@@ -291,7 +294,41 @@ static const mat33_fp_t lid_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
+static const mat33_fp_t lid_kx022_ref = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
 /* Drivers */
+struct motion_sensor_t kx022_lid_accel = {
+	.name = "Lid Accel",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_KX022,
+		.type = MOTIONSENSE_TYPE_ACCEL,
+		.location = MOTIONSENSE_LOC_LID,
+		.drv = &kionix_accel_drv,
+		.mutex = &g_lid_mutex,
+		.drv_data = &g_kx022_data,
+		.port = I2C_PORT_SENSOR,
+		.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
+		.rot_standard_ref = &lid_kx022_ref,
+		.default_range = 2, /* g, enough for laptop. */
+		.min_frequency = KX022_ACCEL_MIN_FREQ,
+		.max_frequency = KX022_ACCEL_MAX_FREQ,
+		.config = {
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+				.ec_rate = 100,
+			},
+			/* EC use accel for angle detection */
+			[SENSOR_CONFIG_EC_S3] = {
+				.odr = 10000 | ROUND_UP_FLAG,
+			},
+		},
+};
+
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 		.name = "Lid Accel",
@@ -401,6 +438,12 @@ void board_init(void)
 
 	if (get_cbi_fw_config_tablet_mode() == TABLET_MODE_PRESENT) {
 		motion_sensor_count = ARRAY_SIZE(motion_sensors);
+		/* Second source LID ACCEL */
+		if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_KX022) {
+			motion_sensors[LID_ACCEL] = kx022_lid_accel;
+			ccprints("LID ACCEL is KX022");
+		} else
+			ccprints("LID ACCEL is BMA253");
 		/* Enable Base Accel interrupt */
 		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 	} else {
