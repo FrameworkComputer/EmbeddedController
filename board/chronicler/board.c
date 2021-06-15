@@ -9,9 +9,6 @@
 #include "common.h"
 #include "accelgyro.h"
 #include "cbi_ec_fw_config.h"
-#include "driver/accel_bma2x2.h"
-#include "driver/accelgyro_bmi260.h"
-#include "driver/als_tcs3400.h"
 #include "driver/retimer/bb_retimer.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -28,7 +25,6 @@
 #include "switch.h"
 #include "system.h"
 #include "task.h"
-#include "tablet_mode.h"
 #include "throttle_ap.h"
 #include "uart.h"
 #include "usb_pd.h"
@@ -136,13 +132,6 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 /******************************************************************************/
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "sensor",
-		.port = I2C_PORT_SENSOR,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C0_SENSOR_SCL,
-		.sda = GPIO_EC_I2C0_SENSOR_SDA,
-	},
 	{
 		.name = "usb_c0",
 		.port = I2C_PORT_USB_C0,

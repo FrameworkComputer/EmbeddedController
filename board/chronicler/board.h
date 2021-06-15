@@ -37,29 +37,10 @@
 /* Keyboard features */
 
 /* Sensors */
-/* BMA253 accelerometer in base */
-#define CONFIG_ACCEL_BMA255
-
-/* BMI260 accel/gyro in base */
-#define CONFIG_ACCELGYRO_BMI260
-#define CONFIG_ACCELGYRO_BMI260_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-
-/* TCS3400 ALS */
-#define CONFIG_ALS
-#define ALS_COUNT		1
-#define CONFIG_ALS_TCS3400
-#define CONFIG_ALS_TCS3400_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
-
-/* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK \
-	(BIT(LID_ACCEL) | BIT(CLEAR_ALS))
-
-#define CONFIG_LID_ANGLE
-#define CONFIG_LID_ANGLE_UPDATE
-#define CONFIG_LID_ANGLE_SENSOR_BASE		BASE_ACCEL
-#define CONFIG_LID_ANGLE_SENSOR_LID		LID_ACCEL
+#undef CONFIG_TABLET_MODE
+#undef CONFIG_GMR_TABLET_MODE
+#undef CONFIG_ACCEL_FIFO
+#undef CONFIG_ACCEL_FIFO_SIZE
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_PORT_MAX_COUNT			2
@@ -95,6 +76,7 @@
 /* BC 1.2 */
 
 /* Volume Button feature */
+#undef CONFIG_VOLUME_BUTTONS
 
 /* Fan features */
 
@@ -131,14 +113,9 @@
 #define GPIO_SYS_RESET_L		GPIO_SYS_RST_ODL
 #define GPIO_WP_L			GPIO_EC_WP_L
 #define GPIO_USB_C1_BC12_INT_ODL	GPIO_USB_C1_MIX_INT_ODL
-#define GPIO_VOLUME_UP_L		GPIO_EC_VOLUP_BTN_ODL
-#define GPIO_VOLUME_DOWN_L		GPIO_EC_VOLDN_BTN_ODL
-#define GMR_TABLET_MODE_GPIO_L		GPIO_TABLET_MODE_L
 
 /* I2C Bus Configuration */
 #define CONFIG_I2C
-#define I2C_PORT_ACCEL		I2C_PORT_SENSOR
-#define I2C_PORT_SENSOR		NPCX_I2C_PORT0_0
 #define I2C_PORT_USB_C0		NPCX_I2C_PORT1_0
 #define I2C_PORT_USB_C1		NPCX_I2C_PORT2_0
 #define I2C_PORT_USB_1_MIX	NPCX_I2C_PORT3_0
@@ -175,15 +152,6 @@ enum pwm_channel {
 	PWM_CH_FAN,
 	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT
-};
-
-enum sensor_id {
-	LID_ACCEL = 0,
-	BASE_ACCEL,
-	BASE_GYRO,
-	CLEAR_ALS,
-	RGB_ALS,
-	SENSOR_COUNT,
 };
 
 void board_reset_pd_mcu(void);
