@@ -13,3 +13,10 @@ config EMUL_BMA255
 	  Enable the BMA255 emulator. This driver use emulated I2C bus.
 	  It is used to test bma2x2 driver. Emulators API is available in
 	  zephyr/include/emul/emul_bma255.h
+
+config EMUL_BC12_DETECT_PI3USB9201
+	bool "PI3USB9201 emulator"
+	help
+	  Enable the PI3USB9201 emulator. PI3USB9201 is a BC1.2 charger
+	  detector/advertiser. The emulator supports reading and writing the
+	  4 I2C registers of the PI3USB9201 using the emulated I2C bus.

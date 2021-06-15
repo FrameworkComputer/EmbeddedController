@@ -193,4 +193,10 @@
 		error-on-reserved-bit-write;
 		error-on-msb-first-access;
 	};
+
+	pi3usb9201_emul: pi3usb9201@5f {
+		compatible = "zephyr,pi3usb9201-emul";
+		reg = <0x5f>;
+		label = "PI3USB9201_EMUL";
+	};
 };
