@@ -1750,10 +1750,31 @@ static void pe_update_src_pdo_flags(int port, int pdo_cnt, uint32_t *pdos)
 	}
 }
 
+/*
+ * Evaluate whether our PR role is in the middle of changing, meaning we our
+ * current PR role is not the one we expect to have very shortly.
+ */
+bool pe_is_pr_swapping(int port)
+{
+	enum usb_pe_state cur_state = get_state_pe(port);
+
+	if (cur_state == PE_PRS_SRC_SNK_EVALUATE_SWAP ||
+	    cur_state == PE_PRS_SRC_SNK_TRANSITION_TO_OFF ||
+	    cur_state == PE_PRS_SNK_SRC_EVALUATE_SWAP ||
+	    cur_state == PE_PRS_SNK_SRC_TRANSITION_TO_OFF)
+		return true;
+
+	return false;
+}
+
 void pd_request_power_swap(int port)
 {
 	/* Ignore requests when the board does not wish to swap */
 	if (!pd_check_power_swap(port))
+		return;
+
+	/* Ignore requests when our power role is transitioning */
+	if (pe_is_pr_swapping(port))
 		return;
 
 	/*
