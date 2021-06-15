@@ -7,6 +7,8 @@
 #include "mpu.h"
 #include "logging/log.h"
 #include <arch/arm/aarch32/cortex_m/cmsis.h>
+#include <arch/cpu.h>
+#include <init.h>
 
 LOG_MODULE_REGISTER(shim_mpu, LOG_LEVEL_ERR);
 
