@@ -58,6 +58,9 @@ static void board_init(void)
 	/* Enable motion sensor interrupt */
 	gpio_enable_interrupt(GPIO_BASE_IMU_INT_L);
 	gpio_enable_interrupt(GPIO_LID_ACCEL_INT_L);
+
+	/* Disable PWM_CH_LED2(Green) for unuse */
+	pwm_enable(PWM_CH_LED2, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
