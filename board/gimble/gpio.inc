@@ -10,7 +10,6 @@
 /* INTERRUPT GPIOs: */
 GPIO_INT(ACOK_OD,                        PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
 GPIO_INT(EC_ACCEL_INT_R_L,               PIN(8, 1), GPIO_SEL_1P8V | GPIO_INT_FALLING, lis2dw12_interrupt)
-GPIO_INT(EC_ALS_RGB_INT_R_L,             PIN(D, 4), GPIO_INT_FALLING, tcs3400_interrupt)
 GPIO_INT(EC_IMU_INT_R_L,                 PIN(5, 6), GPIO_SEL_1P8V | GPIO_INT_FALLING, lsm6dso_interrupt)
 GPIO_INT(EC_PROCHOT_IN_L,                PIN(F, 0), GPIO_INT_BOTH, throttle_ap_prochot_input_interrupt)
 GPIO_INT(EC_VOLDN_BTN_ODL,               PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
@@ -26,16 +25,11 @@ GPIO_INT(SLP_SUS_L,                      PIN(F, 1), GPIO_INT_BOTH, power_signal_
 GPIO_INT(SYS_SLP_S0IX_L,                 PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(TABLET_MODE_L,                  PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 GPIO_INT(USB_C0_BC12_INT_ODL,            PIN(C, 6), GPIO_INT_BOTH, bc12_interrupt)
-GPIO_INT(USB_C0_C2_TCPC_INT_ODL,         PIN(E, 0), GPIO_INT_BOTH, tcpc_alert_event)
+GPIO_INT(USB_C0_TCPC_INT_ODL,            PIN(E, 0), GPIO_INT_BOTH, tcpc_alert_event)
 GPIO_INT(USB_C0_PPC_INT_ODL,             PIN(6, 2), GPIO_INT_BOTH, ppc_interrupt)
-GPIO_INT(USB_C0_RT_INT_ODL,              PIN(B, 1), GPIO_INT_BOTH, retimer_interrupt)
 GPIO_INT(USB_C1_BC12_INT_ODL,            PIN(5, 0), GPIO_INT_BOTH, bc12_interrupt)
 GPIO_INT(USB_C1_PPC_INT_ODL,             PIN(F, 5), GPIO_INT_BOTH, ppc_interrupt)
-GPIO_INT(USB_C1_RT_INT_ODL,              PIN(A, 0), GPIO_INT_BOTH, retimer_interrupt)
 GPIO_INT(USB_C1_TCPC_INT_ODL,            PIN(A, 2), GPIO_INT_BOTH, tcpc_alert_event)
-GPIO_INT(USB_C2_BC12_INT_ODL,            PIN(8, 3), GPIO_INT_BOTH, bc12_interrupt)
-GPIO_INT(USB_C2_PPC_INT_ODL,             PIN(7, 0), GPIO_INT_BOTH, ppc_interrupt)
-GPIO_INT(USB_C2_RT_INT_ODL,              PIN(4, 1), GPIO_INT_BOTH, retimer_interrupt)
 
 /* USED GPIOs: */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
@@ -53,15 +47,13 @@ GPIO(EC_I2C_SENSOR_SCL,              PIN(B, 5), GPIO_INPUT | GPIO_SEL_1P8V)
 GPIO(EC_I2C_SENSOR_SDA,              PIN(B, 4), GPIO_INPUT | GPIO_SEL_1P8V)
 GPIO(EC_I2C_USB_C0_C2_PPC_BC_SCL,    PIN(9, 2), GPIO_INPUT)
 GPIO(EC_I2C_USB_C0_C2_PPC_BC_SDA,    PIN(9, 1), GPIO_INPUT)
-GPIO(EC_I2C_USB_C0_C2_RT_SCL,        PIN(D, 1), GPIO_INPUT)
-GPIO(EC_I2C_USB_C0_C2_RT_SDA,        PIN(D, 0), GPIO_INPUT)
 GPIO(EC_I2C_USB_C0_C2_TCPC_SCL,      PIN(9, 0), GPIO_INPUT)
 GPIO(EC_I2C_USB_C0_C2_TCPC_SDA,      PIN(8, 7), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_MIX_SCL,          PIN(E, 4), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_MIX_SDA,          PIN(E, 3), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_TCPC_SCL,         PIN(F, 3), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_TCPC_SDA,         PIN(F, 2), GPIO_INPUT)
-GPIO(EC_KB_BL_EN_L,                  PIN(8, 6), GPIO_OUT_HIGH)
+GPIO(EC_KB_LOCK,                     PIN(0, 4), GPIO_INPUT)
 GPIO(EC_PCHHOT_ODL,                  PIN(7, 4), GPIO_INPUT)
 GPIO(EC_PCH_INT_ODL,                 PIN(B, 0), GPIO_ODR_HIGH)
 GPIO(EC_PCH_PWR_BTN_ODL,             PIN(C, 1), GPIO_ODR_HIGH)
@@ -72,13 +64,13 @@ GPIO(EC_PCH_WAKE_R_ODL,              PIN(C, 0), GPIO_INPUT)
 GPIO(EC_PROCHOT_ODL,                 PIN(6, 3), GPIO_ODR_HIGH)
 GPIO(EN_PP5000_FAN,                  PIN(6, 1), GPIO_OUT_HIGH)
 GPIO(EN_PP5000_USBA_R,               PIN(D, 7), GPIO_OUT_LOW)
-GPIO(EN_S5_RAILS,                    PIN(B, 6), GPIO_OUT_LOW)
+GPIO(EN_S5_RAILS,                    PIN(E, 1), GPIO_OUT_LOW)
 GPIO(IMVP9_VRRDY_OD,                 PIN(4, 3), GPIO_INPUT)
 GPIO(PCH_PWROK,                      PIN(7, 2), GPIO_OUT_LOW)
+GPIO(POWER_LED_GATE,		         PIN(B, 6), GPIO_OUT_LOW)	/* Power LED: White */
 GPIO(SYS_RST_ODL,                    PIN(C, 5), GPIO_ODR_HIGH)
-GPIO(USB_C0_C2_TCPC_RST_ODL,         PIN(A, 7), GPIO_OUT_LOW)
+GPIO(USB_C0_TCPC_RST_ODL,            PIN(A, 7), GPIO_OUT_LOW)
 GPIO(USB_C1_FRS_EN,                  PIN(9, 4), GPIO_OUT_LOW)
-GPIO(USB_C1_RST_ODL,                 PIN(9, 6), GPIO_ODR_LOW)
 GPIO(USB_C1_RT_RST_R_ODL,            PIN(0, 2), GPIO_ODR_LOW)
 GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
 
@@ -91,7 +83,6 @@ ALTERNATE(PIN_MASK(8, 0x80), 0, MODULE_I2C, 0)               /* GPIO87/I2C1_SDA0
 ALTERNATE(PIN_MASK(9, 0x07), 0, MODULE_I2C, 0)               /* GPIO92/I2C2_SCL0, GPIO91/I2C2_SDA0, GPIO90/I2C1_SCL0 */
 ALTERNATE(PIN_MASK(B, 0x0c), 0, MODULE_I2C, 0)               /* GPIOB3/I2C7_SCL0/DCD_L, GPIOB2/I2C7_SDA0/DSR_L */
 ALTERNATE(PIN_MASK(B, 0x30), 0, MODULE_I2C, GPIO_SEL_1P8V)   /* GPIOB5/I2C0_SCL0, GPIOB4/I2C0_SDA0 */
-ALTERNATE(PIN_MASK(D, 0x03), 0, MODULE_I2C, 0)               /* GPIOD1/I2C3_SCL0, GPIOD0/I2C3_SDA0 */
 ALTERNATE(PIN_MASK(E, 0x18), 0, MODULE_I2C, 0)               /* GPIOE4/I2C6_SCL1/I3C_SCL, GPIOE3/I2C6_SDA1/I3C_SDA */
 ALTERNATE(PIN_MASK(F, 0x0c), 0, MODULE_I2C, 0)               /* GPIOF3/I2C4_SCL1, GPIOF2/I2C4_SDA1 */
 
@@ -99,7 +90,7 @@ ALTERNATE(PIN_MASK(F, 0x0c), 0, MODULE_I2C, 0)               /* GPIOF3/I2C4_SCL1
 ALTERNATE(PIN_MASK(4, 0x01), 0, MODULE_PWM, 0)               /* GPIO40/TA1 */
 ALTERNATE(PIN_MASK(6, 0x01), 0, MODULE_PWM, 0)               /* GPIO60/PWM7 */
 ALTERNATE(PIN_MASK(8, 0x01), 0, MODULE_PWM, 0)               /* GPIO80/PWM3 */
-ALTERNATE(PIN_MASK(B, 0x80), 0, MODULE_PWM, 0)               /* GPIOB7/PWM5 */
+ALTERNATE(PIN_MASK(B, 0xc0), 0, MODULE_PWM, 0)               /* GPIOB7/PWM5, GPIOB6/PWM4 */
 ALTERNATE(PIN_MASK(C, 0x1c), 0, MODULE_PWM, 0)               /* GPIOC4/PWM2, GPIOC3/PWM0, GPIOC2/PWM1/I2C6_SCL0 */
 
 /* ADC alternate functions */
@@ -125,6 +116,16 @@ UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
 UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(6, 6))       /* GPO66/ARM_L_x86 */
+UNUSED(PIN(8, 6))       /* GPIO86/TXD/CR_SOUT2 */
+UNUSED(PIN(D, 4))       /* GPIOD4/CR_SIN3 */
+UNUSED(PIN(D, 1))       /* GPIOD1/I2C3_SCL0 */
+UNUSED(PIN(D, 0))       /* GPIOD0/I2C3_SDA0 */
+UNUSED(PIN(8, 3))       /* KSO15/GPIO83 */
+UNUSED(PIN(B, 1))       /* KSO17/GPIOB1/CR_SIN4 */
+UNUSED(PIN(4, 1))       /* GPIO41/ADC4 */
+UNUSED(PIN(A, 0))       /* F_CS0_L/GPIOA0 */
+UNUSED(PIN(9, 6))       /* F_DIO1/GPIO96 */
+UNUSED(PIN(7, 0))       /* GPIO70/PS2_DAT0 */
 
 /* Pre-configured PSL balls:  J8  K6 */
 
@@ -136,29 +137,6 @@ UNUSED(PIN(6, 6))       /* GPO66/ARM_L_x86 */
  */
 GPIO(EC_KSO_02_INV,               PIN(1, 7), GPIO_OUT_LOW)
 
-/*
- * GPIOE1 is an ALT function ADC INPUT on board ID 2 and a GPIO INPUT on
- * board ID 1. This declaration gives us a signal name to use on board
- * ID 1.
- */
-GPIO(ID_1_EC_BATT_PRES_ODL,       PIN(E, 1), GPIO_INPUT)
-
-/*
- * GPIO34 is an INPUT on board ID 2 and ODR_LOW on board ID 1.
- *
- * Since this pin is pulled up to 3.3V through a 30.9K ohm resistor on
- * board ID 2, we will leak about 0.3mW until the pin is put in ALT mode
- * when MODULE_ADC configuration runs. Initializing the pin to ODR_LOW
- * gives us full control on both boards.
- */
-GPIO(ID_1_USB_C0_C2_TCPC_RST_ODL, PIN(3, 4), GPIO_ODR_LOW)
-
-IOEX(ID_1_USB_C0_RT_RST_ODL, EXPIN(IOEX_C0_NCT38XX, 0, 2), GPIO_ODR_LOW)
 IOEX(USB_C0_FRS_EN,          EXPIN(IOEX_C0_NCT38XX, 0, 4), GPIO_LOW)
 IOEX(USB_C0_OC_ODL,          EXPIN(IOEX_C0_NCT38XX, 0, 6), GPIO_ODR_HIGH)
-IOEX(USB_C0_RT_RST_ODL,      EXPIN(IOEX_C0_NCT38XX, 0, 7), GPIO_ODR_LOW)
-
-IOEX(USB_C2_RT_RST_ODL,      EXPIN(IOEX_C2_NCT38XX, 0, 2), GPIO_ODR_LOW)
-IOEX(USB_C2_FRS_EN,          EXPIN(IOEX_C2_NCT38XX, 0, 4), GPIO_LOW)
-IOEX(USB_C1_OC_ODL,          EXPIN(IOEX_C2_NCT38XX, 0, 6), GPIO_ODR_HIGH)
-IOEX(USB_C2_OC_ODL,          EXPIN(IOEX_C2_NCT38XX, 0, 7), GPIO_ODR_HIGH)
+IOEX(USB_C0_RT_RST_ODL,      EXPIN(IOEX_C0_NCT38XX, 0, 2), GPIO_ODR_LOW)

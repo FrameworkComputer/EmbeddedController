@@ -41,13 +41,6 @@
 #define CONFIG_ACCEL_LSM6DSO_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
-/* TCS3400 ALS */
-#define CONFIG_ALS
-#define ALS_COUNT 1
-#define CONFIG_ALS_TCS3400
-#define CONFIG_ALS_TCS3400_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
-
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
 /* FIFO size is in power of 2. */
@@ -56,8 +49,7 @@
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 
 /* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK \
-	(BIT(LID_ACCEL) | BIT(CLEAR_ALS))
+#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
 
 /* Lid accel */
 #define CONFIG_LID_ANGLE
@@ -83,15 +75,15 @@
 
 #define CONFIG_IO_EXPANDER
 #define CONFIG_IO_EXPANDER_NCT38XX
-#define CONFIG_IO_EXPANDER_PORT_COUNT		2
+#define CONFIG_IO_EXPANDER_PORT_COUNT		1
 
 #define CONFIG_USB_PD_TCPM_PS8815
-#define CONFIG_USBC_RETIMER_INTEL_BB
+#undef CONFIG_USBC_RETIMER_INTEL_BB
 
 #define CONFIG_USBC_PPC_SYV682X
 #define CONFIG_USBC_PPC_NX20P3483
 
-/* TODO: b/177608416 - measure and check these values on brya */
+/* measure and check these values on gimble */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
 #define PD_VCONN_SWAP_DELAY		5000 /* us */
@@ -139,8 +131,6 @@
 #define GPIO_VOLUME_UP_L		GPIO_EC_VOLUP_BTN_ODL
 #define GPIO_WP_L			GPIO_EC_WP_ODL
 
-#define GPIO_ID_1_EC_KB_BL_EN		GPIO_EC_BATT_PRES_ODL
-
 /* System has back-lit keyboard */
 #define CONFIG_PWM_KBLIGHT
 
@@ -148,17 +138,14 @@
 
 #define I2C_PORT_SENSOR		NPCX_I2C_PORT0_0
 
-#define I2C_PORT_USB_C0_C2_TCPC	NPCX_I2C_PORT1_0
+#define I2C_PORT_USB_C0_TCPC	NPCX_I2C_PORT1_0
 #define I2C_PORT_USB_C1_TCPC	NPCX_I2C_PORT4_1
 
-#define I2C_PORT_USB_C0_C2_PPC	NPCX_I2C_PORT2_0
+#define I2C_PORT_USB_C0_PPC	NPCX_I2C_PORT2_0
 #define I2C_PORT_USB_C1_PPC	NPCX_I2C_PORT6_1
 
-#define I2C_PORT_USB_C0_C2_BC12	NPCX_I2C_PORT2_0
+#define I2C_PORT_USB_C0_BC12	NPCX_I2C_PORT2_0
 #define I2C_PORT_USB_C1_BC12	NPCX_I2C_PORT6_1
-
-#define I2C_PORT_USB_C0_C2_MUX	NPCX_I2C_PORT3_0
-#define I2C_PORT_USB_C1_MUX	NPCX_I2C_PORT6_1
 
 #define I2C_PORT_BATTERY	NPCX_I2C_PORT5_0
 #define I2C_PORT_CHARGER	NPCX_I2C_PORT7_0
@@ -169,20 +156,14 @@
 
 #define I2C_ADDR_MP2964_FLAGS	0x20
 
-/*
- * see b/174768555#comment22
- */
-#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x56
-#define USBC_PORT_C2_BB_RETIMER_I2C_ADDR	0x57
-
-/* Enabling Thunderbolt-compatible mode */
-#define CONFIG_USB_PD_TBT_COMPAT_MODE
+/* Disabling Thunderbolt-compatible mode */
+#undef CONFIG_USB_PD_TBT_COMPAT_MODE
 
 /* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
+#undef CONFIG_USB_PD_USB4
 
 /* Retimer */
-#define CONFIG_USBC_RETIMER_FW_UPDATE
+#undef CONFIG_USBC_RETIMER_FW_UPDATE
 
 /* Thermal features */
 #define CONFIG_THERMISTOR
@@ -224,14 +205,11 @@ enum sensor_id {
 	LID_ACCEL = 0,
 	BASE_ACCEL,
 	BASE_GYRO,
-	CLEAR_ALS,
-	RGB_ALS,
 	SENSOR_COUNT
 };
 
 enum ioex_port {
 	IOEX_C0_NCT38XX = 0,
-	IOEX_C2_NCT38XX,
 	IOEX_PORT_COUNT
 };
 

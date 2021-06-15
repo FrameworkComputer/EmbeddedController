@@ -20,7 +20,7 @@ const struct i2c_port_t i2c_ports[] = {
 	{
 		/* I2C1 */
 		.name = "tcpc0,2",
-		.port = I2C_PORT_USB_C0_C2_TCPC,
+		.port = I2C_PORT_USB_C0_TCPC,
 		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_C0_C2_TCPC_SCL,
 		.sda = GPIO_EC_I2C_USB_C0_C2_TCPC_SDA,
@@ -28,18 +28,10 @@ const struct i2c_port_t i2c_ports[] = {
 	{
 		/* I2C2 */
 		.name = "ppc0,2",
-		.port = I2C_PORT_USB_C0_C2_PPC,
+		.port = I2C_PORT_USB_C0_PPC,
 		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_C0_C2_PPC_BC_SCL,
 		.sda = GPIO_EC_I2C_USB_C0_C2_PPC_BC_SDA,
-	},
-	{
-		/* I2C3 */
-		.name = "retimer0,2",
-		.port = I2C_PORT_USB_C0_C2_MUX,
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C0_C2_RT_SCL,
-		.sda = GPIO_EC_I2C_USB_C0_C2_RT_SDA,
 	},
 	{
 		/* I2C4 C1 TCPC */
