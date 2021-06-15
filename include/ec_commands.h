@@ -639,13 +639,13 @@ enum ec_status {
 BUILD_ASSERT(sizeof(enum ec_status) == sizeof(uint16_t));
 
 /*
- * Host event codes.  Note these are 1-based, not 0-based, because ACPI query
- * EC command uses code 0 to mean "no event pending".  We explicitly specify
- * each value in the enum listing so they won't change if we delete/insert an
- * item or rearrange the list (it needs to be stable across platforms, not
- * just within a single compiled instance).
+ * Host event codes. ACPI query EC command uses code 0 to mean "no event
+ * pending".  We explicitly specify each value in the enum listing so they won't
+ * change if we delete/insert an item or rearrange the list (it needs to be
+ * stable across platforms, not just within a single compiled instance).
  */
 enum host_event_code {
+	EC_HOST_EVENT_NONE = 0,
 	EC_HOST_EVENT_LID_CLOSED = 1,
 	EC_HOST_EVENT_LID_OPEN = 2,
 	EC_HOST_EVENT_POWER_BUTTON = 3,
