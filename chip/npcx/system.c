@@ -1082,6 +1082,7 @@ const char *system_get_chip_revision(void)
 #ifdef CHIP_FAMILY_NPCX7
 	uint8_t chip_id = NPCX_DEVICE_ID_CR;
 #endif
+	int s;
 
 	switch (chip_gen) {
 #if defined(CHIP_FAMILY_NPCX5)
@@ -1115,7 +1116,7 @@ const char *system_get_chip_revision(void)
 	 * For npcx5/npcx7, the revision number is 1 byte.
 	 * For NPCX9 and later chips, the revision number is 4 bytes.
 	 */
-	for (int s = sizeof(rev_num) - 1; s >= 0; s--) {
+	for (s = sizeof(rev_num) - 1; s >= 0; s--) {
 		uint8_t r = rev_num >> (s * 8);
 
 		*p++ = system_to_hex(r >> 4);
