@@ -25,11 +25,9 @@ void board_hibernate(void)
 
 	/*
 	 * Board rev 5+ has the hardware fix. Don't need the following
-	 * workaround. Limozeen's BRD_ID is not monotonically increasing.
-         * 4 is the earliest revision.
+	 * workaround.
 	 */
-	if ((system_get_board_version() >= 5) ||
-		(board_is_clamshell() && ((system_get_board_version() != 4))))
+	if (system_get_board_version() >= 5)
 		return;
 
 	/*
