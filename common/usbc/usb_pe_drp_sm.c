@@ -324,6 +324,7 @@ enum usb_pe_state {
 	PE_SEND_ALERT,
 	PE_SRC_CHUNK_RECEIVED,
 	PE_SNK_CHUNK_RECEIVED,
+	PE_VCS_FORCE_VCONN,
 };
 
 /*
@@ -447,6 +448,9 @@ __maybe_unused static __const_data const char * const pe_state_names[] = {
 	[PE_SRC_CHUNK_RECEIVED] = "PE_SRC_Chunk_Received",
 	[PE_SNK_CHUNK_RECEIVED] = "PE_SNK_Chunk_Received",
 #endif
+#ifdef CONFIG_USBC_VCONN
+	[PE_VCS_FORCE_VCONN] = "PE_VCS_Force_Vconn",
+#endif
 #endif /* CONFIG_USB_PD_REV30 */
 };
 
@@ -475,6 +479,11 @@ GEN_NOT_SUPPORTED(PE_SRC_CHUNK_RECEIVED);
 GEN_NOT_SUPPORTED(PE_SNK_CHUNK_RECEIVED);
 #define PE_SNK_CHUNK_RECEIVED PE_SNK_CHUNK_RECEIVED_NOT_SUPPORTED
 #endif /* CONFIG_USB_PD_REV30 */
+
+#if !defined(CONFIG_USBC_VCONN) || !defined(CONFIG_USB_PD_REV30)
+GEN_NOT_SUPPORTED(PE_VCS_FORCE_VCONN);
+#define PE_VCS_FORCE_VCONN PE_VCS_FORCE_VCONN_NOT_SUPPORTED
+#endif
 
 #ifndef CONFIG_USB_PD_EXTENDED_MESSAGES
 GEN_NOT_SUPPORTED(PE_GIVE_BATTERY_CAP);
@@ -6321,15 +6330,28 @@ static void pe_vcs_send_swap_run(int port)
 				pe_set_ready_state(port);
 				return;
 			}
+
+			/*
+			 * The Policy Engine May transition to the
+			 * PE_VCS_Force_Vconn state when:
+			 * - A Not_Supported Message is received and
+			 * - The Port is not presently the VCONN Source
+			 */
+			if (type == PD_CTRL_NOT_SUPPORTED) {
+				if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
+							!tc_is_vconn_src(port))
+					set_state_pe(port, PE_VCS_FORCE_VCONN);
+				else
+					pe_set_ready_state(port);
+				return;
+			}
 		}
 		/*
-		 * Unexpected Data Message Received
+		 * Unexpected Message Received, send soft reset with SOP* of
+		 * incoming message.
 		 */
-		else {
-			/* Send Soft Reset */
-			pe_send_soft_reset(port, sop);
-			return;
-		}
+		pe_send_soft_reset(port, sop);
+		return;
 	}
 
 	/*
@@ -6547,6 +6569,50 @@ static void pe_vcs_send_ps_rdy_swap_run(int port)
 		/* PS_RDY didn't send, soft reset */
 		pe_send_soft_reset(port, TCPC_TX_SOP);
 	}
+}
+
+/*
+ * PE_VCS_Force_Vconn
+ */
+__maybe_unused static void pe_vcs_force_vconn_entry(int port)
+{
+	print_current_state(port);
+
+	/* Request DPM to turn on VCONN */
+	pd_request_vconn_swap_on(port);
+}
+
+__maybe_unused static void pe_vcs_force_vconn_run(int port)
+{
+	/*
+	 * The Policy Engine Shall transition back to either the PE_SRC_Ready
+	 * or PE_SNK_Ready state when:
+	 *  1) The Port’s VCONN is on.
+	 *
+	 *  Note we'll wait CONFIG_USBC_VCONN_SWAP_DELAY_US, as defined by the
+	 *  board, to ensure Vconn is on.
+	 */
+	if (pd_timer_is_disabled(port, PE_TIMER_TIMEOUT) &&
+	    PE_CHK_FLAG(port, PE_FLAGS_VCONN_SWAP_COMPLETE)) {
+		PE_CLR_FLAG(port, PE_FLAGS_VCONN_SWAP_COMPLETE);
+		pd_timer_enable(port, PE_TIMER_TIMEOUT,
+				CONFIG_USBC_VCONN_SWAP_DELAY_US);
+	}
+
+	if (pd_timer_is_expired(port, PE_TIMER_TIMEOUT)) {
+		/*
+		 * Note: A cable soft reset shouldn't be necessary as a
+		 * Not_Supported reply means the partner doesn't support
+		 * sourcing Vconn and did not communicate with the cable.
+		 */
+		pe_set_ready_state(port);
+		return;
+	}
+}
+
+__maybe_unused static void pe_vcs_force_vconn_exit(int port)
+{
+	pd_timer_disable(port, PE_TIMER_TIMEOUT);
 }
 
 /*
@@ -7289,6 +7355,13 @@ static __const_data const struct usb_state pe_states[] = {
 		.exit  = pe_chunk_received_exit,
 	},
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
+#ifdef CONFIG_USBC_VCONN
+	[PE_VCS_FORCE_VCONN] = {
+		.entry = pe_vcs_force_vconn_entry,
+		.run   = pe_vcs_force_vconn_run,
+		.exit  = pe_vcs_force_vconn_exit,
+	},
+#endif /* CONFIG_USBC_VCONN */
 #endif /* CONFIG_USB_PD_REV30 */
 };
 
