@@ -132,7 +132,7 @@ DECLARE_EC_TEST(test_not_found)
 
 DECLARE_EC_TEST(test_too_large)
 {
-	uint8_t buf[CBI_EEPROM_SIZE-1];
+	uint8_t buf[CBI_IMAGE_SIZE-1];
 	const int tag = 0xff;
 
 	/* Data too large */

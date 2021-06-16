@@ -104,7 +104,7 @@ int board_get_entropy(void *buffer, int len)
 }
 #endif
 
-static uint8_t eeprom[CBI_EEPROM_SIZE];
+static uint8_t eeprom[CBI_IMAGE_SIZE];
 
 int eeprom_i2c_xfer(int port, uint16_t addr_flags,
 		    const uint8_t *out, int out_size,
