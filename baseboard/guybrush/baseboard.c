@@ -893,6 +893,10 @@ void board_hibernate(void)
 		/* Give PD task and PPC chip time to get to 5V */
 		msleep(SAFE_RESET_VBUS_DELAY_MS);
 	}
+
+	/* Try to put our battery fuel gauge into sleep mode */
+	if (battery_sleep_fuel_gauge() != EC_SUCCESS)
+		cprints(CC_SYSTEM, "Failed to send battery sleep command");
 }
 
 __overridable enum ec_error_list
