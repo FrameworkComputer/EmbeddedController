@@ -20,6 +20,8 @@
 
 #include "baseboard.h"
 
+#define CONFIG_DEBUG_ASSERT_BRIEF
+
 #define CONFIG_VOLUME_BUTTONS
 
 #define CONFIG_USB_MUX_IT5205
