@@ -107,10 +107,10 @@ int board_has_da9313(void)
 
 int board_has_buck_ic(void)
 {
-	return get_model() == LIMOZEEN && system_get_board_version() == 0;
+	return get_model() == LIMOZEEN && system_get_board_version() >= 8;
 }
 
 int board_has_ln9310(void)
 {
-	return get_model() == LIMOZEEN && system_get_board_version() != 0;
+	return get_model() == LIMOZEEN && system_get_board_version() < 8;
 }
