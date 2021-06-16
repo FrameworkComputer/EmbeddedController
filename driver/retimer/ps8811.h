@@ -77,6 +77,10 @@
 #define PS8811_CHAN_B_DE_4_5_PS_0_LSB		0x0
 #define PS8811_CHAN_B_DE_4_5_PS_0_MSB		0x6
 
+/* De-emphasis -6 dB, Pre-shoot 1.5 dB */
+#define PS8811_CHAN_B_DE_6_PS_1_5_LSB		0x2
+#define PS8811_CHAN_B_DE_6_PS_1_5_MSB		0x16
+
 /* De-emphasis -6 dB, Pre-shoot 3 dB */
 #define PS8811_CHAN_B_DE_6_PS_3_LSB		0x4
 #define PS8811_CHAN_B_DE_6_PS_3_MSB		0x16

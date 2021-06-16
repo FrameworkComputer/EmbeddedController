@@ -105,14 +105,14 @@ board_a1_ps8811_retimer_init(const struct usb_mux *me)
 		me, PS8811_REG_PAGE1, PS8811_REG1_USB_CHAN_B_SWING,
 		PS8811_CHAN_B_SWING_MASK, 0x2 << PS8811_CHAN_B_SWING_SHIFT));
 
-	/* Set channel B de-emphasis to -6dB and pre-shoot to 3 dB */
+	/* Set channel B de-emphasis to -6dB and pre-shoot to 1.5 dB */
 	RETURN_ERROR(ps8811_i2c_field_update(
 		me, PS8811_REG_PAGE1, PS8811_REG1_USB_CHAN_B_DE_PS_LSB,
-		PS8811_CHAN_B_DE_PS_LSB_MASK, PS8811_CHAN_B_DE_6_PS_3_LSB));
+		PS8811_CHAN_B_DE_PS_LSB_MASK, PS8811_CHAN_B_DE_6_PS_1_5_LSB));
 
 	RETURN_ERROR(ps8811_i2c_field_update(
 		me, PS8811_REG_PAGE1, PS8811_REG1_USB_CHAN_B_DE_PS_MSB,
-		PS8811_CHAN_B_DE_PS_MSB_MASK, PS8811_CHAN_B_DE_6_PS_3_MSB));
+		PS8811_CHAN_B_DE_PS_MSB_MASK, PS8811_CHAN_B_DE_6_PS_1_5_MSB));
 
 	return EC_SUCCESS;
 }
