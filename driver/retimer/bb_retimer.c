@@ -36,7 +36,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define BB_RETIMER_I2C_RETRY	3
+#define BB_RETIMER_I2C_RETRY	5
 
 /**
  * Utility functions
