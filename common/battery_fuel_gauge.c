@@ -156,6 +156,23 @@ int board_cut_off_battery(void)
 	return rv ? EC_RES_ERROR : EC_RES_SUCCESS;
 }
 
+enum ec_error_list battery_sleep_fuel_gauge(void)
+{
+	const struct sleep_mode_info *sleep_command;
+	int type = get_battery_type();
+
+	/* Sleep entry command must be supplied as it will vary by gauge */
+	if (type == BATTERY_TYPE_COUNT)
+		return EC_ERROR_UNKNOWN;
+
+	sleep_command = &board_battery_info[type].fuel_gauge.sleep_mode;
+
+	if (!sleep_command->sleep_supported)
+		return EC_ERROR_UNIMPLEMENTED;
+
+	return sb_write(sleep_command->reg_addr, sleep_command->reg_data);
+}
+
 static enum ec_error_list battery_get_fet_status_regval(int *regval)
 {
 	int rv;

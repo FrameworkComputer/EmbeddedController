@@ -9,6 +9,7 @@
 #define __CROS_EC_BATTERY_FUEL_GAUGE_H
 
 #include "battery.h"
+#include <stdbool.h>
 
 /* Number of writes needed to invoke battery cutoff command */
 #define SHIP_MODE_WRITES 2
@@ -25,6 +26,12 @@ struct ship_mode_info {
 	const uint16_t reg_data[SHIP_MODE_WRITES];
 };
 
+struct sleep_mode_info {
+	const bool sleep_supported;
+	const uint8_t reg_addr;
+	const uint16_t reg_data;
+};
+
 struct fet_info {
 	const int mfgacc_support;
 	const uint8_t reg_addr;
@@ -39,6 +46,7 @@ struct fuel_gauge_info {
 	const char *device_name;
 	const uint8_t override_nil;
 	const struct ship_mode_info ship_mode;
+	const struct sleep_mode_info sleep_mode;
 	const struct fet_info fet;
 
 #ifdef CONFIG_BATTERY_MEASURE_IMBALANCE
@@ -98,5 +106,12 @@ int cut_off_battery_block_write(const struct ship_mode_info *ship_mode);
  * @return non-zero if error
  */
 int cut_off_battery_sb_write(const struct ship_mode_info *ship_mode);
+
+/**
+ * Send the fuel gauge sleep command through SMBus.
+ *
+ * @return	0 if successful, non-zero if error occurred
+ */
+enum ec_error_list battery_sleep_fuel_gauge(void);
 
 #endif /* __CROS_EC_BATTERY_FUEL_GAUGE_H */
