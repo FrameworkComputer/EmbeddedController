@@ -46,7 +46,7 @@
 
 /* PWM */
 #define CONFIG_PWM
-#define NPCX7_PWM1_SEL    0  /* GPIO C2 is used as PWM1. */
+#define NPCX7_PWM1_SEL    1  /* GPIO C2 is used as PWM1. */
 
 /* USB */
 #define CONFIG_BC12_DETECT_PI3USB9201
