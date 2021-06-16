@@ -77,7 +77,7 @@ static void board_led_set_battery(void)
 	static int battery_ticks;
 	int color = LED_OFF;
 	int period = 0;
-	int percent = charge_get_percent();
+	int percent = DIV_ROUND_NEAREST(charge_get_display_charge(), 10);
 	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
