@@ -26,6 +26,7 @@
 		};
 		lid_open {
 			gpios = <&gpioa 6 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			enum-name = "GPIO_LID_OPEN";
 			label = "LID_OPEN";
 		};
 		entering_rw {
