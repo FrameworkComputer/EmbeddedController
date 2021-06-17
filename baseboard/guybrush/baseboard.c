@@ -581,6 +581,16 @@ int board_set_active_charge_port(int port)
 		/* Disable all ports. */
 		for (i = 0; i < ppc_cnt; i++) {
 			/*
+			 * If this port had booted in dead battery mode, go
+			 * ahead and reset it so EN_SNK responds properly.
+			 */
+			if (nct38xx_get_boot_type(i) ==
+						NCT38XX_BOOT_DEAD_BATTERY) {
+				reset_nct38xx_port(cur_port);
+				pd_set_error_recovery(i);
+			}
+
+			/*
 			 * Do not return early if one fails otherwise we can
 			 * get into a boot loop assertion failure.
 			 */
