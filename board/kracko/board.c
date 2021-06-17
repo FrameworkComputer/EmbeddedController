@@ -295,8 +295,8 @@ static const mat33_fp_t lid_standard_ref = {
 };
 
 static const mat33_fp_t lid_kx022_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(1), 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
