@@ -319,8 +319,6 @@ DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
 void board_hibernate(void)
 {
-	int i;
-
 	/*
 	 * Sensors are unpowered in hibernate. Apply PD to the
 	 * interrupt lines such that they don't float.
@@ -329,14 +327,6 @@ void board_hibernate(void)
 		       GPIO_INPUT | GPIO_PULL_DOWN);
 	gpio_set_flags(GPIO_LID_ACCEL_INT_L,
 		       GPIO_INPUT | GPIO_PULL_DOWN);
-
-	/*
-	 * Enable the PPC power sink path before EC enters hibernate;
-	 * otherwise, ACOK won't go High and can't wake EC up. Check the
-	 * bug b/170324206 for details.
-	 */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
-		ppc_vbus_sink_enable(i, 1);
 }
 
 /* Called on AP S0 -> S3 transition */
