@@ -6,5 +6,96 @@
 / {
 	named-gpios {
 		compatible = "named-gpios";
+
+		recovery_l {
+			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_PULL_UP)>;
+			label = "RECOVERY_L";
+		};
+		wp_l {
+			gpios = <&gpio9 3 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_WP_L";
+			label = "WP_L";
+		};
+		ac_present {
+			gpios = <&gpio7 4 (GPIO_INPUT | GPIO_PULL_UP)>;
+			label = "AC_PRESENT";
+		};
+		power_button_l {
+			gpios = <&gpio7 5 (GPIO_INPUT | GPIO_PULL_UP)>;
+			label = "POWER_BUTTON_L";
+		};
+		lid_open {
+			gpios = <&gpioa 6 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			label = "LID_OPEN";
+		};
+		entering_rw {
+			gpios = <&gpio3 6 GPIO_OUT_LOW>;
+			enum-name = "GPIO_ENTERING_RW";
+			label = "ENTERING_RW";
+		};
+		pch_wake_l {
+			gpios = <&gpio5 0 GPIO_OUT_HIGH>;
+			label = "PCH_WAKE_L";
+		};
+		pgood_fan {
+			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_PULL_UP)>;
+			label = "PGOOD_FAN";
+		};
+		spi_cs_l {
+			gpios = <&gpioa 5 GPIO_OUT_HIGH>;
+			label = "SPI_CS_L";
+		};
+		i2c0_scl0 {
+			gpios = <&gpiob 5 GPIO_ODR_HIGH>;
+			label = "I2C0_SCL0";
+		};
+		i2c0_sda0 {
+			gpios = <&gpiob 4 GPIO_ODR_HIGH>;
+			label = "I2C0_SDA0";
+		};
+		i2c1_scl0 {
+			gpios = <&gpio9 0 GPIO_ODR_HIGH>;
+			label = "I2C1_SCL0";
+		};
+		i2c1_sda0 {
+			gpios = <&gpio8 7 GPIO_ODR_HIGH>;
+			label = "I2C1_SDA0";
+		};
+		i2c2_scl0 {
+			gpios = <&gpio9 2 GPIO_ODR_HIGH>;
+			label = "I2C2_SCL0";
+		};
+		i2c2_sda0 {
+			gpios = <&gpio9 1 GPIO_ODR_HIGH>;
+			label = "I2C2_SDA0";
+		};
+		i2c3_scl0 {
+			gpios = <&gpiod 1 GPIO_ODR_HIGH>;
+			label = "I2C3_SCL0";
+		};
+		i2c3_sda0 {
+			gpios = <&gpiod 0 GPIO_ODR_HIGH>;
+			label = "I2C3_SDA0";
+		};
+		i2c7_sda0 {
+			gpios = <&gpiob 2 GPIO_ODR_HIGH>;
+			label = "I2C7_SDA0";
+		};
+		i2c7_scl0 {
+			gpios = <&gpiob 3 GPIO_ODR_HIGH>;
+			label = "I2C7_SCL0";
+		};
+		board_version1 {
+			gpios = <&gpio6 4 GPIO_INPUT>;
+			label = "BOARD_VERSION1";
+		};
+		board_version2 {
+			gpios = <&gpio6 5 GPIO_INPUT>;
+			label = "BOARD_VERSION2";
+		};
+		board_version3 {
+			gpios = <&gpio6 6 GPIO_INPUT>;
+			label = "BOARD_VERSION3";
+		};
 	};
 };

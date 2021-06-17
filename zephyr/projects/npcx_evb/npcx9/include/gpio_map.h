@@ -9,9 +9,6 @@
 #include <devicetree.h>
 #include <gpio_signal.h>
 
-#define GPIO_ENTERING_RW	GPIO_UNIMPLEMENTED
-#define GPIO_WP_L		GPIO_UNIMPLEMENTED
-
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
  *
