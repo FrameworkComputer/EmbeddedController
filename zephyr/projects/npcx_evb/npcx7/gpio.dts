@@ -22,6 +22,7 @@
 		};
 		power_button_l {
 			gpios = <&gpio7 5 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_POWER_BUTTON_L";
 			label = "POWER_BUTTON_L";
 		};
 		lid_open {
