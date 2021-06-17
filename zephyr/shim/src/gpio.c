@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "gpio/gpio.h"
 #include "sysjump.h"
+#include "cros_version.h"
 
 LOG_MODULE_REGISTER(gpio_shim, LOG_LEVEL_ERR);
 
@@ -281,7 +282,14 @@ static int init_gpios(const struct device *unused)
 				~(GPIO_OUTPUT_INIT_LOW | GPIO_OUTPUT_INIT_HIGH);
 		}
 
+#if IS_ZEPHYR_VERSION(2, 6)
+		rv = gpio_pin_interrupt_configure(data[i].dev, configs[i].pin,
+						  flags);
+#elif IS_ZEPHYR_VERSION(2, 5)
 		rv = gpio_config(data[i].dev, configs[i].pin, flags);
+#else
+#error "Unsupported zephyr version"
+#endif
 		if (rv < 0) {
 			LOG_ERR("Config failed %s (%d)", configs[i].name, rv);
 		}
