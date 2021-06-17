@@ -10,9 +10,6 @@
 
 #include "baseboard.h"
 
-/* Board revision */
-#include "board_revs.h"
-
 /* TODO(waihong): Remove the following bringup features */
 #define CONFIG_BRINGUP
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands. */
@@ -30,12 +27,7 @@
 #define CONFIG_PWM_KBLIGHT
 
 /* BC 1.2 Charger */
-#if BOARD_REV >= TROGDOR_REV1
 #define CONFIG_BC12_DETECT_PI3USB9201
-#else
-#define CONFIG_BC12_DETECT_PI3USB9281
-#define CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT 2
-#endif /* BOARD_REV */
 
 /* USB */
 #define CONFIG_USB_PD_TCPM_PS8805
