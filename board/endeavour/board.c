@@ -125,7 +125,7 @@ struct ec_thermal_config thermal_params[] = {
 	 * fan_off, fan_max
 	 */
 	{{0, C_TO_K(81), C_TO_K(82)}, {0, C_TO_K(77), 0},
-		C_TO_K(43), C_TO_K(76)},	/* TMP431_Internal */
+		C_TO_K(19), C_TO_K(74)},	/* TMP431_Internal */
 	{{0, 0, 0}, {0, 0, 0}, 0, 0},	/* TMP431_Sensor_1 */
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
@@ -309,14 +309,14 @@ struct fan_step {
 
 /* Note: Do not make the fan on/off point equal to 0 or 100 */
 static const struct fan_step fan_table0[] = {
-	{.on =  0, .off =  3, .rpm = 0},
-	{.on = 15, .off =  3, .rpm = 2500},
-	{.on = 36, .off = 18, .rpm = 3200},
-	{.on = 52, .off = 39, .rpm = 3500},
-	{.on = 61, .off = 55, .rpm = 3900},
-	{.on = 70, .off = 64, .rpm = 4500},
-	{.on = 82, .off = 73, .rpm = 5100},
-	{.on = 97, .off = 85, .rpm = 5400},
+	{.on =  0, .off =  2, .rpm = 0},
+	{.on = 11, .off =  2, .rpm = 2500},
+	{.on = 38, .off = 29, .rpm = 3200},
+	{.on = 65, .off = 36, .rpm = 3500},
+	{.on = 76, .off = 64, .rpm = 3900},
+	{.on = 84, .off = 75, .rpm = 4500},
+	{.on = 91, .off = 82, .rpm = 5100},
+	{.on = 98, .off = 89, .rpm = 5400},
 };
 /* All fan tables must have the same number of levels */
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
