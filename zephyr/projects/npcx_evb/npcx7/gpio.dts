@@ -18,6 +18,7 @@
 		};
 		ac_present {
 			gpios = <&gpio7 4 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_AC_PRESENT";
 			label = "AC_PRESENT";
 		};
 		power_button_l {
