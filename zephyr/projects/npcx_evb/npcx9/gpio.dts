@@ -16,17 +16,17 @@
 			enum-name = "GPIO_WP_L";
 			label = "WP_L";
 		};
-		ac_present {
+		gpio_ac_present: ac_present {
 			gpios = <&gpio7 4 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_AC_PRESENT";
 			label = "AC_PRESENT";
 		};
-		power_button_l {
+		gpio_power_button_l: power_button_l {
 			gpios = <&gpio7 5 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 			label = "POWER_BUTTON_L";
 		};
-		lid_open {
+		gpio_lid_open: lid_open {
 			gpios = <&gpioa 6 (GPIO_INPUT | GPIO_PULL_DOWN)>;
 			enum-name = "GPIO_LID_OPEN";
 			label = "LID_OPEN";
@@ -64,5 +64,14 @@
 			enum-name = "GPIO_BOARD_VERSION3";
 			label = "BOARD_VERSION3";
 		};
+	};
+
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-pins = <
+			&gpio_ac_present
+			&gpio_power_button_l
+			&gpio_lid_open
+		>;
 	};
 };
