@@ -97,10 +97,6 @@ test_static int test_vsnprintf_args(void)
 
 	T(expect(/* expect an invalid args error */
 		 EC_ERROR_INVAL, NO_BYTES_TOUCHED,
-		 /* given -1 as output size limit */
-		 false, -1, ""));
-	T(expect(/* expect an invalid args error */
-		 EC_ERROR_INVAL, NO_BYTES_TOUCHED,
 		 /* given 0 as output size limit */
 		 false, 0, ""));
 	T(expect(/* expect SUCCESS */
@@ -209,13 +205,13 @@ test_static int test_vsnprintf_pointers(void)
 	T(expect_success(err_str,     "%P",      ptr));
 	/* %p by itself is invalid */
 	T(expect(EC_ERROR_INVAL, NO_BYTES_TOUCHED,
-		 false, -1, "%p"));
+		 false, 0, "%p"));
 	/* %p with an unknown suffix is invalid */
 	T(expect(EC_ERROR_INVAL, NO_BYTES_TOUCHED,
-		 false, -1, "%p "));
+		 false, 0, "%p "));
 	/* %p with an unknown suffix is invalid */
 	T(expect(EC_ERROR_INVAL, NO_BYTES_TOUCHED,
-		 false, -1, "%pQ"));
+		 false, 0, "%pQ"));
 
 	/* Test %pb, binary format */
 	T(expect_success("0",         "%pb",     BINARY_VALUE(val, 0)));

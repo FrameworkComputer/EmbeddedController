@@ -494,7 +494,7 @@ static int snprintf_addchar(void *context, int c)
 	return 0;
 }
 
-int snprintf(char *str, int size, const char *format, ...)
+int snprintf(char *str, size_t size, const char *format, ...)
 {
 	va_list args;
 	int rv;
@@ -506,7 +506,7 @@ int snprintf(char *str, int size, const char *format, ...)
 	return rv;
 }
 
-int vsnprintf(char *str, int size, const char *format, va_list args)
+int vsnprintf(char *str, size_t size, const char *format, va_list args)
 {
 	struct snprintf_context ctx;
 	int rv;

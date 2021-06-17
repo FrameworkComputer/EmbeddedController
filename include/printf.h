@@ -9,6 +9,7 @@
 #define __CROS_EC_PRINTF_H
 
 #include <stdarg.h>  /* For va_list */
+#include <stddef.h>  /* For size_t */
 #include "common.h"
 
 /*
@@ -87,7 +88,7 @@ __stdlib_compat int vfnprintf(int (*addchar)(void *context, int c),
  * @return EC_SUCCESS, or EC_ERROR_OVERFLOW if the output was truncated.
  */
 __attribute__((__format__(__printf__, 3, 4)))
-__stdlib_compat int snprintf(char *str, int size, const char *format, ...);
+__stdlib_compat int snprintf(char *str, size_t size, const char *format, ...);
 
 /**
  * Print formatted output to a string.
@@ -101,7 +102,7 @@ __stdlib_compat int snprintf(char *str, int size, const char *format, ...);
  * @return The string length written to str, or a negative value on error.
  *         The negative values can be -EC_ERROR_INVAL or -EC_ERROR_OVERFLOW.
  */
-__stdlib_compat int vsnprintf(char *str, int size, const char *format,
+__stdlib_compat int vsnprintf(char *str, size_t size, const char *format,
 			      va_list args);
 
 #endif  /* !HIDE_EC_STDLIB */
