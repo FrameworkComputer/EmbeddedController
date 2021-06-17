@@ -104,7 +104,7 @@ class NpcxPacker(BasePacker):
     """Packer for RO/RW image to generate a .bin build using FMAP.
 
     This expects that the build is setup to generate a
-    zephyr.packed.bin for the RO image, which should be packed using
+    zephyr.npcx.bin for the RO image, which should be packed using
     Nuvoton's loader format.
     """
     def __init__(self, project):
@@ -137,7 +137,7 @@ class NpcxPacker(BasePacker):
 
         # Copy the inputs into the work directory so that Binman can
         # find them under a hard-coded name.
-        shutil.copy2(ro / 'zephyr' / 'zephyr.packed.bin',
+        shutil.copy2(ro / 'zephyr' / 'zephyr.npcx.bin',
                      work_dir / 'zephyr_ro.bin')
         shutil.copy2(rw / 'zephyr' / 'zephyr.bin', work_dir / 'zephyr_rw.bin')
 
