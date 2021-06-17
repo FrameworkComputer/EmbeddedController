@@ -144,7 +144,7 @@
 #include "usbc_config.h"
 
 enum battery_type {
-	BATTERY_LGC011,
+	BATTERY_ATL_3S1P_606072,
 	BATTERY_TYPE_COUNT,
 };
 
