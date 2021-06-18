@@ -670,6 +670,13 @@ void ocpc_reset(struct ocpc_data *ocpc)
 			batt.voltage);
 		charger_set_voltage(ocpc->active_chg_chip, batt.voltage);
 	}
+
+	/*
+	 * See(b:191347747) When linear precharge is enabled, it may affect
+	 * the charging behavior from the primary charger IC. Therefore as
+	 * a part of the reset process, we need to disable linear precharge.
+	 */
+	ocpc_precharge_enable(false);
 }
 
 static void ocpc_set_pid_constants(void)
