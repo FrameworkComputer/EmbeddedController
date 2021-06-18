@@ -158,7 +158,7 @@ static void enable_adc_irqs_via_lid(void)
 DECLARE_HOOK(HOOK_LID_CHANGE, enable_adc_irqs_via_lid, HOOK_PRIO_DEFAULT);
 
 /* I2C Ports */
-const struct i2c_port_t i2c_ports[] = {
+__attribute__((weak)) const struct i2c_port_t i2c_ports[] = {
 	{
 		"eeprom", I2C_PORT_EEPROM, 1000, GPIO_EC_I2C_EEPROM_SCL,
 		GPIO_EC_I2C_EEPROM_SDA
