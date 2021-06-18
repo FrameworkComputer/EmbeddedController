@@ -151,4 +151,27 @@ struct ec_params_vpro_control {
 	uint8_t vpro_mode;
 } __ec_align1;
 
+#define EC_CMD_BB_RETIMER_CONTROL 0x3E0A
+
+enum bb_retimer_control_mode {
+	/* entry bb retimer firmware update mode */
+	BB_ENTRY_FW_UPDATE_MODE = BIT(0),
+	/* exit bb retimer firmware update mode */
+	BB_EXIT_FW_UPDATE_MODE = BIT(1),
+	/* enable compliance mode */
+	BB_ENABLE_COMPLIANCE_MODE = BIT(2),
+	/* Check fw update mode */
+	BB_CHECK_STATUS	= BIT(7),
+};
+
+struct ec_params_bb_retimer_control_mode {
+	uint8_t controller;
+	/* See enum bb_retimer_control_mode */
+	uint8_t modes;
+} __ec_align1;
+
+struct ec_response_bb_retimer_control_mode {
+	uint8_t status;
+} __ec_align1;
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */

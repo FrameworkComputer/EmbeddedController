@@ -315,6 +315,56 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	return rv;
 
 }
+void enable_compliance_mode(int controller)
+{
+	int rv;
+	uint32_t debug_register = 0xD000000;
+	int debug_ctl = 0x0100;
+
+	/* Write 0x0D000000 to address 0x0048 */
+	rv = cypd_write_reg_block(controller, CYP5525_ICL_BB_RETIMER_DAT_REG,
+			(void *) &debug_register, 4);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_BB_RETIMER_DAT_REG fail");
+
+	/* Write 0x0100 to address 0x0046 */
+	rv = cypd_write_reg16(controller, CYP5525_ICL_BB_RETIMER_CMD_REG, debug_ctl);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_BB_RETIMER_CMD_REG fail");
+}
+
+void entry_tbt_mode(int controller)
+{
+	int rv;
+	uint8_t force_tbt_mode = 0x01;
+
+	rv = cypd_write_reg8(controller, CYP5525_ICL_CTRL_REG, force_tbt_mode);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_CTRL_REG fail");
+}
+
+void exit_tbt_mode(int controller)
+{
+	int rv;
+	uint8_t force_tbt_mode = 0x00;
+
+	rv = cypd_write_reg8(controller, CYP5525_ICL_CTRL_REG, force_tbt_mode);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_CTRL_REG fail");
+}
+
+int check_tbt_mode(int controller)
+{
+	int rv;
+	int data;
+
+	rv = cypd_read_reg8(controller, CYP5525_ICL_STS_REG, &data);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Read CYP5525_ICL_STS_REG fail");
+
+	return data;
+}
+
 /*
 int cypd_configure_bb_retimer_power_state(int controller, int power)
 {
@@ -1449,6 +1499,9 @@ static int cmd_cypd_get_status(int argc, char **argv)
 			cypd_read_reg8(i, CYP5525_POWER_STAT, &data);
 			CPRINTS("CYPD_POWER_STAT: 0x%02x", data);
 
+			cypd_read_reg8(i, CYP5525_ICL_STS_REG, &data);
+			CPRINTS("CYP5525_ICL_STS_REG: 0x%04x", data);
+
 			cypd_read_reg8(i, CYP5525_SYS_PWR_STATE, &data);
 			CPRINTS("CYPD_SYS_PWR_STATE: 0x%02x", data);
 			for (p = 0; p < 2; p++) {
@@ -1576,7 +1629,10 @@ static int cmd_cypd_bb(int argc, char **argv)
 {
 	uint32_t ctrl, cmd, data;
 	char *e;
-	if (argc == 4) {
+	if (argc == 2 && !strncmp(argv[1], "compliance", 10)) {
+			enable_compliance_mode(0);
+			enable_compliance_mode(1);
+	} else if (argc == 4) {
 		ctrl = strtoi(argv[1], &e, 0);
 		if (*e || ctrl >= PD_CHIP_COUNT)
 			return EC_ERROR_PARAM1;
