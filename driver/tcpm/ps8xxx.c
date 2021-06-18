@@ -674,6 +674,9 @@ __maybe_unused static void ps8815_disable_rp_detect_workaround_check(int port)
 		ps8815_disable_rp_detect[port] = true;
 }
 
+__overridable void board_ps8xxx_tcpc_init(int port)
+{}
+
 static int ps8xxx_tcpm_init(int port)
 {
 	int status;
@@ -684,6 +687,8 @@ static int ps8xxx_tcpm_init(int port)
 		ps8815_transmit_buffer_workaround_check(port);
 		ps8815_disable_rp_detect_workaround_check(port);
 	}
+
+	board_ps8xxx_tcpc_init(port);
 
 	status = tcpci_tcpm_init(port);
 	if (status != EC_SUCCESS)
