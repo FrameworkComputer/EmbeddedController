@@ -223,7 +223,7 @@ int board_get_version(void)
 	return board_id | (fab_id << 8);
 }
 
-__override int bb_retimer_power_handle(const struct usb_mux *me, int on_off)
+__override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 {
 	const struct bb_usb_control *control = &bb_controls[me->usb_port];
 
@@ -235,7 +235,7 @@ __override int bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 		GPIO_USB_C1_RETIMER_FORCE_PWR : GPIO_USB_C0_RETIMER_FORCE_PWR;
 
 	/* handle retimer's power domain */
-	if (on_off) {
+	if (enable) {
 		/*
 		 * BB retimer NVM can be shared between multiple ports, hence
 		 * lock enabling the retimer until the current retimer request

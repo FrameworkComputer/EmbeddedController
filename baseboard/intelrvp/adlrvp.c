@@ -247,10 +247,10 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	ioex_set_level(oc_signal, is_overcurrented ? 0 : 1);
 }
 
-__override int bb_retimer_power_handle(const struct usb_mux *me, int on_off)
+__override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 {
 	/* Handle retimer's power domain.*/
-	if (on_off) {
+	if (enable) {
 		ioex_set_level(bb_controls[me->usb_port].usb_ls_en_gpio, 1);
 
 		/*

@@ -187,7 +187,7 @@ void config_usb_db_type(void)
 	CPRINTS("Configured USB DB type number is %d", db_type);
 }
 
-__override int bb_retimer_power_handle(const struct usb_mux *me, int on_off)
+__override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 {
 	enum ioex_signal rst_signal;
 
@@ -207,7 +207,7 @@ __override int bb_retimer_power_handle(const struct usb_mux *me, int on_off)
 	 * so we only need to sequence reset.
 	 */
 
-	if (on_off) {
+	if (enable) {
 		/*
 		 * Tpw, minimum time from VCC to RESET_N de-assertion is 100us.
 		 * For boards that don't provide a load switch control, the

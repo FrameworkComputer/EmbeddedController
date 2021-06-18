@@ -123,13 +123,13 @@ static int bb_retimer_write(const struct usb_mux *me,
 	return rv;
 }
 
-__overridable int bb_retimer_power_handle(const struct usb_mux *me, int on_off)
+__overridable int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 {
 	const struct bb_usb_control *control = &bb_controls[me->usb_port];
 
 	/* handle retimer's power domain */
 
-	if (on_off) {
+	if (enable) {
 		gpio_set_level(control->usb_ls_en_gpio, 1);
 		/*
 		 * Tpw, minimum time from VCC to RESET_N de-assertion is 100us.
@@ -470,8 +470,7 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state)
 
 static int retimer_low_power_mode(const struct usb_mux *me)
 {
-	bb_retimer_power_handle(me, 0);
-	return EC_SUCCESS;
+	return bb_retimer_power_enable(me, false);
 }
 
 static bool is_retimer_fw_update_capable(void)
@@ -487,11 +486,11 @@ static int retimer_init(const struct usb_mux *me)
 	/* Burnside Bridge is powered by main AP rail */
 	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
 		/* Ensure reset is asserted while chip is not powered */
-		bb_retimer_power_handle(me, 0);
+		bb_retimer_power_enable(me, false);
 		return EC_ERROR_NOT_POWERED;
 	}
 
-	rv = bb_retimer_power_handle(me, 1);
+	rv = bb_retimer_power_enable(me, true);
 	if (rv != EC_SUCCESS)
 		return rv;
 
