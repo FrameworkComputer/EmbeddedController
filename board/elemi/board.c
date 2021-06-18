@@ -228,6 +228,14 @@ static void kb_backlight_disable(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kb_backlight_disable, HOOK_PRIO_DEFAULT);
 
+__override void board_ps8xxx_tcpc_init(int port)
+{
+	/* b/189587527: Set Displayport EQ loss up to 10dB */
+	tcpc_addr_write(port, PS8751_I2C_ADDR1_P1_FLAGS,
+		PS8815_REG_DP_EQ_SETTING,
+		PS8815_DPEQ_LOSS_UP_10DB << PS8815_REG_DP_EQ_COMP_SHIFT);
+}
+
 /*
  * USB3 DB mux configuration - the top level mux still needs to be set to the
  * virtual_usb_mux_driver so the AP gets notified of mux changes and updates
