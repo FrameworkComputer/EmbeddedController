@@ -14,9 +14,7 @@
 #undef GPIO_VOLUME_UP_L
 #undef GPIO_VOLUME_DOWN_L
 #undef CONFIG_VOLUME_BUTTONS
-
-/* System unlocked in early development */
-#define CONFIG_SYSTEM_UNLOCKED
+#undef CONFIG_I2C_DEBUG
 
 /* EC console commands */
 #define CONFIG_CMD_TCPC_DUMP
