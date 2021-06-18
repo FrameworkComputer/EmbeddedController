@@ -27,13 +27,19 @@ int console_is_restricted(void)
 static void ap_deferred(void)
 {
 	/*
-	 * in S3:   SLP_S3_L is 0 and SLP_S0_L is X.
-	 * in S0ix: SLP_S3_L is X and SLP_S0_L is 0.
-	 * in S0:   SLP_S3_L is 1 and SLP_S0_L is 1.
+	 * Behavior:
+	 * AP Active  (ex. Intel S0):   SLP_L is 1
+	 * AP Suspend (ex. Intel S0ix): SLP_L is 0
+	 * The alternative SLP_ALT_L should be pulled high at all the times.
+	 *
+	 * Legacy Intel behavior:
+	 * in S3:   SLP_ALT_L is 0 and SLP_L is X.
+	 * in S0ix: SLP_ALT_L is X and SLP_L is 0.
+	 * in S0:   SLP_ALT_L is 1 and SLP_L is 1.
 	 * in S5/G3, the FP MCU should not be running.
 	 */
-	int running = gpio_get_level(GPIO_PCH_SLP_S3_L)
-			&& gpio_get_level(GPIO_PCH_SLP_S0_L);
+	int running = gpio_get_level(GPIO_SLP_ALT_L)
+			&& gpio_get_level(GPIO_SLP_L);
 
 	if (running) { /* S0 */
 		disable_sleep(SLEEP_MASK_AP_RUN);
@@ -87,8 +93,8 @@ static void board_init(void)
 		fp_transport_type_to_str(get_fp_transport_type()));
 
 	/* Enable interrupt on PCH power signals */
-	gpio_enable_interrupt(GPIO_PCH_SLP_S3_L);
-	gpio_enable_interrupt(GPIO_PCH_SLP_S0_L);
+	gpio_enable_interrupt(GPIO_SLP_ALT_L);
+	gpio_enable_interrupt(GPIO_SLP_L);
 
 	/*
 	 * Enable the SPI slave interface if the PCH is up.

@@ -14,8 +14,8 @@
 #include "base-gpio.inc"
 
 /* Interrupts */
-GPIO_INT(PCH_SLP_S0_L,    PIN(D, 13), GPIO_INT_BOTH, slp_event)
-GPIO_INT(PCH_SLP_S3_L,    PIN(A, 11), GPIO_INT_BOTH, slp_event)
+GPIO_INT(SLP_L,           PIN(D, 13), GPIO_INT_BOTH, slp_event)
+GPIO_INT(SLP_ALT_L,       PIN(A, 11), GPIO_INT_BOTH, slp_event)
 
 /* Output for User Presence */
 GPIO(USER_PRES_L,         PIN(C, 5),  GPIO_ODR_HIGH)
