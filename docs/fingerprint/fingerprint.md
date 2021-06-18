@@ -328,7 +328,7 @@ fingerprint development boards.
 #### MCU is idle
 
 ```
-(chroot) $ dut-control fpmcu_slp_s3:off
+(chroot) $ dut-control fpmcu_slp_alt:off
 ```
 
 ```
@@ -345,7 +345,7 @@ fingerprint development boards.
 #### MCU in low power mode (suspend)
 
 ```
-(chroot) $ dut-control fpmcu_slp_s3:on
+(chroot) $ dut-control fpmcu_slp_alt:on
 ```
 
 ```
@@ -382,7 +382,7 @@ measure releases before that point.
 #### MCU is idle
 
 ```
-(chroot) $ dut-control fpmcu_slp_s3:off
+(chroot) $ dut-control fpmcu_slp_alt:off
 ```
 
 ```
@@ -397,7 +397,7 @@ measure releases before that point.
 #### MCU in low power mode (suspend)
 
 ```
-(chroot) $ dut-control fpmcu_slp_s3:on
+(chroot) $ dut-control fpmcu_slp_alt:on
 ```
 
 ```
