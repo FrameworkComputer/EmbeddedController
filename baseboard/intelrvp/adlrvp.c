@@ -197,6 +197,9 @@ const struct bb_usb_control bb_controls[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(bb_controls) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
+/* Cache BB retimer power state */
+static bool cache_bb_enable[CONFIG_USB_PD_PORT_MAX_COUNT];
+
 /* Each TCPC have corresponding IO expander and are available in pair */
 struct ioexpander_config_t ioex_config[] = {
 	[IOEX_C0_PCA9675] = {
@@ -249,6 +252,17 @@ void board_overcurrent_event(int port, int is_overcurrented)
 
 __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 {
+	/*
+	 * ADL-P-DDR5 RVP SKU has cascaded retimer topology.
+	 * Ports with cascaded retimers share common load switch and reset pin
+	 * hence no need to set the power state again if the 1st retimer's power
+	 * status has already changed.
+	 */
+	if (cache_bb_enable[me->usb_port] == enable)
+		return EC_SUCCESS;
+
+	cache_bb_enable[me->usb_port] = enable;
+
 	/* Handle retimer's power domain.*/
 	if (enable) {
 		ioex_set_level(bb_controls[me->usb_port].usb_ls_en_gpio, 1);
