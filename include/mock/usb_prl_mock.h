@@ -22,6 +22,7 @@ enum pd_ctrl_msg_type mock_prl_get_last_sent_ctrl_msg(int port);
 
 enum pd_data_msg_type mock_prl_get_last_sent_data_msg(int port);
 
+
 void mock_prl_clear_last_sent_msg(int port);
 
 void mock_prl_message_sent(int port);

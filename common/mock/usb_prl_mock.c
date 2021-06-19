@@ -155,6 +155,10 @@ void mock_prl_clear_last_sent_msg(int port)
 	mock_prl_port[port].last_tx_type = TCPC_TX_INVALID;
 }
 
+timestamp_t prl_get_tcpc_tx_success_ts(int port)
+{
+	return get_time();
+}
 void mock_prl_message_sent(int port)
 {
 	mock_prl_port[port].message_sent = 1;

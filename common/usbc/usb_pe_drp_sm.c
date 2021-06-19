@@ -2016,6 +2016,8 @@ static void pe_sender_response_msg_entry(const int port)
  */
 static enum pe_msg_check pe_sender_response_msg_run(const int port)
 {
+	timestamp_t tx_success_ts;
+	uint32_t offset;
 	if (pd_timer_is_disabled(port, PE_TIMER_SENDER_RESPONSE)) {
 		/* Check for Discard */
 		if (PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED)) {
@@ -2034,9 +2036,19 @@ static enum pe_msg_check pe_sender_response_msg_run(const int port)
 		if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
 			PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 
-			/* Initialize and run the SenderResponseTimer */
+			/* TCPC TX success time stamp */
+			tx_success_ts = prl_get_tcpc_tx_success_ts(port);
+			/* Calculate the delay from TX success to PE */
+			offset = time_since32(tx_success_ts);
+
+			/*
+			 * Initialize and run the SenderResponseTimer by
+			 * offsetting it with TX transmit success time.
+			 * This would remove the effect of the latency from
+			 * propagating the TX status.
+			 */
 			pd_timer_enable(port, PE_TIMER_SENDER_RESPONSE,
-					PD_T_SENDER_RESPONSE);
+					PD_T_SENDER_RESPONSE - offset);
 			return PE_MSG_SEND_COMPLETED;
 		}
 		return PE_MSG_SEND_PENDING;

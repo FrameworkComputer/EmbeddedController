@@ -19,7 +19,6 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
-#include "timer.h"
 #include "tcpm/tcpm.h"
 #include "util.h"
 #include "usb_charge.h"
@@ -415,6 +414,8 @@ GEN_NOT_SUPPORTED(TCH_REPORT_ERROR);
 #define TCH_REPORT_ERROR TCH_REPORT_ERROR_NOT_SUPPORTED
 #endif /* !CONFIG_USB_PD_REV30 */
 
+/* To store the time stamp when TCPC sets TX Complete Success */
+static timestamp_t tcpc_tx_success_ts[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Set the protocol transmit statemachine to a new state. */
 static void set_state_prl_tx(const int port,
@@ -507,8 +508,22 @@ static void print_current_tch_state(const int port)
 }
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 
+
+timestamp_t prl_get_tcpc_tx_success_ts(int port)
+{
+	return tcpc_tx_success_ts[port];
+}
+
+/* Sets the time stamp when TCPC reports TX success. */
+static void set_tcpc_tx_success_ts(int port)
+{
+	tcpc_tx_success_ts[port] = get_time();
+}
+
 void pd_transmit_complete(int port, int status)
 {
+	if (status == TCPC_TX_COMPLETE_SUCCESS)
+		set_tcpc_tx_success_ts(port);
 	prl_tx[port].xmit_status = status;
 }
 
