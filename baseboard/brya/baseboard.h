@@ -99,7 +99,14 @@
 
 #define CONFIG_HOSTCMD_ESPI_RESET_SLP_SX_VW_ON_ESPI_RST
 
-#define CONFIG_BOARD_HAS_RTC_RESET
+/*
+ * TODO(b/191742284): When DAM enabled coreboot image is flashed on top of DAM
+ * disabled coreboot, S5 exit is taking more than 4 seconds, then EC triggers
+ * system shutdown. This WA deselects CONFIG_BOARD_HAS_RTC_RESET to prevent
+ * EC from system shutdown.
+ */
+/* #define CONFIG_BOARD_HAS_RTC_RESET */
+
 #define CONFIG_CMD_AP_RESET_LOG
 #define CONFIG_HOSTCMD_AP_RESET
 
