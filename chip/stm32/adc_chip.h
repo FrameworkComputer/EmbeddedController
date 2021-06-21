@@ -10,6 +10,20 @@
 
 #include "stdint.h"
 
+#ifdef CHIP_FAMILY_STM32L4
+enum stm32_adc_smpr {
+	STM32_ADC_SMPR_DEFAULT = 0,
+	STM32_ADC_SMPR_2_5_CY,
+	STM32_ADC_SMPR_6_5_CY,
+	STM32_ADC_SMPR_12_5_CY,
+	STM32_ADC_SMPR_24_5_CY,
+	STM32_ADC_SMPR_47_5_CY,
+	STM32_ADC_SMPR_92_5_CY,
+	STM32_ADC_SMPR_247_5_CY,
+	STM32_ADC_SMPR_640_5_CY,
+	STM32_ADC_SMPR_COUNT,
+};
+#else
 enum stm32_adc_smpr {
 	STM32_ADC_SMPR_DEFAULT = 0,
 	STM32_ADC_SMPR_1_5_CY,
@@ -22,6 +36,7 @@ enum stm32_adc_smpr {
 	STM32_ADC_SMPR_239_5_CY,
 	STM32_ADC_SMPR_COUNT,
 };
+#endif
 
 /* Data structure to define ADC channels. */
 struct adc_t {
@@ -30,7 +45,11 @@ struct adc_t {
 	int factor_div;
 	int shift;
 	int channel;
-#ifdef CHIP_FAMILY_STM32F0
+#ifdef CHIP_FAMILY_STM32L4
+	int rank;
+#endif
+
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32L4)
 	enum stm32_adc_smpr sample_rate;  /* Sampling Rate of the channel */
 #endif
 };
@@ -51,5 +70,8 @@ void adc_disable(void);
 
 /* Just plain id mapping for code readability */
 #define STM32_AIN(x) (x)
+
+/* Add for ADCs with RANK */
+#define STM32_RANK(x) (x)
 
 #endif /* __CROS_EC_ADC_CHIP_H */
