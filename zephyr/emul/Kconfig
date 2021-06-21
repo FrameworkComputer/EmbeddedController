@@ -20,3 +20,10 @@ config EMUL_BC12_DETECT_PI3USB9201
 	  Enable the PI3USB9201 emulator. PI3USB9201 is a BC1.2 charger
 	  detector/advertiser. The emulator supports reading and writing the
 	  4 I2C registers of the PI3USB9201 using the emulated I2C bus.
+
+config EMUL_PPC_SYV682X
+	bool "Silergy SYV682x PPC emulator"
+	select PLATFORM_EC_USBC_PPC_SYV682X
+	help
+	  Enable the SYV682x emulator. SYV682 is a USB Type-C PPC. This driver
+	  uses the emulated I2C bus.

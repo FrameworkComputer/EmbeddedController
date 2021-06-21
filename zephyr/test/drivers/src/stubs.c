@@ -164,8 +164,9 @@ struct ppc_config_t ppc_chips[] = {
 	},
 	[USBC_PORT_C1] = {
 		.i2c_port = I2C_PORT_USB_C1,
-		.i2c_addr_flags = SN5S330_ADDR1_FLAGS,
-		.drv = &sn5s330_drv,
+		.i2c_addr_flags = SYV682X_ADDR1_FLAGS,
+		/* TODO(b/190519131): Add FRS GPIO, test FRS */
+		.drv = &syv682x_drv,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);

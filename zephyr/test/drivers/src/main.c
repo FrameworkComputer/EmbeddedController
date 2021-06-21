@@ -14,6 +14,7 @@ extern void test_suite_thermistor(void);
 extern void test_suite_temp_sensor(void);
 extern void test_suite_bma2x2(void);
 extern void test_suite_bc12(void);
+extern void test_suite_ppc(void);
 
 void test_main(void)
 {
@@ -29,4 +30,5 @@ void test_main(void)
 	test_suite_temp_sensor();
 	test_suite_bma2x2();
 	test_suite_bc12();
+	test_suite_ppc();
 }
