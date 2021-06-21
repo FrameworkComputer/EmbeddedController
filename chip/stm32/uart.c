@@ -234,6 +234,9 @@ static void uart_freq_change(void)
 	freq = 8000000;
 #elif defined(CHIP_FAMILY_STM32H7)
 	freq = 64000000; /* from 64 Mhz HSI */
+#elif defined(CHIP_FAMILY_STM32L4)
+	/* UART clocked from HSI 16 */
+	freq = 16000000;
 #else
 	/* UART clocked from the main clock */
 	freq = clock_get_freq();
@@ -289,17 +292,29 @@ void uart_init(void)
 #elif defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32G4)
 	/* USART1 clock source from SYSCLK */
 	STM32_RCC_CCIPR &= ~STM32_RCC_CCIPR_USART1SEL_MASK;
+#ifdef CHIP_FAMILY_STM32L4
+	/* For STM32L4, use HSI for UART, to wake up from low power mode */
 	STM32_RCC_CCIPR |=
-		(STM32_RCC_CCIPR_UART_SYSCLK << STM32_RCC_CCIPR_USART1SEL_SHIFT);
+		(STM32_RCC_CCIPR_UART_HSI16 << STM32_RCC_CCIPR_USART1SEL_SHIFT);
+#else
+	STM32_RCC_CCIPR |= (STM32_RCC_CCIPR_UART_SYSCLK
+			    << STM32_RCC_CCIPR_USART1SEL_SHIFT);
+#endif
 	/* LPUART1 clock source from SYSCLK */
 	STM32_RCC_CCIPR &= ~STM32_RCC_CCIPR_LPUART1SEL_MASK;
-	STM32_RCC_CCIPR |=
-		(STM32_RCC_CCIPR_UART_SYSCLK << STM32_RCC_CCIPR_LPUART1SEL_SHIFT);
+	STM32_RCC_CCIPR |= (STM32_RCC_CCIPR_UART_SYSCLK
+			    << STM32_RCC_CCIPR_LPUART1SEL_SHIFT);
 #endif /* CHIP_FAMILY_STM32F0 || CHIP_FAMILY_STM32F3 */
 
 	/* Enable USART clock */
 #if (UARTN == 1)
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_USART1;
+#ifdef CHIP_FAMILY_STM32L4
+#if defined(CONFIG_UART_RX_DMA) || defined(CONFIG_UART_TX_DMA)
+	STM32_RCC_AHB1ENR |= STM32_RCC_HB1_DMA1;
+	STM32_RCC_AHB1ENR |= STM32_RCC_HB1_DMA2;
+#endif
+#endif
 #elif (UARTN == 6)
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_USART6;
 #elif (UARTN == 9)
@@ -318,7 +333,7 @@ void uart_init(void)
 	gpio_config_module(MODULE_UART, 1);
 
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) \
-|| defined(CHIP_FAMILY_STM32H7)
+|| defined(CHIP_FAMILY_STM32H7) || defined(CHIP_FAMILY_STM32L4)
 	/*
 	 * Wake up on start bit detection. WUS can only be written when UE=0,
 	 * so clear UE first.
@@ -337,8 +352,13 @@ void uart_init(void)
 	 * UART enabled, 8 Data bits, oversampling x16, no parity,
 	 * TX and RX enabled.
 	 */
+#ifdef CHIP_FAMILY_STM32L4
+	STM32_USART_CR1(UARTN_BASE) =
+		STM32_USART_CR1_TE | STM32_USART_CR1_RE;
+#else
 	STM32_USART_CR1(UARTN_BASE) =
 		STM32_USART_CR1_UE | STM32_USART_CR1_TE | STM32_USART_CR1_RE;
+#endif
 
 	/* 1 stop bit, no fancy stuff */
 	STM32_USART_CR2(UARTN_BASE) = 0x0000;
@@ -374,6 +394,10 @@ void uart_init(void)
 
 	/* Enable interrupts */
 	task_enable_irq(STM32_IRQ_USART(UARTN));
+
+#ifdef CHIP_FAMILY_STM32L4
+	STM32_USART_CR1(UARTN_BASE) |= STM32_USART_CR1_UE;
+#endif
 
 	init_done = 1;
 }
