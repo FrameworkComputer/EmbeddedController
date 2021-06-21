@@ -80,7 +80,7 @@ GPIO(EC_PROCHOT_ODL,	     PIN(F, 1), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
 GPIO(EC_ENTERING_RW,	     PIN(E, 3), GPIO_OUT_LOW)
 GPIO(ALL_SYS_PWRGD,	     PIN(A, 0), GPIO_OUT_LOW)
 GPIO(SYS_RST_ODL,	     PIN(C, 5), GPIO_ODR_HIGH)
-GPIO(CCD_MODE_ODL,	     PIN(E, 5), GPIO_INPUT)
+GPIO(CCD_MODE_ODL,	     PIN(E, 5), GPIO_ODR_HIGH)
 
 GPIO(EN_USB_A0_5V_SUB,       PIN(9, 7), GPIO_OUT_LOW) /* Don't limit USB-A charging by default - all ports */
 GPIO(EN_USB_A0_VBUS,         PIN(4, 1), GPIO_OUT_LOW) /* Enable USB-A charging - all ports */
