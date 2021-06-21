@@ -90,9 +90,10 @@ static int wait_isr(int port, int mask)
 	return EC_ERROR_TIMEOUT;
 }
 
-/* We are only using sysclk, which is 40MHZ */
+/* Supported i2c input clocks */
 enum stm32_i2c_clk_src {
-	I2C_CLK_SRC_40MHZ = 0,
+	I2C_CLK_SRC_48MHZ = 0,
+	I2C_CLK_SRC_16MHZ = 1,
 	I2C_CLK_SRC_COUNT,
 };
 
@@ -101,10 +102,15 @@ enum stm32_i2c_clk_src {
  * These values are calculated using ST's STM32cubeMX tool
  */
 static const uint32_t timingr_regs[I2C_CLK_SRC_COUNT][I2C_FREQ_COUNT] = {
-	[I2C_CLK_SRC_40MHZ] = {
-		[I2C_FREQ_1000KHZ] = 0x00100618,
-		[I2C_FREQ_400KHZ] = 0x00301347,
-		[I2C_FREQ_100KHZ] = 0x003087FF,
+	[I2C_CLK_SRC_48MHZ] = {
+		[I2C_FREQ_1000KHZ] = 0x20000209,
+		[I2C_FREQ_400KHZ] = 0x2010091A,
+		[I2C_FREQ_100KHZ] = 0x20303E5D,
+	},
+	[I2C_CLK_SRC_16MHZ] = {
+		[I2C_FREQ_1000KHZ] = 0x00000107,
+		[I2C_FREQ_400KHZ] = 0x00100B15,
+		[I2C_FREQ_100KHZ] = 0x00303D5B,
 	},
 };
 
@@ -113,13 +119,12 @@ static void i2c_set_freq_port(const struct i2c_port_t *p,
 			      enum i2c_freq freq)
 {
 	int port = p->port;
-	const uint32_t *regs = timingr_regs[src];
 
 	/* Disable port */
 	STM32_I2C_CR1(port) = 0;
 	STM32_I2C_CR2(port) = 0;
 	/* Set clock frequency */
-	STM32_I2C_TIMINGR(port) = regs[freq];
+	STM32_I2C_TIMINGR(port) = timingr_regs[src][freq];
 	/* Enable port */
 	STM32_I2C_CR1(port) = STM32_I2C_CR1_PE;
 
@@ -134,20 +139,20 @@ static void i2c_set_freq_port(const struct i2c_port_t *p,
 static void i2c_init_port(const struct i2c_port_t *p)
 {
 	int port = p->port;
-	uint32_t mask;
-	uint8_t shift;
-	enum stm32_i2c_clk_src src = I2C_CLK_SRC_40MHZ;
+	uint32_t val;
 	enum i2c_freq freq;
+	enum stm32_i2c_clk_src src = I2C_CLK_SRC_16MHZ;
 
-	/* Enable clocks to I2C modules if necessary */
-	if (!(STM32_RCC_APB1ENR & (1 << (21 + port))))
-		STM32_RCC_APB1ENR |= 1 << (21 + port);
+	/* Enable I2C clock */
+	if (!(STM32_RCC_APB1ENR1 & (1 << (21 + port))))
+		STM32_RCC_APB1ENR1 |= 1 << (21 + port);
 
-	/* Select sysclk as source */
-	mask = STM32_RCC_CCIPR_I2C1SEL_MASK << (port * 2);
-	shift = STM32_RCC_CCIPR_I2C1SEL_SHIFT + (port * 2);
-	STM32_RCC_CCIPR &= ~mask;
-	STM32_RCC_CCIPR |= STM32_RCC_CCIPR_I2C_SYSCLK << shift;
+	/*	Select HSI 16MHz as I2C clock source	*/
+	val = STM32_RCC_CCIPR;
+	val &= ~(STM32_RCC_CCIPR_I2C1SEL_MASK << (port * 2));
+	val |= STM32_RCC_CCIPR_I2C_HSI16
+	       << (STM32_RCC_CCIPR_I2C1SEL_SHIFT + port * 2);
+	STM32_RCC_CCIPR = val;
 
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_I2C, 1);
@@ -155,6 +160,7 @@ static void i2c_init_port(const struct i2c_port_t *p)
 	/* Set clock frequency */
 	switch (p->kbps) {
 	case 1000:
+		STM32_SYSCFG_CFGR1 |= STM32_SYSCFG_I2CFMP(port);
 		freq = I2C_FREQ_1000KHZ;
 		break;
 	case 400:
