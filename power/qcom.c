@@ -552,6 +552,14 @@ enum power_state power_chipset_init(void)
 		if (power_get_signals() & IN_POWER_GOOD) {
 			CPRINTS("SOC ON");
 			init_power_state = POWER_S0;
+
+			/*
+			 * Reenable the power signal AP_RST_L interrupt, which
+			 * should be enabled during S5->S3 but sysjump makes
+			 * it back to default, disabled.
+			 */
+			power_signal_enable_interrupt(GPIO_AP_RST_L);
+
 			/* Disable idle task deep sleep when in S0 */
 			disable_sleep(SLEEP_MASK_AP_RUN);
 		} else {
