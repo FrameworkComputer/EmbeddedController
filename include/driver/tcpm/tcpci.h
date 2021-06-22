@@ -22,6 +22,7 @@
 #define TCPC_REG_PD_INT_REV        0xa
 
 #define TCPC_REG_ALERT             0x10
+#define TCPC_REG_ALERT_NONE         0x0000
 #define TCPC_REG_ALERT_MASK_ALL     0xffff
 #define TCPC_REG_ALERT_VENDOR_DEF   BIT(15)
 #define TCPC_REG_ALERT_ALERT_EXT    BIT(14)
