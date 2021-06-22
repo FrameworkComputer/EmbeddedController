@@ -15,8 +15,14 @@ extern "C" {
 /* Place any C interfaces here */
 
 /*
- * function returns the controller for I2C
- * if there is a special assignment, function board.c can override this.
+ * Function returns the controller for I2C.
+ *
+ * Default function assigns controller for I2C port with modulo operation. If
+ * the I2C ports used are greater than MCHP_I2C_CTRL_MAX, then I2C ports will
+ * share the controller. Typically Type-C chips need individual controller per
+ * port because of heavy I2C transactions. Hence, define a board specific
+ * controller assignment when the I2C ports used are greater than
+ * MCHP_I2C_CTRL_MAX.
  */
 __override_proto int board_i2c_p2c(int port);
 

@@ -236,6 +236,9 @@ const struct i2c_bus_clk i2c_freq_tbl[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(i2c_freq_tbl) == MCHP_I2C_SUPPORTED_BUS_CLOCKS);
 
+/* I2C controller assignment to a port */
+static int i2c_p2c[MCHP_I2C_PORT_COUNT];
+
 static int get_closest(int lesser, int greater, int target)
 {
 	if (target - i2c_freq_tbl[lesser].freq_khz >=
@@ -935,7 +938,7 @@ __overridable int board_i2c_p2c(int port)
 {
 	if (port < 0 || port >= I2C_PORT_COUNT)
 		return -1;
-	return port % MCHP_I2C_CTRL_MAX;
+	return i2c_p2c[port];
 }
 
 /*
@@ -976,6 +979,9 @@ void i2c_init(void)
 	memset(cdata, 0, sizeof(cdata));
 
 	for (i = 0; i < i2c_ports_used; ++i) {
+		/* Assign I2C controller to I2C port */
+		i2c_p2c[i2c_ports[i].port] = i % MCHP_I2C_CTRL_MAX;
+
 		controller = i2c_port_to_controller(i2c_ports[i].port);
 		kbps = i2c_ports[i].kbps;
 
