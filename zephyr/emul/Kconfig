@@ -27,3 +27,9 @@ config EMUL_PPC_SYV682X
 	help
 	  Enable the SYV682x emulator. SYV682 is a USB Type-C PPC. This driver
 	  uses the emulated I2C bus.
+config EMUL_BMI
+	bool "BMI emulator"
+	help
+	  Enable the BMI emulator. This driver use emulated I2C bus.
+	  It is used to test bmi 160 and 260 drivers. Emulators API is
+	  available in zephyr/include/emul/emul_bmi.h

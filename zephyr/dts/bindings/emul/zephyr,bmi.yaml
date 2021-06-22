@@ -1,0 +1,41 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Zephyr BMI Emulator
+
+compatible: "zephyr,bmi"
+
+include: base.yaml
+
+properties:
+    device-model:
+        type: string
+        required: true
+        enum:
+          - BMI_EMUL_160
+        description: Model of device that is emulated.
+
+    error-on-ro-write:
+        type: boolean
+        description:
+          Flag indicating if error should be generated when read only register
+          is being written.
+
+    error-on-wo-read:
+        type: boolean
+        description:
+          Flag indicating if error should be generated when write only register
+          is being read.
+
+    error-on-reserved-bit-write:
+        type: boolean
+        description:
+          Flag indicating if error should be generated when reserved bit
+          is being written.
+
+    simulate-command-exec-time:
+        type: boolean
+        description:
+          Flag indicating if emulator should wait the same amount of time before
+          finishing command as real device would.

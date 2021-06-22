@@ -251,6 +251,12 @@
 #define BMI160_INT_DATA_0      0x58
 #define BMI160_INT_DATA_1      0x59
 
+#define BMI160_INT_LOW_HIGH_0  0x5a
+#define BMI160_INT_LOW_HIGH_1  0x5b
+#define BMI160_INT_LOW_HIGH_2  0x5c
+#define BMI160_INT_LOW_HIGH_3  0x5d
+#define BMI160_INT_LOW_HIGH_4  0x5e
+
 #define BMI160_INT_MOTION_0    0x5f
 #define BMI160_INT_MOTION_1    0x60
 /*
@@ -319,12 +325,18 @@
 #define BMI160_PMU_TRIGGER     0x6c
 #define BMI160_SELF_TEST       0x6d
 
+#define BMI160_NV_CONF         0x70
+
 #define BMI160_OFFSET_ACC70        0x71
 #define BMI160_OFFSET_GYR70        0x74
 #define BMI160_OFFSET_EN_GYR98     0x77
 #define BMI160_OFFSET_ACC_EN            BIT(6)
 #define BMI160_OFFSET_GYRO_EN           BIT(7)
 
+#define BMI160_STEP_CNT_0          0x78
+#define BMI160_STEP_CNT_1          0x79
+#define BMI160_STEP_CONF_0         0x7a
+#define BMI160_STEP_CONF_1         0x7b
 
 #define BMI160_CMD_REG             0x7e
 #define BMI160_CMD_SOFT_RESET      0xb6
