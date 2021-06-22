@@ -3361,6 +3361,14 @@ __override_proto enum ec_pd_port_location board_get_pd_port_location(int port);
 void typec_select_src_current_limit_rp(int port, enum tcpc_rp_value rp);
 
 /**
+ * Called to get a port's default current limit Rp.
+ *
+ * @param port The PD port number
+ * @return rp   Rp is the Current Limit to advertise
+ */
+__override_proto int typec_get_default_current_limit_rp(int port);
+
+/**
  * Called to cache Source Collision Rp
  * A call to typec_update_cc will actually update the hardware to reflect the
  * cache.

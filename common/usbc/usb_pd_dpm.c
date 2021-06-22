@@ -498,7 +498,7 @@ static void balance_source_ports(void)
 			int rem_non_pd = LOWEST_PORT(non_pd_sink_max_requested &
 						     max_current_claimed);
 			typec_select_src_current_limit_rp(rem_non_pd,
-							  CONFIG_USB_PD_PULLUP);
+				typec_get_default_current_limit_rp(rem_non_pd));
 			max_current_claimed &= ~BIT(rem_non_pd);
 
 			/* Wait tSinkAdj before using current */
@@ -539,7 +539,7 @@ static void balance_source_ports(void)
 			int rem_non_pd = LOWEST_PORT(non_pd_sink_max_requested &
 						     max_current_claimed);
 			typec_select_src_current_limit_rp(rem_non_pd,
-							  CONFIG_USB_PD_PULLUP);
+				typec_get_default_current_limit_rp(rem_non_pd));
 			max_current_claimed &= ~BIT(rem_non_pd);
 
 			/* Wait tSinkAdj before using current */
@@ -647,7 +647,8 @@ void dpm_remove_sink(int port)
 	atomic_clear_bits(&non_pd_sink_max_requested, BIT(port));
 
 	/* Restore selected default Rp on the port */
-	typec_select_src_current_limit_rp(port, CONFIG_USB_PD_PULLUP);
+	typec_select_src_current_limit_rp(port,
+		typec_get_default_current_limit_rp(port));
 
 	balance_source_ports();
 }
@@ -694,7 +695,7 @@ int dpm_get_source_current(const int port)
 
 	if (max_current_claimed & BIT(port))
 		return 3000;
-	else if (CONFIG_USB_PD_PULLUP == TYPEC_RP_1A5)
+	else if (typec_get_default_current_limit_rp(port) == TYPEC_RP_1A5)
 		return 1500;
 	else
 		return 500;
