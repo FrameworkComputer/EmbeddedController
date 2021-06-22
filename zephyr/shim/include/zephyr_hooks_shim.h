@@ -13,12 +13,17 @@
 #include <zephyr.h>
 
 #include "common.h"
+#include "cros_version.h"
 
 /**
  * The internal data structure stored for a deferred function.
  */
 struct deferred_data {
-	struct k_delayed_work *delayed_work;
+#if IS_ZEPHYR_VERSION(2, 6)
+	struct k_work_delayable *work;
+#else
+	struct k_delayed_work *work;
+#endif
 };
 
 /**
@@ -26,12 +31,21 @@ struct deferred_data {
  */
 int hook_call_deferred(const struct deferred_data *data, int us);
 
+#if IS_ZEPHYR_VERSION(2, 6)
+#define DECLARE_DEFERRED(routine)                                    \
+	K_WORK_DELAYABLE_DEFINE(routine##_work_data,                 \
+				(void (*)(struct k_work *))routine); \
+	__maybe_unused const struct deferred_data routine##_data = { \
+		.work = &routine##_work_data,                \
+	}
+#else
 #define DECLARE_DEFERRED(routine)                                    \
 	K_DELAYED_WORK_DEFINE(routine##_work_data,                   \
 			      (void (*)(struct k_work *))routine);   \
 	__maybe_unused const struct deferred_data routine##_data = { \
-		.delayed_work = &routine##_work_data,                \
+		.work = &routine##_work_data,                \
 	}
+#endif
 
 /**
  * Internal linked-list structure used to store hook lists.
