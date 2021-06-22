@@ -885,8 +885,8 @@ static const struct cros_shi_driver_api cros_shi_npcx_driver_api = {
 };
 
 static struct cros_shi_npcx_data cros_shi_data;
-DEVICE_DT_INST_DEFINE(0, shi_npcx_init, device_pm_control_nop, &cros_shi_data,
-		      &cros_shi_cfg, PRE_KERNEL_1,
+DEVICE_DT_INST_DEFINE(0, shi_npcx_init, /* pm_control_fn= */ NULL,
+		      &cros_shi_data, &cros_shi_cfg, PRE_KERNEL_1,
 		      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
 		      &cros_shi_npcx_driver_api);
 

@@ -235,7 +235,7 @@ static const struct cros_rtc_npcx_config cros_rtc_npcx_cfg_0 = {
 
 static struct cros_rtc_npcx_data cros_rtc_npcx_data_0;
 
-DEVICE_DT_INST_DEFINE(0, cros_rtc_npcx_init, device_pm_control_nop,
+DEVICE_DT_INST_DEFINE(0, cros_rtc_npcx_init, /* pm_control_fn= */ NULL,
 		      &cros_rtc_npcx_data_0, &cros_rtc_npcx_cfg_0, POST_KERNEL,
 		      CONFIG_KERNEL_INIT_PRIORITY_DEVICE,
 		      &cros_rtc_npcx_driver_api);
