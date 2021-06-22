@@ -413,7 +413,7 @@ void system_reset(int flags)
 		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_FLAGS, panic_flags);
 #endif
 
-#ifdef CHIP_FAMILY_STM32L
+#if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32L4)
 		/*
 		 * Ask the flash module to reboot, so that we reload the
 		 * option bytes.
@@ -431,7 +431,7 @@ void system_reset(int flags)
 		 * use this for hard reset.
 		 */
 		STM32_FLASH_CR |= FLASH_CR_OBL_LAUNCH;
-#elif defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32G4)
+#elif defined(CHIP_FAMILY_STM32G4)
 		STM32_FLASH_KEYR = FLASH_KEYR_KEY1;
 		STM32_FLASH_KEYR = FLASH_KEYR_KEY2;
 		STM32_FLASH_OPTKEYR = FLASH_OPTKEYR_KEY1;

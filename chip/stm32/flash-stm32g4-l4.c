@@ -51,7 +51,11 @@
 #ifdef STM32_FLASH_DBANK_MODE
 #define FLASH_WRP_MASK              (FLASH_PAGE_MAX_COUNT - 1)
 #else
+#ifdef CHIP_FAMILY_STM32L4
+#define FLASH_WRP_MASK              0xFF
+#else
 #define FLASH_WRP_MASK              ((FLASH_PAGE_MAX_COUNT) / 2 - 1)
+#endif
 #endif /* CONFIG_FLASH_DBANK_MODE */
 #define FLASH_WRP_START(val)        ((val) & FLASH_WRP_MASK)
 #define FLASH_WRP_END(val)          (((val) >> 16) & FLASH_WRP_MASK)
@@ -115,7 +119,12 @@ static int unlock(int locks)
 
 static void lock(void)
 {
-	STM32_FLASH_CR = FLASH_CR_LOCK;
+	STM32_FLASH_CR |= FLASH_CR_LOCK;
+}
+
+static void ob_lock(void)
+{
+	STM32_FLASH_CR |= FLASH_CR_OPTLOCK;
 }
 
 /*
@@ -160,11 +169,20 @@ static int commit_optb(void)
 {
 	int rv;
 
+	/*
+	 * Wait for last operation.
+	 */
+	rv = wait_while_busy();
+	if (rv)
+		return rv;
+
 	STM32_FLASH_CR |= FLASH_CR_OPTSTRT;
 
 	rv = wait_while_busy();
 	if (rv)
 		return rv;
+
+	ob_lock();
 	lock();
 
 	return EC_SUCCESS;
@@ -208,8 +226,8 @@ static void optb_get_wrp(enum wrp_region region, struct wrp_info *wrp)
 		 * start/end indices. If end >= start, then RO write protect is
 		 * enabled.
 		 */
-		wrp->start = FLASH_WRP_START(STM32_FLASH_WRP1AR);
-		wrp->end = FLASH_WRP_END(STM32_FLASH_WRP1AR);
+		wrp->start = FLASH_WRP_START(STM32_OPTB_WRP1AR);
+		wrp->end = FLASH_WRP_END(STM32_OPTB_WRP1AR);
 		wrp->enable = wrp->end >= wrp->start;
 	} else if (region == WRP_RW) {
 		/*
@@ -217,8 +235,8 @@ static void optb_get_wrp(enum wrp_region region, struct wrp_info *wrp)
 		 * then WRP2AR must also be check to determine the full range of
 		 * flash page indices being protected.
 		 */
-		wrp->start = FLASH_WRP_START(STM32_FLASH_WRP1BR);
-		wrp->end = FLASH_WRP_END(STM32_FLASH_WRP1BR);
+		wrp->start = FLASH_WRP_START(STM32_OPTB_WRP1BR);
+		wrp->end = FLASH_WRP_END(STM32_OPTB_WRP1BR);
 		wrp->enable = wrp->end >= wrp->start;
 #ifdef STM32_FLASH_DBANK_MODE
 		start = FLASH_WRP_START(STM32_FLASH_WRP2AR);
@@ -434,6 +452,10 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 	int i;
 	int unaligned = (uint32_t)data & (STM32_FLASH_MIN_WRITE_SIZE - 1);
 	uint32_t *data32 = (void *)data;
+
+	/* Check Flash offset */
+	if (offset % STM32_FLASH_MIN_WRITE_SIZE)
+		return EC_ERROR_MEMORY_ALLOCATION;
 
 	if (unlock(FLASH_CR_LOCK) != EC_SUCCESS)
 		return EC_ERROR_UNKNOWN;
@@ -660,6 +682,21 @@ uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 #endif
 
 	return ret;
+}
+
+int crec_flash_physical_force_reload(void)
+{
+	int rv = unlock(FLASH_CR_OPTLOCK);
+
+	if (rv)
+		return rv;
+
+	/* Force a reboot; this should never return. */
+	STM32_FLASH_CR = FLASH_CR_OBL_LAUNCH;
+	while (1)
+		;
+
+	return EC_ERROR_UNKNOWN;
 }
 
 int crec_flash_pre_init(void)
