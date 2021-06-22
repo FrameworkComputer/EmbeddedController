@@ -9,6 +9,11 @@
 #include <devicetree.h>
 #include <gpio_signal.h>
 
+/*
+ * TODO(b:188674805) create a driver to pull this information from DeviceTree
+ */
+#include "power/mt8192.h"
+
 #define GPIO_ENTERING_RW		GPIO_UNIMPLEMENTED
 #define GPIO_WP_L			GPIO_UNIMPLEMENTED
 
@@ -56,15 +61,5 @@
 		 GPIO_INT_EDGE_BOTH, usb_a0_interrupt)
 
 #define GPIO_EN_PP5000 GPIO_EN_PP5000_A
-
-/*
- * TODO(b:188674805) create a driver to pull this information from DeviceTree
- */
-enum power_signal {
-	PMIC_PWR_GOOD,
-	AP_IN_S3_L,
-	AP_WDT_ASSERTED,
-	POWER_SIGNAL_COUNT,
-};
 
 #endif /* __ZEPHYR_GPIO_MAP_H */

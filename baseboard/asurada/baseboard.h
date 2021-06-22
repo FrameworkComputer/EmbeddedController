@@ -187,16 +187,11 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
-
-enum power_signal {
-	PMIC_PWR_GOOD,
-	AP_IN_S3_L,
-	AP_WDT_ASSERTED,
-	POWER_SIGNAL_COUNT,
-};
+#include "power/mt8192.h"
 
 void board_reset_pd_mcu(void);
 enum board_sub_board board_get_sub_board(void);
 void usb_a0_interrupt(enum gpio_signal signal);
+
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BASEBOARD_H */

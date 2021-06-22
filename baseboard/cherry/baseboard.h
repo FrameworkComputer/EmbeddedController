@@ -189,6 +189,7 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
+#include "power/mt8192.h"
 
 enum adc_channel {
 	ADC_VBUS,                /* ADC 0 */
@@ -213,13 +214,6 @@ enum pwm_channel {
 	PWM_CH_LED3,
 	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT,
-};
-
-enum power_signal {
-	PMIC_PWR_GOOD,
-	AP_IN_S3_L,
-	AP_WDT_ASSERTED,
-	POWER_SIGNAL_COUNT,
 };
 
 void board_reset_pd_mcu(void);

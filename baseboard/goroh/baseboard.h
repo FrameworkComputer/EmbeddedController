@@ -192,13 +192,7 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
-
-enum power_signal {
-	PMIC_PWR_GOOD,
-	AP_IN_S3_L,
-	AP_WDT_ASSERTED,
-	POWER_SIGNAL_COUNT,
-};
+#include "power/mt8192.h"
 
 enum board_sub_board {
 	SUB_BOARD_NONE = -1,
