@@ -122,18 +122,6 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-void board_hibernate(void)
-{
-	/*
-	 * Sensors are unpowered in hibernate. Apply PD to the
-	 * interrupt lines such that they don't float.
-	 */
-	gpio_set_flags(GPIO_ACCEL_GYRO_INT_L,
-		       GPIO_INPUT | GPIO_PULL_DOWN);
-	gpio_set_flags(GPIO_LID_ACCEL_INT_L,
-		       GPIO_INPUT | GPIO_PULL_DOWN);
-}
-
 /* Called on AP S0 -> S3 transition */
 static void board_chipset_suspend(void)
 {
