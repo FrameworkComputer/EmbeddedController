@@ -21,7 +21,6 @@
 #include "lid_switch.h"
 #include "pi3usb9201.h"
 #include "power.h"
-#include "power/qcom.h"
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
@@ -327,21 +326,6 @@ static void board_chipset_resume(void)
 		pwm_enable(PWM_CH_DISPLIGHT, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
-
-void board_set_switchcap_power(int enable)
-{
-	gpio_set_level(GPIO_SWITCHCAP_ON, enable);
-}
-
-int board_is_switchcap_enabled(void)
-{
-	return gpio_get_level(GPIO_SWITCHCAP_ON);
-}
-
-int board_is_switchcap_power_good(void)
-{
-	return gpio_get_level(GPIO_SWITCHCAP_PG);
-}
 
 void board_reset_pd_mcu(void)
 {
