@@ -20,7 +20,6 @@ union volteer_cbi_fw_config fw_config_defaults = {
 
 __override void board_cbi_init(void)
 {
-	config_usb3_db_type();
 	if ((!IS_ENABLED(TEST_BUILD) && !ec_cfg_has_numeric_pad()) ||
 	    get_board_id() <= 2)
 		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);

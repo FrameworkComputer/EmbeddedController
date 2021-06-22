@@ -54,13 +54,6 @@
 #define PD_MAX_CURRENT_MA	3000
 #define PD_MAX_VOLTAGE_MV	20000
 
-/* Enabling Thunderbolt-compatible mode */
-#define CONFIG_USB_PD_TBT_COMPAT_MODE
-
-/* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
-#define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x40
-
 /* USB Type A Features */
 #define USB_PORT_COUNT			1
 #define CONFIG_USB_PORT_POWER_DUMB
@@ -69,6 +62,9 @@
 #define CONFIG_USBC_PPC_SN5S330		/* USBC port C0 */
 #define CONFIG_USBC_PPC_SYV682X		/* USBC port C1 */
 #define CONFIG_USB_PD_FRS_PPC
+#undef CONFIG_USB_PD_TCPC_RUNTIME_CONFIG
+#undef CONFIG_USB_PD_TCPM_TUSB422
+#undef CONFIG_USB_MUX_RUNTIME_CONFIG
 
 /* BC 1.2 */
 
@@ -81,6 +77,10 @@
 /* charger defines */
 #define CONFIG_CHARGER_SENSE_RESISTOR		10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC	10
+
+/* Retimer */
+#undef CONFIG_USBC_RETIMER_INTEL_BB
+#undef CONFIG_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
 
 /* Keyboard feature */
 #define CONFIG_KEYBOARD_FACTORY_TEST

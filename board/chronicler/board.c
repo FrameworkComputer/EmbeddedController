@@ -4,12 +4,10 @@
  */
 
 /* Chronicler board-specific configuration */
-#include "bb_retimer.h"
 #include "button.h"
 #include "common.h"
 #include "accelgyro.h"
 #include "cbi_ec_fw_config.h"
-#include "driver/retimer/bb_retimer.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "extpower.h"
