@@ -229,29 +229,46 @@ static int nct38xx_tcpm_set_snk_ctrl(int port, int enable)
 }
 #endif
 
+static inline int tcpc_read_alert_no_lpm_exit(int port, int *val)
+{
+	return tcpc_addr_read16_no_lpm_exit(port,
+					tcpc_config[port].i2c_info.addr_flags,
+					TCPC_REG_ALERT, val);
+}
+
 static void nct38xx_tcpc_alert(int port)
 {
 	int alert, rv;
 
 	/*
-	 * If IO expander feature is defined, read the ALERT register first to
-	 * keep the status of Vendor Define bit. Otherwise, the status of ALERT
-	 * register will be cleared after tcpci_tcpc_alert() is executed.
+	 * The nct3808 is a dual port chip with a shared ALERT
+	 * pin. Avoid taking a port out of LPM if it is not alerting.
+	 *
+	 * The nct38xx exits Idle mode when ALERT is signaled, so there
+	 * is no need to run the TCPM LPM exit code to check the ALERT
+	 * register bits (Ref. NCT38n7/8 Datasheet S 2.3.4 "Setting the
+	 * I2C to * Idle"). In fact, running the TCPM LPM exit code
+	 * causes a new CC Status ALERT which has the effect of creating
+	 * a new ALERT as a side-effect of handing an ALERT.
 	 */
-	if (IS_ENABLED(CONFIG_IO_EXPANDER_NCT38XX))
-		rv = tcpc_read16(port, TCPC_REG_ALERT, &alert);
+	rv = tcpc_read_alert_no_lpm_exit(port, &alert);
+	if (rv == EC_SUCCESS && alert == TCPC_REG_ALERT_NONE) {
+		/* No ALERT on this port, return early. */
+		return;
+	}
 
-	/* Process normal TCPC ALERT event and clear status */
+	/* Process normal TCPC ALERT event and clear status. */
 	tcpci_tcpc_alert(port);
 
 	/*
-	 * If IO expander feature is defined, check the Vendor Define bit to
-	 * handle the IOEX IO's interrupt event
+	 * If the IO expander feature is enabled, use the ALERT register
+	 * value read before it was cleared by calling
+	 * tcpci_tcpc_alert().  Check the Vendor Defined Alert bit to
+	 * handle the IOEX IO's interrupt event.
 	 */
 	if (IS_ENABLED(CONFIG_IO_EXPANDER_NCT38XX))
-		if (!rv && (alert & TCPC_REG_ALERT_VENDOR_DEF))
+		if (rv == EC_SUCCESS && (alert & TCPC_REG_ALERT_VENDOR_DEF))
 			nct38xx_ioex_event_handler(port);
-
 }
 
 static int nct3807_handle_fault(int port, int fault)
