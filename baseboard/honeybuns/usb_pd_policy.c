@@ -47,9 +47,15 @@ const uint32_t pd_src_host_pdo[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pd_src_host_pdo) == PDO_IDX_COUNT);
 
+#ifdef BOARD_C1_1A5_LIMIT
+const uint32_t pd_src_display_pdo[] = {
+	[PDO_IDX_5V]  = PDO_FIXED(5000,   1500, PDO_FIXED_FLAGS),
+};
+#else
 const uint32_t pd_src_display_pdo[] = {
 	[PDO_IDX_5V]  = PDO_FIXED(5000,   3000, PDO_FIXED_FLAGS),
 };
+#endif
 
 const uint32_t pd_snk_pdo[] = {
 	[PDO_IDX_5V]  = PDO_FIXED(5000,   0, PDO_FIXED_FLAGS),
@@ -347,6 +353,20 @@ int pd_check_power_swap(int port)
 
 	return 0;
 }
+
+#ifdef BOARD_C1_1A5_LIMIT
+__override int typec_get_default_current_limit_rp(int port)
+{
+	int rp = TYPEC_RP_USB;
+
+	if (port == USB_PD_PORT_HOST)
+		rp = TYPEC_RP_3A0;
+	else if (port == USB_PD_PORT_DP)
+		rp = TYPEC_RP_1A5;
+
+	return rp;
+}
+#endif
 
 static void usb_tc_connect(void)
 {

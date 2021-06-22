@@ -132,8 +132,18 @@ enum usb_strings {
 #define CONFIG_USB_PD_ALT_MODE_UFP_DP
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_REV30
+/*
+ * Source current limit pull options. Honeybuns always wants TYPEC_RP_3A0
+ * current limits for the usbc host port (C0). For port C1, some variants are
+ * designed with a 1.5A current limit. This variation is handled via
+ * BOARD_C1_1A5_LIMIT which would be set in a variant's board.h file.
+ *
+ * CONFIG_USB_PD_3A_PORTS should be left at 0 as this will disable DPM from
+ * doing any dynamic current limit management.
+ */
 #undef CONFIG_USB_PD_PULLUP
 #define CONFIG_USB_PD_PULLUP TYPEC_RP_3A0
+#define CONFIG_USB_PD_3A_PORTS 0
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_USB_PD_TCPM_PS8805
 #define CONFIG_USB_PD_TCPM_STM32GX
