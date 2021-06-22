@@ -139,10 +139,11 @@ class Zmake:
             before launching more, False to just do this after all jobs complete
     """
     def __init__(self, checkout=None, jobserver=None, jobs=0, modules_dir=None,
-                 zephyr_base=None):
+                 zephyr_base=None, cq=False):
         zmake.multiproc.reset()
         self._checkout = checkout
         self._zephyr_base = zephyr_base
+        self._is_cq = cq
 
         if modules_dir:
             self.module_paths = zmake.modules.locate_from_directory(modules_dir)
@@ -446,8 +447,11 @@ class Zmake:
 
         def run_test(test_file):
             with self.jobserver.get_job():
+                proc_args = ['pytest', '--verbose']
+                if self._is_cq:
+                    proc_args.append('--hypothesis-profile=cq')
                 proc = self.jobserver.popen(
-                    ['pytest', '--verbose', test_file],
+                    proc_args + [test_file],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     encoding='utf-8',

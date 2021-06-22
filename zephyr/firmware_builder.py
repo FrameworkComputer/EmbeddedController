@@ -138,7 +138,7 @@ def test(opts):
         return subprocess.run(
             ['zmake', '-D', 'coverage', build_dir], cwd=platform_ec).returncode
 
-    return subprocess.run(['zmake', '-D', 'testall']).returncode
+    return subprocess.run(['zmake', '-D', '--cq', 'testall']).returncode
 
 
 def main(args):
