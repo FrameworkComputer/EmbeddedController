@@ -5,6 +5,7 @@
 #ifndef __CROS_EC_USB_PD_TCPM_RT1718S_H
 #define __CROS_EC_USB_PD_TCPM_RT1718S_H
 
+#include "util.h"
 #include "usb_charge.h"
 #include "usb_pd_tcpm.h"
 
@@ -73,6 +74,14 @@
 #define RT1718S_UNLOCK_PW_1				0xF1
 
 #define RT1718S_RT2_SYS_CTRL5				0xF210
+
+#define RT1718S_VBUS_VOL_TO_REG(_vol)			(CLAMP(_vol, 5, 20) - 5)
+#define RT1718S_VBUS_PCT_TO_REG(_pct)			(CLAMP(_pct, 5, 20) \
+							/ 5 - 1)
+#define RT1718S_RT2_VBUS_VOL_CTRL			0xF213
+#define RT1718S_RT2_VBUS_VOL_CTRL_OVP_SEL		(BIT(5) | BIT(4))
+#define RT1718S_RT2_VBUS_VOL_CTRL_VOL_SEL		0x0F
+
 #define RT1718S_RT2_VBUS_OCRC_EN			0xF214
 #define RT1718S_RT2_VBUS_OCRC_EN_VBUS_OCP1_EN		BIT(0)
 #define RT1718S_RT2_VBUS_OCP_CTRL1			0xF216

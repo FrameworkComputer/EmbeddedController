@@ -174,6 +174,11 @@ static int rt1718s_init(int port)
 
 	RETURN_ERROR(rt1718s_bc12_init(port));
 
+	/* Set VBUS_VOL_SEL to 20V */
+	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_RT2_VBUS_VOL_CTRL,
+				RT1718S_RT2_VBUS_VOL_CTRL_VOL_SEL,
+				RT1718S_VBUS_VOL_TO_REG(20)));
+
 	/* Disable FOD function */
 	RETURN_ERROR(rt1718s_update_bits8(port, 0xCF, 0x40, 0x00));
 
