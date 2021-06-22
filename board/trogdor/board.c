@@ -42,7 +42,6 @@ static void usb0_evt(enum gpio_signal signal);
 static void usb1_evt(enum gpio_signal signal);
 static void usba_oc_interrupt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
-static void board_connect_c0_sbu(enum gpio_signal s);
 
 #include "gpio_list.h"
 
@@ -100,21 +99,6 @@ static void ppc_interrupt(enum gpio_signal signal)
 	default:
 		break;
 	}
-}
-
-static void board_connect_c0_sbu_deferred(void)
-{
-	/*
-	 * If CCD_MODE_ODL asserts, it means there's a debug accessory connected
-	 * and we should enable the SBU FETs.
-	 */
-	ppc_set_sbu(0, 1);
-}
-DECLARE_DEFERRED(board_connect_c0_sbu_deferred);
-
-static void board_connect_c0_sbu(enum gpio_signal s)
-{
-	hook_call_deferred(&board_connect_c0_sbu_deferred_data, 0);
 }
 
 /* Keyboard scan setting */
@@ -280,13 +264,6 @@ static void board_init(void)
 
 	/* Enable interrupt for BMI160 sensor */
 	gpio_enable_interrupt(GPIO_ACCEL_GYRO_INT_L);
-
-	/*
-	 * The H1 SBU line for CCD are behind PPC chip. The PPC internal FETs
-	 * for SBU may be disconnected after DP alt mode is off. Should enable
-	 * the CCD_MODE_ODL interrupt to make sure the SBU FETs are connected.
-	 */
-	gpio_enable_interrupt(GPIO_CCD_MODE_ODL);
 
 	/* Set the backlight duty cycle to 0. AP will override it later. */
 	pwm_set_duty(PWM_CH_DISPLIGHT, 0);
