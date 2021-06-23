@@ -350,7 +350,7 @@ static const struct ec_response_keybd_config zed_kb = {
 __override
 const struct ec_response_keybd_config *board_vivaldi_keybd_config(void)
 {
-	if (IS_ENABLED(BOARD_ZED))
+	if (IS_ENABLED(BOARD_ZED) || IS_ENABLED(BOARD_STAR))
 		return &zed_kb;
 
 	return NULL;
