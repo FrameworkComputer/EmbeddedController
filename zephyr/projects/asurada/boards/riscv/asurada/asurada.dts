@@ -123,7 +123,7 @@
 			label = "USB_MUX0";
 		};
 		usb-mux1 {
-			i2c-port = <&i2c2>;
+			i2c-port = <&i2c4>;
 			enum-name = "I2C_PORT_USB_MUX1";
 			label = "USB_MUX1";
 		};
