@@ -1195,6 +1195,10 @@ enum MCHP_i2c_port {
 	MCHP_I2C_PORT_COUNT,
 };
 
+/* I2C ports & Configs */
+#define I2C_CONTROLLER_COUNT	MCHP_I2C_CTRL_MAX
+#define I2C_PORT_COUNT		MCHP_I2C_PORT_COUNT
+
 /* All I2C controllers connected to GIRQ13 */
 #define MCHP_I2C_GIRQ		13
 /* I2C[0:7] -> GIRQ13 bits[0:7] */

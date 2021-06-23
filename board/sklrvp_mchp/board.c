@@ -181,32 +181,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-/*
- * MEC152x map ports to controller.
- * Ports may map to the same controller.
- */
-const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
-	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT4,
-	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT5,
-	(MCHP_I2C_CTRL2 << 8) + MCHP_I2C_PORT0,
-	(MCHP_I2C_CTRL3 << 8) + MCHP_I2C_PORT2,
-};
-
-/*
- * default to I2C0 because callers may not check
- * return value if we returned an error code.
- */
-int board_i2c_p2c(int port)
-{
-	int i;
-
-	for (i = 0; i < I2C_PORT_COUNT; i++)
-		if ((i2c_port_to_ctrl[i] & 0xFF) == port)
-			return (int)(i2c_port_to_ctrl[i] >> 8);
-
-	return -1;
-}
-
 static void sklrvp_init(void)
 {
 	int extpwr = extpower_is_present();

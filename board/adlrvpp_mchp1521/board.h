@@ -131,13 +131,6 @@
 /* To do: Remove once fan register details are added in mchp/fan.c */
 #undef CONFIG_FANS
 
-/*
- * MEC152x I2C controllers are multi-port.
- * Each controller can use any of the 11 ports.
- */
-#define I2C_CONTROLLER_COUNT	3
-#define I2C_PORT_COUNT		3
-
 /* Use internal silicon 32KHz oscillator */
 #undef CONFIG_CLOCK_SRC_EXTERNAL
 

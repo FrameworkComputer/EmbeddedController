@@ -1063,6 +1063,10 @@ enum MCHP_i2c_port {
 	MCHP_I2C_PORT_COUNT,
 };
 
+/* I2C ports & Configs */
+#define I2C_CONTROLLER_COUNT	MCHP_I2C_CTRL_MAX
+#define I2C_PORT_COUNT		MCHP_I2C_PORT_COUNT
+
 /*
  * I2C controllers 0-4 implement network layer hardware.
  * I2C controllers 5-7 do include network layer hardware.

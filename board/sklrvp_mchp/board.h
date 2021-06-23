@@ -195,13 +195,6 @@
 #define CONFIG_USB_PD_TCPM_FUSB307
 #define CONFIG_USB_PD_TCPM_TCPCI
 
-/*
- * MEC152x I2C controllers are multi-port.
- * Each controller can use any of the 11 ports.
- */
-#define I2C_CONTROLLER_COUNT	4
-#define I2C_PORT_COUNT		4
-
 #define I2C_PORT_CHARGER		MCHP_I2C_PORT2
 #define I2C_PORT_BATTERY		MCHP_I2C_PORT2
 #define I2C_PORT_PCA9555_BOARD_ID_GPIO	MCHP_I2C_PORT2
