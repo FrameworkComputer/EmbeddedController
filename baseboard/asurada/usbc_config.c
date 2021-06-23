@@ -123,7 +123,7 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 /* BC12 */
 const struct mt6360_config_t mt6360_config = {
-	.i2c_port = 0,
+	.i2c_port = I2C_PORT_POWER,
 	.i2c_addr_flags = MT6360_PMU_I2C_ADDR_FLAGS,
 };
 
@@ -131,7 +131,7 @@ const struct pi3usb9201_config_t
 		pi3usb9201_bc12_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	/* [0]: unused */
 	[1] = {
-		.i2c_port = 4,
+		.i2c_port = I2C_PORT_PPC1,
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
 	}
 };
