@@ -18,7 +18,7 @@
 
 /* SPI ports are used as master */
 static stm32_spi_regs_t *SPI_REGS[] = {
-#ifdef CONFIG_STM32_SPI1_MASTER
+#ifdef CONFIG_STM32_SPI1_CONTROLLER
 	STM32_SPI1_REGS,
 #endif
 	STM32_SPI2_REGS,
@@ -28,7 +28,7 @@ static stm32_spi_regs_t *SPI_REGS[] = {
 
 /* DMA request mapping on channels */
 static uint8_t dma_req_tx[ARRAY_SIZE(SPI_REGS)] = {
-#ifdef CONFIG_STM32_SPI1_MASTER
+#ifdef CONFIG_STM32_SPI1_CONTROLLER
 	DMAMUX1_REQ_SPI1_TX,
 #endif
 	DMAMUX1_REQ_SPI2_TX,
@@ -36,7 +36,7 @@ static uint8_t dma_req_tx[ARRAY_SIZE(SPI_REGS)] = {
 	DMAMUX1_REQ_SPI4_TX,
 };
 static uint8_t dma_req_rx[ARRAY_SIZE(SPI_REGS)] = {
-#ifdef CONFIG_STM32_SPI1_MASTER
+#ifdef CONFIG_STM32_SPI1_CONTROLLER
 	DMAMUX1_REQ_SPI1_RX,
 #endif
 	DMAMUX1_REQ_SPI2_RX,
@@ -49,7 +49,7 @@ static struct mutex spi_mutex[ARRAY_SIZE(SPI_REGS)];
 #define SPI_TRANSACTION_TIMEOUT_USEC (800 * MSEC)
 
 static const struct dma_option dma_tx_option[] = {
-#ifdef CONFIG_STM32_SPI1_MASTER
+#ifdef CONFIG_STM32_SPI1_CONTROLLER
 	{
 		STM32_DMAC_SPI1_TX, (void *)&STM32_SPI1_REGS->txdr,
 		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
@@ -70,7 +70,7 @@ static const struct dma_option dma_tx_option[] = {
 };
 
 static const struct dma_option dma_rx_option[] = {
-#ifdef CONFIG_STM32_SPI1_MASTER
+#ifdef CONFIG_STM32_SPI1_CONTROLLER
 	{
 		STM32_DMAC_SPI1_RX, (void *)&STM32_SPI1_REGS->rxdr,
 		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT

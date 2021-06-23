@@ -3639,11 +3639,11 @@
 /* SPI controller feature */
 #undef CONFIG_SPI_CONTROLLER
 
-/* SPI master halfduplex/3-wire mode */
+/* SPI controller halfduplex/3-wire mode */
 #undef CONFIG_SPI_HALFDUPLEX
 
-/* Support STM32 SPI1 as master. */
-#undef CONFIG_STM32_SPI1_MASTER
+/* Support STM32 SPI1 as controller. */
+#undef CONFIG_STM32_SPI1_CONTROLLER
 
 /* Support MCHP MEC family GP-SPI master(s)
  * Define to 0x01 for GPSPI0 only.

@@ -238,10 +238,10 @@
 #define CONFIG_USB_SPI
 #define CONFIG_SPI_CONTROLLER
 #define CONFIG_SPI_HALFDUPLEX
-#define CONFIG_STM32_SPI1_MASTER
+#define CONFIG_STM32_SPI1_CONTROLLER
 #define CONFIG_SPI_TOUCHPAD_PORT 0
 #define SPI_ST_TP_DEVICE_ID 0
-/* Enable SPI master xfer command */
+/* Enable SPI controller xfer command */
 #define CONFIG_CMD_SPI_XFER
 #define CONFIG_TOUCHPAD
 #define CONFIG_TOUCHPAD_ST
