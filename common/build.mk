@@ -14,6 +14,7 @@ common-y+=version.o printf.o queue.o queue_policies.o irq_locking.o
 
 common-$(CONFIG_ACCELGYRO_BMI160)+=math_util.o
 common-$(CONFIG_ACCELGYRO_BMI260)+=math_util.o
+common-$(CONFIG_ACCELGYRO_BMI3XX)+=math_util.o
 common-$(CONFIG_ACCELGYRO_ICM426XX)+=math_util.o
 common-$(CONFIG_ACCELGYRO_ICM42607)+=math_util.o
 common-$(CONFIG_ACCELGYRO_LSM6DS0)+=math_util.o

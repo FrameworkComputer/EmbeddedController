@@ -70,6 +70,14 @@ config PLATFORM_EC_ACCELGYRO_BMI260
 	  Unit (IMU) consisting of a 16-bit tri-axial gyroscope and a 16-bit
 	  tri-axial accelerometer.
 
+config PLATFORM_EC_ACCELGYRO_BMI3XX
+	bool "BMI3XX Accelgyrometer Driver"
+	select PLATFORM_EC_ACCELGYRO_BMI
+	help
+	  The driver supports Bosch's BMI3XX which is an Inertial Measurement
+	  Unit (IMU) consisting of a 16-bit tri-axial gyroscope and a 16-bit
+	  tri-axial accelerometer.
+
 config PLATFORM_EC_ALS_TCS3400
 	bool "TCS3400 Ambient Light Senseor Driver"
 	help
