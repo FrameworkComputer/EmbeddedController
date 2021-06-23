@@ -79,8 +79,10 @@
 
 /* Specify type of accelerometers attached. */
 #undef CONFIG_ACCEL_BMA255
+#undef CONFIG_ACCEL_BMA4XX
 #undef CONFIG_ACCEL_KXCJ9
 #undef CONFIG_ACCEL_KX022
+
 /*
  * lis2dh/lis2de/lng2dm have the same register interface but different
  * supported resolution. In normal mode, lis2dh works in 10-bit resolution,
