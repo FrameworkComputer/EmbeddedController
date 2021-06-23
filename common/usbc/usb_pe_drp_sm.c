@@ -1352,6 +1352,9 @@ static void pe_handle_detach(void)
 	/* Reset port events */
 	pd_clear_events(port, GENMASK(31, 0));
 
+	/* But then set disconnected event */
+	pd_notify_event(port, PD_STATUS_EVENT_DISCONNECTED);
+
 	/* Tell Policy Engine to invalidate the explicit contract */
 	pe_invalidate_explicit_contract(port);
 
