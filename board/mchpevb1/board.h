@@ -154,11 +154,6 @@
 /* #define CONFIG_CHARGER_ILIM_PIN_DISABLED */
 /* #define CONFIG_CHARGER_INPUT_CURRENT 512 */
 
-/*
- * MCHP disable this for Kabylake eSPI bring up
- * #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
- */
-
 /* #define CONFIG_CHARGER_NARROW_VDC */
 /* #define CONFIG_CHARGER_PROFILE_OVERRIDE */
 /* #define CONFIG_CHARGER_SENSE_RESISTOR 10 */

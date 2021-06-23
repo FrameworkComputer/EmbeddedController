@@ -225,7 +225,6 @@
  * CONFIG_CHARGER_LIMIT_* is not set, so there is no additional restriction on
  * Depthcharge to boot OS.
  */
-#define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON			4
 #define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON		50000
 
 /* Increase length of history buffer for port80 messages. */

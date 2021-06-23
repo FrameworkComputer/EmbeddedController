@@ -38,10 +38,7 @@ int charge_get_percent(void);
 
 static int led_get_charge_percent(void)
 {
-	if (IS_ENABLED(CONFIG_BATTERY_EXPORT_DISPLAY_SOC))
-		return DIV_ROUND_NEAREST(charge_get_display_charge(), 10);
-	else
-		return charge_get_percent();
+	return DIV_ROUND_NEAREST(charge_get_display_charge(), 10);
 }
 
 static enum led_states led_get_state(void)
