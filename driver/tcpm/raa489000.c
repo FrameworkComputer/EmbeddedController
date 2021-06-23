@@ -259,6 +259,8 @@ int raa489000_tcpm_set_cc(int port, int pull)
 int raa489000_debug_detach(int port)
 {
 	int rv;
+	int power_status;
+
 	/*
 	 * Force RAA489000 to see debug detach by running:
 	 *
@@ -266,10 +268,13 @@ int raa489000_debug_detach(int port)
 	 * 2. Set ROLE_CONTROL=0x0F(OPEN,OPEN)
 	 * 3. Set POWER_CONTROL. AutoDischargeDisconnect=0
 	 *
-	 * Only if we have sufficient battery.  Otherwise, we would risk
-	 * brown-out during the CC open set.
+	 * Only if we have sufficient battery or are not sinking.  Otherwise,
+	 * we would risk brown-out during the CC open set.
 	 */
-	if (!pd_is_battery_capable())
+	RETURN_ERROR(tcpc_read(port, TCPC_REG_POWER_STATUS, &power_status));
+
+	if (!pd_is_battery_capable() &&
+			(power_status & TCPC_REG_POWER_STATUS_SINKING_VBUS))
 		return EC_SUCCESS;
 
 	tcpci_tcpc_enable_auto_discharge_disconnect(port, 1);
