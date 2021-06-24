@@ -722,15 +722,15 @@ static void power_common_init(void)
 	/* Update input state */
 	power_update_signals();
 
-	/* Call chipset-specific init to set initial state */
-	power_set_state(power_chipset_init());
-
 	/* Enable interrupts for input signals */
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++, s++)
 		if (s->flags & POWER_SIGNAL_DISABLE_AT_BOOT)
 			power_signal_disable_interrupt(s->gpio);
 		else
 			power_signal_enable_interrupt(s->gpio);
+
+	/* Call chipset-specific init to set initial state */
+	power_set_state(power_chipset_init());
 
 	/*
 	 * Update input state again since there is a small window
