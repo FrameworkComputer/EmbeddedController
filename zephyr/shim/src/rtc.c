@@ -15,7 +15,7 @@
 
 LOG_MODULE_REGISTER(shim_cros_rtc, LOG_LEVEL_ERR);
 
-#define CROS_RTC_DEV DT_LABEL(DT_CHOSEN(cros_rtc))
+#define CROS_RTC_NODE DT_CHOSEN(cros_rtc)
 static const struct device *cros_rtc_dev;
 
 #ifdef CONFIG_HOSTCMD_EVENTS
@@ -40,9 +40,9 @@ static int system_init_rtc(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 
-	cros_rtc_dev = device_get_binding(CROS_RTC_DEV);
+	cros_rtc_dev = DEVICE_DT_GET(CROS_RTC_NODE);
 	if (!cros_rtc_dev) {
-		LOG_ERR("Fail to find %s", CROS_RTC_DEV);
+		LOG_ERR("Error: device %s is not ready", cros_rtc_dev->name);
 		return -ENODEV;
 	}
 

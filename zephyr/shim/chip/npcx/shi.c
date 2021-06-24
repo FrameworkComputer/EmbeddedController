@@ -19,13 +19,14 @@
 
 LOG_MODULE_REGISTER(shim_cros_shi, LOG_LEVEL_DBG);
 
-#define CROS_SHI_DEV DT_LABEL(DT_NODELABEL(shi))
+#define SHI_NODE DT_NODELABEL(shi)
 
 static void shi_enable(void)
 {
-	const struct device *cros_shi_dev = device_get_binding(CROS_SHI_DEV);
-	if (!cros_shi_dev) {
-		LOG_ERR("Fail to bind %s device", CROS_SHI_DEV);
+	const struct device *cros_shi_dev = DEVICE_DT_GET(SHI_NODE);
+
+	if (!device_is_ready(cros_shi_dev)) {
+		LOG_ERR("Error: device %s is not ready", cros_shi_dev->name);
 		return;
 	}
 
@@ -50,9 +51,10 @@ DECLARE_HOOK(HOOK_INIT, shi_reenable_on_sysjump, HOOK_PRIO_INIT_CHIPSET + 1);
 
 static void shi_disable(void)
 {
-	const struct device *cros_shi_dev = device_get_binding(CROS_SHI_DEV);
-	if (!cros_shi_dev) {
-		LOG_ERR("Fail to bind %s device", CROS_SHI_DEV);
+	const struct device *cros_shi_dev = DEVICE_DT_GET(SHI_NODE);
+
+	if (!device_is_ready(cros_shi_dev)) {
+		LOG_ERR("Error: device %s is not ready", cros_shi_dev->name);
 		return;
 	}
 

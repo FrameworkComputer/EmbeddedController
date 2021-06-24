@@ -74,9 +74,9 @@ static int chip_system_init(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 
-	bbram_dev = device_get_binding(DT_LABEL(DT_NODELABEL(bbram)));
-	if (!bbram_dev) {
-		LOG_ERR("bbram_dev get binding failed");
+	bbram_dev = DEVICE_DT_GET(DT_NODELABEL(bbram));
+	if (!device_is_ready(bbram_dev)) {
+		LOG_ERR("Error: device %s is not ready", bbram_dev->name);
 		return -1;
 	}
 

@@ -120,11 +120,10 @@ enum npcx_chip_id {
 static int system_npcx_watchdog_stop(void)
 {
 	if (IS_ENABLED(CONFIG_WATCHDOG)) {
-		const struct device *wdt_dev = device_get_binding(
-			DT_LABEL(DT_INST(0, nuvoton_npcx_watchdog)));
-
-		if (!wdt_dev) {
-			LOG_ERR("wdt_dev get binding failed");
+		const struct device *wdt_dev = DEVICE_DT_GET(
+				DT_NODELABEL(twd0));
+		if (!device_is_ready(wdt_dev)) {
+			LOG_ERR("Error: device %s is not ready", wdt_dev->name);
 			return -ENODEV;
 		}
 

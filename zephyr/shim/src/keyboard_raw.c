@@ -15,7 +15,7 @@
 
 LOG_MODULE_REGISTER(shim_cros_kb_raw, LOG_LEVEL_ERR);
 
-#define CROS_KB_RAW_DEV DT_LABEL(DT_NODELABEL(cros_kb_raw))
+#define CROS_KB_RAW_NODE DT_NODELABEL(cros_kb_raw)
 static const struct device *cros_kb_raw_dev;
 
 /**
@@ -23,9 +23,9 @@ static const struct device *cros_kb_raw_dev;
  */
 void keyboard_raw_init(void)
 {
-	cros_kb_raw_dev = device_get_binding(CROS_KB_RAW_DEV);
-	if (!cros_kb_raw_dev) {
-		LOG_ERR("Fail to find %s", CROS_KB_RAW_DEV);
+	cros_kb_raw_dev = DEVICE_DT_GET(CROS_KB_RAW_NODE);
+	if (!device_is_ready(cros_kb_raw_dev)) {
+		LOG_ERR("Error: device %s is not ready", cros_kb_raw_dev->name);
 		return;
 	}
 

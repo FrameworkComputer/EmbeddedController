@@ -154,7 +154,7 @@ static void espi_reset_handler(const struct device *dev,
 }
 #endif /* CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK */
 
-#define ESPI_DEV DT_LABEL(DT_NODELABEL(espi0))
+#define ESPI_NODE DT_NODELABEL(espi0)
 static const struct device *espi_dev;
 
 
@@ -541,9 +541,9 @@ int zephyr_shim_setup_espi(void)
 		.max_freq = 20,
 	};
 
-	espi_dev = device_get_binding(ESPI_DEV);
-	if (!espi_dev) {
-		LOG_ERR("Failed to find device %s", ESPI_DEV);
+	espi_dev = DEVICE_DT_GET(ESPI_NODE);
+	if (!device_is_ready(espi_dev)) {
+		LOG_ERR("Error: device %s is not ready", espi_dev->name);
 		return -1;
 	}
 

@@ -26,9 +26,9 @@ int watchdog_init(void)
 	const struct device *wdt;
 	struct wdt_timeout_cfg wdt_config;
 
-	wdt = device_get_binding(DT_LABEL(DT_NODELABEL(twd0)));
-	if (!wdt) {
-		LOG_ERR("Watchdog get binding failed");
+	wdt = DEVICE_DT_GET(DT_NODELABEL(twd0));
+	if (!device_is_ready(wdt)) {
+		LOG_ERR("Error: device %s is not ready", wdt->name);
 		return -1;
 	}
 
@@ -62,11 +62,9 @@ void watchdog_reload(void)
 {
 	const struct device *wdt;
 
-	wdt = device_get_binding(DT_LABEL(DT_NODELABEL(twd0)));
-	if (!wdt) {
-		LOG_ERR("Watchdog get binding failed");
-		return;
-	}
+	wdt = DEVICE_DT_GET(DT_NODELABEL(twd0));
+	if (!device_is_ready(wdt))
+		LOG_ERR("Error: device %s is not ready", wdt->name);
 
 	wdt_feed(wdt, 0);
 }
