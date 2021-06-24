@@ -1,0 +1,16 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: EC MKBP Event node
+
+compatible: "ec-wake-mask-event"
+
+properties:
+  wakeup-mask:
+    required: false
+    type: int
+    default: 0
+    description:
+      Define the MKBP or host events that will wake up the application
+      processor from suspend mode.
