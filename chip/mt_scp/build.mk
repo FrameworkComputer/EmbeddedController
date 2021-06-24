@@ -9,8 +9,13 @@
 # Required chip modules
 chip-y=
 
-ifeq ($(CHIP_VARIANT),mt8183)
 CPPFLAGS+=-Ichip/$(CHIP)/$(CHIP_VARIANT)
 dirs-y+=chip/$(CHIP)/$(CHIP_VARIANT)
-include chip/$(CHIP)/$(CHIP_VARIANT)/build.mk
+# Each chip variant can provide specific build.mk if any
+-include chip/$(CHIP)/$(CHIP_VARIANT)/build.mk
+
+ifeq ($(CHIP_VARIANT),$(filter $(CHIP_VARIANT),mt8192 mt8195))
+CPPFLAGS+=-Ichip/$(CHIP)/rv32i_common
+dirs-y+=chip/$(CHIP)/rv32i_common
+include chip/$(CHIP)/rv32i_common/build.mk
 endif

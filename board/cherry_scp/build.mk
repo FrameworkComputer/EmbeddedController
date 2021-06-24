@@ -6,6 +6,6 @@
 # Board specific files build
 #
 
-CHIP:=mt8192_scp
-CHIP_VARIANT:=mt8192
+CHIP:=mt_scp
+CHIP_VARIANT:=mt8195
 BASEBOARD:=mtscp-rv32i
