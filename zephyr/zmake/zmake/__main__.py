@@ -85,6 +85,10 @@ def main(argv=None):
     sub = parser.add_subparsers(dest='subcommand', help='Subcommand')
     sub.required = True
 
+    print_versions = sub.add_parser('print-versions')
+    print_versions.add_argument('project_dir', type=pathlib.Path,
+                                help='Path to the project to build')
+
     configure = sub.add_parser('configure')
     configure.add_argument(
         '--ignore-unsupported-zephyr-version', action='store_true',

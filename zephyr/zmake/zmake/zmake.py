@@ -192,6 +192,13 @@ class Zmake:
 
         return util.locate_zephyr_base(self.checkout, version)
 
+    def print_versions(self, project_dir):
+        """Print all the supported versions for a project directory"""
+        project = zmake.project.Project(pathlib.Path(project_dir))
+        supported_versions = project.config.supported_zephyr_versions
+        for version in supported_versions:
+            print('v{}.{}'.format(*version[:2]))
+
     def configure(self, project_dir, build_dir=None,
                   toolchain=None, ignore_unsupported_zephyr_version=False,
                   build_after_configure=False, test_after_configure=False,
