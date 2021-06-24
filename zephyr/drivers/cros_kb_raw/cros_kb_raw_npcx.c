@@ -71,8 +71,7 @@ static void kb_raw_npcx_init_ksi_wui_callback(
 static int kb_raw_npcx_init(const struct device *dev)
 {
 	const struct cros_kb_raw_npcx_config *const config = DRV_CONFIG(dev);
-	const struct device *const clk_dev =
-		device_get_binding(NPCX_CLK_CTRL_NAME);
+	const struct device *clk_dev = DEVICE_DT_GET(DT_NODELABEL(pcc));
 	int ret;
 
 	/* Turn on device clock first and get source clock freq. */
