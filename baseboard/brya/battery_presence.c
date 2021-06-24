@@ -10,7 +10,7 @@
 
 #include "battery.h"
 #include "battery_smart.h"
-#include "gpio.h"
+#include "common.h"
 
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 

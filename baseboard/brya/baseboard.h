@@ -210,6 +210,7 @@
 #ifndef __ASSEMBLER__
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "common.h"
 #include "baseboard_usbc_config.h"
