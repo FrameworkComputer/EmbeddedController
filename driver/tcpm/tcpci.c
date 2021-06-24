@@ -175,9 +175,14 @@ int tcpc_addr_read(int port, int i2c_addr, int reg, int *val)
 
 int tcpc_addr_read16(int port, int i2c_addr, int reg, int *val)
 {
-	int rv;
-
 	pd_wait_exit_low_power(port);
+
+	return tcpc_addr_read16_no_lpm_exit(port, i2c_addr, reg, val);
+}
+
+int tcpc_addr_read16_no_lpm_exit(int port, int i2c_addr, int reg, int *val)
+{
+	int rv;
 
 	rv = i2c_read16(tcpc_config[port].i2c_info.port,
 			i2c_addr, reg, val);

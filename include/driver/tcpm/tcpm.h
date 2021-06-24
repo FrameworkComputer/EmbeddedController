@@ -49,6 +49,29 @@ static inline int tcpc_addr_read16(int port, int i2c_addr, int reg, int *val)
 			  i2c_addr, reg, val);
 }
 
+/*
+ * The *_no_lpm_exit() routines are intende to be used where the TCPC
+ * needs to be accessed without being being taken out of LPM. The main
+ * use case is to check the alert register to determine if a TCPC is the
+ * source of an interrupt in a shared interrupt implementation. If the
+ * TCPC is taken out of LPM, it may generate a new alert which can lead
+ * to successive unintended interrupts. The TCPC is placed back into the
+ * idle state after the LPM timer expires similar to other tcpc_*()
+ * routines.
+ *
+ * The caller must guarantee that the chip responds to I2C as expected:
+ *  - some TCPCs wake up when they alert and do not need special handing
+ *  - some TCPCs wake up on I2C and respond as expected
+ *  - some TCPCs wake up on I2C and throw away the transaction - these
+ *    need an explicit by the caller.
+ */
+
+static inline int tcpc_addr_read16_no_lpm_exit(int port, int i2c_addr,
+					       int reg, int *val)
+{
+	return tcpc_addr_read16(port, i2c_addr, reg, val);
+}
+
 static inline int tcpc_xfer(int port, const uint8_t *out, int out_size,
 			    uint8_t *in, int in_size)
 {
@@ -103,6 +126,7 @@ int tcpc_addr_write(int port, int i2c_addr, int reg, int val);
 int tcpc_addr_write16(int port, int i2c_addr, int reg, int val);
 int tcpc_addr_read(int port, int i2c_addr, int reg, int *val);
 int tcpc_addr_read16(int port, int i2c_addr, int reg, int *val);
+int tcpc_addr_read16_no_lpm_exit(int port, int i2c_addr, int reg, int *val);
 int tcpc_read_block(int port, int reg, uint8_t *in, int size);
 int tcpc_write_block(int port, int reg, const uint8_t *out, int size);
 int tcpc_xfer(int port, const uint8_t *out, int out_size,
