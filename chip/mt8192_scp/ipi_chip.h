@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_IPI_CHIP_H
 #define __CROS_EC_IPI_CHIP_H
 
+#include "common.h"
+
 /*
  * Length of EC version string is at most 32 byte (NULL included), which
  * also aligns SCP fw_version length.
