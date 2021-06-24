@@ -231,10 +231,9 @@ static const struct cros_kb_raw_npcx_config cros_kb_raw_cfg = {
 
 /* Verify there's exactly 1 enabled cros,kb-raw-npcx node. */
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1);
-DEVICE_DEFINE(cros_kb_raw_npcx_0, DT_LABEL(DT_DRV_INST(0)), kb_raw_npcx_init,
-	      NULL, NULL, &cros_kb_raw_cfg, PRE_KERNEL_1,
-	      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
-	      &cros_kb_raw_npcx_driver_api);
+DEVICE_DT_INST_DEFINE(0, kb_raw_npcx_init, NULL, NULL, &cros_kb_raw_cfg,
+		      PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
+		      &cros_kb_raw_npcx_driver_api);
 
 /* KBS register structure check */
 NPCX_REG_SIZE_CHECK(kbs_reg, 0x010);

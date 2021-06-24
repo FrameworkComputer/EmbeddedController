@@ -518,6 +518,7 @@ static const struct cros_flash_npcx_config cros_flash_cfg = {
 
 static struct cros_flash_npcx_data cros_flash_data;
 
-DEVICE_DEFINE(cros_flash_npcx_0, DT_INST_LABEL(0), flash_npcx_init, NULL,
-	      &cros_flash_data, &cros_flash_cfg, PRE_KERNEL_1,
-	      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT, &cros_flash_npcx_driver_api);
+DEVICE_DT_INST_DEFINE(0, flash_npcx_init, NULL, &cros_flash_data,
+		      &cros_flash_cfg, PRE_KERNEL_1,
+		      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
+		      &cros_flash_npcx_driver_api);

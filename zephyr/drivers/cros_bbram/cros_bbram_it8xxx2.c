@@ -72,7 +72,6 @@ static const struct cros_bbram_it8xxx2_config cros_bbram_cfg = {
 	.size = DT_INST_REG_SIZE_BY_NAME(0, memory),
 };
 
-DEVICE_DEFINE(cros_bbram_it8xxx2_0, DT_INST_LABEL(0), bbram_it8xxx2_init,
-	      NULL, NULL, &cros_bbram_cfg, PRE_KERNEL_1,
-	      CONFIG_CROS_BBRAM_IT8XXX2_INIT_PRIORITY,
-	      &cros_bbram_it8xxx2_driver_api);
+DEVICE_DT_INST_DEFINE(0, bbram_it8xxx2_init, NULL, NULL, &cros_bbram_cfg,
+		      PRE_KERNEL_1, CONFIG_CROS_BBRAM_IT8XXX2_INIT_PRIORITY,
+		      &cros_bbram_it8xxx2_driver_api);

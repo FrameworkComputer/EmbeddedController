@@ -182,7 +182,6 @@ static const struct cros_kb_raw_ite_config cros_kb_raw_cfg = {
 	.irq = DT_INST_IRQN(0),
 };
 
-DEVICE_DEFINE(cros_kb_raw_ite_0, DT_INST_LABEL(0), kb_raw_ite_init, NULL,
-	      NULL, &cros_kb_raw_cfg, PRE_KERNEL_1,
-	      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
-	      &cros_kb_raw_ite_driver_api);
+DEVICE_DT_INST_DEFINE(0, kb_raw_ite_init, NULL, NULL, &cros_kb_raw_cfg,
+		      PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
+		      &cros_kb_raw_ite_driver_api);
