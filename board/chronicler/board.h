@@ -86,6 +86,7 @@
 
 /* Keyboard feature */
 #define CONFIG_KEYBOARD_FACTORY_TEST
+#define CONFIG_KEYBOARD_REFRESH_ROW3
 
 /*
  * Macros for GPIO signals used in common code that don't match the
