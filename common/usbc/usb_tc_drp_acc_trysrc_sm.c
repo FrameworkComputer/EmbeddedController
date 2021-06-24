@@ -1679,9 +1679,11 @@ static void print_current_state(const int port)
 static void handle_device_access(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER) &&
-	    get_state_tc(port) == TC_LOW_POWER_MODE)
+	    get_state_tc(port) == TC_LOW_POWER_MODE) {
+		tc_start_event_loop(port);
 		pd_timer_enable(port, TC_TIMER_LOW_POWER_TIME,
 				PD_LPM_DEBOUNCE_US);
+	}
 }
 
 void tc_event_check(int port, int evt)
