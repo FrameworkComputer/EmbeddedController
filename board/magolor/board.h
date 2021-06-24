@@ -47,6 +47,7 @@
 #define GPIO_USB_C1_INT_ODL GPIO_SUB_C1_INT_EN_RAILS_ODL
 
 /* Keyboard */
+#define CONFIG_KEYBOARD_FACTORY_TEST
 #ifdef BOARD_MAGOLOR
 #define CONFIG_KEYBOARD_BOARD_CONFIG
 #define CONFIG_KEYBOARD_KEYPAD
@@ -207,6 +208,9 @@ enum battery_type {
 	BATTERY_COSMX_AP20CBL,
 	BATTERY_TYPE_COUNT,
 };
+
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
 
 void motion_interrupt(enum gpio_signal signal);
 #endif /* !__ASSEMBLER__ */
