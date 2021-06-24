@@ -6,8 +6,8 @@
 #ifndef __CROS_EC_IPI_CHIP_H
 #define __CROS_EC_IPI_CHIP_H
 
-#include "chip/mt_scp/registers.h"
 #include "common.h"
+#include "registers.h"
 
 #define IPC_MAX 1
 #define IPC_ID(n) (n)
