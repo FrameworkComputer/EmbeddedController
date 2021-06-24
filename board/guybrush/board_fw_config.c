@@ -6,6 +6,13 @@
 #include "base_fw_config.h"
 #include "board_fw_config.h"
 
+bool board_is_convertible(void)
+{
+	return (get_fw_config_field(FW_CONFIG_FORM_FACTOR_OFFSET,
+			FW_CONFIG_FORM_FACTOR_WIDTH)
+			== FW_CONFIG_FORM_FACTOR_CONVERTIBLE);
+}
+
 bool board_has_kblight(void)
 {
 	return (get_fw_config_field(FW_CONFIG_KBLIGHT_OFFSET,

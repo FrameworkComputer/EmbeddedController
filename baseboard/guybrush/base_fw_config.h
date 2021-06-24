@@ -46,5 +46,6 @@ bool board_has_kblight(void);
 enum board_usb_a1_retimer board_get_usb_a1_retimer(void);
 enum board_usb_c1_mux board_get_usb_c1_mux(void);
 enum board_form_factor board_get_form_factor(void);
+bool board_is_convertible(void);
 
 #endif /* _GUYBRUSH_BASE_FW_CONFIG__H_ */
