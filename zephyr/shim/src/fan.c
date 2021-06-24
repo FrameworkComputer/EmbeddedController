@@ -60,9 +60,9 @@ const struct fan_t fans[] = {
 #endif /* named_fan */
 };
 
-#define TACHO_DEV_INIT(node_id) {                                             \
-	fan_control[node_id].tach =                                           \
-		device_get_binding(DT_PROP_BY_PHANDLE(node_id, tach, label)); \
+#define TACHO_DEV_INIT(node_id) {                         \
+	fan_control[node_id].tach =                       \
+		DEVICE_DT_GET(DT_PHANDLE(node_id, tach)); \
 	}
 
 /* Rpm deviation (Unit:percent) */

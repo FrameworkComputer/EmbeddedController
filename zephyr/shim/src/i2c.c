@@ -13,8 +13,7 @@
  * This macro should be called from within DT_FOREACH_CHILD.
  */
 #define INIT_DEV_BINDING(id) \
-	i2c_devices[I2C_PORT(id)] = device_get_binding( \
-		DT_PROP_BY_PHANDLE(id, i2c_port, label));
+	i2c_devices[I2C_PORT(id)] = DEVICE_DT_GET(DT_PHANDLE(id, i2c_port));
 
 #define INIT_REMOTE_PORTS(id) \
 	i2c_remote_ports[I2C_PORT(id)] = DT_PROP_OR(id, remote_port, -1);

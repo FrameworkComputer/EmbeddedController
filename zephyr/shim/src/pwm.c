@@ -26,8 +26,8 @@ LOG_MODULE_REGISTER(pwm_shim, LOG_LEVEL_ERR);
  */
 #define INIT_DEV_BINDING(id) {                                              \
 		pwm_configs[PWM_CHANNEL(id)].name = DT_LABEL(id);           \
-		pwm_configs[PWM_CHANNEL(id)].dev = device_get_binding(      \
-			DT_PROP_BY_PHANDLE(id, pwms, label));               \
+		pwm_configs[PWM_CHANNEL(id)].dev = DEVICE_DT_GET(           \
+			DT_PHANDLE(id, pwms));                              \
 		pwm_configs[PWM_CHANNEL(id)].pin = DT_PWMS_CHANNEL(id);     \
 		pwm_configs[PWM_CHANNEL(id)].flags = DT_PWMS_FLAGS(id);     \
 		pwm_configs[PWM_CHANNEL(id)].freq = DT_PROP(id, frequency); \

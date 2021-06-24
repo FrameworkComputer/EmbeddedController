@@ -23,7 +23,7 @@ struct gpio_config {
 	/* GPIO net name */
 	const char *name;
 	/* Set at build time for lookup */
-	const char *dev_name;
+	const struct device *dev;
 	/* Bit number of pin within device */
 	gpio_pin_t pin;
 	/* From DTS, excludes interrupts flags */
@@ -36,7 +36,7 @@ struct gpio_config {
 		(                                                            \
 			{                                                    \
 				.name = DT_LABEL(id),                        \
-				.dev_name = DT_LABEL(DT_PHANDLE(id, gpios)), \
+				.dev = DEVICE_DT_GET(DT_PHANDLE(id, gpios)), \
 				.pin = DT_GPIO_PIN(id, gpios),               \
 				.init_flags = DT_GPIO_FLAGS(id, gpios),      \
 			}, ),                                                \
@@ -263,12 +263,11 @@ static int init_gpios(const struct device *unused)
 
 	/* Loop through all GPIOs in device tree to set initial configuration */
 	for (size_t i = 0; i < ARRAY_SIZE(configs); ++i) {
-		data[i].dev = device_get_binding(configs[i].dev_name);
+		data[i].dev = configs[i].dev;
 		int rv;
 
-		if (data[i].dev == NULL) {
+		if (!device_is_ready(data[i].dev))
 			LOG_ERR("Not found (%s)", configs[i].name);
-		}
 
 		/*
 		 * The configs[i].init_flags variable is read-only, so the
