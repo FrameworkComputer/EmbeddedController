@@ -50,7 +50,7 @@
 
 static mutex_t port_mutex[I2C_CONTROLLER_COUNT + I2C_BITBANG_PORT_COUNT];
 /* A bitmap of the controllers which are currently servicing a request. */
-static uint32_t i2c_port_active_list;
+static volatile uint32_t i2c_port_active_list;
 BUILD_ASSERT(ARRAY_SIZE(port_mutex) < 32);
 static uint8_t port_protected[I2C_PORT_COUNT + I2C_BITBANG_PORT_COUNT];
 
@@ -295,7 +295,7 @@ void i2c_lock(int port, int lock)
 		/* Disable interrupt during changing counter for preemption. */
 		irq_lock_key = irq_lock();
 
-		i2c_port_active_list |= 1 << port;
+		i2c_port_active_list |= BIT(port);
 		/* EC cannot enter sleep if there's any i2c port active. */
 		disable_sleep(SLEEP_MASK_I2C_CONTROLLER);
 
