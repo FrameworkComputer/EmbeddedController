@@ -6,9 +6,9 @@
 #ifndef __CROS_EC_SCP_VENC_H
 #define __CROS_EC_SCP_VENC_H
 
-#include "chip/mt_scp/registers.h"
 #include "compile_time_macros.h"
 #include "queue.h"
+#include "registers.h"
 
 enum venc_type {
 	VENC_H264,

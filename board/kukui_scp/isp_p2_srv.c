@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include "isp_p2_srv.h"
-#include "chip/mt_scp/ipi_chip.h"
-#include "chip/mt_scp/registers.h"
-#include "queue_policies.h"
 #include "console.h"
 #include "hooks.h"
+#include "ipi_chip.h"
+#include "isp_p2_srv.h"
+#include "queue.h"
+#include "queue_policies.h"
+#include "registers.h"
 #include "task.h"
 #include "util.h"
-#include "queue.h"
 
 #define CPRINTS(format, args...) cprints(CC_IPI, format, ##args)
 

@@ -6,7 +6,7 @@
 #ifndef __CROS_EC_ISP_P1_SRV_H
 #define __CROS_EC_ISP_P1_SRV_H
 
-#include "chip/mt_scp/ipi_chip.h"
+#include "ipi_chip.h"
 
 struct isp_msg {
 	unsigned char id;

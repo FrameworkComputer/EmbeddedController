@@ -4,13 +4,12 @@
  */
 
 #include "console.h"
+#include "ipi_chip.h"
+#include "mdp_ipi_message.h"
 #include "queue_policies.h"
+#include "registers.h"
 #include "task.h"
 #include "util.h"
-
-#include "chip/mt_scp/ipi_chip.h"
-#include "chip/mt_scp/registers.h"
-#include "mdp_ipi_message.h"
 
 #define CPRINTF(format, args...) cprintf(CC_IPI, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_IPI, format, ##args)
