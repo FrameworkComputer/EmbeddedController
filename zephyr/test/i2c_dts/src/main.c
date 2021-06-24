@@ -9,11 +9,11 @@
 
 static void test_i2c_get_device(void)
 {
-	const struct device *accel0 = device_get_binding(
-		DT_PROP_BY_PHANDLE(DT_PATH(named_i2c_ports, accel_0), i2c_port,
-				   label));
-	const struct device *bmi_i2c = device_get_binding(
-		DT_LABEL(DT_NODELABEL(bmi_i2c)));
+	const struct device *accel0 = DEVICE_DT_GET(
+			DT_PHANDLE(DT_PATH(named_i2c_ports, accel_0),
+				   i2c_port));
+	const struct device *bmi_i2c = DEVICE_DT_GET(
+			DT_NODELABEL(bmi_i2c));
 
 	zassert_not_null(accel0, "accel0 was NULL");
 	zassert_not_null(bmi_i2c, "bmi_i2c was NULL");

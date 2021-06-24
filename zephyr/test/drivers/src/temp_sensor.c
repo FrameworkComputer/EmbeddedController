@@ -19,7 +19,7 @@
 #define GPIO_PG_EC_DSW_PWROK_PATH DT_PATH(named_gpios, pg_ec_dsw_pwrok)
 #define GPIO_PG_EC_DSW_PWROK_PORT DT_GPIO_PIN(GPIO_PG_EC_DSW_PWROK_PATH, gpios)
 
-#define ADC_DEVICE_NAME		DT_LABEL(DT_NODELABEL(adc0))
+#define ADC_DEVICE_NODE		DT_NODELABEL(adc0)
 #define ADC_CHANNELS_NUM	DT_PROP(DT_NODELABEL(adc0), nchannels)
 
 /** Test error code when invalid sensor is passed to temp_sensor_read() */
@@ -96,7 +96,7 @@ static void check_valid_temperature(const struct device *adc_dev, int sensor)
 /** Test if temp_sensor_read() returns temperature on success */
 static void test_temp_sensor_read(void)
 {
-	const struct device *adc_dev = device_get_binding(ADC_DEVICE_NAME);
+	const struct device *adc_dev = DEVICE_DT_GET(ADC_DEVICE_NODE);
 	int chan;
 
 	zassert_not_null(adc_dev, "Cannot get ADC device");

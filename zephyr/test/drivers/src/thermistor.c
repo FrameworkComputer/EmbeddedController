@@ -17,7 +17,7 @@
 #define GPIO_PG_EC_DSW_PWROK_PATH DT_PATH(named_gpios, pg_ec_dsw_pwrok)
 #define GPIO_PG_EC_DSW_PWROK_PORT DT_GPIO_PIN(GPIO_PG_EC_DSW_PWROK_PATH, gpios)
 
-#define ADC_DEVICE_NAME		DT_LABEL(DT_NODELABEL(adc0))
+#define ADC_DEVICE_NODE		DT_NODELABEL(adc0)
 
 #define TEMP_3V3_13K7_47K_4050B_INST	DT_INST(0, temp_3v3_13k7_47k_4050b)
 #define ADC_CHANNEL_3V3_13K7_47K_4050B \
@@ -46,7 +46,7 @@ static void test_thermistor_power_pin(void)
 {
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_PG_EC_DSW_PWROK_PATH, gpios));
-	const struct device *adc_dev = device_get_binding(ADC_DEVICE_NAME);
+	const struct device *adc_dev = DEVICE_DT_GET(ADC_DEVICE_NODE);
 	int temp;
 
 	zassert_not_null(gpio_dev, "Cannot get GPIO device");
@@ -122,7 +122,7 @@ static int adc_error_func(const struct device *dev, unsigned int channel,
 /** Test if get temp function return expected error on ADC malfunction */
 static void test_thermistor_adc_read_error(void)
 {
-	const struct device *adc_dev = device_get_binding(ADC_DEVICE_NAME);
+	const struct device *adc_dev = DEVICE_DT_GET(ADC_DEVICE_NODE);
 	int temp;
 
 	zassert_not_null(adc_dev, "Cannot get ADC device");
@@ -230,7 +230,7 @@ static int adc_temperature_func(const struct device *dev, unsigned int channel,
 /** Test conversion from ADC raw value to temperature */
 static void test_thermistor_3v3_13k7_47k_4050b(void)
 {
-	const struct device *adc_dev = device_get_binding(ADC_DEVICE_NAME);
+	const struct device *adc_dev = DEVICE_DT_GET(ADC_DEVICE_NODE);
 	struct thermistor_state state = {
 		.v = 3300,
 		.r = 13700,
@@ -281,7 +281,7 @@ static void test_thermistor_3v3_13k7_47k_4050b(void)
 /** Test conversion from ADC raw value to temperature */
 static void test_thermistor_3v3_30k9_47k_4050b(void)
 {
-	const struct device *adc_dev = device_get_binding(ADC_DEVICE_NAME);
+	const struct device *adc_dev = DEVICE_DT_GET(ADC_DEVICE_NODE);
 	struct thermistor_state state = {
 		.v = 3300,
 		.r = 30900,
@@ -332,7 +332,7 @@ static void test_thermistor_3v3_30k9_47k_4050b(void)
 /** Test conversion from ADC raw value to temperature */
 static void test_thermistor_3v3_51k1_47k_4050b(void)
 {
-	const struct device *adc_dev = device_get_binding(ADC_DEVICE_NAME);
+	const struct device *adc_dev = DEVICE_DT_GET(ADC_DEVICE_NODE);
 	struct thermistor_state state = {
 		.v = 3300,
 		.r = 51100,
@@ -383,7 +383,7 @@ static void test_thermistor_3v3_51k1_47k_4050b(void)
 /** Test conversion from ADC raw value to temperature */
 static void test_thermistor_3v0_22k6_47k_4050b(void)
 {
-	const struct device *adc_dev = device_get_binding(ADC_DEVICE_NAME);
+	const struct device *adc_dev = DEVICE_DT_GET(ADC_DEVICE_NODE);
 	struct thermistor_state state = {
 		.v = 3000,
 		.r = 22600,
