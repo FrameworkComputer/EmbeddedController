@@ -275,6 +275,7 @@
 
 /* save space at RO image */
 #ifdef SECTION_IS_RO
+#undef CONFIG_CMD_ADC
 #undef CONFIG_CMD_APTHROTTLE
 #undef CONFIG_CMD_CRASH
 #undef CONFIG_CMD_HCDEBUG
