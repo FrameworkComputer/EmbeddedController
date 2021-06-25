@@ -58,12 +58,6 @@
 /* Route sbs host requests to virtual battery driver */
 #define VIRTUAL_BATTERY_ADDR_FLAGS 0x0B
 
-/* Define the host events which are allowed to wakeup AP in S3. */
-#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
-		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_MODE_CHANGE))
-
 /* MKBP */
 #define CONFIG_MKBP_INPUT_DEVICES
 #define CONFIG_MKBP_EVENT
