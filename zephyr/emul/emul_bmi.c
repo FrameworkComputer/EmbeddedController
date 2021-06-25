@@ -1292,6 +1292,9 @@ static int bmi_emul_init(const struct emul *emul,
 	case BMI_EMUL_160:
 		data->type_data = get_bmi160_emul_type_data();
 		break;
+	case BMI_EMUL_260:
+		data->type_data = get_bmi260_emul_type_data();
+		break;
 	}
 
 	ret = i2c_emul_register(parent, emul->dev_label, &data->emul);

@@ -63,6 +63,7 @@ enum bmi_emul_axis {
 
 /** BMI emulator models */
 #define BMI_EMUL_160		1
+#define BMI_EMUL_260		2
 
 /** Last register supported by emulator */
 #define BMI_EMUL_MAX_REG	0x80
@@ -211,6 +212,12 @@ struct bmi_emul_type_data {
  * @return Pointer to BMI160 specific structure
  */
 const struct bmi_emul_type_data *get_bmi160_emul_type_data(void);
+/**
+ * @brief Get BMI260 model specific structure.
+ *
+ * @return Pointer to BMI260 specific structure
+ */
+const struct bmi_emul_type_data *get_bmi260_emul_type_data(void);
 
 /**
  * @brief Get pointer to BMI emulator using device tree order number.

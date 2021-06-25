@@ -197,6 +197,8 @@
 	  ((_sensor) == MOTIONSENSE_TYPE_GYRO ? BMI260_FIFO_GYR_EN : \
 	   BMI260_FIFO_AUX_EN))
 
+#define BMI260_SATURATION       0x4a
+
 #define BMI260_AUX_DEV_ID       0x4b
 #define BMI260_AUX_I2C_ADDRESS          BMI260_AUX_DEV_ID
 
@@ -287,6 +289,8 @@
 
 #define BMI260_DRV              0x6c
 #define BMI260_ACC_SELF_TEST    0x6d
+
+#define BMI260_GYR_SELF_TEST_AXES 0x6e
 
 #define BMI260_NV_CONF          0x70
 #define BMI260_ACC_OFFSET_EN        BIT(3)
