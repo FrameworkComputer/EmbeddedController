@@ -296,6 +296,28 @@ static int nct3807_handle_fault(int port, int fault)
 	return rv;
 }
 
+__maybe_unused static int nct38xx_set_frs_enable(int port, int enable)
+{
+	/*
+	 * From b/192012189: Enabling FRS for this chip should:
+	 *
+	 * 1.  Make sure that the sink will not disconnect if Vbus will drop
+	 * due to the Fast Role Swap by setting VBUS_SINK_DISCONNECT_THRESHOLD
+	 * to 0
+	 * 2. Enable the FRS interrupt (already done in TCPCI alert init)
+	 * 3. Set POWER_CONTORL.FastRoleSwapEnable to 1
+	 */
+	RETURN_ERROR(tcpc_write16(port,
+				TCPC_REG_VBUS_SINK_DISCONNECT_THRESH,
+				enable ? 0x0000 :
+				TCPC_REG_VBUS_SINK_DISCONNECT_THRESH_DEFAULT));
+
+	return tcpc_update8(port,
+			    TCPC_REG_POWER_CTRL,
+			    TCPC_REG_POWER_CTRL_FRS_ENABLE,
+			    enable ? MASK_SET : MASK_CLR);
+}
+
 const struct tcpm_drv nct38xx_tcpm_drv = {
 	.init			= &nct38xx_tcpm_init,
 	.release		= &tcpci_tcpm_release,
@@ -337,7 +359,7 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 #endif
 	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
 #ifdef CONFIG_USB_PD_FRS_TCPC
-	.set_frs_enable         = &tcpci_tcpc_fast_role_swap_enable,
+	.set_frs_enable         = &nct38xx_set_frs_enable,
 #endif
 	.handle_fault		= &nct3807_handle_fault,
 };
