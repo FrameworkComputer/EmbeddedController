@@ -22,7 +22,6 @@
 #define CONFIG_DEBUG_ASSERT_BRIEF
 
 /* EC console commands */
-#define CONFIG_CMD_TCPC_DUMP
 #define CONFIG_CMD_CHARGER_DUMP
 
 /* Battery */
