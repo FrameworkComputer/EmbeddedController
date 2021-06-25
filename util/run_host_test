@@ -98,6 +98,8 @@ def parse_options(argv):
   parser.add_argument('--coverage', action='store_const', const='coverage',
                       default='host', dest='test_target',
                       help='Flag if this is a code coverage test.')
+  parser.add_argument('--verbose', '-v', action='count', default=0,
+                      help='Increase output verbosity.')
   parser.add_argument('test_name', type=str)
   return parser.parse_args(argv)
 
@@ -121,7 +123,7 @@ def main(argv):
       opts.test_name, result.reason, elapsed_time),
         file=sys.stderr)
 
-  if result is not TestResult.SUCCESS:
+  if result is not TestResult.SUCCESS or opts.verbose > 0:
     print('====== Emulator output ======', file=sys.stderr)
     print(output.decode('utf-8'), file=sys.stderr)
     print('=============================', file=sys.stderr)
