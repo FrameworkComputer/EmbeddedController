@@ -128,6 +128,11 @@
 
 #endif /* VARIANT_KUKUI_JACUZZI */
 
+#if defined(SECTION_IS_RW) || defined(VARIANT_KUKUI_EC_IT81202)
+#define CONFIG_POWER_SLEEP_FAILURE_DETECTION
+#define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
+#endif
+
 /*
  * Define this flag if board controls dp mux via gpio pins USB_C0_DP_OE_L and
  * USB_C0_DP_POLARITY.
