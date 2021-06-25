@@ -11,3 +11,12 @@ menuconfig CROS_FLASH_NPCX
 	  chip. This is used instead of the flash memory interface so we can
 	  continue to use most of the existing flash memory processing code in
 	  ECOS.
+
+config CROS_FLASH_IT8XXX2
+	bool "ITE IT81202 flash driver for the Zephyr shim"
+	depends on SOC_FAMILY_RISCV_ITE
+	default y
+	help
+	  This option enables the flash driver for the it8xxx2 chip. We can
+	  access the flash by read, write and erase. The it8xxx2 flash size
+	  is 1M byte.
