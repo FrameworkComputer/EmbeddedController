@@ -309,10 +309,12 @@ void task_disable_task(task_id_t tskid)
 
 void task_clear_pending_irq(int irq)
 {
-	/* TODO(b/190203712): Implement this */
+#if CONFIG_ITE_IT8XXX2_INTC
+	ite_intc_isr_clear(irq);
+#endif
 }
 
 void task_enable_irq(int irq)
 {
-	/* TODO(b/190203712): Implement this */
+	arch_irq_enable(irq);
 }
