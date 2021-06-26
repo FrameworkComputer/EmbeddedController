@@ -47,7 +47,8 @@ toolchains = {
                     'ZEPHYR_TOOLCHAIN_VARIANT': 'llvm'}),
     'zephyr': lambda _: build_config.BuildConfig(
         cmake_defs={'ZEPHYR_TOOLCHAIN_VARIANT': 'zephyr',
-                    'ZEPHYR_SDK_INSTALL_DIR': str(find_zephyr_sdk())}),
+                    'ZEPHYR_SDK_INSTALL_DIR': str(find_zephyr_sdk())},
+        environ_defs={'ZEPHYR_SDK_INSTALL_DIR': str(find_zephyr_sdk())}),
     'arm-none-eabi': lambda _: build_config.BuildConfig(
         cmake_defs={'ZEPHYR_TOOLCHAIN_VARIANT': 'cross-compile',
                     'CROSS_COMPILE': '/usr/bin/arm-none-eabi-'}),
