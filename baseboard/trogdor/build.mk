@@ -8,5 +8,6 @@
 
 baseboard-y+=baseboard.o
 baseboard-y+=hibernate.o
+baseboard-y+=power.o
 baseboard-y+=usbc_config.o
 baseboard-y+=usb_pd_policy.o

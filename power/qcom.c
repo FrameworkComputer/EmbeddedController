@@ -616,8 +616,7 @@ static void power_off(void)
 		set_system_power(0);
 	}
 
-	/* Turn off the 3.3V and 5V rails. */
-	gpio_set_level(GPIO_EN_PP3300_A, 0);
+	/* Turn off the 5V rail. */
 #ifdef CONFIG_POWER_PP5000_CONTROL
 	power_5v_enable(task_get_current(), 0);
 #else /* !defined(CONFIG_POWER_PP5000_CONTROL) */
@@ -659,8 +658,7 @@ static int power_on(void)
 {
 	int ret;
 
-	/* Enable the 3.3V and 5V rail. */
-	gpio_set_level(GPIO_EN_PP3300_A, 1);
+	/* Enable the 5V rail. */
 #ifdef CONFIG_POWER_PP5000_CONTROL
 	power_5v_enable(task_get_current(), 1);
 #else /* !defined(CONFIG_POWER_PP5000_CONTROL) */
