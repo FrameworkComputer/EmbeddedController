@@ -58,7 +58,13 @@
 	GPIO_INT(GPIO_X_EC_GPIO2,					\
 		 GPIO_INT_EDGE_FALLING, x_ec_interrupt)			\
 	GPIO_INT(GPIO_AP_XHCI_INIT_DONE,				\
-		 GPIO_INT_EDGE_BOTH, usb_a0_interrupt)
+		 GPIO_INT_EDGE_BOTH, usb_a0_interrupt)			\
+	GPIO_INT(GPIO_AP_EC_WATCHDOG_L,					\
+		 GPIO_INT_EDGE_BOTH, chipset_watchdog_interrupt)	\
+	GPIO_INT(GPIO_AP_IN_SLEEP_L,					\
+		 GPIO_INT_EDGE_BOTH, power_signal_interrupt)		\
+	GPIO_INT(GPIO_PMIC_EC_PWRGD,					\
+		 GPIO_INT_EDGE_BOTH, power_signal_interrupt)
 
 #define GPIO_EN_PP5000 GPIO_EN_PP5000_A
 
