@@ -22,31 +22,37 @@ static inline uint32_t next_idx(uint32_t cur_idx)
 
 K_MUTEX_DEFINE(console_write_lock);
 
-void console_buf_notify_char(char c)
+void console_buf_notify_chars(const char *s, size_t len)
 {
-	/* Don't copy null byte into buffer */
-	if (!c)
-		return;
-
 	/*
-	 * This is just notifying of a console character for debugging
+	 * This is just notifying of console characters for debugging
 	 * output, so if we are unable to lock the mutex immediately,
-	 * then just drop the character.
+	 * then just drop the string.
 	 */
-	if (!k_mutex_lock(&console_write_lock, K_NO_WAIT)) {
-		/* We got the mutex. */
+	if (k_mutex_lock(&console_write_lock, K_NO_WAIT))
+		return;
+	/* We got the mutex. */
+	while (len--) {
+		/* Don't copy null byte into buffer */
+		if (!(*s))
+			continue;
+
 		uint32_t new_tail = next_idx(tail_idx);
 
-		/* Check if we are starting to overwrite our snapshot heads */
+		/* Check if we are starting to overwrite our snapshot
+		 * heads
+		 */
 		if (new_tail == previous_snapshot_idx)
-			previous_snapshot_idx = next_idx(previous_snapshot_idx);
+			previous_snapshot_idx =
+				next_idx(previous_snapshot_idx);
 		if (new_tail == current_snapshot_idx)
-			current_snapshot_idx = next_idx(current_snapshot_idx);
+			current_snapshot_idx =
+				next_idx(current_snapshot_idx);
 
-		console_buf[new_tail] = c;
+		console_buf[new_tail] = *s++;
 		tail_idx = new_tail;
-		k_mutex_unlock(&console_write_lock);
 	}
+	k_mutex_unlock(&console_write_lock);
 }
 
 enum ec_status uart_console_read_buffer_init(void)

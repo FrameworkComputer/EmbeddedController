@@ -220,7 +220,7 @@ void uart_write_char(char c)
 	printk("%c", c);
 
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE))
-		console_buf_notify_char(c);
+		console_buf_notify_chars(&c, 1);
 }
 
 void uart_flush_output(void)
