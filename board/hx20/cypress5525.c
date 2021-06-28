@@ -160,7 +160,7 @@ int cypd_get_active_charging_port(void)
 	return active_port;
 }
 
-int cypd_write_reg_block(int controller, int reg, uint8_t *data, int len)
+int cypd_write_reg_block(int controller, int reg, void *data, int len)
 {
 	int rv;
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
@@ -196,7 +196,7 @@ int cypd_write_reg8(int controller, int reg, int data)
 	return rv;
 }
 
-int cypd_read_reg_block(int controller, int reg, uint8_t *data, int len)
+int cypd_read_reg_block(int controller, int reg, void *data, int len)
 {
 	int rv;
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
@@ -848,12 +848,12 @@ void cyp5525_port_int(int controller, int port)
 			charge_manager_update_dualrole(port_idx, CAP_UNKNOWN);
 		break;
 	case CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
-		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE");
+		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE %d", port_idx);
 		/*todo we can probably clean this up to remove some of this*/
 		cypd_update_port_state(controller, port);
 		break;
 	case CYPD_RESPONSE_PORT_CONNECT:
-		CPRINTS("CYPD_RESPONSE_PORT_CONNECT");
+		CPRINTS("CYPD_RESPONSE_PORT_CONNECT %d", port_idx);
 		cypd_update_port_state(controller, port);
 		break;
 	case CYPD_RESPONSE_EXT_MSG_SOP_RX:
@@ -981,34 +981,26 @@ void cyp5525_interrupt(int controller)
 		cyp5525_port_int(controller, 1);
 		clear_mask |= CYP5525_PORT1_INTR;
 	}
+	if (data & CYP5525_ICLR_INTR) {
+		clear_mask |= CYP5525_ICLR_INTR;
+	}
+
 	if (data & CYP5525_UCSI_INTR) {
 		/* CPRINTS("P%d read ucsi data!", controller); */
 		ucsi_read_tunnel(controller);
-		clear_mask |= CYP5525_UCSI_INTR;
+		cypd_clear_int(controller, CYP5525_UCSI_INTR);
 	}
 	if (clear_mask)
 		cypd_clear_int(controller, clear_mask);
 }
 
-#define CYPD_PROCESS_CONTROLLER_AC_PRESENT BIT(31)
-#define CYPD_PROCESS_CONTROLLER_S0 BIT(30)
-#define CYPD_PROCESS_CONTROLLER_S3 BIT(29)
-#define CYPD_PROCESS_CONTROLLER_S4 BIT(28)
-#define CYPD_PROCESS_CONTROLLER_S5 BIT(27)
-#define CYPD_PROCESS_PLT_RESET     BIT(26)
 
 
 static uint8_t cypd_int_task_id;
 
-static struct mutex cypd_event_mutex;
-static int cypd_events;
-
 void cypd_enque_evt(int evt, int delay)
 {
-	mutex_lock(&cypd_event_mutex);
-	cypd_events |= evt;
-	mutex_unlock(&cypd_event_mutex);
-	task_set_event(TASK_ID_CYPD, TASK_EVENT_WAKE, delay);
+	task_set_event(TASK_ID_CYPD, evt, delay);
 }
 void pd_chip_interrupt_deferred(void)
 {
@@ -1044,7 +1036,7 @@ void soc_plt_reset_interrupt(enum gpio_signal signal)
 /* Called on AP S5 -> S3 transition */
 static void pd_enter_s3(void)
 {
-	cypd_enque_evt(CYPD_PROCESS_CONTROLLER_S3, 0);
+	cypd_enque_evt(CYPD_EVT_S3, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 		pd_enter_s3,
@@ -1054,7 +1046,7 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 /* Called on AP S3 -> S5 transition */
 static void pd_enter_s5(void)
 {
-	cypd_enque_evt(CYPD_PROCESS_CONTROLLER_S5, 0);
+	cypd_enque_evt(CYPD_EVT_S5, 0);
 
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
@@ -1064,7 +1056,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 /* Called on AP S3 -> S0 transition */
 static void pd_enter_s0(void)
 {
-	cypd_enque_evt(CYPD_PROCESS_CONTROLLER_S0, 0);
+	cypd_enque_evt(CYPD_EVT_S0, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pd_enter_s0,
 	     HOOK_PRIO_DEFAULT);
@@ -1092,7 +1084,7 @@ void cypd_interrupt_handler_task(void *p)
 			charge_manager_update_charge(j, i, NULL);
 	}
 	/* trigger the handle_state to start setup in task */
-	cypd_enque_evt(0xC, 0);
+	cypd_enque_evt(CYPD_EVT_STATE_CTRL_0 | CYPD_EVT_STATE_CTRL_1, 0);
 
 	for (i = 0; i < PD_CHIP_COUNT; i++) {
 		if (gpio_get_level(pd_chip_config[i].gpio) == 0) {
@@ -1100,62 +1092,58 @@ void cypd_interrupt_handler_task(void *p)
 		}
 	}
 	while (1) {
-		task_wait_event(-1);
-		mutex_lock(&cypd_event_mutex);
-		evt = cypd_events;
-		cypd_events = 0;
-		mutex_unlock(&cypd_event_mutex);
-		while (evt) {
-			if (evt & CYPD_PROCESS_CONTROLLER_AC_PRESENT) {
-				CPRINTS("GPIO_AC_PRESENT_PD_L changed: value: 0x%02x", gpio_get_level(GPIO_AC_PRESENT_PD_L));
-			}
-			if (evt & CYPD_PROCESS_CONTROLLER_S5) {
-				cyp5225_set_power_state(CYP5525_POWERSTATE_S5);
-			}
-			if (evt & CYPD_PROCESS_CONTROLLER_S3) {
-				cyp5225_set_power_state(CYP5525_POWERSTATE_S3);
-			}
-			if (evt & CYPD_PROCESS_CONTROLLER_S0) {
-				cyp5225_set_power_state(CYP5525_POWERSTATE_S0);
-			}
+		evt = task_wait_event(10*MSEC);
 
-			if (evt & CYPD_PROCESS_PLT_RESET) {
-				CPRINTS("PD Event Platform Reset!");
-				/* initialize BB retimers after a reset */
-				/*
-				cypd_configure_bb_retimer_power_state(0, 1);
-				cypd_configure_bb_retimer_power_state(1, 1);
-				*/
-			}
-			if (evt & BIT(0)) {
-				cyp5525_interrupt(0);
-			}
-			if (evt & BIT(1)) {
-				cyp5525_interrupt(1);
-			}
-			if (evt & BIT(2)) {
-				cypd_handle_state(0);
-			}
-			if (evt & BIT(3)) {
-				cypd_handle_state(1);
-			}
-			if (evt & (BIT(0) | BIT(1) | BIT(2) | BIT(3))) {
-				/*If we just processed an event or sent some commands
-				 * wait a bit for the pd controller to clear any pending
-				 * interrupt requests*/
-				usleep(50);
-			}
-
-			for (i = 0; i < PD_CHIP_COUNT; i++) {
-				if (gpio_get_level(pd_chip_config[i].gpio) == 0) {
-					cypd_enque_evt(1<<i, 0);
-				}
-			}
-			mutex_lock(&cypd_event_mutex);
-			evt = cypd_events;
-			cypd_events = 0;
-			mutex_unlock(&cypd_event_mutex);
+		if (evt & CYPD_EVT_AC_PRESENT) {
+			CPRINTS("GPIO_AC_PRESENT_PD_L changed: value: 0x%02x", gpio_get_level(GPIO_AC_PRESENT_PD_L));
 		}
+		if (evt & CYPD_EVT_S5) {
+			cyp5225_set_power_state(CYP5525_POWERSTATE_S5);
+		}
+		if (evt & CYPD_EVT_S3) {
+			cyp5225_set_power_state(CYP5525_POWERSTATE_S3);
+		}
+		if (evt & CYPD_EVT_S0) {
+			cyp5225_set_power_state(CYP5525_POWERSTATE_S0);
+		}
+
+		if (evt & CYPD_EVT_PLT_RESET) {
+			CPRINTS("PD Event Platform Reset!");
+			/* initialize BB retimers after a reset */
+			/*
+			cypd_configure_bb_retimer_power_state(0, 1);
+			cypd_configure_bb_retimer_power_state(1, 1);
+			*/
+		}
+		if (evt & CYPD_EVT_INT_CTRL_0) {
+			cyp5525_interrupt(0);
+		}
+		if (evt & CYPD_EVT_INT_CTRL_1) {
+			cyp5525_interrupt(1);
+		}
+		if (evt & CYPD_EVT_STATE_CTRL_0) {
+			cypd_handle_state(0);
+		}
+		if (evt & CYPD_EVT_STATE_CTRL_1) {
+			cypd_handle_state(1);
+		}
+
+		if (evt & (CYPD_EVT_INT_CTRL_0 | CYPD_EVT_INT_CTRL_1 |
+					CYPD_EVT_STATE_CTRL_0 | CYPD_EVT_STATE_CTRL_1)) {
+			/*If we just processed an event or sent some commands
+				* wait a bit for the pd controller to clear any pending
+				* interrupt requests*/
+			usleep(50);
+		}
+
+		check_ucsi_event_from_host();
+
+		for (i = 0; i < PD_CHIP_COUNT; i++) {
+			if (gpio_get_level(pd_chip_config[i].gpio) == 0) {
+				cypd_enque_evt(1<<i, 0);
+			}
+		}
+
 	}
 }
 
@@ -1444,10 +1432,23 @@ void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int le
 	}
 }
 
+
+void cypd_print_buff(const char *msg, void *buff, int len)
+{
+	int i;
+	uint8_t *data = (uint8_t *)buff;
+
+	CPRINTF("%s 0x", msg);
+	for (i = 0; i < len; i++) {
+		CPRINTF("%02x", data[i]);
+	}
+	CPRINTF("\n");
+}
+
 static int cmd_cypd_get_status(int argc, char **argv)
 {
 	int i, p, data;
-	uint8_t data4[4];
+	uint8_t data16[16];
 	char *e;
 
 	static const char * const mode[] = {"Boot", "FW1", "FW2", "Invald"};
@@ -1472,8 +1473,8 @@ static int cmd_cypd_get_status(int argc, char **argv)
 			cyp5525_get_version(i);
 			cypd_read_reg8(i, CYP5525_DEVICE_MODE, &data);
 			CPRINTS("CYPD_DEVICE_MODE: 0x%02x %s", data, mode[data & 0x03]);
-			cypd_read_reg_block(i, CYP5525_HPI_VERSION, data4, 4);
-			CPRINTS("HPI_VERSION: 0x%02x%02x%02x%02x", data4[3], data4[2], data4[1], data4[0]);
+			cypd_read_reg_block(i, CYP5525_HPI_VERSION, data16, 4);
+			CPRINTS("HPI_VERSION: 0x%02x%02x%02x%02x", data16[3], data16[2], data16[1], data16[0]);
 			cypd_read_reg8(i, CYP5525_INTR_REG, &data);
 			CPRINTS("CYPD_INTR_REG: 0x%02x %s %s %s %s",
 						data,
@@ -1506,12 +1507,12 @@ static int cmd_cypd_get_status(int argc, char **argv)
 			CPRINTS("CYPD_SYS_PWR_STATE: 0x%02x", data);
 			for (p = 0; p < 2; p++) {
 				CPRINTS("=====Port %d======", p);
-				cypd_read_reg_block(i, CYP5525_PD_STATUS_REG(p), data4, 4);
+				cypd_read_reg_block(i, CYP5525_PD_STATUS_REG(p), data16, 4);
 				CPRINTS("PD_STATUS %s DataRole:%s PowerRole:%s Vconn:%s",
-						data4[1] & BIT(2) ? "Contract" : "NoContract",
-						data4[0] & BIT(6) ? "DFP" : "UFP",
-						data4[1] & BIT(0) ? "Source" : "Sink",
-						data4[1] & BIT(5) ? "En" : "Dis");
+						data16[1] & BIT(2) ? "Contract" : "NoContract",
+						data16[0] & BIT(6) ? "DFP" : "UFP",
+						data16[1] & BIT(0) ? "Source" : "Sink",
+						data16[1] & BIT(5) ? "En" : "Dis");
 				cypd_read_reg8(i, CYP5525_TYPE_C_STATUS_REG(p), &data);
 				CPRINTS("   TYPE_C_STATUS : %s %s %s %s %s",
 							data & 0x1 ? "Connected" : "Not Connected",
@@ -1519,17 +1520,17 @@ static int cmd_cypd_get_status(int argc, char **argv)
 							port_status[(data >> 2) & 0x7],
 							data & 0x20 ? "Ra" : "NoRa",
 							current_level[(data >> 6) & 0x03]);
-				cypd_read_reg_block(i, CYP5525_CURRENT_RDO_REG(p), data4, 4);
+				cypd_read_reg_block(i, CYP5525_CURRENT_RDO_REG(p), data16, 4);
 				CPRINTS("             RDO : Current:%dmA MaxCurrent%dmA 0x%08x",
-						((data4[0] + (data4[1]<<8)) & 0x3FF)*10,
-						(((data4[1]>>2) + (data4[2]<<6)) & 0x3FF)*10,
-						*(uint32_t *)data4);
+						((data16[0] + (data16[1]<<8)) & 0x3FF)*10,
+						(((data16[1]>>2) + (data16[2]<<6)) & 0x3FF)*10,
+						*(uint32_t *)data16);
 
-				cypd_read_reg_block(i, CYP5525_CURRENT_PDO_REG(p), data4, 4);
+				cypd_read_reg_block(i, CYP5525_CURRENT_PDO_REG(p), data16, 4);
 				CPRINTS("             PDO : MaxCurrent:%dmA Voltage%dmA 0x%08x",
-						((data4[0] + (data4[1]<<8)) & 0x3FF)*10,
-						(((data4[1]>>2) + (data4[2]<<6)) & 0x3FF)*50,
-						*(uint32_t *)data4);
+						((data16[0] + (data16[1]<<8)) & 0x3FF)*10,
+						(((data16[1]>>2) + (data16[2]<<6)) & 0x3FF)*50,
+						*(uint32_t *)data16);
 				cypd_read_reg8(i, CYP5525_TYPE_C_VOLTAGE_REG(p), &data);
 				CPRINTS("  TYPE_C_VOLTAGE : %dmV", data*100);
 				cypd_read_reg16(i, CYP5525_PORT_INTR_STATUS_REG(p), &data);
@@ -1539,6 +1540,18 @@ static int cmd_cypd_get_status(int argc, char **argv)
 				/* Flush console to avoid truncating output */
 				cflush();
 			}
+			CPRINTS("=====UCSI======");
+			cypd_read_reg16(i, CYP5525_VERSION_REG, &data);
+			CPRINTS(" Version: 0x%02x", data);
+			cypd_read_reg_block(i, CYP5525_CCI_REG, data16, 4);
+			cypd_print_buff("     CCI:", data16, 4);
+			cypd_read_reg_block(i, CYP5525_CONTROL_REG, data16, 8);
+			cypd_print_buff(" Control:", data16, 8);
+			cypd_read_reg_block(i, CYP5525_MESSAGE_IN_REG, data16, 16);
+			cypd_print_buff(" Msg  In:", data16, 16);
+			cypd_read_reg_block(i, CYP5525_MESSAGE_OUT_REG, data16, 16);
+			cypd_print_buff(" Msg Out:", data16, 16);
+
 		}
 
 	}
@@ -1594,6 +1607,9 @@ static int cmd_cypd_control(int argc, char **argv)
 		} else if (!strncmp(argv[1], "verbose", 7)) {
 			verbose_msg_logging = (i != 0);
 			CPRINTS("verbose=%d", verbose_msg_logging);
+		} else if (!strncmp(argv[1], "ucsi", 4)) {
+			ucsi_set_debug(i != 0);
+			CPRINTS("ucsi verbose=%d", i);
 		} else if (!strncmp(argv[1], "setpdo", 6)) {
 			uint32_t pdo;
 			if (argc < 4) {
@@ -1622,7 +1638,7 @@ static int cmd_cypd_control(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(cypdctl, cmd_cypd_control,
-			"[enable/disable/reset/clearint/verbose] [controller] ",
+			"[enable/disable/reset/clearint/verbose/ucsi] [controller] ",
 			"Set if handling is active for controller");
 
 static int cmd_cypd_bb(int argc, char **argv)

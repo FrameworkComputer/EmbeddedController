@@ -13,6 +13,7 @@
 #include "hooks.h"
 #include "string.h"
 #include "console.h"
+#include "task.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 
@@ -25,7 +26,51 @@ static struct pd_chip_ucsi_info_t pd_chip_ucsi_info[] = {
 	}
 };
 
-static int debug_enable = 0;
+static int ucsi_debug_enable = 0;
+
+void ucsi_set_debug(bool enable)
+{
+	ucsi_debug_enable = enable;
+}
+
+timestamp_t ucsi_wait_time;
+void ucsi_set_next_poll(uint32_t from_now_us)
+{
+	timestamp_t now = get_time();
+	ucsi_wait_time.val = now.val + from_now_us;
+}
+
+const char *command_names(uint8_t command)
+{
+#ifdef PD_VERBOSE_LOGGING
+	static const char *response_codes[0x14] = {
+		"RESERVE",
+		"PPM_RESET",
+		"CANCEL",
+		"CONNECTOR_RESET",
+		"ACK_CC_CI",
+		"SET_NOTIFICATION_ENABLE",
+		"GET_CAPABILITY",
+		"GET_CONNECTOR_CAPABILITY",
+		"SET_UOM",
+		"SET_UOR",
+		"SET_PDM",
+		"SET_PDR",
+		"GET_ALTERNATE_MODES",
+		"GET_CAM_SUPPORTED",
+		"GET_CURRENT_CAM",
+		"SET_NEW_CAM",
+		"GET_PDOS",
+		"GET_CABLE_PROPERTY",
+		"GET_CONNECTOR_STATUS",
+		"GET_ERROR_STATUS"
+	};
+	if (command < 0x14) {
+		return response_codes[command];
+	}
+#endif
+	return "";
+}
 
 int ucsi_write_tunnel(void)
 {
@@ -41,20 +86,19 @@ int ucsi_write_tunnel(void)
 	 * A write to CONTROL (in CCGX) triggers processing of that command.
 	 * Hence MESSAGE_OUT must be available before CONTROL is written to CCGX.
 	 */
-	if (debug_enable) {
-		CPRINTS("UCSI Command: 0x%02x.", *command);
-		CPRINTS("UCSI Control specific: 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x, 0x%02x.",
-			*host_get_customer_memmap(EC_MEMMAP_UCSI_CONTROL_SPECIFIC),
-			*host_get_customer_memmap(EC_MEMMAP_UCSI_CONTROL_SPECIFIC+1),
-			*host_get_customer_memmap(EC_MEMMAP_UCSI_CONTROL_SPECIFIC+2),
-			*host_get_customer_memmap(EC_MEMMAP_UCSI_CONTROL_SPECIFIC+3),
-			*host_get_customer_memmap(EC_MEMMAP_UCSI_CONTROL_SPECIFIC+4),
-			*host_get_customer_memmap(EC_MEMMAP_UCSI_CONTROL_SPECIFIC+5));
+	if (ucsi_debug_enable) {
+		CPRINTS("UCSI Write Command 0x%016llx %s",
+		*(uint64_t *)command, command_names(*command));
+		if (command[1])
+			cypd_print_buff("UCSI Msg Out: ", message_out, 6);
+	}
+	if (*command == UCSI_CMD_PPM_RESET) {
+		CPRINTS("UCSI PPM_RESET");
 	}
 
 	switch (*command) {
-	case UCSI_CMD_CONNECTOR_RESET:
 	case UCSI_CMD_GET_CONNECTOR_CAPABILITY:
+	case UCSI_CMD_CONNECTOR_RESET:
 	case UCSI_CMD_SET_UOM:
 	case UCSI_CMD_SET_UOR:
 	case UCSI_CMD_SET_PDR:
@@ -111,7 +155,7 @@ int ucsi_write_tunnel(void)
 		}
 		break;
 	}
-
+	usleep(50);
 	return rv;
 }
 
@@ -119,28 +163,48 @@ int ucsi_read_tunnel(int controller)
 {
 	int rv;
 
+	if (ucsi_debug_enable && pd_chip_ucsi_info[controller].read_tunnel_complete == 1) {
+		CPRINTS("CYP5525_UCSI Read tunnel but previous read still pending");
+	}
+
 	rv = cypd_read_reg_block(controller, CYP5525_CCI_REG,
-		pd_chip_ucsi_info[controller].cci, 4);
+		&pd_chip_ucsi_info[controller].cci, 4);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("CYP5525_CCI_REG failed");
-
 	/* we need to offset the pd connector number to correct number */
-	if (controller == 1 && (pd_chip_ucsi_info[controller].cci[0] & 0x06))
-		pd_chip_ucsi_info[controller].cci[0] += 0x04;
+	if (controller == 1 && (pd_chip_ucsi_info[controller].cci & 0xFE))
+		pd_chip_ucsi_info[controller].cci += 0x04;
+	if (pd_chip_ucsi_info[controller].cci & 0xFF00) {
+		rv = cypd_read_reg_block(controller, CYP5525_MESSAGE_IN_REG,
+			pd_chip_ucsi_info[controller].message_in, 16);
 
-	rv = cypd_read_reg_block(controller, CYP5525_MESSAGE_IN_REG,
-		pd_chip_ucsi_info[controller].message_in, 16);
-
-	if (rv != EC_SUCCESS)
-		CPRINTS("CYP5525_MESSAGE_IN_REG failed");
+		if (rv != EC_SUCCESS)
+			CPRINTS("CYP5525_MESSAGE_IN_REG failed");
+	} else {
+		memset(pd_chip_ucsi_info[controller].message_in, 0, 16);
+	}
 
 	pd_chip_ucsi_info[controller].read_tunnel_complete = 1;
 
-	if (debug_enable) {
-		CPRINTS("P%d CCI response: 0x%02x, 0x%02x, 0x%02x, 0x%02x.", controller,
-		pd_chip_ucsi_info[controller].cci[0], pd_chip_ucsi_info[controller].cci[1],
-		pd_chip_ucsi_info[controller].cci[2], pd_chip_ucsi_info[controller].cci[3]);
+	if (ucsi_debug_enable) {
+		uint32_t cci_reg = pd_chip_ucsi_info[controller].cci;
+
+		CPRINTS("P%d CCI: 0x%08x Port%d, %s%s%s%s%s%s%s",
+			controller,
+			cci_reg,
+			(cci_reg >> 1) & 0x07F,
+			cci_reg & BIT(25) ? "Not Support " : "",
+			cci_reg & BIT(26) ? "Canceled " : "",
+			cci_reg & BIT(27) ? "Reset " : "",
+			cci_reg & BIT(28) ? "Busy " : "",
+			cci_reg & BIT(29) ? "Acknowledge " : "",
+			cci_reg & BIT(30) ? "Error " : "",
+			cci_reg & BIT(31) ? "Complete " : ""
+			);
+		if (cci_reg & 0xFF00) {
+			cypd_print_buff("Message ", pd_chip_ucsi_info[controller].message_in, 16);
+		}
 	}
 
 
@@ -151,7 +215,7 @@ int cyp5525_ucsi_startup(int controller)
 {
 	int rv = EC_SUCCESS;
 	int data;
-
+	ucsi_set_next_poll(0);
 	rv = cypd_write_reg8(controller, CYP5525_UCSI_CONTROL_REG ,CYPD_UCSI_START);
 	if (rv != EC_SUCCESS)
 		CPRINTS("UCSI start command fail!");
@@ -165,13 +229,13 @@ int cyp5525_ucsi_startup(int controller)
 
 	if (data & CYP5525_DEV_INTR) {
 		rv = cypd_read_reg_block(controller, CYP5525_VERSION_REG,
-			pd_chip_ucsi_info[controller].version, 2);
+			&pd_chip_ucsi_info[controller].version, 2);
 
 		if (rv != EC_SUCCESS)
 			CPRINTS("UCSI start command fail!");
 
 		memcpy(host_get_customer_memmap(EC_MEMMAP_UCSI_VERSION),
-			pd_chip_ucsi_info[controller].version, 2);
+			&pd_chip_ucsi_info[controller].version, 2);
 
 		cypd_clear_int(controller, CYP5525_DEV_INTR);
 	}
@@ -182,14 +246,24 @@ int cyp5525_ucsi_startup(int controller)
  * Suggested by bios team, we don't use host command frequenctly.
  * So we need to polling the flags to get the ucsi event form host.
  */
-static void check_ucsi_event_from_host(void);
-DECLARE_DEFERRED(check_ucsi_event_from_host);
 
-static void check_ucsi_event_from_host(void)
+void check_ucsi_event_from_host(void)
 {
-	uint8_t *message_in;
-	uint8_t *cci;
+	void *message_in;
+	void *cci;
 	int read_complete = 0;
+	int i;
+
+	if (!timestamp_expired(ucsi_wait_time, NULL)) {
+		if (ucsi_debug_enable)
+			CPRINTS("UCSI waiting for time expired");
+		return;
+	}
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		if (pd_chip_ucsi_info[i].cci & BIT(28)) {
+			ucsi_read_tunnel(i);
+		}
+	}
 
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
 			(*host_get_customer_memmap(0x00) & BIT(2))) {
@@ -198,11 +272,11 @@ static void check_ucsi_event_from_host(void)
 		 * Following the specification, until the EC reads the VERSION register
 		 * from CCGX's UCSI interface, it ignores all writes from the BIOS
 		 */
+		ucsi_set_next_poll(10*MSEC);
 		ucsi_write_tunnel();
 		*host_get_customer_memmap(0x00) &= ~BIT(2);
+		return;
 	}
-
-	udelay(10 * MSEC);
 
 	switch (*host_get_customer_memmap(EC_MEMMAP_UCSI_COMMAND)) {
 	case UCSI_CMD_PPM_RESET:
@@ -224,13 +298,15 @@ static void check_ucsi_event_from_host(void)
 	if (read_complete) {
 
 		if (pd_chip_ucsi_info[0].read_tunnel_complete) {
+			ucsi_read_tunnel(0);
 			message_in = pd_chip_ucsi_info[0].message_in;
-			cci = pd_chip_ucsi_info[0].cci;
+			cci = &pd_chip_ucsi_info[0].cci;
 		}
 
 		if (pd_chip_ucsi_info[1].read_tunnel_complete) {
+			ucsi_read_tunnel(1);
 			message_in = pd_chip_ucsi_info[1].message_in;
-			cci = pd_chip_ucsi_info[1].cci;
+			cci = &pd_chip_ucsi_info[1].cci;
 		}
 
 		memcpy(host_get_customer_memmap(EC_MEMMAP_UCSI_MESSAGE_IN), message_in, 16);
@@ -250,8 +326,4 @@ static void check_ucsi_event_from_host(void)
         /* clear the UCSI command */
         *host_get_customer_memmap(EC_MEMMAP_UCSI_COMMAND) = 0;
 	}
-
-	hook_call_deferred(&check_ucsi_event_from_host_data, 10 * MSEC);
-
 }
-DECLARE_HOOK(HOOK_INIT, check_ucsi_event_from_host, HOOK_PRIO_DEFAULT);

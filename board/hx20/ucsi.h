@@ -45,5 +45,6 @@ enum ucsi_command {
 int ucsi_write_tunnel(void);
 int ucsi_read_tunnel(int controller);
 int cyp5525_ucsi_startup(int controller);
-
+void ucsi_set_debug(bool enable);
+void check_ucsi_event_from_host(void);
 #endif	/* __CROS_EC_UCSI_H */
