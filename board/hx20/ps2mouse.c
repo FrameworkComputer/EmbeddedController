@@ -38,7 +38,7 @@ static uint8_t mouse_scale;
 static uint8_t resolution;
 static uint8_t sample_rate = 100;
 static uint8_t ec_mode_disabled;
-static uint8_t detected_host_packet;
+static uint8_t detected_host_packet = true;
 static uint8_t emumouse_task_id;
 
 static uint8_t aux_data;
@@ -460,10 +460,6 @@ void mouse_interrupt_handler_task(void *p)
 				if (!ec_mode_disabled &&
 					(power_state == POWER_S3S0)) {
 					CPRINTS("PS2M Configuring for ps2 emulation mode");
-					detected_host_packet = false;
-					/*tp takes about 80 ms to come up, wait a bit*/
-					usleep(200*MSEC);
-					setup_touchpad();
 
 					gpio_enable_interrupt(GPIO_SOC_TP_INT_L);
 					gpio_enable_interrupt(GPIO_EC_I2C_3_SDA);
@@ -499,7 +495,7 @@ static int command_emumouse(int argc, char **argv)
 		CPRINTS("Resetting to auto");
 		ec_mode_disabled = 0;
 		data_report_en = 1;
-		detected_host_packet = 0;
+		detected_host_packet = true;
 		task_set_event(emumouse_task_id, PS2MOUSE_EVT_REENABLE, 0);
 	}
 	if (argc < 4) {

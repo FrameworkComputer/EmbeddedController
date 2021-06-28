@@ -415,8 +415,11 @@ static void board_extpower(void)
 	}
 
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
-		extpower_is_present() && ac_boot_status())
+		extpower_is_present() && ac_boot_status()) {
+		CPRINTS("Power on from boot on AC present");
 		power_button_simulate_press();
+	}
+
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
