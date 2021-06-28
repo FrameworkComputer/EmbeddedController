@@ -17,7 +17,6 @@ set(PLATFORM_EC_BOARD "${PLATFORM_EC}/board/herobrine_npcx7" CACHE PATH
   "Path to the platform/ec board directory")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
-  "${PLATFORM_EC_BASEBOARD}/hibernate.c"
   "${PLATFORM_EC_BASEBOARD}/usbc_config.c"
   "${PLATFORM_EC_BASEBOARD}/usb_pd_policy.c")
 

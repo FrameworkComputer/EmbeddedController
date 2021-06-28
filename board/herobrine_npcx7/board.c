@@ -31,6 +31,15 @@
 
 #include "gpio_list.h"
 
+/* Wake-up pins for hibernate */
+const enum gpio_signal hibernate_wake_pins[] = {
+	GPIO_LID_OPEN,
+	GPIO_AC_PRESENT,
+	GPIO_POWER_BUTTON_L,
+	GPIO_EC_RST_ODL,
+};
+const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
+
 /* Keyboard scan setting */
 struct keyboard_scan_config keyscan_config = {
 	/* Use 80 us, because KSO_02 passes through the H1. */

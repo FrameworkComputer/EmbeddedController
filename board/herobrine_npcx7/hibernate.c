@@ -5,6 +5,12 @@
 
 #include "gpio.h"
 
+void board_hibernate_late(void)
+{
+	/* Set the hibernate GPIO to turn off the rails */
+	gpio_set_level(GPIO_HIBERNATE_L, 0);
+}
+
 void board_hibernate(void)
 {
 	/*
