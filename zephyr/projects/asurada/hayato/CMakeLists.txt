@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 cmake_minimum_required(VERSION 3.13.1)
+add_compile_definitions(BOARD_HAYATO)
 
 set(BOARD_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
 
