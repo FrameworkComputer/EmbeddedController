@@ -36,7 +36,7 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_LID_OPEN,
 	GPIO_AC_PRESENT,
 	GPIO_POWER_BUTTON_L,
-	GPIO_EC_RST_ODL,
+	GPIO_RTC_EC_WAKE_ODL,
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
