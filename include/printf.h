@@ -12,6 +12,13 @@
 #include <stddef.h>  /* For size_t */
 #include "common.h"
 
+/* The declaration of snprintf is changed to crec_snprintf for Zephyr,
+ * so include stdio.h from Zephyr.
+ */
+#ifdef CONFIG_ZEPHYR
+#include <stdio.h>
+#endif
+
 /*
  * Printf formatting: % [flags] [width] [.precision] [length] [type]
  *
@@ -77,6 +84,11 @@
 __stdlib_compat int vfnprintf(int (*addchar)(void *context, int c),
 			      void *context, const char *format, va_list args);
 
+#ifndef CONFIG_ZEPHYR
+#define snprintf crec_snprintf
+#define vsnprintf crec_vsnprintf
+#endif
+
 /**
  * Print formatted outut to a string.
  *
@@ -88,7 +100,8 @@ __stdlib_compat int vfnprintf(int (*addchar)(void *context, int c),
  * @return EC_SUCCESS, or EC_ERROR_OVERFLOW if the output was truncated.
  */
 __attribute__((__format__(__printf__, 3, 4)))
-__stdlib_compat int snprintf(char *str, size_t size, const char *format, ...);
+__stdlib_compat int crec_snprintf(char *str, size_t size, const char *format,
+				  ...);
 
 /**
  * Print formatted output to a string.
@@ -102,8 +115,8 @@ __stdlib_compat int snprintf(char *str, size_t size, const char *format, ...);
  * @return The string length written to str, or a negative value on error.
  *         The negative values can be -EC_ERROR_INVAL or -EC_ERROR_OVERFLOW.
  */
-__stdlib_compat int vsnprintf(char *str, size_t size, const char *format,
-			      va_list args);
+__stdlib_compat int crec_vsnprintf(char *str, size_t size, const char *format,
+				   va_list args);
 
 #endif  /* !HIDE_EC_STDLIB */
 

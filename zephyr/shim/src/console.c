@@ -12,11 +12,16 @@
 #include <sys/printk.h>
 #include <sys/ring_buffer.h>
 #include <zephyr.h>
+#include <logging/log.h>
 
 #include "console.h"
 #include "printf.h"
 #include "uart.h"
+#include "usb_console.h"
 
+LOG_MODULE_REGISTER(shim_console, LOG_LEVEL_ERR);
+
+static const struct shell *shell_zephyr;
 static struct k_poll_signal shell_uninit_signal;
 static struct k_poll_signal shell_init_signal;
 RING_BUF_DECLARE(rx_buffer, CONFIG_UART_RX_BUF_SIZE);
@@ -189,16 +194,11 @@ static int init_ec_console(const struct device *unused)
 } SYS_INIT(init_ec_console, PRE_KERNEL_1, 50);
 #endif /* CONFIG_CONSOLE_CHANNEL && DT_NODE_EXISTS(DT_PATH(ec_console)) */
 
-/*
- * Minimal implementation of a few uart_* functions we need.
- * TODO(b/178033156): probably need to swap this for something more
- * robust in order to handle UART buffering.
- */
-
-int uart_init_done(void)
+static int init_ec_shell(const struct device *unused)
 {
-	return true;
-}
+	shell_zephyr = shell_backend_uart_get_ptr();
+	return 0;
+} SYS_INIT(init_ec_shell, PRE_KERNEL_1, 50);
 
 void uart_tx_start(void)
 {
@@ -225,6 +225,7 @@ void uart_write_char(char c)
 
 void uart_flush_output(void)
 {
+	shell_process(shell_zephyr);
 }
 
 void uart_tx_flush(void)
@@ -244,6 +245,97 @@ int uart_getc(void)
 void uart_clear_input(void)
 {
 	/* Clear any remaining shell processing. */
-	shell_process(shell_backend_uart_get_ptr());
+	shell_process(shell_zephyr);
 	ring_buf_reset(&rx_buffer);
+}
+
+static void handle_sprintf_rv(int rv, size_t *len)
+{
+	if (rv < 0) {
+		LOG_ERR("Print buffer is too small");
+		*len = CONFIG_SHELL_PRINTF_BUFF_SIZE;
+	} else {
+		*len += rv;
+	}
+}
+
+static void zephyr_print(const char *buff, size_t size)
+{
+	/* shell_* functions can not be used in ISRs so use printk instead.
+	 * Also, console_buf_notify_chars uses a mutex, which may not be
+	 * locked in ISRs.
+	 */
+	if (k_is_in_isr() || shell_zephyr->ctx->state != SHELL_STATE_ACTIVE)
+		printk("%s", buff);
+	else {
+		shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s", buff);
+		if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE))
+			console_buf_notify_chars(buff, size);
+	}
+}
+
+#if defined(CONFIG_USB_CONSOLE) || defined(CONFIG_USB_CONSOLE_STREAM)
+BUILD_ASSERT(0, "USB console is not supported with Zephyr");
+#endif /* defined(CONFIG_USB_CONSOLE) || defined(CONFIG_USB_CONSOLE_STREAM) */
+
+int cputs(enum console_channel channel, const char *outstr)
+{
+	/* Filter out inactive channels */
+	if (console_channel_is_disabled(channel))
+		return EC_SUCCESS;
+
+	zephyr_print(outstr, strlen(outstr));
+
+	return 0;
+}
+
+int cprintf(enum console_channel channel, const char *format, ...)
+{
+	int rv;
+	va_list args;
+	size_t len = 0;
+	char buff[CONFIG_SHELL_PRINTF_BUFF_SIZE];
+
+	/* Filter out inactive channels */
+	if (console_channel_is_disabled(channel))
+		return EC_SUCCESS;
+
+	va_start(args, format);
+	rv = crec_vsnprintf(buff, CONFIG_SHELL_PRINTF_BUFF_SIZE, format, args);
+	va_end(args);
+	handle_sprintf_rv(rv, &len);
+
+	zephyr_print(buff, len);
+
+	return rv > 0 ? EC_SUCCESS : rv;
+}
+
+int cprints(enum console_channel channel, const char *format, ...)
+{
+	int rv;
+	va_list args;
+	char buff[CONFIG_SHELL_PRINTF_BUFF_SIZE];
+	size_t len = 0;
+
+	/* Filter out inactive channels */
+	if (console_channel_is_disabled(channel))
+		return EC_SUCCESS;
+
+	rv = crec_snprintf(buff, CONFIG_SHELL_PRINTF_BUFF_SIZE, "[%pT ",
+			 PRINTF_TIMESTAMP_NOW);
+	handle_sprintf_rv(rv, &len);
+
+	va_start(args, format);
+	rv = crec_vsnprintf(buff + len, CONFIG_SHELL_PRINTF_BUFF_SIZE - len,
+			  format, args);
+	va_end(args);
+	handle_sprintf_rv(rv, &len);
+
+	rv = crec_snprintf(buff + len, CONFIG_SHELL_PRINTF_BUFF_SIZE - len,
+			 "]\n");
+	handle_sprintf_rv(rv, &len);
+
+	zephyr_print(buff, len);
+
+	return rv > 0 ? EC_SUCCESS : rv;
 }
