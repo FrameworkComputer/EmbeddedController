@@ -680,7 +680,12 @@ static int system_run_image_copy_with_flags(enum ec_image copy,
 
 	system_set_reset_flags(add_reset_flags);
 
-	CPRINTS("Jumping to image %s", ec_image_to_string(copy));
+	/* If jumping back to RO, we're no longer in the EFS context. */
+	if (copy == EC_IMAGE_RO)
+		system_clear_reset_flags(EC_RESET_FLAG_EFS);
+
+	CPRINTS("Jumping to image %s (0x%08x)",
+		ec_image_to_string(copy), system_get_reset_flags());
 
 	jump_to_image(init_addr);
 
