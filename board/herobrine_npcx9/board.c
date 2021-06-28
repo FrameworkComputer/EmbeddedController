@@ -68,6 +68,8 @@ const struct i2c_port_t i2c_ports[] = {
 					  GPIO_EC_I2C_USB_C0_PD_SDA},
 	{"tcpc1",   I2C_PORT_TCPC1, 1000, GPIO_EC_I2C_USB_C1_PD_SCL,
 					  GPIO_EC_I2C_USB_C1_PD_SDA},
+	{"rtc",     I2C_PORT_RTC,    400, GPIO_EC_I2C_RTC_SCL,
+					  GPIO_EC_I2C_RTC_SDA},
 	{"eeprom",  I2C_PORT_EEPROM, 400, GPIO_EC_I2C_EEPROM_SCL,
 					  GPIO_EC_I2C_EEPROM_SDA},
 	{"sensor",  I2C_PORT_SENSOR, 400, GPIO_EC_I2C_SENSOR_SCL,
