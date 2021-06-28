@@ -64,11 +64,13 @@ const struct power_signal_info power_signal_list[] = {
 		POWER_SIGNAL_ACTIVE_HIGH,
 		"AP_SUSPEND",
 	},
+#ifdef CONFIG_CHIPSET_SC7180
 	[SC7X80_DEPRECATED_AP_RST_REQ] = {
 		GPIO_DEPRECATED_AP_RST_REQ,
 		POWER_SIGNAL_ACTIVE_HIGH,
 		"DEPRECATED_AP_RST_REQ",
 	},
+#endif /* defined(CONFIG_CHIPSET_SC7180) */
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
