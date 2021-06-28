@@ -87,8 +87,6 @@ static void update_5v_usage(void)
 		base_5v_power += PWR_REAR;
 	if (!gpio_get_level(GPIO_USB_A3_OC_ODL))
 		base_5v_power += PWR_REAR;
-	if (ec_config_get_usb4_present() && !gpio_get_level(GPIO_USB_A4_OC_ODL))
-		base_5v_power += PWR_REAR;
 	if (!gpio_get_level(GPIO_HDMI_CONN0_OC_ODL))
 		base_5v_power += PWR_HDMI;
 	if (!gpio_get_level(GPIO_HDMI_CONN1_OC_ODL))
@@ -140,8 +138,8 @@ const struct pwm_t pwm_channels[] = {
 const struct i2c_port_t i2c_ports[] = {
 	{"ina",     I2C_PORT_INA,     400, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
 	{"ppc0",    I2C_PORT_PPC0,    400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
+	{"scaler",  I2C_PORT_SCALER,  400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
 	{"tcpc0",   I2C_PORT_TCPC0,   400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
-	{"pse",     I2C_PORT_PSE,     400, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
 	{"power",   I2C_PORT_POWER,   400, GPIO_I2C5_SCL, GPIO_I2C5_SDA},
 	{"eeprom",  I2C_PORT_EEPROM,  400, GPIO_I2C7_SCL, GPIO_I2C7_SDA},
 };
@@ -364,6 +362,16 @@ void board_enable_s0_rails(int enable)
 {
 	/* This output isn't connected on protos; safe to set anyway. */
 	gpio_set_level(GPIO_EN_PP5000_HDMI, enable);
+
+	/*
+	 * Toggle scaler power and its downstream USB devices.
+	 */
+	gpio_set_level(GPIO_EC_SCALER_EN, enable);
+	gpio_set_level(GPIO_PWR_CTRL, enable);
+	gpio_set_level(GPIO_EC_MX8M_ONOFF, enable);
+	gpio_set_level(GPIO_EC_CAM_V3P3_EN, enable);
+
+	gpio_set_level(GPIO_PP3300_TPU_A_EN, enable);
 }
 
 int ec_config_get_usb4_present(void)

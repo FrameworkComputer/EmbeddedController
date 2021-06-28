@@ -12,4 +12,3 @@ CHIP_VARIANT:=npcx7m6fc
 
 board-y=board.o
 board-y+=led.o
-board-y+=pse.o
