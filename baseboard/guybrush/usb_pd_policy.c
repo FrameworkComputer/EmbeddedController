@@ -12,6 +12,7 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "gpio.h"
+#include "ioexpander.h"
 #include "system.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
@@ -60,6 +61,20 @@ int pd_set_power_supply_ready(int port)
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+
+	return EC_SUCCESS;
+}
+
+__override int board_pd_set_frs_enable(int port, int enable)
+{
+	/*
+	 * Both PPCs require the FRS GPIO to be set as soon as FRS capability
+	 * is established.
+	 */
+	if (port == 0)
+		ioex_set_level(IOEX_USB_C0_TCPC_FASTSW_CTL_EN, enable);
+	else if (port == 1)
+		ioex_set_level(IOEX_USB_C1_TCPC_FASTSW_CTL_EN, enable);
 
 	return EC_SUCCESS;
 }
