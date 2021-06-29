@@ -381,6 +381,7 @@ enum pd_task_evt {
 	CYPD_EVT_PLT_RESET = BIT(9),
 	CYPD_EVT_UCSI_POLL_CTRL_0 = BIT(10),
 	CYPD_EVT_UCSI_POLL_CTRL_1 = BIT(11),
+	CYPD_EVT_RETIMER_PWR = BIT(12),
 };
 
 /* PD CHIP */
@@ -420,4 +421,8 @@ void exit_tbt_mode(int controller);
 int check_tbt_mode(int controller);
 
 void cypd_print_buff(const char *msg, void *buff, int len);
+
+void set_retimer_power(enum power_state power);
+
+void set_pd_fw_update(bool update);
 #endif	/* __CROS_EC_CYPRESS5525_H */
