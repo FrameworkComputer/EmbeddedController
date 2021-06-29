@@ -45,6 +45,8 @@ void set_bios_diagnostic(uint8_t code);
 
 void reset_diagnostics(void);
 
+void cancel_diagnostics(void);
+
 bool diagnostics_tick(void);
 
 #endif	/* __CROS_EC_DIAGNOSTICS_H */

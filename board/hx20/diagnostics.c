@@ -44,6 +44,11 @@ void reset_diagnostics(void)
 	run_diagnostics = 1;
 }
 
+void cancel_diagnostics(void)
+{
+	run_diagnostics = 0;
+}
+
 static void set_diagnostic_leds(int color)
 {
 	set_pwm_led_color(PWM_LED0, color);
