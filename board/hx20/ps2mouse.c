@@ -364,7 +364,6 @@ read_failed:
 	i2c_lock(I2C_PORT_TOUCHPAD, 0);
 	gpio_enable_interrupt(GPIO_EC_I2C_3_SDA);
 
-
 	 if (mouse_state == PS2MSTATE_RESET) {
 		 return;
 	 }
@@ -400,7 +399,6 @@ read_failed:
 			CPRINTS("PS2M Unexpected Report ID %d reconfiguring", data[2]);
 			setup_touchpad();
 		}
-
 	}
 }
 /*
@@ -460,6 +458,9 @@ void mouse_interrupt_handler_task(void *p)
 				if (!ec_mode_disabled &&
 					(power_state == POWER_S3S0)) {
 					CPRINTS("PS2M Configuring for ps2 emulation mode");
+					/*tp takes about 80 ms to come up, wait a bit*/
+					usleep(200*MSEC);
+					setup_touchpad();
 
 					gpio_enable_interrupt(GPIO_SOC_TP_INT_L);
 					gpio_enable_interrupt(GPIO_EC_I2C_3_SDA);
