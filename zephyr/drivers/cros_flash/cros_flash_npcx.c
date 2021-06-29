@@ -27,6 +27,7 @@ LOG_MODULE_REGISTER(cros_flash, LOG_LEVEL_ERR);
 static int all_protected; /* Has all-flash protection been requested? */
 static int addr_prot_start;
 static int addr_prot_length;
+static uint8_t flag_prot_inconsistent;
 static uint8_t saved_sr1;
 static uint8_t saved_sr2;
 
@@ -704,12 +705,85 @@ static int cros_flash_npcx_erase(const struct device *dev, int offset, int size)
 	return ret;
 }
 
+static int cros_flash_npcx_get_protect(const struct device *dev, int bank)
+{
+	uint32_t addr = bank * CONFIG_FLASH_BANK_SIZE;
+
+	return flash_check_prot_reg(dev, addr, CONFIG_FLASH_BANK_SIZE);
+}
+
+static uint32_t cros_flash_npcx_get_protect_flags(const struct device *dev)
+{
+	uint32_t flags = 0;
+
+	/* Check if WP region is protected in status register */
+	if (flash_check_prot_reg(dev, WP_BANK_OFFSET * CONFIG_FLASH_BANK_SIZE,
+				 WP_BANK_COUNT * CONFIG_FLASH_BANK_SIZE))
+		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
+
+	/*
+	 * TODO: If status register protects a range, but SRP0 is not set,
+	 * flags should indicate EC_FLASH_PROTECT_ERROR_INCONSISTENT.
+	 */
+	if (flag_prot_inconsistent)
+		flags |= EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+
+	/* Read all-protected state from our shadow copy */
+	if (all_protected)
+		flags |= EC_FLASH_PROTECT_ALL_NOW;
+
+	return flags;
+}
+
+static int cros_flash_npcx_protect_at_boot(const struct device *dev,
+					   uint32_t new_flags)
+{
+	int ret;
+
+	if ((new_flags & (EC_FLASH_PROTECT_RO_AT_BOOT |
+			  EC_FLASH_PROTECT_ALL_AT_BOOT)) == 0) {
+		/* Clear protection bits in status register */
+		return flash_set_status_for_prot(dev, 0, 0);
+	}
+
+	ret = flash_write_prot_reg(dev, CONFIG_WP_STORAGE_OFF,
+				   CONFIG_WP_STORAGE_SIZE, 1);
+
+	/*
+	 * Set UMA_LOCK bit for locking all UMA transaction.
+	 * But we still can read directly from flash mapping address
+	 */
+	if (new_flags & EC_FLASH_PROTECT_ALL_AT_BOOT)
+		flash_uma_lock(dev, 1);
+
+	return ret;
+}
+
+static int cros_flash_npcx_protect_now(const struct device *dev, int all)
+{
+	if (all) {
+		/*
+		 * Set UMA_LOCK bit for locking all UMA transaction.
+		 * But we still can read directly from flash mapping address
+		 */
+		flash_uma_lock(dev, 1);
+	} else {
+		/* TODO: Implement RO "now" protection */
+	}
+
+	return EC_SUCCESS;
+}
+
 /* cros ec flash driver registration */
 static const struct cros_flash_driver_api cros_flash_npcx_driver_api = {
 	.init = cros_flash_npcx_init,
 	.physical_read = cros_flash_npcx_read,
 	.physical_write = cros_flash_npcx_write,
 	.physical_erase = cros_flash_npcx_erase,
+	.physical_get_protect = cros_flash_npcx_get_protect,
+	.physical_get_protect_flags = cros_flash_npcx_get_protect_flags,
+	.physical_protect_at_boot = cros_flash_npcx_protect_at_boot,
+	.physical_protect_now = cros_flash_npcx_protect_now,
 };
 
 static int flash_npcx_init(const struct device *dev)

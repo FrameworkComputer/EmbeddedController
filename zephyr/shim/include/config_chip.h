@@ -335,7 +335,6 @@
 #ifdef CONFIG_PLATFORM_EC_FLASH_CROS
 #include "flash_chip.h"
 #define CONFIG_FLASH_CROS
-#define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 
 /* Internal, don't use outside this header */
 #define _BINMAN_RO_PATH DT_PATH(binman, wp_ro)

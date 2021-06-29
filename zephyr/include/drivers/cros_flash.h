@@ -46,11 +46,27 @@ typedef int (*cros_flash_api_physical_write)(const struct device *dev,
 typedef int (*cros_flash_api_physical_erase)(const struct device *dev,
 					     int offset, int size);
 
+typedef int (*cros_flash_api_physical_get_protect)(const struct device *dev,
+						   int bank);
+
+typedef uint32_t
+(*cros_flash_api_physical_get_protect_flags)(const struct device *dev);
+
+typedef int (*cros_flash_api_physical_protect_at_boot)(const struct device *dev,
+						       uint32_t new_flags);
+
+typedef int (*cros_flash_api_physical_protect_now)(const struct device *dev,
+						   int all);
+
 __subsystem struct cros_flash_driver_api {
 	cros_flash_api_init init;
 	cros_flash_api_physical_read physical_read;
 	cros_flash_api_physical_write physical_write;
 	cros_flash_api_physical_erase physical_erase;
+	cros_flash_api_physical_get_protect physical_get_protect;
+	cros_flash_api_physical_get_protect_flags physical_get_protect_flags;
+	cros_flash_api_physical_protect_at_boot physical_protect_at_boot;
+	cros_flash_api_physical_protect_now physical_protect_now;
 };
 
 /**
@@ -163,6 +179,106 @@ static inline int z_impl_cros_flash_physical_erase(const struct device *dev,
 	}
 
 	return api->physical_erase(dev, offset, size);
+}
+
+/**
+ * @brief Read physical write protect setting for a flash bank.
+ *
+ * @param dev Pointer to the device structure for the flash driver instance.
+ * @param bank	Bank index to check.
+ *
+ * @return non-zero if bank is protected until reboot.
+ * @retval -ENOTSUP Not supported api function.
+ */
+__syscall int cros_flash_physical_get_protect(const struct device *dev,
+					      int bank);
+
+static inline int
+z_impl_cros_flash_physical_get_protect(const struct device *dev, int bank)
+{
+	const struct cros_flash_driver_api *api =
+		(const struct cros_flash_driver_api *)dev->api;
+
+	if (!api->physical_get_protect) {
+		return -ENOTSUP;
+	}
+
+	return api->physical_get_protect(dev, bank);
+}
+
+/**
+ * @brief Return flash protect state flags from the physical layer.
+ *
+ * @param dev Pointer to the device structure for the flash driver instance.
+ *
+ * @retval -ENOTSUP Not supported api function.
+ */
+__syscall
+uint32_t cros_flash_physical_get_protect_flags(const struct device *dev);
+
+static inline uint32_t
+z_impl_cros_flash_physical_get_protect_flags(const struct device *dev)
+{
+	const struct cros_flash_driver_api *api =
+		(const struct cros_flash_driver_api *)dev->api;
+
+	if (!api->physical_get_protect_flags) {
+		return -ENOTSUP;
+	}
+
+	return api->physical_get_protect_flags(dev);
+}
+
+/**
+ * @brief Enable/disable protecting firmware/pstate at boot.
+ *
+ * @param dev Pointer to the device structure for the flash driver instance.
+ * @param new_flags	to protect (only EC_FLASH_PROTECT_*_AT_BOOT are
+ * taken care of)
+ *
+ * @return 0 If successful.
+ * @retval -ENOTSUP Not supported api function.
+ */
+__syscall int cros_flash_physical_protect_at_boot(const struct device *dev,
+						  uint32_t new_flags);
+
+static inline int
+z_impl_cros_flash_physical_protect_at_boot(const struct device *dev,
+					   uint32_t new_flags)
+{
+	const struct cros_flash_driver_api *api =
+		(const struct cros_flash_driver_api *)dev->api;
+
+	if (!api->physical_protect_at_boot) {
+		return -ENOTSUP;
+	}
+
+	return api->physical_protect_at_boot(dev, new_flags);
+}
+
+/**
+ * @brief Protect now physical flash.
+ *
+ * @param dev Pointer to the device structure for the flash driver instance.
+ * @param all	Protect all (=1) or just read-only and pstate (=0).
+ *
+ * @return 0 If successful.
+ * @retval -ENOTSUP Not supported api function.
+ */
+__syscall int cros_flash_physical_protect_now(const struct device *dev,
+					      int all);
+
+static inline int
+z_impl_cros_flash_physical_protect_now(const struct device *dev, int all)
+{
+	const struct cros_flash_driver_api *api =
+		(const struct cros_flash_driver_api *)dev->api;
+
+	if (!api->physical_protect_now) {
+		return -ENOTSUP;
+	}
+
+	return api->physical_protect_now(dev, all);
 }
 
 /**
