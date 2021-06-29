@@ -652,18 +652,20 @@
  * Thus, we set them as follows by default:
  *
  *   CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON = 2 (don't boot if soc < 2%)
- *   CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE = 2    (shutdown if soc <= 2%)
+ *   CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE = 3    (shutdown if soc <= 3%)
  *   BATTERY_LEVEL_SHUTDOWN = 3                  (shutdown if soc < 3%)
  *
  * This produces the following behavior:
  *
  * - If soc = 1%, system doesn't boot. User wouldn't know why.
- * - If soc = 2%, system boots. Alert is shown. System immediately shuts down.
- * - If battery discharges to 2% while the system is running, system shuts down.
+ * - If soc = 2~3%, system boots. Alert is shown. System immediately shuts down.
+ * - If battery discharges to 3% while the system is running, system shuts down.
  *   If that happens while a user is away, they can press the power button to
  *   learn what happened.
+ * - If system fails to shutdown for some reason and battery further discharges
+ *   to 2%, EC will trigger shutdown.
  */
-#define CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE	2  /* shutdown if soc <= 2% */
+#define CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE	3  /* shutdown if soc <= 3% */
 
 /*
  * Powerd's full_factor. The value comes from:

@@ -49,7 +49,8 @@ extern struct ec_response_battery_dynamic_info
 
 /*
  * Shut down main processor and/or hibernate EC when discharging and battery
- * level < this level.
+ * level < this level. Setting this too low makes the battery discharge too
+ * deeply, which isn't good for the battery health.
  */
 #define BATTERY_LEVEL_SHUTDOWN		  3
 
