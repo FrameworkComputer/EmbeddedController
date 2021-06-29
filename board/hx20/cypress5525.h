@@ -423,4 +423,6 @@ int check_tbt_mode(int controller);
 void cypd_print_buff(const char *msg, void *buff, int len);
 
 void set_retimer_power(enum power_state power);
+
+void set_pd_fw_update(bool update);
 #endif	/* __CROS_EC_CYPRESS5525_H */

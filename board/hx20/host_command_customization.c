@@ -75,6 +75,7 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 		if ((p->flags & FLASH_FLAG_PD) == FLASH_FLAG_PD) {
 			gpio_disable_interrupt(GPIO_EC_PD_INTA_L);
 			gpio_disable_interrupt(GPIO_EC_PD_INTB_L);
+			set_pd_fw_update(true);
 		}
 	case FLASH_ACCESS_SPI:
 		/* Disable LED drv */
@@ -90,7 +91,7 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 		gpio_enable_interrupt(GPIO_LID_SW_L);
 		gpio_enable_interrupt(GPIO_EC_PD_INTA_L);
 		gpio_enable_interrupt(GPIO_EC_PD_INTB_L);
-
+		set_pd_fw_update(false);
 		/* resetup PD controllers */
 		if ((p->flags & FLASH_FLAG_PD) == FLASH_FLAG_PD) {
 			cypd_reinitialize();

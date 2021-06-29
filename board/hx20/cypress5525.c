@@ -84,7 +84,13 @@ struct extended_msg tx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 
 bool verbose_msg_logging;
+static bool firmware_update;
 
+
+void set_pd_fw_update(bool update)
+{
+	firmware_update = update;
+}
 
 int pd_extpower_is_present(void)
 {
@@ -1103,6 +1109,9 @@ void cypd_interrupt_handler_task(void *p)
 	}
 	while (1) {
 		evt = task_wait_event(10*MSEC);
+
+		if (firmware_update)
+			continue;
 
 		if (evt & CYPD_EVT_AC_PRESENT) {
 			CPRINTS("GPIO_AC_PRESENT_PD_L changed: value: 0x%02x", gpio_get_level(GPIO_AC_PRESENT_PD_L));
