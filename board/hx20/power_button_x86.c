@@ -365,8 +365,9 @@ static void state_machine(uint64_t tnow)
 			}
 		}
 		*/
+
 		/* if trigger by power button don't need wait initial.*/
-		if (power_button_is_pressed()) {
+		if (power_button_is_pressed() || poweron_reason_powerbtn()) {
 			initial_delay = 0;
 		}
 
