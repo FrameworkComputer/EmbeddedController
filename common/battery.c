@@ -616,18 +616,18 @@ void battery_compensate_params(struct batt_params *batt)
 {
 	int numer, denom;
 	int *remain = &(batt->remaining_capacity);
-	int *full = &(batt->full_capacity);
+	int full = batt->full_capacity;
 
 	if ((batt->flags & BATT_FLAG_BAD_FULL_CAPACITY) ||
 			(batt->flags & BATT_FLAG_BAD_REMAINING_CAPACITY))
 		return;
 
-	if (*remain <= 0 || *full <= 0)
+	if (*remain <= 0 || full <= 0)
 		return;
 
 	/* Some batteries don't update full capacity as often. */
-	if (*remain > *full)
-		*remain = *full;
+	if (*remain > full)
+		*remain = full;
 
 	/*
 	 * EC calculates the display SoC like how Powerd used to do. Powerd
@@ -650,8 +650,8 @@ void battery_compensate_params(struct batt_params *batt)
 	 *		 = ----------------------------------- x 1000
 	 *		   full x (full_factor - shutdown_pct)
 	 */
-	numer = 1000 * ((100 * *remain) - (*full * batt_host_shutdown_pct));
-	denom = *full * (batt_host_full_factor - batt_host_shutdown_pct);
+	numer = 1000 * ((100 * *remain) - (full * batt_host_shutdown_pct));
+	denom = full * (batt_host_full_factor - batt_host_shutdown_pct);
 	/* Rounding (instead of truncating) */
 	batt->display_charge = (numer + denom / 2) / denom;
 	if (batt->display_charge < 0)

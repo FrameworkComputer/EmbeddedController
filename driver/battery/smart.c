@@ -359,6 +359,7 @@ static void apply_fake_state_of_charge(struct batt_params *batt)
 
 	batt->state_of_charge = fake_state_of_charge;
 	batt->remaining_capacity = full * fake_state_of_charge / 100;
+	battery_compensate_params(batt);
 	batt->flags &= ~BATT_FLAG_BAD_STATE_OF_CHARGE;
 	batt->flags &= ~BATT_FLAG_BAD_REMAINING_CAPACITY;
 }
