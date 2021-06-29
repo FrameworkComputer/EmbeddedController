@@ -668,14 +668,14 @@ const mat33_fp_t based_ref_icm42607 = {
 	{ 0, FLOAT_TO_FP(1), 0},
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
-struct motion_sensor_t icm42607_lid_accel = {
-	 .name = "Accel",
+struct motion_sensor_t icm42607_base_accel = {
+	 .name = "Base Accel",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
 	 .chip = MOTIONSENSE_CHIP_ICM42607,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_LID,
+	 .location = MOTIONSENSE_LOC_BASE,
 	 .drv = &icm42607_drv,
-	 .mutex = &g_lid_mutex,
+	 .mutex = &g_base_mutex,
 	 .drv_data = &g_icm42607_data,
 	 .port = I2C_PORT_ACCEL,
 	 .i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
@@ -684,22 +684,25 @@ struct motion_sensor_t icm42607_lid_accel = {
 	 .min_frequency = ICM42607_ACCEL_MIN_FREQ,
 	 .max_frequency = ICM42607_ACCEL_MAX_FREQ,
 	 .config = {
-		 /* Enable accel in S0 */
-		 [SENSOR_CONFIG_EC_S0] = {
+		 /* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
 			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
-		 },
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
 	 },
 };
 
-struct motion_sensor_t icm42607_lid_gyro = {
-	 .name = "Gyro",
+struct motion_sensor_t icm42607_base_gyro = {
+	 .name = "Base Gyro",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
 	 .chip = MOTIONSENSE_CHIP_ICM42607,
 	 .type = MOTIONSENSE_TYPE_GYRO,
-	 .location = MOTIONSENSE_LOC_LID,
+	 .location = MOTIONSENSE_LOC_BASE,
 	 .drv = &icm42607_drv,
-	 .mutex = &g_lid_mutex,
+	 .mutex = &g_base_mutex,
 	 .drv_data = &g_icm42607_data,
 	 .port = I2C_PORT_ACCEL,
 	 .i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
@@ -740,8 +743,8 @@ void board_init(void)
 		gpio_set_level(GPIO_EN_PP3300_PEN, 1);
 
 	if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_ICM42607) {
-		motion_sensors[BASE_ACCEL] = icm42607_lid_accel;
-		motion_sensors[BASE_GYRO] = icm42607_lid_gyro;
+		motion_sensors[BASE_ACCEL] = icm42607_base_accel;
+		motion_sensors[BASE_GYRO] = icm42607_base_gyro;
 		ccprints("BASE GYRO is ICM42607");
 	} else {
 		ccprints("BASE GYRO is BMI160");
