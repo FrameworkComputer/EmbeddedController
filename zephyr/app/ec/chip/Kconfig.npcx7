@@ -96,19 +96,7 @@ config PLATFORM_EC_ADC_RESOLUTION
 config PLATFORM_EC_ADC_OVERSAMPLING
 	default 0
 
-# PLL configuration
-config CLOCK_NPCX_OSC_CYCLES_PER_SEC
-	default 90000000
-
-config CLOCK_NPCX_APB1_PRESCALER
-	default 6
-
-config CLOCK_NPCX_APB2_PRESCALER
-	default 6
-
-config CLOCK_NPCX_APB3_PRESCALER
-	default 6
-
+# Set the system clock to 15MHz.
 config SYS_CLOCK_HW_CYCLES_PER_SEC
 	default 15000000
 
