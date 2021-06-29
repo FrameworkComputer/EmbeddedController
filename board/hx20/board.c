@@ -343,8 +343,23 @@ void board_reset_pd_mcu(void)
 
 }
 
+static int power_button_pressed_on_boot;
+int poweron_reason_powerbtn(void)
+{
+	int r = power_button_pressed_on_boot;
+
+	power_button_pressed_on_boot = 0;
+	return r;
+}
+
 static void vci_init(void)
 {
+	if (MCHP_VCI_NEGEDGE_DETECT & (BIT(0) | BIT(1))) {
+		MCHP_VCI_NEGEDGE_DETECT = BIT(0) |  BIT(1);
+		MCHP_VCI_POSEDGE_DETECT = BIT(0) |  BIT(1);
+		power_button_pressed_on_boot = 1;
+	}
+
 	/**
 	 * Switch VCI control from VCI_OUT to GPIO Pin Control
 	 * These have to be done in sequence to prevent glitching
@@ -357,7 +372,7 @@ static void vci_init(void)
 	 * enable BIT 2 for chassis open
 	 */
 	MCHP_VCI_INPUT_ENABLE = BIT(0) |  BIT(1);
-	MCHP_VCI_BUFFER_EN = BIT(2);
+	MCHP_VCI_BUFFER_EN = BIT(0) | BIT(1) | BIT(2);
 }
 DECLARE_HOOK(HOOK_INIT, vci_init, HOOK_PRIO_FIRST);
 
@@ -377,6 +392,9 @@ static void board_power_off_deferred(void)
 		task_disable_irq(i);
 		task_clear_pending_irq(i);
 	}
+
+	MCHP_VCI_NEGEDGE_DETECT = BIT(0) |  BIT(1);
+	MCHP_VCI_POSEDGE_DETECT = BIT(0) |  BIT(1);
 
 	gpio_set_level(GPIO_VS_ON, 0);
 	MCHP_VCI_REGISTER &= ~(MCHP_VCI_REGISTER_FW_CNTRL + MCHP_VCI_REGISTER_FW_EXT);
