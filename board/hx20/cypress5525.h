@@ -99,6 +99,7 @@
 #define CYP5525_DEV_INTR	0x01
 #define CYP5525_PORT0_INTR  0x02
 #define CYP5525_PORT1_INTR  0x04
+#define CYP5525_ICLR_INTR  	0x08
 #define CYP5525_UCSI_INTR   0x80
 
 /************************************************/
@@ -337,13 +338,20 @@ struct pd_port_current_state_t {
 };
 
 struct pd_chip_ucsi_info_t {
-	uint8_t version[2];
+	uint16_t version;
+	uint16_t reserved;
+	uint32_t cci;
+	struct ucsi_control_t {
+		uint8_t command;
+		uint8_t data_len;
+		uint8_t data[6];
+	} control;
 	uint8_t message_in[16];
-	uint8_t cci[8];
+	uint8_t message_out[16];
 	int read_tunnel_complete;
 	int write_tunnel_complete;
 	int wait_ack;
-};
+} __packed;
 
 enum pd_port_role {
 	PORT_SINK,
@@ -357,6 +365,23 @@ enum pd_chip {
 	PD_CHIP_COUNT
 };
 
+/************************************************/
+/*  CYPD Task Events                            */
+/************************************************/
+enum pd_task_evt {
+	CYPD_EVT_INT_CTRL_0 = BIT(0),
+	CYPD_EVT_INT_CTRL_1 = BIT(1),
+	CYPD_EVT_STATE_CTRL_0 = BIT(2),
+	CYPD_EVT_STATE_CTRL_1 = BIT(3),
+	CYPD_EVT_AC_PRESENT =  BIT(4),
+	CYPD_EVT_S0 = BIT(5),
+	CYPD_EVT_S3 = BIT(6),
+	CYPD_EVT_S4 = BIT(7),
+	CYPD_EVT_S5 = BIT(8),
+	CYPD_EVT_PLT_RESET = BIT(9),
+	CYPD_EVT_UCSI_POLL_CTRL_0 = BIT(10),
+	CYPD_EVT_UCSI_POLL_CTRL_1 = BIT(11),
+};
 
 /* PD CHIP */
 void pd_chip_interrupt(enum gpio_signal signal);
@@ -377,9 +402,9 @@ int pd_port_configuration_change(int port, enum pd_port_role port_role);
 
 int cypd_write_reg8(int controller, int reg, int data);
 
-int cypd_write_reg_block(int controller, int reg, uint8_t *data, int len);
+int cypd_write_reg_block(int controller, int reg, void *data, int len);
 
-int cypd_read_reg_block(int controller, int reg, uint8_t *data, int len);
+int cypd_read_reg_block(int controller, int reg, void *data, int len);
 
 void cypd_reinitialize(void);
 
@@ -394,4 +419,5 @@ void exit_tbt_mode(int controller);
 
 int check_tbt_mode(int controller);
 
+void cypd_print_buff(const char *msg, void *buff, int len);
 #endif	/* __CROS_EC_CYPRESS5525_H */
