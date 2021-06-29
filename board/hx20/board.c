@@ -346,10 +346,7 @@ void board_reset_pd_mcu(void)
 static int power_button_pressed_on_boot;
 int poweron_reason_powerbtn(void)
 {
-	int r = power_button_pressed_on_boot;
-
-	power_button_pressed_on_boot = 0;
-	return r;
+	return power_button_pressed_on_boot;
 }
 
 static void vci_init(void)
