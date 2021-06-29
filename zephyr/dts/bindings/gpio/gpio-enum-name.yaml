@@ -32,7 +32,10 @@ properties:
       - GPIO_EC_ACCEL_INT
       - GPIO_EC_ALS_RGB_INT_L
       - GPIO_EC_BL_EN_OD
+      - GPIO_EC_CHG_LED_W_C0
+      - GPIO_EC_CHG_LED_Y_C0
       - GPIO_EC_CHG_LED_B_C1
+      - GPIO_EC_CHG_LED_W_C1
       - GPIO_EC_CHG_LED_Y_C1
       - GPIO_EC_DPBRDG_HPD_ODL
       - GPIO_EC_I2C_SENSOR_SCL
@@ -127,6 +130,7 @@ properties:
       - GPIO_SPI0_CS
       - GPIO_SWITCHCAP_ON
       - GPIO_SWITCHCAP_ON_L
+      - GPIO_SWITCHCAP_PG
       - GPIO_SWITCHCAP_PG_INT_L
       - GPIO_SYS_RESET_L
       - GPIO_SYS_RST_ODL
