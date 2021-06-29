@@ -157,27 +157,27 @@ const struct pwm_t pwm_channels[] = {
 	},
 	[PWM_CH_DB0_LED_RED] = {
 		.channel = 5,
-		.flags = PWM_CONFIG_DSLEEP,
+		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ALT_CLOCK,
 	},
 	[PWM_CH_DB0_LED_GREEN] = {
 		.channel = 6,
-		.flags = PWM_CONFIG_DSLEEP,
+		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ALT_CLOCK,
 	},
 	[PWM_CH_DB0_LED_BLUE] = {
 		.channel = 7,
-		.flags = PWM_CONFIG_DSLEEP,
+		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ALT_CLOCK,
 	},
 	[PWM_CH_DB1_LED_RED] = {
 		.channel = 1,
-		.flags = PWM_CONFIG_DSLEEP,
+		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ALT_CLOCK,
 	},
 	[PWM_CH_DB1_LED_GREEN] = {
 		.channel = 3,
-		.flags = PWM_CONFIG_DSLEEP,
+		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ALT_CLOCK,
 	},
 	[PWM_CH_DB1_LED_BLUE] = {
 		.channel = 8,
-		.flags = PWM_CONFIG_DSLEEP,
+		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ALT_CLOCK,
 	},
 	[PWM_CH_FPR_LED_RED] = {
 		.channel = (MCHP_PWM_ID_MAX+0),
@@ -417,6 +417,15 @@ void cancel_board_power_off(void)
 	hook_call_deferred(&board_power_off_deferred_data, -1);
 }
 
+
+static int cmd_ecoff(int argc, char **argv)
+{
+	board_power_off_deferred();
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(ecoff, cmd_ecoff,
+			"ecoff",
+			"hard power off system now");
 /**
  * Notify PCH of the AC presence.
  */

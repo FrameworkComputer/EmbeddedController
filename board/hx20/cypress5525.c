@@ -365,16 +365,24 @@ int check_tbt_mode(int controller)
 	return data;
 }
 
-/*
+
 int cypd_configure_bb_retimer_power_state(int controller, int power)
 {
+#define RT_EVT_VSYS_REMOVED 0
+#define RT_EVT_VSYS_ADDED 1
 	int rv = EC_SUCCESS;
 	rv = cypd_write_reg8(controller, CYP5225_USER_BB_POWER_EVT ,power);
 	if (rv != EC_SUCCESS)
 		CPRINTS("BB power command fail!");
 	return rv;
 }
-*/
+enum power_state saved_power_state;
+void set_retimer_power(enum power_state power)
+{
+	saved_power_state = power;
+	cypd_enque_evt(CYPD_EVT_RETIMER_PWR, 0);
+
+}
 
 int cyp5525_setup(int controller)
 {
@@ -942,6 +950,8 @@ void cypd_handle_state(int controller)
 			cypd_update_port_state(controller, 1);
 			cypd_write_reg8_wait_ack(controller, CYP5525_SYS_PWR_STATE,
 									power_get_state() == POWER_S0 ? CYP5525_POWERSTATE_S0 : CYP5525_POWERSTATE_S5);
+			if (power_get_state() == POWER_G3)
+				cypd_configure_bb_retimer_power_state(controller, 0);
 			cyp5525_ucsi_startup(controller);
 			gpio_enable_interrupt(pd_chip_config[controller].gpio);
 
@@ -1097,6 +1107,7 @@ void cypd_interrupt_handler_task(void *p)
 		if (evt & CYPD_EVT_AC_PRESENT) {
 			CPRINTS("GPIO_AC_PRESENT_PD_L changed: value: 0x%02x", gpio_get_level(GPIO_AC_PRESENT_PD_L));
 		}
+		/*
 		if (evt & CYPD_EVT_S5) {
 			cyp5225_set_power_state(CYP5525_POWERSTATE_S5);
 		}
@@ -1106,6 +1117,7 @@ void cypd_interrupt_handler_task(void *p)
 		if (evt & CYPD_EVT_S0) {
 			cyp5225_set_power_state(CYP5525_POWERSTATE_S0);
 		}
+		*/
 
 		if (evt & CYPD_EVT_PLT_RESET) {
 			CPRINTS("PD Event Platform Reset!");
@@ -1114,6 +1126,29 @@ void cypd_interrupt_handler_task(void *p)
 			cypd_configure_bb_retimer_power_state(0, 1);
 			cypd_configure_bb_retimer_power_state(1, 1);
 			*/
+		}
+		if (evt & CYPD_EVT_RETIMER_PWR) {
+			if (saved_power_state == POWER_S5) {
+				cypd_configure_bb_retimer_power_state(0, 1);
+				cypd_configure_bb_retimer_power_state(1, 1);
+				usleep(50);
+			}
+			if (saved_power_state == POWER_S5) {
+				cyp5225_set_power_state(CYP5525_POWERSTATE_S5);
+			}
+			if (saved_power_state == POWER_S3) {
+				cyp5225_set_power_state(CYP5525_POWERSTATE_S3);
+			}
+			if (saved_power_state == POWER_S0) {
+				cyp5225_set_power_state(CYP5525_POWERSTATE_S0);
+			}
+			usleep(50);
+
+			if (saved_power_state == POWER_G3) {
+				cypd_configure_bb_retimer_power_state(0, 0);
+				cypd_configure_bb_retimer_power_state(1, 0);
+				usleep(50);
+			}
 		}
 		if (evt & CYPD_EVT_INT_CTRL_0) {
 			cyp5525_interrupt(0);

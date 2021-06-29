@@ -29,6 +29,7 @@
 #include "wireless.h"
 #include "driver/temp_sensor/f75303.h"
 #include "diagnostics.h"
+#include "cypress5525.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
@@ -453,6 +454,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (board_chipset_power_on()) {
 			cancel_board_power_off();
 			CPRINTS("PH G3S5->S5");
+			set_retimer_power(POWER_S5);
 			return POWER_S5;
 		} else {
 			return POWER_G3;
@@ -463,7 +465,7 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("PH S5S3");
 
         gpio_set_level(GPIO_SYSON, 1);
-
+		set_retimer_power(POWER_S3);
         /* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
 		CPRINTS("PH S5S3->S3");
@@ -473,7 +475,6 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S3S0:
 		CPRINTS("PH S3S0");
-
         gpio_set_level(GPIO_SUSP_L, 1);
 
         msleep(10);
@@ -509,6 +510,7 @@ enum power_state power_handle_state(enum power_state state)
 		power_button_enable_led(0);
 
 		me_gpio_change(GPIO_FLAG_NONE);
+		set_retimer_power(POWER_S0);
 		CPRINTS("PH S3S0->S0");
         return POWER_S0;
 
@@ -522,6 +524,7 @@ enum power_state power_handle_state(enum power_state state)
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 		me_gpio_change(GPIO_PULL_DOWN);
 		f75303_set_enabled(0);
+		set_retimer_power(POWER_S3);
 		return POWER_S3;
 		break;
 
@@ -529,6 +532,7 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("PH S3S5");
 		gpio_set_level(GPIO_SYSON, 0);
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
+		set_retimer_power(POWER_S5);
 		return POWER_S5;
 		break;
 
@@ -541,6 +545,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (!extpower_is_present()) {
 			board_power_off();
 		}
+		set_retimer_power(POWER_G3);
 		return POWER_G3;
 		break;
 	}
