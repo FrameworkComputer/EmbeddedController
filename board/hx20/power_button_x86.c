@@ -374,9 +374,8 @@ static void state_machine(uint64_t tnow)
 			tnext_state = tnow + PWRBTN_DELAY_INITIAL;
 			initial_delay--;
 		} else {
-			if (!extpower_is_present() ||
-				(system_get_reset_flags() & EC_RESET_FLAG_HARD) ==
-				EC_RESET_FLAG_HARD) {
+			if (poweron_reason_powerbtn()) {
+
 				reset_diagnostics();
 
 				if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
