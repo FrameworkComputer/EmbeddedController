@@ -9,5 +9,6 @@
 baseboard-y=baseboard.o
 baseboard-y+=board_chipset.o
 baseboard-y+=board_id.o
+baseboard-y+=regulator.o
 baseboard-y+=usbc_config.o
 baseboard-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
