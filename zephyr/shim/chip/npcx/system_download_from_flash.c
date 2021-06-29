@@ -2,10 +2,12 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include <dt-bindings/clock/npcx_clock.h>
 #include <stdnoreturn.h>
 #include <sys/__assert.h>
 
 #include "common.h"
+#include "soc.h"
 #include "system_chip.h"
 
 /* Modules Map */
@@ -41,24 +43,6 @@
 #define NPCX_LPRAM_CTRL		REG32(0x40001044)
 
 /******************************************************************************/
-/* Power Management Controller (PMC) Registers */
-#define NPCX_PWDWN_CTL_ADDR(offset)    (((offset) < 6) ? \
-			(NPCX_PMC_BASE_ADDR + 0x008 + (offset)) : \
-			(NPCX_PMC_BASE_ADDR + 0x024))
-#define NPCX_PWDWN_CTL(offset)	REG8(NPCX_PWDWN_CTL_ADDR(offset))
-
-/* PMC enumeration */
-enum NPCX_PMC_PWDWN_CTL_T {
-	NPCX_PMC_PWDWN_1 = 0,
-	NPCX_PMC_PWDWN_2 = 1,
-	NPCX_PMC_PWDWN_3 = 2,
-	NPCX_PMC_PWDWN_4 = 3,
-	NPCX_PMC_PWDWN_5 = 4,
-	NPCX_PMC_PWDWN_6 = 5,
-	NPCX_PMC_PWDWN_7 = 6,
-	NPCX_PMC_PWDWN_CNT,
-};
-
 /* Sysjump utilities in low power ram for npcx series. */
 noreturn void __keep __attribute__ ((section(".lowpower_ram2")))
 __start_gdma(uint32_t exeAddr)
@@ -124,7 +108,7 @@ void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
 	__ASSERT_NO_MSG(exeAddr != 0x0);
 
 	/* Enable power for the Low Power RAM */
-	CLEAR_BIT(NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6), 6);
+	CLEAR_BIT(NPCX_PWDWN_CTL(NPCX_PMC_BASE_ADDR, NPCX_PWDWN_CTL6), 6);
 
 	/* Enable Low Power RAM */
 	NPCX_LPRAM_CTRL = 1;
