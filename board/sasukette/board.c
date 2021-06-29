@@ -8,6 +8,7 @@
 #include "adc_chip.h"
 #include "button.h"
 #include "cbi_fw_config.h"
+#include "cros_board_info.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
@@ -166,6 +167,8 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	}
 };
 
+static uint32_t board_id;
+
 void board_init(void)
 {
 	int on;
@@ -189,6 +192,8 @@ void board_init(void)
 	/* modify AC DC prochot value */
 	isl923x_set_ac_prochot(CHARGER_SOLO, 4096);
 	isl923x_set_dc_prochot(CHARGER_SOLO, 6000);
+
+	cbi_get_board_version(&board_id);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -197,8 +202,15 @@ void board_hibernate(void)
 	/*
 	 * Put all charger ICs present into low power mode before entering
 	 * z-state.
+	 *
+	 * b:186335659: In order to solve the power consumption problem of
+	 * hibernate，HW solution is adopted after board id 3 to solve the
+	 * problem that AC cannot wake up hibernate mode.
 	 */
-	raa489000_hibernate(0, false);
+	if (board_id > 2)
+		raa489000_hibernate(0, true);
+	else
+		raa489000_hibernate(0, false);
 }
 
 __override void board_pulse_entering_rw(void)
