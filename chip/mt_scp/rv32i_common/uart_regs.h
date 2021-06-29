@@ -10,6 +10,9 @@
 
 #include "registers.h"
 
+/* Chip specific function for setting UART pinmux. */
+void uart_init_pinmux(void);
+
 /* DLAB (Divisor Latch Access Bit) == 0 */
 
 /* (Read) receiver buffer register */
