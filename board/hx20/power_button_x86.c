@@ -321,6 +321,7 @@ static void state_machine(uint64_t tnow)
 				tnext_state = tnow + PWRBTN_DELAY_T0;
 				pwrbtn_state = PWRBTN_STATE_T0;
 				set_pwrbtn_to_pch(0, 0);
+				cancel_diagnostics();
 			}
 		}
 		break;
