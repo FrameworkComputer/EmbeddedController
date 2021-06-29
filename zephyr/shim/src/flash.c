@@ -44,14 +44,6 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 	    (CONFIG_FLASH_WRITE_SIZE - 1))
 		return EC_ERROR_INVAL;
 
-	/* check protection */
-	if (all_protected)
-		return EC_ERROR_ACCESS_DENIED;
-
-	/* check protection */
-	if (flash_check_prot_range(offset, size))
-		return EC_ERROR_ACCESS_DENIED;
-
 	/* Lock physical flash operations */
 	crec_flash_lock_mapped_storage(1);
 
@@ -66,14 +58,6 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 int crec_flash_physical_erase(int offset, int size)
 {
 	int rv;
-
-	/* check protection */
-	if (all_protected)
-		return EC_ERROR_ACCESS_DENIED;
-
-	/* check protection */
-	if (flash_check_prot_range(offset, size))
-		return EC_ERROR_ACCESS_DENIED;
 
 	/* Lock physical flash operations */
 	crec_flash_lock_mapped_storage(1);
@@ -178,19 +162,6 @@ static int flash_dev_init(const struct device *unused)
 		return -ENODEV;
 	}
 	cros_flash_init(cros_flash_dev);
-
-	/*
-	 * Protect status registers of internal spi-flash if WP# is active
-	 * during ec initialization.
-	 */
-#ifdef CONFIG_WP_ACTIVE_HIGH
-	flash_protect_int_flash(gpio_get_level(GPIO_WP));
-#else
-	flash_protect_int_flash(!gpio_get_level(GPIO_WP_L));
-#endif /*CONFIG_WP_ACTIVE_HIGH */
-
-	/* Initialize UMA to unlocked */
-	flash_uma_lock(0);
 
 	return 0;
 }
