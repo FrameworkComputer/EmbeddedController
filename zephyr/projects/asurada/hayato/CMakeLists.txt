@@ -26,6 +26,9 @@ zephyr_library_sources(
 zephyr_library_sources(
   "${PLATFORM_EC_BOARD}/battery.c")
 
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C
+  "src/i2c.c")
+
 # Board specific sensor implementation
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MOTIONSENSE
   "src/sensors.c")
