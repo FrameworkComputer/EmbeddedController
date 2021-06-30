@@ -100,13 +100,11 @@ class RawBinPacker(BasePacker):
         yield singleimage / 'zephyr' / 'zephyr.bin', 'zephyr.bin'
 
 
-class NpcxPacker(BasePacker):
-    """Packer for RO/RW image to generate a .bin build using FMAP.
+class BinmanPacker(BasePacker):
+    """Packer for RO/RW image to generate a .bin build using FMAP."""
+    ro_file = 'zephyr.bin'
+    rw_file = 'zephyr.bin'
 
-    This expects that the build is setup to generate a
-    zephyr.npcx.bin for the RO image, which should be packed using
-    Nuvoton's loader format.
-    """
     def __init__(self, project):
         self.logger = logging.getLogger(self.__class__.__name__)
         super().__init__(project)
@@ -137,9 +135,8 @@ class NpcxPacker(BasePacker):
 
         # Copy the inputs into the work directory so that Binman can
         # find them under a hard-coded name.
-        shutil.copy2(ro / 'zephyr' / 'zephyr.npcx.bin',
-                     work_dir / 'zephyr_ro.bin')
-        shutil.copy2(rw / 'zephyr' / 'zephyr.bin', work_dir / 'zephyr_rw.bin')
+        shutil.copy2(ro / 'zephyr' / self.ro_file, work_dir / 'zephyr_ro.bin')
+        shutil.copy2(rw / 'zephyr' / self.rw_file, work_dir / 'zephyr_rw.bin')
 
         # Version in FRID/FWID can be at most 31 bytes long (32, minus
         # one for null character).
@@ -160,11 +157,23 @@ class NpcxPacker(BasePacker):
         if proc.wait(timeout=60):
             raise OSError('Failed to run binman')
 
-        yield self._check_packed_file_size(work_dir / 'zephyr.bin',
-                                           {'ro': ro, 'rw': rw}), 'zephyr.bin'
+        yield work_dir / 'zephyr.bin', 'zephyr.bin'
         yield ro / 'zephyr' / 'zephyr.elf', 'zephyr.ro.elf'
         yield rw / 'zephyr' / 'zephyr.elf', 'zephyr.rw.elf'
 
+
+class NpcxPacker(BinmanPacker):
+    """Packer for RO/RW image to generate a .bin build using FMAP.
+
+    This expects that the build is setup to generate a
+    zephyr.npcx.bin for the RO image, which should be packed using
+    Nuvoton's loader format.
+    """
+    ro_file = 'zephyr.npcx.bin'
+
+    # TODO(b/192401039): CONFIG_FLASH_SIZE is nuvoton-only.  Since
+    # binman already checks sizes, perhaps we can just remove this
+    # code?
     def _get_max_image_bytes(self, ro, rw):
         ro_size = util.read_kconfig_autoconf_value(
             ro / 'zephyr' / 'include' / 'generated',
@@ -174,9 +183,24 @@ class NpcxPacker(BasePacker):
             'CONFIG_FLASH_SIZE')
         return max(int(ro_size, 0), int(rw_size, 0)) * 1024
 
+    # This can probably be removed too and just rely on binman to
+    # check the sizes... see the comment above.
+    def pack_firmware(self, work_dir, jobclient, ro, rw, version_string=""):
+        for path, output_file in super().pack_firmware(
+            work_dir, jobclient, ro, rw, version_string=version_string,
+        ):
+            if output_file == 'zephyr.bin':
+                yield (
+                    self._check_packed_file_size(path, {'ro': ro, 'rw': rw}),
+                    'zephyr.bin',
+                )
+            else:
+                yield path, output_file
+
 
 # A dictionary mapping packer config names to classes.
 packer_registry = {
+    'binman': BinmanPacker,
     'elf': ElfPacker,
     'npcx': NpcxPacker,
     'raw': RawBinPacker,

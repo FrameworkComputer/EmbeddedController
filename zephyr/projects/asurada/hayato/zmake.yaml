@@ -10,4 +10,4 @@ dts-overlays:
 supported-zephyr-versions:
   - v2.5
 toolchain: coreboot-sdk
-output-type: raw
+output-type: binman

@@ -64,4 +64,16 @@
 			label = "FLASH";
 		};
 	};
+
+	/* it8xxx2 has 1MB of flash */
+	binman {
+		wp-ro {
+			offset = <0x0>;
+			size = <0x80000>;
+		};
+		ec-rw {
+			offset = <0x80000>;
+			size = <0x80000>;
+		};
+	};
 };
