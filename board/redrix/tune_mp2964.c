@@ -5,6 +5,8 @@
 
 /* Tune the MP2964 IMVP9.1 parameters for brya */
 
+#include "common.h"
+#include "compile_time_macros.h"
 #include "console.h"
 #include "hooks.h"
 #include "mp2964.h"

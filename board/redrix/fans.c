@@ -6,11 +6,11 @@
 /* Physical fans. These are logically separate from pwm_channels. */
 
 #include "common.h"
+#include "compile_time_macros.h"
 #include "console.h"
 #include "fan_chip.h"
 #include "fan.h"
 #include "hooks.h"
-#include "pwm_chip.h"
 #include "pwm.h"
 
 /* MFT channels. These are logically separate from pwm_channels. */

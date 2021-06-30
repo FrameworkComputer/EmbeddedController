@@ -4,8 +4,9 @@
  */
 
 #include "common.h"
-#include "hooks.h"
 
+#include "compile_time_macros.h"
+#include "hooks.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 
