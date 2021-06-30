@@ -67,6 +67,173 @@ static inline int bma4_set_reg8(const struct motion_sensor_t *s, int reg,
 	return bma4_write8(s, reg, val);
 }
 
+static int write_accel_offset(const struct motion_sensor_t *s, intv3_t v)
+{
+	int i, val;
+
+	rotate_inv(v, *s->rot_standard_ref, v);
+
+	for (i = X; i <= Z; i++) {
+		val = round_divide((int64_t)v[i] * BMA4_OFFSET_ACC_DIV_MG,
+				   BMA4_OFFSET_ACC_MULTI_MG);
+		if (val > 127)
+			val = 127;
+		if (val < -128)
+			val = -128;
+		if (val < 0)
+			val += 256;
+
+		RETURN_ERROR(bma4_write8(s, BMA4_OFFSET_0_ADDR + i, val));
+	}
+
+	return EC_SUCCESS;
+}
+
+static int set_foc_config(struct motion_sensor_t *s)
+{
+	/* Disabling offset compensation */
+	RETURN_ERROR(bma4_set_reg8(s, BMA4_NV_CONFIG_ADDR,
+				   (BMA4_DISABLE << BMA4_NV_ACCEL_OFFSET_POS),
+				   BMA4_NV_ACCEL_OFFSET_MSK));
+
+	/* Set accelerometer configurations to 50Hz,CIC, continuous mode */
+	RETURN_ERROR(bma4_write8(s, BMA4_ACCEL_CONFIG_ADDR,
+				 BMA4_FOC_ACC_CONF_VAL));
+
+
+	/* Set accelerometer to normal mode by enabling it */
+	RETURN_ERROR(bma4_set_reg8(s, BMA4_POWER_CTRL_ADDR,
+				   (BMA4_ENABLE <<  BMA4_ACCEL_ENABLE_POS),
+				   BMA4_ACCEL_ENABLE_MSK));
+
+	/* Disable advance power save mode */
+	RETURN_ERROR(bma4_set_reg8(s, BMA4_POWER_CONF_ADDR,
+				   (BMA4_DISABLE
+				    << BMA4_ADVANCE_POWER_SAVE_POS),
+				   BMA4_ADVANCE_POWER_SAVE_MSK));
+
+	return EC_SUCCESS;
+}
+
+static int wait_and_read_data(struct motion_sensor_t *s, intv3_t v)
+{
+	int i;
+
+	/* Retry 5 times */
+	uint8_t reg_data[6] = {0}, try_cnt = 5;
+
+	/* Check if data is ready */
+	while (try_cnt && (!(reg_data[0] & BMA4_STAT_DATA_RDY_ACCEL_MSK))) {
+		/* 20ms delay for 50Hz ODR */
+		msleep(20);
+
+		/* Read the status register */
+		RETURN_ERROR(i2c_read_block(s->port, s->i2c_spi_addr_flags,
+					    BMA4_STATUS_ADDR, reg_data, 1));
+
+		try_cnt--;
+	}
+
+	if (!(reg_data[0] & 0x80))
+		return EC_ERROR_TIMEOUT;
+
+	/* Read the sensor data */
+	RETURN_ERROR(i2c_read_block(s->port, s->i2c_spi_addr_flags,
+				    BMA4_DATA_8_ADDR, reg_data, 6));
+
+	for (i = X; i <= Z; i++) {
+		v[i] = (((int8_t)reg_data[i * 2 + 1]) << 8)
+		       | (reg_data[i * 2] & 0xf0);
+
+		/* Since the resolution is only 12 bits*/
+		v[i] = (v[i] / 0x10);
+	}
+
+	rotate(v, *s->rot_standard_ref, v);
+
+	return EC_SUCCESS;
+}
+
+static int8_t perform_accel_foc(struct motion_sensor_t *s, int *target,
+				int sens_range)
+{
+	intv3_t accel_data, offset;
+
+	/* Structure to store accelerometer data temporarily */
+	int32_t delta_value[3] = {0, 0, 0};
+
+	/* Variable to define count */
+	uint8_t i, loop, sample_count = 0;
+
+	for (loop = 0; loop < BMA4_FOC_SAMPLE_LIMIT; loop++) {
+		RETURN_ERROR(wait_and_read_data(s, accel_data));
+
+		sample_count++;
+
+		/* Store the data in a temporary structure */
+		delta_value[0] += accel_data[0] - target[X];
+		delta_value[1] += accel_data[1] - target[Y];
+		delta_value[2] += accel_data[2] - target[Z];
+	}
+
+	/*
+	 * The data is in LSB so -> [(LSB)*1000*range/2^11*-1]
+	 * (unit of offset:mg)
+	 */
+	for (i = X; i <= Z; ++i) {
+		offset[i] = ((((delta_value[i] * 1000 * sens_range)
+			     / sample_count) / 2048) * -1);
+	}
+
+	RETURN_ERROR(write_accel_offset(s, offset));
+
+	/* Enable the offsets and backup to NVM */
+	RETURN_ERROR(bma4_set_reg8(s, BMA4_NV_CONFIG_ADDR,
+				   (BMA4_ENABLE << BMA4_NV_ACCEL_OFFSET_POS),
+				   BMA4_NV_ACCEL_OFFSET_MSK));
+
+	return EC_SUCCESS;
+}
+
+static int perform_calib(struct motion_sensor_t *s, int enable)
+{
+	uint8_t config[2];
+	int pwr_ctrl, pwr_conf;
+	intv3_t target = {0, 0, 0};
+	int sens_range = s->current_range;
+
+	if (!enable)
+		return EC_SUCCESS;
+
+	/* Read accelerometer configurations */
+	RETURN_ERROR(i2c_read_block(s->port, s->i2c_spi_addr_flags,
+			BMA4_ACCEL_CONFIG_ADDR, config, 2));
+
+	/* Get accelerometer enable status to be saved */
+	RETURN_ERROR(bma4_read8(s, BMA4_POWER_CTRL_ADDR, &pwr_ctrl));
+
+	/* Get advance power save mode to be saved */
+	RETURN_ERROR(bma4_read8(s, BMA4_POWER_CONF_ADDR, &pwr_conf));
+
+	/* Perform calibration */
+	RETURN_ERROR(set_foc_config(s));
+
+	/* We calibrate considering Z axis is laid flat on the surface */
+	target[Z] = BMA4_ACC_DATA_PLUS_1G(sens_range);
+
+	RETURN_ERROR(perform_accel_foc(s, target, sens_range));
+
+	/* Set the saved sensor configuration */
+	RETURN_ERROR(i2c_write_block(s->port, s->i2c_spi_addr_flags,
+			BMA4_ACCEL_CONFIG_ADDR, config, 2));
+
+	RETURN_ERROR(bma4_write8(s, BMA4_POWER_CTRL_ADDR, pwr_ctrl));
+
+	RETURN_ERROR(bma4_write8(s, BMA4_POWER_CONF_ADDR, pwr_conf));
+
+	return EC_SUCCESS;
+}
+
 static int set_range(struct motion_sensor_t *s, int range, int round)
 {
 	int ret,  range_reg_val;
@@ -83,8 +250,9 @@ static int set_range(struct motion_sensor_t *s, int range, int round)
 	mutex_lock(s->mutex);
 
 	/* Determine the new value of control reg and attempt to write it. */
-	ret = bma4_set_reg8(s, BMA4_ACCEL_RANGE_ADDR, range_reg_val,
-			   BMA4_ACCEL_RANGE_MSK);
+	ret = bma4_set_reg8(s, BMA4_ACCEL_RANGE_ADDR,
+			    range_reg_val << BMA4_ACCEL_RANGE_POS,
+			    BMA4_ACCEL_RANGE_MSK);
 
 	/* If successfully written, then save the range. */
 	if (ret == EC_SUCCESS)
@@ -113,8 +281,9 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int round)
 	mutex_lock(s->mutex);
 
 	/* Determine the new value of control reg and attempt to write it. */
-	ret = bma4_set_reg8(s, BMA4_ACCEL_CONFIG_ADDR, odr_reg_val,
-			   BMA4_ACCEL_ODR_MSK);
+	ret = bma4_set_reg8(s, BMA4_ACCEL_CONFIG_ADDR,
+			    odr_reg_val << BMA4_ACCEL_ODR_POS,
+			    BMA4_ACCEL_ODR_MSK);
 
 	/* If successfully written, then save the new data rate. */
 	if (ret == EC_SUCCESS)
@@ -135,21 +304,18 @@ static int get_data_rate(const struct motion_sensor_t *s)
 static int set_offset(const struct motion_sensor_t *s, const int16_t *offset,
 		      int16_t temp)
 {
-	int i, ret;
+	int ret;
 	intv3_t v = { offset[X], offset[Y], offset[Z] };
-
-	rotate_inv(v, *s->rot_standard_ref, v);
 
 	mutex_lock(s->mutex);
 
-	/* Offset from host is in 1/1024g, 1/128g internally. */
-	for (i = X; i <= Z; i++) {
-		ret = bma4_write8(s, BMA4_OFFSET_0_ADDR + i, v[i] / 8);
+	ret = write_accel_offset(s, v);
 
-		if (ret) {
-			mutex_unlock(s->mutex);
-			return ret;
-		}
+	if (ret == EC_SUCCESS) {
+		/* Enable the offsets and backup to NVM */
+		ret = bma4_set_reg8(s, BMA4_NV_CONFIG_ADDR,
+				    (BMA4_ENABLE << BMA4_NV_ACCEL_OFFSET_POS),
+				    BMA4_NV_ACCEL_OFFSET_MSK);
 	}
 
 	mutex_unlock(s->mutex);
@@ -167,23 +333,27 @@ static int get_offset(const struct motion_sensor_t *s, int16_t *offset,
 
 	for (i = X; i <= Z; i++) {
 		ret = bma4_read8(s, BMA4_OFFSET_0_ADDR + i, &val);
-
 		if (ret) {
 			mutex_unlock(s->mutex);
 			return ret;
 		}
 
-		v[i] = (int8_t)val * 8;
+		if (val > 0x7f)
+			val -= -256;
+
+		v[i] = round_divide((int64_t)val * BMA4_OFFSET_ACC_MULTI_MG,
+				    BMA4_OFFSET_ACC_DIV_MG);
 	}
 
 	mutex_unlock(s->mutex);
 
+	/* Offset is in milli-g */
 	rotate(v, *s->rot_standard_ref, v);
 	offset[X] = v[X];
 	offset[Y] = v[Y];
 	offset[Z] = v[Z];
 
-	*temp = EC_MOTION_SENSE_INVALID_CALIB_TEMP;
+	*temp = (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP;
 
 	return EC_SUCCESS;
 }
@@ -223,12 +393,6 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	return EC_SUCCESS;
 }
 
-static int perform_calib(struct motion_sensor_t *s, int enable)
-{
-	/* TODO */
-	return EC_ERROR_UNIMPLEMENTED;
-}
-
 static int init(struct motion_sensor_t *s)
 {
 	int ret = 0, reg_val;
@@ -245,8 +409,9 @@ static int init(struct motion_sensor_t *s)
 	mutex_lock(s->mutex);
 
 	/* Enable accelerometer */
-	ret = bma4_set_reg8(s, BMA4_POWER_CTRL_ADDR, BMA4_POWER_ACC_EC_MASK,
-			    BMA4_POWER_ACC_EC_MASK);
+	ret = bma4_set_reg8(s, BMA4_POWER_CTRL_ADDR,
+			    BMA4_ENABLE << BMA4_ACCEL_ENABLE_POS,
+			    BMA4_ACCEL_ENABLE_MSK);
 
 	mutex_unlock(s->mutex);
 
