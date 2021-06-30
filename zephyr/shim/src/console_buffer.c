@@ -66,44 +66,51 @@ enum ec_status uart_console_read_buffer_init(void)
 int uart_console_read_buffer(uint8_t type, char *dest, uint16_t dest_size,
 			     uint16_t *write_count_out)
 {
-	uint32_t head;
+	uint32_t *head;
 	uint16_t write_count = 0;
 
 	switch (type) {
 	case CONSOLE_READ_NEXT:
 		/* Start from beginning of latest snapshot */
-		head = current_snapshot_idx;
+		head = &current_snapshot_idx;
 		break;
 	case CONSOLE_READ_RECENT:
 		/* Start from end of previous snapshot */
-		head = previous_snapshot_idx;
+		head = &previous_snapshot_idx;
 		break;
 	default:
 		return EC_RES_INVALID_PARAM;
 	}
 
-	if (head == tail_idx)
-		/* No new data, return empty response */
-		return EC_RES_SUCCESS;
-
 	/* We need to make sure we have room for at least the null byte */
 	if (dest_size == 0)
 		return EC_RES_INVALID_PARAM;
+
+	if (k_mutex_lock(&console_write_lock, K_MSEC(100)))
+		/* Failed to acquire console buffer mutex */
+		return EC_RES_TIMEOUT;
+
+	if (*head == tail_idx) {
+		/* No new data, return empty response */
+		k_mutex_unlock(&console_write_lock);
+		return EC_RES_SUCCESS;
+	}
 
 	do {
 		if (write_count >= dest_size - 1)
 			/* Buffer is full, minus the space for a null byte */
 			break;
 
-		dest[write_count] = console_buf[head];
+		dest[write_count] = console_buf[*head];
 		write_count++;
-		head = next_idx(head);
-	} while (head != tail_idx);
+		*head = next_idx(*head);
+	} while (*head != tail_idx);
 
 	dest[write_count] = '\0';
 	write_count++;
 
 	*write_count_out = write_count;
+	k_mutex_unlock(&console_write_lock);
 
 	return EC_RES_SUCCESS;
 }
