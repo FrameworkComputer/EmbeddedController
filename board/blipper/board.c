@@ -7,6 +7,7 @@
 
 #include "adc_chip.h"
 #include "button.h"
+#include "cros_board_info.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
@@ -88,15 +89,6 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 {
 	cprints(CC_USBPD, "C0: CC OVP, SBU OVP, or thermal event");
 	pd_handle_cc_overvoltage(0);
-}
-
-void board_hibernate(void)
-{
-	/*
-	 * Charger IC need to be put into their "low power mode" before
-	 * entering the Z-state.
-	 */
-	raa489000_hibernate(0, false);
 }
 
 /* Must come after other header files and interrupt handler declarations */
@@ -204,6 +196,8 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_USB_A0_VBUS
 };
 
+static uint32_t board_id;
+
 void board_init(void)
 {
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
@@ -227,8 +221,26 @@ void board_init(void)
 	keyscan_config.actual_key_mask[12] = 0xff;
 	keyscan_config.actual_key_mask[13] = 0xff;
 	keyscan_config.actual_key_mask[14] = 0xff;
+
+	cbi_get_board_version(&board_id);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+void board_hibernate(void)
+{
+	/*
+	 * Charger IC need to be put into their "low power mode" before
+	 * entering the Z-state.
+	 *
+	 * b:186717219: In order to solve the power consumption problem of
+	 * hibernate，HW solution is adopted after board id 3 to solve the
+	 * problem that AC cannot wake up hibernate mode.
+	 */
+	if (board_id > 2)
+		raa489000_hibernate(0, true);
+	else
+		raa489000_hibernate(0, false);
+}
 
 __override void board_pulse_entering_rw(void)
 {
