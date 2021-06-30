@@ -58,7 +58,7 @@ struct jump_tag {
 /* Jump data (at end of RAM, or preceding panic data) */
 static struct jump_data *jdata;
 
-static uint32_t reset_flags;
+static uint32_t reset_flags;  /* EC_RESET_FLAG_* */
 static int jumped_to_image;
 static int disable_jump;  /* Disable ALL jumps if system is locked */
 static int force_locked;  /* Force system locked even if WP isn't enabled */
@@ -209,29 +209,29 @@ test_mockable uintptr_t system_usable_ram_end(void)
 	return (uintptr_t)jdata - jdata->jump_tag_total;
 }
 
-void system_encode_save_flags(int reset_flags, uint32_t *save_flags)
+void system_encode_save_flags(int flags, uint32_t *save_flags)
 {
 	*save_flags = 0;
 
 	/* Save current reset reasons if necessary */
-	if (reset_flags & SYSTEM_RESET_PRESERVE_FLAGS)
+	if (flags & SYSTEM_RESET_PRESERVE_FLAGS)
 		*save_flags = system_get_reset_flags() |
 			      EC_RESET_FLAG_PRESERVED;
 
 	/* Add in AP off flag into saved flags. */
-	if (reset_flags & SYSTEM_RESET_LEAVE_AP_OFF)
+	if (flags & SYSTEM_RESET_LEAVE_AP_OFF)
 		*save_flags |= EC_RESET_FLAG_AP_OFF;
 
 	/* Add in stay in RO flag into saved flags. */
-	if (reset_flags & SYSTEM_RESET_STAY_IN_RO)
+	if (flags & SYSTEM_RESET_STAY_IN_RO)
 		*save_flags |= EC_RESET_FLAG_STAY_IN_RO;
 
 	/* Add in watchdog flag into saved flags. */
-	if (reset_flags & SYSTEM_RESET_AP_WATCHDOG)
+	if (flags & SYSTEM_RESET_AP_WATCHDOG)
 		*save_flags |= EC_RESET_FLAG_AP_WATCHDOG;
 
 	/* Save reset flag */
-	if (reset_flags & (SYSTEM_RESET_HARD | SYSTEM_RESET_WAIT_EXT))
+	if (flags & (SYSTEM_RESET_HARD | SYSTEM_RESET_WAIT_EXT))
 		*save_flags |= EC_RESET_FLAG_HARD;
 	else
 		*save_flags |= EC_RESET_FLAG_SOFT;

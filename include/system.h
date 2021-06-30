@@ -89,10 +89,10 @@ __test_only void system_override_jdata(void *test_jdata);
 /**
  * Set up flags that should be saved to battery backed RAM.
  *
- * @param reset_flags - flags passed into system_reset
+ * @param flags - flags passed into system_reset (i.e. SYSTEM_RESET_*)
  * @param *save_flags - flags to be saved in battery backed RAM
  */
-void system_encode_save_flags(int reset_flags, uint32_t *save_flags);
+void system_encode_save_flags(int flags, uint32_t *save_flags);
 
 /**
  * Get the reset flags.
