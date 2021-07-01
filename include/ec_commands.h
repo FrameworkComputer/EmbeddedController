@@ -1949,7 +1949,13 @@ enum sysinfo_flags {
 	SYSTEM_IS_FORCE_LOCKED = BIT(1),
 	SYSTEM_JUMP_ENABLED = BIT(2),
 	SYSTEM_JUMPED_TO_CURRENT_IMAGE = BIT(3),
-	SYSTEM_REBOOT_AT_SHUTDOWN = BIT(4)
+	SYSTEM_REBOOT_AT_SHUTDOWN = BIT(4),
+	/*
+	 * Used internally. It's set when EC_HOST_EVENT_KEYBOARD_RECOVERY is
+	 * set and cleared when the system shuts down (not when the host event
+	 * flag is cleared).
+	 */
+	SYSTEM_IN_MANUAL_RECOVERY = BIT(5),
 };
 
 struct ec_response_sysinfo {

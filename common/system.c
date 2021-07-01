@@ -64,6 +64,8 @@ static int disable_jump;  /* Disable ALL jumps if system is locked */
 static int force_locked;  /* Force system locked even if WP isn't enabled */
 static enum ec_reboot_cmd reboot_at_shutdown;
 
+static enum sysinfo_flags system_info_flags;
+
 STATIC_IF(CONFIG_HIBERNATE) uint32_t hibernate_seconds;
 STATIC_IF(CONFIG_HIBERNATE) uint32_t hibernate_microseconds;
 
@@ -919,9 +921,19 @@ void system_common_pre_init(void)
 	}
 }
 
+void system_enter_manual_recovery(void)
+{
+	system_info_flags |= SYSTEM_IN_MANUAL_RECOVERY;
+}
+
+void system_exit_manual_recovery(void)
+{
+	system_info_flags &= ~SYSTEM_IN_MANUAL_RECOVERY;
+}
+
 int system_is_manual_recovery(void)
 {
-	return host_is_event_set(EC_HOST_EVENT_KEYBOARD_RECOVERY);
+	return system_info_flags & SYSTEM_IN_MANUAL_RECOVERY;
 }
 
 /**
@@ -1030,6 +1042,7 @@ void system_enter_hibernate(uint32_t seconds, uint32_t microseconds)
 
 static void system_common_shutdown(void)
 {
+	system_exit_manual_recovery();
 	if (reboot_at_shutdown)
 		CPRINTF("Reboot at shutdown: %d\n", reboot_at_shutdown);
 	handle_pending_reboot(reboot_at_shutdown);
@@ -1050,18 +1063,20 @@ static int sysinfo(struct ec_response_sysinfo *info)
 	info->current_image = system_get_image_copy();
 
 	if (system_jumped_to_this_image())
-		info->flags |= SYSTEM_JUMPED_TO_CURRENT_IMAGE;
+		system_info_flags |= SYSTEM_JUMPED_TO_CURRENT_IMAGE;
 
 	if (system_is_locked()) {
-		info->flags |= SYSTEM_IS_LOCKED;
+		system_info_flags |= SYSTEM_IS_LOCKED;
 		if (force_locked)
-			info->flags |= SYSTEM_IS_FORCE_LOCKED;
+			system_info_flags |= SYSTEM_IS_FORCE_LOCKED;
 		if (!disable_jump)
-			info->flags |= SYSTEM_JUMP_ENABLED;
+			system_info_flags |= SYSTEM_JUMP_ENABLED;
 	}
 
 	if (reboot_at_shutdown)
-		info->flags |= SYSTEM_REBOOT_AT_SHUTDOWN;
+		system_info_flags |= SYSTEM_REBOOT_AT_SHUTDOWN;
+
+	info->flags = system_info_flags;
 
 	return EC_SUCCESS;
 }
@@ -1081,6 +1096,8 @@ static int command_sysinfo(int argc, char **argv)
 	ccprintf("Copy:   %s\n", ec_image_to_string(info.current_image));
 	ccprintf("Jumped: %s\n",
 		 (info.flags & SYSTEM_JUMPED_TO_CURRENT_IMAGE) ? "yes" : "no");
+	ccprintf("Recovery: %s\n",
+		 (info.flags & SYSTEM_IN_MANUAL_RECOVERY) ? "yes" : "no");
 
 	ccputs("Flags: ");
 	if (info.flags & SYSTEM_IS_LOCKED) {
