@@ -500,7 +500,18 @@ SECTIONS
 	 */
 	__flash_used = FLASH_USED_END - ORIGIN(EC_IMAGE_LMA_MEM_REGION);
 #ifndef CONFIG_CHIP_INIT_ROM_REGION
+#if !(defined(SECTION_IS_RW) && (CONFIG_FLASH_WRITE_SIZE > 4))
 	__image_size = __flash_used;
+#else
+	.rw_image_size_alignment :
+	{
+		. = ORIGIN(FLASH) + __flash_used;
+		BYTE(0xFF);
+		. = ALIGN (CONFIG_FLASH_WRITE_SIZE);
+	} > FLASH = 0xFF
+
+	__image_size = __flash_used + SIZEOF(.rw_image_size_alignment);
+#endif
 #endif /* CONFIG_CHIP_INIT_ROM_REGION */
 
 #ifdef CONFIG_FLASH_CROS
