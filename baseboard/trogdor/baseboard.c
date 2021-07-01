@@ -18,5 +18,7 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 int board_allow_i2c_passthru(int port)
 {
-	return (port == I2C_PORT_VIRTUAL_BATTERY);
+	return (port == I2C_PORT_VIRTUAL_BATTERY ||
+		port == I2C_PORT_TCPC0 ||
+		port == I2C_PORT_TCPC1);
 }
