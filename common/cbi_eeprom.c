@@ -5,7 +5,6 @@
 
 /* Support Cros Board Info EEPROM */
 
-#include "cbi_eeprom.h"
 #include "console.h"
 #include "cros_board_info.h"
 #include "gpio.h"

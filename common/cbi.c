@@ -5,7 +5,6 @@
  * Cros Board Info
  */
 
-#include "cbi_eeprom.h"
 #include "common.h"
 #include "console.h"
 #include "crc8.h"
