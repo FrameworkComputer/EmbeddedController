@@ -40,26 +40,10 @@ struct pm_state_info pm_policy_next_state(int32_t ticks)
 	return (struct pm_state_info){ PM_STATE_ACTIVE, 0, 0 };
 }
 
+#if IS_ZEPHYR_VERSION(2, 5)
 /* CROS PM device policy handler */
 bool pm_policy_low_power_devices(enum pm_state state)
 {
-#if IS_ZEPHYR_VERSION(2, 6)
-	bool ret = true;
-
-	switch (state) {
-	case PM_STATE_RUNTIME_IDLE:
-		__fallthrough;
-	case PM_STATE_SUSPEND_TO_IDLE:
-		__fallthrough;
-	case PM_STATE_STANDBY:
-		break;
-	default:
-		ret = false;
-		break;
-	}
-
-	return ret;
-#elif IS_ZEPHYR_VERSION(2, 5)
 	return pm_is_sleep_state(state);
-#endif
 }
+#endif
