@@ -200,6 +200,11 @@ int cbi_create(void);
  */
 void cbi_invalidate_cache(void);
 
+/**
+ * Return CBI cache status
+ */
+int cbi_get_cache_status(void);
+
 #ifdef TEST_BUILD
 /**
  * Write the locally cached CBI to EEPROM.

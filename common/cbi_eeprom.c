@@ -21,7 +21,6 @@
  */
 #define EEPROM_PAGE_WRITE_SIZE	8
 #define EEPROM_PAGE_WRITE_MS	5
-#define EC_ERROR_CBI_CACHE_INVALID	EC_ERROR_INTERNAL_FIRST
 
 static int eeprom_read(uint8_t offset, uint8_t *data, int len)
 {

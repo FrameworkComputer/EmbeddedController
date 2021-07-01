@@ -100,6 +100,11 @@ void cbi_invalidate_cache(void)
 	cache_status = CBI_CACHE_STATUS_INVALID;
 }
 
+int cbi_get_cache_status(void)
+{
+	return cache_status;
+}
+
 static int do_cbi_read(void)
 {
 	CPRINTS("Reading board info");
@@ -153,7 +158,7 @@ static int cbi_read(void)
 	int i;
 	int rv;
 
-	if (cache_status == CBI_CACHE_STATUS_SYNCED)
+	if (cbi_get_cache_status() == CBI_CACHE_STATUS_SYNCED)
 		return EC_SUCCESS;
 
 	for (i = 0; i < 2; i++) {
@@ -421,8 +426,8 @@ static void dump_cbi(void)
 	cbi_invalidate_cache();
 	cbi_read();
 
-	if (cache_status != CBI_CACHE_STATUS_SYNCED) {
-		ccprintf("Cannot Read CBI (Error %d)\n", cache_status);
+	if (cbi_get_cache_status() != CBI_CACHE_STATUS_SYNCED) {
+		ccprintf("Cannot Read CBI (Error %d)\n", cbi_get_cache_status());
 		return;
 	}
 
@@ -455,7 +460,7 @@ static int cc_cbi(int argc, char **argv)
 
 	if (argc == 1) {
 		dump_cbi();
-		if (cache_status == CBI_CACHE_STATUS_SYNCED)
+		if (cbi_get_cache_status() == CBI_CACHE_STATUS_SYNCED)
 			hexdump(cbi, CBI_IMAGE_SIZE);
 		return EC_SUCCESS;
 	}
