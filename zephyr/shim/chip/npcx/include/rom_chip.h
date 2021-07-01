@@ -54,7 +54,4 @@ typedef void (*download_from_flash_ptr) (
 	enum API_RETURN_STATUS_T *status /* Status fo download */
 );
 
-#define NPCX_CHIP_REV_ADDR 0x00007FFC
-#define NPCX_CHIP_REV_STR_SIZE 3
-
 #endif /* __CROS_EC_ROM_CHIP_H */

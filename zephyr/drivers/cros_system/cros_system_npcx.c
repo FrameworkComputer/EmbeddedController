@@ -80,17 +80,19 @@ struct cros_system_npcx_data {
 
 #define DRV_DATA(dev) ((struct cros_system_npcx_data *)(dev)->data)
 
-#define FAMILY_ID_NPCX 0x20
-#define CHIP_ID_NPCX79NXB_C 0x07
+#define SYSTEM_DT_NODE_SOC_ID_CONFIG DT_INST(0, nuvoton_npcx_soc_id)
 
-/* device ID for all variants in npcx family */
-enum npcx_chip_id {
-	DEVICE_ID_NPCX796F_B = 0x21,
-	DEVICE_ID_NPCX796F_C = 0x29,
-	DEVICE_ID_NPCX797F_C = 0x20,
-	DEVICE_ID_NPCX797W_B = 0x24,
-	DEVICE_ID_NPCX797W_C = 0x2C,
-};
+/* Chip info devicetree data */
+#define NPCX_FAMILY_ID DT_PROP(SYSTEM_DT_NODE_SOC_ID_CONFIG, family_id)
+
+#define NPCX_CHIP_ID DT_PROP(SYSTEM_DT_NODE_SOC_ID_CONFIG, chip_id)
+
+#define NPCX_DEVICE_ID DT_PROP(SYSTEM_DT_NODE_SOC_ID_CONFIG, device_id)
+
+#define NPCX_REVISION_ADDR \
+	DT_PROP_BY_IDX(SYSTEM_DT_NODE_SOC_ID_CONFIG, revision_reg, 0)
+#define NPCX_REVISION_LEN \
+	DT_PROP_BY_IDX(SYSTEM_DT_NODE_SOC_ID_CONFIG, revision_reg, 1)
 
 /* RAM block size in npcx family (Unit: bytes) */
 #define NPCX_RAM_BLOCK_SIZE (32 * 1024)
@@ -352,9 +354,11 @@ static const char *cros_system_npcx_get_chip_vendor(const struct device *dev)
 	char *p = str + 8;
 	uint8_t fam_id = inst_mswc->SID_CR;
 
-	if (fam_id == FAMILY_ID_NPCX) {
+#if DT_NODE_EXISTS(SYSTEM_DT_NODE_SOC_ID_CONFIG)
+	if (fam_id == NPCX_FAMILY_ID) {
 		return "Nuvoton";
 	}
+#endif
 
 	hex2char(fam_id >> 4, p++);
 	hex2char(fam_id & 0xf, p);
@@ -369,20 +373,11 @@ static const char *cros_system_npcx_get_chip_name(const struct device *dev)
 	uint8_t chip_id = inst_mswc->SRID_CR;
 	uint8_t device_id = inst_mswc->DEVICE_ID_CR;
 
-	if (chip_id == CHIP_ID_NPCX79NXB_C) {
-		switch (device_id) {
-		case DEVICE_ID_NPCX796F_B:
-			return "NPCX796FB";
-		case DEVICE_ID_NPCX796F_C:
-			return "NPCX796FC";
-		case DEVICE_ID_NPCX797F_C:
-			return "NPCX797FC";
-		case DEVICE_ID_NPCX797W_B:
-			return "NPCX797WB";
-		case DEVICE_ID_NPCX797W_C:
-			return "NPCX797WC";
-		}
+#if DT_NODE_EXISTS(SYSTEM_DT_NODE_SOC_ID_CONFIG)
+	if (chip_id == NPCX_CHIP_ID && device_id == NPCX_DEVICE_ID) {
+		return CONFIG_SOC;
 	}
+#endif
 
 	hex2char(chip_id >> 4, p++);
 	hex2char(chip_id & 0xf, p++);
@@ -394,19 +389,25 @@ static const char *cros_system_npcx_get_chip_name(const struct device *dev)
 static const char *cros_system_npcx_get_chip_revision(const struct device *dev)
 {
 	ARG_UNUSED(dev);
-	static char rev[NPCX_CHIP_REV_STR_SIZE];
+#if DT_NODE_EXISTS(SYSTEM_DT_NODE_SOC_ID_CONFIG)
+	static char rev[NPCX_REVISION_LEN * 2 + 1];
+#else
+	static char rev[1];
+#endif
 	char *p = rev;
-	uint8_t rev_num = *((volatile uint8_t *)NPCX_CHIP_REV_ADDR);
 
+#if DT_NODE_EXISTS(SYSTEM_DT_NODE_SOC_ID_CONFIG)
 	/*
 	 * For NPCX7, the revision number is 1 byte.
 	 * For NPCX9 and later chips, the revision number is 4 bytes.
 	 */
-	for (int s = sizeof(rev_num) - 1; s >= 0; s--) {
-		uint8_t r = rev_num >> (s * 8);
+	for (int s = NPCX_REVISION_ADDR + NPCX_REVISION_LEN - 1;
+	     s >= NPCX_REVISION_ADDR; s--) {
+		uint8_t r = *((volatile uint8_t *)s);
 		hex2char(r >> 4, p++);
 		hex2char(r & 0xf, p++);
 	}
+#endif
 	*p = '\0';
 
 	return rev;
