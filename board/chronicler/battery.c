@@ -32,11 +32,11 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* NVT ATL-3S1P-606072 Battery Information */
+	/* NVT CP813907-01 Battery Information */
 	[BATTERY_ATL_3S1P_606072] = {
 		.fuel_gauge = {
 			.manuf_name = "NVT",
-			.device_name = "ATL-3S1P-606072",
+			.device_name = "CP813907-01",
 			.ship_mode = {
 				.reg_addr = 0x00,
 				.reg_data = { 0x10, 0x10 },
