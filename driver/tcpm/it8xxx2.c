@@ -9,6 +9,7 @@
 #include "config.h"
 #include "console.h"
 #include "it83xx_pd.h"
+#include "ite_pd_intc.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -36,22 +37,6 @@
 #endif
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
-
-#ifdef CONFIG_ZEPHYR
-/* Use the Zephyr names here. When upstreaming we can update this */
-#include <dt-bindings/interrupt-controller/ite-intc.h>
-
-#define IT83XX_GPIO_GPCRF4	GPCRF4
-#define IT83XX_GPIO_GPCRF5	GPCRF5
-#define IT83XX_GPIO_GPCRH1	GPCRH1
-#define IT83XX_GPIO_GPCRH2	GPCRH2
-#define IT83XX_GPIO_GPCRP0	IT8XXX2_GPIO_GPCRP0
-#define IT83XX_GPIO_GPCRP1	IT8XXX2_GPIO_GPCRP1
-#define IT83XX_IRQ_USBPD0	IT8XXX2_IRQ_USBPD0
-#define IT83XX_IRQ_USBPD1	IT8XXX2_IRQ_USBPD1
-#define IT83XX_IRQ_USBPD2	IT8XXX2_IRQ_USBPD2
-#define USB_VID_ITE		0x048d
-#endif
 
 bool rx_en[IT83XX_USBPD_PHY_PORT_COUNT];
 STATIC_IF(CONFIG_USB_PD_DECODE_SOP)
@@ -827,6 +812,10 @@ static void it8xxx2_init(enum usbpd_port port, int role)
 	*usbpd_ctrl_regs[port].cc1 = cc_config;
 	*usbpd_ctrl_regs[port].cc2 = cc_config;
 	task_clear_pending_irq(usbpd_ctrl_regs[port].irq);
+#ifdef CONFIG_ZEPHYR
+	irq_connect_dynamic(usbpd_ctrl_regs[port].irq, 0,
+			(void (*)(const void *))chip_pd_irq, (void *)port, 0);
+#endif
 	task_enable_irq(usbpd_ctrl_regs[port].irq);
 	USBPD_START(port);
 	/*

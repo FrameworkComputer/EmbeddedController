@@ -142,6 +142,7 @@ driver-$(CONFIG_USB_PD_TCPM_TCPCI)+=tcpm/tcpci.o
 driver-$(CONFIG_USB_PD_TCPM_FUSB302)+=tcpm/fusb302.o
 driver-$(CONFIG_USB_PD_TCPM_MT6370)+=tcpm/mt6370.o
 ifdef CONFIG_USB_PD_TCPM_ITE_ON_CHIP
+driver-y +=tcpm/ite_pd_intc.o
 driver-$(CONFIG_USB_PD_TCPM_DRIVER_IT83XX)+=tcpm/it83xx.o
 driver-$(CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2)+=tcpm/it8xxx2.o
 endif
