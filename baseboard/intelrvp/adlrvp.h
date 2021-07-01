@@ -89,7 +89,7 @@
 #define I2C_PORT_EEPROM         I2C_PORT_PCA9555_BOARD_ID_GPIO
 
 /* Enable CBI */
-#define CONFIG_CROS_BOARD_INFO
+#define CONFIG_CBI_EEPROM
 
 /* Configure mux at runtime */
 #define CONFIG_USB_MUX_RUNTIME_CONFIG
