@@ -176,6 +176,14 @@ static void print_battery_params(void)
 
 	print_item_name("Charge:");
 		ccprintf("%d %%\n", batt->state_of_charge);
+
+	if (IS_ENABLED(CONFIG_CHARGER)) {
+		int value;
+
+		print_item_name("  Display:");
+		value = charge_get_display_charge();
+		ccprintf("%d.%d %%\n", value / 10, value % 10);
+	}
 }
 
 static void print_battery_info(void)
@@ -206,12 +214,6 @@ static void print_battery_info(void)
 	print_item_name("Cap-full:");
 	if (check_print_error(battery_full_charge_capacity(&value)))
 		ccprintf("%d mAh\n", value);
-
-#ifdef CONFIG_CHARGER
-	print_item_name("Display:");
-	value = charge_get_display_charge();
-	ccprintf("%d.%d %%\n", value / 10, value % 10);
-#endif
 
 	print_item_name("  Design:");
 	if (check_print_error(battery_design_capacity(&value)))
