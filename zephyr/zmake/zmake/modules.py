@@ -17,10 +17,7 @@ def third_party_module(name, checkout):
     Return:
         The path to the module module.
     """
-    # TODO(b/180531609): version "v2.5" below is a misnomer, as these
-    # modules are actually compatible with all kernel versions.  Drop
-    # v2.5 from the manifest checkout path and remove it from here.
-    return checkout / 'src' / 'third_party' / 'zephyr' / name / 'v2.5'
+    return checkout / 'src' / 'third_party' / 'zephyr' / name
 
 
 known_modules = {
