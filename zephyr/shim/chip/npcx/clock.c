@@ -22,7 +22,7 @@ LOG_MODULE_REGISTER(shim_clock, LOG_LEVEL_ERR);
 
 int clock_get_freq(void)
 {
-	const struct device *clk_dev = DEVICE_DT_GET(DT_NODELABEL(pcc));
+	const struct device *clk_dev = DEVICE_DT_GET(NPCX_CLK_CTRL_NODE);
 	const struct npcx_clk_cfg clk_cfg = {
 		.bus = NPCX_CLOCK_BUS_CORE,
 	};

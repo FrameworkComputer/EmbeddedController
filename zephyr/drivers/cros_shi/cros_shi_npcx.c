@@ -804,7 +804,7 @@ static int shi_npcx_init(const struct device *dev)
 	int ret;
 	const struct cros_shi_npcx_config *const config = DRV_CONFIG(dev);
 	struct shi_reg *const inst = HAL_INSTANCE(dev);
-	const struct device *clk_dev = DEVICE_DT_GET(DT_NODELABEL(pcc));
+	const struct device *clk_dev = DEVICE_DT_GET(NPCX_CLK_CTRL_NODE);
 
 	/* Turn on shi device clock first */
 	ret = clock_control_on(clk_dev,

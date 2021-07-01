@@ -789,7 +789,7 @@ static const struct cros_flash_driver_api cros_flash_npcx_driver_api = {
 static int flash_npcx_init(const struct device *dev)
 {
 	const struct cros_flash_npcx_config *const config = DRV_CONFIG(dev);
-	const struct device *clk_dev = DEVICE_DT_GET(DT_NODELABEL(pcc));
+	const struct device *clk_dev = DEVICE_DT_GET(NPCX_CLK_CTRL_NODE);
 
 	int ret;
 
