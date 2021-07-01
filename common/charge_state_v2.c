@@ -23,6 +23,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "math_util.h"
+#include "power.h"
 #include "printf.h"
 #include "system.h"
 #include "task.h"
@@ -1562,17 +1563,21 @@ static int shutdown_on_critical_battery(void)
 		return 1;
 
 	/* Timer has expired */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
 		switch (board_critical_shutdown_check(&curr)) {
 		case CRITICAL_SHUTDOWN_HIBERNATE:
 			if (IS_ENABLED(CONFIG_HIBERNATE)) {
+				if (power_get_state() == POWER_S3S5)
+					sleep(1);
 				CPRINTS("Hibernate due to critical battery");
+				cflush();
 				system_hibernate(0, 0);
 			}
 			break;
 		case CRITICAL_SHUTDOWN_CUTOFF:
+			if (power_get_state() == POWER_S3S5)
+				sleep(1);
 			CPRINTS("Cutoff due to critical battery");
-			/* Ensure logs are flushed. */
 			cflush();
 			board_cut_off_battery();
 			break;

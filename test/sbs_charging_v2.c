@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "power.h"
 #include "task.h"
 #include "test_util.h"
 #include "util.h"
@@ -53,6 +54,21 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 int chipset_in_state(int state_mask)
 {
 	return state_mask & mock_chipset_state;
+}
+
+int chipset_in_or_transitioning_to_state(int state_mask)
+{
+	return state_mask & mock_chipset_state;
+}
+
+enum power_state power_get_state(void)
+{
+	if (is_shutdown)
+		return POWER_S5;
+	else if (is_hibernated)
+		return POWER_G3;
+	else
+		return POWER_S0;
 }
 
 int board_discharge_on_ac(int enabled)
