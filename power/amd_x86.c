@@ -34,7 +34,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s()", __func__);
 
-	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+	if (!chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
 		forcing_shutdown = 1;
 		power_button_pch_press();
 		report_ap_reset(reason);
