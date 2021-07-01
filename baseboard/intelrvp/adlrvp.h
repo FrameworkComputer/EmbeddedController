@@ -41,6 +41,8 @@
 #define CONFIG_USB_MUX_VIRTUAL
 #define PD_MAX_POWER_MW              100000
 
+#define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
+
 /* TCPC AIC config */
 /* Support NXP PCA9675 I/O expander. */
 #define CONFIG_IO_EXPANDER
