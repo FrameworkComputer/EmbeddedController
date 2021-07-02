@@ -17,6 +17,10 @@
 #define ANX3443_I2C_ADDR2_FLAGS		0x16
 #define ANX3443_I2C_ADDR3_FLAGS		0x11
 
+/* This register is not documented in datasheet. */
+#define ANX3443_REG_POWER_CNTRL		0x2B
+#define ANX3443_POWER_CNTRL_OFF		0xFF
+
 
 /* Ultra low power control register  */
 #define ANX3443_REG_ULTRA_LOW_POWER	0xE6

@@ -7,12 +7,20 @@
  */
 
 #include "anx3443.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "i2c.h"
 #include "time.h"
 #include "usb_mux.h"
 #include "util.h"
+
+/*
+ * Empirical testing found it takes ~12ms to wake mux.
+ * Setting timeout to 20ms for some buffer.
+ */
+#define ANX3443_I2C_WAKE_TIMEOUT_MS 20
+#define ANX3443_I2C_WAKE_RETRY_DELAY_US 500
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -29,24 +37,66 @@ static inline int anx3443_write(const struct usb_mux *me,
 	return i2c_write8(me->i2c_port, me->i2c_addr_flags, reg, val);
 }
 
+static int anx3443_power_off(const struct usb_mux *me)
+{
+	/*
+	 * The mux will not send an acknowledgment when powered off, so ignore
+	 * response and always return success.
+	 */
+	anx3443_write(me, ANX3443_REG_POWER_CNTRL, ANX3443_POWER_CNTRL_OFF);
+	return EC_SUCCESS;
+}
+
+static int anx3443_wake_up(const struct usb_mux *me)
+{
+	timestamp_t start;
+	int rv;
+	int val;
+
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		return EC_ERROR_NOT_POWERED;
+
+	/* Keep reading top register until mux wakes up or timesout */
+	start = get_time();
+	do {
+		rv = anx3443_read(me, 0x0, &val);
+		if (!rv)
+			break;
+		usleep(ANX3443_I2C_WAKE_RETRY_DELAY_US);
+	} while (time_since32(start) < ANX3443_I2C_WAKE_TIMEOUT_MS * MSEC);
+	if (rv) {
+		CPRINTS("ANX3443: Failed to wake mux rv:%d", rv);
+		return EC_ERROR_TIMEOUT;
+	}
+
+	/* ULTRA_LOW_POWER must always be disabled (Fig 2-2) */
+	RETURN_ERROR(anx3443_write(me, ANX3443_REG_ULTRA_LOW_POWER,
+				   ANX3443_ULTRA_LOW_POWER_DIS));
+
+	return EC_SUCCESS;
+}
+
 static int anx3443_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int reg;
 
+	/* Mux is not powered in Z1 */
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		return (mux_state == USB_PD_MUX_NONE) ? EC_SUCCESS
+						      : EC_ERROR_NOT_POWERED;
+
+	/* To disable both DP and USB the mux must be powered off. */
+	if (!(mux_state & (USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED)))
+		return anx3443_power_off(me);
+
+	RETURN_ERROR(anx3443_wake_up(me));
+
 	/* ULP_CFG_MODE_EN overrides pin control. Always set it */
 	reg = ANX3443_ULP_CFG_MODE_EN;
-
-	/*
-	 * NOTE: This mux does not have a "none" state, so USB_PD_MUX_NONE
-	 * is mapped to ANX3443_ULP_CFG_MODE_USB_EN here.
-	 */
-	if ((mux_state & USB_PD_MUX_DOCK) == USB_PD_MUX_DOCK)
-		reg |= ANX3443_ULP_CFG_MODE_USB_EN | ANX3443_ULP_CFG_MODE_DP_EN;
-	else if (mux_state & USB_PD_MUX_DP_ENABLED)
-		reg |= ANX3443_ULP_CFG_MODE_DP_EN;
-	else
+	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		reg |= ANX3443_ULP_CFG_MODE_USB_EN;
-
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
+		reg |= ANX3443_ULP_CFG_MODE_DP_EN;
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		reg |= ANX3443_ULP_CFG_MODE_FLIP;
 
@@ -56,6 +106,12 @@ static int anx3443_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 static int anx3443_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 {
 	int reg;
+
+	/* Mux is not powered in Z1 */
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		return USB_PD_MUX_NONE;
+
+	RETURN_ERROR(anx3443_wake_up(me));
 
 	*mux_state = 0;
 	RETURN_ERROR(anx3443_read(me, ANX3443_REG_ULP_CFG_MODE, &reg));
@@ -82,9 +138,7 @@ static int anx3443_init(const struct usb_mux *me)
 	if (now < ANX3443_I2C_READY_DELAY)
 		usleep(ANX3443_I2C_READY_DELAY - now);
 
-	/* Disable ultra-low power mode  */
-	RETURN_ERROR(anx3443_write(me, ANX3443_REG_ULTRA_LOW_POWER,
-				   ANX3443_ULTRA_LOW_POWER_DIS));
+	RETURN_ERROR(anx3443_wake_up(me));
 
 	/* Default to USB mode */
 	RETURN_ERROR(anx3443_set_mux(me, USB_PD_MUX_USB_ENABLED));
@@ -92,16 +146,8 @@ static int anx3443_init(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-static int anx3443_enter_low_power_mode(const struct usb_mux *me)
-{
-	/* Enable vendor-defined ultra-low power mode */
-	return anx3443_write(me, ANX3443_REG_ULTRA_LOW_POWER,
-			     ANX3443_ULTRA_LOW_POWER_EN);
-}
-
 const struct usb_mux_driver anx3443_usb_mux_driver = {
 	.init = anx3443_init,
 	.set = anx3443_set_mux,
 	.get = anx3443_get_mux,
-	.enter_low_power_mode = anx3443_enter_low_power_mode,
 };
