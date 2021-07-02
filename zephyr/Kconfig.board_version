@@ -2,10 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_BOARD_VERSION
-
-choice "Version source"
-	prompt "Select the source of the version number"
+choice PLATFORM_EC_BOARD_VERSION_SOURCE
+	prompt "Select the source of the board version number"
+	optional
 	help
 	  This allow selection of the source of the board version number
 	  information. Several options are available, but BOARD_VERSION_CBI is
@@ -32,14 +31,4 @@ config PLATFORM_EC_BOARD_VERSION_GPIO
 	  The GPIOs should have external pull-up/pull-down resistors installed
 	  at the factory to select the correct value.
 
-config PLATFORM_EC_BOARD_VERSION_CUSTOM
-	bool "Custom board-specific algortihm"
-	help
-	  Choose this if none of the standard methods is available and you must
-	  perform special logic to find the board version. If this is chosen,
-	  then the system code will call board_get_version() to find out the
-	  version, so you should implement this function in your board code.
-
 endchoice
-
-endif # PLATFORM_EC_BOARD_VERSION

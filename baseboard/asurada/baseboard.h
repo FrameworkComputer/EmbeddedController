@@ -22,7 +22,6 @@
  * allow the second reset to be treated as a power-on.
  */
 #define CONFIG_BOARD_RESET_AFTER_POWER_ON
-#define CONFIG_BOARD_VERSION_CUSTOM
 #define CONFIG_CHIPSET_MT8192
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_HIBERNATE_WAKE_PINS_DYNAMIC

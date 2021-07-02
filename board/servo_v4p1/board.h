@@ -11,8 +11,6 @@
 /* Use Link-Time Optimizations to try to reduce the firmware code size */
 #define CONFIG_LTO
 
-#define CONFIG_BOARD_VERSION_CUSTOM
-
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 

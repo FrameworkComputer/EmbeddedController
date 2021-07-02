@@ -733,16 +733,8 @@
  */
 #undef CONFIG_BOARD_PRE_INIT
 
-/*
- * EC has the notion of board version either through resistors or EEPROM.
- * The common CONFIG_BOARD_VERSION is defined automatically when one of the
- * specific options is used.
- */
-#undef CONFIG_BOARD_VERSION
 /* The board version comes from Cros Board Info within EEPROM. */
 #undef CONFIG_BOARD_VERSION_CBI
-/* The board version function is defined in board code. */
-#undef CONFIG_BOARD_VERSION_CUSTOM
 /*
  * The board version is encoded with 3 GPIO signals where GPIO_BOARD_VERSION1
  * is the LSB.
@@ -5526,18 +5518,6 @@
 
 /******************************************************************************/
 /*
- * Automatically define common CONFIG_BOARD_VERSION if any specific option is
- * used.
- */
-
-#if defined(CONFIG_BOARD_VERSION_CBI) || \
-	defined(CONFIG_BOARD_VERSION_CUSTOM) || \
-	defined(CONFIG_BOARD_VERSION_GPIO)
-#define CONFIG_BOARD_VERSION
-#endif
-
-/******************************************************************************/
-/*
  * Thermal throttling AP must have temperature sensor enabled to get
  * the temperature readings.
  */
@@ -6375,6 +6355,11 @@
 #error "CONFIG_BYPASS_CBI_EEPROM_WP_CHECK is only permitted " \
 	"when CONFIG_SYSTEM_UNLOCK is also enabled."
 #endif /* CONFIG_BYPASS_CBI_EEPROM_WP_CHECK && !CONFIG_SYSTEM_UNLOCK */
+
+#if defined(CONFIG_BOARD_VERSION_CBI) && defined(CONFIG_BOARD_VERSION_GPIO)
+#error "CONFIG_BOARD_VERSION_CBI and CONFIG_BOARD_VERSION_GPIO " \
+	"are mutually exclusive. "
+#endif /* CONFIG_BOARD_VERSION_CBI && CONFIG_BOARD_VERSION_GPIO */
 
 #if !defined(CONFIG_ZEPHYR) && !defined(CONFIG_ACCELGYRO_ICM_COMM_SPI) && \
 	!defined(CONFIG_ACCELGYRO_ICM_COMM_I2C)

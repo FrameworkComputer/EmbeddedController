@@ -382,6 +382,11 @@ const char *system_get_chip_revision(void);
 int system_get_chip_unique_id(uint8_t **id);
 
 /**
+ * Optional board-level function to read board version.
+ */
+__override_proto int board_get_version(void);
+
+/**
  * Optional board-level function to pulse EC_ENTERING_RW.
  *
  * This should ONLY be overridden in very rare circumstances! AKA there better

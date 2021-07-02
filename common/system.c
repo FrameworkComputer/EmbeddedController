@@ -813,31 +813,40 @@ int system_get_image_used(enum ec_image copy)
 }
 
 /*
+ * Overwrite it in board directory in case that we want to read board version
+ * in our own way.
+ */
+__overridable int board_get_version(void)
+{
+#ifdef CONFIG_BOARD_VERSION_GPIO
+	return (!!gpio_get_level(GPIO_BOARD_VERSION1) << 0) |
+	       (!!gpio_get_level(GPIO_BOARD_VERSION2) << 1) |
+	       (!!gpio_get_level(GPIO_BOARD_VERSION3) << 2);
+#else
+	return 0;
+#endif
+}
+
+/*
  * Returns positive board version if successfully retrieved. Otherwise the
  * value is a negative version of an EC return code. Without this optimization
  * multiple boards run out of flash size.
  */
 int system_get_board_version(void)
 {
-#if defined(CONFIG_BOARD_VERSION_CUSTOM)
-	return board_get_version();
-#elif defined(CONFIG_BOARD_VERSION_GPIO)
-	return
-		(!!gpio_get_level(GPIO_BOARD_VERSION1) << 0) |
-		(!!gpio_get_level(GPIO_BOARD_VERSION2) << 1) |
-		(!!gpio_get_level(GPIO_BOARD_VERSION3) << 2);
-#elif defined(CONFIG_BOARD_VERSION_CBI)
-	int error;
-	int32_t version;
+	int board_id;
 
-	error = cbi_get_board_version(&version);
-	if (error)
-		return -error;
-	else
-		return version;
-#else
-	return 0;
-#endif
+	if (IS_ENABLED(CONFIG_BOARD_VERSION_CBI)) {
+		int error;
+
+		error = cbi_get_board_version(&board_id);
+		if (error)
+			return -error;
+
+		return board_id;
+	};
+
+	return board_get_version();
 }
 
 __attribute__((weak))	   /* Weird chips may need their own implementations */
@@ -1604,7 +1613,7 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_CHIP_INFO,
 		     host_command_get_chip_info,
 		     EC_VER_MASK(0));
 
-#ifdef CONFIG_BOARD_VERSION
+#if defined(CONFIG_BOARD_VERSION_CBI) || defined(CONFIG_BOARD_VERSION_GPIO)
 enum ec_status
 host_command_get_board_version(struct host_cmd_handler_args *args)
 {

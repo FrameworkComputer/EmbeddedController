@@ -115,17 +115,6 @@ config PLATFORM_EC_BOARD_RESET_AFTER_POWER_ON
 	  the EC starts up, performs some amount of processing and then gets a
 	  reset that it is not expecting.
 
-config PLATFORM_EC_BOARD_VERSION
-	bool "Support the notion of board version"
-	default y
-	help
-	  Enable support for a board version, used to distinguish different
-	  revisions of the same base design. Each board goes through a number
-	  of development phases on the way to launch. Sometimes different boards
-	  have different quirks and this version number can provide a way for
-	  the EC to handle several board versions, avoiding the problem of
-	  having to flash different images to different board versions.
-
 config PLATFORM_EC_BRINGUP
 	bool "Enable early bringup debugging features"
 	help
