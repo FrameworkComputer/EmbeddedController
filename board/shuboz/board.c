@@ -34,6 +34,7 @@
 #include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
+#include "thermal.h"
 #include "usb_charge.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
@@ -568,6 +569,14 @@ static void setup_fw_config(void)
 	/* Enable SBU fault interrupts */
 	ioex_enable_interrupt(IOEX_USB_C0_SBU_FAULT_ODL);
 	ioex_enable_interrupt(IOEX_USB_C1_SBU_FAULT_DB_ODL);
+
+	/* Config Thermal params */
+	thermal_params[0].temp_host[EC_TEMP_THRESH_HIGH] = C_TO_K(72);
+	thermal_params[0].temp_host[EC_TEMP_THRESH_HALT] = C_TO_K(80);
+	thermal_params[0].temp_host_release[EC_TEMP_THRESH_HIGH] = C_TO_K(67);
+	thermal_params[1].temp_host[EC_TEMP_THRESH_HIGH] = C_TO_K(72);
+	thermal_params[1].temp_host[EC_TEMP_THRESH_HALT] = C_TO_K(80);
+	thermal_params[1].temp_host_release[EC_TEMP_THRESH_HIGH] = C_TO_K(67);
 
 	if (ec_config_has_lid_angle_tablet_mode()) {
 		setup_base_gyro_config();
