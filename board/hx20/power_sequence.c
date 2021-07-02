@@ -329,12 +329,6 @@ enum power_state power_handle_state(enum power_state state)
 
 	switch (state) {
 	case POWER_G3:
-#ifdef CONFIG_EMI_REGION1
-		if (keep_pch_power()) {
-			if ((power_get_signals() & IN_PCH_SLP_S5_DEASSERTED))
-				return POWER_G3S5;
-		}
-#endif
 		break;
 
 #ifdef CONFIG_POWER_S0IX
@@ -538,6 +532,15 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S5G3:
 		CPRINTS("PH S5G3");
+		/* if we need to keep pch power, return to G3S5 state */
+
+#ifdef CONFIG_EMI_REGION1
+		if (keep_pch_power()) {
+			if ((power_get_signals() & IN_PCH_SLP_S5_DEASSERTED))
+				return POWER_G3S5;
+		}
+#endif
+
 		chipset_force_g3();
 		/* clear suspend flag when system shutdown */
 		power_state_clear(EC_PS_ENTER_S0ix |
