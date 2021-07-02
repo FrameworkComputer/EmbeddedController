@@ -7,4 +7,7 @@ if BOARD_ASURADA
 config BOARD
 	default "asurada"
 
+config TASK_PD_STACK_SIZE
+	default 1280
+
 endif # BOARD_ASURADA
