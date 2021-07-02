@@ -4824,7 +4824,7 @@ void pd_task(void *u)
 		if (pd[port].power_role == PD_ROLE_SOURCE) {
 			/* Source: detect disconnect by monitoring CC */
 			tcpm_get_cc(port, &cc1, &cc2);
-			if (pd[port].polarity)
+			if (polarity_rm_dts(pd[port].polarity))
 				cc1 = cc2;
 			if (cc1 == TYPEC_CC_VOLT_OPEN) {
 				set_state(port, PD_STATE_SRC_DISCONNECTED);

@@ -2036,7 +2036,7 @@ static void sink_power_sub_states(int port)
 
 	tcpm_get_cc(port, &cc1, &cc2);
 
-	cc = tc[port].polarity ? cc2 : cc1;
+	cc = polarity_rm_dts(tc[port].polarity) ? cc2 : cc1;
 
 	if (cc == TYPEC_CC_VOLT_RP_DEF)
 		new_cc_voltage = TYPEC_CC_VOLT_RP_DEF;
@@ -3095,7 +3095,7 @@ static void tc_attached_src_run(const int port)
 	/* Check for connection */
 	tcpm_get_cc(port, &cc1, &cc2);
 
-	if (tc[port].polarity)
+	if (polarity_rm_dts(tc[port].polarity))
 		cc1 = cc2;
 
 	if (cc1 == TYPEC_CC_VOLT_OPEN)
