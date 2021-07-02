@@ -80,6 +80,8 @@ int ucsi_write_tunnel(void)
 	int i;
 	int offset = 0;
 	int rv = EC_SUCCESS;
+	static int is_delay;
+	static timestamp_t delay_time;
 
 	/**
 	 * Note that CONTROL data has always to be written after MESSAGE_OUT data is written
@@ -97,6 +99,21 @@ int ucsi_write_tunnel(void)
 	}
 
 	switch (*command) {
+	case UCSI_CMD_GET_CONNECTOR_STATUS:
+		/**
+		 * try to delay 500 msec to wait PD negotiation complete then send command
+		 * to PD chip
+		 */
+		if (!is_delay) {
+			is_delay = 1;
+			delay_time.val = get_time().val + (500 * MSEC);
+		}
+
+		if (!timestamp_expired(delay_time, NULL))
+			return EC_ERROR_BUSY;
+
+		CPRINTS("Already delay 500ms, send command to PD chip");
+		is_delay = 0;
 	case UCSI_CMD_GET_CONNECTOR_CAPABILITY:
 	case UCSI_CMD_CONNECTOR_RESET:
 	case UCSI_CMD_SET_UOM:
@@ -106,7 +123,6 @@ int ucsi_write_tunnel(void)
 	case UCSI_CMD_SET_NEW_CAM:
 	case UCSI_CMD_GET_PDOS:
 	case UCSI_CMD_GET_CABLE_PROPERTY:
-	case UCSI_CMD_GET_CONNECTOR_STATUS:
 	case UCSI_CMD_GET_ALTERNATE_MODES:
 	case UCSI_CMD_GET_CURRENT_CAM:
 
@@ -253,6 +269,7 @@ void check_ucsi_event_from_host(void)
 	void *cci;
 	int read_complete = 0;
 	int i;
+	int rv;
 
 	if (!timestamp_expired(ucsi_wait_time, NULL)) {
 		if (ucsi_debug_enable)
@@ -273,7 +290,11 @@ void check_ucsi_event_from_host(void)
 		 * from CCGX's UCSI interface, it ignores all writes from the BIOS
 		 */
 		ucsi_set_next_poll(10*MSEC);
-		ucsi_write_tunnel();
+		rv = ucsi_write_tunnel();
+
+		if (rv == EC_ERROR_BUSY)
+			return;
+
 		*host_get_customer_memmap(0x00) &= ~BIT(2);
 		return;
 	}
