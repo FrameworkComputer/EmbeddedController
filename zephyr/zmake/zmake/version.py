@@ -21,12 +21,15 @@ def _get_num_commits(repo):
         An integer, the number of commits that have been made.
     """
     try:
-        result = subprocess.run(['git', '-C', repo, 'rev-list', 'HEAD',
-                                 '--count'],
-                                check=True, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL, encoding='utf-8')
+        result = subprocess.run(
+            ["git", "-C", repo, "rev-list", "HEAD", "--count"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            encoding="utf-8",
+        )
     except subprocess.CalledProcessError:
-        commits = '9999'
+        commits = "9999"
     else:
         commits = result.stdout
 
@@ -47,17 +50,20 @@ def _get_revision(repo):
         A string, of the current revision.
     """
     try:
-        result = subprocess.run(['git', '-C', repo, 'log', '-n1',
-                                 '--format=%H'],
-                                check=True, stdout=subprocess.PIPE,
-                                stderr=subprocess.DEVNULL, encoding='utf-8')
+        result = subprocess.run(
+            ["git", "-C", repo, "log", "-n1", "--format=%H"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            encoding="utf-8",
+        )
     except subprocess.CalledProcessError:
         # Fall back to the VCSID provided by the packaging system.
         # Format is 0.0.1-r425-032666c418782c14fe912ba6d9f98ffdf0b941e9 for
         # releases and 9999-032666c418782c14fe912ba6d9f98ffdf0b941e9 for
         # 9999 ebuilds.
-        vcsid = os.environ.get('VCSID', '9999-unknown')
-        revision = vcsid.rsplit('-', 1)[1]
+        vcsid = os.environ.get("VCSID", "9999-unknown")
+        revision = vcsid.rsplit("-", 1)[1]
     else:
         revision = result.stdout
 
@@ -84,19 +90,21 @@ def get_version_string(project, zephyr_base, modules, static=False):
     num_commits = 0
 
     if static:
-        vcs_hashes = 'STATIC'
+        vcs_hashes = "STATIC"
     else:
         repos = {
-            'os': zephyr_base,
+            "os": zephyr_base,
             **modules,
         }
 
         for repo in repos.values():
             num_commits += _get_num_commits(repo)
 
-        vcs_hashes = ','.join(
-            '{}:{}'.format(name, _get_revision(repo)[:6])
-            for name, repo in sorted(repos.items()))
+        vcs_hashes = ",".join(
+            "{}:{}".format(name, _get_revision(repo)[:6])
+            for name, repo in sorted(repos.items())
+        )
 
-    return '{}_v{}.{}.{}-{}'.format(
-        project_id, major_version, minor_version, num_commits, vcs_hashes)
+    return "{}_v{}.{}.{}-{}".format(
+        project_id, major_version, minor_version, num_commits, vcs_hashes
+    )

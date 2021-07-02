@@ -18,31 +18,34 @@ from zmake.build_config import BuildConfig
 
 # Strategies for use with hypothesis
 filenames = st.text(
-    alphabet=set(string.printable) - {'/', ';'},
-    min_size=1,
-    max_size=254).filter(lambda name: name not in ('.', '..'))
-paths = st.builds(lambda parts: pathlib.Path('/', *parts),
-                  st.iterables(filenames, min_size=1))
-config_keys = st.text(alphabet=set(string.ascii_uppercase) | {'_'}, min_size=1)
-config_values = st.builds(str, st.just('y') | st.just('n') | st.integers())
+    alphabet=set(string.printable) - {"/", ";"}, min_size=1, max_size=254
+).filter(lambda name: name not in (".", ".."))
+paths = st.builds(
+    lambda parts: pathlib.Path("/", *parts), st.iterables(filenames, min_size=1)
+)
+config_keys = st.text(alphabet=set(string.ascii_uppercase) | {"_"}, min_size=1)
+config_values = st.builds(str, st.just("y") | st.just("n") | st.integers())
 config_dicts = st.dictionaries(keys=config_keys, values=config_values)
-config_dicts_at_least_one_entry = st.dictionaries(keys=config_keys,
-                                                  values=config_values,
-                                                  min_size=1)
+config_dicts_at_least_one_entry = st.dictionaries(
+    keys=config_keys, values=config_values, min_size=1
+)
 
-build_configs = st.builds(BuildConfig,
-                          environ_defs=config_dicts,
-                          cmake_defs=config_dicts,
-                          kconfig_defs=config_dicts,
-                          kconfig_files=st.lists(paths))
-build_configs_no_kconfig = st.builds(BuildConfig,
-                                     environ_defs=config_dicts,
-                                     cmake_defs=config_dicts)
+build_configs = st.builds(
+    BuildConfig,
+    environ_defs=config_dicts,
+    cmake_defs=config_dicts,
+    kconfig_defs=config_dicts,
+    kconfig_files=st.lists(paths),
+)
+build_configs_no_kconfig = st.builds(
+    BuildConfig, environ_defs=config_dicts, cmake_defs=config_dicts
+)
 build_configs_with_at_least_one_kconfig = st.builds(
     BuildConfig,
     environ_defs=config_dicts,
     cmake_defs=config_dicts,
-    kconfig_defs=config_dicts_at_least_one_entry)
+    kconfig_defs=config_dicts_at_least_one_entry,
+)
 
 
 @hypothesis.given(st.data(), build_configs)
@@ -50,6 +53,7 @@ def test_merge(coins, combined):
     """Test that when splitting a config in half and merging the two
     halves, we get the original config back.
     """
+
     def split(iterable):
         left = []
         right = []
@@ -67,10 +71,18 @@ def test_merge(coins, combined):
     kconf1, kconf2 = split(combined.kconfig_defs.items())
     files1, files2 = split(combined.kconfig_files)
 
-    c1 = BuildConfig(environ_defs=dict(env1), cmake_defs=dict(cmake1),
-                     kconfig_defs=dict(kconf1), kconfig_files=files1)
-    c2 = BuildConfig(environ_defs=dict(env2), cmake_defs=dict(cmake2),
-                     kconfig_defs=dict(kconf2), kconfig_files=files2)
+    c1 = BuildConfig(
+        environ_defs=dict(env1),
+        cmake_defs=dict(cmake1),
+        kconfig_defs=dict(kconf1),
+        kconfig_files=files1,
+    )
+    c2 = BuildConfig(
+        environ_defs=dict(env2),
+        cmake_defs=dict(cmake2),
+        kconfig_defs=dict(kconf2),
+        kconfig_files=files2,
+    )
 
     # Merge the split configs
     merged = c1 | c2
@@ -84,6 +96,7 @@ def test_merge(coins, combined):
 
 class FakeJobClient(zmake.jobserver.JobClient):
     """Simple job client to capture argv/environ."""
+
     def __init__(self):
         self.captured_argv = []
         self.captured_env = {}
@@ -109,21 +122,21 @@ def parse_cmake_args(argv):
         A 2-tuple of a namespace from argparse and the corresponding
         parsed Cmake definitions.
     """
-    assert argv[0] == '/usr/bin/cmake'
+    assert argv[0] == "/usr/bin/cmake"
 
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument('-S', dest='source_dir', type=pathlib.Path)
-    parser.add_argument('-B', dest='build_dir', type=pathlib.Path)
-    parser.add_argument('-G', dest='generator')
-    parser.add_argument('-D', dest='defs', action='append', default=[])
+    parser.add_argument("-S", dest="source_dir", type=pathlib.Path)
+    parser.add_argument("-B", dest="build_dir", type=pathlib.Path)
+    parser.add_argument("-G", dest="generator")
+    parser.add_argument("-D", dest="defs", action="append", default=[])
     args = parser.parse_args(argv[1:])
 
     # Build the definition dictionary
     cmake_defs = {}
     for defn in args.defs:
-        key, sep, val = defn.partition('=')
+        key, sep, val = defn.partition("=")
         if not sep:
-            val = '1'
+            val = "1"
         assert key not in cmake_defs
         cmake_defs[key] = val
 
@@ -160,12 +173,13 @@ def test_popen_cmake_kconfig_but_no_file(conf, project_dir, build_dir):
 def test_popen_cmake_kconfig(conf, project_dir, build_dir):
     job_client = FakeJobClient()
 
-    with tempfile.NamedTemporaryFile('w', delete=False) as f:
+    with tempfile.NamedTemporaryFile("w", delete=False) as f:
         temp_path = f.name
 
     try:
-        conf.popen_cmake(job_client, project_dir, build_dir,
-                         kconfig_path=pathlib.Path(temp_path))
+        conf.popen_cmake(
+            job_client, project_dir, build_dir, kconfig_path=pathlib.Path(temp_path)
+        )
 
         args, cmake_defs = parse_cmake_args(job_client.captured_argv)
 
@@ -173,9 +187,9 @@ def test_popen_cmake_kconfig(conf, project_dir, build_dir):
         expected_kconfig_files.add(temp_path)
 
         if expected_kconfig_files:
-            kconfig_files = set(cmake_defs.pop('CONF_FILE').split(';'))
+            kconfig_files = set(cmake_defs.pop("CONF_FILE").split(";"))
         else:
-            assert 'CONF_FILE' not in cmake_defs
+            assert "CONF_FILE" not in cmake_defs
             kconfig_files = set()
 
         assert cmake_defs == conf.cmake_defs

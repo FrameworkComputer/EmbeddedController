@@ -4,5 +4,6 @@
 
 import hypothesis
 
-hypothesis.settings.register_profile('cq',
-                                     suppress_health_check=hypothesis.HealthCheck.all())
+hypothesis.settings.register_profile(
+    "cq", suppress_health_check=hypothesis.HealthCheck.all()
+)

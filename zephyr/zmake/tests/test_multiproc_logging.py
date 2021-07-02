@@ -13,19 +13,19 @@ import zmake.multiproc
 def test_read_output_from_pipe():
     semaphore = threading.Semaphore(0)
     pipe = os.pipe()
-    fd = io.TextIOWrapper(os.fdopen(pipe[0], 'rb'), encoding='utf-8')
+    fd = io.TextIOWrapper(os.fdopen(pipe[0], "rb"), encoding="utf-8")
     logger = mock.Mock(spec=logging.Logger)
     logger.log.side_effect = lambda log_lvl, line: semaphore.release()
     zmake.multiproc.log_output(logger, logging.DEBUG, fd, job_id="")
-    os.write(pipe[1], 'Hello\n'.encode('utf-8'))
+    os.write(pipe[1], "Hello\n".encode("utf-8"))
     semaphore.acquire()
-    logger.log.assert_called_with(logging.DEBUG, 'Hello')
+    logger.log.assert_called_with(logging.DEBUG, "Hello")
 
 
 def test_read_output_change_log_level():
     semaphore = threading.Semaphore(0)
     pipe = os.pipe()
-    fd = io.TextIOWrapper(os.fdopen(pipe[0], 'rb'), encoding='utf-8')
+    fd = io.TextIOWrapper(os.fdopen(pipe[0], "rb"), encoding="utf-8")
     logger = mock.Mock(spec=logging.Logger)
     logger.log.side_effect = lambda log_lvl, line: semaphore.release()
     # This call will log output from fd (the file descriptor) to DEBUG, though
@@ -35,18 +35,24 @@ def test_read_output_change_log_level():
         logger=logger,
         log_level=logging.DEBUG,
         file_descriptor=fd,
-        log_level_override_func=lambda line, lvl:
-            logging.CRITICAL if line.startswith('World') else lvl,
-        job_id="",)
-    os.write(pipe[1], 'Hello\n'.encode('utf-8'))
+        log_level_override_func=lambda line, lvl: logging.CRITICAL
+        if line.startswith("World")
+        else lvl,
+        job_id="",
+    )
+    os.write(pipe[1], "Hello\n".encode("utf-8"))
     semaphore.acquire()
-    os.write(pipe[1], 'World\n'.encode('utf-8'))
+    os.write(pipe[1], "World\n".encode("utf-8"))
     semaphore.acquire()
-    os.write(pipe[1], 'Bye\n'.encode('utf-8'))
+    os.write(pipe[1], "Bye\n".encode("utf-8"))
     semaphore.acquire()
-    logger.log.assert_has_calls([mock.call(logging.DEBUG, 'Hello'),
-                                 mock.call(logging.CRITICAL, 'World'),
-                                 mock.call(logging.CRITICAL, 'Bye')])
+    logger.log.assert_has_calls(
+        [
+            mock.call(logging.DEBUG, "Hello"),
+            mock.call(logging.CRITICAL, "World"),
+            mock.call(logging.CRITICAL, "Bye"),
+        ]
+    )
 
 
 def test_read_output_from_second_pipe():
@@ -58,8 +64,10 @@ def test_read_output_from_second_pipe():
     """
     semaphore = threading.Semaphore(0)
     pipes = [os.pipe(), os.pipe()]
-    fds = [io.TextIOWrapper(os.fdopen(pipes[0][0], 'rb'), encoding='utf-8'),
-           io.TextIOWrapper(os.fdopen(pipes[1][0], 'rb'), encoding='utf-8')]
+    fds = [
+        io.TextIOWrapper(os.fdopen(pipes[0][0], "rb"), encoding="utf-8"),
+        io.TextIOWrapper(os.fdopen(pipes[1][0], "rb"), encoding="utf-8"),
+    ]
 
     logger = mock.Mock(spec=logging.Logger)
     logger.log.side_effect = lambda log_lvl, fmt, id, line: semaphore.release()
@@ -67,9 +75,9 @@ def test_read_output_from_second_pipe():
     zmake.multiproc.log_output(logger, logging.DEBUG, fds[0], job_id="0")
     zmake.multiproc.log_output(logger, logging.ERROR, fds[1], job_id="1")
 
-    os.write(pipes[1][1], 'Hello\n'.encode('utf-8'))
+    os.write(pipes[1][1], "Hello\n".encode("utf-8"))
     semaphore.acquire()
-    logger.log.assert_called_with(logging.ERROR, '[%s]%s', '1', 'Hello')
+    logger.log.assert_called_with(logging.ERROR, "[%s]%s", "1", "Hello")
 
 
 def test_read_output_after_another_pipe_closed():
@@ -81,8 +89,10 @@ def test_read_output_after_another_pipe_closed():
     """
     semaphore = threading.Semaphore(0)
     pipes = [os.pipe(), os.pipe()]
-    fds = [io.TextIOWrapper(os.fdopen(pipes[0][0], 'rb'), encoding='utf-8'),
-           io.TextIOWrapper(os.fdopen(pipes[1][0], 'rb'), encoding='utf-8')]
+    fds = [
+        io.TextIOWrapper(os.fdopen(pipes[0][0], "rb"), encoding="utf-8"),
+        io.TextIOWrapper(os.fdopen(pipes[1][0], "rb"), encoding="utf-8"),
+    ]
 
     logger = mock.Mock(spec=logging.Logger)
     logger.log.side_effect = lambda log_lvl, fmt, id, line: semaphore.release()
@@ -91,6 +101,6 @@ def test_read_output_after_another_pipe_closed():
     zmake.multiproc.log_output(logger, logging.ERROR, fds[1], job_id="1")
 
     fds[0].close()
-    os.write(pipes[1][1], 'Hello\n'.encode('utf-8'))
+    os.write(pipes[1][1], "Hello\n".encode("utf-8"))
     semaphore.acquire()
-    logger.log.assert_called_with(logging.ERROR, '[%s]%s', '1', 'Hello')
+    logger.log.assert_called_with(logging.ERROR, "[%s]%s", "1", "Hello")

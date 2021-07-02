@@ -13,7 +13,7 @@ import yaml
 # DeprecationWarnings that fire when we import it.  Suppress these
 # during the import to keep the noise down.
 with warnings.catch_warnings():
-    warnings.simplefilter('ignore')
+    warnings.simplefilter("ignore")
     import jsonschema
 
 import zmake.build_config as build_config
@@ -32,8 +32,7 @@ def module_dts_overlay_name(modpath, board_name):
     Returns:
         A pathlib.Path object to the expected overlay path.
     """
-    return modpath / 'zephyr' / 'dts' / 'board-overlays' / '{}.dts'.format(
-        board_name)
+    return modpath / "zephyr" / "dts" / "board-overlays" / "{}.dts".format(board_name)
 
 
 def find_projects(root_dir):
@@ -45,52 +44,52 @@ def find_projects(root_dir):
     Yields:
         Project: The next project found.
     """
-    logging.info('Finding zmake targets under \'%s\'.', root_dir)
-    for path in pathlib.Path(root_dir).rglob('zmake.yaml'):
+    logging.info("Finding zmake targets under '%s'.", root_dir)
+    for path in pathlib.Path(root_dir).rglob("zmake.yaml"):
         yield Project(path.parent)
 
 
 class ProjectConfig:
     """An object wrapping zmake.yaml."""
+
     validator = jsonschema.Draft7Validator
     schema = {
-        'type': 'object',
-        'required': ['supported-zephyr-versions', 'board', 'output-type',
-                     'toolchain'],
-        'properties': {
-            'supported-zephyr-versions': {
-                'type': 'array',
-                'items': {
-                    'type': 'string',
-                    'enum': ['v2.5', 'v2.6'],
+        "type": "object",
+        "required": ["supported-zephyr-versions", "board", "output-type", "toolchain"],
+        "properties": {
+            "supported-zephyr-versions": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": ["v2.5", "v2.6"],
                 },
-                'minItems': 1,
-                'uniqueItems': True,
+                "minItems": 1,
+                "uniqueItems": True,
             },
-            'board': {
-                'type': 'string',
+            "board": {
+                "type": "string",
             },
-            'modules': {
-                'type': 'array',
-                'items': {
-                    'type': 'string',
-                    'enum': list(modules.known_modules),
+            "modules": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": list(modules.known_modules),
                 },
             },
-            'output-type': {
-                'type': 'string',
-                'enum': list(packers.packer_registry),
+            "output-type": {
+                "type": "string",
+                "enum": list(packers.packer_registry),
             },
-            'toolchain': {
-                'type': 'string',
+            "toolchain": {
+                "type": "string",
             },
-            'is-test': {
-                'type': 'boolean',
+            "is-test": {
+                "type": "boolean",
             },
-            'dts-overlays': {
-                'type': 'array',
-                'items': {
-                    'type': 'string',
+            "dts-overlays": {
+                "type": "array",
+                "items": {
+                    "type": "string",
                 },
             },
         },
@@ -103,40 +102,43 @@ class ProjectConfig:
 
     @property
     def supported_zephyr_versions(self):
-        return [util.parse_zephyr_version(x)
-                for x in self.config_dict['supported-zephyr-versions']]
+        return [
+            util.parse_zephyr_version(x)
+            for x in self.config_dict["supported-zephyr-versions"]
+        ]
 
     @property
     def board(self):
-        return self.config_dict['board']
+        return self.config_dict["board"]
 
     @property
     def modules(self):
-        return self.config_dict.get('modules', list(modules.known_modules))
+        return self.config_dict.get("modules", list(modules.known_modules))
 
     @property
     def output_packer(self):
-        return packers.packer_registry[self.config_dict['output-type']]
+        return packers.packer_registry[self.config_dict["output-type"]]
 
     @property
     def toolchain(self):
-        return self.config_dict['toolchain']
+        return self.config_dict["toolchain"]
 
     @property
     def is_test(self):
-        return self.config_dict.get('is-test', False)
+        return self.config_dict.get("is-test", False)
 
     @property
     def dts_overlays(self):
-        return self.config_dict.get('dts-overlays', [])
+        return self.config_dict.get("dts-overlays", [])
 
 
 class Project:
     """An object encapsulating a project directory."""
+
     def __init__(self, project_dir, config_dict=None):
         self.project_dir = project_dir.resolve()
         if not config_dict:
-            with open(self.project_dir / 'zmake.yaml') as f:
+            with open(self.project_dir / "zmake.yaml") as f:
                 config_dict = yaml.safe_load(f)
         self.config = ProjectConfig(config_dict)
         self.packer = self.config.output_packer(self)
@@ -147,11 +149,12 @@ class Project:
         Yields:
             2-tuples of a build configuration name and a BuildConfig.
         """
-        conf = build_config.BuildConfig(cmake_defs={'BOARD': self.config.board})
-        if (self.project_dir / 'boards').is_dir():
+        conf = build_config.BuildConfig(cmake_defs={"BOARD": self.config.board})
+        if (self.project_dir / "boards").is_dir():
             conf |= build_config.BuildConfig(
-                cmake_defs={'BOARD_ROOT': str(self.project_dir)})
-        prj_conf = self.project_dir / 'prj.conf'
+                cmake_defs={"BOARD_ROOT": str(self.project_dir)}
+            )
+        prj_conf = self.project_dir / "prj.conf"
         if prj_conf.is_file():
             conf |= build_config.BuildConfig(kconfig_files=[prj_conf])
         for build_name, packer_config in self.packer.configs():
@@ -177,7 +180,8 @@ class Project:
 
         if overlays:
             return build_config.BuildConfig(
-                cmake_defs={'DTC_OVERLAY_FILE': ';'.join(map(str, overlays))})
+                cmake_defs={"DTC_OVERLAY_FILE": ";".join(map(str, overlays))}
+            )
         else:
             return build_config.BuildConfig()
 
@@ -207,6 +211,7 @@ class Project:
                 result[module] = module_paths[module]
             except KeyError as e:
                 raise KeyError(
-                    'The {!r} module is required by the {} project, but is not '
-                    'available.'.format(module, self.project_dir)) from e
+                    "The {!r} module is required by the {} project, but is not "
+                    "available.".format(module, self.project_dir)
+                ) from e
         return result

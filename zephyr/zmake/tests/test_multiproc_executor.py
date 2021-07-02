@@ -20,7 +20,7 @@ def test_single_function_executor_fail():
 
 def test_single_function_executor_raise():
     executor = zmake.multiproc.Executor()
-    executor.append(lambda: 1/0)
+    executor.append(lambda: 1 / 0)
     assert executor.wait() != 0
 
 

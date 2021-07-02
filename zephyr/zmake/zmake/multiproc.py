@@ -48,6 +48,7 @@ class LogWriter:
             value: True if output was written at that level
         _job_id: The name to prepend to logged lines
     """
+
     def __init__(self, logger, log_level, log_level_override_func, job_id):
         self._logger = logger
         self._log_level = log_level
@@ -166,8 +167,9 @@ def _logging_loop():
 _logging_thread = None
 
 
-def log_output(logger, log_level, file_descriptor,
-               log_level_override_func=None, job_id=None):
+def log_output(
+    logger, log_level, file_descriptor, log_level_override_func=None, job_id=None
+):
     """Log the output from the given file descriptor.
 
     Args:
@@ -185,19 +187,14 @@ def log_output(logger, log_level, file_descriptor,
         global _logging_thread
         if _logging_thread is None or not _logging_thread.is_alive():
             # First pass or thread must have died, create a new one.
-            _logging_thread = threading.Thread(target=_logging_loop,
-                                               daemon=True)
+            _logging_thread = threading.Thread(target=_logging_loop, daemon=True)
             _logging_thread.start()
 
-        writer = LogWriter(
-                logger,
-                log_level,
-                log_level_override_func,
-                job_id)
+        writer = LogWriter(logger, log_level, log_level_override_func, job_id)
         _logging_map[file_descriptor] = writer
         # Write a dummy byte to the pipe to break the select so we can add the
         # new fd.
-        os.write(_logging_interrupt_pipe[1], b'x')
+        os.write(_logging_interrupt_pipe[1], b"x")
         # Notify the condition so we can run the select on the current fds.
         _logging_cv.notify_all()
     return writer
@@ -226,6 +223,7 @@ class Executor:
         results: A list of result codes returned by each of the functions called
          by this Executor.
     """
+
     def __init__(self):
         self.lock = threading.Condition()
         self.threads = []
@@ -247,8 +245,7 @@ class Executor:
              exception.
         """
         with self.lock:
-            thread = threading.Thread(target=lambda: self._run_fn(func),
-                                      daemon=True)
+            thread = threading.Thread(target=lambda: self._run_fn(func), daemon=True)
             thread.start()
             self.threads.append(thread)
 
