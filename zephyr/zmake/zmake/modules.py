@@ -3,9 +3,6 @@
 # found in the LICENSE file.
 """Registry of known Zephyr modules."""
 
-import pathlib
-import os
-
 import zmake.build_config as build_config
 import zmake.util as util
 
