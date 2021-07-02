@@ -41,3 +41,8 @@ enum ec_ssfc_edp_phy_alt_tuning get_cbi_ssfc_edp_phy_alt_tuning(void)
 		SSFC_EDP_PHY_ALT_TUNING_OFFSET;
 }
 
+enum ec_ssfc_c1_mux get_cbi_ssfc_c1_mux(void)
+{
+	return (cached_ssfc & SSFC_C1_MUX_MASK) >>
+		SSFC_C1_MUX_OFFSET;
+}
