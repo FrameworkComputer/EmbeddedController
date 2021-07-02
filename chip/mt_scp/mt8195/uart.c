@@ -17,7 +17,7 @@
 void uart_init_pinmux(void)
 {
 #if UARTN == 0
-	SCP_UART_CK_SEL |= UART0_CK_SEL_VAL(UART_CK_SEL_26M);
+	SCP_UART_CK_SEL |= UART0_CK_SEL_VAL(UART_CK_SEL_ULPOSC);
 	SCP_SET_CLK_CG |= CG_UART0_MCLK | CG_UART0_BCLK | CG_UART0_RST;
 
 	/* set AP GPIO102 and GPIO103 to alt func 5 */
