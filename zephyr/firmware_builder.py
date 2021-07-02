@@ -131,14 +131,20 @@ def test(opts):
     with open(opts.metrics, 'w') as f:
         f.write(json_format.MessageToJson(metrics))
 
+    zephyr_dir = pathlib.Path(__file__).parent.resolve()
+
+    # Run zmake tests to ensure we have a fully working zmake before
+    # proceeding.
+    subprocess.run([zephyr_dir / 'zmake' / 'run_tests.sh'], check=True)
+
     if opts.code_coverage:
-        zephyr_dir = pathlib.Path(__file__).parent
-        platform_ec = zephyr_dir.resolve().parent
+        platform_ec = zephyr_dir.parent
         build_dir = platform_ec / 'build/zephyr-coverage'
         return subprocess.run(
             ['zmake', '-D', 'coverage', build_dir], cwd=platform_ec).returncode
 
-    return subprocess.run(['zmake', '-D', '--cq', 'testall']).returncode
+    subprocess.run(['zmake', '-D', 'testall'], check=True)
+    return 0
 
 
 def main(args):

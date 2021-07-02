@@ -77,10 +77,6 @@ def main(argv=None):
                         'checkout.')
     parser.add_argument('--zephyr-base', type=pathlib.Path,
                         help='Path to Zephyr OS repository')
-    parser.add_argument('--cq', action='store_true',
-                        default=False,
-                        help='Run this pass from CQ (turns off some flaky '
-                             'features)')
 
     sub = parser.add_subparsers(dest='subcommand', help='Subcommand')
     sub.required = True

@@ -146,11 +146,10 @@ class Zmake:
             before launching more, False to just do this after all jobs complete
     """
     def __init__(self, checkout=None, jobserver=None, jobs=0, modules_dir=None,
-                 zephyr_base=None, cq=False):
+                 zephyr_base=None):
         zmake.multiproc.reset()
         self._checkout = checkout
         self._zephyr_base = zephyr_base
-        self._is_cq = cq
 
         if modules_dir:
             self.module_paths = zmake.modules.locate_from_directory(modules_dir)
@@ -437,51 +436,6 @@ class Zmake:
                 raise OSError(get_process_failure_msg(proc))
         return 0
 
-    def _run_pytest(self, directory):
-        """Run pytest on a given directory.
-
-        This is a utility function to help parallelize running pytest on
-        multiple directories.
-
-        Args:
-            directory: The directory that we should search for tests in.
-        """
-        def get_log_level(line, current_log_level):
-            matches = [
-                ('PASSED', logging.INFO),
-                ('FAILED', logging.ERROR),
-                ('warnings summary', logging.WARNING),
-            ]
-
-            for text, lvl in matches:
-                if text in line:
-                    return lvl
-
-            return current_log_level
-
-        def run_test(test_file):
-            with self.jobserver.get_job():
-                proc_args = ['pytest', '--verbose']
-                if self._is_cq:
-                    proc_args.append('--hypothesis-profile=cq')
-                proc = self.jobserver.popen(
-                    proc_args + [test_file],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
-                    encoding='utf-8',
-                    errors='replace')
-                zmake.multiproc.log_output(
-                    self.logger, logging.DEBUG,
-                    proc.stdout, log_level_override_func=get_log_level,
-                    job_id=os.path.basename(test_file),)
-                rv = proc.wait()
-                if rv:
-                    self.logger.error(get_process_failure_msg(proc))
-                return rv
-
-        for test_file in directory.glob('test_*.py'):
-            self.executor.append(func=lambda f=test_file: run_test(f))
-
     def testall(self):
         """Test all the valid test targets"""
         tmp_dirs = []
@@ -500,10 +454,6 @@ class Zmake:
                     build_dir=pathlib.Path(temp_build_dir),
                     build_after_configure=True,
                     test_after_configure=is_test))
-
-        # Run pytest on platform/ec/zephyr/zmake/tests.
-        self._run_pytest(
-            self.module_paths['ec'] / 'zephyr' / 'zmake' / 'tests')
 
         rv = self.executor.wait()
         for tmpdir in tmp_dirs:
