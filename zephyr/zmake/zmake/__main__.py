@@ -163,7 +163,7 @@ def main(argv=None):
         help="The build directory used during configuration",
     )
 
-    testall = sub.add_parser("testall")
+    sub.add_parser("testall")
 
     coverage = sub.add_parser("coverage")
     coverage.add_argument(
