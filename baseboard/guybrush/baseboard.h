@@ -320,7 +320,7 @@ enum adc_channel {
 
 /* TMP112 sensors */
 enum tmp112_sensor {
-	TMP112_SOC, /* Note: MUST match ADC SOC as they share an idx value */
+	TMP112_SOC,
 	TMP112_AMB,
 	TMP112_COUNT,
 };

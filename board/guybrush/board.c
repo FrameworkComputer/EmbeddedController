@@ -351,7 +351,7 @@ int board_get_soc_temp(int idx, int *temp_k)
 		return EC_ERROR_NOT_POWERED;
 
 	if (board_version == 1)
-		return get_temp_3v3_30k9_47k_4050b(idx, temp_k);
+		return get_temp_3v3_30k9_47k_4050b(ADC_TEMP_SENSOR_SOC, temp_k);
 
 	return tmp112_get_val(idx, temp_k);
 }

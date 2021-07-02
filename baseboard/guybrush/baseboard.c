@@ -204,7 +204,7 @@ const struct temp_sensor_t temp_sensors[] = {
 		.name = "SOC",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = board_get_soc_temp,
-		.idx = ADC_TEMP_SENSOR_SOC,
+		.idx = TMP112_SOC,
 	},
 	[TEMP_SENSOR_CHARGER] = {
 		.name = "Charger",
