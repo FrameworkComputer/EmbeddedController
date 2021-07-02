@@ -24,3 +24,6 @@ export PYTHONPATH="${PWD}"
 # CPU by running pytest alongside all the ninjas, which no longer
 # happens.  Remove this flag.
 pytest --hypothesis-profile=cq .
+
+# Check import sorting.
+isort --check .

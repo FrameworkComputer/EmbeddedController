@@ -2,13 +2,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+import pathlib
 import tempfile
+
 import hypothesis
 import hypothesis.strategies as st
-import pathlib
 
 import zmake.modules
-
 
 module_lists = st.lists(st.one_of(*map(st.just, zmake.modules.known_modules)),
                         unique=True)

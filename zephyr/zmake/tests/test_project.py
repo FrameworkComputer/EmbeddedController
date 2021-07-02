@@ -2,16 +2,16 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import hypothesis
-import hypothesis.strategies as st
 import pathlib
-import pytest
 import string
 import tempfile
 
+import hypothesis
+import hypothesis.strategies as st
+import pytest
+
 import zmake.modules
 import zmake.project
-
 
 board_names = st.text(alphabet=set(string.ascii_lowercase) | {'_'},
                       min_size=1)

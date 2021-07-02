@@ -3,13 +3,14 @@
 # found in the LICENSE file.
 
 import argparse
-import hypothesis
-import hypothesis.strategies as st
 import os
 import pathlib
-import pytest
 import string
 import tempfile
+
+import hypothesis
+import hypothesis.strategies as st
+import pytest
 
 import zmake.jobserver
 import zmake.util as util

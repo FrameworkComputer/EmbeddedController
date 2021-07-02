@@ -2,14 +2,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-import hypothesis
-import hypothesis.strategies as st
 import pathlib
-import pytest
 import tempfile
 
-import zmake.util as util
+import hypothesis
+import hypothesis.strategies as st
+import pytest
 
+import zmake.util as util
 
 # Strategies for use with hypothesis
 relative_path = st.from_regex(regex=r"\A\w+[\w/]*\Z")

@@ -4,8 +4,8 @@
 import io
 import logging
 import os
-import unittest.mock as mock
 import threading
+import unittest.mock as mock
 
 import zmake.multiproc
 
