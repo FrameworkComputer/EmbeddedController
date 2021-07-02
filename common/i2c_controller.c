@@ -1212,7 +1212,10 @@ static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 	if (ret)
 		return ret;
 
-	if (port_protected[params->port] && i2c_port->passthru_allowed) {
+	if (port_protected[params->port]) {
+		if (!i2c_port->passthru_allowed)
+			return EC_RES_ACCESS_DENIED;
+
 		for (i = 0; i < params->num_msgs; i++) {
 			if (!i2c_port->passthru_allowed(i2c_port,
 					params->msg[i].addr_flags))
