@@ -141,20 +141,35 @@ config PLATFORM_EC_BYPASS_CBI_EEPROM_WP_CHECK
 	  When defined, ectool can be used to reprogram all CBI fields,
 	  regardless of the state of the hardware write protect.
 
+choice PLATFORM_EC_CBI_STORAGE_TYPE
+	prompt "Select CBI storage Type"
+	optional
+	help
+	  CBI is a means for accessing board information, typically set
+	  during the factory process. This allows selection of the physical
+	  storage of CBI source.
+
+	  See here for detailed information on CBI:
+
+	  https://chromium.googlesource.com/chromiumos/docs/+/master/design_docs/cros_board_info.md
+
 config PLATFORM_EC_CBI_EEPROM
 	bool "CBI EEPROM support"
 	depends on PLATFORM_EC_I2C
 	help
-	  Enables various Chromium OS Board Info (CBI) accessors as well as
-	  host and console commands. CBI is a means for accessing information
-	  about a board, typically written during the factory process.
+	  Enables Chromium OS Board Info (CBI) from EEPROM.
 
 	  One must specify both I2C_PORT_EEPROM and I2C_ADDR_EEPROM_FLAGS to the
 	  CBI EEPROM's i2c port and 7-bit i2c address.
 
-	  See here for information on CBI:
+config PLATFORM_EC_CBI_GPIO
+	bool "CBI GPIO support"
+	help
+	  Enables Chromium OS Board Info (CBI) from strapping pins. EC reads
+	  the BOARD ID and SKU ID from GPIOs and then substantiate in-memory
+	  CBI for AP to query.
 
-	  https://chromium.googlesource.com/chromiumos/docs/+/master/design_docs/cros_board_info.md
+endchoice
 
 config PLATFORM_EC_CHIPSET_RESET_HOOK
 	bool "Provide a hook for when the AP resets"

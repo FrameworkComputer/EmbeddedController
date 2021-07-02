@@ -12,7 +12,18 @@
 
 #define CBI_VERSION_MAJOR	0
 #define CBI_VERSION_MINOR	0
+
+#ifdef CONFIG_CBI_GPIO
+/*
+ * if CBI is sourced from GPIO, the CBI cache only needs to accomondate
+ * BOARD_VERSION and SKU_ID
+ */
+#define CBI_IMAGE_SIZE		(sizeof(struct cbi_header) +  (2 * \
+				(sizeof(struct cbi_data) + sizeof(uint32_t))))
+#else
 #define CBI_IMAGE_SIZE		256
+#endif
+
 static const uint8_t cbi_magic[] = { 0x43, 0x42, 0x49 };  /* 'C' 'B' 'I' */
 
 struct cbi_header {
@@ -48,6 +59,7 @@ enum cbi_cache_status {
 
 enum cbi_storage_type {
 	CBI_STORAGE_TYPE_EEPROM = 0,
+	CBI_STORAGE_TYPE_GPIO = 1
 };
 
 /*

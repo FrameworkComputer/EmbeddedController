@@ -145,7 +145,8 @@ static int do_cbi_read(void)
 	}
 
 	/* Check CRC. This supports new fields unknown to this parser. */
-	if (cbi_crc8(head) != head->crc) {
+	if (cbi_config.storage_type != CBI_STORAGE_TYPE_GPIO &&
+			cbi_crc8(head) != head->crc) {
 		CPRINTS("Bad CRC");
 		return EC_ERROR_INVAL;
 	}
