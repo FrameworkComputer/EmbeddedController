@@ -4,8 +4,26 @@
  */
 
 #include "fpsensor_detect.h"
+#include "gpio.h"
+#include "timer.h"
 
 enum fp_transport_type get_fp_transport_type(void)
 {
-	return FP_TRANSPORT_TYPE_SPI;
+	enum fp_transport_type ret;
+
+	gpio_set_level(GPIO_DIVIDER_HIGHSIDE, 1);
+	usleep(1);
+	switch (gpio_get_level(GPIO_TRANSPORT_SEL)) {
+	case 0:
+		ret = FP_TRANSPORT_TYPE_UART;
+		break;
+	case 1:
+		ret = FP_TRANSPORT_TYPE_SPI;
+		break;
+	default:
+		ret = FP_TRANSPORT_TYPE_UNKNOWN;
+		break;
+	}
+	gpio_set_level(GPIO_DIVIDER_HIGHSIDE, 0);
+	return ret;
 }

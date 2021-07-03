@@ -11,9 +11,11 @@ GPIO_INT(SPI1_NSS,        PIN(A, 4), GPIO_INPUT, spi_event)
 #ifndef APPLY_RESET_LOOP_FIX
 GPIO(WP,                  PIN(B, 7), GPIO_INPUT)
 #endif
+GPIO(TRANSPORT_SEL,       PIN(B, 1), GPIO_INPUT)
 
 /* Outputs */
 GPIO(EC_INT_L,            PIN(A, 1),  GPIO_OUT_HIGH)
+GPIO(DIVIDER_HIGHSIDE,    PIN(B, 8),  GPIO_OUT_LOW)
 
 UNIMPLEMENTED(ENTERING_RW)
 
