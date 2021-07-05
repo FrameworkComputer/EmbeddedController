@@ -78,7 +78,6 @@ GPIO(TBT_PWR_EN,                     PIN(D, 4), GPIO_OUT_LOW)
 GPIO(TP4_RESET,                      PIN(9, 3), GPIO_ODR_LOW)
 GPIO(USB_C1_FRS_EN,                  PIN(9, 4), GPIO_OUT_LOW)
 GPIO(FAN_ID,                         PIN(9, 7), GPIO_INPUT)
-GPIO(DMIC_DET_N,                     PIN(5, 0), GPIO_INPUT)
 GPIO(USB_C0_OC_ODL,                  PIN(5, 6), GPIO_ODR_HIGH)
 GPIO(USB_C1_OC_ODL,                  PIN(8, 6), GPIO_ODR_HIGH)
 
@@ -126,7 +125,7 @@ ALTERNATE(PIN_MASK(6, 0x0C), 0, MODULE_PS2, 0)               /* PS2_CLK1/GPIO62,
 /* Unused Pins */
 UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
 UNUSED(PIN(8, 1))       /* GPIO81/PECI_DATA */
-
+UNUSED(PIN(5, 0))       /* GPIO50 */
 /* Pre-configured PSL balls:  J8  K6 */
 
 
