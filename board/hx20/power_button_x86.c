@@ -458,8 +458,13 @@ static void state_machine(uint64_t tnow)
 		}
 		break;
 	case PWRBTN_STATE_NEED_RESET:
-		CPRINTS("PB held press 20s execute chip reset");
-		system_reset(SYSTEM_RESET_HARD);
+		if (power_button_is_pressed()) {
+			CPRINTS("PB held press 20s execute chip reset");
+			system_reset(SYSTEM_RESET_HARD);
+		} else {
+			/* Stop stretching the power button press */
+			power_button_released(tnow);
+		}
 		break;
 	}
 }
@@ -558,8 +563,9 @@ static void powerbtn_x86_changed(void)
 			pwrbtn_state = PWRBTN_STATE_IDLE;
 			return;
 		}
-
-		power_button_released(get_time().val);
+		/* if system is in G3 or S5 will run to was off state to released button */
+		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			power_button_released(get_time().val);
 	}
 
 	/* Wake the power button task */
