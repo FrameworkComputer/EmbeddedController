@@ -321,6 +321,20 @@ static void rt1718s_alert(int port)
 	tcpci_tcpc_alert(port);
 }
 
+static int rt1718s_enter_low_power_mode(int port)
+{
+	/* enter low power mode */
+	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_SYS_CTRL2,
+					  RT1718S_SYS_CTRL2_LPWR_EN, 0xFF));
+	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_SYS_CTRL2,
+					  RT1718S_SYS_CTRL2_BMCIO_OSC_EN, 0));
+
+	/* disable DP/DM/SBU swtiches */
+	RETURN_ERROR(rt1718s_write8(port, RT1718S_RT2_SBU_CTRL_01, 0));
+
+	return tcpci_enter_low_power_mode(port);
+}
+
 /* RT1718S is a TCPCI compatible port controller */
 const struct tcpm_drv rt1718s_tcpm_drv = {
 	.init			= &rt1718s_init,
@@ -353,7 +367,7 @@ const struct tcpm_drv rt1718s_tcpm_drv = {
 	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
 #endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
+	.enter_low_power_mode	= &rt1718s_enter_low_power_mode,
 #endif
 };
 
