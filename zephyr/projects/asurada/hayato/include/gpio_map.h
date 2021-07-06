@@ -64,7 +64,9 @@
 	GPIO_INT(GPIO_AP_IN_SLEEP_L,					\
 		 GPIO_INT_EDGE_BOTH, power_signal_interrupt)		\
 	GPIO_INT(GPIO_PMIC_EC_PWRGD,					\
-		 GPIO_INT_EDGE_BOTH, power_signal_interrupt)
+		 GPIO_INT_EDGE_BOTH, power_signal_interrupt)		\
+	GPIO_INT(GPIO_AP_EC_WARM_RST_REQ,				\
+		 GPIO_INT_EDGE_RISING, chipset_reset_request_interrupt)
 
 #define GPIO_EN_PP5000 GPIO_EN_PP5000_A
 
