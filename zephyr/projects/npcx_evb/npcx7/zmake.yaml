@@ -5,6 +5,7 @@
 board: npcx7_evb
 dts-overlays:
   - gpio.dts
+  - pwm.dts
 supported-zephyr-versions:
   - v2.6
 toolchain: coreboot-sdk
