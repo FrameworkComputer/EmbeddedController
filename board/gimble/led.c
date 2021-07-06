@@ -9,7 +9,10 @@
  * amber while charging the battery and white when the battery is charged.
  */
 
+#include <stdint.h>
+
 #include "common.h"
+#include "compile_time_macros.h"
 #include "ec_commands.h"
 #include "led_pwm.h"
 #include "pwm.h"

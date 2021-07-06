@@ -3,8 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
+#include <stdint.h>
+#include <stdbool.h>
 
+#include "common.h"
+#include "compile_time_macros.h"
+#include "console.h"
 #include "driver/bc12/pi3usb9201_public.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/ppc/syv682x_public.h"
@@ -12,14 +16,21 @@
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/ps8xxx_public.h"
 #include "driver/tcpm/tcpci.h"
+#include "ec_commands.h"
 #include "fw_config.h"
+#include "gpio.h"
+#include "gpio_signal.h"
 #include "hooks.h"
 #include "ioexpander.h"
 #include "system.h"
+#include "task.h"
+#include "task_id.h"
 #include "timer.h"
 #include "usbc_config.h"
 #include "usbc_ppc.h"
+#include "usb_charge.h"
 #include "usb_mux.h"
+#include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
