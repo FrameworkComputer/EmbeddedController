@@ -44,6 +44,36 @@
 			label = "I2C7_0";
 		};
 	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_ch_0 {
+			label = "ADC0";
+			enum-name = "ADC_EVB_CH_0";
+			channel = <0>;
+		};
+		adc_ch_1 {
+			label = "ADC1";
+			enum-name = "ADC_EVB_CH_1";
+			channel = <1>;
+		};
+		adc_ch_2 {
+			label = "ADC2";
+			enum-name = "ADC_EVB_CH_2";
+			channel = <2>;
+		};
+		adc_ch_3 {
+			label = "ADC3";
+			enum-name = "ADC_EVB_CH_3";
+			channel = <3>;
+		};
+		adc_ch_4 {
+			label = "ADC4";
+			enum-name = "ADC_EVB_CH_4";
+			channel = <4>;
+		};
+	};
 };
 
 &i2c0_0 {
@@ -69,4 +99,8 @@
 &i2c7_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&adc0 {
+	status = "okay";
 };

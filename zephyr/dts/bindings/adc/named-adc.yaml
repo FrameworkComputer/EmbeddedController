@@ -100,3 +100,8 @@ child-binding:
       - ADC_VBUS
       - ADC_VBUS_C0
       - ADC_VBUS_C1
+      - ADC_EVB_CH_0
+      - ADC_EVB_CH_1
+      - ADC_EVB_CH_2
+      - ADC_EVB_CH_3
+      - ADC_EVB_CH_4
