@@ -23,8 +23,11 @@ properties:
     - I2C_PORT_BATTERY
     - I2C_PORT_CHARGER
     - I2C_PORT_EEPROM
+    - I2C_PORT_EVB_0
     - I2C_PORT_EVB_1
     - I2C_PORT_EVB_2
+    - I2C_PORT_EVB_3
+    - I2C_PORT_EVB_7
     - I2C_PORT_OPT_4
     - I2C_PORT_POWER
     - I2C_PORT_PPC0

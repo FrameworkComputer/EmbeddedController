@@ -48,46 +48,6 @@
 			gpios = <&gpioa 5 GPIO_OUT_HIGH>;
 			label = "SPI_CS_L";
 		};
-		i2c0_scl0 {
-			gpios = <&gpiob 5 GPIO_ODR_HIGH>;
-			label = "I2C0_SCL0";
-		};
-		i2c0_sda0 {
-			gpios = <&gpiob 4 GPIO_ODR_HIGH>;
-			label = "I2C0_SDA0";
-		};
-		i2c1_scl0 {
-			gpios = <&gpio9 0 GPIO_ODR_HIGH>;
-			label = "I2C1_SCL0";
-		};
-		i2c1_sda0 {
-			gpios = <&gpio8 7 GPIO_ODR_HIGH>;
-			label = "I2C1_SDA0";
-		};
-		i2c2_scl0 {
-			gpios = <&gpio9 2 GPIO_ODR_HIGH>;
-			label = "I2C2_SCL0";
-		};
-		i2c2_sda0 {
-			gpios = <&gpio9 1 GPIO_ODR_HIGH>;
-			label = "I2C2_SDA0";
-		};
-		i2c3_scl0 {
-			gpios = <&gpiod 1 GPIO_ODR_HIGH>;
-			label = "I2C3_SCL0";
-		};
-		i2c3_sda0 {
-			gpios = <&gpiod 0 GPIO_ODR_HIGH>;
-			label = "I2C3_SDA0";
-		};
-		i2c7_sda0 {
-			gpios = <&gpiob 2 GPIO_ODR_HIGH>;
-			label = "I2C7_SDA0";
-		};
-		i2c7_scl0 {
-			gpios = <&gpiob 3 GPIO_ODR_HIGH>;
-			label = "I2C7_SCL0";
-		};
 		board_version1 {
 			gpios = <&gpio6 4 GPIO_INPUT>;
 			enum-name = "GPIO_BOARD_VERSION1";
