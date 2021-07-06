@@ -6,7 +6,7 @@
 #ifndef __BOARD_PRIMUS_FW_CONFIG_H_
 #define __BOARD_PRIMUS_FW_CONFIG_H_
 
-#include "stdint.h"
+#include <stdint.h>
 
 /****************************************************************************
  * CBI FW_CONFIG layout for Primus board.

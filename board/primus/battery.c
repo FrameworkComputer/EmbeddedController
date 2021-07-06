@@ -7,7 +7,7 @@
 
 #include "battery_fuel_gauge.h"
 #include "common.h"
-#include "util.h"
+#include "compile_time_macros.h"
 
 /*
  * Battery info for all Primus battery types. Note that the fields

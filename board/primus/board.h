@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+#include "compile_time_macros.h"
+
 /*
  * Early primus boards are not set up for vivaldi
  */

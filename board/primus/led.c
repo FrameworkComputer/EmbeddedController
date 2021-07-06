@@ -5,7 +5,10 @@
 
 /* Primus specific PWM LED settings. */
 
+#include <stdint.h>
+
 #include "common.h"
+#include "compile_time_macros.h"
 #include "ec_commands.h"
 #include "led_pwm.h"
 #include "pwm.h"
