@@ -40,8 +40,9 @@
 			gpios = <&gpio5 0 GPIO_OUT_HIGH>;
 			label = "PCH_WAKE_L";
 		};
-		pgood_fan {
+		gpio_pgood_fan: pgood_fan {
 			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_PGOOD_FAN";
 			label = "PGOOD_FAN";
 		};
 		spi_cs_l {

@@ -7,7 +7,7 @@
 	named-pwms {
 		compatible = "named-pwms";
 
-		fan {
+		pwm_fan: fan {
 			pwms = <&pwm0 0 0>;
 			label = "FAN";
 			frequency = <25000>;
