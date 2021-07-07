@@ -87,14 +87,17 @@
 		};
 		board_version1 {
 			gpios = <&gpio6 4 GPIO_INPUT>;
+			enum-name = "GPIO_BOARD_VERSION1";
 			label = "BOARD_VERSION1";
 		};
 		board_version2 {
 			gpios = <&gpio6 5 GPIO_INPUT>;
+			enum-name = "GPIO_BOARD_VERSION2";
 			label = "BOARD_VERSION2";
 		};
 		board_version3 {
 			gpios = <&gpio6 6 GPIO_INPUT>;
+			enum-name = "GPIO_BOARD_VERSION3";
 			label = "BOARD_VERSION3";
 		};
 	};
