@@ -27,6 +27,7 @@
 #define CONFIG_CBI_EEPROM
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CRC8
+#define CONFIG_DPTF
 #define CONFIG_FPU
 
 /* Verified boot configs */
