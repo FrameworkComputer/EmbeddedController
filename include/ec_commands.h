@@ -455,6 +455,13 @@ extern "C" {
 #define USB_RETIMER_FW_UPDATE_OP_SHIFT 4
 #define USB_RETIMER_FW_UPDATE_ERR         0xfe
 #define USB_RETIMER_FW_UPDATE_INVALID_MUX 0xff
+/* Mask to clear unused MUX bits in retimer firmware update  */
+#define USB_RETIMER_FW_UPDATE_MUX_MASK	(USB_PD_MUX_USB_ENABLED       | \
+					USB_PD_MUX_DP_ENABLED         | \
+					USB_PD_MUX_SAFE_MODE          | \
+					USB_PD_MUX_TBT_COMPAT_ENABLED | \
+					USB_PD_MUX_USB4_ENABLED)
+
 /* Retimer firmware update operations */
 #define USB_RETIMER_FW_UPDATE_QUERY_PORT 0 /* Which ports has retimer */
 #define USB_RETIMER_FW_UPDATE_SUSPEND_PD 1 /* Suspend PD port */

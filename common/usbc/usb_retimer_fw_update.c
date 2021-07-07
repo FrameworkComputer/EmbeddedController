@@ -91,6 +91,11 @@ static void deferred_pd_suspend(void)
 }
 DECLARE_DEFERRED(deferred_pd_suspend);
 
+static inline mux_state_t retimer_fw_update_usb_mux_get(int port)
+{
+	return usb_mux_get(port) & USB_RETIMER_FW_UPDATE_MUX_MASK;
+}
+
 void usb_retimer_fw_update_process_op_cb(int port)
 {
 	switch (last_op) {
@@ -118,26 +123,26 @@ void usb_retimer_fw_update_process_op_cb(int port)
 		pd_set_suspend(port, RESUME);
 		break;
 	case USB_RETIMER_FW_UPDATE_GET_MUX:
-		last_result = usb_mux_get(port);
+		last_result = retimer_fw_update_usb_mux_get(port);
 		break;
 	case USB_RETIMER_FW_UPDATE_SET_USB:
 		usb_mux_set(port, USB_PD_MUX_USB_ENABLED,
 			USB_SWITCH_CONNECT, pd_get_polarity(port));
-		last_result = usb_mux_get(port);
+		last_result = retimer_fw_update_usb_mux_get(port);
 		break;
 	case USB_RETIMER_FW_UPDATE_SET_SAFE:
 		usb_mux_set_safe_mode(port);
-		last_result = usb_mux_get(port);
+		last_result = retimer_fw_update_usb_mux_get(port);
 		break;
 	case USB_RETIMER_FW_UPDATE_SET_TBT:
 		usb_mux_set(port, USB_PD_MUX_TBT_COMPAT_ENABLED,
 			USB_SWITCH_CONNECT, pd_get_polarity(port));
-		last_result = usb_mux_get(port);
+		last_result = retimer_fw_update_usb_mux_get(port);
 		break;
 	case USB_RETIMER_FW_UPDATE_DISCONNECT:
 		usb_mux_set(port, USB_PD_MUX_NONE,
 			USB_SWITCH_DISCONNECT, pd_get_polarity(port));
-		last_result = usb_mux_get(port);
+		last_result = retimer_fw_update_usb_mux_get(port);
 		break;
 	default:
 		break;
