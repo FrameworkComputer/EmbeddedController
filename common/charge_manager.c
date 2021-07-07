@@ -833,6 +833,13 @@ static void charge_manager_refresh(void)
 
 		CPRINTS("CL: p%d s%d i%d v%d", new_port, new_supplier,
 			new_charge_current, new_charge_voltage);
+
+		/*
+		 * (b:192638664) We try to check AC OK again to avoid
+		 * unsuccessful detection in the initial detection.
+		 */
+		if (IS_ENABLED(CONFIG_EXTPOWER))
+			board_check_extpower();
 	}
 
 	/*
