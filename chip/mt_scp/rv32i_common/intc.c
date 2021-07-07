@@ -201,12 +201,12 @@ static struct {
 	[SCP_IRQ_GCE]			= { INTC_GRP_0 },
 	[SCP_IRQ_MDP_GCE]		= { INTC_GRP_0 },
 	/* 36 */
-	[SCP_IRQ_VDEC]			= { INTC_GRP_0 },
+	[SCP_IRQ_VDEC]			= { INTC_GRP_8 },
 	[SCP_IRQ_WDT]			= { INTC_GRP_0 },
-	[SCP_IRQ_VDEC_LAT]		= { INTC_GRP_0 },
-	[SCP_IRQ_VDEC1]			= { INTC_GRP_0 },
+	[SCP_IRQ_VDEC_LAT]		= { INTC_GRP_8 },
+	[SCP_IRQ_VDEC1]			= { INTC_GRP_8 },
 	/* 40 */
-	[SCP_IRQ_VDEC1_LAT]		= { INTC_GRP_0 },
+	[SCP_IRQ_VDEC1_LAT]		= { INTC_GRP_8 },
 	[SCP_IRQ_INFRA]			= { INTC_GRP_0 },
 	[SCP_IRQ_CLK_CTRL_CORE]		= { INTC_GRP_0 },
 	[SCP_IRQ_CLK_CTRL2_CORE]	= { INTC_GRP_0 },
@@ -228,7 +228,7 @@ static struct {
 	/* 56 */
 	[SCP_IRQ_I3C0_IBI_WAKE]		= { INTC_GRP_0 },
 	[SCP_IRQ_I3C1_IBI_WAKE]		= { INTC_GRP_0 },
-	[SCP_IRQ_VENC]			= { INTC_GRP_0 },
+	[SCP_IRQ_VENC]			= { INTC_GRP_8 },
 	[SCP_IRQ_APU_ENGINE]		= { INTC_GRP_0 },
 	/* 60 */
 	[SCP_IRQ_MBOX0]			= { INTC_GRP_0 },
@@ -264,7 +264,7 @@ static struct {
 	[SCP_IRQ_JPEGENC]		= { INTC_GRP_0 },
 	[SCP_IRQ_JPEGDEC]		= { INTC_GRP_0 },
 	[SCP_IRQ_JPEGDEC_C2]		= { INTC_GRP_0 },
-	[SCP_IRQ_VENC_C1]		= { INTC_GRP_0 },
+	[SCP_IRQ_VENC_C1]		= { INTC_GRP_8 },
 	/* 88 */
 	[SCP_IRQ_JPEGENC_C1]		= { INTC_GRP_0 },
 	[SCP_IRQ_JPEGDEC_C1]		= { INTC_GRP_0 },
