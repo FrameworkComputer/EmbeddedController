@@ -42,7 +42,7 @@ GPIO_INT(AP_EC_SPI_CS_L,    PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN, shi_cs
 GPIO_INT(BASE_DET_L,        PIN(3, 7), GPIO_INT_BOTH, base_detect_interrupt)  /* Detachable base attached? */
 
 /* Sensor interrupts */
-GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 0), GPIO_INT_FALLING, bmi160_interrupt)  /* Accelerometer/gyro interrupt */
+GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 0), GPIO_INT_FALLING, motion_interrupt)  /* Accelerometer/gyro interrupt */
 
 /* Switchcap, for LN9310, it is the interrupt line of LN9310. */
 GPIO_INT(LN9310_INT,      PIN(E, 2), GPIO_INT_FALLING, switchcap_interrupt)
