@@ -39,6 +39,10 @@ readonly CROS_EC_SPI_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-spi"
 
 readonly CROS_EC_UART_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-uart"
 
+klog() {
+  echo "flash_fp_mcu: $*" > /dev/kmsg
+}
+
 check_hardware_write_protect_disabled() {
   local hardware_write_protect_state
   if ! hardware_write_protect_state="$(crossystem wpsw_cur)"; then
@@ -93,18 +97,22 @@ gpio() {
   for signal in "$@"; do
     case "${cmd}" in
       unexport|export)
+        klog "Set gpio ${signal} to ${cmd}"
         echo "${signal}" > "/sys/class/gpio/${cmd}"
         ;;
       in|out)
         local direction="${cmd}"
+        klog "Set gpio ${signal} direction to ${direction}"
         echo "${direction}" > "/sys/class/gpio/gpio${signal}/direction"
         ;;
       0|1)
         local value="${cmd}"
+        klog "Set gpio ${signal} to ${value}"
         echo "${value}" > "/sys/class/gpio/gpio${signal}/value"
         ;;
       get)
         local value="${cmd}"
+        klog "Get gpio ${signal}"
         cat "/sys/class/gpio/gpio${signal}/value"
         ;;
       *)
@@ -299,6 +307,7 @@ flash_fp_mcu_stm32() {
   fi
 
   # Remove cros_fp if present
+  klog "Unbinding cros-ec driver"
   if [[ "${transport}" == "UART" ]]; then
     echo "${deviceid}" > /sys/bus/serial/drivers/cros-ec-uart/unbind
   else
@@ -314,6 +323,7 @@ flash_fp_mcu_stm32() {
   gpio 0 "${gpio_nrst}"
   sleep 0.001
 
+  klog "Binding raw driver"
   if [[ "${transport}" == "UART" ]]; then
     # load AMDI0020:01 ttyS1
     echo AMDI0020:01 > /sys/bus/platform/drivers/dw-apb-uart/unbind;
@@ -374,6 +384,7 @@ flash_fp_mcu_stm32() {
 
   # unload device
   if [[ "${transport}" != "UART" ]]; then
+    klog "Unbinding raw driver"
     echo "${deviceid}" > /sys/bus/spi/drivers/spidev/unbind
   fi
 
@@ -395,6 +406,7 @@ flash_fp_mcu_stm32() {
 
   # Put back cros_fp driver if transport is SPI
   if [[ "${transport}" != "UART" ]]; then
+    klog "Binding cros-ec driver"
     echo "" > "/sys/bus/spi/devices/${deviceid}/driver_override"
     echo "${deviceid}" > /sys/bus/spi/drivers/cros-ec-spi/bind
 
@@ -414,6 +426,7 @@ flash_fp_mcu_stm32() {
     echo "Please reboot this device."
   else
     # Test it
+    klog "Query version"
     ectool --name=cros_fp version
   fi
 }
