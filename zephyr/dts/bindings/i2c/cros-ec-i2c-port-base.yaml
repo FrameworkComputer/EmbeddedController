@@ -51,3 +51,11 @@ properties:
     description:
       Human readable string describing the device (used as device_get_binding()
       argument).
+  physical-port:
+    type: int
+    # TODO: Change the field to true once all boards' named-i2c-ports support
+    # this property.
+    required: false
+    description:
+      In the named-i2c-ports, it's a number indicated an i2c device
+      (eg. battery, charger, etc.) connected to which soc's i2c port.

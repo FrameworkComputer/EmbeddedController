@@ -72,62 +72,74 @@
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_POWER";
 			label = "POWER";
+			physical-port = <0>;
 		};
 		battery {
 			i2c-port = <&i2c0>;
 			remote-port = <0>;
 			enum-name = "I2C_PORT_BATTERY";
 			label = "BATTERY";
+			physical-port = <0>;
 		};
 		eeprom {
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_EEPROM";
 			label = "EEPROM";
+			physical-port = <0>;
 		};
 		charger {
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_CHARGER";
 			label = "CHARGER";
+			physical-port = <0>;
 		};
 		i2c_sensor: sensor {
 			i2c-port = <&i2c1>;
 			enum-name = "I2C_PORT_SENSOR";
 			label = "SENSOR";
+			physical-port = <1>;
 		};
 		i2c-accel {
 			i2c-port = <&i2c1>;
 			enum-name = "I2C_PORT_ACCEL";
 			label = "ACCEL";
+			physical-port = <1>;
 		};
 		ppc0 {
 			i2c-port = <&i2c2>;
 			enum-name = "I2C_PORT_PPC0";
 			label = "PPC0";
+			physical-port = <2>;
 		};
 		ppc1 {
 			i2c-port = <&i2c4>;
 			enum-name = "I2C_PORT_PPC1";
 			label = "PPC1";
+			physical-port = <4>;
 		};
 		usb-c0 {
 			i2c-port = <&i2c2>;
 			enum-name = "I2C_PORT_USB_C0";
 			label = "USB_C0";
+			physical-port = <2>;
 		};
 		usb-c1 {
 			i2c-port = <&i2c4>;
 			enum-name = "I2C_PORT_USB_C1";
 			label = "USB_C1";
+			physical-port = <4>;
 		};
 		usb-mux0 {
 			i2c-port = <&i2c2>;
 			enum-name = "I2C_PORT_USB_MUX0";
 			label = "USB_MUX0";
+			physical-port = <2>;
 		};
 		usb-mux1 {
 			i2c-port = <&i2c4>;
 			enum-name = "I2C_PORT_USB_MUX1";
 			label = "USB_MUX1";
+			physical-port = <4>;
 		};
 	};
 
