@@ -365,7 +365,7 @@
 		 */
 		ec_batt_pres_odl {
 			gpios = <&gpioe 1 GPIO_INPUT>;
-			enum-name = "GPIO_EC_BATT_PRES_ODL";
+			enum-name = "GPIO_BATT_PRES_ODL";
 			label = "EC_BATT_PRES_ODL";
 		};
 		gpio_en_pp5000_fan: en_pp5000_fan {

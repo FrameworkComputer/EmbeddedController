@@ -67,6 +67,8 @@
 #define GMR_TABLET_MODE_INT(gpio, edge)
 #endif
 
+#define GPIO_EC_BATT_PRES_ODL GPIO_BATT_PRES_ODL
+
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
  *

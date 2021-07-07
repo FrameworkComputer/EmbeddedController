@@ -31,7 +31,6 @@ properties:
       - GPIO_DP_MUX_SEL
       - GPIO_EC_ACCEL_INT
       - GPIO_EC_ALS_RGB_INT_L
-      - GPIO_EC_BATT_PRES_ODL
       - GPIO_EC_BL_EN_OD
       - GPIO_EC_CHG_LED_B_C1
       - GPIO_EC_CHG_LED_Y_C1
