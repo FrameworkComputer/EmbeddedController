@@ -72,6 +72,7 @@ const char *command_names(uint8_t command)
 	return "";
 }
 
+static int is_delay;
 int ucsi_write_tunnel(void)
 {
 	uint8_t *message_out = host_get_customer_memmap(EC_MEMMAP_UCSI_MESSAGE_OUT);
@@ -80,8 +81,6 @@ int ucsi_write_tunnel(void)
 	int i;
 	int offset = 0;
 	int rv = EC_SUCCESS;
-	static int is_delay;
-	static timestamp_t delay_time;
 
 	/**
 	 * Note that CONTROL data has always to be written after MESSAGE_OUT data is written
@@ -106,11 +105,8 @@ int ucsi_write_tunnel(void)
 		 */
 		if (!is_delay) {
 			is_delay = 1;
-			delay_time.val = get_time().val + (500 * MSEC);
-		}
-
-		if (!timestamp_expired(delay_time, NULL))
 			return EC_ERROR_BUSY;
+		}
 
 		CPRINTS("Already delay 500ms, send command to PD chip");
 		is_delay = 0;
@@ -289,8 +285,12 @@ void check_ucsi_event_from_host(void)
 		 * Following the specification, until the EC reads the VERSION register
 		 * from CCGX's UCSI interface, it ignores all writes from the BIOS
 		 */
-		ucsi_set_next_poll(10*MSEC);
 		rv = ucsi_write_tunnel();
+
+		if (is_delay)
+			ucsi_set_next_poll(500*MSEC);
+		else
+			ucsi_set_next_poll(10*MSEC);
 
 		if (rv == EC_ERROR_BUSY)
 			return;
