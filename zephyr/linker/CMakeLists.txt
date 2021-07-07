@@ -14,3 +14,5 @@ zephyr_linker_sources(RAM_SECTIONS image_size.ld)
 # Little FW with specific purposes used by NPCX EC
 zephyr_linker_sources_ifdef(CONFIG_SOC_FAMILY_NPCX ROM_START SORT_KEY 1
   npcx-lfw.ld)
+
+zephyr_linker_sources(SECTIONS iterables-rom.ld)
