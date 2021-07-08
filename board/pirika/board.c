@@ -692,11 +692,11 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 const static struct ec_thermal_config thermal_charger = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(98),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(50),
 	},
 };
 const static struct ec_thermal_config thermal_vcore = {
@@ -705,7 +705,7 @@ const static struct ec_thermal_config thermal_vcore = {
 		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(50),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(53),
 	},
 };
 const static struct ec_thermal_config thermal_ambient = {
