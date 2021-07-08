@@ -190,7 +190,7 @@ static int cros_kb_raw_npcx_init(const struct device *dev)
 	 * Select quasi-bidirectional buffers for KSO pins. It reduces the
 	 * low-to-high transition time. This feature only supports in npcx7.
 	 */
-	if (IS_ENABLED(CONFIG_KEYBOARD_KSO_HIGH_DRIVE)) {
+	if (IS_ENABLED(CONFIG_CROS_KB_RAW_NPCX_KSO_HIGH_DRIVE)) {
 		SET_FIELD(inst->KBSCTL, NPCX_KBSCTL_KBHDRV_FIELD, 0x01);
 	}
 

@@ -12,6 +12,17 @@ menuconfig CROS_KB_RAW_NPCX
 	  kscan interface so we can continue to use most of the existing
 	  keyboard-scanning code in ECOS.
 
+if CROS_KB_RAW_NPCX
+
+config CROS_KB_RAW_NPCX_KSO_HIGH_DRIVE
+	bool "Enable quasi-bidirectional buffers for KSO pins"
+	help
+	  This option enables quasi-bidirectional buffers for KSO pins. The
+	  low-impedance high drive is active when ec changes the output data
+	  buffers from 0 to 1, thereby reducing the low-to-high transition time.
+
+endif # CROS_KB_RAW_NPCX
+
 menuconfig CROS_KB_RAW_ITE
 	bool "ITE raw-keyboard-scan driver for the Zephyr shim"
 	depends on SOC_FAMILY_RISCV_ITE
