@@ -9,6 +9,9 @@ CHIP:=stm32
 CHIP_FAMILY:=stm32f4
 CHIP_VARIANT:=stm32f412
 
+# Don't forget that the board build.mk is included more than once to allow
+# conditional variables to be realized. This means that we need to redefine all
+# variable or the "+=" lines will compound.
 board-rw=board_rw.o
 board-y=board.o
 

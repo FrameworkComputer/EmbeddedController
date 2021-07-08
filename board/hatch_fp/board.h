@@ -247,6 +247,8 @@
 #include "gpio_signal.h"
 #include "board_rw.h"
 
+void slp_event(enum gpio_signal signal);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */
