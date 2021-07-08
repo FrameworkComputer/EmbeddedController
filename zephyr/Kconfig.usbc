@@ -272,6 +272,16 @@ config PLATFORM_EC_USB_PD_PORT_MAX_COUNT
 	  source_enabled[] so that plenty of ports are supported without this
 	  configuration option?
 
+config PLATFORM_EC_CONSOLE_CMD_MFALLOW
+	bool "Console command: mfallow"
+	default y
+	help
+	  Controls whether multi-function support is allowed for DP (Display
+	  Port) connections. Default setting allows multi-function support when
+	  the attached device also supports multi-function mode.
+
+	    mfallow <port> [true | false]
+
 config PLATFORM_EC_CONSOLE_CMD_PD
 	bool "Console command: pd"
 	default y
