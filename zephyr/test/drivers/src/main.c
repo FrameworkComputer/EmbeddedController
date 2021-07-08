@@ -16,6 +16,7 @@ extern void test_suite_bma2x2(void);
 extern void test_suite_bc12(void);
 extern void test_suite_ppc(void);
 extern void test_suite_bmi260(void);
+extern void test_suite_bmi160(void);
 
 void test_main(void)
 {
@@ -33,4 +34,5 @@ void test_main(void)
 	test_suite_bc12();
 	test_suite_ppc();
 	test_suite_bmi260();
+	test_suite_bmi160();
 }

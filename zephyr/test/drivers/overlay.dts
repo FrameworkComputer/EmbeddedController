@@ -8,6 +8,7 @@
 / {
 	aliases {
 		bmi260-int = &ms_bmi260_accel;
+		bmi160-int = &ms_bmi160_accel;
 	};
 	named-gpios {
 		compatible = "named-gpios";
@@ -70,6 +71,11 @@
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_ACCEL";
 			label = "ACCEL";
+		};
+		i2c_sensor: sensor {
+			i2c-port = <&i2c1>;
+			enum-name = "I2C_PORT_SENSOR";
+			label = "SENSOR";
 		};
 	};
 
@@ -174,6 +180,10 @@
 		mutex_bmi260: bmi260-mutex {
 			label = "BMI260_MUTEX";
 		};
+
+		mutex_bmi160: bmi160-mutex {
+			label = "BMI160_MUTEX";
+		};
 	};
 
 	/*
@@ -183,6 +193,11 @@
 	motionsense-sensor-data {
 		bmi260_data: bmi260-drv-data {
 			compatible = "cros-ec,drvdata-bmi260";
+			status = "okay";
+		};
+
+		bmi160_data: bmi160-drv-data {
+			compatible = "cros-ec,drvdata-bmi160";
 			status = "okay";
 		};
 	};
@@ -217,6 +232,57 @@
 			drv-data = <&bmi260_data>;
 			default-range = <1000>; /* dps */
 			i2c-spi-addr-flags = "BMI260_ADDR0_FLAGS";
+		};
+
+		ms_bmi160_accel: ms-bmi160-accel {
+			compatible = "cros-ec,bmi160-accel";
+			status = "okay";
+
+			label = "BMI160 emul accel";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&mutex_bmi160>;
+			port = <&i2c_sensor>;
+			drv-data = <&bmi160_data>;
+			default-range = <4>;
+			i2c-spi-addr-flags = "BMI160_ADDR0_FLAGS";
+		};
+
+		ms_bmi160_gyro: ms-bmi160-gyro {
+			compatible = "cros-ec,bmi160-gyro";
+			status = "okay";
+
+			label = "BMI160 emul gyro";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&mutex_bmi160>;
+			port = <&i2c_sensor>;
+			drv-data = <&bmi160_data>;
+			default-range = <1000>; /* dps */
+			i2c-spi-addr-flags = "BMI160_ADDR0_FLAGS";
+		};
+	};
+
+	/*
+	 * Second i2c bus is required, because there is already device with
+	 * address 0x68 on the first bus
+	 */
+	i2c1: i2c@400 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x400 4>;
+		label = "I2C_1";
+
+		accel_bmi160: bmi160@68 {
+			compatible = "zephyr,bmi";
+			reg = <0x68>;
+			label = "BMI160";
+			device-model = "BMI_EMUL_160";
+			error-on-ro-write;
+			error-on-wo-read;
+			error-on-reserved-bit-write;
+			simulate-command-exec-time;
 		};
 	};
 };
