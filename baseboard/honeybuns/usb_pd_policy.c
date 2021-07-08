@@ -145,15 +145,12 @@ __override bool port_discovery_dr_swap_policy(int port,
 /*
  * Default Port Discovery VCONN Swap Policy.
  *
- * 1) VCONN swap if requested by PE and currently not vconn source.
+ * 1) No need to Vconn swap.  This board does not require any cable information.
  */
 __override bool port_discovery_vconn_swap_policy(int port,
 			bool vconn_swap_flag)
 {
-	if (vconn_swap_flag && !tc_is_vconn_src(port))
-		return true;
-	else
-		return false;
+	return false;
 }
 
 int pd_check_vconn_swap(int port)
