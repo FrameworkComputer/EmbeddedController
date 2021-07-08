@@ -176,6 +176,28 @@ int gpio_get_level(enum gpio_signal signal)
 	return l;
 }
 
+int gpio_get_ternary(enum gpio_signal signal)
+{
+	int pd, pu;
+	int flags = gpio_get_default_flags(signal);
+
+	/* Read GPIO with internal pull-down */
+	gpio_set_flags(signal, GPIO_INPUT | GPIO_PULL_DOWN);
+	pd = gpio_get_level(signal);
+	udelay(100);
+
+	/* Read GPIO with internal pull-up */
+	gpio_set_flags(signal, GPIO_INPUT | GPIO_PULL_UP);
+	pu = gpio_get_level(signal);
+	udelay(100);
+
+	/* Reset GPIO flags */
+	gpio_set_flags(signal, flags);
+
+	/* Check PU and PD readings to determine tristate */
+	return pu && !pd ? 2 : pd;
+}
+
 const char *gpio_get_name(enum gpio_signal signal)
 {
 	if (!gpio_is_implemented(signal))

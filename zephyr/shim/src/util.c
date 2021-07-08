@@ -276,3 +276,56 @@ int cond_is(cond_t *c, int val)
 	else
 		return !(*c & COND_CURR_MASK);
 }
+
+int binary_first_base3_from_bits(int *bits, int nbits)
+{
+	int binary_below = 0;
+	int has_z = 0;
+	int base3 = 0;
+	int i;
+
+	/* Loop through every ternary digit, from MSB to LSB. */
+	for (i = nbits - 1; i >= 0; i--) {
+		/*
+		 * We keep track of the normal ternary result and whether
+		 * we found any bit that was a Z. We also determine the
+		 * amount of numbers that can be represented with only binary
+		 * digits (no Z) whose value in the normal ternary system
+		 * is lower than the one we are parsing. Counting from the left,
+		 * we add 2^i for any '1' digit to account for the binary
+		 * numbers whose values would be below it if all following
+		 * digits we parsed would be '0'. As soon as we find a '2' digit
+		 * we can total the remaining binary numbers below as 2^(i+1)
+		 * because we know that all binary representations counting only
+		 * this and following digits must have values below our number
+		 * (since 1xxx is always smaller than 2xxx).
+		 *
+		 * Example: 1 0 2 1 (counting from the left / most significant)
+		 * '1' at 3^3: Add 2^3 = 8 to account for binaries 0000-0111
+		 * '0' at 3^2: Ignore (not all binaries 1000-1100 are below us)
+		 * '2' at 3^1: Add 2^(1+1) = 4 to account for binaries 1000-1011
+		 * Stop adding for lower digits (3^0), all already accounted
+		 * now. We know that there can be no binary numbers 1020-102X.
+		 */
+		base3 = (base3 * 3) + bits[i];
+
+		if (!has_z) {
+			switch (bits[i]) {
+			case 0: /* Ignore '0' digits. */
+				break;
+			case 1:	/* Account for binaries 0 to 2^i - 1. */
+				binary_below += 1 << i;
+				break;
+			case 2:	/* Account for binaries 0 to 2^(i+1) - 1. */
+				binary_below += 1 << (i + 1);
+				has_z = 1;
+			}
+		}
+	}
+
+	if (has_z)
+		return base3 + (1 << nbits) - binary_below;
+
+	/* binary_below is normal binary system value if !has_z. */
+	return binary_below;
+}
