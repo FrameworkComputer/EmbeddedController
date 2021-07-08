@@ -22,5 +22,13 @@
 			offset = <0x07>;
 			size = <0x05>;
 		};
+		scratchpad {
+			offset = <0x0c>;
+			size = <0x04>;
+		};
+		saved-reset-flags {
+			offset = <0x10>;
+			size = <0x04>;
+		};
 	};
 };

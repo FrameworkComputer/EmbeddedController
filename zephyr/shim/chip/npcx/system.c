@@ -9,44 +9,15 @@
 #include "system.h"
 #include "system_chip.h"
 
-#define GET_BBRAM_OFFSET(node) \
-	DT_PROP(DT_PATH(named_bbram_regions, node), offset)
-#define GET_BBRAM_SIZE(node) DT_PROP(DT_PATH(named_bbram_regions, node), size)
-
 LOG_MODULE_REGISTER(shim_npcx_system, LOG_LEVEL_ERR);
-
-const static struct device *bbram_dev;
-
-void chip_save_reset_flags(uint32_t flags)
-{
-	if (bbram_dev == NULL) {
-		LOG_ERR("bbram_dev doesn't binding");
-		return;
-	}
-
-	cros_bbram_write(bbram_dev, GET_BBRAM_OFFSET(saved_reset_flags),
-			 GET_BBRAM_SIZE(saved_reset_flags), (uint8_t *)&flags);
-}
-
-uint32_t chip_read_reset_flags(void)
-{
-	uint32_t flags;
-
-	if (bbram_dev == NULL) {
-		LOG_ERR("bbram_dev doesn't binding");
-		return 0;
-	}
-
-	cros_bbram_read(bbram_dev, GET_BBRAM_OFFSET(saved_reset_flags),
-			GET_BBRAM_SIZE(saved_reset_flags), (uint8_t *)&flags);
-
-	return flags;
-}
 
 void chip_bbram_status_check(void)
 {
-	if (!bbram_dev) {
-		LOG_DBG("bbram_dev doesn't binding");
+	const struct device *bbram_dev;
+
+	bbram_dev = DEVICE_DT_GET(DT_NODELABEL(bbram));
+	if (!device_is_ready(bbram_dev)) {
+		LOG_ERR("Error: device %s is not ready", bbram_dev->name);
 		return;
 	}
 
@@ -107,16 +78,8 @@ static int chip_system_init(const struct device *unused)
 	ARG_UNUSED(unused);
 
 	/*
-	 * NPCX chip uses BBRAM to save the reset flag. Binding & check BBRAM
-	 * here.
+	 * Check BBRAM power status.
 	 */
-	bbram_dev = DEVICE_DT_GET(DT_NODELABEL(bbram));
-	if (!device_is_ready(bbram_dev)) {
-		LOG_ERR("Error: device %s is not ready", bbram_dev->name);
-		return -1;
-	}
-
-	/* check the BBRAM status */
 	chip_bbram_status_check();
 
 	system_mpu_config();

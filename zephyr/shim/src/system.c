@@ -20,27 +20,14 @@
 #define BBRAM_REGION_PD2	DT_PATH(named_bbram_regions, pd2)
 #define BBRAM_REGION_TRY_SLOT	DT_PATH(named_bbram_regions, try_slot)
 
+#define GET_BBRAM_OFFSET(node) \
+	DT_PROP(DT_PATH(named_bbram_regions, node), offset)
+#define GET_BBRAM_SIZE(node) DT_PROP(DT_PATH(named_bbram_regions, node), size)
+
 LOG_MODULE_REGISTER(shim_system, LOG_LEVEL_ERR);
 
 STATIC_IF_NOT(CONFIG_ZTEST) const struct device *bbram_dev;
 static const struct device *sys_dev;
-
-#if DT_NODE_EXISTS(DT_NODELABEL(bbram))
-static int system_init(const struct device *unused)
-{
-	ARG_UNUSED(unused);
-
-	bbram_dev = DEVICE_DT_GET(DT_NODELABEL(bbram));
-	if (!device_is_ready(bbram_dev)) {
-		LOG_ERR("Error: device %s is not ready", bbram_dev->name);
-		return -1;
-	}
-
-	return 0;
-}
-
-SYS_INIT(system_init, PRE_KERNEL_1, 50);
-#endif
 
 /* Map idx to a bbram offset/size, or return -1 on invalid idx */
 static int bbram_lookup(enum system_bbram_idx idx, int *offset_out,
@@ -83,6 +70,62 @@ int system_get_bbram(enum system_bbram_idx idx, uint8_t *value)
 	rc = cros_bbram_read(bbram_dev, offset, size, value);
 
 	return rc ? EC_ERROR_INVAL : EC_SUCCESS;
+}
+
+void chip_save_reset_flags(uint32_t flags)
+{
+	if (bbram_dev == NULL) {
+		LOG_ERR("bbram_dev doesn't binding");
+		return;
+	}
+
+	cros_bbram_write(bbram_dev, GET_BBRAM_OFFSET(saved_reset_flags),
+			 GET_BBRAM_SIZE(saved_reset_flags), (uint8_t *)&flags);
+}
+
+uint32_t chip_read_reset_flags(void)
+{
+	uint32_t flags;
+
+	if (bbram_dev == NULL) {
+		LOG_ERR("bbram_dev doesn't binding");
+		return 0;
+	}
+
+	cros_bbram_read(bbram_dev, GET_BBRAM_OFFSET(saved_reset_flags),
+			GET_BBRAM_SIZE(saved_reset_flags), (uint8_t *)&flags);
+
+	return flags;
+}
+
+int system_set_scratchpad(uint32_t value)
+{
+	if (bbram_dev == NULL) {
+		LOG_ERR("bbram_dev doesn't binding");
+		return -EC_ERROR_INVAL;
+	}
+
+	return cros_bbram_write(bbram_dev, GET_BBRAM_OFFSET(scratchpad),
+			 GET_BBRAM_SIZE(scratchpad), (uint8_t *)&value);
+}
+
+uint32_t system_get_scratchpad(void)
+{
+	uint32_t value;
+
+	if (bbram_dev == NULL) {
+		LOG_ERR("bbram_dev doesn't binding");
+		/*
+		 * TODO(b/195481980): Seperate the scratchpad value & API
+		 * status.
+		 */
+		return 0;
+	}
+
+	cros_bbram_read(bbram_dev, GET_BBRAM_OFFSET(scratchpad),
+			GET_BBRAM_SIZE(scratchpad), (uint8_t *)&value);
+
+	return value;
 }
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
@@ -281,6 +324,14 @@ static int check_reset_cause(void)
 static int system_preinitialize(const struct device *unused)
 {
 	ARG_UNUSED(unused);
+
+#if DT_NODE_EXISTS(DT_NODELABEL(bbram))
+	bbram_dev = DEVICE_DT_GET(DT_NODELABEL(bbram));
+	if (!device_is_ready(bbram_dev)) {
+		LOG_ERR("Error: device %s is not ready", bbram_dev->name);
+		return -1;
+	}
+#endif
 
 	sys_dev = device_get_binding("CROS_SYSTEM");
 	if (!sys_dev) {
