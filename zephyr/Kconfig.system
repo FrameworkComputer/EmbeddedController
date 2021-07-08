@@ -4,6 +4,13 @@
 
 if PLATFORM_EC
 
+config PLATFORM_EC_CONSOLE_CMD_SCRATCHPAD
+	bool "Console Command: scratchpad"
+	help
+	  Enable the scratchpad console command. The scratchpad register
+	  maintain its contents across a software-requested warm reset. The
+	  command is used to set or get the scratchpad.
+
 config PLATFORM_EC_CONSOLE_CMD_SYSINFO
 	bool "Console Command: sysinfo"
 	default y
