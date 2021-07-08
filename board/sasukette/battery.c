@@ -5,9 +5,15 @@
  * Battery pack vendor provided charging profile
  */
 
+#include "battery.h"
 #include "battery_fuel_gauge.h"
+#include "battery_smart.h"
 #include "charge_state.h"
 #include "common.h"
+#include "util.h"
+
+#define CHARGING_VOLTAGE_MV_SAFE        8400
+#define CHARGING_CURRENT_MA_SAFE        1500
 
 /*
  * Battery info for all sasukette battery types. Note that the fields
@@ -68,180 +74,92 @@ BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SDI;
 
-static int swelling_flag = -1;
-static int prev_ac = -1;
-static int charger_flag = -1;
-
-enum swelling_data {
-	SWELLING_TRIGGER_5 = 1,
-	SWELLING_TRIGGER_15,
-	SWELLING_TRIGGER_45,
-	SWELLING_TRIGGER_50,
-	SWELLING_RECOVERY_10,
-	SWELLING_RECOVERY_20,
-	SWELLING_RECOVERY_50,
-	SWELLING_DATA_COUNT
-};
-
 int charger_profile_override(struct charge_state_data *curr)
 {
-	static timestamp_t chargeCnt;
-	int bat_temp_c = (curr->batt.temperature - 2731) / 10;
+	int current;
+	int voltage;
+	/* battery temp in 0.1 deg C */
+	int bat_temp_c;
+	const struct battery_info *batt_info;
 
 	/*
-	 *	start charge temp control
+	 * Keep track of battery temperature range:
 	 *
-	 *	if bat_temp >= 45 or bat_temp <= 0 when adapter plugging in,
-	 *	stop charge
-	 *	if 0 < bat_temp < 45 when adapter plugging in, charge normal
+	 *     ZONE_0  ZONE_1   ZONE_2  ZONE_3
+	 * ---+------+--------+--------+------+--- Temperature (C)
+	 *    0      5        12       45     50
 	 */
-	if (curr->ac != prev_ac) {
-		if (curr->ac) {
-			if ((bat_temp_c <= 0) || (bat_temp_c >= 45))
-				charger_flag = 1;
-		}
-		prev_ac = curr->ac;
-	}
+	enum {
+		TEMP_ZONE_0, /* 0 <= bat_temp_c <= 5 */
+		TEMP_ZONE_1, /* 5 < bat_temp_c <= 12 */
+		TEMP_ZONE_2, /* 12 < bat_temp_c <= 45 */
+		TEMP_ZONE_3, /* 45 < bat_temp_c <= 50 */
+		TEMP_ZONE_COUNT,
+		TEMP_OUT_OF_RANGE = TEMP_ZONE_COUNT
+	} temp_zone;
 
-	if (charger_flag) {
-		curr->requested_current = 0;
-		curr->requested_voltage = 0;
+	/*
+	 * Precharge must be executed when communication is failed on
+	 * dead battery.
+	 */
+	if (!(curr->batt.flags & BATT_FLAG_RESPONSIVE))
+		return 0;
+
+	current = curr->requested_current;
+	voltage = curr->requested_voltage;
+	bat_temp_c = curr->batt.temperature - 2731;
+	batt_info = battery_get_info();
+
+	/*
+	 * If the temperature reading is bad, assume the temperature
+	 * is out of allowable range.
+	 */
+	if ((curr->batt.flags & BATT_FLAG_BAD_TEMPERATURE) ||
+	    (bat_temp_c < 0) || (bat_temp_c > 500))
+		temp_zone = TEMP_OUT_OF_RANGE;
+	else if (bat_temp_c <= 50)
+		temp_zone = TEMP_ZONE_0;
+	else if (bat_temp_c <= 120)
+		temp_zone = TEMP_ZONE_1;
+	else if (bat_temp_c <= 450)
+		temp_zone = TEMP_ZONE_2;
+	else
+		temp_zone = TEMP_ZONE_3;
+
+	switch (temp_zone) {
+	case TEMP_ZONE_0:
+		voltage = CHARGING_VOLTAGE_MV_SAFE;
+		current = CHARGING_CURRENT_MA_SAFE;
+		break;
+
+	case TEMP_ZONE_1:
+		voltage += 100;
+		current = CHARGING_CURRENT_MA_SAFE;
+		break;
+
+	case TEMP_ZONE_2:
+		voltage += 100;
+		break;
+
+	case TEMP_ZONE_3:
+		voltage = CHARGING_VOLTAGE_MV_SAFE;
+		break;
+
+	case TEMP_OUT_OF_RANGE:
+		/* Don't charge if outside of allowable temperature range */
+		current = 0;
+		voltage = 0;
 		curr->batt.flags &= ~BATT_FLAG_WANT_CHARGE;
-		curr->state = ST_IDLE;
-	}
-
-	if ((bat_temp_c > 0) && (bat_temp_c < 45))
-		charger_flag = 0;
-
-/*
- *	battery swelling control
- *
- *	trigger condition		|	recovery condition
- *	1. bat_temp < 5 &&		|	1.batt_temp >= 10
- *	bat_cell_voltage < 4.15		|
- *					|	cv = (cell CV-50mv)*series
- *	cv = 4150mv*series = 8300mv	|	   = 8700mv
- *	cc = FCC*C_rate*0.4		|	cc = FCC*C_rate*0.4 = 1464ma
- *					|
- *	2. bat_temp < 15 &&		|	2.batt_temp >= 20,
- *	bat_cell_voltage < 4.15		|
- *					|	cv = (cell CV-50mv)*series
- *	cv = 4150mv*series = 8300mv	|	   = 8700mv
- *	cc = FCC*C_rate*0.4= 1464ma	|	cc = FCC*C_rate*0.9 = 3294ma
- *					|
- *	3. bat_temp >= 45 &&		|	3. batt_temp < 43
- *	bat_cell_voltage < 4.15		|
- *					|	cv = (cell CV-50mv)*series
- *	cv = 4150mv*series = 8300mv	|	   = 8700mv
- *	cc = FCC*C_rate*0.45= 1647ma	|	cc = FCC*C_rate*0.9 = 3294ma
- *					|
- *	4. bat_temp >= 50		|	4.batt_temp < 45,
- *	stop charge			|	recovery charge
- */
-	if (curr->ac && !charger_flag) {
-
-		/*
-		 * battery swelling trigger condition
-		 */
-		if (curr->batt.voltage < 8300) {
-			if (bat_temp_c < 5)
-				swelling_flag = SWELLING_TRIGGER_5;
-			else if (bat_temp_c < 15)
-				swelling_flag = SWELLING_TRIGGER_15;
-
-			if (bat_temp_c >= 50)
-				swelling_flag = SWELLING_TRIGGER_50;
-			else if (bat_temp_c >= 45) {
-				if (!(swelling_flag & SWELLING_TRIGGER_50))
-					swelling_flag = SWELLING_TRIGGER_45;
-			}
-		}
-
-		/*
-		 * battery swelling recovery condition
-		 */
-		if (swelling_flag) {
-			if ((bat_temp_c >= 10) && (bat_temp_c < 20))
-				swelling_flag = SWELLING_RECOVERY_10;
-			else if ((bat_temp_c >= 20) && (bat_temp_c < 43))
-				swelling_flag = SWELLING_RECOVERY_20;
-			else if ((bat_temp_c >= 43) && (bat_temp_c < 45))
-				swelling_flag = SWELLING_RECOVERY_50;
-		}
-
-		switch (swelling_flag) {
-		case SWELLING_TRIGGER_5:
-			curr->requested_voltage = 4150 * 2;
-			curr->requested_current = 5230 * 0.7 * 0.4;
-
-			if ((curr->batt.current < 300)) {
-				if (chargeCnt.val == 0) {
-					chargeCnt.val = get_time().val
-							+ 30 * SECOND;
-				} else if (timestamp_expired(chargeCnt, NULL)) {
-					curr->requested_current = 0;
-					curr->requested_voltage = 0;
-					curr->batt.flags &=
-							~BATT_FLAG_WANT_CHARGE;
-					curr->state = ST_IDLE;
-				}
-			} else {
-				chargeCnt.val = 0;
-			}
-			break;
-
-		case SWELLING_TRIGGER_15:
-			curr->requested_current = 5230 * 0.7 * 0.4;
-			chargeCnt.val = 0;
-			break;
-
-		case SWELLING_TRIGGER_45:
-			curr->requested_voltage = 4150 * 2;
-			curr->requested_current = 5230 * 0.7 * 0.45;
-
-			if ((curr->batt.current < 300)) {
-				if (chargeCnt.val == 0) {
-					chargeCnt.val = get_time().val
-							+ 30 * SECOND;
-				} else if (timestamp_expired(chargeCnt, NULL)) {
-					curr->requested_current = 0;
-					curr->requested_voltage = 0;
-					curr->batt.flags &=
-							~BATT_FLAG_WANT_CHARGE;
-					curr->state = ST_IDLE;
-				}
-			} else {
-				chargeCnt.val = 0;
-			}
-			break;
-
-		case SWELLING_TRIGGER_50:
-			curr->requested_current = 0;
-			curr->requested_voltage = 0;
-			curr->batt.flags &= ~BATT_FLAG_WANT_CHARGE;
+		if (curr->state != ST_DISCHARGE)
 			curr->state = ST_IDLE;
-			chargeCnt.val = 0;
-			break;
-
-		case SWELLING_RECOVERY_10:
-			curr->requested_current = 5230 * 0.7 * 0.4;
-			chargeCnt.val = 0;
-			break;
-
-		case SWELLING_RECOVERY_20:
-		case SWELLING_RECOVERY_50:
-			curr->requested_current = 5230 * 0.7 * 0.9;
-			chargeCnt.val = 0;
-			break;
-
-		default:
-			curr->requested_voltage += 100;
-			break;
-		}
-	} else {
-		swelling_flag = 0;
-		chargeCnt.val = 0;
+		break;
 	}
+
+	if (voltage > batt_info->voltage_max)
+		voltage = batt_info->voltage_max;
+
+	curr->requested_voltage = voltage;
+	curr->requested_current = MIN(curr->requested_current, current);
 
 	return 0;
 }
