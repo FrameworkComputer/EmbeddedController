@@ -15,4 +15,5 @@ zephyr_linker_sources(RAM_SECTIONS image_size.ld)
 zephyr_linker_sources_ifdef(CONFIG_SOC_FAMILY_NPCX ROM_START SORT_KEY 1
   npcx-lfw.ld)
 
+zephyr_linker_sources(DATA_SECTIONS iterables-ram.ld)
 zephyr_linker_sources(SECTIONS iterables-rom.ld)
