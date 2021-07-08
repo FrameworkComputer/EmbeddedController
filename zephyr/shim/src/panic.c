@@ -59,6 +59,12 @@ static uint32_t placeholder_info_reg;
 #define PANIC_PRINT_REGS(esf_field, pdata_field, human_name) \
 	panic_printf("  %-8s = 0x%08X\n", #human_name, pdata->pdata_field);
 
+void panic_data_print(const struct panic_data *pdata)
+{
+	PANIC_REG_LIST(PANIC_PRINT_REGS);
+}
+
+#ifndef CONFIG_LOG
 static void copy_esf_to_panic_data(const z_arch_esf_t *esf,
 				   struct panic_data *pdata)
 {
@@ -70,11 +76,6 @@ static void copy_esf_to_panic_data(const z_arch_esf_t *esf,
 	pdata->magic = PANIC_DATA_MAGIC;
 
 	PANIC_REG_LIST(PANIC_COPY_REGS);
-}
-
-void panic_data_print(const struct panic_data *pdata)
-{
-	PANIC_REG_LIST(PANIC_PRINT_REGS);
 }
 
 void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
@@ -90,6 +91,7 @@ void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
 	k_fatal_halt(reason);
 	CODE_UNREACHABLE;
 }
+#endif /* CONFIG_LOG */
 
 #ifdef CONFIG_PLATFORM_EC_SOFTWARE_PANIC
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
