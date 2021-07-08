@@ -478,12 +478,14 @@ struct tcpm_drv {
  * Bit 3 --> Set to 1 if TCPC is using TCPCI Revision 2.0
  * Bit 4 --> Set to 1 if TCPC is using TCPCI Revision 2.0 but does not support
  *           the vSafe0V bit in the EXTENDED_STATUS_REGISTER
+ * Bit 5 --> Set to 1 to prevent TCPC setting debug accessory control
  */
 #define TCPC_FLAGS_ALERT_ACTIVE_HIGH	BIT(0)
 #define TCPC_FLAGS_ALERT_OD		BIT(1)
 #define TCPC_FLAGS_RESET_ACTIVE_HIGH	BIT(2)
 #define TCPC_FLAGS_TCPCI_REV2_0		BIT(3)
 #define TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V	BIT(4)
+#define TCPC_FLAGS_NO_DEBUG_ACC_CONTROL	BIT(5)
 
 struct tcpc_config_t {
 	enum ec_bus_type bus_type;	/* enum ec_bus_type */

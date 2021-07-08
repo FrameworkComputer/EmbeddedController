@@ -66,6 +66,8 @@ static int nct38xx_init(int port)
 				(reg & TCPC_REG_POWER_STATUS_DEBUG_ACC_CON))
 		CPRINTS("C%d: Booted in dead battery mode, not changing debug"
 			" control", port);
+	else if (tcpc_config[port].flags & TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)
+		CPRINTS("C%d: NO_DEBUG_ACC_CONTROL", port);
 	else
 		RETURN_ERROR(tcpc_update8(port, TCPC_REG_TCPC_CTRL,
 					  TCPC_REG_TCPC_CTRL_DEBUG_ACC_CONTROL,
