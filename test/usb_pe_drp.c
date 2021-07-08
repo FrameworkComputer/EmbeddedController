@@ -97,19 +97,6 @@ test_static int finish_src_discovery(int startup_cable_probes)
 		   PD_ROLE_SINK, PD_ROLE_UFP, 0);
 
 	/*
-	 * Expect GET_SINK_CAP, reply with a simple Sink Cap since sink partners
-	 * must support this message.
-	 */
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
-					 PD_CTRL_GET_SINK_CAP, 0, 10 * MSEC),
-		EC_SUCCESS, "%d");
-	mock_prl_message_sent(PORT0);
-	task_wait_event(10 * MSEC);
-	rx_message(PD_MSG_SOP, 0, PD_DATA_SINK_CAP,
-		   PD_ROLE_SINK, PD_ROLE_UFP,
-		   PDO_FIXED(5000, 500, PDO_FIXED_COMM_CAP));
-
-	/*
 	 * Cable identity discovery is attempted 6 times total. 1 was done
 	 * above, so expect 5 more now.
 	 */

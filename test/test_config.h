@@ -404,6 +404,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #undef CONFIG_USB_PD_HOST_CMD
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USBC_SS_MUX
+#define CONFIG_USB_PD_3A_PORTS 0 /* Host does not define a 3.0 A PDO */
 #endif
 
 #if defined(TEST_USB_PE_DRP) || defined(TEST_USB_PE_DRP_NOEXTENDED)
@@ -429,6 +430,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USBC_SS_MUX
 #define I2C_PORT_HOST_TCPC 0
 #define CONFIG_CHARGE_MANAGER
+#define CONFIG_USB_PD_3A_PORTS 0 /* Host does not define a 3.0 A PDO */
 #endif /* TEST_USB_PE_DRP || TEST_USB_PE_DRP_NOEXTENDED */
 
 /* Common TypeC tests defines */

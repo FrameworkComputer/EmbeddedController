@@ -2153,8 +2153,11 @@ static void pe_src_startup_entry(int port)
 		/* Reset VCONN swap counter */
 		pe[port].vconn_swap_counter = 0;
 
-		/* Request partner sink caps */
-		pd_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
+		/* Request partner sink caps if a feature requires them */
+		if (IS_ENABLED(CONFIG_USB_PD_HOST_CMD) ||
+						CONFIG_USB_PD_3A_PORTS > 0 ||
+						IS_ENABLED(CONFIG_USB_PD_FRS))
+			pd_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
 	}
 }
 
@@ -3005,13 +3008,18 @@ static void pe_snk_startup_entry(int port)
 		PE_SET_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON);
 	}
 
-	/* Request sink caps for FRS and PRS evaluation.
+	/*
+	 * Request sink caps for FRS, output power consideration, or reporting
+	 * to the AP through host commands.
 	 *
 	 * On entry to the PE_SNK_Ready state if the Sink supports Fast Role
 	 * Swap, then the Policy Engine Shall do the following:
 	 * - Send a Get_Sink_Cap Message
 	 */
-	pd_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
+	if (IS_ENABLED(CONFIG_USB_PD_HOST_CMD) ||
+					CONFIG_USB_PD_3A_PORTS > 0 ||
+					IS_ENABLED(CONFIG_USB_PD_FRS))
+		pd_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
 
 }
 
