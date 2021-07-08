@@ -1,3 +1,7 @@
 #ifdef CONFIG_PLATFORM_EC_HOSTCMD
 ITERABLE_SECTION_ROM(host_command, 4)
 #endif
+
+#ifdef CONFIG_PLATFORM_EC_MKBP_EVENT
+ITERABLE_SECTION_ROM(mkbp_event_source, 4)
+#endif
