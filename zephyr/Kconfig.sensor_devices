@@ -91,6 +91,13 @@ config PLATFORM_EC_ACCELGYRO_ICM426XX
 	  The driver supports ICM425XX which provides both accelerometer and
 	  gyroscope readings.
 
+config PLATFORM_EC_ACCELGYRO_ICM42607
+	bool "ICM42607 Accelgyro Driver"
+	select PLATFORM_EC_ACCELGYRO_ICM
+	help
+	  The driver supports ICM42607 which provides both accelerometer and
+	  gyroscope readings.
+
 config PLATFORM_EC_STM_MEMS_COMMON
 	bool
 	help
