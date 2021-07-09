@@ -37,6 +37,10 @@
 #define CONFIG_CMD_ACCEL_INFO
 #define CONFIG_CMD_BUTTON
 
+/* Work around hardware issues by delaying hibernate for a couple of months */
+#undef CONFIG_HIBERNATE_DELAY_SEC
+#define CONFIG_HIBERNATE_DELAY_SEC (3600 * 24 * 60)
+
 /* USB Type C and USB PD defines */
 
 /* USB Type A Features */
