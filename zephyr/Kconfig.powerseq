@@ -159,4 +159,12 @@ config PLATFORM_EC_POWERSEQ_SC7280
 	  Enable power sequencing for the Qualcomm Snapdragon SC7280
 	  chipset.
 
+config PLATFORM_EC_CONSOLE_CMD_S5_TIMEOUT
+	bool "Console command: s5_timeout"
+	help
+	  Enable the console command 's5_timeout'. This command is used to
+	  change the timeout waiting for inactivity in the S5 power state before
+	  transitioning to the G3 state. This command is useful for power
+	  testing.
+
 endif # PLATFORM_EC_POWERSEQ
