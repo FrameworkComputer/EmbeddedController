@@ -81,6 +81,25 @@ config PLATFORM_EC_STEINHART_HART_3V3_51K1_47K_4050B
 	  -4050 B-constant (thermistor sensitivity)
 endif # PLATFORM_EC_TEMP_SENSOR
 
+
+config PLATFORM_EC_TEMP_SENSOR_FIRST_READ_DELAY
+	bool "Enable a delay before reading temperature seensors"
+	help
+	  Enables a delay on the first read of temperature sensors after
+	  the EC powers on. This allows for setting of any power rails that
+	  control the temperature sensors on the platform.
+
+if PLATFORM_EC_TEMP_SENSOR_FIRST_READ_DELAY
+
+config PLATFORM_EC_TEMP_SENSOR_FIRST_READ_DELAY_MS
+	int "Temperature sensor read delay time"
+	default 500
+	help
+	  Sets the delay time, in milliseconds, before the first the EC will
+	  read any temperature sensors and perform any thermal management.
+
+endif # PLATFORM_EC_TEMP_SENSOR_FIRST_READ_DELAY
+
 config PLATFORM_EC_FAN
 	bool "Fan support"
 	depends on PLATFORM_EC_PWM
