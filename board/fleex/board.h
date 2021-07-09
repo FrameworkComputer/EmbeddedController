@@ -70,7 +70,7 @@
 #define CONFIG_USBC_PPC_SYV682X
 #define CONFIG_USBC_PPC_DEDICATED_INT
 /* SYV682 isn't connected to CC, so TCPC must provide VCONN */
-#define CONFIG_SYV682X_NO_CC
+#define CONFIG_USBC_PPC_SYV682X_NO_CC
 
 #ifndef __ASSEMBLER__
 

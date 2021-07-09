@@ -57,7 +57,7 @@
 #undef CONFIG_SYV682X_HV_ILIM
 #define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_5_50
 /* SYV682 isn't connected to CC, so TCPC must provide VCONN */
-#define CONFIG_SYV682X_NO_CC
+#define CONFIG_USBC_PPC_SYV682X_NO_CC
 
 
 #ifndef __ASSEMBLER__

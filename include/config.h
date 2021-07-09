@@ -4667,7 +4667,7 @@
 #define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_3_30
 
 /* SYV682 does not pass through CC, instead it bypasses to the TCPC */
-#undef CONFIG_SYV682X_NO_CC
+#undef CONFIG_USBC_PPC_SYV682X_NO_CC
 
 /* Define to enable SYV682X VBUS smart discharge. */
 #undef CONFIG_USBC_PPC_SYV682X_SMART_DISCHARGE
@@ -5628,7 +5628,8 @@
 #if defined(CONFIG_USBC_PPC_SYV682X)
 #define CONFIG_USBC_PPC_POLARITY
 #define CONFIG_USBC_PPC_VCONN
-#if !defined(CONFIG_USB_PD_TCPM_ITE_ON_CHIP) && !defined(CONFIG_SYV682X_NO_CC)
+#if !defined(CONFIG_USB_PD_TCPM_ITE_ON_CHIP) && \
+	!defined(CONFIG_USBC_PPC_SYV682X_NO_CC)
 #undef CONFIG_USB_PD_TCPC_VCONN
 #endif
 #endif
