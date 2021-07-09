@@ -157,27 +157,27 @@ const struct pwm_t pwm_channels[] = {
 	},
 	[PWM_CH_DB0_LED_RED] = {
 		.channel = 5,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ALT_CLOCK,
+		.flags = PWM_CONFIG_DSLEEP,
 	},
 	[PWM_CH_DB0_LED_GREEN] = {
 		.channel = 6,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ALT_CLOCK,
+		.flags = PWM_CONFIG_DSLEEP,
 	},
 	[PWM_CH_DB0_LED_BLUE] = {
 		.channel = 7,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ALT_CLOCK,
+		.flags = PWM_CONFIG_DSLEEP,
 	},
 	[PWM_CH_DB1_LED_RED] = {
 		.channel = 1,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ALT_CLOCK,
+		.flags = PWM_CONFIG_DSLEEP,
 	},
 	[PWM_CH_DB1_LED_GREEN] = {
 		.channel = 3,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ALT_CLOCK,
+		.flags = PWM_CONFIG_DSLEEP,
 	},
 	[PWM_CH_DB1_LED_BLUE] = {
 		.channel = 8,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ALT_CLOCK,
+		.flags = PWM_CONFIG_DSLEEP,
 	},
 	[PWM_CH_FPR_LED_RED] = {
 		.channel = (MCHP_PWM_ID_MAX+0),
