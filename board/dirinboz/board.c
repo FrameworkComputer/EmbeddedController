@@ -7,8 +7,6 @@
 #include "button.h"
 #include "cros_board_info.h"
 #include "charge_state.h"
-#include "driver/accel_lis2dw12.h"
-#include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/aoz1380.h"
 #include "driver/ppc/nx20p348x.h"
@@ -44,105 +42,6 @@
 int I2C_PORT_BATTERY = I2C_PORT_BATTERY_V1;
 
 #include "gpio_list.h"
-
-/* Motion sensors */
-static struct mutex g_lid_mutex;
-static struct mutex g_base_mutex;
-
-/* sensor private data */
-static struct stprivate_data g_lis2dwl_data;
-static struct lsm6dsm_data g_lsm6dsm_data = LSM6DSM_DATA;
-
-/* Matrix to rotate accelrator into standard reference frame */
-static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
-
-/* TODO(gcc >= 5.0) Remove the casts to const pointer at rot_standard_ref */
-struct motion_sensor_t motion_sensors[] = {
-	[LID_ACCEL] = {
-	 .name = "Lid Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_LIS2DWL,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &lis2dw12_drv,
-	 .mutex = &g_lid_mutex,
-	 .drv_data = &g_lis2dwl_data,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = LIS2DWL_ADDR1_FLAGS,
-	 .rot_standard_ref = NULL,
-	 .default_range = 2, /* g, enough for laptop. */
-	 .min_frequency = LIS2DW12_ODR_MIN_VAL,
-	 .max_frequency = LIS2DW12_ODR_MAX_VAL,
-	 .config = {
-		 /* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 12500 | ROUND_UP_FLAG,
-		},
-		 /* Sensor on for lid angle detection */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-		},
-	},
-	},
-
-	[BASE_ACCEL] = {
-	 .name = "Base Accel",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_LSM6DSM,
-	 .type = MOTIONSENSE_TYPE_ACCEL,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &lsm6dsm_drv,
-	 .mutex = &g_base_mutex,
-	 .drv_data = LSM6DSM_ST_DATA(g_lsm6dsm_data,
-			MOTIONSENSE_TYPE_ACCEL),
-	 .int_signal = GPIO_6AXIS_INT_L,
-	 .flags = MOTIONSENSE_FLAG_INT_SIGNAL,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
-	 .default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
-	 .rot_standard_ref = &base_standard_ref,
-	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
-	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
-	 .config = {
-		 /* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 13000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
-		},
-		/* Sensor on for angle detection */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
-		},
-	 },
-	},
-
-	[BASE_GYRO] = {
-	 .name = "Base Gyro",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_LSM6DSM,
-	 .type = MOTIONSENSE_TYPE_GYRO,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &lsm6dsm_drv,
-	 .mutex = &g_base_mutex,
-	 .drv_data = LSM6DSM_ST_DATA(g_lsm6dsm_data,
-			MOTIONSENSE_TYPE_GYRO),
-	.int_signal = GPIO_6AXIS_INT_L,
-	.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
-	 .default_range = 1000 | ROUND_UP_FLAG, /* dps */
-	 .rot_standard_ref = &base_standard_ref,
-	 .min_frequency = LSM6DSM_ODR_MIN_VAL,
-	 .max_frequency = LSM6DSM_ODR_MAX_VAL,
-	},
-};
-
-unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /*****************************************************************************
  * Retimers
@@ -486,17 +385,6 @@ static void setup_fw_config(void)
 	/* Enable SBU fault interrupts */
 	ioex_enable_interrupt(IOEX_USB_C0_SBU_FAULT_ODL);
 	ioex_enable_interrupt(IOEX_USB_C1_SBU_FAULT_DB_ODL);
-
-	if (ec_config_has_lid_angle_tablet_mode()) {
-		/* Enable Gyro interrupts */
-		gpio_enable_interrupt(GPIO_6AXIS_INT_L);
-	} else {
-		motion_sensor_count = 0;
-		/* Device is clamshell only */
-		tablet_set_mode(0);
-		/* Gyro is not present, don't allow line to float */
-		gpio_set_flags(GPIO_6AXIS_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
-	}
 
 	/*
 	 * If keyboard is US2(KB_LAYOUT_1), we need translate right ctrl
