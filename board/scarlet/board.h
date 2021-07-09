@@ -182,7 +182,6 @@
 /* Enable Accel over SPI */
 #define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI master port (SPI2) */
 
-#define CONFIG_KEYBOARD_PROTOCOL_
 #define CONFIG_MKBP_INPUT_DEVICES
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
