@@ -163,7 +163,7 @@ def _logging_loop():
             _log_fd(fd)
 
 
-_logging_thread = threading.Thread(target=_logging_loop, daemon=True)
+_logging_thread = None
 
 
 def log_output(logger, log_level, file_descriptor,
@@ -182,13 +182,18 @@ def log_output(logger, log_level, file_descriptor,
         LogWriter object for the resulting output
     """
     with _logging_cv:
-        if not _logging_thread.is_alive():
+        global _logging_thread
+        if _logging_thread is None or not _logging_thread.is_alive():
+            # First pass or thread must have died, create a new one.
+            _logging_thread = threading.Thread(target=_logging_loop,
+                                               daemon=True)
             _logging_thread.start()
+
         writer = LogWriter(
-            logger,
-            log_level,
-            log_level_override_func,
-            job_id)
+                logger,
+                log_level,
+                log_level_override_func,
+                job_id)
         _logging_map[file_descriptor] = writer
         # Write a dummy byte to the pipe to break the select so we can add the
         # new fd.
