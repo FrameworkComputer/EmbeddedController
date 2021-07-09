@@ -145,7 +145,6 @@ int board_get_version(void);
 
 /* returns the i2c port number of charger */
 int board_get_charger_i2c(void);
-int board_get_sku_id(void);
 
 #endif /* !__ASSEMBLER__ */
 

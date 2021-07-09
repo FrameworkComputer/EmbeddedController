@@ -748,7 +748,7 @@ static void cbi_init(void)
  */
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_ADC + 1);
 
-uint32_t system_get_sku_id(void)
+__override uint32_t board_get_sku_id(void)
 {
 	return sku_id;
 }

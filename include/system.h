@@ -382,6 +382,11 @@ const char *system_get_chip_revision(void);
 int system_get_chip_unique_id(uint8_t **id);
 
 /**
+ * Optional board-level function to read SKU ID.
+ */
+__override_proto uint32_t board_get_sku_id(void);
+
+/**
  * Optional board-level function to read board version.
  */
 __override_proto int board_get_version(void);

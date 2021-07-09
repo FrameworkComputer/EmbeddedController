@@ -892,7 +892,7 @@ int board_get_version(void)
 	return version;
 }
 
-static void board_get_sku_id(void)
+static void sku_id_init(void)
 {
 	int sku_id_lower;
 	int sku_id_higher;
@@ -916,7 +916,7 @@ static void board_get_sku_id(void)
 	}
 }
 /* This can't run until after the ADC module has been initialized */
-DECLARE_HOOK(HOOK_INIT, board_get_sku_id, HOOK_PRIO_INIT_ADC + 1);
+DECLARE_HOOK(HOOK_INIT, sku_id_init, HOOK_PRIO_INIT_ADC + 1);
 
 static void print_form_factor_list(int low, int high)
 {
@@ -981,10 +981,10 @@ DECLARE_CONSOLE_COMMAND(sku, command_sku,
 			"<board|line0|line1|form [low high]>",
 			"Get board id, sku, form factor");
 
-uint32_t system_get_sku_id(void)
+__override uint32_t board_get_sku_id(void)
 {
 	if (sku_id == BOARD_VERSION_UNKNOWN)
-		board_get_sku_id();
+		sku_id_init();
 
 	return (uint32_t)sku_id;
 }
