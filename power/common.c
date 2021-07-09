@@ -466,7 +466,8 @@ static enum power_state power_common_state(enum power_state state)
 			}
 
 			now = get_time().val;
-			target = last_shutdown_time + hibernate_delay * SECOND;
+			target = last_shutdown_time +
+					(uint64_t)hibernate_delay * SECOND;
 			switch (board_system_is_idle(last_shutdown_time,
 						     &target, now)) {
 			case CRITICAL_SHUTDOWN_HIBERNATE:
