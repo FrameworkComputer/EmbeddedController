@@ -413,3 +413,8 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 	gpio_pin_configure(data[signal].dev, configs[signal].pin,
 			   convert_to_zephyr_flags(flags));
 }
+
+int signal_is_gpio(int signal)
+{
+	return true;
+}
