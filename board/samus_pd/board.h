@@ -18,6 +18,7 @@
 /* To save space */
 #undef CONFIG_SUPPRESSED_HOST_COMMANDS
 #undef CONFIG_CMD_MFALLOW
+#define CONFIG_USB_PD_DEBUG_LEVEL 1
 
 /* Optional features */
 #define CONFIG_ADC
