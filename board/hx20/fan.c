@@ -21,8 +21,8 @@
 #include "tfdp_chip.h"
 #include "util.h"
 #include "math_util.h"
-
-
+#include "timer.h"
+#include "chipset.h"
 #define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ## args)
 
@@ -160,6 +160,7 @@ int fan_get_rpm_target(int ch)
 		return -1;
 	return rpm_setting[ch];
 }
+timestamp_t fan_spindown_time;
 /**
  * fan gain should not be greater than 1 for stability
  * since fan goes up to 5500rpm and pwm is 0-100%
@@ -171,9 +172,22 @@ void fan_set_rpm_target(int ch, int rpm)
 {
 	int delta;
 	int pct = 0;
+	bool requested_rpm_same = rpm_setting[ch] == rpm;
 
 	if (ch < 0 || ch > MCHP_TACH_ID_MAX || ch > FAN_CH_COUNT)
 		return;
+	/* Keep the fan spinning at min speed for a minute after we transition to 0 rpm*/
+	if (rpm == 0 && rpm_setting[ch] != rpm) {
+		timestamp_t now = get_time();
+
+		fan_spindown_time.val = now.val + 60*SECOND;
+	}
+	rpm_setting[ch] = rpm;
+	if (chipset_in_state(CHIPSET_STATE_ON) && rpm == 0 &&
+		!timestamp_expired(fan_spindown_time, NULL)) {
+		rpm = 1200;
+	}
+
 	pct = fan_rpm_to_percent(ch, rpm);
 	delta = rpm - fan_get_rpm_actual(ch);
 	/**
@@ -183,12 +197,10 @@ void fan_set_rpm_target(int ch, int rpm)
 	 * we will integrate during the fan ramp up/ramp down time
 	 * also do not integrate when the fan is off
 	 */
-	if (rpm == rpm_setting[ch] && rpm > 0)
+	if (requested_rpm_same && rpm > 0)
 		integral_factor[ch] += delta;
 
-	rpm_setting[ch] = rpm;
 	duty_setting[ch] = pct;
-
 
 	/*Cap integral factor at FAN_PID_I_MAX, to prevent runaway conditions */
 	integral_factor[ch] = MIN(MAX(integral_factor[ch], -FAN_PID_I_MAX),
