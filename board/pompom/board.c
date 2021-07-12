@@ -11,6 +11,7 @@
 #include "charge_state.h"
 #include "extpower.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -499,6 +500,7 @@ static struct mutex g_lid_mutex;
 
 static struct bmi_drv_data_t g_bmi160_data;
 static struct accelgyro_saved_data_t g_bma255_data;
+static struct stprivate_data g_lis2dwl_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
 const mat33_fp_t base_standard_ref = {
@@ -588,6 +590,57 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+struct motion_sensor_t lis2dwl_lid_accel = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_LIS2DWL,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &lis2dw12_drv,
+	.mutex = &g_lid_mutex,
+	.drv_data = &g_lis2dwl_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = LIS2DWL_ADDR0_FLAGS,
+	.rot_standard_ref = &lid_standard_ref,
+	.default_range = 2, /* g */
+	.min_frequency = LIS2DW12_ODR_MIN_VAL,
+	.max_frequency = LIS2DW12_ODR_MAX_VAL,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+		},
+		/* Sensor on for lid angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
+
+static void board_detect_motionsensor(void)
+{
+	int val = 0;
+
+	/*
+	 * BMA253 and LIS2DWL have same slave address, so we check the
+	 * LIS2DWL WHO AM I register to check the lid accel type
+	 */
+	i2c_read8(I2C_PORT_SENSOR, LIS2DWL_ADDR0_FLAGS,
+		LIS2DW12_WHO_AM_I_REG, &val);
+
+	if (val == LIS2DW12_WHO_AM_I) {
+		motion_sensors[LID_ACCEL] = lis2dwl_lid_accel;
+		CPRINTS("Lid Accel: LIS2DWL");
+	}
+}
+
+static void board_update_sensor_config_from_sku(void)
+{
+	board_detect_motionsensor();
+}
+DECLARE_HOOK(HOOK_INIT, board_update_sensor_config_from_sku,
+	     HOOK_PRIO_INIT_I2C + 2);
 
 #ifndef TEST_BUILD
 /* This callback disables keyboard when convertibles are fully open */
