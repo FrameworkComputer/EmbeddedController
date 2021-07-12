@@ -11,4 +11,4 @@ CHIP_FAMILY:=npcx7
 CHIP_VARIANT:=npcx7m7fc
 BASEBOARD:=keeby
 
-board-y=board.o battery.o led.o usb_pd_policy.o
+board-y=board.o battery.o cbi_ssfc.o led.o usb_pd_policy.o
