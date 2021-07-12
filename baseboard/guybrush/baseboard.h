@@ -114,6 +114,18 @@
 #define GMR_TABLET_MODE_GPIO_L		GPIO_TABLET_MODE
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 
+#ifdef HAS_TASK_MOTIONSENSE
+/* Enable sensor fifo, must also define the _SIZE and _THRES */
+#define CONFIG_ACCEL_FIFO
+/* FIFO size is a power of 2. */
+#define CONFIG_ACCEL_FIFO_SIZE 256
+/* Depends on how fast the AP boots and typical ODRs. */
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
+#endif
+
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
+
 /* Battery Config */
 #define CONFIG_BATTERY_PRESENT_GPIO	GPIO_EC_BATT_PRES_ODL
 #define CONFIG_BATTERY_CUT_OFF

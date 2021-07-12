@@ -25,11 +25,6 @@
 #define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCEL_BMA4XX
 
-/* Base accel uses fifo */
-#define CONFIG_ACCEL_FIFO
-#define CONFIG_ACCEL_FIFO_SIZE 256	/* Must be a power of 2 */
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
-
 #define I2C_PORT_ACCEL      I2C_PORT_SENSOR
 
 /* EC console commands */
