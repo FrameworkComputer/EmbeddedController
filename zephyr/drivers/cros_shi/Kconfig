@@ -41,3 +41,17 @@ config CROS_SHI_IT8XXX2
 	help
 	  This option enables spi host interface driver which is required to
 	  communicate with the EC when the CPU is the ARM processor.
+
+if CROS_SHI_IT8XXX2
+
+config CROS_SHI_IT8XXX2_INIT_PRIORITY
+	int "cros_shi it8xxx2 initialization priority"
+	default 52
+	help
+	  This sets the it8xxx2 cros_shi driver initialization priority.
+	  In the GPIO shim, the alt function of SHI will be configured
+	  as GPIO input pin. So the priority of cros_shi driver must be
+	  lower than CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY, and
+	  configuration these pins to alt function of SHI.
+
+endif # CROS_SHI_IT8XXX2

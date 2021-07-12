@@ -1,0 +1,18 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: ITE, IT8XXX2 Serial Host Interface (SHI) node
+
+compatible: "ite,it8xxx2-cros-shi"
+
+include: base.yaml
+
+properties:
+    reg:
+      required: true
+
+    pinctrl-0:
+        type: phandles
+        required: true
+        description: Configuration of SHI pinmux controller

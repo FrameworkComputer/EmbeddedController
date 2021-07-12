@@ -11,6 +11,7 @@
 #include <kernel.h>
 #include <logging/log.h>
 #include <soc.h>
+#include <soc_dt.h>
 #include <drivers/pinmux.h>
 #include <dt-bindings/pinctrl/it8xxx2-pinctrl.h>
 
@@ -23,6 +24,21 @@
 #define CPRINTF(format, args...) cprintf(CC_SPI, format, ## args)
 
 LOG_MODULE_REGISTER(cros_shi, LOG_LEVEL_ERR);
+
+#define DRV_CONFIG(dev) ((struct cros_shi_it8xxx2_cfg * const)(dev)->config)
+
+/*
+ * Strcture cros_shi_it8xxx2_cfg is about the setting of SHI,
+ * this config will be used at initial time
+ */
+struct cros_shi_it8xxx2_cfg {
+	/* Pinmux control group */
+	const struct device *pinctrls;
+	/* GPIO pin */
+	uint8_t pin;
+	/* Alternate function */
+	uint8_t alt_fun;
+};
 
 #define SPI_RX_MAX_FIFO_SIZE 256
 #define SPI_TX_MAX_FIFO_SIZE 256
@@ -288,6 +304,7 @@ void spi_event(enum gpio_signal signal)
  */
 static int cros_shi_ite_init(const struct device *dev)
 {
+	const struct cros_shi_it8xxx2_cfg *const config = DRV_CONFIG(dev);
 	/* Set FIFO data target count */
 	struct ec_host_request cmd_head;
 
@@ -342,12 +359,11 @@ static int cros_shi_ite_init(const struct device *dev)
 	/* SPI slave controller enable (after settings are ready) */
 	IT83XX_SPI_SPISGCR = IT83XX_SPI_SPISCEN;
 
-#if DT_NODE_HAS_STATUS(DT_NODELABEL(pinmuxm), okay)
-	const struct device *portm = DEVICE_DT_GET(DT_NODELABEL(pinmuxm));
-
 	/* Ensure spi chip select alt function is enabled. */
-	pinmux_pin_set(portm, 5, IT8XXX2_PINMUX_FUNC_1);
-#endif
+	for (int i = 0; i < DT_INST_PROP_LEN(0, pinctrl_0); i++) {
+		pinmux_pin_set(config[i].pinctrls, config[i].pin,
+			       config[i].alt_fun);
+	}
 
 	/* Enable SPI slave interrupt */
 	IRQ_CONNECT(DT_INST_IRQN(0), 0, shi_ite_int_handler, 0, 0);
@@ -358,7 +374,18 @@ static int cros_shi_ite_init(const struct device *dev)
 
 	return 0;
 }
-SYS_INIT(cros_shi_ite_init, POST_KERNEL, 52);
+
+static const struct cros_shi_it8xxx2_cfg cros_shi_cfg[] =
+	IT8XXX2_DT_ALT_ITEMS_LIST(0);
+
+#if CONFIG_CROS_SHI_IT8XXX2_INIT_PRIORITY <= \
+	CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY
+#error "CROS_SHI must initialize after the GPIOs initialization"
+#endif
+DEVICE_DT_INST_DEFINE(0, cros_shi_ite_init, NULL,
+		      NULL, &cros_shi_cfg, POST_KERNEL,
+		      CONFIG_CROS_SHI_IT8XXX2_INIT_PRIORITY,
+		      NULL);
 
 /* Get protocol information */
 enum ec_status spi_get_protocol_info(struct host_cmd_handler_args *args)
