@@ -169,10 +169,12 @@ __attribute__((weak)) const struct i2c_port_t i2c_ports[] = {
 		GPIO_EC_I2C_BATTERY_SDA
 	},
 
+#ifdef HAS_TASK_MOTIONSENSE
 	{
 		"sensor", I2C_PORT_SENSOR, 400, GPIO_EC_I2C_SENSOR_SCL,
 		GPIO_EC_I2C_SENSOR_SDA
 	},
+#endif
 
 	{
 		"usbc0", I2C_PORT_USB_C0, 1000, GPIO_EC_I2C_USB_C0_SCL,
