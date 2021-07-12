@@ -45,6 +45,7 @@
 /* Sensors */
 /* BMA253 accelerometer in base */
 #define CONFIG_ACCEL_BMA255
+#define CONFIG_ACCEL_KX022
 
 /* BMI160 accel/gyro in base */
 #define CONFIG_ACCELGYRO_BMI160
