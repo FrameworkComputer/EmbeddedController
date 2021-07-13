@@ -642,7 +642,7 @@ static struct policy_engine {
 
 	/* Last received source cap */
 	uint32_t src_caps[PDO_MAX_OBJECTS];
-	int src_cap_cnt;
+	int src_cap_cnt; /* -1 on error retrieving source caps */
 
 	/* Last received sink cap */
 	uint32_t snk_caps[PDO_MAX_OBJECTS];
@@ -2526,9 +2526,11 @@ static void pe_src_transition_supply_run(int port)
 			/*
 			 * Setup to get Device Policy Manager to request
 			 * Source Capabilities, if needed, for possible
-			 * PR_Swap
+			 * PR_Swap.  Get the number directly to avoid re-probing
+			 * if the partner generated an error and left -1 for the
+			 * count.
 			 */
-			if (pd_get_src_cap_cnt(port) == 0)
+			if (pe[port].src_cap_cnt == 0)
 				pd_dpm_request(port, DPM_REQUEST_GET_SRC_CAPS);
 
 			set_state_pe(port, PE_SRC_READY);
@@ -6916,12 +6918,22 @@ static void pe_dr_src_get_source_cap_run(int port)
 								CAP_DUALROLE);
 
 				set_state_pe(port, PE_SRC_READY);
-			} else if (type == PD_CTRL_REJECT ||
-				   type == PD_CTRL_NOT_SUPPORTED) {
+			} else if ((cnt == 0) && (type == PD_CTRL_REJECT ||
+					type == PD_CTRL_NOT_SUPPORTED)) {
+				pd_set_src_caps(port, -1, NULL);
 				set_state_pe(port, PE_SRC_READY);
 			} else {
+				/*
+				 * On protocol error, consider source cap
+				 * retrieval a failure
+				 */
+				pd_set_src_caps(port, -1, NULL);
 				set_state_pe(port, PE_SEND_SOFT_RESET);
 			}
+			return;
+		} else {
+			pd_set_src_caps(port, -1, NULL);
+			set_state_pe(port, PE_SEND_SOFT_RESET);
 			return;
 		}
 	}
@@ -6958,7 +6970,10 @@ void pd_set_src_caps(int port, int cnt, uint32_t *src_caps)
 
 uint8_t pd_get_src_cap_cnt(int port)
 {
-	return pe[port].src_cap_cnt;
+	if (pe[port].src_cap_cnt > 0)
+		return pe[port].src_cap_cnt;
+
+	return 0;
 }
 
 /* Track access to the PD discovery structures during HC execution */
