@@ -14,6 +14,7 @@
 #include "baseboard.h"
 
 /* RVP Board ids */
+#define CONFIG_BOARD_VERSION_GPIO
 #define ADLP_DDR5_RVP_SKU_BOARD_ID	0x12
 #define ADLP_LP5_T4_RVP_SKU_BOARD_ID	0x13
 #define ADL_RVP_BOARD_ID(id)		((id) & 0x3F)

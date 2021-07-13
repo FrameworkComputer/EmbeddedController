@@ -376,7 +376,7 @@ const int pwrok_signal_deassert_count = ARRAY_SIZE(pwrok_signal_assert_list);
  * Returns board information (board id[7:0] and Fab id[15:8]) on success
  * -1 on error.
  */
-int board_get_version(void)
+__override int board_get_version(void)
 {
 	/* Cache the ADLRVP board ID */
 	static int adlrvp_board_id;
