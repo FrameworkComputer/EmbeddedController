@@ -926,7 +926,8 @@ static void pe_set_frs_enable(int port, int enable)
 	int current = PE_CHK_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_ENABLED);
 
 	/* This should only be called from the PD task */
-	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
+	if (!IS_ENABLED(TEST_BUILD))
+		assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
 
 	if (!IS_ENABLED(CONFIG_USB_PD_FRS) || !IS_ENABLED(CONFIG_USB_PD_REV30))
 		return;
@@ -1339,10 +1340,16 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
-static void pe_handle_detach(void)
+#ifdef TEST_BUILD
+/*
+ * Allow unit tests to access this function to clear internal state data between
+ * runs
+ */
+void pe_clear_port_data(int port)
+#else
+static void pe_clear_port_data(int port)
+#endif /* TEST_BUILD */
 {
-	const int port = TASK_ID_TO_PD_PORT(task_get_current());
-
 	/*
 	 * PD 3.0 Section 8.3.3.3.8
 	 * Note: The HardResetCounter is reset on a power cycle or Detach.
@@ -1369,6 +1376,13 @@ static void pe_handle_detach(void)
 
 	/* Exit BIST Test mode, in case the TCPC entered it. */
 	tcpc_set_bist_test_mode(port, false);
+}
+
+static void pe_handle_detach(void)
+{
+	const int port = TASK_ID_TO_PD_PORT(task_get_current());
+
+	pe_clear_port_data(port);
 }
 DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, pe_handle_detach, HOOK_PRIO_DEFAULT);
 

@@ -42,6 +42,7 @@ void before_test(void)
 	mock_dpm_reset();
 	mock_dp_alt_mode_reset();
 	mock_prl_reset();
+	pe_clear_port_data(PORT0);
 
 	/* Restart the PD task and let it settle */
 	task_set_event(TASK_ID_PD_C0, TASK_EVENT_RESET_DONE);
