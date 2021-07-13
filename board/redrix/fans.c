@@ -20,6 +20,11 @@ const struct mft_t mft_channels[] = {
 		.clk_src = TCKC_LFCLK,
 		.pwm_id = PWM_CH_FAN,
 	},
+	[MFT_CH_1] = {
+		.module = NPCX_MFT_MODULE_2,
+		.clk_src = TCKC_LFCLK,
+		.pwm_id = PWM_CH_FAN2,
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
@@ -30,13 +35,21 @@ static const struct fan_conf fan_conf_0 = {
 	.enable_gpio = GPIO_EN_PP5000_FAN,
 };
 
-/*
- * TOOD(b/180681346): need to update for real fan
- *
- * Prototype fan spins at about 7200 RPM at 100% PWM.
- * Set minimum at around 30% PWM.
- */
+static const struct fan_conf fan_conf_1 = {
+	.flags = FAN_USE_RPM_MODE,
+	.ch = MFT_CH_1,	/* Use MFT id to control fan */
+	.pgood_gpio = -1,
+	.enable_gpio = GPIO_EN_PP5000_FAN2,
+};
+
+/* TOOD(b/193487913): need to update for real fan */
 static const struct fan_rpm fan_rpm_0 = {
+	.rpm_min = 2200,
+	.rpm_start = 2200,
+	.rpm_max = 7200,
+};
+
+static const struct fan_rpm fan_rpm_1 = {
 	.rpm_min = 2200,
 	.rpm_start = 2200,
 	.rpm_max = 7200,
@@ -47,42 +60,9 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 		.conf = &fan_conf_0,
 		.rpm = &fan_rpm_0,
 	},
+	[FAN_CH_1] = {
+		.conf = &fan_conf_1,
+		.rpm = &fan_rpm_1,
+	},
 };
 
-#ifndef CONFIG_FANS
-
-/*
- * TODO(b/181271666): use static fan speeds until fan and sensors are
- * tuned. for now, use:
- *
- *   AP off:  33%
- *   AP  on: 100%
- */
-
-static void fan_slow(void)
-{
-	const int duty_pct = 33;
-
-	ccprints("%s: speed %d%%", __func__, duty_pct);
-
-	pwm_enable(PWM_CH_FAN, 1);
-	pwm_set_duty(PWM_CH_FAN, duty_pct);
-}
-
-static void fan_max(void)
-{
-	const int duty_pct = 100;
-
-	ccprints("%s: speed %d%%", __func__, duty_pct);
-
-	pwm_enable(PWM_CH_FAN, 1);
-	pwm_set_duty(PWM_CH_FAN, duty_pct);
-}
-
-DECLARE_HOOK(HOOK_INIT, fan_slow, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, fan_slow, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, fan_slow, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_RESET, fan_max, HOOK_PRIO_FIRST);
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, fan_max, HOOK_PRIO_DEFAULT);
-
-#endif /* CONFIG_FANS */
