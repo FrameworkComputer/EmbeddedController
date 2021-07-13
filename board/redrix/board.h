@@ -222,8 +222,7 @@ enum ioex_port {
 };
 
 enum battery_type {
-	BATTERY_POWER_TECH,
-	BATTERY_LGC011,
+	BATTERY_DYNAPACK_COS,
 	BATTERY_TYPE_COUNT
 };
 
