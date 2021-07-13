@@ -671,7 +671,7 @@ void dpm_remove_source(int port)
 
 /*
  * Note: all ports receive the 1.5 A source offering until they are found to
- * match a criteria on the 3.0 A priority list (ex. though sink capability
+ * match a criteria on the 3.0 A priority list (ex. through sink capability
  * probing), at which point they will be offered a new 3.0 A source capability.
  */
 __overridable int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
