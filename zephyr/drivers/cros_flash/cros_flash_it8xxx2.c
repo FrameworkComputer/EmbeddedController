@@ -232,7 +232,9 @@ static int cros_flash_it8xxx2_protect_now(const struct device *dev, int all)
 
 	if (all) {
 		/* Protect the entire flash */
-		flash_write_protection_set(flash_controller, all);
+		flash_protect_banks(0,
+			CONFIG_FLASH_SIZE_BYTES / CONFIG_FLASH_BANK_SIZE,
+			FLASH_WP_EC);
 		data->all_protected = 1;
 	} else {
 		/* Protect the read-only section and persistent state */
