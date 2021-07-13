@@ -301,16 +301,16 @@ int bmi_get_normalized_rate(const struct motion_sensor_t *s, int rate, int rnd,
 			    int *normalized_rate_ptr, uint8_t *reg_val_ptr);
 
 /* Get the accelerometer offset */
-void bmi_accel_get_offset(const struct motion_sensor_t *accel, intv3_t v);
+int bmi_accel_get_offset(const struct motion_sensor_t *accel, intv3_t v);
 
 /* Get the gyroscope offset */
-void bmi_gyro_get_offset(const struct motion_sensor_t *gyro, intv3_t v);
+int bmi_gyro_get_offset(const struct motion_sensor_t *gyro, intv3_t v);
 
 /* Set the accelerometer offset */
-void bmi_set_accel_offset(const struct motion_sensor_t *accel, intv3_t v);
+int bmi_set_accel_offset(const struct motion_sensor_t *accel, intv3_t v);
 
 /* Set the gyroscope offset */
-void bmi_set_gyro_offset(const struct motion_sensor_t *gyro, intv3_t v,
+int bmi_set_gyro_offset(const struct motion_sensor_t *gyro, intv3_t v,
 			 int *val98_ptr);
 
 #endif /* __CROS_EC_ACCELGYRO_BMI_COMMON_H */

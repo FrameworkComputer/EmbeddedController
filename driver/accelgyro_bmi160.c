@@ -211,13 +211,19 @@ static int set_offset(const struct motion_sensor_t *s,
 
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
-		bmi_set_accel_offset(s, v);
+		ret = bmi_set_accel_offset(s, v);
+		if (ret != EC_SUCCESS)
+			return ret;
+
 		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
 				 BMI160_OFFSET_EN_GYR98,
 				 val98 | BMI160_OFFSET_ACC_EN);
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
-		bmi_set_gyro_offset(s, v, &val98);
+		ret = bmi_set_gyro_offset(s, v, &val98);
+		if (ret != EC_SUCCESS)
+			return ret;
+
 		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
 				 BMI160_OFFSET_EN_GYR98,
 				 val98 | BMI160_OFFSET_GYRO_EN);
@@ -246,7 +252,9 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 	 * Temporary set frequency to 100Hz to get enough data in a short
 	 * period of time.
 	 */
-	set_data_rate(s, 100000, 0);
+	ret = set_data_rate(s, 100000, 0);
+	if (ret != EC_SUCCESS)
+		goto end_perform_calib;
 
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:

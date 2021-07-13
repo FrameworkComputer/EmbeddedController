@@ -161,13 +161,19 @@ static int set_offset(const struct motion_sensor_t *s,
 
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
-		bmi_set_accel_offset(s, v);
+		ret = bmi_set_accel_offset(s, v);
+		if (ret != EC_SUCCESS)
+			return ret;
+
 		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
 				 BMI260_NV_CONF,
 				 val_nv_conf | BMI260_ACC_OFFSET_EN);
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
-		bmi_set_gyro_offset(s, v, &val98);
+		ret = bmi_set_gyro_offset(s, v, &val98);
+		if (ret != EC_SUCCESS)
+			return ret;
+
 		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
 				 BMI260_OFFSET_EN_GYR98,
 				 val98 | BMI260_OFFSET_GYRO_EN);
