@@ -11,21 +11,6 @@
 #include "pwm_chip.h"
 
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED2] = {
-		.channel = 0,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 4800,
-	},
-	[PWM_CH_LED3] = {
-		.channel = 1,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 4800,
-	},
-	[PWM_CH_LED1] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 4800,
-	},
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
 		.flags = 0,
@@ -42,29 +27,11 @@ const struct pwm_t pwm_channels[] = {
 		.flags = PWM_CONFIG_OPEN_DRAIN,
 		.freq = 25000
 	},
-	[PWM_CH_LED4] = {
-		.channel = 7,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 4800,
-	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 static void board_pwm_init(void)
 {
-	/*
-	 * Turn on all the LED at 50%.
-	 * Turn on the fan at 100%.
-	 */
-	pwm_enable(PWM_CH_LED1, 1);
-	pwm_set_duty(PWM_CH_LED1, 50);
-	pwm_enable(PWM_CH_LED2, 1);
-	pwm_set_duty(PWM_CH_LED2, 50);
-	pwm_enable(PWM_CH_LED3, 1);
-	pwm_set_duty(PWM_CH_LED3, 50);
-	pwm_enable(PWM_CH_LED4, 1);
-	pwm_set_duty(PWM_CH_LED4, 50);
-
 	pwm_enable(PWM_CH_KBLIGHT, 1);
 	pwm_set_duty(PWM_CH_KBLIGHT, 50);
 }
