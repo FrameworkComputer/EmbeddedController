@@ -54,6 +54,7 @@
 
 static void bc12_interrupt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
+static void usb_a0_interrupt(enum gpio_signal signal);
 
 #include "gpio_list.h"
 
@@ -230,6 +231,15 @@ const int usb_port_enable[] = {
 	GPIO_EN_PP5000_USB_A0_VBUS_X,
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
+
+__maybe_unused void usb_a0_interrupt(enum gpio_signal signal)
+{
+	enum usb_charge_mode mode = gpio_get_level(signal) ?
+		USB_CHARGE_MODE_ENABLED : USB_CHARGE_MODE_DISABLED;
+
+	for (int i = 0; i < USB_PORT_COUNT; i++)
+		usb_charge_set_mode(i, mode, USB_ALLOW_SUSPEND_CHARGE);
+}
 
 /* USB Mux */
 

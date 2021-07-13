@@ -54,6 +54,10 @@ GPIO_INT(WP,                 PIN(I, 4), GPIO_INT_BOTH | GPIO_SEL_1P8V,
          switch_interrupt) /* EC_FLASH_WP_OD */
 GPIO_INT(SPI0_CS,            PIN(M, 5), GPIO_INT_FALLING,
          spi_event)        /* SPI slave Chip Select -- AP_SPI_EC_CS_L */
+#ifdef BOARD_TOMATO
+GPIO_INT(AP_XHCI_INIT_DONE,  PIN(J, 5), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V,
+         usb_a0_interrupt)
+#endif
 
 /* Power Sequencing Signals */
 GPIO(EC_PMIC_EN_ODL,         PIN(D, 0), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
@@ -82,7 +86,6 @@ GPIO(EC_NVME_PLN_ODL,        PIN(D, 7), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
 GPIO(NVME_EC_PLA_S3_ODL,     PIN(I, 7), GPIO_INPUT)
 GPIO(EN_PP2500_NVME_X,       PIN(J, 2), GPIO_OUTPUT | GPIO_PULL_DOWN)
 GPIO(EN_PP1200_NVME_X,       PIN(J, 3), GPIO_OUTPUT | GPIO_PULL_DOWN)
-GPIO(EN_PP900_NVME_X,        PIN(J, 5), GPIO_OUTPUT | GPIO_PULL_DOWN)
 GPIO(PG_NVME_OD,             PIN(H, 3), GPIO_INPUT)
 
 /* Misc Signals */
