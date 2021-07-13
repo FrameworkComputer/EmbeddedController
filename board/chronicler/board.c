@@ -48,9 +48,9 @@ const struct fan_conf fan_conf_0 = {
 };
 
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min   = 3400,
-	.rpm_start = 3400,
-	.rpm_max   = 5700,
+	.rpm_min   = 3000,
+	.rpm_start = 5000,
+	.rpm_max   = 5100,
 };
 
 const struct fan_t fans[FAN_CH_COUNT] = {
@@ -86,8 +86,9 @@ const static struct ec_thermal_config thermal_config_with_fan = {
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
 	},
-	.temp_fan_off = C_TO_K(41),
-	.temp_fan_max = C_TO_K(59),
+	/* For real temperature fan_table (0 ~ 99C) */
+	.temp_fan_off = C_TO_K(0),
+	.temp_fan_max = C_TO_K(99),
 };
 
 struct ec_thermal_config thermal_params[] = {
@@ -97,6 +98,82 @@ struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_4_FAN]			= thermal_config_without_fan,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
+
+struct fan_step {
+	int on;
+	int off;
+	int rpm;
+};
+
+/* Fan control table */
+static const struct fan_step fan_table0[] = {
+	{.on = 30, .off =  0, .rpm = 3150 },		/* Fan level 0 */
+	{.on = 47, .off = 43, .rpm = 3500 },		/* Fan level 1 */
+	{.on = 50, .off = 47, .rpm = 3750 },		/* Fan level 2 */
+	{.on = 53, .off = 50, .rpm = 4200 },		/* Fan level 3 */
+	{.on = 56, .off = 53, .rpm = 4500 },		/* Fan level 4 */
+	{.on = 59, .off = 56, .rpm = 5000 },		/* Fan level 5 */
+};
+
+/* All fan tables must have the same number of levels */
+#define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
+
+static const struct fan_step *fan_table = fan_table0;
+
+#define FAN_AVERAGE_TIME_SEC 5
+
+int fan_percent_to_rpm(int fan, int pct)
+{
+	static int current_level;
+	static int previous_level = NUM_FAN_LEVELS;
+	static int cnt, avg_pct, previous_pct;
+	int i;
+
+	/* Average several times to smooth fan rotating speed. */
+	avg_pct += pct;
+
+	if (++cnt != FAN_AVERAGE_TIME_SEC)
+		return fan_table[previous_level].rpm;
+
+	avg_pct = (int) avg_pct / FAN_AVERAGE_TIME_SEC;
+
+	/*
+	 * Compare the pct and previous pct, we have the three paths :
+	 *  1. decreasing path. (check the off point)
+	 *  2. increasing path. (check the on point)
+	 *  3. invariant path. (return the current RPM)
+	 */
+	if (avg_pct < previous_pct) {
+		for (i = current_level; i >= 0; i--) {
+			if (avg_pct <= fan_table[i].off)
+				current_level = i - 1;
+			else
+				break;
+		}
+	} else if (avg_pct > previous_pct) {
+		for (i = current_level + 1; i < NUM_FAN_LEVELS; i++) {
+			if (avg_pct >= fan_table[i].on)
+				current_level = i;
+			else
+				break;
+		}
+	}
+
+	if (current_level < 0)
+		current_level = 0;
+
+	if (current_level != previous_level)
+		cprints(CC_THERMAL, "Setting fan RPM to %d",
+			fan_table[current_level].rpm);
+
+	previous_pct = avg_pct;
+	previous_level = current_level;
+
+	cnt = 0;
+	avg_pct = 0;
+
+	return fan_table[current_level].rpm;
+}
 
 /******************************************************************************/
 /* MFT channels. These are logically separate from pwm_channels. */

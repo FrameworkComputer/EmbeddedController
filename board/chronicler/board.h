@@ -76,6 +76,7 @@
 #undef CONFIG_VOLUME_BUTTONS
 
 /* Fan features */
+#define CONFIG_FAN_RPM_CUSTOM
 
 /* charger defines */
 #define CONFIG_CHARGER_SENSE_RESISTOR		10
