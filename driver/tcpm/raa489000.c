@@ -14,6 +14,7 @@
 #include "raa489000.h"
 #include "tcpm/tcpci.h"
 #include "tcpm/tcpm.h"
+#include "timer.h"
 
 #define DEFAULT_R_AC 20
 #define R_AC CONFIG_CHARGER_SENSE_RESISTOR_AC
@@ -113,6 +114,7 @@ int raa489000_init(int port)
 	 * otherwise the board may die (See b/150702984, b/178728138).  This
 	 * works as this part is a combined charger IC and TCPC.
 	 */
+	usleep(853);
 	charger_get_vbus_voltage(port, &vbus_mv);
 
 	/*
