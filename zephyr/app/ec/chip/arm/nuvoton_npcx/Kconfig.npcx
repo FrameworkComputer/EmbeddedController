@@ -8,6 +8,19 @@
 
 if SOC_FAMILY_NPCX
 
+# Enable NPCX firmware header generator
+config NPCX_HEADER
+	default y
+
+config NPCX_HEADER_SPI_MAX_CLOCK
+	default 50
+
+config NPCX_HEADER_SPI_READ_MODE
+	default "dual"
+
+config NPCX_HEADER_CORE_CLOCK_SPI_CLOCK_RATIO
+	default 2
+
 # ADC
 # The resolution and oversamplig values are fixed by the NPCX ADC driver
 config PLATFORM_EC_ADC_RESOLUTION
