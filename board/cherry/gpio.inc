@@ -33,7 +33,11 @@ GPIO_INT(BASE_IMU_INT_L,     PIN(M, 3), GPIO_INT_FALLING | GPIO_SEL_1P8V,
          icm42607_interrupt)
 /* USB-C interrupts */
 GPIO_INT(USB_C0_PPC_INT_ODL, PIN(D, 1), GPIO_INT_BOTH, ppc_interrupt)
+#ifdef BOARD_CHERRY
 GPIO_INT(USB_C0_BC12_INT_ODL,PIN(J, 4), GPIO_INT_FALLING, bc12_interrupt)
+#else /* TOMATO */
+GPIO_INT(USB_C0_BC12_INT_ODL,PIN(I, 5), GPIO_INT_FALLING, bc12_interrupt)
+#endif
 /* TODO: rt1718s interrupt, not implemented */
 GPIO(USB_C1_INT_ODL,         PIN(B, 2), GPIO_INPUT | GPIO_INT_FALLING)
 /* TODO: not used in other devices? */
@@ -80,13 +84,6 @@ GPIO(EN_PP5000_USB_A0_VBUS_X,PIN(B, 7), GPIO_OUT_LOW)
 GPIO(USB_C0_DP_IN_HPD,       PIN(H, 4), GPIO_OUT_LOW)
 GPIO(USB_C1_DP_IN_HPD,       PIN(J, 1), GPIO_OUT_LOW)
 GPIO(USB_C0_FRS_EN,          PIN(F, 0), GPIO_OUT_LOW)
-
-/* NVME */
-GPIO(EC_NVME_PLN_ODL,        PIN(D, 7), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
-GPIO(NVME_EC_PLA_S3_ODL,     PIN(I, 7), GPIO_INPUT)
-GPIO(EN_PP2500_NVME_X,       PIN(J, 2), GPIO_OUTPUT | GPIO_PULL_DOWN)
-GPIO(EN_PP1200_NVME_X,       PIN(J, 3), GPIO_OUTPUT | GPIO_PULL_DOWN)
-GPIO(PG_NVME_OD,             PIN(H, 3), GPIO_INPUT)
 
 /* Misc Signals */
 GPIO(EN_KB_BL,               PIN(A, 5), GPIO_OUT_LOW)
@@ -137,7 +134,9 @@ GPIO(CCD_MODE_ODL,           PIN(C, 4), GPIO_INPUT)
  * ADC pins don't have internal pull-down capability,
  * so we set them as output low.
  */
+#ifdef BOARD_CHERRY
 GPIO(NC_GPI5,                PIN(I, 5), GPIO_OUT_LOW)
+#endif
 /* NC pins, enable internal pull-up/down to avoid floating state. */
 GPIO(NC_GPM6,                PIN(M, 6), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(SPI_CLK_GPG6,           PIN(G, 6), GPIO_INPUT | GPIO_PULL_UP)
@@ -149,7 +148,13 @@ GPIO(SPI_MOSI_GPG4,          PIN(G, 4), GPIO_OUT_LOW)
 GPIO(SPI_MISO_GPG5,          PIN(G, 5), GPIO_OUT_LOW)
 GPIO(SPI_CS_GPG7,            PIN(G, 7), GPIO_OUT_LOW)
 
-/* Unused PWM pins */
+/* Other unused pins */
 GPIO(PWM3,                   PIN(A, 3), GPIO_INPUT)
 GPIO(PWM6,                   PIN(A, 6), GPIO_INPUT)
 GPIO(PWM7,                   PIN(A, 7), GPIO_INPUT)
+GPIO(EC_NVME_PLN_ODL,        PIN(D, 7), GPIO_INPUT)
+GPIO(NVME_EC_PLA_S3_ODL,     PIN(I, 7), GPIO_INPUT)
+GPIO(EN_PP2500_NVME_X,       PIN(J, 2), GPIO_INPUT)
+GPIO(EN_PP1200_NVME_X,       PIN(J, 3), GPIO_INPUT)
+GPIO(PG_NVME_OD,             PIN(H, 3), GPIO_INPUT)
+
