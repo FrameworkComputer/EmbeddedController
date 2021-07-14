@@ -168,7 +168,7 @@ static int config_interrupt(const struct motion_sensor_t *s)
 		goto err_unlock;
 
 	/* Get the previous configuration data */
-	ret = bmi3_read_n(s, BMI3_REG_IO_INT_CTRL, reg_data, 6);
+	ret = bmi3_read_n(s, BMI3_REG_IO_INT_CTRL, reg_data, 4);
 	if (ret)
 		goto err_unlock;
 
@@ -181,14 +181,10 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	reg_data[2] = BMI3_SET_BITS(reg_data[2], BMI3_INT1_OUTPUT_EN,
 				    BMI3_INT_OUTPUT_ENABLE);
 
-	reg_data[4] = BMI3_SET_BIT_POS0(reg_data[4], BMI3_INT_LATCH,
-					BMI3_INT_LATCH_EN);
-
 	/*
-	 * Set the interrupt pin configurations and
-	 * latch settings
+	 * Set the interrupt pin configurations
 	 */
-	ret = bmi3_write_n(s, BMI3_REG_IO_INT_CTRL, &reg_data[2], 4);
+	ret = bmi3_write_n(s, BMI3_REG_IO_INT_CTRL, &reg_data[2], 2);
 	if (ret)
 		goto err_unlock;
 
