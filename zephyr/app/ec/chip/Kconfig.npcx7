@@ -6,6 +6,8 @@
 # This file defines the correct defaults when using the NPCX7 series chipset
 #
 
+if SOC_SERIES_NPCX7
+
 if SOC_NPCX7M6FC
 
 #
@@ -84,33 +86,4 @@ config CROS_EC_RW_SIZE
 
 endif # SOC_NPCX7M7FC
 
-#
-# Default config values shared by all NPCX7 devices
-#
-
-# ADC
-# The resolution and oversamplig values are fixed by the NPCX ADC driver
-config PLATFORM_EC_ADC_RESOLUTION
-	default 10
-
-config PLATFORM_EC_ADC_OVERSAMPLING
-	default 0
-
-# Set the system clock to 15MHz.
-config SYS_CLOCK_HW_CYCLES_PER_SEC
-	default 15000000
-
-if WATCHDOG
-
-# Set the delay time for printing panic data.
-# 1 cycle is about 32ms. 500ms is about 16 cycles.
-config WDT_NPCX_DELAY_CYCLES
-	default 16
-
-endif # WATCHDOG
-
-# The maximum supported time the NPCX can spend in deep-sleep with instant
-# wake is 200 ms, so the hook tick interval is set to match.
-config CROS_EC_HOOK_TICK_INTERVAL
-	default 200000
-
+endif # SOC_SERIES_NPCX7

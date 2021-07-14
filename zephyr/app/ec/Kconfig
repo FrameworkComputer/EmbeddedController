@@ -17,12 +17,7 @@ menuconfig CROS_EC
 if CROS_EC
 
 rsource "soc/Kconfig"
-
-if SOC_SERIES_NPCX7
-
-rsource "chip/Kconfig.npcx7"
-
-endif # SOC_SERIES_NPCX7
+rsource "chip/Kconfig.*"
 
 config LTO
 	bool "Link Time Optimization (LTO)"
