@@ -3827,13 +3827,13 @@ void tc_set_debug_level(enum debug_level debug_level)
 void tc_usb_firmware_fw_update_limited_run(int port)
 {
 	TC_SET_FLAG(port, TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN);
-	tc_start_event_loop(port);
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 void tc_usb_firmware_fw_update_run(int port)
 {
 	TC_SET_FLAG(port, TC_FLAGS_USB_RETIMER_FW_UPDATE_RUN);
-	tc_start_event_loop(port);
+	task_wake(PD_PORT_TO_TASK_ID(port));
 }
 
 void tc_run(const int port)
