@@ -445,3 +445,19 @@ __override bool board_is_dts_port(int port)
 {
 	return port == USBC_PORT_C0;
 }
+
+__override bool board_is_tbt_usb4_port(int port)
+{
+	if (port == USBC_PORT_C0 || port == USBC_PORT_C2)
+		return true;
+
+	return false;
+}
+
+__override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
+{
+	if (!board_is_tbt_usb4_port(port))
+		return TBT_SS_RES_0;
+
+	return TBT_SS_TBT_GEN3;
+}
