@@ -160,7 +160,7 @@ static int config_interrupt(const struct motion_sensor_t *s)
 		goto err_unlock;
 
 	/* Set FIFO water-mark to read data whenever available */
-	reg_data[0] = 1;
+	reg_data[0] = 6;
 	reg_data[1] = 0;
 
 	ret = bmi3_write_n(s, BMI3_REG_FIFO_WATERMARK, reg_data, 2);
