@@ -127,8 +127,8 @@ void gpio_reset(enum gpio_signal signal)
 {
 	const struct gpio_info *g = gpio_list + signal;
 
-	gpio_set_flags_by_mask(g->port, g->mask, g->flags);
 	gpio_set_alternate_function(g->port, g->mask, GPIO_ALT_FUNC_NONE);
+	gpio_set_flags_by_mask(g->port, g->mask, g->flags);
 }
 
 const char *gpio_get_name(enum gpio_signal signal)
