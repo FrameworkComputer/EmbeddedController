@@ -19,7 +19,7 @@
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_FP, format, ## args)
 
-static uint8_t enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE] = {0};
+static uint8_t enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE] __aligned(4) = {0};
 
 /* Recorded error flags */
 static uint16_t errors;

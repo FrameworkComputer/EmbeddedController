@@ -42,7 +42,7 @@
  */
 static uint8_t ctx[FP_SENSOR_CONTEXT_SIZE] __uncached __aligned(4);
 static bio_sensor_t bio_sensor;
-static uint8_t enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE];
+static uint8_t enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE] __aligned(4);
 
 /* recorded error flags */
 static uint16_t errors;
