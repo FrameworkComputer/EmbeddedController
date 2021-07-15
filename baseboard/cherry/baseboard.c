@@ -151,7 +151,7 @@ const struct mt6360_config_t mt6360_config = {
 	.i2c_addr_flags = MT6360_PMU_I2C_ADDR_FLAGS,
 };
 
-const struct pi3usb9201_config_t
+__maybe_unused const struct pi3usb9201_config_t
 		pi3usb9201_bc12_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[0] = {
 		.i2c_port = I2C_PORT_USB0,
@@ -161,7 +161,13 @@ const struct pi3usb9201_config_t
 };
 
 struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+#ifdef CONFIG_BC12_DETECT_PI3USB9201
 	{ .drv = &pi3usb9201_drv },
+#elif defined(CONFIG_BC12_DETECT_MT6360)
+	{ .drv = &mt6360_drv },
+#else
+#error must pick one of PI3USB9201 or MT6360 for port 0
+#endif
 	{ .drv = &rt1718s_bc12_drv },
 };
 
