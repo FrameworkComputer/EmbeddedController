@@ -109,22 +109,26 @@
 #define GPIO_KBD_KSO2			GPIO_EC_KSO_02_INV
 
 /* Sensors */
+#ifdef HAS_TASK_MOTIONSENSE
 #define CONFIG_TABLET_MODE
 #define CONFIG_GMR_TABLET_MODE
 #define GMR_TABLET_MODE_GPIO_L		GPIO_TABLET_MODE
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
+#define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_UPDATE
+#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
+#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 
-#ifdef HAS_TASK_MOTIONSENSE
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
 /* FIFO size is a power of 2. */
 #define CONFIG_ACCEL_FIFO_SIZE 256
 /* Depends on how fast the AP boots and typical ODRs. */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
-#endif
 
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
+#endif
 
 /* Battery Config */
 #define CONFIG_BATTERY_PRESENT_GPIO	GPIO_EC_BATT_PRES_ODL
