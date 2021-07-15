@@ -299,13 +299,6 @@ flash_fp_mcu_stm32() {
 
   echo "Flashing ${transport} device ID: ${deviceid}"
 
-  # Ensure the ACPI is not cutting power when unloading cros-ec-spi
-  if [[ "${gpio_pwren}" -gt 0 ]]; then
-    gpio export "${gpio_pwren}"
-    gpio out    "${gpio_pwren}"
-    gpio 1      "${gpio_pwren}"
-  fi
-
   # Remove cros_fp if present
   klog "Unbinding cros-ec driver"
   if [[ "${transport}" == "UART" ]]; then
@@ -409,11 +402,6 @@ flash_fp_mcu_stm32() {
     klog "Binding cros-ec driver"
     echo "" > "/sys/bus/spi/devices/${deviceid}/driver_override"
     echo "${deviceid}" > /sys/bus/spi/drivers/cros-ec-spi/bind
-
-    # Kernel driver is back, we are no longer controlling power
-    if [[ "${gpio_pwren}" -gt 0 ]]; then
-      gpio unexport "${gpio_pwren}"
-    fi
   fi
 
   if [[ "${cmd_exit_status}" -ne 0 ]]; then
