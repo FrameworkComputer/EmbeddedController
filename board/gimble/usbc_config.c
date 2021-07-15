@@ -279,3 +279,8 @@ void retimer_interrupt(enum gpio_signal signal)
 	 * TODO(b/179513527): add USB-C support
 	 */
 }
+
+__override bool board_is_dts_port(int port)
+{
+	return port == USBC_PORT_C0;
+}
