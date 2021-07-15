@@ -49,6 +49,15 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
+/* Baseboard */
+
+static void baseboard_init(void)
+{
+	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
+	gpio_enable_interrupt(GPIO_AP_XHCI_INIT_DONE);
+}
+DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT-1);
+
 /* Sub-board */
 
 enum board_sub_board board_get_sub_board(void)
