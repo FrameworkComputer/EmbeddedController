@@ -133,24 +133,6 @@ warn_gpio() {
   fi
 }
 
-# TODO(b/190744837): Remove when "Device or resource busy" bug is resolved.
-print_spi_bytes() {
-  local label="$1"
-
-  local timestamp
-  local deviceid
-  local bytes_rx
-  local bytes_tx
-
-  if [[ "${TRANSPORT}" == "SPI" ]]; then
-    timestamp="$(date)"
-    deviceid="$(get_spiid)"
-    bytes_rx="$(cat "/sys/bus/spi/devices/${deviceid}/statistics/bytes_rx")"
-    bytes_tx="$(cat "/sys/bus/spi/devices/${deviceid}/statistics/bytes_tx")"
-    echo "${label}: SPI Bytes (${timestamp}): ${bytes_rx} RX and ${bytes_tx} TX"
-  fi
-}
-
 # Taken verbatim from
 # https://chromium.googlesource.com/chromiumos/docs/+/master/lsb-release.md#shell
 # This should not be used by anything except get_platform_name.
@@ -316,9 +298,6 @@ flash_fp_mcu_stm32() {
     gpio 1      "${gpio_pwren}"
   fi
 
-  # TODO(b/190744837): Remove when "Device or resource busy" bug is resolved.
-  print_spi_bytes C
-
   # Remove cros_fp if present
   if [[ "${transport}" == "UART" ]]; then
     echo "${deviceid}" > /sys/bus/serial/drivers/cros-ec-uart/unbind
@@ -335,9 +314,6 @@ flash_fp_mcu_stm32() {
   gpio 0 "${gpio_nrst}"
   sleep 0.001
 
-  # TODO(b/190744837): Remove when "Device or resource busy" bug is resolved.
-  print_spi_bytes D
-
   if [[ "${transport}" == "UART" ]]; then
     # load AMDI0020:01 ttyS1
     echo AMDI0020:01 > /sys/bus/platform/drivers/dw-apb-uart/unbind;
@@ -349,9 +325,6 @@ flash_fp_mcu_stm32() {
     # poorly behaved chip select line. See b/145023809.
   fi
   sleep 0.5
-
-  # TODO(b/190744837): Remove when "Device or resource busy" bug is resolved.
-  print_spi_bytes E
 
   # We do not expect the drivers to change the pin state when binding.
   # If you receive this warning, the driver needs to be fixed on this board
@@ -629,17 +602,11 @@ main() {
     exit "${EXIT_CONFIG}"
   fi
 
-  # TODO(b/190744837): Remove when "Device or resource busy" bug is resolved.
-  print_spi_bytes A
-
   if [[ "${FLAGS_services}" -eq "${FLAGS_TRUE}" ]]; then
     echo "# Stopping biod and timberslide"
     stop biod
     stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
   fi
-
-  # TODO(b/190744837): Remove when "Device or resource busy" bug is resolved.
-  print_spi_bytes B
 
   # If cros-ec driver isn't bound on startup, this means the final rebinding
   # may fail.
