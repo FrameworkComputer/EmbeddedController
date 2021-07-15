@@ -349,4 +349,20 @@ void host_send_sysrq(uint8_t key);
 uint32_t get_feature_flags0(void);
 uint32_t get_feature_flags1(void);
 
+#ifdef CONFIG_ZTEST
+static inline void
+stub_send_response_callback(struct host_cmd_handler_args *args)
+{
+	ARG_UNUSED(args);
+}
+
+#define BUILD_HOST_COMMAND(CMD, VERSION, RESPONSE)                         \
+	{                                                                  \
+		.command = (CMD), .version = (VERSION),                    \
+		.send_response = stub_send_response_callback,              \
+		.response = &(RESPONSE), .response_max = sizeof(RESPONSE), \
+		.response_size = sizeof(RESPONSE)                          \
+	}
+#endif /* CONFIG_ZTEST */
+
 #endif  /* __CROS_EC_HOST_COMMAND_H */
