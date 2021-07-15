@@ -539,6 +539,16 @@ DECLARE_HOOK(HOOK_LID_CHANGE, powerbtn_x86_lid_change, HOOK_PRIO_DEFAULT);
  */
 static void powerbtn_x86_changed(void)
 {
+	/*
+	* clear VCI button register before shutdown to avoid
+	* AC only will autoboot problem.
+	*/
+	if (!power_button_is_pressed()) {
+		MCHP_VCI_NEGEDGE_DETECT = BIT(0) |  BIT(1);
+		MCHP_VCI_POSEDGE_DETECT = BIT(0) |  BIT(1);
+
+	}
+
 	if (pwrbtn_state == PWRBTN_STATE_BOOT_KB_RESET ||
 	    pwrbtn_state == PWRBTN_STATE_INIT_ON ||
 	    pwrbtn_state == PWRBTN_STATE_LID_OPEN ||
@@ -566,6 +576,7 @@ static void powerbtn_x86_changed(void)
 		/* if system is in G3 or S5 will run to was off state to released button */
 		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
 			power_button_released(get_time().val);
+
 	}
 
 	/* Wake the power button task */
