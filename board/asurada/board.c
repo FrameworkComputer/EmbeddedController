@@ -15,6 +15,8 @@
 #include "console.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm_common.h"
+#include "driver/accelgyro_icm426xx.h"
 #include "driver/als_tcs3400.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/temp_sensor/thermistor.h"
@@ -143,7 +145,61 @@ static void update_rotation_matrix(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, update_rotation_matrix, HOOK_PRIO_INIT_ADC + 2);
+
 #endif
+
+static struct icm_drv_data_t g_icm426xx_data;
+
+enum base_accelgyro_type {
+	BASE_GYRO_NONE = 0,
+	BASE_GYRO_BMI160 = 1,
+	BASE_GYRO_ICM426XX = 2,
+};
+
+static enum base_accelgyro_type base_accelgyro_config;
+
+struct motion_sensor_t icm426xx_base_accel = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+	.default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs. */
+	.rot_standard_ref = NULL,
+	.min_frequency = ICM426XX_ACCEL_MIN_FREQ,
+	.max_frequency = ICM426XX_ACCEL_MAX_FREQ,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
+
+struct motion_sensor_t icm426xx_base_gyro = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = NULL,
+	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
+	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
+};
 
 struct motion_sensor_t motion_sensors[] = {
 	/*
@@ -262,6 +318,38 @@ struct motion_sensor_t motion_sensors[] = {
 #endif /* BOARD_ASURADA_REV0 */
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+void motion_interrupt(enum gpio_signal signal)
+{
+	if (base_accelgyro_config == BASE_GYRO_ICM426XX)
+		icm426xx_interrupt(signal);
+	else
+		bmi160_interrupt(signal);
+}
+
+static void board_detect_motionsense(void)
+{
+	int val;
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return;
+	if (base_accelgyro_config != BASE_GYRO_NONE)
+		return;
+
+	icm_read8(&icm426xx_base_accel, ICM426XX_REG_WHO_AM_I, &val);
+	if (val == ICM426XX_CHIP_ICM40608) {
+		motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
+		motion_sensors[BASE_GYRO] = icm426xx_base_gyro;
+		base_accelgyro_config =  BASE_GYRO_ICM426XX;
+		ccprints("Base Accelgyro: ICM426XX");
+	} else {
+		base_accelgyro_config = BASE_GYRO_BMI160;
+		ccprints("Base Accelgyro: BMI160");
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_detect_motionsense,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_detect_motionsense, HOOK_PRIO_DEFAULT);
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {

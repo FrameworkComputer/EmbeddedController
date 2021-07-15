@@ -60,6 +60,9 @@
 #define CONFIG_ACCELGYRO_BMI160 /* Base accel */
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+#define CONFIG_ACCELGYRO_ICM426XX /* Base accel */
+#define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
 #define CONFIG_ACCEL_LIS2DWL
 #define CONFIG_ACCEL_LIS2DW_AS_BASE
@@ -133,6 +136,7 @@ enum pwm_channel {
 };
 
 int board_accel_force_mode_mask(void);
+void motion_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

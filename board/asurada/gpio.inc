@@ -30,7 +30,7 @@ GPIO_INT(PMIC_EC_PWRGD, PIN(F, 3),
 
 /* Sensor Interrupts */
 GPIO_INT(BASE_IMU_INT_L,     PIN(J, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V,
-         bmi160_interrupt)
+         motion_interrupt)
 GPIO_INT(LID_ACCEL_INT_L,    PIN(J, 3), GPIO_INT_FALLING | GPIO_SEL_1P8V,
          lis2dw12_interrupt)
 #ifdef BOARD_ASURADA_REV0
