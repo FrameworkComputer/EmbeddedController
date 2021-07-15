@@ -14,3 +14,16 @@ properties:
     description:
       Define the MKBP or host events that will wake up the application
       processor from suspend mode.
+      HOST_EVENT_MASK should be used for ec-mkbp-host-event-wakeup-mask e.g.
+      ec-mkbp-host-event-wakeup-mask {
+        compatible = "ec-wake-mask-event";
+        wakeup-mask = <(
+          HOST_EVENT_MASK(HOST_EVENT_LID_OPEN) |
+          HOST_EVENT_MASK(HOST_EVENT_POWER_BUTTON) |
+          HOST_EVENT_MASK(HOST_EVENT_AC_CONNECTED) |
+          HOST_EVENT_MASK(HOST_EVENT_AC_DISCONNECTED) |
+          HOST_EVENT_MASK(HOST_EVENT_HANG_DETECT) |
+          HOST_EVENT_MASK(HOST_EVENT_RTC) |
+          HOST_EVENT_MASK(HOST_EVENT_MODE_CHANGE) |
+          HOST_EVENT_MASK(HOST_EVENT_DEVICE))>;
+      };

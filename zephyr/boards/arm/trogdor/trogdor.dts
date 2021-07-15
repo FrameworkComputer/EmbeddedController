@@ -39,20 +39,21 @@
 
 	ec-mkbp-host-event-wakeup-mask {
 		compatible = "ec-wake-mask-event";
-		wakeup-mask = <(HOST_EVENT_LID_OPEN | \
-				HOST_EVENT_POWER_BUTTON | \
-				HOST_EVENT_AC_CONNECTED | \
-				HOST_EVENT_AC_DISCONNECTED | \
-				HOST_EVENT_HANG_DETECT | \
-				HOST_EVENT_RTC | \
-				HOST_EVENT_MODE_CHANGE | \
-				HOST_EVENT_DEVICE)>;
+		wakeup-mask = <(
+			HOST_EVENT_MASK(HOST_EVENT_LID_OPEN) |
+			HOST_EVENT_MASK(HOST_EVENT_POWER_BUTTON) |
+			HOST_EVENT_MASK(HOST_EVENT_AC_CONNECTED) |
+			HOST_EVENT_MASK(HOST_EVENT_AC_DISCONNECTED) |
+			HOST_EVENT_MASK(HOST_EVENT_HANG_DETECT) |
+			HOST_EVENT_MASK(HOST_EVENT_RTC) |
+			HOST_EVENT_MASK(HOST_EVENT_MODE_CHANGE) |
+			HOST_EVENT_MASK(HOST_EVENT_DEVICE))>;
 	};
 
 	ec-mkbp-event-wakeup-mask {
 		compatible = "ec-wake-mask-event";
-		wakeup-mask = <(MKBP_EVENT_KEY_MATRIX | \
-				MKBP_EVENT_HOST_EVENT | \
+		wakeup-mask = <(MKBP_EVENT_KEY_MATRIX |
+				MKBP_EVENT_HOST_EVENT |
 				MKBP_EVENT_SENSOR_FIFO)>;
 	};
 

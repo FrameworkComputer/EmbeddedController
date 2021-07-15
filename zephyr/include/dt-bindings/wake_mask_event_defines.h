@@ -33,6 +33,8 @@
 #define MKBP_EVENT_ONLINE_CALIBRATION	BIT(11)
 #define MKBP_EVENT_PCHG			BIT(12)
 
+#define HOST_EVENT_MASK(event)		((event) >> 1)
+
 #define HOST_EVENT_NONE			BIT(0)
 #define HOST_EVENT_LID_CLOSED		BIT(1)
 #define HOST_EVENT_LID_OPEN		BIT(2)
