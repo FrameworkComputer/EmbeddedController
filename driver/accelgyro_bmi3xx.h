@@ -105,7 +105,7 @@
 #define BMI3_ACC_FOC_4G_REF			8192
 #define BMI3_ACC_FOC_8G_REF			4096
 #define BMI3_ACC_FOC_16G_REF			2048
-#define BMI3_FOC_SAMPLE_LIMIT			128
+#define BMI3_FOC_SAMPLE_LIMIT			32
 
 /* 20ms delay for 50Hz ODR */
 #define FOC_TRY_COUNT				5
