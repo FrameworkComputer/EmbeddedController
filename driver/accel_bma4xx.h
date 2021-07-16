@@ -137,7 +137,7 @@
 #define BMA4_OFFSET_ACC_MULTI_MG		(3900 * 1000)
 #define BMA4_OFFSET_ACC_DIV_MG			1000000
 
-#define BMA4_FOC_SAMPLE_LIMIT			128
+#define BMA4_FOC_SAMPLE_LIMIT			32
 
 /* Min and Max sampling frequency in mHz */
 #define BMA4_ACCEL_MIN_FREQ	12500
