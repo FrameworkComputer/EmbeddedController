@@ -567,6 +567,8 @@ static int amode_dp_config(int port, uint32_t *payload)
 	mf = ((dp_config >> 8) & 0xff) == MODE_DP_PIN_D ? 1 : 0;
 	/* Configure demux for DP mode */
 	svdm_configure_demux(port, 1, mf);
+	/* Notify hpd->pd conv that a DP_CONFIG message has been received */
+	pd_ufp_enable_hpd_send(port);
 
 	return 1;
 }
