@@ -759,8 +759,10 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 	RETURN_ERROR(bmi3_read_n(s, BMI3_REG_ACC_CONF + s->type, saved_conf,
 				4));
 
-	/* Set the FOC configuration and add a delay */
-	RETURN_ERROR(bmi3_write_n(s, BMI3_REG_ACC_CONF, acc_conf_data, 2));
+	ret = bmi3_write_n(s, BMI3_REG_ACC_CONF, acc_conf_data, 2);
+	if (ret)
+		goto end_calib;
+
 	msleep(FOC_DELAY);
 
 	switch (s->type) {
