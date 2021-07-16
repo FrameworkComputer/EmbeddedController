@@ -50,6 +50,7 @@ struct hpd_edge {
 struct hpd_info {
 	enum hpd_state state;
 	int count;
+	int send_enable;
 	uint64_t timer;
 	uint64_t last_send_ts;
 	enum hpd_event queue[HPD_QUEUE_DEPTH];
@@ -69,6 +70,17 @@ void pd_ufp_set_dp_opos(int port, int opos)
 int pd_ufp_get_dp_opos(int port)
 {
 	return alt_dp_mode_opos[port];
+}
+
+void pd_ufp_enable_hpd_send(int port)
+{
+	/*
+	 * This control is used ensure that a DP_ATTENTION message is not sent
+	 * to the DFP-D before a DP_CONFIG messaage has been received. This
+	 * control is not strictly required by the spec, but some port partners
+	 * will get confused if DP_ATTENTION is sent prior to DP_CONFIG.
+	 */
+	hpd.send_enable = 1;
 }
 
 static void hpd_to_dp_attention(void)
@@ -314,19 +326,37 @@ static void manage_hpd(void)
 	 * queued, then send DP_ATTENTION message.
 	 */
 	if (hpd.count > 0) {
-		if ((get_time().val - hpd.last_send_ts) > HPD_T_MIN_DP_ATTEN) {
+		/*
+		 * If at least one hpd event is pending in the queue, send
+		 * a DP_ATTENTION message if a DP_CONFIG message has been
+		 * received and have passed the minimum spacing interval.
+		 */
+		if (hpd.send_enable &&
+		    ((get_time().val - hpd.last_send_ts) >
+		     HPD_T_MIN_DP_ATTEN)) {
 			/* Generate DP_ATTENTION event pending in queue */
 			hpd_to_dp_attention();
 		} else {
+			uint32_t callback_us;
+
 			/*
 			 * Need to wait until until min spacing requirement of
 			 * DP attention messages. Set callback time to the min
 			 * value required. This callback time could be changed
 			 * based on hpd interrupts.
+			 *
+			 * This wait is also used to prevent a DP_ATTENTION
+			 * message from being sent before at least one DP_CONFIG
+			 * message has been received. If DP_ATTENTION messages
+			 * need to be delayed for this reason, then just wait
+			 * the minimum time spacing.
 			 */
-			hook_call_deferred(&manage_hpd_data,
-					   HPD_T_MIN_DP_ATTEN -
-					   (get_time().val - hpd.last_send_ts));
+			callback_us = HPD_T_MIN_DP_ATTEN -
+				(get_time().val - hpd.last_send_ts);
+			if (callback_us <= 0 ||
+			    callback_us > HPD_T_MIN_DP_ATTEN)
+				callback_us = HPD_T_MIN_DP_ATTEN;
+			hook_call_deferred(&manage_hpd_data, callback_us);
 		}
 	}
 
@@ -374,6 +404,7 @@ void usb_pd_hpd_converter_enable(int enable)
 		hpd.count = 0;
 		hpd.timer = 0;
 	        hpd.last_send_ts = 0;
+		hpd.send_enable = 0;
 
 		/* Reset hpd signal edges queue */
 		hpd.edges.head = 0;

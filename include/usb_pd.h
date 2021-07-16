@@ -2177,6 +2177,13 @@ void pd_ufp_set_dp_opos(int port, int opos);
  */
 int pd_ufp_get_dp_opos(int port);
 
+/**
+ * Notify hpd->pd converter that display is configured
+ *
+ * @param port     USB-C port number
+ */
+void pd_ufp_enable_hpd_send(int port);
+
 /*
  * Returns True if cable supports USB2 connection
  *
