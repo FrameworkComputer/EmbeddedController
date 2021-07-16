@@ -8,15 +8,15 @@
 
 if SOC_SERIES_NPCX9
 
-if SOC_NPCX9M3F
-
 #
 # NPCX993F: 512 KiB Flash, 256 KiB code RAM, 64 KiB data RAM
+# NPCX996F: 512 KiB Flash, 192 KiB code RAM, 64 KiB data RAM
 #
 
-# Code RAM base for NPCX993F
+# Code RAM base for NPCX9 series
 config CROS_EC_PROGRAM_MEMORY_BASE
-	default 0x10080000
+	default 0x10080000 if SOC_NPCX9M3F
+	default 0x10090000 if SOC_NPCX9M6F
 
 config CROS_EC_RAM_BASE
 	default 0x200c0000
@@ -33,16 +33,19 @@ config FLASH_SIZE
 config CROS_EC_RO_MEM_OFF
 	default 0x0
 
-# Image size limited by 1/2 Flash size (256 KiB) and code RAM size (256 KiB)
+# NPCX993F: Image size limited by 1/2 Flash size (256 KiB) and
+#           code RAM size (256 KiB)
+# NPCX996F: Image size limited by code RAM size (192 KiB)
+
 config CROS_EC_RO_SIZE
-	default 0x40000
+	default 0x40000 if SOC_NPCX9M3F
+	default 0x30000 if SOC_NPCX9M6F
 
 config CROS_EC_RW_MEM_OFF
-	default 0x40000
+	default 0x0
 
 config CROS_EC_RW_SIZE
-	default 0x40000
-
-endif # SOC_NPCX9M3F
+	default 0x40000 if SOC_NPCX9M3F
+	default 0x30000 if SOC_NPCX9M6F
 
 endif # SOC_SERIES_NPCX9

@@ -8,54 +8,16 @@
 
 if SOC_SERIES_NPCX7
 
-if SOC_NPCX7M6FC
-
 #
+# NPCX796FB: 1024 KiB Flash, 192 KiB code RAM, 62 KiB data RAM
 # NPCX796FC: 512 KiB Flash, 192 KiB code RAM, 62 KiB data RAM
-#
-
-# Code RAM base for NPCX796FC
-config CROS_EC_PROGRAM_MEMORY_BASE
-	default 0x10090000
-
-config CROS_EC_RAM_BASE
-	default 0x200c0000
-
-config CROS_EC_DATA_RAM_SIZE
-	default 0x00010000
-
-config CROS_EC_RAM_SIZE
-	default 0x0000f800
-
-config FLASH_SIZE
-	default 512
-
-config CROS_EC_RO_MEM_OFF
-	default 0x0
-
-# Image size limited by code RAM size (192 KiB)
-config CROS_EC_RO_SIZE
-	default 0x30000
-
-# RW firmware in program memory - Identical to RO, only one image loaded at a
-# time.
-config CROS_EC_RW_MEM_OFF
-	default 0x0
-
-config CROS_EC_RW_SIZE
-	default 0x30000
-
-endif # SOC_NPCX7M6FC
-
-if SOC_NPCX7M7FC
-
-#
 # NPCX797FC: 512 KiB Flash, 320 KiB code RAM, 62 KiB data RAM
 #
 
-# Code RAM base for NPCX797FC
+# Code RAM base for NPCX7 series
 config CROS_EC_PROGRAM_MEMORY_BASE
-	default 0x10070000
+	default 0x10090000 if SOC_NPCX7M6FB || SOC_NPCX7M6FC
+	default 0x10070000 if SOC_NPCX7M7FC
 
 config CROS_EC_RAM_BASE
 	default 0x200c0000
@@ -67,14 +29,17 @@ config CROS_EC_RAM_SIZE
 	default 0x0000f800
 
 config FLASH_SIZE
-	default 512
+	default 1024 if SOC_NPCX7M6FB
+	default 512  if SOC_NPCX7M6FC || SOC_NPCX7M7FC
 
 config CROS_EC_RO_MEM_OFF
 	default 0x0
 
-# Image size limited by 1/2 Flash size (256 KiB)
+# NPCX796FB/NPCX796FC: Image size limited by code RAM size (192 KiB)
+# NPCX797FC:           Image size limited by 1/2 Flash size (256 KiB)
 config CROS_EC_RO_SIZE
-	default 0x40000
+	default 0x30000 if SOC_NPCX7M6FB || SOC_NPCX7M6FC
+	default 0x40000 if SOC_NPCX7M7FC
 
 # RW firmware in program memory - Identical to RO, only one image loaded at a
 # time.
@@ -82,8 +47,7 @@ config CROS_EC_RW_MEM_OFF
 	default 0x0
 
 config CROS_EC_RW_SIZE
-	default 0x40000
-
-endif # SOC_NPCX7M7FC
+	default 0x30000 if SOC_NPCX7M6FB || SOC_NPCX7M6FC
+	default 0x40000 if SOC_NPCX7M7FC
 
 endif # SOC_SERIES_NPCX7
