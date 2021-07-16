@@ -150,10 +150,6 @@ class Project:
             2-tuples of a build configuration name and a BuildConfig.
         """
         conf = build_config.BuildConfig(cmake_defs={"BOARD": self.config.board})
-        if (self.project_dir / "boards").is_dir():
-            conf |= build_config.BuildConfig(
-                cmake_defs={"BOARD_ROOT": str(self.project_dir)}
-            )
         prj_conf = self.project_dir / "prj.conf"
         if prj_conf.is_file():
             conf |= build_config.BuildConfig(kconfig_files=[prj_conf])
