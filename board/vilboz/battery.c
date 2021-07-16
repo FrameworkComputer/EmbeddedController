@@ -427,20 +427,19 @@ int charger_profile_override(struct charge_state_data *curr)
 			if (chg_temp_c >= chg_curr_table[current_level + 1].on)
 				current_level = current_level + 1;
 		}
+		/*
+		 * Prevent level always minus 0 or over table steps.
+		 */
+		if (current_level < 0)
+			current_level = 0;
+		else if (current_level >= NUM_CHG_CURRENT_LEVELS)
+			current_level = NUM_CHG_CURRENT_LEVELS - 1;
+
+		prev_tmp = chg_temp_c;
+		current = chg_curr_table[current_level].curr_ma;
+
+		curr->requested_current = MIN(curr->requested_current, current);
 	}
-
-	/*
-	 * Prevent level always minus 0 or over table steps.
-	 */
-	if (current_level < 0)
-		current_level = 0;
-	else if (current_level >= NUM_CHG_CURRENT_LEVELS)
-		current_level = NUM_CHG_CURRENT_LEVELS - 1;
-
-	prev_tmp = chg_temp_c;
-	current = chg_curr_table[current_level].curr_ma;
-
-	curr->requested_current = MIN(curr->requested_current, current);
 
 	return 0;
 }
