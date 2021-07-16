@@ -1127,6 +1127,14 @@ static int init(struct motion_sensor_t *s)
 	/* This driver requires a mutex */
 	ASSERT(s->mutex);
 
+	/*
+	 * BMI3xx driver only supports MOTIONSENSE_TYPE_ACCEL and
+	 * MOTIONSENSE_TYPE_GYR0
+	 */
+	if (s->type != MOTIONSENSE_TYPE_ACCEL
+	    && s->type != MOTIONSENSE_TYPE_GYRO)
+		return EC_ERROR_UNIMPLEMENTED;
+
 	/* Reset bmi3 device */
 	reg_data[0] = (uint8_t)(BMI3_CMD_SOFT_RESET & BMI3_SET_LOW_BYTE);
 	reg_data[1] = (uint8_t)((BMI3_CMD_SOFT_RESET & BMI3_SET_HIGH_BYTE)
