@@ -900,14 +900,15 @@ static int set_data_rate(const struct motion_sensor_t *s,
 			 int rate, int rnd)
 {
 	int ret;
-	int normalized_rate;
+	int normalized_rate = 0;
 	uint8_t reg_data[4];
-	uint8_t reg_val;
+	uint8_t reg_val = 0;
 
 	struct accelgyro_saved_data_t *saved_data = BMI_GET_SAVED_DATA(s);
 
-	RETURN_ERROR(bmi_get_normalized_rate(s, rate, rnd, &normalized_rate,
-					     &reg_val));
+	if (rate > 0)
+		RETURN_ERROR(bmi_get_normalized_rate(s, rate, rnd,
+						 &normalized_rate, &reg_val));
 
 	/*
 	 * Lock accel resource to prevent another task from attempting
@@ -944,10 +945,6 @@ static int set_data_rate(const struct motion_sensor_t *s,
 				      BMI3_POWER_MODE,
 				      BMI3_ACC_MODE_NORMAL);
 		}
-
-		/* Set accelerometer ODR */
-		reg_data[2] = BMI3_SET_BIT_POS0(reg_data[2],
-				BMI3_SENS_ODR, reg_val);
 	} else if (s->type == MOTIONSENSE_TYPE_GYRO) {
 		if (rate == 0) {
 			/* FIFO stop collecting events */
@@ -968,9 +965,10 @@ static int set_data_rate(const struct motion_sensor_t *s,
 				      BMI3_POWER_MODE,
 				      BMI3_GYR_MODE_NORMAL);
 		}
-		reg_data[2] = BMI3_SET_BIT_POS0(reg_data[2], BMI3_SENS_ODR,
-						reg_val);
 	}
+
+	/* Set accelerometer ODR */
+	reg_data[2] = BMI3_SET_BIT_POS0(reg_data[2], BMI3_SENS_ODR, reg_val);
 
 	/* Set the accel/gyro configurations. */
 	ret = bmi3_write_n(s, BMI3_REG_ACC_CONF + s->type, &reg_data[2], 2);
