@@ -13,7 +13,7 @@
 #include "baseboard.h"
 
 /* System unlocked in early development */
-#define CONFIG_SYSTEM_UNLOCKED
+#undef CONFIG_SYSTEM_UNLOCKED
 
 #define CONFIG_CMD_TCPC_DUMP
 #define CONFIG_CMD_CHARGER_DUMP
