@@ -12,14 +12,17 @@ if SOC_FAMILY_NPCX
 config NPCX_HEADER
 	default y
 
-config NPCX_HEADER_SPI_MAX_CLOCK
-	default 50
+choice NPCX_HEADER_SPI_MAX_CLOCK_CHOICE
+	default NPCX_HEADER_SPI_MAX_CLOCK_50
+endchoice
 
-config NPCX_HEADER_SPI_READ_MODE
-	default "dual"
+choice NPCX_HEADER_SPI_READ_MODE_CHOICE
+	default NPCX_HEADER_SPI_READ_MODE_DUAL
+endchoice
 
-config NPCX_HEADER_CORE_CLOCK_SPI_CLOCK_RATIO
-	default 2
+choice NPCX_HEADER_CORE_CLOCK_SPI_CLOCK_RATIO_CHOICE
+	default NPCX_HEADER_CORE_CLOCK_SPI_CLOCK_RATIO_2
+endchoice
 
 # ADC
 # The resolution and oversamplig values are fixed by the NPCX ADC driver
