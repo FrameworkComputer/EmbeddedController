@@ -30,6 +30,8 @@
 #define EC_CROS_GPIO_INTERRUPTS						\
 	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt)	\
 	GPIO_INT(GPIO_POWER_BUTTON_L,					\
-		 GPIO_INT_EDGE_BOTH, power_button_interrupt)
+		 GPIO_INT_EDGE_BOTH, power_button_interrupt)		\
+	GPIO_INT(GPIO_SPI0_CS,						\
+		 GPIO_INT_EDGE_FALLING, spi_event)
 
 #endif /* __ZEPHYR_GPIO_MAP_H */

@@ -14,6 +14,7 @@
 #include <drivers/pinmux.h>
 #include <dt-bindings/pinctrl/it8xxx2-pinctrl.h>
 
+#include "chipset.h"
 #include "console.h"
 #include "host_command.h"
 
@@ -260,6 +261,16 @@ static void shi_ite_int_handler(const void *arg)
 
 }
 
+void spi_event(enum gpio_signal signal)
+{
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		/* Move to processing state */
+		spi_set_state(SPI_STATE_PROCESSING);
+		/* Disable idle task deep sleep bit of SPI in S0. */
+		/* TODO(b:185176098): disable_sleep(SLEEP_MASK_SPI); */
+	}
+}
+
 /*
  * SHI init priority is behind CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY to
  * overwrite GPIO_INPUT setting of spi chip select pin.
@@ -330,6 +341,9 @@ static int cros_shi_ite_init(const struct device *dev)
 	/* Enable SPI slave interrupt */
 	IRQ_CONNECT(DT_INST_IRQN(0), 0, shi_ite_int_handler, 0, 0);
 	irq_enable(DT_INST_IRQN(0));
+
+	/* Enable SPI chip select pin interrupt */
+	gpio_enable_interrupt(GPIO_SPI0_CS);
 
 	return 0;
 }
