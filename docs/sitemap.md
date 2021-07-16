@@ -69,6 +69,7 @@
 *   [Low Battery Startup](./low_battery_startup.md)
 *   [I2C tracing via console commands](./i2c-debugging.md)
 *   [Application Processor to EC communication](./ap-ec-comm.md)
+*   [Reducing EC Image Size](./reducting_ec_image_size.md)
 *   [Code Reviews](./code_reviews.md)
 *   [IDE Support](./ide-support.md)
 
