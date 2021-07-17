@@ -148,17 +148,9 @@ void config_usb_db_type(void)
 	CPRINTS("Configured USB DB type number is %d", db_type);
 }
 
-static enum gpio_signal ps8xxx_rst_odl = GPIO_USB_C1_RT_RST_R_ODL;
-
 static void ps8815_reset(void)
 {
 	int val;
-
-	gpio_set_level(ps8xxx_rst_odl, 0);
-	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
-			   PS8815_PWR_H_RST_H_DELAY_MS));
-	gpio_set_level(ps8xxx_rst_odl, 1);
-	msleep(PS8815_FW_INIT_DELAY_MS);
 
 	CPRINTS("%s: patching ps8815 registers", __func__);
 
@@ -177,6 +169,18 @@ static void ps8815_reset(void)
 
 void board_reset_pd_mcu(void)
 {
+	/* Port0 */
+	gpio_set_level(GPIO_USB_C0_TCPC_RST_ODL, 0);
+	gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 0);
+	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
+			   PS8815_PWR_H_RST_H_DELAY_MS));
+
+	gpio_set_level(GPIO_USB_C0_TCPC_RST_ODL, 1);
+	gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 1);
+	/* wait for chips to come up */
+	msleep(PS8815_FW_INIT_DELAY_MS);
+
+	/* Port1 */
 	ps8815_reset();
 	usb_mux_hpd_update(USBC_PORT_C1, 0, 0);
 }
