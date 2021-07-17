@@ -116,17 +116,25 @@ static int cros_system_it8xxx2_get_reset_cause(const struct device *dev)
 
 static int cros_system_it8xxx2_init(const struct device *dev)
 {
-	ARG_UNUSED(dev);
+	struct gctrl_it8xxx2_regs *const gctrl_base = GCTRL_IT8XXX2_REG_BASE;
+
+	/* System triggers a soft reset by default (command: reboot). */
+	gctrl_base->GCTRL_ETWDUARTCR &= ~IT8XXX2_GCTRL_ETWD_HW_RST_EN;
 
 	return 0;
 }
 
 static int cros_system_it8xxx2_soc_reset(const struct device *dev)
 {
+	struct gctrl_it8xxx2_regs *const gctrl_base = GCTRL_IT8XXX2_REG_BASE;
 	struct wdt_it8xxx2_regs *const wdt_base = WDT_IT8XXX2_REG_BASE;
+	uint32_t chip_reset_flags = chip_read_reset_flags();
 
 	/* Disable interrupts to avoid task swaps during reboot. */
 	interrupt_disable_all();
+
+	if (chip_reset_flags & EC_RESET_FLAG_HARD)
+		gctrl_base->GCTRL_ETWDUARTCR |= IT8XXX2_GCTRL_ETWD_HW_RST_EN;
 
 	/*
 	 * Writing invalid key to watchdog module triggers a soft or hardware
