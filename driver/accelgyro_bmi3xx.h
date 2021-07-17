@@ -129,10 +129,15 @@
 /* Feature engine General purpose register 1. */
 #define BMI3_FEATURE_IO_0			0x10
 #define BMI3_ANY_MOTION_X_EN_MASK		0x08
+
 #define BMI3_FEATURE_IO_1			0x11
-#define BMI3_FEATURE_IO_STATUS			0x14
+#define BMI3_FEATURE_IO_1_ERROR_MASK		0x0F
+#define BMI3_FEATURE_IO_1_NO_ERROR		0x05
 #define BMI3_SC_ST_STATUS_MASK			0x10
 #define BMI3_SC_RESULT_MASK			0x20
+#define BMI3_UGAIN_OFFS_UPD_COMPLETE		0x01
+
+#define BMI3_FEATURE_IO_STATUS			0x14
 
 /*
  * The max positive value of accel data is 0x7FFF, equal to range(g)
