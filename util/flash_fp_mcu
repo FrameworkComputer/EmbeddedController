@@ -163,6 +163,8 @@ lsbval() {
 
 # Get the underlying board (reference design) that we're running on (not the
 # FPMCU or sensor).
+# This may be an extended platform name, like nami-kernelnext, hatch-arc-r,
+# or hatch-borealis.
 get_platform_name() {
   local platform_name
 
@@ -186,13 +188,31 @@ get_platform_name() {
     return 1
   fi
 
-  # Tests are also run on modified images, like hatch-arc-r or hatch-borealis.
-  # These devices still have fingerprint and are expected to pass tests.
-  # See b/186697064.
-  # We remove any suffix starting at the first '-'.
-  platform_name="${platform_name%%-*}"
-
   echo "${platform_name}"
+}
+
+# Given a full platform name, extract the base platform.
+#
+# Tests are also run on modified images, like hatch-arc-r, hatch-borealis, or
+# hatch-kernelnext. These devices still have fingerprint and are expected to
+# pass tests. The full platform name reflects these modifications and might
+# be needed to apply an alternative configuration (kernelnext). Other modified
+# tests (arc-r) just need to default to the base platform config, which is
+# identified by this function.
+# See b/186697064.
+#
+# Examples:
+# * platform_base_name "hatch-kernelnext" --> "hatch"
+# * platform_base_name "hatch-arc-r"      --> "hatch"
+# * platform_base_name "hatch-borealis"   --> "hatch"
+# * platform_base_name "hatch"            --> "hatch"
+#
+# Usage: platform_base_name <platform_name>
+platform_base_name() {
+  local platform_name="$1"
+
+  # We remove any suffix starting at the first '-'.
+  echo "${platform_name%%-*}"
 }
 
 get_default_fw() {
@@ -450,9 +470,35 @@ config_nami() {
   readonly GPIO_PWREN=395
 }
 
+config_nami-kernelnext() {
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev1.0"
+
+  readonly GPIO_CHIP="gpiochip360"
+  # FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
+  readonly GPIO_NRST=417
+  # FPMCU BOOT0 is on GPP_D5 = 360 + 77 = 437
+  readonly GPIO_BOOT0=437
+  # FP_PWR_EN is on GPP_B11 = 360 + 35 = 395
+  readonly GPIO_PWREN=395
+}
+
 config_nocturne() {
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev32765.0"
+
+  readonly GPIO_CHIP="gpiochip360"
+  # FPMCU RST_ODL is on GPP_C10 = 360 + 58 = 418
+  readonly GPIO_NRST=418
+  # FPMCU BOOT0 is on GPP_C8 = 360 + 56 = 416
+  readonly GPIO_BOOT0=416
+  # FP_PWR_EN is on GPP_A11 = 360 + 11 = 371
+  readonly GPIO_PWREN=371
+}
+
+config_nocturne-kernelnext() {
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev1.0"
 
   readonly GPIO_CHIP="gpiochip360"
   # FPMCU RST_ODL is on GPP_C10 = 360 + 58 = 418
@@ -570,16 +616,28 @@ main() {
   fi
   readonly PLATFORM_NAME
 
-  echo "Using config for ${PLATFORM_NAME}"
+  if ! PLATFORM_BASE_NAME="$(platform_base_name "${PLATFORM_NAME}")"; then
+    echo "Failed to get platform base name"
+    exit "${EXIT_CONFIG}"
+  fi
+  readonly PLATFORM_BASE_NAME
+
+  echo "Platform name is ${PLATFORM_NAME} (${PLATFORM_BASE_NAME})."
 
   # Check that the config function exists
-  if [[ "$(type -t "config_${PLATFORM_NAME}")" != "function" ]]; then
-    echo "No config for platform ${PLATFORM_NAME}"
+  if [[ "$(type -t "config_${PLATFORM_NAME}")" == "function" ]]; then
+    readonly PLATFORM_CONFIG="${PLATFORM_NAME}"
+  elif [[ "$(type -t "config_${PLATFORM_BASE_NAME}")" == "function" ]]; then
+    readonly PLATFORM_CONFIG="${PLATFORM_BASE_NAME}"
+  else
+    echo "No config for platform ${PLATFORM_NAME}." >&2
     exit "${EXIT_CONFIG}"
   fi
 
-  if ! "config_${PLATFORM_NAME}"; then
-    echo "Configuration failed for platform ${PLATFORM_NAME}"
+  echo "Using config for ${PLATFORM_CONFIG}."
+
+  if ! "config_${PLATFORM_CONFIG}"; then
+    echo "Configuration failed for platform ${PLATFORM_CONFIG}." >&2
     exit "${EXIT_CONFIG}"
   fi
 
