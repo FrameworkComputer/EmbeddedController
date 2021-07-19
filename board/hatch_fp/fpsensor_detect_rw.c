@@ -24,7 +24,11 @@ enum fp_sensor_type get_fp_sensor_type(void)
 		ret = FP_SENSOR_TYPE_UNKNOWN;
 		break;
 	}
-	gpio_set_level(GPIO_DIVIDER_HIGHSIDE, 0);
+	/* We leave GPIO_DIVIDER_HIGHSIDE enabled, since the dragonclaw
+	 * development board use it to enable the AND gate (U10) to CS.
+	 * Production boards could disable this to save power since it's
+	 * only needed for initial detection on those boards.
+	 */
 	return ret;
 }
 

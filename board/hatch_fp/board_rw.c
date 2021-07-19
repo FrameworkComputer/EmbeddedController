@@ -67,6 +67,12 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 static void configure_fp_sensor_spi(void)
 {
+	/* The dragonclaw development board needs this enabled to enable the
+	 * AND gate (U10) to CS. Production boards could disable this to save
+	 * power since it's only needed for initial detection on those boards.
+	 */
+	gpio_set_level(GPIO_DIVIDER_HIGHSIDE, 1);
+
 	/* Configure SPI GPIOs */
 	gpio_config_module(MODULE_SPI_CONTROLLER, 1);
 

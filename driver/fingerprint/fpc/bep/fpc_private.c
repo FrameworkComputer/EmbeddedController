@@ -143,12 +143,6 @@ int fp_sensor_init(void)
 {
 	int rc;
 
-	/* The dragonclaw development board needs this enabled to enable the
-	 * AND gate (U10) to CS. Production boards could disable this to save
-	 * power since it's only needed for initial detection on those boards.
-	 */
-	gpio_set_level(GPIO_DIVIDER_HIGHSIDE, 1);
-
 	/* Print the binary libfpbep.a library version */
 	CPRINTS("FPC libfpbep.a %s", fp_sensor_get_version());
 
