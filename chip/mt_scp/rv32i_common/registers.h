@@ -142,9 +142,6 @@
 #define SCP_CORE0_WDT_CUR_VAL		REG32(SCP_REG_BASE + 0x3003C)
 
 /* INTC */
-#define SCP_INTC_IRQ_POL0		0xef001f20
-#define SCP_INTC_IRQ_POL1		0x0800001d
-#define SCP_INTC_IRQ_POL2		0x00000020
 #define SCP_INTC_WORD(irq)		((irq) >> 5) /* word length = 2^5 */
 #define SCP_INTC_BIT(irq)		((irq) & 0x1F) /* bit shift =LSB[0:4] */
 #define SCP_INTC_GRP_COUNT		15

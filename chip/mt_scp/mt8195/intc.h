@@ -7,6 +7,9 @@
 #define __CROS_EC_INTC_H
 
 /* INTC */
+#define SCP_INTC_IRQ_POL0		0xef001f20
+#define SCP_INTC_IRQ_POL1		0x044001dd
+#define SCP_INTC_IRQ_POL2		0xffffdfe0
 #define SCP_INTC_IRQ_POL3		0xfffffff3
 #define SCP_INTC_GRP_LEN		4
 #define SCP_INTC_IRQ_COUNT		127
