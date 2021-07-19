@@ -15,6 +15,7 @@
 #include "charger.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accelgyro_icm_common.h"
 #include "driver/accelgyro_icm42607.h"
@@ -664,6 +665,40 @@ struct motion_sensor_t lis2dwl_lid_accel = {
 		},
 };
 
+static const mat33_fp_t lid_KX022_ref = {
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+static struct kionix_accel_data g_kx022_data;
+struct motion_sensor_t kx022_lid_accel = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_KX022,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &kionix_accel_drv,
+	.mutex = &g_lid_mutex,
+	.drv_data = &g_kx022_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
+	.rot_standard_ref = &lid_KX022_ref,
+	.min_frequency = KX022_ACCEL_MIN_FREQ,
+	.max_frequency = KX022_ACCEL_MAX_FREQ,
+	.default_range = 2, /* g, to support tablet mode */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
+
 static struct icm_drv_data_t g_icm42607_data;
 const mat33_fp_t based_ref_icm42607 = {
 	{ FLOAT_TO_FP(1), 0, 0},
@@ -762,6 +797,10 @@ void board_init(void)
 			if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_LIS2DWL) {
 				motion_sensors[LID_ACCEL] = lis2dwl_lid_accel;
 				CPRINTF("LID_ACCEL is LIS2DWL");
+			} else if (get_cbi_ssfc_lid_sensor() ==
+						SSFC_SENSOR_KX022) {
+				motion_sensors[LID_ACCEL] = kx022_lid_accel;
+				CPRINTF("LID_ACCEL is KX022");
 			} else {
 				CPRINTF("LID_ACCEL is BMA253");
 			}
@@ -787,6 +826,9 @@ void board_init(void)
 		if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_LIS2DWL) {
 			motion_sensors[LID_ACCEL] = lis2dwl_lid_accel;
 			CPRINTF("LID_ACCEL is LIS2DWL");
+		} else if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_KX022) {
+			motion_sensors[LID_ACCEL] = kx022_lid_accel;
+			CPRINTF("LID_ACCEL is KX022");
 		} else {
 			CPRINTF("LID_ACCEL is BMA253");
 		}

@@ -47,6 +47,7 @@
 
 #define CONFIG_ACCEL_BMA255		/* Lid accel */
 #define CONFIG_ACCEL_LIS2DWL
+#define CONFIG_ACCEL_KX022
 #define CONFIG_ACCELGYRO_BMI160	/* Base accel */
 #define CONFIG_ACCELGYRO_ICM42607
 
