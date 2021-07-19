@@ -88,7 +88,8 @@
 #if !defined(CHIP_FAMILY_STM32F4) && \
 	!defined(CHIP_FAMILY_STM32F7) && \
 	!defined(CHIP_FAMILY_STM32H7) && \
-	!defined(CHIP_VARIANT_STM32F09X)
+	!defined(CHIP_VARIANT_STM32F09X) && \
+	!defined(CHIP_VARIANT_STM32L431X)
 /* Compute the rest of the flash params from these */
 #include "config_std_internal_flash.h"
 #endif
