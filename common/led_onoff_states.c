@@ -99,6 +99,8 @@ static enum led_states led_get_state(void)
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
 		if (charge_get_flags() & CHARGE_FLAG_FORCE_IDLE)
 			new_state = STATE_FACTORY_TEST;
+		else if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			new_state = STATE_DISCHARGE_S5;
 		else
 			new_state = STATE_DISCHARGE_S0;
 		break;
