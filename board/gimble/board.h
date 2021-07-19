@@ -18,6 +18,9 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+#define CONFIG_BRINGUP
+#define CONFIG_SYSTEM_UNLOCKED
+
 /*
  * This will happen automatically on NPCX9 ES2 and later. Do not remove
  * until we can confirm all earlier chips are out of service.
