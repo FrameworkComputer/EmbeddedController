@@ -123,7 +123,7 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c = 60,
 		},
 	},
-	[BATTERY_DynaPack_COS] = {
+	[BATTERY_DYNAPACK_COS] = {
 		.fuel_gauge = {
 			.manuf_name = "333-2C-DA-A",
 			.ship_mode = {
@@ -150,7 +150,7 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c = 60,
 		},
 	},
-	[BATTERY_DANAPACK_ATL] = {
+	[BATTERY_DYNAPACK_ATL] = {
 		.fuel_gauge = {
 			.manuf_name = "333-27-DA-A",
 			.ship_mode = {

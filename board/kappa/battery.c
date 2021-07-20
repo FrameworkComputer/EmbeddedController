@@ -9,7 +9,7 @@
 
 const struct board_batt_params board_battery_info[] = {
 	/* Dynapack HIGHPOWER DAK124960-W110703HT Battery Information */
-	[BATTERY_DANAPACK_HIGHPOWER] = {
+	[BATTERY_DYNAPACK_HIGHPOWER] = {
 		.fuel_gauge = {
 			.manuf_name = "333-2D-14-A",
 			.ship_mode = {
@@ -37,7 +37,7 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 	/* Dynapack CosMX DAK124960-W0P0707HT Battery Information */
-	[BATTERY_DANAPACK_COS] = {
+	[BATTERY_DYNAPACK_COS] = {
 		.fuel_gauge = {
 			.manuf_name = "333-2C-14-A",
 			.ship_mode = {
@@ -67,7 +67,7 @@ const struct board_batt_params board_battery_info[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_DANAPACK_HIGHPOWER;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_DYNAPACK_HIGHPOWER;
 
 enum battery_present battery_hw_present(void)
 {

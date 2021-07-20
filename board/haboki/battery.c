@@ -33,7 +33,7 @@
  */
 const struct board_batt_params board_battery_info[] = {
 	/* DynaPack CosMX Battery Information */
-	[BATTERY_DANAPACK_COS] = {
+	[BATTERY_DYNAPACK_COS] = {
 		.fuel_gauge = {
 			.manuf_name = "333-2C-DA-A",
 			.ship_mode = {
@@ -64,7 +64,7 @@ const struct board_batt_params board_battery_info[] = {
 	},
 
 	/* DynaPack ATL Battery Information */
-	[BATTERY_DANAPACK_ATL] = {
+	[BATTERY_DYNAPACK_ATL] = {
 		.fuel_gauge = {
 			.manuf_name = "333-27-DA-A",
 			.ship_mode = {
@@ -95,7 +95,7 @@ const struct board_batt_params board_battery_info[] = {
 	},
 
 	/* DynaPack HIGHPOWER Battery Information */
-	[BATTERY_DANAPACK_HIGHPOWER] = {
+	[BATTERY_DYNAPACK_HIGHPOWER] = {
 		.fuel_gauge = {
 			.manuf_name = "333-2D-0D-A",
 			.ship_mode = {
@@ -126,7 +126,7 @@ const struct board_batt_params board_battery_info[] = {
 	},
 
 	/* DynaPack BYD Battery Information */
-	[BATTERY_DANAPACK_BYD] = {
+	[BATTERY_DYNAPACK_BYD] = {
 		.fuel_gauge = {
 			.manuf_name = "333-2E-0D-A",
 			.ship_mode = {
@@ -313,4 +313,4 @@ const struct board_batt_params board_battery_info[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_DANAPACK_COS;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_DYNAPACK_COS;
