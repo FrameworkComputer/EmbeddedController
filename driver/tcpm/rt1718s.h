@@ -59,6 +59,7 @@
 #define RT1718S_RT_INT6_INT_BC12_SNK_DONE		BIT(7)
 #define RT1718S_RT_INT6_INT_HVDCP_CHK_DONE		BIT(6)
 #define RT1718S_RT_INT6_INT_BC12_TA_CHG			BIT(5)
+#define RT1718S_RT_INT6_INT_ADC_DONE			BIT(0)
 
 #define RT1718S_RT_ST6					0xA4
 #define RT1718S_RT_ST6_BC12_SNK_DONE			BIT(7)
@@ -156,12 +157,36 @@
 #define RT1718S_RT2_BC12_SRC_FUNC_SRC_MODE_SEL_BC12_DCP	0x20
 #define RT1718S_RT2_BC12_SRC_FUNC_WAIT_VBUS_ON		BIT(0)
 
+#define RT1718S_ADC_CTRL_01				0xF2A0
+#define RT1718S_ADC_CTRL_02				0xF2A1
+#define RT1718S_ADC_CHX_VOL_L(ch)			(0xF2A6 + (ch) * 2)
+#define RT1718S_ADC_CHX_VOL_H(ch)			(0xF2A7 + (ch) * 2)
+
 extern const struct tcpm_drv rt1718s_tcpm_drv;
 extern const struct bc12_drv rt1718s_bc12_drv;
 
 int rt1718s_write8(int port, int reg, int val);
 int rt1718s_read8(int port, int reg, int *val);
 int rt1718s_update_bits8(int port, int reg, int mask, int val);
+int rt1718s_write16(int port, int reg, int val);
+int rt1718s_read16(int port, int reg, int *val);
 __override_proto int board_rt1718s_init(int port);
+
+enum rt1718s_adc_channel {
+	RT1718S_ADC_VBUS1 = 0,
+	RT1718S_ADC_VBUS2,
+	RT1718S_ADC_VDC,
+	RT1718S_ADC_VBUS_CURRENT,
+	RT1718S_ADC_CC1,
+	RT1718S_ADC_CC2,
+	RT1718S_ADC_SBU1,
+	RT1718S_ADC_SBU2,
+	RT1718S_ADC_DP,
+	RT1718S_ADC_DM,
+	RT1718S_ADC_CH10,
+	RT1718S_ADC_CH11,
+};
+
+int rt1718s_get_adc(int port, enum rt1718s_adc_channel channel, int *adc_val);
 
 #endif /* __CROS_EC_USB_PD_TCPM_MT6370_H */
