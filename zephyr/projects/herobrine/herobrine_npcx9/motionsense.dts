@@ -13,7 +13,7 @@
 		 * by alias. Using the alias, each driver creates
 		 * its own <>_INT_EVENT.
 		 */
-		bmi160-int = &base_accel;
+		bmi260-int = &base_accel;
 	};
 
 	/*
@@ -29,8 +29,8 @@
 			label = "LID_MUTEX";
 		};
 
-		mutex_bmi160: bmi160-mutex {
-			label = "BMI160_MUTEX";
+		mutex_bmi260: bmi260-mutex {
+			label = "BMI260_MUTEX";
 		};
 	};
 
@@ -65,8 +65,8 @@
 			status = "okay";
 		};
 
-		bmi160_data: bmi160-drv-data {
-			compatible = "cros-ec,drvdata-bmi160";
+		bmi260_data: bmi260-drv-data {
+			compatible = "cros-ec,drvdata-bmi260";
 			status = "okay";
 		};
 	};
@@ -105,16 +105,16 @@
 		};
 
 		base_accel: base-accel {
-			compatible = "cros-ec,bmi160-accel";
+			compatible = "cros-ec,bmi260-accel";
 			status = "okay";
 
 			label = "Base Accel";
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_BASE";
-			mutex = <&mutex_bmi160>;
+			mutex = <&mutex_bmi260>;
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
-			drv-data = <&bmi160_data>;
+			drv-data = <&bmi260_data>;
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
@@ -130,16 +130,16 @@
 		};
 
 		base-gyro {
-			compatible = "cros-ec,bmi160-gyro";
+			compatible = "cros-ec,bmi260-gyro";
 			status = "okay";
 
 			label = "Base Gyro";
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_BASE";
-			mutex = <&mutex_bmi160>;
+			mutex = <&mutex_bmi260>;
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
-			drv-data = <&bmi160_data>;
+			drv-data = <&bmi260_data>;
 		};
 	};
 
