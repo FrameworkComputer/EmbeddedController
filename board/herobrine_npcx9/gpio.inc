@@ -24,7 +24,7 @@ GPIO_INT(EC_VOLDN_BTN_ODL,  PIN(6, 2), GPIO_INT_BOTH | GPIO_PULL_UP, button_inte
 GPIO_INT(EC_VOLUP_BTN_ODL,  PIN(C, 2), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* Volume Down button */
 GPIO_INT(EC_WP_ODL,         PIN(D, 3), GPIO_INT_BOTH, switch_interrupt)  /* Write protection */
 GPIO_INT(LID_OPEN_EC,       PIN(0, 1), GPIO_INT_BOTH, lid_interrupt)  /* Lid open */
-GPIO_INT(AP_RST_L,          PIN(5, 1), GPIO_INT_BOTH | GPIO_SEL_1P8V, chipset_ap_rst_interrupt)  /* PMIC to signal AP reset */
+GPIO_INT(AP_RST_L,          PIN(5, 1), GPIO_INT_BOTH, chipset_ap_rst_interrupt)  /* PMIC to signal AP reset */
 GPIO_INT(PS_HOLD,           PIN(A, 6), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)  /* Indicate when AP triggers reset/shutdown */
 GPIO_INT(AP_SUSPEND,        PIN(5, 7), GPIO_INT_BOTH, power_signal_interrupt)  /* Suspend signal from PMIC */
 /*
@@ -34,7 +34,7 @@ GPIO_INT(AP_SUSPEND,        PIN(5, 7), GPIO_INT_BOTH, power_signal_interrupt)  /
  * of WARM_RESET_L which is pulled-up by the same rail of POWER_GOOD.
  */
 GPIO_INT(MB_POWER_GOOD,     PIN(3, 7), GPIO_INT_BOTH | GPIO_PULL_DOWN, chipset_power_good_interrupt)  /* PP1800_L18B from PMIC */
-GPIO_INT(WARM_RESET_L,      PIN(B, 0), GPIO_INT_BOTH | GPIO_SEL_1P8V, chipset_warm_reset_interrupt)  /* AP warm reset */
+GPIO_INT(WARM_RESET_L,      PIN(B, 0), GPIO_INT_BOTH, chipset_warm_reset_interrupt)  /* AP warm reset */
 GPIO_INT(AP_EC_SPI_CS_L,    PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN, shi_cs_event)  /* EC SPI Chip Select */
 
 /* Sensor interrupts */
