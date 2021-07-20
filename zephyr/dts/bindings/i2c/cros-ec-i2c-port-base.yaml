@@ -29,6 +29,7 @@ properties:
     - I2C_PORT_POWER
     - I2C_PORT_PPC0
     - I2C_PORT_PPC1
+    - I2C_PORT_RTC
     - I2C_PORT_SENSOR
     - I2C_PORT_TCPC0
     - I2C_PORT_TCPC1
