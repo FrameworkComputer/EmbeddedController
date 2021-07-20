@@ -38,8 +38,6 @@
 	GPIO_INT(GPIO_VOLUME_UP_L, GPIO_INT_EDGE_BOTH, button_interrupt)      \
 	GPIO_INT(GPIO_AP_RST_L, GPIO_INT_EDGE_BOTH, chipset_ap_rst_interrupt) \
 	GPIO_INT(GPIO_AP_SUSPEND, GPIO_INT_EDGE_BOTH, power_signal_interrupt) \
-	GPIO_INT(GPIO_DEPRECATED_AP_RST_REQ, GPIO_INT_EDGE_BOTH,              \
-		 power_signal_interrupt)                                      \
 	GPIO_INT(GPIO_POWER_GOOD, GPIO_INT_EDGE_BOTH,                         \
 		 chipset_power_good_interrupt)                                \
 	GPIO_INT(GPIO_PS_HOLD, GPIO_INT_EDGE_BOTH, power_signal_interrupt)    \

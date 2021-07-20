@@ -38,47 +38,47 @@
 			label = "USB_C1_BC12_INT_L";
 		};
 		usb_a0_oc_odl {
-			gpios = <&gpiod 1 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpiof 4 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_USB_A0_OC_ODL";
 			label = "USB_A0_OC_ODL";
 		};
 		gpio_chg_acok_od: chg_acok_od {
-			gpios = <&gpio0 0 GPIO_INPUT>;
+			gpios = <&gpiod 2 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 			label = "CHG_ACOK_OD";
 		};
 		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
-			gpios = <&gpio0 1 GPIO_INPUT>;
+			gpios = <&gpio0 0 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 			label = "EC_PWR_BTN_ODL";
 		};
 		ec_voldn_btn_odl {
-			gpios = <&gpio7 0 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio6 2 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
 			label = "EC_VOLDN_BTN_ODL";
 		};
 		ec_volup_btn_odl {
-			gpios = <&gpiof 2 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpioc 2 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_VOLUME_UP_L";
 			label = "EC_VOLUP_BTN_ODL";
 		};
 		ec_wp_odl {
-			gpios = <&gpioa 1 GPIO_INPUT>;
+			gpios = <&gpiod 3 GPIO_INPUT>;
 			enum-name = "GPIO_WP_L";
 			label = "EC_WP_ODL";
 		};
 		gpio_lid_open_ec: lid_open_ec {
-			gpios = <&gpiod 2 GPIO_INPUT>;
+			gpios = <&gpio0 1 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
 			label = "LID_OPEN_EC";
 		};
 		ap_rst_l {
-			gpios = <&gpioc 1 GPIO_INPUT>;
+			gpios = <&gpio5 1 GPIO_INPUT>;
 			enum-name = "GPIO_AP_RST_L";
 			label = "AP_RST_L";
 		};
 		ps_hold {
-			gpios = <&gpioa 4 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpioa 6 (GPIO_INPUT | GPIO_PULL_DOWN)>;
 			enum-name = "GPIO_PS_HOLD";
 			label = "PS_HOLD";
 		};
@@ -87,18 +87,13 @@
 			enum-name = "GPIO_AP_SUSPEND";
 			label = "AP_SUSPEND";
 		};
-		deprecated_ap_rst_req {
-			gpios = <&gpioc 2 (GPIO_INPUT | GPIO_PULL_DOWN)>;
-			enum-name = "GPIO_DEPRECATED_AP_RST_REQ";
-			label = "DEPRECATED_AP_RST_REQ";
-		};
 		power_good {
-			gpios = <&gpio5 4 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpio3 7 (GPIO_INPUT | GPIO_PULL_DOWN)>;
 			enum-name = "GPIO_POWER_GOOD";
-			label = "POWER_GOOD";
+			label = "MB_POWER_GOOD";
 		};
 		warm_reset_l {
-			gpios = <&gpiof 4 GPIO_INPUT>;
+			gpios = <&gpiob 0 GPIO_INPUT>;
 			enum-name = "GPIO_WARM_RESET_L";
 			label = "WARM_RESET_L";
 		};
@@ -112,22 +107,22 @@
 			label = "TABLET_MODE_L";
 		};
 		gpio_accel_gyro_int_l: accel_gyro_int_l {
-			gpios = <&gpioa 0 GPIO_INPUT>;
+			gpios = <&gpioa 3 GPIO_INPUT>;
 			enum-name = "GPIO_ACCEL_GYRO_INT_L";
 			label = "ACCEL_GYRO_INT_L";
 		};
-		gpio_ec_rst_odl: ec_rst_odl {
+		gpio_rtc_ec_wake_odl: rtc_ec_wake_odl {
 			gpios = <&gpio0 2 GPIO_INPUT>;
 			enum-name = "GPIO_EC_RST_ODL";
 			label = "EC_RST_ODL";
 		};
 		ec_entering_rw {
-			gpios = <&gpioe 1 GPIO_OUT_LOW>;
+			gpios = <&gpio7 2 GPIO_OUT_LOW>;
 			enum-name = "GPIO_ENTERING_RW";
 			label = "EC_ENTERING_RW";
 		};
 		ccd_mode_odl {
-			gpios = <&gpioe 3 GPIO_INPUT>;
+			gpios = <&gpio6 3 GPIO_INPUT>;
 			enum-name = "GPIO_CCD_MODE_ODL";
 			label = "CCD_MODE_ODL";
 		};
@@ -136,40 +131,35 @@
 			enum-name = "GPIO_BATT_PRES_ODL";
 			label = "EC_BATT_PRES_ODL";
 		};
+		ec_gsc_packet_mode {
+			gpios = <&gpio8 3 GPIO_OUT_LOW>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+			label = "EC_GSC_PACKET_MODE";
+		};
 		pmic_resin_l {
-			gpios = <&gpio3 2 GPIO_ODR_HIGH>;
+			gpios = <&gpioa 0 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_PMIC_RESIN_L";
 			label = "PMIC_RESIN_L";
 		};
 		pmic_kpd_pwr_odl {
-			gpios = <&gpiod 6 GPIO_ODR_HIGH>;
+			gpios = <&gpioa 2 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_PMIC_KPD_PWR_ODL";
 			label = "PMIC_KPD_PWR_ODL";
 		};
-		ec_int_l {
-			gpios = <&gpioa 2 GPIO_ODR_HIGH>;
+		ap_ec_int_l {
+			gpios = <&gpio5 6 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_EC_INT_L";
-			label = "EC_INT_L";
-		};
-		hibernate_l {
-			gpios = <&gpio5 2 GPIO_ODR_HIGH>;
-			enum-name = "GPIO_HIBERNATE_L";
-			label = "HIBERNATE_L";
+			label = "AP_EC_INT_L";
 		};
 		switchcap_on {
 			gpios = <&gpiod 5 GPIO_OUT_LOW>;
 			enum-name = "GPIO_SWITCHCAP_ON";
 			label = "SWITCHCAP_ON";
 		};
-		en_pp3300_a {
-			gpios = <&gpioa 6 GPIO_OUT_LOW>;
-			enum-name = "GPIO_EN_PP3300_A";
-			label = "EN_PP3300_A";
-		};
-		en_pp5000_a {
-			gpios = <&gpio6 7 GPIO_OUT_LOW>;
+		en_pp5000_s3 {
+			gpios = <&gpio7 3 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_PP5000";
-			label = "EN_PP5000_A";
+			label = "EN_PP5000_S3";
 		};
 		ec_bl_disable_l {
 			gpios = <&gpiob 6 GPIO_OUT_LOW>;
@@ -177,14 +167,14 @@
 			label = "EC_BL_DISABLE_L";
 		};
 		lid_accel_int_l {
-			gpios = <&gpio5 6 GPIO_INPUT>;
+			gpios = <&gpioa 1 GPIO_INPUT>;
 			enum-name = "GPIO_LID_ACCEL_INT_L";
 			label = "LID_ACCEL_INT_L";
 		};
-		trackpad_int_gate {
+		tp_int_gate {
 			gpios = <&gpio7 4 GPIO_OUT_LOW>;
 			enum-name = "GPIO_TRACKPAD_INT_GATE";
-			label = "TRACKPAD_INT_GATE";
+			label = "TP_INT_GATE";
 		};
 		usb_c0_pd_rst_l {
 			gpios = <&gpiof 1 GPIO_OUT_HIGH>;
@@ -197,7 +187,7 @@
 			label = "USB_C1_PD_RST_L";
 		};
 		dp_mux_oe_l {
-			gpios = <&gpio9 6 GPIO_ODR_HIGH>;
+			gpios = <&gpiob 1 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_DP_MUX_OE_L";
 			label = "DP_MUX_OE_L";
 		};
@@ -206,13 +196,13 @@
 			enum-name = "GPIO_DP_MUX_SEL";
 			label = "DP_MUX_SEL";
 		};
-		dp_hot_plug_det {
+		dp_hot_plug_det_r {
 			gpios = <&gpio9 5 GPIO_OUT_LOW>;
 			enum-name = "GPIO_DP_HOT_PLUG_DET";
-			label = "DP_HOT_PLUG_DET";
+			label = "DP_HOT_PLUG_DET_R";
 		};
 		en_usb_a_5v {
-			gpios = <&gpio8 6 GPIO_OUT_LOW>;
+			gpios = <&gpiof 0 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_USB_A_5V";
 			label = "EN_USB_A_5V";
 		};
@@ -252,60 +242,40 @@
 			gpios = <&gpio5 5 (GPIO_INPUT | GPIO_PULL_DOWN)>;
 			label = "AP_EC_SPI_CLK";
 		};
-		kb_bl_pwm {
-			gpios = <&gpio8 0 GPIO_INPUT>;
-			label = "KB_BL_PWM";
-		};
-		edp_bkltctl {
-			gpios = <&gpiob 7 GPIO_INPUT>;
-			label = "EDP_BKLTCTL";
-		};
-		ppvar_boostin_sense {
-			gpios = <&gpio4 4 GPIO_INPUT>;
-			label = "PPVAR_BOOSTIN_SENSE";
-		};
-		charger_iadp {
-			gpios = <&gpio4 3 GPIO_INPUT>;
-			label = "CHARGER_IADP";
-		};
-		charger_pmon {
-			gpios = <&gpio4 2 GPIO_INPUT>;
-			label = "CHARGER_PMON";
-		};
 		brd_id0 {
-			gpios = <&gpioc 7 GPIO_INPUT>;
+			gpios = <&gpio9 4 GPIO_INPUT>;
 			enum-name = "GPIO_BOARD_VERSION1";
 			label = "BRD_ID0";
 		};
 		brd_id1 {
-			gpios = <&gpio9 3 GPIO_INPUT>;
+			gpios = <&gpio9 7 GPIO_INPUT>;
 			enum-name = "GPIO_BOARD_VERSION2";
 			label = "BRD_ID1";
 		};
 		brd_id2 {
-			gpios = <&gpio6 3 GPIO_INPUT>;
+			gpios = <&gpioa 5 GPIO_INPUT>;
 			enum-name = "GPIO_BOARD_VERSION3";
 			label = "BRD_ID2";
 		};
 		sku_id0 {
-			gpios = <&gpiof 0 GPIO_INPUT>;
+			gpios = <&gpio6 7 GPIO_INPUT>;
 			enum-name = "GPIO_SKU_ID0";
 			label = "SKU_ID0";
 		};
 		sku_id1 {
-			gpios = <&gpio4 1 GPIO_INPUT>;
+			gpios = <&gpio7 0 GPIO_INPUT>;
 			enum-name = "GPIO_SKU_ID1";
 			label = "SKU_ID1";
 		};
 		sku_id2 {
-			gpios = <&gpiod 4 GPIO_INPUT>;
+			gpios = <&gpioe 1 GPIO_INPUT>;
 			enum-name = "GPIO_SKU_ID2";
 			label = "SKU_ID2";
 		};
-		switchcap_gpio_1 {
+		src_vph_pwr_pg {
 			gpios = <&gpioe 2 (GPIO_INPUT | GPIO_PULL_DOWN)>;
 			enum-name = "GPIO_SWITCHCAP_PG";
-			label = "SWITCHCAP_GPIO_1";
+			label = "SRC_VPH_PWR_PG";
 		};
 		arm_x86 {
 			gpios = <&gpio6 6 GPIO_OUT_LOW>;
@@ -321,9 +291,6 @@
 	def-lvol-io-list {
 		compatible = "nuvoton,npcx-lvolctrl-def";
 		lvol-io-pads = <
-			&lvol_ioc1 /* AP_RST_L */
-			&lvol_ioc2 /* DEPRECATED_AP_RST_REQ */
-			&lvol_iof4 /* WARM_RESET_L */
 			&lvol_iob3 /* EC_I2C_SENSOR_SCL */
 			&lvol_iob2 /* EC_I2C_SENSOR_SDA */
 		>;
@@ -335,7 +302,7 @@
 			&gpio_chg_acok_od
 			&gpio_ec_pwr_btn_odl
 			&gpio_lid_open_ec
-			&gpio_ec_rst_odl
+			&gpio_rtc_ec_wake_odl
 		>;
 	};
 };

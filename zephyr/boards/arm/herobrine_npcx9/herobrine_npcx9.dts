@@ -155,13 +155,6 @@
 			mul = <124000>;
 		};
 	};
-
-	def-lvol-io-list {
-		compatible = "nuvoton,npcx-lvolctrl-def";
-
-		/* I2C_SDA0 & SCL0 */
-		lvol-io-pads = <&lvol_iob4 &lvol_iob5>;
-	};
 };
 
 &uart1 {
