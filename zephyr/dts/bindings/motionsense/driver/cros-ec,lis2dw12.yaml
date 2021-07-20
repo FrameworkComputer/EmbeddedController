@@ -17,3 +17,5 @@ properties:
       - "LIS2DWL_ADDR0_FLAGS"
       - "LIS2DWL_ADDR1_FLAGS"
     default: "LIS2DWL_ADDR1_FLAGS"
+  default-range:
+    default: 2

@@ -7,3 +7,7 @@ description: motion sense sensor node for BMI260 gyro
 compatible: "cros-ec,bmi260-gyro"
 
 include: bmi260.yaml
+
+properties:
+  default-range:
+    default: 1000

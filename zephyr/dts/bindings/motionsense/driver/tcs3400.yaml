@@ -14,3 +14,5 @@ properties:
     enum:
       - "TCS3400_I2C_ADDR_FLAGS"
     default: "TCS3400_I2C_ADDR_FLAGS"
+  default-range:
+    default: 0x10000 # scale = 1x, uscale = 0
