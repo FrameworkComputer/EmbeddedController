@@ -39,7 +39,7 @@ GPIO_INT(AP_EC_SPI_CS_L,    PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN, shi_cs
 
 /* Sensor interrupts */
 GPIO_INT(TABLET_MODE_L,     PIN(C, 6), GPIO_INT_BOTH, gmr_tablet_switch_isr)
-GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 3), GPIO_INT_FALLING, bmi160_interrupt)  /* Accelerometer/gyro interrupt */
+GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 3), GPIO_INT_FALLING, bmi260_interrupt)  /* Accelerometer/gyro interrupt */
 
 GPIO(RTC_EC_WAKE_ODL ,      PIN(0, 2), GPIO_INPUT)     /* RTC interrupt */
 GPIO(EC_ENTERING_RW,        PIN(7, 2), GPIO_OUT_LOW)   /* Indicate when EC is entering RW code */

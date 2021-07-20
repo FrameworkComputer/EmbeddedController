@@ -146,7 +146,7 @@ __override uint32_t board_get_sku_id(void)
 /* Initialize board. */
 static void board_init(void)
 {
-	/* Enable interrupt for BMI160 sensor */
+	/* Enable interrupt for BMI260 sensor */
 	gpio_enable_interrupt(GPIO_ACCEL_GYRO_INT_L);
 
 	/* Set the backlight duty cycle to 0. AP will override it later. */
@@ -180,7 +180,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 static struct mutex g_base_mutex;
 static struct mutex g_lid_mutex;
 
-static struct bmi_drv_data_t g_bmi160_data;
+static struct bmi_drv_data_t g_bmi260_data;
 static struct accelgyro_saved_data_t g_bma255_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
@@ -224,21 +224,21 @@ struct motion_sensor_t motion_sensors[] = {
 	 },
 	},
 	/*
-	 * Note: bmi160: supports accelerometer and gyro sensor
+	 * Note: BMI260: supports accelerometer and gyro sensor
 	 * Requirement: accelerometer sensor must init before gyro sensor
 	 * DO NOT change the order of the following table.
 	 */
 	[BASE_ACCEL] = {
 	 .name = "Base Accel",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .chip = MOTIONSENSE_CHIP_BMI260,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &bmi160_drv,
+	 .drv = &bmi260_drv,
 	 .mutex = &g_base_mutex,
-	 .drv_data = &g_bmi160_data,
+	 .drv_data = &g_bmi260_data,
 	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
+	 .i2c_spi_addr_flags = BMI260_ADDR0_FLAGS,
 	 .rot_standard_ref = &base_standard_ref,
 	 .default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
 	 .min_frequency = BMI_ACCEL_MIN_FREQ,
@@ -256,14 +256,14 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_GYRO] = {
 	 .name = "Gyro",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMI160,
+	 .chip = MOTIONSENSE_CHIP_BMI260,
 	 .type = MOTIONSENSE_TYPE_GYRO,
 	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &bmi160_drv,
+	 .drv = &bmi260_drv,
 	 .mutex = &g_base_mutex,
-	 .drv_data = &g_bmi160_data,
+	 .drv_data = &g_bmi260_data,
 	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
+	 .i2c_spi_addr_flags = BMI260_ADDR0_FLAGS,
 	 .default_range = 1000, /* dps */
 	 .rot_standard_ref = &base_standard_ref,
 	 .min_frequency = BMI_GYRO_MIN_FREQ,
