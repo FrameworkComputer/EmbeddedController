@@ -145,7 +145,7 @@ ALTERNATE(PIN_MASK(B, 0x80), 0, MODULE_PWM, 0)                  /* PWM5 - Fan 1 
 ALTERNATE(PIN_MASK(7, 0x08), 0, MODULE_PWM, 0)                  /* TA2 - Fan Tachometer */
 
 /* ADC */
-ALTERNATE(PIN_MASK(4, 0x2E), 0, MODULE_ADC, 0)                  /* ADC0, ADC1, ADC2, ADC4 */
+ALTERNATE(PIN_MASK(4, 0x3E), 0, MODULE_ADC, 0)                  /* ADC0, ADC1, ADC2, ADC4 */
 ALTERNATE(PIN_MASK(E, 0x02), 0, MODULE_ADC, 0)                  /* ADC7 */
 ALTERNATE(PIN_MASK(F, 0x01), 0, MODULE_ADC, 0)                  /* ADC9 */
 
