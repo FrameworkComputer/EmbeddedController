@@ -12,10 +12,10 @@ include: motionsense-sensor-base.yaml
 properties:
   i2c-spi-addr-flags:
     type: string
-    required: true
     description: i2c address or SPI slave logic GPIO
     enum:
       - "BMA2x2_I2C_ADDR1_FLAGS"
       - "BMA2x2_I2C_ADDR2_FLAGS"
       - "BMA2x2_I2C_ADDR3_FLAGS"
       - "BMA2x2_I2C_ADDR4_FLAGS"
+    default: "BMA2x2_I2C_ADDR1_FLAGS"
