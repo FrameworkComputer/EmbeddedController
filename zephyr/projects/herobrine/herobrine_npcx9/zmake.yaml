@@ -1,0 +1,13 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+board: herobrine_npcx9
+dts-overlays:
+  - gpio.dts
+  - battery.dts
+  - motionsense.dts
+supported-zephyr-versions:
+  - v2.6
+toolchain: coreboot-sdk
+output-type: npcx
