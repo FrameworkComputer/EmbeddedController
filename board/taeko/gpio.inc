@@ -8,14 +8,14 @@
 #define MODULE_KB		MODULE_KEYBOARD_SCAN
 
 /*
- * Generated-gpio.inc is produced using a Brya specific tool that
+ * Generated-gpio.inc is produced using a Taeko specific tool that
  * parses the GPIO definitions derived from the board schematics and
  * EC pinout descriptions derived form the chip datasheets to generate
  * the Chrome EC GPIO pinout definitions. Due to the confidential
  * nature of schematics and datasheets, they are not provided here.
  *
  * Variants that do not auto-generate their GPIO definitions should
- * combine the Brya gpio.inc and generated-gpio.inc into their
+ * combine the Taeko gpio.inc and generated-gpio.inc into their
  * gpio.inc and customize as appropriate.
  */
 

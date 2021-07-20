@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Brya board configuration */
+/* Taeko board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -11,7 +11,7 @@
 #include "compile_time_macros.h"
 
 /*
- * Early brya boards are not set up for vivaldi
+ * Early Taeko boards are not set up for vivaldi
  */
 #undef CONFIG_KEYBOARD_VIVALDI
 
@@ -193,7 +193,7 @@
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
 
 /*
- * TODO(b/181271666): no fan control loop until sensors are tuned
+ * TODO: no fan control loop until sensors are tuned
  */
 /* #define CONFIG_FANS			FAN_CH_COUNT */
 

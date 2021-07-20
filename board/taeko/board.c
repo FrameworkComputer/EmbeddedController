@@ -75,7 +75,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 #ifdef CONFIG_CHARGE_RAMP_SW
 
 /*
- * TODO(b/181508008): tune this threshold
+ * TODO: tune this threshold
  */
 
 #define BC12_MIN_VOLTAGE 4400
