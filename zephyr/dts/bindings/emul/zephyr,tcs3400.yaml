@@ -1,0 +1,44 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Zephyr ALS TCS3400 light sensor i2c emulator
+
+compatible: "zephyr,tcs3400"
+
+include: base.yaml
+
+properties:
+    device-id:
+        type: string
+        required: false
+        enum:
+          - TCS340015_DEVICE_ID
+          - TCS340037_DEVICE_ID
+        default: TCS340015_DEVICE_ID
+        description: Device ID that is set in the register.
+
+    revision:
+        type: int
+        required: false
+        default: 0
+        description: Wafer die revision level that is set in the register.
+
+    error-on-ro-write:
+        type: boolean
+        description:
+          Flag indicating if error should be generated when read only register
+          is being written.
+
+    error-on-reserved-bit-write:
+        type: boolean
+        description:
+          Flag indicating if error should be generated when reserved bit
+          is being written.
+
+    error-on-msb-first-access:
+        type: boolean
+        description:
+          Flag indicating if error should be generated when MSB register of
+          accelerometer value is accessed before LSB and shadowing is enabled
+          at the same time.

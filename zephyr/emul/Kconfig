@@ -33,3 +33,15 @@ config EMUL_BMI
 	  Enable the BMI emulator. This driver use emulated I2C bus.
 	  It is used to test bmi 160 and 260 drivers. Emulators API is
 	  available in zephyr/include/emul/emul_bmi.h
+
+config EMUL_TCS3400
+	bool "TCS3400 emulator"
+	help
+	  Enable the TCS3400 light sensor. This driver use emulated I2C bus.
+	  It is used to test als_tcs3400 driver. It supports reading sensor
+	  values which are correctly scaled using current gain and integration
+	  time configuration, switching between IR and clear sensor and
+	  clearing status register using clear interrupt registers. Other
+	  TCS3400 registers support read and write with optional checking
+	  of proper access to reserved bits. Emulators API is available in
+	  zephyr/include/emul/emul_tcs3400.h
