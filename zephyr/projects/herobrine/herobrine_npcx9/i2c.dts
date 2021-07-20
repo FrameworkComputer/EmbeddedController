@@ -1,0 +1,104 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	aliases {
+		i2c-0 = &i2c0_0;
+		i2c-1 = &i2c1_0;
+		i2c-2 = &i2c2_0;
+		i2c-3 = &i2c3_0;
+		i2c-5 = &i2c5_0;
+		i2c-7 = &i2c7_0;
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		power {
+			i2c-port = <&i2c0_0>;
+			enum-name = "I2C_PORT_POWER";
+			label = "POWER";
+		};
+		battery {
+			i2c-port = <&i2c0_0>;
+			remote-port = <0>;
+			enum-name = "I2C_PORT_BATTERY";
+			label = "BATTERY";
+		};
+		virtual {
+			i2c-port = <&i2c0_0>;
+			enum-name = "I2C_PORT_VIRTUAL";
+			label = "VIRTUAL";
+		};
+		charger {
+			i2c-port = <&i2c0_0>;
+			enum-name = "I2C_PORT_CHARGER";
+			label = "CHARGER";
+		};
+		tcpc0 {
+			i2c-port = <&i2c1_0>;
+			enum-name = "I2C_PORT_TCPC0";
+			label = "TCPC0";
+		};
+		tcpc1 {
+			i2c-port = <&i2c2_0>;
+			enum-name = "I2C_PORT_TCPC1";
+			label = "TCPC1";
+		};
+		eeprom {
+			i2c-port = <&i2c5_0>;
+			enum-name = "I2C_PORT_EEPROM";
+			label = "EEPROM";
+		};
+		i2c_sensor: sensor {
+			i2c-port = <&i2c7_0>;
+			enum-name = "I2C_PORT_SENSOR";
+			label = "SENSOR";
+		};
+		accel {
+			i2c-port = <&i2c7_0>;
+			enum-name = "I2C_PORT_ACCEL";
+			label = "ACCEL";
+		};
+	};
+
+
+};
+
+&i2c0_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+
+	isl9238: isl9238@9 {
+		compatible = "intersil,isl9238";
+		reg = <0x09>;
+		label = "ISL9238_CHARGER";
+	};
+};
+
+&i2c1_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+};
+
+&i2c2_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+};
+
+&i2c3_0 {
+	/* Not used as no WLC connected */
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c5_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c7_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
