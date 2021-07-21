@@ -102,21 +102,8 @@ static void board_led_set_battery(void)
 		}
 		break;
 	case PWR_STATE_DISCHARGE:
-		if (chipset_in_state(CHIPSET_STATE_ON)) {
-			/* S0, Green (soild on) */
-			color = LED_GREEN;
-		} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
-			/* S3, Orange (1s on 3s off) */
-			period = (2 + 2) * LED_ONE_SEC;
-			battery_ticks = battery_ticks % period;
-			if (battery_ticks < 1 * LED_ONE_SEC)
-				color = LED_AMBER;
-			else
-				color = LED_OFF;
-		} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-			/* S5, off */
-			color = LED_OFF;
-		}
+		/* Always indicate off on when discharging */
+		color = LED_OFF;
 		break;
 	case PWR_STATE_ERROR:
 		/* Battery error, Red on 1sec off 1sec */
