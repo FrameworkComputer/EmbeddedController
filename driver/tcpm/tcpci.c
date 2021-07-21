@@ -1515,10 +1515,14 @@ int tcpci_tcpm_mux_enter_low_power(const struct usb_mux *me)
 	return mux_write(me, TCPC_REG_COMMAND, TCPC_REG_COMMAND_I2CIDLE);
 }
 
-int tcpci_tcpm_mux_set(const struct usb_mux *me, mux_state_t mux_state)
+int tcpci_tcpm_mux_set(const struct usb_mux *me, mux_state_t mux_state,
+		       bool *ack_required)
 {
 	int rv;
 	int reg = 0;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	/* Parameter is port only */
 	rv = mux_read(me, TCPC_REG_CONFIG_STD_OUTPUT, &reg);

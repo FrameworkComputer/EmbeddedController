@@ -79,10 +79,14 @@ static int ps8822_init(const struct usb_mux *me)
 }
 
 /* Writes control register to set switch mode */
-static int ps8822_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int ps8822_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			  bool *ack_required)
 {
 	int reg;
 	int rv;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	rv = ps8822_read(me, PS8822_REG_PAGE0, PS8822_REG_MODE, &reg);
 	if (rv)

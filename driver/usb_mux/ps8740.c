@@ -70,9 +70,13 @@ static int ps8740_init(const struct usb_mux *me)
 }
 
 /* Writes control register to set switch mode */
-static int ps8740_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int ps8740_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			  bool *ack_required)
 {
 	uint8_t reg = 0;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		reg |= PS8740_MODE_USB_ENABLED;

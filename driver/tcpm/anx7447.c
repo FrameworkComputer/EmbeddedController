@@ -38,7 +38,8 @@ struct anx_usb_mux {
 	int state;
 };
 
-static int anx7447_mux_set(const struct usb_mux *me, mux_state_t mux_state);
+static int anx7447_mux_set(const struct usb_mux *me, mux_state_t mux_state,
+			   bool *ack_required);
 
 static struct anx_state anx[CONFIG_USB_PD_PORT_MAX_COUNT];
 static struct anx_usb_mux mux[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -290,6 +291,7 @@ static int anx7447_init(int port)
 {
 	int rv, reg, i;
 	const struct usb_mux *me = &usb_muxes[port];
+	bool unused;
 
 	ASSERT(port < CONFIG_USB_PD_PORT_MAX_COUNT);
 
@@ -388,9 +390,13 @@ static int anx7447_init(int port)
 	while ((me != NULL) && (me->driver != &anx7447_usb_mux_driver))
 		me = me->next_mux;
 
+	/*
+	 * Note that bypassing the usb_mux API is okay for internal driver calls
+	 * since the task calling init already holds this port's mux lock.
+	 */
 	if (me != NULL &&
 	    !(me->flags & USB_MUX_FLAG_NOT_TCPC))
-		rv = anx7447_mux_set(me, USB_PD_MUX_NONE);
+		rv = anx7447_mux_set(me, USB_PD_MUX_NONE, &unused);
 #endif /* CONFIG_USB_PD_TCPM_MUX */
 
 	return rv;
@@ -496,6 +502,7 @@ void anx7447_tcpc_clear_hpd_status(int port)
 static int anx7447_mux_init(const struct usb_mux *me)
 {
 	int port = me->usb_port;
+	bool unused;
 
 	ASSERT(port < CONFIG_USB_PD_PORT_MAX_COUNT);
 
@@ -511,7 +518,7 @@ static int anx7447_mux_init(const struct usb_mux *me)
 	 * USB_PD_MUX_DP_ENABLED) when reinitialized, we need to force
 	 * initialize it to USB_PD_MUX_NONE
 	 */
-	return anx7447_mux_set(me, USB_PD_MUX_NONE);
+	return anx7447_mux_set(me, USB_PD_MUX_NONE, &unused);
 }
 
 #ifdef CONFIG_USB_PD_TCPM_ANX7447_AUX_PU_PD
@@ -559,13 +566,17 @@ static inline void anx7447_configure_aux_src(const struct usb_mux *me,
  *
  * a2, a3, a10, a11, b2, b3, b10, b11 are pins on the USB-C connector.
  */
-static int anx7447_mux_set(const struct usb_mux *me, mux_state_t mux_state)
+static int anx7447_mux_set(const struct usb_mux *me, mux_state_t mux_state,
+			   bool *ack_required)
 {
 	int cc_direction;
 	mux_state_t mux_type;
 	int sw_sel = 0x00, aux_sw = 0x00;
 	int rv;
 	int port = me->usb_port;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	cc_direction = mux_state & USB_PD_MUX_POLARITY_INVERTED;
 	mux_type = mux_state & USB_PD_MUX_DOCK;

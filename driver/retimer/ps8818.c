@@ -98,10 +98,14 @@ int ps8818_i2c_field_update8(const struct usb_mux *me, int page, int offset,
 	return rv;
 }
 
-static int ps8818_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int ps8818_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			  bool *ack_required)
 {
 	int rv;
 	int val = 0;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 		return (mux_state == USB_PD_MUX_NONE) ? EC_SUCCESS

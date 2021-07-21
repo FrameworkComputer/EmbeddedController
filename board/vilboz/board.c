@@ -156,8 +156,12 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
  * chip and it need a board specific driver.
  * Overall, it will use chained mux framework.
  */
-static int fsusb42umx_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int fsusb42umx_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			      bool *ack_required)
 {
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
+
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		ioex_set_level(IOEX_USB_C0_SBU_FLIP, 1);
 	else
@@ -429,8 +433,13 @@ static void lte_usb3_mux_init(void)
 			.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
 			.driver = &amd_fp5_usb_mux_driver,
 		};
+		bool unused;
+		/*
+		 * Note: Direct mux driver calls are deprecated.  Calls
+		 * should go through the usb_mux APIs instead.
+		 */
 		/* steer the mux to connect the USB 3 superspeed pairs */
-		usb_c1.driver->set(&usb_c1, USB_PD_MUX_USB_ENABLED);
+		usb_c1.driver->set(&usb_c1, USB_PD_MUX_USB_ENABLED, &unused);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, lte_usb3_mux_init, HOOK_PRIO_DEFAULT);

@@ -376,9 +376,13 @@ static int kb800x_cio_init(const struct usb_mux *me, mux_state_t mux_state)
 	return kb800x_write(me, KB800X_REG_ORIENTATION, orientation);
 }
 
-static int kb800x_set_state(const struct usb_mux *me, mux_state_t mux_state)
+static int kb800x_set_state(const struct usb_mux *me, mux_state_t mux_state,
+			    bool *ack_required)
 {
 	int rv;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	cached_mux_state[me->usb_port] = mux_state;
 	rv = kb800x_write(me, KB800X_REG_RESET, KB800X_RESET_MASK);

@@ -379,11 +379,15 @@ __overridable int bb_retimer_reset(const struct usb_mux *me)
 /**
  * Driver interface functions
  */
-static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state)
+static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state,
+			     bool *ack_required)
 {
 	uint32_t set_retimer_con = 0;
 	uint8_t dp_pin_mode;
 	int port = me->usb_port;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	/*
 	 * Bit 0: DATA_CONNECTION_PRESENT

@@ -76,9 +76,13 @@ static int anx3443_wake_up(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-static int anx3443_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int anx3443_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			   bool *ack_required)
 {
 	int reg;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	/* Mux is not powered in Z1 */
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
@@ -129,6 +133,7 @@ static int anx3443_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 static int anx3443_init(const struct usb_mux *me)
 {
 	uint64_t now;
+	bool unused;
 
 	/*
 	 * ANX3443 requires 30ms to power on. EC and ANX3443 are on the same
@@ -140,8 +145,12 @@ static int anx3443_init(const struct usb_mux *me)
 
 	RETURN_ERROR(anx3443_wake_up(me));
 
+	/*
+	 * Note that bypassing the usb_mux API is okay for internal driver calls
+	 * since the task calling init already holds this port's mux lock.
+	 */
 	/* Default to USB mode */
-	RETURN_ERROR(anx3443_set_mux(me, USB_PD_MUX_USB_ENABLED));
+	RETURN_ERROR(anx3443_set_mux(me, USB_PD_MUX_USB_ENABLED, &unused));
 
 	return EC_SUCCESS;
 }

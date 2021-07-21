@@ -385,12 +385,16 @@ static int anx74xx_mux_aux_to_sbu(int port, int polarity, int enabled)
 }
 
 static int anx74xx_tcpm_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
+				mux_state_t mux_state,
+				bool *ack_required)
 {
 	int ctrl5;
 	int ctrl1 = 0;
 	int rv;
 	int port = me->usb_port;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	if (!(mux_state & ~USB_PD_MUX_POLARITY_INVERTED)) {
 		anx[port].mux_state = mux_state;
@@ -776,6 +780,7 @@ static int anx74xx_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
 	int reg, mux_state, rv = EC_SUCCESS;
 	const struct usb_mux *me = &usb_muxes[port];
+	bool unused;
 
 	rv |= tcpc_read(port, ANX74XX_REG_CC_SOFTWARE_CTRL, &reg);
 	if (polarity_rm_dts(polarity)) /* Inform ANX to use CC2 */
@@ -791,7 +796,7 @@ static int anx74xx_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 	mux_state = anx[port].mux_state & ~USB_PD_MUX_POLARITY_INVERTED;
 	if (polarity_rm_dts(polarity))
 		mux_state |= USB_PD_MUX_POLARITY_INVERTED;
-	anx74xx_tcpm_mux_set(me, mux_state);
+	anx74xx_tcpm_mux_set(me, mux_state, &unused);
 #endif
 	return rv;
 }

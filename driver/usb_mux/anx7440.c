@@ -61,9 +61,13 @@ static int anx7440_init(const struct usb_mux *me)
 }
 
 /* Writes control register to set switch mode */
-static int anx7440_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int anx7440_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			   bool *ack_required)
 {
 	int reg, res;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	res = anx7440_read(me, ANX7440_REG_CHIP_CTRL, &reg);
 	if (res)

@@ -12,6 +12,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "task.h"
+#include "timer.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"
 #include "util.h"
@@ -73,6 +74,7 @@ static int configure_mux(int port,
 	     mux_ptr = mux_ptr->next_mux) {
 		mux_state_t lcl_state;
 		const struct usb_mux_driver *drv = mux_ptr->driver;
+		bool ack_required = false;
 
 		switch (config) {
 		case USB_MUX_INIT:
@@ -107,7 +109,8 @@ static int configure_mux(int port,
 				lcl_state &= ~USB_PD_MUX_POLARITY_INVERTED;
 
 			if (drv && drv->set) {
-				rv = drv->set(mux_ptr, lcl_state);
+				rv = drv->set(mux_ptr, lcl_state,
+					      &ack_required);
 				if (rv)
 					break;
 			}
@@ -132,6 +135,21 @@ static int configure_mux(int port,
 				*mux_state |= lcl_state;
 			}
 			break;
+		}
+
+		if (ack_required) {
+			/* This should only be called from the PD task */
+			assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
+
+			/*
+			 * Note: This task event could be generalized for more
+			 * purposes beyond host command ACKs.  For now, these
+			 * wait times are tuned for the purposes of the TCSS
+			 * mux, but could be made configurable for other
+			 * purposes.
+			 */
+			task_wait_event_mask(PD_EVENT_AP_MUX_DONE, 100*MSEC);
+			usleep(12.5 * MSEC);
 		}
 	}
 

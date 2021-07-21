@@ -134,9 +134,13 @@ static void amd_fp6_set_mux_retry(void)
 }
 
 
-static int amd_fp6_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int amd_fp6_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			   bool *ack_required)
 {
 	uint8_t val;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	if (mux_state == USB_PD_MUX_NONE)
 		/*

@@ -91,9 +91,13 @@ enum ec_error_list it5205h_enable_csbu_switch(const struct usb_mux *me, bool en)
 }
 
 /* Writes control register to set switch mode */
-static int it5205_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int it5205_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			  bool *ack_required)
 {
 	uint8_t reg;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	switch (mux_state & MUX_STATE_DP_USB_MASK) {
 	case USB_PD_MUX_USB_ENABLED:

@@ -215,10 +215,14 @@ static int ps8802_init(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-static int ps8802_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int ps8802_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			  bool *ack_required)
 {
 	int val;
 	int rv;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 		return (mux_state == USB_PD_MUX_NONE) ? EC_SUCCESS

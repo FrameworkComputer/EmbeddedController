@@ -89,9 +89,13 @@ static int anx7451_wake_up(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-static int anx7451_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int anx7451_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			   bool *ack_required)
 {
 	int reg;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	/* Mux is not powered in Z1 */
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))

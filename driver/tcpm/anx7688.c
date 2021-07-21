@@ -144,10 +144,14 @@ static void anx7688_tcpc_alert(int port)
 		anx7688_update_hpd_enable(port);
 }
 
-static int anx7688_mux_set(const struct usb_mux *me, mux_state_t mux_state)
+static int anx7688_mux_set(const struct usb_mux *me, mux_state_t mux_state,
+			   bool *ack_required)
 {
 	int reg = 0;
 	int rv, polarity;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	rv = mux_read(me, TCPC_REG_CONFIG_STD_OUTPUT, &reg);
 	if (rv != EC_SUCCESS)

@@ -90,13 +90,17 @@ static int pi3dpx1207_enter_low_power_mode(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-static int pi3dpx1207_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int pi3dpx1207_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			      bool *ack_required)
 {
 	int rv = EC_SUCCESS;
 	uint8_t mode_val = PI3DPX1207_MODE_WATCHDOG_EN;
 	const int port = me->usb_port;
 	const int gpio_enable = pi3dpx1207_controls[port].enable_gpio;
 	const int gpio_dp_enable = pi3dpx1207_controls[port].dp_enable_gpio;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	/* USB */
 	if (mux_state & USB_PD_MUX_USB_ENABLED) {

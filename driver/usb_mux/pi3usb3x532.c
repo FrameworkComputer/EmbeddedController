@@ -84,9 +84,13 @@ static int pi3usb3x532_init(const struct usb_mux *me)
 
 /* Writes control register to set switch mode */
 static int pi3usb3x532_set_mux(const struct usb_mux *me,
-			       mux_state_t mux_state)
+			       mux_state_t mux_state,
+			       bool *ack_required)
 {
 	uint8_t reg = 0;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		reg |= PI3USB3X532_MODE_USB;

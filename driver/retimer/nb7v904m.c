@@ -147,11 +147,15 @@ static int nb7v904m_init(const struct usb_mux *me)
 	return rv;
 }
 
-static int nb7v904m_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int nb7v904m_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			    bool *ack_required)
 {
 	int rv = EC_SUCCESS;
 	int regval;
 	int flipped = !!(mux_state & USB_PD_MUX_POLARITY_INVERTED);
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	/* Turn off redriver if it's not needed at all. */
 	if (mux_state == USB_PD_MUX_NONE)

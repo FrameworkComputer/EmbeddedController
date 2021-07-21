@@ -42,11 +42,14 @@ struct usb_mux_driver {
 	/**
 	 * Set USB mux state.
 	 *
-	 * @param me usb_mux
-	 * @param mux_state State to set mux to.
+	 * @param[in]  me usb_mux
+	 * @param[in]  mux_state State to set mux to.
+	 * @param[out] bool ack_required - indication of whether this mux needs
+	 * to wait on a host command ACK at the end of a set
 	 * @return EC_SUCCESS on success, non-zero error code on failure.
 	 */
-	int (*set)(const struct usb_mux *me, mux_state_t mux_state);
+	int (*set)(const struct usb_mux *me, mux_state_t mux_state,
+		   bool *ack_required);
 
 	/**
 	 * Get current state of USB mux.

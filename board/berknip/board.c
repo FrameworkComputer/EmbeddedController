@@ -121,8 +121,12 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
  * chip and it need a board specific driver.
  * Overall, it will use chained mux framework.
  */
-static int pi3usb221_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int pi3usb221_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			     bool *ack_required)
 {
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
+
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		ioex_set_level(IOEX_USB_C0_SBU_FLIP, 0);
 	else

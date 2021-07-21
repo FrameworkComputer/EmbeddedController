@@ -341,7 +341,7 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
  * not needed as well. usb_mux.c can handle the situation
  * properly.
  */
-static int fsusb42umx_set_mux(const struct usb_mux*, mux_state_t);
+static int fsusb42umx_set_mux(const struct usb_mux*, mux_state_t, bool *);
 const struct usb_mux_driver usbc_sbu_mux_driver = {
 	.set = fsusb42umx_set_mux,
 };
@@ -447,9 +447,13 @@ BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
  * chip and it needs a board specific driver.
  * Overall, it will use chained mux framework.
  */
-static int fsusb42umx_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int fsusb42umx_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			      bool *ack_required)
 {
 	bool inverted = mux_state & USB_PD_MUX_POLARITY_INVERTED;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	if (me->usb_port == USBC_PORT_C0)
 		RETURN_ERROR(ioex_set_level(IOEX_USB_C0_SBU_FLIP, inverted));

@@ -886,9 +886,9 @@ void ps8xxx_wake_from_standby(const struct usb_mux *me)
 	msleep(10);
 }
 
-static int ps8xxx_mux_set(const struct usb_mux *me, mux_state_t mux_state)
+static int ps8xxx_mux_set(const struct usb_mux *me, mux_state_t mux_state,
+			  bool *ack_required)
 {
-
 	if (product_id[me->usb_port] == PS8751_PRODUCT_ID &&
 	    me->flags & USB_MUX_FLAG_NOT_TCPC) {
 		ps8xxx_wake_from_standby(me);
@@ -906,7 +906,7 @@ static int ps8xxx_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 							       TYPEC_CC_RD)));
 	}
 
-	return tcpci_tcpm_mux_set(me, mux_state);
+	return tcpci_tcpm_mux_set(me, mux_state, ack_required);
 }
 
 static int ps8xxx_mux_get(const struct usb_mux *me, mux_state_t *mux_state)

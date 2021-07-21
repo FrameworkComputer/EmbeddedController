@@ -42,9 +42,13 @@ static int amd_fp5_init(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-static int amd_fp5_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int amd_fp5_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			   bool *ack_required)
 {
 	uint8_t val = 0;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	saved_mux_state[me->usb_port] = mux_state;
 
@@ -128,9 +132,11 @@ static void amd_fp5_chipset_reset_delay(void)
 {
 	struct usb_mux *me;
 	int rv;
+	bool unused;
 
 	while (queue_remove_unit(&chipset_reset_queue, &me)) {
-		rv = amd_fp5_set_mux(me, saved_mux_state[me->usb_port]);
+		rv = amd_fp5_set_mux(me, saved_mux_state[me->usb_port],
+				     &unused);
 		if (rv)
 			ccprints("C%d restore mux rv:%d", me->usb_port, rv);
 	}

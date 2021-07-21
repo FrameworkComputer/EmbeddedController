@@ -204,6 +204,7 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 {
 	int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
 	int pin_mode = pd_dfp_dp_get_pin_mode(port, dp_status[port]);
+	bool unused;
 #if defined(CONFIG_USB_PD_TCPM_MUX) && defined(CONFIG_USB_PD_TCPM_ANX7447)
 	const struct usb_mux *mux = &usb_muxes[port];
 #endif
@@ -224,13 +225,17 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 	case MODE_DP_PIN_C:
 	case MODE_DP_PIN_E:
 		mux_state |= USB_PD_MUX_DP_ENABLED;
-		mux->driver->set(mux, mux_state);
+		/*
+		 * Note: Direct mux driver calls are deprecated.  Calls
+		 * should go through the usb_mux APIs instead.
+		 */
+		mux->driver->set(mux, mux_state, &unused);
 		break;
 	case MODE_DP_PIN_B:
 	case MODE_DP_PIN_D:
 	case MODE_DP_PIN_F:
 		mux_state |= USB_PD_MUX_DOCK;
-		mux->driver->set(mux, mux_state);
+		mux->driver->set(mux, mux_state, &unused);
 		break;
 	}
 #endif

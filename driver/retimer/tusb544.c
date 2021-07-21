@@ -58,10 +58,14 @@ static int tusb544_init(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-static int tusb544_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int tusb544_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			   bool *ack_required)
 {
 	int reg;
 	int rv;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	if (mux_state == USB_PD_MUX_NONE)
 		return tusb544_enter_low_power_mode(me);

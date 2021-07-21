@@ -26,11 +26,18 @@
 
 static mux_state_t virtual_mux_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-static inline void virtual_mux_update_state(int port, mux_state_t mux_state)
+static inline void virtual_mux_update_state(int port, mux_state_t mux_state,
+					    bool *ack_required)
 {
 	mux_state_t previous_mux_state = virtual_mux_state[port];
 
 	virtual_mux_state[port] = mux_state;
+
+	/*
+	 * Initialize ack_required to false to start, and set on necessary
+	 * conditions
+	 */
+	*ack_required = false;
 
 	if (!IS_ENABLED(CONFIG_HOSTCMD_EVENTS))
 		return;
@@ -48,9 +55,6 @@ static inline void virtual_mux_update_state(int port, mux_state_t mux_state)
 	 * TCSS Mux to allow better synchronization between them and thereby
 	 * remain in the same state for achieving proper safe state
 	 * terminations.
-	 *
-	 * Note: While the EC waits for the ACK, the value of usb_mux_get
-	 * won't match the most recently set value with usb_mux_set.
 	 */
 
 	/* TODO(b/186777984): Wait for an ACK for all mux state change */
@@ -60,13 +64,8 @@ static inline void virtual_mux_update_state(int port, mux_state_t mux_state)
 	   ((previous_mux_state & USB_PD_MUX_SAFE_MODE) &&
 	    !(mux_state & USB_PD_MUX_SAFE_MODE)) ||
 	   ((previous_mux_state != USB_PD_MUX_NONE) &&
-	    (mux_state == USB_PD_MUX_NONE))) {
-		/* This should only be called from the PD task */
-		assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
-
-		task_wait_event_mask(PD_EVENT_AP_MUX_DONE, 100*MSEC);
-		usleep(12.5 * MSEC);
-	}
+	    (mux_state == USB_PD_MUX_NONE)))
+		*ack_required = true;
 }
 
 static int virtual_init(const struct usb_mux *me)
@@ -78,7 +77,8 @@ static int virtual_init(const struct usb_mux *me)
  * Set the state of our 'virtual' mux. The EC does not actually control this
  * mux, so update the desired state, then notify the host of the update.
  */
-static int virtual_set_mux(const struct usb_mux *me, mux_state_t mux_state)
+static int virtual_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+			   bool *ack_required)
 {
 	int port = me->usb_port;
 
@@ -86,7 +86,7 @@ static int virtual_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 	mux_state_t new_mux_state = (mux_state & ~USB_PD_MUX_HPD_STATE) |
 		(virtual_mux_state[port] & USB_PD_MUX_HPD_STATE);
 
-	virtual_mux_update_state(port, new_mux_state);
+	virtual_mux_update_state(port, new_mux_state, ack_required);
 
 	return EC_SUCCESS;
 }
@@ -108,13 +108,15 @@ static int virtual_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 void virtual_hpd_update(const struct usb_mux *me, int hpd_lvl, int hpd_irq)
 {
 	int port = me->usb_port;
+	bool unused;
 
 	/* Current HPD related mux status + existing USB & DP mux status */
 	mux_state_t new_mux_state = (hpd_lvl ? USB_PD_MUX_HPD_LVL : 0) |
 			(hpd_irq ? USB_PD_MUX_HPD_IRQ : 0) |
 			(virtual_mux_state[port] & USB_PD_MUX_USB_DP_STATE);
 
-	virtual_mux_update_state(port, new_mux_state);
+	/* HPD ACK isn't required for the EC to continue with its tasks */
+	virtual_mux_update_state(port, new_mux_state, &unused);
 }
 
 const struct usb_mux_driver virtual_usb_mux_driver = {
