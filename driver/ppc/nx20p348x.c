@@ -363,6 +363,11 @@ static int nx20p348x_init(int port)
 #endif
 	nx20p348x_set_vbus_source_current_limit(port, initial_current_limit);
 
+	/* Restore power-on reset value */
+	rv = write_reg(port, NX20P348X_DEVICE_CONTROL_REG, 0);
+	if (rv)
+		return rv;
+
 	return EC_SUCCESS;
 }
 
