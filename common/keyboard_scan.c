@@ -53,9 +53,7 @@
 #define CONFIG_KEYBOARD_POST_SCAN_CLOCKS 16000
 #endif
 
-#ifndef CONFIG_KEYBOARD_BOARD_CONFIG
-/* Use default keyboard scan config, because board didn't supply one */
-struct keyboard_scan_config keyscan_config = {
+__overridable struct keyboard_scan_config keyscan_config = {
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
 	/*
 	 * CONFIG_KEYBOARD_COL2_INVERTED is defined for passing the column 2
@@ -78,7 +76,6 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
 	},
 };
-#endif
 
 /* Boot key list.  Must be in same order as enum boot_key. */
 struct boot_key_entry {

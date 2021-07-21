@@ -49,7 +49,7 @@ static void check_c0_line(void);
 DECLARE_DEFERRED(check_c0_line);
 
 /* Use default keyboard scan config, because board didn't supply one */
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	/*
 	 * CONFIG_KEYBOARD_COL2_INVERTED is defined for passing the column 2
 	 * to H1 which inverts the signal. The signal passing through H1

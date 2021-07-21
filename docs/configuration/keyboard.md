@@ -42,8 +42,8 @@ macros.
 
 ## Data structures
 
--   `struct keyboard_scan_config keyscan_config` - This must be defined if the
-    `CONFIG_KEYBOARD_BOARD_CONFIG` option is defined.
+-   `struct keyboard_scan_config keyscan_config` - This can be used to customize
+    the keyboard scanner (e.g. scan frequency, debounce duration, etc.).
 
 ## Tasks
 

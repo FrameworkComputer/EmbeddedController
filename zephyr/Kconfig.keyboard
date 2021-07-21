@@ -48,16 +48,6 @@ config PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP
 
 endchoice # PLATFORM_EC_KEYBOARD
 
-config PLATFORM_EC_KEYBOARD_BOARD_CONFIG
-	bool "Use custom keyboard config"
-	help
-	  Enable support for custom keyboard config. in which case
-	  keyscan_config must be defined by the board, using
-	  struct keyboard_scan_config.
-
-	  If this is not enabled, default values in common/keyboard_scan.c are
-	  used.
-
 config PLATFORM_EC_KEYBOARD_KEYPAD
 	bool "Support a numeric keypad"
 	help

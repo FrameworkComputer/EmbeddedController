@@ -223,7 +223,7 @@ struct ec_thermal_config thermal_params[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	.output_settle_us = 40,
 	.debounce_down_us = 6 * MSEC,
 	.debounce_up_us = 30 * MSEC,

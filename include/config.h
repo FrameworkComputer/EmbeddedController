@@ -2718,12 +2718,6 @@
 #undef CONFIG_KEYBOARD_FACTORY_TEST
 
 /*
- * Keyboard config (struct keyboard_scan_config) is in board.c.  If this is
- * not defined, default values from common/keyboard_scan.c will be used.
- */
-#undef CONFIG_KEYBOARD_BOARD_CONFIG
-
-/*
  * Support for boot key combinations (e.g. refresh key being held on boot to
  * trigger recovery).
  */

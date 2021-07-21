@@ -107,7 +107,7 @@ static void board_connect_c0_sbu(enum gpio_signal s)
 }
 
 /* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	/* Use 80 us, because KSO_02 passes through the H1. */
 	.output_settle_us = 80,
 	/*

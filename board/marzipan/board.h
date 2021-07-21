@@ -15,7 +15,7 @@
 
 /* Keyboard */
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
-#define CONFIG_KEYBOARD_BOARD_CONFIG
+
 #define CONFIG_PWM_KBLIGHT
 
 /* Battery */

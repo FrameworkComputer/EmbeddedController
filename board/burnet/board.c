@@ -90,7 +90,7 @@ const struct power_signal_info power_signal_list[] = {
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	/*
 	 * TODO(b/133200075): Tune this once we have the final performance
 	 * out of the driver and the i2c bus.

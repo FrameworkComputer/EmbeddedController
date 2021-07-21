@@ -21,6 +21,5 @@ board-y=board.o
 board-y+=battery.o
 board-y+=cbi.o
 board-y+=led.o
-board-y+=keyboard.o
 board-y+=sensors.o
 board-y+=usbc_config.o

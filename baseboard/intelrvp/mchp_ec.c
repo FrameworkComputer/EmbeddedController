@@ -14,7 +14,7 @@
 #include "usb_pd_tcpm.h"
 
 /* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	/*
 	 * F3 key scan cycle completed but scan input is not
 	 * charging to logic high when EC start scan next

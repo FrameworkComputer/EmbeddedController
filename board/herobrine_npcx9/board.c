@@ -43,7 +43,7 @@ const enum gpio_signal hibernate_wake_pins[] = {
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	/* Use 80 us, because KSO_02 passes through the H1. */
 	.output_settle_us = 80,
 	/*

@@ -39,8 +39,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
   "${PLATFORM_EC_BOARD}/battery.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI_EEPROM
   "${PLATFORM_EC_BOARD}/cbi.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_BOARD_CONFIG
-  "${PLATFORM_EC_BOARD}/keyboard.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
   "${PLATFORM_EC_BOARD}/led.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC

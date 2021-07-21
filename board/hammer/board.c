@@ -125,8 +125,7 @@ int usb_i2c_board_is_enabled(void)
 	return !system_is_locked();
 }
 
-#ifdef CONFIG_KEYBOARD_BOARD_CONFIG
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	.output_settle_us = 50,
 	.debounce_down_us = 9 * MSEC,
 	.debounce_up_us = 30 * MSEC,
@@ -138,7 +137,6 @@ struct keyboard_scan_config keyscan_config = {
 		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
 	},
 };
-#endif
 #endif
 
 #if defined(BOARD_WAND) && defined(SECTION_IS_RW)

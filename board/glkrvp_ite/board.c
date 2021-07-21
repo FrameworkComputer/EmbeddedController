@@ -195,7 +195,7 @@ static void pmic_init(void)
 DECLARE_HOOK(HOOK_INIT, pmic_init, HOOK_PRIO_INIT_I2C + 1);
 
 /* Keyboard scan setting */
-struct keyboard_scan_config keyscan_config = {
+__override struct keyboard_scan_config keyscan_config = {
 	.output_settle_us = 35,
 	.debounce_down_us = 5 * MSEC,
 	.debounce_up_us = 40 * MSEC,
