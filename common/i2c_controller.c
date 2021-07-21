@@ -125,6 +125,9 @@ __maybe_unused static int chip_i2c_xfer_with_notify(
 	uint16_t no_pec_af = addr_flags;
 	const struct i2c_port_t *i2c_port = get_i2c_port(port);
 
+	if (i2c_port == NULL)
+		return EC_ERROR_INVAL;
+
 	if (IS_ENABLED(CONFIG_I2C_XFER_BOARD_CALLBACK))
 		i2c_start_xfer_notify(port, addr_flags);
 
