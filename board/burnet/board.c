@@ -537,7 +537,7 @@ static void board_init(void)
 	} else {
 		motion_sensor_count = 0;
 		/* Device is clamshell only */
-		tablet_set_mode(0);
+		tablet_set_mode(0, TABLET_TRIGGER_LID);
 		/* Turn off GMR interrupt */
 		gmr_tablet_switch_disable();
 		/* Base accel is not stuffed, don't allow line to float */

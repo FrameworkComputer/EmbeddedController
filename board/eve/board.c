@@ -459,7 +459,7 @@ static void board_set_tablet_mode(void)
 {
 	int flipped_360_mode = !gpio_get_level(GPIO_TABLET_MODE_L);
 
-	tablet_set_mode(flipped_360_mode);
+	tablet_set_mode(flipped_360_mode, TABLET_TRIGGER_LID);
 
 	/* Update DPTF profile based on mode */
 	if (flipped_360_mode)

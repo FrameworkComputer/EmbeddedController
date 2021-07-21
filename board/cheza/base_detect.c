@@ -101,7 +101,7 @@ static void base_detect_change(enum base_status status)
 	/* We don't enable dual-battery support. Set the base power directly. */
 	gpio_set_level(GPIO_EN_PPVAR_VAR_BASE, connected);
 
-	tablet_set_mode(!connected);
+	tablet_set_mode(!connected, TABLET_TRIGGER_BASE);
 }
 
 static void print_base_detect_value(const char *str, int v)

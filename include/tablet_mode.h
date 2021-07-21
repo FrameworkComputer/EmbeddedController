@@ -13,12 +13,17 @@
  */
 int tablet_get_mode(void);
 
+/* Bit mask of tablet mode trigger */
+#define TABLET_TRIGGER_LID	BIT(0)
+#define TABLET_TRIGGER_BASE	BIT(1)
+
 /**
  * Set tablet mode state
  *
  * @param mode 1: tablet mode. 0 clamshell mode.
+ * @param trigger: bitmask of the trigger, TABLET_TRIGGER_*.
  */
-void tablet_set_mode(int mode);
+void tablet_set_mode(int mode, uint32_t trigger);
 
 /**
  * Disable tablet mode

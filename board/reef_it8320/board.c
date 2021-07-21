@@ -208,7 +208,7 @@ static void board_set_tablet_mode(void)
 	 * Always report device isn't in tablet mode because
 	 * our id is clamshell and no TABLET_MODE_L pin
 	 */
-	tablet_set_mode(0);
+	tablet_set_mode(0, TABLET_TRIGGER_LID);
 }
 
 /* Initialize board. */

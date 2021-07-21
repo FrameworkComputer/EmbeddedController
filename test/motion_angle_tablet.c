@@ -57,7 +57,7 @@ static int test_lid_angle_less180(void)
 
 	cprints(CC_ACCEL, "start loop");
 	/* Force clamshell mode, to be sure we go in tablet mode ASAP. */
-	tablet_set_mode(0);
+	tablet_set_mode(0, TABLET_TRIGGER_LID);
 
 	/* Check we stay in tablet mode, even when hinge is vertical. */
 	while (index < kAccelerometerVerticalHingeTestDataLength) {
@@ -79,7 +79,7 @@ static int test_lid_angle_less180(void)
 	 * Check we stay in tablet mode, even when hinge is vertical and
 	 * shaked.
 	 */
-	tablet_set_mode(0);
+	tablet_set_mode(0, TABLET_TRIGGER_LID);
 	while (index < kAccelerometerVerticalHingeUnstableTestDataLength) {
 		feed_accel_data(kAccelerometerVerticalHingeUnstableTestData,
 				&index, filler);

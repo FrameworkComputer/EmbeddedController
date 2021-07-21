@@ -341,7 +341,7 @@ static void board_init(void)
 			       GPIO_INPUT | GPIO_PULL_DOWN);
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
 		/* Disable tablet mode. */
-		tablet_set_mode(0);
+		tablet_set_mode(0, TABLET_TRIGGER_LID);
 		gmr_tablet_switch_disable();
 		gpio_set_flags(GPIO_TABLET_MODE_L,
 			       GPIO_INPUT | GPIO_PULL_UP);

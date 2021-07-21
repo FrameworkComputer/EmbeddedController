@@ -128,7 +128,7 @@ static void base_detect_change(enum base_status status)
 	 */
 	task_wake(TASK_ID_CHARGER);
 
-	tablet_set_mode(!connected);
+	tablet_set_mode(!connected, TABLET_TRIGGER_BASE);
 }
 
 static void print_base_detect_value(const char *str, int v)

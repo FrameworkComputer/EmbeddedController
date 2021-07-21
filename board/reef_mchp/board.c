@@ -639,7 +639,8 @@ void chipset_pre_init_callback(void)
 
 static void board_set_tablet_mode(void)
 {
-	tablet_set_mode(!gpio_get_level(GPIO_TABLET_MODE_L));
+	tablet_set_mode(!gpio_get_level(GPIO_TABLET_MODE_L),
+			TABLET_TRIGGER_LID);
 }
 
 /* Initialize board. */
