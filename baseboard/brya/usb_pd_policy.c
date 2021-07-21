@@ -72,11 +72,6 @@ int pd_set_power_supply_ready(int port)
 	return EC_SUCCESS;
 }
 
-int pd_snk_is_vbus_provided(int port)
-{
-	return ppc_is_vbus_present(port);
-}
-
 int board_vbus_source_enabled(int port)
 {
 	return ppc_is_sourcing_vbus(port);
