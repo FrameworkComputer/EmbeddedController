@@ -110,6 +110,7 @@ static int nx20p348x_set_vbus_source_current_limit(int port,
 static int nx20p348x_discharge_vbus(int port, int enable)
 {
 	int regval;
+	int newval;
 	int status;
 
 	status = read_reg(port, NX20P348X_DEVICE_CONTROL_REG, &regval);
@@ -117,13 +118,16 @@ static int nx20p348x_discharge_vbus(int port, int enable)
 		return status;
 
 	if (enable)
-		regval |= NX20P348X_CTRL_VBUSDIS_EN;
+		newval = regval | NX20P348X_CTRL_VBUSDIS_EN;
 	else
-		regval &= ~NX20P348X_CTRL_VBUSDIS_EN;
+		newval = regval & ~NX20P348X_CTRL_VBUSDIS_EN;
 
-	status = write_reg(port, NX20P348X_DEVICE_CONTROL_REG, regval);
+	if (newval == regval)
+		return EC_SUCCESS;
+
+	status = write_reg(port, NX20P348X_DEVICE_CONTROL_REG, newval);
 	if (status) {
-		CPRINTS("Failed to %s vbus discharge",
+		CPRINTS("Failed to %s VBUS discharge",
 			enable ? "enable" : "disable");
 		return status;
 	}
@@ -136,6 +140,15 @@ __maybe_unused static int nx20p3481_vbus_sink_enable(int port, int enable)
 	int status;
 	int rv;
 	int control = enable ? NX20P3481_SWITCH_CONTROL_HVSNK : 0;
+
+	if (enable) {
+		/*
+		 * VBUS Discharge must be off in sink mode.
+		 */
+		rv = nx20p348x_discharge_vbus(port, 0);
+		if (rv)
+			return rv;
+	}
 
 	rv = write_reg(port, NX20P348X_SWITCH_CONTROL_REG, control);
 	if (rv)
@@ -201,6 +214,15 @@ __maybe_unused static int nx20p3483_vbus_sink_enable(int port, int enable)
 	int rv;
 
 	enable = !!enable;
+
+	if (enable) {
+		/*
+		 * VBUS Discharge must be off in sink mode.
+		 */
+		rv = nx20p348x_discharge_vbus(port, 0);
+		if (rv)
+			return rv;
+	}
 
 	/*
 	 * We cannot use an EC GPIO for EN_SNK since an EC reset
