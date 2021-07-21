@@ -99,6 +99,10 @@ void chipset_reset(void)
 					KEYBOARD_COL_ ## k, \
 					p)
 
+#define mock_default_key(k, p) mock_key(KEYBOARD_DEFAULT_ROW_ ## k, \
+					KEYBOARD_DEFAULT_COL_ ## k, \
+					p)
+
 static void mock_key(int r, int c, int keydown)
 {
 	ccprintf("%s (%d, %d)\n", keydown ? "Pressing" : "Releasing", r, c);
@@ -330,21 +334,21 @@ static int runtime_key_test(void)
 {
 	/* Alt-VolUp-H triggers system hibernation */
 	mock_defined_key(LEFT_ALT, 1);
-	mock_defined_key(VOL_UP, 1);
+	mock_default_key(VOL_UP, 1);
 	mock_defined_key(KEY_H, 1);
 	TEST_ASSERT(wait_variable_set(&hibernated) == EC_SUCCESS);
 	mock_defined_key(LEFT_ALT, 0);
-	mock_defined_key(VOL_UP, 0);
+	mock_default_key(VOL_UP, 0);
 	mock_defined_key(KEY_H, 0);
 	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 
 	/* Alt-VolUp-R triggers chipset reset */
 	mock_defined_key(RIGHT_ALT, 1);
-	mock_defined_key(VOL_UP, 1);
+	mock_default_key(VOL_UP, 1);
 	mock_defined_key(KEY_R, 1);
 	TEST_ASSERT(wait_variable_set(&reset_called) == EC_SUCCESS);
 	mock_defined_key(RIGHT_ALT, 0);
-	mock_defined_key(VOL_UP, 0);
+	mock_default_key(VOL_UP, 0);
 	mock_defined_key(KEY_R, 0);
 	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 
@@ -352,10 +356,10 @@ static int runtime_key_test(void)
 	mock_defined_key(LEFT_ALT, 1);
 	mock_defined_key(KEY_H, 1);
 	mock_defined_key(KEY_R, 1);
-	mock_defined_key(VOL_UP, 1);
+	mock_default_key(VOL_UP, 1);
 	TEST_ASSERT(verify_variable_not_set(&hibernated) == EC_SUCCESS);
 	TEST_ASSERT(verify_variable_not_set(&reset_called) == EC_SUCCESS);
-	mock_defined_key(VOL_UP, 0);
+	mock_default_key(VOL_UP, 0);
 	mock_defined_key(KEY_R, 0);
 	mock_defined_key(KEY_H, 0);
 	mock_defined_key(LEFT_ALT, 0);
@@ -408,7 +412,7 @@ void test_init(void)
 		/* Power-F3-ESC */
 		system_set_reset_flags(system_get_reset_flags() |
 				       EC_RESET_FLAG_RESET_PIN);
-		mock_key(1, 1, 1);
+		mock_key(KEYBOARD_ROW_ESC, KEYBOARD_COL_ESC, 1);
 	} else if (state & TEST_STATE_MASK(TEST_STATE_STEP_3)) {
 		/* Power-F3-Down */
 		system_set_reset_flags(system_get_reset_flags() |
@@ -424,8 +428,11 @@ static void run_test_step1(void)
 	test_reset();
 
 	RUN_TEST(deghost_test);
+
 	RUN_TEST(debounce_test);
-	RUN_TEST(simulate_key_test);
+
+	if (0)  /* crbug.com/976974 */
+		RUN_TEST(simulate_key_test);
 #ifdef EMU_BUILD
 	RUN_TEST(runtime_key_test);
 #endif
