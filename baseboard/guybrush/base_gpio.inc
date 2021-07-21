@@ -31,7 +31,7 @@ ALTERNATE(/*LID_OPEN*/		PIN_MASK(0, BIT(2)), 0, 			MODULE_PMU, 0)		/* PSL - Lid 
 ALTERNATE(/*ACOK_OD*/		PIN_MASK(0, BIT(0)), 0,				MODULE_PMU, 0)		/* PSL - AC Power Present */
 
 /* SOC Signals */
-UNIMPLEMENTED(ENTERING_RW) 										/* GPIO_ENTERING_RW */
+GPIO(EC_ENTERING_RW,		PIN(6, 6), GPIO_OUT_LOW) 						/* Tell SOC we entered RW */
 GPIO(EC_SYS_RST_L,		PIN(7, 6), GPIO_ODR_HIGH)						/* Cold Reset SOC */
 GPIO(EC_SOC_RSMRST_L,		PIN(C, 5), GPIO_OUT_LOW)						/* Resume Reset SOC */
 GPIO(EC_CLR_CMOS,		PIN(A, 1), GPIO_OUT_LOW)						/* Clear SOC CMOS */
