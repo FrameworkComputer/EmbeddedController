@@ -65,6 +65,7 @@
 /* KeyBoard */
 #define CONFIG_KEYBOARD_REFRESH_ROW3
 #define CONFIG_KEYBOARD_KEYPAD
+#define CONFIG_KEYBOARD_STRICT_DEBOUNCE
 
 /* USB Type A Features */
 #define USB_PORT_COUNT 1
