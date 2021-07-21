@@ -67,16 +67,16 @@ static int pwm_get_cycle_time(enum pwm_channel ch)
 void pwm_enable(enum pwm_channel ch, int enabled)
 {
 	/* pwm channel mapping */
-	ch = pwm_channels[ch].channel;
+	int pwm_reg_index = pwm_channels[ch].channel;
 
 	/*
 	 * enabled : pin to PWM function.
 	 * disabled : pin to GPIO input function.
 	 */
 	if (enabled)
-		*pwm_ctrl_regs[ch].pwm_pin = 0x00;
+		*pwm_ctrl_regs[pwm_reg_index].pwm_pin = 0x00;
 	else
-		*pwm_ctrl_regs[ch].pwm_pin = 0x80 |
+		*pwm_ctrl_regs[pwm_reg_index].pwm_pin = 0x80 |
 			((pwm_channels[ch].flags & PWM_CONFIG_ACTIVE_LOW) ?
 			4 : 2);
 }
