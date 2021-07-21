@@ -1,0 +1,15 @@
+# Here you can place files of interest to be included in the commit message for
+# merge commits to firmware-volteer-13672.B-main
+chip/npcx/*npcx7*
+driver/accel_bma2x2.*
+driver/accelgyro_bmi260.*
+driver/als_tcs3400.*
+driver/bc12/piusb9201.*
+driver/charger/isl9241.*
+driver/ppc/sn5s330.*
+driver/ppc/syv682x.*
+driver/retimer/bb_retimer.*
+driver/retimer/kb800x.*
+driver/tcpm/ps8xxx.*
+driver/tcpm/rt1715.*
+driver/usb_mux/virtual.*
