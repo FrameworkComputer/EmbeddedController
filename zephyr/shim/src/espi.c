@@ -22,7 +22,6 @@
 #include "lpc.h"
 #include "port80.h"
 #include "power.h"
-#include "soc_espi.h"
 #include "task.h"
 #include "timer.h"
 #include "zephyr_espi_shim.h"
@@ -320,10 +319,10 @@ DECLARE_HOOK(HOOK_INIT, host_command_init, HOOK_PRIO_INIT_LPC);
 static void handle_acpi_write(uint32_t data)
 {
 	uint8_t value, result;
-	uint8_t is_cmd = (data >> NPCX_ACPI_TYPE_POS) & 0x01;
+	uint8_t is_cmd = is_acpi_command(data);
 	uint32_t status;
 
-	value = (data >> NPCX_ACPI_DATA_POS) & 0xff;
+	value = get_acpi_value(data);
 
 	/* Handle whatever this was. */
 	if (acpi_ap_to_ec(is_cmd, value, &result)) {
@@ -461,12 +460,12 @@ void lpc_aux_put_char(uint8_t chr, int send_irq)
 static void kbc_ibf_obe_handler(uint32_t data)
 {
 #ifdef HAS_TASK_KEYPROTO
-	uint8_t is_ibf = (data >> NPCX_8042_EVT_POS) & NPCX_8042_EVT_IBF;
+	uint8_t is_ibf = is_8042_ibf(data);
 	uint32_t status = I8042_AUX_DATA;
 
 	if (is_ibf) {
-		keyboard_host_write((data >> NPCX_8042_DATA_POS) & 0xFF,
-				    (data >> NPCX_8042_TYPE_POS) & 0xFF);
+		keyboard_host_write(get_8042_data(data),
+				    get_8042_type(data));
 	} else if (IS_ENABLED(CONFIG_8042_AUX)) {
 		espi_write_lpc_request(espi_dev, E8042_CLEAR_FLAG, &status);
 	}
