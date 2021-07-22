@@ -59,7 +59,7 @@ const struct temp_sensor_t temp_sensors[] = {
 		.idx = ADC_TEMP_SENSOR_1_DDR_SOC
 	},
 	[TEMP_SENSOR_2_SSD] = {
-		.name = "Charger",
+		.name = "SSD",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_2_SSD
@@ -71,13 +71,13 @@ const struct temp_sensor_t temp_sensors[] = {
 		.idx = ADC_TEMP_SENSOR_3_CHARGER
 	},
 	[TEMP_SENSOR_4_MEMORY] = {
-		.name = "Charger",
+		.name = "MEMORY",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_4_MEMORY
 	},
 	[TEMP_SENSOR_5_USBC] = {
-		.name = "Charger",
+		.name = "USBC",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_5_USBC
