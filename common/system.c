@@ -175,7 +175,7 @@ static uint32_t __attribute__((unused)) get_size(enum ec_image copy)
 	}
 }
 
-int system_is_locked(void)
+test_mockable int system_is_locked(void)
 {
 	static int is_locked = -1;
 

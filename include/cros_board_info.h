@@ -217,6 +217,15 @@ void cbi_invalidate_cache(void);
  */
 int cbi_get_cache_status(void);
 
+/**
+ * Latch the CBI EEPROM WP
+ *
+ * This function assumes that the EC has a pin to set the CBI EEPROM WP signal
+ * (GPIO_EC_CBI_WP).  Note that once the WP is set, the EC must be reset via
+ * EC_RST_ODL in order for the WP to become unset since the signal is latched.
+ */
+void cbi_latch_eeprom_wp(void);
+
 #ifdef TEST_BUILD
 /**
  * Write the locally cached CBI to EEPROM.

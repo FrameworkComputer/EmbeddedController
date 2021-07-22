@@ -12,6 +12,7 @@
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
+#include "cros_board_info.h"
 #include "dma.h"
 #include "eeprom.h"
 #include "flash.h"
@@ -168,6 +169,14 @@ test_mockable __keep int main(void)
 #ifdef CONFIG_EEPROM
 	eeprom_init();
 #endif
+
+	/*
+	 * If the EC has exclusive control over the CBI EEPROM WP signal, have
+	 * the EC set the WP if appropriate.  Note that once the WP is set, the
+	 * EC must be reset via EC_RST_ODL in order for the WP to become unset.
+	 */
+	if (IS_ENABLED(CONFIG_EEPROM_CBI_WP) && system_is_locked())
+		cbi_latch_eeprom_wp();
 
 	/*
 	 * Keyboard scan init/Button init can set recovery events to
