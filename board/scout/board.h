@@ -49,6 +49,26 @@
 #define CONFIG_VSTORE_SLOT_COUNT 1
 #define CONFIG_SHA256
 
+/* Sensor */
+#define CONFIG_ACCEL_INTERRUPTS
+#define CONFIG_CMD_ACCEL_INFO
+/* Enable sensor fifo, must also define the _SIZE and _THRES */
+#define CONFIG_ACCEL_FIFO
+/* FIFO size is in power of 2. */
+#define CONFIG_ACCEL_FIFO_SIZE 256
+/* Depends on how fast the AP boots and typical ODRs */
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
+
+/* TCS3400 ALS */
+#define CONFIG_ALS
+#define ALS_COUNT 1
+#define CONFIG_ALS_TCS3400
+#define CONFIG_ALS_TCS3400_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
+
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(CLEAR_ALS)
+
 /* EC Commands */
 #define CONFIG_CMD_BUTTON
 /* Include CLI command needed to support CCD testing. */
@@ -121,6 +141,7 @@
 #define I2C_PORT_INA		NPCX_I2C_PORT0_0
 #define I2C_PORT_PPC0		NPCX_I2C_PORT1_0
 #define I2C_PORT_SCALER		NPCX_I2C_PORT2_0
+#define I2C_PORT_SENSORS	NPCX_I2C_PORT3_0
 #define I2C_PORT_TCPC0		NPCX_I2C_PORT3_0
 #define I2C_PORT_POWER		NPCX_I2C_PORT5_0
 #define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
@@ -170,6 +191,11 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
+enum sensor_id {
+	CLEAR_ALS,
+	RGB_ALS,
+	SENSOR_COUNT,
+};
 
 /* Board specific handlers */
 void board_reset_pd_mcu(void);

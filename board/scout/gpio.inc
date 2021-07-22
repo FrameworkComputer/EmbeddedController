@@ -36,7 +36,8 @@ GPIO_INT(SLP_S3_L,             PIN(A, 5), GPIO_INT_BOTH, slp_s3_interrupt)
 GPIO_INT(PG_PP950_VCCIO_OD,    PIN(1, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_S0_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(IMVP8_VRRDY_OD,       PIN(1, 6), GPIO_INT_BOTH, power_signal_interrupt)
-
+/* ALS signals */
+GPIO_INT(EC_RGB_INT_L,         PIN(9, 7), GPIO_INT_FALLING | GPIO_SEL_1P8V, tcs3400_interrupt)
 /*
  * Directly connected recovery button (not available on some boards).
  */
@@ -70,9 +71,6 @@ GPIO(BOOT_IND_EC,              PIN(E, 2), GPIO_INPUT)
 
 /* TSUM scaler signals */
 GPIO(TSUM_WAKEUP_EC,           PIN(B, 1), GPIO_INPUT)
-
-/* ALS signals */
-GPIO(EC_RGB_INT_L,             PIN(9, 7), GPIO_INPUT)
 
 /* Power control outputs */
 GPIO(EN_PP5000_A,              PIN(A, 4), GPIO_OUT_LOW)
