@@ -51,9 +51,9 @@ static int32_t base_5v_power;
  * Units are milliwatts (5v x ma current)
  */
 #define PWR_BASE_LOAD	(5*1335)
-#define PWR_FRONT_HIGH	(5*1603)
-#define PWR_FRONT_LOW	(5*963)
-#define PWR_REAR	(5*1075)
+#define PWR_FRONT_HIGH	(5*1500)
+#define PWR_FRONT_LOW	(5*900)
+#define PWR_REAR	(5*1500)
 #define PWR_HDMI	(5*562)
 #define PWR_C_HIGH	(5*3740)
 #define PWR_C_LOW	(5*2090)
@@ -70,11 +70,11 @@ static void update_5v_usage(void)
 	 * Recalculate the 5V load, assuming no throttling.
 	 */
 	base_5v_power = PWR_BASE_LOAD;
-	if (!gpio_get_level(GPIO_USB_A0_OC_ODL)) {
+	if (!gpio_get_level(GPIO_USB_A2_OC_ODL)) {
 		front_ports++;
 		base_5v_power += PWR_FRONT_LOW;
 	}
-	if (!gpio_get_level(GPIO_USB_A1_OC_ODL)) {
+	if (!gpio_get_level(GPIO_USB_A3_OC_ODL)) {
 		front_ports++;
 		base_5v_power += PWR_FRONT_LOW;
 	}
@@ -83,11 +83,7 @@ static void update_5v_usage(void)
 	 */
 	if (front_ports > 0)
 		base_5v_power += PWR_FRONT_HIGH - PWR_FRONT_LOW;
-	if (!gpio_get_level(GPIO_USB_A2_OC_ODL))
-		base_5v_power += PWR_REAR;
-	if (!gpio_get_level(GPIO_USB_A3_OC_ODL))
-		base_5v_power += PWR_REAR;
-	if (ec_config_get_usb4_present() && !gpio_get_level(GPIO_USB_A4_OC_ODL))
+	if (!gpio_get_level(GPIO_USB_A1_OC_ODL))
 		base_5v_power += PWR_REAR;
 	if (!gpio_get_level(GPIO_HDMI_CONN0_OC_ODL))
 		base_5v_power += PWR_HDMI;
@@ -247,19 +243,6 @@ const static struct ec_thermal_config thermal_a = {
 	.temp_fan_max = C_TO_K(84),
 };
 
-const static struct ec_thermal_config thermal_b = {
-	.temp_host = {
-		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
-		[EC_TEMP_THRESH_HALT] = 0,
-	},
-};
-
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_CORE] = thermal_a,
 };
@@ -352,49 +335,12 @@ int extpower_is_present(void)
 
 int board_is_c10_gate_enabled(void)
 {
-	/*
-	 * Puff proto drives EN_PP5000_HDMI from EN_S0_RAILS so we cannot gate
-	 * core rails while in S0 because HDMI should remain powered.
-	 * EN_PP5000_HDMI is a separate EC output on all other boards.
-	 */
-	return board_version != 0;
+	return 0;
 }
 
 void board_enable_s0_rails(int enable)
 {
-	/* This output isn't connected on protos; safe to set anyway. */
-	gpio_set_level(GPIO_EN_PP5000_HDMI, enable);
 }
-
-int ec_config_get_usb4_present(void)
-{
-	return !(fw_config & EC_CFG_NO_USB4_MASK);
-}
-
-unsigned int ec_config_get_thermal_solution(void)
-{
-	return (fw_config & EC_CFG_THERMAL_MASK) >> EC_CFG_THERMAL_L;
-}
-
-static void setup_thermal(void)
-{
-	unsigned int table = ec_config_get_thermal_solution();
-	/* Configure Fan */
-	switch (table) {
-	/* Default and table0 use single fan */
-	case 0:
-	default:
-		thermal_params[TEMP_SENSOR_CORE] = thermal_a;
-		break;
-	/* Table1 is fanless */
-	case 1:
-		fan_set_count(0);
-		thermal_params[TEMP_SENSOR_CORE] = thermal_b;
-		break;
-	}
-}
-/* fan_set_count should be called before  HOOK_INIT/HOOK_PRIO_DEFAULT */
-DECLARE_HOOK(HOOK_INIT, setup_thermal, HOOK_PRIO_DEFAULT - 1);
 
 /*
  * Power monitoring and management.
@@ -529,7 +475,7 @@ static void power_monitor(void)
 	if (diff & THROT_TYPE_A) {
 		int typea_bc = (new_state & THROT_TYPE_A) ? 1 : 0;
 
-		gpio_set_level(GPIO_USB_A_LOW_PWR_OD, typea_bc);
+		gpio_set_level(GPIO_USB_A3_LOW_PWR_OD, typea_bc);
 	}
 	hook_call_deferred(&power_monitor_data, delay);
 }

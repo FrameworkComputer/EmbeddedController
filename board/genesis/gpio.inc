@@ -50,12 +50,9 @@ GPIO(BJ_ADP_PRESENT_L,     PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP)
 /* Port power control interrupts */
 GPIO_INT(HDMI_CONN0_OC_ODL,    PIN(0, 7), GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(HDMI_CONN1_OC_ODL,    PIN(0, 6), GPIO_INT_BOTH, port_ocp_interrupt)
-GPIO_INT(USB_A0_OC_ODL,        PIN(E, 4), GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A1_OC_ODL,        PIN(A, 2), GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A2_OC_ODL,        PIN(F, 5), GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A3_OC_ODL,        PIN(0, 3), GPIO_INT_BOTH, port_ocp_interrupt)
-/* May be reconfigured as input */
-GPIO_INT(USB_A4_OC_ODL,        PIN(B, 0), GPIO_OUT_LOW | GPIO_INT_BOTH, port_ocp_interrupt)
 
 /* PCH/CPU signals */
 GPIO(EC_PCH_PWROK,             PIN(0, 5), GPIO_OUT_LOW)
@@ -84,22 +81,29 @@ GPIO(EN_PPVAR_BJ_ADP_L,        PIN(0, 4), GPIO_OUT_LOW)
 /* USB type A */
 GPIO(EN_PP5000_USB_VBUS,       PIN(8, 3), GPIO_OUT_LOW)
 GPIO(USB_A_LOW_PWR_OD,         PIN(9, 4), GPIO_ODR_LOW)
-GPIO(USB_A2_STATUS_L,          PIN(6, 1), GPIO_INPUT)
-GPIO(USB_A3_STATUS_L,          PIN(C, 7), GPIO_INPUT)
+GPIO(USB_A3_LOW_PWR_OD,        PIN(5, 0), GPIO_ODR_LOW)
+GPIO(USB_A1_STATUS_L,          PIN(6, 1), GPIO_INPUT)
+GPIO(USB_A2_STATUS_L,          PIN(C, 7), GPIO_INPUT)
+GPIO(USB_A3_STATUS_L,          PIN(D, 2), GPIO_INPUT)
 
 /* USB type C */
 GPIO(USB_C0_TCPC_RST,          PIN(9, 7), GPIO_OUT_LOW)
 GPIO(USB_C0_POL_L,             PIN(0, 0), GPIO_INPUT | GPIO_SEL_1P8V) /* USB-C Polarity */
+
+/* TPU */
+GPIO(PP3300_TPU_EN,            PIN(E, 4), GPIO_OUT_HIGH)
+
+/* PSE controller */
+GPIO(EC_PSE_PWM_INT,           PIN(B, 0), GPIO_INPUT)		/* PSE controller interrupt */
+GPIO(EC_RST_LTC4291_L,         PIN(9, 6), GPIO_OUT_HIGH)	/* PSE controller reset */
 
 /* Misc. */
 GPIO(M2_SSD_PLN,               PIN(A, 0), GPIO_INPUT)
 GPIO(EC_ENTERING_RW,           PIN(E, 3), GPIO_OUT_LOW)
 GPIO(CCD_MODE_ODL,             PIN(E, 5), GPIO_ODR_HIGH)
 GPIO(PACKET_MODE_EN,           PIN(7, 5), GPIO_OUT_LOW)
-GPIO(EC_RST_LTC4291_L,         PIN(9, 6), GPIO_OUT_HIGH)        /* PSE controller reset */
 
 /* HDMI/CEC */
-GPIO(EN_PP5000_HDMI,           PIN(5, 0), GPIO_OUT_LOW)
 GPIO(HDMI_CONN0_CEC_OUT,       PIN(B, 1), GPIO_ODR_HIGH)
 GPIO(HDMI_CONN0_CEC_IN,        PIN(4, 0), GPIO_INPUT)
 GPIO(HDMI_CONN1_CEC_OUT,       PIN(9, 5), GPIO_ODR_HIGH)
@@ -161,7 +165,6 @@ UNUSED(PIN(3, 2))						/* E5  NC */
 UNUSED(PIN(D, 6))						/* F6  NC */
 UNUSED(PIN(3, 5))						/* F5  NC */
 UNUSED(PIN(5, 6))						/* M2  NC */
-UNUSED(PIN(D, 2))						/* C11 NC */
 UNUSED(PIN(8, 6))						/* J8  NC */
 UNUSED(PIN(9, 3))						/* M11 NC */
 UNUSED(PIN(7, 2))						/* H6  NC */
