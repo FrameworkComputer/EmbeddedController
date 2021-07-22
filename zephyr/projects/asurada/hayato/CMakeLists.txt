@@ -18,6 +18,7 @@ set(PLATFORM_EC_BOARD "${PLATFORM_EC}/board/hayato" CACHE PATH
 zephyr_library_sources(
   "${PLATFORM_EC_BASEBOARD}/board_chipset.c"
   "${PLATFORM_EC_BASEBOARD}/board_id.c"
+  "${PLATFORM_EC_BASEBOARD}/regulator.c"
   "${PLATFORM_EC_BASEBOARD}/usbc_config.c"
   "${PLATFORM_EC_BASEBOARD}/usb_pd_policy.c")
 

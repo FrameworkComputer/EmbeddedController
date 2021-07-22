@@ -4,7 +4,7 @@
  */
 
 #include "common.h"
-#include "driver/bc12/mt6360.h"
+#include "bc12/mt6360_public.h"
 
 /* SD Card */
 int board_regulator_get_info(uint32_t index, char *name,
