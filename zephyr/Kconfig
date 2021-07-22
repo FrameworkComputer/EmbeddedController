@@ -395,6 +395,18 @@ config PLATFORM_EC_I2C
 	  should make shimming other platform/ec modules which rely on i2c
 	  communication "just work" without requiring any further code changes.
 
+config PLATFORM_EC_SMBUS_PEC
+	bool "Packet error checking support for SMBus"
+	help
+	  If enabled, adds error checking support for i2c_readN, i2c_writeN,
+	  i2c_read_string and i2c_write_block. Where
+	  - write operation appends an error checking byte at end of transfer, and
+	  - read operatoin verifies the correctness of error checking byte from the
+	  slave.
+	  Set I2C_FLAG on addr_flags parameter to use this feature.
+
+	  This option also enables error checking function on smart batteries.
+
 config PLATFORM_EC_LID_SWITCH
 	bool "Lid switch"
 	help
