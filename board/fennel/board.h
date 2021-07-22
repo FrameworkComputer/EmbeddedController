@@ -57,6 +57,9 @@
 #define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+#define CONFIG_ACCELGYRO_ICM42607	/* Base accel second source*/
+#define CONFIG_ACCELGYRO_ICM42607_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(LID_ACCEL)
 #define CONFIG_ALS
 #define CONFIG_CMD_ACCEL_INFO
 
@@ -143,6 +146,7 @@ void emmc_cmd_interrupt(enum gpio_signal signal);
 void bc12_interrupt(enum gpio_signal signal);
 void board_reset_pd_mcu(void);
 int board_get_version(void);
+void motion_interrupt(enum gpio_signal signal);
 
 /* returns the i2c port number of charger/battery */
 int board_get_charger_i2c(void);
