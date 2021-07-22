@@ -54,6 +54,14 @@
 #define CONFIG_DETACHABLE_BASE
 #define CONFIG_BASE_ATTACHED_SWITCH
 
+/*
+ * Oled panel need to setup both vcc and backlight, AP will ctrl them.
+ * BL_DISABLE does not need to be controlled by ec.
+ */
+#ifdef CONFIG_BACKLIGHT_LID
+#undef CONFIG_BACKLIGHT_LID
+#endif
+
 /* GPIO alias */
 #define GPIO_AC_PRESENT GPIO_CHG_ACOK_OD
 #define GPIO_WP_L GPIO_EC_FLASH_WP_ODL
