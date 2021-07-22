@@ -71,12 +71,30 @@ static int rt1718s_is_sourcing_vbus(int port)
 
 static int rt1718s_vbus_source_enable(int port, int enable)
 {
-	if (enable)
-		atomic_or(&flags[port], RT1718S_FLAGS_SOURCE_ENABLED);
-	else
-		atomic_clear_bits(&flags[port], RT1718S_FLAGS_SOURCE_ENABLED);
+	atomic_t prev_flag;
 
-	return tcpm_set_src_ctrl(port, enable);
+	if (enable)
+		prev_flag = atomic_or(&flags[port],
+				RT1718S_FLAGS_SOURCE_ENABLED);
+	else
+		prev_flag = atomic_clear_bits(&flags[port],
+				RT1718S_FLAGS_SOURCE_ENABLED);
+
+	/* Return if status doesn't change */
+	if (!!(prev_flag & RT1718S_FLAGS_SOURCE_ENABLED) == !!enable)
+		return EC_SUCCESS;
+
+	RETURN_ERROR(tcpm_set_src_ctrl(port, enable));
+
+#if defined(CONFIG_USB_CHARGER) && defined(CONFIG_USB_PD_VBUS_DETECT_PPC)
+	/*
+	 * Since the VBUS state could be changing here, need to wake the
+	 * USB_CHG_N task so that BC 1.2 detection will be triggered.
+	 */
+	usb_charger_vbus_change(port, enable);
+#endif
+
+	return EC_SUCCESS;
 }
 
 static int rt1718s_vbus_sink_enable(int port, int enable)
@@ -129,10 +147,25 @@ static int rt1718s_dump(int port)
 #ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
 static int rt1718s_is_vbus_present(int port)
 {
-	int status;
-	int rv = read_reg(port, TCPC_REG_POWER_STATUS, &status);
+	__maybe_unused static atomic_t vbus_prev[CONFIG_USB_PD_PORT_MAX_COUNT];
+	int status, vbus;
 
-	return (rv == 0) && (status & TCPC_REG_POWER_STATUS_VBUS_PRES);
+	if (read_reg(port, TCPC_REG_POWER_STATUS, &status))
+		return 0;
+
+	vbus = !!(status & TCPC_REG_POWER_STATUS_VBUS_PRES);
+
+#ifdef CONFIG_USB_CHARGER
+	if (!!(vbus_prev[port] != vbus))
+		usb_charger_vbus_change(port, vbus);
+
+	if (vbus)
+		atomic_or(&vbus_prev[port], 1);
+	else
+		atomic_clear(&vbus_prev[port]);
+#endif
+
+	return vbus;
 }
 #endif
 

@@ -273,19 +273,20 @@ static void rt1718s_bc12_usb_charger_task(const int port)
 	while (1) {
 		uint32_t evt = task_wait_event(-1);
 
-		if (evt & USB_CHG_EVENT_DR_UFP)
-			rt1718s_enable_bc12_sink(port, true);
-
-		if ((evt & USB_CHG_EVENT_DR_DFP) ||
-		    (evt & USB_CHG_EVENT_CC_OPEN)) {
-			rt1718s_update_charge_manager(
-					port, CHARGE_SUPPLIER_NONE);
+		if (evt & USB_CHG_EVENT_VBUS) {
+			if (pd_snk_is_vbus_provided(port))
+				rt1718s_enable_bc12_sink(port, true);
+			else
+				rt1718s_update_charge_manager(
+						port, CHARGE_SUPPLIER_NONE);
 		}
 
 		/* detection done, update charge_manager and stop detection */
 		if (evt & USB_CHG_EVENT_BC12) {
+			int type = rt1718s_get_bc12_type(port);
+
 			rt1718s_update_charge_manager(
-					port, rt1718s_get_bc12_type(port));
+					port, type);
 			rt1718s_enable_bc12_sink(port, false);
 		}
 	}
