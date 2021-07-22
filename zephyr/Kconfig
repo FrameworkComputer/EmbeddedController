@@ -376,6 +376,13 @@ config PLATFORM_EC_HOSTCMD_GET_UPTIME_INFO
 	  the EC has been powered up, the number of AP resets, an optional log
 	  of AP-reset events and some flags.
 
+config PLATFORM_EC_HOSTCMD_REGULATOR
+	bool "Host command of voltage regulator control"
+	help
+	  Enable host commands (EC_CMD_REGULATOR_) for controlling voltage
+	  regulator. The board should also implement board functions defined in
+	  include/regulator.h.
+
 config PLATFORM_EC_I2C
 	bool "I2C shim"
 	default n if ARCH_POSIX
