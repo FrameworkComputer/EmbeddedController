@@ -22,6 +22,19 @@ int main(int argc, char *argv[])
 
 	BUILD_ASSERT(sizeof(pdata) > sizeof(struct panic_data)*2);
 
+	/*
+	 * Provide a minimal help message.
+	 */
+	if (argc > 1) {
+		printf("Usage: cat <PANIC_BLOB_PATH> | ec_parse_panicinfo\n");
+		printf("Print the plain text panic info from a raw EC panic "
+		       "data blob.\n\n");
+		printf("Example:\n");
+		printf("ec_parse_panicinfo "
+		       "</sys/kernel/debug/cros_ec/panicinfo\n");
+		return 1;
+	}
+
 	while (1) {
 		read = fread(&pdata[size], 1, sizeof(pdata)-size, stdin);
 		if (read < 0) {
