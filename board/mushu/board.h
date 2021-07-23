@@ -11,8 +11,11 @@
 /* Baseboard features */
 #include "baseboard.h"
 
-/* Remove PRL state names to free flash space */
+/* Reduce flash usage */
 #define CONFIG_USB_PD_DEBUG_LEVEL 2
+#undef  CONFIG_CMD_ACCELSPOOF
+#undef  CONFIG_CMD_CHARGER_DUMP
+#undef  CONFIG_CMD_PPC_DUMP
 
 #define CONFIG_POWER_BUTTON
 #define CONFIG_KEYBOARD_PROTOCOL_8042
