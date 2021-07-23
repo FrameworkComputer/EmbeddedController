@@ -57,6 +57,11 @@ int board_get_temp(int idx, int *temp_k)
 		if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 			return EC_ERROR_NOT_POWERED;
 
+		/* adc power not ready when transition to S5 */
+		if (chipset_in_or_transitioning_to_state(
+			CHIPSET_STATE_SOFT_OFF))
+			return EC_ERROR_NOT_POWERED;
+
 		channel = ADC_TEMP_SENSOR_SOC;
 		break;
 	default:
