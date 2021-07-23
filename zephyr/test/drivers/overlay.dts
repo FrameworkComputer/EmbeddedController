@@ -9,6 +9,7 @@
 	aliases {
 		bmi260-int = &ms_bmi260_accel;
 		bmi160-int = &ms_bmi160_accel;
+		tcs3400-int = &tcs3400_clear;
 	};
 	named-gpios {
 		compatible = "named-gpios";
@@ -200,6 +201,70 @@
 			compatible = "cros-ec,drvdata-bmi160";
 			status = "okay";
 		};
+
+		tcs_clear_data: tcs3400-clear-drv-data {
+			compatible = "cros-ec,drvdata-tcs3400-clear";
+			status = "okay";
+
+			als-drv-data {
+				compatible = "cros-ec,accelgyro-als-drv-data";
+				als-cal {
+					scale = <1>;
+					uscale = <0>;
+					offset = <0>;
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = <1>;
+					};
+				};
+			};
+		};
+
+		tcs_rgb_data: tcs3400-rgb-drv-data {
+			compatible = "cros-ec,drvdata-tcs3400-rgb";
+			status = "okay";
+
+			/* node for rgb_calibration_t defined in accelgyro.h */
+			rgb_calibration {
+				compatible =
+					"cros-ec,accelgyro-rgb-calibration";
+
+				irt = <1>;
+
+				rgb-cal-x {
+					offset = <0>;
+					coeff = <0 1 0 0>;
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = <1>;
+					};
+				};
+				rgb-cal-y {
+					offset = <0>;
+					coeff = <0 0 1 0>;
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = <1>;
+					};
+				};
+				rgb-cal-z {
+					offset = <0>;
+					coeff = <0 0 0 1>;
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = <1>;
+					};
+				};
+			};
+		};
 	};
 
 	/*
@@ -259,6 +324,37 @@
 			default-range = <1000>; /* dps */
 			i2c-spi-addr-flags = "BMI160_ADDR0_FLAGS";
 		};
+
+		tcs3400_clear: tcs3400-clear {
+			compatible = "cros-ec,tcs3400-clear";
+			status = "okay";
+
+			label = "Clear Light";
+			location = "MOTIONSENSE_LOC_BASE";
+			port = <&i2c_sensor>;
+			default-range = <0x10000>;
+			drv-data = <&tcs_clear_data>;
+			i2c-spi-addr-flags = "TCS3400_I2C_ADDR_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					/* Run ALS sensor in S0 */
+					label = "SENSOR_CONFIG_EC_S0";
+					odr = <1000>;
+				};
+			};
+		};
+
+		tcs3400_rgb: tcs3400-rgb {
+			compatible = "cros-ec,tcs3400-rgb";
+			status = "okay";
+
+			label = "RGB Light";
+			location = "MOTIONSENSE_LOC_BASE";
+			default-range = <0x10000>; /* scale = 1x, uscale = 0 */
+			drv-data = <&tcs_rgb_data>;
+		};
 	};
 
 	/*
@@ -283,6 +379,15 @@
 			error-on-wo-read;
 			error-on-reserved-bit-write;
 			simulate-command-exec-time;
+		};
+
+		tcs_emul: tcs@39 {
+			compatible = "zephyr,tcs3400";
+			reg = <0x39>;
+			label = "TCS_EMUL";
+			error-on-ro-write;
+			error-on-reserved-bit-write;
+			error-on-msb-first-access;
 		};
 	};
 };
