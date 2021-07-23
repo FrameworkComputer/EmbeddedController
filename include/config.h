@@ -1272,6 +1272,7 @@
 						 * discrete EC control
 						 */
 #undef CONFIG_CHIPSET_ECDRIVEN		/* Mock power module */
+#undef CONFIG_CHIPSET_FALCONLITE	/* Falcon-lite*/
 #undef CONFIG_CHIPSET_GEMINILAKE	/* Intel Geminilake (x86) */
 #undef CONFIG_CHIPSET_ICELAKE		/* Intel Icelake (x86) */
 #undef CONFIG_CHIPSET_JASPERLAKE	/* Intel Jasperlake (x86) */
