@@ -4,6 +4,6 @@
 
 board: it8xxx2_evb
 supported-zephyr-versions:
-  - v2.5
+  - v2.6
 toolchain: coreboot-sdk
 output-type: raw
