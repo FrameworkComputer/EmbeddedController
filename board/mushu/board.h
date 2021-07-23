@@ -11,6 +11,9 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+/* Remove PRL state names to free flash space */
+#define CONFIG_USB_PD_DEBUG_LEVEL 2
+
 #define CONFIG_POWER_BUTTON
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_LED_COMMON
