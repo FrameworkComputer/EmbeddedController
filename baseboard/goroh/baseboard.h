@@ -22,7 +22,7 @@
  * allow the second reset to be treated as a power-on.
  */
 #define CONFIG_BOARD_RESET_AFTER_POWER_ON
-/* #define CONFIG_CHIPSET_MT8192 */
+#define CONFIG_CHIPSET_FALCONLITE
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_HIBERNATE_WAKE_PINS_DYNAMIC
 
@@ -176,14 +176,7 @@
 
 #include "gpio_signal.h"
 #include "registers.h"
-#include "power/mt8192.h"
-
-enum board_sub_board {
-	SUB_BOARD_NONE = -1,
-	SUB_BOARD_TYPEC,
-	SUB_BOARD_HDMI,
-	SUB_BOARD_COUNT,
-};
+#include "power/falconlite.h"
 
 int board_get_version(void);
 void board_reset_pd_mcu(void);

@@ -67,12 +67,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-/* power signal list.  Must match order of enum power_signal. */
-const struct power_signal_info power_signal_list[POWER_SIGNAL_COUNT] = {
-	/*TODO(yllin): implement ps */
-};
-BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
 /* BC12 skeleton to make build happy. */
 struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = {
 };
