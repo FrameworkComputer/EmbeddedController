@@ -1729,22 +1729,28 @@ static void sustain_battery_soc(void)
 
 	soc = charge_get_display_charge() / 10;
 
+	/*
+	 * When lower < upper, the sustainer discharges using DISCHARGE. When
+	 * lower == upper, the sustainer discharges using IDLE. The following
+	 * switch statement handle both cases but in reality either DISCHARGE
+	 * or IDLE is used but not both.
+	 */
 	switch (mode) {
 	case CHARGE_CONTROL_NORMAL:
 		/* Going up */
 		if (sustain_soc.upper < soc)
-			mode = CHARGE_CONTROL_DISCHARGE;
+			mode = sustain_soc.upper == sustain_soc.lower ?
+				CHARGE_CONTROL_IDLE : CHARGE_CONTROL_DISCHARGE;
 		break;
 	case CHARGE_CONTROL_IDLE:
-		/* discharging naturally */
+		/* Discharging naturally */
 		if (soc < sustain_soc.lower)
-			/* TODO: Charge slowly */
 			mode = CHARGE_CONTROL_NORMAL;
 		break;
 	case CHARGE_CONTROL_DISCHARGE:
-		/* discharging rapidly (discharge_on_ac) */
-		if (soc < sustain_soc.upper)
-			mode = CHARGE_CONTROL_IDLE;
+		/* Discharging actively. */
+		if (soc < sustain_soc.lower)
+			mode = CHARGE_CONTROL_NORMAL;
 		break;
 	default:
 		return;

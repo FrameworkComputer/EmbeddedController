@@ -799,7 +799,7 @@ static int test_battery_sustainer(void)
 	ccprintf("Test lower < SoC < upper.\n");
 	display_soc = 799;
 	wait_charging_state();
-	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_IDLE);
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_DISCHARGE);
 	ccprintf("Pass.\n");
 
 	ccprintf("Test SoC < lower < upper.\n");
@@ -856,6 +856,71 @@ static int test_battery_sustainer(void)
 	return EC_SUCCESS;
 }
 
+static int test_battery_sustainer_discharge_idle(void)
+{
+	struct ec_params_charge_control p;
+	int rv;
+
+	test_setup(1);
+
+	/* Enable sustainer */
+	p.cmd = EC_CHARGE_CONTROL_CMD_SET;
+	p.mode = CHARGE_CONTROL_NORMAL;
+	p.sustain_soc.lower = 80;
+	p.sustain_soc.upper = 80;
+	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2,
+				    &p, sizeof(p), NULL, 0);
+	TEST_ASSERT(rv == EC_RES_SUCCESS);
+
+	/* Check mode transition as the SoC changes. */
+
+	/* SoC < lower (= upper) */
+	display_soc = 780;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL);
+
+	/* (lower =) upper < SoC */
+	display_soc = 810;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_IDLE);
+
+	/* Unplug AC. Sustainer gets deactivated. */
+	gpio_set_level(GPIO_AC_PRESENT, 0);
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL);
+
+	/* Replug AC. Sustainer gets re-activated. */
+	gpio_set_level(GPIO_AC_PRESENT, 1);
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_IDLE);
+
+	/* lower = SoC = upper */
+	display_soc = 800;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_IDLE);
+
+	/* SoC < lower (= upper) */
+	display_soc = 789;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL);
+
+	/* Disable sustainer */
+	p.cmd = EC_CHARGE_CONTROL_CMD_SET;
+	p.mode = CHARGE_CONTROL_NORMAL;
+	p.sustain_soc.lower = -1;
+	p.sustain_soc.upper = -1;
+	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2,
+				    &p, sizeof(p), NULL, 0);
+	TEST_ASSERT(rv == EC_RES_SUCCESS);
+
+	/* This time, mode will stay in NORMAL even when upper < SoC. */
+	display_soc = 810;
+	wait_charging_state();
+	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL);
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, char **argv)
 {
 	RUN_TEST(test_charge_state);
@@ -868,6 +933,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_hc_current_limit);
 	RUN_TEST(test_low_battery_hostevents);
 	RUN_TEST(test_battery_sustainer);
+	RUN_TEST(test_battery_sustainer_discharge_idle);
 
 	test_print_result();
 }
