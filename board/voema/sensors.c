@@ -16,6 +16,7 @@
 #include "keyboard_scan.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "system.h"
 #include "task.h"
 #include "tablet_mode.h"
 #include "util.h"
@@ -308,6 +309,14 @@ DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_DEFAULT);
 void motion_interrupt(enum gpio_signal signal)
 {
 	icm426xx_interrupt(signal);
+}
+
+int board_accel_force_mode_mask(void)
+{
+	if (system_get_board_version() <= 2)
+		return (BIT(LID_ACCEL) | BIT(CLEAR_ALS) | BIT(BASE_ACCEL));
+	else
+		return (BIT(LID_ACCEL) | BIT(CLEAR_ALS));
 }
 #endif
 
