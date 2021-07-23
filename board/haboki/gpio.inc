@@ -101,6 +101,7 @@ GPIO(EC_ENTERING_RW,		PIN(C, 7), GPIO_OUT_LOW)
 GPIO(EC_BATTERY_PRES_ODL,	PIN(I, 4), GPIO_INPUT)
 GPIO(EN_KB_BL,			PIN(J, 3), GPIO_OUT_LOW) /* Currently unused */
 GPIO(EN_PP5000_PEN,		PIN(B, 5), GPIO_OUT_LOW)
+UNIMPLEMENTED(EC_CBI_WP)
 
 /* NC pins, enable internal pull-down to avoid floating state. */
 GPIO(GPIOC0_NC, PIN(C, 0), GPIO_INPUT | GPIO_PULL_DOWN)

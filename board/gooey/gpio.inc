@@ -99,6 +99,7 @@ GPIO_INT(PEN_DET_ODL,		PIN(J, 1), GPIO_INT_BOTH | GPIO_PULL_UP, pen_detect_inter
 GPIO(EN_PP5000_PEN,	    	PIN(B, 5), GPIO_OUT_LOW)
 GPIO(PEN_DET_PCH,	    	PIN(F, 1), GPIO_OUT_LOW)
 GPIO(EN_KB_BL,			PIN(J, 3), GPIO_OUT_LOW) /* Currently unused */
+UNIMPLEMENTED(EC_CBI_WP)
 
 /* NC pins, enable internal pull-down to avoid floating state. */
 GPIO(GPIOC0_NC, PIN(C, 0), GPIO_INPUT | GPIO_PULL_DOWN)
