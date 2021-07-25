@@ -10,7 +10,7 @@ CHIP_FAMILY:=stm32h7
 CHIP_VARIANT:=stm32h7x3
 
 board-rw=ro_workarounds.o board_rw.o
-board-y=board.o
+board-ro=board_ro.o
 # If we're mocking the sensor detection for testing (so we can test
 # sensor/transport permutations in the unit tests), don't build the real sensor
 # detection.
