@@ -69,7 +69,7 @@ GPIO(SYS_RST_ODL,                    PIN(C, 5), GPIO_ODR_HIGH)
 GPIO(USB_C0_RT_RST_ODL,              PIN(A, 7), GPIO_ODR_LOW)
 GPIO(PDEV_STP_N,                     PIN(9, 6), GPIO_ODR_HIGH)
 GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
-GPIO(USB_C1_RT_RST_ODL,              PIN(3, 2), GPIO_ODR_LOW)
+GPIO(USB_C1_RT_RST_ODL,              PIN(5, 0), GPIO_ODR_LOW)
 GPIO(PAD_FW_RW_EN_N,                 PIN(B, 5), GPIO_ODR_LOW)
 GPIO(TP4_FW_RW_EN_N,                 PIN(B, 4), GPIO_ODR_LOW)
 GPIO(USB_C0_FRS_EN,                  PIN(3, 5), GPIO_OUT_LOW)
@@ -125,7 +125,7 @@ ALTERNATE(PIN_MASK(6, 0x0C), 0, MODULE_PS2, 0)               /* PS2_CLK1/GPIO62,
 /* Unused Pins */
 UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
 UNUSED(PIN(8, 1))       /* GPIO81/PECI_DATA */
-UNUSED(PIN(5, 0))       /* GPIO50 */
+UNUSED(PIN(3, 2))       /* GPO32/TRIS# */
 /* Pre-configured PSL balls:  J8  K6 */
 
 
