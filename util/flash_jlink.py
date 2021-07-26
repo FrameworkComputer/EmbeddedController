@@ -99,7 +99,7 @@ def main(argv: list):
         help='JLinkExe path (default: ' + default_jlink + ')',
         default=default_jlink)
 
-    default_ip = '127.0.0.1:2551'
+    default_ip = '127.0.0.1:19020'
     parser.add_argument(
         '--ip', '-n',
         help='IP address of J-Link or machine running JLinkRemoteServerCLExe '
