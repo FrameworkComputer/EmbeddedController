@@ -55,6 +55,8 @@ test_static int test_rtc_alarm(void)
 
 void run_test(int argc, char **argv)
 {
+	test_reset();
+
 	RUN_TEST(test_rtc_alarm);
 
 	test_print_result();
