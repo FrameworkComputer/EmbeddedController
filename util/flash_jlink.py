@@ -17,9 +17,11 @@ import argparse
 import logging
 import os
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
+import time
 
 # Commands are documented here: https://wiki.segger.com/J-Link_Commander
 JLINK_COMMANDS = '''
@@ -57,6 +59,32 @@ BOARD_CONFIGS = {
 }
 
 
+def is_tcp_port_open(host: str, tcp_port: int) -> bool:
+    """Checks if the TCP host port is open."""
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(2)  # 2 Second Timeout
+    try:
+        sock.connect((host, tcp_port))
+        sock.shutdown(socket.SHUT_RDWR)
+    except ConnectionRefusedError:
+        return False
+    except socket.timeout:
+        return False
+    finally:
+        sock.close()
+    # Other errors are propagated as odd exceptions.
+
+    # We shutdown and closed the connection, but the server may need a second
+    # to start listening again. If the following error is seen, this timeout
+    # should be increased. 300ms seems to be the minimum.
+    #
+    # Connecting to J-Link via IP...FAILED: Can not connect to J-Link via \
+    #   TCP/IP (127.0.0.1, port 19020)
+    time.sleep(0.5)
+    return True
+
+
 def create_jlink_command_file(firmware_file, config):
     tmp = tempfile.NamedTemporaryFile()
     tmp.write(JLINK_COMMANDS.format(FIRMWARE=firmware_file,
@@ -72,6 +100,22 @@ def flash(jlink_exe, ip, device, interface, cmd_file):
     ]
 
     if ip:
+        ip_components = ip.split(':')
+        if len(ip_components) != 2:
+            logging.error(f'Given ip arg "{ip}" is malformed.')
+            return 1
+        ip_host = ip_components[0]
+        try:
+            ip_port = int(ip_components[1])
+        except ValueError:
+            logging.error(
+                f'Given ip arg port "{ip_components[1]}" is malformed.')
+            return 1
+        if not is_tcp_port_open(ip_host, ip_port):
+            logging.error(
+                f'JLink server doesn\'t seem to be listening on {ip}.')
+            logging.error('Ensure that JLinkRemoteServerCLExe is running.')
+            return 1
         cmd.extend(['-ip', ip])
 
     cmd.extend([
