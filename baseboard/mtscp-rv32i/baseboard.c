@@ -16,7 +16,11 @@ struct mpu_entry mpu_entries[NR_MPU_ENTRIES] = {
 	/* SRAM (for IPI shared buffer) */
 	{SCP_SRAM_END, SCP_FW_END, MPU_ATTR_W | MPU_ATTR_R},
 	/* For AP domain */
+#ifdef CHIP_VARIANT_MT8195
+	{0x60000000, 0x70000000, MPU_ATTR_W | MPU_ATTR_R | MPU_ATTR_P},
+#else
 	{0x60000000, 0x70000000, MPU_ATTR_W | MPU_ATTR_R},
+#endif
 	/* For SCP sys */
 	{0x70000000, 0x80000000, MPU_ATTR_W | MPU_ATTR_R},
 	{0x10000000, 0x11400000, MPU_ATTR_W | MPU_ATTR_R},
