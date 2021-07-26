@@ -305,4 +305,33 @@
 			&gpio_rtc_ec_wake_odl
 		>;
 	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpio5 2 0>,
+			<&gpio5 4 0>,
+			<&gpio7 6 0>,
+			<&gpioc 5 0>,
+			<&gpiod 1 0>,
+			<&gpiod 0 0>,
+			<&gpioe 3 0>,
+			<&gpioc 1 0>,
+			<&gpio0 4 0>,
+			<&gpiod 6 0>,
+			<&gpio3 2 0>,
+			<&gpio3 5 0>,
+			<&gpiod 7 0>,
+			<&gpio8 6 0>,
+			<&gpiod 4 0>,
+			<&gpio4 1 0>,
+			<&gpio3 4 0>,
+			<&gpioc 7 0>,
+			<&gpioa 4 0>,
+			<&gpio9 6 0>,
+			<&gpio9 3 0>,
+			<&gpioa 7 0>,
+			<&gpio5 0 0>,
+			<&gpio8 1 0>;
+	};
 };
