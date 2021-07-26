@@ -106,25 +106,36 @@ static void spi_bad_received_data(int count)
 
 static void spi_response_host_data(uint8_t *out_msg_addr, int tx_size)
 {
-	/* Tx FIFO reset and count monitor reset */
-	IT83XX_SPI_TXFCR = IT83XX_SPI_TXFR | IT83XX_SPI_TXFCMR;
-	/* CPU Tx FIFO1 and FIFO2 access */
-	IT83XX_SPI_TXRXFAR = IT83XX_SPI_CPUTFA;
+	/*
+	 * Protect sequence of filling response packet for host.
+	 * This will ensure CPU access FIFO is disabled at SPI end interrupt no
+	 * matter the interrupt is triggered before or after the sequence.
+	 */
+	unsigned int key = irq_lock();
 
-	for (int i = 0; i < tx_size; i += 4) {
-		/* Write response data from out_msg buffer to Tx FIFO */
-		IT83XX_SPI_CPUWTFDB0 = *(uint32_t *)(out_msg_addr + i);
+	if (shi_state == SPI_STATE_PROCESSING) {
+		/* Tx FIFO reset and count monitor reset */
+		IT83XX_SPI_TXFCR = IT83XX_SPI_TXFR | IT83XX_SPI_TXFCMR;
+		/* CPU Tx FIFO1 and FIFO2 access */
+		IT83XX_SPI_TXRXFAR = IT83XX_SPI_CPUTFA;
+
+		for (int i = 0; i < tx_size; i += 4) {
+			/* Write response data from out_msg buffer to Tx FIFO */
+			IT83XX_SPI_CPUWTFDB0 = *(uint32_t *)(out_msg_addr + i);
+		}
+
+		/*
+		 * After writing data to Tx FIFO is finished, this bit will
+		 * be to indicate the SPI slave controller.
+		 */
+		IT83XX_SPI_TXFCR = IT83XX_SPI_TXFS;
+		/* End Tx FIFO access */
+		IT83XX_SPI_TXRXFAR = 0;
+		/* SPI slave read Tx FIFO */
+		IT83XX_SPI_FCR = IT83XX_SPI_SPISRTXF;
 	}
 
-	/*
-	 * After writing data to Tx FIFO is finished, this bit will
-	 * be to indicate the SPI slave controller.
-	 */
-	IT83XX_SPI_TXFCR = IT83XX_SPI_TXFS;
-	/* End Tx FIFO access */
-	IT83XX_SPI_TXRXFAR = 0;
-	/* SPI slave read Tx FIFO */
-	IT83XX_SPI_FCR = IT83XX_SPI_SPISRTXF;
+	irq_unlock(key);
 }
 
 /*
@@ -214,9 +225,6 @@ static void spi_parse_header(void)
 		spi_packet.response_size = 0;
 		spi_packet.driver_result = EC_RES_SUCCESS;
 
-		/* Move to processing state */
-		spi_set_state(SPI_STATE_PROCESSING);
-
 		/* Go to common-layer to handle request */
 		host_packet_receive(&spi_packet);
 	} else {
@@ -235,6 +243,8 @@ static void shi_ite_int_handler(const void *arg)
 	 * EC responded data, then AP ended the transaction.
 	 */
 	if (IT83XX_SPI_ISR & IT83XX_SPI_ENDDETECTINT) {
+		/* Disable CPU access Rx FIFO to clock in data from AP again */
+		IT83XX_SPI_TXRXFAR = 0;
 		/* Ready to receive */
 		spi_set_state(SPI_STATE_READY_TO_RECV);
 		/*
@@ -255,10 +265,11 @@ static void shi_ite_int_handler(const void *arg)
 	if (IT83XX_SPI_RX_VLISR & IT83XX_SPI_RVLI) {
 		/* write clear slave status */
 		IT83XX_SPI_RX_VLISR = IT83XX_SPI_RVLI;
+		/* Move to processing state */
+		spi_set_state(SPI_STATE_PROCESSING);
 		/* Parse header for version of spi-protocol */
 		spi_parse_header();
 	}
-
 }
 
 void spi_event(enum gpio_signal signal)
