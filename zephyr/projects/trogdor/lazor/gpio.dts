@@ -390,4 +390,33 @@
 			&gpio_ec_rst_odl
 		>;
 	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpio5 1 0>,
+			<&gpiod 0 0>,
+			<&gpiof 3 0>,
+			<&gpio0 4 0>,
+			<&gpioc 0 0>,
+			<&gpioa 7 0>,
+			<&gpio8 3 0>,
+			<&gpio8 1 0>,
+			<&gpio3 7 0>,
+			<&gpio7 6 0>,
+			<&gpio3 4 0>,
+			<&gpioc 5 0>,
+			<&gpioa 3 0>,
+			<&gpio7 3 0>,
+			<&gpiod 7 0>,
+			<&gpioa 5 0>,
+			<&gpiob 0 0>,
+			<&gpio9 4 0>,
+			<&gpiob 1 0>,
+			<&gpio6 2 0>,
+			<&gpio3 5 0>,
+			<&gpio9 7 0>,
+			<&gpio6 0 0>,
+			<&gpio7 2 0>;
+	};
 };
