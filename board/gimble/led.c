@@ -24,6 +24,9 @@
 #define LED_SIDESEL_MB_PORT 0
 #define LED_SIDESEL_DB_PORT 1
 
+__override const int led_charge_lvl_1 = 5;
+__override const int led_charge_lvl_2 = 95;
+
 __override struct led_descriptor
 			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
 	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
