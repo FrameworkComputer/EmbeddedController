@@ -115,8 +115,6 @@ enum battery_type {
 /* support factory keyboard test */
 #define CONFIG_KEYBOARD_FACTORY_TEST
 #define GPIO_KBD_KSO2		GPIO_EC_KSO_02_INV
-extern const int keyboard_factory_scan_pins[][2];
-extern const int keyboard_factory_scan_pins_used;
 
 #ifdef SECTION_IS_RO
 /* Interrupt handler for AP jump to BL */

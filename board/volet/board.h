@@ -195,9 +195,6 @@ void board_reset_pd_mcu(void);
 
 void motion_interrupt(enum gpio_signal signal);
 
-extern const int keyboard_factory_scan_pins[][2];
-extern const int keyboard_factory_scan_pins_used;
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

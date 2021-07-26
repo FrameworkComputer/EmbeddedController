@@ -135,4 +135,14 @@ void set_vol_up_key(uint8_t row, uint8_t col);
 static inline void set_vol_up_key(uint8_t row, uint8_t col) {}
 #endif
 
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+/*
+ * Map keyboard connector pins to EC GPIO pins for factory test.
+ * Pins mapped to {-1, -1} are skipped.
+ */
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+#endif
+
+
 #endif  /* __CROS_EC_KEYBOARD_SCAN_H */

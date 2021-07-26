@@ -151,11 +151,6 @@ enum usbc_port {
 
 void board_reset_pd_mcu(void);
 
-#ifdef CONFIG_KEYBOARD_FACTORY_TEST
-extern const int keyboard_factory_scan_pins[][2];
-extern const int keyboard_factory_scan_pins_used;
-#endif
-
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

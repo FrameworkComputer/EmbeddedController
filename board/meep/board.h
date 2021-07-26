@@ -113,11 +113,6 @@ enum ppc_type {
 	PPC_TYPE_COUNT,
 };
 
-#ifdef CONFIG_KEYBOARD_FACTORY_TEST
-extern const int keyboard_factory_scan_pins[][2];
-extern const int keyboard_factory_scan_pins_used;
-#endif
-
 int board_is_convertible(void);
 
 #endif /* !__ASSEMBLER__ */
