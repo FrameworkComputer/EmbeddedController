@@ -14,6 +14,7 @@
 /* Motion sensing drivers */
 
 /* Keyboard features */
+#define CONFIG_KEYBOARD_FACTORY_TEST
 
 /* Sensors */
 #define CONFIG_ACCELGYRO_BMI160
