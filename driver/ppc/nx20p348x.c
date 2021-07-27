@@ -402,7 +402,7 @@ static void nx20p348x_handle_interrupt(int port)
 			}
 		}
 		read_reg(port, NX20P348X_DEVICE_CONTROL_REG, &control_reg);
-		reg |= NX20P348X_CTRL_DB_EXIT;
+		control_reg |= NX20P348X_CTRL_DB_EXIT;
 		write_reg(port, NX20P348X_DEVICE_CONTROL_REG, control_reg);
 		/*
 		 * If DB exit mode failed, then the OVP limit setting done in
