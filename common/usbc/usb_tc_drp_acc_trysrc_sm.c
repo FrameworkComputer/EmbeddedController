@@ -2101,6 +2101,14 @@ static void tc_disabled_run(const int port)
 		set_state_tc(port, drp_state[port] == PD_DRP_FORCE_SOURCE ?
 			     TC_UNATTACHED_SRC : TC_UNATTACHED_SNK);
 	} else {
+		if (IS_ENABLED(CONFIG_USBC_RETIMER_FW_UPDATE)) {
+			if (TC_CHK_FLAG(port,
+				TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN)) {
+				TC_CLR_FLAG(port,
+				TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN);
+				usb_retimer_fw_update_process_op_cb(port);
+			}
+		}
 		tc_pause_event_loop(port);
 	}
 }
@@ -3859,14 +3867,6 @@ void tc_run(const int port)
 	}
 
 	if (IS_ENABLED(CONFIG_USBC_RETIMER_FW_UPDATE)) {
-		if (TC_CHK_FLAG(port, TC_FLAGS_SUSPENDED) &&
-			TC_CHK_FLAG(port,
-				TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN)) {
-			TC_CLR_FLAG(port,
-				TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN);
-			usb_retimer_fw_update_process_op_cb(port);
-		}
-
 		if (TC_CHK_FLAG(port, TC_FLAGS_USB_RETIMER_FW_UPDATE_RUN)) {
 			TC_CLR_FLAG(port, TC_FLAGS_USB_RETIMER_FW_UPDATE_RUN);
 			usb_retimer_fw_update_process_op_cb(port);
