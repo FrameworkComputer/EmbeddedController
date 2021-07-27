@@ -26,6 +26,11 @@
 
 #define CONFIG_PWM_KBLIGHT
 
+/* Battery */
+#define CONFIG_BATTERY_DEVICE_CHEMISTRY "LION"
+#define CONFIG_BATTERY_FUEL_GAUGE
+#define CONFIG_BATTERY_REVIVE_DISCONNECT
+
 /* BC 1.2 Charger */
 #define CONFIG_BC12_DETECT_PI3USB9201
 
@@ -92,6 +97,10 @@ enum pwm_channel {
 	PWM_CH_COUNT
 };
 
+enum battery_type {
+	BATTERY_BMSPOW,
+	BATTERY_TYPE_COUNT,
+};
 /* Reset all TCPCs. */
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
