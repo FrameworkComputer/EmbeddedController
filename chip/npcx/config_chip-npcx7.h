@@ -43,6 +43,13 @@
 #define NPCX_SECOND_UART
 #define UART_MODULE_COUNT 2
 
+/*
+ * For NPCX7, PS2_2 & PS2_3 pins also support other alternate functions
+ * (e.g., ADC5, ADC6, TA2). PS2_2 & PS2_3 should be Explicit defined.
+ */
+#undef NPCX_PS2_MODULE_2
+#undef NPCX_PS2_MODULE_3
+
 /* 64-bit timer support */
 #define NPCX_ITIM64_SUPPORT
 #else

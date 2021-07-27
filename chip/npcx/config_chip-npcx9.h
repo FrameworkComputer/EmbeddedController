@@ -33,6 +33,13 @@
 #define UART_MODULE_COUNT 2
 
 /*
+ * For NPCX9, PS2_2 & PS2_3 pins also support other alternate functions
+ * (e.g., ADC5, ADC6, TA2). PS2_2 & PS2_3 should be Explicit defined.
+ */
+#undef NPCX_PS2_MODULE_2
+#undef NPCX_PS2_MODULE_3
+
+/*
  * Number of I2C controllers. Controller 5/6 has 2 ports, so the chip has
  * two additional ports.
  */

@@ -206,7 +206,7 @@
 
 /* MFT Module */
 #define NPCX_ALT_GPIO_9_3 ALT(9, 3, NPCX_ALT(C, TA1_SL2)) /* TA1_SEL2 */
-#ifdef CONFIG_PS2
+#if defined(CONFIG_PS2) && defined(NPCX_PS2_MODULE_3)
 #define NPCX_ALT_GPIO_A_6 ALT(A, 6, NPCX_ALT(C, PS2_3_SL2)) /* PS2_CLK3 */
 #else
 #define NPCX_ALT_GPIO_A_6 ALT(A, 6, NPCX_ALT(C, TA2_SL2)) /* TA2_SEL2 */
@@ -255,7 +255,11 @@
 #define NPCX_ALT_GPIO_6_3 ALT(6, 3, NPCX_ALT(3, PS2_1_SL)) /* PS2_DATA1 */
 #define NPCX_ALT_GPIO_3_7 ALT(3, 7, NPCX_ALT(3, PS2_2_SL)) /* PS2_CLK2 */
 #define NPCX_ALT_GPIO_3_4 ALT(3, 4, NPCX_ALT(3, PS2_2_SL)) /* PS2_DATA2 */
+#if defined(CONFIG_PS2) && defined(NPCX_PS2_MODULE_3)
 #define NPCX_ALT_GPIO_A_7 ALT(A, 7, NPCX_ALT(C, PS2_3_SL2)) /* PS2_DAT3 */
+#else
+#define NPCX_ALT_GPIO_A_7
+#endif
 
 #define NPCX_ALT_TABLE { \
 	NPCX_ALT_GPIO_0_3  /* KSO16 */               \

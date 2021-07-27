@@ -230,7 +230,7 @@
 #define NPCX_ALT_GPIO_4_3 ALT(4, 3, NPCX_ALT(6, ADC2_SL)) /* ADC2  */
 #define NPCX_ALT_GPIO_4_2 ALT(4, 2, NPCX_ALT(6, ADC3_SL)) /* ADC3  */
 #define NPCX_ALT_GPIO_4_1 ALT(4, 1, NPCX_ALT(6, ADC4_SL)) /* ADC4  */
-#ifdef CONFIG_PS2
+#if defined(CONFIG_PS2) && defined(NPCX_PS2_MODULE_2)
 #define NPCX_ALT_GPIO_3_7 ALT(3, 7, NPCX_ALT(3, PS2_2_SL)) /* PS2_CLK2 */
 #define NPCX_ALT_GPIO_3_4 ALT(3, 4, NPCX_ALT(3, PS2_2_SL)) /* PS2_DATA2 */
 #else
@@ -264,7 +264,7 @@
 #define NPCX_ALT_GPIO_4_0 ALT(4, 0, NPCX_ALT(3, TA1_SL1)) /* TA1_SEL1 */
 #define NPCX_ALT_GPIO_7_3 ALT(7, 3, NPCX_ALT(3, TA2_SL1)) /* TA2_SEL1 */
 #define NPCX_ALT_GPIO_9_3 ALT(9, 3, NPCX_ALT(C, TA1_SL2)) /* TA1_SEL2 */
-#ifdef CONFIG_PS2
+#if defined(CONFIG_PS2) && defined(NPCX_PS2_MODULE_3)
 #define NPCX_ALT_GPIO_A_6 ALT(A, 6, NPCX_ALT(C, PS2_3_SL2)) /* PS2_CLK3 */
 #else
 #define NPCX_ALT_GPIO_A_6 ALT(A, 6, NPCX_ALT(C, TA2_SL2)) /* TA2_SEL2 */
@@ -346,7 +346,7 @@
 #define NPCX_ALT_GPIO_A_3 ALT(A, 3, NPCX_ALT(0, SPIP_SL)) /* SPIP_MOSI */
 #define NPCX_ALT_GPIO_A_1 ALT(A, 1, NPCX_ALT(0, SPIP_SL)) /* SPIP_SCLK */
 
-#ifdef CONFIG_PS2
+#if defined(CONFIG_PS2) && defined(NPCX_PS2_MODULE_3)
 #define NPCX_ALT_GPIO_A_7 ALT(A, 7, NPCX_ALT(C, PS2_3_SL2)) /* PS2_DAT3 */
 #else
 #define NPCX_ALT_GPIO_A_7
