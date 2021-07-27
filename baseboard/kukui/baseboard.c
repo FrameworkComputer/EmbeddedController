@@ -100,6 +100,28 @@ enum kukui_board_version {
 };
 
 /* map from kukui_board_version to board id voltage in mv */
+#ifdef VARIANT_KUKUI_EC_IT81202
+const int16_t kukui_board_id_map[] = {
+	136,   /* 51.1K , 2.2K(gru 3.3K) ohm */
+	388,   /* 51.1k , 6.8K ohm */
+	584,   /* 51.1K , 11K ohm */
+	785,   /* 56K   , 17.4K ohm */
+	993,   /* 51.1K , 22K ohm */
+	1221,  /* 51.1K , 30K ohm */
+	1433,  /* 51.1K , 39.2K ohm */
+	1650,  /* 56K   , 56K ohm */
+	1876,  /* 47K   , 61.9K ohm */
+	2084,  /* 47K   , 80.6K ohm */
+	2273,  /* 56K   , 124K ohm */
+	2461,  /* 51.1K , 150K ohm */
+	2672,  /* 47K   , 200K ohm */
+	2889,  /* 47K   , 330K ohm */
+	3086,  /* 47K   , 680K ohm */
+	3300,  /* 56K   , NC */
+};
+
+#define THRESHOLD_MV 103 /* Simply assume 3300/16/2 */
+#else
 const int16_t kukui_board_id_map[] = {
 	109,   /* 51.1K , 2.2K(gru 3.3K) ohm */
 	211,   /* 51.1k , 6.8K ohm */
@@ -118,9 +140,10 @@ const int16_t kukui_board_id_map[] = {
 	1684,  /* 47K   , 680K ohm */
 	1800,  /* 56K   , NC */
 };
-BUILD_ASSERT(ARRAY_SIZE(kukui_board_id_map) == BOARD_VERSION_COUNT);
 
 #define THRESHOLD_MV 56 /* Simply assume 1800/16/2 */
+#endif /* VARIANT_KUKUI_EC_IT81202 */
+BUILD_ASSERT(ARRAY_SIZE(kukui_board_id_map) == BOARD_VERSION_COUNT);
 
 int board_get_version(void)
 {
