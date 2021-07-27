@@ -39,6 +39,9 @@ static uint32_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 /* Device initialized at least once */
 #define USB_MUX_FLAG_INIT		BIT(1)
 
+/* Coordinate mux accesses by-port among the tasks */
+static mutex_t mux_lock[CONFIG_USB_PD_PORT_MAX_COUNT];
+
 enum mux_config_type {
 	USB_MUX_INIT,
 	USB_MUX_LOW_POWER,
@@ -47,6 +50,19 @@ enum mux_config_type {
 	USB_MUX_CHIPSET_RESET,
 	USB_MUX_HPD_UPDATE,
 };
+
+#ifdef CONFIG_ZEPHYR
+static int init_mux_mutex(const struct device *dev)
+{
+	int port;
+
+	ARG_UNUSED(dev);
+	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++)
+		k_mutex_init(&mux_lock[port]);
+	return 0;
+}
+SYS_INIT(init_mux_mutex, POST_KERNEL, 50);
+#endif /* CONFIG_ZEPHYR */
 
 /* Configure the MUX */
 static int configure_mux(int port,
@@ -76,6 +92,9 @@ static int configure_mux(int port,
 		mux_state_t lcl_state;
 		const struct usb_mux_driver *drv = mux_ptr->driver;
 		bool ack_required = false;
+
+		/* Action time!  Lock this mux */
+		mutex_lock(&mux_lock[port]);
 
 		switch (config) {
 		case USB_MUX_INIT:
@@ -142,6 +161,9 @@ static int configure_mux(int port,
 				mux_ptr->hpd_update(mux_ptr, *mux_state);
 
 		}
+
+		/* Unlock before any host command waits */
+		mutex_unlock(&mux_lock[port]);
 
 		if (ack_required) {
 			/* This should only be called from the PD task */
