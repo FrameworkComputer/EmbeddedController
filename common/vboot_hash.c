@@ -14,6 +14,7 @@
 #include "sha256.h"
 #include "shared_mem.h"
 #include "stdbool.h"
+#include "stdint.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
@@ -116,8 +117,9 @@ static void hash_next_chunk(size_t size)
 {
 #ifdef CONFIG_MAPPED_STORAGE
 	crec_flash_lock_mapped_storage(1);
-	SHA256_update(&ctx, (const uint8_t *)(CONFIG_MAPPED_STORAGE_BASE +
-					      data_offset + curr_pos), size);
+	SHA256_update(&ctx, (const uint8_t *)
+				((uintptr_t)CONFIG_MAPPED_STORAGE_BASE +
+				 data_offset + curr_pos), size);
 	crec_flash_lock_mapped_storage(0);
 #else
 	if (read_and_hash_chunk(data_offset + curr_pos, size) != EC_SUCCESS)
