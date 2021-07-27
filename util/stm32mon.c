@@ -1117,7 +1117,7 @@ int command_erase(int fd, uint16_t count, uint16_t start)
 int command_read_unprotect(int fd)
 {
 	int res;
-	int retries = MAX_RETRY_COUNT;
+	int retries = MAX_ACK_RETRY_COUNT;
 
 	printf("Unprotecting flash read...\n");
 
