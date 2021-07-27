@@ -595,7 +595,12 @@ static void fw_config_tablet_mode(void)
 
 static void board_extpower(void)
 {
-	int extpower_present = extpower_is_present();
+	int extpower_present;
+
+	if (pd_is_connected(0))
+		extpower_present = extpower_is_present();
+	else
+		extpower_present = 0;
 
 	gpio_set_level(GPIO_EC_ACOK_OTG, extpower_present);
 }
