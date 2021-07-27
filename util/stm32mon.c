@@ -1672,6 +1672,12 @@ int main(int argc, char **argv)
 	if (!chip)
 		goto terminate;
 
+	if (command_get_commands(ser, chip) < 0)
+		goto terminate;
+
+	if (flags & FLAG_READ_UNPROTECT)
+		command_read_unprotect(ser);
+
 	/*
 	 * Use the actual size if we were able to read it since some chips
 	 * have the same chip ID, but different flash sizes based on the
@@ -1693,11 +1699,6 @@ int main(int argc, char **argv)
 	 */
 	(void)read_package_data_register(ser, chip, &package_data_reg);
 
-	if (command_get_commands(ser, chip) < 0)
-		goto terminate;
-
-	if (flags & FLAG_READ_UNPROTECT)
-		command_read_unprotect(ser);
 	if (flags & FLAG_UNPROTECT)
 		command_write_unprotect(ser);
 
