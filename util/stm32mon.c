@@ -87,7 +87,7 @@ const struct {
 	CMD_LOOKUP_ENTRY(RU),
 };
 
-const char *cmd_lookup_name(char cmd)
+const char *cmd_lookup_name(uint8_t cmd)
 {
 	int i;
 	for (i = 0; i < ARRAY_SIZE(cmd_lookup_table); i++) {
