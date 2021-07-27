@@ -904,7 +904,7 @@ int command_get_commands(int fd, struct stm32_def *chip)
 			if (name)
 				printf("%s ", name);
 			else
-				printf("%02x ", cmds[i]);
+				printf("0x%02x ", cmds[i]);
 		}
 
 		if (mode == MODE_I2C)
