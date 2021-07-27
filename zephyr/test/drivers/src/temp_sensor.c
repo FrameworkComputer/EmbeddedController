@@ -112,6 +112,13 @@ static void test_temp_sensor_read(void)
 	check_valid_temperature(adc_dev, TEMP_SENSOR_DDR_SOC);
 	check_valid_temperature(adc_dev, TEMP_SENSOR_FAN);
 	check_valid_temperature(adc_dev, TEMP_SENSOR_PP3300_REGULATOR);
+
+	/* Return correct value on all ADC channels */
+	for (chan = 0; chan < ADC_CHANNELS_NUM; chan++) {
+		zassert_ok(adc_emul_const_value_set(adc_dev, chan, 1000),
+			   "channel %d adc_emul_const_value_set() failed",
+			   chan);
+	}
 }
 
 void test_suite_temp_sensor(void)
