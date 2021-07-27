@@ -124,6 +124,12 @@ void *memchr(const void *buffer, int c, size_t n);
  */
 char *strstr(const char *s1, const char *s2);
 
+/**
+ * Calculates the length of the initial segment of s which consists
+ * entirely of bytes not in reject.
+ */
+size_t strcspn(const char *s, const char *reject);
+
 size_t strlen(const char *s);
 char *strncpy(char *dest, const char *src, size_t n);
 int strncmp(const char *s1, const char *s2, size_t n);
