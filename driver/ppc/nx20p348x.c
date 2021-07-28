@@ -234,13 +234,18 @@ __maybe_unused static int nx20p3483_vbus_sink_enable(int port, int enable)
 		return rv;
 
 	for (int i = 0; i < NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC; ++i) {
-		int sw;
+		int ds;
+		bool is_sink;
 
-		rv = read_reg(port, NX20P348X_SWITCH_STATUS_REG, &sw);
+		rv = read_reg(port, NX20P348X_DEVICE_STATUS_REG, &ds);
 		if (rv != EC_SUCCESS)
 			return rv;
-		if (!!(sw & NX20P348X_SWITCH_STATUS_HVSNK) == enable)
+
+		is_sink = (ds & NX20P3483_DEVICE_MODE_MASK) ==
+			NX20P3483_MODE_HV_SNK;
+		if (enable == is_sink)
 			return EC_SUCCESS;
+
 		msleep(1);
 	}
 
