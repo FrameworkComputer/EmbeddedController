@@ -90,6 +90,16 @@ int timestamp_expired(timestamp_t deadline, const timestamp_t *now)
 
 void timer_init(void)
 {
-	if (!time_set)
-		boot_time = _get_time();
+
+	if (!time_set) {
+		/*
+		 * Start the timer just before the 64-bit rollover to try
+		 * and catch 32-bit rollover/truncation bugs.
+		 */
+		timestamp_t ts = {
+			.val = 0xFFFFFFF0
+		};
+
+		force_time(ts);
+	}
 }
