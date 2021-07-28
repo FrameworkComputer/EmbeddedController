@@ -53,6 +53,9 @@ struct led_descriptor {
 	uint8_t time;
 };
 
+extern const int led_charge_lvl_1;
+extern const int led_charge_lvl_2;
+
 enum pwr_led_states {
 	PWR_LED_STATE_ON,
 	PWR_LED_STATE_SUSPEND_AC,
