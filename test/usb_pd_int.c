@@ -71,8 +71,11 @@ test_static int test_storm_not_triggered_for_32bit_overflow(void)
 		int i;
 		timestamp_t time;
 
-		/* Ensure the MSB is 1 for overflow comparison tests */
-		time.val = 0xff000000;
+		/*
+		 * Ensure the MSB is 1 for overflow comparison tests.
+		 * But make sure not to move time backwards.
+		 */
+		time.val = (get_time().val + 0x100000000) | 0xff000000;
 		force_time(time);
 
 		/*
