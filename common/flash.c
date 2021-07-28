@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "cros_board_info.h"
 #include "flash.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -945,6 +946,15 @@ int crec_flash_set_protect(uint32_t mask, uint32_t flags)
 		rv = crec_flash_physical_protect_now(0);
 		if (rv)
 			retval = rv;
+
+		/*
+		 * Latch the CBI EEPROM WP immediately if HW WP is asserted and
+		 * we're now protecting the RO region with SW WP.
+		 */
+		if (IS_ENABLED(CONFIG_EEPROM_CBI_WP) &&
+		    (EC_FLASH_PROTECT_GPIO_ASSERTED &
+		     crec_flash_get_protect()))
+			cbi_latch_eeprom_wp();
 	}
 
 	/* 5 - Commit ALL_NOW. */
