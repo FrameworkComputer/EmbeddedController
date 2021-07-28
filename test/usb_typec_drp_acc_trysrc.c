@@ -703,7 +703,7 @@ __maybe_unused static int test_auto_toggle_delay(void)
 	 */
 	task_wait_event(SECOND);
 	TEST_GT(mock_tcpc.first_call_to_enable_auto_toggle - time,
-		15ul * MSEC, "%lu");
+		(uint64_t)15 * MSEC, "%" PRIu64);
 
 	return EC_SUCCESS;
 }
@@ -733,7 +733,7 @@ __maybe_unused static int test_auto_toggle_delay_early_connect(void)
 	/* Ensure the auto toggle enable was never called */
 	task_wait_event(SECOND);
 	TEST_EQ(mock_tcpc.first_call_to_enable_auto_toggle,
-		TIMER_DISABLED, "%lu");
+		TIMER_DISABLED, "%" PRIu64);
 
 	/* Ensure that the first CC set call was to Rd. */
 	TEST_GT(cc_pull_count, 0, "%d");
