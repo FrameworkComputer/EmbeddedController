@@ -253,7 +253,7 @@ void run_test(int argc, char **argv)
 				return;
 			}
 		} else {
-			size_t alloc_size = r_data % (shmem_size);
+			size_t alloc_size = r_data % (shmem_size / 2);
 
 			/*
 			 * If the allocation entry is empty - allocate a
