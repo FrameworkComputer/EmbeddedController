@@ -133,7 +133,7 @@ static int charge_control(enum ec_charge_control_mode mode)
 {
 	struct ec_params_charge_control params;
 	params.mode = mode;
-	return test_send_host_command(EC_CMD_CHARGE_CONTROL, 2, &params,
+	return test_send_host_command(EC_CMD_CHARGE_CONTROL, 1, &params,
 				      sizeof(params), NULL, 0);
 }
 
