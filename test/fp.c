@@ -24,13 +24,13 @@
 #define LUP_TOLERANCE FLOAT_TO_FP(0.0005f)
 #define SOLVE_TOLERANCE FLOAT_TO_FP(0.0005f)
 #elif defined(TEST_FLOAT) && defined(CONFIG_FPU)
-#define NORM_TOLERANCE FLOAT_TO_FP(0.0f)
+#define NORM_TOLERANCE FLOAT_TO_FP(0.00001f)
 #define NORM_SQUARED_TOLERANCE FLOAT_TO_FP(0.0f)
 #define DOT_TOLERANCE FLOAT_TO_FP(0.0f)
 #define SCALAR_MUL_TOLERANCE FLOAT_TO_FP(0.005f)
 #define EIGENBASIS_TOLERANCE FLOAT_TO_FP(0.02f)
-#define LUP_TOLERANCE FLOAT_TO_FP(0.0f)
-#define SOLVE_TOLERANCE FLOAT_TO_FP(0.0f)
+#define LUP_TOLERANCE FLOAT_TO_FP(0.00001f)
+#define SOLVE_TOLERANCE FLOAT_TO_FP(0.00001f)
 #else
 #error "No such test configuration."
 #endif
@@ -72,13 +72,15 @@ static int test_fpv3_dot(void)
 	/* Golden result g = dot(a, b) */
 	float g = 38.592f;
 	fpv3_t fpa, fpb;
+	volatile fp_t result;
 
 	for (i = 0; i < N; ++i) {
 		fpa[i] = FLOAT_TO_FP(a[i]);
 		fpb[i] = FLOAT_TO_FP(b[i]);
 	}
 
-	TEST_ASSERT(IS_FP_EQUAL(fpv3_dot(fpa, fpb), FLOAT_TO_FP(g),
+	result = fpv3_dot(fpa, fpb);
+	TEST_ASSERT(IS_FP_EQUAL(result, FLOAT_TO_FP(g),
 				DOT_TOLERANCE));
 
 	return EC_SUCCESS;
@@ -107,16 +109,16 @@ static int test_fpv3_norm(void)
 	const int N = 3;
 	floatv3_t a = {3.1f, 4.2f, 5.3f};
 	/* Golden result g = norm(a) */
-	float g = 7.439085483551025390625f;
+	float g = 7.439086f;
 	int i;
 	fpv3_t fpa;
+	volatile fp_t result;
 
 	for (i = 0; i < N; ++i)
 		fpa[i] = FLOAT_TO_FP(a[i]);
 
-	TEST_ASSERT(
-		IS_FP_EQUAL(fpv3_norm(fpa), FLOAT_TO_FP(g), NORM_TOLERANCE));
-
+	result = fpv3_norm(fpa);
+	TEST_ASSERT(IS_FP_EQUAL(result, FLOAT_TO_FP(g), NORM_TOLERANCE));
 	return EC_SUCCESS;
 }
 
@@ -268,12 +270,12 @@ static int test_mat44_fp_decompose_lup(void)
 	mat44_fp_t gold_lu = {
 		{FLOAT_TO_FP(11.0f), FLOAT_TO_FP(0.8181818f),
 		 FLOAT_TO_FP(2.1818182f), FLOAT_TO_FP(0.18181819f)},
-		{FLOAT_TO_FP(3.0f), FLOAT_TO_FP(14.545454),
-		 FLOAT_TO_FP(0.7875f), FLOAT_TO_FP(0.03125f)},
+		{FLOAT_TO_FP(3.0f), FLOAT_TO_FP(14.545455f),
+		 FLOAT_TO_FP(0.78749999f), FLOAT_TO_FP(0.031249999f)},
 		{FLOAT_TO_FP(1.0f), FLOAT_TO_FP(4.181818f),
-		 FLOAT_TO_FP(-3.4750001f), FLOAT_TO_FP(-1.6366906f)},
+		 FLOAT_TO_FP(-3.4749996f), FLOAT_TO_FP(-1.6366909f)},
 		{FLOAT_TO_FP(2.0f), FLOAT_TO_FP(3.3636365f),
-		 FLOAT_TO_FP(-0.012500286f), FLOAT_TO_FP(0.5107909f)}
+		 FLOAT_TO_FP(-0.012500112f), FLOAT_TO_FP(0.5107912f)}
 	};
 	sizev4_t gold_pivot = {0, 2, 2, 3};
 
@@ -307,7 +309,7 @@ static int test_mat44_fp_solve(void)
 	fpv4_t b = {FLOAT_TO_FP(1.0f), FLOAT_TO_FP(3.3f), FLOAT_TO_FP(0.8f),
 		    FLOAT_TO_FP(8.9f)};
 	/* Golden result from float version. */
-	fpv4_t gold_x = {FLOAT_TO_FP(-43.50743f), FLOAT_TO_FP(-21.459526f),
+	fpv4_t gold_x = {FLOAT_TO_FP(-43.507435f), FLOAT_TO_FP(-21.459525f),
 			 FLOAT_TO_FP(26.629248f), FLOAT_TO_FP(16.80776f)};
 
 	mat44_fp_solve(A, x, b, pivot);
