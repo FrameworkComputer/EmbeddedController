@@ -40,8 +40,16 @@
 
 /* Lid accel */
 #define CONFIG_LID_ANGLE
+#define CONFIG_LID_ANGLE_UPDATE
 #define CONFIG_LID_ANGLE_SENSOR_BASE	BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID	LID_ACCEL
+
+/* Enable sensor fifo, must also define the _SIZE and _THRES */
+#define CONFIG_ACCEL_FIFO
+/* FIFO size is in power of 2. */
+#define CONFIG_ACCEL_FIFO_SIZE 256
+/* Depends on how fast the AP boots and typical ODRs */
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 
 /* Sensor console commands */
 #define CONFIG_CMD_ACCELS
