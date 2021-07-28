@@ -365,6 +365,18 @@ static void retimer_set_state_ufp(int port, mux_state_t mux_state,
 }
 
 /**
+ * Driver interface function: reset retimer
+ */
+__overridable int bb_retimer_reset(const struct usb_mux *me)
+{
+	/*
+	 * TODO(b/193402306, b/195375738): Remove this once transition to
+	 * QS Silicon is complete
+	 */
+	return EC_SUCCESS;
+}
+
+/**
  * Driver interface functions
  */
 static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state)
@@ -462,6 +474,14 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state)
 		retimer_set_state_dfp(port, mux_state, &set_retimer_con);
 	else
 		retimer_set_state_ufp(port, mux_state, &set_retimer_con);
+
+	/*
+	 * In AP Mode DP exit to TBT entry is causing TBT lane bonding issue
+	 * Issue is not seen by calling the retimer reset as WA at the time of
+	 * disconnect mode configuration
+	 */
+	if (mux_state == USB_PD_MUX_NONE)
+		bb_retimer_reset(me);
 
 	/* Writing the register4 */
 	return bb_retimer_write(me, BB_RETIMER_REG_CONNECTION_STATE,

@@ -268,6 +268,20 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 	return EC_SUCCESS;
 }
 
+__override int bb_retimer_reset(const struct usb_mux *me)
+{
+	/*
+	 * TODO(b/193402306, b/195375738): Remove this once transition to
+	 * QS Silicon is complete
+	 */
+	bb_retimer_power_enable(me, false);
+	msleep(5);
+	bb_retimer_power_enable(me, true);
+	msleep(25);
+
+	return EC_SUCCESS;
+}
+
 void board_reset_pd_mcu(void)
 {
 	enum gpio_signal tcpc_rst;
