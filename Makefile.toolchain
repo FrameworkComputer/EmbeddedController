@@ -95,11 +95,13 @@ BUILD_CPPFLAGS=$(CFLAGS_DEFINE) -Icore/host $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
 HOST_CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
 	 $(EXTRA_CFLAGS) $(CFLAGS_COVERAGE) $(CFLAGS_HOSTTEST) $(LATE_CFLAGS_DEFINE) \
 	 -DSECTION_IS_$(BLD)=$(EMPTY) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD))
+LD_R_FLAGS=
 ifneq ($(BOARD),host)
 CPPFLAGS+=-ffreestanding -fno-builtin -nostdinc -nostdlib
 CPPFLAGS+=-Ibuiltin/
 else
 CPPFLAGS+=-Og
+LD_R_FLAGS=-m elf_i386
 endif
 CPPFLAGS+= -DCHROMIUM_EC=$(EMPTY)
 CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(COMMON_WARN) $(CFLAGS_y)
@@ -147,7 +149,7 @@ LDFLAGS=-nostdlib -g -Wl,-X -Wl,--gc-sections -Wl,--build-id=none \
 BUILD_LDFLAGS=$(LIBFTDIUSB_LDLIBS)
 HOST_LDFLAGS=$(LIBFTDIUSB_LDLIBS)
 HOST_TEST_LDFLAGS=-Wl,-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
-		  -fuse-ld=bfd \
+		  -fuse-ld=bfd -m32 \
 		  $(if $(TEST_COVERAGE), --coverage,) \
 		  $(if $(TEST_ASAN), -fsanitize=address) \
 		  $(if $(TEST_MSAN), -fsanitize=memory) \
