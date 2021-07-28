@@ -262,4 +262,11 @@ void usb_mux_hpd_update(int port, mux_state_t mux_state);
  */
 int usb_mux_retimer_fw_update_port_info(void);
 
+/**
+ * Check whether this port has pending mux sets
+ *
+ * @param  port USB-C port number
+ * @return True if all pending mux sets have completed
+ */
+bool usb_mux_set_completed(int port);
 #endif
