@@ -34,9 +34,9 @@ typedef atomic_t atomic_val_t;
 	reg1;							\
 })
 
-static inline void atomic_clear_bits(atomic_t *addr, atomic_val_t bits)
+static inline atomic_val_t atomic_clear_bits(atomic_t *addr, atomic_val_t bits)
 {
-	ATOMIC_OP(bic, addr, bits);
+	return ATOMIC_OP(bic, addr, bits);
 }
 
 static inline atomic_val_t atomic_or(atomic_t *addr, atomic_val_t bits)

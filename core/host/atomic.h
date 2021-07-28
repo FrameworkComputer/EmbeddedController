@@ -13,9 +13,9 @@
 typedef int atomic_t;
 typedef atomic_t atomic_val_t;
 
-static inline void atomic_clear_bits(atomic_t *addr, atomic_val_t bits)
+static inline atomic_val_t atomic_clear_bits(atomic_t *addr, atomic_val_t bits)
 {
-	__atomic_fetch_and(addr, ~bits, __ATOMIC_SEQ_CST);
+	return __atomic_fetch_and(addr, ~bits, __ATOMIC_SEQ_CST);
 }
 
 static inline atomic_val_t atomic_or(atomic_t *addr, atomic_val_t bits)
