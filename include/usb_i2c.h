@@ -53,7 +53,7 @@
  *         counter, the 4 bottom bits are the port address, i2c interface
  *         index.
  *
- *   - addr: slave address, 1 byte, i2c 7-bit bus address.
+ *   - addr: peripheral address, 1 byte, i2c 7-bit bus address.
  *
  *   - wc: write count, 1 byte, zero based count of bytes to write. If the
  *         indicated write count cause the payload + header exceeds 64 bytes,
@@ -216,7 +216,7 @@ int usb_i2c_board_is_enabled(void);
 
 /*
  * Special i2c address to use when the client is required to execute some
- * command which does not directly involve the i2c master driver.
+ * command which does not directly involve the i2c controller driver.
  */
 #define USB_I2C_CMD_ADDR_FLAGS 0x78
 

@@ -22,7 +22,7 @@
 
 #ifndef CONFIG_USB_PD_TCPC
 
-/* I2C wrapper functions - get I2C port / slave addr from config struct. */
+/* I2C wrapper functions - get I2C port / peripheral addr from config struct. */
 #ifndef CONFIG_USB_PD_TCPC_LOW_POWER
 static inline int tcpc_addr_write(int port, int i2c_addr, int reg, int val)
 {

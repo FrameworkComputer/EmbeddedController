@@ -13,7 +13,7 @@
  * This is defined in include/i2c.h and is no longer an 8bit
  * address. The 7/10 bit address starts at bit 0 and leaves
  * room for a 10 bit address, although we don't currently
- * have any 10 bit slaves.  I2C or SPI is indicated by a
+ * have any 10 bit peripherals. I2C or SPI is indicated by a
  * more significant bit
  */
 
