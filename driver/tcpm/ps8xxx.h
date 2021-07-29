@@ -11,6 +11,7 @@
 #ifndef __CROS_EC_USB_PD_TCPM_PS8XXX_H
 #define __CROS_EC_USB_PD_TCPM_PS8XXX_H
 
+#define PS8751_P3_TO_P0_FLAGS(p3_flags)	((p3_flags) - 3)
 #define PS8751_P3_TO_P1_FLAGS(p3_flags)	((p3_flags) - 2)
 
 #define PS8751_BIST_TIMER_FREQ  15000000
@@ -78,6 +79,12 @@
 #define PS8815_DPEQ_LOSS_UP_9DB			0x00
 #define PS8815_REG_DP_EQ_COMP_SHIFT		3
 #define PS8815_AUX_INTERCEPTION_DISABLE		BIT(1)
+
+/*
+ * PS8805 register to distinguish chip revision
+ * bit 7-4: 1010b is A3 chip, 0000b is A2 chip
+ */
+#define PS8805_P0_REG_CHIP_REVISION		0x62
 
 /*
  * PS8805 GPIO control register. Note the device I2C address of 0x1A is

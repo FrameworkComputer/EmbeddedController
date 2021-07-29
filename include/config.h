@@ -4540,6 +4540,12 @@
 
 /*
  * Use this to override the TCPCI Device ID value to be 0x0002 for
+ * chip rev A3. Early A3 firmware misreports the DID as 0x0001.
+ */
+#undef CONFIG_USB_PD_TCPM_PS8805_FORCE_DID
+
+/*
+ * Use this to override the TCPCI Device ID value to be 0x0002 for
  * chip rev A1. Early A1 firmware misreports the DID as 0x0001.
  */
 #undef CONFIG_USB_PD_TCPM_PS8815_FORCE_DID

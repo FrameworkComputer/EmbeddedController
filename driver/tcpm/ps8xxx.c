@@ -498,6 +498,33 @@ static int ps8xxx_tcpc_drp_toggle(int port)
 }
 #endif
 
+#ifdef CONFIG_USB_PD_TCPM_PS8805_FORCE_DID
+static int ps8805_make_device_id(int port, int *id)
+{
+	int p0_addr;
+	int val;
+	int status;
+
+	p0_addr = PS8751_P3_TO_P0_FLAGS(tcpc_config[port].i2c_info.addr_flags);
+
+	status = tcpc_addr_read(port, p0_addr, PS8805_P0_REG_CHIP_REVISION,
+				&val);
+	if (status != EC_SUCCESS)
+		return status;
+	switch (val & 0xF0) {
+	case 0x00: /* A2 chip */
+		*id = 1;
+		break;
+	case 0xa0: /* A3 chip */
+		*id = 2;
+		break;
+	default:
+		return EC_ERROR_UNKNOWN;
+	}
+	return EC_SUCCESS;
+}
+#endif
+
 #ifdef CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
 /*
  * Early ps8815 A1 firmware reports 0x0001 in the TCPCI Device ID
@@ -560,6 +587,15 @@ static int ps8xxx_get_chip_info(int port, int live,
 
 	if (chip_info->fw_version_number == 0 ||
 	    chip_info->fw_version_number == -1 || live) {
+#ifdef CONFIG_USB_PD_TCPM_PS8805_FORCE_DID
+		if (chip_info->product_id == PS8805_PRODUCT_ID &&
+		    chip_info->device_id == 0x0001) {
+			rv = ps8805_make_device_id(port, &val);
+			if (rv != EC_SUCCESS)
+				return rv;
+			chip_info->device_id = val;
+		}
+#endif
 #ifdef CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
 		if (chip_info->product_id == PS8815_PRODUCT_ID &&
 		    chip_info->device_id == 0x0001) {
