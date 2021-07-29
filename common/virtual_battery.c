@@ -25,8 +25,8 @@
 enum batt_cmd_parse_state {
 	IDLE = 0, /* initial state */
 	START = 1, /* received the register address (command code) */
-	WRITE_VB, /* writing data bytes to the slave */
-	READ_VB, /* reading data bytes to the slave */
+	WRITE_VB, /* writing data bytes to the peripheral */
+	READ_VB, /* reading data bytes to the peripheral */
 };
 
 static enum batt_cmd_parse_state sb_cmd_state;
