@@ -70,11 +70,11 @@
 /*
  * Timeout to wait for SHI request packet
  *
- * This affects the slowest SPI clock we can support.  A delay of 8192 us
- * permits a 512-byte request at 500 KHz, assuming the master starts sending
- * bytes as soon as it asserts chip select.  That's as slow as we would
- * practically want to run the SHI interface, since running it slower
- * significantly impacts firmware update times.
+ * This affects the slowest SPI clock we can support.  A delay of 8192
+ * us permits a 512-byte request at 500 KHz, assuming the controller
+ * starts sending bytes as soon as it asserts chip select.  That's as
+ * slow as we would practically want to run the SHI interface, since
+ * running it slower significantly impacts firmware update times.
  */
 #define SHI_CMD_RX_TIMEOUT_US 8192
 
