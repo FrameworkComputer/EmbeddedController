@@ -745,7 +745,7 @@ static void i2c_handle_sda_irq(int controller)
 	}
 }
 
-void i2c_master_int_handler (int controller)
+static void i2c_master_int_handler(int controller)
 {
 	volatile struct i2c_status *p_status = i2c_stsobjs + controller;
 
