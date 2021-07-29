@@ -8,9 +8,10 @@
 
 /**
  * @file    fpc_sensor_spi.h
- * @brief   Driver for SPI master.
+ * @brief   Driver for SPI controller.
  *
- * Driver for SPI master. Intended for communication with fingerprint sensor.
+ * Driver for SPI controller. Intended for communication with
+ * fingerprint sensor.
  */
 
 #include <stdint.h>
@@ -70,7 +71,7 @@ bool __unused fpc_sensor_spi_read_irq(void);
 void __unused fpc_sensor_spi_reset(bool state);
 
 /**
- * @brief Initializes SPI master.
+ * @brief Initializes SPI controller.
  *
  * @param[in] speed_hz  Maximum SPI clock speed according to sensor HW spec
  *                      (unit Hz).
