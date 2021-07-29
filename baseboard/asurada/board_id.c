@@ -101,7 +101,7 @@ static void board_version_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_version_init, HOOK_PRIO_INIT_ADC + 1);
 
-int board_get_version(void)
+__override int board_get_version(void)
 {
 	return version;
 }
