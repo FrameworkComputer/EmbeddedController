@@ -31,7 +31,7 @@
 /* Timeout for device should be available after reset (SMBus spec. unit:ms) */
 #define I2C_MAX_TIMEOUT 35
 /*
- * Timeout for SCL held to low by slave device . (SMBus spec. unit:ms).
+ * Timeout for SCL held to low by peripheral device. (SMBus spec. unit:ms).
  * Some I2C devices may violate this timing and clock stretch for longer.
  * TODO: Consider increasing this timeout.
  */
@@ -47,7 +47,7 @@
 #define I2C_START(ctrl) SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_START)
 #define I2C_STOP(ctrl)  SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_STOP)
 #define I2C_NACK(ctrl)  SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_ACK)
-/* I2C moudule automatically stall bus after sending slave address */
+/* I2C module automatically stall bus after sending peripheral address */
 #define I2C_STALL(ctrl) SET_BIT(NPCX_SMBCTL1(ctrl), NPCX_SMBCTL1_STASTRE)
 #define I2C_WRITE_BYTE(ctrl, data) (NPCX_SMBSDA(ctrl) = data)
 #define I2C_READ_BYTE(ctrl, data)  (data = NPCX_SMBSDA(ctrl))
@@ -74,20 +74,21 @@
 
 /* Error values that functions can return */
 enum smb_error {
-	SMB_OK = 0,                 /* No error                            */
-	SMB_CH_OCCUPIED,            /* Channel is already occupied         */
-	SMB_MEM_POOL_INIT_ERROR,    /* Memory pool initialization error    */
-	SMB_BUS_FREQ_ERROR,         /* SMbus freq was not valid            */
-	SMB_INVLAID_REGVALUE,       /* Invalid SMbus register value        */
-	SMB_UNEXIST_CH_ERROR,       /* Channel does not exist              */
-	SMB_NO_SUPPORT_PTL,         /* Not support SMBus Protocol          */
-	SMB_BUS_ERROR,              /* Encounter bus error                 */
-	SMB_MASTER_NO_ADDRESS_MATCH,/* No slave address match (Master Mode)*/
-	SMB_READ_DATA_ERROR,        /* Read data for SDA error             */
-	SMB_READ_OVERFLOW_ERROR,    /* Read data over than we predict      */
-	SMB_TIMEOUT_ERROR,          /* Timeout expired                     */
-	SMB_MODULE_ISBUSY,          /* Module is occupied by other device  */
-	SMB_BUS_BUSY,               /* SMBus is occupied by other device   */
+	SMB_OK = 0,                 /* No error                           */
+	SMB_CH_OCCUPIED,            /* Channel is already occupied        */
+	SMB_MEM_POOL_INIT_ERROR,    /* Memory pool initialization error   */
+	SMB_BUS_FREQ_ERROR,         /* SMbus freq was not valid           */
+	SMB_INVLAID_REGVALUE,       /* Invalid SMbus register value       */
+	SMB_UNEXIST_CH_ERROR,       /* Channel does not exist             */
+	SMB_NO_SUPPORT_PTL,         /* Not support SMBus Protocol         */
+	SMB_BUS_ERROR,              /* Encounter bus error                */
+	SMB_NO_ADDRESS_MATCH,       /* No peripheral address match        */
+				    /*  (Controller Mode)                 */
+	SMB_READ_DATA_ERROR,        /* Read data for SDA error            */
+	SMB_READ_OVERFLOW_ERROR,    /* Read data over than we predict     */
+	SMB_TIMEOUT_ERROR,          /* Timeout expired                    */
+	SMB_MODULE_ISBUSY,          /* Module is occupied by other device */
+	SMB_BUS_BUSY,               /* SMBus is occupied by other device  */
 };
 
 /*
@@ -96,7 +97,7 @@ enum smb_error {
  */
 enum smb_oper_state_t {
 	SMB_IDLE,
-	SMB_MASTER_START,
+	SMB_CONTROLLER_START,
 	SMB_WRITE_OPER,
 	SMB_READ_OPER,
 	SMB_FAKE_READ_OPER,
@@ -113,7 +114,7 @@ struct i2c_status {
 	uint16_t              sz_txbuf;  /* Size of Tx buffer in bytes */
 	uint16_t              sz_rxbuf;  /* Size of rx buffer in bytes */
 	uint16_t              idx_buf;   /* Current index of Tx/Rx buffer */
-	uint16_t              slave_addr_flags;/* Target slave address */
+	uint16_t              addr_flags;/* Target address */
 	enum smb_oper_state_t oper_state;/* Smbus operation state */
 	enum smb_error        err_code;  /* Error code */
 	int                   task_waiting; /* Task waiting on controller */
@@ -310,7 +311,7 @@ static void i2c_fifo_write_data(int controller)
 	CPRINTF("\n");
 }
 
-enum smb_error i2c_master_transaction(int controller)
+enum smb_error i2c_controller_transaction(int controller)
 {
 	/* Set i2c mode to object */
 	int events = 0;
@@ -323,7 +324,7 @@ enum smb_error i2c_master_transaction(int controller)
 	/* Assign current SMB status of controller */
 	if (p_status->oper_state == SMB_IDLE) {
 		/* New transaction */
-		p_status->oper_state = SMB_MASTER_START;
+		p_status->oper_state = SMB_CONTROLLER_START;
 		/* Clear FIFO and status bit */
 		if (IS_ENABLED(NPCX_I2C_FIFO_SUPPORT)) {
 			NPCX_SMBFIF_CTS(controller) =
@@ -358,7 +359,7 @@ enum smb_error i2c_master_transaction(int controller)
 				 * byte from previous transaction, adding a
 				 * extra byte for next transaction which let
 				 * ec sets NACK bit in time is necessary.
-				 * Or i2c master cannot generate STOP
+				 * Or i2c controller cannot generate STOP
 				 * when the last byte is ACK during receiving.
 				 */
 				p_status->sz_rxbuf++;
@@ -408,7 +409,7 @@ enum smb_error i2c_master_transaction(int controller)
 	}
 
 	/* Generate a START condition */
-	if (p_status->oper_state == SMB_MASTER_START ||
+	if (p_status->oper_state == SMB_CONTROLLER_START ||
 			p_status->oper_state == SMB_REPEAT_START) {
 		I2C_START(controller);
 		CPUTS("ST");
@@ -485,7 +486,7 @@ void i2c_done(int controller)
 	p_status->oper_state = (p_status->flags & I2C_XFER_STOP)
 				? SMB_IDLE : SMB_WRITE_SUSPEND;
 	/*
-	 * Disable interrupt for i2c master stall SCL
+	 * Disable interrupt for i2c controller stall SCL
 	 * and forbid SDAST generate interrupt
 	 * until common layer start other transactions
 	 */
@@ -511,7 +512,7 @@ static void i2c_handle_receive(int controller)
 			CPUTS("-SP");
 		} else {
 			/*
-			 * Disable interrupt before i2c master read SDA
+			 * Disable interrupt before i2c controller read SDA
 			 * reg (stall SCL) and forbid SDAST generate
 			 * interrupt until starting other transactions
 			 */
@@ -654,18 +655,18 @@ static void i2c_fifo_handle_receive(int controller)
 static void i2c_handle_sda_irq(int controller)
 {
 	volatile struct i2c_status *p_status = i2c_stsobjs + controller;
-	uint8_t addr_8bit = I2C_STRIP_FLAGS(p_status->slave_addr_flags) << 1;
+	uint8_t addr_8bit = I2C_STRIP_FLAGS(p_status->addr_flags) << 1;
 
 	/* 1 Issue Start is successful ie. write address byte */
-	if (p_status->oper_state == SMB_MASTER_START
+	if (p_status->oper_state == SMB_CONTROLLER_START
 			|| p_status->oper_state == SMB_REPEAT_START) {
 		/* Prepare address byte */
 		if (p_status->sz_txbuf == 0) {/* Receive mode */
 			p_status->oper_state = SMB_READ_OPER;
 			/*
-			 * Receiving one or zero bytes - stall bus after START
-			 * condition. If there's no slave devices on bus, FW
-			 * needn't to set ACK bit.
+			 * Receiving one or zero bytes - stall bus after
+			 * START condition. If there's no peripheral
+			 * devices on bus, FW needn't to set ACK bit.
 			 */
 			if (p_status->sz_rxbuf < 2)
 				I2C_STALL(controller);
@@ -682,14 +683,17 @@ static void i2c_handle_sda_irq(int controller)
 		/* Completed handling START condition */
 		return;
 	}
-	/* 2 Handle master write operation  */
+	/* 2 Handle controller write operation */
 	else if (p_status->oper_state == SMB_WRITE_OPER) {
 		/* all bytes have been written, in a pure write operation */
 		if (p_status->idx_buf == p_status->sz_txbuf) {
 			/*  no more message */
 			if (p_status->sz_rxbuf == 0)
 				i2c_done(controller);
-			/* need to restart & send slave address immediately */
+			/*
+			 * need to restart & send peripheral address
+			 * immediately
+			 */
 			else {
 				/*
 				 * Prepare address byte
@@ -725,7 +729,10 @@ static void i2c_handle_sda_irq(int controller)
 				CPUTS("-ARR");
 			}
 		}
-		/* write next byte (not last byte and not slave address */
+		/*
+		 * write next byte (not last byte and not peripheral
+		 * address)
+		 */
 		else {
 			/*
 			 * This function can be called in either single-byte
@@ -735,7 +742,10 @@ static void i2c_handle_sda_irq(int controller)
 			i2c_fifo_write_data(controller);
 		}
 	}
-	/* 3 Handle master read operation (read or after a write operation) */
+	/*
+	 * 3 Handle controller read operation (read or after a write
+	 * operation)
+	 */
 	else if (p_status->oper_state == SMB_READ_OPER ||
 			p_status->oper_state == SMB_FAKE_READ_OPER) {
 		if (IS_ENABLED(NPCX_I2C_FIFO_SUPPORT))
@@ -745,7 +755,7 @@ static void i2c_handle_sda_irq(int controller)
 	}
 }
 
-static void i2c_master_int_handler(int controller)
+static void i2c_controller_int_handler(int controller)
 {
 	volatile struct i2c_status *p_status = i2c_stsobjs + controller;
 
@@ -757,7 +767,7 @@ static void i2c_master_int_handler(int controller)
 		CPUTS("-SP");
 		/* Clear BER Bit */
 		SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_BER);
-		/* Make sure slave doesn't hold bus by reading */
+		/* Make sure peripheral doesn't hold bus by reading */
 		I2C_READ_BYTE(controller, data);
 
 		/* Set error code */
@@ -785,7 +795,7 @@ static void i2c_master_int_handler(int controller)
 		/* Clear NEGACK Bit */
 		SET_BIT(NPCX_SMBST(controller), NPCX_SMBST_NEGACK);
 		/* Set error code */
-		p_status->err_code = SMB_MASTER_NO_ADDRESS_MATCH;
+		p_status->err_code = SMB_NO_ADDRESS_MATCH;
 		/* Notify upper layer */
 		p_status->oper_state = SMB_IDLE;
 		task_set_event(p_status->task_waiting, TASK_EVENT_I2C_IDLE);
@@ -843,7 +853,7 @@ static void i2c_master_int_handler(int controller)
  */
 void handle_interrupt(int controller)
 {
-	i2c_master_int_handler(controller);
+	i2c_controller_int_handler(controller);
 }
 
 void i2c0_interrupt(void) { handle_interrupt(0); }
@@ -885,7 +895,7 @@ void i2c_set_timeout(int port, uint32_t timeout)
 }
 
 int chip_i2c_xfer(const int port,
-		  const uint16_t slave_addr_flags,
+		  const uint16_t addr_flags,
 		  const uint8_t *out, int out_size,
 		  uint8_t *in, int in_size, int flags)
 {
@@ -909,12 +919,12 @@ int chip_i2c_xfer(const int port,
 	i2c_select_port(port);
 
 	/* Copy data to controller struct */
-	p_status->flags       = flags;
-	p_status->tx_buf      = out;
-	p_status->sz_txbuf    = out_size;
-	p_status->rx_buf      = in;
-	p_status->sz_rxbuf    = in_size;
-	p_status->slave_addr_flags = slave_addr_flags;
+	p_status->flags      = flags;
+	p_status->tx_buf     = out;
+	p_status->sz_txbuf   = out_size;
+	p_status->rx_buf     = in;
+	p_status->sz_rxbuf   = in_size;
+	p_status->addr_flags = addr_flags;
 
 	/* Reset index & error */
 	p_status->idx_buf     = 0;
@@ -941,8 +951,8 @@ int chip_i2c_xfer(const int port,
 
 	CPUTS("\n");
 
-	/* Start master transaction */
-	i2c_master_transaction(ctrl);
+	/* Start controller transaction */
+	i2c_controller_transaction(ctrl);
 
 	/* Reset task ID */
 	p_status->task_waiting = TASK_ID_INVALID;

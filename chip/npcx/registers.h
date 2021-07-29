@@ -612,7 +612,7 @@ enum {
 /* RX FIFO threshold */
 #define NPCX_SMBRXF_CTL_RX_THR           FIELD(0, 6)
 /*
- * In master receiving mode, last byte in FIFO should send ACK or NACK
+ * In controller receiving mode, last byte in FIFO should send ACK or NACK
  */
 #define NPCX_SMBRXF_CTL_LAST             7
 
