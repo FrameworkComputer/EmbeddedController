@@ -597,7 +597,7 @@ void espi_init(void)
 	 * 011b: 50MHz
 	 * 100b: 66MHz
 	 */
-#ifdef IT83XX_ESPI_SLAVE_MAX_FREQ_CONFIGURABLE
+#ifdef IT83XX_ESPI_PERIPHERAL_MAX_FREQ_CONFIGURABLE
 	IT83XX_ESPI_GCAC1 = (IT83XX_ESPI_GCAC1 & ~0x7) | BIT(2);
 #endif
 	/* reset vw_index_flag at initialization */

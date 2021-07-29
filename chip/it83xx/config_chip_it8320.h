@@ -60,8 +60,11 @@
  * (include EC clock frequency) is succeed even CS# is low.
  */
 #define IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED
-/* The slave frequency is adjustable (bit[2-0] at register IT83XX_ESPI_GCAC1) */
-#define IT83XX_ESPI_SLAVE_MAX_FREQ_CONFIGURABLE
+/*
+ * The peripheral frequency is adjustable
+ * (bit[2-0] at register IT83XX_ESPI_GCAC1)
+ */
+#define IT83XX_ESPI_PERIPHERAL_MAX_FREQ_CONFIGURABLE
 /*
  * TODO(b/111480168): eSPI HW reset can't be used because the DMA address
  * gets set incorrectly resulting in a memory access exception.
