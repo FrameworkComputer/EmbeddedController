@@ -25,7 +25,7 @@ struct vw_channel_t {
 	uint8_t  valid_mask;    /* valid bit of signal */
 };
 
-/* VW settings after the master enables the VW channel. */
+/* VW settings after the controller enables the VW channel. */
 static const struct vw_channel_t en_vw_setting[] = {
 	/* EC sends SUS_ACK# = 1 VW to PCH. That does not apply to GLK SoC. */
 #ifndef CONFIG_CHIPSET_GEMINILAKE
@@ -35,14 +35,14 @@ static const struct vw_channel_t en_vw_setting[] = {
 #endif
 };
 
-/* VW settings after the master enables the OOB channel. */
+/* VW settings after the controller enables the OOB channel. */
 static const struct vw_channel_t en_oob_setting[] = {
 	{ESPI_SYSTEM_EVENT_VW_IDX_4,
 		VW_LEVEL_FIELD(0),
 		VW_VALID_FIELD(VW_IDX_4_OOB_RST_ACK)},
 };
 
-/* VW settings after the master enables the flash channel. */
+/* VW settings after the controller enables the flash channel. */
 static const struct vw_channel_t en_flash_setting[] = {
 	{ESPI_SYSTEM_EVENT_VW_IDX_5,
 		VW_LEVEL_FIELD(VW_IDX_5_BTLD_STATUS_DONE),
@@ -63,7 +63,7 @@ static const struct vw_channel_t vw_host_startup_setting[] = {
 
 /* VW signals used in eSPI (NOTE: must match order of enum espi_vw_signal). */
 static const struct vw_channel_t vw_channel_list[] = {
-	/* index 02h: master to slave. */
+	/* index 02h: controller to peripheral. */
 	VW_CHAN(VW_SLP_S3_L,
 		ESPI_SYSTEM_EVENT_VW_IDX_2,
 		VW_LEVEL_FIELD(VW_IDX_2_SLP_S3),
@@ -76,7 +76,7 @@ static const struct vw_channel_t vw_channel_list[] = {
 		ESPI_SYSTEM_EVENT_VW_IDX_2,
 		VW_LEVEL_FIELD(VW_IDX_2_SLP_S5),
 		VW_VALID_FIELD(VW_IDX_2_SLP_S5)),
-	/* index 03h: master to slave. */
+	/* index 03h: controller to peripheral. */
 	VW_CHAN(VW_SUS_STAT_L,
 		ESPI_SYSTEM_EVENT_VW_IDX_3,
 		VW_LEVEL_FIELD(VW_IDX_3_SUS_STAT),
@@ -89,7 +89,7 @@ static const struct vw_channel_t vw_channel_list[] = {
 		ESPI_SYSTEM_EVENT_VW_IDX_3,
 		VW_LEVEL_FIELD(VW_IDX_3_OOB_RST_WARN),
 		VW_VALID_FIELD(VW_IDX_3_OOB_RST_WARN)),
-	/* index 04h: slave to master. */
+	/* index 04h: peripheral to controller. */
 	VW_CHAN(VW_OOB_RST_ACK,
 		ESPI_SYSTEM_EVENT_VW_IDX_4,
 		VW_LEVEL_FIELD(VW_IDX_4_OOB_RST_ACK),
@@ -102,7 +102,7 @@ static const struct vw_channel_t vw_channel_list[] = {
 		ESPI_SYSTEM_EVENT_VW_IDX_4,
 		VW_LEVEL_FIELD(VW_IDX_4_PME),
 		VW_VALID_FIELD(VW_IDX_4_PME)),
-	/* index 05h: slave to master. */
+	/* index 05h: peripheral to controller. */
 	VW_CHAN(VW_ERROR_FATAL,
 		ESPI_SYSTEM_EVENT_VW_IDX_5,
 		VW_LEVEL_FIELD(VW_IDX_5_FATAL),
@@ -115,7 +115,7 @@ static const struct vw_channel_t vw_channel_list[] = {
 		ESPI_SYSTEM_EVENT_VW_IDX_5,
 		VW_LEVEL_FIELD(VW_IDX_5_BTLD_STATUS_DONE),
 		VW_VALID_FIELD(VW_IDX_5_BTLD_STATUS_DONE)),
-	/* index 06h: slave to master. */
+	/* index 06h: peripheral to controller. */
 	VW_CHAN(VW_SCI_L,
 		ESPI_SYSTEM_EVENT_VW_IDX_6,
 		VW_LEVEL_FIELD(VW_IDX_6_SCI),
@@ -132,17 +132,17 @@ static const struct vw_channel_t vw_channel_list[] = {
 		ESPI_SYSTEM_EVENT_VW_IDX_6,
 		VW_LEVEL_FIELD(VW_IDX_6_HOST_RST_ACK),
 		VW_VALID_FIELD(VW_IDX_6_HOST_RST_ACK)),
-	/* index 07h: master to slave. */
+	/* index 07h: controller to peripheral. */
 	VW_CHAN(VW_HOST_RST_WARN,
 		ESPI_SYSTEM_EVENT_VW_IDX_7,
 		VW_LEVEL_FIELD(VW_IDX_7_HOST_RST_WARN),
 		VW_VALID_FIELD(VW_IDX_7_HOST_RST_WARN)),
-	/* index 40h: slave to master. */
+	/* index 40h: peripheral to controller. */
 	VW_CHAN(VW_SUS_ACK,
 		ESPI_SYSTEM_EVENT_VW_IDX_40,
 		VW_LEVEL_FIELD(VW_IDX_40_SUS_ACK),
 		VW_VALID_FIELD(VW_IDX_40_SUS_ACK)),
-	/* index 41h: master to slave. */
+	/* index 41h: controller to peripheral. */
 	VW_CHAN(VW_SUS_WARN_L,
 		ESPI_SYSTEM_EVENT_VW_IDX_41,
 		VW_LEVEL_FIELD(VW_IDX_41_SUS_WARN),
@@ -155,7 +155,7 @@ static const struct vw_channel_t vw_channel_list[] = {
 		ESPI_SYSTEM_EVENT_VW_IDX_41,
 		VW_LEVEL_FIELD(VW_IDX_41_SLP_A),
 		VW_VALID_FIELD(VW_IDX_41_SLP_A)),
-	/* index 42h: master to slave. */
+	/* index 42h: controller to peripheral. */
 	VW_CHAN(VW_SLP_LAN,
 		ESPI_SYSTEM_EVENT_VW_IDX_42,
 		VW_LEVEL_FIELD(VW_IDX_42_SLP_LAN),
@@ -496,32 +496,32 @@ static void espi_enable_reset(void)
 	gpio_enable_interrupt(GPIO_ESPI_RESET_L);
 }
 
-/* Interrupt event of master enables the VW channel. */
+/* Interrupt event of controller enables the VW channel. */
 static void espi_vw_en_asserted(uint8_t evt)
 {
 	/*
-	 * Configure slave to master virtual wire outputs after receiving
-	 * the event of master enables the VW channel.
+	 * Configure peripheral to controller virtual wire outputs after
+	 * receiving the event of controller enables the VW channel.
 	 */
 	espi_configure_vw(en_vw_setting, ARRAY_SIZE(en_vw_setting));
 }
 
-/* Interrupt event of master enables the OOB channel. */
+/* Interrupt event of controller enables the OOB channel. */
 static void espi_oob_en_asserted(uint8_t evt)
 {
 	/*
-	 * Configure slave to master virtual wire outputs after receiving
-	 * the event of master enables the OOB channel.
+	 * Configure peripheral to controller virtual wire outputs after
+	 * receiving the event of controller enables the OOB channel.
 	 */
 	espi_configure_vw(en_oob_setting, ARRAY_SIZE(en_oob_setting));
 }
 
-/* Interrupt event of master enables the flash channel. */
+/* Interrupt event of controller enables the flash channel. */
 static void espi_flash_en_asserted(uint8_t evt)
 {
 	/*
-	 * Configure slave to master virtual wire outputs after receiving
-	 * the event of master enables the flash channel.
+	 * Configure peripheral to controller virtual wire outputs after
+	 * receiving the event of controller enables the flash channel.
 	 */
 	espi_configure_vw(en_flash_setting, ARRAY_SIZE(en_flash_setting));
 }
@@ -560,8 +560,8 @@ void espi_interrupt(void)
 			espi_isr[i](i);
 	}
 	/*
-	 * bit7: the slave has received a peripheral posted/completion.
-	 * This bit indicates the slave has received a packet from eSPI
+	 * bit7: the peripheral has received a peripheral posted/completion.
+	 * This bit indicates the peripheral has received a packet from eSPI
 	 * peripheral channel. We can check cycle type (bit[3-0] at ESPCTRL0)
 	 * and make corresponding modification if needed.
 	 */
@@ -590,7 +590,7 @@ void espi_enable_pad(int enable)
 void espi_init(void)
 {
 	/*
-	 * bit[2-0], the maximum frequency of operation supported by slave:
+	 * bit[2-0], the maximum frequency of operation supported by peripheral:
 	 * 000b: 20MHz
 	 * 001b: 25MHz
 	 * 010b: 33MHz

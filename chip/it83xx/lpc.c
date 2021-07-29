@@ -565,7 +565,7 @@ static void lpc_init(void)
 {
 	enum ec2i_message ec2i_r;
 
-	/* SPI slave interface is disabled */
+	/* SPI peripheral interface is disabled */
 	IT83XX_GCTRL_SSCR = 0;
 	/*
 	 * DLM 52k~56k size select enable.

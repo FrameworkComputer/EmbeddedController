@@ -49,7 +49,7 @@ static uint8_t out_msg[SPI_TX_MAX_FIFO_SIZE] __aligned(4);
 /* Parameters used by host protocols */
 static struct host_packet spi_packet;
 
-enum spi_slave_state_machine {
+enum spi_peripheral_state_machine {
 	/* Ready to receive next request */
 	SPI_STATE_READY_TO_RECV,
 	/* Receiving request */
@@ -60,7 +60,7 @@ enum spi_slave_state_machine {
 	SPI_STATE_RX_BAD,
 
 	SPI_STATE_COUNT,
-} spi_slv_state;
+} spi_peripheral_state;
 
 static const int spi_response_state[] = {
 	[SPI_STATE_READY_TO_RECV] = EC_SPI_OLD_READY,
@@ -72,9 +72,9 @@ BUILD_ASSERT(ARRAY_SIZE(spi_response_state) == SPI_STATE_COUNT);
 
 static void spi_set_state(int state)
 {
-	/* SPI slave state machine */
-	spi_slv_state = state;
-	/* Response spi slave state */
+	/* SPI peripheral state machine */
+	spi_peripheral_state = state;
+	/* Response spi peripheral state */
 	IT83XX_SPI_SPISRDR = spi_response_state[state];
 }
 
@@ -118,12 +118,12 @@ static void spi_response_host_data(uint8_t *out_msg_addr, int tx_size)
 
 	/*
 	 * After writing data to Tx FIFO is finished, this bit will
-	 * be to indicate the SPI slave controller.
+	 * be to indicate the SPI peripheral.
 	 */
 	IT83XX_SPI_TXFCR = IT83XX_SPI_TXFS;
 	/* End Tx FIFO access */
 	IT83XX_SPI_TXRXFAR = 0;
-	/* SPI slave read Tx FIFO */
+	/* SPI peripheral read Tx FIFO */
 	IT83XX_SPI_FCR = IT83XX_SPI_SPISRTXF;
 }
 
@@ -138,7 +138,7 @@ static void spi_send_response_packet(struct host_packet *pkt)
 {
 	int i, tx_size;
 
-	if (spi_slv_state != SPI_STATE_PROCESSING) {
+	if (spi_peripheral_state != SPI_STATE_PROCESSING) {
 		CPRINTS("The request data is not processing.");
 		return;
 	}
@@ -170,7 +170,7 @@ static void spi_host_request_data(uint8_t *in_msg_addr, int count)
 	 */
 
 	for (i = 0; i < count; i += 4)
-		/* Get data from master to buffer */
+		/* Get data from controller to buffer */
 		*(uint32_t *)(in_msg_addr + i) = IT83XX_SPI_RXFRDRB0;
 }
 
@@ -266,7 +266,7 @@ void spi_slv_int_handler(void)
 		 * sleep bit of SPI in S3 or lower.
 		 */
 		enable_sleep(SLEEP_MASK_SPI);
-		/* CS# is deasserted, so write clear all slave status */
+		/* CS# is deasserted, so write clear all peripheral status */
 		IT83XX_SPI_ISR = 0xff;
 	}
 	/*
@@ -276,7 +276,7 @@ void spi_slv_int_handler(void)
 	 * requested data.
 	 */
 	if (IT83XX_SPI_RX_VLISR & IT83XX_SPI_RVLI) {
-		/* write clear slave status */
+		/* write clear peripheral status */
 		IT83XX_SPI_RX_VLISR = IT83XX_SPI_RVLI;
 		/* Parse header for version of spi-protocol */
 		spi_parse_header();
@@ -341,9 +341,9 @@ static void spi_init(void)
 	spi_set_state(SPI_STATE_READY_TO_RECV);
 	/* Interrupt status register(write one to clear) */
 	IT83XX_SPI_ISR = 0xff;
-	/* SPI slave controller enable (after settings are ready) */
+	/* SPI peripheral enable (after settings are ready) */
 	IT83XX_SPI_SPISGCR = IT83XX_SPI_SPISCEN;
-	/* Enable SPI slave interrupt */
+	/* Enable SPI peripheral interrupt */
 	task_clear_pending_irq(IT83XX_IRQ_SPI_SLAVE);
 	task_enable_irq(IT83XX_IRQ_SPI_SLAVE);
 	/* Enable SPI chip select pin interrupt */
@@ -352,7 +352,7 @@ static void spi_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_INIT_SPI);
 
-/* reset slave SPI module */
+/* reset peripheral SPI module */
 static void spi_reset(void)
 {
 	/*
