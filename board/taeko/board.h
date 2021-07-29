@@ -11,12 +11,15 @@
 #include "compile_time_macros.h"
 
 /*
- * Early Taeko boards are not set up for vivaldi
+ * Taeko boards are set up for vivaldi
  */
-#undef CONFIG_KEYBOARD_VIVALDI
+#define CONFIG_KEYBOARD_VIVALDI
 
 /* Baseboard features */
 #include "baseboard.h"
+
+#define CONFIG_BRIGNUP
+#define CONFIG_SYSTEM_UNLOCKED
 
 /*
  * This will happen automatically on NPCX9 ES2 and later. Do not remove
@@ -27,28 +30,18 @@
 #define CONFIG_MP2964
 
 /* LED */
-#define CONFIG_LED_PWM
-#define CONFIG_LED_PWM_COUNT 2
-#undef CONFIG_LED_PWM_NEAR_FULL_COLOR
-#undef CONFIG_LED_PWM_SOC_ON_COLOR
-#undef CONFIG_LED_PWM_SOC_SUSPEND_COLOR
-#undef CONFIG_LED_PWM_LOW_BATT_COLOR
-#define CONFIG_LED_PWM_NEAR_FULL_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_SOC_ON_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_SOC_SUSPEND_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_LOW_BATT_COLOR EC_LED_COLOR_AMBER
+#define CONFIG_LED_ONOFF_STATES
 
 /* Sensors */
+
+/* TODO(b/194765820)
+ * Check if project support dynamic motion sensor count
+ */
+/* #define	CONFIG_DYNAMIC_MOTION_SENSOR_COUNT */
+
 #define CONFIG_ACCELGYRO_LSM6DSO	/* Base accel */
 #define CONFIG_ACCEL_LSM6DSO_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-
-/* TCS3400 ALS */
-#define CONFIG_ALS
-#define ALS_COUNT 1
-#define CONFIG_ALS_TCS3400
-#define CONFIG_ALS_TCS3400_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
 
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
@@ -59,7 +52,7 @@
 
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK \
-	(BIT(LID_ACCEL) | BIT(CLEAR_ALS))
+	(BIT(LID_ACCEL))
 
 /* Lid accel */
 #define CONFIG_LID_ANGLE
@@ -85,10 +78,9 @@
 
 #define CONFIG_IO_EXPANDER
 #define CONFIG_IO_EXPANDER_NCT38XX
-#define CONFIG_IO_EXPANDER_PORT_COUNT		4
+#define CONFIG_IO_EXPANDER_PORT_COUNT		1
 
 #define CONFIG_USB_PD_TCPM_PS8815
-#define CONFIG_USBC_RETIMER_INTEL_BB
 
 #define CONFIG_USBC_PPC_SYV682X
 #define CONFIG_USBC_PPC_NX20P3483
@@ -141,27 +133,18 @@
 #define GPIO_VOLUME_UP_L		GPIO_EC_VOLUP_BTN_ODL
 #define GPIO_WP_L			GPIO_EC_WP_ODL
 
-#define GPIO_ID_1_EC_KB_BL_EN		GPIO_EC_BATT_PRES_ODL
-
 /* System has back-lit keyboard */
 #define CONFIG_PWM_KBLIGHT
 
 /* I2C Bus Configuration */
-
 #define I2C_PORT_SENSOR		NPCX_I2C_PORT0_0
-
-#define I2C_PORT_USB_C0_C2_TCPC	NPCX_I2C_PORT1_0
+#define I2C_PORT_USB_C0_TCPC	NPCX_I2C_PORT1_0
 #define I2C_PORT_USB_C1_TCPC	NPCX_I2C_PORT4_1
-
-#define I2C_PORT_USB_C0_C2_PPC	NPCX_I2C_PORT2_0
+#define I2C_PORT_USB_C0_PPC	NPCX_I2C_PORT2_0
 #define I2C_PORT_USB_C1_PPC	NPCX_I2C_PORT6_1
-
-#define I2C_PORT_USB_C0_C2_BC12	NPCX_I2C_PORT2_0
+#define I2C_PORT_USB_C0_BC12	NPCX_I2C_PORT2_0
 #define I2C_PORT_USB_C1_BC12	NPCX_I2C_PORT6_1
-
-#define I2C_PORT_USB_C0_C2_MUX	NPCX_I2C_PORT3_0
 #define I2C_PORT_USB_C1_MUX	NPCX_I2C_PORT6_1
-
 #define I2C_PORT_BATTERY	NPCX_I2C_PORT5_0
 #define I2C_PORT_CHARGER	NPCX_I2C_PORT7_0
 #define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
@@ -171,21 +154,6 @@
 
 #define I2C_ADDR_MP2964_FLAGS	0x20
 
-/*
- * see b/174768555#comment22
- */
-#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x56
-#define USBC_PORT_C2_BB_RETIMER_I2C_ADDR	0x57
-
-/* Enabling Thunderbolt-compatible mode */
-#define CONFIG_USB_PD_TBT_COMPAT_MODE
-
-/* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
-
-/* Retimer */
-#define CONFIG_USBC_RETIMER_FW_UPDATE
-
 /* Thermal features */
 #define CONFIG_THERMISTOR
 #define CONFIG_TEMP_SENSOR
@@ -193,7 +161,8 @@
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
 
 /*
- * TODO: no fan control loop until sensors are tuned
+ * TODO:(b/194774929)
+ * no fan control loop until sensors are tuned
  */
 /* #define CONFIG_FANS			FAN_CH_COUNT */
 
@@ -221,6 +190,13 @@ enum adc_channel {
 enum temp_sensor_id {
 	TEMP_SENSOR_1_DDR_SOC,
 	TEMP_SENSOR_2_FAN,
+#if 0
+/*
+ * TOOD(b/194774929): need to update for real fan
+ */
+	TEMP_SENSOR_3_CHARGER,
+	TEMP_SENSOR_4_WWAN,
+#endif
 	TEMP_SENSOR_COUNT
 };
 
@@ -228,32 +204,24 @@ enum sensor_id {
 	LID_ACCEL = 0,
 	BASE_ACCEL,
 	BASE_GYRO,
-	CLEAR_ALS,
-	RGB_ALS,
 	SENSOR_COUNT
 };
 
 enum ioex_port {
 	IOEX_C0_NCT38XX = 0,
-	IOEX_C2_NCT38XX,
-	IOEX_ID_1_C0_NCT38XX,
-	IOEX_ID_1_C2_NCT38XX,
 	IOEX_PORT_COUNT
 };
 
 enum battery_type {
-	BATTERY_POWER_TECH,
-	BATTERY_LGC011,
-	BATTERY_TYPE_COUNT
+	BATTERY_SMP,
+	BATTERY_LGC,
+	BATTERY_SUNWODA,
+	BATTERY_TYPE_COUNT,
 };
 
 enum pwm_channel {
-	PWM_CH_LED2 = 0,		/* PWM0 (white charger) */
-	PWM_CH_LED3,			/* PWM1 (orange on DB) */
-	PWM_CH_LED1,			/* PWM2 (orange charger) */
-	PWM_CH_KBLIGHT,			/* PWM3 */
+	PWM_CH_KBLIGHT = 0,		/* PWM3 */
 	PWM_CH_FAN,			/* PWM5 */
-	PWM_CH_LED4,			/* PWM7 (white on DB) */
 	PWM_CH_COUNT
 };
 

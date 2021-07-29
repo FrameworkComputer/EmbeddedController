@@ -31,7 +31,7 @@ static const struct fan_conf fan_conf_0 = {
 };
 
 /*
- * TOOD(b/180681346): need to update for real fan
+ * TOOD(b/194774929): need to update for real fan
  *
  * Prototype fan spins at about 7200 RPM at 100% PWM.
  * Set minimum at around 30% PWM.
@@ -52,7 +52,7 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 #ifndef CONFIG_FANS
 
 /*
- * TODO(b/181271666): use static fan speeds until fan and sensors are
+ * TODO(b/194774929): use static fan speeds until fan and sensors are
  * tuned. for now, use:
  *
  *   AP off:  33%
