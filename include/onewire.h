@@ -10,7 +10,7 @@
  * functions are run at low priority, communication may be garbled.  However,
  * these functions are also slow enough (~1ms per call) that it's really not
  * desirable to put them at high priority.  So make sure you check the
- * confirmation code from the slave for any communication, and retry a few
+ * confirmation code from the peripheral for any communication, and retry a few
  * times in case of failure.
  */
 

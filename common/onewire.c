@@ -54,7 +54,10 @@ static int readbit(void)
 	/* Output low */
 	output0(T_RL);
 
-	/* Delay to let slave release the line if it wants to send a 1-bit */
+	/*
+	 * Delay to let peripheral release the line if it wants to send
+	 * a 1-bit
+	 */
 	udelay(T_MSR - T_RL);
 
 	/* Read bit */
@@ -100,14 +103,14 @@ static void writebit(int bit)
 
 int onewire_reset(void)
 {
-	/* Start transaction with master reset pulse */
+	/* Start transaction with controller reset pulse */
 	output0(T_RSTL);
 
 	/* Wait for presence detect sample time.
 	 *
 	 * (Alternately, we could poll waiting for a 1-bit indicating our pulse
 	 * has let go, then poll up to max time waiting for a 0-bit indicating
-	 * the slave has responded.)
+	 * the peripheral has responded.)
 	 */
 	udelay(T_MSP);
 
