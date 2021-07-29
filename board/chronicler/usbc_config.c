@@ -17,6 +17,7 @@
 #include "driver/ppc/sn5s330_public.h"
 #include "driver/ppc/syv682x_public.h"
 #include "driver/retimer/bb_retimer_public.h"
+#include "driver/retimer/ps8811.h"
 #include "driver/tcpm/ps8xxx_public.h"
 #include "driver/tcpm/rt1715_public.h"
 #include "driver/tcpm/tusb422_public.h"
@@ -311,6 +312,68 @@ static void ps8815_reset(void)
 		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f now %02x", val);
 }
+
+static void ps8815_setup_eq(void)
+{
+	int rv;
+
+	/* TX1 EQ 19db / TX2 EQ 19db */
+	rv = i2c_write8(tcpc_config[USBC_PORT_C1].i2c_info.port,
+		tcpc_config[USBC_PORT_C1].i2c_info.addr_flags, 0x20, 0x77);
+
+	/* RX1 EQ 12db / RX2 EQ 13db */
+	rv |= i2c_write8(tcpc_config[USBC_PORT_C1].i2c_info.port,
+		tcpc_config[USBC_PORT_C1].i2c_info.addr_flags, 0x22, 0x32);
+
+	/* Swing level for upstream port output */
+	rv |= i2c_write8(tcpc_config[USBC_PORT_C1].i2c_info.port,
+		tcpc_config[USBC_PORT_C1].i2c_info.addr_flags, 0xc4, 0x03);
+
+	if (rv)
+		CPRINTS("%s fail!", __func__);
+}
+
+static void ps8811_setup_eq(void)
+{
+	int rv;
+
+	/* AEQ 12db */
+	rv = i2c_write8(I2C_PORT_USB_1_MIX,
+		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0x01, 0x26);
+	/* ADE 2.1db */
+	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
+		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0x02, 0x60);
+	/* BEQ 10.5db */
+	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
+		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0x05, 0x16);
+	/* BDE 2.1db */
+	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
+		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0x06, 0x63);
+	/* Channel A swing level */
+	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
+		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0x66, 0x20);
+	/* Channel B swing level */
+	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
+		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0xa4, 0x03);
+	/* PS level foe B channel */
+	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
+		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0xa5, 0x83);
+	/* DE level foe B channel */
+	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
+		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0xa6, 0x14);
+
+	if (rv)
+		CPRINTS("%s fail!", __func__);
+}
+
+/* Called on AP S5 -> S0 transition */
+void board_ps8xxx_init(void)
+{
+	CPRINTS("%s", __func__);
+	ps8815_setup_eq();
+	ps8811_setup_eq();
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_ps8xxx_init, HOOK_PRIO_LAST);
 
 void board_reset_pd_mcu(void)
 {
