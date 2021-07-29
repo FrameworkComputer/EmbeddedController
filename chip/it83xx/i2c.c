@@ -651,10 +651,15 @@ int chip_i2c_xfer(int port, uint16_t addr_flags,
 	if (out_size == 0 && in_size == 0)
 		return EC_SUCCESS;
 
-	if (pd->i2ccs) {
-		if ((flags & I2C_XFER_SINGLE) == I2C_XFER_SINGLE)
-			flags &= ~I2C_XFER_START;
-	}
+	/*
+	 * Make the below i2c transaction work:
+	 * - i2c_xfer with I2C_XFER_START flag
+	 * - i2c_xfer with I2C_XFER_START flag
+	 * - xxx
+	 * - i2c_xfer with I2C_XFER_STOP flag
+	 */
+	if (pd->i2ccs)
+		flags &= ~I2C_XFER_START;
 
 	/* Copy data to port struct */
 	pd->out = out;
