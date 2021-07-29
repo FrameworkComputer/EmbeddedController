@@ -32,7 +32,7 @@ enum spi_clock_mode {
 struct spi_device_t {
 	/*
 	 * SPI port the device is connected to.
-	 * On some architecture, this is SPI master port index,
+	 * On some architecture, this is SPI controller port index,
 	 * on other the SPI port index directly.
 	 */
 	uint8_t port;
