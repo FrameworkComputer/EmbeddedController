@@ -61,6 +61,8 @@ static const uint16_t action_scancodes[] = {
 	[TK_KBD_BKLIGHT_DOWN] = SCANCODE_KBD_BKLIGHT_DOWN,
 	[TK_KBD_BKLIGHT_UP] = SCANCODE_KBD_BKLIGHT_UP,
 	[TK_PRIVACY_SCRN_TOGGLE] = SCANCODE_PRIVACY_SCRN_TOGGLE,
+	[TK_MICMUTE] = SCANCODE_MICMUTE,
+	[TK_KBD_BKLIGHT_TOGGLE] = SCANCODE_KBD_BKLIGHT_TOGGLE,
 };
 
 static const struct ec_response_keybd_config *vivaldi_keybd;
