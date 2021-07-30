@@ -531,6 +531,7 @@ static void board_chipset_shutdown(void)
 #endif
 	if (version > 6)
 		gpio_set_level(GPIO_EN_INVPWR, 0);
+
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 		board_chipset_shutdown,
