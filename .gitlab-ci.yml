@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-image: sjg20/bionic-20200526-7may21b
+image: sjg20/bionic-20200526-30jul21
 
 # You can update that image using this repo:
 #   https://gitlab.com/zephyr-ec/gitlab-ci-runner/-/tree/main
@@ -31,7 +31,8 @@ before_script:
   - export MODULES_DIR="$HOME/modules"
   - mkdir -p "${MODULES_DIR}"
   - export ZEPHYR_BASE="$HOME/zephyr"
-  - git clone -b chromeos-v2.5 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_BASE}"
+  - git clone -b chromeos-v2.5 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_BASE}25"
+  - git clone -b chromeos-v2.6 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_BASE}26"
   - git clone -b chromeos-v2.5 https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis "${MODULES_DIR}/cmsis"
   - git clone -b chromeos-v2.5 https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32 "${MODULES_DIR}/hal_stm32"
   - ln -s "$(pwd)" "${MODULES_DIR}/ec"
@@ -43,12 +44,14 @@ before_script:
 
 # Users of this template must set:
 # $PROJECT to the project to build in zephyr/projects. E.g. "lazor")
+# $VERSION to the Zephyr version to use (e.g. 25 for 2.5, 26 for 2.6)
 # $PROJECT_SUBDIR if it is in a subdirectory. E.g. "trogdor/"
 .build_template: &build_template
   stage: build
   script:
-    - zmake --zephyr-base "${ZEPHYR_BASE}" --modules-dir "${MODULES_DIR}"
-      -l DEBUG configure -b -B "${BUILD_DIR}/${PROJECT}" -t ${TOOLCHAIN:-zephyr}
+    - zmake --zephyr-base "${ZEPHYR_BASE}${VERSION}"
+      --modules-dir "${MODULES_DIR}" -l DEBUG configure -b
+      -B "${BUILD_DIR}/${PROJECT}" -t ${TOOLCHAIN:-zephyr}
       zephyr/projects/${PROJECT_SUBDIR}${PROJECT}
     - ls "${BUILD_DIR}/${PROJECT}" "${BUILD_DIR}/${PROJECT}/output"
   artifacts:
@@ -60,38 +63,45 @@ delbin:
   variables:
     PROJECT: "delbin"
     PROJECT_SUBDIR: "volteer/"
+    VERSION: 25
   <<: *build_template
 
 hayato:
   variables:
     PROJECT: "hayato"
     PROJECT_SUBDIR: "asurada/"
+    VERSION: 26
   <<: *build_template
 
 it8xxx2_evb:
   variables:
     PROJECT: "it8xxx2_evb"
+    VERSION: 26
   <<: *build_template
 
 kohaku:
   variables:
     PROJECT: "kohaku"
+    VERSION: 25
   <<: *build_template
 
 lazor:
   variables:
     PROJECT: "lazor"
     PROJECT_SUBDIR: "trogdor/"
+    VERSION: 25
   <<: *build_template
 
 native_posix:
   variables:
     PROJECT: "posix-ec"
     TOOLCHAIN: "host"
+    VERSION: 25
   <<: *build_template
 
 volteer:
   variables:
     PROJECT: "volteer"
     PROJECT_SUBDIR: "volteer/"
+    VERSION: 25
   <<: *build_template
