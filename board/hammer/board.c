@@ -345,11 +345,34 @@ static const struct ec_response_keybd_config zed_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
+static const struct ec_response_keybd_config bland_kb = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,
+		TK_REFRESH,
+		TK_FULLSCREEN,
+		TK_OVERVIEW,
+		TK_BRIGHTNESS_DOWN,
+		TK_BRIGHTNESS_UP,
+		/*
+		 * TODO: this is a placeholder key before MIC_MUTE
+		 * implemented.
+		 */
+		TK_SNAPSHOT,
+		TK_VOL_MUTE,
+		TK_VOL_DOWN,
+		TK_VOL_UP,
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
 __override
 const struct ec_response_keybd_config *board_vivaldi_keybd_config(void)
 {
 	if (IS_ENABLED(BOARD_ZED) || IS_ENABLED(BOARD_STAR))
 		return &zed_kb;
+	if (IS_ENABLED(BOARD_BLAND))
+		return &bland_kb;
 
 	return NULL;
 }
