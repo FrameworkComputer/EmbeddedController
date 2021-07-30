@@ -194,6 +194,21 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
+void reconfigure_kbbl_pwm_frquency(void)
+{
+	int active_low = pwm_channels[PWM_CH_KBL].flags & PWM_CONFIG_ACTIVE_LOW;
+	int clock_low = pwm_channels[PWM_CH_KBL].flags & PWM_CONFIG_ALT_CLOCK;
+
+	pwm_slp_en(pwm_channels[PWM_CH_KBL].channel, 0);
+
+	MCHP_PWM_CFG(pwm_channels[PWM_CH_KBL].channel) = (3 << 3) |    /* Pre-divider = 4 */
+			      (active_low ? BIT(2) : 0) |
+			      (clock_low  ? BIT(1) : 0);
+
+	pwm_set_duty(PWM_CH_KBL, 0);
+	CPRINTS("reconfigure kbbl complete.");
+}
+
 #ifdef HAS_TASK_PDCMD
 /* Exchange status with PD MCU. */
 static void pd_mcu_interrupt(enum gpio_signal signal)
@@ -501,6 +516,8 @@ static void board_init(void)
 
 	gpio_enable_interrupt(GPIO_SOC_ENBKL);
 	gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);
+
+	reconfigure_kbbl_pwm_frquency();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT + 1);
 
