@@ -23,7 +23,11 @@ struct mpu_entry mpu_entries[NR_MPU_ENTRIES] = {
 #endif
 	/* For SCP sys */
 	{0x70000000, 0x80000000, MPU_ATTR_W | MPU_ATTR_R},
+#ifdef CHIP_VARIANT_MT8195
+	{0x10000000, 0x11400000, MPU_ATTR_C | MPU_ATTR_W | MPU_ATTR_R},
+#else
 	{0x10000000, 0x11400000, MPU_ATTR_W | MPU_ATTR_R},
+#endif
 };
 
 #include "gpio_list.h"
