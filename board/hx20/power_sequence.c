@@ -137,7 +137,9 @@ static void chipset_force_g3(void)
 	gpio_set_level(GPIO_SYSON, 0);
 	/* keep pch power for wake source or vpro type */
 	if (!keep_pch_power() || me_change) {
+		
 		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
+
 		gpio_set_level(GPIO_PCH_PWR_EN, 0);
 		gpio_set_level(GPIO_PCH_DPWROK, 0);
 		gpio_set_level(GPIO_PCH_PWRBTN_L, 0);
@@ -176,6 +178,8 @@ int board_chipset_power_on(void)
 	gpio_set_level(GPIO_PCH_PWR_EN, 1);
 
 	msleep(10);
+	/* Need to configure the retimer recovery path before RSMRST is released but after PCH_PWR_EN is up */
+	cypd_set_retimer_power(POWER_G3S5);
 
 	gpio_set_level(GPIO_PCH_PWRBTN_L, 1);
 
@@ -448,7 +452,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (board_chipset_power_on()) {
 			cancel_board_power_off();
 			CPRINTS("PH G3S5->S5");
-			set_retimer_power(POWER_S5);
+			
 			return POWER_S5;
 		} else {
 			return POWER_G3;
@@ -459,7 +463,7 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("PH S5S3");
 
         gpio_set_level(GPIO_SYSON, 1);
-		set_retimer_power(POWER_S3);
+		cypd_set_power_active(POWER_S0);
         /* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
 		CPRINTS("PH S5S3->S3");
@@ -504,7 +508,6 @@ enum power_state power_handle_state(enum power_state state)
 		power_button_enable_led(0);
 
 		me_gpio_change(GPIO_FLAG_NONE);
-		set_retimer_power(POWER_S0);
 		CPRINTS("PH S3S0->S0");
         return POWER_S0;
 
@@ -518,7 +521,6 @@ enum power_state power_handle_state(enum power_state state)
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 		me_gpio_change(GPIO_PULL_DOWN);
 		f75303_set_enabled(0);
-		set_retimer_power(POWER_S3);
 		return POWER_S3;
 		break;
 
@@ -526,7 +528,7 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("PH S3S5");
 		gpio_set_level(GPIO_SYSON, 0);
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
-		set_retimer_power(POWER_S5);
+		cypd_set_power_active(POWER_S5);
 		return POWER_S5;
 		break;
 
@@ -540,7 +542,6 @@ enum power_state power_handle_state(enum power_state state)
 				return POWER_G3S5;
 		}
 #endif
-
 		chipset_force_g3();
 		/* clear suspend flag when system shutdown */
 		power_state_clear(EC_PS_ENTER_S0ix |
@@ -548,7 +549,8 @@ enum power_state power_handle_state(enum power_state state)
 		if (!extpower_is_present()) {
 			board_power_off();
 		}
-		set_retimer_power(POWER_G3);
+		/* retimer power needs to be tied to PCH_PWR_EN */
+		cypd_set_retimer_power(POWER_G3); 
 		return POWER_G3;
 		break;
 	}

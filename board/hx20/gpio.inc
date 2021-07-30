@@ -103,9 +103,9 @@ GPIO(EC_I2C06_PD_SDA, PIN(0132),  GPIO_INPUT)
 
 
 /* PD controller */
-GPIO_INT(EC_PD_INTA_L,    PIN(0115), GPIO_INT_FALLING, pd_chip_interrupt)
-GPIO_INT(EC_PD_INTB_L,    PIN(0127), GPIO_INT_FALLING, pd_chip_interrupt)
-GPIO_INT(AC_PRESENT_PD_L, PIN(013),  GPIO_INT_BOTH, pd_chip_interrupt)
+GPIO_INT(EC_PD_INTA_L,    PIN(0115), GPIO_INT_FALLING, pd0_chip_interrupt)
+GPIO_INT(EC_PD_INTB_L,    PIN(0127), GPIO_INT_FALLING, pd1_chip_interrupt)
+GPIO(AC_PRESENT_PD_L,     PIN(013),  GPIO_INPUT)
 GPIO_INT(TYPEC0_VBUS_ON_EC,     PIN(0144), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
 GPIO_INT(TYPEC1_VBUS_ON_EC,     PIN(0143), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
 GPIO_INT(TYPEC2_VBUS_ON_EC,     PIN(0142), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
