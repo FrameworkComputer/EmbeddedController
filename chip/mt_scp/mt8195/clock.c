@@ -115,6 +115,10 @@ static uint32_t clock_ulposc_measure_freq(uint32_t osc)
 {
 	uint32_t result = 0;
 	int cnt;
+	uint32_t cali_0 = AP_CLK26CALI_0;
+	uint32_t cali_1 = AP_CLK26CALI_1;
+	uint32_t dbg_cfg = AP_CLK_DBG_CFG;
+	uint32_t misc_cfg = AP_CLK_MISC_CFG_0;
 
 	/* Set ckgen_load_cnt: CLK26CALI_1[25:16] */
 	AP_CLK26CALI_1 = CFG_CKGEN_LOAD_CNT;
@@ -147,6 +151,11 @@ static uint32_t clock_ulposc_measure_freq(uint32_t osc)
 			break;
 		}
 	}
+
+	AP_CLK26CALI_0 = cali_0;
+	AP_CLK26CALI_1 = cali_1;
+	AP_CLK_DBG_CFG = dbg_cfg;
+	AP_CLK_MISC_CFG_0 = misc_cfg;
 
 	/* disable freq meter */
 	AP_CLK26CALI_0 &= ~CFG_FREQ_METER_ENABLE;
