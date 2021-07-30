@@ -19,6 +19,8 @@ GPIO_INT(PMIC_EC_RESETB,    PIN(F, 3), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL
          power_signal_interrupt)
 GPIO_INT(WARM_RESET_REQ,    PIN(D, 3), GPIO_INT_RISING | GPIO_PULL_DOWN | GPIO_SEL_1P8V,
          chipset_reset_request_interrupt)
+GPIO_INT_RW(ACCEL_INT_ODL,  PIN(J, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V,
+	 bmi160_interrupt)
 GPIO_INT_RO(BOOTBLOCK_EN_L, PIN(J, 1), GPIO_INT_RISING | GPIO_SEL_1P8V,
          emmc_ap_jump_to_bl)
 GPIO_INT(SPI0_CS,           PIN(M, 5), GPIO_INT_FALLING,
@@ -34,7 +36,6 @@ GPIO_INT(AP_EC_WATCHDOG_L,  PIN(C, 7), GPIO_INT_FALLING | GPIO_SEL_1P8V,
 GPIO_INT(UART1_RX,          PIN(B, 0), GPIO_INT_FALLING,
          uart_deepsleep_interrupt) /* UART_DEBUG_TX_EC_RX */
 /* Unimplemented interrupts */
-GPIO(ACCEL_INT_ODL,         PIN(J, 2), GPIO_INPUT)
 GPIO(TABLET_MODE_L,         PIN(J, 7), GPIO_INPUT)
 GPIO(VOLUME_DOWN_L,         PIN(D, 5), GPIO_INPUT)
 GPIO(VOLUME_UP_L,           PIN(D, 6), GPIO_INPUT)
