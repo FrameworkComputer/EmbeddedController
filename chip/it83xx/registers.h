@@ -217,7 +217,7 @@
 #elif defined(CHIP_FAMILY_IT8XXX1) || defined(CHIP_FAMILY_IT8XXX2)
 /* Group 21 */
 #define IT83XX_IRQ_AUDIO_IF       170
-#define IT83XX_IRQ_SPI_SLAVE      171
+#define IT83XX_IRQ_SPI_PERIPHERAL 171
 #define IT83XX_IRQ_DSP_ENGINE     172
 #define IT83XX_IRQ_NN_ENGINE      173
 #define IT83XX_IRQ_USBPD2         174

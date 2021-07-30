@@ -511,12 +511,12 @@ int FLASH_DMA_CODE crec_flash_physical_erase(int offset, int size)
 		 * EC still need to handle AP's EC_CMD_GET_COMMS_STATUS command
 		 * during erasing.
 		 */
-#ifdef IT83XX_IRQ_SPI_SLAVE
+#ifdef IT83XX_IRQ_SPI_PERIPHERAL
 		if (IS_ENABLED(CONFIG_SPI) &&
 		    IS_ENABLED(HAS_TASK_HOSTCMD) &&
 		    IS_ENABLED(CONFIG_HOST_COMMAND_STATUS)) {
 			if (IT83XX_SPI_RX_VLISR & IT83XX_SPI_RVLI)
-				task_trigger_irq(IT83XX_IRQ_SPI_SLAVE);
+				task_trigger_irq(IT83XX_IRQ_SPI_PERIPHERAL);
 		}
 #endif
 	}

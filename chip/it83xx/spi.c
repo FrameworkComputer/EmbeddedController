@@ -234,7 +234,7 @@ void spi_event(enum gpio_signal signal)
 	}
 }
 
-void spi_slv_int_handler(void)
+void spi_peripheral_int_handler(void)
 {
 	if (IS_ENABLED(CONFIG_BOOTBLOCK) &&
 	    (IT83XX_SPI_ISR & IT83XX_SPI_RX_FIFO_FULL) &&
@@ -283,7 +283,7 @@ void spi_slv_int_handler(void)
 	}
 
 	/* Clear the interrupt status */
-	task_clear_pending_irq(IT83XX_IRQ_SPI_SLAVE);
+	task_clear_pending_irq(IT83XX_IRQ_SPI_PERIPHERAL);
 }
 
 static void spi_init(void)
@@ -344,8 +344,8 @@ static void spi_init(void)
 	/* SPI peripheral enable (after settings are ready) */
 	IT83XX_SPI_SPISGCR = IT83XX_SPI_SPISCEN;
 	/* Enable SPI peripheral interrupt */
-	task_clear_pending_irq(IT83XX_IRQ_SPI_SLAVE);
-	task_enable_irq(IT83XX_IRQ_SPI_SLAVE);
+	task_clear_pending_irq(IT83XX_IRQ_SPI_PERIPHERAL);
+	task_enable_irq(IT83XX_IRQ_SPI_PERIPHERAL);
 	/* Enable SPI chip select pin interrupt */
 	gpio_clear_pending_interrupt(GPIO_SPI0_CS);
 	gpio_enable_interrupt(GPIO_SPI0_CS);

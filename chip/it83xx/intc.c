@@ -108,8 +108,8 @@ void intc_cpu_int_group_12(void)
 #endif
 #endif
 #ifdef CONFIG_SPI
-	case IT83XX_IRQ_SPI_SLAVE:
-		spi_slv_int_handler();
+	case IT83XX_IRQ_SPI_PERIPHERAL:
+		spi_peripheral_int_handler();
 		break;
 #endif
 	default:
