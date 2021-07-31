@@ -16,6 +16,7 @@ GPIO_INT(WP,              PIN(B, 7), GPIO_INT_BOTH, wp_event)
 #endif
 
 /* Inputs */
+GPIO_INT(SLP_ALT_DEV_L,   PIN(D,14), GPIO_INT_BOTH, slp_event)
 /*
  * The S4 and SUS sleep lines are unused in code, but are maintained in this
  * gpio list to ensure that they are not repurposed. This is because these
