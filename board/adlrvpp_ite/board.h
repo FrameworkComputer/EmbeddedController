@@ -80,6 +80,10 @@
 #define GPIO_FAN_POWER_EN	GPIO_EC_THRM_SEN_PWRGATE_N
 #define GPIO_ALL_SYS_PWRGD	GPIO_ALL_SYS_PWRGD_EC
 
+/* Increase EC speed */
+#undef PLL_CLOCK
+#define PLL_CLOCK	96000000
+
 #ifndef __ASSEMBLER__
 
 enum adlrvp_i2c_channel {
