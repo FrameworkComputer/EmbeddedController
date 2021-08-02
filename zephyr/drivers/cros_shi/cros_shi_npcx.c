@@ -814,10 +814,10 @@ static int shi_npcx_init(const struct device *dev)
 		return ret;
 	}
 
-	/*
-	 * TODO: for npcx9, HIF_TYP_SEL in DEVCNT register should be set
-	 * by firmware because the BOOTER no longer touches it.
-	 */
+	/* If booter doesn't set the host interface type */
+	if (!NPCX_BOOTER_IS_HIF_TYPE_SET()) {
+		npcx_host_interface_sel(NPCX_HIF_TYPE_ESPI_SHI);
+	}
 
 	/*
 	 * SHICFG1 (SHI Configuration 1) setting
