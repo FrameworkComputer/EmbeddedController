@@ -64,7 +64,7 @@ export STATIC_VERSION
 #    a ccache issue.
 
 # commands to build all targets
-cmd_libec = $(LD) -r $(LD_R_FLAGS) $^ -o $@.1.o ${silent_err} && \
+cmd_libec = $(LD) -r $^ -o $@.1.o ${silent_err} && \
 	$(OBJCOPY) --localize-hidden $@.1.o $@.2.o ${silent_err} && \
 	$(AR) scr $@ $@.2.o ${silent_err}
 cmd_lds = $(CPP) -P -C -MMD -MF $@.d -MT $@ $(CPPFLAGS) $< -o $@
