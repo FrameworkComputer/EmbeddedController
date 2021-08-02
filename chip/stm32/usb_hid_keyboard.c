@@ -541,7 +541,8 @@ static int hid_keyboard_get_report(uint8_t report_id, uint8_t report_type,
 #ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
 	if (report_type == REPORT_TYPE_FEATURE) {
 		*buffer_ptr = (uint8_t *)feature_report;
-		*buffer_size = sizeof(feature_report);
+		*buffer_size = (sizeof(uint32_t) *
+				CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS);
 		return 0;
 	}
 #endif
