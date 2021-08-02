@@ -149,9 +149,19 @@ struct motion_sensor_t motion_sensors[] = {
 };
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
+static bool board_is_convertible(void)
+{
+	int sku = system_get_sku_id();
+
+	return sku == 1;
+}
+
 int board_sensor_at_360(void)
 {
-	return !gpio_get_level(GMR_TABLET_MODE_GPIO_L);
+	if (board_is_convertible())
+		return !gpio_get_level(GMR_TABLET_MODE_GPIO_L);
+
+	return 0;
 }
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
 /*
@@ -356,6 +366,24 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_BC12_EC_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+#ifndef VARIANT_KUKUI_NO_SENSORS
+static void board_motion_init(void)
+{
+	if (!board_is_convertible()) {
+		/* Disable motion sense. */
+		motion_sensor_count = 0;
+		gpio_disable_interrupt(GPIO_ACCEL_INT_ODL);
+		gpio_set_flags(GPIO_ACCEL_INT_ODL, GPIO_INPUT);
+		/* Disable tablet mode. */
+		tablet_set_mode(0, TABLET_TRIGGER_LID);
+		gmr_tablet_switch_disable();
+		gpio_set_flags(GPIO_TABLET_MODE_L,
+				GPIO_INPUT | GPIO_PULL_UP);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_motion_init, HOOK_PRIO_DEFAULT + 1);
+#endif /* VARIANT_KUKUI_NO_SENSORS */
 
 /* Vconn control for integrated ITE TCPC */
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
