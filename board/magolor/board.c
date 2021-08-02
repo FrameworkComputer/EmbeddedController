@@ -177,14 +177,13 @@ __override const struct ec_response_keybd_config
 *board_vivaldi_keybd_config(void)
 {
 	if (get_cbi_fw_config_numeric_pad()) {
-		if (system_get_board_version() >= 6 ||
-		    gpio_get_level(GPIO_EC_VIVALDIKEYBOARD_ID))
+		if (gpio_get_level(GPIO_EC_VIVALDIKEYBOARD_ID))
 			return &magma_keybd;
 		else
 			return &magpie_keybd;
 	}
 	else {
-		if (system_get_board_version() >= 5)
+		if (gpio_get_level(GPIO_EC_VIVALDIKEYBOARD_ID))
 			return &magister_keybd;
 		else
 			return &magolor_keybd;
