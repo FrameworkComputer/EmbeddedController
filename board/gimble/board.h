@@ -155,6 +155,7 @@
 #undef CONFIG_USBC_RETIMER_FW_UPDATE
 
 /* Thermal features */
+#define CONFIG_FANS FAN_CH_COUNT
 #define CONFIG_THERMISTOR
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_POWER_GPIO	GPIO_SEQ_EC_DSW_PWROK
@@ -167,7 +168,8 @@
 /*
  * TODO(b/181271666): no fan control loop until sensors are tuned
  */
-/* #define CONFIG_FANS			FAN_CH_COUNT */
+/* Fan features */
+#define CONFIG_CUSTOM_FAN_CONTROL
 
 /* Charger defines */
 #define CONFIG_CHARGER_BQ25720
