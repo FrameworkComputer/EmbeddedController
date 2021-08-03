@@ -965,6 +965,7 @@ enum tbt_compat_cable_speed get_tbt_cable_speed(int port)
 		max_tbt_speed : cable_tbt_speed;
 }
 
+/* Note: Assumes that pins have already been set in safe state */
 int enter_tbt_compat_mode(int port, enum tcpci_msg_type sop,
 			uint32_t *payload)
 {
@@ -984,13 +985,6 @@ int enter_tbt_compat_mode(int port, enum tcpci_msg_type sop,
 	payload[0] = pd_dfp_enter_mode(port, enter_mode_sop, USB_VID_INTEL, 0) |
 		     VDO_CMDT(CMDT_INIT) |
 		     VDO_SVDM_VERS(pd_get_vdo_ver(port, enter_mode_sop));
-
-	/*
-	 * Enter safe mode before sending Enter mode SOP/SOP'/SOP''
-	 * Ref: Tiger Lake Platform PD Controller Interface Requirements for
-	 * Integrated USB C, section A.1.2 TBT as DFP.
-	 */
-	usb_mux_set_safe_mode(port);
 
 	/* For TBT3 Cable Enter Mode Command, number of Objects is 1 */
 	if ((sop == TCPCI_MSG_SOP_PRIME) ||
@@ -1237,7 +1231,7 @@ __overridable uint8_t get_dp_pin_mode(int port)
 	return pd_dfp_dp_get_pin_mode(port, dp_status[port]);
 }
 
-static mux_state_t svdm_dp_get_mux_mode(int port)
+mux_state_t svdm_dp_get_mux_mode(int port)
 {
 	int pin_mode = get_dp_pin_mode(port);
 	/* Default dp_port_mf_allow is true */
@@ -1259,6 +1253,7 @@ static mux_state_t svdm_dp_get_mux_mode(int port)
 		return USB_PD_MUX_DP_ENABLED;
 }
 
+/* Note: Assumes that pins have already been set in safe state if necessary */
 __overridable int svdm_dp_config(int port, uint32_t *payload)
 {
 	int opos = pd_alt_mode(port, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
@@ -1277,17 +1272,6 @@ __overridable int svdm_dp_config(int port, uint32_t *payload)
 		return 0;
 
 	CPRINTS("pin_mode: %x, mf: %d, mux: %d", pin_mode, mf_pref, mux_mode);
-
-	/*
-	 * Place the USB Type-C pins that are to be re-configured to DisplayPort
-	 * Configuration into the Safe state. For USB_PD_MUX_DOCK, the
-	 * superspeed signals can remain connected. For USB_PD_MUX_DP_ENABLED,
-	 * disconnect the superspeed signals here, before the pins are
-	 * re-configured to DisplayPort (in svdm_dp_post_config, when we receive
-	 * the config ack).
-	 */
-	if (mux_mode == USB_PD_MUX_DP_ENABLED)
-		usb_mux_set_safe_mode(port);
 
 	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
 			 CMD_DP_CONFIG | VDO_OPOS(opos));

@@ -786,13 +786,31 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 			}
 			break;
 		case CMD_DP_STATUS:
-			/* DP status response & UFP's DP attention have same
-			   payload */
+			/*
+			 * Note: DP status response & UFP's DP attention have
+			 * the same payload
+			 */
 			dfp_consume_attention(port, payload);
-			if (modep && modep->opos)
+
+			if (modep && modep->opos) {
+				/*
+				 * Place the USB Type-C pins that are to be
+				 * re-configured to DisplayPort Configuration
+				 * into the Safe state. For USB_PD_MUX_DOCK,
+				 * the superspeed signals can remain connected.
+				 * For USB_PD_MUX_DP_ENABLED, disconnect the
+				 * superspeed signals here, before the pins are
+				 * re-configured to DisplayPort (in
+				 * svdm_dp_post_config, when we receive the
+				 * config ack).
+				 */
+				if (svdm_dp_get_mux_mode(port) ==
+							USB_PD_MUX_DP_ENABLED)
+					usb_mux_set_safe_mode(port);
 				rsize = modep->fx->config(port, payload);
-			else
+			} else {
 				rsize = 0;
+			}
 			break;
 		case CMD_DP_CONFIG:
 			if (modep && modep->opos && modep->fx->post_config)

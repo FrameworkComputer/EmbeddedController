@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "assert.h"
+#include "atomic.h"
 #include "usb_common.h"
 #include "usb_dp_alt_mode.h"
 #include "usb_pd.h"
@@ -31,8 +32,10 @@ enum dp_states {
 	DP_ENTER_ACKED,
 	DP_ENTER_NAKED,
 	DP_STATUS_ACKED,
+	DP_PREPARE_CONFIG,
 	DP_ACTIVE,
 	DP_ENTER_RETRY,
+	DP_PREPARE_EXIT,
 	DP_INACTIVE,
 	DP_STATE_COUNT
 };
@@ -45,20 +48,31 @@ static enum dp_states dp_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 static const uint8_t state_vdm_cmd[DP_STATE_COUNT] = {
 	[DP_START] = CMD_ENTER_MODE,
 	[DP_ENTER_ACKED] = CMD_DP_STATUS,
-	[DP_STATUS_ACKED] = CMD_DP_CONFIG,
-	[DP_ACTIVE] = CMD_EXIT_MODE,
-	[DP_ENTER_NAKED] = CMD_EXIT_MODE,
+	[DP_PREPARE_CONFIG] = CMD_DP_CONFIG,
+	[DP_PREPARE_EXIT] = CMD_EXIT_MODE,
 	[DP_ENTER_RETRY] = CMD_ENTER_MODE,
 };
 
+/*
+ * Track if we're retrying due to an Enter Mode NAK
+ */
+#define DP_FLAG_RETRY	BIT(0)
+
+static uint32_t dpm_dp_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+#define DP_SET_FLAG(port, flag) atomic_or(&dpm_dp_flags[port], (flag))
+#define DP_CLR_FLAG(port, flag) atomic_clear_bits(&dpm_dp_flags[port], (flag))
+#define DP_CHK_FLAG(port, flag) (dpm_dp_flags[port] & (flag))
+
 bool dp_is_active(int port)
 {
-	return dp_state[port] == DP_ACTIVE;
+	return dp_state[port] == DP_ACTIVE || dp_state[port] == DP_PREPARE_EXIT;
 }
 
 void dp_init(int port)
 {
 	dp_state[port] = DP_START;
+	dpm_dp_flags[port] = 0;
 }
 
 bool dp_entry_is_done(int port)
@@ -71,6 +85,7 @@ static void dp_entry_failed(int port)
 {
 	CPRINTS("C%d: DP alt mode protocol failed!", port);
 	dp_state[port] = DP_INACTIVE;
+	dpm_dp_flags[port] = 0;
 }
 
 static bool dp_response_valid(int port, enum tcpci_msg_type type,
@@ -135,25 +150,23 @@ void dp_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		dfp_consume_attention(port, vdm);
 		dp_state[port] = DP_STATUS_ACKED;
 		break;
-	case DP_STATUS_ACKED:
+	case DP_PREPARE_CONFIG:
 		if (modep && modep->opos && modep->fx->post_config)
 			modep->fx->post_config(port);
 		dp_state[port] = DP_ACTIVE;
 		CPRINTS("C%d: Entered DP mode", port);
 		break;
-	case DP_ACTIVE:
+	case DP_PREPARE_EXIT:
 		/*
 		 * Request to exit mode successful, so put the module in an
-		 * inactive state.
+		 * inactive state or give entry another shot.
 		 */
-		dp_exit_to_usb_mode(port);
-		break;
-	case DP_ENTER_NAKED:
-		/*
-		 * The request to exit the mode was successful,
-		 * so try to enter the mode again.
-		 */
-		dp_state[port] = DP_ENTER_RETRY;
+		if (DP_CHK_FLAG(port, DP_FLAG_RETRY)) {
+			dp_state[port] = DP_ENTER_RETRY;
+			DP_CLR_FLAG(port, DP_FLAG_RETRY);
+		} else {
+			dp_exit_to_usb_mode(port);
+		}
 		break;
 	case DP_INACTIVE:
 		/*
@@ -195,7 +208,7 @@ void dp_vdm_naked(int port, enum tcpci_msg_type type, uint8_t vdm_cmd)
 		 */
 		dp_entry_failed(port);
 		break;
-	case DP_ACTIVE:
+	case DP_PREPARE_EXIT:
 		/* Treat an Exit Mode NAK the same as an Exit Mode ACK. */
 		dp_exit_to_usb_mode(port);
 		break;
@@ -247,6 +260,26 @@ enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 		if (!(modep && modep->opos))
 			return MSG_SETUP_ERROR;
 
+		if (!get_dp_pin_mode(port))
+			return MSG_SETUP_ERROR;
+
+		dp_state[port] = DP_PREPARE_CONFIG;
+
+		/*
+		 * Place the USB Type-C pins that are to be re-configured to
+		 * DisplayPort Configuration into the Safe state. For
+		 * USB_PD_MUX_DOCK, the superspeed signals can remain
+		 * connected. For USB_PD_MUX_DP_ENABLED, disconnect the
+		 * superspeed signals here, before the pins are re-configured
+		 * to DisplayPort (in svdm_dp_post_config, when we receive
+		 * the config ack).
+		 */
+		if (svdm_dp_get_mux_mode(port) == USB_PD_MUX_DP_ENABLED) {
+			usb_mux_set_safe_mode(port);
+			return MSG_SETUP_MUX_WAIT;
+		}
+		/* Fall through if no mux set is needed */
+	case DP_PREPARE_CONFIG:
 		vdo_count_ret = modep->fx->config(port, vdm);
 		if (vdo_count_ret == 0)
 			return MSG_SETUP_ERROR;
@@ -254,6 +287,8 @@ enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
 		break;
 	case DP_ENTER_NAKED:
+		DP_SET_FLAG(port, DP_FLAG_RETRY);
+		/* Fall through to send exit mode */
 	case DP_ACTIVE:
 		/*
 		 * Called to exit DP alt mode, either when the mode
@@ -269,7 +304,10 @@ enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 			return MSG_SETUP_ERROR;
 
 		usb_mux_set_safe_mode_exit(port);
-
+		dp_state[port] = DP_PREPARE_EXIT;
+		return MSG_SETUP_MUX_WAIT;
+	case DP_PREPARE_EXIT:
+		/* DPM should call setup only after safe state is set */
 		vdm[0] = VDO(USB_SID_DISPLAYPORT,
 			     1, /* structured */
 			     CMD_EXIT_MODE);

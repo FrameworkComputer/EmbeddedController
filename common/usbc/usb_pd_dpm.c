@@ -18,6 +18,7 @@
 #include "tcpm/tcpm.h"
 #include "usb_dp_alt_mode.h"
 #include "usb_mode.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_dpm.h"
 #include "usb_pd_tcpm.h"
@@ -278,6 +279,14 @@ static void dpm_attempt_mode_entry(int port)
 		return;
 	}
 
+	/*
+	 * If muxes are still settling, then wait on our next VDM.  We must
+	 * ensure we correctly sequence actions such as USB safe state with TBT
+	 * entry or DP configuration.
+	 */
+	if (IS_ENABLED(CONFIG_USBC_SS_MUX) && !usb_mux_set_completed(port))
+		return;
+
 	/* Check if port, port partner and cable support USB4. */
 	if (IS_ENABLED(CONFIG_USB_PD_USB4) &&
 	    board_is_tbt_usb4_port(port) &&
@@ -320,6 +329,10 @@ static void dpm_attempt_mode_entry(int port)
 		vdo_count = ARRAY_SIZE(vdm);
 		status = dp_setup_next_vdm(port, &vdo_count, vdm);
 	}
+
+	/* Not ready to send a VDM, check again next cycle */
+	if (status == MSG_SETUP_MUX_WAIT)
+		return;
 
 	/*
 	 * If the PE didn't discover any supported (requested) alternate mode,
@@ -372,6 +385,15 @@ static void dpm_attempt_mode_exit(int port)
 		CPRINTS("C%d: USB4 teardown", port);
 		usb4_exit_mode_request(port);
 	}
+
+	/*
+	 * If muxes are still settling, then wait on our next VDM.  We must
+	 * ensure we correctly sequence actions such as USB safe state with TBT
+	 * or DP mode exit.
+	 */
+	if (IS_ENABLED(CONFIG_USBC_SS_MUX) && !usb_mux_set_completed(port))
+		return;
+
 	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
 	    tbt_is_active(port)) {
 		/*
@@ -391,6 +413,7 @@ static void dpm_attempt_mode_exit(int port)
 		return;
 	}
 
+	/* This covers error, wait mux, and unsupported cases */
 	if (status != MSG_SETUP_SUCCESS)
 		return;
 

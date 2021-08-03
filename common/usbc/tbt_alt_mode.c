@@ -90,6 +90,8 @@ enum tbt_states {
 	TBT_START = 0,
 	TBT_ENTER_SOP,
 	TBT_ACTIVE,
+	/* Set to force Exit mode from non-Active states */
+	TBT_PREPARE_EXIT_MODE,
 	TBT_EXIT_SOP,
 	TBT_INACTIVE,
 	/* Active cable only */
@@ -103,7 +105,6 @@ static enum tbt_states tbt_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static const uint8_t state_vdm_cmd[TBT_STATE_COUNT] = {
 	[TBT_ENTER_SOP] = CMD_ENTER_MODE,
-	[TBT_ACTIVE] = CMD_EXIT_MODE,
 	[TBT_EXIT_SOP] = CMD_EXIT_MODE,
 	/* Active cable only */
 	[TBT_ENTER_SOP_PRIME] = CMD_ENTER_MODE,
@@ -299,27 +300,18 @@ void intel_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		/* Indicate to PE layer that alt mode is active */
 		pd_set_dfp_enter_mode_flag(port, true);
 		break;
-	case TBT_ACTIVE:
+	case TBT_EXIT_SOP:
 		tbt_prints("exit mode SOP", port);
 		opos_sop = pd_alt_mode(port, TCPCI_MSG_SOP, USB_VID_INTEL);
 
 		/* Clear Thunderbolt related signals */
-		pd_dfp_exit_mode(port, TCPCI_MSG_SOP, USB_VID_INTEL, opos_sop);
-		set_usb_mux_with_current_data_role(port);
+		if (opos_sop > 0)
+			pd_dfp_exit_mode(port, TCPCI_MSG_SOP, USB_VID_INTEL,
+					 opos_sop);
 		if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE) {
 			tbt_active_cable_exit_mode(port);
 		} else {
-			/*
-			 * Exit Mode process is complete; go to inactive state.
-			 */
-			tbt_exit_done(port);
-		}
-		break;
-	case TBT_EXIT_SOP:
-		set_usb_mux_with_current_data_role(port);
-		if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE)
-			tbt_active_cable_exit_mode(port);
-		else {
+			set_usb_mux_with_current_data_role(port);
 			if (TBT_CHK_FLAG(port, TBT_FLAG_RETRY_DONE))
 				/* retried enter mode, still failed, give up */
 				tbt_exit_done(port);
@@ -330,7 +322,6 @@ void intel_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 	case TBT_EXIT_SOP_PRIME_PRIME:
 		tbt_prints("exit mode SOP''", port);
 		tbt_state[port] = TBT_EXIT_SOP_PRIME;
-		set_usb_mux_with_current_data_role(port);
 		break;
 	case TBT_EXIT_SOP_PRIME:
 		tbt_prints("exit mode SOP'", port);
@@ -382,26 +373,15 @@ void intel_vdm_naked(int port, enum tcpci_msg_type type, uint8_t vdm_cmd)
 		 * so request to exit the mode first before retrying the enter
 		 * command. This can happen if the EC is restarted
 		 */
-		tbt_state[port] = TBT_EXIT_SOP;
-		break;
-	case TBT_ACTIVE:
-		/* Exit SOP got NAK'ed */
-		set_usb_mux_with_current_data_role(port);
-		if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE)
-			tbt_active_cable_exit_mode(port);
-		else {
-			tbt_prints("exit mode SOP failed", port);
-			tbt_state[port] = TBT_INACTIVE;
-			TBT_CLR_FLAG(port, TBT_FLAG_RETRY_DONE);
-		}
+		tbt_state[port] = TBT_PREPARE_EXIT_MODE;
 		break;
 	case TBT_EXIT_SOP:
 		/* Exit SOP got NAK'ed */
 		tbt_prints("exit mode SOP failed", port);
-		set_usb_mux_with_current_data_role(port);
 		if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE)
 			tbt_active_cable_exit_mode(port);
 		else {
+			set_usb_mux_with_current_data_role(port);
 			if (TBT_CHK_FLAG(port, TBT_FLAG_RETRY_DONE))
 				/* Retried enter mode, still failed, give up */
 				tbt_exit_done(port);
@@ -410,7 +390,6 @@ void intel_vdm_naked(int port, enum tcpci_msg_type type, uint8_t vdm_cmd)
 		}
 		break;
 	case TBT_EXIT_SOP_PRIME_PRIME:
-		set_usb_mux_with_current_data_role(port);
 		tbt_prints("exit mode SOP'' failed", port);
 		tbt_state[port] = TBT_EXIT_SOP_PRIME;
 		break;
@@ -481,23 +460,26 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 		else
 			tbt_prints("retry to enter mode", port);
 
+		/*
+		 * Enter safe mode before sending Enter mode SOP/SOP'/SOP''
+		 * Ref: Tiger Lake Platform PD Controller Interface
+		 * Requirements for Integrated USB C, section A.1.2 TBT as DFP.
+		 */
+		usb_mux_set_safe_mode(port);
+
 		cable_mode_resp.raw_value =
 			pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
 
 		/* Active cable and LRD cables send Enter Mode SOP' first */
 		if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE ||
 		    cable_mode_resp.tbt_active_passive == TBT_CABLE_ACTIVE) {
-			vdo_count_ret = enter_tbt_compat_mode(port,
-						TCPCI_MSG_SOP_PRIME, vdm);
-			*tx_type = TCPCI_MSG_SOP_PRIME;
 			tbt_state[port] = TBT_ENTER_SOP_PRIME;
 		} else {
 			/* Passive cable send Enter Mode SOP */
-			vdo_count_ret =
-				enter_tbt_compat_mode(port, TCPCI_MSG_SOP, vdm);
 			tbt_state[port] = TBT_ENTER_SOP;
 		}
-		break;
+
+		return MSG_SETUP_MUX_WAIT;
 	case TBT_ENTER_SOP_PRIME:
 		vdo_count_ret =
 			enter_tbt_compat_mode(port, TCPCI_MSG_SOP_PRIME, vdm);
@@ -513,20 +495,30 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 		vdo_count_ret =
 			enter_tbt_compat_mode(port, TCPCI_MSG_SOP, vdm);
 		break;
-	case TBT_EXIT_SOP:
 	case TBT_ACTIVE:
+		/*
+		 * Since we had successfully entered mode, consider ourselves
+		 * done with any retires.
+		 */
+		TBT_SET_FLAG(port, TBT_FLAG_RETRY_DONE);
+		/* Fall through */
+	case TBT_PREPARE_EXIT_MODE:
 		/*
 		 * Called to exit Thunderbolt alt mode, either when the mode is
 		 * active and the system is shutting down, or when an initial
 		 * request to enter the mode is NAK'ed. This can happen if EC
 		 * is restarted while Thunderbolt mode is active.
 		 */
+		usb_mux_set_safe_mode_exit(port);
+
+		tbt_state[port] = TBT_EXIT_SOP;
+		return MSG_SETUP_MUX_WAIT;
+	case TBT_EXIT_SOP:
+		/* DPM will only call this after safe state set is done */
 		modep = pd_get_amode_data(port,
 					  TCPCI_MSG_SOP, USB_VID_INTEL);
 		if (!(modep && modep->opos))
 			return MSG_SETUP_ERROR;
-
-		usb_mux_set_safe_mode_exit(port);
 
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
 			VDO_OPOS(modep->opos) |
@@ -541,8 +533,6 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 		if (!(modep && modep->opos))
 			return MSG_SETUP_ERROR;
 
-		usb_mux_set_safe_mode_exit(port);
-
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
 			VDO_OPOS(modep->opos) |
 			VDO_CMDT(CMDT_INIT) |
@@ -556,8 +546,6 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 				TCPCI_MSG_SOP_PRIME, USB_VID_INTEL);
 		if (!(modep && modep->opos))
 			return MSG_SETUP_ERROR;
-
-		usb_mux_set_safe_mode_exit(port);
 
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
 			VDO_OPOS(modep->opos) |

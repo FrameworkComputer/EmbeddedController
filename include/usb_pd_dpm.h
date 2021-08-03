@@ -113,6 +113,7 @@ enum dpm_msg_setup_status {
 	MSG_SETUP_SUCCESS,
 	MSG_SETUP_ERROR,
 	MSG_SETUP_UNSUPPORTED,
+	MSG_SETUP_MUX_WAIT,
 };
 
 #endif  /* __CROS_EC_USB_DPM_H */

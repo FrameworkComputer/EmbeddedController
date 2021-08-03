@@ -21,6 +21,7 @@
 #include "usb_pd_dpm.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pe_sm.h"
+#include "usb_tbt_alt_mode.h"
 #include "usbc_ppc.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -122,7 +123,9 @@ void usb4_exit_mode_request(int port)
 {
 	usb4_state[port] = USB4_START;
 	usb_mux_set_safe_mode_exit(port);
-	set_usb_mux_with_current_data_role(port);
+	/* If TBT mode is active, leave safe state for mode exit VDMs */
+	if (!tbt_is_active(port))
+		set_usb_mux_with_current_data_role(port);
 }
 
 void enter_usb_init(int port)

@@ -3269,6 +3269,14 @@ __override_proto int svdm_dp_attention(int port, uint32_t *payload);
  */
 __override_proto void svdm_exit_dp_mode(int port);
 
+/**
+ * Get the DP mode that's desired on this port
+ *
+ * @param  port The PD port number
+ * @return USB_PD_MUX_DOCK or USB_PD_MUX_DP_ENABLED
+ */
+uint8_t svdm_dp_get_mux_mode(int port);
+
 /* Google Firmware Update Alternate Mode */
 /**
  * Enter Google Firmware Update (GFU) Mode.
