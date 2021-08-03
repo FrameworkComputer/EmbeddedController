@@ -53,10 +53,10 @@ static void led_set_color_battery(int port, enum led_color color)
 {
 	enum gpio_signal amber_led, white_led;
 
-	amber_led = (port == RIGHT_PORT ? GPIO_C0_CHARGE_LED_AMBER_L :
-				 GPIO_C1_CHARGE_LED_AMBER_L);
-	white_led = (port == RIGHT_PORT ? GPIO_C0_CHARGE_LED_WHITE_L :
-				 GPIO_C1_CHARGE_LED_WHITE_L);
+	amber_led = (port == RIGHT_PORT ? GPIO_C1_CHARGE_LED_AMBER_L :
+				 GPIO_C0_CHARGE_LED_AMBER_L);
+	white_led = (port == RIGHT_PORT ? GPIO_C1_CHARGE_LED_WHITE_L :
+				 GPIO_C0_CHARGE_LED_WHITE_L);
 
 	switch (color) {
 	case LED_WHITE:
@@ -183,7 +183,7 @@ static void led_set_battery(void)
 			led_set_color_battery(LEFT_PORT, LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
-		set_active_port_color((battery_ticks & 0x2) ?
+		set_active_port_color((battery_ticks & 0x1) ?
 				LED_WHITE : LED_OFF);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
