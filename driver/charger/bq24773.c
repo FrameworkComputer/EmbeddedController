@@ -244,22 +244,13 @@ static enum ec_error_list bq2477x_post_init(int chgnum)
 	if (rv)
 		return rv;
 
-#ifndef BOARD_SAMUS
 	/* Turn off PROCHOT warning */
 	rv = raw_read16(chgnum, REG_PROCHOT_OPTION1, &option);
 	if (rv)
 		return rv;
 
 	option &= ~PROCHOT_OPTION1_SELECTOR_MASK;
-
 	rv = raw_write16(chgnum, REG_PROCHOT_OPTION1, option);
-#else
-	/* On Samus, use PROCHOT warning to detect charging problems */
-	/* Turn on PROCHOT warning */
-	rv = raw_write16(chgnum, REG_PROCHOT_OPTION1, 0x8120);
-	/* Set PROCHOT ICRIT warning when IADP is >120% of IDPM */
-	rv |= raw_write16(chgnum, REG_PROCHOT_OPTION0, 0x1b54);
-#endif
 
 	if (rv)
 		return rv;

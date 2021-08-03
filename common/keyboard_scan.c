@@ -376,47 +376,6 @@ static int check_runtime_keys(const uint8_t *state)
 	int num_press = 0;
 	int c;
 
-#ifdef BOARD_SAMUS
-	int16_t chg_override;
-
-	/*
-	 * TODO(crosbug.com/p/34850): remove these hot-keys for samus, should
-	 * be done at higher level than this.
-	 */
-	/*
-	 * On samus, ctrl + search + 0|1|2 sets the active charge port
-	 * by sending the charge override host command. Should only be sent
-	 * when chipset is in S0. Note that 'search' and '1' keys are on
-	 * the same column.
-	 */
-	if ((state[KEYBOARD_COL_LEFT_CTRL] == KEYBOARD_MASK_LEFT_CTRL ||
-	     state[KEYBOARD_COL_RIGHT_CTRL] == KEYBOARD_MASK_RIGHT_CTRL) &&
-	    ((state[KEYBOARD_COL_SEARCH] & KEYBOARD_MASK_SEARCH) ==
-						KEYBOARD_MASK_SEARCH) &&
-	    chipset_in_state(CHIPSET_STATE_ON)) {
-		if (state[KEYBOARD_COL_KEY_0] == KEYBOARD_MASK_KEY_0) {
-			/* Charge from neither port */
-			chg_override = -2;
-			pd_host_command(EC_CMD_PD_CHARGE_PORT_OVERRIDE, 0,
-					&chg_override, 2, NULL, 0);
-			return 0;
-		} else if (state[KEYBOARD_COL_KEY_1] ==
-			   (KEYBOARD_MASK_KEY_1 | KEYBOARD_MASK_SEARCH)) {
-			/* Charge from port 0 (left side) */
-			chg_override = 0;
-			pd_host_command(EC_CMD_PD_CHARGE_PORT_OVERRIDE, 0,
-					&chg_override, 2, NULL, 0);
-			return 0;
-		} else if (state[KEYBOARD_COL_KEY_2] == KEYBOARD_MASK_KEY_2) {
-			/* Charge from port 1 (right side) */
-			chg_override = 1;
-			pd_host_command(EC_CMD_PD_CHARGE_PORT_OVERRIDE, 0,
-					&chg_override, 2, NULL, 0);
-			return 0;
-		}
-	}
-#endif
-
 	/*
 	 * All runtime key combos are (right or left ) alt + volume up + (some
 	 * key NOT on the same col as alt or volume up )

@@ -51,7 +51,6 @@ die() {
 BOARDS_IT83XX=(
 	adlrvpm_ite
 	adlrvpp_ite
-	glkrvp_ite
 	it83xx_evb
 	jslrvp_ite
 	reef_it8320
@@ -83,7 +82,6 @@ BOARDS_STM32=(
 	pit
 	plankton
 	rainier
-	samus_pd
 	strago_pd
 	zinger
 )
@@ -123,7 +121,6 @@ BOARDS_NPCX_7M7X_JTAG=(
 )
 
 BOARDS_NPCX_SPI=(
-	glkrvp
 )
 
 BOARDS_SPI_1800MV=(
@@ -135,7 +132,6 @@ BOARDS_RAIDEN=(
 	coral
 	eve
 	fizz
-	flapjack
 	kukui
 	nami
 	nautilus
@@ -368,7 +364,7 @@ fi
 # Servo variables management
 case "${BOARD}" in
 	chocodile_bec ) MCU="usbpd" ;;
-	oak_pd|samus_pd|strago_pd ) MCU="usbpd" ;;
+	oak_pd|strago_pd ) MCU="usbpd" ;;
 	chell_pd|glados_pd ) MCU="usbpd" ;;
 	bloonchipper|dartmonkey|hatch_fp|nami_fp|nocturne_fp ) MCU="fpmcu" ;;
 	dingdong|hoho|twinkie ) DUT_CONTROL_CMD=( "true" ); MCU="ec" ;;
