@@ -12,6 +12,7 @@
 #include "board_revs.h"
 
 /* Free up some flash space */
+#define CONFIG_DEBUG_ASSERT_BRIEF
 #define CONFIG_USB_PD_DEBUG_LEVEL 0
 
 #define CONFIG_LTO
