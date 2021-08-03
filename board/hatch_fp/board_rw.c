@@ -35,7 +35,9 @@ static void configure_fp_sensor_spi(void)
 	/* Configure SPI GPIOs */
 	gpio_config_module(MODULE_SPI_CONTROLLER, 1);
 
-	/* Set all SPI master signal pins to very high speed: B12/13/14/15 */
+	/* Set all SPI controller signal pins to very high speed:
+	 * B12/13/14/15
+	 */
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xff000000;
 
 	/* Enable clocks to SPI2 module (master) */

@@ -170,7 +170,7 @@
 #define I2C_PORT_TCPC    1
 
 /* Enable Accel over SPI */
-#define CONFIG_SPI_ACCEL_PORT    0  /* First SPI master port (SPI2) */
+#define CONFIG_SPI_ACCEL_PORT    0  /* First SPI controller port (SPI2) */
 
 /* Timer selection */
 #define TIM_CLOCK32 2

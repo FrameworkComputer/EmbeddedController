@@ -10,7 +10,7 @@ include: motionsense-sensor-base.yaml
 properties:
   i2c-spi-addr-flags:
     type: string
-    description: i2c address or SPI slave logic GPIO
+    description: i2c address or SPI peripheral logic GPIO
     enum:
       - "TCS3400_I2C_ADDR_FLAGS"
     default: "TCS3400_I2C_ADDR_FLAGS"

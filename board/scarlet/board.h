@@ -186,7 +186,7 @@
 #define VIRTUAL_BATTERY_ADDR_FLAGS 0x0B
 
 /* Enable Accel over SPI */
-#define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI master port (SPI2) */
+#define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI controller port (SPI2) */
 
 #define CONFIG_MKBP_INPUT_DEVICES
 #define CONFIG_MKBP_EVENT

@@ -101,7 +101,7 @@ static void emmc_send_data_over_spi(uint8_t *tx, int tx_size, int rst_tx)
 		IT83XX_SPI_CPUWTFDB0 = *(uint32_t *)(tx + i);
 	/*
 	 * After writing data to TX FIFO is finished, this bit will
-	 * be to indicate the SPI slave controller.
+	 * be to indicate the SPI peripheral controller.
 	 */
 	IT83XX_SPI_TXFCR = IT83XX_SPI_TXFS;
 	/* End CPU access TX FIFO */

@@ -91,9 +91,9 @@ BUILD_ASSERT(ARRAY_SIZE(spi_response_state) == SPI_STATE_COUNT);
 
 static void spi_set_state(int state)
 {
-	/* SPI slave state machine */
+	/* SPI peripheral state machine */
 	shi_state = state;
-	/* Response spi slave state */
+	/* Response spi peripheral state */
 	IT83XX_SPI_SPISRDR = spi_response_state[state];
 }
 
@@ -142,12 +142,12 @@ static void spi_response_host_data(uint8_t *out_msg_addr, int tx_size)
 
 		/*
 		 * After writing data to Tx FIFO is finished, this bit will
-		 * be to indicate the SPI slave controller.
+		 * be to indicate the SPI peripheral controller.
 		 */
 		IT83XX_SPI_TXFCR = IT83XX_SPI_TXFS;
 		/* End Tx FIFO access */
 		IT83XX_SPI_TXRXFAR = 0;
-		/* SPI slave read Tx FIFO */
+		/* SPI peripheral read Tx FIFO */
 		IT83XX_SPI_FCR = IT83XX_SPI_SPISRTXF;
 	}
 
@@ -356,7 +356,7 @@ static int cros_shi_ite_init(const struct device *dev)
 	spi_set_state(SPI_STATE_READY_TO_RECV);
 	/* Interrupt status register(write one to clear) */
 	IT83XX_SPI_ISR = 0xff;
-	/* SPI slave controller enable (after settings are ready) */
+	/* SPI peripheral controller enable (after settings are ready) */
 	IT83XX_SPI_SPISGCR = IT83XX_SPI_SPISCEN;
 
 	/* Ensure spi chip select alt function is enabled. */
@@ -365,7 +365,7 @@ static int cros_shi_ite_init(const struct device *dev)
 			       config[i].alt_fun);
 	}
 
-	/* Enable SPI slave interrupt */
+	/* Enable SPI peripheral interrupt */
 	IRQ_CONNECT(DT_INST_IRQN(0), 0, shi_ite_int_handler, 0, 0);
 	irq_enable(DT_INST_IRQN(0));
 

@@ -51,7 +51,7 @@
 
 /* Enable control of SPI over USB */
 #define CONFIG_SPI_CONTROLLER
-#define CONFIG_SPI_FLASH_PORT    0  /* First SPI master port */
+#define CONFIG_SPI_FLASH_PORT    0  /* First SPI controller port */
 
 
 #define CONFIG_USB_SPI

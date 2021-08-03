@@ -267,7 +267,7 @@ static void board_spi_enable(void)
 #ifdef CHIP_FAMILY_STM32L4
 	/* Set I/O speed before AF configured */
 	/* EMMC SPI SLAVE: PB13/14/15 */
-	/* SENSORS SPI MASTER: PB10, PB12, PC2, PC3 */
+	/* SENSORS SPI controller: PB10, PB12, PC2, PC3 */
 	STM32_GPIO_OSPEEDR(GPIO_B) |= 0xFF300000;
 	STM32_GPIO_OSPEEDR(GPIO_C) |= 0x000000F0;
 

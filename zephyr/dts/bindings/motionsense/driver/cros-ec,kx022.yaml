@@ -12,7 +12,7 @@ include: motionsense-sensor-base.yaml
 properties:
   i2c-spi-addr-flags:
     type: string
-    description: i2c address or SPI slave logic GPIO
+    description: i2c address or SPI peripheral logic GPIO
     enum:
       - "KX022_ADDR0_FLAGS"
       - "KX022_ADDR1_FLAGS"

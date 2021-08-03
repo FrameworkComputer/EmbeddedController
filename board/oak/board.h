@@ -163,7 +163,7 @@
 #define I2C_PORT_TCPC    1
 
 /* Enable Accel over SPI */
-#define CONFIG_SPI_ACCEL_PORT    0  /* First SPI master port (SPI2) */
+#define CONFIG_SPI_ACCEL_PORT    0  /* First SPI controller port (SPI2) */
 
 /* Ambient Light Sensor address */
 #define OPT3001_I2C_ADDR_FLAGS OPT3001_I2C_ADDR1_FLAGS

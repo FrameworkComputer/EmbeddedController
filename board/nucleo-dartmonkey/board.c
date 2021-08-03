@@ -76,7 +76,9 @@ static void spi_configure(void)
 {
 	/* Configure SPI GPIOs */
 	gpio_config_module(MODULE_SPI_CONTROLLER, 1);
-	/* Set all SPI master signal pins to very high speed: pins E2/4/5/6 */
+	/* Set all SPI controller signal pins to very high speed:
+	 * pins E2/4/5/6
+	 */
 	STM32_GPIO_OSPEEDR(GPIO_E) |= 0x00003f30;
 	/* Enable clocks to SPI4 module (master) */
 	STM32_RCC_APB2ENR |= STM32_RCC_PB2_SPI4;
@@ -97,7 +99,7 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_SLP_L);
 
 	/*
-	 * Enable the SPI slave interface if the PCH is up.
+	 * Enable the SPI peripheral interface if the PCH is up.
 	 * Do not use hook_call_deferred(), because ap_deferred() will be
 	 * called after tasks with priority higher than HOOK task (very late).
 	 */
