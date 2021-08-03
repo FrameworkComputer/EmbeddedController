@@ -197,8 +197,8 @@ void board_reset_pd_mcu(void)
 	nct38xx_reset_notify(USBC_PORT_C1);
 
 	/* wait for chips to come up */
-	if (NCT38XX_RESET_POST_DELAY_MS != 0)
-		msleep(NCT38XX_RESET_POST_DELAY_MS);
+	if (NCT3807_RESET_POST_DELAY_MS != 0)
+		msleep(NCT3807_RESET_POST_DELAY_MS);
 }
 
 static void board_tcpc_init(void)

@@ -689,12 +689,12 @@ void board_reset_pd_mcu(void)
 	/* Reset TCPC0 */
 	reset_pd_port(USBC_PORT_C0, GPIO_USB_C0_TCPC_RST_L,
 		      NCT38XX_RESET_HOLD_DELAY_MS,
-		      NCT38XX_RESET_POST_DELAY_MS);
+		      NCT3807_RESET_POST_DELAY_MS);
 
 	/* Reset TCPC1 */
 	reset_pd_port(USBC_PORT_C1, GPIO_USB_C1_TCPC_RST_L,
 		      NCT38XX_RESET_HOLD_DELAY_MS,
-		      NCT38XX_RESET_POST_DELAY_MS);
+		      NCT3807_RESET_POST_DELAY_MS);
 }
 
 uint16_t tcpc_get_alert_status(void)
