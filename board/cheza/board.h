@@ -50,7 +50,7 @@
 
 #undef CONFIG_PECI
 
-#define CONFIG_HOSTCMD_SPS
+#define CONFIG_HOSTCMD_SHI
 #define CONFIG_HOST_COMMAND_STATUS
 #define CONFIG_HOSTCMD_SECTION_SORTED /* Host commands are sorted. */
 #define CONFIG_MKBP_EVENT

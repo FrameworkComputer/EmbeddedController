@@ -2238,9 +2238,10 @@
 #undef CONFIG_HOSTCMD_I2C_ADDR_FLAGS
 
 /*
- * Accept EC host commands over the SPI slave (SPS) interface.
+ * Accept EC host commands over the SPI host interface.  The AP is SPI
+ * controller and the EC is the SPI peripheral for this configuration.
  */
-#undef CONFIG_HOSTCMD_SPS
+#undef CONFIG_HOSTCMD_SHI
 
 /*
  * Host command rate limiting assures EC will have time to process lower

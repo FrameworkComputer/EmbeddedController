@@ -8,7 +8,7 @@
 #ifndef SHI_CHIP_H_
 #define SHI_CHIP_H_
 
-#ifdef CONFIG_HOSTCMD_SPS
+#ifdef CONFIG_HOSTCMD_SHI
 /**
  * Called when the NSS level changes, signalling the start of a SHI
  * transaction.

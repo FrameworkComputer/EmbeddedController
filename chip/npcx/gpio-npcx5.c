@@ -179,7 +179,7 @@ DECLARE_IRQ(NPCX_IRQ_KSI_WKINTC_1,  __gpio_wk1c_interrupt, 3);
 #endif
 DECLARE_IRQ(NPCX_IRQ_WKINTD_1,      __gpio_wk1d_interrupt, 3);
 DECLARE_IRQ(NPCX_IRQ_WKINTE_1,      __gpio_wk1e_interrupt, 3);
-#ifdef CONFIG_HOSTCMD_SPS
+#ifdef CONFIG_HOSTCMD_SHI
 /*
  * HACK: Make CS GPIO P2 to improve SHI reliability.
  * TODO: Increase CS-assertion-to-transaction-start delay on host to

@@ -187,6 +187,15 @@
     [chromium.org documentation](https://www.chromium.org/for-testers/saft) for
     more details.
 
+*   **SHI - SPI Host Interface** {#shi}
+
+    [SPI](#spi) host interface used for communication between the AP and the EC.
+    In this configuration, the AP provides the SPI controller and the EC
+    provides the SPI peripheral. This interface is only used for non-x86 base
+    APs.
+
+    x86-based APs use either the [eSPI](#espi) or [LPC](#lpc) interface.
+
 *   **SPI - Serial Peripheral Interconnect** {#spi}
 
     A 4-wire synchronous communication bus consisting of the signals CLK
