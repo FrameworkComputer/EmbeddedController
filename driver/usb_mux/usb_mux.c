@@ -79,11 +79,17 @@ enum mux_config_type {
 #define MUX_QUEUE_DEPTH		4
 BUILD_ASSERT(POWER_OF_TWO(MUX_QUEUE_DEPTH));
 
+/* Define in order to enable debug info about how long the queue takes */
+#undef DEBUG_MUX_QUEUE_TIME
+
 struct mux_queue_entry {
 	enum mux_config_type type;
 	mux_state_t mux_mode;		/* For both HPD and mux set */
 	enum usb_switch usb_config;	/* Set only */
 	int polarity;			/* Set only */
+#ifdef DEBUG_MUX_QUEUE_TIME
+	timestamp_t enqueued_time;
+#endif
 };
 
 /*
@@ -140,6 +146,9 @@ __maybe_unused static void mux_task_enqueue(int port, enum mux_config_type type,
 	new_entry.mux_mode = mux_mode;
 	new_entry.usb_config = usb_config;
 	new_entry.polarity = polarity;
+#ifdef DEBUG_MUX_QUEUE_TIME
+	new_entry.enqueued_time = get_time();
+#endif
 
 	mutex_lock(&queue_lock[port]);
 
@@ -198,6 +207,10 @@ __maybe_unused void usb_mux_task(void *u)
 
 				queue_peek_units(&mux_queue[port], &next, 0, 1);
 
+#ifdef DEBUG_MUX_QUEUE_TIME
+				CPRINTS("C%d: Start mux set queued %d us ago",
+					port, time_since32(next.enqueued_time));
+#endif
 				if (next.type == USB_MUX_SET_MODE)
 					perform_mux_set(port, next.mux_mode,
 							next.usb_config,
@@ -209,6 +222,11 @@ __maybe_unused void usb_mux_task(void *u)
 					CPRINTS("Error: Unknown mux task type:"
 						"%d", next.type);
 
+#ifdef DEBUG_MUX_QUEUE_TIME
+				CPRINTS("C%d: Completed mux set queued %d "
+					"us ago",
+					port, time_since32(next.enqueued_time));
+#endif
 				/*
 				 * Lock since the tail is changing, which would
 				 * disrupt any calls iterating the queue.
