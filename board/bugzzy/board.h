@@ -29,6 +29,7 @@
 #undef CONFIG_CMD_BATTFAKE
 
 /* EC console commands */
+#define CONFIG_CMD_TCPC_DUMP
 #define CONFIG_CMD_CHARGER_DUMP
 
 /* Battery */
@@ -40,9 +41,12 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr */
 #define CONFIG_OCPC
+#define CONFIG_CHARGER_PROFILE_OVERRIDE
+#define CONFIG_CHARGE_RAMP_HW
 #undef  CONFIG_CHARGER_SINGLE_CHIP
 #undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
 #define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE (100 * MSEC)
+#define CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
 
 /*
  * GPIO for C1 interrupts, for baseboard use
@@ -53,31 +57,33 @@
 #define GPIO_USB_C1_INT_ODL GPIO_SUB_C1_INT_EN_RAILS_ODL
 
 /* Keyboard */
-#define CONFIG_PWM_KBLIGHT
 
 /* LED */
-#define CONFIG_LED_PWM
-#define CONFIG_LED_PWM_COUNT 1
-#undef CONFIG_LED_PWM_NEAR_FULL_COLOR
-#undef CONFIG_LED_PWM_SOC_ON_COLOR
-#undef CONFIG_LED_PWM_SOC_SUSPEND_COLOR
-#undef CONFIG_LED_PWM_LOW_BATT_COLOR
-#define CONFIG_LED_PWM_NEAR_FULL_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_SOC_ON_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_SOC_SUSPEND_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_LOW_BATT_COLOR EC_LED_COLOR_AMBER
+#define CONFIG_LED_COMMON
+#define CONFIG_LED_ONOFF_STATES
+#define GPIO_BAT_LED_RED_L GPIO_LED_R_ODL
+#define GPIO_BAT_LED_GREEN_L GPIO_LED_G_ODL
+#define GPIO_PWR_LED_BLUE_L GPIO_LED_B_ODL
+
 
 /* PWM */
-#define CONFIG_PWM
-#define NPCX7_PWM1_SEL    1  /* GPIO C2 is used as PWM1. */
+#define NPCX7_PWM1_SEL    0  /* GPIO C2 is not used as PWM1. */
+
+/* Thermistors */
+#define CONFIG_TEMP_SENSOR
+#define CONFIG_THERMISTOR
+#define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 
 /* USB */
 #define CONFIG_BC12_DETECT_PI3USB9201
-#define CONFIG_USBC_RETIMER_NB7V904M
+#define CONFIG_USB_MUX_PS8743
 
 /* USB PD */
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_USB_PD_TCPM_RAA489000
+#undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
+#define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE (100 * MSEC)
+#define CONFIG_USB_PD_COMM_LOCKED
 
 /* USB defines specific to external TCPCs */
 #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
@@ -96,7 +102,6 @@
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	16080	/* us */
 #undef CONFIG_USBC_VCONN_SWAP_DELAY_US
 #define CONFIG_USBC_VCONN_SWAP_DELAY_US		787	/* us */
-
 
 /* I2C configuration */
 #define I2C_PORT_EEPROM     NPCX_I2C_PORT7_0
@@ -125,7 +130,6 @@
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 
-#define CONFIG_ACCEL_BMA255		/* Lid accel */
 #define CONFIG_ACCELGYRO_BMI160		/* Base accel */
 
 /* Lid operates in forced mode, base in FIFO */
@@ -147,6 +151,11 @@
 #define CONFIG_TABLET_MODE_SWITCH
 #define CONFIG_GMR_TABLET_MODE
 
+/* LIS2DS Lid accel */
+#define CONFIG_ACCEL_LIS2DS
+#define CONFIG_ACCEL_LIS2DS_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(LID_ACCEL)
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -158,9 +167,19 @@ enum chg_id {
 	CHARGER_NUM,
 };
 
+enum temp_sensor_id {
+	TEMP_SENSOR_1,
+	TEMP_SENSOR_2,
+	TEMP_SENSOR_3,
+	TEMP_SENSOR_4,
+	TEMP_SENSOR_COUNT
+};
+
 enum adc_channel {
 	ADC_TEMP_SENSOR_1,     /* ADC0 */
 	ADC_TEMP_SENSOR_2,     /* ADC1 */
+	ADC_TEMP_SENSOR_3,     /* ADC5 */
+	ADC_TEMP_SENSOR_4,     /* ADC6 */
 	ADC_SUB_ANALOG,	       /* ADC2 */
 	ADC_VSNS_PP3300_A,     /* ADC9 */
 	ADC_CH_COUNT
@@ -173,18 +192,12 @@ enum sensor_id {
 	SENSOR_COUNT
 };
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT,
-	PWM_CH_LED1_AMBER,
-	PWM_CH_LED2_WHITE,
-	PWM_CH_COUNT,
-};
-
 /* List of possible batteries */
 enum battery_type {
-	BATTERY_POWER_TECH,
+	BATTERY_SDI,
 	BATTERY_TYPE_COUNT,
 };
 
+void panel_power_change_interrupt(enum gpio_signal signal);
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

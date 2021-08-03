@@ -14,30 +14,31 @@
 #include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
-#include "driver/accel_bma2x2.h"
+#include "cros_board_info.h"
+#include "driver/accel_lis2ds.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
-#include "driver/retimer/nb7v904m.h"
 #include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
-#include "driver/usb_mux/pi3usb3x532.h"
+#include "driver/temp_sensor/thermistor.h"
+#include "driver/usb_mux/ps8743.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "keyboard_8042.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
-#include "pwm.h"
-#include "pwm_chip.h"
 #include "stdbool.h"
 #include "switch.h"
 #include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
+#include "temp_sensor.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
@@ -146,6 +147,20 @@ const struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
+	[ADC_TEMP_SENSOR_3] = {
+		.name = "TEMP_SENSOR3",
+		.input_ch = NPCX_ADC_CH5,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_TEMP_SENSOR_4] = {
+		.name = "TEMP_SENSOR4",
+		.input_ch = NPCX_ADC_CH6,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
 	[ADC_SUB_ANALOG] = {
 		.name = "SUB_ANALOG",
 		.input_ch = NPCX_ADC_CH2,
@@ -162,6 +177,28 @@ const struct adc_t adc_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
+
+/* Thermistors */
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_1] = {.name = "Memory",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_1},
+	[TEMP_SENSOR_2] = {.name = "Charger",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_2},
+	[TEMP_SENSOR_3] = {.name = "Skin1",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_3},
+	[TEMP_SENSOR_4] = {.name = "Skin2",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_4},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
 
 void board_init(void)
 {
@@ -231,7 +268,7 @@ void board_hibernate(void)
 	 */
 	if (board_get_charger_chip_count() > 1)
 		raa489000_hibernate(1, true);
-	raa489000_hibernate(0, true);
+	raa489000_hibernate(0, false);
 }
 
 void board_reset_pd_mcu(void)
@@ -242,45 +279,9 @@ void board_reset_pd_mcu(void)
 	 */
 }
 
-#ifdef BOARD_WADDLEDOO
-static void reconfigure_5v_gpio(void)
-{
-	/*
-	 * b/147257497: On early waddledoo boards, GPIO_EN_PP5000 was swapped
-	 * with GPIO_VOLUP_BTN_ODL. Therefore, we'll actually need to set that
-	 * GPIO instead for those boards.  Note that this breaks the volume up
-	 * button functionality.
-	 */
-	if (system_get_board_version() < 0) {
-		CPRINTS("old board - remapping 5V en");
-		gpio_set_flags(GPIO_VOLUP_BTN_ODL, GPIO_OUT_LOW);
-	}
-}
-DECLARE_HOOK(HOOK_INIT, reconfigure_5v_gpio, HOOK_PRIO_INIT_I2C+1);
-#endif /* BOARD_WADDLEDOO */
-
 static void set_5v_gpio(int level)
 {
-	int version;
-	enum gpio_signal gpio = GPIO_EN_PP5000;
-
-	/*
-	 * b/147257497: On early waddledoo boards, GPIO_EN_PP5000 was swapped
-	 * with GPIO_VOLUP_BTN_ODL. Therefore, we'll actually need to set that
-	 * GPIO instead for those boards.  Note that this breaks the volume up
-	 * button functionality.
-	 */
-	if (IS_ENABLED(BOARD_WADDLEDOO)) {
-		version = system_get_board_version();
-
-		/*
-		 * If the CBI EEPROM wasn't formatted, assume it's a very early
-		 * board.
-		 */
-		gpio = version < 0 ? GPIO_VOLUP_BTN_ODL : GPIO_EN_PP5000;
-	}
-
-	gpio_set_level(gpio, level);
+	gpio_set_level(GPIO_EN_PP5000, level);
 }
 
 __override void board_power_5v_enable(int enable)
@@ -433,31 +434,33 @@ static const mat33_fp_t base_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
-static struct accelgyro_saved_data_t g_bma253_data;
+static struct stprivate_data g_lis2ds_data;
 static struct bmi_drv_data_t g_bmi160_data;
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 		.name = "Lid Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMA255,
+		.chip = MOTIONSENSE_CHIP_LIS2DS,
 		.type = MOTIONSENSE_TYPE_ACCEL,
 		.location = MOTIONSENSE_LOC_LID,
-		.drv = &bma2x2_accel_drv,
+		.drv = &lis2ds_drv,
 		.mutex = &g_lid_mutex,
-		.drv_data = &g_bma253_data,
+		.drv_data = &g_lis2ds_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
+		.i2c_spi_addr_flags = LIS2DS_ADDR1_FLAGS,
 		.rot_standard_ref = &lid_standard_ref,
-		.default_range = 2,
-		.min_frequency = BMA255_ACCEL_MIN_FREQ,
-		.max_frequency = BMA255_ACCEL_MAX_FREQ,
+		.min_frequency = LIS2DS_ODR_MIN_VAL,
+		.max_frequency = LIS2DS_ODR_MAX_VAL,
+		.default_range = 2, /* g, to support lid angle calculation. */
 		.config = {
+			/* EC use accel for angle detection */
 			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 10000 | ROUND_UP_FLAG,
+				.odr = 12500 | ROUND_UP_FLAG,
 			},
+			/* Sensor on in S3 */
 			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 10000 | ROUND_UP_FLAG,
+				.odr = 12500 | ROUND_UP_FLAG,
 			},
 		},
 	},
@@ -552,28 +555,6 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	},
 };
 
-/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] = {
-		.channel = 3,
-		.flags = PWM_CONFIG_DSLEEP,
-		.freq = 10000,
-	},
-
-	[PWM_CH_LED1_AMBER] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq = 2400,
-	},
-
-	[PWM_CH_LED2_WHITE] = {
-		.channel = 0,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq = 2400,
-	}
-};
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -596,27 +577,43 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-const struct usb_mux usbc1_retimer = {
-	.usb_port = 1,
-	.i2c_port = I2C_PORT_SUB_USB_C1,
-	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
-	.driver = &nb7v904m_usb_redriver_drv,
-};
+static int ps8743_tune_mux_c0(const struct usb_mux *me);
+static int ps8743_tune_mux_c1(const struct usb_mux *me);
+
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 0,
 		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
-		.driver = &pi3usb3x532_usb_mux_driver,
+		.i2c_addr_flags = PS8743_I2C_ADDR0_FLAG,
+		.driver = &ps8743_usb_mux_driver,
+		.board_init = &ps8743_tune_mux_c0,
 	},
 	{
 		.usb_port = 1,
 		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
-		.driver = &pi3usb3x532_usb_mux_driver,
-		.next_mux = &usbc1_retimer,
+		.i2c_addr_flags = PS8743_I2C_ADDR0_FLAG,
+		.driver = &ps8743_usb_mux_driver,
+		.board_init = &ps8743_tune_mux_c1,
 	}
 };
+/* USB Mux C0 : board_init of PS8743 */
+static int ps8743_tune_mux_c0(const struct usb_mux *me)
+{
+	ps8743_tune_usb_eq(me,
+			PS8743_USB_EQ_TX_3_6_DB,
+			PS8743_USB_EQ_RX_16_0_DB);
+
+	return EC_SUCCESS;
+}
+/* USB Mux C1 : board_init of PS8743 */
+static int ps8743_tune_mux_c1(const struct usb_mux *me)
+{
+	ps8743_tune_usb_eq(me,
+			PS8743_USB_EQ_TX_3_6_DB,
+			PS8743_USB_EQ_RX_16_0_DB);
+
+	return EC_SUCCESS;
+}
 
 uint16_t tcpc_get_alert_status(void)
 {
@@ -653,6 +650,32 @@ uint16_t tcpc_get_alert_status(void)
 
 	return status;
 }
+static const struct ec_response_keybd_config keybd1 = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_FORWARD,		/* T2 */
+		TK_REFRESH,		/* T3 */
+		TK_FULLSCREEN,		/* T4 */
+		TK_OVERVIEW,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	/* No function keys, no numeric keypad, has screenlock key */
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+__override const struct ec_response_keybd_config
+*board_vivaldi_keybd_config(void)
+{
+	/*
+	 * Future boards should use fw_config if needed.
+	 */
+
+	return &keybd1;
+}
 
 #ifndef TEST_BUILD
 /* This callback disables keyboard when convertibles are fully open */
@@ -681,3 +704,30 @@ void lid_angle_peripheral_enable(int enable)
 	}
 }
 #endif
+/**
+ * Enable panel power detection
+ */
+static void panel_power_detect_init(void)
+{
+	gpio_enable_interrupt(GPIO_EN_PP1800_PANEL_S0);
+}
+DECLARE_HOOK(HOOK_INIT, panel_power_detect_init, HOOK_PRIO_DEFAULT);
+
+/**
+ * Handle VPN / VSN for mipi display.
+ */
+static void panel_power_change_deferred(void)
+{
+	int signal = gpio_get_level(GPIO_EN_PP1800_PANEL_S0);
+
+	gpio_set_level(GPIO_EN_LCD_ENP, signal);
+	msleep(1);
+	gpio_set_level(GPIO_EN_LCD_ENN, signal);
+}
+DECLARE_DEFERRED(panel_power_change_deferred);
+
+void panel_power_change_interrupt(enum gpio_signal signal)
+{
+	/* Reset lid debounce time */
+	hook_call_deferred(&panel_power_change_deferred_data, 1 * MSEC);
+}
