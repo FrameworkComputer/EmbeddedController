@@ -735,4 +735,16 @@ config PLATFORM_EC_I2C_PASSTHRU_RESTRICTED
 	  Once enabled, board_allow_i2c_passthru function has to be implemented,
 	  which defines the allowed usage of the command.
 
+config PLATFORM_EC_HOST_COMMAND_STATUS
+	bool "Return in-progress status for slow host commands"
+	default n
+	help
+	  When the AP is attached to the EC via a serialized bus such as I2C or
+	  SPI, it needs a way to minimize the length of time an EC command will
+	  tie up the bus (and the kernel driver on the AP). If this config is
+	  defined, the EC may return an in-progress result code for slow
+	  commands such as flash erase/write instead of stalling until the
+	  command finishes processing, and the AP may then inquire the status
+	  of the current command and/or the result of the previous command.
+
 endif # PLATFORM_EC
