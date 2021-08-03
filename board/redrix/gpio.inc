@@ -33,6 +33,11 @@ GPIO_INT(USB_C1_BC12_INT_ODL,            PIN(8, 3), GPIO_INT_FALLING, bc12_inter
 GPIO_INT(USB_C1_PPC_INT_ODL,             PIN(7, 0), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C1_RT_INT_ODL,              PIN(4, 1), GPIO_INT_FALLING, retimer_interrupt)
 
+/* WLC interrupt. GPIO_PULL_DOWN ensures no IRQ when WLC chip is off. */
+#ifdef SECTION_IS_RW
+GPIO_INT(PEN_INT_ODL, PIN(F, 5), GPIO_INT_RISING | GPIO_PULL_DOWN, pchg_irq)
+#endif
+
 /* USED GPIOs: */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
 GPIO(CHARGER_VAP_OTG_EN,             PIN(9, 6), GPIO_OUT_LOW)
@@ -76,6 +81,7 @@ GPIO(SYS_RST_ODL,                    PIN(C, 5), GPIO_ODR_HIGH)
 GPIO(USB_C0_TCPC_RST_ODL,            PIN(A, 7), GPIO_ODR_LOW)
 GPIO(USB_C1_TCPC_RST_ODL,            PIN(A, 0), GPIO_ODR_LOW)
 GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
+GPIO(PEN_RST_L,                      PIN(0, 2), GPIO_ODR_HIGH)
 
 /* LED */
 GPIO(C0_CHARGE_LED_AMBER_L,          PIN(C, 4), GPIO_OUT_HIGH)	/* Amber C0 port */

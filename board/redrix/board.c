@@ -18,6 +18,7 @@
 #include "fw_config.h"
 #include "hooks.h"
 #include "lid_switch.h"
+#include "peripheral_charger.h"
 #include "power_button.h"
 #include "power.h"
 #include "registers.h"
@@ -31,6 +32,25 @@
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+
+/* PCHG control */
+#ifdef SECTION_IS_RW
+extern struct pchg_drv ctn730_drv;
+
+struct pchg pchgs[] = {
+	[0] = {
+		.cfg = &(const struct pchg_config) {
+			.drv = &ctn730_drv,
+			.i2c_port = I2C_PORT_WLC,
+			.irq_pin = GPIO_PEN_INT_ODL,
+			.full_percent = 96,
+			.block_size = 128,
+		},
+		.events = QUEUE_NULL(PCHG_EVENT_QUEUE_SIZE, enum pchg_event),
+	},
+};
+const int pchg_count = ARRAY_SIZE(pchgs);
+#endif
 
 /******************************************************************************/
 /* USB-A charging control */

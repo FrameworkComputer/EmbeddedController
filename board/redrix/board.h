@@ -57,6 +57,13 @@
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 
+/* WLC pins */
+#ifdef SECTION_IS_RW
+#define CONFIG_PERIPHERAL_CHARGER
+#define CONFIG_DEVICE_EVENT
+#define CONFIG_CTN730
+#endif
+
 /* USB Type A Features */
 #define USB_PORT_COUNT			1
 #define CONFIG_USB_PORT_POWER_DUMB
@@ -123,6 +130,8 @@
 
 #define GPIO_ID_1_EC_KB_BL_EN		GPIO_EC_BATT_PRES_ODL
 
+#define GPIO_WLC_NRST_CONN		GPIO_PEN_RST_L
+
 /* System has back-lit keyboard */
 #define CONFIG_PWM_KBLIGHT
 
@@ -145,6 +154,7 @@
 #define I2C_PORT_BATTERY	NPCX_I2C_PORT5_0
 #define I2C_PORT_CHARGER	NPCX_I2C_PORT7_0
 #define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
+#define I2C_PORT_WLC		NPCX_I2C_PORT7_0
 
 #define I2C_ADDR_EEPROM_FLAGS	0x50
 
