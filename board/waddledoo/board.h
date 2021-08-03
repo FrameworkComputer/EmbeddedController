@@ -26,6 +26,10 @@
 /* EC console commands */
 #define CONFIG_CMD_CHARGER_DUMP
 
+/* Remove default commands to free flash space */
+#undef CONFIG_CMD_ACCELSPOOF
+#undef CONFIG_CMD_BATTFAKE
+
 /* Battery */
 #define CONFIG_BATTERY_FUEL_GAUGE
 
