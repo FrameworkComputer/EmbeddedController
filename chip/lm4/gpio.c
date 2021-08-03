@@ -328,7 +328,7 @@ static void gpio_interrupt(int port, uint32_t mis)
 
 /**
  * Handlers for each GPIO port.  These read and clear the interrupt bits for
- * the port, then call the master handler above.
+ * the port, then call the main handler above.
  */
 #define GPIO_IRQ_FUNC(irqfunc, gpiobase)		\
 	void irqfunc(void)				\

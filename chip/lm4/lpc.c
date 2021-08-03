@@ -759,16 +759,17 @@ static void lpc_init(void)
 #endif
 
 	/*
-	 * Ensure the EC (slave) has control of the memory-mapped I/O space.
-	 * Once the EC has won arbitration for the memory-mapped space, it will
-	 * keep control of it until it writes the last byte in the space.
-	 * (That never happens; we can't use the last byte in the space because
-	 * ACPI can't see it anyway.)
+	 * Ensure the EC (peripheral) has control of the memory-mapped
+	 * I/O space.  Once the EC has won arbitration for the
+	 * memory-mapped space, it will keep control of it until it
+	 * writes the last byte in the space.  (That never happens; we
+	 * can't use the last byte in the space because ACPI can't see
+	 * it anyway.)
 	 */
 	while (!(LM4_LPC_ST(LPC_CH_MEMMAP) & 0x10)) {
 		/* Clear HW1ST */
 		LM4_LPC_ST(LPC_CH_MEMMAP) &= ~0x40;
-		/* Do a slave write; this should cause SW1ST to be set */
+		/* Do a peripheral write; this should cause SW1ST to be set */
 		*LPC_POOL_MEMMAP = *LPC_POOL_MEMMAP;
 	}
 

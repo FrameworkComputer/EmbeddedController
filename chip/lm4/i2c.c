@@ -39,9 +39,10 @@
 #define LM4_I2C_MCS_CLKTO  BIT(7)
 
 /*
- * Minimum delay between resetting the port or sending a stop condition, and
- * when the port can be expected to be back in an idle state (and the slave
- * has had long enough to see the start/stop condition edges).
+ * Minimum delay between resetting the port or sending a stop condition,
+ * and when the port can be expected to be back in an idle state (and
+ * the peripheral has had long enough to see the start/stop condition
+ * edges).
  *
  * 500 us = 50 clocks at 100 KHz bus speed.  This has been experimentally
  * determined to be enough.
@@ -103,7 +104,7 @@ int i2c_do_work(int port)
 		/*
 		 * Error after starting; abort transfer.  Ignore errors at
 		 * start because arbitration and timeout errors are taken care
-		 * of in chip_i2c_xfer(), and slave ack failures will
+		 * of in chip_i2c_xfer(), and peripheral ack failures will
 		 * automatically clear once we send a start condition.
 		 */
 		pd->err = EC_ERROR_UNKNOWN;
@@ -165,7 +166,7 @@ int i2c_do_work(int port)
 	return 0;
 }
 
-int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
+int chip_i2c_xfer(const int port, const uint16_t addr_flags,
 		  const uint8_t *out, int out_size,
 		  uint8_t *in, int in_size, int flags)
 {
@@ -193,7 +194,7 @@ int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 
 		CPRINTS("I2C%d Addr:%02X bad status 0x%02x, SCL=%d, SDA=%d",
 			port,
-			I2C_STRIP_FLAGS(slave_addr_flags),
+			I2C_STRIP_FLAGS(addr_flags),
 			reg_mcs,
 			i2c_get_line_levels(port) & I2C_LINE_SCL_HIGH,
 			i2c_get_line_levels(port) & I2C_LINE_SDA_HIGH);
@@ -212,14 +213,15 @@ int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 		LM4_I2C_MTPR(port) = tpr;
 
 		/*
-		 * We don't know what edges the slave saw, so sleep long enough
-		 * that the slave will see the new start condition below.
+		 * We don't know what edges the peripheral saw, so sleep
+		 * long enough that the peripheral will see the new
+		 * start condition below.
 		 */
 		usleep(I2C_IDLE_US);
 	}
 
-	/* Set slave address for transmit */
-	LM4_I2C_MSA(port) = (I2C_STRIP_FLAGS(slave_addr_flags) << 1) & 0xff;
+	/* Set peripheral address for transmit */
+	LM4_I2C_MSA(port) = (I2C_STRIP_FLAGS(addr_flags) << 1) & 0xff;
 
 	/* Enable interrupts */
 	pd->task_waiting = task_get_current();
@@ -358,7 +360,7 @@ void i2c_init(void)
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_I2C, 1);
 
-	/* Initialize ports as master, with interrupts enabled */
+	/* Initialize ports as controller, with interrupts enabled */
 	for (i = 0; i < i2c_ports_used; i++)
 		LM4_I2C_MCR(i2c_ports[i].port) = 0x10;
 
