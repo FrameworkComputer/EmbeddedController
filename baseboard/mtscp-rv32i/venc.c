@@ -31,7 +31,7 @@ static struct consumer const event_venc_consumer = {
 };
 
 /* Stub functions only provided by private overlays. */
-#ifndef HAVE_PRIVATE_MT8192
+#ifndef HAVE_PRIVATE_MT_SCP
 void venc_h264_msg_handler(void *data) {}
 #endif
 
