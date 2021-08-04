@@ -198,6 +198,14 @@ static int cros_flash_it8xxx2_erase(const struct device *dev, int offset,
 	if (IS_ENABLED(CONFIG_ITE_IT8XXX2_INTC)) {
 		ite_intc_save_and_disable_interrupts();
 	}
+	/*
+	 * EC still need to handle AP's EC_CMD_GET_COMMS_STATUS command
+	 * during erasing.
+	 */
+	if (IS_ENABLED(HAS_TASK_HOSTCMD) &&
+		IS_ENABLED(CONFIG_HOST_COMMAND_STATUS)) {
+		irq_enable(DT_IRQN(DT_NODELABEL(shi)));
+	}
 	/* Always use sector erase command */
 	for (; size > 0; size -= CONFIG_FLASH_ERASE_SIZE) {
 		ret = flash_erase(flash_controller, offset,
