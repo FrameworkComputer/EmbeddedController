@@ -2741,7 +2741,7 @@ charge_command_charge_control(struct host_cmd_handler_args *args)
 
 	if (args->version >= 2) {
 		if (p->cmd == EC_CHARGE_CONTROL_CMD_SET) {
-			if (get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL) {
+			if (p->mode == CHARGE_CONTROL_NORMAL) {
 				rv = battery_sustainer_set(
 						p->sustain_soc.lower,
 						p->sustain_soc.upper);
