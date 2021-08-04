@@ -4,7 +4,7 @@
 
 board: native_posix
 supported-zephyr-versions:
-  - v2.5
+  - v2.6
 output-type: elf
 toolchain: llvm
 is-test: true
