@@ -178,9 +178,25 @@ static void suspend_peripherals(void)
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, suspend_peripherals, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_TABLET_MODE */
 
-/* Board level callback was not linked in test build, implement it here. */
 #ifdef TEST_BUILD
-void lid_angle_peripheral_enable(int enable)
+__overridable void lid_angle_peripheral_enable(int enable)
 {
 }
-#endif
+#else
+__overridable void lid_angle_peripheral_enable(int enable)
+{
+	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
+
+	if (enable) {
+		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
+	} else {
+		/*
+		 * Ensure that the chipset is off before disabling the keyboard.
+		 * When the chipset is on, the EC keeps the keyboard enabled and
+		 * the AP decides whether to ignore input devices or not.
+		 */
+		if (!chipset_in_s0)
+			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
+	}
+}
+#endif /* TEST_BUILD */

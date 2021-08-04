@@ -222,9 +222,8 @@ static void cbi_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
-#ifndef TEST_BUILD
 /* This callback disables keyboard when convertibles are fully open */
-void lid_angle_peripheral_enable(int enable)
+__override void lid_angle_peripheral_enable(int enable)
 {
 	/*
 	 * If the lid is in tablet position via other sensors,
@@ -237,7 +236,6 @@ void lid_angle_peripheral_enable(int enable)
 	if (board_is_convertible())
 		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
-#endif
 
 int board_is_lid_angle_tablet_mode(void)
 {

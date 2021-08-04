@@ -29,7 +29,5 @@ zephyr_library_sources(
   "${PLATFORM_EC_BOARD}/usbc_config.c")
 
 # Board specific implementation
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MOTIONSENSE
-  "src/sensors.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C
   "src/i2c.c")

@@ -336,8 +336,7 @@ void baseboard_mst_enable_control(enum mst_source src, int level)
 #endif
 
 /* Enable or disable input devices, based on chipset state */
-#ifndef TEST_BUILD
-void lid_angle_peripheral_enable(int enable)
+__override void lid_angle_peripheral_enable(int enable)
 {
 	if (board_is_convertible()) {
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
@@ -345,7 +344,6 @@ void lid_angle_peripheral_enable(int enable)
 		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 	}
 }
-#endif
 
 static uint8_t sku_id;
 static uint8_t board_id;

@@ -645,13 +645,11 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 #endif /* HAS_TASK_MOTIONSENSE */
 
-#ifndef TEST_BUILD
-void lid_angle_peripheral_enable(int enable)
+__override void lid_angle_peripheral_enable(int enable)
 {
 	if (board_is_convertible())
 		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 }
-#endif
 
 static const int sku_thresh_mv[] = {
 	/* Vin = 3.3V, Ideal voltage, R2 values listed below */

@@ -21,7 +21,3 @@ zephyr_library_include_directories(
 # Include selected EC source for the baseboard
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
   "${PLATFORM_EC_BASEBOARD}/power.c")
-
-# Board specific sensor implementation
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MOTIONSENSE
-  "src/sensors.c")

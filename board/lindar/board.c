@@ -109,8 +109,7 @@ int board_is_lid_angle_tablet_mode(void)
 }
 
 /* Enable or disable input devices, based on tablet mode or chipset state */
-#ifndef TEST_BUILD
-void lid_angle_peripheral_enable(int enable)
+__override void lid_angle_peripheral_enable(int enable)
 {
 	if (ec_cfg_has_tabletmode()) {
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF) ||
@@ -119,7 +118,6 @@ void lid_angle_peripheral_enable(int enable)
 		keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 	}
 }
-#endif
 
 /******************************************************************************/
 /* Sensors */

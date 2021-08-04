@@ -30,6 +30,6 @@ void lid_angle_set_wake_angle(int ang);
  *
  * @param enable Flag that enables or disables peripherals.
  */
-void lid_angle_peripheral_enable(int enable);
+__override_proto void lid_angle_peripheral_enable(int enable);
 
 #endif  /* __CROS_EC_LID_ANGLE_H */

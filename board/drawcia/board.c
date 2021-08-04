@@ -662,9 +662,8 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-#ifndef TEST_BUILD
 /* This callback disables keyboard when convertibles are fully open */
-void lid_angle_peripheral_enable(int enable)
+__override void lid_angle_peripheral_enable(int enable)
 {
 	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
 
@@ -688,7 +687,6 @@ void lid_angle_peripheral_enable(int enable)
 			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
 	}
 }
-#endif
 
 __override void ocpc_get_pid_constants(int *kp, int *kp_div,
 				       int *ki, int *ki_div,

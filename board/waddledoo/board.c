@@ -654,9 +654,8 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-#ifndef TEST_BUILD
 /* This callback disables keyboard when convertibles are fully open */
-void lid_angle_peripheral_enable(int enable)
+__override void lid_angle_peripheral_enable(int enable)
 {
 	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
 
@@ -680,4 +679,3 @@ void lid_angle_peripheral_enable(int enable)
 			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
 	}
 }
-#endif

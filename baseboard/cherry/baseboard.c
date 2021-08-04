@@ -592,27 +592,6 @@ int board_regulator_get_voltage(uint32_t index, uint32_t *voltage_mv)
 	return mt6360_regulator_get_voltage(id, voltage_mv);
 }
 
-/* Lid */
-#ifndef TEST_BUILD
-/* This callback disables keyboard when convertibles are fully open */
-void lid_angle_peripheral_enable(int enable)
-{
-	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
-
-	if (enable) {
-		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
-	} else {
-		/*
-		 * Ensure that the chipset is off before disabling the keyboard.
-		 * When the chipset is on, the EC keeps the keyboard enabled and
-		 * the AP decides whether to ignore input devices or not.
-		 */
-		if (!chipset_in_s0)
-			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
-	}
-}
-#endif
-
 static void baseboard_init(void)
 {
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
