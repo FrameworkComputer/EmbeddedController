@@ -100,7 +100,7 @@ static __maybe_unused int lis2dw12_load_fifo(struct motion_sensor_t *s,
 			vect.data[Y] = axis[Y];
 			vect.data[Z] = axis[Z];
 			vect.flags = 0;
-			vect.sensor_num = 0;
+			vect.sensor_num = s - motion_sensors;
 			motion_sense_fifo_stage_data(&vect, s, 3,
 						     interrupt_timestamp);
 		}
