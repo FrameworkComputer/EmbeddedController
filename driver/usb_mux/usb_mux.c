@@ -45,6 +45,7 @@ enum mux_config_type {
 	USB_MUX_SET_MODE,
 	USB_MUX_GET_MODE,
 	USB_MUX_CHIPSET_RESET,
+	USB_MUX_HPD_UPDATE,
 };
 
 /* Configure the MUX */
@@ -135,6 +136,18 @@ static int configure_mux(int port,
 				*mux_state |= lcl_state;
 			}
 			break;
+
+		case USB_MUX_HPD_UPDATE:
+			lcl_state = *mux_state;
+
+			if (mux_ptr->hpd_update) {
+				int hpd_lvl = (lcl_state & USB_PD_MUX_HPD_LVL) ?
+						1 : 0;
+				int hpd_irq = (lcl_state & USB_PD_MUX_HPD_IRQ) ?
+						1 : 0;
+				mux_ptr->hpd_update(mux_ptr, hpd_lvl, hpd_irq);
+			}
+
 		}
 
 		if (ack_required) {
@@ -322,8 +335,8 @@ void usb_mux_flip(int port)
 
 void usb_mux_hpd_update(int port, int hpd_lvl, int hpd_irq)
 {
-	mux_state_t mux_state;
-	const struct usb_mux *mux_ptr = &usb_muxes[port];
+	mux_state_t mux_state = (hpd_lvl ? USB_PD_MUX_HPD_LVL : 0) |
+				(hpd_irq ? USB_PD_MUX_HPD_IRQ : 0);
 
 	if (port >= board_get_usb_pd_port_count()) {
 		return;
@@ -336,13 +349,11 @@ void usb_mux_hpd_update(int port, int hpd_lvl, int hpd_irq)
 	if (exit_low_power_mode(port) != EC_SUCCESS)
 		return;
 
-	for (; mux_ptr; mux_ptr = mux_ptr->next_mux)
-		if (mux_ptr->hpd_update)
-			mux_ptr->hpd_update(mux_ptr, hpd_lvl, hpd_irq);
+	configure_mux(port, USB_MUX_HPD_UPDATE, &mux_state);
 
 	if (!configure_mux(port, USB_MUX_GET_MODE, &mux_state)) {
 		mux_state |= (hpd_lvl ? USB_PD_MUX_HPD_LVL : 0) |
-			     (hpd_irq ? USB_PD_MUX_HPD_IRQ : 0);
+			(hpd_irq ? USB_PD_MUX_HPD_IRQ : 0);
 		configure_mux(port, USB_MUX_SET_MODE, &mux_state);
 	}
 }
