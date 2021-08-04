@@ -77,9 +77,6 @@ __override void led_set_color_battery(enum ec_led_colors color)
 
 	led1_duty = led2_duty = led3_duty = led4_duty = BAT_LED_OFF_LVL;
 
-	if (!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
-		return;
-
 	/* Check which port is the charging port,
 	 * and turn on the corresponding led.
 	 */
