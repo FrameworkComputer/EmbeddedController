@@ -66,6 +66,7 @@
  * pulse length for simulated power button presses when the system is off.
  */
 #define PWRBTN_INITIAL_US  (200 * MSEC)
+#define PWRBTN_WAS_OFF_DEBOUNCE (500 * MSEC) /* power button man-made bounce */
 #define PWRBTN_WAIT_RSMRST (20 * MSEC)
 #define PWRBTN_DELAY_INITIAL	(100 * MSEC)
 #define PWRBTN_RETRY_COUNT  200				 /* base on PWRBTN_WAIT_RSMRST 1 count = 20ms */
@@ -299,7 +300,7 @@ static void state_machine(uint64_t tnow)
 			retry_wait = PWRBTN_DELAY_T1 - (rsmrst_retry * PWRBTN_WAIT_RSMRST);
 			rsmrst_retry = 0;
 
-			tnext_state = tnow + PWRBTN_INITIAL_US;
+			tnext_state = tnow + PWRBTN_WAS_OFF_DEBOUNCE;
 			pwrbtn_state = PWRBTN_STATE_WAS_OFF;
 			msleep(20);
 			set_pwrbtn_to_pch(0, 0);
@@ -422,7 +423,7 @@ static void state_machine(uint64_t tnow)
 		 * true power button state to the PCH. */
 		if (power_button_is_pressed()) {
 			/* User is still holding the power button */
-			tnext_state = tnow + retry_wait;
+			tnext_state = tnow + (retry_wait - PWRBTN_WAS_OFF_DEBOUNCE);
 			pwrbtn_state = PWRBTN_STATE_HELD;
 		} else {
 			/* Stop stretching the power button press */
@@ -433,6 +434,10 @@ static void state_machine(uint64_t tnow)
 		/* Do nothing */
 		break;
 	case PWRBTN_STATE_HELD:
+
+		if (!power_button_is_pressed())
+			power_button_released(tnow);
+
 		if (!gpio_get_level(GPIO_ON_OFF_FP_L)) {
 			tnext_state = tnow + PWRBTN_DELAY_T2;
 			pwrbtn_state = PWRBTN_STATE_NEED_RESET;
