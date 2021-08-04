@@ -2168,6 +2168,10 @@ wait_for_it:
 
 		/* And the EC console */
 		is_full = calc_is_full();
+
+		/* Run battery sustainer (no-op if not applicable). */
+		sustain_battery_soc();
+
 		if ((!(curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
 		    curr.batt.state_of_charge != prev_charge) ||
 #ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
@@ -2176,7 +2180,6 @@ wait_for_it:
 		    (is_full != prev_full) ||
 		    (curr.state != prev_state) ||
 		    (charge_get_display_charge() != prev_disp_charge)) {
-			sustain_battery_soc();
 			show_charging_progress();
 			prev_charge = curr.batt.state_of_charge;
 			prev_disp_charge = charge_get_display_charge();
