@@ -192,7 +192,7 @@ int board_chipset_power_on(void)
 		return false;
 	}
 
-	me_gpio_change(me_change & ME_UNLOCK ? GPIO_PULL_UP : GPIO_PULL_DOWN);
+	me_gpio_change(me_change & ME_UNLOCK ? GPIO_OUT_HIGH : GPIO_OUT_LOW);
 
 	/* Add 10ms delay between SUSP_VR and RSMRST */
 	msleep(20);
@@ -516,7 +516,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_PCH_PWROK, 0);
 		gpio_set_level(GPIO_SYS_PWROK, 0);
 		hook_notify(HOOK_CHIPSET_SUSPEND);
-		me_gpio_change(GPIO_PULL_DOWN);
+		me_gpio_change(GPIO_OUT_LOW);
 		f75303_set_enabled(0);
 		set_retimer_power(POWER_S3);
 		return POWER_S3;
