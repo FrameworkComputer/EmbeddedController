@@ -19,7 +19,9 @@
 
 /* Save some flash space */
 #define CONFIG_CHIP_INIT_ROM_REGION
+#undef  CONFIG_CONSOLE_CMDHELP
 #define CONFIG_DEBUG_ASSERT_BRIEF
+#define CONFIG_USB_PD_DEBUG_LEVEL 2
 
 /* EC console commands */
 #define CONFIG_CMD_CHARGER_DUMP
