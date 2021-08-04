@@ -15,13 +15,13 @@ test_static int test_scratchpad(void)
 	int rv;
 	uint32_t scratch;
 
-	scratch = system_get_scratchpad();
+	TEST_EQ(system_get_scratchpad(&scratch), EC_SUCCESS, "%d");
 	TEST_EQ(scratch, 0, "%d");
 
 	rv = system_set_scratchpad(1);
 	TEST_EQ(rv, EC_SUCCESS, "%d");
 
-	scratch = system_get_scratchpad();
+	TEST_EQ(system_get_scratchpad(&scratch), EC_SUCCESS, "%d");
 	TEST_EQ(scratch, 1, "%d");
 
 	return EC_SUCCESS;

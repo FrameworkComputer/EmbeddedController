@@ -361,9 +361,15 @@ void system_reset(int flags);
 int system_set_scratchpad(uint32_t value);
 
 /**
- * Return the current scratchpad register value.
+ * Get the scratchpad register value.
+ *
+ * The scratchpad register maintains its contents across a
+ * software-requested warm reset.
+ *
+ * @param value Where to store the content of the register.
+ * @return      EC_SUCCESS, or non-zero if error.
  */
-uint32_t system_get_scratchpad(void);
+int system_get_scratchpad(uint32_t *value);
 
 /**
  * Return the chip vendor/name/revision string.

@@ -102,7 +102,10 @@ int test_get_error_count(void)
 
 uint32_t test_get_state(void)
 {
-	return system_get_scratchpad();
+	uint32_t state;
+
+	system_get_scratchpad(&state);
+	return state;
 }
 
 test_mockable void test_clean_up(void)

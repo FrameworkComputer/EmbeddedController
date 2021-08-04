@@ -1141,9 +1141,10 @@ int system_set_scratchpad(uint32_t value)
 	return bbram_data_write(BBRM_DATA_INDEX_SCRATCHPAD, value);
 }
 
-uint32_t system_get_scratchpad(void)
+int system_get_scratchpad(uint32_t *value)
 {
-	return bbram_data_read(BBRM_DATA_INDEX_SCRATCHPAD);
+	*value = bbram_data_read(BBRM_DATA_INDEX_SCRATCHPAD);
+	return EC_SUCCESS;
 }
 
 int system_is_reboot_warm(void)

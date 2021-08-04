@@ -270,8 +270,11 @@ static int test_shared_mem(void)
 
 static int test_scratchpad(void)
 {
+	uint32_t scratchpad_value;
+
 	system_set_scratchpad(0xfeed);
-	TEST_ASSERT(system_get_scratchpad() == 0xfeed);
+	TEST_EQ(system_get_scratchpad(&scratchpad_value), EC_SUCCESS, "%d");
+	TEST_EQ(scratchpad_value, 0xfeed, "%d");
 
 	return EC_SUCCESS;
 }

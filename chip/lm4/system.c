@@ -579,9 +579,10 @@ int system_set_scratchpad(uint32_t value)
 	return hibdata_write(HIBDATA_INDEX_SCRATCHPAD, value);
 }
 
-uint32_t system_get_scratchpad(void)
+int system_get_scratchpad(uint32_t *value)
 {
-	return hibdata_read(HIBDATA_INDEX_SCRATCHPAD);
+	*value = hibdata_read(HIBDATA_INDEX_SCRATCHPAD);
+	return EC_SUCCESS;
 }
 
 const char *system_get_chip_vendor(void)

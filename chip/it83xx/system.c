@@ -373,16 +373,11 @@ int system_set_scratchpad(uint32_t value)
 	return EC_SUCCESS;
 }
 
-uint32_t system_get_scratchpad(void)
+int system_get_scratchpad(uint32_t *value)
 {
-	uint32_t value = 0;
-
-	value |= BRAM_SCRATCHPAD3 << 24;
-	value |= BRAM_SCRATCHPAD2 << 16;
-	value |= BRAM_SCRATCHPAD1 << 8;
-	value |= BRAM_SCRATCHPAD0;
-
-	return value;
+	*value = (BRAM_SCRATCHPAD3 << 24) | (BRAM_SCRATCHPAD2 << 16) |
+		 (BRAM_SCRATCHPAD1 << 8) | (BRAM_SCRATCHPAD0);
+	return EC_SUCCESS;
 }
 
 static uint32_t system_get_chip_id(void)

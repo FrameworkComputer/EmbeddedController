@@ -225,22 +225,21 @@ int system_set_scratchpad(uint32_t value)
 	return EC_SUCCESS;
 }
 
-uint32_t system_get_scratchpad(void)
+int system_get_scratchpad(uint32_t *value)
 {
 	FILE *f = get_persistent_storage("scratchpad", "r");
-	uint32_t value;
 	int success;
 
 	if (f == NULL)
-		return 0;
+		return EC_ERROR_UNKNOWN;
 
-	success = fscanf(f, "%u", &value);
+	success = fscanf(f, "%u", value);
 	release_persistent_storage(f);
 
 	if (success)
-		return value;
+		return EC_SUCCESS;
 	else
-		return 0;
+		return EC_ERROR_UNKNOWN;
 }
 
 static void __jump_resetvec(void)

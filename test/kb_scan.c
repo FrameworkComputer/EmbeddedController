@@ -557,7 +557,9 @@ static int test_check_boot_down(void)
 
 void test_init(void)
 {
-	uint32_t state = system_get_scratchpad();
+	uint32_t state;
+
+	system_get_scratchpad(&state);
 
 	if (state & TEST_STATE_MASK(TEST_STATE_STEP_2)) {
 		/* Power-F3-ESC */

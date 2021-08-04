@@ -35,9 +35,10 @@ int system_set_scratchpad(uint32_t value)
 	return EC_SUCCESS;
 }
 
-uint32_t system_get_scratchpad(void)
+int system_get_scratchpad(uint32_t *value)
 {
-	return SCP_GPR[0] & 0xffff;
+	*value = SCP_GPR[0] & 0xffff;
+	return EC_SUCCESS;
 }
 
 const char *system_get_chip_vendor(void)

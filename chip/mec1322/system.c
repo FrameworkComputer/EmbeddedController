@@ -218,9 +218,10 @@ int system_set_scratchpad(uint32_t value)
 	return EC_SUCCESS;
 }
 
-uint32_t system_get_scratchpad(void)
+int system_get_scratchpad(uint32_t *value)
 {
-	return MEC1322_VBAT_RAM(HIBDATA_INDEX_SCRATCHPAD);
+	*value = MEC1322_VBAT_RAM(HIBDATA_INDEX_SCRATCHPAD);
+	return EC_SUCCESS;
 }
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)

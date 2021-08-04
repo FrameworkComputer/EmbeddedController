@@ -29,9 +29,9 @@ static int test_reboot_on_shutdown(void)
 	params.cmd = EC_REBOOT_COLD;
 	params.flags = EC_REBOOT_FLAG_ON_AP_SHUTDOWN;
 
-	TEST_ASSERT(test_send_host_command(
-			EC_CMD_REBOOT_EC, 0, &params,
-			sizeof(params), NULL, 0) == EC_SUCCESS);
+	TEST_EQ(test_send_host_command(EC_CMD_REBOOT_EC, 0, &params,
+				       sizeof(params), NULL, 0),
+		EC_SUCCESS, "%d");
 
 	system_set_scratchpad(TEST_STATE_STEP_2);
 	test_chipset_off();
@@ -54,16 +54,16 @@ static int test_cancel_reboot(void)
 	params.cmd = EC_REBOOT_COLD;
 	params.flags = EC_REBOOT_FLAG_ON_AP_SHUTDOWN;
 
-	TEST_ASSERT(test_send_host_command(
-			EC_CMD_REBOOT_EC, 0, &params,
-			sizeof(params), NULL, 0) == EC_SUCCESS);
+	TEST_EQ(test_send_host_command(EC_CMD_REBOOT_EC, 0, &params,
+				       sizeof(params), NULL, 0),
+		EC_SUCCESS, "%d");
 
 	params.cmd = EC_REBOOT_CANCEL;
 	params.flags = 0;
 
-	TEST_ASSERT(test_send_host_command(
-			EC_CMD_REBOOT_EC, 0, &params,
-			sizeof(params), NULL, 0) == EC_SUCCESS);
+	TEST_EQ(test_send_host_command(EC_CMD_REBOOT_EC, 0, &params,
+				       sizeof(params), NULL, 0),
+		EC_SUCCESS, "%d");
 
 	test_chipset_off();
 	msleep(30);
@@ -94,7 +94,14 @@ static void fail_and_clean_up(void)
 
 void run_test(int argc, char **argv)
 {
-	uint32_t state = system_get_scratchpad();
+	uint32_t state = 0;
+
+	/* The return value isn't checked here on purpose. The scratchpad file
+	 * may exist from a previous run or it may be in a clean state. A
+	 * previous run of this test should reset the scratchpad value to 0
+	 * regardless of the final result.
+	 */
+	system_get_scratchpad(&state);
 
 	test_reset();
 

@@ -109,23 +109,19 @@ int system_set_scratchpad(uint32_t value)
 			 GET_BBRAM_SIZE(scratchpad), (uint8_t *)&value);
 }
 
-uint32_t system_get_scratchpad(void)
+int system_get_scratchpad(uint32_t *value)
 {
-	uint32_t value;
-
 	if (bbram_dev == NULL) {
 		LOG_ERR("bbram_dev doesn't binding");
-		/*
-		 * TODO(b/195481980): Seperate the scratchpad value & API
-		 * status.
-		 */
-		return 0;
+		return -EC_ERROR_INVAL;
 	}
 
-	cros_bbram_read(bbram_dev, GET_BBRAM_OFFSET(scratchpad),
-			GET_BBRAM_SIZE(scratchpad), (uint8_t *)&value);
+	if (cros_bbram_read(bbram_dev, GET_BBRAM_OFFSET(scratchpad),
+			    GET_BBRAM_SIZE(scratchpad), (uint8_t *)value)) {
+		return -EC_ERROR_INVAL;
+	}
 
-	return value;
+	return 0;
 }
 
 void system_hibernate(uint32_t seconds, uint32_t microseconds)
