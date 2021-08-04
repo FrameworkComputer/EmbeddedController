@@ -129,6 +129,9 @@
 #define CONFIG_TEMP_SENSOR_POWER_GPIO	GPIO_SEQ_EC_DSW_PWROK
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
 
+/* LED */
+#define CONFIG_BATTERY_LEVEL_NEAR_FULL 91
+
 /*
  * TODO: no fan control loop until sensors are tuned
  */

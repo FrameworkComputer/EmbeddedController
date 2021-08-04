@@ -17,7 +17,7 @@ const struct pwm_t pwm_channels[] = {
 	},
 	[PWM_CH_TKP_A_LED_N] = {
 		.channel = 1,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+		.flags = PWM_CONFIG_DSLEEP,
 		.freq = 4800,
 	},
 	[PWM_CH_LED1_AMBER] = {
@@ -52,14 +52,14 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 static void board_pwm_init(void)
 {
 	/*
-	 * Turn on LOGO led and turn off battery/power led
+	 * Turn off LOGO/power/battery led
 	 */
 	pwm_enable(PWM_CH_LED1_AMBER, 1);
 	pwm_set_duty(PWM_CH_LED1_AMBER, 0);
 	pwm_enable(PWM_CH_LED2_WHITE, 1);
 	pwm_set_duty(PWM_CH_LED2_WHITE, 0);
 	pwm_enable(PWM_CH_TKP_A_LED_N, 1);
-	pwm_set_duty(PWM_CH_TKP_A_LED_N, 100);
+	pwm_set_duty(PWM_CH_TKP_A_LED_N, 0);
 	pwm_enable(PWM_CH_LED4, 1);
 	pwm_set_duty(PWM_CH_LED4, 0);
 
