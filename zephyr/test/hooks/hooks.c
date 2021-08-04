@@ -69,7 +69,7 @@ static void test_hook_list_empty(void)
 
 static bool deferred_func_called;
 
-#define DEFERRED_DELAY_US (250 * 1000)
+#define DEFERRED_DELAY_US (500 * 1000)
 static void deferred_func(void)
 {
 	deferred_func_called = true;
