@@ -19,6 +19,11 @@ enum ec_cfg_keyboard_backlight_type {
 	KEYBOARD_BACKLIGHT_ENABLED = 1
 };
 
+enum ec_cfg_eps_type {
+	EPS_DISABLED = 0,
+	EPS_ENABLED = 1
+};
+
 union redrix_cbi_fw_config {
 	struct {
 		uint32_t				sd_db : 2;
@@ -26,7 +31,7 @@ union redrix_cbi_fw_config {
 		uint32_t				audio : 3;
 		uint32_t				lte_db : 2;
 		uint32_t				ufc : 2;
-		uint32_t				eps : 1;
+		enum ec_cfg_eps_type			eps : 1;
 		uint32_t				reserved_1 : 21;
 	};
 	uint32_t raw_value;
@@ -38,5 +43,13 @@ union redrix_cbi_fw_config {
  * @return the FW_CONFIG for the board.
  */
 union redrix_cbi_fw_config get_fw_config(void);
+
+/**
+ * Check if the FW_CONFIG has enabled privacy screen.
+ *
+ * @return true if board supports privacy screen, false if the board
+ * doesn't support it.
+ */
+bool ec_cfg_has_eps(void);
 
 #endif /* __BOARD_BRYA_FW_CONFIG_H_ */

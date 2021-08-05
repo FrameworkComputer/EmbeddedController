@@ -48,3 +48,8 @@ union redrix_cbi_fw_config get_fw_config(void)
 {
 	return fw_config;
 }
+
+bool ec_cfg_has_eps(void)
+{
+	return (fw_config.eps == EPS_ENABLED);
+}
