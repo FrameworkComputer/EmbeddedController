@@ -170,7 +170,7 @@ int spi_flash_read(uint8_t *buf_usr, unsigned int offset, unsigned int bytes)
 			read_size);
 		if (ret != EC_SUCCESS)
 			break;
-		msleep(1);
+		msleep(CONFIG_SPI_FLASH_READ_WAIT_MS);
 	}
 	return ret;
 }

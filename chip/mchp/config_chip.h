@@ -150,6 +150,18 @@
 #define CONFIG_PROGRAM_MEMORY_BASE	0x000E0000
 #endif
 
+/*
+ * Optimize SPI flash read timing, MEC172x QMSPI controller controls CS#
+ * by hardware, it will add several system clock cycles delay between CS
+ * deassertion to CS assertion at the start of the next transaction, this
+ * guarantees SPI back to back transactions, so 1ms delay can be removed
+ * to optimze timing. MEC172x chip supports this hardware feature.
+ */
+#if defined(CHIP_FAMILY_MEC172X)
+#undef CONFIG_SPI_FLASH_READ_WAIT_MS
+#define CONFIG_SPI_FLASH_READ_WAIT_MS 0
+#endif
+
 #include "config_flash_layout.h"
 
 /************************************************************************/

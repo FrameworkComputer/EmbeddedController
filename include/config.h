@@ -3657,6 +3657,12 @@
  */
 #undef CONFIG_MCHP_GPSPI
 
+/*
+ * Configure SPI flash read wait time as 1ms
+ * Chip or board can redefine it per design
+ */
+#define CONFIG_SPI_FLASH_READ_WAIT_MS 1
+
 /* Default stack size to use for tasks, in bytes */
 #undef CONFIG_STACK_SIZE
 
