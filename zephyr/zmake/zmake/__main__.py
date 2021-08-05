@@ -67,7 +67,14 @@ def main(argv=None):
         help=("Turn on debug features (e.g., stack trace, " "verbose logging)"),
     )
     parser.add_argument(
-        "-j", "--jobs", type=int, help="Degree of multiprogramming to use"
+        "-j",
+        "--jobs",
+        # TODO(b/178196029): ninja doesn't know how to talk to a
+        # jobserver properly and spams our CPU on all cores.  Default
+        # to -j1 to execute sequentially until we switch to GNU Make.
+        default=1,
+        type=int,
+        help="Degree of multiprogramming to use",
     )
     parser.add_argument(
         "-l",
