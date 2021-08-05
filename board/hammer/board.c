@@ -354,11 +354,7 @@ static const struct ec_response_keybd_config bland_kb = {
 		TK_OVERVIEW,
 		TK_BRIGHTNESS_DOWN,
 		TK_BRIGHTNESS_UP,
-		/*
-		 * TODO: this is a placeholder key before MIC_MUTE
-		 * implemented.
-		 */
-		TK_SNAPSHOT,
+		TK_MICMUTE,
 		TK_VOL_MUTE,
 		TK_VOL_DOWN,
 		TK_VOL_UP,
