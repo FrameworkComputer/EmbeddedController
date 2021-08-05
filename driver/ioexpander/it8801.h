@@ -36,13 +36,20 @@
 #define IT8801_REG_MASK_GPIOPUE         BIT(0)
 #define IT8801_REG_GPIO23SOV            BIT(3)
 #define IT8801_REG_MASK_SELKSO2         0x02
+#define IT8801_REG_GISR                 0xF9
+#define IT8801_REG_MASK_GISR_GKSIIS     BIT(6)
+#define IT8801_REG_MASK_GISR_GGPIOG2IS  BIT(2)
+#define IT8801_REG_MASK_GISR_GGPIOG1IS  BIT(1)
+#define IT8801_REG_MASK_GISR_GGPIOG0IS  BIT(0)
+#define IT8801_REG_MASK_GISR_GGPIOGXIS  (IT8801_REG_MASK_GISR_GGPIOG2IS | \
+		IT8801_REG_MASK_GISR_GGPIOG1IS | IT8801_REG_MASK_GISR_GGPIOG0IS)
 #define IT8801_REG_LBVIDR               0xFE
 #define IT8801_REG_HBVIDR               0xFF
 #define IT8801_KSO_COUNT                18
 
 /* General Purpose I/O Port (GPIO) */
 #define IT8801_SUPPORT_GPIO_FLAGS (GPIO_OPEN_DRAIN | GPIO_INPUT | \
-		GPIO_OUTPUT | GPIO_LOW | GPIO_HIGH)
+		GPIO_OUTPUT | GPIO_LOW | GPIO_HIGH | GPIO_INT_ANY)
 
 #define IT8801_REG_MASK_GPIOAFS_FUNC1   (0x00 << 7)
 
@@ -70,14 +77,9 @@ extern const struct ioexpander_drv it8801_ioexpander_drv;
 #define IT8801_GPIOAFS_SHIFT            6  /* bit 6~7 */
 
 #define IT8801_GPIODIR                  BIT(5)  /* direction, output=1 */
-
-#define IT8801_GPIOIOT_SHIFT            3  /* bit 3~4 */
-#define IT8801_GPIOIOT_MASK             0x3
-#define IT8801_GPIOIOT_INT_LEVEL        0
-#define IT8801_GPIOIOT_INT_RISING       1
-#define IT8801_GPIOIOT_INT_FALLING      2
-#define IT8801_GPIOIOT_INT_EDGE         3  /* = RISING + FALLING */
-#define IT8801_GPIOIOT_OPEN_DRAIN       2
+/* input pin */
+#define IT8801_GPIOIOT_INT_RISING       BIT(3)
+#define IT8801_GPIOIOT_INT_FALLING      BIT(4)
 
 #define IT8801_GPIODIR                  BIT(5)
 #define IT8801_GPIOIOT                  BIT(4)
