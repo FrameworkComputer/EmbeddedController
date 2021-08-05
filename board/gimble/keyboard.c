@@ -34,8 +34,8 @@ static const struct ec_response_keybd_config gimble_kb = {
 		TK_SNAPSHOT,		/* T5 */
 		TK_BRIGHTNESS_DOWN,	/* T6 */
 		TK_BRIGHTNESS_UP,	/* T7 */
-		TK_KBD_BKLIGHT_TOGGLE,	/* T8 */
-		TK_MICMUTE,		/* T9 */
+		TK_MICMUTE,		/* T8 */
+		TK_KBD_BKLIGHT_TOGGLE,	/* T9 */
 		TK_PLAY_PAUSE,		/* T10 */
 		TK_VOL_MUTE,		/* T11 */
 		TK_VOL_DOWN,		/* T12 */
