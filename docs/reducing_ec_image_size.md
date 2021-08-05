@@ -4,6 +4,8 @@ The EC ToT codebase continues grows as new features are added and for bug
 fixes. This puts pressure on older boards that have limited flash space
 remaining. This document provides some tips for reducing the EC image size.
 
+[TOC]
+
 ## Checking the EC image footprint
 
 The EC codebase supports two build types:
@@ -188,7 +190,7 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_CHGRAMP | `chgramp` | |
 | | CONFIG_CMD_CLOCKGATES | `clockgates` | |
 | | CONFIG_CMD_COMXTEST | `comxtest` | |
-| | CONFIG_CMD_CRASH | `crash` | |
+| x | CONFIG_CMD_CRASH | `crash` | |
 | | CONFIG_CMD_DEVICE_EVENT | `deviceevent` | |
 | | CONFIG_CMD_DLOG | `dlog` | |
 | | CONFIG_CMD_ECTEMP | `ectemp` | |
@@ -206,7 +208,7 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_GT7288 | `gt7288_desc`<br>`gt7288_repdesc`<br>`gt7288_ver`<br>`gt7288_report` | |
 | | CONFIG_CMD_HASH | `hash` | firmware_ECHash uses `ectool echash` |
 | x | CONFIG_CMD_HCDEBUG | `hcdebug` | firmware_ECBootTime.py |
-| | CONFIG_CMD_HOSTCMD | `hostcmd` | |
+| x | CONFIG_CMD_HOSTCMD | `hostcmd` | |
 | | CONFIG_CMD_I2CWEDGE | `i2cwedge`<br>`i2cunwedge` | |
 | | CONFIG_CMD_I2C_PROTECT | `i2cprotect` | |
 | | CONFIG_CMD_I2C_SCAN | `i2cscan` | |
@@ -221,7 +223,7 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_IDLE_STATS | `idlestats` | |
 | | CONFIG_CMD_INA | `ina` | |
 | | CONFIG_CMD_JUMPTAGS | `jumptags` | |
-| | CONFIG_CMD_KEYBOARD | `8042`<br>`ksstate`<br>`kbpress` | |
+| x | CONFIG_CMD_KEYBOARD | `8042`<br>`ksstate`<br>`kbpress` | |
 | | CONFIG_CMD_LEDTEST | `ledtest` | |
 | | CONFIG_CMD_MCDP | `mcdp` | |
 | | CONFIG_CMD_MD | `md` | |
@@ -325,6 +327,19 @@ and can help troubleshoot PD issues when a PD analyzer isn't available.
 It is not recommended to set the fixed debug level to `DEBUG_DISABLE` (0) on any
 shipping firmware.
 
+### TCPMv1 Configuration
+
+Many older platforms still use the legacy TCPMv1 (`CONFIG_USB_PD_TCPMV1`)
+implementation.  Specific to TCPMv1, the PD protocol state names can be removed
+from the debug output by adding the following to the board.h/baseboard.h file.
+
+```c
+#undef CONFIG_USB_PD_TCPMV1_DEBUG
+```
+
+This saves around 900 bytes of flash space. TCPMv2 does not currently provide an
+equivalent configuration option, so there is also no Kconfig equivalent.
+
 ## Other optional features
 
 ### ASSERT() Calls
@@ -359,6 +374,86 @@ zephyr-ec builds use Zephyr's shell subsystem and by default enable the
 with many other non-critical features. Refer to the shell subsystem [Kconfig][2]
 source file for the complete list of shell features than can be configured.
 
+### Link time optimizaiton
+
+Link time optimization (LTO) is a feature of the linker to identify and remove
+unused code.
+
+For cros-ec builds, LTO is enabled by adding this to the board.h/baseboard.h
+file.
+
+```c
+#define CONFIG_LTO
+```
+
+For zephyr-ec builds, LTO is enabled by default and is controlled with Kconfig.
+
+```
+CONFIG_LTO=y
+```
+
+Note that for zephyr-ec builds, LTO is only turned on for the source files found
+under `platform/ec`.  The upstream Zephyr code does not currently support LTO
+due to some auto-generated code that breaks the assumptions made by the linker.
+This [Github issue][4] tracks the effort to support LTO in the Zephyr kernel.
+
+### CONFIG_CHIP_INIT_ROM_REGION
+
+The config option `CONFIG_CHIP_INIT_ROM_REGION` creates a new linker section to
+store data that remains resident in ROM/flash at runtime. This reduces the
+effective cros-ec image size by identifying data structures that do not need to
+be copied into the code RAM section at startup.
+
+This option has the following requirements:
+1. EC executes code from RAM
+2. The ROM/flash size is larger than 2 times the code RAM size.
+3. The RO code released for the board includes this
+   [change](https://crrev.com/c/2428566).
+
+The only EC chip that matches these prerequisites is the Nuvoton NPCX7.
+
+Due to the RO code requirement, take care before enabling this option for boards
+released prior to 2021.
+
+If the above requirements are meant, add the following to the
+board.h/baseboard.h file:
+
+```c
+#define CONFIG_CHIP_INIT_ROM_REGION
+#define CONFIG_CHIP_DATA_IN_INIT_ROM
+```
+
+These options are not supported for zephyr-ec builds.
+
+### Enable short GPIO names
+
+The [GPIO macros](./configuration/gpio.md) defined by the board get stored as
+descriptive strings for use with the `gpioget` and `gpioset` console commands.
+
+The names of the GPIOs can be shorted by enabling the
+`CONFIG_COMMON_GPIO_SHORTNAMES` option.
+
+For example, the Kukui board defines this GPIO:
+
+```c
+GPIO(PMIC_FORCE_RESET_ODL, PIN(A, 2),  GPIO_ODR_HIGH)
+```
+
+Normally, the GPIO name is stored exactly as specified by the macro:
+`PMIC_FORCE_RESET_ODL`.  However, when `CONFIG_COMMON_GPIO_SHORTNAMES` is
+defined, then the GPIO name is shortened to only include port and pin number:
+`A2`.
+
+This option is currently only supported by the STM32 chip and it is not
+supported by zephyr-ec builds.
+
+Note that there are some [FAFT tests][5] that rely on the GPIO name. If you
+enable this option, you may also need to change firmware testing configuration
+[file][6].
+
 [1]:./zephyr_build.md#Working-outside-the-chroot
 [2]:https://github.com/zephyrproject-rtos/zephyr/blob/main/subsys/shell/Kconfig
 [3]:https://docs.zephyrproject.org/latest/guides/optimizations/tools.html
+[4]:https://github.com/zephyrproject-rtos/zephyr/issues/2112
+[5]:https://chromium.googlesource.com/chromiumos/third_party/autotest/+/069cb4b0/server/site_tests/firmware_ECUsbPorts/firmware_ECUsbPorts.py#81
+[6]:https://chromium.googlesource.com/chromiumos/platform/fw-testing-configs/+/e2e9547e/volteer.json#26
