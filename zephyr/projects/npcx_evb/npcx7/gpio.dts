@@ -38,6 +38,7 @@
 		};
 		pch_wake_l {
 			gpios = <&gpio5 0 GPIO_OUT_HIGH>;
+			enum-name = "GPIO_EC_PCH_WAKE_ODL";
 			label = "PCH_WAKE_L";
 		};
 		gpio_pgood_fan: pgood_fan {
