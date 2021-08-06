@@ -27,8 +27,8 @@
 
 #define GPIO_BOTH_EDGES_PU (GPIO_INT_BOTH | GPIO_PULL_UP)
 
-/* Only needed if CONFIG_HOSTCMD_ESPI is not set, using LPC interface to PCH */
-#ifndef CONFIG_HOSTCMD_ESPI
+/* Only needed if CONFIG_HOST_INTERFACE_ESPI is not set, using LPC interface to PCH */
+#ifndef CONFIG_HOST_INTERFACE_ESPI
 GPIO_INT(PCH_PLTRST_L, PIN(064), GPIO_BOTH_EDGES_PU, lpcrst_interrupt)
 #endif
 

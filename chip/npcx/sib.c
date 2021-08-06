@@ -19,7 +19,7 @@
  * For eSPI - it is 200 us.
  * For LPC - it is 5 us.
  */
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 #define HOST_TRANSACTION_TIMEOUT_US 200
 #else
 #define HOST_TRANSACTION_TIMEOUT_US 5

@@ -67,7 +67,7 @@ static void __gpio_wk0efgh_interrupt(void)
 			SET_BIT(NPCX_WKPCL(MIWU_TABLE_0, MIWU_GROUP_5), 6);
 			return;
 		}
-		if (IS_ENABLED(CONFIG_HOSTCMD_ESPI)) {
+		if (IS_ENABLED(CONFIG_HOST_INTERFACE_ESPI)) {
 			if (IS_BIT_SET(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 5)
 				&&
 			IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0, MIWU_GROUP_5), 5)) {

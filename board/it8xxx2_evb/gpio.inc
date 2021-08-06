@@ -9,7 +9,7 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 GPIO_INT(POWER_BUTTON_L, PIN(E, 4), GPIO_INT_BOTH | GPIO_PULL_UP,   power_button_interrupt)
-#ifndef CONFIG_HOSTCMD_ESPI
+#ifndef CONFIG_HOST_INTERFACE_ESPI
 GPIO_INT(PCH_PLTRST_L,   PIN(E, 3), GPIO_INT_BOTH | GPIO_PULL_UP,   lpcrst_interrupt)
 #endif
 GPIO_INT(LID_OPEN,       PIN(E, 2), GPIO_INT_BOTH | GPIO_PULL_UP,   lid_interrupt)

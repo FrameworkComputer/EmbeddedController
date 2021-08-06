@@ -136,7 +136,7 @@ static void keyboard_irq_assert(void)
  */
 static void lpc_generate_smi(void)
 {
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	espi_vw_set_wire(VW_SMI_L, 0);
 	udelay(65);
 	espi_vw_set_wire(VW_SMI_L, 1);
@@ -149,7 +149,7 @@ static void lpc_generate_smi(void)
 
 static void lpc_generate_sci(void)
 {
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	espi_vw_set_wire(VW_SCI_L, 0);
 	udelay(65);
 	espi_vw_set_wire(VW_SCI_L, 1);
@@ -377,7 +377,7 @@ void lpc_clear_acpi_status_mask(uint8_t mask)
 	pm_set_status(LPC_ACPI_CMD, mask, 0);
 }
 
-#ifndef CONFIG_HOSTCMD_ESPI
+#ifndef CONFIG_HOST_INTERFACE_ESPI
 int lpc_get_pltrst_asserted(void)
 {
 	return !gpio_get_level(GPIO_PCH_PLTRST_L);
@@ -688,7 +688,7 @@ static void lpc_init(void)
 	 */
 	IT83XX_GCTRL_SPCTRL1 |= 0xC2;
 
-#ifndef CONFIG_HOSTCMD_ESPI
+#ifndef CONFIG_HOST_INTERFACE_ESPI
 	gpio_enable_interrupt(GPIO_PCH_PLTRST_L);
 #endif
 
@@ -711,7 +711,7 @@ static void lpc_init(void)
 	task_clear_pending_irq(IT83XX_IRQ_PMC3_IN);
 	task_enable_irq(IT83XX_IRQ_PMC3_IN);
 
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	espi_init();
 #endif
 	/* Sufficiently initialized */
@@ -726,7 +726,7 @@ static void lpc_init(void)
  */
 DECLARE_HOOK(HOOK_INIT, lpc_init, HOOK_PRIO_INIT_LPC);
 
-#ifndef CONFIG_HOSTCMD_ESPI
+#ifndef CONFIG_HOST_INTERFACE_ESPI
 void lpcrst_interrupt(enum gpio_signal signal)
 {
 	if (lpc_get_pltrst_asserted())

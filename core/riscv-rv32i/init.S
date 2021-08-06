@@ -75,7 +75,7 @@ __ec_intc:
 .global eflash_sig
 eflash_sig:
 .byte 0xA5, 0xA5, 0xA5, 0xA5, 0xA5, 0xA5
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 .byte 0xA4 /* eSPI */
 #else
 .byte 0xA5 /* LPC */

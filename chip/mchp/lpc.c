@@ -88,7 +88,7 @@ static void keyboard_irq_assert(void)
 static void lpc_generate_smi(void)
 {
 	CPUTS("LPC Pulse SMI");
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	/* eSPI: pulse SMI# Virtual Wire low */
 	espi_vw_pulse_wire(VW_SMI_L, 0);
 #else
@@ -106,7 +106,7 @@ static void lpc_generate_sci(void)
 	udelay(65);
 	gpio_set_level(CONFIG_SCI_GPIO, 1);
 #else
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	espi_vw_pulse_wire(VW_SCI_L, 0);
 #else
 	MCHP_ACPI_PM_STS |= 1;
@@ -129,7 +129,7 @@ static void lpc_update_wake(host_event_t wake_events)
 	 */
 	wake_events &= ~EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON);
 
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	espi_vw_set_wire(VW_WAKE_L, !wake_events);
 #else
 	/* Signal is asserted low when wake events is non-zero */
@@ -304,7 +304,7 @@ const int acpi_ec_nvic_ibf[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(acpi_ec_nvic_ibf) == MCHP_ACPI_EC_INSTANCES);
 
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 const int acpi_ec_espi_bar_id[] = {
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC0,
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC1,
@@ -326,7 +326,7 @@ void chip_acpi_ec_config(int instance, uint32_t io_base, uint8_t mask)
 
 	MCHP_PCR_SLP_DIS_DEV(acpi_ec_pcr_slp[instance]);
 
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	MCHP_ESPI_IO_BAR_CTL_MASK(acpi_ec_espi_bar_id[instance]) =
 			mask;
 	MCHP_ESPI_IO_BAR(acpi_ec_espi_bar_id[instance]) =
@@ -350,7 +350,7 @@ void chip_8042_config(uint32_t io_base)
 {
 	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_8042);
 
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	MCHP_ESPI_IO_BAR_CTL_MASK(MCHP_ESPI_IO_BAR_ID_8042) = 0x04;
 	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_ID_8042) =
 			(io_base << 16) + 0x01ul;
@@ -372,7 +372,7 @@ void chip_8042_config(uint32_t io_base)
 #ifndef CONFIG_KEYBOARD_IRQ_GPIO
 	/* Set up SERIRQ for keyboard */
 	MCHP_8042_KB_CTRL |= BIT(5);
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	/* Delivery 8042 keyboard interrupt as IRQ1 using eSPI SERIRQ */
 	MCHP_ESPI_IO_SERIRQ_REG(MCHP_ESPI_SIRQ_8042_KB) = 1;
 #else
@@ -392,7 +392,7 @@ void chip_8042_config(uint32_t io_base)
  */
 void chip_emi0_config(uint32_t io_base)
 {
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	MCHP_ESPI_IO_BAR_CTL_MASK(MCHP_ESPI_IO_BAR_ID_EMI0) = 0x0F;
 	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_ID_EMI0) =
 			(io_base << 16) + 0x01ul;
@@ -442,7 +442,7 @@ void chip_port80_config(uint32_t io_base)
 	MCHP_P80_CFG(0) = MCHP_P80_FLUSH_FIFO_WO +
 			MCHP_P80_RESET_TIMESTAMP_WO;
 
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	MCHP_ESPI_IO_BAR_CTL_MASK(MCHP_ESPI_IO_BAR_P80_0) = 0x00;
 	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_P80_0) =
 			(io_base << 16) + 0x01ul;
@@ -484,7 +484,7 @@ static void chip_lpc_iobar_debug(void)
  * For eSPI PLATFORM_RESET# virtual wire is used as LRESET#
  *
  */
-#ifndef CONFIG_HOSTCMD_ESPI
+#ifndef CONFIG_HOST_INTERFACE_ESPI
 static void setup_lpc(void)
 {
 	MCHP_LPC_CFG_BAR |= (1ul << 15);
@@ -545,7 +545,7 @@ static void lpc_init(void)
 		MCHP_PCR_SLP_EN2_ACPI_EC0 +
 		MCHP_PCR_SLP_EN2_MIF8042);
 
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 
 	espi_init();
 
@@ -621,7 +621,7 @@ void lpc_set_init_done(int val)
  */
 void lpcrst_interrupt(enum gpio_signal signal)
 {
-#ifndef CONFIG_HOSTCMD_ESPI
+#ifndef CONFIG_HOST_INTERFACE_ESPI
 	/* Initialize LPC module when LRESET# is de-asserted */
 	if (!lpc_get_pltrst_asserted()) {
 		setup_lpc();
@@ -941,10 +941,10 @@ void lpc_clear_acpi_status_mask(uint8_t mask)
  */
 int lpc_get_pltrst_asserted(void)
 {
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	/*
 	 * eSPI PLTRST# a VWire or side-band signal
-	 * Controlled by CONFIG_HOSTCMD_ESPI
+	 * Controlled by CONFIG_HOST_INTERFACE_ESPI
 	 */
 	return !espi_vw_get_wire(VW_PLTRST_L);
 #else

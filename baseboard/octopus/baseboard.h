@@ -249,7 +249,7 @@
  /* Common SoC / PCH defines */
 #define CONFIG_CHIPSET_GEMINILAKE
 #define CONFIG_CHIPSET_RESET_HOOK
-#define CONFIG_HOSTCMD_ESPI
+#define CONFIG_HOST_INTERFACE_ESPI
 /* TODO(b/74123961): Enable Virtual Wires after bringup */
 #define CONFIG_POWER_COMMON
 #define CONFIG_POWER_S0IX

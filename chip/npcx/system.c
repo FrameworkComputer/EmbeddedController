@@ -872,7 +872,7 @@ void system_pre_init(void)
 		BIT(NPCX_PWDWN_CTL6_ITIM6_PD) |
 #endif
 		BIT(NPCX_PWDWN_CTL6_ITIM4_PD); /* Skip ITIM5_PD */
-#if !defined(CONFIG_HOSTCMD_ESPI)
+#if !defined(CONFIG_HOST_INTERFACE_ESPI)
 	pwdwn6 |= 1 << NPCX_PWDWN_CTL6_ESPI_PD;
 #endif
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6) = pwdwn6;

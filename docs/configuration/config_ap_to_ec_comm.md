@@ -12,7 +12,7 @@ following options.
 -   `CONFIG_HOSTCMD_SHI` - [SPI Host Interface](../ec_terms.md#shi) (SHI)
 -   `CONFIG_HOST_INTERFACE_HECI` - HECI interface
 -   `CONFIG_HOST_INTERFACE_LPC` - [LPC](../ec_terms.md#lpc) bus
--   `CONFIG_HOSTCMD_ESPI` - [eSPI](../ec_terms.md#espi) bus
+-   `CONFIG_HOST_INTERFACE_ESPI` - [eSPI](../ec_terms.md#espi) bus
 
 In [config.h], search for options that start with the same name as your selected
 communication interface. Override defaults as needed.

@@ -20,7 +20,7 @@ static const struct ec2i_t keyboard_settings[] = {
 	/* Set IRQ=01h for logical device */
 	{HOST_INDEX_IRQNUMX, 0x01},
 	/* Configure IRQTP for KBC. */
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	/*
 	 * Interrupt request type select (IRQTP) for KBC.
 	 * bit 1, 0: IRQ request is buffered and applied to SERIRQ

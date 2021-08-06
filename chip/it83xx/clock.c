@@ -232,7 +232,7 @@ static void clock_set_pll(enum pll_freq_idx idx)
 		ext_timer_ms(LOW_POWER_EXT_TIMER, EXT_PSR_32P768K_HZ,
 				1, 1, 5, 1, 0);
 		task_clear_pending_irq(et_ctrl_regs[LOW_POWER_EXT_TIMER].irq);
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 		/*
 		 * Workaround for (b:70537592):
 		 * We have to set chip select pin as input mode in order to
@@ -249,7 +249,7 @@ static void clock_set_pll(enum pll_freq_idx idx)
 #endif
 		/* Update PLL settings. */
 		clock_pll_changed();
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 #ifdef IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED
 		/* Enable eSPI pad after changing PLL sequence. */
 		espi_enable_pad(1);
@@ -301,7 +301,8 @@ void clock_init(void)
 	 */
 	IT83XX_GCTRL_RSTS = (IT83XX_GCTRL_RSTS & 0x3F) + 0x40;
 
-#if defined(IT83XX_ESPI_RESET_MODULE_BY_FW) && defined(CONFIG_HOSTCMD_ESPI)
+#if defined(IT83XX_ESPI_RESET_MODULE_BY_FW) && \
+	defined(CONFIG_HOST_INTERFACE_ESPI)
 	/*
 	 * Because we don't support eSPI HW reset function (b/111480168) on DX
 	 * version, so we have to reset eSPI configurations during init to
@@ -539,7 +540,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	/* EC sleep */
 	ec_sleep = 1;
 #if defined(IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED) && \
-defined(CONFIG_HOSTCMD_ESPI)
+defined(CONFIG_HOST_INTERFACE_ESPI)
 	/* Disable eSPI pad. */
 	espi_enable_pad(0);
 #endif
@@ -565,7 +566,7 @@ void clock_sleep_mode_wakeup_isr(void)
 	/* trigger a reboot if wake up EC from sleep mode (system hibernate) */
 	if (clock_ec_wake_from_sleep()) {
 #if defined(IT83XX_ESPI_INHIBIT_CS_BY_PAD_DISABLED) && \
-defined(CONFIG_HOSTCMD_ESPI)
+defined(CONFIG_HOST_INTERFACE_ESPI)
 		/*
 		 * Enable eSPI pad.
 		 * We will not need to enable eSPI pad here if Dx is able to

@@ -43,7 +43,7 @@
 #define CONFIG_BOARD_RESET_AFTER_POWER_ON
 
 /* Host communication */
-#define CONFIG_HOSTCMD_ESPI
+#define CONFIG_HOST_INTERFACE_ESPI
 #define CONFIG_HOSTCMD_ESPI_VW_SLP_S4
 
 /* Chipset config */

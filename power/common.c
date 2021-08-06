@@ -151,7 +151,7 @@ int power_signal_is_asserted(const struct power_signal_info *s)
 #ifdef CONFIG_BRINGUP
 static const char *power_signal_get_name(enum gpio_signal signal)
 {
-	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI)) {
+	if (IS_ENABLED(CONFIG_HOST_INTERFACE_ESPI)) {
 		/* Check signal is from GPIOs or VWs */
 		if (espi_signal_is_vw(signal))
 			return espi_vw_get_wire_name(

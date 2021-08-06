@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_LPC_CHIP_H
 #define __CROS_EC_LPC_CHIP_H
 
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 
 #include "espi.h"
 
@@ -37,7 +37,7 @@ void lpc_set_init_done(int val);
 
 void lpc_mem_mapped_init(void);
 
-#ifndef CONFIG_HOSTCMD_ESPI
+#ifndef CONFIG_HOST_INTERFACE_ESPI
 void lpcrst_interrupt(enum gpio_signal signal);
 #endif
 

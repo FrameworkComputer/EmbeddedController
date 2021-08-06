@@ -178,7 +178,7 @@ void system_pre_init(void)
 	MCHP_EC_AHB_ERR_EN = 0; /* enable capture of address on error */
 
 	/* Manual voltage selection only required for MEC170x and MEC152x */
-	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI))
+	if (IS_ENABLED(CONFIG_HOST_INTERFACE_ESPI))
 		vtr3_voltage_select(1);
 	else
 		vtr3_voltage_select(0);
@@ -427,7 +427,7 @@ int system_get_scratchpad(uint32_t *value)
  * defined for MEC170x and the IS_ENABLED() macro causes the
  * compiler to evaluate both true and false code paths.
  */
-#if defined(CONFIG_HOSTCMD_ESPI)
+#if defined(CONFIG_HOST_INTERFACE_ESPI)
 static void disable_host_ifc_clocks(void)
 {
 	MCHP_ESPI_ACTIVATE &= ~0x01;

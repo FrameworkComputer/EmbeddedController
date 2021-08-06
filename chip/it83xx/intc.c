@@ -84,7 +84,7 @@ static void intc_cpu_int_group_12(void)
 		peci_interrupt();
 		break;
 #endif
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 	case IT83XX_IRQ_ESPI:
 		espi_interrupt();
 		break;

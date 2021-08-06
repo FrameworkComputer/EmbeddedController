@@ -32,7 +32,7 @@ GPIO_INT(RSMRST_L_PGOOD, PIN(F, 1), GPIO_INT_BOTH, power_signal_interrupt)	/* PM
 GPIO_INT(ALL_SYS_PGOOD,	 PIN(F, 0), GPIO_INT_BOTH, power_signal_interrupt)	/* PMIC_EC_PWROK_OD */
 GPIO_INT(AC_PRESENT, 	 PIN(A, 7), GPIO_INT_BOTH, extpower_interrupt)		/* ACOK_OD */
 
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 /* enable 1.8v input of EC's espi_reset pin, and then this pin takes effect. */
 GPIO_INT(ESPI_RESET_L, 	 PIN(D, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V, espi_reset_pin_asserted_interrupt) /* eSPI_reset# */
 #endif

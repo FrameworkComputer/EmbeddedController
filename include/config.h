@@ -3146,14 +3146,14 @@
 /*
  * EC supports x86 host communication with AP. This can either be through LPC
  * or eSPI. The CONFIG_HOSTCMD_X86 will get automatically defined if either
- * CONFIG_HOST_INTERFACE_LPC or CONFIG_HOSTCMD_ESPI are defined.
+ * CONFIG_HOST_INTERFACE_LPC or CONFIG_HOST_INTERFACE_ESPI are defined.
  * LPC and eSPI are mutually exclusive.
  */
 #undef CONFIG_HOSTCMD_X86
 /* Support host command interface over LPC bus. */
 #undef CONFIG_HOST_INTERFACE_LPC
 /* Support host command interface over eSPI bus. */
-#undef CONFIG_HOSTCMD_ESPI
+#undef CONFIG_HOST_INTERFACE_ESPI
 
 /*
  * SLP signals (SLP_S3 and SLP_S4) use virtual wires intead of physical pins
@@ -5516,7 +5516,7 @@
  * without using eSPI for host commands.
  */
 #if (!defined(CONFIG_ZEPHYR) && defined(CONFIG_HOST_ESPI_VW_POWER_SIGNAL) && \
-     !defined(CONFIG_HOSTCMD_ESPI))
+	!defined(CONFIG_HOST_INTERFACE_ESPI))
 #error Must enable eSPI to enable virtual wires.
 #endif
 
@@ -5641,17 +5641,17 @@
  * Automatically define CONFIG_HOSTCMD_X86 if either child option is defined.
  * Ensure LPC and eSPI are mutually exclusive
  */
-#if defined(CONFIG_HOST_INTERFACE_LPC) || defined(CONFIG_HOSTCMD_ESPI)
+#if defined(CONFIG_HOST_INTERFACE_LPC) || defined(CONFIG_HOST_INTERFACE_ESPI)
 #define CONFIG_HOSTCMD_X86
 #endif
 
-#if defined(CONFIG_HOST_INTERFACE_LPC) && defined(CONFIG_HOSTCMD_ESPI)
+#if defined(CONFIG_HOST_INTERFACE_LPC) && defined(CONFIG_HOST_INTERFACE_ESPI)
 #error Must select only one type of host communication bus.
 #endif
 
 #if defined(CONFIG_HOSTCMD_X86) && \
 	!defined(CONFIG_HOST_INTERFACE_LPC) && \
-	!defined(CONFIG_HOSTCMD_ESPI)
+	!defined(CONFIG_HOST_INTERFACE_ESPI)
 #error Must select one type of host communication bus.
 #endif
 

@@ -37,7 +37,7 @@ GPIO_INT(UART1_RX,	PIN(B, 0), GPIO_INT_FALLING, uart_deepsleep_interrupt)	/* UAR
 
 GPIO_INT(WP_L,		PIN(I, 4), GPIO_INT_BOTH, switch_interrupt)		/* EC_WP_ODL */
 
-#ifdef CONFIG_HOSTCMD_ESPI
+#ifdef CONFIG_HOST_INTERFACE_ESPI
 /* enable 1.8v input of EC's espi_reset pin, and then this pin takes effect. */
 GPIO_INT(ESPI_RESET_L,	PIN(D, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V, espi_reset_pin_asserted_interrupt) /* eSPI_reset# */
 #endif
@@ -75,7 +75,7 @@ GPIO(EC_PCH_DSW_PWROK,	PIN(L, 6), GPIO_OUT_LOW)
 
 /* Host communication GPIOs */
 GPIO(PCH_WAKE_L,	PIN(J, 0), GPIO_ODR_HIGH)
-#ifndef CONFIG_HOSTCMD_ESPI
+#ifndef CONFIG_HOST_INTERFACE_ESPI
 GPIO(PCH_PLTRST_L,	PIN(E, 3), GPIO_INPUT | GPIO_PULL_UP)
 #endif
 
@@ -165,7 +165,7 @@ GPIO(NC_USB_C1_RETIMER_ALRT,	PIN(G, 0), GPIO_INPUT)
 /* Used if Base EC is present */
 GPIO(NC_EC_BASE_DET,		PIN(I, 3), GPIO_INPUT)
 
-#ifndef CONFIG_HOSTCMD_ESPI
+#ifndef CONFIG_HOST_INTERFACE_ESPI
 GPIO_INT(ESPI_RESET_L,	PIN(D, 2), GPIO_INPUT)
 #endif
 

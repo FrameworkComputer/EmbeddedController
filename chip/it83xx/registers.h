@@ -1456,7 +1456,7 @@ enum bram_indices {
 	BRAM_IDX_EC_LOG_STATUS = 0xc,
 
 	/* offset 0x0d ~ 0x1f are reserved for future use. */
-#if defined(CONFIG_HOST_INTERFACE_LPC) || defined(CONFIG_HOSTCMD_ESPI)
+#if defined(CONFIG_HOST_INTERFACE_LPC) || defined(CONFIG_HOST_INTERFACE_ESPI)
 	/*
 	 * offset 0x20 ~ 0x7b are reserved for future use.
 	 * (apply to x86 platform)
@@ -1508,7 +1508,7 @@ enum bram_ec_logs_status {
  * And they will be used to save panic data if the GPG1 reset mechanism
  * is enabled.
  */
-#if defined(CONFIG_HOST_INTERFACE_LPC) || defined(CONFIG_HOSTCMD_ESPI)
+#if defined(CONFIG_HOST_INTERFACE_LPC) || defined(CONFIG_HOST_INTERFACE_ESPI)
 /* offset 0x80 ~ 0xbf */
 #define IT83XX_BRAM_BANK1(i)    REG8(IT83XX_BRAM_BASE + 0x80 + i)
 #else
