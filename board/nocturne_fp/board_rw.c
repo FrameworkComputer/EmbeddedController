@@ -19,18 +19,6 @@
 #error "This file should only be built for RW."
 #endif
 
-/**
- * Disable restricted commands when the system is locked.
- *
- * @see console.h system.c
- */
-int console_is_restricted(void)
-{
-	return system_is_locked();
-}
-
-#include "gpio_list.h"
-
 /* SPI devices */
 struct spi_device_t spi_devices[] = {
 	/* Fingerprint sensor (SCLK at 4Mhz) */
@@ -96,7 +84,7 @@ static void spi_configure(enum fp_sensor_spi_select spi_select)
 	spi_enable(&spi_devices[0], 1);
 }
 
-void board_init(void)
+void board_init_rw(void)
 {
 	enum fp_sensor_spi_select spi_select = get_fp_sensor_spi_select();
 
@@ -123,7 +111,6 @@ void board_init(void)
 	/* Enable interrupt on PCH power signals */
 	gpio_enable_interrupt(gpio_slp_alt_l);
 	gpio_enable_interrupt(GPIO_SLP_L);
-
 	/*
 	 * Enable the SPI slave interface if the PCH is up.
 	 * Do not use hook_call_deferred(), because ap_deferred() will be
@@ -131,4 +118,3 @@ void board_init(void)
 	 */
 	ap_deferred();
 }
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
