@@ -5,8 +5,6 @@
  */
 
 /* Interrupts */
-GPIO_INT(SLP_L,           PIN(A, 8), GPIO_INT_BOTH, slp_event)
-GPIO_INT(SLP_ALT_L,       PIN(B, 6), GPIO_INT_BOTH, slp_event)
 GPIO_INT(SPI1_NSS,        PIN(A, 4), GPIO_INPUT, spi_event)
 
 /* Inputs */
