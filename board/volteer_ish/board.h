@@ -35,7 +35,7 @@
 #define CONFIG_ACCEL_BMA255
 
 /* Host command over HECI */
-#define CONFIG_HOSTCMD_HECI
+#define CONFIG_HOST_INTERFACE_HECI
 
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HECI

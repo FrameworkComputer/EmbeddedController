@@ -62,7 +62,7 @@
 #define CONFIG_DMA_PAGING
 
 /* Host command over HECI */
-#define CONFIG_HOSTCMD_HECI
+#define CONFIG_HOST_INTERFACE_HECI
 
 /* I2C ports */
 #define I2C_PORT_SENSOR ISH_I2C0

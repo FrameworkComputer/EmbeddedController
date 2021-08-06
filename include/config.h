@@ -3141,7 +3141,7 @@
 #undef CONFIG_HID_HECI
 
 /* Support host command interface over HECI */
-#undef CONFIG_HOSTCMD_HECI
+#undef CONFIG_HOST_INTERFACE_HECI
 
 /*
  * EC supports x86 host communication with AP. This can either be through LPC
