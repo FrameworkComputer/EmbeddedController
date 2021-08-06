@@ -238,6 +238,12 @@ static inline int tcpc_read_alert_no_lpm_exit(int port, int *val)
 					TCPC_REG_ALERT, val);
 }
 
+/* Map Type-C port to IOEX port */
+__overridable int board_map_nct38xx_tcpc_port_to_ioex(int port)
+{
+	return port;
+}
+
 static void nct38xx_tcpc_alert(int port)
 {
 	int alert, rv;
@@ -268,9 +274,13 @@ static void nct38xx_tcpc_alert(int port)
 	 * tcpci_tcpc_alert().  Check the Vendor Defined Alert bit to
 	 * handle the IOEX IO's interrupt event.
 	 */
-	if (IS_ENABLED(CONFIG_IO_EXPANDER_NCT38XX))
-		if (rv == EC_SUCCESS && (alert & TCPC_REG_ALERT_VENDOR_DEF))
-			nct38xx_ioex_event_handler(port);
+	if (IS_ENABLED(CONFIG_IO_EXPANDER_NCT38XX) &&
+		rv == EC_SUCCESS && (alert & TCPC_REG_ALERT_VENDOR_DEF)) {
+		int ioexport;
+
+		ioexport = board_map_nct38xx_tcpc_port_to_ioex(port);
+		nct38xx_ioex_event_handler(ioexport);
+	}
 }
 
 static int nct3807_handle_fault(int port, int fault)

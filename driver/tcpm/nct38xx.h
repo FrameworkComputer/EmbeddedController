@@ -103,8 +103,23 @@ void nct38xx_ioex_handle_alert(int ioex);
 /*
  * Check which IO's interrupt event is triggered. If any, call its
  * registered interrupt handler.
+ *
+ * @param ioex	I/O expander number
+ * @return EC_SUCCESS on success else error
  */
 int nct38xx_ioex_event_handler(int ioex);
+
+/*
+ * Board level function to map USB-C port to IOEX port
+ *
+ * Default function assumes USB-C port number to be same as the
+ * I/O expander port number. If this logic differs, add an
+ * overridable function at the board level.
+ *
+ * @param port	USB-C port number
+ * @return IOEX port number
+ */
+__override_proto int board_map_nct38xx_tcpc_port_to_ioex(int port);
 
 enum nct38xx_boot_type {
 	NCT38XX_BOOT_UNKNOWN,
