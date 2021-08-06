@@ -103,7 +103,7 @@
 #define CONFIG_MPU
 #endif
 #define CONFIG_DMA
-#define CONFIG_HOSTCMD_LPC
+#define CONFIG_HOST_INTERFACE_LPC
 #define CONFIG_SPI
 #define CONFIG_SWITCH
 

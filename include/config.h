@@ -3146,12 +3146,12 @@
 /*
  * EC supports x86 host communication with AP. This can either be through LPC
  * or eSPI. The CONFIG_HOSTCMD_X86 will get automatically defined if either
- * CONFIG_HOSTCMD_LPC or CONFIG_HOSTCMD_ESPI are defined. LPC and eSPI are
- * mutually exclusive.
+ * CONFIG_HOST_INTERFACE_LPC or CONFIG_HOSTCMD_ESPI are defined.
+ * LPC and eSPI are mutually exclusive.
  */
 #undef CONFIG_HOSTCMD_X86
 /* Support host command interface over LPC bus. */
-#undef CONFIG_HOSTCMD_LPC
+#undef CONFIG_HOST_INTERFACE_LPC
 /* Support host command interface over eSPI bus. */
 #undef CONFIG_HOSTCMD_ESPI
 
@@ -5641,16 +5641,16 @@
  * Automatically define CONFIG_HOSTCMD_X86 if either child option is defined.
  * Ensure LPC and eSPI are mutually exclusive
  */
-#if defined(CONFIG_HOSTCMD_LPC) || defined(CONFIG_HOSTCMD_ESPI)
+#if defined(CONFIG_HOST_INTERFACE_LPC) || defined(CONFIG_HOSTCMD_ESPI)
 #define CONFIG_HOSTCMD_X86
 #endif
 
-#if defined(CONFIG_HOSTCMD_LPC) && defined(CONFIG_HOSTCMD_ESPI)
+#if defined(CONFIG_HOST_INTERFACE_LPC) && defined(CONFIG_HOSTCMD_ESPI)
 #error Must select only one type of host communication bus.
 #endif
 
 #if defined(CONFIG_HOSTCMD_X86) && \
-	!defined(CONFIG_HOSTCMD_LPC) && \
+	!defined(CONFIG_HOST_INTERFACE_LPC) && \
 	!defined(CONFIG_HOSTCMD_ESPI)
 #error Must select one type of host communication bus.
 #endif

@@ -30,7 +30,7 @@
 #define CONFIG_SPI_CONTROLLER
 #define CONFIG_SPI_FLASH_PORT 0
 #define CONFIG_UART_HOST
-#define CONFIG_HOSTCMD_LPC
+#define CONFIG_HOST_INTERFACE_LPC
 
 /* Optional console commands */
 #define CONFIG_CMD_FLASH

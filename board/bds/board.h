@@ -19,7 +19,7 @@
 
 /* Modules we want to exclude */
 #undef CONFIG_LID_SWITCH
-#undef CONFIG_HOSTCMD_LPC
+#undef CONFIG_HOST_INTERFACE_LPC
 #undef CONFIG_PECI
 #undef CONFIG_SWITCH
 

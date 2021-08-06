@@ -20,7 +20,7 @@ chip-$(CONFIG_EEPROM)+=eeprom.o
 chip-$(CONFIG_FANS)+=fan.o
 chip-$(CONFIG_FLASH_PHYSICAL)+=flash.o
 chip-$(CONFIG_I2C)+=i2c.o
-chip-$(CONFIG_HOSTCMD_LPC)+=lpc.o
+chip-$(CONFIG_HOST_INTERFACE_LPC)+=lpc.o
 chip-$(CONFIG_PECI)+=peci.o
 # pwm functions are implemented with the fan functions
 chip-$(CONFIG_PWM)+=pwm.o fan.o

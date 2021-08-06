@@ -50,7 +50,7 @@ static void clear_reset_flags(void)
 }
 DECLARE_HOOK(HOOK_INIT, clear_reset_flags, HOOK_PRIO_LAST);
 
-#if !defined(CONFIG_HOSTCMD_LPC) && !defined(CONFIG_HOSTCMD_ESPI)
+#if !defined(CONFIG_HOST_INTERFACE_LPC) && !defined(CONFIG_HOSTCMD_ESPI)
 static void system_save_panic_data_to_bram(void)
 {
 	uint8_t *ptr = (uint8_t *)PANIC_DATA_PTR;

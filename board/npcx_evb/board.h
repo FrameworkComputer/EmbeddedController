@@ -12,7 +12,7 @@
 #define CONFIG_ADC
 #define CONFIG_PWM
 #define CONFIG_SPI
-#define CONFIG_HOSTCMD_LPC
+#define CONFIG_HOST_INTERFACE_LPC
 #define CONFIG_PECI
 
 /* Optional features */

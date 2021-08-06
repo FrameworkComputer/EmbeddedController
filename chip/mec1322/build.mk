@@ -22,7 +22,7 @@ chip-$(CONFIG_ADC)+=adc.o
 chip-$(CONFIG_FANS)+=fan.o
 chip-$(CONFIG_FLASH_PHYSICAL)+=flash.o
 chip-$(CONFIG_I2C)+=i2c.o
-chip-$(CONFIG_HOSTCMD_LPC)+=lpc.o
+chip-$(CONFIG_HOST_INTERFACE_LPC)+=lpc.o
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 ifndef CONFIG_KEYBOARD_NOT_RAW
