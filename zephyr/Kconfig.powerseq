@@ -124,6 +124,7 @@ config PLATFORM_EC_POWERSEQ_S4
 	depends on PLATFORM_EC_ESPI_VW_SLP_S5
 	default y if AP_X86_INTEL_TGL
 	default y if AP_X86_INTEL_ADL
+	default y if AP_X86_INTEL_MTL
 	help
 	  Advertise S4 residency capabilities to the AP. This is required for
 	  AP hibernate (suspend-to-disk) on Intel platforms with Key Locker
@@ -143,6 +144,14 @@ config CHIPSET_ALDERLAKE_SLG4BD44540
        help
           Use this for AlderLake power sequencing with the
           Silego chips.
+
+config PLATFORM_EC_POWERSEQ_METEORLAKE
+	bool "Use common Meteorlake code for power sequencing"
+	depends on AP_X86_INTEL_MTL
+	default n
+	help
+	  Use the Meteorlake common code for power sequencing. Note that
+	  this applies to Meteorlake and potentially future SoCs.
 
 menuconfig PLATFORM_EC_POWERSEQ_ICELAKE
 	bool "Use common Icelake code for power sequencing"
