@@ -369,6 +369,7 @@ static void rt1718s_alert(int port)
 	tcpci_tcpc_alert(port);
 }
 
+#ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 static int rt1718s_enter_low_power_mode(int port)
 {
 	/* enter low power mode */
@@ -382,6 +383,7 @@ static int rt1718s_enter_low_power_mode(int port)
 
 	return tcpci_enter_low_power_mode(port);
 }
+#endif
 
 /* RT1718S is a TCPCI compatible port controller */
 const struct tcpm_drv rt1718s_tcpm_drv = {
