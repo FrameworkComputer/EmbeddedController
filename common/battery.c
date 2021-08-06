@@ -15,6 +15,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "math_util.h"
 #include "timer.h"
 #include "usb_pd.h"
 #include "util.h"

@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "math_util.h"
 #include "power.h"
 #include "task.h"
 #include "test_util.h"
