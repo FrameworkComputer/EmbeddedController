@@ -802,4 +802,15 @@ config PLATFORM_EC_AMD_SB_RMI
 	  tasks such as managing power consumption and power limits of the CPU
 	  socket.
 
+config PLATFORM_EC_AMD_STT
+	bool "Enable driver for AMD STT interface"
+	depends on PLATFORM_EC_AMD_SB_RMI
+	help
+	  AMD platforms provide the Skin Temperature Tracking (STT) interface.
+	  Skin temperature management can be used to maximize the system
+	  performance while keeping the skin temperature within its
+	  specification. It makes use of the thermal capacitance of the system
+	  to temporarily boost above the sustainable power limit, while the
+	  chassis skin temperatures are below limits.
+
 endif # PLATFORM_EC

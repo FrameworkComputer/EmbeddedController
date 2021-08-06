@@ -1760,4 +1760,9 @@
 #define CONFIG_AMD_SB_RMI
 #endif
 
+#undef CONFIG_AMD_STT
+#ifdef CONFIG_PLATFORM_EC_AMD_STT
+#define CONFIG_AMD_STT
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

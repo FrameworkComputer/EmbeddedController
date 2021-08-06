@@ -3876,6 +3876,9 @@
  */
 #undef CONFIG_TEMP_SENSOR_POWER_GPIO
 
+/* AMD STT (Skin Temperature Tracking) */
+#undef CONFIG_AMD_STT
+
 /* Compile common code for throttling the CPU based on the temp sensors */
 #undef CONFIG_THROTTLE_AP
 
@@ -6433,5 +6436,10 @@
 #endif	/* !CONFIG_ZEPHYR && !CONFIG_ACCELGYRO_BMI_SPI && \
 	 * !CONFIG_ACCELGYRO_BMI_I2C
 	 */
+
+/* AMD STT requires AMD SB-RMI to be enabled */
+#if defined(CONFIG_AMD_STT) && !defined(CONFIG_AMD_SB_RMI)
+#define CONFIG_AMD_SB_RMI
+#endif
 
 #endif  /* __CROS_EC_CONFIG_H */
