@@ -1,0 +1,27 @@
+description: Defines board version and sku id gpios
+
+compatible: cros-ec,gpio-id
+
+properties:
+  bits:
+    type: phandles
+    required: true
+    description: GPIO list to read, LSB to MSB
+
+  system:
+    type: string
+    description:
+      Numeral system used to decode values
+      - binary - expects array with values of 0 and 1.
+      - binary_first_base3 - non-standard ternary number system
+          where the first 2^n natural numbers are represented as
+          they would be in a binary system (without any Z digits)
+          and the following 3^n-2^n numbers use the remaining
+          ternary representations in the normal ternary system order
+      - ternary - expects array with values of 0, 1 and 2.
+          It treats 'Z' state as digit '2'.
+    enum:
+      - binary
+      - binary_first_base3
+      - ternary
+

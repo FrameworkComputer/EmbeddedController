@@ -329,3 +329,27 @@ int binary_first_base3_from_bits(int *bits, int nbits)
 	/* binary_below is normal binary system value if !has_z. */
 	return binary_below;
 }
+
+int binary_from_bits(int *bits, int nbits)
+{
+	int value = 0;
+	int i;
+
+	/* Loop through every binary digit, from MSB to LSB. */
+	for (i = nbits - 1; i >= 0; i--)
+		value = (value << 1) | bits[i];
+
+	return value;
+}
+
+int ternary_from_bits(int *bits, int nbits)
+{
+	int value = 0;
+	int i;
+
+	/* Loop through every ternary digit, from MSB to LSB. */
+	for (i = nbits - 1; i >= 0; i--)
+		value = (value * 3) + bits[i];
+
+	return value;
+}

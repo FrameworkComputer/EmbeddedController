@@ -342,7 +342,7 @@ void wait_for_ready(volatile uint32_t *reg, uint32_t enable, uint32_t ready);
  * the normal ternary system order (skipping the values that were already used
  * up).
  *
- * This function is useful for converting BOARd ID, which is initially used a
+ * This function is useful for converting BOARD ID, which is initially used a
  * binary and later decided to switch to tri-state after some revisions have
  * already been built.
  *
@@ -364,6 +364,25 @@ void wait_for_ready(volatile uint32_t *reg, uint32_t enable, uint32_t ready);
  * @return Number in the binary-first ternary number system.
  */
 int binary_first_base3_from_bits(int *bits, int nbits);
+
+/**
+ * Convert the binary bit array to integer value.
+ *
+ * @param bits    array of integers with values of 0 and 1
+ * @param nbits   number of bits to decode
+ * @return        integer decoded from bits
+ */
+int binary_from_bits(int *bits, int nbits);
+
+/**
+ * Convert the ternary bit array to integer value.
+ * This function is used to handle 'Z' state of gpio as value of '2'.
+ *
+ * @param bits    array of integers with values of 0, 1 or 2
+ * @param nbits   number of bits to decode
+ * @return        integer decoded from bits
+ */
+int ternary_from_bits(int *bits, int nbits);
 
 #ifdef __cplusplus
 }
