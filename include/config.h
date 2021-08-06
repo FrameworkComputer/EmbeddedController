@@ -4757,15 +4757,11 @@
 
 /*
  * Intel Reference Validation Platform's (RVP) Modular Embedded Control
- * Card (MECC) version 0.9
+ * Card (MECC) versions
  */
 #undef CONFIG_INTEL_RVP_MECC_VERSION_0_9
-
-/*
- * Intel Reference Validation Platform's (RVP) Modular Embedded Control
- * Card (MECC) version 1.0
- */
 #undef CONFIG_INTEL_RVP_MECC_VERSION_1_0
+#undef CONFIG_INTEL_RVP_MECC_VERSION_1_1
 
 /*****************************************************************************/
 
