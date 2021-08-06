@@ -413,3 +413,19 @@ static void board_chipset_resume(void)
 		pwm_enable(PWM_CH_DISPLIGHT, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+
+__override uint32_t board_get_sku_id(void)
+{
+	static int sku_id = -1;
+
+	if (sku_id == -1) {
+		int bits[3];
+
+		bits[0] = gpio_get_ternary(GPIO_SKU_ID0);
+		bits[1] = gpio_get_ternary(GPIO_SKU_ID1);
+		bits[2] = gpio_get_ternary(GPIO_SKU_ID2);
+		sku_id = binary_first_base3_from_bits(bits, ARRAY_SIZE(bits));
+	}
+
+	return (uint32_t)sku_id;
+}

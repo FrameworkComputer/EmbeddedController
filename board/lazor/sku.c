@@ -17,7 +17,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-static int brd_id = -1;
 static uint8_t sku_id;
 
 enum board_model {
@@ -32,19 +31,6 @@ static const char *const model_name[] = {
 	"UNKNOWN",
 };
 
-int board_get_version(void)
-{
-	if (brd_id == -1) {
-		int bits[3];
-
-		bits[0] = gpio_get_ternary(GPIO_BOARD_VERSION1);
-		bits[1] = gpio_get_ternary(GPIO_BOARD_VERSION2);
-		bits[2] = gpio_get_ternary(GPIO_BOARD_VERSION3);
-		brd_id = binary_first_base3_from_bits(bits, ARRAY_SIZE(bits));
-	}
-	return brd_id;
-}
-
 static enum board_model get_model(void)
 {
 	if (sku_id == 0 || sku_id == 1 || sku_id == 2 || sku_id == 3)
@@ -57,16 +43,7 @@ static enum board_model get_model(void)
 /* Read SKU ID from GPIO and initialize variables for board variants */
 static void sku_init(void)
 {
-	uint8_t val = 0;
-
-	if (gpio_get_level(GPIO_SKU_ID0))
-		val |= 0x01;
-	if (gpio_get_level(GPIO_SKU_ID1))
-		val |= 0x02;
-	if (gpio_get_level(GPIO_SKU_ID2))
-		val |= 0x04;
-
-	sku_id = val;
+	sku_id = system_get_sku_id();
 	CPRINTS("SKU: %u (%s)", sku_id, model_name[get_model()]);
 }
 DECLARE_HOOK(HOOK_INIT, sku_init, HOOK_PRIO_INIT_I2C + 1);
