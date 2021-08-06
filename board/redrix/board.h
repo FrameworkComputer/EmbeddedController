@@ -123,8 +123,6 @@
 #define GPIO_VOLUME_UP_L		GPIO_EC_VOLUP_BTN_ODL
 #define GPIO_WP_L			GPIO_EC_WP_ODL
 
-#define GPIO_ID_1_EC_KB_BL_EN		GPIO_EC_BATT_PRES_ODL
-
 #define GPIO_WLC_NRST_CONN		GPIO_PEN_RST_L
 
 /* System has back-lit keyboard */
