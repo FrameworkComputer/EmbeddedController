@@ -24,6 +24,7 @@
 
 /* Reduce flash space usage */
 #define CONFIG_DEBUG_ASSERT_BRIEF
+#define CONFIG_USB_PD_DEBUG_LEVEL 2
 
 #define CONFIG_LED_COMMON
 
