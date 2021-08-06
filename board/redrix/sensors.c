@@ -17,15 +17,15 @@
 
 /* ADC configuration */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_1_DDR_SOC] = {
-		.name = "TEMP_DDR_SOC",
+	[ADC_TEMP_SENSOR_1_DDR] = {
+		.name = "TEMP_DDR",
 		.input_ch = NPCX_ADC_CH0,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_2_FAN] = {
-		.name = "TEMP_FAN",
+	[ADC_TEMP_SENSOR_2_SOC] = {
+		.name = "TEMP_SOC",
 		.input_ch = NPCX_ADC_CH1,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
@@ -38,8 +38,8 @@ const struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_4_WWAN] = {
-		.name = "TEMP_WWAN",
+	[ADC_TEMP_SENSOR_4_REGULATOR] = {
+		.name = "TEMP_REGULATOR",
 		.input_ch = NPCX_ADC_CH7,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
@@ -266,27 +266,54 @@ DECLARE_HOOK(HOOK_INIT, board_sensors_init, HOOK_PRIO_INIT_I2C + 1);
 
 /* Temperature sensor configuration */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1_DDR_SOC] = {
-		.name = "DDR and SOC",
+	[TEMP_SENSOR_1_DDR] = {
+		.name = "DDR",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_1_DDR_SOC
+		.idx = ADC_TEMP_SENSOR_1_DDR
 	},
-	[TEMP_SENSOR_2_FAN] = {
-		.name = "FAN",
+	[TEMP_SENSOR_2_SOC] = {
+		.name = "SOC",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2_FAN
+		.idx = ADC_TEMP_SENSOR_2_SOC
+	},
+	[TEMP_SENSOR_3_CHARGER] = {
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_3_CHARGER
+	},
+	[TEMP_SENSOR_4_REGULATOR] = {
+		.name = "Regulator",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_4_REGULATOR
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
- * TODO(b/180681346): update for Alder Lake/brya
+ * TODO(b/195673113): Need to update for Alder Lake/redrix
+ */
+static const struct ec_thermal_config thermal_ddr = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+	.temp_fan_off = C_TO_K(35),
+	.temp_fan_max = C_TO_K(50),
+};
+
+/*
+ * TODO(b/195673113): Need to update for Alder Lake/redrix
  *
  * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
- * 130 C.  However, sensor is located next to DDR, so we need to use the lower
- * DDR temperature limit (85 C)
+ * 130 C.  However, sensor is located next to SOC, so we need to use the lower
+ * SOC temperature limit (85 C)
  */
 static const struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
@@ -301,25 +328,30 @@ static const struct ec_thermal_config thermal_cpu = {
 };
 
 /*
- * TODO(b/180681346): update for Alder Lake/brya
- *
- * Inductor limits - used for both charger and PP3300 regulator
- *
- * Need to use the lower of the charger IC, PP3300 regulator, and the inductors
- *
- * Charger max recommended temperature 100C, max absolute temperature 125C
- * PP3300 regulator: operating range -40 C to 145 C
- *
- * Inductors: limit of 125c
- * PCB: limit is 80c
+ * TODO(b/195673113): Need to update for Alder Lake/redrix
  */
-static const struct ec_thermal_config thermal_fan = {
+static const struct ec_thermal_config thermal_charger = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(55),
+};
+
+/*
+ * TODO(b/195673113): Need to update for Alder Lake/redrix
+ */
+static const struct ec_thermal_config thermal_regulator = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
 	},
 	.temp_fan_off = C_TO_K(40),
 	.temp_fan_max = C_TO_K(55),
@@ -327,7 +359,9 @@ static const struct ec_thermal_config thermal_fan = {
 
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_DDR_SOC] = thermal_cpu,
-	[TEMP_SENSOR_2_FAN]	= thermal_fan,
+	[TEMP_SENSOR_1_DDR] = thermal_ddr,
+	[TEMP_SENSOR_2_SOC] = thermal_cpu,
+	[TEMP_SENSOR_3_CHARGER] = thermal_charger,
+	[TEMP_SENSOR_4_REGULATOR] = thermal_regulator,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
