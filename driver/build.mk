@@ -220,3 +220,6 @@ driver-$(CONFIG_MP4245)+=mp4245.o
 
 # Power Management ICs
 driver-$(CONFIG_MP2964)+=mp2964.o
+
+# SOC Interface
+driver-$(CONFIG_AMD_SB_RMI)+=sb_rmi.o

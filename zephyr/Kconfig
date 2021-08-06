@@ -794,4 +794,12 @@ config PLATFORM_EC_HOST_COMMAND_STATUS
 	  command finishes processing, and the AP may then inquire the status
 	  of the current command and/or the result of the previous command.
 
+config PLATFORM_EC_AMD_SB_RMI
+	bool "Enable driver for AMD SB-RMI interface"
+	help
+	  AMD platforms provide the Side-Band Remote Management Interface.
+	  SB-RMI provides an interface for an external SMBus master to perform
+	  tasks such as managing power consumption and power limits of the CPU
+	  socket.
+
 endif # PLATFORM_EC

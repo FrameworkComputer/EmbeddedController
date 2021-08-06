@@ -1755,4 +1755,9 @@
 #define CONFIG_HOSTCMD_DEBUG_MODE 3
 #endif
 
+#undef CONFIG_AMD_SB_RMI
+#ifdef CONFIG_PLATFORM_EC_AMD_SB_RMI
+#define CONFIG_AMD_SB_RMI
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

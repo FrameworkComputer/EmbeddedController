@@ -1296,6 +1296,9 @@
 /* Redefine when we need a different power-on sequence on the same chipset. */
 #define CONFIG_CHIPSET_POWER_SEQ_VERSION 0
 
+/* AMD Side-Band Remote Management Interface (SB-RMI) support */
+#undef CONFIG_AMD_SB_RMI
+
 /*****************************************************************************/
 /*
  * Chip config for clock circuitry
