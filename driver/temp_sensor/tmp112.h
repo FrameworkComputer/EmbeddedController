@@ -38,11 +38,23 @@ extern const struct tmp112_sensor_t tmp112_sensors[];
  * @param idx		Index to read, from board's enum tmp112_sensor
  *			definition
  *
- * @param temp_ptr	Destination for temperature in K.
+ * @param temp_k_ptr	Destination for temperature in K.
  *
  * @return EC_SUCCESS if successful, non-zero if error.
  */
-int tmp112_get_val(int idx, int *temp_ptr);
+int tmp112_get_val_k(int idx, int *temp_k_ptr);
+
+/**
+ * Get the last polled value of a sensor.
+ *
+ * @param idx		Index to read, from board's enum tmp112_sensor
+ *			definition
+ *
+ * @param temp_mk_ptr	Destination for temperature in mK.
+ *
+ * @return EC_SUCCESS if successful, non-zero if error.
+ */
+int tmp112_get_val_mk(int idx, int *temp_mk_ptr);
 
 /**
  * Init the sensors.  Note, this will run automatically on HOOK_INIT, but is

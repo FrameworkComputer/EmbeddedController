@@ -10,6 +10,7 @@
 #include "tmp112.h"
 #include "i2c.h"
 #include "hooks.h"
+#include "math_util.h"
 #include "util.h"
 
 #define TMP112_RESOLUTION 12
@@ -18,7 +19,7 @@
 
 #define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
 
-static int temp_val_local[TMP112_COUNT];
+static int temp_mk_local[TMP112_COUNT];
 
 static int raw_read16(int sensor, const int offset, int *data_ptr)
 {
@@ -48,7 +49,7 @@ static int raw_write16(int sensor, const int offset, int data)
 			   offset, data);
 }
 
-static int get_temp(int sensor, int *temp_ptr)
+static int get_reg_temp(int sensor, int *temp_ptr)
 {
 	int rv;
 	int temp_raw = 0;
@@ -61,32 +62,41 @@ static int get_temp(int sensor, int *temp_ptr)
 	return EC_SUCCESS;
 }
 
-static inline int tmp112_reg_to_c(int16_t reg)
+static inline int tmp112_reg_to_mk(int16_t reg)
 {
-	int tmp;
+	int temp_mc;
 
-	tmp = (((reg >> TMP112_SHIFT1) * 1000 ) >> TMP112_SHIFT2);
+	temp_mc = (((reg >> TMP112_SHIFT1) * 1000) >> TMP112_SHIFT2);
 
-	return tmp / 1000;
+	return MILLI_CELSIUS_TO_MILLI_KELVIN(temp_mc);
 }
 
-int tmp112_get_val(int idx, int *temp_ptr)
+int tmp112_get_val_k(int idx, int *temp_k_ptr)
 {
 	if (idx >= TMP112_COUNT)
 		return EC_ERROR_INVAL;
 
-	*temp_ptr = temp_val_local[idx];
+	*temp_k_ptr = MILLI_KELVIN_TO_KELVIN(temp_mk_local[idx]);
+	return EC_SUCCESS;
+}
+
+int tmp112_get_val_mk(int idx, int *temp_mk_ptr)
+{
+	if (idx >= TMP112_COUNT)
+		return EC_ERROR_INVAL;
+
+	*temp_mk_ptr = temp_mk_local[idx];
 	return EC_SUCCESS;
 }
 
 static void tmp112_poll(void)
 {
 	int s;
-	int temp_c = 0;
+	int temp_reg = 0;
 
 	for (s = 0; s < TMP112_COUNT; s++) {
-		if (get_temp(s, &temp_c) == EC_SUCCESS)
-			temp_val_local[s] = C_TO_K(tmp112_reg_to_c(temp_c));
+		if (get_reg_temp(s, &temp_reg) == EC_SUCCESS)
+			temp_mk_local[s] = tmp112_reg_to_mk(temp_reg);
 	}
 }
 DECLARE_HOOK(HOOK_SECOND, tmp112_poll, HOOK_PRIO_TEMP_SENSOR);

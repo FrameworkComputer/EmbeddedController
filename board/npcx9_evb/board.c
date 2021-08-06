@@ -90,7 +90,7 @@ BUILD_ASSERT(ARRAY_SIZE(tmp112_sensors) == TMP112_COUNT);
 /******************************************************************************/
 /* Temperature sensor. */
 const struct temp_sensor_t temp_sensors[] = {
-	{ "System", TEMP_SENSOR_TYPE_BOARD, tmp112_get_val, TMP112_0 },
+	{ "System", TEMP_SENSOR_TYPE_BOARD, tmp112_get_val_k, TMP112_0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
