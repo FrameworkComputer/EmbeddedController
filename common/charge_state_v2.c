@@ -1280,7 +1280,7 @@ static void show_charging_progress(void)
 }
 
 /* Calculate if battery is full based on whether it is accepting charge */
-static int calc_is_full(void)
+test_mockable int calc_is_full(void)
 {
 	static int __bss_slow ret;
 
