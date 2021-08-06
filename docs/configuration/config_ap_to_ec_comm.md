@@ -9,7 +9,7 @@ details a system level of the operation of this feature.
 Configure the AP to EC communication channel, picking exactly one of the
 following options.
 
--   `CONFIG_HOSTCMD_SHI` - [SPI Host Interface](../ec_terms.md#shi) (SHI)
+-   `CONFIG_HOST_INTERFACE_SHI` - [SPI Host Interface](../ec_terms.md#shi) (SHI)
 -   `CONFIG_HOST_INTERFACE_HECI` - HECI interface
 -   `CONFIG_HOST_INTERFACE_LPC` - [LPC](../ec_terms.md#lpc) bus
 -   `CONFIG_HOST_INTERFACE_ESPI` - [eSPI](../ec_terms.md#espi) bus

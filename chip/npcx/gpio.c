@@ -560,7 +560,7 @@ void gpio_pre_init(void)
 #endif
 
 	/* Pin_Mux for LPC & SHI */
-#ifdef CONFIG_HOSTCMD_SHI
+#ifdef CONFIG_HOST_INTERFACE_SHI
 	/* Switching to eSPI mode for SHI interface */
 	NPCX_DEVCNT |= 0x08;
 	/* Alternate Intel bus interface LPC/eSPI to GPIOs first */

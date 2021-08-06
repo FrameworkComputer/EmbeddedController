@@ -67,7 +67,8 @@ GPIO(EC_I2C_POWER_SCL,		PIN(D, 1), GPIO_INPUT)
  * Pin 57 (SER_IRQ) defaults to LPC mode, but we also have EC_PCH_KB_INT_ODL
  * (Pin B0) in case it doesn't work (Set CONFIG_KEYBOARD_IRQ_GPIO in this case).
  *
- * See also the NO_LPC_ESPI bit in DEVALT1 and the CONFIG_HOSTCMD_SHI option.
+ * See also the NO_LPC_ESPI bit in DEVALT1 and the
+ * CONFIG_HOST_INTERFACE_SHI option.
  */
 
 GPIO(PCH_SMI_L,			PIN(A, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V)	/* EC_SMI_ODL */

@@ -11,7 +11,7 @@
 /* Optional modules */
 #define CONFIG_ADC
 #define CONFIG_PWM
-#define CONFIG_HOSTCMD_SHI /* Used in ARM-based platform for host interface */
+#define CONFIG_HOST_INTERFACE_SHI /* ARM-based platform for host interface */
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
