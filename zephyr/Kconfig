@@ -627,6 +627,22 @@ config PLATFORM_EC_SWITCH
           This also enables the "mmapinfo" console command to report the current
           state of all switches.
 
+choice PLATFORM_EC_SWITCHCAP_TYPE
+	prompt "Enable switchcap support"
+	optional
+	help
+	  Enable support for switchcap used to power on the AP.
+	  If enabled, type of switchcap must be selected and node in device
+	  tree must be added that describes the driver and pins used to control
+	  the switchcap.
+
+config PLATFORM_EC_SWITCHCAP_GPIO
+	bool "GPIO controlled switchcap"
+	help
+	  Enable support for the GPIO controlled switchcap.
+	  Pins used for controlling the switchcap must be defined in board's
+	  device tree.
+
 config PLATFORM_EC_SWITCHCAP_LN9310
 	bool "LN9310 switchcap driver"
 	depends on PLATFORM_EC_I2C
@@ -634,7 +650,10 @@ config PLATFORM_EC_SWITCHCAP_LN9310
 	  Enable support for the LION Semiconductor LN9310 switched
 	  capacitor converter.  This will export definitions for
 	  ln9310_init, ln9310_interrupt, and ln9310_power_good, which
-	  project-specific code should call appropriately.
+	  project-specific code should call appropriately if there's
+	  no switchcap node in device tree.
+
+endchoice
 
 config PLATFORM_EC_SYSTEM_UNLOCKED
 	bool "System unlocked: allow dangerous commands while in development"

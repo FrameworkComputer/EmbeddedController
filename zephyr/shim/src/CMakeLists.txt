@@ -33,6 +33,10 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MOTIONSENSE
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PANIC       panic.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PWM         pwm.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RTC         rtc.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SWITCHCAP_GPIO
+															switchcap_gpio.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SWITCHCAP_LN9310
+															switchcap_ln9310.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TEMP_SENSOR temp_sensors.c
                                                             thermal.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TIMER       hwtimer.c)

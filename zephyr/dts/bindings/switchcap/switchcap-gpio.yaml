@@ -1,0 +1,16 @@
+description: SwitchCap controlled by gpios
+
+compatible: "switchcap-gpio"
+
+properties:
+  enable-pin:
+    type: phandle
+    required: true
+    description: |
+      GPIO used to enable the switch cap
+
+  power-good-pin:
+    type: phandle
+    required: false
+    description: |
+      GPIO used to read if power is good

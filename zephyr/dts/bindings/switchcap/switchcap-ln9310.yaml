@@ -1,0 +1,27 @@
+description: SwitchCap controlled by LN9310
+
+compatible: "switchcap-ln9310"
+
+properties:
+  enable-l-pin:
+    type: phandle
+    required: true
+    description: |
+      GPIO used to enable the switch cap - active low
+
+  port:
+    type: phandle
+    required: true
+    description: |
+      I2C port used to communicate with controller
+
+  addr-flags:
+    type: string
+    default: "LN9310_I2C_ADDR_0_FLAGS"
+    enum:
+      - "LN9310_I2C_ADDR_0_FLAGS"
+      - "LN9310_I2C_ADDR_1_FLAGS"
+      - "LN9310_I2C_ADDR_2_FLAGS"
+      - "LN9310_I2C_ADDR_3_FLAGS"
+    description: |
+      I2C address of controller
