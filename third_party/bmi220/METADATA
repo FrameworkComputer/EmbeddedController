@@ -1,0 +1,15 @@
+name: "BMI220 implementation"
+description:
+    "Hex encoded binary for BMI220 driver initial configuration"
+
+third_party {
+  url {
+    type: HOMEPAGE
+    value: "https://www.bosch-sensortec.com/"
+  }
+  version: "v2.47.1"
+  last_upgrade_date { year: 2021 month: 06 day: 23 }
+  license_type: NOTICE
+  local_modifications: "Created LICENSE file."
+    "Adapted code to work with EC codebase."
+}

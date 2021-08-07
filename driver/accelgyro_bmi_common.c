@@ -23,23 +23,29 @@
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
-#if !defined(CONFIG_ACCELGYRO_BMI160) && !defined(CONFIG_ACCELGYRO_BMI260) \
-&& !defined(CONFIG_ACCELGYRO_BMI3XX)
-#error "Must use following sensors BMI160 BMI260 BMI3XX"
+#if !defined(CONFIG_ACCELGYRO_BMI160) && \
+    !defined(CONFIG_ACCELGYRO_BMI220) && \
+    !defined(CONFIG_ACCELGYRO_BMI260) && \
+    !defined(CONFIG_ACCELGYRO_BMI3XX)
+#error "Must use following sensors BMI160 BMI220 BMI260 BMI3XX"
 #endif
 
-#if defined(CONFIG_ACCELGYRO_BMI260) && !defined(CONFIG_ACCELGYRO_BMI160)
+#if (defined(CONFIG_ACCELGYRO_BMI260) || defined(CONFIG_ACCELGYRO_BMI220)) && \
+    !defined(CONFIG_ACCELGYRO_BMI160)
 #define V(s_) 1
-#elif defined(CONFIG_ACCELGYRO_BMI160) && !defined(CONFIG_ACCELGYRO_BMI260)
+#elif defined(CONFIG_ACCELGYRO_BMI160) && \
+      !(defined(CONFIG_ACCELGYRO_BMI260) || defined(CONFIG_ACCELGYRO_BMI220))
 #define V(s_) 0
 #else
-#define V(s_) ((s_)->chip == MOTIONSENSE_CHIP_BMI260)
+#define V(s_) ((s_)->chip == MOTIONSENSE_CHIP_BMI260 || \
+	       (s_)->chip == MOTIONSENSE_CHIP_BMI220)
 #endif
 /* Index for which table to use. */
-#if !defined(CONFIG_ACCELGYRO_BMI160) || !defined(CONFIG_ACCELGYRO_BMI260)
-#define T(s_) 0
-#else
+#if defined(CONFIG_ACCELGYRO_BMI160) && \
+    (defined(CONFIG_ACCELGYRO_BMI220) || defined(CONFIG_ACCELGYRO_BMI260))
 #define T(s_) V(s_)
+#else
+#define T(s_) 0
 #endif
 
 /* List of range values in +/-G's and their associated register values. */
@@ -50,7 +56,7 @@ const struct bmi_accel_param_pair g_ranges[][4] = {
 	  {8,  BMI160_GSEL_8G},
 	  {16, BMI160_GSEL_16G} },
 #endif
-#ifdef CONFIG_ACCELGYRO_BMI260
+#if defined(CONFIG_ACCELGYRO_BMI220) || defined(CONFIG_ACCELGYRO_BMI260)
 	{ {2,  BMI260_GSEL_2G},
 	  {4,  BMI260_GSEL_4G},
 	  {8,  BMI260_GSEL_8G},
@@ -70,7 +76,7 @@ const struct bmi_accel_param_pair dps_ranges[][5] = {
 	  {1000, BMI160_DPS_SEL_1000},
 	  {2000, BMI160_DPS_SEL_2000} },
 #endif
-#ifdef CONFIG_ACCELGYRO_BMI260
+#if defined(CONFIG_ACCELGYRO_BMI220) || defined(CONFIG_ACCELGYRO_BMI260)
 	{ {125,  BMI260_DPS_SEL_125},
 	  {250,  BMI260_DPS_SEL_250},
 	  {500,  BMI260_DPS_SEL_500},

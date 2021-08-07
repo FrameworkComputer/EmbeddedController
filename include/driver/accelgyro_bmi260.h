@@ -14,7 +14,10 @@
 #include "driver/accelgyro_bmi260_public.h"
 
 #define BMI260_CHIP_ID      0x00
+/* BMI260 chip identifier */
 #define BMI260_CHIP_ID_MAJOR    0x27
+/* BMI220 chip identifier */
+#define BMI220_CHIP_ID_MAJOR    0x26
 
 #define BMI260_ERR_REG          0x02
 
