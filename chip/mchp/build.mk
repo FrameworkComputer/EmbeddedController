@@ -81,7 +81,7 @@ chip-lfw-flat = $(out)/RW/$(chip-lfw)-lfw.flat
 
 # build these specifically for lfw with -lfw suffix
 objs_lfw = $(patsubst %, $(out)/RW/%-lfw.o, \
-		$(addprefix common/, util gpio) \
+		$(addprefix common/, util util_stdlib gpio) \
 		$(addprefix chip/$(CHIP)/, spi qmspi dma gpio clock hwtimer tfdp) \
 		core/$(CORE)/cpu $(chip-lfw))
 

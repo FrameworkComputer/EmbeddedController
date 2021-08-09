@@ -9,7 +9,7 @@
 # Note that this variable includes the trailing "/"
 _common_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
 
-common-y=util.o
+common-y=util.o util_stdlib.o
 common-y+=version.o printf.o queue.o queue_policies.o irq_locking.o
 
 common-$(CONFIG_ACCELGYRO_BMI160)+=math_util.o
