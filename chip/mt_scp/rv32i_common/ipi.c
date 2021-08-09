@@ -14,6 +14,7 @@
 #include "system.h"
 #include "task.h"
 #include "util.h"
+#include "video.h"
 
 #define CPRINTF(format, args...) cprintf(CC_IPI, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_IPI, format, ##args)
@@ -128,9 +129,8 @@ static void ipi_enable_deferred(void)
 	scp_run.signaled = 1;
 	strncpy(scp_run.fw_ver, system_get_version(EC_IMAGE_RW),
 		SCP_FW_VERSION_LEN);
-	scp_run.dec_capability = VCODEC_CAPABILITY_4K_DISABLED | VDEC_CAP_MM21 | VDEC_CAP_H264_SLICE |
-				 VDEC_CAP_VP8_FRAME | VDEC_CAP_VP9_FRAME;
-	scp_run.enc_capability = VENC_CAP_4K;
+	scp_run.dec_capability = video_get_dec_capability();
+	scp_run.enc_capability = video_get_enc_capability();
 
 	ret = ipi_send(SCP_IPI_INIT, (void *)&scp_run, sizeof(scp_run), 1);
 	if (ret) {
