@@ -53,7 +53,9 @@ def build(opts):
             "Run 'test' with --code-coverage instead.")
         return
 
-    subprocess.run(['make', 'buildall_only', '-j{}'.format(opts.cpus)],
+    cmd = ['make', 'buildall_only', '-j{}'.format(opts.cpus)]
+    print(f'# Running {" ".join(cmd)}.')
+    subprocess.run(cmd,
                    cwd=os.path.dirname(__file__),
                    check=True)
 
@@ -136,7 +138,9 @@ def test(opts):
     # Otherwise, build the 'runtests' target, which verifies all
     # posix-based unit tests build and pass.
     target = 'coverage' if opts.code_coverage else 'runtests'
-    subprocess.run(['make', target, '-j{}'.format(opts.cpus)],
+    cmd = ['make', target, '-j{}'.format(opts.cpus)]
+    print(f'# Running {" ".join(cmd)}.')
+    subprocess.run(cmd,
                    cwd=os.path.dirname(__file__),
                    check=True)
 
@@ -146,6 +150,7 @@ def test(opts):
         # rotted, so we only build the ones that compile.
         cmd = ['make', '-j{}'.format(opts.cpus)]
         cmd.extend(['tests-' + b for b in BOARDS_UNIT_TEST])
+        print(f'# Running {" ".join(cmd)}.')
         subprocess.run(cmd,
                        cwd=os.path.dirname(__file__),
                        check=True)
