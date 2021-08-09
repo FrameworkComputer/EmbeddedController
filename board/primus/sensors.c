@@ -86,7 +86,7 @@ const struct temp_sensor_t temp_sensors[] = {
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
- * TODO(b/190459738): update for Alder Lake/primus
+ * TODO(b/195901486): update for Alder Lake/primus
  *
  * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
  * 130 C.  However, sensor is located next to DDR, so we need to use the lower
@@ -105,7 +105,7 @@ static const struct ec_thermal_config thermal_cpu = {
 };
 
 /*
- * TODO(b/190459738): update for Alder Lake/primus
+ * TODO(b/195901486): update for Alder Lake/primus
  *
  * Inductor limits - used for both charger and PP3300 regulator
  *
@@ -130,7 +130,7 @@ static const struct ec_thermal_config thermal_inductor = {
 };
 
 /*
- * TODO(b/190459738): Thermal table need to be fine tuned.
+ * TODO(b/195901486): Thermal table need to be fine tuned.
  */
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = thermal_cpu,

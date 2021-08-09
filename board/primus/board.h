@@ -130,10 +130,7 @@
 /* LED */
 #define CONFIG_BATTERY_LEVEL_NEAR_FULL 91
 
-/*
- * TODO: no fan control loop until sensors are tuned
- */
-/* #define CONFIG_FANS			FAN_CH_COUNT */
+#define CONFIG_FANS			FAN_CH_COUNT
 
 /* Charger defines */
 #define CONFIG_CHARGER_BQ25720
