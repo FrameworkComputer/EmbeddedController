@@ -24,6 +24,14 @@ from google.protobuf import json_format
 DEFAULT_BUNDLE_DIRECTORY = '/tmp/artifact_bundles'
 DEFAULT_BUNDLE_METADATA_FILE = '/tmp/artifact_bundle_metadata'
 
+# The the list of boards whose on-device unit tests we will verify compilation.
+# TODO(b/172501728) On-device unit tests should build for all boards, but
+# they've bit rotted, so we only build the ones that compile.
+BOARDS_UNIT_TEST = [
+    'bloonchipper',
+    'dartmonkey',
+]
+
 
 def build(opts):
     """Builds all EC firmware targets
@@ -136,10 +144,11 @@ def test(opts):
         # Verify compilation of the on-device unit test binaries.
         # TODO(b/172501728) These should build  for all boards, but they've bit
         # rotted, so we only build the ones that compile.
-        subprocess.run(
-            ['make', 'BOARD=bloonchipper', 'tests', '-j{}'.format(opts.cpus)],
-            cwd=os.path.dirname(__file__),
-            check=True)
+        cmd = ['make', '-j{}'.format(opts.cpus)]
+        cmd.extend(['tests-' + b for b in BOARDS_UNIT_TEST])
+        subprocess.run(cmd,
+                       cwd=os.path.dirname(__file__),
+                       check=True)
 
 
 def main(args):
