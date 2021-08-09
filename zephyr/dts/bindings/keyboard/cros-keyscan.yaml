@@ -1,0 +1,82 @@
+ # Copyright 2021 The Chromium OS Authors. All rights reserved.
+ # Use of this source code is governed by a BSD-style license that can be
+ # found in the LICENSE file.
+
+description: Keyboard scanning properties
+
+compatible: "cros-keyscan"
+
+properties:
+    output-settle:
+      type: int
+      required: false
+      default: 80
+      description: |
+          Delay time, in microseconds, between setting up output and waiting for
+          it to settle. 80 microseconds is the recommended value when column 2
+          of the keyboard passes through the Google Security Chip. Otherwise 50
+          microseconds is the recommended value.
+
+    debounce-down:
+      type: int
+      required: false
+      default: 9000
+      description: |
+          Time, in microseconds, to debounce key-down.
+
+    debounce-up:
+      type: int
+      required: false
+      default: 30000
+      description: |
+          Time, in microseconds, to debounce key-up.
+
+    scan-period:
+      type: int
+      required: false
+      default: 3000
+      description: |
+          Time between scans when keyboard scan task runs in polling mode.
+
+    min-post-scan-delay:
+      type: int
+      required: false
+      default: 1000
+      description: |
+          Minimum time between end of one scan and start of the next one.
+          This ensures keyboard scanning doesn't starve the rest of the system
+          if the scan period is set too short, or if other higher-priority
+          system activity is starving the keyboard scan task too.
+
+    poll-timeout:
+      type: int
+      required: false
+      default: 100000
+      description: |
+          Revert to interrupt mode after no keyboard activity for this period.
+          Specified in microseconds.
+
+    actual-key-mask:
+      type: array
+      required: false
+      default: [
+        0x1c, # C0
+        0xff, # C1
+        0xff, # C2
+        0xff, # C3
+        0xff, # C4
+        0xf5, # C5
+        0xff, # C6
+        0xa4, # C7
+        0xfe, # C8
+        0x55, # C9
+        0xfa, # C10
+        0xff, # C11
+        0xca, # C12
+        0x00, # C13 for keypad
+        0x00, # C14 for keypad
+      ]
+      description: |
+          Keyboard scanning mask. For each keyboard column, specify which
+          keyboard rows actually exist. Default key mask includes scanning for
+          full Chromebook keyboard, excluding the keypad.
