@@ -126,9 +126,12 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 /*
  * Delay between power-on the system and power-on the PMIC.
  * Some latest PMIC firmware needs this delay longer, for doing a cold
- * reboot. Did an experiment; it should be 120ms+. Set it with margin.
+ * reboot.
+ *
+ * Measured on Herobrine IOB + Trogdor MLB, the delay takes ~200ms. Set
+ * it with margin.
  */
-#define SYSTEM_POWER_ON_DELAY		(150 * MSEC)
+#define SYSTEM_POWER_ON_DELAY		(300 * MSEC)
 
 /*
  * Delay between the PMIC power drop and power-off the system.
