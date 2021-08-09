@@ -52,7 +52,7 @@ int hook_call_deferred(const struct deferred_data *data, int us);
  */
 struct zephyr_shim_hook_list {
 	void (*routine)(void);
-	int priority;
+	uint16_t priority; /* HOOK_PRIO_LAST = 9999 */
 	enum hook_type type;
 	struct zephyr_shim_hook_list *next;
 };
