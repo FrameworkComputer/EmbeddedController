@@ -6,8 +6,9 @@ board: volteer
 dts-overlays:
   - bb_retimer.dts
   - cbi_eeprom.dts
-  - gpio.dts
   - fan.dts
+  - gpio.dts
+  - keyboard.dts
   - motionsense.dts
   - pwm.dts
 supported-zephyr-versions:
