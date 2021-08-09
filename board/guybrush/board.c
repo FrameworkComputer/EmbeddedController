@@ -360,7 +360,7 @@ static void board_chipset_startup(void)
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
 	     HOOK_PRIO_DEFAULT);
 
-int board_get_soc_temp(int idx, int *temp_k)
+int board_get_soc_temp_k(int idx, int *temp_k)
 {
 	uint32_t board_version = get_board_version();
 
@@ -371,4 +371,30 @@ int board_get_soc_temp(int idx, int *temp_k)
 		return get_temp_3v3_30k9_47k_4050b(ADC_TEMP_SENSOR_SOC, temp_k);
 
 	return tmp112_get_val_k(idx, temp_k);
+}
+
+int board_get_soc_temp_mk(int *temp_mk)
+{
+	uint32_t board_version = get_board_version();
+
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		return EC_ERROR_NOT_POWERED;
+
+	if (board_version == 1)
+		return EC_ERROR_UNIMPLEMENTED;
+
+	return tmp112_get_val_mk(TMP112_SOC, temp_mk);
+}
+
+int board_get_ambient_temp_mk(int *temp_mk)
+{
+	uint32_t board_version = get_board_version();
+
+	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
+		return EC_ERROR_NOT_POWERED;
+
+	if (board_version == 1)
+		return EC_ERROR_UNIMPLEMENTED;
+
+	return tmp112_get_val_mk(TMP112_AMB, temp_mk);
 }

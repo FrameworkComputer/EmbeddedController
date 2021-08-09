@@ -75,6 +75,8 @@
 
 /* Thermal Config */
 #define CONFIG_ADC
+#define CONFIG_AMD_SB_RMI
+#define CONFIG_AMD_STT
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
 #define CONFIG_THROTTLE_AP
 #define CONFIG_TEMP_SENSOR_SB_TSI
@@ -376,7 +378,7 @@ void sbu_fault_interrupt(enum ioex_signal signal);
 void baseboard_en_pwr_pcore_s0(enum gpio_signal signal);
 void baseboard_en_pwr_s0(enum gpio_signal signal);
 
-int board_get_soc_temp(int idx, int *temp_k);
+int board_get_soc_temp_k(int idx, int *temp_k);
 
 /* CBI utility functions */
 uint32_t get_sku_id(void);
