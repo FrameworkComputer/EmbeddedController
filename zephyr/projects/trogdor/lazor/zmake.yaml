@@ -4,8 +4,9 @@
 
 board: trogdor
 dts-overlays:
-  - gpio.dts
   - battery.dts
+  - gpio.dts
+  - keyboard.dts
   - motionsense.dts
 supported-zephyr-versions:
   - v2.5
