@@ -15,25 +15,13 @@
 
 int hook_call_deferred(const struct deferred_data *data, int us)
 {
-#if IS_ZEPHYR_VERSION(2, 6)
 	struct k_work_delayable *work = data->work;
-#else
-	struct k_delayed_work *work = data->work;
-#endif
 	int rv = 0;
 
 	if (us == -1) {
-#if IS_ZEPHYR_VERSION(2, 6)
 		k_work_cancel_delayable(work);
-#else
-		k_delayed_work_cancel(work);
-#endif
 	} else if (us >= 0) {
-#if IS_ZEPHYR_VERSION(2, 6)
 		rv = k_work_schedule(work, K_USEC(us));
-#else
-		rv = k_delayed_work_submit(work, K_USEC(us));
-#endif
 		if (rv == -EINVAL) {
 			/* Already processing or completed. */
 			return 0;

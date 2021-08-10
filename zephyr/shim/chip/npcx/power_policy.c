@@ -4,19 +4,12 @@
  */
 
 #include <zephyr.h>
+#include <pm/pm.h>
 #include <soc.h>
 
 #include "console.h"
 #include "cros_version.h"
 #include "system.h"
-
-#if IS_ZEPHYR_VERSION(2, 6)
-#include <pm/pm.h>
-#elif IS_ZEPHYR_VERSION(2, 5)
-#include <power/power.h>
-#else
-#error "Unsupported Zephyr version"
-#endif
 
 static const struct pm_state_info pm_min_residency[] =
 	PM_STATE_INFO_DT_ITEMS_LIST(DT_NODELABEL(cpu0));
@@ -39,11 +32,3 @@ struct pm_state_info pm_policy_next_state(int32_t ticks)
 
 	return (struct pm_state_info){ PM_STATE_ACTIVE, 0, 0 };
 }
-
-#if IS_ZEPHYR_VERSION(2, 5)
-/* CROS PM device policy handler */
-bool pm_policy_low_power_devices(enum pm_state state)
-{
-	return pm_is_sleep_state(state);
-}
-#endif
