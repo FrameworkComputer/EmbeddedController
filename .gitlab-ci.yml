@@ -31,10 +31,9 @@ before_script:
   - export MODULES_DIR="$HOME/modules"
   - mkdir -p "${MODULES_DIR}"
   - export ZEPHYR_BASE="$HOME/zephyr"
-  - git clone -b chromeos-v2.5 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_BASE}25"
   - git clone -b chromeos-v2.6 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_BASE}26"
-  - git clone -b chromeos-v2.5 https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis "${MODULES_DIR}/cmsis"
-  - git clone -b chromeos-v2.5 https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32 "${MODULES_DIR}/hal_stm32"
+  - git clone -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis "${MODULES_DIR}/cmsis"
+  - git clone -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32 "${MODULES_DIR}/hal_stm32"
   - ln -s "$(pwd)" "${MODULES_DIR}/ec"
   - python3 -V  # Print out python version for debugging
   - python3 -m pip install zephyr/zmake --user
@@ -63,7 +62,7 @@ delbin:
   variables:
     PROJECT: "delbin"
     PROJECT_SUBDIR: "volteer/"
-    VERSION: 25
+    VERSION: 26
   <<: *build_template
 
 hayato:
@@ -82,26 +81,26 @@ it8xxx2_evb:
 kohaku:
   variables:
     PROJECT: "kohaku"
-    VERSION: 25
+    VERSION: 26
   <<: *build_template
 
 lazor:
   variables:
     PROJECT: "lazor"
     PROJECT_SUBDIR: "trogdor/"
-    VERSION: 25
+    VERSION: 26
   <<: *build_template
 
 native_posix:
   variables:
     PROJECT: "posix-ec"
     TOOLCHAIN: "host"
-    VERSION: 25
+    VERSION: 26
   <<: *build_template
 
 volteer:
   variables:
     PROJECT: "volteer"
     PROJECT_SUBDIR: "volteer/"
-    VERSION: 25
+    VERSION: 26
   <<: *build_template
