@@ -367,7 +367,7 @@ const struct ec_response_keybd_config *board_vivaldi_keybd_config(void)
 {
 	if (IS_ENABLED(BOARD_ZED) || IS_ENABLED(BOARD_STAR))
 		return &zed_kb;
-	if (IS_ENABLED(BOARD_BLAND))
+	if (IS_ENABLED(BOARD_BLAND) || IS_ENABLED(BOARD_EEL))
 		return &bland_kb;
 
 	return NULL;
