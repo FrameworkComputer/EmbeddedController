@@ -8,39 +8,48 @@
 
 #include <shell/shell.h>
 
+struct zephyr_console_command {
+	/* Handler for the command.  argv[0] will be the command name. */
+	int (*handler)(int argc, char **argv);
+	/* Description of args */
+	const char *argdesc;
+	/* Short help for command */
+	const char *help;
+};
+
 /**
  * zshim_run_ec_console_command() - Dispatch a CrOS EC console command
  * using Zephyr's shell
  *
- * @handler:		A CrOS EC shell command handler.
- * @shell:		The Zephyr shell to run on.
+ * @command:		Pointer to a struct zephyr_console_command
  * @argc:		The number of command line arguments.
  * @argv:		The NULL-terminated list of arguments.
- * @help_str:		The help string to display when "-h" is passed.
- * @argdesc:		The string describing the arguments to the command.
  *
  * Return: the return value from the handler.
  */
-int zshim_run_ec_console_command(int (*handler)(int argc, char **argv),
-				 const struct shell *shell, size_t argc,
-				 char **argv, const char *help_str,
-				 const char *argdesc);
+int zshim_run_ec_console_command(const struct zephyr_console_command *command,
+				 size_t argc, char **argv);
 
 /* Internal wrappers for DECLARE_CONSOLE_COMMAND_* macros. */
-#define _ZEPHYR_SHELL_COMMAND_SHIM_2(NAME, ROUTINE_ID, ARGDESC, HELP,	\
-				     WRAPPER_ID)			\
-	static int WRAPPER_ID(const struct shell *shell, size_t argc,        \
-			      char **argv)                                   \
-	{                                                                    \
-		return zshim_run_ec_console_command(ROUTINE_ID, shell, argc, \
-						    argv, HELP, ARGDESC);    \
-	}                                                                    \
-	SHELL_CMD_ARG_REGISTER(NAME, NULL, HELP, WRAPPER_ID, 0,              \
+#define _ZEPHYR_SHELL_COMMAND_SHIM_2(NAME, ROUTINE_ID, ARGDESC, HELP,       \
+				     WRAPPER_ID, ENTRY_ID)                  \
+	static const struct zephyr_console_command ENTRY_ID = {             \
+		.handler = ROUTINE_ID,                                      \
+		.argdesc = ARGDESC,                                         \
+		.help = HELP,                                               \
+	};                                                                  \
+	static int WRAPPER_ID(const struct shell *shell, size_t argc,       \
+			      char **argv)                                  \
+	{                                                                   \
+		return zshim_run_ec_console_command(&ENTRY_ID, argc, argv); \
+	}                                                                   \
+	SHELL_CMD_ARG_REGISTER(NAME, NULL, HELP, WRAPPER_ID, 0,             \
 			       SHELL_OPT_ARG_MAX)
 
-#define _ZEPHYR_SHELL_COMMAND_SHIM(NAME, ROUTINE_ID, ARGDESC, HELP)   \
-	_ZEPHYR_SHELL_COMMAND_SHIM_2(NAME, ROUTINE_ID, ARGDESC, HELP, \
-				     UTIL_CAT(zshim_wrapper_, ROUTINE_ID))
+#define _ZEPHYR_SHELL_COMMAND_SHIM(NAME, ROUTINE_ID, ARGDESC, HELP)        \
+	_ZEPHYR_SHELL_COMMAND_SHIM_2(NAME, ROUTINE_ID, ARGDESC, HELP,      \
+				     UTIL_CAT(zshim_wrapper_, ROUTINE_ID), \
+				     UTIL_CAT(zshim_entry_, ROUTINE_ID))
 
 /* These macros mirror the macros provided by the CrOS EC. */
 #define DECLARE_CONSOLE_COMMAND(NAME, ROUTINE, ARGDESC, HELP) \
@@ -64,4 +73,4 @@ int zshim_run_ec_console_command(int (*handler)(int argc, char **argv),
  */
 void console_buf_notify_chars(const char *s, size_t len);
 
-#endif  /* __CROS_EC_ZEPHYR_CONSOLE_SHIM_H */
+#endif /* __CROS_EC_ZEPHYR_CONSOLE_SHIM_H */

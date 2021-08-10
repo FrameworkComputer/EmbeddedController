@@ -18,6 +18,7 @@
 #include "printf.h"
 #include "uart.h"
 #include "usb_console.h"
+#include "zephyr_console_shim.h"
 
 LOG_MODULE_REGISTER(shim_console, LOG_LEVEL_ERR);
 
@@ -160,26 +161,22 @@ void uart_shell_start(void)
 	k_poll(&event, 1, K_FOREVER);
 }
 
-int zshim_run_ec_console_command(int (*handler)(int argc, char **argv),
-				 const struct shell *shell, size_t argc,
-				 char **argv, const char *help_str,
-				 const char *argdesc)
+int zshim_run_ec_console_command(const struct zephyr_console_command *command,
+				 size_t argc, char **argv)
 {
-	ARG_UNUSED(shell);
-
 	for (int i = 1; i < argc; i++) {
-		if (!help_str && !argdesc)
+		if (!command->help && !command->argdesc)
 			break;
 		if (!strcmp(argv[i], "-h")) {
-			if (help_str)
-				printk("%s\n", help_str);
-			if (argdesc)
-				printk("Usage: %s\n", argdesc);
+			if (command->help)
+				printk("%s\n", command->help);
+			if (command->argdesc)
+				printk("Usage: %s\n", command->argdesc);
 			return 0;
 		}
 	}
 
-	return handler(argc, argv);
+	return command->handler(argc, argv);
 }
 
 #if defined(CONFIG_CONSOLE_CHANNEL) && DT_NODE_EXISTS(DT_PATH(ec_console))
