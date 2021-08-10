@@ -350,6 +350,11 @@ static enum usb_power_roles get_current_power_role(int port,
 	return role;
 }
 
+__overridable int board_get_vbus_voltage(int port)
+{
+	return 0;
+}
+
 static int get_vbus_voltage(int port, enum usb_power_roles current_role)
 {
 	int voltage_mv;
@@ -375,6 +380,8 @@ static int get_vbus_voltage(int port, enum usb_power_roles current_role)
 #elif defined(CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT)
 		/* No VBUS ADC channel - voltage is unknown */
 		voltage_mv = 0;
+#elif defined(CONFIG_USB_PD_VBUS_MEASURE_BY_BOARD)
+		voltage_mv = board_get_vbus_voltage(port);
 #else
 		/* There is a single ADC that measures joint Vbus */
 		voltage_mv = adc_read_channel(ADC_VBUS);
