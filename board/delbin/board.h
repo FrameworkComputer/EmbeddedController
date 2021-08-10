@@ -11,13 +11,11 @@
 /* Baseboard features */
 #include "baseboard.h"
 
-#ifndef BOARD_DELBIN_NPCX796FC
 /*
  * The RAM and flash size combination on the NPCX797FC dose not leave
  * any unused flash space that can be used to store the .init_rom section.
  */
 #undef CONFIG_CHIP_INIT_ROM_REGION
-#endif
 
 #undef NPCX_PWM1_SEL
 #define NPCX_PWM1_SEL 0	/* GPIO C2 is not used as PWM1. */

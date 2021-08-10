@@ -9,12 +9,7 @@
 CHIP:=npcx
 CHIP_FAMILY:=npcx7
 
-# Old Delbin boards are using with NPCX796FC variant.
-ifeq ($(BOARD),delbin_npcx796fc)
-CHIP_VARIANT:=npcx7m6fc
-else
 CHIP_VARIANT:=npcx7m7fc
-endif
 BASEBOARD:=volteer
 
 board-y=board.o
