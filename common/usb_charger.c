@@ -22,6 +22,7 @@
 #include "task.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
+#include "usb_pd_flags.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -81,11 +82,11 @@ void usb_charger_vbus_change(int port, int vbus_level)
 		usb_charger_reset_charge(port);
 #endif
 
-#if (defined(CONFIG_USB_PD_VBUS_DETECT_CHARGER) \
-	|| defined(CONFIG_USB_PD_VBUS_DETECT_PPC))
-	/* USB PD task */
-	task_wake(PD_PORT_TO_TASK_ID(port));
-#endif
+	if ((get_usb_pd_vbus_detect() == USB_PD_VBUS_DETECT_CHARGER) ||
+		(get_usb_pd_vbus_detect() == USB_PD_VBUS_DETECT_PPC)) {
+		/* USB PD task */
+		task_wake(PD_PORT_TO_TASK_ID(port));
+	}
 }
 
 void usb_charger_reset_charge(int port)

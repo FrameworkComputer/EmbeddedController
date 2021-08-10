@@ -25,6 +25,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_dpm.h"
+#include "usb_pd_flags.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ocp.h"
 #include "usbc_ppc.h"
@@ -851,12 +852,17 @@ void pd_set_vbus_discharge(int port, int enable)
 	mutex_lock(&discharge_lock[port]);
 	enable &= !board_vbus_source_enabled(port);
 
-	if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE_GPIO))
+	if (get_usb_pd_discharge() == USB_PD_DISCHARGE_GPIO) {
 		gpio_discharge_vbus(port, enable);
-	else if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE_TCPC))
+	} else if (get_usb_pd_discharge() == USB_PD_DISCHARGE_TCPC) {
+#ifdef CONFIG_USB_PD_DISCHARGE_PPC
 		tcpc_discharge_vbus(port, enable);
-	else if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE_PPC))
+#endif
+	} else if (get_usb_pd_discharge() == USB_PD_DISCHARGE_PPC) {
+#ifdef CONFIG_USB_PD_DISCHARGE_PPC
 		ppc_discharge_vbus(port, enable);
+#endif
+	}
 
 	mutex_unlock(&discharge_lock[port]);
 }
@@ -884,6 +890,10 @@ void pd_deferred_resume(int port)
 }
 #endif /* CONFIG_USB_PD_TCPM_TCPCI */
 
+__overridable int pd_snk_is_vbus_provided(int port)
+{
+	return EC_SUCCESS;
+}
 
 /*
  * Check the specified Vbus level
@@ -893,8 +903,10 @@ void pd_deferred_resume(int port)
  */
 __overridable bool pd_check_vbus_level(int port, enum vbus_level level)
 {
-	if (IS_ENABLED(CONFIG_USB_PD_VBUS_DETECT_TCPC))
+	if (IS_ENABLED(CONFIG_USB_PD_VBUS_DETECT_TCPC) &&
+		(get_usb_pd_vbus_detect() == USB_PD_VBUS_DETECT_TCPC)) {
 		return tcpm_check_vbus_level(port, level);
+	}
 	else if (level == VBUS_PRESENT)
 		return pd_snk_is_vbus_provided(port);
 	else

@@ -4236,6 +4236,13 @@
 #undef CONFIG_USB_PD_DEBUG_LEVEL
 
 /*
+ * Define if this board is using runtime flags instead of build time configs
+ * to control USB PD properties.
+ */
+#define CONFIG_USB_PD_FLAGS
+#undef CONFIG_USB_PD_RUNTIME_FLAGS
+
+/*
  * Define if this board can enable VBUS discharge (eg. through a GPIO-controlled
  * discharge circuit, or through port controller registers) to discharge VBUS
  * rapidly on disconnect. Will be defined automatically when one of the below
