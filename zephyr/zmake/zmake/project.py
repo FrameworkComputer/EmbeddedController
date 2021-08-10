@@ -61,7 +61,7 @@ class ProjectConfig:
                 "type": "array",
                 "items": {
                     "type": "string",
-                    "enum": ["v2.5", "v2.6"],
+                    "enum": ["v2.6"],
                 },
                 "minItems": 1,
                 "uniqueItems": True,
