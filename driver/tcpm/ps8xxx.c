@@ -58,6 +58,8 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+#define PS8XXX_I2C_RECOVERY_DELAY_MS	10
+
 /*
  * The product_id per ports here is expected to be set in callback function -
  * .init of tcpm_drv by calling board_get_ps8xxx_product_id().
@@ -290,7 +292,7 @@ static struct ps8xxx_variant_map variant_map[] = {
 };
 
 static int get_reg_by_product(const int port,
-				const enum ps8xxx_variant_regs reg)
+			      const enum ps8xxx_variant_regs reg)
 {
 	int i;
 
@@ -569,6 +571,48 @@ static int ps8815_make_device_id(int port, int *id)
 }
 #endif
 
+/*
+ * The ps8815 can take up to 50ms (FW_INIT_DELAY_MS) to fully wake up
+ * from sleep/low power mode - specially when it contains an application
+ * block firmware update. When the chip is asleep, the 1st I2C
+ * transaction will fail but the chip will begin to wake up within 10ms
+ * (I2C_RECOVERY_DELAY_MS). After this delay, I2C transactions succeed,
+ * but the firmware is still not fully operational. The way to check if
+ * the firmware is ready, is to poll the firmware register for a
+ * non-zero value. This logic applies to all ps8xxx family members
+ * supported by this driver.
+ */
+
+static int ps8xxx_lpm_recovery_delay(int port)
+{
+	int val;
+	int status;
+	int fw_reg;
+	timestamp_t deadline;
+
+	fw_reg = get_reg_by_product(port, REG_FW_VER);
+
+	deadline = get_time();
+	deadline.val += PS8815_FW_INIT_DELAY_MS * 1000;
+
+	val = 0;
+	for (;;) {
+		status = tcpc_read(port, fw_reg, &val);
+		if (status != EC_SUCCESS) {
+			/* wait for chip to wake up */
+			msleep(PS8XXX_I2C_RECOVERY_DELAY_MS);
+			continue;
+		}
+		if (val != 0)
+			break;
+		msleep(1);
+		if (timestamp_expired(deadline, NULL))
+			return EC_ERROR_TIMEOUT;
+	}
+
+	return EC_SUCCESS;
+}
+
 static int ps8xxx_get_chip_info(int port, int live,
 			struct ec_response_pd_chip_info_v1 *chip_info)
 {
@@ -725,6 +769,12 @@ static int ps8xxx_tcpm_init(int port)
 	int status;
 
 	product_id[port] = board_get_ps8xxx_product_id(port);
+
+	status = ps8xxx_lpm_recovery_delay(port);
+	if (status != EC_SUCCESS) {
+		CPRINTS("C%d: init: LPM recovery failed", port);
+		return status;
+	}
 
 	if (IS_ENABLED(CONFIG_USB_PD_TCPM_PS8815)) {
 		status = ps8815_transmit_buffer_workaround_check(port);
