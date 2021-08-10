@@ -42,7 +42,8 @@ static void uart_rx_handle(const struct device *dev)
 			/* Put `rd_len` bytes on the ring buffer */
 			ring_buf_put_finish(&rx_buffer, rd_len);
 		} else {
-			/* There's no room on the ring buffer, throw away 1
+			/*
+			 * There's no room on the ring buffer, throw away 1
 			 * byte.
 			 */
 			rd_len = uart_fifo_read(dev, &scratch, 1);
@@ -67,7 +68,8 @@ static void shell_uninit_callback(const struct shell *shell, int res)
 		/* Set the new callback */
 		uart_irq_callback_user_data_set(dev, uart_callback, NULL);
 
-		/* Disable TX interrupts. We don't actually use TX but for some
+		/*
+		 * Disable TX interrupts. We don't actually use TX but for some
 		 * reason none of this works without this line.
 		 */
 		uart_irq_tx_disable(dev);
@@ -267,13 +269,14 @@ static void handle_sprintf_rv(int rv, size_t *len)
 
 static void zephyr_print(const char *buff, size_t size)
 {
-	/* shell_* functions can not be used in ISRs so use printk instead.
+	/*
+	 * shell_* functions can not be used in ISRs so use printk instead.
 	 * Also, console_buf_notify_chars uses a mutex, which may not be
 	 * locked in ISRs.
 	 */
-	if (k_is_in_isr() || shell_zephyr->ctx->state != SHELL_STATE_ACTIVE)
+	if (k_is_in_isr() || shell_zephyr->ctx->state != SHELL_STATE_ACTIVE) {
 		printk("%s", buff);
-	else {
+	} else {
 		/*
 		 * On some platforms, shell_* functions are not as fast
 		 * as printk and they need the added speed to avoid
