@@ -467,17 +467,15 @@ int ac_boot_status(void)
 	return (*host_get_customer_memmap(0x48) & BIT(0)) ? true : false;
 }
 
-static uint8_t chassis_edge_status;
 static uint8_t chassis_vtr_open_count;
 static uint8_t chassis_open_count;
 
 static void check_chassis_open(int init)
 {
-	if (MCHP_VCI_POSEDGE_DETECT & BIT(2) ||
-		MCHP_VCI_NEGEDGE_DETECT & BIT(2)) {
+	if (MCHP_VCI_NEGEDGE_DETECT & BIT(2)) {
 		MCHP_VCI_POSEDGE_DETECT = BIT(2);
 		MCHP_VCI_NEGEDGE_DETECT = BIT(2);
-		chassis_edge_status = 1;
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 1);
 
 		if (init) {
 			system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN,
@@ -492,7 +490,6 @@ static void check_chassis_open(int init)
 				system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL,
 								++chassis_open_count);
 		}
-		
 
 		CPRINTF("Chassis was open");
 	}
@@ -1115,16 +1112,14 @@ static enum ec_status host_chassis_intrusion_control(struct host_cmd_handler_arg
 	}
 
 	if (p->clear_chassis_status) {
-		chassis_edge_status = 0;
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 0);
 		return EC_SUCCESS;
 	}
 
-	r->chassis_ever_opened = chassis_edge_status;
+	system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, &r->chassis_ever_opened);
 	system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_MAGIC, &r->coin_batt_ever_remove);
 	system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, &r->total_open_count);
 	system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, &r->vtr_open_count);
-
-
 
 	args->response_size = sizeof(*r);
 
