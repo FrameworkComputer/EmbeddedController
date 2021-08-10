@@ -498,8 +498,13 @@ static void usb_wake_deferred(void)
 		 * interface.
 		 */
 		CPRINTF("USB stuck\n");
+#if defined(STM32_RCC_APB1RSTR2_USBFSRST)
+		STM32_RCC_APB1RSTR2 |= STM32_RCC_APB1RSTR2_USBFSRST;
+		STM32_RCC_APB1RSTR2 &= STM32_RCC_APB1RSTR2_USBFSRST;
+#else
 		STM32_RCC_APB1RSTR |= STM32_RCC_PB1_USB;
 		STM32_RCC_APB1RSTR &= ~STM32_RCC_PB1_USB;
+#endif
 		usb_init();
 	}
 }
@@ -673,7 +678,11 @@ DECLARE_IRQ(STM32_IRQ_USB_LP, usb_interrupt, 1);
 void usb_init(void)
 {
 	/* Enable USB device clock. */
+#if defined(STM32_RCC_APB1ENR2_USBFSEN)
+	STM32_RCC_APB1ENR2 |= STM32_RCC_APB1ENR2_USBFSEN;
+#else
 	STM32_RCC_APB1ENR |= STM32_RCC_PB1_USB;
+#endif
 
 	/* we need a proper 48MHz clock */
 	clock_enable_module(MODULE_USB, 1);
@@ -742,14 +751,22 @@ void usb_release(void)
 	clock_enable_module(MODULE_USB, 0);
 
 	/* disable USB device clock */
+#if defined(STM32_RCC_APB1ENR2_USBFSEN)
+	STM32_RCC_APB1ENR2 &= ~STM32_RCC_APB1ENR2_USBFSEN;
+#else
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_USB;
+#endif
 }
 /* ensure the host disconnects and reconnects over a sysjump */
 DECLARE_HOOK(HOOK_SYSJUMP, usb_release, HOOK_PRIO_DEFAULT);
 
 int usb_is_enabled(void)
 {
+#if defined(STM32_RCC_APB1ENR2_USBFSEN)
+	return (STM32_RCC_APB1ENR2 & STM32_RCC_APB1ENR2_USBFSEN) ? 1 : 0;
+#else
 	return (STM32_RCC_APB1ENR & STM32_RCC_PB1_USB) ? 1 : 0;
+#endif
 }
 
 void *memcpy_to_usbram(void *dest, const void *src, size_t n)

@@ -26,6 +26,11 @@ else ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32h7))
 CORE:=cortex-m
 # Allow the full Cortex-M4 instruction set (identical to M7)
 CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4
+else ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32l5))
+# STM32FL5xx family has a Cortex-M33 ARM core
+CORE:=cortex-m
+# Allow the full Cortex-M33 instruction set
+CFLAGS_CPU+=-march=armv8-m.main+dsp -mcpu=cortex-m33
 else
 # other STM32 SoCs have a Cortex-M3 ARM core
 CORE:=cortex-m
@@ -63,8 +68,8 @@ ifndef CONFIG_KEYBOARD_NOT_RAW
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif
 chip-$(HAS_TASK_POWERLED)+=power_led.o
-ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32g4 stm32l4))
-# STM32G4 and STM32L4 use the same flash IP block
+ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32g4 stm32l4 stm32l5))
+# STM32G4, STM32L4 and STM32L5 use the same flash IP block
 chip-y+=flash-stm32g4-l4.o
 else
 chip-$(CONFIG_FLASH_PHYSICAL)+=flash-$(CHIP_FAMILY).o

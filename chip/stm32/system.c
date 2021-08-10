@@ -87,12 +87,16 @@ static void check_reset_cause(void)
 {
 	uint32_t flags = chip_read_reset_flags();
 	uint32_t raw_cause = STM32_RCC_RESET_CAUSE;
+#ifdef STM32_PWR_RESET_CAUSE
 	uint32_t pwr_status = STM32_PWR_RESET_CAUSE;
+#endif
 
 	/* Clear the hardware reset cause by setting the RMVF bit */
 	STM32_RCC_RESET_CAUSE |= RESET_CAUSE_RMVF;
+#ifdef STM32_PWR_RESET_CAUSE
 	/* Clear SBF in PWR_CSR */
 	STM32_PWR_RESET_CAUSE_CLR |= RESET_CAUSE_SBF_CLR;
+#endif
 	/* Clear saved reset flags */
 	chip_save_reset_flags(0);
 
@@ -114,9 +118,11 @@ static void check_reset_cause(void)
 	if (raw_cause & RESET_CAUSE_PIN)
 		flags |= EC_RESET_FLAG_RESET_PIN;
 
+#ifdef STM32_PWR_RESET_CAUSE
 	if (pwr_status & RESET_CAUSE_SBF)
 		/* Hibernated and subsequently awakened */
 		flags |= EC_RESET_FLAG_HIBERNATE;
+#endif
 
 	if (!flags && (raw_cause & RESET_CAUSE_OTHER))
 		flags |= EC_RESET_FLAG_OTHER;
@@ -202,11 +208,15 @@ void chip_pre_init(void)
 #elif defined(CHIP_FAMILY_STM32H7)
 	/* TODO(b/67081508) */
 #endif
-
+#if defined(CHIP_FAMILY_STM32L5)
+	(void)apb1fz_reg;
+	(void)apb2fz_reg;
+#else
 	if (apb1fz_reg)
 		STM32_DBGMCU_APB1FZ |= apb1fz_reg;
 	if (apb2fz_reg)
 		STM32_DBGMCU_APB2FZ |= apb2fz_reg;
+#endif
 }
 
 #ifdef CONFIG_PVD
@@ -312,7 +322,8 @@ void system_pre_init(void)
 		STM32_RCC_CSR = (STM32_RCC_CSR & ~0x00C30000) | 0x00420000;
 	}
 #elif defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
-	defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32F4) || \
+	defined(CHIP_FAMILY_STM32L4) || \
+	defined(CHIP_FAMILY_STM32L5) || defined(CHIP_FAMILY_STM32F4) ||	\
 	defined(CHIP_FAMILY_STM32H7) || defined(CHIP_FAMILY_STM32G4)
 	if ((STM32_RCC_BDCR & BDCR_ENABLE_MASK) != BDCR_ENABLE_VALUE) {
 		/* The RTC settings are bad, we need to reset it */
@@ -602,6 +613,9 @@ int system_is_reboot_warm(void)
 #elif defined(CHIP_FAMILY_STM32L)
 	return ((STM32_RCC_AHBENR & 0x3f) == 0x3f);
 #elif defined(CHIP_FAMILY_STM32L4)
+	return ((STM32_RCC_AHB2ENR & STM32_RCC_AHB2ENR_GPIOMASK)
+			== STM32_RCC_AHB2ENR_GPIOMASK);
+#elif defined(CHIP_FAMILY_STM32L5)
 	return ((STM32_RCC_AHB2ENR & STM32_RCC_AHB2ENR_GPIOMASK)
 			== STM32_RCC_AHB2ENR_GPIOMASK);
 #elif defined(CHIP_FAMILY_STM32F4)
