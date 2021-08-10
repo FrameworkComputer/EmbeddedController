@@ -87,6 +87,11 @@ __override_proto void show_critical_error(void);
  */
 __override_proto void show_power_shortage(void);
 
+/*
+ * Board level packet mode enable function.
+ */
+__override_proto void board_enable_packet_mode(bool enable);
+
 /**
  * Interrupt handler for packet mode entry.
  *
