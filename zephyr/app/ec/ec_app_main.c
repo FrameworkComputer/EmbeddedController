@@ -67,7 +67,7 @@ void ec_app_main(void)
 		}
 	}
 
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_VBOOT)) {
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_VBOOT_EFS2)) {
 		/*
 		 * For RO, it behaves as follows:
 		 *   In recovery, it enables PD communication and returns.

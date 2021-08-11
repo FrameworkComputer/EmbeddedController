@@ -405,7 +405,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VBOOT_HASH
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VOLUME_BUTTONS
                                                 "${PLATFORM_EC}/common/button.c")
 
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VBOOT
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VBOOT_EFS2
                                                 "${PLATFORM_EC}/common/vboot/efs2.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VSTORE

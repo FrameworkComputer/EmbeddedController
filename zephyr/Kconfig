@@ -641,8 +641,8 @@ menuconfig PLATFORM_EC_TIMER
 	  This option is needed by many features in the EC. Disabling it will
 	  likely cause build errors.
 
-config PLATFORM_EC_VBOOT
-	bool "Enable Chromium OS verified boot"
+config PLATFORM_EC_VBOOT_EFS2
+	bool "EFS2 verified EC boot"
 	default y if !SOC_POSIX
 	help
 	  Enables Early Firmware Selection v2 (EFS2) verified boot. When booting
