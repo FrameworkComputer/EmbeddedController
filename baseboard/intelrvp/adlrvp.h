@@ -107,6 +107,9 @@
 /* Enabling USB4 mode */
 #define CONFIG_USB_PD_USB4
 
+/* Enable low power mode */
+#define CONFIG_USB_PD_TCPC_LOW_POWER
+
 /* Config Fan */
 #define CONFIG_FANS		1
 #define BOARD_FAN_MIN_RPM	3000
