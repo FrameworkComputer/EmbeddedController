@@ -178,6 +178,14 @@ static int cros_flash_it8xxx2_write(const struct device *dev, int offset,
 		return -EACCES;
 	}
 
+	/*
+	 * If AP sends write flash command continuously, EC might not have
+	 * chance to go back to hook task to touch watchdog. Reload watchdog
+	 * on each flash write to prevent the reset.
+	 */
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG))
+		watchdog_reload();
+
 	return flash_write(flash_controller, offset, src_data, size);
 }
 
