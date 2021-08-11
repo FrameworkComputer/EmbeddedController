@@ -48,7 +48,7 @@ struct usb_mux;
  *   20ms is marginal
  *   25ms is OK
  */
-#define PS8815_FW_INIT_DELAY_MS 40
+#define PS8815_FW_INIT_DELAY_MS 50
 
 /* NOTE: The Product ID will read as 0x8803 if the firmware has malfunctioned in
  * 8705, 8755 and 8805.
