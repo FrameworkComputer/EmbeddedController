@@ -34,6 +34,8 @@
 #define CONFIG_CMD_BUTTON
 
 /* USB Type C and USB PD defines */
+#define CONFIG_USB_MUX_ANX7451
+#define CONFIG_USBC_RETIMER_ANX7451
 
 /* USB Type A Features */
 

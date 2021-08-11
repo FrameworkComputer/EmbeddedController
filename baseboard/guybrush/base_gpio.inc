@@ -58,11 +58,8 @@ GPIO(USB_C0_HPD,		PIN(F, 5), GPIO_OUT_LOW)						/* C0 DP Hotplug Detect */
 GPIO(USB_C1_HPD,		PIN(F, 4), GPIO_OUT_LOW)						/* C1 DP Hotplug Detect */
 
 /* Sensor Signals */
-/* TODO: Make 6AXIS_INT_L an interrupt */
-GPIO_INT(6AXIS_INT_L,		PIN(A, 0), GPIO_INT_FALLING | GPIO_PULL_UP, motion_interrupt)				/* 6 Axis IMU */
 GPIO(3AXIS_INT_L,		PIN(A, 2), GPIO_INPUT | GPIO_PULL_DOWN)					/* 3 Axis Accel */
 GPIO_INT(LID_OPEN,		PIN(0, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,	lid_interrupt)		/* Lid Open */
-GPIO_INT(TABLET_MODE,		PIN(C, 1), GPIO_INT_BOTH,			gmr_tablet_switch_isr)	/* 360 Tablet Mode */
 GPIO_INT(VOLDN_BTN_ODL,		PIN(A, 7), GPIO_INT_BOTH | GPIO_PULL_UP,	button_interrupt)	/* Volume Down */
 GPIO_INT(VOLUP_BTN_ODL,		PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, 	button_interrupt)	/* Volume Up */
 GPIO(EC_BATT_PRES_ODL,		PIN(9, 4), GPIO_INPUT)							/* Battery Present */
