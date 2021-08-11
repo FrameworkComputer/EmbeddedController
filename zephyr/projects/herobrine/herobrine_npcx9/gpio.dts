@@ -151,7 +151,7 @@
 			enum-name = "GPIO_EC_INT_L";
 			label = "AP_EC_INT_L";
 		};
-		switchcap_on {
+		gpio_switchcap_on: switchcap_on {
 			gpios = <&gpiod 5 GPIO_OUT_LOW>;
 			enum-name = "GPIO_SWITCHCAP_ON";
 			label = "SWITCHCAP_ON";
@@ -272,7 +272,7 @@
 			enum-name = "GPIO_SKU_ID2";
 			label = "SKU_ID2";
 		};
-		src_vph_pwr_pg {
+		gpio_switchcap_pg: src_vph_pwr_pg {
 			gpios = <&gpioe 2 (GPIO_INPUT | GPIO_PULL_DOWN)>;
 			enum-name = "GPIO_SWITCHCAP_PG";
 			label = "SRC_VPH_PWR_PG";

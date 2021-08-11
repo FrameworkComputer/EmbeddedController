@@ -8,6 +8,7 @@ dts-overlays:
   - battery.dts
   - i2c.dts
   - motionsense.dts
+  - switchcap.dts
 supported-zephyr-versions:
   - v2.6
 toolchain: coreboot-sdk
