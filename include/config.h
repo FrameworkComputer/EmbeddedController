@@ -4713,6 +4713,9 @@
  */
 #undef CONFIG_USBC_SS_MUX_DFP_ONLY
 
+/* Only configure USB type-c superspeed mux when UFP */
+#undef CONFIG_USBC_SS_MUX_UFP_ONLY
+
 /* Support v1.1 type-C connection state machine */
 #undef CONFIG_USBC_BACKWARDS_COMPATIBLE_DFP
 

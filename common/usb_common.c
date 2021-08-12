@@ -483,6 +483,12 @@ mux_state_t get_mux_mode_to_set(int port)
 	    pd_get_data_role(port) != PD_ROLE_DFP)
 		return USB_PD_MUX_NONE;
 
+	/* If new data role isn't UFP & we only support UFP then disconnect. */
+	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
+	    IS_ENABLED(CONFIG_USBC_SS_MUX_UFP_ONLY) &&
+	    pd_get_data_role(port) != PD_ROLE_UFP)
+		return USB_PD_MUX_NONE;
+
 	/*
 	 * If the power role is sink and the PD partner device is not capable
 	 * of USB communication then disconnect.
