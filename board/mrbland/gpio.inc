@@ -84,6 +84,7 @@ GPIO(DP_HOT_PLUG_DET,       PIN(9, 5), GPIO_OUT_LOW)   /* DP HPD to AP */
 /* LEDs */
 GPIO(EC_CHG_LED_R_C0,       PIN(C, 3), GPIO_OUT_LOW)
 GPIO(EC_CHG_LED_G_C0,       PIN(C, 4), GPIO_OUT_LOW)
+GPIO(EC_PWRBTN_LED,         PIN(7, 3), GPIO_OUT_LOW)
 
 /*
  * SPI host interface - enable PDs by default. These will be made functional
@@ -173,7 +174,6 @@ UNUSED(PIN(D, 1))
 UNUSED(PIN(D, 3))
 UNUSED(PIN(7, 5))
 UNUSED(PIN(8, 6))
-UNUSED(PIN(7, 3))
 UNUSED(PIN(7, 4))
 UNUSED(PIN(D, 7))
 UNUSED(PIN(8, 5))
