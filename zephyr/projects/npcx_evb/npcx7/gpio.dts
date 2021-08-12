@@ -17,17 +17,17 @@
 			label = "WP_L";
 		};
 		gpio_ac_present: ac_present {
-			gpios = <&gpio7 4 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpiod 2 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 			label = "AC_PRESENT";
 		};
 		gpio_power_button_l: power_button_l {
-			gpios = <&gpio7 5 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio0 0 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 			label = "POWER_BUTTON_L";
 		};
 		gpio_lid_open: lid_open {
-			gpios = <&gpioa 6 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpio0 1 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
 			label = "LID_OPEN";
 		};
