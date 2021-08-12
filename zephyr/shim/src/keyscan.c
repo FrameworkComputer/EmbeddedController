@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_kb_raw_keyscan
+#define DT_DRV_COMPAT cros_keyscan
 
 #include <assert.h>
 #include <kernel.h>
@@ -11,7 +11,7 @@
 
 #include "keyboard_scan.h"
 
-#if DT_NODE_EXISTS(DT_INST(0, cros_kb_raw_keyscan))
+#if DT_NODE_EXISTS(DT_INST(0, cros_keyscan))
 
 /* The keyboard matrix should have at least enough columns for the
  * standard keyboard with no keypad.
