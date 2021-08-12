@@ -104,3 +104,29 @@
 &adc0 {
 	status = "okay";
 };
+
+&cros_kb_raw {
+	status = "okay";
+	pinctrl-0 = <&alt7_no_ksi0_sl
+		     &alt7_no_ksi1_sl
+		     &alt7_no_ksi2_sl
+		     &alt7_no_ksi3_sl
+		     &alt7_no_ksi4_sl
+		     &alt7_no_ksi5_sl
+		     &alt7_no_ksi6_sl
+		     &alt7_no_ksi7_sl
+		     &alt8_no_kso00_sl
+		     &alt8_no_kso01_sl
+		     &alt8_no_kso02_sl
+		     &alt8_no_kso03_sl
+		     &alt8_no_kso04_sl
+		     &alt8_no_kso05_sl
+		     &alt8_no_kso06_sl
+		     &alt8_no_kso07_sl
+		     &alt9_no_kso08_sl
+		     &alt9_no_kso09_sl
+		     &alt9_no_kso10_sl
+		     &alt9_no_kso11_sl
+		     &alt9_no_kso12_sl
+		     >;
+};
