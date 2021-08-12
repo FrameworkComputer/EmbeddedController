@@ -375,6 +375,30 @@ static void mux_chipset_reset(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, mux_chipset_reset, HOOK_PRIO_DEFAULT);
 
+/*
+ * For muxes which have powered off in G3, clear any cached INIT and LPM flags
+ * since the chip will need reset.
+ */
+static void usb_mux_reset_in_g3(void)
+{
+	int port;
+	const struct usb_mux *mux_ptr;
+
+	for (port = 0; port < board_get_usb_pd_port_count(); port++) {
+		mux_ptr = &usb_muxes[port];
+
+		while (mux_ptr) {
+			if (mux_ptr->flags & USB_MUX_FLAG_RESETS_IN_G3) {
+				atomic_clear_bits(&flags[port],
+						  USB_MUX_FLAG_INIT |
+						  USB_MUX_FLAG_IN_LPM);
+			}
+			mux_ptr = mux_ptr->next_mux;
+		}
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_HARD_OFF, usb_mux_reset_in_g3, HOOK_PRIO_DEFAULT);
+
 #ifdef CONFIG_CMD_TYPEC
 static int command_typec(int argc, char **argv)
 {
