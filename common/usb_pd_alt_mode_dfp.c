@@ -1169,10 +1169,11 @@ __overridable int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 	 * if we don't need to maintain HPD connectivity info in a low power
 	 * mode, then we shall exit DP Alt Mode.  (This is why we don't enter
 	 * when the SoC is off as opposed to suspend where adding a display
-	 * could cause a wake up.)
+	 * could cause a wake up.)  When in S5->S3 transition state, we
+	 * should treat it as a SoC off state.
 	 */
 #ifdef HAS_TASK_CHIPSET
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+	if (!chipset_in_state(CHIPSET_STATE_ANY_SUSPEND | CHIPSET_STATE_ON))
 		return -1;
 #endif
 
