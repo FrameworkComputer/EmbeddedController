@@ -811,39 +811,39 @@ static int ps8xxx_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 }
 
 const struct tcpm_drv ps8xxx_tcpm_drv = {
-	.init			= &ps8xxx_tcpm_init,
-	.release		= &ps8xxx_tcpm_release,
-	.get_cc			= &ps8xxx_tcpm_get_cc,
+	.init			= ps8xxx_tcpm_init,
+	.release		= ps8xxx_tcpm_release,
+	.get_cc			= ps8xxx_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	.check_vbus_level	= &tcpci_tcpm_check_vbus_level,
+	.check_vbus_level	= tcpci_tcpm_check_vbus_level,
 #endif
-	.select_rp_value	= &tcpci_tcpm_select_rp_value,
-	.set_cc			= &ps8xxx_tcpm_set_cc,
-	.set_polarity		= &tcpci_tcpm_set_polarity,
+	.select_rp_value	= tcpci_tcpm_select_rp_value,
+	.set_cc			= ps8xxx_tcpm_set_cc,
+	.set_polarity		= tcpci_tcpm_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
-	.sop_prime_enable	= &tcpci_tcpm_sop_prime_enable,
+	.sop_prime_enable	= tcpci_tcpm_sop_prime_enable,
 #endif
-	.set_vconn		= &tcpci_tcpm_set_vconn,
-	.set_msg_header		= &tcpci_tcpm_set_msg_header,
-	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
-	.get_message_raw	= &tcpci_tcpm_get_message_raw,
-	.transmit		= &ps8xxx_tcpm_transmit,
-	.tcpc_alert		= &tcpci_tcpc_alert,
+	.set_vconn		= tcpci_tcpm_set_vconn,
+	.set_msg_header		= tcpci_tcpm_set_msg_header,
+	.set_rx_enable		= tcpci_tcpm_set_rx_enable,
+	.get_message_raw	= tcpci_tcpm_get_message_raw,
+	.transmit		= ps8xxx_tcpm_transmit,
+	.tcpc_alert		= tcpci_tcpc_alert,
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
-	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
+	.tcpc_discharge_vbus	= tcpci_tcpc_discharge_vbus,
 #endif
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle		= &ps8xxx_tcpc_drp_toggle,
+	.drp_toggle		= ps8xxx_tcpc_drp_toggle,
 #endif
 #ifdef CONFIG_USB_PD_PPC
-	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
-	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
+	.set_snk_ctrl		= tcpci_tcpm_set_snk_ctrl,
+	.set_src_ctrl		= tcpci_tcpm_set_src_ctrl,
 #endif
-	.get_chip_info		= &ps8xxx_get_chip_info,
+	.get_chip_info		= ps8xxx_get_chip_info,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	.enter_low_power_mode	= &ps8xxx_enter_low_power_mode,
+	.enter_low_power_mode	= ps8xxx_enter_low_power_mode,
 #endif
-	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
+	.set_bist_test_mode	= tcpci_set_bist_test_mode,
 };
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
@@ -853,8 +853,8 @@ struct i2c_stress_test_dev ps8xxx_i2c_stress_test_dev = {
 		.read_val = PS8XXX_VENDOR_ID & 0xFF,
 		.write_reg = MUX_IN_HPD_ASSERTION_REG,
 	},
-	.i2c_read = &tcpc_i2c_read,
-	.i2c_write = &tcpc_i2c_write,
+	.i2c_read = tcpc_i2c_read,
+	.i2c_write = tcpc_i2c_write,
 };
 #endif /* CONFIG_CMD_I2C_STRESS_TEST_TCPC */
 
@@ -943,10 +943,10 @@ static int ps8xxx_mux_enter_low_power(const struct usb_mux *me)
 }
 
 const struct usb_mux_driver ps8xxx_usb_mux_driver = {
-	.init = &ps8xxx_mux_init,
-	.set = &ps8xxx_mux_set,
-	.get = &ps8xxx_mux_get,
-	.enter_low_power_mode = &ps8xxx_mux_enter_low_power,
+	.init = ps8xxx_mux_init,
+	.set = ps8xxx_mux_set,
+	.get = ps8xxx_mux_get,
+	.enter_low_power_mode = ps8xxx_mux_enter_low_power,
 };
 
 #endif /* CONFIG_USB_PD_TCPM_PS8751_CUSTOM_MUX_DRIVER */
