@@ -282,6 +282,18 @@ end_perform_calib:
 	return ret;
 }
 
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+int list_activities(const struct motion_sensor_t *s,
+		    uint32_t *enabled,
+		    uint32_t *disabled)
+{
+	struct bmi_drv_data_t *data = BMI_GET_DATA(s);
+	*enabled = data->enabled_activities;
+	*disabled = data->disabled_activities;
+	return EC_RES_SUCCESS;
+}
+#endif
+
 #ifdef CONFIG_ACCEL_INTERRUPTS
 
 /**
@@ -579,6 +591,9 @@ const struct accelgyro_drv bmi260_drv = {
 	.read_temp = bmi_read_temp,
 #ifdef CONFIG_ACCEL_INTERRUPTS
 	.irq_handler = irq_handler,
+#endif
+#ifdef CONFIG_GESTURE_HOST_DETECTION
+	.list_activities = list_activities,
 #endif
 #ifdef CONFIG_BODY_DETECTION
 	.get_rms_noise = bmi_get_rms_noise,
