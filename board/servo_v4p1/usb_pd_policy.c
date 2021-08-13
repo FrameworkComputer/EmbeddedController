@@ -1456,6 +1456,20 @@ static int cmd_usbc_action(int argc, char *argv[])
 			return EC_ERROR_PARAM2;
 
 		allow_pr_swap = !!atoi(argv[2]);
+	} else if (!strcasecmp(argv[1], "fastboot")) {
+		if (argc == 2) {
+			CPRINTF("fastboot = %d\n",
+				!!(cc_config & CC_FASTBOOT_DFP));
+			return EC_SUCCESS;
+		}
+
+		if (argc != 3)
+			return EC_ERROR_PARAM2;
+
+		if (!!atoi(argv[2]))
+			cc_config |= CC_FASTBOOT_DFP;
+		else
+			cc_config &= ~CC_FASTBOOT_DFP;
 	} else {
 		return EC_ERROR_PARAM1;
 	}

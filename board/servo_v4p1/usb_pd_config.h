@@ -57,6 +57,7 @@
 				  * Emulate Electronically Marked Cable Assembly
 				  * (EMCA) servo (or non-EMCA)
 				  */
+#define CC_FASTBOOT_DFP	BIT(7)   /* Allow mux uServo->Fastboot on DFP */
 
 /* Servo v4 DP alt-mode configuration */
 #define ALT_DP_ENABLE		BIT(0)   /* Enable DP alt-mode or not */
