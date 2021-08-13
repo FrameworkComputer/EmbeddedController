@@ -46,18 +46,16 @@
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
-#define CONFIG_ACCEL_LIS2DWL
-#define CONFIG_ACCEL_LIS2DW_AS_BASE
-#define CONFIG_ACCEL_LIS2DW12_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(LID_ACCEL)
-
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 #define CONFIG_LID_ANGLE_UPDATE
 
-/* TODO(b/171931139): remove this after rev1 board deprecated */
-#define CONFIG_ACCEL_FORCE_MODE_MASK (board_accel_force_mode_mask())
+#define CONFIG_ACCEL_BMA255 /* Lid accel BMA253 */
+
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK \
+	(BIT(LID_ACCEL) | BIT(BASE_GYRO) | BIT(BASE_ACCEL))
 
 /* SPI / Host Command */
 #undef CONFIG_HOSTCMD_DEBUG_MODE
@@ -101,8 +99,6 @@ enum pwm_channel {
 	PWM_CH_KB_BL,
 	PWM_CH_COUNT,
 };
-
-int board_accel_force_mode_mask(void);
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

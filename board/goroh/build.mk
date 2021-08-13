@@ -11,4 +11,7 @@ CHIP_FAMILY:=it8xxx2
 CHIP_VARIANT:=it81202bx_1024
 BASEBOARD:=goroh
 
-board-y+=battery.o board.o led.o
+board-y+=battery.o
+board-y+=board.o
+board-y+=led.o
+board-y+=sensors.o

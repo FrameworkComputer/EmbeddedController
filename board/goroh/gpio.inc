@@ -38,8 +38,6 @@ GPIO_INT(PG_VDD_DDR_OD,          PIN(J, 5), GPIO_INT_BOTH,
 /* Sensor Interrupts */
 GPIO_INT(BASE_IMU_INT_L,     PIN(M, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V,
          bmi160_interrupt)
-GPIO_INT(LID_ACCEL_INT_L,    PIN(G, 0), GPIO_INT_FALLING | GPIO_SEL_1P8V,
-         lis2dw12_interrupt)
 
 /* USB-C interrupts */
 GPIO_INT(USB_C0_FAULT_ODL,   PIN(D, 1), GPIO_INT_BOTH, ppc_interrupt)
@@ -134,6 +132,9 @@ ALTERNATE(PIN_MASK(I, 0x6E), 0, MODULE_ADC, 0) /* ADC 1,2,3,5,6 */
 
 /* SPI */
 ALTERNATE(PIN_MASK(M, 0x33), 0, MODULE_SPI, 0) /* SPI */
+
+/* unused, configure as input pin */
+GPIO(LID_ACCEL_INT_L,    PIN(G, 0), GPIO_INPUT | GPIO_SEL_1P8V)
 
 /* *_ODL pin has external pullup so don't pull it down. */
 
