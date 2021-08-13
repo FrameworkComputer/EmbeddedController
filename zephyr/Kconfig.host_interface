@@ -1,0 +1,59 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_HOSTCMD
+
+choice PLATFORM_EC_HOST_INTERFACE_TYPE
+	prompt "Select the host interface type"
+	default PLATFORM_EC_HOST_INTERFACE_ESPI if AP_X86
+	default PLATFORM_EC_HOST_INTERFACE_SHI if AP_ARM
+	help
+	  The AP communicates with the EC using one of several host interface
+	  types.  The selection of the host interface type is based on the
+	  capability of both the AP and the EC.
+
+	  x86-compatible application processors typically use the enhanced SPI
+	  (ESPI) interface while other application processors use the SPI host
+	  interface (SHI).
+
+config PLATFORM_EC_HOST_INTERFACE_ESPI
+	bool "eSPI"
+	depends on ESPI && AP
+	help
+	  Enable the Enhanced Serial Peripheral Interface (eSPI) host interface.
+	  eSPI supports a shared physical connection between several on-board
+	  devices, similar to SPI. It adds a few optional signals and a protocol
+	  layer to provide independent 'channels' for each device to communicate
+	  over.
+
+	  eSPI is the replacement for LPC (Low-Pin-Count bus).
+
+	  See here for information about eSPI:
+
+	  https://www.intel.com/content/dam/support/us/en/documents/software/chipset-software/327432-004_espi_base_specification_rev1.0_cb.pdf
+
+config PLATFORM_EC_HOST_INTERFACE_HECI
+	bool "HECI"
+	depends on AP
+	help
+	  Enable the Host Embedded Controller Interface (HECI).
+
+
+config PLATFORM_EC_HOST_INTERFACE_LPC
+	bool "LPC"
+	depends on AP
+	help
+	  Enable the Low-Pin-Count (LPC) bus.
+
+config PLATFORM_EC_HOST_INTERFACE_SHI
+	bool "SPI Host Interface"
+	depends on AP
+	help
+	  Enable the SPI Host Interface (SHI). This is a traditional SPI (serial
+	  peripheral interface), where the AP is the SPI controller and the EC
+	  is the SPI peripheral.
+
+endchoice # PLATFORM_EC_HOST_INTERFACE_TYPE
+
+endif # PLATFORM_EC_HOSTCMD
