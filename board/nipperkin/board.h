@@ -16,26 +16,10 @@
 /* Keyboard features */
 #define CONFIG_KEYBOARD_FACTORY_TEST
 
-/* Sensors */
-#define CONFIG_ACCELGYRO_BMI160
-#define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-#define CONFIG_ACCELGYRO_BMI3XX
-#define CONFIG_ACCELGYRO_BMI3XX_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-#define CONFIG_ACCEL_INTERRUPTS
-#define CONFIG_ACCEL_BMA4XX
-
-#define I2C_PORT_ACCEL      I2C_PORT_SENSOR
-
 /* EC console commands */
-#define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_ACCEL_INFO
 #define CONFIG_CMD_BUTTON
 
 /* USB Type C and USB PD defines */
-#define CONFIG_USB_MUX_ANX7451
-#define CONFIG_USBC_RETIMER_ANX7451
 
 /* USB Type A Features */
 
@@ -54,21 +38,12 @@
 #include "gpio_signal.h"
 #include "registers.h"
 
-/* Motion sensor interrupt */
-void motion_interrupt(enum gpio_signal signal);
-
 /* Battery Types */
 enum battery_type {
 	BATTERY_AEC,
 	BATTERY_AP18F4M,
 	BATTERY_POWER_TECH,
 	BATTERY_TYPE_COUNT,
-};
-
-enum base_accelgyro_type {
-	BASE_GYRO_NONE = 0,
-	BASE_GYRO_BMI160 = 1,
-	BASE_GYRO_BMI323 = 2,
 };
 
 #endif /* !__ASSEMBLER__ */

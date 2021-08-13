@@ -16,7 +16,6 @@
 #define FW_CONFIG_USB_DB_OFFSET			0
 #define FW_CONFIG_USB_DB_WIDTH			2
 #define FW_CONFIG_USB_DB_A1_PS8811_C1_PS8818	0
-#define FW_CONFIG_USB_DB_A1_ANX7491_C1_ANX7451	1
 
 /*
  * Form Factor (1 bits)
