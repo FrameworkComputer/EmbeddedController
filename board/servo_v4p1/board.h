@@ -214,6 +214,7 @@
 #define CONFIG_USB_PD_ONLY_FIXED_PDOS
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USBC_SS_MUX
+#define CONFIG_USBC_SS_MUX_UFP_ONLY
 
 /* Don't automatically change roles */
 #undef CONFIG_USB_PD_INITIAL_DRP_STATE

@@ -13,6 +13,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "ioexpanders.h"
+#include "pathsel.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -802,10 +803,43 @@ __override int pd_check_data_swap(int port,
 __override void pd_execute_data_swap(int port,
 				     enum pd_data_role data_role)
 {
-	/*
-	 * TODO(b/137887386): Turn on the fastboot/DFU path when data swap to
-	 * DFP?
-	 */
+	if (port == CHG)
+		return;
+
+	switch (data_role) {
+	case PD_ROLE_DFP:
+		if (cc_config & CC_FASTBOOT_DFP) {
+			dut_to_host();
+		} else {
+			/* Disable USB2 lines from DUT */
+			gpio_set_level(GPIO_FASTBOOT_DUTHUB_MUX_EN_L, 1);
+			uservo_to_host();
+		}
+		break;
+	case PD_ROLE_UFP:
+		/* Ensure that FASTBOOT is disabled */
+		gpio_set_level(GPIO_FASTBOOT_DUTHUB_MUX_SEL, 1);
+
+		/* Enable USB2 lines */
+		gpio_set_level(GPIO_FASTBOOT_DUTHUB_MUX_EN_L, 0);
+
+		/*
+		 * By default, uServo port will be enabled. Only if the user
+		 * explicitly enable CC_FASTBOOT_DFP then uServo is disabled.
+		 */
+		if (!(cc_config & CC_FASTBOOT_DFP))
+			uservo_to_host();
+		break;
+	case PD_ROLE_DISCONNECTED:
+		/* Disable USB2 lines */
+		gpio_set_level(GPIO_FASTBOOT_DUTHUB_MUX_EN_L, 1);
+
+		if (!(cc_config & CC_FASTBOOT_DFP))
+			uservo_to_host();
+		break;
+	default:
+		CPRINTS("C%d: %s: Invalid data_role:%d", port, __func__,  data_role);
+	}
 }
 
 __override void pd_check_pr_role(int port,
