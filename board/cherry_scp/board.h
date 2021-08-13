@@ -14,7 +14,7 @@
  * RW only, no flash
  * +-------------------- 0x0
  * | ROM vectortable, .text, .rodata, .data LMA
- * +-------------------- 0x58000
+ * +-------------------- 0x68000
  * | RAM .bss, .data
  * +-------------------- 0xbfc00
  * | Reserved (padding for 1k-alignment)
