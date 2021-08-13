@@ -585,33 +585,30 @@ static int ps8xxx_get_chip_info(int port, int live,
 		chip_info->product_id = product_id[port];
 	}
 
-	if (chip_info->fw_version_number == 0 ||
-	    chip_info->fw_version_number == -1 || live) {
 #ifdef CONFIG_USB_PD_TCPM_PS8805_FORCE_DID
-		if (chip_info->product_id == PS8805_PRODUCT_ID &&
-		    chip_info->device_id == 0x0001) {
-			rv = ps8805_make_device_id(port, &val);
-			if (rv != EC_SUCCESS)
-				return rv;
-			chip_info->device_id = val;
-		}
-#endif
-#ifdef CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
-		if (chip_info->product_id == PS8815_PRODUCT_ID &&
-		    chip_info->device_id == 0x0001) {
-			rv = ps8815_make_device_id(port, &val);
-			if (rv != EC_SUCCESS)
-				return rv;
-			chip_info->device_id = val;
-		}
-#endif
-		reg = get_reg_by_product(port, REG_FW_VER);
-		rv = tcpc_read(port, reg, &val);
+	if (chip_info->product_id == PS8805_PRODUCT_ID &&
+	    chip_info->device_id == 0x0001) {
+		rv = ps8805_make_device_id(port, &val);
 		if (rv != EC_SUCCESS)
 			return rv;
-
-		chip_info->fw_version_number = val;
+		chip_info->device_id = val;
 	}
+#endif
+#ifdef CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
+	if (chip_info->product_id == PS8815_PRODUCT_ID &&
+	    chip_info->device_id == 0x0001) {
+		rv = ps8815_make_device_id(port, &val);
+		if (rv != EC_SUCCESS)
+			return rv;
+		chip_info->device_id = val;
+	}
+#endif
+	reg = get_reg_by_product(port, REG_FW_VER);
+	rv = tcpc_read(port, reg, &val);
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	chip_info->fw_version_number = val;
 
 	/* Treat unexpected values as error (FW not initiated from reset) */
 	if (live && (
