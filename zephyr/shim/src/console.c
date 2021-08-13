@@ -164,10 +164,16 @@ void uart_shell_start(void)
 int zshim_run_ec_console_command(const struct zephyr_console_command *command,
 				 size_t argc, char **argv)
 {
+	/*
+	 * The Zephyr shell only displays the help string and not
+	 * the argument descriptor when passing "-h" or "--help".  Mimic the
+	 * cros-ec behavior by displaying both the user types "<command> help",
+	 */
+#ifdef CONFIG_SHELL_HELP
 	for (int i = 1; i < argc; i++) {
 		if (!command->help && !command->argdesc)
 			break;
-		if (!strcmp(argv[i], "-h")) {
+		if (!strcmp(argv[i], "help")) {
 			if (command->help)
 				printk("%s\n", command->help);
 			if (command->argdesc)
@@ -175,6 +181,7 @@ int zshim_run_ec_console_command(const struct zephyr_console_command *command,
 			return 0;
 		}
 	}
+#endif
 
 	return command->handler(argc, argv);
 }

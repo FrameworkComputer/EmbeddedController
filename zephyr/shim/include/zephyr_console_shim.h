@@ -11,11 +11,21 @@
 struct zephyr_console_command {
 	/* Handler for the command.  argv[0] will be the command name. */
 	int (*handler)(int argc, char **argv);
+#ifdef CONFIG_SHELL_HELP
 	/* Description of args */
 	const char *argdesc;
 	/* Short help for command */
 	const char *help;
+#endif
 };
+
+#ifdef CONFIG_SHELL_HELP
+#define _HELP_ARGS(A, H) \
+	.argdesc = A,     \
+	.help = H,
+#else
+#define _HELP_ARGS(A, H)
+#endif
 
 /**
  * zshim_run_ec_console_command() - Dispatch a CrOS EC console command
@@ -35,8 +45,7 @@ int zshim_run_ec_console_command(const struct zephyr_console_command *command,
 				     WRAPPER_ID, ENTRY_ID)                  \
 	static const struct zephyr_console_command ENTRY_ID = {             \
 		.handler = ROUTINE_ID,                                      \
-		.argdesc = ARGDESC,                                         \
-		.help = HELP,                                               \
+		_HELP_ARGS(ARGDESC, HELP)                                   \
 	};                                                                  \
 	static int WRAPPER_ID(const struct shell *shell, size_t argc,       \
 			      char **argv)                                  \
