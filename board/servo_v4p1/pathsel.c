@@ -66,11 +66,11 @@ void usb3_a1_to_host(void)
 void dut_to_host(void)
 {
 	gpio_set_level(GPIO_FASTBOOT_DUTHUB_MUX_SEL, 0);
+	gpio_set_level(GPIO_FASTBOOT_DUTHUB_MUX_EN_L, 0);
 	uservo_fastboot_mux_sel(MUX_SEL_FASTBOOT);
 }
 
 void uservo_to_host(void)
 {
-	gpio_set_level(GPIO_FASTBOOT_DUTHUB_MUX_SEL, 1);
 	uservo_fastboot_mux_sel(MUX_SEL_USERVO);
 }
