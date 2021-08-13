@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_ESPI
+if PLATFORM_EC_HOST_INTERFACE_ESPI
 
 config PLATFORM_EC_ESPI_VW_SLP_S3
 	bool "SLP_S3 is an eSPI virtual wire instead of a GPIO"
@@ -31,4 +31,4 @@ config PLATFORM_EC_ESPI_RESET_SLP_SX_VW_ON_ESPI_RST
 	  maintain these pins' states per request. Note that this is
 	  currently unimplemented for Zephyr. Please see b/183148073.
 
-endif # PLATFORM_EC_ESPI
+endif # PLATFORM_EC_HOST_INTERFACE_ESPI

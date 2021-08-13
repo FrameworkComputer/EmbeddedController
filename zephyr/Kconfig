@@ -71,7 +71,7 @@ rsource "Kconfig.watchdog"
 
 config PLATFORM_EC_ACPI
 	bool "Advanced Confiugration and Power Interface (ACPI)"
-	default y if AP_X86 && PLATFORM_EC_ESPI
+	default y if AP_X86 && PLATFORM_EC_HOST_INTERFACE_ESPI
 	help
 	  Enable the Advanced Configuration and Power Interface (ACPI) in the
 	  EC. ACPI is a standard interface to the Application Processor (AP)
@@ -331,7 +331,7 @@ config PLATFORM_EC_EMULATED_SYSRQ
 	  This option enables support for sending emulated SysRq events to AP
 	  (on designs with a keyboard, SysRq is passed as normal key presses).
 
-menuconfig PLATFORM_EC_ESPI
+menuconfig PLATFORM_EC_HOST_INTERFACE_ESPI
 	bool "eSPI"
 	depends on ESPI && AP
 	default y

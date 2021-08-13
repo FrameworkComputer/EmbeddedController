@@ -200,7 +200,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DPTF
                                                 "${PLATFORM_EC}/common/dptf.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
                                                 "${PLATFORM_EC}/common/chipset.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ESPI
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI
                                                 "${PLATFORM_EC}/common/espi.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC "${PLATFORM_EC}/common/extpower_common.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_EXTPOWER_GPIO

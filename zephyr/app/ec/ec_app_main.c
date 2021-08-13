@@ -61,7 +61,7 @@ void ec_app_main(void)
 		button_init();
 	}
 
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_ESPI)) {
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI)) {
 		if (zephyr_shim_setup_espi() < 0) {
 			printk("Failed to init eSPI!\n");
 		}

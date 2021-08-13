@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_ESPI
+if PLATFORM_EC_HOST_INTERFACE_ESPI
 
 config PLATFORM_EC_PORT80_4_BYTE
 	bool "Allow accept 4-byte Port80 codes"
@@ -11,4 +11,4 @@ config PLATFORM_EC_PORT80_4_BYTE
 	  codes when AP sends 4-byte Port80 codes via eSPI PUT_IOWR_SHORT
 	  protocol in a single transaction.
 
-endif # PLATFORM_EC_ESPI
+endif # PLATFORM_EC_HOST_INTERFACE_ESPI
