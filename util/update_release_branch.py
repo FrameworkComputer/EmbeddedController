@@ -76,9 +76,9 @@ TEST=`make -j buildall`
 
 Cq-Include-Trybots: chromeos/cq:cq-orchestrator
 """
-    # Wrap the relevant commits command and bug field such that we don't exceed
-    # 72 cols.
+    # Wrap the commands and bug field such that we don't exceed 72 cols.
     relevant_commits_cmd = textwrap.fill(relevant_commits_cmd, width=72)
+    cmd = textwrap.fill(cmd, width=72)
     # Wrap at 68 cols to save room for 'BUG='
     bugs = textwrap.wrap(" ".join(relevant_bugs), width=68)
     bug_field = ""
@@ -205,6 +205,12 @@ def main(argv):
         "-X",
         help=("The strategy option for the chosen merge " "strategy"),
     )
+    parser.add_argument(
+        "--remove_owners",
+        "-r",
+        action=("store_true"),
+        help=("Remove non-root OWNERS level files if present"),
+    )
 
     opts = parser.parse_args(argv[1:])
 
@@ -250,6 +256,30 @@ def main(argv):
         stderr=subprocess.DEVNULL,
         check=False,
     )
+
+    # Prune OWNERS files if desired
+    if opts.remove_owners:
+        prunelist = []
+        for root, dirs, files in os.walk("."):
+            for name in dirs:
+                if "build" in name:
+                    continue
+            for name in files:
+                if "OWNERS" in name:
+                    path = os.path.join(root, name)
+                    prunelist.append(path[2:])  # Strip the "./"
+
+        # Remove the top level OWNERS file from the prunelist.
+        try:
+            prunelist.remove("OWNERS")
+        except ValueError:
+            pass
+
+        if prunelist:
+            print("Not merging the following OWNERS files:")
+            for path in prunelist:
+                print("  " + path)
+
     if result.returncode:
         # Let's perform the merge
         print("Updating remote...")
@@ -286,7 +316,39 @@ def main(argv):
         ]
         if opts.strategy_option:
             arglist.append("-X" + opts.strategy_option)
-        subprocess.run(arglist, check=True)
+        try:
+            subprocess.run(arglist, check=True)
+        except:
+            # We've likely encountered a merge conflict due to new OWNERS file
+            # modifications. If we're removing the owners, we'll delete them.
+            if opts.remove_owners and prunelist:
+                # Find the unmerged files
+                unmerged = (
+                    subprocess.run(
+                        ["git", "diff", "--name-only", "--diff-filter=U"],
+                        stdout=subprocess.PIPE,
+                        encoding="utf-8",
+                        check=True,
+                    )
+                    .stdout.rstrip()
+                    .split()
+                )
+
+                # Prune OWNERS files
+                for file in unmerged:
+                    if file in prunelist:
+                        subprocess.run(["git", "rm", file])
+                        unmerged.remove(file)
+
+                print("Removed non-root OWNERS files.")
+                if unmerged:
+                    print(
+                        "Unmerged files still exist! You need to manually resolve this."
+                    )
+                    print("\n".join(unmerged))
+                    sys.exit(1)
+            else:
+                raise
     else:
         print(
             "We have already started merge process.",
