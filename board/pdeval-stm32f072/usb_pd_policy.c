@@ -260,8 +260,10 @@ __override void svdm_dp_post_config(int port)
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
 		return;
 
+	/* Note: Usage is deprecated, use usb_mux_hpd_update instead */
 	if (IS_ENABLED(CONFIG_USB_PD_TCPM_ANX7447))
-		anx7447_tcpc_update_hpd_status(mux, 1, 0);
+		anx7447_tcpc_update_hpd_status(mux, USB_PD_MUX_HPD_LVL |
+					       USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 
 __override int svdm_dp_attention(int port, uint32_t *payload)
@@ -270,9 +272,14 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
 	const struct usb_mux *mux = &usb_muxes[port];
+	mux_state_t mux_state = (lvl ? USB_PD_MUX_HPD_LVL :
+				 USB_PD_MUX_HPD_LVL_DEASSERTED) |
+				(irq ? USB_PD_MUX_HPD_IRQ :
+				 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 
+	/* Note: Usage is deprecated, use usb_mux_hpd_update instead */
 	CPRINTS("Attention: 0x%x", payload[1]);
-	anx7447_tcpc_update_hpd_status(mux, lvl, irq);
+	anx7447_tcpc_update_hpd_status(mux, mux_state);
 #endif
 	dp_status[port] = payload[1];
 

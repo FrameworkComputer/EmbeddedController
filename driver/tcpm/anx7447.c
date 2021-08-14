@@ -455,10 +455,12 @@ static void anx7447_tcpc_alert(int port)
 static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void anx7447_tcpc_update_hpd_status(const struct usb_mux *me,
-				    int hpd_lvl, int hpd_irq)
+				    mux_state_t mux_state)
 {
 	int reg = 0;
 	int port = me->usb_port;
+	int hpd_lvl = (mux_state & USB_PD_MUX_HPD_LVL) ? 1 : 0;
+	int hpd_irq = (mux_state & USB_PD_MUX_HPD_IRQ) ? 1 : 0;
 
 	/*
 	 * All calls within this method need to update to a mux_read/write calls

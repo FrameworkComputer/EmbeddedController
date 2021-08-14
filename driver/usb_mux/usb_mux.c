@@ -138,15 +138,8 @@ static int configure_mux(int port,
 			break;
 
 		case USB_MUX_HPD_UPDATE:
-			lcl_state = *mux_state;
-
-			if (mux_ptr->hpd_update) {
-				int hpd_lvl = (lcl_state & USB_PD_MUX_HPD_LVL) ?
-						1 : 0;
-				int hpd_irq = (lcl_state & USB_PD_MUX_HPD_IRQ) ?
-						1 : 0;
-				mux_ptr->hpd_update(mux_ptr, hpd_lvl, hpd_irq);
-			}
+			if (mux_ptr->hpd_update)
+				mux_ptr->hpd_update(mux_ptr, *mux_state);
 
 		}
 

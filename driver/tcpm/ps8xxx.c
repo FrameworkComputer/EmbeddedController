@@ -383,9 +383,11 @@ bool check_ps8755_chip(int port)
 }
 
 void ps8xxx_tcpc_update_hpd_status(const struct usb_mux *me,
-				   int hpd_lvl, int hpd_irq)
+				   mux_state_t mux_state)
 {
 	int port = me->usb_port;
+	int hpd_lvl = (mux_state & USB_PD_MUX_HPD_LVL) ? 1 : 0;
+	int hpd_irq = (mux_state & USB_PD_MUX_HPD_IRQ) ? 1 : 0;
 
 	if (IS_ENABLED(CONFIG_USB_PD_TCPM_PS8751_CUSTOM_MUX_DRIVER) &&
 	    product_id[me->usb_port] == PS8751_PRODUCT_ID &&

@@ -220,7 +220,7 @@ extern const struct usb_mux_driver anx74xx_tcpm_usb_mux_driver;
 void anx74xx_tcpc_set_vbus(int port, int enable);
 void anx74xx_tcpc_clear_hpd_status(int port);
 void anx74xx_tcpc_update_hpd_status(const struct usb_mux *me,
-				    int hpd_lvl, int hpd_irq);
+				    mux_state_t mux_state);
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
 extern struct i2c_stress_test_dev anx74xx_i2c_stress_test_dev;

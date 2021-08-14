@@ -119,7 +119,7 @@ void board_set_dp_mux_control(int output_enable, int polarity)
 }
 
 static void board_hpd_update(const struct usb_mux *me,
-			     int hpd_lvl, int hpd_irq)
+			     mux_state_t mux_state)
 {
 	/*
 	 * svdm_dp_attention() did most of the work, we only need to notify

@@ -136,17 +136,15 @@ struct usb_mux {
 	int (*board_set)(const struct usb_mux *me, mux_state_t mux_state);
 
 	/*
-	 * TODO: Consider moving this to usb_mux_driver struct
-	 *
 	 * USB Type-C DP alt mode support. Notify Type-C controller
 	 * there is DP dongle hot-plug.
 	 *
 	 * @param me usb_mux
-	 * @param hpd_lvl Level
-	 * @param hpd_irq IRQ
+	 * @param mux_state with HPD IRQ and HPD LVL flags set
+	 *        accordingly
 	 */
 	void (*hpd_update)(const struct usb_mux *me,
-			   int hpd_lvl, int hpd_irq);
+			   mux_state_t mux_state);
 };
 
 /* Supported USB mux drivers */
@@ -170,7 +168,7 @@ extern const struct usb_mux usb_muxes[];
 #endif
 
 /* Supported hpd_update functions */
-void virtual_hpd_update(const struct usb_mux *me, int hpd_lvl, int hpd_irq);
+void virtual_hpd_update(const struct usb_mux *me, mux_state_t mux_state);
 
 /*
  * Helper methods that either use tcpc communication or direct i2c

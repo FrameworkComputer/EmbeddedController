@@ -105,14 +105,13 @@ static int virtual_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 	return EC_SUCCESS;
 }
 
-void virtual_hpd_update(const struct usb_mux *me, int hpd_lvl, int hpd_irq)
+void virtual_hpd_update(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int port = me->usb_port;
 	bool unused;
 
 	/* Current HPD related mux status + existing USB & DP mux status */
-	mux_state_t new_mux_state = (hpd_lvl ? USB_PD_MUX_HPD_LVL : 0) |
-			(hpd_irq ? USB_PD_MUX_HPD_IRQ : 0) |
+	mux_state_t new_mux_state = mux_state |
 			(virtual_mux_state[port] & USB_PD_MUX_USB_DP_STATE);
 
 	/* HPD ACK isn't required for the EC to continue with its tasks */
