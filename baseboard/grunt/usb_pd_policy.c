@@ -142,7 +142,8 @@ __override void svdm_dp_post_config(int port)
 
 	/* set the minimum time delay (2ms) for the next HPD IRQ */
 	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
-	usb_mux_hpd_update(port, 1, 0);
+	usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL |
+				 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */

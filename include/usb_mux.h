@@ -247,10 +247,9 @@ void usb_mux_flip(int port);
  * Update the hot-plug event.
  *
  * @param port port number.
- * @param hpd_lvl HPD level.
- * @param hpd_irq HPD IRQ.
+ * @param mux_state HPD IRQ and LVL mux flags
  */
-void usb_mux_hpd_update(int port, int hpd_lvl, int hpd_irq);
+void usb_mux_hpd_update(int port, mux_state_t mux_state);
 
 /**
  * Port information about retimer firmware update support.

@@ -283,9 +283,11 @@ static void ps8815_reset(int port)
 void board_reset_pd_mcu(void)
 {
 	ps8815_reset(USBC_PORT_C0);
-	usb_mux_hpd_update(USBC_PORT_C0, 0, 0);
+	usb_mux_hpd_update(USBC_PORT_C0, USB_PD_MUX_HPD_LVL_DEASSERTED |
+					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 	ps8815_reset(USBC_PORT_C1);
-	usb_mux_hpd_update(USBC_PORT_C1, 0, 0);
+	usb_mux_hpd_update(USBC_PORT_C1, USB_PD_MUX_HPD_LVL_DEASSERTED |
+					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 
 /******************************************************************************/

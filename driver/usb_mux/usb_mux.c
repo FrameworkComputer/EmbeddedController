@@ -326,10 +326,9 @@ void usb_mux_flip(int port)
 	configure_mux(port, USB_MUX_SET_MODE, &mux_state);
 }
 
-void usb_mux_hpd_update(int port, int hpd_lvl, int hpd_irq)
+void usb_mux_hpd_update(int port, mux_state_t hpd_state)
 {
-	mux_state_t mux_state = (hpd_lvl ? USB_PD_MUX_HPD_LVL : 0) |
-				(hpd_irq ? USB_PD_MUX_HPD_IRQ : 0);
+	mux_state_t get_state;
 
 	if (port >= board_get_usb_pd_port_count()) {
 		return;
@@ -342,12 +341,11 @@ void usb_mux_hpd_update(int port, int hpd_lvl, int hpd_irq)
 	if (exit_low_power_mode(port) != EC_SUCCESS)
 		return;
 
-	configure_mux(port, USB_MUX_HPD_UPDATE, &mux_state);
+	configure_mux(port, USB_MUX_HPD_UPDATE, &hpd_state);
 
-	if (!configure_mux(port, USB_MUX_GET_MODE, &mux_state)) {
-		mux_state |= (hpd_lvl ? USB_PD_MUX_HPD_LVL : 0) |
-			(hpd_irq ? USB_PD_MUX_HPD_IRQ : 0);
-		configure_mux(port, USB_MUX_SET_MODE, &mux_state);
+	if (!configure_mux(port, USB_MUX_GET_MODE, &get_state)) {
+		get_state |= hpd_state;
+		configure_mux(port, USB_MUX_SET_MODE, &get_state);
 	}
 }
 
@@ -475,7 +473,7 @@ static enum ec_status hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
 	/* Clear HPD IRQ event since we're about to inform host of it. */
 	if (IS_ENABLED(CONFIG_USB_MUX_VIRTUAL) &&
 	    (r->flags & USB_PD_MUX_HPD_IRQ)) {
-		usb_mux_hpd_update(port, r->flags & USB_PD_MUX_HPD_LVL, 0);
+		usb_mux_hpd_update(port, r->flags & USB_PD_MUX_HPD_LVL);
 	}
 
 	args->response_size = sizeof(*r);

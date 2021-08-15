@@ -147,6 +147,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
 	int cur_lvl = gpio_get_level(hpd);
+	mux_state_t mux_state;
 
 	dp_status[port] = payload[1];
 
@@ -213,7 +214,9 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		pd_notify_dp_alt_mode_entry(port);
 
 	/* Configure TCPC for the HPD event, for proper muxing */
-	usb_mux_hpd_update(port, lvl, irq);
+	mux_state = (lvl ? USB_PD_MUX_HPD_LVL : USB_PD_MUX_HPD_LVL_DEASSERTED) |
+		    (irq ? USB_PD_MUX_HPD_IRQ : USB_PD_MUX_HPD_IRQ_DEASSERTED);
+	usb_mux_hpd_update(port, mux_state);
 
 	/* Signal AP for the HPD event, through GPIO to AP */
 	if (irq & cur_lvl) {
@@ -251,7 +254,8 @@ __override void svdm_exit_dp_mode(int port)
 		gpio_set_level(GPIO_DP_MUX_SEL, 0);
 
 		/* Signal AP for the HPD low event */
-		usb_mux_hpd_update(port, 0, 0);
+		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
+					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 		gpio_set_level(GPIO_DP_HOT_PLUG_DET, 0);
 	}
 }
