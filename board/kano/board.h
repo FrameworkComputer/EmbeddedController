@@ -77,7 +77,7 @@
 
 #define CONFIG_IO_EXPANDER
 #define CONFIG_IO_EXPANDER_NCT38XX
-#define CONFIG_IO_EXPANDER_PORT_COUNT		4
+#define CONFIG_IO_EXPANDER_PORT_COUNT		1
 
 #define CONFIG_USB_PD_TCPM_PS8815
 #define CONFIG_USBC_RETIMER_INTEL_BB
@@ -133,8 +133,6 @@
 #define GPIO_VOLUME_UP_L		GPIO_EC_VOLUP_BTN_ODL
 #define GPIO_WP_L			GPIO_EC_WP_ODL
 
-#define GPIO_ID_1_EC_KB_BL_EN		GPIO_EC_BATT_PRES_ODL
-
 /* System has back-lit keyboard */
 #define CONFIG_PWM_KBLIGHT
 
@@ -167,7 +165,6 @@
  * see b/174768555#comment22
  */
 #define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x56
-#define USBC_PORT_C2_BB_RETIMER_I2C_ADDR	0x57
 
 /* Enabling Thunderbolt-compatible mode */
 #define CONFIG_USB_PD_TBT_COMPAT_MODE
@@ -225,9 +222,6 @@ enum sensor_id {
 
 enum ioex_port {
 	IOEX_C0_NCT38XX = 0,
-	IOEX_C2_NCT38XX,
-	IOEX_ID_1_C0_NCT38XX,
-	IOEX_ID_1_C2_NCT38XX,
 	IOEX_PORT_COUNT
 };
 
