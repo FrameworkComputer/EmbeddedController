@@ -210,9 +210,14 @@ static void baseboard_init(void)
 	 * field of the CBI. If this value is programmed, then make sure the
 	 * MST_LANE_CONTROL gpio matches the mf bit.
 	 */
-	if (cbi_get_fw_config(&fw_config)) {
+	if (!cbi_get_fw_config(&fw_config)) {
 		dock_mf = CBI_FW_MF_PREFERENCE(fw_config);
 		baseboard_set_mst_lane_control(dock_mf);
+	} else {
+		dock_mf = dock_get_mf_preference();
+		cbi_set_fw_config(dock_mf);
+		CPRINTS("cbi: setting default result = %s",
+			cbi_get_fw_config(&fw_config) ? "pass" : "fail");
 	}
 
 #ifdef GPIO_USBC_UF_ATTACHED_SRC
