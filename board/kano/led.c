@@ -48,13 +48,6 @@ struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
 		.enable = &pwm_enable,
 		.set_duty = &pwm_set_duty,
 	},
-	{
-		.ch0 = PWM_CH_LED3,
-		.ch1 = PWM_CH_LED4,
-		.ch2 = PWM_LED_NO_CHANNEL,
-		.enable = &pwm_enable,
-		.set_duty = &pwm_set_duty,
-	},
 };
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
