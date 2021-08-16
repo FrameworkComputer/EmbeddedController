@@ -69,15 +69,15 @@
 		};
 	};
 
-	/* it8xxx2 has 1MB of flash */
+	/* it8xxx2 has 1MB of flash. currently, we use 512KB from flash. */
 	binman {
 		wp-ro {
 			offset = <0x0>;
-			size = <0x80000>;
+			size = <0x40000>;
 		};
 		ec-rw {
-			offset = <0x80000>;
-			size = <0x80000>;
+			offset = <0x40000>;
+			size = <0x40000>;
 		};
 	};
 };
