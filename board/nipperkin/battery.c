@@ -30,98 +30,63 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* AEC 5477109 */
-	[BATTERY_AEC] = {
+	/* SMP 996QA193H Battery Information */
+	[BATTERY_SIMPLO_HIGHPOWER] = {
 		.fuel_gauge = {
-			.manuf_name = "AEC",
+			.manuf_name = "333-1D-11-A",
 			.ship_mode = {
-				.reg_addr = 0x00,
+				.reg_addr = 0x0,
 				.reg_data = { 0x0010, 0x0010 },
 			},
-			.sleep_mode = {
-				.sleep_supported = true,
-				.reg_addr = 0x00,
-				.reg_data = 0x0011,
-			},
 			.fet = {
+				.mfgacc_support = 1,
 				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
-			}
+				.reg_mask = 0x0006,
+				.disconnect_val = 0x0,
+			},
 		},
 		.batt_info = {
-			.voltage_max          = 8700,	/* mV */
-			.voltage_normal       = 7600,
-			.voltage_min          = 6000,
-			.precharge_current    = 100,	/* mA */
+			.voltage_max = 13200,		/* mV */
+			.voltage_normal = 11550,	/* mV */
+			.voltage_min = 9000,		/* mV */
+			.precharge_current = 256,	/* mA */
 			.start_charging_min_c = 0,
 			.start_charging_max_c = 45,
-			.charging_min_c       = 0,
-			.charging_max_c       = 50,
-			.discharging_min_c    = -20,
-			.discharging_max_c    = 60,
+			.charging_min_c = 0,
+			.charging_max_c = 45,
+			.discharging_min_c = -20,
+			.discharging_max_c = 60,
 		},
 	},
-	/* AP18F4M / LIS4163ACPC */
-	[BATTERY_AP18F4M] = {
+/* Cosmx CA407792G Battery Information */
+	[BATTERY_COSMX] = {
 		.fuel_gauge = {
-			.manuf_name = "Murata KT00404001",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
-			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
-			}
-		},
-		.batt_info = {
-			.voltage_max          = 8700,	/* mV */
-			.voltage_normal       = 7600,
-			.voltage_min          = 5500,
-			.precharge_current    = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 50,
-			.charging_min_c       = 0,
-			.charging_max_c       = 60,
-			.discharging_min_c    = -20,
-			.discharging_max_c    = 75,
-		},
-	},
-	/* POW-TECH Battery Information */
-	[BATTERY_POWER_TECH] = {
-		.fuel_gauge = {
-			.manuf_name = "POW-TECH",
+			.manuf_name = "333-AC-11-A",
 			.ship_mode = {
 				.reg_addr = 0x0,
-				.reg_data = { 0x10, 0x10 },
-			},
-			.sleep_mode = {
-				.sleep_supported = true,
-				.reg_addr = 0x00,
-				.reg_data = 0x0011,
+				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.reg_addr       = 0x00,
-				.reg_mask       = 0x2000,
-				.disconnect_val = 0x2000,
-			}
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0006,
+				.disconnect_val = 0x0,
+			},
 		},
 		.batt_info = {
-			.voltage_max          = 8800,	/* mV */
-			.voltage_normal       = 7700,
-			.voltage_min          = 6000,
-			.precharge_current    = 88,	/* mA */
+			.voltage_max = 13200,		/* mV */
+			.voltage_normal = 11550,	/* mV */
+			.voltage_min = 9000,		/* mV */
+			.precharge_current = 256,	/* mA */
 			.start_charging_min_c = 0,
 			.start_charging_max_c = 45,
-			.charging_min_c       = 0,
-			.charging_max_c       = 45,
-			.discharging_min_c    = -20,
-			.discharging_max_c    = 60,
+			.charging_min_c = 0,
+			.charging_max_c = 45,
+			.discharging_min_c = -10,
+			.discharging_max_c = 60,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_AP18F4M;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SIMPLO_HIGHPOWER;
