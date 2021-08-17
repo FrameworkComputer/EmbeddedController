@@ -123,6 +123,9 @@ BOARDS_NPCX_7M7X_JTAG=(
 BOARDS_NPCX_SPI=(
 )
 
+BOARDS_NPCX_INT_SPI=(
+)
+
 BOARDS_SPI_1800MV=(
 	coral
 	reef
@@ -306,6 +309,10 @@ fi
 
 if $(in_array "${BOARDS_NPCX_SPI[@]}" "${BOARD}"); then
 	SUPPORTED_CHIPS+=("npcx_spi")
+fi
+
+if $(in_array "${BOARDS_NPCX_INT_SPI[@]}" "${BOARD}"); then
+	SUPPORTED_CHIPS+=("npcx_int_spi")
 fi
 
 if $(in_array "${BOARDS_IT83XX[@]}" "${BOARD}"); then
