@@ -14,6 +14,7 @@
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "hooks.h"
+#include "keyboard_8042_sharedlib.h"
 #include "lid_switch.h"
 #include "power_button.h"
 #include "power.h"
@@ -106,3 +107,12 @@ enum battery_present battery_hw_present(void)
 	/* The GPIO is low when the battery is physically present */
 	return gpio_get_level(batt_pres) ? BP_NO : BP_YES;
 }
+
+static void keyboard_init(void)
+{
+	/*
+	 * Set T15(KSI0/KSO11) to Lock key(KSI3/KSO9)
+	 */
+	set_scancode_set2(0, 11, get_scancode_set2(3, 9));
+}
+DECLARE_HOOK(HOOK_INIT, keyboard_init, HOOK_PRIO_DEFAULT);
