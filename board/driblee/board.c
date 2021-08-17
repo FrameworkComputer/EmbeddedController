@@ -54,9 +54,6 @@
 
 static uint8_t new_adc_key_state;
 
-static void ps8762_chaddr_deferred(void);
-DECLARE_DEFERRED(ps8762_chaddr_deferred);
-
 /******************************************************************************/
 /* USB-A Configuration */
 const int usb_port_enable[USB_PORT_COUNT] = {
@@ -148,40 +145,6 @@ static void usb_c0_interrupt(enum gpio_signal s)
 
 }
 
-/* C1 interrupt line shared by BC 1.2, TCPC, and charger */
-static void check_c1_line(void);
-DECLARE_DEFERRED(check_c1_line);
-
-static void notify_c1_chips(void)
-{
-	schedule_deferred_pd_interrupt(1);
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
-}
-
-static void check_c1_line(void)
-{
-	/*
-	 * If line is still being held low, see if there's more to process from
-	 * one of the chips.
-	 */
-	if (!gpio_get_level(GPIO_SUB_USB_C1_INT_ODL)) {
-		notify_c1_chips();
-		hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
-	}
-}
-
-static void sub_usb_c1_interrupt(enum gpio_signal s)
-{
-	/* Cancel any previous calls to check the interrupt line */
-	hook_call_deferred(&check_c1_line_data, -1);
-
-	/* Notify all chips using this line that an interrupt came in */
-	notify_c1_chips();
-
-	/* Check the line again in 5ms */
-	hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
-}
-
 #include "gpio_list.h"
 
 /* ADC channels */
@@ -270,7 +233,8 @@ void board_hibernate(void)
 	 * Both charger ICs need to be put into their "low power mode" before
 	 * entering the Z-state.
 	 */
-	raa489000_hibernate(1, true);
+	if (board_get_charger_chip_count() > 1)
+		raa489000_hibernate(1, true);
 	raa489000_hibernate(0, true);
 }
 
@@ -282,13 +246,10 @@ void board_reset_pd_mcu(void)
 	 */
 }
 
-static void ps8762_chaddr_deferred(void)
+static void set_5v_gpio(int level)
 {
-	/* Switch PS8762 I2C Address to 0x50*/
-	if (ps8802_chg_i2c_addr(I2C_PORT_SUB_USB_C1) == EC_SUCCESS)
-		CPRINTS("Switch PS8762 address to 0x50 success");
-	else
-		CPRINTS("Switch PS8762 address to 0x50 failed");
+	gpio_set_level(GPIO_EN_PP5000, level);
+	gpio_set_level(GPIO_EN_USB_A0_VBUS, level);
 }
 
 __override void board_power_5v_enable(int enable)
@@ -298,17 +259,17 @@ __override void board_power_5v_enable(int enable)
 	 * generated locally on the sub board and we need to set the comparator
 	 * polarity on the sub board charger IC.
 	 */
-	gpio_set_level(GPIO_EN_PP5000, !!enable);
-	if (isl923x_set_comparator_inversion(1, !!enable))
-		CPRINTS("Failed to %sable sub rails!", enable ? "en" : "dis");
+	set_5v_gpio(!!enable);
+}
 
-	if (!enable)
-		return;
-	/*
-	 * Port C1 the PP3300_USB_C1  assert, delay 15ms
-	 * colud be accessed PS8762 by I2C.
-	 */
-	hook_call_deferred(&ps8762_chaddr_deferred_data, 15 * MSEC);
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	return CONFIG_USB_PD_PORT_MAX_COUNT;
+}
+
+__override uint8_t board_get_charger_chip_count(void)
+{
+	return CHARGER_NUM;
 }
 
 int board_is_sourcing_vbus(int port)
@@ -323,7 +284,7 @@ int board_is_sourcing_vbus(int port)
 int board_set_active_charge_port(int port)
 {
 	int is_real_port = (port >= 0 &&
-			    port < CONFIG_USB_PD_PORT_MAX_COUNT);
+			    port < board_get_usb_pd_port_count());
 	int i;
 	int old_port;
 
@@ -336,7 +297,7 @@ int board_set_active_charge_port(int port)
 
 	/* Disable all ports. */
 	if (port == CHARGE_PORT_NONE) {
-		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+		for (i = 0; i < board_get_usb_pd_port_count(); i++)
 			tcpc_write(i, TCPC_REG_COMMAND,
 				   TCPC_REG_COMMAND_SNK_CTRL_LOW);
 
@@ -353,7 +314,7 @@ int board_set_active_charge_port(int port)
 	 * Turn off the other ports' sink path FETs, before enabling the
 	 * requested charge port.
 	 */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 		if (i == port)
 			continue;
 
@@ -409,9 +370,7 @@ void board_init(void)
 	int on;
 
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
-	gpio_enable_interrupt(GPIO_SUB_USB_C1_INT_ODL);
 	check_c0_line();
-	check_c1_line();
 
 	/* Turn on 5V if the system is on, otherwise turn it off. */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
@@ -422,6 +381,25 @@ void board_init(void)
 	setup_thermal();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+/* Enable HDMI any time the SoC is on */
+static void hdmi_enable(void)
+{
+	if (get_cbi_fw_config_hdmi() == HDMI_PRESENT) {
+		gpio_set_level(GPIO_EC_HDMI_EN_ODL, 0);
+		gpio_set_level(GPIO_HDMI_PP3300_EN, 1);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, hdmi_enable, HOOK_PRIO_DEFAULT);
+
+static void hdmi_disable(void)
+{
+	if (get_cbi_fw_config_hdmi() == HDMI_PRESENT) {
+		gpio_set_level(GPIO_EC_HDMI_EN_ODL, 1);
+		gpio_set_level(GPIO_HDMI_PP3300_EN, 0);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, hdmi_disable, HOOK_PRIO_DEFAULT);
 
 __override void ocpc_get_pid_constants(int *kp, int *kp_div,
 				       int *ki, int *ki_div,
@@ -446,24 +424,12 @@ const struct charger_config_t chg_chips[] = {
 		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
 		.drv = &isl923x_drv,
 	},
-
-	{
-		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
-		.drv = &isl923x_drv,
-	},
 };
 const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	{
 		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-		.flags = PI3USB9201_ALWAYS_POWERED,
-	},
-
-	{
-		.i2c_port = I2C_PORT_SUB_USB_C1,
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
 		.flags = PI3USB9201_ALWAYS_POWERED,
 	},
@@ -489,16 +455,6 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.flags = TCPC_FLAGS_TCPCI_REV2_0,
 		.drv = &raa489000_tcpm_drv,
 	},
-
-	{
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_SUB_USB_C1,
-			.addr_flags = RAA489000_TCPC0_I2C_FLAGS,
-		},
-		.flags = TCPC_FLAGS_TCPCI_REV2_0,
-		.drv = &raa489000_tcpm_drv,
-	},
 };
 
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
@@ -508,12 +464,6 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
 		.driver = &pi3usb3x532_usb_mux_driver,
 	},
-	{
-		.usb_port = 1,
-		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = PS8802_I2C_ADDR_FLAGS_CUSTOM,
-		.driver = &ps8802_usb_mux_driver,
-	}
 };
 
 uint16_t tcpc_get_alert_status(void)
@@ -534,17 +484,6 @@ uint16_t tcpc_get_alert_status(void)
 
 			if (regval)
 				status |= PD_STATUS_TCPC_ALERT_0;
-		}
-	}
-
-	if (!gpio_get_level(GPIO_SUB_USB_C1_INT_ODL)) {
-		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
-			/* TCPCI spec Rev 1.0 says to ignore bits 14:12. */
-			if (!(tcpc_config[1].flags & TCPC_FLAGS_TCPCI_REV2_0))
-				regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
-
-			if (regval)
-				status |= PD_STATUS_TCPC_ALERT_1;
 		}
 	}
 
