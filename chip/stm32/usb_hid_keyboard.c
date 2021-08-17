@@ -515,7 +515,8 @@ static const struct action_key_config action_key[] = {
 	[TK_MICMUTE] = { .mask = BIT(18), .usage = 0x000B002F },
 };
 
-static const int SLEEP_KEY_MASK = BIT(ARRAY_SIZE(action_key));
+/* TK_* is 1-indexed, so the next bit is at ARRAY_SIZE(action_key) - 1 */
+static const int SLEEP_KEY_MASK = BIT(ARRAY_SIZE(action_key) - 1);
 
 #ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
 static uint32_t feature_report[CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS];
