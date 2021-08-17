@@ -155,13 +155,6 @@ const struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_SUB_ANALOG] = {
-		.name = "SUB_ANALOG",
-		.input_ch = NPCX_ADC_CH2,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-	},
 	[ADC_VSNS_PP3300_A] = {
 		.name = "PP3300_A_PGOOD",
 		.input_ch = NPCX_ADC_CH9,
@@ -501,34 +494,3 @@ int button_is_adc_detected(enum gpio_signal gpio)
 {
 	return (gpio == GPIO_VOLUME_DOWN_L) || (gpio == GPIO_VOLUME_UP_L);
 }
-
-static void adc_vol_key_press_check(void)
-{
-	int volt = adc_read_channel(ADC_SUB_ANALOG);
-	static uint8_t old_adc_key_state;
-	uint8_t adc_key_state_change;
-
-	if (volt > 2400 && volt < 2490) {
-		/* volume-up is pressed */
-		new_adc_key_state = ADC_VOL_UP_MASK;
-	} else if (volt > 2600 && volt < 2690) {
-		/* volume-down is pressed */
-		new_adc_key_state = ADC_VOL_DOWN_MASK;
-	} else if (volt < 2290) {
-		/* both volumn-up and volume-down are pressed */
-		new_adc_key_state = ADC_VOL_UP_MASK | ADC_VOL_DOWN_MASK;
-	} else if (volt > 2700) {
-		/* both volumn-up and volume-down are released */
-		new_adc_key_state = 0;
-	}
-	if (new_adc_key_state != old_adc_key_state) {
-		adc_key_state_change = old_adc_key_state ^ new_adc_key_state;
-		if (adc_key_state_change && ADC_VOL_UP_MASK)
-			button_interrupt(GPIO_VOLUME_UP_L);
-		if (adc_key_state_change && ADC_VOL_DOWN_MASK)
-			button_interrupt(GPIO_VOLUME_DOWN_L);
-
-		old_adc_key_state = new_adc_key_state;
-	}
-}
-DECLARE_HOOK(HOOK_TICK, adc_vol_key_press_check, HOOK_PRIO_DEFAULT);
