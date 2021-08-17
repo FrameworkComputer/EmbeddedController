@@ -25,6 +25,8 @@
 
 /* Save some flash space */
 #define CONFIG_DEBUG_ASSERT_BRIEF
+#undef CONFIG_CMD_ACCELSPOOF
+#undef CONFIG_CMD_BATTFAKE
 
 /* EC console commands */
 #define CONFIG_CMD_CHARGER_DUMP
