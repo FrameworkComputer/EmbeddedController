@@ -12,6 +12,12 @@
 #include "util.h"
 #include "tfdp_chip.h"
 
+/* Maximum fan driver setting value */
+#define MAX_FAN_DRIVER_SETTING 0x3ff
+
+/* Fan driver setting data in bit[15:6] of hardware register */
+#define FAN_DRIVER_SETTING_SHIFT 6
+
 /* Maximum tach reading/target value */
 #define MAX_TACH 0x1fff
 
@@ -71,12 +77,15 @@ void fan_set_duty(int ch, int percent)
 		percent = 100;
 
 	duty_setting = percent;
-	MCHP_FAN_SETTING(0) = percent * 255 / 100;
+	MCHP_FAN_SETTING(0) = (percent * MAX_FAN_DRIVER_SETTING / 100)
+		<< FAN_DRIVER_SETTING_SHIFT;
 	clear_status();
 }
 
 int fan_get_duty(int ch)
 {
+	duty_setting = (MCHP_FAN_SETTING(0) >> FAN_DRIVER_SETTING_SHIFT)
+		* 100 / MAX_FAN_DRIVER_SETTING;
 	return duty_setting;
 }
 
@@ -140,7 +149,8 @@ void fan_channel_setup(int ch, unsigned int flags)
 {
 	/* Clear PCR sleep enable for RPM2FAN0 */
 	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_RPMPWM0);
-
+	/* Configure PWM Min drive */
+	MCHP_FAN_MIN_DRV(0) = 0x0A;
 	/*
 	 * Fan configuration 1 register:
 	 *   0x80 = bit 7    = RPM mode (0x00 if FAN_USE_RPM_MODE not set)
@@ -149,16 +159,17 @@ void fan_channel_setup(int ch, unsigned int flags)
 	 *   0x03 = bits 2:0 = 400 ms update time
 	 *
 	 * Fan configuration 2 register:
-	 *   0x00 = bit 6    = Ramp control disabled
-	 *   0x00 = bit 5    = Glitch filter enabled
-	 *   0x18 = bits 4:3 = Using both derivative options
-	 *   0x02 = bits 2:1 = error range is 50 RPM
-	 *   0x00 = bits 0   = normal polarity
+	 *   0x00 = bit 7    = Ramp control disabled
+	 *   0x00 = bit 6    = Glitch filter enabled
+	 *   0x30 = bits 5:4 = Using both derivative options
+	 *   0x04 = bits 3:2 = error range is 50 RPM
+	 *   0x00 = bits 1   = normal polarity
+	 *   0x00 = bit 0    = Reserved
 	 */
 	if (flags & FAN_USE_RPM_MODE)
 		MCHP_FAN_CFG1(0) = 0xab;
 	else
 		MCHP_FAN_CFG1(0) = 0x2b;
-	MCHP_FAN_CFG2(0) = 0x1a;
+	MCHP_FAN_CFG2(0) = 0x34;
 	clear_status();
 }
