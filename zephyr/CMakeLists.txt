@@ -61,6 +61,9 @@ if(DEFINED CONFIG_PLATFORM_EC)
   # with Zephyr builds only.
   zephyr_compile_definitions("CONFIG_ZEPHYR")
 
+  # Force compiler warnings to generate errors
+  zephyr_compile_options(-Werror)
+
   # When LTO is enabled, enable only for the "app" library, which compiles
   # and links all Chromium OS sources.
   # TODO: Enable LTO for all sources when Zephyr supports it.
