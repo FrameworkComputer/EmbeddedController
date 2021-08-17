@@ -151,9 +151,7 @@ enum pwm_channel {
 };
 
 enum battery_type {
-	BATTERY_AP19B8M,
-	BATTERY_LGC_AP18C8K,
-	BATTERY_MURATA_AP18C4K,
+	BATTERY_C21N2018,
 	BATTERY_TYPE_COUNT,
 };
 
