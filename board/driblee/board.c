@@ -58,7 +58,6 @@ static uint8_t new_adc_key_state;
 /* USB-A Configuration */
 const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_USB_A0_VBUS,
-	GPIO_EN_USB_A1_VBUS,
 };
 
 /* Keyboard scan setting */
@@ -143,6 +142,19 @@ static void usb_c0_interrupt(enum gpio_signal s)
 	/* Check the line again in 5ms */
 	hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
 
+}
+
+static void sub_hdmi_hpd_interrupt(enum gpio_signal s)
+{
+	int hdmi_hpd_odl = gpio_get_level(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL);
+
+	gpio_set_level(GPIO_EC_AP_USB_C1_HDMI_HPD, !hdmi_hpd_odl);
+}
+
+static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
+{
+	cprints(CC_USBPD, "C0: CC OVP, SBU OVP, or thermal event");
+	pd_handle_cc_overvoltage(0);
 }
 
 #include "gpio_list.h"
