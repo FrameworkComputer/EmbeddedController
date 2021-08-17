@@ -8,7 +8,7 @@
 
 CHIP:=npcx
 CHIP_FAMILY:=npcx7
-CHIP_VARIANT:=npcx7m6fc
+CHIP_VARIANT:=npcx7m7fc
 BASEBOARD:=dedede
 
 board-y=board.o battery.o cbi_ssfc.o led.o usb_pd_policy.o
