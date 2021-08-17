@@ -59,7 +59,7 @@ GPIO_INT(SPI0_CS,            PIN(M, 5), GPIO_INT_FALLING,
 
 /* Power Sequencing Signals */
 GPIO(EN_PP1800_S5,           PIN(H, 0), GPIO_OUT_LOW)
-GPIO(EN_PP5000_S5,           PIN(C, 6), GPIO_OUT_LOW)
+GPIO(EN_PP5000_S5,           PIN(C, 6), GPIO_OUT_HIGH) /* default high for PPC init on start up. */
 GPIO(EN_VDD_SOC,             PIN(E, 1), GPIO_OUT_LOW)
 GPIO(EN_VDD_MEDIA_ML,        PIN(F, 1), GPIO_OUT_LOW)
 GPIO(SYS_RST_ODL,            PIN(B, 6), GPIO_ODR_LOW)

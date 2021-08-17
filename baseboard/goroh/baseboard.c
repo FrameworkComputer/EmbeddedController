@@ -6,6 +6,8 @@
 /* Goroh baseboard-specific configuration */
 
 #include "adc.h"
+#include "adc_chip.h"
+#include "baseboard_usbc_config.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charger.h"
@@ -44,8 +46,6 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-static void ppc_interrupt(enum gpio_signal signal);
-
 #include "gpio_list.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
@@ -74,40 +74,6 @@ struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = {
 const int usb_port_enable[USB_PORT_COUNT] = {
 };
 
-/* Detect subboard */
-static void board_tcpc_init(void)
-{
-	gpio_enable_interrupt(GPIO_USB_C0_FAULT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_FAULT_ODL);
-}
-/* Must be done after I2C and subboard */
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
-
-/* PPC */
-struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.i2c_port = I2C_PORT_PPC0,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
-	},
-	{
-		.i2c_port = I2C_PORT_PPC1,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
-	},
-};
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
-
-static void ppc_interrupt(enum gpio_signal signal)
-{
-	if (signal == GPIO_USB_C0_FAULT_ODL)
-		/* C0: PPC interrupt */
-		syv682x_interrupt(0);
-	else
-		/* C1: PPC interrupt */
-		syv682x_interrupt(1);
-}
-
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
@@ -123,11 +89,6 @@ static void board_chipset_suspend(void)
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 /* USB Mux */
-
-/* TODO(yllin): configure USB mux */
-
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-};
 
 /*
  * I2C channels (A, B, and C) are using the same timing registers (00h~07h)
@@ -166,24 +127,6 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	/* TODO: check correct operation for GOROH */
 }
 
-/* TCPC */
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.bus_type = EC_BUS_TYPE_EMBEDDED,
-		/* TCPC is embedded within EC so no i2c config needed */
-		.drv = &it8xxx2_tcpm_drv,
-		/* Alert is active-low, push-pull */
-		.flags = 0,
-	},
-	{
-		.bus_type = EC_BUS_TYPE_EMBEDDED,
-		/* TCPC is embedded within EC so no i2c config needed */
-		.drv = &it8xxx2_tcpm_drv,
-		/* Alert is active-low, push-pull */
-		.flags = 0,
-	},
-};
-
 const struct cc_para_t *board_get_cc_tuning_parameter(enum usbpd_port port)
 {
 	const static struct cc_para_t
@@ -199,23 +142,6 @@ const struct cc_para_t *board_get_cc_tuning_parameter(enum usbpd_port port)
 	};
 
 	return &cc_parameter[port];
-}
-
-uint16_t tcpc_get_alert_status(void)
-{
-	/*
-	 * C0 & C1: TCPC is embedded in the EC and processes interrupts in the
-	 * chip code (it83xx/intc.c)
-	 */
-	return 0;
-}
-
-void board_reset_pd_mcu(void)
-{
-	/*
-	 * C0 & C1: TCPC is embedded in the EC and processes interrupts in the
-	 * chip code (it83xx/intc.c)
-	 */
 }
 
 void board_set_charge_limit(int port, int supplier, int charge_ma,

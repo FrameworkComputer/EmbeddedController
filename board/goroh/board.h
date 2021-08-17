@@ -92,6 +92,12 @@ enum adc_channel {
 	ADC_CH_COUNT,
 };
 
+enum usbc_port {
+	USBC_PORT_C0 = 0,
+	USBC_PORT_C1,
+	USBC_PORT_COUNT
+};
+
 enum pwm_channel {
 	PWM_CH_LED1,
 	PWM_CH_LED2,
