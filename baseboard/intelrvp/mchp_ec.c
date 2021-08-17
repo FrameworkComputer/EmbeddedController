@@ -77,7 +77,11 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 /* PWM channels */
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_FAN] = {
-		.channel = 4,
+#ifdef CHIP_FAMILY_MEC172X
+		.channel = PWM_HW_CH_0,
+#else
+		.channel = PWM_HW_CH_4,
+#endif
 		.flags = PWM_CONFIG_HAS_RPM_MODE,
 	},
 };
