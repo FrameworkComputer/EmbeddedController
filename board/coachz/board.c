@@ -50,7 +50,16 @@ static void ks_interrupt(enum gpio_signal s);
 
 #include "gpio_list.h"
 
+/*
+ * Workaround for b/193223400. This disables the IRQ from CTN730. Fixing this
+ * here (using a rather awkward way) separates the fix from the common code.
+ */
 #ifdef SECTION_IS_RW
+#define GPIO_PCHG_P0 GPIO_WLC_IRQ_CONN
+#else
+#define GPIO_PCHG_P0 ARRAY_SIZE(gpio_irq_handlers)
+#endif
+
 extern struct pchg_drv ctn730_drv;
 
 struct pchg pchgs[] = {
@@ -58,7 +67,7 @@ struct pchg pchgs[] = {
 		.cfg = &(const struct pchg_config) {
 			.drv = &ctn730_drv,
 			.i2c_port = I2C_PORT_WLC,
-			.irq_pin = GPIO_WLC_IRQ_CONN,
+			.irq_pin = GPIO_PCHG_P0,
 			.full_percent = 96,
 			.block_size = 128,
 		},
@@ -66,7 +75,6 @@ struct pchg pchgs[] = {
 	},
 };
 const int pchg_count = ARRAY_SIZE(pchgs);
-#endif
 
 /* GPIO Interrupt Handlers */
 static void tcpc_alert_event(enum gpio_signal signal)

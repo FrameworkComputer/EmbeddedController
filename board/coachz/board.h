@@ -65,12 +65,9 @@
 #define GPIO_KS_OPEN GPIO_LID_INT_N_HALL2
 
 /* WLC pins */
-#ifdef SECTION_IS_RW
-#define GPIO_PCHG_P0 GPIO_WLC_IRQ_CONN
 #define CONFIG_PERIPHERAL_CHARGER
 #define CONFIG_DEVICE_EVENT
 #define CONFIG_CTN730
-#endif
 
 #ifndef __ASSEMBLER__
 

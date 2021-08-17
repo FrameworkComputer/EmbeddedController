@@ -30,9 +30,7 @@ GPIO_INT(AP_SUSPEND,        PIN(5, 7), GPIO_INT_BOTH, power_signal_interrupt)  /
 GPIO_INT(DEPRECATED_AP_RST_REQ, PIN(C, 2), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V, power_signal_interrupt) /* Deprecated AP initiated reset indicator */
 
 /* WLC interrupt. GPIO_PULL_DOWN ensures no IRQ when WLC chip is off. */
-#ifdef SECTION_IS_RW
 GPIO_INT(WLC_IRQ_CONN, PIN(7, 4), GPIO_INT_RISING | GPIO_PULL_DOWN, pchg_irq)
-#endif
 
 /*
  * When switch-cap is off, the POWER_GOOD signal is floating. Need a pull-down
