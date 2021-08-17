@@ -33,8 +33,6 @@
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
-#include "pwm.h"
-#include "pwm_chip.h"
 #include "stdbool.h"
 #include "switch.h"
 #include "system.h"
@@ -51,7 +49,6 @@
 #define ADC_VOL_UP_MASK     BIT(0)
 #define ADC_VOL_DOWN_MASK   BIT(1)
 
-static uint8_t new_adc_key_state;
 
 /******************************************************************************/
 /* USB-A Configuration */
@@ -143,6 +140,12 @@ static void usb_c0_interrupt(enum gpio_signal s)
 
 }
 
+static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
+{
+	cprints(CC_USBPD, "C0: CC OVP, SBU OVP, or thermal event");
+	pd_handle_cc_overvoltage(0);
+}
+
 #include "gpio_list.h"
 
 /* ADC channels */
@@ -157,13 +160,6 @@ const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_2] = {
 		.name = "TEMP_SENSOR2",
 		.input_ch = NPCX_ADC_CH1,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-	},
-	[ADC_SUB_ANALOG] = {
-		.name = "SUB_ANALOG",
-		.input_ch = NPCX_ADC_CH2,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
@@ -403,16 +399,6 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	},
 };
 
-/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] = {
-		.channel = 3,
-		.flags = PWM_CONFIG_DSLEEP,
-		.freq = 10000,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -457,50 +443,3 @@ uint16_t tcpc_get_alert_status(void)
 
 	return status;
 }
-
-int adc_to_physical_value(enum gpio_signal gpio)
-{
-	if (gpio == GPIO_VOLUME_UP_L)
-		return !!(new_adc_key_state & ADC_VOL_UP_MASK);
-	else if (gpio == GPIO_VOLUME_DOWN_L)
-		return !!(new_adc_key_state & ADC_VOL_DOWN_MASK);
-
-	CPRINTS("Not a volume up or down key");
-	return 0;
-}
-
-int button_is_adc_detected(enum gpio_signal gpio)
-{
-	return (gpio == GPIO_VOLUME_DOWN_L) || (gpio == GPIO_VOLUME_UP_L);
-}
-
-static void adc_vol_key_press_check(void)
-{
-	int volt = adc_read_channel(ADC_SUB_ANALOG);
-	static uint8_t old_adc_key_state;
-	uint8_t adc_key_state_change;
-
-	if (volt > 2400 && volt < 2490) {
-		/* volume-up is pressed */
-		new_adc_key_state = ADC_VOL_UP_MASK;
-	} else if (volt > 2600 && volt < 2690) {
-		/* volume-down is pressed */
-		new_adc_key_state = ADC_VOL_DOWN_MASK;
-	} else if (volt < 2290) {
-		/* both volumn-up and volume-down are pressed */
-		new_adc_key_state = ADC_VOL_UP_MASK | ADC_VOL_DOWN_MASK;
-	} else if (volt > 2700) {
-		/* both volumn-up and volume-down are released */
-		new_adc_key_state = 0;
-	}
-	if (new_adc_key_state != old_adc_key_state) {
-		adc_key_state_change = old_adc_key_state ^ new_adc_key_state;
-		if (adc_key_state_change && ADC_VOL_UP_MASK)
-			button_interrupt(GPIO_VOLUME_UP_L);
-		if (adc_key_state_change && ADC_VOL_DOWN_MASK)
-			button_interrupt(GPIO_VOLUME_DOWN_L);
-
-		old_adc_key_state = new_adc_key_state;
-	}
-}
-DECLARE_HOOK(HOOK_TICK, adc_vol_key_press_check, HOOK_PRIO_DEFAULT);

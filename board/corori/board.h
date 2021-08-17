@@ -31,7 +31,6 @@
 /* Keyboard */
 
 #define CONFIG_KEYBOARD_KEYPAD
-#define CONFIG_PWM_KBLIGHT
 
 /* LED defines */
 #define CONFIG_LED_COMMON
@@ -41,7 +40,6 @@
 
 
 /* PWM */
-#define CONFIG_PWM
 #define NPCX7_PWM1_SEL    1  /* GPIO C2 is used as PWM1. */
 
 /* Temp sensor */
@@ -86,7 +84,6 @@
 #define I2C_ADDR_EEPROM_FLAGS 0x50 /* 7b address */
 
 /* Volume Button feature */
-#define CONFIG_ADC_BUTTONS
 #define CONFIG_VOLUME_BUTTONS
 #define GPIO_VOLUME_UP_L GPIO_VOLUP_BTN_ODL
 #define GPIO_VOLUME_DOWN_L GPIO_VOLDN_BTN_ODL
@@ -99,7 +96,6 @@
 enum adc_channel {
 	ADC_TEMP_SENSOR_1,     /* ADC0 */
 	ADC_TEMP_SENSOR_2,     /* ADC1 */
-	ADC_SUB_ANALOG,	       /* ADC2 */
 	ADC_VSNS_PP3300_A,     /* ADC9 */
 	ADC_CH_COUNT
 };
@@ -108,11 +104,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_1,
 	TEMP_SENSOR_2,
 	TEMP_SENSOR_COUNT
-};
-
-enum pwm_channel {
-	PWM_CH_KBLIGHT,
-	PWM_CH_COUNT,
 };
 
 enum battery_type {
