@@ -450,6 +450,10 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 __overridable uint16_t board_get_ps8xxx_product_id(int port)
 {
+	/* Check if the chip is PS8755 for rev-0, rev-1 and rev-2 */
+	if (system_get_board_version() < 3 && check_ps8755_chip(port))
+		return PS8755_PRODUCT_ID;
+
 	return PS8805_PRODUCT_ID;
 }
 

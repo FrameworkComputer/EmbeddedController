@@ -367,6 +367,21 @@ uint16_t board_get_ps8xxx_product_id(int port)
 	return 0;
 }
 
+bool check_ps8755_chip(int port)
+{
+	int val;
+	int p0_addr;
+	int status;
+	bool is_ps8755 = false;
+
+	p0_addr = PS8751_P3_TO_P0_FLAGS(tcpc_config[port].i2c_info.addr_flags);
+	status = tcpc_addr_read(port, p0_addr, PS8755_P0_REG_SM, &val);
+	if (status == EC_SUCCESS && val == PS8755_P0_REG_SM_VALUE)
+		is_ps8755 = true;
+
+	return is_ps8755;
+}
+
 void ps8xxx_tcpc_update_hpd_status(const struct usb_mux *me,
 				   int hpd_lvl, int hpd_irq)
 {
