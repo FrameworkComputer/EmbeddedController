@@ -182,6 +182,7 @@ enum sensor_id {
 
 enum battery_type {
 	BATTERY_SUNWODA,
+	BATTERY_SMP,
 	BATTERY_TYPE_COUNT
 };
 
