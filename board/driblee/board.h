@@ -42,6 +42,8 @@
 
 /* LED defines */
 #define CONFIG_LED_ONOFF_STATES
+#define CONFIG_LED_COMMON
+#define CONFIG_LED_ONOFF_STATES_BAT_LOW 10
 
 /* PWM */
 #define CONFIG_PWM

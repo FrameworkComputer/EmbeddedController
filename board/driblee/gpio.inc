@@ -64,9 +64,8 @@ GPIO(EN_BL_OD,		PIN(D, 3), GPIO_ODR_LOW)
 GPIO(EC_CBI_WP,		PIN(E, 5), GPIO_OUT_LOW)
 
 /* LED */
-GPIO(LED_B_ODL,                  PIN(C, 2), GPIO_OUT_HIGH)        /* PWM_CH_LED2_BLUE */
-GPIO(LED_G_ODL,                  PIN(C, 3), GPIO_OUT_HIGH)        /* PWM_CH_LED1_GREEN */
-GPIO(LED_R_ODL,                  PIN(C, 4), GPIO_OUT_HIGH)        /* PWM_CH_LED2_ORANGE */
+GPIO(LED_1_PWR_WHITE_L,	 PIN(C, 3), GPIO_OUT_HIGH)
+GPIO(LED_2_CHG_AMBER_L,	 PIN(C, 4), GPIO_OUT_HIGH)
 
 /* Power Sequencing */
 GPIO(EC_AP_PSYS,	     PIN(B, 7), GPIO_OUT_LOW)
