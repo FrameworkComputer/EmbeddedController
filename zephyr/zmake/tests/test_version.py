@@ -76,21 +76,21 @@ def _setup_example_repos(tmp_path):
     _git_commit(mod1)
 
     # Has two commits.
-    mod2 = tmp_path / "mod2"
+    mod2 = tmp_path / "ec"
     _git_init(mod2)
     _git_add(mod2, mod2 / "file2")
     _git_commit(mod2)
     _git_add(mod2, mod2 / "file3")
     _git_commit(mod2)
 
-    return project, zephyr_base, {"mod1": mod1, "mod2": mod2}
+    return project, zephyr_base, {"mod1": mod1, "ec": mod2}
 
 
 def test_version_string(tmp_path):
     project, zephyr_base, modules = _setup_example_repos(tmp_path)
     assert (
         version.get_version_string(project, zephyr_base, modules)
-        == "prj_v2.6.4-mod1:02fd7a,mod2:b5991f,os:377d26"
+        == "prj_v2.6.4-ec:b5991f,os:377d26,mod1:02fd7a"
     )
 
 

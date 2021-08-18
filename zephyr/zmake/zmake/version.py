@@ -106,7 +106,13 @@ def get_version_string(project, zephyr_base, modules, static=False):
 
         vcs_hashes = ",".join(
             "{}:{}".format(name, _get_revision(repo)[:6])
-            for name, repo in sorted(repos.items())
+            for name, repo in sorted(
+                repos.items(),
+                # Put the EC module first, then Zephyr OS kernel, as
+                # these are probably the most important hashes to
+                # developers.
+                key=lambda p: (p[0] != "ec", p[0] != "os", p),
+            )
         )
 
     return "{}_v{}.{}.{}-{}".format(
