@@ -171,7 +171,12 @@ static void suspend_led_update(void)
 {
 	while (1) {
 		tick++;
-		if (chipset_in_state(CHIPSET_STATE_ON))
+
+		/* HOOK_CHIPSET_SUSPEND will be called when POWER_S0S0ix,
+		 * if we are not transitioning to suspend, we should break here.
+		 */
+		if (!chipset_in_or_transitioning_to_state(
+			CHIPSET_STATE_ANY_SUSPEND))
 			break;
 
 		/* 1s gradual on, 1s gradual off, 3s off */
