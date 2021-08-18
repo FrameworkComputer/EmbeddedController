@@ -361,7 +361,7 @@ __overridable bool board_is_dts_port(int port)
 	return true;
 }
 
-int pd_get_retry_count(int port, enum tcpm_transmit_type type)
+int pd_get_retry_count(int port, enum tcpm_sop_type type)
 {
 	/* PD 3.0 6.7.7: nRetryCount = 2; PD 2.0 6.6.9: nRetryCount = 3 */
 	return pd_get_rev(port, type) == PD_REV30 ? 2 : 3;

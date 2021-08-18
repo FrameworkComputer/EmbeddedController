@@ -20,6 +20,7 @@
 #include "usb_mode.h"
 #include "usb_pd.h"
 #include "usb_pd_dpm.h"
+#include "usb_pd_tcpm.h"
 #include "usb_tbt_alt_mode.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -180,7 +181,7 @@ static bool dpm_mode_entry_requested(int port, enum typec_mode mode)
 	}
 }
 
-void dpm_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
+void dpm_vdm_acked(int port, enum tcpm_sop_type type, int vdo_count,
 		uint32_t *vdm)
 {
 	const uint16_t svid = PD_VDO_VID(vdm[0]);
@@ -202,7 +203,7 @@ void dpm_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 	}
 }
 
-void dpm_vdm_naked(int port, enum tcpm_transmit_type type, uint16_t svid,
+void dpm_vdm_naked(int port, enum tcpm_sop_type type, uint16_t svid,
 		uint8_t vdm_cmd)
 {
 	switch (svid) {
@@ -230,7 +231,7 @@ static void dpm_attempt_mode_entry(int port)
 {
 	int vdo_count = 0;
 	uint32_t vdm[VDO_MAX_SIZE];
-	enum tcpm_transmit_type tx_type = TCPC_TX_SOP;
+	enum tcpm_sop_type tx_type = TCPC_TX_SOP;
 	bool enter_mode_requested =
 		IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY) ?  false : true;
 
@@ -355,7 +356,7 @@ static void dpm_attempt_mode_exit(int port)
 {
 	uint32_t vdm = 0;
 	int vdo_count = 0;
-	enum tcpm_transmit_type tx_type = TCPC_TX_SOP;
+	enum tcpm_sop_type tx_type = TCPC_TX_SOP;
 
 	if (IS_ENABLED(CONFIG_USB_PD_USB4) &&
 	    enter_usb_entry_is_done(port)) {

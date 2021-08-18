@@ -105,7 +105,7 @@ union buffer {
 };
 
 struct ucpd_tx_desc {
-	enum tcpm_transmit_type type;
+	enum tcpm_sop_type type;
 	int msg_len;
 	int msg_index;
 	union buffer data;
@@ -719,7 +719,7 @@ int stm32gx_ucpd_get_chip_info(int port, int live,
 
 static int stm32gx_ucpd_start_transmit(int port, enum ucpd_tx_msg msg_type)
 {
-	enum tcpm_transmit_type type;
+	enum tcpm_sop_type type;
 
 	/* Select the correct tx desciptor */
 	ucpd_tx_active_buffer = &ucpd_tx_buffers[msg_type];
@@ -1130,7 +1130,7 @@ static void ucpd_send_good_crc(int port, uint16_t rx_header)
 	int msg_id;
 	int rev_id;
 	uint16_t tx_header;
-	enum tcpm_transmit_type tx_type;
+	enum tcpm_sop_type tx_type;
 	enum pd_power_role pr = 0;
 	enum pd_data_role dr = 0;
 
@@ -1146,7 +1146,7 @@ static void ucpd_send_good_crc(int port, uint16_t rx_header)
 
 	/*
 	 * Get the rx ordered set code just detected. SOP -> SOP''_Debug are in
-	 * the same order as enum tcpm_transmit_type and so can be used
+	 * the same order as enum tcpm_sop_type and so can be used
 	 * directly.
 	 */
 	tx_type = STM32_UCPD_RX_ORDSETR(port) & STM32_UCPD_RXORDSETR_MASK;
@@ -1180,7 +1180,7 @@ static void ucpd_send_good_crc(int port, uint16_t rx_header)
 }
 
 int stm32gx_ucpd_transmit(int port,
-			  enum tcpm_transmit_type type,
+			  enum tcpm_sop_type type,
 			  uint16_t header,
 			  const uint32_t *data)
 {
@@ -1319,7 +1319,7 @@ void stm32gx_ucpd1_irq(void)
 		/* Check for errors */
 		if (!(sr & STM32_UCPD_SR_RXERR)) {
 			uint16_t *rx_header = (uint16_t *)ucpd_rx_buffer;
-			enum tcpm_transmit_type type;
+			enum tcpm_sop_type type;
 			int good_crc = 0;
 
 			type = STM32_UCPD_RX_ORDSETR(port) &

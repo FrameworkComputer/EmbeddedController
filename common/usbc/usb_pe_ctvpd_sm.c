@@ -11,6 +11,7 @@
 #include "usb_pd_tcpm.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
+#include "usb_pd_tcpm.h"
 #include "usb_tc_sm.h"
 #include "usb_emsg.h"
 #include "usb_sm.h"
@@ -110,7 +111,7 @@ void pe_got_hard_reset(int port)
 	/* No implementation needed by this policy engine */
 }
 
-void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
+void pe_report_error(int port, enum pe_error e, enum tcpm_sop_type type)
 {
 	/* No implementation needed by this policy engine */
 }

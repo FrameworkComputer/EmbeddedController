@@ -268,7 +268,7 @@ static struct pd_protocol {
 	/* next Vendor Defined Message to send */
 	uint32_t vdo_data[VDO_MAX_SIZE];
 	/* type of transmit message (SOP/SOP'/SOP'') */
-	enum tcpm_transmit_type xmit_type;
+	enum tcpm_sop_type xmit_type;
 	uint8_t vdo_count;
 	/* VDO to retry if UFP responder replied busy. */
 	uint32_t vdo_retry;
@@ -345,7 +345,7 @@ static inline void set_state_timeout(int port,
 	pd[port].timeout_state = timeout_state;
 }
 
-int pd_get_rev(int port, enum tcpm_transmit_type type)
+int pd_get_rev(int port, enum tcpm_sop_type type)
 {
 #ifdef CONFIG_USB_PD_REV30
 	/* TCPMv1 Only stores PD revision for SOP and SOP' types */
@@ -360,7 +360,7 @@ int pd_get_rev(int port, enum tcpm_transmit_type type)
 #endif
 }
 
-int pd_get_vdo_ver(int port, enum tcpm_transmit_type type)
+int pd_get_vdo_ver(int port, enum tcpm_sop_type type)
 {
 #ifdef CONFIG_USB_PD_REV30
 	if (type == TCPC_TX_SOP_PRIME)
@@ -681,7 +681,7 @@ static bool consume_sop_repeat_message(int port, uint8_t msg_id)
 static bool consume_repeat_message(int port, uint32_t msg_header)
 {
 	uint8_t msg_id = PD_HEADER_ID(msg_header);
-	enum tcpm_transmit_type sop = PD_HEADER_GET_SOP(msg_header);
+	enum tcpm_sop_type sop = PD_HEADER_GET_SOP(msg_header);
 
 	/* If repeat message ignore, except softreset control request. */
 	if (PD_HEADER_TYPE(msg_header) == PD_CTRL_SOFT_RESET &&
@@ -908,7 +908,7 @@ void pd_transmit_complete(int port, int status)
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TX);
 }
 
-static int pd_transmit(int port, enum tcpm_transmit_type type,
+static int pd_transmit(int port, enum tcpm_sop_type type,
 		       uint16_t header, const uint32_t *data, enum ams_seq ams)
 {
 	int evt;
@@ -1260,7 +1260,7 @@ static int send_bist_cmd(int port)
 #endif
 
 static void queue_vdm(int port, uint32_t *header, const uint32_t *data,
-			     int data_cnt, enum tcpm_transmit_type type)
+			     int data_cnt, enum tcpm_sop_type type)
 {
 	pd[port].vdo_count = data_cnt + 1;
 	pd[port].vdo_data[0] = header[0];
@@ -1276,7 +1276,7 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload,
 {
 	int rlen = 0;
 	uint32_t *rdata;
-	enum tcpm_transmit_type rtype = TCPC_TX_SOP;
+	enum tcpm_sop_type rtype = TCPC_TX_SOP;
 
 	if (pd[port].vdm_state == VDM_STATE_BUSY) {
 		/* If UFP responded busy retry after timeout */
@@ -2213,7 +2213,7 @@ static void pd_vdm_send_state_machine(int port)
 {
 	int res;
 	uint16_t header;
-	enum tcpm_transmit_type msg_type = pd[port].xmit_type;
+	enum tcpm_sop_type msg_type = pd[port].xmit_type;
 
 	switch (pd[port].vdm_state) {
 	case VDM_STATE_READY:

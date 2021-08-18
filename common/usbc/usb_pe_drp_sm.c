@@ -575,7 +575,7 @@ static struct policy_engine {
 	uint32_t events;
 
 	/* port address where soft resets are sent */
-	enum tcpm_transmit_type soft_reset_sop;
+	enum tcpm_sop_type soft_reset_sop;
 
 	/* Current limit / voltage based on the last request message */
 	uint32_t curr_limit;
@@ -590,7 +590,7 @@ static struct policy_engine {
 	struct partner_active_modes partner_amodes[AMODE_TYPE_COUNT];
 
 	/* Partner type to send */
-	enum tcpm_transmit_type tx_type;
+	enum tcpm_sop_type tx_type;
 
 	/* VDM - used to send information to shared VDM Request state */
 	uint32_t vdm_cnt;
@@ -670,12 +670,12 @@ static const uint8_t vdo_ver[] = {
 	[PD_REV30] = VDM_VER20,
 };
 
-int pd_get_rev(int port, enum tcpm_transmit_type type)
+int pd_get_rev(int port, enum tcpm_sop_type type)
 {
 	return prl_get_rev(port, type);
 }
 
-int pd_get_vdo_ver(int port, enum tcpm_transmit_type type)
+int pd_get_vdo_ver(int port, enum tcpm_sop_type type)
 {
 	enum pd_rev_type rev = prl_get_rev(port, type);
 
@@ -693,7 +693,7 @@ static void pe_set_ready_state(int port)
 		set_state_pe(port, PE_SNK_READY);
 }
 
-static inline void send_data_msg(int port, enum tcpm_transmit_type type,
+static inline void send_data_msg(int port, enum tcpm_sop_type type,
 				 enum pd_data_msg_type msg)
 {
 	/* Clear any previous TX status before sending a new message */
@@ -702,14 +702,14 @@ static inline void send_data_msg(int port, enum tcpm_transmit_type type,
 }
 
 static __maybe_unused inline void send_ext_data_msg(
-	int port, enum tcpm_transmit_type type, enum pd_ext_msg_type msg)
+	int port, enum tcpm_sop_type type, enum pd_ext_msg_type msg)
 {
 	/* Clear any previous TX status before sending a new message */
 	PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 	prl_send_ext_data_msg(port, type, msg);
 }
 
-static inline void send_ctrl_msg(int port, enum tcpm_transmit_type type,
+static inline void send_ctrl_msg(int port, enum tcpm_sop_type type,
 				 enum pd_ctrl_msg_type msg)
 {
 	/* Clear any previous TX status before sending a new message */
@@ -1082,7 +1082,7 @@ static bool pe_can_send_sop_vdm(int port, int vdm_cmd)
 	return false;
 }
 
-static void pe_send_soft_reset(const int port, enum tcpm_transmit_type type)
+static void pe_send_soft_reset(const int port, enum tcpm_sop_type type)
 {
 	pe[port].soft_reset_sop = type;
 	set_state_pe(port, PE_SEND_SOFT_RESET);
@@ -1117,7 +1117,7 @@ static bool pe_check_outgoing_discard(int port)
 	 */
 	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED) &&
 				PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
-		enum tcpm_transmit_type sop =
+		enum tcpm_sop_type sop =
 				PD_HEADER_GET_SOP(rx_emsg[port].header);
 
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_DISCARDED);
@@ -1130,7 +1130,7 @@ static bool pe_check_outgoing_discard(int port)
 	return false;
 }
 
-void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
+void pe_report_error(int port, enum pe_error e, enum tcpm_sop_type type)
 {
 	/* This should only be called from the PD task */
 	assert(port == TASK_ID_TO_PD_PORT(task_get_current()));
@@ -1911,7 +1911,7 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 	return false;
 }
 
-bool pd_setup_vdm_request(int port, enum tcpm_transmit_type tx_type,
+bool pd_setup_vdm_request(int port, enum tcpm_sop_type tx_type,
 		uint32_t *vdm, uint32_t vdo_cnt)
 {
 	if (vdo_cnt < VDO_HDR_SIZE || vdo_cnt > VDO_MAX_SIZE)
@@ -3179,7 +3179,7 @@ static void pe_snk_select_capability_run(int port)
 {
 	uint8_t type;
 	uint8_t cnt;
-	enum tcpm_transmit_type sop;
+	enum tcpm_sop_type sop;
 	enum pe_msg_check msg_check;
 
 	/*
@@ -6319,7 +6319,7 @@ static void pe_vcs_send_swap_run(int port)
 {
 	uint8_t type;
 	uint8_t cnt;
-	enum tcpm_transmit_type sop;
+	enum tcpm_sop_type sop;
 	enum pe_msg_check msg_check;
 
 	/*
@@ -6565,7 +6565,7 @@ static void pe_vcs_send_ps_rdy_swap_entry(int port)
 
 	/* Check for any interruptions to this non-interruptible AMS */
 	if (PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
-		enum tcpm_transmit_type sop =
+		enum tcpm_sop_type sop =
 				PD_HEADER_GET_SOP(rx_emsg[port].header);
 
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
@@ -6762,7 +6762,7 @@ static void pe_dr_get_sink_cap_run(int port)
 	int cnt;
 	int ext;
 	enum pe_msg_check msg_check;
-	enum tcpm_transmit_type sop;
+	enum tcpm_sop_type sop;
 
 	/*
 	 * Check the state of the message sent
@@ -7010,7 +7010,7 @@ void pd_dfp_discovery_init(int port)
 }
 
 __maybe_unused void pd_discovery_access_clear(int port,
-			enum tcpm_transmit_type type)
+			enum tcpm_sop_type type)
 {
 	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
 		assert(0);
@@ -7019,7 +7019,7 @@ __maybe_unused void pd_discovery_access_clear(int port,
 }
 
 __maybe_unused bool pd_discovery_access_validate(int port,
-			enum tcpm_transmit_type type)
+			enum tcpm_sop_type type)
 {
 	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
 		assert(0);
@@ -7028,7 +7028,7 @@ __maybe_unused bool pd_discovery_access_validate(int port,
 }
 
 __maybe_unused struct pd_discovery *pd_get_am_discovery(int port,
-			enum tcpm_transmit_type type)
+			enum tcpm_sop_type type)
 {
 	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
 		assert(0);
@@ -7039,7 +7039,7 @@ __maybe_unused struct pd_discovery *pd_get_am_discovery(int port,
 }
 
 __maybe_unused struct partner_active_modes *pd_get_partner_active_modes(
-			int port, enum tcpm_transmit_type type)
+			int port, enum tcpm_sop_type type)
 {
 	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
 		assert(0);

@@ -178,7 +178,7 @@ static int it83xx_tcpm_get_message_raw(int port, uint32_t *buf, int *head)
 
 static enum tcpc_transmit_complete it83xx_tx_data(
 	enum usbpd_port port,
-	enum tcpm_transmit_type type,
+	enum tcpm_sop_type type,
 	uint16_t header,
 	const uint32_t *buf)
 {
@@ -247,7 +247,7 @@ static enum tcpc_transmit_complete it83xx_tx_data(
 }
 
 static enum tcpc_transmit_complete it83xx_send_hw_reset(enum usbpd_port port,
-				enum tcpm_transmit_type reset_type)
+				enum tcpm_sop_type reset_type)
 {
 	if (reset_type == TCPC_TX_CABLE_RESET)
 		IT83XX_USBPD_MTSR0(port) |= USBPD_REG_MASK_CABLE_ENABLE;
@@ -678,7 +678,7 @@ static int it83xx_tcpm_set_rx_enable(int port, int enable)
 }
 
 static int it83xx_tcpm_transmit(int port,
-			enum tcpm_transmit_type type,
+			enum tcpm_sop_type type,
 			uint16_t header,
 			const uint32_t *data)
 {

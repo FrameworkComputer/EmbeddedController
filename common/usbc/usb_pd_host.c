@@ -12,6 +12,7 @@
 #include "host_command.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 #include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
@@ -23,7 +24,7 @@ static enum ec_status hc_typec_discovery(struct host_cmd_handler_args *args)
 	const struct ec_params_typec_discovery *p = args->params;
 	struct ec_response_typec_discovery *r = args->response;
 	const struct pd_discovery *disc;
-	enum tcpm_transmit_type type;
+	enum tcpm_sop_type type;
 
 	/* Confirm the number of HC VDOs matches our stored VDOs */
 	BUILD_ASSERT(sizeof(r->discovery_vdo) == sizeof(union disc_ident_ack));

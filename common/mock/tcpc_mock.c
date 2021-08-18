@@ -141,7 +141,7 @@ static int mock_get_message_raw(int port, uint32_t *payload, int *head)
 	return EC_SUCCESS;
 }
 
-static int mock_transmit(int port, enum tcpm_transmit_type type,
+static int mock_transmit(int port, enum tcpm_sop_type type,
 			 uint16_t header, const uint32_t *data)
 {
 	return EC_SUCCESS;

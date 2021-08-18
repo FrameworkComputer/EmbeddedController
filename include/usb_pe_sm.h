@@ -50,7 +50,7 @@ void pe_message_sent(int port);
  * @param  e    error
  * @param type  port address where error was generated
  */
-void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type);
+void pe_report_error(int port, enum pe_error e, enum tcpm_sop_type type);
 
 /**
  * Informs the Policy Engine of a discard.

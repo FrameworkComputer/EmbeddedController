@@ -262,7 +262,7 @@ int tcpci_tcpm_set_vconn(int port, int enable);
 int tcpci_tcpm_set_msg_header(int port, int power_role, int data_role);
 int tcpci_tcpm_set_rx_enable(int port, int enable);
 int tcpci_tcpm_get_message_raw(int port, uint32_t *payload, int *head);
-int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
+int tcpci_tcpm_transmit(int port, enum tcpm_sop_type type,
 			uint16_t header, const uint32_t *data);
 int tcpci_tcpm_release(int port);
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE

@@ -271,7 +271,7 @@ static inline int tcpm_reset_bist_type_2(int port)
  */
 int tcpm_enqueue_message(int port);
 
-static inline int tcpm_transmit(int port, enum tcpm_transmit_type type,
+static inline int tcpm_transmit(int port, enum tcpm_sop_type type,
 				uint16_t header, const uint32_t *data)
 {
 	return tcpc_config[port].drv->transmit(port, type, header, data);
@@ -532,7 +532,7 @@ void tcpm_enable_auto_discharge_disconnect(int port, int enable);
  *
  * @return EC_SUCCESS or error
  */
-int tcpm_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
+int tcpm_transmit(int port, enum tcpm_sop_type type, uint16_t header,
 		  const uint32_t *data);
 
 /**

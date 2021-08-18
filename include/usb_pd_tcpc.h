@@ -61,7 +61,7 @@ int tcpc_set_vconn(int port, int enable);
 int tcpc_set_msg_header(int port, int power_role, int data_role);
 int tcpc_set_rx_enable(int port, int enable);
 int tcpc_get_message(int port, uint32_t *payload, int *head);
-int tcpc_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
+int tcpc_transmit(int port, enum tcpm_sop_type type, uint16_t header,
 		  const uint32_t *data);
 int rx_buf_is_empty(int port);
 void rx_buf_clear(int port);

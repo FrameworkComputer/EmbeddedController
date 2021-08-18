@@ -58,7 +58,7 @@ __overridable const struct svdm_response svdm_rsp = {
 	.modes = NULL,
 };
 
-static int pd_get_mode_idx(int port, enum tcpm_transmit_type type,
+static int pd_get_mode_idx(int port, enum tcpm_sop_type type,
 		uint16_t svid)
 {
 	int amode_idx;
@@ -73,7 +73,7 @@ static int pd_get_mode_idx(int port, enum tcpm_transmit_type type,
 	return -1;
 }
 
-static int pd_allocate_mode(int port, enum tcpm_transmit_type type,
+static int pd_allocate_mode(int port, enum tcpm_sop_type type,
 		uint16_t svid)
 {
 	int i, j;
@@ -226,7 +226,7 @@ int pd_dfp_dp_get_pin_mode(int port, uint32_t status)
 }
 
 struct svdm_amode_data *pd_get_amode_data(int port,
-		enum tcpm_transmit_type type, uint16_t svid)
+		enum tcpm_sop_type type, uint16_t svid)
 {
 	int idx = pd_get_mode_idx(port, type, svid);
 	struct partner_active_modes *active =
@@ -240,7 +240,7 @@ struct svdm_amode_data *pd_get_amode_data(int port,
  * Enter default mode ( payload[0] == 0 ) or attempt to enter mode via svid &
  * opos
  */
-uint32_t pd_dfp_enter_mode(int port, enum tcpm_transmit_type type,
+uint32_t pd_dfp_enter_mode(int port, enum tcpm_sop_type type,
 		uint16_t svid, int opos)
 {
 	int mode_idx = pd_allocate_mode(port, type, svid);
@@ -280,7 +280,7 @@ uint32_t pd_dfp_enter_mode(int port, enum tcpm_transmit_type type,
 }
 
 /* TODO(b/170372521) : Incorporate exit mode specific changes to DPM SM */
-int pd_dfp_exit_mode(int port, enum tcpm_transmit_type type, uint16_t svid,
+int pd_dfp_exit_mode(int port, enum tcpm_sop_type type, uint16_t svid,
 		int opos)
 {
 	struct svdm_amode_data *modep;
@@ -353,7 +353,7 @@ void dfp_consume_attention(int port, uint32_t *payload)
 		modep->fx->attention(port, payload);
 }
 
-void dfp_consume_identity(int port, enum tcpm_transmit_type type, int cnt,
+void dfp_consume_identity(int port, enum tcpm_sop_type type, int cnt,
 		uint32_t *payload)
 {
 	int ptype;
@@ -396,7 +396,7 @@ void dfp_consume_identity(int port, enum tcpm_transmit_type type, int cnt,
 	pd_set_identity_discovery(port, type, PD_DISC_COMPLETE);
 }
 
-void dfp_consume_svids(int port, enum tcpm_transmit_type type, int cnt,
+void dfp_consume_svids(int port, enum tcpm_sop_type type, int cnt,
 		uint32_t *payload)
 {
 	int i;
@@ -441,7 +441,7 @@ void dfp_consume_svids(int port, enum tcpm_transmit_type type, int cnt,
 	pd_set_svids_discovery(port, type, PD_DISC_COMPLETE);
 }
 
-void dfp_consume_modes(int port, enum tcpm_transmit_type type, int cnt,
+void dfp_consume_modes(int port, enum tcpm_sop_type type, int cnt,
 		uint32_t *payload)
 {
 	int svid_idx;
@@ -488,14 +488,14 @@ void dfp_consume_modes(int port, enum tcpm_transmit_type type, int cnt,
 			PD_DISC_COMPLETE);
 }
 
-int pd_alt_mode(int port, enum tcpm_transmit_type type, uint16_t svid)
+int pd_alt_mode(int port, enum tcpm_sop_type type, uint16_t svid)
 {
 	struct svdm_amode_data *modep = pd_get_amode_data(port, type, svid);
 
 	return (modep) ? modep->opos : -1;
 }
 
-void pd_set_identity_discovery(int port, enum tcpm_transmit_type type,
+void pd_set_identity_discovery(int port, enum tcpm_sop_type type,
 			       enum pd_discovery_state disc)
 {
 	struct pd_discovery *pd = pd_get_am_discovery(port, type);
@@ -504,7 +504,7 @@ void pd_set_identity_discovery(int port, enum tcpm_transmit_type type,
 }
 
 enum pd_discovery_state pd_get_identity_discovery(int port,
-						  enum tcpm_transmit_type type)
+						  enum tcpm_sop_type type)
 {
 	struct pd_discovery *disc = pd_get_am_discovery(port, type);
 
@@ -512,7 +512,7 @@ enum pd_discovery_state pd_get_identity_discovery(int port,
 }
 
 const union disc_ident_ack *pd_get_identity_response(int port,
-					       enum tcpm_transmit_type type)
+					       enum tcpm_sop_type type)
 {
 	if (type >= DISCOVERY_TYPE_COUNT)
 		return NULL;
@@ -544,7 +544,7 @@ uint8_t pd_get_product_type(int port)
 	return resp->idh.product_type;
 }
 
-void pd_set_svids_discovery(int port, enum tcpm_transmit_type type,
+void pd_set_svids_discovery(int port, enum tcpm_sop_type type,
 			       enum pd_discovery_state disc)
 {
 	struct pd_discovery *pd = pd_get_am_discovery(port, type);
@@ -553,28 +553,28 @@ void pd_set_svids_discovery(int port, enum tcpm_transmit_type type,
 }
 
 enum pd_discovery_state pd_get_svids_discovery(int port,
-		enum tcpm_transmit_type type)
+		enum tcpm_sop_type type)
 {
 	struct pd_discovery *disc = pd_get_am_discovery(port, type);
 
 	return disc->svids_discovery;
 }
 
-int pd_get_svid_count(int port, enum tcpm_transmit_type type)
+int pd_get_svid_count(int port, enum tcpm_sop_type type)
 {
 	struct pd_discovery *disc = pd_get_am_discovery(port, type);
 
 	return disc->svid_cnt;
 }
 
-uint16_t pd_get_svid(int port, uint16_t svid_idx, enum tcpm_transmit_type type)
+uint16_t pd_get_svid(int port, uint16_t svid_idx, enum tcpm_sop_type type)
 {
 	struct pd_discovery *disc = pd_get_am_discovery(port, type);
 
 	return disc->svids[svid_idx].svid;
 }
 
-void pd_set_modes_discovery(int port, enum tcpm_transmit_type type,
+void pd_set_modes_discovery(int port, enum tcpm_sop_type type,
 		uint16_t svid, enum pd_discovery_state disc)
 {
 	struct pd_discovery *pd = pd_get_am_discovery(port, type);
@@ -592,7 +592,7 @@ void pd_set_modes_discovery(int port, enum tcpm_transmit_type type,
 }
 
 enum pd_discovery_state pd_get_modes_discovery(int port,
-		enum tcpm_transmit_type type)
+		enum tcpm_sop_type type)
 {
 	const struct svid_mode_data *mode_data = pd_get_next_mode(port, type);
 
@@ -606,7 +606,7 @@ enum pd_discovery_state pd_get_modes_discovery(int port,
 	return mode_data->discovery;
 }
 
-int pd_get_mode_vdo_for_svid(int port, enum tcpm_transmit_type type,
+int pd_get_mode_vdo_for_svid(int port, enum tcpm_sop_type type,
 		uint16_t svid, uint32_t *vdo_out)
 {
 	int idx;
@@ -628,7 +628,7 @@ int pd_get_mode_vdo_for_svid(int port, enum tcpm_transmit_type type,
 }
 
 struct svid_mode_data *pd_get_next_mode(int port,
-		enum tcpm_transmit_type type)
+		enum tcpm_sop_type type)
 {
 	struct pd_discovery *disc = pd_get_am_discovery(port, type);
 	struct svid_mode_data *failed_mode_data = NULL;
@@ -663,14 +663,14 @@ struct svid_mode_data *pd_get_next_mode(int port,
 }
 
 uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx,
-		enum tcpm_transmit_type type)
+		enum tcpm_sop_type type)
 {
 	struct pd_discovery *disc = pd_get_am_discovery(port, type);
 
 	return disc->svids[svid_idx].mode_vdo;
 }
 
-bool pd_is_mode_discovered_for_svid(int port, enum tcpm_transmit_type type,
+bool pd_is_mode_discovered_for_svid(int port, enum tcpm_sop_type type,
 		uint16_t svid)
 {
 	const struct pd_discovery *disc = pd_get_am_discovery(port, type);
@@ -696,7 +696,7 @@ void notify_sysjump_ready(void)
 		task_set_event(sysjump_task_waiting, TASK_EVENT_SYSJUMP_READY);
 }
 
-static inline bool is_pd_rev3(int port, enum tcpm_transmit_type type)
+static inline bool is_pd_rev3(int port, enum tcpm_sop_type type)
 {
 	return pd_get_rev(port, type) == PD_REV30;
 }
@@ -848,7 +848,7 @@ bool is_active_cable_element_retimer(int port)
  * ############################################################################
  */
 
-uint32_t pd_get_tbt_mode_vdo(int port, enum tcpm_transmit_type type)
+uint32_t pd_get_tbt_mode_vdo(int port, enum tcpm_sop_type type)
 {
 	uint32_t tbt_mode_vdo[PDO_MODES];
 
@@ -960,13 +960,13 @@ enum tbt_compat_cable_speed get_tbt_cable_speed(int port)
 		max_tbt_speed : cable_tbt_speed;
 }
 
-int enter_tbt_compat_mode(int port, enum tcpm_transmit_type sop,
+int enter_tbt_compat_mode(int port, enum tcpm_sop_type sop,
 			uint32_t *payload)
 {
 	union tbt_dev_mode_enter_cmd enter_dev_mode = { .raw_value = 0 };
 	union tbt_mode_resp_device dev_mode_resp;
 	union tbt_mode_resp_cable cable_mode_resp;
-	enum tcpm_transmit_type enter_mode_sop =
+	enum tcpm_sop_type enter_mode_sop =
 					sop == TCPC_TX_SOP_PRIME_PRIME ?
 						TCPC_TX_SOP_PRIME : sop;
 

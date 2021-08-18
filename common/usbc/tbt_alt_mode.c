@@ -18,6 +18,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tbt.h"
+#include "usb_pd_tcpm.h"
 #include "usb_pe_sm.h"
 #include "usb_tbt_alt_mode.h"
 
@@ -184,7 +185,7 @@ void tbt_exit_mode_request(int port)
 	}
 }
 
-static bool tbt_response_valid(int port, enum tcpm_transmit_type type,
+static bool tbt_response_valid(int port, enum tcpm_sop_type type,
 				char *cmdt, int vdm_cmd)
 {
 	enum tbt_states st = tbt_state[port];
@@ -258,7 +259,7 @@ bool tbt_cable_entry_required_for_usb4(int port)
 	return false;
 }
 
-void intel_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
+void intel_vdm_acked(int port, enum tcpm_sop_type type, int vdo_count,
 		uint32_t *vdm)
 {
 	struct pd_discovery *disc;
@@ -366,7 +367,7 @@ void intel_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 	}
 }
 
-void intel_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd)
+void intel_vdm_naked(int port, enum tcpm_sop_type type, uint8_t vdm_cmd)
 {
 	if (!tbt_response_valid(port, type, "NAK", vdm_cmd))
 		return;
@@ -458,7 +459,7 @@ static bool tbt_mode_is_supported(int port, int vdo_count)
 }
 
 int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
-		enum tcpm_transmit_type *tx_type)
+		enum tcpm_sop_type *tx_type)
 {
 	struct svdm_amode_data *modep;
 	int vdo_count_ret = 0;

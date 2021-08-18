@@ -36,7 +36,7 @@ void dpm_set_mode_exit_request(int port);
  * @param vdo_count The number of VDOs in vdm; must be at least 1
  * @param vdm       The VDM payload of the ACK
  */
-void dpm_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
+void dpm_vdm_acked(int port, enum tcpm_sop_type type, int vdo_count,
 		uint32_t *vdm);
 
 /*
@@ -48,7 +48,7 @@ void dpm_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
  * @param svid    The SVID of the request
  * @param vdm_cmd The VDM command of the request
  */
-void dpm_vdm_naked(int port, enum tcpm_transmit_type type, uint16_t svid,
+void dpm_vdm_naked(int port, enum tcpm_sop_type type, uint16_t svid,
 		uint8_t vdm_cmd);
 
 /*

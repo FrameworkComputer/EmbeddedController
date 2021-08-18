@@ -10,13 +10,14 @@
 #include "common.h"
 #include "usb_tc_sm.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 
 struct mock_tc_port_t {
 	int rev;
 	int pd_enable;
 	int msg_tx_id;
 	int msg_rx_id;
-	enum tcpm_transmit_type sop;
+	enum tcpm_sop_type sop;
 	enum tcpc_rp_value lcl_rp;
 	int attached_snk;
 	int attached_src;

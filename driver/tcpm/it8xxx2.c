@@ -197,7 +197,7 @@ void it8xxx2_get_tx_error_status(enum usbpd_port port)
 }
 
 static enum tcpc_transmit_complete it8xxx2_tx_data(enum usbpd_port port,
-						   enum tcpm_transmit_type type,
+						   enum tcpm_sop_type type,
 						   uint16_t header,
 						   const uint32_t *buf)
 {
@@ -595,7 +595,7 @@ static int it8xxx2_tcpm_set_rx_enable(int port, int enable)
 }
 
 static int it8xxx2_tcpm_transmit(int port,
-				 enum tcpm_transmit_type type,
+				 enum tcpm_sop_type type,
 				 uint16_t header,
 				 const uint32_t *data)
 {

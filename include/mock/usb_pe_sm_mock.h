@@ -9,9 +9,10 @@
 
 #include "common.h"
 #include "usb_pe_sm.h"
+#include "usb_pd_tcpm.h"
 
 struct mock_pe_port_t {
-	enum tcpm_transmit_type sop;
+	enum tcpm_sop_type sop;
 
 	int mock_pe_message_sent;
 	int mock_pe_error;

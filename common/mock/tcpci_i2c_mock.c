@@ -8,6 +8,7 @@
 #include "tcpm/tcpci.h"
 #include "test_util.h"
 #include "timer.h"
+#include "usb_pd_tcpm.h"
 
 #ifndef TEST_BUILD
 #error "Mocks should only be in the test build."
@@ -180,7 +181,7 @@ static bool debug_accessory_indicator_supported(void)
 	return true;
 }
 
-static int verify_transmit(enum tcpm_transmit_type want_tx_type,
+static int verify_transmit(enum tcpm_sop_type want_tx_type,
 			   int want_tx_retry,
 			   enum pd_ctrl_msg_type want_ctrl_msg,
 			   enum pd_data_msg_type want_data_msg,
@@ -229,7 +230,7 @@ static int verify_transmit(enum tcpm_transmit_type want_tx_type,
 	return EC_ERROR_UNKNOWN;
 }
 
-int verify_tcpci_transmit(enum tcpm_transmit_type tx_type,
+int verify_tcpci_transmit(enum tcpm_sop_type tx_type,
 			  enum pd_ctrl_msg_type ctrl_msg,
 			  enum pd_data_msg_type data_msg)
 {
@@ -238,7 +239,7 @@ int verify_tcpci_transmit(enum tcpm_transmit_type tx_type,
 			       VERIFY_TIMEOUT);
 }
 
-int verify_tcpci_tx_timeout(enum tcpm_transmit_type tx_type,
+int verify_tcpci_tx_timeout(enum tcpm_sop_type tx_type,
 			    enum pd_ctrl_msg_type ctrl_msg,
 			    enum pd_data_msg_type data_msg,
 			    int timeout)
@@ -248,7 +249,7 @@ int verify_tcpci_tx_timeout(enum tcpm_transmit_type tx_type,
 			       timeout);
 }
 
-int verify_tcpci_tx_retry_count(enum tcpm_transmit_type tx_type,
+int verify_tcpci_tx_retry_count(enum tcpm_sop_type tx_type,
 				enum pd_ctrl_msg_type ctrl_msg,
 				enum pd_data_msg_type data_msg,
 				int retry_count)
@@ -258,7 +259,7 @@ int verify_tcpci_tx_retry_count(enum tcpm_transmit_type tx_type,
 			       VERIFY_TIMEOUT);
 }
 
-int verify_tcpci_tx_with_data(enum tcpm_transmit_type tx_type,
+int verify_tcpci_tx_with_data(enum tcpm_sop_type tx_type,
 			      enum pd_data_msg_type data_msg,
 			      uint8_t *data,
 			      int data_bytes,

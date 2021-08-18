@@ -73,7 +73,7 @@ static void dp_entry_failed(int port)
 	dp_state[port] = DP_INACTIVE;
 }
 
-static bool dp_response_valid(int port, enum tcpm_transmit_type type,
+static bool dp_response_valid(int port, enum tcpm_sop_type type,
 			     char *cmdt, int vdm_cmd)
 {
 	enum dp_states st = dp_state[port];
@@ -111,7 +111,7 @@ static void dp_exit_to_usb_mode(int port)
 		? DP_START : DP_INACTIVE;
 }
 
-void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
+void dp_vdm_acked(int port, enum tcpm_sop_type type, int vdo_count,
 		uint32_t *vdm)
 {
 	const struct svdm_amode_data *modep =
@@ -171,7 +171,7 @@ void dp_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
 	}
 }
 
-void dp_vdm_naked(int port, enum tcpm_transmit_type type, uint8_t vdm_cmd)
+void dp_vdm_naked(int port, enum tcpm_sop_type type, uint8_t vdm_cmd)
 {
 	if (!dp_response_valid(port, type, "NAK", vdm_cmd))
 		return;

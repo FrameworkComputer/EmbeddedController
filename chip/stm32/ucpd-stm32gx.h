@@ -51,7 +51,7 @@
 #define UCPD_RST2  0x19u
 #define UCPD_EOP   0x0Du
 
-/* This order of this enum matches tcpm_transmit_type */
+/* This order of this enum matches tcpm_sop_type */
 enum ucpd_tx_ordset {
 	TX_ORDERSET_SOP =	(UCPD_SYNC1 |
 				(UCPD_SYNC1<<5u) |
@@ -173,7 +173,7 @@ int stm32gx_ucpd_set_msg_header(int port, int power_role, int data_role);
  * @return EC_SUCCESS
  */
 int stm32gx_ucpd_transmit(int port,
-			enum tcpm_transmit_type type,
+			enum tcpm_sop_type type,
 			uint16_t header,
 			  const uint32_t *data);
 

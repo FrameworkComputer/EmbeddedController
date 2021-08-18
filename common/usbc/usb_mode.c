@@ -19,6 +19,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_dpm.h"
+#include "usb_pd_tcpm.h"
 #include "usb_pe_sm.h"
 #include "usbc_ppc.h"
 
@@ -142,7 +143,7 @@ void enter_usb_failed(int port)
 	usb4_state[port] = USB4_INACTIVE;
 }
 
-static bool enter_usb_response_valid(int port, enum tcpm_transmit_type type)
+static bool enter_usb_response_valid(int port, enum tcpm_sop_type type)
 {
 	/*
 	 * Check for an unexpected response.
@@ -215,7 +216,7 @@ bool enter_usb_cable_is_capable(int port)
 	return true;
 }
 
-void enter_usb_accepted(int port, enum tcpm_transmit_type type)
+void enter_usb_accepted(int port, enum tcpm_sop_type type)
 {
 	struct pd_discovery *disc;
 
@@ -253,7 +254,7 @@ void enter_usb_accepted(int port, enum tcpm_transmit_type type)
 	}
 }
 
-void enter_usb_rejected(int port, enum tcpm_transmit_type type)
+void enter_usb_rejected(int port, enum tcpm_sop_type type)
 {
 	if (!enter_usb_response_valid(port, type) ||
 	    usb4_state[port] == USB4_ACTIVE)
@@ -262,7 +263,7 @@ void enter_usb_rejected(int port, enum tcpm_transmit_type type)
 	enter_usb_failed(port);
 }
 
-uint32_t enter_usb_setup_next_msg(int port, enum tcpm_transmit_type *type)
+uint32_t enter_usb_setup_next_msg(int port, enum tcpm_sop_type *type)
 {
 	struct pd_discovery *disc_sop_prime;
 

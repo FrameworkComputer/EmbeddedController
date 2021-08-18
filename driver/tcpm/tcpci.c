@@ -22,6 +22,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpc.h"
+#include "usb_pd_tcpm.h"
 #include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
@@ -943,7 +944,7 @@ void tcpm_clear_pending_messages(int port)
 	q->tail = q->head;
 }
 
-int tcpci_tcpm_transmit(int port, enum tcpm_transmit_type type,
+int tcpci_tcpm_transmit(int port, enum tcpm_sop_type type,
 			uint16_t header, const uint32_t *data)
 {
 	int reg = TCPC_REG_TX_DATA;

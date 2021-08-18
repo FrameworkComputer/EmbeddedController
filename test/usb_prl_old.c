@@ -13,6 +13,7 @@
 #include "usb_emsg.h"
 #include "usb_pd_test_util.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
 #include "usb_sm_checks.h"
@@ -114,7 +115,7 @@ static struct pd_prl {
 	enum pd_data_role data_role;
 	int msg_tx_id;
 	int msg_rx_id;
-	enum tcpm_transmit_type sop;
+	enum tcpm_sop_type sop;
 
 	int mock_pe_message_sent;
 	int mock_pe_error;
@@ -505,7 +506,7 @@ static int verify_ctrl_msg_transmission(int port,
 }
 
 static int simulate_send_ctrl_msg_request_from_pe(int port,
-	enum tcpm_transmit_type type, enum pd_ctrl_msg_type msg_type)
+	enum tcpm_sop_type type, enum pd_ctrl_msg_type msg_type)
 {
 	pd_port[port].mock_got_soft_reset = 0;
 	pd_port[port].mock_pe_error = -1;
@@ -564,7 +565,7 @@ static int verify_data_msg_transmission(int port,
 }
 
 static int simulate_send_data_msg_request_from_pe(int port,
-	enum tcpm_transmit_type type, enum pd_ctrl_msg_type msg_type, int len)
+	enum tcpm_sop_type type, enum pd_ctrl_msg_type msg_type, int len)
 {
 	int i;
 	uint8_t *buf = tx_emsg[port].buf;
@@ -699,7 +700,7 @@ static int verify_extended_data_msg_transmission(int port,
 }
 
 static int simulate_send_extended_data_msg(int port,
-		enum tcpm_transmit_type type, enum pd_ctrl_msg_type msg_type,
+		enum tcpm_sop_type type, enum pd_ctrl_msg_type msg_type,
 		int len)
 {
 	int i;
@@ -757,7 +758,7 @@ enum pd_cable_plug tc_get_cable_plug(int port)
 	return PD_PLUG_FROM_DFP_UFP;
 }
 
-void pe_report_error(int port, enum pe_error e, enum tcpm_transmit_type type)
+void pe_report_error(int port, enum pe_error e, enum tcpm_sop_type type)
 {
 	pd_port[port].mock_pe_error = e;
 	pd_port[port].sop = type;

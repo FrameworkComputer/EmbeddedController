@@ -65,14 +65,21 @@ static inline enum tcpc_cc_polarity polarity_rm_dts(
 	return (enum tcpc_cc_polarity)(polarity & BIT(0));
 }
 
-enum tcpm_transmit_type {
+/*
+ * Types of PD data that can be sent or received. The values match the TCPCI bit
+ * field values TRANSMIT[Transmit SOP* Message] (TCPCI r2.0 v1.2, table 4-38)
+ * and RX_BUF_FRAME_TYPE[Received SOP* message] (table 4-37).
+ */
+enum tcpm_sop_type {
 	TCPC_TX_SOP = 0,
 	TCPC_TX_SOP_PRIME = 1,
 	TCPC_TX_SOP_PRIME_PRIME = 2,
 	TCPC_TX_SOP_DEBUG_PRIME = 3,
 	TCPC_TX_SOP_DEBUG_PRIME_PRIME = 4,
+	/* Only a valid register setting for TRANSMIT */
 	TCPC_TX_HARD_RESET = 5,
 	TCPC_TX_CABLE_RESET = 6,
+	/* Only a valid register setting for TRANSMIT */
 	TCPC_TX_BIST_MODE_2 = 7,
 	TCPC_TX_INVALID = 0xf,
 };
@@ -302,7 +309,7 @@ struct tcpm_drv {
 	 *
 	 * @return EC_SUCCESS or error
 	 */
-	int (*transmit)(int port, enum tcpm_transmit_type type, uint16_t header,
+	int (*transmit)(int port, enum tcpm_sop_type type, uint16_t header,
 					const uint32_t *data);
 
 	/**

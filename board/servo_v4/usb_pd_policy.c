@@ -965,7 +965,7 @@ static int svdm_enter_mode(int port, uint32_t *payload)
 	return 1;
 }
 
-int pd_alt_mode(int port, enum tcpm_transmit_type type, uint16_t svid)
+int pd_alt_mode(int port, enum tcpm_sop_type type, uint16_t svid)
 {
 	if (type == TCPC_TX_SOP && svid == USB_SID_DISPLAYPORT)
 		return alt_mode;

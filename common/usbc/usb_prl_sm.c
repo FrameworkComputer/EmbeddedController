@@ -312,7 +312,7 @@ static struct tx_chunked {
 /* Message Reception State Machine Object */
 static struct protocol_layer_rx {
 	/* received message type */
-	enum tcpm_transmit_type sop;
+	enum tcpm_sop_type sop;
 	/* message ids for all valid port partners */
 	int msg_id[NUM_SOP_STAR_TYPES];
 } prl_rx[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -324,7 +324,7 @@ static struct protocol_layer_tx {
 	/* state machine flags */
 	uint32_t flags;
 	/* last message type we transmitted */
-	enum tcpm_transmit_type last_xmit_type;
+	enum tcpm_sop_type last_xmit_type;
 	/* message id counters for all 6 port partners */
 	uint32_t msg_id_counter[NUM_SOP_STAR_TYPES];
 	/* transmit status */
@@ -344,7 +344,7 @@ static struct pd_message {
 	/* message status flags */
 	uint32_t flags;
 	/* SOP* */
-	enum tcpm_transmit_type xmit_type;
+	enum tcpm_sop_type xmit_type;
 	/* type of message */
 	uint8_t msg_type;
 	/* PD revision */
@@ -627,7 +627,7 @@ void prl_hard_reset_complete(int port)
 }
 
 void prl_send_ctrl_msg(int port,
-		      enum tcpm_transmit_type type,
+		      enum tcpm_sop_type type,
 		      enum pd_ctrl_msg_type msg)
 {
 	pdmsg[port].xmit_type = type;
@@ -647,7 +647,7 @@ void prl_send_ctrl_msg(int port,
 }
 
 void prl_send_data_msg(int port,
-		      enum tcpm_transmit_type type,
+		      enum tcpm_sop_type type,
 		      enum pd_data_msg_type msg)
 {
 	pdmsg[port].xmit_type = type;
@@ -667,7 +667,7 @@ void prl_send_data_msg(int port,
 
 #ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
 void prl_send_ext_data_msg(int port,
-			  enum tcpm_transmit_type type,
+			  enum tcpm_sop_type type,
 			  enum pd_ext_msg_type msg)
 {
 	pdmsg[port].xmit_type = type;
@@ -772,7 +772,7 @@ void prl_run(int port, int evt, int en)
 	}
 }
 
-void prl_set_rev(int port, enum tcpm_transmit_type type,
+void prl_set_rev(int port, enum tcpm_sop_type type,
 						enum pd_rev_type rev)
 {
 	/* We only store revisions for SOP* types. */
@@ -781,7 +781,7 @@ void prl_set_rev(int port, enum tcpm_transmit_type type,
 	pdmsg[port].rev[type] = rev;
 }
 
-enum pd_rev_type prl_get_rev(int port, enum tcpm_transmit_type type)
+enum pd_rev_type prl_get_rev(int port, enum tcpm_sop_type type)
 {
 	/* We only store revisions for SOP* types. */
 	ASSERT(type < NUM_SOP_STAR_TYPES);

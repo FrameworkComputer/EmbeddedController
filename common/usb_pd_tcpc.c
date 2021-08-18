@@ -259,7 +259,7 @@ static struct pd_port_controller {
 	int rx_buf_head, rx_buf_tail;
 
 	/* Next transmit */
-	enum tcpm_transmit_type tx_type;
+	enum tcpm_sop_type tx_type;
 	uint16_t tx_head;
 	uint32_t tx_payload[7];
 	const uint32_t *tx_data;
@@ -1128,7 +1128,7 @@ int tcpc_set_rx_enable(int port, int enable)
 	return EC_SUCCESS;
 }
 
-int tcpc_transmit(int port, enum tcpm_transmit_type type, uint16_t header,
+int tcpc_transmit(int port, enum tcpm_sop_type type, uint16_t header,
 		  const uint32_t *data)
 {
 	/* Store data to transmit and wake task to send it */

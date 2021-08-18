@@ -17,6 +17,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpc.h"
+#include "usb_pd_tcpm.h"
 #include "util.h"
 
 #if !defined(CONFIG_USB_PD_TCPM_TCPCI)
@@ -909,7 +910,7 @@ static int anx74xx_tcpm_get_message_raw(int port, uint32_t *payload, int *head)
 	return anx74xx_read_pd_obj(port, (uint8_t *)payload, len);
 }
 
-static int anx74xx_tcpm_transmit(int port, enum tcpm_transmit_type type,
+static int anx74xx_tcpm_transmit(int port, enum tcpm_sop_type type,
 		  uint16_t header,
 		  const uint32_t *data)
 {

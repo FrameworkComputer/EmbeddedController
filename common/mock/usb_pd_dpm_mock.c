@@ -11,6 +11,7 @@
 #include "usb_pd.h"
 #include "mock/usb_pd_dpm_mock.h"
 #include "memory.h"
+#include "usb_pd_tcpm.h"
 
 #ifndef TEST_BUILD
 #error "Mocks should only be in the test build."
@@ -30,12 +31,12 @@ void dpm_init(int port)
 	dpm[port].mode_exit_request = false;
 }
 
-void dpm_vdm_acked(int port, enum tcpm_transmit_type type, int vdo_count,
+void dpm_vdm_acked(int port, enum tcpm_sop_type type, int vdo_count,
 		uint32_t *vdm)
 {
 }
 
-void dpm_vdm_naked(int port, enum tcpm_transmit_type type, uint16_t svid,
+void dpm_vdm_naked(int port, enum tcpm_sop_type type, uint16_t svid,
 		uint8_t vdm_cmd)
 {
 }

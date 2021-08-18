@@ -414,7 +414,7 @@ static int ps8xxx_tcpc_bist_mode_2(int port)
 	return rv;
 }
 
-static int ps8xxx_tcpm_transmit(int port, enum tcpm_transmit_type type,
+static int ps8xxx_tcpm_transmit(int port, enum tcpm_sop_type type,
 			uint16_t header, const uint32_t *data)
 {
 	if (type == TCPC_TX_BIST_MODE_2)

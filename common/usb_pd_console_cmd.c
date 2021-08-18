@@ -8,6 +8,7 @@
 #include "console.h"
 #include "usb_pd.h"
 #include "util.h"
+#include "usb_pd_tcpm.h"
 
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 #ifdef CONFIG_CMD_USB_PD_PE
@@ -17,7 +18,7 @@ static void dump_pe(int port)
 	struct svdm_amode_data *modep;
 	uint32_t mode_caps;
 	const union disc_ident_ack *resp;
-	enum tcpm_transmit_type type;
+	enum tcpm_sop_type type;
 	/* TODO(b/152417597): Output SOP' discovery results */
 	const struct pd_discovery *disc =
 		pd_get_am_discovery(port, TCPC_TX_SOP);
