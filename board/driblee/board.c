@@ -297,9 +297,11 @@ int board_set_active_charge_port(int port)
 
 	/* Disable all ports. */
 	if (port == CHARGE_PORT_NONE) {
-		for (i = 0; i < board_get_usb_pd_port_count(); i++)
+		for (i = 0; i < board_get_usb_pd_port_count(); i++) {
 			tcpc_write(i, TCPC_REG_COMMAND,
 				   TCPC_REG_COMMAND_SNK_CTRL_LOW);
+			raa489000_enable_asgate(i, false);
+		}
 
 		return EC_SUCCESS;
 	}
@@ -321,6 +323,7 @@ int board_set_active_charge_port(int port)
 		if (tcpc_write(i, TCPC_REG_COMMAND,
 			       TCPC_REG_COMMAND_SNK_CTRL_LOW))
 			CPRINTS("p%d: sink path disable failed.", i);
+		raa489000_enable_asgate(i, false);
 	}
 
 	/*
@@ -331,7 +334,8 @@ int board_set_active_charge_port(int port)
 		charger_discharge_on_ac(1);
 
 	/* Enable requested charge port. */
-	if (tcpc_write(port, TCPC_REG_COMMAND,
+	if (raa489000_enable_asgate(port, true) ||
+		tcpc_write(port, TCPC_REG_COMMAND,
 		       TCPC_REG_COMMAND_SNK_CTRL_HIGH)) {
 		CPRINTS("p%d: sink path enable failed.", port);
 		charger_discharge_on_ac(0);
