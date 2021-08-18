@@ -316,18 +316,17 @@ static void ps8815_reset(void)
 static void ps8815_setup_eq(void)
 {
 	int rv;
+	const int port = tcpc_config[USBC_PORT_C1].i2c_info.port;
+	const int addr = tcpc_config[USBC_PORT_C1].i2c_info.addr_flags;
 
 	/* TX1 EQ 19db / TX2 EQ 19db */
-	rv = i2c_write8(tcpc_config[USBC_PORT_C1].i2c_info.port,
-		tcpc_config[USBC_PORT_C1].i2c_info.addr_flags, 0x20, 0x77);
+	rv = i2c_write8(port, addr, 0x20, 0x77);
 
 	/* RX1 EQ 12db / RX2 EQ 13db */
-	rv |= i2c_write8(tcpc_config[USBC_PORT_C1].i2c_info.port,
-		tcpc_config[USBC_PORT_C1].i2c_info.addr_flags, 0x22, 0x32);
+	rv |= i2c_write8(port, addr, 0x22, 0x32);
 
 	/* Swing level for upstream port output */
-	rv |= i2c_write8(tcpc_config[USBC_PORT_C1].i2c_info.port,
-		tcpc_config[USBC_PORT_C1].i2c_info.addr_flags, 0xc4, 0x03);
+	rv |= i2c_write8(port, addr, 0xc4, 0x03);
 
 	if (rv)
 		CPRINTS("%s fail!", __func__);
@@ -336,31 +335,25 @@ static void ps8815_setup_eq(void)
 static void ps8811_setup_eq(void)
 {
 	int rv;
+	const int port = I2C_PORT_USB_1_MIX;
+	const int addr = PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1;
 
 	/* AEQ 12db */
-	rv = i2c_write8(I2C_PORT_USB_1_MIX,
-		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0x01, 0x26);
+	rv = i2c_write8(port, addr, 0x01, 0x26);
 	/* ADE 2.1db */
-	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
-		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0x02, 0x60);
+	rv |= i2c_write8(port, addr, 0x02, 0x60);
 	/* BEQ 10.5db */
-	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
-		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0x05, 0x16);
+	rv |= i2c_write8(port, addr, 0x05, 0x16);
 	/* BDE 2.1db */
-	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
-		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0x06, 0x63);
+	rv |= i2c_write8(port, addr, 0x06, 0x63);
 	/* Channel A swing level */
-	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
-		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0x66, 0x20);
+	rv |= i2c_write8(port, addr, 0x66, 0x20);
 	/* Channel B swing level */
-	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
-		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0xa4, 0x03);
+	rv |= i2c_write8(port, addr, 0xa4, 0x03);
 	/* PS level foe B channel */
-	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
-		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0xa5, 0x83);
+	rv |= i2c_write8(port, addr, 0xa5, 0x83);
 	/* DE level foe B channel */
-	rv |= i2c_write8(I2C_PORT_USB_1_MIX,
-		PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1, 0xa6, 0x14);
+	rv |= i2c_write8(port, addr, 0xa6, 0x14);
 
 	if (rv)
 		CPRINTS("%s fail!", __func__);
@@ -370,6 +363,10 @@ static void ps8811_setup_eq(void)
 void board_ps8xxx_init(void)
 {
 	CPRINTS("%s", __func__);
+	/*
+	 * Adjust USB3 settings to improve signal integrity.
+	 * See b/194985848.
+	 */
 	ps8815_setup_eq();
 	ps8811_setup_eq();
 }
