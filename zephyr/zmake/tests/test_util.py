@@ -87,3 +87,18 @@ def test_read_kconfig_autoconf_value(value):
             f.write("#define TEST {}".format(value))
         read_value = util.read_kconfig_autoconf_value(path, "TEST")
         assert int(read_value) == value
+
+
+@pytest.mark.parametrize(
+    ["input_str", "expected_result"],
+    [
+        ("", '""'),
+        ("TROGDOR ABC-123", '"TROGDOR ABC-123"'),
+        ("hello world", '"hello world"'),
+        ("hello\nworld", r'"hello\nworld"'),
+        ('hello"world', r'"hello\"world"'),
+        ("hello\\world", '"hello\\\\world"'),
+    ],
+)
+def test_c_str(input_str, expected_result):
+    assert util.c_str(input_str) == expected_result

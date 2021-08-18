@@ -141,7 +141,8 @@ EXTRAVERSION =
                             pathlib.Path(tmpname), build_dir=pathlib.Path("build")
                         )
                     else:
-                        zmk.build(pathlib.Path(tmpname))
+                        with patch("zmake.version.write_version_header", autospec=True):
+                            zmk.build(pathlib.Path(tmpname))
                     multiproc.wait_for_log_end()
 
     recs = [rec.getMessage() for rec in cap.records]
