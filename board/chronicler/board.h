@@ -18,10 +18,6 @@
 #undef CONFIG_CHIP_INIT_ROM_REGION
 
 /* Optional features */
-#define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
-
-/* Remove PRL state names to free flash space */
-#define CONFIG_USB_PD_DEBUG_LEVEL 2
 
 #define CONFIG_VBOOT_EFS2
 
