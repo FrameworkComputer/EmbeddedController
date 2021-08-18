@@ -63,7 +63,7 @@ int test_td_pd_src3_e7(void)
 	 */
 	TEST_EQ(proc_pd_e3(), EC_SUCCESS, "%d");
 
-	partner_send_msg(PD_MSG_SOP, PD_CTRL_GET_SOURCE_CAP_EXT, 0, 0, NULL);
+	partner_send_msg(TCPC_TX_SOP, PD_CTRL_GET_SOURCE_CAP_EXT, 0, 0, NULL);
 
 	/*
 	 * c) If a Not_Supported message is received, and Num_Fixed_Batteries
@@ -117,7 +117,8 @@ int test_td_pd_src3_e7(void)
 	ext_msg = EXT_MSG_CHUNKED |
 		  EXT_MSG_DATA_SIZE_1 |
 		  GBSDB_FIXED_BATTERY_0;
-	partner_send_msg(PD_MSG_SOP, PD_EXT_GET_BATTERY_STATUS, 1, 1, &ext_msg);
+	partner_send_msg(TCPC_TX_SOP, PD_EXT_GET_BATTERY_STATUS, 1, 1,
+			&ext_msg);
 
 	/*
 	 * f) If a Battery_Status message is not received within

@@ -44,7 +44,7 @@ static int td_pd_ll_e4(enum pd_data_role data_role)
 	 *    and do not send GoodCrc for nRetryCount + 1 times
 	 *    (nRetryCount equals 3 since PD 2.1).
 	 */
-	partner_send_msg(PD_MSG_SOP,
+	partner_send_msg(TCPC_TX_SOP,
 			 PD_CTRL_GET_SINK_CAP,
 			 0, 0, NULL);
 

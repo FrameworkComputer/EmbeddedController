@@ -43,7 +43,7 @@ static int td_pd_vndi3_e3(enum pd_data_role data_role)
 	/*
 	 * b) Tester executes a Discover Identity exchange
 	 */
-	partner_send_msg(PD_MSG_SOP, PD_DATA_VENDOR_DEF,
+	partner_send_msg(TCPC_TX_SOP, PD_DATA_VENDOR_DEF,
 			 1, 0, &vdo);
 
 	/*

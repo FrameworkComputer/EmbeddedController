@@ -125,7 +125,7 @@ void partner_tx_msg_id_reset(int sop)
 		partner_tx_id[sop] = 0;
 }
 
-void partner_send_msg(enum pd_msg_type sop,
+void partner_send_msg(enum tcpm_sop_type sop,
 		      uint16_t type,
 		      uint16_t cnt,
 		      uint16_t ext,
@@ -135,7 +135,7 @@ void partner_send_msg(enum pd_msg_type sop,
 
 	partner_tx_id[sop] &= 7;
 	header = PD_HEADER(type,
-			sop == PD_MSG_SOP ? partner_get_power_role()
+			sop == TCPC_TX_SOP ? partner_get_power_role()
 			: PD_PLUG_FROM_CABLE,
 			partner_get_data_role(),
 			partner_tx_id[sop],
@@ -259,7 +259,7 @@ int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 			 *    The Source Capabilities includes Fixed 5V 3A PDO.
 			 */
 			task_wait_event(1 * MSEC);
-			partner_send_msg(PD_MSG_SOP, PD_DATA_SOURCE_CAP, 1, 0,
+			partner_send_msg(TCPC_TX_SOP, PD_DATA_SOURCE_CAP, 1, 0,
 					 &pdo);
 
 			/*
@@ -275,10 +275,10 @@ int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 			 * g) The tester sends Accept, and when Vbus is stable
 			 *    at the target voltage, sends PS_RDY.
 			 */
-			partner_send_msg(PD_MSG_SOP, PD_CTRL_ACCEPT, 0, 0,
+			partner_send_msg(TCPC_TX_SOP, PD_CTRL_ACCEPT, 0, 0,
 					 NULL);
 			task_wait_event(10 * MSEC);
-			partner_send_msg(PD_MSG_SOP, PD_CTRL_PS_RDY, 0, 0,
+			partner_send_msg(TCPC_TX_SOP, PD_CTRL_PS_RDY, 0, 0,
 					 NULL);
 			task_wait_event(1 * MSEC);
 
@@ -304,7 +304,7 @@ int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 			/*
 			 * e) The tester requests 5V 0.5A.
 			 */
-			partner_send_msg(PD_MSG_SOP, PD_DATA_REQUEST, 1, 0,
+			partner_send_msg(TCPC_TX_SOP, PD_DATA_REQUEST, 1, 0,
 					 &rdo);
 
 			TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
@@ -402,23 +402,23 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 			task_wait_event(10 * MSEC);
 
 			switch (found_index) {
-			case 0:	/* PD_MSG_SOP PD_CTRL_GET_SOURCE_CAP */
-				partner_send_msg(PD_MSG_SOP,
+			case 0:	/* TCPC_TX_SOP PD_CTRL_GET_SOURCE_CAP */
+				partner_send_msg(TCPC_TX_SOP,
 						 PD_DATA_SOURCE_CAP,
 						 1, 0, &pdo);
 				break;
-			case 1: /* PD_MSG_SOP PD_CTRL_GET_SINK_CAP */
-				partner_send_msg(PD_MSG_SOP,
+			case 1: /* TCPC_TX_SOP PD_CTRL_GET_SINK_CAP */
+				partner_send_msg(TCPC_TX_SOP,
 						 PD_DATA_SINK_CAP,
 						 1, 0, &pdo);
 				break;
 			case 2: /* TCPC_TX_SOP_PRIME PD_DATA_VENDOR_DEF */
-				partner_send_msg(PD_MSG_SOP_PRIME,
+				partner_send_msg(TCPC_TX_SOP_PRIME,
 						 PD_CTRL_NOT_SUPPORTED,
 						 0, 0, NULL);
 				break;
 			case 3: /* TCPC_TX_SOP PD_DATA_VENDOR_DEF */
-				partner_send_msg(PD_MSG_SOP,
+				partner_send_msg(TCPC_TX_SOP,
 						 PD_CTRL_NOT_SUPPORTED,
 						 0, 0, NULL);
 				break;
@@ -463,24 +463,24 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 			task_wait_event(10 * MSEC);
 
 			switch (found_index) {
-			case 0: /* PD_MSG_SOP PD_CTRL_GET_SINK_CAP */
-				partner_send_msg(PD_MSG_SOP,
+			case 0: /* TCPC_TX_SOP PD_CTRL_GET_SINK_CAP */
+				partner_send_msg(TCPC_TX_SOP,
 						 PD_DATA_SINK_CAP,
 						 1, 0, &pdo);
 				break;
 			case 1: /* TCPC_TX_SOP PD_CTRL_DR_SWAP */
-				partner_send_msg(PD_MSG_SOP,
+				partner_send_msg(TCPC_TX_SOP,
 						 PD_CTRL_REJECT,
 						 0, 0, NULL);
 				break;
-			case 2:	/* PD_MSG_SOP PD_CTRL_PR_SWAP */
-				partner_send_msg(PD_MSG_SOP,
+			case 2:	/* TCPC_TX_SOP PD_CTRL_PR_SWAP */
+				partner_send_msg(TCPC_TX_SOP,
 						 PD_CTRL_REJECT,
 						 0, 0, NULL);
 				break;
 			case 3: /* TCPC_TX_SOP PD_CTRL_VCONN_SWAP */
 				TEST_LT(vcs++, 4, "%d");
-				partner_send_msg(PD_MSG_SOP,
+				partner_send_msg(TCPC_TX_SOP,
 						 PD_CTRL_REJECT,
 						 0, 0, NULL);
 				break;

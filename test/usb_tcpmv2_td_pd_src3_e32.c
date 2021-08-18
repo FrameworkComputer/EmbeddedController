@@ -67,7 +67,7 @@ int test_td_pd_src3_e32(void)
 	 * incrementing values (mod 256) starting at 0x00.
 	 */
 	setup_chunk_msg(0, data);
-	partner_send_msg(PD_MSG_SOP, 0x1F, 7, 1, (uint32_t *)data);
+	partner_send_msg(TCPC_TX_SOP, 0x1F, 7, 1, (uint32_t *)data);
 	start_time = get_time().val;
 
 	/*
@@ -128,7 +128,7 @@ int test_td_pd_src3_e32(void)
 		chunk = next_chunk;
 
 		setup_chunk_msg(chunk, data);
-		partner_send_msg(PD_MSG_SOP, 0x1F, 7, 1, (uint32_t *)data);
+		partner_send_msg(TCPC_TX_SOP, 0x1F, 7, 1, (uint32_t *)data);
 
 		TEST_EQ(verify_tcpci_tx_with_data(TCPC_TX_SOP,
 					0x1F,
@@ -153,7 +153,7 @@ int test_td_pd_src3_e32(void)
 	task_wait_event(PD_T_CHUNK_SENDER_RSP_MAX + (5 * MSEC));
 
 	setup_chunk_msg(0, data);
-	partner_send_msg(PD_MSG_SOP, 0x1F, 7, 1, (uint32_t *)data);
+	partner_send_msg(TCPC_TX_SOP, 0x1F, 7, 1, (uint32_t *)data);
 
 	/*
 	 * i) If a message is not received within tChunkReceiverRequest max,

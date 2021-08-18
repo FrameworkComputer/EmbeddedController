@@ -2183,7 +2183,7 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	 */
 	if (!IS_ENABLED(CONFIG_USB_CTVPD) &&
 	    !IS_ENABLED(CONFIG_USB_VPD) &&
-	    PD_HEADER_GET_SOP(header) != PD_MSG_SOP &&
+	    PD_HEADER_GET_SOP(header) != TCPC_TX_SOP &&
 	    PD_HEADER_PROLE(header) == PD_PLUG_FROM_DFP_UFP)
 		return;
 

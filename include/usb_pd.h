@@ -1305,15 +1305,6 @@ enum cable_outlet {
 #define PD_HEADER_GET_SOP(header) (((header) >> 28) & 0xf)
 #define PD_HEADER_SOP(sop) (((sop) & 0xf) << 28)
 
-enum pd_msg_type {
-	PD_MSG_SOP,
-	PD_MSG_SOP_PRIME,
-	PD_MSG_SOP_PRIME_PRIME,
-	PD_MSG_SOP_DBG_PRIME,
-	PD_MSG_SOP_DBG_PRIME_PRIME,
-	PD_MSG_SOP_CBL_RST,
-};
-
 /* Used for processing pd extended header */
 #define PD_EXT_HEADER_CHUNKED(header)   (((header) >> 15) & 1)
 #define PD_EXT_HEADER_CHUNK_NUM(header) (((header) >> 11) & 0xf)

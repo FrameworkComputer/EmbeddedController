@@ -32,7 +32,7 @@ int test_td_pd_snk3_e12(void)
 	 * b) The Tester keeps the Rp value as SinkTXNG and sends a
 	 * Get_Sink_Cap message to the UUT.
 	 */
-	partner_send_msg(PD_MSG_SOP, PD_CTRL_GET_SINK_CAP, 0, 0, NULL);
+	partner_send_msg(TCPC_TX_SOP, PD_CTRL_GET_SINK_CAP, 0, 0, NULL);
 
 	/*
 	 * c) Upon receipt of the Sink_Capabilities Message, the Tester doesn't

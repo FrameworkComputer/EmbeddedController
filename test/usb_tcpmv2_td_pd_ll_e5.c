@@ -38,7 +38,7 @@ static int td_pd_ll_e5(enum pd_data_role data_role)
 	 * b) Initiate a Soft Reset and check that the procedure is completed
 	 *    successfully.
 	 */
-	partner_send_msg(PD_MSG_SOP, PD_CTRL_SOFT_RESET, 0, 0, NULL);
+	partner_send_msg(TCPC_TX_SOP, PD_CTRL_SOFT_RESET, 0, 0, NULL);
 
 	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_ACCEPT, 0),
 		EC_SUCCESS, "%d");

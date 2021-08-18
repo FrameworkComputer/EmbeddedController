@@ -54,7 +54,7 @@ enum pd_rev_type partner_get_pd_rev(void);
 #define TCPC_TX_SOP_ALL -1
 void partner_tx_msg_id_reset(int sop);
 
-void partner_send_msg(enum pd_msg_type sop,
+void partner_send_msg(enum tcpm_sop_type sop,
 		      uint16_t type,
 		      uint16_t cnt,
 		      uint16_t ext,

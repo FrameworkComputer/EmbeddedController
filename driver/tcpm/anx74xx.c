@@ -1026,9 +1026,9 @@ void anx74xx_tcpc_alert(int port)
 
 #ifdef CONFIG_USB_PD_DECODE_SOP
 	if (reg & ANX74XX_REG_EXT_SOP)
-		msg_sop[port] = PD_MSG_SOP;
+		msg_sop[port] = TCPC_TX_SOP;
 	else if (reg & ANX74XX_REG_EXT_SOP_PRIME)
-		msg_sop[port] = PD_MSG_SOP_PRIME;
+		msg_sop[port] = TCPC_TX_SOP_PRIME;
 #endif
 
 	/* Check for Hard Reset done bit */
@@ -1043,7 +1043,7 @@ void anx74xx_tcpc_alert(int port)
 
 #ifdef CONFIG_USB_PD_DECODE_SOP
 	if (reg & ANX74XX_REG_EXT_SOP_PRIME_PRIME)
-		msg_sop[port] = PD_MSG_SOP_PRIME_PRIME;
+		msg_sop[port] = TCPC_TX_SOP_PRIME_PRIME;
 #endif
 
 	if (reg & ANX74XX_REG_EXT_HARD_RST) {

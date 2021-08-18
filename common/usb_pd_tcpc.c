@@ -721,11 +721,11 @@ int pd_analyze_rx(int port, uint32_t *payload)
 #ifdef CONFIG_USB_PD_DECODE_SOP
 	/* Encode message address */
 	if (val == PD_SOP) {
-		phs.head |= PD_HEADER_SOP(PD_MSG_SOP);
+		phs.head |= PD_HEADER_SOP(TCPC_TX_SOP);
 	} else if (val == PD_SOP_PRIME) {
-		phs.head |= PD_HEADER_SOP(PD_MSG_SOP_PRIME);
+		phs.head |= PD_HEADER_SOP(TCPC_TX_SOP_PRIME);
 	} else if (val == PD_SOP_PRIME_PRIME) {
-		phs.head |= PD_HEADER_SOP(PD_MSG_SOP_PRIME_PRIME);
+		phs.head |= PD_HEADER_SOP(TCPC_TX_SOP_PRIME_PRIME);
 	} else {
 		msg = "SOP*";
 		goto packet_err;

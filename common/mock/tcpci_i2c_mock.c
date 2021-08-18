@@ -362,7 +362,7 @@ int verify_tcpci_possible_tx(struct possible_tx possible[],
 	return EC_ERROR_TIMEOUT;
 }
 
-void mock_tcpci_receive(enum pd_msg_type sop, uint16_t header,
+void mock_tcpci_receive(enum tcpm_sop_type sop, uint16_t header,
 			uint32_t *payload)
 {
 	int i;

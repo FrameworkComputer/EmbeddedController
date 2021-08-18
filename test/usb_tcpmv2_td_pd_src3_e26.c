@@ -33,7 +33,7 @@ int test_td_pd_src3_e26(void)
 	/*
 	 * ...and sends a Get_Source_Cap message to the UUT.
 	 */
-	partner_send_msg(PD_MSG_SOP, PD_CTRL_GET_SOURCE_CAP, 0, 0, NULL);
+	partner_send_msg(TCPC_TX_SOP, PD_CTRL_GET_SOURCE_CAP, 0, 0, NULL);
 
 	/*
 	 * c) Upon receipt of the Source_Capabilities Message, the Tester
