@@ -10,6 +10,7 @@
 #include "bd99992gw.h"
 #include "board_config.h"
 #include "button.h"
+#include "cbi_ssfc.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "charge_ramp.h"
@@ -19,6 +20,8 @@
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accel_kionix.h"
+#include "driver/accel_kx022.h"
 #include "driver/charger/isl923x.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -583,8 +586,9 @@ static struct mutex g_base_mutex;
 
 static struct bmi_drv_data_t g_bmi160_data;
 
-/* BMA255 private data */
+/* private data */
 static struct accelgyro_saved_data_t g_bma255_data;
+static struct kionix_accel_data g_kx022_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
 const mat33_fp_t base_standard_ref = {
@@ -597,6 +601,35 @@ const mat33_fp_t lid_standard_ref = {
 	{ FLOAT_TO_FP(-1), 0, 0 },
 	{ 0,  FLOAT_TO_FP(1), 0 },
 	{ 0, 0, FLOAT_TO_FP(-1) }
+};
+
+struct motion_sensor_t lid_accel_kx022 = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_KX022,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &kionix_accel_drv,
+	.mutex = &g_lid_mutex,
+	.drv_data = &g_kx022_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
+	.rot_standard_ref = &lid_standard_ref,
+	.min_frequency = KX022_ACCEL_MIN_FREQ,
+	.max_frequency = KX022_ACCEL_MAX_FREQ,
+	.default_range = 2, /* g, to support lid angle calculation. */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 0,
+		},
+		/* Sensor on in S3 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 0,
+		},
+	},
 };
 
 struct motion_sensor_t motion_sensors[] = {
@@ -674,6 +707,16 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+static void board_detect_motionsense(void)
+{
+	if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_LID_KX022) {
+		motion_sensors[LID_ACCEL] = lid_accel_kx022;
+		ccprints("LID_ACCEL is KX022");
+	} else
+		ccprints("LID_ACCEL is BMA253");
+}
+DECLARE_HOOK(HOOK_INIT, board_detect_motionsense, HOOK_PRIO_DEFAULT);
 
 /* Enable or disable input devices, based on chipset state and tablet mode */
 __override void lid_angle_peripheral_enable(int enable)
