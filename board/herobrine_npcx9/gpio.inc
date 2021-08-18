@@ -29,12 +29,10 @@ GPIO_INT(PS_HOLD,           PIN(A, 6), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_sig
 GPIO_INT(AP_SUSPEND,        PIN(5, 7), GPIO_INT_BOTH, power_signal_interrupt)  /* Suspend signal from PMIC */
 /*
  * When switch-cap is off, the POWER_GOOD signal is floating. Need a pull-down
- * to make it low. Overload the interrupt function chipset_warm_reset_interrupt
- * for not only signalling power_signal_interrupt but also handling the logic
- * of WARM_RESET_L which is pulled-up by the same rail of POWER_GOOD.
+ * to make it low.
  */
-GPIO_INT(MB_POWER_GOOD,     PIN(3, 7), GPIO_INT_BOTH | GPIO_PULL_DOWN, chipset_power_good_interrupt)  /* PP1800_L18B from PMIC */
-GPIO_INT(WARM_RESET_L,      PIN(B, 0), GPIO_INT_BOTH, chipset_warm_reset_interrupt)  /* AP warm reset */
+GPIO_INT(MB_POWER_GOOD,     PIN(3, 7), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)  /* PP1800_L18B from PMIC */
+GPIO_INT(WARM_RESET_L,      PIN(B, 0), GPIO_INT_BOTH, power_signal_interrupt)  /* AP warm reset */
 GPIO_INT(AP_EC_SPI_CS_L,    PIN(5, 3), GPIO_INT_FALLING | GPIO_PULL_DOWN, shi_cs_event)  /* EC SPI Chip Select */
 
 /* Sensor interrupts */
