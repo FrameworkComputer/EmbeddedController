@@ -289,6 +289,9 @@ static void board_spi_disable(void)
 	/* Set pins to a state calming the sensor down. */
 	gpio_set_flags(GPIO_EC_SENSOR_SPI_CK, GPIO_OUT_LOW);
 	gpio_set_level(GPIO_EC_SENSOR_SPI_CK, 0);
+	/* Pull SPI_NSS pin to low to prevent a leakage. */
+	gpio_set_flags(GPIO_EC_SENSOR_SPI_NSS, GPIO_OUT_LOW);
+	gpio_set_level(GPIO_EC_SENSOR_SPI_NSS, 0);
 	gpio_config_module(MODULE_SPI_CONTROLLER, 0);
 
 	/* Disable spi peripheral and clocks. */
