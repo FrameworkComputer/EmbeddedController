@@ -1,0 +1,47 @@
+description: "LGC KT0020G010 AP16L8J"
+compatible: "lgc,ap16l8j"
+
+include: battery-smart.yaml
+
+properties:
+   enum-name:
+      type: string
+      default: "lgc,ap16l8j"
+
+   # Fuel gauge
+   manuf_name:
+      default: "LGC KT0020G010"
+   device_name:
+      default: "AP16L8J"
+   ship_mode_reg_addr:
+      default: 0x3A
+   ship_mode_reg_data:
+      default: [ 0xC574, 0xC574 ]
+   fet_mfgacc_support:
+      default: 1
+   fet_reg_mask:
+      default: 0x0002
+   fet_disconnect_val:
+      default: 0x0
+
+   # Battery info
+   voltage_max:
+      default: 8700
+   voltage_normal:
+      default: 7500
+   voltage_min:
+      default: 6000
+   precharge_current:
+      default: 256
+   start_charging_min_c:
+      default: 0
+   start_charging_max_c:
+      default: 50
+   charging_min_c:
+      default: 0
+   charging_max_c:
+      default: 60
+   discharging_min_c:
+      default: -20
+   discharging_max_c:
+      default: 75

@@ -1,0 +1,19 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+compatible: "battery-smart"
+
+include: [ "base.yaml", "battery-info.yaml", "battery-fuel-gauge.yaml" ]
+
+properties:
+   enum-name:
+      description: Unique value used for creating enum of batteries types
+      type: string
+      enum:
+         - "as3gwrc3ka,c235-41"
+         - "lgc,ap16l8j"
+         - "lgc,ap18c8k"
+         - "murata,ap18c4k"
+         - "panasonic,ap16l5j"
+         - "panasonic,ap16l5j-009"

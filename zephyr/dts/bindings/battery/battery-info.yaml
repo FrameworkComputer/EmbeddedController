@@ -1,0 +1,71 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description:
+   Information about battery
+   Voltage is in millivolts
+   Current is in milliamperes
+   Temperature is in Celsius degrees
+
+compatible: "battery-info"
+
+properties:
+   voltage_max:
+      description: |
+         Maximum voltage that can be applied to the battery.
+      type: int
+   voltage_normal:
+      description: |
+         Nominal voltage of the battery.
+      type: int
+   voltage_min:
+      description: |
+         Minimum voltage of the battery.
+         If current voltage is below this value, system will shutdown.
+      type: int
+   precharge_voltage:
+      description: |
+         Voltage used during the precharge phase. Not all chargers
+         may take these into account.
+      type: int
+   precharge_current:
+      description: |
+         Maximum current used during the precharge phase.
+      type: int
+   start_charging_min_c:
+      description: |
+         Minimum temperature of battery to start charging it.
+         This value is used only if CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
+         is defined.
+      type: int
+   start_charging_max_c:
+      description: |
+         Maximum temperature of battery to start charging it.
+         This value is used only if CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
+         is defined.
+      type: int
+   charging_min_c:
+      description: |
+         Minimum temperature of battery during charging it. If the battery
+         temperature falls below this value, charging will be stopped.
+         This value is used only if CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
+         is defined.
+      type: int
+   charging_max_c:
+      description: |
+         Maximum temperature of battery during charging it. If the battery
+         temperature raises above this value, charging will be stopped.
+         This value is used only if CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
+         is defined.
+      type: int
+   discharging_min_c:
+      description: |
+         Minimum working temperature of battery.
+         If temperature is below this value, the system will shutdown.
+      type: int
+   discharging_max_c:
+      description: |
+         Maximum working temperature of battery.
+         If temperature is above this value, the system will shutdown.
+      type: int

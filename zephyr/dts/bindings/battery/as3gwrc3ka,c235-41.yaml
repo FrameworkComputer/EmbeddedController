@@ -1,0 +1,47 @@
+description: "AS3GWRc3KA C235-41"
+compatible: "as3gwrc3ka,c235-41"
+
+include: battery-smart.yaml
+
+properties:
+   enum-name:
+      type: string
+      default: "as3gwrc3ka,c235-41"
+
+   # Fuel gauge
+   manuf_name:
+      default: "AS3GWRc3KA"
+   device_name:
+      default: "C235-41"
+   ship_mode_reg_addr:
+      default: 0x00
+   ship_mode_reg_data:
+      default: [ 0x10, 0x10 ]
+   fet_reg_addr:
+      default: 0x99
+   fet_reg_mask:
+      default: 0x0c
+   fet_disconnect_val:
+      default: 0x0c
+
+   # Battery info
+   voltage_max:
+      default: 8800
+   voltage_normal:
+      default: 7700
+   voltage_min:
+      default: 6000
+   precharge_current:
+      default: 256
+   start_charging_min_c:
+      default: 0
+   start_charging_max_c:
+      default: 45
+   charging_min_c:
+      default: 0
+   charging_max_c:
+      default: 60
+   discharging_min_c:
+      default: 0
+   discharging_max_c:
+      default: 60

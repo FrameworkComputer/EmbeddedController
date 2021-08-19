@@ -1,0 +1,84 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+   Battery fuel gauge parameters
+
+compatible: "battery-fuel-gauge"
+
+properties:
+   manuf_name:
+      description: Manufacturer name
+      type: string
+   device_name:
+      description: Model/Device name
+      type: string
+   ship_mode_wb_support:
+      description: |
+         Write Block support. If this is true, then i2c write block command
+         will be used instead of a 16-bit write
+         Value must be either 0 or 1.
+      type: int
+   ship_mode_reg_addr:
+      description: |
+         Address of register responsible for enabling ship mode.
+      type: int
+   ship_mode_reg_data:
+      description: |
+         Values written to register to enable ship mode.
+      type: array
+   sleep_mode_support:
+      description: |
+         Defines if battery support fuel gauge sleep command.
+         Value must be either 0 or 1.
+      type: int
+   sleep_mode_reg_addr:
+      description: |
+         Defines address where command will be sent to go into sleep mode.
+      type: int
+   sleep_mode_reg_data:
+      description: |
+         Defines value which will be sent to register to go into sleep mode.
+      type: int
+   fet_mfgacc_support:
+      description: |
+         Defines if battery supports manufacturer access command.
+         If enabled, FET status is read using the ManufacturerBlockAccess (0x44)
+         to read the OperationStatus (0x54) register.
+         The fet_reg_mask and fet_disconnect_val properties must still be
+         defined.
+         Value must be either 0 or 1.
+      type: int
+   fet_reg_addr:
+      description: |
+         Address of register which reports charging and discharging FETs status.
+         This property is ignored if fet_mfgacc_support is true.
+      type: int
+   fet_reg_mask:
+      description: |
+         Mask which determines which bit in status value contains the
+         discharge FET status.
+      type: int
+   fet_disconnect_val:
+      description: |
+         Value that describes which bits must be set to determine that
+         discharge FET has disconnected the battery.
+      type: int
+   fet_cfet_mask:
+      description: |
+         Mask which determines which bit in status value contains the
+         charge FET status. If this value is 0, this means there's
+         no charge FET.
+      type: int
+   fet_cfet_off_val:
+      description: |
+         Value that describes which bits must be set to determine that
+         charge FET has disconnected the battery.
+      type: int
+   imbalance_mv:
+      description: |
+         This property is used if CONFIG_BATTERY_MEASURE_IMBALANCE is defined.
+         It should be an enum and its value should be a name of function
+         which will be assigned to imbalance_mv pointer.
+      type: string
