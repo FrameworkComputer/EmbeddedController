@@ -82,10 +82,10 @@ const struct pwm_t pwm_channels[] = {
 		.freq_hz = 25000, /* maximum supported frequency */
 		.pcfsr_sel = PWM_PRESCALER_C4
 	},
-	[PWM_CH_KB_BL] = {
+	[PWM_CH_KBLIGHT] = {
 		.channel = PWM_HW_CH_DCR3,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 324, /* maximum supported frequency */
+		.flags = PWM_CONFIG_DSLEEP,
+		.freq_hz = 25000,
 		.pcfsr_sel = PWM_PRESCALER_C4
 	},
 };
