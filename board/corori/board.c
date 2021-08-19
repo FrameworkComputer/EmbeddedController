@@ -28,7 +28,6 @@
 #include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/usb_mux/pi3usb3x532.h"
-#include "driver/retimer/ps8802.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -60,9 +59,6 @@
 #define ADC_VOL_DOWN_MASK   BIT(1)
 
 static uint8_t new_adc_key_state;
-
-static void ps8762_chaddr_deferred(void);
-DECLARE_DEFERRED(ps8762_chaddr_deferred);
 
 /******************************************************************************/
 /* USB-A Configuration */
@@ -153,40 +149,6 @@ static void usb_c0_interrupt(enum gpio_signal s)
 	/* Check the line again in 5ms */
 	hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
 
-}
-
-/* C1 interrupt line shared by BC 1.2, TCPC, and charger */
-static void check_c1_line(void);
-DECLARE_DEFERRED(check_c1_line);
-
-static void notify_c1_chips(void)
-{
-	schedule_deferred_pd_interrupt(1);
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
-}
-
-static void check_c1_line(void)
-{
-	/*
-	 * If line is still being held low, see if there's more to process from
-	 * one of the chips.
-	 */
-	if (!gpio_get_level(GPIO_SUB_USB_C1_INT_ODL)) {
-		notify_c1_chips();
-		hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
-	}
-}
-
-static void sub_usb_c1_interrupt(enum gpio_signal s)
-{
-	/* Cancel any previous calls to check the interrupt line */
-	hook_call_deferred(&check_c1_line_data, -1);
-
-	/* Notify all chips using this line that an interrupt came in */
-	notify_c1_chips();
-
-	/* Check the line again in 5ms */
-	hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
 }
 
 #include "gpio_list.h"
@@ -289,15 +251,6 @@ void board_reset_pd_mcu(void)
 	 */
 }
 
-static void ps8762_chaddr_deferred(void)
-{
-	/* Switch PS8762 I2C Address to 0x50*/
-	if (ps8802_chg_i2c_addr(I2C_PORT_SUB_USB_C1) == EC_SUCCESS)
-		CPRINTS("Switch PS8762 address to 0x50 success");
-	else
-		CPRINTS("Switch PS8762 address to 0x50 failed");
-}
-
 __override void board_power_5v_enable(int enable)
 {
 	/*
@@ -311,11 +264,6 @@ __override void board_power_5v_enable(int enable)
 
 	if (!enable)
 		return;
-	/*
-	 * Port C1 the PP3300_USB_C1  assert, delay 15ms
-	 * colud be accessed PS8762 by I2C.
-	 */
-	hook_call_deferred(&ps8762_chaddr_deferred_data, 15 * MSEC);
 }
 
 int board_is_sourcing_vbus(int port)
@@ -595,9 +543,7 @@ void board_init(void)
 	int on;
 
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
-	gpio_enable_interrupt(GPIO_SUB_USB_C1_INT_ODL);
 	check_c0_line();
-	check_c1_line();
 
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
@@ -672,24 +618,12 @@ const struct charger_config_t chg_chips[] = {
 		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
 		.drv = &isl923x_drv,
 	},
-
-	{
-		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
-		.drv = &isl923x_drv,
-	},
 };
 const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	{
 		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-		.flags = PI3USB9201_ALWAYS_POWERED,
-	},
-
-	{
-		.i2c_port = I2C_PORT_SUB_USB_C1,
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
 		.flags = PI3USB9201_ALWAYS_POWERED,
 	},
@@ -715,16 +649,6 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.flags = TCPC_FLAGS_TCPCI_REV2_0,
 		.drv = &raa489000_tcpm_drv,
 	},
-
-	{
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_SUB_USB_C1,
-			.addr_flags = RAA489000_TCPC0_I2C_FLAGS,
-		},
-		.flags = TCPC_FLAGS_TCPCI_REV2_0,
-		.drv = &raa489000_tcpm_drv,
-	},
 };
 
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
@@ -734,12 +658,6 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
 		.driver = &pi3usb3x532_usb_mux_driver,
 	},
-	{
-		.usb_port = 1,
-		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = PS8802_I2C_ADDR_FLAGS_CUSTOM,
-		.driver = &ps8802_usb_mux_driver,
-	}
 };
 
 uint16_t tcpc_get_alert_status(void)
@@ -760,17 +678,6 @@ uint16_t tcpc_get_alert_status(void)
 
 			if (regval)
 				status |= PD_STATUS_TCPC_ALERT_0;
-		}
-	}
-
-	if (!gpio_get_level(GPIO_SUB_USB_C1_INT_ODL)) {
-		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
-			/* TCPCI spec Rev 1.0 says to ignore bits 14:12. */
-			if (!(tcpc_config[1].flags & TCPC_FLAGS_TCPCI_REV2_0))
-				regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
-
-			if (regval)
-				status |= PD_STATUS_TCPC_ALERT_1;
 		}
 	}
 
