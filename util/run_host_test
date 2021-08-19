@@ -6,8 +6,6 @@
 
 """Wrapper that runs a host test. Handles timeout and stopping the emulator."""
 
-from __future__ import print_function
-
 import argparse
 import enum
 import io
@@ -21,16 +19,10 @@ import time
 
 class TestResult(enum.Enum):
   """An Enum representing the result of running a test."""
-  SUCCESS = enum.auto()
-  FAIL = enum.auto()
-  TIMEOUT = enum.auto()
-  UNEXPECTED_TERMINATION = enum.auto()
-
-  @property
-  def exit_code(self):
-    if self is TestResult.SUCCESS:
-      return 0
-    return 1
+  SUCCESS = 0
+  FAIL = 1
+  TIMEOUT = 2
+  UNEXPECTED_TERMINATION = 3
 
   @property
   def reason(self):
@@ -52,14 +44,17 @@ def run_test(path, timeout=10):
       bufsize=0,
       stdin=subprocess.PIPE,
       stdout=subprocess.PIPE,
-      env=env)
+      env=env,
+      encoding='utf-8',
+      errors='replace',
+  )
 
   # Put the output pipe in non-blocking mode. We will then select(2)
   # on the pipe to know when we have bytes to process.
   os.set_blocking(proc.stdout.fileno(), False)
 
   try:
-    output_buffer = io.BytesIO()
+    output_buffer = io.StringIO()
     while True:
       select_timeout = timeout - (time.monotonic() - start_time)
       if select_timeout <= 0:
@@ -74,9 +69,9 @@ def run_test(path, timeout=10):
       output_buffer.write(proc.stdout.read())
       output_log = output_buffer.getvalue()
 
-      if b'Pass!' in output_log:
+      if 'Pass!' in output_log:
         return TestResult.SUCCESS, output_log
-      if b'Fail!' in output_log:
+      if 'Fail!' in output_log:
         return TestResult.FAIL, output_log
       if proc.poll():
         return TestResult.UNEXPECTED_TERMINATION, output_log
@@ -98,8 +93,8 @@ def parse_options(argv):
   parser.add_argument('--coverage', action='store_const', const='coverage',
                       default='host', dest='test_target',
                       help='Flag if this is a code coverage test.')
-  parser.add_argument('--verbose', '-v', action='count', default=0,
-                      help='Increase output verbosity.')
+  parser.add_argument('--verbose', '-v', action='store_true',
+                      help='Dump emulator output always, even if successful.')
   parser.add_argument('test_name', type=str)
   return parser.parse_args(argv)
 
@@ -123,11 +118,11 @@ def main(argv):
       opts.test_name, result.reason, elapsed_time),
         file=sys.stderr)
 
-  if result is not TestResult.SUCCESS or opts.verbose > 0:
+  if result is not TestResult.SUCCESS or opts.verbose:
     print('====== Emulator output ======', file=sys.stderr)
-    print(output.decode('utf-8'), file=sys.stderr)
+    print(output, file=sys.stderr)
     print('=============================', file=sys.stderr)
-  return result.exit_code
+  return result.value
 
 
 if __name__ == '__main__':
