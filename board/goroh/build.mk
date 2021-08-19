@@ -13,5 +13,6 @@ BASEBOARD:=goroh
 
 board-y+=battery.o
 board-y+=board.o
+board-y+=fans.o
 board-y+=led.o
 board-y+=sensors.o

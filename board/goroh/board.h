@@ -106,5 +106,10 @@ enum pwm_channel {
 	PWM_CH_COUNT,
 };
 
+enum fan_channel {
+	FAN_CH_0,
+	FAN_CH_COUNT
+};
+
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

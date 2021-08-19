@@ -153,6 +153,9 @@
 #endif
 #define CONFIG_LID_SWITCH
 
+/* Fan */
+#define CONFIG_FANS 1
+
 /* SPI / Host Command */
 #define CONFIG_SPI
 

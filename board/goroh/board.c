@@ -62,37 +62,28 @@ const struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-/* PWM */
-
-/*
- * PWM channels. Must be in the exactly same order as in enum pwm_channel.
- * There total three 16 bits clock prescaler registers for all pwm channels,
- * so use the same frequency and prescaler register setting is required if
- * number of pwm channel greater than three.
- *
- * TODO(yllin): configure PWM
- */
+/* PWM channels.  */
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_LED1] = {
-		.channel = 0,
+		.channel = PWM_HW_CH_DCR0,
 		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
 		.freq_hz = 324, /* maximum supported frequency */
 		.pcfsr_sel = PWM_PRESCALER_C4
 	},
 	[PWM_CH_LED2] = {
-		.channel = 1,
+		.channel = PWM_HW_CH_DCR1,
 		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
 		.freq_hz = 324, /* maximum supported frequency */
 		.pcfsr_sel = PWM_PRESCALER_C4
 	},
 	[PWM_CH_FAN] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 324, /* maximum supported frequency */
+		.channel = PWM_HW_CH_DCR2,
+		.flags = PWM_CONFIG_OPEN_DRAIN,
+		.freq_hz = 25000, /* maximum supported frequency */
 		.pcfsr_sel = PWM_PRESCALER_C4
 	},
 	[PWM_CH_KB_BL] = {
-		.channel = 3,
+		.channel = PWM_HW_CH_DCR3,
 		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
 		.freq_hz = 324, /* maximum supported frequency */
 		.pcfsr_sel = PWM_PRESCALER_C4
