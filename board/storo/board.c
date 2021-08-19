@@ -866,40 +866,6 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-const static struct ec_thermal_config thermal_memory = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(60),
-	},
-};
-const static struct ec_thermal_config thermal_ambient = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-	},
-};
-const static struct ec_thermal_config thermal_cpu = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-	},
-};
-struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1] = thermal_memory,
-	[TEMP_SENSOR_2] = thermal_ambient,
-	[TEMP_SENSOR_3] = thermal_cpu,
-};
-BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-
 /* This callback disables keyboard when convertibles are fully open */
 __override void lid_angle_peripheral_enable(int enable)
 {
