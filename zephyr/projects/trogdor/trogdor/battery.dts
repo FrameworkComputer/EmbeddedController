@@ -4,11 +4,9 @@
  */
 
 / {
-	named-batteries {
-		compatible = "named-batteries";
-
-		ap16l5j {
-			enum-name = "ap16l5j";
+	batteries {
+		default_battery: ap16l5j {
+			compatible = "panasonic,ap16l5j";
 		};
 	};
 };
