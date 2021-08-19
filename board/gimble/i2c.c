@@ -23,7 +23,7 @@ const struct i2c_port_t i2c_ports[] = {
 		 * before raising to 1MHz.
 		 */
 		/* I2C1 */
-		.name = "tcpc0,2",
+		.name = "tcpc0",
 		.port = I2C_PORT_USB_C0_TCPC,
 		.kbps = 400,
 		.scl = GPIO_EC_I2C_USB_C0_C2_TCPC_SCL,
@@ -31,7 +31,7 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 	{
 		/* I2C2 */
-		.name = "ppc0,2",
+		.name = "ppc0",
 		.port = I2C_PORT_USB_C0_PPC,
 		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_C0_C2_PPC_BC_SCL,
@@ -56,14 +56,6 @@ const struct i2c_port_t i2c_ports[] = {
 		.kbps = 100,
 		.scl = GPIO_EC_I2C_BAT_SCL,
 		.sda = GPIO_EC_I2C_BAT_SDA,
-	},
-	{
-		/* I2C6 */
-		.name = "ppc1",
-		.port = I2C_PORT_USB_C1_PPC,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C_USB_C1_MIX_SCL,
-		.sda = GPIO_EC_I2C_USB_C1_MIX_SDA,
 	},
 	{
 		/* I2C7 */
