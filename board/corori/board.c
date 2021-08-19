@@ -64,7 +64,6 @@ static uint8_t new_adc_key_state;
 /* USB-A Configuration */
 const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_USB_A0_VBUS,
-	GPIO_EN_USB_A1_VBUS,
 };
 
 /* Keyboard scan setting */
@@ -251,6 +250,12 @@ void board_reset_pd_mcu(void)
 	 */
 }
 
+static void set_5v_gpio(int level)
+{
+	gpio_set_level(GPIO_EN_PP5000, level);
+	gpio_set_level(GPIO_EN_USB_A0_VBUS, level);
+}
+
 __override void board_power_5v_enable(int enable)
 {
 	/*
@@ -258,12 +263,7 @@ __override void board_power_5v_enable(int enable)
 	 * generated locally on the sub board and we need to set the comparator
 	 * polarity on the sub board charger IC.
 	 */
-	gpio_set_level(GPIO_EN_PP5000, !!enable);
-	if (isl923x_set_comparator_inversion(1, !!enable))
-		CPRINTS("Failed to %sable sub rails!", enable ? "en" : "dis");
-
-	if (!enable)
-		return;
+	set_5v_gpio(!!enable);
 }
 
 int board_is_sourcing_vbus(int port)
