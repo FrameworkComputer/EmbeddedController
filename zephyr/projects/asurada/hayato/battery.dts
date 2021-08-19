@@ -4,11 +4,9 @@
  */
 
 / {
-	named-batteries {
-		compatible = "named-batteries";
-
-		c235 {
-			enum-name = "c235";
+	batteries {
+		default_battery: c235 {
+			compatible = "as3gwrc3ka,c235-41";
 		};
 	};
 };

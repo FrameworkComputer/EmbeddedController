@@ -22,8 +22,5 @@ zephyr_library_sources(
   "${PLATFORM_EC_BASEBOARD}/usbc_config.c"
   "${PLATFORM_EC_BASEBOARD}/usb_pd_policy.c")
 
-zephyr_library_sources(
-  "${PLATFORM_EC_BOARD}/battery.c")
-
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C
   "src/i2c.c")
