@@ -77,8 +77,8 @@ GPIO(EC_BATT_PRES_ODL,       PIN(C, 0), GPIO_INPUT)
 GPIO(BC12_DET_EN,            PIN(J, 5), GPIO_OUT_LOW) /* EN_USB_C0_BC12_DET */
 GPIO(EN_EC_ID_ODL,           PIN(H, 5), GPIO_ODR_LOW)
 GPIO(ENTERING_RW,            PIN(C, 5), GPIO_OUT_LOW) /* EC_ENTERING_RW */
-GPIO(EC_USB_C0_MUX_RESET_L,  PIN(D, 7), GPIO_OUT_HIGH)
 GPIO(EC_KB_BL_EN,            PIN(G, 3), GPIO_OUT_LOW) /* Keyboard backlight enable */
+GPIO(EN_5V_USM,              PIN(D, 7), GPIO_OUT_LOW)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C_A_SCL,              PIN(B, 3), GPIO_INPUT) /* I2C_CHG_BATT_SCL */

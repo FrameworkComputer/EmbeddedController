@@ -112,3 +112,15 @@ void board_usb_mux_init(void)
 				   PS8743_USB_EQ_RX_12_8_DB);
 }
 DECLARE_HOOK(HOOK_INIT, board_usb_mux_init, HOOK_PRIO_INIT_I2C + 1);
+
+static void board_suspend(void)
+{
+	gpio_set_level(GPIO_EN_5V_USM, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_suspend, HOOK_PRIO_DEFAULT);
+
+static void board_resume(void)
+{
+	gpio_set_level(GPIO_EN_5V_USM, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_resume, HOOK_PRIO_DEFAULT);
