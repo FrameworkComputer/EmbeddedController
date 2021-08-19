@@ -24,7 +24,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
   "${PLATFORM_EC_BOARD}/led.c")
 
 zephyr_library_sources(
-  "${PLATFORM_EC_BOARD}/battery.c"
   "${PLATFORM_EC_BOARD}/hibernate.c"
   "${PLATFORM_EC_BOARD}/sku.c"
   "${PLATFORM_EC_BOARD}/switchcap.c"

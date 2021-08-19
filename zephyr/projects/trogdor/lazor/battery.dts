@@ -4,27 +4,21 @@
  */
 
 / {
-	named-batteries {
-		compatible = "named-batteries";
-
-		ap16l5j {
-			enum-name = "ap16l5j";
+	batteries {
+		default_battery: ap16l5j {
+			compatible = "panasonic,ap16l5j";
 		};
-
 		ap16l5j_009 {
-			enum-name = "ap16l5j_009";
+			compatible = "panasonic,ap16l5j-009";
 		};
-
 		ap16l8j {
-			enum-name = "ap16l8j";
+			compatible = "lgc,ap16l8j";
 		};
-
 		lgc_ap18c8k {
-			enum-name = "lgc_ap18c8k";
+			compatible = "lgc,ap18c8k";
 		};
-
 		murata_ap18c4k {
-			enum-name = "murata_ap18c4k";
+			compatible = "murata,ap18c4k";
 		};
 	};
 };
