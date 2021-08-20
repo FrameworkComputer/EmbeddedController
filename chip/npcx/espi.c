@@ -561,7 +561,8 @@ void espi_interrupt(void)
 		NPCX_ESPISTS = status;
 
 		if (IS_BIT_SET(status, NPCX_ESPISTS_BERR))
-			CPRINTS("eSPI Bus Error");
+			/* Always print eSPI Bus Errors */
+			cprints(CC_LPC, "eSPI Bus Error");
 
 		/* eSPI inband reset(from VW) */
 		if (IS_BIT_SET(status, NPCX_ESPISTS_IBRST)) {
