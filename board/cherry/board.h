@@ -40,6 +40,7 @@
 
 /* Keyboard */
 #define GPIO_EN_KEYBOARD_BACKLIGHT	GPIO_EN_KB_BL
+#define CONFIG_KEYBOARD_REFRESH_ROW3
 
 /* Sensor */
 #define CONFIG_GMR_TABLET_MODE
