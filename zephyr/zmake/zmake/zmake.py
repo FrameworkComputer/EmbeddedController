@@ -235,7 +235,6 @@ class Zmake:
             self.logger.info("Clearing old build directory %s", build_dir)
             shutil.rmtree(build_dir)
 
-        generated_include_dir = build_dir / "include"
         base_config = zmake.build_config.BuildConfig(
             environ_defs={"ZEPHYR_BASE": str(zephyr_base), "PATH": "/usr/bin"},
             cmake_defs={
@@ -243,7 +242,6 @@ class Zmake:
                 "SYSCALL_INCLUDE_DIRS": str(
                     self.module_paths["ec"] / "zephyr" / "include" / "drivers"
                 ),
-                "ZMAKE_INCLUDE_DIR": str(generated_include_dir),
             },
         )
 
@@ -276,8 +274,6 @@ class Zmake:
 
         if not build_dir.exists():
             build_dir = build_dir.mkdir()
-        if not generated_include_dir.exists():
-            generated_include_dir.mkdir()
         processes = []
         self.logger.info("Building %s in %s.", project_dir, build_dir)
         for build_name, build_config in project.iter_builds():
@@ -377,14 +373,6 @@ class Zmake:
             project,
             build_dir / "zephyr_base",
             zmake.modules.locate_from_directory(build_dir / "modules"),
-        )
-
-        # The version header needs to generated during the build phase
-        # instead of configure, as the tree may have changed since
-        # configure was run.
-        zmake.version.write_version_header(
-            version_string,
-            build_dir / "include" / "ec_version.h",
         )
 
         for build_name, build_config in project.iter_builds():

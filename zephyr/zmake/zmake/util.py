@@ -9,29 +9,6 @@ import re
 import shlex
 
 
-def c_str(input_str):
-    """Make a string that can be included as a literal in C source code.
-
-    Args:
-        input_str: The string to process.
-
-    Returns:
-        A string which can be included in C source code.
-    """
-
-    def c_chr(char):
-        # Convert a char in a string to the C representation.  Per the
-        # C standard, we can use all characters but quote, newline,
-        # and backslash directly with no replacements.
-        return {
-            '"': r"\"",
-            "\n": r"\n",
-            "\\": "\\\\",
-        }.get(char, char)
-
-    return '"{}"'.format("".join(map(c_chr, input_str)))
-
-
 def locate_cros_checkout():
     """Find the path to the ChromiumOS checkout.
 

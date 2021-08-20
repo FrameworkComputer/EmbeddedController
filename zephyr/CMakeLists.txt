@@ -25,11 +25,33 @@ if(NOT EXISTS "${PLATFORM_EC}/zephyr/module.yml")
   assert_exists("${PLATFORM_EC}/zephyr/module.yml")
 endif()
 
-if(DEFINED ZMAKE_INCLUDE_DIR)
-  zephyr_include_directories("${ZMAKE_INCLUDE_DIR}")
-endif()
-
 if(DEFINED CONFIG_PLATFORM_EC)
+  # Build the EC's expected ec_version.h file.
+  set(ec_version_file "${CMAKE_BINARY_DIR}/ec/include/generated/ec_version.h")
+  # Create the command used to generate the ec_version.h file.
+  add_custom_command(
+          OUTPUT ${ec_version_file}
+          # TODO(b/185249526): zephyr: add project name to the version output
+          COMMAND BOARD=${BOARD}_zephyr ${PLATFORM_EC}/util/getversion.sh > ${ec_version_file}
+          WORKING_DIRECTORY ${PLATFORM_EC}
+  )
+  # Create a custom target that will depend on the file.
+  add_custom_target(generate_ec_version DEPENDS ${ec_version_file})
+
+  # Create a local library (ec_version) that will be a pure interface library
+  # and will depend on the custom target that generates the ec_version.h file.
+  add_library(ec_version INTERFACE)
+  add_dependencies(ec_version generate_ec_version)
+
+  # Ensure the EC version file is generated before trying to build the app
+  # library, which includes compiling version.c
+  add_dependencies(app ec_version)
+
+  # Register the library with zephyr so that it generates the file at build
+  # time. Also, append the include directory so we can include ec_version.h.
+  zephyr_append_cmake_library(ec_version)
+  zephyr_include_directories("${CMAKE_BINARY_DIR}/ec/include/generated")
+
   # Add CHROMIUM_EC definition, which is used by ec_commands.h to
   # determine that the header is being compiled for the EC instead of
   # by another third-party C codebase.
