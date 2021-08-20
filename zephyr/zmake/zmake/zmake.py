@@ -668,25 +668,6 @@ class Zmake:
             return rv
 
         with self.jobserver.get_job():
-            # Get the build version
-            proc = self.jobserver.popen(
-                [self.module_paths["ec"] / "util/getversion.sh"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                encoding="utf-8",
-                errors="replace",
-            )
-            zmake.multiproc.log_output(
-                self.logger, logging.ERROR, proc.stderr, job_id="getversion.sh"
-            )
-            version = ""
-            for line in proc.stdout:
-                match = re.search(r'#define VERSION "(.*)"', line)
-                if match:
-                    version = match.group(1)
-            if proc.wait():
-                raise OSError(get_process_failure_msg(proc))
-
             # Merge info files into a single lcov.info
             self.logger.info("Merging coverage data into %s.", build_dir / "lcov.info")
             cmd = ["/usr/bin/lcov", "-o", build_dir / "lcov.info"]
@@ -717,7 +698,7 @@ class Zmake:
                     "-o",
                     build_dir / "coverage_rpt",
                     "-t",
-                    "Zephyr EC Unittest {}".format(version),
+                    "Zephyr EC Unittest",
                     "-p",
                     self.checkout / "src",
                     "-s",
