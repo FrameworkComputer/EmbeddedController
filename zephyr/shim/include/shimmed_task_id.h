@@ -107,6 +107,9 @@ typedef uint8_t task_id_t;
 enum {
 	TASK_ID_IDLE = -1, /* We don't shim the idle task */
 	CROS_EC_TASK_LIST
+#ifdef TEST_BUILD
+	TASK_ID_TEST_RUNNER,
+#endif
 	TASK_ID_COUNT,
 	TASK_ID_INVALID = 0xff, /* Unable to find the task */
 };
