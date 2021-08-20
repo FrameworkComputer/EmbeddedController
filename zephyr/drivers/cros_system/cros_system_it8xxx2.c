@@ -11,7 +11,9 @@
 #include <soc.h>
 #include <soc/ite_it8xxx2/reg_def_cros.h>
 
+#include "gpio.h"
 #include "system.h"
+#include "util.h"
 
 LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 
@@ -133,7 +135,7 @@ static int cros_system_it8xxx2_soc_reset(const struct device *dev)
 	/* Disable interrupts to avoid task swaps during reboot. */
 	interrupt_disable_all();
 
-	if (chip_reset_flags & EC_RESET_FLAG_HARD)
+	if (chip_reset_flags & (EC_RESET_FLAG_HARD | EC_RESET_FLAG_HIBERNATE))
 		gctrl_base->GCTRL_ETWDUARTCR |= IT8XXX2_GCTRL_ETWD_HW_RST_EN;
 
 	/*
@@ -155,7 +157,72 @@ static int cros_system_it8xxx2_hibernate(const struct device *dev,
 					 uint32_t seconds,
 					 uint32_t microseconds)
 {
-	/* TODO: To implement the hibernate mode */
+	struct wdt_it8xxx2_regs *const wdt_base = WDT_IT8XXX2_REG_BASE;
+
+	/* Disable all interrupts. */
+	interrupt_disable_all();
+
+	/* Save and disable interrupts */
+	if (IS_ENABLED(CONFIG_ITE_IT8XXX2_INTC))
+		ite_intc_save_and_disable_interrupts();
+
+	/* bit5: watchdog is disabled. */
+	wdt_base->ETWCTRL |= IT8XXX2_WDT_EWDSCEN;
+
+	/*
+	 * Setup GPIOs for hibernate. On some boards, it's possible that this
+	 * may not return at all. On those boards, power to the EC is likely
+	 * being turn off entirely.
+	 */
+	if (board_hibernate_late) {
+		/*
+		 * Set reset flag in case board_hibernate_late() doesn't
+		 * return.
+		 */
+		chip_save_reset_flags(EC_RESET_FLAG_HIBERNATE);
+		board_hibernate_late();
+	}
+
+	if (seconds || microseconds) {
+		/*
+		 * Convert milliseconds(or at least 1 ms) to 32 Hz
+		 * free run timer count for hibernate.
+		 */
+		uint32_t c = (seconds * 1000 + microseconds / 1000 + 1) *
+				32 / 1000;
+
+		/* Enable a 32-bit timer and clock source is 32 Hz */
+		/* Disable external timer x */
+		IT8XXX2_EXT_CTRLX(FREE_RUN_TIMER) &= ~IT8XXX2_EXT_ETXEN;
+		irq_disable(FREE_RUN_TIMER_IRQ);
+		IT8XXX2_EXT_PSRX(FREE_RUN_TIMER) = EXT_PSR_32;
+		IT8XXX2_EXT_CNTX(FREE_RUN_TIMER) = c & FREE_RUN_TIMER_MAX_CNT;
+		/* Enable and re-start external timer x */
+		IT8XXX2_EXT_CTRLX(FREE_RUN_TIMER) |=
+			(IT8XXX2_EXT_ETXEN | IT8XXX2_EXT_ETXRST);
+		irq_enable(FREE_RUN_TIMER_IRQ);
+	}
+
+	static const int wakeup_pin_list[] = {
+#if DT_NODE_EXISTS(SYSTEM_DT_NODE_HIBERNATE_CONFIG)
+		UTIL_LISTIFY(SYSTEM_DT_NODE_WAKEUP_PIN_LEN,
+			     SYSTEM_DT_WAKEUP_GPIO_ENUM_BY_IDX, _)
+#endif
+	};
+
+	/* Reconfigure wake-up GPIOs */
+	for (int i = 0; i < ARRAY_SIZE(wakeup_pin_list); i++)
+		/* Re-enable interrupt for wake-up inputs */
+		gpio_enable_interrupt(wakeup_pin_list[i]);
+
+	/* EC sleep mode */
+	chip_pll_ctrl(CHIP_PLL_SLEEP);
+
+	/* Chip sleep and wait timer wake it up */
+	__asm__ volatile ("wfi");
+
+	/* Reset EC when wake up from sleep mode (system hibernate) */
+	system_reset(SYSTEM_RESET_HIBERNATE);
 
 	return 0;
 }
