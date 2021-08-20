@@ -224,14 +224,6 @@ static int rt1718s_init(int port)
 		need_sw_reset = false;
 	}
 
-	if (IS_ENABLED(CONFIG_USB_PD_FRS_TCPC))
-		/* Set vbus frs low unmasked, Rx frs unmasked */
-		RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_RT_MASK1,
-					RT1718S_RT_MASK1_M_VBUS_FRS_LOW |
-					RT1718S_RT_MASK1_M_RX_FRS,
-					0xFF));
-
-
 	RETURN_ERROR(rt1718s_bc12_init(port));
 
 	/* Set VBUS_VOL_SEL to 20V */
@@ -357,6 +349,27 @@ void rt1718s_vendor_defined_alert(int port)
 {
 	int rv, value;
 
+	if (IS_ENABLED(CONFIG_USB_PD_FRS_PPC) &&
+	    IS_ENABLED(CONFIG_USBC_PPC_RT1718S)) {
+		int int1;
+
+		rv = rt1718s_read8(port, RT1718S_RT_INT1, &int1);
+		if (rv)
+			return;
+		rv = rt1718s_write8(port, RT1718S_RT_INT1, int1);
+		if (rv)
+			return;
+
+		if ((int1 & RT1718S_RT_INT1_INT_RX_FRS)) {
+			pd_got_frs_signal(port);
+
+			tcpc_write16(port, TCPC_REG_ALERT,
+					TCPC_REG_ALERT_VENDOR_DEF);
+			/* ignore other interrupts for faster frs handling */
+			return;
+		}
+	}
+
 	/* Process BC12 alert */
 	rv = rt1718s_read8(port, RT1718S_RT_INT6, &value);
 	if (rv)
@@ -393,7 +406,9 @@ static void rt1718s_alert(int port)
 	tcpc_read16(port, TCPC_REG_ALERT, &alert);
 	if (alert & TCPC_REG_ALERT_VENDOR_DEF)
 		rt1718s_vendor_defined_alert(port);
-	tcpci_tcpc_alert(port);
+
+	if (alert & ~TCPC_REG_ALERT_VENDOR_DEF)
+		tcpci_tcpc_alert(port);
 }
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
