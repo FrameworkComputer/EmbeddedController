@@ -14,6 +14,10 @@
 #define VARIANT_KUKUI_EC_STM32F098
 #undef CONFIG_CMD_MFALLOW
 
+/* Free up flash space */
+#define CONFIG_DEBUG_ASSERT_BRIEF
+#define CONFIG_USB_PD_DEBUG_LEVEL 2
+
 #ifndef SECTION_IS_RW
 #define VARIANT_KUKUI_NO_SENSORS
 #endif /* SECTION_IS_RW */
