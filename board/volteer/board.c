@@ -4,7 +4,6 @@
  */
 
 /* Volteer board-specific configuration */
-#include "bb_retimer.h"
 #include "button.h"
 #include "common.h"
 #include "accelgyro.h"
@@ -12,7 +11,7 @@
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi260.h"
 #include "driver/als_tcs3400.h"
-#include "driver/retimer/bb_retimer.h"
+#include "driver/retimer/bb_retimer_public.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "extpower.h"

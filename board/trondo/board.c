@@ -4,7 +4,6 @@
  */
 
 /* Volteer board-specific configuration */
-#include "bb_retimer.h"
 #include "button.h"
 #include "common.h"
 #include "accelgyro.h"
@@ -17,7 +16,7 @@
 #include "driver/ppc/syv682x.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tusb422.h"
-#include "driver/retimer/bb_retimer.h"
+#include "driver/retimer/bb_retimer_public.h"
 #include "driver/sync.h"
 #include "extpower.h"
 #include "fan.h"

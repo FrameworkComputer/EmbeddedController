@@ -6,7 +6,6 @@
 /* Volteer board-specific configuration */
 #include "accelgyro.h"
 #include "assert.h"
-#include "bb_retimer.h"
 #include "button.h"
 #include "common.h"
 #include "cbi_ec_fw_config.h"
@@ -14,6 +13,7 @@
 #include "driver/als_tcs3400.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/syv682x.h"
+#include "driver/retimer/bb_retimer_public.h"
 #include "driver/sync.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tusb422.h"

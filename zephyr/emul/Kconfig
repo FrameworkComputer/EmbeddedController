@@ -27,6 +27,7 @@ config EMUL_PPC_SYV682X
 	help
 	  Enable the SYV682x emulator. SYV682 is a USB Type-C PPC. This driver
 	  uses the emulated I2C bus.
+
 config EMUL_BMI
 	bool "BMI emulator"
 	help
@@ -45,3 +46,11 @@ config EMUL_TCS3400
 	  TCS3400 registers support read and write with optional checking
 	  of proper access to reserved bits. Emulators API is available in
 	  zephyr/include/emul/emul_tcs3400.h
+
+config EMUL_BB_RETIMER
+	bool "BB retimer emulator"
+	help
+	  Enable the BB (Burnside Bridge) retimer emulator. This driver use
+	  emulated I2C bus. It is used to test bb_retimer driver. It supports
+	  reads and writes to all emulator registers. Emulators API is
+	  available in zephyr/include/emul/emul_bb_retimer.h

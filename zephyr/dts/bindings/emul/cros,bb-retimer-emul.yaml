@@ -1,0 +1,30 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Zephyr BB retimer Emulator
+
+compatible: "cros,bb-retimer-emul"
+
+include: base.yaml
+
+properties:
+    vendor:
+        type: string
+        required: true
+        enum:
+          - BB_RETIMER_VENDOR_ID_1
+          - BB_RETIMER_VENDOR_ID_2
+        description: Vendor ID used by device that is emulated.
+
+    error-on-ro-write:
+        type: boolean
+        description:
+          Flag indicating if error should be generated when read only register
+          is being written.
+
+    error-on-reserved-bit-write:
+        type: boolean
+        description:
+          Flag indicating if error should be generated when reserved bit
+          is being written.

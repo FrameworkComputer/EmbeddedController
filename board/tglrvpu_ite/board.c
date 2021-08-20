@@ -5,10 +5,10 @@
 
 /* Intel TGL-U-RVP-ITE board-specific configuration */
 
-#include "bb_retimer.h"
 #include "button.h"
 #include "charger.h"
 #include "driver/charger/isl9241.h"
+#include "driver/retimer/bb_retimer_public.h"
 #include "extpower.h"
 #include "i2c.h"
 #include "intc.h"

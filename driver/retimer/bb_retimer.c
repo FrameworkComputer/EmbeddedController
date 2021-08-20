@@ -5,7 +5,7 @@
  * Driver for Intel Burnside Bridge - Thunderbolt/USB/DisplayPort Retimer
  */
 
-#include "bb_retimer.h"
+#include "driver/retimer/bb_retimer.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"

@@ -4,7 +4,6 @@
  */
 
 /* Malefor board-specific configuration */
-#include "bb_retimer.h"
 #include "button.h"
 #include "cbi_ec_fw_config.h"
 #include "common.h"
@@ -13,6 +12,7 @@
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/ppc/syv682x.h"
+#include "driver/retimer/bb_retimer_public.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"

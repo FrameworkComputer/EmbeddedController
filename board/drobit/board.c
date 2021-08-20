@@ -4,7 +4,6 @@
  */
 
 /* Volteer board-specific configuration */
-#include "bb_retimer.h"
 #include "button.h"
 #include "common.h"
 #include "accelgyro.h"
@@ -12,7 +11,7 @@
 #include "charge_state_v2.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/ppc/syv682x.h"
-#include "driver/retimer/bb_retimer.h"
+#include "driver/retimer/bb_retimer_public.h"
 #include "driver/sync.h"
 #include "driver/tcpm/rt1715.h"
 #include "driver/tcpm/tcpci.h"
