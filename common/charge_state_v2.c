@@ -1692,7 +1692,6 @@ const struct batt_params *charger_current_battery_params(void)
 static int battery_outside_charging_temperature(void)
 {
 	const struct battery_info *batt_info = battery_get_info();
-	/* battery temp in 0.1 deg C */
 	int batt_temp_c = DECI_KELVIN_TO_CELSIUS(curr.batt.temperature);
 	int max_c, min_c;
 
