@@ -343,7 +343,7 @@ const struct i2c_port_t i2c_ports[] = {
 	{"bat_chg",  IT83XX_I2C_CH_A, 100, GPIO_I2C_A_SCL, GPIO_I2C_A_SDA},
 	{"sensor",   IT83XX_I2C_CH_B, 400, GPIO_I2C_B_SCL, GPIO_I2C_B_SDA},
 	{"usb0",     IT83XX_I2C_CH_C, 400, GPIO_I2C_C_SCL, GPIO_I2C_C_SDA},
-	{"usb1",     IT83XX_I2C_CH_E, 400, GPIO_I2C_E_SCL, GPIO_I2C_E_SDA},
+	{"usb1",     IT83XX_I2C_CH_E, 1000, GPIO_I2C_E_SCL, GPIO_I2C_E_SDA},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -411,16 +411,25 @@ int rt1718s_gpio_ctrl(enum rt1718s_gpio_state state)
 
 __override int board_rt1718s_init(int port)
 {
-	/* set GPIO1 is push pull, as output, output low. */
+	/* set GPIO 1~3 as push pull, as output, output low. */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO1_CTRL,
 			RT1718S_GPIOX_OD_N | RT1718S_GPIOX_OE |
 			RT1718S_GPIOX_CTRL_GPIOX_O,
 			RT1718S_GPIOX_OD_N | RT1718S_GPIOX_OE));
-	/* set GPIO2 is push pull, as output, output low. */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO2_CTRL,
 			RT1718S_GPIOX_OD_N | RT1718S_GPIOX_OE |
 			RT1718S_GPIOX_CTRL_GPIOX_O,
 			RT1718S_GPIOX_OD_N | RT1718S_GPIOX_OE));
+	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO3_CTRL,
+			RT1718S_GPIOX_OD_N | RT1718S_GPIOX_OE |
+			RT1718S_GPIOX_CTRL_GPIOX_O,
+			RT1718S_GPIOX_OD_N | RT1718S_GPIOX_OE));
+
+	/* gpio 1/2 output high when receiving frx signal */
+	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO1_VBUS_CTRL,
+			RT1718S_GPIO1_VBUS_CTRL_FRS_RX_VBUS, 0xFF));
+	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO2_VBUS_CTRL,
+			RT1718S_GPIO2_VBUS_CTRL_FRS_RX_VBUS, 0xFF));
 
 	/* Turn on SBU switch */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_RT2_SBU_CTRL_01,
@@ -428,6 +437,15 @@ __override int board_rt1718s_init(int port)
 				RT1718S_RT2_SBU_CTRL_01_SBU2_SWEN |
 				RT1718S_RT2_SBU_CTRL_01_SBU1_SWEN,
 				0xFF));
+	/* Trigger GPIO 1/2 change when FRS signal received */
+	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_FRS_CTRL3,
+			RT1718S_FRS_CTRL3_FRS_RX_WAIT_GPIO2 |
+			RT1718S_FRS_CTRL3_FRS_RX_WAIT_GPIO1,
+			RT1718S_FRS_CTRL3_FRS_RX_WAIT_GPIO2));
+	/* Set FRS signal detect time to 46.875us */
+	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_FRS_CTRL1,
+			RT1718S_FRS_CTRL1_FRSWAPRX_MASK,
+			0xFF));
 
 	return EC_SUCCESS;
 }
@@ -597,3 +615,18 @@ static void baseboard_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT - 1);
+
+__override int board_pd_set_frs_enable(int port, int enable)
+{
+	int value;
+
+	if (port == 0)
+		return EC_SUCCESS;
+
+	value = RT1718S_GPIOX_OD_N | RT1718S_GPIOX_OE;
+	if (enable)
+		value |= RT1718S_GPIOX_CTRL_GPIOX_O;
+
+	/* Use write instead of update to save 1 i2c read in FRS path */
+	return rt1718s_write8(port, RT1718S_GPIO3_CTRL, value);
+}
