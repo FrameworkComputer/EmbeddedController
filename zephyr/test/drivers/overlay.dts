@@ -44,6 +44,16 @@
 			enum-name = "GPIO_EC_PCH_WAKE_ODL";
 			label = "EC_PCH_WAKE_ODL";
 		};
+		usb_c1_ls_en {
+			gpios = <&gpio0 6 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_USB_C1_LS_EN";
+			label = "USB_C1_LS_EN";
+		};
+		usb_c1_rt_rst_odl {
+			gpios = <&gpio0 7 GPIO_ODR_LOW>;
+			enum-name = "GPIO_USB_C1_RT_RST_ODL";
+			label = "USB_C1_RT_RST_ODL";
+		};
 	};
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
@@ -407,7 +417,7 @@
 };
 
 &gpio0 {
-	ngpios = <6>;
+	ngpios = <8>;
 };
 
 &i2c0 {
@@ -461,5 +471,14 @@
 		error-on-wo-read;
 		error-on-reserved-bit-write;
 		simulate-command-exec-time;
+	};
+
+	usb_c1_bb_retimer_emul: bbretimer@42 {
+		compatible = "cros,bb-retimer-emul";
+		reg = <0x42>;
+		label = "USB_C1_BB_RETIMER";
+		vendor = "BB_RETIMER_VENDOR_ID_1";
+		error-on-ro-write;
+		error-on-reserved-bit-write;
 	};
 };

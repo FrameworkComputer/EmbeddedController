@@ -19,6 +19,7 @@ extern void test_suite_bmi260(void);
 extern void test_suite_bmi160(void);
 extern void test_suite_tcs3400(void);
 extern void test_suite_espi(void);
+extern void test_suite_bb_retimer(void);
 
 void test_main(void)
 {
@@ -39,4 +40,5 @@ void test_main(void)
 	test_suite_bmi160();
 	test_suite_tcs3400();
 	test_suite_espi();
+	test_suite_bb_retimer();
 }
