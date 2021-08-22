@@ -180,6 +180,8 @@ DEFINE_boolean verbose "${FLAGS_FALSE}" \
 	"Verbose hw control logging"
 DEFINE_boolean verify "${FLAGS_FALSE}" \
 	"Verify EC firmware image after programming."
+DEFINE_boolean zephyr "${FLAGS_FALSE}" \
+	"Program a Zephyr EC image instead of a CrOS EC image"
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -269,6 +271,11 @@ function dut_control_get_or_die {
 }
 
 : ${BOARD:=${FLAGS_board}}
+
+# Find the Zephyr project directory for the specified board. Zephyr projects
+# organized under ./zephyr/projects as <baseboard>/<board> directory.
+: ${ZEPHYR_DIR:=$(find zephyr/projects -mindepth 2 -maxdepth 2 \
+		-type d -name "${BOARD}")}
 
 in_array() {
 	local n=$#
@@ -664,9 +671,20 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# TODO: the name of the RO images created for zephyr vary based on whether
+# the RO image includes a header.
+# NPCX images use "build-ro/zephyr/zephyr.npcx.bin"
+# ITE images use "build-ro/zephyr/zephyr.bin"
+if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] && [ "${FLAGS_zephyr}" = ${FLAGS_TRUE} ]
+then
+	die "The --ro flag is not supported with the --zephyr flag"
+fi
+
 # Possible default EC images
 if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
 	EC_FILE=ec.RO.flat
+elif [ "${FLAGS_zephyr}" = ${FLAGS_TRUE} ] ; then
+	EC_FILE=zephyr.bin
 else
 	EC_FILE=ec.bin
 fi
@@ -675,6 +693,8 @@ LOCAL_BUILD=
 if [[ -n "${EC_DIR}" ]]; then
 	if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
 		LOCAL_BUILD="${EC_DIR}/build/${BOARD}/RO/${EC_FILE}"
+	elif [ "${FLAGS_zephyr}" = ${FLAGS_TRUE} ] ; then
+		LOCAL_BUILD="${EC_DIR}/build/${ZEPHYR_DIR}/output/${EC_FILE}"
 	else
 		LOCAL_BUILD="${EC_DIR}/build/${BOARD}/${EC_FILE}"
 	fi
@@ -1421,6 +1441,7 @@ function flash_npcx_uut() {
 		"$(dirname "$IMG")/chip/npcx/spiflashfw" \
 		"$(dirname "$IMG")" \
 		"${EC_DIR}/build/${BOARD}/chip/npcx/spiflashfw" \
+		"${EC_DIR}/build/${ZEPHYR_DIR}/output" \
 		"$(dirname "$LOCAL_BUILD")" \
 		"$(dirname "$EMERGE_BUILD")" ;
 	do
