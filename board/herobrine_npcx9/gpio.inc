@@ -18,12 +18,12 @@ GPIO_INT(USB_C1_BC12_INT_L,    PIN(8, 2), GPIO_INT_FALLING | GPIO_PULL_UP, usb1_
 GPIO_INT(USB_A0_OC_ODL,        PIN(F, 4), GPIO_INT_BOTH | GPIO_PULL_UP, usba_oc_interrupt)
 
 /* System interrupts */
-GPIO_INT(CHG_ACOK_OD,       PIN(D, 2), GPIO_INT_BOTH, extpower_interrupt)  /* ACOK */
+GPIO_INT(CHG_ACOK_OD,       PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)  /* ACOK */
 GPIO_INT(EC_PWR_BTN_ODL,    PIN(0, 0), GPIO_INT_BOTH, power_button_interrupt)  /* Power button */
 GPIO_INT(EC_VOLDN_BTN_ODL,  PIN(6, 2), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* Volume Up button */
 GPIO_INT(EC_VOLUP_BTN_ODL,  PIN(C, 2), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* Volume Down button */
 GPIO_INT(EC_WP_ODL,         PIN(D, 3), GPIO_INT_BOTH, switch_interrupt)  /* Write protection */
-GPIO_INT(LID_OPEN_EC,       PIN(0, 1), GPIO_INT_BOTH, lid_interrupt)  /* Lid open */
+GPIO_INT(LID_OPEN_EC,       PIN(0, 1), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)  /* Lid open */
 GPIO_INT(AP_RST_L,          PIN(5, 1), GPIO_INT_BOTH, chipset_ap_rst_interrupt)  /* PMIC to signal AP reset */
 GPIO_INT(PS_HOLD,           PIN(A, 6), GPIO_INT_BOTH | GPIO_PULL_DOWN, power_signal_interrupt)  /* Indicate when AP triggers reset/shutdown */
 GPIO_INT(AP_SUSPEND,        PIN(5, 7), GPIO_INT_BOTH, power_signal_interrupt)  /* Suspend signal from PMIC */
@@ -158,6 +158,10 @@ ALTERNATE(PIN_MASK(4, 0xC0), 1, MODULE_SPI, GPIO_SEL_1P8V) /* SHI_SDO (GPIO47), 
 ALTERNATE(PIN_MASK(5, 0x28), 1, MODULE_SPI, GPIO_SEL_1P8V) /* SHI_SCLK (GPIO55), SHI_CS# (GPIO53) */
 ALTERNATE(PIN_MASK(8, 0x01), 0, MODULE_PWM, 0)             /* PWM3 (GPIO80) - KB_BL_PWM */
 ALTERNATE(PIN_MASK(B, 0x80), 1, MODULE_PWM, 0)             /* PWM5 (GPIOB7) - EDP_BKLTCTL */
+ALTERNATE(PIN_MASK(D, 0x04), 1, MODULE_PMU, 0)             /* PSL_IN1 (GPIOD2) - ACOK_OD */
+ALTERNATE(PIN_MASK(0, 0x01), 1, MODULE_PMU, 0)             /* PSL_IN2 (GPIO00) - EC_PWR_BTN_ODL */
+ALTERNATE(PIN_MASK(0, 0x02), 1, MODULE_PMU, 0)             /* PSL_IN3 (GPIO01) - LID_OPEN_EC */
+ALTERNATE(PIN_MASK(0, 0x04), 1, MODULE_PMU, 0)             /* PSL_IN4 (GPIO02) - RTC_EC_WAKE_ODL */
 
 /* Keyboard */
 #define GPIO_KB_INPUT           (GPIO_INPUT | GPIO_PULL_UP)
