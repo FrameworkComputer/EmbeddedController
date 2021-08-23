@@ -19,13 +19,41 @@
 extern "C" {
 #endif
 
+enum cortex_panic_frame_registers {
+	CORTEX_PANIC_FRAME_REGISTER_R0 = 0,
+	CORTEX_PANIC_FRAME_REGISTER_R1,
+	CORTEX_PANIC_FRAME_REGISTER_R2,
+	CORTEX_PANIC_FRAME_REGISTER_R3,
+	CORTEX_PANIC_FRAME_REGISTER_R12,
+	CORTEX_PANIC_FRAME_REGISTER_LR,
+	CORTEX_PANIC_FRAME_REGISTER_PC,
+	CORTEX_PANIC_FRAME_REGISTER_PSR,
+	NUM_CORTEX_PANIC_FRAME_REGISTERS
+};
+
+enum cortex_panic_registers {
+	CORTEX_PANIC_REGISTER_PSP = 0,
+	CORTEX_PANIC_REGISTER_IPSR,
+	CORTEX_PANIC_REGISTER_MSP,
+	CORTEX_PANIC_REGISTER_R4,
+	CORTEX_PANIC_REGISTER_R5,
+	CORTEX_PANIC_REGISTER_R6,
+	CORTEX_PANIC_REGISTER_R7,
+	CORTEX_PANIC_REGISTER_R8,
+	CORTEX_PANIC_REGISTER_R9,
+	CORTEX_PANIC_REGISTER_R10,
+	CORTEX_PANIC_REGISTER_R11,
+	CORTEX_PANIC_REGISTER_LR,
+	NUM_CORTEX_PANIC_REGISTERS
+};
+
 /* ARM Cortex-Mx registers saved on panic */
 struct cortex_panic_data {
-	uint32_t regs[12];        /* psp, ipsr, msp, r4-r11, lr(=exc_return).
-				   * In version 1, that was uint32_t regs[11] =
-				   * psp, ipsr, lr, r4-r11
-				   */
-	uint32_t frame[8];        /* r0-r3, r12, lr, pc, xPSR */
+	/* See cortex_panic_registers enum for information about registers */
+	uint32_t regs[NUM_CORTEX_PANIC_REGISTERS];
+
+	/* See cortex_panic_frame_registers enum for more information */
+	uint32_t frame[NUM_CORTEX_PANIC_FRAME_REGISTERS];
 
 	uint32_t cfsr;
 	uint32_t bfar;

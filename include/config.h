@@ -1501,6 +1501,9 @@
  */
 #undef CONFIG_CHIP_PANIC_BACKUP
 
+/* Don't save General Purpose Registers during panic */
+#undef CONFIG_PANIC_STRIP_GPR
+
 /*
  * Provide the default GPIO abstraction layer.
  * You want this unless you are doing a really tiny firmware.

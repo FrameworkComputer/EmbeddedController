@@ -312,8 +312,19 @@ void __keep report_panic(void)
 	    sp <= CONFIG_RAM_BASE + CONFIG_RAM_SIZE - 8 * sizeof(uint32_t)) {
 		const uint32_t *sregs = (const uint32_t *)sp;
 		int i;
-		for (i = 0; i < 8; i++)
+
+		/* Skip r0-r3 and r12 registers if necessary */
+		for (i = CORTEX_PANIC_FRAME_REGISTER_R0;
+		    i <= CORTEX_PANIC_FRAME_REGISTER_R12; i++)
+			if (IS_ENABLED(CONFIG_PANIC_STRIP_GPR))
+				pdata->cm.frame[i] = 0;
+			else
+				pdata->cm.frame[i] = sregs[i];
+
+		for (i = CORTEX_PANIC_FRAME_REGISTER_LR;
+		    i < NUM_CORTEX_PANIC_FRAME_REGISTERS; i++)
 			pdata->cm.frame[i] = sregs[i];
+
 		pdata->flags |= PANIC_DATA_FLAG_FRAME_VALID;
 	}
 
@@ -357,6 +368,33 @@ void exception_panic(void)
 		"mrs r1, psp\n"
 		"mrs r2, ipsr\n"
 		"mov r3, sp\n"
+#ifdef CONFIG_PANIC_STRIP_GPR
+		/*
+		 * Check if we are in exception. This is similar to
+		 * in_interrupt_context(). Exception bits are 9 LSB, so
+		 * we can perform left shift for 23 bits and check if result
+		 * is 0 (lsls instruction is setting appropriate flags).
+		 */
+		"lsls r6, r2, #23\n"
+		/*
+		 * If this is software panic (shift result == 0) then register
+		 * r4 and r5 contain additional info about panic.
+		 * Clear r6-r11 always and r4, r5 only if this is exception
+		 * panic. To clear r4 and r5, 'movne' conditional instruction
+		 * is used. It works only when flags contain information that
+		 * result was != 0. Itt is pseudo instruction which is used
+		 * to make sure we are using correct conditional instructions.
+		 */
+		"itt ne\n"
+		"movne r4, #0\n"
+		"movne r5, #0\n"
+		"mov r6, #0\n"
+		"mov r7, #0\n"
+		"mov r8, #0\n"
+		"mov r9, #0\n"
+		"mov r10, #0\n"
+		"mov r11, #0\n"
+#endif
 		"stmia r0, {r1-r11, lr}\n"
 		"mov sp, %[pstack]\n"
 		"bl report_panic\n" : :
