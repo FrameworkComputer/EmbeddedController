@@ -394,3 +394,5 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VBOOT_EFS2
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VSTORE
                                                 "${PLATFORM_EC}/common/vstore.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RTC
+						"${PLATFORM_EC}/common/rtc.c")
