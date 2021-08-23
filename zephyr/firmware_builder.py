@@ -137,14 +137,13 @@ def test(opts):
     # proceeding.
     subprocess.run([zephyr_dir / 'zmake' / 'run_tests.sh'], check=True)
 
-    if opts.code_coverage:
-        platform_ec = zephyr_dir.parent
-        build_dir = platform_ec / 'build/zephyr-coverage'
-        return subprocess.run(
-            ['zmake', '-D', 'coverage', build_dir], cwd=platform_ec).returncode
-
     subprocess.run(['zmake', '-D', 'testall'], check=True)
-    return 0
+
+    # Run the test with coverage also, as sometimes they behave differently.
+    platform_ec = zephyr_dir.parent
+    build_dir = platform_ec / 'build/zephyr-coverage'
+    return subprocess.run(
+        ['zmake', '-D', 'coverage', build_dir], cwd=platform_ec).returncode
 
 
 def main(args):
