@@ -81,38 +81,6 @@
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50 /* 7b address */
 
-/* Sensors */
-#define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_ACCEL_INFO
-#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
-
-#define CONFIG_ACCEL_BMA255		/* Lid accel */
-#define CONFIG_ACCELGYRO_BMI160		/* Base accel */
-#define CONFIG_ACCEL_KX022		/* Lid accel */
-#define CONFIG_ACCELGYRO_ICM426XX	/* Base accel second source*/
-
-/* Lid operates in forced mode, base in FIFO */
-#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
-#define CONFIG_ACCEL_FIFO
-#define CONFIG_ACCEL_FIFO_SIZE 256	/* Must be a power of 2 */
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
-
-#define CONFIG_ACCEL_INTERRUPTS
-#define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-
-#define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-
-#define CONFIG_LID_ANGLE
-#define CONFIG_LID_ANGLE_UPDATE
-#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
-#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
-
-#define CONFIG_TABLET_MODE
-#define CONFIG_TABLET_MODE_SWITCH
-#define CONFIG_GMR_TABLET_MODE
-
 /* Volume Button feature */
 #define CONFIG_ADC_BUTTONS
 #define CONFIG_VOLUME_BUTTONS
@@ -138,13 +106,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
-enum sensor_id {
-	LID_ACCEL,
-	BASE_ACCEL,
-	BASE_GYRO,
-	SENSOR_COUNT
-};
-
 enum pwm_channel {
 	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT,
@@ -156,6 +117,5 @@ enum battery_type {
 };
 
 int board_is_sourcing_vbus(int port);
-void motion_interrupt(enum gpio_signal signal);
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

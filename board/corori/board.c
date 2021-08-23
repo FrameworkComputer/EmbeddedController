@@ -16,11 +16,6 @@
 #include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
-#include "driver/accel_bma2x2.h"
-#include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
-#include "driver/accelgyro_icm426xx.h"
-#include "driver/accel_kionix.h"
 #include "driver/temp_sensor/thermistor.h"
 #include "temp_sensor.h"
 #include "driver/bc12/pi3usb9201.h"
@@ -36,7 +31,6 @@
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
-#include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -44,7 +38,6 @@
 #include "stdbool.h"
 #include "switch.h"
 #include "system.h"
-#include "tablet_mode.h"
 #include "task.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
@@ -359,218 +352,12 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 	raa489000_set_output_current(port, rp);
 }
 
-/* Sensors */
-static struct mutex g_lid_mutex;
-static struct mutex g_base_mutex;
-
-/* Matrices to rotate accelerometers into the standard reference. */
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
-
-static const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
-
-
-/* BMA253 private data */
-static struct accelgyro_saved_data_t g_bma253_data;
-
-/* BMI160 private data */
-static struct bmi_drv_data_t g_bmi160_data;
-
-static const mat33_fp_t base_icm_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
-
-/* ICM426 private data */
-static struct icm_drv_data_t g_icm426xx_data;
-/* KX022 private data */
-static struct kionix_accel_data g_kx022_data;
-
-struct motion_sensor_t kx022_lid_accel = {
-	.name = "Lid Accel",
-	.active_mask = SENSOR_ACTIVE_S0_S3,
-	.chip = MOTIONSENSE_CHIP_KX022,
-	.type = MOTIONSENSE_TYPE_ACCEL,
-	.location = MOTIONSENSE_LOC_LID,
-	.drv = &kionix_accel_drv,
-	.mutex = &g_lid_mutex,
-	.drv_data = &g_kx022_data,
-	.port = I2C_PORT_ACCEL,
-	.i2c_spi_addr_flags = KX022_ADDR0_FLAGS,
-	.rot_standard_ref = &lid_standard_ref,
-	.min_frequency = KX022_ACCEL_MIN_FREQ,
-	.max_frequency = KX022_ACCEL_MAX_FREQ,
-	.default_range = 2, /* g, to support tablet mode */
-	.config = {
-		/* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-		},
-		/* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-		},
-	},
-};
-
-struct motion_sensor_t icm426xx_base_accel = {
-	.name = "Base Accel",
-	.active_mask = SENSOR_ACTIVE_S0_S3,
-	.chip = MOTIONSENSE_CHIP_ICM426XX,
-	.type = MOTIONSENSE_TYPE_ACCEL,
-	.location = MOTIONSENSE_LOC_BASE,
-	.drv = &icm426xx_drv,
-	.mutex = &g_base_mutex,
-	.drv_data = &g_icm426xx_data,
-	.port = I2C_PORT_ACCEL,
-	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
-	.default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
-	.rot_standard_ref = &base_icm_ref,
-	.min_frequency = ICM426XX_ACCEL_MIN_FREQ,
-	.max_frequency = ICM426XX_ACCEL_MAX_FREQ,
-	.config = {
-		/* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 13000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
-		},
-		/* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
-		},
-	},
-};
-
-struct motion_sensor_t icm426xx_base_gyro = {
-	.name = "Base Gyro",
-	.active_mask = SENSOR_ACTIVE_S0_S3,
-	.chip = MOTIONSENSE_CHIP_ICM426XX,
-	.type = MOTIONSENSE_TYPE_GYRO,
-	.location = MOTIONSENSE_LOC_BASE,
-	.drv = &icm426xx_drv,
-	.mutex = &g_base_mutex,
-	.drv_data = &g_icm426xx_data,
-	.port = I2C_PORT_ACCEL,
-	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
-	.default_range = 1000, /* dps */
-	.rot_standard_ref = &base_icm_ref,
-	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
-	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
-};
-
-struct motion_sensor_t motion_sensors[] = {
-	[LID_ACCEL] = {
-		.name = "Lid Accel",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMA255,
-		.type = MOTIONSENSE_TYPE_ACCEL,
-		.location = MOTIONSENSE_LOC_LID,
-		.drv = &bma2x2_accel_drv,
-		.mutex = &g_lid_mutex,
-		.drv_data = &g_bma253_data,
-		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
-		.rot_standard_ref = &lid_standard_ref,
-		.default_range = 2,
-		.min_frequency = BMA255_ACCEL_MIN_FREQ,
-		.max_frequency = BMA255_ACCEL_MAX_FREQ,
-		.config = {
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-			},
-			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-			},
-		},
-	},
-	[BASE_ACCEL] = {
-		.name = "Base Accel",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMI160,
-		.type = MOTIONSENSE_TYPE_ACCEL,
-		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi160_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi160_data,
-		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-		.rot_standard_ref = &base_standard_ref,
-		.default_range = 4,
-		.min_frequency = BMI_ACCEL_MIN_FREQ,
-		.max_frequency = BMI_ACCEL_MAX_FREQ,
-		.config = {
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 13000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-		},
-	},
-	[BASE_GYRO] = {
-		.name = "Base Gyro",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMI160,
-		.type = MOTIONSENSE_TYPE_GYRO,
-		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi160_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi160_data,
-		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-		.default_range = 1000, /* dps */
-		.rot_standard_ref = &base_standard_ref,
-		.min_frequency = BMI_GYRO_MIN_FREQ,
-		.max_frequency = BMI_GYRO_MAX_FREQ,
-	},
-};
-
-unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-
 void board_init(void)
 {
 	int on;
 
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
 	check_c0_line();
-
-	/* Enable gpio interrupt for base accelgyro sensor */
-	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
-	if (get_cbi_fw_config_tablet_mode()) {
-		if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_ICM426XX) {
-			motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
-			motion_sensors[BASE_GYRO] = icm426xx_base_gyro;
-			cprints(CC_SYSTEM, "BASE GYRO is ICM426XX");
-		} else
-			cprints(CC_SYSTEM, "BASE GYRO is BMI160");
-
-		if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_KX022) {
-			motion_sensors[LID_ACCEL] = kx022_lid_accel;
-			cprints(CC_SYSTEM, "LID_ACCEL is KX022");
-		} else
-			cprints(CC_SYSTEM, "LID_ACCEL is BMA253");
-
-		motion_sensor_count = ARRAY_SIZE(motion_sensors);
-		/* Enable gpio interrupt for base accelgyro sensor */
-		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
-	} else {
-		motion_sensor_count = 0;
-		gmr_tablet_switch_disable();
-		/* Base accel is not stuffed, don't allow line to float */
-		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
-		GPIO_INPUT | GPIO_PULL_DOWN);
-	}
 
 	/* Turn on 5V if the system is on, otherwise turn it off. */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
@@ -581,19 +368,6 @@ void board_init(void)
 	setup_thermal();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
-void motion_interrupt(enum gpio_signal signal)
-{
-		switch (get_cbi_ssfc_base_sensor()) {
-		case SSFC_SENSOR_ICM426XX:
-			icm426xx_interrupt(signal);
-			break;
-		case SSFC_SENSOR_BMI160:
-		default:
-			bmi160_interrupt(signal);
-			break;
-		}
-}
 
 __override void ocpc_get_pid_constants(int *kp, int *kp_div,
 				       int *ki, int *ki_div,
@@ -730,31 +504,3 @@ static void adc_vol_key_press_check(void)
 	}
 }
 DECLARE_HOOK(HOOK_TICK, adc_vol_key_press_check, HOOK_PRIO_DEFAULT);
-
-#ifndef TEST_BUILD
-/* This callback disables keyboard when convertibles are fully open */
-void lid_angle_peripheral_enable(int enable)
-{
-	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
-
-	/*
-	 * If the lid is in tablet position via other sensors,
-	 * ignore the lid angle, which might be faulty then
-	 * disable keyboard.
-	 */
-	if (tablet_get_mode())
-		enable = 0;
-
-	if (enable) {
-		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
-	} else {
-		/*
-		 * Ensure that the chipset is off before disabling the keyboard.
-		 * When the chipset is on, the EC keeps the keyboard enabled and
-		 * the AP decides whether to ignore input devices or not.
-		 */
-		if (!chipset_in_s0)
-			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
-	}
-}
-#endif
