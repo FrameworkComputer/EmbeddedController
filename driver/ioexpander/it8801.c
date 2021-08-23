@@ -26,7 +26,7 @@ static int it8801_read(int reg, int *data)
 		IT8801_KEYBOARD_PWM_I2C_ADDR_FLAGS, reg, data);
 }
 
-static int it8801_write(int reg, int data)
+__maybe_unused static int it8801_write(int reg, int data)
 {
 	return i2c_write8(IT8801_KEYBOARD_PWM_I2C_PORT,
 		IT8801_KEYBOARD_PWM_I2C_ADDR_FLAGS, reg, data);
@@ -60,6 +60,7 @@ static int it8801_check_vendor_id(void)
 	return EC_SUCCESS;
 }
 
+#ifdef CONFIG_KEYBOARD_NOT_RAW
 void keyboard_raw_init(void)
 {
 	int ret;
@@ -195,6 +196,7 @@ void io_expander_it8801_interrupt(enum gpio_signal signal)
 	/* Wake the scan task */
 	task_wake(TASK_ID_KEYSCAN);
 }
+#endif /* CONFIG_KEYBOARD_NOT_RAW */
 
 static int it8801_ioex_read(int ioex, int reg, int *data)
 {
