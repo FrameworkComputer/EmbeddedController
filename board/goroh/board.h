@@ -69,6 +69,11 @@
 #define CONFIG_ACCEL_FORCE_MODE_MASK \
 	(BIT(LID_ACCEL) | BIT(BASE_GYRO) | BIT(BASE_ACCEL))
 
+/* Thermistors */
+#define CONFIG_TEMP_SENSOR
+#define CONFIG_THERMISTOR
+#define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
+
 /* SPI / Host Command */
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
@@ -95,10 +100,10 @@ enum sensor_id {
 };
 
 enum adc_channel {
-	ADC_BOARD_ID_0,     /* ADC 1 */
-	ADC_TEMP_VDD_CPU,   /* ADC 2 */
-	ADC_TEMP_VDD_GPU,   /* ADC 3 */
-	ADC_TEMP_CHARGER,   /* ADC 5 */
+	ADC_BOARD_ID,            /* ADC 1 */
+	ADC_TEMP_SENSOR_CPU,     /* ADC 2 */
+	ADC_TEMP_SENSOR_GPU,     /* ADC 3 */
+	ADC_TEMP_SENSOR_CHARGER, /* ADC 5 */
 
 	/* Number of ADC channels */
 	ADC_CH_COUNT,
@@ -121,6 +126,13 @@ enum pwm_channel {
 enum fan_channel {
 	FAN_CH_0,
 	FAN_CH_COUNT
+};
+
+enum temp_sensor_id {
+	TEMP_SENSOR_CPU,
+	TEMP_SENSOR_GPU,
+	TEMP_SENSOR_CHARGER,
+	TEMP_SENSOR_COUNT,
 };
 
 #endif /* !__ASSEMBLER__ */

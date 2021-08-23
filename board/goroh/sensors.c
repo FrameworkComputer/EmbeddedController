@@ -7,9 +7,12 @@
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/als_tcs3400.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
 #include "spi.h"
+#include "thermal.h"
+#include "temp_sensor.h"
 
 static struct mutex g_base_mutex;
 static struct mutex g_lid_mutex;
@@ -97,3 +100,25 @@ struct motion_sensor_t motion_sensors[] = {
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
+/* Temperature sensor configuration */
+const struct temp_sensor_t temp_sensors[] = {
+	[TEMP_SENSOR_CPU] = {
+		.name = "CPU",
+		.type = TEMP_SENSOR_TYPE_CPU,
+		.read = get_temp_3v3_51k1_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_CPU,
+	},
+	[TEMP_SENSOR_GPU] = {
+		.name = "GPU",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_51k1_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_GPU,
+	},
+	[TEMP_SENSOR_CHARGER] = {
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_51k1_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_CHARGER,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
