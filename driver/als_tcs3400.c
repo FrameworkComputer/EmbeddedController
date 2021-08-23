@@ -258,7 +258,7 @@ tcs3400_adjust_sensor_for_saturation(struct motion_sensor_t *s,
 			return ret;
 	}
 
-	return ret;
+	return EC_SUCCESS;
 }
 
 /**
@@ -537,7 +537,7 @@ void tcs3400_interrupt(enum gpio_signal signal)
 static int tcs3400_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
 	uint32_t status = 0;
-	int ret = EC_SUCCESS;
+	int ret;
 
 	if (!(*event & CONFIG_ALS_TCS3400_INT_EVENT))
 		return EC_ERROR_NOT_HANDLED;
@@ -565,7 +565,7 @@ static int tcs3400_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	if (ret)
 		return ret;
 
-	return ret;
+	return EC_SUCCESS;
 }
 
 static int tcs3400_rgb_get_scale(const struct motion_sensor_t *s,
