@@ -161,7 +161,7 @@
 /*
  * see b/174768555#comment22
  */
-#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x56
+#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x54
 #define USBC_PORT_C1_BB_RETIMER_I2C_ADDR	0x56
 
 /* Enabling Thunderbolt-compatible mode */
