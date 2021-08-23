@@ -41,8 +41,8 @@ static const char * const exc_type[16] = {
 
 void software_panic(uint32_t reason, uint32_t info)
 {
-	asm volatile ("mv s0, %0" : : "r"(reason));
-	asm volatile ("mv s1, %0" : : "r"(info));
+	asm volatile ("mv s0, %0" : : "r"(reason) : "s0");
+	asm volatile ("mv s1, %0" : : "r"(info)   : "s1");
 	if (in_interrupt_context())
 		asm("j excep_handler");
 	else
