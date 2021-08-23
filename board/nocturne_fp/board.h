@@ -108,6 +108,7 @@
 #undef CONFIG_TASK_PROFILING
 #define CONFIG_WATCHDOG_HELP
 #define CONFIG_WP_ACTIVE_HIGH
+#define CONFIG_PANIC_STRIP_GPR
 
 /* SPI configuration for the fingerprint sensor */
 #define CONFIG_SPI_CONTROLLER
