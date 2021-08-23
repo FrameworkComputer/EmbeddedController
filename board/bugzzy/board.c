@@ -731,3 +731,12 @@ void panel_power_change_interrupt(enum gpio_signal signal)
 	/* Reset lid debounce time */
 	hook_call_deferred(&panel_power_change_deferred_data, 1 * MSEC);
 }
+
+/**
+ * Handle TSP_TA according to AC status
+ */
+static void handle_tsp_ta(void)
+{
+	gpio_set_level(GPIO_TSP_TA, extpower_is_present());
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, handle_tsp_ta, HOOK_PRIO_DEFAULT);
