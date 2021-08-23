@@ -16,6 +16,8 @@
 #include "power_button.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "host_command_customization.h"
+#include "system.h"
 #include "util.h"
 #include "diagnostics.h"
 
@@ -29,6 +31,9 @@
 #define BREATH_ON_LENGTH	62
 #define BREATH_OFF_LENGTH	200
 
+#define FP_LED_HIGH 60
+#define FP_LED_MEDIUM 40
+#define FP_LED_LOW 20
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_LEFT_LED,
@@ -38,6 +43,7 @@ const enum ec_led_id supported_led_ids[] = {
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 int power_button_enable = 0;
+static uint8_t led_level;
 
 struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
 				/* Red, Green, Blue */
@@ -55,7 +61,7 @@ struct pwm_led pwr_led_color_map[EC_LED_COLOR_COUNT] = {
 	[EC_LED_COLOR_GREEN]  = {   0,  15,   0 },
 	[EC_LED_COLOR_BLUE]   = {   0,   0,   0 },
 	[EC_LED_COLOR_YELLOW] = {   0,   5,  10 },
-	[EC_LED_COLOR_WHITE]  = {  55,   0,   0 },
+	[EC_LED_COLOR_WHITE]  = {  FP_LED_HIGH,   0,   0 },
 	[EC_LED_COLOR_AMBER]  = {   0,   5,  30 },
 };
 
@@ -319,6 +325,12 @@ static void led_configure(void)
 	for (i = 0; i < PWM_CH_COUNT; i++) {
 		pwm_enable(i, 1);
 	}
+
+	system_get_bbram(STSTEM_BBRAM_IDX_FP_LED_LEVEL, &led_level);
+
+	if (led_level)
+		pwr_led_color_map[EC_LED_COLOR_WHITE].ch0 = led_level;
+
 	led_tick();
 }
 
@@ -331,3 +343,35 @@ void power_button_enable_led(int enable)
 	power_button_enable = enable;
 }
 
+static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_fp_led_control *p = args->params;
+	struct ec_response_fp_led_level *r = args->response;
+
+	if (p->get_led_level) {
+		system_get_bbram(STSTEM_BBRAM_IDX_FP_LED_LEVEL, &r->level);
+		args->response_size = sizeof(*r);
+		return EC_RES_SUCCESS;
+	}
+
+	switch (p->set_led_level) {
+	case FP_LED_BRIGHTNESS_HIGH:
+		led_level = FP_LED_HIGH;
+		break;
+	case FP_LED_BRIGHTNESS_MEDIUM:
+		led_level = FP_LED_MEDIUM;
+		break;
+	case FP_LED_BRIGHTNESS_LOW:
+		led_level = FP_LED_LOW;
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+		break;
+	}
+
+	system_set_bbram(STSTEM_BBRAM_IDX_FP_LED_LEVEL, led_level);
+	pwr_led_color_map[EC_LED_COLOR_WHITE].ch0 = led_level;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FP_LED_LEVEL_CONTROL, fp_led_level_control, EC_VER_MASK(0));

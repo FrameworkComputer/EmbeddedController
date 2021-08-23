@@ -51,6 +51,7 @@ enum hibdata_index {
 	HIBDATA_INDEX_CHASSIS_MAGIC = 33,
 	HIBDATA_INDEX_CHASSIS_VTR_OPEN = 34,
 	HIBDATA_INDEX_VPRO_STATUS = 35,
+	HIBDATA_INDEX_FP_LED_LEVEL = 37,
 	/*
 	 * .. 56 ~ 59 byte for ESPI VW use ..
 	 * .. 60 ~ 63 byte for IMAGETYPE use ..
@@ -365,6 +366,8 @@ static int bbram_idx_lookup(enum system_bbram_idx idx)
 		return HIBDATA_INDEX_CHASSIS_VTR_OPEN;
 	case SYSTEM_BBRAM_IDX_VPRO_STATUS:
 		return HIBDATA_INDEX_VPRO_STATUS;
+	case STSTEM_BBRAM_IDX_FP_LED_LEVEL:
+		return HIBDATA_INDEX_FP_LED_LEVEL;
 	default:
 		return -1;
 	}

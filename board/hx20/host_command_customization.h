@@ -174,4 +174,21 @@ struct ec_response_bb_retimer_control_mode {
 	uint8_t status;
 } __ec_align1;
 
+#define EC_CMD_FP_LED_LEVEL_CONTROL 0x3E0E
+
+struct ec_params_fp_led_control {
+	uint8_t set_led_level;
+	uint8_t get_led_level;
+} __ec_align1;
+
+enum fp_led_brightness_level {
+	FP_LED_BRIGHTNESS_HIGH = 0,
+	FP_LED_BRIGHTNESS_MEDIUM = BIT(0),
+	FP_LED_BRIGHTNESS_LOW = BIT(1),
+};
+
+struct ec_response_fp_led_level {
+	uint8_t level;
+} __ec_align1;
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */
