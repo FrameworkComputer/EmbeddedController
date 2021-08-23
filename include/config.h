@@ -2570,7 +2570,15 @@
 /* Support CCGXXF I/O expander built inside PD chip */
 #undef CONFIG_IO_EXPANDER_CCGXXF
 
-/* Support IT8801 I/O expander. */
+/*
+ * Support IT8801 I/O expander.
+ *
+ * I2C address IT8801_KEYBOARD_PWM_I2C_ADDR_FLAGS and I2C port
+ * IT8801_KEYBOARD_PWM_I2C_PORT must be defined as well.
+ * Note: these values are only used when accessing the keyboard and PWM
+ * function of the IT8801 chip.  I/O expander functions are accessed using
+ * the ioex_config[] array.
+ */
 #undef CONFIG_IO_EXPANDER_IT8801
 
 /* Support Nuvoton NCT38xx I/O expander. */

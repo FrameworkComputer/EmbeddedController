@@ -22,14 +22,14 @@ static int it8801_ioex_set_level(int ioex, int port, int mask, int value);
 
 static int it8801_read(int reg, int *data)
 {
-	return i2c_read8(I2C_PORT_IO_EXPANDER_IT8801, IT8801_I2C_ADDR,
-		reg, data);
+	return i2c_read8(IT8801_KEYBOARD_PWM_I2C_PORT,
+		IT8801_KEYBOARD_PWM_I2C_ADDR_FLAGS, reg, data);
 }
 
 static int it8801_write(int reg, int data)
 {
-	return i2c_write8(I2C_PORT_IO_EXPANDER_IT8801, IT8801_I2C_ADDR,
-		reg, data);
+	return i2c_write8(IT8801_KEYBOARD_PWM_I2C_PORT,
+		IT8801_KEYBOARD_PWM_I2C_ADDR_FLAGS, reg, data);
 }
 
 struct it8801_vendor_id_t {

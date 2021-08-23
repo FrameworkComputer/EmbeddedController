@@ -105,8 +105,8 @@ __override struct keyboard_scan_config keyscan_config = {
 
 struct ioexpander_config_t ioex_config[CONFIG_IO_EXPANDER_PORT_COUNT] = {
 	[0] = {
-		.i2c_host_port = I2C_PORT_IO_EXPANDER_IT8801,
-		.i2c_addr_flags = IT8801_I2C_ADDR,
+		.i2c_host_port = IT8801_KEYBOARD_PWM_I2C_PORT,
+		.i2c_addr_flags = IT8801_I2C_ADDR1,
 		.drv = &it8801_ioexpander_drv,
 	},
 };
