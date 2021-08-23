@@ -584,6 +584,21 @@ class Zmake:
         if rv:
             return rv
 
+        # Compute the version string.
+        version_string = zmake.version.get_version_string(
+            project,
+            build_dir / "zephyr_base",
+            zmake.modules.locate_from_directory(build_dir / "modules"),
+        )
+
+        # The version header needs to generated during the build phase
+        # instead of configure, as the tree may have changed since
+        # configure was run.
+        zmake.version.write_version_header(
+            version_string,
+            build_dir / "include" / "ec_version.h",
+        )
+
         # Use ninja to compile the all.libraries target.
         build_project = zmake.project.Project(build_dir / "project")
 
