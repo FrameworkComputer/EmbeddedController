@@ -118,7 +118,9 @@ static void mt6360_update_charge_manager(int port,
 	static enum charge_supplier current_bc12_type = CHARGE_SUPPLIER_NONE;
 
 	if (new_bc12_type != current_bc12_type) {
-		charge_manager_update_charge(current_bc12_type, port, NULL);
+		if (current_bc12_type >= 0)
+			charge_manager_update_charge(current_bc12_type, port,
+							NULL);
 
 		if (new_bc12_type != CHARGE_SUPPLIER_NONE) {
 			struct charge_port_info chg = {
