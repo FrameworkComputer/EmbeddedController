@@ -47,7 +47,6 @@
 #define CONFIG_LED_ONOFF_STATES_BAT_LOW 10
 
 /* PWM */
-#define CONFIG_PWM
 #define NPCX7_PWM1_SEL    1  /* GPIO C2 is used as PWM1. */
 
 /* Temp sensor */
@@ -120,11 +119,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_1,
 	TEMP_SENSOR_2,
 	TEMP_SENSOR_COUNT
-};
-
-enum pwm_channel {
-	PWM_CH_KBLIGHT,
-	PWM_CH_COUNT,
 };
 
 /* List of possible batteries */

@@ -33,8 +33,6 @@
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
-#include "pwm.h"
-#include "pwm_chip.h"
 #include "stdbool.h"
 #include "switch.h"
 #include "system.h"
@@ -423,16 +421,6 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 		.flags = PI3USB9201_ALWAYS_POWERED,
 	},
 };
-
-/* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] = {
-		.channel = 3,
-		.flags = PWM_CONFIG_DSLEEP,
-		.freq = 10000,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
