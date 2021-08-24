@@ -15,6 +15,9 @@
 
 #define CONFIG_MP2964
 
+/* Barrel Jack */
+#define DEDICATED_CHARGE_PORT 3
+
 /* USB Type A Features */
 #define USB_PORT_COUNT			1
 #define CONFIG_USB_PORT_POWER_DUMB

@@ -58,6 +58,9 @@
 #define CONFIG_USB_CHARGER
 #define CONFIG_BC12_DETECT_PI3USB9201
 
+/* Support Barrel Jack */
+#undef CONFIG_DEDICATED_CHARGE_PORT_COUNT
+#define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
 /*
  * Don't allow the system to boot to S0 when the battery is low and unable to
  * communicate on locked systems (which haven't PD negotiated)
