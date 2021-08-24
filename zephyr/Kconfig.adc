@@ -45,4 +45,18 @@ config PLATFORM_EC_ADC_OVERSAMPLING
 	  help in providing more stable readings. The supported oversampling
 	  values depend on specific hardware.
 
+config PLATFORM_EC_ADC_CHANNELS_RUNTIME_CONFIG
+	bool "ADC runtime config"
+	default n
+	help
+	  Allows the configuration of the ADC channels to be set up at
+	  runtime. This makes the adc_channels[] array writable,
+	  i.e. not const. It should be declared as such in the board
+	  config.
+
+	  This is useful when the board has runtime information that
+	  changes the configuration, such as board revision information.
+	  Without this, multiple EC images would need to be installed
+	  depending on the board.
+
 endif # PLATFORM_EC_ADC

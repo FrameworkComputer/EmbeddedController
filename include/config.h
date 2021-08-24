@@ -299,6 +299,11 @@
 #undef CONFIG_ADC
 
 /*
+ * Allow runtime configuration of the adc_channels[] array
+ */
+#undef CONFIG_ADC_CHANNELS_RUNTIME_CONFIG
+
+/*
  * ADC sample time selection. The value is chip-dependent.
  * TODO: Replace this with CONFIG_ADC_PROFILE entries.
  */

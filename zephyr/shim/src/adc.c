@@ -31,8 +31,13 @@ const struct device *adc_dev;
 			.differential = DT_PROP(node_id, differential), \
 		},                                                      \
 	},
+#ifdef CONFIG_ADC_CHANNELS_RUNTIME_CONFIG
+struct adc_t adc_channels[] = { DT_FOREACH_CHILD(
+	DT_INST(0, named_adc_channels), ADC_CHANNEL_COMMA) };
+#else
 const struct adc_t adc_channels[] = { DT_FOREACH_CHILD(
 	DT_INST(0, named_adc_channels), ADC_CHANNEL_COMMA) };
+#endif
 #endif /* named_adc_channels */
 
 static int init_device_bindings(const struct device *device)
