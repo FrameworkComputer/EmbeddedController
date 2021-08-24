@@ -27,23 +27,28 @@
 
 #define CONFIG_IO_EXPANDER
 #define CONFIG_IO_EXPANDER_NCT38XX
-#define CONFIG_IO_EXPANDER_PORT_COUNT		4
+#define CONFIG_IO_EXPANDER_PORT_COUNT		2
 
-#define CONFIG_USB_PD_TCPM_PS8815
+#define CONFIG_USB_PD_PPC
+#define CONFIG_USB_PD_TCPM_RT1715
 #define CONFIG_USBC_RETIMER_INTEL_BB
-
+/* TODO(b/197505149): need to fix the build error and clarify
+ * how to set the usb_ls_en_gpio and retimer_rst_gpio
+ * in the same array.
+ */
+/* #define CONFIG_USBC_RETIMER_KB800X */
 #define CONFIG_USBC_PPC_SYV682X
-#define CONFIG_USBC_PPC_NX20P3483
 
 /* TODO: b/177608416 - measure and check these values on brya */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
 #define PD_VCONN_SWAP_DELAY		5000 /* us */
 
-/*
- * Passive USB-C cables only support up to 60W.
+/* The design should support up to 100W. */
+/* TODO(b/197702356): Set the max PD to 60W now and change it
+ * to 100W after we verify it.
  */
-#define PD_OPERATING_POWER_MW	15000
+#define PD_OPERATING_POWER_MW	CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
 #define PD_MAX_POWER_MW		60000
 #define PD_MAX_CURRENT_MA	3000
 #define PD_MAX_VOLTAGE_MV	20000
@@ -160,8 +165,6 @@ enum temp_sensor_id {
 enum ioex_port {
 	IOEX_C0_NCT38XX = 0,
 	IOEX_C2_NCT38XX,
-	IOEX_ID_1_C0_NCT38XX,
-	IOEX_ID_1_C2_NCT38XX,
 	IOEX_PORT_COUNT
 };
 

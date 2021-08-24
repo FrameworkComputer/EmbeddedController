@@ -13,7 +13,6 @@ BASEBOARD:=brask
 
 board-y=
 board-y+=board.o
-board-y+=fw_config.o
 board-y+=i2c.o
 board-y+=pwm.o
 board-y+=sensors.o

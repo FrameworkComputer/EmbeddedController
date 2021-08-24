@@ -12,7 +12,6 @@
 #include "power.h"
 #include "switch.h"
 #include "throttle_ap.h"
-#include "usbc_config.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
 
@@ -29,11 +28,6 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 
 /******************************************************************************/
-
-__override void board_cbi_init(void)
-{
-	config_usb_db_type();
-}
 
 int board_set_active_charge_port(int port)
 {
