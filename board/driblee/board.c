@@ -171,7 +171,7 @@ const struct temp_sensor_t temp_sensors[] = {
 			   .type = TEMP_SENSOR_TYPE_BOARD,
 			   .read = get_temp_3v3_51k1_47k_4050b,
 			   .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "Ambient",
+	[TEMP_SENSOR_2] = {.name = "Charger",
 			   .type = TEMP_SENSOR_TYPE_BOARD,
 			   .read = get_temp_3v3_51k1_47k_4050b,
 			   .idx = ADC_TEMP_SENSOR_2},
