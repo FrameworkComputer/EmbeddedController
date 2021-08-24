@@ -274,7 +274,6 @@ void board_reset_pd_mcu(void)
 
 	gpio_set_level(tcpc_rst, 0);
 	if (ec_cfg_usb_db_type() != DB_USB_ABSENT) {
-		gpio_set_level(GPIO_USB_C1_RST_ODL, 0);
 		gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 0);
 	}
 
@@ -286,7 +285,6 @@ void board_reset_pd_mcu(void)
 
 	gpio_set_level(tcpc_rst, 1);
 	if (ec_cfg_usb_db_type() != DB_USB_ABSENT) {
-		gpio_set_level(GPIO_USB_C1_RST_ODL, 1);
 		gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 1);
 	}
 

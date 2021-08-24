@@ -12,11 +12,11 @@
 const struct i2c_port_t i2c_ports[] = {
 	{
 		/* I2C0 */
-		.name = "sensor",
-		.port = I2C_PORT_SENSOR,
+		.name = "dp_redriver",
+		.port = I2C_PORT_DP_REDRIVER,
 		.kbps = 400,
-		.scl = GPIO_EC_I2C_SENSOR_SCL,
-		.sda = GPIO_EC_I2C_SENSOR_SDA,
+		.scl = GPIO_EC_I2C_DP_SCL,
+		.sda = GPIO_EC_I2C_DP_SDA,
 	},
 	{
 		/* I2C1 */
@@ -31,8 +31,8 @@ const struct i2c_port_t i2c_ports[] = {
 		.name = "ppc0,2",
 		.port = I2C_PORT_USB_C0_C2_PPC,
 		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C0_C2_PPC_BC_SCL,
-		.sda = GPIO_EC_I2C_USB_C0_C2_PPC_BC_SDA,
+		.scl = GPIO_EC_I2C_USB_C0_C2_PPC_SCL,
+		.sda = GPIO_EC_I2C_USB_C0_C2_PPC_SDA,
 	},
 	{
 		/* I2C3 */
@@ -52,17 +52,17 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 	{
 		/* I2C5 */
-		.name = "battery",
-		.port = I2C_PORT_BATTERY,
-		.kbps = 100,
-		.scl = GPIO_EC_I2C_BAT_SCL,
-		.sda = GPIO_EC_I2C_BAT_SDA,
+		.name = "wireless_charger",
+		.port = I2C_PORT_QI,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C_QI_SCL,
+		.sda = GPIO_EC_I2C_QI_SDA,
 	},
 	{
 		/* I2C6 */
 		.name = "ppc1",
 		.port = I2C_PORT_USB_C1_PPC,
-		.kbps = 400,
+		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_C1_MIX_SCL,
 		.sda = GPIO_EC_I2C_USB_C1_MIX_SDA,
 	},

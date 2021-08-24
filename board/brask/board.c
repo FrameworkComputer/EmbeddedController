@@ -24,7 +24,7 @@
 /* USB-A charging control */
 
 const int usb_port_enable[USB_PORT_COUNT] = {
-	GPIO_EN_PP5000_USBA_R,
+	GPIO_EN_PP5000_USBA,
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 
