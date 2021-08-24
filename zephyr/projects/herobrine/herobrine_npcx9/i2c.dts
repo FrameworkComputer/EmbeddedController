@@ -102,6 +102,13 @@
 &i2c4_1 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+
+	pcf85063a: pcf85063a@51 {
+		compatible = "nxp,rtc-pcf85063a";
+		reg = <0x51>;
+		label = "RTC_PCF85063A";
+		int-gpios = <&gpio_rtc_ec_wake_odl>;
+	};
 };
 
 &i2c5_0 {
