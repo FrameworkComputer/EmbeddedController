@@ -6,11 +6,61 @@
 import argparse
 import inspect
 import logging
+import os
 import pathlib
 import sys
 
 import zmake.multiproc as multiproc
 import zmake.zmake as zm
+
+
+def maybe_reexec(argv):
+    """Re-exec zmake from the EC source tree, if possible and desired.
+
+    Zmake installs into the users' chroot, which makes it convenient
+    to execute, but can sometimes become tedious when zmake changes
+    land and users haven't upgraded their chroots yet.
+
+    We can partially subvert this problem by re-execing zmake from the
+    source if it's available.  This won't make it so developers never
+    need to upgrade their chroots (e.g., a toolchain upgrade could
+    require chroot upgrades), but at least makes it slightly more
+    convenient for an average repo sync.
+
+    Args:
+        argv: The argument list passed to the main function, not
+            including the executable path.
+
+    Returns:
+        None, if the re-exec did not happen, or never returns if the
+        re-exec did happen.
+    """
+    # We only re-exec if we are inside of a chroot (since if installed
+    # standalone using pip, there's already an "editable install"
+    # feature for that in pip.)
+    env = dict(os.environ)
+    srcroot = env.get("CROS_WORKON_SRCROOT")
+    if not srcroot:
+        return
+
+    # If for some reason we decide to move zmake in the future, then
+    # we don't want to use the re-exec logic.
+    zmake_path = (
+        pathlib.Path(srcroot) / "src" / "platform" / "ec" / "zephyr" / "zmake"
+    ).resolve()
+    if not zmake_path.is_dir():
+        return
+
+    # If PYTHONPATH is set, it is either because we just did a
+    # re-exec, or because the user wants to run a specific copy of
+    # zmake.  In either case, we don't want to re-exec.
+    if "PYTHONPATH" in env:
+        return
+
+    # Set PYTHONPATH so that we run zmake from source.
+    env["PYTHONPATH"] = str(zmake_path)
+
+    os.execve(sys.executable, [sys.executable, "-m", "zmake", *argv], env)
 
 
 def call_with_namespace(func, namespace):
@@ -54,6 +104,8 @@ def main(argv=None):
     """
     if argv is None:
         argv = sys.argv[1:]
+
+    maybe_reexec(argv)
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
