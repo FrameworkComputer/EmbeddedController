@@ -216,15 +216,9 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 	enum ioex_signal rst_signal;
 
 	if (me->usb_port == USBC_PORT_C0) {
-		if (get_board_id() == 1)
-			rst_signal = IOEX_ID_1_USB_C0_RT_RST_ODL;
-		else
-			rst_signal = IOEX_USB_C0_RT_RST_ODL;
+		rst_signal = IOEX_USB_C0_RT_RST_ODL;
 	} else if (me->usb_port == USBC_PORT_C2) {
-		if (get_board_id() == 1)
-			rst_signal = IOEX_ID_1_USB_C2_RT_RST_ODL;
-		else
-			rst_signal = IOEX_USB_C2_RT_RST_ODL;
+		rst_signal = IOEX_USB_C2_RT_RST_ODL;
 	} else {
 		return EC_ERROR_INVAL;
 	}
@@ -247,20 +241,6 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 		 * which powers I2C controller within retimer
 		 */
 		msleep(1);
-		if (get_board_id() == 1) {
-			int val;
-
-			/*
-			 * Check if we were able to deassert
-			 * reset. Board ID 1 uses a GPIO that is
-			 * uncontrollable when a debug accessory is
-			 * connected.
-			 */
-			if (ioex_get_level(rst_signal, &val) != EC_SUCCESS)
-				return EC_ERROR_UNKNOWN;
-			if (val != 1)
-				return EC_ERROR_NOT_POWERED;
-		}
 	} else {
 		ioex_set_level(rst_signal, 0);
 		msleep(1);
@@ -286,10 +266,7 @@ void board_reset_pd_mcu(void)
 {
 	enum gpio_signal tcpc_rst;
 
-	if (get_board_id() == 1)
-		tcpc_rst = GPIO_ID_1_USB_C0_C2_TCPC_RST_ODL;
-	else
-		tcpc_rst = GPIO_USB_C0_C2_TCPC_RST_ODL;
+	tcpc_rst = GPIO_USB_C0_C2_TCPC_RST_ODL;
 
 	/*
 	 * TODO(b/179648104): figure out correct timing
@@ -335,13 +312,8 @@ static void board_tcpc_init(void)
 		 * C0/C2 TCPC, so they must be set up after the TCPC has
 		 * been taken out of reset.
 		 */
-		if (get_board_id() == 1) {
-			enable_ioex(IOEX_ID_1_C0_NCT38XX);
-			enable_ioex(IOEX_ID_1_C2_NCT38XX);
-		} else {
-			enable_ioex(IOEX_C0_NCT38XX);
-			enable_ioex(IOEX_C2_NCT38XX);
-		}
+		enable_ioex(IOEX_C0_NCT38XX);
+		enable_ioex(IOEX_C2_NCT38XX);
 	}
 
 	/* Enable PPC interrupts. */

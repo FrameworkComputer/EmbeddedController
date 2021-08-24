@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Shared USB-C policy for Brya boards */
+/* Shared USB-C policy for Brask boards */
 
 #include <stddef.h>
 #include <stdint.h>

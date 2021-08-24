@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* brya family-specific USB-C configuration */
+/* brask family-specific USB-C configuration */
 
 #ifndef __CROS_EC_BASEBOARD_USBC_CONFIG_H
 #define __CROS_EC_BASEBOARD_USBC_CONFIG_H

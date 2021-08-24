@@ -5,26 +5,17 @@
  * found in the LICENSE file.
  */
 
-#define MODULE_KB		MODULE_KEYBOARD_SCAN
-
 /* INTERRUPT GPIOs: */
-GPIO_INT(ACOK_OD,                    PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
-GPIO_INT(EC_ACCEL_INT_R_L,           PIN(8, 1), GPIO_SEL_1P8V | GPIO_INT_FALLING, lis2dw12_interrupt)
-GPIO_INT(EC_ALS_RGB_INT_R_L,         PIN(D, 4), GPIO_INT_FALLING, tcs3400_interrupt)
-GPIO_INT(EC_IMU_INT_R_L,             PIN(5, 6), GPIO_SEL_1P8V | GPIO_INT_FALLING, lsm6dso_interrupt)
+GPIO_INT(ACOK_OD,                    PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)
 GPIO_INT(EC_PROCHOT_IN_L,            PIN(F, 0), GPIO_INT_BOTH, throttle_ap_prochot_input_interrupt)
-GPIO_INT(EC_VOLDN_BTN_ODL,           PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
-GPIO_INT(EC_VOLUP_BTN_ODL,           PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_WP_ODL,                  PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
-GPIO_INT(GSC_EC_PWR_BTN_ODL,         PIN(0, 1), GPIO_INT_BOTH | GPIO_HIB_WAKE_LOW, power_button_interrupt)
-GPIO_INT(LID_OPEN,                   PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)
+GPIO_INT(GSC_EC_PWR_BTN_ODL,         PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)
 GPIO_INT(SEQ_EC_ALL_SYS_PG,          PIN(F, 4), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SEQ_EC_DSW_PWROK,           PIN(C, 7), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SEQ_EC_RSMRST_ODL,          PIN(E, 2), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_S3_L,                   PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_SUS_L,                  PIN(F, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SYS_SLP_S0IX_L,             PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(TABLET_MODE_L,              PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 GPIO_INT(USB_C0_BC12_INT_ODL,        PIN(C, 6), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C0_C2_TCPC_INT_ODL,     PIN(E, 0), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(USB_C0_PPC_INT_ODL,         PIN(6, 2), GPIO_INT_FALLING, ppc_interrupt)
@@ -38,9 +29,7 @@ GPIO_INT(USB_C2_RT_INT_ODL,          PIN(4, 1), GPIO_INT_FALLING, retimer_interr
 
 /* USED GPIOs: */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
-GPIO(CHARGER_VAP_OTG_EN,             PIN(7, 3), GPIO_OUT_LOW)
 GPIO(CPU_C10_GATE_L,                 PIN(6, 7), GPIO_INPUT)
-GPIO(EC_BATT_PRES_ODL,               PIN(A, 3), GPIO_INPUT)
 GPIO(EC_ENTERING_RW,                 PIN(0, 3), GPIO_OUT_LOW)
 GPIO(EC_EN_EDP_BL,                   PIN(D, 3), GPIO_OUT_HIGH)
 GPIO(EC_GSC_PACKET_MODE,             PIN(7, 5), GPIO_OUT_LOW)
@@ -60,7 +49,6 @@ GPIO(EC_I2C_USB_C1_MIX_SCL,          PIN(E, 4), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_MIX_SDA,          PIN(E, 3), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_TCPC_SCL,         PIN(F, 3), GPIO_INPUT)
 GPIO(EC_I2C_USB_C1_TCPC_SDA,         PIN(F, 2), GPIO_INPUT)
-GPIO(EC_KB_BL_EN_L,                  PIN(8, 6), GPIO_OUT_HIGH)
 GPIO(EC_PCHHOT_ODL,                  PIN(7, 4), GPIO_INPUT)
 GPIO(EC_PCH_INT_ODL,                 PIN(B, 0), GPIO_ODR_HIGH)
 GPIO(EC_PCH_PWR_BTN_ODL,             PIN(C, 1), GPIO_ODR_HIGH)
@@ -107,14 +95,6 @@ ALTERNATE(PIN_MASK(3, 0x10), 0, MODULE_ADC, 0)               /* GPIO34/PS2_DAT2/
 ALTERNATE(PIN_MASK(4, 0x34), 0, MODULE_ADC, 0)               /* GPIO42/ADC3/RI_L, GPIO45/ADC0, GPIO44/ADC1 */
 ALTERNATE(PIN_MASK(E, 0x02), 0, MODULE_ADC, 0)               /* GPIOE1/ADC7 */
 
-/* KB alternate functions */
-ALTERNATE(PIN_MASK(0, 0xf0), 0, MODULE_KB, GPIO_ODR_HIGH)    /* KSO10&P80_CLK/GPIO07, KSO11&P80_DAT/GPIO06, KSO12/GPIO05, KSO13/GPIO04 */
-ALTERNATE(PIN_MASK(1, 0x7f), 0, MODULE_KB, GPIO_ODR_HIGH)    /* KSO06/GPO13/GP_SEL_L, KSO07/GPO12/JEN_L, KSO03/GPIO16/JTAG_TDO0_SWO, KSO04/GPIO15/XNOR, KSO05/GPIO14, KSO08/GPIO11/CR_SOUT1, KSO09/GPIO10/CR_SIN1 */
-ALTERNATE(PIN_MASK(2, 0xfc), 0, MODULE_KB, GPIO_INPUT | GPIO_PULL_UP) /* KSI2/GPIO27/TRACEDATA1, KSI3/GPIO26/TRACEDATA0, KSI4/GPIO25/TRACECLK/GP_SCLK, KSI5/GPIO24/GP_MISO, KSI6/GPIO23/S_SBUB, KSI7/GPIO22/S_SBUA */
-ALTERNATE(PIN_MASK(2, 0x03), 0, MODULE_KB, GPIO_ODR_HIGH)    /* KSO00/GPIO21/JTAG_TCK_SWCLK, KSO01/GPIO20/JTAG_TMS_SWIO */
-ALTERNATE(PIN_MASK(3, 0x03), 0, MODULE_KB, GPIO_INPUT | GPIO_PULL_UP) /* KSI0/GPIO31/TRACEDATA3/GP_MOSI, KSI1/GPIO30/TRACEDATA2/GP_CS_L */
-ALTERNATE(PIN_MASK(8, 0x04), 0, MODULE_KB, GPIO_ODR_HIGH)    /* KSO14/GPIO82 */
-
 /* PMU alternate functions */
 ALTERNATE(PIN_MASK(0, 0x01), 0, MODULE_PMU, GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH) /* PSL_IN2_L&GPI00/GPIO00 */
 ALTERNATE(PIN_MASK(0, 0x02), 0, MODULE_PMU, GPIO_INT_BOTH | GPIO_HIB_WAKE_LOW) /* GPIO01/PSL_IN3_L&GPI01 */
@@ -125,45 +105,6 @@ UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
 UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(6, 6))       /* GPIO66 */
-/*
- * The NPCX keyboard driver does not use named GPIOs to access
- * keyboard scan pins, so we do not list them in *gpio.inc. However, when
- * KEYBOARD_COL2_INVERTED is defined, this name is required.
- */
-GPIO(EC_KSO_02_INV,               PIN(1, 7), GPIO_OUT_LOW)
-
-/*
- * GPIOE1 is an ALT function ADC INPUT on board ID 2 and a GPIO INPUT on
- * board ID 1. This declaration gives us a signal name to use on board
- * ID 1.
- */
-GPIO(ID_1_EC_BATT_PRES_ODL,       PIN(E, 1), GPIO_INPUT)
-
-/*
- * GPIO34 is an INPUT on board ID 2 and ODR_LOW on board ID 1.
- *
- * Since this pin is pulled up to 3.3V through a 30.9K ohm resistor on
- * board ID 2, we will leak about 0.3mW until the pin is put in ALT mode
- * when MODULE_ADC configuration runs. Initializing the pin to ODR_LOW
- * gives us full control on both boards.
- */
-GPIO(ID_1_USB_C0_C2_TCPC_RST_ODL, PIN(3, 4), GPIO_ODR_LOW)
-
-/* Board ID 1 IO expander configuration */
-
-IOEX(ID_1_USB_C0_RT_RST_ODL, EXPIN(IOEX_ID_1_C0_NCT38XX, 0, 2), GPIO_ODR_LOW)
-/* GPIO03_P1 to PU */
-IOEX(ID_1_USB_C0_FRS_EN,     EXPIN(IOEX_ID_1_C0_NCT38XX, 0, 4), GPIO_LOW)
-IOEX(ID_1_USB_C0_OC_ODL,     EXPIN(IOEX_ID_1_C0_NCT38XX, 0, 6), GPIO_ODR_HIGH)
-/* GPIO07_P1 to PU */
-
-IOEX(ID_1_USB_C2_RT_RST_ODL, EXPIN(IOEX_ID_1_C2_NCT38XX, 0, 2), GPIO_ODR_LOW)
-/* GPIO03_P2 to PU */
-IOEX(ID_1_USB_C2_FRS_EN,     EXPIN(IOEX_ID_1_C2_NCT38XX, 0, 4), GPIO_LOW)
-IOEX(ID_1_USB_C1_OC_ODL,     EXPIN(IOEX_ID_1_C2_NCT38XX, 0, 6), GPIO_ODR_HIGH)
-IOEX(ID_1_USB_C2_OC_ODL,     EXPIN(IOEX_ID_1_C2_NCT38XX, 0, 7), GPIO_ODR_HIGH)
-
-/* Board ID 2 IO expander configuration */
 
 /* GPIO02_P2 to PU */
 /* GPIO03_P2 to PU */
