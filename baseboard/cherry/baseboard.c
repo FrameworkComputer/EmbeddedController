@@ -629,3 +629,21 @@ __override int board_pd_set_frs_enable(int port, int enable)
 	/* Use write instead of update to save 1 i2c read in FRS path */
 	return rt1718s_write8(port, RT1718S_GPIO3_CTRL, value);
 }
+
+__override int board_get_vbus_voltage(int port)
+{
+	int voltage = 0;
+
+	switch (port) {
+	case 0:
+		voltage = adc_read_channel(ADC_VBUS);
+		break;
+	case 1:
+		rt1718s_get_adc(port, RT1718S_ADC_VBUS1, &voltage);
+		break;
+	default:
+		return 0;
+	}
+
+	return voltage;
+}
