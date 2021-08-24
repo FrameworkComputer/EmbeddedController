@@ -12,29 +12,29 @@
 
 /* ADC configuration */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_1_DDR_SOC] = {
-		.name = "TEMP_DDR_SOC",
+	[ADC_TEMP_SENSOR_1_CPU] = {
+		.name = "TEMP_CPU",
 		.input_ch = NPCX_ADC_CH0,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_2_FAN] = {
-		.name = "TEMP_FAN",
+	[ADC_TEMP_SENSOR_2_CPU_VR] = {
+		.name = "TEMP_CPU_VR",
 		.input_ch = NPCX_ADC_CH1,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_3_CHARGER] = {
-		.name = "TEMP_CHARGER",
+	[ADC_TEMP_SENSOR_3_WIFI] = {
+		.name = "TEMP_WIFI",
 		.input_ch = NPCX_ADC_CH6,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_4_WWAN] = {
-		.name = "TEMP_WWAN",
+	[ADC_TEMP_SENSOR_4_DIMM] = {
+		.name = "TEMP_DIMM",
 		.input_ch = NPCX_ADC_CH7,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
@@ -51,17 +51,29 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Temperature sensor configuration */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1_DDR_SOC] = {
-		.name = "DDR and SOC",
+	[TEMP_SENSOR_1_CPU] = {
+		.name = "CPU",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_1_DDR_SOC
+		.idx = ADC_TEMP_SENSOR_1_CPU
 	},
-	[TEMP_SENSOR_2_FAN] = {
-		.name = "FAN",
+	[TEMP_SENSOR_2_CPU_VR] = {
+		.name = "CPU VR",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2_FAN
+		.idx = ADC_TEMP_SENSOR_2_CPU_VR
+	},
+	[TEMP_SENSOR_3_WIFI] = {
+		.name = "WIFI",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_3_WIFI
+	},
+	[TEMP_SENSOR_4_DIMM] = {
+		.name = "DIMM",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_4_DIMM
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
@@ -86,33 +98,13 @@ static const struct ec_thermal_config thermal_cpu = {
 };
 
 /*
- * TODO(b/180681346): update for Alder Lake/brya
- *
- * Inductor limits - used for both charger and PP3300 regulator
- *
- * Need to use the lower of the charger IC, PP3300 regulator, and the inductors
- *
- * Charger max recommended temperature 100C, max absolute temperature 125C
- * PP3300 regulator: operating range -40 C to 145 C
- *
- * Inductors: limit of 125c
- * PCB: limit is 80c
+ * TODO(b/197478860): add the thermal sensor setting
  */
-static const struct ec_thermal_config thermal_fan = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
-	},
-	.temp_fan_off = C_TO_K(40),
-	.temp_fan_max = C_TO_K(55),
-};
-
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_DDR_SOC] = thermal_cpu,
-	[TEMP_SENSOR_2_FAN]	= thermal_fan,
+	[TEMP_SENSOR_1_CPU] = thermal_cpu,
+	[TEMP_SENSOR_2_CPU_VR] = thermal_cpu,
+	[TEMP_SENSOR_3_WIFI] = thermal_cpu,
+	[TEMP_SENSOR_4_DIMM] = thermal_cpu,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
