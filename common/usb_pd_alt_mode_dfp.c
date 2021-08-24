@@ -811,7 +811,7 @@ bool is_cable_speed_gen2_capable(int port)
 	struct pd_discovery *disc =
 		pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
 
-	switch (pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME)) {
+	switch (pd_get_rev(port, TCPCI_MSG_SOP_PRIME)) {
 	case PD_REV20:
 		return disc->identity.product_t1.p_rev20.ss ==
 						USB_R20_SS_U31_GEN1_GEN2;
