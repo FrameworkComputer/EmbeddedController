@@ -149,30 +149,35 @@ static void ps8815_reset(void)
 		CPRINTS("ps8815: reg 0x0f now %02x", val);
 }
 
-static void ps8815_setup_eq(void)
+/*
+ * Adjust USB3 settings to improve signal integrity.
+ * See b/194985848.
+ */
+__override void board_ps8xxx_tcpc_init(int port)
 {
 	int rv;
-	const int port = tcpc_config[USBC_PORT_C1].i2c_info.port;
-	const int addr = tcpc_config[USBC_PORT_C1].i2c_info.addr_flags;
+
+	CPRINTS("%s", __func__);
 
 	/* TX1 EQ 19db / TX2 EQ 19db */
-	rv = i2c_write8(port, addr, 0x20, 0x77);
-
+	rv = tcpc_addr_write(port, PS8751_I2C_ADDR1_P1_FLAGS, 0x20, 0x77);
 	/* RX1 EQ 12db / RX2 EQ 13db */
-	rv |= i2c_write8(port, addr, 0x22, 0x32);
-
+	rv |= tcpc_addr_write(port, PS8751_I2C_ADDR1_P1_FLAGS, 0x22, 0x32);
 	/* Swing level for upstream port output */
-	rv |= i2c_write8(port, addr, 0xc4, 0x03);
+	rv |= tcpc_addr_write(port, PS8751_I2C_ADDR1_P1_FLAGS, 0xc4, 0x03);
 
 	if (rv)
 		CPRINTS("%s fail!", __func__);
 }
 
-static void ps8811_setup_eq(void)
+/* Called on AP S5 -> S0 transition */
+void board_ps8811_init(void)
 {
 	int rv;
 	const int port = I2C_PORT_USB_1_MIX;
 	const int addr = PS8811_I2C_ADDR_FLAGS0 + PS8811_REG_PAGE1;
+
+	CPRINTS("%s", __func__);
 
 	/* AEQ 12db */
 	rv = i2c_write8(port, addr, 0x01, 0x26);
@@ -194,19 +199,7 @@ static void ps8811_setup_eq(void)
 	if (rv)
 		CPRINTS("%s fail!", __func__);
 }
-
-/* Called on AP S5 -> S0 transition */
-void board_ps8xxx_init(void)
-{
-	CPRINTS("%s", __func__);
-	/*
-	 * Adjust USB3 settings to improve signal integrity.
-	 * See b/194985848.
-	 */
-	ps8815_setup_eq();
-	ps8811_setup_eq();
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_ps8xxx_init, HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_ps8811_init, HOOK_PRIO_LAST);
 
 void board_reset_pd_mcu(void)
 {
