@@ -48,7 +48,7 @@ GPIO_INT(BASE_DET_L,        PIN(3, 7), GPIO_INT_BOTH, base_detect_interrupt)  /*
 GPIO_INT(LID_360_L,         PIN(7, 3), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 GPIO_INT(LID_INT_N_HALL1,   PIN(D, 7), GPIO_INT_BOTH, ks_interrupt)  /* Kickstand attached (0) or detached (1) */
 GPIO_INT(LID_INT_N_HALL2,   PIN(6, 0), GPIO_INT_BOTH, ks_interrupt)  /* Kickstand close (0) or open (1) */
-GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 0), GPIO_INT_FALLING, bmi160_interrupt)  /* Accelerometer/gyro interrupt */
+GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 0), GPIO_INT_FALLING, motion_interrupt)  /* Accelerometer/gyro interrupt */
 
 /*
  * EC_RST_ODL acts as a wake source from hibernate mode. However, it does not
