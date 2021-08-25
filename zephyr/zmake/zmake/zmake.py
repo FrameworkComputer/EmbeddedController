@@ -536,6 +536,8 @@ class Zmake:
                 "--exclude",
                 "*/ec/test/*",
                 "--exclude",
+                "*/ec/zephyr/shim/chip/npcx/npcx_monitor/*",
+                "--exclude",
                 "*/ec/zephyr/emul/*",
                 "--exclude",
                 "*/ec/zephyr/test/*",
