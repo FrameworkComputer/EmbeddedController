@@ -53,17 +53,15 @@ K_MUTEX_DEFINE(g_base_accel_mutex);
 static struct accelgyro_saved_data_t g_bma253_data;
 static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
-/* TODO(b/184779333): calibrate the orientation matrix on later board stage */
 static const mat33_fp_t lid_standard_ref = {
+	{ FLOAT_TO_FP(-1), 0, 0},
 	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
-/* TODO(b/184779743): verify orientation matrix */
 static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(1), 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
