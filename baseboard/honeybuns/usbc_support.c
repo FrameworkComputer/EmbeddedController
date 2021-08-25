@@ -331,6 +331,12 @@ int c1_ps8805_vbus_source_enable(int port, int enable)
 	return ps8805_gpio_set_level(port, PS8805_GPIO_1, enable);
 }
 
+__override bool usb_ufp_check_usb3_enable(int port)
+{
+	/* USB3.1 mux should be enabled based on UFP data role */
+	return port == USB_PD_PORT_HOST;
+}
+
 #ifdef GPIO_USBC_UF_ATTACHED_SRC
 static int ppc_ocp_count;
 
