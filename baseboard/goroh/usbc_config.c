@@ -45,34 +45,57 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 /* USB Mux */
-
-__overridable int board_c1_ps8818_mux_init(const struct usb_mux *me)
+static int goroh_usb_c0_init_mux(const struct usb_mux *me)
 {
-	/* enable C1 mux power */
-	GPIO_SET_LEVEL(GPIO_EN_USB_C1_MUX_PWR, 1);
-	return 0;
+	return virtual_usb_mux_driver.init(me);
 }
 
-__overridable int board_c1_ps8818_mux_set(const struct usb_mux *me,
-					  mux_state_t mux_state)
+static int goroh_usb_c0_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+				bool *ack_required)
 {
-	if (mux_state == USB_PD_MUX_NONE)
-		GPIO_SET_LEVEL(GPIO_EN_USB_C1_MUX_PWR, 0);
+	/*
+	 * b/188376636: Inverse C0 polarity.
+	 * Goroh rev0 CC1/CC2 SBU1/SBU2 are reversed.
+	 * We report inversed polarity to the SoC and SoC we reverse the SBU
+	 * accordingly.
+	 */
+	mux_state = mux_state ^ USB_PD_MUX_POLARITY_INVERTED;
 
-	return 0;
+	return virtual_usb_mux_driver.set(me, mux_state, ack_required);
+
 }
+
+static int goroh_usb_c0_get_mux(const struct usb_mux *me,
+				mux_state_t *mux_state)
+{
+	return virtual_usb_mux_driver.get(me, mux_state);
+}
+
+static struct usb_mux_driver goroh_usb_c0_mux_driver = {
+	.init = goroh_usb_c0_init_mux,
+	.set = goroh_usb_c0_set_mux,
+	.get = goroh_usb_c0_get_mux,
+};
+
+static const struct usb_mux goroh_usb_c1_ps8818_retimer = {
+	.usb_port = USBC_PORT_C1,
+	.i2c_port = I2C_PORT_USB_C1,
+	.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
+	.driver = &ps8818_usb_retimer_driver,
+	.next_mux = NULL,
+};
 
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		/* C0 no mux */
+	[USBC_PORT_C0] = {
+		.usb_port = USBC_PORT_C0,
+		.driver = &goroh_usb_c0_mux_driver,
+		.hpd_update = &virtual_hpd_update,
 	},
-	{
+	[USBC_PORT_C1] = {
 		.usb_port = USBC_PORT_C1,
-		.i2c_port = I2C_PORT_USB_C1,
-		.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
-		.driver = &ps8818_usb_retimer_driver,
-		.board_init = &board_c1_ps8818_mux_init,
-		.board_set = &board_c1_ps8818_mux_set,
+		.driver = &virtual_usb_mux_driver,
+		.hpd_update = &virtual_hpd_update,
+		.next_mux = &goroh_usb_c1_ps8818_retimer,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
