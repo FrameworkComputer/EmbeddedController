@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-image: sjg20/bionic-20200526-30jul21
+image: jbettis/bionic-20200807-27aug21
 
 # You can update that image using this repo:
 #   https://gitlab.com/zephyr-ec/gitlab-ci-runner/-/tree/main
@@ -104,3 +104,16 @@ volteer:
     PROJECT_SUBDIR: "volteer/"
     VERSION: 26
   <<: *build_template
+
+coverage:
+  stage: test
+  script:
+    - zmake --zephyr-base "${ZEPHYR_BASE}26"
+      --modules-dir "${MODULES_DIR}" -l DEBUG coverage
+      "${BUILD_DIR}/coverage"
+    - ls "${BUILD_DIR}/coverage" "${BUILD_DIR}/coverage/coverage_rpt"
+  artifacts:
+    paths:
+      - build/coverage/*
+    expire_in: 1 week
+
