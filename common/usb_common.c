@@ -458,6 +458,11 @@ enum pd_drp_next_states drp_auto_toggle_next_state(
 	}
 }
 
+__overridable bool usb_ufp_check_usb3_enable(int port)
+{
+	return false;
+}
+
 mux_state_t get_mux_mode_to_set(int port)
 {
 	/*
@@ -476,6 +481,16 @@ mux_state_t get_mux_mode_to_set(int port)
 	 */
 	if (pd_is_disconnected(port))
 		return USB_PD_MUX_NONE;
+
+	/*
+	 * For type-c only connections, there may be a need to enable USB3.1
+	 * mode when the port is in a UFP data role, independent of any other
+	 * conditions which are checked below. The default function returns
+	 * false, so only boards that override this check will be affected.
+	 */
+	if (usb_ufp_check_usb3_enable(port) && pd_get_data_role(port)
+	    == PD_ROLE_UFP)
+		return USB_PD_MUX_USB_ENABLED;
 
 	/* If new data role isn't DFP & we only support DFP, also disconnect. */
 	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&

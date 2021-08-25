@@ -176,6 +176,16 @@ void notify_sysjump_ready(void);
 void set_usb_mux_with_current_data_role(int port);
 
 /**
+ * Check if the mux should be set to enable USB3.1 mode based only on being in a
+ * UFP data role. This is mode is required when attached to a port partner that
+ * is type-c only, but still needs to enable USB3.1 mode.
+ *
+ * @param port USB-C port number
+ * @return true if USB3 mode should be enabled, false otherwise
+ */
+__override_proto bool usb_ufp_check_usb3_enable(int port);
+
+/**
  * Configure the USB MUX in safe mode.
  * Before entering into alternate mode, state of the USB-C MUX needs to be in
  * safe mode.
