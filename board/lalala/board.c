@@ -5,7 +5,7 @@
 
 /* Lalala board-specific configuration */
 
-#include "adc_chip.h"
+#include "adc.h"
 #include "button.h"
 #include "cbi_fw_config.h"
 #include "cbi_ssfc.h"

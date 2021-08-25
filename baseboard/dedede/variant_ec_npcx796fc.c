@@ -5,7 +5,7 @@
 
 /* Common code for VARIANT_[DEDEDE|KEEBY]_NPCX79[6/7]FC configuration */
 
-#include "adc_chip.h"
+#include "adc.h"
 #include "atomic.h"
 #include "chipset.h"
 #include "common.h"

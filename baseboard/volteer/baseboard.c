@@ -4,7 +4,7 @@
  */
 
 /* Volteer family-specific configuration */
-#include "adc_chip.h"
+#include "adc.h"
 #include "button.h"
 #include "cbi_ec_fw_config.h"
 #include "charger.h"

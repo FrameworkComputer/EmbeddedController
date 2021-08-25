@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "accelgyro.h"
-#include "adc_chip.h"
+#include "adc.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dso.h"
 #include "driver/als_tcs3400_public.h"
