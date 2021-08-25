@@ -1,7 +1,22 @@
 # Here you can place files of interest to be included in the commit message for
 # merge commits to firmware-dedede-13606.B
+common/charge_state_v2.c
+common/mkbp_*
 common/ocpc.c
+common/usbc/usb_tc_drp_acc_trysrc_sm.c
+common/usbc/usb_sm.c
+common/usbc/*_pd_*
+common/usbc/dp_alt_mode.c
+common/usbc/usb_prl_sm.c
+common/usbc/usb_pe_drp_sm.c
+common/usb_charger.c
+common/usb_common.c
+common/usbc_ocp.c
 driver/charger/sm5803.*
 driver/charger/isl923x.*
 driver/tcpm/raa489000.*
 driver/tcpm/it83*
+include/power/icelake.h
+include/intel_x86.h
+power/icelake.c
+power/intel_x86.c
