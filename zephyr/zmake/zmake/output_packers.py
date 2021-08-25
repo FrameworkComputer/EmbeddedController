@@ -185,6 +185,7 @@ class NpcxPacker(BinmanPacker):
     """
 
     ro_file = "zephyr.npcx.bin"
+    npcx_monitor = "npcx_monitor.bin"
 
     # TODO(b/192401039): CONFIG_FLASH_SIZE is nuvoton-only.  Since
     # binman already checks sizes, perhaps we can just remove this
@@ -215,6 +216,9 @@ class NpcxPacker(BinmanPacker):
                 )
             else:
                 yield path, output_file
+
+        # Include the NPCX monitor file as an output artifact.
+        yield ro / self.npcx_monitor, self.npcx_monitor
 
 
 # A dictionary mapping packer config names to classes.
