@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_ADC_CHIP_H
 #define __CROS_EC_ADC_CHIP_H
 
-#include "adc.h"
+#include "common.h"
 
 /* Minimum and maximum values returned by raw ADC read. */
 #define ADC_READ_MIN 0
@@ -44,12 +44,6 @@ struct adc_t {
 	int factor_div;
 	int shift;
 };
-
-/*
- * Boards must provide this list of ADC channel definitions.  This must match
- * the enum adc_channel list provided by the board.
- */
-extern const struct adc_t adc_channels[];
 
 /*
  * Boards may configure a ADC channel for use with thershold interrupts.

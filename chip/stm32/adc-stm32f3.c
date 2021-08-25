@@ -4,7 +4,6 @@
  */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"

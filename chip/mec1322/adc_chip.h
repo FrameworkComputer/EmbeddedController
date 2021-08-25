@@ -17,12 +17,6 @@ struct adc_t {
 	int channel;
 };
 
-/*
- * Boards must provide this list of ADC channel definitions.  This must match
- * the enum adc_channel list provided by the board.
- */
-extern const struct adc_t adc_channels[];
-
 /* Minimum and maximum values returned by adc_read_channel(). */
 #define ADC_READ_MIN 0
 #define ADC_READ_MAX 1023

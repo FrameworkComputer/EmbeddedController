@@ -8,7 +8,6 @@
 #ifndef __CROS_EC_VPD_API_H
 #define __CROS_EC_VPD_API_H
 
-#include "adc.h"
 #include "gpio.h"
 #include "usb_pd.h"
 

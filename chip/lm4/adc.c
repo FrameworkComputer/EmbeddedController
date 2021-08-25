@@ -6,7 +6,6 @@
 /* LM4-specific ADC module for Chrome EC */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "atomic.h"
 #include "clock.h"
 #include "console.h"

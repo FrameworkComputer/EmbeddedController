@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_ADC_CHIP_H
 #define __CROS_EC_ADC_CHIP_H
 
+#include <stdint.h>
+
 #include "common.h"
 
 /*
@@ -120,12 +122,6 @@ struct vcmp_t {
 	 */
 	enum chip_adc_channel adc_ch;
 };
-
-/*
- * Boards must provide this list of ADC channel definitions. This must match
- * the enum adc_channel list provided by the board.
- */
-extern const struct adc_t adc_channels[];
 
 #ifdef CONFIG_ADC_VOLTAGE_COMPARATOR
 /*

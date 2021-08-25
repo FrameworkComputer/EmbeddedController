@@ -6,7 +6,6 @@
 /* Temperature sensor module for Chrome EC */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "hooks.h"
 

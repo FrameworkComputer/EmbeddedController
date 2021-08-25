@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_ADC_H
 #define __CROS_EC_ADC_H
 
+#include "adc_chip.h"
 #include "common.h"
 
 #define ADC_READ_ERROR -1  /* Value returned by adc_read_channel() on error */
@@ -15,6 +16,12 @@
 #ifdef CONFIG_ZEPHYR
 #include <zephyr_adc.h>
 #endif /* CONFIG_ZEPHYR */
+
+/*
+ * Boards must provide this list of ADC channel definitions.  This must match
+ * the enum adc_channel list provided by the board.
+ */
+extern const struct adc_t adc_channels[];
 
 /*
  * Boards which use the ADC interface must provide enum adc_channel in the

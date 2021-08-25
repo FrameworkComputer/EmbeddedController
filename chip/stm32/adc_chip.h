@@ -8,8 +8,6 @@
 #ifndef __CROS_EC_ADC_CHIP_H
 #define __CROS_EC_ADC_CHIP_H
 
-#include "stdint.h"
-
 #ifdef CHIP_FAMILY_STM32L4
 enum stm32_adc_smpr {
 	STM32_ADC_SMPR_DEFAULT = 0,
@@ -53,13 +51,6 @@ struct adc_t {
 	enum stm32_adc_smpr sample_rate;  /* Sampling Rate of the channel */
 #endif
 };
-
-/*
- * Boards must provide this list of ADC channel definitions.  This must match
- * the enum adc_channel list provided by the board. Also, for STM32F0, this
- * must be ordered by AIN ID.
- */
-extern const struct adc_t adc_channels[];
 
 /* Disable ADC module when we don't need it anymore. */
 void adc_disable(void);

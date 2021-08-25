@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_ADC_CHIP_H
 #define __CROS_EC_ADC_CHIP_H
 
+#include <stdint.h>
+
 enum lm4_adc_sequencer {
 	LM4_ADC_SEQ0 = 0,
 	LM4_ADC_SEQ1,
@@ -28,12 +30,6 @@ struct adc_t {
 	uint32_t gpio_port;
 	uint8_t gpio_mask;
 };
-
-/*
- * Boards must provide this list of ADC channel definitions.  This must match
- * the enum adc_channel list provided by the board.
- */
-extern const struct adc_t adc_channels[];
 
 /* Minimum and maximum values returned by raw ADC read. */
 #define ADC_READ_MIN 0

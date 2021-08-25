@@ -6,7 +6,6 @@
 /* NPCX-specific ADC module for Chrome EC */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "atomic.h"
 #include "clock.h"
 #include "clock_chip.h"
