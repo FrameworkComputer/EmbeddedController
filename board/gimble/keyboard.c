@@ -32,9 +32,9 @@ static const struct ec_response_keybd_config gimble_kb = {
 		TK_FULLSCREEN,		/* T3 */
 		TK_OVERVIEW,		/* T4 */
 		TK_SNAPSHOT,		/* T5 */
-		TK_KBD_BKLIGHT_TOGGLE,	/* T6 */
-		TK_BRIGHTNESS_DOWN,	/* T7 */
-		TK_BRIGHTNESS_UP,	/* T8 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_KBD_BKLIGHT_TOGGLE,	/* T8 */
 		TK_PLAY_PAUSE,		/* T9 */
 		TK_MICMUTE,		/* T10 */
 		TK_VOL_MUTE,		/* T11 */
