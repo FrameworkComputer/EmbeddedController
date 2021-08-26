@@ -8,7 +8,9 @@
 #include "adc_chip.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_bma2x2_public.h"
+#include "driver/accel_bma422.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_lsm6dsm.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
 #include "motion_sense.h"
@@ -50,6 +52,12 @@ static struct accelgyro_saved_data_t g_bma253_data;
 /* BMI160 private data */
 static struct bmi_drv_data_t g_bmi160_data;
 
+/* LSM6DSM private data */
+static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
+
+/* BMA422 private data */
+static struct accelgyro_saved_data_t g_bma422_data;
+
 /* TODO(b/192477578): calibrate the orientation matrix on later board stage */
 static const mat33_fp_t lid_standard_ref = {
 	{ 0, FLOAT_TO_FP(1), 0},
@@ -57,11 +65,23 @@ static const mat33_fp_t lid_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
+static const mat33_fp_t lid_standard_ref_id_1 = {
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
 /* TODO(b/192477578): calibrate the orientation matrix on later board stage */
 static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
 	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
+	{ 0, 0, FLOAT_TO_FP(1)}
+};
+
+static const mat33_fp_t base_standard_ref_id_1 = {
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
 struct motion_sensor_t motion_sensors[] = {
@@ -139,6 +159,118 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+struct motion_sensor_t bma422_lid_accel = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_BMA422,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &bma4_accel_drv,
+	.mutex = &g_lid_accel_mutex,
+	.drv_data = &g_bma422_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = BMA4_I2C_ADDR_SECONDARY,
+	.rot_standard_ref = &lid_standard_ref_id_1,
+	.min_frequency = BMA4_ACCEL_MIN_FREQ,
+	.max_frequency = BMA4_ACCEL_MAX_FREQ,
+	.default_range = 2, /* g, enough for laptop. */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* Sensor on in S3 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+			.ec_rate = 0,
+		},
+	},
+};
+
+struct motion_sensor_t lsm6dsm_base_accel = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_LSM6DSM,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &lsm6dsm_drv,
+	.mutex = &g_base_accel_mutex,
+	.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+			MOTIONSENSE_TYPE_ACCEL),
+	.int_signal = GPIO_EC_IMU_INT_R_L,
+	.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+	.rot_standard_ref = &base_standard_ref_id_1,
+	.default_range = 4,  /* g */
+	.min_frequency = LSM6DSM_ODR_MIN_VAL,
+	.max_frequency = LSM6DSM_ODR_MAX_VAL,
+	.config = {
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 13000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+	},
+};
+
+struct motion_sensor_t lsm6dsm_base_gyro = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_LSM6DSM,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &lsm6dsm_drv,
+	.mutex = &g_base_accel_mutex,
+	.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+			MOTIONSENSE_TYPE_GYRO),
+	.int_signal = GPIO_EC_IMU_INT_R_L,
+	.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+	.default_range = 1000 | ROUND_UP_FLAG, /* dps */
+	.rot_standard_ref = &base_standard_ref_id_1,
+	.min_frequency = LSM6DSM_ODR_MIN_VAL,
+	.max_frequency = LSM6DSM_ODR_MAX_VAL,
+	.config = {
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 13000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+	},
+};
+
+void motion_interrupt(enum gpio_signal signal)
+{
+	if (get_board_id() >= 1)
+		lsm6dsm_interrupt(signal);
+	else
+		bmi160_interrupt(signal);
+}
+
+static void update_sensor_array(void)
+{
+	if (get_board_id() >= 1) {
+		motion_sensors[LID_ACCEL] = bma422_lid_accel;
+		motion_sensors[BASE_ACCEL] = lsm6dsm_base_accel;
+		motion_sensors[BASE_GYRO] = lsm6dsm_base_gyro;
+		ccprints("LID ACCEL is BMA422");
+		ccprints("BASE IMU is LSM6DSM");
+	} else {
+		ccprints("LID ACCEL is BMA253");
+		ccprints("BASE IMU is BMI160");
+	}
+}
+DECLARE_HOOK(HOOK_INIT, update_sensor_array, HOOK_PRIO_INIT_I2C);
 
 static void baseboard_sensors_init(void)
 {
