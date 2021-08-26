@@ -6,7 +6,6 @@
 /* Berknip board configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "button.h"
 #include "charger.h"
 #include "cbi_ec_fw_config.h"

@@ -4,7 +4,6 @@
  */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "backlight.h"
 #include "button.h"
 #include "chipset.h"

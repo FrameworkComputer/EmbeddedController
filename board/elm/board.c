@@ -6,7 +6,6 @@
 /* Oak board configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "atomic.h"
 #include "battery.h"
 #include "charge_manager.h"

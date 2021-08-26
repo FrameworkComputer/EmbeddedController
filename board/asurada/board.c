@@ -5,7 +5,6 @@
 /* Asurada board configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"

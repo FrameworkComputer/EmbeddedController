@@ -6,7 +6,6 @@
 /* Poppy board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "anx7447.h"
 #include "battery.h"
 #include "board_config.h"

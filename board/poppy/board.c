@@ -6,7 +6,6 @@
 /* Poppy board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "als.h"
 #include "bd99992gw.h"
 #include "board_config.h"

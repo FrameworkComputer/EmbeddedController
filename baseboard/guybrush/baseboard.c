@@ -6,7 +6,6 @@
 /* Guybrush family-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "cros_board_info.h"
 #include "base_fw_config.h"
 #include "battery_fuel_gauge.h"

@@ -5,7 +5,6 @@
 /* nucleo-f411re development board configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "console.h"
 #include "driver/accelgyro_bmi_common.h"

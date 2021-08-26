@@ -5,7 +5,6 @@
 /* Stellaris EKB-LM4F-EAC board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "registers.h"

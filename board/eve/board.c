@@ -6,7 +6,6 @@
 /* Eve board-specific configuration */
 
 #include "acpi.h"
-#include "adc_chip.h"
 #include "bd99992gw.h"
 #include "board_config.h"
 #include "button.h"

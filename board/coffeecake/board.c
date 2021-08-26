@@ -5,7 +5,6 @@
 /* Coffeecake dock configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "charger/sy21612.h"
 #include "clock.h"
 #include "common.h"

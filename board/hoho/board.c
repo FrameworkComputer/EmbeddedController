@@ -5,7 +5,6 @@
 /* Hoho dongle configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "ec_commands.h"
 #include "ec_version.h"

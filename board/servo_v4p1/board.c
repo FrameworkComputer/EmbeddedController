@@ -5,7 +5,6 @@
 /* Servo V4p1 configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "ccd_measure_sbu.h"
 #include "chg_control.h"
 #include "common.h"

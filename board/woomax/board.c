@@ -6,7 +6,6 @@
 /* Trembyle board configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "button.h"
 #include "cbi_ec_fw_config.h"
 #include "cbi_ssfc.h"

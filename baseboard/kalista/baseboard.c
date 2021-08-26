@@ -6,7 +6,6 @@
 /* Kalista baseboard configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "baseboard.h"
 #include "battery.h"
 #include "bd99992gw.h"

@@ -11,7 +11,6 @@
  */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "als.h"
 #include "bd99992gw.h"
 #include "button.h"

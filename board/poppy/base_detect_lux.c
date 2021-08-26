@@ -6,7 +6,6 @@
 /* Lux base detection code */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "board.h"
 #include "chipset.h"
 #include "common.h"

@@ -4,7 +4,6 @@
  */
 /* C2D2 debug device board configuration */
 
-#include "adc_chip.h"
 #include "adc.h"
 #include "common.h"
 #include "console.h"

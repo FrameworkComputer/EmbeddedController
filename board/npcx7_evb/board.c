@@ -6,7 +6,6 @@
 /* Nuvoton M4 EB board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "backlight.h"
 #include "chipset.h"
 #include "common.h"

@@ -6,7 +6,6 @@
 /* Morphius board configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "battery_smart.h"
 #include "button.h"
 #include "cbi_ssfc.h"

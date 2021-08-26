@@ -5,7 +5,6 @@
 /* Plankton board configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"

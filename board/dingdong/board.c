@@ -5,7 +5,6 @@
 /* Dingdong dongle configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "ec_version.h"
 #include "gpio.h"

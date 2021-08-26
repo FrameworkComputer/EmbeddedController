@@ -5,7 +5,6 @@
 /* Servo V4 configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "console.h"
 #include "ec_version.h"

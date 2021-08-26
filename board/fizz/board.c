@@ -6,7 +6,6 @@
 /* Fizz board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "als.h"
 #include "battery.h"
 #include "bd99992gw.h"

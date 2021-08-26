@@ -5,7 +5,6 @@
 /* Hardware initialization and common functions */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "cpu.h"
 #include "registers.h"

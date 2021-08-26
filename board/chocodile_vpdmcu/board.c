@@ -6,7 +6,6 @@
 /* chocodile board configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "common.h"
 #include "gpio.h"
 #include "hooks.h"

@@ -6,7 +6,6 @@
 /* Coachz base detection code */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "board.h"
 #include "base_state.h"
 #include "chipset.h"

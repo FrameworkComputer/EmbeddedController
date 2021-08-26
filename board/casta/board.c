@@ -6,7 +6,6 @@
 /* Casta board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "battery.h"
 #include "cbi_ssfc.h"
 #include "charge_manager.h"

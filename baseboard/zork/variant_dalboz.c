@@ -4,7 +4,6 @@
  */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "charger.h"
 #include "chipset.h"
 #include "common.h"

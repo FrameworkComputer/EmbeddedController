@@ -6,7 +6,6 @@
 /* Reef board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "als.h"
 #include "button.h"
 #include "charge_manager.h"

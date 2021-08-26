@@ -6,7 +6,6 @@
 /* Bloog/Blooguard board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "battery.h"
 #include "button.h"
 #include "charge_manager.h"

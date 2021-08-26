@@ -6,7 +6,6 @@
 /* Stryke board-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "button.h"
 #include "common.h"
 #include "cros_board_info.h"

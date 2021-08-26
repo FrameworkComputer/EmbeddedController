@@ -6,7 +6,6 @@
 /* Cherry baseboard-specific configuration */
 
 #include "adc.h"
-#include "adc_chip.h"
 #include "button.h"
 #include "charge_manager.h"
 #include "charger.h"
