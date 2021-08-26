@@ -310,6 +310,39 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c = 60,
 		},
 	},
+
+	/* ATL GB-S20-4473A9-01H&020H Battery Information
+	 * Gauge IC : RAJ240045
+	 */
+	[BATTERY_ATL] = {
+		.fuel_gauge = {
+			.manuf_name = "313-B7-0D-A",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 0,
+				.reg_addr = 0x43,
+				.reg_mask = 0x0003,
+				.disconnect_val = 0x0,
+				.cfet_mask = 0x0002,
+				.cfet_off_val = 0x0,
+			},
+		},
+		.batt_info = {
+			.voltage_max = 8800,		/* mV */
+			.voltage_normal = 7700,		/* mV */
+			.voltage_min = 6000,		/* mV */
+			.precharge_current = 256,	/* mA */
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 45,
+			.discharging_min_c = -10,
+			.discharging_max_c = 60,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
