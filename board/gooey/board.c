@@ -211,6 +211,12 @@ void board_init(void)
 	/* Enable gpio interrupt for pen detect */
 	gpio_enable_interrupt(GPIO_PEN_DET_ODL);
 
+	/* Make sure pen detection is triggered or not at sysjump */
+	if (!gpio_get_level(GPIO_PEN_DET_ODL))
+		gpio_set_level(GPIO_EN_PP5000_PEN, 1);
+	if (gpio_get_level(GPIO_PEN_DET_ODL))
+		gpio_set_level(GPIO_PEN_DET_PCH, 1);
+
 	/* Set LEDs luminance */
 	pwm_set_duty(PWM_CH_LED_RED, 70);
 	pwm_set_duty(PWM_CH_LED_GREEN, 70);
