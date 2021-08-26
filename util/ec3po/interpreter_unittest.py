@@ -54,7 +54,7 @@ class TestEnhancedECBehaviour(unittest.TestCase):
                                           log_level=logging.DEBUG,
                                           name="EC")
 
-  @mock.patch('interpreter.os')
+  @mock.patch('ec3po.interpreter.os')
   def test_HandlingCommandsThatProduceNoOutput(self, mock_os):
     """Verify that the Interpreter correctly handles non-output commands.
 
@@ -119,7 +119,7 @@ class TestEnhancedECBehaviour(unittest.TestCase):
     # Finally, verify that the appropriate writes were actually sent to the EC.
     self.ec_uart_pty.assert_has_calls(expected_ec_calls)
 
-  @mock.patch('interpreter.os')
+  @mock.patch('ec3po.interpreter.os')
   def test_CommandRetryingOnError(self, mock_os):
     """Verify that commands are retried if an error is encountered.
 
@@ -208,7 +208,7 @@ class TestEnhancedECBehaviour(unittest.TestCase):
     # Verify that PackCommand() was called.
     self.itpr.PackCommand.assert_not_called()
 
-  @mock.patch('interpreter.os')
+  @mock.patch('ec3po.interpreter.os')
   def test_KeepingTrackOfInterrogation(self, mock_os):
     """Verify that the interpreter can track the state of the interrogation.
 
