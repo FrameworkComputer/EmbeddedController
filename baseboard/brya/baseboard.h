@@ -85,6 +85,13 @@
 #define CONFIG_BATTERY_HW_PRESENT_CUSTOM
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_CMD_BATT_MFG_ACCESS
+/*
+ * Enable support for battery hostcmd, supporting longer strings.
+ * support for EC_CMD_BATTERY_GET_STATIC version 1.
+ */
+#define CONFIG_BATTERY_V2
+#define CONFIG_BATTERY_COUNT 1
+#define CONFIG_HOSTCMD_BATTERY_V2
 
 /* Chipset config */
 #define CONFIG_CHIPSET_ALDERLAKE_SLG4BD44540
