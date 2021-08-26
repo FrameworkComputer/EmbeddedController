@@ -88,6 +88,8 @@ GPIO(EC_AP_USB_C0_HPD,	     PIN(9, 3), GPIO_OUT_LOW)
 GPIO(HDMI_SEL_L,	     PIN(7, 2), GPIO_OUT_HIGH)
 GPIO(EC_BATTERY_PRES_ODL,    PIN(E, 1), GPIO_INPUT)
 GPIO(EN_USB_A0_VBUS,	 PIN(4, 1), GPIO_OUT_LOW)		/* Enable A0 5V Charging */
+
+GPIO(EC_ACOK_OTG, PIN(C, 0), GPIO_OUT_LOW)  /* OTG-OVP protect enable */
 /*
  * Lalala doesn't have these physical pins coming to the EC but uses other
  * logic.
