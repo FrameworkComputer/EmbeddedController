@@ -47,7 +47,6 @@
 /* Forward declaration */
 static void tcpc_alert_event(enum gpio_signal signal);
 static void usb0_evt(enum gpio_signal signal);
-static void usb1_evt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
 static void board_connect_c0_sbu(enum gpio_signal s);
 static void switchcap_interrupt(enum gpio_signal signal);
@@ -63,9 +62,6 @@ static void tcpc_alert_event(enum gpio_signal signal)
 	case GPIO_USB_C0_PD_INT_ODL:
 		port = 0;
 		break;
-	case GPIO_USB_C1_PD_INT_ODL:
-		port = 1;
-		break;
 	default:
 		return;
 	}
@@ -78,19 +74,11 @@ static void usb0_evt(enum gpio_signal signal)
 	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
 }
 
-static void usb1_evt(enum gpio_signal signal)
-{
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
-}
-
 static void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_C0_SWCTL_INT_ODL:
 		sn5s330_interrupt(0);
-		break;
-	case GPIO_USB_C1_SWCTL_INT_ODL:
-		sn5s330_interrupt(1);
 		break;
 	default:
 		break;
@@ -123,8 +111,6 @@ const struct i2c_port_t i2c_ports[] = {
 					  GPIO_EC_I2C_POWER_SDA},
 	{"tcpc0",   I2C_PORT_TCPC0, 1000, GPIO_EC_I2C_USB_C0_PD_SCL,
 					  GPIO_EC_I2C_USB_C0_PD_SDA},
-	{"tcpc1",   I2C_PORT_TCPC1, 1000, GPIO_EC_I2C_USB_C1_PD_SCL,
-					  GPIO_EC_I2C_USB_C1_PD_SDA},
 	{"eeprom",  I2C_PORT_EEPROM, 400, GPIO_EC_I2C_EEPROM_SCL,
 					  GPIO_EC_I2C_EEPROM_SDA},
 	{"sensor",  I2C_PORT_SENSOR, 400, GPIO_EC_I2C_SENSOR_SCL,
@@ -197,11 +183,6 @@ struct ppc_config_t ppc_chips[] = {
 		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
 		.drv = &sn5s330_drv
 	},
-	{
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
@@ -211,14 +192,6 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_TCPC0,
-			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
-		},
-		.drv = &ps8xxx_tcpm_drv,
-	},
-	{
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_TCPC1,
 			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
 		},
 		.drv = &ps8xxx_tcpm_drv,
@@ -238,19 +211,10 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
-	{
-		.usb_port = 1,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-	}
 };
 
 /* BC1.2 */
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
-	{
-		.i2c_port = I2C_PORT_POWER,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
 	{
 		.i2c_port = I2C_PORT_EEPROM,
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
@@ -430,7 +394,6 @@ static void board_init(void)
 {
 	/* Enable BC1.2 interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
-	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
 	gpio_enable_interrupt(GPIO_ACCEL_GYRO_INT_L);
 
 	/*
@@ -465,7 +428,6 @@ void board_tcpc_init(void)
 
 	/* Enable TCPC interrupts */
 	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
 
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
@@ -547,10 +509,8 @@ void board_reset_pd_mcu(void)
 	cflush();
 
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
 	msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
-	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
 }
 
 void board_set_tcpc_power_mode(int port, int mode)
@@ -662,9 +622,6 @@ uint16_t tcpc_get_alert_status(void)
 	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL))
 		if (gpio_get_level(GPIO_USB_C0_PD_RST_L))
 			status |= PD_STATUS_TCPC_ALERT_0;
-	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL))
-		if (gpio_get_level(GPIO_USB_C1_PD_RST_L))
-			status |= PD_STATUS_TCPC_ALERT_1;
 
 	return status;
 }

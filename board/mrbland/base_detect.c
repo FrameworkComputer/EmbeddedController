@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Homestar base detection code */
+/* Mrbland base detection code */
 
 #include "adc.h"
 #include "base_state.h"

@@ -9,12 +9,9 @@
  * Note: Those with interrupt handlers must be declared first. */
 
 /* USB-C interrupts */
-GPIO_INT(USB_C0_PD_INT_ODL,    PIN(E, 0), GPIO_INT_FALLING, tcpc_alert_event)  /* Interrupt from port-0 TCPC */
-GPIO_INT(USB_C1_PD_INT_ODL,    PIN(F, 5), GPIO_INT_FALLING, tcpc_alert_event)  /* Interrupt from port-1 TCPC */
-GPIO_INT(USB_C0_SWCTL_INT_ODL, PIN(0, 3), GPIO_INT_FALLING, ppc_interrupt)  /* Interrupt from port-0 PPC */
-GPIO_INT(USB_C1_SWCTL_INT_ODL, PIN(4, 0), GPIO_INT_FALLING, ppc_interrupt)  /* Interrupt from port-1 PPC */
-GPIO_INT(USB_C0_BC12_INT_L,    PIN(6, 1), GPIO_INT_FALLING | GPIO_PULL_UP, usb0_evt)  /* Interrupt from port-0 BC1.2 */
-GPIO_INT(USB_C1_BC12_INT_L,    PIN(8, 2), GPIO_INT_FALLING | GPIO_PULL_UP, usb1_evt)  /* Interrupt from port-1 BC1.2 */
+GPIO_INT(USB_C0_PD_INT_ODL,    PIN(F, 5), GPIO_INT_FALLING, tcpc_alert_event)  /* Interrupt from port-0 TCPC */
+GPIO_INT(USB_C0_SWCTL_INT_ODL, PIN(4, 0), GPIO_INT_FALLING, ppc_interrupt)  /* Interrupt from port-0 PPC */
+GPIO_INT(USB_C0_BC12_INT_L,    PIN(8, 2), GPIO_INT_FALLING | GPIO_PULL_UP, usb0_evt)  /* Interrupt from port-0 BC1.2 */
 
 /* System interrupts */
 GPIO_INT(CHG_ACOK_OD,       PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)  /* ACOK */
@@ -75,8 +72,7 @@ GPIO(EN_BASE,               PIN(0, 4), GPIO_OUT_LOW)   /* Enable power to detach
 GPIO(POGO_VBUS_PRESENT,     PIN(6, 2), GPIO_INPUT)    /* POGO PIN */
 
 /* USB-C */
-GPIO(USB_C0_PD_RST_L,       PIN(F, 1), GPIO_ODR_HIGH)  /* Port-0 TCPC chip reset, actaully Open-Drain */
-GPIO(USB_C1_PD_RST_L,       PIN(E, 4), GPIO_ODR_HIGH)  /* Port-1 TCPC chip reset, actually Open-Drain */
+GPIO(USB_C0_PD_RST_L,       PIN(E, 4), GPIO_ODR_HIGH)  /* Port-0 TCPC chip reset, actually Open-Drain */
 GPIO(DP_MUX_OE_L,           PIN(9, 6), GPIO_ODR_HIGH)  /* DP mux enable, actually Open-Drain */
 GPIO(DP_MUX_SEL,            PIN(4, 5), GPIO_OUT_LOW)   /* DP mux selection: L:C0, H:C1 */
 GPIO(DP_HOT_PLUG_DET,       PIN(9, 5), GPIO_OUT_LOW)   /* DP HPD to AP */
@@ -108,10 +104,8 @@ GPIO(CHARGER_PMON,          PIN(4, 2), GPIO_INPUT)     /* ADC3 */
 /* I2C */
 GPIO(EC_I2C_POWER_SCL,      PIN(B, 5), GPIO_INPUT)
 GPIO(EC_I2C_POWER_SDA,      PIN(B, 4), GPIO_INPUT)
-GPIO(EC_I2C_USB_C0_PD_SCL,  PIN(9, 0), GPIO_INPUT)
-GPIO(EC_I2C_USB_C0_PD_SDA,  PIN(8, 7), GPIO_INPUT)
-GPIO(EC_I2C_USB_C1_PD_SCL,  PIN(9, 2), GPIO_INPUT)
-GPIO(EC_I2C_USB_C1_PD_SDA,  PIN(9, 1), GPIO_INPUT)
+GPIO(EC_I2C_USB_C0_PD_SCL,  PIN(9, 2), GPIO_INPUT)
+GPIO(EC_I2C_USB_C0_PD_SDA,  PIN(9, 1), GPIO_INPUT)
 GPIO(EC_I2C_EEPROM_SCL,     PIN(3, 3), GPIO_INPUT)
 GPIO(EC_I2C_EEPROM_SDA,     PIN(3, 6), GPIO_INPUT)
 GPIO(EC_I2C_SENSOR_SCL,     PIN(B, 3), GPIO_INPUT | GPIO_SEL_1P8V)
@@ -177,12 +171,17 @@ UNUSED(PIN(8, 6))
 UNUSED(PIN(7, 4))
 UNUSED(PIN(D, 7))
 UNUSED(PIN(8, 5))
+UNUSED(PIN(E, 0))
+UNUSED(PIN(0, 3))
+UNUSED(PIN(6, 1))
+UNUSED(PIN(F, 1))
+UNUSED(PIN(9, 0))
+UNUSED(PIN(8, 7))
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)            /* UART (GPIO64/65) */
 ALTERNATE(PIN_MASK(B, 0x30), 1, MODULE_I2C, 0)             /* I2C0 (GPIOB4/B5) */
-ALTERNATE(PIN_MASK(9, 0x07), 1, MODULE_I2C, 0)             /* I2C1 SDA (GPIO90), I2C2 (GPIO91/92) */
-ALTERNATE(PIN_MASK(8, 0x80), 1, MODULE_I2C, 0)             /* I2C1 SCL (GPIO87) */
+ALTERNATE(PIN_MASK(9, 0x06), 1, MODULE_I2C, 0)             /* I2C2 (GPIO91/92) */
 ALTERNATE(PIN_MASK(3, 0x48), 1, MODULE_I2C, 0)             /* I2C5 (GPIO33/36) */
 ALTERNATE(PIN_MASK(B, 0x0C), 1, MODULE_I2C, GPIO_SEL_1P8V) /* I2C7 (GPIOB2/B3) - 1.8V */
 ALTERNATE(PIN_MASK(4, 0x1C), 0, MODULE_ADC, 0)             /* ADC1 (GPIO44), ADC2 (GPIO43), ADC3 (GPIO42) */
