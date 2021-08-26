@@ -52,6 +52,8 @@ static int power_s5_up;
 static int s5_exit_tries;
 static int stress_test_enable;
 
+static void chipset_force_g3(void);
+
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s(%d)", __func__, reason);
@@ -66,7 +68,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		report_ap_reset(reason);
 		forcing_shutdown = 1;
-		power_button_pch_press();
+		chipset_force_g3();
 	}
 }
 
@@ -101,7 +103,9 @@ int keep_pch_power(void)
 
 	system_get_bbram(SYSTEM_BBRAM_IDX_VPRO_STATUS, &vpro_change);
 
-	if (version & BIT(0) && extpower_is_present() && vpro_change)
+	if (forcing_shutdown)
+		return false;
+	else if (version & BIT(0) && extpower_is_present() && vpro_change)
 		return true;
 #ifdef CONFIG_EMI_REGION1
 	else if (wake_source & RTCWAKE)
@@ -374,8 +378,9 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("PH S5");
 
 		if (forcing_shutdown) {
-			power_button_pch_release();
+			/* force shutdown process shouldn't keep PCH power */
 			forcing_shutdown = 0;
+			return POWER_S5G3;
 		}
 
 		if (power_s5_up || stress_test_enable) {
