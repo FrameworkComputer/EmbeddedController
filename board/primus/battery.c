@@ -89,6 +89,35 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c	= 60,
 		},
 	},
+
+	[BATTERY_CELXPERT] = {
+		.fuel_gauge = {
+			.manuf_name = "Celxpert",
+			.device_name = "LNV-5B11F21941",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0000,
+				.reg_mask = 0x6000,
+				.disconnect_val = 0x6000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200, /* mV */
+			.voltage_normal		= 11520, /* mV */
+			.voltage_min		= 9000,  /* mV */
+			.precharge_current	= 487,	 /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 70,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
