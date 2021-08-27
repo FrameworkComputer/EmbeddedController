@@ -128,6 +128,7 @@ UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(C, 3))       /* GPIOC3 */
+UNUSED(PIN(E, 1))       /* GPIOE1 */
 
 /* Pre-configured PSL balls:  J8  K6 */
 
@@ -138,13 +139,6 @@ UNUSED(PIN(C, 3))       /* GPIOC3 */
  * KEYBOARD_COL2_INVERTED is defined, this name is required.
  */
 GPIO(EC_KSO_02_INV,               PIN(1, 7), GPIO_OUT_LOW)
-
-/*
- * GPIOE1 is an ALT function ADC INPUT on board ID 2 and a GPIO INPUT on
- * board ID 1. This declaration gives us a signal name to use on board
- * ID 1.
- */
-GPIO(ID_1_EC_BATT_PRES_ODL,       PIN(E, 1), GPIO_INPUT)
 
 /*
  * GPIO34 is an INPUT on board ID 2 and ODR_LOW on board ID 1.

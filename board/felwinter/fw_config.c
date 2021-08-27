@@ -32,21 +32,6 @@ void board_init_fw_config(void)
 		CPRINTS("CBI: Read FW_CONFIG failed, using board defaults");
 		fw_config = fw_config_defaults;
 	}
-
-	if (get_board_id() == 0) {
-		/*
-		 * Early boards have a zero'd out FW_CONFIG, so replace
-		 * it with a sensible default value. If DB_USB_ABSENT2
-		 * was used as an alternate encoding of DB_USB_ABSENT to
-		 * avoid the zero check, then fix it.
-		 */
-		if (fw_config.raw_value == 0) {
-			CPRINTS("CBI: FW_CONFIG is zero, using board defaults");
-			fw_config = fw_config_defaults;
-		} else if (fw_config.usb_db == DB_USB_ABSENT2) {
-			fw_config.usb_db = DB_USB_ABSENT;
-		}
-	}
 }
 
 union brya_cbi_fw_config get_fw_config(void)
