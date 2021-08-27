@@ -377,7 +377,7 @@ power_chipset_handle_host_sleep_event(enum host_sleep_event state,
 {
 	if (state == HOST_SLEEP_EVENT_S3_SUSPEND) {
 		CPRINTS("AP suspend");
-		clock_select_clock(SCP_CLK_ULPOSC2_LOW_SPEED);
+		clock_select_clock(SCP_CLK_32K);
 	} else if (state == HOST_SLEEP_EVENT_S3_RESUME) {
 		CPRINTS("AP resume");
 		clock_select_clock(SCP_CLK_ULPOSC2_HIGH_SPEED);
