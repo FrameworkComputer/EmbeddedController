@@ -73,6 +73,7 @@ if (DEFINED CONFIG_PLATFORM_EC)
     "${PLATFORM_EC}/zephyr/shim/include"
     "${PLATFORM_EC}/fuzz"
     "${PLATFORM_EC}/test"
+    "${PLATFORM_EC}"
     "${PLATFORM_EC}/include"
     "${PLATFORM_EC}/include/driver"
     "${PLATFORM_EC}/third_party")

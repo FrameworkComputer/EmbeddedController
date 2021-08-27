@@ -29,7 +29,7 @@
  */
 CREATE_SENSOR_DATA(cros_ec_drvdata_bmi160, CREATE_SENSOR_DATA_BMI160)
 /*
- * CREATE_MOTION_SENSOR which is defined in motionsense_sensros.c is
+ * CREATE_MOTION_SENSOR which is defined in motionsense_sensors.c is
  * the macro to create an entry in motion_sensors array.
  * The macro gets value of compatible property of
  * the sensor in device tree and sensor specific values like chip ID,
