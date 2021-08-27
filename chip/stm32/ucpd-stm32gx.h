@@ -173,7 +173,7 @@ int stm32gx_ucpd_set_msg_header(int port, int power_role, int data_role);
  * @return EC_SUCCESS
  */
 int stm32gx_ucpd_transmit(int port,
-			enum tcpm_sop_type type,
+			enum tcpci_msg_type type,
 			uint16_t header,
 			  const uint32_t *data);
 

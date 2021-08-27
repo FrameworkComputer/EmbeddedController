@@ -70,17 +70,17 @@ int test_td_pd_src3_e9(void)
 	 */
 	TEST_EQ(proc_pd_e3(), EC_SUCCESS, "%d");
 
-	partner_send_msg(TCPC_TX_SOP, PD_CTRL_GET_SOURCE_CAP_EXT, 0, 0, NULL);
+	partner_send_msg(TCPCI_MSG_SOP, PD_CTRL_GET_SOURCE_CAP_EXT, 0, 0, NULL);
 
 	/*
 	 * c) If a Source_Capabilities_Extended message is received, the
 	 *    Tester record the Number of Batteries/Battery Slots field.
 	 */
-	possible[0].tx_type = TCPC_TX_SOP;
+	possible[0].tx_type = TCPCI_MSG_SOP;
 	possible[0].ctrl_msg = PD_CTRL_NOT_SUPPORTED;
 	possible[0].data_msg = 0;
 
-	possible[1].tx_type = TCPC_TX_SOP;
+	possible[1].tx_type = TCPCI_MSG_SOP;
 	possible[1].ctrl_msg = 0;
 	possible[1].data_msg = PD_EXT_SOURCE_CAP;
 
@@ -135,7 +135,7 @@ int test_td_pd_src3_e9(void)
 	ref = 8;
 	ext_msg = EXT_MSG_CHUNKED | EXT_MSG_DATA_SIZE_1 |
 		  (ref << 16);
-	partner_send_msg(TCPC_TX_SOP, PD_EXT_GET_BATTERY_STATUS, 1, 1,
+	partner_send_msg(TCPCI_MSG_SOP, PD_EXT_GET_BATTERY_STATUS, 1, 1,
 			 &ext_msg);
 
 	/*
@@ -145,11 +145,11 @@ int test_td_pd_src3_e9(void)
 	 *    2. If the recorded Number of Batteries/Battery Slots field is
 	 *       not 0, the test fails.
 	 */
-	possible[0].tx_type = TCPC_TX_SOP;
+	possible[0].tx_type = TCPCI_MSG_SOP;
 	possible[0].ctrl_msg = PD_CTRL_NOT_SUPPORTED;
 	possible[0].data_msg = 0;
 
-	possible[1].tx_type = TCPC_TX_SOP;
+	possible[1].tx_type = TCPCI_MSG_SOP;
 	possible[1].ctrl_msg = 0;
 	possible[1].data_msg = PD_DATA_BATTERY_STATUS;
 

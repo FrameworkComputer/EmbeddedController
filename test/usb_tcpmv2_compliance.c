@@ -14,7 +14,7 @@
 void before_test(void)
 {
 	partner_set_pd_rev(PD_REV30);
-	partner_tx_msg_id_reset(TCPC_TX_SOP_ALL);
+	partner_tx_msg_id_reset(TCPCI_MSG_SOP_ALL);
 
 	mock_usb_mux_reset();
 	mock_tcpci_reset();

@@ -127,7 +127,7 @@ static int svdm_tbt_compat_response_identity(int port, uint32_t *payload)
 	payload[VDO_I(CSTAT)] = VDO_CSTAT(0);
 	payload[VDO_I(PRODUCT)] = vdo_product;
 
-	if (pd_get_rev(port, TCPC_TX_SOP) == PD_REV30) {
+	if (pd_get_rev(port, TCPCI_MSG_SOP) == PD_REV30) {
 		/* PD Revision 3.0 */
 		payload[VDO_I(IDH)] = vdo_idh_rev30;
 		payload[VDO_I(PTYPE_UFP1_VDO)] = vdo_ufp1;

@@ -24,7 +24,7 @@ static enum ec_status hc_typec_discovery(struct host_cmd_handler_args *args)
 	const struct ec_params_typec_discovery *p = args->params;
 	struct ec_response_typec_discovery *r = args->response;
 	const struct pd_discovery *disc;
-	enum tcpm_sop_type type;
+	enum tcpci_msg_type type;
 
 	/* Confirm the number of HC VDOs matches our stored VDOs */
 	BUILD_ASSERT(sizeof(r->discovery_vdo) == sizeof(union disc_ident_ack));
@@ -36,7 +36,7 @@ static enum ec_status hc_typec_discovery(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 
 	type = p->partner_type == TYPEC_PARTNER_SOP ?
-		TCPC_TX_SOP : TCPC_TX_SOP_PRIME;
+		TCPCI_MSG_SOP : TCPCI_MSG_SOP_PRIME;
 
 	/*
 	 * Clear out access mask so we can track if tasks have touched data
@@ -156,10 +156,12 @@ static enum ec_status hc_typec_status(struct host_cmd_handler_args *args)
 	r->events = pd_get_events(p->port);
 
 	r->sop_revision = r->sop_connected ?
-		PD_STATUS_REV_SET_MAJOR(pd_get_rev(p->port, TCPC_TX_SOP)) : 0;
-	r->sop_prime_revision = pd_get_identity_discovery(p->port,
-					TCPC_TX_SOP_PRIME) == PD_DISC_COMPLETE ?
-		PD_STATUS_REV_SET_MAJOR(pd_get_rev(p->port, TCPC_TX_SOP_PRIME))
+		PD_STATUS_REV_SET_MAJOR(pd_get_rev(p->port, TCPCI_MSG_SOP)) : 0;
+	r->sop_prime_revision =
+		pd_get_identity_discovery(p->port, TCPCI_MSG_SOP_PRIME) ==
+		PD_DISC_COMPLETE ?
+		PD_STATUS_REV_SET_MAJOR(pd_get_rev(p->port,
+					TCPCI_MSG_SOP_PRIME))
 		: 0;
 
 	r->source_cap_count = pd_get_src_cap_cnt(p->port);

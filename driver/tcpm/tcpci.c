@@ -944,7 +944,7 @@ void tcpm_clear_pending_messages(int port)
 	q->tail = q->head;
 }
 
-int tcpci_tcpm_transmit(int port, enum tcpm_sop_type type,
+int tcpci_tcpm_transmit(int port, enum tcpci_msg_type type,
 			uint16_t header, const uint32_t *data)
 {
 	int reg = TCPC_REG_TX_DATA;

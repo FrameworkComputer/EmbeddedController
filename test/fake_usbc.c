@@ -57,7 +57,7 @@ __overridable enum pd_cable_plug tc_get_cable_plug(int port)
 	return PD_PLUG_FROM_DFP_UFP;
 }
 
-__overridable int pd_get_rev(int port, enum tcpm_sop_type type)
+__overridable int pd_get_rev(int port, enum tcpci_msg_type type)
 {
 	return IS_ENABLED(CONFIG_USB_PD_REV30) ? PD_REV30 : PD_REV20;
 }
@@ -259,12 +259,12 @@ void dpm_init(int port)
 {
 }
 
-void dpm_vdm_acked(int port, enum tcpm_sop_type type, int vdo_count,
+void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		uint32_t *vdm)
 {
 }
 
-void dpm_vdm_naked(int port, enum tcpm_sop_type type, uint16_t svid,
+void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
 		uint8_t vdm_cmd)
 {
 }

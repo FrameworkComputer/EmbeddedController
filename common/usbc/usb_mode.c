@@ -143,13 +143,13 @@ void enter_usb_failed(int port)
 	usb4_state[port] = USB4_INACTIVE;
 }
 
-static bool enter_usb_response_valid(int port, enum tcpm_sop_type type)
+static bool enter_usb_response_valid(int port, enum tcpci_msg_type type)
 {
 	/*
 	 * Check for an unexpected response.
 	 */
 	if (get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE &&
-	     type != TCPC_TX_SOP) {
+	     type != TCPCI_MSG_SOP) {
 		enter_usb_failed(port);
 		return false;
 	}
@@ -159,7 +159,7 @@ static bool enter_usb_response_valid(int port, enum tcpm_sop_type type)
 bool enter_usb_port_partner_is_capable(int port)
 {
 	const struct pd_discovery *disc =
-			pd_get_am_discovery(port, TCPC_TX_SOP);
+			pd_get_am_discovery(port, TCPCI_MSG_SOP);
 
 	if (usb4_state[port] == USB4_INACTIVE)
 		return false;
@@ -177,9 +177,9 @@ bool enter_usb_cable_is_capable(int port)
 			return false;
 	} else if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE) {
 		struct pd_discovery *disc_sop_prime =
-			pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+			pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
 
-		if (pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME) >= VDM_VER20 &&
+		if (pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME) >= VDM_VER20 &&
 		    disc_sop_prime->identity.product_t1.a_rev30.vdo_ver >=
 							VDO_VERSION_1_3) {
 			union active_cable_vdo2_rev30 a2_rev30 =
@@ -200,14 +200,14 @@ bool enter_usb_cable_is_capable(int port)
 		 */
 		} else {
 			const struct pd_discovery *disc =
-				pd_get_am_discovery(port, TCPC_TX_SOP);
+				pd_get_am_discovery(port, TCPCI_MSG_SOP);
 			union tbt_mode_resp_cable cable_mode_resp = {
 				.raw_value = pd_get_tbt_mode_vdo(port,
-							TCPC_TX_SOP_PRIME) };
+							TCPCI_MSG_SOP_PRIME) };
 
 			if (!disc->identity.idh.modal_support ||
 			   !pd_is_mode_discovered_for_svid(port,
-					TCPC_TX_SOP_PRIME, USB_VID_INTEL) ||
+					TCPCI_MSG_SOP_PRIME, USB_VID_INTEL) ||
 			    cable_mode_resp.tbt_rounded !=
 					TBT_GEN3_GEN4_ROUNDED_NON_ROUNDED)
 				return false;
@@ -216,7 +216,7 @@ bool enter_usb_cable_is_capable(int port)
 	return true;
 }
 
-void enter_usb_accepted(int port, enum tcpm_sop_type type)
+void enter_usb_accepted(int port, enum tcpci_msg_type type)
 {
 	struct pd_discovery *disc;
 
@@ -225,7 +225,7 @@ void enter_usb_accepted(int port, enum tcpm_sop_type type)
 
 	switch (usb4_state[port]) {
 	case USB4_ENTER_SOP_PRIME:
-		disc = pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+		disc = pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
 		if (disc->identity.product_t1.a_rev20.sop_p_p)
 			usb4_state[port] = USB4_ENTER_SOP_PRIME_PRIME;
 		else
@@ -254,7 +254,7 @@ void enter_usb_accepted(int port, enum tcpm_sop_type type)
 	}
 }
 
-void enter_usb_rejected(int port, enum tcpm_sop_type type)
+void enter_usb_rejected(int port, enum tcpci_msg_type type)
 {
 	if (!enter_usb_response_valid(port, type) ||
 	    usb4_state[port] == USB4_ACTIVE)
@@ -263,13 +263,13 @@ void enter_usb_rejected(int port, enum tcpm_sop_type type)
 	enter_usb_failed(port);
 }
 
-uint32_t enter_usb_setup_next_msg(int port, enum tcpm_sop_type *type)
+uint32_t enter_usb_setup_next_msg(int port, enum tcpci_msg_type *type)
 {
 	struct pd_discovery *disc_sop_prime;
 
 	switch (usb4_state[port]) {
 	case USB4_START:
-		disc_sop_prime = pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+		disc_sop_prime = pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
 		/*
 		 * Ref: Tiger Lake Platform PD Controller Interface Requirements
 		 * for Integrated USBC, section A.2.2: USB4 as DFP.
@@ -279,24 +279,24 @@ uint32_t enter_usb_setup_next_msg(int port, enum tcpm_sop_type *type)
 		 */
 		usb_mux_set_safe_mode(port);
 
-		if (pd_get_vdo_ver(port, TCPC_TX_SOP_PRIME) < VDM_VER20 ||
+		if (pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME) < VDM_VER20 ||
 		    disc_sop_prime->identity.product_t1.a_rev30.vdo_ver <
 							VDO_VERSION_1_3 ||
 		    get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE) {
 			usb4_state[port] = USB4_ENTER_SOP;
 		} else {
 			usb4_state[port] = USB4_ENTER_SOP_PRIME;
-			*type = TCPC_TX_SOP_PRIME;
+			*type = TCPCI_MSG_SOP_PRIME;
 		}
 		break;
 	case USB4_ENTER_SOP_PRIME:
-		*type = TCPC_TX_SOP_PRIME;
+		*type = TCPCI_MSG_SOP_PRIME;
 		break;
 	case USB4_ENTER_SOP_PRIME_PRIME:
-		*type = TCPC_TX_SOP_PRIME_PRIME;
+		*type = TCPCI_MSG_SOP_PRIME_PRIME;
 		break;
 	case USB4_ENTER_SOP:
-		*type = TCPC_TX_SOP;
+		*type = TCPCI_MSG_SOP;
 		break;
 	case USB4_ACTIVE:
 		return -1;

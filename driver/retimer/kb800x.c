@@ -340,7 +340,7 @@ static int kb800x_cio_init(const struct usb_mux *me, mux_state_t mux_state)
 	enum idh_ptype cable_type = get_usb_pd_cable_type(me->usb_port);
 	union tbt_mode_resp_cable cable_resp = {
 		.raw_value =
-			pd_get_tbt_mode_vdo(me->usb_port, TCPC_TX_SOP_PRIME)
+			pd_get_tbt_mode_vdo(me->usb_port, TCPCI_MSG_SOP_PRIME)
 	};
 
 	rv = kb800x_bulk_write(me, cio_init_addresses, cio_init_values,

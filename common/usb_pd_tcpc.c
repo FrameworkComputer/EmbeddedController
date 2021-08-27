@@ -259,7 +259,7 @@ static struct pd_port_controller {
 	int rx_buf_head, rx_buf_tail;
 
 	/* Next transmit */
-	enum tcpm_sop_type tx_type;
+	enum tcpci_msg_type tx_type;
 	uint16_t tx_head;
 	uint32_t tx_payload[7];
 	const uint32_t *tx_data;
@@ -721,11 +721,11 @@ int pd_analyze_rx(int port, uint32_t *payload)
 #ifdef CONFIG_USB_PD_DECODE_SOP
 	/* Encode message address */
 	if (val == PD_SOP) {
-		phs.head |= PD_HEADER_SOP(TCPC_TX_SOP);
+		phs.head |= PD_HEADER_SOP(TCPCI_MSG_SOP);
 	} else if (val == PD_SOP_PRIME) {
-		phs.head |= PD_HEADER_SOP(TCPC_TX_SOP_PRIME);
+		phs.head |= PD_HEADER_SOP(TCPCI_MSG_SOP_PRIME);
 	} else if (val == PD_SOP_PRIME_PRIME) {
-		phs.head |= PD_HEADER_SOP(TCPC_TX_SOP_PRIME_PRIME);
+		phs.head |= PD_HEADER_SOP(TCPCI_MSG_SOP_PRIME_PRIME);
 	} else {
 		msg = "SOP*";
 		goto packet_err;
@@ -868,19 +868,19 @@ int tcpc_run(int port, int evt)
 	if ((evt & PD_EVENT_TX) && pd[port].rx_enabled) {
 		switch (pd[port].tx_type) {
 #if defined(CONFIG_USB_VPD) || defined(CONFIG_USB_CTVPD)
-		case TCPC_TX_SOP_PRIME:
+		case TCPCI_MSG_SOP_PRIME:
 #else
-		case TCPC_TX_SOP:
+		case TCPCI_MSG_SOP:
 #endif
 			res = send_validate_message(port,
 					pd[port].tx_head,
 					pd[port].tx_data);
 			break;
-		case TCPC_TX_BIST_MODE_2:
+		case TCPCI_MSG_TX_BIST_MODE_2:
 			bist_mode_2_tx(port);
 			res = 0;
 			break;
-		case TCPC_TX_HARD_RESET:
+		case TCPCI_MSG_TX_HARD_RESET:
 			res = send_hard_reset(port);
 			break;
 		default:
@@ -1128,7 +1128,7 @@ int tcpc_set_rx_enable(int port, int enable)
 	return EC_SUCCESS;
 }
 
-int tcpc_transmit(int port, enum tcpm_sop_type type, uint16_t header,
+int tcpc_transmit(int port, enum tcpci_msg_type type, uint16_t header,
 		  const uint32_t *data)
 {
 	/* Store data to transmit and wake task to send it */

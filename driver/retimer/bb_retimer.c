@@ -156,7 +156,7 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 				  uint32_t *set_retimer_con)
 {
 	union tbt_mode_resp_cable cable_resp = {
-		.raw_value = pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME) };
+		.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME) };
 	union tbt_mode_resp_device dev_resp;
 	enum idh_ptype cable_type = get_usb_pd_cable_type(port);
 
@@ -188,7 +188,7 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 
 	if (mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED ||
 	    mux_state & USB_PD_MUX_USB4_ENABLED) {
-		dev_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPC_TX_SOP);
+		dev_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP);
 
 		/*
 		 * Bit 2: RE_TIMER_DRIVER

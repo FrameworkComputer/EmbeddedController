@@ -43,7 +43,7 @@ static int td_pd_vndi3_e3(enum pd_data_role data_role)
 	/*
 	 * b) Tester executes a Discover Identity exchange
 	 */
-	partner_send_msg(TCPC_TX_SOP, PD_DATA_VENDOR_DEF,
+	partner_send_msg(TCPCI_MSG_SOP, PD_DATA_VENDOR_DEF,
 			 1, 0, &vdo);
 
 	/*
@@ -51,7 +51,7 @@ static int td_pd_vndi3_e3(enum pd_data_role data_role)
 	 * No, the tester checks that the UUT replies Not_Supported.  The test
 	 * stops here in this case.
 	 */
-	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, PD_CTRL_NOT_SUPPORTED, 0),
+	TEST_EQ(verify_tcpci_transmit(TCPCI_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0),
 		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 

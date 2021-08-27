@@ -76,7 +76,7 @@ bool tbt_is_active(int port);
  * @param vdo_count The number of VDOs in the ACK VDM
  * @param vdm       VDM from ACK
  */
-void intel_vdm_acked(int port, enum tcpm_sop_type type, int vdo_count,
+void intel_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		uint32_t *vdm);
 
 /*
@@ -87,7 +87,7 @@ void intel_vdm_acked(int port, enum tcpm_sop_type type, int vdo_count,
  * @param svid    The SVID of the request
  * @param vdm_cmd The VDM command of the request
  */
-void intel_vdm_naked(int port, enum tcpm_sop_type type, uint8_t vdm_cmd);
+void intel_vdm_naked(int port, enum tcpci_msg_type type, uint8_t vdm_cmd);
 
 /*
  * Construct the next Thunderbolt VDM that should be sent.
@@ -100,6 +100,6 @@ void intel_vdm_naked(int port, enum tcpm_sop_type type, uint8_t vdm_cmd);
  * @return          The number of VDOs written to VDM or -1 to indicate error
  */
 int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
-		enum tcpm_sop_type *tx_type);
+		enum tcpci_msg_type *tx_type);
 
 #endif

@@ -115,7 +115,7 @@ static struct pd_prl {
 	enum pd_data_role data_role;
 	int msg_tx_id;
 	int msg_rx_id;
-	enum tcpm_sop_type sop;
+	enum tcpci_msg_type sop;
 
 	int mock_pe_message_sent;
 	int mock_pe_error;
@@ -506,7 +506,7 @@ static int verify_ctrl_msg_transmission(int port,
 }
 
 static int simulate_send_ctrl_msg_request_from_pe(int port,
-	enum tcpm_sop_type type, enum pd_ctrl_msg_type msg_type)
+	enum tcpci_msg_type type, enum pd_ctrl_msg_type msg_type)
 {
 	pd_port[port].mock_got_soft_reset = 0;
 	pd_port[port].mock_pe_error = -1;
@@ -565,7 +565,7 @@ static int verify_data_msg_transmission(int port,
 }
 
 static int simulate_send_data_msg_request_from_pe(int port,
-	enum tcpm_sop_type type, enum pd_ctrl_msg_type msg_type, int len)
+	enum tcpci_msg_type type, enum pd_ctrl_msg_type msg_type, int len)
 {
 	int i;
 	uint8_t *buf = tx_emsg[port].buf;
@@ -700,7 +700,7 @@ static int verify_extended_data_msg_transmission(int port,
 }
 
 static int simulate_send_extended_data_msg(int port,
-		enum tcpm_sop_type type, enum pd_ctrl_msg_type msg_type,
+		enum tcpci_msg_type type, enum pd_ctrl_msg_type msg_type,
 		int len)
 {
 	int i;
@@ -740,7 +740,7 @@ static void enable_prl(int port, int en)
 	/* Init PRL */
 	cycle_through_state_machine(port, 10, MSEC);
 
-	prl_set_rev(port, TCPC_TX_SOP, pd_port[port].rev);
+	prl_set_rev(port, TCPCI_MSG_SOP, pd_port[port].rev);
 }
 
 enum pd_power_role pd_get_power_role(int port)
@@ -758,7 +758,7 @@ enum pd_cable_plug tc_get_cable_plug(int port)
 	return PD_PLUG_FROM_DFP_UFP;
 }
 
-void pe_report_error(int port, enum pe_error e, enum tcpm_sop_type type)
+void pe_report_error(int port, enum pe_error e, enum tcpci_msg_type type)
 {
 	pd_port[port].mock_pe_error = e;
 	pd_port[port].sop = type;
@@ -844,7 +844,7 @@ static int test_send_ctrl_msg(void)
 				PRL_TX_WAIT_FOR_MESSAGE_REQUEST, "%u");
 
 		TEST_NE(simulate_send_ctrl_msg_request_from_pe(port,
-				TCPC_TX_SOP, PD_CTRL_ACCEPT), 0, "%d");
+				TCPCI_MSG_SOP, PD_CTRL_ACCEPT), 0, "%d");
 
 		cycle_through_state_machine(port, 1, MSEC);
 
@@ -882,7 +882,7 @@ static int test_send_data_msg(void)
 				PRL_TX_WAIT_FOR_MESSAGE_REQUEST, "%u");
 
 		TEST_NE(simulate_send_data_msg_request_from_pe(port,
-				TCPC_TX_SOP, PD_DATA_SOURCE_CAP, i), 0, "%d");
+				TCPCI_MSG_SOP, PD_DATA_SOURCE_CAP, i), 0, "%d");
 
 		cycle_through_state_machine(port, 1, MSEC);
 
@@ -919,7 +919,7 @@ static int test_send_data_msg_to_much_data(void)
 
 	/* Try to send 29-bytes */
 	TEST_EQ(simulate_send_data_msg_request_from_pe(port,
-			TCPC_TX_SOP, PD_DATA_SOURCE_CAP, 29), 0, "%d");
+			TCPCI_MSG_SOP, PD_DATA_SOURCE_CAP, 29), 0, "%d");
 
 	task_wake(PD_PORT_TO_TASK_ID(port));
 	task_wait_event(30 * MSEC);
@@ -964,8 +964,8 @@ static int test_send_extended_data_msg(void)
 		TEST_EQ(prl_tx_get_state(port),
 				PRL_TX_WAIT_FOR_MESSAGE_REQUEST, "%d");
 
-		TEST_NE(simulate_send_extended_data_msg(
-				port, TCPC_TX_SOP, PD_EXT_MANUFACTURER_INFO, i),
+		TEST_NE(simulate_send_extended_data_msg(port, TCPCI_MSG_SOP,
+					PD_EXT_MANUFACTURER_INFO, i),
 					0, "%d");
 
 		cycle_through_state_machine(port, 10, MSEC);
@@ -1148,7 +1148,7 @@ static int test_send_soft_reset_msg(void)
 				PRL_TX_WAIT_FOR_MESSAGE_REQUEST, "%u");
 
 	TEST_NE(simulate_send_ctrl_msg_request_from_pe(port,
-			TCPC_TX_SOP, PD_CTRL_SOFT_RESET), 0, "%d");
+			TCPCI_MSG_SOP, PD_CTRL_SOFT_RESET), 0, "%d");
 
 	task_wake(PD_PORT_TO_TASK_ID(port));
 	task_wait_event(30 * MSEC);

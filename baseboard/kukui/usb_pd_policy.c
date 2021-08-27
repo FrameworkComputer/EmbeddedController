@@ -183,7 +183,7 @@ __override int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 
 __override int svdm_dp_config(int port, uint32_t *payload)
 {
-	int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+	int opos = pd_alt_mode(port, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
 	int status = dp_status[port];
 	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
 	int pin_mode;

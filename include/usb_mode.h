@@ -72,7 +72,7 @@ bool enter_usb_cable_is_capable(int port);
  * @param port    USB-C port number
  * @param type    Transmit type (SOP, SOP', SOP'') for request
  */
-void enter_usb_accepted(int port, enum tcpm_sop_type type);
+void enter_usb_accepted(int port, enum tcpci_msg_type type);
 
 /*
  * Handles rejected USB4 response
@@ -80,7 +80,7 @@ void enter_usb_accepted(int port, enum tcpm_sop_type type);
  * @param port    USB-C port number
  * @param type    Transmit type (SOP, SOP', SOP'') for request
  */
-void enter_usb_rejected(int port, enum tcpm_sop_type type);
+void enter_usb_rejected(int port, enum tcpci_msg_type type);
 
 /*
  * Constructs the next USB4 EUDO that should be sent.
@@ -88,6 +88,6 @@ void enter_usb_rejected(int port, enum tcpm_sop_type type);
  * @param port    USB-C port number
  * @param type    Transmit type (SOP, SOP', SOP'') for request
  */
-uint32_t enter_usb_setup_next_msg(int port, enum tcpm_sop_type *type);
+uint32_t enter_usb_setup_next_msg(int port, enum tcpci_msg_type *type);
 
 #endif

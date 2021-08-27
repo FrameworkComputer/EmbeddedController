@@ -178,7 +178,7 @@ static int it83xx_tcpm_get_message_raw(int port, uint32_t *buf, int *head)
 
 static enum tcpc_transmit_complete it83xx_tx_data(
 	enum usbpd_port port,
-	enum tcpm_sop_type type,
+	enum tcpci_msg_type type,
 	uint16_t header,
 	const uint32_t *buf)
 {
@@ -200,7 +200,7 @@ static enum tcpc_transmit_complete it83xx_tx_data(
 	IT83XX_USBPD_MTSR1(port) =
 		(IT83XX_USBPD_MTSR1(port) & ~0x70) | ((type & 0x7) << 4);
 	/* bit7: transmit message is send to cable or not */
-	if (TCPC_TX_SOP == type)
+	if (type == TCPCI_MSG_SOP)
 		IT83XX_USBPD_MTSR0(port) &= ~USBPD_REG_MASK_CABLE_ENABLE;
 	else
 		IT83XX_USBPD_MTSR0(port) |= USBPD_REG_MASK_CABLE_ENABLE;
@@ -247,9 +247,9 @@ static enum tcpc_transmit_complete it83xx_tx_data(
 }
 
 static enum tcpc_transmit_complete it83xx_send_hw_reset(enum usbpd_port port,
-				enum tcpm_sop_type reset_type)
+				enum tcpci_msg_type reset_type)
 {
-	if (reset_type == TCPC_TX_CABLE_RESET)
+	if (reset_type == TCPCI_MSG_CABLE_RESET)
 		IT83XX_USBPD_MTSR0(port) |= USBPD_REG_MASK_CABLE_ENABLE;
 	else
 		IT83XX_USBPD_MTSR0(port) &= ~USBPD_REG_MASK_CABLE_ENABLE;
@@ -678,29 +678,29 @@ static int it83xx_tcpm_set_rx_enable(int port, int enable)
 }
 
 static int it83xx_tcpm_transmit(int port,
-			enum tcpm_sop_type type,
+			enum tcpci_msg_type type,
 			uint16_t header,
 			const uint32_t *data)
 {
 	int status = TCPC_TX_COMPLETE_FAILED;
 
 	switch (type) {
-	case TCPC_TX_SOP:
-	case TCPC_TX_SOP_PRIME:
-	case TCPC_TX_SOP_PRIME_PRIME:
-	case TCPC_TX_SOP_DEBUG_PRIME:
-	case TCPC_TX_SOP_DEBUG_PRIME_PRIME:
+	case TCPCI_MSG_SOP:
+	case TCPCI_MSG_SOP_PRIME:
+	case TCPCI_MSG_SOP_PRIME_PRIME:
+	case TCPCI_MSG_SOP_DEBUG_PRIME:
+	case TCPCI_MSG_SOP_DEBUG_PRIME_PRIME:
 		status = it83xx_tx_data(port,
 					type,
 					header,
 					data);
 		break;
-	case TCPC_TX_BIST_MODE_2:
+	case TCPCI_MSG_TX_BIST_MODE_2:
 		it83xx_send_bist_mode2_pattern(port);
 		status = TCPC_TX_COMPLETE_SUCCESS;
 		break;
-	case TCPC_TX_HARD_RESET:
-	case TCPC_TX_CABLE_RESET:
+	case TCPCI_MSG_TX_HARD_RESET:
+	case TCPCI_MSG_CABLE_RESET:
 		status = it83xx_send_hw_reset(port, type);
 		break;
 	default:

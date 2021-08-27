@@ -181,7 +181,7 @@ static bool dpm_mode_entry_requested(int port, enum typec_mode mode)
 	}
 }
 
-void dpm_vdm_acked(int port, enum tcpm_sop_type type, int vdo_count,
+void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		uint32_t *vdm)
 {
 	const uint16_t svid = PD_VDO_VID(vdm[0]);
@@ -203,7 +203,7 @@ void dpm_vdm_acked(int port, enum tcpm_sop_type type, int vdo_count,
 	}
 }
 
-void dpm_vdm_naked(int port, enum tcpm_sop_type type, uint16_t svid,
+void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
 		uint8_t vdm_cmd)
 {
 	switch (svid) {
@@ -231,7 +231,7 @@ static void dpm_attempt_mode_entry(int port)
 {
 	int vdo_count = 0;
 	uint32_t vdm[VDO_MAX_SIZE];
-	enum tcpm_sop_type tx_type = TCPC_TX_SOP;
+	enum tcpci_msg_type tx_type = TCPCI_MSG_SOP;
 	bool enter_mode_requested =
 		IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY) ?  false : true;
 
@@ -264,8 +264,8 @@ static void dpm_attempt_mode_entry(int port)
 	 * If discovery has not occurred for modes, do not attempt to switch
 	 * to alt mode.
 	 */
-	if (pd_get_svids_discovery(port, TCPC_TX_SOP) != PD_DISC_COMPLETE ||
-	    pd_get_modes_discovery(port, TCPC_TX_SOP) != PD_DISC_COMPLETE)
+	if (pd_get_svids_discovery(port, TCPCI_MSG_SOP) != PD_DISC_COMPLETE ||
+	    pd_get_modes_discovery(port, TCPCI_MSG_SOP) != PD_DISC_COMPLETE)
 		return;
 
 	if (dp_entry_is_done(port) ||
@@ -297,8 +297,9 @@ static void dpm_attempt_mode_entry(int port)
 
 	/* If not, check if they support Thunderbolt alt mode. */
 	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
-	    board_is_tbt_usb4_port(port) &&
-	    pd_is_mode_discovered_for_svid(port, TCPC_TX_SOP, USB_VID_INTEL) &&
+			board_is_tbt_usb4_port(port) &&
+			pd_is_mode_discovered_for_svid(port, TCPCI_MSG_SOP,
+				USB_VID_INTEL) &&
 			dpm_mode_entry_requested(port, TYPEC_MODE_TBT)) {
 		enter_mode_requested = true;
 		vdo_count = tbt_setup_next_vdm(port,
@@ -307,7 +308,7 @@ static void dpm_attempt_mode_entry(int port)
 
 	/* If not, check if they support DisplayPort alt mode. */
 	if (vdo_count == 0 && !DPM_CHK_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE) &&
-	    pd_is_mode_discovered_for_svid(port, TCPC_TX_SOP,
+	    pd_is_mode_discovered_for_svid(port, TCPCI_MSG_SOP,
 				USB_SID_DISPLAYPORT) &&
 	    dpm_mode_entry_requested(port, TYPEC_MODE_DP)) {
 		enter_mode_requested = true;
@@ -356,7 +357,7 @@ static void dpm_attempt_mode_exit(int port)
 {
 	uint32_t vdm = 0;
 	int vdo_count = 0;
-	enum tcpm_sop_type tx_type = TCPC_TX_SOP;
+	enum tcpci_msg_type tx_type = TCPCI_MSG_SOP;
 
 	if (IS_ENABLED(CONFIG_USB_PD_USB4) &&
 	    enter_usb_entry_is_done(port)) {
@@ -394,7 +395,7 @@ static void dpm_attempt_mode_exit(int port)
 static void dpm_send_attention_vdm(int port)
 {
 	/* Set up VDM ATTEN msg that was passed in previously */
-	if (pd_setup_vdm_request(port, TCPC_TX_SOP, dpm[port].vdm_attention,
+	if (pd_setup_vdm_request(port, TCPCI_MSG_SOP, dpm[port].vdm_attention,
 				 dpm[port].vdm_cnt) == true)
 		/* Trigger PE to start a VDM command run */
 		pd_dpm_request(port, DPM_REQUEST_VDM);
@@ -601,7 +602,7 @@ void dpm_evaluate_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo)
 			return;
 
 		/* FRS is only supported in PD 3.0 and higher */
-		if (pd_get_rev(port, TCPC_TX_SOP) == PD_REV20)
+		if (pd_get_rev(port, TCPCI_MSG_SOP) == PD_REV20)
 			return;
 
 		if ((vsafe5v_pdo & PDO_FIXED_DUAL_ROLE) && frs_current) {

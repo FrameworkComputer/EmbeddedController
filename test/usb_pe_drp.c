@@ -54,7 +54,7 @@ void before_test(void)
  * TODO: Add support for multiple data objects (when a test is added here that
  * needs it).
  */
-test_static void rx_message(enum tcpm_sop_type sop,
+test_static void rx_message(enum tcpci_msg_type sop,
 			    enum pd_ctrl_msg_type ctrl_msg,
 			    enum pd_data_msg_type data_msg,
 			    enum pd_power_role prole,
@@ -89,12 +89,12 @@ test_static int finish_src_discovery(int startup_cable_probes)
 	int i;
 
 	/* Expect GET_SOURCE_CAP, reply NOT_SUPPORTED. */
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 PD_CTRL_GET_SOURCE_CAP, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 	task_wait_event(10 * MSEC);
-	rx_message(TCPC_TX_SOP, PD_CTRL_NOT_SUPPORTED, 0,
+	rx_message(TCPCI_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0,
 		   PD_ROLE_SINK, PD_ROLE_UFP, 0);
 
 	/*
@@ -102,20 +102,20 @@ test_static int finish_src_discovery(int startup_cable_probes)
 	 * above, so expect 5 more now.
 	 */
 	for (i = startup_cable_probes; i < 6; i++) {
-		TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
+		TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP_PRIME,
 						 0, PD_DATA_VENDOR_DEF,
 						 60 * MSEC),
 			EC_SUCCESS, "%d");
-		mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
+		mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPCI_MSG_SOP_PRIME);
 	}
 
 	/* Expect VENDOR_DEF for partner identity, reply NOT_SUPPORTED. */
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 0, PD_DATA_VENDOR_DEF, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 	task_wait_event(10 * MSEC);
-	rx_message(TCPC_TX_SOP, PD_CTRL_NOT_SUPPORTED, 0,
+	rx_message(TCPCI_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0,
 		   PD_ROLE_SINK, PD_ROLE_UFP, 0);
 
 	return EC_SUCCESS;
@@ -131,7 +131,7 @@ test_static int test_send_caps_error_before_connected(void)
 	mock_tc_port[PORT0].power_role = PD_ROLE_SOURCE;
 	mock_tc_port[PORT0].pd_enable = 1;
 	mock_tc_port[PORT0].vconn_src = true;
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 0, PD_DATA_SOURCE_CAP, 10 * MSEC),
 		EC_SUCCESS, "%d");
 
@@ -140,22 +140,22 @@ test_static int test_send_caps_error_before_connected(void)
 	 * PE_SRC_Send_Capabilities goes to PE_SRC_Discovery on send error (and
 	 * does not send soft reset).
 	 */
-	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP);
+	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPCI_MSG_SOP);
 
 	/*
 	 * We should have gone to PE_SRC_Discovery on above error, so expect
 	 * VENDOR_DEF for cable identity, simulate no cable.
 	 */
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP_PRIME,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP_PRIME,
 					 0, PD_DATA_VENDOR_DEF, 10 * MSEC),
 		EC_SUCCESS, "%d");
-	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP_PRIME);
+	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPCI_MSG_SOP_PRIME);
 
 	/*
 	 * Expect SOURCE_CAP again. This is a retry since the first one above
 	 * got ERR_TCH_XMIT. Now simulate success (ie GoodCRC).
 	 */
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 0, PD_DATA_SOURCE_CAP, 110 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
@@ -170,13 +170,13 @@ test_static int test_send_caps_error_before_connected(void)
 	 */
 
 	/* REQUEST 5V, expect ACCEPT, PS_RDY. */
-	rx_message(TCPC_TX_SOP, 0, PD_DATA_REQUEST,
+	rx_message(TCPCI_MSG_SOP, 0, PD_DATA_REQUEST,
 		   PD_ROLE_SINK, PD_ROLE_UFP, RDO_FIXED(1, 500, 500, 0));
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 PD_CTRL_ACCEPT, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 PD_CTRL_PS_RDY, 0, 35 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
@@ -198,20 +198,20 @@ test_static int test_send_caps_error_when_connected(void)
 	mock_tc_port[PORT0].power_role = PD_ROLE_SOURCE;
 	mock_tc_port[PORT0].pd_enable = 1;
 	mock_tc_port[PORT0].vconn_src = true;
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 0, PD_DATA_SOURCE_CAP, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 	task_wait_event(10 * MSEC);
 
 	/* REQUEST 5V, expect ACCEPT, PS_RDY. */
-	rx_message(TCPC_TX_SOP, 0, PD_DATA_REQUEST,
+	rx_message(TCPCI_MSG_SOP, 0, PD_DATA_REQUEST,
 		   PD_ROLE_SINK, PD_ROLE_UFP, RDO_FIXED(1, 500, 500, 0));
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 PD_CTRL_ACCEPT, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 PD_CTRL_PS_RDY, 0, 35 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
@@ -224,14 +224,14 @@ test_static int test_send_caps_error_when_connected(void)
 	 * Now connected. Send GET_SOURCE_CAP, to check how error sending
 	 * SOURCE_CAP is handled.
 	 */
-	rx_message(TCPC_TX_SOP, PD_CTRL_GET_SOURCE_CAP, 0,
+	rx_message(TCPCI_MSG_SOP, PD_CTRL_GET_SOURCE_CAP, 0,
 		   PD_ROLE_SINK, PD_ROLE_UFP, 0);
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 0, PD_DATA_SOURCE_CAP, 10 * MSEC),
 		EC_SUCCESS, "%d");
 
 	/* Simulate error sending SOURCE_CAP. */
-	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPC_TX_SOP);
+	mock_prl_report_error(PORT0, ERR_TCH_XMIT, TCPCI_MSG_SOP);
 
 	/*
 	 * Expect SOFT_RESET.
@@ -240,7 +240,7 @@ test_static int test_send_caps_error_when_connected(void)
 	 * "The PE_SRC_Send_Soft_Reset state Shall be entered from any state
 	 * when ... A Message has not been sent after retries to the Sink"
 	 */
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 PD_CTRL_SOFT_RESET, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
@@ -260,20 +260,20 @@ test_static int test_interrupting_pr_swap(void)
 	mock_tc_port[PORT0].power_role = PD_ROLE_SOURCE;
 	mock_tc_port[PORT0].pd_enable = 1;
 	mock_tc_port[PORT0].vconn_src = true;
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 0, PD_DATA_SOURCE_CAP, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
 	task_wait_event(10 * MSEC);
 
 	/* REQUEST 5V, expect ACCEPT, PS_RDY. */
-	rx_message(TCPC_TX_SOP, 0, PD_DATA_REQUEST,
+	rx_message(TCPCI_MSG_SOP, 0, PD_DATA_REQUEST,
 		   PD_ROLE_SINK, PD_ROLE_UFP, RDO_FIXED(1, 500, 500, 0));
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 PD_CTRL_ACCEPT, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 PD_CTRL_PS_RDY, 0, 35 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
@@ -286,10 +286,10 @@ test_static int test_interrupting_pr_swap(void)
 	 * Now connected.  Initiate a PR swap and then interrupt it after the
 	 * Accept, when power is transitioning to off.
 	 */
-	rx_message(TCPC_TX_SOP, PD_CTRL_PR_SWAP, 0,
+	rx_message(TCPCI_MSG_SOP, PD_CTRL_PR_SWAP, 0,
 		   PD_ROLE_SINK, PD_ROLE_UFP, 0);
 
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_SOP,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
 					 PD_CTRL_ACCEPT, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_prl_message_sent(PORT0);
@@ -297,14 +297,14 @@ test_static int test_interrupting_pr_swap(void)
 	task_wait_event(5 * SECOND);
 
 	/* Interrupt the non-interruptible AMS */
-	rx_message(TCPC_TX_SOP, PD_CTRL_PR_SWAP, 0,
+	rx_message(TCPCI_MSG_SOP, PD_CTRL_PR_SWAP, 0,
 		   PD_ROLE_SINK, PD_ROLE_UFP, 0);
 
 	/*
 	 * Expect a hard reset since power was transitioning during this
 	 * interruption
 	 */
-	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPC_TX_HARD_RESET,
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_TX_HARD_RESET,
 					 0, 0, 10 * MSEC),
 		EC_SUCCESS, "%d");
 

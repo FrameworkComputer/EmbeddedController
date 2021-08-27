@@ -33,13 +33,13 @@ int test_td_pd_src3_e26(void)
 	/*
 	 * ...and sends a Get_Source_Cap message to the UUT.
 	 */
-	partner_send_msg(TCPC_TX_SOP, PD_CTRL_GET_SOURCE_CAP, 0, 0, NULL);
+	partner_send_msg(TCPCI_MSG_SOP, PD_CTRL_GET_SOURCE_CAP, 0, 0, NULL);
 
 	/*
 	 * c) Upon receipt of the Source_Capabilities Message, the Tester
 	 * doesn’t reply with GoodCRC.
 	 */
-	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0, PD_DATA_SOURCE_CAP),
+	TEST_EQ(verify_tcpci_transmit(TCPCI_MSG_SOP, 0, PD_DATA_SOURCE_CAP),
 		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_FAILED);
 
@@ -48,7 +48,7 @@ int test_td_pd_src3_e26(void)
 	 * within tReceive max (1.1 ms) + tSoftReset max (15 ms).
 	 */
 	TEST_EQ(verify_tcpci_tx_timeout(
-			TCPC_TX_SOP, PD_CTRL_SOFT_RESET, 0, 15 * MSEC),
+			TCPCI_MSG_SOP, PD_CTRL_SOFT_RESET, 0, 15 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 

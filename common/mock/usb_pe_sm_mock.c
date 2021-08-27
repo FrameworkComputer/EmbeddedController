@@ -46,7 +46,7 @@ void mock_pe_port_reset(void)
 	}
 }
 
-void pe_report_error(int port, enum pe_error e, enum tcpm_sop_type type)
+void pe_report_error(int port, enum pe_error e, enum tcpci_msg_type type)
 {
 	mock_pe_port[port].mock_pe_error = e;
 	mock_pe_port[port].sop = type;
@@ -110,7 +110,7 @@ void pd_set_src_caps(int port, int cnt, uint32_t *src_caps)
 void pd_request_power_swap(int port)
 {}
 
-int pd_get_rev(int port, enum tcpm_sop_type type)
+int pd_get_rev(int port, enum tcpci_msg_type type)
 {
 	return IS_ENABLED(CONFIG_USB_PD_REV30) ? PD_REV30 : PD_REV20;
 }

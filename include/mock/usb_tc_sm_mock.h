@@ -17,7 +17,7 @@ struct mock_tc_port_t {
 	int pd_enable;
 	int msg_tx_id;
 	int msg_rx_id;
-	enum tcpm_sop_type sop;
+	enum tcpci_msg_type sop;
 	enum tcpc_rp_value lcl_rp;
 	int attached_snk;
 	int attached_src;

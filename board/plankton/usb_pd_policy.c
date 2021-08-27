@@ -237,7 +237,7 @@ int svdm_enter_mode(int port, uint32_t *payload)
 	return 1;
 }
 
-int pd_alt_mode(int port, enum tcpm_sop_type type, uint16_t svid)
+int pd_alt_mode(int port, enum tcpci_msg_type type, uint16_t svid)
 {
 	return alt_mode;
 }

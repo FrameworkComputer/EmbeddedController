@@ -63,7 +63,7 @@ int test_td_pd_src_e2(void)
 	 *    Provider, if the Specification Revision field is 10b
 	 *    (Rev 3.0), the test passes and stops here,
 	 */
-	TEST_EQ(verify_tcpci_tx_with_data(TCPC_TX_SOP,
+	TEST_EQ(verify_tcpci_tx_with_data(TCPCI_MSG_SOP,
 					  PD_DATA_SOURCE_CAP,
 					  data,
 					  sizeof(data),

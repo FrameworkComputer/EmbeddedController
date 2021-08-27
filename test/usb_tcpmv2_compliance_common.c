@@ -118,14 +118,14 @@ enum pd_rev_type partner_get_pd_rev(void)
 static int partner_tx_id[NUM_SOP_STAR_TYPES];
 void partner_tx_msg_id_reset(int sop)
 {
-	if (sop == TCPC_TX_SOP_ALL)
+	if (sop == TCPCI_MSG_SOP_ALL)
 		for (sop = 0; sop < NUM_SOP_STAR_TYPES; ++sop)
 			partner_tx_id[sop] = 0;
 	else
 		partner_tx_id[sop] = 0;
 }
 
-void partner_send_msg(enum tcpm_sop_type sop,
+void partner_send_msg(enum tcpci_msg_type sop,
 		      uint16_t type,
 		      uint16_t cnt,
 		      uint16_t ext,
@@ -135,7 +135,7 @@ void partner_send_msg(enum tcpm_sop_type sop,
 
 	partner_tx_id[sop] &= 7;
 	header = PD_HEADER(type,
-			sop == TCPC_TX_SOP ? partner_get_power_role()
+			sop == TCPCI_MSG_SOP ? partner_get_power_role()
 			: PD_PLUG_FROM_CABLE,
 			partner_get_data_role(),
 			partner_tx_id[sop],
@@ -259,14 +259,14 @@ int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 			 *    The Source Capabilities includes Fixed 5V 3A PDO.
 			 */
 			task_wait_event(1 * MSEC);
-			partner_send_msg(TCPC_TX_SOP, PD_DATA_SOURCE_CAP, 1, 0,
-					 &pdo);
+			partner_send_msg(TCPCI_MSG_SOP, PD_DATA_SOURCE_CAP, 1,
+					0, &pdo);
 
 			/*
 			 * f) The tester waits for the Request from the UUT for
 			 *    tSenderResponse max (30 ms).
 			 */
-			TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0,
+			TEST_EQ(verify_tcpci_transmit(TCPCI_MSG_SOP, 0,
 						      PD_DATA_REQUEST),
 				EC_SUCCESS, "%d");
 			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
@@ -275,10 +275,10 @@ int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 			 * g) The tester sends Accept, and when Vbus is stable
 			 *    at the target voltage, sends PS_RDY.
 			 */
-			partner_send_msg(TCPC_TX_SOP, PD_CTRL_ACCEPT, 0, 0,
+			partner_send_msg(TCPCI_MSG_SOP, PD_CTRL_ACCEPT, 0, 0,
 					 NULL);
 			task_wait_event(10 * MSEC);
-			partner_send_msg(TCPC_TX_SOP, PD_CTRL_PS_RDY, 0, 0,
+			partner_send_msg(TCPCI_MSG_SOP, PD_CTRL_PS_RDY, 0, 0,
 					 NULL);
 			task_wait_event(1 * MSEC);
 
@@ -290,7 +290,7 @@ int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 			 * c) The tester waits Source Capabilities for for
 			 *    tNoResponse max (5.5 s).
 			 */
-			TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0,
+			TEST_EQ(verify_tcpci_transmit(TCPCI_MSG_SOP, 0,
 						      PD_DATA_SOURCE_CAP),
 				EC_SUCCESS, "%d");
 
@@ -304,10 +304,10 @@ int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 			/*
 			 * e) The tester requests 5V 0.5A.
 			 */
-			partner_send_msg(TCPC_TX_SOP, PD_DATA_REQUEST, 1, 0,
+			partner_send_msg(TCPCI_MSG_SOP, PD_DATA_REQUEST, 1, 0,
 					 &rdo);
 
-			TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
+			TEST_EQ(verify_tcpci_transmit(TCPCI_MSG_SOP,
 						      PD_CTRL_ACCEPT, 0),
 				EC_SUCCESS, "%d");
 			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
@@ -316,7 +316,7 @@ int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 			 * f) The tester waits PS_RDY for tPSSourceOn max
 			 *    (480 ms).
 			 */
-			TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP,
+			TEST_EQ(verify_tcpci_transmit(TCPCI_MSG_SOP,
 						      PD_CTRL_PS_RDY, 0),
 				EC_SUCCESS, "%d");
 			mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
@@ -369,19 +369,19 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 	struct possible_tx possible[4];
 
 	if (data_role == PD_ROLE_DFP) {
-		possible[0].tx_type = TCPC_TX_SOP;
+		possible[0].tx_type = TCPCI_MSG_SOP;
 		possible[0].ctrl_msg = PD_CTRL_GET_SOURCE_CAP;
 		possible[0].data_msg = 0;
 
-		possible[1].tx_type = TCPC_TX_SOP;
+		possible[1].tx_type = TCPCI_MSG_SOP;
 		possible[1].ctrl_msg = PD_CTRL_GET_SINK_CAP;
 		possible[1].data_msg = 0;
 
-		possible[2].tx_type = TCPC_TX_SOP_PRIME;
+		possible[2].tx_type = TCPCI_MSG_SOP_PRIME;
 		possible[2].ctrl_msg = 0;
 		possible[2].data_msg = PD_DATA_VENDOR_DEF;
 
-		possible[3].tx_type = TCPC_TX_SOP;
+		possible[3].tx_type = TCPCI_MSG_SOP;
 		possible[3].ctrl_msg = 0;
 		possible[3].data_msg = PD_DATA_VENDOR_DEF;
 
@@ -402,23 +402,23 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 			task_wait_event(10 * MSEC);
 
 			switch (found_index) {
-			case 0:	/* TCPC_TX_SOP PD_CTRL_GET_SOURCE_CAP */
-				partner_send_msg(TCPC_TX_SOP,
+			case 0:	/* TCPCI_MSG_SOP PD_CTRL_GET_SOURCE_CAP */
+				partner_send_msg(TCPCI_MSG_SOP,
 						 PD_DATA_SOURCE_CAP,
 						 1, 0, &pdo);
 				break;
-			case 1: /* TCPC_TX_SOP PD_CTRL_GET_SINK_CAP */
-				partner_send_msg(TCPC_TX_SOP,
+			case 1: /* TCPCI_MSG_SOP PD_CTRL_GET_SINK_CAP */
+				partner_send_msg(TCPCI_MSG_SOP,
 						 PD_DATA_SINK_CAP,
 						 1, 0, &pdo);
 				break;
-			case 2: /* TCPC_TX_SOP_PRIME PD_DATA_VENDOR_DEF */
-				partner_send_msg(TCPC_TX_SOP_PRIME,
+			case 2: /* TCPCI_MSG_SOP_PRIME PD_DATA_VENDOR_DEF */
+				partner_send_msg(TCPCI_MSG_SOP_PRIME,
 						 PD_CTRL_NOT_SUPPORTED,
 						 0, 0, NULL);
 				break;
-			case 3: /* TCPC_TX_SOP PD_DATA_VENDOR_DEF */
-				partner_send_msg(TCPC_TX_SOP,
+			case 3: /* TCPCI_MSG_SOP PD_DATA_VENDOR_DEF */
+				partner_send_msg(TCPCI_MSG_SOP,
 						 PD_CTRL_NOT_SUPPORTED,
 						 0, 0, NULL);
 				break;
@@ -430,19 +430,19 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 	} else if (data_role == PD_ROLE_UFP) {
 		int vcs = 0;
 
-		possible[0].tx_type = TCPC_TX_SOP;
+		possible[0].tx_type = TCPCI_MSG_SOP;
 		possible[0].ctrl_msg = PD_CTRL_GET_SINK_CAP;
 		possible[0].data_msg = 0;
 
-		possible[1].tx_type = TCPC_TX_SOP;
+		possible[1].tx_type = TCPCI_MSG_SOP;
 		possible[1].ctrl_msg = PD_CTRL_DR_SWAP;
 		possible[1].data_msg = 0;
 
-		possible[2].tx_type = TCPC_TX_SOP;
+		possible[2].tx_type = TCPCI_MSG_SOP;
 		possible[2].ctrl_msg = PD_CTRL_PR_SWAP;
 		possible[2].data_msg = 0;
 
-		possible[3].tx_type = TCPC_TX_SOP;
+		possible[3].tx_type = TCPCI_MSG_SOP;
 		possible[3].ctrl_msg = PD_CTRL_VCONN_SWAP;
 		possible[3].data_msg = 0;
 
@@ -463,24 +463,24 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 			task_wait_event(10 * MSEC);
 
 			switch (found_index) {
-			case 0: /* TCPC_TX_SOP PD_CTRL_GET_SINK_CAP */
-				partner_send_msg(TCPC_TX_SOP,
+			case 0: /* TCPCI_MSG_SOP PD_CTRL_GET_SINK_CAP */
+				partner_send_msg(TCPCI_MSG_SOP,
 						 PD_DATA_SINK_CAP,
 						 1, 0, &pdo);
 				break;
-			case 1: /* TCPC_TX_SOP PD_CTRL_DR_SWAP */
-				partner_send_msg(TCPC_TX_SOP,
+			case 1: /* TCPCI_MSG_SOP PD_CTRL_DR_SWAP */
+				partner_send_msg(TCPCI_MSG_SOP,
 						 PD_CTRL_REJECT,
 						 0, 0, NULL);
 				break;
-			case 2:	/* TCPC_TX_SOP PD_CTRL_PR_SWAP */
-				partner_send_msg(TCPC_TX_SOP,
+			case 2:	/* TCPCI_MSG_SOP PD_CTRL_PR_SWAP */
+				partner_send_msg(TCPCI_MSG_SOP,
 						 PD_CTRL_REJECT,
 						 0, 0, NULL);
 				break;
-			case 3: /* TCPC_TX_SOP PD_CTRL_VCONN_SWAP */
+			case 3: /* TCPCI_MSG_SOP PD_CTRL_VCONN_SWAP */
 				TEST_LT(vcs++, 4, "%d");
-				partner_send_msg(TCPC_TX_SOP,
+				partner_send_msg(TCPCI_MSG_SOP,
 						 PD_CTRL_REJECT,
 						 0, 0, NULL);
 				break;

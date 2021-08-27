@@ -18,17 +18,17 @@ static void dump_pe(int port)
 	struct svdm_amode_data *modep;
 	uint32_t mode_caps;
 	const union disc_ident_ack *resp;
-	enum tcpm_sop_type type;
+	enum tcpci_msg_type type;
 	/* TODO(b/152417597): Output SOP' discovery results */
 	const struct pd_discovery *disc =
-		pd_get_am_discovery(port, TCPC_TX_SOP);
+		pd_get_am_discovery(port, TCPCI_MSG_SOP);
 
 	static const char * const idh_ptype_names[]  = {
 		"UNDEF", "Hub", "Periph", "PCable", "ACable", "AMA",
 		"RSV6", "RSV7"};
 	static const char * const tx_names[] = {"SOP", "SOP'", "SOP''"};
 
-	for (type = TCPC_TX_SOP; type < DISCOVERY_TYPE_COUNT; type++) {
+	for (type = TCPCI_MSG_SOP; type < DISCOVERY_TYPE_COUNT; type++) {
 		resp = pd_get_identity_response(port, type);
 		if (pd_get_identity_discovery(port, type) != PD_DISC_COMPLETE) {
 			ccprintf("No %s identity discovered yet.\n",
@@ -52,20 +52,20 @@ static void dump_pe(int port)
 		ccprintf("\n");
 	}
 
-	if (pd_get_svid_count(port, TCPC_TX_SOP) < 1) {
+	if (pd_get_svid_count(port, TCPCI_MSG_SOP) < 1) {
 		ccprintf("No SVIDS discovered yet.\n");
 		return;
 	}
 
 	/* TODO(b/152418267): Display discovered SVIDs and modes for SOP' */
-	for (i = 0; i < pd_get_svid_count(port, TCPC_TX_SOP); i++) {
+	for (i = 0; i < pd_get_svid_count(port, TCPCI_MSG_SOP); i++) {
 		ccprintf("SVID[%d]: %04x MODES:", i, disc->svids[i].svid);
 		for (j = 0; j < disc->svids[j].mode_cnt; j++)
 			ccprintf(" [%d] %08x", j + 1,
 					disc->svids[i].mode_vdo[j]);
 		ccprintf("\n");
 
-		modep = pd_get_amode_data(port, TCPC_TX_SOP,
+		modep = pd_get_amode_data(port, TCPCI_MSG_SOP,
 				disc->svids[i].svid);
 		if (modep) {
 			mode_caps = modep->data->mode_vdo[modep->opos - 1];
@@ -134,10 +134,10 @@ static int command_cable(int argc, char **argv)
 	}
 	ccprintf("%s\n", cable_type[ptype]);
 
-	cable_rev = pd_get_rev(port, TCPC_TX_SOP_PRIME);
-	disc = pd_get_am_discovery(port, TCPC_TX_SOP_PRIME);
+	cable_rev = pd_get_rev(port, TCPCI_MSG_SOP_PRIME);
+	disc = pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
 	cable_mode_resp.raw_value =
-		pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME);
+		pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
 
 
 	/* Cable revision */

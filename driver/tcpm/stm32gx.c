@@ -103,7 +103,7 @@ static int stm32gx_tcpm_set_rx_enable(int port, int enable)
 }
 
 static int stm32gx_tcpm_transmit(int port,
-			enum tcpm_sop_type type,
+			enum tcpci_msg_type type,
 			uint16_t header,
 			const uint32_t *data)
 {

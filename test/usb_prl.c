@@ -40,7 +40,7 @@ static void enable_prl(int port, int en)
 
 	task_wait_event(10*MSEC);
 
-	prl_set_rev(port, TCPC_TX_SOP, mock_tc_port[port].rev);
+	prl_set_rev(port, TCPCI_MSG_SOP, mock_tc_port[port].rev);
 }
 
 static int test_receive_control_msg(void)
@@ -77,7 +77,7 @@ static int test_send_control_msg(void)
 	int port = PORT0;
 
 	/* Set up the message to be sent. */
-	prl_send_ctrl_msg(port, TCPC_TX_SOP, PD_CTRL_ACCEPT);
+	prl_send_ctrl_msg(port, TCPCI_MSG_SOP, PD_CTRL_ACCEPT);
 	task_wait_event(MSEC);
 	/* Simulate the TX complete that the PD_INT handler would signal */
 	pd_transmit_complete(port, TCPC_TX_COMPLETE_SUCCESS);
@@ -112,7 +112,7 @@ static int test_discard_queued_tx_when_rx_happens(void)
 		buf[i] = (uint8_t)i;
 
 	tx_emsg[port].len = len;
-	prl_send_data_msg(port, TCPC_TX_SOP, PD_DATA_SOURCE_CAP);
+	prl_send_data_msg(port, TCPCI_MSG_SOP, PD_DATA_SOURCE_CAP);
 
 	/* Set up the message to be received. */
 	mock_tcpm_rx_msg(port, header, 0, NULL);

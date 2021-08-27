@@ -102,7 +102,7 @@ static volatile int hpd_prev_level;
 
 void hpd_irq_deferred(void)
 {
-	int dp_mode = pd_alt_mode(1, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+	int dp_mode = pd_alt_mode(1, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
 
 	if (dp_mode) {
 		pd_send_hpd(DUT, hpd_irq);
@@ -114,7 +114,7 @@ DECLARE_DEFERRED(hpd_irq_deferred);
 void hpd_lvl_deferred(void)
 {
 	int level = gpio_get_level(GPIO_DP_HPD);
-	int dp_mode = pd_alt_mode(1, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+	int dp_mode = pd_alt_mode(1, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
 
 	if (level != hpd_prev_level) {
 		/* It's a glitch while in deferred or canceled action */

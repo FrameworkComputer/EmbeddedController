@@ -44,12 +44,12 @@ static int td_pd_ll_e4(enum pd_data_role data_role)
 	 *    and do not send GoodCrc for nRetryCount + 1 times
 	 *    (nRetryCount equals 3 since PD 2.1).
 	 */
-	partner_send_msg(TCPC_TX_SOP,
+	partner_send_msg(TCPCI_MSG_SOP,
 			 PD_CTRL_GET_SINK_CAP,
 			 0, 0, NULL);
 
 	retries = 3;
-	TEST_EQ(verify_tcpci_tx_retry_count(TCPC_TX_SOP, 0, PD_DATA_SINK_CAP,
+	TEST_EQ(verify_tcpci_tx_retry_count(TCPCI_MSG_SOP, 0, PD_DATA_SINK_CAP,
 			retries),
 		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_FAILED);
@@ -59,8 +59,8 @@ static int td_pd_ll_e4(enum pd_data_role data_role)
 	 *    not reply GoodCrc.
 	 */
 	retries = 3;
-	TEST_EQ(verify_tcpci_tx_retry_count(TCPC_TX_SOP, PD_CTRL_SOFT_RESET, 0,
-			retries),
+	TEST_EQ(verify_tcpci_tx_retry_count(TCPCI_MSG_SOP, PD_CTRL_SOFT_RESET,
+				0, retries),
 		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_FAILED);
 	task_wait_event(1 * MSEC);
@@ -69,7 +69,7 @@ static int td_pd_ll_e4(enum pd_data_role data_role)
 	 * d) Check that the UUT issues a Hard Reset.
 	 */
 	TEST_EQ(mock_tcpci_get_reg(TCPC_REG_TRANSMIT),
-		TCPC_TX_HARD_RESET, "%d");
+		TCPCI_MSG_TX_HARD_RESET, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS | TCPC_REG_ALERT_TX_FAILED);
 	mock_tcpci_set_reg(TCPC_REG_TRANSMIT, 0);
 	task_wait_event(1 * MSEC);

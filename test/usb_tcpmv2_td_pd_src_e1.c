@@ -38,7 +38,7 @@ int test_td_pd_src_e1(void)
 	 *    is not received from the Provider within 250 ms (tFirstSourceCap
 	 *    max) after VBus present.
 	 */
-	TEST_EQ(verify_tcpci_tx_timeout(TCPC_TX_SOP, 0,
+	TEST_EQ(verify_tcpci_tx_timeout(TCPCI_MSG_SOP, 0,
 					PD_DATA_SOURCE_CAP,
 					250 * MSEC),
 		EC_SUCCESS, "%d");

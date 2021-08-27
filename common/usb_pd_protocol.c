@@ -268,7 +268,7 @@ static struct pd_protocol {
 	/* next Vendor Defined Message to send */
 	uint32_t vdo_data[VDO_MAX_SIZE];
 	/* type of transmit message (SOP/SOP'/SOP'') */
-	enum tcpm_sop_type xmit_type;
+	enum tcpci_msg_type xmit_type;
 	uint8_t vdo_count;
 	/* VDO to retry if UFP responder replied busy. */
 	uint32_t vdo_retry;
@@ -345,13 +345,13 @@ static inline void set_state_timeout(int port,
 	pd[port].timeout_state = timeout_state;
 }
 
-int pd_get_rev(int port, enum tcpm_sop_type type)
+int pd_get_rev(int port, enum tcpci_msg_type type)
 {
 #ifdef CONFIG_USB_PD_REV30
 	/* TCPMv1 Only stores PD revision for SOP and SOP' types */
 	ASSERT(type < NUM_SOP_STAR_TYPES - 1);
 
-	if (type == TCPC_TX_SOP_PRIME)
+	if (type == TCPCI_MSG_SOP_PRIME)
 		return get_usb_pd_cable_revision(port);
 
 	return pd[port].rev;
@@ -360,10 +360,10 @@ int pd_get_rev(int port, enum tcpm_sop_type type)
 #endif
 }
 
-int pd_get_vdo_ver(int port, enum tcpm_sop_type type)
+int pd_get_vdo_ver(int port, enum tcpci_msg_type type)
 {
 #ifdef CONFIG_USB_PD_REV30
-	if (type == TCPC_TX_SOP_PRIME)
+	if (type == TCPCI_MSG_SOP_PRIME)
 		return vdo_ver[get_usb_pd_cable_revision(port)];
 
 	return vdo_ver[pd[port].rev];
@@ -681,15 +681,15 @@ static bool consume_sop_repeat_message(int port, uint8_t msg_id)
 static bool consume_repeat_message(int port, uint32_t msg_header)
 {
 	uint8_t msg_id = PD_HEADER_ID(msg_header);
-	enum tcpm_sop_type sop = PD_HEADER_GET_SOP(msg_header);
+	enum tcpci_msg_type sop = PD_HEADER_GET_SOP(msg_header);
 
 	/* If repeat message ignore, except softreset control request. */
 	if (PD_HEADER_TYPE(msg_header) == PD_CTRL_SOFT_RESET &&
 	    PD_HEADER_CNT(msg_header) == 0) {
 		return false;
-	} else if (sop == TCPC_TX_SOP_PRIME) {
+	} else if (sop == TCPCI_MSG_SOP_PRIME) {
 		return consume_sop_prime_repeat_msg(port, msg_id);
-	} else if (sop == TCPC_TX_SOP_PRIME_PRIME) {
+	} else if (sop == TCPCI_MSG_SOP_PRIME_PRIME) {
 		return consume_sop_prime_prime_repeat_msg(port, msg_id);
 	} else {
 		return consume_sop_repeat_message(port, msg_id);
@@ -835,7 +835,7 @@ static inline void set_state(int port, enum pd_states next_state)
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 #endif
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-		if (pd_dfp_exit_mode(port, TCPC_TX_SOP, 0, 0))
+		if (pd_dfp_exit_mode(port, TCPCI_MSG_SOP, 0, 0))
 			usb_mux_set_safe_mode(port);
 #endif
 		/*
@@ -908,7 +908,7 @@ void pd_transmit_complete(int port, int status)
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TX);
 }
 
-static int pd_transmit(int port, enum tcpm_sop_type type,
+static int pd_transmit(int port, enum tcpci_msg_type type,
 		       uint16_t header, const uint32_t *data, enum ams_seq ams)
 {
 	int evt;
@@ -961,7 +961,7 @@ static int pd_transmit(int port, enum tcpm_sop_type type,
 			 */
 			sink_can_xmit(port, SINK_TX_NG);
 			sink_ng = 1;
-		} else if (type != TCPC_TX_HARD_RESET) {
+		} else if (type != TCPCI_MSG_TX_HARD_RESET) {
 			enum tcpc_cc_voltage_status cc1, cc2;
 
 			tcpm_get_cc(port, &cc1, &cc2);
@@ -1004,7 +1004,7 @@ static int send_control(int port, int type)
 	int bit_len;
 	uint16_t header = PD_HEADER(type, pd[port].power_role,
 				pd[port].data_role, pd[port].msg_id, 0,
-				pd_get_rev(port, TCPC_TX_SOP), 0);
+				pd_get_rev(port, TCPCI_MSG_SOP), 0);
 	/*
 	 * For PD 3.0, collision avoidance logic needs to know if this message
 	 * will begin a new Atomic Message Sequence (AMS)
@@ -1013,7 +1013,7 @@ static int send_control(int port, int type)
 			    ? AMS_START : AMS_RESPONSE;
 
 
-	bit_len = pd_transmit(port, TCPC_TX_SOP, header, NULL, ams);
+	bit_len = pd_transmit(port, TCPCI_MSG_SOP, header, NULL, ams);
 	if (debug_level >= 2)
 		CPRINTF("C%d CTRL[%d]>%d\n", port, type, bit_len);
 
@@ -1042,13 +1042,13 @@ static int send_source_cap(int port, enum ams_seq ams)
 		/* No source capabilities defined, sink only */
 		header = PD_HEADER(PD_CTRL_REJECT, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, 0,
-			pd_get_rev(port, TCPC_TX_SOP), 0);
+			pd_get_rev(port, TCPCI_MSG_SOP), 0);
 	else
 		header = PD_HEADER(PD_DATA_SOURCE_CAP, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, src_pdo_cnt,
-			pd_get_rev(port, TCPC_TX_SOP), 0);
+			pd_get_rev(port, TCPCI_MSG_SOP), 0);
 
-	bit_len = pd_transmit(port, TCPC_TX_SOP, header, src_pdo, ams);
+	bit_len = pd_transmit(port, TCPCI_MSG_SOP, header, src_pdo, ams);
 	if (debug_level >= 2)
 		CPRINTF("C%d srcCAP>%d\n", port, bit_len);
 
@@ -1135,7 +1135,7 @@ static int send_battery_cap(int port, uint32_t *payload)
 		}
 	}
 
-	bit_len = pd_transmit(port, TCPC_TX_SOP, header, (uint32_t *)msg,
+	bit_len = pd_transmit(port, TCPCI_MSG_SOP, header, (uint32_t *)msg,
 			      AMS_RESPONSE);
 	if (debug_level >= 2)
 		CPRINTF("C%d batCap>%d\n", port, bit_len);
@@ -1203,7 +1203,7 @@ static int send_battery_status(int port,  uint32_t *payload)
 		msg = BSDO_CAP(BSDO_CAP_UNKNOWN);
 	}
 
-	bit_len = pd_transmit(port, TCPC_TX_SOP, header, &msg, AMS_RESPONSE);
+	bit_len = pd_transmit(port, TCPCI_MSG_SOP, header, &msg, AMS_RESPONSE);
 	if (debug_level >= 2)
 		CPRINTF("C%d batStat>%d\n", port, bit_len);
 
@@ -1217,9 +1217,9 @@ static void send_sink_cap(int port)
 	int bit_len;
 	uint16_t header = PD_HEADER(PD_DATA_SINK_CAP, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, pd_snk_pdo_cnt,
-			pd_get_rev(port, TCPC_TX_SOP), 0);
+			pd_get_rev(port, TCPCI_MSG_SOP), 0);
 
-	bit_len = pd_transmit(port, TCPC_TX_SOP, header, pd_snk_pdo,
+	bit_len = pd_transmit(port, TCPCI_MSG_SOP, header, pd_snk_pdo,
 			      AMS_RESPONSE);
 	if (debug_level >= 2)
 		CPRINTF("C%d snkCAP>%d\n", port, bit_len);
@@ -1230,10 +1230,10 @@ static int send_request(int port, uint32_t rdo)
 	int bit_len;
 	uint16_t header = PD_HEADER(PD_DATA_REQUEST, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, 1,
-			pd_get_rev(port, TCPC_TX_SOP), 0);
+			pd_get_rev(port, TCPCI_MSG_SOP), 0);
 
 	/* Note: ams will need to be AMS_START if used for PPS keep alive */
-	bit_len = pd_transmit(port, TCPC_TX_SOP, header, &rdo, AMS_RESPONSE);
+	bit_len = pd_transmit(port, TCPCI_MSG_SOP, header, &rdo, AMS_RESPONSE);
 	if (debug_level >= 2)
 		CPRINTF("C%d REQ>%d\n", port, bit_len);
 
@@ -1250,9 +1250,9 @@ static int send_bist_cmd(int port)
 	int bit_len;
 	uint16_t header = PD_HEADER(PD_DATA_BIST, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id, 1,
-			pd_get_rev(port, TCPC_TX_SOP), 0);
+			pd_get_rev(port, TCPCI_MSG_SOP), 0);
 
-	bit_len = pd_transmit(port, TCPC_TX_SOP, header, &bdo, AMS_START);
+	bit_len = pd_transmit(port, TCPCI_MSG_SOP, header, &bdo, AMS_START);
 	CPRINTF("C%d BIST>%d\n", port, bit_len);
 
 	return bit_len;
@@ -1260,7 +1260,7 @@ static int send_bist_cmd(int port)
 #endif
 
 static void queue_vdm(int port, uint32_t *header, const uint32_t *data,
-			     int data_cnt, enum tcpm_sop_type type)
+			     int data_cnt, enum tcpci_msg_type type)
 {
 	pd[port].vdo_count = data_cnt + 1;
 	pd[port].vdo_data[0] = header[0];
@@ -1276,7 +1276,7 @@ static void handle_vdm_request(int port, int cnt, uint32_t *payload,
 {
 	int rlen = 0;
 	uint32_t *rdata;
-	enum tcpm_sop_type rtype = TCPC_TX_SOP;
+	enum tcpci_msg_type rtype = TCPCI_MSG_SOP;
 
 	if (pd[port].vdm_state == VDM_STATE_BUSY) {
 		/* If UFP responded busy retry after timeout */
@@ -1371,7 +1371,7 @@ void pd_execute_hard_reset(int port)
 	invalidate_last_message_id(port);
 	tcpm_set_rx_enable(port, 0);
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
-	if (pd_dfp_exit_mode(port, TCPC_TX_SOP, 0, 0))
+	if (pd_dfp_exit_mode(port, TCPCI_MSG_SOP, 0, 0))
 		usb_mux_set_safe_mode(port);
 #endif
 
@@ -1637,7 +1637,7 @@ static void handle_data_request(int port, uint32_t head,
 			/* currently only support sending bist carrier mode 2 */
 			if ((payload[0] >> 28) == 5) {
 				/* bist data object mode is 2 */
-				pd_transmit(port, TCPC_TX_BIST_MODE_2, 0,
+				pd_transmit(port, TCPCI_MSG_TX_BIST_MODE_2, 0,
 					    NULL, AMS_RESPONSE);
 				/* Set to appropriate port disconnected state */
 				set_state(port, DUAL_ROLE_IF_ELSE(port,
@@ -2125,7 +2125,7 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 #ifdef CONFIG_USB_PD_REV30
 	pd[port].vdo_data[0] |= VDO_SVDM_VERS(vdo_ver[pd[port].rev]);
 #endif
-	queue_vdm(port, pd[port].vdo_data, data, count, TCPC_TX_SOP);
+	queue_vdm(port, pd[port].vdo_data, data, count, TCPCI_MSG_SOP);
 
 	task_wake(PD_PORT_TO_TASK_ID(port));
 }
@@ -2179,7 +2179,7 @@ static void exit_tbt_mode_sop_prime(int port)
 	if (!IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE))
 		return;
 
-	opos = pd_alt_mode(port, TCPC_TX_SOP, USB_VID_INTEL);
+	opos = pd_alt_mode(port, TCPCI_MSG_SOP, USB_VID_INTEL);
 	if (opos <= 0)
 		return;
 
@@ -2187,9 +2187,9 @@ static void exit_tbt_mode_sop_prime(int port)
 	/*
 	 * Note: TCPMv2 contemplates separate discovery structures for each SOP
 	 * type. TCPMv1 only uses one discovery structure, so all accesses
-	 * specify TCPC_TX_SOP.
+	 * specify TCPCI_MSG_SOP.
 	 */
-	if (pd_dfp_exit_mode(port, TCPC_TX_SOP, USB_VID_INTEL, opos))
+	if (pd_dfp_exit_mode(port, TCPCI_MSG_SOP, USB_VID_INTEL, opos))
 		usb_mux_set_safe_mode(port);
 	else
 		return;
@@ -2197,12 +2197,12 @@ static void exit_tbt_mode_sop_prime(int port)
 	header = PD_HEADER(PD_DATA_VENDOR_DEF, pd[port].power_role,
 			pd[port].data_role, pd[port].msg_id,
 			(int)pd[port].vdo_count,
-			pd_get_rev(port, TCPC_TX_SOP), 0);
+			pd_get_rev(port, TCPCI_MSG_SOP), 0);
 
 	pd[port].vdo_data[0] = VDO(USB_VID_INTEL, 1,
 				   CMD_EXIT_MODE | VDO_OPOS(opos));
 
-	pd_transmit(port, TCPC_TX_SOP_PRIME, header, pd[port].vdo_data,
+	pd_transmit(port, TCPCI_MSG_SOP_PRIME, header, pd[port].vdo_data,
 		    AMS_START);
 
 	usb_mux_set(port, USB_PD_MUX_USB_ENABLED, USB_SWITCH_CONNECT,
@@ -2213,7 +2213,7 @@ static void pd_vdm_send_state_machine(int port)
 {
 	int res;
 	uint16_t header;
-	enum tcpm_sop_type msg_type = pd[port].xmit_type;
+	enum tcpci_msg_type msg_type = pd[port].xmit_type;
 
 	switch (pd[port].vdm_state) {
 	case VDM_STATE_READY:
@@ -2241,8 +2241,8 @@ static void pd_vdm_send_state_machine(int port)
 		 * data role swap takes place during source and sink
 		 * negotiation and in case of failure, a soft reset is issued.
 		 */
-		if ((msg_type == TCPC_TX_SOP_PRIME) ||
-		    (msg_type == TCPC_TX_SOP_PRIME_PRIME)) {
+		if ((msg_type == TCPCI_MSG_SOP_PRIME) ||
+		    (msg_type == TCPCI_MSG_SOP_PRIME_PRIME)) {
 			/* Prepare SOP'/SOP'' header and send VDM */
 			header = PD_HEADER(
 				PD_DATA_VENDOR_DEF,
@@ -2250,7 +2250,7 @@ static void pd_vdm_send_state_machine(int port)
 				0,
 				pd[port].msg_id,
 				(int)pd[port].vdo_count,
-				pd_get_rev(port, TCPC_TX_SOP),
+				pd_get_rev(port, TCPCI_MSG_SOP),
 				0);
 			res = pd_transmit(port, msg_type, header,
 					  pd[port].vdo_data, AMS_START);
@@ -2275,17 +2275,17 @@ static void pd_vdm_send_state_machine(int port)
 						   pd[port].msg_id,
 						   (int)pd[port].vdo_count,
 						   pd_get_rev
-							(port, TCPC_TX_SOP),
+							(port, TCPCI_MSG_SOP),
 						   0);
 
-				if ((msg_type == TCPC_TX_SOP_PRIME_PRIME) &&
+				if ((msg_type == TCPCI_MSG_SOP_PRIME_PRIME) &&
 				     IS_ENABLED(CONFIG_USBC_SS_MUX)) {
 					exit_tbt_mode_sop_prime(port);
-				} else if (msg_type == TCPC_TX_SOP_PRIME) {
+				} else if (msg_type == TCPCI_MSG_SOP_PRIME) {
 					pd[port].vdo_data[0] = VDO(USB_SID_PD,
 						1, CMD_DISCOVER_SVID);
 				}
-				res = pd_transmit(port, TCPC_TX_SOP, header,
+				res = pd_transmit(port, TCPCI_MSG_SOP, header,
 						  pd[port].vdo_data, AMS_START);
 				reset_pd_cable(port);
 			}
@@ -2296,8 +2296,8 @@ static void pd_vdm_send_state_machine(int port)
 					   pd[port].data_role,
 					   pd[port].msg_id,
 					   (int)pd[port].vdo_count,
-					   pd_get_rev(port, TCPC_TX_SOP), 0);
-			res = pd_transmit(port, TCPC_TX_SOP, header,
+					   pd_get_rev(port, TCPCI_MSG_SOP), 0);
+			res = pd_transmit(port, TCPCI_MSG_SOP, header,
 					  pd[port].vdo_data, AMS_START);
 		}
 
@@ -2391,12 +2391,11 @@ __maybe_unused static void exit_supported_alt_mode(int port)
 		return;
 
 	for (i = 0; i < supported_modes_cnt; i++) {
-		int opos = pd_alt_mode(port, TCPC_TX_SOP,
+		int opos = pd_alt_mode(port, TCPCI_MSG_SOP,
 				supported_modes[i].svid);
 
-		if (opos > 0 &&
-		    pd_dfp_exit_mode(
-			    port, TCPC_TX_SOP, supported_modes[i].svid, opos)) {
+		if (opos > 0 && pd_dfp_exit_mode(port, TCPCI_MSG_SOP,
+					supported_modes[i].svid, opos)) {
 			CPRINTS("C%d Exiting ALT mode with SVID = 0x%x", port,
 				supported_modes[i].svid);
 			usb_mux_set_safe_mode(port);
@@ -2821,7 +2820,8 @@ static void pd_send_enter_usb(int port, int *timeout)
 		PD_REV30,
 		0);
 
-	res = pd_transmit(port, TCPC_TX_SOP, header, &usb4_payload, AMS_START);
+	res = pd_transmit(port, TCPCI_MSG_SOP, header, &usb4_payload,
+			AMS_START);
 	if (res < 0) {
 		*timeout = 10*MSEC;
 		/*
@@ -3071,7 +3071,7 @@ void pd_task(void *u)
 			/* cut the power */
 			pd_execute_hard_reset(port);
 			/* notify the other side of the issue */
-			pd_transmit(port, TCPC_TX_HARD_RESET, 0, NULL,
+			pd_transmit(port, TCPCI_MSG_TX_HARD_RESET, 0, NULL,
 				    AMS_START);
 		}
 
@@ -4569,7 +4569,7 @@ void pd_task(void *u)
 			if (hard_reset_sent)
 				break;
 
-			if (pd_transmit(port, TCPC_TX_HARD_RESET, 0, NULL,
+			if (pd_transmit(port, TCPCI_MSG_TX_HARD_RESET, 0, NULL,
 				AMS_START) < 0) {
 				/*
 				 * likely a non-idle channel
@@ -4639,7 +4639,7 @@ void pd_task(void *u)
 						PD_STATE_SRC_DISCONNECTED));
 			break;
 		case PD_STATE_BIST_TX:
-			pd_transmit(port, TCPC_TX_BIST_MODE_2, 0, NULL,
+			pd_transmit(port, TCPCI_MSG_TX_BIST_MODE_2, 0, NULL,
 				    AMS_START);
 			/* Delay at least enough to finish sending BIST */
 			timeout = PD_T_BIST_TRANSMIT + 20*MSEC;
@@ -4997,7 +4997,7 @@ int pd_is_port_enabled(int port)
 void pd_send_hpd(int port, enum hpd_event hpd)
 {
 	uint32_t data[1];
-	int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+	int opos = pd_alt_mode(port, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
 	if (!opos)
 		return;
 

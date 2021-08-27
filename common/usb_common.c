@@ -361,7 +361,7 @@ __overridable bool board_is_dts_port(int port)
 	return true;
 }
 
-int pd_get_retry_count(int port, enum tcpm_sop_type type)
+int pd_get_retry_count(int port, enum tcpci_msg_type type)
 {
 	/* PD 3.0 6.7.7: nRetryCount = 2; PD 2.0 6.6.9: nRetryCount = 3 */
 	return pd_get_rev(port, type) == PD_REV30 ? 2 : 3;
@@ -809,7 +809,7 @@ static void pd_usb_billboard_deferred(void)
 		 * 1. Will we have multiple type-C port UFPs
 		 * 2. Will there be other modes applicable to DFPs besides DP
 		 */
-		if (!pd_alt_mode(0, TCPC_TX_SOP, USB_SID_DISPLAYPORT))
+		if (!pd_alt_mode(0, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT))
 			usb_connect();
 	}
 }

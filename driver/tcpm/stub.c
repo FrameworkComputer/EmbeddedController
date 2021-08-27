@@ -113,7 +113,7 @@ void tcpm_clear_pending_messages(int port)
 	rx_buf_clear(port);
 }
 
-int tcpm_transmit(int port, enum tcpm_sop_type type, uint16_t header,
+int tcpm_transmit(int port, enum tcpci_msg_type type, uint16_t header,
 		  const uint32_t *data)
 {
 	return tcpc_transmit(port, type, header, data);

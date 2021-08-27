@@ -68,24 +68,25 @@ static inline enum tcpc_cc_polarity polarity_rm_dts(
 /*
  * Types of PD data that can be sent or received. The values match the TCPCI bit
  * field values TRANSMIT[Transmit SOP* Message] (TCPCI r2.0 v1.2, table 4-38)
- * and RX_BUF_FRAME_TYPE[Received SOP* message] (table 4-37).
+ * and RX_BUF_FRAME_TYPE[Received SOP* message] (table 4-37). Note that Hard
+ * Reset, Cable Reset, and BIST Carrier Mode 2 are not really messages.
  */
-enum tcpm_sop_type {
-	TCPC_TX_SOP = 0,
-	TCPC_TX_SOP_PRIME = 1,
-	TCPC_TX_SOP_PRIME_PRIME = 2,
-	TCPC_TX_SOP_DEBUG_PRIME = 3,
-	TCPC_TX_SOP_DEBUG_PRIME_PRIME = 4,
+enum tcpci_msg_type {
+	TCPCI_MSG_SOP = 0,
+	TCPCI_MSG_SOP_PRIME = 1,
+	TCPCI_MSG_SOP_PRIME_PRIME = 2,
+	TCPCI_MSG_SOP_DEBUG_PRIME = 3,
+	TCPCI_MSG_SOP_DEBUG_PRIME_PRIME = 4,
 	/* Only a valid register setting for TRANSMIT */
-	TCPC_TX_HARD_RESET = 5,
-	TCPC_TX_CABLE_RESET = 6,
+	TCPCI_MSG_TX_HARD_RESET = 5,
+	TCPCI_MSG_CABLE_RESET = 6,
 	/* Only a valid register setting for TRANSMIT */
-	TCPC_TX_BIST_MODE_2 = 7,
-	TCPC_TX_INVALID = 0xf,
+	TCPCI_MSG_TX_BIST_MODE_2 = 7,
+	TCPCI_MSG_INVALID = 0xf,
 };
 
 /* Number of valid Transmit Types */
-#define NUM_SOP_STAR_TYPES (TCPC_TX_SOP_DEBUG_PRIME_PRIME + 1)
+#define NUM_SOP_STAR_TYPES (TCPCI_MSG_SOP_DEBUG_PRIME_PRIME + 1)
 
 enum tcpc_transmit_complete {
 	TCPC_TX_UNSET = -1,
@@ -309,7 +310,7 @@ struct tcpm_drv {
 	 *
 	 * @return EC_SUCCESS or error
 	 */
-	int (*transmit)(int port, enum tcpm_sop_type type, uint16_t header,
+	int (*transmit)(int port, enum tcpci_msg_type type, uint16_t header,
 					const uint32_t *data);
 
 	/**

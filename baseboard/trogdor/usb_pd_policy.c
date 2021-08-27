@@ -91,7 +91,7 @@ int pd_snk_is_vbus_provided(int port)
 #ifdef CONFIG_USB_PD_ALT_MODE_DFP
 __override int svdm_dp_config(int port, uint32_t *payload)
 {
-	int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+	int opos = pd_alt_mode(port, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
 	uint8_t pin_mode = get_dp_pin_mode(port);
 
 	if (!pin_mode)

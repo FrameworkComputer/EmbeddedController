@@ -80,7 +80,7 @@ void prl_run(int port, int evt, int en);
  * @param type port address
  * @param rev revision
  */
-void prl_set_rev(int port, enum tcpm_sop_type type,
+void prl_set_rev(int port, enum tcpci_msg_type type,
 					enum pd_rev_type rev);
 
 /**
@@ -90,7 +90,7 @@ void prl_set_rev(int port, enum tcpm_sop_type type,
  * @param type port address
  * @return pd rev
  */
-enum pd_rev_type prl_get_rev(int port, enum tcpm_sop_type type);
+enum pd_rev_type prl_get_rev(int port, enum tcpci_msg_type type);
 
 /**
  * Sends a PD control message
@@ -99,7 +99,7 @@ enum pd_rev_type prl_get_rev(int port, enum tcpm_sop_type type);
  * @param type Transmit type
  * @param msg  Control message type
  */
-void prl_send_ctrl_msg(int port, enum tcpm_sop_type type,
+void prl_send_ctrl_msg(int port, enum tcpci_msg_type type,
 	enum pd_ctrl_msg_type msg);
 
 /**
@@ -109,7 +109,7 @@ void prl_send_ctrl_msg(int port, enum tcpm_sop_type type,
  * @param type Transmit type
  * @param msg  Data message type
  */
-void prl_send_data_msg(int port, enum tcpm_sop_type type,
+void prl_send_data_msg(int port, enum tcpci_msg_type type,
 	enum pd_data_msg_type msg);
 
 /**
@@ -119,7 +119,7 @@ void prl_send_data_msg(int port, enum tcpm_sop_type type,
  * @param type Transmit type
  * @param msg  Extended data message type
  */
-void prl_send_ext_data_msg(int port, enum tcpm_sop_type type,
+void prl_send_ext_data_msg(int port, enum tcpci_msg_type type,
 	enum pd_ext_msg_type msg);
 
 /**

@@ -836,16 +836,16 @@ static int fusb302_tcpm_get_message_raw(int port, uint32_t *payload, int *head)
 			return EC_ERROR_UNKNOWN;
 
 		if (reg & TCPC_REG_STATUS1_RXSOP1)
-			*head |= PD_HEADER_SOP(TCPC_TX_SOP_PRIME);
+			*head |= PD_HEADER_SOP(TCPCI_MSG_SOP_PRIME);
 		else if (reg & TCPC_REG_STATUS1_RXSOP2)
-			*head |= PD_HEADER_SOP(TCPC_TX_SOP_PRIME_PRIME);
+			*head |= PD_HEADER_SOP(TCPCI_MSG_SOP_PRIME_PRIME);
 	}
 #endif
 
 	return rv;
 }
 
-static int fusb302_tcpm_transmit(int port, enum tcpm_sop_type type,
+static int fusb302_tcpm_transmit(int port, enum tcpci_msg_type type,
 				 uint16_t header, const uint32_t *data)
 {
 	/*
@@ -871,7 +871,7 @@ static int fusb302_tcpm_transmit(int port, enum tcpm_sop_type type,
 	fusb302_flush_tx_fifo(port);
 
 	switch (type) {
-	case TCPC_TX_SOP:
+	case TCPCI_MSG_SOP:
 
 		/* put register address first for of burst tcpc write */
 		buf[buf_pos++] = TCPC_REG_FIFOS;
@@ -883,7 +883,7 @@ static int fusb302_tcpm_transmit(int port, enum tcpm_sop_type type,
 		buf[buf_pos++] = FUSB302_TKN_SYNC2;
 
 		return fusb302_send_message(port, header, data, buf, buf_pos);
-	case TCPC_TX_SOP_PRIME:
+	case TCPCI_MSG_SOP_PRIME:
 
 		/* put register address first for of burst tcpc write */
 		buf[buf_pos++] = TCPC_REG_FIFOS;
@@ -895,7 +895,7 @@ static int fusb302_tcpm_transmit(int port, enum tcpm_sop_type type,
 		buf[buf_pos++] = FUSB302_TKN_SYNC3;
 
 		return fusb302_send_message(port, header, data, buf, buf_pos);
-	case TCPC_TX_SOP_PRIME_PRIME:
+	case TCPCI_MSG_SOP_PRIME_PRIME:
 
 		/* put register address first for of burst tcpc write */
 		buf[buf_pos++] = TCPC_REG_FIFOS;
@@ -907,14 +907,14 @@ static int fusb302_tcpm_transmit(int port, enum tcpm_sop_type type,
 		buf[buf_pos++] = FUSB302_TKN_SYNC3;
 
 		return fusb302_send_message(port, header, data, buf, buf_pos);
-	case TCPC_TX_HARD_RESET:
+	case TCPCI_MSG_TX_HARD_RESET:
 		/* Simply hit the SEND_HARD_RESET bit */
 		tcpc_read(port, TCPC_REG_CONTROL3, &reg);
 		reg |= TCPC_REG_CONTROL3_SEND_HARDRESET;
 		tcpc_write(port, TCPC_REG_CONTROL3, reg);
 
 		break;
-	case TCPC_TX_BIST_MODE_2:
+	case TCPCI_MSG_TX_BIST_MODE_2:
 		/* Hit the BIST_MODE2 bit and start TX */
 		tcpc_read(port, TCPC_REG_CONTROL1, &reg);
 		reg |= TCPC_REG_CONTROL1_BIST_MODE2;

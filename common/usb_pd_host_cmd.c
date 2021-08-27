@@ -118,7 +118,7 @@ static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
 
 	switch (p->cmd) {
 	case PD_EXIT_MODE:
-		if (pd_dfp_exit_mode(p->port, TCPC_TX_SOP, p->svid, p->opos))
+		if (pd_dfp_exit_mode(p->port, TCPCI_MSG_SOP, p->svid, p->opos))
 			pd_send_vdm(p->port, p->svid,
 				    CMD_EXIT_MODE | VDO_OPOS(p->opos), NULL, 0);
 		else {
@@ -127,7 +127,7 @@ static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
 		}
 		break;
 	case PD_ENTER_MODE:
-		if (pd_dfp_enter_mode(p->port, TCPC_TX_SOP, p->svid, p->opos))
+		if (pd_dfp_enter_mode(p->port, TCPCI_MSG_SOP, p->svid, p->opos))
 			pd_send_vdm(p->port, p->svid, CMD_ENTER_MODE |
 				    VDO_OPOS(p->opos), NULL, 0);
 		break;
@@ -173,20 +173,20 @@ static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
 
 	/* no more to send */
 	/* TODO(b/148528713): Use TCPMv2's separate storage for SOP'. */
-	if (p->svid_idx >= pd_get_svid_count(p->port, TCPC_TX_SOP)) {
+	if (p->svid_idx >= pd_get_svid_count(p->port, TCPCI_MSG_SOP)) {
 		r->svid = 0;
 		args->response_size = sizeof(r->svid);
 		return EC_RES_SUCCESS;
 	}
 
-	r->svid = pd_get_svid(p->port, p->svid_idx, TCPC_TX_SOP);
+	r->svid = pd_get_svid(p->port, p->svid_idx, TCPCI_MSG_SOP);
 	r->opos = 0;
-	memcpy(r->vdo, pd_get_mode_vdo(p->port, p->svid_idx, TCPC_TX_SOP),
+	memcpy(r->vdo, pd_get_mode_vdo(p->port, p->svid_idx, TCPCI_MSG_SOP),
 		sizeof(uint32_t) * PDO_MODES);
-	modep = pd_get_amode_data(p->port, TCPC_TX_SOP, r->svid);
+	modep = pd_get_amode_data(p->port, TCPCI_MSG_SOP, r->svid);
 
 	if (modep)
-		r->opos = pd_alt_mode(p->port, TCPC_TX_SOP, r->svid);
+		r->opos = pd_alt_mode(p->port, TCPCI_MSG_SOP, r->svid);
 
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
@@ -253,8 +253,8 @@ static uint8_t get_pd_control_flags(int port)
 	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
 		return 0;
 
-	cable_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPC_TX_SOP_PRIME);
-	device_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPC_TX_SOP);
+	cable_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
+	device_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP);
 
 	/*
 	 * Ref: USB Type-C Cable and Connector Specification

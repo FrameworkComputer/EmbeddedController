@@ -56,8 +56,8 @@ int test_retry_count_sop(void)
 	 * Source Caps is SOP message which should be retried at TCPC layer.
 	 * The retry count for PD3 should be 2.
 	 */
-	TEST_EQ(verify_tcpci_tx_retry_count(TCPC_TX_SOP, 0, PD_DATA_SOURCE_CAP,
-		2),
+	TEST_EQ(verify_tcpci_tx_retry_count(TCPCI_MSG_SOP, 0,
+				PD_DATA_SOURCE_CAP, 2),
 		EC_SUCCESS, "%d");
 	return EC_SUCCESS;
 }
@@ -83,7 +83,7 @@ int test_retry_count_hard_reset(void)
 	/*
 	 * The Tester waits for Source_Capabilities for tNoResponse max.
 	 */
-	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0, PD_DATA_SOURCE_CAP),
+	TEST_EQ(verify_tcpci_transmit(TCPCI_MSG_SOP, 0, PD_DATA_SOURCE_CAP),
 		EC_SUCCESS, "%d");
 	/*
 	 * The Tester replies GoodCrc on reception of the Source_Capabilities.
@@ -100,7 +100,7 @@ int test_retry_count_hard_reset(void)
 	prl_execute_hard_reset(PORT0);
 
 	/* The retry count for hard resets should be 0 */
-	TEST_EQ(verify_tcpci_tx_retry_count(TCPC_TX_HARD_RESET, 0, 0, 0),
+	TEST_EQ(verify_tcpci_tx_retry_count(TCPCI_MSG_TX_HARD_RESET, 0, 0, 0),
 		EC_SUCCESS, "%d");
 
 	return EC_SUCCESS;

@@ -531,7 +531,7 @@ void pd_set_src_caps(int port, int cnt, uint32_t *src_caps)
 {
 }
 
-int pd_get_rev(int port, enum tcpm_sop_type type)
+int pd_get_rev(int port, enum tcpci_msg_type type)
 {
 	return PD_REV30;
 }
@@ -708,9 +708,9 @@ static void tc_set_modes_exit(int port)
 {
 	if (IS_ENABLED(CONFIG_USB_PE_SM) &&
 			IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP)) {
-		pd_dfp_exit_mode(port, TCPC_TX_SOP, 0, 0);
-		pd_dfp_exit_mode(port, TCPC_TX_SOP_PRIME, 0, 0);
-		pd_dfp_exit_mode(port, TCPC_TX_SOP_PRIME_PRIME, 0, 0);
+		pd_dfp_exit_mode(port, TCPCI_MSG_SOP, 0, 0);
+		pd_dfp_exit_mode(port, TCPCI_MSG_SOP_PRIME, 0, 0);
+		pd_dfp_exit_mode(port, TCPCI_MSG_SOP_PRIME_PRIME, 0, 0);
 	}
 }
 
@@ -3930,7 +3930,7 @@ static void pd_chipset_reset(void)
 		return;
 
 	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
-		enum tcpm_sop_type tx;
+		enum tcpci_msg_type tx;
 
 		/* Do not notify the AP of irrelevant past Hard Resets. */
 		pd_clear_events(i, PD_STATUS_EVENT_HARD_RESET);
@@ -3939,11 +3939,11 @@ static void pd_chipset_reset(void)
 		 * Re-set events for SOP and SOP' discovery complete so the
 		 * kernel knows to consume discovery information for them.
 		 */
-		for (tx = TCPC_TX_SOP; tx <= TCPC_TX_SOP_PRIME; tx++) {
+		for (tx = TCPCI_MSG_SOP; tx <= TCPCI_MSG_SOP_PRIME; tx++) {
 			if (pd_get_identity_discovery(i, tx) != PD_DISC_NEEDED
 			    && pd_get_svids_discovery(i, tx) != PD_DISC_NEEDED
 			    && pd_get_modes_discovery(i, tx) != PD_DISC_NEEDED)
-				pd_notify_event(i, tx == TCPC_TX_SOP ?
+				pd_notify_event(i, tx == TCPCI_MSG_SOP ?
 					PD_STATUS_EVENT_SOP_DISC_DONE :
 					PD_STATUS_EVENT_SOP_PRIME_DISC_DONE);
 		}

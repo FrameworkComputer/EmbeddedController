@@ -912,7 +912,7 @@ static int anx74xx_tcpm_get_message_raw(int port, uint32_t *payload, int *head)
 	return anx74xx_read_pd_obj(port, (uint8_t *)payload, len);
 }
 
-static int anx74xx_tcpm_transmit(int port, enum tcpm_sop_type type,
+static int anx74xx_tcpm_transmit(int port, enum tcpci_msg_type type,
 		  uint16_t header,
 		  const uint32_t *data)
 {
@@ -921,14 +921,14 @@ static int anx74xx_tcpm_transmit(int port, enum tcpm_sop_type type,
 
 	switch (type) {
 	/* ANX is aware of type */
-	case TCPC_TX_SOP:
-	case TCPC_TX_SOP_PRIME:
-	case TCPC_TX_SOP_PRIME_PRIME:
+	case TCPCI_MSG_SOP:
+	case TCPCI_MSG_SOP_PRIME:
+	case TCPCI_MSG_SOP_PRIME_PRIME:
 		len = PD_HEADER_CNT(header) * 4 + 2;
 		ret = anx74xx_send_message(port, header,
 						  data, type, len);
 		break;
-	case TCPC_TX_HARD_RESET:
+	case TCPCI_MSG_TX_HARD_RESET:
 	/* Request HARD RESET */
 		tcpc_read(port, ANX74XX_REG_TX_CTRL_1, &reg);
 		reg |= ANX74XX_REG_TX_HARD_RESET_REQ;
@@ -936,13 +936,13 @@ static int anx74xx_tcpm_transmit(int port, enum tcpm_sop_type type,
 	/*After Hard Reset, TCPM shall disable goodCRC*/
 		anx74xx_tcpm_set_auto_good_crc(port, 0);
 		break;
-	case TCPC_TX_CABLE_RESET:
+	case TCPCI_MSG_CABLE_RESET:
 	/* Request CABLE RESET */
 		tcpc_read(port, ANX74XX_REG_TX_CTRL_1, &reg);
 		reg |= ANX74XX_REG_TX_CABLE_RESET_REQ;
 		ret = tcpc_write(port, ANX74XX_REG_TX_CTRL_1, reg);
 		break;
-	case TCPC_TX_BIST_MODE_2:
+	case TCPCI_MSG_TX_BIST_MODE_2:
 	/* Request BIST MODE 2 */
 		reg = ANX74XX_REG_TX_BIST_START
 				| ANX74XX_REG_TX_BIXT_FOREVER | (0x02 << 4);
@@ -1028,9 +1028,9 @@ void anx74xx_tcpc_alert(int port)
 
 #ifdef CONFIG_USB_PD_DECODE_SOP
 	if (reg & ANX74XX_REG_EXT_SOP)
-		msg_sop[port] = TCPC_TX_SOP;
+		msg_sop[port] = TCPCI_MSG_SOP;
 	else if (reg & ANX74XX_REG_EXT_SOP_PRIME)
-		msg_sop[port] = TCPC_TX_SOP_PRIME;
+		msg_sop[port] = TCPCI_MSG_SOP_PRIME;
 #endif
 
 	/* Check for Hard Reset done bit */
@@ -1045,7 +1045,7 @@ void anx74xx_tcpc_alert(int port)
 
 #ifdef CONFIG_USB_PD_DECODE_SOP
 	if (reg & ANX74XX_REG_EXT_SOP_PRIME_PRIME)
-		msg_sop[port] = TCPC_TX_SOP_PRIME_PRIME;
+		msg_sop[port] = TCPCI_MSG_SOP_PRIME_PRIME;
 #endif
 
 	if (reg & ANX74XX_REG_EXT_HARD_RST) {

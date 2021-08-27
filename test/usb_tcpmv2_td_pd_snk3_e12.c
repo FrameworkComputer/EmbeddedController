@@ -32,13 +32,13 @@ int test_td_pd_snk3_e12(void)
 	 * b) The Tester keeps the Rp value as SinkTXNG and sends a
 	 * Get_Sink_Cap message to the UUT.
 	 */
-	partner_send_msg(TCPC_TX_SOP, PD_CTRL_GET_SINK_CAP, 0, 0, NULL);
+	partner_send_msg(TCPCI_MSG_SOP, PD_CTRL_GET_SINK_CAP, 0, 0, NULL);
 
 	/*
 	 * c) Upon receipt of the Sink_Capabilities Message, the Tester doesn't
 	 * reply with GoodCRC.
 	 */
-	TEST_EQ(verify_tcpci_transmit(TCPC_TX_SOP, 0, PD_DATA_SINK_CAP),
+	TEST_EQ(verify_tcpci_transmit(TCPCI_MSG_SOP, 0, PD_DATA_SINK_CAP),
 		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_FAILED);
 
@@ -47,7 +47,7 @@ int test_td_pd_snk3_e12(void)
 	 * within tReceive max + tSoftReset max
 	 */
 	TEST_EQ(verify_tcpci_tx_timeout(
-			TCPC_TX_SOP, PD_CTRL_SOFT_RESET, 0, 16 * MSEC),
+			TCPCI_MSG_SOP, PD_CTRL_SOFT_RESET, 0, 16 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 

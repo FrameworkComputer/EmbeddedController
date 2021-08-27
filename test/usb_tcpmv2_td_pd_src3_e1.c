@@ -69,7 +69,7 @@ int test_td_pd_src3_e1(void)
 	 *    5. Message Type field = 00001b (Source Capabilities)
 	 *    6. Extended field = 0b
 	 */
-	TEST_EQ(verify_tcpci_tx_with_data(TCPC_TX_SOP,
+	TEST_EQ(verify_tcpci_tx_with_data(TCPCI_MSG_SOP,
 					  PD_DATA_SOURCE_CAP,
 					  data,
 					  sizeof(data),

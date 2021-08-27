@@ -74,17 +74,17 @@ int test_td_pd_src3_e8(void)
 	 */
 	TEST_EQ(proc_pd_e3(), EC_SUCCESS, "%d");
 
-	partner_send_msg(TCPC_TX_SOP, PD_CTRL_GET_SOURCE_CAP_EXT, 0, 0, NULL);
+	partner_send_msg(TCPCI_MSG_SOP, PD_CTRL_GET_SOURCE_CAP_EXT, 0, 0, NULL);
 
 	/*
 	 * c) If a Source_Capabilities_Extended message is received, the
 	 *    Tester record the Number of Batteries/Battery Slots field.
 	 */
-	possible[0].tx_type = TCPC_TX_SOP;
+	possible[0].tx_type = TCPCI_MSG_SOP;
 	possible[0].ctrl_msg = PD_CTRL_NOT_SUPPORTED;
 	possible[0].data_msg = 0;
 
-	possible[1].tx_type = TCPC_TX_SOP;
+	possible[1].tx_type = TCPCI_MSG_SOP;
 	possible[1].ctrl_msg = 0;
 	possible[1].data_msg = PD_EXT_SOURCE_CAP;
 
@@ -143,14 +143,14 @@ int test_td_pd_src3_e8(void)
 
 		ext_msg = EXT_MSG_CHUNKED | EXT_MSG_DATA_SIZE_1 |
 			  (ref << 16);
-		partner_send_msg(TCPC_TX_SOP, PD_EXT_GET_BATTERY_STATUS, 1, 1,
+		partner_send_msg(TCPCI_MSG_SOP, PD_EXT_GET_BATTERY_STATUS, 1, 1,
 				 &ext_msg);
 
 		/*
 		 * e) If a Battery_Status message is received, the Tester
 		 *    verifies:
 		 */
-		TEST_EQ(verify_tcpci_tx_with_data(TCPC_TX_SOP,
+		TEST_EQ(verify_tcpci_tx_with_data(TCPCI_MSG_SOP,
 						  PD_DATA_BATTERY_STATUS,
 						  data,
 						  sizeof(data),

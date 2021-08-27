@@ -67,7 +67,7 @@ int test_td_pd_src3_e32(void)
 	 * incrementing values (mod 256) starting at 0x00.
 	 */
 	setup_chunk_msg(0, data);
-	partner_send_msg(TCPC_TX_SOP, 0x1F, 7, 1, (uint32_t *)data);
+	partner_send_msg(TCPCI_MSG_SOP, 0x1F, 7, 1, (uint32_t *)data);
 	start_time = get_time().val;
 
 	/*
@@ -77,11 +77,11 @@ int test_td_pd_src3_e32(void)
 	 * transmitted until the first bit of the response Message
 	 * Preamble has been received.
 	 */
-	possible[0].tx_type = TCPC_TX_SOP;
+	possible[0].tx_type = TCPCI_MSG_SOP;
 	possible[0].ctrl_msg = PD_CTRL_NOT_SUPPORTED;
 	possible[0].data_msg = 0;
 
-	possible[1].tx_type = TCPC_TX_SOP;
+	possible[1].tx_type = TCPCI_MSG_SOP;
 	possible[1].ctrl_msg = 0;
 	possible[1].data_msg = 0x1F;
 
@@ -128,9 +128,9 @@ int test_td_pd_src3_e32(void)
 		chunk = next_chunk;
 
 		setup_chunk_msg(chunk, data);
-		partner_send_msg(TCPC_TX_SOP, 0x1F, 7, 1, (uint32_t *)data);
+		partner_send_msg(TCPCI_MSG_SOP, 0x1F, 7, 1, (uint32_t *)data);
 
-		TEST_EQ(verify_tcpci_tx_with_data(TCPC_TX_SOP,
+		TEST_EQ(verify_tcpci_tx_with_data(TCPCI_MSG_SOP,
 					0x1F,
 					data,
 					sizeof(data),
@@ -153,13 +153,13 @@ int test_td_pd_src3_e32(void)
 	task_wait_event(PD_T_CHUNK_SENDER_RSP_MAX + (5 * MSEC));
 
 	setup_chunk_msg(0, data);
-	partner_send_msg(TCPC_TX_SOP, 0x1F, 7, 1, (uint32_t *)data);
+	partner_send_msg(TCPCI_MSG_SOP, 0x1F, 7, 1, (uint32_t *)data);
 
 	/*
 	 * i) If a message is not received within tChunkReceiverRequest max,
 	 * the test fails.
 	 */
-	TEST_EQ(verify_tcpci_tx_with_data(TCPC_TX_SOP,
+	TEST_EQ(verify_tcpci_tx_with_data(TCPCI_MSG_SOP,
 				0x1F,
 				data,
 				sizeof(data),

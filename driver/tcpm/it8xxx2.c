@@ -170,7 +170,7 @@ static int it8xxx2_tcpm_get_message_raw(int port, uint32_t *buf, int *head)
 	 * BIT[6:4] SOP type of Rx message
 	 * 000b=SOP, 001b=SOP', 010b=SOP", 011b=Debug SOP', 100b=Debug SOP"
 	 * 101b=HRDRST, 110b=CBLRST
-	 * 000b~100b is aligned to enum tcpm_sop_type.
+	 * 000b~100b is aligned to enum tcpci_msg_type.
 	 *
 	 */
 	if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
@@ -197,7 +197,7 @@ void it8xxx2_get_tx_error_status(enum usbpd_port port)
 }
 
 static enum tcpc_transmit_complete it8xxx2_tx_data(enum usbpd_port port,
-						   enum tcpm_sop_type type,
+						   enum tcpci_msg_type type,
 						   uint16_t header,
 						   const uint32_t *buf)
 {
@@ -595,31 +595,31 @@ static int it8xxx2_tcpm_set_rx_enable(int port, int enable)
 }
 
 static int it8xxx2_tcpm_transmit(int port,
-				 enum tcpm_sop_type type,
+				 enum tcpci_msg_type type,
 				 uint16_t header,
 				 const uint32_t *data)
 {
 	int status = TCPC_TX_COMPLETE_FAILED;
 
 	switch (type) {
-	case TCPC_TX_SOP:
-	case TCPC_TX_SOP_PRIME:
-	case TCPC_TX_SOP_PRIME_PRIME:
-	case TCPC_TX_SOP_DEBUG_PRIME:
-	case TCPC_TX_SOP_DEBUG_PRIME_PRIME:
+	case TCPCI_MSG_SOP:
+	case TCPCI_MSG_SOP_PRIME:
+	case TCPCI_MSG_SOP_PRIME_PRIME:
+	case TCPCI_MSG_SOP_DEBUG_PRIME:
+	case TCPCI_MSG_SOP_DEBUG_PRIME_PRIME:
 		status = it8xxx2_tx_data(port,
 					 type,
 					 header,
 					 data);
 		break;
-	case TCPC_TX_BIST_MODE_2:
+	case TCPCI_MSG_TX_BIST_MODE_2:
 		it8xxx2_send_bist_mode2_pattern(port);
 		status = TCPC_TX_COMPLETE_SUCCESS;
 		break;
-	case TCPC_TX_HARD_RESET:
+	case TCPCI_MSG_TX_HARD_RESET:
 		status = it8xxx2_send_hw_reset(port);
 		break;
-	case TCPC_TX_CABLE_RESET:
+	case TCPCI_MSG_CABLE_RESET:
 		status = it8xxx2_send_cable_reset(port);
 		break;
 	default:

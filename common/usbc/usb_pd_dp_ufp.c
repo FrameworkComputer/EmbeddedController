@@ -104,7 +104,7 @@ static void hpd_to_dp_attention(void)
 	 * Construct DP Attention message. This consists of the VDM header and
 	 * the DP_STATUS VDO.
 	 */
-	svdm_header = VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP)) |
+	svdm_header = VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP)) |
 			       VDO_OPOS(opos) | CMD_ATTENTION;
 	vdm[0] = VDO(USB_SID_DISPLAYPORT, 1, svdm_header);
 

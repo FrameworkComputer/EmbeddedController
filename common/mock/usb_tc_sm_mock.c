@@ -31,7 +31,7 @@ void mock_tc_port_reset(void)
 		mock_tc_port[port].pd_enable = 0;
 		mock_tc_port[port].msg_tx_id = 0;
 		mock_tc_port[port].msg_rx_id = 0;
-		mock_tc_port[port].sop = TCPC_TX_INVALID;
+		mock_tc_port[port].sop = TCPCI_MSG_INVALID;
 		mock_tc_port[port].lcl_rp = TYPEC_RP_RESERVED;
 		mock_tc_port[port].attached_snk = 0;
 		mock_tc_port[port].attached_src = 0;

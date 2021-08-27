@@ -73,7 +73,7 @@ static void dp_entry_failed(int port)
 	dp_state[port] = DP_INACTIVE;
 }
 
-static bool dp_response_valid(int port, enum tcpm_sop_type type,
+static bool dp_response_valid(int port, enum tcpci_msg_type type,
 			     char *cmdt, int vdm_cmd)
 {
 	enum dp_states st = dp_state[port];
@@ -82,11 +82,11 @@ static bool dp_response_valid(int port, enum tcpm_sop_type type,
 	 * Check for an unexpected response.
 	 * If DP is inactive, ignore the command.
 	 */
-	if (type != TCPC_TX_SOP ||
+	if (type != TCPCI_MSG_SOP ||
 	    (st != DP_INACTIVE && state_vdm_cmd[st] != vdm_cmd)) {
 		CPRINTS("C%d: Received unexpected DP VDM %s (cmd %d) from"
 			" %s in state %d", port, cmdt, vdm_cmd,
-			type == TCPC_TX_SOP ? "port partner" : "cable plug",
+			type == TCPCI_MSG_SOP ? "port partner" : "cable plug",
 			st);
 		dp_entry_failed(port);
 		return false;
@@ -96,9 +96,9 @@ static bool dp_response_valid(int port, enum tcpm_sop_type type,
 
 static void dp_exit_to_usb_mode(int port)
 {
-	int opos = pd_alt_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+	int opos = pd_alt_mode(port, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
 
-	pd_dfp_exit_mode(port, TCPC_TX_SOP, USB_SID_DISPLAYPORT, opos);
+	pd_dfp_exit_mode(port, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT, opos);
 	set_usb_mux_with_current_data_role(port);
 
 	CPRINTS("C%d: Exited DP mode", port);
@@ -111,7 +111,7 @@ static void dp_exit_to_usb_mode(int port)
 		? DP_START : DP_INACTIVE;
 }
 
-void dp_vdm_acked(int port, enum tcpm_sop_type type, int vdo_count,
+void dp_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		uint32_t *vdm)
 {
 	const struct svdm_amode_data *modep =
@@ -171,7 +171,7 @@ void dp_vdm_acked(int port, enum tcpm_sop_type type, int vdo_count,
 	}
 }
 
-void dp_vdm_naked(int port, enum tcpm_sop_type type, uint8_t vdm_cmd)
+void dp_vdm_naked(int port, enum tcpci_msg_type type, uint8_t vdm_cmd)
 {
 	if (!dp_response_valid(port, type, "NAK", vdm_cmd))
 		return;
@@ -210,7 +210,7 @@ void dp_vdm_naked(int port, enum tcpm_sop_type type, uint8_t vdm_cmd)
 int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 {
 	const struct svdm_amode_data *modep = pd_get_amode_data(port,
-			TCPC_TX_SOP, USB_SID_DISPLAYPORT);
+			TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
 	int vdo_count_ret;
 
 	if (vdo_count < VDO_MAX_SIZE)
@@ -220,13 +220,13 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 	case DP_START:
 	case DP_ENTER_RETRY:
 		/* Enter the first supported mode for DisplayPort. */
-		vdm[0] = pd_dfp_enter_mode(port, TCPC_TX_SOP,
+		vdm[0] = pd_dfp_enter_mode(port, TCPCI_MSG_SOP,
 				USB_SID_DISPLAYPORT, 0);
 		if (vdm[0] == 0)
 			return -1;
 		/* CMDT_INIT is 0, so this is a no-op */
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
-		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP));
+		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
 		vdo_count_ret = 1;
 		if (dp_state[port] == DP_START)
 			CPRINTS("C%d: Attempting to enter DP mode", port);
@@ -240,7 +240,7 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 			return -1;
 		vdm[0] |= PD_VDO_OPOS(modep->opos);
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
-		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP));
+		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
 		break;
 	case DP_STATUS_ACKED:
 		if (!(modep && modep->opos))
@@ -250,7 +250,7 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 		if (vdo_count_ret == 0)
 			return -1;
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
-		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP));
+		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
 		break;
 	case DP_ENTER_NAKED:
 	case DP_ACTIVE:
@@ -275,7 +275,7 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 
 		vdm[0] |= VDO_OPOS(modep->opos);
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
-		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPC_TX_SOP));
+		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
 		vdo_count_ret = 1;
 		break;
 	case DP_INACTIVE:

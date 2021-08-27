@@ -426,15 +426,15 @@ static int ps8xxx_tcpc_bist_mode_2(int port)
 	rv |= tcpc_write(port, PS8XXX_REG_BIST_CONT_MODE_CTR, 0);
 
 	/* Start BIST MODE 2 */
-	rv |= tcpc_write(port, TCPC_REG_TRANSMIT, TCPC_TX_BIST_MODE_2);
+	rv |= tcpc_write(port, TCPC_REG_TRANSMIT, TCPCI_MSG_TX_BIST_MODE_2);
 
 	return rv;
 }
 
-static int ps8xxx_tcpm_transmit(int port, enum tcpm_sop_type type,
+static int ps8xxx_tcpm_transmit(int port, enum tcpci_msg_type type,
 			uint16_t header, const uint32_t *data)
 {
-	if (type == TCPC_TX_BIST_MODE_2)
+	if (type == TCPCI_MSG_TX_BIST_MODE_2)
 		return ps8xxx_tcpc_bist_mode_2(port);
 	else
 		return tcpci_tcpm_transmit(port, type, header, data);
