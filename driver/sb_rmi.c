@@ -6,6 +6,7 @@
 /* AMD SB-RMI (Side-band Remote Management Interface) Driver */
 
 #include "common.h"
+#include "chipset.h"
 #include "i2c.h"
 #include "sb_rmi.h"
 #include "stdbool.h"
@@ -90,6 +91,10 @@ int sb_rmi_mailbox_xfer(int cmd, uint32_t msg_in, uint32_t *msg_out_ptr)
 	int val;
 	bool alerted;
 	timestamp_t start;
+
+	if (!chipset_in_state(CHIPSET_STATE_ON))
+		return EC_ERROR_NOT_POWERED;
+
 	/**
 	 * Step 1: writing 0x80 to SBRMI::InBndMsg_inst7 (SBRMI_x3F) to
 	 *         indicate that command is to be serviced and to make sure

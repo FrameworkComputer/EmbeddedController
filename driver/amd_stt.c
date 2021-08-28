@@ -5,6 +5,7 @@
 
 #include "amd_stt.h"
 #include "common.h"
+#include "chipset.h"
 #include "console.h"
 #include "driver/sb_rmi.h"
 #include "hooks.h"
@@ -71,6 +72,10 @@ static void amd_stt_handler(void)
 	int rv;
 	int soc_temp_mk;
 	int ambient_temp_mk;
+
+	/* STT interface is only active in S0 */
+	if (!chipset_in_state(CHIPSET_STATE_ON))
+		return;
 
 	/*
 	 * TODO(b/192391025): Replace with temp_sensor_read_mk(TEMP_SENSOR_SOC)
