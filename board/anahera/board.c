@@ -13,8 +13,6 @@
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "hooks.h"
-#include "driver/accelgyro_lsm6dsm.h"
-#include "driver/als_tcs3400.h"
 #include "fw_config.h"
 #include "hooks.h"
 #include "lid_switch.h"
@@ -23,7 +21,6 @@
 #include "power.h"
 #include "registers.h"
 #include "switch.h"
-#include "tablet_mode.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
 
@@ -32,25 +29,6 @@
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
-
-/* PCHG control */
-#ifdef SECTION_IS_RW
-extern struct pchg_drv ctn730_drv;
-
-struct pchg pchgs[] = {
-	[0] = {
-		.cfg = &(const struct pchg_config) {
-			.drv = &ctn730_drv,
-			.i2c_port = I2C_PORT_WLC,
-			.irq_pin = GPIO_PEN_INT_ODL,
-			.full_percent = 96,
-			.block_size = 128,
-		},
-		.events = QUEUE_NULL(PCHG_EVENT_QUEUE_SIZE, enum pchg_event),
-	},
-};
-const int pchg_count = ARRAY_SIZE(pchgs);
-#endif
 
 /******************************************************************************/
 /* USB-A charging control */

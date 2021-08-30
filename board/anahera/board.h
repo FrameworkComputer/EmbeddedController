@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Redrix board configuration */
+/* Anahera board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -20,44 +20,9 @@
 #define CONFIG_HIBERNATE_PSL_VCC1_RST_WAKEUP
 
 /* Sensors */
-#define CONFIG_ACCEL_BMA255		/* Lid accel */
-#define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
-#define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-#define CONFIG_LID_ANGLE
-#define CONFIG_LID_ANGLE_SENSOR_BASE	BASE_ACCEL
-#define CONFIG_LID_ANGLE_SENSOR_LID	LID_ACCEL
-
-/* TCS3400 ALS */
-#define CONFIG_ALS
-#define ALS_COUNT 1
-#define CONFIG_ALS_TCS3400
-#define CONFIG_ALS_TCS3400_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
-
-/* Enable sensor fifo, must also define the _SIZE and _THRES */
-#define CONFIG_ACCEL_FIFO
-/* FIFO size is in power of 2. */
-#define CONFIG_ACCEL_FIFO_SIZE 256
-/* Depends on how fast the AP boots and typical ODRs */
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
-
-/* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK \
-	(BIT(LID_ACCEL) | BIT(CLEAR_ALS))
-
-#define CONFIG_ACCEL_INTERRUPTS
-
-/* Sensor console commands */
-#define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_ACCEL_INFO
-
-/* WLC pins */
-#ifdef SECTION_IS_RW
-#define CONFIG_PERIPHERAL_CHARGER
-#define CONFIG_DEVICE_EVENT
-#define CONFIG_CTN730
-#endif
+#undef CONFIG_TABLET_MODE
+#undef CONFIG_TABLET_MODE_SWITCH
+#undef CONFIG_GMR_TABLET_MODE
 
 /* USB Type A Features */
 #define USB_PORT_COUNT			1
@@ -106,7 +71,6 @@
 #define GPIO_PCH_RTCRST			GPIO_EC_PCH_RTCRST
 #define GPIO_PCH_SLP_S0_L		GPIO_SYS_SLP_S0IX_L
 #define GPIO_PCH_SLP_S3_L		GPIO_SLP_S3_L
-#define GMR_TABLET_MODE_GPIO_L		GPIO_TABLET_MODE_L
 
 /*
  * GPIO_EC_PCH_INT_ODL is used for MKBP events as well as a PCH wakeup
@@ -123,15 +87,10 @@
 #define GPIO_VOLUME_UP_L		GPIO_EC_VOLUP_BTN_ODL
 #define GPIO_WP_L			GPIO_EC_WP_ODL
 
-#define GPIO_WLC_NRST_CONN		GPIO_PEN_RST_L
-
 /* System has back-lit keyboard */
 #define CONFIG_PWM_KBLIGHT
 
 /* I2C Bus Configuration */
-
-#define I2C_PORT_SENSOR		NPCX_I2C_PORT0_0
-
 #define I2C_PORT_USB_C0_TCPC	NPCX_I2C_PORT1_0
 #define I2C_PORT_USB_C1_TCPC	NPCX_I2C_PORT4_1
 
@@ -147,7 +106,6 @@
 #define I2C_PORT_BATTERY	NPCX_I2C_PORT5_0
 #define I2C_PORT_CHARGER	NPCX_I2C_PORT7_0
 #define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
-#define I2C_PORT_WLC		NPCX_I2C_PORT7_0
 
 #define I2C_ADDR_EEPROM_FLAGS	0x50
 
@@ -208,15 +166,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
-enum sensor_id {
-	LID_ACCEL = 0,
-	BASE_ACCEL,
-	BASE_GYRO,
-	CLEAR_ALS,
-	RGB_ALS,
-	SENSOR_COUNT
-};
-
 enum ioex_port {
 	IOEX_C0_NCT38XX = 0,
 	IOEX_C1_NCT38XX,
@@ -232,19 +181,16 @@ enum battery_type {
 enum pwm_channel {
 	PWM_CH_KBLIGHT = 0,		/* PWM3 */
 	PWM_CH_FAN,			/* PWM5 */
-	PWM_CH_FAN2,			/* PWM7 */
 	PWM_CH_COUNT
 };
 
 enum fan_channel {
 	FAN_CH_0 = 0,
-	FAN_CH_1,
 	FAN_CH_COUNT
 };
 
 enum mft_channel {
 	MFT_CH_0 = 0,
-	MFT_CH_1,
 	MFT_CH_COUNT
 };
 
