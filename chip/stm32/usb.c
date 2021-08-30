@@ -677,14 +677,7 @@ DECLARE_IRQ(STM32_IRQ_USB_LP, usb_interrupt, 1);
 
 void usb_init(void)
 {
-	/* Enable USB device clock. */
-#if defined(STM32_RCC_APB1ENR2_USBFSEN)
-	STM32_RCC_APB1ENR2 |= STM32_RCC_APB1ENR2_USBFSEN;
-#else
-	STM32_RCC_APB1ENR |= STM32_RCC_PB1_USB;
-#endif
-
-	/* we need a proper 48MHz clock */
+	/* Enable USB device clock, possibly increasing system clock to 48MHz */
 	clock_enable_module(MODULE_USB, 1);
 
 	/* configure the pinmux */
@@ -747,26 +740,15 @@ void usb_release(void)
 	/* unset pinmux */
 	gpio_config_module(MODULE_USB, 0);
 
-	/* disable 48MHz clock */
+	/* disable USB device clock, possibly slowing down system clock */
 	clock_enable_module(MODULE_USB, 0);
-
-	/* disable USB device clock */
-#if defined(STM32_RCC_APB1ENR2_USBFSEN)
-	STM32_RCC_APB1ENR2 &= ~STM32_RCC_APB1ENR2_USBFSEN;
-#else
-	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_USB;
-#endif
 }
 /* ensure the host disconnects and reconnects over a sysjump */
 DECLARE_HOOK(HOOK_SYSJUMP, usb_release, HOOK_PRIO_DEFAULT);
 
 int usb_is_enabled(void)
 {
-#if defined(STM32_RCC_APB1ENR2_USBFSEN)
-	return (STM32_RCC_APB1ENR2 & STM32_RCC_APB1ENR2_USBFSEN) ? 1 : 0;
-#else
-	return (STM32_RCC_APB1ENR & STM32_RCC_PB1_USB) ? 1 : 0;
-#endif
+	return clock_is_module_enabled(MODULE_USB);
 }
 
 void *memcpy_to_usbram(void *dest, const void *src, size_t n)

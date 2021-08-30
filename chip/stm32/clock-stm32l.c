@@ -195,15 +195,16 @@ static void clock_set_osc(enum clock_osc osc)
 	}
 }
 
+static uint64_t clock_mask;
+
 void clock_enable_module(enum module_id module, int enable)
 {
-	static uint32_t clock_mask;
-	int new_mask;
+	uint64_t new_mask;
 
 	if (enable)
-		new_mask = clock_mask | BIT(module);
+		new_mask = clock_mask | BIT_ULL(module);
 	else
-		new_mask = clock_mask & ~BIT(module);
+		new_mask = clock_mask & ~BIT_ULL(module);
 
 	/* Only change clock if needed */
 	if ((!!new_mask) != (!!clock_mask)) {
@@ -214,7 +215,19 @@ void clock_enable_module(enum module_id module, int enable)
 		clock_set_osc(new_mask ? OSC_HSI : OSC_MSI);
 	}
 
+	if (module == MODULE_USB) {
+		if (enable)
+			STM32_RCC_APB1ENR |= STM32_RCC_PB1_USB;
+		else
+			STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_USB;
+	}
+
 	clock_mask = new_mask;
+}
+
+int clock_is_module_enabled(enum module_id module)
+{
+	return !!(clock_mask & BIT_ULL(module));
 }
 
 #ifdef CONFIG_STM32L_FAKE_HIBERNATE

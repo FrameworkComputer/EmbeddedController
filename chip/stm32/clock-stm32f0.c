@@ -407,7 +407,21 @@ void clock_enable_module(enum module_id module, int enable)
 		else
 			STM32_RCC_APB2ENR &= ~STM32_RCC_APB2ENR_ADCEN;
 		return;
+	} else if (module == MODULE_USB) {
+		if (enable)
+			STM32_RCC_APB1ENR |= STM32_RCC_PB1_USB;
+		else
+			STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_USB;
 	}
+}
+
+int clock_is_module_enabled(enum module_id module)
+{
+	if (module == MODULE_ADC)
+		return !!(STM32_RCC_APB2ENR & STM32_RCC_APB2ENR_ADCEN);
+	else if (module == MODULE_USB)
+		return !!(STM32_RCC_APB1ENR & STM32_RCC_PB1_USB);
+	return 0;
 }
 
 void rtc_init(void)

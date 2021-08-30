@@ -37,6 +37,13 @@ int clock_get_freq(void);
 void clock_enable_module(enum module_id module, int enable);
 
 /**
+ * Query whether clock is enabled for given module.
+ *
+ * @return Non-zero if enabled, zero if disabled.
+ */
+int clock_is_module_enabled(enum module_id module);
+
+/**
  * Enable or disable the PLL.
  *
  * @param enable	Enable PLL if non-zero; disable if zero.
