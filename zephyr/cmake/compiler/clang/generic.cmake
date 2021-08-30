@@ -3,3 +3,4 @@
 # found in the LICENSE file.
 
 set(CMAKE_C_COMPILER "/usr/bin/x86_64-pc-linux-gnu-clang")
+set(CMAKE_GCOV "/usr/bin/llvm-cov gcov")
