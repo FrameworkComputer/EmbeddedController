@@ -5,8 +5,8 @@
 
 /* Math utility functions for minute-IA */
 
-#ifndef __CROS_EC_MATH_H
-#define __CROS_EC_MATH_H
+#ifndef __CROS_EC_FPU_H
+#define __CROS_EC_FPU_H
 
 #include "config.h"
 
@@ -238,4 +238,4 @@ static inline int __isinff(float v)
 }
 
 #endif  /* CONFIG_FPU */
-#endif  /* __CROS_EC_MATH_H */
+#endif  /* __CROS_EC_FPU_H */

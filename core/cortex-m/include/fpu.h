@@ -5,8 +5,8 @@
 
 /* Math utility functions for ARMv7 */
 
-#ifndef __CROS_EC_MATH_H
-#define __CROS_EC_MATH_H
+#ifndef __CROS_EC_FPU_H
+#define __CROS_EC_FPU_H
 
 #ifdef CONFIG_FPU
 static inline float sqrtf(float v)
@@ -32,4 +32,4 @@ static inline float fabsf(float v)
 }
 #endif  /* CONFIG_FPU */
 
-#endif  /* __CROS_EC_MATH_H */
+#endif  /* __CROS_EC_FPU_H */

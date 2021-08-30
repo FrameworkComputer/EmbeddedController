@@ -13,7 +13,7 @@
  * This file is not called math.h to avoid a conflict with the toolchain's
  * built-in version.
  *
- * This code is taken from core/cortex-m/include/math.h
+ * This code is taken from core/cortex-m/include/fpu.h
  */
 
 #ifdef CONFIG_PLATFORM_EC_FPU

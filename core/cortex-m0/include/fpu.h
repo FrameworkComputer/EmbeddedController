@@ -3,12 +3,9 @@
  * found in the LICENSE file.
  */
 
-/* Math utility functions for N8 */
+/* Math utility functions for ARMv6-M */
 
-#ifndef __CROS_EC_MATH_H
-#define __CROS_EC_MATH_H
+#ifndef __CROS_EC_FPU_H
+#define __CROS_EC_FPU_H
 
-float sqrtf(float x);
-float fabsf(float x);
-
-#endif  /* __CROS_EC_MATH_H */
+#endif  /* __CROS_EC_FPU_H */

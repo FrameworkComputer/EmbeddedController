@@ -5,9 +5,9 @@
 
 /* Math utility functions for RISC-V */
 
-#ifndef __CROS_EC_MATH_H
-#define __CROS_EC_MATH_H
+#ifndef __CROS_EC_FPU_H
+#define __CROS_EC_FPU_H
 
 float sqrtf(float x);
 
-#endif  /* __CROS_EC_MATH_H */
+#endif  /* __CROS_EC_FPU_H */
