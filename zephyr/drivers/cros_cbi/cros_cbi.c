@@ -132,7 +132,7 @@ DT_INST_FOREACH_STATUS_OKAY(CBI_SSFC_VALUE_BUILD_ASSERT)
 static const uint8_t ssfc_values[] = {
 	DT_INST_FOREACH_STATUS_OKAY(CBI_SSFC_VALUE_ARRAY)
 };
-static union cbi_ssfc cached_ssfc;
+static union cbi_ssfc cached_ssfc __attribute__((unused));
 
 /* CBI SSFC part end */
 

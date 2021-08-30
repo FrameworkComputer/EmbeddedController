@@ -281,7 +281,6 @@ static int bmi260_emul_gyr_range_to_shift(uint8_t range)
 static int bmi260_emul_start_cmd(uint8_t *regs, struct i2c_emul *emul, int cmd)
 {
 	int time;
-	int ret;
 
 	switch (cmd) {
 	case BMI260_CMD_SOFT_RESET:
@@ -309,7 +308,6 @@ static int bmi260_emul_start_cmd(uint8_t *regs, struct i2c_emul *emul, int cmd)
  */
 static void bmi260_emul_end_cmd(uint8_t *regs, struct i2c_emul *emul)
 {
-	uint8_t pmu_status;
 	bool tag_time;
 	bool header;
 	int cmd;
@@ -354,7 +352,6 @@ static int bmi260_emul_handle_write(uint8_t *regs, struct i2c_emul *emul,
 	uint8_t mask;
 	bool tag_time;
 	bool header;
-	int ret;
 
 	/* Ignore first byte which sets starting register */
 	byte -= 1;
@@ -440,7 +437,6 @@ static int bmi260_emul_handle_read(uint8_t *regs, struct i2c_emul *emul,
 	bool header;
 	int gyr_shift;
 	int acc_shift;
-	int ret;
 
 	/*
 	 * If register is FIFO data, then read data from FIFO.

@@ -1547,7 +1547,6 @@ static void test_bmi_init(void)
 {
 	struct motion_sensor_t *ms_acc, *ms_gyr;
 	struct i2c_emul *emul;
-	int ret;
 
 	emul = bmi_emul_get(BMI_ORD);
 	ms_acc = &motion_sensors[BMI_ACC_SENSOR_ID];
@@ -1681,7 +1680,6 @@ static void check_fifo_f(struct motion_sensor_t *ms_acc,
 /** Test irq handler of accelerometer sensor */
 static void test_bmi_acc_fifo(void)
 {
-	struct ec_response_motion_sensor_data vector;
 	struct motion_sensor_t *ms, *ms_gyr;
 	struct fifo_func_data func_data;
 	struct bmi_emul_frame f[3];

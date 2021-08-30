@@ -1125,7 +1125,6 @@ static int bmi_emul_handle_read(struct i2c_emul *emul, int reg, int byte,
 				char *buf)
 {
 	struct bmi_emul_data *data;
-	uint16_t fifo_len;
 	int ret;
 
 	data = CONTAINER_OF(emul, struct bmi_emul_data, emul);
@@ -1175,7 +1174,6 @@ static int bmi_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 {
 	const struct bmi_emul_cfg *cfg;
 	struct bmi_emul_data *data;
-	unsigned int len;
 	int ret, i;
 	bool read;
 

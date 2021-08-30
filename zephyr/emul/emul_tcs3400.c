@@ -677,7 +677,6 @@ static int tcs_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 {
 	const struct tcs_emul_cfg *cfg;
 	struct tcs_emul_data *data;
-	unsigned int len;
 	int ret, i, reg;
 	bool read;
 

@@ -607,8 +607,6 @@ static void test_bma_read(void)
 	int16_t ret_acc[3];
 	int16_t exp_acc[3];
 	intv3_t ret_acc_v;
-	uint8_t reg_rate;
-	int drv_rate;
 
 	emul = bma_emul_get(BMA_ORD);
 
@@ -728,7 +726,6 @@ static int emul_write_calib_func(struct i2c_emul *emul, int reg, uint8_t val,
 				 void *data)
 {
 	struct calib_func_data *d = data;
-	int cur_time;
 
 	if (reg != BMA2x2_OFFSET_CTRL_ADDR) {
 		return 1;

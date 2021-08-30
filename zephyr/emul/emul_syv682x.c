@@ -82,10 +82,6 @@ static int syv682x_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 {
 	const struct syv682x_emul_cfg *cfg;
 	struct syv682x_emul_data *data;
-	unsigned int len;
-	int ret, i, reg;
-	bool read;
-
 	data = CONTAINER_OF(emul, struct syv682x_emul_data, emul);
 	cfg = data->cfg;
 

@@ -294,7 +294,6 @@ static int sbat_emul_read_at_rate_ok(struct sbat_emul_bat_data *bat,
 {
 	int rem_time_s;
 	int rate;
-	int cap;
 
 	rate = bat->at_rate;
 	if (bat->mode & MODE_CAPACITY) {
@@ -799,7 +798,6 @@ static int sbat_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 {
 	const struct sbat_emul_cfg *cfg;
 	struct sbat_emul_data *data;
-	unsigned int len;
 	int ret = 0, i;
 
 	data = CONTAINER_OF(emul, struct sbat_emul_data, emul);

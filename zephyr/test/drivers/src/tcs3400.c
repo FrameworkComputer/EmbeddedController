@@ -229,7 +229,6 @@ static void test_tcs_read_calibration(void)
 	uint32_t event = TCS_INT_EVENT;
 	int emul_v[4];
 	int exp_v[4];
-	int ret;
 	intv3_t v;
 
 	emul = tcs_emul_get(TCS_ORD);
@@ -359,7 +358,7 @@ static void test_tcs_read_xyz(void)
 		MOTION_SENSE_DEFAULT_SCALE, MOTION_SENSE_DEFAULT_SCALE,
 		MOTION_SENSE_DEFAULT_SCALE, MOTION_SENSE_DEFAULT_SCALE
 	};
-	int ret, i, test;
+	int i, test;
 	intv3_t v;
 
 	emul = tcs_emul_get(TCS_ORD);
@@ -451,7 +450,7 @@ static void test_tcs_scale(void)
 	};
 	uint16_t scale[3];
 	int16_t temp;
-	int ret, i, test;
+	int i, test;
 	intv3_t v;
 
 	emul = tcs_emul_get(TCS_ORD);

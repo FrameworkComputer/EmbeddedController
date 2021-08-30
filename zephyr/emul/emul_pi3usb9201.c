@@ -96,9 +96,6 @@ static int pi3usb9201_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 {
 	const struct pi3usb9201_emul_cfg *cfg;
 	struct pi3usb9201_emul_data *data;
-	unsigned int len;
-	int ret, i, reg;
-	bool read;
 
 	data = CONTAINER_OF(emul, struct pi3usb9201_emul_data, emul);
 	cfg = data->cfg;

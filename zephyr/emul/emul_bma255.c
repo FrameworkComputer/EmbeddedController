@@ -1047,7 +1047,6 @@ static int bma_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 {
 	const struct bma_emul_cfg *cfg;
 	struct bma_emul_data *data;
-	unsigned int len;
 	int ret, i, reg;
 	bool read;
 

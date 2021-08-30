@@ -404,7 +404,6 @@ static void bmi160_emul_handle_off_comp(uint8_t *regs, struct i2c_emul *emul)
 static int bmi160_emul_start_cmd(uint8_t *regs, struct i2c_emul *emul, int cmd)
 {
 	int time;
-	int ret;
 
 	switch (cmd) {
 	case BMI160_CMD_SOFT_RESET:
@@ -566,7 +565,6 @@ static int bmi160_emul_handle_write(uint8_t *regs, struct i2c_emul *emul,
 {
 	bool tag_time;
 	bool header;
-	int ret;
 
 	if (byte > 1) {
 		LOG_ERR("Block writes are not allowed");
@@ -636,7 +634,6 @@ static int bmi160_emul_handle_read(uint8_t *regs, struct i2c_emul *emul,
 	bool header;
 	int gyr_shift;
 	int acc_shift;
-	int ret;
 
 	/*
 	 * If register is FIFO data, then read data from FIFO.
