@@ -62,6 +62,12 @@ properties:
     type: phandle
     description: phandle to CBI SSGC value indicating that the sensor
       should be used
+  runtime-probe:
+    type: boolean
+    description: runtime probing of sensor will be executed if true
+  int-signal:
+    type: phandle
+    description: pin which triggers interrupt for sensor
 
 #
 # examples:
