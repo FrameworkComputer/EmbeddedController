@@ -635,7 +635,11 @@ class Zmake:
                 proc.stderr,
                 job_id=job_id,
             )
-            procs.append(proc)
+            if self._sequential:
+                if proc.wait():
+                    raise OSError(get_process_failure_msg(proc))
+            else:
+                procs.append(proc)
 
         for proc in procs:
             if proc.wait():
@@ -685,6 +689,10 @@ class Zmake:
                         project, project_build_dir, lcov_file
                     )
                 )
+            if self._sequential:
+                rv = self.executor.wait()
+                if rv:
+                    return rv
 
         rv = self.executor.wait()
         if rv:
