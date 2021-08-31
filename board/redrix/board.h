@@ -174,6 +174,7 @@
 
 /* Fan features */
 #define CONFIG_FANS		FAN_CH_COUNT
+#define CONFIG_CUSTOM_FAN_CONTROL
 
 /* Charger defines */
 #define CONFIG_CHARGER_BQ25720
