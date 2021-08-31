@@ -24,10 +24,7 @@ GPIO_INT(SLP_S3_L,                       PIN(A, 5), GPIO_INT_BOTH, power_signal_
 GPIO_INT(SLP_SUS_L,                      PIN(F, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SYS_SLP_S0IX_L,                 PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(TABLET_MODE_L,                  PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
-GPIO_INT(USB_C0_BC12_INT_ODL,            PIN(C, 6), GPIO_INT_FALLING, bc12_interrupt)
-GPIO_INT(USB_C0_C2_TCPC_INT_ODL,         PIN(E, 0), GPIO_INT_FALLING, tcpc_alert_event)
-GPIO_INT(USB_C0_PPC_INT_ODL,             PIN(6, 2), GPIO_INT_FALLING, ppc_interrupt)
-GPIO_INT(USB_C0_RT_INT_ODL,              PIN(B, 1), GPIO_INT_FALLING, retimer_interrupt)
+GPIO_INT(USB_C2_TCPC_INT_ODL,            PIN(E, 0), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(USB_C1_BC12_INT_ODL,            PIN(5, 0), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C1_PPC_INT_ODL,             PIN(F, 5), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C1_TCPC_INT_ODL,            PIN(A, 2), GPIO_INT_FALLING, tcpc_alert_event)
@@ -129,6 +126,9 @@ UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(C, 3))       /* GPIOC3 */
 UNUSED(PIN(E, 1))       /* GPIOE1 */
 UNUSED(PIN(D, 4))       /* GPIOD4 */
+UNUSED(PIN(C, 6))       /* GPIOC6 */
+UNUSED(PIN(6, 2))       /* GPIO62 */
+UNUSED(PIN(B, 1))       /* GPIOB1 */
 
 /* Pre-configured PSL balls:  J8  K6 */
 
@@ -140,40 +140,12 @@ UNUSED(PIN(D, 4))       /* GPIOD4 */
  */
 GPIO(EC_KSO_02_INV,               PIN(1, 7), GPIO_OUT_LOW)
 
-/*
- * GPIO34 is an INPUT on board ID 2 and ODR_LOW on board ID 1.
- *
- * Since this pin is pulled up to 3.3V through a 30.9K ohm resistor on
- * board ID 2, we will leak about 0.3mW until the pin is put in ALT mode
- * when MODULE_ADC configuration runs. Initializing the pin to ODR_LOW
- * gives us full control on both boards.
- */
-GPIO(ID_1_USB_C0_C2_TCPC_RST_ODL, PIN(3, 4), GPIO_ODR_LOW)
-
-/* Board ID 1 IO expander configuration */
-
-IOEX(ID_1_USB_C0_RT_RST_ODL, EXPIN(IOEX_ID_1_C0_NCT38XX, 0, 2), GPIO_ODR_LOW)
-/* GPIO03_P1 to PU */
-IOEX(ID_1_USB_C0_FRS_EN,     EXPIN(IOEX_ID_1_C0_NCT38XX, 0, 4), GPIO_LOW)
-IOEX(ID_1_USB_C0_OC_ODL,     EXPIN(IOEX_ID_1_C0_NCT38XX, 0, 6), GPIO_ODR_HIGH)
-/* GPIO07_P1 to PU */
-
-IOEX(ID_1_USB_C2_RT_RST_ODL, EXPIN(IOEX_ID_1_C2_NCT38XX, 0, 2), GPIO_ODR_LOW)
-/* GPIO03_P2 to PU */
-IOEX(ID_1_USB_C2_FRS_EN,     EXPIN(IOEX_ID_1_C2_NCT38XX, 0, 4), GPIO_LOW)
-IOEX(ID_1_USB_C1_OC_ODL,     EXPIN(IOEX_ID_1_C2_NCT38XX, 0, 6), GPIO_ODR_HIGH)
-IOEX(ID_1_USB_C2_OC_ODL,     EXPIN(IOEX_ID_1_C2_NCT38XX, 0, 7), GPIO_ODR_HIGH)
-
-/* Board ID 2 IO expander configuration */
-
 /* GPIO02_P2 to PU */
 /* GPIO03_P2 to PU */
-IOEX(USB_C0_OC_ODL,          EXPIN(IOEX_C0_NCT38XX, 0, 4), GPIO_ODR_HIGH)
-IOEX(USB_C0_FRS_EN,          EXPIN(IOEX_C0_NCT38XX, 0, 6), GPIO_LOW)
-IOEX(USB_C0_RT_RST_ODL,      EXPIN(IOEX_C0_NCT38XX, 0, 7), GPIO_ODR_LOW)
+
+IOEX(USB_C1_OC_ODL,          EXPIN(IOEX_C1_NCT38XX, 0, 4), GPIO_ODR_HIGH)
 
 IOEX(USB_C2_RT_RST_ODL,      EXPIN(IOEX_C2_NCT38XX, 0, 2), GPIO_ODR_LOW)
-IOEX(USB_C1_OC_ODL,          EXPIN(IOEX_C2_NCT38XX, 0, 3), GPIO_ODR_HIGH)
 IOEX(USB_C2_OC_ODL,          EXPIN(IOEX_C2_NCT38XX, 0, 4), GPIO_ODR_HIGH)
 IOEX(USB_C2_FRS_EN,          EXPIN(IOEX_C2_NCT38XX, 0, 6), GPIO_LOW)
 /* GPIO07_P2 to PU */

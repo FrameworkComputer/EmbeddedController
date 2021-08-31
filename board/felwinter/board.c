@@ -105,3 +105,10 @@ enum battery_present battery_hw_present(void)
 	/* The GPIO is low when the battery is physically present */
 	return gpio_get_level(batt_pres) ? BP_NO : BP_YES;
 }
+
+static void board_init(void)
+{
+	if (ec_cfg_usb_db_type() == DB_USB4_NCT3807)
+		db_update_usb4_config_from_config();
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

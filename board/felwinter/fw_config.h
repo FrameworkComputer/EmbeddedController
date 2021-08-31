@@ -9,15 +9,14 @@
 #include <stdint.h>
 
 /****************************************************************************
- * CBI FW_CONFIG layout for Brya board.
+ * CBI FW_CONFIG layout for felwinter board.
  *
- * Source of truth is the project/brya/brya/config.star configuration file.
+ * Source of truth is the project/brya/felwinter/config.star configuration file.
  */
 
 enum ec_cfg_usb_db_type {
-	DB_USB_ABSENT = 0,
 	DB_USB3_PS8815 = 1,
-	DB_USB_ABSENT2 = 15
+	DB_USB4_NCT3807 = 2
 };
 
 enum ec_cfg_keyboard_backlight_type {
