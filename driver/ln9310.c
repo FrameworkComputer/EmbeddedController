@@ -393,7 +393,7 @@ void ln9310_init(void)
 		CPRINTS("LN9310 reading BC_STS_C failed");
 		return;
 	}
-	chip_revision = val && LN9310_BC_STS_C_CHIP_REV_MASK;
+	chip_revision = val & LN9310_BC_STS_C_CHIP_REV_MASK;
 	startup_workaround_required = chip_revision < LN9310_BC_STS_C_CHIP_REV_FIXED;
 
 	/* Update INFET configuration  */
