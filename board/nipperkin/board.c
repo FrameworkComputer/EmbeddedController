@@ -171,8 +171,8 @@ int board_get_ambient_temp_mk(int *temp_mk)
 
 /* ADC Channels */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_SOC] = {
-		.name = "SOC",
+	[ADC_TEMP_SENSOR_MEMORY] = {
+		.name = "MEMORY",
 		.input_ch = NPCX_ADC_CH0,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
@@ -185,8 +185,8 @@ const struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_MEMORY] = {
-		.name = "MEMORY",
+	[ADC_TEMP_SENSOR_5V_REGULATOR] = {
+		.name = "5V_REGULATOR",
 		.input_ch = NPCX_ADC_CH2,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
@@ -210,7 +210,7 @@ const struct adc_t adc_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Temp Sensors */
-static int board_get_memory_temp(int, int *);
+static int board_get_temp(int, int *);
 
 const struct tmp112_sensor_t tmp112_sensors[] = {
 	{ I2C_PORT_SENSOR, TMP112_I2C_ADDR_FLAGS0 },
@@ -234,8 +234,14 @@ const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_MEMORY] = {
 		.name = "Memory",
 		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = board_get_memory_temp,
+		.read = board_get_temp,
 		.idx = ADC_TEMP_SENSOR_MEMORY,
+	},
+	[TEMP_SENSOR_5V_REGULATOR] = {
+		.name = "5V_REGULATOR",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = board_get_temp,
+		.idx = ADC_TEMP_SENSOR_5V_REGULATOR,
 	},
 	[TEMP_SENSOR_CPU] = {
 		.name = "CPU",
@@ -309,7 +315,7 @@ struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
-static int board_get_memory_temp(int idx, int *temp_k)
+static int board_get_temp(int idx, int *temp_k)
 {
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 		return EC_ERROR_NOT_POWERED;
