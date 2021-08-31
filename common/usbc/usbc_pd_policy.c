@@ -32,14 +32,15 @@ __overridable bool port_discovery_dr_swap_policy(int port,
 /*
  * Default Port Discovery VCONN Swap Policy.
  *
- * 1) If vconn_swap_to_on_flag == true and vconn is currently off,
- *    transition to pe_vcs_send_swap
+ * 1) If vconn_swap_to_on_flag == true, and vconn is currently off,
+ * 2) Sourcing VCONN is possible
+ *    then transition to pe_vcs_send_swap
  */
 __overridable bool port_discovery_vconn_swap_policy(int port,
 		bool vconn_swap_flag)
 {
 	if (IS_ENABLED(CONFIG_USBC_VCONN) && vconn_swap_flag &&
-			!tc_is_vconn_src(port))
+		!tc_is_vconn_src(port) && tc_check_vconn_swap(port))
 		return true;
 
 	/* Do not perform a VCONN swap */
