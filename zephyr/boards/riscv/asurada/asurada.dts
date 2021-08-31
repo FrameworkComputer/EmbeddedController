@@ -150,6 +150,8 @@
 	};
 
 	soc {
+		/delete-node/ kscan@f01d00;
+
 		cros_kb_raw: cros-kb-raw@f01d00 {
 			compatible = "ite,it8xxx2-cros-kb-raw";
 			reg = <0x00f01d00 0x29>;
