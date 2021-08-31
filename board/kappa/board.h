@@ -43,6 +43,9 @@
 
 #define CONFIG_USB_MUX_IT5205
 
+#undef CONFIG_GMR_TABLET_MODE
+#undef CONFIG_TABLET_MODE
+#undef CONFIG_TABLET_MODE_SWITCH
 
 /* I2C ports */
 #define I2C_PORT_BC12               0
