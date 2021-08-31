@@ -27,7 +27,7 @@ GPIO_INT(USB_C0_PPC_INT_ODL,             PIN(F, 5), GPIO_INT_FALLING, ppc_interr
 GPIO_INT(USB_C1_TCPC_INT_ODL,            PIN(A, 2), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(USB_C1_BC12_INT_ODL,            PIN(0, 2), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C1_PPC_INT_ODL,             PIN(7, 0), GPIO_INT_FALLING, ppc_interrupt)
-GPIO_INT(USB_C1_RT_INT_ODL,              PIN(4, 1), GPIO_INT_FALLING, retimer_interrupt)
+GPIO_INT(USB_C1_RT_INT_ODL,              PIN(9, 7), GPIO_INT_FALLING, retimer_interrupt)
 
 /* USED GPIOs: */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
@@ -77,7 +77,7 @@ GPIO(USB_A_LOW_PWR_OD,               PIN(6, 6), GPIO_ODR_LOW)
 GPIO(TBT_PWR_EN,                     PIN(D, 4), GPIO_OUT_LOW)
 GPIO(TP4_RESET,                      PIN(9, 3), GPIO_ODR_LOW)
 GPIO(USB_C1_FRS_EN,                  PIN(9, 4), GPIO_OUT_LOW)
-GPIO(FAN_ID,                         PIN(9, 7), GPIO_INPUT)
+GPIO(FAN_ID,                         PIN(4, 1), GPIO_INPUT)
 GPIO(USB_C0_OC_ODL,                  PIN(5, 6), GPIO_ODR_HIGH)
 GPIO(USB_C1_OC_ODL,                  PIN(8, 6), GPIO_ODR_HIGH)
 
