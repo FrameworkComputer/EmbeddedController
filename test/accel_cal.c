@@ -125,11 +125,19 @@ void before_test(void)
 	accel_cal_reset(&cal);
 }
 
+void after_test(void) {}
+
 TEST_MAIN()
 {
 	ztest_test_suite(test_accel_cal,
-			 ztest_unit_test(test_calibrated_correctly_with_kasa),
-			 ztest_unit_test(test_calibrated_correctly_with_newton),
-			 ztest_unit_test(test_temperature_gates));
+			 ztest_unit_test_setup_teardown(
+				 test_calibrated_correctly_with_kasa,
+				 before_test, after_test),
+			 ztest_unit_test_setup_teardown(
+				 test_calibrated_correctly_with_newton,
+				 before_test, after_test),
+			 ztest_unit_test_setup_teardown(test_temperature_gates,
+							before_test,
+							after_test));
 	ztest_run_test_suite(test_accel_cal);
 }
