@@ -26,8 +26,8 @@
 /* USB packet ram config */
 #define CONFIG_USB_RAM_BASE        0x4000D800
 #define CONFIG_USB_RAM_SIZE        1024
-#define CONFIG_USB_RAM_ACCESS_TYPE uint32_t
-#define CONFIG_USB_RAM_ACCESS_SIZE 4
+#define CONFIG_USB_RAM_ACCESS_TYPE uint16_t
+#define CONFIG_USB_RAM_ACCESS_SIZE 2
 
 #undef I2C_PORT_COUNT
 #define I2C_PORT_COUNT	4
