@@ -25,6 +25,26 @@ config PLATFORM_EC_USBC_RETIMER_INTEL_BB
 	    - Multifunction Display (MFD): two unidirectional lanes of DP and
 	      one bidirectional lane of USB3.1 Gen1/2
 
+config PLATFORM_EC_USBC_RETIMER_INTEL_HB
+	bool "Support Intel Hayden Bridge retimer"
+	help
+	  Enable this to support the Intel Hayden Bridge Thunderbolt / USB /
+	  DisplayPort retimer.
+
+	  Intel Hayden Bridge is a Type-C multi-protocol retimer to be used
+	  in on-board applications. Hayden Bridge offers the ability to latch
+	  protocol signals into on-chip memory before retransmitting them
+	  onwards. It can be used to extend the physical length of the system
+	  without increasing high-frequency jitter.
+
+	  Hayden Bridge supports spec compliant retimer of following
+	  protocols:
+	  - Display Port: four unidirectional DP lanes
+	  - USB3.2 Gen1/2: two bi-directional USB lanes
+	  - Thunderbolt/USB4: two bi-directional USB4 lanes
+	  - Multifunction Display (MFD): two unidirectional lanes of DP and
+	    one bi-directional lane of USB3.2 Gen1/2
+
 config PLATFORM_EC_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
 	bool "Use runtime configuration of Intel Burnside Bridge"
 	depends on PLATFORM_EC_USBC_RETIMER_INTEL_BB

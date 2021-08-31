@@ -540,6 +540,10 @@ static int retimer_init(const struct usb_mux *me)
 	rv = bb_retimer_read(me, BB_RETIMER_REG_VENDOR_ID, &data);
 	if (rv != EC_SUCCESS)
 		return rv;
+#ifdef CONFIG_USBC_RETIMER_INTEL_HB
+	if (data != BB_RETIMER_DEVICE_ID)
+		return EC_ERROR_INVAL;
+#else
 	if ((data != BB_RETIMER_VENDOR_ID_1) &&
 			data != BB_RETIMER_VENDOR_ID_2)
 		return EC_ERROR_INVAL;
@@ -549,6 +553,7 @@ static int retimer_init(const struct usb_mux *me)
 		return rv;
 	if (data != BB_RETIMER_DEVICE_ID)
 		return EC_ERROR_INVAL;
+#endif
 
 	return EC_SUCCESS;
 }
