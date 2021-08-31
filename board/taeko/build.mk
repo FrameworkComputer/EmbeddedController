@@ -14,6 +14,7 @@ BASEBOARD:=brya
 board-y=
 board-y+=battery.o
 board-y+=board.o
+board-y+=charger.o
 board-y+=fans.o
 board-y+=fw_config.o
 board-y+=i2c.o
