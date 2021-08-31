@@ -45,6 +45,26 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
+/* ADC Channels */
+enum adc_channel {
+	ADC_TEMP_SENSOR_SOC = 0,
+	ADC_TEMP_SENSOR_CHARGER,
+	ADC_TEMP_SENSOR_MEMORY,
+	ADC_CORE_IMON1,
+	ADC_SOC_IMON2,
+	ADC_CH_COUNT
+};
+
+/* Temp Sensors */
+enum temp_sensor_id {
+	TEMP_SENSOR_SOC = 0,
+	TEMP_SENSOR_CHARGER,
+	TEMP_SENSOR_MEMORY,
+	TEMP_SENSOR_CPU,
+	TEMP_SENSOR_AMBIENT,
+	TEMP_SENSOR_COUNT
+};
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

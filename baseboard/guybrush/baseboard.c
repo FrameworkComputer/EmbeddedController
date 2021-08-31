@@ -5,7 +5,6 @@
 
 /* Guybrush family-specific configuration */
 
-#include "adc.h"
 #include "cros_board_info.h"
 #include "base_fw_config.h"
 #include "battery_fuel_gauge.h"
@@ -23,8 +22,6 @@
 #include "driver/retimer/ps8811.h"
 #include "driver/retimer/ps8818.h"
 #include "driver/tcpm/nct38xx.h"
-#include "driver/temp_sensor/sb_tsi.h"
-#include "driver/temp_sensor/tmp112.h"
 #include "driver/usb_mux/anx7451.h"
 #include "driver/usb_mux/amd_fp6.h"
 #include "fan.h"
@@ -39,9 +36,6 @@
 #include "pi3usb9201.h"
 #include "power.h"
 #include "pwm.h"
-#include "temp_sensor.h"
-#include "thermal.h"
-#include "temp_sensor/thermistor.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
@@ -149,145 +143,7 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-/* ADC Channels */
-const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_SOC] = {
-		.name = "SOC",
-		.input_ch = NPCX_ADC_CH0,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-	},
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		.name = "CHARGER",
-		.input_ch = NPCX_ADC_CH1,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-	},
-	[ADC_TEMP_SENSOR_MEMORY] = {
-		.name = "MEMORY",
-		.input_ch = NPCX_ADC_CH2,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-	},
-	[ADC_CORE_IMON1] = {
-		.name = "CORE_I",
-		.input_ch = NPCX_ADC_CH3,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-	},
-	[ADC_SOC_IMON2] = {
-		.name = "SOC_I",
-		.input_ch = NPCX_ADC_CH4,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-/* Temp Sensors */
-static int board_get_memory_temp(int, int *);
-
-const struct tmp112_sensor_t tmp112_sensors[] = {
-	{ I2C_PORT_SENSOR, TMP112_I2C_ADDR_FLAGS0 },
-	{ I2C_PORT_SENSOR, TMP112_I2C_ADDR_FLAGS1 },
-};
-BUILD_ASSERT(ARRAY_SIZE(tmp112_sensors) == TMP112_COUNT);
-
-const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_SOC] = {
-		.name = "SOC",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = board_get_soc_temp_k,
-		.idx = TMP112_SOC,
-	},
-	[TEMP_SENSOR_CHARGER] = {
-		.name = "Charger",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_CHARGER,
-	},
-	[TEMP_SENSOR_MEMORY] = {
-		.name = "Memory",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = board_get_memory_temp,
-		.idx = ADC_TEMP_SENSOR_MEMORY,
-	},
-	[TEMP_SENSOR_CPU] = {
-		.name = "CPU",
-		.type = TEMP_SENSOR_TYPE_CPU,
-		.read = sb_tsi_get_val,
-		.idx = 0,
-	},
-	[TEMP_SENSOR_AMBIENT] = {
-		.name = "Ambient",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = tmp112_get_val_k,
-		.idx = TMP112_AMB,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
-struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT] = {
-	[TEMP_SENSOR_SOC] = {
-		.temp_host = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(100),
-			[EC_TEMP_THRESH_HALT] = C_TO_K(105),
-		},
-		.temp_host_release = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
-		},
-		/* TODO: Setting fan off to 0 so it's allways on */
-		.temp_fan_off = C_TO_K(0),
-		.temp_fan_max = C_TO_K(70),
-	},
-	[TEMP_SENSOR_CHARGER] = {
-		.temp_host = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(100),
-			[EC_TEMP_THRESH_HALT] = C_TO_K(105),
-		},
-		.temp_host_release = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
-		},
-		.temp_fan_off = 0,
-		.temp_fan_max = 0,
-	},
-	[TEMP_SENSOR_MEMORY] = {
-		.temp_host = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(100),
-			[EC_TEMP_THRESH_HALT] = C_TO_K(105),
-		},
-		.temp_host_release = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
-		},
-		.temp_fan_off = 0,
-		.temp_fan_max = 0,
-	},
-	[TEMP_SENSOR_CPU] = {
-		.temp_host = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(100),
-			[EC_TEMP_THRESH_HALT] = C_TO_K(105),
-		},
-		.temp_host_release = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
-		},
-		/*
-		 * CPU temp sensor fan thresholds are high because they are a
-		 * backup for the SOC temp sensor fan thresholds.
-		 */
-		.temp_fan_off = C_TO_K(60),
-		.temp_fan_max = C_TO_K(90),
-	},
-	/*
-	 * Note: Leave ambient entries at 0, both as it does not represent a
-	 * hotspot and as not all boards have this sensor
-	 */
-};
-BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
 const struct charger_config_t chg_chips[] = {
 	{
@@ -811,13 +667,6 @@ void bc12_interrupt(enum gpio_signal signal)
 	default:
 		break;
 	}
-}
-
-static int board_get_memory_temp(int idx, int *temp_k)
-{
-	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-		return EC_ERROR_NOT_POWERED;
-	return get_temp_3v3_30k9_47k_4050b(idx, temp_k);
 }
 
 /**

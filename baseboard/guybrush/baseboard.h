@@ -314,31 +314,11 @@ enum usba_port {
 	USBA_PORT_COUNT
 };
 
-/* ADC Channels */
-enum adc_channel {
-	ADC_TEMP_SENSOR_SOC = 0,
-	ADC_TEMP_SENSOR_CHARGER,
-	ADC_TEMP_SENSOR_MEMORY,
-	ADC_CORE_IMON1,
-	ADC_SOC_IMON2,
-	ADC_CH_COUNT
-};
-
 /* TMP112 sensors */
 enum tmp112_sensor {
 	TMP112_SOC,
 	TMP112_AMB,
 	TMP112_COUNT,
-};
-
-/* Temp Sensors */
-enum temp_sensor_id {
-	TEMP_SENSOR_SOC = 0,
-	TEMP_SENSOR_CHARGER,
-	TEMP_SENSOR_MEMORY,
-	TEMP_SENSOR_CPU,
-	TEMP_SENSOR_AMBIENT,
-	TEMP_SENSOR_COUNT
 };
 
 enum sensor_id {
