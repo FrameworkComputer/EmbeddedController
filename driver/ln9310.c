@@ -373,7 +373,7 @@ static int ln9310_precharge_cfly_reset(void)
 	return status;
 }
 
-void ln9310_init(void)
+int ln9310_init(void)
 {
 	int status, val, chip_revision;
 	enum battery_cell_type batt;
@@ -389,9 +389,9 @@ void ln9310_init(void)
 	 * should not use the software startup sequence.
 	 */
 	status = raw_read8(LN9310_REG_BC_STS_C, &val);
-	if (status) {
+	if (status != EC_SUCCESS) {
 		CPRINTS("LN9310 reading BC_STS_C failed");
-		return;
+		return status;
 	}
 	chip_revision = val & LN9310_BC_STS_C_CHIP_REV_MASK;
 	startup_workaround_required = chip_revision < LN9310_BC_STS_C_CHIP_REV_FIXED;
@@ -400,7 +400,7 @@ void ln9310_init(void)
 	status = ln9310_update_infet();
 
 	if (status != EC_SUCCESS)
-		return;
+		return status;
 
 	/*
 	 * Set OPERATION_MODE update method
@@ -439,7 +439,7 @@ void ln9310_init(void)
 		/* Update Startup sequence */
 		status = ln9310_update_startup_seq();
 		if (status != EC_SUCCESS)
-			return;
+			return status;
 	}
 
 	batt = board_get_battery_cell_type();
@@ -449,16 +449,17 @@ void ln9310_init(void)
 		status = ln9310_init_2to1();
 	} else {
 		CPRINTS("LN9310 not supported battery type: %d", batt);
-		return;
+		return EC_ERROR_INVAL;
 	}
 
 	if (status != EC_SUCCESS)
-		return;
+		return status;
 
 	/* Unmask the MODE change interrupt */
 	field_update8(LN9310_REG_INT1_MSK,
 			LN9310_INT1_MODE,
 			0);
+	return EC_SUCCESS;
 }
 
 void ln9310_software_enable(int enable)
