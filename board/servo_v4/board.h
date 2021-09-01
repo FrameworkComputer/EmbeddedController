@@ -10,6 +10,11 @@
 
 #define CONFIG_LTO
 
+/* Free up flash space */
+#ifdef SECTION_IS_RO
+#define CONFIG_DEBUG_ASSERT_BRIEF
+#endif
+
 /*
  * Board Versions:
  * Versions are designated by the PCB color and consist of red, blue, and
