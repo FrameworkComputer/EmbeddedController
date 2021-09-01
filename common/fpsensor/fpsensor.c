@@ -132,6 +132,17 @@ static uint32_t fp_process_enroll(void)
 	     | (percent << EC_MKBP_FP_ENROLL_PROGRESS_OFFSET);
 }
 
+static bool fp_match_success(int match_result)
+{
+	if (match_result == EC_MKBP_FP_ERR_MATCH_YES ||
+	    match_result == EC_MKBP_FP_ERR_MATCH_YES_UPDATED ||
+	    match_result == EC_MKBP_FP_ERR_MATCH_YES_UPDATE_FAILED) {
+		return true;
+	}
+
+	return false;
+}
+
 static uint32_t fp_process_match(void)
 {
 	timestamp_t t0 = get_time();
@@ -146,20 +157,39 @@ static uint32_t fp_process_match(void)
 		res = fp_finger_match(fp_template[0], templ_valid, fp_buffer,
 				      &fgr, &updated);
 		CPRINTS("Match =>%d (finger %d)", res, fgr);
-		if (res < 0 || fgr < 0 || fgr >= FP_MAX_FINGER_COUNT) {
+
+		if (fp_match_success(res)) {
+			/*
+			 * Match succeded! Let's check if template number
+			 * is valid. If it is not valid, overwrite result
+			 * with EC_MKBP_FP_ERR_MATCH_NO_INTERNAL.
+			 */
+			if (fgr >= 0 && fgr < FP_MAX_FINGER_COUNT) {
+				fp_enable_positive_match_secret(fgr,
+					&positive_match_secret_state);
+			} else {
+				res = EC_MKBP_FP_ERR_MATCH_NO_INTERNAL;
+			}
+		} else if (res < 0) {
+			/*
+			 * Negative result means that there is a problem with
+			 * code responsible for matching. Overwrite it with
+			 * MATCH_NO_INTERNAL to let upper layers know what
+			 * happened.
+			 */
 			res = EC_MKBP_FP_ERR_MATCH_NO_INTERNAL;
-			timestamps_invalid |= FPSTATS_MATCHING_INV;
-		} else {
-			fp_enable_positive_match_secret(fgr,
-				&positive_match_secret_state);
 		}
+
 		if (res == EC_MKBP_FP_ERR_MATCH_YES_UPDATED)
 			templ_dirty |= updated;
 	} else {
 		CPRINTS("No enrolled templates");
 		res = EC_MKBP_FP_ERR_MATCH_NO_TEMPLATES;
-		timestamps_invalid |= FPSTATS_MATCHING_INV;
 	}
+
+	if (!fp_match_success(res))
+		timestamps_invalid |= FPSTATS_MATCHING_INV;
+
 	matching_time_us = time_since32(t0);
 	return EC_MKBP_FP_MATCH | EC_MKBP_FP_ERRCODE(res)
 	| ((fgr << EC_MKBP_FP_MATCH_IDX_OFFSET) & EC_MKBP_FP_MATCH_IDX_MASK);
