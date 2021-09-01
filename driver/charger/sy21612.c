@@ -166,7 +166,7 @@ void sy21612_int(enum gpio_signal signal)
 }
 
 #ifdef HAS_TASK_SY21612
-void sy21612_task(void)
+void sy21612_task(void *u)
 {
 	int flags;
 
@@ -211,4 +211,3 @@ static int command_sy21612(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(sy21612, command_sy21612,
 			NULL, NULL);
 #endif
-
