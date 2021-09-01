@@ -26,6 +26,27 @@
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
+#if defined(CONFIG_ZEPHYR) && defined(CONFIG_ACCEL_INTERRUPTS)
+
+/* Get the motion sensor ID of the ICM426xx sensor that generates the interrupt.
+ * The interrupt is converted to the event and transferred to motion sense task
+ * that actually handles the interrupt.
+ *
+ * Here we use an alias (icm426xx_int) to get the motion sensor ID. This alias
+ * MUST be defined for this driver to work.
+ * aliases {
+ *   icm426xx-int = &base_accel;
+ * };
+ */
+#if DT_NODE_EXISTS(DT_ALIAS(icm426xx_int))
+#define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(icm426xx_int)))
+#else
+#error Missing aliases/icm426xx-int in device tree
+#endif
+
+#endif /* defined(CONFIG_ZEPHYR) && defined(CONFIG_ACCEL_INTERRUPTS) */
+
 STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
 
 static int icm426xx_normalize(const struct motion_sensor_t *s, intv3_t v,
@@ -963,6 +984,19 @@ out_unlock:
 	return ret;
 }
 
+static int icm426xx_probe(const struct motion_sensor_t *s)
+{
+	int val;
+
+	if (icm_read8(s, ICM426XX_REG_WHO_AM_I, &val) != EC_SUCCESS)
+		return EC_ERROR_NOT_HANDLED;
+
+	if (val != ICM426XX_CHIP_ICM40608 && val != ICM426XX_CHIP_ICM42605)
+		return EC_ERROR_NOT_HANDLED;
+
+	return EC_SUCCESS;
+}
+
 const struct accelgyro_drv icm426xx_drv = {
 	.init = icm426xx_init,
 	.read = icm426xx_read,
@@ -975,7 +1009,9 @@ const struct accelgyro_drv icm426xx_drv = {
 	.get_offset = icm426xx_get_offset,
 	.set_scale = icm_set_scale,
 	.get_scale = icm_get_scale,
+	.probe = icm426xx_probe,
 #ifdef CONFIG_ACCEL_INTERRUPTS
+	.interrupt = icm426xx_interrupt,
 	.irq_handler = icm426xx_irq_handler,
 #endif
 };

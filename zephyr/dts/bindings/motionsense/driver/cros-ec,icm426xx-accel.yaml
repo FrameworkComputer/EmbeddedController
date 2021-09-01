@@ -1,0 +1,13 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: motion sense sensor node for ICM426xx accel
+
+compatible: "cros-ec,icm426xx-accel"
+
+include: icm426xx.yaml
+
+properties:
+  default-range:
+    default: 4

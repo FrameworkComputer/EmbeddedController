@@ -37,3 +37,6 @@
 #ifdef CONFIG_PLATFORM_EC_ALS_TCS3400
 #include "tcs3400-drvinfo.inc"
 #endif
+#ifdef CONFIG_PLATFORM_EC_ACCELGYRO_ICM426XX
+#include "icm426xx-drvinfo.inc"
+#endif

@@ -11,6 +11,7 @@
 #include "accelgyro.h"
 #include "hwtimer.h"
 #include "timer.h"
+#include "builtin/stddef.h"
 
 #if !defined(CONFIG_ACCELGYRO_ICM_COMM_SPI) && \
 	!defined(CONFIG_ACCELGYRO_ICM_COMM_I2C)

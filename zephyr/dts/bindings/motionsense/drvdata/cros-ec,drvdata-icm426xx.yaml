@@ -1,0 +1,18 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: ICM426xx driver data node
+
+compatible: "cros-ec,drvdata-icm426xx"
+
+include: drvdata-base.yaml
+
+#
+# examples:
+#
+# icm426xx_data: icm426xx-drv-data {
+#       compatible = "cros-ec,drvdata-icm426xx";
+#       status = "okay";
+# };
+#
