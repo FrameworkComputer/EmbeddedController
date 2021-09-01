@@ -283,9 +283,9 @@ end_perform_calib:
 }
 
 #ifdef CONFIG_GESTURE_HOST_DETECTION
-int list_activities(const struct motion_sensor_t *s,
-		    uint32_t *enabled,
-		    uint32_t *disabled)
+static int list_activities(const struct motion_sensor_t *s,
+			   uint32_t *enabled,
+			   uint32_t *disabled)
 {
 	struct bmi_drv_data_t *data = BMI_GET_DATA(s);
 	*enabled = data->enabled_activities;
