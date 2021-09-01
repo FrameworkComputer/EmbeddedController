@@ -406,10 +406,12 @@ flash_fp_mcu_stm32() {
   gpio 0   "${gpio_boot0}" "${gpio_nrst}"
   gpio 1   "${gpio_nrst}"
 
-  # Give up GPIO control
-  # TODO(b/179839337): Remove this for Strongbad DVT, where we should have
-  # correct external pulls on these lines.
-  if [[ "${PLATFORM_NAME}" != "strongbad" ]]; then
+  # Give up GPIO control, unless we need to keep these driving as
+  # outputs because they're not open-drain signals.
+  # TODO(b/179839337): Make this the default and properly support
+  # open-drain outputs on other platforms.
+  if [[ "${PLATFORM_NAME}" != "strongbad" ]] &&
+     [[ "${PLATFORM_NAME}" != "herobrine" ]]; then
     gpio in       "${gpio_boot0}" "${gpio_nrst}"
   fi
   gpio unexport "${gpio_boot0}" "${gpio_nrst}"
@@ -472,6 +474,20 @@ config_hatch() {
   readonly GPIO_PWREN=467
 }
 
+config_herobrine() {
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev11.0"
+  # TODO(b/179533783): Fix this script to look for non-ACPI modalias
+  readonly DEVICEID="spi11.0"
+
+  readonly GPIO_CHIP="gpiochip336"
+  # FPMCU RST_ODL is $(gpiofind FP_RST_L) is gpiochip0 78
+  readonly GPIO_NRST=$((336 + $(gpiofind FP_RST_L|cut -f2 -d" ")))
+  # FPMCU BOOT0 is $(gpiofind FPMCU_BOOT0) is gpiochip0 77
+  readonly GPIO_BOOT0=$((336 + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
+  # EN FP RAILS is $(gpiofind EN_FP_RAILS) is gpiochip0 42
+  readonly GPIO_PWREN=$((336 + $(gpiofind EN_FP_RAILS|cut -f2 -d" ")))
+}
 
 config_nami() {
   readonly TRANSPORT="SPI"
