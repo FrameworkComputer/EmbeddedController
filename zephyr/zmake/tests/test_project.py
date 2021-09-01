@@ -70,8 +70,8 @@ def test_find_dts_overlays(modules):
             with TemporaryProject(
                 {
                     "board": board,
-                    "toolchain": "foo",
                     "output-type": "elf",
+                    "supported-toolchains": ["llvm"],
                     "supported-zephyr-versions": ["v2.6"],
                 }
             ) as project:
@@ -104,8 +104,8 @@ def test_prune_modules(modules):
     with TemporaryProject(
         {
             "board": "native_posix",
-            "toolchain": "coreboot-sdk",
             "output-type": "elf",
+            "supported-toolchains": ["coreboot-sdk"],
             "supported-zephyr-versions": ["v2.6"],
             "modules": modules,
         }
@@ -125,8 +125,8 @@ def test_prune_modules_unavailable():
     with TemporaryProject(
         {
             "board": "native_posix",
-            "toolchain": "coreboot-sdk",
             "output-type": "elf",
+            "supported-toolchains": ["coreboot-sdk"],
             "supported-zephyr-versions": ["v2.6"],
             "modules": ["hal_stm32", "cmsis"],
         }
@@ -144,7 +144,8 @@ def test_find_projects_empty(tmp_path):
 YAML_FILE = """
 supported-zephyr-versions:
   - v2.6
-toolchain: coreboot-sdk
+supported-toolchains:
+  - coreboot-sdk
 output-type: npcx
 """
 

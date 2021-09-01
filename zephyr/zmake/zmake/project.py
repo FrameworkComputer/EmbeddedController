@@ -12,6 +12,7 @@ import yaml
 import zmake.build_config as build_config
 import zmake.modules as modules
 import zmake.output_packers as packers
+import zmake.toolchains as toolchains
 import zmake.util as util
 
 # The version of jsonschema in the chroot has a bunch of
@@ -55,7 +56,12 @@ class ProjectConfig:
     validator = jsonschema.Draft7Validator
     schema = {
         "type": "object",
-        "required": ["supported-zephyr-versions", "board", "output-type", "toolchain"],
+        "required": [
+            "board",
+            "output-type",
+            "supported-toolchains",
+            "supported-zephyr-versions",
+        ],
         "properties": {
             "supported-zephyr-versions": {
                 "type": "array",
@@ -80,8 +86,12 @@ class ProjectConfig:
                 "type": "string",
                 "enum": list(packers.packer_registry),
             },
-            "toolchain": {
-                "type": "string",
+            "supported-toolchains": {
+                "type": "array",
+                "items": {
+                    "type": "string",
+                    "enum": list(toolchains.support_classes),
+                },
             },
             "is-test": {
                 "type": "boolean",
@@ -120,8 +130,8 @@ class ProjectConfig:
         return packers.packer_registry[self.config_dict["output-type"]]
 
     @property
-    def toolchain(self):
-        return self.config_dict["toolchain"]
+    def supported_toolchains(self):
+        return self.config_dict["supported-toolchains"]
 
     @property
     def is_test(self):
@@ -211,3 +221,28 @@ class Project:
                     "available.".format(module, self.project_dir)
                 ) from e
         return result
+
+    def get_toolchain(self, module_paths, override=None):
+        if override:
+            if override not in self.config.supported_toolchains:
+                logging.warning(
+                    "Toolchain %r isn't supported by this project. You're on your own.",
+                    override,
+                )
+            support_class = toolchains.support_classes.get(
+                override, toolchains.GenericToolchain
+            )
+            return support_class(name=override, modules=module_paths)
+        else:
+            for name in self.config.supported_toolchains:
+                support_class = toolchains.support_classes[name]
+                toolchain = support_class(name=name, modules=module_paths)
+                if toolchain.probe():
+                    logging.info("Toolchain %r selected by probe function.", toolchain)
+                    return toolchain
+            raise OSError(
+                "No supported toolchains could be found on your system. If you see "
+                "this message in the chroot, it indicates a bug. Otherwise, you'll "
+                "either want to setup your system with a supported toolchain, or "
+                "manually select an unsupported toolchain with the -t flag."
+            )

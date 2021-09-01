@@ -19,6 +19,7 @@ import zmake.build_config
 import zmake.jobserver
 import zmake.multiproc as multiproc
 import zmake.project
+import zmake.toolchains
 import zmake.zmake as zm
 
 OUR_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -48,6 +49,12 @@ class FakeProject:
 
     def find_dts_overlays(self, module_paths):
         return zmake.build_config.BuildConfig()
+
+    def get_toolchain(self, module_paths, override=None):
+        return zmake.toolchains.GenericToolchain(
+            override or "foo",
+            modules=module_paths,
+        )
 
 
 class FakeJobserver(zmake.jobserver.GNUMakeJobServer):

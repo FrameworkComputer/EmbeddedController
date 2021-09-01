@@ -16,7 +16,6 @@ import zmake.jobserver
 import zmake.modules
 import zmake.multiproc
 import zmake.project
-import zmake.toolchains as toolchains
 import zmake.util as util
 import zmake.version
 
@@ -260,10 +259,8 @@ class Zmake:
 
         dts_overlay_config = project.find_dts_overlays(module_paths)
 
-        if not toolchain:
-            toolchain = project.config.toolchain
-
-        toolchain_config = toolchains.get_toolchain(toolchain, module_paths)
+        toolchain_support = project.get_toolchain(module_paths, override=toolchain)
+        toolchain_config = toolchain_support.get_build_config()
 
         if bringup:
             base_config |= zmake.build_config.BuildConfig(

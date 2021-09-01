@@ -54,8 +54,8 @@ def _setup_example_repos(tmp_path):
         project_path,
         config_dict={
             "board": "foo",
-            "toolchain": "bar",
             "output-type": "raw",
+            "supported-toolchains": ["coreboot-sdk"],
             "supported-zephyr-versions": ["v2.6"],
         },
     )

@@ -8,7 +8,9 @@ dts-overlays:
   - gpio.dts
   - keyboard.dts
   - motionsense.dts
+supported-toolchains:
+  - coreboot-sdk
+  - zephyr
 supported-zephyr-versions:
   - v2.6
-toolchain: coreboot-sdk
 output-type: npcx

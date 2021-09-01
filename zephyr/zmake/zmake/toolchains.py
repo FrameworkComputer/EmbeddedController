@@ -3,88 +3,152 @@
 # found in the LICENSE file.
 """Definitions of toolchain variables."""
 
-import glob
 import os
 import pathlib
 
 import zmake.build_config as build_config
 
 
-def find_zephyr_sdk():
-    """Find the Zephyr SDK, if it's installed.
+class GenericToolchain:
+    """Default toolchain if not known to zmake.
 
-    Returns:
-        The path to the Zephyr SDK, using the search rules defined by
-        https://docs.zephyrproject.org/latest/getting_started/installation_linux.html
+    Simply pass ZEPHYR_TOOLCHAIN_VARIANT=name to the build, with
+    nothing extra.
     """
 
-    def _gen_sdk_paths():
-        yield os.getenv("ZEPHYR_SDK_INSTALL_DIR")
+    def __init__(self, name, modules=None):
+        self.name = name
+        self.modules = modules or {}
 
-        for searchpath in (
-            "~/zephyr-sdk",
-            "~/.local/zephyr-sdk",
-            "~/.local/opt/zephyr-sdk",
-            "~/bin/zephyr-sdk",
-            "/opt/zephyr-sdk",
-            "/usr/zephyr-sdk",
-            "/usr/local/zephyr-sdk",
-        ):
-            for suffix in ("", "-*"):
-                yield from glob.glob(os.path.expanduser(searchpath + suffix))
+    def probe(self):
+        """Probe if the toolchain is available on the system."""
+        # Since the toolchain is not known to zmake, we have no way to
+        # know if it's installed.  Simply return False to indicate not
+        # installed.  An unknown toolchain would only be used if -t
+        # was manually passed to zmake, and is not valid to put in a
+        # zmake.yaml file.
+        return False
 
-    for path in _gen_sdk_paths():
-        if not path:
-            continue
-        path = pathlib.Path(path)
-        if (path / "sdk_version").is_file():
-            return path
+    def get_build_config(self):
+        """Get the build configuration for the toolchain.
 
-    raise OSError("Unable to find the Zephyr SDK")
+        Returns:
+            A build_config.BuildConfig to be applied to the build.
+        """
+        return build_config.BuildConfig(
+            cmake_defs={
+                "ZEPHYR_TOOLCHAIN_VARIANT": self.name,
+            },
+        )
 
 
-# Mapping of toolchain names -> (λ (module-paths) build-config)
-toolchains = {
-    "coreboot-sdk": lambda modules: build_config.BuildConfig(
-        cmake_defs={
-            "TOOLCHAIN_ROOT": str(modules["ec"] / "zephyr"),
-            "ZEPHYR_TOOLCHAIN_VARIANT": "coreboot-sdk",
+class CorebootSdkToolchain(GenericToolchain):
+    def probe(self):
+        # For now, we always assume it's at /opt/coreboot-sdk, since
+        # that's where it's installed in the chroot.  We may want to
+        # consider adding support for a coreboot-sdk built in the
+        # user's home directory, for example, which happens if a
+        # "make crossgcc" is done from the coreboot repository.
+        return pathlib.Path("/opt/coreboot-sdk").is_dir()
+
+    def get_build_config(self):
+        return (
+            build_config.BuildConfig(
+                cmake_defs={
+                    "TOOLCHAIN_ROOT": str(self.modules["ec"] / "zephyr"),
+                },
+            )
+            | super().get_build_config()
+        )
+
+
+class ZephyrToolchain(GenericToolchain):
+    def __init__(self, *args, **kwargs):
+        self.zephyr_sdk_install_dir = self._find_zephyr_sdk()
+        super().__init__(*args, **kwargs)
+
+    @staticmethod
+    def _find_zephyr_sdk():
+        """Find the Zephyr SDK, if it's installed.
+
+        Returns:
+            The path to the Zephyr SDK, using the search rules defined by
+            https://docs.zephyrproject.org/latest/getting_started/installation_linux.html,
+            or None, if one cannot be found on the system.
+        """
+        from_env = os.getenv("ZEPHYR_SDK_INSTALL_DIR")
+        if from_env:
+            return pathlib.Path(from_env)
+
+        def _gen_sdk_paths():
+            for prefix in (
+                "~",
+                "~/.local",
+                "~/.local/opt",
+                "~/bin",
+                "/opt",
+                "/usr",
+                "/usr/local",
+            ):
+                prefix = pathlib.Path(os.path.expanduser(prefix))
+                yield prefix / "zephyr-sdk"
+                yield from prefix.glob("zephyr-sdk-*")
+
+        for path in _gen_sdk_paths():
+            if (path / "sdk_version").is_file():
+                return path
+
+        return None
+
+    def probe(self):
+        return bool(self.zephyr_sdk_install_dir)
+
+    def get_build_config(self):
+        assert self.zephyr_sdk_install_dir
+        tc_vars = {
+            "ZEPHYR_SDK_INSTALL_DIR": str(self.zephyr_sdk_install_dir),
         }
-    ),
-    "llvm": lambda modules: build_config.BuildConfig(
-        cmake_defs={
-            "TOOLCHAIN_ROOT": str(modules["ec"] / "zephyr"),
-            "ZEPHYR_TOOLCHAIN_VARIANT": "llvm",
-        }
-    ),
-    "zephyr": lambda _: build_config.BuildConfig(
-        cmake_defs={
-            "ZEPHYR_TOOLCHAIN_VARIANT": "zephyr",
-            "ZEPHYR_SDK_INSTALL_DIR": str(find_zephyr_sdk()),
-        },
-        environ_defs={"ZEPHYR_SDK_INSTALL_DIR": str(find_zephyr_sdk())},
-    ),
-    "arm-none-eabi": lambda _: build_config.BuildConfig(
-        cmake_defs={
-            "ZEPHYR_TOOLCHAIN_VARIANT": "cross-compile",
-            "CROSS_COMPILE": "/usr/bin/arm-none-eabi-",
-        }
-    ),
+        return (
+            build_config.BuildConfig(
+                environ_defs=tc_vars,
+                cmake_defs=tc_vars,
+            )
+            | super().get_build_config()
+        )
+
+
+class LlvmToolchain(GenericToolchain):
+    def probe(self):
+        # TODO: differentiate chroot llvm path vs. something more
+        # generic?
+        return pathlib.Path("/usr/bin/x86_64-pc-linux-gnu-clang").exists()
+
+    def get_build_config(self):
+        # TODO: this contains custom settings for the chroot.  Plumb a
+        # toolchain for "generic-llvm" for external uses?
+        return (
+            build_config.BuildConfig(
+                cmake_defs={
+                    "TOOLCHAIN_ROOT": str(self.modules["ec"] / "zephyr"),
+                },
+            )
+            | super().get_build_config()
+        )
+
+
+class HostToolchain(GenericToolchain):
+    def probe(self):
+        # "host" toolchain for Zephyr means GCC.
+        for search_path in os.getenv("PATH", "/usr/bin").split(":"):
+            if (pathlib.Path(search_path) / "gcc").exists():
+                return True
+        return False
+
+
+# Mapping of toolchain names -> support class
+support_classes = {
+    "coreboot-sdk": CorebootSdkToolchain,
+    "host": HostToolchain,
+    "llvm": LlvmToolchain,
+    "zephyr": ZephyrToolchain,
 }
-
-
-def get_toolchain(name, module_paths):
-    """Get a toolchain by name.
-
-    Args:
-        name: The name of the toolchain.
-        module_paths: Dictionary mapping module names to paths.
-
-    Returns:
-        The corresponding BuildConfig from the defined toolchains, if
-        one exists, otherwise a simple BuildConfig which sets
-        ZEPHYR_TOOLCHAIN_VARIANT to the corresponding name.
-    """
-    if name in toolchains:
-        return toolchains[name](module_paths)
-    return build_config.BuildConfig(cmake_defs={"ZEPHYR_TOOLCHAIN_VARIANT": name})

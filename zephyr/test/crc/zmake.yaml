@@ -5,6 +5,8 @@
 board: native_posix
 supported-zephyr-versions:
   - v2.6
-toolchain: llvm
+supported-toolchains:
+  - llvm
+  - host
 output-type: elf
 is-test: true

@@ -9,7 +9,9 @@ dts-overlays:
   - i2c.dts
   - motionsense.dts
   - switchcap.dts
+supported-toolchains:
+  - coreboot-sdk
+  - zephyr
 supported-zephyr-versions:
   - v2.6
-toolchain: coreboot-sdk
 output-type: npcx
