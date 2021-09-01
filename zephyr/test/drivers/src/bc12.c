@@ -95,16 +95,6 @@ static const struct bc12_status bc12_chg_limits[] = {
 #define GPIO_ACOK_OD_PATH DT_PATH(named_gpios, acok_od)
 #define GPIO_ACOK_OD_PORT DT_GPIO_PIN(GPIO_ACOK_OD_PATH, gpios)
 
-/*
- * The driver test app seems to have USBC_PORT_COUNT=2 but missing the task for
- * port 1, so change port count to 1 here.
- * TODO: fix the app so count and tasks agree.
- */
-__override uint8_t board_get_usb_pd_port_count(void)
-{
-	return 1;
-}
-
 static void test_bc12_pi3usb9201_host_mode(void)
 {
 	struct i2c_emul *emul = pi3usb9201_emul_get(PI3USB9201_ORD);
@@ -262,6 +252,7 @@ static void test_bc12_pi3usb9201(void)
 	 * role to disconnected.
 	 */
 	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_CC_OPEN);
+	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_CC_OPEN);
 	msleep(1);
 	/*
 	 * Expect the pi3usb9201 driver to configure power down mode and mask
