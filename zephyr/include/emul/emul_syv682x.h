@@ -12,6 +12,7 @@
 #define __EMUL_SYV682X_H
 
 #include <drivers/i2c_emul.h>
+#include <stdint.h>
 
 /* Register info copied from syv682.h */
 
@@ -107,6 +108,15 @@
  * @return Pointer to smart battery emulator
  */
 struct i2c_emul *syv682x_emul_get(int ord);
+
+/**
+ * @brief Set the underlying interrupt conditions affecting the status register
+ *
+ * @param emul SYV682x emulator
+ * @param val  A status register value corresponding to the underlying
+ *             conditions
+ */
+void syv682x_emul_set_status(struct i2c_emul *emul, uint8_t val);
 
 /**
  * @brief Set value of a register of SYV682x

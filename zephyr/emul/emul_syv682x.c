@@ -12,6 +12,7 @@
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
 #include <logging/log.h>
 LOG_MODULE_REGISTER(syv682x);
+#include <stdint.h>
 #include <string.h>
 
 #include "emul/emul_syv682x.h"
@@ -28,6 +29,12 @@ struct syv682x_emul_data {
 	const struct syv682x_emul_cfg *cfg;
 	/** Current state of all emulated SYV682x registers */
 	uint8_t reg[EMUL_REG_COUNT];
+	/**
+	 * Current state of conditions affecting interrupt bits, as distinct
+	 * from the current values of those bits stored in reg.
+	 */
+	uint8_t status_cond;
+	uint8_t control_4_cond;
 };
 
 /** Static configuration for the emulator */
@@ -51,6 +58,15 @@ int syv682x_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val)
 	data->reg[reg] = val;
 
 	return 0;
+}
+
+void syv682x_emul_set_status(struct i2c_emul *emul, uint8_t val)
+{
+	struct syv682x_emul_data *data;
+
+	data = CONTAINER_OF(emul, struct syv682x_emul_data, emul);
+	data->status_cond = val;
+	data->reg[SYV682X_STATUS_REG] |= val;
 }
 
 int syv682x_emul_get_reg(struct i2c_emul *emul, int reg, uint8_t *val)
@@ -102,6 +118,10 @@ static int syv682x_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 		return syv682x_emul_set_reg(emul, msgs[0].buf[0],
 				msgs[0].buf[1]);
 	} else if (num_msgs == 2) {
+		int ret;
+		int reg;
+		uint8_t *buf;
+
 		if (!((msgs[0].flags & I2C_MSG_RW_MASK) == I2C_MSG_WRITE
 					&& msgs[0].len == 1
 					&& (msgs[1].flags & I2C_MSG_RW_MASK) ==
@@ -110,8 +130,27 @@ static int syv682x_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 			LOG_ERR("Unexpected read msgs");
 			return -EIO;
 		}
-		return syv682x_emul_get_reg(emul, msgs[0].buf[0],
-				&msgs[1].buf[0]);
+
+		reg = msgs[0].buf[0];
+		buf = &msgs[1].buf[0];
+		ret = syv682x_emul_get_reg(emul, reg, buf);
+
+		switch (reg) {
+		/*
+		 * These registers are clear-on-read (if the underlying
+		 * condition has cleared).
+		 */
+		case SYV682X_STATUS_REG:
+			syv682x_emul_set_reg(emul, reg, data->status_cond);
+			break;
+		case SYV682X_CONTROL_4_REG:
+			syv682x_emul_set_reg(emul, reg, data->control_4_cond);
+			break;
+		default:
+			break;
+		}
+
+		return ret;
 	} else {
 		LOG_ERR("Unexpected num_msgs");
 		return -EIO;
