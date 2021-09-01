@@ -557,7 +557,8 @@ int board_set_active_charge_port(int port)
 	if (port == 1)
 		RETURN_ERROR(rt1718s_gpio_ctrl(RT1718S_GPIO_ENABLE_SINK));
 	else if (port != 1 && !ppc_is_sourcing_vbus(1))
-		RETURN_ERROR(rt1718s_gpio_ctrl(RT1718S_GPIO_DISABLED));
+		/* error ignored to make port 0 work without sub-board */
+		rt1718s_gpio_ctrl(RT1718S_GPIO_DISABLED);
 
 	return EC_SUCCESS;
 }
