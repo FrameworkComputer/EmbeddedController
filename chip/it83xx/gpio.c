@@ -871,6 +871,9 @@ static void __gpio_irq(void)
 	/* Determine interrupt number. */
 	int irq = intc_get_ec_int();
 
+	/* assert failure if interrupt number is zero */
+	ASSERT(irq);
+
 #ifdef HAS_TASK_KEYSCAN
 	if (irq == IT83XX_IRQ_WKINTC) {
 		keyboard_raw_interrupt();
