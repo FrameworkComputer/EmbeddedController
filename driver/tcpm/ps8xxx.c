@@ -614,6 +614,9 @@ static int ps8xxx_lpm_recovery_delay(int port)
 
 	val = 0;
 	for (;;) {
+		if (timestamp_expired(deadline, NULL))
+			return EC_ERROR_TIMEOUT;
+
 		status = tcpc_read(port, fw_reg, &val);
 		if (status != EC_SUCCESS) {
 			/* wait for chip to wake up */
@@ -623,8 +626,6 @@ static int ps8xxx_lpm_recovery_delay(int port)
 		if (val != 0)
 			break;
 		msleep(1);
-		if (timestamp_expired(deadline, NULL))
-			return EC_ERROR_TIMEOUT;
 	}
 
 	return EC_SUCCESS;
