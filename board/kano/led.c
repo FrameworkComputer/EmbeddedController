@@ -67,9 +67,6 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	case EC_LED_ID_LEFT_LED:
 		pwm_id = PWM_LED0;
 		break;
-	case EC_LED_ID_RIGHT_LED:
-		pwm_id = PWM_LED1;
-		break;
 	default:
 		return EC_ERROR_UNKNOWN;
 	}
