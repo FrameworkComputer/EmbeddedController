@@ -6,13 +6,24 @@
 #include "common.h"
 #include "accelgyro.h"
 #include "adc_chip.h"
+#include "driver/accel_bma422.h"
+#include "driver/accel_bma4xx.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dso.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "motion_sense.h"
 #include "temp_sensor.h"
 #include "thermal.h"
 #include "temp_sensor/thermistor.h"
+
+#if 0
+#define CPRINTS(format, args...) ccprints(format, ## args)
+#define CPRINTF(format, args...) ccprintf(format, ## args)
+#else
+#define CPRINTS(format, args...)
+#define CPRINTF(format, args...)
+#endif
 
 /* ADC configuration */
 const struct adc_t adc_channels[] = {
@@ -51,6 +62,7 @@ K_MUTEX_DEFINE(g_lid_accel_mutex);
 K_MUTEX_DEFINE(g_base_accel_mutex);
 static struct stprivate_data g_lis2dw12_data;
 static struct lsm6dso_data lsm6dso_data;
+static struct accelgyro_saved_data_t g_bma422_data;
 
 /* TODO(b/184779333): calibrate the orientation matrix on later board stage */
 static const mat33_fp_t lid_standard_ref = {
@@ -66,9 +78,39 @@ static const mat33_fp_t base_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
+
+struct motion_sensor_t bma422_lid_accel = {
+	.name = "Lid Accel - BMA",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_BMA422,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &bma4_accel_drv,
+	.mutex = &g_lid_accel_mutex,
+	.drv_data = &g_bma422_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = BMA4_I2C_ADDR_PRIMARY, /* 0x18 */
+	.rot_standard_ref = &lid_standard_ref, /* identity matrix */
+	.default_range = 2, /* g, enough for laptop. */
+	.min_frequency = BMA4_ACCEL_MIN_FREQ,
+	.max_frequency = BMA4_ACCEL_MAX_FREQ,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* Sensor on in S3 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+			.ec_rate = 0,
+		},
+	},
+};
+
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
-		.name = "Lid Accel",
+		.name = "Lid Accel - ST",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
 		.chip = MOTIONSENSE_CHIP_LIS2DW12,
 		.type = MOTIONSENSE_TYPE_ACCEL,
@@ -78,7 +120,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &g_lis2dw12_data,
 		.int_signal = GPIO_EC_ACCEL_INT_R_L,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = LIS2DW12_ADDR1,
+		.i2c_spi_addr_flags = LIS2DW12_ADDR1, /* 0x19 */
 		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.rot_standard_ref = &lid_standard_ref, /* identity matrix */
 		.default_range = 2, /* g */
@@ -157,14 +199,87 @@ struct motion_sensor_t motion_sensors[] = {
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
+static void board_detect_motionsensor(void)
+{
+	int ret;
+	int val;
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return;
+
+	/*
+	 * TODO:b/194765820 - Dynamic motion sensor count
+	 * Clamshell un-support motion sensor.
+	 * We should ignore to detect motion sensor for clamshell.
+	 * List this TODO item until we know how to identify DUT type.
+	 */
+
+	/* Check lid accel chip */
+	ret = i2c_read8(I2C_PORT_SENSOR, LIS2DW12_ADDR1,
+			LIS2DW12_WHO_AM_I_REG, &val);
+	if (ret == 0 && val == LIS2DW12_WHO_AM_I) {
+		CPRINTS("LID_ACCEL is IS2DW12");
+		/* Enable gpio interrupt for lid accel sensor */
+		gpio_enable_interrupt(GPIO_EC_ACCEL_INT_R_L);
+		return;
+	}
+
+	ret = i2c_read8(I2C_PORT_SENSOR, BMA4_I2C_ADDR_PRIMARY,
+			BMA4_CHIP_ID_ADDR, &val);
+	if (ret == 0 && val == BMA422_CHIP_ID) {
+		CPRINTS("LID_ACCEL is BMA422");
+		motion_sensors[LID_ACCEL] = bma422_lid_accel;
+		/*
+		 * The driver for BMA422 doesn't have code to support
+		 * INT1. So, it doesn't need to enable interrupt.
+		 * Vendor recommend to configure EC gpio as high-z if
+		 * we don't use INT1. Keep this pin as input w/o enable
+		 * interrupt.
+		 */
+		return;
+	}
+
+	/* Lid accel is not stuffed, don't allow line to float */
+	gpio_disable_interrupt(GPIO_EC_ACCEL_INT_R_L);
+	gpio_set_flags(GPIO_EC_ACCEL_INT_R_L, GPIO_INPUT | GPIO_PULL_DOWN);
+	CPRINTS("No LID_ACCEL");
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_detect_motionsensor,
+		HOOK_PRIO_DEFAULT);
+
+
 static void baseboard_sensors_init(void)
 {
-	/* Enable gpio interrupt for lid accel sensor */
-	gpio_enable_interrupt(GPIO_EC_ACCEL_INT_R_L);
+	CPRINTS("baseboard_sensors_init");
+	/*
+	 * GPIO_EC_ACCEL_INT_R_L
+	 * The interrupt of lid accel is disabled by default.
+	 * We'll enable it later if lid accel is LIS2DW12.
+	 */
+
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_EC_IMU_INT_R_L);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_INIT_I2C + 1);
+
+void motion_interrupt(enum gpio_signal signal)
+{
+	if (motion_sensors[LID_ACCEL].chip == MOTIONSENSE_CHIP_LIS2DW12) {
+		lis2dw12_interrupt(signal);
+		CPRINTS("IS2DW12 interrupt");
+		return;
+	}
+
+	/*
+	 * From other project, ex. guybrush, it seem BMA422 doesn't have
+	 * interrupt handler when EC_ACCEL_INT_R_L is asserted.
+	 * However, I don't see BMA422 assert EC_ACCEL_INT_R_L when it has
+	 * power. That could be the reason EC code doesn't register any
+	 * interrupt handler.
+	 */
+	CPRINTS("BMA422 interrupt");
+
+}
 
 /* Temperature sensor configuration */
 const struct temp_sensor_t temp_sensors[] = {

@@ -57,6 +57,7 @@
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_SENSOR_BASE	BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID	LID_ACCEL
+#define CONFIG_ACCEL_BMA4XX
 #define CONFIG_ACCEL_LIS2DWL
 #define CONFIG_ACCEL_LIS2DW_AS_BASE
 #define CONFIG_ACCEL_LIS2DW12_INT_EVENT \
@@ -233,6 +234,8 @@ enum mft_channel {
 	MFT_CH_0 = 0,
 	MFT_CH_COUNT
 };
+
+void motion_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 
