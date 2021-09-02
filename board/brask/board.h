@@ -18,6 +18,12 @@
 /* Barrel Jack */
 #define DEDICATED_CHARGE_PORT 3
 
+/* HDMI CEC */
+#define CONFIG_CEC
+#define CEC_GPIO_OUT GPIO_HDMI_CEC_OUT
+#define CEC_GPIO_IN  GPIO_HDMI_CEC_IN
+#define CEC_GPIO_PULL_UP GPIO_HDMI_CEC_PULL_UP
+
 /* USB Type A Features */
 #define USB_PORT_COUNT			4
 #define CONFIG_USB_PORT_POWER_DUMB

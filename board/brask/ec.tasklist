@@ -23,4 +23,5 @@
 	TASK_ALWAYS(PD_C1, pd_task, NULL, VENTI_TASK_STACK_SIZE) \
 	TASK_ALWAYS(PD_C2, pd_task, NULL, VENTI_TASK_STACK_SIZE) \
 	TASK_ALWAYS(PD_INT_C0, pd_shared_alert_task, (BIT(2) | BIT(0)), TASK_STACK_SIZE) \
-	TASK_ALWAYS(PD_INT_C1, pd_interrupt_handler_task, 1, TASK_STACK_SIZE)
+	TASK_ALWAYS(PD_INT_C1, pd_interrupt_handler_task, 1, TASK_STACK_SIZE) \
+	TASK_ALWAYS(CEC, cec_task, NULL, TASK_STACK_SIZE)
