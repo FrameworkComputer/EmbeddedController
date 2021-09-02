@@ -74,6 +74,9 @@ int pd_set_power_supply_ready(int port)
 
 int board_vbus_source_enabled(int port)
 {
+	/* Ignore non-PD ports (the barrel jack). */
+	if (port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+		return 0;
 	return ppc_is_sourcing_vbus(port);
 }
 

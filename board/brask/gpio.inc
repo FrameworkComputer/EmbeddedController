@@ -26,6 +26,7 @@ GPIO_INT(USB_C1_TCPC_INT_ODL,        PIN(A, 2), GPIO_INT_FALLING, tcpc_alert_eve
 GPIO_INT(USB_C2_BC12_INT_ODL,        PIN(8, 3), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C2_PPC_INT_ODL,         PIN(7, 0), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C2_RT_INT_ODL,          PIN(4, 1), GPIO_INT_FALLING, retimer_interrupt)
+GPIO_INT(BJ_ADP_PRESENT_ODL,         PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP, adp_connect_interrupt)
 
 /* CCD */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
@@ -45,8 +46,7 @@ GPIO(DP_CONN_OC_ODL,                 PIN(2, 5), GPIO_INPUT)
 GPIO(HDMI_CONN_OC_ODL,               PIN(2, 4), GPIO_INPUT)
 
 /* BarrelJack */
-GPIO(EN_PPVAR_BJ_ADP_L,              PIN(0, 7), GPIO_INPUT)
-GPIO(BJ_ADP_PRESENT_ODL,             PIN(8, 2), GPIO_INPUT)
+GPIO(EN_PPVAR_BJ_ADP_L,              PIN(0, 7), GPIO_OUT_LOW)
 
 /* Chipset PCH */
 GPIO(EC_PCHHOT_ODL,                  PIN(7, 4), GPIO_INPUT)
