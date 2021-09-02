@@ -5,6 +5,8 @@
 
 #include <zephyr.h>
 #include <ztest.h>
+#include <drivers/gpio.h>
+#include <drivers/gpio/gpio_emul.h>
 
 #include "common.h"
 #include "ec_tasks.h"
@@ -18,6 +20,11 @@
 
 #include "driver/retimer/bb_retimer.h"
 
+#define GPIO_USB_C1_LS_EN_PATH DT_PATH(named_gpios, usb_c1_ls_en)
+#define GPIO_USB_C1_LS_EN_PORT DT_GPIO_PIN(GPIO_USB_C1_LS_EN_PATH, gpios)
+#define GPIO_USB_C1_RT_RST_ODL_PATH DT_PATH(named_gpios, usb_c1_rt_rst_odl)
+#define GPIO_USB_C1_RT_RST_ODL_PORT	\
+		DT_GPIO_PIN(GPIO_USB_C1_RT_RST_ODL_PATH, gpios)
 #define EMUL_LABEL DT_NODELABEL(usb_c1_bb_retimer_emul)
 
 #define BB_RETIMER_ORD DT_DEP_ORD(EMUL_LABEL)
@@ -418,11 +425,100 @@ static void test_bb_set_dfp_state(void)
 		      exp_conn, conn);
 }
 
+/** Test BB retimer init */
+static void test_bb_init(void)
+{
+	const struct device *gpio_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_USB_C1_LS_EN_PATH, gpios));
+	struct i2c_emul *emul;
+
+	zassert_not_null(gpio_dev, "Cannot get GPIO device");
+
+	emul = bb_emul_get(BB_RETIMER_ORD);
+
+	/* Set AP to normal state and wait for chipset task */
+	set_mock_power_state(POWER_S0);
+	k_msleep(1);
+
+	/* Setup emulator fail on read */
+	i2c_common_emul_set_read_fail_reg(emul, BB_RETIMER_REG_VENDOR_ID);
+	/* Test fail on vendor ID read */
+	zassert_equal(-EIO, bb_usb_retimer.init(&usb_muxes[USBC_PORT_C1]),
+		      NULL);
+	/* Enable pins should be set always after init, when AP is on */
+	zassert_equal(1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_LS_EN_PORT),
+		      NULL);
+	zassert_equal(1, gpio_emul_output_get(gpio_dev,
+					      GPIO_USB_C1_RT_RST_ODL_PORT),
+		      NULL);
+
+	/* Setup wrong vendor ID */
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	bb_emul_set_reg(emul, BB_RETIMER_REG_VENDOR_ID, 0x12144678);
+	/* Test fail on wrong vendor ID */
+	zassert_equal(EC_ERROR_INVAL,
+		      bb_usb_retimer.init(&usb_muxes[USBC_PORT_C1]), NULL);
+	zassert_equal(1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_LS_EN_PORT),
+		      NULL);
+	zassert_equal(1, gpio_emul_output_get(gpio_dev,
+					      GPIO_USB_C1_RT_RST_ODL_PORT),
+		      NULL);
+
+	/* Setup emulator fail on device ID read */
+	i2c_common_emul_set_read_fail_reg(emul, BB_RETIMER_REG_DEVICE_ID);
+	bb_emul_set_reg(emul, BB_RETIMER_REG_VENDOR_ID, BB_RETIMER_VENDOR_ID_1);
+	/* Test fail on device ID read */
+	zassert_equal(-EIO, bb_usb_retimer.init(&usb_muxes[USBC_PORT_C1]),
+		      NULL);
+	zassert_equal(1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_LS_EN_PORT),
+		      NULL);
+	zassert_equal(1, gpio_emul_output_get(gpio_dev,
+					      GPIO_USB_C1_RT_RST_ODL_PORT),
+		      NULL);
+
+	/* Setup wrong device ID */
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	bb_emul_set_reg(emul, BB_RETIMER_REG_DEVICE_ID, 0x12144678);
+	/* Test fail on wrong device ID */
+	zassert_equal(EC_ERROR_INVAL,
+		      bb_usb_retimer.init(&usb_muxes[USBC_PORT_C1]), NULL);
+	zassert_equal(1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_LS_EN_PORT),
+		      NULL);
+	zassert_equal(1, gpio_emul_output_get(gpio_dev,
+					      GPIO_USB_C1_RT_RST_ODL_PORT),
+		      NULL);
+
+	/* Test successful init */
+	bb_emul_set_reg(emul, BB_RETIMER_REG_DEVICE_ID, BB_RETIMER_DEVICE_ID);
+	zassert_equal(EC_SUCCESS, bb_usb_retimer.init(&usb_muxes[USBC_PORT_C1]),
+		      NULL);
+	zassert_equal(1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_LS_EN_PORT),
+		      NULL);
+	zassert_equal(1, gpio_emul_output_get(gpio_dev,
+					      GPIO_USB_C1_RT_RST_ODL_PORT),
+		      NULL);
+
+	/* Set AP to off state and wait for chipset task */
+	set_mock_power_state(POWER_G3);
+	k_msleep(1);
+
+	/* With AP off, init should fail and pins should be unset */
+	zassert_equal(EC_ERROR_NOT_POWERED,
+		      bb_usb_retimer.init(&usb_muxes[USBC_PORT_C1]), NULL);
+	zassert_equal(0, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_LS_EN_PORT),
+		      NULL);
+	zassert_equal(0, gpio_emul_output_get(gpio_dev,
+					      GPIO_USB_C1_RT_RST_ODL_PORT),
+		      NULL);
+}
+
+
 void test_suite_bb_retimer(void)
 {
 	ztest_test_suite(bb_retimer,
 			 ztest_user_unit_test(test_bb_is_fw_update_capable),
 			 ztest_user_unit_test(test_bb_set_state),
-			 ztest_user_unit_test(test_bb_set_dfp_state));
+			 ztest_user_unit_test(test_bb_set_dfp_state),
+			 ztest_user_unit_test(test_bb_init));
 	ztest_run_test_suite(bb_retimer);
 }

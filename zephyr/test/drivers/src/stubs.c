@@ -11,6 +11,7 @@
 #include "charger/isl9241_public.h"
 #include "config.h"
 #include "i2c/i2c.h"
+#include "power.h"
 #include "ppc/sn5s330_public.h"
 #include "ppc/syv682x_public.h"
 #include "retimer/bb_retimer_public.h"
@@ -200,3 +201,32 @@ uint16_t tcpc_get_alert_status(void)
 {
 	return 0;
 }
+
+enum power_state power_chipset_init(void)
+{
+	return POWER_G3;
+}
+
+enum power_state mock_state = POWER_G3;
+
+void set_mock_power_state(enum power_state state)
+{
+	mock_state = state;
+	task_wake(TASK_ID_CHIPSET);
+}
+
+enum power_state power_handle_state(enum power_state state)
+{
+	return mock_state;
+}
+
+void chipset_reset(enum chipset_reset_reason reason)
+{
+}
+
+void chipset_force_shutdown(enum chipset_shutdown_reason reason)
+{
+}
+
+/* Power signals list. Must match order of enum power_signal. */
+const struct power_signal_info power_signal_list[] = {};

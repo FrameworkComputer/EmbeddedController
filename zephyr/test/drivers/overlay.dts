@@ -44,13 +44,15 @@
 			enum-name = "GPIO_EC_PCH_WAKE_ODL";
 			label = "EC_PCH_WAKE_ODL";
 		};
+		/* Setup USB C1 pin as output to check their state in test */
 		usb_c1_ls_en {
-			gpios = <&gpio0 6 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio0 6 (GPIO_INPUT | GPIO_PULL_UP |
+					   GPIO_OUTPUT)>;
 			enum-name = "GPIO_USB_C1_LS_EN";
 			label = "USB_C1_LS_EN";
 		};
 		usb_c1_rt_rst_odl {
-			gpios = <&gpio0 7 GPIO_ODR_LOW>;
+			gpios = <&gpio0 7 (GPIO_OUTPUT | GPIO_INPUT)>;
 			enum-name = "GPIO_USB_C1_RT_RST_ODL";
 			label = "USB_C1_RT_RST_ODL";
 		};

@@ -256,6 +256,12 @@ static int bb_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 
 	data = BB_DATA_FROM_I2C_EMUL(emul);
 
+	/* First byte of read message is read size which is always 4 */
+	if (bytes == 0) {
+		*val = 4;
+		return 0;
+	}
+
 	*val = data->data_dword & 0xff;
 	data->data_dword >>= 8;
 
