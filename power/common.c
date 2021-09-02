@@ -1020,7 +1020,7 @@ host_command_hibernation_delay(struct host_cmd_handler_args *args)
 	r->hibernate_delay = hibernate_delay;
 
 	args->response_size = sizeof(struct ec_response_hibernation_delay);
-	return EC_SUCCESS;
+	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_HIBERNATION_DELAY,
 		     host_command_hibernation_delay,
