@@ -93,6 +93,9 @@
 #define USB_PORT_COUNT 1
 #define CONFIG_USB_PORT_POWER_DUMB
 
+/* Keyboard features */
+#define CONFIG_KEYBOARD_VIVALDI
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
