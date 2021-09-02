@@ -1075,6 +1075,16 @@ config PLATFORM_EC_USB_PD_TCPM_PS8805
 	  DisplayPort applications. It supports Power Delivery and the
 	  DisplayPort Alt Mode.
 
+if PLATFORM_EC_USB_PD_TCPM_PS8805
+config PLATFORM_EC_USB_PD_TCPM_PS8805_FORCE_DID
+	bool "Parade PS8805 Force Device ID"
+	default y
+	help
+	  Early firmware versions of the PS8805 report an incorrect device ID
+	  value for A3 silicon. Enable this option to check the vendor specific
+	  chip version register and force the correct device ID.
+endif # PLATFORM_EC_USB_PD_TCPM_PS8805
+
 config PLATFORM_EC_USB_PD_TCPM_PS8815
 	bool "Parade PS8815 USB-C Gen 2 Type-C Port Controller"
 	select PLATFORM_EC_USB_PD_TCPM_MUX
@@ -1084,6 +1094,16 @@ config PLATFORM_EC_USB_PD_TCPM_PS8815
 	  with a USB Type-C Port Controller (TCPC) for USB Type-C Host and
 	  DisplayPort applications. It supports Power Delivery and the
 	  DisplayPort Alt Mode.
+
+if PLATFORM_EC_USB_PD_TCPM_PS8815
+config PLATFORM_EC_USB_PD_TCPM_PS8815_FORCE_DID
+	bool "Parade PS8815 Force Device ID"
+	default y
+	help
+	  Early firmware versions of the PS8815 report an incorrect device ID
+	  value for A1 silicon. Enable this option to check the vendor specific
+	  chip version register and force the correct device ID.
+endif # PLATFORM_EC_USB_PD_TCPM_PS8815
 
 config PLATFORM_EC_USB_PD_TCPM_RT1715
 	bool "Ricktek RT1715 Type-C Port Controller"
