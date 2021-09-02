@@ -717,6 +717,9 @@ class Zmake:
             if proc.wait():
                 raise OSError(get_process_failure_msg(proc))
 
+            # Find the common root dir
+            prefixdir = os.path.commonprefix(list(self.module_paths.values()))
+
             # Merge into a nice html report
             self.logger.info("Creating coverage report %s.", build_dir / "coverage_rpt")
             proc = self.jobserver.popen(
@@ -728,7 +731,7 @@ class Zmake:
                     "-t",
                     "Zephyr EC Unittest",
                     "-p",
-                    self.checkout / "src",
+                    prefixdir,
                     "-s",
                 ]
                 + all_lcov_files,
