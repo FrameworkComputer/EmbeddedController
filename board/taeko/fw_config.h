@@ -51,4 +51,12 @@ union taeko_cbi_fw_config get_fw_config(void);
  */
 enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void);
 
+/**
+ * Check if the FW_CONFIG has enabled keyboard backlight.
+ *
+ * @return true if board supports keyboard backlight, false if the board
+ * doesn't support it.
+ */
+bool ec_cfg_has_keyboard_backlight(void);
+
 #endif /* __BOARD_TAEKO_FW_CONFIG_H_ */

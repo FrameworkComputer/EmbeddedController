@@ -58,3 +58,8 @@ enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void)
 {
 	return fw_config.usb_db;
 }
+
+bool ec_cfg_has_keyboard_backlight(void)
+{
+	return (fw_config.kb_bl == KEYBOARD_BACKLIGHT_ENABLED);
+}
