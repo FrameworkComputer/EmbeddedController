@@ -117,3 +117,9 @@ coverage:
       - build/coverage/*
     expire_in: 1 week
 
+testall:
+  stage: test
+  script:
+    - zmake --zephyr-base "${ZEPHYR_BASE}26"
+      --modules-dir "${MODULES_DIR}" -l DEBUG testall
+
