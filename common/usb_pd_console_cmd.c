@@ -112,7 +112,7 @@ static int command_cable(int argc, char **argv)
 {
 	int port;
 	char *e;
-	struct pd_discovery *disc;
+	const struct pd_discovery *disc;
 	enum idh_ptype ptype;
 	int cable_rev;
 	union tbt_mode_resp_cable cable_mode_resp;

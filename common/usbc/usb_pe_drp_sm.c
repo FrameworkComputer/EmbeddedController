@@ -5762,7 +5762,7 @@ static void pe_init_vdm_modes_request_entry(int port)
 
 static void pe_init_vdm_modes_request_run(int port)
 {
-	struct svid_mode_data *mode_data;
+	const struct svid_mode_data *mode_data;
 	uint16_t requested_svid;
 
 	mode_data = pd_get_next_mode(port, pe[port].tx_type);
@@ -7050,14 +7050,20 @@ __maybe_unused bool pd_discovery_access_validate(int port,
 	return !(task_access[port][type] & ~BIT(task_get_current()));
 }
 
-__maybe_unused struct pd_discovery *pd_get_am_discovery(int port,
+__maybe_unused struct pd_discovery *pd_get_am_discovery_and_notify_access(
+				int port, enum tcpci_msg_type type)
+{
+	atomic_or(&task_access[port][type], BIT(task_get_current()));
+	return (struct pd_discovery *)pd_get_am_discovery(port, type);
+}
+
+__maybe_unused const struct pd_discovery *pd_get_am_discovery(int port,
 			enum tcpci_msg_type type)
 {
 	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP))
 		assert(0);
 	ASSERT(type < DISCOVERY_TYPE_COUNT);
 
-	atomic_or(&task_access[port][type], BIT(task_get_current()));
 	return &pe[port].discovery[type];
 }
 

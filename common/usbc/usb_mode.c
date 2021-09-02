@@ -176,7 +176,7 @@ bool enter_usb_cable_is_capable(int port)
 		if (get_usb4_cable_speed(port) < USB_R30_SS_U32_U40_GEN1)
 			return false;
 	} else if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE) {
-		struct pd_discovery *disc_sop_prime =
+		const struct pd_discovery *disc_sop_prime =
 			pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
 
 		if (pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME) >= VDM_VER20 &&
@@ -222,7 +222,7 @@ bool enter_usb_cable_is_capable(int port)
 
 void enter_usb_accepted(int port, enum tcpci_msg_type type)
 {
-	struct pd_discovery *disc;
+	const struct pd_discovery *disc;
 
 	if (!enter_usb_response_valid(port, type))
 		return;
@@ -269,7 +269,7 @@ void enter_usb_rejected(int port, enum tcpci_msg_type type)
 
 uint32_t enter_usb_setup_next_msg(int port, enum tcpci_msg_type *type)
 {
-	struct pd_discovery *disc_sop_prime;
+	const struct pd_discovery *disc_sop_prime;
 
 	switch (usb4_state[port]) {
 	case USB4_START:

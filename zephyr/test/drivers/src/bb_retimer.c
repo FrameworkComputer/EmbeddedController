@@ -90,7 +90,8 @@ static void test_bb_set_state(void)
 		      exp_conn, conn);
 
 	/* Test USB3 gen2 mode */
-	disc = pd_get_am_discovery(USBC_PORT_C1, TCPCI_MSG_SOP_PRIME);
+	disc = pd_get_am_discovery_and_notify_access(
+					USBC_PORT_C1, TCPCI_MSG_SOP_PRIME);
 	disc->identity.product_t1.p_rev20.ss = USB_R20_SS_U31_GEN1_GEN2;
 	prl_set_rev(USBC_PORT_C1, TCPCI_MSG_SOP_PRIME, PD_REV30);
 	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
@@ -210,7 +211,8 @@ static void test_bb_set_dfp_state(void)
 		      exp_conn, conn);
 
 	/* Set active cable type */
-	disc = pd_get_am_discovery(USBC_PORT_C1, TCPCI_MSG_SOP_PRIME);
+	disc = pd_get_am_discovery_and_notify_access(
+					USBC_PORT_C1, TCPCI_MSG_SOP_PRIME);
 	disc->identity.idh.product_type = IDH_PTYPE_ACABLE;
 	disc->identity.product_t2.a2_rev30.active_elem = ACTIVE_RETIMER;
 	prl_set_rev(USBC_PORT_C1, TCPCI_MSG_SOP_PRIME, PD_REV30);
@@ -230,7 +232,8 @@ static void test_bb_set_dfp_state(void)
 	disc->svids[0].mode_vdo[0] = cable_resp.raw_value;
 
 	/* Set device VDO */
-	dev_disc = pd_get_am_discovery(USBC_PORT_C1, TCPCI_MSG_SOP);
+	dev_disc = pd_get_am_discovery_and_notify_access(
+						USBC_PORT_C1, TCPCI_MSG_SOP);
 	dev_disc->svid_cnt = 1;
 	dev_disc->svids[0].svid = USB_VID_INTEL;
 	dev_disc->svids[0].discovery = PD_DISC_COMPLETE;

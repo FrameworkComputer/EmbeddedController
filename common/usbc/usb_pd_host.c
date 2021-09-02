@@ -44,7 +44,7 @@ static enum ec_status hc_typec_discovery(struct host_cmd_handler_args *args)
 	 */
 	pd_discovery_access_clear(p->port, type);
 
-	disc = pd_get_am_discovery(p->port, type);
+	disc = pd_get_am_discovery_and_notify_access(p->port, type);
 
 	/* Initialize return size to that of discovery with no SVIDs */
 	args->response_size = sizeof(*r);
@@ -89,8 +89,10 @@ static enum ec_status hc_typec_discovery(struct host_cmd_handler_args *args)
 	 * of the copy.  If the data was accessed, return BUSY so the AP will
 	 * try retrieving again and get the updated data.
 	 */
-	if (!pd_discovery_access_validate(p->port, type))
+	if (!pd_discovery_access_validate(p->port, type)) {
+		CPRINTS("[C%d] %s returns EC_RES_BUSY!!\n", p->port, __func__);
 		return EC_RES_BUSY;
+	}
 
 	return EC_RES_SUCCESS;
 }

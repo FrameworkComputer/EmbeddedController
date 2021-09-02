@@ -373,7 +373,14 @@ static int dfp_discover_svids(uint32_t *payload)
 	return 1;
 }
 
-struct pd_discovery *pd_get_am_discovery(int port, enum tcpci_msg_type type)
+struct pd_discovery *pd_get_am_discovery_and_notify_access(
+				int port, enum tcpci_msg_type type)
+{
+	return (struct pd_discovery *)pd_get_am_discovery(port, type);
+}
+
+const struct pd_discovery *pd_get_am_discovery(int port,
+			enum tcpci_msg_type type)
 {
 	return &discovery[port][type];
 }
@@ -399,7 +406,8 @@ void pd_set_dfp_enter_mode_flag(int port, bool set)
  */
 static int dfp_discover_modes(int port, uint32_t *payload)
 {
-	struct pd_discovery *disc = pd_get_am_discovery(port, TCPCI_MSG_SOP);
+	const struct pd_discovery *disc =
+			pd_get_am_discovery(port, TCPCI_MSG_SOP);
 	uint16_t svid = disc->svids[disc->svid_idx].svid;
 
 	if (disc->svid_idx >= disc->svid_cnt)

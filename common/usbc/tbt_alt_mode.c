@@ -218,7 +218,7 @@ static void tbt_retry_enter_mode(int port)
 /* Send Exit Mode to SOP''(if supported), or SOP' */
 static void tbt_active_cable_exit_mode(int port)
 {
-	struct pd_discovery *disc;
+	const struct pd_discovery *disc;
 
 	disc = pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
 
@@ -230,7 +230,7 @@ static void tbt_active_cable_exit_mode(int port)
 
 bool tbt_cable_entry_required_for_usb4(int port)
 {
-	struct pd_discovery *disc_sop_prime;
+	const struct pd_discovery *disc_sop_prime;
 	union tbt_mode_resp_cable cable_mode_resp;
 
 	/* Request to enter Thunderbolt mode for the cable prior to entering
@@ -262,7 +262,7 @@ bool tbt_cable_entry_required_for_usb4(int port)
 void intel_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		uint32_t *vdm)
 {
-	struct pd_discovery *disc;
+	const struct pd_discovery *disc;
 	const uint8_t vdm_cmd = PD_VDO_CMD(vdm[0]);
 	int opos_sop, opos_sop_prime;
 	union tbt_mode_resp_cable cable_mode_resp;

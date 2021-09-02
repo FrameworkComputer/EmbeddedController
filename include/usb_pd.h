@@ -372,7 +372,7 @@ struct svdm_amode_data {
 	/* VDM object position */
 	int opos;
 	/* mode capabilities specific to SVID amode. */
-	struct svid_mode_data *data;
+	const struct svid_mode_data *data;
 };
 
 enum hpd_event {
@@ -1987,7 +1987,8 @@ int pd_get_mode_vdo_for_svid(int port, enum tcpci_msg_type type,
  *             mode, if any exist and no modes succeeded in discovery;
  *             NULL, otherwise
  */
-struct svid_mode_data *pd_get_next_mode(int port, enum tcpci_msg_type type);
+const struct svid_mode_data *pd_get_next_mode(int port,
+		enum tcpci_msg_type type);
 
 /**
  * Return a pointer to the discover identity response structure for this SOP*
@@ -2053,7 +2054,7 @@ uint16_t pd_get_svid(int port, uint16_t svid_idx, enum tcpci_msg_type type);
  * @param type     SOP* type to retrieve
  * @return         Pointer to modes of VDO
  */
-uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx,
+const uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx,
 		enum tcpci_msg_type type);
 
 /*
@@ -2144,7 +2145,18 @@ bool pd_discovery_access_validate(int port, enum tcpci_msg_type type);
  * @param type Transmit type (SOP, SOP') for discovered information
  * @return     pointer to PD alternate mode discovery results
  */
-struct pd_discovery *pd_get_am_discovery(int port,
+struct pd_discovery *pd_get_am_discovery_and_notify_access(int port,
+		enum tcpci_msg_type type);
+
+/*
+ * Returns the constant pointer to PD alternate mode discovery results
+ * Note: Caller function is expected to only read the discovery results.
+ *
+ * @param port USB-C port number
+ * @param type Transmit type (SOP, SOP') for discovered information
+ * @return     pointer to PD alternate mode discovery results
+ */
+const struct pd_discovery *pd_get_am_discovery(int port,
 		enum tcpci_msg_type type);
 
 /*
