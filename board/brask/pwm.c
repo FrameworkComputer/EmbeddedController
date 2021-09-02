@@ -11,10 +11,20 @@
 #include "pwm_chip.h"
 
 const struct pwm_t pwm_channels[] = {
+	[PWM_CH_LED_GREEN] = {
+		.channel = 0,
+		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+		.freq = 2000
+	},
 	[PWM_CH_FAN] = {
 		.channel = 5,
 		.flags = PWM_CONFIG_OPEN_DRAIN | PWM_CONFIG_DSLEEP,
 		.freq = 1000
+	},
+	[PWM_CH_LED_RED] = {
+		.channel = 2,
+		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+		.freq = 2000
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
@@ -28,5 +38,8 @@ static void board_pwm_init(void)
 	 */
 	pwm_enable(PWM_CH_FAN, 1);
 	pwm_set_duty(PWM_CH_FAN, 100);
+
+	pwm_enable(PWM_CH_LED_RED, 1);
+	pwm_enable(PWM_CH_LED_GREEN, 1);
 }
 DECLARE_HOOK(HOOK_INIT, board_pwm_init, HOOK_PRIO_DEFAULT);

@@ -46,10 +46,7 @@
 #define CONFIG_HOSTCMD_ESPI_RESET_SLP_SX_VW_ON_ESPI_RST
 
 /* LED */
-/*
- * TODO(b/197471359): Implement the LED behavior
- */
-/* #define CONFIG_LED_COMMON */
+#define CONFIG_LED_COMMON
 
 /* Common charger defines */
 #define CONFIG_CHARGE_MANAGER
