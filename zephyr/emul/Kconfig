@@ -2,6 +2,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config EMUL_COMMON_I2C
+	bool "Common handler for I2C emulator messages"
+	help
+	  Enable common code that is used by many emulators of devices on I2C
+	  bus. It allows to share code for handling I2C messages, locking and
+	  custom user handlers between these emulators.
+
 config EMUL_SMART_BATTERY
 	bool "Smart Battery emulator"
 	help
