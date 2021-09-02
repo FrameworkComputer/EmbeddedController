@@ -23,6 +23,15 @@
 /* Internal SPI flash on NPCX7 */
 #define CONFIG_FLASH_SIZE_BYTES (512 * 1024)  /* 512KB internal spi flash */
 
+/* Save some flash space */
+#define CONFIG_USB_PD_DEBUG_LEVEL 2
+#undef CONFIG_CMD_FLASHINFO
+#undef CONFIG_CMD_MMAPINFO
+#undef CONFIG_CMD_ACCELSPOOF
+#undef CONFIG_CMD_ACCEL_FIFO
+#undef CONFIG_CMD_ACCEL_INFO
+#undef CONFIG_CMD_TASK_RESET
+
 /* Battery */
 #define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
