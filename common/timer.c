@@ -175,6 +175,10 @@ void usleep(unsigned us)
 	uint32_t evt = 0;
 	uint32_t t0;
 
+	/* If a wait is 0, return immediately. */
+	if (!us)
+		return;
+
 	if (IS_ENABLED(CONFIG_ZEPHYR)) {
 		while (us)
 			us = k_usleep(us);
@@ -196,7 +200,6 @@ void usleep(unsigned us)
 		return;
 	}
 
-	ASSERT(us);
 	do {
 		evt |= task_wait_event(us);
 	} while (!(evt & TASK_EVENT_TIMER) &&
