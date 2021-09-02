@@ -390,7 +390,7 @@ int ln9310_init(void)
 	 */
 	status = raw_read8(LN9310_REG_BC_STS_C, &val);
 	if (status != EC_SUCCESS) {
-		CPRINTS("LN9310 reading BC_STS_C failed");
+		CPRINTS("LN9310 reading BC_STS_C failed: %d", status);
 		return status;
 	}
 	chip_revision = val & LN9310_BC_STS_C_CHIP_REV_MASK;
