@@ -14,29 +14,22 @@ LOG_MODULE_REGISTER(emul_tcs);
 #include <drivers/i2c.h>
 #include <drivers/i2c_emul.h>
 
+#include "emul/emul_common_i2c.h"
 #include "emul/emul_tcs3400.h"
 
 #include "driver/als_tcs3400.h"
 
-/**
- * Describe if there is no ongoing I2C message or if there is message handled
- * at the moment (last message doesn't ended with stop or write is not followed
- * by read).
- */
-enum tcs_emul_msg_state {
-	TCS_EMUL_NONE_MSG,
-	TCS_EMUL_IN_WRITE,
-	TCS_EMUL_IN_READ
-};
+#define TCS_DATA_FROM_I2C_EMUL(_emul)					     \
+	CONTAINER_OF(CONTAINER_OF(_emul, struct i2c_common_emul_data, emul), \
+		     struct tcs_emul_data, common)
 
 /** Run-time data used by the emulator */
 struct tcs_emul_data {
-	/** I2C emulator detail */
-	struct i2c_emul emul;
-	/** TCS3400 device being emulated */
-	const struct device *i2c;
-	/** Configuration information */
-	const struct tcs_emul_cfg *cfg;
+	/** Common I2C data */
+	struct i2c_common_emul_data common;
+
+	/** Value of data byte in ongoing write message */
+	uint8_t write_byte;
 
 	/** Current state of emulated TCS3400 registers */
 	uint8_t reg[TCS_EMUL_REG_COUNT];
@@ -67,85 +60,7 @@ struct tcs_emul_data {
 	bool lsb_g_read;
 	bool lsb_b_read;
 	bool lsb_c_ir_read;
-
-	/** Current state of I2C bus (if emulator is handling message) */
-	enum tcs_emul_msg_state msg_state;
-	/** Number of already handled bytes in ongoing message */
-	int msg_byte;
-	/** Register selected in last write command */
-	uint8_t cur_reg;
-	/** Value of data byte in ongoing write message */
-	uint8_t write_byte;
-
-	/** Custom write function called on I2C write opperation */
-	tcs_emul_write_func write_func;
-	/** Data passed to custom write function */
-	void *write_func_data;
-	/** Custom read function called on I2C read opperation */
-	tcs_emul_read_func read_func;
-	/** Data passed to custom read function */
-	void *read_func_data;
-
-	/** Control if read should fail on given register */
-	int read_fail_reg;
-	/** Control if write should fail on given register */
-	int write_fail_reg;
-
-	/** Mutex used to control access to emulator data */
-	struct k_mutex data_mtx;
 };
-
-/** Static configuration for the emulator */
-struct tcs_emul_cfg {
-	/** Label of the I2C bus this emulator connects to */
-	const char *i2c_label;
-	/** Pointer to run-time data */
-	struct tcs_emul_data *data;
-	/** Address of TCS3400 on i2c bus */
-	uint16_t addr;
-};
-
-/** Check description in emul_tcs3400.h */
-int tcs_emul_lock_data(struct i2c_emul *emul, k_timeout_t timeout)
-{
-	struct tcs_emul_data *data;
-
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
-
-	return k_mutex_lock(&data->data_mtx, timeout);
-}
-
-/** Check description in emul_tcs3400.h */
-int tcs_emul_unlock_data(struct i2c_emul *emul)
-{
-	struct tcs_emul_data *data;
-
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
-
-	return k_mutex_unlock(&data->data_mtx);
-}
-
-/** Check description in emul_tcs3400.h */
-void tcs_emul_set_write_func(struct i2c_emul *emul,
-			     tcs_emul_write_func func, void *data)
-{
-	struct tcs_emul_data *emul_data;
-
-	emul_data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
-	emul_data->write_func = func;
-	emul_data->write_func_data = data;
-}
-
-/** Check description in emul_tcs3400.h */
-void tcs_emul_set_read_func(struct i2c_emul *emul,
-			    tcs_emul_read_func func, void *data)
-{
-	struct tcs_emul_data *emul_data;
-
-	emul_data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
-	emul_data->read_func = func;
-	emul_data->read_func_data = data;
-}
 
 /** Check description in emul_tcs3400.h */
 void tcs_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val)
@@ -157,7 +72,7 @@ void tcs_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val)
 	}
 
 	reg -= TCS_EMUL_FIRST_REG;
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
+	data = TCS_DATA_FROM_I2C_EMUL(emul);
 	data->reg[reg] = val;
 }
 
@@ -170,28 +85,10 @@ uint8_t tcs_emul_get_reg(struct i2c_emul *emul, int reg)
 		return 0;
 	}
 
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
+	data = TCS_DATA_FROM_I2C_EMUL(emul);
 	reg -= TCS_EMUL_FIRST_REG;
 
 	return data->reg[reg];
-}
-
-/** Check description in emul_tcs3400.h */
-void tcs_emul_set_read_fail_reg(struct i2c_emul *emul, int reg)
-{
-	struct tcs_emul_data *data;
-
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
-	data->read_fail_reg = reg;
-}
-
-/** Check description in emul_tcs3400.h */
-void tcs_emul_set_write_fail_reg(struct i2c_emul *emul, int reg)
-{
-	struct tcs_emul_data *data;
-
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
-	data->write_fail_reg = reg;
 }
 
 /** Check description in emul_tcs3400.h */
@@ -199,7 +96,7 @@ int tcs_emul_get_val(struct i2c_emul *emul, enum tcs_emul_axis axis)
 {
 	struct tcs_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
+	data = TCS_DATA_FROM_I2C_EMUL(emul);
 
 	switch (axis) {
 	case TCS_EMUL_R:
@@ -222,7 +119,7 @@ void tcs_emul_set_val(struct i2c_emul *emul, enum tcs_emul_axis axis, int val)
 {
 	struct tcs_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
+	data = TCS_DATA_FROM_I2C_EMUL(emul);
 
 	switch (axis) {
 	case TCS_EMUL_R:
@@ -248,7 +145,7 @@ void tcs_emul_set_err_on_ro_write(struct i2c_emul *emul, bool set)
 {
 	struct tcs_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
+	data = TCS_DATA_FROM_I2C_EMUL(emul);
 	data->error_on_ro_write = set;
 }
 
@@ -257,7 +154,7 @@ void tcs_emul_set_err_on_rsvd_write(struct i2c_emul *emul, bool set)
 {
 	struct tcs_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
+	data = TCS_DATA_FROM_I2C_EMUL(emul);
 	data->error_on_rsvd_write = set;
 }
 
@@ -266,7 +163,7 @@ void tcs_emul_set_err_on_msb_first(struct i2c_emul *emul, bool set)
 {
 	struct tcs_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
+	data = TCS_DATA_FROM_I2C_EMUL(emul);
 	data->error_on_msb_first = set;
 }
 
@@ -308,7 +205,7 @@ static void tcs_emul_reset(struct i2c_emul *emul)
 {
 	struct tcs_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
+	data = TCS_DATA_FROM_I2C_EMUL(emul);
 
 	data->reg[TCS_I2C_ENABLE  - TCS_EMUL_FIRST_REG] = 0x00;
 	data->reg[TCS_I2C_ATIME   - TCS_EMUL_FIRST_REG] = 0xff;
@@ -380,7 +277,7 @@ static void tcs_emul_clear_int(struct i2c_emul *emul)
 {
 	struct tcs_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
+	data = TCS_DATA_FROM_I2C_EMUL(emul);
 
 	data->reg[TCS_I2C_STATUS  - TCS_EMUL_FIRST_REG] = 0x00;
 }
@@ -389,36 +286,28 @@ static void tcs_emul_clear_int(struct i2c_emul *emul)
  * @brief Handle I2C write message. It is checked if accessed register isn't RO
  *        and reserved bits are set to 0. Write set value of reg field of TCS
  *        emulator data ignoring reserved bits and write only bits. Some
- *        commands are handled specialy. Before any handling, custom function
- *        is called if provided.
+ *        commands are handled specialy.
  *
  * @param emul Pointer to TCS3400 emulator
  * @param reg Register which is written
- * @param val Value being written to @p reg
+ * @param bytes Number of bytes received in this write message
  *
  * @return 0 on success
  * @return -EIO on error
  */
-static int tcs_emul_handle_write(struct i2c_emul *emul, int reg, uint8_t val)
+static int tcs_emul_handle_write(struct i2c_emul *emul, int reg, int bytes)
 {
 	struct tcs_emul_data *data;
-	int ret;
+	uint8_t val;
 
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
+	data = TCS_DATA_FROM_I2C_EMUL(emul);
 
-	if (data->write_func) {
-		ret = data->write_func(emul, reg, val, data->write_func_data);
-		if (ret < 0) {
-			return -EIO;
-		} else if (ret == 0) {
-			return 0;
-		}
+	/* This write only selected register for I2C read message */
+	if (bytes < 2) {
+		return 0;
 	}
 
-	if (data->write_fail_reg == reg ||
-	    data->write_fail_reg == TCS_EMUL_FAIL_ALL_REG) {
-		return -EIO;
-	}
+	val = data->write_byte;
 
 	/* Register is in data->reg */
 	if (reg >= TCS_EMUL_FIRST_REG && reg <= TCS_EMUL_LAST_REG) {
@@ -508,7 +397,7 @@ static int tcs_emul_get_reg_val(struct i2c_emul *emul, int reg,
 	int cycles;
 	int gain;
 
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
+	data = TCS_DATA_FROM_I2C_EMUL(emul);
 
 	if (lsb) {
 		*lsb_read = 1;
@@ -552,40 +441,26 @@ static int tcs_emul_get_reg_val(struct i2c_emul *emul, int reg,
 /**
  * @brief Handle I2C read message. Response is obtained from reg field of TCS
  *        emul data. When accessing light sensor value, register data is first
- *        computed using internal emulator state. Before default handler, custom
- *        user read function is called if provided.
+ *        computed using internal emulator state.
  *
  * @param emul Pointer to TCS3400 emulator
- * @param reg Register address to read
- * @param buf Pointer where resultat should be stored
+ * @param reg First register address that is accessed in this read message
+ * @param buf Pointer where result should be stored
+ * @param bytes Number of bytes already handled in this read message
  *
  * @return 0 on success
  * @return -EIO on error
  */
-static int tcs_emul_handle_read(struct i2c_emul *emul, int reg, char *buf)
+static int tcs_emul_handle_read(struct i2c_emul *emul, int reg, uint8_t *buf,
+				int bytes)
 {
 	struct tcs_emul_data *data;
 	unsigned int c_ir;
 	int ret;
 
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
+	data = TCS_DATA_FROM_I2C_EMUL(emul);
 
-	if (data->read_func) {
-		ret = data->read_func(emul, reg, data->read_func_data);
-		if (ret < 0) {
-			return -EIO;
-		} else if (ret == 0) {
-			/* Immediately return value set by custom function */
-			*buf = data->reg[reg - TCS_EMUL_FIRST_REG];
-
-			return 0;
-		}
-	}
-
-	if (data->read_fail_reg == reg ||
-	    data->read_fail_reg == TCS_EMUL_FAIL_ALL_REG) {
-		return -EIO;
-	}
+	reg += bytes;
 
 	if ((reg < TCS_EMUL_FIRST_REG || reg > TCS_EMUL_LAST_REG) &&
 	    reg != TCS_I2C_IR) {
@@ -660,117 +535,30 @@ static int tcs_emul_handle_read(struct i2c_emul *emul, int reg, char *buf)
 }
 
 /**
- * @biref Emulate an I2C transfer to a TCS3400 light sensor
+ * @brief Handle I2C write message. Check if message is not too long and saves
+ *        data that will be stored in register
  *
- * This handles simple reads and writes
+ * @param emul Pointer to TCS3400 emulator
+ * @param reg Register address that is accessed
+ * @param val Data to write to the register
+ * @param bytes Number of bytes already handled in this read message
  *
- * @param emul I2C emulation information
- * @param msgs List of messages to process
- * @param num_msgs Number of messages to process
- * @param addr Address of the I2C target device
- *
- * @retval 0 If successful
- * @retval -EIO General input / output error
+ * @return 0 on success
+ * @return -EIO on error
  */
-static int tcs_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
-			     int num_msgs, int addr)
+static int tcs_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
+			       int bytes)
 {
-	const struct tcs_emul_cfg *cfg;
 	struct tcs_emul_data *data;
-	int ret, i, reg;
-	bool read;
 
-	data = CONTAINER_OF(emul, struct tcs_emul_data, emul);
-	cfg = data->cfg;
+	data = TCS_DATA_FROM_I2C_EMUL(emul);
 
-	if (cfg->addr != addr) {
-		LOG_ERR("Address mismatch, expected %02x, got %02x", cfg->addr,
-			addr);
+	if (bytes > 1) {
+		LOG_ERR("Too long write command");
 		return -EIO;
 	}
 
-	i2c_dump_msgs("emul", msgs, num_msgs, addr);
-
-	for (; num_msgs > 0; num_msgs--, msgs++) {
-		read = msgs->flags & I2C_MSG_READ;
-
-		switch (data->msg_state) {
-		case TCS_EMUL_NONE_MSG:
-			data->msg_byte = 0;
-			break;
-		case TCS_EMUL_IN_WRITE:
-			if (read) {
-				/* Finish write command */
-				if (data->msg_byte == 2) {
-					k_mutex_lock(&data->data_mtx,
-						     K_FOREVER);
-					ret = tcs_emul_handle_write(emul,
-							data->cur_reg,
-							data->write_byte);
-					k_mutex_unlock(&data->data_mtx);
-					if (ret) {
-						return -EIO;
-					}
-				}
-				data->msg_byte = 0;
-			}
-			break;
-		case TCS_EMUL_IN_READ:
-			if (!read) {
-				data->msg_byte = 0;
-			}
-			break;
-		}
-		data->msg_state = read ? TCS_EMUL_IN_READ : TCS_EMUL_IN_WRITE;
-
-		if (msgs->flags & I2C_MSG_STOP) {
-			data->msg_state = TCS_EMUL_NONE_MSG;
-		}
-
-		if (!read) {
-			/* Dispatch write command */
-			for (i = 0; i < msgs->len; i++) {
-				switch (data->msg_byte) {
-				case 0:
-					data->cur_reg = msgs->buf[i];
-					break;
-				case 1:
-					data->write_byte = msgs->buf[i];
-					break;
-				default:
-					data->msg_state = TCS_EMUL_NONE_MSG;
-					LOG_ERR("Too long write command");
-					return -EIO;
-				}
-				data->msg_byte++;
-			}
-
-			/* Execute write command */
-			if (msgs->flags & I2C_MSG_STOP && data->msg_byte == 2) {
-				k_mutex_lock(&data->data_mtx, K_FOREVER);
-				ret = tcs_emul_handle_write(emul, data->cur_reg,
-							    data->write_byte);
-				k_mutex_unlock(&data->data_mtx);
-				if (ret) {
-					return -EIO;
-				}
-			}
-		} else {
-			/* Dispatch read command */
-			for (i = 0; i < msgs->len; i++) {
-				reg = data->cur_reg + data->msg_byte;
-				data->msg_byte++;
-
-				k_mutex_lock(&data->data_mtx, K_FOREVER);
-				ret = tcs_emul_handle_read(emul, reg,
-							   &(msgs->buf[i]));
-				k_mutex_unlock(&data->data_mtx);
-				if (ret) {
-					return -EIO;
-				}
-			}
-		}
-	}
+	data->write_byte = val;
 
 	return 0;
 }
@@ -778,7 +566,7 @@ static int tcs_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 /* Device instantiation */
 
 static struct i2c_emul_api tcs_emul_api = {
-	.transfer = tcs_emul_transfer,
+	.transfer = i2c_common_emul_transfer,
 };
 
 /**
@@ -795,15 +583,15 @@ static struct i2c_emul_api tcs_emul_api = {
 static int tcs_emul_init(const struct emul *emul,
 			 const struct device *parent)
 {
-	const struct tcs_emul_cfg *cfg = emul->cfg;
-	struct tcs_emul_data *data = cfg->data;
+	const struct i2c_common_emul_cfg *cfg = emul->cfg;
+	struct i2c_common_emul_data *data = cfg->data;
 	int ret;
 
 	data->emul.api = &tcs_emul_api;
 	data->emul.addr = cfg->addr;
 	data->i2c = parent;
 	data->cfg = cfg;
-	k_mutex_init(&data->data_mtx);
+	i2c_common_emul_init(data);
 
 	ret = i2c_emul_register(parent, emul->dev_label, &data->emul);
 
@@ -825,17 +613,20 @@ static int tcs_emul_init(const struct emul *emul,
 		.lsb_r_read = 0,					\
 		.lsb_g_read = 0,					\
 		.lsb_b_read = 0,					\
-		.msg_state = TCS_EMUL_NONE_MSG,				\
-		.cur_reg = 0,						\
-		.write_func = NULL,					\
-		.read_func = NULL,					\
-		.write_fail_reg = TCS_EMUL_NO_FAIL_REG,			\
-		.read_fail_reg = TCS_EMUL_NO_FAIL_REG,			\
+		.common = {						\
+			.start_write = NULL,				\
+			.write_byte = tcs_emul_write_byte,		\
+			.finish_write = tcs_emul_handle_write,		\
+			.start_read = NULL,				\
+			.read_byte = tcs_emul_handle_read,		\
+			.finish_read = NULL,				\
+			.access_reg = NULL,				\
+		},							\
 	};								\
 									\
-	static const struct tcs_emul_cfg tcs_emul_cfg_##n = {		\
+	static const struct i2c_common_emul_cfg tcs_emul_cfg_##n = {	\
 		.i2c_label = DT_INST_BUS_LABEL(n),			\
-		.data = &tcs_emul_data_##n,				\
+		.data = &tcs_emul_data_##n.common,			\
 		.addr = DT_INST_REG_ADDR(n),				\
 	};								\
 	EMUL_DEFINE(tcs_emul_init, DT_DRV_INST(n), &tcs_emul_cfg_##n)
@@ -843,7 +634,7 @@ static int tcs_emul_init(const struct emul *emul,
 DT_INST_FOREACH_STATUS_OKAY(TCS3400_EMUL)
 
 #define TCS3400_EMUL_CASE(n)					\
-	case DT_INST_DEP_ORD(n): return &tcs_emul_data_##n.emul;
+	case DT_INST_DEP_ORD(n): return &tcs_emul_data_##n.common.emul;
 
 /** Check description in emul_tcs3400.h */
 struct i2c_emul *tcs_emul_get(int ord)

@@ -29,8 +29,6 @@
  *
  * - define a Device Tree overlay file to set which inadvisable driver behaviour
  *   should be treated as errors and which model is emulated
- * - call @ref bmi_emul_set_read_func and @ref bmi_emul_set_write_func to setup
- *   custom handlers for I2C messages
  * - call @ref bmi_emul_set_reg and @ref bmi_emul_get_reg to set and get value
  *   of BMI registers
  * - call @ref bmi_emul_set_off and @ref bmi_emul_get_off to set and get
@@ -41,11 +39,11 @@
  *   behaviour
  * - call @ref bmi_emul_simulate_cmd_exec_time to enable or disable simulation
  *   of command execution time
- * - call @ref bmi_emul_set_read_fail_reg and @ref bmi_emul_set_write_fail_reg
- *   to configure emulator to fail on given register read or write
  * - call @ref bmi_emul_append_frame to add frame to FIFO
  * - call @reg bmi_emul_set_skipped_frames to generate skip frame on next access
  *   to FIFO
+ * - call functions from emul_common_i2c.h to setup custom handlers for I2C
+ *   messages
  */
 
 /**
@@ -106,13 +104,6 @@ enum bmi_emul_axis {
  */
 #define BMI_EMUL_ACCESS_E	1
 
-/**
- * Special register values used in @ref bmi_emul_set_read_fail_reg and
- * @ref bmi_emul_set_write_fail_reg
- */
-#define BMI_EMUL_FAIL_ALL_REG	(-1)
-#define BMI_EMUL_NO_FAIL_REG	(-2)
-
 /** Structure used to describe single FIFO frame */
 struct bmi_emul_frame {
 	/** Type of frame */
@@ -145,14 +136,26 @@ struct bmi_emul_type_data {
 	bool sensortime_follow_config_frame;
 
 	/**
+	 * @brief Compute register address that acctually will be accessed, when
+	 *        selected register is @p reg and there was @p byte handled in
+	 *        the current I2C message
+	 *
+	 * @param emul Pointer to BMI emulator
+	 * @param reg Selected register
+	 * @param byte Number of handled bytes in the current I2C message
+	 * @param read If current I2C message is read
+	 *
+	 * @return Register address that will be accessed
+	 */
+	int (*access_reg)(struct i2c_emul *emul, int reg, int byte, bool read);
+
+	/**
 	 * @brief Model specific write function. It should modify state of
-	 *        emulator if required. @p reg value should be updated to
-	 *        register which is acctually accessed.
+	 *        emulator if required.
 	 *
 	 * @param regs Pointer to array of emulator's registers
 	 * @param emul Pointer to BMI emulator
-	 * @param reg Pointer to accessed reg. If different reg is accessed,
-	 *            this value should be modified.
+	 * @param reg Selected register
 	 * @param byte Number of handled bytes in this write command
 	 * @param val Value that is being written
 	 *
@@ -160,18 +163,15 @@ struct bmi_emul_type_data {
 	 * @return BMI_EMUL_ACCESS_E on RO register access
 	 * @return other on error
 	 */
-	int (*handle_write)(uint8_t *regs, struct i2c_emul *emul, int *reg,
+	int (*handle_write)(uint8_t *regs, struct i2c_emul *emul, int reg,
 			    int byte, uint8_t val);
 	/**
 	 * @brief Model specific read function. It should modify state of
-	 *        emulator if required. @p reg value should be updated to
-	 *        register which is acctually accessed. @p buf should be
-	 *        set to response value.
+	 *        emulator if required. @p buf should be set to response value.
 	 *
 	 * @param regs Pointer to array of emulator's registers
 	 * @param emul Pointer to BMI emulator
-	 * @param reg Pointer to accessed reg. If different reg is accessed,
-	 *            this value should be modified.
+	 * @param reg Selected register
 	 * @param byte Byte which is accessed during block read
 	 * @param buf Pointer where read byte should be stored
 	 *
@@ -179,7 +179,7 @@ struct bmi_emul_type_data {
 	 * @return BMI_EMUL_ACCESS_E on WO register access
 	 * @return other on error
 	 */
-	int (*handle_read)(uint8_t *regs, struct i2c_emul *emul, int *reg,
+	int (*handle_read)(uint8_t *regs, struct i2c_emul *emul, int reg,
 			   int byte, char *buf);
 	/**
 	 * @brief Model specific reset function. It should modify state of
@@ -229,82 +229,6 @@ const struct bmi_emul_type_data *get_bmi260_emul_type_data(void);
 struct i2c_emul *bmi_emul_get(int ord);
 
 /**
- * @brief Custom function type that is used as user-defined callback in read
- *        I2C messages handling.
- *
- * @param emul Pointer to BMI emulator
- * @param reg Address which is now accessed by read command
- * @param byte Byte which is accessed during block read
- * @param data Pointer to custom user data
- *
- * @return 0 on success. Value of @p reg should be set by @ref bmi_emul_set_reg
- * @return 1 continue with normal BMI emulator handler
- * @return negative on error
- */
-typedef int (*bmi_emul_read_func)(struct i2c_emul *emul, int reg, int byte,
-				  void *data);
-
-/**
- * @brief Custom function type that is used as user-defined callback in write
- *        I2C messages handling.
- *
- * @param emul Pointer to BMA255 emulator
- * @param reg Address which is now accessed by write command
- * @param byte Number of handled bytes in this write command. It does include
- *             first byte containing accessed register address.
- * @param val Value which is being written to @p reg
- * @param data Pointer to custom user data
- *
- * @return 0 on success
- * @return 1 continue with normal BMI emulator handler
- * @return negative on error
- */
-typedef int (*bmi_emul_write_func)(struct i2c_emul *emul, int reg, int byte,
-				   uint8_t val, void *data);
-
-/**
- * @brief Lock access to BMI properties. After acquiring lock, user
- *        may change emulator behaviour in multi-thread setup.
- *
- * @param emul Pointer to BMI emulator
- * @param timeout Timeout in getting lock
- *
- * @return k_mutex_lock return code
- */
-int bmi_emul_lock_data(struct i2c_emul *emul, k_timeout_t timeout);
-
-/**
- * @brief Unlock access to BMI properties.
- *
- * @param emul Pointer to BMI emulator
- *
- * @return k_mutex_unlock return code
- */
-int bmi_emul_unlock_data(struct i2c_emul *emul);
-
-/**
- * @brief Set write handler for I2C messages. This function is called before
- *        generic handler.
- *
- * @param emul Pointer to BMI emulator
- * @param func Pointer to custom function
- * @param data User data passed on call of custom function
- */
-void bmi_emul_set_write_func(struct i2c_emul *emul, bmi_emul_write_func func,
-			     void *data);
-
-/**
- * @brief Set read handler for I2C messages. This function is called before
- *        generic handler.
- *
- * @param emul Pointer to BMI emulator
- * @param func Pointer to custom function
- * @param data User data passed on call of custom function
- */
-void bmi_emul_set_read_func(struct i2c_emul *emul, bmi_emul_read_func func,
-			    void *data);
-
-/**
  * @brief Set value of given register of BMI
  *
  * @param emul Pointer to BMI emulator
@@ -322,24 +246,6 @@ void bmi_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val);
  * @return Value of the register
  */
 uint8_t bmi_emul_get_reg(struct i2c_emul *emul, int reg);
-
-/**
- * @brief Setup fail on read of given register of BMI
- *
- * @param emul Pointer to BMI emulator
- * @param reg Register address or one of special values (BMI_EMUL_FAIL_ALL_REG,
- *            BMI_EMUL_NO_FAIL_REG)
- */
-void bmi_emul_set_read_fail_reg(struct i2c_emul *emul, int reg);
-
-/**
- * @brief Setup fail on write of given register of BMI
- *
- * @param emul Pointer to BMI emulator
- * @param reg Register address or one of special values (BMI_EMUL_FAIL_ALL_REG,
- *            BMI_EMUL_NO_FAIL_REG)
- */
-void bmi_emul_set_write_fail_reg(struct i2c_emul *emul, int reg);
 
 /**
  * @brief Get internal value of offset for given axis and sensor

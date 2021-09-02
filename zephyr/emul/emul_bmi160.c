@@ -552,7 +552,7 @@ static void bmi160_emul_end_cmd(uint8_t *regs, struct i2c_emul *emul)
  *
  * @param regs Pointer to array of emulator's registers
  * @param emul Pointer to BMI emulator
- * @param reg Pointer to accessed reg
+ * @param reg Register address that is accessed
  * @param byte Number of handled bytes in this write command
  * @param val Value that is being written
  *
@@ -561,7 +561,7 @@ static void bmi160_emul_end_cmd(uint8_t *regs, struct i2c_emul *emul)
  * @return -EIO on error
  */
 static int bmi160_emul_handle_write(uint8_t *regs, struct i2c_emul *emul,
-				    int *reg, int byte, uint8_t val)
+				    int reg, int byte, uint8_t val)
 {
 	bool tag_time;
 	bool header;
@@ -571,8 +571,8 @@ static int bmi160_emul_handle_write(uint8_t *regs, struct i2c_emul *emul,
 		return -EIO;
 	}
 
-	if (*reg <= BMI160_FIFO_DATA ||
-	    (*reg >= BMI160_STEP_CNT_0 && *reg <= BMI160_STEP_CNT_1)) {
+	if (reg <= BMI160_FIFO_DATA ||
+	    (reg >= BMI160_STEP_CNT_0 && reg <= BMI160_STEP_CNT_1)) {
 		return BMI_EMUL_ACCESS_E;
 	}
 
@@ -582,7 +582,7 @@ static int bmi160_emul_handle_write(uint8_t *regs, struct i2c_emul *emul,
 		bmi160_emul_end_cmd(regs, emul);
 	}
 
-	switch (*reg) {
+	switch (reg) {
 	case BMI160_CMD_REG:
 		if (regs[BMI160_CMD_REG] != BMI160_CMD_NOOP) {
 			LOG_ERR("Issued command before previous end");
@@ -607,6 +607,36 @@ static int bmi160_emul_handle_write(uint8_t *regs, struct i2c_emul *emul,
 }
 
 /**
+ * @brief Get currently accessed register. It is first register plus number of
+ *        handled bytes for all registers except BMI160_FIFO_DATA for which
+ *        address incrementation is disabled.
+ *
+ * @param emul Pointer to BMI emulator
+ * @param reg First byte of last write message
+ * @param bytes Number of bytes already handled from current message
+ * @param read If currently handled is read message
+ *
+ * @return Currently accessed register
+ */
+static int bmi160_emul_access_reg(struct i2c_emul *emul, int reg, int byte,
+				  bool read)
+{
+	if (!read) {
+		return reg;
+	}
+
+	/*
+	 * If register is FIFO data, then read data from FIFO.
+	 * Else block read access subsequent registers.
+	 */
+	if (reg <= BMI160_FIFO_DATA && reg + byte >= BMI160_FIFO_DATA) {
+		return BMI160_FIFO_DATA;
+	}
+
+	return reg + byte;
+}
+
+/**
  * @brief BMI160 specific read function. It handle block reads but only if
  *        device is not suspended. FIFO data register is trap register, so
  *        after reaching it, register address is not increased on block reads.
@@ -616,7 +646,7 @@ static int bmi160_emul_handle_write(uint8_t *regs, struct i2c_emul *emul,
  *
  * @param regs Pointer to array of emulator's registers
  * @param emul Pointer to BMI emulator
- * @param reg Pointer to accessed reg
+ * @param reg Register address that is accessed
  * @param byte Byte which is accessed during block read
  * @param buf Pointer where read byte should be stored
  *
@@ -625,7 +655,7 @@ static int bmi160_emul_handle_write(uint8_t *regs, struct i2c_emul *emul,
  * @return -EIO on other error
  */
 static int bmi160_emul_handle_read(uint8_t *regs, struct i2c_emul *emul,
-				   int *reg, int byte, char *buf)
+				   int reg, int byte, char *buf)
 {
 	uint16_t fifo_len;
 	bool acc_off_en;
@@ -634,17 +664,12 @@ static int bmi160_emul_handle_read(uint8_t *regs, struct i2c_emul *emul,
 	bool header;
 	int gyr_shift;
 	int acc_shift;
+	int fifo_byte;
 
-	/*
-	 * If register is FIFO data, then read data from FIFO.
-	 * Else block read access subsequent registers.
-	 */
-	if (*reg <= BMI160_FIFO_DATA && *reg + byte >= BMI160_FIFO_DATA) {
-		byte -= *reg - BMI160_FIFO_DATA;
-		*reg = BMI160_FIFO_DATA;
-	} else {
-		*reg += byte;
-	}
+	/* Get number of bytes readed from FIFO */
+	fifo_byte = byte - (reg - BMI160_FIFO_DATA);
+
+	reg = bmi160_emul_access_reg(emul, reg, byte, true /* = read */);
 
 	/* Stop on going command if required */
 	if (regs[BMI160_CMD_REG] != BMI160_CMD_NOOP &&
@@ -665,7 +690,7 @@ static int bmi160_emul_handle_read(uint8_t *regs, struct i2c_emul *emul,
 	gyr_shift = bmi160_emul_gyr_range_to_shift(regs[BMI160_GYR_RANGE]);
 	acc_shift = bmi160_emul_acc_range_to_shift(regs[BMI160_ACC_RANGE]);
 
-	switch (*reg) {
+	switch (reg) {
 	case BMI160_GYR_X_L_G:
 	case BMI160_GYR_X_H_G:
 	case BMI160_GYR_Y_L_G:
@@ -702,13 +727,13 @@ static int bmi160_emul_handle_read(uint8_t *regs, struct i2c_emul *emul,
 		}
 		break;
 	case BMI160_FIFO_DATA:
-		regs[*reg] = bmi_emul_get_fifo_data(emul, byte, tag_time,
-						    header, acc_shift,
-						    gyr_shift);
+		regs[reg] = bmi_emul_get_fifo_data(emul, fifo_byte, tag_time,
+						   header, acc_shift,
+						   gyr_shift);
 		break;
 	}
 
-	*buf = regs[*reg];
+	*buf = regs[reg];
 
 	return 0;
 }
@@ -728,6 +753,7 @@ struct bmi_emul_type_data bmi160_emul = {
 	.sensortime_follow_config_frame = false,
 	.handle_write = bmi160_emul_handle_write,
 	.handle_read = bmi160_emul_handle_read,
+	.access_reg = bmi160_emul_access_reg,
 	.reset = bmi160_emul_reset,
 	.rsvd_mask = bmi_emul_160_rsvd_mask,
 	.nvm_reg = bmi160_nvm_reg,

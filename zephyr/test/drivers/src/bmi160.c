@@ -9,6 +9,7 @@
 #include "common.h"
 #include "i2c.h"
 #include "emul/emul_bmi.h"
+#include "emul/emul_common_i2c.h"
 
 #include "motion_sense_fifo.h"
 #include "driver/accelgyro_bmi160.h"
@@ -154,13 +155,13 @@ static void test_bmi_acc_get_offset(void)
 	exp_v[2] = -1000 / 30;
 
 	/* Test fail on offset read */
-	bmi_emul_set_read_fail_reg(emul, BMI160_OFFSET_ACC70);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_OFFSET_ACC70);
 	zassert_equal(-EIO, ms->drv->get_offset(ms, ret, &temp), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_OFFSET_ACC70 + 1);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_OFFSET_ACC70 + 1);
 	zassert_equal(-EIO, ms->drv->get_offset(ms, ret, &temp), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_OFFSET_ACC70 + 2);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_OFFSET_ACC70 + 2);
 	zassert_equal(-EIO, ms->drv->get_offset(ms, ret, &temp), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Disable rotation */
 	ms->rot_standard_ref = NULL;
@@ -198,7 +199,7 @@ static void test_bmi_gyr_get_offset(void)
 	ms = &motion_sensors[BMI_GYR_SENSOR_ID];
 
 	/* Do not fail on read */
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Set emulator offset */
 	exp_v[0] = BMI_EMUL_125_DEG_S / 100;
@@ -211,15 +212,15 @@ static void test_bmi_gyr_get_offset(void)
 	exp_v[2] = -125000 / 300;
 
 	/* Test fail on offset read */
-	bmi_emul_set_read_fail_reg(emul, BMI160_OFFSET_GYR70);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_OFFSET_GYR70);
 	zassert_equal(-EIO, ms->drv->get_offset(ms, ret, &temp), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_OFFSET_GYR70 + 1);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_OFFSET_GYR70 + 1);
 	zassert_equal(-EIO, ms->drv->get_offset(ms, ret, &temp), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_OFFSET_GYR70 + 2);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_OFFSET_GYR70 + 2);
 	zassert_equal(-EIO, ms->drv->get_offset(ms, ret, &temp), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_OFFSET_EN_GYR98);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_OFFSET_EN_GYR98);
 	zassert_equal(-EIO, ms->drv->get_offset(ms, ret, &temp), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Disable rotation */
 	ms->rot_standard_ref = NULL;
@@ -260,21 +261,21 @@ static void test_bmi_acc_set_offset(void)
 	ms = &motion_sensors[BMI_ACC_SENSOR_ID];
 
 	/* Test fail on OFFSET EN GYR98 register read and write */
-	bmi_emul_set_read_fail_reg(emul, BMI160_OFFSET_EN_GYR98);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_OFFSET_EN_GYR98);
 	zassert_equal(-EIO, ms->drv->set_offset(ms, input_v, temp), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
-	bmi_emul_set_write_fail_reg(emul, BMI160_OFFSET_EN_GYR98);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(emul, BMI160_OFFSET_EN_GYR98);
 	zassert_equal(-EIO, ms->drv->set_offset(ms, input_v, temp), NULL);
-	bmi_emul_set_write_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test fail on offset write */
-	bmi_emul_set_write_fail_reg(emul, BMI160_OFFSET_ACC70);
+	i2c_common_emul_set_write_fail_reg(emul, BMI160_OFFSET_ACC70);
 	zassert_equal(-EIO, ms->drv->set_offset(ms, input_v, temp), NULL);
-	bmi_emul_set_write_fail_reg(emul, BMI160_OFFSET_ACC70 + 1);
+	i2c_common_emul_set_write_fail_reg(emul, BMI160_OFFSET_ACC70 + 1);
 	zassert_equal(-EIO, ms->drv->set_offset(ms, input_v, temp), NULL);
-	bmi_emul_set_write_fail_reg(emul, BMI160_OFFSET_ACC70 + 2);
+	i2c_common_emul_set_write_fail_reg(emul, BMI160_OFFSET_ACC70 + 2);
 	zassert_equal(-EIO, ms->drv->set_offset(ms, input_v, temp), NULL);
-	bmi_emul_set_write_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Set input offset */
 	exp_v[0] = BMI_EMUL_1G / 10;
@@ -331,21 +332,21 @@ static void test_bmi_gyr_set_offset(void)
 	ms = &motion_sensors[BMI_GYR_SENSOR_ID];
 
 	/* Test fail on OFFSET EN GYR98 register read and write */
-	bmi_emul_set_read_fail_reg(emul, BMI160_OFFSET_EN_GYR98);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_OFFSET_EN_GYR98);
 	zassert_equal(-EIO, ms->drv->set_offset(ms, input_v, temp), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
-	bmi_emul_set_write_fail_reg(emul, BMI160_OFFSET_EN_GYR98);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(emul, BMI160_OFFSET_EN_GYR98);
 	zassert_equal(-EIO, ms->drv->set_offset(ms, input_v, temp), NULL);
-	bmi_emul_set_write_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test fail on offset write */
-	bmi_emul_set_write_fail_reg(emul, BMI160_OFFSET_GYR70);
+	i2c_common_emul_set_write_fail_reg(emul, BMI160_OFFSET_GYR70);
 	zassert_equal(-EIO, ms->drv->set_offset(ms, input_v, temp), NULL);
-	bmi_emul_set_write_fail_reg(emul, BMI160_OFFSET_GYR70 + 1);
+	i2c_common_emul_set_write_fail_reg(emul, BMI160_OFFSET_GYR70 + 1);
 	zassert_equal(-EIO, ms->drv->set_offset(ms, input_v, temp), NULL);
-	bmi_emul_set_write_fail_reg(emul, BMI160_OFFSET_GYR70 + 2);
+	i2c_common_emul_set_write_fail_reg(emul, BMI160_OFFSET_GYR70 + 2);
 	zassert_equal(-EIO, ms->drv->set_offset(ms, input_v, temp), NULL);
-	bmi_emul_set_write_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Set input offset */
 	exp_v[0] = BMI_EMUL_125_DEG_S / 100;
@@ -441,7 +442,7 @@ static void test_bmi_acc_set_range(void)
 	ms->current_range = start_range;
 	bmi_emul_set_reg(emul, BMI160_ACC_RANGE, BMI160_GSEL_2G);
 	/* Setup emulator fail on write */
-	bmi_emul_set_write_fail_reg(emul, BMI160_ACC_RANGE);
+	i2c_common_emul_set_write_fail_reg(emul, BMI160_ACC_RANGE);
 
 	/* Test fail on write */
 	zassert_equal(-EIO, ms->drv->set_range(ms, 12, 0), NULL);
@@ -454,7 +455,7 @@ static void test_bmi_acc_set_range(void)
 		      bmi_emul_get_reg(emul, BMI160_ACC_RANGE), NULL);
 
 	/* Do not fail on write */
-	bmi_emul_set_write_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test setting range with rounding down */
 	check_set_acc_range(emul, ms, 1, 0, 2);
@@ -549,7 +550,7 @@ static void test_bmi_gyr_set_range(void)
 	ms->current_range = start_range;
 	bmi_emul_set_reg(emul, BMI160_GYR_RANGE, BMI160_DPS_SEL_250);
 	/* Setup emulator fail on write */
-	bmi_emul_set_write_fail_reg(emul, BMI160_GYR_RANGE);
+	i2c_common_emul_set_write_fail_reg(emul, BMI160_GYR_RANGE);
 
 	/* Test fail on write */
 	zassert_equal(-EIO, ms->drv->set_range(ms, 125, 0), NULL);
@@ -562,7 +563,7 @@ static void test_bmi_gyr_set_range(void)
 		      bmi_emul_get_reg(emul, BMI160_GYR_RANGE), NULL);
 
 	/* Do not fail on write */
-	bmi_emul_set_write_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test setting range with rounding down */
 	check_set_gyr_range(emul, ms, 1, 0, 125);
@@ -756,7 +757,7 @@ static void test_bmi_acc_rate(void)
 	reg_rate = bmi_emul_get_reg(emul, BMI160_ACC_CONF);
 
 	/* Setup emulator fail on read */
-	bmi_emul_set_read_fail_reg(emul, BMI160_ACC_CONF);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_ACC_CONF);
 
 	/* Test fail on read */
 	zassert_equal(-EIO, ms->drv->set_data_rate(ms, 50000, 0), NULL);
@@ -767,10 +768,10 @@ static void test_bmi_acc_rate(void)
 	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_ACC_CONF), NULL);
 
 	/* Do not fail on read */
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Setup emulator fail on write */
-	bmi_emul_set_write_fail_reg(emul, BMI160_ACC_CONF);
+	i2c_common_emul_set_write_fail_reg(emul, BMI160_ACC_CONF);
 
 	/* Test fail on write */
 	zassert_equal(-EIO, ms->drv->set_data_rate(ms, 50000, 0), NULL);
@@ -781,7 +782,7 @@ static void test_bmi_acc_rate(void)
 	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_ACC_CONF), NULL);
 
 	/* Do not fail on write */
-	bmi_emul_set_write_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test disabling sensor */
 	pmu_status = BMI160_PMU_NORMAL << BMI160_PMU_ACC_OFFSET;
@@ -935,7 +936,7 @@ static void test_bmi_gyr_rate(void)
 	reg_rate = bmi_emul_get_reg(emul, BMI160_GYR_CONF);
 
 	/* Setup emulator fail on read */
-	bmi_emul_set_read_fail_reg(emul, BMI160_GYR_CONF);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_GYR_CONF);
 
 	/* Test fail on read */
 	zassert_equal(-EIO, ms->drv->set_data_rate(ms, 50000, 0), NULL);
@@ -946,10 +947,10 @@ static void test_bmi_gyr_rate(void)
 	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_GYR_CONF), NULL);
 
 	/* Do not fail on read */
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Setup emulator fail on write */
-	bmi_emul_set_write_fail_reg(emul, BMI160_GYR_CONF);
+	i2c_common_emul_set_write_fail_reg(emul, BMI160_GYR_CONF);
 
 	/* Test fail on write */
 	zassert_equal(-EIO, ms->drv->set_data_rate(ms, 50000, 0), NULL);
@@ -960,7 +961,7 @@ static void test_bmi_gyr_rate(void)
 	zassert_equal(reg_rate, bmi_emul_get_reg(emul, BMI160_GYR_CONF), NULL);
 
 	/* Do not fail on write */
-	bmi_emul_set_write_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test disabling sensor */
 	pmu_status = BMI160_PMU_NORMAL << BMI160_PMU_ACC_OFFSET;
@@ -1030,18 +1031,18 @@ static void test_bmi_read_temp(void)
 	ms_gyr = &motion_sensors[BMI_GYR_SENSOR_ID];
 
 	/* Setup emulator fail on read */
-	bmi_emul_set_read_fail_reg(emul, BMI160_TEMPERATURE_0);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_TEMPERATURE_0);
 	zassert_equal(EC_ERROR_NOT_POWERED,
 		      ms_acc->drv->read_temp(ms_acc, &ret_temp), NULL);
 	zassert_equal(EC_ERROR_NOT_POWERED,
 		      ms_gyr->drv->read_temp(ms_gyr, &ret_temp), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_TEMPERATURE_1);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_TEMPERATURE_1);
 	zassert_equal(EC_ERROR_NOT_POWERED,
 		      ms_acc->drv->read_temp(ms_acc, &ret_temp), NULL);
 	zassert_equal(EC_ERROR_NOT_POWERED,
 		      ms_gyr->drv->read_temp(ms_gyr, &ret_temp), NULL);
 	/* Do not fail on read */
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Fail on invalid temperature */
 	bmi_emul_set_reg(emul, BMI160_TEMPERATURE_0, 0x00);
@@ -1116,10 +1117,10 @@ static void test_bmi_acc_read(void)
 	bmi_emul_set_off(emul, BMI_EMUL_ACC_Z, 0);
 
 	/* Fail on read status */
-	bmi_emul_set_read_fail_reg(emul, BMI160_STATUS);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_STATUS);
 	zassert_equal(-EIO, ms->drv->read(ms, ret_v), NULL);
 
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* When not ready, driver should return saved raw value */
 	exp_v[0] = 100;
@@ -1187,20 +1188,20 @@ static void test_bmi_acc_read(void)
 	compare_int3v(exp_v, ret_v);
 
 	/* Fail on read of data registers */
-	bmi_emul_set_read_fail_reg(emul, BMI160_ACC_X_L_G);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_ACC_X_L_G);
 	zassert_equal(-EIO, ms->drv->read(ms, ret_v), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_ACC_X_H_G);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_ACC_X_H_G);
 	zassert_equal(-EIO, ms->drv->read(ms, ret_v), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_ACC_Y_L_G);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_ACC_Y_L_G);
 	zassert_equal(-EIO, ms->drv->read(ms, ret_v), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_ACC_Y_H_G);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_ACC_Y_H_G);
 	zassert_equal(-EIO, ms->drv->read(ms, ret_v), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_ACC_Z_L_G);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_ACC_Z_L_G);
 	zassert_equal(-EIO, ms->drv->read(ms, ret_v), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_ACC_Z_H_G);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_ACC_Z_H_G);
 	zassert_equal(-EIO, ms->drv->read(ms, ret_v), NULL);
 
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 	ms->rot_standard_ref = NULL;
 }
 
@@ -1224,10 +1225,10 @@ static void test_bmi_gyr_read(void)
 	bmi_emul_set_off(emul, BMI_EMUL_GYR_Z, 0);
 
 	/* Fail on read status */
-	bmi_emul_set_read_fail_reg(emul, BMI160_STATUS);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_STATUS);
 	zassert_equal(-EIO, ms->drv->read(ms, ret_v), NULL);
 
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* When not ready, driver should return saved raw value */
 	exp_v[0] = 100;
@@ -1295,20 +1296,20 @@ static void test_bmi_gyr_read(void)
 	compare_int3v(exp_v, ret_v);
 
 	/* Fail on read of data registers */
-	bmi_emul_set_read_fail_reg(emul, BMI160_GYR_X_L_G);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_GYR_X_L_G);
 	zassert_equal(-EIO, ms->drv->read(ms, ret_v), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_GYR_X_H_G);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_GYR_X_H_G);
 	zassert_equal(-EIO, ms->drv->read(ms, ret_v), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_GYR_Y_L_G);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_GYR_Y_L_G);
 	zassert_equal(-EIO, ms->drv->read(ms, ret_v), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_GYR_Y_H_G);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_GYR_Y_H_G);
 	zassert_equal(-EIO, ms->drv->read(ms, ret_v), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_GYR_Z_L_G);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_GYR_Z_L_G);
 	zassert_equal(-EIO, ms->drv->read(ms, ret_v), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_GYR_Z_H_G);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_GYR_Z_H_G);
 	zassert_equal(-EIO, ms->drv->read(ms, ret_v), NULL);
 
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 	ms->rot_standard_ref = NULL;
 }
 
@@ -1316,10 +1317,12 @@ static void test_bmi_gyr_read(void)
  * Custom emulatro read function which always return not ready STATUS register.
  * Used in calibration test.
  */
-static int emul_nrdy(struct i2c_emul *emul, int reg, int byte, void *data)
+static int emul_nrdy(struct i2c_emul *emul, int reg, uint8_t *val, int byte,
+		     void *data)
 {
 	if (reg == BMI160_STATUS) {
 		bmi_emul_set_reg(emul, BMI160_STATUS, 0);
+		*val = 0;
 
 		return 0;
 	}
@@ -1379,13 +1382,13 @@ static void test_bmi_acc_perform_calib(void)
 	exp_off[2] = BMI_EMUL_1G - exp_off[2];
 
 	/* Test fail on rate set */
-	bmi_emul_set_read_fail_reg(emul, BMI160_ACC_CONF);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_ACC_CONF);
 	zassert_equal(-EIO, ms->drv->perform_calib(ms, 1), NULL);
 	zassert_equal(range, ms->current_range, NULL);
 	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
 
 	/* Test fail on status read */
-	bmi_emul_set_read_fail_reg(emul, BMI160_STATUS);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_STATUS);
 	zassert_equal(-EIO, ms->drv->perform_calib(ms, 1), NULL);
 	zassert_equal(range, ms->current_range, NULL);
 	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
@@ -1393,13 +1396,13 @@ static void test_bmi_acc_perform_calib(void)
 	bmi_emul_set_reg(emul, BMI160_CMD_REG, BMI160_CMD_NOOP);
 
 	/* Test fail on data not ready */
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
-	bmi_emul_set_read_func(emul, emul_nrdy, NULL);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_func(emul, emul_nrdy, NULL);
 	zassert_equal(EC_RES_TIMEOUT, ms->drv->perform_calib(ms, 1), NULL);
 	zassert_equal(range, ms->current_range, NULL);
 	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
 	/* Remove custom emulator read function */
-	bmi_emul_set_read_func(emul, NULL, NULL);
+	i2c_common_emul_set_read_func(emul, NULL, NULL);
 	/* Stop fast offset compensation before next test */
 	bmi_emul_set_reg(emul, BMI160_CMD_REG, BMI160_CMD_NOOP);
 
@@ -1503,13 +1506,13 @@ static void test_bmi_gyr_perform_calib(void)
 	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
 
 	/* Test fail on rate set */
-	bmi_emul_set_read_fail_reg(emul, BMI160_GYR_CONF);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_GYR_CONF);
 	zassert_equal(-EIO, ms->drv->perform_calib(ms, 1), NULL);
 	zassert_equal(range, ms->current_range, NULL);
 	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
 
 	/* Test fail on status read */
-	bmi_emul_set_read_fail_reg(emul, BMI160_STATUS);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_STATUS);
 	zassert_equal(-EIO, ms->drv->perform_calib(ms, 1), NULL);
 	zassert_equal(range, ms->current_range, NULL);
 	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
@@ -1517,13 +1520,13 @@ static void test_bmi_gyr_perform_calib(void)
 	bmi_emul_set_reg(emul, BMI160_CMD_REG, BMI160_CMD_NOOP);
 
 	/* Test fail on data not ready */
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
-	bmi_emul_set_read_func(emul, emul_nrdy, NULL);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_func(emul, emul_nrdy, NULL);
 	zassert_equal(EC_RES_TIMEOUT, ms->drv->perform_calib(ms, 1), NULL);
 	zassert_equal(range, ms->current_range, NULL);
 	zassert_equal(rate, ms->drv->get_data_rate(ms), NULL);
 	/* Remove custom emulator read function */
-	bmi_emul_set_read_func(emul, NULL, NULL);
+	i2c_common_emul_set_read_func(emul, NULL, NULL);
 	/* Stop fast offset compensation before next test */
 	bmi_emul_set_reg(emul, BMI160_CMD_REG, BMI160_CMD_NOOP);
 
@@ -1568,7 +1571,8 @@ struct fifo_func_data {
  * to value passed as additional data. It sets interrupt registers to 0 after
  * access.
  */
-static int emul_fifo_func(struct i2c_emul *emul, int reg, int byte, void *data)
+static int emul_fifo_func(struct i2c_emul *emul, int reg, uint8_t *val,
+			  int byte, void *data)
 {
 	struct fifo_func_data *d = data;
 
@@ -1703,11 +1707,11 @@ static void test_bmi_acc_fifo(void)
 	event = BMI_INT_EVENT;
 
 	/* Test fail to read interrupt status registers */
-	bmi_emul_set_read_fail_reg(emul, BMI160_INT_STATUS_0);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_INT_STATUS_0);
 	zassert_equal(-EIO, ms->drv->irq_handler(ms, &event), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI160_INT_STATUS_1);
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_INT_STATUS_1);
 	zassert_equal(-EIO, ms->drv->irq_handler(ms, &event), NULL);
-	bmi_emul_set_read_fail_reg(emul, BMI_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test no interrupt */
 	bmi_emul_set_reg(emul, BMI160_INT_STATUS_0, 0);
@@ -1717,7 +1721,7 @@ static void test_bmi_acc_fifo(void)
 	check_fifo(ms, ms_gyr, NULL, acc_range, gyr_range);
 
 	/* Set custom function for FIFO test */
-	bmi_emul_set_read_func(emul, emul_fifo_func, &func_data);
+	i2c_common_emul_set_read_func(emul, emul_fifo_func, &func_data);
 	/* Enable sensor FIFO */
 	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, 50000, 0), NULL);
 	/* Set range */
@@ -1802,7 +1806,7 @@ static void test_bmi_acc_fifo(void)
 	check_fifo(ms, ms_gyr, f, acc_range, gyr_range);
 
 	/* Remove custom emulator read function */
-	bmi_emul_set_read_func(emul, NULL, NULL);
+	i2c_common_emul_set_read_func(emul, NULL, NULL);
 }
 
 /** Test irq handler of gyroscope sensor */

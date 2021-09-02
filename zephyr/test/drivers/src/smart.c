@@ -8,6 +8,7 @@
 
 #include "common.h"
 #include "i2c.h"
+#include "emul/emul_common_i2c.h"
 #include "emul/emul_smart_battery.h"
 
 #include "battery.h"
@@ -102,13 +103,6 @@ static void test_battery_status(void)
 	zassert_equal(expected, status, "%d != %d", expected, status);
 }
 
-/** Custom battery function which always fail */
-int fail_func(struct i2c_emul *emul, uint8_t *buf, int *len, int cmd,
-	      void *data)
-{
-	return -EINVAL;
-}
-
 /** Test wait for stable function */
 static void test_battery_wait_for_stable(void)
 {
@@ -117,11 +111,11 @@ static void test_battery_wait_for_stable(void)
 	emul = sbat_emul_get_ptr(BATTERY_ORD);
 
 	/* Should fail when read function always fail */
-	sbat_emul_set_custom_read_func(emul, fail_func, NULL);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_FAIL_ALL_REG);
 	zassert_equal(EC_ERROR_NOT_POWERED, battery_wait_for_stable(), NULL);
 
 	/* Should be ok with default handler */
-	sbat_emul_set_custom_read_func(emul, NULL, NULL);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 	zassert_equal(EC_SUCCESS, battery_wait_for_stable(), NULL);
 }
 
@@ -179,29 +173,10 @@ static void test_battery_time_at_rate(void)
 	zassert_equal(expect_time, minutes, "%d != %d", expect_time, minutes);
 }
 
-/** Parameter for fail_cmd_func */
-struct fail_cmd_data {
-	int cmd;
-};
-
-/** Custom battery function which fail on specific command */
-int fail_cmd_func(struct i2c_emul *emul, uint8_t *buf, int *len, int cmd,
-		  void *data)
-{
-	struct fail_cmd_data *p = data;
-
-	if (p->cmd == cmd)
-		return -EINVAL;
-
-	/* Use default handler */
-	return 1;
-}
-
 /** Test battery get params */
 static void test_battery_get_params(void)
 {
 	struct sbat_emul_bat_data *bat;
-	struct fail_cmd_data func_data;
 	struct batt_params batt;
 	struct i2c_emul *emul;
 	int flags;
@@ -213,84 +188,81 @@ static void test_battery_get_params(void)
 	bat->desired_charg_cur = 1000;
 	bat->desired_charg_volt = 5000;
 
-	/* Use function which allows to fail for specific command */
-	sbat_emul_set_custom_read_func(emul, fail_cmd_func, &func_data);
-
 	/* Fail temperature read */
-	func_data.cmd = SB_TEMPERATURE;
+	i2c_common_emul_set_read_fail_reg(emul, SB_TEMPERATURE);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_TEMPERATURE;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
 	/* Fail state of charge read; want charge cannot be set */
-	func_data.cmd = SB_RELATIVE_STATE_OF_CHARGE;
+	i2c_common_emul_set_read_fail_reg(emul, SB_RELATIVE_STATE_OF_CHARGE);
 	flags = BATT_FLAG_RESPONSIVE | BATT_FLAG_BAD_STATE_OF_CHARGE;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
 	/* Fail voltage read */
-	func_data.cmd = SB_VOLTAGE;
+	i2c_common_emul_set_read_fail_reg(emul, SB_VOLTAGE);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_VOLTAGE;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
 	/* Fail current read */
-	func_data.cmd = SB_CURRENT;
+	i2c_common_emul_set_read_fail_reg(emul, SB_CURRENT);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_CURRENT;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
 	/* Fail average current read */
-	func_data.cmd = SB_AVERAGE_CURRENT;
+	i2c_common_emul_set_read_fail_reg(emul, SB_AVERAGE_CURRENT);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_AVERAGE_CURRENT;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
 	/* Fail charging voltage read; want charge cannot be set */
-	func_data.cmd = SB_CHARGING_VOLTAGE;
+	i2c_common_emul_set_read_fail_reg(emul, SB_CHARGING_VOLTAGE);
 	flags = BATT_FLAG_RESPONSIVE | BATT_FLAG_BAD_DESIRED_VOLTAGE;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
 	/* Fail charging voltage read; want charge cannot be set */
-	func_data.cmd = SB_CHARGING_CURRENT;
+	i2c_common_emul_set_read_fail_reg(emul, SB_CHARGING_CURRENT);
 	flags = BATT_FLAG_RESPONSIVE | BATT_FLAG_BAD_DESIRED_CURRENT;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
 	/* Fail remaining capacity read */
-	func_data.cmd = SB_REMAINING_CAPACITY;
+	i2c_common_emul_set_read_fail_reg(emul, SB_REMAINING_CAPACITY);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_REMAINING_CAPACITY;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
 	/* Fail full capacity read */
-	func_data.cmd = SB_FULL_CHARGE_CAPACITY;
+	i2c_common_emul_set_read_fail_reg(emul, SB_FULL_CHARGE_CAPACITY);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_FULL_CAPACITY;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
 	/* Fail status read */
-	func_data.cmd = SB_BATTERY_STATUS;
+	i2c_common_emul_set_read_fail_reg(emul, SB_BATTERY_STATUS);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
 		BATT_FLAG_BAD_STATUS;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
 	/* Fail all */
-	sbat_emul_set_custom_read_func(emul, fail_func, NULL);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_FAIL_ALL_REG);
 	flags = BATT_FLAG_BAD_ANY;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 
 	/* Use default handler, everything should be ok */
-	sbat_emul_set_custom_read_func(emul, NULL, NULL);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);

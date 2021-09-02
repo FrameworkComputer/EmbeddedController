@@ -9,6 +9,7 @@
 #include "common.h"
 #include "ec_tasks.h"
 #include "emul/emul_bb_retimer.h"
+#include "emul/emul_common_i2c.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "stubs.h"
@@ -41,7 +42,8 @@ static void test_bb_set_state(void)
 	set_test_runner_tid();
 
 	/* Setup emulator fail on write */
-	bb_emul_set_write_fail_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
+	i2c_common_emul_set_write_fail_reg(emul,
+					   BB_RETIMER_REG_CONNECTION_STATE);
 
 	/* Test fail on reset register write */
 	zassert_equal(-EIO, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
@@ -50,7 +52,7 @@ static void test_bb_set_state(void)
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 
 	/* Do not fail on write */
-	bb_emul_set_write_fail_reg(emul, BB_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Set UFP role for whole test */
 	tc_set_data_role(USBC_PORT_C1, PD_ROLE_UFP);

@@ -28,13 +28,12 @@
  * As-such, each application may
  *
  * - define a Device Tree overlay file to set the most of battery properties
- * - call @ref sbat_emul_set_custom_write_func and
- *   @ref sbat_emul_set_custom_read_func to setup custom handlers for SMBus
- *   messages.
  * - get battery properties calling @ref sbat_emul_get_bat_data Battery
  *   properties can be changed through obtained pointer. In multithread
  *   environment access to battery can be guarded by calling
  *   @ref sbat_emul_lock_bat_data and @ref sbat_emul_unlock_bat_data
+ * - call functions from emul_common_i2c.h to setup custom handlers for SMBus
+ *   messages
  */
 
 /* Value used to indicate that no command is selected */
@@ -123,26 +122,6 @@ struct sbat_emul_bat_data {
 struct i2c_emul *sbat_emul_get_ptr(int ord);
 
 /**
- * @brief Custom function type that is used as user defined callbacks in read
- *        and write SMBus messages handling.
- *
- * @param emul Pointer to smart battery emulator
- * @param buf Pointer to data from write command or to be filed by read command
- * @param len Pointer to number of bytes used for write command buffer. It may
- *            exceed MSG_BUF_LEN, indicating that some bytes from write command
- *            are not saved in @p buf. If read command is handled, than
- *            function should set how many bytes are written to @p buf
- * @param cmd Command that was recognized
- * @param data Pointer to custom user data
- *
- * @return 0 on success
- * @return 1 continue with normal smart battery emulator handler
- * @return negative on error
- */
-typedef int (*sbat_emul_custom_func)(struct i2c_emul *emul, uint8_t *buf,
-				     int *len, int cmd, void *data);
-
-/**
  * @brief Function which allows to get properties of emulated smart battery
  *
  * @param emul Pointer to smart battery emulator
@@ -150,48 +129,6 @@ typedef int (*sbat_emul_custom_func)(struct i2c_emul *emul, uint8_t *buf,
  * @return Pointer to smart battery properties
  */
 struct sbat_emul_bat_data *sbat_emul_get_bat_data(struct i2c_emul *emul);
-
-/**
- * @brief Lock access to smart battery properties. After acquiring lock, user
- *        may change emulator behaviour in multi-thread setup.
- *
- * @param emul Pointer to smart battery emulator
- * @param timeout Timeout in getting lock
- *
- * @return k_mutex_lock return code
- */
-int sbat_emul_lock_bat_data(struct i2c_emul *emul, k_timeout_t timeout);
-
-/**
- * @brief Unlock access to smart battery properties.
- *
- * @param emul Pointer to smart battery emulator
- *
- * @return k_mutex_unlock return code
- */
-int sbat_emul_unlock_bat_dat(struct i2c_emul *emul);
-
-/**
- * @brief Set custom write SMBus message handler. This function is called before
- *        generic handler.
- *
- * @param emul Pointer to smart battery emulator
- * @param func Pointer to custom function
- * @param data User data passed on call of custom function
- */
-void sbat_emul_set_custom_write_func(struct i2c_emul *emul,
-				     sbat_emul_custom_func func, void *data);
-
-/**
- * @brief Set custom read SMBus message handler. This function is called before
- *        generic handler.
- *
- * @param emul Pointer to smart battery emulator
- * @param func Pointer to custom function
- * @param data User data passed on call of custom function
- */
-void sbat_emul_set_custom_read_func(struct i2c_emul *emul,
-				    sbat_emul_custom_func func, void *data);
 
 /**
  * @brief Convert date to format used by smart battery
@@ -235,6 +172,19 @@ int sbat_emul_get_word_val(struct i2c_emul *emul, int cmd, uint16_t *val);
  */
 int sbat_emul_get_block_data(struct i2c_emul *emul, int cmd, uint8_t **blk,
 			     int *len);
+
+/**
+ * @brief Set next response of emulator. This function may be used in user
+ *        custom read callback to setup response with calculated PEC.
+ *
+ * @param emul Pointer to smart battery emulator
+ * @param cmd Read command
+ * @param buf Buffer with the response
+ * @param len Length of the response
+ * @param fail If emulator should fail to send response
+ */
+void sbat_emul_set_response(struct i2c_emul *emul, int cmd, uint8_t *buf,
+			    int len, bool fail);
 
 /**
  * @}

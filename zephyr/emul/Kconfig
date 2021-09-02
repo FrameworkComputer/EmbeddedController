@@ -11,11 +11,13 @@ config EMUL_COMMON_I2C
 
 config EMUL_SMART_BATTERY
 	bool "Smart Battery emulator"
+	select EMUL_COMMON_I2C
 	help
 	  Enable the Smart Battery emulator. This driver use emulated I2C bus.
 
 config EMUL_BMA255
 	bool "BMA255 emulator"
+	select EMUL_COMMON_I2C
 	help
 	  Enable the BMA255 emulator. This driver use emulated I2C bus.
 	  It is used to test bma2x2 driver. Emulators API is available in
@@ -37,6 +39,7 @@ config EMUL_PPC_SYV682X
 
 config EMUL_BMI
 	bool "BMI emulator"
+	select EMUL_COMMON_I2C
 	help
 	  Enable the BMI emulator. This driver use emulated I2C bus.
 	  It is used to test bmi 160 and 260 drivers. Emulators API is
@@ -44,6 +47,7 @@ config EMUL_BMI
 
 config EMUL_TCS3400
 	bool "TCS3400 emulator"
+	select EMUL_COMMON_I2C
 	help
 	  Enable the TCS3400 light sensor. This driver use emulated I2C bus.
 	  It is used to test als_tcs3400 driver. It supports reading sensor
@@ -56,6 +60,7 @@ config EMUL_TCS3400
 
 config EMUL_BB_RETIMER
 	bool "BB retimer emulator"
+	select EMUL_COMMON_I2C
 	help
 	  Enable the BB (Burnside Bridge) retimer emulator. This driver use
 	  emulated I2C bus. It is used to test bb_retimer driver. It supports

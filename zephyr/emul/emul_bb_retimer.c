@@ -14,29 +14,19 @@ LOG_MODULE_REGISTER(emul_bb_retimer);
 #include <drivers/i2c.h>
 #include <drivers/i2c_emul.h>
 
+#include "emul/emul_common_i2c.h"
 #include "emul/emul_bb_retimer.h"
 
 #include "driver/retimer/bb_retimer.h"
 
-/**
- * Describe if there is no ongoing I2C message or if there is message handled
- * at the moment (last message doesn't ended with stop or write is not followed
- * by read).
- */
-enum bb_emul_msg_state {
-	BB_EMUL_NONE_MSG,
-	BB_EMUL_IN_WRITE,
-	BB_EMUL_IN_READ
-};
+#define BB_DATA_FROM_I2C_EMUL(_emul)					     \
+	CONTAINER_OF(CONTAINER_OF(_emul, struct i2c_common_emul_data, emul), \
+		     struct bb_emul_data, common)
 
 /** Run-time data used by the emulator */
 struct bb_emul_data {
-	/** I2C emulator detail */
-	struct i2c_emul emul;
-	/** BB retimer device being emulated */
-	const struct device *i2c;
-	/** Configuration information */
-	const struct bb_emul_cfg *cfg;
+	/** Common I2C data */
+	struct i2c_common_emul_data common;
 
 	/** Current state of all emulated BB retimer registers */
 	uint32_t reg[BB_RETIMER_REG_COUNT];
@@ -49,84 +39,9 @@ struct bb_emul_data {
 	/** Return error when trying to write 1 to reserved bit */
 	bool error_on_rsvd_write;
 
-	/** Current state of I2C bus (if emulator is handling message) */
-	enum bb_emul_msg_state msg_state;
-	/** Number of already handled bytes in ongoing message */
-	int msg_byte;
-	/** Register selected in last write command */
-	uint8_t cur_reg;
 	/** Value of data dword in ongoing i2c message */
 	uint32_t data_dword;
-
-	/** Custom write function called on I2C write opperation */
-	bb_emul_write_func write_func;
-	/** Data passed to custom write function */
-	void *write_func_data;
-	/** Custom read function called on I2C read opperation */
-	bb_emul_read_func read_func;
-	/** Data passed to custom read function */
-	void *read_func_data;
-
-	/** Control if read should fail on given register */
-	int read_fail_reg;
-	/** Control if write should fail on given register */
-	int write_fail_reg;
-
-	/** Mutex used to control access to emulator data */
-	struct k_mutex data_mtx;
 };
-
-/** Static configuration for the emulator */
-struct bb_emul_cfg {
-	/** Label of the I2C bus this emulator connects to */
-	const char *i2c_label;
-	/** Pointer to run-time data */
-	struct bb_emul_data *data;
-	/** Address of BB retimer on i2c bus */
-	uint16_t addr;
-};
-
-/** Check description in emul_bb_retimer.h */
-int bb_emul_lock_data(struct i2c_emul *emul, k_timeout_t timeout)
-{
-	struct bb_emul_data *data;
-
-	data = CONTAINER_OF(emul, struct bb_emul_data, emul);
-
-	return k_mutex_lock(&data->data_mtx, timeout);
-}
-
-/** Check description in emul_bb_retimer.h */
-int bb_emul_unlock_data(struct i2c_emul *emul)
-{
-	struct bb_emul_data *data;
-
-	data = CONTAINER_OF(emul, struct bb_emul_data, emul);
-
-	return k_mutex_unlock(&data->data_mtx);
-}
-
-/** Check description in emul_bb_retimer.h */
-void bb_emul_set_write_func(struct i2c_emul *emul,
-			    bb_emul_write_func func, void *data)
-{
-	struct bb_emul_data *emul_data;
-
-	emul_data = CONTAINER_OF(emul, struct bb_emul_data, emul);
-	emul_data->write_func = func;
-	emul_data->write_func_data = data;
-}
-
-/** Check description in emul_bb_retimer.h */
-void bb_emul_set_read_func(struct i2c_emul *emul,
-			   bb_emul_read_func func, void *data)
-{
-	struct bb_emul_data *emul_data;
-
-	emul_data = CONTAINER_OF(emul, struct bb_emul_data, emul);
-	emul_data->read_func = func;
-	emul_data->read_func_data = data;
-}
 
 /** Check description in emul_bb_retimer.h */
 void bb_emul_set_reg(struct i2c_emul *emul, int reg, uint32_t val)
@@ -137,7 +52,7 @@ void bb_emul_set_reg(struct i2c_emul *emul, int reg, uint32_t val)
 		return;
 	}
 
-	data = CONTAINER_OF(emul, struct bb_emul_data, emul);
+	data = BB_DATA_FROM_I2C_EMUL(emul);
 	data->reg[reg] = val;
 }
 
@@ -150,27 +65,9 @@ uint32_t bb_emul_get_reg(struct i2c_emul *emul, int reg)
 		return 0;
 	}
 
-	data = CONTAINER_OF(emul, struct bb_emul_data, emul);
+	data = BB_DATA_FROM_I2C_EMUL(emul);
 
 	return data->reg[reg];
-}
-
-/** Check description in emul_bb_retimer.h */
-void bb_emul_set_read_fail_reg(struct i2c_emul *emul, int reg)
-{
-	struct bb_emul_data *data;
-
-	data = CONTAINER_OF(emul, struct bb_emul_data, emul);
-	data->read_fail_reg = reg;
-}
-
-/** Check description in emul_bb_retimer.h */
-void bb_emul_set_write_fail_reg(struct i2c_emul *emul, int reg)
-{
-	struct bb_emul_data *data;
-
-	data = CONTAINER_OF(emul, struct bb_emul_data, emul);
-	data->write_fail_reg = reg;
 }
 
 /** Check description in emul_bb_retimer.h */
@@ -178,7 +75,7 @@ void bb_emul_set_err_on_ro_write(struct i2c_emul *emul, bool set)
 {
 	struct bb_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct bb_emul_data, emul);
+	data = BB_DATA_FROM_I2C_EMUL(emul);
 	data->error_on_ro_write = set;
 }
 
@@ -187,7 +84,7 @@ void bb_emul_set_err_on_rsvd_write(struct i2c_emul *emul, bool set)
 {
 	struct bb_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct bb_emul_data, emul);
+	data = BB_DATA_FROM_I2C_EMUL(emul);
 	data->error_on_rsvd_write = set;
 }
 
@@ -212,7 +109,7 @@ static void bb_emul_reset(struct i2c_emul *emul)
 {
 	struct bb_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct bb_emul_data, emul);
+	data = BB_DATA_FROM_I2C_EMUL(emul);
 
 	data->reg[BB_RETIMER_REG_VENDOR_ID]		= data->vendor_id;
 	data->reg[BB_RETIMER_REG_DEVICE_ID]		= BB_RETIMER_DEVICE_ID;
@@ -227,25 +124,28 @@ static void bb_emul_reset(struct i2c_emul *emul)
 /**
  * @brief Handle I2C write message. It is checked if accessed register isn't RO
  *        and reserved bits are set to 0. Write set value of reg field of BB
- *        retimer emulator data ignoring reserved bits and write only bits. Some
- *        commands are handled specialy. Before any handling, custom function
- *        is called if provided.
+ *        retimer emulator data ignoring reserved bits and write only bits.
  *
  * @param emul Pointer to BB retimer emulator
  * @param reg Register which is written
- * @param val Value being written to @p reg
  * @param msg_len Length of handled I2C message
  *
  * @return 0 on success
  * @return -EIO on error
  */
-static int bb_emul_handle_write(struct i2c_emul *emul, int reg, uint32_t val,
-				int msg_len)
+static int bb_emul_handle_write(struct i2c_emul *emul, int reg, int msg_len)
 {
 	struct bb_emul_data *data;
-	int ret;
+	uint32_t val;
 
-	data = CONTAINER_OF(emul, struct bb_emul_data, emul);
+	data = BB_DATA_FROM_I2C_EMUL(emul);
+
+	/* This write only selected register for I2C read message */
+	if (msg_len < 2) {
+		return 0;
+	}
+
+	val = data->data_dword;
 
 	/*
 	 * BB retimer ignores data bytes above 4 and use zeros if there is less
@@ -253,20 +153,6 @@ static int bb_emul_handle_write(struct i2c_emul *emul, int reg, uint32_t val,
 	 */
 	if (msg_len != 6) {
 		LOG_WRN("Got %d bytes of WR data, expected 4", msg_len - 2);
-	}
-
-	if (data->write_func) {
-		ret = data->write_func(emul, reg, val, data->write_func_data);
-		if (ret < 0) {
-			return -EIO;
-		} else if (ret == 0) {
-			return 0;
-		}
-	}
-
-	if (data->write_fail_reg == reg ||
-	    data->write_fail_reg == BB_EMUL_FAIL_ALL_REG) {
-		return -EIO;
 	}
 
 	if (reg <= BB_RETIMER_REG_DEVICE_ID ||
@@ -297,40 +183,19 @@ static int bb_emul_handle_write(struct i2c_emul *emul, int reg, uint32_t val,
 
 /**
  * @brief Handle I2C read message. Response is obtained from reg field of bb
- *        emul data. When accessing accelerometer value, register data is first
- *        computed using internal emulator state. Before default handler, custom
- *        user read function is called if provided.
+ *        emul data.
  *
  * @param emul Pointer to BB retimer emulator
  * @param reg Register address to read
- * @param buf Pointer where result should be stored
  *
  * @return 0 on success
  * @return -EIO on error
  */
-static int bb_emul_handle_read(struct i2c_emul *emul, int reg, uint32_t *buf)
+static int bb_emul_handle_read(struct i2c_emul *emul, int reg)
 {
 	struct bb_emul_data *data;
-	int ret;
 
-	data = CONTAINER_OF(emul, struct bb_emul_data, emul);
-
-	if (data->read_func) {
-		ret = data->read_func(emul, reg, data->read_func_data);
-		if (ret < 0) {
-			return -EIO;
-		} else if (ret == 0) {
-			/* Immediately return value set by custom function */
-			*buf = data->reg[reg];
-
-			return 0;
-		}
-	}
-
-	if (data->read_fail_reg == reg ||
-	    data->read_fail_reg == BB_EMUL_FAIL_ALL_REG) {
-		return -EIO;
-	}
+	data = BB_DATA_FROM_I2C_EMUL(emul);
 
 	if (reg >= BB_RETIMER_REG_COUNT) {
 		LOG_ERR("Read unknown register 0x%x", reg);
@@ -338,146 +203,86 @@ static int bb_emul_handle_read(struct i2c_emul *emul, int reg, uint32_t *buf)
 		return -EIO;
 	}
 
-	*buf = data->reg[reg];
+	data->data_dword = data->reg[reg];
 
 	return 0;
 }
 
 /**
- * @biref Emulate an I2C transfer to a BB retimer
+ * @brief Function called for each byte of write message. Data are stored
+ *        in data_dword field of bb_emul_data
  *
- * This handles simple reads and writes
+ * @param emul Pointer to BB retimer emulator
+ * @param reg First byte of write message
+ * @param val Received byte of write message
+ * @param bytes Number of bytes already received
  *
- * @param emul I2C emulation information
- * @param msgs List of messages to process
- * @param num_msgs Number of messages to process
- * @param addr Address of the I2C target device
- *
- * @retval 0 If successful
- * @retval -EIO General input / output error
+ * @return 0 on success
  */
-static int bb_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
-			    int num_msgs, int addr)
+static int bb_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
+			      int bytes)
 {
-	const struct bb_emul_cfg *cfg;
 	struct bb_emul_data *data;
-	int ret, i;
-	bool read;
 
-	data = CONTAINER_OF(emul, struct bb_emul_data, emul);
-	cfg = data->cfg;
+	data = BB_DATA_FROM_I2C_EMUL(emul);
 
-	if (cfg->addr != addr) {
-		LOG_ERR("Address mismatch, expected %02x, got %02x", cfg->addr,
-			addr);
-		return -EIO;
-	}
-
-	i2c_dump_msgs("emul", msgs, num_msgs, addr);
-
-	for (; num_msgs > 0; num_msgs--, msgs++) {
-		read = msgs->flags & I2C_MSG_READ;
-
-		switch (data->msg_state) {
-		case BB_EMUL_NONE_MSG:
-			data->data_dword = 0;
-			data->msg_byte = 0;
-			break;
-		case BB_EMUL_IN_WRITE:
-			if (read) {
-				/* Finish write command */
-				if (data->msg_byte >= 2) {
-					k_mutex_lock(&data->data_mtx,
-						     K_FOREVER);
-					ret = bb_emul_handle_write(emul,
-							data->cur_reg,
-							data->data_dword,
-							data->msg_byte);
-					k_mutex_unlock(&data->data_mtx);
-					if (ret) {
-						return -EIO;
-					}
-				}
-				data->data_dword = 0;
-				data->msg_byte = 0;
-			}
-			break;
-		case BB_EMUL_IN_READ:
-			if (!read) {
-				data->data_dword = 0;
-				data->msg_byte = 0;
-			}
-			break;
+	if (bytes == 1) {
+		data->data_dword = 0;
+		if (val != 4) {
+			LOG_WRN("Invalid write size");
 		}
-		data->msg_state = read ? BB_EMUL_IN_READ : BB_EMUL_IN_WRITE;
-
-		if (msgs->flags & I2C_MSG_STOP) {
-			data->msg_state = BB_EMUL_NONE_MSG;
-		}
-
-		if (!read) {
-			/* Dispatch wrtie command */
-			for (i = 0; i < msgs->len; i++) {
-				switch (data->msg_byte) {
-				case 0:
-					data->cur_reg = msgs->buf[i];
-					break;
-				case 1:
-					/*
-					 * BB retimer ignores size, but it
-					 * should be 4, so emulator check this.
-					 */
-					if (msgs->buf[i] != 4) {
-						LOG_WRN("Invalid write size");
-					}
-					break;
-				default:
-					data->data_dword |=
-						(msgs->buf[i] & 0xff) <<
-						(8 * (data->msg_byte - 2));
-				}
-				data->msg_byte++;
-			}
-
-			/* Execute write command */
-			if (msgs->flags & I2C_MSG_STOP && data->msg_byte >= 2) {
-				k_mutex_lock(&data->data_mtx, K_FOREVER);
-				ret = bb_emul_handle_write(emul, data->cur_reg,
-							   data->data_dword,
-							   data->msg_byte);
-				k_mutex_unlock(&data->data_mtx);
-				if (ret) {
-					return -EIO;
-				}
-			}
-		} else {
-			/* Prepare response */
-			if (data->msg_byte == 0) {
-				k_mutex_lock(&data->data_mtx, K_FOREVER);
-				ret = bb_emul_handle_read(emul, data->cur_reg,
-							  &data->data_dword);
-				k_mutex_unlock(&data->data_mtx);
-				if (ret) {
-					return -EIO;
-				}
-			}
-
-			for (i = 0; i < msgs->len; i++) {
-				msgs->buf[i] = data->data_dword & 0xff;
-				data->data_dword >>= 8;
-
-				data->msg_byte++;
-			}
-		}
+	} else if (bytes < 6) {
+		data->data_dword |= val << (8 * (bytes - 2));
 	}
 
 	return 0;
 }
 
+/**
+ * @brief Function called for each byte of read message. data_dword is converted
+ *        to read message response.
+ *
+ * @param emul Pointer to BB retimer emulator
+ * @param reg First byte of last write message
+ * @param val Pointer where byte to read should be stored
+ * @param bytes Number of bytes already readed
+ *
+ * @return 0 on success
+ */
+static int bb_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
+			     int bytes)
+{
+	struct bb_emul_data *data;
+
+	data = BB_DATA_FROM_I2C_EMUL(emul);
+
+	*val = data->data_dword & 0xff;
+	data->data_dword >>= 8;
+
+	return 0;
+}
+
+/**
+ * @brief Get currently accessed register, which always equals to selected
+ *        register.
+ *
+ * @param emul Pointer to BB retimer emulator
+ * @param reg First byte of last write message
+ * @param bytes Number of bytes already handled from current message
+ * @param read If currently handled is read message
+ *
+ * @return Currently accessed register
+ */
+static int bb_emul_access_reg(struct i2c_emul *emul, int reg, int bytes,
+			      bool read)
+{
+	return reg;
+}
+
 /* Device instantiation */
 
 static struct i2c_emul_api bb_emul_api = {
-	.transfer = bb_emul_transfer,
+	.transfer = i2c_common_emul_transfer,
 };
 
 /**
@@ -494,15 +299,15 @@ static struct i2c_emul_api bb_emul_api = {
 static int bb_emul_init(const struct emul *emul,
 			const struct device *parent)
 {
-	const struct bb_emul_cfg *cfg = emul->cfg;
-	struct bb_emul_data *data = cfg->data;
+	const struct i2c_common_emul_cfg *cfg = emul->cfg;
+	struct i2c_common_emul_data *data = cfg->data;
 	int ret;
 
 	data->emul.api = &bb_emul_api;
 	data->emul.addr = cfg->addr;
 	data->i2c = parent;
 	data->cfg = cfg;
-	k_mutex_init(&data->data_mtx);
+	i2c_common_emul_init(data);
 
 	ret = i2c_emul_register(parent, emul->dev_label, &data->emul);
 
@@ -517,17 +322,20 @@ static int bb_emul_init(const struct emul *emul,
 		.error_on_ro_write = DT_INST_PROP(n, error_on_ro_write),\
 		.error_on_rsvd_write = DT_INST_PROP(n,			\
 					error_on_reserved_bit_write),	\
-		.msg_state = BB_EMUL_NONE_MSG,				\
-		.cur_reg = 0,						\
-		.write_func = NULL,					\
-		.read_func = NULL,					\
-		.write_fail_reg = BB_EMUL_NO_FAIL_REG,			\
-		.read_fail_reg = BB_EMUL_NO_FAIL_REG,			\
+		.common = {						\
+			.start_write = NULL,				\
+			.write_byte = bb_emul_write_byte,		\
+			.finish_write = bb_emul_handle_write,		\
+			.start_read = bb_emul_handle_read,		\
+			.read_byte = bb_emul_read_byte,			\
+			.finish_read = NULL,				\
+			.access_reg = bb_emul_access_reg,		\
+		},							\
 	};								\
 									\
-	static const struct bb_emul_cfg bb_emul_cfg_##n = {		\
+	static const struct i2c_common_emul_cfg bb_emul_cfg_##n = {	\
 		.i2c_label = DT_INST_BUS_LABEL(n),			\
-		.data = &bb_emul_data_##n,				\
+		.data = &bb_emul_data_##n.common,			\
 		.addr = DT_INST_REG_ADDR(n),				\
 	};								\
 	EMUL_DEFINE(bb_emul_init, DT_DRV_INST(n), &bb_emul_cfg_##n)
@@ -535,7 +343,7 @@ static int bb_emul_init(const struct emul *emul,
 DT_INST_FOREACH_STATUS_OKAY(BB_RETIMER_EMUL)
 
 #define BB_RETIMER_EMUL_CASE(n)					\
-	case DT_INST_DEP_ORD(n): return &bb_emul_data_##n.emul;
+	case DT_INST_DEP_ORD(n): return &bb_emul_data_##n.common.emul;
 
 /** Check description in emul_bb_emulator.h */
 struct i2c_emul *bb_emul_get(int ord)

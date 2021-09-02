@@ -27,16 +27,14 @@
  *
  * - define a devicetree overlay file to set which inadvisable driver behaviour
  *   should be treated as error and emulated device ID and revision
- * - call @ref tcs_emul_set_read_func and @ref tcs_emul_set_write_func to setup
- *   custom handlers for I2C messages
  * - call @ref tcs_emul_set_reg and @ref tcs_emul_get_reg to set and get value
  *   of TCS3400 registers
  * - call @ref tcs_emul_set_val and @ref tcs_emul_set_val to set and get
  *   light sensor value
  * - call tcs_emul_set_err_* to change emulator behaviour on inadvisable driver
  *   behaviour
- * - call @ref tcs_emul_set_read_fail_reg and @ref tcs_emul_set_write_fail_reg
- *   to configure emulator to fail on given register read or write
+ * - call functions from emul_common_i2c.h to setup custom handlers for I2C
+ *   messages
  */
 
 /**
@@ -77,13 +75,6 @@ enum tcs_emul_axis {
 #define TCS_EMUL_REG_COUNT	(TCS_EMUL_LAST_REG - TCS_EMUL_FIRST_REG + 1)
 
 /**
- * Special register values used in @ref tcs_emul_set_read_fail_reg and
- * @ref tcs_emul_set_write_fail_reg
- */
-#define TCS_EMUL_FAIL_ALL_REG	(-1)
-#define TCS_EMUL_NO_FAIL_REG	(-2)
-
-/**
  * @brief Get pointer to TCS3400 emulator using device tree order number.
  *
  * @param ord Device tree order number obtained from DT_DEP_ORD macro
@@ -91,78 +82,6 @@ enum tcs_emul_axis {
  * @return Pointer to TCS3400 emulator
  */
 struct i2c_emul *tcs_emul_get(int ord);
-
-/**
- * @brief Custom function type that is used as user-defined callback in read
- *        I2C messages handling.
- *
- * @param emul Pointer to TCS3400 emulator
- * @param reg Address which is now accessed by read command
- * @param data Pointer to custom user data
- *
- * @return 0 on success. Value of @p reg should be set by @ref tcs_emul_set_reg
- * @return 1 continue with normal TCS3400 emulator handler
- * @return negative on error
- */
-typedef int (*tcs_emul_read_func)(struct i2c_emul *emul, int reg, void *data);
-
-/**
- * @brief Custom function type that is used as user-defined callback in write
- *        I2C messages handling.
- *
- * @param emul Pointer to TCS3400 emulator
- * @param reg Address which is now accessed by write command
- * @param val Value which is being written to @p reg
- * @param data Pointer to custom user data
- *
- * @return 0 on success
- * @return 1 continue with normal TCS3400 emulator handler
- * @return negative on error
- */
-typedef int (*tcs_emul_write_func)(struct i2c_emul *emul, int reg, uint8_t val,
-				   void *data);
-
-/**
- * @brief Lock access to TCS3400 properties. After acquiring lock, user
- *        may change emulator behaviour in multi-thread setup.
- *
- * @param emul Pointer to TCS3400 emulator
- * @param timeout Timeout in getting lock
- *
- * @return k_mutex_lock return code
- */
-int tcs_emul_lock_data(struct i2c_emul *emul, k_timeout_t timeout);
-
-/**
- * @brief Unlock access to TCS3400 properties.
- *
- * @param emul Pointer to TCS3400 emulator
- *
- * @return k_mutex_unlock return code
- */
-int tcs_emul_unlock_data(struct i2c_emul *emul);
-
-/**
- * @brief Set write handler for I2C messages. This function is called before
- *        generic handler.
- *
- * @param emul Pointer to TCS3400 emulator
- * @param func Pointer to custom function
- * @param data User data passed on call of custom function
- */
-void tcs_emul_set_write_func(struct i2c_emul *emul, tcs_emul_write_func func,
-			     void *data);
-
-/**
- * @brief Set read handler for I2C messages. This function is called before
- *        generic handler.
- *
- * @param emul Pointer to TCS3400 emulator
- * @param func Pointer to custom function
- * @param data User data passed on call of custom function
- */
-void tcs_emul_set_read_func(struct i2c_emul *emul, tcs_emul_read_func func,
-			    void *data);
 
 /**
  * @brief Set value of given register of TCS3400
@@ -182,24 +101,6 @@ void tcs_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val);
  * @return Value of the register
  */
 uint8_t tcs_emul_get_reg(struct i2c_emul *emul, int reg);
-
-/**
- * @brief Setup fail on read of given register of TCS3400
- *
- * @param emul Pointer to TCS3400 emulator
- * @param reg Register address or one of special values (TCS_EMUL_FAIL_ALL_REG,
- *            TCS_EMUL_NO_FAIL_REG)
- */
-void tcs_emul_set_read_fail_reg(struct i2c_emul *emul, int reg);
-
-/**
- * @brief Setup fail on write of given register of TCS3400
- *
- * @param emul Pointer to TCS3400 emulator
- * @param reg Register address or one of special values (TCS_EMUL_FAIL_ALL_REG,
- *            TCS_EMUL_NO_FAIL_REG)
- */
-void tcs_emul_set_write_fail_reg(struct i2c_emul *emul, int reg);
 
 /**
  * @brief Get internal value of light sensor for given axis

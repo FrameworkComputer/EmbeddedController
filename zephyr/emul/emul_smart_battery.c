@@ -14,52 +14,29 @@ LOG_MODULE_REGISTER(smart_battery);
 #include <drivers/i2c.h>
 #include <drivers/i2c_emul.h>
 
+#include "emul/emul_common_i2c.h"
 #include "emul/emul_smart_battery.h"
 
 #include "crc8.h"
 #include "battery_smart.h"
 
+#define SBAT_DATA_FROM_I2C_EMUL(_emul)					     \
+	CONTAINER_OF(CONTAINER_OF(_emul, struct i2c_common_emul_data, emul), \
+		     struct sbat_emul_data, common)
+
 /** Run-time data used by the emulator */
 struct sbat_emul_data {
-	/** I2C emulator detail */
-	struct i2c_emul emul;
-	/** Smart battery device being emulated */
-	const struct device *i2c;
-	/** Configuration information */
-	const struct sbat_emul_cfg *cfg;
+	/** Common I2C data */
+	struct i2c_common_emul_data common;
+
 	/** Data required to simulate battery */
 	struct sbat_emul_bat_data bat;
 	/** Command that should be handled next */
 	int cur_cmd;
 	/** Message buffer which is used to handle smb transactions */
 	uint8_t msg_buf[MSG_BUF_LEN];
-	/** Position in msg_buf if there is on going smb write opperation */
-	int ong_write;
-	/** Position in msg_buf if there is on going smb read opperation */
-	int ong_read;
 	/** Total bytes that were generated in response to smb read operation */
 	int num_to_read;
-	/** Custom write function called on smb write opperation */
-	sbat_emul_custom_func write_custom_func;
-	/** Data passed to custom write function */
-	void *write_custom_func_data;
-	/** Custom read function called on smb read opperation */
-	sbat_emul_custom_func read_custom_func;
-	/** Data passed to custom read function */
-	void *read_custom_func_data;
-
-	/** Mutex used to control access to battery data */
-	struct k_mutex bat_mtx;
-};
-
-/** Static configuration for the emulator */
-struct sbat_emul_cfg {
-	/** Label of the I2C bus this emulator connects to */
-	const char *i2c_label;
-	/** Pointer to run-time data */
-	struct sbat_emul_data *data;
-	/** Address of smart battery on i2c bus */
-	uint16_t addr;
 };
 
 /** Check description in emul_smart_battery.h */
@@ -67,51 +44,9 @@ struct sbat_emul_bat_data *sbat_emul_get_bat_data(struct i2c_emul *emul)
 {
 	struct sbat_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct sbat_emul_data, emul);
+	data = SBAT_DATA_FROM_I2C_EMUL(emul);
 
 	return &data->bat;
-}
-
-/** Check description in emul_smart_battery.h */
-int sbat_emul_lock_bat_data(struct i2c_emul *emul, k_timeout_t timeout)
-{
-	struct sbat_emul_data *data;
-
-	data = CONTAINER_OF(emul, struct sbat_emul_data, emul);
-
-	return k_mutex_lock(&data->bat_mtx, timeout);
-}
-
-/** Check description in emul_smart_battery.h */
-int sbat_emul_unlock_bat_dat(struct i2c_emul *emul)
-{
-	struct sbat_emul_data *data;
-
-	data = CONTAINER_OF(emul, struct sbat_emul_data, emul);
-
-	return k_mutex_unlock(&data->bat_mtx);
-}
-
-/** Check description in emul_smart_battery.h */
-void sbat_emul_set_custom_write_func(struct i2c_emul *emul,
-				     sbat_emul_custom_func func, void *data)
-{
-	struct sbat_emul_data *emul_data;
-
-	emul_data = CONTAINER_OF(emul, struct sbat_emul_data, emul);
-	emul_data->write_custom_func = func;
-	emul_data->write_custom_func_data = data;
-}
-
-/** Check description in emul_smart_battery.h */
-void sbat_emul_set_custom_read_func(struct i2c_emul *emul,
-				    sbat_emul_custom_func func, void *data)
-{
-	struct sbat_emul_data *emul_data;
-
-	emul_data = CONTAINER_OF(emul, struct sbat_emul_data, emul);
-	emul_data->read_custom_func = func;
-	emul_data->read_custom_func_data = data;
 }
 
 /** Check description in emul_smart_battery.h */
@@ -345,7 +280,7 @@ static uint16_t sbat_emul_read_status(struct i2c_emul *emul)
 	struct sbat_emul_bat_data *bat;
 	struct sbat_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct sbat_emul_data, emul);
+	data = SBAT_DATA_FROM_I2C_EMUL(emul);
 	bat = &data->bat;
 
 	status = bat->status;
@@ -401,7 +336,7 @@ int sbat_emul_get_word_val(struct i2c_emul *emul, int cmd, uint16_t *val)
 	int mode_mw;
 	int rate;
 
-	data = CONTAINER_OF(emul, struct sbat_emul_data, emul);
+	data = SBAT_DATA_FROM_I2C_EMUL(emul);
 	bat = &data->bat;
 	mode_mw = bat->mode & MODE_CAPACITY;
 
@@ -537,7 +472,7 @@ int sbat_emul_get_block_data(struct i2c_emul *emul, int cmd, uint8_t **blk,
 	struct sbat_emul_bat_data *bat;
 	struct sbat_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct sbat_emul_data, emul);
+	data = SBAT_DATA_FROM_I2C_EMUL(emul);
 	bat = &data->bat;
 
 	switch (cmd) {
@@ -567,18 +502,39 @@ int sbat_emul_get_block_data(struct i2c_emul *emul, int cmd, uint8_t **blk,
  * @brief Append PEC to read command response if battery support it
  *
  * @param data Pointer to smart battery emulator data
+ * @param cmd Command for which PEC is calculated
  */
-static void sbat_emul_append_pec(struct sbat_emul_data *data)
+static void sbat_emul_append_pec(struct sbat_emul_data *data, int cmd)
 {
 	uint8_t pec;
 
 	if (BATTERY_SPEC_VERSION(data->bat.spec_info) ==
 	    BATTERY_SPEC_VER_1_1_WITH_PEC) {
-		pec = sbat_emul_pec_head(data->cfg->addr, 1, data->cur_cmd);
+		pec = sbat_emul_pec_head(data->common.cfg->addr, 1, cmd);
 		pec = cros_crc8_arg(data->msg_buf, data->num_to_read, pec);
 		data->msg_buf[data->num_to_read] = pec;
 		data->num_to_read++;
 	}
+}
+
+/** Check description in emul_smart_battery.h */
+void sbat_emul_set_response(struct i2c_emul *emul, int cmd, uint8_t *buf,
+			    int len, bool fail)
+{
+	struct sbat_emul_data *data;
+
+	data = SBAT_DATA_FROM_I2C_EMUL(emul);
+
+	if (fail) {
+		data->bat.error_code = STATUS_CODE_UNKNOWN_ERROR;
+		data->num_to_read = 0;
+		return;
+	}
+
+	data->num_to_read = MIN(len, MSG_BUF_LEN - 1);
+	memcpy(data->msg_buf, buf, data->num_to_read);
+	data->bat.error_code = STATUS_CODE_OK;
+	sbat_emul_append_pec(data, cmd);
 }
 
 /**
@@ -589,45 +545,32 @@ static void sbat_emul_append_pec(struct sbat_emul_data *data)
  *        always set to 0.
  *
  * @param emul Pointer to smart battery emulator
+ * @param reg Command selected by last write message. If data->cur_cmd is
+ *            different than SBAT_EMUL_NO_CMD, then reg should equal to
+ *            data->cur_cmd
  *
  * @return 0 on success
  * @return -EIO on error
  */
-static int sbat_emul_handle_read_msg(struct i2c_emul *emul)
+static int sbat_emul_handle_read_msg(struct i2c_emul *emul, int reg)
 {
 	struct sbat_emul_data *data;
 	uint16_t word;
 	uint8_t *blk;
 	int ret, len;
 
-	data = CONTAINER_OF(emul, struct sbat_emul_data, emul);
-
-	data->num_to_read = 0;
-	if (data->read_custom_func != NULL) {
-		ret = data->read_custom_func(emul, data->msg_buf,
-					     &data->num_to_read, data->cur_cmd,
-					     data->read_custom_func_data);
-		if (ret < 0) {
-			data->bat.error_code = STATUS_CODE_UNKNOWN_ERROR;
-			data->num_to_read = 0;
-
-			return -EIO;
-		} else if (ret == 0) {
-			data->bat.error_code = STATUS_CODE_OK;
-			sbat_emul_append_pec(data);
-
-			return 0;
-		}
-	}
+	data = SBAT_DATA_FROM_I2C_EMUL(emul);
 
 	if (data->cur_cmd == SBAT_EMUL_NO_CMD) {
 		/* Unexpected read message without preceding command select */
 		data->bat.error_code = STATUS_CODE_UNKNOWN_ERROR;
 		return -EIO;
 	}
+	data->cur_cmd = SBAT_EMUL_NO_CMD;
+	data->num_to_read = 0;
 
 	/* Handle commands which return word */
-	ret = sbat_emul_get_word_val(emul, data->cur_cmd, &word);
+	ret = sbat_emul_get_word_val(emul, reg, &word);
 	if (ret < 0) {
 		return -EIO;
 	}
@@ -636,17 +579,17 @@ static int sbat_emul_handle_read_msg(struct i2c_emul *emul)
 		data->msg_buf[0] = word & 0xff;
 		data->msg_buf[1] = (word >> 8) & 0xff;
 		data->bat.error_code = STATUS_CODE_OK;
-		sbat_emul_append_pec(data);
+		sbat_emul_append_pec(data, reg);
 
 		return 0;
 	}
 
 	/* Handle commands which return block */
-	ret = sbat_emul_get_block_data(emul, data->cur_cmd, &blk, &len);
+	ret = sbat_emul_get_block_data(emul, reg, &blk, &len);
 	if (ret != 0) {
 		if (ret == 1) {
 			data->bat.error_code = STATUS_CODE_UNSUPPORTED;
-			LOG_ERR("Unknown read command (0x%x)", data->cur_cmd);
+			LOG_ERR("Unknown read command (0x%x)", reg);
 		}
 
 		return -EIO;
@@ -656,49 +599,31 @@ static int sbat_emul_handle_read_msg(struct i2c_emul *emul)
 	data->msg_buf[0] = len;
 	memcpy(&data->msg_buf[1], blk, len);
 	data->bat.error_code = STATUS_CODE_OK;
-	sbat_emul_append_pec(data);
+	sbat_emul_append_pec(data, reg);
 
 	return 0;
 }
 
 /**
- * @brief Function which finalize write messages. It expects that
- *        data->ong_write is set to number of bytes received in data->msg_buf.
- *        It guarantee that data->ong_write is set to 0.
+ * @brief Function which finalize write messages.
  *
  * @param emul Pointer to smart battery emulator
+ * @param reg First byte of write message, usually selected command
+ * @param bytes Number of bytes received in data->msg_buf
  *
  * @return 0 on success
  * @return -EIO on error
  */
-static int sbat_emul_finalize_write_msg(struct i2c_emul *emul)
+static int sbat_emul_finalize_write_msg(struct i2c_emul *emul, int reg,
+					int bytes)
 {
 	struct sbat_emul_bat_data *bat;
 	struct sbat_emul_data *data;
 	uint16_t word;
 	uint8_t pec;
-	int ret;
 
-	data = CONTAINER_OF(emul, struct sbat_emul_data, emul);
+	data = SBAT_DATA_FROM_I2C_EMUL(emul);
 	bat = &data->bat;
-
-	if (data->write_custom_func != NULL) {
-		ret = data->write_custom_func(emul, data->msg_buf,
-					      &data->ong_write,
-					      data->msg_buf[0],
-					      data->write_custom_func_data);
-		if (ret < 0) {
-			data->bat.error_code = STATUS_CODE_UNKNOWN_ERROR;
-			data->ong_write = 0;
-
-			return -EIO;
-		} else if (ret == 0) {
-			data->bat.error_code = STATUS_CODE_OK;
-			data->ong_write = 0;
-
-			return 0;
-		}
-	}
 
 	/*
 	 * Fail if:
@@ -706,38 +631,33 @@ static int sbat_emul_finalize_write_msg(struct i2c_emul *emul)
 	 *  - there are too many bytes
 	 *  - there is command byte and only one data byte
 	 */
-	if (data->ong_write <= 0 ||
-	    data->ong_write > 4 ||
-	    data->ong_write == 2) {
+	if (bytes <= 0 || bytes > 4 || bytes == 2) {
 		data->bat.error_code = STATUS_CODE_BADSIZE;
-		data->ong_write = 0;
-		LOG_ERR("wrong write message size (%d)", data->ong_write);
+		LOG_ERR("wrong write message size (%d)", bytes);
 
 		return -EIO;
 	}
 
 	/* There is only command for read */
-	if (data->ong_write == 1) {
-		data->cur_cmd = data->msg_buf[0];
-		data->ong_write = 0;
+	if (bytes == 1) {
+		data->cur_cmd = reg;
 		return 0;
 	}
 
 	/* Handle PEC */
-	if (data->ong_write == 4) {
+	data->msg_buf[0] = reg;
+	if (bytes == 4) {
 		if (BATTERY_SPEC_VERSION(data->bat.spec_info) !=
 		    BATTERY_SPEC_VER_1_1_WITH_PEC) {
 			data->bat.error_code = STATUS_CODE_BADSIZE;
-			data->ong_write = 0;
 			LOG_ERR("Unexpected PEC; No support in this version");
 
 			return -EIO;
 		}
-		pec = sbat_emul_pec_head(data->cfg->addr, 0, 0);
+		pec = sbat_emul_pec_head(data->common.cfg->addr, 0, 0);
 		pec = cros_crc8_arg(data->msg_buf, 3, pec);
 		if (pec != data->msg_buf[3]) {
 			data->bat.error_code = STATUS_CODE_UNKNOWN_ERROR;
-			data->ong_write = 0;
 			LOG_ERR("Wrong PEC 0x%x != 0x%x",
 				pec, data->msg_buf[3]);
 
@@ -766,117 +686,88 @@ static int sbat_emul_finalize_write_msg(struct i2c_emul *emul)
 		bat->at_rate = word;
 		break;
 	default:
-		data->ong_write = 0;
 		data->bat.error_code = STATUS_CODE_ACCESS_DENIED;
 		LOG_ERR("Unknown write command (0x%x)", data->msg_buf[0]);
 
 		return -EIO;
 	}
 
-	data->ong_write = 0;
 	data->bat.error_code = STATUS_CODE_OK;
 
 	return 0;
 }
 
 /**
- * Emulator an I2C transfer to an smart battery
+ * @brief Function called for each byte of write message which is saved in
+ *        data->msg_buf
  *
- * This handles simple reads and writes
+ * @param emul Pointer to smart battery emulator
+ * @param reg First byte of write message, usually selected command
+ * @param val Received byte of write message
+ * @param bytes Number of bytes already received
  *
- * @param emul I2C emulation information
- * @param msgs List of messages to process. For 'read' messages, this function
- *             updates the 'buf' member with the data that was read
- * @param num_msgs Number of messages to process
- * @param addr Address of the I2C target device.
- *
- * @retval 0 If successful
- * @retval -EIO General input / output error
+ * @return 0 on success
  */
-static int sbat_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
-			      int num_msgs, int addr)
+static int sbat_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
+				int bytes)
 {
-	const struct sbat_emul_cfg *cfg;
 	struct sbat_emul_data *data;
-	int ret = 0, i;
 
-	data = CONTAINER_OF(emul, struct sbat_emul_data, emul);
-	cfg = data->cfg;
+	data = SBAT_DATA_FROM_I2C_EMUL(emul);
 
-	if (cfg->addr != addr) {
-		LOG_ERR("Address mismatch, expected %02x, got %02x", cfg->addr,
-			addr);
-		return -EIO;
-	}
-
-	i2c_dump_msgs("emul", msgs, num_msgs, addr);
-
-	for (; num_msgs > 0; num_msgs--, msgs++) {
-		if (!(msgs->flags & I2C_MSG_READ)) {
-			/* Disscard any ongoing read */
-			data->num_to_read = 0;
-
-			/* Save incoming data to buffer */
-			for (i = 0; i < msgs->len; i++, data->ong_write++) {
-				if (data->ong_write < MSG_BUF_LEN) {
-					data->msg_buf[data->ong_write] =
-								msgs->buf[i];
-				}
-			}
-
-			/* Handle write message when we receive stop signal */
-			if (msgs->flags & I2C_MSG_STOP) {
-				k_mutex_lock(&data->bat_mtx, K_FOREVER);
-				ret = sbat_emul_finalize_write_msg(emul);
-				k_mutex_unlock(&data->bat_mtx);
-			}
-		} else {
-			/* Finalize any ongoing write message before read */
-			if (data->ong_write) {
-				k_mutex_lock(&data->bat_mtx, K_FOREVER);
-				ret = sbat_emul_finalize_write_msg(emul);
-				k_mutex_unlock(&data->bat_mtx);
-				if (ret) {
-					return -EIO;
-				}
-			}
-
-			/* Prepare read message */
-			if (!data->num_to_read) {
-				k_mutex_lock(&data->bat_mtx, K_FOREVER);
-				ret = sbat_emul_handle_read_msg(emul);
-				k_mutex_unlock(&data->bat_mtx);
-				data->cur_cmd = SBAT_EMUL_NO_CMD;
-				data->ong_read = 0;
-			}
-
-			for (i = 0; i < msgs->len; i++, data->ong_read++) {
-				if (data->ong_read >= data->num_to_read) {
-					/* We wrote everything */
-					data->num_to_read = 0;
-					break;
-				}
-				msgs->buf[i] = data->msg_buf[data->ong_read];
-			}
-
-			if (msgs->flags & I2C_MSG_STOP) {
-				/* Disscard any data that wern't read */
-				data->num_to_read = 0;
-			}
-		}
-
-		if (ret) {
-			return -EIO;
-		}
+	if (bytes < MSG_BUF_LEN) {
+		data->msg_buf[bytes] = val;
 	}
 
 	return 0;
 }
 
+/**
+ * @brief Function called for each byte of read message. Byte from data->msg_buf
+ *        is copied to read message response.
+ *
+ * @param emul Pointer to smart battery emulator
+ * @param reg First byte of last write message, usually selected command
+ * @param val Pointer where byte to read should be stored
+ * @param bytes Number of bytes already readed
+ *
+ * @return 0 on success
+ */
+static int sbat_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
+			       int bytes)
+{
+	struct sbat_emul_data *data;
+
+	data = SBAT_DATA_FROM_I2C_EMUL(emul);
+
+	if (bytes < data->num_to_read) {
+		*val = data->msg_buf[bytes];
+	}
+
+	return 0;
+}
+
+/**
+ * @brief Get currently accessed register, which always equals to selected
+ *        command.
+ *
+ * @param emul Pointer to smart battery emulator
+ * @param reg First byte of last write message, usually selected command
+ * @param bytes Number of bytes already handled from current message
+ * @param read If currently handled is read message
+ *
+ * @return Currently accessed register
+ */
+static int sbat_emul_access_reg(struct i2c_emul *emul, int reg, int bytes,
+				bool read)
+{
+	return reg;
+}
+
 /* Device instantiation */
 
 static struct i2c_emul_api sbat_emul_api = {
-	.transfer = sbat_emul_transfer,
+	.transfer = i2c_common_emul_transfer,
 };
 
 /**
@@ -893,15 +784,15 @@ static struct i2c_emul_api sbat_emul_api = {
 static int sbat_emul_init(const struct emul *emul,
 			  const struct device *parent)
 {
-	const struct sbat_emul_cfg *cfg = emul->cfg;
-	struct sbat_emul_data *data = cfg->data;
+	const struct i2c_common_emul_cfg *cfg = emul->cfg;
+	struct i2c_common_emul_data *data = cfg->data;
 	int ret;
 
 	data->emul.api = &sbat_emul_api;
 	data->emul.addr = cfg->addr;
 	data->i2c = parent;
 	data->cfg = cfg;
-	k_mutex_init(&data->bat_mtx);
+	i2c_common_emul_init(data);
 
 	ret = i2c_emul_register(parent, emul->dev_label, &data->emul);
 
@@ -965,13 +856,20 @@ static int sbat_emul_init(const struct emul *emul,
 			.error_code = STATUS_CODE_OK,			\
 		},							\
 		.cur_cmd = SBAT_EMUL_NO_CMD,				\
-		.write_custom_func = NULL,				\
-		.read_custom_func = NULL,				\
+		.common = {						\
+			.start_write = NULL,				\
+			.write_byte = sbat_emul_write_byte,		\
+			.finish_write = sbat_emul_finalize_write_msg,	\
+			.start_read = sbat_emul_handle_read_msg,	\
+			.read_byte = sbat_emul_read_byte,		\
+			.finish_read = NULL,				\
+			.access_reg = sbat_emul_access_reg,		\
+		},							\
 	};								\
 									\
-	static const struct sbat_emul_cfg sbat_emul_cfg_##n = {		\
+	static const struct i2c_common_emul_cfg sbat_emul_cfg_##n = {	\
 		.i2c_label = DT_INST_BUS_LABEL(n),			\
-		.data = &sbat_emul_data_##n,				\
+		.data = &sbat_emul_data_##n.common,			\
 		.addr = DT_INST_REG_ADDR(n),				\
 	};								\
 	EMUL_DEFINE(sbat_emul_init, DT_DRV_INST(n), &sbat_emul_cfg_##n)
@@ -979,7 +877,7 @@ static int sbat_emul_init(const struct emul *emul,
 DT_INST_FOREACH_STATUS_OKAY(SMART_BATTERY_EMUL)
 
 #define SMART_BATTERY_EMUL_CASE(n)					\
-	case DT_INST_DEP_ORD(n): return &sbat_emul_data_##n.emul;
+	case DT_INST_DEP_ORD(n): return &sbat_emul_data_##n.common.emul;
 
 /** Check description in emul_smart_battery.h */
 struct i2c_emul *sbat_emul_get_ptr(int ord)

@@ -31,8 +31,6 @@
  * - define a Device Tree overlay file to set default NVM content, default
  *   static accelerometer value and which inadvisable driver behaviour should
  *   be treated as errors
- * - call @ref bma_emul_set_read_func and @ref bma_emul_set_write_func to setup
- *   custom handlers for I2C messages
  * - call @ref bma_emul_set_reg and @ref bma_emul_get_reg to set and get value
  *   of BMA255 registers
  * - call @ref bma_emul_set_off and @ref bma_emul_set_off to set and get
@@ -41,8 +39,8 @@
  *   accelerometer value
  * - call bma_emul_set_err_* to change emulator behaviour on inadvisable driver
  *   behaviour
- * - call @ref bma_emul_set_read_fail_reg and @ref bma_emul_set_write_fail_reg
- *   to configure emulator to fail on given register read or write
+ * - call functions from emul_common_i2c.h to setup custom handlers for I2C
+ *   messages
  */
 
 /**
@@ -61,13 +59,6 @@
 #define BMA_EMUL_1G		BIT(10)
 
 /**
- * Special register values used in @ref bma_emul_set_read_fail_reg and
- * @ref bma_emul_set_write_fail_reg
- */
-#define BMA_EMUL_FAIL_ALL_REG	(-1)
-#define BMA_EMUL_NO_FAIL_REG	(-2)
-
-/**
  * @brief Get pointer to BMA255 emulator using device tree order number.
  *
  * @param ord Device tree order number obtained from DT_DEP_ORD macro
@@ -75,78 +66,6 @@
  * @return Pointer to BMA255 emulator
  */
 struct i2c_emul *bma_emul_get(int ord);
-
-/**
- * @brief Custom function type that is used as user-defined callback in read
- *        I2C messages handling.
- *
- * @param emul Pointer to BMA255 emulator
- * @param reg Address which is now accessed by read command
- * @param data Pointer to custom user data
- *
- * @return 0 on success. Value of @p reg should be set by @ref bma_emul_set_reg
- * @return 1 continue with normal BMA255 emulator handler
- * @return negative on error
- */
-typedef int (*bma_emul_read_func)(struct i2c_emul *emul, int reg, void *data);
-
-/**
- * @brief Custom function type that is used as user-defined callback in write
- *        I2C messages handling.
- *
- * @param emul Pointer to BMA255 emulator
- * @param reg Address which is now accessed by write command
- * @param val Value which is being written to @p reg
- * @param data Pointer to custom user data
- *
- * @return 0 on success
- * @return 1 continue with normal BMA255 emulator handler
- * @return negative on error
- */
-typedef int (*bma_emul_write_func)(struct i2c_emul *emul, int reg, uint8_t val,
-				   void *data);
-
-/**
- * @brief Lock access to BMA255 properties. After acquiring lock, user
- *        may change emulator behaviour in multi-thread setup.
- *
- * @param emul Pointer to BMA255 emulator
- * @param timeout Timeout in getting lock
- *
- * @return k_mutex_lock return code
- */
-int bma_emul_lock_data(struct i2c_emul *emul, k_timeout_t timeout);
-
-/**
- * @brief Unlock access to BMA255 properties.
- *
- * @param emul Pointer to BMA255 emulator
- *
- * @return k_mutex_unlock return code
- */
-int bma_emul_unlock_data(struct i2c_emul *emul);
-
-/**
- * @brief Set write handler for I2C messages. This function is called before
- *        generic handler.
- *
- * @param emul Pointer to BMA255 emulator
- * @param func Pointer to custom function
- * @param data User data passed on call of custom function
- */
-void bma_emul_set_write_func(struct i2c_emul *emul, bma_emul_write_func func,
-			     void *data);
-
-/**
- * @brief Set read handler for I2C messages. This function is called before
- *        generic handler.
- *
- * @param emul Pointer to BMA255 emulator
- * @param func Pointer to custom function
- * @param data User data passed on call of custom function
- */
-void bma_emul_set_read_func(struct i2c_emul *emul, bma_emul_read_func func,
-			    void *data);
 
 /**
  * @brief Set value of given register of BMA255
@@ -166,24 +85,6 @@ void bma_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val);
  * @return Value of the register
  */
 uint8_t bma_emul_get_reg(struct i2c_emul *emul, int reg);
-
-/**
- * @brief Setup fail on read of given register of BMA255
- *
- * @param emul Pointer to BMA255 emulator
- * @param reg Register address or one of special values (BMA_EMUL_FAIL_ALL_REG,
- *            BMA_EMUL_NO_FAIL_REG)
- */
-void bma_emul_set_read_fail_reg(struct i2c_emul *emul, int reg);
-
-/**
- * @brief Setup fail on write of given register of BMA255
- *
- * @param emul Pointer to BMA255 emulator
- * @param reg Register address or one of special values (BMA_EMUL_FAIL_ALL_REG,
- *            BMA_EMUL_NO_FAIL_REG)
- */
-void bma_emul_set_write_fail_reg(struct i2c_emul *emul, int reg);
 
 /**
  * @brief Get internal value of offset for given axis
@@ -267,6 +168,21 @@ void bma_emul_set_err_on_rsvd_write(struct i2c_emul *emul, bool set);
  * @param set Check for this error
  */
 void bma_emul_set_err_on_msb_first(struct i2c_emul *emul, bool set);
+
+/**
+ * @brief Function calculate register that should be accessed when I2C message
+ *        started from @p reg register and now byte number @p bytes is handled.
+ *        This function is used in I2C common emulator code and can be used in
+ *        custom user functions.
+ *
+ * @param emul Pointer to BMA255 emulator
+ * @param reg Starting register
+ * @param bytes Number of bytes already processed in the I2C message handler
+ * @param read If current I2C message is read
+ *
+ * @retval Register address that should be accessed
+ */
+int bma_emul_access_reg(struct i2c_emul *emul, int reg, int bytes, bool read);
 
 /**
  * @}
