@@ -612,6 +612,13 @@ static int ps8743_tune_mux_c1(const struct usb_mux *me)
 			PS8743_USB_EQ_TX_3_6_DB,
 			PS8743_USB_EQ_RX_16_0_DB);
 
+	ps8743_write(me,
+			PS8743_REG_USB_SWING,
+			PS8743_LFPS_SWG_TD);
+	ps8743_write(me,
+			PS8743_REG_DP_SETTING,
+			PS8743_DP_SWG_ADJ_P15P);
+
 	return EC_SUCCESS;
 }
 
