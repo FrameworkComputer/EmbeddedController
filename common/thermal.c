@@ -61,16 +61,19 @@ static int first_read_delay = CONFIG_TEMP_SENSOR_FIRST_READ_DELAY_MS;
 
 static void thermal_control(void)
 {
-	int i, j, t, rv, f;
+	int i, j, t, rv;
 	int count_over[EC_TEMP_THRESH_COUNT];
 	int count_under[EC_TEMP_THRESH_COUNT];
 	int num_valid_limits[EC_TEMP_THRESH_COUNT];
 	int num_sensors_read;
-	int fmax;
-	int temp_fan_configured;
-
-#ifdef CONFIG_CUSTOM_FAN_CONTROL
+#ifdef CONFIG_FANS
+#ifndef CONFIG_CUSTOM_FAN_CONTROL
+	int f = 0;
+	int fmax = 0;
+	int temp_fan_configured = 0;
+#else
 	int temp[TEMP_SENSOR_COUNT];
+#endif
 #endif
 
 	/* add delay to ensure thermal sensor is ready when EC boot */
@@ -87,8 +90,6 @@ static void thermal_control(void)
 	memset(count_under, 0, sizeof(count_under));
 	memset(num_valid_limits, 0, sizeof(num_valid_limits));
 	num_sensors_read = 0;
-	fmax = 0;
-	temp_fan_configured = 0;
 
 	/* go through all the sensors */
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
@@ -96,7 +97,7 @@ static void thermal_control(void)
 		/* read one */
 		rv = temp_sensor_read(i, &t);
 
-#ifdef CONFIG_CUSTOM_FAN_CONTROL
+#if defined(CONFIG_FANS) && defined(CONFIG_CUSTOM_FAN_CONTROL)
 		/* Store all sensors value */
 		temp[i] = K_TO_C(t);
 #endif
@@ -123,6 +124,8 @@ static void thermal_control(void)
 			}
 		}
 
+#ifdef CONFIG_FANS
+#ifndef CONFIG_CUSTOM_FAN_CONTROL
 		/* figure out the max fan needed, too */
 		if (thermal_params[i].temp_fan_off &&
 		    thermal_params[i].temp_fan_max) {
@@ -134,6 +137,8 @@ static void thermal_control(void)
 
 			temp_fan_configured = 1;
 		}
+#endif
+#endif
 	}
 
 	if (!num_sensors_read) {
@@ -208,16 +213,16 @@ static void thermal_control(void)
 		throttle_ap(THROTTLE_OFF, THROTTLE_SOFT, THROTTLE_SRC_THERMAL);
 	}
 
-	if (temp_fan_configured) {
 #ifdef CONFIG_FANS
 #ifdef CONFIG_CUSTOM_FAN_CONTROL
-		for (i = 0; i < fan_get_count(); i++) {
-			if (!is_thermal_control_enabled(i))
-				continue;
+	for (i = 0; i < fan_get_count(); i++) {
+		if (!is_thermal_control_enabled(i))
+			continue;
 
-			board_override_fan_control(i, temp);
-		}
+		board_override_fan_control(i, temp);
+	}
 #else
+	if (temp_fan_configured) {
 		/* TODO(crosbug.com/p/23797): For now, we just treat all
 		 * fans the same. It would be better if we could assign
 		 * different thermal profiles to each fan - in case one
@@ -226,9 +231,9 @@ static void thermal_control(void)
 		 */
 		for (i = 0; i < fan_get_count(); i++)
 			fan_set_percent_needed(i, fmax);
-#endif
-#endif
 	}
+#endif
+#endif
 }
 
 /* Wait until after the sensors have been read */
