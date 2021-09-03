@@ -82,8 +82,6 @@ static const struct ec_thermal_config thermal_fan = {
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
 	},
-	.temp_fan_off = C_TO_K(35),
-	.temp_fan_max = C_TO_K(50),
 };
 
 /*
@@ -101,8 +99,6 @@ static const struct ec_thermal_config thermal_cpu = {
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
 	},
-	.temp_fan_off = C_TO_K(35),
-	.temp_fan_max = C_TO_K(50),
 };
 
 /*
@@ -116,8 +112,6 @@ static const struct ec_thermal_config thermal_charger = {
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
 	},
-	.temp_fan_off = C_TO_K(40),
-	.temp_fan_max = C_TO_K(55),
 };
 
 /*
@@ -131,8 +125,6 @@ static const struct ec_thermal_config thermal_regulator = {
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
 	},
-	.temp_fan_off = C_TO_K(40),
-	.temp_fan_max = C_TO_K(55),
 };
 
 /* this should really be "const" */

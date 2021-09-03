@@ -358,8 +358,6 @@ const static struct ec_thermal_config thermal_a = {
 		[EC_TEMP_THRESH_WARN] = 0,
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
 	},
-	.temp_fan_off = C_TO_K(25),
-	.temp_fan_max = C_TO_K(70),
 };
 
 const static struct ec_thermal_config thermal_b = {
@@ -373,8 +371,6 @@ const static struct ec_thermal_config thermal_b = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
-	.temp_fan_off = C_TO_K(25),
-	.temp_fan_max = C_TO_K(50),
 };
 
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
