@@ -246,6 +246,8 @@ void system_encode_save_flags(int flags, uint32_t *save_flags)
 	/* Save reset flag */
 	if (flags & (SYSTEM_RESET_HARD | SYSTEM_RESET_WAIT_EXT))
 		*save_flags |= EC_RESET_FLAG_HARD;
+	else if (flags & SYSTEM_RESET_HIBERNATE)
+		*save_flags |= EC_RESET_FLAG_HIBERNATE;
 	else
 		*save_flags |= EC_RESET_FLAG_SOFT;
 }
