@@ -20,44 +20,6 @@
 
 LOG_MODULE_REGISTER(cros_system, LOG_LEVEL_ERR);
 
-/**
- * @brief Get a node from path '/hibernate_wakeup_pins' which has a property
- *        'wakeup-pins' contains GPIO list for hibernate wake-up
- *
- * @return node identifier with that path.
- */
-#define SYSTEM_DT_NODE_HIBERNATE_CONFIG DT_INST(0, cros_ec_hibernate_wake_pins)
-
-/**
- * @brief Get the length of 'wakeup-pins' property
- *
- * @return length of 'wakeup-pins' prop which type is 'phandles'
- */
-#define SYSTEM_DT_NODE_WAKEUP_PIN_LEN \
-	DT_PROP_LEN(SYSTEM_DT_NODE_HIBERNATE_CONFIG, wakeup_pins)
-
-/**
- * @brief Get a node identifier from a phandle in property 'wakeup-pins' at
- *        index i.
- *
- * @param i index of 'wakeup-pins' prop which type is 'phandles'
- * @return node identifier with that path.
- */
-#define SYSTEM_DT_NODE_WAKEUP_PIN_BY_IDX(i) \
-	DT_PHANDLE_BY_IDX(SYSTEM_DT_NODE_HIBERNATE_CONFIG, wakeup_pins, i)
-
-/**
- * @brief Get the enum using in chromium system by index i in 'wakeup-pins'
- *        list.
- *
- * @param i index of 'wakeup-pins' prop which type is 'phandles'
- * @return GPIO enumeration
- */
-#define SYSTEM_DT_WAKEUP_GPIO_ENUM_BY_IDX(i, _)                           \
-	COND_CODE_1(DT_NODE_HAS_PROP(SYSTEM_DT_NODE_WAKEUP_PIN_BY_IDX(i), \
-				     enum_name),                          \
-		    (GPIO_SIGNAL(SYSTEM_DT_NODE_WAKEUP_PIN_BY_IDX(i)), ), ())
-
 /* Driver config */
 struct cros_system_npcx_config {
 	/* hardware module base address */
