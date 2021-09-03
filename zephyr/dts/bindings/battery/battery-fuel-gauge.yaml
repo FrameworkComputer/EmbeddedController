@@ -78,7 +78,8 @@ properties:
       type: int
    imbalance_mv:
       description: |
-         This property is used if CONFIG_BATTERY_MEASURE_IMBALANCE is defined.
+         This property is used only if
+         CONFIG_PLATFORM_EC_BATTERY_MEASURE_IMBALANCE is enabled.
          It should be an enum and its value should be a name of function
          which will be assigned to imbalance_mv pointer.
       type: string

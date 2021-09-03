@@ -417,6 +417,18 @@ config PLATFORM_EC_CONSOLE_CMD_CHGRAMP
 	      OC 1: s0 oc_det0 icl0
 	      OC 2: s0 oc_det0 icl0
 
+config PLATFORM_EC_BATTERY_CRITICAL_SHUTDOWN_CUT_OFF
+	bool "Enable battery cut off on critical power level"
+	help
+	  If this option is enabled, the battery will enter cut-off
+	  mode in case of critical power level.
+
+config PLATFORM_EC_BATTERY_CHECK_CHARGE_TEMP_LIMITS
+	bool "Monitor battery temperature while charging"
+	help
+	  Enable monitoring of battery temperature while charging and
+	  stop charging if is outside of the safe range.
+
 config PLATFORM_EC_BATTERY_CUT_OFF
 	bool "Host/Console command: battery cut-off"
 	help
@@ -441,6 +453,26 @@ config PLATFORM_EC_BATTERY_REVIVE_DISCONNECT
 	  If this battery is found to be in disconnect state, take it out of
 	  this state by force-applying a charge current. Once defined,
 	  a battery_get_disconnect_state() function has to be provided.
+
+config PLATFORM_EC_BATTERY_MEASURE_IMBALANCE
+	bool "Measure the battery cells imbalance"
+	help
+	  Smart battery driver should measure the voltage cell imbalance in the
+	  battery pack.
+	  This requires a battery driver capable of the measurement.
+	  If enabled, the AP enabling may be prevented if battery is too
+	  imbalanced.
+
+config PLATFORM_EC_BATTERY_MAX_IMBALANCE_MV
+	int "Max battery imbalance in millivolts"
+	depends on PLATFORM_EC_BATTERY_MEASURE_IMBALANCE
+	default 200
+	help
+	  Imbalanced battery packs in this situation appear to have balanced
+	  charge very quickly after beginning the charging cycle, since dV/dQ
+	  rapidly decreases as the cell is charged out of deep discharge.
+	  Increasing the value of CHARGER_MIN_BAT_PCT_IMBALANCED_POWER_ON will
+	  make a system tolerant of larger values of BATTERY_MAX_IMBALANCE_MV.
 
 config PLATFORM_EC_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV
 	int "Voltage limit in mV when battery is full and AP is off"

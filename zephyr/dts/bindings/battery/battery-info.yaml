@@ -36,28 +36,28 @@ properties:
    start_charging_min_c:
       description: |
          Minimum temperature of battery to start charging it.
-         This value is used only if CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
-         is defined.
+         This value is used only if
+         CONFIG_PLATFORM_EC_BATTERY_CHECK_CHARGE_TEMP_LIMITS is enabled.
       type: int
    start_charging_max_c:
       description: |
          Maximum temperature of battery to start charging it.
-         This value is used only if CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
-         is defined.
+         This value is used only if
+         CONFIG_PLATFORM_EC_BATTERY_CHECK_CHARGE_TEMP_LIMITS is enabled.
       type: int
    charging_min_c:
       description: |
          Minimum temperature of battery during charging it. If the battery
          temperature falls below this value, charging will be stopped.
-         This value is used only if CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
-         is defined.
+         This value is used only if
+         CONFIG_PLATFORM_EC_BATTERY_CHECK_CHARGE_TEMP_LIMITS is enabled.
       type: int
    charging_max_c:
       description: |
          Maximum temperature of battery during charging it. If the battery
          temperature raises above this value, charging will be stopped.
-         This value is used only if CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS
-         is defined.
+         This value is used only if
+         CONFIG_PLATFORM_EC_BATTERY_CHECK_CHARGE_TEMP_LIMITS is enabled.
       type: int
    discharging_min_c:
       description: |
