@@ -36,7 +36,5 @@ we must set the following modes:
    supports SSE and is known to work (there may be other good choices).
 ]]
 if(DEFINED CONFIG_SOC_POSIX)
-  set(FLOAT_FLAGS "-msse -mfpmath=sse -march=pentium4")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLOAT_FLAGS}")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLOAT_FLAGS}")
+  zephyr_cc_option(-msse -mfpmath=sse -march=pentium4)
 endif()
