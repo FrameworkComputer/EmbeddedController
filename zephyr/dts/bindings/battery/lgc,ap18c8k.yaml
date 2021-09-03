@@ -17,6 +17,10 @@ properties:
       default: 0x3A
    ship_mode_reg_data:
       default: [ 0xC574, 0xC574 ]
+   # Documentation: b/130608940
+   # Command Code: 0x43
+   # Bit 0 - DFET - Condition of D-FET ( 0=OFF, 1=ON )
+   # Bit 1 - CFET - Condition of C-FET ( 0=OFF, 1=ON )
    fet_mfgacc_support:
       default: 0
    fet_reg_addr:
@@ -24,7 +28,11 @@ properties:
    fet_reg_mask:
       default: 0x0001
    fet_disconnect_val:
-      default: 0x0
+      default: 0x0000
+   fet_cfet_mask:
+      default: 0x0002
+   fet_cfet_off_val:
+      default: 0x0000
 
    # Battery info
    voltage_max:
