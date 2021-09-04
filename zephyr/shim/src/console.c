@@ -22,6 +22,8 @@
 
 LOG_MODULE_REGISTER(shim_console, LOG_LEVEL_ERR);
 
+static const struct device *uart_shell_dev =
+	DEVICE_DT_GET(DT_CHOSEN(zephyr_shell_uart));
 static const struct shell *shell_zephyr;
 static struct k_poll_signal shell_uninit_signal;
 static struct k_poll_signal shell_init_signal;
@@ -62,21 +64,19 @@ static void uart_callback(const struct device *dev, void *user_data)
 
 static void shell_uninit_callback(const struct shell *shell, int res)
 {
-	const struct device *dev =
-		device_get_binding(CONFIG_UART_SHELL_ON_DEV_NAME);
-
 	if (!res) {
 		/* Set the new callback */
-		uart_irq_callback_user_data_set(dev, uart_callback, NULL);
+		uart_irq_callback_user_data_set(uart_shell_dev, uart_callback,
+						NULL);
 
 		/*
 		 * Disable TX interrupts. We don't actually use TX but for some
 		 * reason none of this works without this line.
 		 */
-		uart_irq_tx_disable(dev);
+		uart_irq_tx_disable(uart_shell_dev);
 
 		/* Enable RX interrupts */
-		uart_irq_rx_enable(dev);
+		uart_irq_rx_enable(uart_shell_dev);
 	}
 
 	/* Notify the uninit signal that we finished */
@@ -88,15 +88,13 @@ int uart_shell_stop(void)
 	struct k_poll_event event = K_POLL_EVENT_INITIALIZER(
 		K_POLL_TYPE_SIGNAL, K_POLL_MODE_NOTIFY_ONLY,
 		&shell_uninit_signal);
-	const struct device *dev =
-		device_get_binding(CONFIG_UART_SHELL_ON_DEV_NAME);
 
 	/* Clear all pending input */
 	uart_clear_input();
 
 	/* Disable RX and TX interrupts */
-	uart_irq_rx_disable(dev);
-	uart_irq_tx_disable(dev);
+	uart_irq_rx_disable(uart_shell_dev);
+	uart_irq_tx_disable(uart_shell_dev);
 
 	/* Initialize the uninit signal */
 	k_poll_signal_init(&shell_uninit_signal);
@@ -113,8 +111,6 @@ int uart_shell_stop(void)
 
 static void shell_init_from_work(struct k_work *work)
 {
-	const struct device *dev =
-		device_get_binding(CONFIG_UART_SHELL_ON_DEV_NAME);
 	bool log_backend = CONFIG_SHELL_BACKEND_SERIAL_LOG_LEVEL > 0;
 	uint32_t level;
 	ARG_UNUSED(work);
@@ -126,10 +122,10 @@ static void shell_init_from_work(struct k_work *work)
 	}
 
 	/* Initialize the shell and re-enable both RX and TX */
-	shell_init(shell_backend_uart_get_ptr(), dev, false, log_backend,
-		   level);
-	uart_irq_rx_enable(dev);
-	uart_irq_tx_enable(dev);
+	shell_init(shell_backend_uart_get_ptr(), uart_shell_dev, false,
+		   log_backend, level);
+	uart_irq_rx_enable(uart_shell_dev);
+	uart_irq_tx_enable(uart_shell_dev);
 
 	/* Notify the init signal that initialization is complete */
 	k_poll_signal_raise(&shell_init_signal, 0);
@@ -138,15 +134,13 @@ static void shell_init_from_work(struct k_work *work)
 void uart_shell_start(void)
 {
 	static struct k_work shell_init_work;
-	const struct device *dev =
-		device_get_binding(CONFIG_UART_SHELL_ON_DEV_NAME);
 	struct k_poll_event event = K_POLL_EVENT_INITIALIZER(
 		K_POLL_TYPE_SIGNAL, K_POLL_MODE_NOTIFY_ONLY,
 		&shell_init_signal);
 
 	/* Disable RX and TX interrupts */
-	uart_irq_rx_disable(dev);
-	uart_irq_tx_disable(dev);
+	uart_irq_rx_disable(uart_shell_dev);
+	uart_irq_tx_disable(uart_shell_dev);
 
 	/* Initialize k_work to call shell init (this makes it thread safe) */
 	k_work_init(&shell_init_work, shell_init_from_work);
@@ -237,10 +231,7 @@ void uart_flush_output(void)
 
 void uart_tx_flush(void)
 {
-	const struct device *dev =
-		device_get_binding(CONFIG_UART_SHELL_ON_DEV_NAME);
-
-	while (!uart_irq_tx_complete(dev))
+	while (!uart_irq_tx_complete(uart_shell_dev))
 		;
 }
 
