@@ -17,8 +17,8 @@
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
-#define LED_OFF_LVL	0
-#define LED_ON_LVL	1
+#define LED_OFF_LVL	1
+#define LED_ON_LVL	0
 
 __override const int led_charge_lvl_1 = 5;
 
