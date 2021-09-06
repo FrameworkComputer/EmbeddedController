@@ -90,13 +90,6 @@ config PLATFORM_EC_BATTERY_DEVICE_CHEMISTRY
 	  is returning the right information. If it is not, there might be
 	  something wrong with the I2C implementation.
 
-config PLATFORM_EC_BATTERY_REVIVE_DISCONNECT
-	bool "Check for a battery in disconnect state"
-	help
-	  Check for battery in disconnect state (similar to cut-off state). If
-	  so, take it out of that state by force-applying a charge current.
-	  This option requires battery_get_disconnect_state() to be defined.
-
 config PLATFORM_EC_I2C_VIRTUAL_BATTERY
 	bool "I2C virtual battery"
 	help
@@ -255,7 +248,7 @@ config PLATFORM_EC_CHARGER_BQ25720_VSYS_TH2_DV
 config PLATFORM_EC_CHARGER_MAINTAIN_VBAT
 	bool "Maintain VBAT voltage regardless of AC state"
 	help
-	  Leave the  charger VBAT configured to battery-requested voltage under
+	  Leave the charger VBAT configured to battery-requested voltage under
 	  all conditions, even when AC is not present. This may be necessary to
 	  work around quirks of certain charger chips, such as the BD9995X.
 
@@ -471,8 +464,19 @@ config PLATFORM_EC_BATTERY_MAX_IMBALANCE_MV
 	  Imbalanced battery packs in this situation appear to have balanced
 	  charge very quickly after beginning the charging cycle, since dV/dQ
 	  rapidly decreases as the cell is charged out of deep discharge.
-	  Increasing the value of CHARGER_MIN_BAT_PCT_IMBALANCED_POWER_ON will
-	  make a system tolerant of larger values of BATTERY_MAX_IMBALANCE_MV.
+	  Increasing the value of
+	  CONFIG_PLATFORM_EC_CHARGER_MIN_BAT_PCT_IMBALANCED_POWER_ON will make a
+	  system tolerant of larger values of
+	  CONFIG_PLATFORM_EC_BATTERY_MAX_IMBALANCE_MV.
+
+config PLATFORM_EC_CHARGER_MIN_BAT_PCT_IMBALANCED_POWER_ON
+	int "Minimum battery percentage for power on with an imbalanced pack"
+	depends on PLATFORM_EC_BATTERY_MEASURE_IMBALANCE
+	default 5
+	range 0 100
+	help
+	  If battery pack is in imbalanced state and current state of charge is
+	  below this value, the AP won't be powered on.
 
 config PLATFORM_EC_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV
 	int "Voltage limit in mV when battery is full and AP is off"
