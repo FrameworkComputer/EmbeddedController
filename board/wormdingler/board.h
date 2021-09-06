@@ -100,10 +100,8 @@ enum pwm_channel {
 
 /* List of possible batteries */
 enum battery_type {
-	BATTERY_L19C2PD7,
-	BATTERY_TBD,
-	BATTERY_L21D4PG0,
-	BATTERY_L21M4PG0,
+	BATTERY_L21D2PG2,
+	BATTERY_L21B2PG2,
 	BATTERY_TYPE_COUNT,
 };
 

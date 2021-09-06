@@ -33,69 +33,11 @@
  */
 
 const struct board_batt_params board_battery_info[] = {
-	/* Celxpert L19C2PD7 */
-	[BATTERY_L19C2PD7] = {
-		.fuel_gauge = {
-			.manuf_name = "Celxpert",
-			.device_name = "L19C2PD7",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
-			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0,
-			}
-		},
-		.batt_info = {
-			.voltage_max            = 8800, /* mV */
-			.voltage_normal         = 7680, /* mV */
-			.voltage_min            = 6500, /* mV */
-			.precharge_current      = 190,  /* mA */
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 59,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 70,
-		},
-	},
-	/* SMP TBD */
-	[BATTERY_TBD] = {
-		.fuel_gauge = {
-			.manuf_name = "SMP",
-			.device_name = "TBD",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
-			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0,
-			}
-		},
-		.batt_info = {
-			.voltage_max            = 8800, /* mV */
-			.voltage_normal         = 7680, /* mV */
-			.voltage_min            = 6500, /* mV */
-			.precharge_current      = 196,  /* mA */
-			.start_charging_min_c   = -1,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 60,
-		},
-	},
-	/* Sunwoda L21D4PG0 */
-	[BATTERY_L21D4PG0] = {
+	/* Sunwoda L21D2PG2 */
+	[BATTERY_L21D2PG2] = {
 		.fuel_gauge = {
 			.manuf_name = "Sunwoda",
-			.device_name = "L21D4PG0",
+			.device_name = "L21D2PG2",
 			.ship_mode = {
 				.reg_addr = 0x34,
 				.reg_data = { 0x0000, 0x1000 },
@@ -108,23 +50,23 @@ const struct board_batt_params board_battery_info[] = {
 			}
 		},
 		.batt_info = {
-			.voltage_max            = 8900, /* mV */
-			.voltage_normal         = 7720, /* mV */
+			.voltage_max            = 8860, /* mV */
+			.voltage_normal         = 7700, /* mV */
 			.voltage_min            = 6000, /* mV */
-			.precharge_current      = 274,  /* mA */
+			.precharge_current      = 200,  /* mA */
 			.start_charging_min_c   = 0,
 			.start_charging_max_c   = 50,
 			.charging_min_c         = 0,
-			.charging_max_c         = 60,
+			.charging_max_c         = 63,
 			.discharging_min_c      = -20,
-			.discharging_max_c      = 60,
+			.discharging_max_c      = 63,
 		},
 	},
-	/* SMP L21M4PG0 */
-	[BATTERY_L21M4PG0] = {
+	/* BYD L21B2PG2 */
+	[BATTERY_L21B2PG2] = {
 		.fuel_gauge = {
-			.manuf_name = "SMP",
-			.device_name = "L21M4PG0",
+			.manuf_name = "BYD",
+			.device_name = "L21B2PG2",
 			.ship_mode = {
 				.reg_addr = 0x34,
 				.reg_data = { 0x0000, 0x1000 },
@@ -137,10 +79,10 @@ const struct board_batt_params board_battery_info[] = {
 			}
 		},
 		.batt_info = {
-			.voltage_max            = 8900, /* mV */
-			.voltage_normal         = 7720, /* mV */
+			.voltage_max            = 8860, /* mV */
+			.voltage_normal         = 7700, /* mV */
 			.voltage_min            = 6000, /* mV */
-			.precharge_current      = 274,  /* mA */
+			.precharge_current      = 256,  /* mA */
 			.start_charging_min_c   = 0,
 			.start_charging_max_c   = 50,
 			.charging_min_c         = 0,
@@ -152,4 +94,4 @@ const struct board_batt_params board_battery_info[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_L19C2PD7;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_L21D2PG2;
