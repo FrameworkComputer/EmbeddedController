@@ -115,6 +115,22 @@ config PLATFORM_EC_BOARD_RESET_AFTER_POWER_ON
 	  the EC starts up, performs some amount of processing and then gets a
 	  reset that it is not expecting.
 
+config PLATFORM_EC_WAIT_RESET_CYCLES_PER_ITERATION
+	int "CPU execution cycle per iteration for waiting the H1 reset"
+	default 4
+	depends on PLATFORM_EC_BOARD_RESET_AFTER_POWER_ON
+	help
+	  This options specifies the number of CPU execution cycles per delay
+	  loop iteration, while waiting for the H1 to reset.
+
+config PLATFORM_EC_PREINIT_HW_CYCLES_PER_SEC
+	int "CPU power up clock cycle per second"
+	default 100000000
+	depends on PLATFORM_EC_BOARD_RESET_AFTER_POWER_ON
+	help
+	  This option specifies the frequency (in Hz) of the CPU core when
+	  coming out of a power on reset.
+
 config PLATFORM_EC_BRINGUP
 	bool "Enable early bringup debugging features"
 	help
