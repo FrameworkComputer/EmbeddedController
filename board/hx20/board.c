@@ -75,6 +75,8 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+static int board_doing_power_off_30s;
+
 #ifdef CONFIG_BOARD_PRE_INIT
 /*
  * Used to enable JTAG debug during development.
@@ -416,16 +418,18 @@ static void board_power_off_deferred(void)
 }
 DECLARE_DEFERRED(board_power_off_deferred);
 
-void board_power_off(void)
+void board_power_off(int msec)
 {
-	CPRINTS("Shutting down system in 30 seconds!");
-
-	hook_call_deferred(&board_power_off_deferred_data, 30000 * MSEC);
+	CPRINTS("Shutting down system in %d seconds!", (msec / 1000));
+	if (msec == 30000)
+		board_doing_power_off_30s = 1;
+	hook_call_deferred(&board_power_off_deferred_data, msec * MSEC);
 }
 
 void cancel_board_power_off(void)
 {
 	CPRINTS("Cancel shutdown");
+	board_doing_power_off_30s = 0;
 	hook_call_deferred(&board_power_off_deferred_data, -1);
 }
 
@@ -448,7 +452,7 @@ static void board_extpower(void)
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
 		/* if AC disconnected, need to power_off EC_ON */
 		if (!extpower_is_present())
-			board_power_off();
+			board_power_off(30000);
 		else
 			cancel_board_power_off();
 	}
@@ -979,6 +983,12 @@ void prochot_monitor(void)
 	}
 
 	check_chassis_open(0);
+
+	if (board_doing_power_off_30s && !gpio_get_level(GPIO_CHASSIS_OPEN)) {
+		CPRINTS("Force board power off after 3 second!!!");
+		cancel_board_power_off();
+		board_power_off(3000);
+	}
 
 }
 DECLARE_HOOK(HOOK_SECOND, prochot_monitor, HOOK_PRIO_DEFAULT);

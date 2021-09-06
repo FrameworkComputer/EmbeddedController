@@ -546,7 +546,10 @@ enum power_state power_handle_state(enum power_state state)
 		power_state_clear(EC_PS_ENTER_S0ix |
 			EC_PS_RESUME_S0ix | EC_PS_RESUME_S3 | EC_PS_ENTER_S3);
 		if (!extpower_is_present()) {
-			board_power_off();
+			if (!gpio_get_level(GPIO_CHASSIS_OPEN))
+				board_power_off(3000);
+			else
+				board_power_off(30000);
 		}
 		set_retimer_power(POWER_G3);
 		return POWER_G3;

@@ -745,15 +745,13 @@ void mainboard_power_button_interrupt(enum gpio_signal signal);
 /* fingerprint power button handler*/
 void fingerprint_power_button_interrupt(enum gpio_signal signal);
 
-void board_power_off(void);
+void board_power_off(int msec);
 void cancel_board_power_off(void);
 
 /* power sequence */
 int board_chipset_power_on(void);
 
 int board_get_version(void);
-
-void board_power_off(void);
 
 void boot_ap_on_g3(void);
 
