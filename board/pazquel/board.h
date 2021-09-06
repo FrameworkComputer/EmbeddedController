@@ -99,7 +99,7 @@ enum pwm_channel {
 };
 
 enum battery_type {
-	BATTERY_BMSPOW,
+	BATTERY_GANFENG,
 	BATTERY_TYPE_COUNT,
 };
 /* Reset all TCPCs. */

@@ -9,9 +9,10 @@
 #include "common.h"
 
 const struct board_batt_params board_battery_info[] = {
-	[BATTERY_BMSPOW] = {
+	/* GanFeng SG20 Battery Information */
+	[BATTERY_GANFENG] = {
 		.fuel_gauge = {
-			.manuf_name = "BMSPow",
+			.manuf_name = "Ganfeng",
 			.device_name = "SG20",
 			.ship_mode = {
 				.reg_addr = 0x00,
@@ -22,7 +23,6 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_mask = 0x0003,
 				.disconnect_val = 0x0000,
 			}
-                  
 		},
 		.batt_info = {
 			.voltage_max        = 8700, /* mV */
@@ -40,4 +40,4 @@ const struct board_batt_params board_battery_info[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_BMSPOW;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_GANFENG;
