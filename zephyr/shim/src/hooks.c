@@ -21,7 +21,7 @@ int hook_call_deferred(const struct deferred_data *data, int us)
 	if (us == -1) {
 		k_work_cancel_delayable(work);
 	} else if (us >= 0) {
-		rv = k_work_schedule(work, K_USEC(us));
+		rv = k_work_reschedule(work, K_USEC(us));
 		if (rv == -EINVAL) {
 			/* Already processing or completed. */
 			return 0;
