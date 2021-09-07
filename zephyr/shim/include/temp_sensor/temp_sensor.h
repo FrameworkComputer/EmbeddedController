@@ -10,8 +10,7 @@
 
 #ifdef CONFIG_PLATFORM_EC_TEMP_SENSOR
 
-#define ZSHIM_TEMP_SENSOR_ID(node_id)      \
-	DT_ENUM_UPPER_TOKEN(node_id, enum_name)
+#define ZSHIM_TEMP_SENSOR_ID(node_id) DT_STRING_UPPER_TOKEN(node_id, enum_name)
 #define TEMP_SENSOR_ID_WITH_COMMA(node_id) ZSHIM_TEMP_SENSOR_ID(node_id),
 
 enum temp_sensor_id {

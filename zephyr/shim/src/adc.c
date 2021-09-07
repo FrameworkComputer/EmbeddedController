@@ -16,20 +16,20 @@ const struct device *adc_dev;
 #define HAS_NAMED_ADC_CHANNELS DT_NODE_EXISTS(DT_INST(0, named_adc_channels))
 
 #if HAS_NAMED_ADC_CHANNELS
-#define ADC_CHANNEL_COMMA(node_id)                                      \
-	[ZSHIM_ADC_ID(node_id)] = {                                     \
-		.name = DT_LABEL(node_id),                              \
-		.input_ch = DT_PROP(node_id, channel),                  \
-		.factor_mul = DT_PROP(node_id, mul),                    \
-		.factor_div = DT_PROP(node_id, div),                    \
-		.channel_cfg = {                                        \
-			.channel_id = DT_PROP(node_id, channel),        \
-			.gain = DT_ENUM_TOKEN(node_id, gain),           \
-			.reference = DT_ENUM_TOKEN(node_id, reference), \
-			.acquisition_time =                             \
-				DT_PROP(node_id, acquisition_time),     \
-			.differential = DT_PROP(node_id, differential), \
-		},                                                      \
+#define ADC_CHANNEL_COMMA(node_id)                                        \
+	[ZSHIM_ADC_ID(node_id)] = {                                       \
+		.name = DT_LABEL(node_id),                                \
+		.input_ch = DT_PROP(node_id, channel),                    \
+		.factor_mul = DT_PROP(node_id, mul),                      \
+		.factor_div = DT_PROP(node_id, div),                      \
+		.channel_cfg = {                                          \
+			.channel_id = DT_PROP(node_id, channel),          \
+			.gain = DT_STRING_TOKEN(node_id, gain),           \
+			.reference = DT_STRING_TOKEN(node_id, reference), \
+			.acquisition_time =                               \
+				DT_PROP(node_id, acquisition_time),       \
+			.differential = DT_PROP(node_id, differential),   \
+		},                                                        \
 	},
 #ifdef CONFIG_ADC_CHANNELS_RUNTIME_CONFIG
 struct adc_t adc_channels[] = { DT_FOREACH_CHILD(

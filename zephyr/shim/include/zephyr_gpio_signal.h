@@ -11,7 +11,7 @@
 #include <devicetree.h>
 #include <toolchain.h>
 
-#define GPIO_SIGNAL(id) DT_ENUM_UPPER_TOKEN(id, enum_name)
+#define GPIO_SIGNAL(id) DT_STRING_UPPER_TOKEN(id, enum_name)
 #define GPIO_SIGNAL_WITH_COMMA(id) \
 	COND_CODE_1(DT_NODE_HAS_PROP(id, enum_name), (GPIO_SIGNAL(id), ), ())
 enum gpio_signal {

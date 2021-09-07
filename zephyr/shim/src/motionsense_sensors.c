@@ -132,9 +132,10 @@ DT_FOREACH_CHILD(SENSOR_ROT_REF_NODE, DECLARE_SENSOR_ROT_REF)
  * Get I2C or SPI address.
  * See motionsense-sensor-base.yaml for DT example and details.
  */
-#define SENSOR_I2C_SPI_ADDR_FLAGS(id)					\
-	IF_ENABLED(DT_NODE_HAS_PROP(id, i2c_spi_addr_flags),		\
-		(.i2c_spi_addr_flags = DT_ENUM_TOKEN(id, i2c_spi_addr_flags),))
+#define SENSOR_I2C_SPI_ADDR_FLAGS(id)                        \
+	IF_ENABLED(DT_NODE_HAS_PROP(id, i2c_spi_addr_flags), \
+		   (.i2c_spi_addr_flags =                    \
+			    DT_STRING_TOKEN(id, i2c_spi_addr_flags), ))
 
 /*
  * Get the address of rotation matrix which is referred by phandle.
@@ -187,8 +188,8 @@ DT_FOREACH_CHILD(SENSOR_ROT_REF_NODE, DECLARE_SENSOR_ROT_REF)
 /* Get and assign the basic information for a motion sensor */
 #define SENSOR_BASIC_INFO(id)						\
 	.name = DT_LABEL(id),						\
-	.active_mask = DT_ENUM_TOKEN(id, active_mask),			\
-	.location = DT_ENUM_TOKEN(id, location),			\
+	.active_mask = DT_STRING_TOKEN(id, active_mask),		\
+	.location = DT_STRING_TOKEN(id, location),			\
 	.default_range = DT_PROP(id, default_range),			\
 	SENSOR_I2C_SPI_ADDR_FLAGS(id)					\
 	SENSOR_MUTEX(id)						\
@@ -196,7 +197,6 @@ DT_FOREACH_CHILD(SENSOR_ROT_REF_NODE, DECLARE_SENSOR_ROT_REF)
 	SENSOR_ROT_STD_REF(id)						\
 	SENSOR_DRV_DATA(id)						\
 	SENSOR_CONFIG(id)
-
 
 /* Create motion sensor node with node ID */
 #define DO_MK_SENSOR_ENTRY(						\

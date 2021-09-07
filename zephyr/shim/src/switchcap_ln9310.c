@@ -21,11 +21,9 @@
 
 #define SC_PORT_PHANDLE \
 	DT_PHANDLE(DT_PATH(switchcap), port)
-#define SC_PORT \
-	DT_ENUM_UPPER_TOKEN(SC_PORT_PHANDLE, enum_name)
+#define SC_PORT DT_STRING_UPPER_TOKEN(SC_PORT_PHANDLE, enum_name)
 
-#define SC_ADDR_FLAGS \
-	DT_ENUM_UPPER_TOKEN(DT_PATH(switchcap), addr_flags)
+#define SC_ADDR_FLAGS DT_STRING_UPPER_TOKEN(DT_PATH(switchcap), addr_flags)
 
 void board_set_switchcap_power(int enable)
 {

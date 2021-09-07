@@ -22,7 +22,7 @@
 	i2c_physical_ports[I2C_PORT(id)] = DT_PROP_OR(id, physical_port, -1);
 
 #define I2C_CONFIG_GPIO(id, type) \
-	DT_ENUM_UPPER_TOKEN(DT_CHILD(DT_CHILD(id, config), type), enum_name)
+	DT_STRING_UPPER_TOKEN(DT_CHILD(DT_CHILD(id, config), type), enum_name)
 
 #define I2C_PORT_INIT(id)             \
 	{                             \

@@ -603,7 +603,7 @@ static int tcs_emul_init(const struct emul *emul,
 #define TCS3400_EMUL(n)							\
 	static struct tcs_emul_data tcs_emul_data_##n = {		\
 		.revision = DT_INST_PROP(n, revision),			\
-		.id = DT_ENUM_TOKEN(DT_DRV_INST(n), device_id),		\
+		.id = DT_STRING_TOKEN(DT_DRV_INST(n), device_id),		\
 		.error_on_ro_write = DT_INST_PROP(n, error_on_ro_write),\
 		.error_on_rsvd_write = DT_INST_PROP(n,			\
 					error_on_reserved_bit_write),	\

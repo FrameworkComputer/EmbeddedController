@@ -805,8 +805,8 @@ static int sbat_emul_init(const struct emul *emul,
 			.mf_access = DT_INST_PROP(n, mf_access),	\
 			.at_rate_full_mw_support = DT_INST_PROP(n,	\
 					at_rate_full_mw_support),	\
-			.spec_info = ((DT_ENUM_TOKEN(DT_DRV_INST(n),	\
-						     version) <<	\
+			.spec_info = ((DT_STRING_TOKEN(DT_DRV_INST(n),	\
+						       version) <<	\
 				       BATTERY_SPEC_VERSION_SHIFT) &	\
 				      BATTERY_SPEC_VERSION_MASK) |	\
 				     ((DT_INST_PROP(n, vscale) <<	\

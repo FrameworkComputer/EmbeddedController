@@ -8,12 +8,12 @@
 #include "adc.h"
 #include "temp_sensor/thermistor.h"
 
-#define TEMP_THERMISTOR(node_id)                               \
-	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {                    \
-		.name = DT_LABEL(node_id),                     \
-		.read = DT_ENUM_TOKEN(node_id, get_temp_func), \
-		.idx = ZSHIM_ADC_ID(DT_PHANDLE(node_id, adc)), \
-		.type = TEMP_SENSOR_TYPE_BOARD,                \
+#define TEMP_THERMISTOR(node_id)                                 \
+	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {                      \
+		.name = DT_LABEL(node_id),                       \
+		.read = DT_STRING_TOKEN(node_id, get_temp_func), \
+		.idx = ZSHIM_ADC_ID(DT_PHANDLE(node_id, adc)),   \
+		.type = TEMP_SENSOR_TYPE_BOARD,                  \
 	},
 
 #if DT_NODE_EXISTS(DT_PATH(named_temp_sensors))

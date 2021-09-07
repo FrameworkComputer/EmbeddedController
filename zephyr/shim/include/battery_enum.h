@@ -9,7 +9,7 @@
 #endif
 
 #define BATTERY_ENUM(val)	DT_CAT(BATTERY_, val)
-#define BATTERY_TYPE(id)	BATTERY_ENUM(DT_ENUM_UPPER_TOKEN(id, enum_name))
+#define BATTERY_TYPE(id) BATTERY_ENUM(DT_STRING_UPPER_TOKEN(id, enum_name))
 #define BATTERY_TYPE_WITH_COMMA(id)	BATTERY_TYPE(id),
 
 /* This produces a list of BATTERY_<ENUM_NAME> identifiers */

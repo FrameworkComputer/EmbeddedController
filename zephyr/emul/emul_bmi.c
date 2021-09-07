@@ -1078,7 +1078,7 @@ static int bmi_emul_init(const struct emul *emul,
 					error_on_reserved_bit_write),	\
 		.simulate_command_exec_time = DT_INST_PROP(n,		\
 					simulate_command_exec_time),	\
-		.type = DT_ENUM_TOKEN(DT_DRV_INST(n), device_model),	\
+		.type = DT_STRING_TOKEN(DT_DRV_INST(n), device_model),	\
 		.common = {						\
 			.start_write = NULL,				\
 			.write_byte = bmi_emul_handle_write,		\

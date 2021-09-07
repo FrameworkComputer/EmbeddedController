@@ -46,8 +46,8 @@ static void test_tcs_init(void)
 	tcs_emul_set_reg(emul, TCS_I2C_ID, 0);
 	zassert_equal(EC_ERROR_ACCESS_DENIED, ms->drv->init(ms), NULL);
 	/* Restore ID */
-	tcs_emul_set_reg(emul, TCS_I2C_ID, DT_ENUM_TOKEN(DT_NODELABEL(tcs_emul),
-							 device_id));
+	tcs_emul_set_reg(emul, TCS_I2C_ID,
+			 DT_STRING_TOKEN(DT_NODELABEL(tcs_emul), device_id));
 
 	/* Test successful init. ATIME and AGAIN should be changed on init */
 	zassert_equal(EC_SUCCESS, ms->drv->init(ms), NULL);

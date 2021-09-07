@@ -10,7 +10,7 @@
 
 #ifdef CONFIG_PLATFORM_EC_ADC
 
-#define ZSHIM_ADC_ID(node_id)         DT_ENUM_UPPER_TOKEN(node_id, enum_name)
+#define ZSHIM_ADC_ID(node_id) DT_STRING_UPPER_TOKEN(node_id, enum_name)
 #define ADC_ID_WITH_COMMA(node_id)    ZSHIM_ADC_ID(node_id),
 
 enum adc_channel {

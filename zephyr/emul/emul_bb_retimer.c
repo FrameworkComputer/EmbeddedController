@@ -324,7 +324,7 @@ static int bb_emul_init(const struct emul *emul,
 
 #define BB_RETIMER_EMUL(n)						\
 	static struct bb_emul_data bb_emul_data_##n = {			\
-		.vendor_id = DT_ENUM_TOKEN(DT_DRV_INST(n), vendor),	\
+		.vendor_id = DT_STRING_TOKEN(DT_DRV_INST(n), vendor),	\
 		.error_on_ro_write = DT_INST_PROP(n, error_on_ro_write),\
 		.error_on_rsvd_write = DT_INST_PROP(n,			\
 					error_on_reserved_bit_write),	\
