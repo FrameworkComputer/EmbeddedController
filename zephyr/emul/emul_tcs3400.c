@@ -626,6 +626,7 @@ static int tcs_emul_init(const struct emul *emul,
 									\
 	static const struct i2c_common_emul_cfg tcs_emul_cfg_##n = {	\
 		.i2c_label = DT_INST_BUS_LABEL(n),			\
+		.dev_label = DT_INST_LABEL(n),                          \
 		.data = &tcs_emul_data_##n.common,			\
 		.addr = DT_INST_REG_ADDR(n),				\
 	};								\

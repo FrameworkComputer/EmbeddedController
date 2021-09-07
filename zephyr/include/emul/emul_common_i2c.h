@@ -214,6 +214,8 @@ typedef int (*i2c_common_emul_write_func)(struct i2c_emul *emul, int reg,
 struct i2c_common_emul_cfg {
 	/** Label of the I2C bus this emulator connects to */
 	const char *i2c_label;
+	/** Label of the I2C device being emulated */
+	const char *dev_label;
 	/** Pointer to run-time data */
 	struct i2c_common_emul_data *data;
 	/** Address of emulator on i2c bus */
