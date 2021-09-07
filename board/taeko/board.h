@@ -18,7 +18,6 @@
 /* Baseboard features */
 #include "baseboard.h"
 
-#define CONFIG_BRIGNUP
 #define CONFIG_SYSTEM_UNLOCKED
 
 /*
