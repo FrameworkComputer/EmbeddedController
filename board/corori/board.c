@@ -456,3 +456,33 @@ static void board_extpower(void)
 	gpio_set_level(GPIO_EC_ACOK_OTG, extpower_present);
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
+
+const struct i2c_port_t i2c_ports[] = {
+	{
+		"eeprom", I2C_PORT_EEPROM, 400, GPIO_EC_I2C_EEPROM_SCL,
+		GPIO_EC_I2C_EEPROM_SDA
+	},
+
+	{
+		"battery", I2C_PORT_BATTERY, 100, GPIO_EC_I2C_BATTERY_SCL,
+		GPIO_EC_I2C_BATTERY_SDA
+	},
+
+#ifdef HAS_TASK_MOTIONSENSE
+	{
+		"sensor", I2C_PORT_SENSOR, 400, GPIO_EC_I2C_SENSOR_SCL,
+		GPIO_EC_I2C_SENSOR_SDA
+	},
+#endif
+
+	{
+		"usbc0", I2C_PORT_USB_C0, 1000, GPIO_EC_I2C_USB_C0_SCL,
+		GPIO_EC_I2C_USB_C0_SDA
+	},
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
+	{
+		"sub_usbc1", I2C_PORT_SUB_USB_C1, 1000,
+		GPIO_EC_I2C_SUB_USB_C1_SCL, GPIO_EC_I2C_SUB_USB_C1_SDA
+	},
+#endif
+};
