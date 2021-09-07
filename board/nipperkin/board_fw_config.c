@@ -6,13 +6,6 @@
 #include "base_fw_config.h"
 #include "board_fw_config.h"
 
-bool board_is_convertible(void)
-{
-	return (get_fw_config_field(FW_CONFIG_FORM_FACTOR_OFFSET,
-			FW_CONFIG_FORM_FACTOR_WIDTH)
-			== FW_CONFIG_FORM_FACTOR_CONVERTIBLE);
-}
-
 bool board_has_kblight(void)
 {
 	return (get_fw_config_field(FW_CONFIG_KBLIGHT_OFFSET,
@@ -28,3 +21,10 @@ enum board_usb_a1_retimer board_get_usb_a1_retimer(void)
 {
 	return USB_A1_RETIMER_PS8811;
 };
+
+bool board_has_privacy_panel(void)
+{
+	return (get_fw_config_field(FW_CONFIG_KEYBOARD_OFFSET,
+			FW_CONFIG_KEYBOARD_WIDTH) ==
+			FW_CONFIG_KEYBOARD_PRIVACY_YES);
+}
