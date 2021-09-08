@@ -404,8 +404,7 @@ int bmi3_parse_fifo_data(struct motion_sensor_t *s, struct bmi3_fifo_frame
 				vect.data[Y] = v[Y];
 				vect.data[Z] = v[Z];
 				vect.flags = 0;
-				vect.sensor_num = sens_cnt;
-
+				vect.sensor_num = s - motion_sensors + sens_cnt;
 				motion_sense_fifo_stage_data(&vect,
 						sens_output, 3, last_ts);
 			}
