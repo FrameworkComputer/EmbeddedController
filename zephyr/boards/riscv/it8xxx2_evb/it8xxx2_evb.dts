@@ -23,12 +23,12 @@
 	named-gpios {
 		compatible = "named-gpios";
 
-		power_button_l {
+		power_button_l: power_button_l {
 			gpios = <&gpioe 4 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 			label = "POWER_BUTTON_L";
 		};
-		lid_open {
+		lid_open: lid_open {
 			gpios = <&gpioe 2 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_LID_OPEN";
 			label = "LID_OPEN";
@@ -124,6 +124,12 @@
 			enum-name = "GPIO_SPI0_CS";
 			label = "SPI0_CS";
 		};
+	};
+
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-pins = <&power_button_l
+			       &lid_open>;
 	};
 
 	named-adc-channels {
