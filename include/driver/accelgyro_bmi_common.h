@@ -313,4 +313,7 @@ int bmi_set_accel_offset(const struct motion_sensor_t *accel, intv3_t v);
 int bmi_set_gyro_offset(const struct motion_sensor_t *gyro, intv3_t v,
 			 int *val98_ptr);
 
+int bmi_list_activities(const struct motion_sensor_t *s,
+			uint32_t *enabled,
+			uint32_t *disabled);
 #endif /* __CROS_EC_ACCELGYRO_BMI_COMMON_H */

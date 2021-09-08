@@ -891,3 +891,12 @@ void motion_orientation_update(const struct motion_sensor_t *s)
 }
 #endif
 
+int bmi_list_activities(const struct motion_sensor_t *s,
+			uint32_t *enabled,
+			uint32_t *disabled)
+{
+	struct bmi_drv_data_t *data = BMI_GET_DATA(s);
+	*enabled = data->enabled_activities;
+	*disabled = data->disabled_activities;
+	return EC_RES_SUCCESS;
+}
