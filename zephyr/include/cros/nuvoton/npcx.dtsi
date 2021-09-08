@@ -62,17 +62,6 @@
 
 	soc {
 
-		bbram: bb-ram@400af000 {
-			#address-cells = <1>;
-			#size-cells = <1>;
-			compatible = "nuvoton,npcx-cros-bbram";
-			status = "okay";
-			reg = <0x400af000 0x80
-			       0x400af100 0x1>;
-			reg-names = "memory", "status";
-			label = "BBRAM";
-		};
-
 		cros_kb_raw: cros-kb-raw@400a3000 {
 			compatible = "nuvoton,npcx-cros-kb-raw";
 			reg = <0x400a3000 0x2000>;
@@ -159,4 +148,8 @@
 
 &cpu0 {
 	cpu-power-states = <&suspend_to_idle_instant &suspend_to_idle_normal>;
+};
+
+&bbram {
+	status = "okay";
 };

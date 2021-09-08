@@ -77,7 +77,7 @@ struct cros_system_npcx_data {
 
 /* Get saved reset flag address in battery-backed ram */
 #define BBRAM_SAVED_RESET_FLAG_ADDR                         \
-	(DT_REG_ADDR(DT_INST(0, nuvoton_npcx_cros_bbram)) + \
+	(DT_REG_ADDR(DT_INST(0, nuvoton_npcx_bbram)) + \
 	 DT_PROP(DT_PATH(named_bbram_regions, saved_reset_flags), offset))
 
 /* Soc specific system local functions */

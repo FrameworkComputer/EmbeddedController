@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <drivers/cros_bbram.h>
+#include <drivers/bbram.h>
 #include <logging/log.h>
 
 #include "system.h"
@@ -11,9 +11,10 @@
 
 LOG_MODULE_REGISTER(shim_npcx_system, LOG_LEVEL_ERR);
 
-void chip_bbram_status_check(void)
+static void chip_bbram_status_check(void)
 {
 	const struct device *bbram_dev;
+	int res;
 
 	bbram_dev = DEVICE_DT_GET(DT_NODELABEL(bbram));
 	if (!device_is_ready(bbram_dev)) {
@@ -21,18 +22,18 @@ void chip_bbram_status_check(void)
 		return;
 	}
 
-	if (cros_bbram_get_ibbr(bbram_dev)) {
+	res = bbram_check_invalid(bbram_dev);
+	if (res != 0 && res != -ENOTSUP)
 		LOG_ERR("VBAT power drop!");
-		cros_bbram_reset_ibbr(bbram_dev);
-	}
-	if (cros_bbram_get_vsby(bbram_dev)) {
+
+	res = bbram_check_standby_power(bbram_dev);
+	if (res != 0 && res != -ENOTSUP)
 		LOG_ERR("VSBY power drop!");
-		cros_bbram_reset_vsby(bbram_dev);
-	}
-	if (cros_bbram_get_vcc1(bbram_dev)) {
+
+	res = bbram_check_power(bbram_dev);
+	if (res != 0 && res != -ENOTSUP)
 		LOG_ERR("VCC1 power drop!");
-		cros_bbram_reset_vcc1(bbram_dev);
-	}
+
 }
 
 /*
@@ -89,10 +90,9 @@ static int chip_system_init(const struct device *unused)
 /*
  * The priority should be lower than CROS_BBRAM_NPCX_INIT_PRIORITY.
  */
-#if (CONFIG_CROS_SYSTEM_NPCX_PRE_INIT_PRIORITY <= \
-     CONFIG_CROS_BBRAM_NPCX_INIT_PRIORITY)
+#if (CONFIG_CROS_SYSTEM_NPCX_PRE_INIT_PRIORITY <= CONFIG_BBRAM_INIT_PRIORITY)
 #error CONFIG_CROS_SYSTEM_NPCX_PRE_INIT_PRIORITY must greater than \
-	CONFIG_CROS_BBRAM_NPCX_INIT_PRIORITY
+	CONFIG_BBRAM_INIT_PRIORITY
 #endif
 SYS_INIT(chip_system_init, PRE_KERNEL_1,
 	 CONFIG_CROS_SYSTEM_NPCX_PRE_INIT_PRIORITY);

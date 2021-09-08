@@ -12,7 +12,7 @@ config CROS_SYSTEM_NPCX_PRE_INIT_PRIORITY
 	help
 	  This sets the priority of the NPCX chip system initialization. The
 	  chip system initialization verifies the integrity of the BBRAM and
-	  must be a lower priority than CONFIG_CROS_BBRAM_NPCX_INIT_PRIORITY and
+	  must be a lower priority than CONFIG_BBRAM_INIT_PRIORITY and
 	  must be a higher priority than PLATFORM_EC_SYSTEM_PRE_INIT.
 
 endif # PLATFORM_EC
