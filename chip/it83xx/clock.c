@@ -134,9 +134,15 @@ static uint8_t pll_setting;
 
 void __ram_code clock_ec_pll_ctrl(enum ec_pll_ctrl mode)
 {
+	volatile uint8_t _pll_ctrl __unused;
+
 	IT83XX_ECPM_PLLCTRL = mode;
-	/* for deep doze / sleep mode */
-	IT83XX_ECPM_PLLCTRL = mode;
+	/*
+	 * for deep doze / sleep mode
+	 * This load operation will ensure PLL setting is taken into
+	 * control register before wait for interrupt instruction.
+	 */
+	_pll_ctrl = IT83XX_ECPM_PLLCTRL;
 
 #ifdef IT83XX_CHIP_FLASH_NO_DEEP_POWER_DOWN
 	/*
@@ -546,9 +552,15 @@ defined(CONFIG_HOSTCMD_ESPI)
 	__builtin_unreachable();
 }
 
+/* use data type int here not bool to get better instruction number. */
+static volatile int wait_interrupt_fired;
 void clock_sleep_mode_wakeup_isr(void)
 {
 	uint32_t st_us, c;
+
+	/* Clear flag on each interrupt. */
+	if (IS_ENABLED(CHIP_CORE_RISCV))
+		wait_interrupt_fired = 0;
 
 	/* trigger a reboot if wake up EC from sleep mode (system hibernate) */
 	if (clock_ec_wake_from_sleep()) {
@@ -595,10 +607,7 @@ defined(CONFIG_HOSTCMD_ESPI)
 	}
 }
 
-/**
- * Low power idle task. Executed when no tasks are ready to be scheduled.
- */
-void __ram_code __idle(void)
+void __keep __idle_init(void)
 {
 	console_expire_time.val = get_time().val + CONSOLE_IN_USE_ON_BOOT_TIME;
 	/* init hw timer and clock source is 32.768 KHz */
@@ -611,6 +620,18 @@ void __ram_code __idle(void)
 	 * their task inits and have gone to sleep.
 	 */
 	CPRINTS("low power idle task started");
+}
+
+/**
+ * Low power idle task. Executed when no tasks are ready to be scheduled.
+ */
+void __ram_code __idle(void)
+{
+	/*
+	 * There is not enough space from ram code section to cache entire idle
+	 * function, hence pull initialization function out of the section.
+	 */
+	__idle_init();
 
 	while (1) {
 		/* Disable interrupts */
@@ -636,8 +657,21 @@ void __ram_code __idle(void)
 			clock_ec_pll_ctrl(EC_PLL_DOZE);
 			idle_doze_cnt++;
 		}
+		/* Set flag before entering low power mode. */
+		if (IS_ENABLED(CHIP_CORE_RISCV))
+			wait_interrupt_fired = 1;
 		clock_cpu_standby();
 		interrupt_enable();
+		/*
+		 * Sometimes wfi instruction may fail due to CPU's MTIP@mip
+		 * register is non-zero.
+		 * If the wait_interrupt_fired flag is true at this point,
+		 * it means that EC waked-up by the above issue not an
+		 * interrupt. Hence we loop running wfi instruction here until
+		 * wfi success.
+		 */
+		while (IS_ENABLED(CHIP_CORE_RISCV) && wait_interrupt_fired)
+			clock_cpu_standby();
 	}
 }
 #endif /* CONFIG_LOW_POWER_IDLE */
