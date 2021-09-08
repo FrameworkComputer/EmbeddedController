@@ -740,3 +740,9 @@ static void handle_tsp_ta(void)
 	gpio_set_level(GPIO_TSP_TA, extpower_is_present());
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, handle_tsp_ta, HOOK_PRIO_DEFAULT);
+
+/******************************************************************************/
+/* USB-A charging control */
+const int usb_port_enable[USB_PORT_COUNT] = {
+	GPIO_EN_USB_A0_VBUS,
+};
