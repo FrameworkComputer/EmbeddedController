@@ -52,29 +52,6 @@ enum gpio_signal hibernate_wake_pins[] = {
 };
 int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
-__override void board_hibernate_late(void)
-{
-	/*
-	 * Turn off PP5000_A. Required for devices without Z-state.
-	 * Don't care for devices with Z-state.
-	 */
-	gpio_set_level(GPIO_EN_PP5000_A, 0);
-
-	/*
-	 * GPIO_EN_SLP_Z not implemented in rev0/1,
-	 * fallback to usual hibernate process.
-	 */
-	if (IS_ENABLED(BOARD_ASURADA) && board_get_version() <= 1)
-		return;
-
-	isl9238c_hibernate(CHARGER_SOLO);
-
-	gpio_set_level(GPIO_EN_SLP_Z, 1);
-
-	/* should not reach here */
-	__builtin_unreachable();
-}
-
 /*
  * I2C channels (A, B, and C) are using the same timing registers (00h~07h)
  * at default.
