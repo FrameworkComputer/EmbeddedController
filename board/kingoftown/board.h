@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Trogdor board configuration */
+/* Kingoftown board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -99,7 +99,10 @@ enum pwm_channel {
 
 /* List of possible batteries */
 enum battery_type {
-	BATTERY_AP16L5J,
+	BATTERY_DYNAPACK_HIGHPOWER,
+	BATTERY_DYNAPACK_BYD,
+	BATTERY_COS,
+	BATTERY_ATL,
 	BATTERY_TYPE_COUNT,
 };
 

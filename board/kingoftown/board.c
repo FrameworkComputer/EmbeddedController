@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Trogdor board-specific configuration */
+/* Kingoftown board-specific configuration */
 
 #include "adc_chip.h"
 #include "button.h"

@@ -10,7 +10,7 @@
 #include "util.h"
 
 /*
- * Battery info for all trogdor battery types. Note that the fields
+ * Battery info for all kingoftown battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
  * The effective temperature limits are given by discharging_min/max_c.
  *
@@ -33,36 +33,124 @@
  */
 
 const struct board_batt_params board_battery_info[] = {
-	/* AP16L5J */
-	[BATTERY_AP16L5J] = {
+	/* DynaPack HIGHPOWER Battery Information */
+	[BATTERY_DYNAPACK_HIGHPOWER] = {
 		.fuel_gauge = {
-			.manuf_name = "PANASONIC",
-			.device_name = "AP16L5J",
+			.manuf_name = "333-2D-0D-A",
 			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0006,
+				.disconnect_val = 0x0,
+			},
+		},
+		.batt_info = {
+			.voltage_max = 8800,	/* mV */
+			.voltage_normal = 7700,
+			.voltage_min = 6000,
+			.precharge_current = 256,	/* mA */
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 45,
+			.discharging_min_c = -10,
+			.discharging_max_c = 60,
+		},
+	},
+
+	/* DynaPack BYD Battery Information */
+	[BATTERY_DYNAPACK_BYD] = {
+		.fuel_gauge = {
+			.manuf_name = "333-2E-0D-A",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0006,
+				.disconnect_val = 0x0,
+			},
+		},
+		.batt_info = {
+			.voltage_max = 8800,	/* mV */
+			.voltage_normal = 7700,
+			.voltage_min = 6000,
+			.precharge_current = 256,	/* mA */
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 45,
+			.discharging_min_c = -10,
+			.discharging_max_c = 60,
+		},
+	},
+
+	/* CosMX Battery Information */
+	[BATTERY_COS] = {
+		.fuel_gauge = {
+			.manuf_name = "333-AC-0D-A",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0006,
+				.disconnect_val = 0x0,
+			},
+		},
+		.batt_info = {
+			.voltage_max = 8800,	/* mV */
+			.voltage_normal = 7700,
+			.voltage_min = 6000,
+			.precharge_current = 256,	/* mA */
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 45,
+			.discharging_min_c = -10,
+			.discharging_max_c = 60,
+		},
+	},
+
+	/* ATL GB-S20-4473A9-01H&020H Battery Information
+	 * Gauge IC : RAJ240045
+	 */
+	[BATTERY_ATL] = {
+		.fuel_gauge = {
+			.manuf_name = "313-B7-0D-A",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
 				.mfgacc_support = 0,
-				.reg_addr = 0x0,
-				.reg_mask = 0x4000,
+				.reg_addr = 0x43,
+				.reg_mask = 0x0003,
 				.disconnect_val = 0x0,
-			}
+			},
 		},
 		.batt_info = {
-			.voltage_max            = 8800,
-			.voltage_normal         = 7700, /* mV */
-			.voltage_min            = 6000, /* mV */
-			.precharge_current      = 256,  /* mA */
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 75,
+			.voltage_max = 8800,		/* mV */
+			.voltage_normal = 7700,		/* mV */
+			.voltage_min = 6000,		/* mV */
+			.precharge_current = 256,	/* mA */
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 45,
+			.discharging_min_c = -10,
+			.discharging_max_c = 60,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_AP16L5J;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_DYNAPACK_HIGHPOWER;
