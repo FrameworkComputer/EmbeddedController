@@ -176,9 +176,6 @@ static int rt1718s_bc12_init(int port)
 	/* Disable sink wait vbus */
 	RETURN_ERROR(rt1718s_set_bc12_sink_wait_vbus(port, false));
 
-	/* Disable bc 1.2 sink function */
-	RETURN_ERROR(rt1718s_enable_bc12_sink(port, false));
-
 	return EC_SUCCESS;
 }
 
