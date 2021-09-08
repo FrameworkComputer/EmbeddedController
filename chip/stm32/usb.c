@@ -89,6 +89,36 @@ const uint8_t usb_string_desc[] = {
 	0x09, 0x04 /* LangID = 0x0409: U.S. English */
 };
 
+#ifdef CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR
+/*
+ * String descriptor for Windows Compatible ID OS Descriptor. This string
+ * descriptor is used by Windows OS to know to request a Windows Compatible ID
+ * OS Descriptor so that Windows will load the proper WINUSB driver.
+ */
+const void *const usb_ms_os_string_descriptor = {USB_MS_STRING_DESC("MSFT100")};
+
+/*
+ * Extended Compat ID OS Feature descriptor. This descriptor is used by Windows
+ * OS to know which type of driver is required so the USB-EP device gets
+ * registered properly. This type of descriptor may contain more than one
+ * function interface, but this instantiation only uses one function interface
+ * to communicate the WINUSB compatible ID.
+ */
+const struct usb_ms_ext_compat_id_desc winusb_desc = {
+	.dwLength = sizeof(struct usb_ms_ext_compat_id_desc),
+	.bcdVersion = 0x100, /* Windows Compat ID Desc v1.0 */
+	.wIndex = USB_MS_EXT_COMPATIBLE_ID_INDEX,
+	.bCount = USB_MS_COMPAT_ID_FUNCTION,
+	.function = {
+		[0] = {
+			.bFirstInterfaceNumber = 0,
+			.reserved_1 = 1,
+			.compatible_id = {USB_MS_COMPAT_ID}, /* WINUSB */
+		},
+	},
+};
+#endif
+
 /* Endpoint table in USB controller RAM */
 struct stm32_endpoint btable_ep[USB_EP_COUNT] __aligned(8) __usb_btable;
 /* Control endpoint (EP0) buffers */
@@ -200,17 +230,30 @@ static void ep0_rx(void)
 	}
 	/* vendor specific request */
 	if ((req & USB_TYPE_MASK) == USB_TYPE_VENDOR) {
-#ifdef CONFIG_WEBUSB_URL
+#if defined(CONFIG_WEBUSB_URL) || \
+	defined(CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR)
 		uint8_t b_req = req >> 8; /* bRequest in the transfer */
-		uint16_t idx = ep0_buf_rx[2]; /* wIndex in the transfer */
+		uint16_t w_index = ep0_buf_rx[2]; /* wIndex in the transfer */
 
-		if (b_req == 0x01 && idx == WEBUSB_REQ_GET_URL) {
+#ifdef CONFIG_WEBUSB_URL
+		if (b_req == 0x01 && w_index == WEBUSB_REQ_GET_URL) {
 			int len = *(uint8_t *)webusb_url;
 
 			ep0_send_descriptor(webusb_url, len, 0);
 			return;
 		}
-#endif
+#endif /* CONFIG_WEBUSB_URL */
+
+#ifdef CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR
+		if (b_req == USB_MS_STRING_DESC_VENDOR_CODE &&
+			w_index == USB_MS_EXT_COMPATIBLE_ID_INDEX) {
+			ep0_send_descriptor((uint8_t *)&winusb_desc,
+					    winusb_desc.dwLength, 0);
+			return;
+		}
+#endif /* CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR */
+
+#endif /* CONFIG_WEBUSB_URL || CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR */
 		goto unknown_req;
 	}
 
@@ -237,6 +280,19 @@ static void ep0_rx(void)
 			break;
 #endif
 		case USB_DT_STRING: /* Setup : Get string descriptor */
+
+#ifdef CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR
+			/*
+			 * String descriptor request at index == 0xEE is used by
+			 * Windows OS to know how to retrieve an Extended Compat
+			 * ID OS Feature descriptor.
+			 */
+			if (idx == USB_GET_MS_DESCRIPTOR) {
+				desc = (uint8_t *)usb_ms_os_string_descriptor;
+				len = desc[0];
+				break;
+			}
+#endif
 			if (idx >= USB_STR_COUNT)
 				/* The string does not exist : STALL */
 				goto unknown_req;

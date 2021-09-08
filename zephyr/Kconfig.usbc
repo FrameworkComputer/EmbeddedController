@@ -149,6 +149,14 @@ config PLATFORM_EC_USB_VID
 	  changed. But, in certain cases this may need to be changed to
 	  match an OEM's vendor ID.
 
+config PLATFORM_EC_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR
+	bool "USB MS Extended Compat ID Feature Descriptor"
+	help
+	  This enables USB-EP to contain a MS Windows USB string descriptor
+	  which is then used by MS Windows to request a Extended Compatible
+	  ID Feature descriptor so that Windows will know to load its WINUSB
+	  driver.
+
 config PLATFORM_EC_USBC_RETIMER_INTEL_BB
 	bool "Support Intel Burnside Bridge retimer"
 	help

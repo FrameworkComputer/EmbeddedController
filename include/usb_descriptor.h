@@ -286,6 +286,38 @@ struct usb_setup_packet {
 	uint16_t wLength;
 };
 
+/*
+ * Extended Compat ID OS Feature Descriptor Specification for Windows v1.0 USB
+ * Descriptors.
+ */
+#define USB_MS_STRING_DESC_VENDOR_CODE 0x2
+#define USB_MS_EXT_COMPATIBLE_ID_INDEX 0x4
+#define USB_GET_MS_DESCRIPTOR 0xEE
+#define USB_MS_COMPAT_ID 'W', 'I', 'N', 'U', 'S', 'B'
+#define USB_MS_COMPAT_ID_FUNCTION 1
+
+struct usb_function_section {
+	uint8_t bFirstInterfaceNumber;
+	uint8_t reserved_1;
+	uint8_t compatible_id[8];
+	uint8_t subCompatibleID[8];
+	uint8_t reserved_2[6];
+} __packed;
+
+struct usb_ms_ext_compat_id_desc {
+	uint32_t dwLength;
+	uint16_t bcdVersion;
+	uint16_t wIndex;
+	uint8_t bCount;
+	uint8_t Reserved[7];
+	/*
+	 * The spec allows for multiple function sections to be included, but
+	 * the only current use case requires just one function section to
+	 * notify Windows to use the WINUSB driver.
+	 */
+	struct usb_function_section function[USB_MS_COMPAT_ID_FUNCTION];
+} __packed;
+
 /* Helpers for descriptors */
 
 #define WIDESTR(quote) WIDESTR2(quote)
@@ -305,6 +337,28 @@ struct usb_setup_packet {
 		USB_DT_STRING, \
 		WIDESTR(str) \
 	}
+
+/*
+ * Macro to generate a string descriptor used by Windows OS which instructs
+ * windows to request a MS Compatible ID Descriptor and then enables Windows OS
+ * to load the correct driver for a USB-EP
+ */
+#define USB_MS_STRING_DESC(str) \
+	((const void *)&(const struct { \
+		uint8_t _len; \
+		uint8_t _type; \
+		wchar_t _data[sizeof(str) - 1]; \
+		uint16_t _vendor; \
+	}) { \
+		/* Total size of the descriptor is : \
+		 * size of the UTF-16 text plus the len/type fields \
+		 * plus 2 bytes for vendor code minus the string 0-termination \
+		 */ \
+		sizeof(WIDESTR(str)) + 2 - 2 + 2, \
+		USB_DT_STRING, \
+		WIDESTR(str), \
+		USB_MS_STRING_DESC_VENDOR_CODE,    \
+	})
 
 #ifdef CONFIG_USB_SERIALNO
 /* String Descriptor for USB, for editable strings. */

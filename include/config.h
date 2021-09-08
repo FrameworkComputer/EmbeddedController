@@ -4965,6 +4965,14 @@
 /* Support correct handling of USB suspend (host-initiated). */
 #undef CONFIG_USB_SUSPEND
 
+/*
+ * Enable this config for a USB-EP device that needs to interop properly with a
+ * MS Windows OS host machine. This config will enable a special string
+ * descriptor so Windows OS will know to retreieve an Extended Compat ID OS
+ * Feature descriptor.
+ */
+#undef CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR
+
 /* Default pull-up value on the USB-C ports when they are used as source. */
 #define CONFIG_USB_PD_PULLUP TYPEC_RP_1A5
 /*
