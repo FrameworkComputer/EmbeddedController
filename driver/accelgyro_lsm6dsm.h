@@ -293,17 +293,6 @@ struct lsm6dsm_fifo_data {
 	int total_samples_in_pattern;
 };
 
-/*
- * Structure used to maintain the load state per sensor. This will be used to
- * properly spread values in case we have more than one reading for a given
- * sensor in a single fifo read pass.
- */
-struct load_fifo_sensor_state_t {
-	uint32_t int_timestamp;
-	uint8_t sample_count;
-	int sample_rate;
-};
-
 /**
  * Structure used to hold fifo state. This struct should only be used if
  * CONFIG_ACCEL_FIFO is defined.
@@ -317,7 +306,6 @@ struct lsm6dsm_accel_fifo_state {
 	 * initial samples with incorrect values
 	 */
 	unsigned int samples_to_discard[FIFO_DEV_NUM];
-	struct load_fifo_sensor_state_t load_fifo_sensor_state[FIFO_DEV_NUM];
 };
 
 /*

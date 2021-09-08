@@ -37,26 +37,6 @@
 static volatile uint32_t last_interrupt_timestamp;
 
 /**
- * Resets the lsm6dsm load fifo sensor states to the given timestamp. This
- * should be called at the start of the fifo read sequence.
- *
- * @param s Pointer to the first sensor in the lsm6dsm (accelerometer).
- * @param ts The timestamp to use for the interrupt timestamp.
- */
-__maybe_unused static void reset_load_fifo_sensor_state(
-	struct motion_sensor_t *s, uint32_t ts)
-{
-	int i;
-	struct lsm6dsm_accel_fifo_state *fifo_state =
-		LSM6DSM_GET_DATA(s)->accel_fifo_state;
-
-	for (i = 0; i < FIFO_DEV_NUM; i++) {
-		fifo_state->load_fifo_sensor_state[i].int_timestamp = ts;
-		fifo_state->load_fifo_sensor_state[i].sample_count = 0;
-	}
-}
-
-/**
  * Gets the dev_fifo enum value for a given sensor.
  *
  * @param s Pointer to the sensor in question.
@@ -379,9 +359,6 @@ static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts,
 	int err, left, length;
 	uint8_t fifo[FIFO_READ_LEN];
 
-	/* Reset the load_fifo_sensor_state so we can start a new read. */
-	reset_load_fifo_sensor_state(s, interrupt_timestamp);
-
 	/*
 	 * DIFF[11:0] are number of unread uint16 in FIFO
 	 * mask DIFF and compute total byte len to read from FIFO.
@@ -629,9 +606,6 @@ int lsm6dsm_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 				private->accel_fifo_state;
 			fifo_state->samples_to_discard[s->type] =
 				LSM6DSM_DISCARD_SAMPLES;
-			fifo_state->load_fifo_sensor_state[get_fifo_type(s)]
-				.sample_rate = normalized_rate == 0
-					? 0 : SECOND * 1000 / normalized_rate;
 			ret = fifo_enable(accel);
 			if (ret != EC_SUCCESS)
 				CPRINTS("Failed to enable FIFO. Error: %d",
