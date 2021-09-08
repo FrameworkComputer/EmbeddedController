@@ -285,10 +285,6 @@ const struct temp_sensor_t temp_sensors[] = {
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_2_FAN
 	},
-#if 0
-/*
- * TOOD(b/194774929): need to update for real fan
- */
 	[TEMP_SENSOR_3_CHARGER] = {
 		.name = "CHARGER",
 		.type = TEMP_SENSOR_TYPE_BOARD,
@@ -301,7 +297,6 @@ const struct temp_sensor_t temp_sensors[] = {
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_4_WWAN
 	},
-#endif
 };
 
 
@@ -355,13 +350,8 @@ static const struct ec_thermal_config thermal_fan = {
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = thermal_cpu,
 	[TEMP_SENSOR_2_FAN]	= thermal_fan,
-#if 0
-/*
- * TOOD(b/194774929): need to update for real fan
- */
 	[TEMP_SENSOR_3_CHARGER]	= thermal_fan,
 	[TEMP_SENSOR_4_WWAN]	= thermal_fan,
-#endif
 };
 
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
