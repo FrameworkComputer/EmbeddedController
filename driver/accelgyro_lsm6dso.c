@@ -208,7 +208,7 @@ static int accelgyro_config_fifo(const struct motion_sensor_t *s)
 	 */
 	samples_to_discard[s->type] = LSM6DSO_DISCARD_SAMPLES;
 
-	fifo_odr_mask = LSM6DSO_FIFO_ODR_TO_REG(s);
+	fifo_odr_mask = LSM6DSO_FIFO_ODR_MASK(s);
 	reg_val = LSM6DSO_ODR_TO_REG(data->base.odr);
 	err = st_write_data_with_mask(s, LSM6DSO_FIFO_CTRL3_ADDR,
 				      fifo_odr_mask, reg_val);
@@ -333,8 +333,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		}
 
 		if (normalized_rate < LSM6DSO_ODR_MIN_VAL ||
-		    normalized_rate > MIN(LSM6DSO_ODR_MAX_VAL,
-					  CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ))
+		    normalized_rate > LSM6DSO_ODR_MAX_VAL)
 			return EC_RES_INVALID_PARAM;
 	}
 

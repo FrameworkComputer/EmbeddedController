@@ -128,7 +128,7 @@ struct lsm6dso_fstatus {
 /* ODR reg value from selected data rate in mHz */
 #define LSM6DSO_ODR_TO_REG(_odr) (__fls(_odr / LSM6DSO_ODR_MIN_VAL) + 1)
 
-#define LSM6DSO_FIFO_ODR_TO_REG(_s) \
+#define LSM6DSO_FIFO_ODR_MASK(_s) \
 	(_s->type == MOTIONSENSE_TYPE_ACCEL ? LSM6DSO_FIFO_ODR_XL_MASK : \
 	 LSM6DSO_FIFO_ODR_G_MASK)
 
@@ -221,7 +221,7 @@ struct lsm6dso_data {
 #define LSM6DSO_GET_DATA(_s) ((struct stprivate_data *)((_s)->drv_data))
 
 /* Macro to initialize motion_sensors structure */
-#define LSM6DSO_ST_DATA(g, type) (&(&(g))->st_data[(type)])
+#define LSM6DSO_ST_DATA(g, type) (&((g).st_data[type]))
 #define LSM6DSO_MAIN_SENSOR(_s) ((_s) - (_s)->type)
 
 extern const struct accelgyro_drv lsm6dso_drv;
