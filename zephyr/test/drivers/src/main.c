@@ -24,6 +24,7 @@ extern void test_suite_ln9310(void);
 extern void test_suite_lis2dw12(void);
 extern void test_suite_stm_mems_common(void);
 extern void test_suite_isl923x(void);
+extern void test_suite_usb_mux(void);
 
 void test_main(void)
 {
@@ -49,4 +50,5 @@ void test_main(void)
 	test_suite_lis2dw12();
 	test_suite_stm_mems_common();
 	test_suite_isl923x();
+	test_suite_usb_mux();
 }

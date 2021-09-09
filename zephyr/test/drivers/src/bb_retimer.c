@@ -442,6 +442,11 @@ static void test_bb_init(void)
 
 	/* Set AP to normal state and wait for chipset task */
 	set_mock_power_state(POWER_S0);
+	/*
+	 * TODO(b/201420132) - setting power state requires to wake up
+	 * TASK_ID_CHIPSET Sleep is required to run chipset task before
+	 * continuing with test
+	 */
 	k_msleep(1);
 
 	/* Setup emulator fail on read */
@@ -504,6 +509,11 @@ static void test_bb_init(void)
 
 	/* Set AP to off state and wait for chipset task */
 	set_mock_power_state(POWER_G3);
+	/*
+	 * TODO(b/201420132) - setting power state requires to wake up
+	 * TASK_ID_CHIPSET Sleep is required to run chipset task before
+	 * continuing with test
+	 */
 	k_msleep(1);
 
 	/* With AP off, init should fail and pins should be unset */
