@@ -60,10 +60,6 @@
 	(LSM6DSO_CTRL1_ADDR + (_sensor))
 #define LSM6DSO_ODR_MASK			0xf0
 
-/* Hardware FIFO size in byte */
-#define LSM6DSO_MAX_FIFO_SIZE		4096
-#define LSM6DSO_MAX_FIFO_LENGTH	(LSM6DSO_MAX_FIFO_SIZE / OUT_XYZ_SIZE)
-
 /* FIFO decimator registers and bitmask */
 #define LSM6DSO_FIFO_CTRL1_ADDR		0x07
 #define LSM6DSO_FIFO_CTRL2_ADDR		0x08
@@ -104,11 +100,8 @@ enum lsm6dso_dev_fifo {
 };
 
 /* Define FIFO data pattern, tag and len */
-#define LSM6DSO_SAMPLE_SIZE		6
-#define LSM6DSO_TS_SAMPLE_SIZE		4
 #define LSM6DSO_TAG_SIZE		1
-#define LSM6DSO_FIFO_SAMPLE_SIZE	LSM6DSO_SAMPLE_SIZE + LSM6DSO_TAG_SIZE
-#define LSM6DSO_MAX_FIFO_DEPTH		416
+#define LSM6DSO_FIFO_SAMPLE_SIZE	(OUT_XYZ_SIZE + LSM6DSO_TAG_SIZE)
 
 enum lsm6dso_tag_fifo {
 	LSM6DSO_GYRO_TAG = 0x01,
@@ -222,7 +215,6 @@ struct lsm6dso_data {
 
 /* Macro to initialize motion_sensors structure */
 #define LSM6DSO_ST_DATA(g, type) (&((g).st_data[type]))
-#define LSM6DSO_MAIN_SENSOR(_s) ((_s) - (_s)->type)
 
 extern const struct accelgyro_drv lsm6dso_drv;
 

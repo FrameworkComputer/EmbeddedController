@@ -159,32 +159,25 @@ static void push_fifo_data(struct motion_sensor_t *main_s, uint8_t *fifo,
 	motion_sense_fifo_stage_data(&vect, sensor, 3, saved_ts);
 }
 
-static inline int load_fifo(struct motion_sensor_t *s,
-			    const struct lsm6dso_fstatus *fsts,
+static inline int load_fifo(struct motion_sensor_t *main_s,
+			    const uint16_t fifo_len,
 			    uint32_t saved_ts)
 {
-	uint8_t fifo[FIFO_READ_LEN], *ptr;
-	int i, err, read_len = 0, word_len, fifo_len;
-	uint16_t fifo_depth;
+	uint8_t fifo[LSM6DSO_FIFO_SAMPLE_SIZE];
+	int i, err;
 
-	fifo_depth = fsts->len & LSM6DSO_FIFO_DIFF_MASK;
-	fifo_len = fifo_depth * LSM6DSO_FIFO_SAMPLE_SIZE;
-	while (read_len < fifo_len) {
-		word_len = GENERIC_MIN(fifo_len - read_len, sizeof(fifo));
-		err = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
+	for (i = 0; i < fifo_len; i++) {
+		err = st_raw_read_n_noinc(main_s->port,
+					  main_s->i2c_spi_addr_flags,
 					  LSM6DSO_FIFO_DATA_ADDR_TAG,
-					  fifo, word_len);
+					  fifo, LSM6DSO_FIFO_SAMPLE_SIZE);
 		if (err != EC_SUCCESS)
 			return err;
 
-		for (i = 0; i < word_len; i += LSM6DSO_FIFO_SAMPLE_SIZE) {
-			ptr = &fifo[i];
-			push_fifo_data(LSM6DSO_MAIN_SENSOR(s), ptr, saved_ts);
-		}
-		read_len += word_len;
+		push_fifo_data(main_s, fifo, saved_ts);
 	}
 
-	return read_len;
+	return EC_SUCCESS;
 }
 
 /**
@@ -234,31 +227,37 @@ void lsm6dso_interrupt(enum gpio_signal signal)
  */
 static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
-	int ret = EC_SUCCESS;
+	int ret = EC_SUCCESS, fifo_len = 0;
 	struct lsm6dso_fstatus fsts;
+	bool has_read_fifo = false;
 
-	if (((s->type != MOTIONSENSE_TYPE_ACCEL) &&
-	     (s->type != MOTIONSENSE_TYPE_GYRO)) ||
+	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
 	    (!(*event & CONFIG_ACCEL_LSM6DSO_INT_EVENT)))
 		return EC_ERROR_NOT_HANDLED;
 
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+	if (!IS_ENABLED(CONFIG_ACCEL_FIFO))
+		return EC_SUCCESS;
+
+	do {
 		/* Read how many data patterns on FIFO to read. */
 		ret = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
 					  LSM6DSO_FIFO_STS1_ADDR,
 					  (uint8_t *)&fsts, sizeof(fsts));
 		if (ret != EC_SUCCESS)
-			return ret;
+			break;
 
 		if (fsts.len & (LSM6DSO_FIFO_DATA_OVR | LSM6DSO_FIFO_FULL))
 			CPRINTS("%s FIFO Overrun: %04x", s->name, fsts.len);
 
-		if (fsts.len & LSM6DSO_FIFO_DIFF_MASK)
-			ret = load_fifo(s, &fsts, last_interrupt_timestamp);
+		fifo_len = fsts.len & LSM6DSO_FIFO_DIFF_MASK;
+		if (fifo_len) {
+			ret = load_fifo(s, fifo_len, last_interrupt_timestamp);
+			has_read_fifo = true;
+		}
+	} while (fifo_len != 0 && ret == EC_SUCCESS);
 
-		if (IS_ENABLED(CONFIG_ACCEL_FIFO) && ret > 0)
-			motion_sense_fifo_commit_data();
-	}
+	if (ret == EC_SUCCESS && has_read_fifo)
+		motion_sense_fifo_commit_data();
 
 	return ret;
 }
