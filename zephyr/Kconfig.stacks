@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+##############################################################################
 if SOC_SERIES_NPCX7
 
 # Zephyr internal stack sizes
@@ -57,3 +58,54 @@ config TASK_USB_CHG_STACK_SIZE
 	default 544
 
 endif # SOC_SERIES_NPCX7
+##############################################################################
+
+
+##############################################################################
+if SOC_SERIES_NPCX9
+
+# Zephyr internal stack sizes
+
+config IDLE_STACK_SIZE
+	default 192
+
+config ISR_STACK_SIZE
+	default 1024
+
+config SHELL_STACK_SIZE
+	default 1536
+
+config SYSTEM_WORKQUEUE_STACK_SIZE
+	default 800
+
+# Chromium EC stack sizes
+
+config TASK_CHARGER_STACK_SIZE
+	default 750
+
+config TASK_CHIPSET_STACK_SIZE
+	default 684
+
+config TASK_HOOKS_STACK_SIZE
+	default 672
+
+config TASK_HOSTCMD_STACK_SIZE
+	default 700
+
+config TASK_KEYSCAN_STACK_SIZE
+	default 700
+
+config TASK_MOTIONSENSE_STACK_SIZE
+	default 812
+
+config TASK_PD_STACK_SIZE
+	default 1184
+
+config TASK_PD_INT_STACK_SIZE
+	default 736
+
+config TASK_USB_CHG_STACK_SIZE
+	default 544
+
+endif # SOC_SERIES_NPCX9
+##############################################################################
