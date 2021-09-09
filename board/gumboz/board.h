@@ -13,10 +13,7 @@
 #include <stdbool.h>
 #include "baseboard.h"
 
-#define CONFIG_IO_EXPANDER_PCAL6408
-
 #define CONFIG_USBC_PPC_NX20P3483
-#define CONFIG_USB_MUX_PS8740
 #define CONFIG_USB_MUX_PS8743
 #define CONFIG_USB_MUX_RUNTIME_CONFIG
 
