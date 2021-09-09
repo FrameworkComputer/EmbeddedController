@@ -82,6 +82,11 @@ enum charge_state {
 enum charge_state charge_get_state(void);
 
 /**
+ * Return current charge v2 state.
+ */
+__test_only enum charge_state_v2 charge_get_state_v2(void);
+
+/**
  * Return non-zero if battery is so low we want to keep AP off.
  */
 int charge_keep_power_off(void);
