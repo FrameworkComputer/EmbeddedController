@@ -24,6 +24,7 @@ known_modules = {
     "hal_stm32": third_party_module,
     "cmsis": third_party_module,
     "ec": lambda name, checkout: (checkout / "src" / "platform" / "ec"),
+    "nanopb": third_party_module,
 }
 
 
