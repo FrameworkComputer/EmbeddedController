@@ -131,13 +131,13 @@ void keyboard_raw_task_start(void)
 	keyboard_raw_enable_interrupt(1);
 }
 
-static const uint8_t kso_mapping[] = {
+__overridable const uint8_t it8801_kso_mapping[] = {
 	0, 1, 20, 3, 4, 5, 6, 17, 18, 16, 15, 11, 12,
 #ifdef CONFIG_KEYBOARD_KEYPAD
 	13, 14
 #endif
 };
-BUILD_ASSERT(ARRAY_SIZE(kso_mapping) == KEYBOARD_COLS_MAX);
+BUILD_ASSERT(ARRAY_SIZE(it8801_kso_mapping) == KEYBOARD_COLS_MAX);
 
 test_mockable void keyboard_raw_drive_column(int col)
 {
@@ -170,7 +170,7 @@ test_mockable void keyboard_raw_drive_column(int col)
 		 * Selected KSO[20, 18:11, 6:3, 1:0] output low,
 		 * all others KSO output high.
 		 */
-		kso_val = kso_mapping[col];
+		kso_val = it8801_kso_mapping[col];
 
 		if (IS_ENABLED(CONFIG_KEYBOARD_COL2_INVERTED)) {
 			/* GPIO23 is inverted. */

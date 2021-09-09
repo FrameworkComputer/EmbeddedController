@@ -58,6 +58,7 @@
 #define IT8801_VALID_GPIO_G1_MASK       0x3F
 #define IT8801_VALID_GPIO_G2_MASK       0x0F
 
+extern __override_proto const uint8_t it8801_kso_mapping[];
 extern const struct ioexpander_drv it8801_ioexpander_drv;
 
 /* GPIO Register map */
