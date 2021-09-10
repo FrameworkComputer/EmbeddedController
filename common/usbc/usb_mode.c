@@ -212,7 +212,11 @@ bool enter_usb_cable_is_capable(int port)
 					TBT_GEN3_GEN4_ROUNDED_NON_ROUNDED)
 				return false;
 		}
+	} else {
+		/* Not Emark cable */
+		return false;
 	}
+
 	return true;
 }
 
