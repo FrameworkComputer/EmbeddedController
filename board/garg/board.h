@@ -8,6 +8,9 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
+/* Free up flash space */
+#define CONFIG_LTO
+
 /* Select Baseboard features */
 #define VARIANT_OCTOPUS_EC_NPCX796FB
 #define VARIANT_OCTOPUS_CHARGER_ISL9238
