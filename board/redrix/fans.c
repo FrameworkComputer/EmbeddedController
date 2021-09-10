@@ -42,17 +42,16 @@ static const struct fan_conf fan_conf_1 = {
 	.enable_gpio = GPIO_EN_PP5000_FAN2,
 };
 
-/* TOOD(b/193487913): need to update for real fan */
 static const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 2200,
-	.rpm_start = 2200,
-	.rpm_max = 7200,
+	.rpm_min = 1900,
+	.rpm_start = 2900,
+	.rpm_max = 7300,
 };
 
 static const struct fan_rpm fan_rpm_1 = {
-	.rpm_min = 2200,
-	.rpm_start = 2200,
-	.rpm_max = 7200,
+	.rpm_min = 1900,
+	.rpm_start = 2900,
+	.rpm_max = 7300,
 };
 
 const struct fan_t fans[FAN_CH_COUNT] = {
