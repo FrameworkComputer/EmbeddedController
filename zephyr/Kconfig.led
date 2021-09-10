@@ -29,15 +29,6 @@ config PLATFORM_EC_LED_PWM
 
 if PLATFORM_EC_LED_PWM
 
-config PLATFORM_EC_LED_PWM_COUNT
-	int "Number of PWM LEDs"
-	default 1
-	help
-	  This sets the number of PWM LEDs that are controlled by the common
-	  PWM LED policy. The maximum number of PWM LEDs is currently 2.
-
-	  TODO(b/177452529): Set this parameter from the device tree.
-
 config PLATFORM_EC_CONSOLE_CMD_LEDTEST
 	bool "Console command: ledtest"
 	default y

@@ -1,0 +1,19 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: PWM LED configuration
+
+compatible: "cros-ec,pwm-leds"
+
+include: base.yaml
+
+properties:
+  leds:
+    type: phandles
+    description: |
+      List of pwm-leds nodes. These are expected to have a pwms property
+      pointing to the relevant PWMs, in red, green, blue and optionally sidesel
+      order.
+
+      # TODO(b/177452529): add led_color_map support
