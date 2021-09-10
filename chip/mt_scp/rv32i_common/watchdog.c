@@ -13,16 +13,16 @@
 
 void watchdog_reload(void)
 {
-	SCP_CORE0_WDT_KICK = BIT(0);
+	SCP_CORE_WDT_KICK = BIT(0);
 }
 DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
 
 void watchdog_disable(void)
 {
 	/* disable watchdog */
-	SCP_CORE0_WDT_CFG &= ~WDT_EN;
+	SCP_CORE_WDT_CFG &= ~WDT_EN;
 	/* clear watchdog irq */
-	SCP_CORE0_WDT_IRQ |= BIT(0);
+	SCP_CORE_WDT_IRQ |= BIT(0);
 }
 
 void watchdog_enable(void)
@@ -30,11 +30,11 @@ void watchdog_enable(void)
 	const uint32_t timeout = WDT_PERIOD(CONFIG_WATCHDOG_PERIOD_MS);
 
 	/* disable watchdog */
-	SCP_CORE0_WDT_CFG &= ~WDT_EN;
+	SCP_CORE_WDT_CFG &= ~WDT_EN;
 	/* clear watchdog irq */
-	SCP_CORE0_WDT_IRQ |= BIT(0);
+	SCP_CORE_WDT_IRQ |= BIT(0);
 	/* enable watchdog */
-	SCP_CORE0_WDT_CFG = WDT_EN | timeout;
+	SCP_CORE_WDT_CFG = WDT_EN | timeout;
 	/* reload watchdog */
 	watchdog_reload();
 }
