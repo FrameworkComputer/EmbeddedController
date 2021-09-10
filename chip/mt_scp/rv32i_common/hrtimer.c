@@ -18,9 +18,6 @@
 #include "scp_timer.h"
 #include "task.h"
 
-#define TIMER_SYSTEM 5
-#define TIMER_EVENT 3
-
 #ifdef CHIP_VARIANT_MT8195
 #define TIMER_CLOCK_MHZ 31
 #else
@@ -37,42 +34,42 @@ static uint8_t event_high;
 void timer_enable(int n)
 {
 	/* cannot be changed when timer is enabled */
-	SCP_CORE0_TIMER_IRQ_CTRL(n) |= TIMER_IRQ_EN;
-	SCP_CORE0_TIMER_EN(n) |= TIMER_EN;
+	SCP_CORE_TIMER_IRQ_CTRL(n) |= TIMER_IRQ_EN;
+	SCP_CORE_TIMER_EN(n) |= TIMER_EN;
 }
 
 void timer_disable(int n)
 {
-	SCP_CORE0_TIMER_EN(n) &= ~TIMER_EN;
+	SCP_CORE_TIMER_EN(n) &= ~TIMER_EN;
 	/* cannot be changed when timer is enabled */
-	SCP_CORE0_TIMER_IRQ_CTRL(n) &= ~TIMER_IRQ_EN;
+	SCP_CORE_TIMER_IRQ_CTRL(n) &= ~TIMER_IRQ_EN;
 }
 
 uint32_t timer_read_raw_sr(void)
 {
-	return SCP_CORE0_TIMER_CUR_VAL(TIMER_SR);
+	return SCP_CORE_TIMER_CUR_VAL(TIMER_SR);
 }
 
 static int timer_is_irq(int n)
 {
-	return SCP_CORE0_TIMER_IRQ_CTRL(n) & TIMER_IRQ_STATUS;
+	return SCP_CORE_TIMER_IRQ_CTRL(n) & TIMER_IRQ_STATUS;
 }
 
 static void timer_ack_irq(int n)
 {
-	SCP_CORE0_TIMER_IRQ_CTRL(n) |= TIMER_IRQ_CLR;
+	SCP_CORE_TIMER_IRQ_CTRL(n) |= TIMER_IRQ_CLR;
 }
 
 static void timer_set_reset_value(int n, uint32_t reset_value)
 {
 	/* cannot be changed when timer is enabled */
-	SCP_CORE0_TIMER_RST_VAL(n) = reset_value;
+	SCP_CORE_TIMER_RST_VAL(n) = reset_value;
 }
 
 static void timer_set_clock(int n, uint32_t clock_source)
 {
-	SCP_CORE0_TIMER_EN(n) = (SCP_CORE0_TIMER_EN(n) & ~TIMER_CLK_SRC_MASK) |
-				clock_source;
+	SCP_CORE_TIMER_EN(n) = (SCP_CORE_TIMER_EN(n) & ~TIMER_CLK_SRC_MASK) |
+			       clock_source;
 }
 
 static void timer_reset(int n)
@@ -86,7 +83,7 @@ static void timer_reset(int n)
 /* Convert hardware countdown timer to 64bit countup ticks. */
 static uint64_t timer_read_raw_system(void)
 {
-	uint32_t timer_ctrl = SCP_CORE0_TIMER_IRQ_CTRL(TIMER_SYSTEM);
+	uint32_t timer_ctrl = SCP_CORE_TIMER_IRQ_CTRL(TIMER_SYSTEM);
 	uint32_t sys_high_adj = sys_high;
 
 	/*
@@ -98,13 +95,13 @@ static uint64_t timer_read_raw_system(void)
 					  (TIMER_CLOCK_MHZ - 1);
 
 	return OVERFLOW_TICKS - (((uint64_t)sys_high_adj << 32) |
-				 SCP_CORE0_TIMER_CUR_VAL(TIMER_SYSTEM));
+				 SCP_CORE_TIMER_CUR_VAL(TIMER_SYSTEM));
 }
 
 static uint64_t timer_read_raw_event(void)
 {
 	return OVERFLOW_TICKS - (((uint64_t)event_high << 32) |
-				 SCP_CORE0_TIMER_CUR_VAL(TIMER_EVENT));
+				 SCP_CORE_TIMER_CUR_VAL(TIMER_EVENT));
 }
 
 static void timer_reload(int n, uint32_t value)
@@ -117,7 +114,7 @@ static void timer_reload(int n, uint32_t value)
 static int timer_reload_event_high(void)
 {
 	if (event_high) {
-		if (SCP_CORE0_TIMER_RST_VAL(TIMER_EVENT) == 0xffffffff)
+		if (SCP_CORE_TIMER_RST_VAL(TIMER_EVENT) == 0xffffffff)
 			timer_enable(TIMER_EVENT);
 		else
 			timer_reload(TIMER_EVENT, 0xffffffff);
