@@ -12,9 +12,17 @@
 /* TODO (b:179900857) Make this implementation not npcx specific. */
 
 #define NPCX_MDC_BASE_ADDR                0x4000C000
+#ifdef CONFIG_SOC_SERIES_NPCX7
 #define NPCX_FWCTRL                       REG8(NPCX_MDC_BASE_ADDR + 0x007)
 #define NPCX_FWCTRL_RO_REGION             0
 #define NPCX_FWCTRL_FW_SLOT               1
+#elif defined(CONFIG_SOC_SERIES_NPCX9)
+#define NPCX_FWCTRL                       REG8(NPCX_MDC_BASE_ADDR + 0x005)
+#define NPCX_FWCTRL_RO_REGION             1
+#define NPCX_FWCTRL_FW_SLOT               2
+#else
+#error "Unsupported NPCX SoC series."
+#endif
 
 void system_jump_to_booter(void)
 {
