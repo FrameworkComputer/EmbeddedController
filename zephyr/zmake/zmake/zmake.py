@@ -314,7 +314,11 @@ class Zmake:
                 log_level_override_func=cmake_log_level_override,
                 job_id=job_id,
             )
-            processes.append(proc)
+            if self._sequential:
+                if proc.wait():
+                    raise OSError(get_process_failure_msg(proc))
+            else:
+                processes.append(proc)
         for proc in processes:
             if proc.wait():
                 raise OSError(get_process_failure_msg(proc))
@@ -341,7 +345,6 @@ class Zmake:
                 True if all if OK
                 False if an error was found (so that zmake should exit)
             """
-            # Let all output be produced before exiting
             bad = None
             for proc in procs:
                 if proc.wait() and not bad:
@@ -354,6 +357,9 @@ class Zmake:
                 # since it exposes the fragmented nature of the build.
                 raise OSError(get_process_failure_msg(bad))
 
+            # Let all output be produced before exiting
+            for writer in writers:
+                writer.wait()
             if fail_on_warnings and any(
                 w.has_written(logging.WARNING) or w.has_written(logging.ERROR)
                 for w in writers
@@ -439,7 +445,7 @@ class Zmake:
             packer_work_dir, self.jobserver, version_string=version_string, **dirs
         ):
             shutil.copy2(output_file, output_dir / output_name)
-            self.logger.info("Output file '%r' created.", output_file)
+            self.logger.debug("Output file '%s' created.", output_file)
             output_files_out.append(output_file)
 
         return 0
