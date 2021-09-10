@@ -90,6 +90,14 @@
 #define LCT_WUI_MASK			MASK_PIN7
 
 /* Modules Map */
+
+/* Miscellaneous Device Control (MDC) registers */
+#define NPCX_FWCTRL			REG8(NPCX_MDC_BASE_ADDR + 0x009)
+
+/* MDC register fields */
+#define NPCX_FWCTRL_RO_REGION		6
+#define NPCX_FWCTRL_FW_SLOT		7
+
 #define NPCX_CR_UART_BASE_ADDR(mdl)	(0x400E0000 + ((mdl) * 0x2000L))
 #define NPCX_LCT_BASE_ADDR		0x400D7000
 #define NPCX_SMB_BASE_ADDR(mdl)		(((mdl) < 2) ? \
