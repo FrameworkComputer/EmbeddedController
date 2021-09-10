@@ -873,7 +873,8 @@ static int sbat_emul_init(const struct emul *emul,
 		.data = &sbat_emul_data_##n.common,			\
 		.addr = DT_INST_REG_ADDR(n),				\
 	};								\
-	EMUL_DEFINE(sbat_emul_init, DT_DRV_INST(n), &sbat_emul_cfg_##n)
+	EMUL_DEFINE(sbat_emul_init, DT_DRV_INST(n), &sbat_emul_cfg_##n,	\
+		    &sbat_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(SMART_BATTERY_EMUL)
 

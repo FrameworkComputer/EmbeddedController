@@ -1096,7 +1096,8 @@ static int bmi_emul_init(const struct emul *emul,
 		.data = &bmi_emul_data_##n.common,			\
 		.addr = DT_INST_REG_ADDR(n),				\
 	};								\
-	EMUL_DEFINE(bmi_emul_init, DT_DRV_INST(n), &bmi_emul_cfg_##n)
+	EMUL_DEFINE(bmi_emul_init, DT_DRV_INST(n), &bmi_emul_cfg_##n,	\
+		    &bmi_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(BMI_EMUL)
 

@@ -345,7 +345,8 @@ static int bb_emul_init(const struct emul *emul,
 		.data = &bb_emul_data_##n.common,			\
 		.addr = DT_INST_REG_ADDR(n),				\
 	};								\
-	EMUL_DEFINE(bb_emul_init, DT_DRV_INST(n), &bb_emul_cfg_##n)
+	EMUL_DEFINE(bb_emul_init, DT_DRV_INST(n), &bb_emul_cfg_##n,	\
+		    &bb_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(BB_RETIMER_EMUL)
 

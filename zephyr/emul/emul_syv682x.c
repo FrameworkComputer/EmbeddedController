@@ -153,16 +153,15 @@ static int syv682x_emul_init(const struct emul *emul,
 	return ret;
 }
 
-#define SYV682X_EMUL(n)						\
-	static struct syv682x_emul_data syv682x_emul_data_##n = {	\
-	};								\
-									\
-	static const struct syv682x_emul_cfg syv682x_emul_cfg_##n = {	\
-		.i2c_label = DT_INST_BUS_LABEL(n),			\
-		.data = &syv682x_emul_data_##n,				\
-		.addr = DT_INST_REG_ADDR(n),				\
-	};								\
-	EMUL_DEFINE(syv682x_emul_init, DT_DRV_INST(n), &syv682x_emul_cfg_##n)
+#define SYV682X_EMUL(n)                                                       \
+	static struct syv682x_emul_data syv682x_emul_data_##n = {};           \
+	static const struct syv682x_emul_cfg syv682x_emul_cfg_##n = {         \
+		.i2c_label = DT_INST_BUS_LABEL(n),                            \
+		.data = &syv682x_emul_data_##n,                               \
+		.addr = DT_INST_REG_ADDR(n),                                  \
+	};                                                                    \
+	EMUL_DEFINE(syv682x_emul_init, DT_DRV_INST(n), &syv682x_emul_cfg_##n, \
+		    &syv682x_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(SYV682X_EMUL)
 

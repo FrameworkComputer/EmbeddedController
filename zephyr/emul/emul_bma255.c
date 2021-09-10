@@ -1022,7 +1022,8 @@ static int bma_emul_init(const struct emul *emul,
 		.data = &bma_emul_data_##n.common,			\
 		.addr = DT_INST_REG_ADDR(n),				\
 	};								\
-	EMUL_DEFINE(bma_emul_init, DT_DRV_INST(n), &bma_emul_cfg_##n)
+	EMUL_DEFINE(bma_emul_init, DT_DRV_INST(n), &bma_emul_cfg_##n,	\
+		    &bma_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(BMA255_EMUL)
 
