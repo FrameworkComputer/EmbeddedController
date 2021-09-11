@@ -536,8 +536,7 @@ enum power_state power_handle_state(enum power_state state)
 
 #ifdef CONFIG_EMI_REGION1
 		if (keep_pch_power()) {
-			if ((power_get_signals() & IN_PCH_SLP_S5_DEASSERTED))
-				return POWER_G3S5;
+			return POWER_S5;
 		}
 #endif
 
