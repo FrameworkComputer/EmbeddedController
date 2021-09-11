@@ -134,6 +134,7 @@ static enum ec_status factory_mode(struct host_cmd_handler_args *args)
 		system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, 0);
 		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_MAGIC, EC_PARAM_CHASSIS_BBRAM_MAGIC);
 		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, 0);
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 0);
 		system_set_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, 0);
 	}
 
