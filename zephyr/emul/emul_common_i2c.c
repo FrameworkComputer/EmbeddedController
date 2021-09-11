@@ -377,7 +377,7 @@ int i2c_common_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 			} else {
 				i = 0;
 			}
-			/* Dispatch wrtie command */
+			/* Dispatch write command */
 			for (; i < msgs->len; i++, data->msg_byte++) {
 				ret = i2c_common_emul_write_byte(emul, data,
 								 msgs->buf[i]);

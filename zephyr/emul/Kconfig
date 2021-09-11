@@ -66,3 +66,5 @@ config EMUL_BB_RETIMER
 	  emulated I2C bus. It is used to test bb_retimer driver. It supports
 	  reads and writes to all emulator registers. Emulators API is
 	  available in zephyr/include/emul/emul_bb_retimer.h
+
+rsource "Kconfig.ln9310"
