@@ -5,6 +5,7 @@
 
 #include <sys/util.h>
 
+#include "console.h"
 #include "i2c.h"
 #include "i2c/i2c.h"
 
@@ -24,9 +25,6 @@
 
 #define INIT_REMOTE_PORTS(id) \
 	[I2C_PORT(id)] = DT_PROP_OR(id, remote_port, -1),
-
-#define INIT_PHYSICAL_PORTS(id) \
-	i2c_physical_ports[I2C_PORT(id)] = DT_PROP_OR(id, physical_port, -1);
 
 #define I2C_PORT_INIT(id)             \
 	{                             \
@@ -57,7 +55,27 @@ static const struct device *i2c_devices[I2C_PORT_COUNT] = {
 static int init_device_bindings(const struct device *device)
 {
 	ARG_UNUSED(device);
-	DT_FOREACH_CHILD(DT_PATH(named_i2c_ports), INIT_PHYSICAL_PORTS)
+
+	/*
+	 * The EC application may lock the I2C bus for more than a single
+	 * I2C transaction. Initialize the i2c_physical_ports[] array to map
+	 * each named-i2c-ports child to the physical bus assignment.
+	 *
+	 * TODO(b/199918263): zephyr: Optimize I2C mutexes
+	 * Modify the port_mutex[] array defined by i2c_controller.c
+	 * so that only mutexes for unique physical ports are created to
+	 * save space.
+	 */
+	i2c_physical_ports[0] = 0;
+	for (int child = 1; child < I2C_PORT_COUNT; child++) {
+		for (int phys_port = 0; phys_port < I2C_PORT_COUNT;
+		     phys_port++) {
+			if (i2c_devices[child] == i2c_devices[phys_port]) {
+				i2c_physical_ports[child] = phys_port;
+				break;
+			}
+		}
+	}
 	return 0;
 }
 SYS_INIT(init_device_bindings, POST_KERNEL, 51);
@@ -91,3 +109,23 @@ int i2c_get_physical_port(int enum_port)
 	 */
 	return (i2c_port < I2C_PORT_COUNT) ? i2c_port : -1;
 }
+
+#ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_I2C_PORTMAP
+static int command_i2c_portmap(int argc, char **argv)
+{
+	int i;
+
+	ccprintf("Zephyr physical I2C ports (%d):\n", I2C_PORT_COUNT);
+	for (i = 0; i < I2C_PORT_COUNT; i++) {
+		ccprintf("  %d : %d\n", i, i2c_physical_ports[i]);
+	}
+	ccprintf("Zephyr remote I2C ports (%d):\n", I2C_PORT_COUNT);
+	for (i = 0; i < I2C_PORT_COUNT; i++) {
+		ccprintf("  %d : %d\n", i, i2c_remote_ports[i]);
+	}
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(i2c_portmap, command_i2c_portmap, NULL,
+			"Show I2C port mapping");
+#endif /* CONFIG_PLATFORM_EC_CONSOLE_CMD_I2C_PORTMAP */

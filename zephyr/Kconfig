@@ -454,6 +454,15 @@ config PLATFORM_EC_I2C
 	  should make shimming other platform/ec modules which rely on i2c
 	  communication "just work" without requiring any further code changes.
 
+config PLATFORM_EC_CONSOLE_CMD_I2C_PORTMAP
+	bool "Console command: i2c_portmap"
+	default y
+	depends on PLATFORM_EC_I2C
+	help
+	  Enable the 'i2c_portmap' console command. This comamnd is used to
+	  display the mapping of the I2C ports defined by the named-i2c-ports
+	  node to the physical port and remote port indexes.
+
 config PLATFORM_EC_SMBUS_PEC
 	bool "Packet error checking support for SMBus"
 	help
