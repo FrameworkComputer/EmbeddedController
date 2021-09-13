@@ -194,7 +194,6 @@ enum pd_task_timer {
 
 	PD_TIMER_COUNT
 };
-BUILD_ASSERT(PD_TIMER_COUNT <= 32);
 
 enum pd_timer_range {
 	PE_TIMER_RANGE,

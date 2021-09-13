@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_LIMITS_H_
 #define __CROS_EC_LIMITS_H_
 
+#define CHAR_BIT 8
+
 #define ULONG_MAX 0xffffffffu
 
 #endif /* __CROS_EC_LIMITS_H_ */
