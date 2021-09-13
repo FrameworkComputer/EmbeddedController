@@ -282,6 +282,7 @@ static void led_set_power(void)
 	/* don't light up when at lid close */
 	if (!lid_is_open()) {
 		set_pwr_led_color(PWM_LED2, -1);
+		enable_pwr_breath(PWM_LED2, EC_LED_COLOR_WHITE, 0);
 		return;
 	}
 

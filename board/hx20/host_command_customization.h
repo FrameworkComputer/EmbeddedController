@@ -191,4 +191,10 @@ struct ec_response_fp_led_level {
 	uint8_t level;
 } __ec_align1;
 
+#define EC_CMD_CHASSIS_OPEN_CHECK 0x3E0F
+
+struct ec_response_chassis_open_check {
+	uint8_t status;
+} __ec_align1;
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */
