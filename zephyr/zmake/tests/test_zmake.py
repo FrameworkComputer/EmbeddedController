@@ -141,7 +141,7 @@ EXTRAVERSION =
 """
                 )
             zephyr_base.resolve = mock.Mock(return_value=pathlib.Path(tmpname))
-            with patch("zmake.version.get_version_string", return_value="123"):
+            with patch("zmake.version.get_version_string", return_value=("123", "123")):
                 with patch.object(zmake.project, "Project", return_value=FakeProject()):
                     if use_configure:
                         zmk.configure(

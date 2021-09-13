@@ -376,7 +376,7 @@ class Zmake:
         project = zmake.project.Project(build_dir / "project")
 
         # Compute the version string.
-        version_string = zmake.version.get_version_string(
+        version_string, short_version_string = zmake.version.get_version_string(
             project,
             build_dir / "zephyr_base",
             zmake.modules.locate_from_directory(build_dir / "modules"),
@@ -387,6 +387,7 @@ class Zmake:
         # configure was run.
         zmake.version.write_version_header(
             version_string,
+            short_version_string,
             build_dir / "include" / "ec_version.h",
         )
 
@@ -442,7 +443,7 @@ class Zmake:
         if output_files_out is None:
             output_files_out = []
         for output_file, output_name in project.packer.pack_firmware(
-            packer_work_dir, self.jobserver, version_string=version_string, **dirs
+            packer_work_dir, self.jobserver, version_string=short_version_string, **dirs
         ):
             shutil.copy2(output_file, output_dir / output_name)
             self.logger.debug("Output file '%s' created.", output_file)
@@ -591,7 +592,7 @@ class Zmake:
             return rv
 
         # Compute the version string.
-        version_string = zmake.version.get_version_string(
+        version_string, short_version_string = zmake.version.get_version_string(
             project,
             build_dir / "zephyr_base",
             zmake.modules.locate_from_directory(build_dir / "modules"),
@@ -602,6 +603,7 @@ class Zmake:
         # configure was run.
         zmake.version.write_version_header(
             version_string,
+            short_version_string,
             build_dir / "include" / "ec_version.h",
         )
 
