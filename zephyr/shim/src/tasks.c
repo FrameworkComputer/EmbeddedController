@@ -79,14 +79,15 @@ struct task_ctx {
 #endif /* CONFIG_THREAD_NAME */
 #define TASK_TEST(_name, _entry, _parameter, _size) \
 	CROS_EC_TASK(_name, _entry, _parameter, _size)
-static struct task_ctx shimmed_tasks[] = { CROS_EC_TASK_LIST };
+static struct task_ctx shimmed_tasks[] = {
+	CROS_EC_TASK_LIST
+#ifdef TEST_BUILD
+	[TASK_ID_TEST_RUNNER] = {},
+#endif
+};
 static int tasks_started;
 #undef CROS_EC_TASK
 #undef TASK_TEST
-
-#ifdef TEST_BUILD
-static k_tid_t test_runner_tid;
-#endif
 
 task_id_t task_get_current(void)
 {
@@ -103,11 +104,6 @@ task_id_t task_get_current(void)
 	}
 #endif /* HAS_TASK_HOOKS */
 
-#ifdef TEST_BUILD
-	if (k_current_get() == test_runner_tid) {
-		return TASK_ID_TEST_RUNNER;
-	}
-#endif
 	__ASSERT(false, "Task index out of bound");
 	return 0;
 }
@@ -269,7 +265,7 @@ void timer_cancel(task_id_t cros_ec_task_id)
 #ifdef TEST_BUILD
 void set_test_runner_tid(void)
 {
-	test_runner_tid = k_current_get();
+	shimmed_tasks[TASK_ID_TEST_RUNNER].zephyr_tid = k_current_get();
 }
 #endif
 
@@ -280,6 +276,13 @@ void start_ec_tasks(void)
 
 		k_timer_init(&ctx->timer, timer_expire, NULL);
 
+#ifdef TEST_BUILD
+		/* Do not create thread for test runner; it will be set later */
+		if (i == TASK_ID_TEST_RUNNER) {
+			ctx->zephyr_tid = NULL;
+			continue;
+		}
+#endif
 		/*
 		 * TODO(b/172361873): Add K_FP_REGS for FPU tasks. See
 		 * comment in config.h for CONFIG_TASK_LIST for existing flags
