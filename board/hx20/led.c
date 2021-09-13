@@ -31,9 +31,9 @@
 #define BREATH_ON_LENGTH	62
 #define BREATH_OFF_LENGTH	200
 
-#define FP_LED_HIGH 60
+#define FP_LED_HIGH 55
 #define FP_LED_MEDIUM 40
-#define FP_LED_LOW 20
+#define FP_LED_LOW 15
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_LEFT_LED,
