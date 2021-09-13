@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import pathlib
+import re
 import tempfile
 
 import hypothesis
@@ -12,7 +13,9 @@ import pytest
 import zmake.util as util
 
 # Strategies for use with hypothesis
-relative_path = st.from_regex(regex=r"\A\w+[\w/]*\Z")
+relative_path = st.from_regex(
+    regex=re.compile(r"\A\w{1,255}(/\w{1,255}){0,15}\Z", re.ASCII)
+)
 
 
 @hypothesis.given(relative_path, relative_path, relative_path)
