@@ -9,6 +9,13 @@
 #include "i2c/i2c.h"
 
 /*
+ * The named-i2c-ports node is required by the I2C shim
+ */
+#if !DT_NODE_EXISTS(DT_PATH(named_i2c_ports))
+#error I2C shim requires the named-i2c-ports node to be defined.
+#endif
+
+/*
  * Initialize device bindings in i2c_devices.
  * This macro should be called from within DT_FOREACH_CHILD.
  */
@@ -20,9 +27,6 @@
 
 #define INIT_PHYSICAL_PORTS(id) \
 	i2c_physical_ports[I2C_PORT(id)] = DT_PROP_OR(id, physical_port, -1);
-
-#define I2C_CONFIG_GPIO(id, type) \
-	DT_STRING_UPPER_TOKEN(DT_CHILD(DT_CHILD(id, config), type), enum_name)
 
 #define I2C_PORT_INIT(id)             \
 	{                             \
@@ -38,18 +42,11 @@
  * be removed at that point.
  */
 const struct i2c_port_t i2c_ports[] = {
-#if DT_NODE_EXISTS(DT_PATH(named_i2c_ports))
 	DT_FOREACH_CHILD(DT_PATH(named_i2c_ports), I2C_PORT_INIT)
-#endif
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 static int i2c_remote_ports[I2C_PORT_COUNT];
 static int i2c_physical_ports[I2C_PORT_COUNT];
-
-int i2c_get_line_levels(int port)
-{
-	return I2C_LINE_IDLE;
-}
 
 static const struct device *i2c_devices[I2C_PORT_COUNT];
 
