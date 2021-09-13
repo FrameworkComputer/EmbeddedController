@@ -138,6 +138,14 @@
 #endif
 #endif
 
+/*
+ * Enable support for battery hostcmd, supporting longer strings.
+ * Support for EC_CMD_BATTERY_GET_STATIC version 1.
+ */
+#define CONFIG_BATTERY_V2
+#define CONFIG_BATTERY_COUNT	1
+#define CONFIG_HOSTCMD_BATTERY_V2
+
 #ifndef __ASSEMBLER__
 
 enum adlrvp_charge_ports {
