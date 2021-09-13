@@ -487,6 +487,39 @@ out:
 	return rv;
 }
 
+void rt1718s_gpio_set_flags(int port, enum rt1718s_gpio signal, uint32_t flags)
+{
+	int val = 0;
+
+	if (!(flags & GPIO_OPEN_DRAIN))
+		val |= RT1718S_GPIO_CTRL_OD_N;
+	if (flags & GPIO_PULL_UP)
+		val |= RT1718S_GPIO_CTRL_PU;
+	if (flags & GPIO_PULL_DOWN)
+		val |= RT1718S_GPIO_CTRL_PD;
+	if (flags & GPIO_HIGH)
+		val |= RT1718S_GPIO_CTRL_O;
+	if (flags & GPIO_OUTPUT)
+		val |= RT1718S_GPIO_CTRL_OE;
+
+	rt1718s_write8(port, RT1718S_GPIO_CTRL(signal), val);
+}
+
+void rt1718s_gpio_set_level(int port, enum rt1718s_gpio signal, int value)
+{
+	rt1718s_update_bits8(port, RT1718S_GPIO_CTRL(signal),
+			RT1718S_GPIO_CTRL_O,
+			value ? 0xFF : 0);
+}
+
+int rt1718s_gpio_get_level(int port, enum rt1718s_gpio signal)
+{
+	int val;
+
+	rt1718s_read8(port, RT1718S_GPIO_CTRL(signal), &val);
+	return !!(val & RT1718S_GPIO_CTRL_I);
+}
+
 /* RT1718S is a TCPCI compatible port controller */
 const struct tcpm_drv rt1718s_tcpm_drv = {
 	.init			= &rt1718s_init,

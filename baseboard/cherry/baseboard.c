@@ -388,32 +388,22 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-/* TODO: implement IOEX interface */
 int rt1718s_gpio_ctrl(enum rt1718s_gpio_state state)
 {
 	const int port = 1;
 
 	switch (state) {
 	case RT1718S_GPIO_DISABLED:
-		/* gpio1 high, gpio2 low */
-		RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO1_CTRL,
-				RT1718S_GPIOX_CTRL_GPIOX_O, 0xFF));
-		RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO2_CTRL,
-				RT1718S_GPIOX_CTRL_GPIOX_O, 0x00));
+		rt1718s_gpio_set_level(port, RT1718S_GPIO1, 1);
+		rt1718s_gpio_set_level(port, RT1718S_GPIO2, 0);
 		break;
 	case RT1718S_GPIO_ENABLE_SINK:
-		/* gpio1/2 low */
-		RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO1_CTRL,
-				RT1718S_GPIOX_CTRL_GPIOX_O, 0x00));
-		RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO2_CTRL,
-				RT1718S_GPIOX_CTRL_GPIOX_O, 0x00));
+		rt1718s_gpio_set_level(port, RT1718S_GPIO1, 0);
+		rt1718s_gpio_set_level(port, RT1718S_GPIO2, 0);
 		break;
 	case RT1718S_GPIO_ENABLE_SOURCE:
-		/* gpio1/2 high */
-		RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO1_CTRL,
-				RT1718S_GPIOX_CTRL_GPIOX_O, 0xFF));
-		RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO2_CTRL,
-				RT1718S_GPIOX_CTRL_GPIOX_O, 0xFF));
+		rt1718s_gpio_set_level(port, RT1718S_GPIO1, 1);
+		rt1718s_gpio_set_level(port, RT1718S_GPIO2, 1);
 		break;
 	}
 
@@ -423,18 +413,9 @@ int rt1718s_gpio_ctrl(enum rt1718s_gpio_state state)
 __override int board_rt1718s_init(int port)
 {
 	/* set GPIO 1~3 as push pull, as output, output low. */
-	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO1_CTRL,
-			RT1718S_GPIOX_OD_N | RT1718S_GPIOX_OE |
-			RT1718S_GPIOX_CTRL_GPIOX_O,
-			RT1718S_GPIOX_OD_N | RT1718S_GPIOX_OE));
-	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO2_CTRL,
-			RT1718S_GPIOX_OD_N | RT1718S_GPIOX_OE |
-			RT1718S_GPIOX_CTRL_GPIOX_O,
-			RT1718S_GPIOX_OD_N | RT1718S_GPIOX_OE));
-	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO3_CTRL,
-			RT1718S_GPIOX_OD_N | RT1718S_GPIOX_OE |
-			RT1718S_GPIOX_CTRL_GPIOX_O,
-			RT1718S_GPIOX_OD_N | RT1718S_GPIOX_OE));
+	rt1718s_gpio_set_flags(port, RT1718S_GPIO1, GPIO_OUT_LOW);
+	rt1718s_gpio_set_flags(port, RT1718S_GPIO2, GPIO_OUT_LOW);
+	rt1718s_gpio_set_flags(port, RT1718S_GPIO3, GPIO_OUT_LOW);
 
 	/* gpio 1/2 output high when receiving frx signal */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO1_VBUS_CTRL,
@@ -630,17 +611,15 @@ DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT - 1);
 
 __override int board_pd_set_frs_enable(int port, int enable)
 {
-	int value;
-
-	if (port == 0)
-		return EC_SUCCESS;
-
-	value = RT1718S_GPIOX_OD_N | RT1718S_GPIOX_OE;
-	if (enable)
-		value |= RT1718S_GPIOX_CTRL_GPIOX_O;
-
-	/* Use write instead of update to save 1 i2c read in FRS path */
-	return rt1718s_write8(port, RT1718S_GPIO3_CTRL, value);
+	if (port == 1)
+		/*
+		 * Use set_flags (implemented by a single i2c write) instead
+		 * of set_level (= i2c_update) to save one read operation in
+		 * FRS path.
+		 */
+		rt1718s_gpio_set_flags(port, RT1718S_GPIO3,
+				enable ? GPIO_OUT_HIGH : GPIO_OUT_LOW);
+	return EC_SUCCESS;
 }
 
 __override int board_get_vbus_voltage(int port)

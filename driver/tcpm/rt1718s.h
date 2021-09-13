@@ -103,12 +103,14 @@
 #define RT1718S_VBUS_CTRL_EN				0xEC
 #define RT1718S_VBUS_CTRL_EN_GPIO2_VBUS_PATH_EN		BIT(7)
 #define RT1718S_VBUS_CTRL_EN_GPIO1_VBUS_PATH_EN		BIT(6)
-#define RT1718S_GPIO1_CTRL				0xED
-#define RT1718S_GPIO2_CTRL				0xEE
-#define RT1718S_GPIO3_CTRL				0xEF
-#define RT1718S_GPIOX_OD_N				BIT(3)
-#define RT1718S_GPIOX_OE				BIT(2)
-#define RT1718S_GPIOX_CTRL_GPIOX_O			BIT(1)
+
+#define RT1718S_GPIO_CTRL(n)				(0xED + (n))
+#define RT1718S_GPIO_CTRL_PU				BIT(5)
+#define RT1718S_GPIO_CTRL_PD				BIT(4)
+#define RT1718S_GPIO_CTRL_OD_N				BIT(3)
+#define RT1718S_GPIO_CTRL_OE				BIT(2)
+#define RT1718S_GPIO_CTRL_O				BIT(1)
+#define RT1718S_GPIO_CTRL_I				BIT(0)
 
 #define RT1718S_UNLOCK_PW_2				0xF0
 #define RT1718S_UNLOCK_PW_1				0xF1
@@ -206,5 +208,38 @@ enum rt1718s_adc_channel {
 };
 
 int rt1718s_get_adc(int port, enum rt1718s_adc_channel channel, int *adc_val);
+
+enum rt1718s_gpio {
+	RT1718S_GPIO1 = 0,
+	RT1718S_GPIO2,
+	RT1718S_GPIO3,
+};
+
+/**
+ * Set flags for GPIO
+ *
+ * @param port		rt1718s I2C port
+ * @param signal	gpio pin name in enum rt1718s_gpio
+ * @param flags		GPIO_* flags defined in include/gpio.h
+ */
+void rt1718s_gpio_set_flags(int port, enum rt1718s_gpio signal, uint32_t flags);
+
+/**
+ * Set the value of a signal
+ *
+ * @param port		rt1718s I2C port
+ * @param signal	gpio pin name in enum rt1718s_gpio
+ * @param value		New value for signal (0 = low, non-zero = high)
+ */
+void rt1718s_gpio_set_level(int port, enum rt1718s_gpio signal, int value);
+
+/**
+ * Get the current value of a signal.
+ *
+ * @param port		rt1718s I2C port
+ * @param signal	gpio pin name in enum rt1718s_gpio
+ * @return 0 if low, 1 if high.
+ */
+int rt1718s_gpio_get_level(int port, enum rt1718s_gpio signal);
 
 #endif /* __CROS_EC_USB_PD_TCPM_MT6370_H */
