@@ -39,6 +39,7 @@
 #include "lpc.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "link_defs.h"
 #include "math_util.h"
 #include "motion_sense.h"
 #include "motion_lid.h"
@@ -74,8 +75,6 @@
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
-
-static int board_doing_power_off_30s;
 
 #ifdef CONFIG_BOARD_PRE_INIT
 /*
@@ -418,18 +417,16 @@ static void board_power_off_deferred(void)
 }
 DECLARE_DEFERRED(board_power_off_deferred);
 
-void board_power_off(int msec)
+void board_power_off(void)
 {
-	CPRINTS("Shutting down system in %d seconds!", (msec / 1000));
-	if (msec == 30000)
-		board_doing_power_off_30s = 1;
-	hook_call_deferred(&board_power_off_deferred_data, msec * MSEC);
+	CPRINTS("Shutting down system in 30 seconds!");
+
+	hook_call_deferred(&board_power_off_deferred_data, 30000 * MSEC);
 }
 
 void cancel_board_power_off(void)
 {
 	CPRINTS("Cancel shutdown");
-	board_doing_power_off_30s = 0;
 	hook_call_deferred(&board_power_off_deferred_data, -1);
 }
 
@@ -452,7 +449,7 @@ static void board_extpower(void)
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
 		/* if AC disconnected, need to power_off EC_ON */
 		if (!extpower_is_present())
-			board_power_off(30000);
+			board_power_off();
 		else
 			cancel_board_power_off();
 	}
@@ -964,6 +961,19 @@ static void setup_fans(void)
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 #endif
 
+void check_deferred_time (const struct deferred_data *data)
+{
+	int i = data - __deferred_funcs;
+	static uint64_t duration;
+
+	if (__deferred_until[i]) {
+		duration = __deferred_until[i] - get_time().val;
+
+		if (!gpio_get_level(GPIO_CHASSIS_OPEN) && duration < 27000 * MSEC )
+			hook_call_deferred(data, 0);
+	}
+}
+
 static int prochot_low_time;
 
 void prochot_monitor(void)
@@ -984,11 +994,7 @@ void prochot_monitor(void)
 
 	check_chassis_open(0);
 
-	if (board_doing_power_off_30s && !gpio_get_level(GPIO_CHASSIS_OPEN)) {
-		CPRINTS("Force board power off after 3 second!!!");
-		cancel_board_power_off();
-		board_power_off(3000);
-	}
+	check_deferred_time(&board_power_off_deferred_data);
 
 }
 DECLARE_HOOK(HOOK_SECOND, prochot_monitor, HOOK_PRIO_DEFAULT);

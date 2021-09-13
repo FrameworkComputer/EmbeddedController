@@ -745,7 +745,7 @@ void mainboard_power_button_interrupt(enum gpio_signal signal);
 /* fingerprint power button handler*/
 void fingerprint_power_button_interrupt(enum gpio_signal signal);
 
-void board_power_off(int msec);
+void board_power_off(void);
 void cancel_board_power_off(void);
 
 /* power sequence */
