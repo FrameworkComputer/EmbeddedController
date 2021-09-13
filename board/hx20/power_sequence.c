@@ -52,6 +52,13 @@ static int power_s5_up;
 static int s5_exit_tries;
 static int stress_test_enable;
 
+static int bb_retimer_init_pending = true;
+
+void pending_retimer_init(int pending) {
+	bb_retimer_init_pending = pending;
+}
+
+
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s(%d)", __func__, reason);
@@ -137,10 +144,15 @@ static void chipset_force_g3(void)
 	gpio_set_level(GPIO_SYSON, 0);
 	/* keep pch power for wake source or vpro type */
 	if (!keep_pch_power() || me_change) {
-		
-		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 
-		gpio_set_level(GPIO_PCH_PWR_EN, 0);
+
+		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
+		if (bb_retimer_init_pending == false) {
+			/* retimer power needs to be tied to PCH_PWR_EN */
+			cypd_set_retimer_power(POWER_G3);
+
+			gpio_set_level(GPIO_PCH_PWR_EN, 0);
+		}
 		gpio_set_level(GPIO_PCH_DPWROK, 0);
 		gpio_set_level(GPIO_PCH_PWRBTN_L, 0);
 		gpio_set_level(GPIO_AC_PRESENT_OUT, 0);
@@ -196,7 +208,7 @@ int board_chipset_power_on(void)
 		return false;
 	}
 
-	me_gpio_change(me_change & ME_UNLOCK ? GPIO_PULL_UP : GPIO_PULL_DOWN);
+	me_gpio_change(me_change & ME_UNLOCK ? GPIO_OUT_HIGH : GPIO_OUT_LOW);
 
 	/* Add 10ms delay between SUSP_VR and RSMRST */
 	msleep(20);
@@ -463,7 +475,7 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("PH S5S3");
 
         gpio_set_level(GPIO_SYSON, 1);
-		cypd_set_power_active(POWER_S0);
+
         /* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
 		CPRINTS("PH S5S3->S3");
@@ -508,6 +520,8 @@ enum power_state power_handle_state(enum power_state state)
 		power_button_enable_led(0);
 
 		me_gpio_change(GPIO_FLAG_NONE);
+
+		cypd_set_power_active(POWER_S0);
 		CPRINTS("PH S3S0->S0");
         return POWER_S0;
 
@@ -519,7 +533,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_PCH_PWROK, 0);
 		gpio_set_level(GPIO_SYS_PWROK, 0);
 		hook_notify(HOOK_CHIPSET_SUSPEND);
-		me_gpio_change(GPIO_PULL_DOWN);
+		me_gpio_change(GPIO_OUT_LOW);
 		f75303_set_enabled(0);
 		return POWER_S3;
 		break;
@@ -529,6 +543,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_SYSON, 0);
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 		cypd_set_power_active(POWER_S5);
+		power_s5_up = 0;
 		return POWER_S5;
 		break;
 
@@ -538,8 +553,7 @@ enum power_state power_handle_state(enum power_state state)
 
 #ifdef CONFIG_EMI_REGION1
 		if (keep_pch_power()) {
-			if ((power_get_signals() & IN_PCH_SLP_S5_DEASSERTED))
-				return POWER_G3S5;
+			return POWER_S5;
 		}
 #endif
 		chipset_force_g3();
@@ -549,8 +563,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (!extpower_is_present()) {
 			board_power_off();
 		}
-		/* retimer power needs to be tied to PCH_PWR_EN */
-		cypd_set_retimer_power(POWER_G3); 
+
 		return POWER_G3;
 		break;
 	}

@@ -194,6 +194,21 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
+void reconfigure_kbbl_pwm_frquency(void)
+{
+	int active_low = pwm_channels[PWM_CH_KBL].flags & PWM_CONFIG_ACTIVE_LOW;
+	int clock_low = pwm_channels[PWM_CH_KBL].flags & PWM_CONFIG_ALT_CLOCK;
+
+	pwm_slp_en(pwm_channels[PWM_CH_KBL].channel, 0);
+
+	MCHP_PWM_CFG(pwm_channels[PWM_CH_KBL].channel) = (3 << 3) |    /* Pre-divider = 4 */
+			      (active_low ? BIT(2) : 0) |
+			      (clock_low  ? BIT(1) : 0);
+
+	pwm_set_duty(PWM_CH_KBL, 0);
+	CPRINTS("reconfigure kbbl complete.");
+}
+
 #ifdef HAS_TASK_PDCMD
 /* Exchange status with PD MCU. */
 static void pd_mcu_interrupt(enum gpio_signal signal)
@@ -452,17 +467,15 @@ int ac_boot_status(void)
 	return (*host_get_customer_memmap(0x48) & BIT(0)) ? true : false;
 }
 
-static uint8_t chassis_edge_status;
 static uint8_t chassis_vtr_open_count;
 static uint8_t chassis_open_count;
 
 static void check_chassis_open(int init)
 {
-	if (MCHP_VCI_POSEDGE_DETECT & BIT(2) ||
-		MCHP_VCI_NEGEDGE_DETECT & BIT(2)) {
+	if (MCHP_VCI_NEGEDGE_DETECT & BIT(2)) {
 		MCHP_VCI_POSEDGE_DETECT = BIT(2);
 		MCHP_VCI_NEGEDGE_DETECT = BIT(2);
-		chassis_edge_status = 1;
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 1);
 
 		if (init) {
 			system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN,
@@ -477,7 +490,6 @@ static void check_chassis_open(int init)
 				system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL,
 								++chassis_open_count);
 		}
-		
 
 		CPRINTF("Chassis was open");
 	}
@@ -501,6 +513,8 @@ static void board_init(void)
 
 	gpio_enable_interrupt(GPIO_SOC_ENBKL);
 	gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);
+
+	reconfigure_kbbl_pwm_frquency();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT + 1);
 
@@ -531,6 +545,7 @@ static void board_chipset_shutdown(void)
 #endif
 	if (version > 6)
 		gpio_set_level(GPIO_EN_INVPWR, 0);
+
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 		board_chipset_shutdown,
@@ -1097,16 +1112,14 @@ static enum ec_status host_chassis_intrusion_control(struct host_cmd_handler_arg
 	}
 
 	if (p->clear_chassis_status) {
-		chassis_edge_status = 0;
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 0);
 		return EC_SUCCESS;
 	}
 
-	r->chassis_ever_opened = chassis_edge_status;
+	system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, &r->chassis_ever_opened);
 	system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_MAGIC, &r->coin_batt_ever_remove);
 	system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, &r->total_open_count);
 	system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, &r->vtr_open_count);
-
-
 
 	args->response_size = sizeof(*r);
 

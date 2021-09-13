@@ -25,6 +25,7 @@
 #include "usb_emsg.h"
 #include "power.h"
 #include "cpu_power.h"
+#include "power_sequence.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -413,63 +414,31 @@ int check_tbt_mode(int controller)
 	return data;
 }
 
-#define RT_EVT_DISABLE 0xFF
-#define RT_EVT_ENABLE 0xFE
-#define RT_EVT_FORCE_CONFIG 0xFD
-#define RT_EVT_VSYS_REMOVED 0
-#define RT_EVT_VSYS_ADDED 1
-#define RT_EVT_RETRY_STATUS 2
-#define RT_EVT_UPDATE_STATUS 3
-
-void pd_bb_trigger_deferred(void)
-{
-	cypd_enque_evt(CYPD_EVT_RETIMER_PWR, 0);
-}
-DECLARE_DEFERRED(pd_bb_trigger_deferred);
-
 void cypd_bb_retimer_cmd(uint8_t cmd)
 {
-	int i;
-	for (i = 0; i < PD_CHIP_COUNT; i++) {
-		cypd_write_reg16_wait_ack(i, CYP5225_USER_BB_POWER_EVT,  cmd);
-	}
+       int i;
+
+       for (i = 0; i < PD_CHIP_COUNT; i++) {
+               cypd_write_reg16_wait_ack(i, CYP5225_USER_BB_POWER_EVT,  cmd);
+       }
 }
-uint8_t bb_write_count = 0;
-void cypd_set_bb_retimer_power(bool on) {
 
 
-	CPRINTS("BB power %s", on ? "ON" : "OFF");
-	if (pd_chip_config[0].state != CYP5525_STATE_READY ||
-			pd_chip_config[1].state != CYP5525_STATE_READY ) {
-			/* Try later */
-			hook_call_deferred(&pd_bb_trigger_deferred_data, 100*MSEC);
-			return;
-	}
-	cypd_bb_retimer_cmd(on ? RT_EVT_VSYS_ADDED : RT_EVT_VSYS_REMOVED);
-	if (on) {
-		if (bb_write_count < 1) {
-			/*need to send command twice to trigger retimer write
-			* after the retimer boots with init delay */
-			hook_call_deferred(&pd_bb_trigger_deferred_data, 50*MSEC);
-		} else if (bb_write_count == 1){
-			/* reset any ports with power mode as source to ensure usb3 connections are valid */
+void cypd_reset_source_ports(void)
+{
+	int i;
+	int port;
+	int controller;
 
-			int i;
-			int port;
-			int controller;
-			for (i = 0; i < PD_PORT_COUNT; i++) {
-				port = i & 1;
-				controller = i >>1;
-				if (pd_port_states[i].power_role == PD_ROLE_SOURCE) {
+	CPRINTS("Resetting source ports");
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+			port = i & 1;
+			controller = i >>1;
+			if (pd_port_states[i].power_role == PD_ROLE_SOURCE) {
 					CPRINTS("reset port %d:%d", controller, port);
 					cypd_write_reg8(controller, CYP5525_PD_CONTROL_REG(port), CYPD_PD_CMD_HARD_RESET);
-				}
-
 			}
-
-		}
 	}
-	bb_write_count++;
 }
 
 enum power_state saved_bb_power_state = POWER_S0;
@@ -477,11 +446,11 @@ enum power_state saved_bb_power_state = POWER_S0;
 void cypd_set_retimer_power(enum power_state power)
 {
 	if (power != saved_bb_power_state) {
-		saved_bb_power_state = power;
-		bb_write_count = 0;
-		cypd_enque_evt(CYPD_EVT_RETIMER_PWR, 0);
+			saved_bb_power_state = power;
+			cypd_enque_evt(CYPD_EVT_RETIMER_PWR, 0);
 	}
 }
+
 
 void cypd_set_power_active(enum power_state power)
 {
@@ -1031,7 +1000,9 @@ void cyp5525_port_int(int controller, int port)
 
 void pd_bb_powerdown_deferred(void)
 {
-	if (power_get_state() == POWER_G3) {
+	pending_retimer_init(0);
+	if (!keep_pch_power() && power_get_state() == POWER_G3) {
+		CPRINTS("BB PCH PWR down");
 		gpio_set_level(GPIO_PCH_PWR_EN, 0);
 	}
 }
@@ -1066,7 +1037,9 @@ int cyp5525_device_int(int controller)
 void cypd_handle_state(int controller)
 {
 	int data;
+	int i;
 	int delay = 0;
+
 	switch (pd_chip_config[controller].state) {
 	case CYP5525_STATE_POWER_ON:
 		/*poll to see if the controller has booted yet*/
@@ -1092,22 +1065,30 @@ void cypd_handle_state(int controller)
 			gpio_disable_interrupt(pd_chip_config[controller].gpio);
 			cyp5525_get_version(controller);
 			cypd_write_reg8_wait_ack(controller, CYP5225_USER_MAINBOARD_VERSION, board_get_version());
+			for(i=0; i < 50;i++) {
+				if (gpio_get_level(GPIO_PWR_3V5V_PG))
+					break;
+				usleep(MSEC);
+				CPRINTS("CYPD PWRGOOD");
+			}
+			pending_retimer_init(1);
 			gpio_set_level(GPIO_PCH_PWR_EN, 1);
-			hook_call_deferred(&pd_bb_powerdown_deferred_data, 500*MSEC);
+
+			hook_call_deferred(&pd_bb_powerdown_deferred_data, BB_PWR_DOWN_TIMEOUT);
 			cypd_update_power_status();
 
-			update_system_power_state();
-			//if (power_get_state() != POWER_G3 && power_get_state() != POWER_G3S5) {
-			//	/*make sure mux control is enabled*/
-				cypd_write_reg16_wait_ack(controller, CYP5225_USER_BB_POWER_EVT,  RT_EVT_VSYS_ADDED);
-			//}
+			cypd_set_power_state(CYP5525_POWERSTATE_S5);
+			
+
 			cyp5525_setup(controller);
 			cypd_update_port_state(controller, 0);
 			cypd_update_port_state(controller, 1);
 
 			cyp5525_ucsi_startup(controller);
 			gpio_enable_interrupt(pd_chip_config[controller].gpio);
-			
+			cypd_write_reg16_wait_ack(controller, CYP5225_USER_BB_POWER_EVT,  RT_EVT_VSYS_ADDED);
+			update_system_power_state();
+
 			//if (power_get_state() == POWER_S0 || 
 			//	power_get_state() == POWER_S0ix) {
 				/*Handle unexpected PD controller resets when we are powered on*/
@@ -1159,8 +1140,7 @@ void cyp5525_interrupt(int controller)
 		ucsi_read_tunnel(controller);
 		cypd_clear_int(controller, CYP5525_UCSI_INTR);
 	}
-	if (clear_mask)
-		cypd_clear_int(controller, clear_mask);
+	cypd_clear_int(controller, clear_mask);
 }
 
 
@@ -1181,8 +1161,13 @@ void pd0_chip_interrupt_deferred(void)
 DECLARE_DEFERRED(pd0_chip_interrupt_deferred);
 void pd0_chip_interrupt(enum gpio_signal signal)
 {
+	/* GPIO_PCH_PWR_EN must be first */
+	gpio_set_level(GPIO_PCH_PWR_EN, 1);
 	hook_call_deferred(&pd0_chip_interrupt_deferred_data, 0);
 	//task_set_event(TASK_ID_CYPD, CYPD_EVT_INT_CTRL_0, 0);
+	pending_retimer_init(1);
+
+	hook_call_deferred(&pd_bb_powerdown_deferred_data, BB_PWR_DOWN_TIMEOUT);
 }
 
 void pd1_chip_interrupt_deferred(void)
@@ -1193,8 +1178,13 @@ void pd1_chip_interrupt_deferred(void)
 DECLARE_DEFERRED(pd1_chip_interrupt_deferred);
 void pd1_chip_interrupt(enum gpio_signal signal)
 {
+	/* GPIO_PCH_PWR_EN must be first */
+	gpio_set_level(GPIO_PCH_PWR_EN, 1);
 	hook_call_deferred(&pd1_chip_interrupt_deferred_data, 0);
 	//task_set_event(TASK_ID_CYPD, CYPD_EVT_INT_CTRL_1, 0);
+	pending_retimer_init(1);
+
+	hook_call_deferred(&pd_bb_powerdown_deferred_data, BB_PWR_DOWN_TIMEOUT);
 }
 /*
 void soc_plt_reset_interrupt_deferred(void)
@@ -1283,25 +1273,19 @@ void cypd_interrupt_handler_task(void *p)
 
 		if (evt & CYPD_EVT_PLT_RESET) {
 			CPRINTS("PD Event Platform Reset!");
-			/* initialize BB retimers after a reset */
-			/*
-			cypd_configure_bb_retimer_power_state(0, 1);
-			cypd_configure_bb_retimer_power_state(1, 1);
-			*/
 		}
 
 		if (evt & CYPD_EVT_RETIMER_PWR) {
 			if (saved_bb_power_state == POWER_G3S5) {
-				cypd_set_bb_retimer_power(1);
+					cypd_bb_retimer_cmd(RT_EVT_VSYS_ADDED);
 			}
 			if (saved_bb_power_state == POWER_G3) {
-				cypd_set_bb_retimer_power(0);
+					cypd_bb_retimer_cmd(RT_EVT_VSYS_REMOVED);
 			}
 		}
 
 		if (evt & CYPD_EVT_S_CHANGE) {
 			update_system_power_state();
-
 		}
 
 		if (evt & CYPD_EVT_INT_CTRL_0) {

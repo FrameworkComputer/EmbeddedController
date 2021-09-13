@@ -134,6 +134,7 @@ static enum ec_status factory_mode(struct host_cmd_handler_args *args)
 		system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, 0);
 		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_MAGIC, EC_PARAM_CHASSIS_BBRAM_MAGIC);
 		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, 0);
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 0);
 		system_set_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, 0);
 	}
 
@@ -163,6 +164,9 @@ static enum ec_status host_custom_command_hello(struct host_cmd_handler_args *ar
 	 */
 	s5_power_up_control(1);
 	update_me_change(0);
+
+	/* clear ACPI ready flags for pre-os*/
+	*host_get_customer_memmap(0x00) &= ~BIT(0);
 
 	/**
 	 * Moved sci enable on this host command, we need to check acpi_driver ready flag
@@ -253,3 +257,16 @@ static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_BB_RETIMER_CONTROL, bb_retimer_control, EC_VER_MASK(0));
+
+static enum ec_status chassis_open_check(struct host_cmd_handler_args *args)
+{
+	struct ec_response_chassis_open_check *r = args->response;
+
+	CPRINTS("Chassis status: %d", !gpio_get_level(GPIO_CHASSIS_OPEN));
+	r->status = !gpio_get_level(GPIO_CHASSIS_OPEN) & 0x01;
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+
+}
+DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_OPEN_CHECK, chassis_open_check, EC_VER_MASK(0));

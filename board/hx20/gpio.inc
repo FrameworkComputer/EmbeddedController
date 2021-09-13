@@ -78,7 +78,7 @@ GPIO(AC_PRESENT_OUT,        PIN(0240),  GPIO_ODR_LOW)
 GPIO(EC_RSMRST_L,           PIN(036),   GPIO_INPUT | GPIO_OUT_LOW)
 GPIO(EC_ON,                 PIN(0250),  GPIO_OUT_HIGH) /* keep +3VL_EC to power on */
 GPIO(PCH_DPWROK,            PIN(012),   GPIO_ODR_LOW)
-GPIO(PCH_PWR_EN,            PIN(0244),  GPIO_ODR_LOW)
+GPIO(PCH_PWR_EN,            PIN(0244),  GPIO_INPUT | GPIO_ODR_LOW)
 GPIO(SYSON,                 PIN(0222),  GPIO_OUT_LOW)
 GPIO(SUSP_L,                PIN(034),   GPIO_OUT_LOW)
 GPIO(EC_VCCST_PG,           PIN(023),   GPIO_OUT_LOW)
@@ -119,8 +119,8 @@ GPIO(FAN_SPEED,         PIN(050), GPIO_INPUT)
 
 /* Miscellaneous */
 GPIO(TYPEC_G_DRV2_EN,       PIN(0101), GPIO_OUT_HIGH)    /* LED drv */
-GPIO(ME_EN,                 PIN(060),  GPIO_PULL_DOWN)	/* DVT ME control use VTR1(3.3v) */
-GPIO(ME_EN_PVT,             PIN(064),  GPIO_PULL_DOWN)	/* PVT ME control use VTR3(1.8v) */
+GPIO(ME_EN,                 PIN(060),  GPIO_OUT_LOW)	/* DVT ME control use VTR1(3.3v) */
+GPIO(ME_EN_PVT,             PIN(064),  GPIO_OUT_LOW)	/* PVT ME control use VTR3(1.8v) */
 GPIO(EC_BKOFF_L,            PIN(0102), GPIO_OUT_LOW)    /* Panel backlight control */
 
 GPIO(CAM_EN,                PIN(0255), GPIO_OUT_LOW)    /* Open camera power  */
