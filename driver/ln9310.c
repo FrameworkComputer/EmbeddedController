@@ -78,26 +78,28 @@ void ln9310_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&ln9310_irq_deferred_data, 0);
 }
 
-static int is_battery_gt_10v(void)
+static int is_battery_gt_10v(bool *out)
 {
-	int status, val, gt_10v;
+	int status, val;
 
 	CPRINTS("LN9310 checking input voltage, threshold=10V");
 	/*
 	 * Turn on INFET_OUT_SWITCH_OK comparator;
 	 * configure INFET_OUT_SWITCH_OK to 10V.
 	 */
-	field_update8(LN9310_REG_TRACK_CTRL,
+	status = field_update8(LN9310_REG_TRACK_CTRL,
 		      LN9310_TRACK_INFET_OUT_SWITCH_OK_EN_MASK |
 				LN9310_TRACK_INFET_OUT_SWITCH_OK_CFG_MASK,
 		      LN9310_TRACK_INFET_OUT_SWITCH_OK_EN_ON |
 				LN9310_TRACK_INFET_OUT_SWITCH_OK_CFG_10V);
+	if (status != EC_SUCCESS)
+		return status;
 
 	/* Read INFET_OUT_SWITCH_OK comparator */
 	status = raw_read8(LN9310_REG_BC_STS_B, &val);
-	if (status) {
+	if (status != EC_SUCCESS) {
 		CPRINTS("LN9310 reading BC_STS_B failed");
-		return -1;
+		return status;
 	}
 	CPRINTS("LN9310 BC_STS_B: 0x%x", val);
 
@@ -105,15 +107,15 @@ static int is_battery_gt_10v(void)
 	 * If INFET_OUT_SWITCH_OK=0, VIN < 10V
 	 * If INFET_OUT_SWITCH_OK=1, VIN > 10V
 	 */
-	gt_10v = !!(val & LN9310_BC_STS_B_INFET_OUT_SWITCH_OK);
-	CPRINTS("LN9310 battery %s 10V", gt_10v ? ">" : "<");
+	*out = !!(val & LN9310_BC_STS_B_INFET_OUT_SWITCH_OK);
+	CPRINTS("LN9310 battery %s 10V", (*out) ? ">" : "<");
 
 	/* Turn off INFET_OUT_SWITCH_OK comparator */
-	field_update8(LN9310_REG_TRACK_CTRL,
+	status = field_update8(LN9310_REG_TRACK_CTRL,
 		      LN9310_TRACK_INFET_OUT_SWITCH_OK_EN_MASK,
 		      LN9310_TRACK_INFET_OUT_SWITCH_OK_EN_OFF);
 
-	return gt_10v;
+	return status;
 }
 
 static int ln9310_reset_detected(void)
@@ -141,158 +143,145 @@ static int ln9310_reset_detected(void)
 
 static int ln9310_update_startup_seq(void)
 {
+	int rc;
+
 	CPRINTS("LN9310 update startup sequence");
 
 	/*
 	 * Startup sequence instruction swap to hold Cfly
 	 * bottom plate low during startup
 	 */
-	field_update8(LN9310_REG_LION_CTRL,
-		      LN9310_LION_CTRL_MASK,
-		      LN9310_LION_CTRL_UNLOCK_AND_EN_TM);
+	rc = field_update8(LN9310_REG_LION_CTRL, LN9310_LION_CTRL_MASK,
+			   LN9310_LION_CTRL_UNLOCK_AND_EN_TM);
 
-	field_update8(LN9310_REG_SWAP_CTRL_0,
-		      0xff,
-		      0x52);
+	rc |= field_update8(LN9310_REG_SWAP_CTRL_0, 0xff, 0x52);
 
-	field_update8(LN9310_REG_SWAP_CTRL_1,
-		      0xff,
-		      0x54);
+	rc |= field_update8(LN9310_REG_SWAP_CTRL_1, 0xff, 0x54);
 
-	field_update8(LN9310_REG_SWAP_CTRL_2,
-		      0xff,
-		      0xCC);
+	rc |= field_update8(LN9310_REG_SWAP_CTRL_2, 0xff, 0xCC);
 
-	field_update8(LN9310_REG_SWAP_CTRL_3,
-		      0xff,
-		      0x02);
+	rc |= field_update8(LN9310_REG_SWAP_CTRL_3, 0xff, 0x02);
 
 	/* Startup sequence settings */
-	field_update8(LN9310_REG_CFG_4,
-		      LN9310_CFG_4_SC_OUT_PRECHARGE_EN_TIME_CFG_MASK |
-				LN9310_CFG_4_SW1_VGS_SHORT_EN_MSK_MASK |
-				LN9310_CFG_4_BSTH_BSTL_HIGH_ROUT_CFG_MASK,
-		      LN9310_CFG_4_SC_OUT_PRECHARGE_EN_TIME_CFG_ON |
-				LN9310_CFG_4_SW1_VGS_SHORT_EN_MSK_OFF |
-				LN9310_CFG_4_BSTH_BSTL_HIGH_ROUT_CFG_LOWEST);
+	rc |= field_update8(
+		LN9310_REG_CFG_4,
+		LN9310_CFG_4_SC_OUT_PRECHARGE_EN_TIME_CFG_MASK |
+			LN9310_CFG_4_SW1_VGS_SHORT_EN_MSK_MASK |
+			LN9310_CFG_4_BSTH_BSTL_HIGH_ROUT_CFG_MASK,
+		LN9310_CFG_4_SC_OUT_PRECHARGE_EN_TIME_CFG_ON |
+			LN9310_CFG_4_SW1_VGS_SHORT_EN_MSK_OFF |
+			LN9310_CFG_4_BSTH_BSTL_HIGH_ROUT_CFG_LOWEST);
 
 	/* SW4 before BSTH_BSTL */
-	field_update8(LN9310_REG_SPARE_0,
-		      LN9310_SPARE_0_SW4_BEFORE_BSTH_BSTL_EN_CFG_MASK,
-		      LN9310_SPARE_0_SW4_BEFORE_BSTH_BSTL_EN_CFG_ON);
+	rc |= field_update8(LN9310_REG_SPARE_0,
+			    LN9310_SPARE_0_SW4_BEFORE_BSTH_BSTL_EN_CFG_MASK,
+			    LN9310_SPARE_0_SW4_BEFORE_BSTH_BSTL_EN_CFG_ON);
 
+	rc |= field_update8(LN9310_REG_LION_CTRL, LN9310_LION_CTRL_MASK,
+			    LN9310_LION_CTRL_LOCK);
 
-	field_update8(LN9310_REG_LION_CTRL,
-		      LN9310_LION_CTRL_MASK,
-		      LN9310_LION_CTRL_LOCK);
-
-	return EC_SUCCESS;
+	return rc == EC_SUCCESS ? EC_SUCCESS : EC_ERROR_UNKNOWN;
 }
 
 static int ln9310_init_3to1(void)
 {
+	int rc;
+
 	CPRINTS("LN9310 init (3:1 operation)");
 
 	/* Enable track protection and SC_OUT configs for 3:1 switching */
-	field_update8(LN9310_REG_MODE_CHANGE_CFG,
-		      LN9310_MODE_TM_TRACK_MASK |
-				LN9310_MODE_TM_SC_OUT_PRECHG_MASK |
-				LN9310_MODE_TM_VIN_OV_CFG_MASK,
-		      LN9310_MODE_TM_TRACK_SWITCH31 |
-				LN9310_MODE_TM_SC_OUT_PRECHG_SWITCH31 |
-				LN9310_MODE_TM_VIN_OV_CFG_3S);
+	rc = field_update8(LN9310_REG_MODE_CHANGE_CFG,
+			   LN9310_MODE_TM_TRACK_MASK |
+				   LN9310_MODE_TM_SC_OUT_PRECHG_MASK |
+				   LN9310_MODE_TM_VIN_OV_CFG_MASK,
+			   LN9310_MODE_TM_TRACK_SWITCH31 |
+				   LN9310_MODE_TM_SC_OUT_PRECHG_SWITCH31 |
+				   LN9310_MODE_TM_VIN_OV_CFG_3S);
 
 	/* Enable 3:1 operation mode */
-	field_update8(LN9310_REG_PWR_CTRL,
-		      LN9310_PWR_OP_MODE_MASK,
-		      LN9310_PWR_OP_MODE_SWITCH31);
+	rc |= field_update8(LN9310_REG_PWR_CTRL, LN9310_PWR_OP_MODE_MASK,
+			    LN9310_PWR_OP_MODE_SWITCH31);
 
 	/* 3S lower bound delta configurations */
-	field_update8(LN9310_REG_LB_CTRL,
-		      LN9310_LB_DELTA_MASK,
-		      LN9310_LB_DELTA_3S);
+	rc |= field_update8(LN9310_REG_LB_CTRL, LN9310_LB_DELTA_MASK,
+			    LN9310_LB_DELTA_3S);
 
 	/*
 	 * TODO(waihong): The LN9310_REG_SYS_CTR was set to a wrong value
 	 * accidentally. Override it to 0. This may not need.
 	 */
-	field_update8(LN9310_REG_SYS_CTRL,
-		      0xff,
-		      0);
+	rc |= field_update8(LN9310_REG_SYS_CTRL, 0xff, 0);
 
-	return EC_SUCCESS;
+	return rc == EC_SUCCESS ? EC_SUCCESS : EC_ERROR_UNKNOWN;
 }
 
 static int ln9310_init_2to1(void)
 {
+	int rc;
+	bool battery_gt_10v;
+
 	CPRINTS("LN9310 init (2:1 operation)");
 
-	if (is_battery_gt_10v()) {
+	rc = is_battery_gt_10v(&battery_gt_10v);
+	if (rc != EC_SUCCESS || battery_gt_10v) {
 		CPRINTS("LN9310 init stop. Input voltage is too high.");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	/* Enable track protection and SC_OUT configs for 2:1 switching */
-	field_update8(LN9310_REG_MODE_CHANGE_CFG,
-		      LN9310_MODE_TM_TRACK_MASK |
-				LN9310_MODE_TM_SC_OUT_PRECHG_MASK,
-		      LN9310_MODE_TM_TRACK_SWITCH21 |
-				LN9310_MODE_TM_SC_OUT_PRECHG_SWITCH21);
+	rc = field_update8(LN9310_REG_MODE_CHANGE_CFG,
+			   LN9310_MODE_TM_TRACK_MASK |
+				   LN9310_MODE_TM_SC_OUT_PRECHG_MASK,
+			   LN9310_MODE_TM_TRACK_SWITCH21 |
+				   LN9310_MODE_TM_SC_OUT_PRECHG_SWITCH21);
 
 	/* Enable 2:1 operation mode */
-	field_update8(LN9310_REG_PWR_CTRL,
-		      LN9310_PWR_OP_MODE_MASK,
-		      LN9310_PWR_OP_MODE_SWITCH21);
+	rc |= field_update8(LN9310_REG_PWR_CTRL, LN9310_PWR_OP_MODE_MASK,
+			   LN9310_PWR_OP_MODE_SWITCH21);
 
 	/* 2S lower bound delta configurations */
-	field_update8(LN9310_REG_LB_CTRL,
-		      LN9310_LB_DELTA_MASK,
-		      LN9310_LB_DELTA_2S);
+	rc |= field_update8(LN9310_REG_LB_CTRL, LN9310_LB_DELTA_MASK,
+			   LN9310_LB_DELTA_2S);
 
 	/*
 	 * TODO(waihong): The LN9310_REG_SYS_CTR was set to a wrong value
 	 * accidentally. Override it to 0. This may not need.
 	 */
-	field_update8(LN9310_REG_SYS_CTRL,
-		      0xff,
-		      0);
+	rc |= field_update8(LN9310_REG_SYS_CTRL, 0xff, 0);
 
-	return EC_SUCCESS;
+	return rc == EC_SUCCESS ? EC_SUCCESS : EC_ERROR_UNKNOWN;
 }
 
 static int ln9310_update_infet(void)
 {
+	int rc;
+
 	CPRINTS("LN9310 update infet configuration");
 
-
-	field_update8(LN9310_REG_LION_CTRL,
-		      LN9310_LION_CTRL_MASK,
-		      LN9310_LION_CTRL_UNLOCK_AND_EN_TM);
+	rc = field_update8(LN9310_REG_LION_CTRL, LN9310_LION_CTRL_MASK,
+			   LN9310_LION_CTRL_UNLOCK_AND_EN_TM);
 
 	/* Update Infet register settings */
-	field_update8(LN9310_REG_CFG_5,
-		      LN9310_CFG_5_INGATE_PD_EN_MASK,
-			  LN9310_CFG_5_INGATE_PD_EN_OFF);
+	rc |= field_update8(LN9310_REG_CFG_5, LN9310_CFG_5_INGATE_PD_EN_MASK,
+			   LN9310_CFG_5_INGATE_PD_EN_OFF);
 
-	field_update8(LN9310_REG_CFG_5,
-		      LN9310_CFG_5_INFET_CP_PD_BIAS_CFG_MASK,
-			  LN9310_CFG_5_INFET_CP_PD_BIAS_CFG_LOWEST);
+	rc |= field_update8(LN9310_REG_CFG_5,
+			   LN9310_CFG_5_INFET_CP_PD_BIAS_CFG_MASK,
+			   LN9310_CFG_5_INFET_CP_PD_BIAS_CFG_LOWEST);
 
 	/* enable automatic infet control */
-	field_update8(LN9310_REG_PWR_CTRL,
-				LN9310_PWR_INFET_AUTO_MODE_MASK,
-				LN9310_PWR_INFET_AUTO_MODE_ON);
+	rc |= field_update8(LN9310_REG_PWR_CTRL, LN9310_PWR_INFET_AUTO_MODE_MASK,
+			   LN9310_PWR_INFET_AUTO_MODE_ON);
 
- 	/* disable LS_HELPER during IDLE by setting MSK bit high  */
-	field_update8(LN9310_REG_CFG_0,
-				LN9310_CFG_0_LS_HELPER_IDLE_MSK_MASK,
-				LN9310_CFG_0_LS_HELPER_IDLE_MSK_ON);
+	/* disable LS_HELPER during IDLE by setting MSK bit high  */
+	rc |= field_update8(LN9310_REG_CFG_0,
+			   LN9310_CFG_0_LS_HELPER_IDLE_MSK_MASK,
+			   LN9310_CFG_0_LS_HELPER_IDLE_MSK_ON);
 
-	field_update8(LN9310_REG_LION_CTRL,
-		      LN9310_LION_CTRL_MASK,
-		      LN9310_LION_CTRL_LOCK);
+	rc |= field_update8(LN9310_REG_LION_CTRL, LN9310_LION_CTRL_MASK,
+			   LN9310_LION_CTRL_LOCK);
 
-	return EC_SUCCESS;
+	return rc == EC_SUCCESS ? EC_SUCCESS : EC_ERROR_UNKNOWN;
 }
 
 static int ln9310_precharge_cfly(uint64_t *precharge_timeout)
