@@ -94,8 +94,12 @@ int i2c_get_port_from_remote_port(int remote_port)
 			return port;
 	}
 
-	/* Remote port is not defined, return -1 to signal the problem */
-	return -1;
+	/*
+	 * Remote port is not defined, return 1:1 mapping to support TCPC
+	 * firmware updates, which always query the EC for the correct I2C
+	 * port number.
+	 */
+	return remote_port;
 }
 
 int i2c_get_physical_port(int enum_port)
