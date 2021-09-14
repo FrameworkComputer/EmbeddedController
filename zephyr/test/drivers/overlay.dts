@@ -75,6 +75,11 @@
 			enum-name = "I2C_PORT_BATTERY";
 			label = "BATTERY";
 		};
+		power {
+			i2c-port = <&i2c0>;
+			enum-name = "I2C_PORT_POWER";
+			label = "POWER";
+		};
 		charger {
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_CHARGER";
@@ -482,5 +487,12 @@
 		vendor = "BB_RETIMER_VENDOR_ID_1";
 		error-on-ro-write;
 		error-on-reserved-bit-write;
+	};
+
+	ln9310: ln9310@80 {
+		compatible = "cros,ln9310-emul";
+		status = "okay";
+		reg = <0x80>;
+		label = "LN9310";
 	};
 };
