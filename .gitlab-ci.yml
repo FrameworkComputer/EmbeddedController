@@ -40,6 +40,9 @@ before_script:
   - export BUILD_DIR=build
   - export ZEPHYR_DIR=/zephyr
   - export PATH="$PATH:$HOME/.local/bin"
+  - python3 -m pip install anytree --user
+  - python3 -m pip install pyelftools --user
+  - export PYTHONIOENCODING=utf-8
 
 # Users of this template must set:
 # $PROJECT to the project to build in zephyr/projects. E.g. "lazor")
@@ -52,6 +55,13 @@ before_script:
       --modules-dir "${MODULES_DIR}" -l DEBUG configure -b
       -B "${BUILD_DIR}/${PROJECT}" -t ${TOOLCHAIN:-zephyr}
       zephyr/projects/${PROJECT_SUBDIR}${PROJECT}
+    - for b in "${BUILD_DIR}/${PROJECT}"/build-* ; do
+      bdir=$(basename ${b}) ;
+      ninja -C ${b} ram_report >"${BUILD_DIR}/${PROJECT}/output/${bdir}_ram_report.txt" ;
+      cp ${b}/ram.json "${BUILD_DIR}/${PROJECT}/output/${bdir}_ram.json" ;
+      ninja -C ${b} rom_report >"${BUILD_DIR}/${PROJECT}/output/${bdir}_rom_report.txt" ;
+      cp ${b}/rom.json "${BUILD_DIR}/${PROJECT}/output/${bdir}_rom.json" ;
+      done
     - ls "${BUILD_DIR}/${PROJECT}" "${BUILD_DIR}/${PROJECT}/output"
   artifacts:
     paths:
