@@ -15,6 +15,9 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
+/* The macro is used to prevent a DBZ exception while decoding PDOs. */
+#define PROCESS_ZERO_DIVISOR(x) ((x) == 0 ? 1 : (x))
+
 #if defined(PD_MAX_VOLTAGE_MV) && defined(PD_OPERATING_POWER_MW)
 /*
  * As a sink, this is the max voltage (in millivolts) we can request
@@ -192,9 +195,10 @@ void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *max_mv,
 		max_ma = PDO_VAR_MAX_CURRENT(pdo);
 	} else {
 		mw = PDO_BATT_MAX_POWER(pdo);
-		max_ma = 1000 * mw / *min_mv;
+		max_ma = 1000 * mw / PROCESS_ZERO_DIVISOR(*min_mv);
 	}
-	max_ma = MIN(max_ma, PD_MAX_POWER_MW * 1000 / *min_mv);
+	max_ma = MIN(max_ma,
+		     PD_MAX_POWER_MW * 1000 / PROCESS_ZERO_DIVISOR(*min_mv));
 	*ma = MIN(max_ma, PD_MAX_CURRENT_MA);
 }
 
