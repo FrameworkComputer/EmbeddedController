@@ -41,8 +41,17 @@
 #define CONFIG_PWM
 
 /* Sensors */
+#define CONFIG_ACCEL_BMA255		/* Lid accel */
 #define CONFIG_ACCEL_KX022		/* Lid accel */
-#define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
+#define CONFIG_ACCELGYRO_BMI160		/* Base accel */
+#define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+#define CONFIG_ACCELGYRO_BMI_COMM_I2C
+#define CONFIG_ACCELGYRO_ICM426XX	/* Base accel */
+#define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+#define CONFIG_ACCELGYRO_ICM_COMM_I2C
+
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
 
@@ -135,6 +144,7 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
+void motion_interrupt(enum gpio_signal signal);
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

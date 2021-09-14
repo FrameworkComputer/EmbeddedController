@@ -8,11 +8,16 @@
 #include "adc_chip.h"
 #include "button.h"
 #include "cbi_fw_config.h"
+#include "cbi_ssfc.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
+#include "driver/accel_bma2x2.h"
 #include "driver/accel_kionix.h"
-#include "driver/accelgyro_lsm6dsm.h"
+#include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_bmi160.h"
+#include "driver/accelgyro_icm_common.h"
+#include "driver/accelgyro_icm426xx.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/tusb544.h"
@@ -603,8 +608,98 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Sensor Data */
+static struct accelgyro_saved_data_t g_bma253_data;
 static struct kionix_accel_data  g_kx022_data;
-static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
+static struct bmi_drv_data_t g_bmi160_data;
+static struct icm_drv_data_t g_icm426xx_data;
+
+const mat33_fp_t lid_standard_ref = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+const mat33_fp_t base_standard_ref_icm = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+const mat33_fp_t base_standard_ref_bmi = {
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+
+struct motion_sensor_t bma253_lid_accel = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_BMA255,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &bma2x2_accel_drv,
+	.mutex = &g_lid_mutex,
+	.drv_data = &g_bma253_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = BMA2x2_I2C_ADDR1_FLAGS,
+	.rot_standard_ref = &lid_standard_ref,
+	.default_range = 2, /* g */
+	/* We only use 2g because its resolution is only 8-bits */
+	.min_frequency = BMA255_ACCEL_MIN_FREQ,
+	.max_frequency = BMA255_ACCEL_MAX_FREQ,
+	.config = {
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
+
+struct motion_sensor_t bmi160_base_accel = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_BMI160,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &bmi160_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_bmi160_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
+	.rot_standard_ref = &base_standard_ref_bmi,
+	.default_range = 4,  /* g */
+	.min_frequency = BMI_ACCEL_MIN_FREQ,
+	.max_frequency = BMI_ACCEL_MAX_FREQ,
+	.config = {
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 13000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+	},
+};
+
+struct motion_sensor_t bmi160_base_gyro = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_BMI160,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &bmi160_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_bmi160_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = &base_standard_ref_bmi,
+	.min_frequency = BMI_GYRO_MIN_FREQ,
+	.max_frequency = BMI_GYRO_MAX_FREQ,
+};
 
 /* Drivers */
 struct motion_sensor_t motion_sensors[] = {
@@ -618,8 +713,8 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_lid_mutex,
 		.drv_data = &g_kx022_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
-		.rot_standard_ref = NULL,
+		.i2c_spi_addr_flags = KX022_ADDR0_FLAGS,
+		.rot_standard_ref = &lid_standard_ref,
 		.default_range = 2, /* g */
 		/* We only use 2g because its resolution is only 8-bits */
 		.min_frequency = KX022_ACCEL_MIN_FREQ,
@@ -636,24 +731,21 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_ACCEL] = {
 		.name = "Base Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_LSM6DSM,
+		.chip = MOTIONSENSE_CHIP_ICM426XX,
 		.type = MOTIONSENSE_TYPE_ACCEL,
 		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &lsm6dsm_drv,
+		.drv = &icm426xx_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
-				MOTIONSENSE_TYPE_ACCEL),
-		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
-		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+		.drv_data = &g_icm426xx_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
-		.rot_standard_ref = NULL,
+		.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+		.rot_standard_ref = &base_standard_ref_icm,
 		.default_range = 4,  /* g */
-		.min_frequency = LSM6DSM_ODR_MIN_VAL,
-		.max_frequency = LSM6DSM_ODR_MAX_VAL,
+		.min_frequency = ICM426XX_ACCEL_MIN_FREQ,
+		.max_frequency = ICM426XX_ACCEL_MAX_FREQ,
 		.config = {
 			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 13000 | ROUND_UP_FLAG,
+				.odr = 10000 | ROUND_UP_FLAG,
 				.ec_rate = 100 * MSEC,
 			},
 			[SENSOR_CONFIG_EC_S3] = {
@@ -665,25 +757,47 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_GYRO] = {
 		.name = "Base Gyro",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_LSM6DSM,
+		.chip = MOTIONSENSE_CHIP_ICM426XX,
 		.type = MOTIONSENSE_TYPE_GYRO,
 		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &lsm6dsm_drv,
+		.drv = &icm426xx_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
-				MOTIONSENSE_TYPE_GYRO),
-		.int_signal = GPIO_BASE_SIXAXIS_INT_L,
-		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
+		.drv_data = &g_icm426xx_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
-		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
-		.rot_standard_ref = NULL,
-		.min_frequency = LSM6DSM_ODR_MIN_VAL,
-		.max_frequency = LSM6DSM_ODR_MAX_VAL,
+		.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+		.default_range = 1000, /* dps */
+		.rot_standard_ref = &base_standard_ref_icm,
+		.min_frequency = ICM426XX_GYRO_MIN_FREQ,
+		.max_frequency = ICM426XX_GYRO_MAX_FREQ,
 	},
 };
 
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+void motion_interrupt(enum gpio_signal signal)
+{
+	if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_BMI160)
+		bmi160_interrupt(signal);
+	else
+		icm426xx_interrupt(signal);
+}
+
+static void board_sensors_init(void)
+{
+	if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_BMA255) {
+		motion_sensors[LID_ACCEL] = bma253_lid_accel;
+		ccprints("LID_ACCEL is BMA253");
+	} else
+		ccprints("LID_ACCEL is KX022");
+
+	if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_BMI160) {
+		motion_sensors[BASE_ACCEL] = bmi160_base_accel;
+		motion_sensors[BASE_GYRO] = bmi160_base_gyro;
+		ccprints("BASE_ACCEL is BMI160");
+	} else
+		ccprints("BASE_ACCEL is ICM426XX");
+}
+DECLARE_HOOK(HOOK_INIT, board_sensors_init, HOOK_PRIO_DEFAULT);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
