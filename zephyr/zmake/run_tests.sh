@@ -29,7 +29,7 @@ pytest --hypothesis-profile=cq .
 isort --check .
 
 # Check black formatting.
-black --check .
+black --check --diff .
 
 # Check flake8 reports no issues.
 flake8 .
