@@ -14,10 +14,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "driver/accel_kionix.h"
-#include "driver/accel_kx022.h"
 #include "driver/accelgyro_icm42607.h"
-#include "driver/accelgyro_icm_common.h"
 #include "driver/bc12/mt6360.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
@@ -34,7 +31,6 @@
 #include "i2c.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
-#include "motion_sense.h"
 #include "power_button.h"
 #include "power.h"
 #include "pwm_chip.h"
@@ -232,9 +228,6 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 static void board_chipset_resume(void)
 {
 	gpio_set_level(GPIO_EC_BL_EN_OD, 1);
-	if (IS_ENABLED(CONFIG_PWM_KBLIGHT))
-		gpio_set_level(GPIO_EN_KB_BL, 1);
-
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
@@ -242,8 +235,6 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 static void board_chipset_suspend(void)
 {
 	gpio_set_level(GPIO_EC_BL_EN_OD, 0);
-	if (IS_ENABLED(CONFIG_PWM_KBLIGHT))
-		gpio_set_level(GPIO_EN_KB_BL, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
@@ -361,12 +352,6 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 int board_allow_i2c_passthru(int port)
 {
 	return (port == I2C_PORT_VIRTUAL_BATTERY);
-}
-
-
-void board_overcurrent_event(int port, int is_overcurrented)
-{
-	/* TODO: check correct operation for Cherry */
 }
 
 /* TCPC */
