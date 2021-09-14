@@ -83,6 +83,13 @@ hayato:
     VERSION: 26
   <<: *build_template
 
+herobrine_npcx9:
+  variables:
+    PROJECT: "herobrine_npcx9"
+    PROJECT_SUBDIR: "herobrine/"
+    VERSION: 26
+  <<: *build_template
+
 it8xxx2_evb:
   variables:
     PROJECT: "it8xxx2_evb"
