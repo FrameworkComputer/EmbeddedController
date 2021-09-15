@@ -454,6 +454,27 @@ config PLATFORM_EC_I2C
 	  should make shimming other platform/ec modules which rely on i2c
 	  communication "just work" without requiring any further code changes.
 
+config PLATFORM_EC_I2C_DEBUG
+	bool "I2C Tracing"
+	default n if ARCH_POSIX
+	depends on PLATFORM_EC_I2C
+	help
+	  This option enables I2C bus communication tracing. Use the console
+	  command "i2ctrace" to enable and disable tracing on specific I2C
+	  peripherals.
+
+	  Please see the I2C debugging documentation for more details:
+
+	  https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/docs/i2c-debugging.md
+
+config PLATFORM_EC_I2C_DEBUG_PASSTHRU
+	bool "I2C Passthru Debug"
+	default n if ARCH_POSIX
+	depends on PLATFORM_EC_I2C
+	help
+	  This option enables extra debug for I2C passthru operations initiated
+	  by the AP.
+
 config PLATFORM_EC_CONSOLE_CMD_I2C_PORTMAP
 	bool "Console command: i2c_portmap"
 	default y
