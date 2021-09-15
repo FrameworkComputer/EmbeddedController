@@ -14,6 +14,9 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
+/* Free up flash space */
+#undef CONFIG_USB_PD_TCPMV1_DEBUG
+
 /* Accelero meter and gyro sensor */
 #define CONFIG_ACCEL_KX022
 #undef CONfFIG_CMD_ACCELSPOOF
