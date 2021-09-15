@@ -23,6 +23,7 @@
 #include <sys/ioctl.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #include "compile_time_macros.h"
 #include "usb_if.h"
@@ -2267,15 +2268,18 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 
 static void sighandler(int signum)
 {
+	int status;
 	printf("\nCaught signal %d: %s\nExiting...\n",
 		signum, strsignal(signum));
-	exit_requested = 1;
+	wait(&status);
+	exit_requested = status;
 }
 
 static void register_sigaction(void)
 {
 	struct sigaction sigact;
 
+	memset(&sigact, 0, sizeof(sigact));
 	sigact.sa_handler = sighandler;
 	sigemptyset(&sigact.sa_mask);
 	sigact.sa_flags = 0;
