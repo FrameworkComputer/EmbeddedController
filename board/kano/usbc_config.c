@@ -128,6 +128,8 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 
 	if (me->usb_port == USBC_PORT_C0) {
 		rst_signal = GPIO_USB_C0_RT_RST_ODL;
+	} else if (me->usb_port == USBC_PORT_C1) {
+		rst_signal = GPIO_USB_C1_RT_RST_R_ODL;
 	} else {
 		return EC_ERROR_INVAL;
 	}
@@ -163,6 +165,7 @@ void board_reset_pd_mcu(void)
 	 * TODO(b/179648104): figure out correct timing
 	 */
 
+	gpio_set_level(GPIO_USB_C0_RT_RST_ODL, 0);
 	gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 0);
 
 	/*
@@ -171,6 +174,7 @@ void board_reset_pd_mcu(void)
 
 	msleep(20);
 
+	gpio_set_level(GPIO_USB_C0_RT_RST_ODL, 1);
 	gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 1);
 
 	/* wait for chips to come up */
