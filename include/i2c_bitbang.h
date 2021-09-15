@@ -12,6 +12,14 @@ extern const struct i2c_drv bitbang_drv;
 extern const struct i2c_port_t i2c_bitbang_ports[];
 extern const unsigned int i2c_bitbang_ports_used;
 
+/**
+ * Enable I2C raw mode for the ports which need pre-task
+ * I2C transactions in bitbang mode.
+ *
+ * @param enable Enable/disable the I2C raw mode
+ */
+void enable_i2c_raw_mode(bool enable);
+
 /* expose static functions for testing */
 #ifdef TEST_BUILD
 int bitbang_start_cond(const struct i2c_port_t *i2c_port);
