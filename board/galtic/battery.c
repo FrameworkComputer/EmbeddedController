@@ -88,7 +88,44 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c      = 60,
 		},
 	},
+	[BATTERY_C140243] = {
+		.fuel_gauge = {
+			.manuf_name = "AS3GXXD3KB",
+			.device_name = "C140243",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr = 0x99,
+				.reg_mask = 0x000C,
+				.disconnect_val = 0x000C,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0004,
+			}
+		},
+		.batt_info = {
+			.voltage_max            = 13200, /* mV */
+			.voltage_normal         = 11880, /* mV */
+			.voltage_min            = 9000, /* mV */
+			.precharge_current      = 256,  /* mA */
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 45,
+			.charging_min_c         = 0,
+			.charging_max_c         = 60,
+			.discharging_min_c      = -20,
+			.discharging_max_c      = 60,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_C140254;
+
+__override int board_get_default_battery_type(void)
+{
+	if (board_get_battery_cell_type() == BATTERY_CELL_TYPE_3S)
+		return BATTERY_C140243;
+	else
+		return DEFAULT_BATTERY_TYPE;
+}
