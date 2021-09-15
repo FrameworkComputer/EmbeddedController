@@ -157,10 +157,10 @@
 			enum-name = "GPIO_SWITCHCAP_ON";
 			label = "SWITCHCAP_ON";
 		};
-		en_pp5000_s3 {
-			gpios = <&gpio7 3 GPIO_OUT_LOW>;
+		en_pp5000_s5 {
+			gpios = <&gpio7 3 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_EN_PP5000";
-			label = "EN_PP5000_S3";
+			label = "EN_PP5000_S5";
 		};
 		ec_bl_disable_l {
 			gpios = <&gpiob 6 GPIO_OUT_LOW>;

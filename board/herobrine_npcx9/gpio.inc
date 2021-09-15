@@ -52,7 +52,7 @@ GPIO(AP_EC_INT_L,           PIN(5, 6), GPIO_ODR_HIGH)  /* Interrupt line between
 
 /* Power enables */
 GPIO(SWITCHCAP_ON,          PIN(D, 5), GPIO_OUT_LOW)   /* Enable switch cap */
-GPIO(EN_PP5000_S3,          PIN(7, 3), GPIO_OUT_LOW)   /* Enable PP5000 */
+GPIO(EN_PP5000_S5,          PIN(7, 3), GPIO_OUT_HIGH)  /* Enable PP5000 */
 GPIO(EC_BL_DISABLE_L,       PIN(B, 6), GPIO_OUT_LOW)   /* Backlight disable signal from EC */
 
 /* Sensors */

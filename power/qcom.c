@@ -619,13 +619,6 @@ static void power_off(void)
 		set_system_power(0);
 	}
 
-	/* Turn off the 5V rail. */
-#ifdef CONFIG_POWER_PP5000_CONTROL
-	power_5v_enable(task_get_current(), 0);
-#else /* !defined(CONFIG_POWER_PP5000_CONTROL) */
-	gpio_set_level(GPIO_EN_PP5000, 0);
-#endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
-
 	lid_opened = 0;
 }
 
@@ -660,13 +653,6 @@ static int power_is_enough(void)
 static int power_on(void)
 {
 	int ret;
-
-	/* Enable the 5V rail. */
-#ifdef CONFIG_POWER_PP5000_CONTROL
-	power_5v_enable(task_get_current(), 1);
-#else /* !defined(CONFIG_POWER_PP5000_CONTROL) */
-	gpio_set_level(GPIO_EN_PP5000, 1);
-#endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
 
 	ret = set_system_power(1);
 	if (ret != EC_SUCCESS)
