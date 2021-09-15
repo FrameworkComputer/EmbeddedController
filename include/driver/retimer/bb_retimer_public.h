@@ -44,18 +44,6 @@ __override_proto int bb_retimer_power_enable(const struct usb_mux *me,
 					     bool enable);
 
 /**
- * reset the BB retimer
- *
- * Define override function at board level if the platform specific changes
- * are needed to reset the BB retimer.
- *
- * @param me     Pointer to USB mux
- *
- * @return EC_SUCCESS, or non-zero on error.
- */
-__override_proto int bb_retimer_reset(const struct usb_mux *me);
-
-/**
  * Set HPD on the BB retimer
  *
  * Set the HPD related fields in the BB retimer
