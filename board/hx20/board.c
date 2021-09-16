@@ -39,6 +39,7 @@
 #include "lpc.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "link_defs.h"
 #include "math_util.h"
 #include "motion_sense.h"
 #include "motion_lid.h"
@@ -957,6 +958,19 @@ static void setup_fans(void)
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 #endif
 
+void check_deferred_time (const struct deferred_data *data)
+{
+	int i = data - __deferred_funcs;
+	static uint64_t duration;
+
+	if (__deferred_until[i]) {
+		duration = __deferred_until[i] - get_time().val;
+
+		if (!gpio_get_level(GPIO_CHASSIS_OPEN) && duration < 27000 * MSEC )
+			hook_call_deferred(data, 0);
+	}
+}
+
 static int prochot_low_time;
 
 void prochot_monitor(void)
@@ -976,6 +990,8 @@ void prochot_monitor(void)
 	}
 
 	check_chassis_open(0);
+
+	check_deferred_time(&board_power_off_deferred_data);
 
 }
 DECLARE_HOOK(HOOK_SECOND, prochot_monitor, HOOK_PRIO_DEFAULT);
