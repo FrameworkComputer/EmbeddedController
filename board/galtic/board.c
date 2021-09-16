@@ -368,7 +368,7 @@ static const struct ec_response_keybd_config galtic_kb = {
 		TK_FORWARD,		/* T2 */
 		TK_REFRESH,		/* T3 */
 		TK_FULLSCREEN,		/* T4 */
-		TK_SNAPSHOT,		/* T5 */
+		TK_OVERVIEW,		/* T5 */
 		TK_BRIGHTNESS_DOWN,	/* T6 */
 		TK_BRIGHTNESS_UP,	/* T7 */
 		TK_VOL_MUTE,		/* T8 */
