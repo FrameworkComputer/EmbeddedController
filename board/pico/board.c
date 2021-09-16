@@ -154,7 +154,7 @@ static bool board_is_convertible(void)
 {
 	int sku = system_get_sku_id();
 
-	return sku == 1;
+	return sku == 1 || sku == 2;
 }
 
 int board_sensor_at_360(void)
