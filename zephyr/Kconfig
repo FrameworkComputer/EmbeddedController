@@ -448,6 +448,11 @@ config PLATFORM_EC_LOW_POWER_IDLE
 	  enabled when the Zephyr power management options are enabled with the
 	  PM option.
 
+config PLATFORM_EC_LOW_POWER_S0
+	bool "Enable deep sleep during S0"
+	help
+	  Enable deep sleep during S0 (ignores SLEEP_MASK_AP_RUN).
+
 config PLATFORM_EC_POWER_COMMON
 	bool
 	default y
