@@ -359,8 +359,6 @@ void usb_mux_flip(int port)
 
 void usb_mux_hpd_update(int port, mux_state_t hpd_state)
 {
-	mux_state_t get_state;
-
 	if (port >= board_get_usb_pd_port_count()) {
 		return;
 	}
@@ -373,11 +371,6 @@ void usb_mux_hpd_update(int port, mux_state_t hpd_state)
 		return;
 
 	configure_mux(port, USB_MUX_HPD_UPDATE, &hpd_state);
-
-	if (!configure_mux(port, USB_MUX_GET_MODE, &get_state)) {
-		get_state |= hpd_state;
-		configure_mux(port, USB_MUX_SET_MODE, &get_state);
-	}
 }
 
 int usb_mux_retimer_fw_update_port_info(void)
