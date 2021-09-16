@@ -26,7 +26,7 @@
 #include "power.h"
 #include "cpu_power.h"
 #include "power_sequence.h"
-
+#include "extpower.h"
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
@@ -87,6 +87,7 @@ struct extended_msg tx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 bool verbose_msg_logging;
 static bool firmware_update;
 
+static bool system_power_present;
 
 void set_pd_fw_update(bool update)
 {
@@ -348,11 +349,18 @@ int cypd_update_power_status(void)
 	int i;
 	int rv = EC_SUCCESS;
 	int power_stat = 0;
-	if (battery_is_present()) {
+	if (charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE) {
 		power_stat |= BIT(3);
 	}
-	if (pd_extpower_is_present()) {
+	if (extpower_is_present()) {
 		power_stat |= BIT(1) + BIT(2);
+	}
+
+	if (power_stat) {
+		system_power_present = 1;
+	}
+	else {
+		system_power_present = 0;
 	}
 	CPRINTS("%s power_stat 0x%x", __func__, power_stat);
 
@@ -1066,13 +1074,20 @@ void cypd_handle_state(int controller)
 			cyp5525_get_version(controller);
 			cypd_write_reg8_wait_ack(controller, CYP5225_USER_MAINBOARD_VERSION, board_get_version());
 			for(i=0; i < 50;i++) {
-				if (gpio_get_level(GPIO_PWR_3V5V_PG))
+				if (gpio_get_level(GPIO_PWR_3V5V_PG) && 
+					(extpower_is_present() || 
+						charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE))
 					break;
 				usleep(MSEC);
-				CPRINTS("CYPD PWRGOOD");
+				
 			}
 			pending_retimer_init(1);
-			gpio_set_level(GPIO_PCH_PWR_EN, 1);
+			if (extpower_is_present() || 
+				charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE) {
+				gpio_set_level(GPIO_PCH_PWR_EN, 1);
+			} else {
+				CPRINTS("Dead Battery Condition?");
+			}
 
 			hook_call_deferred(&pd_bb_powerdown_deferred_data, BB_PWR_DOWN_TIMEOUT);
 			cypd_update_power_status();
@@ -1162,8 +1177,10 @@ DECLARE_DEFERRED(pd0_chip_interrupt_deferred);
 void pd0_chip_interrupt(enum gpio_signal signal)
 {
 	/* GPIO_PCH_PWR_EN must be first */
-	gpio_set_level(GPIO_PCH_PWR_EN, 1);
-	hook_call_deferred(&pd0_chip_interrupt_deferred_data, 0);
+	if (system_power_present) {
+		gpio_set_level(GPIO_PCH_PWR_EN, 1);
+		hook_call_deferred(&pd0_chip_interrupt_deferred_data, 0);
+	}
 	//task_set_event(TASK_ID_CYPD, CYPD_EVT_INT_CTRL_0, 0);
 	pending_retimer_init(1);
 
@@ -1179,8 +1196,10 @@ DECLARE_DEFERRED(pd1_chip_interrupt_deferred);
 void pd1_chip_interrupt(enum gpio_signal signal)
 {
 	/* GPIO_PCH_PWR_EN must be first */
-	gpio_set_level(GPIO_PCH_PWR_EN, 1);
-	hook_call_deferred(&pd1_chip_interrupt_deferred_data, 0);
+	if (system_power_present) {
+		gpio_set_level(GPIO_PCH_PWR_EN, 1);
+		hook_call_deferred(&pd0_chip_interrupt_deferred_data, 0);
+	}
 	//task_set_event(TASK_ID_CYPD, CYPD_EVT_INT_CTRL_1, 0);
 	pending_retimer_init(1);
 
