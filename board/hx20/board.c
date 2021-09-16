@@ -39,6 +39,7 @@
 #include "lpc.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "link_defs.h"
 #include "math_util.h"
 #include "motion_sense.h"
 #include "motion_lid.h"
@@ -243,7 +244,7 @@ const struct i2c_port_t i2c_ports[]  = {
 	{"batt",     MCHP_I2C_PORT1, 100,  GPIO_I2C_1_SDA, GPIO_I2C_1_SCL},
 	{"touchpd",  MCHP_I2C_PORT2, 100,  GPIO_I2C_2_SDA, GPIO_I2C_2_SCL},
 	{"sensors",  MCHP_I2C_PORT3, 100,  GPIO_I2C_3_SDA, GPIO_I2C_3_SCL},
-	{"pd",       MCHP_I2C_PORT6, 100,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL},
+	{"pd",       MCHP_I2C_PORT6, 400,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL},
 	{"pch",      MCHP_I2C_PORT0, 400,  GPIO_I2C_0_SDA, GPIO_I2C_0_SCL},
 
 };
@@ -467,17 +468,15 @@ int ac_boot_status(void)
 	return (*host_get_customer_memmap(0x48) & BIT(0)) ? true : false;
 }
 
-static uint8_t chassis_edge_status;
 static uint8_t chassis_vtr_open_count;
 static uint8_t chassis_open_count;
 
 static void check_chassis_open(int init)
 {
-	if (MCHP_VCI_POSEDGE_DETECT & BIT(2) ||
-		MCHP_VCI_NEGEDGE_DETECT & BIT(2)) {
+	if (MCHP_VCI_NEGEDGE_DETECT & BIT(2)) {
 		MCHP_VCI_POSEDGE_DETECT = BIT(2);
 		MCHP_VCI_NEGEDGE_DETECT = BIT(2);
-		chassis_edge_status = 1;
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 1);
 
 		if (init) {
 			system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN,
@@ -492,7 +491,6 @@ static void check_chassis_open(int init)
 				system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL,
 								++chassis_open_count);
 		}
-		
 
 		CPRINTF("Chassis was open");
 	}
@@ -960,6 +958,19 @@ static void setup_fans(void)
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 #endif
 
+void check_deferred_time (const struct deferred_data *data)
+{
+	int i = data - __deferred_funcs;
+	static uint64_t duration;
+
+	if (__deferred_until[i]) {
+		duration = __deferred_until[i] - get_time().val;
+
+		if (!gpio_get_level(GPIO_CHASSIS_OPEN) && duration < 27000 * MSEC )
+			hook_call_deferred(data, 0);
+	}
+}
+
 static int prochot_low_time;
 
 void prochot_monitor(void)
@@ -979,6 +990,8 @@ void prochot_monitor(void)
 	}
 
 	check_chassis_open(0);
+
+	check_deferred_time(&board_power_off_deferred_data);
 
 }
 DECLARE_HOOK(HOOK_SECOND, prochot_monitor, HOOK_PRIO_DEFAULT);
@@ -1115,16 +1128,14 @@ static enum ec_status host_chassis_intrusion_control(struct host_cmd_handler_arg
 	}
 
 	if (p->clear_chassis_status) {
-		chassis_edge_status = 0;
+		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 0);
 		return EC_SUCCESS;
 	}
 
-	r->chassis_ever_opened = chassis_edge_status;
+	system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, &r->chassis_ever_opened);
 	system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_MAGIC, &r->coin_batt_ever_remove);
 	system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, &r->total_open_count);
 	system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, &r->vtr_open_count);
-
-
 
 	args->response_size = sizeof(*r);
 

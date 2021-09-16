@@ -25,6 +25,7 @@
 #include "usb_emsg.h"
 #include "power.h"
 #include "cpu_power.h"
+#include "power_sequence.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -288,20 +289,7 @@ int cyp5225_wait_for_ack(int controller, int timeout_us)
 	return EC_SUCCESS;
 }
 
-int cyp5225_set_power_state(int power_state)
-{
-	int i;
-	int rv = EC_SUCCESS;
 
-	CPRINTS("%s Setting power state to %d", __func__, power_state);
-
-	for (i = 0; i < PD_CHIP_COUNT; i++) {
-		rv = cypd_write_reg8(i, CYP5525_SYS_PWR_STATE, power_state);
-		if (rv != EC_SUCCESS)
-			break;
-	}
-	return rv;
-}
 int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 {
 	int rv = EC_SUCCESS;
@@ -319,8 +307,63 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 		cypd_clear_int(controller, CYP5525_DEV_INTR);
 	}
 	return rv;
-
 }
+int cypd_write_reg16_wait_ack(int controller, int reg, int data)
+{
+	int rv = EC_SUCCESS;
+	int intr_status;
+	rv = cypd_write_reg16(controller, reg, data);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write Reg8 0x%x fail!", reg);
+
+	if (cyp5225_wait_for_ack(controller, 100*MSEC) != EC_SUCCESS) {
+		CPRINTS("%s timeout on interrupt", __func__);
+		return EC_ERROR_INVAL;
+	}
+	rv = cypd_get_int(controller, &intr_status);
+	if (intr_status & CYP5525_DEV_INTR) {
+		cypd_clear_int(controller, CYP5525_DEV_INTR);
+	}
+	usleep(50);
+	return rv;
+}
+
+int cypd_set_power_state(int power_state)
+{
+	int i;
+	int rv = EC_SUCCESS;
+
+	CPRINTS("%s pwr state %d", __func__, power_state);
+
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		rv = cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, power_state);
+		if (rv != EC_SUCCESS)
+			break;
+	}
+	return rv;
+}
+
+int cypd_update_power_status(void)
+{
+	int i;
+	int rv = EC_SUCCESS;
+	int power_stat = 0;
+	if (battery_is_present()) {
+		power_stat |= BIT(3);
+	}
+	if (pd_extpower_is_present()) {
+		power_stat |= BIT(1) + BIT(2);
+	}
+	CPRINTS("%s power_stat 0x%x", __func__, power_stat);
+
+	for (i = 0; i < PD_CHIP_COUNT; i++) {
+		rv = cypd_write_reg8_wait_ack(i, CYP5525_POWER_STAT, power_stat);
+		if (rv != EC_SUCCESS)
+			break;
+	}
+	return rv;
+}
+
 void enable_compliance_mode(int controller)
 {
 	int rv;
@@ -371,24 +414,69 @@ int check_tbt_mode(int controller)
 	return data;
 }
 
-
-int cypd_configure_bb_retimer_power_state(int controller, int power)
+void cypd_bb_retimer_cmd(uint8_t cmd)
 {
-#define RT_EVT_VSYS_REMOVED 0
-#define RT_EVT_VSYS_ADDED 1
-	int rv = EC_SUCCESS;
-	rv = cypd_write_reg8(controller, CYP5225_USER_BB_POWER_EVT ,power);
-	if (rv != EC_SUCCESS)
-		CPRINTS("BB power command fail!");
-	return rv;
+       int i;
+
+       for (i = 0; i < PD_CHIP_COUNT; i++) {
+               cypd_write_reg16_wait_ack(i, CYP5225_USER_BB_POWER_EVT,  cmd);
+       }
 }
-enum power_state saved_power_state;
-void set_retimer_power(enum power_state power)
+
+
+void cypd_reset_source_ports(void)
 {
-	saved_power_state = power;
-	cypd_enque_evt(CYPD_EVT_RETIMER_PWR, 0);
+	int i;
+	int port;
+	int controller;
+
+	CPRINTS("Resetting source ports");
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+			port = i & 1;
+			controller = i >>1;
+			if (pd_port_states[i].power_role == PD_ROLE_SOURCE) {
+					CPRINTS("reset port %d:%d", controller, port);
+					cypd_write_reg8(controller, CYP5525_PD_CONTROL_REG(port), CYPD_PD_CMD_HARD_RESET);
+			}
+	}
+}
+
+enum power_state saved_bb_power_state = POWER_S0;
+
+void cypd_set_retimer_power(enum power_state power)
+{
+	if (power != saved_bb_power_state) {
+			saved_bb_power_state = power;
+			cypd_enque_evt(CYPD_EVT_RETIMER_PWR, 0);
+	}
+}
+
+
+void cypd_set_power_active(enum power_state power)
+{
+	cypd_enque_evt(CYPD_EVT_S_CHANGE, 0);
+}
+
+void update_system_power_state(void)
+{
+
+	enum power_state ps = power_get_state();
+	switch (ps) {
+	case POWER_G3:
+	case POWER_S5:
+	case POWER_S5G3:
+	case POWER_S3S5:
+		cypd_set_power_state(CYP5525_POWERSTATE_S5);
+		break;
+	default:
+		cypd_set_power_state(CYP5525_POWERSTATE_S0);
+		break;
+
+
+	}
 
 }
+
 
 int cyp5525_setup(int controller)
 {
@@ -439,6 +527,20 @@ int cyp5525_setup(int controller)
 		cypd_clear_int(controller, cypd_setup_cmds[i].status_reg);
 	}
 	return EC_SUCCESS;
+}
+
+
+void cypd_set_source_pdo_mask(int enabled_mask)
+{
+	int i;
+	int port;
+	int controller;
+
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+		port = i % 2;
+		controller = i >>1;
+		cypd_write_reg8(controller, CYP5525_SELECT_SOURCE_PDO_REG(port), enabled_mask);
+	}
 }
 
 /*
@@ -812,10 +914,10 @@ void cypd_update_port_state(int controller, int port)
 }
 void cypd_print_version(int controller, const char *vtype, uint8_t *data)
 {
-		CPRINTS("Controller %d  %s version B:%d.%d.%d.%d AP:%d.%d.%d.%c%c",
+		CPRINTS("Controller %d  %s version B:%d.%d.%d.%d", /* AP:%d.%d.%d.%c%c */
 		controller, vtype,
-		(data[3]>>4) & 0xF, (data[3]) & 0xF, data[2], data[0] + (data[1]<<8),
-		(data[7]>>4) & 0xF, (data[7]) & 0xF, data[6], data[5], data[4]
+		(data[3]>>4) & 0xF, (data[3]) & 0xF, data[2], data[0] + (data[1]<<8)
+		/* (data[7]>>4) & 0xF, (data[7]) & 0xF, data[6], data[5], data[4] */
 		);
 }
 void cyp5525_get_version(int controller)
@@ -828,10 +930,11 @@ void cyp5525_get_version(int controller)
 	rv = i2c_read_offset16_block(i2c_port, addr_flags, CYP5525_READ_ALL_VERSION_REG, data, 24);
 	if (rv != EC_SUCCESS)
 		CPRINTS("READ_ALL_VERSION_REG failed");
-	cypd_print_version(controller, "Boot", data);
+	/*cypd_print_version(controller, "Boot", data);*/
 	cypd_print_version(controller, "App1", data+8);
 	cypd_print_version(controller, "App2", data+16);
 }
+
 
 void cyp5525_port_int(int controller, int port)
 {
@@ -895,6 +998,16 @@ void cyp5525_port_int(int controller, int port)
 	}
 }
 
+void pd_bb_powerdown_deferred(void)
+{
+	pending_retimer_init(0);
+	if (!keep_pch_power() && power_get_state() == POWER_G3) {
+		CPRINTS("BB PCH PWR down");
+		gpio_set_level(GPIO_PCH_PWR_EN, 0);
+	}
+}
+DECLARE_DEFERRED(pd_bb_powerdown_deferred);
+
 int cyp5525_device_int(int controller)
 {
 	int data;
@@ -906,7 +1019,7 @@ int cyp5525_device_int(int controller)
 		data>>8);
 		switch (data & 0xFF) {
 		case CYPD_RESPONSE_RESET_COMPLETE:
-					CPRINTS("RESET COMPLETE FROM CONTROLLER %d", controller);
+					CPRINTS("PD%d Reset Complete", controller);
 
 			pd_chip_config[controller].state = CYP5525_STATE_POWER_ON;
 			/* Run state handler to set up controller */
@@ -924,7 +1037,9 @@ int cyp5525_device_int(int controller)
 void cypd_handle_state(int controller)
 {
 	int data;
+	int i;
 	int delay = 0;
+
 	switch (pd_chip_config[controller].state) {
 	case CYP5525_STATE_POWER_ON:
 		/*poll to see if the controller has booted yet*/
@@ -950,16 +1065,35 @@ void cypd_handle_state(int controller)
 			gpio_disable_interrupt(pd_chip_config[controller].gpio);
 			cyp5525_get_version(controller);
 			cypd_write_reg8_wait_ack(controller, CYP5225_USER_MAINBOARD_VERSION, board_get_version());
+			for(i=0; i < 50;i++) {
+				if (gpio_get_level(GPIO_PWR_3V5V_PG))
+					break;
+				usleep(MSEC);
+				CPRINTS("CYPD PWRGOOD");
+			}
+			pending_retimer_init(1);
+			gpio_set_level(GPIO_PCH_PWR_EN, 1);
+
+			hook_call_deferred(&pd_bb_powerdown_deferred_data, BB_PWR_DOWN_TIMEOUT);
+			cypd_update_power_status();
+
+			cypd_set_power_state(CYP5525_POWERSTATE_S5);
+			
 
 			cyp5525_setup(controller);
 			cypd_update_port_state(controller, 0);
 			cypd_update_port_state(controller, 1);
-			cypd_write_reg8_wait_ack(controller, CYP5525_SYS_PWR_STATE,
-									power_get_state() == POWER_S0 ? CYP5525_POWERSTATE_S0 : CYP5525_POWERSTATE_S5);
-			if (power_get_state() == POWER_G3)
-				cypd_configure_bb_retimer_power_state(controller, 0);
+
 			cyp5525_ucsi_startup(controller);
 			gpio_enable_interrupt(pd_chip_config[controller].gpio);
+			cypd_write_reg16_wait_ack(controller, CYP5225_USER_BB_POWER_EVT,  RT_EVT_VSYS_ADDED);
+			update_system_power_state();
+
+			//if (power_get_state() == POWER_S0 || 
+			//	power_get_state() == POWER_S0ix) {
+				/*Handle unexpected PD controller resets when we are powered on*/
+			//	cypd_enque_evt(CYPD_EVT_RETIMER_PWR, 0);
+			//}
 
 			CPRINTS("CYPD %d Ready!", controller);
 			pd_chip_config[controller].state = CYP5525_STATE_READY;
@@ -1006,8 +1140,7 @@ void cyp5525_interrupt(int controller)
 		ucsi_read_tunnel(controller);
 		cypd_clear_int(controller, CYP5525_UCSI_INTR);
 	}
-	if (clear_mask)
-		cypd_clear_int(controller, clear_mask);
+	cypd_clear_int(controller, clear_mask);
 }
 
 
@@ -1018,21 +1151,40 @@ void cypd_enque_evt(int evt, int delay)
 {
 	task_set_event(TASK_ID_CYPD, evt, delay);
 }
-void pd_chip_interrupt_deferred(void)
+
+
+void pd0_chip_interrupt_deferred(void)
 {
-	int i;
-	for (i = 0; i < PD_CHIP_COUNT; i++) {
-		if (gpio_get_level(pd_chip_config[i].gpio) == 0) {
-			cypd_enque_evt(1<<i, 0);
-		}
-	}
+	task_set_event(TASK_ID_CYPD, CYPD_EVT_INT_CTRL_0, 0);
+
 }
-DECLARE_DEFERRED(pd_chip_interrupt_deferred);
-
-
-void pd_chip_interrupt(enum gpio_signal signal)
+DECLARE_DEFERRED(pd0_chip_interrupt_deferred);
+void pd0_chip_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(&pd_chip_interrupt_deferred_data, 0);
+	/* GPIO_PCH_PWR_EN must be first */
+	gpio_set_level(GPIO_PCH_PWR_EN, 1);
+	hook_call_deferred(&pd0_chip_interrupt_deferred_data, 0);
+	//task_set_event(TASK_ID_CYPD, CYPD_EVT_INT_CTRL_0, 0);
+	pending_retimer_init(1);
+
+	hook_call_deferred(&pd_bb_powerdown_deferred_data, BB_PWR_DOWN_TIMEOUT);
+}
+
+void pd1_chip_interrupt_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CYPD_EVT_INT_CTRL_1, 0);
+
+}
+DECLARE_DEFERRED(pd1_chip_interrupt_deferred);
+void pd1_chip_interrupt(enum gpio_signal signal)
+{
+	/* GPIO_PCH_PWR_EN must be first */
+	gpio_set_level(GPIO_PCH_PWR_EN, 1);
+	hook_call_deferred(&pd1_chip_interrupt_deferred_data, 0);
+	//task_set_event(TASK_ID_CYPD, CYPD_EVT_INT_CTRL_1, 0);
+	pending_retimer_init(1);
+
+	hook_call_deferred(&pd_bb_powerdown_deferred_data, BB_PWR_DOWN_TIMEOUT);
 }
 /*
 void soc_plt_reset_interrupt_deferred(void)
@@ -1050,33 +1202,36 @@ void soc_plt_reset_interrupt(enum gpio_signal signal)
 }
 
 /* Called on AP S5 -> S3 transition */
+/*
 static void pd_enter_s3(void)
 {
-	cypd_enque_evt(CYPD_EVT_S3, 0);
+	cypd_enque_evt(CYPD_EVT_S_CHANGE, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 		pd_enter_s3,
 		HOOK_PRIO_DEFAULT);
-
+*/
 
 /* Called on AP S3 -> S5 transition */
+/*
 static void pd_enter_s5(void)
 {
-	cypd_enque_evt(CYPD_EVT_S5, 0);
+	cypd_enque_evt(CYPD_EVT_S_CHANGE, 0);
 
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 		pd_enter_s5,
 		HOOK_PRIO_DEFAULT);
-
+*/
 /* Called on AP S3 -> S0 transition */
+/*
 static void pd_enter_s0(void)
 {
-	cypd_enque_evt(CYPD_EVT_S0, 0);
+	cypd_enque_evt(CYPD_EVT_S_CHANGE, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pd_enter_s0,
 	     HOOK_PRIO_DEFAULT);
-
+*/
 
 void cypd_reinitialize(void)
 {
@@ -1103,9 +1258,8 @@ void cypd_interrupt_handler_task(void *p)
 	cypd_enque_evt(CYPD_EVT_STATE_CTRL_0 | CYPD_EVT_STATE_CTRL_1, 0);
 
 	for (i = 0; i < PD_CHIP_COUNT; i++) {
-		if (gpio_get_level(pd_chip_config[i].gpio) == 0) {
-		   cypd_enque_evt(1<<i, 0);
-		}
+		gpio_enable_interrupt(pd_chip_config[i].gpio);
+		cypd_enque_evt(CYPD_EVT_STATE_CTRL_0<<i, 0);
 	}
 	while (1) {
 		evt = task_wait_event(10*MSEC);
@@ -1116,49 +1270,24 @@ void cypd_interrupt_handler_task(void *p)
 		if (evt & CYPD_EVT_AC_PRESENT) {
 			CPRINTS("GPIO_AC_PRESENT_PD_L changed: value: 0x%02x", gpio_get_level(GPIO_AC_PRESENT_PD_L));
 		}
-		/*
-		if (evt & CYPD_EVT_S5) {
-			cyp5225_set_power_state(CYP5525_POWERSTATE_S5);
-		}
-		if (evt & CYPD_EVT_S3) {
-			cyp5225_set_power_state(CYP5525_POWERSTATE_S3);
-		}
-		if (evt & CYPD_EVT_S0) {
-			cyp5225_set_power_state(CYP5525_POWERSTATE_S0);
-		}
-		*/
 
 		if (evt & CYPD_EVT_PLT_RESET) {
 			CPRINTS("PD Event Platform Reset!");
-			/* initialize BB retimers after a reset */
-			/*
-			cypd_configure_bb_retimer_power_state(0, 1);
-			cypd_configure_bb_retimer_power_state(1, 1);
-			*/
 		}
-		if (evt & CYPD_EVT_RETIMER_PWR) {
-			if (saved_power_state == POWER_S5) {
-				cypd_configure_bb_retimer_power_state(0, 1);
-				cypd_configure_bb_retimer_power_state(1, 1);
-				usleep(50);
-			}
-			if (saved_power_state == POWER_S5) {
-				cyp5225_set_power_state(CYP5525_POWERSTATE_S5);
-			}
-			if (saved_power_state == POWER_S3) {
-				cyp5225_set_power_state(CYP5525_POWERSTATE_S3);
-			}
-			if (saved_power_state == POWER_S0) {
-				cyp5225_set_power_state(CYP5525_POWERSTATE_S0);
-			}
-			usleep(50);
 
-			if (saved_power_state == POWER_G3) {
-				cypd_configure_bb_retimer_power_state(0, 0);
-				cypd_configure_bb_retimer_power_state(1, 0);
-				usleep(50);
+		if (evt & CYPD_EVT_RETIMER_PWR) {
+			if (saved_bb_power_state == POWER_G3S5) {
+					cypd_bb_retimer_cmd(RT_EVT_VSYS_ADDED);
+			}
+			if (saved_bb_power_state == POWER_G3) {
+					cypd_bb_retimer_cmd(RT_EVT_VSYS_REMOVED);
 			}
 		}
+
+		if (evt & CYPD_EVT_S_CHANGE) {
+			update_system_power_state();
+		}
+
 		if (evt & CYPD_EVT_INT_CTRL_0) {
 			cyp5525_interrupt(0);
 		}
@@ -1167,9 +1296,14 @@ void cypd_interrupt_handler_task(void *p)
 		}
 		if (evt & CYPD_EVT_STATE_CTRL_0) {
 			cypd_handle_state(0);
+			task_wait_event_mask(TASK_EVENT_TIMER,10);
 		}
 		if (evt & CYPD_EVT_STATE_CTRL_1) {
 			cypd_handle_state(1);
+			task_wait_event_mask(TASK_EVENT_TIMER,10);
+		}
+		if (evt & CYPD_EVT_UPDATE_PWRSTAT) {
+			cypd_update_power_status();
 		}
 
 		if (evt & (CYPD_EVT_INT_CTRL_0 | CYPD_EVT_INT_CTRL_1 |
@@ -1342,6 +1476,7 @@ int board_set_active_charge_port(int charge_port)
 	for (i = 0; i < PD_CHIP_COUNT; i++)
 		cypd_write_reg8(i, CYP5225_USER_DISABLE_LOCKOUT, disable_lockout);
 
+	cypd_enque_evt(CYPD_EVT_UPDATE_PWRSTAT, 100);
 	hook_call_deferred(&update_power_limit_deferred_data, 100 * MSEC);
 	CPRINTS("Updating %s port %d", __func__, charge_port);
 
@@ -1672,7 +1807,16 @@ static int cmd_cypd_control(int argc, char **argv)
 			pwrstate = strtoul(argv[3], &e, 0);
 			if (*e)
 				return EC_ERROR_PARAM3;
-			cyp5225_set_power_state(pwrstate);
+			cypd_set_power_state(pwrstate);
+		} else if (!strncmp(argv[1], "reg", 3)) {
+			int r;
+			int regval;
+			if (argc < 5) {
+				return EC_ERROR_PARAM4;
+			}
+			r = strtoul(argv[3], &e, 0);
+			regval = strtoul(argv[4], &e, 0);
+			cypd_write_reg16(i, r,  regval);
 		} else {
 			return EC_ERROR_PARAM1;
 		}

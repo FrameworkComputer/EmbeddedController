@@ -753,8 +753,6 @@ int board_chipset_power_on(void);
 
 int board_get_version(void);
 
-void board_power_off(void);
-
 void boot_ap_on_g3(void);
 
 void power_button_enable_led(int enable);
