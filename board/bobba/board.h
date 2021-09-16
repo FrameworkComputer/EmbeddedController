@@ -17,7 +17,6 @@
 #define I2C_PORT_ACCEL	I2C_PORT_SENSOR
 
 /* EC console commands  */
-#define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 #undef CONFIG_CMD_ACCELSPOOF
 #undef CONFIG_CMD_MFALLOW
