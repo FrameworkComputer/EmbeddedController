@@ -58,8 +58,12 @@
  */
 #define PWRBTN_DELAY_T0    (32 * MSEC)  /* 32ms (PCH requires >16ms) */
 #define PWRBTN_DELAY_T1    (4 * SECOND - PWRBTN_DELAY_T0)  /* 4 secs - t0 */
-#define PWRBTN_DELAY_T2    (20 * SECOND - PWRBTN_DELAY_T1)  /* 20 secs - t1 */
-#define PWRBTN_DELAY_T3    (10 * SECOND - PWRBTN_DELAY_T1)  /* 10 secs - t1 */
+#define PWRBTN_DELAY_T4 \
+	(8 * SECOND - PWRBTN_DELAY_T1 - PWRBTN_DELAY_T0)  /* 8 secs - t1 */
+#define PWRBTN_DELAY_T2 \
+	(20 * SECOND - PWRBTN_DELAY_T4 - PWRBTN_DELAY_T1)  /* 20 secs - t4 */
+#define PWRBTN_DELAY_T3 \
+	(10 * SECOND - PWRBTN_DELAY_T4 - PWRBTN_DELAY_T1)  /* 10 secs - t4 */
 /*
  * Length of time to stretch initial power button press to give chipset a
  * chance to wake up (~100ms) and react to the press (~16ms).  Also used as
@@ -103,6 +107,8 @@ enum power_button_state {
 	PWRBTN_STATE_NEED_RESET,
 	/* Power button pressed keep long time; battery disconnect */
 	PWRBTN_STATE_NEED_BATT_CUTOFF,
+	/* Power button press keep long time; force shutdown */
+	PWRBTN_STATE_NEED_SHUTDOWN,
 };
 static enum power_button_state pwrbtn_state = PWRBTN_STATE_IDLE;
 
@@ -120,6 +126,7 @@ static const char * const state_names[] = {
 	"was-off",
 	"need-reset",
 	"batt-cutoff",
+	"force-shutdown"
 };
 
 /*
@@ -435,16 +442,13 @@ static void state_machine(uint64_t tnow)
 		break;
 	case PWRBTN_STATE_HELD:
 
-		if (!power_button_is_pressed())
+		if (power_button_is_pressed()) {
+			tnext_state = tnow + PWRBTN_DELAY_T4;
+			pwrbtn_state = PWRBTN_STATE_NEED_SHUTDOWN;
+		} else {
 			power_button_released(tnow);
-
-		if (!gpio_get_level(GPIO_ON_OFF_FP_L)) {
-			tnext_state = tnow + PWRBTN_DELAY_T2;
-			pwrbtn_state = PWRBTN_STATE_NEED_RESET;
-		} else if (!gpio_get_level(GPIO_ON_OFF_BTN_L)) {
-			tnext_state = tnow + PWRBTN_DELAY_T3;
-			pwrbtn_state = PWRBTN_STATE_NEED_BATT_CUTOFF;
 		}
+
 		break;
 	case PWRBTN_STATE_EAT_RELEASE:
 		/* Do nothing */
@@ -471,6 +475,26 @@ static void state_machine(uint64_t tnow)
 			/* Stop stretching the power button press */
 			power_button_released(tnow);
 		}
+		break;
+	case PWRBTN_STATE_NEED_SHUTDOWN:
+
+		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+			CPRINTS("PB held press 8s execute force shutdown");
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_G3);
+		}
+
+		if (power_button_is_pressed()) {
+			if (!gpio_get_level(GPIO_ON_OFF_FP_L)) {
+				tnext_state = tnow + PWRBTN_DELAY_T2;
+				pwrbtn_state = PWRBTN_STATE_NEED_RESET;
+			} else if (!gpio_get_level(GPIO_ON_OFF_BTN_L)) {
+				tnext_state = tnow + PWRBTN_DELAY_T3;
+				pwrbtn_state = PWRBTN_STATE_NEED_BATT_CUTOFF;
+			}
+		} else {
+			power_button_released(tnow);
+		}
+
 		break;
 	}
 }
