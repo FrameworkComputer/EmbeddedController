@@ -460,6 +460,7 @@ static void state_machine(uint64_t tnow)
 			power_button_battery_cutoff = 0;
 			board_cut_off_battery();
 			CPRINTS("PB held press 10s execute battery disconnect");
+			power_button_released(tnow);
 		}
 		break;
 	case PWRBTN_STATE_NEED_RESET:
