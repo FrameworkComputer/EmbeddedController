@@ -492,6 +492,38 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state,
 			set_retimer_con);
 }
 
+void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t mux_state)
+{
+	uint32_t retimer_con_reg = 0;
+
+	if (bb_retimer_read(me, BB_RETIMER_REG_CONNECTION_STATE,
+			    &retimer_con_reg) != EC_SUCCESS)
+		return;
+
+	/*
+	 * Bit 14: IRQ_HPD (ignored if BIT8 = 0)
+	 * 0 - No IRQ_HPD
+	 * 1 - IRQ_HPD received
+	 */
+	if (mux_state & USB_PD_MUX_HPD_IRQ)
+		retimer_con_reg |= BB_RETIMER_IRQ_HPD;
+	else
+		retimer_con_reg &= ~BB_RETIMER_IRQ_HPD;
+
+	/*
+	 * Bit 15: HPD_LVL (ignored if BIT8 = 0)
+	 * 0 - HPD_State Low
+	 * 1 - HPD_State High
+	 */
+	if (mux_state & USB_PD_MUX_HPD_LVL)
+		retimer_con_reg |= BB_RETIMER_HPD_LVL;
+	else
+		retimer_con_reg &= ~BB_RETIMER_HPD_LVL;
+
+	/* Writing the register4 */
+	bb_retimer_write(me, BB_RETIMER_REG_CONNECTION_STATE, retimer_con_reg);
+}
+
 static int retimer_low_power_mode(const struct usb_mux *me)
 {
 	return bb_retimer_power_enable(me, false);
