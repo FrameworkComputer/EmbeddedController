@@ -98,6 +98,7 @@
 #define DEFAULT_SERIALNO "Uninitialized"
 #define CONFIG_MAC_ADDR
 #define DEFAULT_MAC_ADDR "Uninitialized"
+#define CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL		0
