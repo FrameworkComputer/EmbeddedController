@@ -78,7 +78,7 @@ GPIO(AC_PRESENT_OUT,        PIN(0240),  GPIO_ODR_LOW)
 GPIO(EC_RSMRST_L,           PIN(036),   GPIO_INPUT | GPIO_OUT_LOW)
 GPIO(EC_ON,                 PIN(0250),  GPIO_OUT_HIGH) /* keep +3VL_EC to power on */
 GPIO(PCH_DPWROK,            PIN(012),   GPIO_ODR_LOW)
-GPIO(PCH_PWR_EN,            PIN(0244),  GPIO_ODR_LOW)
+GPIO(PCH_PWR_EN,            PIN(0244),  GPIO_INPUT | GPIO_ODR_LOW)
 GPIO(SYSON,                 PIN(0222),  GPIO_OUT_LOW)
 GPIO(SUSP_L,                PIN(034),   GPIO_OUT_LOW)
 GPIO(EC_VCCST_PG,           PIN(023),   GPIO_OUT_LOW)
@@ -103,9 +103,9 @@ GPIO(EC_I2C06_PD_SDA, PIN(0132),  GPIO_INPUT)
 
 
 /* PD controller */
-GPIO_INT(EC_PD_INTA_L,    PIN(0115), GPIO_INT_FALLING, pd_chip_interrupt)
-GPIO_INT(EC_PD_INTB_L,    PIN(0127), GPIO_INT_FALLING, pd_chip_interrupt)
-GPIO_INT(AC_PRESENT_PD_L, PIN(013),  GPIO_INT_BOTH, pd_chip_interrupt)
+GPIO_INT(EC_PD_INTA_L,    PIN(0115), GPIO_INT_FALLING, pd0_chip_interrupt)
+GPIO_INT(EC_PD_INTB_L,    PIN(0127), GPIO_INT_FALLING, pd1_chip_interrupt)
+GPIO(AC_PRESENT_PD_L,     PIN(013),  GPIO_INPUT)
 GPIO_INT(TYPEC0_VBUS_ON_EC,     PIN(0144), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
 GPIO_INT(TYPEC1_VBUS_ON_EC,     PIN(0143), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
 GPIO_INT(TYPEC2_VBUS_ON_EC,     PIN(0142), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */

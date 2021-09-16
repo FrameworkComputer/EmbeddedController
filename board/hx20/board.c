@@ -243,7 +243,7 @@ const struct i2c_port_t i2c_ports[]  = {
 	{"batt",     MCHP_I2C_PORT1, 100,  GPIO_I2C_1_SDA, GPIO_I2C_1_SCL},
 	{"touchpd",  MCHP_I2C_PORT2, 100,  GPIO_I2C_2_SDA, GPIO_I2C_2_SCL},
 	{"sensors",  MCHP_I2C_PORT3, 100,  GPIO_I2C_3_SDA, GPIO_I2C_3_SCL},
-	{"pd",       MCHP_I2C_PORT6, 100,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL},
+	{"pd",       MCHP_I2C_PORT6, 400,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL},
 	{"pch",      MCHP_I2C_PORT0, 400,  GPIO_I2C_0_SDA, GPIO_I2C_0_SCL},
 
 };

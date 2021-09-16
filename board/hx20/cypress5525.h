@@ -20,6 +20,7 @@
 #define CYP5525_FW2_VERSION_REG         0x0020
 #define CYP5525_PDPORT_ENABLE_REG       0x002C
 #define CYP5525_POWER_STAT              0x002E
+#define CYP5525_BATTERY_STAT			0x0031
 
 #define CYP5525_UCSI_STATUS_REG         0x0038
 #define CYP5525_UCSI_CONTROL_REG        0x0039
@@ -144,6 +145,9 @@ enum cypd_pd_command {
 	CYPD_PD_CMD_VCONN_EN = 0x07,
 	CYPD_PD_CMD_VCONN_DIS = 0x08,
 	CYPD_PD_CMD_TRG_VCONN_SWAP = 0x09,
+	CYPD_PD_CMD_HARD_RESET = 0x0D,
+	CYPD_PD_CMD_SOFT_RESET = 0x0E,
+	CYPD_PD_CMD_CABLE_RESET = 0x0F,
 	CYPD_PD_CMD_EC_INIT_COMPLETE = 0x10,
 	CYPD_PD_CMD_PORT_DISABLE = 0x11,
 	CYPD_PD_CMD_CHANGE_PD_PORT_PARAMS = 0x14,
@@ -289,6 +293,16 @@ enum cypd_response {
 #define CYP5225_RESET_CMD				0x0152 /* Byte[0]:'R', Byte[1]:0x01 */
 #define CYP5225_RESET_CMD_I2C			0x0052 /* Byte[0]:'R', Byte[1]:0x00 */
 
+/*
+ * Retimer control register commands
+ */
+#define RT_EVT_VSYS_REMOVED 0
+#define RT_EVT_VSYS_ADDED 1
+#define RT_EVT_RETRY_STATUS 2
+#define RT_EVT_UPDATE_STATUS 3
+
+#define BB_PWR_DOWN_TIMEOUT (4000*MSEC)
+
 enum cyp5525_state {
 	CYP5525_STATE_ERROR,
 	CYP5525_STATE_POWER_ON,
@@ -374,18 +388,17 @@ enum pd_task_evt {
 	CYPD_EVT_STATE_CTRL_0 = BIT(2),
 	CYPD_EVT_STATE_CTRL_1 = BIT(3),
 	CYPD_EVT_AC_PRESENT =  BIT(4),
-	CYPD_EVT_S0 = BIT(5),
-	CYPD_EVT_S3 = BIT(6),
-	CYPD_EVT_S4 = BIT(7),
-	CYPD_EVT_S5 = BIT(8),
-	CYPD_EVT_PLT_RESET = BIT(9),
-	CYPD_EVT_UCSI_POLL_CTRL_0 = BIT(10),
-	CYPD_EVT_UCSI_POLL_CTRL_1 = BIT(11),
-	CYPD_EVT_RETIMER_PWR = BIT(12),
+	CYPD_EVT_S_CHANGE = BIT(5),
+	CYPD_EVT_PLT_RESET = BIT(6),
+	CYPD_EVT_UCSI_POLL_CTRL_0 = BIT(7),
+	CYPD_EVT_UCSI_POLL_CTRL_1 = BIT(8),
+	CYPD_EVT_RETIMER_PWR = BIT(9),
+	CYPD_EVT_UPDATE_PWRSTAT = BIT(10)
 };
 
 /* PD CHIP */
-void pd_chip_interrupt(enum gpio_signal signal);
+void pd0_chip_interrupt(enum gpio_signal signal);
+void pd1_chip_interrupt(enum gpio_signal signal);
 
 void pd_extpower_is_present_interrupt(enum gpio_signal signal);
 void soc_plt_reset_interrupt(enum gpio_signal signal);
@@ -422,7 +435,9 @@ int check_tbt_mode(int controller);
 
 void cypd_print_buff(const char *msg, void *buff, int len);
 
-void set_retimer_power(enum power_state power);
+void cypd_set_retimer_power(enum power_state power);
+
+void cypd_set_power_active(enum power_state power);
 
 void set_pd_fw_update(bool update);
 #endif	/* __CROS_EC_CYPRESS5525_H */
