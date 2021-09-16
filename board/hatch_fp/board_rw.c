@@ -46,6 +46,15 @@ static void configure_fp_sensor_spi(void)
 
 void board_init_rw(void)
 {
+	/*
+	 * FP_RST_ODL pin is defined in gpio_rw.inc (with GPIO_OUT_HIGH
+	 * flag) but not in gpio.inc, so RO leaves this pin set to 0 (reset
+	 * default), but RW doesn't initialize this pin to 1 because sysjump
+	 * to RW is a warm reset (see gpio_pre_init() in chip/stm32/gpio.c).
+	 * Explicitly reset FP_RST_ODL pin to default value.
+	 */
+	gpio_reset(GPIO_FP_RST_ODL);
+
 	/* Configure and enable SPI as master for FP sensor */
 	configure_fp_sensor_spi();
 }
