@@ -18,6 +18,8 @@
 /* EC console commands */
 #define CONFIG_CMD_TCPC_DUMP
 #define CONFIG_CMD_CHARGER_DUMP
+#undef CONFIG_CMD_POWERINDEBUG
+#undef CONFIG_I2C_DEBUG
 
 /* Battery */
 #define CONFIG_BATTERY_FUEL_GAUGE
