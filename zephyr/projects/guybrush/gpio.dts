@@ -105,6 +105,7 @@
 		ec_soc_wake_l {
 			gpios = <&gpio0 3 GPIO_OUT_HIGH>;
 			label = "EC_SOC_WAKE_L";
+			enum-name = "GPIO_EC_PCH_WAKE_ODL";
 		};
 		ec_soc_int_l {
 			gpios = <&gpio8 3 GPIO_OUT_HIGH>;
