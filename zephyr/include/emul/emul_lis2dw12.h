@@ -6,4 +6,24 @@
 #ifndef ZEPHYR_INCLUDE_EMUL_EMUL_LIS2DW12_H_
 #define ZEPHYR_INCLUDE_EMUL_EMUL_LIS2DW12_H_
 
+#include <emul.h>
+
+/**
+ * @brief Reset the state of the lis2dw12 emulator.
+ *
+ * @param emul The emulator to reset.
+ */
+void lis2dw12_emul_reset(const struct emul *emul);
+
+/**
+ * @brief Set the who-am-i register value.
+ *
+ * By default the who-am-i register holds LIS2DW12_WHO_AM_I, this function
+ * enables overriding that value in order to drive testing.
+ *
+ * @param emul The emulator to modify.
+ * @param who_am_i The new who-am-i register value.
+ */
+void lis2dw12_emul_set_who_am_i(const struct emul *emul, uint8_t who_am_i);
+
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_LIS2DW12_H_ */
