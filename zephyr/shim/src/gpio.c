@@ -72,16 +72,14 @@ struct gpio_signal_callback {
 	const gpio_flags_t flags;
 };
 
-/* The single zephyr gpio handler that routes to appropriate platform/ec cb */
-static void gpio_handler_shim(const struct device *port,
-			      struct gpio_callback *cb, gpio_port_pins_t pins)
-{
-	const struct gpio_signal_callback *const gpio =
-		CONTAINER_OF(cb, struct gpio_signal_callback, callback);
-
-	/* Call the platform/ec gpio interrupt handler */
-	gpio->irq_handler(gpio->signal);
-}
+/*
+ * Each zephyr project should define EC_CROS_GPIO_INTERRUPTS in their gpio_map.h
+ * file if there are any interrupts that should be registered.  The
+ * corresponding handler will be declared here, which will prevent
+ * needing to include headers with complex dependencies in gpio_map.h.
+ *
+ * EC_CROS_GPIO_INTERRUPTS is a space-separated list of GPIO_INT items.
+ */
 
 /*
  * Validate interrupt flags are valid for the Zephyr GPIO driver.
@@ -106,14 +104,6 @@ EC_CROS_GPIO_INTERRUPTS
 #endif
 #undef GPIO_INT
 
-/*
- * Each zephyr project should define EC_CROS_GPIO_INTERRUPTS in their gpio_map.h
- * file if there are any interrupts that should be registered.  The
- * corresponding handler will be declared here, which will prevent
- * needing to include headers with complex dependencies in gpio_map.h.
- *
- * EC_CROS_GPIO_INTERRUPTS is a space-separated list of GPIO_INT items.
- */
 #define GPIO_INT(sig, f, cb) void cb(enum gpio_signal signal);
 #ifdef EC_CROS_GPIO_INTERRUPTS
 EC_CROS_GPIO_INTERRUPTS
@@ -132,6 +122,17 @@ struct gpio_signal_callback gpio_interrupts[] = {
 #endif
 #undef GPIO_INT
 };
+
+/* The single zephyr gpio handler that routes to appropriate platform/ec cb */
+static void gpio_handler_shim(const struct device *port,
+			      struct gpio_callback *cb, gpio_port_pins_t pins)
+{
+	const struct gpio_signal_callback *const gpio =
+		CONTAINER_OF(cb, struct gpio_signal_callback, callback);
+
+	/* Call the platform/ec gpio interrupt handler */
+	gpio->irq_handler(gpio->signal);
+}
 
 /**
  * get_interrupt_from_signal() - Translate a gpio_signal to the
