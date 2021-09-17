@@ -9,6 +9,7 @@
 	aliases {
 		bmi260-int = &ms_bmi260_accel;
 		bmi160-int = &ms_bmi160_accel;
+		lis2dw12-int = &ms_lis2dw12_accel;
 		tcs3400-int = &tcs3400_clear;
 	};
 	named-gpios {
@@ -207,6 +208,10 @@
 		mutex_bmi160: bmi160-mutex {
 			label = "BMI160_MUTEX";
 		};
+
+		mutex_lis2dw12: lis2dw12-mutex {
+			label = "LIS2DW12_MUTEX";
+		};
 	};
 
 	/*
@@ -221,6 +226,11 @@
 
 		bmi160_data: bmi160-drv-data {
 			compatible = "cros-ec,drvdata-bmi160";
+			status = "okay";
+		};
+
+		lis2dw12_data: lis2dw12-drv-data {
+			compatible = "cros-ec,drvdata-lis2dw12";
 			status = "okay";
 		};
 
@@ -345,6 +355,19 @@
 			drv-data = <&bmi160_data>;
 			default-range = <1000>; /* dps */
 			i2c-spi-addr-flags = "BMI160_ADDR0_FLAGS";
+		};
+
+		ms_lis2dw12_accel: ms-lis2dw12-accel {
+			compatible = "cros-ec,lis2dw12";
+			status = "okay";
+
+			label = "LIS2DW12";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&mutex_lis2dw12>;
+			port = <&i2c_accel>;
+			drv-data = <&lis2dw12_data>;
+			default-range = <2>;
+			i2c-spi-addr-flags = "LIS2DWL_ADDR1_FLAGS";
 		};
 
 		tcs3400_clear: tcs3400-clear {
@@ -494,5 +517,12 @@
 		status = "okay";
 		reg = <0x80>;
 		label = "LN9310";
+	};
+
+	lis2dw12_emul: lis2dw12@19 {
+		compatible = "cros,lis2dw12-emul";
+		status = "okay";
+		reg = <0x19>;
+		label = "LIS2DW12_EMUL";
 	};
 };

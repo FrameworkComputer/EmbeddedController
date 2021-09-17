@@ -1,0 +1,12 @@
+# Copyright 2021 The chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: CROS implementation of the LIS2DW12 emulator
+
+compatible: "cros,lis2dw12-emul"
+
+include: base.yaml
+properties:
+  reg:
+    required: true

@@ -14,6 +14,7 @@
 
 #include "driver/ln9310.h"
 #include "emul/emul_common_i2c.h"
+#include "emul/emul_ln9310.h"
 #include "i2c.h"
 
 #include <logging/log.h>

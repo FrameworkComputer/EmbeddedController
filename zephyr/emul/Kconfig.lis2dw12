@@ -1,0 +1,23 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+DT_COMPAT_LIS2DW12_EMUL := cros,lis2dw12-emul
+
+menuconfig EMUL_LIS2DW12
+	bool "LIS2DW12 accelerometer emulator"
+	default $(dt_compat_enabled,$(DT_COMPAT_LIS2DW12_EMUL))
+	depends on I2C_EMUL
+	select PLATFORM_EC_ACCEL_LIS2DW12
+	help
+	  Enable the LIS2DW12 emulator. This driver uses the emulated I2C bus.
+	  It is used to test the lis2dw12 driver. Emulator API is available in
+	  zephyr/include/emul/emul_lis2dw12.h
+
+if EMUL_LIS2DW12
+
+module = LIS2DW12_EMUL
+module-str = lis2dw12_emul
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # EMUL_LIS2DW12

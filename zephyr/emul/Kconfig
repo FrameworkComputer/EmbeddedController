@@ -68,3 +68,4 @@ config EMUL_BB_RETIMER
 	  available in zephyr/include/emul/emul_bb_retimer.h
 
 rsource "Kconfig.ln9310"
+rsource "Kconfig.lis2dw12"
