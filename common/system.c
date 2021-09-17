@@ -1568,16 +1568,12 @@ DECLARE_CONSOLE_COMMAND(rflags, command_rflags,
 static enum ec_status
 host_command_get_version(struct host_cmd_handler_args *args)
 {
-	struct ec_response_get_version *r = args->response;
+	struct ec_response_get_version_v1 *r = args->response;
 	enum ec_image active_slot = system_get_active_copy();
-
-	/* Clear optional fields (i.e. cros_fwid). */
-	memset(r, 0, sizeof(*r));
 
 	strzcpy(r->version_string_ro, system_get_version(EC_IMAGE_RO),
 		sizeof(r->version_string_ro));
-	strzcpy(r->version_string_rw,
-		system_get_version(active_slot),
+	strzcpy(r->version_string_rw, system_get_version(active_slot),
 		sizeof(r->version_string_rw));
 
 	switch (system_get_image_copy()) {
@@ -1593,18 +1589,30 @@ host_command_get_version(struct host_cmd_handler_args *args)
 		break;
 	}
 
+	/*
+	 * Assuming args->response is zero'd in host_command_process, so no need
+	 * to zero uninitialized fields here.
+	 */
 	if (args->version > 0 && IS_ENABLED(CONFIG_CROS_FWID_VERSION)) {
 		strzcpy(r->cros_fwid_ro, system_get_cros_fwid(EC_IMAGE_RO),
 			sizeof(r->cros_fwid_ro));
 		strzcpy(r->cros_fwid_rw, system_get_cros_fwid(EC_IMAGE_RW),
 			sizeof(r->cros_fwid_rw));
 	}
+
+	/*
+	 * By convention, ec_response_get_version_v1 is a strict superset of
+	 * ec_response_get_version(v0). The v1 response changes the semantics
+	 * of one field (reserved to cros_fwid_ro) and adds one additional field
+	 * (cros_fwid_rw). So simply adjusting the response size here is safe.
+	 */
 	if (args->version == 0)
-		/* cros_fwid_rw[32] is not present in version 0 */
-		args->response_size =
-			offsetof(struct ec_response_get_version, cros_fwid_rw);
-	else
 		args->response_size = sizeof(struct ec_response_get_version);
+	else if (args->version == 1)
+		args->response_size = sizeof(struct ec_response_get_version_v1);
+	else
+		/* Shouldn't happen because of EC_VER_MASK */
+		return EC_RES_INVALID_VERSION;
 
 	return EC_RES_SUCCESS;
 }

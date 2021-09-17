@@ -1149,14 +1149,33 @@ enum ec_image {
 };
 
 /**
- * struct ec_response_get_version - Response to the get version command.
+ * struct ec_response_get_version - Response to the v0 get version command.
+ * @version_string_ro: Null-terminated RO firmware version string.
+ * @version_string_rw: Null-terminated RW firmware version string.
+ * @reserved: Unused bytes; was previously RW-B firmware version string.
+ * @current_image: One of ec_image.
+ */
+struct ec_response_get_version {
+	char version_string_ro[32];
+	char version_string_rw[32];
+	char reserved[32];  /* Changed to cros_fwid_ro in version 1 */
+	uint32_t current_image;
+} __ec_align4;
+
+/**
+ * struct ec_response_get_version_v1 - Response to the v1 get version command.
+ *
+ * ec_response_get_version_v1 is a strict superset of ec_response_get_version.
+ * The v1 response changes the semantics of one field (reserved to cros_fwid_ro)
+ * and adds one additional field (cros_fwid_rw).
+ *
  * @version_string_ro: Null-terminated RO firmware version string.
  * @version_string_rw: Null-terminated RW firmware version string.
  * @cros_fwid_ro: Null-terminated RO CrOS FWID string.
  * @current_image: One of ec_image.
  * @cros_fwid_rw: Null-terminated RW CrOS FWID string.
  */
-struct ec_response_get_version {
+struct ec_response_get_version_v1 {
 	char version_string_ro[32];
 	char version_string_rw[32];
 	char cros_fwid_ro[32];  /* Added in version 1 (Used to be reserved) */
