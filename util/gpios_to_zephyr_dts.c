@@ -57,6 +57,8 @@
 	       maybe_parens(strip_zero_ors(#opts)), #name);
 #define PIN(A, B) "gpio" #A " " #B
 #define ALTERNATE(...)
+#define IOEX(...)
+#define IOEX_INT(...)
 
 /* Strip out " | 0" and "0 | " from a string */
 static char *strip_zero_ors(const char *s)
