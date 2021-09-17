@@ -60,12 +60,10 @@ static struct gpio_data data[] = {
 #endif
 };
 
-/* Maps platform/ec gpio callbacks to zephyr gpio callbacks */
+/* Maps platform/ec gpio callback information */
 struct gpio_signal_callback {
 	/* The platform/ec gpio_signal */
 	const enum gpio_signal signal;
-	/* Zephyr callback */
-	struct gpio_callback callback;
 	/* IRQ handler from platform/ec code */
 	void (*const irq_handler)(enum gpio_signal signal);
 	/* Interrupt-related gpio flags */
@@ -104,11 +102,37 @@ EC_CROS_GPIO_INTERRUPTS
 #endif
 #undef GPIO_INT
 
+/*
+ * Create unique enum values for each GPIO_INT entry, which also sets
+ * the ZEPHYR_GPIO_INT_COUNT value.
+ */
+#define ZEPHYR_GPIO_INT_ID(sig) INT_##sig
+#define GPIO_INT(sig, f, cb) ZEPHYR_GPIO_INT_ID(sig),
+enum zephyr_gpio_int_id {
+#ifdef EC_CROS_GPIO_INTERRUPTS
+	EC_CROS_GPIO_INTERRUPTS
+#endif
+	ZEPHYR_GPIO_INT_COUNT,
+};
+#undef GPIO_INT
+
+/* Create prototypes for each GPIO IRQ handler */
 #define GPIO_INT(sig, f, cb) void cb(enum gpio_signal signal);
 #ifdef EC_CROS_GPIO_INTERRUPTS
 EC_CROS_GPIO_INTERRUPTS
 #endif
 #undef GPIO_INT
+
+/*
+ * The Zephyr gpio_callback data needs to be updated at runtime, so allocate
+ * into uninitialized data (BSS). The constant data pulled from
+ * EC_CROS_GPIO_INTERRUPTS is stored separately in the gpio_interrupts[] array.
+ */
+static struct gpio_callback zephyr_gpio_callbacks[ZEPHYR_GPIO_INT_COUNT];
+
+#define ZEPHYR_GPIO_CALLBACK_TO_INDEX(cb)                 \
+	(int)(((int)(cb) - (int)&zephyr_gpio_callbacks) / \
+	      sizeof(struct gpio_callback))
 
 #define GPIO_INT(sig, f, cb)       \
 	{                          \
@@ -116,19 +140,21 @@ EC_CROS_GPIO_INTERRUPTS
 		.flags = f,        \
 		.irq_handler = cb, \
 	},
-struct gpio_signal_callback gpio_interrupts[] = {
+const static struct gpio_signal_callback
+	gpio_interrupts[ZEPHYR_GPIO_INT_COUNT] = {
 #ifdef EC_CROS_GPIO_INTERRUPTS
-	EC_CROS_GPIO_INTERRUPTS
+		EC_CROS_GPIO_INTERRUPTS
 #endif
 #undef GPIO_INT
-};
+	};
 
 /* The single zephyr gpio handler that routes to appropriate platform/ec cb */
 static void gpio_handler_shim(const struct device *port,
 			      struct gpio_callback *cb, gpio_port_pins_t pins)
 {
+	int callback_index = ZEPHYR_GPIO_CALLBACK_TO_INDEX(cb);
 	const struct gpio_signal_callback *const gpio =
-		CONTAINER_OF(cb, struct gpio_signal_callback, callback);
+		&gpio_interrupts[callback_index];
 
 	/* Call the platform/ec gpio interrupt handler */
 	gpio->irq_handler(gpio->signal);
@@ -143,7 +169,7 @@ static void gpio_handler_shim(const struct device *port,
  * Return: A pointer to the corresponding entry in gpio_interrupts, or
  * NULL if one does not exist.
  */
-static struct gpio_signal_callback *
+const static struct gpio_signal_callback *
 get_interrupt_from_signal(enum gpio_signal signal)
 {
 	if (!gpio_is_implemented(signal))
@@ -320,10 +346,10 @@ static int init_gpios(const struct device *unused)
 		if (signal == GPIO_UNIMPLEMENTED)
 			continue;
 
-		gpio_init_callback(&gpio_interrupts[i].callback,
-				   gpio_handler_shim, BIT(configs[signal].pin));
+		gpio_init_callback(&zephyr_gpio_callbacks[i], gpio_handler_shim,
+				   BIT(configs[signal].pin));
 		rv = gpio_add_callback(data[signal].dev,
-				       &gpio_interrupts[i].callback);
+				       &zephyr_gpio_callbacks[i]);
 
 		if (rv < 0) {
 			LOG_ERR("Callback reg failed %s (%d)",
@@ -352,7 +378,7 @@ SYS_INIT(init_gpios, POST_KERNEL, CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY);
 int gpio_enable_interrupt(enum gpio_signal signal)
 {
 	int rv;
-	struct gpio_signal_callback *interrupt;
+	const struct gpio_signal_callback *interrupt;
 
 	interrupt = get_interrupt_from_signal(signal);
 
