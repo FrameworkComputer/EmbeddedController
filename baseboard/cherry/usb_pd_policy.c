@@ -217,7 +217,7 @@ void pd_power_supply_reset(int port)
 		pd_set_vbus_discharge(port, 1);
 
 	if (port == 1)
-		rt1718s_gpio_ctrl(RT1718S_GPIO_DISABLED);
+		rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_5V_OUT, 0);
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -245,11 +245,8 @@ int pd_set_power_supply_ready(int port)
 	if (rv)
 		return rv;
 
-	if (port == 1) {
-		rv = rt1718s_gpio_ctrl(RT1718S_GPIO_ENABLE_SOURCE);
-		if (rv)
-			return rv;
-	}
+	if (port == 1)
+		rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_5V_OUT, 1);
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);

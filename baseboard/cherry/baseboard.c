@@ -373,28 +373,6 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-int rt1718s_gpio_ctrl(enum rt1718s_gpio_state state)
-{
-	const int port = 1;
-
-	switch (state) {
-	case RT1718S_GPIO_DISABLED:
-		rt1718s_gpio_set_level(port, RT1718S_GPIO1, 1);
-		rt1718s_gpio_set_level(port, RT1718S_GPIO2, 0);
-		break;
-	case RT1718S_GPIO_ENABLE_SINK:
-		rt1718s_gpio_set_level(port, RT1718S_GPIO1, 0);
-		rt1718s_gpio_set_level(port, RT1718S_GPIO2, 0);
-		break;
-	case RT1718S_GPIO_ENABLE_SOURCE:
-		rt1718s_gpio_set_level(port, RT1718S_GPIO1, 1);
-		rt1718s_gpio_set_level(port, RT1718S_GPIO2, 1);
-		break;
-	}
-
-	return EC_SUCCESS;
-}
-
 __override int board_rt1718s_init(int port)
 {
 	/* set GPIO 1~3 as push pull, as output, output low. */
@@ -495,6 +473,7 @@ int board_set_active_charge_port(int port)
 			if (ppc_vbus_sink_enable(i, 0))
 				CPRINTS("Disabling C%d as sink failed.", i);
 		}
+		rt1718s_gpio_set_level(1, GPIO_EN_USB_C1_VBUS_L, 1);
 
 		return EC_SUCCESS;
 	}
@@ -525,18 +504,7 @@ int board_set_active_charge_port(int port)
 		return EC_ERROR_UNKNOWN;
 	}
 
-	/*
-	 * RT1718S gpio control:
-	 * If new charge port is port 1, enable sink path.
-	 * If new charge port is not port 1, and port 1 is not sourcing,
-	 * turn off both paths.
-	 * Otherwise: port 1 is sourcing, don't change.
-	 */
-	if (port == 1)
-		RETURN_ERROR(rt1718s_gpio_ctrl(RT1718S_GPIO_ENABLE_SINK));
-	else if (port != 1 && !ppc_is_sourcing_vbus(1))
-		/* error ignored to make port 0 work without sub-board */
-		rt1718s_gpio_ctrl(RT1718S_GPIO_DISABLED);
+	rt1718s_gpio_set_level(1, GPIO_EN_USB_C1_VBUS_L, !(port == 1));
 
 	return EC_SUCCESS;
 }
@@ -602,7 +570,7 @@ __override int board_pd_set_frs_enable(int port, int enable)
 		 * of set_level (= i2c_update) to save one read operation in
 		 * FRS path.
 		 */
-		rt1718s_gpio_set_flags(port, RT1718S_GPIO3,
+		rt1718s_gpio_set_flags(port, GPIO_EN_USB_C1_FRS,
 				enable ? GPIO_OUT_HIGH : GPIO_OUT_LOW);
 	return EC_SUCCESS;
 }
