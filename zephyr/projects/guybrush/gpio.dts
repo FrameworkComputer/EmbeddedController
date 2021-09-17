@@ -18,6 +18,7 @@
 		mech_pwr_btn_odl {
 			gpios = <&gpiod 2 GPIO_INPUT>;
 			label = "MECH_PWR_BTN_ODL";
+			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		ec_pwr_btn_odl {
 			gpios = <&gpio0 1 GPIO_INPUT>;
