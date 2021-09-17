@@ -461,6 +461,10 @@ int board_set_active_charge_port(int port)
 
 	old_port = charge_manager_get_active_charge_port();
 
+	/* If the port is not changing, we should do nothing */
+	if (old_port == port)
+		return EC_SUCCESS;
+
 	CPRINTS("New chg p%d", port);
 
 	/* Disable all ports. */
