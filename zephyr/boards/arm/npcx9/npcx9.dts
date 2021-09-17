@@ -1,0 +1,167 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/dts-v1/;
+
+#include <cros/nuvoton/npcx9.dtsi>
+#include <dt-bindings/adc/adc.h>
+#include <dt-bindings/gpio_defines.h>
+#include <dt-bindings/wake_mask_event_defines.h>
+#include <nuvoton/npcx9m3f.dtsi>
+
+/ {
+	model = "NPCX9";
+
+	aliases {
+		i2c-0 = &i2c0_0;
+		i2c-1 = &i2c1_0;
+		i2c-2 = &i2c2_0;
+		i2c-3 = &i2c3_0;
+		i2c-5 = &i2c5_0;
+		i2c-7 = &i2c7_0;
+	};
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,console = &uart1;
+		zephyr,shell-uart = &uart1;
+		zephyr,flash = &flash0;
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+		i2c_sensor: sensor {
+			i2c-port = <&i2c0_0>;
+			enum-name = "I2C_PORT_SENSOR";
+			label = "SENSOR";
+		};
+		tcpc0_2 {
+			i2c-port = <&i2c1_0>;
+			enum-name = "I2C_PORT_USB_C0_C2_TCPC";
+			label = "TCPC0,2";
+		};
+		tcpc1 {
+			i2c-port = <&i2c4_1>;
+			enum-name = "I2C_PORT_USB_C1_TCPC";
+			label = "TCPC1";
+		};
+		ppc0_2 {
+			i2c-port = <&i2c2_0>;
+			enum-name = "I2C_PORT_USB_C0_C2_PPC";
+			label = "PPC0,2";
+		};
+		ppc1 {
+			i2c-port = <&i2c6_1>;
+			enum-name = "I2C_PORT_USB_C1_PPC";
+			label = "PPC1";
+		};
+		retimer0_2 {
+			i2c-port = <&i2c3_0>;
+			enum-name = "I2C_PORT_USB_C0_C2_MUX";
+			label = "RETIMER0,2";
+		};
+		battery {
+			i2c-port = <&i2c5_0>;
+			enum-name = "I2C_PORT_BATTERY";
+			label = "BATTERY";
+		};
+		eeprom {
+			i2c-port = <&i2c7_0>;
+			enum-name = "I2C_PORT_EEPROM";
+			label = "EEPROM";
+		};
+		charger {
+			i2c-port = <&i2c7_0>;
+			enum-name = "I2C_PORT_CHARGER";
+			label = "EEPROM";
+		};
+	};
+
+	named-pwms {
+		compatible = "named-pwms";
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+	};
+
+	def-lvol-io-list {
+		compatible = "nuvoton,npcx-lvolctrl-def";
+	};
+};
+
+&uart1 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&altj_cr_sin1_sl2 &altj_cr_sout1_sl2>;
+};
+
+&i2c0_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c1_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+};
+
+&i2c2_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+};
+
+&i2c3_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+};
+
+&i2c4_1 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c5_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c6_1 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c7_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&cros_kb_raw {
+	status = "okay";
+	/* No KSO2 (it's inverted and implemented by GPIO) */
+	pinctrl-0 = <&alt7_no_ksi0_sl
+		     &alt7_no_ksi1_sl
+		     &alt7_no_ksi2_sl
+		     &alt7_no_ksi3_sl
+		     &alt7_no_ksi4_sl
+		     &alt7_no_ksi5_sl
+		     &alt7_no_ksi6_sl
+		     &alt7_no_ksi7_sl
+		     &alt8_no_kso00_sl
+		     &alt8_no_kso01_sl
+		     &alt8_no_kso03_sl
+		     &alt8_no_kso04_sl
+		     &alt8_no_kso05_sl
+		     &alt8_no_kso06_sl
+		     &alt8_no_kso07_sl
+		     &alt9_no_kso08_sl
+		     &alt9_no_kso09_sl
+		     &alt9_no_kso10_sl
+		     &alt9_no_kso11_sl
+		     &alt9_no_kso12_sl
+		     &alt9_no_kso13_sl
+		     &alt9_no_kso14_sl
+		     >;
+};
