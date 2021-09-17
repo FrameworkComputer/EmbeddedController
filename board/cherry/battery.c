@@ -63,6 +63,35 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c	= 75,
 		},
 	},
+	/* AP16L8J */
+	[BATTERY_AP16L8J] = {
+		.fuel_gauge = {
+			.manuf_name = "LGC KT0020G010",
+			.device_name = "AP16L8J",
+			.ship_mode = {
+				.reg_addr = 0x3A,
+				.reg_data = { 0xC574, 0xC574 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0002,
+				.disconnect_val = 0x0,
+			}
+		},
+		.batt_info = {
+			.voltage_max            = 8700,
+			.voltage_normal         = 7500, /* mV */
+			.voltage_min            = 6000, /* mV */
+			.precharge_current      = 256,  /* mA */
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 50,
+			.charging_min_c         = 0,
+			.charging_max_c         = 60,
+			.discharging_min_c      = -20,
+			.discharging_max_c      = 75,
+		},
+	},
 	/* LGC AP18C8K Battery Information */
 	[BATTERY_LGC_AP18C8K] = {
 		.fuel_gauge = {
