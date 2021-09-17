@@ -28,6 +28,12 @@ config AP_X86_INTEL_ADL
 	help
 	  The application processor is Intel Alder Lake (ADL) chipset.
 
+config AP_X86_AMD
+	bool "AP is an AMD chipset"
+	select AP_x86
+	help
+	  The application processor is a product of AMD.
+
 config AP_ARM_MTK_MT8192
 	bool "MediaTek MT8192"
 	select AP_AARCH64
@@ -56,12 +62,6 @@ config AP_X86_INTEL
 	select AP_X86
 	help
 	  The application processor (AP) is an Intel SoC.
-
-config AP_X86_AMD
-	bool
-	select AP_X86
-	help
-	  The application processor (AP) is an AMD SoC.
 
 config AP_X86
 	bool
