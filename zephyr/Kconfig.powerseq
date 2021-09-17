@@ -44,10 +44,30 @@ config PLATFORM_EC_HOSTCMD_AP_RESET
 
 config PLATFORM_EC_POWERSEQ_PP5000_CONTROL
 	bool "Enable a task-safe way to control the PP5000 rail"
+	depends on !AP_X86_AMD
 	default y
 	help
 	  Guard access to the PP5000 GPIO using mutex locks, allowing
 	  the rail to be changed in a task-safe manner.
+
+menuconfig PLATFORM_EC_POWERSEQ_AMD
+	bool "AMD power sequencing"
+	depends on AP_X86_AMD
+	select HAS_TASK_POWERBTN
+	default y
+	help
+	  Enable AMD power sequencing code.
+
+if PLATFORM_EC_POWERSEQ_AMD
+
+config PLATFORM_EC_POWER_BUTTON_TO_PCH_CUSTOM
+	bool "Custom board_pwrbtn_to_pch"
+	help
+	  The board support code provides a custom function,
+	  board_pwrbtn_to_pch, that replaces the standard GPIO set
+	  level to the SoC.
+
+endif  # PLATFORM_EC_POWERSEQ_AMD
 
 menuconfig PLATFORM_EC_POWERSEQ_INTEL
 	bool "Enable shimming common Intel power sequencing code"

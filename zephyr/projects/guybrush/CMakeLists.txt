@@ -13,3 +13,5 @@ set(PLATFORM_EC_BASEBOARD "${PLATFORM_EC}/baseboard/guybrush" CACHE PATH
   "Path to the platform/ec baseboard directory")
 set(PLATFORM_EC_BOARD "${PLATFORM_EC}/board/guybrush" CACHE PATH
   "Path to the platform/ec board directory")
+
+zephyr_library_sources("power_signals.c")
