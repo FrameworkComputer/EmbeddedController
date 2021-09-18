@@ -7,6 +7,15 @@
 #define ZEPHYR_INCLUDE_EMUL_EMUL_LIS2DW12_H_
 
 #include <emul.h>
+#include <drivers/i2c_emul.h>
+
+/**
+ * @brief The the i2c emulator pointer from the top level emul.
+ *
+ * @param emul The emulator to query
+ * @return Pointer to the i2c emulator struct
+ */
+struct i2c_emul *lis2dw12_emul_to_i2c_emul(const struct emul *emul);
 
 /**
  * @brief Reset the state of the lis2dw12 emulator.

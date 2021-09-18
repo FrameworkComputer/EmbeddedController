@@ -36,10 +36,19 @@ struct lis2dw12_emul_cfg {
 	struct i2c_common_emul_cfg common;
 };
 
+struct i2c_emul *lis2dw12_emul_to_i2c_emul(const struct emul *emul)
+{
+	struct lis2dw12_emul_data *data = emul->data;
+
+	return &(data->common.emul);
+}
+
 void lis2dw12_emul_reset(const struct emul *emul)
 {
 	struct lis2dw12_emul_data *data = emul->data;
 
+	i2c_common_emul_set_read_fail_reg(lis2dw12_emul_to_i2c_emul(emul),
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
 	data->who_am_i_reg = LIS2DW12_WHO_AM_I;
 }
 
@@ -55,7 +64,6 @@ static int lis2dw12_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 {
 	struct lis2dw12_emul_data *data = LIS2DW12_DATA_FROM_I2C_EMUL(emul);
 
-	LOG_ERR("read_byte(reg=%d)", reg);
 	switch (reg) {
 	case LIS2DW12_WHO_AM_I_REG:
 		__ASSERT_NO_MSG(bytes == 0);
