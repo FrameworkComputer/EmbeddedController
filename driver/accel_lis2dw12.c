@@ -514,7 +514,7 @@ static int init(struct motion_sensor_t *s)
 	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
 			   LIS2DW12_WHO_AM_I_REG, &tmp);
 	if (ret != EC_SUCCESS)
-		return EC_ERROR_UNKNOWN;
+		return ret;
 
 	if (tmp != LIS2DW12_WHO_AM_I)
 		return EC_ERROR_ACCESS_DENIED;
@@ -533,7 +533,7 @@ static int init(struct motion_sensor_t *s)
 	/* Wait End of Reset. */
 	do {
 		if (timeout > 10) {
-			ret = EC_RES_TIMEOUT;
+			ret = EC_ERROR_TIMEOUT;
 			goto err_unlock;
 		}
 
@@ -592,8 +592,8 @@ static int init(struct motion_sensor_t *s)
 
 err_unlock:
 	mutex_unlock(s->mutex);
-	CPRINTS("%s: MS Init type:0x%X Error", s->name, s->type);
-	return EC_ERROR_UNKNOWN;
+	CPRINTS("%s: MS Init type:0x%X Error(%d)", s->name, s->type, ret);
+	return ret;
 }
 
 const struct accelgyro_drv lis2dw12_drv = {
