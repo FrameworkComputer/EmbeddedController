@@ -1129,6 +1129,55 @@ static void i2c_freq_changed(void)
 
 DECLARE_HOOK(HOOK_FREQ_CHANGE, i2c_freq_changed, HOOK_PRIO_DEFAULT);
 
+enum i2c_freq chip_i2c_get_freq(int chip_i2c_port)
+{
+	int ctrl;
+	int kbps;
+
+	ctrl = i2c_port_to_controller(chip_i2c_port);
+	if (ctrl < 0)
+		return I2C_FREQ_COUNT;
+
+	kbps = i2c_stsobjs[ctrl].kbps;
+
+	if (kbps > 400)
+		return I2C_FREQ_1000KHZ;
+	if (kbps > 100)
+		return I2C_FREQ_400KHZ;
+
+	if (kbps == 100)
+		return I2C_FREQ_100KHZ;
+
+	return I2C_FREQ_COUNT;
+}
+
+int chip_i2c_set_freq(int chip_i2c_port, enum i2c_freq freq)
+{
+	int ctrl;
+	int bus_freq_kbps;
+
+	ctrl = i2c_port_to_controller(chip_i2c_port);
+	if (ctrl < 0)
+		return EC_ERROR_INVAL;
+
+	switch (freq) {
+	case I2C_FREQ_100KHZ:
+		bus_freq_kbps = 100;
+		break;
+	case I2C_FREQ_400KHZ:
+		bus_freq_kbps = 400;
+		break;
+	case I2C_FREQ_1000KHZ:
+		bus_freq_kbps = 1000;
+		break;
+	default:
+		return EC_ERROR_INVAL;
+	}
+
+	i2c_port_set_freq(ctrl, bus_freq_kbps);
+	return EC_SUCCESS;
+}
+
 void i2c_init(void)
 {
 	int i;
