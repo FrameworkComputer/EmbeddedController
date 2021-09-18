@@ -137,16 +137,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.rot_standard_ref = &base_standard_ref,
 		.min_frequency = LSM6DSO_ODR_MIN_VAL,
 		.max_frequency = LSM6DSO_ODR_MAX_VAL,
-		.config = {
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 13000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-		},
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);

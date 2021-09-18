@@ -136,16 +136,6 @@ struct motion_sensor_t motion_sensors[] = {
 		.rot_standard_ref = &base_standard_ref,
 		.min_frequency = ICM426XX_GYRO_MIN_FREQ,
 		.max_frequency = ICM426XX_GYRO_MAX_FREQ,
-		.config = {
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 13000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-		},
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);

@@ -404,13 +404,6 @@ struct motion_sensor_t motion_sensors[] = {
 	 .rot_standard_ref = &base_standard_ref,
 	 .min_frequency = BMI_GYRO_MIN_FREQ,
 	 .max_frequency = BMI_GYRO_MAX_FREQ,
-	 .config = {
-		 /* Enable gyro in S0 */
-		 [SENSOR_CONFIG_EC_S0] = {
-			 .odr = 10000 | ROUND_UP_FLAG,
-			 .ec_rate = 100 * MSEC,
-		 },
-	 },
 	},
 	[LID_BARO] = {
 	 .name = "Baro",

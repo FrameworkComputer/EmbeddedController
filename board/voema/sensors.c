@@ -187,8 +187,6 @@ struct motion_sensor_t motion_sensors[] = {
 			},
 		},
 	},
-	[BASE_GYRO] = {
-	},
 	[CLEAR_ALS] = {
 		.name = "Clear Light",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
