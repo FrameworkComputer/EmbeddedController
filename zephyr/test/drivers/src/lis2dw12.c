@@ -57,6 +57,19 @@ static void test_lis2dw12_init__fail_write_soft_reset(void)
 	zassert_equal(EC_ERROR_INVAL, rv, NULL);
 }
 
+static void test_lis2dw12_init__timeout_read_soft_reset(void)
+{
+	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
+	int rv;
+
+	i2c_common_emul_set_read_fail_reg(lis2dw12_emul_to_i2c_emul(emul),
+					  LIS2DW12_SOFT_RESET_ADDR);
+	rv = ms->drv->init(ms);
+	zassert_equal(EC_ERROR_TIMEOUT, rv, "init returned %d but expected %d",
+		      rv, EC_ERROR_TIMEOUT);
+}
+
 void test_suite_lis2dw12(void)
 {
 	ztest_test_suite(lis2dw12,
@@ -68,6 +81,9 @@ void test_suite_lis2dw12(void)
 				 lis2dw12_setup, unit_test_noop),
 			 ztest_unit_test_setup_teardown(
 				 test_lis2dw12_init__fail_write_soft_reset,
+				 lis2dw12_setup, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_lis2dw12_init__timeout_read_soft_reset,
 				 lis2dw12_setup, unit_test_noop));
 	ztest_run_test_suite(lis2dw12);
 }
