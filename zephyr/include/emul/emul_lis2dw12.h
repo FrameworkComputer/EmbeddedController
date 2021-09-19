@@ -35,4 +35,14 @@ void lis2dw12_emul_reset(const struct emul *emul);
  */
 void lis2dw12_emul_set_who_am_i(const struct emul *emul, uint8_t who_am_i);
 
+/**
+ * @brief Check the number of times the chip was soft reset.
+ *
+ * This value is reset by a call to lis2dw12_emul_reset().
+ *
+ * @param emul The emulator to query
+ * @return The number of times that the chip was reset.
+ */
+uint32_t lis2dw12_emul_get_soft_reset_count(const struct emul *emul);
+
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_LIS2DW12_H_ */

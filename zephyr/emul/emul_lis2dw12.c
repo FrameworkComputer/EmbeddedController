@@ -31,6 +31,8 @@ struct lis2dw12_emul_data {
 	uint8_t who_am_i_reg;
 	/** Emulated ctrl2 register */
 	uint8_t ctrl2_reg;
+	/** Soft reset count */
+	uint32_t soft_reset_count;
 };
 
 struct lis2dw12_emul_cfg {
@@ -48,13 +50,17 @@ struct i2c_emul *lis2dw12_emul_to_i2c_emul(const struct emul *emul)
 void lis2dw12_emul_reset(const struct emul *emul)
 {
 	struct lis2dw12_emul_data *data = emul->data;
+	struct i2c_emul *i2c_emul = lis2dw12_emul_to_i2c_emul(emul);
 
-	i2c_common_emul_set_read_fail_reg(lis2dw12_emul_to_i2c_emul(emul),
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
-	i2c_common_emul_set_write_fail_reg(lis2dw12_emul_to_i2c_emul(emul),
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_func(i2c_emul, NULL, NULL);
+	i2c_common_emul_set_write_func(i2c_emul, NULL, NULL);
 	data->who_am_i_reg = LIS2DW12_WHO_AM_I;
 	data->ctrl2_reg = 0;
+	data->soft_reset_count = 0;
 }
 
 void lis2dw12_emul_set_who_am_i(const struct emul *emul, uint8_t who_am_i)
@@ -62,6 +68,13 @@ void lis2dw12_emul_set_who_am_i(const struct emul *emul, uint8_t who_am_i)
 	struct lis2dw12_emul_data *data = emul->data;
 
 	data->who_am_i_reg = who_am_i;
+}
+
+uint32_t lis2dw12_emul_get_soft_reset_count(const struct emul *emul)
+{
+	struct lis2dw12_emul_data *data = emul->data;
+
+	return data->soft_reset_count;
 }
 
 static int lis2dw12_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
@@ -95,7 +108,11 @@ static int lis2dw12_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 		return -EINVAL;
 	case LIS2DW12_CTRL2_ADDR:
 		__ASSERT_NO_MSG(bytes == 1);
-		data->ctrl2_reg = val;
+		if ((val & LIS2DW12_SOFT_RESET_MASK) != 0) {
+			/* Soft reset */
+			data->soft_reset_count++;
+		}
+		data->ctrl2_reg = val & ~LIS2DW12_SOFT_RESET_MASK;
 		break;
 	default:
 		return -EINVAL;

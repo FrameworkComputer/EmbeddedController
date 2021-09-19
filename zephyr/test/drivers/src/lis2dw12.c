@@ -70,6 +70,33 @@ static void test_lis2dw12_init__timeout_read_soft_reset(void)
 		      rv, EC_ERROR_TIMEOUT);
 }
 
+static int lis2dw12_test_mock_write_fail_set_bdu(struct i2c_emul *emul, int reg,
+						uint8_t val, int bytes,
+						void *data)
+{
+	if (reg == LIS2DW12_BDU_ADDR && bytes == 1 &&
+	    (val & LIS2DW12_BDU_MASK) != 0) {
+		return -EIO;
+	}
+	return 1;
+}
+
+static void test_lis2dw12_init__fail_set_bdu(void)
+{
+	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
+	int rv;
+
+	i2c_common_emul_set_write_func(lis2dw12_emul_to_i2c_emul(emul),
+				      lis2dw12_test_mock_write_fail_set_bdu,
+				      NULL);
+	rv = ms->drv->init(ms);
+	zassert_equal(EC_ERROR_INVAL, rv, "init returned %d but expected %d",
+		      rv, EC_ERROR_INVAL);
+	zassert_true(lis2dw12_emul_get_soft_reset_count(emul) > 0,
+		      "expected at least one soft reset");
+}
+
 void test_suite_lis2dw12(void)
 {
 	ztest_test_suite(lis2dw12,
@@ -84,6 +111,9 @@ void test_suite_lis2dw12(void)
 				 lis2dw12_setup, unit_test_noop),
 			 ztest_unit_test_setup_teardown(
 				 test_lis2dw12_init__timeout_read_soft_reset,
+				 lis2dw12_setup, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_lis2dw12_init__fail_set_bdu,
 				 lis2dw12_setup, unit_test_noop));
 	ztest_run_test_suite(lis2dw12);
 }
