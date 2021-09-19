@@ -541,9 +541,7 @@ static int init(struct motion_sensor_t *s)
 		timeout += 1;
 		ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
 				  LIS2DW12_SOFT_RESET_ADDR, &status);
-		if (ret != EC_SUCCESS)
-			continue;
-	} while ((status & LIS2DW12_SOFT_RESET_MASK) != 0);
+	} while (ret != EC_SUCCESS || (status & LIS2DW12_SOFT_RESET_MASK) != 0);
 
 	/* Enable BDU. */
 	ret = st_write_data_with_mask(s, LIS2DW12_BDU_ADDR, LIS2DW12_BDU_MASK,
