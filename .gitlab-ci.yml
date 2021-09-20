@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-image: jbettis/bionic-20200807-27aug21
+image: jbettis/bionic-20200807-20sep21
 
 # You can update that image using this repo:
 #   https://gitlab.com/zephyr-ec/gitlab-ci-runner/-/tree/main
@@ -35,6 +35,7 @@ before_script:
   - git clone -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis "${MODULES_DIR}/cmsis"
   - git clone -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32 "${MODULES_DIR}/hal_stm32"
   - git clone -b main https://chromium.googlesource.com/chromiumos/third_party/zephyr/nanopb "${MODULES_DIR}/nanopb"
+  - git clone -b main https://chromium.googlesource.com/chromiumos/third_party/cryptoc "${MODULES_DIR}/cryptoc"
   - ln -s "$(pwd)" "${MODULES_DIR}/ec"
   - python3 -V  # Print out python version for debugging
   - python3 -m pip install zephyr/zmake --user
@@ -128,11 +129,17 @@ coverage:
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}26"
       --modules-dir "${MODULES_DIR}" -l DEBUG coverage
-      "${BUILD_DIR}/coverage"
-    - ls "${BUILD_DIR}/coverage" "${BUILD_DIR}/coverage/coverage_rpt"
+      "${BUILD_DIR}/zcoverage"
+    - make -j CRYPTOC_DIR="${MODULES_DIR}/cryptoc"
+      FTDIVERSION=1 HOSTGCOV='gcov'
+      CROSS_COMPILE_arm=/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-
+      coverage
+    - lcov -o build/merged.info -a build/coverage/lcov.info -a build/zcoverage/lcov.info
   artifacts:
     paths:
-      - build/coverage/*
+      - build/zcoverage/coverage_rpt/*
+      - build/coverage/coverage_rpt/*
+      - build/merged.info
     expire_in: 1 week
 
 testall:
