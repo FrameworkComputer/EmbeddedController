@@ -117,11 +117,13 @@ CFLAGS+= -fconserve-stack
 endif
 CXXFLAGS+=-DPROTOBUF_INLINE_NOT_IN_HEADERS=0
 
+ifeq ($(LIBFTDI_NAME),)
 FTDIVERSION:=$(shell $(PKG_CONFIG) --modversion libftdi1 2>/dev/null)
 ifneq ($(FTDIVERSION),)
   LIBFTDI_NAME=ftdi1
 else
   LIBFTDI_NAME=ftdi
+endif
 endif
 
 LIBFTDIUSB_CFLAGS:=$(shell $(PKG_CONFIG) --cflags lib${LIBFTDI_NAME} libusb-1.0)
