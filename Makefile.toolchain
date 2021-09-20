@@ -52,6 +52,12 @@ C_WARN = -Wstrict-prototypes -Wdeclaration-after-statement -Wno-pointer-sign
 COMMON_WARN = -Wall -Wundef -Werror -Werror-implicit-function-declaration \
 	-Wno-trigraphs -Wno-format-security -Wno-address-of-packed-member \
 	-fno-common -fno-strict-aliasing -fno-strict-overflow
+ifeq ($(cc-name),clang)
+COMMON_WARN+=-Werror=uninitialized
+endif
+ifeq ($(cc-name),gcc)
+COMMON_WARN+=-Werror=maybe-uninitialized
+endif
 
 UBSAN_FLAGS=-fsanitize=array-bounds,vla-bound \
 	-fno-sanitize=vptr \

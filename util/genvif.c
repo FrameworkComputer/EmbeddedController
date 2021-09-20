@@ -2791,7 +2791,7 @@ static void init_vif_component_general_pd_fields(
 	 * to NO, then this field shall be set to YES.
 	 */
 	{
-		bool supports_to_dfp;
+		bool supports_to_dfp = false;
 
 		switch (type) {
 		case SRC:
@@ -2833,7 +2833,7 @@ static void init_vif_component_general_pd_fields(
 	 * 5 (eMarker) then this field shall be ignored by Testers.
 	 */
 	{
-		bool supports_to_ufp;
+		bool supports_to_ufp = false;
 
 		switch (type) {
 		case SRC:

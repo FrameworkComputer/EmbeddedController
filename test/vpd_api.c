@@ -324,8 +324,8 @@ void vpd_ct_set_pull(int pull, int rp_value)
 
 void vpd_ct_get_cc(int *cc1, int *cc2)
 {
-	int cc1_v;
-	int cc2_v;
+	int cc1_v = 0;
+	int cc2_v = 0;
 
 	switch (ct_cc_pull) {
 	case TYPEC_CC_RP:
