@@ -948,7 +948,7 @@ static void set_rtc_host_event(void)
 DECLARE_DEFERRED(set_rtc_host_event);
 #endif
 
-test_mockable_static
+test_mockable
 void __rtc_alarm_irq(void)
 {
 	struct rtc_time_reg rtc;
