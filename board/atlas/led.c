@@ -17,7 +17,7 @@ const enum ec_led_id supported_led_ids[] = {
 };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
+struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
 				/* Red, Green, Blue */
 	[EC_LED_COLOR_RED]    = {  70,   0,   0 },
 	[EC_LED_COLOR_GREEN]  = {   0,  35,   0 },

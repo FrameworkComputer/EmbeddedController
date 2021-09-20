@@ -18,7 +18,7 @@ const enum ec_led_id supported_led_ids[] = {
 };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-struct pwm_led led_color_map_v3[EC_LED_COLOR_COUNT] = {
+struct pwm_led_color_map led_color_map_v3[EC_LED_COLOR_COUNT] = {
 				/* Red, Green, Blue */
 	[EC_LED_COLOR_RED]    = {  36,   0,   0 },
 	[EC_LED_COLOR_GREEN]  = {   0,  15,   0 },
@@ -29,7 +29,7 @@ struct pwm_led led_color_map_v3[EC_LED_COLOR_COUNT] = {
 };
 
 /* Map for board rev 2 */
-struct pwm_led led_color_map_v2[EC_LED_COLOR_COUNT] = {
+struct pwm_led_color_map led_color_map_v2[EC_LED_COLOR_COUNT] = {
 				/* Red, Green, Blue */
 	[EC_LED_COLOR_RED]    = {  62,   0,   0 },
 	[EC_LED_COLOR_GREEN]  = {   0,  31,   0 },
@@ -40,7 +40,7 @@ struct pwm_led led_color_map_v2[EC_LED_COLOR_COUNT] = {
 };
 
 /* Map for board rev 0 and 1 */
-struct pwm_led led_color_map_v0_1[EC_LED_COLOR_COUNT] = {
+struct pwm_led_color_map led_color_map_v0_1[EC_LED_COLOR_COUNT] = {
 				/* Red, Green, Blue */
 	[EC_LED_COLOR_RED]    = {   1,   0,   0 },
 	[EC_LED_COLOR_GREEN]  = {   0,   1,   0 },
@@ -50,7 +50,7 @@ struct pwm_led led_color_map_v0_1[EC_LED_COLOR_COUNT] = {
 	[EC_LED_COLOR_AMBER]  = {  15,   1,   0 },
 };
 
-struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = { { 0 } };
+struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = { { 0 } };
 
 /* Two tri-color LEDs with red, green, and blue channels. */
 struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
@@ -112,9 +112,10 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	return EC_SUCCESS;
 }
 
-static void fill_led_color_map(struct pwm_led map[])
+static void fill_led_color_map(struct pwm_led_color_map map[])
 {
-	memcpy(led_color_map, map, EC_LED_COLOR_COUNT * sizeof(struct pwm_led));
+	memcpy(led_color_map, map,
+	       EC_LED_COLOR_COUNT * sizeof(struct pwm_led_color_map));
 }
 
 static void select_color_map(void)

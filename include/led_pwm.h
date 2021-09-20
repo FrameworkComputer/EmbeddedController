@@ -23,6 +23,12 @@ struct pwm_led {
 	void (*set_duty)(enum pwm_channel ch, int percent);
 };
 
+struct pwm_led_color_map {
+	uint8_t ch0;
+	uint8_t ch1;
+	uint8_t ch2;
+};
+
 enum pwm_led_id {
 	PWM_LED0 = 0,
 #if CONFIG_LED_PWM_COUNT >= 2
@@ -39,7 +45,7 @@ enum pwm_led_id {
  * all applicable channels.  (e.g. A bi-color LED which has a red and green
  * channel should define all 0s for EC_LED_COLOR_BLUE and EC_LED_COLOR_WHITE.)
  */
-extern struct pwm_led led_color_map[EC_LED_COLOR_COUNT];
+extern struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT];
 
 /*
  * A map of the PWM channels to logical PWM LEDs.
