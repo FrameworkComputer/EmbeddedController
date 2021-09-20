@@ -58,6 +58,9 @@ DARTMONKEY = 'dartmonkey'
 JTRACE = 'jtrace'
 SERVO_MICRO = 'servo_micro'
 
+GCC = 'gcc'
+CLANG = 'clang'
+
 
 class ImageType(Enum):
     """EC Image type to use for the test."""
@@ -254,10 +257,14 @@ def hw_write_protect(enable: bool) -> None:
     subprocess.run(cmd).check_returncode()
 
 
-def build(test_name: str, board_name: str) -> None:
+def build(test_name: str, board_name: str, compiler: str) -> None:
     """Build specified test for specified board."""
-    cmd = [
-        'make',
+    cmd = ['make']
+
+    if compiler == CLANG:
+        cmd = cmd + ['CC=arm-none-eabi-clang']
+
+    cmd = cmd + [
         'BOARD=' + board_name,
         'test-' + test_name,
         '-j',
@@ -431,6 +438,11 @@ def main():
          default=JTRACE
      )
 
+    compiler_options = [GCC, CLANG]
+    parser.add_argument('--compiler', '-c',
+                        choices=compiler_options,
+                        default=GCC)
+
     # This might be expanded to serve as a "remote" for flash_ec also, so
     # we will leave it generic.
     parser.add_argument(
@@ -455,7 +467,7 @@ def main():
 
     for test in test_list:
         # build test binary
-        build(test.name, args.board)
+        build(test.name, args.board, args.compiler)
 
         # flash test binary
         # TODO(b/158327221): First attempt to flash fails after
