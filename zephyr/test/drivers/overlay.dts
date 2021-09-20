@@ -525,4 +525,11 @@
 		reg = <0x19>;
 		label = "LIS2DW12_EMUL";
 	};
+
+	i2c_mock: i2c_mock@84 {
+		compatible = "cros,i2c-mock";
+		status = "okay";
+		reg = <0x84>;
+		label = "I2C_MOCK";
+	};
 };
