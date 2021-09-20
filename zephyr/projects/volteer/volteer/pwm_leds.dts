@@ -19,5 +19,12 @@
 		compatible = "cros-ec,pwm-leds";
 
 		leds = <&pwm_led0>;
+
+		color-map-red    = <100   0   0>;
+		color-map-green  = <  0 100   0>;
+		color-map-blue   = <  0   0 100>;
+		color-map-yellow = <100  70   0>;
+		color-map-white  = <100  70 100>;
+		color-map-amber  = <100  20   0>;
 	};
 };

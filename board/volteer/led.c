@@ -18,6 +18,7 @@ const enum ec_led_id supported_led_ids[] = {
 };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
+#ifndef CONFIG_ZEPHYR
 struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
 				/* Red, Green, Blue */
 	[EC_LED_COLOR_RED] =    {  100,   0,     0 },
@@ -31,7 +32,6 @@ struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
 	[EC_LED_COLOR_AMBER] =  {  100,  20,     0 },
 };
 
-#ifndef CONFIG_ZEPHYR
 struct pwm_led pwm_leds[] = {
 	/* 2 RGB diffusers controlled by 1 set of 3 channels. */
 	[PWM_LED0] = {
