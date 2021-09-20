@@ -92,6 +92,14 @@ void svc_helper_handler()
  */
 #define IRQ_UNUSED_OFFSET 8
 
+/* Disable warning that "initializer overrides prior initialization of this
+ * subobject", since we are explicitly doing this to handle the unused IRQs.
+ */
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winitializer-overrides"
+#endif /* __clang__ */
+
 #define table(x)								\
 	const func vectors[] __attribute__((section(".text.vecttable"))) = {	\
 		x								\
@@ -378,6 +386,12 @@ table(
 	irq(253)
 	irq(254)
 )
+
+#if PASS == 2
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif /* __clang__ */
+#endif
 
 #if PASS == 1
 #undef PASS
