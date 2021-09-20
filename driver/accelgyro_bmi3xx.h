@@ -94,9 +94,8 @@
 #define BMI3_INT_OUTPUT_DISABLE			0
 #define BMI3_INT_OUTPUT_ENABLE			1
 
-/* FIFO sensor data lengths */
-#define BMI3_LENGTH_FIFO_ACC			0x6
-#define BMI3_LENGTH_FIFO_GYR			0x6
+/* FIFO sensor data length (in word), Accel or Gyro */
+#define BMI3_FIFO_ENTRY			0x3
 /* Macro to define accelerometer configuration value for FOC */
 #define BMI3_FOC_ACC_CONF_VAL_LSB		0xB7
 #define BMI3_FOC_ACC_CONF_VAL_MSB		0x40
@@ -114,11 +113,7 @@
 #define BMI3_INT_STATUS_FFULL			0x8000
 #define BMI3_INT_STATUS_ORIENTATION		0x0008
 
-#define BMI3_FIFO_ACC_LENGTH			6
-#define BMI3_FIFO_GYR_LENGTH			6
-#define BMI3_SENSOR_TIME_LENGTH			2
 
-/* Masks for FIFO I2C sync data frames */
 #define BMI3_FIFO_GYRO_I2C_SYNC_FRAME		0x7f02
 #define BMI3_FIFO_ACCEL_I2C_SYNC_FRAME		0x7f01
 
@@ -168,8 +163,7 @@
 /* 1LSB = 61 milli-dps*/
 #define BMI3_OFFSET_GYR_MDPS			(61 * 1000)
 
-/* Other definitions */
-#define BMI3_FIFO_BUFFER			64
+#define BMI3_FIFO_BUFFER			32
 
 /* General Macro Definitions */
 /* LSB and MSB mask definitions */
@@ -215,7 +209,7 @@
  * fifo_flush. The word counter is updated each time a complete frame was read
  * or written.
  */
-#define BMI3_FIFO_FILL_LVL_MASK			0x07
+#define BMI3_FIFO_FILL_LVL_MASK			0x07FF
 
 /* Enum to define interrupt lines */
 enum bmi3_hw_int_pin {
@@ -228,19 +222,7 @@ enum bmi3_hw_int_pin {
 
 /* Structure to define FIFO frame configuration */
 struct bmi3_fifo_frame {
-	/* Pointer to FIFO data */
-	uint8_t *data;
-
-	/* Number of user defined bytes of FIFO to be read */
-	uint16_t length;
-
-	/* Enables type of data to be streamed - accelerometer,
-	 *  gyroscope
-	 */
-	uint8_t available_fifo_sens;
-
-	/* Water-mark level for water-mark interrupt */
-	uint16_t wm_lvl;
+	uint16_t data[BMI3_FIFO_BUFFER + 1];
 
 	/* Available fifo length */
 	uint16_t available_fifo_len;
@@ -252,34 +234,6 @@ enum sensor_index_t {
 	SENSOR_GYRO,
 	NUM_OF_PRIMARY_SENSOR,
 };
-
-/* Structure to define FIFO accel, gyro x, y and z axes */
-struct bmi3_fifo_data {
-	/* Data in x-axis */
-	int16_t x;
-
-	/* Data in y-axis */
-	int16_t y;
-
-	/* Data in z-axis */
-	int16_t z;
-};
-
-struct bmi3xx_drv_data {
-	struct accelgyro_saved_data_t saved_data[3];
-	uint8_t flags;
-	uint8_t enabled_activities;
-	uint8_t disabled_activities;
-	/* Current resolution of accelerometer. */
-	int sensor_resolution;
-	int16_t offset[3];
-};
-
-#define BMI3_GET_DATA(_s) \
-	((struct bmi3xx_drv_data *)(_s)->drv_data)
-
-#define BMI3_GET_SAVED_DATA(_s) \
-	(&BMI3_GET_DATA(_s)->saved_data)
 
 #define BMI3_DRDY_OFF(_sensor)   (7 - (_sensor))
 #define BMI3_DRDY_MASK(_sensor)  (1 << BMI3_DRDY_OFF(_sensor))
