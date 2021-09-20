@@ -1,0 +1,12 @@
+# Copyright 2021 The chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: A generic I2C mock
+
+compatible: "cros,i2c-mock"
+
+include: base.yaml
+properties:
+   reg:
+     required: true
