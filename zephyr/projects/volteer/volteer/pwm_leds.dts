@@ -26,5 +26,7 @@
 		color-map-yellow = <100  70   0>;
 		color-map-white  = <100  70 100>;
 		color-map-amber  = <100  20   0>;
+
+		brightness-range = <255 255 255 0 0 0>;
 	};
 };

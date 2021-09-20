@@ -5,6 +5,7 @@
 
 #define DT_DRV_COMPAT cros_ec_pwm_leds
 
+#include <string.h>
 #include <devicetree.h>
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
@@ -42,5 +43,18 @@ struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
 	[EC_LED_COLOR_WHITE]  = DT_INST_PROP(0, color_map_white),
 	[EC_LED_COLOR_AMBER]  = DT_INST_PROP(0, color_map_amber),
 };
+
+BUILD_ASSERT(DT_INST_PROP_LEN(0, brightness_range) == EC_LED_COLOR_COUNT,
+	     "brightness_range must have exactly EC_LED_COLOR_COUNT values");
+
+static const uint8_t dt_brigthness_range[EC_LED_COLOR_COUNT] = DT_INST_PROP(
+		0, brightness_range);
+
+void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
+{
+	/* led_id is ignored, same ranges for all LEDs */
+	memcpy(brightness_range, dt_brigthness_range,
+	       sizeof(dt_brigthness_range));
+}
 
 #endif /* DT_HAS_COMPAT_STATUS_OKAY */

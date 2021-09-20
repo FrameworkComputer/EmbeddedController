@@ -23,9 +23,9 @@ config PLATFORM_EC_LED_PWM
 	  Enable PWM (Pulse Width Modulation) controlled LEDs that conform to
 	  the Chromium OS LED behavior specification.
 
-	  Your board files must implement the led_get_brightness_range() and
-	  led_set_brightness() which are used by the LED PWM module to set the
-	  board LEDs in response to power and charging events.
+	  Your board files must implement led_set_brightness() function, which
+	  is used by the LED PWM module to set the board LEDs in response to
+	  power and charging events.
 
 if PLATFORM_EC_LED_PWM
 

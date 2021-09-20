@@ -66,3 +66,10 @@ properties:
   color-map-amber:
     type: array
     required: true
+
+  brightness-range:
+    type: array
+    required: true
+    description: |
+      A list of brigthness range value for all supported channels in order,
+      Red, Green, Blue, Yellow, White, Amber (0 to 255).
