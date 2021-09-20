@@ -17,7 +17,6 @@ a command.
 from __future__ import print_function
 
 import binascii
-# pylint: disable=cros-logging-import
 import copy
 import logging
 import os

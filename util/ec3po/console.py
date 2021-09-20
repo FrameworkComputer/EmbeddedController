@@ -18,7 +18,6 @@ import argparse
 import binascii
 import ctypes
 from datetime import datetime
-# pylint: disable=cros-logging-import
 import logging
 import os
 import pty

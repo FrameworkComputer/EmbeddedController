@@ -9,7 +9,6 @@
 
 from __future__ import print_function
 
-# pylint: disable=cros-logging-import
 import logging
 import mock
 import tempfile

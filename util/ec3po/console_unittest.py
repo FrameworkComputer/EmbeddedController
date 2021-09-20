@@ -10,7 +10,6 @@
 from __future__ import print_function
 
 import binascii
-# pylint: disable=cros-logging-import
 import logging
 import mock
 import tempfile
