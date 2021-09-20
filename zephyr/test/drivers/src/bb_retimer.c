@@ -53,8 +53,9 @@ static void test_bb_set_state(void)
 					   BB_RETIMER_REG_CONNECTION_STATE);
 
 	/* Test fail on reset register write */
-	zassert_equal(-EIO, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-					       USB_PD_MUX_NONE, &ack_required),
+	zassert_equal(EC_ERROR_INVAL,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_NONE, &ack_required),
 		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 
@@ -446,8 +447,8 @@ static void test_bb_init(void)
 	/* Setup emulator fail on read */
 	i2c_common_emul_set_read_fail_reg(emul, BB_RETIMER_REG_VENDOR_ID);
 	/* Test fail on vendor ID read */
-	zassert_equal(-EIO, bb_usb_retimer.init(&usb_muxes[USBC_PORT_C1]),
-		      NULL);
+	zassert_equal(EC_ERROR_INVAL,
+		      bb_usb_retimer.init(&usb_muxes[USBC_PORT_C1]), NULL);
 	/* Enable pins should be set always after init, when AP is on */
 	zassert_equal(1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_LS_EN_PORT),
 		      NULL);
@@ -471,8 +472,8 @@ static void test_bb_init(void)
 	i2c_common_emul_set_read_fail_reg(emul, BB_RETIMER_REG_DEVICE_ID);
 	bb_emul_set_reg(emul, BB_RETIMER_REG_VENDOR_ID, BB_RETIMER_VENDOR_ID_1);
 	/* Test fail on device ID read */
-	zassert_equal(-EIO, bb_usb_retimer.init(&usb_muxes[USBC_PORT_C1]),
-		      NULL);
+	zassert_equal(EC_ERROR_INVAL,
+		      bb_usb_retimer.init(&usb_muxes[USBC_PORT_C1]), NULL);
 	zassert_equal(1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_LS_EN_PORT),
 		      NULL);
 	zassert_equal(1, gpio_emul_output_get(gpio_dev,

@@ -39,7 +39,7 @@ static void test_tcs_init(void)
 
 	/* Fail init on communication errors */
 	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_FAIL_ALL_REG);
-	zassert_equal(-EIO, ms->drv->init(ms), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->init(ms), NULL);
 	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Fail on bad ID */
@@ -70,11 +70,11 @@ static void test_tcs_read(void)
 
 	/* Test error on writing registers */
 	i2c_common_emul_set_write_fail_reg(emul, TCS_I2C_ATIME);
-	zassert_equal(-EIO, ms->drv->read(ms, v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, v), NULL);
 	i2c_common_emul_set_write_fail_reg(emul, TCS_I2C_CONTROL);
-	zassert_equal(-EIO, ms->drv->read(ms, v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, v), NULL);
 	i2c_common_emul_set_write_fail_reg(emul, TCS_I2C_ENABLE);
-	zassert_equal(-EIO, ms->drv->read(ms, v), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, v), NULL);
 	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test starting read with calibration */
@@ -154,13 +154,13 @@ static void test_tcs_irq_handler_fail(void)
 	event = TCS_INT_EVENT;
 	/* Test error on reading status */
 	i2c_common_emul_set_read_fail_reg(emul, TCS_I2C_STATUS);
-	zassert_equal(-EIO, ms->drv->irq_handler(ms, &event), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->irq_handler(ms, &event), NULL);
 	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 	check_fifo_empty(ms, ms_rgb);
 
 	/* Test fail on changing device power state */
 	i2c_common_emul_set_write_fail_reg(emul, TCS_I2C_ENABLE);
-	zassert_equal(-EIO, ms->drv->irq_handler(ms, &event), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->irq_handler(ms, &event), NULL);
 	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 	check_fifo_empty(ms, ms_rgb);
 
@@ -538,10 +538,10 @@ static void test_tcs_data_rate(void)
 
 	/* Test fail on reading device power state */
 	i2c_common_emul_set_read_fail_reg(emul, TCS_I2C_ENABLE);
-	zassert_equal(-EIO, ms->drv->set_data_rate(ms, 0, 0), NULL);
-	zassert_equal(-EIO, ms->drv->set_data_rate(ms, 0, 1), NULL);
-	zassert_equal(-EIO, ms->drv->set_data_rate(ms, 100, 0), NULL);
-	zassert_equal(-EIO, ms->drv->set_data_rate(ms, 100, 1), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 0, 0), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 0, 1), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 100, 0), NULL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 100, 1), NULL);
 	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test setting 0 rate disables device */

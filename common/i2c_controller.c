@@ -266,7 +266,14 @@ int i2c_xfer_unlocked(const int port,
 					 in, in_size);
 		}
 
-		return ret;
+		switch (ret) {
+		case 0:
+			return EC_SUCCESS;
+		case -EIO:
+			return EC_ERROR_INVAL;
+		default:
+			return EC_ERROR_UNKNOWN;
+		}
 #elif defined(CONFIG_I2C_XFER_LARGE_TRANSFER)
 		ret = i2c_xfer_no_retry(port, no_pec_af,
 					    out, out_size, in,
