@@ -113,6 +113,7 @@
 
 /* Sensors */
 #ifdef HAS_TASK_MOTIONSENSE
+
 #define CONFIG_TABLET_MODE
 #define CONFIG_GMR_TABLET_MODE
 #define GMR_TABLET_MODE_GPIO_L		GPIO_TABLET_MODE
@@ -131,7 +132,7 @@
 
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK (1 << LID_ACCEL)
-#endif
+#endif  /* HAS_TASK_MOTIONSENSE */
 
 /* Backlight config */
 #define CONFIG_BACKLIGHT_LID

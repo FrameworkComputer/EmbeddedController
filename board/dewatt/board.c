@@ -41,8 +41,7 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Motion sensor private data */
-static struct bmi_drv_data_t g_bmi160_data;
-static struct bmi3xx_drv_data g_bmi323_data;
+static struct bmi_drv_data_t g_bmi_data;
 static struct accelgyro_saved_data_t g_bma422_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
@@ -84,7 +83,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.location = MOTIONSENSE_LOC_BASE,
 		.drv = &bmi3xx_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi323_data,
+		.drv_data = &g_bmi_data,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = BMI3_ADDR_I2C_PRIM,
 		.rot_standard_ref = &base_standard_ref,
@@ -140,7 +139,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.location = MOTIONSENSE_LOC_BASE,
 		.drv = &bmi3xx_drv,
 		.mutex = &g_base_mutex,
-		.drv_data = &g_bmi323_data,
+		.drv_data = &g_bmi_data,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = BMI3_ADDR_I2C_PRIM,
 		.default_range = 1000, /* dps */
@@ -159,7 +158,7 @@ struct motion_sensor_t bmi160_base_accel = {
 	.location = MOTIONSENSE_LOC_BASE,
 	.drv = &bmi160_drv,
 	.mutex = &g_base_mutex,
-	.drv_data = &g_bmi160_data,
+	.drv_data = &g_bmi_data,
 	.port = I2C_PORT_SENSOR,
 	.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	.rot_standard_ref = &base_standard_ref,
@@ -188,7 +187,7 @@ struct motion_sensor_t bmi160_base_gyro = {
 	.location = MOTIONSENSE_LOC_BASE,
 	.drv = &bmi160_drv,
 	.mutex = &g_base_mutex,
-	.drv_data = &g_bmi160_data,
+	.drv_data = &g_bmi_data,
 	.port = I2C_PORT_SENSOR,
 	.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
 	.default_range = 1000, /* dps */
