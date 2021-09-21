@@ -8,9 +8,9 @@
 
 #include <sys/atomic.h>
 
-static inline void atomic_clear_bits(atomic_t *addr, atomic_val_t bits)
+static inline atomic_val_t atomic_clear_bits(atomic_t *addr, atomic_val_t bits)
 {
-	atomic_and(addr, ~bits);
+	return atomic_and(addr, ~bits);
 }
 
 #endif  /* __CROS_EC_ATOMIC_H */
