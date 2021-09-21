@@ -40,3 +40,11 @@ struct command {
  * The key matrix is read from the fdt.
  */
 int cmd_keyscan(int argc, char *argv[]);
+
+/* ASCII mode for printing, default off */
+extern int ascii_mode;
+
+int cmd_i2c_protect(int argc, char *argv[]);
+int cmd_i2c_read(int argc, char *argv[]);
+int cmd_i2c_write(int argc, char *argv[]);
+int cmd_i2c_xfer(int argc, char *argv[]);
