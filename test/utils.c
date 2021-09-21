@@ -466,7 +466,10 @@ test_static int test_safe_memcmp(void)
 	const char str2[] = "def";
 	const char str3[] = "abc";
 
-	BUILD_ASSERT(str1 != str3);
+	/* Verify that the compiler hasn't optimized str1 and str3 to point
+	 * to the same underlying memory.
+	 */
+	TEST_NE(str1, str3, "%p");
 
 	TEST_EQ(safe_memcmp(NULL, NULL, 0), 0, "%d");
 	TEST_EQ(safe_memcmp(str1, str2, sizeof(str1)), 1, "%d");
