@@ -175,6 +175,14 @@
 #define NPCX_IRQ_COUNT                   64
 
 /******************************************************************************/
+/* Miscellaneous Device Control (MDC) registers */
+#define NPCX_FWCTRL                       REG8(NPCX_MDC_BASE_ADDR + 0x007)
+
+/* MDC register fields */
+#define NPCX_FWCTRL_RO_REGION            0
+#define NPCX_FWCTRL_FW_SLOT              1
+
+/******************************************************************************/
 /* High Frequency Clock Generator (HFCG) registers */
 #define NPCX_HFCGCTRL                     REG8(NPCX_HFCG_BASE_ADDR + 0x000)
 #define NPCX_HFCGML                       REG8(NPCX_HFCG_BASE_ADDR + 0x002)

@@ -104,14 +104,6 @@
 #define NPCX_IRQ_WKINTD_2		NPCX_IRQ_63
 
 /* Modules Map */
-
-/* Miscellaneous Device Control (MDC) registers */
-#define NPCX_FWCTRL			REG8(NPCX_MDC_BASE_ADDR + 0x007)
-
-/* MDC register fields */
-#define NPCX_FWCTRL_RO_REGION		0
-#define NPCX_FWCTRL_FW_SLOT		1
-
 #define NPCX_ITIM32_BASE_ADDR		0x400BC000
 #define NPCX_CR_UART_BASE_ADDR(mdl)	(0x400C4000 + ((mdl) * 0x2000L))
 #define NPCX_SMB_BASE_ADDR(mdl)		(((mdl) < 2) ? \
