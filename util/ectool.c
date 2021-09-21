@@ -186,7 +186,7 @@ const char help_str[] =
 	"      Read I2C bus\n"
 	"  i2cwrite\n"
 	"      Write I2C bus\n"
-	"  i2cxfer <port> <slave_addr> <read_count> [write bytes...]\n"
+	"  i2cxfer <port> <peripheral_addr> <read_count> [write bytes...]\n"
 	"      Perform I2C transfer on EC's I2C bus\n"
 	"  infopddev <port>\n"
 	"      Get info about USB type-C accessory attached to port\n"
@@ -858,7 +858,7 @@ static const char * const ec_feature_names[] = {
 	[EC_FEATURE_WIFI_SWITCH] = "Switch wifi on/off",
 	[EC_FEATURE_HOST_EVENTS] = "Host event",
 	[EC_FEATURE_GPIO] = "GPIO",
-	[EC_FEATURE_I2C] = "I2C master",
+	[EC_FEATURE_I2C] = "I2C controller",
 	[EC_FEATURE_CHARGER] = "Charger",
 	[EC_FEATURE_BATTERY] = "Simple Battery",
 	[EC_FEATURE_SMART_BATTERY] = "Smart Battery",
@@ -7303,7 +7303,7 @@ int cmd_i2c_xfer(int argc, char *argv[])
 
 	addr = strtol(argv[2], &e, 0) & 0x7f;
 	if (e && *e) {
-		fprintf(stderr, "Bad slave address.\n");
+		fprintf(stderr, "Bad peripheral address.\n");
 		return -1;
 	}
 
