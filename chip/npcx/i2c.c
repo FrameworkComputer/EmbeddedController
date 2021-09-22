@@ -119,6 +119,7 @@ struct i2c_status {
 	enum smb_error        err_code;  /* Error code */
 	int                   task_waiting; /* Task waiting on controller */
 	uint32_t              timeout_us;/* Transaction timeout */
+	uint16_t              kbps;      /* Speed */
 };
 /* I2C controller state data array */
 static struct i2c_status i2c_stsobjs[I2C_CONTROLLER_COUNT];
@@ -212,6 +213,7 @@ static void i2c_abort_data(int controller)
 static int i2c_reset(int controller)
 {
 	uint16_t timeout = I2C_MAX_TIMEOUT;
+
 	/* Disable the SMB module */
 	CLEAR_BIT(NPCX_SMBCTL2(controller), NPCX_SMBCTL2_ENABLE);
 
@@ -1040,6 +1042,9 @@ static void i2c_port_set_freq(const int ctrl, const int bus_freq_kbps)
 	freq = (ctrl < 2) ? clock_get_freq() : clock_get_apb2_freq();
 #endif
 
+	if (bus_freq_kbps == i2c_stsobjs[ctrl].kbps)
+		return;
+
 	/*
 	 * Set SCL frequency by formula:
 	 * tSCL = 4 * SCLFRQ * tCLK
@@ -1050,6 +1055,7 @@ static void i2c_port_set_freq(const int ctrl, const int bus_freq_kbps)
 
 	/* Normal mode if I2C freq is under 100kHz */
 	if (bus_freq_kbps <= 100) {
+		i2c_stsobjs[ctrl].kbps = bus_freq_kbps;
 		/* Set divider value of SCL */
 		SET_FIELD(NPCX_SMBCTL2(ctrl), NPCX_SMBCTL2_SCLFRQ7_FIELD,
 			  (scl_freq & 0x7F));
@@ -1072,6 +1078,7 @@ static void i2c_port_set_freq(const int ctrl, const int bus_freq_kbps)
 		pTiming = i2c_1m_timings;
 		i2c_timing_used = i2c_1m_timing_used;
 	} else {
+		i2c_stsobjs[ctrl].kbps = bus_freq_kbps;
 		/* Set value from formula */
 		NPCX_SMBSCLLT(ctrl) = scl_freq;
 		NPCX_SMBSCLHT(ctrl) = scl_freq;
@@ -1083,6 +1090,7 @@ static void i2c_port_set_freq(const int ctrl, const int bus_freq_kbps)
 
 	for (j = 0; j < i2c_timing_used; j++, pTiming++) {
 		if (pTiming->clock == (freq/SECOND)) {
+			i2c_stsobjs[ctrl].kbps = bus_freq_kbps;
 			/* Set SCLH(L)T and hold-time */
 			NPCX_SMBSCLLT(ctrl) = pTiming->k1/2;
 			NPCX_SMBSCLHT(ctrl) = pTiming->k2/2;
@@ -1101,6 +1109,11 @@ static void i2c_port_set_freq(const int ctrl, const int bus_freq_kbps)
 static void i2c_freq_changed(void)
 {
 	int i;
+
+	for (i = 0; i < I2C_CONTROLLER_COUNT; ++i) {
+		/* No bus speed configured */
+		i2c_stsobjs[i].kbps = 0;
+	}
 
 	for (i = 0; i < i2c_ports_used; i++) {
 		const struct i2c_port_t *p;
