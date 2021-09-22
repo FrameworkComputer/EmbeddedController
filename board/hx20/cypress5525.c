@@ -1475,7 +1475,7 @@ int board_set_active_charge_port(int charge_port)
 		gpio_set_level(GPIO_TYPEC1_VBUS_ON_EC, 0);
 		gpio_set_level(GPIO_TYPEC2_VBUS_ON_EC, 0);
 		gpio_set_level(GPIO_TYPEC3_VBUS_ON_EC, 0);
-		usleep(10*MSEC);
+		usleep(250*MSEC);
 	}
 	prev_charge_port = charge_port;
 	if (charge_port >=0){
