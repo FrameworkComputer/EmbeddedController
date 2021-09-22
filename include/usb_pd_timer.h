@@ -294,4 +294,58 @@ int pd_timer_next_expiration(int port);
  */
 void pd_timer_dump(int port);
 
+#ifdef TEST_BUILD
+/*****************************************************************************
+ * TEST_BUILD section
+ *
+ * This is solely for the use of unit testing.  Most of the inner workings
+ * of PD timer are internal static, so they have to be allowed access in
+ * order to unit test the basics of the code.
+ *
+ * If you are interested in the workings of PD timers please refer to
+ * common/usbc/usb_pd_timer.c
+ */
+
+/* exported: number of USB-C ports */
+#define MAX_PD_PORTS		CONFIG_USB_PD_PORT_MAX_COUNT
+/* exported: number of uint32_t fields for bit mask to all timers */
+#define TIMER_FIELD_NUM_UINT32S	2
+
+/* PD timers have three possible states: Active, Inactive and Disabled */
+/* exported: timer_active indicates if a timer is currently active */
+extern uint32_t timer_active[MAX_PD_PORTS][TIMER_FIELD_NUM_UINT32S];
+/* exported: timer_disabled indicates if a timer is currently disabled */
+extern uint32_t timer_disabled[MAX_PD_PORTS][TIMER_FIELD_NUM_UINT32S];
+
+/* exported: do not call directly, only for the defined macros */
+extern void pd_timer_atomic_op(
+		atomic_val_t (*op)(atomic_t*, atomic_val_t),
+		uint32_t *const timer_field, const uint64_t mask);
+
+/* exported: set/clear/check the current timer_active for a timer */
+#define PD_SET_ACTIVE(p, m)	pd_timer_atomic_op(		\
+					atomic_or,		\
+					timer_active[p],	\
+					(m))
+#define PD_CLR_ACTIVE(p, m)	pd_timer_atomic_op(		\
+					atomic_clear_bits,	\
+					timer_active[p],	\
+					(m))
+#define PD_CHK_ACTIVE(p, m)	((timer_active[p][0] & ((m) >> 32)) | \
+				 (timer_active[p][1] & (m)))
+
+/* exported: set/clear/check the current timer_disabled for a timer */
+#define PD_SET_DISABLED(p, m)	pd_timer_atomic_op(		\
+					atomic_or,		\
+					timer_disabled[p],	\
+					(m))
+#define PD_CLR_DISABLED(p, m)	pd_timer_atomic_op(		\
+					atomic_clear_bits,	\
+					timer_disabled[p],	\
+					(m))
+#define PD_CHK_DISABLED(p, m)	((timer_disabled[p][0] & ((m) >> 32)) | \
+				 (timer_disabled[p][1] & (m)))
+
+#endif /* TEST_BUILD */
+
 #endif  /* __CROS_EC_USB_PD_TIMER_H */

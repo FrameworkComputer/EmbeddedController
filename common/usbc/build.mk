@@ -46,6 +46,7 @@ all-obj-$(CONFIG_USB_PD_ALT_MODE_UFP_DP)+=$(_usbc_dir)usb_pd_dp_ufp.o
 endif # CONFIG_USB_PD_TCPMV2
 
 # For testing
+all-obj-$(CONFIG_TEST_USB_PD_TIMER)+=$(_usbc_dir)usb_pd_timer.o
 all-obj-$(CONFIG_TEST_USB_PE_SM)+=$(_usbc_dir)usbc_pd_policy.o
 all-obj-$(CONFIG_TEST_USB_PE_SM)+=$(_usbc_dir)usb_pe_drp_sm.o
 all-obj-$(CONFIG_TEST_SM)+=$(_usbc_dir)usb_sm.o

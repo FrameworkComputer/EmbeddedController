@@ -44,8 +44,11 @@
 				 (timer_disabled[p][1] & (m)))
 
 #define TIMER_FIELD_NUM_UINT32S 2
-static uint32_t timer_active[MAX_PD_PORTS][TIMER_FIELD_NUM_UINT32S];
-static uint32_t timer_disabled[MAX_PD_PORTS][TIMER_FIELD_NUM_UINT32S];
+
+test_mockable_static
+uint32_t timer_active[MAX_PD_PORTS][TIMER_FIELD_NUM_UINT32S];
+test_mockable_static
+uint32_t timer_disabled[MAX_PD_PORTS][TIMER_FIELD_NUM_UINT32S];
 static uint64_t timer_expires[MAX_PD_PORTS][MAX_PD_TIMERS];
 BUILD_ASSERT(sizeof(timer_active[0]) * CHAR_BIT >= PD_TIMER_COUNT);
 BUILD_ASSERT(sizeof(timer_disabled[0]) * CHAR_BIT >= PD_TIMER_COUNT);
@@ -111,7 +114,7 @@ __maybe_unused static __const_data const char * const pd_timer_names[] = {
  * @param timer_field Array of timer fields to operate on
  * @param mask_val    64-bit mask to apply to the timer field
  */
-static void pd_timer_atomic_op(
+test_mockable_static void pd_timer_atomic_op(
 		atomic_val_t (*op)(atomic_t*, atomic_val_t),
 		uint32_t *const timer_field, const uint64_t mask_val)
 {
