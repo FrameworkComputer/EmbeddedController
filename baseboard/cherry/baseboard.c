@@ -559,6 +559,9 @@ int board_regulator_get_voltage(uint32_t index, uint32_t *voltage_mv)
 static void baseboard_init(void)
 {
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
+#ifndef BOARD_CHERRY
+	gpio_enable_interrupt(GPIO_AP_XHCI_INIT_DONE);
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT - 1);
 
