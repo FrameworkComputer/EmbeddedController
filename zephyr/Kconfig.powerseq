@@ -116,10 +116,18 @@ config PLATFORM_EC_POWERSEQ_COMETLAKE
 	help
 	  Use the Comet Lake code for power sequencing.
 
+config CHIPSET_ALDERLAKE_SLG4BD44540
+       bool "Use powersequencing with Silego"
+       depends on AP_X86_INTEL_ADL
+       default y
+       help
+          Use this for AlderLake power sequencing with the
+          Silego chips.
+
 menuconfig PLATFORM_EC_POWERSEQ_ICELAKE
 	bool "Use common Icelake code for power sequencing"
-	default y if AP_X86_INTEL_TGL
-	default y if AP_X86_INTEL_ADL
+	depends on AP_X86_INTEL_TGL
+	default y
 	help
 	  Use the Icelake common code for power sequencing.  Note that
 	  this applies to more platforms than just Icelake.  For

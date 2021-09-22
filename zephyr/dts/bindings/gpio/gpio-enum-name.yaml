@@ -87,6 +87,7 @@ properties:
       - GPIO_EN_PWR_A
       - GPIO_EN_PWR_PCORE_S0_R
       - GPIO_EN_PWR_S0_R
+      - GPIO_EN_S5_RAILS
       - GPIO_EN_SLP_Z
       - GPIO_EN_ULP
       - GPIO_EN_USB_A_5V
@@ -104,6 +105,7 @@ properties:
       - GPIO_I2C_E_SDA
       - GPIO_I2C_F_SCL
       - GPIO_I2C_F_SDA
+      - GPIO_IMVP9_VRRDY_OD
       - GPIO_KBD_KSO2
       - GPIO_LID_ACCEL_INT_L
       - GPIO_LID_OPEN
@@ -111,6 +113,7 @@ properties:
       - GPIO_PACKET_MODE_EN
       - GPIO_PCH_DSW_PWROK
       - GPIO_PCH_PWRBTN_L
+      - GPIO_PCH_PWROK
       - GPIO_PCH_RSMRST_L
       - GPIO_PCH_RTCRST
       - GPIO_PCH_SLP_S0_L
@@ -189,6 +192,7 @@ properties:
       - GPIO_USB_C1_SWCTL_INT_ODL
       - GPIO_USB_C1_TCPC_INT_ODL
       - GPIO_USB_C1_TCPC_RST_L
+      - GPIO_VCCST_PWRGD_OD
       - GPIO_VBOB_EN
       - GPIO_VOLUME_DOWN_L
       - GPIO_VOLUME_UP_L
