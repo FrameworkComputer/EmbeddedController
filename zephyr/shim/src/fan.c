@@ -18,7 +18,7 @@
 LOG_MODULE_REGISTER(fan_shim, LOG_LEVEL_ERR);
 
 #define FAN_CONFIGS(node_id)                                                   \
-	const struct fan_conf node_id_conf = {                                 \
+	const struct fan_conf node_id##_conf = {                               \
 		.flags = (COND_CODE_1(DT_PROP(node_id, not_use_rpm_mode),      \
 				      (0), (FAN_USE_RPM_MODE))) |              \
 			 (COND_CODE_1(DT_PROP(node_id, use_fast_start),        \
@@ -33,7 +33,7 @@ LOG_MODULE_REGISTER(fan_shim, LOG_LEVEL_ERR);
 			(GPIO_SIGNAL(DT_PHANDLE(node_id, enable_gpio))),       \
 			(GPIO_UNIMPLEMENTED)),                                 \
 	};                                                                     \
-	const struct fan_rpm node_id_rpm = {                                   \
+	const struct fan_rpm node_id##_rpm = {                                 \
 		.rpm_min = DT_PROP(node_id, rpm_min),                          \
 		.rpm_start = DT_PROP(node_id, rpm_start),                      \
 		.rpm_max = DT_PROP(node_id, rpm_max),                          \
@@ -41,8 +41,8 @@ LOG_MODULE_REGISTER(fan_shim, LOG_LEVEL_ERR);
 
 #define FAN_INST(node_id)              \
 	[node_id] = {                  \
-		.conf = &node_id_conf, \
-		.rpm = &node_id_rpm,   \
+		.conf = &node_id##_conf, \
+		.rpm = &node_id##_rpm,   \
 	},
 
 #define FAN_CONTROL_INST(node_id)                                \
