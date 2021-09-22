@@ -49,7 +49,7 @@ enum power_signal {
 		 power_signal_interrupt)                                     \
 	GPIO_INT(GPIO_PCH_SLP_S0_L, GPIO_INT_EDGE_BOTH,                      \
 		 power_signal_interrupt)                                     \
-	GPIO_INT(GPIO_S5_PGOOD, GPIO_INT_EDGE_BOTH, extpower_interrupt)      \
+	GPIO_INT(GPIO_S5_PGOOD, GPIO_INT_EDGE_BOTH, baseboard_en_pwr_s0)     \
 	GPIO_INT(GPIO_S0_PGOOD, GPIO_INT_EDGE_BOTH, power_signal_interrupt)  \
 	GPIO_INT(GPIO_EC_PCORE_INT_ODL, GPIO_INT_EDGE_BOTH,                  \
 		 power_signal_interrupt)                                     \
