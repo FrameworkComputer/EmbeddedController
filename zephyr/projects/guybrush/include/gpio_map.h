@@ -56,6 +56,8 @@ enum power_signal {
 	GPIO_INT(GPIO_PG_GROUPC_S0_OD, GPIO_INT_EDGE_BOTH,                   \
 		 baseboard_en_pwr_pcore_s0)                                  \
 	GPIO_INT(GPIO_PG_LPDDR4X_S3_OD, GPIO_INT_EDGE_BOTH,                  \
-		 baseboard_en_pwr_pcore_s0)
+		 baseboard_en_pwr_pcore_s0)                                  \
+	GPIO_INT(GPIO_VOLUME_UP_L, GPIO_INT_EDGE_BOTH, button_interrupt)     \
+	GPIO_INT(GPIO_VOLUME_DOWN_L, GPIO_INT_EDGE_BOTH, button_interrupt)
 
 #endif /* __ZEPHYR_GPIO_MAP_H */

@@ -196,10 +196,12 @@
 		voldn_btn_odl {
 			gpios = <&gpioa 7 (GPIO_INPUT | GPIO_PULL_UP)>;
 			label = "VOLDN_BTN_ODL";
+			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
 		volup_btn_odl {
 			gpios = <&gpio9 3 (GPIO_INPUT | GPIO_PULL_UP)>;
 			label = "VOLUP_BTN_ODL";
+			enum-name = "GPIO_VOLUME_UP_L";
 		};
 		ec_batt_pres_odl {
 			gpios = <&gpio9 4 GPIO_INPUT>;
@@ -280,6 +282,7 @@
 		ec_kso_02_inv {
 			gpios = <&gpio1 7 GPIO_OUT_LOW>;
 			label = "EC_KSO_02_INV";
+			enum-name = "GPIO_KBD_KSO2";
 		};
 		ec_espi_rst_l {
 			gpios = <&gpio5 4 GPIO_PULL_UP>;
