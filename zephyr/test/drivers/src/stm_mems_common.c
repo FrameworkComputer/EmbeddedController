@@ -21,17 +21,6 @@ static void setup(void)
 	i2c_mock_reset(MOCK_EMUL);
 }
 
-static const struct device *get_i2c_dev(void)
-{
-	const struct device *i2c_dev =
-		device_get_binding(DT_LABEL(DT_NODELABEL(i2c0)));
-
-	zassert_not_null(i2c_dev, "Failed to find 'i2c0' node");
-	zassert_equal(i2c_dev, i2c_get_device_for_port(I2C_PORT_POWER),
-		      "i2c0 node doesn't match I2C_PORT_POWER");
-	return i2c_dev;
-}
-
 static int mock_read_fn(struct i2c_emul *emul, int reg, uint8_t *val, int bytes,
 			void *data)
 {
