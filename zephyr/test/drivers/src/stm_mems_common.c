@@ -62,6 +62,6 @@ void test_suite_stm_mems_common(void)
 	ztest_test_suite(stm_mems_common,
 			 ztest_unit_test_setup_teardown(
 				 test_st_raw_read_n,
-				 unit_test_noop, unit_test_noop));
+				 setup, unit_test_noop));
 	ztest_run_test_suite(stm_mems_common);
 }
