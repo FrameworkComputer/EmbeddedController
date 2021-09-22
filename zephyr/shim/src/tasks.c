@@ -6,6 +6,7 @@
 #include <kernel.h>
 #include <init.h>
 #include <sys/atomic.h>
+#include <shell/shell.h>
 
 #include "common.h"
 #include "timer.h"
@@ -342,3 +343,11 @@ inline int in_interrupt_context(void)
 {
 	return k_is_in_isr();
 }
+
+#if IS_ENABLED(CONFIG_KERNEL_SHELL) && IS_ENABLED(CONFIG_THREAD_MONITOR)
+static int taskinfo(const struct shell *shell, size_t argc, char **argv)
+{
+	return shell_execute_cmd(shell, "kernel threads");
+}
+SHELL_CMD_REGISTER(taskinfo, NULL, "Threads statistics", taskinfo);
+#endif
