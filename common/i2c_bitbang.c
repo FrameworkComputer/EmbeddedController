@@ -349,6 +349,10 @@ void enable_i2c_raw_mode(bool enable)
 	}
 }
 
+__overridable void board_pre_task_i2c_peripheral_init(void)
+{
+}
+
 const struct i2c_drv bitbang_drv = {
 	.xfer = &i2c_bitbang_xfer
 };
