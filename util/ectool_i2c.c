@@ -4,6 +4,7 @@
  */
 
 #include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -122,6 +123,7 @@ static void cmd_i2c_help(void)
 {
 	fprintf(stderr,
 		"  Usage: i2cread <8 | 16> <port> <addr8> <offset>\n"
+		"  Usage: i2cspeed <port> [speed in kHz]\n"
 		"  Usage: i2cwrite <8 | 16> <port> <addr8> <offset> <data>\n"
 		"  Usage: i2cxfer <port> <addr7> <read_count> [bytes...]\n"
 		"    <port> i2c port number\n"
@@ -318,4 +320,92 @@ int cmd_i2c_xfer(int argc, char *argv[])
 	}
 
 	return 0;
+}
+
+static int i2c_get(int port)
+{
+	struct ec_params_i2c_control  p;
+	struct ec_response_i2c_control r;
+	uint16_t speed_khz;
+	int rv;
+
+	memset(&p, 0, sizeof(p));
+	p.port = port;
+	p.cmd = EC_I2C_CONTROL_GET_SPEED;
+
+	rv = ec_command(EC_CMD_I2C_CONTROL, 0, &p, sizeof(p), &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	speed_khz = r.cmd_response.speed_khz;
+	if (speed_khz == EC_I2C_CONTROL_SPEED_UNKNOWN)
+		printf("I2C port %d: speed: unknown\n", port);
+	else
+		printf("I2C port %d: speed: %u kHz\n", port, speed_khz);
+
+	return 0;
+}
+
+static int i2c_set(int port, int new_speed_khz)
+{
+	struct ec_params_i2c_control  p;
+	struct ec_response_i2c_control r;
+	uint16_t old_speed_khz;
+	int rv;
+
+	if ((new_speed_khz == EC_I2C_CONTROL_SPEED_UNKNOWN) ||
+	    (new_speed_khz < 0 || new_speed_khz > UINT16_MAX)) {
+		fprintf(stderr, "I2C speed %d kHz is not supported\n",
+			new_speed_khz);
+		return -1;
+	}
+
+	memset(&p, 0, sizeof(p));
+	p.port = port;
+	p.cmd = EC_I2C_CONTROL_SET_SPEED;
+	p.cmd_params.speed_khz = new_speed_khz;
+
+	rv = ec_command(EC_CMD_I2C_CONTROL, 0, &p, sizeof(p), &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	old_speed_khz = r.cmd_response.speed_khz;
+	if (old_speed_khz == EC_I2C_CONTROL_SPEED_UNKNOWN) {
+		printf("Port %d speed set to %d kHz\n", port, new_speed_khz);
+	} else {
+		printf("Port %d speed changed from %u kHz to %d kHz\n", port,
+		       old_speed_khz,
+		       new_speed_khz);
+	}
+
+	return 0;
+}
+
+int cmd_i2c_speed(int argc, char *argv[])
+{
+	unsigned int port, speed;
+	char *e;
+
+	if (argc < 2 || argc > 3) {
+		cmd_i2c_help();
+		return -1;
+	}
+
+	port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad port.\n");
+		return -1;
+	}
+
+	if (argc == 2)
+		return i2c_get(port);
+
+	speed = strtol(argv[2], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Bad speed. "
+			"Typical speeds are one of {100,400,1000}.\n");
+		return -1;
+	}
+
+	return i2c_set(port, speed);
 }

@@ -184,6 +184,8 @@ const char help_str[] =
 	"      Protect EC's I2C bus\n"
 	"  i2cread\n"
 	"      Read I2C bus\n"
+	"  i2cspeed <port> [speed]\n"
+	"      Get or set EC's I2C bus speed\n"
 	"  i2cwrite\n"
 	"      Write I2C bus\n"
 	"  i2cxfer <port> <peripheral_addr> <read_count> [write bytes...]\n"
@@ -10444,6 +10446,7 @@ const struct command commands[] = {
 	{"locatechip", cmd_locate_chip},
 	{"i2cprotect", cmd_i2c_protect},
 	{"i2cread", cmd_i2c_read},
+	{"i2cspeed", cmd_i2c_speed},
 	{"i2cwrite", cmd_i2c_write},
 	{"i2cxfer", cmd_i2c_xfer},
 	{"infopddev", cmd_pd_device_info},

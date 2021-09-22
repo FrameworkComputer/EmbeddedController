@@ -46,5 +46,6 @@ extern int ascii_mode;
 
 int cmd_i2c_protect(int argc, char *argv[]);
 int cmd_i2c_read(int argc, char *argv[]);
+int cmd_i2c_speed(int argc, char *argv[]);
 int cmd_i2c_write(int argc, char *argv[]);
 int cmd_i2c_xfer(int argc, char *argv[]);
