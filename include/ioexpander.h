@@ -56,6 +56,8 @@ struct ioexpander_drv {
 
 /* IO expander chip disabled. No I2C communication will be attempted. */
 #define IOEX_FLAGS_DISABLED	BIT(0)
+/* IO Expander has been initialized */
+#define IOEX_FLAGS_INITIALIZED	BIT(1)
 
 struct ioexpander_config_t {
 	/* Physical I2C port connects to the IO expander chip. */
