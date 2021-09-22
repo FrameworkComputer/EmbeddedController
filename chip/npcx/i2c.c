@@ -1018,7 +1018,7 @@ int i2c_raw_get_sda(int port)
 
 /*****************************************************************************/
 
-static void i2c_port_set_freq(const int ctrl, const int bus_freq)
+static void i2c_port_set_freq(const int ctrl, const int bus_freq_kbps)
 {
 	int freq, j;
 	int scl_freq;
@@ -1046,10 +1046,10 @@ static void i2c_port_set_freq(const int ctrl, const int bus_freq)
 	 * fSCL = fCLK / (4*SCLFRQ)
 	 * SCLFRQ = ceil(fCLK/(4*fSCL))
 	 */
-	scl_freq = DIV_ROUND_UP(freq, bus_freq*4000); /* Unit in bps */
+	scl_freq = DIV_ROUND_UP(freq, bus_freq_kbps*4000); /* Unit in bps */
 
 	/* Normal mode if I2C freq is under 100kHz */
-	if (bus_freq <= 100) {
+	if (bus_freq_kbps <= 100) {
 		/* Set divider value of SCL */
 		SET_FIELD(NPCX_SMBCTL2(ctrl), NPCX_SMBCTL2_SCLFRQ7_FIELD,
 			  (scl_freq & 0x7F));
@@ -1065,10 +1065,10 @@ static void i2c_port_set_freq(const int ctrl, const int bus_freq)
 	 * timing condition for all source clocks. Please refer
 	 * Section 7.5.9 "SMBus Timing - Fast Mode" for detail.
 	 */
-	if (bus_freq == 400) {
+	if (bus_freq_kbps == 400) {
 		pTiming = i2c_400k_timings;
 		i2c_timing_used = i2c_400k_timing_used;
-	} else if (bus_freq == 1000) {
+	} else if (bus_freq_kbps == 1000) {
 		pTiming = i2c_1m_timings;
 		i2c_timing_used = i2c_1m_timing_used;
 	} else {
