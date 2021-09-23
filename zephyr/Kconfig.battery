@@ -255,6 +255,16 @@ config PLATFORM_EC_CHARGER_RAA489000
 	  Enables the driver for the Renesas RAA489000 battery charger
 	  with integrated USB-C TCPC.
 
+config PLATFORM_EC_CHARGER_RT9490
+	bool "Use the RT9490 charger"
+	depends on PLATFORM_EC_I2C
+	select PLATFORM_EC_CHARGER_OTG_SUPPORTED
+	help
+	  Enables the driver for the Richtek RT9490 battery charger
+	  controller. This is a highly-integrated 5A Buck-Boost switch mode
+	  battery charge management and system power path management device for
+	  1-4 cell Li-Ion and Li-polymer battery.
+
 config PLATFORM_EC_CHARGER_SM5803
 	bool "Use the SM5803 charger"
 	depends on PLATFORM_EC_I2C

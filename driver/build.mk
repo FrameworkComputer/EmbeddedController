@@ -78,6 +78,7 @@ driver-$(CONFIG_CHARGER_MT6370)+=charger/rt946x.o
 driver-$(CONFIG_CHARGER_RAA489000)+=charger/isl923x.o
 driver-$(CONFIG_CHARGER_RT9466)+=charger/rt946x.o
 driver-$(CONFIG_CHARGER_RT9467)+=charger/rt946x.o
+driver-$(CONFIG_CHARGER_RT9490)+=charger/rt9490.o
 driver-$(CONFIG_CHARGER_SY21612)+=charger/sy21612.o
 driver-$(CONFIG_CHARGER_SM5803)+=charger/sm5803.o
 
