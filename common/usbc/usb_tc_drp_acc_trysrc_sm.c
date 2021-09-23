@@ -724,6 +724,11 @@ static void tc_detached(int port)
 	tc_set_modes_exit(port);
 	if (IS_ENABLED(CONFIG_USB_PRL_SM))
 		prl_set_default_pd_revision(port);
+
+	/* Clear any mux connection on detach */
+	if (IS_ENABLED(CONFIG_USBC_SS_MUX))
+		usb_mux_set(port, USB_PD_MUX_NONE,
+			    USB_SWITCH_DISCONNECT, tc[port].polarity);
 }
 
 static inline void pd_set_dual_role_and_event(int port,
@@ -2241,10 +2246,6 @@ static void tc_unattached_snk_entry(const int port)
 	 */
 	pd_execute_data_swap(port, PD_ROLE_DISCONNECTED);
 	pd_timer_enable(port, TC_TIMER_NEXT_ROLE_SWAP, PD_T_DRP_SNK);
-
-	if (IS_ENABLED(CONFIG_USBC_SS_MUX))
-		usb_mux_set(port, USB_PD_MUX_NONE,
-			USB_SWITCH_DISCONNECT, tc[port].polarity);
 
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
 		CLR_FLAGS_ON_DISCONNECT(port);
