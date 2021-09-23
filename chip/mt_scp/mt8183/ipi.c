@@ -381,6 +381,7 @@ static void ipi_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, ipi_init, HOOK_PRIO_DEFAULT);
 
+DECLARE_IRQ(SCP_IRQ_IPC0, ipc_handler, 4);
 void ipc_handler(void)
 {
 	/* TODO(b/117917141): We only support IPC_ID(0) for now. */
@@ -391,4 +392,3 @@ void ipc_handler(void)
 
 	SCP_GIPC_IN &= (SCP_GPIC_IN_CLEAR_ALL & ~SCP_GIPC_IN_CLEAR_IPCN(0));
 }
-DECLARE_IRQ(SCP_IRQ_IPC0, ipc_handler, 4);

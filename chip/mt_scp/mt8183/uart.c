@@ -93,6 +93,7 @@ void uart_process(void)
 }
 
 #if (UARTN < SCP_UART_COUNT)
+DECLARE_IRQ(UART_IRQ(UARTN), uart_interrupt, 2);
 void uart_interrupt(void)
 {
 	uint8_t ier;
@@ -103,8 +104,8 @@ void uart_interrupt(void)
 	UART_IER(UARTN) = 0;
 	UART_IER(UARTN) = ier;
 }
-DECLARE_IRQ(UART_IRQ(UARTN), uart_interrupt, 2);
 
+DECLARE_IRQ(UART_RX_IRQ(UARTN), uart_rx_interrupt, 2);
 void uart_rx_interrupt(void)
 {
 	uint8_t ier;
@@ -117,7 +118,6 @@ void uart_rx_interrupt(void)
 	UART_IER(UARTN) = ier;
 	SCP_INTC_UART_RX_IRQ |= 1 << UARTN;
 }
-DECLARE_IRQ(UART_RX_IRQ(UARTN), uart_rx_interrupt, 2);
 #endif
 
 void uart_task(void)

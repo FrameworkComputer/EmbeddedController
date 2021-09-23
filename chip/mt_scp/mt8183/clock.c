@@ -338,21 +338,21 @@ void scp_enable_clock(void)
 	AP_CLK_CFG_5_CLR = PWRAP_ULPOSC_CG;
 }
 
+DECLARE_IRQ(SCP_IRQ_CLOCK, clock_control_irq, 3);
 void clock_control_irq(void)
 {
 	/* Read ack CLK_IRQ */
 	(SCP_CLK_IRQ_ACK);
 	task_clear_pending_irq(SCP_IRQ_CLOCK);
 }
-DECLARE_IRQ(SCP_IRQ_CLOCK, clock_control_irq, 3);
 
+DECLARE_IRQ(SCP_IRQ_CLOCK2, clock_fast_wakeup_irq, 3);
 void clock_fast_wakeup_irq(void)
 {
 	/* Ack fast wakeup */
 	SCP_SLEEP_IRQ2 = 1;
 	task_clear_pending_irq(SCP_IRQ_CLOCK2);
 }
-DECLARE_IRQ(SCP_IRQ_CLOCK2, clock_fast_wakeup_irq, 3);
 
 /* Console command */
 int command_ulposc(int argc, char *argv[])
