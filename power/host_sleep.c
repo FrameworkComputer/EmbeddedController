@@ -167,8 +167,10 @@ void sleep_start_suspend(struct host_sleep_event_context *ctx,
 	/* Use zero internally to indicate no timeout. */
 	if (timeout == EC_HOST_SLEEP_TIMEOUT_DEFAULT) {
 		timeout = host_sleep_timeout_default;
+	}
 
-	} else if (timeout == EC_HOST_SLEEP_TIMEOUT_INFINITE) {
+	/* Use 0xFFFF to disable the timeout */
+	if (timeout == EC_HOST_SLEEP_TIMEOUT_INFINITE) {
 		sleep_signal_timeout = 0;
 		return;
 	}
