@@ -153,3 +153,7 @@
 &bbram {
 	status = "okay";
 };
+
+&mdc {
+	status = "okay";
+};
