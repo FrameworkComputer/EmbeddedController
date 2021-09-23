@@ -24,16 +24,15 @@ static void chip_bbram_status_check(void)
 
 	res = bbram_check_invalid(bbram_dev);
 	if (res != 0 && res != -ENOTSUP)
-		LOG_ERR("VBAT power drop!");
+		LOG_INF("VBAT power drop!");
 
 	res = bbram_check_standby_power(bbram_dev);
 	if (res != 0 && res != -ENOTSUP)
-		LOG_ERR("VSBY power drop!");
+		LOG_INF("VSBY power drop!");
 
 	res = bbram_check_power(bbram_dev);
 	if (res != 0 && res != -ENOTSUP)
-		LOG_ERR("VCC1 power drop!");
-
+		LOG_INF("VCC1 power drop!");
 }
 
 /*
