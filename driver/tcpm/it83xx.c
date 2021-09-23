@@ -47,6 +47,7 @@ const struct usbpd_ctrl_t usbpd_ctrl_regs[] = {
 BUILD_ASSERT(ARRAY_SIZE(usbpd_ctrl_regs) == IT83XX_USBPD_PHY_PORT_COUNT);
 
 static int it83xx_tcpm_set_rx_enable(int port, int enable);
+static int it83xx_tcpm_set_vconn(int port, int enable);
 
 /*
  * Disable cc analog and pd digital module, but only left Rd_5.1K (Not
@@ -453,7 +454,7 @@ static void it83xx_init(enum usbpd_port port, int role)
 	/* cc connect */
 	IT83XX_USBPD_CCCSR(port) = 0;
 	/* disable vconn */
-	it83xx_enable_vconn(port, 0);
+	it83xx_tcpm_set_vconn(port, 0);
 	/* TX start from high */
 	IT83XX_USBPD_CCADCR(port) |= BIT(6);
 	/* enable cc1/cc2 */
@@ -609,14 +610,21 @@ static int it83xx_tcpm_set_vconn(int port, int enable)
 			if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
 				/* Enable tcpc receive SOP' and SOP'' packet */
 				it83xx_tcpm_decode_sop_prime_enable(port, true);
-		}
-
-		/* Turn on/off vconn power switch. */
-		board_pd_vconn_ctrl(port,
-			USBPD_GET_PULL_CC_SELECTION(port) ?
-				USBPD_CC_PIN_2 : USBPD_CC_PIN_1, enable);
-
-		if (!enable) {
+			/* Turn on Vconn power switch. */
+			board_pd_vconn_ctrl(port,
+					    USBPD_GET_PULL_CC_SELECTION(port) ?
+					    USBPD_CC_PIN_2 : USBPD_CC_PIN_1,
+					    enable);
+		} else {
+			/*
+			 * If the pd port has previous connection and supplies
+			 * Vconn, then RO jumping to RW reset the system,
+			 * we never know which cc is the previous Vconn pin,
+			 * so we always turn both cc pins off when disable
+			 * Vconn power switch.
+			 */
+			board_pd_vconn_ctrl(port, USBPD_CC_PIN_1, enable);
+			board_pd_vconn_ctrl(port, USBPD_CC_PIN_2, enable);
 			/* Disable tcpc receive SOP' and SOP'' packet */
 			if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
 				it83xx_tcpm_decode_sop_prime_enable(port,
