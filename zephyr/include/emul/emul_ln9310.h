@@ -14,6 +14,7 @@
 
 #include <emul.h>
 #include "driver/ln9310.h"
+#include <stdbool.h>
 
 /**
  * @brief Select the current emulator to use.
@@ -59,5 +60,14 @@ void ln9310_emul_set_version(const struct emul *emulator, int version);
  * @param is_gt_10v Whether or not the chip is currently getting more than 10V.
  */
 void ln9310_emul_set_vin_gt_10v(const struct emul *emulator, bool is_gt_10v);
+
+/**
+ * @brief Get whether or not the LN9310 is initialized.
+ *
+ * @param emulator The LN9310 emulator to read.
+ *
+ * @return true if the LN9310 was correctly initialized.
+ */
+bool ln9310_emul_is_init(const struct emul *emulator);
 
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_LN9310_H_ */

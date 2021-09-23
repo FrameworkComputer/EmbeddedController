@@ -21,6 +21,7 @@ void test_ln9310_2s_no_startup__passes_init(void)
 	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
 
 	zassert_ok(ln9310_init(), NULL);
+	zassert_true(ln9310_emul_is_init(emulator), NULL);
 }
 
 void test_ln9310_3s_no_startup__passes_init(void)
@@ -36,6 +37,7 @@ void test_ln9310_3s_no_startup__passes_init(void)
 	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
 
 	zassert_ok(ln9310_init(), NULL);
+	zassert_true(ln9310_emul_is_init(emulator), NULL);
 }
 
 void test_suite_ln9310(void)
