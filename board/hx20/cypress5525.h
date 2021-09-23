@@ -440,4 +440,6 @@ void cypd_set_retimer_power(enum power_state power);
 void cypd_set_power_active(enum power_state power);
 
 void set_pd_fw_update(bool update);
+
+void cypd_charger_init_complete(void);
 #endif	/* __CROS_EC_CYPRESS5525_H */

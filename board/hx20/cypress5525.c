@@ -344,6 +344,26 @@ int cypd_set_power_state(int power_state)
 	return rv;
 }
 
+static bool charger_init_ok;
+void cypd_charger_init_complete(void)
+{
+	charger_init_ok = 1;
+}
+void cypd_update_power(void)
+{
+	return;
+	if (!charger_init_ok) {
+		system_power_present = 0;
+		return;
+	}
+
+	if (extpower_is_present() ||
+	 charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE)
+		system_power_present = 1;
+	else
+		system_power_present = 0;
+}
+
 int cypd_update_power_status(void)
 {
 	int i;
@@ -356,12 +376,8 @@ int cypd_update_power_status(void)
 		power_stat |= BIT(1) + BIT(2);
 	}
 
-	if (power_stat) {
-		system_power_present = 1;
-	}
-	else {
-		system_power_present = 0;
-	}
+	cypd_update_power();
+
 	CPRINTS("%s power_stat 0x%x", __func__, power_stat);
 
 	for (i = 0; i < PD_CHIP_COUNT; i++) {
@@ -1045,7 +1061,7 @@ int cyp5525_device_int(int controller)
 void cypd_handle_state(int controller)
 {
 	int data;
-	int i;
+	//int i;
 	int delay = 0;
 
 	switch (pd_chip_config[controller].state) {
@@ -1073,18 +1089,22 @@ void cypd_handle_state(int controller)
 			gpio_disable_interrupt(pd_chip_config[controller].gpio);
 			cyp5525_get_version(controller);
 			cypd_write_reg8_wait_ack(controller, CYP5225_USER_MAINBOARD_VERSION, board_get_version());
-			for(i=0; i < 50;i++) {
+
+			/*for(i=0; i < 50;i++) {
 				if (gpio_get_level(GPIO_PWR_3V5V_PG) && 
-					(extpower_is_present() || 
-						charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE))
+						((charger_current_battery_params()->is_present == BP_YES && 
+							!(charger_current_battery_params()->flags & BATT_FLAG_BAD_ANY))
+						)
+					)
 					break;
 				usleep(MSEC);
 				
-			}
+			}*/
 			pending_retimer_init(1);
-			if (extpower_is_present() || 
-				charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE) {
+			cypd_update_power();
+			if (system_power_present) {
 				gpio_set_level(GPIO_PCH_PWR_EN, 1);
+				CPRINTS("PD PCH ON");
 			} else {
 				CPRINTS("Dead Battery Condition?");
 			}
