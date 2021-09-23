@@ -713,6 +713,12 @@ const struct charger_config_t chg_chips[] = {
 };
 
 #ifdef CONFIG_CHARGER_CUSTOMER_SETTING
+static void charger_chips_init(void);
+void charger_chips_init_retry(void)
+{
+	charger_chips_init();
+}
+DECLARE_DEFERRED(charger_chips_init_retry);
 static void charger_chips_init(void)
 {
 	/* Battery present need ADC function ready, so change the initail priority
@@ -721,6 +727,18 @@ static void charger_chips_init(void)
 
 	int chip;
 	uint16_t val = 0x0000; /*default ac setting */
+	uint32_t data = 0;
+	/*In our case the EC can boot before the charger has power so
+	 * check if the charger is responsive before we try to init it */
+
+
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_ACOK_REFERENCE, &data) != EC_SUCCESS) {
+			CPRINTS("Retry Charger init");
+			hook_call_deferred(&charger_chips_init_retry_data, 100*MSEC);
+			return;
+		}
+
 
 	for (chip = 0; chip < board_get_charger_chip_count(); chip++) {
 		if (chg_chips[chip].drv->init)
@@ -753,6 +771,7 @@ static void charger_chips_init(void)
 		ISL9241_REG_ACOK_REFERENCE, 0x0B00))
 		goto init_fail;
 
+	cypd_charger_init_complete();
 	return;
 
 init_fail:
