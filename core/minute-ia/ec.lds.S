@@ -235,6 +235,12 @@ SECTIONS
 	/* TODO: Adjust __image_size to proper value for core minute-ia later */
 	__image_size = . - CONFIG_ISH_BOOT_START;
 
+#if defined(SECTION_IS_RW) && (CONFIG_FLASH_WRITE_SIZE > 0)
+	/* Alignment is needed by flash_command_write() for RW update. */
+	ASSERT(__image_size % CONFIG_FLASH_WRITE_SIZE == 0,
+	       "Error: RW image is not aligned to CONFIG_FLASH_WRITE_SIZE")
+#endif
+
 	def_irq_low  = ABSOLUTE(default_int_handler) & 0xFFFF;
 	def_irq_high = ABSOLUTE(default_int_handler) >> 16;
 
