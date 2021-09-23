@@ -527,12 +527,21 @@ static int it8xxx2_tcpm_set_vconn(int port, int enable)
 				/* Enable tcpc receive SOP' and SOP'' packet */
 				it8xxx2_tcpm_decode_sop_prime_enable(port,
 								     true);
-		}
-		/* Turn on/off vconn power switch. */
-		board_pd_vconn_ctrl(port,
-				    USBPD_GET_PULL_CC_SELECTION(port) ?
-				    USBPD_CC_PIN_2 : USBPD_CC_PIN_1, enable);
-		if (!enable) {
+			/* Turn on Vconn power switch. */
+			board_pd_vconn_ctrl(port,
+					    USBPD_GET_PULL_CC_SELECTION(port) ?
+					    USBPD_CC_PIN_2 : USBPD_CC_PIN_1,
+					    enable);
+		} else {
+			/*
+			 * If the pd port has previous connection and supplies
+			 * Vconn, then RO jumping to RW reset the system,
+			 * we never know which cc is the previous Vconn pin,
+			 * so we always turn both cc pins off when disable
+			 * Vconn power switch.
+			 */
+			board_pd_vconn_ctrl(port, USBPD_CC_PIN_1, enable);
+			board_pd_vconn_ctrl(port, USBPD_CC_PIN_2, enable);
 			if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP))
 				/* Disable tcpc receive SOP' and SOP'' packet */
 				it8xxx2_tcpm_decode_sop_prime_enable(port,
@@ -792,7 +801,7 @@ static void it8xxx2_init(enum usbpd_port port, int role)
 	/* Set default power role and assert Rp/Rd */
 	it8xxx2_set_power_role(port, role);
 	/* Disable vconn: connect cc analog module, disable cc 5v tolerant */
-	it8xxx2_enable_vconn(port, 0);
+	it8xxx2_tcpm_set_vconn(port, 0);
 	/* Enable tx done and hard reset detect interrupt */
 	IT83XX_USBPD_IMR(port) &= ~(USBPD_REG_MASK_MSG_TX_DONE |
 				    USBPD_REG_MASK_HARD_RESET_DETECT);
