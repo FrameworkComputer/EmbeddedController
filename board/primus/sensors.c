@@ -95,13 +95,25 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 static const struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
 	},
 	.temp_fan_off = C_TO_K(35),
 	.temp_fan_max = C_TO_K(50),
+};
+
+static const struct ec_thermal_config thermal_ssd = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(92),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(55),
 };
 
 /*
@@ -120,7 +132,7 @@ static const struct ec_thermal_config thermal_cpu = {
 static const struct ec_thermal_config thermal_inductor = {
 	.temp_host = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
@@ -134,7 +146,7 @@ static const struct ec_thermal_config thermal_inductor = {
  */
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = thermal_cpu,
-	[TEMP_SENSOR_2_SSD]	    = thermal_inductor,
+	[TEMP_SENSOR_2_SSD]	= thermal_ssd,
 	[TEMP_SENSOR_3_CHARGER]	= thermal_inductor,
 	[TEMP_SENSOR_4_MEMORY]	= thermal_inductor,
 	[TEMP_SENSOR_5_USBC]	= thermal_inductor,
