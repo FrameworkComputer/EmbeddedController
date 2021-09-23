@@ -19,13 +19,6 @@ enum battery_index {
 	BATT_IDX_BASE = 1,
 };
 
-#ifdef CONFIG_BATTERY_V2
-extern struct ec_response_battery_static_info_v1
-	battery_static[CONFIG_BATTERY_COUNT];
-extern struct ec_response_battery_dynamic_info
-	battery_dynamic[CONFIG_BATTERY_COUNT];
-#endif
-
 /* Stop charge when charging and battery level >= this percentage */
 #define BATTERY_LEVEL_FULL		100
 
@@ -79,6 +72,27 @@ enum battery_disconnect_state {
 	BATTERY_NOT_DISCONNECTED,
 	BATTERY_DISCONNECT_ERROR,
 };
+
+struct battery_static_info {
+	uint16_t design_capacity;
+	uint16_t design_voltage;
+	uint32_t cycle_count;
+	/*
+	 * TODO: The fields below should be renamed & re-typed:
+	 * uint16_t serial[32];
+	 * char manufacturer[32];
+	 * char device_name[32];
+	 * char chemistry[32];
+	 */
+	/* Max string size in the SB spec is 31. */
+	char manufacturer_ext[32];	/* SB_MANUFACTURER_NAME */
+	char model_ext[32];		/* SB_DEVICE_NAME */
+	char serial_ext[32];		/* SB_SERIAL_NUMBER */
+	char type_ext[32];		/* SB_DEVICE_CHEMISTRY */
+};
+
+extern struct battery_static_info battery_static[];
+extern struct ec_response_battery_dynamic_info battery_dynamic[];
 
 /* Battery parameters */
 struct batt_params {

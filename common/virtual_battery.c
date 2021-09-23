@@ -171,6 +171,15 @@ void copy_memmap_string(uint8_t *dest, int offset, int len)
 	memcpy(dest + 1, memmap_str, MIN(memmap_strlen, len - 1));
 }
 
+static void copy_battery_info_string(uint8_t *dst, const uint8_t *src, int len)
+{
+	if (len == 0)
+		return;
+
+	dst[0] = strlen(src);
+	strncpy(dst + 1, src, len - 1);
+}
+
 int virtual_battery_operation(const uint8_t *batt_cmd_head,
 			      uint8_t *dest,
 			      int read_len,
@@ -192,6 +201,14 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 	 * are two bytes.
 	 */
 	int bounded_read_len = MIN(read_len, 2);
+	const struct battery_static_info *bs;
+
+	if (IS_ENABLED(CONFIG_BATTERY_V2))
+		/*
+		 * TODO: To support multiple batteries, we need to translate
+		 * i2c address to a battery index.
+		 */
+		bs = &battery_static[BATT_IDX_MAIN];
 
 	curr_batt = charger_current_battery_params();
 	switch (*batt_cmd_head) {
@@ -296,13 +313,24 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 		memcpy(dest, &val, bounded_read_len);
 		break;
 	case SB_MANUFACTURER_NAME:
-		copy_memmap_string(dest, EC_MEMMAP_BATT_MFGR, read_len);
+		if (IS_ENABLED(CONFIG_BATTERY_V2))
+			copy_battery_info_string(dest, bs->manufacturer_ext,
+						 read_len);
+		else
+			copy_memmap_string(dest, EC_MEMMAP_BATT_MFGR, read_len);
 		break;
 	case SB_DEVICE_NAME:
-		copy_memmap_string(dest, EC_MEMMAP_BATT_MODEL, read_len);
+		if (IS_ENABLED(CONFIG_BATTERY_V2))
+			copy_battery_info_string(dest, bs->model_ext, read_len);
+		else
+			copy_memmap_string(dest, EC_MEMMAP_BATT_MODEL,
+					   read_len);
 		break;
 	case SB_DEVICE_CHEMISTRY:
-		copy_memmap_string(dest, EC_MEMMAP_BATT_TYPE, read_len);
+		if (IS_ENABLED(CONFIG_BATTERY_V2))
+			copy_battery_info_string(dest, bs->type_ext, read_len);
+		else
+			copy_memmap_string(dest, EC_MEMMAP_BATT_TYPE, read_len);
 		break;
 	case SB_AVERAGE_TIME_TO_FULL:
 		/* This may cause an i2c transaction */

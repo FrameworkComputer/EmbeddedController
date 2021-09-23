@@ -296,6 +296,8 @@ int ec_ec_client_base_get_static_info(void)
 			uint8_t crc8;
 		} resp;
 	} __packed data;
+	const struct ec_response_battery_static_info *info = &data.resp.info;
+	struct battery_static_info *bs = &battery_static[BATT_IDX_BASE];
 
 	data.req.param.index = 0;
 
@@ -316,8 +318,15 @@ int ec_ec_client_base_get_static_info(void)
 	CPRINTF("C-count:    %d\n", data.resp.info.cycle_count);
 #endif
 
-	memcpy(&battery_static[BATT_IDX_BASE], &data.resp.info,
-				sizeof(battery_static[BATT_IDX_BASE]));
+	bs->design_capacity = info->design_capacity;
+	bs->design_voltage = info->design_voltage;
+	bs->cycle_count = info->cycle_count;
+	strncpy(bs->manufacturer_ext, info->manufacturer,
+		sizeof(bs->manufacturer_ext));
+	strncpy(bs->model_ext, info->model, sizeof(bs->model_ext));
+	strncpy(bs->serial_ext, info->serial, sizeof(bs->serial_ext));
+	strncpy(bs->type_ext, info->type, sizeof(bs->type_ext));
+
 	return EC_RES_SUCCESS;
 }
 
