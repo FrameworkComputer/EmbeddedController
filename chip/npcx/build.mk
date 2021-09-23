@@ -69,13 +69,13 @@ show_esct_cmd=$(if $(V),,echo '  ECST   ' $(subst $(out)/,,$@) ; )
 # size when the CONFIG_CHIP_INIT_ROM_REGION is used. Note that the -fwlen
 # parameter for the ecst utility must be in hex.
 cmd_fwlen=$(shell awk '\
-  /__flash_used =/ {flash_used = strtonum($$1)} \
+  /__flash_used/ {flash_used = strtonum("0x" $$1)} \
   END {printf ("%x", flash_used)}' $(1))
 
 # ECST options for header
 bld_ecst=${out}/util/ecst -chip $(CHIP_VARIANT) \
 	-usearmrst -mode bt -ph -i $(1) -o $(2) -nohcrc -nofcrc -flashsize 8 \
-	-fwlen $(call cmd_fwlen, $(patsubst %.flat,%.map,$(2))) \
+	-fwlen $(call cmd_fwlen, $(patsubst %.flat,%.smap,$(2))) \
 	-spimaxclk 50 -spireadmode dual 1> /dev/null
 
 # Replace original one with the flat file including header

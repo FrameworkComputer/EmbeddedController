@@ -308,11 +308,16 @@ SECTIONS
 		     (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
 
 	/*
-	 * __flash_used is used in flash free calculations by the makefile.
+	 * __flash_used and __flash_size is used in flash free calculations by
+	 * the makefile. Note the difference between __flash_size and
+	 * __config_flash_size. __flash_size is the flash size for the given
+	 * image (RW, RO, etc.), while __config_flash_size is the *total*
+	 * flash size.
 	 * __image_size is stored in the struct image_data header and used
-	 * in hash calcuations.
+	 * in hash calculations.
 	 */
 	__flash_used = LOADADDR(.data) + SIZEOF(.data) - ORIGIN(FLASH);
+	__flash_size = LENGTH(FLASH);
 	__image_size = __flash_used;
 
 #if defined(SECTION_IS_RW) && (CONFIG_FLASH_WRITE_SIZE > 0)

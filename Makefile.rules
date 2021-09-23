@@ -426,9 +426,9 @@ ifeq ($(V),0)
 cmd_size=
 else
 cmd_size=$(Q)awk '\
-  /__flash_used =/ {flash_used = strtonum($$1)} \
-  /^FLASH / {flash_size = strtonum($$3)} \
-  /__ram_free =/ {ram_free = strtonum($$1)} \
+  /__flash_used/ {flash_used = strtonum("0x" $$1)} \
+  /__flash_size/ {flash_size = strtonum("0x" $$1)} \
+  /__ram_free/ {ram_free = strtonum("0x" $$1)} \
   END {room_free = flash_size - flash_used; \
        print ram_free > "$(out)/$(1)/space_free_ram.txt"; \
        printf "  *** "; \
@@ -438,7 +438,7 @@ cmd_size=$(Q)awk '\
        } \
        printf ("%s bytes in RAM still available on $(BOARD) $(1) ****\n", \
            ram_free) \
-  }' $(out)/$(1)/$(PROJECT).$(1).map
+  }' $(out)/$(1)/$(PROJECT).$(1).smap
 endif
 
 # List the smallest free flash spaces
