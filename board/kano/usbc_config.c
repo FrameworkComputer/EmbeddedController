@@ -91,6 +91,15 @@ static const struct usb_mux usbc1_tcss_usb_mux = {
 	.hpd_update = &virtual_hpd_update,
 };
 
+struct usb_mux soc_side_bb_retimer_usb_mux = {
+	.usb_port = USBC_PORT_C1,
+	.driver = &bb_usb_retimer,
+	.hpd_update = bb_retimer_hpd_update,
+	.i2c_port = I2C_PORT_USB_C1_MUX,
+	.i2c_addr_flags = USBC_PORT_C1_SOC_BB_RETIMER_I2C_ADDR,
+	.next_mux = &usbc1_tcss_usb_mux,
+};
+
 const struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.usb_port = USBC_PORT_C0,
@@ -106,7 +115,7 @@ const struct usb_mux usb_muxes[] = {
 		.hpd_update = bb_retimer_hpd_update,
 		.i2c_port = I2C_PORT_USB_C1_MUX,
 		.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
-		.next_mux = &usbc1_tcss_usb_mux,
+		.next_mux = &soc_side_bb_retimer_usb_mux,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
