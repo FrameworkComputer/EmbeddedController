@@ -118,6 +118,9 @@
 #undef  CONFIG_FW_PSTATE_SIZE
 #define CONFIG_FW_PSTATE_SIZE 0
 
+/* Include math_util for bitmask_uint64 used in pd_timers */
+#define CONFIG_MATH_UTIL
+
 #ifndef __ASSEMBLER__
 
 /* Timer selection */

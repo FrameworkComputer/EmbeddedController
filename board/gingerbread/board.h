@@ -62,6 +62,9 @@
 #define GPIO_WP_L		GPIO_EC_WP_L
 #define GPIO_WP		GPIO_EC_WP_L
 
+/* Include math_util for bitmask_uint64 used in pd_timers */
+#define CONFIG_MATH_UTIL
+
 #ifndef __ASSEMBLER__
 
 #include "registers.h"

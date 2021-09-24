@@ -50,6 +50,9 @@
 #define I2C_PORT_EEPROM I2C_PORT_I2C3
 #define MP4245_I2C_ADDR_FLAGS MP4245_I2C_ADDR_0_FLAGS
 
+/* Include math_util for bitmask_uint64 used in pd_timers */
+#define CONFIG_MATH_UTIL
+
 #ifndef __ASSEMBLER__
 
 #include "registers.h"

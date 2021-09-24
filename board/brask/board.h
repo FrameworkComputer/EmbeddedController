@@ -145,6 +145,9 @@
  */
 /* #define CONFIG_FANS			FAN_CH_COUNT */
 
+/* Include math_util for bitmask_uint64 used in pd_timers */
+#define CONFIG_MATH_UTIL
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"	/* needed by registers.h */

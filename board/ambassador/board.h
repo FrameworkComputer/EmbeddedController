@@ -177,6 +177,9 @@
 
 #define PP5000_PGOOD_POWER_SIGNAL_MASK POWER_SIGNAL_MASK(PP5000_A_PGOOD)
 
+/* Include math_util for bitmask_uint64 used in pd_timers */
+#define CONFIG_MATH_UTIL
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
