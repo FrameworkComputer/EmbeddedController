@@ -484,6 +484,16 @@ config PLATFORM_EC_CONSOLE_CMD_I2C_PORTMAP
 	  display the mapping of the I2C ports defined by the named-i2c-ports
 	  node to the physical port and remote port indexes.
 
+config PLATFORM_EC_CONSOLE_CMD_I2C_SPEED
+	bool "Console command: i2cspeed"
+	default n
+	depends on PLATFORM_EC_I2C
+	help
+	  Enable the 'i2cspeed' console command. This comamnd is used to
+	  display an I2C port's bus speed. Additionally, for ports with
+	  the DYNAMIC_SPEED port flag set, the speed can be set. In all
+	  cases, the bus speed is in units of kHz.
+
 config PLATFORM_EC_SMBUS_PEC
 	bool "Packet error checking support for SMBus"
 	help

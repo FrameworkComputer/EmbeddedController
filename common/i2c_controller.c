@@ -1724,6 +1724,80 @@ DECLARE_CONSOLE_COMMAND(i2cxfer, command_i2cxfer,
 			"Read write I2C");
 #endif
 
+#ifdef CONFIG_CMD_I2C_SPEED
+
+static const char * const i2c_freq_str[] = {
+	[I2C_FREQ_1000KHZ] = "1000 kHz",
+	[I2C_FREQ_400KHZ] = "400 kHz",
+	[I2C_FREQ_100KHZ] = "100 kHz",
+	[I2C_FREQ_COUNT] = "unknown",
+};
+
+BUILD_ASSERT(ARRAY_SIZE(i2c_freq_str) == I2C_FREQ_COUNT + 1);
+
+static int command_i2c_speed(int argc, char **argv)
+{
+	int port;
+	char *e;
+	enum i2c_freq freq;
+	enum i2c_freq new_freq = I2C_FREQ_COUNT;
+
+	if (argc < 2 || argc > 3)
+		return EC_ERROR_PARAM_COUNT;
+
+	port = strtoi(argv[1], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM1;
+
+	if (port < 0 || port >= I2C_PORT_COUNT)
+		return EC_ERROR_INVAL;
+
+	freq = i2c_get_freq(port);
+	if (freq < 0 || freq > I2C_FREQ_COUNT)
+		return EC_ERROR_UNKNOWN;
+
+	if (argc == 3) {
+		int khz;
+		int rv;
+
+		khz = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM2;
+
+		switch (khz) {
+		case 100:
+			new_freq = I2C_FREQ_100KHZ;
+			break;
+		case 400:
+			new_freq = I2C_FREQ_400KHZ;
+			break;
+		case 1000:
+			new_freq = I2C_FREQ_1000KHZ;
+			break;
+		default:
+			return EC_ERROR_PARAM2;
+		}
+		rv = i2c_set_freq(port, new_freq);
+		if (rv != EC_SUCCESS)
+			return rv;
+	}
+
+	if (new_freq != I2C_FREQ_COUNT)
+		ccprintf("Port %d speed changed from %s to %s\n", port,
+			 i2c_freq_str[freq],
+			 i2c_freq_str[new_freq]);
+	else
+		ccprintf("Port %d speed is %s\n", port, i2c_freq_str[freq]);
+
+	return EC_SUCCESS;
+}
+
+DECLARE_CONSOLE_COMMAND(i2cspeed, command_i2c_speed,
+			"port [speed in kHz]",
+			"Get or set I2C port speed");
+
+#endif /* CONFIG_CMD_I2C_SPEED */
+
 #ifdef CONFIG_CMD_I2C_STRESS_TEST
 static void i2c_test_status(struct i2c_test_results *i2c_test, int test_dev)
 {
