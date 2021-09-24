@@ -9,6 +9,7 @@
 #define __CROS_EC_MATH_UTIL_H
 
 #include <stdint.h>
+#include "limits.h"
 
 #ifdef CONFIG_FPU
 typedef float fp_t;
@@ -229,5 +230,14 @@ void rotate_inv(const intv3_t v, const mat33_fp_t R, intv3_t res);
  * Divide dividend by divisor and round it to the nearest integer.
  */
 int round_divide(int64_t dividend, int divisor);
+
+/**
+ * Create a 64 bit bitmask of 2^offset
+ */
+#if ULONG_MAX == 0xFFFFFFFFUL
+uint64_t bitmask_uint64(int offset);
+#else
+#define bitmask_uint64(o) ((uint64_t)1 << (o))
+#endif
 
 #endif /* __CROS_EC_MATH_UTIL_H */

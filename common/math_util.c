@@ -293,3 +293,43 @@ int round_divide(int64_t dividend, int divisor)
 		(dividend - divisor / 2) / divisor :
 		(dividend + divisor / 2) / divisor;
 }
+
+#if ULONG_MAX == 0xFFFFFFFFUL
+/*
+ * 32 bit processor
+ *
+ * Some 32 bit processors do not include a 64 bit shift
+ * operation. So fall back to 32 bit operations on a
+ * union.
+ */
+uint64_t bitmask_uint64(int offset)
+{
+	union mask64_t {
+		struct {
+#if (__BYTE_ORDER__  == __ORDER_LITTLE_ENDIAN__)
+			uint32_t lo;
+			uint32_t hi;
+#elif (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
+			uint32_t hi;
+			uint32_t lo;
+#endif
+		};
+		uint64_t val;
+	} mask;
+
+	/* Clear out the mask */
+	mask.val = 0;
+
+	/*
+	 * If the shift is out of range the result should
+	 * remain 0, otherwise perform the shift
+	 */
+	if (offset >= 0 && offset < 64) {
+		if (offset < 32)
+			mask.lo = BIT(offset);
+		else
+			mask.hi = BIT(offset - 32);
+	}
+	return mask.val;
+}
+#endif
