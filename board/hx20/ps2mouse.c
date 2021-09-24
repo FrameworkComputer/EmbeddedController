@@ -23,6 +23,7 @@
 #include "power.h"
 #include "diagnostics.h"
 #define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_KEYBOARD, format, ## args)
 
 static enum ps2_mouse_state mouse_state = PS2MSTATE_STREAM;
 static enum ps2_mouse_state prev_mouse_state = PS2MSTATE_STREAM;
@@ -40,7 +41,6 @@ static uint8_t sample_rate = 100;
 static uint8_t ec_mode_disabled;
 static uint8_t detected_host_packet = true;
 static uint8_t emumouse_task_id;
-
 static uint8_t aux_data;
 void send_data_byte(uint8_t data) {
 	int timeout = 0;
@@ -229,7 +229,7 @@ void touchpad_interrupt(enum gpio_signal signal)
 		unprocessed_tp_int_count = 0;
 	} else {
 		if (timestamp_expired(last_int_time, &now)) {
-			if (unprocessed_tp_int_count++ > 4) {
+			if (unprocessed_tp_int_count++ > TOUCHPAD_I2C_RETRY_COUNT_TO_RENABLE) {
 				detected_host_packet = false;
 				unprocessed_tp_int_count = 0;
 				task_set_event(emumouse_task_id, PS2MOUSE_EVT_REENABLE, 0);
@@ -325,7 +325,7 @@ void read_touchpad_in_report(void)
 {
 	int rv = EC_SUCCESS;
 	uint8_t data[128];
-	int xfer_len;
+	int xfer_len = 0;
 	int16_t x, y;
 	uint8_t response_byte = 0x08;
 	/*dont trigger disable state during our own transactions*/
