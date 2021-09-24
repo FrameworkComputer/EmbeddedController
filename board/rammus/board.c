@@ -19,6 +19,8 @@
 #include "console.h"
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm_common.h"
+#include "driver/accelgyro_icm426xx.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
@@ -586,6 +588,7 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 static struct bmi_drv_data_t g_bmi160_data;
+static struct icm_drv_data_t g_icm426xx_data;
 
 /* private data */
 static struct accelgyro_saved_data_t g_bma255_data;
@@ -598,10 +601,62 @@ const mat33_fp_t base_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(-1) }
 };
 
+const mat33_fp_t base_standard_ref_icm = {
+	{ 0, FLOAT_TO_FP(1), 0 },
+	{ FLOAT_TO_FP(1), 0, 0 },
+	{ 0, 0, FLOAT_TO_FP(-1) }
+};
+
 const mat33_fp_t lid_standard_ref = {
 	{ FLOAT_TO_FP(-1), 0, 0 },
 	{ 0,  FLOAT_TO_FP(1), 0 },
 	{ 0, 0, FLOAT_TO_FP(-1) }
+};
+
+struct motion_sensor_t base_accel_icm = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+	.rot_standard_ref = &base_standard_ref_icm,
+	.min_frequency = ICM426XX_ACCEL_MIN_FREQ,
+	.max_frequency = ICM426XX_ACCEL_MAX_FREQ,
+	.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* Sensor on in S3 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 0,
+		},
+	},
+};
+
+struct motion_sensor_t base_gyro_icm = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = &base_standard_ref_icm,
+	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
+	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
 };
 
 struct motion_sensor_t lid_accel_kx022 = {
@@ -709,6 +764,14 @@ struct motion_sensor_t motion_sensors[] = {
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
+void motion_interrupt(enum gpio_signal signal)
+{
+	if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_BASE_ICM426XX)
+		icm426xx_interrupt(signal);
+	else
+		bmi160_interrupt(signal);
+}
+
 static void board_detect_motionsense(void)
 {
 	if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_LID_KX022) {
@@ -716,6 +779,13 @@ static void board_detect_motionsense(void)
 		ccprints("LID_ACCEL is KX022");
 	} else
 		ccprints("LID_ACCEL is BMA253");
+
+	if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_BASE_ICM426XX) {
+		motion_sensors[BASE_ACCEL] = base_accel_icm;
+		motion_sensors[BASE_GYRO] = base_gyro_icm;
+		ccprints("BASE_ACCEL is ICM426XX");
+	} else
+		ccprints("BASE_ACCEL is BMI160");
 }
 DECLARE_HOOK(HOOK_INIT, board_detect_motionsense, HOOK_PRIO_DEFAULT);
 

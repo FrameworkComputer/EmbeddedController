@@ -112,6 +112,9 @@
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+#define CONFIG_ACCELGYRO_ICM426XX
+#define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 #define CONFIG_ACCELGYRO_BMI160_INT2_OUTPUT
 #define CONFIG_ACCEL_BMA255
 #define CONFIG_ACCEL_KX022
@@ -269,6 +272,7 @@ enum pwm_channel {
 /* Board specific handlers */
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
+void motion_interrupt(enum gpio_signal signal);
 
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)

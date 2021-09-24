@@ -29,3 +29,8 @@ enum ec_ssfc_lid_sensor get_cbi_ssfc_lid_sensor(void)
 {
 	return cached_ssfc.lid_sensor;
 }
+
+enum ec_ssfc_base_sensor get_cbi_ssfc_base_sensor(void)
+{
+	return cached_ssfc.base_sensor;
+}

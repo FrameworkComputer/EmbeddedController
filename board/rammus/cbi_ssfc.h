@@ -21,10 +21,20 @@ enum ec_ssfc_lid_sensor {
 	SSFC_SENSOR_LID_KX022 = 2
 };
 
+/*
+ * Base Sensor (Bits 5-3)
+ */
+enum ec_ssfc_base_sensor {
+	SSFC_SENSOR_BASE_DEFAULT = 0,
+	SSFC_SENSOR_BASE_BMI160 = 1,
+	SSFC_SENSOR_BASE_ICM426XX = 2,
+};
+
 union rammus_cbi_ssfc {
 	struct {
 		enum ec_ssfc_lid_sensor lid_sensor : 3;
-		uint32_t reserved_2 : 29;
+		enum ec_ssfc_base_sensor base_sensor : 3;
+		uint32_t reserved_2 : 26;
 	};
 	uint32_t raw_value;
 };
@@ -35,5 +45,12 @@ union rammus_cbi_ssfc {
  * @return the Lid sensor board type.
  */
 enum ec_ssfc_lid_sensor get_cbi_ssfc_lid_sensor(void);
+
+/**
+ * Get the base sensor type form SSFC_CONFIG.
+ *
+ * @return the base sensor board type.
+ */
+enum ec_ssfc_base_sensor get_cbi_ssfc_base_sensor(void);
 
 #endif /* _RAMMUS_CBI_SSFC__H_ */
