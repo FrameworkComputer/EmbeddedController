@@ -1,0 +1,63 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: GPIO LED colors parent node
+
+compatible: "cros-ec,gpio-led-colors"
+
+child-binding:
+    description: LED Color nodes
+    properties:
+        charge-state:
+            description: If the LED color depends on charge state, this
+                         property is used to describe it.
+            type: string
+            required: false
+            enum:
+                - PWR_STATE_CHARGE
+                - PWR_STATE_DISCHARGE
+                - PWR_STATE_ERROR
+                - PWR_STATE_IDLE
+                - PWR_STATE_CHARGE_NEAR_FULL
+
+        chipset-state:
+            description: If the LED color depends on chipset state, this
+                         property is used to describe it.
+            type: string
+            required: false
+            enum:
+                - POWER_S0
+                - POWER_S3
+                - POWER_S5
+
+        extra-flag:
+            description: If the LED color depends on additional factors
+            type: string
+            required: false
+            enum:
+                - NONE
+                - LED_CHFLAG_FORCE_IDLE
+                - LED_CHFLAG_DEFAULT
+                - LED_BATT_BELOW_10_PCT
+                - LED_BATT_ABOVE_10_PCT
+
+    child-binding:
+        description: Color enum
+        properties:
+            led-color:
+                type: string
+                required: true
+                enum:
+                    - LED_OFF
+                    - LED_RED
+                    - LED_GREEN
+                    - LED_BLUE
+                    - LED_YELLOW
+                    - LED_WHITE
+                    - LED_AMBER
+            period:
+                description: In case of blinking LEDs, amount of time in secs
+                             the LED color is active
+                type: int
+                required: false
