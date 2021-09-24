@@ -337,3 +337,108 @@ static void board_chipset_suspend(void)
 	ioex_set_level(IOEX_HDMI_DATA_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+/*
+ * With privacy screen, with keyboard backlight
+ */
+static const struct ec_response_keybd_config keybd_w_privacy_w_kblight = {
+	.num_top_row_keys = 13,
+	.action_keys = {
+		TK_BACK,			/* T1 */
+		TK_REFRESH,			/* T2 */
+		TK_FULLSCREEN,			/* T3 */
+		TK_OVERVIEW,			/* T4 */
+		TK_SNAPSHOT,			/* T5 */
+		TK_BRIGHTNESS_DOWN,		/* T6 */
+		TK_BRIGHTNESS_UP,		/* T7 */
+		TK_PRIVACY_SCRN_TOGGLE,		/* T8 */
+		TK_KBD_BKLIGHT_TOGGLE,		/* T9 */
+		TK_MICMUTE,			/* T10 */
+		TK_VOL_MUTE,			/* T11 */
+		TK_VOL_DOWN,			/* T12 */
+		TK_VOL_UP,			/* T13 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+/*
+ * Without privacy screen, with keyboard backlight
+ */
+static const struct ec_response_keybd_config keybd_wo_privacy_w_kblight = {
+	.num_top_row_keys = 13,
+	.action_keys = {
+		TK_BACK,			/* T1 */
+		TK_REFRESH,			/* T2 */
+		TK_FULLSCREEN,			/* T3 */
+		TK_OVERVIEW,			/* T4 */
+		TK_SNAPSHOT,			/* T5 */
+		TK_BRIGHTNESS_DOWN,		/* T6 */
+		TK_BRIGHTNESS_UP,		/* T7 */
+		TK_KBD_BKLIGHT_TOGGLE,		/* T8 */
+		TK_PLAY_PAUSE,			/* T9 */
+		TK_MICMUTE,			/* T10 */
+		TK_VOL_MUTE,			/* T11 */
+		TK_VOL_DOWN,			/* T12 */
+		TK_VOL_UP,			/* T13 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+/*
+ * With privacy screen, without keyboard backlight
+ */
+static const struct ec_response_keybd_config keybd_w_privacy_wo_kblight = {
+	.num_top_row_keys = 13,
+	.action_keys = {
+		TK_BACK,			/* T1 */
+		TK_REFRESH,			/* T2 */
+		TK_FULLSCREEN,			/* T3 */
+		TK_OVERVIEW,			/* T4 */
+		TK_SNAPSHOT,			/* T5 */
+		TK_BRIGHTNESS_DOWN,		/* T6 */
+		TK_BRIGHTNESS_UP,		/* T7 */
+		TK_PRIVACY_SCRN_TOGGLE,		/* T8 */
+		TK_PLAY_PAUSE,			/* T9 */
+		TK_MICMUTE,			/* T10 */
+		TK_VOL_MUTE,			/* T11 */
+		TK_VOL_DOWN,			/* T12 */
+		TK_VOL_UP,			/* T13 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+/*
+ * Without privacy screen, without keyboard backlight
+ */
+static const struct ec_response_keybd_config keybd_wo_privacy_wo_kblight = {
+	.num_top_row_keys = 13,
+	.action_keys = {
+		TK_BACK,			/* T1 */
+		TK_REFRESH,			/* T2 */
+		TK_FULLSCREEN,			/* T3 */
+		TK_OVERVIEW,			/* T4 */
+		TK_SNAPSHOT,			/* T5 */
+		TK_BRIGHTNESS_DOWN,		/* T6 */
+		TK_BRIGHTNESS_UP,		/* T7 */
+		TK_PREV_TRACK,			/* T8 */
+		TK_PLAY_PAUSE,			/* T9 */
+		TK_MICMUTE,			/* T10 */
+		TK_VOL_MUTE,			/* T11 */
+		TK_VOL_DOWN,			/* T12 */
+		TK_VOL_UP,			/* T13 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
+{
+	if (board_has_privacy_panel() && board_has_kblight())
+		return &keybd_w_privacy_w_kblight;
+	else if (!board_has_privacy_panel() && board_has_kblight())
+		return &keybd_wo_privacy_w_kblight;
+	else if (board_has_privacy_panel() && !board_has_kblight())
+		return &keybd_w_privacy_wo_kblight;
+	else
+		return &keybd_wo_privacy_wo_kblight;
+}
