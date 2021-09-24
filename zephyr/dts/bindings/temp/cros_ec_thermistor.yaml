@@ -1,0 +1,57 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# For more information:
+# https://www.electronics-tutorials.ws/io/thermistors.html
+
+description: Common properties for thermistors
+
+compatible: cros-ec,thermistor
+
+properties:
+  scaling-factor:
+    required: true
+    type: int
+    description: Scaling factor for voltage pairs
+
+  num-pairs:
+    required: true
+    type: int
+    description: Number of sample data points for linear interpolation
+
+  steinhart-reference-mv:
+    required: true
+    type: int
+    description: >
+      Used only for testing.
+      Is the reference voltage for temperature 25C.
+
+  steinhart-reference-res:
+    required: true
+    type: int
+    description: >
+      Used only for testing.
+      Is the reference resistance for temperature 25C.
+
+child-binding:
+  description: >
+    Data samples derived from Steinhart-Hart
+    equation in a resistor divider circuit.
+    Used in linear interpolation.
+
+  properties:
+    milivolt:
+      type: int
+      required: true
+      description: Voltage reading for a given temperature sample
+
+    temp:
+      type: int
+      required: true
+      description: Temperature (Celcius) in a sample
+
+    sample-index:
+      type: int
+      required: true
+      description: The index of a datum to maintain sample order to interpolate.

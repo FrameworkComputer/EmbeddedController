@@ -1,0 +1,308 @@
+/ {
+	thermistor_3V3_30K9_47K_4050B: thermistor-3V3-30K9-47K-4050B {
+		status = "disabled";
+		compatible = "cros-ec,thermistor";
+		scaling-factor = <11>;
+		num-pairs = <10>;
+		steinhart-reference-mv = <3300>;
+		steinhart-reference-res = <30900>;
+
+		/*
+		 * Data derived from Steinhart-Hart equation in a resistor
+		 * divider circuit with Vdd=3300mV, R = 30.9Kohm, and thermistor
+		 * (B = 4050, T0 = 298.15 K, nominal resistance (R0) = 47Kohm).
+		 */
+		sample-datum-0 {
+			milivolt = <(2753 / 11)>;
+			temp = <0>;
+			sample-index = <0>;
+		};
+		sample-datum-1 {
+			milivolt = <(2487 / 11)>;
+			temp = <10>;
+			sample-index = <1>;
+		};
+		sample-datum-2 {
+			milivolt = <(2165 / 11)>;
+			temp = <20>;
+			sample-index = <2>;
+		};
+		sample-datum-3 {
+			milivolt = <(1813 / 11)>;
+			temp = <30>;
+			sample-index = <3>;
+		};
+		sample-datum-4 {
+			milivolt = <(1145 / 11)>;
+			temp = <50>;
+			sample-index = <4>;
+		};
+		sample-datum-5 {
+			milivolt = <(878 / 11)>;
+			temp = <60>;
+			sample-index = <5>;
+		};
+		sample-datum-6 {
+			milivolt = <(665 / 11)>;
+			temp = <70>;
+			sample-index = <6>;
+		};
+		sample-datum-7 {
+			milivolt = <(500 / 11)>;
+			temp = <80>;
+			sample-index = <7>;
+		};
+		sample-datum-8 {
+			milivolt = <(375 / 11)>;
+			temp = <90>;
+			sample-index = <8>;
+		};
+		sample-datum-9 {
+			milivolt = <(282 / 11)>;
+			temp = <100>;
+			sample-index = <9>;
+		};
+	};
+
+
+	thermistor_3V0_22K6_47K_4050B: thermistor-3V0-22K6-47K-4050B {
+		status = "disabled";
+		compatible = "cros-ec,thermistor";
+		scaling-factor = <11>;
+		num-pairs = <13>;
+		steinhart-reference-mv = <3000>;
+		steinhart-reference-res = <22600>;
+
+		/*
+		 * Data derived from Steinhart-Hart equation in a resistor
+		 * divider circuit with Vdd=3000mV, R = 22.6Kohm, and thermistor
+		 * (B = 4050, T0 = 298.15 K, nominal resistance (R0) = 47Kohm).
+		 */
+		sample-datum-0 {
+			milivolt = <( 2619 / 11)>;
+			temp = <0>;
+			sample-index = <0>;
+		};
+		sample-datum-1 {
+			milivolt = <( 2421 / 11)>;
+			temp = <10>;
+			sample-index = <1>;
+		};
+		sample-datum-2 {
+			milivolt = <( 2168 / 11)>;
+			temp = <20>;
+			sample-index = <2>;
+		};
+		sample-datum-3 {
+			milivolt = <( 1875 / 11)>;
+			temp = <30>;
+			sample-index = <3>;
+		};
+		sample-datum-4 {
+			milivolt = <( 1563 / 11)>;
+			temp = <40>;
+			sample-index = <4>;
+		};
+		sample-datum-5 {
+			milivolt = <( 1262 / 11)>;
+			temp = <50>;
+			sample-index = <5>;
+		};
+		sample-datum-6 {
+			milivolt = <(  994 / 11)>;
+			temp = <60>;
+			sample-index = <6>;
+		};
+		sample-datum-7 {
+			milivolt = <(  769 / 11)>;
+			temp = <70>;
+			sample-index = <7>;
+		};
+		sample-datum-8 {
+			milivolt = <(  588 / 11)>;
+			temp = <80>;
+			sample-index = <8>;
+		};
+		sample-datum-9 {
+			milivolt = <(  513 / 11)>;
+			temp = <85>;
+			sample-index = <9>;
+		};
+		sample-datum-10 {
+			milivolt = <(  448 / 11)>;
+			temp = <90>;
+			sample-index = <10>;
+		};
+		sample-datum-11 {
+			milivolt = <(  390 / 11)>;
+			temp = <95>;
+			sample-index = <11>;
+		};
+		sample-datum-12 {
+			milivolt = <(  340 / 11)>;
+			temp = <100>;
+			sample-index = <12>;
+		};
+	};
+
+	thermistor_3V3_13K7_47K_4050B: thermistor-3V3-13K7-47K-4050B {
+		status = "disabled";
+		compatible = "cros-ec,thermistor";
+		scaling-factor = <13>;
+		num-pairs = <13>;
+		steinhart-reference-mv = <3300>;
+		steinhart-reference-res = <13700>;
+
+		/*
+		 * Data derived from Steinhart-Hart equation in a resistor
+		 * divider circuit with Vdd=3300mV, R = 13.7Kohm, and thermistor
+		 * (B = 4050, T0 = 298.15 K, nominal resistance (R0) = 47Kohm).
+		 */
+		sample-datum-0 {
+			milivolt = <(3033 / 13)>;
+			temp = <0>;
+			sample-index = <0>;
+		};
+		sample-datum-1 {
+			milivolt = <(2882 / 13)>;
+			temp = <10>;
+			sample-index = <1>;
+		};
+		sample-datum-2 {
+			milivolt = <(2677 / 13)>;
+			temp = <20>;
+			sample-index = <2>;
+		};
+		sample-datum-3 {
+			milivolt = <(2420 / 13)>;
+			temp = <30>;
+			sample-index = <3>;
+		};
+		sample-datum-4 {
+			milivolt = <(2119 / 13)>;
+			temp = <40>;
+			sample-index = <4>;
+		};
+		sample-datum-5 {
+			milivolt = <(1799 / 13)>;
+			temp = <50>;
+			sample-index = <5>;
+		};
+		sample-datum-6 {
+			milivolt = <(1485 / 13)>;
+			temp = <60>;
+			sample-index = <6>;
+		};
+		sample-datum-7 {
+			milivolt = <(1197 / 13)>;
+			temp = <70>;
+			sample-index = <7>;
+		};
+		sample-datum-8 {
+			milivolt = <( 947 / 13)>;
+			temp = <80>;
+			sample-index = <8>;
+		};
+		sample-datum-9 {
+			milivolt = <( 839 / 13)>;
+			temp = <85>;
+			sample-index = <9>;
+		};
+		sample-datum-10 {
+			milivolt = <( 741 / 13)>;
+			temp = <90>;
+			sample-index = <10>;
+		};
+		sample-datum-11 {
+			milivolt = <( 653 / 13)>;
+			temp = <95>;
+			sample-index = <11>;
+		};
+		sample-datum-12 {
+			milivolt = <( 576 / 13)>;
+			temp = <100>;
+			sample-index = <12>;
+		};
+	};
+
+
+	thermistor_3V3_51K1_47K_4050B: thermistor-3V3-51K1-47K-4050B {
+		status = "disabled";
+		compatible = "cros-ec,thermistor";
+		scaling-factor = <11>;
+		num-pairs = <13>;
+		steinhart-reference-mv = <3300>;
+		steinhart-reference-res = <51100>;
+
+		/*
+		 * Data derived from Steinhart-Hart equation in a resistor
+		 * divider circuit with Vdd=3300mV, R = 51.1Kohm, and thermistor
+		 * (B = 4050, T0 = 298.15 K, nominal resistance (R0) = 47Kohm).
+		 */
+		sample-datum-0 {
+			milivolt = <(2484 / 11)>;
+			temp = <0>;
+			sample-index = <0>;
+		};
+		sample-datum-1 {
+			milivolt = <(2142 / 11)>;
+			temp = <10>;
+			sample-index = <1>;
+		};
+		sample-datum-2 {
+			milivolt = <(1767 / 11)>;
+			temp = <20>;
+			sample-index = <2>;
+		};
+		sample-datum-3 {
+			milivolt = <(1400 / 11)>;
+			temp = <30>;
+			sample-index = <3>;
+		};
+		sample-datum-4 {
+			milivolt = <(1072 / 11)>;
+			temp = <40>;
+			sample-index = <4>;
+		};
+		sample-datum-5 {
+			milivolt = <( 802 / 11)>;
+			temp = <50>;
+			sample-index = <5>;
+		};
+		sample-datum-6 {
+			milivolt = <( 593 / 11)>;
+			temp = <60>;
+			sample-index = <6>;
+		};
+		sample-datum-7 {
+			milivolt = <( 436 / 11)>;
+			temp = <70>;
+			sample-index = <7>;
+		};
+		sample-datum-8 {
+			milivolt = <( 321 / 11)>;
+			temp = <80>;
+			sample-index = <8>;
+		};
+		sample-datum-9 {
+			milivolt = <( 276 / 11)>;
+			temp = <85>;
+			sample-index = <9>;
+		};
+		sample-datum-10 {
+			milivolt = <( 237 / 11)>;
+			temp = <90>;
+			sample-index = <10>;
+		};
+		sample-datum-11 {
+			milivolt = <( 204 / 11)>;
+			temp = <95>;
+			sample-index = <11>;
+		};
+		sample-datum-12 {
+			milivolt = <( 177 / 11)>;
+			temp = <100>;
+			sample-index = <12>;
+		};
+	};
+};

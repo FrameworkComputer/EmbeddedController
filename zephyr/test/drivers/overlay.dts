@@ -4,6 +4,7 @@
  */
 
 #include <dt-bindings/gpio_defines.h>
+#include <cros/thermistor/thermistor.dtsi>
 
 / {
 	aliases {
@@ -147,7 +148,9 @@
 
 	named-temp-sensors {
 		charger {
-			compatible = "temp-3v3-13k7-47k-4050b";
+			thermistor = <&thermistor_3V3_13K7_47K_4050B>;
+			status = "okay";
+			compatible = "cros-ec,temp-sensor";
 			label = "TEMP_SENSOR_CHARGER";
 			enum-name = "TEMP_SENSOR_CHARGER";
 			temp_fan_off = <40>;
@@ -158,7 +161,9 @@
 			adc = <&adc_charger>;
 		};
 		pp3300-regulator {
-			compatible = "temp-3v3-30k9-47k-4050b";
+			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+			status = "okay";
+			compatible = "cros-ec,temp-sensor";
 			label = "TEMP_SENSOR_PP3300_REGULATOR";
 			enum-name = "TEMP_SENSOR_PP3300_REGULATOR";
 			temp_fan_off = <40>;
@@ -169,7 +174,9 @@
 			adc = <&adc_pp3300_regulator>;
 		};
 		ddr-soc {
-			compatible = "temp-3v3-51k1-47k-4050b";
+			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+			status = "okay";
+			compatible = "cros-ec,temp-sensor";
 			label = "TEMP_SENSOR_DDR_SOC";
 			enum-name = "TEMP_SENSOR_DDR_SOC";
 			temp_fan_off = <35>;
@@ -180,7 +187,9 @@
 			adc = <&adc_ddr_soc>;
 		};
 		fan {
-			compatible = "temp-3v0-22k6-47k-4050b";
+			thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+			status = "okay";
+			compatible = "cros-ec,temp-sensor";
 			label = "TEMP_SENSOR_FAN";
 			enum-name = "TEMP_SENSOR_FAN";
 			temp_fan_off = <35>;
@@ -532,4 +541,21 @@
 		reg = <0x84>;
 		label = "I2C_MOCK";
 	};
+};
+
+/* Enable all thermistors for testing */
+&thermistor_3V3_30K9_47K_4050B  {
+	status = "okay";
+};
+
+&thermistor_3V0_22K6_47K_4050B  {
+	status = "okay";
+};
+
+&thermistor_3V3_13K7_47K_4050B  {
+	status = "okay";
+};
+
+&thermistor_3V3_51K1_47K_4050B  {
+	status = "okay";
 };

@@ -27,7 +27,11 @@ int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
 		return EC_ERROR_INVAL;
 	sensor = temp_sensors + id;
 
+#ifdef CONFIG_ZEPHYR
+	return sensor->read(sensor, temp_ptr);
+#else
 	return sensor->read(sensor->idx, temp_ptr);
+#endif
 }
 
 static void update_mapped_memory(void)

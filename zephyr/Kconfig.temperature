@@ -31,54 +31,6 @@ config PLATFORM_EC_THERMISTOR
 	  Enables support for thermistors (resistor whose resistance is
 	  strongly dependent on temperature) as temperature-sensor type.
 
-config PLATFORM_EC_STEINHART_HART_3V0_22K6_47K_4050B
-	bool "Steinhart-hart 3V0_22K6_47K_4050B"
-	depends on PLATFORM_EC_THERMISTOR
-	help
-	  Enables support for measuring temperature using the Steinhart-Hart
-	  equation model and the thermistor configured with the following
-	  circuit configuration:
-	  -3.0V reference voltage
-	  -22.6 kilohm fixed resistor, connected to the reference voltage
-	  -47 kilohm thermistor reference resistance at 25 C
-	  -4050 B-constant (thermistor sensitivity)
-
-config PLATFORM_EC_STEINHART_HART_3V3_13K7_47K_4050B
-	bool "Steinhart-hart 3V3_13K7_47K_4050B"
-	depends on PLATFORM_EC_THERMISTOR
-	help
-	  Enables support for measuring temperature using the Steinhart-Hart
-	  equation model and the thermistor configured with the following
-	  circuit configuration:
-	  -3.3V reference voltage
-	  -13.7 kilohm fixed resistor, connected to the reference voltage
-	  -47 kilohm thermistor reference resistance at 25 C
-	  -4050 B-constant (thermistor sensitivity)
-
-config PLATFORM_EC_STEINHART_HART_3V3_30K9_47K_4050B
-	bool "Steinhart-hart 3V3_30K9_47K_4050B"
-	depends on PLATFORM_EC_THERMISTOR
-	help
-	  Enables support for measuring temperature using the Steinhart-Hart
-	  equation model and the thermistor configured with the following
-	  circuit configuration:
-	  -3.3V reference voltage
-	  -30.9 kilohm fixed resistor, connected to the reference voltage
-	  -47 kilohm thermistor reference resistance at 25 C
-	  -4050 B-constant (thermistor sensitivity)
-
-config PLATFORM_EC_STEINHART_HART_3V3_51K1_47K_4050B
-	bool "Steinhart-hart 3V3_51K1_47K_4050B"
-	depends on PLATFORM_EC_THERMISTOR
-	default y
-	help
-	  Enables support for measuring temperature using the Steinhart-Hart
-	  equation model and the thermistor configured with the following
-	  circuit configuration:
-	  -3.3V reference voltage
-	  -51.1 kilohm fixed resistor, connected to the reference voltage
-	  -47 kilohm thermistor reference resistance at 25 C
-	  -4050 B-constant (thermistor sensitivity)
 endif # PLATFORM_EC_TEMP_SENSOR
 
 

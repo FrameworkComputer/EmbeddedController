@@ -147,4 +147,20 @@ int get_temp_3v0_22k6_47k_4050b(int idx_adc, int *temp_ptr);
 int get_temp_3v3_30k9_47k_4050b(int idx_adc, int *temp_ptr);
 #endif
 
-#endif  /* __CROS_EC_TEMP_SENSOR_THERMISTOR_NCP15WB_H */
+/**
+ * Reads the sensor's ADC channel and uses a lookup table and interpolation to
+ * argument thermistor_info for interpolation to return a temperature in degrees
+ * K.
+ *
+ * @param idx_adc	The idx value from the temp_sensor_t struct, which is
+ *			the ADC channel to read and convert to degrees K
+ * @param temp_ptr	Destination for temperature (in degrees K)
+ * @param info	Structure containing information about the underlying thermistor
+ * that is necessary to interpolate temperature
+ *
+ * @return EC_SUCCESS, or non-zero if error.
+ */
+int thermistor_get_temperature(int idx_adc, int *temp_ptr,
+			       const struct thermistor_info *info);
+
+#endif /* __CROS_EC_TEMP_SENSOR_THERMISTOR_NCP15WB_H */
