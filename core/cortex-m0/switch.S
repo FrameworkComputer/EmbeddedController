@@ -104,7 +104,7 @@ svc_handler_return:
 .thumb_func
 pendsv_handler:
   push {r3, lr}              @ save link register and keep stack aligned
-  ldr r0, =#CPU_SCB_ICSR     @ load CPU_SCB_ICSR's address
+  ldr r0, =CPU_SCB_ICSR      @ load CPU_SCB_ICSR's address
   movs r1, #1                @ prepare left shift (1 << 27)
   lsls r1, #27               @ shift the bit
   str r1, [r0]               @ clear pending flag
