@@ -16,6 +16,7 @@
  * ensure it is enabled in the interrupt controller with the right priority.
  */
 #define DECLARE_IRQ(irq, routine, priority)                     \
+	void routine(void);					\
 	void IRQ_HANDLER(irq)(void)				\
 	{							\
 		void *ret = __builtin_return_address(0);	\

@@ -21,6 +21,7 @@
 #define DECLARE_IRQ(irq, routine, priority) DECLARE_IRQ_(irq, routine, priority)
 #ifdef CONFIG_TASK_PROFILING
 #define DECLARE_IRQ_(irq, routine, priority)                    \
+	void routine(void);					\
 	void IRQ_HANDLER(irq)(void)				\
 	{							\
 		void *ret = __builtin_return_address(0);	\
@@ -34,6 +35,7 @@
 #else /* CONFIG_TASK_PROFILING */
 /* No Profiling : connect directly the IRQ vector */
 #define DECLARE_IRQ_(irq, routine, priority)                    \
+	void routine(void);					\
 	void IRQ_HANDLER(irq)(void) __attribute__((alias(STRINGIFY(routine))));\
 	const struct irq_priority __keep IRQ_PRIORITY(irq)	\
 	__attribute__((section(".rodata.irqprio")))		\

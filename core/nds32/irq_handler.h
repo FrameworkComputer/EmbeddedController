@@ -16,6 +16,7 @@
  * ensure it is enabled in the interrupt controller with the right priority.
  */
 #define DECLARE_IRQ(irq, routine, priority)				\
+	void routine(void);						\
 	void IRQ_HANDLER(CPU_INT(irq))(void)				\
 		__attribute__ ((alias(STRINGIFY(routine))));		\
 	const struct irq_priority __keep IRQ_PRIORITY(CPU_INT(irq))	\
