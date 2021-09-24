@@ -425,9 +425,14 @@ enum power_state power_handle_state(enum power_state state)
 			s5_exit_tries = 0;
 			return POWER_S5S3; /* Power up to next state */
 		}
+		
+
 
 		s5_exit_tries = 0;
-		return POWER_S5G3;
+
+		if ((power_get_signals() & IN_PCH_SLP_S4_DEASSERTED) == IN_PCH_SLP_S4_DEASSERTED) {
+			return POWER_S5S3;
+		}
 
 		break;
 
