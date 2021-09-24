@@ -69,6 +69,15 @@ int iface_undefined(iface_arguments)
 #undef interface
 #undef null
 
+/* Disable warning that "initializer overrides prior initialization of this
+ * subobject", since we are explicitly doing this to handle the unused
+ * endpoints.
+ */
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winitializer-overrides"
+#endif /* __clang__ */
+
 /* align function pointers on a 32-bit boundary */
 #define table(type, name, x) type name[] __attribute__((aligned(4), section(".rodata.usb_ep." #name ",\"a\" @"))) = { x };
 #define null (void*)0
@@ -160,6 +169,12 @@ table(iface_func, usb_iface_request,
 	interface(1)
 	interface(0)
 )
+#endif
+
+#if PASS == 2
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif /* __clang__ */
 #endif
 
 #if PASS == 1
