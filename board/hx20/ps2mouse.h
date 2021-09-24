@@ -68,6 +68,8 @@ enum ps2_mouse_task_evt {
 #define TOUCHPAD_I2C_HID_EP 0x2c
 #define TOUCHPAD_I2C_CONTROL_EP 0x33
 
+#define TOUCHPAD_I2C_RETRY_COUNT_TO_RENABLE 6
+
 enum pixart_pct3854_regs {
 	PCT3854_DESCRIPTOR	= 0x0020,
 	PCT3854_REPORT_DESC	= 0x0021,
