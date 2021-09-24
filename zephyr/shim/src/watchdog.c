@@ -44,6 +44,13 @@ int watchdog_init(void)
 	wdt_config.callback = wdt_warning_handler;
 
 	err = wdt_install_timeout(wdt, &wdt_config);
+
+	/* If watchdog is running, reinstall it. */
+	if (err == -EBUSY) {
+		wdt_disable(wdt);
+		err = wdt_install_timeout(wdt, &wdt_config);
+	}
+
 	if (err < 0) {
 		LOG_ERR("Watchdog install error");
 		return err;
