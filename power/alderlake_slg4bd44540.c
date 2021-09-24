@@ -23,13 +23,13 @@
  * should be suitable for variants.
  */
 
-/* SEQ_EC_ALL_SYS_PG high to VCCST_PWRGD high delay */
+/* PG_EC_ALL_SYS_PWRGD high to VCCST_PWRGD high delay */
 #define VCCST_PWRGD_DELAY_MS	2
 
 /* IMVP9_VRRDY high to PCH_PWROK high delay */
 #define PCH_PWROK_DELAY_MS	2
 
-/* SEQ_EC_ALL_SYS_PG high to EC_PCH_SYS_PWROK high delay */
+/* PG_EC_ALL_SYS_PWRGD high to EC_PCH_SYS_PWROK high delay */
 #define SYS_PWROK_DELAY_MS	45
 
 /* IMVP9_VRRDY high timeout */
@@ -188,17 +188,17 @@ static void all_sys_pwrgd_pass_thru(void)
 	int pch_pok;
 	int sys_pok;
 
-	sys_pg = gpio_get_level(GPIO_SEQ_EC_ALL_SYS_PG);
+	sys_pg = gpio_get_level(GPIO_PG_EC_ALL_SYS_PWRGD);
 
 	if (IS_ENABLED(CONFIG_BRINGUP))
-		CPRINTS("SEQ_EC_ALL_SYS_PG is %d", sys_pg);
+		CPRINTS("PG_EC_ALL_SYS_PWRGD is %d", sys_pg);
 
 	if (sys_pg == 0) {
 		ap_off();
 		return;
 	}
 
-	/* SEQ_EC_ALL_SYS_PG is asserted, enable VCCST_PWRGD_OD. */
+	/* PG_EC_ALL_SYS_PWRGD is asserted, enable VCCST_PWRGD_OD. */
 
 	vccst_pg = gpio_get_level(GPIO_VCCST_PWRGD_OD);
 	if (vccst_pg == 0) {
@@ -226,9 +226,9 @@ static void all_sys_pwrgd_pass_thru(void)
 	if (sys_pok == 0) {
 		msleep(SYS_PWROK_DELAY_MS);
 		/* Check if we lost power while waiting. */
-		sys_pg = gpio_get_level(GPIO_SEQ_EC_ALL_SYS_PG);
+		sys_pg = gpio_get_level(GPIO_PG_EC_ALL_SYS_PWRGD);
 		if (sys_pg == 0) {
-			CPRINTS("SEQ_EC_ALL_SYS_PG deasserted, "
+			CPRINTS("PG_EC_ALL_SYS_PWRGD deasserted, "
 				"shutting AP off!");
 			ap_off();
 			return;
