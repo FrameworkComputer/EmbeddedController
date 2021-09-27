@@ -62,10 +62,12 @@ int pd_set_power_supply_ready(int port)
 	return EC_SUCCESS;
 }
 
+#ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
 int pd_snk_is_vbus_provided(int port)
 {
 	return ppc_is_vbus_present(port);
 }
+#endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
 
 int board_vbus_source_enabled(int port)
 {
