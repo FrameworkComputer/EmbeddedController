@@ -22,7 +22,8 @@ typedef atomic_t atomic_val_t;
 ({								\
 	uint32_t reg0, reg1;					\
 								\
-	__asm__ __volatile__("   cpsid i\n"			\
+	__asm__ __volatile__(".syntax unified\n"		\
+			     "   cpsid i\n"			\
 			     "   ldr  %0, [%2]\n"		\
 			     "   mov  %1, %0\n"			\
 			     #asm_op" %0, %0, %3\n"		\
@@ -36,12 +37,12 @@ typedef atomic_t atomic_val_t;
 
 static inline atomic_val_t atomic_clear_bits(atomic_t *addr, atomic_val_t bits)
 {
-	return ATOMIC_OP(bic, addr, bits);
+	return ATOMIC_OP(bics, addr, bits);
 }
 
 static inline atomic_val_t atomic_or(atomic_t *addr, atomic_val_t bits)
 {
-	return ATOMIC_OP(orr, addr, bits);
+	return ATOMIC_OP(orrs, addr, bits);
 }
 
 static inline atomic_val_t atomic_add(atomic_t *addr, atomic_val_t value)
@@ -51,14 +52,14 @@ static inline atomic_val_t atomic_add(atomic_t *addr, atomic_val_t value)
 
 static inline atomic_val_t atomic_sub(atomic_t *addr, atomic_val_t value)
 {
-	return ATOMIC_OP(sub, addr, value);
+	return ATOMIC_OP(subs, addr, value);
 }
 
 static inline atomic_val_t atomic_clear(atomic_t *addr)
 {
 	atomic_t ret;
 
-	__asm__ __volatile__("   mov     %2, #0\n"
+	__asm__ __volatile__("   movs    %2, #0\n"
 			     "   cpsid   i\n"
 			     "   ldr     %0, [%1]\n"
 			     "   str     %2, [%1]\n"
