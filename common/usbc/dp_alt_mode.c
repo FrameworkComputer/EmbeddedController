@@ -207,14 +207,15 @@ void dp_vdm_naked(int port, enum tcpci_msg_type type, uint8_t vdm_cmd)
 	}
 }
 
-int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
+enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
+					    uint32_t *vdm)
 {
 	const struct svdm_amode_data *modep = pd_get_amode_data(port,
 			TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
 	int vdo_count_ret;
 
-	if (vdo_count < VDO_MAX_SIZE)
-		return -1;
+	if (*vdo_count < VDO_MAX_SIZE)
+		return MSG_SETUP_ERROR;
 
 	switch (dp_state[port]) {
 	case DP_START:
@@ -223,7 +224,7 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 		vdm[0] = pd_dfp_enter_mode(port, TCPCI_MSG_SOP,
 				USB_SID_DISPLAYPORT, 0);
 		if (vdm[0] == 0)
-			return -1;
+			return MSG_SETUP_ERROR;
 		/* CMDT_INIT is 0, so this is a no-op */
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
 		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
@@ -233,22 +234,22 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 		break;
 	case DP_ENTER_ACKED:
 		if (!(modep && modep->opos))
-			return -1;
+			return MSG_SETUP_ERROR;
 
 		vdo_count_ret = modep->fx->status(port, vdm);
 		if (vdo_count_ret == 0)
-			return -1;
+			return MSG_SETUP_ERROR;
 		vdm[0] |= PD_VDO_OPOS(modep->opos);
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
 		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
 		break;
 	case DP_STATUS_ACKED:
 		if (!(modep && modep->opos))
-			return -1;
+			return MSG_SETUP_ERROR;
 
 		vdo_count_ret = modep->fx->config(port, vdm);
 		if (vdo_count_ret == 0)
-			return -1;
+			return MSG_SETUP_ERROR;
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
 		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
 		break;
@@ -265,7 +266,7 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 		 * TODO(b/159856063): Clean up the API to the fx functions.
 		 */
 		if (!(modep && modep->opos))
-			return -1;
+			return MSG_SETUP_ERROR;
 
 		usb_mux_set_safe_mode_exit(port);
 
@@ -282,11 +283,17 @@ int dp_setup_next_vdm(int port, int vdo_count, uint32_t *vdm)
 		/*
 		 * DP mode is inactive.
 		 */
-		return -1;
+		return MSG_SETUP_ERROR;
 	default:
 		CPRINTF("%s called with invalid state %d\n",
 				__func__, dp_state[port]);
-		return -1;
+		return MSG_SETUP_ERROR;
 	}
-	return vdo_count_ret;
+
+	if (vdo_count_ret) {
+		*vdo_count = vdo_count_ret;
+		return MSG_SETUP_SUCCESS;
+	}
+
+	return MSG_SETUP_UNSUPPORTED;
 }

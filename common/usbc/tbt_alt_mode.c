@@ -458,8 +458,9 @@ static bool tbt_mode_is_supported(int port, int vdo_count)
 	return true;
 }
 
-int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
-		enum tcpci_msg_type *tx_type)
+enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
+					     uint32_t *vdm,
+					     enum tcpci_msg_type *tx_type)
 {
 	struct svdm_amode_data *modep;
 	int vdo_count_ret = 0;
@@ -467,13 +468,13 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
 
 	*tx_type = TCPCI_MSG_SOP;
 
-	if (vdo_count < VDO_MAX_SIZE)
-		return -1;
+	if (*vdo_count < VDO_MAX_SIZE)
+		return MSG_SETUP_ERROR;
 
 	switch (tbt_state[port]) {
 	case TBT_START:
-		if (!tbt_mode_is_supported(port, vdo_count))
-			return 0;
+		if (!tbt_mode_is_supported(port, *vdo_count))
+			return MSG_SETUP_UNSUPPORTED;
 
 		if (!TBT_CHK_FLAG(port, TBT_FLAG_RETRY_DONE))
 			tbt_prints("attempt to enter mode", port);
@@ -523,7 +524,7 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
 		modep = pd_get_amode_data(port,
 					  TCPCI_MSG_SOP, USB_VID_INTEL);
 		if (!(modep && modep->opos))
-			return -1;
+			return MSG_SETUP_ERROR;
 
 		usb_mux_set_safe_mode_exit(port);
 
@@ -538,7 +539,7 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
 		modep = pd_get_amode_data(port,
 			TCPCI_MSG_SOP_PRIME, USB_VID_INTEL);
 		if (!(modep && modep->opos))
-			return -1;
+			return MSG_SETUP_ERROR;
 
 		usb_mux_set_safe_mode_exit(port);
 
@@ -554,7 +555,7 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
 		modep = pd_get_amode_data(port,
 				TCPCI_MSG_SOP_PRIME, USB_VID_INTEL);
 		if (!(modep && modep->opos))
-			return -1;
+			return MSG_SETUP_ERROR;
 
 		usb_mux_set_safe_mode_exit(port);
 
@@ -568,12 +569,17 @@ int tbt_setup_next_vdm(int port, int vdo_count, uint32_t *vdm,
 		break;
 	case TBT_INACTIVE:
 		/* Thunderbolt mode is inactive */
-		return 0;
+		return MSG_SETUP_UNSUPPORTED;
 	default:
 		 CPRINTF("%s called with invalid state %d\n",
 				__func__, tbt_state[port]);
-		return -1;
+		return MSG_SETUP_ERROR;
 	}
 
-	return vdo_count_ret;
+	if (vdo_count_ret) {
+		*vdo_count = vdo_count_ret;
+		return MSG_SETUP_SUCCESS;
+	}
+
+	return MSG_SETUP_UNSUPPORTED;
 }

@@ -235,6 +235,7 @@ static void dpm_attempt_mode_entry(int port)
 	enum tcpci_msg_type tx_type = TCPCI_MSG_SOP;
 	bool enter_mode_requested =
 		IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY) ?  false : true;
+	enum dpm_msg_setup_status status = MSG_SETUP_UNSUPPORTED;
 
 	if (pd_get_data_role(port) != PD_ROLE_DFP) {
 		if (DPM_CHK_FLAG(port, DPM_FLAG_ENTER_DP |
@@ -288,8 +289,9 @@ static void dpm_attempt_mode_entry(int port)
 		 * cable and USB4 mode with the port partner.
 		 */
 		if (tbt_cable_entry_required_for_usb4(port)) {
-			vdo_count = tbt_setup_next_vdm(port,
-				ARRAY_SIZE(vdm), vdm, &tx_type);
+			vdo_count = ARRAY_SIZE(vdm);
+			status = tbt_setup_next_vdm(port, &vdo_count, vdm,
+						    &tx_type);
 		} else {
 			pd_dpm_request(port, DPM_REQUEST_ENTER_USB);
 			return;
@@ -303,24 +305,28 @@ static void dpm_attempt_mode_entry(int port)
 				USB_VID_INTEL) &&
 			dpm_mode_entry_requested(port, TYPEC_MODE_TBT)) {
 		enter_mode_requested = true;
-		vdo_count = tbt_setup_next_vdm(port,
-			ARRAY_SIZE(vdm), vdm, &tx_type);
+		vdo_count = ARRAY_SIZE(vdm);
+		status = tbt_setup_next_vdm(port, &vdo_count, vdm,
+					    &tx_type);
 	}
 
 	/* If not, check if they support DisplayPort alt mode. */
-	if (vdo_count == 0 && !DPM_CHK_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE) &&
+	if (status == MSG_SETUP_UNSUPPORTED &&
+	    !DPM_CHK_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE) &&
 	    pd_is_mode_discovered_for_svid(port, TCPCI_MSG_SOP,
-				USB_SID_DISPLAYPORT) &&
+					   USB_SID_DISPLAYPORT) &&
 	    dpm_mode_entry_requested(port, TYPEC_MODE_DP)) {
 		enter_mode_requested = true;
-		vdo_count = dp_setup_next_vdm(port, ARRAY_SIZE(vdm), vdm);
+		vdo_count = ARRAY_SIZE(vdm);
+		status = dp_setup_next_vdm(port, &vdo_count, vdm);
 	}
 
 	/*
 	 * If the PE didn't discover any supported (requested) alternate mode,
 	 * just mark setup done and get out of here.
 	 */
-	if (vdo_count == 0 && !DPM_CHK_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE)) {
+	if (status != MSG_SETUP_SUCCESS &&
+				!DPM_CHK_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE)) {
 		if (enter_mode_requested) {
 			/*
 			 * TODO(b/168030639): Notify the AP that mode entry
@@ -336,7 +342,7 @@ static void dpm_attempt_mode_entry(int port)
 		return;
 	}
 
-	if (vdo_count < 0) {
+	if (status != MSG_SETUP_SUCCESS) {
 		dpm_set_mode_entry_done(port);
 		CPRINTS("C%d: Couldn't construct alt mode VDM", port);
 		return;
@@ -356,8 +362,9 @@ static void dpm_attempt_mode_entry(int port)
 
 static void dpm_attempt_mode_exit(int port)
 {
-	uint32_t vdm = 0;
-	int vdo_count = 0;
+	uint32_t vdm[VDO_MAX_SIZE];
+	int vdo_count = ARRAY_SIZE(vdm);
+	enum dpm_msg_setup_status status = MSG_SETUP_ERROR;
 	enum tcpci_msg_type tx_type = TCPCI_MSG_SOP;
 
 	if (IS_ENABLED(CONFIG_USB_PD_USB4) &&
@@ -374,18 +381,20 @@ static void dpm_attempt_mode_exit(int port)
 		 */
 		CPRINTS("C%d: TBT teardown", port);
 		tbt_exit_mode_request(port);
-		vdo_count = tbt_setup_next_vdm(port, VDO_MAX_SIZE, &vdm,
-					&tx_type);
+		status = tbt_setup_next_vdm(port, &vdo_count, vdm, &tx_type);
 	} else if (dp_is_active(port)) {
 		CPRINTS("C%d: DP teardown", port);
-		vdo_count = dp_setup_next_vdm(port, VDO_MAX_SIZE, &vdm);
+		status = dp_setup_next_vdm(port, &vdo_count, vdm);
 	} else {
 		/* Clear exit mode request */
 		dpm_clear_mode_exit_request(port);
 		return;
 	}
 
-	if (!pd_setup_vdm_request(port, tx_type, &vdm, vdo_count)) {
+	if (status != MSG_SETUP_SUCCESS)
+		return;
+
+	if (!pd_setup_vdm_request(port, tx_type, vdm, vdo_count)) {
 		dpm_clear_mode_exit_request(port);
 		return;
 	}
