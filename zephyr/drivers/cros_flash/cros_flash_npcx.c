@@ -774,6 +774,38 @@ static int cros_flash_npcx_protect_now(const struct device *dev, int all)
 	return EC_SUCCESS;
 }
 
+static int cros_flash_npcx_get_jedec_id(const struct device *dev,
+					uint8_t *manufacturer,
+					uint16_t *device)
+{
+	struct fiu_reg *const inst = HAL_INSTANCE(dev);
+
+	/* Lock physical flash operations */
+	crec_flash_lock_mapped_storage(1);
+
+	/* Read manufacturer and device ID */
+	cros_flash_npcx_exec_cmd(dev,
+				 SPI_NOR_CMD_RDID,
+				 UMA_CODE_CMD_RD_BYTE(3));
+
+	*manufacturer = inst->UMA_DB0;
+	*device = (inst->UMA_DB1 << 8) | inst->UMA_DB2;
+
+	/* Unlock physical flash operations */
+	crec_flash_lock_mapped_storage(0);
+
+	return EC_SUCCESS;
+}
+
+static int cros_flash_npcx_get_status(const struct device *dev,
+		uint8_t *sr1, uint8_t *sr2)
+{
+	*sr1 = flash_get_status1(dev);
+	*sr2 = flash_get_status2(dev);
+
+	return EC_SUCCESS;
+}
+
 /* cros ec flash driver registration */
 static const struct cros_flash_driver_api cros_flash_npcx_driver_api = {
 	.init = cros_flash_npcx_init,
@@ -784,6 +816,8 @@ static const struct cros_flash_driver_api cros_flash_npcx_driver_api = {
 	.physical_get_protect_flags = cros_flash_npcx_get_protect_flags,
 	.physical_protect_at_boot = cros_flash_npcx_protect_at_boot,
 	.physical_protect_now = cros_flash_npcx_protect_now,
+	.physical_get_jedec_id = cros_flash_npcx_get_jedec_id,
+	.physical_get_status = cros_flash_npcx_get_status,
 };
 
 static int flash_npcx_init(const struct device *dev)
