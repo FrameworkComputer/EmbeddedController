@@ -41,9 +41,9 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0000, 0x1000 },
 			},
 			.fet = {
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0100,
+				.reg_addr = 0x00,
+				.reg_mask = 0x0018,
+				.disconnect_val = 0x0000,
 			}
 		},
 		.batt_info = {
@@ -69,9 +69,9 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0000, 0x1000 },
 			},
 			.fet = {
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0100,
+				.reg_addr = 0x00,
+				.reg_mask = 0x0018,
+				.disconnect_val = 0x0000,
 			}
 		},
 		.batt_info = {
@@ -97,9 +97,9 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0000, 0x1000 },
 			},
 			.fet = {
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0100,
+				.reg_addr = 0x00,
+				.reg_mask = 0x0018,
+				.disconnect_val = 0x0000,
 			}
 		},
 		.batt_info = {
