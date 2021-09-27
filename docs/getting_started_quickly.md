@@ -3,7 +3,7 @@
 [TOC]
 
 The
-[Chromium OS Developer Guide](https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md)
+[Chromium OS Developer Guide](https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md)
 and [README](../README.md) walk through the steps needed to fetch and build
 Chromium OS source. These steps can be followed to retrieve and build EC source
 as well. On the other hand, if your sole interest is building an EC image, the

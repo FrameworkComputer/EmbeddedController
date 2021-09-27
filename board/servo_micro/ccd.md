@@ -129,17 +129,17 @@ standard Linux `drivers/usb/serial/usb-serial-simple.c`
 The SPI endpoint is described in
 [`chip/stm32/usb_spi.h`](../../chip/stm32/usb_spi.h) and provides a simple
 connection to the SPI port. The host support is provided as a
-[driver in flashrom](https://chromium.googlesource.com/chromiumos/third_party/flashrom/+/master/raiden_debug_spi.c).
+[driver in flashrom](https://chromium.googlesource.com/chromiumos/third_party/flashrom/+/HEAD/raiden_debug_spi.c).
 
 The I2C endpoint is described in [`include/usb_i2c.h`](../../include/usb_i2c.h)
 and provides a simple connection to the I2C bus. The host support is provided in
 the
-[hdctools servo support](https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/master/servo/stm32i2c.py).
+[hdctools servo support](https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/servo/stm32i2c.py).
 
 The GPIO endpoint is cryptically described in
 [`chip/stm32/usb_gpio.h`](../../chip/stm32/usb_gpio.h) and provides simple
 access to set/clear and read the GPIO pins. The host support is provided in the
-[hdctools servo support](https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/master/servo/stm32gpio.py).
+[hdctools servo support](https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/servo/stm32gpio.py).
 
 The UPDATE endpoint is not part of CCD. It provides a method for updating the
 STM32 without needing the special boot modes. This uses the

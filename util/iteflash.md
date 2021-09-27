@@ -33,7 +33,7 @@ circuits on a Chrome OS device motherboard. As of this writing, the most common
 [Servo v4](https://www.chromium.org/chromium-os/servo/servov4) is **not** a
 Servo in this sense. It is a USB hub with a microcontroller that proxies Servo
 functionality from either CR50 or Servo Micro.) See also
-[Case-Closed Debug in Chromebooks and Servo Micro](https://chromium.googlesource.com/chromiumos/platform/ec/+/master/board/servo_micro/ccd.md).
+[Case-Closed Debug in Chromebooks and Servo Micro](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/board/servo_micro/ccd.md).
 
 ### How ITE EC reflashing works
 

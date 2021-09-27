@@ -33,9 +33,9 @@ have multiple threads of execution, which is enabled by a `$TEST.tasklist` file
 associated with the unit test. The test runner task has a task ID of
 `TASK_ID_TEST_RUNNER`, which can be used as an argument to any of the task
 functions. See for example the
-[`charge_ramp` unit test](https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/test/charge_ramp.c#81)
+[`charge_ramp` unit test](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/test/charge_ramp.c#81)
 and the
-[`host_command` unit test](https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/test/host_command.c#32)
+[`host_command` unit test](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/test/host_command.c#32)
 
 When a unit test is ported to Ztest, `test_main` doesn't have a thread ID, so
 `TASK_ID_TEST_RUNNER` is undefined. `charge_ramp` and `host_command` cannot be
@@ -43,7 +43,7 @@ ported at this time. `test_main` also cannot call any of the task functions that
 must be called from a task, such as `task_wake`; these functions can pend the
 calling task, but since `test_main` doesn't have a thread ID, the pend will
 fail. See the
-[`mutex` unit test](https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/test/mutex.c#116)
+[`mutex` unit test](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/test/mutex.c#116)
 for an example.
 
 ## Determine source files being tested

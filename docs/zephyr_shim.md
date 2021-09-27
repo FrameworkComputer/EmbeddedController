@@ -40,7 +40,7 @@ requires us to add some Zephyr specific code in a `zephyr` directory in the
 platform/ec for future development and work on migrating the platform/ec-module
 code out of the module directory and into a first-class Zephyr code format -- in
 the local
-[Chrome Zephyr repo](https://chromium.googlesource.com/chromiumos/platform/zephyr-chrome/+/refs/heads/master)
+[Chrome Zephyr repo](https://chromium.googlesource.com/chromiumos/platform/zephyr-chrome/+/HEAD)
 and ultimately [upstream](https://github.com/zephyrproject-rtos/zephyr).
 
 For platform/ec code that is stable and not under active development, the Zephyr
@@ -96,7 +96,7 @@ Add the `src/platform/ec/zephyr` folder with:
         expose from platform/ec code to the Zephyr build.
 *   Shim code to translate platform/ec code into Zephyr code
     *   For example, redefine platform/ec’s
-        [`DECLARE_HOST_COMMAND`](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/master:src/platform/ec/include/host_command.h;l=256;drc=514923bc59f5a3435dbb7cbf348735ed41889ffe)
+        [`DECLARE_HOST_COMMAND`](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/HEAD:src/platform/ec/include/host_command.h;l=256;drc=514923bc59f5a3435dbb7cbf348735ed41889ffe)
         to map to Zephyr's upstream
         [`EC_HOST_CMD_HANDLER`](https://github.com/zephyrproject-rtos/zephyr/blob/d7468bf836b75c29980441f294a61eae6bf4bc75/include/ec_host_cmd.h#L73)
         macro. This allows us to compile select platform/ec files in the Zephyr

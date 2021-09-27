@@ -133,7 +133,7 @@ UART.](./images/ec-3po-high-level-design.png)
 
 Each host command is a 16-bit command value. Commands which take parameters or
 return response data specify `struct`s for that data. See
-[`include/ec_commands.h`](https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/include/ec_commands.h)
+[`include/ec_commands.h`](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/include/ec_commands.h)
 for the current format of request and replies. Currently, there are no changes
 made to the format of the host request and response structures.
 

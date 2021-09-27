@@ -200,4 +200,4 @@ DECLARE_HOOK(HOOK_INIT, board_i2c_init, HOOK_PRIO_INIT_I2C);
 [./chip/npcx/registers.h]: ../../chip/npcx/registers.h
 [./include/i2c.h]: ../../include/i2c.h
 [I2C Example]: ../images/i2c_example.png
-[CBI]: https://chromium.googlesource.com/chromiumos/docs/+/master/design_docs/cros_board_info.md
+[CBI]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md

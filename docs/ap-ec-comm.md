@@ -148,5 +148,5 @@ after receiving a host packet and before it has a response ready.
 
 [`cros-ec` Kernel driver]: https://chromium.googlesource.com/chromiumos/third_party/kernel/+/refs/heads/chromeos-4.19/drivers/mfd/cros_ec_dev.c
 [Industrial I/O]: https://www.kernel.org/doc/html/v4.14/driver-api/iio/index.html
-[host command task]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/common/host_command.c
+[host command task]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/common/host_command.c
 [Transport-specific details]: #Transport_specific-details

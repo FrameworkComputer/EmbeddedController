@@ -169,9 +169,9 @@ After finishing the changes required for all EC features, it is recommended that
 you make one final pass over all the GPIOs and pin assignments used on your
 board. Refer to the [GPIO](./configuration/gpio.md) documentation for details.
 
-[README.md]:https://chromium.googlesource.com/chromiumos/platform/dev-util/+/master/contrib/variant/README.md
-[new_variant.py]:https://chromium.googlesource.com/chromiumos/platform/dev-util/+/master/contrib/variant/new_variant.py
-[create_initial_ec_image.sh]:https://chromium.googlesource.com/chromiumos/platform/dev-util/+/master/contrib/variant/create_initial_ec_image.sh
+[README.md]:https://chromium.googlesource.com/chromiumos/platform/dev-util/+/HEAD/contrib/variant/README.md
+[new_variant.py]:https://chromium.googlesource.com/chromiumos/platform/dev-util/+/HEAD/contrib/variant/new_variant.py
+[create_initial_ec_image.sh]:https://chromium.googlesource.com/chromiumos/platform/dev-util/+/HEAD/contrib/variant/create_initial_ec_image.sh
 [Volteer EC skeleton build]:https://chromium-review.googlesource.com/c/chromiumos/platform/ec/+/1758532
 [Hatch EC skeleton build]:https://chromium-review.googlesource.com/c/chromiumos/platform/ec/+/1377569/
 [config.h]: ./new_board_checklist.md#config_h

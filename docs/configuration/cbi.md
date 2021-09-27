@@ -34,6 +34,6 @@ None required by this feature.
 Refer to the [I2C debugging information] to verify communication with the CBI
 EEPROM.
 
-[CBI]: https://chromium.googlesource.com/chromiumos/docs/+/master/design_docs/cros_board_info.md
+[CBI]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md
 [I2C buses]: ./i2c.md
 [I2C debugging information]: ./i2c.md#
