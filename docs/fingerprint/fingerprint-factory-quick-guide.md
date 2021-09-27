@@ -41,7 +41,7 @@ Please add
 [fingerprint\_mcu.py](https://chromium.git.corp.google.com/chromiumos/platform/factory/+/a283609cd8446ba4a4b75c2e1d84c9ba24ea8422/py/test/pytests/fingerprint_mcu.py)
 to your device test list. A more detailed description about this test can be
 found
-[here](https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/docs/fingerprint/fingerprint-factory-requirements.md).
+[here](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/fingerprint/fingerprint-factory-requirements.md).
 
 ### Initialize FPMCU entropy in factory finalization
 
@@ -78,7 +78,7 @@ to reset rollback\_block\_id and entropy. So the follow-up re-finalization
 ## References
 
 *   CrOS fingerprint factory requirements:
-    [doc link](https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/docs/fingerprint/fingerprint-factory-requirements.md)
+    [doc link](https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/fingerprint/fingerprint-factory-requirements.md)
 *   The summary of CLs:
     *   Add a factory script to update FPMCU firmware:
         [crrev/c/1918679](https://chromium-review.googlesource.com/c/chromiumos/platform/factory/+/1918679),

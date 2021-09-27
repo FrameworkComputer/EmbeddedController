@@ -104,9 +104,9 @@ test_that --board=<BOARD> <IP> suite:fingerprint
 
 <!-- Links -->
 
-[servo debugger]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/master/docs/servo.md
-[developer mode]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_mode.md
+[servo debugger]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/docs/servo.md
+[developer mode]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_mode.md
 [CCD]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/cr50_stab/docs/case_closed_debugging.md
-[Servo V4]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/master/docs/servo_v4.md
-[have the prerequisites]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#Prerequisites
-[get the source]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#get-the-source
+[Servo V4]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/docs/servo_v4.md
+[have the prerequisites]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#Prerequisites
+[get the source]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#get-the-source

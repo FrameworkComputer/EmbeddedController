@@ -603,27 +603,27 @@ Make sure that this interface is disabled:
 <!-- Links -->
 
 [EC]: https://chromium.googlesource.com/chromiumos/platform/ec
-[ectool_servo_spi]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/util/comm-servo-spi.c#15
-[servo]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/master/README.md
-[developer mode]: https://chromium.googlesource.com/chromiumos/docs/+/master/debug_buttons.md#firmware-keyboard-interface
-[hardware write protection]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/docs/write_protection.md
-[have the prerequisites]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#Prerequisites
-[get the source]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#get-the-source
-[enter the `chroot`]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#building-chromium-os
-[Chromium OS Contributing Guide]: https://chromium.googlesource.com/chromiumos/docs/+/master/contributing.md
-[Servo Micro Info]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/master/docs/servo_micro.md
-[Set your editor]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#Set-your-editor
+[ectool_servo_spi]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/util/comm-servo-spi.c#15
+[servo]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/README.md
+[developer mode]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/debug_buttons.md#firmware-keyboard-interface
+[hardware write protection]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/write_protection.md
+[have the prerequisites]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#Prerequisites
+[get the source]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#get-the-source
+[enter the `chroot`]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#building-chromium-os
+[Chromium OS Contributing Guide]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/contributing.md
+[Servo Micro Info]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/docs/servo_micro.md
+[Set your editor]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#Set-your-editor
 [Life of a patch]: https://source.android.com/setup/contribute/life-of-a-patch
 [Git: Concepts and Workflow]: https://docs.google.com/presentation/d/1IQCRPHEIX-qKo7QFxsD3V62yhyGA9_5YsYXFOiBpgkk/
 [Gerrit: Concepts and Workflow]: https://docs.google.com/presentation/d/1C73UgQdzZDw0gzpaEqIC6SPujZJhqamyqO1XOHjH-uk/
 [Public Gerrit]: https://chromium-review.googlesource.com
-[Power Measurement Documentation]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/master/docs/power_measurement.md
+[Power Measurement Documentation]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/docs/power_measurement.md
 [Internal Gerrit]: https://chrome-internal-review.googlesource.com
 [Gerrit Credentials Setup]: https://www.chromium.org/chromium-os/developer-guide/gerrit-guide
 [Micro USB Cable]: https://www.monoprice.com/product?p_id=9762
 [PNM]: https://en.wikipedia.org/wiki/Netpbm_format
-[Git and Gerrit Intro for Chromium OS]: https://chromium.googlesource.com/chromiumos/docs/+/master/git_and_gerrit_intro.md
-[Installing Chromium]: https://chromium.googlesource.com/chromiumos/docs/+/master/developer_guide.md#installing-chromium-os-on-your-device
+[Git and Gerrit Intro for Chromium OS]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/git_and_gerrit_intro.md
+[Installing Chromium]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#installing-chromium-os-on-your-device
 [FPMCU documentation]: ./fingerprint.md
 [Fingerprint Debugging]: ./fingerprint-debugging.md
 [dragonclaw schematics]: ../schematics/dragonclaw

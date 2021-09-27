@@ -714,37 +714,37 @@ The log file is `/var/log/cros_fp.log`.
 [Arm TrustZone]: https://www.arm.com/products/security-on-arm/trustzone
 [Authentication-Time User Secrets]: http://go/authentication-time-user-secrets
 [AuthSession]: https://chromium.googlesource.com/chromiumos/platform2/+/eae39a9ad1239f8fbfa8164255578b306ff6ba5c/biod/biometrics_manager.h#96
-[biod D-Bus API]: https://chromium.googlesource.com/chromiumos/platform2/+/refs/heads/master/system_api/dbus/biod/
-[biod upstart script]: https://chromium.googlesource.com/chromiumos/platform2/+/master/biod/init/biod.conf
+[biod D-Bus API]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/system_api/dbus/biod/
+[biod upstart script]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/biod/init/biod.conf
 [ccd open]: https://chromium.googlesource.com/chromiumos/platform/ec/+/cr50_stab/docs/case_closed_debugging_cr50.md#Open-CCD
 [CDD]: https://source.android.com/compatibility/android-cdd#7_3_10_fingerprint_sensor
-[Chromium OS EC]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/README.md
+[Chromium OS EC]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/README.md
 [clobber-state]: https://chromium.googlesource.com/chromiumos/platform2/+/962ab1bc481db0cf504b5449eb3a3d5008ea7601/init/clobber_state.cc#475
-[cryptohome daemon store folder]: https://chromium.googlesource.com/chromiumos/docs/+/master/sandboxing.md#securely-mounting-cryptohome-daemon-store-folders
+[cryptohome daemon store folder]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/sandboxing.md#securely-mounting-cryptohome-daemon-store-folders
 [cryptohome]: https://www.chromium.org/chromium-os/chromiumos-design-docs/protecting-cached-user-data
 [Detachable Base Swap Detection]: https://docs.google.com/document/d/1WYdkkSAL_RHVc5mUXnAvBBfAeM7Wj3ABa1dbeTdvm74/edit#heading=h.g74ijelumqop
 [Detachable Base Verified Boot Anti-Rollback]: http://go/detachable-base-vboot#heading=h.fimcm174ok3
 [Detachable Base Verified Boot]: http://go/detachable-base-vboot#heading=h.dolfbdpggye6
-[EC primitives]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/README.md#Software-Features
+[EC primitives]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/README.md#Software-Features
 [EnrollSession]: https://chromium.googlesource.com/chromiumos/platform2/+/eae39a9ad1239f8fbfa8164255578b306ff6ba5c/biod/biometrics_manager.h#92
 [fingerprint authentication framework]: https://developer.android.com/about/versions/marshmallow/android-6.0.html#fingerprint-authentication
-[fuzzed]: https://chromium.googlesource.com/chromiumos/platform2/+/master/biod/biod_storage_fuzzer.cc
+[fuzzed]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/biod/biod_storage_fuzzer.cc
 [Global Read-out Protection (RDP) mode Level 1]: https://www.st.com/content/ccc/resource/technical/document/application_note/b4/14/62/81/18/57/48/05/DM00075930.pdf/files/DM00075930.pdf/jcr:content/translations/en.DM00075930.pdf
 [HKDF]: https://tools.ietf.org/html/rfc5869
 [Input Key Material (IKM)]: https://en.wikipedia.org/wiki/HKDF
 [Intel SGX]: https://software.intel.com/en-us/sgx
 [macOS]: https://support.apple.com/en-us/HT207054
-[malloc/free memory module for Chrome EC]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/common/shmalloc.c
+[malloc/free memory module for Chrome EC]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/common/shmalloc.c
 [matching algorithm]: https://en.wikipedia.org/wiki/Fingerprint#Algorithms
-[mount_encrypted]: https://chromium.googlesource.com/chromiumos/platform2/+/master/cryptohome/mount_encrypted
+[mount_encrypted]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/cryptohome/mount_encrypted
 [New UKM collection review - CrOS FP Unlock]: https://docs.google.com/document/d/1qjDCMcBcrhSeg_uwyEIRsXHKmzUTJahcg6a4YVhkuLo
 [Old Design Doc]: https://docs.google.com/document/d/1MdPRmCDkVg1HO9DdbvPT5fDZS2ICg5ys9_ok_K95EEU
 [PDD is here]: http://go/cros-fingerprint-pdd
 [Privacy fields for Fingerprints]: https://docs.google.com/spreadsheets/d/1jLfnuhfbrImpoxuj92OkAxS_GGrm7QkpQhsUQCkO9ec
 [Privacy fields for Fingerprints]: https://docs.google.com/spreadsheets/d/1jLfnuhfbrImpoxuj92OkAxS_GGrm7QkpQhsUQCkO9ec/
 [RM0433]: https://www.st.com/content/ccc/resource/technical/document/reference_manual/group0/c9/a3/76/fa/55/46/45/fa/DM00314099/files/DM00314099.pdf/jcr:content/translations/en.DM00314099.pdf
-[sandboxing]: https://chromium.googlesource.com/chromiumos/docs/+/master/sandboxing.md
-[seccomp filter]: https://chromium.googlesource.com/chromiumos/platform2/+/master/biod/init/seccomp/biod-seccomp-amd64.policy
+[sandboxing]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/sandboxing.md
+[seccomp filter]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/biod/init/seccomp/biod-seccomp-amd64.policy
 [Security Audit Report]: https://drive.google.com/a/google.com/file/d/0B1HHKpeDpzYnMDdocGxwWUhpckpWM0hMU0tPa2ZjdEFnLU53/
 [state machine]: https://chromium.googlesource.com/chromiumos/platform/ec/+/90d177e3f0ae729bea7e24934a3c6ef9f2520d45/common/fpsensor.c#252
 [statically allocated]: https://chromium.googlesource.com/chromiumos/platform/ec/+/90d177e3f0ae729bea7e24934a3c6ef9f2520d45/common/fpsensor.c#57

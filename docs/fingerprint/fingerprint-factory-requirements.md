@@ -483,12 +483,12 @@ Wrote /tmp/fp.0.png (14085 bytes)
 Wrote /tmp/fp.1.png (14025 bytes)
 ```
 
-[Software Write Protect]: https://chromium.googlesource.com/chromiumos/platform/ec/+/refs/heads/master/docs/write_protection.md#Software-Write-Protect
-[hardware write protect]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/docs/write_protection.md#hw_wp
+[Software Write Protect]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/write_protection.md#Software-Write-Protect
+[hardware write protect]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/docs/write_protection.md#hw_wp
 [FPC1025: Module Test Specification]: http://go/cros-fingerprint-fpc1025-module-test-spec
 [FPC1145: Module Test Specification]: http://go/cros-fingerprint-fpc1145-module-test-spec
 [FPC In-Device Test Specification]: http://go/cros-fingerprint-fpc-indevice-test-spec
-[`fingerprint_mcu.py`]: https://chromium.googlesource.com/chromiumos/platform/factory/+/master/py/test/pytests/fingerprint_mcu.py
+[`fingerprint_mcu.py`]: https://chromium.googlesource.com/chromiumos/platform/factory/+/HEAD/py/test/pytests/fingerprint_mcu.py
 [Checkerboard Test]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/pytests/fingerprint_mcu.py#166
 [GetSensorIdErrors]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/utils/fpmcu_utils.py#73
 [GetSensorId]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/utils/fpmcu_utils.py#65
@@ -496,7 +496,7 @@ Wrote /tmp/fp.1.png (14025 bytes)
 [rubber_finger_present]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/pytests/fingerprint_mcu.py#330
 [Chrome OS Fingerprint Team]: http://go/cros-fingerprint-docs
 [Factory Fingerprint Sensor Testing for `nocturne`]: http://go/fingerprint-factory-testing-nocturne
-[`flash_fp_mcu`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/master/util/flash_fp_mcu
+[`flash_fp_mcu`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/util/flash_fp_mcu
 [Fingerprint flashing documentation]: ./fingerprint.md#factory-rma-dev-updates
-[Chrome OS Config]: https://chromium.googlesource.com/chromiumos/platform2/+/master/chromeos-config/README.md
+[Chrome OS Config]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md
 [updating Chrome OS Config]: ./fingerprint.md#update-chromeos-config
