@@ -24,13 +24,29 @@ LOG_MODULE_REGISTER(ln9310_emul, CONFIG_LN9310_EMUL_LOG_LEVEL);
 	CONTAINER_OF(CONTAINER_OF(_emul, struct i2c_common_emul_data, emul), \
 		     struct ln9310_emul_data, common)
 
+enum functional_mode {
+	/* TODO shutdown_mode, */
+	/* TODO bypass, */
+	FUNCTIONAL_MODE_STANDBY = LN9310_SYS_STANDBY,
+	FUNCTIONAL_MODE_SWITCHING_21 =
+		LN9310_SYS_SWITCHING21_ACTIVE,
+	FUNCTIONAL_MODE_SWITCHING_31 =
+		LN9310_SYS_SWITCHING31_ACTIVE
+};
+
 struct ln9310_emul_data {
 	/** Common I2C data */
 	struct i2c_common_emul_data common;
 	/** The current emulated battery cell type */
 	enum battery_cell_type battery_cell_type;
+	/** Current Functional Mode */
+	enum functional_mode current_mode;
+	/** Emulated SYS STS register */
+	uint8_t sys_sts_reg;
 	/** Emulated INT1 MSK register */
 	uint8_t int1_msk_reg;
+	/** Emulated INT1 register */
+	uint8_t int1_reg;
 	/** Emulated Lion control register */
 	uint8_t lion_ctrl_reg;
 	/** Emulated startup control register */
@@ -63,13 +79,86 @@ struct ln9310_emul_data {
 	uint8_t swap_ctrl_3_reg;
 	/** Emulated track control register */
 	uint8_t track_ctrl_reg;
-	/** Emulated mode change register */
-	uint8_t mode_change_reg;
+	/** Emulated mode change cfg register */
+	uint8_t mode_change_cfg_reg;
 	/** Emulated system control register */
 	uint8_t sys_ctrl_reg;
 };
 
 static const struct emul *singleton;
+
+
+static void do_ln9310_interrupt(struct ln9310_emul_data *data)
+{
+	/*
+	 * TODO(b/201437348): Use gpio interrupt pins properly instead of
+	 * making direct interrupt call as part of this or system test
+	 */
+
+	data->int1_reg |= LN9310_INT1_MODE;
+	ln9310_interrupt(0);
+}
+
+static void mode_change(struct ln9310_emul_data *data)
+{
+
+	bool now_in_standby = data->startup_ctrl_reg &
+			      LN9310_STARTUP_STANDBY_EN;
+	bool now_in_switching_21 =
+		((data->power_ctrl_reg & LN9310_PWR_OP_MODE_MASK) ==
+		 LN9310_PWR_OP_MODE_SWITCH21) &&
+		!now_in_standby;
+	bool now_in_switching_31 =
+		((data->power_ctrl_reg & LN9310_PWR_OP_MODE_MASK) ==
+		 LN9310_PWR_OP_MODE_SWITCH31) &&
+		!now_in_standby;
+
+	__ASSERT_NO_MSG(!(now_in_switching_21 && now_in_switching_31));
+
+	switch (data->current_mode) {
+	case FUNCTIONAL_MODE_STANDBY:
+		if (now_in_switching_21) {
+			data->current_mode =
+				FUNCTIONAL_MODE_SWITCHING_21;
+			data->sys_sts_reg = data->current_mode;
+			do_ln9310_interrupt(data);
+		} else if (now_in_switching_31) {
+			data->current_mode =
+				FUNCTIONAL_MODE_SWITCHING_31;
+			data->sys_sts_reg = data->current_mode;
+			do_ln9310_interrupt(data);
+		}
+		break;
+	case FUNCTIONAL_MODE_SWITCHING_21:
+		if (now_in_standby) {
+			data->current_mode =
+				FUNCTIONAL_MODE_SWITCHING_21;
+			data->sys_sts_reg = data->current_mode;
+			do_ln9310_interrupt(data);
+		} else if (now_in_switching_31) {
+			data->current_mode =
+				FUNCTIONAL_MODE_SWITCHING_31;
+			data->sys_sts_reg = data->current_mode;
+			do_ln9310_interrupt(data);
+		}
+		break;
+	case FUNCTIONAL_MODE_SWITCHING_31:
+		if (now_in_standby) {
+			data->current_mode =
+				FUNCTIONAL_MODE_STANDBY;
+			data->sys_sts_reg = data->current_mode;
+			do_ln9310_interrupt(data);
+		} else if (now_in_switching_21) {
+			data->current_mode =
+				FUNCTIONAL_MODE_SWITCHING_21;
+			data->sys_sts_reg = data->current_mode;
+			do_ln9310_interrupt(data);
+		}
+		break;
+	default:
+		__ASSERT(0, "Unrecognized mode");
+	}
+}
 
 void ln9310_emul_set_context(const struct emul *emulator)
 {
@@ -79,24 +168,12 @@ void ln9310_emul_set_context(const struct emul *emulator)
 void ln9310_emul_reset(const struct emul *emulator)
 {
 	struct ln9310_emul_data *data = emulator->data;
+	struct i2c_common_emul_data common = data->common;
 
-	data->lion_ctrl_reg = 0;
-	data->startup_ctrl_reg = 0;
-	data->bc_sts_b_reg = 0;
-	data->cfg_0_reg = 0;
-	data->cfg_4_reg = 0;
-	data->cfg_5_reg = 0;
-	data->power_ctrl_reg = 0;
-	data->timer_ctrl_reg = 0;
-	data->lower_bound_ctrl_reg = 0;
-	data->spare_0_reg = 0;
-	data->swap_ctrl_0_reg = 0;
-	data->swap_ctrl_1_reg = 0;
-	data->swap_ctrl_2_reg = 0;
-	data->swap_ctrl_3_reg = 0;
-	data->track_ctrl_reg = 0;
-	data->mode_change_reg = 0;
-	data->sys_ctrl_reg = 0;
+	/* Only Reset the LN9310 Register Data */
+	memset(data, 0, sizeof(struct ln9310_emul_data));
+	data->common = common;
+	data->current_mode = LN9310_SYS_STANDBY;
 }
 
 void ln9310_emul_set_battery_cell_type(const struct emul *emulator,
@@ -154,6 +231,14 @@ static int ln9310_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 	struct ln9310_emul_data *data = LN9310_DATA_FROM_I2C_EMUL(emul);
 
 	switch (reg) {
+	case LN9310_REG_INT1:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->int1_reg = val;
+		break;
+	case LN9310_REG_SYS_STS:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->sys_sts_reg = val;
+		break;
 	case LN9310_REG_INT1_MSK:
 		__ASSERT_NO_MSG(bytes == 1);
 		data->int1_msk_reg = val;
@@ -188,6 +273,12 @@ static int ln9310_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 	case LN9310_REG_PWR_CTRL:
 		__ASSERT_NO_MSG(bytes == 1);
 		data->power_ctrl_reg = val;
+		bool reset_standby = ((val & LN9310_PWR_OP_MODE_SWITCH21) ||
+				      (val & LN9310_PWR_OP_MODE_SWITCH31)) &&
+				     data->bc_sts_c_reg >=
+					     LN9310_BC_STS_C_CHIP_REV_FIXED;
+		if (reset_standby)
+			data->startup_ctrl_reg &= ~LN9310_STARTUP_STANDBY_EN;
 		break;
 	case LN9310_REG_TIMER_CTRL:
 		__ASSERT_NO_MSG(bytes == 1);
@@ -223,7 +314,7 @@ static int ln9310_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 		break;
 	case LN9310_REG_MODE_CHANGE_CFG:
 		__ASSERT_NO_MSG(bytes == 1);
-		data->mode_change_reg = val;
+		data->mode_change_cfg_reg = val;
 		break;
 	case LN9310_REG_SYS_CTRL:
 		__ASSERT_NO_MSG(bytes == 1);
@@ -232,6 +323,7 @@ static int ln9310_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 	default:
 		return -EINVAL;
 	}
+	mode_change(data);
 	return 0;
 }
 
@@ -242,6 +334,14 @@ static int ln9310_emul_start_read(struct i2c_emul *emul, int reg)
 
 static int ln9310_emul_finish_read(struct i2c_emul *emul, int reg, int bytes)
 {
+	struct ln9310_emul_data *data = LN9310_DATA_FROM_I2C_EMUL(emul);
+
+	switch (reg) {
+	case LN9310_REG_INT1:
+		/* Reading the interrupt clears it. */
+		data->int1_reg = 0;
+		break;
+	}
 	return 0;
 }
 
@@ -251,6 +351,14 @@ static int ln9310_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 	struct ln9310_emul_data *data = LN9310_DATA_FROM_I2C_EMUL(emul);
 
 	switch (reg) {
+	case LN9310_REG_INT1:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->int1_reg;
+		break;
+	case LN9310_REG_SYS_STS:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->sys_sts_reg;
+		break;
 	case LN9310_REG_INT1_MSK:
 		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int1_msk_reg;
@@ -321,7 +429,7 @@ static int ln9310_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 		break;
 	case LN9310_REG_MODE_CHANGE_CFG:
 		__ASSERT_NO_MSG(bytes == 0);
-		*val = data->mode_change_reg;
+		*val = data->mode_change_cfg_reg;
 		break;
 	case LN9310_REG_SYS_CTRL:
 		__ASSERT_NO_MSG(bytes == 0);

@@ -235,4 +235,9 @@ enum battery_cell_type {
 
 enum battery_cell_type board_get_battery_cell_type(void);
 
+/**
+ *  @brief Resets LN9310 Driver State
+ */
+__test_only void ln9310_reset_to_initial_state(void);
+
 #endif /* __CROS_EC_LN9310_H */

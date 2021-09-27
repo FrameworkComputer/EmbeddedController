@@ -571,3 +571,9 @@ void ln9310_software_enable(int enable)
 	}
 	return;
 }
+
+__test_only void ln9310_reset_to_initial_state(void)
+{
+	power_good = 0;
+	startup_workaround_required = 0;
+}
