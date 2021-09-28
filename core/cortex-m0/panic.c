@@ -163,8 +163,17 @@ void exception_panic(void)
 			[pstack] "r" (pstack_addr) :
 			/* Constraints protecting these from being clobbered.
 			 * Gcc should be using r0 & r12 for pregs and pstack. */
-			"r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9",
-			"r10", "r11", "cc", "memory"
+			"r1", "r2", "r3", "r4", "r5", "r6",
+		/* clang warns that we're clobbering a reserved register:
+		 * inline asm clobber list contains reserved registers: R7
+		 * [-Werror,-Winline-asm]. The intent of the clobber list is
+		 * to force pregs and pstack to be in R0 and R12, which
+		 * still holds.
+		 */
+#ifndef __clang__
+			"r7",
+#endif
+			"r8", "r9", "r10", "r11", "cc", "memory"
 		);
 }
 
