@@ -37,22 +37,6 @@
 static volatile uint32_t last_interrupt_timestamp;
 
 /**
- * Gets the dev_fifo enum value for a given sensor.
- *
- * @param s Pointer to the sensor in question.
- * @return the dev_fifo enum value corresponding to the sensor.
- */
-static inline enum dev_fifo get_fifo_type(const struct motion_sensor_t *s)
-{
-	static enum dev_fifo map[] = {
-		FIFO_DEV_ACCEL,
-		FIFO_DEV_GYRO,
-		FIFO_DEV_MAG
-	};
-	return map[s->type];
-}
-
-/**
  * Gets the sensor type associated with the dev_fifo enum. This type can be used
  * to get the sensor number by using it as an offset from the first sensor in
  * the lsm6dsm (the accelerometer).
