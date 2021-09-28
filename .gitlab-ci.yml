@@ -136,7 +136,7 @@ coverage:
       coverage
     - lcov -o build/merged.info -a build/coverage/lcov.info -a build/zcoverage/lcov.info
     - lcov -o build/merged_no_zephyr.info -r build/merged.info '/home/uboot/zephyr26/*' '/home/uboot/modules/*' '/usr/include/x86_64-linux-gnu/*'
-    - grep SF: build/zcoverage/projects_herobrine_herobrine_npcx9.info | sort -u | sed -e 's|^SF:||' | xargs lcov -o build/merged_no_zephyr_herobrine_npcx9.info -e build/merged_no_zephyr.info
+    - grep "SF:" build/zcoverage/projects_herobrine_herobrine_npcx9.info | sort -u | sed -e 's|^SF:||' | xargs lcov -o build/merged_no_zephyr_herobrine_npcx9.info -e build/merged_no_zephyr.info
     - /usr/bin/genhtml -q -o build/merged_no_zephyr_herobrine_npcx9_rpt -t "Herobrine npcx9 coverage w/o zephyr" -p /builds/zephyr-ec/ec -s build/merged_no_zephyr_herobrine_npcx9.info
   artifacts:
     paths:
