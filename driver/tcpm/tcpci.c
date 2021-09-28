@@ -1020,6 +1020,18 @@ int tcpci_tcpm_transmit(int port, enum tcpci_msg_type type,
 	}
 
 	/*
+	 * The PRL_RX state machine should force a discard of PRL_TX any time a
+	 * new message comes in.  However, since most of the PRL_RX runs on
+	 * the TCPC, we may receive a RX interrupt between the EC PRL_RX and
+	 * PRL_TX state machines running.  In this case, mark the message
+	 * discarded and don't tell the TCPC to transmit.
+	 */
+	if (tcpm_has_pending_message(port)) {
+		pd_transmit_complete(port, TCPC_TX_COMPLETE_DISCARDED);
+		return EC_ERROR_BUSY;
+	}
+
+	/*
 	 * We always retry in TCPC hardware since the TCPM is too slow to
 	 * respond within tRetry (~195 usec).
 	 *
