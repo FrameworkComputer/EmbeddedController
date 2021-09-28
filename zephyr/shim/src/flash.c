@@ -139,6 +139,43 @@ uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 	return ret;
 }
 
+#if IS_ENABLED(CONFIG_SHELL)
+static int command_flashchip(const struct shell *shell,
+			     size_t argc,
+			     char **argv)
+{
+	uint8_t manufacturer;
+	uint16_t device;
+	uint8_t status1;
+	uint8_t status2;
+	int res;
+
+	res = cros_flash_physical_get_status(cros_flash_dev,
+					     &status1,
+					     &status2);
+
+	if (!res)
+		shell_fprintf(shell,
+			      SHELL_NORMAL,
+			      "Status 1: 0x%02x, Status 2: 0x%02x\n",
+			      status1, status2);
+
+	res = cros_flash_physical_get_jedec_id(cros_flash_dev,
+					       &manufacturer,
+					       &device);
+
+	if (!res)
+		shell_fprintf(shell,
+			      SHELL_NORMAL,
+			      "Manufacturer: 0x%02x, DID: 0x%04x\n",
+			      manufacturer, device);
+
+	return 0;
+}
+SHELL_CMD_REGISTER(flashchip, NULL, "Information about flash chip",
+		   command_flashchip);
+#endif
+
 /*
  * The priority flash_dev_init should be lower than GPIO initialization because
  * it calls gpio_get_level function.
