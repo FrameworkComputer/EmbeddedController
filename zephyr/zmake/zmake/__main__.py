@@ -161,6 +161,11 @@ def main(argv=None):
     parser.add_argument(
         "--zephyr-base", type=pathlib.Path, help="Path to Zephyr OS repository"
     )
+    parser.add_argument(
+        "--zephyr-root",
+        type=pathlib.Path,
+        help="Path to Zephyr OS repos, must contain subdirs like v1.2",
+    )
 
     sub = parser.add_subparsers(dest="subcommand", help="Subcommand")
     sub.required = True

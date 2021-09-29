@@ -64,7 +64,7 @@ def locate_cros_checkout():
     raise FileNotFoundError("Unable to locate a ChromiumOS checkout")
 
 
-def locate_zephyr_base(checkout, version):
+def locate_zephyr_base(zephyr_root, version):
     """Locate the path to the Zephyr RTOS in a ChromiumOS checkout.
 
     Args:
@@ -74,14 +74,7 @@ def locate_zephyr_base(checkout, version):
     Returns:
         The path to the Zephyr source.
     """
-    return (
-        checkout
-        / "src"
-        / "third_party"
-        / "zephyr"
-        / "main"
-        / "v{}.{}".format(*version[:2])
-    )
+    return zephyr_root / "v{}.{}".format(*version[:2])
 
 
 def read_kconfig_file(path):
