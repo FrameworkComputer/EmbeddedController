@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-image: jbettis/bionic-20200807-20sep21
+image: jbettis/ubuntu-29sep21
 
 # You can update that image using this repo:
 #   https://gitlab.com/zephyr-ec/gitlab-ci-runner/-/tree/main
@@ -31,19 +31,17 @@ before_script:
   - export MODULES_DIR="$HOME/modules"
   - mkdir -p "${MODULES_DIR}"
   - export ZEPHYR_BASE="$HOME/zephyr"
-  - git clone -b chromeos-v2.6 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_BASE}26"
-  - git clone -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis "${MODULES_DIR}/cmsis"
-  - git clone -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32 "${MODULES_DIR}/hal_stm32"
-  - git clone -b main https://chromium.googlesource.com/chromiumos/third_party/zephyr/nanopb "${MODULES_DIR}/nanopb"
-  - git clone -b main https://chromium.googlesource.com/chromiumos/third_party/cryptoc "${MODULES_DIR}/cryptoc"
+  - git clone --depth 1 -b chromeos-v2.6 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_BASE}26"
+  - git clone --depth 1 -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis "${MODULES_DIR}/cmsis"
+  - git clone --depth 1 -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32 "${MODULES_DIR}/hal_stm32"
+  - git clone --depth 1 -b main https://chromium.googlesource.com/chromiumos/third_party/zephyr/nanopb "${MODULES_DIR}/nanopb"
+  - git clone --depth 1 -b main https://chromium.googlesource.com/chromiumos/third_party/cryptoc "${MODULES_DIR}/cryptoc"
   - ln -s "$(pwd)" "${MODULES_DIR}/ec"
   - python3 -V  # Print out python version for debugging
   - python3 -m pip install zephyr/zmake --user
   - export BUILD_DIR=build
   - export ZEPHYR_DIR=/zephyr
   - export PATH="$PATH:$HOME/.local/bin"
-  - python3 -m pip install anytree --user
-  - python3 -m pip install pyelftools --user
   - export PYTHONIOENCODING=utf-8
 
 # Users of this template must set:
@@ -52,6 +50,7 @@ before_script:
 # $PROJECT_SUBDIR if it is in a subdirectory. E.g. "trogdor/"
 .build_template: &build_template
   stage: build
+  needs: []
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}${VERSION}"
       --modules-dir "${MODULES_DIR}" -l DEBUG configure -b
@@ -124,30 +123,51 @@ volteer:
     VERSION: 26
   <<: *build_template
 
-coverage:
+ec_coverage:
   stage: test
+  needs: []
+  script:
+    - make -j8 CRYPTOC_DIR="${MODULES_DIR}/cryptoc"
+      HOSTGCOV='gcov'
+      CROSS_COMPILE_arm=/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-
+      test-coverage
+  artifacts:
+    paths:
+      - build/coverage/coverage_rpt/*
+      - build/coverage/lcov.info
+    expire_in: 1 week
+
+zephyr_coverage:
+  stage: test
+  needs: []
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}26"
       --modules-dir "${MODULES_DIR}" -l DEBUG coverage
       "${BUILD_DIR}/zcoverage"
-    - make -j CRYPTOC_DIR="${MODULES_DIR}/cryptoc"
-      FTDIVERSION=1 HOSTGCOV='gcov'
-      CROSS_COMPILE_arm=/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-
-      coverage
+  artifacts:
+    paths:
+      - build/zcoverage/coverage_rpt/*
+      - build/zcoverage/*.info
+    expire_in: 1 week
+
+merged_coverage:
+  stage: test
+  needs: ["ec_coverage", "zephyr_coverage"]
+  script:
     - lcov -o build/merged.info -a build/coverage/lcov.info -a build/zcoverage/lcov.info
     - lcov -o build/merged_no_zephyr.info -r build/merged.info '/home/uboot/zephyr26/*' '/home/uboot/modules/*' '/usr/include/x86_64-linux-gnu/*'
     - grep "SF:" build/zcoverage/projects_herobrine_herobrine_npcx9.info | sort -u | sed -e 's|^SF:||' | xargs lcov -o build/merged_no_zephyr_herobrine_npcx9.info -e build/merged_no_zephyr.info
     - /usr/bin/genhtml -q -o build/merged_no_zephyr_herobrine_npcx9_rpt -t "Herobrine npcx9 coverage w/o zephyr" -p /builds/zephyr-ec/ec -s build/merged_no_zephyr_herobrine_npcx9.info
   artifacts:
     paths:
-      - build/zcoverage/coverage_rpt/*
-      - build/coverage/coverage_rpt/*
       - build/*.info
       - build/*_rpt
     expire_in: 1 week
+  coverage: '/lines\.*: \d+\.\d+%/'
 
 testall:
   stage: test
+  needs: []
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}26"
       --modules-dir "${MODULES_DIR}" -l DEBUG testall

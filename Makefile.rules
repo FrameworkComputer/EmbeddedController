@@ -403,17 +403,15 @@ $(foreach b, $(cts_boards), \
 
 cov-boards=lazor volteer
 cov-test-targets=$(foreach t,$(cov-test-list-host),build/coverage/$(t).info)
-cov-test-targets+=$(foreach t,$(cov-boards),build/coverage/initial-$(t).info)
+cov-initial-targets=$(foreach t,$(cov-boards),build/coverage/initial-$(t).info)
 bldversion=$(shell (./util/getversion.sh ; echo VERSION) | $(CPP) -P -)
 
-# lcov fails when multiple instances run at the same time.
-# We need to run them sequentially by using flock
-cmd_lcov=flock /tmp/ec-lcov-lock -c "lcov --gcov-tool \
+cmd_lcov=lcov --gcov-tool \
 	$(HOSTGCOV) -q -o $@ -c -d build/coverage/$* -t $* \
-	--exclude '*/ec/test/*' --exclude '*/ec/include/tests/*'"
-cmd_lcov-initial=flock /tmp/ec-lcov-lock -c "lcov --gcov-tool \
+	--exclude '*/ec/test/*' --exclude '*/ec/include/tests/*'
+cmd_lcov-initial=lcov --gcov-tool \
 	$(GCOV) -q -o $@ -c -d build/coverage/initial-$* \
-	-i -t $* --exclude '*/ec/test/*' --exclude '*/ec/include/tests/*'"
+	-i -t $* --exclude '*/ec/test/*' --exclude '*/ec/include/tests/*'
 cmd_merge_cov=lcov -o build/coverage/lcov.info $(foreach info,$^,-a ${info})
 cmd_report_cov=genhtml -q -o build/coverage/coverage_rpt -t \
 	       "EC Unittest "$(bldversion) -s $^
@@ -463,10 +461,14 @@ build/coverage/%.info: run-coverage-%
 
 .PHONY: coverage
 coverage: TEST_FLAG=TEST_COVERAGE=y
-coverage: $(cov-test-targets)
+coverage: $(cov-test-targets) $(cov-initial-targets)
 	$(call quiet,merge_cov,MERGE  )
 	$(call quiet,report_cov,REPORT )
 	$(call quiet,strip_lcov,STRIP  )
+test-coverage: TEST_FLAG=TEST_COVERAGE=y
+test-coverage: $(cov-test-targets)
+	$(call quiet,merge_cov,MERGE  )
+	$(call quiet,report_cov,REPORT )
 
 $(out)/libec.a: $(ro-objs)
 	$(call quiet,libec,BUILD )
