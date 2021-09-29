@@ -26,12 +26,7 @@ config SHELL_PRINTF_BUFF_SIZE
 	default 130
 
 # Some boards may need to increase the size, depending on the amount of output
-#
-# TODO(b/196627937): zephyr: hang when running help with CONFIG_SHELL_HELP
-# enabled.  Increase the TX buffer size to workaround the hang when the help
-# is enabled.
 config SHELL_BACKEND_SERIAL_TX_RING_BUFFER_SIZE
-	default 4096 if SHELL_HELP
 	default 1024
 
 menuconfig PLATFORM_EC_HOSTCMD_CONSOLE
