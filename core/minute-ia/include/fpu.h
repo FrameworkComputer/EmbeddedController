@@ -204,7 +204,7 @@ static inline int __isnanf(float v)
 		"fxam\n"
 		"fnstsw %0\n"
 		: "=r" (stat)
-		: "0" (v));
+		: "v" (v));
 
 	return (stat & (COND_FP_NAN | COND_FP_NORMAL | COND_FP_ZERO))
 	       == COND_FP_NAN;
