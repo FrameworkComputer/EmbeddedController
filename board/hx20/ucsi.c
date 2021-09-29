@@ -345,6 +345,7 @@ void check_ucsi_event_from_host(void)
 		host_set_single_event(EC_HOST_EVENT_UCSI);
 
         /* clear the UCSI command */
-        *host_get_customer_memmap(EC_MEMMAP_UCSI_COMMAND) = 0;
+		if (!(*host_get_customer_memmap(0x00) & BIT(2)))
+			*host_get_customer_memmap(EC_MEMMAP_UCSI_COMMAND) = 0;
 	}
 }
