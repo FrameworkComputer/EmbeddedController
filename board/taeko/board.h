@@ -34,8 +34,17 @@
 /* Sensors */
 #define	CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 
+
+/* Change Request (b/199529373)
+ * GYRO sensor change from ST LSM6DSOETR3TR to ST LSM6DS3TR-C
+ *	LSM6DSOETR3TR base accel/gyro if board id = 0
+ *	LSM6DS3TR-C Base accel/gyro if board id > 0
+ */
 #define CONFIG_ACCELGYRO_LSM6DSO	/* Base accel */
 #define CONFIG_ACCEL_LSM6DSO_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+#define CONFIG_ACCELGYRO_LSM6DSM
+#define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
