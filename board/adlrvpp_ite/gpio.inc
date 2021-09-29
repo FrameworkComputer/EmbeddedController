@@ -48,8 +48,13 @@ UNIMPLEMENTED(USBC_TCPC_ALRT_P0)
 GPIO(NC_USBC_TCPC_ALRT_P0,	PIN(I, 7), GPIO_INPUT)
 GPIO_INT(USBC_TCPC_PPC_ALRT_P0, PIN(J, 5), GPIO_INT_FALLING, ppc_interrupt)
 
+/*
+ * b:200265672 External pull-up resistor of port 1 is removed to fix port 3
+ * TCPC interrupt issue. So add internal pull-up for port 1 instead.
+ * This change is only applied to ITE chip.
+ */
 #if defined(HAS_TASK_PD_C1)
-GPIO_INT(USBC_TCPC_ALRT_P1,	PIN(G, 0), GPIO_INT_FALLING, tcpc_alert_event)
+GPIO_INT(USBC_TCPC_ALRT_P1,	PIN(G, 0), GPIO_INT_FALLING | GPIO_PULL_UP, tcpc_alert_event)
 GPIO_INT(USBC_TCPC_PPC_ALRT_P1, PIN(C, 4), GPIO_INT_FALLING, ppc_interrupt)
 #else
 GPIO(USBC_TCPC_ALRT_P1,		PIN(G, 0), GPIO_INPUT)
