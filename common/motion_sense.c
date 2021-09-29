@@ -1120,6 +1120,7 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			return EC_RES_INVALID_PARAM;
 
 		if (IS_ENABLED(CONFIG_GESTURE_HOST_DETECTION) &&
+		    MOTION_SENSE_ACTIVITY_SENSOR_ID >= 0 &&
 		    (in->sensor_odr.sensor_num ==
 		     MOTION_SENSE_ACTIVITY_SENSOR_ID))
 			out->info.type = MOTIONSENSE_TYPE_ACTIVITY;
@@ -1451,6 +1452,7 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 	case MOTIONSENSE_CMD_SPOOF: {
 		/* spoof activity if it is activity sensor */
 		if (IS_ENABLED(CONFIG_GESTURE_HOST_DETECTION) &&
+		    MOTION_SENSE_ACTIVITY_SENSOR_ID >= 0 &&
 		    in->spoof.sensor_id == MOTION_SENSE_ACTIVITY_SENSOR_ID) {
 			switch (in->spoof.activity_num) {
 #ifdef CONFIG_BODY_DETECTION
