@@ -24,7 +24,6 @@
 # Start the task scheduling. Start current_task (hook_task)
 # This function is not an ISR but imitates the sequence.
 .align 4
-.func __task_start
 __task_start:
 	movl 0x4(%esp), %ecx
 	movl current_task, %eax
@@ -39,12 +38,10 @@ __task_start:
 	movl $0x1, (%ecx)       # first task is ready. set start_called = 1
 	popa
 	iret
-.endfunc
 
 # Default interrupt handler - to handle exceptions
 # and prints error
 .align 4
-.func default_int_handler
 default_int_handler:
 
 	pusha
@@ -70,10 +67,8 @@ default_int_handler:
 	ASM_LOCK_PREFIX subl $1, __in_isr
 	popa
 	iret
-.endfunc
 
 .align 4
-.func sw_irq_handler
 sw_irq_handler:
 	pusha
 	ASM_LOCK_PREFIX addl $1, __in_isr
@@ -91,14 +86,12 @@ sw_irq_handler:
 	ASM_LOCK_PREFIX subl $1, __in_isr
 	popa
 	iret
-.endfunc
 
 
 # Switches from one task to another if ready.
 # __schedule triggers software interrupt ISH_TS_VECTOR, which is handled by
 # __switchto
 .align 4
-.func __switchto
 __switchto:
 	pusha
 	ASM_LOCK_PREFIX addl $1, __in_isr
@@ -116,4 +109,3 @@ __switchto:
 	ASM_LOCK_PREFIX subl $1, __in_isr
 	popa
 	iret
-.endfunc
