@@ -191,7 +191,7 @@ int ucsi_read_tunnel(int controller)
 		rv = cypd_read_reg_block(controller, CYP5525_MESSAGE_IN_REG,
 			pd_chip_ucsi_info[controller].message_in, 16);
 
-		if (rv != EC_SUCCESS)
+		if (rv != EC_SUCCESS) 
 			CPRINTS("CYP5525_MESSAGE_IN_REG failed");
 	} else {
 		memset(pd_chip_ucsi_info[controller].message_in, 0, 16);
@@ -330,6 +330,8 @@ void check_ucsi_event_from_host(void)
 			cci = &pd_chip_ucsi_info[1].cci;
 		}
 
+		msleep(2);
+
 		memcpy(host_get_customer_memmap(EC_MEMMAP_UCSI_MESSAGE_IN), message_in, 16);
 		memcpy(host_get_customer_memmap(EC_MEMMAP_UCSI_CCI), cci, 4);
 
@@ -342,10 +344,10 @@ void check_ucsi_event_from_host(void)
 		pd_chip_ucsi_info[0].read_tunnel_complete = 0;
 		pd_chip_ucsi_info[1].read_tunnel_complete = 0;
 
-		host_set_single_event(EC_HOST_EVENT_UCSI);
-
-        /* clear the UCSI command */
+		/* clear the UCSI command */
 		if (!(*host_get_customer_memmap(0x00) & BIT(2)))
 			*host_get_customer_memmap(EC_MEMMAP_UCSI_COMMAND) = 0;
+
+		host_set_single_event(EC_HOST_EVENT_UCSI);
 	}
 }
