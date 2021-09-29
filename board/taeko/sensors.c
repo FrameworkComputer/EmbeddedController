@@ -10,6 +10,7 @@
 #include "driver/accel_bma4xx.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dso.h"
+#include "fw_config.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "motion_sense.h"
@@ -64,19 +65,20 @@ static struct stprivate_data g_lis2dw12_data;
 static struct lsm6dso_data lsm6dso_data;
 static struct accelgyro_saved_data_t g_bma422_data;
 
-/* TODO(b/184779333): calibrate the orientation matrix on later board stage */
+/* TODO(b/201504044): calibrate the orientation matrix on later board stage */
+#if 0
 static const mat33_fp_t lid_standard_ref = {
 	{ 0, FLOAT_TO_FP(1), 0},
 	{ FLOAT_TO_FP(1), 0, 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
-/* TODO(b/184779743): verify orientation matrix */
 static const mat33_fp_t base_standard_ref = {
 	{ FLOAT_TO_FP(1), 0, 0},
 	{ 0, FLOAT_TO_FP(-1), 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
+#endif
 
 
 struct motion_sensor_t bma422_lid_accel = {
@@ -90,7 +92,7 @@ struct motion_sensor_t bma422_lid_accel = {
 	.drv_data = &g_bma422_data,
 	.port = I2C_PORT_SENSOR,
 	.i2c_spi_addr_flags = BMA4_I2C_ADDR_PRIMARY, /* 0x18 */
-	.rot_standard_ref = &lid_standard_ref, /* identity matrix */
+	.rot_standard_ref = NULL, /* identity matrix */
 	.default_range = 2, /* g, enough for laptop. */
 	.min_frequency = BMA4_ACCEL_MIN_FREQ,
 	.max_frequency = BMA4_ACCEL_MAX_FREQ,
@@ -122,7 +124,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LIS2DW12_ADDR1, /* 0x19 */
 		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
-		.rot_standard_ref = &lid_standard_ref, /* identity matrix */
+		.rot_standard_ref = NULL, /* identity matrix */
 		.default_range = 2, /* g */
 		.min_frequency = LIS2DW12_ODR_MIN_VAL,
 		.max_frequency = LIS2DW12_ODR_MAX_VAL,
@@ -151,7 +153,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSO_ADDR0_FLAGS,
-		.rot_standard_ref = &base_standard_ref,
+		.rot_standard_ref = NULL,
 		.default_range = 4,  /* g */
 		.min_frequency = LSM6DSO_ODR_MIN_VAL,
 		.max_frequency = LSM6DSO_ODR_MAX_VAL,
@@ -181,13 +183,19 @@ struct motion_sensor_t motion_sensors[] = {
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSO_ADDR0_FLAGS,
 		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
-		.rot_standard_ref = &base_standard_ref,
+		.rot_standard_ref = NULL,
 		.min_frequency = LSM6DSO_ODR_MIN_VAL,
 		.max_frequency = LSM6DSO_ODR_MAX_VAL,
 	},
 
 };
+
+#ifdef CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+#else
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+#endif
+
 
 static void board_detect_motionsensor(void)
 {
@@ -198,11 +206,11 @@ static void board_detect_motionsensor(void)
 		return;
 
 	/*
-	 * TODO:b/194765820 - Dynamic motion sensor count
-	 * Clamshell un-support motion sensor.
-	 * We should ignore to detect motion sensor for clamshell.
-	 * List this TODO item until we know how to identify DUT type.
+	 * b/194765820 - Dynamic motion sensor count
+	 * All board supports tablet mode if board id > 0
 	 */
+	if (get_board_id() == 0 && !ec_cfg_has_tabletmode())
+		return;
 
 	/* Check lid accel chip */
 	ret = i2c_read8(I2C_PORT_SENSOR, LIS2DW12_ADDR1,
@@ -232,23 +240,34 @@ static void board_detect_motionsensor(void)
 	/* Lid accel is not stuffed, don't allow line to float */
 	gpio_disable_interrupt(GPIO_EC_ACCEL_INT_R_L);
 	gpio_set_flags(GPIO_EC_ACCEL_INT_R_L, GPIO_INPUT | GPIO_PULL_DOWN);
-	CPRINTS("No LID_ACCEL");
+	CPRINTS("No LID_ACCEL are detected");
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_detect_motionsensor,
 		HOOK_PRIO_DEFAULT);
 
-
 static void baseboard_sensors_init(void)
 {
 	CPRINTS("baseboard_sensors_init");
-	/*
-	 * GPIO_EC_ACCEL_INT_R_L
-	 * The interrupt of lid accel is disabled by default.
-	 * We'll enable it later if lid accel is LIS2DW12.
+	/* b/194765820
+	 * Dynamic motion sensor count
+	 * All board supports tablet mode if board id > 0
 	 */
+	if (get_board_id() > 0 || ec_cfg_has_tabletmode()) {
+		/*
+		 * GPIO_EC_ACCEL_INT_R_L
+		 * The interrupt of lid accel is disabled by default.
+		 * We'll enable it later if lid accel is LIS2DW12.
+		 */
 
-	/* Enable gpio interrupt for base accelgyro sensor */
-	gpio_enable_interrupt(GPIO_EC_IMU_INT_R_L);
+		/* Enable gpio interrupt for base accelgyro sensor */
+		gpio_enable_interrupt(GPIO_EC_IMU_INT_R_L);
+	} else {
+		CPRINTS("Clamshell");
+		motion_sensor_count = 0;
+		/* Gyro is not present, don't allow line to float */
+		gpio_set_flags(GPIO_EC_IMU_INT_R_L, GPIO_INPUT |
+				GPIO_PULL_DOWN);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_INIT_I2C + 1);
 
