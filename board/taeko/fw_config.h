@@ -16,8 +16,7 @@
 
 enum ec_cfg_usb_db_type {
 	DB_USB_ABSENT = 0,
-	DB_USB3_PS8815 = 1,
-	DB_USB_ABSENT2 = 15
+	DB_USB3_PS8815 = 1
 };
 
 enum ec_cfg_keyboard_backlight_type {
@@ -25,14 +24,27 @@ enum ec_cfg_keyboard_backlight_type {
 	KEYBOARD_BACKLIGHT_ENABLED = 1
 };
 
+enum ec_cfg_tabletmode_type {
+	TABLETMODE_DISABLED = 0,
+	TABLETMODE_ENABLED = 1
+};
+
 union taeko_cbi_fw_config {
 	struct {
-		enum ec_cfg_usb_db_type			usb_db : 4;
+		enum ec_cfg_usb_db_type			usb_db : 2;
 		uint32_t				sd_db : 2;
-		uint32_t				lte_db : 1;
 		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
 		uint32_t				audio : 3;
-		uint32_t				reserved_1 : 21;
+		/* b/194515356 - Fw config structure
+		 * bit8-9: kb_layout
+		 * bit10-11: wifi_sar_id,
+		 * bit12: nvme
+		 * bit13: emmc
+		 * bit14: fan
+		 */
+		uint32_t				reserved_1 : 7;
+		enum ec_cfg_tabletmode_type		tabletmode : 1;
+		uint32_t				reserved_2 : 16;
 	};
 	uint32_t raw_value;
 };
@@ -58,5 +70,13 @@ enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void);
  * doesn't support it.
  */
 bool ec_cfg_has_keyboard_backlight(void);
+
+/**
+ * Check if the FW_CONFIG has enabled tablet mode.
+ *
+ * @return true if board supports tablet mode, false if the board
+ * doesn't support it.
+ */
+bool ec_cfg_has_tabletmode(void);
 
 #endif /* __BOARD_TAEKO_FW_CONFIG_H_ */
