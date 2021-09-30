@@ -327,6 +327,15 @@ void check_ucsi_event_from_host(void)
 			cci = &pd_chip_ucsi_info[1].cci;
 		}
 
+		if (
+			*host_get_customer_memmap(EC_MEMMAP_UCSI_COMMAND) == UCSI_CMD_GET_CONNECTOR_STATUS &&
+			(((uint8_t*)message_in)[8] & 0x03) > 1)
+		{
+			CPRINTS("Overriding Slow charger status");
+			/* Override not charging value with nominal charging */
+			((uint8_t*)message_in)[8] = (((uint8_t*)message_in)[8] & 0xFC) + 1;
+		}
+
 		msleep(2);
 
 		memcpy(host_get_customer_memmap(EC_MEMMAP_UCSI_MESSAGE_IN), message_in, 16);
