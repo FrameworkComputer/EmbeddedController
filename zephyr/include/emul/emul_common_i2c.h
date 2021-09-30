@@ -276,6 +276,9 @@ struct i2c_common_emul_data {
 	struct k_mutex data_mtx;
 };
 
+/** A common API that simply links to the i2c_common_emul_transfer function */
+extern struct i2c_emul_api i2c_common_emul_api;
+
 /**
  * @brief Lock access to emulator properties. After acquiring lock, user
  *        may change emulator behaviour in multi-thread setup.

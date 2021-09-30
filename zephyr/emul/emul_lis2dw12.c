@@ -120,10 +120,6 @@ static int lis2dw12_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 	return 0;
 }
 
-static struct i2c_emul_api lis2dw12_emul_api_i2c = {
-	.transfer = i2c_common_emul_transfer,
-};
-
 static int emul_lis2dw12_init(const struct emul *emul,
 			      const struct device *parent)
 {
@@ -131,7 +127,7 @@ static int emul_lis2dw12_init(const struct emul *emul,
 	const struct i2c_common_emul_cfg *cfg = &(lis2dw12_cfg->common);
 	struct lis2dw12_emul_data *data = emul->data;
 
-	data->common.emul.api = &lis2dw12_emul_api_i2c;
+	data->common.emul.api = &i2c_common_emul_api;
 	data->common.emul.addr = cfg->addr;
 	data->common.emul.parent = emul;
 	data->common.i2c = parent;

@@ -138,10 +138,6 @@ enum battery_cell_type board_get_battery_cell_type(void)
 	return data->battery_cell_type;
 }
 
-static struct i2c_emul_api ln9310_emul_api_i2c = {
-	.transfer = i2c_common_emul_transfer,
-};
-
 static int ln9310_emul_start_write(struct i2c_emul *emul, int reg)
 {
 	return 0;
@@ -349,7 +345,7 @@ static int emul_ln9310_init(const struct emul *emul,
 	const struct i2c_common_emul_cfg *cfg = emul->cfg;
 	struct ln9310_emul_data *data = emul->data;
 
-	data->common.emul.api = &ln9310_emul_api_i2c;
+	data->common.emul.api = &i2c_common_emul_api;
 	data->common.emul.addr = cfg->addr;
 	data->common.emul.parent = emul;
 	data->common.i2c = parent;

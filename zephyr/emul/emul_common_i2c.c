@@ -430,3 +430,7 @@ void i2c_common_emul_init(struct i2c_common_emul_data *data)
 
 	k_mutex_init(&data->data_mtx);
 }
+
+struct i2c_emul_api i2c_common_emul_api = {
+	.transfer = i2c_common_emul_transfer,
+};

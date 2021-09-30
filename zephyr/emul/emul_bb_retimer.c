@@ -287,10 +287,6 @@ static int bb_emul_access_reg(struct i2c_emul *emul, int reg, int bytes,
 
 /* Device instantiation */
 
-static struct i2c_emul_api bb_emul_api = {
-	.transfer = i2c_common_emul_transfer,
-};
-
 /**
  * @brief Set up a new BB retimer emulator
  *
@@ -309,7 +305,7 @@ static int bb_emul_init(const struct emul *emul,
 	struct i2c_common_emul_data *data = cfg->data;
 	int ret;
 
-	data->emul.api = &bb_emul_api;
+	data->emul.api = &i2c_common_emul_api;
 	data->emul.addr = cfg->addr;
 	data->i2c = parent;
 	data->cfg = cfg;

@@ -1020,10 +1020,6 @@ static int bmi_emul_handle_read(struct i2c_emul *emul, int reg, uint8_t *buf,
 
 /* Device instantiation */
 
-static struct i2c_emul_api bmi_emul_api = {
-	.transfer = i2c_common_emul_transfer,
-};
-
 /**
  * @brief Set up a new BMI emulator
  *
@@ -1043,7 +1039,7 @@ static int bmi_emul_init(const struct emul *emul,
 	struct bmi_emul_data *bmi_data;
 	int ret;
 
-	data->emul.api = &bmi_emul_api;
+	data->emul.api = &i2c_common_emul_api;
 	data->emul.addr = cfg->addr;
 	data->i2c = parent;
 	data->cfg = cfg;

@@ -950,10 +950,6 @@ static int bma_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 
 /* Device instantiation */
 
-static struct i2c_emul_api bma_emul_api = {
-	.transfer = i2c_common_emul_transfer,
-};
-
 /**
  * @brief Set up a new BMA255 emulator
  *
@@ -972,7 +968,7 @@ static int bma_emul_init(const struct emul *emul,
 	struct i2c_common_emul_data *data = cfg->data;
 	int ret;
 
-	data->emul.api = &bma_emul_api;
+	data->emul.api = &i2c_common_emul_api;
 	data->emul.addr = cfg->addr;
 	data->i2c = parent;
 	data->cfg = cfg;
