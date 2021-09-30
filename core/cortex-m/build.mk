@@ -15,11 +15,13 @@ $(call set-option,CROSS_COMPILE,\
 CFLAGS_FPU-$(CONFIG_FPU)=-mfpu=fpv4-sp-d16 -mfloat-abi=hard
 
 # CPU specific compilation flags
-CFLAGS_CPU+=-mthumb -Os
+CFLAGS_CPU+=-mthumb
 ifeq ($(cc-name),clang)
+CFLAGS_CPU+=-Oz		# Like -Os (and thus -O2), but reduces code size further.
 # Link compiler-rt when using clang, so clang finds the builtins it provides.
 LDFLAGS_EXTRA+=-lclang_rt.builtins-arm
 else
+CFLAGS_CPU+=-Os
 CFLAGS_CPU+=-mno-sched-prolog
 endif
 CFLAGS_CPU+=-mno-unaligned-access
