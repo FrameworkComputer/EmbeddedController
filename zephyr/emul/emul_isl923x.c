@@ -48,6 +48,8 @@ struct isl923x_emul_data {
 	uint16_t adapter_current_limit2_reg;
 	/** Emulated max voltage register */
 	uint16_t max_volt_reg;
+	/** Emulated manufacturer ID register */
+	uint16_t manufacturer_id_reg;
 };
 
 struct isl923x_emul_cfg {
@@ -60,6 +62,14 @@ struct i2c_emul *isl923x_emul_get_i2c_emul(const struct emul *emulator)
 	struct isl923x_emul_data *data = emulator->data;
 
 	return &(data->common.emul);
+}
+
+void isl923x_emul_set_manufacturer_id(const struct emul *emulator,
+				      uint16_t manufacturer_id)
+{
+	struct isl923x_emul_data *data = emulator->data;
+
+	data->manufacturer_id_reg = manufacturer_id;
 }
 
 static int isl923x_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
@@ -100,6 +110,14 @@ static int isl923x_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 		else
 			*val = (uint8_t)((data->adapter_current_limit2_reg >>
 					  8) &
+					 0xff);
+		break;
+	case ISL923X_REG_MANUFACTURER_ID:
+		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
+		if (bytes == 0)
+			*val = (uint8_t)(data->manufacturer_id_reg & 0xff);
+		else
+			*val = (uint8_t)((data->manufacturer_id_reg >> 8) &
 					 0xff);
 		break;
 	default:

@@ -158,11 +158,33 @@ void test_isl923x_set_input_current_limit(void)
 	}
 }
 
+void test_manufacturer_id(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+	int id;
+
+	isl923x_emul_set_manufacturer_id(isl923x_emul, 0x1234);
+	zassert_ok(isl923x_drv.manufacturer_id(CHARGER_NUM, &id), NULL);
+	zassert_equal(0x1234, id, NULL);
+
+	/* Test read error */
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  ISL923X_REG_MANUFACTURER_ID);
+	zassert_equal(EC_ERROR_INVAL,
+		      isl923x_drv.manufacturer_id(CHARGER_NUM, &id), NULL);
+
+	/* Reset fail register */
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(isl923x,
 			 ztest_unit_test(test_isl923x_set_current),
 			 ztest_unit_test(test_isl923x_set_voltage),
-			 ztest_unit_test(test_isl923x_set_input_current_limit));
+			 ztest_unit_test(test_isl923x_set_input_current_limit),
+			 ztest_unit_test(test_manufacturer_id));
 	ztest_run_test_suite(isl923x);
 }
