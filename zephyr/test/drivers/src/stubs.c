@@ -8,6 +8,7 @@
 #include "bc12/pi3usb9201_public.h"
 #include "charge_ramp.h"
 #include "charger.h"
+#include "charger/isl923x_public.h"
 #include "charger/isl9241_public.h"
 #include "config.h"
 #include "i2c/i2c.h"
@@ -44,12 +45,26 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
 
 /* Charger Chip Configuration */
 const struct charger_config_t chg_chips[] = {
+#ifdef CONFIG_PLATFORM_EC_CHARGER_ISL9241
 	{
 		.i2c_port = I2C_PORT_CHARGER,
 		.i2c_addr_flags = ISL9241_ADDR_FLAGS,
 		.drv = &isl9241_drv,
 	},
+#endif
+#ifdef CONFIG_PLATFORM_EC_CHARGER_ISL9238
+	{
+		.i2c_port = I2C_PORT_CHARGER,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
+#endif
 };
+
+uint8_t board_get_charger_chip_count(void)
+{
+	return ARRAY_SIZE(chg_chips);
+}
 
 const struct board_batt_params board_battery_info[] = {
 	/* LGC\011 L17L3PB0 Battery Information */
