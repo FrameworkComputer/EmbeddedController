@@ -28,4 +28,13 @@ struct i2c_emul *isl923x_emul_get_i2c_emul(const struct emul *emulator);
 void isl923x_emul_set_manufacturer_id(const struct emul *emulator,
 				      uint16_t manufacturer_id);
 
+/**
+ * @brief Set the device ID
+ *
+ * @param emulator The emulator to modify
+ * @param device_id The new device ID
+ */
+void isl923x_emul_set_device_id(const struct emul *emulator,
+				uint16_t device_id);
+
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_ISL923X_H_ */
