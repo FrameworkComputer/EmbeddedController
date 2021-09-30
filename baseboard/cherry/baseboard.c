@@ -38,6 +38,7 @@
 #include "regulator.h"
 #include "spi.h"
 #include "switch.h"
+#include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
 #include "temp_sensor.h"
@@ -375,10 +376,15 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 
 __override int board_rt1718s_init(int port)
 {
-	/* set GPIO 1~3 as push pull, as output, output low. */
-	rt1718s_gpio_set_flags(port, RT1718S_GPIO1, GPIO_OUT_LOW);
-	rt1718s_gpio_set_flags(port, RT1718S_GPIO2, GPIO_OUT_LOW);
-	rt1718s_gpio_set_flags(port, RT1718S_GPIO3, GPIO_OUT_LOW);
+	static bool gpio_initialized;
+
+	if (!system_jumped_late() && !gpio_initialized) {
+		/* set GPIO 1~3 as push pull, as output, output low. */
+		rt1718s_gpio_set_flags(port, RT1718S_GPIO1, GPIO_OUT_LOW);
+		rt1718s_gpio_set_flags(port, RT1718S_GPIO2, GPIO_OUT_LOW);
+		rt1718s_gpio_set_flags(port, RT1718S_GPIO3, GPIO_OUT_LOW);
+		gpio_initialized = true;
+	}
 
 	/* gpio 1/2 output high when receiving frx signal */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO1_VBUS_CTRL,
