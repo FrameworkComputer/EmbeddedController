@@ -6,6 +6,7 @@
 /* Intel ADLRVP-NPCX board-specific configuration */
 #include "button.h"
 #include "fusb302.h"
+#include "i2c_bitbang.h"
 #include "lid_switch.h"
 #include "pca9675.h"
 #include "power.h"
@@ -62,6 +63,27 @@ const struct i2c_port_t i2c_ports[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_CHAN_COUNT);
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+const struct i2c_port_t i2c_bitbang_ports[] = {
+	[I2C_BITBANG_CHAN_BRD_ID] = {
+		.name = "bitbang_brd_id",
+		.port = I2C_PORT_CHARGER,
+		.kbps = 100,
+		.scl = GPIO_SMB_BS_CLK,
+		.sda = GPIO_SMB_BS_DATA,
+		.drv = &bitbang_drv,
+	},
+	[I2C_BITBANG_CHAN_IOEX_0] = {
+		.name = "bitbang_ioex_0",
+		.port = I2C_PORT_TYPEC_0,
+		.kbps = 100,
+		.scl = GPIO_USBC_TCPC_I2C_CLK_P0,
+		.sda = GPIO_USBC_TCPC_I2C_DATA_P0,
+		.drv = &bitbang_drv,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(i2c_bitbang_ports) == I2C_BITBANG_CHAN_COUNT);
+const unsigned int i2c_bitbang_ports_used = ARRAY_SIZE(i2c_bitbang_ports);
 
 /* USB-C TCPC Configuration */
 const struct tcpc_config_t tcpc_config[] = {

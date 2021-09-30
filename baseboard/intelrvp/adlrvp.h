@@ -181,6 +181,16 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
+/* I2C access in polling mode before task is initialized */
+#define CONFIG_I2C_BITBANG
+
+enum adlrvp_bitbang_i2c_channel {
+	I2C_BITBANG_CHAN_BRD_ID,
+	I2C_BITBANG_CHAN_IOEX_0,
+	I2C_BITBANG_CHAN_COUNT
+};
+#define I2C_BITBANG_PORT_COUNT	I2C_BITBANG_CHAN_COUNT
+
 void espi_reset_pin_asserted_interrupt(enum gpio_signal signal);
 void extpower_interrupt(enum gpio_signal signal);
 void ppc_interrupt(enum gpio_signal signal);

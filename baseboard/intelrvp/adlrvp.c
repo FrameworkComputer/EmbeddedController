@@ -312,8 +312,6 @@ static void board_connect_c0_sbu_deferred(void)
 	}
 }
 DECLARE_DEFERRED(board_connect_c0_sbu_deferred);
-/* Make sure SBU are routed to CCD or AUX based on CCD status at init */
-DECLARE_HOOK(HOOK_INIT, board_connect_c0_sbu_deferred, HOOK_PRIO_INIT_I2C + 2);
 
 void board_connect_c0_sbu(enum gpio_signal s)
 {
@@ -365,7 +363,6 @@ static void configure_retimer_usbmux(void)
 		break;
 	}
 }
-DECLARE_HOOK(HOOK_INIT, configure_retimer_usbmux, HOOK_PRIO_INIT_I2C + 1);
 
 /******************************************************************************/
 /* PWROK signal configuration */
@@ -447,4 +444,16 @@ __override bool board_is_tbt_usb4_port(int port)
 	}
 
 	return tbt_usb4;
+}
+
+__override void board_pre_task_i2c_peripheral_init(void)
+{
+	/* Initialized IOEX-0 to access IOEX-GPIOs needed pre-task */
+	ioex_init(IOEX_C0_PCA9675);
+
+	/* Make sure SBU are routed to CCD or AUX based on CCD status at init */
+	board_connect_c0_sbu_deferred();
+
+	/* Configure board specific retimer & mux */
+	configure_retimer_usbmux();
 }
