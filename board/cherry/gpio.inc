@@ -59,7 +59,7 @@ GPIO_INT(SPI0_CS,            PIN(M, 5), GPIO_INT_FALLING,
          spi_event)        /* SPI slave Chip Select -- AP_SPI_EC_CS_L */
 #ifndef BOARD_CHERRY
 GPIO_INT(AP_XHCI_INIT_DONE,  PIN(J, 5), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V,
-         usb_a0_interrupt)
+         xhci_init_done_interrupt)
 #endif
 
 /* Power Sequencing Signals */
