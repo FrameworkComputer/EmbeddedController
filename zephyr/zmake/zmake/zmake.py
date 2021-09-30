@@ -339,7 +339,15 @@ class Zmake:
         util.update_symlink(project_dir, build_dir / "project")
 
         if test_after_configure:
-            return self.test(build_dir=build_dir)
+            rv = self.test(build_dir=build_dir)
+            if rv or not coverage:
+                return rv
+            return self._coverage_run_test(
+                project=project,
+                build_dir=build_dir,
+                lcov_file=build_dir / "output" / "zephyr.info",
+                is_configured=True,
+            )
         elif build_after_configure:
             return self.build(build_dir=build_dir)
 
@@ -664,17 +672,24 @@ class Zmake:
 
         return self._run_lcov(build_dir, lcov_file, initial=True, gcov=gcov)
 
-    def _coverage_run_test(self, project, build_dir, lcov_file):
+    def _coverage_run_test(
+        self,
+        project,
+        build_dir,
+        lcov_file,
+        is_configured=False,
+    ):
         self.logger.info("Running test %s in %s", project.project_dir, build_dir)
-        rv = self.configure(
-            project_dir=project.project_dir,
-            build_dir=build_dir,
-            build_after_configure=True,
-            test_after_configure=True,
-            coverage=True,
-        )
-        if rv:
-            return rv
+        if not is_configured:
+            rv = self.configure(
+                project_dir=project.project_dir,
+                build_dir=build_dir,
+                build_after_configure=True,
+                test_after_configure=True,
+                coverage=True,
+            )
+            if rv:
+                return rv
         gcov = "gcov.sh-not-found"
         for build_name, build_config in project.iter_builds():
             gcov = build_dir / "build-{}".format(build_name) / "gcov.sh"
