@@ -547,6 +547,8 @@ class Zmake:
                 build_dir,
                 "-t",
                 lcov_file.stem,
+                "--rc",
+                "lcov_branch_coverage=1",
                 "--exclude",
                 "*/build-*/zephyr/*/generated/*",
                 "--exclude",
@@ -716,7 +718,13 @@ class Zmake:
         with self.jobserver.get_job():
             # Merge info files into a single lcov.info
             self.logger.info("Merging coverage data into %s.", build_dir / "lcov.info")
-            cmd = ["/usr/bin/lcov", "-o", build_dir / "lcov.info"]
+            cmd = [
+                "/usr/bin/lcov",
+                "-o",
+                build_dir / "lcov.info",
+                "--rc",
+                "lcov_branch_coverage=1",
+            ]
             for info in all_lcov_files:
                 cmd += ["-a", info]
             proc = self.jobserver.popen(
@@ -751,6 +759,7 @@ class Zmake:
                     "-p",
                     prefixdir,
                     "-s",
+                    "--branch-coverage",
                 ]
                 + all_lcov_files,
                 stdout=subprocess.PIPE,
