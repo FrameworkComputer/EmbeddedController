@@ -23,6 +23,7 @@ extern void test_suite_bb_retimer(void);
 extern void test_suite_ln9310(void);
 extern void test_suite_lis2dw12(void);
 extern void test_suite_stm_mems_common(void);
+extern void test_suite_isl923x(void);
 
 void test_main(void)
 {
@@ -47,4 +48,5 @@ void test_main(void)
 	test_suite_ln9310();
 	test_suite_lis2dw12();
 	test_suite_stm_mems_common();
+	test_suite_isl923x();
 }
