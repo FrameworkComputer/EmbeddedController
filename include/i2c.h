@@ -568,6 +568,26 @@ void i2c_trace_notify(int port, uint16_t addr_flags,
 		      const uint8_t *in_data, size_t in_size);
 
 /**
+ * Convert an enum i2c_freq constant to numeric frequency in kHz.
+ *
+ * @param freq		An enum i2c_freq constant
+ *
+ * @return The frequency in kHz, or 0 if the input is not a valid
+ *			speed.
+ */
+int i2c_freq_to_khz(enum i2c_freq freq);
+
+/**
+ * Convert a numeric frequency in kHz to an enum i2c_freq constant.
+ *
+ * @param speed_khz	The frequency in kHz
+ *
+ * @return The frequency as an enum i2c_freq constant, or I2C_FREQ_COUNT
+ *			if the input is not a valid speed.
+ */
+enum i2c_freq i2c_khz_to_freq(int speed_khz);
+
+/**
  * Set bus speed. Only support for ports with I2C_PORT_FLAG_DYNAMIC_SPEED
  * flag.
  *
