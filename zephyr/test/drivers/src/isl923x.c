@@ -19,6 +19,10 @@ BUILD_ASSERT(CONFIG_CHARGER_SENSE_RESISTOR == 10 ||
 BUILD_ASSERT(CONFIG_CHARGER_SENSE_RESISTOR_AC == 20 ||
 	     CONFIG_CHARGER_SENSE_RESISTOR_AC == 10);
 
+BUILD_ASSERT(IS_ENABLED(CONFIG_CHARGER_ISL9238),
+	     "Must test on ISL9238; ISL9237, ISL9238c, and RAA489000 are not"
+	     " yet supported");
+
 #if CONFIG_CHARGER_SENSE_RESISTOR == 10
 #define EXPECTED_CURRENT_MA(n) (n)
 #else
@@ -241,6 +245,25 @@ void test_options(void)
 		      "Expected options 0xff7ffffe but got 0x%x", option);
 }
 
+void test_get_info(void)
+{
+	const struct charger_info *info = isl923x_drv.get_info(CHARGER_NUM);
+
+	zassert_ok(strcmp("isl9238", info->name), NULL);
+	zassert_equal(ISL9238_SYS_VOLTAGE_REG_MAX, info->voltage_max, NULL);
+	zassert_equal(ISL923X_SYS_VOLTAGE_REG_MIN, info->voltage_min, NULL);
+	zassert_equal(8, info->voltage_step, NULL);
+	zassert_equal(EXPECTED_CURRENT_MA(6080), info->current_max, NULL);
+	zassert_equal(EXPECTED_CURRENT_MA(4), info->current_min, NULL);
+	zassert_equal(EXPECTED_CURRENT_MA(4), info->current_step, NULL);
+	zassert_equal(EXPECTED_INPUT_CURRENT_MA(6080), info->input_current_max,
+		      NULL);
+	zassert_equal(EXPECTED_INPUT_CURRENT_MA(4), info->input_current_min,
+		      NULL);
+	zassert_equal(EXPECTED_INPUT_CURRENT_MA(4), info->input_current_step,
+		      NULL);
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(isl923x,
@@ -249,6 +272,7 @@ void test_suite_isl923x(void)
 			 ztest_unit_test(test_isl923x_set_input_current_limit),
 			 ztest_unit_test(test_manufacturer_id),
 			 ztest_unit_test(test_device_id),
-			 ztest_unit_test(test_options));
+			 ztest_unit_test(test_options),
+			 ztest_unit_test(test_get_info));
 	ztest_run_test_suite(isl923x);
 }
