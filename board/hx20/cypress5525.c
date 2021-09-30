@@ -1657,7 +1657,7 @@ void cypd_print_buff(const char *msg, void *buff, int len)
 	uint8_t *data = (uint8_t *)buff;
 
 	CPRINTF("%s 0x", msg);
-	for (i = 0; i < len; i++) {
+	for (i = len-1; i >=0; i--) {
 		CPRINTF("%02x", data[i]);
 	}
 	CPRINTF("\n");
