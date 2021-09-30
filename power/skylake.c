@@ -46,7 +46,7 @@ const struct power_signal_info power_signal_list[] = {
 		"SLP_SUS_DEASSERTED",
 	},
 	[X86_RSMRST_L_PWRGD] = {
-		GPIO_RSMRST_L_PGOOD,
+		GPIO_PG_EC_RSMRST_ODL,
 		POWER_SIGNAL_ACTIVE_HIGH,
 		"RSMRST_N_PWRGD",
 	},

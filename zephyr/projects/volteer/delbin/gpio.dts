@@ -47,11 +47,6 @@
 			enum-name = "GPIO_PG_EC_RSMRST_ODL";
 			label = "PG_EC_RSMRST_ODL";
 		};
-		rsmrst_l_pgood {
-			gpios = <&gpioe 2 GPIO_INPUT>;
-			enum-name = "GPIO_RSMRST_L_PGOOD";
-			label = "RSMRST_L_PGOOD";
-		};
 		dsw_pwrok {
 			gpios = <&gpioc 7 GPIO_INPUT>;
 			enum-name = "GPIO_PG_EC_DSW_PWROK";

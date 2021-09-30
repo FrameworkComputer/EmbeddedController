@@ -36,7 +36,7 @@ const struct power_signal_info power_signal_list[] = {
 		.name = "SLP_S4_DEASSERTED",
 	},
 	[X86_RSMRST_L_PGOOD] = {
-		.gpio = GPIO_RSMRST_L_PGOOD,
+		.gpio = GPIO_PG_EC_RSMRST_ODL,
 		.flags = POWER_SIGNAL_ACTIVE_HIGH,
 		.name = "RSMRST_L_PGOOD",
 	},

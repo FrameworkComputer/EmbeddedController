@@ -487,7 +487,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 
 void intel_x86_rsmrst_signal_interrupt(enum gpio_signal signal)
 {
-	int rsmrst_in = gpio_get_level(GPIO_RSMRST_L_PGOOD);
+	int rsmrst_in = gpio_get_level(GPIO_PG_EC_RSMRST_ODL);
 	int rsmrst_out = gpio_get_level(GPIO_PCH_RSMRST_L);
 
 	/*
@@ -518,7 +518,7 @@ void common_intel_x86_handle_rsmrst(enum power_state state)
 	 * Pass through RSMRST asynchronously, as PCH may not react
 	 * immediately to power changes.
 	 */
-	int rsmrst_in = gpio_get_level(GPIO_RSMRST_L_PGOOD);
+	int rsmrst_in = gpio_get_level(GPIO_PG_EC_RSMRST_ODL);
 	int rsmrst_out = gpio_get_level(GPIO_PCH_RSMRST_L);
 
 	/* Nothing to do. */
@@ -542,7 +542,7 @@ void common_intel_x86_handle_rsmrst(enum power_state state)
 
 	gpio_set_level(GPIO_PCH_RSMRST_L, rsmrst_in);
 
-	CPRINTS("Pass through GPIO_RSMRST_L_PGOOD: %d", rsmrst_in);
+	CPRINTS("Pass through GPIO_PG_EC_RSMRST_ODL: %d", rsmrst_in);
 
 	board_after_rsmrst(rsmrst_in);
 }

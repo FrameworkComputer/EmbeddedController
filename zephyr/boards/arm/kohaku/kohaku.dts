@@ -72,7 +72,7 @@
 		};
 		pg_ec_rsmrst_l {
 			gpios = <&gpioe 2 GPIO_INPUT>;
-			enum-name = "GPIO_RSMRST_L_PGOOD";
+			enum-name = "GPIO_PG_EC_RSMRST_ODL";
 			label = "PG_EC_RSMRST_L";
 		};
 		pg_ec_all_sys_pwrgd {

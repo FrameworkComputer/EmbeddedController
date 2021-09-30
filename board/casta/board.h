@@ -15,6 +15,8 @@
 #define CONFIG_CHARGER_RUNTIME_CONFIG
 #include "baseboard.h"
 
+#define GPIO_PG_EC_RSMRST_ODL GPIO_RSMRST_L_PGOOD
+
 #define CONFIG_LED_COMMON
 
 /* USB PD */

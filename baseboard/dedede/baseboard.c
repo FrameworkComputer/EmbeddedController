@@ -155,7 +155,7 @@ static void baseboard_prepare_power_signals(void)
 
 	/* Restore pull-up on PG_PP1050_ST_OD */
 	if (system_jumped_to_this_image() &&
-					gpio_get_level(GPIO_RSMRST_L_PGOOD))
+					gpio_get_level(GPIO_PG_EC_RSMRST_ODL))
 		board_after_rsmrst(1);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_prepare_power_signals, HOOK_PRIO_FIRST);

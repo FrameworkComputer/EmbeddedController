@@ -51,7 +51,7 @@ const struct power_signal_info power_signal_list[] = {
 		"ALL_SYS_PGOOD",
 	},
 	[X86_RSMRST_N] = {
-		GPIO_RSMRST_L_PGOOD,
+		GPIO_PG_EC_RSMRST_ODL,
 		POWER_SIGNAL_ACTIVE_HIGH,
 		"RSMRST_L",
 	},
@@ -178,6 +178,6 @@ int chipset_pltrst_is_valid(void)
 	 * Invalid PLTRST# from SOC unless RSMRST#
 	 * from PMIC through EC to soc is deasserted.
 	 */
-	return (gpio_get_level(GPIO_RSMRST_L_PGOOD) &&
+	return (gpio_get_level(GPIO_PG_EC_RSMRST_ODL) &&
 		gpio_get_level(GPIO_PCH_RSMRST_L));
 }

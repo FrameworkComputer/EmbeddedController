@@ -103,11 +103,11 @@
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
+#define GPIO_PG_EC_RSMRST_ODL	GPIO_PG_EC_RSMRST_L
 #define GPIO_PCH_RSMRST_L	GPIO_EC_PCH_RSMRST_L
 #define GPIO_PCH_SLP_S0_L	GPIO_SLP_S0_L
 #define GPIO_CPU_PROCHOT	GPIO_EC_PROCHOT_ODL
 #define GPIO_AC_PRESENT		GPIO_ACOK_OD
-#define GPIO_RSMRST_L_PGOOD	GPIO_PG_EC_RSMRST_L
 #define GPIO_PCH_SYS_PWROK	GPIO_EC_PCH_SYS_PWROK
 #define GPIO_PCH_SLP_S3_L	GPIO_SLP_S3_L
 #define GPIO_PCH_SLP_S4_L	GPIO_SLP_S4_L

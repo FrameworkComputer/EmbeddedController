@@ -126,7 +126,6 @@ properties:
       - GPIO_PP5000_A_PG_OD
       - GPIO_PS_HOLD
       - GPIO_QSIP_ON
-      - GPIO_RSMRST_L_PGOOD
       - GPIO_S0_PGOOD
       - GPIO_S5_PGOOD
       - GPIO_SET_VMC_VOLT_AT_1V8

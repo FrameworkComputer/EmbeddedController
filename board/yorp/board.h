@@ -13,6 +13,8 @@
 #define VARIANT_OCTOPUS_CHARGER_ISL9238
 #include "baseboard.h"
 
+#define GPIO_PG_EC_RSMRST_ODL GPIO_RSMRST_L_PGOOD
+
 /* EC console commands  */
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO

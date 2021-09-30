@@ -284,6 +284,6 @@ unsigned int ec_config_get_thermal_solution(void);
  * There is no RSMRST input, so alias it to the output. This short-circuits
  * common_intel_x86_handle_rsmrst.
  */
-#define GPIO_RSMRST_L_PGOOD	GPIO_PCH_RSMRST_L
+#define GPIO_PG_EC_RSMRST_ODL	GPIO_PCH_RSMRST_L
 
 #endif /* __CROS_EC_BOARD_H */
