@@ -7,7 +7,8 @@
 	named-pwms {
 		compatible = "named-pwms";
 		/* NOTE: &pwm number needs same with channel number */
-		led1 {
+		led1: led1 {
+			#pwm-cells = <0>;
 			pwms = <&pwm0 PWM_CHANNEL_0 PWM_POLARITY_INVERTED>;
 			label = "LED1";
 			/*
@@ -16,12 +17,14 @@
 			 */
 			frequency = <324>;
 		};
-		led2 {
+		led2: led2 {
+			#pwm-cells = <0>;
 			pwms = <&pwm1 PWM_CHANNEL_1 PWM_POLARITY_INVERTED>;
 			label = "LED2";
 			frequency = <324>;
 		};
-		led3 {
+		led3: led3 {
+			#pwm-cells = <0>;
 			pwms = <&pwm2 PWM_CHANNEL_2 PWM_POLARITY_INVERTED>;
 			label = "LED3";
 			frequency = <324>;

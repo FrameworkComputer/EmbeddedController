@@ -15,6 +15,7 @@ set(PLATFORM_EC_BASEBOARD "${PLATFORM_EC}/baseboard/asurada" CACHE PATH
 set(PLATFORM_EC_BOARD "${PLATFORM_EC}/board/hayato" CACHE PATH
   "Path to the platform/ec board directory")
 
+# Include selected EC source from the baseboard
 zephyr_library_sources(
   "${PLATFORM_EC_BASEBOARD}/board_chipset.c"
   "${PLATFORM_EC_BASEBOARD}/board_id.c"
@@ -22,6 +23,10 @@ zephyr_library_sources(
   "${PLATFORM_EC_BASEBOARD}/regulator.c"
   "${PLATFORM_EC_BASEBOARD}/usbc_config.c"
   "${PLATFORM_EC_BASEBOARD}/usb_pd_policy.c")
+
+# Include selected EC source from the board
+zephyr_library_sources(
+  "${PLATFORM_EC_BOARD}/led_hayato.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C
   "src/i2c.c")
