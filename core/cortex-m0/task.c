@@ -174,9 +174,9 @@ inline bool is_interrupt_enabled(void)
 inline bool in_interrupt_context(void)
 {
 	int ret;
-	asm("mrs %0, ipsr\n"              /* read exception number */
-	    "lsl %0, #23\n" : "=r"(ret)); /* exception bits are the 9 LSB */
-	return ret;
+	asm("mrs %0, ipsr\n" /* read exception number */
+	    : "=r"(ret));
+	return ret & GENMASK(8, 0); /* exception bits are the 9 LSB */
 }
 
 #ifdef CONFIG_TASK_PROFILING
