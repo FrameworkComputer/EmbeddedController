@@ -180,7 +180,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c         = 60,
 			.discharging_min_c      = -20,
 			.discharging_max_c      = 60,
-			.vendor_param_start     = 0x70,
+			.vendor_param_start     = 0x2f,
 		},
 	},
 	/* SMP L21M4PG0 */
@@ -210,7 +210,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c         = 60,
 			.discharging_min_c      = -20,
 			.discharging_max_c      = 60,
-			.vendor_param_start     = 0x70,
+			.vendor_param_start     = 0x2f,
 		},
 	},
 };
