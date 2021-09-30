@@ -200,6 +200,47 @@ void test_device_id(void)
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
+void test_options(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+	uint32_t option;
+
+	/* Test failed control 0 read */
+	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL0);
+	zassert_equal(EC_ERROR_INVAL,
+		      isl923x_drv.get_option(CHARGER_NUM, &option), NULL);
+
+	/* Test failed control 1 read */
+	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL1);
+	zassert_equal(EC_ERROR_INVAL,
+		      isl923x_drv.get_option(CHARGER_NUM, &option), NULL);
+
+	/* Reset failed read */
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test failed control 0 write */
+	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_CONTROL0);
+	zassert_equal(EC_ERROR_INVAL,
+		      isl923x_drv.set_option(CHARGER_NUM, option), NULL);
+
+	/* Test failed control 1 write */
+	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_CONTROL1);
+	zassert_equal(EC_ERROR_INVAL,
+		      isl923x_drv.set_option(CHARGER_NUM, option), NULL);
+
+	/* Reset failed write */
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test normal write/read, note that bits 23 and 0 are always 0 */
+	zassert_ok(isl923x_drv.set_option(CHARGER_NUM, 0xffffffff), NULL);
+	zassert_ok(isl923x_drv.get_option(CHARGER_NUM, &option), NULL);
+	zassert_equal(0xff7ffffe, option,
+		      "Expected options 0xff7ffffe but got 0x%x", option);
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(isl923x,
@@ -207,6 +248,7 @@ void test_suite_isl923x(void)
 			 ztest_unit_test(test_isl923x_set_voltage),
 			 ztest_unit_test(test_isl923x_set_input_current_limit),
 			 ztest_unit_test(test_manufacturer_id),
-			 ztest_unit_test(test_device_id));
+			 ztest_unit_test(test_device_id),
+			 ztest_unit_test(test_options));
 	ztest_run_test_suite(isl923x);
 }
