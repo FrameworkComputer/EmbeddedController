@@ -188,7 +188,7 @@ __override int power_signal_get_level(enum gpio_signal signal)
 	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI)) {
 		/* Check signal is from GPIOs or VWs */
 		if (espi_signal_is_vw(signal))
-			return espi_vw_get_wire(signal);
+			return espi_vw_get_wire((enum espi_vw_signal)signal);
 	}
 	return gpio_get_level(signal);
 

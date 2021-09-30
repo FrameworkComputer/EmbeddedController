@@ -115,7 +115,7 @@ __overridable int power_signal_get_level(enum gpio_signal signal)
 	if (IS_ENABLED(CONFIG_HOST_ESPI_VW_POWER_SIGNAL)) {
 		/* Check signal is from GPIOs or VWs */
 		if (espi_signal_is_vw(signal))
-			return espi_vw_get_wire(signal);
+			return espi_vw_get_wire((enum espi_vw_signal)signal);
 	}
 	return gpio_get_level(signal);
 }
@@ -125,7 +125,8 @@ int power_signal_disable_interrupt(enum gpio_signal signal)
 	if (IS_ENABLED(CONFIG_HOST_ESPI_VW_POWER_SIGNAL)) {
 		/* Check signal is from GPIOs or VWs */
 		if (espi_signal_is_vw(signal))
-			return espi_vw_disable_wire_int(signal);
+			return espi_vw_disable_wire_int(
+				(enum espi_vw_signal)signal);
 	}
 	return gpio_disable_interrupt(signal);
 }
@@ -135,7 +136,8 @@ int power_signal_enable_interrupt(enum gpio_signal signal)
 	if (IS_ENABLED(CONFIG_HOST_ESPI_VW_POWER_SIGNAL)) {
 		/* Check signal is from GPIOs or VWs */
 		if (espi_signal_is_vw(signal))
-			return espi_vw_enable_wire_int(signal);
+			return espi_vw_enable_wire_int(
+				(enum espi_vw_signal)signal);
 	}
 	return gpio_enable_interrupt(signal);
 }
@@ -152,7 +154,8 @@ static const char *power_signal_get_name(enum gpio_signal signal)
 	if (IS_ENABLED(CONFIG_HOSTCMD_ESPI)) {
 		/* Check signal is from GPIOs or VWs */
 		if (espi_signal_is_vw(signal))
-			return espi_vw_get_wire_name(signal);
+			return espi_vw_get_wire_name(
+				(enum espi_vw_signal)signal);
 	}
 	return gpio_get_name(signal);
 }
