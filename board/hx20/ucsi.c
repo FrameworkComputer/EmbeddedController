@@ -287,10 +287,7 @@ void check_ucsi_event_from_host(void)
 		 */
 		rv = ucsi_write_tunnel();
 
-		if (is_delay)
-			ucsi_set_next_poll(500*MSEC);
-		else
-			ucsi_set_next_poll(10*MSEC);
+		ucsi_set_next_poll(10*MSEC);
 
 		if (rv == EC_ERROR_BUSY)
 			return;
