@@ -46,6 +46,7 @@ before_script:
   - export ZEPHYR_DIR=/zephyr
   - export PATH="$PATH:$HOME/.local/bin"
   - export PYTHONIOENCODING=utf-8
+  - export EC_DIR=/builds/zephyr-ec/ec
 
 # Users of this template must set:
 # $PROJECT to the project to build in zephyr/projects. E.g. "lazor")
@@ -71,6 +72,23 @@ before_script:
       - build/${PROJECT}/output/*
     expire_in: 1 week
 
+# Users of this template must set:
+# $PROJECT to the project to build in zephyr/projects. E.g. "lazor")
+# $PROJECT_SUBDIR if it is in a subdirectory. E.g. "trogdor/"
+.coverage_template: &coverage_template
+  stage: test
+  needs: ["merged_coverage", "zephyr_coverage"]
+  script:
+    - PROJECT_NAME=$(echo ${PROJECT_SUBDIR}${PROJECT} | tr '/' '_')
+    - grep "SF:" "build/zcoverage/projects_${PROJECT_NAME}.info" | sort -u | sed -e 's|^SF:||' | xargs lcov -o build/no_zephyr_${PROJECT_NAME}.info -e build/merged_no_zephyr.info
+    - /usr/bin/genhtml -q -o build/no_zephyr_${PROJECT_NAME}_rpt -t "${PROJECT} coverage w/o zephyr" -p ${EC_DIR} -s build/no_zephyr_${PROJECT_NAME}.info
+  artifacts:
+    paths:
+      - build/*.info
+      - build/*_rpt
+    expire_in: 1 week
+  coverage: '/lines\.*: \d+\.\d+%/'
+
 delbin:
   variables:
     PROJECT: "delbin"
@@ -88,6 +106,12 @@ herobrine_npcx9:
     PROJECT: "herobrine_npcx9"
     PROJECT_SUBDIR: "herobrine/"
   <<: *build_template
+
+herobrine_npcx9_coverage:
+  variables:
+    PROJECT: "herobrine_npcx9"
+    PROJECT_SUBDIR: "herobrine/"
+  <<: *coverage_template
 
 it8xxx2_evb:
   variables:
@@ -130,6 +154,7 @@ ec_coverage:
       - build/coverage/coverage_rpt/*
       - build/coverage/lcov.info
     expire_in: 1 week
+  coverage: '/lines\.*: \d+\.\d+%/'
 
 zephyr_coverage:
   stage: test
@@ -143,6 +168,7 @@ zephyr_coverage:
       - build/zcoverage/coverage_rpt/*
       - build/zcoverage/*.info
     expire_in: 1 week
+  coverage: '/lines\.*: \d+\.\d+%/'
 
 merged_coverage:
   stage: test
@@ -150,8 +176,6 @@ merged_coverage:
   script:
     - lcov -o build/merged.info -a build/coverage/lcov.info -a build/zcoverage/lcov.info
     - lcov -o build/merged_no_zephyr.info -r build/merged.info "${ZEPHYR_ROOT}/*" "${MODULES_DIR}/*" '/usr/include/x86_64-linux-gnu/*'
-    - grep "SF:" build/zcoverage/projects_herobrine_herobrine_npcx9.info | sort -u | sed -e 's|^SF:||' | xargs lcov -o build/merged_no_zephyr_herobrine_npcx9.info -e build/merged_no_zephyr.info
-    - /usr/bin/genhtml -q -o build/merged_no_zephyr_herobrine_npcx9_rpt -t "Herobrine npcx9 coverage w/o zephyr" -p /builds/zephyr-ec/ec -s build/merged_no_zephyr_herobrine_npcx9.info
   artifacts:
     paths:
       - build/*.info
