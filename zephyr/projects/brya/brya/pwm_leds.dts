@@ -1,0 +1,44 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_led0: pwm_led_0 {
+			pwms = <&led1 &led2>;
+		};
+		pwm_led1: pwm_led_1 {
+			pwms = <&led3 &led4>;
+		};
+	};
+
+	cros-pwmleds {
+		compatible = "cros-ec,pwm-leds";
+
+		leds = <&pwm_led0 &pwm_led1>;
+			      /*<amber   white>*/
+		color-map-red    = <0    0>;
+		color-map-green  = <0    0>;
+		color-map-blue   = <0    0>;
+		color-map-yellow = <0    0>;
+		color-map-white  = <0   50>;
+		color-map-amber  = <50   0>;
+
+		brightness-range = <0 0 0 0 100 100>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pwm_led_0@0 {
+			reg = <0>;
+			ec-led-name = "EC_LED_ID_LEFT_LED";
+		};
+
+		pwm_led_1@1 {
+			reg = <1>;
+			ec-led-name = "EC_LED_ID_RIGHT_LED";
+		};
+	};
+};
