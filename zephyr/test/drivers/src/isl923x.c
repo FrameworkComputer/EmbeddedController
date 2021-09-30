@@ -8,11 +8,16 @@
 
 #include "battery.h"
 #include "charger_utils.h"
+#include "driver/charger/isl923x.h"
 #include "driver/charger/isl923x_public.h"
+#include "emul/emul_common_i2c.h"
 #include "emul/emul_isl923x.h"
 
 BUILD_ASSERT(CONFIG_CHARGER_SENSE_RESISTOR == 10 ||
 	     CONFIG_CHARGER_SENSE_RESISTOR == 5);
+
+BUILD_ASSERT(CONFIG_CHARGER_SENSE_RESISTOR_AC == 20 ||
+	     CONFIG_CHARGER_SENSE_RESISTOR_AC == 10);
 
 #if CONFIG_CHARGER_SENSE_RESISTOR == 10
 #define EXPECTED_CURRENT_MA(n) (n)
@@ -20,7 +25,14 @@ BUILD_ASSERT(CONFIG_CHARGER_SENSE_RESISTOR == 10 ||
 #define EXPECTED_CURRENT_MA(n) (n * 2)
 #endif
 
+#if CONFIG_CHARGER_SENSE_RESISTOR_AC == 20
+#define EXPECTED_INPUT_CURRENT_MA(n) (n)
+#else
+#define EXPECTED_INPUT_CURRENT_MA(n) (n * 2)
+#endif
+
 #define CHARGER_NUM get_charger_num(&isl923x_drv)
+#define ISL923X_EMUL emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)))
 
 void test_isl923x_set_current(void)
 {
@@ -80,10 +92,77 @@ void test_isl923x_set_voltage(void)
 	}
 }
 
+void test_isl923x_set_input_current_limit(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+	int expected_current_milli_amps[] = {
+		EXPECTED_INPUT_CURRENT_MA(0),
+		EXPECTED_INPUT_CURRENT_MA(4),
+		EXPECTED_INPUT_CURRENT_MA(8),
+		EXPECTED_INPUT_CURRENT_MA(16),
+		EXPECTED_INPUT_CURRENT_MA(32),
+		EXPECTED_INPUT_CURRENT_MA(64),
+		EXPECTED_INPUT_CURRENT_MA(128),
+		EXPECTED_INPUT_CURRENT_MA(256),
+		EXPECTED_INPUT_CURRENT_MA(512),
+		EXPECTED_INPUT_CURRENT_MA(1024),
+		EXPECTED_INPUT_CURRENT_MA(2048),
+		EXPECTED_INPUT_CURRENT_MA(4096) };
+	int current_milli_amps;
+
+	/* Test failing to write to current limit 1 reg */
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   ISL923X_REG_ADAPTER_CURRENT_LIMIT1);
+	zassert_equal(EC_ERROR_INVAL,
+		      isl923x_drv.set_input_current_limit(CHARGER_NUM, 0),
+		      NULL);
+
+	/* Test failing to write to current limit 2 reg */
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   ISL923X_REG_ADAPTER_CURRENT_LIMIT2);
+	zassert_equal(EC_ERROR_INVAL,
+		      isl923x_drv.set_input_current_limit(CHARGER_NUM, 0),
+		      NULL);
+
+	/* Reset fail register */
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test failing to read current limit 1 reg */
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  ISL923X_REG_ADAPTER_CURRENT_LIMIT1);
+	zassert_equal(EC_ERROR_INVAL,
+		      isl923x_drv.get_input_current_limit(CHARGER_NUM,
+							  &current_milli_amps),
+		      NULL);
+
+	/* Reset fail register */
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test normal code path */
+	for (int i = 0; i < ARRAY_SIZE(expected_current_milli_amps); ++i) {
+		zassert_ok(isl923x_drv.set_input_current_limit(
+				   CHARGER_NUM, expected_current_milli_amps[i]),
+			   "Failed to set input current limit to %dmV",
+			   expected_current_milli_amps[i]);
+		zassert_ok(isl923x_drv.get_input_current_limit(
+				   CHARGER_NUM, &current_milli_amps),
+			   "Failed to get input current limit");
+		zassert_equal(expected_current_milli_amps[i],
+			      current_milli_amps,
+			      "Expected input current %dmA but got %dmA",
+			      expected_current_milli_amps[i],
+			      current_milli_amps);
+	}
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(isl923x,
 			 ztest_unit_test(test_isl923x_set_current),
-			 ztest_unit_test(test_isl923x_set_voltage));
+			 ztest_unit_test(test_isl923x_set_voltage),
+			 ztest_unit_test(test_isl923x_set_input_current_limit));
 	ztest_run_test_suite(isl923x);
 }
