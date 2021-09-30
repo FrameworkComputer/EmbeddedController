@@ -541,6 +541,13 @@
 		reg = <0x84>;
 		label = "I2C_MOCK";
 	};
+
+	isl923x_emul: isl923x@9 {
+		compatible = "cros,isl923x-emul";
+		status = "okay";
+		reg = <0x9>;
+		label = "ISL923X_EMUL";
+	};
 };
 
 /* Enable all thermistors for testing */
