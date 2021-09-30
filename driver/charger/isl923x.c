@@ -113,13 +113,6 @@ static const struct charger_info isl9237_charger_info = {
 	.input_current_step = AC_REG_TO_CURRENT(INPUT_I_STEP),
 };
 
-static inline enum ec_error_list raw_read8(int chgnum, int offset, int *value)
-{
-	return i2c_read8(chg_chips[chgnum].i2c_port,
-			 chg_chips[chgnum].i2c_addr_flags,
-			 offset, value);
-}
-
 static inline enum ec_error_list raw_read16(int chgnum, int offset, int *value)
 {
 	return i2c_read16(chg_chips[chgnum].i2c_port,
@@ -796,7 +789,6 @@ out:
 	return rv;
 }
 
-#ifdef CONFIG_CHARGER_RAA489000
 enum ec_error_list raa489000_is_acok(int chgnum, bool *acok)
 {
 	int regval, rv;
@@ -916,9 +908,7 @@ void raa489000_hibernate(int chgnum, bool disable_adc)
 
 	cflush();
 }
-#endif /* CONFIG_CHARGER_RAA489000 */
 
-#ifdef CONFIG_CHARGER_ISL9238C
 enum ec_error_list isl9238c_hibernate(int chgnum)
 {
 	/* Disable IMON */
@@ -958,7 +948,6 @@ enum ec_error_list isl9238c_resume(int chgnum)
 
 	return EC_SUCCESS;
 }
-#endif /* CONFIG_CHARGER_ISL9238C */
 
 
 /*****************************************************************************/
