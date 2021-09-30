@@ -46,7 +46,7 @@
 static int learn_mode;
 
 /* Mutex for CONTROL1 register, that can be updated from multiple tasks. */
-K_MUTEX_DEFINE(control1_mutex);
+K_MUTEX_DEFINE(control1_mutex_isl9241);
 
 /* Charger parameters */
 static const struct charger_info isl9241_charger_info = {
@@ -312,7 +312,7 @@ static enum ec_error_list isl9241_discharge_on_ac(int chgnum, int enable)
 {
 	int rv;
 
-	mutex_lock(&control1_mutex);
+	mutex_lock(&control1_mutex_isl9241);
 
 	rv = isl9241_update(chgnum, ISL9241_REG_CONTROL1,
 			    ISL9241_CONTROL1_LEARN_MODE,
@@ -320,7 +320,7 @@ static enum ec_error_list isl9241_discharge_on_ac(int chgnum, int enable)
 	if (!rv)
 		learn_mode = enable;
 
-	mutex_unlock(&control1_mutex);
+	mutex_unlock(&control1_mutex_isl9241);
 	return rv;
 }
 

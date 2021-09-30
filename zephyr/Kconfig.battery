@@ -99,12 +99,6 @@ config PLATFORM_EC_I2C_VIRTUAL_BATTERY
 	  return desired data to host instead of issuing I2C transaction every
 	  time.
 
-choice "Charger select"
-	prompt "Select the charger to use"
-	help
-	  Select the battery charger IC used on the board. Only one charger may
-	  be selected.
-
 config PLATFORM_EC_CHARGER_ISL9237
 	bool "Use the ISL9237 charger"
 	depends on PLATFORM_EC_I2C
@@ -179,8 +173,6 @@ config PLATFORM_EC_CHARGER_BQ25720
 	  battery charger for one to four battery cell applications. A
 	  wide range of input power sources are supported such as high
 	  voltage USB-C power delivery.
-
-endchoice  # "Charger select"
 
 config PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
 	bool "Board supports discharge mode"
