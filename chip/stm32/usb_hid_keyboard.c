@@ -375,7 +375,6 @@ const struct usb_hid_descriptor USB_CUSTOM_DESC_VAR(USB_IFACE_HID_KEYBOARD,
 #define EP_TX_BUF_SIZE DIV_ROUND_UP(HID_KEYBOARD_REPORT_SIZE, 2)
 
 static usb_uint hid_ep_tx_buf[EP_TX_BUF_SIZE] __usb_ram;
-static volatile int hid_current_buf;
 
 static volatile int hid_ep_data_ready;
 
