@@ -41,6 +41,8 @@ BUILD_ASSERT(IS_ENABLED(CONFIG_CHARGER_ISL9238),
 
 void test_isl923x_set_current(void)
 {
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	int expected_current_milli_amps[] = {
 		EXPECTED_CURRENT_MA(0),	   EXPECTED_CURRENT_MA(4),
 		EXPECTED_CURRENT_MA(8),	   EXPECTED_CURRENT_MA(16),
@@ -49,18 +51,31 @@ void test_isl923x_set_current(void)
 		EXPECTED_CURRENT_MA(512),  EXPECTED_CURRENT_MA(1024),
 		EXPECTED_CURRENT_MA(2048), EXPECTED_CURRENT_MA(4096)
 	};
-	int current_mA;
+	int current_milli_amps;
+
+	/* Test I2C failure when reading charge current */
+	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CHG_CURRENT);
+	zassert_equal(EC_ERROR_INVAL,
+		      isl923x_drv.get_current(CHARGER_NUM, &current_milli_amps),
+		      NULL);
+
+	/* Reset fail register */
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	for (int i = 0; i < ARRAY_SIZE(expected_current_milli_amps); ++i) {
 		zassert_ok(isl923x_drv.set_current(
 				   CHARGER_NUM, expected_current_milli_amps[i]),
 			   "Failed to set the current to %dmA",
 			   expected_current_milli_amps[i]);
-		zassert_ok(isl923x_drv.get_current(CHARGER_NUM, &current_mA),
+		zassert_ok(isl923x_drv.get_current(CHARGER_NUM,
+						   &current_milli_amps),
 			   "Failed to get current");
-		zassert_equal(expected_current_milli_amps[i], current_mA,
+		zassert_equal(expected_current_milli_amps[i],
+			      current_milli_amps,
 			      "Expected current %dmA but got %dmA",
-			      expected_current_milli_amps[i], current_mA);
+			      expected_current_milli_amps[i],
+			      current_milli_amps);
 	}
 }
 
