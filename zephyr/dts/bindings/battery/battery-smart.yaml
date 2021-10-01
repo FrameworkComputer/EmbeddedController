@@ -11,6 +11,7 @@ properties:
       description: Unique value used for creating enum of batteries types
       type: string
       enum:
+         - "aec,5477109"
          - "as3gwrc3ka,c235-41"
          - "lgc,ap16l8j"
          - "lgc,ap18c8k"

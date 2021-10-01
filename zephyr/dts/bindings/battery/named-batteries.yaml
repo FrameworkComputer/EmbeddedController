@@ -11,6 +11,7 @@ child-binding:
           type: string
           required: true
           enum:
+            - "aec,5477109"
             - "ap16l5j"
             - "ap16l5j_009"
             - "ap16l8j"
