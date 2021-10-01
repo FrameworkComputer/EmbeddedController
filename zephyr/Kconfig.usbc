@@ -43,21 +43,6 @@ menuconfig PLATFORM_EC_USBC
 
 if PLATFORM_EC_USBC
 
-config PLATFORM_EC_CHARGE_MANAGER
-	bool "Charge manager"
-	default y
-	help
-	  The EC charge manager manages charging the battery from all supported
-	  power sources.  This includes dedicated charge ports (such as a
-	  barrel jack connector), BC1.2 (Battery Charging 1.2) sources, and
-	  USB-C sources. When multiple charge sources are connected to a
-	  Chromebook simultaneously, the charge manager is responsible for
-	  picking the best source.
-
-	  Note that the charge manager assumes that at least one USB-C power
-	  source is available on the hardware, so cannot be built without
-	  PLATFORM_EC_USBC.
-
 config PLATFORM_EC_CHARGER_INPUT_CURRENT
 	int "Charger input current in mA"
 	depends on PLATFORM_EC_CHARGE_MANAGER

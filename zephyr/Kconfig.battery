@@ -4,7 +4,6 @@
 
 menuconfig PLATFORM_EC_BATTERY
 	bool "Battery support"
-	select HAS_TASK_CHARGER
 	help
 	  Enables battery support on the board. Requires selection of a battery
 	  and a charger IC.
@@ -98,6 +97,31 @@ config PLATFORM_EC_I2C_VIRTUAL_BATTERY
 	  The battery parameters, which are already cached in EC are used to
 	  return desired data to host instead of issuing I2C transaction every
 	  time.
+
+menuconfig PLATFORM_EC_CHARGER
+	bool "Charging support"
+	default y
+	select HAS_TASK_CHARGER
+	help
+	  Enable the EC charging task.  This enables compilation of the
+          charge_state_v2 code.
+
+if PLATFORM_EC_CHARGER
+
+config PLATFORM_EC_CHARGE_MANAGER
+	bool "Charge manager"
+	default y
+	help
+	  The EC charge manager manages charging the battery from all supported
+	  power sources.  This includes dedicated charge ports (such as a
+	  barrel jack connector), BC1.2 (Battery Charging 1.2) sources, and
+	  USB-C sources. When multiple charge sources are connected to a
+	  Chromebook simultaneously, the charge manager is responsible for
+	  picking the best source.
+
+	  Note that the charge manager assumes that at least one USB-C power
+	  source is available on the hardware, so cannot be built without
+	  PLATFORM_EC_USBC.
 
 config PLATFORM_EC_CHARGER_ISL9237
 	bool "Use the ISL9237 charger"
@@ -401,6 +425,8 @@ config PLATFORM_EC_CONSOLE_CMD_CHGRAMP
 	      OC 0: s-1 oc_det0 icl0
 	      OC 1: s0 oc_det0 icl0
 	      OC 2: s0 oc_det0 icl0
+
+endif # PLATFORM_EC_CHARGER
 
 config PLATFORM_EC_BATTERY_CRITICAL_SHUTDOWN_CUT_OFF
 	bool "Enable battery cut off on critical power level"
