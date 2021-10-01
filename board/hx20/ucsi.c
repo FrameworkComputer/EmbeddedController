@@ -327,6 +327,25 @@ void check_ucsi_event_from_host(void)
 			cci = &pd_chip_ucsi_info[1].cci;
 		}
 
+
+		/* Fix UCSI stopping responding to right side ports
+		 * the standard says the CCI connector change indicator field
+		 * should be 0 for ACK_CC_CI, however our controller responds with
+		 * the port number populated for the port with the valid response
+		 * so choose this response as a priority when we get an ack from
+		 * both controllers
+		 */
+		if (pd_chip_ucsi_info[1].read_tunnel_complete &&
+			pd_chip_ucsi_info[0].read_tunnel_complete) {
+			if (pd_chip_ucsi_info[0].cci & 0xFE) {
+				message_in = pd_chip_ucsi_info[0].message_in;
+				cci = &pd_chip_ucsi_info[0].cci;
+			} else if (pd_chip_ucsi_info[1].cci & 0xFE) {
+				message_in = pd_chip_ucsi_info[1].message_in;
+				cci = &pd_chip_ucsi_info[1].cci;
+			}
+		}
+
 		if (
 			*host_get_customer_memmap(EC_MEMMAP_UCSI_COMMAND) == UCSI_CMD_GET_CONNECTOR_STATUS &&
 			(((uint8_t*)message_in)[8] & 0x03) > 1)
