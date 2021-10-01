@@ -261,7 +261,7 @@ static void set_mux(enum usb_mux mux, uint8_t val)
 		break;
 
 	default:
-		break;
+		return;
 	}
 
 	val &= 0x7;
