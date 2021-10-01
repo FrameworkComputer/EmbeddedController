@@ -41,6 +41,12 @@ struct ln9310_emul_data {
 	enum battery_cell_type battery_cell_type;
 	/** Current Functional Mode */
 	enum functional_mode current_mode;
+	/** Emulated TEST MODE CTRL register */
+	uint8_t test_mode_ctrl_reg;
+	/** Emulated FORCE SC21 CTRL 1 register */
+	uint8_t force_sc21_ctrl_1_reg;
+	/** Emulated FORCE SC21 CTRL 2 register */
+	uint8_t force_sc21_ctrl_2_reg;
 	/** Emulated SYS STS register */
 	uint8_t sys_sts_reg;
 	/** Emulated INT1 MSK register */
@@ -108,27 +114,28 @@ static void do_ln9310_interrupt(struct ln9310_emul_data *data)
 static void mode_change(struct ln9310_emul_data *data)
 {
 
-	bool now_in_standby = data->startup_ctrl_reg &
+	bool new_mode_in_standby = data->startup_ctrl_reg &
 			      LN9310_STARTUP_STANDBY_EN;
-	bool now_in_switching_21 =
+	bool new_mode_in_switching_21 =
 		((data->power_ctrl_reg & LN9310_PWR_OP_MODE_MASK) ==
 		 LN9310_PWR_OP_MODE_SWITCH21) &&
-		!now_in_standby;
-	bool now_in_switching_31 =
+		!new_mode_in_standby;
+	bool new_mode_in_switching_31 =
 		((data->power_ctrl_reg & LN9310_PWR_OP_MODE_MASK) ==
 		 LN9310_PWR_OP_MODE_SWITCH31) &&
-		!now_in_standby;
+		!new_mode_in_standby;
 
-	__ASSERT_NO_MSG(!(now_in_switching_21 && now_in_switching_31));
+	__ASSERT_NO_MSG(
+		!(new_mode_in_switching_21 && new_mode_in_switching_31));
 
 	switch (data->current_mode) {
 	case FUNCTIONAL_MODE_STANDBY:
-		if (now_in_switching_21) {
+		if (new_mode_in_switching_21) {
 			data->current_mode =
 				FUNCTIONAL_MODE_SWITCHING_21;
 			data->sys_sts_reg = data->current_mode;
 			do_ln9310_interrupt(data);
-		} else if (now_in_switching_31) {
+		} else if (new_mode_in_switching_31) {
 			data->current_mode =
 				FUNCTIONAL_MODE_SWITCHING_31;
 			data->sys_sts_reg = data->current_mode;
@@ -136,12 +143,12 @@ static void mode_change(struct ln9310_emul_data *data)
 		}
 		break;
 	case FUNCTIONAL_MODE_SWITCHING_21:
-		if (now_in_standby) {
+		if (new_mode_in_standby) {
 			data->current_mode =
-				FUNCTIONAL_MODE_SWITCHING_21;
+				FUNCTIONAL_MODE_STANDBY;
 			data->sys_sts_reg = data->current_mode;
 			do_ln9310_interrupt(data);
-		} else if (now_in_switching_31) {
+		} else if (new_mode_in_switching_31) {
 			data->current_mode =
 				FUNCTIONAL_MODE_SWITCHING_31;
 			data->sys_sts_reg = data->current_mode;
@@ -149,12 +156,12 @@ static void mode_change(struct ln9310_emul_data *data)
 		}
 		break;
 	case FUNCTIONAL_MODE_SWITCHING_31:
-		if (now_in_standby) {
+		if (new_mode_in_standby) {
 			data->current_mode =
 				FUNCTIONAL_MODE_STANDBY;
 			data->sys_sts_reg = data->current_mode;
 			do_ln9310_interrupt(data);
-		} else if (now_in_switching_21) {
+		} else if (new_mode_in_switching_21) {
 			data->current_mode =
 				FUNCTIONAL_MODE_SWITCHING_21;
 			data->sys_sts_reg = data->current_mode;
@@ -324,6 +331,18 @@ static int ln9310_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 		__ASSERT_NO_MSG(bytes == 1);
 		data->sys_ctrl_reg = val;
 		break;
+	case LN9310_REG_FORCE_SC21_CTRL_1:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->force_sc21_ctrl_1_reg = val;
+		break;
+	case LN9310_REG_FORCE_SC21_CTRL_2:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->force_sc21_ctrl_2_reg = val;
+		break;
+	case LN9310_REG_TEST_MODE_CTRL:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->test_mode_ctrl_reg = val;
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -438,6 +457,18 @@ static int ln9310_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 	case LN9310_REG_SYS_CTRL:
 		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->sys_ctrl_reg;
+		break;
+	case LN9310_REG_FORCE_SC21_CTRL_1:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->force_sc21_ctrl_1_reg;
+		break;
+	case LN9310_REG_FORCE_SC21_CTRL_2:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->force_sc21_ctrl_2_reg;
+		break;
+	case LN9310_REG_TEST_MODE_CTRL:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->test_mode_ctrl_reg;
 		break;
 	default:
 		return -EINVAL;
