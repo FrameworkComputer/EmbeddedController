@@ -290,6 +290,7 @@
 /* Modules we want to exclude */
 #undef CONFIG_CMD_BATTFAKE
 #undef CONFIG_CMD_FLASH
+#undef CONFIG_CMD_FLASH_WP
 #undef CONFIG_CMD_FLASHINFO
 #undef CONFIG_CMD_HASH
 #undef CONFIG_CMD_MD
