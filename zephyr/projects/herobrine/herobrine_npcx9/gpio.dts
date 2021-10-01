@@ -321,7 +321,7 @@
 			&gpio_sku_id2
 		>;
 
-		system = "binary_first_base3";
+		system = "ternary";
 	};
 
 	board {
@@ -333,7 +333,7 @@
 			&gpio_brd_id2
 		>;
 
-		system = "binary_first_base3";
+		system = "ternary";
 	};
 
 	unused-pins {
