@@ -640,13 +640,13 @@ struct ioexpander_config_t ioex_config[] = {
 		.i2c_host_port = I2C_PORT_TCPC1,
 		.i2c_addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
 		.drv = &nct38xx_ioexpander_drv,
-		.flags = IOEX_FLAGS_DISABLED,
+		.flags = IOEX_FLAGS_DEFAULT_INIT_DISABLED,
 	},
 	[IOEX_HDMI_PCAL6408] = {
 		.i2c_host_port = I2C_PORT_TCPC1,
 		.i2c_addr_flags = PCAL6408_I2C_ADDR0,
 		.drv = &pcal6408_ioexpander_drv,
-		.flags = IOEX_FLAGS_DISABLED,
+		.flags = IOEX_FLAGS_DEFAULT_INIT_DISABLED,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(ioex_config) == CONFIG_IO_EXPANDER_PORT_COUNT);

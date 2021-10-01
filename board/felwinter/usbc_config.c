@@ -176,13 +176,13 @@ struct ioexpander_config_t ioex_config[] = {
 		.i2c_host_port = I2C_PORT_USB_C1_TCPC,
 		.i2c_addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
 		.drv = &nct38xx_ioexpander_drv,
-		.flags = IOEX_FLAGS_DISABLED,
+		.flags = IOEX_FLAGS_DEFAULT_INIT_DISABLED,
 	},
 	[IOEX_C2_NCT38XX] = {
 		.i2c_host_port = I2C_PORT_USB_C2_TCPC,
 		.i2c_addr_flags = NCT38XX_I2C_ADDR1_1_FLAGS,
 		.drv = &nct38xx_ioexpander_drv,
-		.flags = IOEX_FLAGS_DISABLED,
+		.flags = IOEX_FLAGS_DEFAULT_INIT_DISABLED,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(ioex_config) == CONFIG_IO_EXPANDER_PORT_COUNT);
@@ -266,7 +266,6 @@ void board_reset_pd_mcu(void)
 
 static void enable_ioex(int ioex)
 {
-	ioex_config[ioex].flags &= ~IOEX_FLAGS_DISABLED;
 	ioex_init(ioex);
 }
 

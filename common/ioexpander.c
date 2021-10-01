@@ -47,7 +47,7 @@ static const struct ioex_info *ioex_get_signal_info(enum ioex_signal signal)
 
 	g = ioex_list + signal - IOEX_SIGNAL_START;
 
-	if (ioex_config[g->ioex].flags & IOEX_FLAGS_DISABLED) {
+	if (!(ioex_config[g->ioex].flags & IOEX_FLAGS_INITIALIZED)) {
 		CPRINTS("ioex %s disabled", g->name);
 		return NULL;
 	}
@@ -169,9 +169,6 @@ int ioex_init(int ioex)
 	int rv;
 	int i;
 
-	if (ioex_config[ioex].flags & IOEX_FLAGS_DISABLED)
-		return EC_ERROR_BUSY;
-
 	if (drv->init != NULL) {
 		rv = drv->init(ioex);
 		if (rv != EC_SUCCESS)
@@ -195,7 +192,7 @@ int ioex_init(int ioex)
 		}
 	}
 
-	ioex_config[ioex].flags |= IOEX_FLAGS_INITIALIZED;
+	ioex_config[ioex].flags = IOEX_FLAGS_INITIALIZED;
 
 	return EC_SUCCESS;
 }
@@ -205,8 +202,12 @@ static void ioex_init_default(void)
 	int i;
 
 	for (i = 0; i < CONFIG_IO_EXPANDER_PORT_COUNT; i++) {
-		/* IO Expander has been initialized, skip re-initializing */
-		if (ioex_config[i].flags & IOEX_FLAGS_INITIALIZED)
+		/*
+		 * If the IO Expander has been initialized or if the default
+		 * initialization is disabled, skip initializing.
+		 */
+		if (ioex_config[i].flags & (IOEX_FLAGS_INITIALIZED |
+					IOEX_FLAGS_DEFAULT_INIT_DISABLED))
 			continue;
 
 		ioex_init(i);
@@ -227,7 +228,7 @@ static void print_ioex_info(enum ioex_signal signal)
 	int flags = 0;
 	const struct ioex_info *g = ioex_list + signal - IOEX_SIGNAL_START;
 
-	if (ioex_config[g->ioex].flags & IOEX_FLAGS_DISABLED) {
+	if (!(ioex_config[g->ioex].flags & IOEX_FLAGS_INITIALIZED)) {
 		ccprintf("  DISABLED %s\n", ioex_get_name(signal));
 		return;
 	}
