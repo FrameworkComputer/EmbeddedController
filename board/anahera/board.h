@@ -133,6 +133,7 @@
 /* Fan features */
 #define CONFIG_FANS		FAN_CH_COUNT
 #define CONFIG_CUSTOM_FAN_CONTROL
+#define RPM_DEVIATION	1
 
 /* Charger defines */
 #define CONFIG_CHARGER_BQ25720
