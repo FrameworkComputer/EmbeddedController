@@ -11,8 +11,8 @@
 
 /* ADC configuration */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_1_DDR] = {
-		.name = "TEMP_DDR",
+	[ADC_TEMP_SENSOR_1_FAN] = {
+		.name = "TEMP_FAN",
 		.input_ch = NPCX_ADC_CH0,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
@@ -44,11 +44,11 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Temperature sensor configuration */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1_DDR] = {
-		.name = "DDR",
+	[TEMP_SENSOR_1_FAN] = {
+		.name = "Fan",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_1_DDR
+		.idx = ADC_TEMP_SENSOR_1_FAN
 	},
 	[TEMP_SENSOR_2_SOC] = {
 		.name = "SOC",
@@ -72,9 +72,9 @@ const struct temp_sensor_t temp_sensors[] = {
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
- * TODO(b/195673113): Need to update for Alder Lake/redrix
+ * TODO(b/199246802): Need to update for Alder Lake/anahera
  */
-static const struct ec_thermal_config thermal_ddr = {
+static const struct ec_thermal_config thermal_fan = {
 	.temp_host = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
 		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
@@ -87,7 +87,7 @@ static const struct ec_thermal_config thermal_ddr = {
 };
 
 /*
- * TODO(b/195673113): Need to update for Alder Lake/redrix
+ * TODO(b/199246802): Need to update for Alder Lake/anahera
  *
  * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
  * 130 C.  However, sensor is located next to SOC, so we need to use the lower
@@ -106,7 +106,7 @@ static const struct ec_thermal_config thermal_cpu = {
 };
 
 /*
- * TODO(b/195673113): Need to update for Alder Lake/redrix
+ * TODO(b/199246802): Need to update for Alder Lake/anahera
  */
 static const struct ec_thermal_config thermal_charger = {
 	.temp_host = {
@@ -121,7 +121,7 @@ static const struct ec_thermal_config thermal_charger = {
 };
 
 /*
- * TODO(b/195673113): Need to update for Alder Lake/redrix
+ * TODO(b/199246802): Need to update for Alder Lake/anahera
  */
 static const struct ec_thermal_config thermal_regulator = {
 	.temp_host = {
@@ -137,7 +137,7 @@ static const struct ec_thermal_config thermal_regulator = {
 
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_DDR] = thermal_ddr,
+	[TEMP_SENSOR_1_FAN] = thermal_fan,
 	[TEMP_SENSOR_2_SOC] = thermal_cpu,
 	[TEMP_SENSOR_3_CHARGER] = thermal_charger,
 	[TEMP_SENSOR_4_REGULATOR] = thermal_regulator,

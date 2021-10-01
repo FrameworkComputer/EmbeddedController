@@ -151,7 +151,7 @@
 #include "usbc_config.h"
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_1_DDR,
+	ADC_TEMP_SENSOR_1_FAN,
 	ADC_TEMP_SENSOR_2_SOC,
 	ADC_TEMP_SENSOR_3_CHARGER,
 	ADC_TEMP_SENSOR_4_REGULATOR,
@@ -159,7 +159,7 @@ enum adc_channel {
 };
 
 enum temp_sensor_id {
-	TEMP_SENSOR_1_DDR,
+	TEMP_SENSOR_1_FAN,
 	TEMP_SENSOR_2_SOC,
 	TEMP_SENSOR_3_CHARGER,
 	TEMP_SENSOR_4_REGULATOR,
