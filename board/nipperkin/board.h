@@ -28,6 +28,7 @@
 /* Volume Button feature */
 
 /* Fan features */
+#define CONFIG_CUSTOM_FAN_CONTROL
 
 /* LED features */
 #define CONFIG_LED_COMMON
