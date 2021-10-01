@@ -80,10 +80,12 @@ static int bh1730_read_lux(const struct motion_sensor_t *s, intv3_t v)
 	 * Return an error when nothing change to prevent filling the
 	 * fifo with useless data.
 	 */
-	if (v[0] == drv_data->last_value)
+	if (v[0] == drv_data->last_value) {
 		return EC_ERROR_UNCHANGED;
-	else
+	} else {
+		drv_data->last_value = v[0];
 		return EC_SUCCESS;
+	}
 }
 
 static int bh1730_set_range(struct motion_sensor_t *s, int range,
@@ -177,4 +179,3 @@ const struct accelgyro_drv bh1730_drv = {
 	.set_data_rate = bh1730_set_data_rate,
 	.get_data_rate = bh1730_get_data_rate,
 };
-
