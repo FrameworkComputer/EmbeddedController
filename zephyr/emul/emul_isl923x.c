@@ -92,6 +92,24 @@ void isl923x_emul_set_device_id(const struct emul *emulator,
 	data->device_id_reg = device_id;
 }
 
+bool isl923x_emul_is_learn_mode_enabled(const struct emul *emulator)
+{
+	struct isl923x_emul_data *data = emulator->data;
+
+	return (data->control_1_reg & ISL923X_C1_LEARN_MODE_ENABLE) != 0;
+}
+
+void isl923x_emul_set_learn_mode_enabled(const struct emul *emulator,
+					 bool enabled)
+{
+	struct isl923x_emul_data *data = emulator->data;
+
+	if (enabled)
+		data->control_1_reg |= ISL923X_C1_LEARN_MODE_ENABLE;
+	else
+		data->control_1_reg &= ~ISL923X_C1_LEARN_MODE_ENABLE;
+}
+
 static int isl923x_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 				  int bytes)
 {

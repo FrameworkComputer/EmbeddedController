@@ -37,4 +37,21 @@ void isl923x_emul_set_manufacturer_id(const struct emul *emulator,
 void isl923x_emul_set_device_id(const struct emul *emulator,
 				uint16_t device_id);
 
+/**
+ * @brief Check whether or not learn mode is enabled
+ *
+ * @param emulator The emulator to probe
+ * @return True if the emulator is in learn mode
+ */
+bool isl923x_emul_is_learn_mode_enabled(const struct emul *emulator);
+
+/**
+ * @brief Set the emulator's learn mode manually without affecting the driver
+ *
+ * @param emulator The emulator to modify
+ * @param enabled Whether or not learn mode should be enabled
+ */
+void isl923x_emul_set_learn_mode_enabled(const struct emul *emulator,
+					 bool enabled);
+
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_ISL923X_H_ */

@@ -273,6 +273,24 @@ void test_status(void)
 	zassert_equal(CHARGER_LEVEL_2, status, NULL);
 }
 
+void test_set_mode(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+
+	/* Enable learn mode and set mode (actual value doesn't matter) */
+	zassert_ok(isl923x_drv.discharge_on_ac(CHARGER_NUM, true), NULL);
+	zassert_ok(isl923x_drv.set_mode(CHARGER_NUM, 0), NULL);
+	/* Learn mode should still be set */
+	zassert_true(isl923x_emul_is_learn_mode_enabled(isl923x_emul), NULL);
+
+	/* Disable learn mode, but keep the bits */
+	zassert_ok(isl923x_drv.discharge_on_ac(CHARGER_NUM, false), NULL);
+	isl923x_emul_set_learn_mode_enabled(isl923x_emul, true);
+	zassert_ok(isl923x_drv.set_mode(CHARGER_NUM, 0), NULL);
+	/* Learn mode should still be off */
+	zassert_true(!isl923x_emul_is_learn_mode_enabled(isl923x_emul), NULL);
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(isl923x,
@@ -283,6 +301,7 @@ void test_suite_isl923x(void)
 			 ztest_unit_test(test_device_id),
 			 ztest_unit_test(test_options),
 			 ztest_unit_test(test_get_info),
-			 ztest_unit_test(test_status));
+			 ztest_unit_test(test_status),
+			 ztest_unit_test(test_set_mode));
 	ztest_run_test_suite(isl923x);
 }
