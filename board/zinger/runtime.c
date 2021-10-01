@@ -258,17 +258,17 @@ void system_reset(int flags)
 void exception_panic(void) __attribute__((naked));
 void exception_panic(void)
 {
-#ifdef CONFIG_DEBUG_PRINTF
 	asm volatile(
+#ifdef CONFIG_DEBUG_PRINTF
 		"mov r0, %0\n"
 		/* TODO: Should this be SP_process instead of SP_main? */
 		"mov r3, sp\n"
 		"ldr r1, [r3, #6*4]\n" /* retrieve exception PC */
 		"ldr r2, [r3, #5*4]\n" /* retrieve exception LR */
 		"bl debug_printf\n"
-	: : "r"("PANIC PC=%08x LR=%08x\n\n"));
 #endif
-	cpu_reset();
+		"bl cpu_reset\n"
+	: : "r"("PANIC PC=%08x LR=%08x\n\n"));
 }
 
 void panic_reboot(void)
