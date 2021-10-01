@@ -380,7 +380,7 @@ config PLATFORM_EC_CHARGE_RAMP_HW
 	depends on !PLATFORM_EC_CHARGER_CHGRAMP_BROKEN
 	help
 	   Disables software control of ramping up charging. This is used when
-	   the hardware has a a mechanism for ramping input current and
+	   the hardware has a mechanism for ramping input current and
 	   backing-off as needed.
 
 config PLATFORM_EC_CHARGE_RAMP_SW

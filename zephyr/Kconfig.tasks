@@ -7,7 +7,7 @@
 menu "Tasks"
 
 config HAS_TASK_CHARGER
-	bool "Charger task"
+	bool
 	depends on PLATFORM_EC_BATTERY
 	help
 	  This turns on the charger task. This deals with monitoring the
@@ -28,7 +28,7 @@ config TASK_CHARGER_STACK_SIZE
 endif # HAS_TASK_CHARGER
 
 config HAS_TASK_CHG_RAMP
-	bool "Charger-ramp task"
+	bool
 	depends on PLATFORM_EC_BATTERY
 	help
 	  This turns on the charger ramp task. This attempts to ramp up the
@@ -49,7 +49,7 @@ config TASK_CHG_RAMP_STACK_SIZE
 endif # HAS_TASK_CHG_RAMP
 
 config HAS_TASK_CHIPSET
-	bool "Chipset task"
+	bool
 	depends on PLATFORM_EC_POWERSEQ
 	help
 	  This turns on the chipset task which handles powering the chipset
@@ -89,7 +89,7 @@ config TASK_HOOKS_STACK_SIZE
 endif # HAS_TASK_HOOKS
 
 config HAS_TASK_HOSTCMD
-	bool "Host-command task"
+	bool
 	depends on PLATFORM_EC_HOSTCMD
 	help
 	  This turns on the hostcmd task which handles communication with the
@@ -108,7 +108,7 @@ config TASK_HOSTCMD_STACK_SIZE
 endif # HAS_TASK_HOSTCMD
 
 config HAS_TASK_KEYPROTO
-	bool "Keyboard-protocol task (x86)"
+	bool
 	depends on PLATFORM_EC_KEYBOARD_PROTOCOL_8042
 	help
 	  This turns on the keyproto task which handles conversion of keyboard
@@ -127,7 +127,7 @@ config TASK_KEYPROTO_STACK_SIZE
 endif # HAS_TASK_KEYPROTO
 
 config HAS_TASK_KEYSCAN
-	bool "Keyboard-scanning task"
+	bool
 	depends on PLATFORM_EC_KEYBOARD
 	help
 	  This turns on the keyscan task which handles scanning the keyboard
@@ -146,7 +146,7 @@ config TASK_KEYSCAN_STACK_SIZE
 endif # HAS_TASK_KEYSCAN
 
 config HAS_TASK_MOTIONSENSE
-	bool "Enable motionsense task"
+	bool
 	help
 	  This turns on the motion sense task which collects sensor data from the
 	  sensors and reports them to AP. Using the data, it also produces other
@@ -163,7 +163,7 @@ config TASK_MOTIONSENSE_STACK_SIZE
 endif # HAS_TASK_MOTIONSENSE
 
 config HAS_TASK_POWERBTN
-	bool "Power-button task (x86)"
+	bool
 	depends on PLATFORM_EC_POWER_BUTTON
 	help
 	  This turns on the powerbtn task which handles monitoring the power
@@ -183,93 +183,85 @@ config TASK_POWERBTN_STACK_SIZE
 
 endif # HAS_TASK_POWERBTN
 
+if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 0
+
+config TASK_PD_STACK_SIZE
+	int "PD task stack size"
+	default 1024	# EC uses VENTI_TASK_STACK_SIZE which is 896
+	help
+	  The stack size of the PD_Cx tasks.
+
+config TASK_PD_INT_STACK_SIZE
+	int "PD interrupts task stack size"
+	default 1280
+	help
+	  The stack size of the PD_Cn_INT tasks.
+
+endif # PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 0
+
 config HAS_TASK_PD_C0
-	bool "USB Power Delivery task"
+	bool
 	depends on PLATFORM_EC_USB_POWER_DELIVERY
-	default y
+	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 0
 	help
 	  This turns on the PD_C0 task which handles the rather complex USB
 	  Power Delivery protocol for port 0. There is one of these tasks for
 	  each USB-C port on the device, but they are enabled separately
 	  depending on how many ports are present.
 
-if HAS_TASK_PD_C0
-
-config TASK_PD_STACK_SIZE
-	int "Stack size"
-	default 1024	# EC uses VENTI_TASK_STACK_SIZE which is 896
-	help
-	  The stack size of the PD_Cx tasks.
-
-endif # HAS_TASK_PD_C0
-
 config HAS_TASK_PD_C1
-	bool "USB Power Delivery task"
+	bool
 	depends on PLATFORM_EC_USB_POWER_DELIVERY
+	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 1
 	help
 	  This turns on the PD_C1 task for devices with >=2 ports.
 
 config HAS_TASK_PD_C2
-	bool "USB Power Delivery task"
+	bool
 	depends on PLATFORM_EC_USB_POWER_DELIVERY
+	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 2
 	help
 	  This turns on the PD_C2 task for devices with >=3 ports.
 
 config HAS_TASK_PD_C3
-	bool "USB Power Delivery task"
+	bool
 	depends on PLATFORM_EC_USB_POWER_DELIVERY
+	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 3
 	help
 	  This turns on the PD_C3 task for devices with 4 ports.
 
 config HAS_TASK_PD_INT_C0
-	bool "USB Power Delivery task"
+	bool
 	depends on PLATFORM_EC_USB_POWER_DELIVERY
-	default y
+	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 0
 	help
 	  This turns on the PD_INT_C0 task which handles servicing of Power
 	  Delivery (PD) message interrupts for port 0. There is one of these
 	  tasks for each USB-C port on the device, but they are enabled
 	  separately depending on how many ports are present.
 
-if HAS_TASK_PD_INT_C0
-
-config TASK_PD_INT_STACK_SIZE
-	int "Stack size"
-	default 1280
-	help
-	  The stack size of the PD_Cn_INT tasks.
-
-endif # HAS_TASK_PD_INT_C0
-
 config HAS_TASK_PD_INT_C1
-	bool "USB Power Delivery task"
+	bool
 	depends on PLATFORM_EC_USB_POWER_DELIVERY
+	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 1
 	help
 	  This turns on the PD_INT_C1 task for devices with >=2 ports.
 
 config HAS_TASK_PD_INT_C2
-	bool "USB Power Delivery task"
+	bool
 	depends on PLATFORM_EC_USB_POWER_DELIVERY
+	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 2
 	help
 	  This turns on the PD_INT_C2 task for devices with >=3 ports.
 
 config HAS_TASK_PD_INT_C3
-	bool "USB Power Delivery task"
+	bool
 	depends on PLATFORM_EC_USB_POWER_DELIVERY
+	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 3
 	help
 	  This turns on the PD_INT_C3 task for devices with 4 ports.
 
-config HAS_TASK_USB_CHG_P0
-	bool "USB Charger (port 0)"
-	depends on PLATFORM_EC_USB_CHARGER
-	help
-	  This turns on the USB charger task for port 0. This handles
-	  negotiating power from an attached charger, trying to get the maximum
-	  available power consistent with the needs of the device.
-
-	  There is one of these tasks for each USB-C port on the device.
-
-if HAS_TASK_USB_CHG_P0
+if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 0
 
 config TASK_USB_CHG_STACK_SIZE
 	int "(all ports) task stack size"
@@ -282,8 +274,21 @@ config TASK_USB_CHG_STACK_SIZE
 
 endif # HAS_TASK_USB_CHG_P0
 
+config HAS_TASK_USB_CHG_P0
+	bool
+	depends on PLATFORM_EC_USB_CHARGER
+	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 0
+	help
+	  This turns on the USB charger task for port 0. This handles
+	  negotiating power from an attached charger, trying to get the maximum
+	  available power consistent with the needs of the device.
+
+	  There is one of these tasks for each USB-C port on the device.
+
 config HAS_TASK_USB_CHG_P1
-	bool "USB Charger (port 1)"
+	bool
+	depends on PLATFORM_EC_USB_CHARGER
+	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 1
 	help
 	  This turns on the USB charger task for port 1. This handles
 	  negotiating power from an attached charger, trying to get the maximum
@@ -292,7 +297,9 @@ config HAS_TASK_USB_CHG_P1
 	  There is one of these tasks for each USB-C port on the device.
 
 config HAS_TASK_USB_CHG_P2
-	bool "USB Charger (port 2)"
+	bool
+	depends on PLATFORM_EC_USB_CHARGER
+	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 2
 	help
 	  This turns on the USB charger task for port 2. This handles
 	  negotiating power from an attached charger, trying to get the maximum
