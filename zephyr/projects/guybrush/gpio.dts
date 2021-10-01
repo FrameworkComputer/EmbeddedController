@@ -206,6 +206,7 @@
 		ec_batt_pres_odl {
 			gpios = <&gpio9 4 GPIO_INPUT>;
 			label = "EC_BATT_PRES_ODL";
+			enum-name = "GPIO_BATT_PRES_ODL";
 		};
 		ec_disable_disp_bl {
 			gpios = <&gpioa 6 GPIO_OUT_HIGH>;
