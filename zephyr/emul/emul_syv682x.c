@@ -67,6 +67,17 @@ void syv682x_emul_set_status(struct i2c_emul *emul, uint8_t val)
 	data = CONTAINER_OF(emul, struct syv682x_emul_data, emul);
 	data->status_cond = val;
 	data->reg[SYV682X_STATUS_REG] |= val;
+
+	if (val & (SYV682X_STATUS_TSD | SYV682X_STATUS_OVP))
+		data->reg[SYV682X_CONTROL_1_REG] |= SYV682X_CONTROL_1_PWR_ENB;
+
+	/*
+	 * TODO(b/190519131): Make this emulator trigger GPIO-based interrupts
+	 * by itself based on the status. In real life, the device should turn
+	 * the power path off when either of these conditions occurs, and they
+	 * should quickly dissipate. If they somehow stay set, the device should
+	 * interrupt continuously.
+	 */
 }
 
 int syv682x_emul_get_reg(struct i2c_emul *emul, int reg, uint8_t *val)
@@ -110,13 +121,30 @@ static int syv682x_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 	i2c_dump_msgs("emul", msgs, num_msgs, addr);
 
 	if (num_msgs == 1) {
+		int reg = msgs[0].buf[0];
+		uint8_t val = msgs[0].buf[1];
+
 		if (!((msgs[0].flags & I2C_MSG_RW_MASK) == I2C_MSG_WRITE
 					&& msgs[0].len == 2)) {
 			LOG_ERR("Unexpected write msgs");
 			return -EIO;
 		}
-		return syv682x_emul_set_reg(emul, msgs[0].buf[0],
-				msgs[0].buf[1]);
+
+		switch (reg) {
+		case SYV682X_CONTROL_1_REG:
+			/*
+			 * If OVP or TSD is active, the power path stays
+			 * disabled.
+			 */
+			if (data->status_cond & (SYV682X_STATUS_TSD |
+						SYV682X_STATUS_OVP))
+				val |= SYV682X_CONTROL_1_PWR_ENB;
+			break;
+		default:
+			break;
+		}
+
+		return syv682x_emul_set_reg(emul, msgs[0].buf[0], val);
 	} else if (num_msgs == 2) {
 		int ret;
 		int reg;

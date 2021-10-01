@@ -66,6 +66,30 @@ static void test_ppc_syv682x_interrupt(void)
 	 * port back on without a detach. This could frustrate efforts to test
 	 * the TC.
 	 */
+
+	/*
+	 * A TSD event should cause the driver to disable source and sink paths.
+	 * (The device will have already physically disabled them.) The state of
+	 * the sink path is not part of the driver's API.
+	 */
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, true),
+			"Source enable failed");
+	syv682x_emul_set_status(emul, SYV682X_STATUS_TSD);
+	syv682x_interrupt(syv682x_port);
+	msleep(1);
+	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
+			"PPC is sourcing power after TSD");
+	syv682x_emul_set_status(emul, 0);
+
+	/* An OVP event should cause the driver to disable the source path. */
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, true),
+			"Source enable failed");
+	syv682x_emul_set_status(emul, SYV682X_STATUS_OVP);
+	syv682x_interrupt(syv682x_port);
+	msleep(1);
+	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
+			"PPC is sourcing power after TSD");
+	syv682x_emul_set_status(emul, 0);
 }
 
 static void test_ppc_syv682x(void)
