@@ -5,6 +5,7 @@
 board: native_posix
 supported-zephyr-versions:
   - v2.6
+  - v2.7
 supported-toolchains:
   - llvm
   - host
