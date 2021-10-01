@@ -43,6 +43,9 @@ LOG_MODULE_REGISTER(isl923x_emul, CONFIG_ISL923X_EMUL_LOG_LEVEL);
 /** Mask used for the control 1 register */
 #define REG_CONTROL1_MASK (GENMASK(15, 8) | GENMASK(6, 0))
 
+/** Mask used for the AC PROCHOT register */
+#define REG_PROCHOT_AC_MASK GENMASK(12, 7)
+
 struct isl923x_emul_data {
 	/** Common I2C data */
 	struct i2c_common_emul_data common;
@@ -62,12 +65,21 @@ struct isl923x_emul_data {
 	uint16_t control_0_reg;
 	/** Emulated control 1 register */
 	uint16_t control_1_reg;
+	/** Emulated AC PROCHOT register */
+	uint16_t ac_prochot_reg;
 };
 
 struct isl923x_emul_cfg {
 	/** Common I2C config */
 	const struct i2c_common_emul_cfg common;
 };
+
+const struct device *isl923x_emul_get_parent(const struct emul *emulator)
+{
+	struct isl923x_emul_data *data = emulator->data;
+
+	return data->common.i2c;
+}
 
 struct i2c_emul *isl923x_emul_get_i2c_emul(const struct emul *emulator)
 {
@@ -179,6 +191,13 @@ static int isl923x_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 		else
 			*val = (uint8_t)((data->control_1_reg >> 8) & 0xff);
 		break;
+	case ISL923X_REG_PROCHOT_AC:
+		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
+		if (bytes == 0)
+			*val = (uint8_t)(data->ac_prochot_reg & 0xff);
+		else
+			*val = (uint8_t)((data->ac_prochot_reg >> 8) & 0xff);
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -238,6 +257,14 @@ static int isl923x_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 			data->control_1_reg = val & REG_CONTROL1_MASK;
 		else
 			data->control_1_reg |= (val << 8) & REG_CONTROL1_MASK;
+		break;
+	case ISL923X_REG_PROCHOT_AC:
+		__ASSERT_NO_MSG(bytes == 1 || bytes == 2);
+		if (bytes == 1)
+			data->ac_prochot_reg = val & REG_PROCHOT_AC_MASK;
+		else
+			data->ac_prochot_reg |= (val << 8) &
+						REG_PROCHOT_AC_MASK;
 		break;
 	default:
 		return -EINVAL;

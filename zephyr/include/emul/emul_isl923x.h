@@ -6,8 +6,17 @@
 #ifndef ZEPHYR_INCLUDE_EMUL_EMUL_ISL923X_H_
 #define ZEPHYR_INCLUDE_EMUL_EMUL_ISL923X_H_
 
-#include <emul.h>
+#include <device.h>
 #include <drivers/i2c_emul.h>
+#include <emul.h>
+
+/**
+ * @brief Get the emulator's parent bus device
+ *
+ * @param emulator The emulator to look-up
+ * @return Pointer to the bus connecting to the emulator
+ */
+const struct device *isl923x_emul_get_parent(const struct emul *emulator);
 
 /**
  * @brief Get the I2C emulator struct
