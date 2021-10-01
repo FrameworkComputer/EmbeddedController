@@ -62,7 +62,7 @@ static enum ec_status hostcmd_setbasestate(struct host_cmd_handler_args *args)
 
 	base_force_state(params->cmd);
 
-	return EC_SUCCESS;
+	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_SET_BASE_STATE, hostcmd_setbasestate,
 		     EC_VER_MASK(0));
