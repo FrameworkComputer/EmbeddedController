@@ -306,6 +306,11 @@ void test_set_mode(void)
 	zassert_true(!isl923x_emul_is_learn_mode_enabled(isl923x_emul), NULL);
 }
 
+void test_post_init(void)
+{
+	zassert_ok(isl923x_drv.post_init(CHARGER_NUM), NULL);
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(isl923x,
@@ -317,6 +322,7 @@ void test_suite_isl923x(void)
 			 ztest_unit_test(test_options),
 			 ztest_unit_test(test_get_info),
 			 ztest_unit_test(test_status),
-			 ztest_unit_test(test_set_mode));
+			 ztest_unit_test(test_set_mode),
+			 ztest_unit_test(test_post_init));
 	ztest_run_test_suite(isl923x);
 }
