@@ -7,6 +7,7 @@
 #include <drivers/emul.h>
 
 #include "battery.h"
+#include "battery_smart.h"
 #include "charger_utils.h"
 #include "driver/charger/isl923x.h"
 #include "driver/charger/isl923x_public.h"
@@ -264,6 +265,14 @@ void test_get_info(void)
 		      NULL);
 }
 
+void test_status(void)
+{
+	int status;
+
+	zassert_ok(isl923x_drv.get_status(CHARGER_NUM, &status), NULL);
+	zassert_equal(CHARGER_LEVEL_2, status, NULL);
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(isl923x,
@@ -273,6 +282,7 @@ void test_suite_isl923x(void)
 			 ztest_unit_test(test_manufacturer_id),
 			 ztest_unit_test(test_device_id),
 			 ztest_unit_test(test_options),
-			 ztest_unit_test(test_get_info));
+			 ztest_unit_test(test_get_info),
+			 ztest_unit_test(test_status));
 	ztest_run_test_suite(isl923x);
 }
