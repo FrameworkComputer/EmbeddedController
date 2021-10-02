@@ -12,6 +12,5 @@ supported-toolchains:
   - coreboot-sdk
   - zephyr
 supported-zephyr-versions:
-  - v2.6
   - v2.7
 output-type: binman
