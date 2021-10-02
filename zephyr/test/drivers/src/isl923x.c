@@ -43,6 +43,13 @@ BUILD_ASSERT(IS_ENABLED(CONFIG_CHARGER_ISL9238),
 #define CHARGER_NUM get_charger_num(&isl923x_drv)
 #define ISL923X_EMUL emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)))
 
+static int mock_write_fn_always_fail(struct i2c_emul *emul, int reg,
+				     uint8_t val, int bytes, void *data)
+{
+	ztest_test_fail();
+	return 0;
+}
+
 void test_isl923x_set_current(void)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
@@ -432,6 +439,53 @@ void test_set_dc_prochot(void)
 	}
 }
 
+void test_comparator_inversion(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	const struct device *i2c_dev = isl923x_emul_get_parent(isl923x_emul);
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+	uint8_t reg_addr = ISL923X_REG_CONTROL2;
+	uint16_t reg_value;
+	uint8_t tx_buf[] = { reg_addr, 0, 0 };
+
+	/* Test failed read, should not write */
+	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL2);
+	i2c_common_emul_set_write_func(i2c_emul, mock_write_fn_always_fail,
+				       NULL);
+	zassert_equal(EC_ERROR_INVAL,
+		      isl923x_set_comparator_inversion(CHARGER_NUM, false),
+		      NULL);
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_func(i2c_emul, NULL, NULL);
+
+	/* Test failed write */
+	zassert_ok(i2c_write(i2c_dev, tx_buf, sizeof(tx_buf), i2c_emul->addr),
+		   "Failed to clear CTRL2 register");
+	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_CONTROL2);
+	zassert_equal(EC_ERROR_INVAL,
+		      isl923x_set_comparator_inversion(CHARGER_NUM, true),
+		      NULL);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test enable comparator inversion */
+	zassert_ok(isl923x_set_comparator_inversion(CHARGER_NUM, true), NULL);
+	zassert_ok(i2c_write_read(i2c_dev, i2c_emul->addr, &reg_addr,
+				  sizeof(reg_addr), &reg_value,
+				  sizeof(reg_value)),
+		   "Failed to read CTRL 2 register");
+	zassert_true((reg_value & ISL923X_C2_INVERT_CMOUT) != 0, NULL);
+
+	/* Test disable comparator inversion */
+	zassert_ok(isl923x_set_comparator_inversion(CHARGER_NUM, false), NULL);
+	zassert_ok(i2c_write_read(i2c_dev, i2c_emul->addr, &reg_addr,
+				  sizeof(reg_addr), &reg_value,
+				  sizeof(reg_value)),
+		   "Failed to read CTRL 2 register");
+	zassert_true((reg_value & ISL923X_C2_INVERT_CMOUT) == 0, NULL);
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(isl923x,
@@ -446,6 +500,7 @@ void test_suite_isl923x(void)
 			 ztest_unit_test(test_set_mode),
 			 ztest_unit_test(test_post_init),
 			 ztest_unit_test(test_set_ac_prochot),
-			 ztest_unit_test(test_set_dc_prochot));
+			 ztest_unit_test(test_set_dc_prochot),
+			 ztest_unit_test(test_comparator_inversion));
 	ztest_run_test_suite(isl923x);
 }
