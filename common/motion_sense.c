@@ -232,7 +232,7 @@ static int motion_sense_set_ec_rate_from_ap(
 	 * One will have a delay guarantee to be less than its ODR.
 	 */
 	if (SECOND * 1100 / odr_mhz > new_rate_us)
-		new_rate_us = new_rate_us / 95 * 100;
+		new_rate_us = new_rate_us * 95 / 100;
 
 end_set_ec_rate_from_ap:
 	return MAX(new_rate_us, motion_min_interval);
