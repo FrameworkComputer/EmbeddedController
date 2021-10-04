@@ -460,10 +460,11 @@ void ln9310_software_enable(int enable)
 	/*
 	 * LN9310 startup requires (nEN=0 AND STANDBY_EN=0) where nEN is a pin
 	 * and STANDBY_EN is a register bit. Previous EC firmware set
-	 * STANDBY_EN=1 in ln9310_init and toggled nEN to startup/shutdown. This
-	 * function implements an alternate software (i.e. controlled by EC
-	 * through I2C commands) startup sequence so one option is to set nEN=1
-	 * and just used ln9310_software_enable to startup/shutdown.
+	 * STANDBY_EN=1 in ln9310_init and toggled nEN to startup/shutdown. In
+	 * addition to normal startup, this function also implements an
+	 * alternate software (i.e. controlled by EC through I2C commands)
+	 * startup sequence required by older chip versions, so one option is to
+	 * set nEN=1 and just used ln9310_software_enable to startup/shutdown.
 	 * ln9310_software_enable can also be used in conjunction w/ the nEN pin
 	 * (in case nEN pin is desired as visible signal ) as follows:
 	 *
