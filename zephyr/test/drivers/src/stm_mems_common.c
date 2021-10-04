@@ -266,6 +266,71 @@ static void test_st_get_data_rate(void)
 		      expected_data_rate);
 }
 
+static void test_st_normalize(void)
+{
+	struct stprivate_data driver_data = {
+		.resol = 12, /* 12 bits of useful data (arbitrary) */
+		.offset = {  /* Arbitrary offsets */
+			[X] = -100,
+			[Y] = 200,
+			[Z] = 100,
+		},
+	};
+	/* Fixed-point identity matrix that performs no rotation. */
+	const mat33_fp_t identity_rot_matrix = {
+		{ INT_TO_FP(1), INT_TO_FP(0), INT_TO_FP(0) },
+		{ INT_TO_FP(0), INT_TO_FP(1), INT_TO_FP(0) },
+		{ INT_TO_FP(0), INT_TO_FP(0), INT_TO_FP(1) },
+	};
+	const struct motion_sensor_t sensor = {
+		.drv_data = &driver_data,
+		.rot_standard_ref = &identity_rot_matrix,
+		.current_range = 32, /* used to scale offsets (arbitrary) */
+	};
+
+	/* Accelerometer data is passed in with the format:
+	 * (lower address)                  (higher address)
+	 *  [X LSB] [X MSB] [Y LSB] [Y MSB] [Z LSB] [Z MSB]
+	 *
+	 * The LSB are left-aligned and contain noise/junk data
+	 * in their least-significant bit positions. When interpreted
+	 * as int16 samples, the `driver_data.resol`-count most
+	 * significant bits are what we actually use. For this test, we
+	 * set `resol` to 12, so there will be 12 useful bits and 4 noise
+	 * bits. This test (and the EC code) assume we are compiling on
+	 * a little-endian machine. The samples themselvesare unsigned and
+	 * biased at 2^12/2 = 2^11.
+	 */
+	uint16_t input_reading[] = {
+		((BIT(11) - 100) << 4) | 0x000a,
+		((BIT(11) + 0) << 4) | 0x000b,
+		((BIT(11) + 100) << 4) | 0x000c,
+	};
+
+	/* Expected outputs w/ noise bits suppressed and offsets applied.
+	 * Note that the data stays left-aligned.
+	 */
+	intv3_t expected_output = {
+		((BIT(11) - 100) << 4) + driver_data.offset[X],
+		((BIT(11) + 0) << 4) + driver_data.offset[Y],
+		((BIT(11) + 100) << 4) + driver_data.offset[Z],
+	};
+
+	intv3_t actual_output = { 0 };
+
+	st_normalize(&sensor, (int *)&actual_output, (uint8_t *)input_reading);
+
+	zassert_within(actual_output[X], expected_output[X], 0.5f,
+		      "X output is %d but expected %d", actual_output[X],
+		      expected_output[X]);
+	zassert_within(actual_output[Y], expected_output[Y], 0.5f,
+		      "Y output is %d but expected %d", actual_output[Y],
+		      expected_output[Y]);
+	zassert_within(actual_output[Z], expected_output[Z], 0.5f,
+		      "Z output is %d but expected %d", actual_output[Z],
+		      expected_output[Z]);
+}
+
 void test_suite_stm_mems_common(void)
 {
 	ztest_test_suite(
@@ -279,6 +344,7 @@ void test_suite_stm_mems_common(void)
 		ztest_unit_test(test_st_get_resolution),
 		ztest_unit_test(test_st_set_offset),
 		ztest_unit_test(test_st_get_offset),
-		ztest_unit_test(test_st_get_data_rate));
+		ztest_unit_test(test_st_get_data_rate),
+		ztest_unit_test(test_st_normalize));
 	ztest_run_test_suite(stm_mems_common);
 }
