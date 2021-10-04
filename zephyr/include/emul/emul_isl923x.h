@@ -29,6 +29,13 @@ const struct device *isl923x_emul_get_parent(const struct emul *emulator);
 struct i2c_emul *isl923x_emul_get_i2c_emul(const struct emul *emulator);
 
 /**
+ * @brief Reset all registers
+ *
+ * @param emulator The emulator to modify
+ */
+void isl923x_emul_reset(const struct emul *emulator);
+
+/**
  * @brief Set the manufacturer ID
  *
  * @param emulator The emulator to modify

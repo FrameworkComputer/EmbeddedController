@@ -105,6 +105,15 @@ struct i2c_emul *isl923x_emul_get_i2c_emul(const struct emul *emulator)
 	return &(data->common.emul);
 }
 
+void isl923x_emul_reset(const struct emul *emulator)
+{
+	struct isl923x_emul_data *data = emulator->data;
+	struct i2c_common_emul_data common_backup = data->common;
+
+	memset(data, 0, sizeof(struct isl923x_emul_data));
+	data->common = common_backup;
+}
+
 void isl923x_emul_set_manufacturer_id(const struct emul *emulator,
 				      uint16_t manufacturer_id)
 {

@@ -23,9 +23,22 @@ const uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size)
 	return NULL;
 }
 
+#ifdef CONFIG_ZTEST
+struct system_jumped_late_mock system_jumped_late_mock = {
+	.ret_val = 0,
+	.call_count = 0,
+};
+#endif
+
 int system_jumped_late(void)
 {
+#ifdef CONFIG_ZTEST
+	system_jumped_late_mock.call_count++;
+
+	return system_jumped_late_mock.ret_val;
+#else
 	return 0;
+#endif
 }
 
 enum ec_image system_get_image_copy(void)

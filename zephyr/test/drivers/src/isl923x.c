@@ -13,6 +13,7 @@
 #include "driver/charger/isl923x_public.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_isl923x.h"
+#include "system.h"
 
 BUILD_ASSERT(CONFIG_CHARGER_SENSE_RESISTOR == 10 ||
 	     CONFIG_CHARGER_SENSE_RESISTOR == 5);
@@ -566,6 +567,112 @@ static void test_get_vbus_voltage(void)
 	}
 }
 
+static void test_init(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+	int input_current;
+
+	/* Test failed CTRL2 register read (prochot debounce) */
+	isl923x_emul_reset(isl923x_emul);
+	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL2);
+	isl923x_drv.init(CHARGER_NUM);
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+	zassert_ok(isl923x_drv.get_input_current_limit(CHARGER_NUM,
+						       &input_current),
+		   NULL);
+	zassert_equal(0, input_current,
+		      "Expected input current 0mV but got %dmV", input_current);
+
+	/* Test failed CTRL2 register write */
+	isl923x_emul_reset(isl923x_emul);
+	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_CONTROL2);
+	isl923x_drv.init(CHARGER_NUM);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+	zassert_ok(isl923x_drv.get_input_current_limit(CHARGER_NUM,
+						       &input_current),
+		   NULL);
+	zassert_equal(0, input_current,
+		      "Expected input current 0mV but got %dmV", input_current);
+
+	/* Test failed CTRL 0 read */
+	isl923x_emul_reset(isl923x_emul);
+	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL0);
+	isl923x_drv.init(CHARGER_NUM);
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+	zassert_ok(isl923x_drv.get_input_current_limit(CHARGER_NUM,
+						       &input_current),
+		   NULL);
+	zassert_equal(0, input_current,
+		      "Expected input current 0mV but got %dmV", input_current);
+
+	/* Test failed CTRL 0 write */
+	isl923x_emul_reset(isl923x_emul);
+	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_CONTROL0);
+	isl923x_drv.init(CHARGER_NUM);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+	zassert_ok(isl923x_drv.get_input_current_limit(CHARGER_NUM,
+						       &input_current),
+		   NULL);
+	zassert_equal(0, input_current,
+		      "Expected input current 0mV but got %dmV", input_current);
+
+	/* Test failed CTRL 3 read */
+	isl923x_emul_reset(isl923x_emul);
+	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL9238_REG_CONTROL3);
+	isl923x_drv.init(CHARGER_NUM);
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+	zassert_ok(isl923x_drv.get_input_current_limit(CHARGER_NUM,
+						       &input_current),
+		   NULL);
+	zassert_equal(0, input_current,
+		      "Expected input current 0mV but got %dmV", input_current);
+
+	/* Test failed CTRL 3 write */
+	isl923x_emul_reset(isl923x_emul);
+	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL9238_REG_CONTROL3);
+	isl923x_drv.init(CHARGER_NUM);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+	zassert_ok(isl923x_drv.get_input_current_limit(CHARGER_NUM,
+						       &input_current),
+		   NULL);
+	zassert_equal(0, input_current,
+		      "Expected input current 0mV but got %dmV", input_current);
+
+	/* Test failed write adapter current limit */
+	isl923x_emul_reset(isl923x_emul);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   ISL923X_REG_ADAPTER_CURRENT_LIMIT1);
+	isl923x_drv.init(CHARGER_NUM);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+	zassert_ok(isl923x_drv.get_input_current_limit(CHARGER_NUM,
+						       &input_current),
+		   NULL);
+	zassert_equal(0, input_current,
+		      "Expected input current 0mV but got %dmV", input_current);
+
+	/*
+	 * Test system_jumped_late being true (will not call
+	 * set_input_current_limit)
+	 */
+	system_jumped_late_mock.ret_val = true;
+	system_jumped_late_mock.call_count = 0;
+	isl923x_emul_reset(isl923x_emul);
+	isl923x_drv.init(CHARGER_NUM);
+	zassert_equal(
+		1, system_jumped_late_mock.call_count,
+		"Expected to have called system_jumped_late() once, but got %d calls",
+		system_jumped_late_mock.call_count);
+	system_jumped_late_mock.ret_val = false;
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(isl923x,
@@ -583,6 +690,7 @@ void test_suite_isl923x(void)
 			 ztest_unit_test(test_set_dc_prochot),
 			 ztest_unit_test(test_comparator_inversion),
 			 ztest_unit_test(test_discharge_on_ac),
-			 ztest_unit_test(test_get_vbus_voltage));
+			 ztest_unit_test(test_get_vbus_voltage),
+			 ztest_unit_test(test_init));
 	ztest_run_test_suite(isl923x);
 }

@@ -185,6 +185,14 @@ uintptr_t get_program_memory_addr(enum ec_image copy);
  */
 int system_jumped_to_this_image(void);
 
+#ifdef CONFIG_ZTEST
+struct system_jumped_late_mock {
+	int ret_val;
+	int call_count;
+};
+extern struct system_jumped_late_mock system_jumped_late_mock;
+#endif
+
 /**
  * Return non-zero if late (legacy) sysjump occurred.
  *
