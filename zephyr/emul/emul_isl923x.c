@@ -82,6 +82,8 @@ struct isl923x_emul_data {
 	uint16_t ac_prochot_reg;
 	/** Emulated DC PROCHOT register */
 	uint16_t dc_prochot_reg;
+	/** Emulated ADC vbus register */
+	uint16_t adc_vbus_reg;
 };
 
 struct isl923x_emul_cfg {
@@ -135,6 +137,15 @@ void isl923x_emul_set_learn_mode_enabled(const struct emul *emulator,
 		data->control_1_reg |= ISL923X_C1_LEARN_MODE_ENABLE;
 	else
 		data->control_1_reg &= ~ISL923X_C1_LEARN_MODE_ENABLE;
+}
+
+void isl923x_emul_set_adc_vbus(const struct emul *emulator,
+			       uint16_t value)
+{
+	struct isl923x_emul_data *data = emulator->data;
+
+	/* The VBUS voltage is returned in bits 13:6. The LSB is 96mV. */
+	data->adc_vbus_reg = value & GENMASK(13, 6);
 }
 
 static int isl923x_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
@@ -233,6 +244,13 @@ static int isl923x_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 			*val = (uint8_t)(data->dc_prochot_reg & 0xff);
 		else
 			*val = (uint8_t)((data->dc_prochot_reg >> 8) & 0xff);
+		break;
+	case RAA489000_REG_ADC_VBUS:
+		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
+		if (bytes == 0)
+			*val = (uint8_t)(data->adc_vbus_reg & 0xff);
+		else
+			*val = (uint8_t)((data->adc_vbus_reg >> 8) & 0xff);
 		break;
 	default:
 		return -EINVAL;

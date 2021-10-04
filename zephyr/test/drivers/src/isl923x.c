@@ -537,6 +537,35 @@ static void test_discharge_on_ac(void)
 	zassert_true((reg_value & ISL923X_C1_LEARN_MODE_ENABLE) == 0, NULL);
 }
 
+static void test_get_vbus_voltage(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+	int reg_values[] = { BIT(6),  BIT(7),  BIT(8),	BIT(9),
+			     BIT(10), BIT(11), BIT(12), BIT(13) };
+	int voltage;
+
+	/* Test fail to read the ADC vbus register */
+	i2c_common_emul_set_read_fail_reg(i2c_emul, RAA489000_REG_ADC_VBUS);
+	zassert_equal(EC_ERROR_INVAL,
+		      isl923x_drv.get_vbus_voltage(CHARGER_NUM, 0, &voltage),
+		      NULL);
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	for (int i = 0; i < ARRAY_SIZE(reg_values); ++i) {
+		int expected_voltage = (reg_values[i] >> 6) * 96;
+
+		isl923x_emul_set_adc_vbus(isl923x_emul, reg_values[i]);
+		zassert_ok(isl923x_drv.get_vbus_voltage(CHARGER_NUM, 0,
+							&voltage),
+			   NULL);
+		zassert_equal(expected_voltage, voltage,
+			      "Expected %dmV but got %dmV", expected_voltage,
+			      voltage);
+	}
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(isl923x,
@@ -553,6 +582,7 @@ void test_suite_isl923x(void)
 			 ztest_unit_test(test_set_ac_prochot),
 			 ztest_unit_test(test_set_dc_prochot),
 			 ztest_unit_test(test_comparator_inversion),
-			 ztest_unit_test(test_discharge_on_ac));
+			 ztest_unit_test(test_discharge_on_ac),
+			 ztest_unit_test(test_get_vbus_voltage));
 	ztest_run_test_suite(isl923x);
 }

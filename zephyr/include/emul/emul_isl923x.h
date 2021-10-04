@@ -63,4 +63,13 @@ bool isl923x_emul_is_learn_mode_enabled(const struct emul *emulator);
 void isl923x_emul_set_learn_mode_enabled(const struct emul *emulator,
 					 bool enabled);
 
+/**
+ * @brief Set the emulator's ADC vbus register
+ *
+ * @param emulator The emulator to modify
+ * @param value The new ADC register value
+ */
+void isl923x_emul_set_adc_vbus(const struct emul *emulator,
+			       uint16_t value);
+
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_ISL923X_H_ */
