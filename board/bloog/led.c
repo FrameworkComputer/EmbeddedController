@@ -47,7 +47,7 @@ static void led_set_color_battery(int port, enum led_color color)
 		(color == LED_WHITE) ? BAT_LED_ON : BAT_LED_OFF);
 }
 
-void led_set_color_power(enum ec_led_colors color)
+void led_set_color_power(enum led_color color)
 {
 	switch (color) {
 	case LED_OFF:
@@ -101,7 +101,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 		break;
 	case EC_LED_ID_POWER_LED:
 		if (brightness[EC_LED_COLOR_WHITE] != 0)
-			led_set_color_power(EC_LED_COLOR_WHITE);
+			led_set_color_power(LED_WHITE);
 		else
 			led_set_color_power(LED_OFF);
 		break;

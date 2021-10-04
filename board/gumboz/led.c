@@ -81,7 +81,7 @@ static void led_set_color_battery(int port, enum led_color color)
 	}
 }
 
-void led_set_color_power(enum ec_led_colors color)
+void led_set_color_power(enum led_color color)
 {
 	switch (color) {
 	case LED_OFF:

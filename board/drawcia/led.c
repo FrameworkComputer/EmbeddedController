@@ -52,7 +52,7 @@ static int led_set_color_battery(enum led_color color)
 	return EC_SUCCESS;
 }
 
-static int led_set_color_power(enum ec_led_colors color)
+static int led_set_color_power(enum led_color color)
 {
 	switch (color) {
 	case LED_OFF:

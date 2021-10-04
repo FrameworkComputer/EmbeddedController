@@ -54,12 +54,12 @@ static const uint8_t color_brightness[2] = {
 	[LED_WHITE]   = 100,
 };
 
-void led_set_color_power(enum ec_led_colors color)
+void led_set_color_power(enum led_color color)
 {
 	pwm_set_duty(PWM_CH_POWER_LED, color_brightness[color]);
 }
 
-void led_set_color_battery(enum ec_led_colors color)
+void led_set_color_battery(enum led_color color)
 {
 	uint32_t board_ver = 0;
 	int led_batt_on_lvl, led_batt_off_lvl;
