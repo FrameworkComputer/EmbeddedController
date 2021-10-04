@@ -20,12 +20,6 @@ static inline int lm3630a_write(uint8_t reg, uint8_t val)
 			  reg, val);
 }
 
-static inline int lm3630a_read(uint8_t reg, int *val)
-{
-	return i2c_read8(I2C_PORT_KBLIGHT, LM3630A_I2C_ADDR_FLAGS,
-			 reg, val);
-}
-
 static void deferred_lm3630a_poweron(void)
 {
 	/*
