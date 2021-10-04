@@ -46,3 +46,5 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TIMER       hwtimer.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C         i2c.c)
 zephyr_library_sources_ifdef(CONFIG_SHIMMED_TASKS           tasks.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_WATCHDOG    watchdog.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BC12_DETECT_PI3USB9201
+	                                                     bc12_pi3usb9201.c)
