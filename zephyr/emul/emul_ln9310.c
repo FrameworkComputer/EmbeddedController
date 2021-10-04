@@ -277,12 +277,6 @@ static int ln9310_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 	case LN9310_REG_PWR_CTRL:
 		__ASSERT_NO_MSG(bytes == 1);
 		data->power_ctrl_reg = val;
-		bool reset_standby = ((val & LN9310_PWR_OP_MODE_SWITCH21) ||
-				      (val & LN9310_PWR_OP_MODE_SWITCH31)) &&
-				     data->bc_sts_c_reg >=
-					     LN9310_BC_STS_C_CHIP_REV_FIXED;
-		if (reset_standby)
-			data->startup_ctrl_reg &= ~LN9310_STARTUP_STANDBY_EN;
 		break;
 	case LN9310_REG_TIMER_CTRL:
 		__ASSERT_NO_MSG(bytes == 1);

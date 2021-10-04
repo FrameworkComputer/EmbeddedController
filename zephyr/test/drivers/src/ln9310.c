@@ -33,7 +33,11 @@ static void test_ln9310_2s_powers_up(void)
 	zassert_true(ln9310_emul_is_init(emulator), NULL);
 
 	k_msleep(TEST_DELAY_MS);
+	zassert_false(ln9310_power_good(), NULL);
 
+	ln9310_software_enable(1);
+
+	k_msleep(TEST_DELAY_MS);
 	zassert_true(ln9310_power_good(), NULL);
 }
 
@@ -53,7 +57,11 @@ static void test_ln9310_3s_powers_up(void)
 	zassert_true(ln9310_emul_is_init(emulator), NULL);
 
 	k_msleep(TEST_DELAY_MS);
+	zassert_false(ln9310_power_good(), NULL);
 
+	ln9310_software_enable(1);
+
+	k_msleep(TEST_DELAY_MS);
 	zassert_true(ln9310_power_good(), NULL);
 }
 
