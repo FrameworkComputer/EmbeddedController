@@ -486,6 +486,57 @@ void test_comparator_inversion(void)
 	zassert_true((reg_value & ISL923X_C2_INVERT_CMOUT) == 0, NULL);
 }
 
+static void test_discharge_on_ac(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	const struct device *i2c_dev = isl923x_emul_get_parent(isl923x_emul);
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+	uint8_t reg_addr = ISL923X_REG_CONTROL1;
+	uint8_t tx_buf[] = { reg_addr, 0, 0 };
+	uint16_t reg_value;
+
+	/* Test failure to read CTRL1 register */
+	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL1);
+	zassert_equal(EC_ERROR_INVAL,
+		      isl923x_drv.discharge_on_ac(CHARGER_NUM, true), NULL);
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Set CTRL1 register to 0 */
+	zassert_ok(i2c_write(i2c_dev, tx_buf, sizeof(tx_buf), i2c_emul->addr),
+		   NULL);
+
+	/* Test failure to write CTRL1 register */
+	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_CONTROL1);
+	zassert_equal(EC_ERROR_INVAL,
+		      isl923x_drv.discharge_on_ac(CHARGER_NUM, true), NULL);
+	zassert_ok(i2c_write_read(i2c_dev, i2c_emul->addr, &reg_addr,
+				  sizeof(reg_addr), &reg_value,
+				  sizeof(reg_value)),
+		   NULL);
+	zassert_equal(0, reg_value, NULL);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test enabling discharge on AC */
+	zassert_ok(isl923x_drv.discharge_on_ac(CHARGER_NUM, true), NULL);
+
+	zassert_ok(i2c_write_read(i2c_dev, i2c_emul->addr, &reg_addr,
+				  sizeof(reg_addr), &reg_value,
+				  sizeof(reg_value)),
+		   NULL);
+	zassert_true((reg_value & ISL923X_C1_LEARN_MODE_ENABLE) != 0, NULL);
+
+	/* Test disabling discharge on AC */
+	zassert_ok(isl923x_drv.discharge_on_ac(CHARGER_NUM, false), NULL);
+
+	zassert_ok(i2c_write_read(i2c_dev, i2c_emul->addr, &reg_addr,
+				  sizeof(reg_addr), &reg_value,
+				  sizeof(reg_value)),
+		   NULL);
+	zassert_true((reg_value & ISL923X_C1_LEARN_MODE_ENABLE) == 0, NULL);
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(isl923x,
@@ -501,6 +552,7 @@ void test_suite_isl923x(void)
 			 ztest_unit_test(test_post_init),
 			 ztest_unit_test(test_set_ac_prochot),
 			 ztest_unit_test(test_set_dc_prochot),
-			 ztest_unit_test(test_comparator_inversion));
+			 ztest_unit_test(test_comparator_inversion),
+			 ztest_unit_test(test_discharge_on_ac));
 	ztest_run_test_suite(isl923x);
 }
