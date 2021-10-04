@@ -53,13 +53,6 @@ struct gpio_data {
 	const struct device *dev;
 };
 
-#define GPIO_DATA(id) COND_CODE_1(DT_NODE_HAS_PROP(id, enum_name), ({}, ), ())
-static struct gpio_data data[] = {
-#if DT_NODE_EXISTS(DT_PATH(named_gpios))
-	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_DATA)
-#endif
-};
-
 /* Maps platform/ec gpio callback information */
 struct gpio_signal_callback {
 	/* The platform/ec gpio_signal */
@@ -194,7 +187,8 @@ int gpio_get_level(enum gpio_signal signal)
 	if (!gpio_is_implemented(signal))
 		return 0;
 
-	const int l = gpio_pin_get_raw(data[signal].dev, configs[signal].pin);
+	const int l = gpio_pin_get_raw(configs[signal].dev,
+				       configs[signal].pin);
 
 	if (l < 0) {
 		LOG_ERR("Cannot read %s (%d)", configs[signal].name, l);
@@ -238,7 +232,9 @@ void gpio_set_level(enum gpio_signal signal, int value)
 	if (!gpio_is_implemented(signal))
 		return;
 
-	int rv = gpio_pin_set_raw(data[signal].dev, configs[signal].pin, value);
+	int rv = gpio_pin_set_raw(configs[signal].dev,
+				  configs[signal].pin,
+				  value);
 
 	if (rv < 0) {
 		LOG_ERR("Cannot write %s (%d)", configs[signal].name, rv);
@@ -312,10 +308,9 @@ static int init_gpios(const struct device *unused)
 
 	/* Loop through all GPIOs in device tree to set initial configuration */
 	for (size_t i = 0; i < ARRAY_SIZE(configs); ++i) {
-		data[i].dev = configs[i].dev;
 		int rv;
 
-		if (!device_is_ready(data[i].dev))
+		if (!device_is_ready(configs[i].dev))
 			LOG_ERR("Not found (%s)", configs[i].name);
 
 		/*
@@ -330,7 +325,7 @@ static int init_gpios(const struct device *unused)
 				~(GPIO_OUTPUT_INIT_LOW | GPIO_OUTPUT_INIT_HIGH);
 		}
 
-		rv = gpio_pin_configure(data[i].dev, configs[i].pin, flags);
+		rv = gpio_pin_configure(configs[i].dev, configs[i].pin, flags);
 		if (rv < 0) {
 			LOG_ERR("Config failed %s (%d)", configs[i].name, rv);
 		}
@@ -348,7 +343,7 @@ static int init_gpios(const struct device *unused)
 
 		gpio_init_callback(&zephyr_gpio_callbacks[i], gpio_handler_shim,
 				   BIT(configs[signal].pin));
-		rv = gpio_add_callback(data[signal].dev,
+		rv = gpio_add_callback(configs[signal].dev,
 				       &zephyr_gpio_callbacks[i]);
 
 		if (rv < 0) {
@@ -389,7 +384,8 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 	 * Config interrupt flags (e.g. INT_EDGE_BOTH) & enable interrupt
 	 * together.
 	 */
-	rv = gpio_pin_interrupt_configure(data[signal].dev, configs[signal].pin,
+	rv = gpio_pin_interrupt_configure(configs[signal].dev,
+					  configs[signal].pin,
 					  (interrupt->flags | GPIO_INT_ENABLE) &
 						  ~GPIO_INT_DISABLE);
 	if (rv < 0) {
@@ -407,7 +403,8 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 	if (!gpio_is_implemented(signal))
 		return -1;
 
-	rv = gpio_pin_interrupt_configure(data[signal].dev, configs[signal].pin,
+	rv = gpio_pin_interrupt_configure(configs[signal].dev,
+					  configs[signal].pin,
 					  GPIO_INT_DISABLE);
 	if (rv < 0) {
 		LOG_ERR("Failed to disable interrupt on %s (%d)",
@@ -422,7 +419,7 @@ void gpio_reset(enum gpio_signal signal)
 	if (!gpio_is_implemented(signal))
 		return;
 
-	gpio_pin_configure(data[signal].dev, configs[signal].pin,
+	gpio_pin_configure(configs[signal].dev, configs[signal].pin,
 			   configs[signal].init_flags);
 }
 
@@ -431,7 +428,7 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 	if (!gpio_is_implemented(signal))
 		return;
 
-	gpio_pin_configure(data[signal].dev, configs[signal].pin,
+	gpio_pin_configure(configs[signal].dev, configs[signal].pin,
 			   convert_to_zephyr_flags(flags));
 }
 
