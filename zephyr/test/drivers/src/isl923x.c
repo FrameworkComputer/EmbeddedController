@@ -51,7 +51,7 @@ static int mock_write_fn_always_fail(struct i2c_emul *emul, int reg,
 	return 0;
 }
 
-void test_isl923x_set_current(void)
+static void test_isl923x_set_current(void)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -91,7 +91,7 @@ void test_isl923x_set_current(void)
 	}
 }
 
-void test_isl923x_set_voltage(void)
+static void test_isl923x_set_voltage(void)
 {
 	int expected_voltage_milli_volts[] = { 8,    16,   32,	 64,
 					       128,  256,  512,	 1024,
@@ -124,7 +124,7 @@ void test_isl923x_set_voltage(void)
 	}
 }
 
-void test_isl923x_set_input_current_limit(void)
+static void test_isl923x_set_input_current_limit(void)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -190,7 +190,7 @@ void test_isl923x_set_input_current_limit(void)
 	}
 }
 
-void test_manufacturer_id(void)
+static void test_manufacturer_id(void)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -211,7 +211,7 @@ void test_manufacturer_id(void)
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
-void test_device_id(void)
+static void test_device_id(void)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -232,7 +232,7 @@ void test_device_id(void)
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
-void test_options(void)
+static void test_options(void)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -273,7 +273,7 @@ void test_options(void)
 		      "Expected options 0xff7ffffe but got 0x%x", option);
 }
 
-void test_get_info(void)
+static void test_get_info(void)
 {
 	const struct charger_info *info = isl923x_drv.get_info(CHARGER_NUM);
 
@@ -292,7 +292,7 @@ void test_get_info(void)
 		      NULL);
 }
 
-void test_status(void)
+static void test_status(void)
 {
 	int status;
 
@@ -300,7 +300,7 @@ void test_status(void)
 	zassert_equal(CHARGER_LEVEL_2, status, NULL);
 }
 
-void test_set_mode(void)
+static void test_set_mode(void)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 
@@ -318,12 +318,12 @@ void test_set_mode(void)
 	zassert_true(!isl923x_emul_is_learn_mode_enabled(isl923x_emul), NULL);
 }
 
-void test_post_init(void)
+static void test_post_init(void)
 {
 	zassert_ok(isl923x_drv.post_init(CHARGER_NUM), NULL);
 }
 
-void test_set_ac_prochot(void)
+static void test_set_ac_prochot(void)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	const struct device *i2c_dev = isl923x_emul_get_parent(isl923x_emul);
@@ -384,7 +384,7 @@ void test_set_ac_prochot(void)
 			      current_milli_amps);
 	}
 }
-void test_set_dc_prochot(void)
+static void test_set_dc_prochot(void)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	const struct device *i2c_dev = isl923x_emul_get_parent(isl923x_emul);
@@ -440,7 +440,7 @@ void test_set_dc_prochot(void)
 	}
 }
 
-void test_comparator_inversion(void)
+static void test_comparator_inversion(void)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	const struct device *i2c_dev = isl923x_emul_get_parent(isl923x_emul);
