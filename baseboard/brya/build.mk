@@ -10,4 +10,5 @@ baseboard-y=
 baseboard-y+=baseboard.o
 baseboard-y+=battery_presence.o
 baseboard-y+=cbi.o
+baseboard-$(HAS_TASK_PROCHOT)+=prochot.o
 baseboard-y+=usb_pd_policy.o
