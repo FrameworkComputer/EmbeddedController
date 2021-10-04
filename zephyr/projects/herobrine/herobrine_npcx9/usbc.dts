@@ -1,0 +1,28 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	usbc {
+		port0: usbc-port0 {
+			bc12 {
+				compatible = "pericom,pi3usb9201";
+				status = "okay";
+				irq = <&gpio_usb_c0_bc12_int_l>;
+				port = <&i2c_power>;
+				i2c-addr-flags = "PI3USB9201_I2C_ADDR_3_FLAGS";
+			};
+		};
+
+		port1: usbc-port1 {
+			bc12 {
+				compatible = "pericom,pi3usb9201";
+				status = "okay";
+				irq = <&gpio_usb_c1_bc12_int_l>;
+				port = <&i2c_eeprom>;
+				i2c-addr-flags = "PI3USB9201_I2C_ADDR_3_FLAGS";
+			};
+		};
+	};
+};

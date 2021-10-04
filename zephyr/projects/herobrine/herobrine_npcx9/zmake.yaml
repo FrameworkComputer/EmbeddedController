@@ -9,6 +9,7 @@ dts-overlays:
   - i2c.dts
   - motionsense.dts
   - switchcap.dts
+  - usbc.dts
 supported-toolchains:
   - coreboot-sdk
   - zephyr

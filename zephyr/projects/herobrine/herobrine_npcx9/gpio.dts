@@ -27,12 +27,12 @@
 			enum-name = "GPIO_USB_C1_SWCTL_INT_ODL";
 			label = "USB_C1_SWCTL_INT_ODL";
 		};
-		usb_c0_bc12_int_l {
+		gpio_usb_c0_bc12_int_l: usb_c0_bc12_int_l {
 			gpios = <&gpio6 1 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_USB_C0_BC12_INT_L";
 			label = "USB_C0_BC12_INT_L";
 		};
-		usb_c1_bc12_int_l {
+		gpio_usb_c1_bc12_int_l: usb_c1_bc12_int_l {
 			gpios = <&gpio8 2 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_USB_C1_BC12_INT_L";
 			label = "USB_C1_BC12_INT_L";

@@ -8,6 +8,8 @@
 #include <devicetree.h>
 #include "bc12/pi3usb9201_public.h"
 #include "hooks.h"
+#include "task.h"
+#include "usb_charge.h"
 #include "usb_pd.h"
 
 
@@ -40,5 +42,19 @@ static void bc12_enable_irqs(void)
 	DT_INST_FOREACH_STATUS_OKAY(BC12_GPIO_ENABLE_INTERRUPT)
 }
 DECLARE_HOOK(HOOK_INIT, bc12_enable_irqs, HOOK_PRIO_DEFAULT);
+
+#if DT_INST_NODE_HAS_PROP(0, irq)
+void usb0_evt(enum gpio_signal signal)
+{
+	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
+}
+#endif
+
+#if DT_INST_NODE_HAS_PROP(1, irq)
+void usb1_evt(enum gpio_signal signal)
+{
+	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
+}
+#endif
 
 #endif /* DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT) */
