@@ -17,6 +17,11 @@
 #include "system.h"
 #include "util.h"
 
+/* Times of tick per 1 second */
+#define TIMES_TICK_ONE_SEC (1000 / HOOK_TICK_INTERVAL_MS)
+/* Times of tick per half second */
+#define TIMES_TICK_HALF_SEC (500 / HOOK_TICK_INTERVAL_MS)
+
 #define BAT_LED_ON 1
 #define BAT_LED_OFF 0
 
@@ -90,9 +95,31 @@ static void set_active_port_color(enum led_color color)
 static void board_led_set_battery(void)
 {
 	static int battery_ticks;
+	static int power_ticks;
+	int led_blink_cycle;
 	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
+
+	/*
+	 * Override battery LED for kingoftown which doesn't have power LED,
+	 * blinking battery white LED to indicate system suspend without
+	 * charging.
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
+            charge_get_state() != PWR_STATE_CHARGE) {
+
+		power_ticks++;
+		led_blink_cycle = power_ticks % (2 * TIMES_TICK_ONE_SEC);
+
+		side_led_set_color(0, (led_blink_cycle < TIMES_TICK_ONE_SEC) ?
+								LED_WHITE : LED_OFF);
+		side_led_set_color(1, (led_blink_cycle < TIMES_TICK_ONE_SEC) ?
+								LED_WHITE : LED_OFF);
+		return;
+	}
+
+	power_ticks = 0;
 
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
@@ -101,9 +128,13 @@ static void board_led_set_battery(void)
 		break;
 	case PWR_STATE_DISCHARGE:
 		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED)) {
-			if (charge_get_percent() <= 10)
+			if (charge_get_percent() <= 10) {
+				led_blink_cycle =
+					battery_ticks % (2 * TIMES_TICK_ONE_SEC);
 				side_led_set_color(0,
-				   (battery_ticks & 0x4) ? LED_WHITE : LED_OFF);
+					(led_blink_cycle < TIMES_TICK_ONE_SEC) ?
+							LED_WHITE : LED_OFF);
+			}
 			else
 				side_led_set_color(0, LED_OFF);
 		}
@@ -112,17 +143,20 @@ static void board_led_set_battery(void)
 			side_led_set_color(1, LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
-		set_active_port_color((battery_ticks & 0x2) ?
-				LED_WHITE : LED_OFF);
+		led_blink_cycle = battery_ticks % TIMES_TICK_ONE_SEC;
+		set_active_port_color((led_blink_cycle < TIMES_TICK_HALF_SEC) ?
+								LED_WHITE : LED_OFF);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		set_active_port_color(LED_WHITE);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			set_active_port_color((battery_ticks & 0x4) ?
+		if (chflags & CHARGE_FLAG_FORCE_IDLE) {
+			led_blink_cycle = battery_ticks % (2 * TIMES_TICK_ONE_SEC);
+			set_active_port_color(
+				(led_blink_cycle < TIMES_TICK_ONE_SEC) ?
 					LED_AMBER : LED_OFF);
-		else
+		} else
 			set_active_port_color(LED_WHITE);
 		break;
 	default:
