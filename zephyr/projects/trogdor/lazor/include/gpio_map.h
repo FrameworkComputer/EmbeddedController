@@ -61,7 +61,7 @@
 	GPIO_INT(GPIO_CCD_MODE_ODL, GPIO_INT_EDGE_FALLING,                    \
 		 board_connect_c0_sbu)                                        \
 	GPIO_INT(GPIO_ACCEL_GYRO_INT_L, GPIO_INT_EDGE_FALLING,                \
-		 GPIO_ACCEL_GYRO_INT_L_ISR)                                   \
+		 bmi160_interrupt)                                            \
 	GPIO_INT(GPIO_TABLET_MODE_L, GPIO_INT_EDGE_BOTH, gmr_tablet_switch_isr)
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
