@@ -190,6 +190,62 @@ static void test_st_get_resolution(void)
 		      expected_resolution);
 }
 
+static void test_st_set_offset(void)
+{
+	int16_t expected_offset[3] = { 123, 456, 789 };
+
+	struct stprivate_data driver_data;
+	const struct motion_sensor_t sensor = {
+		.drv_data = &driver_data,
+	};
+
+	int rv = st_set_offset(&sensor, expected_offset, 0);
+
+	zassert_equal(rv, EC_SUCCESS, "rv as %d but expected %d", rv,
+		      EC_SUCCESS);
+	zassert_equal(driver_data.offset[X], expected_offset[X],
+		      "X offset is %d but expected %d", driver_data.offset[X],
+		      expected_offset[X]);
+	zassert_equal(driver_data.offset[Y], expected_offset[Y],
+		      "Y offset is %d but expected %d", driver_data.offset[Y],
+		      expected_offset[Y]);
+	zassert_equal(driver_data.offset[Z], expected_offset[Z],
+		      "Z offset is %d but expected %d", driver_data.offset[Z],
+		      expected_offset[Z]);
+}
+
+static void test_st_get_offset(void)
+{
+	struct stprivate_data driver_data = {
+		.offset = { [X] = 123, [Y] = 456, [Z] = 789 },
+	};
+	const struct motion_sensor_t sensor = {
+		.drv_data = &driver_data,
+	};
+
+	int16_t temp_out = 0;
+	int16_t actual_offset[3] = { 0, 0, 0 };
+
+	int rv = st_get_offset(&sensor, actual_offset, &temp_out);
+
+	zassert_equal(rv, EC_SUCCESS, "rv as %d but expected %d", rv,
+		      EC_SUCCESS);
+	zassert_equal(
+		temp_out, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP,
+		"temp is %d but should be %d (EC_MOTION_SENSE_INVALID_CALIB_TEMP)",
+		temp_out, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP);
+
+	zassert_equal(actual_offset[X], driver_data.offset[X],
+		      "X offset is %d but expected %d", actual_offset[X],
+		      driver_data.offset[X]);
+	zassert_equal(actual_offset[Y], driver_data.offset[Y],
+		      "Y offset is %d but expected %d", actual_offset[Y],
+		      driver_data.offset[Y]);
+	zassert_equal(actual_offset[Z], driver_data.offset[Z],
+		      "Z offset is %d but expected %d", actual_offset[Z],
+		      driver_data.offset[Z]);
+}
+
 static void test_st_get_data_rate(void)
 {
 	int expected_data_rate = 456;
@@ -221,6 +277,8 @@ void test_suite_stm_mems_common(void)
 		ztest_unit_test_setup_teardown(test_st_write_data_with_mask,
 					       setup, unit_test_noop),
 		ztest_unit_test(test_st_get_resolution),
+		ztest_unit_test(test_st_set_offset),
+		ztest_unit_test(test_st_get_offset),
 		ztest_unit_test(test_st_get_data_rate));
 	ztest_run_test_suite(stm_mems_common);
 }
