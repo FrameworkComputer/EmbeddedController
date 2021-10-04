@@ -28,8 +28,8 @@ The main source code for fingerprint sensor functionality lives in the
 The following "boards" (specified by the `BOARD` environment variable when
 building the EC code) are for fingerprint:
 
-MCU                    | Sensor     | Firmware (EC "board")                          | Dev Board                                    | Nucleo Board
----------------------- | ---------- | ---------------------------------------------- | -------------------------------------------- | ------------
+MCU                      | Sensor     | Firmware (EC "board")                          | Dev Board                                    | Nucleo Board
+------------------------ | ---------- | ---------------------------------------------- | -------------------------------------------- | ------------
 [STM32H743] \(Cortex-M7) | [FPC 1145] | `dartmonkey`<br>(aka `nocturne_fp`, `nami_fp`) | [Icetower v0.2] <br>(Previously Dragontalon) | [Nucleo H743ZI2]
 [STM32F412] \(Cortex-M4) | [FPC 1025] | `bloonchipper`<br>(aka `hatch_fp`)             | [Dragonclaw v0.2]                            | [Nucleo F412ZG]
 
