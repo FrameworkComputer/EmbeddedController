@@ -12,9 +12,11 @@
 #include "charge_state.h"
 #include "common.h"
 #include "config.h"
+#include "cros_board_info.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "ppc/sn5s330_public.h"
+#include "ppc/syv682x_public.h"
 #include "system.h"
 #include "tcpm/ps8xxx_public.h"
 #include "tcpm/tcpci.h"
@@ -70,15 +72,37 @@ void usba_oc_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&usba_oc_deferred_data, 0);
 }
 
+#define BOARD_VERSION_UNKNOWN	0xffffffff
+
+/* Check board version to decide which ppc is used. */
+static bool board_has_syv_ppc(void)
+{
+	static uint32_t board_version = BOARD_VERSION_UNKNOWN;
+
+	if (board_version == BOARD_VERSION_UNKNOWN) {
+		if (cbi_get_board_version(&board_version) != EC_SUCCESS) {
+			CPRINTS("Failed to get board version.");
+			board_version = 0;
+		}
+	}
+
+	return (board_version >= 1);
+}
+
 void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_C0_SWCTL_INT_ODL:
-		sn5s330_interrupt(0);
+		if (board_has_syv_ppc())
+			syv682x_interrupt(0);
+		else
+			sn5s330_interrupt(0);
 		break;
+
 	case GPIO_USB_C1_SWCTL_INT_ODL:
 		sn5s330_interrupt(1);
 		break;
+
 	default:
 		break;
 	}
@@ -128,7 +152,9 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 						  uint32_t value)
 {
 	return EC_RES_INVALID_PARAM;
-}/* Power Path Controller */
+}
+
+/* Power Path Controller */
 struct ppc_config_t ppc_chips[] = {
 	{
 		.i2c_port = I2C_PORT_TCPC0,
@@ -142,6 +168,12 @@ struct ppc_config_t ppc_chips[] = {
 	},
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
+
+static const struct ppc_config_t ppc_syv682x_port0 = {
+		.i2c_port = I2C_PORT_TCPC0,
+		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.drv = &syv682x_drv,
+};
 
 /* TCPC mux configuration */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
@@ -208,6 +240,12 @@ static void board_init_usbc(void)
 
 	/* Enable USB-A overcurrent interrupt */
 	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
+
+	/* Configure the PPC driver */
+	if (board_has_syv_ppc())
+		memcpy(&ppc_chips[0],
+		       &ppc_syv682x_port0,
+		       sizeof(struct ppc_config_t));
 }
 DECLARE_HOOK(HOOK_INIT, board_init_usbc, HOOK_PRIO_DEFAULT);
 
