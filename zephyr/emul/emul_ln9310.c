@@ -205,7 +205,11 @@ bool ln9310_emul_is_init(const struct emul *emulator)
 {
 	struct ln9310_emul_data *data =  emulator->data;
 
-	return (data->int1_msk_reg & LN9310_INT1_MODE) == 0;
+	bool interrupts_unmasked = (data->int1_msk_reg & LN9310_INT1_MODE) == 0;
+	bool min_switch_freq_set =
+		(data->spare_0_reg & LN9310_SPARE_0_LB_MIN_FREQ_SEL_ON) != 0;
+
+	return interrupts_unmasked && min_switch_freq_set;
 }
 
 enum battery_cell_type board_get_battery_cell_type(void)
