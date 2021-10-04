@@ -243,9 +243,8 @@ openssl genrsa -3 -out board/$BOARD/dev_key.pem 3072
 
 ### Resources
 
-*   https://sites.google.com/a/google.com/chromeos/resources/engineering/releng/signer-documentation
-*   https://sites.google.com/a/google.com/chromeos/paygen---payload
-*   https://b.corp.google.com/issues/77882970
+*   http://go/cros-signer-docs
+*   https://issuetracker.google.com/issues/77882970
 
 ## Signing
 
