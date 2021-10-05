@@ -87,6 +87,12 @@ struct ln9310_emul_data {
 
 static const struct emul *singleton;
 
+struct i2c_emul *ln9310_emul_get_i2c_emul(const struct emul *emulator)
+{
+	struct ln9310_emul_data *data = emulator->data;
+
+	return &(data->common.emul);
+}
 
 static void do_ln9310_interrupt(struct ln9310_emul_data *data)
 {
@@ -442,7 +448,7 @@ static int ln9310_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 static int ln9310_emul_access_reg(struct i2c_emul *emul, int reg, int bytes,
 				  bool read)
 {
-	return 0;
+	return reg;
 }
 
 static int emul_ln9310_init(const struct emul *emul,

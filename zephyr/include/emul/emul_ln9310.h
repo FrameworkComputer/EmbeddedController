@@ -70,4 +70,14 @@ void ln9310_emul_set_vin_gt_10v(const struct emul *emulator, bool is_gt_10v);
  */
 bool ln9310_emul_is_init(const struct emul *emulator);
 
+/**
+ * @brief Get the I2C emulator struct
+ *
+ * This is generally coupled with calls to i2c_common_emul_* functions.
+ *
+ * @param emulator The emulator to look-up
+ * @return Pointer to the I2C emulator struct
+ */
+struct i2c_emul *ln9310_emul_get_i2c_emul(const struct emul *emulator);
+
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_LN9310_H_ */
