@@ -18,9 +18,13 @@ variables:
 # If you want to also cache the installed packages, you have to install
 # them in a virtualenv and cache it as well.
 cache:
+  key: ${CI_COMMIT_SHA}
+  policy: pull
   paths:
     - .cache/pip
     - venv/
+    - modules/
+    - zephyr/main
 
 
 # The directory structure is:
@@ -28,17 +32,17 @@ cache:
 # /zephyr
 # /builds/zephyr-ec/ec       EC_DIR
 before_script:
-  - export MODULES_DIR="$HOME/modules"
+  - export MODULES_DIR="$CI_PROJECT_DIR/modules"
   - mkdir -p "${MODULES_DIR}"
-  - export ZEPHYR_ROOT="$HOME/zephyr/main"
+  - export ZEPHYR_ROOT="$CI_PROJECT_DIR/zephyr/main"
   - mkdir -p "${ZEPHYR_ROOT}"
-  - git clone --depth 1 -b chromeos-v2.6 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_ROOT}/v2.6"
-  - git clone --depth 1 -b chromeos-v2.7 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_ROOT}/v2.7"
-  - git clone --depth 1 -b chromeos-v2.8 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_ROOT}/v2.8"
-  - git clone --depth 1 -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis "${MODULES_DIR}/cmsis"
-  - git clone --depth 1 -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32 "${MODULES_DIR}/hal_stm32"
-  - git clone --depth 1 -b main https://chromium.googlesource.com/chromiumos/third_party/zephyr/nanopb "${MODULES_DIR}/nanopb"
-  - git clone --depth 1 -b main https://chromium.googlesource.com/chromiumos/third_party/cryptoc "${MODULES_DIR}/cryptoc"
+  - test -d "${ZEPHYR_ROOT}/v2.6" || git clone --depth 1 -b chromeos-v2.6 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_ROOT}/v2.6"
+  - test -d "${ZEPHYR_ROOT}/v2.7" || git clone --depth 1 -b chromeos-v2.7 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_ROOT}/v2.7"
+  - test -d "${ZEPHYR_ROOT}/v2.8" || git clone --depth 1 -b chromeos-v2.8 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_ROOT}/v2.8"
+  - test -d "${MODULES_DIR}/cmsis" || git clone --depth 1 -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis "${MODULES_DIR}/cmsis"
+  - test -d "${MODULES_DIR}/hal_stm32" || git clone --depth 1 -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32 "${MODULES_DIR}/hal_stm32"
+  - test -d "${MODULES_DIR}/nanopb" || git clone --depth 1 -b main https://chromium.googlesource.com/chromiumos/third_party/zephyr/nanopb "${MODULES_DIR}/nanopb"
+  - test -d "${MODULES_DIR}/cryptoc" || git clone --depth 1 -b main https://chromium.googlesource.com/chromiumos/third_party/cryptoc "${MODULES_DIR}/cryptoc"
   - ln -s "$(pwd)" "${MODULES_DIR}/ec"
   - python3 -V  # Print out python version for debugging
   - python3 -m pip install zephyr/zmake --user
@@ -48,12 +52,26 @@ before_script:
   - export PYTHONIOENCODING=utf-8
   - export EC_DIR=/builds/zephyr-ec/ec
 
+seed_cache:
+  stage: build
+  needs: []
+  cache:
+    key: ${CI_COMMIT_SHA}
+    paths:
+      - .cache/pip
+      - venv/
+      - modules/
+      - zephyr/main
+    policy: push
+  script:
+    - ls "${MODULES_DIR}" "${ZEPHYR_ROOT}"
+
 # Users of this template must set:
 # $PROJECT to the project to build in zephyr/projects. E.g. "lazor")
 # $PROJECT_SUBDIR if it is in a subdirectory. E.g. "trogdor/"
 .build_template: &build_template
   stage: build
-  needs: []
+  needs: ["seed_cache"]
   script:
     - zmake --zephyr-root "${ZEPHYR_ROOT}"
       --modules-dir "${MODULES_DIR}" -l DEBUG configure -b
@@ -143,7 +161,7 @@ volteer:
 
 ec_coverage:
   stage: test
-  needs: []
+  needs: ["seed_cache"]
   script:
     - make -j8 CRYPTOC_DIR="${MODULES_DIR}/cryptoc"
       HOSTGCOV='gcov'
@@ -158,7 +176,7 @@ ec_coverage:
 
 zephyr_coverage:
   stage: test
-  needs: []
+  needs: ["seed_cache"]
   script:
     - zmake --zephyr-root "${ZEPHYR_ROOT}"
       --modules-dir "${MODULES_DIR}" -l DEBUG coverage
@@ -185,7 +203,7 @@ merged_coverage:
 
 testall:
   stage: test
-  needs: []
+  needs: ["seed_cache"]
   script:
     - zmake --zephyr-root "${ZEPHYR_ROOT}"
       --modules-dir "${MODULES_DIR}" -l DEBUG testall
