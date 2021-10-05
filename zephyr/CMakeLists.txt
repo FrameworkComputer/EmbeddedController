@@ -236,6 +236,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
                                                 "${PLATFORM_EC}/common/led_common.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_PWM
                                                 "${PLATFORM_EC}/common/led_pwm.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_ONOFF_STATES
+                                                "${PLATFORM_EC}/common/led_onoff_states.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LID_ANGLE
                                                 "${PLATFORM_EC}/common/motion_lid.c"
                                                 "${PLATFORM_EC}/common/math_util.c")

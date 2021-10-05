@@ -45,4 +45,23 @@ config PLATFORM_EC_CONSOLE_CMD_LEDTEST
 	    ledtest 0 disable
 
 endif # PLATFORM_EC_LED_PWM
+
+config PLATFORM_EC_LED_ONOFF_STATES
+	bool "EC LED On-Off States"
+	help
+	  Enable EC Standard LED On-Off state code that conforms to the
+	  Chromium OS LED On-Off state behavior.
+
+if PLATFORM_EC_LED_ONOFF_STATES
+
+config PLATFORM_EC_LED_ONOFF_STATES_BAT_LOW
+	int "EC LED On-Off State Battery Low Percentage"
+	default 10
+	help
+	  Enable EC Standard LED On-Off bettery low percentage
+	  for standard Chromium OS LED On-Off battery low
+	  state behavior.
+
+endif # PLATFORM_EC_LED_ONOFF_STATES
+
 endif # PLATFORM_EC_LED_COMMON
