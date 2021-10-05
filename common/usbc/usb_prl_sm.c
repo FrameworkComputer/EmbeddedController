@@ -128,7 +128,7 @@ struct bit_name {
 	const char	*name;
 };
 
-static __const_data struct bit_name flag_bit_names[] = {
+static __const_data const struct bit_name flag_bit_names[] = {
 	{ PRL_FLAGS_TX_COMPLETE, "PRL_FLAGS_TX_COMPLETE" },
 	{ PRL_FLAGS_SINK_NG, "PRL_FLAGS_SINK_NG" },
 	{ PRL_FLAGS_WAIT_SINK_OK, "PRL_FLAGS_WAIT_SINK_OK" },
@@ -146,7 +146,7 @@ static __const_data struct bit_name flag_bit_names[] = {
 __maybe_unused static void print_bits(const char *group,
 				      const char *desc,
 				      int value,
-				      struct bit_name *names,
+				      const struct bit_name *names,
 				      int names_size)
 {
 	int i;
