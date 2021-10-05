@@ -45,7 +45,9 @@ enum charge_state {
 	/* Charging, almost fully charged */
 	PWR_STATE_CHARGE_NEAR_FULL,
 	/* Charging state machine error */
-	PWR_STATE_ERROR
+	PWR_STATE_ERROR,
+	/*  Count of total states */
+	PWR_STATE_COUNT
 };
 
 /* Charge state flags */
