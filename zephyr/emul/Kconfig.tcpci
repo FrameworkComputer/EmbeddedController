@@ -1,0 +1,24 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+DT_COMPAT_TCPCI_EMUL := cros,tcpci-emul
+
+menuconfig EMUL_TCPCI
+	bool "TCPCI emulator"
+	default $(dt_compat_enabled,$(DT_COMPAT_TCPCI_EMUL))
+	depends on I2C_EMUL
+	help
+	  Enable the TCPCI emulator. This driver uses the emulated I2C bus.
+	  It is used to test tcpci code. It supports reads and writes to all
+	  emulator registers. Generic TCPCI emulator can be used as the base
+	  for specific TCPC device emulator that follow TCPCI specification.
+	  TCPCI emulator API is available in zephyr/include/emul/emul_tcpci.h
+
+if EMUL_TCPCI
+
+module = TCPCI_EMUL
+module-str = tcpci_emul
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # EMUL_TCPCI
