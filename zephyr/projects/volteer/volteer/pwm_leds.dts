@@ -28,5 +28,13 @@
 		color-map-amber  = <100  20   0>;
 
 		brightness-range = <255 255 255 0 0 0>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pwm_led_0@0 {
+			reg = <0>;
+			ec-led-name = "EC_LED_ID_POWER_LED";
+		};
 	};
 };

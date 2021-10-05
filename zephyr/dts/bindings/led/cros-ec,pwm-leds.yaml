@@ -74,3 +74,32 @@ properties:
     description: |
       A list of brigthness range value for all supported channels in order,
       Red, Green, Blue, Yellow, White, Amber (0 to 255).
+
+child-binding:
+  description: |
+    LED child binding node for mapping a PWM_LED to a EC_LED_ID.
+
+    For example
+
+    pwm_led_0@0 {
+                reg = <0>;
+                ec-led-name = "EC_LED_ID_LEFT_LED";
+    };
+    pwm_led_1@1 {
+                reg = <1>;
+                ec-led-name = "EC_LED_ID_RIGHT_LED";
+    };
+
+  properties:
+    reg:
+      type: int
+      required: true
+      description: LED ID, can be either 0 or 1 for PWM_LED0 and PWM_LED1
+      enum:
+        - 0 # PWM_LED0
+        - 1 # PWM_LED1
+
+    ec-led-name:
+      type: string
+      required: true
+      description: The EC_LED_ID value to map the LED to.

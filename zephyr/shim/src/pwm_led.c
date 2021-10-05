@@ -71,4 +71,44 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 	       sizeof(dt_brigthness_range));
 }
 
+#define PWM_NAME_TO_ID(node_id) \
+	case DT_STRING_TOKEN(node_id, ec_led_name): \
+		pwm_id = DT_REG_ADDR(node_id); \
+		break;
+
+int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
+{
+	enum pwm_led_id pwm_id;
+
+	switch (led_id) {
+	DT_INST_FOREACH_CHILD(0, PWM_NAME_TO_ID)
+	default:
+		return EC_ERROR_UNKNOWN;
+	}
+
+	if (DT_INST_NODE_HAS_PROP(0, color_map_red) &&
+	    brightness[EC_LED_COLOR_RED])
+		set_pwm_led_color(pwm_id, EC_LED_COLOR_RED);
+	else if (DT_INST_NODE_HAS_PROP(0, color_map_green) &&
+		 brightness[EC_LED_COLOR_GREEN])
+		set_pwm_led_color(pwm_id, EC_LED_COLOR_GREEN);
+	else if (DT_INST_NODE_HAS_PROP(0, color_map_blue) &&
+			brightness[EC_LED_COLOR_BLUE])
+		set_pwm_led_color(pwm_id, EC_LED_COLOR_BLUE);
+	else if (DT_INST_NODE_HAS_PROP(0, color_map_yellow) &&
+			brightness[EC_LED_COLOR_YELLOW])
+		set_pwm_led_color(pwm_id, EC_LED_COLOR_YELLOW);
+	else if (DT_INST_NODE_HAS_PROP(0, color_map_white) &&
+			brightness[EC_LED_COLOR_WHITE])
+		set_pwm_led_color(pwm_id, EC_LED_COLOR_WHITE);
+	else if (DT_INST_NODE_HAS_PROP(0, color_map_amber) &&
+			brightness[EC_LED_COLOR_AMBER])
+		set_pwm_led_color(pwm_id, EC_LED_COLOR_AMBER);
+	else
+		/* Otherwise, the "color" is "off". */
+		set_pwm_led_color(pwm_id, -1);
+
+	return EC_SUCCESS;
+}
+
 #endif /* DT_HAS_COMPAT_STATUS_OKAY */
