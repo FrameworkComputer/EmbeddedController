@@ -686,10 +686,10 @@ enum ec_status charger_profile_override_get_param(uint32_t param,
 	switch (param) {
 	case PARAM_LEARN_MODE:
 		*value = disch_on_ac;
-		return EC_SUCCESS;
+		return EC_RES_SUCCESS;
 	case PARAM_DISCONNECT_STATE:
 		*value = battery_check_disconnect();
-		return EC_SUCCESS;
+		return EC_RES_SUCCESS;
 	default:
 		return EC_RES_INVALID_PARAM;
 	}
