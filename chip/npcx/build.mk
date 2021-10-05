@@ -11,6 +11,9 @@ CORE:=cortex-m
 # Allow the full Cortex-M4 instruction set
 CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4
 
+# Disable overlapping section warning that linker emits due to NPCX_RO_HEADER.
+LDFLAGS_EXTRA+=-Wl,--no-check-sections
+
 # Assign default CHIP_FAMILY as npcx5 for old boards used npcx5 series
 ifeq ($(CHIP_FAMILY),)
 CHIP_FAMILY:=npcx5
