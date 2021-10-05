@@ -39,7 +39,11 @@
 #define REG_GENERAL_CTLSEL_USB3         BIT(0)
 #define REG_GENERAL_CTLSEL_ANYDP        BIT(1)
 #define REG_GENERAL_FLIPSEL             BIT(2)
+#if defined(CONFIG_USB_MUX_TUSB1044)
+#define REG_GENERAL_HPDIN_OVERRIDE      BIT(3)
+#else
 #define REG_GENERAL_DP_EN_CTRL          BIT(3)
+#endif
 #define REG_GENERAL_EQ_OVERRIDE         BIT(4)
 
 /* AUX and DP Lane Control Register */
@@ -126,5 +130,14 @@
 #define TUSB1064_USB_EQ_UFP_10_4_DB 0xD
 #define TUSB1064_USB_EQ_UFP_10_7_DB 0xE
 #define TUSB1064_USB_EQ_UFP_11_1_DB 0xF
+
+#if defined(CONFIG_USB_MUX_TUSB1044)
+/*
+ * This api is used to override the HPD infomartion received on HPD_IN pin
+ * or when no HPD physical pin is connected.
+ * Writes HPD infomration to the General_1 Registor.
+ */
+void tusb1044_hpd_update(const struct usb_mux *me, mux_state_t mux_state);
+#endif
 
 #endif /* __CROS_EC_TUSB1064_H */

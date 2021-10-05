@@ -190,8 +190,9 @@ driver-$(CONFIG_USB_MUX_PI3USB31532)+=usb_mux/pi3usb3x532.o
 driver-$(CONFIG_USB_MUX_PS8740)+=usb_mux/ps8740.o
 driver-$(CONFIG_USB_MUX_PS8742)+=usb_mux/ps8740.o
 driver-$(CONFIG_USB_MUX_PS8743)+=usb_mux/ps8743.o
-driver-$(CONFIG_USB_MUX_TUSB1064)+=usb_mux/tusb1064.o
 driver-$(CONFIG_USB_MUX_PS8822)+=usb_mux/ps8822.o
+driver-$(CONFIG_USB_MUX_TUSB1044)+=usb_mux/tusb1064.o
+driver-$(CONFIG_USB_MUX_TUSB1064)+=usb_mux/tusb1064.o
 driver-$(CONFIG_USB_MUX_VIRTUAL)+=usb_mux/virtual.o
 
 # USB Hub with I2C interface

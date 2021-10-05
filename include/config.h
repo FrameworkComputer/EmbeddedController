@@ -5053,6 +5053,9 @@
 /* Support the Parade PS8743 Type-C Redriving Switch */
 #undef CONFIG_USB_MUX_PS8743
 
+/* Config to enable TUSB1044 Type-c USB redriver */
+#undef CONFIG_USB_MUX_TUSB1044
+
 /* Support the Texas Instrument TUSB1064 Type-C Redriving Switch (UFP) */
 #undef CONFIG_USB_MUX_TUSB1064
 

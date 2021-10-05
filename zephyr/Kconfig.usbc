@@ -920,6 +920,13 @@ config PLATFORM_EC_USB_MUX_PS8743
 	  High-Bit-Rate 2 (HBR2) redriver. It provides control of switching
 	  modes through either GPIO or I2C.
 
+config PLATFORM_EC_USB_MUX_TUSB1044
+	bool "TI TUSB1044 USB-C 10 Gbps Linear Redriver"
+	help
+	  This is a USB Type-C Alt Mode redriver. This supports USB 3.1
+	  Gen 2 and DisplayPort 1.4 as Alternate Mode. It Provides GPIO and
+	  I2C Control for Channel Direction and Equalization.
+
 endif
 
 config PLATFORM_EC_USBC_SS_MUX
