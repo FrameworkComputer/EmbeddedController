@@ -22,11 +22,17 @@ BUILD_ASSERT(DT_INST_PROP_LEN(0, leds) <= 2,
 	PWM_CHANNEL(DT_PWMS_CTLR_BY_IDX(                        \
 		DT_PHANDLE_BY_IDX(node_id, prop, idx), led_ch))
 
+#define PWM_CHANNEL_BY_IDX_COND(node_id, prop, idx, led_ch)           \
+	COND_CODE_1(DT_PROP_HAS_IDX(                                  \
+		DT_PHANDLE_BY_IDX(node_id, prop, idx), pwms, led_ch), \
+		(PWM_CHANNEL_BY_IDX(node_id, prop, idx, led_ch)),     \
+		(PWM_LED_NO_CHANNEL))
+
 #define PWM_LED_INIT(node_id, prop, idx) \
 	[PWM_LED##idx] = { \
-		.ch0 = PWM_CHANNEL_BY_IDX(node_id, prop, idx, 0), \
-		.ch1 = PWM_CHANNEL_BY_IDX(node_id, prop, idx, 1), \
-		.ch2 = PWM_CHANNEL_BY_IDX(node_id, prop, idx, 2), \
+		.ch0 = PWM_CHANNEL_BY_IDX_COND(node_id, prop, idx, 0), \
+		.ch1 = PWM_CHANNEL_BY_IDX_COND(node_id, prop, idx, 1), \
+		.ch2 = PWM_CHANNEL_BY_IDX_COND(node_id, prop, idx, 2), \
 		.enable = &pwm_enable, \
 		.set_duty = &pwm_set_duty, \
 	},
