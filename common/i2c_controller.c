@@ -1488,6 +1488,15 @@ DECLARE_HOST_COMMAND(EC_CMD_I2C_PASSTHRU_PROTECT, i2c_command_passthru_protect,
 static enum ec_status
 i2c_command_control(struct host_cmd_handler_args *args)
 {
+#ifdef CONFIG_ZEPHYR
+	/* For Zephyr, convert the received remote port number to a port number
+	 * used in EC.
+	 */
+	((struct ec_params_i2c_control *)(args->params))->port =
+		i2c_get_port_from_remote_port(
+			((struct ec_params_i2c_control *)(args->params))
+			->port);
+#endif
 	const struct ec_params_i2c_control *params = args->params;
 	struct ec_response_i2c_control *resp = args->response;
 	enum i2c_freq old_i2c_freq;
