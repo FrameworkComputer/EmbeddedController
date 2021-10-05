@@ -41,13 +41,21 @@ struct pwm_led pwm_leds[] = {
 	DT_INST_FOREACH_PROP_ELEM(0, leds, PWM_LED_INIT)
 };
 
+#define EC_LED_COLOR_BLANK {0}
+
 struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
-	[EC_LED_COLOR_RED]    = DT_INST_PROP(0, color_map_red),
-	[EC_LED_COLOR_GREEN]  = DT_INST_PROP(0, color_map_green),
-	[EC_LED_COLOR_BLUE]   = DT_INST_PROP(0, color_map_blue),
-	[EC_LED_COLOR_YELLOW] = DT_INST_PROP(0, color_map_yellow),
-	[EC_LED_COLOR_WHITE]  = DT_INST_PROP(0, color_map_white),
-	[EC_LED_COLOR_AMBER]  = DT_INST_PROP(0, color_map_amber),
+	[EC_LED_COLOR_RED]    = DT_INST_PROP_OR(0, color_map_red,
+						EC_LED_COLOR_BLANK),
+	[EC_LED_COLOR_GREEN]  = DT_INST_PROP_OR(0, color_map_green,
+						EC_LED_COLOR_BLANK),
+	[EC_LED_COLOR_BLUE]   = DT_INST_PROP_OR(0, color_map_blue,
+						EC_LED_COLOR_BLANK),
+	[EC_LED_COLOR_YELLOW] = DT_INST_PROP_OR(0, color_map_yellow,
+						EC_LED_COLOR_BLANK),
+	[EC_LED_COLOR_WHITE]  = DT_INST_PROP_OR(0, color_map_white,
+						EC_LED_COLOR_BLANK),
+	[EC_LED_COLOR_AMBER]  = DT_INST_PROP_OR(0, color_map_amber,
+						EC_LED_COLOR_BLANK),
 };
 
 BUILD_ASSERT(DT_INST_PROP_LEN(0, brightness_range) == EC_LED_COLOR_COUNT,
