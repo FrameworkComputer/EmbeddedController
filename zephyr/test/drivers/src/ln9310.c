@@ -7,6 +7,7 @@
 #include <drivers/emul.h>
 #include <kernel.h>
 #include <ztest_assert.h>
+#include <drivers/i2c_emul.h>
 
 #include "driver/ln9310.h"
 #include "emul/emul_ln9310.h"
@@ -24,6 +25,34 @@
  */
 #define REQUIRES_CFLY_PRECHARGE_STARTUP_CHIP_REV \
 	(LN9310_BC_STS_C_CHIP_REV_FIXED - 1)
+
+static void test_ln9310_read_chip_fails(void)
+{
+	const struct emul *emulator =
+		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	struct i2c_emul *i2c_emul = ln9310_emul_get_i2c_emul(emulator);
+
+	zassert_not_null(emulator, NULL);
+	zassert_not_null(i2c_emul, NULL);
+
+	ln9310_emul_set_context(emulator);
+	ln9310_emul_reset(emulator);
+	/* Battery and chip rev won't matter here so only testing one pair */
+	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_2S);
+	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
+
+	i2c_common_emul_set_read_fail_reg(i2c_emul, LN9310_REG_BC_STS_C);
+
+	zassert_ok(!ln9310_init(), NULL);
+	zassert_false(ln9310_emul_is_init(emulator), NULL);
+
+	/* TODO(b/201420132) */
+	k_msleep(TEST_DELAY_MS);
+	zassert_false(ln9310_power_good(), NULL);
+
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+}
 
 static void test_ln9310_2s_powers_up(void)
 {
@@ -179,6 +208,9 @@ void test_suite_ln9310(void)
 {
 	ztest_test_suite(
 		ln9310,
+		ztest_unit_test_setup_teardown(test_ln9310_read_chip_fails,
+					       reset_ln9310_state,
+					       reset_ln9310_state),
 		ztest_unit_test_setup_teardown(test_ln9310_2s_powers_up,
 					       reset_ln9310_state,
 					       reset_ln9310_state),
