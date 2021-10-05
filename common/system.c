@@ -681,11 +681,6 @@ static int system_run_image_copy_with_flags(enum ec_image copy,
 		init_addr = system_get_fw_reset_vector(base);
 	} else {
 		uintptr_t init = base + 4;
-
-		/* Skip any head room in the RO image */
-		if (copy == EC_IMAGE_RO)
-			init += CONFIG_RO_HEAD_ROOM;
-
 		init_addr = *(uintptr_t *)(init);
 
 		/* Make sure the reset vector is inside the destination image */

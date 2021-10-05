@@ -5190,13 +5190,6 @@
  */
 #undef CONFIG_WP_ALWAYS
 
-/*
- * If needed to allocate some free space in the base of the RO or RW section
- * of the image, define these to be equal the required size of the free space.
- */
-#define CONFIG_RO_HEAD_ROOM 0
-#define CONFIG_RW_HEAD_ROOM 0
-
 /* Firmware upgrade options. */
 /* A different config for the same update. TODO(vbendeb): dedupe these */
 #undef CONFIG_USB_UPDATE

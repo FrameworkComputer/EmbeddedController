@@ -145,12 +145,6 @@ SECTIONS
 	} > SHARED_LIB
 #endif
 	.text : {
-#ifdef SECTION_IS_RO
-		. = . +  CONFIG_RO_HEAD_ROOM;
-#endif
-#ifdef SECTION_IS_RW
-		. = . +  CONFIG_RW_HEAD_ROOM;
-#endif
 		*(.text.vecttable)
 		. = ALIGN(4);
 		__image_data_offset = .;
