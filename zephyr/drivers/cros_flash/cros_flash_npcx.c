@@ -842,7 +842,7 @@ static const struct npcx_alt cros_flash_alts[] = NPCX_DT_ALT_ITEMS_LIST(0);
 static const struct cros_flash_npcx_config cros_flash_cfg = {
 	.base = DT_INST_REG_ADDR(0),
 	.clk_cfg = NPCX_DT_CLK_CFG_ITEM(0),
-	.size = DT_INST_PROP(0, size),
+	.size = DT_INST_REG_SIZE(0),
 	.alts_size = ARRAY_SIZE(cros_flash_alts),
 	.alts_list = cros_flash_alts,
 };

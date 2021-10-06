@@ -111,9 +111,8 @@
 
 		fiu0: cros-flash@40020000 {
 			compatible = "nuvoton,npcx-cros-flash";
-			reg = <0x40020000 0x2000>;
+			reg = <0x40020000 0x80000>;
 			clocks = <&pcc NPCX_CLOCK_BUS_APB3 NPCX_PWDWN_CTL1 2>;
-			size = <0x80000>;
 			label = "FLASH_INTERFACE_UNIT0";
 			pinctrl-0 = <>;
 		};
