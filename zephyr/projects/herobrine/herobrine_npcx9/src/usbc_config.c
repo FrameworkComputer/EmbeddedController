@@ -143,21 +143,6 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 	return EC_RES_INVALID_PARAM;
 }
 
-/* Power Path Controller */
-struct ppc_config_t ppc_chips[] = {
-	{
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
-	{
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
-};
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
-
 static const struct ppc_config_t ppc_syv682x_port0 = {
 		.i2c_port = I2C_PORT_TCPC0,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
