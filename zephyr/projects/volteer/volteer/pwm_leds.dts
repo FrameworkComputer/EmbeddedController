@@ -10,7 +10,6 @@
 			pwms = <&led3_red
 				&led2_green
 				&led1_blue
-				&led3_sidesel
 				>;
 		};
 	};
@@ -19,6 +18,7 @@
 		compatible = "cros-ec,pwm-leds";
 
 		leds = <&pwm_led0>;
+		sidesel = <&led3_sidesel>;
 
 		color-map-red    = <100   0   0>;
 		color-map-green  = <  0 100   0>;

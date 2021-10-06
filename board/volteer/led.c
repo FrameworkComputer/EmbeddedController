@@ -13,7 +13,6 @@
 #include "led_pwm.h"
 #include "pwm.h"
 
-#ifndef CONFIG_ZEPHYR
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_POWER_LED,
 };
@@ -78,7 +77,6 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 	return EC_SUCCESS;
 }
-#endif
 
 /* Illuminates the LED on the side of the active charging port. If not charging,
  * illuminates both LEDs.
