@@ -207,7 +207,8 @@ enum power_state power_chipset_init(void)
 	gpio_enable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
 	gpio_enable_interrupt(GPIO_AP_IN_SLEEP_L);
 
-	if (system_get_reset_flags() & EC_RESET_FLAG_SYSJUMP) {
+	if (system_get_reset_flags() & EC_RESET_FLAG_SYSJUMP &&
+			!IS_ENABLED(CONFIG_VBOOT_EFS2)) {
 		if ((power_get_signals() & IN_ALL_S0) == IN_ALL_S0) {
 			disable_sleep(SLEEP_MASK_AP_RUN);
 			power_signal_enable_interrupt(GPIO_AP_EC_WATCHDOG_L);
