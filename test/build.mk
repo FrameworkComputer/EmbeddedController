@@ -125,6 +125,8 @@ cov-dont-test += fpsensor_crypto
 cov-dont-test += fpsensor_state
 # version: Only works in a chroot.
 cov-dont-test += version
+# interrupt: The test often times out if enabled for coverage.
+cov-dont-test += interrupt
 cov-test-list-host = $(filter-out $(cov-dont-test), $(test-list-host))
 
 accel_cal-y=accel_cal.o

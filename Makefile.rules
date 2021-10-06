@@ -459,7 +459,7 @@ build/coverage/initial-%.info:
 build/coverage/%.info: run-coverage-%
 	$(call quiet,lcov,COV    )
 
-.PHONY: coverage
+.PHONY: coverage test-coverage
 coverage: TEST_FLAG=TEST_COVERAGE=y
 coverage: $(cov-test-targets) $(cov-initial-targets)
 	$(call quiet,merge_cov,MERGE  )
