@@ -518,6 +518,18 @@ static void console_handle_char(int c)
 	case 0x7f:
 		handle_backspace();
 		break;
+
+	case CTRL('C'):
+		/* Terminate this line */
+		ccputs("^C\n");
+
+		/* Start new line, discarding any existing partial input. */
+		input_pos = input_len = 0;
+		input_buf[0] = '\0';
+
+		/* Reprint prompt */
+		ccputs(PROMPT);
+		break;
 #endif /* !defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 
 	case '\n':
