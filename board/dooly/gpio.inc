@@ -151,8 +151,13 @@ ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)                 /* UART from EC 
 GPIO(PANEL_ID0,			PIN(0, 2), GPIO_INPUT)
 GPIO(PANEL_ID1,			PIN(C, 6), GPIO_INPUT)
 
-/* EDID write protect control */
-GPIO(EC_EDID_WP_DISABLE_L,	PIN(D, 3), GPIO_OUT_HIGH)			/* LOW to disable EDID WP */
+/*
+ * EDID write protect control
+ * EDID ROM powered by EN_ROA_RAILS, init low to prevent power leakage
+ * high to enable EDID ROM WP
+ * low to disable EDID ROM WP
+ */
+GPIO(EC_EDID_WP_DISABLE_L,	PIN(D, 3), GPIO_OUT_LOW)
 
 /* Unused pins */
 UNUSED(PIN(9, 5))						/* H10 TP54 */

@@ -728,8 +728,19 @@ static void board_chipset_startup(void)
 		ppc_vbus_source_enable(USB_PD_PORT_TCPC_0, 1);
 	if (ppc_is_sourcing_vbus(USB_PD_PORT_TCPC_1))
 		ppc_vbus_source_enable(USB_PD_PORT_TCPC_1, 1);
+
+	/* set high to enable EDID ROM WP */
+	gpio_set_level(GPIO_EC_EDID_WP_DISABLE_L, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
+	     HOOK_PRIO_DEFAULT);
+
+static void board_chipset_shutdown(void)
+{
+	/* set low to prevent power leakage */
+	gpio_set_level(GPIO_EC_EDID_WP_DISABLE_L, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown,
 	     HOOK_PRIO_DEFAULT);
 /******************************************************************************/
 /* USB-C PPC Configuration */
