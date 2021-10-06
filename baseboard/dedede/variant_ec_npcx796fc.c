@@ -186,6 +186,11 @@ __attribute__((weak)) const struct i2c_port_t i2c_ports[] = {
 		GPIO_EC_I2C_SUB_USB_C1_SCL, GPIO_EC_I2C_SUB_USB_C1_SDA
 	},
 #endif
+#ifdef BOARD_BUGZZY
+	{
+		"lcd", I2C_PORT_LCD, 400, GPIO_EC_I2C_LCD_SCL,
+		GPIO_EC_I2C_LCD_SDA
+	},
+#endif
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-

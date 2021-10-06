@@ -113,12 +113,27 @@
 #define I2C_PORT_USB_C0     NPCX_I2C_PORT1_0
 #define I2C_PORT_SUB_USB_C1 NPCX_I2C_PORT2_0
 #define I2C_PORT_USB_MUX    I2C_PORT_USB_C0
+#define I2C_PORT_LCD	    NPCX_I2C_PORT3_0
 /* TODO(b:147440290): Need to handle multiple charger ICs */
 #define I2C_PORT_CHARGER    I2C_PORT_USB_C0
 
 #define I2C_PORT_ACCEL      I2C_PORT_SENSOR
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50 /* 7b address */
+#define I2C_ADDR_ISL98607_FLAGS 0x29
+
+/* ISL98607 registers and value */
+/* VBST Voltage Adjustment */
+#define ISL98607_REG_VBST_OUT	0x06
+#define ISL98607_VBST_OUT_5P65	0x0a
+
+/* VN Voltage Adjustment */
+#define ISL98607_REG_VN_OUT	0x08
+#define ISL98607_VN_OUT_5P5	0x0a
+
+/* VP Voltage Adjustment */
+#define ISL98607_REG_VP_OUT	0x09
+#define ISL98607_VP_OUT_5P5	0x0a
 
 /*
  * I2C pin names for baseboard
