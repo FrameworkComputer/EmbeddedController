@@ -339,7 +339,7 @@ static int get_offset(const struct motion_sensor_t *s, int16_t *offset,
 		}
 
 		if (val > 0x7f)
-			val -= -256;
+			val -= 256;
 
 		v[i] = round_divide((int64_t)val * BMA4_OFFSET_ACC_MULTI_MG,
 				    BMA4_OFFSET_ACC_DIV_MG);
