@@ -18,6 +18,17 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(cros_ec_pwm_leds) <= 1,
 BUILD_ASSERT(DT_INST_PROP_LEN(0, leds) <= 2,
 	     "Unsupported number of LEDs defined");
 
+#define PWM_LED_NAME(node_id) DT_STRING_UPPER_TOKEN(node_id, ec_led_name)
+#define PWM_LED_NAME_WITH_COMMA(node_id) PWM_LED_NAME(node_id),
+
+const enum ec_led_id supported_led_ids[] = {
+	DT_INST_FOREACH_CHILD(0, PWM_LED_NAME_WITH_COMMA)
+};
+const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
+
+BUILD_ASSERT(ARRAY_SIZE(supported_led_ids) == DT_INST_PROP_LEN(0, leds),
+	     "Mismatch count of LED device phandles and LED name map entries.");
+
 #define PWM_CHANNEL_BY_IDX(node_id, prop, idx, led_ch)          \
 	PWM_CHANNEL(DT_PWMS_CTLR_BY_IDX(                        \
 		DT_PHANDLE_BY_IDX(node_id, prop, idx), led_ch))
@@ -72,7 +83,7 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 }
 
 #define PWM_NAME_TO_ID(node_id) \
-	case DT_STRING_TOKEN(node_id, ec_led_name): \
+	case PWM_LED_NAME(node_id): \
 		pwm_id = DT_REG_ADDR(node_id); \
 		break;
 

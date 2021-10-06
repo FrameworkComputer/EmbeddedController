@@ -13,12 +13,12 @@
 #include "led_pwm.h"
 #include "pwm.h"
 
+#ifndef CONFIG_ZEPHYR
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_POWER_LED,
 };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-#ifndef CONFIG_ZEPHYR
 struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
 				/* Red, Green, Blue */
 	[EC_LED_COLOR_RED] =    {  100,   0,     0 },
