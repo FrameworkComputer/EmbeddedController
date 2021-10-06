@@ -46,7 +46,7 @@ properties:
     - I2C_PORT_USB_C1_TCPC
     - I2C_PORT_USB_MUX0
     - I2C_PORT_USB_MUX1
-    - I2C_PORT_VIRTUAL
+    - I2C_PORT_VIRTUAL_BATTERY
     - I2C_PORT_WLC
   label:
     required: true

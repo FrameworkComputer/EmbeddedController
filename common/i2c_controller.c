@@ -1250,7 +1250,7 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-#ifdef I2C_PORT_VIRTUAL_BATTERY
+#ifdef CONFIG_I2C_VIRTUAL_BATTERY
 static inline int is_i2c_port_virtual_battery(int port)
 {
 #ifdef CONFIG_ZEPHYR
@@ -1263,7 +1263,7 @@ static inline int is_i2c_port_virtual_battery(int port)
 	return (port == I2C_PORT_VIRTUAL_BATTERY);
 #endif
 }
-#endif /* I2C_PORT_VIRTUAL_BATTERY */
+#endif /* CONFIG_I2C_VIRTUAL_BATTERY */
 
 static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 {
@@ -1338,7 +1338,7 @@ static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 		if (resp->num_msgs == params->num_msgs - 1)
 			xferflags |= I2C_XFER_STOP;
 
-#if defined(VIRTUAL_BATTERY_ADDR_FLAGS) && defined(I2C_PORT_VIRTUAL_BATTERY)
+#ifdef CONFIG_I2C_VIRTUAL_BATTERY
 		if (is_i2c_port_virtual_battery(params->port) &&
 		    addr_flags == VIRTUAL_BATTERY_ADDR_FLAGS) {
 			if (virtual_battery_handler(resp, in_len, &rv,

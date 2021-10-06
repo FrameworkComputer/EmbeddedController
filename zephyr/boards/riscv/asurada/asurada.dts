@@ -97,6 +97,11 @@
 			enum-name = "I2C_PORT_BATTERY";
 			label = "BATTERY";
 		};
+		virtual-battery {
+			i2c-port = <&i2c0>;
+			enum-name = "I2C_PORT_VIRTUAL_BATTERY";
+			label = "VIRTUAL_BATTERY";
+		};
 		eeprom {
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_EEPROM";

@@ -98,6 +98,17 @@ config PLATFORM_EC_I2C_VIRTUAL_BATTERY
 	  return desired data to host instead of issuing I2C transaction every
 	  time.
 
+config PLATFORM_EC_I2C_VIRTUAL_BATTERY_ADDR
+	hex "I2C virtual battery address"
+	default 0x0B if PLATFORM_EC_BATTERY_SMART
+	range 0x00 0x7f
+	depends on PLATFORM_EC_I2C_VIRTUAL_BATTERY
+	help
+	  This config sets i2c address that will be intercepted by virtual
+	  battery feature. All communication to this port will be cached
+	  to decrease i2c communication traffic.
+	  This should be equal to the address of real battery.
+
 menuconfig PLATFORM_EC_CHARGER
 	bool "Charging support"
 	default y
