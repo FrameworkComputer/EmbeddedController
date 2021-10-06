@@ -895,6 +895,20 @@ static int ps8xxx_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 	return tcpci_tcpm_get_cc(port, cc1, cc2);
 }
 
+static int ps8xxx_tcpm_set_vconn(int port, int enable)
+{
+	/*
+	 * Add delay of writing TCPC_REG_POWER_CTRL makes
+	 * CC status being judged correctly when disable VCONN.
+	 * This may be a PS8XXX firmware issue, Parade is still trying.
+	 * https://partnerissuetracker.corp.google.com/issues/185202064
+	 */
+	if (!enable)
+		msleep(PS8XXX_VCONN_TURN_OFF_DELAY_US);
+
+	return tcpci_tcpm_set_vconn(port, enable);
+}
+
 const struct tcpm_drv ps8xxx_tcpm_drv = {
 	.init			= ps8xxx_tcpm_init,
 	.release		= ps8xxx_tcpm_release,
@@ -908,7 +922,7 @@ const struct tcpm_drv ps8xxx_tcpm_drv = {
 #ifdef CONFIG_USB_PD_DECODE_SOP
 	.sop_prime_enable	= tcpci_tcpm_sop_prime_enable,
 #endif
-	.set_vconn		= tcpci_tcpm_set_vconn,
+	.set_vconn		= ps8xxx_tcpm_set_vconn,
 	.set_msg_header		= tcpci_tcpm_set_msg_header,
 	.set_rx_enable		= tcpci_tcpm_set_rx_enable,
 	.get_message_raw	= tcpci_tcpm_get_message_raw,

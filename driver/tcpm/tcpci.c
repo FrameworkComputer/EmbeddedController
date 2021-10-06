@@ -661,15 +661,6 @@ int tcpci_tcpm_set_vconn(int port, int enable)
 	reg &= ~TCPC_REG_POWER_CTRL_VCONN(1);
 	reg |= TCPC_REG_POWER_CTRL_VCONN(enable);
 
-	/*
-	 * Add delay of writing TCPC_REG_POWER_CTRL makes
-	 * CC status being judged correctly when disable VCONN.
-	 * This may be a PS8XXX firmware issue, Parade is still trying.
-	 * https://partnerissuetracker.corp.google.com/issues/185202064
-	 */
-	if (!enable)
-		msleep(PS8XXX_VCONN_TURN_OFF_DELAY_US);
-
 	return tcpc_write(port, TCPC_REG_POWER_CTRL, reg);
 }
 
