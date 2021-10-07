@@ -88,7 +88,7 @@ static void test_ppc_syv682x_interrupt(void)
 	syv682x_interrupt(syv682x_port);
 	msleep(1);
 	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
-			"PPC is sourcing power after TSD");
+			"PPC is sourcing power after OVP");
 	syv682x_emul_set_status(emul, 0);
 }
 
