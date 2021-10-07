@@ -132,7 +132,7 @@ void config_usb_db_type(void)
 
 __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 {
-	enum ioex_signal rst_signal;
+	enum gpio_signal rst_signal;
 
 	if (me->usb_port == USBC_PORT_C0) {
 		rst_signal = GPIO_USB_C0_RT_RST_ODL;
