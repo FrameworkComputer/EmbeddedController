@@ -2,9 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-menuconfig CROS_SHI_NPCX
-	bool "Nuvoton NPCX Serial Host Interface driver for the Zephyr shim"
+config CROS_SHI_NPCX
+	bool
 	depends on SOC_FAMILY_NPCX
+	depends on PLATFORM_EC_HOST_INTERFACE_SHI
+	default y
 	help
 	  This option enables Serial Host Interface driver for the NPCX family
 	  of processors. This is used for host-command communication on the
@@ -35,9 +37,10 @@ config CROS_SHI_NPCX_DEBUG
 endif # CROS_SHI_NPCX
 
 config CROS_SHI_IT8XXX2
-	bool "ITE it81202 spi host interface driver for Zephyr"
-	depends on SOC_FAMILY_RISCV_ITE && AP_ARM
-	default y if PLATFORM_EC_HOSTCMD
+	bool
+	depends on SOC_FAMILY_RISCV_ITE
+	depends on PLATFORM_EC_HOST_INTERFACE_SHI
+	default y
 	help
 	  This option enables spi host interface driver which is required to
 	  communicate with the EC when the CPU is the ARM processor.
