@@ -19,15 +19,17 @@
 
 #define MAX_ARGS_PER_COMMAND 10
 
-#define PROMPT "> "
-
 #ifdef CONFIG_EXPERIMENTAL_CONSOLE
 #define EC_SYN 0xEC
 #define EC_ACK 0xC0
-#endif /* defined(CONFIG_EXPERIMENTAL_CONSOLE) */
+#else /* defined(CONFIG_EXPERIMENTAL_CONSOLE) */
+
+#define PROMPT "> "
 
 /* ASCII control character; for example, CTRL('C') = ^C */
 #define CTRL(c) ((c) - '@')
+
+#endif /* defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 
 #ifdef CONFIG_CONSOLE_HISTORY
 /* History buffers */
@@ -274,8 +276,8 @@ static void console_init(void)
 	ccprintf("Enhanced Console is enabled (v1.0.0); type HELP for help.\n");
 #else
 	ccprintf("Console is enabled; type HELP for help.\n");
-#endif /* defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 	ccputs(PROMPT);
+#endif /* defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 }
 
 static int console_putc(int c)
