@@ -814,9 +814,9 @@ static void adc_vol_key_press_check(void)
 	}
 	if (new_adc_key_state != old_adc_key_state) {
 		adc_key_state_change = old_adc_key_state ^ new_adc_key_state;
-		if (adc_key_state_change && ADC_VOL_UP_MASK)
+		if (adc_key_state_change & ADC_VOL_UP_MASK)
 			button_interrupt(GPIO_VOLUME_UP_L);
-		if (adc_key_state_change && ADC_VOL_DOWN_MASK)
+		if (adc_key_state_change & ADC_VOL_DOWN_MASK)
 			button_interrupt(GPIO_VOLUME_DOWN_L);
 
 		old_adc_key_state = new_adc_key_state;
