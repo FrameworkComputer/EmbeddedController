@@ -25,7 +25,7 @@ __override struct keyboard_scan_config keyscan_config = {
 	},
 };
 
-static const struct ec_response_keybd_config keybd1 = {
+static const struct ec_response_keybd_config keybd_wo_privacy_w_kblight = {
 	.num_top_row_keys = 13,
 	.action_keys = {
 		TK_BACK,		/* T1 */
@@ -45,7 +45,27 @@ static const struct ec_response_keybd_config keybd1 = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
-static const struct ec_response_keybd_config keybd2 = {
+static const struct ec_response_keybd_config keybd_wo_privacy_wo_kblight = {
+	.num_top_row_keys = 13,
+	.action_keys = {
+		TK_BACK,			/* T1 */
+		TK_REFRESH,			/* T2 */
+		TK_FULLSCREEN,			/* T3 */
+		TK_OVERVIEW,			/* T4 */
+		TK_SNAPSHOT,			/* T5 */
+		TK_BRIGHTNESS_DOWN,		/* T6 */
+		TK_BRIGHTNESS_UP,		/* T7 */
+		TK_PREV_TRACK,			/* T8 */
+		TK_PLAY_PAUSE,			/* T9 */
+		TK_MICMUTE,			/* T10 */
+		TK_VOL_MUTE,			/* T11 */
+		TK_VOL_DOWN,			/* T12 */
+		TK_VOL_UP,			/* T13 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+static const struct ec_response_keybd_config keybd_w_privacy_w_kblight = {
 	.num_top_row_keys = 13,
 	.action_keys = {
 		TK_BACK,		/* T1 */
@@ -65,11 +85,38 @@ static const struct ec_response_keybd_config keybd2 = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
+static const struct ec_response_keybd_config keybd_w_privacy_wo_kblight = {
+	.num_top_row_keys = 13,
+	.action_keys = {
+		TK_BACK,			/* T1 */
+		TK_REFRESH,			/* T2 */
+		TK_FULLSCREEN,			/* T3 */
+		TK_OVERVIEW,			/* T4 */
+		TK_SNAPSHOT,			/* T5 */
+		TK_BRIGHTNESS_DOWN,		/* T6 */
+		TK_BRIGHTNESS_UP,		/* T7 */
+		TK_PRIVACY_SCRN_TOGGLE,		/* T8 */
+		TK_PLAY_PAUSE,			/* T9 */
+		TK_MICMUTE,			/* T10 */
+		TK_VOL_MUTE,			/* T11 */
+		TK_VOL_DOWN,			/* T12 */
+		TK_VOL_UP,			/* T13 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
 __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {
-	if (ec_cfg_has_eps() == 0)
-		return &keybd1;
-	else
-		return &keybd2;
+	if (ec_cfg_has_eps()) {
+		if (ec_cfg_has_kblight())
+			return &keybd_w_privacy_w_kblight;
+		else
+			return &keybd_w_privacy_wo_kblight;
+	} else {
+		if (ec_cfg_has_kblight())
+			return &keybd_wo_privacy_w_kblight;
+		else
+			return &keybd_wo_privacy_wo_kblight;
+	}
 }
