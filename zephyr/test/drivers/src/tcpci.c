@@ -1068,6 +1068,28 @@ static void test_tcpci_set_bist_mode(void)
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
 }
 
+/** Test TCPCI discharge vbus */
+static void test_tcpci_discharge_vbus(void)
+{
+	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
+	uint8_t exp_ctrl, initial_ctrl;
+
+	/* Set initial value for POWER ctrl register. Chosen arbitrary. */
+	initial_ctrl = TCPC_REG_POWER_CTRL_VBUS_VOL_MONITOR_DIS |
+		       TCPC_REG_POWER_CTRL_VOLT_ALARM_DIS;
+	tcpci_emul_set_reg(emul, TCPC_REG_POWER_CTRL, initial_ctrl);
+
+	/* Test discharge enable */
+	exp_ctrl = initial_ctrl | TCPC_REG_POWER_CTRL_FORCE_DISCHARGE;
+	tcpci_tcpc_discharge_vbus(USBC_PORT_C0, 1);
+	check_tcpci_reg(emul, TCPC_REG_POWER_CTRL, exp_ctrl);
+
+	/* Test discharge disable */
+	exp_ctrl = initial_ctrl & ~TCPC_REG_POWER_CTRL_FORCE_DISCHARGE;
+	tcpci_tcpc_discharge_vbus(USBC_PORT_C0, 0);
+	check_tcpci_reg(emul, TCPC_REG_POWER_CTRL, exp_ctrl);
+}
+
 void test_suite_tcpci(void)
 {
 	ztest_test_suite(tcpci,
@@ -1091,6 +1113,7 @@ void test_suite_tcpci(void)
 			 ztest_user_unit_test(test_tcpci_drp_toggle),
 			 ztest_user_unit_test(test_tcpci_get_chip_info),
 			 ztest_user_unit_test(test_tcpci_low_power_mode),
-			 ztest_user_unit_test(test_tcpci_set_bist_mode));
+			 ztest_user_unit_test(test_tcpci_set_bist_mode),
+			 ztest_user_unit_test(test_tcpci_discharge_vbus));
 	ztest_run_test_suite(tcpci);
 }
