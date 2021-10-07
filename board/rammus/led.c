@@ -157,7 +157,7 @@ static void rammus_led_set_battery(void)
 		if(charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER)
 			config_battery_led(LED_STATE_FULL);
 		else
-			config_battery_led(LED_STATE_OFF);
+			config_battery_led(LED_STATE_DISCHARGE);
 		charge_ticks = 0;
 		break;
 	default:
