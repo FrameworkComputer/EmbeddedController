@@ -127,7 +127,7 @@ struct usb_mux usb_muxes[] = {
 		.driver = &bb_usb_retimer,
 		.hpd_update = bb_retimer_hpd_update,
 		.i2c_port = I2C_PORT_USB_C2_MUX,
-		.i2c_addr_flags = USBC_PORT_BB_RETIMER_I2C_ADDR,
+		.i2c_addr_flags = USBC_PORT_C2_BB_RETIMER_I2C_ADDR,
 		.next_mux = &usbc2_tcss_usb_mux,
 	},
 	[USBC_PORT_C1] = {
@@ -145,7 +145,7 @@ struct usb_mux usb_muxes_c1 = {
 		.driver = &bb_usb_retimer,
 		.hpd_update = bb_retimer_hpd_update,
 		.i2c_port = I2C_PORT_USB_C1_MUX,
-		.i2c_addr_flags = USBC_PORT_BB_RETIMER_I2C_ADDR,
+		.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
 		.next_mux = &usbc1_tcss_usb_mux,
 };
 
