@@ -351,7 +351,6 @@ void cypd_charger_init_complete(void)
 }
 void cypd_update_power(void)
 {
-	return;
 	if (!charger_init_ok) {
 		system_power_present = 0;
 		return;
