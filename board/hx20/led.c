@@ -28,12 +28,16 @@
 #define LED_ON_TICKS 5
 
 /* at 8-bit mode one cycle = 8ms */
-#define BREATH_ON_LENGTH	62
+#define BREATH_ON_LENGTH_HIGH	62
+#define BREATH_ON_LENGTH_MID	72
+#define BREATH_ON_LENGTH_LOW	90
 #define BREATH_OFF_LENGTH	200
 
 #define FP_LED_HIGH 55
 #define FP_LED_MEDIUM 40
 #define FP_LED_LOW 15
+
+#define FP_BREATH_LOW 20
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_LEFT_LED,
@@ -44,6 +48,7 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 int power_button_enable = 0;
 static uint8_t led_level;
+int breath_led_length;
 
 struct pwm_led led_color_map[EC_LED_COLOR_COUNT] = {
 				/* Red, Green, Blue */
@@ -67,7 +72,7 @@ struct pwm_led pwr_led_color_map[EC_LED_COLOR_COUNT] = {
 
 struct pwm_led breath_led_color_map[EC_LED_COLOR_COUNT] = {
 				/* White, Green, Red */
-	[EC_LED_COLOR_WHITE]  = {  50,   0,   0 },
+	[EC_LED_COLOR_WHITE]  = {  FP_LED_HIGH,   0,   0 },
 };
 
 struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
@@ -120,7 +125,7 @@ void set_pwr_led_color(enum pwm_led_id id, int color)
 		led->set_duty(led->ch2, duty.ch2);
 }
 
-void enable_pwr_breath(enum pwm_led_id id, int color, uint8_t enable)
+void enable_pwr_breath(enum pwm_led_id id, int color, int breath_length, uint8_t enable)
 {
 	struct pwm_led duty = { 0 };
 	const struct pwm_led *led = &pwm_leds[id];
@@ -136,11 +141,11 @@ void enable_pwr_breath(enum pwm_led_id id, int color, uint8_t enable)
 	}
 
 	if (led->ch0 != (enum pwm_channel)PWM_LED_NO_CHANNEL)
-		bbled_enable(led->ch0, duty.ch0, BREATH_ON_LENGTH, BREATH_OFF_LENGTH, enable);
+		bbled_enable(led->ch0, duty.ch0, breath_length, BREATH_OFF_LENGTH, enable);
 	if (led->ch1 != (enum pwm_channel)PWM_LED_NO_CHANNEL)
-		bbled_enable(led->ch1, duty.ch1, BREATH_ON_LENGTH, BREATH_OFF_LENGTH, enable);
+		bbled_enable(led->ch1, duty.ch1, breath_length, BREATH_OFF_LENGTH, enable);
 	if (led->ch2 != (enum pwm_channel)PWM_LED_NO_CHANNEL)
-		bbled_enable(led->ch2, duty.ch2, BREATH_ON_LENGTH, BREATH_OFF_LENGTH, enable);
+		bbled_enable(led->ch2, duty.ch2, breath_length, BREATH_OFF_LENGTH, enable);
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
@@ -282,14 +287,14 @@ static void led_set_power(void)
 	/* don't light up when at lid close */
 	if (!lid_is_open()) {
 		set_pwr_led_color(PWM_LED2, -1);
-		enable_pwr_breath(PWM_LED2, EC_LED_COLOR_WHITE, 0);
+		enable_pwr_breath(PWM_LED2, EC_LED_COLOR_WHITE, breath_led_length, 0);
 		return;
 	}
 
 	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
-		enable_pwr_breath(PWM_LED2, EC_LED_COLOR_WHITE, 1);
+		enable_pwr_breath(PWM_LED2, EC_LED_COLOR_WHITE, breath_led_length, 1);
 	else
-		enable_pwr_breath(PWM_LED2, EC_LED_COLOR_WHITE, 0);
+		enable_pwr_breath(PWM_LED2, EC_LED_COLOR_WHITE, breath_led_length, 0);
 
 	if (chipset_in_state(CHIPSET_STATE_ON) | power_button_enable) {
 		if (charge_prevent_power_on(0))
@@ -321,6 +326,7 @@ static void led_tick(void)
 static void led_configure(void)
 {
 	int i;
+	uint8_t breath_led_level = FP_LED_HIGH;
 
 	/*Initialize PWM channels*/
 	for (i = 0; i < PWM_CH_COUNT; i++) {
@@ -329,8 +335,29 @@ static void led_configure(void)
 
 	system_get_bbram(STSTEM_BBRAM_IDX_FP_LED_LEVEL, &led_level);
 
-	if (led_level)
+
+	if (led_level) {
+		switch (led_level) {
+		case FP_LED_BRIGHTNESS_HIGH:
+			breath_led_level = FP_LED_HIGH;
+			breath_led_length = BREATH_ON_LENGTH_HIGH;
+			break;
+		case FP_LED_BRIGHTNESS_MEDIUM:
+			breath_led_level = FP_LED_MEDIUM;
+			breath_led_length = BREATH_ON_LENGTH_MID;
+			break;
+		case FP_LED_BRIGHTNESS_LOW:
+			breath_led_level = FP_BREATH_LOW;
+			breath_led_length = BREATH_ON_LENGTH_LOW;
+			break;
+		default:
+			break;
+		}
+		breath_led_color_map[EC_LED_COLOR_WHITE].ch0 = breath_led_level;
 		pwr_led_color_map[EC_LED_COLOR_WHITE].ch0 = led_level;
+	} else
+		breath_led_length = BREATH_ON_LENGTH_HIGH;
+
 
 	led_tick();
 }
@@ -348,6 +375,7 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fp_led_control *p = args->params;
 	struct ec_response_fp_led_level *r = args->response;
+	uint8_t breath_led_level;
 
 	if (p->get_led_level) {
 		system_get_bbram(STSTEM_BBRAM_IDX_FP_LED_LEVEL, &r->level);
@@ -358,12 +386,18 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 	switch (p->set_led_level) {
 	case FP_LED_BRIGHTNESS_HIGH:
 		led_level = FP_LED_HIGH;
+		breath_led_level = FP_LED_HIGH;
+		breath_led_length = BREATH_ON_LENGTH_HIGH;
 		break;
 	case FP_LED_BRIGHTNESS_MEDIUM:
 		led_level = FP_LED_MEDIUM;
+		breath_led_level = FP_LED_MEDIUM;
+		breath_led_length = BREATH_ON_LENGTH_MID;
 		break;
 	case FP_LED_BRIGHTNESS_LOW:
 		led_level = FP_LED_LOW;
+		breath_led_level = FP_BREATH_LOW;
+		breath_led_length = BREATH_ON_LENGTH_LOW;
 		break;
 	default:
 		return EC_RES_INVALID_PARAM;
@@ -371,6 +405,8 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 	}
 
 	system_set_bbram(STSTEM_BBRAM_IDX_FP_LED_LEVEL, led_level);
+
+	breath_led_color_map[EC_LED_COLOR_WHITE].ch0 = breath_led_level;
 	pwr_led_color_map[EC_LED_COLOR_WHITE].ch0 = led_level;
 
 	return EC_RES_SUCCESS;
