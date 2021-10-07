@@ -24,8 +24,7 @@ static int bus_fault_ignored;
 static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
 
 /* Preceded by stack, rounded down to nearest 64-bit-aligned boundary */
-static const uint32_t pstack_addr = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE
-				     - sizeof(struct panic_data)) & ~7;
+static const uint32_t pstack_addr = ((uint32_t)pdata_ptr) & ~7;
 
 /**
  * Print the name and value of a register
