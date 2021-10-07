@@ -184,6 +184,9 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR		10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC	10
 
+/* PROCHOT defines */
+#define BATT_MAX_CONTINUE_DISCHARGE_WATT    45
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"	/* needed by registers.h */
@@ -194,6 +197,7 @@ enum adc_channel {
 	ADC_TEMP_SENSOR_1_DDR_SOC,
 	ADC_TEMP_SENSOR_2_FAN,
 	ADC_TEMP_SENSOR_3_CHARGER,
+	ADC_IADPT,
 	ADC_CH_COUNT
 };
 
