@@ -43,6 +43,8 @@
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+#define CPRINTSCHIP(format, args...) cprints(CC_CHIPSET, format ## args)
+
 static void reset_nct38xx_port(int port);
 
 /* Wake Sources */
@@ -872,14 +874,32 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	}
 }
 
-void baseboard_en_pwr_pcore_s0(enum gpio_signal signal)
+static void baseboard_set_en_pwr_pcore(void)
 {
-
-	/* EC must AND signals PG_LPDDR4X_S3_OD and PG_GROUPC_S0_OD */
+	/*
+	 * EC must AND signals PG_LPDDR4X_S3_OD, PG_GROUPC_S0_OD, and
+	 * EN_PWR_S0_R.
+	 */
 	gpio_set_level(GPIO_EN_PWR_PCORE_S0_R,
 					gpio_get_level(GPIO_PG_LPDDR4X_S3_OD) &&
-					gpio_get_level(GPIO_PG_GROUPC_S0_OD));
+					gpio_get_level(GPIO_PG_GROUPC_S0_OD) &&
+					gpio_get_level(GPIO_EN_PWR_S0_R));
 }
+
+void baseboard_en_pwr_pcore_signal(enum gpio_signal signal)
+{
+	baseboard_set_en_pwr_pcore();
+}
+
+static void baseboard_check_groupc_low(void)
+{
+	/* Warn if we see unexpected sequencing here */
+	if (!gpio_get_level(GPIO_EN_PWR_S0_R) &&
+					gpio_get_level(GPIO_PG_GROUPC_S0_OD))
+		CPRINTSCHIP("WARN: PG_GROUPC_S0_OD high while EN_PWR_S0_R low");
+
+}
+DECLARE_DEFERRED(baseboard_check_groupc_low);
 
 void baseboard_en_pwr_s0(enum gpio_signal signal)
 {
@@ -888,6 +908,17 @@ void baseboard_en_pwr_s0(enum gpio_signal signal)
 	gpio_set_level(GPIO_EN_PWR_S0_R,
 					gpio_get_level(GPIO_SLP_S3_L) &&
 					gpio_get_level(GPIO_PG_PWR_S5));
+
+	/*
+	 * If we set EN_PWR_S0_R low, then check PG_GROUPC_S0_OD went low as
+	 * well some reasonable time later
+	 */
+	if (!gpio_get_level(GPIO_EN_PWR_S0_R))
+		hook_call_deferred(&baseboard_check_groupc_low_data,
+				   100 * MSEC);
+
+	/* Change EN_PWR_PCORE_S0_R if needed */
+	baseboard_set_en_pwr_pcore();
 
 	/* Now chain off to the normal power signal interrupt handler. */
 	power_signal_interrupt(signal);
