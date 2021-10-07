@@ -197,10 +197,13 @@ static int command_charger(int argc, char **argv)
 	}
 
 	idx_provided = isdigit((unsigned char)argv[1][0]);
-	if (idx_provided)
+	if (idx_provided) {
 		chgnum = atoi(argv[1]);
-	else
+		if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count()))
+			return EC_ERROR_PARAM1;
+	} else {
 		chgnum = 0;
+	}
 
 	if ((argc == 2) && idx_provided) {
 		print_charger_debug(chgnum);
@@ -230,14 +233,32 @@ static int command_charger(int argc, char **argv)
 			return EC_ERROR_PARAM2+idx_provided;
 		dptf_limit_ma = d;
 		return EC_SUCCESS;
+	} else if (strcasecmp(argv[1+idx_provided], "dump") == 0) {
+		if (!IS_ENABLED(CONFIG_CMD_CHARGER_DUMP) ||
+				!chg_chips[chgnum].drv->dump_registers) {
+			ccprintf("dump not supported\n");
+			return EC_ERROR_PARAM1+idx_provided;
+		}
+		ccprintf("Dump %s registers\n",
+				chg_chips[chgnum].drv->get_info(chgnum)->name);
+		chg_chips[chgnum].drv->dump_registers(chgnum);
+		return EC_SUCCESS;
 	} else {
 		return EC_ERROR_PARAM1+idx_provided;
 	}
 }
 
 DECLARE_CONSOLE_COMMAND(charger, command_charger,
-			"[chgnum] [input | current | voltage | dptf] [newval]",
-			"Get or set charger param(s)");
+			"[chgnum] [input | current | voltage | dptf] [newval]"
+#ifdef CONFIG_CMD_CHARGER_DUMP
+			"\n\t[chgnum] dump"
+#endif
+			,
+			"Get or set charger param(s)"
+#ifdef CONFIG_CMD_CHARGER_DUMP
+			". Dump registers."
+#endif
+);
 
 /* Driver wrapper functions */
 

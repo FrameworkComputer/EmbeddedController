@@ -135,6 +135,9 @@ struct charger_drv {
 
 	/* Enable/disable linear charging */
 	enum ec_error_list (*enable_linear_charge)(int chgnum, bool enable);
+
+	/* Dumps charger registers */
+	void (*dump_registers)(int chgnum);
 };
 
 struct charger_config_t {

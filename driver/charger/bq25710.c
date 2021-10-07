@@ -666,12 +666,10 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, bq25710_chipset_suspend, HOOK_PRIO_DEFAULT);
 #endif
 
 #ifdef CONFIG_CMD_CHARGER_DUMP
-static int console_bq25710_dump_regs(int argc, char **argv)
+static void console_bq25710_dump_regs(int chgnum)
 {
 	int i;
 	int val;
-	int chgnum = 0;
-	char *e;
 
 	/* Dump all readable registers on bq25710. */
 	static const uint8_t regs[] = {
@@ -703,25 +701,13 @@ static int console_bq25710_dump_regs(int argc, char **argv)
 		BQ25710_REG_MANUFACTURER_ID,
 		BQ25710_REG_DEVICE_ADDRESS,
 	};
-	if (argc >= 2) {
-		chgnum = strtoi(argv[1], &e, 10);
-		if (*e)
-			return EC_ERROR_PARAM1;
-	}
 
 	for (i = 0; i < ARRAY_SIZE(regs); ++i) {
 		if (raw_read16(chgnum, regs[i], &val))
 			continue;
 		ccprintf("BQ25710 REG 0x%02x:  0x%04x\n", regs[i], val);
 	}
-
-
-	return 0;
 }
-DECLARE_CONSOLE_COMMAND(charger_dump, console_bq25710_dump_regs,
-			"charger_dump <chgnum>",
-			"Dump all charger registers");
-
 #endif /* CONFIG_CMD_CHARGER_DUMP */
 
 const struct charger_drv bq25710_drv = {
@@ -749,4 +735,7 @@ const struct charger_drv bq25710_drv = {
 	.ramp_is_stable = &bq25710_ramp_is_stable,
 	.ramp_get_current_limit = &bq25710_ramp_get_current_limit,
 #endif /* CONFIG_CHARGE_RAMP_HW */
+#ifdef CONFIG_CMD_CHARGER_DUMP
+	.dump_registers = &console_bq25710_dump_regs,
+#endif
 };

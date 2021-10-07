@@ -1465,7 +1465,7 @@ static int read_ext(int chgnum, uint8_t cmd)
 }
 
 /* Dump all readable registers on bd9995x */
-static int console_bd9995x_dump_regs(int argc, char **argv)
+static void console_bd9995x_dump_regs(int chgnum)
 {
 	int i;
 	uint8_t regs[] = { 0x14, 0x15, 0x3c, 0x3d, 0x3e, 0x3f };
@@ -1480,12 +1480,7 @@ static int console_bd9995x_dump_regs(int argc, char **argv)
 		ccprintf("EXT REG %4x:  %4x\n", i, read_ext(CHARGER_SOLO, i));
 		cflush();
 	}
-
-	return 0;
 }
-DECLARE_CONSOLE_COMMAND(charger_dump, console_bd9995x_dump_regs,
-			NULL,
-			"Dump all charger registers");
 #endif /* CONFIG_CMD_CHARGER_DUMP */
 
 #ifdef CONFIG_CMD_CHARGER
@@ -1737,6 +1732,9 @@ const struct charger_drv bd9995x_drv = {
 	.device_id = &bd9995x_device_id,
 	.get_option = &bd9995x_get_option,
 	.set_option = &bd9995x_set_option,
+#ifdef CONFIG_CMD_CHARGER_DUMP
+	.dump_registers = &console_bd9995x_dump_regs,
+#endif
 };
 
 #ifdef CONFIG_BC12_SINGLE_DRIVER
