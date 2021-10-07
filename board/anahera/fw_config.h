@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#ifndef __BOARD_BRYA_FW_CONFIG_H_
-#define __BOARD_BRYA_FW_CONFIG_H_
+#ifndef __BOARD_ANAHERA_FW_CONFIG_H_
+#define __BOARD_ANAHERA_FW_CONFIG_H_
 
 #include <stdint.h>
 
 /****************************************************************************
- * CBI FW_CONFIG layout for Redrix board.
+ * CBI FW_CONFIG layout for Anahera board.
  *
- * Source of truth is the project/brya/redrix/config.star configuration file.
+ * Source of truth is the project/brya/anahera/config.star configuration file.
  */
 
 enum ec_cfg_keyboard_backlight_type {
@@ -24,7 +24,7 @@ enum ec_cfg_eps_type {
 	EPS_ENABLED = 1
 };
 
-union redrix_cbi_fw_config {
+union anahera_cbi_fw_config {
 	struct {
 		uint32_t				sd_db : 2;
 		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
@@ -32,7 +32,8 @@ union redrix_cbi_fw_config {
 		uint32_t				lte_db : 2;
 		uint32_t				ufc : 2;
 		enum ec_cfg_eps_type			eps : 1;
-		uint32_t				reserved_1 : 21;
+		uint32_t				boot_device : 2;
+		uint32_t				reserved_1 : 19;
 	};
 	uint32_t raw_value;
 };
@@ -42,7 +43,7 @@ union redrix_cbi_fw_config {
  *
  * @return the FW_CONFIG for the board.
  */
-union redrix_cbi_fw_config get_fw_config(void);
+union anahera_cbi_fw_config get_fw_config(void);
 
 /**
  * Check if the FW_CONFIG has enabled privacy screen.
@@ -52,4 +53,12 @@ union redrix_cbi_fw_config get_fw_config(void);
  */
 bool ec_cfg_has_eps(void);
 
-#endif /* __BOARD_BRYA_FW_CONFIG_H_ */
+/**
+ * Check if the FW_CONFIG has enabled keyboard backlight.
+ *
+ * @return true if board supports keyboard backlight, false if the board
+ * doesn't support it.
+ */
+bool ec_cfg_has_kblight(void);
+
+#endif /* __BOARD_ANAHERA_FW_CONFIG_H_ */

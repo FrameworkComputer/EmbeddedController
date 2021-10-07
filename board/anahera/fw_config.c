@@ -11,19 +11,19 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
-static union redrix_cbi_fw_config fw_config;
+static union anahera_cbi_fw_config fw_config;
 BUILD_ASSERT(sizeof(fw_config) == sizeof(uint32_t));
 
 /*
- * FW_CONFIG defaults for redrix if the CBI.FW_CONFIG data is not
+ * FW_CONFIG defaults for anahera if the CBI.FW_CONFIG data is not
  * initialized.
  */
-static const union redrix_cbi_fw_config fw_config_defaults = {
-	.kb_bl = KEYBOARD_BACKLIGHT_ENABLED,
+static const union anahera_cbi_fw_config fw_config_defaults = {
+	.kb_bl = KEYBOARD_BACKLIGHT_DISABLED,
 };
 
 /****************************************************************************
- * Redrix FW_CONFIG access
+ * Anahera FW_CONFIG access
  */
 void board_init_fw_config(void)
 {
@@ -44,7 +44,7 @@ void board_init_fw_config(void)
 	}
 }
 
-union redrix_cbi_fw_config get_fw_config(void)
+union anahera_cbi_fw_config get_fw_config(void)
 {
 	return fw_config;
 }
@@ -52,4 +52,9 @@ union redrix_cbi_fw_config get_fw_config(void)
 bool ec_cfg_has_eps(void)
 {
 	return (fw_config.eps == EPS_ENABLED);
+}
+
+bool ec_cfg_has_kblight(void)
+{
+	return (fw_config.kb_bl == KEYBOARD_BACKLIGHT_ENABLED);
 }
