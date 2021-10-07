@@ -122,6 +122,7 @@
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50 /* 7b address */
 #define I2C_ADDR_ISL98607_FLAGS 0x29
+#define I2C_ADDR_MP3372_FLAGS 0x28
 
 /* ISL98607 registers and value */
 /* VBST Voltage Adjustment */
@@ -136,6 +137,10 @@
 #define ISL98607_REG_VP_OUT	0x09
 #define ISL98607_VP_OUT_5P5	0x0a
 
+/* MP3372 registers and value */
+/* ISET & CHEN */
+#define MP3372_REG_ISET_CHEN		0x00
+#define MP3372_ISET_21P8_CHEN_ALL	0x70ff
 /*
  * I2C pin names for baseboard
  *
