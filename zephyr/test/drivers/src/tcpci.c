@@ -1090,6 +1090,49 @@ static void test_tcpci_discharge_vbus(void)
 	check_tcpci_reg(emul, TCPC_REG_POWER_CTRL, exp_ctrl);
 }
 
+/** Test TCPC xfer */
+static void test_tcpc_xfer(void)
+{
+	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
+	uint16_t val, exp_val;
+	uint8_t reg;
+
+	/* Set value to register (value and register chosen arbitrary) */
+	exp_val = 0x7fff;
+	reg = TCPC_REG_ALERT_MASK;
+	tcpci_emul_set_reg(emul, reg, exp_val);
+
+	/* Test reading value using tcpc_xfer() function */
+	zassert_equal(EC_SUCCESS,
+		      tcpc_xfer(USBC_PORT_C0, &reg, 1, (uint8_t *)&val, 2),
+		      NULL);
+	zassert_equal(exp_val, val, "0x%x != 0x%x", exp_val, val);
+}
+
+/** Test TCPCI debug accessory enable/disable */
+static void test_tcpci_debug_accessory(void)
+{
+	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
+	uint8_t exp_val, initial_val;
+
+	/* Set initial value for STD output register. Chosen arbitrary. */
+	initial_val = TCPC_REG_CONFIG_STD_OUTPUT_AUDIO_CONN_N |
+		      TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB |
+		      TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED |
+		      TCPC_REG_CONFIG_STD_OUTPUT_DBG_ACC_CONN_N;
+	tcpci_emul_set_reg(emul, TCPC_REG_CONFIG_STD_OUTPUT, initial_val);
+
+	/* Test debug accessory connect */
+	exp_val = initial_val & ~TCPC_REG_CONFIG_STD_OUTPUT_DBG_ACC_CONN_N;
+	tcpci_tcpc_debug_accessory(USBC_PORT_C0, 1);
+	check_tcpci_reg(emul, TCPC_REG_CONFIG_STD_OUTPUT, exp_val);
+
+	/* Test debug accessory disconnect */
+	exp_val = initial_val | TCPC_REG_CONFIG_STD_OUTPUT_DBG_ACC_CONN_N;
+	tcpci_tcpc_debug_accessory(USBC_PORT_C0, 0);
+	check_tcpci_reg(emul, TCPC_REG_CONFIG_STD_OUTPUT, exp_val);
+}
+
 void test_suite_tcpci(void)
 {
 	ztest_test_suite(tcpci,
@@ -1114,6 +1157,8 @@ void test_suite_tcpci(void)
 			 ztest_user_unit_test(test_tcpci_get_chip_info),
 			 ztest_user_unit_test(test_tcpci_low_power_mode),
 			 ztest_user_unit_test(test_tcpci_set_bist_mode),
-			 ztest_user_unit_test(test_tcpci_discharge_vbus));
+			 ztest_user_unit_test(test_tcpci_discharge_vbus),
+			 ztest_user_unit_test(test_tcpc_xfer),
+			 ztest_user_unit_test(test_tcpci_debug_accessory));
 	ztest_run_test_suite(tcpci);
 }
