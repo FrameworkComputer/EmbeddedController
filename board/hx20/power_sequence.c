@@ -36,6 +36,7 @@
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
 static int forcing_shutdown;  /* Forced shutdown in progress? */
+static int custom_forcing_shutdown;
 
 /*
  * define wake source for keep PCH power
@@ -75,6 +76,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		report_ap_reset(reason);
 		forcing_shutdown = 1;
+		custom_forcing_shutdown = 1;
 		chipset_force_g3();
 	}
 }
@@ -91,6 +93,7 @@ void chipset_handle_espi_reset_assert(void)
 		forcing_shutdown) {
 		power_button_pch_release();
 		forcing_shutdown = 0;
+
 	}
 }
 
@@ -110,8 +113,10 @@ int keep_pch_power(void)
 
 	system_get_bbram(SYSTEM_BBRAM_IDX_VPRO_STATUS, &vpro_change);
 
-	if (forcing_shutdown)
+	if (custom_forcing_shutdown && power_get_state() == POWER_S5G3) {
+		custom_forcing_shutdown = 0;
 		return false;
+	}
 	else if (version & BIT(0) && extpower_is_present() && vpro_change)
 		return true;
 #ifdef CONFIG_EMI_REGION1
@@ -393,11 +398,9 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S5:
 		CPRINTS("PH S5");
 
-		if (forcing_shutdown) {
+		if (custom_forcing_shutdown)
 			/* force shutdown process shouldn't keep PCH power */
-			forcing_shutdown = 0;
 			return POWER_S5G3;
-		}
 
 		if (power_s5_up || stress_test_enable) {
 			/* Wait S5 signal when power up from S5 */
@@ -562,9 +565,8 @@ enum power_state power_handle_state(enum power_state state)
 		/* if we need to keep pch power, return to G3S5 state */
 
 #ifdef CONFIG_EMI_REGION1
-		if (keep_pch_power()) {
+		if (keep_pch_power())
 			return POWER_S5;
-		}
 #endif
 		chipset_force_g3();
 		/* clear suspend flag when system shutdown */
