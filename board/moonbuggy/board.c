@@ -310,7 +310,7 @@ static void board_init(void)
 	 * button is not available.
 	 */
 	if (board_version < 2)
-		button_disable_gpio(GPIO_EC_RECOVERY_BTN_ODL);
+		button_disable_gpio(BUTTON_RECOVERY);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
