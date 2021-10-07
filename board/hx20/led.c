@@ -28,12 +28,16 @@
 #define LED_ON_TICKS 5
 
 /* at 8-bit mode one cycle = 8ms */
-#define BREATH_ON_LENGTH	62
+#define BREATH_ON_LENGTH_HIGH	62
+#define BREATH_ON_LENGTH_MID	72
+#define BREATH_ON_LENGTH_LOW	90
 #define BREATH_OFF_LENGTH	200
 
 #define FP_LED_HIGH 55
 #define FP_LED_MEDIUM 40
 #define FP_LED_LOW 15
+
+#define FP_BREATH_LOW 20
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_LEFT_LED,
@@ -336,15 +340,15 @@ static void led_configure(void)
 		switch (led_level) {
 		case FP_LED_BRIGHTNESS_HIGH:
 			breath_led_level = FP_LED_HIGH;
-			breath_led_length = BREATH_ON_LENGTH;
+			breath_led_length = BREATH_ON_LENGTH_HIGH;
 			break;
 		case FP_LED_BRIGHTNESS_MEDIUM:
 			breath_led_level = FP_LED_MEDIUM;
-			breath_led_length = 72;
+			breath_led_length = BREATH_ON_LENGTH_MID;
 			break;
 		case FP_LED_BRIGHTNESS_LOW:
-			breath_led_level = 20;
-			breath_led_length = 90;
+			breath_led_level = FP_BREATH_LOW;
+			breath_led_length = BREATH_ON_LENGTH_LOW;
 			break;
 		default:
 			break;
@@ -352,7 +356,7 @@ static void led_configure(void)
 		breath_led_color_map[EC_LED_COLOR_WHITE].ch0 = breath_led_level;
 		pwr_led_color_map[EC_LED_COLOR_WHITE].ch0 = led_level;
 	} else
-		breath_led_length = BREATH_ON_LENGTH;
+		breath_led_length = BREATH_ON_LENGTH_HIGH;
 
 
 	led_tick();
@@ -383,17 +387,17 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 	case FP_LED_BRIGHTNESS_HIGH:
 		led_level = FP_LED_HIGH;
 		breath_led_level = FP_LED_HIGH;
-		breath_led_length = BREATH_ON_LENGTH;
+		breath_led_length = BREATH_ON_LENGTH_HIGH;
 		break;
 	case FP_LED_BRIGHTNESS_MEDIUM:
 		led_level = FP_LED_MEDIUM;
 		breath_led_level = FP_LED_MEDIUM;
-		breath_led_length = 72;
+		breath_led_length = BREATH_ON_LENGTH_MID;
 		break;
 	case FP_LED_BRIGHTNESS_LOW:
 		led_level = FP_LED_LOW;
-		breath_led_level = 20;
-		breath_led_length = 90;
+		breath_led_level = FP_BREATH_LOW;
+		breath_led_length = BREATH_ON_LENGTH_LOW;
 		break;
 	default:
 		return EC_RES_INVALID_PARAM;
