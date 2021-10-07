@@ -143,6 +143,12 @@ int board_is_sourcing_vbus(int port)
 	return 0;
 }
 
+struct usb_mux usbc0_virtual_usb_mux = {
+	.usb_port = USBC_PORT_C0,
+	.driver = &virtual_usb_mux_driver,
+	.hpd_update = &virtual_hpd_update,
+};
+
 struct usb_mux usbc1_virtual_usb_mux = {
 	.usb_port = USBC_PORT_C1,
 	.driver = &virtual_usb_mux_driver,
@@ -152,8 +158,10 @@ struct usb_mux usbc1_virtual_usb_mux = {
 struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.usb_port = USBC_PORT_C0,
-		.driver = &virtual_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
+		.driver = &tcpci_tcpm_usb_mux_driver,
+		.next_mux = &usbc0_virtual_usb_mux,
+		.i2c_port = I2C_PORT_USB_C0,
+		.i2c_addr_flags = DT_REG_ADDR(DT_NODELABEL(tcpci_emul)),
 	},
 	[USBC_PORT_C1] = {
 		.usb_port = USBC_PORT_C1,

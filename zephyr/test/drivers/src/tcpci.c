@@ -1133,8 +1133,223 @@ static void test_tcpci_debug_accessory(void)
 	check_tcpci_reg(emul, TCPC_REG_CONFIG_STD_OUTPUT, exp_val);
 }
 
+/* Setup TCPCI usb mux to behave as it is used only for usb mux */
+static void set_usb_mux_not_tcpc(void)
+{
+	usb_muxes[USBC_PORT_C0].flags = USB_MUX_FLAG_NOT_TCPC;
+}
+
+/* Setup TCPCI usb mux to behave as it is used for usb mux and TCPC */
+static void set_usb_mux_tcpc(void)
+{
+	usb_muxes[USBC_PORT_C0].flags = 0;
+}
+
+/** Test TCPCI mux init */
+static void test_tcpci_mux_init(void)
+{
+	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
+	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
+	struct usb_mux *tcpci_usb_mux = &usb_muxes[USBC_PORT_C0];
+
+	/* Set as usb mux with TCPC for first init call */
+	set_usb_mux_tcpc();
+
+	/* Make sure that TCPC is not accessed */
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_FAIL_ALL_REG);
+	zassert_equal(EC_SUCCESS, tcpci_tcpm_mux_init(tcpci_usb_mux),
+		      NULL);
+
+	/* Set as only usb mux without TCPC for rest of the test */
+	set_usb_mux_not_tcpc();
+
+	/* Test fail on power status read */
+	i2c_common_emul_set_read_fail_reg(i2c_emul, TCPC_REG_POWER_STATUS);
+	zassert_equal(EC_ERROR_INVAL, tcpci_tcpm_mux_init(tcpci_usb_mux),
+		      NULL);
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test fail on uninitialised bit set */
+	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
+			   TCPC_REG_POWER_STATUS_UNINIT);
+	zassert_equal(EC_ERROR_TIMEOUT,
+		      tcpci_tcpm_mux_init(tcpci_usb_mux), NULL);
+
+	/* Set correct power status for rest of the test */
+	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS, 0);
+
+	/* Test fail on alert mask write fail */
+	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_ALERT_MASK);
+	zassert_equal(EC_ERROR_UNKNOWN,
+		      tcpci_tcpm_mux_init(tcpci_usb_mux), NULL);
+
+	/* Test fail on alert write fail */
+	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_ALERT);
+	zassert_equal(EC_ERROR_UNKNOWN,
+		      tcpci_tcpm_mux_init(tcpci_usb_mux), NULL);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Set arbitrary value to alert and alert mask registers */
+	tcpci_emul_set_reg(emul, TCPC_REG_ALERT, 0xffff);
+	tcpci_emul_set_reg(emul, TCPC_REG_ALERT_MASK, 0xffff);
+
+	/* Test success init */
+	zassert_equal(EC_SUCCESS, tcpci_tcpm_mux_init(tcpci_usb_mux),
+		      NULL);
+	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, 0);
+	check_tcpci_reg(emul, TCPC_REG_ALERT, 0);
+}
+
+/** Test TCPCI mux enter low power mode */
+static void test_tcpci_mux_enter_low_power(void)
+{
+	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
+	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
+	struct usb_mux *tcpci_usb_mux = &usb_muxes[USBC_PORT_C0];
+
+	/* Set as usb mux with TCPC for first enter_low_power call */
+	set_usb_mux_tcpc();
+
+	/* Make sure that TCPC is not accessed */
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_FAIL_ALL_REG);
+	zassert_equal(EC_SUCCESS,
+		      tcpci_tcpm_mux_enter_low_power(tcpci_usb_mux),
+		      NULL);
+
+	/* Set as only usb mux without TCPC for rest of the test */
+	set_usb_mux_not_tcpc();
+
+	/* Test error on failed command set */
+	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_COMMAND);
+	zassert_equal(EC_ERROR_INVAL,
+		      tcpci_tcpm_mux_enter_low_power(tcpci_usb_mux),
+		      NULL);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test correct command is issued */
+	zassert_equal(EC_SUCCESS,
+		      tcpci_tcpm_mux_enter_low_power(tcpci_usb_mux),
+		      NULL);
+	check_tcpci_reg(emul, TCPC_REG_COMMAND, TCPC_REG_COMMAND_I2CIDLE);
+}
+
+/** Test TCPCI mux set and get */
+static void test_tcpci_mux_set_get(void)
+{
+	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
+	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
+	struct usb_mux *tcpci_usb_mux = &usb_muxes[USBC_PORT_C0];
+	mux_state_t mux_state, mux_state_get;
+	uint16_t exp_val, initial_val;
+	bool ack;
+
+	mux_state = USB_PD_MUX_NONE;
+
+	/* Test fail on standard output config register read */
+	i2c_common_emul_set_read_fail_reg(i2c_emul, TCPC_REG_CONFIG_STD_OUTPUT);
+	zassert_equal(EC_ERROR_INVAL,
+		      tcpci_tcpm_mux_set(tcpci_usb_mux, mux_state, &ack),
+		      NULL);
+	zassert_equal(EC_ERROR_INVAL,
+		      tcpci_tcpm_mux_get(tcpci_usb_mux, &mux_state_get),
+		      NULL);
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test fail on standard output config register write */
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   TCPC_REG_CONFIG_STD_OUTPUT);
+	zassert_equal(EC_ERROR_INVAL,
+		      tcpci_tcpm_mux_set(tcpci_usb_mux, mux_state, &ack),
+		      NULL);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Set initial value for STD output register. Chosen arbitrary. */
+	initial_val = TCPC_REG_CONFIG_STD_OUTPUT_AUDIO_CONN_N |
+		      TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB |
+		      TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED |
+		      TCPC_REG_CONFIG_STD_OUTPUT_DBG_ACC_CONN_N;
+	tcpci_emul_set_reg(emul, TCPC_REG_CONFIG_STD_OUTPUT, initial_val);
+
+	/* Test setting/getting no MUX connection without polarity inverted */
+	exp_val = (initial_val & ~TCPC_REG_CONFIG_STD_OUTPUT_MUX_MASK) |
+		  TCPC_REG_CONFIG_STD_OUTPUT_MUX_NONE;
+	exp_val &= ~TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED;
+	mux_state = USB_PD_MUX_NONE;
+	zassert_equal(EC_SUCCESS,
+		      tcpci_tcpm_mux_set(tcpci_usb_mux, mux_state, &ack),
+		      NULL);
+	check_tcpci_reg(emul, TCPC_REG_CONFIG_STD_OUTPUT, exp_val);
+	zassert_false(ack, "Ack from host shouldn't be required");
+	zassert_equal(EC_SUCCESS,
+		      tcpci_tcpm_mux_get(tcpci_usb_mux, &mux_state_get),
+		      NULL);
+	zassert_equal(mux_state, mux_state_get, "Expected state 0x%x, got 0x%x",
+		      mux_state, mux_state_get);
+
+	/* Test setting/getting MUX DP with polarity inverted */
+	exp_val = (initial_val & ~TCPC_REG_CONFIG_STD_OUTPUT_MUX_MASK) |
+		  TCPC_REG_CONFIG_STD_OUTPUT_MUX_DP |
+		  TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED;
+	mux_state = USB_PD_MUX_DP_ENABLED | USB_PD_MUX_POLARITY_INVERTED;
+	zassert_equal(EC_SUCCESS,
+		      tcpci_tcpm_mux_set(tcpci_usb_mux, mux_state, &ack),
+		      NULL);
+	check_tcpci_reg(emul, TCPC_REG_CONFIG_STD_OUTPUT, exp_val);
+	zassert_false(ack, "Ack from host shouldn't be required");
+	zassert_equal(EC_SUCCESS,
+		      tcpci_tcpm_mux_get(tcpci_usb_mux, &mux_state_get),
+		      NULL);
+	zassert_equal(mux_state, mux_state_get, "Expected state 0x%x, got 0x%x",
+		      mux_state, mux_state_get);
+
+	/* Test setting/getting MUX USB without polarity inverted */
+	exp_val = (initial_val & ~TCPC_REG_CONFIG_STD_OUTPUT_MUX_MASK) |
+		  TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB;
+	exp_val &= ~TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED;
+	mux_state = USB_PD_MUX_USB_ENABLED;
+	zassert_equal(EC_SUCCESS,
+		      tcpci_tcpm_mux_set(tcpci_usb_mux, mux_state, &ack),
+		      NULL);
+	check_tcpci_reg(emul, TCPC_REG_CONFIG_STD_OUTPUT, exp_val);
+	zassert_false(ack, "Ack from host shouldn't be required");
+	zassert_equal(EC_SUCCESS,
+		      tcpci_tcpm_mux_get(tcpci_usb_mux, &mux_state_get),
+		      NULL);
+	zassert_equal(mux_state, mux_state_get, "Expected state 0x%x, got 0x%x",
+		      mux_state, mux_state_get);
+
+	/* Test setting/getting MUX USB and DP with polarity inverted */
+	exp_val = (initial_val & ~TCPC_REG_CONFIG_STD_OUTPUT_MUX_MASK) |
+		  TCPC_REG_CONFIG_STD_OUTPUT_MUX_DP |
+		  TCPC_REG_CONFIG_STD_OUTPUT_MUX_USB |
+		  TCPC_REG_CONFIG_STD_OUTPUT_CONNECTOR_FLIPPED;
+	mux_state = USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED |
+		    USB_PD_MUX_POLARITY_INVERTED;
+	zassert_equal(EC_SUCCESS,
+		      tcpci_tcpm_mux_set(tcpci_usb_mux, mux_state, &ack),
+		      NULL);
+	check_tcpci_reg(emul, TCPC_REG_CONFIG_STD_OUTPUT, exp_val);
+	zassert_false(ack, "Ack from host shouldn't be required");
+	zassert_equal(EC_SUCCESS,
+		      tcpci_tcpm_mux_get(tcpci_usb_mux, &mux_state_get),
+		      NULL);
+	zassert_equal(mux_state, mux_state_get, "Expected state 0x%x, got 0x%x",
+		      mux_state, mux_state_get);
+}
+
 void test_suite_tcpci(void)
 {
+	/* This test suite assumes that first usb mux for port C0 is TCPCI */
+	__ASSERT(usb_muxes[USBC_PORT_C0].driver == &tcpci_tcpm_usb_mux_driver,
+		 "Invalid config of usb_muxes in test/drivers/src/stubs.c");
+
 	ztest_test_suite(tcpci,
 			 ztest_user_unit_test(test_tcpci_init),
 			 ztest_user_unit_test(test_tcpci_release),
@@ -1159,6 +1374,13 @@ void test_suite_tcpci(void)
 			 ztest_user_unit_test(test_tcpci_set_bist_mode),
 			 ztest_user_unit_test(test_tcpci_discharge_vbus),
 			 ztest_user_unit_test(test_tcpc_xfer),
-			 ztest_user_unit_test(test_tcpci_debug_accessory));
+			 ztest_user_unit_test(test_tcpci_debug_accessory),
+			 ztest_user_unit_test(test_tcpci_mux_init),
+			 ztest_user_unit_test(test_tcpci_mux_enter_low_power),
+			 /* Test set/get with usb mux and without TCPC */
+			 ztest_unit_test_setup_teardown(test_tcpci_mux_set_get,
+				set_usb_mux_not_tcpc, set_usb_mux_tcpc),
+			 /* Test set/get with usb mux and TCPC */
+			 ztest_user_unit_test(test_tcpci_mux_set_get));
 	ztest_run_test_suite(tcpci);
 }
