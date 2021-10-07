@@ -15,6 +15,7 @@
 
 /* Keyboard features */
 #define CONFIG_KEYBOARD_FACTORY_TEST
+#define CONFIG_KEYBOARD_REFRESH_ROW3
 
 /* Sensors */
 #define CONFIG_ACCELGYRO_BMI160

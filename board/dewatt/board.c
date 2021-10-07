@@ -22,6 +22,7 @@
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "keyboard_8042.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -533,4 +534,28 @@ static int board_get_memory_temp(int idx, int *temp_k)
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 		return EC_ERROR_NOT_POWERED;
 	return get_temp_3v3_30k9_47k_4050b(idx, temp_k);
+}
+
+/* keyboard config */
+static const struct ec_response_keybd_config main_kb = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+__override const struct ec_response_keybd_config
+*board_vivaldi_keybd_config(void)
+{
+	return &main_kb;
 }
