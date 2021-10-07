@@ -837,6 +837,20 @@ static void test_bmi_acc_rate(void)
 	reg_rate = bmi_emul_get_reg(emul, BMI260_ACC_CONF);
 	zassert_equal(BMI260_ACC_EN, pwr_ctrl, NULL);
 	zassert_true(reg_rate & BMI260_FILTER_PERF, NULL);
+
+	/* Test disabling sensor (by setting rate to 0) but failing. */
+	i2c_common_emul_set_write_fail_reg(emul, BMI260_PWR_CTRL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 0, 0),
+		      "Did not properly handle failed power down.");
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test enabling sensor but failing. (after first disabling it) */
+	ms->drv->set_data_rate(ms, 0, 0);
+
+	i2c_common_emul_set_write_fail_reg(emul, BMI260_PWR_CTRL);
+	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 50000, 0),
+		      "Did not properly handle failed power up.");
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
 /**
