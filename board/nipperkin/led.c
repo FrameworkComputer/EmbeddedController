@@ -39,17 +39,17 @@ enum led_color {
 };
 
 enum led_port {
-	LED_RIGHT_PORT = 0,
-	LED_LEFT_PORT
+	LED_LEFT_PORT = 0,
+	LED_RIGHT_PORT
 };
 
 static void led_set_color_battery(enum led_port port, enum led_color color)
 {
 	enum gpio_signal amber_led, white_led;
 
-	amber_led = (port == LED_RIGHT_PORT ? GPIO_C0_CHARGE_LED_AMBER_L :
+	amber_led = (port == LED_LEFT_PORT ? GPIO_C0_CHARGE_LED_AMBER_L :
 				 GPIO_C1_CHARGE_LED_AMBER_L);
-	white_led = (port == LED_RIGHT_PORT ? GPIO_C0_CHARGE_LED_WHITE_L :
+	white_led = (port == LED_LEFT_PORT ? GPIO_C0_CHARGE_LED_WHITE_L :
 				 GPIO_C1_CHARGE_LED_WHITE_L);
 
 	switch (color) {
