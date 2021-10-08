@@ -273,9 +273,16 @@ function dut_control_get_or_die {
 : ${BOARD:=${FLAGS_board}}
 
 # Find the Zephyr project directory for the specified board. Zephyr projects
-# organized under ./zephyr/projects as <baseboard>/<board> directory.
-: ${ZEPHYR_DIR:=$(find zephyr/projects -mindepth 2 -maxdepth 2 \
-		-type d -name "${BOARD}")}
+# organized under ./zephyr/projects and always contain the file zmake.yaml
+mapfile -t zephyr_projects < <(find zephyr/projects/ -type f -name "zmake.yaml")
+for i in "${zephyr_projects[@]}"; do
+	zephyr_project_dir=$(dirname "${i}")
+	zephyr_project_name=$(basename "${zephyr_project_dir}")
+	if [[ "${BOARD}" = "${zephyr_project_name}" ]]; then
+		ZEPHYR_DIR="${zephyr_project_dir}"
+		break
+	fi
+done
 
 in_array() {
 	local n=$#
