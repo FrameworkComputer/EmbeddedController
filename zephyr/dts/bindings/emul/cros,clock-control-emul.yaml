@@ -1,0 +1,15 @@
+# Copyright 2021 The chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Emulated clock
+
+compatible: "cros,clock-control-emul"
+
+include: base.yaml
+properties:
+   clock-frequency:
+     type: int
+     required: true
+     description: |
+       Default frequency in Hz for the output clock.
