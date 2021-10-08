@@ -68,8 +68,10 @@ void syv682x_emul_set_status(struct i2c_emul *emul, uint8_t val)
 	data->status_cond = val;
 	data->reg[SYV682X_STATUS_REG] |= val;
 
-	if (val & (SYV682X_STATUS_TSD | SYV682X_STATUS_OVP))
+	if (val & (SYV682X_STATUS_TSD | SYV682X_STATUS_OVP |
+				SYV682X_STATUS_OC_HV)) {
 		data->reg[SYV682X_CONTROL_1_REG] |= SYV682X_CONTROL_1_PWR_ENB;
+	}
 
 	/*
 	 * TODO(b/190519131): Make this emulator trigger GPIO-based interrupts

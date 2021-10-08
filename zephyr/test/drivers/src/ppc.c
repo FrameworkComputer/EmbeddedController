@@ -43,6 +43,7 @@ static void test_ppc_syv682x_vbus_enable(void)
 static void test_ppc_syv682x_interrupt(void)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+	uint8_t reg;
 
 	syv682x_emul_set_status(emul, SYV682X_STATUS_OC_5V);
 	syv682x_interrupt(syv682x_port);
@@ -89,6 +90,37 @@ static void test_ppc_syv682x_interrupt(void)
 	msleep(1);
 	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
 			"PPC is sourcing power after OVP");
+	syv682x_emul_set_status(emul, 0);
+
+	/*
+	 * A high-voltage OC while sinking should cause the driver to try to
+	 * re-enable the sink path until the OC count limit is reached, at which
+	 * point the driver should leave it disabled.
+	 */
+	zassert_ok(ppc_vbus_sink_enable(syv682x_port, true),
+			"Sink enable failed");
+	syv682x_emul_set_status(emul, SYV682X_STATUS_OC_HV);
+	syv682x_interrupt(syv682x_port);
+	msleep(1);
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
+			"Reading CONTROL_1 failed");
+	zassert_equal(reg & SYV682X_CONTROL_1_PWR_ENB, 0,
+			"Power path disabled after HV_OC handled");
+	syv682x_emul_set_status(emul, SYV682X_STATUS_OC_HV);
+	syv682x_interrupt(syv682x_port);
+	msleep(1);
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
+			"Reading CONTROL_1 failed");
+	zassert_equal(reg & SYV682X_CONTROL_1_PWR_ENB, 0,
+			"Power path disabled after HV_OC handled");
+	syv682x_emul_set_status(emul, SYV682X_STATUS_OC_HV);
+	syv682x_interrupt(syv682x_port);
+	msleep(1);
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
+			"Reading CONTROL_1 failed");
+	zassert_equal(reg & SYV682X_CONTROL_1_PWR_ENB,
+			SYV682X_CONTROL_1_PWR_ENB,
+			"Power path enabled after HV_OC handled 3 times");
 	syv682x_emul_set_status(emul, 0);
 }
 
