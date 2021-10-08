@@ -146,17 +146,16 @@ void exception_panic(void)
 {
 	/* Save registers and branch directly to panic handler */
 	asm volatile(
-		"mov r0, %[pregs]\n"
 		"mrs r1, psp\n"
 		"mrs r2, ipsr\n"
 		"mov r3, sp\n"
-		"stmia r0!, {r1-r7}\n"
+		"stmia %[pregs]!, {r1-r7}\n"
 		"mov r1, r8\n"
 		"mov r2, r9\n"
 		"mov r3, r10\n"
 		"mov r4, r11\n"
 		"mov r5, lr\n"
-		"stmia r0!, {r1-r5}\n"
+		"stmia %[pregs]!, {r1-r5}\n"
 		"mov sp, %[pstack]\n"
 		"bl report_panic\n" : :
 			[pregs] "r" (pdata_ptr->cm.regs),
