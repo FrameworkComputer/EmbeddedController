@@ -440,4 +440,16 @@ struct irq_def {
 #endif /* CONFIG_COMMON_RUNTIME */
 #endif /* !CONFIG_ZEPHYR */
 
+#if defined(CONFIG_ZEPHYR) && defined(TEST_BUILD)
+#include <kernel.h>
+
+/**
+ * @brief Get the Zephyr thread ID for the given task
+ *
+ * @param cros_tid A valid cros TASK_ID_* entry
+ * @return The Zephyr thread ID
+ */
+k_tid_t task_get_zephyr_tid(size_t cros_tid);
+#endif /* CONFIG_ZEPHYR && TEST_BUILD */
+
 #endif  /* __CROS_EC_TASK_H */

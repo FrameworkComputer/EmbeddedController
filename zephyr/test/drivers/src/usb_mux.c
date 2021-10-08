@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include <kernel.h>
 #include <zephyr.h>
 #include <ztest.h>
 #include <drivers/gpio.h>
@@ -13,6 +14,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "stubs.h"
+#include "task.h"
 #include "usb_prl_sm.h"
 #include "usb_tc_sm.h"
 
@@ -188,9 +190,30 @@ static void setup_usb_mux_proxy_chain(void)
 	}
 }
 
+static void suspend_usbc_task(bool suspend)
+{
+	static const task_id_t cros_tids[] = {
+		COND_CODE_1(HAS_TASK_PD_C0, (TASK_ID_PD_C0,), ())
+		COND_CODE_1(HAS_TASK_PD_C1, (TASK_ID_PD_C1,), ())
+		COND_CODE_1(HAS_TASK_PD_C2, (TASK_ID_PD_C2,), ())
+		COND_CODE_1(HAS_TASK_PD_C3, (TASK_ID_PD_C3,), ())
+	};
+
+	for (int i = 0; i < ARRAY_SIZE(cros_tids); ++i) {
+		k_tid_t pd_c1_tid = task_get_zephyr_tid(cros_tids[i]);
+
+		if (suspend) {
+			k_thread_suspend(pd_c1_tid);
+		} else {
+			k_thread_resume(pd_c1_tid);
+		}
+	}
+}
+
 /** Restore original usb_mux chain without proxy */
 static void resotre_usb_mux_chain(void)
 {
+	suspend_usbc_task(/*suspend=*/ false);
 	memcpy(&usb_muxes[USBC_PORT_C1], &usb_mux_c1, sizeof(struct usb_mux));
 }
 
@@ -569,6 +592,7 @@ void test_usb_mux_chipset_reset(void)
 /** Setup proxy chain and uninit usb muxes */
 void setup_uninit_mux(void)
 {
+	suspend_usbc_task(/*suspend=*/ true);
 	setup_usb_mux_proxy_chain();
 
 	/* Makes sure that usb muxes of port 1 are not init */
@@ -579,6 +603,7 @@ void setup_uninit_mux(void)
 /** Setup proxy chain and init usb muxes */
 void setup_init_mux(void)
 {
+	suspend_usbc_task(/*suspend=*/ true);
 	setup_usb_mux_proxy_chain();
 
 	/* Makes sure that usb muxes of port 1 are init */
