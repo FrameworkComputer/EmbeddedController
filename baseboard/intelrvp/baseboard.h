@@ -111,6 +111,8 @@
 #define CONFIG_USB_PD_TCPM_TCPCI
 #define CONFIG_USB_PD_TRY_SRC
 #define CONFIG_USB_POWER_DELIVERY
+/* Treat 2nd reset from H1 as Power-On */
+#define CONFIG_BOARD_RESET_AFTER_POWER_ON
 
 /* USB MUX */
 #ifdef CONFIG_USB_MUX_VIRTUAL
