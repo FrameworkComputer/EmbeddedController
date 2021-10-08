@@ -165,6 +165,9 @@
 #define CONFIG_DEBUG_ASSERT_BRIEF
 
 /* Disable console commands to help save space */
+#undef CONFIG_CMD_ADC
+#undef CONFIG_CMD_BATTFAKE
+#undef CONFIG_CMD_CBI
 #undef CONFIG_CMD_APTHROTTLE
 #undef CONFIG_CMD_BUTTON
 #undef CONFIG_CONSOLE_CMDHELP
