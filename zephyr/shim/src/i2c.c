@@ -60,22 +60,25 @@ static int init_device_bindings(const struct device *device)
 	 * The EC application may lock the I2C bus for more than a single
 	 * I2C transaction. Initialize the i2c_physical_ports[] array to map
 	 * each named-i2c-ports child to the physical bus assignment.
-	 *
-	 * TODO(b/199918263): zephyr: Optimize I2C mutexes
-	 * Modify the port_mutex[] array defined by i2c_controller.c
-	 * so that only mutexes for unique physical ports are created to
-	 * save space.
 	 */
-	i2c_physical_ports[0] = 0;
+	int i;
+	int physical_port = 0;
+
+	i2c_physical_ports[0] = physical_port;
 	for (int child = 1; child < I2C_PORT_COUNT; child++) {
-		for (int phys_port = 0; phys_port < I2C_PORT_COUNT;
-		     phys_port++) {
-			if (i2c_devices[child] == i2c_devices[phys_port]) {
-				i2c_physical_ports[child] = phys_port;
+		for (i = 0; i < child; i++) {
+			if (i2c_devices[child] == i2c_devices[i]) {
+				i2c_physical_ports[child] =
+					i2c_physical_ports[i];
 				break;
 			}
 		}
+		if (i == child)
+			i2c_physical_ports[child] = ++physical_port;
 	}
+	__ASSERT(I2C_DEVICE_COUNT == 0 ||
+			 physical_port == (I2C_DEVICE_COUNT - 1),
+		 "I2C_DEVICE_COUNT is invalid");
 	return 0;
 }
 SYS_INIT(init_device_bindings, POST_KERNEL, 51);
@@ -104,14 +107,18 @@ int i2c_get_port_from_remote_port(int remote_port)
 
 int i2c_get_physical_port(int enum_port)
 {
-	int i2c_port = i2c_physical_ports[enum_port];
+	int i2c_port;
 
+	if (enum_port < 0 || enum_port >= I2C_PORT_COUNT)
+		return -1;
+
+	i2c_port = i2c_physical_ports[enum_port];
 	/*
 	 * Return -1 for caller if physical port is not defined or the
 	 * port number is out of port_mutex space.
 	 * Please ensure the caller won't change anything if -1 received.
 	 */
-	return (i2c_port < I2C_PORT_COUNT) ? i2c_port : -1;
+	return (i2c_port < I2C_DEVICE_COUNT) ? i2c_port : -1;
 }
 
 #ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_I2C_PORTMAP

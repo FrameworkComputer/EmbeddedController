@@ -23,6 +23,18 @@ enum i2c_ports {
 #endif /* named_i2c_ports */
 #endif /* CONFIG_PLATFORM_EC_I2C */
 
+#ifdef CONFIG_I2C_NPCX
+#define I2C_COMPAT nuvoton_npcx_i2c_port
+#elif CONFIG_I2C_ITE_IT8XXX2
+#define I2C_COMPAT ite_it8xxx2_i2c
+#elif CONFIG_I2C_EMUL
+#define I2C_COMPAT zephyr_i2c_emul_controller
+#else
+#error An undefined I2C driver is used.
+#endif
+
+#define I2C_DEVICE_COUNT DT_NUM_INST_STATUS_OKAY(I2C_COMPAT)
+
 /**
  * @brief Adaptation of platform/ec's port IDs which map a port/bus to a device.
  *

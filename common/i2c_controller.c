@@ -48,7 +48,15 @@
 #define I2C_BITBANG_PORT_COUNT 0
 #endif
 
+#ifdef CONFIG_ZEPHYR
+/* I2C_PORT_COUNT is bigger than the real count of used I2C devices, so
+ * use a special define for that to save RAM.
+ */
+static mutex_t port_mutex[I2C_DEVICE_COUNT + I2C_BITBANG_PORT_COUNT];
+#else
 static mutex_t port_mutex[I2C_CONTROLLER_COUNT + I2C_BITBANG_PORT_COUNT];
+#endif /* CONFIG_ZEPHYR */
+
 /* A bitmap of the controllers which are currently servicing a request. */
 static volatile uint32_t i2c_port_active_list;
 BUILD_ASSERT(ARRAY_SIZE(port_mutex) < 32);
@@ -322,9 +330,6 @@ void i2c_lock(int port, int lock)
 	/* Lock the controller, not the port */
 	port = i2c_port_to_controller(port);
 #endif
-	if (port < 0 || port >= ARRAY_SIZE(port_mutex))
-		return;
-
 	if (IS_ENABLED(CONFIG_ZEPHYR)) {
 		/*
 		 * For Zephyr: to convert an i2c port enum value to a port
@@ -334,6 +339,9 @@ void i2c_lock(int port, int lock)
 		if (i2c_get_physical_port(port) >= 0)
 			port = i2c_get_physical_port(port);
 	}
+
+	if (port < 0 || port >= ARRAY_SIZE(port_mutex))
+		return;
 
 	if (lock) {
 		uint32_t irq_lock_key;
