@@ -78,6 +78,9 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 		forcing_shutdown = 1;
 		custom_forcing_shutdown = 1;
 		chipset_force_g3();
+		/* we need to clear the wake source to avoid the wrong power state */
+		*host_get_customer_memmap(0x02) = 0x00;
+		system_set_bbram(SYSTEM_BBRAM_IDX_VPRO_STATUS, 0);
 	}
 }
 
