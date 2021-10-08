@@ -100,8 +100,8 @@
 #undef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
 #define CONFIG_CHARGE_RAMP_HW
-#define CONFIG_CHARGER_SENSE_RESISTOR 10
-#define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
+#define CONFIG_CHARGER_BQ25710_SENSE_RESISTOR 10
+#define CONFIG_CHARGER_BQ25710_SENSE_RESISTOR_AC 10
 /*
  * Don't allow the system to boot to S0 when the battery is low and unable to
  * communicate on locked systems (which haven't PD negotiated)

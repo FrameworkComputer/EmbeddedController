@@ -1047,6 +1047,12 @@
  */
 #undef CONFIG_CHARGER_BQ25720_VSYS_TH2_DV
 
+/* Value of the bq25710 charge sense resistor, in mOhms */
+#undef CONFIG_CHARGER_BQ25710_SENSE_RESISTOR
+
+/* Value of the bq25710 input current sense resistor, in mOhms */
+#undef CONFIG_CHARGER_BQ25710_SENSE_RESISTOR_AC
+
 /*
  * Board specific maximum input current limit, in mA.
  */

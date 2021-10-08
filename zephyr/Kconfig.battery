@@ -250,6 +250,24 @@ endchoice  # "Discharge control method"
 
 endif  # PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
 
+config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR
+	int "Value of the charge sense-resistor, in mOhms"
+	default 10
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+	  The charge sense-resistor is used to detect the charge current to the
+	  battery. Its value must be known for the calculation to be correct.
+	  The value is typically around 10 mOhms.
+
+config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR_AC
+	int "Value of the input sense-resistor, in mOhms"
+	default 10
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+	  The input sense-resistor is used to detect the input current from the
+	  external AC power supply. Its value must be known for the calculation
+	  to be correct. The value is typically around 10 mOhms.
+
 config PLATFORM_EC_CHARGER_BQ25720_VSYS_TH2_CUSTOM
 	bool "VSYS_TH2 override"
 	depends on PLATFORM_EC_CHARGER_BQ25720
