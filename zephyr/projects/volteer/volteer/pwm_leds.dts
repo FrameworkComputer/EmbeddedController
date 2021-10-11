@@ -7,10 +7,7 @@
 	pwmleds {
 		compatible = "pwm-leds";
 		pwm_led0: pwm_led_0 {
-			pwms = <&led3_red
-				&led2_green
-				&led1_blue
-				>;
+			pwms = <&led3_red &led2_green &led1_blue>;
 		};
 	};
 
