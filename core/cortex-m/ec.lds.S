@@ -502,10 +502,8 @@ SECTIONS
 #if !(defined(SECTION_IS_RW) && (CONFIG_FLASH_WRITE_SIZE > 4))
 	__image_size = __flash_used;
 #else
-	.rw_image_size_alignment :
+	.rw_image_size_alignment FLASH_USED_END : AT(FLASH_USED_END)
 	{
-		. = ORIGIN(FLASH) + __flash_used;
-		BYTE(0xFF);
 		. = ALIGN (CONFIG_FLASH_WRITE_SIZE);
 	} > FLASH = 0xFF
 
