@@ -479,6 +479,11 @@
 #undef CONFIG_BATTERY
 
 /*
+ * Config to indicate the battery type that cannot be auto detected.
+ */
+#undef CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
+
+/*
  * Compile battery-specific code.
  *
  * Note that some boards have their own unique battery constants / functions.

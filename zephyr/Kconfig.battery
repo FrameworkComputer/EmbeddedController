@@ -767,6 +767,14 @@ config PLATFORM_EC_BATTERY_V2
 	  batteries and full size string values in the battery information
 	  including manufacturer, model, chemistry.
 
+config PLATFORM_EC_BATTERY_TYPE_NO_AUTO_DETECT
+	bool "Disable battery auto detection"
+	help
+	  Enable this option when the battery type cannot be distinguished
+	  based on only the manufacturer and device name. Your board code
+	  must call battery_set_fixed_battery_type() to set the fixed battery
+	  type, during board initialization.
+
 endchoice
 
 if PLATFORM_EC_BATTERY_V2

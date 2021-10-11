@@ -14,6 +14,9 @@
 /* Number of writes needed to invoke battery cutoff command */
 #define SHIP_MODE_WRITES 2
 
+/* When battery type is not initialized */
+#define BATTERY_TYPE_UNINITIALIZED -1
+
 struct ship_mode_info {
 	/*
 	 * Write Block Support. If wb_support is true, then we use a i2c write
@@ -76,6 +79,15 @@ int battery_default_imbalance_mv(void);
 int battery_bq4050_imbalance_mv(void);
 #endif
 
+#endif
+
+#ifdef CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
+/*
+ * Set the battery type, when auto-detection cannot be used.
+ *
+ * @param type	Battery type
+ */
+void battery_set_fixed_battery_type(int type);
 #endif
 
 /**
