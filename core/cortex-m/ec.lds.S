@@ -351,7 +351,7 @@ SECTIONS
 	__data_lma_start = ORIGIN(ROM_RESIDENT_VMA);
 	#define INIT_ROM_LMA	(ORIGIN(ROM_RESIDENT_VMA) + SIZEOF(.data))
 #else
-	__data_lma_start = .;
+	__data_lma_start = LOADADDR(.data);
 	#define INIT_ROM_LMA	ORIGIN(ROM_RESIDENT_VMA)
 #endif
 
