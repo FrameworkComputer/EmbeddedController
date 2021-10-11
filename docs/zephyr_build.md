@@ -110,6 +110,14 @@ ln -s somewhere/u-boot/tools/binman/binman
 As above, ensure that `~/.local/bin` in on your PATH
 
 
+### Install Zephyr toolchain
+
+If using the Zephyr toolchain (`-t zephyr`), follow the [upstream
+documentation] to install the Zephyr build tools.
+
+[upstream documentation]: https://docs.zephyrproject.org/getting_started/index.html#install-a-toolchain
+
+
 ### Building
 
 You can use `zmake help` to obtain help on how to use zmake. The following is
