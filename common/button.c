@@ -31,9 +31,9 @@ struct button_state_t {
 	int debounced_pressed;
 };
 
-static struct button_state_t __bss_slow state[BUTTON_COUNT];
+static struct button_state_t state[BUTTON_COUNT];
 
-static uint64_t __bss_slow next_deferred_time;
+static uint64_t next_deferred_time;
 
 #if defined(CONFIG_CMD_BUTTON) || defined(CONFIG_HOSTCMD_BUTTON)
 #define CONFIG_SIMULATED_BUTTON

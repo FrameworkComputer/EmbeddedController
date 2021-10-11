@@ -181,7 +181,7 @@ DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_SYSRQ, sysrq_get_next_event);
 /************************ Keyboard press simulation ************************/
 #ifndef HAS_TASK_KEYSCAN
 /* Keys simulated-pressed */
-static uint8_t __bss_slow simulated_key[KEYBOARD_COLS_MAX];
+static uint8_t simulated_key[KEYBOARD_COLS_MAX];
 uint8_t keyboard_cols = KEYBOARD_COLS_MAX;
 
 /* For boards without a keyscan task, try and simulate keyboard presses. */

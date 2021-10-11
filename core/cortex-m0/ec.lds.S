@@ -264,7 +264,6 @@ SECTIONS
 		*(.bss.system_stack)
 		/* Rest of .bss takes care of its own alignment */
 		*(.bss)
-		*(.bss.slow)
 
 		/*
 		 * Reserve space for deferred function firing times.

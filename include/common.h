@@ -126,16 +126,6 @@
 #endif
 
 /*
- * Place the object in the .bss.slow region.
- *
- * On boards with unoptimized RAM there is no penalty and it simply is appended
- * to the .bss section.
- */
-#ifndef __bss_slow
-#define __bss_slow __attribute__((section(".bss.slow")))
-#endif
-
-/*
  * Place a read-only object into a ROM resident section. If supported by the
  * EC chip, the object is part of the flash image but not copied into RAM
  * automatically. Users may only access the data using the include/init_rom.h

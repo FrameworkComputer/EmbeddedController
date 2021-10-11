@@ -15,7 +15,7 @@
 #define UNIT_SIZE sizeof(struct event_log_entry)
 #define UNIT_COUNT (CONFIG_EVENT_LOG_SIZE/UNIT_SIZE)
 #define UNIT_COUNT_MASK		(UNIT_COUNT - 1)
-static struct event_log_entry __bss_slow log_events[UNIT_COUNT];
+static struct event_log_entry log_events[UNIT_COUNT];
 BUILD_ASSERT(POWER_OF_TWO(UNIT_COUNT));
 
 /*

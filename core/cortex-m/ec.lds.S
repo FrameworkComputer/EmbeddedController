@@ -408,16 +408,7 @@ SECTIONS
 		__deferred_until = .;
 		. += (__deferred_funcs_end - __deferred_funcs) * (8 / 4);
 		__deferred_until_end = .;
-	} > IRAM
 
-	.bss.slow : {
-		/* Region of RAM reclaimed from the little firmware(LFW). */
-		*(.bss.slow)
-		/*
-		 * Not replacing the loader, so .bss.slow is part of .bss.
-		 * It needs to be followed by __bss_end so that .bss.slow
-		 * will be zeroed by init.
-		 */
 		. = ALIGN(4);
 		__bss_end = .;
 	} > IRAM
