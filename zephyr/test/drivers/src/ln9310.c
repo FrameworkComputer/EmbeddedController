@@ -265,6 +265,36 @@ static void test_ln9310_cfly_precharge_exceeds_retries(void)
 	i2c_common_emul_set_write_func(emul, NULL, NULL);
 }
 
+static void test_ln9310_battery_unknown(void)
+{
+	const struct emul *emulator =
+		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+
+	zassert_not_null(emulator, NULL);
+
+	ln9310_emul_set_context(emulator);
+	ln9310_emul_reset(emulator);
+	/*
+	 * Chip rev won't matter for statement
+	 * cov so only testing one version.
+	 */
+	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_UNKNOWN);
+	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
+
+	zassert_ok(!ln9310_init(), NULL);
+	zassert_false(ln9310_emul_is_init(emulator), NULL);
+
+	/* TODO(b/201420132) */
+	k_msleep(TEST_DELAY_MS);
+	zassert_false(ln9310_power_good(), NULL);
+
+	ln9310_software_enable(1);
+
+	/* TODO(b/201420132) */
+	k_msleep(TEST_DELAY_MS);
+	zassert_false(ln9310_power_good(), NULL);
+}
+
 static void reset_ln9310_state(void)
 {
 	ln9310_reset_to_initial_state();
@@ -274,6 +304,9 @@ void test_suite_ln9310(void)
 {
 	ztest_test_suite(
 		ln9310,
+		ztest_unit_test_setup_teardown(test_ln9310_battery_unknown,
+					       reset_ln9310_state,
+					       reset_ln9310_state),
 		ztest_unit_test_setup_teardown(test_ln9310_read_chip_fails,
 					       reset_ln9310_state,
 					       reset_ln9310_state),
