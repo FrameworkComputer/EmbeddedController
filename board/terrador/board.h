@@ -11,6 +11,9 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+/* Free flash space */
+#define CONFIG_USB_PD_DEBUG_LEVEL 2
+
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
