@@ -15,6 +15,7 @@
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
 /* Reduce flash usage */
+#undef CONFIG_CONSOLE_CMDHELP
 #define CONFIG_USB_PD_DEBUG_LEVEL 2
 
 #define CONFIG_POWER_BUTTON
