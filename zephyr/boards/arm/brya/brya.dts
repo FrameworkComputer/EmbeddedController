@@ -13,6 +13,17 @@
 / {
 	model = "Google Brya Baseboard";
 
+	aliases {
+		i2c-0 = &i2c0_0;
+		i2c-1 = &i2c1_0;
+		i2c-2 = &i2c2_0;
+		i2c-3 = &i2c3_0;
+		i2c-4 = &i2c4_1;
+		i2c-5 = &i2c5_0;
+		i2c-6 = &i2c6_1;
+		i2c-7 = &i2c7_0;
+	};
+
 	chosen {
 		zephyr,sram = &sram0;
 		zephyr,console = &uart1;
@@ -28,7 +39,7 @@
 			i2c-port = <&i2c0_0>;
 			enum-name = "I2C_PORT_SENSOR";
 		};
-		tcpc0_2 {
+		tcpc0_2: tcpc0_2 {
 			i2c-port = <&i2c1_0>;
 			enum-name = "I2C_PORT_USB_C0_C2_TCPC";
 		};
@@ -36,11 +47,11 @@
 			i2c-port = <&i2c4_1>;
 			enum-name = "I2C_PORT_USB_C1_TCPC";
 		};
-		ppc0_2 {
+		ppc0_2: ppc0_2 {
 			i2c-port = <&i2c2_0>;
 			enum-name = "I2C_PORT_USB_C0_C2_PPC";
 		};
-		ppc1 {
+		ppc1: ppc1 {
 			i2c-port = <&i2c6_1>;
 			enum-name = "I2C_PORT_USB_C1_PPC";
 		};
@@ -59,6 +70,14 @@
 		charger {
 			i2c-port = <&i2c7_0>;
 			enum-name = "I2C_PORT_CHARGER";
+		};
+		c1_bc12: c1_bc12 {
+			i2c-port = <&i2c6_1>;
+			enum-name = "I2C_PORT_USB_C1_BC12";
+		};
+		c0_c2_bc12: c0_c2_bc12 {
+			i2c-port = <&i2c2_0>;
+			enum-name = "I2C_PORT_USB_C0_C2_BC12";
 		};
 		mp2964 {
 			i2c-port = <&i2c7_0>;
