@@ -177,4 +177,17 @@ static inline int time_after(uint32_t a, uint32_t b)
 	return time_until(a, b) < 0;
 }
 
+/**
+ * @brief Mock get_time() function.
+ *
+ * Setting to non-NULL makes subsequent calls to get_time() return
+ * its set value.
+ *
+ * When set to NULL, subsequent calls to get_time() return
+ * unmocked values.
+ */
+#ifdef CONFIG_ZTEST
+extern timestamp_t *get_time_mock;
+#endif /* CONFIG_ZTEST */
+
 #endif  /* __CROS_EC_TIMER_H */
