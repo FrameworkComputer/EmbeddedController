@@ -284,6 +284,16 @@ void tcpci_emul_set_rev(const struct emul *emul, enum tcpci_emul_rev rev)
 	}
 }
 
+/** Check description in emul_tcpci.h */
+void tcpci_emul_set_dev_ops(const struct emul *emul,
+			    struct tcpci_emul_dev_ops *dev_ops)
+{
+	struct tcpci_emul_data *data = emul->data;
+
+	data->dev_ops = dev_ops;
+}
+
+
 /** Mask reserved bits in each register of TCPCI */
 static const uint8_t tcpci_emul_rsvd_mask[] = {
 	[TCPC_REG_VENDOR_ID]				= 0x00,

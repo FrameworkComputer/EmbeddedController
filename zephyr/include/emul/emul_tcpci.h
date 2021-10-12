@@ -232,6 +232,15 @@ struct tcpci_emul_msg *tcpci_emul_get_tx_msg(const struct emul *emul);
 void tcpci_emul_set_rev(const struct emul *emul, enum tcpci_emul_rev rev);
 
 /**
+ * @brief Set callbacks for specific TCPC device emulator
+ *
+ * @param emul Pointer to TCPCI emulator
+ * @param dev_ops Pointer to callbacks
+ */
+void tcpci_emul_set_dev_ops(const struct emul *emul,
+			    struct tcpci_emul_dev_ops *dev_ops);
+
+/**
  * @}
  */
 
