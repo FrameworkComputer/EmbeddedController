@@ -12,6 +12,7 @@
 #include "driver/ln9310.h"
 #include "emul/emul_ln9310.h"
 #include "emul/emul_common_i2c.h"
+#include "timer.h"
 
 /*
  * TODO(b/201420132): Implement approach for tests to immediately schedule work
@@ -353,15 +354,89 @@ static void test_ln9310_lion_ctrl_reg_fails(void)
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
+
+struct precharge_timeout_data {
+	timestamp_t time_to_mock;
+	bool handled_clearing_standby_en_bit_timeout;
+};
+
+static int mock_intercept_startup_ctrl_reg(struct i2c_emul *emul, int reg,
+					   uint8_t val, int bytes, void *data)
+{
+	struct precharge_timeout_data *test_data = data;
+
+	if (reg == LN9310_REG_STARTUP_CTRL &&
+	    test_data->handled_clearing_standby_en_bit_timeout == false) {
+		if (val == 0) {
+			timestamp_t time = get_time();
+
+			time.val += 1 + LN9310_CFLY_PRECHARGE_TIMEOUT;
+			test_data->time_to_mock = time;
+			get_time_mock = &test_data->time_to_mock;
+		} else {
+			/* ln9310 aborts a startup attempt */
+			test_data->handled_clearing_standby_en_bit_timeout =
+				true;
+			get_time_mock = NULL;
+		}
+	}
+	return 1;
+}
+
+static void test_ln9310_cfly_precharge_timesout(void)
+{
+	const struct emul *emulator =
+		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	struct i2c_emul *i2c_emul = ln9310_emul_get_i2c_emul(emulator);
+	struct precharge_timeout_data test_data = {
+		.time_to_mock = -1,
+		.handled_clearing_standby_en_bit_timeout = false,
+	};
+
+	zassert_not_null(emulator, NULL);
+	zassert_not_null(i2c_emul, NULL);
+
+	ln9310_emul_set_context(emulator);
+	ln9310_emul_reset(emulator);
+	/* Battery and chip rev won't matter here so only testing one pair */
+	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_2S);
+	ln9310_emul_set_version(emulator,
+				REQUIRES_CFLY_PRECHARGE_STARTUP_CHIP_REV);
+
+	zassert_ok(ln9310_init(), NULL);
+	zassert_true(ln9310_emul_is_init(emulator), NULL);
+
+	/* TODO(b/201420132) */
+	k_msleep(TEST_DELAY_MS);
+	zassert_false(ln9310_power_good(), NULL);
+
+	i2c_common_emul_set_write_func(
+		i2c_emul, &mock_intercept_startup_ctrl_reg, &test_data);
+
+	ln9310_software_enable(1);
+	/* TODO(b/201420132) */
+	k_msleep(TEST_DELAY_MS);
+	zassert_true(test_data.handled_clearing_standby_en_bit_timeout, NULL);
+	/* It only times out on one attempt, it should subsequently startup */
+	zassert_true(ln9310_power_good(), NULL);
+
+	i2c_common_emul_set_write_func(i2c_emul, NULL, NULL);
+}
+
 static void reset_ln9310_state(void)
 {
 	ln9310_reset_to_initial_state();
+	get_time_mock = NULL;
 }
 
 void test_suite_ln9310(void)
 {
 	ztest_test_suite(
 		ln9310,
+		ztest_unit_test_setup_teardown(
+			test_ln9310_cfly_precharge_timesout,
+			reset_ln9310_state,
+			reset_ln9310_state),
 		ztest_unit_test_setup_teardown(test_ln9310_lion_ctrl_reg_fails,
 					       reset_ln9310_state,
 					       reset_ln9310_state),
