@@ -45,10 +45,9 @@ static void test_ppc_syv682x_interrupt(void)
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	uint8_t reg;
 
+	/* An OC event less than 100 ms should not cause VBUS to turn off. */
 	syv682x_emul_set_status(emul, SYV682X_STATUS_OC_5V);
 	syv682x_interrupt(syv682x_port);
-
-	/* An OC event less than 100 ms should not cause VBUS to turn off. */
 	msleep(50);
 	syv682x_interrupt(syv682x_port);
 	zassert_true(ppc_is_sourcing_vbus(syv682x_port),
