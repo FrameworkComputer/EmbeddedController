@@ -113,6 +113,25 @@
 		};
 	};
 
+	cbi-ssfc {
+		compatible = "named-cbi-ssfc";
+		cbi_ssfc_base_sensor: base_sensor {
+			enum-name = "BASE_SENSOR";
+			size = <2>;
+			base_sensor_0: base0 {
+				compatible = "named-cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+				default;
+			};
+			base_sensor_1: base1 {
+				compatible = "named-cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
+			};
+		};
+	};
+
 	adc0: adc {
 		compatible = "zephyr,adc-emul";
 		nchannels = <4>;
