@@ -127,7 +127,7 @@ union cbi_ssfc {
 };
 
 BUILD_ASSERT(sizeof(union cbi_ssfc) == sizeof(uint32_t),
-	     "CBI SSFS structure exceedes 32 bits");
+	     "CBI SSFS structure exceeds 32 bits");
 
 DT_INST_FOREACH_STATUS_OKAY(CBI_SSFC_VALUE_BUILD_ASSERT)
 
