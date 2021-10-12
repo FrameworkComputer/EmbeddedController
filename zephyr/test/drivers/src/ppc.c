@@ -121,6 +121,41 @@ static void test_ppc_syv682x_interrupt(void)
 			SYV682X_CONTROL_1_PWR_ENB,
 			"Power path enabled after HV_OC handled 3 times");
 	syv682x_emul_set_status(emul, 0);
+
+	/*
+	 * A VCONN OC event less than 100 ms should not cause the driver to turn
+	 * VCONN off.
+	 */
+	ppc_set_vconn(syv682x_port, true);
+	syv682x_emul_set_control_4(emul, SYV682X_CONTROL_4_VCONN_OCP);
+	syv682x_interrupt(syv682x_port);
+	msleep(1);
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_4_REG, &reg),
+			"Reading CONTROL_4 failed");
+	zassert_true(reg &
+			(SYV682X_CONTROL_4_VCONN1 | SYV682X_CONTROL_4_VCONN2),
+			"VCONN disabled after initial VCONN OC");
+	msleep(50);
+	syv682x_interrupt(syv682x_port);
+	msleep(1);
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_4_REG, &reg),
+			"Reading CONTROL_4 failed");
+	zassert_true(reg &
+			(SYV682X_CONTROL_4_VCONN1 | SYV682X_CONTROL_4_VCONN2),
+			"VCONN disabled after short VCONN OC");
+	/*
+	 * But if the event keeps going for over 100 ms continuously, the driver
+	 * should turn VCONN off.
+	 */
+	msleep(60);
+	syv682x_interrupt(syv682x_port);
+	msleep(1);
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_4_REG, &reg),
+			"Reading CONTROL_4 failed");
+	zassert_false(reg &
+			(SYV682X_CONTROL_4_VCONN1 | SYV682X_CONTROL_4_VCONN2),
+			"VCONN enabled after long VCONN OC");
+	syv682x_emul_set_control_4(emul, 0x0);
 }
 
 static void test_ppc_syv682x(void)
