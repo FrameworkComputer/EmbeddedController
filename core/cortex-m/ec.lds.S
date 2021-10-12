@@ -506,15 +506,15 @@ SECTIONS
 	__flash_used = FLASH_USED_END - ORIGIN(EC_IMAGE_LMA_MEM_REGION);
 	__flash_size = LENGTH(EC_IMAGE_LMA_MEM_REGION);
 #ifndef CONFIG_CHIP_INIT_ROM_REGION
-#if !(defined(SECTION_IS_RW) && (CONFIG_FLASH_WRITE_SIZE > 4))
-	__image_size = __flash_used;
-#else
+#if defined(SECTION_IS_RW) && (CONFIG_FLASH_WRITE_SIZE > 4)
 	.rw_image_size_alignment FLASH_USED_END : AT(FLASH_USED_END)
 	{
 		. = ALIGN (CONFIG_FLASH_WRITE_SIZE);
 	} > FLASH = 0xFF
 
 	__image_size = __flash_used + SIZEOF(.rw_image_size_alignment);
+#else
+	__image_size = __flash_used;
 #endif
 #if defined(SECTION_IS_RW) && (CONFIG_FLASH_WRITE_SIZE > 0)
 	/* Alignment is needed by flash_command_write() for RW update. */
