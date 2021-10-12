@@ -122,6 +122,9 @@ enum sn5s330_pp_idx {
 #define SN5S330_VSAFE0V_STAT		BIT(2)
 #define SN5S330_VSAFE0V_MASK		BIT(3)
 
+/* FUNC_SET_10 */
+#define SN5S330_PP1_RCP_OFFSET		BIT(4)
+
 /*
  * INT_MASK_RISE/FALL_EDGE_1
  *

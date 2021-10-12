@@ -333,6 +333,17 @@ static int sn5s330_init(int port)
 		return status;
 	}
 
+	/*
+	 * Set RCP voltage threshold to 3mV instead of 6mV default for the
+	 * source path. This modification helps prevent false RCP triggers
+	 * against certain port partners when VBUS is set to 20V.
+	 */
+	status = clr_flags(port, SN5S330_FUNC_SET10, SN5S330_PP1_RCP_OFFSET);
+	if (status) {
+		ppc_prints("Failed to set FUNC_SET10!", port);
+		return status;
+	}
+
 	/* Turn off PP1 FET. */
 	status = sn5s330_pp_fet_enable(port, SN5S330_PP1, 0);
 	if (status) {
