@@ -36,8 +36,8 @@ enum cbi_ssfc_value_id {
  * (Internal use only.)
  */
 typedef int (*cros_cbi_api_init)(const struct device *dev);
-typedef int (*cros_cbi_api_ssfc_check_match)(const struct device *dev,
-					     enum cbi_ssfc_value_id value_id);
+typedef bool (*cros_cbi_api_ssfc_check_match)(const struct device *dev,
+					      enum cbi_ssfc_value_id value_id);
 
 __subsystem struct cros_cbi_driver_api {
 	cros_cbi_api_init init;
