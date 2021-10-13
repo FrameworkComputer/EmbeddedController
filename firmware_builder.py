@@ -78,6 +78,14 @@ def build(opts):
     with open(opts.metrics, 'w') as f:
         f.write(json_format.MessageToJson(metric_list))
 
+    # Ensure that there are no regressions for boards that build successfully
+    # with clang: b/172020503.
+    cmd = ['./util/build_with_clang.py']
+    print(f'# Running {" ".join(cmd)}.')
+    subprocess.run(cmd,
+                   cwd=os.path.dirname(__file__),
+                   check=True)
+
 
 UNITS = {
     'B': 1,
