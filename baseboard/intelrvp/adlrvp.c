@@ -16,6 +16,7 @@
 #include "sn5s330.h"
 #include "system.h"
 #include "task.h"
+#include "tusb1064.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"
 #include "util.h"
@@ -329,10 +330,16 @@ static void configure_retimer_usbmux(void)
 	switch (ADL_RVP_BOARD_ID(board_get_version())) {
 	case ADLN_LP5_ERB_SKU_BOARD_ID:
 	case ADLN_LP5_RVP_SKU_BOARD_ID:
-		/* No retimer on Port0 & Port1 */
-		usb_muxes[TYPE_C_PORT_0].driver = NULL;
+		/* enable TUSB1044RNQR redriver on Port0  */
+		usb_muxes[TYPE_C_PORT_0].i2c_addr_flags =
+					TUSB1064_I2C_ADDR14_FLAGS;
+		usb_muxes[TYPE_C_PORT_0].driver =
+					&tusb1064_usb_mux_driver;
+		usb_muxes[TYPE_C_PORT_0].hpd_update = tusb1044_hpd_update;
+
 #if defined(HAS_TASK_PD_C1)
 		usb_muxes[TYPE_C_PORT_1].driver = NULL;
+		usb_muxes[TYPE_C_PORT_1].hpd_update = NULL;
 #endif
 		break;
 
