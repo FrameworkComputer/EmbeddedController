@@ -47,12 +47,6 @@ static const struct gpio_config configs[] = {
 #endif
 };
 
-/* Runtime information for each GPIO that is configured in named_gpios */
-struct gpio_data {
-	/* Runtime device for gpio port. Set during in init function */
-	const struct device *dev;
-};
-
 /* Maps platform/ec gpio callback information */
 struct gpio_signal_callback {
 	/* The platform/ec gpio_signal */
