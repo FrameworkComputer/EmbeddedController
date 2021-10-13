@@ -853,6 +853,221 @@ static void test_tcpci_alert_rx_message(void)
 	zassert_false(tcpm_has_pending_message(USBC_PORT_C0), NULL);
 }
 
+/** Test TCPCI auto discharge on disconnect */
+static void test_tcpci_auto_discharge(void)
+{
+	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
+	uint8_t initial_ctrl;
+	uint8_t exp_ctrl;
+
+	/* Set initial value for POWER ctrl register. Chosen arbitrary. */
+	initial_ctrl = TCPC_REG_POWER_CTRL_VBUS_VOL_MONITOR_DIS |
+		       TCPC_REG_POWER_CTRL_FORCE_DISCHARGE;
+	tcpci_emul_set_reg(emul, TCPC_REG_POWER_CTRL, initial_ctrl);
+
+	/* Test discharge enable */
+	exp_ctrl = initial_ctrl | TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT;
+	tcpci_tcpc_enable_auto_discharge_disconnect(USBC_PORT_C0, 1);
+	check_tcpci_reg(emul, TCPC_REG_POWER_CTRL, exp_ctrl);
+
+	/* Test discharge disable */
+	exp_ctrl = initial_ctrl &
+		   ~TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT;
+	tcpci_tcpc_enable_auto_discharge_disconnect(USBC_PORT_C0, 0);
+	check_tcpci_reg(emul, TCPC_REG_POWER_CTRL, exp_ctrl);
+}
+
+/** Test TCPCI drp toggle */
+static void test_tcpci_drp_toggle(void)
+{
+	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
+	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
+	uint8_t exp_tcpc_ctrl, exp_role_ctrl, initial_tcpc_ctrl;
+
+	/* Set TCPCI to revision 2 */
+	tcpc_config[USBC_PORT_C0].flags = TCPC_FLAGS_TCPCI_REV2_0;
+	tcpci_emul_set_rev(emul, TCPCI_EMUL_REV2_0_VER1_1);
+
+	/* Test error on failed role CTRL set */
+	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_ROLE_CTRL);
+	zassert_equal(EC_ERROR_INVAL, tcpci_tcpc_drp_toggle(USBC_PORT_C0),
+		      NULL);
+
+	/* Test error on failed TCPC CTRL set */
+	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_TCPC_CTRL);
+	zassert_equal(EC_ERROR_INVAL, tcpci_tcpc_drp_toggle(USBC_PORT_C0),
+		      NULL);
+
+	/* Test error on failed command set */
+	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_COMMAND);
+	zassert_equal(EC_ERROR_INVAL, tcpci_tcpc_drp_toggle(USBC_PORT_C0),
+		      NULL);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Set initial value for TCPC ctrl register. Chosen arbitrary. */
+	initial_tcpc_ctrl = TCPC_REG_TCPC_CTRL_DEBUG_ACC_CONTROL |
+			    TCPC_REG_TCPC_CTRL_BIST_TEST_MODE;
+	tcpci_emul_set_reg(emul, TCPC_REG_TCPC_CTRL, initial_tcpc_ctrl);
+
+	/*
+	 * Test correct registers values for rev 2.0. Role control CC lines
+	 * have to be set to RP with DRP enabled and smallest RP value.
+	 */
+	exp_tcpc_ctrl = initial_tcpc_ctrl |
+			TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT;
+	exp_role_ctrl = TCPC_REG_ROLE_CTRL_SET(TYPEC_DRP, TYPEC_RP_USB,
+					       TYPEC_CC_RP, TYPEC_CC_RP);
+	zassert_equal(EC_SUCCESS, tcpci_tcpc_drp_toggle(USBC_PORT_C0), NULL);
+	check_tcpci_reg(emul, TCPC_REG_TCPC_CTRL, exp_tcpc_ctrl);
+	check_tcpci_reg(emul, TCPC_REG_ROLE_CTRL, exp_role_ctrl);
+	check_tcpci_reg(emul, TCPC_REG_COMMAND,
+			TCPC_REG_COMMAND_LOOK4CONNECTION);
+
+	/* Set TCPCI to revision 1 */
+	tcpc_config[USBC_PORT_C0].flags = 0;
+	tcpci_emul_set_rev(emul, TCPCI_EMUL_REV1_0_VER1_0);
+
+	/* Set initial value for TCPC ctrl register. Chosen arbitrary. */
+	initial_tcpc_ctrl = TCPC_REG_TCPC_CTRL_DEBUG_ACC_CONTROL |
+			    TCPC_REG_TCPC_CTRL_BIST_TEST_MODE;
+	tcpci_emul_set_reg(emul, TCPC_REG_TCPC_CTRL, initial_tcpc_ctrl);
+
+	/*
+	 * Test correct registers values for rev 1.0. Role control CC lines
+	 * have to be set to RD with DRP enabled and smallest RP value.
+	 * Only CC lines setting is different from rev 2.0
+	 */
+	exp_tcpc_ctrl = initial_tcpc_ctrl |
+			TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT;
+	exp_role_ctrl = TCPC_REG_ROLE_CTRL_SET(TYPEC_DRP, TYPEC_RP_USB,
+					       TYPEC_CC_RD, TYPEC_CC_RD);
+	zassert_equal(EC_SUCCESS, tcpci_tcpc_drp_toggle(USBC_PORT_C0), NULL);
+	check_tcpci_reg(emul, TCPC_REG_TCPC_CTRL, exp_tcpc_ctrl);
+	check_tcpci_reg(emul, TCPC_REG_ROLE_CTRL, exp_role_ctrl);
+	check_tcpci_reg(emul, TCPC_REG_COMMAND,
+			TCPC_REG_COMMAND_LOOK4CONNECTION);
+}
+
+/** Test TCPCI get chip info */
+static void test_tcpci_get_chip_info(void)
+{
+	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
+	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
+	struct ec_response_pd_chip_info_v1 info;
+	uint16_t vendor, product, bcd;
+
+	/* Test error on failed vendor id get */
+	i2c_common_emul_set_read_fail_reg(i2c_emul, TCPC_REG_VENDOR_ID);
+	zassert_equal(EC_ERROR_INVAL, tcpci_get_chip_info(USBC_PORT_C0, 1,
+							  &info), NULL);
+
+	/* Test error on failed product id get */
+	i2c_common_emul_set_read_fail_reg(i2c_emul, TCPC_REG_PRODUCT_ID);
+	zassert_equal(EC_ERROR_INVAL, tcpci_get_chip_info(USBC_PORT_C0, 1,
+							  &info), NULL);
+
+	/* Test error on failed BCD get */
+	i2c_common_emul_set_read_fail_reg(i2c_emul, TCPC_REG_VENDOR_ID);
+	zassert_equal(EC_ERROR_INVAL, tcpci_get_chip_info(USBC_PORT_C0, 1,
+							  &info), NULL);
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test reading chip info. Values chosen arbitrary. */
+	vendor = 0x1234;
+	product = 0x5678;
+	bcd = 0x9876;
+	tcpci_emul_set_reg(emul, TCPC_REG_VENDOR_ID, vendor);
+	tcpci_emul_set_reg(emul, TCPC_REG_PRODUCT_ID, product);
+	tcpci_emul_set_reg(emul, TCPC_REG_BCD_DEV, bcd);
+	zassert_equal(EC_SUCCESS, tcpci_get_chip_info(USBC_PORT_C0, 1, &info),
+		      NULL);
+	zassert_equal(vendor, info.vendor_id, NULL);
+	zassert_equal(product, info.product_id, NULL);
+	zassert_equal(bcd, info.device_id, NULL);
+
+	/* Test reading cached chip info */
+	info.vendor_id = 0;
+	info.product_id = 0;
+	info.device_id = 0;
+	/* Make sure, that TCPC is not accessed */
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_FAIL_ALL_REG);
+	zassert_equal(EC_SUCCESS, tcpci_get_chip_info(USBC_PORT_C0, 0, &info),
+		      NULL);
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+	zassert_equal(vendor, info.vendor_id, NULL);
+	zassert_equal(product, info.product_id, NULL);
+	zassert_equal(bcd, info.device_id, NULL);
+}
+
+/** Test TCPCI enter low power mode */
+static void test_tcpci_low_power_mode(void)
+{
+	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
+	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
+
+	/* Test error on failed command set */
+	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_COMMAND);
+	zassert_equal(EC_ERROR_INVAL, tcpci_enter_low_power_mode(USBC_PORT_C0),
+		      NULL);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test correct command is issued */
+	zassert_equal(EC_SUCCESS, tcpci_enter_low_power_mode(USBC_PORT_C0),
+		      NULL);
+	check_tcpci_reg(emul, TCPC_REG_COMMAND, TCPC_REG_COMMAND_I2CIDLE);
+}
+
+/** Test TCPCI set bist test mode */
+static void test_tcpci_set_bist_mode(void)
+{
+	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
+	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
+	uint16_t exp_mask, initial_mask;
+	uint8_t exp_ctrl, initial_ctrl;
+
+	/* Test error on TCPC CTRL set */
+	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_TCPC_CTRL);
+	zassert_equal(EC_ERROR_INVAL, tcpci_set_bist_test_mode(USBC_PORT_C0, 1),
+		      NULL);
+
+	/* Test error on alert mask set */
+	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_ALERT_MASK);
+	zassert_equal(EC_ERROR_INVAL, tcpci_set_bist_test_mode(USBC_PORT_C0, 1),
+		      NULL);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Set initial value for alert mask register. Chosen arbitrary. */
+	initial_mask = TCPC_REG_ALERT_MASK_ALL;
+	tcpci_emul_set_reg(emul, TCPC_REG_ALERT_MASK, initial_mask);
+
+	/* Set initial value for TCPC ctrl register. Chosen arbitrary. */
+	initial_ctrl = TCPC_REG_TCPC_CTRL_DEBUG_ACC_CONTROL |
+		       TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT;
+	tcpci_emul_set_reg(emul, TCPC_REG_TCPC_CTRL, initial_ctrl);
+
+	/* Test enabling bist test mode */
+	exp_mask = initial_mask & ~TCPC_REG_ALERT_RX_STATUS;
+	exp_ctrl = initial_ctrl | TCPC_REG_TCPC_CTRL_BIST_TEST_MODE;
+	zassert_equal(EC_SUCCESS, tcpci_set_bist_test_mode(USBC_PORT_C0, 1),
+		      NULL);
+	check_tcpci_reg(emul, TCPC_REG_TCPC_CTRL, exp_ctrl);
+	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
+
+	/* Test disabling bist test mode */
+	exp_mask = initial_mask | TCPC_REG_ALERT_RX_STATUS;
+	exp_ctrl = initial_ctrl & ~TCPC_REG_TCPC_CTRL_BIST_TEST_MODE;
+	zassert_equal(EC_SUCCESS, tcpci_set_bist_test_mode(USBC_PORT_C0, 0),
+		      NULL);
+	check_tcpci_reg(emul, TCPC_REG_TCPC_CTRL, exp_ctrl);
+	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
+}
+
 void test_suite_tcpci(void)
 {
 	ztest_test_suite(tcpci,
@@ -871,6 +1086,11 @@ void test_suite_tcpci(void)
 				test_tcpci_get_rx_message_raw_rev1),
 			 ztest_user_unit_test(test_tcpci_transmit_rev1),
 			 ztest_user_unit_test(test_tcpci_alert),
-			 ztest_user_unit_test(test_tcpci_alert_rx_message));
+			 ztest_user_unit_test(test_tcpci_alert_rx_message),
+			 ztest_user_unit_test(test_tcpci_auto_discharge),
+			 ztest_user_unit_test(test_tcpci_drp_toggle),
+			 ztest_user_unit_test(test_tcpci_get_chip_info),
+			 ztest_user_unit_test(test_tcpci_low_power_mode),
+			 ztest_user_unit_test(test_tcpci_set_bist_mode));
 	ztest_run_test_suite(tcpci);
 }
