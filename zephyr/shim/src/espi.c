@@ -534,10 +534,10 @@ int zephyr_shim_setup_espi(void)
 	};
 
 	struct espi_cfg cfg = {
-		.io_caps = ESPI_IO_MODE_SINGLE_LINE,
+		.io_caps = ESPI_IO_MODE_QUAD_LINES,
 		.channel_caps = ESPI_CHANNEL_VWIRE | ESPI_CHANNEL_PERIPHERAL |
 				ESPI_CHANNEL_OOB,
-		.max_freq = 20,
+		.max_freq = 50,
 	};
 
 	espi_dev = DEVICE_DT_GET(ESPI_NODE);
