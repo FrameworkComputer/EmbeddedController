@@ -10,7 +10,8 @@
 #include "host_command.h"
 #include "util.h"
 
-enum ec_status pstore_command_get_info(struct host_cmd_handler_args *args)
+static enum ec_status
+pstore_command_get_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_pstore_info *r = args->response;
 
@@ -26,7 +27,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PSTORE_INFO,
 		     pstore_command_get_info,
 		     EC_VER_MASK(0));
 
-enum ec_status pstore_command_read(struct host_cmd_handler_args *args)
+static enum ec_status pstore_command_read(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pstore_read *p = args->params;
 	char *dest = args->response;
@@ -63,7 +64,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PSTORE_READ,
 		     pstore_command_read,
 		     EC_VER_MASK(0));
 
-enum ec_status pstore_command_write(struct host_cmd_handler_args *args)
+static enum ec_status pstore_command_write(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pstore_write *p = args->params;
 

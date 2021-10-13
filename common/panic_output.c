@@ -421,7 +421,8 @@ DECLARE_CONSOLE_COMMAND(panicinfo, command_panicinfo,
 /*****************************************************************************/
 /* Host commands */
 
-enum ec_status host_command_panic_info(struct host_cmd_handler_args *args)
+static enum ec_status
+host_command_panic_info(struct host_cmd_handler_args *args)
 {
 	uint32_t pdata_size = get_panic_data_size();
 	uintptr_t pdata_start = get_panic_data_start();

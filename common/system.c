@@ -1691,7 +1691,7 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_CHIP_INFO,
 		     host_command_get_chip_info,
 		     EC_VER_MASK(0));
 
-enum ec_status
+static enum ec_status
 host_command_get_board_version(struct host_cmd_handler_args *args)
 {
 	struct ec_response_board_version *r = args->response;
@@ -1712,7 +1712,7 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_BOARD_VERSION,
 		     host_command_get_board_version,
 		     EC_VER_MASK(0));
 
-enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
+static enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
 {
 	struct ec_params_reboot_ec p;
 

@@ -9,7 +9,13 @@
 #include "i2c.h"
 #include "util.h"
 
-enum ec_status i2c_get_protocol_info(struct host_cmd_handler_args *args)
+/**
+ * Command handler to get host command protocol information
+ *
+ * @param args:	host command handler arguments
+ * @return	EC_SUCCESS
+ */
+static enum ec_status i2c_get_protocol_info(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_protocol_info *r = args->response;
 

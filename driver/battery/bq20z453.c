@@ -18,7 +18,8 @@ static void cutoff(void)
 }
 DECLARE_DEFERRED(cutoff);
 
-enum ec_status battery_command_cut_off(struct host_cmd_handler_args *args)
+static enum ec_status
+battery_command_cut_off(struct host_cmd_handler_args *args)
 {
 	/*
 	 * Queue battery cutoff.  This must be deferred so we can send the

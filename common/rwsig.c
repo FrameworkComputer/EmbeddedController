@@ -298,7 +298,7 @@ exit:
 		task_wait_event(-1);
 }
 
-enum ec_status rwsig_cmd_action(struct host_cmd_handler_args *args)
+static enum ec_status rwsig_cmd_action(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_rwsig_action *p = args->params;
 
@@ -320,7 +320,7 @@ DECLARE_HOST_COMMAND(EC_CMD_RWSIG_ACTION,
 		     EC_VER_MASK(0));
 
 #else /* !HAS_TASK_RWSIG */
-enum ec_status rwsig_cmd_check_status(struct host_cmd_handler_args *args)
+static enum ec_status rwsig_cmd_check_status(struct host_cmd_handler_args *args)
 {
 	struct ec_response_rwsig_check_status *r = args->response;
 

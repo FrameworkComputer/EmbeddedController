@@ -168,7 +168,7 @@ enum ec_status port80_last_boot(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-enum ec_status port80_command_read(struct host_cmd_handler_args *args)
+static enum ec_status port80_command_read(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_port80_read *p = args->params;
 	uint32_t offset = p->read_buffer.offset;

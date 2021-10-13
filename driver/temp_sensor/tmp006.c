@@ -264,7 +264,7 @@ int tmp006_get_val(int idx, int *temp_ptr)
 /*****************************************************************************/
 /* Host commands */
 
-enum ec_status tmp006_get_calibration(struct host_cmd_handler_args *args)
+static enum ec_status tmp006_get_calibration(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_tmp006_get_calibration *p = args->params;
 	struct ec_response_tmp006_get_calibration_v1 *r1 = args->response;
@@ -299,7 +299,7 @@ DECLARE_HOST_COMMAND(EC_CMD_TMP006_GET_CALIBRATION,
 		     tmp006_get_calibration,
 		     EC_VER_MASK(1));
 
-enum ec_status tmp006_set_calibration(struct host_cmd_handler_args *args)
+static enum ec_status tmp006_set_calibration(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_tmp006_set_calibration_v1 *p1 = args->params;
 	struct tmp006_data_t *tdata;
@@ -333,7 +333,7 @@ DECLARE_HOST_COMMAND(EC_CMD_TMP006_SET_CALIBRATION,
 		     tmp006_set_calibration,
 		     EC_VER_MASK(1));
 
-enum ec_status tmp006_get_raw(struct host_cmd_handler_args *args)
+static enum ec_status tmp006_get_raw(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_tmp006_get_raw *p = args->params;
 	struct ec_response_tmp006_get_raw *r = args->response;

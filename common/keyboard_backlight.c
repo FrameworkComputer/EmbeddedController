@@ -132,7 +132,8 @@ DECLARE_CONSOLE_COMMAND(kblight, cc_kblight,
 			"percent",
 			"Get/set keyboard backlight");
 
-enum ec_status hc_get_keyboard_backlight(struct host_cmd_handler_args *args)
+static enum ec_status
+hc_get_keyboard_backlight(struct host_cmd_handler_args *args)
 {
 	struct ec_response_pwm_get_keyboard_backlight *r = args->response;
 
@@ -146,7 +147,8 @@ DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT,
 		     hc_get_keyboard_backlight,
 		     EC_VER_MASK(0));
 
-enum ec_status hc_set_keyboard_backlight(struct host_cmd_handler_args *args)
+static enum ec_status
+hc_set_keyboard_backlight(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pwm_set_keyboard_backlight *p = args->params;
 

@@ -270,6 +270,7 @@ struct host_command *zephyr_find_host_command(int command);
  * commands starting at offset 0x0000
  */
 #define DECLARE_HOST_COMMAND(command, routine, version_mask)		\
+	static enum ec_status(routine)(struct host_cmd_handler_args *args); \
 	const struct host_command __keep __no_sanitize_address		\
 	EXPAND(0x0000, command)						\
 	__attribute__((section(".rodata.hcmds."EXPANDSTR(0x0000, command)))) \
@@ -280,6 +281,7 @@ struct host_command *zephyr_find_host_command(int command);
  * commands starting at offset EC_CMD_BOARD_SPECIFIC_BASE,
  */
 #define DECLARE_PRIVATE_HOST_COMMAND(command, routine, version_mask) \
+	static enum ec_status(routine)(struct host_cmd_handler_args *args); \
 	const struct host_command __keep __no_sanitize_address	     \
 	EXPAND(EC_CMD_BOARD_SPECIFIC_BASE, command) \
 	__attribute__((section(".rodata.hcmds."\
@@ -288,7 +290,7 @@ struct host_command *zephyr_find_host_command(int command);
 		   version_mask}
 #else /* !CONFIG_ZEPHYR && !HAS_TASK_HOSTCMD */
 #define DECLARE_HOST_COMMAND(command, routine, version_mask)    \
-	enum ec_status (routine)(struct host_cmd_handler_args *args)       \
+	static enum ec_status (routine)(struct host_cmd_handler_args *args) \
 		__attribute__((unused))
 
 #define DECLARE_PRIVATE_HOST_COMMAND(command, routine, version_mask)	\
