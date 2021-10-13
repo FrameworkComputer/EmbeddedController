@@ -1,0 +1,56 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if BOARD_CORSOLA
+
+config BOARD
+	default "corsola"
+
+# Zephyr internal stack sizes
+
+config IDLE_STACK_SIZE
+	default 256
+
+config ISR_STACK_SIZE
+	default 800
+
+config SHELL_STACK_SIZE
+	default 1048
+
+config SYSTEM_WORKQUEUE_STACK_SIZE
+	default 1024
+
+
+# Chromium EC stack sizes
+
+config TASK_CHARGER_STACK_SIZE
+	default 960
+
+config TASK_CHIPSET_STACK_SIZE
+	default 820
+
+config TASK_HOOKS_STACK_SIZE
+	default 672
+
+config TASK_HOSTCMD_STACK_SIZE
+	default 1024
+
+config TASK_KEYSCAN_STACK_SIZE
+	default 920
+
+config TASK_MOTIONSENSE_STACK_SIZE
+	default 920
+
+config TASK_PD_STACK_SIZE
+	default 1024
+
+config TASK_USB_CHG_STACK_SIZE
+	default 800
+
+
+choice PLATFORM_EC_HOSTCMD_DEBUG_MODE
+	default HCDEBUG_OFF
+endchoice # PLATFORM_EC_HOSTCMD_DEBUG_MODE
+
+endif # BOARD_CORSOLA
