@@ -668,6 +668,191 @@ static void test_tcpci_transmit_rev1(void)
 	test_tcpci_transmit();
 }
 
+/** Test TCPCI alert */
+static void test_tcpci_alert(void)
+{
+	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
+	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
+
+	tcpc_config[USBC_PORT_C0].flags = TCPC_FLAGS_TCPCI_REV2_0;
+	tcpci_emul_set_rev(emul, TCPCI_EMUL_REV2_0_VER1_1);
+
+	/* Test alert read fail */
+	i2c_common_emul_set_read_fail_reg(i2c_emul, TCPC_REG_ALERT);
+	tcpci_tcpc_alert(USBC_PORT_C0);
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Handle overcurrent */
+	tcpci_emul_set_reg(emul, TCPC_REG_ALERT, TCPC_REG_ALERT_FAULT);
+	tcpci_emul_set_reg(emul, TCPC_REG_FAULT_STATUS,
+			   TCPC_REG_FAULT_STATUS_VCONN_OVER_CURRENT);
+	tcpci_tcpc_alert(USBC_PORT_C0);
+	check_tcpci_reg(emul, TCPC_REG_ALERT, 0x0);
+	check_tcpci_reg(emul, TCPC_REG_FAULT_STATUS, 0x0);
+
+	/* Test TX complete */
+	tcpci_emul_set_reg(emul, TCPC_REG_ALERT, TCPC_REG_ALERT_TX_COMPLETE);
+	tcpci_tcpc_alert(USBC_PORT_C0);
+
+	/* Test clear alert and ext_alert */
+	tcpci_emul_set_reg(emul, TCPC_REG_ALERT, TCPC_REG_ALERT_ALERT_EXT);
+	tcpci_emul_set_reg(emul, TCPC_REG_ALERT_EXT,
+			   TCPC_REG_ALERT_EXT_TIMER_EXPIRED);
+	tcpci_tcpc_alert(USBC_PORT_C0);
+	check_tcpci_reg(emul, TCPC_REG_ALERT, 0x0);
+	check_tcpci_reg(emul, TCPC_REG_FAULT_STATUS, 0x0);
+
+	/* Test CC changed, CC status chosen arbitrary */
+	tcpci_emul_set_reg(emul, TCPC_REG_CC_STATUS,
+			   TCPC_REG_CC_STATUS_SET(1, TYPEC_CC_VOLT_RP_1_5,
+						  TYPEC_CC_VOLT_RP_3_0));
+	tcpci_emul_set_reg(emul, TCPC_REG_ALERT, TCPC_REG_ALERT_CC_STATUS);
+	tcpci_tcpc_alert(USBC_PORT_C0);
+
+	/* Test Hard reset */
+	tcpci_emul_set_reg(emul, TCPC_REG_ALERT, TCPC_REG_ALERT_RX_HARD_RST);
+	tcpci_tcpc_alert(USBC_PORT_C0);
+}
+
+
+/** Test TCPCI alert RX message */
+static void test_tcpci_alert_rx_message(void)
+{
+	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
+	struct tcpci_emul_msg msg1, msg2;
+	uint8_t buf1[32], buf2[32];
+	uint32_t payload[7];
+	int exp_head;
+	int i, head;
+	int size;
+
+	tcpc_config[USBC_PORT_C0].flags = TCPC_FLAGS_TCPCI_REV2_0;
+	tcpci_emul_set_rev(emul, TCPCI_EMUL_REV2_0_VER1_1);
+
+	for (i = 0; i < 32; i++) {
+		buf1[i] = i + 1;
+		buf2[i] = i + 33;
+	}
+	size = 23;
+	msg1.buf = buf1;
+	msg1.cnt = size + 3;
+	msg1.type = TCPCI_MSG_SOP;
+
+	msg2.buf = buf2;
+	msg2.cnt = size + 3;
+	msg2.type = TCPCI_MSG_SOP_PRIME;
+
+	/* Test receiving one message */
+	zassert_ok(tcpci_emul_add_rx_msg(emul, &msg1, true),
+		   "Failed to setup emulator message");
+	tcpci_tcpc_alert(USBC_PORT_C0);
+	check_tcpci_reg(emul, TCPC_REG_ALERT, 0x0);
+
+	/* Check if msg1 is in queue */
+	zassert_true(tcpm_has_pending_message(USBC_PORT_C0), NULL);
+	zassert_equal(EC_SUCCESS, tcpm_dequeue_message(USBC_PORT_C0, payload,
+						       &head), NULL);
+	exp_head = (TCPCI_MSG_SOP << 28) | (buf1[1] << 8) | buf1[0];
+	zassert_equal(exp_head, head,
+		      "Received header 0x%08lx, expected 0x%08lx",
+		      head, exp_head);
+	zassert_mem_equal(payload, buf1 + 2, size, NULL);
+	zassert_false(tcpm_has_pending_message(USBC_PORT_C0), NULL);
+
+	/* Test receiving two messages */
+	zassert_ok(tcpci_emul_add_rx_msg(emul, &msg1, true),
+		   "Failed to setup emulator message");
+	zassert_ok(tcpci_emul_add_rx_msg(emul, &msg2, true),
+		   "Failed to setup emulator message");
+	tcpci_tcpc_alert(USBC_PORT_C0);
+	check_tcpci_reg(emul, TCPC_REG_ALERT, 0x0);
+
+	/* Check if msg1 is in queue */
+	zassert_true(tcpm_has_pending_message(USBC_PORT_C0), NULL);
+	zassert_equal(EC_SUCCESS, tcpm_dequeue_message(USBC_PORT_C0, payload,
+						       &head), NULL);
+	exp_head = (TCPCI_MSG_SOP << 28) | (buf1[1] << 8) | buf1[0];
+	zassert_equal(exp_head, head,
+		      "Received header 0x%08lx, expected 0x%08lx",
+		      head, exp_head);
+	zassert_mem_equal(payload, buf1 + 2, size, NULL);
+	/* Check if msg2 is in queue */
+	zassert_true(tcpm_has_pending_message(USBC_PORT_C0), NULL);
+	zassert_equal(EC_SUCCESS, tcpm_dequeue_message(USBC_PORT_C0, payload,
+						       &head), NULL);
+	exp_head = (TCPCI_MSG_SOP_PRIME << 28) | (buf2[1] << 8) | buf2[0];
+	zassert_equal(exp_head, head,
+		      "Received header 0x%08lx, expected 0x%08lx",
+		      head, exp_head);
+	zassert_mem_equal(payload, buf2 + 2, size, NULL);
+	zassert_false(tcpm_has_pending_message(USBC_PORT_C0), NULL);
+
+	/* Test with too long first message */
+	msg1.cnt = 32;
+	zassert_ok(tcpci_emul_add_rx_msg(emul, &msg1, true),
+		   "Failed to setup emulator message");
+	zassert_ok(tcpci_emul_add_rx_msg(emul, &msg2, true),
+		   "Failed to setup emulator message");
+	tcpci_tcpc_alert(USBC_PORT_C0);
+	check_tcpci_reg(emul, TCPC_REG_ALERT, 0x0);
+
+	/* Check if msg2 is in queue */
+	zassert_true(tcpm_has_pending_message(USBC_PORT_C0), NULL);
+	zassert_equal(EC_SUCCESS, tcpm_dequeue_message(USBC_PORT_C0, payload,
+						       &head), NULL);
+	exp_head = (TCPCI_MSG_SOP_PRIME << 28) | (buf2[1] << 8) | buf2[0];
+	zassert_equal(exp_head, head,
+		      "Received header 0x%08lx, expected 0x%08lx",
+		      head, exp_head);
+	zassert_mem_equal(payload, buf2 + 2, size, NULL);
+	zassert_false(tcpm_has_pending_message(USBC_PORT_C0), NULL);
+
+	/* Test constant read message failure */
+	zassert_ok(tcpci_emul_add_rx_msg(emul, &msg1, true),
+		   "Failed to setup emulator message");
+	/* Create loop with one message with wrong size */
+	msg1.next = &msg1;
+	tcpci_tcpc_alert(USBC_PORT_C0);
+	/* Nothing should be in queue */
+	zassert_false(tcpm_has_pending_message(USBC_PORT_C0), NULL);
+
+	/* Test constant correct messages stream */
+	msg1.cnt = size + 3;
+	tcpci_tcpc_alert(USBC_PORT_C0);
+	msg1.next = NULL;
+
+	/* msg1 should be at least twice in queue */
+	exp_head = (TCPCI_MSG_SOP << 28) | (buf1[1] << 8) | buf1[0];
+	for (i = 0; i < 2; i++) {
+		zassert_true(tcpm_has_pending_message(USBC_PORT_C0), NULL);
+		zassert_equal(EC_SUCCESS,
+			      tcpm_dequeue_message(USBC_PORT_C0, payload,
+						   &head), NULL);
+		zassert_equal(exp_head, head,
+			      "Received header 0x%08lx, expected 0x%08lx",
+			      head, exp_head);
+		zassert_mem_equal(payload, buf1 + 2, size, NULL);
+	}
+	tcpm_clear_pending_messages(USBC_PORT_C0);
+	zassert_false(tcpm_has_pending_message(USBC_PORT_C0), NULL);
+
+	/* Read message that is left in TCPC buffer */
+	tcpci_tcpc_alert(USBC_PORT_C0);
+	check_tcpci_reg(emul, TCPC_REG_ALERT, 0x0);
+
+	/* Check if msg1 is in queue */
+	zassert_true(tcpm_has_pending_message(USBC_PORT_C0), NULL);
+	zassert_equal(EC_SUCCESS, tcpm_dequeue_message(USBC_PORT_C0, payload,
+						       &head), NULL);
+	exp_head = (TCPCI_MSG_SOP << 28) | (buf1[1] << 8) | buf1[0];
+	zassert_equal(exp_head, head,
+		      "Received header 0x%08lx, expected 0x%08lx",
+		      head, exp_head);
+	zassert_mem_equal(payload, buf1 + 2, size, NULL);
+	zassert_false(tcpm_has_pending_message(USBC_PORT_C0), NULL);
+}
+
 void test_suite_tcpci(void)
 {
 	ztest_test_suite(tcpci,
@@ -684,6 +869,8 @@ void test_suite_tcpci(void)
 			 ztest_user_unit_test(test_tcpci_transmit_rev2),
 			 ztest_user_unit_test(
 				test_tcpci_get_rx_message_raw_rev1),
-			 ztest_user_unit_test(test_tcpci_transmit_rev1));
+			 ztest_user_unit_test(test_tcpci_transmit_rev1),
+			 ztest_user_unit_test(test_tcpci_alert),
+			 ztest_user_unit_test(test_tcpci_alert_rx_message));
 	ztest_run_test_suite(tcpci);
 }
