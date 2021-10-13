@@ -493,11 +493,8 @@ static int cc_cbi(int argc, char **argv)
 			if (setter->size < 1) {
 				ccprintf("Set size too small\n");
 				return EC_ERROR_PARAM4;
-			} else if (setter->tag == CBI_TAG_REWORK_ID &&
-				   setter->size > 8) {
-				ccprintf("Set size too large\n");
-				return EC_ERROR_PARAM4;
-			} else if (setter->size > 4) {
+			} else if ((setter->size > 8) || (setter->size > 4 &&
+				   setter->tag != CBI_TAG_REWORK_ID)) {
 				ccprintf("Set size too large\n");
 				return EC_ERROR_PARAM4;
 			}
