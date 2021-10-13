@@ -27,6 +27,7 @@ extern void test_suite_isl923x(void);
 extern void test_suite_usb_mux(void);
 extern void test_suite_ppc_syv682c(void);
 extern void test_suite_cros_cbi(void);
+extern void test_suite_tcpci(void);
 
 void test_main(void)
 {
@@ -55,4 +56,5 @@ void test_main(void)
 	test_suite_usb_mux();
 	test_suite_ppc_syv682c();
 	test_suite_cros_cbi();
+	test_suite_tcpci();
 }

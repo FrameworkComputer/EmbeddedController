@@ -573,6 +573,13 @@
 		reg = <0x9>;
 		label = "ISL923X_EMUL";
 	};
+
+	tcpci_emul: tcpci_emul@82 {
+		compatible = "cros,tcpci-emul";
+		status = "okay";
+		reg = <0x82>;
+		label = "TCPCI_EMUL";
+	};
 };
 
 /* Enable all thermistors for testing */

@@ -17,7 +17,7 @@
 #include "ppc/syv682x_public.h"
 #include "retimer/bb_retimer_public.h"
 #include "stubs.h"
-#include "tcpm/tusb422_public.h"
+#include "tcpm/tcpci.h"
 #include "tcpm/tusb422_public.h"
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
@@ -122,9 +122,9 @@ struct tcpc_config_t tcpc_config[] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_USB_C0,
-			.addr_flags = TUSB422_I2C_ADDR_FLAGS,
+			.addr_flags = DT_REG_ADDR(DT_NODELABEL(tcpci_emul)),
 		},
-		.drv = &tusb422_tcpm_drv,
+		.drv = &tcpci_tcpm_drv,
 	},
 	[USBC_PORT_C1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
