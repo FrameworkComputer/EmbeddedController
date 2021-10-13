@@ -73,3 +73,22 @@ board_vivaldi_keybd_config(void)
 	else
 		return &keybd2;
 }
+
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+/*
+ * Map keyboard connector pins to EC GPIO pins for factory test.
+ * Pins mapped to {-1, -1} are skipped.
+ * The connector has 24 pins total, and there is no pin 0.
+ */
+const int keyboard_factory_scan_pins[][2] = {
+		{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
+		{0, 7}, {1, 4}, {1, 3}, {1, 6}, {1, 7},
+		{3, 1}, {2, 0}, {1, 5}, {2, 6}, {2, 7},
+		{2, 1}, {2, 4}, {2, 5}, {1, 2}, {2, 3},
+		{2, 2}, {3, 0}, {-1, -1}, {-1, -1}, {-1, -1},
+};
+
+const int keyboard_factory_scan_pins_used =
+			ARRAY_SIZE(keyboard_factory_scan_pins);
+#endif
