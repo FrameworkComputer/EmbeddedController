@@ -15,6 +15,9 @@
 
 /* RVP Board ids */
 #define CONFIG_BOARD_VERSION_GPIO
+#define ADLM_LP4_RVP1_SKU_BOARD_ID	0x01
+#define ADLM_LP5_RVP2_SKU_BOARD_ID	0x02
+#define ADLM_LP5_RVP3_SKU_BOARD_ID	0x03
 #define ADLN_LP5_ERB_SKU_BOARD_ID	0x06
 #define ADLN_LP5_RVP_SKU_BOARD_ID	0x07
 #define ADLP_DDR5_RVP_SKU_BOARD_ID	0x12
@@ -155,6 +158,9 @@
 #define CONFIG_BATTERY_COUNT	1
 #define CONFIG_HOSTCMD_BATTERY_V2
 
+/* Config to indicate battery type doesn't auto detect */
+#define CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
+
 #ifndef __ASSEMBLER__
 
 enum adlrvp_charge_ports {
@@ -186,7 +192,8 @@ enum ioex_port {
 #define CONFIG_IO_EXPANDER_PORT_COUNT IOEX_PORT_COUNT
 
 enum battery_type {
-	BATTERY_GETAC_SMP_HHP_408,
+	BATTERY_GETAC_SMP_HHP_408_3S,
+	BATTERY_GETAC_SMP_HHP_408_2S,
 	BATTERY_TYPE_COUNT,
 };
 

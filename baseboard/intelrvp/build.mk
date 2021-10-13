@@ -31,9 +31,5 @@ ifneq ($(filter y,$(BOARD_ADLRVPP_ITE) $(BOARD_ADLRVPM_ITE) \
 		$(BOARD_ADLRVPP_MCHP1521) $(BOARD_ADLRVPP_NPCX) \
 		$(BOARD_ADLRVPP_MCHP1727)),)
 baseboard-y+=adlrvp.o
-ifneq ($(BOARD_ADLRVPM_ITE),)
-baseboard-$(CONFIG_BATTERY_SMART)+=adlrvp_battery2s.o
-else
-baseboard-$(CONFIG_BATTERY_SMART)+=adlrvp_battery3s.o
-endif
+baseboard-$(CONFIG_BATTERY_SMART)+=adlrvp_battery.o
 endif
