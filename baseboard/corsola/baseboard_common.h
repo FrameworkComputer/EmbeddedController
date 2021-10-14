@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Asurada baseboard-specific onfiguration common to ECOS and Zephyr */
+/* Corsola baseboard-specific onfiguration common to ECOS and Zephyr */
 
 #ifndef __CROS_EC_BASEBOARD_COMMON_H
 #define __CROS_EC_BASEBOARD_COMMON_H

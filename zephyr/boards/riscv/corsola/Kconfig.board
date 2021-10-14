@@ -8,7 +8,7 @@
 # applicable to be upstreamed, even though this code is shared by all
 # projects using Trogdor baseboard.
 config BOARD_CORSOLA
-	bool "Google Asurada Baseboard"
+	bool "Google Corsola Baseboard"
 	depends on SOC_IT8XXX2
 	# Allow generating initial 0 line coverage.
 	select HAS_COVERAGE_SUPPORT

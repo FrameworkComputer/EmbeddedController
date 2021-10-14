@@ -6,7 +6,7 @@
 #include "i2c/i2c.h"
 #include "i2c.h"
 
-/* Hayato board specific i2c implementation */
+/* Krabby board specific i2c implementation */
 
 #ifdef CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED
 int board_allow_i2c_passthru(int port)

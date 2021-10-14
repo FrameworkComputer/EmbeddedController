@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-/* Asurada board configuration */
+/* Krabby board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -25,22 +25,15 @@
 #define CONFIG_MT6360_BC12_GPIO
 
 /* LED */
-#ifdef BOARD_HAYATO
 #define CONFIG_LED_ONOFF_STATES
 #define CONFIG_LED_ONOFF_STATES_BAT_LOW 10
-#endif
 
 /* PD / USB-C / PPC */
 #define CONFIG_USB_PD_DEBUG_LEVEL 3
 #define PD_MAX_CURRENT_MA 3000
 #define PD_OPERATING_POWER_MW 15000
-#ifdef BOARD_HAYATO
 #define PD_MAX_VOLTAGE_MV 15000
 #define PD_MAX_POWER_MW 45000
-#else
-#define PD_MAX_VOLTAGE_MV 20000
-#define PD_MAX_POWER_MW 60000
-#endif
 #define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
@@ -74,19 +67,7 @@
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 #define CONFIG_LID_ANGLE_UPDATE
 
-#ifdef BOARD_ASURADA_REV0
-#define CONFIG_ALS
-#define ALS_COUNT 1
-#define CONFIG_ALS_TCS3400
-#define CONFIG_ALS_TCS3400_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
-#define CONFIG_ALS_TCS3400_EMULATED_IRQ_EVENT
-
-#define CONFIG_ACCEL_FORCE_MODE_MASK (BIT(LID_ACCEL) | BIT(CLEAR_ALS))
-#else
-/* TODO(b/171931139): remove this after rev1 board deprecated */
-#define CONFIG_ACCEL_FORCE_MODE_MASK (board_accel_force_mode_mask())
-#endif
+#define CONFIG_ACCEL_FORCE_MODE_MASK 0
 
 /* SPI / Host Command */
 #undef CONFIG_HOSTCMD_DEBUG_MODE
@@ -109,10 +90,6 @@ enum sensor_id {
 	BASE_ACCEL = 0,
 	BASE_GYRO,
 	LID_ACCEL,
-#ifdef BOARD_ASURADA_REV0
-	CLEAR_ALS,
-	RGB_ALS,
-#endif
 	SENSOR_COUNT,
 };
 
@@ -135,7 +112,6 @@ enum pwm_channel {
 	PWM_CH_COUNT,
 };
 
-int board_accel_force_mode_mask(void);
 void motion_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */

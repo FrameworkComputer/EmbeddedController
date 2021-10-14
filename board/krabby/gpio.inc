@@ -33,12 +33,7 @@ GPIO_INT(BASE_IMU_INT_L,     PIN(J, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V,
          motion_interrupt)
 GPIO_INT(LID_ACCEL_INT_L,    PIN(J, 3), GPIO_INT_FALLING | GPIO_SEL_1P8V,
          lis2dw12_interrupt)
-#ifdef BOARD_ASURADA_REV0
-GPIO_INT(ALS_RGB_INT_ODL,    PIN(F, 0), GPIO_INT_FALLING,
-         tcs3400_interrupt)
-#else
 GPIO(ALS_RGB_INT_ODL,        PIN(F, 0), GPIO_INPUT)
-#endif
 
 /* USB-C interrupts */
 GPIO_INT(USB_C0_PPC_INT_ODL, PIN(D, 1), GPIO_INT_BOTH, ppc_interrupt)
@@ -46,7 +41,6 @@ GPIO_INT(USB_C0_BC12_INT_ODL,PIN(J, 6), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C1_BC12_INT_L,  PIN(J, 4), GPIO_INT_FALLING, bc12_interrupt)
 
 /* Volume button interrupts */
-/* Note that netnames are reversed in asurada rev 0/1 */
 GPIO_INT(VOLUME_DOWN_L,      PIN(D, 5), GPIO_INT_BOTH | GPIO_PULL_UP,
          button_interrupt) /* EC_VOLDN_BTN_ODL */
 GPIO_INT(VOLUME_UP_L,        PIN(D, 6), GPIO_INT_BOTH | GPIO_PULL_UP,
@@ -55,13 +49,8 @@ GPIO_INT(VOLUME_UP_L,        PIN(D, 6), GPIO_INT_BOTH | GPIO_PULL_UP,
 /* Other interrupts */
 GPIO_INT(AP_XHCI_INIT_DONE,  PIN(D, 2), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V,
          usb_a0_interrupt)
-#ifdef BOARD_ASURADA_REV0
-GPIO_INT(AC_PRESENT,         PIN(M, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,
-         extpower_interrupt) /* AC_OK / AC_PRESENT in rev0 */
-#else /* HAYATO */
 GPIO_INT(AC_PRESENT,         PIN(E, 5), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH,
          extpower_interrupt) /* AC_OK / AC_PRESENT in rev1+ */
-#endif
 GPIO_INT(UART1_RX,           PIN(B, 0), GPIO_INT_FALLING,
          uart_deepsleep_interrupt) /* UART_DEBUG_TX_EC_RX */
 GPIO_INT(WP,                 PIN(I, 4), GPIO_INT_BOTH | GPIO_SEL_1P8V,
@@ -152,11 +141,7 @@ GPIO(CCD_MODE_ODL,           PIN(C, 4), GPIO_INPUT)
  */
 GPIO(NC_GPI7,                PIN(I, 7), GPIO_OUT_LOW)
 /* NC pins, enable internal pull-up/down to avoid floating state. */
-#ifdef BOARD_ASURADA_REV0
-GPIO(NC_GPE5,                PIN(E, 5), GPIO_INPUT | GPIO_PULL_UP)
-#else /* HAYATO */
 GPIO(NC_GPM2,                PIN(M, 2), GPIO_INPUT | GPIO_PULL_DOWN)
-#endif
 GPIO(NC_GPM3,                PIN(M, 3), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(NC_GPM6,                PIN(M, 6), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(SPI_CLK_GPG6,           PIN(G, 6), GPIO_INPUT | GPIO_PULL_UP)

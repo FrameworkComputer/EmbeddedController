@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Asurada baseboard-chipset specific configuration */
+/* Corsola baseboard-chipset specific configuration */
 
 #include "common.h"
 #include "gpio.h"

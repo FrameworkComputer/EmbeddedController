@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Asurada baseboard-specific configuration */
+/* Corsola baseboard-specific configuration */
 
 #include "adc.h"
 #include "button.h"
@@ -27,7 +27,6 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "it5205_sbu.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "motion_sense.h"

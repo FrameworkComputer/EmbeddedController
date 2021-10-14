@@ -14,7 +14,7 @@
 #include "usbc_ppc.h"
 
 #if CONFIG_USB_PD_3A_PORTS != 1
-#error Asurada reference must have at least one 3.0 A port
+#error Corsola reference must have at least one 3.0 A port
 #endif
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
@@ -157,10 +157,6 @@ int pd_snk_is_vbus_provided(int port)
 {
 	static int vbus_prev[CONFIG_USB_PD_PORT_MAX_COUNT];
 	int vbus;
-
-	if ((IS_ENABLED(BOARD_HAYATO) && board_get_version() < 4) ||
-	    (IS_ENABLED(BOARD_SPHERION) && board_get_version() < 1))
-		return ppc_is_vbus_present(port);
 
 	/*
 	 * (b:181203590#comment20) TODO(yllin): use

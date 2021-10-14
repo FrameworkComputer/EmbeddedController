@@ -3,16 +3,10 @@
  * found in the LICENSE file.
  */
 
-/* Asurada board-specific USB-C configuration */
+/* Krabby board-specific USB-C configuration */
 
-#include "driver/ppc/syv682x.h"
 #include "driver/usb_mux/ps8743.h"
 #include "hooks.h"
-
-__override int syv682x_board_is_syv682c(int port)
-{
-	return board_get_version() > 2;
-}
 
 void board_usb_mux_init(void)
 {

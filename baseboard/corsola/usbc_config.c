@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Asurada baseboard-specific USB-C configuration */
+/* Corsola baseboard-specific USB-C configuration */
 
 #include "adc.h"
 #include "baseboard_common.h"
@@ -259,7 +259,7 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 
 void board_overcurrent_event(int port, int is_overcurrented)
 {
-	/* TODO: check correct operation for Asurada */
+	/* TODO: check correct operation for Corsola */
 }
 
 /* TCPC */
