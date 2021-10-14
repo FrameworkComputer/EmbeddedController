@@ -258,7 +258,7 @@ static void update_leds(void)
 DECLARE_HOOK(HOOK_TICK, update_leds, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CMD_LEDTEST
-int command_ledtest(int argc, char **argv)
+static int command_ledtest(int argc, char **argv)
 {
 	int enable;
 	int pwm_led_id;

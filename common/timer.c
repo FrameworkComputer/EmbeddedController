@@ -405,7 +405,7 @@ DECLARE_SAFE_CONSOLE_COMMAND(gettime, command_get_time,
 #endif
 
 #ifdef CONFIG_CMD_TIMERINFO
-int command_timer_info(int argc, char **argv)
+static int command_timer_info(int argc, char **argv)
 {
 	timer_print_info();
 

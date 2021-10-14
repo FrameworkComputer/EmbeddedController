@@ -155,7 +155,7 @@ thermal_exit:
 	thermal_wait_until.val = get_time().val + (3 * SECOND);
 }
 
-int command_jc(int argc, char **argv)
+static int command_jc(int argc, char **argv)
 {
 	static int prev_jc_temp;
 	int jc_temp;

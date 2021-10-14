@@ -178,7 +178,7 @@ static void thermal_control(void)
 
 		/* Print temperature sensor values before shutting down AP */
 		if (IS_ENABLED(CONFIG_CMD_TEMP_SENSOR)) {
-			console_command_temps(1, NULL);
+			print_temps();
 			cflush();
 		}
 

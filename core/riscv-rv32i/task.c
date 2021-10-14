@@ -620,7 +620,7 @@ void task_print_list(void)
 	}
 }
 
-int command_task_info(int argc, char **argv)
+static int command_task_info(int argc, char **argv)
 {
 #ifdef CONFIG_TASK_PROFILING
 	unsigned int total = 0;

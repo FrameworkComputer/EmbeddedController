@@ -244,7 +244,7 @@ void board_reset_pd_mcu(void)
 	hook_call_deferred(&deferred_reset_pd_mcu_data, 10*MSEC);
 }
 
-int command_pd_reset(int argc, char **argv)
+static int command_pd_reset(int argc, char **argv)
 {
 	board_reset_pd_mcu();
 	return EC_SUCCESS;
@@ -529,4 +529,3 @@ uint16_t tcpc_get_alert_status(void)
 {
 	return gpio_get_level(GPIO_PD_MCU_INT) ? PD_STATUS_TCPC_ALERT_0 : 0;
 }
-
