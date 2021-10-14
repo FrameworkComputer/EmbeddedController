@@ -107,6 +107,7 @@ static int charge_current = CHARGE_CURRENT_UNINITIALIZED;
 static int charge_current_uncapped = CHARGE_CURRENT_UNINITIALIZED;
 static int charge_voltage;
 static int charge_supplier = CHARGE_SUPPLIER_NONE;
+static int charge_pd_current_uncapped = CHARGE_CURRENT_UNINITIALIZED;
 static int override_port = OVERRIDE_OFF;
 
 static int delayed_override_port = OVERRIDE_OFF;
@@ -265,6 +266,11 @@ static int charge_manager_is_seeded(void)
 	}
 	is_seeded = 1;
 	return 1;
+}
+
+int charge_manager_get_pd_current_uncapped(void)
+{
+	return charge_pd_current_uncapped;
 }
 
 #ifndef TEST_BUILD
@@ -827,6 +833,15 @@ static void charge_manager_refresh(void)
 		new_charge_voltage =
 			available_charge[new_supplier][new_port].voltage;
 	}
+
+	/*
+	 * Record the PD current limit to prevent from over-sinking
+	 * the charger.
+	 */
+	if (new_supplier == CHARGE_SUPPLIER_PD)
+		charge_pd_current_uncapped = new_charge_current_uncapped;
+	else
+		charge_pd_current_uncapped = CHARGE_CURRENT_UNINITIALIZED;
 
 	/* Change the charge limit + charge port/supplier if modified. */
 	if (new_port != charge_port || new_charge_current != charge_current ||
