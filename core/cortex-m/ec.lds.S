@@ -351,7 +351,14 @@ SECTIONS
 	__data_lma_start = ORIGIN(ROM_RESIDENT_VMA);
 	#define INIT_ROM_LMA	(ORIGIN(ROM_RESIDENT_VMA) + SIZEOF(.data))
 #else
+/*
+ * TODO(b/202863352): Unify clang and gcc behavior.
+ */
+#ifdef __clang__
 	__data_lma_start = LOADADDR(.data);
+#else
+	__data_lma_start = .;
+#endif
 	#define INIT_ROM_LMA	ORIGIN(ROM_RESIDENT_VMA)
 #endif
 
