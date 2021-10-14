@@ -195,6 +195,45 @@ static uint8_t flash_get_status2(void)
 	return ret;
 }
 
+static void flash_set_status(int reg1, int reg2)
+{
+	/* Lock physical flash operations */
+	crec_flash_lock_mapped_storage(1);
+
+	/* Disable tri-state */
+	TRISTATE_FLASH(0);
+	/* Enable write */
+	flash_write_enable();
+
+	NPCX_UMA_DB0 = reg1;
+	NPCX_UMA_DB1 = reg2;
+
+	/* Write status register 1/2 */
+	flash_execute_cmd(CMD_WRITE_STATUS_REG, MASK_CMD_WR_2BYTE);
+	/* Enable tri-state */
+	TRISTATE_FLASH(1);
+
+	/* Unlock physical flash operations */
+	crec_flash_lock_mapped_storage(0);
+}
+
+static void flash_set_quad_enable(int enable)
+{
+	uint8_t sr1 = flash_get_status1();
+	uint8_t sr2 = flash_get_status2();
+
+	/* If QE is the same value, return directly. */
+	if (!!(sr2 & SPI_FLASH_SR2_QE) == enable)
+		return;
+
+	if (enable)
+		sr2 |= SPI_FLASH_SR2_QE;
+	else
+		sr2 &= ~SPI_FLASH_SR2_QE;
+
+	flash_set_status(sr1, sr2);
+}
+
 #ifdef NPCX_INT_FLASH_SUPPORT
 static int is_int_flash_protected(void)
 {
@@ -300,25 +339,7 @@ static int flash_set_status_for_prot(int reg1, int reg2)
 	flash_protect_int_flash(!gpio_get_level(GPIO_WP_L));
 #endif /*_CONFIG_WP_ACTIVE_HIGH_*/
 #endif
-
-	/* Lock physical flash operations */
-	crec_flash_lock_mapped_storage(1);
-
-	/* Disable tri-state */
-	TRISTATE_FLASH(0);
-	/* Enable write */
-	flash_write_enable();
-
-	NPCX_UMA_DB0 = reg1;
-	NPCX_UMA_DB1 = reg2;
-
-	/* Write status register 1/2 */
-	flash_execute_cmd(CMD_WRITE_STATUS_REG, MASK_CMD_WR_2BYTE);
-	/* Enable tri-state */
-	TRISTATE_FLASH(1);
-
-	/* Unlock physical flash operations */
-	crec_flash_lock_mapped_storage(0);
+	flash_set_status(reg1, reg2);
 
 	spi_flash_reg_to_protect(reg1, reg2,
 				 &addr_prot_start, &addr_prot_length);
@@ -697,18 +718,6 @@ uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 
 int crec_flash_pre_init(void)
 {
-	/*
-	 * Protect status registers of internal spi-flash if WP# is active
-	 * during ec initialization.
-	 */
-#ifdef NPCX_INT_FLASH_SUPPORT
-#ifdef CONFIG_WP_ACTIVE_HIGH
-	flash_protect_int_flash(gpio_get_level(GPIO_WP));
-#else
-	flash_protect_int_flash(!gpio_get_level(GPIO_WP_L));
-#endif /*CONFIG_WP_ACTIVE_HIGH */
-#endif
-
 #if !defined(NPCX_INT_FLASH_SUPPORT)
 	/* Enable FIU interface */
 	flash_pinmux(1);
@@ -721,6 +730,23 @@ int crec_flash_pre_init(void)
 
 	/* Initialize UMA to unlocked */
 	flash_uma_lock(0);
+
+	/*
+	 * Disable flash quad enable to avoid /WP pin function is not
+	 * available. */
+	flash_set_quad_enable(0);
+
+	/*
+	 * Protect status registers of internal spi-flash if WP# is active
+	 * during ec initialization.
+	 */
+#ifdef NPCX_INT_FLASH_SUPPORT
+#ifdef CONFIG_WP_ACTIVE_HIGH
+	flash_protect_int_flash(gpio_get_level(GPIO_WP));
+#else
+	flash_protect_int_flash(!gpio_get_level(GPIO_WP_L));
+#endif /*CONFIG_WP_ACTIVE_HIGH */
+#endif
 	return EC_SUCCESS;
 }
 
