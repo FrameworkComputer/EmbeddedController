@@ -98,6 +98,16 @@ int ioex_enable_interrupt(enum ioex_signal signal);
 int ioex_disable_interrupt(enum ioex_signal signal);
 
 /*
+ * Get io expander flags (IOEX_FLAGS_*) for chip that specified IOEX signal
+ * belongs to. They contain information if port was disabled or initialized.
+ *
+ * @param signal IOEX signal that belongs to chip which flags will be returned
+ * @param val	 Pointer to memory where flags will be stored
+ * @return	 EC_SUCCESS if successful, non-zero if error.
+ */
+int ioex_get_ioex_flags(enum ioex_signal signal, int *val);
+
+/*
  * Get flags for the IOEX signal
  *
  * @param signal	IOEX signal to get flags for
