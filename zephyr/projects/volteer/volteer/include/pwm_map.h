@@ -16,10 +16,7 @@
  * TODO(b/177452529): eliminate the dependency on enum pwm_channel
  * and configure this information directly from the device tree.
  */
-#define PWM_CH_LED4_SIDESEL	NAMED_PWM(led3_sidesel)
 
 #define PWM_CH_KBLIGHT		NAMED_PWM(kblight)
-
-#define PWM_CH_FAN		NAMED_PWM(fan)
 
 #endif /* __ZEPHYR_CHROME_PWM_MAP_H */

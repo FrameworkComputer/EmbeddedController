@@ -10,7 +10,6 @@
 
 #include "pwm/pwm.h"
 
-#define PWM_CH_FAN		NAMED_PWM(fan)
 #define PWM_CH_KBLIGHT		NAMED_PWM(kblight)
 
 #endif /* __ZEPHYR_PWM_MAP_H */
