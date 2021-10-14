@@ -42,6 +42,9 @@
  *  The value b'10 is disconnect_val, so we can use b'01 for cfet_off_val
  */
 
+/* charging current is limited to 0.45C */
+#define CHARGING_CURRENT_45C 2601
+
 const struct board_batt_params board_battery_info[] = {
 	/* SDI Battery Information */
 	[BATTERY_SDI] = {
@@ -78,6 +81,30 @@ const struct board_batt_params board_battery_info[] = {
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SDI;
+
+int charger_profile_override(struct charge_state_data *curr)
+{
+	if ((chipset_in_state(CHIPSET_STATE_ON)) &&
+			(curr->requested_current > CHARGING_CURRENT_45C))
+		curr->requested_current = CHARGING_CURRENT_45C;
+
+	return 0;
+}
+
+/* Customs options controllable by host command. */
+#define PARAM_FASTCHARGE (CS_PARAM_CUSTOM_PROFILE_MIN + 0)
+
+enum ec_status charger_profile_override_get_param(uint32_t param,
+						  uint32_t *value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+						  uint32_t value)
+{
+	return EC_RES_INVALID_PARAM;
+}
 
 /* Lower our input voltage to 5V in S0iX when battery is full. */
 #define PD_VOLTAGE_WHEN_FULL 5000
