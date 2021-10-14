@@ -23,7 +23,7 @@
 int svdm_get_hpd_gpio(int port)
 {
 	/* HPD is low active, inverse the result */
-	return !gpio_get_level(GPIO_EC_DPBRDG_HPD_ODL);
+	return !gpio_get_level(GPIO_EC_AP_DP_HPD_ODL);
 }
 
 void svdm_set_hpd_gpio(int port, int en)
@@ -32,7 +32,7 @@ void svdm_set_hpd_gpio(int port, int en)
 	 * HPD is low active, inverse the en
 	 * TODO: C0&C1 shares the same HPD, implement FCFS policy.
 	 */
-	gpio_set_level(GPIO_EC_DPBRDG_HPD_ODL, !en);
+	gpio_set_level(GPIO_EC_AP_DP_HPD_ODL, !en);
 }
 
 /**

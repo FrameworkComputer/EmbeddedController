@@ -53,7 +53,7 @@ const struct charger_config_t chg_chips[] = {
 
 static void baseboard_init(void)
 {
-	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C0_PPC_BC12_INT_ODL);
 	gpio_enable_interrupt(GPIO_AP_XHCI_INIT_DONE);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT-1);
@@ -102,7 +102,6 @@ DECLARE_HOOK(HOOK_INIT, sub_board_init, HOOK_PRIO_INIT_I2C - 1);
 /* Detect subboard */
 static void board_tcpc_init(void)
 {
-	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
 	/* C1: GPIO_USB_C1_PPC_INT_ODL & HDMI: GPIO_PS185_EC_DP_HPD */
 	gpio_enable_interrupt(GPIO_X_EC_GPIO2);
 
@@ -119,7 +118,7 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_port = I2C_PORT_PPC0,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
 		.drv = &syv682x_drv,
-		.frs_en = GPIO_USB_C0_FRS_EN,
+		.frs_en = GPIO_USB_C0_PPC_FRSINFO,
 	},
 	{
 		.i2c_port = I2C_PORT_PPC1,
@@ -152,29 +151,19 @@ struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 
 void bc12_interrupt(enum gpio_signal signal)
 {
-	if (signal == GPIO_USB_C0_BC12_INT_ODL)
-		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
-	else
-		task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
+	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
 }
 
 static void board_sub_bc12_init(void)
 {
 	if (board_get_sub_board() == SUB_BOARD_TYPEC)
-		gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
+		gpio_enable_interrupt(GPIO_USB_C1_BC12_CHARGER_INT_ODL);
 	else
 		/* If this is not a Type-C subboard, disable the task. */
 		task_disable_task(TASK_ID_USB_CHG_P1);
 }
 /* Must be done after I2C and subboard */
 DECLARE_HOOK(HOOK_INIT, board_sub_bc12_init, HOOK_PRIO_INIT_I2C + 1);
-
-void ppc_interrupt(enum gpio_signal signal)
-{
-	if (signal == GPIO_USB_C0_PPC_INT_ODL)
-		/* C0: PPC interrupt */
-		syv682x_interrupt(0);
-}
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {
@@ -382,7 +371,7 @@ static void ps185_hdmi_hpd_deferred(void)
 
 	debounced_hpd = new_hpd;
 
-	gpio_set_level(GPIO_EC_DPBRDG_HPD_ODL, !debounced_hpd);
+	gpio_set_level(GPIO_EC_AP_DP_HPD_ODL, !debounced_hpd);
 	CPRINTS(debounced_hpd ? "HDMI plug" : "HDMI unplug");
 }
 DECLARE_DEFERRED(ps185_hdmi_hpd_deferred);
@@ -411,7 +400,7 @@ void x_ec_interrupt(enum gpio_signal signal)
 int ppc_get_alert_status(int port)
 {
 	if (port == 0)
-		return gpio_get_level(GPIO_USB_C0_PPC_INT_ODL) == 0;
+		return gpio_get_level(GPIO_USB_C0_PPC_BC12_INT_ODL) == 0;
 	if (port == 1 && board_get_sub_board() == SUB_BOARD_TYPEC)
 		return gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
 

@@ -21,8 +21,6 @@
 #define CONFIG_IT83XX_RESET_PD_CONTRACT_IN_BRAM
 
 /* BC12 */
-/* TODO(b/159583342): remove after rev0 deprecated */
-#define CONFIG_MT6360_BC12_GPIO
 
 /* LED */
 #define CONFIG_LED_ONOFF_STATES
