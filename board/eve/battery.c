@@ -607,7 +607,7 @@ static int board_battery_fix_otd_recovery_temp(uint32_t value)
 	return EC_SUCCESS;
 }
 
-int battery_get_vendor_param(uint32_t param, uint32_t *value)
+__override int battery_get_vendor_param(uint32_t param, uint32_t *value)
 {
 	/*
 	 * These registers can't be read directly because the flash area
@@ -638,7 +638,7 @@ int battery_get_vendor_param(uint32_t param, uint32_t *value)
 	return EC_RES_ERROR;
 }
 
-int battery_set_vendor_param(uint32_t param, uint32_t value)
+__override int battery_set_vendor_param(uint32_t param, uint32_t value)
 {
 	switch (param) {
 	case SB_VENDOR_PARAM_CTO_DISABLE:

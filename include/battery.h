@@ -89,6 +89,9 @@ struct battery_static_info {
 	char model_ext[32];		/* SB_DEVICE_NAME */
 	char serial_ext[32];		/* SB_SERIAL_NUMBER */
 	char type_ext[32];		/* SB_DEVICE_CHEMISTRY */
+#ifdef CONFIG_BATTERY_VENDOR_PARAM
+	uint8_t vendor_param[32];
+#endif
 };
 
 extern struct battery_static_info battery_static[];
@@ -165,6 +168,9 @@ struct battery_info {
 	int8_t charging_max_c;
 	int8_t discharging_min_c;
 	int8_t discharging_max_c;
+#ifdef CONFIG_BATTERY_VENDOR_PARAM
+	uint8_t vendor_param_start;
+#endif
 };
 
 /**
@@ -415,7 +421,7 @@ int battery_is_cut_off(void);
  * @param value		Location to store retrieved value.
  * @return non-zero if error.
  */
-int battery_get_vendor_param(uint32_t param, uint32_t *value);
+__override_proto int battery_get_vendor_param(uint32_t param, uint32_t *value);
 
 /**
  * Write battery vendor parameter.
@@ -426,7 +432,7 @@ int battery_get_vendor_param(uint32_t param, uint32_t *value);
  * @param value		Value to write to the battery.
  * @return non-zero if error.
  */
-int battery_set_vendor_param(uint32_t param, uint32_t value);
+__override_proto int battery_set_vendor_param(uint32_t param, uint32_t value);
 
 /**
  * Wait for battery stable.

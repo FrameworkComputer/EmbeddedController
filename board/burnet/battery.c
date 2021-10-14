@@ -34,6 +34,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c = 45,
 			.discharging_min_c = -10,
 			.discharging_max_c = 60,
+			.vendor_param_start = 0x70,
 		},
 	},
 	/* Dynapack CosMX Battery Information */
@@ -62,6 +63,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c = 45,
 			.discharging_min_c = -10,
 			.discharging_max_c = 60,
+			.vendor_param_start = 0x70,
 		},
 	},
 	/* Simplo CosMX Battery Information */
@@ -90,6 +92,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c = 45,
 			.discharging_min_c = -10,
 			.discharging_max_c = 60,
+			.vendor_param_start = 0x70,
 		},
 	},
 	/* Simplo HIGHPOWER Battery Information */
@@ -118,6 +121,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c = 45,
 			.discharging_min_c = -10,
 			.discharging_max_c = 60,
+			.vendor_param_start = 0x70,
 		},
 	},
 	/* Samsung SDI Battery Information */
@@ -146,6 +150,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c = 45,
 			.discharging_min_c = -10,
 			.discharging_max_c = 60,
+			.vendor_param_start = 0x70,
 		},
 	},
 	/* CosMX Battery Information */
@@ -174,6 +179,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c = 45,
 			.discharging_min_c = -10,
 			.discharging_max_c = 60,
+			.vendor_param_start = 0x70,
 		},
 	},
 };

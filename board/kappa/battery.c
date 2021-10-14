@@ -34,6 +34,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c = 45,
 			.discharging_min_c = -10,
 			.discharging_max_c = 60,
+			.vendor_param_start = 0x70,
 		},
 	},
 	/* Dynapack CosMX DAK124960-W0P0707HT Battery Information */
@@ -62,6 +63,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c = 45,
 			.discharging_min_c = -10,
 			.discharging_max_c = 60,
+			.vendor_param_start = 0x70,
 		},
 	},
 };

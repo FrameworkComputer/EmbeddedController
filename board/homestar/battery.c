@@ -60,6 +60,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c         = 45,
 			.discharging_min_c      = -10,
 			.discharging_max_c      = 60,
+			.vendor_param_start     = 0x70,
 		},
 	},
 	/* COSMX GH02047XL */
@@ -89,6 +90,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c         = 45,
 			.discharging_min_c      = -10,
 			.discharging_max_c      = 60,
+			.vendor_param_start     = 0x70,
 		},
 	},
 	/* COSMX DS02032XL */
@@ -118,6 +120,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c         = 45,
 			.discharging_min_c      = -10,
 			.discharging_max_c      = 60,
+			.vendor_param_start     = 0x70,
 		},
 	},
 	/* SMP DS02032XL */
@@ -147,6 +150,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c         = 45,
 			.discharging_min_c      = -10,
 			.discharging_max_c      = 60,
+			.vendor_param_start     = 0x70,
 		},
 	},
 	/* Sunwoda L21D4PG0 */
@@ -176,6 +180,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c         = 60,
 			.discharging_min_c      = -20,
 			.discharging_max_c      = 60,
+			.vendor_param_start     = 0x70,
 		},
 	},
 	/* SMP L21M4PG0 */
@@ -205,6 +210,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c         = 60,
 			.discharging_min_c      = -20,
 			.discharging_max_c      = 60,
+			.vendor_param_start     = 0x70,
 		},
 	},
 };

@@ -59,6 +59,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c         = 60,
 			.discharging_min_c      = -20,
 			.discharging_max_c      = 75,
+			.vendor_param_start     = 0x70,
 		},
 	},
 	/* COSMX AP21CBI Battery information */
@@ -87,6 +88,7 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_max_c         = 60,
 			.discharging_min_c      = -20,
 			.discharging_max_c      = 75,
+			.vendor_param_start     = 0x70,
 		},
 	},
 };
