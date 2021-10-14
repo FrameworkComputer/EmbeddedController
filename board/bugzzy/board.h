@@ -125,6 +125,11 @@
 #define I2C_ADDR_MP3372_FLAGS 0x28
 
 /* ISL98607 registers and value */
+/* Enable VP / VN / VBST */
+#define ISL98607_REG_ENABLE	0x05
+#define ISL98607_VP_VN_VBST_EN	0x07
+#define ISL97607_VP_VN_VBST_DIS	0x00
+
 /* VBST Voltage Adjustment */
 #define ISL98607_REG_VBST_OUT	0x06
 #define ISL98607_VBST_OUT_5P65	0x0a
@@ -222,5 +227,6 @@ enum battery_type {
 };
 
 void panel_power_change_interrupt(enum gpio_signal signal);
+void lcd_reset_change_interrupt(enum gpio_signal signal);
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

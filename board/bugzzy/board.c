@@ -758,6 +758,43 @@ void panel_power_change_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&panel_power_change_deferred_data, 1 * MSEC);
 }
 
+/*
+ * Detect LCD reset & control LCD DCDC power
+ */
+static void lcd_reset_detect_init(void)
+{
+	if (board_id == -1) {
+		uint32_t val;
+
+		if (cbi_get_board_version(&val) == EC_SUCCESS)
+			board_id = val;
+	}
+
+	if (board_id < 4)
+		return;
+	gpio_enable_interrupt(GPIO_DDI0_DDC_SCL);
+}
+DECLARE_HOOK(HOOK_INIT, lcd_reset_detect_init, HOOK_PRIO_DEFAULT);
+/*
+ * Handle VSP / VSN for mipi display when lcd turns off
+ */
+static void lcd_reset_change_deferred(void)
+{
+	int signal = gpio_get_level(GPIO_DDI0_DDC_SCL);
+
+	if (signal != 0)
+		return;
+
+	i2c_write8(I2C_PORT_LCD, I2C_ADDR_ISL98607_FLAGS,
+			ISL98607_REG_ENABLE, ISL97607_VP_VN_VBST_DIS);
+
+}
+DECLARE_DEFERRED(lcd_reset_change_deferred);
+void lcd_reset_change_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&lcd_reset_change_deferred_data, 100 * MSEC);
+}
+
 /**
  * Handle TSP_TA according to AC status
  */
