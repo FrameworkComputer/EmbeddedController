@@ -179,6 +179,14 @@
 
 /* Charger defines */
 #define CONFIG_CHARGER_BQ25720
+/*
+ * b/202915015: The IDCHG current limit is set in 512 mA steps.
+ * The value set here is somewhat specific to the battery pack being
+ * currently used. The limit here was set based on the battery's
+ * discharge current limit and what was tested to prevent the AP
+ * rebooting with low charge level batteries.
+ */
+#define CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA	8192
 #define CONFIG_CHARGER_BQ25720_VSYS_TH2_DV	70
 #define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER_SENSE_RESISTOR		10
