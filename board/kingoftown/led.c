@@ -26,8 +26,8 @@
 #define BAT_LED_OFF 0
 
 const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_RIGHT_LED,
 	EC_LED_ID_LEFT_LED,
+	EC_LED_ID_RIGHT_LED,
 };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
@@ -58,10 +58,10 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	int port;
 
 	switch (led_id) {
-	case EC_LED_ID_RIGHT_LED:
+	case EC_LED_ID_LEFT_LED:
 		port = 0;
 		break;
-	case EC_LED_ID_LEFT_LED:
+	case EC_LED_ID_RIGHT_LED:
 		port = 1;
 		break;
 	default:
@@ -86,9 +86,9 @@ static void set_active_port_color(enum led_color color)
 {
 	int port = charge_manager_get_active_charge_port();
 
-	if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
-		side_led_set_color(0, (port == 0) ? color : LED_OFF);
 	if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
+		side_led_set_color(0, (port == 0) ? color : LED_OFF);
+	if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
 		side_led_set_color(1, (port == 1) ? color : LED_OFF);
 }
 
@@ -131,16 +131,16 @@ static void board_led_set_battery(void)
 			if (charge_get_percent() <= 10) {
 				led_blink_cycle =
 					battery_ticks % (2 * TIMES_TICK_ONE_SEC);
-				side_led_set_color(0,
+				side_led_set_color(1,
 					(led_blink_cycle < TIMES_TICK_ONE_SEC) ?
 							LED_WHITE : LED_OFF);
 			}
 			else
-				side_led_set_color(0, LED_OFF);
+				side_led_set_color(1, LED_OFF);
 		}
 
 		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
-			side_led_set_color(1, LED_OFF);
+			side_led_set_color(0, LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
 		led_blink_cycle = battery_ticks % TIMES_TICK_ONE_SEC;
