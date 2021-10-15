@@ -179,7 +179,6 @@ GPIO_IRQ_FUNC(__gpio_wk1d_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_4));
 GPIO_IRQ_FUNC(__gpio_wk1e_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_5));
 GPIO_IRQ_FUNC(__gpio_wk1f_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_6));
 GPIO_IRQ_FUNC(__gpio_wk1g_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_7));
-GPIO_IRQ_FUNC(__gpio_wk2fg_interrupt, WUI_INT(MIWU_TABLE_2, MIWU_GROUP_6));
 
 DECLARE_IRQ(NPCX_IRQ_CR_SIN2_WKINTA_0, __gpio_cr_sin2_interrupt, 3);
 DECLARE_IRQ(NPCX_IRQ_TWD_WKINTB_0,     __gpio_wk0b_interrupt, 3);
