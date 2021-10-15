@@ -11,7 +11,7 @@
 #include "compile_time_macros.h"
 #include "gpio.h"
 /*
- * Battery info for all Brya battery types. Note that the fields
+ * Battery info for all Vell battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
  * The effective temperature limits are given by discharging_min/max_c.
  *
@@ -100,13 +100,6 @@ const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_POWER_TECH;
 
 enum battery_present battery_hw_present(void)
 {
-	enum gpio_signal batt_pres;
-
-	if (get_board_id() == 1)
-		batt_pres = GPIO_ID_1_EC_BATT_PRES_ODL;
-	else
-		batt_pres = GPIO_EC_BATT_PRES_ODL;
-
 	/* The GPIO is low when the battery is physically present */
-	return gpio_get_level(batt_pres) ? BP_NO : BP_YES;
+	return gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES;
 }
