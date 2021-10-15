@@ -1576,6 +1576,8 @@ static void print_flash_protect_flags(const char *desc, uint32_t flags)
 		printf(" STUCK");
 	if (flags & EC_FLASH_PROTECT_ERROR_INCONSISTENT)
 		printf(" INCONSISTENT");
+	if (flags & EC_FLASH_PROTECT_ERROR_UNKNOWN)
+		printf(" UNKNOWN_ERROR");
 	printf("\n");
 }
 

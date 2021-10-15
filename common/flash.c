@@ -1032,6 +1032,8 @@ static int command_flash_info(int argc, char **argv)
 		ccputs(" STUCK");
 	if (flags & EC_FLASH_PROTECT_ERROR_INCONSISTENT)
 		ccputs(" INCONSISTENT");
+	if (flags & EC_FLASH_PROTECT_ERROR_UNKNOWN)
+		ccputs(" UNKNOWN_ERROR");
 #ifdef CONFIG_ROLLBACK
 	if (flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT)
 		ccputs(" rollback_at_boot");
@@ -1490,6 +1492,7 @@ static enum ec_status flash_command_protect(struct host_cmd_handler_args *args)
 		EC_FLASH_PROTECT_GPIO_ASSERTED |
 		EC_FLASH_PROTECT_ERROR_STUCK |
 		EC_FLASH_PROTECT_ERROR_INCONSISTENT |
+		EC_FLASH_PROTECT_ERROR_UNKNOWN |
 		crec_flash_physical_get_valid_flags();
 	r->writable_flags = crec_flash_physical_get_writable_flags(r->flags);
 

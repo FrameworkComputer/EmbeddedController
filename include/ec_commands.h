@@ -1768,6 +1768,8 @@ struct ec_params_flash_erase_v1 {
 #define EC_FLASH_PROTECT_ROLLBACK_AT_BOOT   BIT(9)
 /* Rollback information flash region protected now */
 #define EC_FLASH_PROTECT_ROLLBACK_NOW       BIT(10)
+/* Error - Unknown error */
+#define EC_FLASH_PROTECT_ERROR_UNKNOWN      BIT(11)
 
 
 /**
