@@ -558,6 +558,9 @@ static int command_dps(int argc, char **argv)
 		return EC_SUCCESS;
 	} else if (!strcasecmp(argv[1], "dis")) {
 		dps_enable(false);
+		/* issue a new PD request for a default voltage */
+		if (dps_port != CHARGE_PORT_NONE)
+			pd_dpm_request(dps_port, DPM_REQUEST_NEW_POWER_LEVEL);
 		return EC_SUCCESS;
 	} else if (!strcasecmp(argv[1], "fakepwr")) {
 		if (argc == 2) {
