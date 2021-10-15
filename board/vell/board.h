@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Brya board configuration */
+/* Vell board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -23,8 +23,6 @@
  * until we can confirm all earlier chips are out of service.
  */
 #define CONFIG_HIBERNATE_PSL_VCC1_RST_WAKEUP
-
-#define CONFIG_MP2964
 
 /* LED */
 #define CONFIG_LED_PWM
@@ -172,11 +170,8 @@
 #define I2C_PORT_BATTERY	NPCX_I2C_PORT5_0
 #define I2C_PORT_CHARGER	NPCX_I2C_PORT7_0
 #define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
-#define I2C_PORT_MP2964		NPCX_I2C_PORT7_0
 
 #define I2C_ADDR_EEPROM_FLAGS	0x50
-
-#define I2C_ADDR_MP2964_FLAGS	0x20
 
 /*
  * see b/174768555#comment22
