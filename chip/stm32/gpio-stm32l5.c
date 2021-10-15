@@ -6,6 +6,7 @@
 #include "clock.h"
 #include "common.h"
 #include "gpio.h"
+#include "gpio_chip.h"
 #include "hooks.h"
 #include "registers.h"
 #include "task.h"

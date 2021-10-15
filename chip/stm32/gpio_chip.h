@@ -19,4 +19,5 @@ void gpio_enable_clocks(void);
  */
 int gpio_required_clocks(void);
 
+void __keep gpio_interrupt(void);
 #endif  /* __CROS_EC_CHIP_STM32_GPIO_CHIP_H */
