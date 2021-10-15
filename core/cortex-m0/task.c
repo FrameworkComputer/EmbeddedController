@@ -179,12 +179,14 @@ inline int in_interrupt_context(void)
 	return ret;
 }
 
+#ifdef CONFIG_TASK_PROFILING
 static inline int get_interrupt_context(void)
 {
 	int ret;
 	asm("mrs %0, ipsr\n" : "=r"(ret)); /* read exception number */
 	return ret & 0x1ff;                /* exception bits are the 9 LSB */
 }
+#endif
 
 task_id_t task_get_current(void)
 {
