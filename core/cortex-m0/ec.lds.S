@@ -263,7 +263,7 @@ SECTIONS
 		. = ALIGN(8);
 		*(.bss.system_stack)
 		/* Rest of .bss takes care of its own alignment */
-		*(.bss)
+		*(.bss*)
 
 		/*
 		 * Reserve space for deferred function firing times.
@@ -284,7 +284,7 @@ SECTIONS
 		. = ALIGN(4);
 		__data_start = .;
 		*(.data.tasks)
-		*(.data)
+		*(.data*)
 		. = ALIGN(4);
 		*(.iram.text)
 		. = ALIGN(4);
