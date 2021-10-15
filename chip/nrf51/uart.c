@@ -81,7 +81,7 @@ int uart_read_char(void)
 }
 
 /* Interrupt handler for console USART */
-void uart_interrupt(void)
+static void uart_interrupt(void)
 {
 #ifndef CONFIG_UART_RX_DMA
 	/*

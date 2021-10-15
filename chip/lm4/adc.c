@@ -191,10 +191,10 @@ static void handle_interrupt(int ss)
 		task_set_event(id, TASK_EVENT_ADC_DONE);
 }
 
-void ss0_interrupt(void) { handle_interrupt(0); }
-void ss1_interrupt(void) { handle_interrupt(1); }
-void ss2_interrupt(void) { handle_interrupt(2); }
-void ss3_interrupt(void) { handle_interrupt(3); }
+static void ss0_interrupt(void) { handle_interrupt(0); }
+static void ss1_interrupt(void) { handle_interrupt(1); }
+static void ss2_interrupt(void) { handle_interrupt(2); }
+static void ss3_interrupt(void) { handle_interrupt(3); }
 
 DECLARE_IRQ(LM4_IRQ_ADC0_SS0, ss0_interrupt, 2);
 DECLARE_IRQ(LM4_IRQ_ADC0_SS1, ss1_interrupt, 2);

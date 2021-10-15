@@ -139,7 +139,7 @@ static void adc_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, adc_init, HOOK_PRIO_INIT_ADC);
 
-void adc_interrupt(void)
+static void adc_interrupt(void)
 {
 	MCHP_INT_DISABLE(MCHP_ADC_GIRQ) = MCHP_ADC_GIRQ_SINGLE_BIT;
 

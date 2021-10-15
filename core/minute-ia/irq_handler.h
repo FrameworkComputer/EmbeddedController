@@ -31,7 +31,7 @@ asm (".include \"core/minute-ia/irq_handler_common.S\"");
  * to be used for dynamically setting up interrupt gates
  */
 #define DECLARE_IRQ_(irq_, routine_, vector)				\
-	void __keep routine_(void);					\
+	static void __attribute__((used)) routine_(void);		\
 	void IRQ_HANDLER(irq_)(void);					\
 	__asm__ (".section .rodata.irqs\n");				\
 	const struct irq_def __keep CONCAT4(__irq_, irq_, _, routine_)	\

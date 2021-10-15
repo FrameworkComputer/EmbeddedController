@@ -339,7 +339,7 @@ void scp_enable_clock(void)
 }
 
 DECLARE_IRQ(SCP_IRQ_CLOCK, clock_control_irq, 3);
-void clock_control_irq(void)
+static void clock_control_irq(void)
 {
 	/* Read ack CLK_IRQ */
 	(SCP_CLK_IRQ_ACK);
@@ -347,7 +347,7 @@ void clock_control_irq(void)
 }
 
 DECLARE_IRQ(SCP_IRQ_CLOCK2, clock_fast_wakeup_irq, 3);
-void clock_fast_wakeup_irq(void)
+static void clock_fast_wakeup_irq(void)
 {
 	/* Ack fast wakeup */
 	SCP_SLEEP_IRQ2 = 1;

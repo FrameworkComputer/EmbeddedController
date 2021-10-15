@@ -1248,7 +1248,7 @@ enum ec_error_list stm32gx_ucpd_set_bist_test_mode(const int port,
 	return EC_SUCCESS;
 }
 
-void stm32gx_ucpd1_irq(void)
+static void stm32gx_ucpd1_irq(void)
 {
 	/* STM32_IRQ_UCPD indicates this is from UCPD1, so port = 0 */
 	int port = 0;

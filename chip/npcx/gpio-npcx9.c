@@ -52,13 +52,13 @@ DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
  */
 
 #define GPIO_IRQ_FUNC(_irq_func, wui_int)		\
-void _irq_func(void)					\
+static void _irq_func(void)				\
 {							\
 	gpio_interrupt(wui_int);			\
 }
 
 /* If we need to handle the other type interrupts except GPIO, add code here */
-void __gpio_host_interrupt(void)
+static void __gpio_host_interrupt(void)
 {
 	if (IS_ENABLED(CONFIG_HOSTCMD_X86)) {
 		/* Pending bit 7 or 6 or 5? */
@@ -97,7 +97,7 @@ static void set_rtc_host_event(void)
 DECLARE_DEFERRED(set_rtc_host_event);
 #endif
 
-void __gpio_rtc_interrupt(void)
+static void __gpio_rtc_interrupt(void)
 {
 	/* Check pending bit 7 */
 #ifdef CONFIG_HOSTCMD_RTC
@@ -110,7 +110,7 @@ void __gpio_rtc_interrupt(void)
 #endif
 	gpio_interrupt(WUI_INT(MIWU_TABLE_0, MIWU_GROUP_4));
 }
-void __gpio_cr_sin2_interrupt(void)
+static void __gpio_cr_sin2_interrupt(void)
 {
 #if defined(CONFIG_LOW_POWER_IDLE) && (CONFIG_CONSOLE_UART == 1)
 	/* Handle the interrupt from UART wakeup event */
@@ -133,7 +133,7 @@ void __gpio_cr_sin2_interrupt(void)
 
 }
 
-void __gpio_wk1h_interrupt(void)
+static void __gpio_wk1h_interrupt(void)
 {
 #if defined(CONFIG_LOW_POWER_IDLE) && (CONFIG_CONSOLE_UART == 0)
 	/* Handle the interrupt from UART wakeup event */
@@ -154,7 +154,7 @@ void __gpio_wk1h_interrupt(void)
 		gpio_interrupt(WUI_INT(MIWU_TABLE_1, MIWU_GROUP_8));
 }
 
-void __gpio_lct_interrupt(void)
+static void __gpio_lct_interrupt(void)
 {
 	if (NPCX_WKPND(MIWU_TABLE_2, MIWU_GROUP_6) & LCT_WUI_MASK) {
 		NPCX_WKPCL(MIWU_TABLE_2, MIWU_GROUP_6) |= LCT_WUI_MASK;

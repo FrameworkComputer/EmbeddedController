@@ -651,7 +651,7 @@ static void shi_handle_cs_assert(void)
 }
 
 /* This routine handles all interrupts of this module */
-void shi_int_handler(void)
+static void shi_int_handler(void)
 {
 	uint8_t stat_reg;
 #ifdef NPCX_SHI_V2

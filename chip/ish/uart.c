@@ -122,7 +122,7 @@ int uart_read_char(void)
 	return RBR(ISH_DEBUG_UART);
 }
 
-void uart_ec_interrupt(void)
+static void uart_ec_interrupt(void)
 {
 	/* Read input FIFO until empty, then fill output FIFO */
 	uart_process_input();

@@ -27,7 +27,7 @@
 	typedef struct {					\
 		int fake[irq >= CONFIG_IRQ_COUNT ? -1 : 1];	\
 	} irq_num_check_##irq;					\
-	void __keep routine(void);				\
+	static void __attribute__((used)) routine(void);	\
 	void IRQ_HANDLER(irq)(void)				\
 	{							\
 		asm volatile("mov r0, lr\n"			\

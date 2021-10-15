@@ -579,7 +579,7 @@ static void wov_under_over_error_handler(int *count, uint32_t *last_time)
  *
  * @return  None
  */
-void wov_interrupt_handler(void)
+static void wov_interrupt_handler(void)
 {
 	uint32_t wov_status;
 	uint32_t wov_inten;

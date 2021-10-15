@@ -221,7 +221,7 @@ int uart_read_char(void)
 /**
  * Interrupt handlers for UART
  */
-void uart_rxtx_interrupt(void)
+static void uart_rxtx_interrupt(void)
 {
 	/* Process the Console Input */
 	uart_process_input();

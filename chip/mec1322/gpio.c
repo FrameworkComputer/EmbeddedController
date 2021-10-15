@@ -267,7 +267,7 @@ static void gpio_interrupt(int girq, int port_offset)
 }
 
 #define GPIO_IRQ_FUNC(irqfunc, girq, port_offset)  \
-	void irqfunc(void)                         \
+	static void irqfunc(void)                  \
 	{                                          \
 		gpio_interrupt(girq, port_offset); \
 	}

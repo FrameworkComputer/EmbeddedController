@@ -368,7 +368,7 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 		;
 }
 
-void htimer_interrupt(void)
+static void htimer_interrupt(void)
 {
 	/* Time to wake up */
 }

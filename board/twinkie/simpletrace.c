@@ -160,11 +160,12 @@ static void print_error(enum pd_rx_errors err)
 		ccprintf("ERR %d\n", err);
 }
 
+#ifdef HAS_TASK_SNIFFER
 /* keep track of RX edge timing in order to trigger receive */
 static timestamp_t rx_edge_ts[2][PD_RX_TRANSITION_COUNT];
 static int rx_edge_ts_idx[2];
 
-void rx_event(void)
+static void rx_event(void)
 {
 	int pending, i;
 	int next_idx;
@@ -209,7 +210,6 @@ void rx_event(void)
 		}
 	}
 }
-#ifdef HAS_TASK_SNIFFER
 DECLARE_IRQ(STM32_IRQ_COMP, rx_event, 1);
 #endif
 

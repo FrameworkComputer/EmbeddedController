@@ -393,7 +393,7 @@ int pd_board_checks(void)
 
 }
 
-void pd_adc_interrupt(void)
+static void pd_adc_interrupt(void)
 {
 	/* Clear flags */
 	STM32_ADC_ISR = 0x8e;

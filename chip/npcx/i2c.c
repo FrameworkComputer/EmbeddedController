@@ -858,15 +858,15 @@ void handle_interrupt(int controller)
 	i2c_controller_int_handler(controller);
 }
 
-void i2c0_interrupt(void) { handle_interrupt(0); }
-void i2c1_interrupt(void) { handle_interrupt(1); }
-void i2c2_interrupt(void) { handle_interrupt(2); }
-void i2c3_interrupt(void) { handle_interrupt(3); }
+static void i2c0_interrupt(void) { handle_interrupt(0); }
+static void i2c1_interrupt(void) { handle_interrupt(1); }
+static void i2c2_interrupt(void) { handle_interrupt(2); }
+static void i2c3_interrupt(void) { handle_interrupt(3); }
 #if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
-void i2c4_interrupt(void) { handle_interrupt(4); }
-void i2c5_interrupt(void) { handle_interrupt(5); }
-void i2c6_interrupt(void) { handle_interrupt(6); }
-void i2c7_interrupt(void) { handle_interrupt(7); }
+static void i2c4_interrupt(void) { handle_interrupt(4); }
+static void i2c5_interrupt(void) { handle_interrupt(5); }
+static void i2c6_interrupt(void) { handle_interrupt(6); }
+static void i2c7_interrupt(void) { handle_interrupt(7); }
 #endif
 
 DECLARE_IRQ(NPCX_IRQ_SMB1, i2c0_interrupt, 4);

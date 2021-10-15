@@ -398,12 +398,12 @@ static void handle_interrupt(int port)
 		task_set_event(id, TASK_EVENT_I2C_IDLE);
 }
 
-void i2c0_interrupt(void) { handle_interrupt(0); }
-void i2c1_interrupt(void) { handle_interrupt(1); }
-void i2c2_interrupt(void) { handle_interrupt(2); }
-void i2c3_interrupt(void) { handle_interrupt(3); }
-void i2c4_interrupt(void) { handle_interrupt(4); }
-void i2c5_interrupt(void) { handle_interrupt(5); }
+static void i2c0_interrupt(void) { handle_interrupt(0); }
+static void i2c1_interrupt(void) { handle_interrupt(1); }
+static void i2c2_interrupt(void) { handle_interrupt(2); }
+static void i2c3_interrupt(void) { handle_interrupt(3); }
+static void i2c4_interrupt(void) { handle_interrupt(4); }
+static void i2c5_interrupt(void) { handle_interrupt(5); }
 
 DECLARE_IRQ(LM4_IRQ_I2C0, i2c0_interrupt, 2);
 DECLARE_IRQ(LM4_IRQ_I2C1, i2c1_interrupt, 2);

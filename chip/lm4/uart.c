@@ -101,7 +101,7 @@ static void uart_clear_rx_fifo(int channel)
 /**
  * Interrupt handler for UART0
  */
-void uart_ec_interrupt(void)
+static void uart_ec_interrupt(void)
 {
 	/* Clear transmit and receive interrupt status */
 	LM4_UART_ICR(0) = 0x70;
@@ -118,7 +118,7 @@ DECLARE_IRQ(LM4_IRQ_UART0, uart_ec_interrupt, 1);
 /**
  * Interrupt handler for Host UART
  */
-void uart_host_interrupt(void)
+static void uart_host_interrupt(void)
 {
 	/* Clear transmit and receive interrupt status */
 	LM4_UART_ICR(CONFIG_UART_HOST) = 0x70;

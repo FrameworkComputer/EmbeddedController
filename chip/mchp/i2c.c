@@ -1042,41 +1042,41 @@ static void handle_interrupt(int controller)
 		task_set_event(id, TASK_EVENT_I2C_IDLE);
 }
 
-void i2c0_interrupt(void)
+static void i2c0_interrupt(void)
 {
 	handle_interrupt(0);
 }
-void i2c1_interrupt(void)
+static void i2c1_interrupt(void)
 {
 	handle_interrupt(1);
 }
-void i2c2_interrupt(void)
+static void i2c2_interrupt(void)
 {
 	handle_interrupt(2);
 }
-void i2c3_interrupt(void)
+static void i2c3_interrupt(void)
 {
 	handle_interrupt(3);
 }
 #if defined(CHIP_FAMILY_MEC172X)
-void i2c4_interrupt(void)
+static void i2c4_interrupt(void)
 {
 	handle_interrupt(4);
 }
 #elif defined(CHIP_FAMILY_MEC152X)
-void i2c4_interrupt(void)
+static void i2c4_interrupt(void)
 {
 	handle_interrupt(4);
 }
-void i2c5_interrupt(void)
+static void i2c5_interrupt(void)
 {
 	handle_interrupt(5);
 }
-void i2c6_interrupt(void)
+static void i2c6_interrupt(void)
 {
 	handle_interrupt(6);
 }
-void i2c7_interrupt(void)
+static void i2c7_interrupt(void)
 {
 	handle_interrupt(7);
 }

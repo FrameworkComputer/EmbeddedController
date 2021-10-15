@@ -49,7 +49,7 @@ void __hw_clock_source_set(uint32_t ts)
 	STM32_TIM32_CNT(TIM_CLOCK32) = ts;
 }
 
-void __hw_clock_source_irq(void)
+static void __hw_clock_source_irq(void)
 {
 	uint32_t stat_tim = STM32_TIM_SR(TIM_CLOCK32);
 

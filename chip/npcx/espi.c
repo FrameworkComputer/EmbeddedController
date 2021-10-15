@@ -502,7 +502,7 @@ void espi_espirst_handler(void)
 }
 
 /* Handle eSPI virtual wire interrupt 1 */
-void __espi_wk2a_interrupt(void)
+static void __espi_wk2a_interrupt(void)
 {
 	uint8_t pending_bits = NPCX_WKPND(MIWU_TABLE_2, MIWU_GROUP_1);
 
@@ -524,7 +524,7 @@ void __espi_wk2a_interrupt(void)
 DECLARE_IRQ(NPCX_IRQ_WKINTA_2, __espi_wk2a_interrupt, 3);
 
 /* Handle eSPI virtual wire interrupt 2 */
-void __espi_wk2b_interrupt(void)
+static void __espi_wk2b_interrupt(void)
 {
 	uint8_t pending_bits = NPCX_WKPND(MIWU_TABLE_2, MIWU_GROUP_2);
 
@@ -540,7 +540,7 @@ void __espi_wk2b_interrupt(void)
 DECLARE_IRQ(NPCX_IRQ_WKINTB_2, __espi_wk2b_interrupt, 3);
 
 /* Interrupt handler for eSPI status changed */
-void espi_interrupt(void)
+static void espi_interrupt(void)
 {
 	int chan;
 	uint32_t mask, status;

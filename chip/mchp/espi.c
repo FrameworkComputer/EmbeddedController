@@ -1074,7 +1074,7 @@ const FPVW girq25_vw_handlers[MCHP_GIRQ25_NUM_M2S] = {
 };
 
 /* Interrupt handler for eSPI virtual wires in MSVW00 - MSVW01 */
-void espi_mswv1_interrupt(void)
+static void espi_mswv1_interrupt(void)
 {
 	uint32_t d, girq24_result, bpos;
 
@@ -1095,7 +1095,7 @@ DECLARE_IRQ(MCHP_IRQ_GIRQ24, espi_mswv1_interrupt, 2);
 
 
 /* Interrupt handler for eSPI virtual wires in MSVW07 - MSVW10 */
-void espi_msvw2_interrupt(void)
+static void espi_msvw2_interrupt(void)
 {
 	uint32_t d, girq25_result, bpos;
 
@@ -1156,7 +1156,7 @@ DECLARE_IRQ(MCHP_IRQ_GIRQ25, espi_msvw2_interrupt, 2);
  * equivalent to eSPI Platform Reset.
  *
  */
-void espi_reset_isr(void)
+static void espi_reset_isr(void)
 {
 	uint8_t erst;
 
@@ -1198,7 +1198,7 @@ DECLARE_IRQ(MCHP_IRQ_ESPI_RESET, espi_reset_isr, 3);
  * eSPI Virtual Wire channel enable handler
  * Must disable once VW Enable is set by eSPI Master
  */
-void espi_vw_en_isr(void)
+static void espi_vw_en_isr(void)
 {
 	MCHP_INT_DISABLE(MCHP_ESPI_GIRQ) = MCHP_ESPI_VW_EN_GIRQ_BIT;
 	MCHP_INT_SOURCE(MCHP_ESPI_GIRQ) = MCHP_ESPI_VW_EN_GIRQ_BIT;
@@ -1218,7 +1218,7 @@ DECLARE_IRQ(MCHP_IRQ_ESPI_VW_EN, espi_vw_en_isr, 2);
 /*
  * eSPI OOB TX and OOB channel enable change interrupt handler
  */
-void espi_oob_tx_isr(void)
+static void espi_oob_tx_isr(void)
 {
 	uint32_t sts;
 
@@ -1245,7 +1245,7 @@ DECLARE_IRQ(MCHP_IRQ_ESPI_OOB_UP, espi_oob_tx_isr, 2);
 
 
 /* eSPI OOB RX interrupt handler */
-void espi_oob_rx_isr(void)
+static void espi_oob_rx_isr(void)
 {
 	uint32_t sts;
 
@@ -1262,7 +1262,7 @@ DECLARE_IRQ(MCHP_IRQ_ESPI_OOB_DN, espi_oob_rx_isr, 2);
  * eSPI Flash Channel enable change and data transfer
  * interrupt handler
  */
-void espi_fc_isr(void)
+static void espi_fc_isr(void)
 {
 	uint32_t sts;
 
@@ -1290,7 +1290,7 @@ DECLARE_IRQ(MCHP_IRQ_ESPI_FC, espi_fc_isr, 2);
 
 
 /* eSPI Peripheral Channel interrupt handler */
-void espi_pc_isr(void)
+static void espi_pc_isr(void)
 {
 	uint32_t sts;
 

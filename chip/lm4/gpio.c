@@ -331,7 +331,7 @@ static void gpio_interrupt(int port, uint32_t mis)
  * the port, then call the main handler above.
  */
 #define GPIO_IRQ_FUNC(irqfunc, gpiobase)		\
-	void irqfunc(void)				\
+	static void irqfunc(void)			\
 	{						\
 		uint32_t mis = LM4_GPIO_MIS(gpiobase);	\
 		LM4_GPIO_ICR(gpiobase) = mis;		\

@@ -71,11 +71,6 @@ struct rpmsg_ns_msg {
 };
 
 /*
- * IPC Handler.
- */
-void ipc_handler(void);
-
-/*
  * An IPC IRQ could be shared across many IPI handlers.
  * Those handlers would usually operate on disabling or enabling the IPC IRQ.
  * This may disorder the actual timing to on/off the IRQ when there are many

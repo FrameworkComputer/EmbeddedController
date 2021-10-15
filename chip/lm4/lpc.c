@@ -542,7 +542,7 @@ DECLARE_DEFERRED(lpc_chipset_reset);
 /**
  * LPC interrupt handler
  */
-void lpc_interrupt(void)
+static void lpc_interrupt(void)
 {
 	uint32_t mis = LM4_LPC_LPCMIS;
 	uint32_t st;

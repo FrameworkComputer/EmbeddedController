@@ -67,7 +67,7 @@ static const struct res_cfg {
 
 #ifdef HAS_TASK_SNIFFER
 /* we don't have the default DMA handlers */
-void dma_event_interrupt_channel_3(void)
+static void dma_event_interrupt_channel_3(void)
 {
 	if (STM32_DMA1_REGS->isr & STM32_DMA_ISR_TCIF(STM32_DMAC_CH3)) {
 		dma_clear_isr(STM32_DMAC_CH3);

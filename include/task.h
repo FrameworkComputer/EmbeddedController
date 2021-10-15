@@ -431,8 +431,9 @@ struct irq_def {
 #define IRQ_HANDLER(irqname) CONCAT3(irq_, irqname, _handler)
 #define IRQ_HANDLER_OPT(irqname) CONCAT3(irq_, irqname, _handler_optional)
 #define DECLARE_IRQ(irq, routine, priority) DECLARE_IRQ_(irq, routine, priority)
-#define DECLARE_IRQ_(irq, routine, priority) \
-	void IRQ_HANDLER_OPT(irq)(void) __attribute__((alias(#routine)));
+#define DECLARE_IRQ_(irq, routine, priority)             \
+	static void routine(void) __attribute__((used)); \
+	void IRQ_HANDLER_OPT(irq)(void) __attribute__((alias(#routine)))
 
 /* Include ec.irqlist here for compilation dependency */
 #define ENABLE_IRQ(x)

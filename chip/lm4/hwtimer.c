@@ -42,7 +42,7 @@ void __hw_clock_source_set(uint32_t ts)
 	LM4_TIMER_TAV(6) = 0xffffffff - ts;
 }
 
-void __hw_clock_source_irq(void)
+static void __hw_clock_source_irq(void)
 {
 	uint32_t status = LM4_TIMER_RIS(6);
 

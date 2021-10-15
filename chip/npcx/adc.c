@@ -318,7 +318,7 @@ void npcx_adc_register_thresh_irq(int threshold_idx,
  * @return  none
  * @notes   Only handle SW-triggered conversion in npcx chip
  */
-void adc_interrupt(void)
+static void adc_interrupt(void)
 {
 	int i;
 	uint16_t thrcts;

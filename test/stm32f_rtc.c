@@ -17,7 +17,7 @@ static const int rtc_delay_ms = 500;
 static const int delay_tol_us = MSEC / 2;
 
 /* Override default RTC interrupt handler */
-void __rtc_alarm_irq(void)
+void rtc_alarm_irq(void)
 {
 	atomic_add(&rtc_fired, 1);
 	reset_rtc_alarm(&rtc_irq);

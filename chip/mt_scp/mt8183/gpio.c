@@ -155,7 +155,7 @@ void gpio_init(void)
 DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 
 /* Interrupt handler */
-void __keep gpio_interrupt(void)
+static void __attribute__((used)) gpio_interrupt(void)
 {
 	int bit, port;
 	uint32_t pending;

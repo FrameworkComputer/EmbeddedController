@@ -646,7 +646,7 @@ void lpcrst_interrupt(enum gpio_signal signal)
  * or logging of EMI host communication? We don't observe
  * this ISR so Host is not writing to MCHP_EMI_H2E_MBX(0).
  */
-void emi0_interrupt(void)
+static void emi0_interrupt(void)
 {
 	uint8_t h2e;
 
@@ -726,7 +726,7 @@ static int acpi_ec0_custom(int is_cmd, uint8_t value,
 }
 #endif
 
-void acpi_0_interrupt(void)
+static void acpi_0_interrupt(void)
 {
 	uint8_t value, result, is_cmd;
 
@@ -771,7 +771,7 @@ DECLARE_IRQ(MCHP_IRQ_ACPIEC0_IBF, acpi_0_interrupt, 1);
  * Used to handle custom ACPI EC0 command requiring
  * two byte response.
  */
-void acpi_0_obe_isr(void)
+static void acpi_0_obe_isr(void)
 {
 	uint8_t sts, data;
 
@@ -796,7 +796,7 @@ void acpi_0_obe_isr(void)
 DECLARE_IRQ(MCHP_IRQ_ACPIEC0_OBE, acpi_0_obe_isr, 1);
 #endif
 
-void acpi_1_interrupt(void)
+static void acpi_1_interrupt(void)
 {
 	uint8_t st = MCHP_ACPI_EC_STATUS(1);
 
@@ -854,7 +854,7 @@ DECLARE_IRQ(MCHP_IRQ_ACPIEC1_IBF, acpi_1_interrupt, 1);
  * Reading data out of input buffer clears read-only status
  * in 8042EM. Next, we must clear aggregator status.
  */
-void kb_ibf_interrupt(void)
+static void kb_ibf_interrupt(void)
 {
 	if (lpc_keyboard_input_pending())
 		keyboard_host_write(MCHP_8042_H2E,
@@ -872,7 +872,7 @@ DECLARE_IRQ(MCHP_IRQ_8042EM_IBF, kb_ibf_interrupt, 1);
  * aggregator. Clear aggregator 8042EM OBE R/WC status bit before
  * invoking task.
  */
-void kb_obe_interrupt(void)
+static void kb_obe_interrupt(void)
 {
 	MCHP_INT_SOURCE(MCHP_8042_GIRQ) = MCHP_8042_OBE_GIRQ_BIT;
 	task_wake(TASK_ID_KEYPROTO);

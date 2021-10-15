@@ -25,7 +25,7 @@ static uint32_t * const rw_rst =
 	(uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE+CONFIG_RW_MEM_OFF+4);
 
 /* External interrupt EXTINT7 for external comparator on PA7 */
-void pd_rx_interrupt(void)
+static void pd_rx_interrupt(void)
 {
 	/* trigger reception handling */
 	pd_rx_handler();

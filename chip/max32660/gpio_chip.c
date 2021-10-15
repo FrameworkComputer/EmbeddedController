@@ -228,7 +228,7 @@ static void gpio_interrupt(int port, uint32_t mis)
  * interrupt handler and clear the GPIO hardware interrupt status.
  */
 #define GPIO_IRQ_FUNC(irqfunc, gpiobase)                                       \
-	void irqfunc(void)                                                     \
+	static void irqfunc(void)                                              \
 	{                                                                      \
 		mxc_gpio_regs_t *gpio = MXC_GPIO_GET_GPIO(gpiobase);           \
 		uint32_t mis = gpio->int_stat;                                 \

@@ -84,7 +84,7 @@ static void port_80_interrupt_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, port_80_interrupt_init, HOOK_PRIO_DEFAULT);
 
-void port_80_interrupt(void)
+static void port_80_interrupt(void)
 {
 	int data;
 

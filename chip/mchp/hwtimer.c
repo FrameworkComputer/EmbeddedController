@@ -56,9 +56,9 @@ static void __hw_clock_source_irq(int timer_id)
 	process_timers(timer_id == 0);
 }
 
-void __hw_clock_source_irq_0(void) { __hw_clock_source_irq(0); }
+static void __hw_clock_source_irq_0(void) { __hw_clock_source_irq(0); }
 DECLARE_IRQ(MCHP_IRQ_TIMER32_0, __hw_clock_source_irq_0, 1);
-void __hw_clock_source_irq_1(void) { __hw_clock_source_irq(1); }
+static void __hw_clock_source_irq_1(void) { __hw_clock_source_irq(1); }
 DECLARE_IRQ(MCHP_IRQ_TIMER32_1, __hw_clock_source_irq_1, 1);
 
 static void configure_timer(int timer_id)

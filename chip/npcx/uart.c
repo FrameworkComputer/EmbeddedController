@@ -197,7 +197,7 @@ int uart_read_char(void)
 }
 
 /* Interrupt handler for Console UART */
-void uart_ec_interrupt(void)
+static void uart_ec_interrupt(void)
 {
 #ifdef CONFIG_UART_PAD_SWITCH
 	if (pad == UART_ALTERNATE_PAD) {

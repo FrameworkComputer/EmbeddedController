@@ -72,7 +72,7 @@ void keyboard_raw_enable_interrupt(int enable)
 	}
 }
 
-void keyboard_raw_interrupt(void)
+static void keyboard_raw_interrupt(void)
 {
 	/* Clear interrupt status bits */
 	MEC1322_KS_KSI_STATUS = 0xff;

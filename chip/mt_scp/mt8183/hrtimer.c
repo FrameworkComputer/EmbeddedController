@@ -243,7 +243,10 @@ static void __hw_clock_source_irq(int n)
 
 #define DECLARE_TIMER_IRQ(n) \
 	DECLARE_IRQ(IRQ_TIMER(n), __hw_clock_source_irq_##n, 2); \
-	void __hw_clock_source_irq_##n(void) { __hw_clock_source_irq(n); }
+	static void __hw_clock_source_irq_##n(void)              \
+	{                                                        \
+		__hw_clock_source_irq(n);                        \
+	}
 
 DECLARE_TIMER_IRQ(0);
 DECLARE_TIMER_IRQ(1);

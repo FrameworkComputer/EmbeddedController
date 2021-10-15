@@ -975,7 +975,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_spi_disable,
 	     MOTION_SENSE_HOOK_PRIO + 1);
 
 #ifdef MEC1701_EVB_TACH_TEST /* PWM/TACH test */
-void tach0_isr(void)
+static void tach0_isr(void)
 {
 	MCHP_INT_DISABLE(MCHP_TACH_GIRQ) = MCHP_TACH_GIRQ_BIT(0);
 	MCHP_INT_SOURCE(MCHP_TACH_GIRQ) = MCHP_TACH_GIRQ_BIT(0);

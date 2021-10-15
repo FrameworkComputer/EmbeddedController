@@ -87,7 +87,7 @@ struct usart_hw_config const usart1_hw = {
 	.ops            = &usart_variant_hw_ops,
 };
 
-void usart1_interrupt(void)
+static void usart1_interrupt(void)
 {
 	usart_interrupt(configs[0]);
 }
@@ -105,7 +105,7 @@ struct usart_hw_config const usart2_hw = {
 	.ops            = &usart_variant_hw_ops,
 };
 
-void usart2_interrupt(void)
+static void usart2_interrupt(void)
 {
 	usart_interrupt(configs[1]);
 }
@@ -123,7 +123,7 @@ struct usart_hw_config const usart3_hw = {
 	.ops            = &usart_variant_hw_ops,
 };
 
-void usart3_interrupt(void)
+static void usart3_interrupt(void)
 {
 	usart_interrupt(configs[2]);
 }

@@ -299,7 +299,7 @@ static void i2c_event_handler(int port)
 	}
 }
 
-void i2c_event_interrupt(void)
+static void i2c_event_interrupt(void)
 {
 	i2c_event_handler(I2C_PORT_EC);
 }

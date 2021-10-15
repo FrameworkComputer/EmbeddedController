@@ -116,7 +116,7 @@ void __hw_clock_source_set(uint32_t ts)
 
 
 /* Interrupt handler for timer */
-void timer_irq(void)
+static void timer_irq(void)
 {
 	int overflow = 0;
 

@@ -322,7 +322,7 @@ DECLARE_DEFERRED(set_rtc_host_event);
 #endif
 
 test_mockable
-void __rtc_alarm_irq(void)
+void rtc_alarm_irq(void)
 {
 	struct rtc_time_reg rtc;
 	reset_rtc_alarm(&rtc);
@@ -334,6 +334,11 @@ void __rtc_alarm_irq(void)
 		hook_call_deferred(&set_rtc_host_event_data, 0);
 	}
 #endif
+}
+
+static void __rtc_alarm_irq(void)
+{
+	rtc_alarm_irq();
 }
 DECLARE_IRQ(STM32_IRQ_RTC_ALARM, __rtc_alarm_irq, 1);
 

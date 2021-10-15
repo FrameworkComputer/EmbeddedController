@@ -49,21 +49,26 @@ static void gpio_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 
-DECLARE_IRQ(STM32_IRQ_EXTI0, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI1, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI2, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI3, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI4, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI5, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI6, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI7, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI8, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI9, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI10, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI11, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI12, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI13, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI14, gpio_interrupt, 1);
-DECLARE_IRQ(STM32_IRQ_EXTI15, gpio_interrupt, 1);
+static void _gpio_interrupt(void)
+{
+	gpio_interrupt();
+}
+
+DECLARE_IRQ(STM32_IRQ_EXTI0, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI1, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI2, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI3, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI4, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI5, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI6, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI7, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI8, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI9, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI10, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI11, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI12, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI13, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI14, _gpio_interrupt, 1);
+DECLARE_IRQ(STM32_IRQ_EXTI15, _gpio_interrupt, 1);
 
 #include "gpio-f0-l.c"

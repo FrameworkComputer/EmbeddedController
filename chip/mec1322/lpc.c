@@ -292,7 +292,7 @@ static void lpc_chipset_reset(void)
 DECLARE_DEFERRED(lpc_chipset_reset);
 #endif
 
-void girq19_interrupt(void)
+static void girq19_interrupt(void)
 {
 	/* Check interrupt result for LRESET# trigger */
 	if (MEC1322_INT_RESULT(19) & BIT(1)) {
@@ -318,7 +318,7 @@ void girq19_interrupt(void)
 }
 DECLARE_IRQ(MEC1322_IRQ_GIRQ19, girq19_interrupt, 1);
 
-void emi_interrupt(void)
+static void emi_interrupt(void)
 {
 	port_80_write(MEC1322_EMI_H2E_MBX);
 }
@@ -345,7 +345,7 @@ int port_80_read(void)
 	return data;
 }
 
-void acpi_0_interrupt(void)
+static void acpi_0_interrupt(void)
 {
 	uint8_t value, result, is_cmd;
 

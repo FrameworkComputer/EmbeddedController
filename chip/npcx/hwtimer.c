@@ -166,7 +166,7 @@ void __hw_clock_event_clear(void)
 }
 
 /* Irq for hwtimer event */
-void __hw_clock_event_irq(void)
+static void __hw_clock_event_irq(void)
 {
 	/* ITIM event module disable */
 	CLEAR_BIT(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN);
@@ -246,7 +246,7 @@ void __hw_clock_source_set(uint32_t ts)
 }
 
 /* Irq for hwtimer tick */
-void __hw_clock_source_irq(void)
+static void __hw_clock_source_irq(void)
 {
 	/* Is timeout trigger trigger? */
 	if (IS_BIT_SET(NPCX_ITCTS(ITIM_SYSTEM_NO), NPCX_ITCTS_TO_STS)) {

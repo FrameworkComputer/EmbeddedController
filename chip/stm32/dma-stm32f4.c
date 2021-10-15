@@ -303,7 +303,7 @@ void dma_clear_isr(enum dma_channel stream)
 #define STM32_DMA_IDX(dma, x)   CONCAT4(STM32_DMA, dma, _STREAM, x)
 #define STM32_DMA_FCT(dma, x)   CONCAT4(dma_, dma, _event_interrupt_stream_, x)
 #define DECLARE_DMA_IRQ(dma, x) \
-	void STM32_DMA_FCT(dma, x)(void) \
+	static void STM32_DMA_FCT(dma, x)(void) \
 	{ \
 		dma_clear_isr(STM32_DMA_IDX(dma, x)); \
 		if (dma_irq[STM32_DMA_IDX(dma, x)].cb != NULL) \

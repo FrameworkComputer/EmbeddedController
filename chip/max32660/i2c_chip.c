@@ -410,7 +410,7 @@ void i2c_slave_service(i2c_req_t *req)
 /**
  * I2C0_IRQHandler() - Async Handler for I2C Slave driver.
  */
-void I2C0_IRQHandler(void)
+static void I2C0_IRQHandler(void)
 {
 	i2c_slave_handler(i2c_bus_ports[0]);
 }
@@ -418,7 +418,7 @@ void I2C0_IRQHandler(void)
 /**
  * I2C1_IRQHandler() - Async Handler for I2C Slave driver.
  */
-void I2C1_IRQHandler(void)
+static void I2C1_IRQHandler(void)
 {
 	i2c_slave_handler(i2c_bus_ports[1]);
 }

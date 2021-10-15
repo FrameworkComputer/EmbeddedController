@@ -19,7 +19,7 @@ int __ram_code intc_get_ec_int(void)
 	return ec_int;
 }
 
-void intc_cpu_int_group_5(void)
+static void intc_cpu_int_group_5(void)
 {
 	/* Determine interrupt number. */
 	int intc_group_5 = intc_get_ec_int();
@@ -40,7 +40,7 @@ void intc_cpu_int_group_5(void)
 }
 DECLARE_IRQ(CPU_INT_GROUP_5, intc_cpu_int_group_5, 2);
 
-void intc_cpu_int_group_4(void)
+static void intc_cpu_int_group_4(void)
 {
 	/* Determine interrupt number. */
 	int intc_group_4 = intc_get_ec_int();
@@ -73,7 +73,7 @@ void intc_cpu_int_group_4(void)
 }
 DECLARE_IRQ(CPU_INT_GROUP_4, intc_cpu_int_group_4, 2);
 
-void intc_cpu_int_group_12(void)
+static void intc_cpu_int_group_12(void)
 {
 	/* Determine interrupt number. */
 	int intc_group_12 = intc_get_ec_int();
@@ -118,7 +118,7 @@ void intc_cpu_int_group_12(void)
 }
 DECLARE_IRQ(CPU_INT_GROUP_12, intc_cpu_int_group_12, 2);
 
-void intc_cpu_int_group_7(void)
+static void intc_cpu_int_group_7(void)
 {
 	/* Determine interrupt number. */
 	int intc_group_7 = intc_get_ec_int();
@@ -140,7 +140,7 @@ void intc_cpu_int_group_7(void)
 }
 DECLARE_IRQ(CPU_INT_GROUP_7, intc_cpu_int_group_7, 2);
 
-void intc_cpu_int_group_6(void)
+static void intc_cpu_int_group_6(void)
 {
 	/* Determine interrupt number. */
 	int intc_group_6 = intc_get_ec_int();

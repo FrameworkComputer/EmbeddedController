@@ -519,7 +519,7 @@ static void handle_host_write(int is_cmd)
 /* Interrupt handlers */
 #ifdef HAS_TASK_KEYPROTO
 /* KB controller input buffer full ISR */
-void lpc_kbc_ibf_interrupt(void)
+static void lpc_kbc_ibf_interrupt(void)
 {
 	uint8_t status;
 	uint8_t ibf;
@@ -543,7 +543,7 @@ void lpc_kbc_ibf_interrupt(void)
 DECLARE_IRQ(NPCX_IRQ_KBC_IBF, lpc_kbc_ibf_interrupt, 4);
 
 /* KB controller output buffer empty ISR */
-void lpc_kbc_obe_interrupt(void)
+static void lpc_kbc_obe_interrupt(void)
 {
 	/* Disable KBC OBE interrupt */
 	CLEAR_BIT(NPCX_HICTRL, NPCX_HICTRL_OBECIE);
@@ -559,7 +559,7 @@ DECLARE_IRQ(NPCX_IRQ_KBC_OBE, lpc_kbc_obe_interrupt, 4);
 #endif
 
 /* PM channel input buffer full ISR */
-void lpc_pmc_ibf_interrupt(void)
+static void lpc_pmc_ibf_interrupt(void)
 {
 	/* Channel-1 for ACPI usage*/
 	/* Channel-2 for Host Command usage , so the argument data had been
@@ -572,12 +572,12 @@ void lpc_pmc_ibf_interrupt(void)
 DECLARE_IRQ(NPCX_IRQ_PM_CHAN_IBF, lpc_pmc_ibf_interrupt, 4);
 
 /* PM channel output buffer empty ISR */
-void lpc_pmc_obe_interrupt(void)
+static void lpc_pmc_obe_interrupt(void)
 {
 }
 DECLARE_IRQ(NPCX_IRQ_PM_CHAN_OBE, lpc_pmc_obe_interrupt, 4);
 
-void lpc_port80_interrupt(void)
+static void lpc_port80_interrupt(void)
 {
 	uint8_t i;
 	uint8_t count = 0;

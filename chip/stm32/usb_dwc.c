@@ -999,7 +999,7 @@ static void usb_enumdone(void)
 }
 
 
-void usb_interrupt(void)
+static void usb_interrupt(void)
 {
 	uint32_t status = GR_USB_GINTSTS & GR_USB_GINTMSK;
 	uint32_t oepint = status & GINTSTS(OEPINT);

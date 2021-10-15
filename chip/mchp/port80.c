@@ -30,7 +30,7 @@
  * NOTE: The overrun bit could be used to set a flag indicating EC could
  * not keep up with the host.
  */
-void port_80_interrupt(void)
+static void port_80_interrupt(void)
 {
 	int d = MCHP_BDP0_DATTR;
 
@@ -61,7 +61,7 @@ DECLARE_IRQ(MCHP_IRQ_BDP0, port_80_interrupt, 3);
  * to I/O 80h and 90h.  LSB to 0x80 and MSB to 0x90.
  *
  */
-void port_80_interrupt(void)
+static void port_80_interrupt(void)
 {
 	int d;
 

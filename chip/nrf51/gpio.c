@@ -284,7 +284,7 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 /*
  * Clear interrupt and run handler.
  */
-void gpio_interrupt(void)
+static void gpio_interrupt(void)
 {
 	const struct gpio_info *g;
 	int i;

@@ -151,7 +151,7 @@ void uart_enable_interrupt(void)
  * Interrupt handler for UART.
  * Lower priority below other critical ISR's.
  */
-void uart_ec_interrupt(void)
+static void uart_ec_interrupt(void)
 {
 	/* Read input FIFO until empty, then fill output FIFO */
 	uart_process_input();

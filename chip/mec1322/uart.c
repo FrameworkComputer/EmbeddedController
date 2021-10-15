@@ -103,7 +103,7 @@ static void uart_clear_rx_fifo(int channel)
 /**
  * Interrupt handler for UART
  */
-void uart_ec_interrupt(void)
+static void uart_ec_interrupt(void)
 {
 	/* Read input FIFO until empty, then fill output FIFO */
 	uart_process_input();
