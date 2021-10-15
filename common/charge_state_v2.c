@@ -44,7 +44,6 @@
 #define CRITICAL_BATTERY_SHUTDOWN_TIMEOUT_US \
 	(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT * SECOND)
 #define PRECHARGE_TIMEOUT_US (PRECHARGE_TIMEOUT * SECOND)
-#define LFCC_EVENT_THRESH 5 /* Full-capacity change reqd for host event */
 
 #ifdef CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT
 #ifndef CONFIG_HOSTCMD_EVENTS
@@ -156,21 +155,6 @@ static int problems_exist;
 static int debugging;
 
 
-/* Track problems in communicating with the battery or charger */
-enum problem_type {
-	PR_STATIC_UPDATE,
-	PR_SET_VOLTAGE,
-	PR_SET_CURRENT,
-	PR_SET_MODE,
-	PR_SET_INPUT_CURR,
-	PR_POST_INIT,
-	PR_CHG_FLAGS,
-	PR_BATT_FLAGS,
-	PR_CUSTOM,
-	PR_CFG_SEC_CHG,
-
-	NUM_PROBLEM_TYPES
-};
 static const char * const prob_text[] = {
 	"static update",
 	"set voltage",
@@ -189,7 +173,7 @@ BUILD_ASSERT(ARRAY_SIZE(prob_text) == NUM_PROBLEM_TYPES);
  * TODO(crosbug.com/p/27639): When do we decide a problem is real and not
  * just intermittent? And what do we do about it?
  */
-static void problem(enum problem_type p, int v)
+void charge_problem(enum problem_type p, int v)
 {
 	static int last_prob_val[NUM_PROBLEM_TYPES];
 	static timestamp_t last_prob_time[NUM_PROBLEM_TYPES];
@@ -770,357 +754,6 @@ static void charge_allocate_input_current_limit(void)
 }
 #endif /* CONFIG_EC_EC_COMM_BATTERY_CLIENT */
 
-#ifndef CONFIG_BATTERY_V2
-/* Returns zero if every item was updated. */
-static int update_static_battery_info(void)
-{
-	char *batt_str;
-	int batt_serial;
-	uint8_t batt_flags = 0;
-	/*
-	 * The return values have type enum ec_error_list, but EC_SUCCESS is
-	 * zero. We'll just look for any failures so we can try them all again.
-	 */
-	int rv;
-
-	/* Smart battery serial number is 16 bits */
-	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_SERIAL);
-	memset(batt_str, 0, EC_MEMMAP_TEXT_MAX);
-	rv = battery_serial_number(&batt_serial);
-	if (!rv)
-		snprintf(batt_str, EC_MEMMAP_TEXT_MAX, "%04X", batt_serial);
-
-	/* Design Capacity of Full */
-	rv |= battery_design_capacity(
-		(int *)host_get_memmap(EC_MEMMAP_BATT_DCAP));
-
-	/* Design Voltage */
-	rv |= battery_design_voltage(
-		(int *)host_get_memmap(EC_MEMMAP_BATT_DVLT));
-
-	/* Last Full Charge Capacity (this is only mostly static) */
-	rv |= battery_full_charge_capacity(
-		(int *)host_get_memmap(EC_MEMMAP_BATT_LFCC));
-
-	/* Cycle Count */
-	rv |= battery_cycle_count((int *)host_get_memmap(EC_MEMMAP_BATT_CCNT));
-
-	/* Battery Manufacturer string */
-	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_MFGR);
-	memset(batt_str, 0, EC_MEMMAP_TEXT_MAX);
-	rv |= battery_manufacturer_name(batt_str, EC_MEMMAP_TEXT_MAX);
-
-	/* Battery Model string */
-	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_MODEL);
-	memset(batt_str, 0, EC_MEMMAP_TEXT_MAX);
-	rv |= battery_device_name(batt_str, EC_MEMMAP_TEXT_MAX);
-
-	/* Battery Type string */
-	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_TYPE);
-	rv |= battery_device_chemistry(batt_str, EC_MEMMAP_TEXT_MAX);
-
-	/* Zero the dynamic entries. They'll come next. */
-	*(int *)host_get_memmap(EC_MEMMAP_BATT_VOLT) = 0;
-	*(int *)host_get_memmap(EC_MEMMAP_BATT_RATE) = 0;
-	*(int *)host_get_memmap(EC_MEMMAP_BATT_CAP) = 0;
-	*(int *)host_get_memmap(EC_MEMMAP_BATT_LFCC) = 0;
-	if (extpower_is_present())
-		batt_flags |= EC_BATT_FLAG_AC_PRESENT;
-	*host_get_memmap(EC_MEMMAP_BATT_FLAG) = batt_flags;
-
-	if (rv)
-		problem(PR_STATIC_UPDATE, rv);
-	else
-		/* No errors seen. Battery data is now present */
-		*host_get_memmap(EC_MEMMAP_BATTERY_VERSION) = 1;
-
-	return rv;
-}
-
-static void update_dynamic_battery_info(void)
-{
-	/* The memmap address is constant. We should fix these calls somehow. */
-	int *memmap_volt = (int *)host_get_memmap(EC_MEMMAP_BATT_VOLT);
-	int *memmap_rate = (int *)host_get_memmap(EC_MEMMAP_BATT_RATE);
-	int *memmap_cap = (int *)host_get_memmap(EC_MEMMAP_BATT_CAP);
-	int *memmap_lfcc = (int *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
-	uint8_t *memmap_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
-	uint8_t tmp;
-	int send_batt_status_event = 0;
-	int send_batt_info_event = 0;
-	static int batt_present;
-
-	tmp = 0;
-	if (curr.ac)
-		tmp |= EC_BATT_FLAG_AC_PRESENT;
-
-	if (curr.batt.is_present == BP_YES) {
-		tmp |= EC_BATT_FLAG_BATT_PRESENT;
-		batt_present = 1;
-		/* Tell the AP to read battery info if it is newly present. */
-		if (!(*memmap_flags & EC_BATT_FLAG_BATT_PRESENT))
-			send_batt_info_event++;
-	} else {
-		/*
-		 * Require two consecutive updates with BP_NOT_SURE
-		 * before reporting it gone to the host.
-		 */
-		if (batt_present)
-			tmp |= EC_BATT_FLAG_BATT_PRESENT;
-		else if (*memmap_flags & EC_BATT_FLAG_BATT_PRESENT)
-			send_batt_info_event++;
-		batt_present = 0;
-	}
-
-	if (curr.batt.flags & EC_BATT_FLAG_INVALID_DATA)
-		tmp |= EC_BATT_FLAG_INVALID_DATA;
-
-	if (!(curr.batt.flags & BATT_FLAG_BAD_VOLTAGE))
-		*memmap_volt = curr.batt.voltage;
-
-	if (!(curr.batt.flags & BATT_FLAG_BAD_CURRENT))
-		*memmap_rate = ABS(curr.batt.current);
-
-	if (!(curr.batt.flags & BATT_FLAG_BAD_REMAINING_CAPACITY)) {
-		/*
-		 * If we're running off the battery, it must have some charge.
-		 * Don't report zero charge, as that has special meaning
-		 * to Chrome OS powerd.
-		 */
-		if (curr.batt.remaining_capacity == 0 && !curr.batt_is_charging)
-			*memmap_cap = 1;
-		else
-			*memmap_cap = curr.batt.remaining_capacity;
-	}
-
-	if (!(curr.batt.flags & BATT_FLAG_BAD_FULL_CAPACITY) &&
-	    (curr.batt.full_capacity <= (*memmap_lfcc - LFCC_EVENT_THRESH) ||
-	     curr.batt.full_capacity >= (*memmap_lfcc + LFCC_EVENT_THRESH))) {
-		*memmap_lfcc = curr.batt.full_capacity;
-		/* Poke the AP if the full_capacity changes. */
-		send_batt_info_event++;
-	}
-
-	if (curr.batt.is_present == BP_YES &&
-	    !(curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
-	    curr.batt.state_of_charge <= BATTERY_LEVEL_CRITICAL)
-		tmp |= EC_BATT_FLAG_LEVEL_CRITICAL;
-
-	tmp |= curr.batt_is_charging ? EC_BATT_FLAG_CHARGING :
-				       EC_BATT_FLAG_DISCHARGING;
-
-	/* Tell the AP to re-read battery status if charge state changes */
-	if (*memmap_flags != tmp)
-		send_batt_status_event++;
-
-	/* Update flags before sending host events. */
-	*memmap_flags = tmp;
-
-	if (send_batt_info_event)
-		host_set_single_event(EC_HOST_EVENT_BATTERY);
-	if (send_batt_status_event)
-		host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
-}
-#else /* CONFIG_BATTERY_V2 */
-
-static int is_battery_string_reliable(const char *buf)
-{
-	/*
-	 * From is_string_printable rule, 0xFF is not printable.
-	 * So, EC should think battery string is unreliable if string
-	 * include 0xFF.
-	 */
-	while (*buf) {
-		if ((*buf) == 0xFF)
-			return 0;
-		buf++;
-	}
-
-	return 1;
-}
-
-static int update_static_battery_info(void)
-{
-	int batt_serial;
-	int val;
-	/*
-	 * The return values have type enum ec_error_list, but EC_SUCCESS is
-	 * zero. We'll just look for any failures so we can try them all again.
-	 */
-	int rv, ret;
-
-	struct ec_response_battery_static_info_v1 *const bs =
-		&battery_static[BATT_IDX_MAIN];
-
-	/* Clear all static information. */
-	memset(bs, 0, sizeof(*bs));
-
-	/* Smart battery serial number is 16 bits */
-	rv = battery_serial_number(&batt_serial);
-	if (!rv)
-		snprintf(bs->serial_ext, sizeof(bs->serial_ext),
-			 "%04X", batt_serial);
-
-	/* Design Capacity of Full */
-	ret = battery_design_capacity(&val);
-	if (!ret)
-		bs->design_capacity = val;
-	rv |= ret;
-
-	/* Design Voltage */
-	ret = battery_design_voltage(&val);
-	if (!ret)
-		bs->design_voltage = val;
-	rv |= ret;
-
-	/* Cycle Count */
-	ret = battery_cycle_count(&val);
-	if (!ret)
-		bs->cycle_count = val;
-	rv |= ret;
-
-	/* Battery Manufacturer string */
-	rv |= battery_manufacturer_name(bs->manufacturer_ext,
-					sizeof(bs->manufacturer_ext));
-
-	/* Battery Model string */
-	rv |= battery_device_name(bs->model_ext, sizeof(bs->model_ext));
-
-	/* Battery Type string */
-	rv |= battery_device_chemistry(bs->type_ext, sizeof(bs->type_ext));
-
-	/*
-	 * b/181639264: Battery gauge follow SMBus SPEC and SMBus define
-	 * cumulative clock low extend time for both controller (master) and
-	 * peripheral (slave). However, I2C doesn't.
-	 * Regarding this issue, we observe EC sometimes pull I2C CLK low
-	 * a while after EC start running. Actually, we are not sure the
-	 * reason until now.
-	 * If EC pull I2C CLK low too long, and it may cause battery fw timeout
-	 * because battery count cumulative clock extend time over 25ms.
-	 * When it happened, battery will release both its CLK and DATA and
-	 * reset itself. So, EC may get 0xFF when EC keep reading data from
-	 * battery. Battery static information will be unreliable and need to
-	 * be updated.
-	 * This change is improvement that EC should retry if battery string is
-	 * unreliable.
-	 */
-	if (!is_battery_string_reliable(bs->serial_ext) ||
-	    !is_battery_string_reliable(bs->manufacturer_ext) ||
-	    !is_battery_string_reliable(bs->model_ext) ||
-	    !is_battery_string_reliable(bs->type_ext))
-		rv |= EC_ERROR_UNKNOWN;
-
-	/* Zero the dynamic entries. They'll come next. */
-	memset(&battery_dynamic[BATT_IDX_MAIN], 0,
-	       sizeof(battery_dynamic[BATT_IDX_MAIN]));
-
-	if (rv)
-		problem(PR_STATIC_UPDATE, rv);
-
-#ifdef HAS_TASK_HOSTCMD
-	battery_memmap_refresh(BATT_IDX_MAIN);
-#endif
-
-	return rv;
-}
-
-static void update_dynamic_battery_info(void)
-{
-	static int batt_present;
-	uint8_t tmp;
-	int send_batt_status_event = 0;
-	int send_batt_info_event = 0;
-
-	struct ec_response_battery_dynamic_info *const bd =
-		&battery_dynamic[BATT_IDX_MAIN];
-
-	tmp = 0;
-	if (curr.ac)
-		tmp |= EC_BATT_FLAG_AC_PRESENT;
-
-	if (curr.batt.is_present == BP_YES) {
-		tmp |= EC_BATT_FLAG_BATT_PRESENT;
-		batt_present = 1;
-		/* Tell the AP to read battery info if it is newly present. */
-		if (!(bd->flags & EC_BATT_FLAG_BATT_PRESENT))
-			send_batt_info_event++;
-	} else {
-		/*
-		 * Require two consecutive updates with BP_NOT_SURE
-		 * before reporting it gone to the host.
-		 */
-		if (batt_present)
-			tmp |= EC_BATT_FLAG_BATT_PRESENT;
-		else if (bd->flags & EC_BATT_FLAG_BATT_PRESENT)
-			send_batt_info_event++;
-		batt_present = 0;
-	}
-
-	if (curr.batt.flags & EC_BATT_FLAG_INVALID_DATA)
-		tmp |= EC_BATT_FLAG_INVALID_DATA;
-
-	if (!(curr.batt.flags & BATT_FLAG_BAD_VOLTAGE))
-		bd->actual_voltage = curr.batt.voltage;
-
-	if (!(curr.batt.flags & BATT_FLAG_BAD_CURRENT))
-		bd->actual_current = curr.batt.current;
-
-	if (!(curr.batt.flags & BATT_FLAG_BAD_DESIRED_VOLTAGE))
-		bd->desired_voltage = curr.batt.desired_voltage;
-
-	if (!(curr.batt.flags & BATT_FLAG_BAD_DESIRED_CURRENT))
-		bd->desired_current = curr.batt.desired_current;
-
-	if (!(curr.batt.flags & BATT_FLAG_BAD_REMAINING_CAPACITY)) {
-		/*
-		 * If we're running off the battery, it must have some charge.
-		 * Don't report zero charge, as that has special meaning
-		 * to Chrome OS powerd.
-		 */
-		if (curr.batt.remaining_capacity == 0 && !curr.batt_is_charging)
-			bd->remaining_capacity = 1;
-		else
-			bd->remaining_capacity = curr.batt.remaining_capacity;
-	}
-
-	if (!(curr.batt.flags & BATT_FLAG_BAD_FULL_CAPACITY) &&
-		(curr.batt.full_capacity <=
-			(bd->full_capacity - LFCC_EVENT_THRESH) ||
-		 curr.batt.full_capacity >=
-			(bd->full_capacity + LFCC_EVENT_THRESH))) {
-		bd->full_capacity = curr.batt.full_capacity;
-		/* Poke the AP if the full_capacity changes. */
-		send_batt_info_event++;
-	}
-
-	if (curr.batt.is_present == BP_YES &&
-	    !(curr.batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
-	    curr.batt.state_of_charge <= BATTERY_LEVEL_CRITICAL)
-		tmp |= EC_BATT_FLAG_LEVEL_CRITICAL;
-
-	tmp |= curr.batt_is_charging ? EC_BATT_FLAG_CHARGING :
-				       EC_BATT_FLAG_DISCHARGING;
-
-	/* Tell the AP to re-read battery status if charge state changes */
-	if (bd->flags != tmp)
-		send_batt_status_event++;
-
-	bd->flags = tmp;
-
-#ifdef HAS_TASK_HOSTCMD
-	battery_memmap_refresh(BATT_IDX_MAIN);
-#endif
-
-#ifdef CONFIG_HOSTCMD_EVENTS
-	if (send_batt_info_event)
-		host_set_single_event(EC_HOST_EVENT_BATTERY);
-	if (send_batt_status_event)
-		host_set_single_event(EC_HOST_EVENT_BATTERY_STATUS);
-#endif
-}
-#endif /* CONFIG_BATTERY_V2 */
-
 static const char * const state_list[] = {
 	"idle", "discharge", "charge", "precharge"
 };
@@ -1352,12 +985,12 @@ static int charge_request(int voltage, int current)
 			r2 = charger_set_current(0, current);
 	}
 	if (r2 != EC_SUCCESS)
-		problem(PR_SET_CURRENT, r2);
+		charge_problem(PR_SET_CURRENT, r2);
 
 	if (voltage >= 0)
 		r1 = charger_set_voltage(0, voltage);
 	if (r1 != EC_SUCCESS)
-		problem(PR_SET_VOLTAGE, r1);
+		charge_problem(PR_SET_VOLTAGE, r1);
 
 #ifdef CONFIG_OCPC
 	/*
@@ -1374,7 +1007,7 @@ static int charge_request(int voltage, int current)
 							   &curr.ocpc,
 							   voltage, current);
 		if (r3 != EC_SUCCESS)
-			problem(PR_CFG_SEC_CHG, r3);
+			charge_problem(PR_CFG_SEC_CHG, r3);
 	}
 #endif /* CONFIG_OCPC */
 
@@ -1387,7 +1020,7 @@ static int charge_request(int voltage, int current)
 	else
 		r4 = charger_set_mode(CHARGE_FLAG_INHIBIT_CHARGE);
 	if (r4 != EC_SUCCESS)
-		problem(PR_SET_MODE, r4);
+		charge_problem(PR_SET_MODE, r4);
 
 	/*
 	 * Only update if the request worked, so we'll keep trying on failures.
@@ -1686,6 +1319,11 @@ static void notify_host_of_over_current(struct batt_params *batt)
 const struct batt_params *charger_current_battery_params(void)
 {
 	return &curr.batt;
+}
+
+struct charge_state_data *charge_get_status(void)
+{
+	return &curr;
 }
 
 /* Determine if the battery is outside of allowable temperature range */
@@ -2014,14 +1652,15 @@ void charger_task(void *u)
 				int rv = charger_post_init();
 
 				if (rv != EC_SUCCESS) {
-					problem(PR_POST_INIT, rv);
+					charge_problem(PR_POST_INIT, rv);
 				} else if (curr.desired_input_current !=
 					    CHARGE_CURRENT_UNINITIALIZED) {
 					rv = charger_set_input_current_limit(
 						chgnum,
 						curr.desired_input_current);
 					if (rv != EC_SUCCESS)
-						problem(PR_SET_INPUT_CURR, rv);
+						charge_problem(
+							PR_SET_INPUT_CURR, rv);
 				}
 
 				if (rv == EC_SUCCESS)
@@ -2109,9 +1748,9 @@ void charger_task(void *u)
 		 * better then flag it as an error.
 		 */
 		if (curr.chg.flags & CHG_FLAG_BAD_ANY)
-			problem(PR_CHG_FLAGS, curr.chg.flags);
+			charge_problem(PR_CHG_FLAGS, curr.chg.flags);
 		if (curr.batt.flags & BATT_FLAG_BAD_ANY)
-			problem(PR_BATT_FLAGS, curr.batt.flags);
+			charge_problem(PR_BATT_FLAGS, curr.batt.flags);
 
 		/*
 		 * If AC is present, check if input current is sufficient to
@@ -2167,7 +1806,7 @@ wait_for_it:
 			&& get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL) {
 			sleep_usec = charger_profile_override(&curr);
 			if (sleep_usec < 0)
-				problem(PR_CUSTOM, sleep_usec);
+				charge_problem(PR_CUSTOM, sleep_usec);
 		}
 
 		if (IS_ENABLED(CONFIG_BATTERY_CHECK_CHARGE_TEMP_LIMITS)

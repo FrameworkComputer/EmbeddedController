@@ -147,6 +147,10 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BACKLIGHT_LID
                                                 "${PLATFORM_EC}/common/backlight_lid.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
                                                 "${PLATFORM_EC}/common/battery.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_V1
+                                                "${PLATFORM_EC}/common/battery_v1.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_V2
+                                                "${PLATFORM_EC}/common/battery_v2.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_FUEL_GAUGE
                                                 "${PLATFORM_EC}/common/battery_fuel_gauge.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY_SMART

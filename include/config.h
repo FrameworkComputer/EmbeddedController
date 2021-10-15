@@ -631,14 +631,19 @@
 #undef CONFIG_BATTERY_LEVEL_NEAR_FULL
 
 /*
+ * Use memory mapped region to store battery information. It supports only
+ * single battery systems. V2 should be used unless there is a reason not to.
+ */
+#undef CONFIG_BATTERY_V1
+
+/*
  * Use an alternative method to store battery information: Instead of writing
  * directly to host memory mapped region, this keeps the battery information in
  * ec_response_battery_static/dynamic_info structures, that can then be fetched
  * using host commands, or via EC_ACPI_MEM_BATTERY_INDEX command, which tells
  * the EC to update the shared memory.
  *
- * This is required on dual-battery systems, and on on hostless bases with a
- * battery.
+ * This is required on dual-battery systems and hostless bases with a battery.
  */
 #undef CONFIG_BATTERY_V2
 
@@ -5841,6 +5846,12 @@
 #define CONFIG_BATTERY_COUNT 1
 #endif
 #endif /* CONFIG_EC_EC_COMM_BATTERY */
+
+/*****************************************************************************/
+/* If battery_v2 isn't used, it's v1. */
+#if defined(CONFIG_BATTERY) && !defined(CONFIG_BATTERY_V2)
+#define CONFIG_BATTERY_V1
+#endif
 
 /*****************************************************************************/
 /* Define derived USB PD Discharge common path */

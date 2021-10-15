@@ -191,4 +191,24 @@ bool charge_is_current_stable(void);
  */
 void trigger_ocpc_reset(void);
 
+/* Track problems in communicating with the battery or charger */
+enum problem_type {
+	PR_STATIC_UPDATE,
+	PR_SET_VOLTAGE,
+	PR_SET_CURRENT,
+	PR_SET_MODE,
+	PR_SET_INPUT_CURR,
+	PR_POST_INIT,
+	PR_CHG_FLAGS,
+	PR_BATT_FLAGS,
+	PR_CUSTOM,
+	PR_CFG_SEC_CHG,
+
+	NUM_PROBLEM_TYPES
+};
+
+void charge_problem(enum problem_type p, int v);
+
+struct charge_state_data *charge_get_status(void);
+
 #endif /* __CROS_EC_CHARGE_STATE_V2_H */

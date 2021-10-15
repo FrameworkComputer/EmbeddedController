@@ -54,6 +54,9 @@ extern struct ec_response_battery_dynamic_info
  */
 #define BATTERY_LEVEL_SHUTDOWN		  3
 
+/* Full-capacity change reqd for host event */
+#define LFCC_EVENT_THRESH 5
+
 /*
  * Sometimes we have hardware to detect battery present, sometimes we have to
  * wait until we've been able to talk to the battery.
@@ -475,5 +478,17 @@ void battery_compensate_params(struct batt_params *batt);
 __override_proto void board_battery_compensate_params(struct batt_params *batt);
 
 void battery_validate_params(struct batt_params *batt);
+
+/**
+ * Read static battery info from a main battery and store it in a cache.
+ *
+ * @return EC_SUCCESS or EC_ERROR_*.
+ */
+int update_static_battery_info(void);
+
+/**
+ * Read dynamic battery info from a main battery and store it in a cache.
+ */
+void update_dynamic_battery_info(void);
 
 #endif /* __CROS_EC_BATTERY_H */
