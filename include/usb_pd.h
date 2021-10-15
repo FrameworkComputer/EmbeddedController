@@ -2707,6 +2707,11 @@ void pd_rx_enable_monitoring(int port);
 /* stop listening to the CC wire during transmissions */
 void pd_rx_disable_monitoring(int port);
 
+/**
+ * interrupt handler
+ */
+void pd_rx_handler(void);
+
 /* get time since last RX edge interrupt */
 uint64_t get_time_since_last_edge(int port);
 

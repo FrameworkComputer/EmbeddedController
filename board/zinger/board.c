@@ -20,8 +20,6 @@
 /* Large 768-Byte buffer for RSA computation : could be re-use afterwards... */
 static uint32_t rsa_workbuf[3 * RSANUMWORDS];
 
-extern void pd_rx_handler(void);
-
 /* RW firmware reset vector */
 static uint32_t * const rw_rst =
 	(uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE+CONFIG_RW_MEM_OFF+4);
