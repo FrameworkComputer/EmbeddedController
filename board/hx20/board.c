@@ -582,19 +582,7 @@ void board_hibernate_late(void)
 	/* put host chipset into reset */
 	gpio_set_level(GPIO_SYS_RESET_L, 0);
 
-	/* Turn off LEDs in hibernate */
-	/*
-	gpio_set_level(GPIO_CHARGE_LED_1, 0);
-	gpio_set_level(GPIO_CHARGE_LED_2, 0);
-	*/
-
-	/*
-	 * Set PD wake low so that it toggles high to generate a wake
-	 * event once we leave hibernate.
-	 */
-	/*
-	gpio_set_level(GPIO_USB_PD_WAKE, 0);
-	*/
+	board_power_off_deferred();
 }
 
 /* according to Panel team suggest, delay 60ms to meet spec */
