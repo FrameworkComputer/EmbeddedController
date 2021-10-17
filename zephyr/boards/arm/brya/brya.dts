@@ -6,6 +6,7 @@
 /dts-v1/;
 
 #include <cros/nuvoton/npcx9.dtsi>
+#include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/gpio_defines.h>
 #include <nuvoton/npcx9m3f.dtsi>
 
@@ -74,6 +75,78 @@
 
 	named-adc-channels {
 		compatible = "named-adc-channels";
+
+		adc_ddr_soc: ddr_soc {
+			label = "TEMP_DDR_SOC";
+			enum-name = "ADC_TEMP_SENSOR_1_DDR_SOC";
+			channel = <0>;
+		};
+		adc_ambient: ambient {
+			label = "TEMP_AMBIENT";
+			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
+			channel = <1>;
+		};
+		adc_charger: charger {
+			label = "TEMP_CHARGER";
+			enum-name = "ADC_TEMP_SENSOR_3_CHARGER";
+			channel = <6>;
+		};
+		adc_wwan: wwan {
+			label = "TEMP_WWAN";
+			enum-name = "ADC_TEMP_SENSOR_4_WWAN";
+			channel = <7>;
+		};
+	};
+
+	named-temp-sensors {
+		ddr_soc {
+			compatible = "cros-ec,temp-sensor";
+			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+			label = "DDR and SOC";
+			enum-name = "TEMP_SENSOR_1_DDR_SOC";
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			adc = <&adc_ddr_soc>;
+		};
+		ambient {
+			compatible = "cros-ec,temp-sensor";
+			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+			label = "Ambient";
+			enum-name = "TEMP_SENSOR_2_AMBIENT";
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			adc = <&adc_ambient>;
+		};
+		charger {
+			compatible = "cros-ec,temp-sensor";
+			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+			label = "Charger";
+			enum-name = "TEMP_SENSOR_3_CHARGER";
+			temp_fan_off = <35>;
+			temp_fan_max = <65>;
+			temp_host_high = <105>;
+			temp_host_halt = <120>;
+			temp_host_release_high = <90>;
+			adc = <&adc_charger>;
+		};
+		wwan {
+			compatible = "cros-ec,temp-sensor";
+			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+			label = "WWAN";
+			enum-name = "TEMP_SENSOR_4_WWAN";
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <130>;
+			temp_host_halt = <130>;
+			temp_host_release_high = <100>;
+			adc = <&adc_wwan>;
+		};
 	};
 
 	def-lvol-io-list {
@@ -185,4 +258,12 @@
 		     &alt9_no_kso13_sl
 		     &alt9_no_kso14_sl
 		     >;
+};
+
+&adc0 {
+	status = "okay";
+};
+
+&thermistor_3V3_30K9_47K_4050B {
+	status = "okay";
 };

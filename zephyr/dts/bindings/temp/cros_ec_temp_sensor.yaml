@@ -36,6 +36,10 @@ properties:
       - TEMP_SENSOR_DDR_SOC
       - TEMP_SENSOR_FAN
       - TEMP_SENSOR_PP3300_REGULATOR
+      - TEMP_SENSOR_1_DDR_SOC
+      - TEMP_SENSOR_2_AMBIENT
+      - TEMP_SENSOR_3_CHARGER
+      - TEMP_SENSOR_4_WWAN
 
     temp_fan_off:
       type: int
