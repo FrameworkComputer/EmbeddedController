@@ -1127,7 +1127,7 @@ static int ov_getc(void)
 	if (!override_file)
 		return EOF;
 
-	if (pushback_cnt)
+	if (pushback_cnt > 0)
 		return pushback_stack[--pushback_cnt];
 	return getc(override_file);
 }
