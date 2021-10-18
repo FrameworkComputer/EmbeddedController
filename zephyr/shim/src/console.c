@@ -272,15 +272,7 @@ static void zephyr_print(const char *buff, size_t size)
 	if (k_is_in_isr() || shell_zephyr->ctx->state != SHELL_STATE_ACTIVE) {
 		printk("%s", buff);
 	} else {
-		/*
-		 * On some platforms, shell_* functions are not as fast
-		 * as printk and they need the added speed to avoid
-		 * timeouts.
-		 */
-		if (IS_ENABLED(CONFIG_PLATFORM_EC_CONSOLE_USES_PRINTK))
-			printk("%s", buff);
-		else
-			shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s", buff);
+		shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s", buff);
 		if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE))
 			console_buf_notify_chars(buff, size);
 	}

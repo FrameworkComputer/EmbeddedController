@@ -51,14 +51,3 @@ config PLATFORM_EC_HOSTCMD_CONSOLE_BUF_SIZE
 	  modular arithmetic is used.
 
 endif # PLATFORM_EC_HOSTCMD_CONSOLE
-
-config PLATFORM_EC_CONSOLE_USES_PRINTK
-	bool "Console uses printk"
-	depends on CONSOLE
-	help
-	  Implement zephyr_print using printk for all cases instead
-	  of using shell_fprintf for non-ISR uses in
-	  shim/common/console.c.
-	  Some devices have not been able to output to the console
-	  fast enough using shell_fprintf and end up timing out
-	  unrelated functionality.
