@@ -139,12 +139,15 @@ struct usb_mux {
 	 * USB Type-C DP alt mode support. Notify Type-C controller
 	 * there is DP dongle hot-plug.
 	 *
-	 * @param me usb_mux
-	 * @param mux_state with HPD IRQ and HPD LVL flags set
-	 *        accordingly
+	 * @param[in]  me usb_mux
+	 * @param[in]  mux_state with HPD IRQ and HPD LVL flags set
+	 *	       accordingly
+	 * @param[out] ack_required: indication of whether this function
+	 *	       requires a wait for an AP ACK after
 	 */
 	void (*hpd_update)(const struct usb_mux *me,
-			   mux_state_t mux_state);
+			   mux_state_t mux_state,
+			   bool *ack_required);
 };
 
 /* Supported USB mux drivers */
@@ -168,7 +171,8 @@ extern const struct usb_mux usb_muxes[];
 #endif
 
 /* Supported hpd_update functions */
-void virtual_hpd_update(const struct usb_mux *me, mux_state_t mux_state);
+void virtual_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
+			bool *ack_required);
 
 /*
  * Helper methods that either use tcpc communication or direct i2c

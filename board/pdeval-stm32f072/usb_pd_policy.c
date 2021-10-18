@@ -243,6 +243,7 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 
 __override void svdm_dp_post_config(int port)
 {
+	bool unused;
 	const struct usb_mux *mux = &usb_muxes[port];
 
 	dp_flags[port] |= DP_FLAGS_DP_ON;
@@ -252,7 +253,8 @@ __override void svdm_dp_post_config(int port)
 	/* Note: Usage is deprecated, use usb_mux_hpd_update instead */
 	if (IS_ENABLED(CONFIG_USB_PD_TCPM_ANX7447))
 		anx7447_tcpc_update_hpd_status(mux, USB_PD_MUX_HPD_LVL |
-					       USB_PD_MUX_HPD_IRQ_DEASSERTED);
+					       USB_PD_MUX_HPD_IRQ_DEASSERTED,
+					       &unused);
 }
 
 __override int svdm_dp_attention(int port, uint32_t *payload)
@@ -261,6 +263,8 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
 	const struct usb_mux *mux = &usb_muxes[port];
+	bool unused;
+
 	mux_state_t mux_state = (lvl ? USB_PD_MUX_HPD_LVL :
 				 USB_PD_MUX_HPD_LVL_DEASSERTED) |
 				(irq ? USB_PD_MUX_HPD_IRQ :
@@ -268,7 +272,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 	/* Note: Usage is deprecated, use usb_mux_hpd_update instead */
 	CPRINTS("Attention: 0x%x", payload[1]);
-	anx7447_tcpc_update_hpd_status(mux, mux_state);
+	anx7447_tcpc_update_hpd_status(mux, mux_state, &unused);
 #endif
 	dp_status[port] = payload[1];
 

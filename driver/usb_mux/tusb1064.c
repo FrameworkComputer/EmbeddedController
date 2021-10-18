@@ -30,10 +30,14 @@ static int tusb1064_write(const struct usb_mux *me, uint8_t reg, uint8_t val)
 }
 
 #if defined(CONFIG_USB_MUX_TUSB1044)
-void tusb1044_hpd_update(const struct usb_mux *me, mux_state_t mux_state)
+void tusb1044_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
+			 bool *ack_required)
 {
 	int res;
 	uint8_t reg;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	res = tusb1064_read(me, TUSB1064_REG_GENERAL, &reg);
 	if (res)

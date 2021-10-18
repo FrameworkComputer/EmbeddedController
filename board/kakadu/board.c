@@ -120,8 +120,12 @@ struct mt6370_thermal_bound thermal_bound = {
 };
 
 static void board_hpd_update(const struct usb_mux *me,
-			     mux_state_t mux_state)
+			     mux_state_t mux_state,
+			     bool *ack_required)
 {
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
+
 	/*
 	 * svdm_dp_attention() did most of the work, we only need to notify
 	 * host here.

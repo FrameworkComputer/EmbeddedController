@@ -137,7 +137,8 @@
  * or when no HPD physical pin is connected.
  * Writes HPD infomration to the General_1 Registor.
  */
-void tusb1044_hpd_update(const struct usb_mux *me, mux_state_t mux_state);
+void tusb1044_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
+			 bool *ack_required);
 #endif
 
 /**

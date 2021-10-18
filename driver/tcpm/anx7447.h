@@ -143,7 +143,8 @@ extern const struct tcpm_drv anx7447_tcpm_drv;
 extern const struct usb_mux_driver anx7447_usb_mux_driver;
 void anx7447_tcpc_clear_hpd_status(int port);
 void anx7447_tcpc_update_hpd_status(const struct usb_mux *me,
-				    mux_state_t mux_state);
+				    mux_state_t mux_state,
+				    bool *ack_required);
 
 /**
  * Erase OCM flash if it's not empty

@@ -79,7 +79,8 @@ __override_proto
 uint16_t board_get_ps8xxx_product_id(int port);
 
 void ps8xxx_tcpc_update_hpd_status(const struct usb_mux *me,
-				   mux_state_t mux_state);
+				   mux_state_t mux_state,
+				   bool *ack_required);
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
 extern struct i2c_stress_test_dev ps8xxx_i2c_stress_test_dev;

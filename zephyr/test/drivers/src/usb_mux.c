@@ -152,7 +152,8 @@ static bool proxy_fw_update_cap(void)
 }
 
 /** Proxy function which check calls from usb_mux framework to driver */
-static void proxy_hpd_update(const struct usb_mux *me, mux_state_t mux_state)
+static void proxy_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
+			     bool *ack_required)
 {
 	int i = me->i2c_addr_flags;
 
@@ -163,7 +164,7 @@ static void proxy_hpd_update(const struct usb_mux *me, mux_state_t mux_state)
 
 	if (org_mux[i] != NULL &&
 	    org_mux[i]->hpd_update != NULL) {
-		org_mux[i]->hpd_update(org_mux[i], mux_state);
+		org_mux[i]->hpd_update(org_mux[i], mux_state, ack_required);
 	}
 }
 

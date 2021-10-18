@@ -472,9 +472,13 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state,
 			set_retimer_con);
 }
 
-void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t mux_state)
+void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
+			   bool *ack_required)
 {
 	uint32_t retimer_con_reg = 0;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	if (bb_retimer_read(me, BB_RETIMER_REG_CONNECTION_STATE,
 			    &retimer_con_reg) != EC_SUCCESS)

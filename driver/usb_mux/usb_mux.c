@@ -317,9 +317,6 @@ static int configure_mux(int port,
 					break;
 			}
 
-			if (ack_required)
-				ack_task[port] = task_get_current();
-
 			/* Apply board specific setting */
 			if (mux_ptr->board_set)
 				rv = mux_ptr->board_set(mux_ptr, lcl_state);
@@ -343,7 +340,8 @@ static int configure_mux(int port,
 
 		case USB_MUX_HPD_UPDATE:
 			if (mux_ptr->hpd_update)
-				mux_ptr->hpd_update(mux_ptr, *mux_state);
+				mux_ptr->hpd_update(mux_ptr, *mux_state,
+						    &ack_required);
 
 		}
 
@@ -351,6 +349,8 @@ static int configure_mux(int port,
 		mutex_unlock(&mux_lock[port]);
 
 		if (ack_required) {
+			ack_task[port] = task_get_current();
+
 			/*
 			 * This should only be called from the PD task or usb
 			 * mux task

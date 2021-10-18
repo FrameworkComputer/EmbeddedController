@@ -233,12 +233,16 @@ static void anx74xx_tcpc_discharge_vbus(int port, int enable)
 static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void anx74xx_tcpc_update_hpd_status(const struct usb_mux *me,
-				    mux_state_t mux_state)
+				    mux_state_t mux_state,
+				    bool *ack_required)
 {
 	int reg;
 	int port = me->usb_port;
 	int hpd_lvl = (mux_state & USB_PD_MUX_HPD_LVL) ? 1 : 0;
 	int hpd_irq = (mux_state & USB_PD_MUX_HPD_IRQ) ? 1 : 0;
+
+	/* This driver does not use host command ACKs */
+	*ack_required = false;
 
 	mux_read(me, ANX74XX_REG_HPD_CTRL_0, &reg);
 	if (hpd_lvl)
