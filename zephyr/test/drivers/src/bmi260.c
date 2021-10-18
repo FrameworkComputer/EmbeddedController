@@ -1853,6 +1853,44 @@ static void test_bmi_gyr_fifo(void)
 		      NULL);
 }
 
+static void test_unsupported_configs(void)
+{
+	/*
+	 * This test checks that we properly handle passing in invalid sensor
+	 * types or attempting unsupported operations on certain sensor types.
+	 */
+
+	struct motion_sensor_t ms_fake;
+
+	/* Part 1:
+	 * Setting offset on anything that is not an accel or gyro is an error.
+	 * Make a copy of the accelerometer motion sensor struct and modify its
+	 * type to magnetometer for this test.
+	 */
+	memcpy(&ms_fake, &motion_sensors[BMI_ACC_SENSOR_ID], sizeof(ms_fake));
+	ms_fake.type = MOTIONSENSE_TYPE_MAG;
+
+	int16_t offset[3];
+	int ret =
+		ms_fake.drv->set_offset(&ms_fake, (const int16_t *)&offset, 0);
+	zassert_equal(
+		ret, EC_RES_INVALID_PARAM,
+		"Expected a return code of %d (EC_RES_INVALID_PARAM) but got %d",
+		EC_RES_INVALID_PARAM, ret);
+
+	/* Part 2:
+	 * Running a calibration on a magnetometer is also not supported.
+	 */
+	memcpy(&ms_fake, &motion_sensors[BMI_ACC_SENSOR_ID], sizeof(ms_fake));
+	ms_fake.type = MOTIONSENSE_TYPE_MAG;
+
+	ret = ms_fake.drv->perform_calib(&ms_fake, 1);
+	zassert_equal(
+		ret, EC_RES_INVALID_PARAM,
+		"Expected a return code of %d (EC_RES_INVALID_PARAM) but got %d",
+		EC_RES_INVALID_PARAM, ret);
+}
+
 void test_suite_bmi260(void)
 {
 	ztest_test_suite(bmi260,
@@ -1873,6 +1911,7 @@ void test_suite_bmi260(void)
 			 ztest_user_unit_test(test_bmi_gyr_perform_calib),
 			 ztest_user_unit_test(test_bmi_init),
 			 ztest_user_unit_test(test_bmi_acc_fifo),
-			 ztest_user_unit_test(test_bmi_gyr_fifo));
+			 ztest_user_unit_test(test_bmi_gyr_fifo),
+			 ztest_user_unit_test(test_unsupported_configs));
 	ztest_run_test_suite(bmi260);
 }

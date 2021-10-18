@@ -254,6 +254,12 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 
 	if (!enable)
 		return EC_SUCCESS;
+
+	/* We only support accelerometers and gyroscopes */
+	if (s->type != MOTIONSENSE_TYPE_ACCEL &&
+	    s->type != MOTIONSENSE_TYPE_GYRO)
+		return EC_RES_INVALID_PARAM;
+
 	rate = bmi_get_data_rate(s);
 	ret = set_data_rate(s, 100000, 0);
 	if (ret)
@@ -269,10 +275,12 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
 		break;
+	/* LCOV_EXCL_START */
 	default:
-		/* Not supported on Magnetometer */
-		ret = EC_RES_INVALID_PARAM;
-		goto end_perform_calib;
+		/* Unreachable due to sensor type check above. */
+		ASSERT(false);
+		break;
+	/* LCOV_EXCL_STOP */
 	}
 
 	/* Get the calibrated offset */
