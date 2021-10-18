@@ -21,6 +21,7 @@
 #include "usb_pd.h"
 #include "usb_pd_dpm.h"
 #include "usb_pd_tcpm.h"
+#include "usb_pd_pdo.h"
 #include "usb_tbt_alt_mode.h"
 
 #ifdef CONFIG_COMMON_RUNTIME

@@ -25,6 +25,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
+#include "usb_pd_pdo.h"
 #include "usb_pd_tcpm.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
@@ -32,8 +33,6 @@
 
 #define DUT_PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
 			     PDO_FIXED_COMM_CAP)
-
-#define CHG_PDO_FIXED_FLAGS (PDO_FIXED_DATA_SWAP)
 
 #define VBUS_UNCHANGED(curr, pend, new) (curr == new && pend == new)
 
@@ -88,32 +87,6 @@
 #define DUT_BOTH_CC_PD(r) DUT_BOTH_CC_SET(r, GPIO_OUT_LOW)
 #define DUT_BOTH_CC_OPEN(r) DUT_BOTH_CC_SET(r, GPIO_INPUT)
 
-/*
- * Dynamic PDO that reflects capabilities present on the CHG port. Allow for
- * multiple entries so that we can offer greater than 5V charging. The 1st
- * entry will be fixed 5V, but its current value may change based on the CHG
- * port vbus info. Subsequent entries are used for when offering vbus greater
- * than 5V.
- */
-static const uint16_t pd_src_voltages_mv[] = {
-		5000, 9000, 10000, 12000, 15000, 20000,
-};
-static uint32_t pd_src_chg_pdo[ARRAY_SIZE(pd_src_voltages_mv)];
-static uint8_t chg_pdo_cnt;
-
-const uint32_t pd_snk_pdo[] = {
-		PDO_FIXED(5000, 500, CHG_PDO_FIXED_FLAGS),
-		PDO_BATT(4750, 21000, 15000),
-		PDO_VAR(4750, 21000, 3000),
-};
-const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
-
-struct vbus_prop {
-	int mv;
-	int ma;
-};
-static struct vbus_prop vbus[CONFIG_USB_PD_PORT_MAX_COUNT];
-static int active_charge_port = CHARGE_PORT_NONE;
 static enum charge_supplier active_charge_supplier;
 static uint8_t vbus_rp = TYPEC_RP_RESERVED;
 
@@ -170,11 +143,6 @@ static uint32_t max_supported_voltage(void)
 
 	return board_max_mv < user_limited_max_mv ? board_max_mv :
 						    user_limited_max_mv;
-}
-
-static int charge_port_is_active(void)
-{
-	return active_charge_port == CHG && vbus[CHG].mv > 0;
 }
 
 static int is_charge_through_allowed(void)
@@ -604,22 +572,6 @@ int board_select_rp_value(int port, int rp)
 	}
 
 	return EC_SUCCESS;
-}
-
-int charge_manager_get_source_pdo(const uint32_t **src_pdo, const int port)
-{
-	int pdo_cnt = 0;
-
-	/*
-	 * If CHG is providing VBUS, then advertise what's available on the CHG
-	 * port, otherwise we provide no power.
-	 */
-	if (charge_port_is_active()) {
-		*src_pdo =  pd_src_chg_pdo;
-		pdo_cnt = chg_pdo_cnt;
-	}
-
-	return pdo_cnt;
 }
 
 __override void pd_transition_voltage(int idx)

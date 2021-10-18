@@ -19,6 +19,7 @@
 
 #include "config.h"
 #include "usb_pd.h"
+#include "usb_pd_pdo.h"
 #include "usb_pd_tcpm.h"
 #include "charge_manager.h"
 

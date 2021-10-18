@@ -168,9 +168,10 @@ common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o
 common-$(CONFIG_HAS_TASK_PD_INT)+=usbc_intr_task.o
 ifneq ($(CONFIG_USB_POWER_DELIVERY),)
-common-$(CONFIG_USB_POWER_DELIVERY)+=usb_common.o
+common-$(CONFIG_USB_POWER_DELIVERY)+=usb_common.o usb_pd_pdo.o
 ifneq ($(CONFIG_USB_PD_TCPMV1),)
-common-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_protocol.o usb_pd_policy.o
+common-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_protocol.o usb_pd_policy.o \
+	usb_pd_pdo.o
 endif
 common-$(CONFIG_USB_PD_DUAL_ROLE)+=usb_pd_dual_role.o
 common-$(CONFIG_USB_PD_HOST_CMD)+=usb_pd_host_cmd.o

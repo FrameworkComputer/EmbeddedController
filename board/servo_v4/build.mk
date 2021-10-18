@@ -14,6 +14,6 @@ CHIP_VARIANT:=stm32f07x
 test-list-y=
 
 board-y=board.o
-board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o
+board-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_policy.o usb_pd_pdo.o
 
 all_deps=$(patsubst ro,,$(def_all_deps))

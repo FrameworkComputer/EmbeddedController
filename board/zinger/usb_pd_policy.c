@@ -15,6 +15,7 @@
 #include "timer.h"
 #include "util.h"
 #include "usb_pd.h"
+#include "usb_pd_pdo.h"
 
 /* ------------------------- Power supply control ------------------------ */
 
@@ -88,13 +89,6 @@ static timestamp_t fault_deadline;
 /* convert raw ADC value to mV */
 #define ADC_TO_VOLT_MV(vbus) ((vbus)*VOLT_DIV*VDDA_MV/ADC_SCALE)
 
-/* Max current */
-#if defined(BOARD_ZINGER)
-#define RATED_CURRENT 3000
-#elif defined(BOARD_MINIMUFFIN)
-#define RATED_CURRENT 2250
-#endif
-
 /* Max current : 20% over rated current */
 #define MAX_CURRENT VBUS_MA(RATED_CURRENT * 6/5)
 /* Fast short circuit protection : 50% over rated current */
@@ -153,26 +147,6 @@ static void discharge_voltage(int target_volt)
 }
 
 /* ----------------------- USB Power delivery policy ---------------------- */
-
-#define PDO_FIXED_FLAGS (PDO_FIXED_UNCONSTRAINED | PDO_FIXED_DATA_SWAP)
-
-/* Voltage indexes for the PDOs */
-enum volt_idx {
-	PDO_IDX_5V  = 0,
-	PDO_IDX_12V = 1,
-	PDO_IDX_20V = 2,
-
-	PDO_IDX_COUNT
-};
-
-/* Power Delivery Objects */
-const uint32_t pd_src_pdo[] = {
-	[PDO_IDX_5V]  = PDO_FIXED(5000,  RATED_CURRENT, PDO_FIXED_FLAGS),
-	[PDO_IDX_12V] = PDO_FIXED(12000, RATED_CURRENT, PDO_FIXED_FLAGS),
-	[PDO_IDX_20V] = PDO_FIXED(20000, RATED_CURRENT, PDO_FIXED_FLAGS),
-};
-const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
-BUILD_ASSERT(ARRAY_SIZE(pd_src_pdo) == PDO_IDX_COUNT);
 
 /* PDO voltages (should match the table above) */
 static const struct {
