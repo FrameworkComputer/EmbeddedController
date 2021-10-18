@@ -94,4 +94,3 @@ struct bh1730_drv_data_t {
 extern const struct accelgyro_drv bh1730_drv;
 
 #endif	/* __CROS_EC_ALS_BH1730_H */
-

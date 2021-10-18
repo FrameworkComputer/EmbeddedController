@@ -89,4 +89,3 @@ void lis2mdl_normalize(const struct motion_sensor_t *s,
 extern const struct accelgyro_drv lis2mdl_drv;
 
 #endif /* __CROS_EC_MAG_LIS2MDL_H */
-

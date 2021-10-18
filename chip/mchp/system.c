@@ -588,4 +588,3 @@ void system_set_image_copy(enum ec_image copy)
 	MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX) = (copy == EC_IMAGE_RW) ?
 				EC_IMAGE_RW : EC_IMAGE_RO;
 }
-

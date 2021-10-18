@@ -1000,4 +1000,3 @@ const float kAccelerometerFullyOpenTestData[] = {
     0.272461f};
 const size_t kAccelerometerFullyOpenTestDataLength =
     ARRAY_SIZE(kAccelerometerFullyOpenTestData);
-

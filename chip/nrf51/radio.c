@@ -56,4 +56,3 @@ int radio_init(enum nrf51_radio_mode_t mode)
 
 	return err_code;
 }
-

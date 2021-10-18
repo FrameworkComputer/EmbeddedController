@@ -188,4 +188,3 @@ uint8_t sib_read_reg(uint8_t io_offset, uint8_t index_value)
 
 	return data_value;
 }
-

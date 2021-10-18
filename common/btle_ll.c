@@ -858,4 +858,3 @@ void bluetooth_ll_task(void)
 		}
 	}
 }
-

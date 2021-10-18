@@ -14,4 +14,3 @@
 extern const struct ppc_drv rt1718s_ppc_drv;
 
 #endif /* defined(__CROS_EC_PPC_RT1718S_H) */
-

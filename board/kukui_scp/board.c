@@ -18,4 +18,3 @@
 
 /* Build GPIO tables */
 #include "gpio_list.h"
-

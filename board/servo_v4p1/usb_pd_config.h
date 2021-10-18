@@ -280,4 +280,3 @@ static inline void pd_config_init(int port, uint8_t power_role)
 int pd_adc_read(int port, int cc);
 
 #endif /* __CROS_EC_USB_PD_CONFIG_H */
-

@@ -73,4 +73,3 @@
 #define WP_BANK_COUNT           31
 #define PSTATE_BANK             30
 #define PSTATE_BANK_COUNT       1
-

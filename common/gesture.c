@@ -332,4 +332,3 @@ static int command_tap_info(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(tapinfo, command_tap_info,
 			"debug on/off",
 			"Print tap information");
-

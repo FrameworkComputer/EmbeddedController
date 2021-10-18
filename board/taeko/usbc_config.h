@@ -19,4 +19,3 @@ enum usbc_port {
 void config_usb_db_type(void);
 
 #endif /* __CROS_EC_USBC_CONFIG_H */
-

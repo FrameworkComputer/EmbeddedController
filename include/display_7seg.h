@@ -24,4 +24,3 @@ enum seven_seg_module_display {
 int display_7seg_write(enum seven_seg_module_display module, uint16_t data);
 
 #endif  /* __CROS_EC_DISPLAY_7SEG_H */
-

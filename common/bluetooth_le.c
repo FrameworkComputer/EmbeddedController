@@ -195,4 +195,3 @@ void dump_ble_packet(struct ble_pdu *ble_p)
 		mem_dump(ble_p->payload, ble_p->header.data.length);
 	}
 }
-

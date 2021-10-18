@@ -134,4 +134,3 @@ const struct accelgyro_drv sync_drv = {
 	.get_data_rate = sync_get_data_rate,
 	.irq_handler = motion_irq_handler,
 };
-

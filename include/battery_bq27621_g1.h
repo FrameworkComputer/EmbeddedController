@@ -16,4 +16,3 @@ int bq27621_state_of_charge(int *percent);
  * Returns EC_SUCCESS on success.
  */
 int bq27621_init(void);
-

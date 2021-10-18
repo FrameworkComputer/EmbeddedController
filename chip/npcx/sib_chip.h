@@ -20,4 +20,3 @@ void sib_write_reg(uint8_t io_offset, uint8_t index_value,
 uint8_t sib_read_reg(uint8_t io_offset, uint8_t index_value);
 /* Emulate host to read Keyboard I/O */
 uint8_t sib_read_kbc_reg(uint8_t io_offset);
-

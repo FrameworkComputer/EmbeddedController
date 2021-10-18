@@ -172,4 +172,3 @@ int kernel_version_ge(int major, int minor, int sublevel)
 
 	return ksublevel >= sublevel;
 }
-

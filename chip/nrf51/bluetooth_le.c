@@ -534,4 +534,3 @@ static int command_ble_adv_scan(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(ble_scan, command_ble_adv_scan,
 			"chan [num] [addr0]",
 			"Scan for [num] BLE packets on channel chan");
-

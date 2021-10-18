@@ -301,4 +301,3 @@ int i2c_get_line_levels(int port)
 	return (i2c_raw_get_sda(port) ? I2C_LINE_SDA_HIGH : 0) |
 		(i2c_raw_get_scl(port) ? I2C_LINE_SCL_HIGH : 0);
 }
-

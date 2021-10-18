@@ -751,4 +751,3 @@ DECLARE_CONSOLE_COMMAND(dsleep, command_dsleep,
 			"Give a timeout value for the console in use timeout.\n"
 			"See also 'sleepmask'.");
 #endif /* CONFIG_LOW_POWER_IDLE */
-

@@ -25,4 +25,3 @@ enum cts_rc sync(void)
 
 	return CTS_RC_SUCCESS;
 }
-

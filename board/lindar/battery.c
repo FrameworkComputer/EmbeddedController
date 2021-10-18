@@ -133,4 +133,3 @@ __override bool board_battery_is_initialized(void)
 		!!(batt_status & STATUS_INITIALIZED));
 	return batt_initialization_state;
 }
-

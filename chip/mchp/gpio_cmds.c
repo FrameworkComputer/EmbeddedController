@@ -94,4 +94,3 @@ static int cmd_gp_set_config(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(gpsetcfg, cmd_gp_set_config,
 			"gp_num val",
 			"Set GPIO config");
-

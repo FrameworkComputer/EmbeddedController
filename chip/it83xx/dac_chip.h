@@ -55,4 +55,3 @@ void dac_set_output_voltage(enum chip_dac_channel ch, int mv);
 int dac_get_output_voltage(enum chip_dac_channel ch);
 
 #endif /* __CROS_EC_DAC_CHIP_H */
-

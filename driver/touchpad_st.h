@@ -271,4 +271,3 @@ enum ST_TP_MODE {
 #define ST_TP_MIN_HEATMAP_VERSION 0x12
 
 #endif /* __CROS_EC_TOUCHPAD_ST_H */
-

@@ -199,4 +199,3 @@ static void led_second(void)
 		std_led_set_battery();
 }
 DECLARE_HOOK(HOOK_SECOND, led_second, HOOK_PRIO_DEFAULT);
-

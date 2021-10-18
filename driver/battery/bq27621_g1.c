@@ -744,4 +744,3 @@ DECLARE_CONSOLE_COMMAND(fgcmdrd, command_fgcmdrd,
 			"Send a 2-byte cmd to the fg, read back the 2-byte result");
 
 #endif /* CONFIG_CMD_BATDEBUG */
-

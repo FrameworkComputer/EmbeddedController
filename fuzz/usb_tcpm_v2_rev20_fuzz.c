@@ -30,4 +30,3 @@ int pd_check_vconn_swap(int port)
 {
 	return 1;
 }
-

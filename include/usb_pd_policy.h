@@ -38,4 +38,3 @@ __override_proto bool port_discovery_vconn_swap_policy(int port,
 		bool vconn_swap_flag);
 
 #endif /* __CROS_EC_USB_PD_POLICY_H */
-

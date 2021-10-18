@@ -64,4 +64,3 @@ uint8_t qmspi_xfr(const struct spi_device_t *spi_device,
 #endif /* #ifndef _QMSPI_CHIP_H */
 /**   @}
  */
-

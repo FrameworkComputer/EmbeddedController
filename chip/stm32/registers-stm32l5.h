@@ -2421,4 +2421,3 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 #define STM32_DMA_CCR_MEM2MEM		BIT(14)
 
 #endif /* !__ASSEMBLER__ */
-

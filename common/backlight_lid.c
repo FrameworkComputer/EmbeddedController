@@ -81,5 +81,3 @@ switch_command_enable_backlight(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_BKLIGHT,
 		     switch_command_enable_backlight,
 		     EC_VER_MASK(0));
-
-

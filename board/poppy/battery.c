@@ -223,4 +223,3 @@ enum battery_present battery_is_present(void)
 	batt_pres_prev = battery_check_present_status();
 	return batt_pres_prev;
 }
-

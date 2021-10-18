@@ -340,4 +340,3 @@ sspi_flash_upload(int spi_offset, int spi_size)
 	for (;;)
 		;
 }
-

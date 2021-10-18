@@ -356,4 +356,3 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 	}
 	return EC_SUCCESS;
 }
-

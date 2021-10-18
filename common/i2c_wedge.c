@@ -338,4 +338,3 @@ static int command_i2c_unwedge(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(i2cunwedge, command_i2c_unwedge,
 	"",
 	"Unwedge host I2C bus");
-

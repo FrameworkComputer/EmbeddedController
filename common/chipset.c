@@ -126,4 +126,3 @@ get_ap_reset_stats(struct ap_reset_log_entry *reset_log_entries,
 }
 
 #endif  /* !CONFIG_AP_RESET_LOG */
-

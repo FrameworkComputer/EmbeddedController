@@ -175,4 +175,3 @@ int spi_enable(const struct spi_device_t *spi_device, int enable)
 
 	return EC_SUCCESS;
 }
-

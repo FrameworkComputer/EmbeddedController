@@ -394,4 +394,3 @@ void tc_reset_support_timer(int port);
 void tc_ctvpd_detected(int port);
 #endif /* CONFIG_USB_CTVPD */
 #endif /* __CROS_EC_USB_TC_H */
-

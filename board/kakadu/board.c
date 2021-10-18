@@ -519,4 +519,3 @@ void board_fill_source_power_info(int port,
 	r->meas.current_lim = 1500;
 	r->max_power = r->meas.voltage_now * r->meas.current_max;
 }
-

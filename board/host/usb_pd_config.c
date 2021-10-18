@@ -32,4 +32,3 @@ test_mockable int pd_adc_read(int port, int cc)
 	/* Not implemented */
 	return 0;
 }
-

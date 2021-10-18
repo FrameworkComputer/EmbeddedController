@@ -31,4 +31,3 @@ void test_main(void)
 			 ztest_user_unit_test(test_i2c_port_count));
 	ztest_run_test_suite(test_i2c);
 }
-

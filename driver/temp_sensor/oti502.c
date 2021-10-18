@@ -64,4 +64,3 @@ static void temp_sensor_poll(void)
 	}
 }
 DECLARE_HOOK(HOOK_SECOND, temp_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
-

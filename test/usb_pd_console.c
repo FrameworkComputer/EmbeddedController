@@ -469,4 +469,3 @@ void run_test(int argc, char **argv)
 
 	test_print_result();
 }
-

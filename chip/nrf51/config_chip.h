@@ -61,4 +61,3 @@
 #define GPIO_PIN_MASK(p, m) .port = GPIO_##p, .mask = (m)
 
 #endif /* __CROS_EC_CONFIG_CHIP_H */
-

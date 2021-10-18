@@ -36,4 +36,3 @@ int battery_bq4050_imbalance_mv(void)
 	}
 	return (n_cells == 0) ? 0 : max_voltage - min_voltage;
 }
-

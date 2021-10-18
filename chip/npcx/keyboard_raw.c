@@ -166,4 +166,3 @@ int keyboard_raw_is_input_low(int port, int id)
 {
 	return (NPCX_PDIN(port) & BIT(id)) == 0;
 }
-

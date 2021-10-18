@@ -349,4 +349,3 @@ int adt7481_set_power(enum adt7481_power_state power_on)
 	return EC_SUCCESS;
 #endif
 }
-

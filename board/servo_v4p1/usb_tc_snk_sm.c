@@ -288,4 +288,3 @@ void snk_task(void *u)
 		run_state(0, &tc.ctx);
 	}
 }
-

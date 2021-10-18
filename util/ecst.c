@@ -2483,4 +2483,3 @@ unsigned int finalize_crc_32(unsigned int crc)
 	return result;
 
 }  /* finalize_crc_32 */
-

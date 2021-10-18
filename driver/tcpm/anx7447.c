@@ -858,4 +858,3 @@ const struct usb_mux_driver anx7447_usb_mux_driver = {
 	.get = anx7447_mux_get,
 };
 #endif /* CONFIG_USB_PD_TCPM_MUX */
-

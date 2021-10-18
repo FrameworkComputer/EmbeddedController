@@ -697,4 +697,3 @@ int qmspi_enable(int hw_port, int enable)
 
 	return EC_SUCCESS;
 }
-

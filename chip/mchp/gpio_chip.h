@@ -35,4 +35,3 @@ void gpio_power_off_by_mask(uint32_t port, uint32_t mask);
 #endif /* #ifndef _GPIO_CHIP_H */
 /**   @}
  */
-

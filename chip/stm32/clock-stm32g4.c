@@ -291,4 +291,3 @@ int clock_is_module_enabled(enum module_id module)
 		return !!(STM32_RCC_AHB2ENR & STM32_RCC_AHB2ENR_ADC12EN);
 	return 0;
 }
-

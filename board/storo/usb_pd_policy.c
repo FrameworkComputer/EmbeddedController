@@ -59,4 +59,3 @@ int pd_set_power_supply_ready(int port)
 
 	return EC_SUCCESS;
 }
-

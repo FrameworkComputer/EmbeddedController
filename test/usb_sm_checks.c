@@ -187,4 +187,3 @@ int test_pe_all_states_named(void)
 
 	return EC_SUCCESS;
 }
-

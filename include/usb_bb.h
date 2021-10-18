@@ -51,4 +51,3 @@ struct usb_bb_caps_base_descriptor {
 
 
 #endif /* __CROS_EC_USB_BB_H */
-

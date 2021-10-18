@@ -181,4 +181,3 @@ int ble_test_rx(void)
 
 	return EC_SUCCESS;
 }
-

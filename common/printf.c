@@ -518,4 +518,3 @@ int crec_vsnprintf(char *str, size_t size, const char *format, va_list args)
 
 	return (rv == EC_SUCCESS) ? (ctx.str - str) : -rv;
 }
-

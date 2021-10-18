@@ -327,4 +327,3 @@ int tmp411_set_power(enum tmp411_power_state power_on)
 	return EC_SUCCESS;
 #endif
 }
-

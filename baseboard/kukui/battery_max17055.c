@@ -185,4 +185,3 @@ int get_battery_manufacturer_name(char *dest, int size)
 	strzcpy(dest, name[BATT_ID], size);
 	return EC_SUCCESS;
 }
-

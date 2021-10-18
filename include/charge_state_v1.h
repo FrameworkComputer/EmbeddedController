@@ -69,4 +69,3 @@ struct charge_state_context {
 };
 
 #endif /* __CROS_EC_CHARGE_STATE_V1_H */
-

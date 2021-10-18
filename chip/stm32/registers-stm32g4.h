@@ -1503,4 +1503,3 @@ enum dmamux1_request {
 #define STM32_UNIQUE_ID_LENGTH      (3 * 4)
 
 #endif /* !__ASSEMBLER__ */
-

@@ -79,4 +79,3 @@ void port_80_interrupt(void)
 }
 DECLARE_IRQ(MCHP_IRQ_PORT80DBG0, port_80_interrupt, 3);
 #endif
-

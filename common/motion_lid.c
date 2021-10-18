@@ -565,4 +565,3 @@ enum ec_status host_cmd_motion_lid(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-

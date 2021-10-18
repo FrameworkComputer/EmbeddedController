@@ -64,4 +64,3 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 		.rpm = &fan_rpm_1,
 	},
 };
-

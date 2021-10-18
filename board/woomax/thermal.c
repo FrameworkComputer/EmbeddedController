@@ -137,4 +137,3 @@ void board_override_fan_control(int fan, int *tmp)
 			fan_table_to_rpm(fan, tmp));
 	}
 }
-

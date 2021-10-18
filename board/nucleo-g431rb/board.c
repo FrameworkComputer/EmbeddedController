@@ -31,4 +31,3 @@ static void led_second(void)
 	gpio_set_level(GPIO_LED1, count++ & 0x1);
 }
 DECLARE_HOOK(HOOK_SECOND, led_second, HOOK_PRIO_DEFAULT);
-

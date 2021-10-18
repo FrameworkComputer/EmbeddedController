@@ -66,4 +66,3 @@ int init_rom_copy(int offset, int size, char *data)
 {
 	return crec_flash_read(offset, size, data);
 }
-

@@ -176,4 +176,3 @@ int __hw_clock_source_init(uint32_t start_t)
 
 	return NRF51_PERID_TIMER(HWTIMER);
 }
-

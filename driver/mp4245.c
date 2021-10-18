@@ -211,4 +211,3 @@ static int command_mp4245(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(mp4245, command_mp4245,
 			"<info|dump|vbus|ilim>",
 			"Turn on/off|set vbus.");
-

@@ -226,4 +226,3 @@ void pd_command_task(void *u)
 			pd_exchange_status(ec_state);
 	}
 }
-

@@ -44,4 +44,3 @@ int i2c_is_raw_mode(int port)
 	else
 		return 1;
 }
-

@@ -380,4 +380,3 @@ void usb_power_event(struct usb_power_config const *config,
 
 
 #endif /* __CROS_EC_USB_DWC_POWER_H */
-

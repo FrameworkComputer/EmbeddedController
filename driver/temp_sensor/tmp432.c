@@ -396,4 +396,3 @@ int tmp432_set_power(enum tmp432_power_state power_on)
 	return EC_SUCCESS;
 #endif
 }
-

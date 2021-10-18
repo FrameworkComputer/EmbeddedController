@@ -650,4 +650,3 @@ void i2c_init(void)
 	task_enable_irq(IRQ_PERIPHERAL);
 #endif
 }
-

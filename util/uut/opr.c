@@ -550,4 +550,3 @@ static bool opr_send_cmds(struct command_node *cmd_buf, uint32_t cmd_num)
 
 	return true;
 }
-

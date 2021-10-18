@@ -1019,4 +1019,3 @@ static int command_lpc(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(lpc, command_lpc, "[sci|smi|wake]",
 	"Trigger SCI/SMI");
 #endif
-

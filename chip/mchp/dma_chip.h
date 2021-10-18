@@ -65,4 +65,3 @@ int dma_crc32_start(const uint8_t *mstart, const uint32_t nbytes, int ien);
 #endif /* #ifndef _DMA_CHIP_H */
 /**   @}
  */
-

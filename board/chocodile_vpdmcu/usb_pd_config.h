@@ -160,4 +160,3 @@ static inline int pd_adc_read(int port, int cc)
 }
 
 #endif /* __CROS_EC_USB_PD_CONFIG_H */
-

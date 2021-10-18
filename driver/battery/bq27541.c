@@ -429,4 +429,3 @@ int battery_get_avg_voltage(void)
 	return -EC_ERROR_UNIMPLEMENTED;
 }
 #endif /* CONFIG_CMD_PWR_AVG */
-

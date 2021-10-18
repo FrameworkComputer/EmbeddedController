@@ -477,4 +477,3 @@ void baseboard_usbc_usb3_irq(void)
 
 #endif /* defined(GPIO_USBC_UF_ATTACHED_SRC) */
 #endif /* defined(SECTION_IS_RW) */
-

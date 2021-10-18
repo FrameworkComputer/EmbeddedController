@@ -57,4 +57,3 @@ const void *spi_dma_option(const struct spi_device_t *spi_device,
 #endif /* #ifndef _QMSPI_CHIP_H */
 /**   @}
  */
-

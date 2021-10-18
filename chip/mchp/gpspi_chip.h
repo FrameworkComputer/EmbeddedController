@@ -32,4 +32,3 @@ int gpspi_enable(int port, int enable);
 #endif /* #ifndef _GPSPI_CHIP_H */
 /**   @}
  */
-

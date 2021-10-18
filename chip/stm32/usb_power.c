@@ -730,4 +730,3 @@ void usb_power_deferred_cap(struct usb_power_config const *config)
 	if (config->state->state == USB_POWER_STATE_CAPTURING)
 		hook_call_deferred(config->deferred_cap, timeout);
 }
-

@@ -224,4 +224,3 @@ static int command_powerbtn(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn,
 			"[msec]",
 			"Simulate power button press");
-

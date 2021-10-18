@@ -9,4 +9,3 @@
 
 /* To define the gpio_list[] instance. */
 #include "gpio_list.h"
-

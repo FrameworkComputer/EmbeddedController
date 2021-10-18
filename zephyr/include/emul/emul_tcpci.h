@@ -236,4 +236,3 @@ void tcpci_emul_set_rev(const struct emul *emul, enum tcpci_emul_rev rev);
  */
 
 #endif /* __EMUL_TCPCI */
-

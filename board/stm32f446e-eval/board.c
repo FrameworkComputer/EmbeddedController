@@ -88,4 +88,3 @@ void board_config_post_gpio_init(void)
 	GPIO_SET_HS(C,  6);
 	GPIO_SET_HS(C,  7);
 }
-
