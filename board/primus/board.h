@@ -130,6 +130,8 @@
 /* LED */
 #define CONFIG_BATTERY_LEVEL_NEAR_FULL 91
 
+/* Fan features */
+#define CONFIG_CUSTOM_FAN_CONTROL
 #define CONFIG_FANS			FAN_CH_COUNT
 #define RPM_DEVIATION	1
 

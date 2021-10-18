@@ -23,4 +23,5 @@ board-y+=led.o
 board-y+=pwm.o
 board-y+=ps2.o
 board-y+=sensors.o
+board-y+=thermal.o
 board-y+=usbc_config.o
