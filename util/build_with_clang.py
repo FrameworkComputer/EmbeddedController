@@ -5,11 +5,15 @@
 # found in the LICENSE file.
 
 """Build firmware with clang instead of gcc."""
+import argparse
+import concurrent
 import logging
+import multiprocessing
 import os
 import subprocess
 import sys
 
+from concurrent.futures import ThreadPoolExecutor
 
 # Add to this list as compilation errors are fixed for boards.
 BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
@@ -35,10 +39,45 @@ def build(board_name: str) -> None:
 
 
 def main() -> int:
-    logging.basicConfig(level='DEBUG')
-    for board in BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG:
-        build(board)
+    parser = argparse.ArgumentParser()
 
+    log_level_choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+    parser.add_argument(
+        '--log_level', '-l',
+        choices=log_level_choices,
+        default='DEBUG'
+    )
+
+    parser.add_argument(
+        '--num_threads', '-j',
+        type=int,
+        default=multiprocessing.cpu_count()
+    )
+
+    args = parser.parse_args()
+    logging.basicConfig(level=args.log_level)
+
+    logging.debug('Building with %d threads', args.num_threads)
+
+    failed_boards = []
+    with ThreadPoolExecutor(max_workers=args.num_threads) as executor:
+        future_to_board = {
+            executor.submit(build, board): board
+            for board in BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG
+        }
+        for future in concurrent.futures.as_completed(future_to_board):
+            board = future_to_board[future]
+            try:
+                future.result()
+            except Exception:
+                failed_boards.append(board)
+
+    if len(failed_boards) > 0:
+        logging.error('The following boards failed to compile:\n%s',
+                      '\n'.join(failed_boards))
+        return 1
+
+    logging.info('All boards compiled successfully!')
     return 0
 
 
