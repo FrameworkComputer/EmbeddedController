@@ -577,12 +577,16 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,
 		board_chipset_suspend,
 		HOOK_PRIO_DEFAULT);
 
+void board_hibernate(void)
+{
+	board_power_off_deferred();
+}
 void board_hibernate_late(void)
 {
 	/* put host chipset into reset */
 	gpio_set_level(GPIO_SYS_RESET_L, 0);
 
-	board_power_off_deferred();
+
 }
 
 /* according to Panel team suggest, delay 60ms to meet spec */
