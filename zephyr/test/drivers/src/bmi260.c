@@ -1891,6 +1891,30 @@ static void test_unsupported_configs(void)
 		EC_RES_INVALID_PARAM, ret);
 }
 
+void test_interrupt_handler(void)
+{
+	/* The accelerometer interrupt handler simply sets an event flag for the
+	 * motion sensing task. Make sure that flag starts cleared, fire the
+	 * interrupt, and ensure the flag is set.
+	 */
+
+	uint32_t *mask;
+
+	mask = task_get_event_bitmap(TASK_ID_MOTIONSENSE);
+	zassert_true(mask != NULL,
+		     "Got a null pointer when getting event bitmap.");
+	zassert_true((*mask & CONFIG_ACCELGYRO_BMI260_INT_EVENT) == 0,
+		     "Event flag is set before firing interrupt");
+
+	bmi260_interrupt(0);
+
+	mask = task_get_event_bitmap(TASK_ID_MOTIONSENSE);
+	zassert_true(mask != NULL,
+		     "Got a null pointer when getting event bitmap.");
+	zassert_true(*mask & CONFIG_ACCELGYRO_BMI260_INT_EVENT,
+		     "Event flag is not set after firing interrupt");
+}
+
 void test_suite_bmi260(void)
 {
 	ztest_test_suite(bmi260,
@@ -1912,6 +1936,7 @@ void test_suite_bmi260(void)
 			 ztest_user_unit_test(test_bmi_init),
 			 ztest_user_unit_test(test_bmi_acc_fifo),
 			 ztest_user_unit_test(test_bmi_gyr_fifo),
-			 ztest_user_unit_test(test_unsupported_configs));
+			 ztest_user_unit_test(test_unsupported_configs),
+			 ztest_user_unit_test(test_interrupt_handler));
 	ztest_run_test_suite(bmi260);
 }

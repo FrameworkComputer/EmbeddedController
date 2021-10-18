@@ -37,26 +37,6 @@
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
-#if defined(CONFIG_ZEPHYR) && defined(CONFIG_ACCEL_INTERRUPTS)
-/*
- * Get the mostion sensor ID of the BMI260 sensor that
- * generates the interrupt.
- * The interrupt is converted to the event and transferred to motion
- * sense task that actually handles the interrupt.
- *
- * Here, we use alias to get the motion sensor ID
- *
- * e.g) base_accel is the label of a child node in /motionsense-sensors
- * aliases {
- *     bmi260-int = &base_accel;
- * };
- */
-#if DT_NODE_EXISTS(DT_ALIAS(bmi260_int))
-#define CONFIG_ACCELGYRO_BMI260_INT_EVENT	\
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(bmi260_int)))
-#endif
-#endif
-
 STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
 
 /*
