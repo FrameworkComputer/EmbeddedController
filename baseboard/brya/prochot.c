@@ -31,7 +31,7 @@ struct batt_para batt_params;
 
 static int cal_sys_watt(void)
 {
-	int adapter_voltage_mv;
+	int adapter_voltage_v;
 	int IDPM;
 	int Vacpacn;
 	int V_iadpt;
@@ -44,9 +44,9 @@ static int cal_sys_watt(void)
 
 	IDPM = V_iadpt / CONFIG_CHARGER_SENSE_RESISTOR_AC;
 
-	adapter_voltage_mv = charge_manager_get_charger_voltage();
+	adapter_voltage_v = charge_manager_get_charger_voltage() / 1000;
 
-	W_adpt = IDPM * adapter_voltage_mv / PROCHOT_ADAPTER_WATT_RATIO * 100;
+	W_adpt = IDPM * adapter_voltage_v / PROCHOT_ADAPTER_WATT_RATIO * 100;
 
 	return W_adpt;
 }
