@@ -26,6 +26,7 @@ extern void test_suite_stm_mems_common(void);
 extern void test_suite_isl923x(void);
 extern void test_suite_usb_mux(void);
 extern void test_suite_ppc_syv682c(void);
+extern void test_suite_ppc_sn5s330(void);
 extern void test_suite_cros_cbi(void);
 extern void test_suite_tcpci(void);
 
@@ -54,6 +55,7 @@ void test_main(void)
 	test_suite_stm_mems_common();
 	test_suite_isl923x();
 	test_suite_usb_mux();
+	test_suite_ppc_sn5s330();
 	test_suite_ppc_syv682c();
 	test_suite_cros_cbi();
 	test_suite_tcpci();

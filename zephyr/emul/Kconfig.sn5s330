@@ -1,0 +1,22 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+DT_COMPAT_SN5S330_EMUL := cros,sn5s330-emul
+
+menuconfig EMUL_SN5S330
+	bool "sn5s330 emulator"
+	default $(dt_compat_enabled,$(DT_COMPAT_SN5S330_EMUL))
+	depends on I2C_EMUL
+	help
+	  Enable the sn5s330 emulator. This driver uses the emulated I2C bus. It
+	  is used to test the sn5s330 driver. Emulator API is available in
+	  zephyr/include/emul/emul_sn5s330.h
+
+if EMUL_SN5S330
+
+module = SN5S330_EMUL
+module-str = sn5s330_emul
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # EMUL_SN5S330
