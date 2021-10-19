@@ -339,6 +339,7 @@ static int check_hdmi_hpd_status(void)
 /* Called on AP resume to S0 */
 static void board_chipset_resume(void)
 {
+	ioex_set_level(IOEX_USB_A1_PD_R_L, 1);
 	ioex_set_level(IOEX_HDMI_DATA_EN, 1);
 	ioex_set_level(IOEX_EN_PWR_HDMI, 1);
 	msleep(PI3HDX1204_POWER_ON_DELAY_MS);
@@ -355,6 +356,7 @@ static void board_chipset_suspend(void)
 		PI3HDX1204_I2C_ADDR_FLAGS, 0);
 	ioex_set_level(IOEX_EN_PWR_HDMI, 0);
 	ioex_set_level(IOEX_HDMI_DATA_EN, 0);
+	ioex_set_level(IOEX_USB_A1_PD_R_L, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
