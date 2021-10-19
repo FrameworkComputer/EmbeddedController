@@ -22,6 +22,8 @@
 
 static uint8_t init_done, tx_started;
 
+static uint32_t saved_uart_ier;
+
 void uart_init(void)
 {
 	const uint32_t baud_rate = CONFIG_UART_BAUD_RATE;
@@ -94,7 +96,7 @@ int uart_read_char(void)
 void uart_tx_start(void)
 {
 	tx_started = 1;
-	if (UART_IER(UARTN) & UART_IER_THRI)
+	if ((UART_IER(UARTN) & UART_IER_THRI) || (saved_uart_ier != 0))
 		return;
 	disable_sleep(SLEEP_MASK_UART);
 	UART_IER(UARTN) |= UART_IER_THRI;
@@ -116,6 +118,18 @@ void uart_tx_stop(void)
 	tx_started = 0;
 	UART_IER(UARTN) &= ~UART_IER_THRI;
 	enable_sleep(SLEEP_MASK_UART);
+}
+
+void uart_disable_irq(void)
+{
+	saved_uart_ier = UART_IER(UARTN);
+	UART_IER(UARTN) = 0;
+}
+
+void uart_enable_irq(void)
+{
+	UART_IER(UARTN) = saved_uart_ier;
+	saved_uart_ier = 0;
 }
 
 static void uart_process(void)
