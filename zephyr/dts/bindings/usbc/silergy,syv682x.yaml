@@ -11,4 +11,4 @@ properties:
       - "SYV682X_ADDR0_FLAGS"
       - "SYV682X_ADDR1_FLAGS"
       - "SYV682X_ADDR2_FLAGS"
-      - "SYV682x_ADDR3_FLAGS"
+      - "SYV682X_ADDR3_FLAGS"

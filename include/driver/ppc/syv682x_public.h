@@ -12,7 +12,7 @@
 #define SYV682X_ADDR0_FLAGS		0x40
 #define SYV682X_ADDR1_FLAGS		0x41
 #define SYV682X_ADDR2_FLAGS		0x42
-#define SYV682x_ADDR3_FLAGS		0x43
+#define SYV682X_ADDR3_FLAGS		0x43
 
 extern const struct ppc_drv syv682x_drv;
 
