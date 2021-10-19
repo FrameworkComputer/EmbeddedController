@@ -295,12 +295,15 @@ void bmi260_interrupt(enum gpio_signal signal)
 	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCELGYRO_BMI260_INT_EVENT);
 }
 
+/**
+ * config_interrupt - sets up the interrupt request output pin on the BMI260
+ *
+ * Note: this function only supports motion_sensor_t structs of type
+ * MOTIONSENSE_TYPE_ACCEL and expects the caller to verify this.
+ */
 static int config_interrupt(const struct motion_sensor_t *s)
 {
 	int ret;
-
-	if (s->type != MOTIONSENSE_TYPE_ACCEL)
-		return EC_SUCCESS;
 
 	mutex_lock(s->mutex);
 	bmi_write8(s->port, s->i2c_spi_addr_flags,
