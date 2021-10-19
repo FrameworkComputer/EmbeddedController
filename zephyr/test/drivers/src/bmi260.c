@@ -1915,6 +1915,60 @@ void test_interrupt_handler(void)
 		     "Event flag is not set after firing interrupt");
 }
 
+void test_bmi_init_chip_id(void)
+{
+	struct i2c_emul *emul = bmi_emul_get(BMI_ORD);
+	struct motion_sensor_t *ms_acc = &motion_sensors[BMI_ACC_SENSOR_ID];
+
+	/* Part 1:
+	 * Error occurs while reading the chip ID
+	 */
+	i2c_common_emul_set_read_fail_reg(emul, BMI260_CHIP_ID);
+	int ret = ms_acc->drv->init(ms_acc);
+
+	zassert_equal(ret, EC_ERROR_UNKNOWN,
+		      "Expected %d (EC_ERROR_UNKNOWN) but got %d",
+		      EC_ERROR_UNKNOWN, ret);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Part 2:
+	 * Test cases where the returned chip ID does not match what is
+	 * expected. This involves overriding values in the motion_sensor
+	 * struct, so make a copy first.
+	 */
+	struct motion_sensor_t ms_fake;
+
+	memcpy(&ms_fake, ms_acc, sizeof(ms_fake));
+
+	/* Part 2a: expecting MOTIONSENSE_CHIP_BMI220 but get BMI260's chip ID!
+	 */
+	bmi_emul_set_reg(emul, BMI260_CHIP_ID, BMI260_CHIP_ID_MAJOR);
+	ms_fake.chip = MOTIONSENSE_CHIP_BMI220;
+
+	ret = ms_fake.drv->init(&ms_fake);
+	zassert_equal(ret, EC_ERROR_ACCESS_DENIED,
+		      "Expected %d (EC_ERROR_ACCESS_DENIED) but got %d",
+		      EC_ERROR_ACCESS_DENIED, ret);
+
+	/* Part 2b: expecting MOTIONSENSE_CHIP_BMI260 but get BMI220's chip ID!
+	 */
+	bmi_emul_set_reg(emul, BMI260_CHIP_ID, BMI220_CHIP_ID_MAJOR);
+	ms_fake.chip = MOTIONSENSE_CHIP_BMI260;
+
+	ret = ms_fake.drv->init(&ms_fake);
+	zassert_equal(ret, EC_ERROR_ACCESS_DENIED,
+		      "Expected %d (EC_ERROR_ACCESS_DENIED) but got %d",
+		      EC_ERROR_ACCESS_DENIED, ret);
+
+	/* Part 2c: use an invalid expected chip */
+	ms_fake.chip = MOTIONSENSE_CHIP_MAX;
+
+	ret = ms_fake.drv->init(&ms_fake);
+	zassert_equal(ret, EC_ERROR_ACCESS_DENIED,
+		      "Expected %d (EC_ERROR_ACCESS_DENIED) but got %d",
+		      EC_ERROR_ACCESS_DENIED, ret);
+}
+
 void test_suite_bmi260(void)
 {
 	ztest_test_suite(bmi260,
@@ -1937,6 +1991,7 @@ void test_suite_bmi260(void)
 			 ztest_user_unit_test(test_bmi_acc_fifo),
 			 ztest_user_unit_test(test_bmi_gyr_fifo),
 			 ztest_user_unit_test(test_unsupported_configs),
-			 ztest_user_unit_test(test_interrupt_handler));
+			 ztest_user_unit_test(test_interrupt_handler),
+			 ztest_user_unit_test(test_bmi_init_chip_id));
 	ztest_run_test_suite(bmi260);
 }
