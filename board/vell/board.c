@@ -33,11 +33,6 @@
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
-__override void board_cbi_init(void)
-{
-	config_usb_db_type();
-}
-
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
