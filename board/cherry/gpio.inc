@@ -77,8 +77,7 @@ GPIO(EC_INT_L,               PIN(E, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V) /* EC_AP_
 
 /* USB and USBC Signals */
 GPIO(DP_PATH_SEL,            PIN(G, 0), GPIO_OUT_HIGH)
-/* TODO: Turn off in S3 */
-GPIO(DP_DEMUX_EN,            PIN(G, 1), GPIO_OUT_HIGH)
+GPIO(DP_DEMUX_EN,            PIN(G, 1), GPIO_OUT_LOW)
 GPIO(EC_AP_DP_HPD_ODL,       PIN(J, 0), GPIO_ODR_HIGH)
 GPIO(EN_PP5000_USB_A0_VBUS_X,PIN(B, 7), GPIO_OUT_LOW)
 GPIO(USB_C0_DP_IN_HPD,       PIN(H, 4), GPIO_OUT_LOW)
@@ -121,7 +120,7 @@ ALTERNATE(PIN_MASK(B, 0x03), 1, MODULE_UART, 0) /* EC to Servo */
 ALTERNATE(PIN_MASK(A, 0b1111), 1, MODULE_PWM, 0) /* PWM 0,1,2,3 */
 
 /* ADC */
-ALTERNATE(PIN_MASK(I, 0xCF), 0, MODULE_ADC, 0) /* ADC 0,1,2,3,6,7 */
+ALTERNATE(PIN_MASK(I, 0b11001001), 0, MODULE_ADC, 0) /* ADC 0,3,6,7 */
 
 /* SPI */
 ALTERNATE(PIN_MASK(M, 0x33), 0, MODULE_SPI, 0) /* SPI */
@@ -138,23 +137,28 @@ GPIO(CCD_MODE_ODL,           PIN(C, 4), GPIO_INPUT)
  */
 #ifdef BOARD_CHERRY
 GPIO(NC_GPI5,                PIN(I, 5), GPIO_OUT_LOW)
+#else
+GPIO(NC_GPJ4,                PIN(J, 4), GPIO_INPUT | GPIO_PULL_DOWN)
 #endif
 /* NC pins, enable internal pull-up/down to avoid floating state. */
-GPIO(NC_GPM6,                PIN(M, 6), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(NC_GPA1,                PIN(A, 1), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(PWM7,                   PIN(A, 7), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(EC_NVME_PLN_ODL,        PIN(D, 7), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(SPI_CLK_GPG6,           PIN(G, 6), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(PG_NVME_OD,             PIN(H, 3), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(EN_PP2500_NVME_X,       PIN(J, 2), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(EN_PP1200_NVME_X,       PIN(J, 3), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(NC_GPM6,                PIN(M, 6), GPIO_INPUT | GPIO_PULL_DOWN)
 /*
- * These 4 pins don't have internal pull-down capability,
+ * These pins don't have internal pull-down capability,
  * so we set them as output low.
  */
 GPIO(SPI_MOSI_GPG4,          PIN(G, 4), GPIO_OUT_LOW)
 GPIO(SPI_MISO_GPG5,          PIN(G, 5), GPIO_OUT_LOW)
 GPIO(SPI_CS_GPG7,            PIN(G, 7), GPIO_OUT_LOW)
+GPIO(EC_ID0,                 PIN(I, 1), GPIO_OUT_LOW)
+GPIO(EC_ID1,                 PIN(I, 2), GPIO_OUT_LOW)
 
 /* Other unused pins */
-GPIO(PWM7,                   PIN(A, 7), GPIO_INPUT)
-GPIO(EC_NVME_PLN_ODL,        PIN(D, 7), GPIO_INPUT)
 GPIO(NVME_EC_PLA_S3_ODL,     PIN(I, 7), GPIO_INPUT)
-GPIO(EN_PP2500_NVME_X,       PIN(J, 2), GPIO_INPUT)
-GPIO(EN_PP1200_NVME_X,       PIN(J, 3), GPIO_INPUT)
-GPIO(PG_NVME_OD,             PIN(H, 3), GPIO_INPUT)
 

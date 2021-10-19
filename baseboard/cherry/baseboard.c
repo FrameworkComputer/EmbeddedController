@@ -230,6 +230,7 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 static void board_chipset_resume(void)
 {
 	gpio_set_level(GPIO_EC_BL_EN_OD, 1);
+	gpio_set_level(GPIO_DP_DEMUX_EN, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
@@ -237,6 +238,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 static void board_chipset_suspend(void)
 {
 	gpio_set_level(GPIO_EC_BL_EN_OD, 0);
+	gpio_set_level(GPIO_DP_DEMUX_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
