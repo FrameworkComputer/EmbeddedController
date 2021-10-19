@@ -1373,9 +1373,8 @@ static void pe_clear_port_data(int port)
 	pd_set_src_caps(port, 0, NULL);
 	pe_set_snk_caps(port, 0, NULL);
 
-	/* Clear any stored modes and discovery data */
+	/* Clear any stored discovery data, but leave modes for alt mode exit */
 	pd_dfp_discovery_init(port);
-	pd_dfp_mode_init(port);
 
 	dpm_remove_sink(port);
 	dpm_remove_source(port);
