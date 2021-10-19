@@ -24,14 +24,22 @@ enum ec_cfg_keyboard_backlight_type {
 	KEYBOARD_BACKLIGHT_ENABLED = 1
 };
 
+enum ec_cfg_usb_mb_type {
+	MB_USB4_TBT = 0,
+	MB_USB3_NON_TBT = 1
+};
+
 union brya_cbi_fw_config {
 	struct {
-		enum ec_cfg_usb_db_type			usb_db : 4;
-		uint32_t				sd_db : 2;
-		uint32_t				lte_db : 1;
+		enum ec_cfg_usb_db_type			usb_db : 3;
+		uint32_t				wifi : 2;
+		uint32_t				stylus : 1;
 		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
 		uint32_t				audio : 3;
-		uint32_t				reserved_1 : 21;
+		uint32_t				thermal : 2;
+		uint32_t				table_mode : 1;
+		enum ec_cfg_usb_mb_type			usb_mb : 3;
+		uint32_t				reserved_1 : 16;
 	};
 	uint32_t raw_value;
 };
@@ -49,5 +57,12 @@ union brya_cbi_fw_config get_fw_config(void);
  * @return the USB daughter board type.
  */
 enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void);
+
+/**
+ * Get the USB main board type from FW_CONFIG.
+ *
+ * @return the USB main board type.
+ */
+enum ec_cfg_usb_mb_type ec_cfg_usb_mb_type(void);
 
 #endif /* __BOARD_BRYA_FW_CONFIG_H_ */

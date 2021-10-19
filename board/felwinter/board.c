@@ -110,5 +110,9 @@ static void board_init(void)
 {
 	if (ec_cfg_usb_db_type() == DB_USB4_NCT3807)
 		db_update_usb4_config_from_config();
+
+	if (ec_cfg_usb_mb_type() == MB_USB4_TBT)
+		mb_update_usb4_tbt_config_from_config();
+
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
