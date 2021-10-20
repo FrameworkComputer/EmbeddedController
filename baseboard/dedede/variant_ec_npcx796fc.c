@@ -101,10 +101,11 @@ static void disable_adc_irqs_deferred(void)
 DECLARE_DEFERRED(disable_adc_irqs_deferred);
 
 /*
- * The ADC interrupts are only needed for booting up.  The assumption is that
- * the PP3300_A rail will not go down during runtime.  Therefore, we'll disable
- * the ADC interrupts shortly after booting up and also after shutting down.
+ * The assumption is that the PP3300_A rail will not go down during runtime.
+ * Therefore, we'll disable the ADC interrupts shortly after booting up
+ * and also after shutting down.
  */
+static void enable_adc_irqs(void);
 static void disable_adc_irqs(void)
 {
 	int delay = 200 * MSEC;
@@ -114,8 +115,10 @@ static void disable_adc_irqs(void)
 	 * to G3.  Therefore, we'll postpone disabling the ADC IRQs until after
 	 * this occurs.
 	 */
-	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
 		delay = 15 * SECOND;
+		enable_adc_irqs();
+	}
 	hook_call_deferred(&disable_adc_irqs_deferred_data, delay);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, disable_adc_irqs, HOOK_PRIO_DEFAULT);
@@ -138,7 +141,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, disable_adc_irqs, HOOK_PRIO_DEFAULT);
  */
 static void enable_adc_irqs(void)
 {
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
 		CPRINTS("%s", __func__);
 		hook_call_deferred(&disable_adc_irqs_deferred_data, -1);
 		npcx_set_adc_repetitive(adc_channels[ADC_VSNS_PP3300_A].input_ch,
