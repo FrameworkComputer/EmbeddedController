@@ -21,6 +21,7 @@
 #include "driver/accelgyro_lsm6dsm.h"
 #include "fw_config.h"
 #include "hooks.h"
+#include "keyboard_8042_sharedlib.h"
 #include "lid_switch.h"
 #include "power_button.h"
 #include "power.h"
@@ -49,6 +50,13 @@ BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 __override void board_cbi_init(void)
 {
 	config_usb_db_type();
+
+	/*
+	 * If keyboard is US2(KB_LAYOUT_1), we need translate right ctrl
+	 * to backslash(\|) key.
+	 */
+	if (ec_cfg_keyboard_layout() == KB_LAYOUT_1)
+		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
 }
 
 /* Called on AP S3 -> S0 transition */
