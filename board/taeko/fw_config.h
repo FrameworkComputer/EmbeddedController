@@ -35,16 +35,16 @@ union taeko_cbi_fw_config {
 		uint32_t				sd_db : 2;
 		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
 		uint32_t				audio : 3;
+		uint32_t				reserved_1 : 6;
 		/* b/194515356 - Fw config structure
+		 * b/203630618 - Move tablet mode to bit14
 		 * bit8-9: kb_layout
 		 * bit10-11: wifi_sar_id,
 		 * bit12: nvme
 		 * bit13: emmc
-		 * bit14: fan
 		 */
-		uint32_t				reserved_1 : 7;
 		enum ec_cfg_tabletmode_type		tabletmode : 1;
-		uint32_t				reserved_2 : 16;
+		uint32_t				reserved_2 : 17;
 	};
 	uint32_t raw_value;
 };
