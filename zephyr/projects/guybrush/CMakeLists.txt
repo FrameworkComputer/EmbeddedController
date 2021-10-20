@@ -15,3 +15,7 @@ set(PLATFORM_EC_BOARD "${PLATFORM_EC}/board/guybrush" CACHE PATH
   "Path to the platform/ec board directory")
 
 zephyr_library_sources("power_signals.c")
+
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
+	"usbc_config.c"
+	"usb_pd_policy.c")

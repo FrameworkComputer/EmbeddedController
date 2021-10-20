@@ -17,15 +17,57 @@
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
+		i2c_tcpc0: tcpc0 {
+			i2c-port = <&i2c0_0>;
+			enum-name = "I2C_PORT_TCPC0";
+			label = "TCPC0";
+		};
+
+		i2c_tcpc1: tcpc1 {
+			i2c-port = <&i2c1_0>;
+			enum-name = "I2C_PORT_TCPC1";
+			label = "TCPC1";
+		};
+
 		battery {
 			i2c-port = <&i2c2_0>;
 			remote-port = <0>;
 			enum-name = "I2C_PORT_BATTERY";
 			label = "BATTERY";
 		};
+
+		usb_mux {
+			i2c-port = <&i2c3_0>;
+			enum-name = "I2C_PORT_USB_MUX";
+			label = "USB_MUX";
+		};
+
+		charger {
+			i2c-port = <&i2c4_1>;
+			enum-name = "I2C_PORT_CHARGER";
+			label = "CHARGER";
+		};
 	};
 
 
+};
+
+&i2c0_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+};
+
+&i2c1_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c_ctrl1 {
+	status = "okay";
 };
 
 &i2c2_0 {
@@ -34,5 +76,23 @@
 };
 
 &i2c_ctrl2 {
+	status = "okay";
+};
+
+&i2c3_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c_ctrl3 {
+	status = "okay";
+};
+
+&i2c4_1 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c_ctrl4 {
 	status = "okay";
 };

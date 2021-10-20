@@ -143,38 +143,47 @@
 		usb_c0_tcpc_int_odl {
 			gpios = <&gpioe 0 GPIO_INPUT>;
 			label = "USB_C0_TCPC_INT_ODL";
+			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
 		};
 		usb_c1_tcpc_int_odl {
 			gpios = <&gpioc 7 GPIO_INPUT>;
 			label = "USB_C1_TCPC_INT_ODL";
+			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
 		};
 		usb_c0_ppc_int_odl {
 			gpios = <&gpio7 5 GPIO_INPUT>;
 			label = "USB_C0_PPC_INT_ODL";
+			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		usb_c1_ppc_int_odl {
 			gpios = <&gpiod 4 GPIO_INPUT>;
 			label = "USB_C1_PPC_INT_ODL";
+			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
 		};
 		usb_c0_bc12_int_odl {
 			gpios = <&gpioa 4 (GPIO_INPUT | GPIO_PULL_UP)>;
 			label = "USB_C0_BC12_INT_ODL";
+			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
 		};
 		usb_c1_bc12_int_odl {
 			gpios = <&gpio9 6 (GPIO_INPUT | GPIO_PULL_UP)>;
 			label = "USB_C1_BC12_INT_ODL";
+			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
 		};
 		usb_c0_c1_fault_odl {
 			gpios = <&gpio7 3 GPIO_ODR_HIGH>;
 			label = "USB_C0_C1_FAULT_ODL";
+			enum-name = "GPIO_USB_C0_C1_FAULT_ODL";
 		};
 		usb_c0_tcpc_rst_l {
 			gpios = <&gpio3 4 GPIO_OUT_HIGH>;
 			label = "USB_C0_TCPC_RST_L";
+			enum-name = "GPIO_USB_C0_TCPC_RST_L";
 		};
 		usb_c1_tcpc_rst_l {
 			gpios = <&gpio3 7 GPIO_OUT_HIGH>;
 			label = "USB_C1_TCPC_RST_L";
+			enum-name = "GPIO_USB_C1_TCPC_RST_L";
 		};
 		usb_c0_hpd {
 			gpios = <&gpiof 5 GPIO_OUT_LOW>;
