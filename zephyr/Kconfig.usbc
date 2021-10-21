@@ -208,6 +208,12 @@ config PLATFORM_EC_USBC_RETIMER_PS8811
 	  signals for long media link applications. It supports USB 3.1 Gen 2
 	  with operation speed up to 10Gbps as well as Gen 1 operation at 5Gbps.
 
+config PLATFORM_EC_USBC_RETIMER_PS8818
+	bool "Parade PS8818 USB Type-C Retimer for USB and DP Alternate Mode"
+	help
+	  PS8818 is a 10Gbps retimer for Type-C applications with the
+	  integrated USB3.1 and DisplayPort alternate mode port.
+
 config PLATFORM_EC_USBC_RETIMER_KB800X
 	bool "Enable KB800X retimer"
 	help
