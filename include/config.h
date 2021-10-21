@@ -4959,7 +4959,6 @@
  * Intel Reference Validation Platform's (RVP) Modular Embedded Control
  * Card (MECC) versions
  */
-#undef CONFIG_INTEL_RVP_MECC_VERSION_0_9
 #undef CONFIG_INTEL_RVP_MECC_VERSION_1_0
 #undef CONFIG_INTEL_RVP_MECC_VERSION_1_1
 
