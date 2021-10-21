@@ -925,6 +925,12 @@ menuconfig PLATFORM_EC_USB_MUX
 
 if PLATFORM_EC_USB_MUX
 
+config PLATFORM_EC_USB_MUX_AMD_FP6
+	bool "AMD FP6 integrated mux"
+	help
+	  Integrated AMD FP6 mux for USB and DP.  Mux control happens over
+	  an i2c channel.
+
 config PLATFORM_EC_USB_MUX_IT5205
 	bool "ITE IT5205 USB Type-C 3:2 Alternative mode passive mux"
 	help
