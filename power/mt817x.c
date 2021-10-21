@@ -644,7 +644,7 @@ static void power_on(void)
 	CPRINTS("AP running ...");
 }
 
-void chipset_reset(enum chipset_reset_reason reason)
+void chipset_reset(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s: %d", __func__, reason);
 	report_ap_reset(reason);

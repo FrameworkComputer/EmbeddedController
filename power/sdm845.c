@@ -687,7 +687,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	task_wake(TASK_ID_CHIPSET);
 }
 
-void chipset_reset(enum chipset_reset_reason reason)
+void chipset_reset(enum chipset_shutdown_reason reason)
 {
 	int rv;
 

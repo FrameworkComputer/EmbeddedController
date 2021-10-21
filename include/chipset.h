@@ -96,7 +96,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason);
 /**
  * Reset the CPU and/or chipset.
  */
-void chipset_reset(enum chipset_reset_reason reason);
+void chipset_reset(enum chipset_shutdown_reason reason);
 
 /**
  * Interrupt handler to power GPIO inputs.
@@ -137,7 +137,7 @@ static inline void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 }
 
-static inline void chipset_reset(enum chipset_reset_reason reason) { }
+static inline void chipset_reset(enum chipset_shutdown_reason reason) { }
 static inline void power_interrupt(enum gpio_signal signal) { }
 static inline void chipset_handle_espi_reset_assert(void) { }
 static inline void chipset_handle_reboot(void) { }

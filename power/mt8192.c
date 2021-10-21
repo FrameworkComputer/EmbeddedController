@@ -170,7 +170,7 @@ void chipset_exit_hard_off_button(void)
 }
 DECLARE_DEFERRED(chipset_exit_hard_off_button);
 
-void chipset_reset(enum chipset_reset_reason reason)
+void chipset_reset(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s: %d", __func__, reason);
 	report_ap_reset(reason);

@@ -607,7 +607,7 @@ __overridable void intel_x86_sys_reset_delay(void)
 	udelay(32 * MSEC);
 }
 
-void chipset_reset(enum chipset_reset_reason reason)
+void chipset_reset(enum chipset_shutdown_reason reason)
 {
 	/*
 	 * Irrespective of cold_reset value, always toggle SYS_RESET_L to

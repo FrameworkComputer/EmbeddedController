@@ -215,7 +215,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 }
 
 #define SYS_RST_HOLD_US (1 * MSEC)
-void chipset_reset(enum chipset_reset_reason reason)
+void chipset_reset(enum chipset_shutdown_reason reason)
 {
 #ifdef CONFIG_CMD_RTC
 	/* Print out the RTC to help correlate resets in logs. */

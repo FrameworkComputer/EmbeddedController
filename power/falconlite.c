@@ -296,7 +296,7 @@ enum power_state power_chipset_init(void)
 	return POWER_G3;
 }
 
-void chipset_reset(enum chipset_reset_reason reason)
+void chipset_reset(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s: %d", __func__, reason);
 	report_ap_reset(reason);

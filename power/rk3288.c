@@ -385,7 +385,7 @@ static void power_off(void)
 	hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
 }
 
-void chipset_reset(enum chipset_reset_reason reason)
+void chipset_reset(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s(%d)", __func__, reason);
 	report_ap_reset(reason);

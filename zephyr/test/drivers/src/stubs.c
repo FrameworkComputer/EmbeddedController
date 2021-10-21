@@ -261,7 +261,7 @@ enum power_state power_handle_state(enum power_state state)
 	return mock_state;
 }
 
-void chipset_reset(enum chipset_reset_reason reason)
+void chipset_reset(enum chipset_shutdown_reason reason)
 {
 }
 
