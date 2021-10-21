@@ -777,6 +777,13 @@ config PLATFORM_EC_USBC_PPC_VCONN
 	  might need to disable this feature (for instance when both the PPC and
 	  TCPC can supply VCONN). We can cross that bridge when we come to it.
 
+config PLATFORM_EC_USBC_PPC_NX20P3483
+	bool "NX20P3483 High Voltage Sink/Source Combo Switch"
+	select PLATFORM_EC_USBC_OCP
+	help
+	  The NX20P3483 is a product with combined multiple power switches
+	  and a LDO for USB PD application.
+
 config PLATFORM_EC_USBC_PPC_SN5S330
 	bool "TI SN5S330 PD 3.0 power mux"
 	select PLATFORM_EC_USBC_OCP
