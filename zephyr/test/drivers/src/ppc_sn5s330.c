@@ -18,6 +18,11 @@
 #define SN5S330_PORT 0
 #define EMUL emul_get_binding(DT_LABEL(DT_NODELABEL(sn5s330_emul)))
 
+/*
+ * TODO(b/203364783): Exclude other threads from interacting with the emulator
+ * to avoid test flakiness
+ */
+
 static int fail_until_write_func(struct i2c_emul *emul, int reg, uint8_t val,
 				 int bytes, void *data)
 {
@@ -27,7 +32,7 @@ static int fail_until_write_func(struct i2c_emul *emul, int reg, uint8_t val,
 		*count -= 1;
 		return -EIO;
 	}
-	return 0;
+	return 1;
 }
 
 static void test_fail_once_func_set1(void)
