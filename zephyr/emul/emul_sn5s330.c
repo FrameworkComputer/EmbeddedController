@@ -46,7 +46,7 @@ struct i2c_emul *sn5s330_emul_to_i2c_emul(const struct emul *emul)
 
 int sn5s330_emul_peek_reg(const struct emul *emul, uint32_t reg, uint32_t *val)
 {
-	struct sn5s330_emul_data *data = SN5S330_DATA_FROM_I2C_EMUL(emul);
+	struct sn5s330_emul_data *data = emul->data;
 
 	switch (reg) {
 	case SN5S330_FUNC_SET1:
