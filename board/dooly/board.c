@@ -627,23 +627,28 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 /******************************************************************************/
 /* Thermal control; drive fan based on temperature sensors. */
-const static struct ec_thermal_config thermal_a = {
-	.temp_host = {
-		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(78),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
-		[EC_TEMP_THRESH_HALT] = 0,
-	},
-	.temp_fan_off = C_TO_K(41),
-	.temp_fan_max = C_TO_K(72),
-};
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define THERMAL_A \
+	{ \
+		.temp_host = { \
+			[EC_TEMP_THRESH_WARN] = 0, \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(78), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_WARN] = 0, \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
+			[EC_TEMP_THRESH_HALT] = 0, \
+		}, \
+		.temp_fan_off = C_TO_K(41), \
+		.temp_fan_max = C_TO_K(72), \
+	}
+__maybe_unused static const struct ec_thermal_config thermal_a = THERMAL_A;
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1] = thermal_a,
+	[TEMP_SENSOR_1] = THERMAL_A,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 

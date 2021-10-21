@@ -316,15 +316,20 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * 130 C.  However, sensor is located next to DDR, so we need to use the lower
  * DDR temperature limit (85 C)
  */
-static const struct ec_thermal_config thermal_cpu = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
-	},
-};
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define THERMAL_CPU \
+	{ \
+		.temp_host = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
+		}, \
+	}
+__maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 
 /*
  * TODO(b/194318801): confirm thermal limits setting for gimble
@@ -339,21 +344,27 @@ static const struct ec_thermal_config thermal_cpu = {
  * Inductors: limit of 125c
  * PCB: limit is 80c
  */
-static const struct ec_thermal_config thermal_inductor = {
-	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
-	},
-	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
-	},
-};
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define THERMAL_INDUCTOR \
+	{ \
+		.temp_host = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
+		}, \
+	}
+__maybe_unused static const struct ec_thermal_config thermal_inductor =
+	THERMAL_INDUCTOR;
 
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_DDR_SOC] = thermal_cpu,
+	[TEMP_SENSOR_1_DDR_SOC] = THERMAL_CPU,
 	/* TODO(b/194318801): confirm thermal limits setting for gimble */
-	[TEMP_SENSOR_2_FAN]	= thermal_inductor,
-	[TEMP_SENSOR_3_CHARGER]	= thermal_inductor,
+	[TEMP_SENSOR_2_FAN] = THERMAL_INDUCTOR,
+	[TEMP_SENSOR_3_CHARGER] = THERMAL_INDUCTOR,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
