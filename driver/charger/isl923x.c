@@ -1282,6 +1282,7 @@ static enum ec_error_list raa489000_enable_linear_charge(int chgnum,
 		rv = raw_update16(CHARGER_PRIMARY, RAA489000_REG_CONTROL10,
 				  RAA489000_C10_ENABLE_DVC_TRICKLE_CHARGE,
 				  MASK_CLR);
+		rv |= isl9237_set_current(CHARGER_PRIMARY, 0);
 	}
 
 	return rv;
