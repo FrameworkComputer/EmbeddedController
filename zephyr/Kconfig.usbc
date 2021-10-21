@@ -777,6 +777,14 @@ config PLATFORM_EC_USBC_PPC_VCONN
 	  might need to disable this feature (for instance when both the PPC and
 	  TCPC can supply VCONN). We can cross that bridge when we come to it.
 
+config PLATFORM_EC_USBC_PPC_AOZ1380
+	bool "Alpha & Omega USB Type-C PD Sink and Source Protection Switch"
+	select PLATFORM_EC_USBC_OCP
+	help
+	  AOZ1380DI integrates two power switches and control circuitry to
+	  provide all the functionality and protection needed for sourcing
+	  and sinking current through a USB Type-C port with PD capability.
+
 config PLATFORM_EC_USBC_PPC_NX20P3483
 	bool "NX20P3483 High Voltage Sink/Source Combo Switch"
 	select PLATFORM_EC_USBC_OCP
