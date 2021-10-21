@@ -50,6 +50,48 @@ static void test_ps8xxx_init_fail(void)
 		      NULL);
 }
 
+/**
+ * Test PS8805 init and indirectly ps8705_dci_disable which is
+ * used by PS8805
+ */
+static void test_ps8805_init(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+	struct i2c_emul *p1_i2c_emul =
+		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_1);
+	struct i2c_emul *tcpci_i2c_emul = tcpci_emul_get_i2c_emul(tcpci_emul);
+
+	/* Set arbitrary FW reg value != 0 for this test */
+	tcpci_emul_set_reg(tcpci_emul, PS8XXX_REG_FW_REV, 0x31);
+	/* Set correct power status for this test */
+	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_POWER_STATUS, 0x0);
+
+	/* Test fail on read I2C debug reg */
+	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul,
+					  PS8XXX_REG_I2C_DEBUGGING_ENABLE);
+	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1),
+		      NULL);
+	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test fail on read DCI reg */
+	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
+					  PS8XXX_P1_REG_MUX_USB_DCI_CFG);
+	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1),
+		      NULL);
+	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test successful init */
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	check_tcpci_reg(tcpci_emul, PS8XXX_REG_I2C_DEBUGGING_ENABLE,
+			PS8XXX_REG_I2C_DEBUGGING_ENABLE_ON);
+	zassert_equal(PS8XXX_REG_MUX_USB_DCI_CFG_MODE_OFF,
+		      ps8xxx_emul_get_dci_cfg(ps8xxx_emul) &
+		      PS8XXX_REG_MUX_USB_DCI_CFG_MODE_MASK, NULL);
+}
+
 /** Test PS8xxx release */
 static void test_ps8xxx_release(void)
 {
@@ -141,6 +183,66 @@ static void test_ps8xxx_transmit(void)
 				      &reg_val), NULL);
 	cnt |= reg_val;
 	zassert_equal(exp_cnt, cnt, "0x%llx != 0x%llx", exp_cnt, cnt);
+}
+
+/** Test PS8805 and PS8815 drp toggle */
+static void test_ps88x5_drp_toggle(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+	struct i2c_emul *tcpci_i2c_emul = tcpci_emul_get_i2c_emul(tcpci_emul);
+	uint16_t exp_role_ctrl;
+
+	/* Test fail on command write */
+	i2c_common_emul_set_write_fail_reg(tcpci_i2c_emul, TCPC_REG_COMMAND);
+	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.drp_toggle(USBC_PORT_C1),
+		      NULL);
+
+	/* Test fail on role control write */
+	i2c_common_emul_set_write_fail_reg(tcpci_i2c_emul, TCPC_REG_ROLE_CTRL);
+	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.drp_toggle(USBC_PORT_C1),
+		      NULL);
+	i2c_common_emul_set_write_fail_reg(tcpci_i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test fail on CC status read */
+	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul, TCPC_REG_CC_STATUS);
+	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.drp_toggle(USBC_PORT_C1),
+		      NULL);
+	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Set CC status as snk, CC lines set arbitrary */
+	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_CC_STATUS,
+			   TCPC_REG_CC_STATUS_SET(1, TYPEC_CC_VOLT_OPEN,
+						  TYPEC_CC_VOLT_RA));
+
+	/*
+	 * TODO(b/203858808): PS8815 sleep here if specific FW rev.
+	 *                    Find way to test 1 ms delay
+	 */
+	/* Test drp toggle when CC is snk. Role control CC lines should be RP */
+	exp_role_ctrl = TCPC_REG_ROLE_CTRL_SET(TYPEC_DRP, TYPEC_RP_USB,
+					       TYPEC_CC_RP, TYPEC_CC_RP);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.drp_toggle(USBC_PORT_C1),
+		      NULL);
+	check_tcpci_reg(tcpci_emul, TCPC_REG_ROLE_CTRL, exp_role_ctrl);
+	check_tcpci_reg(tcpci_emul, TCPC_REG_COMMAND,
+			TCPC_REG_COMMAND_LOOK4CONNECTION);
+
+	/* Set CC status as src, CC lines set arbitrary */
+	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_CC_STATUS,
+			   TCPC_REG_CC_STATUS_SET(0, TYPEC_CC_VOLT_OPEN,
+						  TYPEC_CC_VOLT_RA));
+
+	/* Test drp toggle when CC is src. Role control CC lines should be RD */
+	exp_role_ctrl = TCPC_REG_ROLE_CTRL_SET(TYPEC_DRP, TYPEC_RP_USB,
+					       TYPEC_CC_RD, TYPEC_CC_RD);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.drp_toggle(USBC_PORT_C1),
+		      NULL);
+	check_tcpci_reg(tcpci_emul, TCPC_REG_ROLE_CTRL, exp_role_ctrl);
+	check_tcpci_reg(tcpci_emul, TCPC_REG_COMMAND,
+			TCPC_REG_COMMAND_LOOK4CONNECTION);
 }
 
 /** Test PS8xxx get chip info code used by all PS8xxx devices */
@@ -264,17 +366,251 @@ static void test_ps8805_get_chip_info(void)
 	test_ps8xxx_get_chip_info(PS8805_PRODUCT_ID);
 }
 
+/** Test PS8805 get chip info and indirectly ps8805_make_device_id */
+static void test_ps8805_get_chip_info_fix_dev_id(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+	struct i2c_emul *p0_i2c_emul =
+		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_0);
+	struct ec_response_pd_chip_info_v1 info;
+	uint16_t vendor, product, device_id, fw_rev;
+	uint16_t chip_rev;
+
+	struct {
+		uint16_t exp_dev_id;
+		uint16_t chip_rev;
+	} test_param[] = {
+		/* Test A3 chip revision */
+		{
+			.exp_dev_id = 0x2,
+			.chip_rev = 0xa0,
+		},
+		/* Test A2 chip revision */
+		{
+			.exp_dev_id = 0x1,
+			.chip_rev = 0x0,
+		},
+	};
+
+	/* Setup chip info */
+	vendor = PS8XXX_VENDOR_ID;
+	product = PS8805_PRODUCT_ID;
+	/* Arbitrary revision */
+	fw_rev = 0x32;
+	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_VENDOR_ID, vendor);
+	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_PRODUCT_ID, product);
+	tcpci_emul_set_reg(tcpci_emul, PS8XXX_REG_FW_REV, fw_rev);
+
+	/* Set device id which requires fixing */
+	device_id = 0x1;
+	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_BCD_DEV, device_id);
+
+	/* Test error on fixing device id because of fail chip revision read */
+	i2c_common_emul_set_read_fail_reg(p0_i2c_emul,
+					  PS8805_P0_REG_CHIP_REVISION);
+	zassert_equal(EC_ERROR_INVAL,
+		      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1, &info),
+		      NULL);
+	i2c_common_emul_set_read_fail_reg(p0_i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Set wrong chip revision */
+	chip_rev = 0x32;
+	ps8xxx_emul_set_chip_rev(ps8xxx_emul, chip_rev);
+
+	/* Test error on fixing device id */
+	zassert_equal(EC_ERROR_UNKNOWN,
+		      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1, &info),
+		      NULL);
+
+	/* Test fixing device id for specific chip revisions */
+	for (int i = 0; i < ARRAY_SIZE(test_param); i++) {
+		ps8xxx_emul_set_chip_rev(ps8xxx_emul, test_param[i].chip_rev);
+
+		/* Test correct device id after fixing */
+		zassert_equal(EC_SUCCESS,
+			      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1,
+							    &info),
+			      "Failed to get chip info in test case %d (chip_rev 0x%x)",
+			      i, test_param[i].chip_rev);
+		zassert_equal(vendor, info.vendor_id,
+			      "0x%x != (vendor = 0x%x) in test case %d (chip_rev 0x%x)",
+			      vendor, info.vendor_id,
+			      i, test_param[i].chip_rev);
+		zassert_equal(product, info.product_id,
+			      "0x%x != (product = 0x%x) in test case %d (chip_rev 0x%x)",
+			      product, info.product_id,
+			      i, test_param[i].chip_rev);
+		zassert_equal(test_param[i].exp_dev_id, info.device_id,
+			      "0x%x != (device = 0x%x) in test case %d (chip_rev 0x%x)",
+			      test_param[i].exp_dev_id, info.device_id,
+			      i, test_param[i].chip_rev);
+		zassert_equal(fw_rev, info.fw_version_number,
+			      "0x%x != (FW rev = 0x%x) in test case %d (chip_rev 0x%x)",
+			      fw_rev, info.fw_version_number,
+			      i, test_param[i].chip_rev);
+	}
+}
+
+/** Test PS8805 get/set gpio */
+static void test_ps8805_gpio(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	struct i2c_emul *gpio_i2c_emul =
+		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_GPIO);
+	uint8_t exp_ctrl, gpio_ctrl;
+	int level;
+
+	struct {
+		enum ps8805_gpio signal;
+		uint16_t gpio_reg;
+		int level;
+	} test_param[] = {
+		/* Chain of set and unset GPIO to test */
+		{
+			.gpio_reg = PS8805_REG_GPIO_0,
+			.signal = PS8805_GPIO_0,
+			.level = 1,
+		},
+		{
+			.gpio_reg = PS8805_REG_GPIO_1,
+			.signal = PS8805_GPIO_1,
+			.level = 1,
+		},
+		{
+			.gpio_reg = PS8805_REG_GPIO_2,
+			.signal = PS8805_GPIO_2,
+			.level = 1,
+		},
+		/* Test setting GPIO 0 which is already set */
+		{
+			.gpio_reg = PS8805_REG_GPIO_0,
+			.signal = PS8805_GPIO_0,
+			.level = 1,
+		},
+		/* Test clearing GPIOs */
+		{
+			.gpio_reg = PS8805_REG_GPIO_0,
+			.signal = PS8805_GPIO_0,
+			.level = 0,
+		},
+		{
+			.gpio_reg = PS8805_REG_GPIO_1,
+			.signal = PS8805_GPIO_1,
+			.level = 0,
+		},
+		{
+			.gpio_reg = PS8805_REG_GPIO_2,
+			.signal = PS8805_GPIO_2,
+			.level = 0,
+		},
+		/* Test clearing GPIO 0 which is already unset */
+		{
+			.gpio_reg = PS8805_REG_GPIO_0,
+			.signal = PS8805_GPIO_0,
+			.level = 1,
+		},
+	};
+
+	/* Setup fail on gpio control reg read */
+	i2c_common_emul_set_read_fail_reg(gpio_i2c_emul,
+					  PS8805_REG_GPIO_CONTROL);
+
+	/* Test fail on reading gpio control reg */
+	zassert_equal(EC_ERROR_INVAL,
+		      ps8805_gpio_set_level(USBC_PORT_C1, PS8805_GPIO_0, 1),
+		      NULL);
+	zassert_equal(EC_ERROR_INVAL,
+		      ps8805_gpio_get_level(USBC_PORT_C1, PS8805_GPIO_0,
+					    &level), NULL);
+
+	/* Do not fail on gpio control reg read */
+	i2c_common_emul_set_read_fail_reg(gpio_i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test fail on writing gpio control reg */
+	i2c_common_emul_set_write_fail_reg(gpio_i2c_emul,
+					   PS8805_REG_GPIO_CONTROL);
+	zassert_equal(EC_ERROR_INVAL,
+		      ps8805_gpio_set_level(USBC_PORT_C1, PS8805_GPIO_0, 1),
+		      NULL);
+	i2c_common_emul_set_write_fail_reg(gpio_i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Clear gpio control reg */
+	ps8xxx_emul_set_gpio_ctrl(ps8xxx_emul, 0x0);
+	exp_ctrl = 0;
+
+	/* Test set and unset GPIO */
+	for (int i = 0; i < ARRAY_SIZE(test_param); i++) {
+		if (test_param[i].level) {
+			exp_ctrl |= test_param[i].gpio_reg;
+		} else {
+			exp_ctrl &= ~test_param[i].gpio_reg;
+		}
+		zassert_equal(EC_SUCCESS,
+			      ps8805_gpio_set_level(USBC_PORT_C1,
+						    test_param[i].signal,
+						    test_param[i].level),
+			      "Failed gpio_set in test case %d (gpio %d, level %d)",
+			      i, test_param[i].signal, test_param[i].level);
+		zassert_equal(EC_SUCCESS,
+			      ps8805_gpio_get_level(USBC_PORT_C1,
+						    test_param[i].signal,
+						    &level),
+			      "Failed gpio_get in test case %d (gpio %d, level %d)",
+			      i, test_param[i].signal, test_param[i].level);
+		zassert_equal(test_param[i].level, level,
+			      "%d != (gpio_get_level = %d) in test case %d (gpio %d, level %d)",
+			      test_param[i].level, level, i,
+			      test_param[i].signal, test_param[i].level);
+		gpio_ctrl = ps8xxx_emul_get_gpio_ctrl(ps8xxx_emul);
+		zassert_equal(exp_ctrl, gpio_ctrl,
+			      "0x%x != (gpio_ctrl = 0x%x) in test case %d (gpio %d, level %d)",
+			      exp_ctrl, gpio_ctrl, i, test_param[i].signal,
+			      test_param[i].level);
+	}
+}
+
 /* Setup no fail for all I2C devices associated with PS8xxx emulator */
 static void setup_no_fail_all(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
 	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
 	struct i2c_emul *tcpci_i2c_emul = tcpci_emul_get_i2c_emul(tcpci_emul);
+	struct i2c_emul *p0_i2c_emul =
+		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_0);
+	struct i2c_emul *p1_i2c_emul =
+		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_1);
+	struct i2c_emul *gpio_i2c_emul =
+		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_GPIO);
 
 	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 	i2c_common_emul_set_write_fail_reg(tcpci_i2c_emul,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	if (p0_i2c_emul != NULL) {
+		i2c_common_emul_set_read_fail_reg(p0_i2c_emul,
+						  I2C_COMMON_EMUL_NO_FAIL_REG);
+		i2c_common_emul_set_write_fail_reg(p0_i2c_emul,
+						   I2C_COMMON_EMUL_NO_FAIL_REG);
+	}
+
+	if (p1_i2c_emul != NULL) {
+		i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
+						  I2C_COMMON_EMUL_NO_FAIL_REG);
+		i2c_common_emul_set_write_fail_reg(p1_i2c_emul,
+						   I2C_COMMON_EMUL_NO_FAIL_REG);
+	}
+
+	if (gpio_i2c_emul != NULL) {
+		i2c_common_emul_set_read_fail_reg(gpio_i2c_emul,
+						  I2C_COMMON_EMUL_NO_FAIL_REG);
+		i2c_common_emul_set_write_fail_reg(gpio_i2c_emul,
+						   I2C_COMMON_EMUL_NO_FAIL_REG);
+	}
 }
 
 void test_suite_ps8xxx(void)
@@ -282,14 +618,23 @@ void test_suite_ps8xxx(void)
 	ztest_test_suite(ps8805,
 			 ztest_unit_test_setup_teardown(test_ps8xxx_init_fail,
 				 setup_no_fail_all, unit_test_noop),
+			 ztest_unit_test_setup_teardown(test_ps8805_init,
+				 setup_no_fail_all, unit_test_noop),
 			 ztest_unit_test_setup_teardown(test_ps8xxx_release,
 				 setup_no_fail_all, unit_test_noop),
 			 ztest_unit_test_setup_teardown(test_ps8xxx_set_vconn,
 				 setup_no_fail_all, unit_test_noop),
 			 ztest_unit_test_setup_teardown(test_ps8xxx_transmit,
 				 setup_no_fail_all, unit_test_noop),
+			 ztest_unit_test_setup_teardown(test_ps88x5_drp_toggle,
+				 setup_no_fail_all, unit_test_noop),
 			 ztest_unit_test_setup_teardown(
 				 test_ps8805_get_chip_info,
+				 setup_no_fail_all, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8805_get_chip_info_fix_dev_id,
+				 setup_no_fail_all, unit_test_noop),
+			 ztest_unit_test_setup_teardown(test_ps8805_gpio,
 				 setup_no_fail_all, unit_test_noop));
 	ztest_run_test_suite(ps8805);
 }
