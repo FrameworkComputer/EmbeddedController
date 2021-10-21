@@ -6,6 +6,8 @@
 #ifndef _ZORK_CBI_EC_FW_CONFIG__H_
 #define _ZORK_CBI_EC_FW_CONFIG__H_
 
+#include "cbi_ssfc.h"
+
 /****************************************************************************
  * CBI Zork EC FW Configuration
  */
@@ -56,12 +58,6 @@ enum ec_cfg_lid_accel_sensor_type {
  *
  * ec_config_has_base_gyro_sensor() will return ec_cfg_base_gyro_sensor_type
  */
-enum ec_cfg_base_gyro_sensor_type {
-	BASE_GYRO_NONE = 0,
-	BASE_GYRO_BMI160 = 1,
-	BASE_GYRO_LSM6DSM = 2,
-	BASE_GYRO_ICM426XX = 3,
-};
 #define EC_CFG_BASE_GYRO_SENSOR_L		11
 #define EC_CFG_BASE_GYRO_SENSOR_H		13
 #define EC_CFG_BASE_GYRO_SENSOR_MASK	\
@@ -133,7 +129,7 @@ uint32_t get_cbi_fw_config(void);
 enum ec_cfg_usb_db_type ec_config_get_usb_db(void);
 enum ec_cfg_usb_mb_type ec_config_get_usb_mb(void);
 enum ec_cfg_lid_accel_sensor_type ec_config_has_lid_accel_sensor(void);
-enum ec_cfg_base_gyro_sensor_type ec_config_has_base_gyro_sensor(void);
+enum ec_ssfc_base_gyro_sensor ec_config_has_base_gyro_sensor(void);
 enum ec_cfg_pwm_keyboard_backlight_type ec_config_has_pwm_keyboard_backlight(
 									void);
 enum ec_cfg_lid_angle_tablet_mode_type ec_config_has_lid_angle_tablet_mode(

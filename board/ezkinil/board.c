@@ -309,27 +309,27 @@ const struct usb_mux usbc0_sbu_mux = {
  * Base Gyro Sensor dynamic configuration
  */
 
-static int base_gyro_config;
+static enum ec_ssfc_base_gyro_sensor base_gyro_config = SSFC_BASE_GYRO_NONE;
 
 static void setup_base_gyro_config(void)
 {
 	base_gyro_config = ec_config_has_base_gyro_sensor();
 
-	if (base_gyro_config == BASE_GYRO_ICM426XX) {
+	if (base_gyro_config == SSFC_BASE_GYRO_ICM426XX) {
 		motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
 		motion_sensors[BASE_GYRO] = icm426xx_base_gyro;
 		ccprints("BASE GYRO is ICM426XX");
-	} else if (base_gyro_config == BASE_GYRO_BMI160)
+	} else if (base_gyro_config == SSFC_BASE_GYRO_BMI160)
 		ccprints("BASE GYRO is BMI160");
 }
 
 void motion_interrupt(enum gpio_signal signal)
 {
 	switch (base_gyro_config) {
-	case BASE_GYRO_ICM426XX:
+	case SSFC_BASE_GYRO_ICM426XX:
 		icm426xx_interrupt(signal);
 		break;
-	case BASE_GYRO_BMI160:
+	case SSFC_BASE_GYRO_BMI160:
 	default:
 		bmi160_interrupt(signal);
 		break;

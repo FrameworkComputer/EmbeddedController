@@ -53,7 +53,7 @@ enum ec_cfg_lid_accel_sensor_type ec_config_has_lid_accel_sensor(void)
 /*
  * ec_config_has_base_gyro_sensor() will return ec_cfg_base_gyro_sensor_type
  */
-enum ec_cfg_base_gyro_sensor_type ec_config_has_base_gyro_sensor(void)
+enum ec_ssfc_base_gyro_sensor ec_config_has_base_gyro_sensor(void)
 {
 	return ((get_cbi_fw_config() & EC_CFG_BASE_GYRO_SENSOR_MASK)
 			>> EC_CFG_BASE_GYRO_SENSOR_L);
