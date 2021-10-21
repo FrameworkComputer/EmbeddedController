@@ -503,6 +503,7 @@ struct tcpc_config_t {
 	const struct tcpm_drv *drv;
 	/* See TCPC_FLAGS_* above */
 	uint32_t flags;
+	enum gpio_signal alert_signal;
 };
 
 #ifndef CONFIG_USB_PD_TCPC_RUNTIME_CONFIG
