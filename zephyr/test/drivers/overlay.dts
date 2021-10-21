@@ -69,7 +69,7 @@
 			label = "USB_C0";
 		};
 		usb-c1 {
-			i2c-port = <&i2c0>;
+			i2c-port = <&i2c1>;
 			enum-name = "I2C_PORT_USB_C1";
 			label = "USB_C1";
 		};
@@ -432,8 +432,8 @@
 	};
 
 	/*
-	 * Second i2c bus is required, because there is already device with
-	 * address 0x68 on the first bus
+	 * Second i2c bus is required, because there are already devices with
+	 * addresses 0x68, 0xb and 0x9 on the first bus
 	 */
 	i2c1: i2c@400 {
 		status = "okay";
@@ -444,15 +444,20 @@
 		reg = <0x400 4>;
 		label = "I2C_1";
 
-		accel_bmi160: bmi160@68 {
-			compatible = "zephyr,bmi";
-			reg = <0x68>;
-			label = "BMI160";
-			device-model = "BMI_EMUL_160";
-			error-on-ro-write;
-			error-on-wo-read;
-			error-on-reserved-bit-write;
-			simulate-command-exec-time;
+		tcpci_ps8xxx_emul: tcpci_ps8xxx_emul@b {
+			compatible = "cros,tcpci-emul";
+			status = "okay";
+			reg = <0xb>;
+			label = "TCPCI_PS8XXX_EMUL";
+		};
+
+		ps8xxx_emul: ps8xxx_emul {
+			compatible = "cros,ps8xxx-emul";
+			tcpci-i2c = <&tcpci_ps8xxx_emul>;
+			p0-i2c-addr = <0x8>;
+			p1-i2c-addr = <0x9>;
+			gpio-i2c-addr = <0x1a>;
+			label = "PS8XXX_EMUL";
 		};
 
 		tcs_emul: tcs@39 {
@@ -462,6 +467,32 @@
 			error-on-ro-write;
 			error-on-reserved-bit-write;
 			error-on-msb-first-access;
+		};
+
+		syv682x_emul: syv682x@41 {
+			compatible = "zephyr,syv682x-emul";
+			reg = <0x41>;
+			label = "SYV682X_EMUL";
+		};
+
+		usb_c1_bb_retimer_emul: bbretimer@42 {
+			compatible = "cros,bb-retimer-emul";
+			reg = <0x42>;
+			label = "USB_C1_BB_RETIMER";
+			vendor = "BB_RETIMER_VENDOR_ID_1";
+			error-on-ro-write;
+			error-on-reserved-bit-write;
+		};
+
+		accel_bmi160: bmi160@68 {
+			compatible = "zephyr,bmi";
+			reg = <0x68>;
+			label = "BMI160";
+			device-model = "BMI_EMUL_160";
+			error-on-ro-write;
+			error-on-wo-read;
+			error-on-reserved-bit-write;
+			simulate-command-exec-time;
 		};
 	};
 
@@ -526,12 +557,6 @@
 		label = "SN5S330_EMUL";
 	};
 
-	syv682x_emul: syv682x@41 {
-		compatible = "zephyr,syv682x-emul";
-		reg = <0x41>;
-		label = "SYV682X_EMUL";
-	};
-
 	accel_bmi260: bmi260@68 {
 		compatible = "zephyr,bmi";
 		reg = <0x68>;
@@ -541,15 +566,6 @@
 		error-on-wo-read;
 		error-on-reserved-bit-write;
 		simulate-command-exec-time;
-	};
-
-	usb_c1_bb_retimer_emul: bbretimer@42 {
-		compatible = "cros,bb-retimer-emul";
-		reg = <0x42>;
-		label = "USB_C1_BB_RETIMER";
-		vendor = "BB_RETIMER_VENDOR_ID_1";
-		error-on-ro-write;
-		error-on-reserved-bit-write;
 	};
 
 	ln9310: ln9310@80 {
