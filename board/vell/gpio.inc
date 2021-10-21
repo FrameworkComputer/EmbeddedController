@@ -11,7 +11,6 @@
 GPIO_INT(ACOK_OD,                        PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
 GPIO_INT(EC_ALS_RGB_INT_R_L,             PIN(D, 4), GPIO_INT_FALLING, tcs3400_interrupt)
 GPIO_INT(EC_PROCHOT_IN_L,                PIN(F, 0), GPIO_INT_BOTH, throttle_ap_prochot_input_interrupt)
-GPIO_INT(EC_VOLUP_BTN_ODL,               PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_WP_ODL,                      PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
 GPIO_INT(GSC_EC_PWR_BTN_ODL,             PIN(0, 1), GPIO_INT_BOTH | GPIO_HIB_WAKE_LOW, power_button_interrupt)
 GPIO_INT(LID_OPEN,                       PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)
@@ -60,7 +59,6 @@ GPIO(EC_I2C_USB_C2_C3_PPC_BC_RT_SCL, PIN(E, 4), GPIO_INPUT)
 GPIO(EC_I2C_USB_C2_C3_PPC_BC_RT_SDA, PIN(E, 3), GPIO_INPUT)
 GPIO(EC_I2C_USB_C2_C3_TCPC_SCL,      PIN(F, 3), GPIO_INPUT)
 GPIO(EC_I2C_USB_C2_C3_TCPC_SDA,      PIN(F, 2), GPIO_INPUT)
-GPIO(EC_KB_BL_EN_L,                  PIN(8, 6), GPIO_OUT_HIGH)
 GPIO(EC_PCHHOT_ODL,                  PIN(7, 4), GPIO_INPUT)
 GPIO(EC_PCH_INT_ODL,                 PIN(B, 0), GPIO_ODR_HIGH)
 GPIO(EC_PCH_PWR_BTN_ODL,             PIN(C, 1), GPIO_ODR_HIGH)
@@ -77,13 +75,6 @@ GPIO(SYS_RST_ODL,                    PIN(C, 5), GPIO_ODR_HIGH)
 GPIO(USB_C0_C1_TCPC_RST_ODL,         PIN(A, 7), GPIO_ODR_LOW)
 GPIO(USB_C2_C3_TCPC_RST_ODL,         PIN(9, 6), GPIO_ODR_LOW)
 GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
-
-/* Not implemented in hardware */
-UNIMPLEMENTED(TABLET_MODE_L)
-UNIMPLEMENTED(EC_IMU_INT_R_L)
-UNIMPLEMENTED(EN_PP5000_USBA_R)
-UNIMPLEMENTED(EC_ACCEL_INT_R_L)
-UNIMPLEMENTED(EC_VOLDN_BTN_ODL)
 
 /* UART alternate functions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)              /* GPIO64/CR_SIN1, GPO65/CR_SOUT1/FLPRG1_L */
@@ -131,6 +122,8 @@ UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
 UNUSED(PIN(F, 4))       /* GPIOF4/I2C5_SDA1 */
 UNUSED(PIN(F, 5))       /* GPIOF5/I2C5_SCL1 */
+UNUSED(PIN(8, 6))       /* GPO86/TXD/CR_SOUT2 */
+UNUSED(PIN(9, 7))       /* GPIO97 */
 
 /* Pre-configured PSL balls:  J8  K6 */
 
