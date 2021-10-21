@@ -45,7 +45,7 @@ extern const struct usb_mux_driver pi3dpx1207_usb_retimer;
 /* Retimer driver hardware specific controls */
 struct pi3dpx1207_usb_control {
 	/* Retimer enable */
-	const enum gpio_signal enable_gpio;
+	const enum ioex_signal enable_gpio;
 	/* DP Mode enable */
 	const enum gpio_signal dp_enable_gpio;
 };
