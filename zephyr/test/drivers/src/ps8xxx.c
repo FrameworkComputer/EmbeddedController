@@ -92,6 +92,31 @@ static void test_ps8805_init(void)
 		      PS8XXX_REG_MUX_USB_DCI_CFG_MODE_MASK, NULL);
 }
 
+/** Test PS8815 init */
+static void test_ps8815_init(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+	struct i2c_emul *p1_i2c_emul =
+		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_1);
+
+	/* Set arbitrary FW reg value != 0 for this test */
+	tcpci_emul_set_reg(tcpci_emul, PS8XXX_REG_FW_REV, 0x31);
+	/* Set correct power status for rest of the test */
+	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_POWER_STATUS, 0x0);
+
+	/* Test fail on reading HW revision register */
+	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
+					  PS8815_P1_REG_HW_REVISION);
+	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1),
+		      NULL);
+	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test successful init */
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+}
+
 /** Test PS8xxx release */
 static void test_ps8xxx_release(void)
 {
@@ -114,6 +139,119 @@ static void test_ps8xxx_release(void)
 		      NULL);
 	zassert_true(k_uptime_get() - start_ms >= 10,
 		     "release on FW reg read fail should wait for chip");
+}
+
+/**
+ * Check if PS8815 set_cc write correct value to ROLE_CTRL register and if
+ * PS8815 specific workaround is applied to RP_DETECT_CONTROL.
+ */
+static void check_ps8815_set_cc(enum tcpc_rp_value rp, enum tcpc_cc_pull cc,
+				uint16_t rp_detect_ctrl, const char *test_case)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+	uint16_t reg_val, exp_role_ctrl;
+
+	/* Clear RP detect register to see if it is set after test */
+	tcpci_emul_set_reg(tcpci_emul, PS8XXX_REG_RP_DETECT_CONTROL, 0);
+
+	exp_role_ctrl = TCPC_REG_ROLE_CTRL_SET(TYPEC_NO_DRP, rp, cc, cc);
+
+	zassert_equal(EC_SUCCESS,
+		      ps8xxx_tcpm_drv.select_rp_value(USBC_PORT_C1, rp),
+		      "Failed to set RP for case: %s", test_case);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.set_cc(USBC_PORT_C1, cc),
+		      "Failed to set CC for case: %s", test_case);
+
+	zassert_ok(tcpci_emul_get_reg(tcpci_emul, TCPC_REG_ROLE_CTRL, &reg_val),
+		   "Failed tcpci_emul_get_reg() for case: %s", test_case);
+	zassert_equal(exp_role_ctrl, reg_val,
+		      "0x%x != (role_ctrl = 0x%x) for case: %s", exp_role_ctrl,
+		      reg_val, test_case);
+	zassert_ok(tcpci_emul_get_reg(tcpci_emul, PS8XXX_REG_RP_DETECT_CONTROL,
+				      &reg_val),
+		   "Failed tcpci_emul_get_reg() for case: %s", test_case);
+	zassert_equal(rp_detect_ctrl, reg_val,
+		      "0x%x != (rp detect = 0x%x) for case: %s", rp_detect_ctrl,
+		      reg_val, test_case);
+}
+
+/** Test PS8815 set cc and device specific workarounds */
+static void test_ps8815_set_cc(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+
+	/* Set firmware version <= 0x10 to set "disable rp detect" workaround */
+	tcpci_emul_set_reg(tcpci_emul, PS8XXX_REG_FW_REV, 0x8);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+
+	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, RP_DETECT_DISABLE,
+			    "fw rev 0x8 \"disable rp detect\" workaround");
+
+	/* First call to set_cc should disarm workaround */
+	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, 0,
+			    "second call without workaround");
+
+	/* drp_toggle should rearm "disable rp detect" workaround */
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.drp_toggle(USBC_PORT_C1),
+		      NULL);
+	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, RP_DETECT_DISABLE,
+			    "drp_toggle rearm workaround");
+
+	/*
+	 * Set firmware version <= 0x10 to set "disable rp detect" workaround
+	 * again
+	 */
+	tcpci_emul_set_reg(tcpci_emul, PS8XXX_REG_FW_REV, 0xa);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+
+	/* CC RD shouldn't trigger "disable rp detect" workaround */
+	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RD, 0,
+			    "CC RD not trigger workaround");
+
+	/*
+	 * Set firmware version > 0x10 to unset "disable rp detect"
+	 * workaround
+	 */
+	tcpci_emul_set_reg(tcpci_emul, PS8XXX_REG_FW_REV, 0x12);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+
+	/* Firmware > 0x10 shouldn't trigger "disable rp detect" workaround */
+	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, 0,
+			    "fw rev > 0x10 not trigger workaround");
+
+	/*
+	 * Set hw revision 0x0a00 to enable workaround for b/171430855 (delay
+	 * 1 ms on role control reg update)
+	 */
+	ps8xxx_emul_set_hw_rev(ps8xxx_emul, 0x0a00);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+
+	/*
+	 * TODO(b/203858808): Find if it is possible to detect additional 1 ms
+	 *                    delay
+	 */
+	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, 0,
+			    "delay on HW rev 0x0a00");
+
+	/*
+	 * Set hw revision 0x0a01 to enable workaround for b/171430855 (delay
+	 * 1 ms on role control reg update)
+	 */
+	ps8xxx_emul_set_hw_rev(ps8xxx_emul, 0x0a01);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, 0,
+			    "delay on HW rev 0x0a01");
+
+	/*
+	 * Set other hw revision to disable workaround for b/171430855 (delay
+	 * 1 ms on role control reg update)
+	 */
+	ps8xxx_emul_set_hw_rev(ps8xxx_emul, 0x0a02);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, 0,
+			    "no delay on other HW rev");
 }
 
 /** Test PS8xxx set vconn */
@@ -366,6 +504,11 @@ static void test_ps8805_get_chip_info(void)
 	test_ps8xxx_get_chip_info(PS8805_PRODUCT_ID);
 }
 
+static void test_ps8815_get_chip_info(void)
+{
+	test_ps8xxx_get_chip_info(PS8815_PRODUCT_ID);
+}
+
 /** Test PS8805 get chip info and indirectly ps8805_make_device_id */
 static void test_ps8805_get_chip_info_fix_dev_id(void)
 {
@@ -450,6 +593,97 @@ static void test_ps8805_get_chip_info_fix_dev_id(void)
 			      "0x%x != (FW rev = 0x%x) in test case %d (chip_rev 0x%x)",
 			      fw_rev, info.fw_version_number,
 			      i, test_param[i].chip_rev);
+	}
+}
+
+/** Test PS8815 get chip info and indirectly ps8815_make_device_id */
+static void test_ps8815_get_chip_info_fix_dev_id(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+	struct i2c_emul *p1_i2c_emul =
+		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_1);
+	struct ec_response_pd_chip_info_v1 info;
+	uint16_t vendor, product, device_id, fw_rev;
+	uint16_t hw_rev;
+
+	struct {
+		uint16_t exp_dev_id;
+		uint16_t hw_rev;
+	} test_param[] = {
+		/* Test A0 HW revision */
+		{
+			.exp_dev_id = 0x1,
+			.hw_rev = 0x0a00,
+		},
+		/* Test A1 HW revision */
+		{
+			.exp_dev_id = 0x2,
+			.hw_rev = 0x0a01,
+		},
+		/* Test A2 HW revision */
+		{
+			.exp_dev_id = 0x3,
+			.hw_rev = 0x0a02,
+		},
+	};
+
+	/* Setup chip info */
+	vendor = PS8XXX_VENDOR_ID;
+	product = PS8815_PRODUCT_ID;
+	/* Arbitrary revision */
+	fw_rev = 0x32;
+	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_VENDOR_ID, vendor);
+	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_PRODUCT_ID, product);
+	tcpci_emul_set_reg(tcpci_emul, PS8XXX_REG_FW_REV, fw_rev);
+
+	/* Set device id which requires fixing */
+	device_id = 0x1;
+	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_BCD_DEV, device_id);
+
+	/* Test error on fixing device id because of fail hw revision read */
+	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
+					  PS8815_P1_REG_HW_REVISION);
+	zassert_equal(EC_ERROR_INVAL,
+		      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1, &info),
+		      NULL);
+	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Set wrong hw revision */
+	hw_rev = 0x32;
+	ps8xxx_emul_set_hw_rev(ps8xxx_emul, hw_rev);
+
+	/* Test error on fixing device id */
+	zassert_equal(EC_ERROR_UNKNOWN,
+		      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1, &info),
+		      NULL);
+
+	/* Test fixing device id for specific HW revisions */
+	for (int i = 0; i < ARRAY_SIZE(test_param); i++) {
+		ps8xxx_emul_set_hw_rev(ps8xxx_emul, test_param[i].hw_rev);
+
+		/* Test correct device id after fixing */
+		zassert_equal(EC_SUCCESS,
+			      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1,
+							    &info),
+			      "Failed to get chip info in test case %d (hw_rev 0x%x)",
+			      i, test_param[i].hw_rev);
+		zassert_equal(vendor, info.vendor_id,
+			      "0x%x != (vendor = 0x%x) in test case %d (hw_rev 0x%x)",
+			      vendor, info.vendor_id, i, test_param[i].hw_rev);
+		zassert_equal(product, info.product_id,
+			      "0x%x != (product = 0x%x) in test case %d (hw_rev 0x%x)",
+			      product, info.product_id,
+			      i, test_param[i].hw_rev);
+		zassert_equal(test_param[i].exp_dev_id, info.device_id,
+			      "0x%x != (device = 0x%x) in test case %d (hw_rev 0x%x)",
+			      test_param[i].exp_dev_id, info.device_id,
+			      i, test_param[i].hw_rev);
+		zassert_equal(fw_rev, info.fw_version_number,
+			      "0x%x != (FW rev = 0x%x) in test case %d (hw_rev 0x%x)",
+			      fw_rev, info.fw_version_number,
+			      i, test_param[i].hw_rev);
 	}
 }
 
@@ -613,28 +847,77 @@ static void setup_no_fail_all(void)
 	}
 }
 
+/**
+ * Setup PS8xxx emulator to mimic PS8805 and setup no fail for all I2C devices
+ * associated with PS8xxx emulator
+ */
+static void setup_ps8805(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+
+	board_set_ps8xxx_product_id(PS8805_PRODUCT_ID);
+	ps8xxx_emul_set_product_id(ps8xxx_emul, PS8805_PRODUCT_ID);
+	setup_no_fail_all();
+}
+
+/**
+ * Setup PS8xxx emulator to mimic PS8815 and setup no fail for all I2C devices
+ * associated with PS8xxx emulator
+ */
+static void setup_ps8815(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+
+	board_set_ps8xxx_product_id(PS8815_PRODUCT_ID);
+	ps8xxx_emul_set_product_id(ps8xxx_emul, PS8815_PRODUCT_ID);
+	setup_no_fail_all();
+}
+
 void test_suite_ps8xxx(void)
 {
 	ztest_test_suite(ps8805,
 			 ztest_unit_test_setup_teardown(test_ps8xxx_init_fail,
-				 setup_no_fail_all, unit_test_noop),
+				 setup_ps8805, unit_test_noop),
 			 ztest_unit_test_setup_teardown(test_ps8805_init,
-				 setup_no_fail_all, unit_test_noop),
+				 setup_ps8805, unit_test_noop),
 			 ztest_unit_test_setup_teardown(test_ps8xxx_release,
 				 setup_no_fail_all, unit_test_noop),
 			 ztest_unit_test_setup_teardown(test_ps8xxx_set_vconn,
-				 setup_no_fail_all, unit_test_noop),
+				 setup_ps8805, unit_test_noop),
 			 ztest_unit_test_setup_teardown(test_ps8xxx_transmit,
-				 setup_no_fail_all, unit_test_noop),
+				 setup_ps8805, unit_test_noop),
 			 ztest_unit_test_setup_teardown(test_ps88x5_drp_toggle,
-				 setup_no_fail_all, unit_test_noop),
+				 setup_ps8805, unit_test_noop),
 			 ztest_unit_test_setup_teardown(
 				 test_ps8805_get_chip_info,
-				 setup_no_fail_all, unit_test_noop),
+				 setup_ps8805, unit_test_noop),
 			 ztest_unit_test_setup_teardown(
 				 test_ps8805_get_chip_info_fix_dev_id,
-				 setup_no_fail_all, unit_test_noop),
+				 setup_ps8805, unit_test_noop),
 			 ztest_unit_test_setup_teardown(test_ps8805_gpio,
-				 setup_no_fail_all, unit_test_noop));
+				 setup_ps8805, unit_test_noop));
 	ztest_run_test_suite(ps8805);
+
+	ztest_test_suite(ps8815,
+			 ztest_unit_test_setup_teardown(test_ps8xxx_init_fail,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(test_ps8815_init,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(test_ps8xxx_release,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(test_ps8815_set_cc,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(test_ps8xxx_set_vconn,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(test_ps8xxx_transmit,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(test_ps88x5_drp_toggle,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8815_get_chip_info,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8815_get_chip_info_fix_dev_id,
+				 setup_ps8815, unit_test_noop));
+	ztest_run_test_suite(ps8815);
 }

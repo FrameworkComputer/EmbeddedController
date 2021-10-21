@@ -139,6 +139,22 @@ struct tcpc_config_t tcpc_config[] = {
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
 
+static uint16_t ps8xxx_product_id = PS8805_PRODUCT_ID;
+
+uint16_t board_get_ps8xxx_product_id(int port)
+{
+	if (port != USBC_PORT_C1) {
+		return 0;
+	}
+
+	return ps8xxx_product_id;
+}
+
+void board_set_ps8xxx_product_id(uint16_t product_id)
+{
+	ps8xxx_product_id = product_id;
+}
+
 int board_is_sourcing_vbus(int port)
 {
 	return 0;
