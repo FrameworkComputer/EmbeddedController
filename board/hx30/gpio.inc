@@ -5,28 +5,24 @@
  * found in the LICENSE file.
  */
 
-/*
- * mec1701h_evb board GPIO pins
- * !!!!!!!!!!!!!!!!!!!!!!! IMPORTANT !!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * MEC1701 and MEC1322 data sheets GPIO numbers are OCTAL.
- * Original glados MEC1322 used these octal numbers as base 10.
- * mec1701 and its boards will use OCTAL therefore make sure all
- * numbers used below are written as C OCTAL with a leading 0.
- * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- *
- */
-/* NOTE: We use JTAG on MEC1701H on EVB.
+
+/* NOTE: We use JTAG on MEC1521.
  * GPIO_0145 is JTAG_TDI
  * GPIO_0146 is JTAG_TDO
  * GPIO_0147 is JTAG_CLK
  * GPIO_0150 is JTAG_TMS
  */
 
+/* Chromium common code */
 UNIMPLEMENTED(WP)
 UNIMPLEMENTED(ENTERING_RW)
 UNIMPLEMENTED(RSMRST_L_PGOOD)
 UNIMPLEMENTED(PCH_RTCRST)
 UNIMPLEMENTED(SYS_RESET_L)
+
+UNIMPLEMENTED(EN_INVPWR) /* need to check don't we control panel power? */
+
+
 /* Interrupt Pin Defination */
 
 /* Power Sequence */
@@ -35,33 +31,24 @@ GPIO_INT(ON_OFF_FP_L,     PIN(0163), GPIO_INT_BOTH, fingerprint_power_button_int
 GPIO_INT(PWR_3V5V_PG,     PIN(051),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_SUS_L,       PIN(0221), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(VCCIN_AUX_VR_PG, PIN(0227), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(PM_SLP_S3_L,     PIN(022),  GPIO_INT_BOTH, power_signal_interrupt) /* eSPI signal */
-GPIO_INT(PM_SLP_S4_L,     PIN(0226), GPIO_INT_BOTH, power_signal_interrupt) /* eSPI signal */
+GPIO_INT(PM_SLP_S3_L,     PIN(022),  GPIO_INT_BOTH, power_signal_interrupt)	/* eSPI signal */
+GPIO_INT(PM_SLP_S4_L,     PIN(0226), GPIO_INT_BOTH, power_signal_interrupt)	/* eSPI signal */
+GPIO_INT(PM_SLP_S0_L,     PIN(062),  GPIO_INT_BOTH, power_signal_interrupt)	/* eSPI signal */  
 GPIO_INT(VR_PWRGD,        PIN(057),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SOC_ENBKL,       PIN(0165), GPIO_INT_BOTH, soc_signal_interrupt)
 GPIO_INT(LID_SW_L,        PIN(0254), GPIO_INT_BOTH, lid_interrupt)
-GPIO_INT(CHASSIS_OPEN,    PIN(0161), GPIO_INT_BOTH, chassis_control_interrupt) /* monitor C cover open */
-GPIO_INT(ADP_IN,              PIN(0172), GPIO_INT_BOTH, extpower_interrupt)    /* Adaptor in from charger ACOK pin */
+GPIO_INT(CHASSIS_OPEN,    PIN(0161), GPIO_INT_BOTH, chassis_control_interrupt)	/* monitor C cover open */
+GPIO_INT(ADP_IN,          PIN(0172), GPIO_INT_BOTH, extpower_interrupt)		/* Adaptor in from charger ACOK pin */
+GPIO_INT(PLT_RST_L,       PIN(024),  GPIO_INT_BOTH, soc_plt_reset_interrupt)	/* CPU triggered Platform reset */
 
 /* UART input */
 GPIO_INT(UART0_RX,        PIN(0105), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, \
 	 uart_deepsleep_interrupt)
 
 /* Sensor */
-GPIO_INT(SOC_TP_INT_L,    PIN(0242), GPIO_INT_FALLING, touchpad_interrupt)
-
-/* Input signal */
-GPIO(CAM_SW,              PIN(067),  GPIO_INPUT)    /* Monitor to close CAM PWR */
-
-/* Reserve Pin Defination */
-GPIO_INT(PLT_RST_L,       PIN(024),  GPIO_INT_BOTH, soc_plt_reset_interrupt)    /* CPU triggered Platform reset */
-GPIO(SX_EXIT_HOLDOFF_L,   PIN(025),  GPIO_INPUT)    /* Reserved for S0ix state */
-GPIO(EN_INVPWR,           PIN(062),  GPIO_INPUT)  /* DVT2 LCD 19V power enable */
-GPIO(MIC_SW,              PIN(0171), GPIO_INPUT)    /* Reserved for DMIC function */
-GPIO(SOC_EC_INT_L,        PIN(0246), GPIO_INPUT | GPIO_ODR_HIGH)    /* Reserved for HID */
-GPIO(VS_ON,               PIN(0241), GPIO_OUT_HIGH)  /* 3.3V and 5V rails */
-GPIO(FP_CTRL,             PIN(0245), GPIO_INPUT)    /* Reserved for fingerprint control */
-GPIO(GPIO170_STRAP,       PIN(0170), GPIO_INPUT)
+GPIO_INT(SOC_TP_INT_L,	PIN(0242), GPIO_INT_FALLING, touchpad_interrupt)
+GPIO(EC_ALS_INT_L,	PIN(025),  GPIO_INPUT)	/* ALS interrupt */
+GPIO(EC_ACC_INT_L,	PIN(060),  GPIO_INPUT)	/* ACC interrupt */
 
 /* power sequence output pins */
 /*
@@ -71,22 +58,23 @@ GPIO(GPIO170_STRAP,       PIN(0170), GPIO_INPUT)
  * In order to not get interrupt storms there should be external logic
  * which makes this a true binary signal into the EC.
  */
-GPIO(EC_ON,                 PIN(0250),  GPIO_OUT_HIGH) /* keep +3VL_EC to power on */
-GPIO(PBTN_OUT_L,            PIN(0243),  GPIO_OUT_LOW)
-GPIO(AC_PRESENT_OUT,        PIN(0240),  GPIO_ODR_LOW)
-GPIO(EC_RSMRST_L,           PIN(055),   GPIO_INPUT | GPIO_OUT_LOW) /* EC bootloader ESPI mode */
-GPIO(PCH_DPWROK,            PIN(0223),  GPIO_INPUT | GPIO_ODR_LOW)
-GPIO(PCH_PWR_EN,            PIN(0244),  GPIO_INPUT | GPIO_ODR_LOW)
-GPIO(SYSON,                 PIN(0206),  GPIO_OUT_LOW)
-GPIO(SUSP_L,                PIN(034),   GPIO_OUT_LOW)
-GPIO(EC_VCCST_PG,           PIN(023),   GPIO_OUT_LOW)
-GPIO(VR_ON,                 PIN(033),   GPIO_OUT_LOW)
-GPIO(PCH_PWROK,             PIN(052),   GPIO_OUT_LOW)
-GPIO(SYS_PWROK,             PIN(0106),  GPIO_OUT_LOW)
+GPIO(EC_ON,		PIN(0250),  GPIO_INPUT | GPIO_OUT_HIGH)	/* keep +3VL_EC to power on */
+GPIO(VS_ON,		PIN(0241),  GPIO_INPUT | GPIO_ODR_HIGH)	/* 3.3V and 5V rails */
+GPIO(PBTN_OUT_L,	PIN(0243),  GPIO_INPUT | GPIO_OUT_LOW)
+GPIO(AC_PRESENT_OUT,	PIN(0240),  GPIO_INPUT | GPIO_ODR_LOW)
+GPIO(EC_RSMRST_L,	PIN(055),   GPIO_INPUT | GPIO_OUT_LOW)	/* EC bootloader ESPI mode */
+GPIO(PCH_DPWROK,	PIN(0223),  GPIO_INPUT | GPIO_ODR_LOW)
+GPIO(PCH_PWR_EN,	PIN(0244),  GPIO_INPUT | GPIO_ODR_LOW)
+GPIO(SYSON,		PIN(0206),  GPIO_INPUT | GPIO_OUT_LOW)
+GPIO(SUSP_L,		PIN(034),   GPIO_INPUT | GPIO_OUT_LOW)
+GPIO(EC_VCCST_PG,	PIN(023),   GPIO_INPUT | GPIO_ODR_LOW)
+GPIO(VR_ON,		PIN(033),   GPIO_INPUT | GPIO_OUT_LOW)
+GPIO(PCH_PWROK,		PIN(052),   GPIO_INPUT | GPIO_OUT_LOW)
+GPIO(SYS_PWROK,		PIN(0106),  GPIO_INPUT | GPIO_OUT_LOW)
+GPIO(EC_RTCRST,		PIN(016),   GPIO_INPUT | GPIO_ODR_LOW)	/* after reset low 5 sec */
 
 
 /* I2C pins - these will be reconfigured for alternate function below */
-
 GPIO(EC_SMB_SDA0,	PIN(03),	GPIO_INPUT) /* HID (Slave) */
 GPIO(EC_SMB_CLK0,	PIN(04),	GPIO_INPUT) /* HID (Slave) */
 GPIO(EC_SMB_CLK1,	PIN(0131),	GPIO_INPUT) /* Batt CHarger */
@@ -102,47 +90,33 @@ GPIO(EC_I2C06_PD1_SDA,	PIN(0132),	GPIO_INPUT) /* PD controller 0 */
 GPIO(EC_I2C07_PD2_CLK,	PIN(013),	GPIO_INPUT) /* PD controller 1 */
 GPIO(EC_I2C07_PD2_SDA,	PIN(012),	GPIO_INPUT) /* PD controller 1 */
 
-
 /* PD controller */
 GPIO_INT(EC_PD_INTA_L,		PIN(0115), GPIO_INT_FALLING, pd0_chip_interrupt)
 GPIO_INT(EC_PD_INTB_L,		PIN(0127), GPIO_INT_FALLING, pd1_chip_interrupt)
-GPIO(AC_PRESENT_PD_L,		PIN(0224), GPIO_INPUT)
 GPIO_INT(TYPEC0_VBUS_ON_EC,	PIN(043),  GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
 GPIO_INT(TYPEC1_VBUS_ON_EC,	PIN(036),  GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
 GPIO_INT(TYPEC2_VBUS_ON_EC,	PIN(0142), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
 GPIO_INT(TYPEC3_VBUS_ON_EC,	PIN(0141), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
-GPIO(EC_PROCHOT_L,		PIN(0222), GPIO_INPUT | GPIO_ODR_HIGH)
 
-/* Fan PWM output and TACH input. PROCHOT input */
-/* MEC1701H GPIO_0050/FAN_TACH0 OK */
-GPIO(FAN_SPEED,         PIN(050), GPIO_INPUT)
-
+GPIO(AC_PRESENT_PD_L,		PIN(0224), GPIO_INPUT)
+GPIO(MUX_SBU_UART_FLIP,		PIN(0101), GPIO_OUT_HIGH) /* SBU debug mux enable */
 
 /* Miscellaneous */
-GPIO(TYPEC_G_DRV2_EN,       PIN(0101), GPIO_OUT_HIGH)    /* LED drv */
-GPIO(ME_EN,                 PIN(064),  GPIO_OUT_LOW)	/* PVT ME control use VTR3(1.8v) */
-GPIO(EC_BKOFF_L,            PIN(0102), GPIO_OUT_LOW)    /* Panel backlight control */
+GPIO(EC_PROCHOT_L,	PIN(0222), GPIO_INPUT | GPIO_ODR_HIGH)
+GPIO(FAN_SPEED,         PIN(050),  GPIO_INPUT)
+GPIO(FP_CTRL,		PIN(0245), GPIO_INPUT) /* Fingerprint control */
+GPIO(CAM_SW,		PIN(067),  GPIO_INPUT) /* (UNIMPLEMENTED) Monitor to close CAM PWR */
+GPIO(MIC_SW,		PIN(0171), GPIO_INPUT) /* (UNIMPLEMENTED) DMIC function */
 
-GPIO(CAM_EN,                PIN(0255), GPIO_OUT_LOW)    /* Open camera power  */
-/* GPIO(FAN_PWM0,              PIN(053),  GPIO_OUT_HIGH) */   /* EVT for fan full on */
-GPIO(EC_MUTE_L,             PIN(0253), GPIO_ODR_LOW)
-GPIO(OTG_EN,                PIN(0207), GPIO_OUT_LOW)	/* Always low PWR request */
+GPIO(SOC_EC_INT_L,	PIN(0246), GPIO_INPUT | GPIO_ODR_HIGH)    /* HID interrupt, notify host to read data */
+GPIO(ME_EN,		PIN(064),  GPIO_OUT_LOW) /* PVT ME control use VTR3(1.8v) */
+GPIO(EC_BKOFF_L,	PIN(0102), GPIO_OUT_LOW) /* Panel backlight control */
+GPIO(CAM_EN,		PIN(0255), GPIO_OUT_LOW) /* Open camera power  */
+GPIO(OTG_EN,		PIN(0207), GPIO_OUT_LOW) /* Always low PWR request */
+GPIO(CAP_LED_L,		PIN(0114), GPIO_OUT_LOW)
+GPIO(EC_MUTE_L,		PIN(0253), GPIO_ODR_LOW)
 
-
-/*
- * TODO(crosbug.com/p/40848): These LEDs should be under control of the
- * mec1701 LED control unit. Remove these GPIO definitions once the LED
- * control unit is functional.
- */
-/*GPIO(FPR_LED_R,	PIN(0156), GPIO_OUT_LOW)*/    /* TODO: implement PWM */
-/*GPIO(FPR_LED_G,	PIN(0157), GPIO_OUT_LOW)*/    /* TODO: implement PWM */
-/*GPIO(FPR_LED_B,	PIN(0153), GPIO_OUT_LOW)*/    /* TODO: implement PWM */
-
-GPIO(CAP_LED_L,     PIN(0114), GPIO_OUT_LOW)
-
-/*
- * Analog pins
- */
+/* Analog pins */
 GPIO(TP_BOARD_ID, PIN(0203),  GPIO_FLAG_NONE)
 GPIO(AD_BOARD_ID, PIN(0205),  GPIO_FLAG_NONE)
 
@@ -163,7 +137,7 @@ ALTERNATE(PIN_MASK(2, 0x30), 1, MODULE_UART, 0)
 
 /* KB pins */
 /*
- * MEC1704H (144 pin package)
+ * MEC1521
  * KSO00 = GPIO_0040 Func2 bank 1 bit 0
  * KSO01 = GPIO_0045 Func1 bank 1 bit 5
  * KSO02 = GPIO_0046 Func1 bank 1 bit 6
