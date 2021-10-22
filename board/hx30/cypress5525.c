@@ -42,13 +42,13 @@
 
 static struct pd_chip_config_t pd_chip_config[] = {
 	[PD_CHIP_0] = {
-		.i2c_port = I2C_PORT_PD_MCU,
+		.i2c_port = I2C_PORT_PD_MCU0,
 		.addr_flags = CYP5525_I2C_CHIP0 | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
 		.state = CYP5525_STATE_POWER_ON,
 		.gpio = GPIO_EC_PD_INTA_L,
 	},
 	[PD_CHIP_1] = {
-		.i2c_port = I2C_PORT_PD_MCU,
+		.i2c_port = I2C_PORT_PD_MCU1,
 		.addr_flags = CYP5525_I2C_CHIP1 | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
 		.state = CYP5525_STATE_POWER_ON,
 		.gpio = GPIO_EC_PD_INTB_L,

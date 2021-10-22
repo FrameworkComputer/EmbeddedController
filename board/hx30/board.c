@@ -241,11 +241,13 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
  * MCHP EVB connected to KBL RVP3
  */
 const struct i2c_port_t i2c_ports[]  = {
+	{"pch",      MCHP_I2C_PORT0, 400,  GPIO_I2C_0_SDA, GPIO_I2C_0_SCL},
 	{"batt",     MCHP_I2C_PORT1, 100,  GPIO_I2C_1_SDA, GPIO_I2C_1_SCL},
 	{"touchpd",  MCHP_I2C_PORT2, 100,  GPIO_I2C_2_SDA, GPIO_I2C_2_SCL},
 	{"sensors",  MCHP_I2C_PORT3, 100,  GPIO_I2C_3_SDA, GPIO_I2C_3_SCL},
-	{"pd",       MCHP_I2C_PORT6, 400,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL},
-	{"pch",      MCHP_I2C_PORT0, 400,  GPIO_I2C_0_SDA, GPIO_I2C_0_SCL},
+	{"als",      MCHP_I2C_PORT4, 100,  GPIO_I2C_4_SDA, GPIO_I2C_4_SCL},
+	{"pd1",      MCHP_I2C_PORT6, 400,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL},
+	{"pd2",      MCHP_I2C_PORT7, 400,  GPIO_I2C_7_SDA, GPIO_I2C_7_SCL},
 
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
@@ -256,8 +258,10 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
  */
 const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
 	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT6,
+	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT7,
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT1,
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT3,
+	(MCHP_I2C_CTRL2 << 8) + MCHP_I2C_PORT4,
 	(MCHP_I2C_CTRL4 << 8) + MCHP_I2C_PORT2,
 	(MCHP_I2C_CTRL3 << 8) + MCHP_I2C_PORT0,
 };
@@ -286,7 +290,6 @@ const unsigned int i2c_slvs_used = ARRAY_SIZE(i2c_slv_ports);
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	{ QMSPI0_PORT, 4, GPIO_QMSPI_CS0},
 #if defined(CONFIG_SPI_ACCEL_PORT)
 	{ GPSPI0_PORT, 2, GPIO_SPI0_CS0 },
 #endif

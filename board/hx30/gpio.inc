@@ -34,7 +34,7 @@ GPIO_INT(ON_OFF_BTN_L,    PIN(0162), GPIO_INT_BOTH, mainboard_power_button_inter
 GPIO_INT(ON_OFF_FP_L,     PIN(0163), GPIO_INT_BOTH, fingerprint_power_button_interrupt)
 GPIO_INT(PWR_3V5V_PG,     PIN(051),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_SUS_L,       PIN(0221), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(VCCIN_AUX_VR_PG, PIN(043),  GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(VCCIN_AUX_VR_PG, PIN(0227), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PM_SLP_S3_L,     PIN(022),  GPIO_INT_BOTH, power_signal_interrupt) /* eSPI signal */
 GPIO_INT(PM_SLP_S4_L,     PIN(0226), GPIO_INT_BOTH, power_signal_interrupt) /* eSPI signal */
 GPIO_INT(VR_PWRGD,        PIN(057),  GPIO_INT_BOTH, power_signal_interrupt)
@@ -54,8 +54,6 @@ GPIO_INT(SOC_TP_INT_L,    PIN(0242), GPIO_INT_FALLING, touchpad_interrupt)
 GPIO(CAM_SW,              PIN(067),  GPIO_INPUT)    /* Monitor to close CAM PWR */
 
 /* Reserve Pin Defination */
-GPIO(EC_SMB_SDA0,         PIN(03),   GPIO_INPUT)    /* Reserved for HID */
-GPIO(EC_SMB_CLK0,         PIN(04),   GPIO_INPUT)    /* Reserved for HID */
 GPIO_INT(PLT_RST_L,       PIN(024),  GPIO_INT_BOTH, soc_plt_reset_interrupt)    /* CPU triggered Platform reset */
 GPIO(SX_EXIT_HOLDOFF_L,   PIN(025),  GPIO_INPUT)    /* Reserved for S0ix state */
 GPIO(EN_INVPWR,           PIN(062),  GPIO_INPUT)  /* DVT2 LCD 19V power enable */
@@ -73,11 +71,11 @@ GPIO(GPIO170_STRAP,       PIN(0170), GPIO_INPUT)
  * In order to not get interrupt storms there should be external logic
  * which makes this a true binary signal into the EC.
  */
+GPIO(EC_ON,                 PIN(0250),  GPIO_OUT_HIGH) /* keep +3VL_EC to power on */
 GPIO(PBTN_OUT_L,            PIN(0243),  GPIO_OUT_LOW)
 GPIO(AC_PRESENT_OUT,        PIN(0240),  GPIO_ODR_LOW)
-GPIO(EC_RSMRST_L,           PIN(036),   GPIO_INPUT | GPIO_OUT_LOW)
-GPIO(EC_ON,                 PIN(0250),  GPIO_OUT_HIGH) /* keep +3VL_EC to power on */
-GPIO(PCH_DPWROK,            PIN(012),   GPIO_ODR_LOW)
+GPIO(EC_RSMRST_L,           PIN(055),   GPIO_INPUT | GPIO_OUT_LOW) /* EC bootloader ESPI mode */
+GPIO(PCH_DPWROK,            PIN(0223),  GPIO_INPUT | GPIO_ODR_LOW)
 GPIO(PCH_PWR_EN,            PIN(0244),  GPIO_INPUT | GPIO_ODR_LOW)
 GPIO(SYSON,                 PIN(0222),  GPIO_OUT_LOW)
 GPIO(SUSP_L,                PIN(034),   GPIO_OUT_LOW)
@@ -88,29 +86,32 @@ GPIO(SYS_PWROK,             PIN(0106),  GPIO_OUT_LOW)
 
 
 /* I2C pins - these will be reconfigured for alternate function below */
-/* Batt CHarger */
-GPIO(EC_SMB_CLK1, PIN(0131), GPIO_INPUT)
-GPIO(EC_SMB_SDA1, PIN(0130), GPIO_INPUT)
-/* Touchpad */
-GPIO(EC_I2C_3_SCL, PIN(0155),  GPIO_INPUT)
-GPIO_INT(EC_I2C_3_SDA, PIN(0154),  GPIO_INT_FALLING, touchpad_i2c_interrupt)
-/* Therm Sensor */
-GPIO(EC_SMB_CLK3, PIN(010), GPIO_INPUT)
-GPIO(EC_SMB_SDA3, PIN(07), GPIO_INPUT)
-/* PD */
-GPIO(EC_I2C06_PD_CLK, PIN(0140),  GPIO_INPUT)
-GPIO(EC_I2C06_PD_SDA, PIN(0132),  GPIO_INPUT)
+
+GPIO(EC_SMB_SDA0,	PIN(03),	GPIO_INPUT) /* HID (Slave) */
+GPIO(EC_SMB_CLK0,	PIN(04),	GPIO_INPUT) /* HID (Slave) */
+GPIO(EC_SMB_CLK1,	PIN(0131),	GPIO_INPUT) /* Batt CHarger */
+GPIO(EC_SMB_SDA1,	PIN(0130),	GPIO_INPUT) /* Batt CHarger */
+GPIO(EC_I2C_3_SCL,	PIN(0155),	GPIO_INPUT) /* Touchpad */
+GPIO_INT(EC_I2C_3_SDA,	PIN(0154),	GPIO_INT_FALLING, touchpad_i2c_interrupt) /* Touchpad */
+GPIO(EC_SMB_CLK3,	PIN(010),	GPIO_INPUT) /* Therm Sensor */
+GPIO(EC_SMB_SDA3,	PIN(07),	GPIO_INPUT) /* Therm Sensor */
+GPIO(EC_SMB_CLK4,	PIN(0144),	GPIO_INPUT) /* Therm Sensor */
+GPIO(EC_SMB_SDA4,	PIN(0143),	GPIO_INPUT) /* Therm Sensor */
+GPIO(EC_I2C06_PD1_CLK,	PIN(0140),	GPIO_INPUT) /* PD controller 0 */
+GPIO(EC_I2C06_PD1_SDA,	PIN(0132),	GPIO_INPUT) /* PD controller 0 */
+GPIO(EC_I2C07_PD2_CLK,	PIN(013),	GPIO_INPUT) /* PD controller 1 */
+GPIO(EC_I2C07_PD2_SDA,	PIN(012),	GPIO_INPUT) /* PD controller 1 */
 
 
 /* PD controller */
-GPIO_INT(EC_PD_INTA_L,    PIN(0115), GPIO_INT_FALLING, pd0_chip_interrupt)
-GPIO_INT(EC_PD_INTB_L,    PIN(0127), GPIO_INT_FALLING, pd1_chip_interrupt)
-GPIO(AC_PRESENT_PD_L,     PIN(013),  GPIO_INPUT)
-GPIO_INT(TYPEC0_VBUS_ON_EC,     PIN(0144), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
-GPIO_INT(TYPEC1_VBUS_ON_EC,     PIN(0143), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
-GPIO_INT(TYPEC2_VBUS_ON_EC,     PIN(0142), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
-GPIO_INT(TYPEC3_VBUS_ON_EC,     PIN(0141), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
-GPIO(EC_PROCHOT_L,          PIN(0206), GPIO_INPUT | GPIO_ODR_HIGH)
+GPIO_INT(EC_PD_INTA_L,		PIN(0115), GPIO_INT_FALLING, pd0_chip_interrupt)
+GPIO_INT(EC_PD_INTB_L,		PIN(0127), GPIO_INT_FALLING, pd1_chip_interrupt)
+GPIO(AC_PRESENT_PD_L,		PIN(0224), GPIO_INPUT)
+GPIO_INT(TYPEC0_VBUS_ON_EC,	PIN(043),  GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
+GPIO_INT(TYPEC1_VBUS_ON_EC,	PIN(036),  GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
+GPIO_INT(TYPEC2_VBUS_ON_EC,	PIN(0142), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
+GPIO_INT(TYPEC3_VBUS_ON_EC,	PIN(0141), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
+GPIO(EC_PROCHOT_L,		PIN(0206), GPIO_INPUT | GPIO_ODR_HIGH)
 
 /* Fan PWM output and TACH input. PROCHOT input */
 /* MEC1701H GPIO_0050/FAN_TACH0 OK */
@@ -127,22 +128,6 @@ GPIO(CAM_EN,                PIN(0255), GPIO_OUT_LOW)    /* Open camera power  */
 /* GPIO(FAN_PWM0,              PIN(053),  GPIO_OUT_HIGH) */   /* EVT for fan full on */
 GPIO(EC_MUTE_L,             PIN(0253), GPIO_ODR_LOW)
 GPIO(OTG_EN,                PIN(0207), GPIO_OUT_LOW)	/* Always low PWR request */
-
-/* SPI
- * Chip select must be open drain and driven high before SPI controller
- * configuration.
- */
-/*
- * MEC1701H
- * GPIO_0055/PWM2/SHD_CS0#/RSMRST#
- * GPIO_0124/GPTP-OUT6/PVT_CS#/KSO11
- * QMSPI controller drives chip select, must be
- * configured to alternative function. See below.
- * Always use the name QMSPI_CS0 for chip select.
- * Actual GPIO could be GPIO_0055 QMSPI shared chip select or
- * GPIO_0124 private chip select.
- */
-GPIO(QMSPI_CS0,		PIN(055),  GPIO_ODR_HIGH)
 
 
 /*
@@ -260,15 +245,17 @@ ALTERNATE(PIN_MASK(0, 0x4000), 2, MODULE_SPI_FLASH, 0)
 
 /* I2C pins */
 
-/* SMB00_DAT - GPIO_0003 Func1, SMB00_CLK - GPIO_0004 Func1 (bank 0 bits[3:4], reserved)
+/* SMB00_DAT - GPIO_0003 Func1, SMB00_CLK - GPIO_0004 Func1 (bank 0 bits[3:4], Slave)
  * SMB01_DAT - GPIO_0130 Func1, SMB01_CLK - GPIO_0131 Func1 (bank 2 bits[24:25])
  * SMB02_DAT - GPIO_0154 Func1, SMB02_CLK - GPIO_0155 Func1 (bank 3 bits[12:13])
  * SMB03_DAT - GPIO_0007 Func1, SMB03_CLK - GPIO_0010 Func1 (bank 0 bits[7:8])
+ * SMB04_DAT - GPIO_0143 Func1, SMB04_CLK - GPIO_0144 Func1 (bank 3 bits[3:4])
  * SMB06_DAT - GPIO_0132 Func1, SMB06_CLK - GPIO_0140 Func1 (bank 2 bit[26], bank 3 bit[0])
-*/
-ALTERNATE(PIN_MASK(0, 0x0198),    1, MODULE_I2C, GPIO_ODR_HIGH)
+ * SMB07_DAT - GPIO_012  Func1, SMB07_CLK - GPIO_013  Func1 (bank 0 bits[10:11])
+ */
+ALTERNATE(PIN_MASK(0, 0x0D98),    1, MODULE_I2C, GPIO_ODR_HIGH)
 ALTERNATE(PIN_MASK(2, 0x7000000), 1, MODULE_I2C, GPIO_ODR_HIGH)
-ALTERNATE(PIN_MASK(3, 0x3001),    1, MODULE_I2C, GPIO_ODR_HIGH)
+ALTERNATE(PIN_MASK(3, 0x3019),    1, MODULE_I2C, GPIO_ODR_HIGH)
 
 /* ADC pins */
 /* ADC00 - GPIO_0200 / I_ADP,			Func1 Bank 4 bit[0]
