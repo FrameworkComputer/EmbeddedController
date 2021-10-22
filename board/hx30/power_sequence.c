@@ -611,12 +611,7 @@ DECLARE_HOST_COMMAND(EC_CMD_SET_AP_REBOOT_DELAY, set_ap_reboot_delay,
 
 void me_gpio_change(uint32_t flags)
 {
-	enum gpio_signal gpio = GPIO_ME_EN;
-	int version = board_get_version();
-
-	gpio = version > 8 ? GPIO_ME_EN_PVT : GPIO_ME_EN;
-
-	gpio_set_flags(gpio, flags);
+	gpio_set_flags(GPIO_ME_EN, flags);
 }
 
 void update_me_change(int change)
