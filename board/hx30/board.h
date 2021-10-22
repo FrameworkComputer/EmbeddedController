@@ -487,10 +487,6 @@
 #define GPIO_I2C_7_SCL      GPIO_EC_I2C07_PD2_CLK
 
 
-/* EVT - DVT cover */
-#define GPIO_EC_KBL_PWR_EN		    GPIO_TYPEC_G_DRV2_EN
-
-
 /* I2C ports */
 #define I2C_CONTROLLER_COUNT	5
 #define I2C_SLAVE_CONTROLLER_COUNT	1

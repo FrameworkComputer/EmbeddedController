@@ -175,42 +175,27 @@ enum backlight_brightness {
 
 int hx20_kblight_enable(int enable)
 {
-	if (board_get_version() > 4) {
-		/*Sets PCR mask for low power handling*/
-		pwm_enable(PWM_CH_KBL, enable);
-	} else if (enable == 0) {
-		gpio_set_level(GPIO_EC_KBL_PWR_EN, 0);
-	}
+	/*Sets PCR mask for low power handling*/
+	pwm_enable(PWM_CH_KBL, enable);
+
 	return EC_SUCCESS;
 }
 
 
 static int hx20_kblight_set_brightness(int percent)
 {
-	if (board_get_version() > 4)
-		pwm_set_duty(PWM_CH_KBL, percent);
-	else
-		gpio_set_level(GPIO_EC_KBL_PWR_EN, percent ? 1 : 0);
-
+	pwm_set_duty(PWM_CH_KBL, percent);
 	return EC_SUCCESS;
 }
 
 static int hx20_kblight_get_brightness(void)
 {
-	if (board_get_version() > 4)
-		return pwm_get_duty(PWM_CH_KBL);
-	else
-		return gpio_get_level(GPIO_EC_KBL_PWR_EN) ? 100 : 0;
-
+	return pwm_get_duty(PWM_CH_KBL);
 }
 
 static int hx20_kblight_init(void)
 {
-	if (board_get_version() > 4)
-		pwm_set_duty(PWM_CH_KBL, 0);
-	else
-		gpio_set_level(GPIO_EC_KBL_PWR_EN, 0);
-
+	pwm_set_duty(PWM_CH_KBL, 0);
 	return EC_SUCCESS;
 }
 
