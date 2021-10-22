@@ -15,24 +15,11 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "stubs.h"
+#include "tcpci_test_common.h"
 
 #include "tcpm/tcpci.h"
 
 #define EMUL_LABEL DT_NODELABEL(tcpci_emul)
-
-/** Check TCPC register value */
-static void check_tcpci_reg_f(const struct emul *emul, int reg,
-			      uint16_t exp_val, int line)
-{
-	uint16_t reg_val;
-
-	zassert_ok(tcpci_emul_get_reg(emul, reg, &reg_val),
-		   "Failed tcpci_emul_get_reg(); line: %d", line);
-	zassert_equal(exp_val, reg_val, "Expected 0x%x, got 0x%x; line: %d",
-		      exp_val, reg_val, line);
-}
-#define check_tcpci_reg(emul, reg, exp_val)			\
-	check_tcpci_reg_f((emul), (reg), (exp_val), __LINE__)
 
 /** Test TCPCI init and vbus level */
 static void test_tcpci_init(void)
