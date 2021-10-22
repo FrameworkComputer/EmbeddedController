@@ -77,7 +77,7 @@ GPIO(AC_PRESENT_OUT,        PIN(0240),  GPIO_ODR_LOW)
 GPIO(EC_RSMRST_L,           PIN(055),   GPIO_INPUT | GPIO_OUT_LOW) /* EC bootloader ESPI mode */
 GPIO(PCH_DPWROK,            PIN(0223),  GPIO_INPUT | GPIO_ODR_LOW)
 GPIO(PCH_PWR_EN,            PIN(0244),  GPIO_INPUT | GPIO_ODR_LOW)
-GPIO(SYSON,                 PIN(0222),  GPIO_OUT_LOW)
+GPIO(SYSON,                 PIN(0206),  GPIO_OUT_LOW)
 GPIO(SUSP_L,                PIN(034),   GPIO_OUT_LOW)
 GPIO(EC_VCCST_PG,           PIN(023),   GPIO_OUT_LOW)
 GPIO(VR_ON,                 PIN(033),   GPIO_OUT_LOW)
@@ -111,7 +111,7 @@ GPIO_INT(TYPEC0_VBUS_ON_EC,	PIN(043),  GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpowe
 GPIO_INT(TYPEC1_VBUS_ON_EC,	PIN(036),  GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
 GPIO_INT(TYPEC2_VBUS_ON_EC,	PIN(0142), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
 GPIO_INT(TYPEC3_VBUS_ON_EC,	PIN(0141), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
-GPIO(EC_PROCHOT_L,		PIN(0206), GPIO_INPUT | GPIO_ODR_HIGH)
+GPIO(EC_PROCHOT_L,		PIN(0222), GPIO_INPUT | GPIO_ODR_HIGH)
 
 /* Fan PWM output and TACH input. PROCHOT input */
 /* MEC1701H GPIO_0050/FAN_TACH0 OK */
@@ -313,3 +313,8 @@ ALTERNATE(PIN_MASK(1, 0x4000), 1, MODULE_PWM, 0)
  *  GPIO044,  VREF_VTT,     Func1, Bank 1 bit[4]
  */
 ALTERNATE(PIN_MASK(1, 0x0014), 1, MODULE_PECI, 0)
+
+/* PROCHOT
+ * GPIO022, Function1, Bank 4 bit[18]
+ */
+ ALTERNATE(PIN_MASK(4, 0x40000), 1, MODULE_GPIO, 0)

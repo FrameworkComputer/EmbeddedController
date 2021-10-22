@@ -596,7 +596,6 @@ enum adc_channel {
 	ADC_TP_BOARD_ID,
 	ADC_AD_BID,
 	ADC_AUDIO_BOARD_ID,
-	ADC_PROCHOT_L,
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };

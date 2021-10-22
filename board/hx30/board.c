@@ -232,7 +232,6 @@ const struct adc_t adc_channels[] = {
 	[ADC_TP_BOARD_ID]     = {"TP_BID", 3300, 4096, 0, 3},
 	[ADC_AD_BID]          = {"AD_BID", 3300, 4096, 0, 4},
 	[ADC_AUDIO_BOARD_ID]  = {"AUDIO_BID", 3300, 4096, 0, 5},
-	[ADC_PROCHOT_L]       = {"PROCHOT_L", 3300, 4096, 0, 6}
 
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
@@ -984,33 +983,6 @@ void check_deferred_time (const struct deferred_data *data)
 			hook_call_deferred(data, 0);
 	}
 }
-
-static int prochot_low_time;
-
-void prochot_monitor(void)
-{
-	int val_l;
-	/* TODO Enable this once PROCHOT has moved to VCCIN_AUX_CORE_ALERT#_R
-	* Right now the voltage for this is too low for us to sample using gpio.
-	*/
-	val_l = adc_read_channel(ADC_PROCHOT_L) > 500;
-	/*val_l = gpio_get_level(GPIO_EC_val_lPROCHOT_L);*/
-	if (val_l) {
-		prochot_low_time = 0;
-	} else {
-		prochot_low_time++;
-		if ((prochot_low_time & 0xF) == 0xF && chipset_in_state(CHIPSET_STATE_ON))
-			CPRINTF("PROCHOT has been low for too long - investigate");
-	}
-
-	check_chassis_open(0);
-
-	check_deferred_time(&board_power_off_deferred_data);
-
-}
-DECLARE_HOOK(HOOK_SECOND, prochot_monitor, HOOK_PRIO_DEFAULT);
-
-
 
 int mainboard_power_button_first_state;
 static void mainboard_power_button_change_deferred(void)
