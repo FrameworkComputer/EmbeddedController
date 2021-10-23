@@ -192,7 +192,8 @@ int ioex_init(int ioex)
 		}
 	}
 
-	ioex_config[ioex].flags = IOEX_FLAGS_INITIALIZED;
+	ioex_config[ioex].flags &= ~IOEX_FLAGS_DEFAULT_INIT_DISABLED;
+	ioex_config[ioex].flags |= IOEX_FLAGS_INITIALIZED;
 
 	return EC_SUCCESS;
 }
