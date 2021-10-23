@@ -25,7 +25,8 @@
 static int tca64xxa_write_byte(int ioex, int port, int reg, uint8_t val)
 {
 	const struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
-	const int reg_addr = TCA64XXA_PORT_ID(port, reg, ioex_p->flags);
+	const int reg_addr = TCA64XXA_PORT_ID(port, reg,
+		(ioex_p->flags & IOEX_FLAGS_TCA64XXA_FLAG_VER_TCA6416A) ? 2:4);
 
 	return i2c_write8(ioex_p->i2c_host_port,
 			  ioex_p->i2c_addr_flags,
@@ -36,7 +37,8 @@ static int tca64xxa_write_byte(int ioex, int port, int reg, uint8_t val)
 static int tca64xxa_read_byte(int ioex, int port, int reg, int *val)
 {
 	const struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
-	const int reg_addr = TCA64XXA_PORT_ID(port, reg, ioex_p->flags);
+	const int reg_addr = TCA64XXA_PORT_ID(port, reg,
+		(ioex_p->flags & IOEX_FLAGS_TCA64XXA_FLAG_VER_TCA6416A) ? 2:4);
 
 	return i2c_read8(ioex_p->i2c_host_port,
 			 ioex_p->i2c_addr_flags,
@@ -87,9 +89,9 @@ static int tca64xxa_init(int ioex)
 	const struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
 	int portsCount;
 
-	if (ioex_p->flags & TCA64XXA_FLAG_VER_TCA6416A)
+	if (ioex_p->flags & IOEX_FLAGS_TCA64XXA_FLAG_VER_TCA6416A)
 		portsCount = 2;
-	else if (ioex_p->flags & TCA64XXA_FLAG_VER_TCA6424A)
+	else if (ioex_p->flags & IOEX_FLAGS_TCA64XXA_FLAG_VER_TCA6424A)
 		portsCount = 3;
 	else
 		return EC_ERROR_UNIMPLEMENTED;
