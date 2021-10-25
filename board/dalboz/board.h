@@ -195,8 +195,8 @@ static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
 }
 
 /* These IO expander GPIOs vary with DB option. */
-extern enum gpio_signal IOEX_USB_A1_RETIMER_EN;
-extern enum gpio_signal IOEX_USB_A1_CHARGE_EN_DB_L;
+extern enum ioex_signal IOEX_USB_A1_RETIMER_EN;
+extern enum ioex_signal IOEX_USB_A1_CHARGE_EN_DB_L;
 
 void board_reset_pd_mcu(void);
 
