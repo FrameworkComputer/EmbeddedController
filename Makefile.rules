@@ -670,14 +670,14 @@ $(npcx-monitor-fw-bin):$(npcx-monitor-fw).c npx-monitor-dir
 	$(Q)$(OBJCOPY) -O binary $(out)/$(npcx-monitor-fw).elf $@
 
 $(out)/$(npcx-monitor-hdr)_ro.o:$(npcx-monitor-hdr).c npx-monitor-dir
-	$(Q)$(CC) $(CFLAGS) -DSECTION_IS_RO=$(EMPTY) -MMD -c $< -MT $@ -o $@
+	$(Q)$(CC) $(CFLAGS) -DSECTION_IS_RO=$(EMPTY) -MMD -fno-lto -c $< -MT $@ -o $@
 
 $(npcx-monitor-hdr-ro-bin):$(out)/$(npcx-monitor-hdr)_ro.o
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )
 	$(Q)$(OBJCOPY) -O binary $< $@
 
 $(out)/$(npcx-monitor-hdr)_rw.o:$(npcx-monitor-hdr).c npx-monitor-dir
-	$(Q)$(CC) $(CFLAGS) -MMD -c $< -MT $@ -o $@
+	$(Q)$(CC) $(CFLAGS) -MMD -fno-lto -c $< -MT $@ -o $@
 
 $(npcx-monitor-hdr-rw-bin):$(out)/$(npcx-monitor-hdr)_rw.o
 	$(if $(V),,@echo '  EXTBIN ' $(subst $(out)/,,$@) ; )

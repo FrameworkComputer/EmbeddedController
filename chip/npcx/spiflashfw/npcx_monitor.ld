@@ -49,4 +49,5 @@ SECTIONS
      */
     _sidata = _etext;
 
+    /DISCARD/ : { *(.ARM.*) }
 }
