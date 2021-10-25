@@ -504,9 +504,6 @@ static void board_init(void)
 	int version = board_get_version();
 	uint8_t memcap;
 
-	if (version > 6)
-		gpio_set_flags(GPIO_EN_INVPWR, GPIO_OUT_LOW);
-
 	system_get_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, &memcap);
 
 	if (memcap && !ac_boot_status())
@@ -524,13 +521,7 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT + 1);
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {
-	int version = board_get_version();
-
 	CPRINTS("HOOK_CHIPSET_STARTUP - called board_chipset_startup");
-
-	if (version > 6)
-		gpio_set_level(GPIO_EN_INVPWR, 1);
-
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 		board_chipset_startup,
@@ -539,15 +530,11 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 /* Called on AP S3 -> S5 transition */
 static void board_chipset_shutdown(void)
 {
-	int version = board_get_version();
-
 	CPRINTS(" HOOK_CHIPSET_SHUTDOWN board_chipset_shutdown");
 
 #ifdef CONFIG_EMI_REGION1
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
 #endif
-	if (version > 6)
-		gpio_set_level(GPIO_EN_INVPWR, 0);
 
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,

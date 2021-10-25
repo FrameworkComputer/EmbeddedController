@@ -20,9 +20,6 @@ UNIMPLEMENTED(RSMRST_L_PGOOD)
 UNIMPLEMENTED(PCH_RTCRST)
 UNIMPLEMENTED(SYS_RESET_L)
 
-UNIMPLEMENTED(EN_INVPWR) /* need to check don't we control panel power? */
-
-
 /* Interrupt Pin Defination */
 
 /* Power Sequence */
