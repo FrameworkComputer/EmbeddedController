@@ -383,7 +383,7 @@ static void setup_v0_charger(void)
  */
 DECLARE_HOOK(HOOK_INIT, setup_v0_charger, HOOK_PRIO_INIT_I2C);
 
-enum gpio_signal board_usbc_port_to_hpd_gpio(int port)
+int board_usbc_port_to_hpd_gpio_or_ioex(int port)
 {
 	/* USB-C0 always uses USB_C0_HPD (= DP3_HPD). */
 	if (port == 0)

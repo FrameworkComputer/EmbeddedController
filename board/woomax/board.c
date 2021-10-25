@@ -835,7 +835,7 @@ void hdmi_hpd_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
 }
 
-enum gpio_signal board_usbc_port_to_hpd_gpio(int port)
+int board_usbc_port_to_hpd_gpio_or_ioex(int port)
 {
 	/* USB-C0 always uses USB_C0_HPD */
 	if (port == 0)

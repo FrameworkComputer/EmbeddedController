@@ -209,8 +209,15 @@ static inline bool ec_config_has_mst_hub_rtd2141b(void)
 }
 
 void motion_interrupt(enum gpio_signal signal);
-enum gpio_signal board_usbc_port_to_hpd_gpio(int port);
-#define PORT_TO_HPD(port) board_usbc_port_to_hpd_gpio(port)
+
+/**
+ * @warning Callers must use gpio_or_ioex_set_level to handle the return result
+ * since either type of signal can be returned.
+ *
+ * @return GPIO (gpio_signal) or IOEX (ioex_signal)
+ */
+int board_usbc_port_to_hpd_gpio_or_ioex(int port);
+#define PORT_TO_HPD(port) board_usbc_port_to_hpd_gpio_or_ioex(port)
 
 extern const struct usb_mux usbc0_pi3dpx1207_usb_retimer;
 extern const struct usb_mux usbc1_ps8802;
