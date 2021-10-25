@@ -16,6 +16,7 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "hooks.h"
+#include "mkbp_event.h"
 #include "stdbool.h"
 #include "host_command.h"
 #include "system.h"
@@ -126,6 +127,12 @@ int remote_flashing(int argc, char **argv)
 	return EC_SUCCESS;
 }
 #endif /* defined(CONFIG_CMD_PD) && defined(CONFIG_CMD_PD_FLASH) */
+
+#ifdef CONFIG_COMMON_RUNTIME
+struct ec_params_usb_pd_rw_hash_entry rw_hash_table[RW_HASH_ENTRIES];
+#endif /* CONFIG_COMMON_RUNTIME */
+
+static __maybe_unused uint32_t pd_host_event_status __aligned(4);
 
 bool pd_firmware_upgrade_check_power_readiness(int port)
 {
@@ -1051,4 +1058,26 @@ int pd_build_alert_msg(uint32_t *msg, uint32_t *len, enum pd_power_role pr)
 	*len = 4;
 
 	return EC_SUCCESS;
+}
+
+#if defined(HAS_TASK_HOSTCMD) && !defined(TEST_BUILD)
+void pd_send_host_event(int mask)
+{
+	/* mask must be set */
+	if (!mask)
+		return;
+
+	atomic_or(&pd_host_event_status, mask);
+	/* interrupt the AP */
+	host_set_single_event(EC_HOST_EVENT_PD_MCU);
+}
+#endif /* defined(HAS_TASK_HOSTCMD) && !defined(TEST_BUILD) */
+
+__overridable void pd_notify_dp_alt_mode_entry(int port)
+{
+	if (IS_ENABLED(CONFIG_MKBP_EVENT)) {
+		(void)port;
+		CPRINTS("Notifying AP of DP Alt Mode Entry...");
+		mkbp_send_event(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED);
+	}
 }

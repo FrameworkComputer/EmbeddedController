@@ -20,8 +20,6 @@
 #include "usb_pd_tcpm.h"
 #include "usb_pd.h"
 #ifdef CONFIG_COMMON_RUNTIME
-struct ec_params_usb_pd_rw_hash_entry rw_hash_table[RW_HASH_ENTRIES];
-
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 #else /* CONFIG_COMMON_RUNTIME */
@@ -454,14 +452,6 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE,
 			EC_VER_MASK(0));
 #endif /* CONFIG_HOSTCMD_FLASHPD && CONFIG_USB_PD_TCPMV2 */
 
-#ifdef CONFIG_MKBP_EVENT
-__overridable void pd_notify_dp_alt_mode_entry(int port)
-{
-	(void)port;
-	CPRINTS("Notifying AP of DP Alt Mode Entry...");
-	mkbp_send_event(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED);
-}
-#endif /* CONFIG_MKBP_EVENT */
 
 __overridable enum ec_pd_port_location board_get_pd_port_location(int port)
 {
@@ -573,18 +563,6 @@ hc_pd_host_event_status(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_PD_HOST_EVENT_STATUS, hc_pd_host_event_status,
 		     EC_VER_MASK(0));
-
-/* Send host event up to AP */
-void pd_send_host_event(int mask)
-{
-	/* mask must be set */
-	if (!mask)
-		return;
-
-	atomic_or(&pd_host_event_status, mask);
-	/* interrupt the AP */
-	host_set_single_event(EC_HOST_EVENT_PD_MCU);
-}
 #endif /* ! CONFIG_USB_PD_TCPM_STUB && ! TEST_BUILD */
 
 #endif /* HAS_TASK_HOSTCMD */
