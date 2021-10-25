@@ -207,7 +207,7 @@ void config_usb_db_type(void)
 
 __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 {
-	enum ioex_signal rst_signal;
+	int rst_signal;
 
 	if (me->usb_port == USBC_PORT_C1)
 		rst_signal = GPIO_USB_C1_RT_RST_R_ODL;
@@ -228,14 +228,14 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 		 * retimer_init() function ensures power is up before calling
 		 * this function.
 		 */
-		ioex_set_level(rst_signal, 1);
+		gpio_or_ioex_set_level(rst_signal, 1);
 		/*
 		 * Allow 1ms time for the retimer to power up lc_domain
 		 * which powers I2C controller within retimer
 		 */
 		msleep(1);
 	} else {
-		ioex_set_level(rst_signal, 0);
+		gpio_or_ioex_set_level(rst_signal, 0);
 		msleep(1);
 	}
 	return EC_SUCCESS;
