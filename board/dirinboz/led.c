@@ -38,7 +38,7 @@ enum led_port {
 
 static void led_set_color_battery(int port, enum led_color color)
 {
-	enum gpio_signal amber_led, white_led;
+	int amber_led, white_led;
 	uint32_t board_ver = 0;
 	int led_batt_on_lvl, led_batt_off_lvl;
 
