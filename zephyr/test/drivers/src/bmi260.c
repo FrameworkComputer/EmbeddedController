@@ -2042,6 +2042,35 @@ void test_bmi_config_load_no_mapped_flash(void)
 	i2c_common_emul_set_read_func(emul, NULL, NULL);
 }
 
+void test_bmi_config_unsupported_chip(void)
+{
+	/* Test what occurs when we try to configure a chip that is
+	 * turned off in Kconfig (BMI220). This test assumes that
+	 * CONFIG_ACCELGYRO_BMI220 is NOT defined.
+	 */
+
+#if defined(CONFIG_ACCELGYRO_BMI220)
+#error "Test test_bmi_config_unsupported_chip will not work properly with " \
+	"CONFIG_ACCELGYRO_BMI220 defined."
+#endif
+
+	struct i2c_emul *emul = bmi_emul_get(BMI_ORD);
+	struct motion_sensor_t ms_fake;
+
+	/* Set up struct and emaulator to be a BMI220 chip, which
+	 * `bmi_config_load()` does not support in the current configuration
+	 */
+
+	memcpy(&ms_fake, &motion_sensors[BMI_ACC_SENSOR_ID], sizeof(ms_fake));
+	ms_fake.chip = MOTIONSENSE_CHIP_BMI220;
+	bmi_emul_set_reg(emul, BMI260_CHIP_ID, BMI220_CHIP_ID_MAJOR);
+
+	int ret = ms_fake.drv->init(&ms_fake);
+
+	zassert_equal(ret, EC_ERROR_INVALID_CONFIG, "Expected %d but got %d",
+		      EC_ERROR_INVALID_CONFIG, ret);
+}
+
 void test_suite_bmi260(void)
 {
 	ztest_test_suite(bmi260,
@@ -2067,6 +2096,8 @@ void test_suite_bmi260(void)
 			 ztest_user_unit_test(test_interrupt_handler),
 			 ztest_user_unit_test(test_bmi_init_chip_id),
 			 ztest_user_unit_test(
-				 test_bmi_config_load_no_mapped_flash));
+				 test_bmi_config_load_no_mapped_flash),
+			 ztest_user_unit_test(
+				 test_bmi_config_unsupported_chip));
 	ztest_run_test_suite(bmi260);
 }
