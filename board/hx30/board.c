@@ -501,7 +501,6 @@ static void check_chassis_open(int init)
 /* Initialize board. */
 static void board_init(void)
 {
-	int version = board_get_version();
 	uint8_t memcap;
 
 	system_get_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, &memcap);
