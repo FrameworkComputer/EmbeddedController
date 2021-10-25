@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include <fff.h>
 #include <zephyr.h>
 #include <ztest.h>
 
@@ -14,6 +15,7 @@
 #include "motion_sense_fifo.h"
 #include "driver/accelgyro_bmi260.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "test_mocks.h"
 
 #define BMI_ORD			DT_DEP_ORD(DT_NODELABEL(accel_bmi260))
 #define BMI_ACC_SENSOR_ID	SENSOR_ID(DT_NODELABEL(ms_bmi260_accel))
@@ -1567,6 +1569,15 @@ static int emul_init_ok(struct i2c_emul *emul, int reg, uint8_t *val, int byte,
 	return 1;
 }
 
+/**
+ * A custom fake to use with the `init_rom_map` mock that returns the
+ * value of `addr`
+ */
+static const void *init_rom_map_addr_passthru(const void *addr, int size)
+{
+	return addr;
+}
+
 /** Test init function of BMI260 accelerometer and gyroscope sensors */
 static void test_bmi_init(void)
 {
@@ -1576,6 +1587,10 @@ static void test_bmi_init(void)
 	emul = bmi_emul_get(BMI_ORD);
 	ms_acc = &motion_sensors[BMI_ACC_SENSOR_ID];
 	ms_gyr = &motion_sensors[BMI_GYR_SENSOR_ID];
+
+	/* The mock should return whatever is passed in to its addr param */
+	RESET_FAKE(init_rom_map);
+	init_rom_map_fake.custom_fake = init_rom_map_addr_passthru;
 
 	/*
 	 * Test successful init. It is needed custom function to set value of
@@ -1969,6 +1984,64 @@ void test_bmi_init_chip_id(void)
 		      EC_ERROR_ACCESS_DENIED, ret);
 }
 
+/* Make an I2C emulator mock wrapped in FFF */
+FAKE_VALUE_FUNC(int, bmi_config_load_no_mapped_flash_mock_read_fn,
+		struct i2c_emul *, int, uint8_t *, int, void *);
+static int bmi_config_load_no_mapped_flash_mock_read_fn_helper(
+	struct i2c_emul *emul, int reg, uint8_t *val, int bytes, void *data)
+{
+	if (reg == BMI260_INTERNAL_STATUS && val) {
+		/* We want to force-return a status of 'initialized' when this
+		 * is read.
+		 */
+		*val = BMI260_INIT_OK;
+		return 0;
+	}
+	/* For other registers, go through the normal emulator route */
+	return 1;
+}
+
+void test_bmi_config_load_no_mapped_flash(void)
+{
+	/* Tests the situation where we load BMI config data when flash memory
+	 * is not mapped (basically what occurs when `init_rom_map()` in
+	 * `bmi_config_load()` returns NULL)
+	 */
+
+	struct i2c_emul *emul = bmi_emul_get(BMI_ORD);
+	struct motion_sensor_t *ms_acc = &motion_sensors[BMI_ACC_SENSOR_ID];
+	int ret, num_status_reg_reads;
+
+	/* Force bmi_config_load() to have to manually copy from memory */
+	RESET_FAKE(init_rom_map)
+	init_rom_map_fake.return_val = NULL;
+
+	/* Set proper chip ID and raise the INIT_OK flag to signal that config
+	 * succeeded.
+	 */
+	bmi_emul_set_reg(emul, BMI260_CHIP_ID, BMI260_CHIP_ID_MAJOR);
+	i2c_common_emul_set_read_func(
+		emul, bmi_config_load_no_mapped_flash_mock_read_fn, NULL);
+	RESET_FAKE(bmi_config_load_no_mapped_flash_mock_read_fn);
+	bmi_config_load_no_mapped_flash_mock_read_fn_fake.custom_fake =
+		bmi_config_load_no_mapped_flash_mock_read_fn_helper;
+
+	ret = ms_acc->drv->init(ms_acc);
+
+	zassert_equal(ret, EC_RES_SUCCESS, "Got %d but expected %d", ret,
+		      EC_RES_SUCCESS);
+
+	/* Check the number of times we accessed BMI260_INTERNAL_STATUS */
+	num_status_reg_reads = MOCK_COUNT_CALLS_WITH_ARG_VALUE(
+		bmi_config_load_no_mapped_flash_mock_read_fn_fake, 1,
+		BMI260_INTERNAL_STATUS);
+	zassert_equal(1, num_status_reg_reads,
+		      "Accessed status reg %d times but expected %d.",
+		      num_status_reg_reads, 1);
+
+	i2c_common_emul_set_read_func(emul, NULL, NULL);
+}
+
 void test_suite_bmi260(void)
 {
 	ztest_test_suite(bmi260,
@@ -1992,6 +2065,8 @@ void test_suite_bmi260(void)
 			 ztest_user_unit_test(test_bmi_gyr_fifo),
 			 ztest_user_unit_test(test_unsupported_configs),
 			 ztest_user_unit_test(test_interrupt_handler),
-			 ztest_user_unit_test(test_bmi_init_chip_id));
+			 ztest_user_unit_test(test_bmi_init_chip_id),
+			 ztest_user_unit_test(
+				 test_bmi_config_load_no_mapped_flash));
 	ztest_run_test_suite(bmi260);
 }
