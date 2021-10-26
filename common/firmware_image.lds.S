@@ -76,6 +76,15 @@ MEMORY
 
 SECTIONS
 {
+	/*
+	 * Create empty text section. Without an explicit text section
+	 * clang/lld will create one and put it at an address it selects. Even
+	 * though the section it creates is empty, if the LMA is beyond the end
+	 * of the flash, ec.bin will be too large since the empty space is
+	 * filled with 0xFF.
+	 */
+	.text (NOLOAD) : {}
+
 	.image.RO : AT(IMAGE_RO_AT) {
 		*(.image.RO)
 	} > FLASH =0xff
