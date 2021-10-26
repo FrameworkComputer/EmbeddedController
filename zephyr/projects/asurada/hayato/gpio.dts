@@ -27,14 +27,15 @@
 			enum-name = "GPIO_AP_EC_WARM_RST_REQ";
 			label = "AP_EC_WARM_RST_REQ";
 		};
-		ap_ec_watchdog_l {
-			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		ap_ec_watchdog_l: ap_ec_watchdog_l {
+			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_EC_WATCHDOG_L";
 			label = "AP_EC_WATCHDOG_L";
 		};
-		ap_in_sleep_l {
+		ap_in_sleep_l: ap_in_sleep_l {
 			gpios = <&gpiof 2 (GPIO_INPUT | GPIO_PULL_DOWN |
-					GPIO_VOLTAGE_1P8)>;
+					GPIO_VOLTAGE_1P8 | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_IN_SLEEP_L";
 			label = "AP_IN_SLEEP_L";
 		};
@@ -44,9 +45,9 @@
 			enum-name = "GPIO_AP_XHCI_INIT_DONE";
 			label = "AP_XHCI_INIT_DONE";
 		};
-		pmic_ec_pwrgd {
+		pmic_ec_pwrgd: pmic_ec_pwrgd {
 			gpios = <&gpiof 3 (GPIO_INPUT | GPIO_PULL_DOWN |
-					GPIO_VOLTAGE_1P8)>;
+					GPIO_VOLTAGE_1P8 | GPIO_ACTIVE_HIGH)>;
 			enum-name = "GPIO_PMIC_EC_PWRGD";
 			label = "PMIC_EC_PWRGD";
 		};
@@ -325,6 +326,22 @@
 		wakeup-pins = <&ac_present
 			       &power_button_l
 			       &lid_open>;
+	};
+
+	power_signal_list: power-signal-list {
+		compatible = "mediatek,power-signal-list";
+		pmic_pwr_good {
+			power-enum-name = "PMIC_PWR_GOOD";
+			gpio = <&pmic_ec_pwrgd>;
+		};
+		ap_in_s3_l {
+			power-enum-name = "AP_IN_S3_L";
+			gpio = <&ap_in_sleep_l>;
+		};
+		ap_wdt_asserted {
+			power-enum-name = "AP_WDT_ASSERTED";
+			gpio = <&ap_ec_watchdog_l>;
+		};
 	};
 
 	unused-pins {

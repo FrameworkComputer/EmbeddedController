@@ -6,11 +6,15 @@
 #ifndef __CROS_EC_POWER_MT8192_H_
 #define __CROS_EC_POWER_MT8192_H_
 
+#ifndef CONFIG_ZEPHYR
+
 enum power_signal {
 	PMIC_PWR_GOOD,
 	AP_IN_S3_L,
 	AP_WDT_ASSERTED,
 	POWER_SIGNAL_COUNT,
 };
+
+#endif /* !CONFIG_ZEPHYR */
 
 #endif /* __CROS_EC_POWER_MT8192_H_ */

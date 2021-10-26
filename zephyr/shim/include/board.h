@@ -11,6 +11,9 @@
 /* Included shimed version of gpio signal. */
 #include "gpio_signal.h"
 
+/* Include shimmed version of power signal */
+#include "power/power.h"
+
 /* Include board specific gpio mapping/aliases if named_pgios node exists */
 #if DT_NODE_EXISTS(DT_PATH(named_gpios))
 #include "gpio_map.h"

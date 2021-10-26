@@ -1,0 +1,19 @@
+# Copyright 2021 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: MediaTek, Power Signal List
+compatible: "mediatek,power-signal-list"
+
+include: power-signal-list.yaml
+
+properties:
+  power-signals-required:
+    default: 3
+
+child-binding:
+  properties:
+    power-enum-name:
+      enum:
+        - AP_IN_S3_L
+        - AP_WDT_ASSERTED
+        - PMIC_PWR_GOOD

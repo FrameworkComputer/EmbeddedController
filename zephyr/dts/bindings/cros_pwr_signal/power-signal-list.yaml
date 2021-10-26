@@ -1,0 +1,24 @@
+# Copyright 2021 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: Power Signal List
+
+properties:
+  power-signals-required:
+    description:
+      Number of power-signal children there should be for the current AP
+    type: int
+
+child-binding:
+  description: Power Signal List child node
+  properties:
+    gpio:
+      description:
+        PHandle to the associated GPIO
+      type: phandle
+      required: true
+    power-enum-name:
+      description:
+        Enumeration values for power-signal-list
+      type: string
+      required: true
