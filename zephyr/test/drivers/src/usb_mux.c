@@ -199,15 +199,12 @@ static void suspend_usbc_task(bool suspend)
 		COND_CODE_1(HAS_TASK_PD_C3, (TASK_ID_PD_C3,), ())
 	};
 
-	for (int i = 0; i < ARRAY_SIZE(cros_tids); ++i) {
-		k_tid_t pd_c1_tid = task_get_zephyr_tid(cros_tids[i]);
-
-		if (suspend) {
-			k_thread_suspend(pd_c1_tid);
-		} else {
-			k_thread_resume(pd_c1_tid);
-		}
-	}
+	for (int i = 0; i < ARRAY_SIZE(cros_tids); ++i)
+		/*
+		 * TODO(b/201420132): pd_set_suspend uses sleeps which we should
+		 * minimize
+		 */
+		pd_set_suspend(TASK_ID_TO_PD_PORT(cros_tids[i]), suspend);
 }
 
 /** Restore original usb_mux chain without proxy */
