@@ -10,6 +10,4 @@
 
 #include "pwm/pwm.h"
 
-#define PWM_CH_DISPLIGHT	NAMED_PWM(displight)
-
 #endif /* __ZEPHYR_PWM_MAP_H */

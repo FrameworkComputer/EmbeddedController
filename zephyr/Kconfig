@@ -630,9 +630,9 @@ config PLATFORM_EC_PWM_DISPLIGHT
 	depends on PLATFORM_EC_PWM
 	help
 	  Enables display backlight controlled by a PWM signal connected
-	  directly to the EC chipset. The board files must define the C
-	  reference PWM_CH_DISPLIGHT to the PWM channel used for the
-	  display backlight control.
+	  directly to the EC chipset. The board devicetree file must define the
+	  PWM channel used for the display backlight control and assign the
+	  "displight" node label to it.
 
 config PLATFORM_EC_RTC
 	bool "Real-time clock (RTC)"

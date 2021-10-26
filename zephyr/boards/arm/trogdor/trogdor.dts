@@ -116,7 +116,7 @@
 			label = "KBLIGHT";
 			frequency = <10000>;
 		};
-		displight {
+		displight: displight {
 			pwms = <&pwm5 0 0>;
 			label = "DISPLIGHT";
 			frequency = <4800>;
