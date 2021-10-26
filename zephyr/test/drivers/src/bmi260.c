@@ -2013,8 +2013,12 @@ void test_bmi_config_load_no_mapped_flash(void)
 	int ret, num_status_reg_reads;
 
 	/* Force bmi_config_load() to have to manually copy from memory */
-	RESET_FAKE(init_rom_map)
+	RESET_FAKE(init_rom_map);
 	init_rom_map_fake.return_val = NULL;
+
+	/* Force init_rom_copy() to succeed */
+	RESET_FAKE(init_rom_copy);
+	init_rom_copy_fake.return_val = 0;
 
 	/* Set proper chip ID and raise the INIT_OK flag to signal that config
 	 * succeeded.
@@ -2026,6 +2030,7 @@ void test_bmi_config_load_no_mapped_flash(void)
 	bmi_config_load_no_mapped_flash_mock_read_fn_fake.custom_fake =
 		bmi_config_load_no_mapped_flash_mock_read_fn_helper;
 
+	/* Part 1: successful path */
 	ret = ms_acc->drv->init(ms_acc);
 
 	zassert_equal(ret, EC_RES_SUCCESS, "Got %d but expected %d", ret,
@@ -2039,6 +2044,34 @@ void test_bmi_config_load_no_mapped_flash(void)
 		      "Accessed status reg %d times but expected %d.",
 		      num_status_reg_reads, 1);
 
+	/* Part 2: write to `BMI260_INIT_ADDR_0` fails */
+	i2c_common_emul_set_write_fail_reg(emul, BMI260_INIT_ADDR_0);
+
+	ret = ms_acc->drv->init(ms_acc);
+	zassert_equal(ret, EC_ERROR_INVALID_CONFIG, "Got %d but expected %d",
+		      ret, EC_ERROR_INVALID_CONFIG);
+
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Part 3: init_rom_copy() fails w/ a non-zero return code of 255. */
+	init_rom_copy_fake.return_val = 255;
+
+	ret = ms_acc->drv->init(ms_acc);
+	zassert_equal(ret, EC_ERROR_INVALID_CONFIG, "Got %d but expected %d",
+		      ret, EC_ERROR_INVALID_CONFIG);
+
+	init_rom_copy_fake.return_val = 0;
+
+	/* Part 4: write to `BMI260_INIT_DATA` fails */
+	i2c_common_emul_set_write_fail_reg(emul, BMI260_INIT_DATA);
+
+	ret = ms_acc->drv->init(ms_acc);
+	zassert_equal(ret, EC_ERROR_INVALID_CONFIG, "Got %d but expected %d",
+		      ret, EC_ERROR_INVALID_CONFIG);
+
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Cleanup */
 	i2c_common_emul_set_read_func(emul, NULL, NULL);
 }
 
