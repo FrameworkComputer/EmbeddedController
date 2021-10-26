@@ -12,7 +12,7 @@
 			label = "FAN";
 			frequency = <25000>;
 		};
-		kblight {
+		kblight: kblight {
 			pwms = <&pwm2 0 0>;
 			label = "KBLIGHT";
 			frequency = <10000>;

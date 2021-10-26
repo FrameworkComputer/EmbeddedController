@@ -50,7 +50,7 @@
 	named-pwms {
 		compatible = "named-pwms";
 
-		kblight {
+		kblight: kblight {
 			pwms = <&pwm3 0 0>;
 			label = "KBLIGHT";
 			frequency = <10000>;

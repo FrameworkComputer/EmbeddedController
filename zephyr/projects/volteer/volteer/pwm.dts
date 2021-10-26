@@ -31,7 +31,7 @@
 			label = "LED4_SIDESEL";
 			frequency = <2400>;
 		};
-		kblight {
+		kblight: kblight {
 			pwms = <&pwm3 0 0>;
 			label = "KBLIGHT";
 			frequency = <2400>;

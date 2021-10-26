@@ -168,9 +168,9 @@ config PLATFORM_EC_PWM_KBLIGHT
 	depends on PLATFORM_EC_PWM
 	help
 	  Enables a PWM-controlled keyboard backlight controlled by a PWM signal
-	  connected directly to the EC chipset. The board files must define
-	  the C reference PWM_CH_KBLIGHT to the PWM channel used for the
-	  keyboard backlight control.
+	  connected directly to the EC chipset. The board devicetree file must
+	  define the PWM channel used for the keyboard backlight control and
+	  assign the "kblight" node label to it.
 
 endchoice  # Keyboard backlight
 
