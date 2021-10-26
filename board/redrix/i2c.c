@@ -46,7 +46,7 @@ const struct i2c_port_t i2c_ports[] = {
 		/* I2C4 C1 TCPC */
 		.name = "tcpc1",
 		.port = I2C_PORT_USB_C1_TCPC,
-		.kbps = 400,
+		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_C1_TCPC_SCL,
 		.sda = GPIO_EC_I2C_USB_C1_TCPC_SDA,
 	},
@@ -62,7 +62,7 @@ const struct i2c_port_t i2c_ports[] = {
 		/* I2C6 */
 		.name = "ppc1,retimer1",
 		.port = I2C_PORT_USB_C1_PPC,
-		.kbps = 400,
+		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_C1_MIX_SCL,
 		.sda = GPIO_EC_I2C_USB_C1_MIX_SDA,
 	},
