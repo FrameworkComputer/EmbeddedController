@@ -22,7 +22,7 @@
 #endif
 
 #ifdef CONFIG_PWM
-#include "pwm_map.h"
+#include "pwm/pwm.h"
 #endif
 
 /* Include board specific sensor configuration if motionsense is enabled */
