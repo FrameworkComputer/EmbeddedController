@@ -59,6 +59,12 @@ struct ioexpander_drv {
 /* IO Expander has been initialized */
 #define IOEX_FLAGS_INITIALIZED	BIT(1)
 
+/*
+ * BITS 24 to 31 are used by io-expander drivers that need to control multiple
+ * devices
+ */
+#define IOEX_FLAGS_CUSTOM_BIT(x) BUILD_CHECK_INLINE(BIT(x), BIT(x) & 0xff000000)
+
 struct ioexpander_config_t {
 	/* Physical I2C port connects to the IO expander chip. */
 	int i2c_host_port;
