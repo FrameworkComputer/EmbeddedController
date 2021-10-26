@@ -154,6 +154,14 @@
 #include "gpio_signal.h"
 #include "registers.h"
 
+enum board_version {
+	BOARD_VERSION_PROTO = 1,
+	BOARD_VERSION_PRE_EVT = 2,
+	BOARD_VERSION_EVT = 3,
+	BOARD_VERSION_DVT = 4,
+	BOARD_VERSION_PVT = 5,
+};
+
 enum adc_channel {
 	ADC_SNS_PP3300,     /* ADC2 */
 	ADC_SNS_PP1050,     /* ADC7 */

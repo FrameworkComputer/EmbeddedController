@@ -137,13 +137,6 @@ const struct motion_sensor_t *motion_als_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 
-static void board_sensors_init(void)
-{
-	/* Enable interrupt for the TCS3400 color light sensor */
-	gpio_enable_interrupt(GPIO_EC_RGB_INT_L);
-}
-DECLARE_HOOK(HOOK_INIT, board_sensors_init, HOOK_PRIO_INIT_I2C + 1);
-
 static void power_monitor(void);
 DECLARE_DEFERRED(power_monitor);
 
@@ -412,6 +405,33 @@ static void cbi_init(void)
 		board_version, sku_id, fw_config);
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
+
+static void board_sensors_init(void)
+{
+	/* Enable interrupt for the TCS3400 color light sensor */
+	switch (board_version) {
+	case BOARD_VERSION_PROTO:
+	case BOARD_VERSION_PRE_EVT:
+	case BOARD_VERSION_EVT:
+		/*
+		 * b/203224828: These versions incorrectly use a 1.8V interrupt
+		 * line, which sends a constant interrupt signal and eventually
+		 * triggers a watchdog reset, so we keep it disabled.
+		 */
+		gpio_disable_interrupt(GPIO_EC_RGB_INT_L);
+		CPRINTS("ALS interrupt disabled (detected known-bad hardware)");
+		break;
+
+	case BOARD_VERSION_DVT:
+	case BOARD_VERSION_PVT:
+	default:
+		gpio_enable_interrupt(GPIO_EC_RGB_INT_L);
+		CPRINTS("ALS interrupt enabled");
+		break;
+	}
+}
+/* Ensure board_sensors_init runs after cbi_init. */
+DECLARE_HOOK(HOOK_INIT, board_sensors_init, HOOK_PRIO_INIT_I2C + 2);
 
 static void board_init(void)
 {
