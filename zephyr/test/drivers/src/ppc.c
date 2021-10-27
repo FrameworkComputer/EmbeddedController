@@ -168,6 +168,32 @@ static void test_ppc_syv682x_interrupt(void)
 			(SYV682X_CONTROL_4_VCONN1 | SYV682X_CONTROL_4_VCONN2),
 			"VCONN enabled after long VCONN OC");
 	syv682x_emul_set_control_4(emul, 0x0);
+
+	/*
+	 * A VCONN over-voltage (VBAT_OVP) event will cause the device to
+	 * disconnect CC and VCONN. The driver should then reinitialize the
+	 * device, which will enable both CC lines but leave VCONN disabled. The
+	 * driver should then run generic CC over-voltage handling.
+	 */
+	ppc_set_vconn(syv682x_port, true);
+	syv682x_emul_set_control_4(emul, SYV682X_CONTROL_4_VBAT_OVP);
+	syv682x_interrupt(syv682x_port);
+	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
+	msleep(1);
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_4_REG, &reg),
+			"Reading CONTROL_4 failed");
+	zassert_true(reg & SYV682X_CONTROL_4_CC1_BPS,
+			"CC1 disabled after handling VBAT_OVP");
+	zassert_true(reg & SYV682X_CONTROL_4_CC2_BPS,
+			"CC2 disabled after handling VBAT_OVP");
+	zassert_false(reg &
+			(SYV682X_CONTROL_4_VCONN1 | SYV682X_CONTROL_4_VCONN2),
+			"VCONN enabled after handling VBAT_OVP");
+	/*
+	 * TODO(b/190519131): The PD stack should generate a Reset in response
+	 * to a CC over-voltage event. There is currently no easy way to test
+	 * that a Hard Reset occurred.
+	 */
 }
 
 static void test_ppc_syv682x(void)

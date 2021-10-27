@@ -100,6 +100,14 @@ void syv682x_emul_set_control_4(struct i2c_emul *emul, uint8_t val)
 	 * current. The latter behavior is observed in practice, and this
 	 * emulator does not currently model it.
 	 */
+
+	/* VBAT_OVP disconnects CC and VCONN. */
+	if (val_interrupt & SYV682X_CONTROL_4_VBAT_OVP) {
+		data->reg[SYV682X_CONTROL_4_REG] &= ~(SYV682X_CONTROL_4_CC1_BPS
+				| SYV682X_CONTROL_4_CC2_BPS
+				| SYV682X_CONTROL_4_VCONN1
+				| SYV682X_CONTROL_4_VCONN2);
+	}
 }
 
 int syv682x_emul_get_reg(struct i2c_emul *emul, int reg, uint8_t *val)
