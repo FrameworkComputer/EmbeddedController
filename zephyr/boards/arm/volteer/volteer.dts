@@ -60,12 +60,12 @@
 			enum-name = "I2C_PORT_ACCEL";
 			label = "ACCEL";
 		};
-		usb-c0 {
+		i2c_usb_c0: usb-c0 {
 			i2c-port = <&i2c1_0>;
 			enum-name = "I2C_PORT_USB_C0";
 			label = "USB_C0";
 		};
-		usb-c1 {
+		i2c_usb_c1: usb-c1 {
 			i2c-port = <&i2c2_0>;
 			enum-name = "I2C_PORT_USB_C1";
 			label = "USB_C1";

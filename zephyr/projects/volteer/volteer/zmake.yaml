@@ -12,6 +12,7 @@ dts-overlays:
   - motionsense.dts
   - pwm.dts
   - pwm_leds.dts
+  - usbc.dts
 supported-toolchains:
   - coreboot-sdk
   - zephyr

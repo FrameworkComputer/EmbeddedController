@@ -340,12 +340,15 @@ static void board_tcpc_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
 
+#ifndef CONFIG_ZEPHYR
 	/* Enable BC1.2 interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
+#endif /* !CONFIG_ZEPHYR */
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
 
+#ifndef CONFIG_ZEPHYR
 /******************************************************************************/
 /* BC1.2 charger detect configuration */
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
@@ -359,6 +362,7 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
+#endif /* !CONFIG_ZEPHYR */
 
 /******************************************************************************/
 /* TCPC support routines */

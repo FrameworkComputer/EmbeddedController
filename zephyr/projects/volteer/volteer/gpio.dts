@@ -108,7 +108,7 @@
 			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
 			label = "USB_C1_PPC_INT_ODL";
 		};
-		usb_c0_bc12_int_odl {
+		gpio_usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
 			gpios = <&gpioe 4 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
 			label = "USB_C0_BC12_INT_ODL";
@@ -119,7 +119,7 @@
 			enum-name = "GPIO_USB_C1_MIX_INT_ODL";
 			label = "USB_C1_MIX_INT_ODL";
 		};
-		usb_c1_bc12_int_odl {
+		gpio_usb_c1_bc12_int_odl: usb_c1_bc12_int_odl {
 			#gpio-cells = <0>;
 			gpios = <&gpio0 3 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
