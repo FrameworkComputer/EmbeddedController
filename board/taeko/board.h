@@ -104,6 +104,9 @@
 #define PD_MAX_CURRENT_MA	3000
 #define PD_MAX_VOLTAGE_MV	20000
 
+/* The lower the input voltage, the higher the power efficiency. */
+#define PD_PREFER_LOW_VOLTAGE
+
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
