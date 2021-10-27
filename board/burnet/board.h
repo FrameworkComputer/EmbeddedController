@@ -47,6 +47,9 @@
 
 #define CONFIG_USB_MUX_IT5205
 
+/* Disable verbose output in EC pd */
+#define CONFIG_CMD_PD_SRCCAPS_REDUCED_SIZE
+
 /* Motion Sensors */
 #ifndef VARIANT_KUKUI_NO_SENSORS
 #define CONFIG_ACCEL_BMA255		/* Lid accel */
