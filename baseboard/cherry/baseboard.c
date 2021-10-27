@@ -295,7 +295,7 @@ static int board_ps8802_mux_set(const struct usb_mux *me,
 					PS8802_REG_PAGE2,
 					PS8802_REG2_USB_SSEQ_LEVEL,
 					PS8802_USBEQ_LEVEL_UP_MASK,
-					PS8802_USBEQ_LEVEL_UP_19DB));
+					PS8802_USBEQ_LEVEL_UP_12DB));
 	}
 
 	/* DP specific config */
@@ -305,7 +305,7 @@ static int board_ps8802_mux_set(const struct usb_mux *me,
 					PS8802_REG_PAGE2,
 					PS8802_REG2_DPEQ_LEVEL,
 					PS8802_DPEQ_LEVEL_UP_MASK,
-					PS8802_DPEQ_LEVEL_UP_19DB));
+					PS8802_DPEQ_LEVEL_UP_12DB));
 	}
 
 	return EC_SUCCESS;
