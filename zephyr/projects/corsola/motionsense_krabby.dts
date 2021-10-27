@@ -13,7 +13,7 @@
 		 * by alias. Using the alias, each driver creates
 		 * its own <>_INT_EVENT.
 		 */
-		bmi160-int = &base_accel;
+		icm42607-int = &base_accel;
 		lis2dw12-int = &lid_accel;
 	};
 
@@ -30,8 +30,8 @@
 			label = "LID_MUTEX";
 		};
 
-		mutex_bmi160: bmi160-mutex {
-			label = "BMI160_MUTEX";
+		base_mutex: icm42607-mutex {
+			label = "ICM42607_MUTEX";
 		};
 	};
 
@@ -39,15 +39,15 @@
 	motionsense-rotation-ref {
 		compatible = "cros-ec,motionsense-rotation-ref";
 		lid_rot_ref: lid-rotation-ref {
-			mat33 = <(-1) 0 0
-				 0 (-1) 0
+			mat33 = <1 0 0
+				 0 1 0
 				 0 0 1>;
 		};
 
 		base_rot_ref: base-rotation-ref {
 			mat33 = <1 0 0
-				 0 (-1) 0
-				 0 0 (-1)>;
+				 0 1 0
+				 0 0 1>;
 		};
 	};
 
@@ -61,8 +61,8 @@
 	 * "struct als_drv_data_t" in accelgyro.h
 	 */
 	motionsense-sensor-data {
-		bmi160_data: bmi160-drv-data {
-			compatible = "cros-ec,drvdata-bmi160";
+		icm42607_data: icm42607-drv-data {
+			compatible = "cros-ec,drvdata-icm42607";
 			status = "okay";
 		};
 
@@ -105,16 +105,16 @@
 		};
 
 		base_accel: base-accel {
-			compatible = "cros-ec,bmi160-accel";
+			compatible = "cros-ec,icm42607-accel";
 			status = "okay";
 
 			label = "Base Accel";
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_BASE";
-			mutex = <&mutex_bmi160>;
+			mutex = <&base_mutex>;
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
-			drv-data = <&bmi160_data>;
+			drv-data = <&icm42607_data>;
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
@@ -129,17 +129,17 @@
 			};
 		};
 
-		base-gyro {
-			compatible = "cros-ec,bmi160-gyro";
+		base_gyro: base-gyro {
+			compatible = "cros-ec,icm42607-gyro";
 			status = "okay";
 
 			label = "Base Gyro";
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_BASE";
-			mutex = <&mutex_bmi160>;
+			mutex = <&base_mutex>;
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
-			drv-data = <&bmi160_data>;
+			drv-data = <&icm42607_data>;
 		};
 	};
 

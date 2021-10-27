@@ -129,10 +129,13 @@
 #define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
 #endif
 
-/* TODO: remove after icm426xx driver added */
-static inline void motion_interrupt(enum gpio_signal signal)
-{
-}
+#ifdef CONFIG_PLATFORM_EC_ACCELGYRO_ICM42607
+	#define BASE_IMU_INT() GPIO_INT(GPIO_BASE_IMU_INT_L,                   \
+					GPIO_INT_EDGE_FALLING,                 \
+					icm42607_interrupt)
+#else
+	#define BASE_IMU_INT()
+#endif
 
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
@@ -159,8 +162,7 @@ static inline void motion_interrupt(enum gpio_signal signal)
 	AP_IN_RST_INT()							\
 	AP_EC_WDTRST_INT()						\
 	GMR_TABLET_INT()						\
-	GPIO_INT(GPIO_BASE_IMU_INT_L,					\
-		 GPIO_INT_EDGE_FALLING, motion_interrupt)		\
+	BASE_IMU_INT()							\
 	LID_ACCEL_INT()							\
 	USBA_INT()							\
 	EXTPWR_INT()							\
