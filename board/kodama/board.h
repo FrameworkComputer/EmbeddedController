@@ -58,6 +58,9 @@
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
 #endif /* SECTION_IS_RW */
 
+/* Disable verbose output in EC pd */
+#define CONFIG_CMD_PD_SRCCAPS_REDUCED_SIZE
+
 /* I2C ports */
 #define I2C_PORT_CHARGER  0
 #define I2C_PORT_TCPC0    0
