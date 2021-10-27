@@ -65,6 +65,18 @@ int kblight_enable(int enable)
 	return kblight.drv->enable(enable);
 }
 
+int kblight_get_enabled(void)
+{
+#ifdef GPIO_EN_KEYBOARD_BACKLIGHT
+	if (!gpio_get_level(GPIO_EN_KEYBOARD_BACKLIGHT))
+		return 0;
+#endif
+	if (kblight.drv && kblight.drv->get_enabled)
+		return kblight.drv->get_enabled();
+	return -1;
+}
+
+
 int kblight_register(const struct kblight_drv *drv)
 {
 	kblight.drv = drv;
@@ -125,7 +137,8 @@ static int cc_kblight(int argc, char **argv)
 		if (kblight_enable(i > 0))
 			return EC_ERROR_PARAM1;
 	}
-	ccprintf("Keyboard backlight: %d%%\n", kblight_get());
+	ccprintf("Keyboard backlight: %d%% enabled: %d\n",
+		kblight_get(), kblight_get_enabled());
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(kblight, cc_kblight,
@@ -138,7 +151,7 @@ hc_get_keyboard_backlight(struct host_cmd_handler_args *args)
 	struct ec_response_pwm_get_keyboard_backlight *r = args->response;
 
 	r->percent = kblight_get();
-	r->enabled = 1;			/* Deprecated */
+	r->enabled = kblight_get_enabled();
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;

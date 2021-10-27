@@ -54,6 +54,17 @@ static int lm3509_power(int enable)
 	return lm3509_write(LM3509_REG_GP, enable ? 0x7 : 0);
 }
 
+static int lm3509_get_power(void)
+{
+	int rv, val;
+
+	rv = lm3509_read(LM3509_REG_GP, &val);
+	if (rv)
+		return -1;
+	/* Bit 0: Enable MAIN. Bit 1: Enable SUB/FB */
+	return (val & 0x3) == 0x3 ? 1 : 0;
+}
+
 static int lm3509_set_brightness(int percent)
 {
 	/* We don't need to read/mask/write BMAIN because bit6 and 7 are non
@@ -82,4 +93,5 @@ const struct kblight_drv kblight_lm3509 = {
 	.set = lm3509_set_brightness,
 	.get = lm3509_get_brightness,
 	.enable = lm3509_power,
+	.get_enabled = lm3509_get_power,
 };

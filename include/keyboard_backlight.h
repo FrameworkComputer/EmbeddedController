@@ -43,6 +43,12 @@ struct kblight_drv {
 	 * @return EC_SUCCESS or EC_ERROR_*
 	 */
 	int (*enable)(int enable);
+
+	/**
+	 * Get the enabled state.
+	 * @return 1=Enable, 0=Disable, -1=Failed to read enabled state.
+	 */
+	int (*get_enabled)(void);
 };
 
 /**

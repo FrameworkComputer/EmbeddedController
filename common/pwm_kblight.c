@@ -38,9 +38,15 @@ static int kblight_pwm_enable(int enable)
 	return EC_SUCCESS;
 }
 
+static int kblight_pwm_get_enabled(void)
+{
+	return pwm_get_enabled(kblight_pwm_ch);
+}
+
 const struct kblight_drv kblight_pwm = {
 	.init = kblight_pwm_init,
 	.set = kblight_pwm_set,
 	.get = kblight_pwm_get,
 	.enable = kblight_pwm_enable,
+	.get_enabled = kblight_pwm_get_enabled,
 };
