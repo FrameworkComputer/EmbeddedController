@@ -807,6 +807,123 @@ static void test_ps8805_gpio(void)
 	}
 }
 
+/** Test TCPCI init and vbus level */
+static void test_ps8xxx_tcpci_init(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+
+	test_tcpci_init(tcpci_emul, USBC_PORT_C1);
+}
+
+/** Test TCPCI release */
+static void test_ps8xxx_tcpci_release(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+
+	test_tcpci_release(tcpci_emul, USBC_PORT_C1);
+}
+
+/** Test TCPCI get cc */
+static void test_ps8xxx_tcpci_get_cc(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+
+	test_tcpci_get_cc(tcpci_emul, USBC_PORT_C1);
+}
+
+/** Test TCPCI set cc */
+static void test_ps8xxx_tcpci_set_cc(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+
+	test_tcpci_set_cc(tcpci_emul, USBC_PORT_C1);
+}
+
+/** Test TCPCI set polarity */
+static void test_ps8xxx_tcpci_set_polarity(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+
+	test_tcpci_set_polarity(tcpci_emul, USBC_PORT_C1);
+}
+
+/** Test TCPCI set vconn */
+static void test_ps8xxx_tcpci_set_vconn(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+
+	test_tcpci_set_vconn(tcpci_emul, USBC_PORT_C1);
+}
+
+/** Test TCPCI set msg header */
+static void test_ps8xxx_tcpci_set_msg_header(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+
+	test_tcpci_set_msg_header(tcpci_emul, USBC_PORT_C1);
+}
+
+/** Test TCPCI get raw message */
+static void test_ps8xxx_tcpci_get_rx_message_raw(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+
+	test_tcpci_get_rx_message_raw(tcpci_emul, USBC_PORT_C1);
+}
+
+/** Test TCPCI transmitting message */
+static void test_ps8xxx_tcpci_transmit(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+
+	test_tcpci_transmit(tcpci_emul, USBC_PORT_C1);
+}
+
+/** Test TCPCI alert */
+static void test_ps8xxx_tcpci_alert(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+
+	test_tcpci_alert(tcpci_emul, USBC_PORT_C1);
+}
+
+/** Test TCPCI alert RX message */
+static void test_ps8xxx_tcpci_alert_rx_message(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+
+	test_tcpci_alert_rx_message(tcpci_emul, USBC_PORT_C1);
+}
+
+/** Test TCPCI enter low power mode */
+static void test_ps8xxx_tcpci_low_power_mode(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+
+	test_tcpci_low_power_mode(tcpci_emul, USBC_PORT_C1);
+}
+
+/** Test TCPCI set bist test mode */
+static void test_ps8xxx_tcpci_set_bist_mode(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+
+	test_tcpci_set_bist_mode(tcpci_emul, USBC_PORT_C1);
+}
+
 /* Setup no fail for all I2C devices associated with PS8xxx emulator */
 static void setup_no_fail_all(void)
 {
@@ -895,6 +1012,44 @@ void test_suite_ps8xxx(void)
 				 test_ps8805_get_chip_info_fix_dev_id,
 				 setup_ps8805, unit_test_noop),
 			 ztest_unit_test_setup_teardown(test_ps8805_gpio,
+				 setup_ps8805, unit_test_noop),
+			 ztest_unit_test_setup_teardown(test_ps8xxx_tcpci_init,
+				 setup_ps8805, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_release,
+				 setup_ps8805, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_get_cc,
+				 setup_ps8805, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_set_cc,
+				 setup_ps8805, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_set_polarity,
+				 setup_ps8805, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_set_vconn,
+				 setup_ps8805, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_set_msg_header,
+				 setup_ps8805, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_get_rx_message_raw,
+				 setup_ps8805, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_transmit,
+				 setup_ps8805, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_alert,
+				 setup_ps8805, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_alert_rx_message,
+				 setup_ps8805, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_low_power_mode,
+				 setup_ps8805, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_set_bist_mode,
 				 setup_ps8805, unit_test_noop));
 	ztest_run_test_suite(ps8805);
 
@@ -918,6 +1073,44 @@ void test_suite_ps8xxx(void)
 				 setup_ps8815, unit_test_noop),
 			 ztest_unit_test_setup_teardown(
 				 test_ps8815_get_chip_info_fix_dev_id,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(test_ps8xxx_tcpci_init,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_release,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_get_cc,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_set_cc,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_set_polarity,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_set_vconn,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_set_msg_header,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_get_rx_message_raw,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_transmit,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_alert,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_alert_rx_message,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_low_power_mode,
+				 setup_ps8815, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				 test_ps8xxx_tcpci_set_bist_mode,
 				 setup_ps8815, unit_test_noop));
 	ztest_run_test_suite(ps8815);
 }
