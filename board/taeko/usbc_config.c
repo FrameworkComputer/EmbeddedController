@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "battery.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
@@ -168,6 +169,11 @@ static void ps8815_reset(void)
 	if (i2c_read8(I2C_PORT_USB_C1_TCPC,
 		      PS8751_I2C_ADDR1_FLAGS, 0x0f, &val) == EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f was %02x", val);
+	else {
+		CPRINTS("delay 10ms to make sure PS8815 is waken from idle");
+		msleep(10);
+	}
+
 
 	if (i2c_write8(I2C_PORT_USB_C1_TCPC,
 		       PS8751_I2C_ADDR1_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
@@ -235,7 +241,15 @@ void board_reset_pd_mcu(void)
 	 */
 
 	gpio_set_level(GPIO_USB_C0_TCPC_RST_ODL, 0);
-	gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 0);
+
+	/*
+	 * (b/202489681): Nx20p3483 cannot sink power after reset ec
+	 * To avoid nx20p3483 cannot sink power after reset ec w/ AC
+	 * only in TCPC1 port, EC shouldn't assert GPIO_USB_C1_RT_RST_R_ODL
+	 * if no battery.
+	 */
+	if (battery_hw_present())
+		gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 0);
 
 	/*
 	 * delay for power-on to reset-off and min. assertion time
