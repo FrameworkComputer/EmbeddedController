@@ -34,7 +34,7 @@ static struct {
 	const struct usb_mux *mux;
 	uint8_t val;
 	bool write_pending;
-} saved_mux_state[USBC_PORT_COUNT];
+} saved_mux_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int amd_fp6_mux_port0_read(const struct usb_mux *me, uint8_t *val)
 {
