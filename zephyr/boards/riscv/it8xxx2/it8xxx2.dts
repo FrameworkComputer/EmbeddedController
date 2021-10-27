@@ -12,7 +12,7 @@
 #include <dt-bindings/wake_mask_event_defines.h>
 
 / {
-	model = "Google Corsola Baseboard";
+	model = "Google IT8XXX2 Baseboard";
 
 	chosen {
 		zephyr,sram = &sram0;

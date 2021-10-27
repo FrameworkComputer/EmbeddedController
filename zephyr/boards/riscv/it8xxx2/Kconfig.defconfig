@@ -2,10 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if BOARD_CORSOLA
+if BOARD_IT8XXX2
 
 config BOARD
-	default "corsola"
+	default "it8xxx2"
 
 # Zephyr internal stack sizes
 
@@ -53,4 +53,4 @@ choice PLATFORM_EC_HOSTCMD_DEBUG_MODE
 	default HCDEBUG_OFF
 endchoice # PLATFORM_EC_HOSTCMD_DEBUG_MODE
 
-endif # BOARD_CORSOLA
+endif # BOARD_IT8XXX2
