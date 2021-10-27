@@ -21,6 +21,9 @@
 #define FW_IMAGE_SIGN(sect,suffix) \
 	STRINGIFY(FW_FILE(FINAL_OUTDIR,PROJECT,sect,suffix,.sig))
 
+.global _start
+_start:
+
 /* Read Only firmware */
 #ifdef CONFIG_FW_INCLUDE_RO
 .section .image.RO, "ax"
