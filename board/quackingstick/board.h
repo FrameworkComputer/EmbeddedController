@@ -74,6 +74,11 @@
 #define GPIO_WP_L GPIO_EC_FLASH_WP_ODL
 #define GPIO_PMIC_RESIN_L GPIO_PM845_RESIN_L
 
+/* temp */
+#define CONFIG_TEMP_SENSOR
+#define CONFIG_THERMISTOR
+#define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -84,7 +89,13 @@ enum adc_channel {
 	ADC_AMON_BMON,
 	ADC_PSYS,
 	ADC_BASE_DET,
+	ADC_SYSTHERM2,
 	ADC_CH_COUNT
+};
+
+enum temp_sensor_id {
+	TEMP_SENSOR_SYS2,
+	TEMP_SENSOR_COUNT
 };
 
 /* Motion sensors */
