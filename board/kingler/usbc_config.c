@@ -5,6 +5,7 @@
 
 /* Krabby board-specific USB-C configuration */
 
+#include "driver/tcpm/it83xx_pd.h"
 #include "driver/usb_mux/ps8743.h"
 #include "hooks.h"
 
@@ -20,3 +21,8 @@ void board_usb_mux_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_usb_mux_init, HOOK_PRIO_INIT_I2C + 1);
+
+const struct cc_para_t *board_get_cc_tuning_parameter(enum usbpd_port port)
+{
+	return NULL;
+}

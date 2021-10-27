@@ -26,6 +26,7 @@ zephyr_library_sources(
 
 # Include selected EC source from the board
 zephyr_library_sources(
+  "${PLATFORM_EC_BOARD}/hooks.c"
   "${PLATFORM_EC_BOARD}/led.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C
