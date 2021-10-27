@@ -229,6 +229,19 @@
 /* Device version of product. */
 #define CONFIG_USB_BCD_DEV 0x0000
 
+/*
+ * These stack sizes were determined using "make analyzestack" for brya
+ * and include about 15% headroom. Sizes are rounded to multiples of 64
+ * bytes. Task stack sizes not listed here use more generic values (see
+ * ec.tasklist).
+ */
+#define BASEBOARD_CHARGER_TASK_STACK_SIZE	1088
+#define BASEBOARD_CHG_RAMP_TASK_STACK_SIZE	1088
+#define BASEBOARD_CHIPSET_TASK_STACK_SIZE	1152
+#define BASEBOARD_PD_INT_TASK_STACK_SIZE	 800
+#define BASEBOARD_PD_TASK_STACK_SIZE		1216
+#define BASEBOARD_POWERBTN_TASK_STACK_SIZE	1088
+
 #ifndef __ASSEMBLER__
 
 #include <stdbool.h>
