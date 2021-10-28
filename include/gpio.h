@@ -29,7 +29,7 @@
 #elif GPIO_INPUT != BIT(8)
 #error GPIO_INPUT values are not the same!
 #elif GPIO_OUTPUT != BIT(9)
-#error GPIO_PULL_DOWN values are not the same!
+#error GPIO_OUTPUT values are not the same!
 #endif
 
 /* Otherwise define overlapping GPIO_ flags ourselves */
