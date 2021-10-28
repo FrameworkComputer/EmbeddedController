@@ -176,6 +176,14 @@ void panic_printf(const char *format, ...);
  */
 void panic_data_print(const struct panic_data *pdata);
 
+/*
+ * Print saved panic information on console channel to observe panic
+ * information
+ *
+ * @param pdata pointer to saved panic data
+ */
+void panic_data_ccprint(const struct panic_data *pdata);
+
 /**
  * Report an assertion failure and reset
  *

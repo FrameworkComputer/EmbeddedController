@@ -4,6 +4,7 @@
  */
 
 #include "cpu.h"
+#include "console.h"
 #include "panic.h"
 #include "task.h"
 #include "util.h"
@@ -167,3 +168,53 @@ void panic_data_print(const struct panic_data *pdata)
 	mepc = pdata->riscv.mepc;
 	print_panic_information(regs, mcause, mepc);
 }
+
+#ifdef CONFIG_PANIC_CONSOLE_OUTPUT
+static void ccprint_panic_information(uint32_t *regs, uint32_t mcause,
+					uint32_t mepc)
+{
+	ccprintf("=== EXCEPTION: MCAUSE=%x ===\n", mcause);
+	ccprintf("S11 %08x S10 %08x  S9 %08x  S8   %08x\n",
+		     regs[0], regs[1], regs[2], regs[3]);
+	ccprintf("S7  %08x S6  %08x  S5 %08x  S4   %08x\n",
+		     regs[4], regs[5], regs[6], regs[7]);
+	ccprintf("S3  %08x S2  %08x  S1 %08x  S0   %08x\n",
+		     regs[8], regs[9], regs[10], regs[11]);
+	ccprintf("T6  %08x T5  %08x  T4 %08x  T3   %08x\n",
+		     regs[12], regs[13], regs[14], regs[15]);
+	ccprintf("T2  %08x T1  %08x  T0 %08x  A7   %08x\n",
+		     regs[16], regs[17], regs[18], regs[19]);
+	cflush();
+
+	ccprintf("A6  %08x A5  %08x  A4 %08x  A3   %08x\n",
+		     regs[20], regs[21], regs[22], regs[23]);
+	ccprintf("A2  %08x A1  %08x  A0 %08x  TP   %08x\n",
+		     regs[24], regs[25], regs[26], regs[27]);
+	ccprintf("GP  %08x RA  %08x  SP %08x  MEPC %08x\n",
+		     regs[28], regs[29], regs[30], mepc);
+
+#ifdef CONFIG_DEBUG_EXCEPTIONS
+	if ((regs[SOFT_PANIC_GPR_REASON] & 0xfffffff0) == PANIC_SW_BASE) {
+#ifdef CONFIG_SOFTWARE_PANIC
+		ccprintf("Software panic reason: %s\n",
+			panic_sw_reasons[(regs[SOFT_PANIC_GPR_REASON] -
+						PANIC_SW_BASE)]);
+		ccprintf("Software panic info:   %d\n",
+			regs[SOFT_PANIC_GPR_INFO]);
+#endif /* CONFIG_SOFTWARE_PANIC */
+	} else {
+		ccprintf("Exception type: %s\n", exc_type[(mcause & 0xf)]);
+	}
+#endif /* CONFIG_DEBUG_EXCEPTIONS */
+	cflush();
+}
+void panic_data_ccprint(const struct panic_data *pdata)
+{
+	uint32_t *regs, mcause, mepc;
+
+	regs = (uint32_t *)pdata->riscv.regs;
+	mcause = pdata->riscv.mcause;
+	mepc = pdata->riscv.mepc;
+	ccprint_panic_information(regs, mcause, mepc);
+}
+#endif /* CONFIG_PANIC_CONSOLE_OUTPUT */
