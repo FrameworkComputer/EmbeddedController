@@ -20,6 +20,11 @@
 #define CONFIG_CMD_BUTTON
 
 /* USB Type C and USB PD defines */
+#define PD_OPERATING_POWER_MW   15000
+#define PD_MAX_CURRENT_MA       5000
+#define PD_MAX_VOLTAGE_MV       20000
+/* Max Power = 100 W */
+#define PD_MAX_POWER_MW         ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
 
 /* USB Type A Features */
 

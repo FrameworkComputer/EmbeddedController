@@ -37,6 +37,12 @@
 #define CONFIG_USB_MUX_ANX7451
 #define CONFIG_USBC_RETIMER_ANX7451
 
+#define PD_OPERATING_POWER_MW   15000
+#define PD_MAX_CURRENT_MA       5000
+#define PD_MAX_VOLTAGE_MV       20000
+/* Max Power = 100 W */
+#define PD_MAX_POWER_MW         ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
+
 /* USB Type A Features */
 
 /* BC 1.2 */
