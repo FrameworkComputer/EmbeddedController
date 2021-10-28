@@ -227,13 +227,14 @@ static inline int tcpm_sop_prime_enable(int port, bool enable)
 
 static inline int tcpm_set_vconn(int port, int enable)
 {
-#ifdef CONFIG_USB_PD_TCPC_VCONN
-	int rv;
+	if (IS_ENABLED(CONFIG_USB_PD_TCPC_VCONN) ||
+	    tcpc_config[port].flags & TCPC_FLAGS_CONTROL_VCONN) {
+		int rv;
 
-	rv = tcpc_config[port].drv->set_vconn(port, enable);
-	if (rv)
-		return rv;
-#endif
+		rv = tcpc_config[port].drv->set_vconn(port, enable);
+		if (rv)
+			return rv;
+	}
 
 	return tcpm_sop_prime_enable(port, enable);
 }
