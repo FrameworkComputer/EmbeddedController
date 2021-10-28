@@ -122,6 +122,8 @@
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 #define CONFIG_CMD_I2C_PROTECT
 #define CONFIG_HOSTCMD_PD_CONTROL
+/* Disable verbose output in EC pd */
+#define CONFIG_CMD_PD_SRCCAPS_REDUCED_SIZE
 
 /*
  * Flash layout:
