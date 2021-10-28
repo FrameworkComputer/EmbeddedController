@@ -105,7 +105,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 		if (brightness[EC_LED_COLOR_WHITE] != 0)
 			led_set_color_power(EC_LED_COLOR_WHITE);
 		else
-			led_set_color_battery(LED_OFF);
+			led_set_color_power(LED_OFF);
 	} else {
 		return EC_ERROR_INVAL;
 	}
