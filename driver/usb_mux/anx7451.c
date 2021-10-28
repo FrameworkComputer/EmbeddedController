@@ -11,7 +11,7 @@
 #include "common.h"
 #include "console.h"
 #include "i2c.h"
-#include "time.h"
+#include "timer.h"
 #include "usb_mux.h"
 #include "util.h"
 
