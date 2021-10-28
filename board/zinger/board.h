@@ -73,8 +73,8 @@
 #undef CONFIG_WATCHDOG_PERIOD_MS
 #define CONFIG_WATCHDOG_PERIOD_MS 2300
 
-/* debug printf flash footprinf is about 1400 bytes */
-#define CONFIG_DEBUG_PRINTF
+/* debug printf flash footprint is about 1400 bytes */
+#undef CONFIG_DEBUG_PRINTF
 #define UARTN CONFIG_UART_CONSOLE
 #define UARTN_BASE STM32_USART_BASE(CONFIG_UART_CONSOLE)
 
