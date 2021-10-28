@@ -24,6 +24,7 @@
 #include "usb_mux.h"
 #include "usbc_ocp.h"
 #include "usbc_ppc.h"
+#include "usbc/ppc.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -143,12 +144,6 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 	return EC_RES_INVALID_PARAM;
 }
 
-static const struct ppc_config_t ppc_syv682x_port0 = {
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
-};
-
 /* TCPC mux configuration */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
@@ -201,9 +196,7 @@ static void board_init_usbc(void)
 
 	/* Configure the PPC driver */
 	if (board_has_syv_ppc())
-		memcpy(&ppc_chips[0],
-		       &ppc_syv682x_port0,
-		       sizeof(struct ppc_config_t));
+		PPC_ENABLE_ALTERNATE(ppc_port0_syv);
 }
 DECLARE_HOOK(HOOK_INIT, board_init_usbc, HOOK_PRIO_DEFAULT);
 
