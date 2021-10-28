@@ -2104,6 +2104,73 @@ void test_bmi_config_unsupported_chip(void)
 		      EC_ERROR_INVALID_CONFIG, ret);
 }
 
+void test_init_config_read_failure(void)
+{
+	/* Test proper response to a failed read from the register
+	 * BMI260_INTERNAL_STATUS.
+	 */
+
+	struct i2c_emul *emul = bmi_emul_get(BMI_ORD);
+	struct motion_sensor_t *ms_acc = &motion_sensors[BMI_ACC_SENSOR_ID];
+	int ret;
+
+	/* Set up i2c emulator and mocks */
+	bmi_emul_set_reg(emul, BMI260_CHIP_ID, BMI260_CHIP_ID_MAJOR);
+	i2c_common_emul_set_read_fail_reg(emul, BMI260_INTERNAL_STATUS);
+	RESET_FAKE(init_rom_map);
+	init_rom_map_fake.custom_fake = init_rom_map_addr_passthru;
+
+	ret = ms_acc->drv->init(ms_acc);
+
+	zassert_equal(ret, EC_ERROR_INVALID_CONFIG, "Expected %d but got %d",
+		      EC_ERROR_INVALID_CONFIG, ret);
+}
+
+/* Mock read function and counter used to test the timeout when
+ * waiting for the chip to initialize
+ */
+static int timeout_test_status_reg_access_count;
+static int status_timeout_mock_read_fn(struct i2c_emul *emul, int reg,
+				       uint8_t *val, int bytes, void *data)
+{
+	if (reg == BMI260_INTERNAL_STATUS && val) {
+		/* We want to force-return a non-OK status each time */
+		timeout_test_status_reg_access_count++;
+		*val = BMI260_INIT_ERR;
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+void test_init_config_status_timeout(void)
+{
+	/* We allow up to 15 tries to get a successful BMI260_INIT_OK
+	 * value from the BMI260_INTERNAL_STATUS register. Make sure
+	 * we properly handle the case where the chip is not initialized
+	 * before the timeout.
+	 */
+
+	struct i2c_emul *emul = bmi_emul_get(BMI_ORD);
+	struct motion_sensor_t *ms_acc = &motion_sensors[BMI_ACC_SENSOR_ID];
+	int ret;
+
+	/* Set up i2c emulator and mocks */
+	bmi_emul_set_reg(emul, BMI260_CHIP_ID, BMI260_CHIP_ID_MAJOR);
+	timeout_test_status_reg_access_count = 0;
+	i2c_common_emul_set_read_func(emul, status_timeout_mock_read_fn, NULL);
+	RESET_FAKE(init_rom_map);
+	init_rom_map_fake.custom_fake = init_rom_map_addr_passthru;
+
+	ret = ms_acc->drv->init(ms_acc);
+
+	zassert_equal(timeout_test_status_reg_access_count, 15,
+		      "Expected %d attempts but counted %d", 15,
+		      timeout_test_status_reg_access_count);
+	zassert_equal(ret, EC_ERROR_INVALID_CONFIG, "Expected %d but got %d",
+		      EC_ERROR_INVALID_CONFIG, ret);
+}
+
 void test_suite_bmi260(void)
 {
 	ztest_test_suite(bmi260,
@@ -2131,6 +2198,9 @@ void test_suite_bmi260(void)
 			 ztest_user_unit_test(
 				 test_bmi_config_load_no_mapped_flash),
 			 ztest_user_unit_test(
-				 test_bmi_config_unsupported_chip));
+				 test_bmi_config_unsupported_chip),
+			 ztest_user_unit_test(
+				 test_init_config_read_failure),
+			 ztest_user_unit_test(test_init_config_status_timeout));
 	ztest_run_test_suite(bmi260);
 }
