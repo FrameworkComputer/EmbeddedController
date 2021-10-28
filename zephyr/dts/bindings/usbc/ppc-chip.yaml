@@ -20,3 +20,9 @@ properties:
     type: string
     description: |
       I2C address of controller
+
+  alternate-for:
+    type: phandle
+    description: |
+      Pointer to the primary PPC device that can be replaced at runtime
+      by this device.
