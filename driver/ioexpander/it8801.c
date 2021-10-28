@@ -19,6 +19,10 @@
 
 #define CPRINTS(format, args...) cprints(CC_KEYSCAN, format, ## args)
 
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+#error "This driver doesn't support get_port function"
+#endif
+
 static int it8801_ioex_set_level(int ioex, int port, int mask, int value);
 static void it8801_ioex_event_handler(void);
 DECLARE_DEFERRED(it8801_ioex_event_handler);

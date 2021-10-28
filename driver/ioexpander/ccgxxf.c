@@ -14,6 +14,10 @@
 
 #define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
 
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+#error "This driver doesn't support get_port function"
+#endif
+
 static inline int ccgxxf_read8(int ioex, int reg, int *data)
 {
 	return i2c_read8(ioex_config[ioex].i2c_host_port,

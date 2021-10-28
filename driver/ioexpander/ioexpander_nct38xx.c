@@ -16,6 +16,10 @@
 #define CPRINTF(format, args...) cprintf(CC_GPIO, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
 
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+#error "This driver doesn't support get_port function"
+#endif
+
 /*
  * Store the GPIO_ALERT_MASK_0/1 and chip ID registers locally. In this way,
  * we don't have to read it via I2C transaction everytime.

@@ -9,6 +9,10 @@
 #include "ioexpander.h"
 #include "pca9675.h"
 
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+#error "This driver doesn't support get_port function"
+#endif
+
 struct pca9675_ioexpander {
 	/* I/O port direction (1 = input, 0 = output) */
 	uint16_t io_direction;

@@ -15,6 +15,10 @@
 #define CPRINTF(format, args...) cprintf(CC_GPIO, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
 
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+#error "This driver doesn't support get_port function"
+#endif
+
 /*
  * Store interrupt mask registers locally. In this way,
  * we don't have to read it via i2c transaction every time.
