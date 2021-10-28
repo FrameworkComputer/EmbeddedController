@@ -56,7 +56,6 @@ GPIO(EC_ACC_INT_L,	PIN(060),  GPIO_INPUT)	/* ACC interrupt */
  * which makes this a true binary signal into the EC.
  */
 GPIO(EC_ON,		PIN(0250),  GPIO_INPUT | GPIO_OUT_HIGH)	/* keep +3VL_EC to power on */
-GPIO(VS_ON,		PIN(0241),  GPIO_INPUT | GPIO_ODR_HIGH)	/* 3.3V and 5V rails */
 GPIO(PBTN_OUT_L,	PIN(0243),  GPIO_INPUT | GPIO_OUT_LOW)
 GPIO(AC_PRESENT_OUT,	PIN(0240),  GPIO_INPUT | GPIO_ODR_LOW)
 GPIO(EC_RSMRST_L,	PIN(055),   GPIO_INPUT | GPIO_OUT_LOW)	/* EC bootloader ESPI mode */
@@ -70,6 +69,7 @@ GPIO(PCH_PWROK,		PIN(052),   GPIO_INPUT | GPIO_OUT_LOW)
 GPIO(SYS_PWROK,		PIN(0106),  GPIO_INPUT | GPIO_OUT_LOW)
 GPIO(EC_RTCRST,		PIN(016),   GPIO_INPUT | GPIO_ODR_LOW)	/* after reset low 5 sec */
 
+UNIMPLEMENTED(VS_ON)
 
 /* I2C pins - these will be reconfigured for alternate function below */
 GPIO(EC_SMB_SDA0,	PIN(03),	GPIO_INPUT) /* HID (Slave) */
