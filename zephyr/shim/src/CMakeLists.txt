@@ -49,4 +49,4 @@ zephyr_library_sources_ifdef(CONFIG_SHIMMED_TASKS           tasks.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_WATCHDOG    watchdog.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BC12_DETECT_PI3USB9201
 	                                                     bc12_pi3usb9201.c)
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC_SN5S330 ppc_sn5s330.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC    ppc.c)
