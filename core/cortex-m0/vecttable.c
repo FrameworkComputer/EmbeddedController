@@ -77,7 +77,11 @@ extern void reset(void);
 #pragma clang diagnostic ignored "-Winitializer-overrides"
 #endif /* __clang__ */
 
-#define table(x) func vectors[] __attribute__((section(".text.vecttable,\"a\" @"))) = { x[IRQ_UNUSED_OFFSET] = null };
+#define table(x)							     \
+	const func vectors[] __attribute__((section(".text.vecttable"))) = { \
+		x							     \
+		[IRQ_UNUSED_OFFSET] = null				     \
+	}
 
 #define vec(name) name ## _handler,
 #define irq(num) [num < CONFIG_IRQ_COUNT ? num + IRQ_OFFSET : IRQ_UNUSED_OFFSET] = vec(irq_ ## num)
@@ -135,7 +139,7 @@ table(
 	irq(29)
 	irq(30)
 	irq(31)
-)
+);
 
 #if PASS == 2
 #ifdef __clang__
