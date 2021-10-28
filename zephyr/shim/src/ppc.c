@@ -6,9 +6,11 @@
 #include <devicetree.h>
 #include "usbc_ppc.h"
 #include "usbc/ppc_sn5s330.h"
+#include "usbc/ppc_syv682x.h"
 #include "usbc/ppc.h"
 
-#if DT_HAS_COMPAT_STATUS_OKAY(SN5S330_COMPAT)
+#if DT_HAS_COMPAT_STATUS_OKAY(SN5S330_COMPAT) || \
+	DT_HAS_COMPAT_STATUS_OKAY(SYV682X_COMPAT)
 
 #define PPC_CHIP_PRIM(id, fn)                                \
 	COND_CODE_1(DT_NODE_HAS_PROP(id, alternate_for), (), \
@@ -20,6 +22,8 @@
 struct ppc_config_t ppc_chips[] = {
 	DT_FOREACH_STATUS_OKAY_VARGS(SN5S330_COMPAT, PPC_CHIP_PRIM,
 				     PPC_CHIP_SN5S330)
+	DT_FOREACH_STATUS_OKAY_VARGS(SYV682X_COMPAT, PPC_CHIP_PRIM,
+				     PPC_CHIP_SYV682X)
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
