@@ -4,6 +4,7 @@
  */
 
 #include "assert.h"
+#include "button.h"
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "common.h"
