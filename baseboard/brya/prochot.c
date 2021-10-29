@@ -196,7 +196,8 @@ static void assert_prochot(void)
 			if (total_W > ADT_RATING_W *
 			PROCHOT_ASSERTION_PD_RATIO / 100)
 				gpio_set_level(GPIO_EC_PROCHOT_ODL, 0);
-			else if (total_W <= ADT_RATING_W)
+			else if (total_W <= ADT_RATING_W *
+			PROCHOT_DEASSERTION_PD_RATIO / 100)
 				gpio_set_level(GPIO_EC_PROCHOT_ODL, 1);
 		} else {
 			/* AC + battery */
