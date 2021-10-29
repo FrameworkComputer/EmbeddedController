@@ -1,0 +1,3 @@
+remove:
+# Remove all callsites pointing to panic_assert_fail.
+- panic_assert_fail
