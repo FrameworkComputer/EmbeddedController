@@ -305,7 +305,7 @@ const char help_str[] =
 	"  switches\n"
 	"      Prints current EC switch positions\n"
 	"  temps <sensorid>\n"
-	"      Print temperature.\n"
+	"      Print temperature and fan speed\n"
 	"  tempsinfo <sensorid>\n"
 	"      Print temperature sensor info.\n"
 	"  thermalget <platform-specific args>\n"
@@ -3022,12 +3022,50 @@ int read_mapped_temperature(int id)
 	return rv;
 }
 
+static int get_thermal_fan_percent(int temp)
+{
+	struct ec_params_thermal_get_threshold_v1 p;
+	struct ec_thermal_config r;
+	int rv = 0;
+
+	rv = ec_command(EC_CMD_THERMAL_GET_THRESHOLD, 1, &p, sizeof(p),
+			&r, sizeof(r));
+
+	if (rv <= 0 || r.temp_fan_max == r.temp_fan_off)
+		return -1;
+	if (temp < r.temp_fan_off)
+		return 0;
+	if (temp > r.temp_fan_max)
+		return 100;
+	return 100 * (temp - r.temp_fan_off) /
+		     (r.temp_fan_max - r.temp_fan_off);
+}
+
+static int cmd_temperature_print(int id, int mtemp)
+{
+	struct ec_response_temp_sensor_get_info r;
+	struct ec_params_temp_sensor_get_info p;
+	int rc;
+	int temp = mtemp + EC_TEMP_SENSOR_OFFSET;
+
+	p.id = id;
+	rc = ec_command(EC_CMD_TEMP_SENSOR_GET_INFO, 0, &p, sizeof(p),
+			&r, sizeof(r));
+	if (rc < 0)
+		return rc;
+	printf("%-20s  %d K (= %d C) %11d%%\n", r.sensor_name, temp,
+	       K_TO_C(temp), get_thermal_fan_percent(temp));
+
+	return 0;
+}
 
 int cmd_temperature(int argc, char *argv[])
 {
-	int rv;
+	int mtemp;
 	int id;
 	char *e;
+	const char header[] = "--sensor name -------- temperature "
+			      "-------- fan speed --\n";
 
 	if (argc != 2) {
 		fprintf(stderr, "Usage: %s <sensorid> | all\n", argv[0]);
@@ -3035,11 +3073,12 @@ int cmd_temperature(int argc, char *argv[])
 	}
 
 	if (strcmp(argv[1], "all") == 0) {
+		fprintf(stdout, header);
 		for (id = 0;
 		     id < EC_TEMP_SENSOR_ENTRIES + EC_TEMP_SENSOR_B_ENTRIES;
 		     id++) {
-			rv = read_mapped_temperature(id);
-			switch (rv) {
+			mtemp = read_mapped_temperature(id);
+			switch (mtemp) {
 			case EC_TEMP_SENSOR_NOT_PRESENT:
 				break;
 			case EC_TEMP_SENSOR_ERROR:
@@ -3053,8 +3092,7 @@ int cmd_temperature(int argc, char *argv[])
 					id);
 				break;
 			default:
-				printf("%d: %d K\n", id,
-				       rv + EC_TEMP_SENSOR_OFFSET);
+				cmd_temperature_print(id, mtemp);
 			}
 		}
 		return 0;
@@ -3073,9 +3111,9 @@ int cmd_temperature(int argc, char *argv[])
 	}
 
 	printf("Reading temperature...");
-	rv = read_mapped_temperature(id);
+	mtemp = read_mapped_temperature(id);
 
-	switch (rv) {
+	switch (mtemp) {
 	case EC_TEMP_SENSOR_NOT_PRESENT:
 		printf("Sensor not present\n");
 		return -1;
@@ -3089,8 +3127,9 @@ int cmd_temperature(int argc, char *argv[])
 		fprintf(stderr, "Sensor not calibrated\n");
 		return -1;
 	default:
-		printf("%d K\n", rv + EC_TEMP_SENSOR_OFFSET);
-		return 0;
+		fprintf(stdout, "\n");
+		fprintf(stdout, header);
+		return cmd_temperature_print(id, mtemp);
 	}
 }
 

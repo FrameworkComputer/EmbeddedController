@@ -108,18 +108,18 @@ int print_temps(void)
 	int rv, rv1 = EC_SUCCESS;
 
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
-		ccprintf("  %-20s: ", temp_sensors[i].name);
+		ccprintf("  %-20s  ", temp_sensors[i].name);
 		rv = temp_sensor_read(i, &t);
 		if (rv)
 			rv1 = rv;
 
 		switch (rv) {
 		case EC_SUCCESS:
-			ccprintf("%d K = %d C", t, K_TO_C(t));
+			ccprintf("%d K (= %d C)", t, K_TO_C(t));
 #ifdef CONFIG_THROTTLE_AP
 			if (thermal_params[i].temp_fan_off &&
 			    thermal_params[i].temp_fan_max)
-				ccprintf("  %d%%",
+				ccprintf("  %11d%%",
 					 thermal_fan_percent(
 						 thermal_params[i].temp_fan_off,
 						 thermal_params[i].temp_fan_max,
@@ -151,7 +151,7 @@ static int command_temps(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(temps, command_temps,
 			NULL,
-			"Print temp sensors");
+			"Print temp sensors and fan speed");
 #endif
 
 /*****************************************************************************/
