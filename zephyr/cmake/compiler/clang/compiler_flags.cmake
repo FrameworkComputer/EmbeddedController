@@ -7,4 +7,4 @@ include("${ZEPHYR_BASE}/cmake/compiler/clang/compiler_flags.cmake")
 # Disable -fno-freestanding.
 set_compiler_property(PROPERTY hosted)
 
-check_set_compiler_property(APPEND PROPERTY warning_extended -Wunused-variable -Werror=unused-variable)
+check_set_compiler_property(APPEND PROPERTY warning_extended -Wunused-variable -Werror=unused-variable -Werror=missing-braces)
