@@ -43,15 +43,24 @@ BUILD_ASSERT(GPIO_COUNT < GPIO_LIMIT);
 	GPIO_SIGNAL(DT_PHANDLE(DT_NODELABEL(label), prop))
 
 /*
- * While we don't support IO expanders at the moment, multiple
- * platform/ec headers (e.g., espi.h) require some of these constants
- * to be defined.  Define them as a compatibility measure.
+ * Define enums for IO expanders and signals
  */
+#define IOEX_SIGNAL(id) DT_STRING_UPPER_TOKEN(id, enum_name)
+#define IOEX_SIGNAL_WITH_COMMA(id) \
+	COND_CODE_1(DT_NODE_HAS_PROP(id, enum_name), (IOEX_SIGNAL(id), ), ())
 enum ioex_signal {
 	IOEX_SIGNAL_START = GPIO_LIMIT + 1,
-	IOEX_SIGNAL_END = IOEX_SIGNAL_START,
+	/* Used to ensure that the first IOEX signal is same as start */
+	__IOEX_PLACEHOLDER = GPIO_LIMIT,
+#if DT_NODE_EXISTS(DT_PATH(named_ioexes))
+	DT_FOREACH_CHILD(DT_PATH(named_ioexes), IOEX_SIGNAL_WITH_COMMA)
+#endif
+	IOEX_SIGNAL_END,
 	IOEX_LIMIT = 0x1FFF,
 };
 BUILD_ASSERT(IOEX_SIGNAL_END < IOEX_LIMIT);
+
+#undef IOEX_SIGNAL_WITH_COMMA
+#undef IOEX_SIGNAL
 
 #define IOEX_COUNT (IOEX_SIGNAL_END - IOEX_SIGNAL_START)

@@ -1,0 +1,31 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC_IOEX
+	bool "IO expander support"
+	depends on I2C
+	help
+	  Enable support for IO expanders subsystem.
+	  This will allow to use CrOS EC calls to ioex_* functions. It supports
+	  both CrOS EC ioex drivers and Zephyr GPIO drivers.
+
+if PLATFORM_EC_IOEX
+
+config PLATFORM_EC_IOEX_INIT_PRIORITY
+	int "IO expander init priority"
+	range 0 99
+	default 52
+	help
+	  Sets the priority of function that initializes
+	  the IO expander subsystem
+
+config PLATFORM_EC_CONSOLE_CMD_IOEX
+	bool "Enable shell commands for IO expander"
+	depends on SHELL
+	help
+	  Enable shell commands for IO expander.
+	  It will enable ioexget and ioexset commands in EC console
+	  that allow to get and change values of IO expanders pins.
+
+endif

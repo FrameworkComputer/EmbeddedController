@@ -1,0 +1,21 @@
+description: Named IOEXes parent node
+
+compatible: "named-ioexes"
+
+child-binding:
+    description: Named IOEXes child node
+    include: ioex-enum-name.yaml
+    properties:
+       gpios:
+          type: phandle-array
+          required: true
+       label:
+          required: true
+          type: string
+          description: |
+            Human readable string describing the net name connected
+            to the I/O expander pin.
+       "#gpio-cells":
+          type: int
+          required: false
+          const: 0

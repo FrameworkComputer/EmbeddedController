@@ -221,6 +221,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C_DEBUG
                                                 "${PLATFORM_EC}/common/i2c_trace.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C_VIRTUAL_BATTERY
                                                 "${PLATFORM_EC}/common/virtual_battery.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CONSOLE_CMD_IOEX
+                                                "${PLATFORM_EC}/common/ioexpander_commands.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD
                                                 "${PLATFORM_EC}/common/keyboard_scan.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_8042
