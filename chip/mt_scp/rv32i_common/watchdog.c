@@ -8,6 +8,7 @@
 #include "common.h"
 #include "hooks.h"
 #include "registers.h"
+#include "scp_watchdog.h"
 #include "watchdog.h"
 
 void watchdog_reload(void)
@@ -16,7 +17,15 @@ void watchdog_reload(void)
 }
 DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
 
-int watchdog_init(void)
+void disable_watchdog(void)
+{
+	/* disable watchdog */
+	SCP_CORE0_WDT_CFG &= ~WDT_EN;
+	/* clear watchdog irq */
+	SCP_CORE0_WDT_IRQ |= BIT(0);
+}
+
+void enable_watchdog(void)
 {
 	const uint32_t timeout = WDT_PERIOD(CONFIG_WATCHDOG_PERIOD_MS);
 
@@ -28,6 +37,11 @@ int watchdog_init(void)
 	SCP_CORE0_WDT_CFG = WDT_EN | timeout;
 	/* reload watchdog */
 	watchdog_reload();
+}
+
+int watchdog_init(void)
+{
+	enable_watchdog();
 
 	return EC_SUCCESS;
 }
