@@ -25,6 +25,7 @@
 #include "lid_switch.h"
 #include "power_button.h"
 #include "power.h"
+#include "ps8xxx.h"
 #include "registers.h"
 #include "switch.h"
 #include "tablet_mode.h"
@@ -135,6 +136,55 @@ static void board_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_SECOND, board_init, HOOK_PRIO_DEFAULT);
+
+__overridable void board_ps8xxx_tcpc_init(int port)
+{
+	int val;
+
+	if (i2c_read8(I2C_PORT_USB_C1_TCPC,
+		PS8751_I2C_ADDR1_P1_FLAGS, PS8815_REG_APTX_EQ_AT_10G, &val))
+		CPRINTS("ps8815: fail to read reg 0x%02x",
+			PS8815_REG_APTX_EQ_AT_10G);
+
+	/* APTX2 EQ 23dB, APTX1 EQ 23dB */
+	if (i2c_write8(I2C_PORT_USB_C1_TCPC,
+		PS8751_I2C_ADDR1_P1_FLAGS, PS8815_REG_APTX_EQ_AT_10G, 0x99))
+		CPRINTS("ps8815: fail to write reg 0x%02x",
+			PS8815_REG_APTX_EQ_AT_10G);
+
+	if (i2c_read8(I2C_PORT_USB_C1_TCPC,
+		PS8751_I2C_ADDR1_P1_FLAGS, PS8815_REG_RX_EQ_AT_10G, &val))
+		CPRINTS("ps8815: fail to read reg 0x%02x",
+			PS8815_REG_RX_EQ_AT_10G);
+
+	/* RX2 EQ 18dB, RX1 EQ 16dB */
+	if (i2c_write8(I2C_PORT_USB_C1_TCPC,
+		PS8751_I2C_ADDR1_P1_FLAGS, PS8815_REG_RX_EQ_AT_10G, 0x64))
+		CPRINTS("ps8815: fail to write reg 0x%02x",
+			PS8815_REG_RX_EQ_AT_10G);
+
+	if (i2c_read8(I2C_PORT_USB_C1_TCPC,
+		PS8751_I2C_ADDR1_P1_FLAGS, PS8815_REG_APTX_EQ_AT_5G, &val))
+		CPRINTS("ps8815: fail to read reg 0x%02x",
+			PS8815_REG_APTX_EQ_AT_5G);
+
+	/* APTX2 EQ 16dB, APTX1 EQ 16dB */
+	if (i2c_write8(I2C_PORT_USB_C1_TCPC,
+		PS8751_I2C_ADDR1_P1_FLAGS, PS8815_REG_APTX_EQ_AT_5G, 0x44))
+		CPRINTS("ps8815: fail to write reg 0x%02x",
+			PS8815_REG_APTX_EQ_AT_5G);
+
+	if (i2c_read8(I2C_PORT_USB_C1_TCPC,
+		PS8751_I2C_ADDR1_P1_FLAGS, PS8815_REG_RX_EQ_AT_5G, &val))
+		CPRINTS("ps8815: fail to read reg 0x%02x",
+			PS8815_REG_RX_EQ_AT_5G);
+
+	/* RX2 EQ 16dB, RX1 EQ 16dB */
+	if (i2c_write8(I2C_PORT_USB_C1_TCPC,
+		PS8751_I2C_ADDR1_P1_FLAGS, PS8815_REG_RX_EQ_AT_5G, 0x44))
+		CPRINTS("ps8815: fail to write reg 0x%02x",
+			PS8815_REG_RX_EQ_AT_5G);
+}
 
 __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
