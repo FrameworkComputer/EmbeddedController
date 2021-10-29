@@ -1,7 +1,0 @@
-board: native_posix
-supported-toolchains:
-  - llvm
-  - host
-supported-zephyr-versions:
-  - v2.7
-output-type: elf

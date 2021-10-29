@@ -2,10 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-board: kohaku
-supported-toolchains:
-  - coreboot-sdk
-  - zephyr
-supported-zephyr-versions:
-  - v2.7
-output-type: npcx
+register_npcx_project(
+    "kingler",
+    zephyr_board="npcx9",
+    dts_overlays=["battery.dts", "gpio.dts", "i2c.dts"],
+)

@@ -11,26 +11,11 @@ import hypothesis.strategies as st
 import pytest
 
 import zmake.modules
+import zmake.output_packers
 import zmake.project
 
 board_names = st.text(alphabet=set(string.ascii_lowercase) | {"_"}, min_size=1)
 sets_of_board_names = st.lists(st.lists(board_names, unique=True))
-
-
-class TemporaryProject(tempfile.TemporaryDirectory):
-    """A temporary project wrapper.
-
-    Args:
-        config: The config dictionary to be used with the project.
-    """
-
-    def __init__(self, config):
-        self.config = config
-        super().__init__()
-
-    def __enter__(self):
-        project_path = pathlib.Path(super().__enter__())
-        return zmake.project.Project(project_path, config_dict=self.config)
 
 
 @hypothesis.given(sets_of_board_names)
@@ -67,21 +52,22 @@ def test_find_dts_overlays(modules):
                 board_file_mapping[board] = files | {file_name}
 
         for board, expected_dts_files in board_file_mapping.items():
-            with TemporaryProject(
-                {
-                    "board": board,
-                    "output-type": "elf",
-                    "supported-toolchains": ["llvm"],
-                    "supported-zephyr-versions": ["v2.6"],
-                }
-            ) as project:
-                config = project.find_dts_overlays(dict(enumerate(module_paths)))
-
-                actual_dts_files = set(
-                    config.cmake_defs.get("DTC_OVERLAY_FILE", "").split(";")
+            project = zmake.project.Project(
+                zmake.project.ProjectConfig(
+                    name=board,
+                    zephyr_board=board,
+                    output_packer=zmake.output_packers.ElfPacker,
+                    supported_toolchains=["llvm"],
+                    supported_zephyr_versions=["v2.7"],
+                    project_dir=pathlib.Path("/fakebuild"),
                 )
+            )
+            config = project.find_dts_overlays(dict(enumerate(module_paths)))
+            actual_dts_files = set(
+                config.cmake_defs.get("DTC_OVERLAY_FILE", "").split(";")
+            )
 
-                assert actual_dts_files == set(map(str, expected_dts_files))
+            assert actual_dts_files == set(map(str, expected_dts_files))
 
     setup_modules_and_dispatch(modules, testcase)
 
@@ -101,16 +87,18 @@ def test_prune_modules(modules):
         for name in zmake.modules.known_modules
     }
 
-    with TemporaryProject(
-        {
-            "board": "native_posix",
-            "output-type": "elf",
-            "supported-toolchains": ["coreboot-sdk"],
-            "supported-zephyr-versions": ["v2.6"],
-            "modules": modules,
-        }
-    ) as project:
-        assert set(project.prune_modules(module_paths)) == set(modules)
+    project = zmake.project.Project(
+        zmake.project.ProjectConfig(
+            name="prunetest",
+            zephyr_board="native_posix",
+            output_packer=zmake.output_packers.ElfPacker,
+            supported_toolchains=["coreboot-sdk"],
+            supported_zephyr_versions=["v2.7"],
+            project_dir=pathlib.Path("/fake"),
+            modules=modules,
+        ),
+    )
+    assert set(project.prune_modules(module_paths)) == set(modules)
 
 
 def test_prune_modules_unavailable():
@@ -122,17 +110,19 @@ def test_prune_modules_unavailable():
         "hal_stm32": pathlib.Path("/mod/halstm"),
     }
 
-    with TemporaryProject(
-        {
-            "board": "native_posix",
-            "output-type": "elf",
-            "supported-toolchains": ["coreboot-sdk"],
-            "supported-zephyr-versions": ["v2.6"],
-            "modules": ["hal_stm32", "cmsis"],
-        }
-    ) as project:
-        with pytest.raises(KeyError):
-            project.prune_modules(module_paths)
+    project = zmake.project.Project(
+        zmake.project.ProjectConfig(
+            name="prunetest",
+            zephyr_board="native_posix",
+            output_packer=zmake.output_packers.ElfPacker,
+            supported_toolchains=["coreboot-sdk"],
+            supported_zephyr_versions=["v2.7"],
+            project_dir=pathlib.Path("/fake"),
+            modules=["hal_stm32", "cmsis"],
+        ),
+    )
+    with pytest.raises(KeyError):
+        project.prune_modules(module_paths)
 
 
 def test_find_projects_empty(tmp_path):
@@ -141,33 +131,65 @@ def test_find_projects_empty(tmp_path):
     assert len(projects) == 0
 
 
-YAML_FILE = """
-supported-zephyr-versions:
-  - v2.6
-supported-toolchains:
-  - coreboot-sdk
-output-type: npcx
+CONFIG_FILE_1 = """
+register_raw_project("one", zephyr_board="one")
+register_host_test("two")
+register_npcx_project("three", zephyr_board="three")
+register_binman_project("four", zephyr_board="four")
+"""
+
+CONFIG_FILE_2 = """
+register_raw_project(
+    "five",
+    zephyr_board="foo",
+    dts_overlays=[here / "gpio.dts"],
+)
 """
 
 
 def test_find_projects(tmp_path):
     """Test the find_projects method when there are projects."""
-    dir = tmp_path.joinpath("one")
-    dir.mkdir()
-    dir.joinpath("zmake.yaml").write_text("board: one\n" + YAML_FILE)
-    tmp_path.joinpath("two").mkdir()
-    dir = tmp_path.joinpath("two/a")
-    dir.mkdir()
-    dir.joinpath("zmake.yaml").write_text("board: twoa\nis-test: true\n" + YAML_FILE)
-    dir = tmp_path.joinpath("two/b")
-    dir.mkdir()
-    dir.joinpath("zmake.yaml").write_text("board: twob\n" + YAML_FILE)
-    projects = list(zmake.project.find_projects(tmp_path))
-    projects.sort(key=lambda x: x.project_dir)
-    assert len(projects) == 3
-    assert projects[0].project_dir == tmp_path.joinpath("one")
-    assert projects[1].project_dir == tmp_path.joinpath("two/a")
-    assert projects[2].project_dir == tmp_path.joinpath("two/b")
-    assert not projects[0].config.is_test
-    assert projects[1].config.is_test
-    assert not projects[2].config.is_test
+    cf1_dir = tmp_path / "cf1"
+    cf1_dir.mkdir()
+    (cf1_dir / "BUILD.py").write_text(CONFIG_FILE_1)
+
+    cf2_bb_dir = tmp_path / "cf2_bb"
+    cf2_bb_dir.mkdir()
+    cf2_dir = cf2_bb_dir / "cf2"
+    cf2_dir.mkdir()
+    (cf2_dir / "BUILD.py").write_text(CONFIG_FILE_2)
+
+    projects = zmake.project.find_projects(tmp_path)
+    assert len(projects) == 5
+    assert projects["one"].config.project_dir == cf1_dir
+    assert not projects["one"].config.is_test
+
+    assert projects["two"].config.project_dir == cf1_dir
+    assert projects["two"].config.zephyr_board == "native_posix"
+    assert projects["two"].config.is_test
+
+    assert projects["three"].config.project_dir == cf1_dir
+    assert not projects["three"].config.is_test
+    assert projects["three"].config.zephyr_board == "three"
+
+    assert projects["four"].config.project_dir == cf1_dir
+    assert not projects["four"].config.is_test
+    assert projects["four"].config.zephyr_board == "four"
+
+    assert projects["five"].config.project_dir == cf2_dir
+    assert not projects["five"].config.is_test
+    assert projects["five"].config.zephyr_board == "foo"
+
+
+def test_find_projects_name_conflict(tmp_path):
+    """When two projects define the same name, that should be an error."""
+    cf1_dir = tmp_path / "cf1"
+    cf1_dir.mkdir()
+    (cf1_dir / "BUILD.py").write_text(CONFIG_FILE_2)
+
+    cf2_dir = tmp_path / "cf2"
+    cf2_dir.mkdir()
+    (cf2_dir / "BUILD.py").write_text(CONFIG_FILE_2)
+
+    with pytest.raises(KeyError):
+        zmake.project.find_projects(tmp_path)

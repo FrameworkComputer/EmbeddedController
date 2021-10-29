@@ -26,7 +26,7 @@ class GenericToolchain:
         # know if it's installed.  Simply return False to indicate not
         # installed.  An unknown toolchain would only be used if -t
         # was manually passed to zmake, and is not valid to put in a
-        # zmake.yaml file.
+        # BUILD.py file.
         return False
 
     def get_build_config(self):

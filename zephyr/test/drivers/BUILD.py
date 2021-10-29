@@ -2,11 +2,4 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-board: native_posix
-supported-zephyr-versions:
-  - v2.7
-supported-toolchains:
-  - llvm
-  - host
-output-type: elf
-is-test: true
+register_host_test("drivers", dts_overlays=["overlay.dts"])

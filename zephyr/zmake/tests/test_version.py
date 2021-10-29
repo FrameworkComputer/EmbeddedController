@@ -8,6 +8,7 @@ import unittest.mock as mock
 
 import pytest
 
+import zmake.output_packers
 import zmake.project
 import zmake.version as version
 
@@ -51,13 +52,14 @@ def _setup_example_repos(tmp_path):
     project_path.mkdir()
 
     project = zmake.project.Project(
-        project_path,
-        config_dict={
-            "board": "foo",
-            "output-type": "raw",
-            "supported-toolchains": ["coreboot-sdk"],
-            "supported-zephyr-versions": ["v2.6"],
-        },
+        zmake.project.ProjectConfig(
+            name="prj",
+            zephyr_board="foo",
+            output_packer=zmake.output_packers.RawBinPacker,
+            supported_toolchains=["coreboot-sdk"],
+            supported_zephyr_versions=["v2.6"],
+            project_dir=project_path,
+        ),
     )
     # Has one commit.
     zephyr_base = tmp_path / "zephyr_base"

@@ -2,13 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-board: volteer
-dts-overlays:
-  - gpio.dts
-  - motionsense.dts
-supported-toolchains:
-  - coreboot-sdk
-  - zephyr
-supported-zephyr-versions:
-  - v2.7
-output-type: npcx
+register_binman_project(
+    "krabby",
+    zephyr_board="it8xxx2",
+    dts_overlays=["battery.dts", "gpio.dts", "motionsense.dts", "pwm.dts"],
+)

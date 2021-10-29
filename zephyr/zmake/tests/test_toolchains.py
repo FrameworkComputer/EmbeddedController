@@ -7,6 +7,7 @@ import pathlib
 
 import pytest
 
+import zmake.output_packers
 import zmake.project as project
 import zmake.toolchains as toolchains
 
@@ -62,18 +63,19 @@ def zephyr_exists(mockfs):
 @pytest.fixture
 def fake_project(tmp_path):
     return project.Project(
-        tmp_path,
-        config_dict={
-            "board": "foo",
-            "supported-zephyr-versions": ["v2.6"],
-            "supported-toolchains": [
+        project.ProjectConfig(
+            name="foo",
+            zephyr_board="foo",
+            supported_zephyr_versions=["v2.6"],
+            supported_toolchains=[
                 "coreboot-sdk",
                 "host",
                 "llvm",
                 "zephyr",
             ],
-            "output-type": "raw",
-        },
+            output_packer=zmake.output_packers.RawBinPacker,
+            project_dir=tmp_path,
+        ),
     )
 
 

@@ -2,10 +2,4 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-board: it8xxx2_evb
-supported-toolchains:
-  - coreboot-sdk
-  - zephyr
-supported-zephyr-versions:
-  - v2.7
-output-type: raw
+register_host_test("system", dts_overlays=["overlay.dts"])

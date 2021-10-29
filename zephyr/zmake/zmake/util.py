@@ -213,36 +213,3 @@ def log_multi_line(logger, level, message):
     for line in message.splitlines():
         if line:
             logger.log(level, line)
-
-
-def resolve_build_dir(platform_ec_dir, project_dir, build_dir):
-    """Resolve the build directory using platform/ec/build/... as default.
-
-    Args:
-        platform_ec_dir: The path to the chromiumos source's platform/ec
-          directory.
-        project_dir: The directory of the project.
-        build_dir: The directory to build in (may be None).
-    Returns:
-        The resolved build directory (using build_dir if not None).
-    """
-    if build_dir:
-        return build_dir
-
-    if not pathlib.Path.exists(project_dir / "zmake.yaml"):
-        raise OSError("Invalid configuration")
-
-    # Resolve project_dir to absolute path.
-    project_dir = project_dir.resolve()
-
-    # Compute the path of project_dir relative to platform_ec_dir.
-    project_relative_path = pathlib.Path.relative_to(project_dir, platform_ec_dir)
-
-    # Make sure that the project_dir is a subdirectory of platform_ec_dir.
-    if platform_ec_dir / project_relative_path != project_dir:
-        raise OSError(
-            "Can't resolve project directory {} which is not a subdirectory"
-            " of the platform/ec directory {}".format(project_dir, platform_ec_dir)
-        )
-
-    return platform_ec_dir / "build" / project_relative_path

@@ -90,7 +90,6 @@ def get_version_string(project, zephyr_base, modules, static=False):
         the build for the OS.
     """
     major_version, minor_version, *_ = util.read_zephyr_version(zephyr_base)
-    project_id = project.project_dir.parts[-1]
     num_commits = 0
 
     if static:
@@ -116,7 +115,7 @@ def get_version_string(project, zephyr_base, modules, static=False):
         )
 
     return "{}_v{}.{}.{}-{}".format(
-        project_id, major_version, minor_version, num_commits, vcs_hashes
+        project.config.name, major_version, minor_version, num_commits, vcs_hashes
     )
 
 

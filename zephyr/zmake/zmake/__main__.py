@@ -200,7 +200,8 @@ def main(argv=None):
         help="Test the .elf file after configuration",
     )
     configure.add_argument(
-        "project_dir", type=pathlib.Path, help="Path to the project to build"
+        "project_name_or_dir",
+        help="Path to the project to build",
     )
     configure.add_argument(
         "-c",

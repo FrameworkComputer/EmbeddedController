@@ -2,13 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-board: native_posix
-supported-zephyr-versions:
-  - v2.7
-supported-toolchains:
-  - llvm
-  - host
-output-type: elf
-is-test: true
-dts-overlays:
-  - overlay.dts
+register_npcx_project(
+    "delbin",
+    zephyr_board="volteer",
+    dts_overlays=["gpio.dts", "motionsense.dts"],
+)

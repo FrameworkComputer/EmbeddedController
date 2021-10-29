@@ -3,24 +3,14 @@
 # found in the LICENSE file.
 """Module for project config wrapper object."""
 
+import dataclasses
 import logging
 import pathlib
-import warnings
-
-import yaml
 
 import zmake.build_config as build_config
+import zmake.configlib as configlib
 import zmake.modules as modules
-import zmake.output_packers as packers
 import zmake.toolchains as toolchains
-import zmake.util as util
-
-# The version of jsonschema in the chroot has a bunch of
-# DeprecationWarnings that fire when we import it.  Suppress these
-# during the import to keep the noise down.
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    import jsonschema
 
 
 def module_dts_overlay_name(modpath, board_name):
@@ -36,121 +26,87 @@ def module_dts_overlay_name(modpath, board_name):
     return modpath / "zephyr" / "dts" / "board-overlays" / "{}.dts".format(board_name)
 
 
+def load_config_file(path):
+    """Load a BUILD.py config file and create associated projects.
+
+    Args:
+        path: A pathlib.Path to the BUILD.py file.
+
+    Returns:
+        A list of Project objects specified by the file.
+    """
+    projects = []
+
+    def register_project(name, **kwargs):
+        projects.append(Project(ProjectConfig(name=name, **kwargs)))
+
+    # The Python environment passed to the config file.
+    config_globals = {
+        "register_project": register_project,
+        "here": path.parent.resolve(),
+    }
+
+    # First, load the global helper functions.
+    code = compile(
+        pathlib.Path(configlib.__file__).read_bytes(),
+        configlib.__file__,
+        "exec",
+    )
+    exec(code, config_globals)
+
+    # Next, load the BUILD.py
+    logging.info("Loading config file %s", path)
+    code = compile(path.read_bytes(), str(path), "exec")
+    exec(code, config_globals)
+    logging.info("Config file %s defines %s projects", path, len(projects))
+    return projects
+
+
 def find_projects(root_dir):
     """Finds all zmake projects in root_dir.
 
     Args:
         root_dir: the root dir as a pathlib.Path object
 
-    Yields:
-        Project: The next project found.
+    Returns:
+        A dictionary mapping project names to Project objects.
     """
     logging.info("Finding zmake targets under '%s'.", root_dir)
-    for path in pathlib.Path(root_dir).rglob("zmake.yaml"):
-        yield Project(path.parent)
+    found_projects = {}
+    for path in pathlib.Path(root_dir).rglob("BUILD.py"):
+        for project in load_config_file(path):
+            if project.config.name in found_projects:
+                raise KeyError(
+                    "Duplicate project defined: {} (in {})".format(
+                        project.config.name, path
+                    )
+                )
+            found_projects[project.config.name] = project
+    return found_projects
 
 
+@dataclasses.dataclass
 class ProjectConfig:
-    """An object wrapping zmake.yaml."""
-
-    validator = jsonschema.Draft7Validator
-    schema = {
-        "type": "object",
-        "required": [
-            "board",
-            "output-type",
-            "supported-toolchains",
-            "supported-zephyr-versions",
-        ],
-        "properties": {
-            "supported-zephyr-versions": {
-                "type": "array",
-                "items": {
-                    "type": "string",
-                    "enum": ["v2.6", "v2.7", "v2.8"],
-                },
-                "minItems": 1,
-                "uniqueItems": True,
-            },
-            "board": {
-                "type": "string",
-            },
-            "modules": {
-                "type": "array",
-                "items": {
-                    "type": "string",
-                    "enum": list(modules.known_modules),
-                },
-            },
-            "output-type": {
-                "type": "string",
-                "enum": list(packers.packer_registry),
-            },
-            "supported-toolchains": {
-                "type": "array",
-                "items": {
-                    "type": "string",
-                    "enum": list(toolchains.support_classes),
-                },
-            },
-            "is-test": {
-                "type": "boolean",
-            },
-            "dts-overlays": {
-                "type": "array",
-                "items": {
-                    "type": "string",
-                },
-            },
-        },
-    }
-
-    def __init__(self, config_dict):
-        self.validator.check_schema(self.schema)
-        jsonschema.validate(config_dict, self.schema, cls=self.validator)
-        self.config_dict = config_dict
-
-    @property
-    def supported_zephyr_versions(self):
-        return [
-            util.parse_zephyr_version(x)
-            for x in self.config_dict["supported-zephyr-versions"]
-        ]
-
-    @property
-    def board(self):
-        return self.config_dict["board"]
-
-    @property
-    def modules(self):
-        return self.config_dict.get("modules", list(modules.known_modules))
-
-    @property
-    def output_packer(self):
-        return packers.packer_registry[self.config_dict["output-type"]]
-
-    @property
-    def supported_toolchains(self):
-        return self.config_dict["supported-toolchains"]
-
-    @property
-    def is_test(self):
-        return self.config_dict.get("is-test", False)
-
-    @property
-    def dts_overlays(self):
-        return self.config_dict.get("dts-overlays", [])
+    name: str
+    zephyr_board: str
+    supported_toolchains: "list[str]"
+    output_packer: type
+    supported_zephyr_versions: "list[str]" = dataclasses.field(
+        default_factory=lambda: ["v2.7"],
+    )
+    modules: "list[str]" = dataclasses.field(
+        default_factory=lambda: modules.known_modules,
+    )
+    is_test: bool = dataclasses.field(default=False)
+    dts_overlays: "list[str]" = dataclasses.field(default_factory=list)
+    project_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)
 
 
 class Project:
     """An object encapsulating a project directory."""
 
-    def __init__(self, project_dir, config_dict=None):
-        self.project_dir = project_dir.resolve()
-        if not config_dict:
-            with open(self.project_dir / "zmake.yaml") as f:
-                config_dict = yaml.safe_load(f)
-        self.config = ProjectConfig(config_dict)
+    def __init__(self, config):
+        self.config = config
         self.packer = self.config.output_packer(self)
 
     def iter_builds(self):
@@ -159,8 +115,8 @@ class Project:
         Yields:
             2-tuples of a build configuration name and a BuildConfig.
         """
-        conf = build_config.BuildConfig(cmake_defs={"BOARD": self.config.board})
-        prj_conf = self.project_dir / "prj.conf"
+        conf = build_config.BuildConfig(cmake_defs={"BOARD": self.config.zephyr_board})
+        prj_conf = self.config.project_dir / "prj.conf"
         if prj_conf.is_file():
             conf |= build_config.BuildConfig(kconfig_files=[prj_conf])
         for build_name, packer_config in self.packer.configs():
@@ -178,11 +134,11 @@ class Project:
         """
         overlays = []
         for module_path in modules.values():
-            dts_path = module_dts_overlay_name(module_path, self.config.board)
+            dts_path = module_dts_overlay_name(module_path, self.config.zephyr_board)
             if dts_path.is_file():
                 overlays.append(dts_path.resolve())
 
-        overlays.extend(self.project_dir / f for f in self.config.dts_overlays)
+        overlays.extend(self.config.dts_overlays)
 
         if overlays:
             return build_config.BuildConfig(
@@ -218,7 +174,7 @@ class Project:
             except KeyError as e:
                 raise KeyError(
                     "The {!r} module is required by the {} project, but is not "
-                    "available.".format(module, self.project_dir)
+                    "available.".format(module, self.config.project_dir)
                 ) from e
         return result
 

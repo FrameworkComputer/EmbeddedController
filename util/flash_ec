@@ -272,18 +272,6 @@ function dut_control_get_or_die {
 
 : ${BOARD:=${FLAGS_board}}
 
-# Find the Zephyr project directory for the specified board. Zephyr projects
-# organized under ./zephyr/projects and always contain the file zmake.yaml
-mapfile -t zephyr_projects < <(find zephyr/projects/ -type f -name "zmake.yaml")
-for i in "${zephyr_projects[@]}"; do
-	zephyr_project_dir=$(dirname "${i}")
-	zephyr_project_name=$(basename "${zephyr_project_dir}")
-	if [[ "${BOARD}" = "${zephyr_project_name}" ]]; then
-		ZEPHYR_DIR="${zephyr_project_dir}"
-		break
-	fi
-done
-
 in_array() {
 	local n=$#
 	local value=${!n}
@@ -701,7 +689,7 @@ if [[ -n "${EC_DIR}" ]]; then
 	if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
 		LOCAL_BUILD="${EC_DIR}/build/${BOARD}/RO/${EC_FILE}"
 	elif [ "${FLAGS_zephyr}" = ${FLAGS_TRUE} ] ; then
-		LOCAL_BUILD="${EC_DIR}/build/${ZEPHYR_DIR}/output/${EC_FILE}"
+		LOCAL_BUILD="${EC_DIR}/build/zephyr/${BOARD}/output/${EC_FILE}"
 	else
 		LOCAL_BUILD="${EC_DIR}/build/${BOARD}/${EC_FILE}"
 	fi
@@ -1448,7 +1436,7 @@ function flash_npcx_uut() {
 		"$(dirname "$IMG")/chip/npcx/spiflashfw" \
 		"$(dirname "$IMG")" \
 		"${EC_DIR}/build/${BOARD}/chip/npcx/spiflashfw" \
-		"${EC_DIR}/build/${ZEPHYR_DIR}/output" \
+		"${EC_DIR}/build/zephyr/${BOARD}/output" \
 		"$(dirname "$LOCAL_BUILD")" \
 		"$(dirname "$EMERGE_BUILD")" ;
 	do

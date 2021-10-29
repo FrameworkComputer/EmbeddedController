@@ -2,12 +2,4 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-board: brya
-dts-overlays:
-  - gpio.dts
-supported-toolchains:
-  - coreboot-sdk
-  - zephyr
-supported-zephyr-versions:
-  - v2.7
-output-type: npcx
+register_host_test("i2c", dts_overlays=["overlay.dts"])

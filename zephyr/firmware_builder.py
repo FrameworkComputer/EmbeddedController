@@ -99,18 +99,14 @@ def bundle_firmware(opts):
     bundle_dir = get_bundle_dir(opts)
     zephyr_dir = pathlib.Path(__file__).parent
     platform_ec = zephyr_dir.resolve().parent
-    for project in zmake.project.find_projects(zephyr_dir):
-        build_dir = zmake.util.resolve_build_dir(platform_ec,
-                                                 project.project_dir, None)
+    for project in zmake.project.find_projects(zephyr_dir).values():
+        build_dir = platform_ec / "build" / "zephyr" / project.config.name
         artifacts_dir = build_dir / 'output'
         # TODO(kmshelton): Remove once the build command does not rely
         # on a pre-defined list of targets.
         if not artifacts_dir.is_dir():
             continue
-        project_identifier = '_'.join(
-            project.project_dir.
-            parts[project.project_dir.parts.index('projects') + 1:])
-        tarball_name = '{}.firmware.tbz2'.format(project_identifier)
+        tarball_name = '{}.firmware.tbz2'.format(project.config.name)
         tarball_path = bundle_dir.joinpath(tarball_name)
         cmd = ['tar', 'cvfj', tarball_path, '.']
         subprocess.run(cmd, cwd=artifacts_dir, check=True)

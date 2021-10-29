@@ -24,8 +24,8 @@ setuptools.setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
-        "jsonschema>=3.2.0",
-        "pyyaml>=3.13",
+        # Required until chroot upgrades to Python 3.7+.
+        "dataclasses>=0.6; python_version < '3.7'",
     ],
     # To provide executable scripts, use entry points in preference to the
     # "scripts" keyword. Entry points provide cross-platform support and allow

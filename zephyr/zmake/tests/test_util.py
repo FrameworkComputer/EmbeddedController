@@ -3,7 +3,6 @@
 # found in the LICENSE file.
 
 import pathlib
-import re
 import tempfile
 
 import hypothesis
@@ -13,57 +12,6 @@ import pytest
 import zmake.util as util
 
 # Strategies for use with hypothesis
-relative_path = st.from_regex(
-    regex=re.compile(r"\A\w{1,255}(/\w{1,255}){0,15}\Z", re.ASCII)
-)
-
-
-@hypothesis.given(relative_path, relative_path, relative_path)
-@hypothesis.settings(deadline=60000)
-def test_resolve_build_dir_with_build_dir(
-    platform_ec_subdir, project_subdir, build_subdir
-):
-    with tempfile.TemporaryDirectory() as temp_dir_name:
-        platform_ec_dir = pathlib.Path(temp_dir_name) / platform_ec_subdir
-        build_dir = util.resolve_build_dir(
-            platform_ec_dir=platform_ec_dir,
-            project_dir=platform_ec_dir / project_subdir,
-            build_dir=platform_ec_dir / build_subdir,
-        )
-
-        assert build_dir == platform_ec_dir / build_subdir
-
-
-@hypothesis.given(relative_path, relative_path)
-@hypothesis.settings(deadline=60000)
-def test_resolve_build_dir_invalid_project(platform_ec_subdir, project_subdir):
-    try:
-        with tempfile.TemporaryDirectory() as temp_dir_name:
-            platform_ec_dir = pathlib.Path(temp_dir_name) / platform_ec_subdir
-            util.resolve_build_dir(
-                platform_ec_dir=platform_ec_dir,
-                project_dir=platform_ec_dir / project_subdir,
-                build_dir=None,
-            )
-            pytest.fail()
-    except Exception:
-        pass
-
-
-@hypothesis.given(relative_path, relative_path)
-@hypothesis.settings(deadline=60000)
-def test_resolve_build_dir_from_project(platform_ec_subdir, project_subdir):
-    with tempfile.TemporaryDirectory() as temp_dir_name:
-        platform_ec_dir = pathlib.Path(temp_dir_name) / platform_ec_subdir
-        project_dir = platform_ec_dir / project_subdir
-        project_dir.mkdir(parents=True)
-        (project_dir / "zmake.yaml").touch()
-        build_dir = util.resolve_build_dir(
-            platform_ec_dir=platform_ec_dir, project_dir=project_dir, build_dir=None
-        )
-        assert build_dir == platform_ec_dir / "build" / project_subdir
-
-
 version_integers = st.integers(min_value=0)
 version_tuples = st.tuples(version_integers, version_integers, version_integers)
 
