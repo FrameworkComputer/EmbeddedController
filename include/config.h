@@ -1054,6 +1054,15 @@
 #undef CONFIG_CHARGER_BQ25710_SENSE_RESISTOR_AC
 
 /*
+ * This config option is used to enable the PSYS sensing circuit on the
+ * BQ25710 and BQ25720 chargers. This is used for system power
+ * monitoring on board designs that support this capability. This
+ * circuit is disabled by default (reset) and needs to be explicitly
+ * enabled for meaningful results.
+ */
+#undef CONFIG_CHARGER_BQ25710_PSYS_SENSING
+
+/*
  * Board specific maximum input current limit, in mA.
  */
 #undef CONFIG_CHARGER_MAX_INPUT_CURRENT

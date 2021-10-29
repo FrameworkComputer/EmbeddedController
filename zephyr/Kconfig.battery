@@ -250,6 +250,17 @@ endchoice  # "Discharge control method"
 
 endif  # PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
 
+config CONFIG_PLATFORM_EC_CHARGER_BQ25710_PSYS_SENSING
+	bool "Charger monitors PSYS"
+	default n
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+	  This enables the PSYS sensing circuit on the BQ25710 and
+	  BQ25720 chargers. This is used for system power monitoring on
+	  board designs that support this capability. This circuit is
+	  disabled by default (reset) and needs to be explicitly enabled
+	  for meaningful results.
+
 config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR
 	int "Value of the charge sense-resistor, in mOhms"
 	default 10
