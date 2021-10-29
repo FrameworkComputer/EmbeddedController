@@ -273,8 +273,8 @@ static void usb_spi_process_rx_packet(struct usb_spi_config const *config,
 		} else if (write_count > USB_SPI_MAX_WRITE_COUNT) {
 			setup_transfer_response(config,
 				USB_SPI_WRITE_COUNT_INVALID);
+#ifdef CONFIG_SPI_HALFDUPLEX
 		} else if (read_count == USB_SPI_FULL_DUPLEX_ENABLED) {
-#ifndef CONFIG_SPI_HALFDUPLEX
 			/* Full duplex mode is not supported on this device. */
 			setup_transfer_response(config,
 				USB_SPI_UNSUPPORTED_FULL_DUPLEX);
