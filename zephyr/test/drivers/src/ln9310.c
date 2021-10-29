@@ -389,7 +389,13 @@ static void test_ln9310_cfly_precharge_timesout(void)
 		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
 	struct i2c_emul *i2c_emul = ln9310_emul_get_i2c_emul(emulator);
 	struct precharge_timeout_data test_data = {
-		.time_to_mock = -1,
+		.time_to_mock = {
+			.val = -1,
+			.le = {
+				.lo = -1,
+				.hi = -1,
+			},
+		},
 		.handled_clearing_standby_en_bit_timeout = false,
 	};
 
