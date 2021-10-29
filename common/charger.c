@@ -624,17 +624,25 @@ enum ec_error_list charger_set_option(int option)
 
 enum ec_error_list charger_set_hw_ramp(int enable)
 {
-	int chgnum = 0;
+	int chgnum;
+	int rv = EC_ERROR_UNIMPLEMENTED;
 
-	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
-		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
-		return EC_ERROR_INVAL;
+	for (chgnum = 0; chgnum < board_get_charger_chip_count(); chgnum++) {
+		/* Check if the chg chip supports set_hw_ramp. */
+		if (chg_chips[chgnum].drv->set_hw_ramp) {
+			if (enable) {
+				/* Check if this is the active chg chip. */
+				if (chgnum == charge_get_active_chg_chip())
+					rv = chg_chips[chgnum].drv->set_hw_ramp(chgnum, 1);
+				/* This is not the active chg chip, disable hw_ramp. */
+				else
+					rv = chg_chips[chgnum].drv->set_hw_ramp(chgnum, 0);
+			} else
+				rv = chg_chips[chgnum].drv->set_hw_ramp(chgnum, 0);
+		}
 	}
 
-	if (!chg_chips[chgnum].drv->set_hw_ramp)
-		return EC_ERROR_UNIMPLEMENTED;
-
-	return chg_chips[chgnum].drv->set_hw_ramp(chgnum, enable);
+	return rv;
 }
 
 #ifdef CONFIG_CHARGE_RAMP_HW
