@@ -578,13 +578,19 @@ enum power_state power_chipset_init(void)
 		}
 	}
 
-	/* Leave power off only if requested by reset flags */
-	if (!(reset_flags & EC_RESET_FLAG_AP_OFF) &&
-	    !(reset_flags & EC_RESET_FLAG_SYSJUMP)) {
-		CPRINTS("auto_power_on set due to reset_flag 0x%x",
-			system_get_reset_flags());
-		auto_power_on = 1;
-	}
+	auto_power_on = 1;
+
+	/*
+	 * Leave power off only if requested by reset flags
+	 *
+	 * TODO(b/201099749): EC bootloader: Give RO chance to run EFS after
+	 * shutdown from recovery screen
+	 */
+	if (reset_flags & EC_RESET_FLAG_AP_OFF)
+		auto_power_on = 0;
+	else if (!(reset_flags & EC_RESET_FLAG_EFS) &&
+		    (reset_flags & EC_RESET_FLAG_SYSJUMP))
+		auto_power_on = 0;
 
 	if (battery_is_present() == BP_YES) {
 		/*
@@ -594,6 +600,9 @@ enum power_state power_chipset_init(void)
 		 */
 		battery_wait_for_stable();
 	}
+
+	if (auto_power_on)
+		CPRINTS("auto_power_on set due to reset flags");
 
 	return init_power_state;
 }
