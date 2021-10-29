@@ -28,7 +28,18 @@ struct ioex_gpio_config {
 	gpio_pin_t pin;
 	/* From DTS, excludes interrupts flags */
 	gpio_flags_t init_flags;
+	/*
+	 * Index of CrOS IO expander chip
+	 * If IO expander uses CrOS EC driver, this value will be one
+	 * of the possible from enum ioexpander_id
+	 * otherwise, if using the Zephyr GPIO driver, this will be -1
+	 */
+	int cros_drv_index;
+	/* Port of IO expander. Valid only if ioex field is not -1 */
+	int port;
 };
+
+#define IOEX_IS_CROS_DRV(config) (config->cros_drv_index >= 0)
 
 struct ioex_int_config {
 	const enum ioex_signal signal;
@@ -69,12 +80,20 @@ struct ioex_int_config ioex_int_configs[] = {
 };
 #undef IOEX_INT
 
+#define CHIP_FROM_GPIO(id) DT_PARENT(DT_GPIO_CTLR(id, gpios))
+
 #define IOEX_GPIO_CONFIG(id)                                                \
 	{                                                                   \
 		.name = DT_LABEL(id),                                       \
 		.dev = DEVICE_DT_GET(DT_PHANDLE(id, gpios)),                \
 		.pin = DT_GPIO_PIN(id, gpios),                              \
 		.init_flags = DT_GPIO_FLAGS(id, gpios),                     \
+		.cros_drv_index =                                           \
+			COND_CODE_1(DT_NODE_HAS_COMPAT(CHIP_FROM_GPIO(id),  \
+				cros_ioex_chip),                            \
+			(IOEXPANDER_ID(CHIP_FROM_GPIO(id)), ),              \
+			(-1,))                                              \
+		.port = DT_REG_ADDR(DT_GPIO_CTLR(id, gpios))                \
 	},
 
 #define IOEX_INIT_FLAGS(id) 0,
@@ -115,6 +134,12 @@ static const struct ioex_gpio_config *ioex_get_signal_info(
 	ASSERT(signal_is_ioex(signal));
 
 	g = ioex_gpio_configs + signal - IOEX_SIGNAL_START;
+
+	if (IOEX_IS_CROS_DRV(g) &&
+	    !(ioex_config[g->cros_drv_index].flags & IOEX_FLAGS_INITIALIZED)) {
+		LOG_ERR("ioex %s disabled", g->name);
+		return NULL;
+	}
 
 	return g;
 }
@@ -239,6 +264,20 @@ static void ioex_isr(const struct device *port,
 
 int ioex_init(int ioex)
 {
+	const struct ioexpander_drv *drv = ioex_config[ioex].drv;
+	int rv;
+
+	if (ioex_config[ioex].flags & IOEX_FLAGS_INITIALIZED)
+		return EC_SUCCESS;
+
+	if (drv->init != NULL) {
+		rv = drv->init(ioex);
+		if (rv != EC_SUCCESS)
+			return rv;
+	}
+
+	ioex_config[ioex].flags |= IOEX_FLAGS_INITIALIZED;
+
 	return EC_SUCCESS;
 }
 
@@ -319,8 +358,14 @@ int ioex_get_ioex_flags(enum ioex_signal signal, int *val)
 	if (g == NULL)
 		return EC_ERROR_INVAL;
 
-	/* Zephyr gpio drivers are initialized by internal subsystem */
-	*val = IOEX_FLAGS_INITIALIZED;
+	if (!IOEX_IS_CROS_DRV(g)) {
+		/* Zephyr gpio drivers are initialized by internal subsystem */
+		*val = IOEX_FLAGS_INITIALIZED;
+		return EC_SUCCESS;
+	}
+
+	*val = ioex_config[g->cros_drv_index].flags;
+
 	return EC_SUCCESS;
 }
 

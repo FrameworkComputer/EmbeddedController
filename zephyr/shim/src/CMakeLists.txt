@@ -29,6 +29,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD     host_command.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE
                                                             console_buffer.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX        ioex.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX_CROS_DRV
+                                                            ioex_drv.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD    keyboard_raw.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD    keyscan.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MKBP_EVENT  mkbp_event.c)

@@ -223,6 +223,18 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C_VIRTUAL_BATTERY
                                                 "${PLATFORM_EC}/common/virtual_battery.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CONSOLE_CMD_IOEX
                                                 "${PLATFORM_EC}/common/ioexpander_commands.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX_CCGXXF
+                                                "${PLATFORM_EC}/driver/ioexpander/ccgxxf.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX_IT8801
+                                                "${PLATFORM_EC}/driver/ioexpander/it8801.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX_NCT38XX
+                                                "${PLATFORM_EC}/driver/ioexpander/ioexpander_nct38xx.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX_PCA9675
+                                                "${PLATFORM_EC}/driver/ioexpander/pca9675.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX_PCAL6408
+                                                "${PLATFORM_EC}/driver/ioexpander/pcal6408.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX_TCA64XXA
+                                                "${PLATFORM_EC}/driver/ioexpander/tca64xxa.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD
                                                 "${PLATFORM_EC}/common/keyboard_scan.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_8042

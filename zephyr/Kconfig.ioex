@@ -28,4 +28,45 @@ config PLATFORM_EC_CONSOLE_CMD_IOEX
 	  It will enable ioexget and ioexset commands in EC console
 	  that allow to get and change values of IO expanders pins.
 
+config PLATFORM_EC_IOEX_CROS_DRV
+	bool
+	help
+	  Enable support for CrOS EC IO expander drivers
+
+config PLATFORM_EC_IOEX_CCGXXF
+	bool "Cypress CCGXXF"
+	select PLATFORM_EC_IOEX_CROS_DRV
+	help
+	  Enables driver for Cypress CCGXXF IO expander (built inside PD chip)
+
+config PLATFORM_EC_IOEX_IT8801
+	bool "IT8801"
+	select PLATFORM_EC_IOEX_CROS_DRV
+	help
+	  Enables support for IT8801 IO expander with keyboard matrix controller
+
+config PLATFORM_EC_IOEX_NCT38XX
+	bool "Nuvoton NCT38xx"
+	select PLATFORM_EC_IOEX_CROS_DRV
+	help
+	  Enables support for IO expander built inside Nuvoton NCT38xx TCPC
+
+config PLATFORM_EC_IOEX_PCA9675
+	bool "NXP PCA9675PW"
+	select PLATFORM_EC_IOEX_CROS_DRV
+	help
+	  Enables support for NXP PCA9675PW IO expander
+
+config PLATFORM_EC_IOEX_PCAL6408
+	bool "NXP PCA(L)6408"
+	select PLATFORM_EC_IOEX_CROS_DRV
+	help
+	  Enables support for NXP PCA(L)6408 IO expander
+
+config PLATFORM_EC_IOEX_TCA64XXA
+	bool "TI TCA64xA"
+	select PLATFORM_EC_IOEX_CROS_DRV
+	help
+	  Enables support for Texas Instruments TCA64xxA IO expanders family
+
 endif
