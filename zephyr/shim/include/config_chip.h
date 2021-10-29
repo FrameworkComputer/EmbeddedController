@@ -303,6 +303,11 @@
 #define CONFIG_CHIPSET_RESUME_INIT_HOOK
 #endif
 
+#undef CONFIG_CHIP_INIT_ROM_REGION
+#ifdef CONFIG_PLATFORM_EC_CHIP_INIT_ROM_REGION
+#define CONFIG_CHIP_INIT_ROM_REGION
+#endif
+
 #ifdef CONFIG_PLATFORM_EC_EXTPOWER_GPIO
 #define CONFIG_EXTPOWER_GPIO
 
@@ -365,6 +370,22 @@
 #define CONFIG_WP_STORAGE_SIZE	CONFIG_EC_PROTECTED_STORAGE_SIZE
 #define CONFIG_RO_SIZE		CONFIG_CROS_EC_RO_SIZE
 #define CONFIG_RW_SIZE		CONFIG_CROS_EC_RW_SIZE
+
+/*
+ * ROM resident area in flash used to store data objects that are not copied
+ * into code RAM. Enable using the CONFIG_CHIP_INIT_ROM_REGION option.
+ */
+#define CONFIG_RO_ROM_RESIDENT_MEM_OFF	CONFIG_RO_SIZE
+#define CONFIG_RO_ROM_RESIDENT_SIZE \
+	(CONFIG_EC_PROTECTED_STORAGE_SIZE - CONFIG_RO_SIZE)
+
+/*
+ * RW firmware in program memory - Identical to RO, only one image loaded at
+ * a time.
+ */
+#define CONFIG_RW_ROM_RESIDENT_MEM_OFF	CONFIG_RW_SIZE
+#define CONFIG_RW_ROM_RESIDENT_SIZE \
+	(CONFIG_EC_WRITABLE_STORAGE_SIZE - CONFIG_RW_SIZE)
 
 /* Flash settings */
 #undef CONFIG_EXTERNAL_STORAGE

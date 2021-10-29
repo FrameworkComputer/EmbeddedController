@@ -14,7 +14,6 @@
 
 #include "stdbool.h"
 
-#ifdef CONFIG_CHIP_INIT_ROM_REGION
 /**
  * Get the memory mapped address of an .init_rom data object.
  *
@@ -27,7 +26,14 @@
  * @return Pointer to data object in memory. Return NULL if the object
  * is not memory mapped.
  */
+#ifdef CONFIG_CHIP_INIT_ROM_REGION
 const void *init_rom_map(const void *addr, int size);
+#else
+static inline const void *init_rom_map(const void *addr, int size)
+{
+	return addr;
+}
+#endif
 
 /**
  * Unmaps an .init_rom data object. Must be called when init_rom_map() is
@@ -36,7 +42,13 @@ const void *init_rom_map(const void *addr, int size);
  * @param offset	Address of the data object assigned by the linker.
  * @param size	        Size of the data object.
  */
+#ifdef CONFIG_CHIP_INIT_ROM_REGION
 void init_rom_unmap(const void *addr, int size);
+#else
+static inline void init_rom_unmap(const void *addr, int size)
+{
+}
+#endif
 
 /**
  * Copy an .init_rom data object into a RAM location. This routine must be used
@@ -49,17 +61,9 @@ void init_rom_unmap(const void *addr, int size);
  *
  * @return 0 on success.
  */
+#ifdef CONFIG_CHIP_INIT_ROM_REGION
 int init_rom_copy(int offset, int size, char *data);
 #else
-static inline const void *init_rom_map(const void *addr, int size)
-{
-	return addr;
-}
-
-static inline void init_rom_unmap(const void *addr, int size)
-{
-}
-
 static inline int init_rom_copy(int offset, int size, char *data)
 {
 	return 0;
