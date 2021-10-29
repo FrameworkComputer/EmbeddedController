@@ -247,17 +247,53 @@ void gpio_set_level_verbose(enum console_channel channel,
 	(GPIO_OPEN_DRAIN | GPIO_PULL_UP | GPIO_PULL_DOWN | GPIO_INPUT | \
 	 GPIO_OUTPUT)
 
+#define FLAGS_HANDLED_FROM_ZEPHYR                                              \
+	(GPIO_DISCONNECTED | GPIO_OPEN_DRAIN | GPIO_PULL_UP | GPIO_PULL_DOWN | \
+	 GPIO_OUTPUT_INIT_LOW | GPIO_OUTPUT_INIT_HIGH | GPIO_INPUT |           \
+	 GPIO_OUTPUT | GPIO_INT_ENABLE | GPIO_INT_EDGE | GPIO_INT_HIGH_1 |     \
+	 GPIO_INT_LOW_0 | GPIO_VOLTAGE_1P8)
+
+#define FLAGS_HANDLED_TO_ZEPHYR                                                \
+	(GPIO_FLAG_NONE | GPIO_OPEN_DRAIN | GPIO_PULL_UP | GPIO_PULL_DOWN |    \
+	 GPIO_LOW | GPIO_HIGH | GPIO_INPUT | GPIO_OUTPUT | GPIO_INT_F_RISING | \
+	 GPIO_INT_F_FALLING | GPIO_INT_F_LOW | GPIO_INT_F_HIGH |               \
+	 GPIO_SEL_1P8V)
+
 static int convert_from_zephyr_flags(const gpio_flags_t zephyr)
 {
 	/* Start out with the bits that are the same. */
 	int ec_flags = zephyr & GPIO_CONVERSION_SAME_BITS;
-	gpio_flags_t unhandled_flags = zephyr & ~GPIO_CONVERSION_SAME_BITS;
+	gpio_flags_t unhandled_flags = zephyr & (~FLAGS_HANDLED_FROM_ZEPHYR);
 
 	/* TODO(b/173789980): handle conversion of more bits? */
 	if (unhandled_flags) {
 		LOG_WRN("Unhandled GPIO bits in zephyr->ec conversion: 0x%08X",
 			unhandled_flags);
 	}
+
+	if (zephyr & GPIO_DISCONNECTED)
+		ec_flags |= GPIO_FLAG_NONE;
+	if (zephyr & GPIO_OUTPUT_INIT_LOW)
+		ec_flags |= GPIO_LOW;
+	if (zephyr & GPIO_OUTPUT_INIT_HIGH)
+		ec_flags |= GPIO_HIGH;
+
+	if (zephyr & GPIO_INT_ENABLE) {
+		if (zephyr & GPIO_INT_EDGE) {
+			if (zephyr & GPIO_INT_HIGH_1)
+				ec_flags |= GPIO_INT_F_RISING;
+			if (zephyr & GPIO_INT_LOW_0)
+				ec_flags |= GPIO_INT_F_FALLING;
+		} else {
+			if (zephyr & GPIO_INT_LOW_0)
+				ec_flags |= GPIO_INT_F_LOW;
+			if (zephyr & GPIO_INT_HIGH_1)
+				ec_flags |= GPIO_INT_F_HIGH;
+		}
+	}
+
+	if (zephyr & GPIO_VOLTAGE_1P8)
+		ec_flags |= GPIO_SEL_1P8V;
 
 	return ec_flags;
 }
@@ -266,13 +302,32 @@ static gpio_flags_t convert_to_zephyr_flags(int ec_flags)
 {
 	/* Start out with the bits that are the same. */
 	gpio_flags_t zephyr_flags = ec_flags & GPIO_CONVERSION_SAME_BITS;
-	int unhandled_flags = ec_flags & ~GPIO_CONVERSION_SAME_BITS;
+	int unhandled_flags = ec_flags & (~FLAGS_HANDLED_TO_ZEPHYR);
 
 	/* TODO(b/173789980): handle conversion of more bits? */
 	if (unhandled_flags) {
 		LOG_WRN("Unhandled GPIO bits in ec->zephyr conversion: 0x%08X",
 			unhandled_flags);
 	}
+
+	if (ec_flags & GPIO_FLAG_NONE)
+		zephyr_flags |= GPIO_DISCONNECTED;
+	if (ec_flags & GPIO_LOW)
+		zephyr_flags |= GPIO_OUTPUT_INIT_LOW;
+	if (ec_flags & GPIO_HIGH)
+		zephyr_flags |= GPIO_OUTPUT_INIT_HIGH;
+	if (ec_flags & GPIO_INT_F_RISING)
+		zephyr_flags |= GPIO_INT_ENABLE
+			| GPIO_INT_EDGE | GPIO_INT_HIGH_1;
+	if (ec_flags & GPIO_INT_F_FALLING)
+		zephyr_flags |= GPIO_INT_ENABLE
+			| GPIO_INT_EDGE | GPIO_INT_LOW_0;
+	if (ec_flags & GPIO_INT_F_LOW)
+		zephyr_flags |= GPIO_INT_ENABLE | GPIO_INT_LOW_0;
+	if (ec_flags & GPIO_INT_F_HIGH)
+		zephyr_flags |= GPIO_INT_ENABLE | GPIO_INT_HIGH_1;
+	if (ec_flags & GPIO_SEL_1P8V)
+		zephyr_flags |= GPIO_VOLTAGE_1P8;
 
 	return zephyr_flags;
 }
