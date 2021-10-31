@@ -599,6 +599,11 @@ config_brya() {
   readonly GPIO_PWREN=314
 }
 
+config_brask() {
+  # Let's call the config_brya since brask follows the brya HW design
+  config_brya
+}
+
 config_zork() {
   readonly TRANSPORT="UART"
   readonly DEVICE="/dev/ttyS1"
