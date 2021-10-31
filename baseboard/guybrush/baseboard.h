@@ -238,8 +238,8 @@
 #define GPIO_USB1_ILIM_SEL IOEX_USB_A0_LIMIT_SDP
 #define GPIO_USB2_ILIM_SEL IOEX_USB_A1_LIMIT_SDP_DB
 
-/* Round up 3250 max current to multiple of 128mA for ISL9241 AC prochot. */
-#define GUYBRUSH_AC_PROCHOT_CURRENT_MA 3328
+/* Round up 5000 max current to multiple of 128mA for ISL9241 AC prochot. */
+#define GUYBRUSH_AC_PROCHOT_CURRENT_MA 5120
 
 /*
  * USB ID - This is allocated specifically for Guybrush
