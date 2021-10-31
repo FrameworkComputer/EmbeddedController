@@ -35,6 +35,8 @@
 
 /* Notification from interrupt to CEC task that data has been received */
 #define TASK_EVENT_RECEIVED_DATA TASK_EVENT_CUSTOM_BIT(0)
+#define TASK_EVENT_OKAY          TASK_EVENT_CUSTOM_BIT(1)
+#define TASK_EVENT_FAILED        TASK_EVENT_CUSTOM_BIT(2)
 
 /* CEC broadcast address. Also the highest possible CEC address */
 #define CEC_BROADCAST_ADDR 15
@@ -592,7 +594,8 @@ static void cec_event_timeout(void)
 				cec_tx.len = 0;
 				cec_tx.resends = 0;
 				enter_state(CEC_STATE_IDLE);
-				send_mkbp_event(EC_MKBP_CEC_SEND_OK);
+				task_set_event(TASK_ID_CEC,
+					       TASK_EVENT_OKAY);
 			}
 		} else {
 			if (cec_tx.resends < CEC_MAX_RESENDS) {
@@ -604,7 +607,8 @@ static void cec_event_timeout(void)
 				cec_tx.len = 0;
 				cec_tx.resends = 0;
 				enter_state(CEC_STATE_IDLE);
-				send_mkbp_event(EC_MKBP_CEC_SEND_FAILED);
+				task_set_event(TASK_ID_CEC,
+					       TASK_EVENT_FAILED);
 			}
 		}
 		break;
@@ -1035,6 +1039,13 @@ void cec_task(void *unused)
 			}
 			if (rv == EC_SUCCESS)
 				mkbp_send_event(EC_MKBP_EVENT_CEC_MESSAGE);
+		}
+		if (events & TASK_EVENT_OKAY) {
+			send_mkbp_event(EC_MKBP_CEC_SEND_OK);
+			CPRINTS("SEND OKAY");
+		} else if (events & TASK_EVENT_FAILED) {
+			send_mkbp_event(EC_MKBP_CEC_SEND_FAILED);
+			CPRINTS("SEND FAILED");
 		}
 	}
 }
