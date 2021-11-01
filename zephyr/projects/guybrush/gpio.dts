@@ -188,10 +188,12 @@
 		usb_c0_hpd {
 			gpios = <&gpiof 5 GPIO_OUT_LOW>;
 			label = "USB_C0_HPD";
+			enum-name = "GPIO_USB_C0_DP_HPD";
 		};
 		usb_c1_hpd {
 			gpios = <&gpiof 4 GPIO_OUT_LOW>;
 			label = "USB_C1_HPD";
+			enum-name = "GPIO_USB_C1_DP_HPD";
 		};
 		3axis_int_l {
 			gpios = <&gpioa 2 (GPIO_INPUT | GPIO_PULL_DOWN)>;
