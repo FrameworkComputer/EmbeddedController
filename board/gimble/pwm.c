@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "hooks.h"
@@ -51,10 +52,7 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 static void board_pwm_init(void)
 {
-	/*
-	 * Turn off LED1 to LED4.
-	 * Turn on KB LED at 50%.
-	 */
+	/* Turn off LED1 to LED4 */
 	pwm_enable(PWM_CH_LED1, 1);
 	pwm_set_duty(PWM_CH_LED1, 0);
 	pwm_enable(PWM_CH_LED2, 1);
@@ -63,7 +61,9 @@ static void board_pwm_init(void)
 	pwm_set_duty(PWM_CH_LED3, 0);
 	pwm_enable(PWM_CH_LED4, 1);
 	pwm_set_duty(PWM_CH_LED4, 0);
-
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return;
+	/* Turn on KB LED at 50%. */
 	pwm_enable(PWM_CH_KBLIGHT, 1);
 	pwm_set_duty(PWM_CH_KBLIGHT, 50);
 }
