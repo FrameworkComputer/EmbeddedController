@@ -21,6 +21,10 @@
 #include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/usb_mux/it5205.h"
+#include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_bmi260.h"
+#include "driver/accelgyro_icm42607.h"
+#include "driver/accelgyro_icm_common.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "intc.h"
@@ -43,6 +47,7 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
+#define CPRINTF(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define INT_RECHECK_US 5000
 
@@ -308,6 +313,104 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 
+static struct icm_drv_data_t g_icm42607_data;
+const mat33_fp_t based_ref_icm42607 = {
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
+};
+struct motion_sensor_t icm42607_base_accel = {
+	 .name = "Base Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_ICM42607,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &icm42607_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &g_icm42607_data,
+	 .port = I2C_PORT_ACCEL,
+	 .i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
+	 .default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
+	 .rot_standard_ref = &based_ref_icm42607,
+	 .min_frequency = ICM42607_ACCEL_MIN_FREQ,
+	 .max_frequency = ICM42607_ACCEL_MAX_FREQ,
+	 .config = {
+		 /* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	 },
+};
+struct motion_sensor_t icm42607_base_gyro = {
+	 .name = "Base Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_ICM42607,
+	 .type = MOTIONSENSE_TYPE_GYRO,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &icm42607_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &g_icm42607_data,
+	 .port = I2C_PORT_ACCEL,
+	 .i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
+	 .default_range = 1000, /* dps */
+	 .rot_standard_ref = &based_ref_icm42607,
+	 .min_frequency = ICM42607_GYRO_MIN_FREQ,
+	 .max_frequency = ICM42607_GYRO_MAX_FREQ,
+};
+
+static struct bmi_drv_data_t g_bmi220_data;
+const mat33_fp_t based_ref_bmi220 = {
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
+};
+struct motion_sensor_t bmi220_base_accel = {
+	 .name = "Base Accel",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_BMI220,
+	 .type = MOTIONSENSE_TYPE_ACCEL,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &bmi260_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &g_bmi220_data,
+	 .port = I2C_PORT_ACCEL,
+	 .i2c_spi_addr_flags = BMI260_ADDR0_FLAGS,
+	 .default_range = 4, /* g, to meet CDD 7.3.1/C-1-4 reqs.*/
+	 .rot_standard_ref = &based_ref_bmi220,
+	 .min_frequency = BMI_ACCEL_MIN_FREQ,
+	 .max_frequency = BMI_ACCEL_MAX_FREQ,
+	 .config = {
+		[SENSOR_CONFIG_EC_S0] = {
+				.odr = 13000 | ROUND_UP_FLAG,
+				.ec_rate = 100 * MSEC,
+		},
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+	 },
+};
+struct motion_sensor_t bmi220_base_gyro = {
+	 .name = "Base Gyro",
+	 .active_mask = SENSOR_ACTIVE_S0_S3,
+	 .chip = MOTIONSENSE_CHIP_BMI220,
+	 .type = MOTIONSENSE_TYPE_GYRO,
+	 .location = MOTIONSENSE_LOC_BASE,
+	 .drv = &bmi260_drv,
+	 .mutex = &g_base_mutex,
+	 .drv_data = &g_bmi220_data,
+	 .port = I2C_PORT_ACCEL,
+	 .i2c_spi_addr_flags = BMI260_ADDR0_FLAGS,
+	 .default_range = 1000, /* dps */
+	 .rot_standard_ref = &based_ref_bmi220,
+	 .min_frequency = BMI_GYRO_MIN_FREQ,
+	 .max_frequency = BMI_GYRO_MAX_FREQ,
+};
+
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 void board_init(void)
@@ -356,11 +459,37 @@ void board_init(void)
 
 		gpio_set_flags(GPIO_VOLUP_BTN_ODL,
 				GPIO_INPUT | GPIO_PULL_DOWN);
-
+	} else {
+		if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_ICM42607) {
+			motion_sensors[BASE_ACCEL] = icm42607_base_accel;
+			motion_sensors[BASE_GYRO] = icm42607_base_gyro;
+			CPRINTF("BASE GYRO is ICM42607");
+		} else if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_BMI220) {
+			motion_sensors[BASE_ACCEL] = bmi220_base_accel;
+			motion_sensors[BASE_GYRO] = bmi220_base_gyro;
+			CPRINTF("BASE GYRO is BMI220");
+		} else {
+			CPRINTF("BASE GYRO is LSM6DSM");
+		}
 	}
-
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+void motion_interrupt(enum gpio_signal signal)
+{
+	switch (get_cbi_ssfc_base_sensor()) {
+	case SSFC_SENSOR_ICM42607:
+		icm42607_interrupt(signal);
+		break;
+	case SSFC_SENSOR_BMI220:
+		bmi260_interrupt(signal);
+		break;
+	case SSFC_SENSOR_LSM6DSM:
+	default:
+		lsm6dsm_interrupt(signal);
+		break;
+	}
+}
 
 void board_hibernate(void)
 {
