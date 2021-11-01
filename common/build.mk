@@ -253,11 +253,6 @@ $(out)/RW/common/rsa.o: CFLAGS+=-O3
 $(out)/RO/common/rsa.o: CFLAGS+=-O3
 endif
 
-# AES-GCM code needs C99, else we'd have to move many variables declarations
-# around.
-$(out)/RW/common/aes-gcm.o: CFLAGS+=-std=c99 -Wno-declaration-after-statement
-$(out)/RO/common/aes-gcm.o: CFLAGS+=-std=c99 -Wno-declaration-after-statement
-
 ifneq ($(CONFIG_BOOTBLOCK),)
 
 ifdef BOOTBLOCK

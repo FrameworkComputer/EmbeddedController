@@ -113,7 +113,7 @@ else
 HOSTGCOV=$(CURDIR)/util/llvm-gcov.sh
 endif
 
-C_WARN = -Wstrict-prototypes -Wdeclaration-after-statement -Wno-pointer-sign
+C_WARN = -Wstrict-prototypes -Wno-pointer-sign
 C_WARN += -Werror-implicit-function-declaration
 COMMON_WARN += -Wall -Wundef \
 	-Wno-trigraphs -Wno-format-security -Wno-address-of-packed-member \
