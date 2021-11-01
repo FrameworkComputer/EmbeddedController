@@ -3,13 +3,12 @@
  * found in the LICENSE file.
  */
 
-/* Marzipan board-specific USB-C configuration */
+/* Trogdor family-specific USB-C configuration */
 
 #include "charger.h"
 #include "charger/isl923x_public.h"
 #include "charge_state.h"
 #include "usb_pd.h"
-#include "usbc_config.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -58,23 +57,4 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 						  uint32_t value)
 {
 	return EC_RES_INVALID_PARAM;
-}
-
-/* GPIO Interrupt Handlers */
-void tcpc_alert_event(enum gpio_signal signal)
-{
-	int port = -1;
-
-	switch (signal) {
-	case GPIO_USB_C0_PD_INT_ODL:
-		port = 0;
-		break;
-	case GPIO_USB_C1_PD_INT_ODL:
-		port = 1;
-		break;
-	default:
-		return;
-	}
-
-	schedule_deferred_pd_interrupt(port);
 }
