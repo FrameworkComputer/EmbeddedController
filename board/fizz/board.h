@@ -60,6 +60,7 @@
 
 /* EC console commands */
 #define CONFIG_CMD_BUTTON
+#undef CONFIG_CMD_ADC
 
 /* SOC */
 #define CONFIG_CHIPSET_SKYLAKE
