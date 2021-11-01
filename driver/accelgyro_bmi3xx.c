@@ -481,7 +481,7 @@ int set_accel_offset(const struct motion_sensor_t *s, intv3_t v)
 	/* Set the power mode as suspend */
 	RETURN_ERROR(bmi3_read_n(s, BMI3_REG_ACC_CONF, saved_conf, 6));
 
-	/* Ignore two i2c sync bytes and store consecutive bytes in reg_data */
+	/* Disable accelerometer and gyroscope */
 	reg_data[0] = saved_conf[2];
 	reg_data[1] = 0x00;
 	reg_data[2] = saved_conf[4];
@@ -505,9 +505,6 @@ int set_accel_offset(const struct motion_sensor_t *s, intv3_t v)
 	RETURN_ERROR(bmi3_write_n(s, BMI3_FEATURE_ENGINE_DMA_TX_DATA, reg_data,
 				  6));
 
-	/* Restore ACC_CONF by storing saved_conf data */
-	RETURN_ERROR(bmi3_read_n(s, BMI3_REG_ACC_CONF, saved_conf, 6));
-
 	/* Update the offset to the sensor engine */
 	reg_data[0] = (uint8_t)(BMI3_CMD_USR_GAIN_OFFS_UPDATE &
 				BMI3_SET_LOW_BYTE);
@@ -516,6 +513,9 @@ int set_accel_offset(const struct motion_sensor_t *s, intv3_t v)
 				 BMI3_SET_HIGH_BYTE) >> 8);
 
 	RETURN_ERROR(bmi3_write_n(s, BMI3_REG_CMD, reg_data, 2));
+
+	/* Restore ACC_CONF by storing saved_conf data */
+	RETURN_ERROR(bmi3_write_n(s, BMI3_REG_ACC_CONF, &saved_conf[2], 4));
 
 	return EC_SUCCESS;
 }
