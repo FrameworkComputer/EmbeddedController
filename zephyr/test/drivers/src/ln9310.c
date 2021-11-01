@@ -586,6 +586,44 @@ static void test_ln9310_reset_explicit_detected_startup(void)
 	i2c_common_emul_set_read_func(i2c_emul, NULL, NULL);
 }
 
+static void test_ln9310_update_startup_seq_fails(void)
+{
+	const struct emul *emulator =
+		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
+	struct i2c_emul *i2c_emul = ln9310_emul_get_i2c_emul(emulator);
+	struct reg_to_fail_data test_data = {
+		.reg_access_to_fail = LN9310_REG_CFG_4,
+		.reg_access_fail_countdown = 1,
+	};
+
+	zassert_not_null(emulator, NULL);
+	zassert_not_null(i2c_emul, NULL);
+
+	ln9310_emul_set_context(emulator);
+	ln9310_emul_reset(emulator);
+	/* Battery won't matter here so only testing one pair */
+	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_2S);
+	/* Requires older version of chip */
+	ln9310_emul_set_version(emulator,
+				REQUIRES_CFLY_PRECHARGE_STARTUP_CHIP_REV);
+
+	i2c_common_emul_set_read_func(
+		i2c_emul, &mock_read_intercept_reg_to_fail, &test_data);
+
+	zassert_false(ln9310_init() == 0, NULL);
+	zassert_false(ln9310_emul_is_init(emulator), NULL);
+
+	ln9310_software_enable(true);
+
+	/* TODO(b/201420132) */
+	k_msleep(TEST_DELAY_MS);
+
+	zassert_false(ln9310_power_good(), NULL);
+	zassert_true(test_data.reg_access_fail_countdown <= 0, NULL);
+
+	i2c_common_emul_set_read_func(i2c_emul, NULL, NULL);
+}
+
 static void reset_ln9310_state(void)
 {
 	ln9310_reset_to_initial_state();
@@ -596,6 +634,10 @@ void test_suite_ln9310(void)
 {
 	ztest_test_suite(
 		ln9310,
+		ztest_unit_test_setup_teardown(
+			test_ln9310_update_startup_seq_fails,
+			reset_ln9310_state,
+			reset_ln9310_state),
 		ztest_unit_test_setup_teardown(
 			test_ln9310_reset_explicit_detected_startup,
 			reset_ln9310_state,
