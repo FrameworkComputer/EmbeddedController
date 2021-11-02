@@ -30,6 +30,28 @@ struct sn5s330_emul_data {
 	struct i2c_common_emul_data common;
 	/** Emulated FUNC_SET1 register */
 	uint8_t func_set1_reg;
+	/** Emulated FUNC_SET2 register */
+	uint8_t func_set2_reg;
+	/** Emulated FUNC_SET3 register */
+	uint8_t func_set3_reg;
+	/** Emulated FUNC_SET4 register */
+	uint8_t func_set4_reg;
+	/** Emulated FUNC_SET5 register */
+	uint8_t func_set5_reg;
+	/** Emulated FUNC_SET6 register */
+	uint8_t func_set6_reg;
+	/** Emulated FUNC_SET7 register */
+	uint8_t func_set7_reg;
+	/** Emulated FUNC_SET8 register */
+	uint8_t func_set8_reg;
+	/** Emulated FUNC_SET9 register */
+	uint8_t func_set9_reg;
+	/** Emulated FUNC_SET10 register */
+	uint8_t func_set10_reg;
+	/** Emulated FUNC_SET11 register */
+	uint8_t func_set11_reg;
+	/** Emulated FUNC_SET12 register */
+	uint8_t func_set12_reg;
 };
 
 struct sn5s330_emul_cfg {
@@ -68,6 +90,50 @@ static int sn5s330_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->func_set1_reg;
 		break;
+	case SN5S330_FUNC_SET2:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->func_set2_reg;
+		break;
+	case SN5S330_FUNC_SET3:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->func_set3_reg;
+		break;
+	case SN5S330_FUNC_SET4:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->func_set4_reg;
+		break;
+	case SN5S330_FUNC_SET5:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->func_set5_reg;
+		break;
+	case SN5S330_FUNC_SET6:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->func_set6_reg;
+		break;
+	case SN5S330_FUNC_SET7:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->func_set7_reg;
+		break;
+	case SN5S330_FUNC_SET8:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->func_set8_reg;
+		break;
+	case SN5S330_FUNC_SET9:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->func_set9_reg;
+		break;
+	case SN5S330_FUNC_SET10:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->func_set10_reg;
+		break;
+	case SN5S330_FUNC_SET11:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->func_set11_reg;
+		break;
+	case SN5S330_FUNC_SET12:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->func_set12_reg;
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -85,6 +151,51 @@ static int sn5s330_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 		__ASSERT_NO_MSG(bytes == 1);
 		data->func_set1_reg = val;
 		break;
+	case SN5S330_FUNC_SET2:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->func_set2_reg = val;
+		break;
+	case SN5S330_FUNC_SET3:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->func_set3_reg = val;
+		break;
+	case SN5S330_FUNC_SET4:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->func_set4_reg = val;
+		break;
+	case SN5S330_FUNC_SET5:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->func_set5_reg = val;
+		break;
+	case SN5S330_FUNC_SET6:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->func_set6_reg = val;
+		break;
+	case SN5S330_FUNC_SET7:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->func_set7_reg = val;
+		break;
+	case SN5S330_FUNC_SET8:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->func_set8_reg = val;
+		break;
+	case SN5S330_FUNC_SET9:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->func_set9_reg = val;
+		break;
+	case SN5S330_FUNC_SET10:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->func_set10_reg = val;
+		break;
+	case SN5S330_FUNC_SET11:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->func_set11_reg = val;
+		break;
+	case SN5S330_FUNC_SET12:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->func_set12_reg = val;
+		break;
+
 	default:
 		return -EINVAL;
 	}
