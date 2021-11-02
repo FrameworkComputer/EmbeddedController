@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 register_npcx_project(
-    "guybrush",
+    project_name="guybrush",
     zephyr_board="npcx9",
     dts_overlays=["battery.dts", "gpio.dts", "i2c.dts"],
 )

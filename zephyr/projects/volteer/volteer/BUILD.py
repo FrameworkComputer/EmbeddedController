@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 register_npcx_project(
-    "volteer",
+    project_name="volteer",
     zephyr_board="volteer",
     dts_overlays=[
         "bb_retimer.dts",

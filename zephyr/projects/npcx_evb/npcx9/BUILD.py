@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 register_npcx_project(
-    "npcx9",
+    project_name="npcx9",
     zephyr_board="npcx9_evb",
     dts_overlays=["gpio.dts", "pwm.dts", "fan.dts", "keyboard.dts"],
 )

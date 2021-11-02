@@ -3,6 +3,6 @@
 # found in the LICENSE file.
 
 register_npcx_project(
-    "kohaku",
+    project_name="kohaku",
     zephyr_board="kohaku",
 )

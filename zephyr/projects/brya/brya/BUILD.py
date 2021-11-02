@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 register_npcx_project(
-    "brya",
+    project_name="brya",
     zephyr_board="brya",
     dts_overlays=["gpio.dts"],
 )

@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 register_binman_project(
-    "hayato",
+    project_name="hayato",
     zephyr_board="asurada",
     dts_overlays=["battery.dts", "gpio.dts", "motionsense.dts", "pwm.dts"],
 )

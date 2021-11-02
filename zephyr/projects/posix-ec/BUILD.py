@@ -2,4 +2,4 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-register_host_project("posix-ec")
+register_host_project(project_name="posix-ec")

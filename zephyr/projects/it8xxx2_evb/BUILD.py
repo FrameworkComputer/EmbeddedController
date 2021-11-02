@@ -3,6 +3,6 @@
 # found in the LICENSE file.
 
 register_raw_project(
-    "it8xxx2_evb",
+    project_name="it8xxx2_evb",
     zephyr_board="it8xxx2_evb",
 )

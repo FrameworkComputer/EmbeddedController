@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 register_npcx_project(
-    "herobrine_npcx9",
+    project_name="herobrine_npcx9",
     zephyr_board="herobrine_npcx9",
     dts_overlays=[
         "gpio.dts",

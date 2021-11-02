@@ -54,7 +54,7 @@ def test_find_dts_overlays(modules):
         for board, expected_dts_files in board_file_mapping.items():
             project = zmake.project.Project(
                 zmake.project.ProjectConfig(
-                    name=board,
+                    project_name=board,
                     zephyr_board=board,
                     output_packer=zmake.output_packers.ElfPacker,
                     supported_toolchains=["llvm"],
@@ -89,7 +89,7 @@ def test_prune_modules(modules):
 
     project = zmake.project.Project(
         zmake.project.ProjectConfig(
-            name="prunetest",
+            project_name="prunetest",
             zephyr_board="native_posix",
             output_packer=zmake.output_packers.ElfPacker,
             supported_toolchains=["coreboot-sdk"],
@@ -112,7 +112,7 @@ def test_prune_modules_unavailable():
 
     project = zmake.project.Project(
         zmake.project.ProjectConfig(
-            name="prunetest",
+            project_name="prunetest",
             zephyr_board="native_posix",
             output_packer=zmake.output_packers.ElfPacker,
             supported_toolchains=["coreboot-sdk"],
@@ -132,15 +132,15 @@ def test_find_projects_empty(tmp_path):
 
 
 CONFIG_FILE_1 = """
-register_raw_project("one", zephyr_board="one")
-register_host_test("two")
-register_npcx_project("three", zephyr_board="three")
-register_binman_project("four", zephyr_board="four")
+register_raw_project(project_name="one", zephyr_board="one")
+register_host_test(test_name="two")
+register_npcx_project(project_name="three", zephyr_board="three")
+register_binman_project(project_name="four", zephyr_board="four")
 """
 
 CONFIG_FILE_2 = """
 register_raw_project(
-    "five",
+    project_name="five",
     zephyr_board="foo",
     dts_overlays=[here / "gpio.dts"],
 )
@@ -164,9 +164,9 @@ def test_find_projects(tmp_path):
     assert projects["one"].config.project_dir == cf1_dir
     assert not projects["one"].config.is_test
 
-    assert projects["two"].config.project_dir == cf1_dir
-    assert projects["two"].config.zephyr_board == "native_posix"
-    assert projects["two"].config.is_test
+    assert projects["test-two"].config.project_dir == cf1_dir
+    assert projects["test-two"].config.zephyr_board == "native_posix"
+    assert projects["test-two"].config.is_test
 
     assert projects["three"].config.project_dir == cf1_dir
     assert not projects["three"].config.is_test

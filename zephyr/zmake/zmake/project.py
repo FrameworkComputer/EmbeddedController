@@ -37,8 +37,8 @@ def load_config_file(path):
     """
     projects = []
 
-    def register_project(name, **kwargs):
-        projects.append(Project(ProjectConfig(name=name, **kwargs)))
+    def register_project(**kwargs):
+        projects.append(Project(ProjectConfig(**kwargs)))
 
     # The Python environment passed to the config file.
     config_globals = {
@@ -75,19 +75,19 @@ def find_projects(root_dir):
     found_projects = {}
     for path in pathlib.Path(root_dir).rglob("BUILD.py"):
         for project in load_config_file(path):
-            if project.config.name in found_projects:
+            if project.config.project_name in found_projects:
                 raise KeyError(
                     "Duplicate project defined: {} (in {})".format(
-                        project.config.name, path
+                        project.config.project_name, path
                     )
                 )
-            found_projects[project.config.name] = project
+            found_projects[project.config.project_name] = project
     return found_projects
 
 
 @dataclasses.dataclass
 class ProjectConfig:
-    name: str
+    project_name: str
     zephyr_board: str
     supported_toolchains: "list[str]"
     output_packer: type

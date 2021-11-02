@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 register_npcx_project(
-    "lazor",
+    project_name="lazor",
     zephyr_board="trogdor",
     dts_overlays=[
         "battery.dts",

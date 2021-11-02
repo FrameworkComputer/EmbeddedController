@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 register_npcx_project(
-    "delbin",
+    project_name="delbin",
     zephyr_board="volteer",
     dts_overlays=["gpio.dts", "motionsense.dts"],
 )

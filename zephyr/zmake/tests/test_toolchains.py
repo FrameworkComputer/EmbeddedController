@@ -64,7 +64,7 @@ def zephyr_exists(mockfs):
 def fake_project(tmp_path):
     return project.Project(
         project.ProjectConfig(
-            name="foo",
+            project_name="foo",
             zephyr_board="foo",
             supported_zephyr_versions=["v2.6"],
             supported_toolchains=[

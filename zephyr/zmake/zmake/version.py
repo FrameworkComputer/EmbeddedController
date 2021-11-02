@@ -115,7 +115,11 @@ def get_version_string(project, zephyr_base, modules, static=False):
         )
 
     return "{}_v{}.{}.{}-{}".format(
-        project.config.name, major_version, minor_version, num_commits, vcs_hashes
+        project.config.project_name,
+        major_version,
+        minor_version,
+        num_commits,
+        vcs_hashes,
     )
 
 

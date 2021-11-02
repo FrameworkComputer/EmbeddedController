@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 register_binman_project(
-    "krabby",
+    project_name="krabby",
     zephyr_board="it8xxx2",
     dts_overlays=[
         "adc.dts",
