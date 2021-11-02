@@ -78,7 +78,8 @@ void syv682x_emul_set_status(struct i2c_emul *emul, uint8_t val)
 	 * by itself based on the status. In real life, the device should turn
 	 * the power path off when either of these conditions occurs, and they
 	 * should quickly dissipate. If they somehow stay set, the device should
-	 * interrupt continuously.
+	 * interrupt continuously. Relatedly, the emulator should only generate
+	 * an FRS alert if the EC is asserting the FRS GPIO.
 	 */
 }
 
